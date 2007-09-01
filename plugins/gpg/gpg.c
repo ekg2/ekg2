@@ -623,11 +623,9 @@ static int gpg_theme_init() {
 #define MIN_GPGME_VERSION "1.0.0"
 
 EXPORT int gpg_plugin_init(int prio) {
-	FILE *f;
 	gpgme_error_t err;
-	const char *dbfile = prepare_pathf("keys/gpgkeydb.txt");
 
-	if (mkdir_recursive(dbfile, 0)) {
+	if (mkdir(prepare_path("keys", 1), 0700) && errno != EEXIST) {
 		debug_error("Creating of directory keys failed, gpg plugin needs it!\n");	/* it's not 100% true.. but... */
 		return -1;
 	}
@@ -642,21 +640,25 @@ EXPORT int gpg_plugin_init(int prio) {
 		return -1;
 	}
 
-	if ((f = fopen(dbfile, "r"))) {
-		char *line;
-		while ((line = read_file(f, 0))) {
-			char **p = array_make(line, "\t", 3, 0, 0);
+	{
+		FILE *f;
+		const char *dbfile = prepare_path("keys/gpgkeydb.txt", 1);
+		if ((f = fopen(dbfile, "r"))) {
+			char *line;
+			while ((line = read_file(f, 0))) {
+				char **p = array_make(line, "\t", 3, 0, 0);
+				
+				if (p && p[0] && p[1] && p[2]) {
+					egpg_key_t *k = gpg_keydb_add(p[0], p[1], NULL);
 
-			if (p && p[0] && p[1] && p[2]) {
-				egpg_key_t *k = gpg_keydb_add(p[0], p[1], NULL);
+					k->keysetup = atoi(p[2]);
+				} else debug_error("[GPG] INVALID LINE: %s\n", line);
 
-				k->keysetup = atoi(p[2]);
-			} else debug_error("[GPG] INVALID LINE: %s\n", line);
-
-			array_free(p);
-		}
-		fclose(f);
-	} else debug_error("[GPG] Opening of %s failed: %d %s.\n", dbfile, errno, strerror(errno));
+				array_free(p);
+			}
+			fclose(f);
+		} else debug_error("[GPG] Opening of %s failed: %d %s.\n", dbfile, errno, strerror(errno));
+	}
 
 #if 0
 /* XXX Set the locale information. ? */
@@ -688,11 +690,16 @@ EXPORT int gpg_plugin_init(int prio) {
 
 static int gpg_plugin_destroy() {
 	FILE *f = NULL;
+	
 	list_t l;
-	const char *dbfile = prepare_pathf("keys/gpgkeydb.txt");
 
-	if (mkdir_recursive(dbfile, 0) || !(f = fopen(dbfile, "w"))) {
-		debug_error("[GPG] gpg db failed to save (%s)\n", strerror(errno));
+	if (mkdir(prepare_path("keys", 1), 0700) && errno != EEXIST) {
+		debug_error("[GPG] Creating of directory keys failed: %d %s. gpg db failed to save\n", errno, strerror(errno));
+	} else {
+		const char *dbfile = prepare_path("keys/gpgkeydb.txt", 1);
+
+		if (!(f = fopen(dbfile, "w")))
+			debug_error("[GPG] Opening of %s failed: %d %s. gpg db failed to save\n", dbfile, errno, strerror(errno));
 	}
 
 /* save our db to file, and cleanup memory... */

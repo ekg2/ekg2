@@ -135,25 +135,20 @@ void userlist_add_entry(session_t *session, const char *line)
 		array_free(entry);
 		return;
 	}
-
-	u = xmalloc(sizeof(userlist_t)); /* we'd need this here */
-	u->uid = entry[6];	entry[6] = NULL;
-
-	{
-		int function = EKG_USERLIST_PRIVHANDLER_READING;
-
-		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry, &count);
-	}
+	
+	u = xmalloc(sizeof(userlist_t));
+	if (atoi(entry[6])) 
+		u->uid = saprintf("gg:%s", entry[6]);
+	else
+		u->uid = xstrdup(entry[6]);
 
 	if (valid_plugin_uid(session->plugin, u->uid) != 1) {
 		debug_error("userlist_add_entry() wrong uid: %s for session: %s [plugin: 0x%x]\n", u->uid, session->uid, session->plugin);
-		array_free_count(entry, count);
+		array_free(entry);
 		xfree(u->uid);
 		xfree(u);
 		return;
 	}
-
-	u->status = EKG_STATUS_NA;
 
 	for (i = 0; i < 6; i++) {
 		if (!xstrcmp(entry[i], "(null)") || !xstrcmp(entry[i], "")) {
@@ -162,17 +157,28 @@ void userlist_add_entry(session_t *session, const char *line)
 		}
 	}
 			
-	u->groups	= group_init(entry[5]);
+	u->first_name = xstrdup(entry[0]);
+	u->last_name = xstrdup(entry[1]);
 
-	u->nickname	= !valid_nick(entry[3]) ? 
-		saprintf("_%s", entry[3]) :
-		xstrdup(entry[3]);
+	if (entry[3] && !valid_nick(entry[3]))
+		u->nickname = saprintf("_%s", entry[3]);
+	else
+		u->nickname = xstrdup(entry[3]);
 
-	u->foreign	= entry[7] ? 
-		saprintf(";%s", entry[7]) :
-		NULL;
+	u->mobile = xstrdup(entry[4]);
+	u->groups = group_init(entry[5]);
+	u->status = xstrdup(EKG_STATUS_NA);
 	
-	array_free_count(entry, count);
+	if (entry[7])
+		u->foreign = saprintf(";%s", entry[7]);
+	else
+		u->foreign = xstrdup("");
+
+	for (i = 0; i < count; i++)
+		xfree(entry[i]);
+
+	xfree(entry);
+
 	LIST_ADD_SORTED(&(session->userlist), u, 0, userlist_compare);
 }
 
@@ -244,32 +250,25 @@ int userlist_write(session_t *session)
 	/* userlist_dump() */
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
-		char **entry = xcalloc(7, sizeof(char *));
-		char *line;
+		const char *uid;
+		char *groups;
 
-		entry[0] = NULL;				/* first name [gg] */
-		entry[1] = NULL;				/* last name [gg] */
-		entry[2] = xstrdup(u->nickname);		/* display? backwards compatibility? */
-		entry[3] = xstrdup(u->nickname);		/* nickname */
-		entry[4] = NULL;				/* mobile [gg] */
-		entry[5] = group_to_string(u->groups, 1, 0);	/* groups (alloced itself) */
-		entry[6] = strdup(u->uid);			/* uid */
+		uid = (!strncmp(u->uid, "gg:", 3)) ? u->uid + 3 : u->uid;
 
-		{
-			int function = EKG_USERLIST_PRIVHANDLER_WRITING;
+		groups = group_to_string(u->groups, 1, 0);
 
-			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry);
-		}
-
-		line = array_join_count(entry, ";", 7);
-
-		fprintf(f, "%s%s\n", 
-			line, 					/* look upper */
-			u->foreign ? u->foreign : "");		/* backwards compatibility */
-
-		xfree(line);
-		array_free_count(entry, 7);
-	}
+		fprintf(f, "%s;%s;%s;%s;%s;%s;%s%s\r\n",
+			(u->first_name) ? u->first_name : "",
+			(u->last_name) ? u->last_name : "",
+			(u->nickname) ? u->nickname : "",
+			(u->nickname) ? u->nickname : "",
+			(u->mobile) ? u->mobile : "",
+			groups,
+			uid,
+			(u->foreign) ? u->foreign : "");
+		
+		xfree(groups);
+	}	
 
 	fclose(f);
 	return 0;
@@ -356,7 +355,10 @@ void userlist_clear_status(session_t *session, const char *uid)
                 userlist_t *u = l->data;
 
 		if (!uid || !xstrcasecmp(uid, u->uid)) {
-			u->status = EKG_STATUS_NA;
+			xfree(u->status);
+			u->status = xstrdup(EKG_STATUS_NA);
+			memset(&u->ip, 0, sizeof(struct in_addr));
+			u->port = 0;
 			xfree(u->descr);
 			u->descr = NULL;
 
@@ -394,15 +396,16 @@ void userlist_free_u (list_t *userlist)
                 userlist_t *u = l->data;
                 list_t lp;
 
-		if (u->priv) {
-			int func = EKG_USERLIST_PRIVHANDLER_FREE;
-
-			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func);
-		}
+                xfree(u->first_name);
+                xfree(u->last_name);
                 xfree(u->nickname);
                 xfree(u->uid);
+                xfree(u->mobile);
+                xfree(u->status);
                 xfree(u->descr);
+                xfree(u->authtype);
                 xfree(u->foreign);
+                xfree(u->last_status);
                 xfree(u->last_descr);
 
                 for (lp = u->groups; lp; lp = lp->next) {
@@ -440,7 +443,7 @@ ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio)
 	r	= xmalloc(sizeof(ekg_resource_t));
 	r->name		= xstrdup(name);		/* resource name */
 	r->prio		= prio;				/* resource prio */
-	r->status	= EKG_STATUS_NA;		/* this is quite stupid but we must be legal with ekg2 ABI ? */
+	r->status	= xstrdup(EKG_STATUS_NA);	/* this is quite stupid but we must be legal with ekg2 ABI */
 
 	LIST_ADD_SORTED(&(u->resources), r, 0, userlist_resource_compare);	/* add to list sorted by prio && than by name */
 	return r;
@@ -483,6 +486,7 @@ void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
 	
 	xfree(r->name);
 	xfree(r->descr);
+	xfree(r->status);
 
 	list_remove(&(u->resources), r, 1);
 }
@@ -504,6 +508,7 @@ void userlist_resource_free(userlist_t *u) {
 		ekg_resource_t *r = l->data;
 
 		xfree(r->name);
+		xfree(r->status);
 		xfree(r->descr);
 	}
 	list_destroy(u->resources, 1);
@@ -544,15 +549,19 @@ userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickna
 
         u->uid = xstrdup(uid);
         u->nickname = xstrdup(nickname);
-        u->status = EKG_STATUS_NA;
+        u->status = xstrdup(EKG_STATUS_NA);
 #if 0 /* if 0 != NULL */
+        u->first_name = NULL;
+        u->last_name = NULL;
+        u->mobile = NULL;
         u->descr = NULL;
+        u->authtype = NULL;
         u->foreign = NULL;
         u->last_status = NULL;
         u->last_descr = NULL;
         u->resources = NULL;
 #endif
-        return LIST_ADD_SORTED(userlist, u, 0, userlist_compare);
+	return LIST_ADD_SORTED(userlist, u, 0, userlist_compare);
 }
 
 /*
@@ -581,17 +590,18 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
         if (!u)
                 return -1;
 
-	if (u->priv) {
-		int func = EKG_USERLIST_PRIVHANDLER_FREE;
-
-		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func);
-	}
+        xfree(u->first_name);
+        xfree(u->last_name);
         xfree(u->nickname);
         xfree(u->uid);
+        xfree(u->mobile);
+        xfree(u->status);
         xfree(u->descr);
+        xfree(u->authtype);
         xfree(u->foreign);
+        xfree(u->last_status);
         xfree(u->last_descr);
-
+	
 	if (u->groups) {
 		for (l = u->groups; l; l = l->next) {
 			struct ekg_group *g = l->data;
@@ -600,7 +610,6 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
 		}
 		list_destroy(u->groups, 1);
 	}
-
 	userlist_resource_free(u);
 
         list_remove(userlist, u, 1);
@@ -979,8 +988,10 @@ int ignored_add(session_t *session, const char *uid, int level)
 	ekg_group_add(u, tmp);
 	xfree(tmp);
 
-	if (level & IGNORE_STATUS)
-		u->status = EKG_STATUS_NA; /* maybe EKG_STATUS_UNKNOWN would be better? */
+	if (level & IGNORE_STATUS) {
+		xfree(u->status);
+		u->status = xstrdup(EKG_STATUS_NA);
+	}
 
 	if (level & IGNORE_STATUS_DESCR) {
 		xfree(u->descr);

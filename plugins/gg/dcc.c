@@ -228,18 +228,11 @@ COMMAND(gg_command_dcc)
 		struct gg_dcc *gd = NULL;
 		struct stat st;
 		userlist_t *u;
-		gg_userlist_private_t *up;
 		dcc_t *d;
 		int fd;
-		const char *fn;
 
 		if (!params[1] || !params[2]) {
 			wcs_printq("not_enough_params", name);
-			return -1;
-		}
-
-		if (!(fn = prepare_path_user(params[2]))) {
-			printq("generic_error", "path too long"); /* XXX? */
 			return -1;
 		}
 
@@ -247,48 +240,44 @@ COMMAND(gg_command_dcc)
 			printq("user_not_found", params[1]);
 			return -1;
 		}
-		up = gg_userlist_priv_get(u);
 
 		if (!session_connected_get(session)) {
 			wcs_printq("not_connected");
 			return -1;
 		}
 
-		if (u->status == EKG_STATUS_NA) {
+		if (!xstrcmp(u->status, EKG_STATUS_NA)) {
 			printq("dcc_user_not_avail", format_user(session, u->uid));
 			return -1;
 		}
 
-		if (!up || !up->ip) {
+		if (!u->ip) {
 			printq("dcc_user_aint_dcc", format_user(session, u->uid));
 			return -1;
 		}
 		
-		if (!stat(fn, &st) && !S_ISREG(st.st_mode)) {
-			printq("io_nonfile", params[2]);
+		if (!stat(params[2], &st) && S_ISDIR(st.st_mode)) {
+			printq("dcc_open_error", params[2], strerror(EISDIR));
 			return -1;
 		}
-
-		if ((fd = open(fn, O_RDONLY|O_NONBLOCK)) == -1) {
-			if (errno == ENXIO)
-				printq("io_nonfile", params[2]);
-			else
-				printq("io_cantopen", params[2], strerror(errno));
+		
+		if ((fd = open(params[2], O_RDONLY)) == -1) {
+			printq("dcc_open_error", params[2], strerror(errno));
 			return -1;
 		}
 
 		close(fd);
 
-		if (up->port < 10 || !xstrncasecmp(params[0], "rse", 3)) {
+		if (u->port < 10 || !xstrncasecmp(params[0], "rse", 3)) {
 			/* nie mo¿emy siê z nim po³±czyæ, wiêc on spróbuje */
 			gg_dcc_request(g->sess, atoi(u->uid + 3));
 		} else {
-			if (!(gd = gg_dcc_send_file(up->ip, up->port, uin, atoi(u->uid + 3)))) {
+			if (!(gd = gg_dcc_send_file(u->ip, u->port, uin, atoi(u->uid + 3)))) {
 				printq("dcc_error", strerror(errno));
 				return -1;
 			}
 
-			if (gg_dcc_fill_file_info(gd, fn) == -1) {
+			if (gg_dcc_fill_file_info(gd, params[2]) == -1) {
 				printq("dcc_open_error", params[2], strerror(errno));
 				gg_free_dcc(gd);
 				return -1;
@@ -296,7 +285,7 @@ COMMAND(gg_command_dcc)
 		}
 		
 		d = dcc_add(session, u->uid, DCC_SEND, gd);
-		dcc_filename_set(d, fn);
+		dcc_filename_set(d, params[2]);
 		dcc_size_set(d, st.st_size);
 		if (gd)
 			watch_add(&gg_plugin, gd->fd, gd->check, gg_dcc_handler, gd);
@@ -308,7 +297,6 @@ COMMAND(gg_command_dcc)
 		struct gg_dcc *gd = NULL;
 		dcc_t *d;
 		userlist_t *u;
-		gg_userlist_private_t *up;
 
 		if (!params[1]) {
 			printq("not_enough_params", name);
@@ -324,19 +312,18 @@ COMMAND(gg_command_dcc)
 			printq("user_not_found", params[1]);
 			return -1;
 		}
-		up = gg_userlist_priv_get(u);
 
 		if (!session_connected_get(session)) {
 			wcs_printq("not_connected");
 			return -1;
 		}
 
-		if (u->status == EKG_STATUS_NA) {
+		if (!xstrcmp(u->status, EKG_STATUS_NA)) {
 			printq("dcc_user_not_avail", format_user(session, u->uid));
 			return -1;
 		}
 
-		if (!up || !up->ip) {
+		if (!u->ip) {
 			printq("dcc_user_aint_dcc", format_user(session, u->uid));
 			return -1;
 		}
@@ -382,11 +369,11 @@ COMMAND(gg_command_dcc)
 			return 0;
 		}
 
-		if (up->port < 10 || !xstrncasecmp(params[0], "rvo", 3)) {
+		if (u->port < 10 || !xstrncasecmp(params[0], "rvo", 3)) {
 			/* nie mo¿emy siê z nim po³±czyæ, wiêc on spróbuje */
 			gg_dcc_request(g->sess, atoi(u->uid + 3));
 		} else {
-			if (!(gd = gg_dcc_voice_chat(up->ip, up->port, uin, atoi(u->uid + 3)))) {
+			if (!(gd = gg_dcc_voice_chat(u->ip, u->port, uin, atoi(u->uid + 3)))) {
 				printq("dcc_error", strerror(errno));
 				return -1;
 			}
@@ -402,7 +389,7 @@ COMMAND(gg_command_dcc)
 				__AINIT_F("oss", AUDIO_READ, "freq", "8000", "sample", "16", "channels", "1"),
 				__CINIT_F("gsm", "with-ms", "1"),
 				__AINIT_F("gg_dcc", AUDIO_WRITE, "dccuid", u->uid, 
-					"len", (up->protocol >= 0x1b) ? itoa(GG_DCC_VOICE_FRAME_LENGTH_505) : itoa(GG_DCC_VOICE_FRAME_LENGTH), 
+					"len", (u->protocol >= 0x1b) ? itoa(GG_DCC_VOICE_FRAME_LENGTH_505) : itoa(GG_DCC_VOICE_FRAME_LENGTH), 
 					"dccid", itoa(d->id) /*, "fd", itoa(audiofds[1]) */ ));
 		stream_create("Gygy audio INPUT",
 				__AINIT_F("gg_dcc", AUDIO_READ, "dccid", itoa(d->id), "uid", u->uid, "fd", itoa(audiofds[0])), 
@@ -806,15 +793,13 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			if (d->peer_uin) {
 				char peer[16];
 				userlist_t *u;
-				gg_userlist_private_t *up;
 				
 				snprintf(peer, sizeof(peer), "gg:%d", d->peer_uin);
 				u = userlist_find(session_find(uin), peer);
-				up = gg_userlist_priv_get(u);
 
-				if (!addr.s_addr && u && up) {
-					addr.s_addr = up->ip;
-					port = up->port;
+				if (!addr.s_addr && u) {
+					addr.s_addr = u->ip;
+					port = u->port;
 				}
 				tmp = saprintf("%s (%s:%d)", format_user(session_find(uin), peer), inet_ntoa(addr), port);
 			} else 

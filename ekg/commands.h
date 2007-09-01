@@ -60,7 +60,7 @@ typedef COMMAND(command_func_t);
 
 typedef struct {
 	/* public: */
-	const char *name;
+	char *name;
 	plugin_t *plugin;
 
 	/* private: */

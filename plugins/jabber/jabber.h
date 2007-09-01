@@ -8,7 +8,6 @@
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
-#include <ekg/userlist.h>
 
 #ifdef HAVE_EXPAT_H
  #include <expat.h>
@@ -103,13 +102,6 @@ typedef struct {
 	unsigned int order;					/* order */
 } jabber_iq_privacy_t;
 
-typedef struct {
-	char	*thread;
-	char	*uid;
-	char	*subject;
-	void	*next;
-} jabber_conversation_t;
-
 /**
  * jabber_private_t contains private data of jabber/tlen session.
  */
@@ -122,7 +114,7 @@ typedef struct {
 	char using_ssl;			/**< 1 if we're using SSL, 2 if we're using TLS, else 0 */
 	SSL_SESSION ssl_session;	/**< SSL session */
 #ifdef JABBER_HAVE_GNUTLS
-	gnutls_certificate_credentials xcred;	/**< gnutls credentials (?) */
+	gnutls_certificate_credentials xcred;
 #endif
 #endif
 	int id;				/**< queries ID */
@@ -141,23 +133,7 @@ typedef struct {
 	watch_t *send_watch;
 
 	xmlnode_t *node;		/**< current XML branch */
-	jabber_conversation_t *conversations;	/**< known conversations */
 } jabber_private_t;
-
-typedef struct {
-	int authtype;
-
-	/* from muc_userlist_t */
-	char *role;		/* role: */
-	char *aff;		/* affiliation: */
-} jabber_userlist_private_t;
-
-enum jabber_auth_t {
-	EKG_JABBER_AUTH_NONE	= 0,
-	EKG_JABBER_AUTH_FROM	= 1,
-	EKG_JABBER_AUTH_TO	= 2,
-	EKG_JABBER_AUTH_BOTH	= 3
-};
 
 #define jabber_private(s) ((jabber_private_t*) session_private_get(s))
 
@@ -165,7 +141,6 @@ extern plugin_t jabber_plugin;
 extern char *jabber_default_pubsub_server;
 extern char *jabber_default_search_server;
 extern int config_jabber_beep_mail;
-extern char *jabber_authtypes[];
 
 void jabber_register_commands(void);
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data);
@@ -174,22 +149,16 @@ int JABBER_COMMIT_DATA(watch_t *w);
 void jabber_handle(void *data, xmlnode_t *n);
 
 /* digest.c hashowanie.. */
-char *jabber_digest(const char *sid, const char *password, void *charset);
+char *jabber_digest(const char *sid, const char *password);
 char *jabber_dcc_digest(char *sid, char *initiator, char *target);
 char *jabber_challange_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm);
-void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd, const char *stream_id);
 
 char *jabber_attr(char **atts, const char *att);
 char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);
 char *tlen_encode(const char *what);
 char *tlen_decode(const char *what);
-unsigned char *utfstrchr(unsigned char *s, unsigned char c);
 int jabber_write_status(session_t *s);
-
-void jabber_convert_string_init(int is_tlen);
-void jabber_convert_string_destroy();
-QUERY(jabber_convert_string_reinit);
 
 void jabber_reconnect_handler(int type, void *data);
 WATCHER(jabber_handle_resolver);
@@ -211,12 +180,6 @@ char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_
 char *jabber_zlib_decompress(const char *buf, int *len);
 char *jabber_zlib_compress(const char *buf, int *len);
 #endif
-
-jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u);
-
-int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *subject, const char *thread, jabber_conversation_t **result, const int can_add);
-jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, const int n);
-char *jabber_thread_gen(jabber_private_t *j, const char *uid);
 
 #endif /* __EKG_JABBER_JABBER_H */
 

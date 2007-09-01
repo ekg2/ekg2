@@ -624,21 +624,17 @@ static void sessions_var_generator(const char *text, int len)
         if (!session_in_line)
                 return;
 
-	if (!(p = session_in_line->plugin)) {
-		debug_error("[%s:%d] Plugin disappear [s: %s]\n", __FILE__, __LINE__, __(session_in_line->uid));
-		return;
-	}
+        if (!(p = plugin_find_uid(session_in_line->uid)))
+                return;
 
-	if (!p->params)
-		return;
 
-	for (i = 0; (p->params[i].key /* && p->params[i].id != -1 */); i++) {
+	for (i = 0; p->params[i]; i++) {
 		if(*text == '-') {
-                        if (!xstrncasecmp(text + 1, p->params[i].key, len - 1))
-                                array_add_check(&completions, saprintf(("-%s"), p->params[i].key), 1);
+                        if (!xstrncasecmp(text + 1, p->params[i]->key, len - 1))
+                                array_add_check(&completions, saprintf(("-%s"), p->params[i]->key), 1);
                 } else {
-                        if (!xstrncasecmp(text, p->params[i].key, len)) {
-                                array_add_check(&completions, xstrdup(p->params[i].key), 1);
+                        if (!xstrncasecmp(text, p->params[i]->key, len)) {
+                                array_add_check(&completions, xstrdup(p->params[i]->key), 1);
 			}
                 }
         }

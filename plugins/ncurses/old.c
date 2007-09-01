@@ -231,7 +231,7 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 		return 0;
 
 	if (n->backlog_size == config_backlog_size) {
-		fstring_t *line = n->backlog[n->backlog_size - 1];
+		ncurses_fstring_t *line = n->backlog[n->backlog_size - 1];
 		int i;
 
 		for (i = 0; i < n->lines_count; i++) {
@@ -239,17 +239,17 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 				removed++;
 		}
 
-		fstring_free(line);
+		fstring_free((fstring_t *) line);
 
 		n->backlog_size--;
 	} else 
-		n->backlog = xrealloc(n->backlog, (n->backlog_size + 1) * sizeof(fstring_t *));
+		n->backlog = xrealloc(n->backlog, (n->backlog_size + 1) * sizeof(ncurses_fstring_t *));
 
-	memmove(&n->backlog[1], &n->backlog[0], n->backlog_size * sizeof(fstring_t *));
+	memmove(&n->backlog[1], &n->backlog[0], n->backlog_size * sizeof(ncurses_fstring_t *));
 #if USE_UNICODE
-	{
-		int rlen = xstrlen(str->str.b);
-		wchar_t *temp = xmalloc((rlen + 1) * sizeof(CHAR_T));		/* new str->str */
+	if (config_use_unicode) {
+		int rlen = xstrlen(str->str);
+		wchar_t *temp = xmalloc((rlen+1) * sizeof(CHAR_T));		/* new str->str */
 
 		int cur = 0;
 		int i = 0;
@@ -259,7 +259,7 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 		while (cur <= rlen) {
 			wchar_t znak;
 			int inv = 0;
-			int len	= mbtowc(&znak, &(str->str.b[cur]), rlen-cur);
+			int len	= mbtowc(&znak, &(str->str[cur]), rlen-cur);
 
 			if (len == -1) {
 /*				debug("[%s:%d] mbtowc() failed ?! (%d, %s) (%d)\n", __FILE__, __LINE__, errno, strerror(errno), i); */
@@ -281,14 +281,14 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 		}
 
 	/* resize str->attr && str->str to match newlen */
-		xfree(str->str.b); 
+		xfree(str->str); 
 
-		str->str.w  = xrealloc(temp, (i+1) * sizeof(CHAR_T));		/* i ? */
+		str->str  = xrealloc(temp, (i+1) * sizeof(CHAR_T));		/* i ? */
 		str->attr = xrealloc(str->attr, (i+1) * sizeof(short));		/* i ? */
 
 	}
 #endif
-	n->backlog[0] = str;
+	n->backlog[0] = (ncurses_fstring_t *) str;
 
 	n->backlog_size++;
 
@@ -355,7 +355,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		time_t lastts = 0; 		/* last cached ts */
 		char lasttsbuf[100];		/* last cached strftime() result */
 
-		str = n->backlog[i]->str.w + n->backlog[i]->prompt_len;
+		str = __SPTR(n->backlog[i]->str, n->backlog[i]->prompt_len);
 		attr = n->backlog[i]->attr + n->backlog[i]->prompt_len;
 		ts = n->backlog[i]->ts;
 		margin_left = (!w->floating) ? n->backlog[i]->margin_left : -1;
@@ -381,7 +381,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			l->prompt_len = n->backlog[i]->prompt_len;
 			if (!n->backlog[i]->prompt_empty) {
-				l->prompt_str = n->backlog[i]->str.w;
+				l->prompt_str = n->backlog[i]->str;
 				l->prompt_attr = n->backlog[i]->attr;
 			} else {
 				l->prompt_str = NULL;
@@ -393,7 +393,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				if (ts && lastts == ts) {	/* use cached value */
 					s = fstring_new(lasttsbuf);
 
-					l->ts = s->str.b;
+					l->ts = s->str;
 					l->ts_len = xstrlen(l->ts);
 					l->ts_attr = s->attr;
 
@@ -408,7 +408,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 					s = fstring_new(lasttsbuf);
 
-					l->ts = s->str.b;
+					l->ts = s->str;
 					l->ts_len = xstrlen(l->ts);
 					l->ts_attr = s->attr;
 
@@ -432,14 +432,14 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		
 			for (j = 0, word = 0; j < l->len; j++) {
 
-				if (str[j] == CHAR(' ') && !w->nowrap)
+				if (__S(str, j) == ' ' && !w->nowrap)
 					word = j + 1;
 
 				if (j == width) {
 					l->len = (word) ? word : width;
-					if (str[j] == CHAR(' ')) {
+					if (__S(str, j) == ' ') {
 						l->len--;
-						str++;
+						__SN(&str, 1);		/* str++ */
 						attr++;
 					}
 					break;
@@ -447,16 +447,16 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			}
 
 			if (w->nowrap) {
-				while (*str) {
-					str++;
+				while (__S(str, 0)) {		/* while (*str)  */
+					__SN(&str, 1);			/* str++ */
 					attr++;
 				}
 				break;
 			}
-			str += l->len;
+			__SN(&str, l->len);	/* str += l->len */
 			attr += l->len;
 
-			if (! *str)
+			if (!__S(str, 0))
 				break;
 
 			wrapping = 1;
@@ -763,10 +763,10 @@ void ncurses_redraw(window_t *w)
 				if (!l->prompt_str)
 					continue;
 				
-				ch = l->prompt_str[x];
+				ch = __S(l->prompt_str, x);
 				chattr = l->prompt_attr[x];
 			} else {
-				ch = l->str[x - l->prompt_len];
+				ch = __S(l->str, x - l->prompt_len);
 				chattr = l->attr[x - l->prompt_len];
 			}
 			if ((chattr & 64))
@@ -794,7 +794,6 @@ void ncurses_redraw(window_t *w)
 #warning "XXX ?"
 				!config_use_unicode && 
 #endif
-				config_use_iso &&
 				ch > 127 && ch < 160
 			   ) 
 			{
@@ -838,7 +837,7 @@ void ncurses_clear(window_t *w, int full)
 		int i;
 
 		for (i = 0; i < n->backlog_size; i++)
-			fstring_free(n->backlog[i]);
+			fstring_free((fstring_t *) n->backlog[i]);
 
 		xfree(n->backlog);
 
@@ -1284,31 +1283,24 @@ void update_statusbar(int commit)
 	}
 
 	__add_format_dup("debug", (!window_current->id), "");
-#define __add_format_dup_st(x, y) __add_format_dup(x, (sess && sess->connected && (sess->status == y)), "");
-	__add_format_dup_st("away", EKG_STATUS_AWAY);
-	__add_format_dup_st("avail", EKG_STATUS_AVAIL);
-	__add_format_dup_st("dnd", EKG_STATUS_DND);
-	__add_format_dup_st("chat", EKG_STATUS_FFC);
-	__add_format_dup_st("xa", EKG_STATUS_XA);
-	__add_format_dup_st("invisible", EKG_STATUS_INVISIBLE);
-#undef __add_format_dup_st
-	__add_format_dup("notavail", (!sess || !sess->connected || (sess->status == EKG_STATUS_NA)), "");
+	__add_format_dup("away", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AWAY)), "");
+	__add_format_dup("avail", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_AVAIL)), "");
+	__add_format_dup("dnd", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_DND)), "");
+	__add_format_dup("chat", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_FREE_FOR_CHAT)), "");
+	__add_format_dup("xa", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_XA)), "");
+	__add_format_dup("invisible", (sess && sess->connected && !xstrcasecmp(sess->status, EKG_STATUS_INVISIBLE)), "");
+	__add_format_dup("notavail", (!sess || !sess->connected || !xstrcasecmp(sess->status, EKG_STATUS_NA)), "");
 	__add_format_dup("more", (window_current->more), "");
 
 	__add_format_dup("query_descr", (q && q->descr), q->descr);
-#define __add_format_dup_st(x, y) __add_format_dup("query_" x, (q && (q->status == y)), "");
-	__add_format_dup_st("away", EKG_STATUS_AWAY);
-	__add_format_dup_st("avail", EKG_STATUS_AVAIL);
-	__add_format_dup_st("invisible", EKG_STATUS_INVISIBLE);
-	__add_format_dup_st("notavail", EKG_STATUS_NA);
-	__add_format_dup_st("dnd", EKG_STATUS_DND);
-	__add_format_dup_st("chat", EKG_STATUS_FFC);
-	__add_format_dup_st("xa", EKG_STATUS_XA);
-	/* XXX add unknown and likes!; maybe we could use ekg_status_string()? */
-#undef __add_format_dup_st
-#if 0
+	__add_format_dup("query_away", (q && !xstrcasecmp(q->status, EKG_STATUS_AWAY)), "");
+	__add_format_dup("query_avail", (q && !xstrcasecmp(q->status, EKG_STATUS_AVAIL)), "");
+	__add_format_dup("query_invisible", (q && !xstrcasecmp(q->status, EKG_STATUS_INVISIBLE)), "");
+	__add_format_dup("query_notavail", (q && !xstrcasecmp(q->status, EKG_STATUS_NA)), "");
+	__add_format_dup("query_dnd", (q && !xstrcasecmp(q->status, EKG_STATUS_DND)), "");
+	__add_format_dup("query_chat", (q && !xstrcasecmp(q->status, EKG_STATUS_FREE_FOR_CHAT)), "");
+	__add_format_dup("query_xa", (q && !xstrcasecmp(q->status, EKG_STATUS_XA)), "");
 	__add_format_dup("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
-#endif
 
         __add_format_dup("typing", (q && (q->xstate & EKG_XSTATE_TYPING)), "");
 	__add_format_dup("url", 1, "http://www.ekg2.org/");
@@ -1400,7 +1392,7 @@ int ncurses_window_kill(window_t *w)
 		int i;
 
 		for (i = 0; i < n->backlog_size; i++)
-			fstring_free(n->backlog[i]);
+			fstring_free((fstring_t *) n->backlog[i]);
 
 		xfree(n->backlog);
 	}
@@ -1447,7 +1439,6 @@ static void sigwinch_handler()
 void ncurses_init()
 {
 	int background;
-	va_list dummy;
 
 	ncurses_screen_width = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
 	ncurses_screen_height = getenv("LINES") ? atoi(getenv("LINES")) : 24;
@@ -1456,15 +1447,7 @@ void ncurses_init()
 	cbreak();
 	noecho();
 	nonl();
-#ifdef HAVE_NCURSES_ULC
-	if (!config_use_iso
-#if USE_UNICODE
-			&& !config_use_unicode
-#endif
-			)
-		use_legacy_coding(2);
-#endif
-
+	
 	if (config_display_transparent) {
 		background = COLOR_DEFAULT;
 		use_default_colors();
@@ -1511,7 +1494,7 @@ void ncurses_init()
 
 #undef __init_bg
 
-	ncurses_contacts_changed("contacts", dummy);
+	ncurses_contacts_changed("contacts", NULL);
 	ncurses_commit();
 
 	/* deaktywujemy klawisze INTR, QUIT, SUSP i DSUSP */
@@ -1873,46 +1856,46 @@ static void spellcheck(CHAR_T *what, char *where) {
 	register int j = 0;     /* licznik */
 
 	/* Sprawdzamy czy nie mamy doczynienia z 47 (wtedy nie sprawdzamy reszty ) */
-	if (!what || *what == 47)
+	if (!what || __S(what, 0) == 47)
 		return;       /* konczymy funkcje */
 	    
-	for (i = 0; what[i] != CHAR('\0') && what[i] != CHAR('\n') && what[i] != CHAR('\r'); i++) {
-		if ((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != CHAR('\0')) { // separator/koniec lini/koniec stringu
+	for (i = 0; __S(what, i) != '\0' && __S(what, i) != '\n' && __S(what, i) != '\r'; i++) {
+		if ((!isalpha_pl(__S(what, i)) || i == 0 ) && __S(what, i+1) != '\0' ) { // separator/koniec lini/koniec stringu
 			char *word;             /* aktualny wyraz */
 			size_t wordlen;		/* dlugosc aktualnego wyrazu */
 		
-			for (; what[i] != CHAR('\0') && what[i] != CHAR('\n') && what[i] != CHAR('\r'); i++) {
-				if (isalpha_pl(what[i])) /* szukamy jakiejs pierwszej literki */
+			for (; __S(what, i) != '\0' && __S(what, i) != '\n' && __S(what, i) != '\r'; i++) {
+				if (isalpha_pl(__S(what, i))) /* szukamy jakiejs pierwszej literki */
 					break; 
 			}
 
 			/* trochê poprawiona wydajno¶æ */
-			if (what[i] == '\0' || what[i] == '\n' || what[i] == '\r') {
+			if (__S(what, i) == '\0' || __S(what, i) == '\n' || __S(what, i) == '\r') {
 				i--;
 				continue;
 				/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */ 
 			} else if (
-							   what[i] == 'h' && 
-					what[i + 1] && what[i + 1] == 't' && 
-					what[i + 2] && what[i + 2] == 't' && 
-					what[i + 3] && what[i + 3] == 'p' && 
-					what[i + 4] && what[i + 4] == ':' &&
-					what[i + 5] && what[i + 5] == '/' && 
-					what[i + 6] && what[i + 6] == '/') {
+							    __S(what, i) == 'h' && 
+					__S(what, i + 1) && __S(what, i + 1) == 't' && 
+					__S(what, i + 2) && __S(what, i + 2) == 't' && 
+					__S(what, i + 3) && __S(what, i + 3) == 'p' && 
+					__S(what, i + 4) && __S(what, i + 4) == ':' &&
+					__S(what, i + 5) && __S(what, i + 5) == '/' && 
+					__S(what, i + 6) && __S(what, i + 6) == '/') {
 
-				for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
+				for(; __S(what, i) != ' ' && __S(what, i) != '\n' && __S(what, i) != '\r' && __S(what, i) != '\0'; i++);
 				i--;
 				continue;
 				/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */ 
 			} else if (
-							    what[i] == 'f' && 
-					what[i + 1] && what[i + 1] == 't' && 
-					what[i + 2] && what[i + 2] == 'p' && 
-					what[i + 3] && what[i + 3] == ':' && 
-					what[i + 4] && what[i + 4] == '/' && 
-					what[i + 5] && what[i + 5] == '/') {
+							    __S(what, i) == 'f' && 
+					__S(what, i + 1) && __S(what, i + 1) == 't' && 
+					__S(what, i + 2) && __S(what, i + 2) == 'p' && 
+					__S(what, i + 3) && __S(what, i + 3) == ':' && 
+					__S(what, i + 4) && __S(what, i + 4) == '/' && 
+					__S(what, i + 5) && __S(what, i + 5) == '/') {
 
-				for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
+				for(; __S(what, i) != ' ' && __S(what, i) != '\n' && __S(what, i) != '\r' && __S(what, i) != '\0'; i++);
 				i--;
 				continue;
 			}
@@ -1920,9 +1903,9 @@ static void spellcheck(CHAR_T *what, char *where) {
 			word = xmalloc((xwcslen(what) + 1)*sizeof(char));
 
 			/* wrzucamy aktualny wyraz do zmiennej word */
-			for (j = 0; what[i] != '\n' && what[i] != '\0' && isalpha_pl(what[i]); i++) {
-				if (isalpha_pl(what[i])) {
-					word[j]= what[i];
+			for (j = 0; __S(what, i) != '\n' && __S(what, i) != '\0' && isalpha_pl(__S(what, i)); i++) {
+				if (isalpha_pl(__S(what, i))) {
+					word[j]= __S(what, i);
 					j++;
 				} else 
 					break;
@@ -2003,11 +1986,11 @@ void ncurses_redraw_input(unsigned int ch) {
 #endif
 			for (j = 0; j + line_start < plen && j < input->_maxx + 1; j++) { 
 #ifdef WITH_ASPELL
-				if (aspell_line && aspell_line[line_start + j] == ASPELLCHAR && p[line_start + j] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-					print_char(input, i, j, p[line_start + j], A_UNDERLINE);
+				if (aspell_line && aspell_line[line_start + j] == ASPELLCHAR && __S(p, line_start + j) != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+					print_char(input, i, j, __S(p, line_start + j), A_UNDERLINE);
 				else	/* jesli jest wszystko okey to wyswietlamy normalny */
 #endif					/* lub nie mamy aspella */
-					print_char(input, i, j, p[j + line_start], A_NORMAL);
+					print_char(input, i, j, __S(p, j + line_start), A_NORMAL);
 			}
 #ifdef WITH_ASPELL
 			xfree(aspell_line);
@@ -2031,11 +2014,11 @@ void ncurses_redraw_input(unsigned int ch) {
 #endif
 		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < linelen - line_start; i++) {
 #ifdef WITH_ASPELL
-			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start + i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-                        	print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i], A_UNDERLINE);
+			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && __S(ncurses_line, line_start + i) != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+                        	print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i), A_UNDERLINE);
 			else 	/* jesli jest wszystko okey to wyswietlamy normalny */
 #endif				/* lub gdy nie mamy aspella */
-                                print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i], A_NORMAL);
+                                print_char(input, 0, i + ncurses_current->prompt_len, __S(ncurses_line, line_start + i), A_NORMAL);
 		}
 #ifdef WITH_ASPELL
 		xfree(aspell_line);
@@ -2209,9 +2192,9 @@ end:
 				xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
 
 					/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
-			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, sizeof(CHAR_T) * (LINE_MAXLEN - line_index - 1));
+			memmove(__SPTR(ncurses_line, line_index + 1), __SPTR(ncurses_line, line_index), sizeofchart*LINE_MAXLEN - sizeofchart*line_index - sizeofchart);
 					/* put in ncurses_line[lindex_index] current char */
-			ncurses_line[line_index++] = ch;
+			__SREP(ncurses_line, line_index++, ch);		/* ncurses_line[line_index++] = ch */
 		}
 	}
 then:
@@ -2302,10 +2285,10 @@ void changed_backlog_size(const char *var)
 			continue;
 				
 		for (i = config_backlog_size; i < n->backlog_size; i++)
-			fstring_free(n->backlog[i]);
+			fstring_free((fstring_t *) n->backlog[i]);
 
 		n->backlog_size = config_backlog_size;
-		n->backlog = xrealloc(n->backlog, n->backlog_size * sizeof(fstring_t *));
+		n->backlog = xrealloc(n->backlog, n->backlog_size * sizeof(ncurses_fstring_t *));
 
 		ncurses_backlog_split(w, 1, 0);
 	}
@@ -2365,7 +2348,7 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		if (lastlog->isregex) {		/* regexp */
 #ifdef HAVE_REGEX_H
 			int rs;
-			if (!(rs = regexec(&(lastlog->reg), n->backlog[i]->str.w, 0, NULL, 0))) 
+			if (!(rs = regexec(&(lastlog->reg), n->backlog[i]->str, 0, NULL, 0))) 
 				found = 1;
 			else if (rs != REG_NOMATCH) {
 				char errbuf[512];
@@ -2380,8 +2363,8 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 #endif
 		} else {				/* substring */
 			if (local_config_lastlog_case) 
-				found = !!xstrstr(n->backlog[i]->str.w, lastlog->expression);
-			else	found = !!xstrcasestr(n->backlog[i]->str.w, lastlog->expression);
+				found = !!xstrstr(n->backlog[i]->str, lastlog->expression);
+			else	found = !!xstrcasestr(n->backlog[i]->str, lastlog->expression);
 		}
 
 		if (!config_lastlog_noitems && found && !items) { /* add header only when found */
@@ -2393,18 +2376,17 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		if (found) {
 			fstring_t *dup;
 			size_t len;
-#if 0
-(USE_UNICODE)
+#if USE_UNICODE
 			#warning "ncurses_ui_window_lastlog_find() won't work with USE_UNICODE sorry. no time for it. feel free"
 			continue;
 #endif
 
 			dup = xmalloc(sizeof(fstring_t));
 
-			len = xwcslen(n->backlog[i]->str.w);
+			len = xstrlen(n->backlog[i]->str);
 
-			dup->str.w		= xmemdup(n->backlog[i]->str.w, sizeof(CHAR_T) * (len + 1));
-			dup->attr		= xmemdup(n->backlog[i]->attr, sizeof(short) * (len + 1));
+			dup->str		= xmemdup(n->backlog[i]->str, sizeof(char)*(len+1));
+			dup->attr		= xmemdup(n->backlog[i]->attr, sizeof(short)*(len+1));
 			dup->ts			= n->backlog[i]->ts;
 			dup->prompt_len		= n->backlog[i]->prompt_len;
 			dup->prompt_empty	= n->backlog[i]->prompt_empty;

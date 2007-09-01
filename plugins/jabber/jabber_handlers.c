@@ -107,73 +107,6 @@ static xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name) {
 	return NULL;
 }
 
-/**
- * jabber_iq_auth_send()
- *
- * Send jabber:iq:auth with <i><digest>DIGEST</digest></i> or <i><password>PLAINTEXT_PASSWORD</password></i><br>
- * It support both tlen auth, and jabber NON-SASL Authentication [XEP-0078]<br>
- *
- * @note	<b>XEP-0078:</b> Non-SASL Authentication: http://www.xmpp.org/extensions/xep-0078.html
- *
- * @todo	It's not really XEP-0078 cause ekg2 don't support it. But it this done that way.. I don't know any server with XEP-0078 functonality..<br>
- * 		I still rcv 'service-unavailable' or 'bad-request' ;(<br>
- * 		But it <b>MUST</b> be implemented for <i>/session disable_sasl 1</i><br>
- * 		So it's just <i>jabber:iq:auth</i> for <i>disable_sasl</i> 2.
- *
- * @note 	Tlen Authentication was stolen from libtlen calc_passcode() with magic stuff (C) libtlen's developer and Piotr Paw³ow<br>
- * 		see: http://libtlen.sourceforge.net/
- *
- * @param	s 		- session to authenticate <b>CANNOT BE NULL</b>
- * @param	username	- username
- * @param	passwd		- password to hash or to escape
- * @param	stream_id	- id of stream.
- */
-
-void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd, const char *stream_id) {
-	extern void *jconv_out; /* misc.c */
-	extern void *tconv_out; /* misc.c */
-
-	jabber_private_t *j = s->priv;
-
-	const char *passwd2 = NULL;			/* if set than jabber_digest() should be done on it. else plaintext_passwd 
-							   Variable to keep password from @a password, or generated hash of password with magic constant [tlen] */
-
-	char *resource = tlenjabber_escape(j->resource);/* escaped resource name */
-	char *epasswd = NULL;				/* temporary password [escaped, or hash], if needed for xfree() */
-	char *authpass;					/* <digest>digest</digest> or <password>plaintext_password</password> */
-
-	/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw³ow */
-	if (j->istlen) {
-		int     magic1 = 0x50305735, magic2 = 0x12345671, sum = 7;
-		char    z;
-		while ((z = *passwd++) != 0) {
-			if (z == ' ' || z == '\t') continue;
-			magic1 ^= (((magic1 & 0x3f) + sum) * z) + (magic1 << 8);
-			magic2 += (magic2 << 8) ^ magic1;
-			sum += z;
-		}
-		magic1 &= 0x7fffffff;
-		magic2 &= 0x7fffffff;
-
-		passwd2 = epasswd = saprintf("%08x%08x", magic1, magic2);
-	} else if (session_int_get(s, "plaintext_passwd")) {
-		epasswd = jabber_escape(passwd);
-	} else 	passwd2 = passwd;
-
-
-	authpass = (passwd2) ?
-		saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd2, j->istlen ? tconv_out : jconv_out)) :	/* hash */
-		saprintf("<password>%s</password>", epasswd);				/* plaintext */
-		
-	watch_write(j->send_watch, 
-			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>%s</resource></query></iq>", 
-			j->server, username, authpass, resource);
-	xfree(authpass);
-
-	xfree(epasswd);
-	xfree(resource);
-}
-
 
 /*
  * tlen_handle_notification()
@@ -331,7 +264,7 @@ JABBER_HANDLER(tlen_handle) {
 JABBER_HANDLER(jabber_handle_stream_features) {
 	jabber_private_t *j = s->priv;
 
-	int use_sasl = j->connecting == 1 && (session_int_get(s, "disable_sasl") != 2);
+	int use_sasl = j->connecting == 1 && (session_int_get(s, "use_sasl") == 1);
 	int use_fjuczers = 0;	/* bitmaska (& 1 -> session) (& 2 -> bind) */
 
 	int display_fjuczers = session_int_get(s, "display_server_features");
@@ -344,7 +277,6 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 	if (display_fjuczers == 1 && session_int_get(s, "__features_displayed") == 1)
 		display_fjuczers = 0;
 
-
 	if (display_fjuczers) {
 		xmlnode_t *ch;
 
@@ -352,47 +284,47 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 
 		for (ch = n->children; ch; ch = ch->next) {
 			xmlnode_t *another;
-				if (!xstrcmp(ch->name, "starttls")) {
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_tls"); 
-					continue;
-				}
 
-				if (!xstrcmp(ch->name, "mechanisms")) {
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session disable_sasl");
-					for (another = ch->children; another; another = another->next) {	
-						if (!xstrcmp(another->name, "mechanism")) {
-							if (!xstrcmp(another->data, "DIGEST-MD5"))
-								print("xmpp_feature_sub", session_name(s), j->server, "SASL", another->data, "Default");
-							else if (!xstrcmp(another->data, "PLAIN"))
-								print("xmpp_feature_sub", session_name(s), j->server, "SASL", another->data, "/sesion plaintext_passwd");
-							else	print("xmpp_feature_sub_unknown", session_name(s), j->server, "SASL", __(another->data), "");
-						}
+			if (!xstrcmp(ch->name, "starttls")) {
+				print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_tls"); 
+				continue;
+			}
+
+			if (!xstrcmp(ch->name, "mechanisms")) {
+				print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session disable_sasl");
+				for (another = ch->children; another; another = another->next) {
+					if (!xstrcmp(another->name, "mechanism")) {
+						if (!xstrcmp(another->data, "DIGEST-MD5"))
+							print("xmpp_feature_sub", session_name(s), j->server, "SASL", another->data, "Default");
+						else if (!xstrcmp(another->data, "PLAIN"))
+							print("xmpp_feature_sub", session_name(s), j->server, "SASL", another->data, "/sesion plaintext_passwd");
+						else	print("xmpp_feature_sub_unknown", session_name(s), j->server, "SASL", __(another->data), "");
 					}
-					continue;
 				}
+				continue; 
+			}
 #if 0
-				if (!xstrcmp(ch->name, "compression")) {
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_compression method1,method2,..");
-					for (another = ch->children; another; another = another->next) {
-						if (!xstrcmp(another->name, "method")) {
-							if (!xstrcmp(another->data, "zlib"))
-								print("xmpp_feature_sub", session_name(s), j->server, "COMPRESSION", another->data, "/session use_compression zlib");
-							else if (!xstrcmp(another->data, "lzw"))
-								print("xmpp_feature_sub", session_name(s), j->server, "COMPRESSION", another->data, "/session use_compression lzw");
-							else	print("xmpp_feature_sub_unknown", session_name(s), j->server, "COMPRESSION", __(another->data), "");
-						}
-					}
-					continue;
-				}
-#endif
-				if (!xstrcmp(ch->name, "session"))
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Manage session");
-				else if (!xstrcmp(ch->name, "bind"))
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Bind resource");
-				else if (!xstrcmp(ch->name, "register"))
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Register account using /register");
-				else	print("xmpp_feature_unknown", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"));
 
+			if (!xstrcmp(ch->name, "compression")) {
+				print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_compression method1,method2,..");
+				for (another = ch->children; another; another = another->next) {
+					if (!xstrcmp(another->name, "method")) {
+						if (0); 
+						else show_subfeature("zlib", "COMPRESSION", another, "/session use_compression zlib");
+						else show_subfeature("lzw", "COMPRESSION", another, "/session use_compression lzw");
+						else print("xmpp_feature_sub_unknown", session_name(s), j->server, "COMPRESSION" __(another->data), "");
+					}
+				} continue;
+			}
+#endif
+
+			if (!xstrcmp(ch->name, "session"))
+				print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Manage session");
+			else if (!xstrcmp(ch->name, "bind"))
+				print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Bind resource");
+			else if (!xstrcmp(ch->name, "register"))
+				print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Register account using /register");
+			else	print("xmpp_feature_unknown", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"));
 		}
 		print("xmpp_feature_footer", session_name(s), j->server);
 	}
@@ -543,7 +475,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				str = string_init(NULL);
 
 				string_append_raw(str, "\0", 1);
-				string_append_n(str, s->uid+5, xstrchr(s->uid+5, '@')-s->uid-5);
+				string_append_n(str, s->uid+4, xstrchr(s->uid+4, '@')-s->uid-4);
 				string_append_raw(str, "\0", 1);
 				string_append(str, session_get(s, "password"));
 
@@ -558,13 +490,13 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 			default:
 				debug_error("[jabber] SASL auth_type: UNKNOWN!!!, disconnecting from host.\n");
 				j->parser = NULL; jabber_handle_disconnect(s, 
-						"We tried to auth using SASL but none of method supported by server we know. "
-						"Check __debug window and supported SASL server auth methods and sent them to ekg2 devs. "
-						"Temporary you can turn off SASL auth using by setting disable_sasl to 1 or 2. "
-						"/session disable_sasl 2", EKG_DISCONNECT_FAILURE);
+					"We tried to auth using SASL but none of method supported by server we know. "
+					"Check __debug window and supported SASL server auth methods and sent them to ekg2 devs. "
+					"Temporary you can turn off SASL auth using /session use_sasl 0", EKG_DISCONNECT_FAILURE);
 			break;
 		}
 	}
+
 }
 
 JABBER_HANDLER(jabber_handle_compressed) {
@@ -657,7 +589,7 @@ JABBER_HANDLER(jabber_handle_challenge) {
 		}
 		session_set(s, "__sasl_excepted", NULL);
 	} else {
-		char *username = xstrndup(s->uid+5, xstrchr(s->uid+5, '@')-s->uid-5);
+		char *username = xstrndup(s->uid+4, xstrchr(s->uid+4, '@')-s->uid-4);
 		const char *password = session_get(s, "password");
 
 		string_t str = string_init(NULL);	/* text to encode && sent */
@@ -838,7 +770,6 @@ JABBER_HANDLER(jabber_handle_message) {
 	xmlnode_t *nerr		= xmlnode_find_child(n, "error");
 	xmlnode_t *nbody   	= xmlnode_find_child(n, "body");
 	xmlnode_t *nsubject	= NULL;
-	xmlnode_t *nthread	= NULL;
 	xmlnode_t *xitem;
 	
 	const char *from = jabber_attr(n->atts, "from");
@@ -851,7 +782,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	int new_line = 0;	/* if there was headlines do we need to display seperator between them and body? */
 	
 	if (j->istlen)	uid = saprintf("tlen:%s", juid);
-	else		uid = saprintf("xmpp:%s", juid);
+	else		uid = saprintf("jid:%s", juid);
 
 	xfree(juid);
 
@@ -920,13 +851,13 @@ JABBER_HANDLER(jabber_handle_message) {
 				/* jesli jest body, to mamy do czynienia z prosba o potwierdzenie */
 				if (nbody && isack) {
 					char *id = jabber_attr(n->atts, "id");
-					const int our_status = session_status_get(s);
+					const char *our_status = session_status_get(s);
 
 					if (j->send_watch) j->send_watch->transfer_limit = -1;
 
 					watch_write(j->send_watch, "<message to=\"%s\"><x xmlns=\"jabber:x:event\">", from);
 
-					if (our_status == EKG_STATUS_INVISIBLE) {
+					if (!xstrcmp(our_status, EKG_STATUS_INVISIBLE)) {
 						watch_write(j->send_watch, "<offline/>");
 					} else {
 						if (acktype & 1)
@@ -941,15 +872,17 @@ JABBER_HANDLER(jabber_handle_message) {
 				/* je¶li body nie ma, to odpowiedz na nasza prosbe */
 				if (!nbody && isack) {
 					char *__session = xstrdup(session_uid_get(s));
-					char *__rcpt	= xstrdup(uid);
-					int __status  = ((acktype & 1) ? EKG_ACK_DELIVERED : 
-							(acktype & 2) ? EKG_ACK_QUEUED : 
-							EKG_ACK_UNKNOWN);
+					char *__rcpt	= xstrdup(uid); /* was uid+4 */
+					char *__status  = xstrdup(
+						(acktype & 1) ? EKG_ACK_DELIVERED : 
+						(acktype & 2) ? EKG_ACK_QUEUED : 
+						NULL);
 					char *__seq	= NULL; /* id ? */
-					/* protocol_message_ack; sesja ; uid ; seq (NULL ? ) ; status - delivered ; queued ) */
+					/* protocol_message_ack; sesja ; uid + 4 ; seq (NULL ? ) ; status - delivered ; queued ) */
 					query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &__session, &__rcpt, &__seq, &__status);
 					xfree(__session);
 					xfree(__rcpt);
+					xfree(__status);
 					/* xfree(__seq); */
 				}
 				
@@ -996,8 +929,12 @@ JABBER_HANDLER(jabber_handle_message) {
 			} else debug_error("[JABBER, MESSAGE]: <x xmlns=%s\n", ns);
 /* x */		} else if (!xstrcmp(xitem->name, "subject")) {
 			nsubject = xitem;
-		} else if (!xstrcmp(xitem->name, "thread")) {
-			nthread = xitem;
+			if (nsubject->data) {
+				string_append(body, "Subject: ");
+				string_append(body, nsubject->data);
+				string_append(body, "\n");
+				new_line = 1;
+			}
 /* subject */	} else if (!xstrcmp(xitem->name, "body")) {
 		} /* XXX, JEP-0085 here */
 		else if (!xstrcmp(jabber_attr(xitem->atts, "xmlns"), "http://jabber.org/protocol/chatstates")) {
@@ -1009,71 +946,6 @@ JABBER_HANDLER(jabber_handle_message) {
 			else debug_error("[JABBER, MESSAGE]: INVALID CHATSTATE: %s\n", xitem->name);
 		} else debug_error("[JABBER, MESSAGE]: <%s\n", xitem->name);
 	}
-
-	const char *type = jabber_attr(n->atts, "type");
-	int class = (!xstrcmp(type, "chat") || !xstrcmp(type, "groupchat") ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_MESSAGE);
-	const int nonthreaded = (!nthread || !nthread->data);
-	const int hassubject = (nsubject && nsubject->data);
-
-	if (hassubject) { /* we need to linearize this earlier */
-		char *tmp = nsubject->data;
-
-		while ((tmp = xstrchr(tmp, '\n'))) {
-			if (*(tmp+1) == '\0') {
-				*tmp = '\0';
-				break; /* we really don't need to search again */
-			} else
-				*tmp = ' ';
-		}
-	}
-	if ((class == EKG_MSGCLASS_MESSAGE) /* conversations only with messages */
-			&& (!nonthreaded /* either if we've got thread */
-				|| ((nbody || nsubject) && (session_int_get(s, "allow_add_reply_id") > 1))
-					/* or we're allowing to use conversations for non-threaded messages */
-				)) {
-		jabber_conversation_t *thr;
-		int i = jabber_conversation_find(j, uid,
-				(nonthreaded && hassubject ? nsubject->data : NULL),
-				(nonthreaded ? NULL : nthread->data),
-				&thr, (session_int_get(s, "allow_add_reply_id") > 0));
-		
-		if (nonthreaded)
-			nthread = xmalloc(sizeof(xmlnode_t)); /* ugly hack, to make non-threaded reply work */
-		
-		if (thr) { /* XXX, do it nicer */
-			xfree(nthread->data);
-			nthread->data = saprintf("#%d", i);
-			debug("[jabber, message] thread: %s -> #%d\n", thr->thread, i);
-		}
-	
-		if (!(nsubject && nsubject->data)) {
-			string_append(body, (thr ? "Reply-ID: " : "Thread: "));
-			string_append(body, nthread->data);
-			string_append(body, "\n");
-			if (nonthreaded)
-				xfree(nthread);
-
-			new_line = 1;
-		} else if (thr) {
-			xfree(thr->subject);
-			thr->subject = xstrdup(nsubject->data); /* we should store newest message subject, not first */
-		}
-	}
-	if (hassubject) {
-		string_append(body, "Subject: ");
-		string_append(body, nsubject->data);
-		if (nthread && nthread->data) {
-			string_append(body, " [");
-			string_append(body, nthread->data);
-			string_append(body, "]");
-			
-			if (!nthread->name) /* this means we're using above hack */
-				xfree(nthread);
-		}
-		string_append(body, "\n");
-		new_line = 1;
-	}
-
 	if (new_line) string_append(body, "\n"); 	/* let's seperate headlines from message */
 
 	if (x_encrypted) 
@@ -1082,7 +954,10 @@ JABBER_HANDLER(jabber_handle_message) {
 		string_append(body, nbody->data);	/* unecrpyted message */
 
 	if (nbody || nsubject) {
+		const char *type = jabber_attr(n->atts, "type");
+
 		char *me	= xstrdup(session_uid_get(s));
+		int class 	= (!xstrcmp(type, "chat") || !xstrcmp(type, "groupchat") ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_MESSAGE);
 		int ekgbeep 	= EKG_TRY_BEEP;
 		int secure	= (x_encrypted != NULL);
 		char **rcpts 	= NULL;
@@ -1109,7 +984,7 @@ JABBER_HANDLER(jabber_handle_message) {
 			ekgbeep	= EKG_NO_BEEP;
 
 			formatted = format_string(format_find(isour ? "jabber_muc_send" : "jabber_muc_recv"),
-				session_name(s), uid2, nick ? nick : uid2+5, text, "");
+				session_name(s), uid2, nick ? nick : uid2+4, text, "");
 			
 			debug("[MUC,MESSAGE] uid2:%s uuid:%s message:%s\n", uid2, nick, text);
 			query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
@@ -1135,7 +1010,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	xfree(uid);
 } /* */
 
-/* idea and some code copyrighted by Marek Marczykowski xmpp:marmarek@jabberpl.org */
+/* idea and some code copyrighted by Marek Marczykowski jid:marmarek@jabberpl.org */
 
 /* handlue <x xmlns=jabber:x:data type=form */
 static void jabber_handle_xmldata_form(session_t *s, const char *uid, const char *command, xmlnode_t *form, const char *param) { /* JEP-0004: Data Forms */
@@ -1334,10 +1209,10 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco) {
 				"<item jid=\"%s/%s\" name=\"Manage ekg2 plugins\" node=\"http://ekg2.org/jabber/rc#ekg-manage-sessions\"/>"
 				"<item jid=\"%s/%s\" name=\"Execute ANY command in ekg2\" node=\"http://ekg2.org/jabber/rc#ekg-command-execute\"/>"
 				"</query></iq>", from, id, 
-				s->uid+5, j->resource, s->uid+5, j->resource, 
-				s->uid+5, j->resource, s->uid+5, j->resource,
-				s->uid+5, j->resource, s->uid+5, j->resource,
-				s->uid+5, j->resource);
+				s->uid+4, j->resource, s->uid+4, j->resource, 
+				s->uid+4, j->resource, s->uid+4, j->resource,
+				s->uid+4, j->resource, s->uid+4, j->resource,
+				s->uid+4, j->resource);
 		return;
 	}
 	/* XXX, tutaj jakies ogolne informacje co umie ekg2 */
@@ -1413,26 +1288,26 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_disco_info) {
 			int user_command = 0;
 
 			/* dj, jakas glupota... ale ma ktos pomysl zeby to inaczej zrobic?... jeszcze istnieje pytanie czy w ogole jest sens to robic.. */
-			if (!xstrcmp(var, "http://jabber.org/protocol/disco#info")) 		tvar = "/xmpp:transpinfo";
-			else if (!xstrcmp(var, "http://jabber.org/protocol/disco#items")) 	tvar = "/xmpp:transports";
-			else if (!xstrcmp(var, "http://jabber.org/protocol/disco"))		tvar = "/xmpp:transpinfo && /xmpp:transports";
-			else if (!xstrcmp(var, "http://jabber.org/protocol/muc"))		tvar = "/xmpp:mucpart && /xmpp:mucjoin";
-			else if (!xstrcmp(var, "http://jabber.org/protocol/stats"))		tvar = "/xmpp:stats";
-			else if (!xstrcmp(var, "jabber:iq:register"))		    		tvar = "/xmpp:register";
-			else if (!xstrcmp(var, "jabber:iq:search"))				tvar = "/xmpp:search";
+			if (!xstrcmp(var, "http://jabber.org/protocol/disco#info")) 		tvar = "/jid:transpinfo";
+			else if (!xstrcmp(var, "http://jabber.org/protocol/disco#items")) 	tvar = "/jid:transports";
+			else if (!xstrcmp(var, "http://jabber.org/protocol/disco"))		tvar = "/jid:transpinfo && /jid:transports";
+			else if (!xstrcmp(var, "http://jabber.org/protocol/muc"))		tvar = "/jid:mucpart && /jid:mucjoin";
+			else if (!xstrcmp(var, "http://jabber.org/protocol/stats"))		tvar = "/jid:stats";
+			else if (!xstrcmp(var, "jabber:iq:register"))		    		tvar = "/jid:register";
+			else if (!xstrcmp(var, "jabber:iq:search"))				tvar = "/jid:search";
 
-			else if (!xstrcmp(var, "http://jabber.org/protocol/bytestreams")) { user_command = 1; tvar = "/xmpp:dcc (PROT: BYTESTREAMS)"; }
-			else if (!xstrcmp(var, "http://jabber.org/protocol/si/profile/file-transfer")) { user_command = 1; tvar = "/xmpp:dcc"; }
-			else if (!xstrcmp(var, "http://jabber.org/protocol/commands")) { user_command = 1; tvar = "/xmpp:control"; } 
-			else if (!xstrcmp(var, "jabber:iq:version"))	{ user_command = 1;	tvar = "/xmpp:ver"; }
-			else if (!xstrcmp(var, "jabber:iq:last"))	{ user_command = 1;	tvar = "/xmpp:lastseen"; }
-			else if (!xstrcmp(var, "vcard-temp"))		{ user_command = 1;	tvar = "/xmpp:change && /xmpp:userinfo"; }
-			else if (!xstrcmp(var, "message"))		{ user_command = 1;	tvar = "/xmpp:msg"; }
+			else if (!xstrcmp(var, "http://jabber.org/protocol/bytestreams")) { user_command = 1; tvar = "/jid:dcc (PROT: BYTESTREAMS)"; }
+			else if (!xstrcmp(var, "http://jabber.org/protocol/si/profile/file-transfer")) { user_command = 1; tvar = "/jid:dcc"; }
+			else if (!xstrcmp(var, "http://jabber.org/protocol/commands")) { user_command = 1; tvar = "/jid:control"; } 
+			else if (!xstrcmp(var, "jabber:iq:version"))	{ user_command = 1;	tvar = "/jid:ver"; }
+			else if (!xstrcmp(var, "jabber:iq:last"))	{ user_command = 1;	tvar = "/jid:lastseen"; }
+			else if (!xstrcmp(var, "vcard-temp"))		{ user_command = 1;	tvar = "/jid:change && /jid:userinfo"; }
+			else if (!xstrcmp(var, "message"))		{ user_command = 1;	tvar = "/jid:msg"; }
 
-			else if (!xstrcmp(var, "http://jabber.org/protocol/vacation"))	{ user_command = 2;	tvar = "/xmpp:vacation"; }
+			else if (!xstrcmp(var, "http://jabber.org/protocol/vacation"))	{ user_command = 2;	tvar = "/jid:vacation"; }
 			else if (!xstrcmp(var, "presence-invisible"))	{ user_command = 2;	tvar = "/invisible"; } /* we ought use jabber:iq:privacy */
-			else if (!xstrcmp(var, "jabber:iq:privacy"))	{ user_command = 2;	tvar = "/xmpp:privacy"; }
-			else if (!xstrcmp(var, "jabber:iq:private"))	{ user_command = 2;	tvar = "/xmpp:private && /xmpp:config && /xmpp:bookmark"; }
+			else if (!xstrcmp(var, "jabber:iq:privacy"))	{ user_command = 2;	tvar = "/jid:privacy"; }
+			else if (!xstrcmp(var, "jabber:iq:private"))	{ user_command = 2;	tvar = "/jid:private && /jid:config && /jid:bookmark"; }
 
 			if (tvar)	print(	user_command == 2 ? "jabber_transinfo_comm_not" : 
 					user_command == 1 ? "jabber_transinfo_comm_use" : "jabber_transinfo_comm_ser", 
@@ -1490,7 +1365,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_last) {
 
 	print(
 		(xstrchr(from_str, '/') ? "jabber_lastseen_idle" :	/* if we have resource than display -> user online+idle		*/
-		xstrchr(from_str, '@') ? "jabber_lastseen_response" :	/* if we have '@' in xmpp: than display ->  user logged out	*/
+		xstrchr(from_str, '@') ? "jabber_lastseen_response" :	/* if we have '@' in jid: than display ->  user logged out	*/
 					"jabber_lastseen_uptime"),	/* otherwise we have server -> server up for: 			*/
 			jabberfix(from_str, "unknown"), buff);
 	xfree(from_str);
@@ -1617,7 +1492,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 						char *jid, *formated;
 						char *formatedx;
 
-						if (!xstrcmp(type, "jid")) 		jid = saprintf("xmpp:%s", value);
+						if (!xstrcmp(type, "jid")) 		jid = saprintf("jid:%s", value);
 						else if (!xstrcmp(type, "group")) 	jid = saprintf("@%s", value);
 						else					jid = xstrdup(value);
 
@@ -1659,7 +1534,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 					}
 				}
 				{	/* just help... */
-					char *allowed = format_string(format_find("jabber_privacy_item_allow"), "xmpp:allowed - JID ALLOWED");
+					char *allowed = format_string(format_find("jabber_privacy_item_allow"), "jid:allowed - JID ALLOWED");
 					char *denied  = format_string(format_find("jabber_privacy_item_deny"), "@denied - GROUP DENIED");
 					print("jabber_privacy_item_footer", session_name(s), j->server, allowed, denied);
 					xfree(allowed); xfree(denied);
@@ -1697,12 +1572,12 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
 
 		if (!xstrcmp(node->name, "ekg2")) {
 			if (!xstrcmp(ns, "ekg2:prefs") && !xstrncmp(id, "config", 6)) 
-				config_display = 0;	/* if it's /xmpp:config --get (not --display) we don't want to display it */ 
+				config_display = 0;	/* if it's /jid:config --get (not --display) we don't want to display it */ 
 			/* XXX, other */
 		}
 		if (!xstrcmp(node->name, "storage")) {
 			if (!xstrcmp(ns, "storage:bookmarks") && !xstrncmp(id, "config", 6))
-				bookmark_display = 0;	/* if it's /xmpp:bookmark --get (not --display) we don't want to display it (/xmpp:bookmark --get performed @ connect) */
+				bookmark_display = 0;	/* if it's /jid:bookmark --get (not --display) we don't want to display it (/jid:bookmark --get performed @ connect) */
 		}
 
 		if (!config_display || !bookmark_display) quiet = 1;
@@ -1994,7 +1869,7 @@ JABBER_HANDLER_IQ(jabber_handle_si) {
 
 				if (jabber_dcc_ip && jabber_dcc) {
 					/* basic streamhost, our ip, default port, our jid. check if we enable it. XXX*/
-					streamhost.jid	= saprintf("%s/%s", s->uid+5, j->resource);
+					streamhost.jid	= saprintf("%s/%s", s->uid+4, j->resource);
 					streamhost.ip	= xstrdup(jabber_dcc_ip);
 					streamhost.port	= jabber_dcc_port;
 					list_add(&(b->streamlist), &streamhost, sizeof(struct jabber_streamhost_item));
@@ -2011,7 +1886,7 @@ JABBER_HANDLER_IQ(jabber_handle_si) {
 
 				watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"%s\">"
 						"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">", 
-						d->uid+5, p->req, p->sid);
+						d->uid+4, p->req, p->sid);
 
 				for (l = b->streamlist; l; l = l->next) {
 					struct jabber_streamhost_item *item = l->data;
@@ -2029,12 +1904,10 @@ JABBER_HANDLER_IQ(jabber_handle_si) {
 		char *uid;
 		char *filename	= jabber_unescape(jabber_attr(p->atts, "name"));
 		char *size 	= jabber_attr(p->atts, "size");
-#if 0
-		xmlnode_t *range; /* unused? */
-#endif
+		xmlnode_t *range;
 		jabber_dcc_t *jdcc;
 
-		uid = saprintf("xmpp:%s", uin);
+		uid = saprintf("jid:%s", uin);
 
 		jdcc = xmalloc(sizeof(jabber_dcc_t));
 		jdcc->session	= s;
@@ -2068,9 +1941,7 @@ JABBER_HANDLER_IQ(jabber_handle_bytestreams) {
 
 	char *uid = jabber_unescape(from);		/* jid */
 	char *sid = jabber_attr(n->atts, "sid");	/* session id */
-#if 0 /* unused */
-	char *smode = jabber_attr(q->atts, "mode"); 	/* tcp, udp */
-#endif
+	char *smode = jabber_attr(n->atts, "mode"); 	/* tcp, udp */
 	dcc_t *d = NULL;
 
 	if (iqtype == JABBER_IQ_TYPE_SET && (d = jabber_dcc_find(uid, NULL, sid))) {
@@ -2086,7 +1957,7 @@ JABBER_HANDLER_IQ(jabber_handle_bytestreams) {
 
 		if (d->type == DCC_SEND) {
 			watch_write(j->send_watch, 
-					"<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"406\">Declined</error></iq>", d->uid+5, id);
+					"<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"406\">Declined</error></iq>", d->uid+4, id);
 			return;
 		}
 
@@ -2166,7 +2037,7 @@ find_streamhost:
 					"<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"404\" type=\"cancel\">"
 					/* Psi: <error code='404'>Could not connect to given hosts</error> */
 					"<item-not-found xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/>"
-					"</error></iq>", d->uid+5, id);
+					"</error></iq>", d->uid+4, id);
 
 			print("dcc_error_refused", format_user(s, d->uid));
 
@@ -2252,8 +2123,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 			session_set(s, "__new_password", NULL);
 		} else if (!xstrncmp(id, "search", 6)) {
 			debug_error("[JABBER] search failed: %s\n", reason);
-		}
-		else if (!xstrncmp(id, "offer", 5)) {
+		} else if (!xstrncmp(id, "offer", 5)) {
 			char *uin = jabber_unescape(from);
 			dcc_t *p = jabber_dcc_find(uin, id, NULL);
 
@@ -2322,6 +2192,307 @@ JABBER_HANDLER(jabber_handle_iq) {
 	if ((q = xmlnode_find_child(n, "si"))) /* JEP-0095: Stream Initiation */
 		jabber_handle_si(s, q, type, from, id);
 
+	if ((q = xmlnode_find_child(n, "command"))) {
+		const char *ns		= jabber_attr(q->atts, "xmlns");
+		const char *node	= jabber_attr(q->atts, "node");
+
+		char *uid 	= jabber_unescape(from);
+
+		if (type == JABBER_IQ_TYPE_RESULT && !xstrcmp(ns, "http://jabber.org/protocol/commands")) {
+			const char *status	= jabber_attr(q->atts, "status");
+
+			if (!xstrcmp(status, "completed")) { 
+				print("jabber_remotecontrols_completed", session_name(s), uid, node);
+			} else if (!xstrcmp(status, "executing")) {
+				const char *set  = node;
+				xmlnode_t *child;
+
+				if (!xstrncmp(node, "http://jabber.org/protocol/rc#", 30)) set = node+30;
+
+				for (child = q->children; child; child = child->next) {
+					if (	!xstrcmp(child->name, "x") && 
+						!xstrcmp(jabber_attr(child->atts, "xmlns"), "jabber:x:data") && 
+						!xstrcmp(jabber_attr(child->atts, "type"), "form")) {
+
+						jabber_handle_xmldata_form(s, uid, "control", child->children, node);
+					}
+				}
+			} else debug_error("[JABBER, UNKNOWN STATUS: %s\n", status);
+		} else if (type == JABBER_IQ_TYPE_SET && !xstrcmp(ns, "http://jabber.org/protocol/commands") && xstrcmp(jabber_attr(q->atts, "action"), "cancel") /* XXX */) {
+			int not_handled = 0;
+			int not_allowed = 0;
+			int is_valid = 0;
+			xmlnode_t *x = xmlnode_find_child(q, "x");
+			
+//			int iscancel = !xstrcmp(jabber_attr(q->atts, "action"), "cancel");
+
+			if (x) { 
+				if (!xstrcmp(jabber_attr(x->atts, "xmlns"), "jabber:x:data") && !xstrcmp(jabber_attr(x->atts, "type"), "submit")); 
+				else goto rc_invalid;
+			} else { 
+					print("jabber_remotecontrols_preparing", session_name(s), uid, node);
+			}
+			
+			/* CHECK IF HE CAN DO IT */
+			switch (session_int_get(s, "allow_remote_control"))  {
+				case 666: break;
+				case 1: if (!xstrncmp(from, s->uid+4, xstrlen(s->uid+4)) /* jesli poczatek jida sie zgadza. */
+						&& from[xstrlen(s->uid+4)] == '/' /* i jesli na koncu tej osoby jida, gdzie sie konczy nasz zaczyna sie resource... */) 
+						break; /* to jest raczej ok */
+				case 2:	/* XXX */
+				case 0:
+				default:
+					not_allowed = 1;
+			}
+			if (not_allowed) goto rc_forbidden;
+
+#define EXECUTING_HEADER(title, instr, FORM_TYPE) \
+	if (j->send_watch) j->send_watch->transfer_limit = -1;	/* read plugins.h for more details */ \
+	watch_write(j->send_watch,\
+		"<iq to=\"%s\" type=\"result\" id=\"%s\">"\
+		"<command xmlns=\"http://jabber.org/protocol/commands\" node=\"%s\" status=\"executing\">"\
+		"<x xmlns=\"jabber:x:data\" type=\"form\">"\
+		"<title>%s</title>"\
+		"<instructions>%s</instructions>"\
+		"<field var=\"FORM_TYPE\" type=\"hidden\"><value>%s</value></field>", from, id, node, title, instr, FORM_TYPE)
+
+#define EXECUTING_FIELD_BOOL(name, label, value) \
+	watch_write(j->send_watch, "<field var=\"%s\" label=\"%s\" type=\"boolean\"><value>%d</value></field>", name, label, value)
+
+#define EXECUTING_FIELD_STR_MULTI(name, label, value) \
+	watch_write(j->send_watch, "<field var=\"%s\" label=\"%s\" type=\"text-multi\"><value>%s</value></field>", name, label, value)
+
+#define EXECUTING_FIELD_STR(name, label, value) \
+	watch_write(j->send_watch, "<field var=\"%s\" label=\"%s\" type=\"text-single\"><value>%s</value></field>", name, label, value)
+
+#define EXECUTING_FIELD_STR_INT(name, label, value) \
+	watch_write(j->send_watch, "<field var=\"%s\" label=\"%s\" type=\"text-single\"><value>%d</value></field>", name, label, value)
+
+#define EXECUTING_SUBOPTION_STR(label, value) \
+	watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>", label, value)
+
+#define EXECUTING_FOOTER() watch_write(j->send_watch, "</x></command></iq>")
+
+			if (!xstrcmp(node, "http://jabber.org/protocol/rc#set-status")) {
+				if (!x) {
+					char *status = s->status;
+					char *descr = jabber_escape(s->descr);
+					/* XXX, w/g http://jabber.org/protocol/rc#set-status nie mamy 'avail' tylko 'online' */
+
+					/* XXX, should this be even used? Not making any modifications for new autoaway */
+					if (!xstrcmp(status, EKG_STATUS_AUTOAWAY))	status = (s->autoaway ? "away" : "online");
+					else if (!xstrcmp(status, EKG_STATUS_AVAIL))	status = "online";
+
+					EXECUTING_HEADER("Set Status", "Choose the status and status message", "http://jabber.org/protocol/rc");
+					watch_write(j->send_watch, "<field var=\"status\" label=\"Status\" type=\"list-single\"><required/>");
+						EXECUTING_SUBOPTION_STR("Chat", EKG_STATUS_FREE_FOR_CHAT);
+						EXECUTING_SUBOPTION_STR("Online", "online");			/* EKG_STATUS_AVAIL */
+						EXECUTING_SUBOPTION_STR("Away", EKG_STATUS_AWAY);
+						EXECUTING_SUBOPTION_STR("Extended Away", EKG_STATUS_XA);
+						EXECUTING_SUBOPTION_STR("Do Not Disturb", EKG_STATUS_DND);
+						EXECUTING_SUBOPTION_STR("Invisible", EKG_STATUS_INVISIBLE); 
+						EXECUTING_SUBOPTION_STR("Offline", EKG_STATUS_NA);
+						watch_write(j->send_watch, "<value>%s</value></field>", status);
+					EXECUTING_FIELD_STR_INT("status-priority", "Priority", session_int_get(s, "priority"));
+					EXECUTING_FIELD_STR_MULTI("status-message", "Message", descr ? descr : "");
+					EXECUTING_FOOTER();
+					xfree(descr);
+				} else {
+					char *status	= NULL;
+					char *descr	= NULL;
+					char *prio	= NULL;
+					int priority	= session_int_get(s, "priority");
+
+					is_valid = jabber_handle_xmldata_submit(s, x->children, "http://jabber.org/protocol/rc", 0,
+							"status", &status, "status-priority", &prio, "status-message", 
+							&descr, "status-priority", &prio, NULL);
+					if (is_valid) {
+						if (prio) priority = atoi(prio);
+						if (!xstrcmp(status, "online")) { xfree(status); status = xstrdup(EKG_STATUS_AVAIL); } 
+
+						if (status)	session_status_set(s, status);
+						if (descr)	session_descr_set(s, descr);
+						session_int_set(s, "priority", priority);
+						print("jabber_remotecontrols_commited_status", session_name(s), uid, status, descr, itoa(priority));
+						jabber_write_status(s);
+					}
+					xfree(status); xfree(descr);
+				}
+			} else if (!xstrcmp(node, "http://jabber.org/protocol/rc#set-options") || !xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-set-all-options")) {
+				int alloptions = !xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-set-all-options");
+
+				if (!x) {
+					EXECUTING_HEADER("Set Options", "Set the desired options", alloptions ? "http://ekg2.org/jabber/rc" : "http://jabber.org/protocol/rc");
+					if (alloptions) {
+						/* send all ekg2 options? *g* :> */
+						list_t l;
+						for (l = variables; l; l = l->next) {
+							variable_t *v = l->data;
+							if (v->type == VAR_STR || v->type == VAR_FOREIGN || v->type == VAR_FILE || 
+									v->type == VAR_DIR || v->type == VAR_THEME) 
+							{
+								char *value = jabber_unescape(*(char **) v->ptr);
+								EXECUTING_FIELD_STR(v->name, v->name, value ? value : "");
+								xfree(value);
+							} else if (v->type == VAR_INT || v->type == VAR_BOOL) {
+								EXECUTING_FIELD_BOOL(v->name, v->name, *(int *) v->ptr);
+							} else { 	/* XXX */
+								continue;
+							}
+						}
+					} else {
+						EXECUTING_FIELD_BOOL("sounds", "Play sounds", config_beep);
+						EXECUTING_FIELD_BOOL("auto-offline", "Automatically Go Offline when Idle", (s->autoaway || s->status == EKG_STATUS_AUTOAWAY));
+						EXECUTING_FIELD_BOOL("auto-msg", "Automatically Open New Messages", 0);		/* XXX */
+						EXECUTING_FIELD_BOOL("auto-files", "Automatically Accept File Transfers", 0);	/* XXX */
+						EXECUTING_FIELD_BOOL("auto-auth", "Automatically Authorize Contacts", 0);	/* XXX */
+					}
+					EXECUTING_FOOTER();
+				} else {
+					if (alloptions) {
+						char **atts = NULL;
+						is_valid = jabber_handle_xmldata_submit(s, x->children, "http://ekg2.org/jabber/rc", 1, &atts, NULL);
+						if (is_valid && atts) {
+							int i;
+							debug_function("[VALID]\n");
+							for (i=0; atts[i]; i+=2) {
+								debug("[%d] atts: %s %s\n", i, atts[i], atts[i+1]);
+								variable_set(atts[i], atts[i+1], 0);
+							}
+							print("jabber_remotecontrols_executed", session_name(s), uid, node);
+						}
+						array_free(atts);
+					} else { 
+						char *sounds 		= NULL;
+						char *auto_offline	= NULL;
+						char *auto_msg		= NULL;
+						char *auto_files	= NULL;
+						char *auto_auth		= NULL;
+						is_valid = jabber_handle_xmldata_submit(s, x->children, "http://jabber.org/protocol/rc", 0, 
+							"sounds", &sounds, "auto-offline", &auto_offline, "auto-msg", &auto_msg, "auto-files", &auto_files, 
+							"auto-auth", &auto_auth, NULL);
+						/* parse */
+						debug_function("[JABBER, RC] sounds: %s [AUTO] off: %s msg: %s files: %s auth: %s\n", sounds, 
+							auto_offline, auto_msg, auto_files, auto_auth);
+						xfree(sounds); xfree(auto_offline); xfree(auto_msg); xfree(auto_files); xfree(auto_auth);
+					} 
+				}
+			} else if (!xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-manage-plugins")) {
+				if (!x) {
+					EXECUTING_HEADER("Manage ekg2 plugins", "Do what you want :)", "http://ekg2.org/jabber/rc");
+					EXECUTING_FOOTER();
+				} else {
+					not_handled = 1;
+				}
+			} else if (!xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-manage-sessions")) {
+				if (!x) {
+					EXECUTING_HEADER("Manage ekg2 sessions", "Do what you want :)", "http://ekg2.org/jabber/rc");
+					EXECUTING_FOOTER();
+				} else {
+					not_handled = 1;
+				}
+			} else if (!xstrcmp(node, "http://ekg2.org/jabber/rc#ekg-command-execute")) {
+				if (!x) {
+					list_t l;
+					char *session_cur = jabber_escape(session_current->uid);
+
+					EXECUTING_HEADER("EXECUTE COMMAND IN EKG2", "Do what you want, but be carefull", "http://ekg2.org/jabber/rc");
+					watch_write(j->send_watch, 
+						"<field label=\"Command name\" type=\"list-single\" var=\"command-name\">");	/* required */
+
+					for (l = commands; l; l = l->next) {
+						command_t *c = l->data;
+						watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>", c->name, c->name);
+					}
+					watch_write(j->send_watch,
+						"<value>help</value></field>"
+						"<field label=\"Params:\" type=\"text-multi\" var=\"params-line\"></field>"
+						"<field label=\"Session name (empty for current)\" type=\"list-single\" var=\"session-name\">");
+	
+					for (l = sessions; l; l = l->next) {
+						session_t *s = l->data;
+						char *alias	= jabber_escape(s->alias);
+						char *uid	= jabber_escape(s->uid);
+						watch_write(j->send_watch, "<option label=\"%s\"><value>%s</value></option>", alias ? alias : uid, uid);
+						xfree(alias); xfree(uid);
+					}
+					watch_write(j->send_watch, 
+						"<value>%s</value></field>"
+						"<field label=\"Window name (leave empty for current)\" type=\"list-single\" var=\"window-name\">", session_cur);
+
+					for (l = windows; l; l = l->next) {
+						window_t *w = l->data;
+						char *target 	= jabber_escape(window_target(w));
+						watch_write(j->send_watch, "<option label=\"%s\"><value>%d</value></option>", target ? target : itoa(w->id), w->id);
+						xfree(target);
+					} 
+					watch_write(j->send_watch, "<value>%d</value></field>", window_current->id);
+					EXECUTING_FIELD_BOOL("command-quiet", "Quiet mode? (Won't display *results of command handler* on screen)", 0);
+					EXECUTING_FOOTER();
+					xfree(session_cur);
+				} else {
+					char *sessionname	= NULL;
+					char *command		= NULL;
+					char *params		= NULL;
+					char *window		= NULL;
+					char *quiet		= NULL;
+
+					int windowid = 1, isquiet = 0;
+
+					is_valid = jabber_handle_xmldata_submit(s, x->children, "http://ekg2.org/jabber/rc", 0, 
+							"command-name", &command, "params-line", &params, "session-name", &sessionname,
+							"window-name", &window, "command-quiet", &quiet, NULL);
+					if (quiet)	isquiet  = atoi(quiet);
+					if (window)	windowid = atoi(window);
+
+					if (is_valid) { 
+						char *fullcommand = saprintf("/%s %s", command, params ? params : "");
+						window_t  *win;
+						session_t *ses;
+						int ret;
+
+						ses	= session_find(sessionname);
+						win	= window_exist(windowid);
+	
+						if (!ses) ses = session_current;
+						if (!win) win = window_current;
+
+						ret = command_exec(win->target, ses, fullcommand, isquiet);
+						print("jabber_remotecontrols_commited_command", session_name(s), uid, fullcommand, session_name(ses), win->target, itoa(isquiet));
+						xfree(fullcommand);
+					}
+					xfree(sessionname); xfree(params); xfree(command);
+					xfree(window); xfree(quiet);
+				}
+			} else {
+				debug_error("YOU WANT TO CONTROL ME with unknown node? (%s) Sorry I'm not fortune-teller\n", node);
+				not_handled = 1;
+			}
+rc_invalid:
+			if (x && !not_handled) {
+				if (is_valid) {
+					watch_write(j->send_watch, 
+						"<iq to=\"%s\" type=\"result\" id=\"%s\">"
+						"<command xmlns=\"http://jabber.org/protocol/commands\" node=\"%s\" status=\"completed\"/>"
+						"</iq>", from, id, node);
+				} else {
+					debug_error("JABBER, REMOTECONTROL: He didn't send valid FORM_TYPE!!!! He's bu.\n");
+					/* error <bad-request/> ? */
+				}
+			}
+rc_forbidden:
+			if (not_handled || not_allowed) {
+				watch_write(j->send_watch, 
+					"<iq to=\"%s\" type=\"error\" id=\"%s\">"
+						"<error type=\"cancel\"><%s xmlns=\"urn:ietf:params:xml:ns:xmpp-stanzas\"/></error>"
+					"</iq>", from, id,
+					not_allowed ? "forbidden" : "item-not-found");
+			}
+			JABBER_COMMIT_DATA(j->send_watch); /* let's write data to jabber socket */
+		}
+		xfree(uid);
+	}
+
 	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
 	        i typ "result" (przy za¿±daniu rostera od serwera) */
 	if (type == JABBER_IQ_TYPE_RESULT || type == JABBER_IQ_TYPE_SET) {
@@ -2365,11 +2536,11 @@ JABBER_HANDLER(jabber_handle_iq) {
 			if (!xstrcmp(ns, "jabber:iq:privacy")) { /* RFC 3921 (10th: privacy) */
 				jabber_handle_iq_result_privacy(s, q, from, id); return;
 			}
-			
+
 			if (!xstrcmp(ns, "jabber:iq:private")) {
 				jabber_handle_iq_result_private(s, q, from, id); return;
 			}
-
+			
 			if (!xstrcmp(ns, "http://jabber.org/protocol/vacation")) { /* JEP-0109: Vacation Messages */
 				xmlnode_t *temp;
 
@@ -2467,10 +2638,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 						if (!xstrcmp(reg->name, "instructions")) continue;
 
 						jname = jabber_unescape(reg->name);
-						if (!xstrcmp(jname, "password"))
-							jdata = xstrdup("(...)");
-						else
-							jdata = jabber_unescape(reg->data);
+						jdata = jabber_unescape(reg->data);
 						print("jabber_registration_item", session_name(s), from_str, jname, jdata);
 						xfree(jname);
 						xfree(jdata);
@@ -2485,7 +2653,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 				jabber_handle_bytestreams(s, q, type, from, id);	return;
 			}
 
-			if (!xstrncmp(ns, "jabber:iq:version", 17)) {
+			if (!xstrcmp(ns, "jabber:iq:version")) {
 				jabber_handle_iq_result_version(s, q, from, id); 	return;
 			}
 			
@@ -2497,31 +2665,15 @@ JABBER_HANDLER(jabber_handle_iq) {
 				xmlnode_t *item = xmlnode_find_child(q, "item");
 
 				for (; item ; item = item->next) {
-					const char *jid = jabber_attr(item->atts, "jid");
 					userlist_t *u;
 					char *uid;
-
-					if (j->istlen) {
-							/* do it like tlen does with roster - always @tlen.pl */
-						char *atsign	= xstrchr(jid, '@');
-
-						if (atsign)
-							*atsign	= 0;
-						uid = saprintf("tlen:%s@tlen.pl", jid);
-					} else {
-							/* newer jabberd2 workaround - strip resource */
-						char *tmp	= xstrchr(jid, '/');
-						
-						if (tmp)
-							*tmp	= 0;
-						uid		= saprintf("xmpp:%s", jid);
-					}
+					if (j->istlen)	uid = saprintf("tlen:%s", jabber_attr(item->atts, "jid"));
+					else 		uid = saprintf("jid:%s",jabber_attr(item->atts, "jid"));
 
 					/* je¶li element rostera ma subscription = remove to tak naprawde u¿ytkownik jest usuwany;
 					w przeciwnym wypadku - nalezy go dopisaæ do userlisty; dodatkowo, jesli uzytkownika
 					mamy ju¿ w liscie, to przyszla do nas zmiana rostera; usunmy wiec najpierw, a potem
 					sprawdzmy, czy warto dodawac :) */
-
 					if ((session_int_get(s, "__roster_retrieved") == 1) && (u = userlist_find(s, uid)))
 						userlist_remove(s, u);
 
@@ -2529,24 +2681,11 @@ JABBER_HANDLER(jabber_handle_iq) {
 						/* nic nie robimy, bo juz usuniete */
 					} else {
 						char *nickname 	= tlenjabber_unescape(jabber_attr(item->atts, "name"));
-						const char *authval;
 						xmlnode_t *group = xmlnode_find_child(item,"group");
-						u = userlist_add(s, uid, nickname); 
+						u = userlist_add(s, uid, nickname ? nickname : uid); 
 
-						if ((authval = jabber_attr(item->atts, "subscription"))) {
-							jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-
-							if (up)
-								for (up->authtype = EKG_JABBER_AUTH_BOTH; (up->authtype > EKG_JABBER_AUTH_NONE) && xstrcasecmp(authval, jabber_authtypes[up->authtype]); (up->authtype)--);
-
-							if (!up || !(up->authtype & EKG_JABBER_AUTH_TO)) {
-								if (u && u->status == EKG_STATUS_NA)
-									u->status = EKG_STATUS_UNKNOWN;
-							} else {
-								if (u && u->status == EKG_STATUS_UNKNOWN)
-									u->status = EKG_STATUS_NA;
-							}
-						}
+						if (jabber_attr(item->atts, "subscription"))
+							u->authtype = xstrdup(jabber_attr(item->atts, "subscription"));
 						
 						for (; group ; group = group->next ) {
 							char *gname = jabber_unescape(group->data);
@@ -2561,46 +2700,6 @@ JABBER_HANDLER(jabber_handle_iq) {
 					}
 					xfree(uid);
 				}; /* for */
-
-				{		/* nickname generator */
-					list_t l;
-
-					for (l = s->userlist; l; l = l->next) {
-						userlist_t *u = l->data;
-
-						if (u && !u->nickname) {
-							char *userpart	= xstrdup(u->uid);
-							char *tmp	= xstrchr(userpart, '@');
-							const char **cp;
-							
-							const char *possibilities[] = { userpart+5, u->uid+5, u->uid, NULL };
-
-							if (tmp) *tmp	= 0;
-
-							for (cp = possibilities; *cp; cp++) {
-								list_t m;
-
-								for (m = s->userlist; m; m = m->next) {
-									userlist_t *w = m->data;
-
-									if (w && w->nickname && !xstrcasecmp(w->nickname, *cp))
-										break;
-								}
-
-								if (!m)
-									break;
-							}
-
-							if (*cp)
-								u->nickname = xstrdup(*cp);
-							else
-								debug_error("[jabber] can't find any free nickname for UID %s.. that's kinda bitch!\n", u->uid);
-
-							xfree(userpart);
-						}
-					}
-				}
-
 				session_int_set(s, "__roster_retrieved", 1);
 			} /* jabber:iq:roster */
 		} /* if query */
@@ -2619,31 +2718,43 @@ JABBER_HANDLER(jabber_handle_iq) {
 			if (!xstrcmp(ns, "jabber:iq:last")) {
 				jabber_handle_iq_get_last(s, j, q, from, id);	return;
 			}
-			
+
 			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#info")) {
 				jabber_handle_iq_get_disco_info(s, j, q, from, id); return;
 			}
-
-			if (!xstrcmp(ns, "jabber:iq:version") && id && from) {
+			
+			if (!xstrncmp(ns, "jabber:iq:version", 17) && id && from) {
 				jabber_handle_iq_get_version(s, j, q, from, id); return;
 			}
-
 		} /* if query */
 	} /* type == get */
 } /* iq */
 
-static inline void mucuser_private_deinit(userlist_t *u) {
-	jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+typedef struct {
+	char *role;		/* role: */
+	char *aff;		/* affiliation: */
+} muc_userlist_t;
 
-	if (up) {
-		xfree(up->role);
-		xfree(up->aff);
-	}
+static inline muc_userlist_t *mucuser_private_get(userlist_t *u) {
+	muc_userlist_t *p;
+	if (!u) 	return NULL;
+	if (u->priv)	return u->priv;
+
+	p = xmalloc(sizeof(muc_userlist_t));
+	u->priv = p;
+	return p;
+}
+
+static inline void mucuser_private_deinit(userlist_t *u) {
+	muc_userlist_t *p;
+	if (!u || !(p = u->priv)) return;
+
+	xfree(p->role);
+	xfree(p->aff);
 }
 
 JABBER_HANDLER(jabber_handle_presence) {
 	jabber_private_t *j = s->priv;
-
 	const char *from = jabber_attr(n->atts, "from");
 	const char *type = jabber_attr(n->atts, "type");
 	char *jid, *uid;
@@ -2657,7 +2768,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 	jid = tlenjabber_unescape(from);
 
 	if (istlen)	uid = saprintf("tlen:%s", jid);
-	else		uid = saprintf("xmpp:%s", jid);
+	else		uid = saprintf("jid:%s", jid);
 
 	xfree(jid);
 
@@ -2697,7 +2808,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 
 	for (q = n->children; q; q = q->next) {
 		char *tmp	= xstrchr(uid, '/');
-		char *mucuid	= xstrndup(uid, tmp ? tmp - uid : -1);
+		char *mucuid	= xstrndup(uid, tmp ? tmp - uid : xstrlen(uid));
 		char *ns	= jabber_attr(q->atts, "xmlns");
 
 		if (!xstrcmp(q->name, "x")) {
@@ -2728,10 +2839,10 @@ JABBER_HANDLER(jabber_handle_presence) {
 							xfree(jid); xfree(role); xfree(affiliation);
 							break;
 						}
-						if (tmp) nickjid = saprintf("xmpp:%s", tmp + 1);
+						if (tmp) nickjid = saprintf("jid:%s", tmp + 1);
 						else	 nickjid = xstrdup(uid);
 
-						if (na) 	print_window(mucuid, s, 0, "muc_left", session_name(s), nickjid + 5, jid, mucuid+5, "");
+						if (na) 	print_window(mucuid, s, 0, "muc_left", session_name(s), nickjid + 4, jid, mucuid+4, "");
 
 						ulist = newconference_member_find(c, nickjid);
 						if (ulist && na) { 
@@ -2739,19 +2850,18 @@ JABBER_HANDLER(jabber_handle_presence) {
 							newconference_member_remove(c, ulist); 
 							ulist = NULL; 
 						} else if (!ulist) {
-							ulist = newconference_member_add(c, nickjid, nickjid + 5);
-							print_window(mucuid, s, 0, "muc_joined", session_name(s), nickjid + 5, jid, mucuid+5, "", role, affiliation);
+							ulist = newconference_member_add(c, nickjid, nickjid + 4);
+							print_window(mucuid, s, 0, "muc_joined", session_name(s), nickjid + 4, jid, mucuid+4, "", role, affiliation);
 						}
 
 						if (ulist) {
-							jabber_userlist_private_t *up = jabber_userlist_priv_get(ulist);
-							ulist->status = EKG_STATUS_AVAIL;
+							char *tmp = ulist->status;
+							ulist->status = xstrdup(EKG_STATUS_AVAIL);
+							xfree(tmp);
 							
 							mucuser_private_deinit(ulist);
-							if (up) {
-								up->role	= xstrdup(role);
-								up->aff		= xstrdup(affiliation);
-							}
+							mucuser_private_get(ulist)->role	= xstrdup(role);
+							mucuser_private_get(ulist)->aff		= xstrdup(affiliation);
 						}
 						debug("[MUC, PRESENCE] NEWITEM: %s (%s) ROLE:%s AFF:%s\n", nickjid, __(jid), role, affiliation);
 						xfree(nickjid);
@@ -2781,8 +2891,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 	}
 	if (!ismuc && (!type || ( na || !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
 		xmlnode_t *nshow, *nstatus, *nerr, *temp;
-		char *descr = NULL;
-		int status = 0;
+		char *status = NULL, *descr = NULL;
 		char *jstatus = NULL;
 		char *tmp2;
 
@@ -2791,13 +2900,13 @@ JABBER_HANDLER(jabber_handle_presence) {
 		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
 			jstatus = tlenjabber_unescape(nshow->data);
 			if (!xstrcmp(jstatus, "na") || na) {
-				status = EKG_STATUS_NA;
+				status = xstrdup(EKG_STATUS_NA);
 				na = 1;
 			}
 		} else {
 			if (na)
-				status = EKG_STATUS_NA;
-			else	status = EKG_STATUS_AVAIL;
+				status = xstrdup(EKG_STATUS_NA);
+			else	status = xstrdup(EKG_STATUS_AVAIL);
 		}
 
 		if ((nerr = xmlnode_find_child(n, "error"))) { /* bledny */
@@ -2806,35 +2915,26 @@ JABBER_HANDLER(jabber_handle_presence) {
 			descr = saprintf("(%s) %s", ecode, etext);
 			xfree(etext);
 
-			status = EKG_STATUS_ERROR;
-
-			if (istlen) { /* we need to get&fix the UID - userlist entry is sent with @tlen.pl, but error with user-given host */
-				char *tmp	= tlenjabber_unescape(jabber_attr(n->atts, "to"));
-				char *atsign	= xstrchr(tmp, '@');
-
-				if (atsign)
-					*atsign	= 0;
-				uid = saprintf("tlen:%s@tlen.pl", tmp);
-				xfree(tmp);
-			}
+			xfree(status);
+			status = xstrdup(EKG_STATUS_ERROR);
 		} 
 		if ((nstatus = xmlnode_find_child(n, "status"))) { /* opisowy */
 			xfree(descr);
 			descr = tlenjabber_unescape(nstatus->data);
 		}
 
-		if (!jstatus)
-			jstatus = xstrdup("unknown");
-
-		if (!status && ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN))
+		if (status) {
+			xfree(jstatus);
+		} else if (jstatus && (!xstrcasecmp(jstatus, EKG_STATUS_AWAY)		|| !xstrcasecmp(jstatus, EKG_STATUS_INVISIBLE)	||
+					!xstrcasecmp(jstatus, EKG_STATUS_XA)		|| !xstrcasecmp(jstatus, EKG_STATUS_DND) 	|| 
+					!xstrcasecmp(jstatus, EKG_STATUS_FREE_FOR_CHAT) || !xstrcasecmp(jstatus, EKG_STATUS_BLOCKED))) {
+			status = jstatus;
+		} else if (istlen && !xstrcmp(jstatus, "available")) {
+			status = xstrdup(EKG_STATUS_AVAIL);
+		} else {
 			debug_error("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
-		xfree(jstatus);
-		{
-			userlist_t *u = userlist_find(s, uid);
-			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-			
-			if ((status == EKG_STATUS_NA) && (!up || !(up->authtype & EKG_JABBER_AUTH_TO)))
-				status = EKG_STATUS_UNKNOWN;
+			xfree(jstatus);
+			status = xstrdup(EKG_STATUS_AVAIL);
 		}
 
 		if ((tmp2 = xstrchr(uid, '/'))) {
@@ -2858,12 +2958,16 @@ JABBER_HANDLER(jabber_handle_presence) {
 		}
 		{
 			char *session 	= xstrdup(session_uid_get(s));
+			char *host 	= NULL;
+			int port 	= 0;
 
 			if (!when) when = time(NULL);
-			query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &when);
+			query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &host, &port, &when, NULL);
 			
 			xfree(session);
+/*			xfree(host); */
 		}
+		xfree(status);
 		xfree(descr);
 	}
 	xfree(uid);
@@ -2889,20 +2993,19 @@ static void jabber_session_connected(session_t *s) {
 	watch_write(j->send_watch, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 	jabber_write_status(s);
 
-	if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, ("/xmpp:bookmark --get"), 1);
+	if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, ("/jid:bookmark --get"), 1);
 	if (session_int_get(s, "auto_privacylist_sync") != 0) {
 		const char *list = session_get(s, "privacy_list");
 
 		if (!list) list = "ekg2";
-		command_exec_format(NULL, s, 1, ("/xmpp:privacy --get %s"), 	list);	/* synchronize list */
-		command_exec_format(NULL, s, 1, ("/xmpp:privacy --session %s"), 	list); 	/* set as active */
+		command_exec_format(NULL, s, 1, ("/jid:privacy --get %s"), 	list);	/* synchronize list */
+		command_exec_format(NULL, s, 1, ("/jid:privacy --session %s"), 	list); 	/* set as active */
 	}
 #if GMAIL_MAIL_NOTIFY
-	/* talk.google.com should work also for Google Apps for your domain */
-	if (!xstrcmp(session_get(s, "server"), "talk.google.com")) {
+	if (!xstrcmp(j->server, "gmail.com")) {
 		watch_write(j->send_watch,
 			"<iq type=\"set\" to=\"%s\" id=\"gmail%d\"><usersetting xmlns=\"google:setting\"><mailnotifications value=\"true\"/></usersetting></iq>",
-			s->uid+5, j->id++);
+			s->uid+4, j->id++);
 
 		watch_write(j->send_watch,
 			"<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>",

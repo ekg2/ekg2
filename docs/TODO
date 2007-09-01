@@ -9,6 +9,7 @@ rozwi±zanie.
   - THANKS - chyba przydatny by³by taki plik
 
 * klient:
+  - dodaæ ró¿ne eventsy (szkielet ju¿ jest) (del)
   - bindowane CTRL+Strza³ki, PageUP itd (del)
   - ostatnio pisz±ca osoba blinka przez 5 sekund, w rogu ekranu (Oli)
   - uporz±dkowane i dobrze dzia³aj±ce okna p³ywaj±ce (sz?)
@@ -51,11 +52,3 @@ rozwi±zanie.
 [irc]
 	- poprawiæ wszelkie znane b³êdy
 	- popracowaæ nad stabilno¶ci±
-
-
-*** *** *** *** ***
-[Zmienne sesyjne]
-   gdy zmienna zaczyna sie od '__' wtedy sprawdzajmy tylko s->local_vars, oraz gdy nie istnieje dodajmy.
-   Jesli nie, to wtedy sprawdz tylko zmienne zdefiniowane przez PLUGIN_VAR_ADD, a gdy nie ma nie dodawaj.
-   Zrobic wczesniej audyt kodu, czy wszystkie pluginy spelniaja te zalozenia.
-

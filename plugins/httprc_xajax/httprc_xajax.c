@@ -35,12 +35,13 @@
 #include <ekg/dynstuff.h>
 #include <ekg/log.h>
 #include <ekg/plugins.h>
-#include <ekg/strings.h>
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
+
+#include <plugins/ncurses/ecurses.h>
 
 /* string that you're typing in browser's window:
  * e.g: your.server.with.ekg2.com, localhost, 127.0.0.1
@@ -93,6 +94,21 @@ char *generate_cookie(void)
 	return saprintf("%x%d%d", rand()*rand(), (int)time(NULL), rand());
 }
 
+inline char *wcs_to_normal_http(const CHAR_T *str) {
+	if (!str) return NULL;
+#if USE_UNICODE
+	if (config_use_unicode) {
+		int len		= wcstombs(NULL, (wchar_t *) str,0);
+		char *tmp 	= xmalloc(len+1);
+		int ret;
+
+		ret = wcstombs(tmp, (wchar_t *) str, len);
+		return tmp;
+	} else
+#endif
+		return (char *) str;
+}
+
 char *escape_single_quote(char *p, int inuni)
 {
 	string_t s = string_init(NULL);
@@ -132,14 +148,10 @@ char *escape_single_quote(char *p, int inuni)
 	return string_free(s, 0);
 }
 
-char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
+char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 {
-	short *attr = line->attr;
-	char *str = line->str.b;
-	CHAR_T *str_w = line->str.w;
 	string_t asc = string_init(NULL);
-	int i, last, lastbeg, len, att;
-	CHAR_T tempchar;
+	int i, last, lastbeg, tempchar, len, att;
 	char *normal;
 	char *tmp;
 	char *colortbl[10] = { "grey", "red", "green", "yellow", "blue", "purple", "turquoise", "white" };
@@ -161,24 +173,28 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 	 * <strong><span>...</span>  ... <span> ... </span> </strong>
 	 * since this would be quite senseless
 	 */
+	len = strlen(str);
 #if USE_UNICODE
-	if (inuni)
-		len = wcslen(str_w);
-	else
+	if (config_use_unicode && inuni)
+		len = wcslen(str);
 #endif
-		len = strlen(str);
 	for (i = 1; i <= len; i++)
 	{
 		if (attr[i] == last)
 			continue;
 	
-		tempchar = str[i];
-		str[i] = 0;
+		if (inuni) {
+			tempchar = __S(str, i);
+			__SREP(str, i, 0);
+		} else {
+			tempchar = str[i];
+			str[i] = 0;
+		}
 		att = attr[lastbeg];
 		if (inuni)
-			normal = wcs_to_normal(str_w + lastbeg);
+			normal = wcs_to_normal_http(__SPTR(str, lastbeg));
 		else
-			normal = str + lastbeg;
+			normal = str+lastbeg;
 		if (ISONLYNORMAL)
 		{
 			ADDJSf("%s.appendChild(document.createTextNode('%s'));\n",parent,(tmp = escape_single_quote(normal,inuni)));
@@ -203,12 +219,15 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 			} else 
 				ADDJSf("%s.appendChild(sp);", parent);
 		}
-		if (inuni)
+		if (normal != str+lastbeg)
 			xfree(normal);
 		xfree(tmp);
 
 		ADDJS("\n");
-		str[i] = tempchar;
+		if (inuni)
+			__SREP(str, i, tempchar);
+		else
+			str[i]=tempchar;
 		lastbeg = i;
 		last = attr[i];
 	}
@@ -281,14 +300,14 @@ QUERY(httprc_xajax_def_action)
 					ncurses_window_t *n = w->private;
 					line = *(va_arg(ap, fstring_t **));
 					gline=1;
-					fstringed = http_fstring(w->id, "ch", line, 0);
+					fstringed = http_fstring(w->id, "ch", line->str, line->attr, 0);
 					tmp = saprintf("glst=gwins[%d][2].length;\n"
 							"ch = document.createElement('li');\n"
 							"ch.setAttribute('id', 'lin'+glst);\n"
 							"%s\n"
-							"ch.className='info'+(glst%%2);\n"
+							"ch.className='info'+(glst%2);\n"
 							"gwins[%d][2][glst]=ch;\n"
-							"if (current_window != %d) { xajax.$\('wi'+%d).className='act'; }\n"
+							"if (current_window != %d) { xajax.$('wi'+%d).className='act'; }\n"
 							"else { window_content_add_line(%d); }\n",
 							w->id, fstringed, w->id,
 							w->id, w->id,
@@ -303,7 +322,7 @@ QUERY(httprc_xajax_def_action)
 				string_append(p->collected, " = ");
 				string_append(p->collected, itoa(w->id));
 				string_append(p->collected, " = ");
-				string_append(p->collected, line->str.b);
+				string_append(p->collected, line->str);
 				string_append(p->collected, "]]></cmd>");
 				string_append(p->collected, "<cmd n=\"js\"><![CDATA[");
 				string_append(p->collected, tmp);
@@ -715,7 +734,7 @@ WATCHER(http_watch_read) {
 					/* really, really stupid... */
 					string_append(htheader, "ch = document.createElement('li');\n"
 							"ch.setAttribute('id', 'lin'+i);\n");
-					tempdata = http_fstring(w->id, "ch", n->backlog[i], 1);
+					tempdata = http_fstring(w->id, "ch", n->backlog[i]->str, n->backlog[i]->attr, 1);
 					string_append(htheader, tempdata);
 					if (j^=1)
 						string_append(htheader, "ch.className='info1';");
@@ -762,7 +781,7 @@ WATCHER(http_watch_read) {
 					httprc_write2(send_watch, "\t\t\t\t<dd><ul>\n");
 				for (l = session_current->userlist; l; l = l->next) {
 					userlist_t *u = l->data;
-					httprc_write(send_watch, "\t\t\t\t\t<li class=\"%s\"><a href=\"#\">%s</a></li>\n", ekg_status_string(u->status, 0), u->nickname ? u->nickname : u->uid);
+					httprc_write(send_watch, "\t\t\t\t\t<li class=\"%s\"><a href=\"#\">%s</a></li>\n", u->status, u->nickname ? u->nickname : u->uid);
 				}
 				if (session_current->userlist)
 					httprc_write2(send_watch, "\t\t\t\t</ul></dd>\n");
@@ -876,10 +895,13 @@ int httprc_xajax_plugin_init(int prio) {
 		return -1;
 	}
 
+	watch_add(&httprc_xajax_plugin, fd, WATCH_READ, http_watch_accept, NULL);
+
+/*	variable_add(&rc_plugin, TEXT("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL); */
+
 	plugin_register(&httprc_xajax_plugin, prio);
 
-/*	variable_add(&rc_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL); */
-	watch_add(&httprc_xajax_plugin, fd, WATCH_READ, http_watch_accept, NULL);
+	plugin_var_add(&httprc_xajax_plugin, "port", VAR_INT, HTTPRCXAJAX_DEFPORT, 0, NULL);
 
 //	query_connect(&httprc_xajax_plugin, ("set-vars-default"), httprc_xajax_def_action, NULL);
 //	query_connect(&httprc_xajax_plugin, ("ui-beep"), httprc_xajax_def_action, NULL);

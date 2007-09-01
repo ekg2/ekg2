@@ -3,6 +3,7 @@
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
+#include <iconv.h>
 
 #include "ekg2-config.h"
 
@@ -22,20 +23,6 @@
 #include "jabber.h"
 #include "jabber-ssl.h"
 
-void *jconv_in = (void*) -1;
-void *jconv_out = (void*) -1;
-void *tconv_in = (void*) -1;
-void *tconv_out = (void*) -1;
-
-jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u) {
-	int func			= EKG_USERLIST_PRIVHANDLER_GET;
-	jabber_userlist_private_t *up	= NULL;
-
-	query_emit_id(&jabber_plugin, USERLIST_PRIVHANDLE, &u, &func, &up);
-
-	return up;
-}
-	
 /* XXX, It's the same function from mcjabber, but uses one buffor. */
 static char *jabber_gpg_strip_header_footer(char *data) {
 	char *p, *q;
@@ -201,56 +188,164 @@ char *jabber_attr(char **atts, const char *att)
 	return NULL;
 }
 
-/**
- * jabber_escape()
+/* Following two functions shamelessly ripped from mutt-1.4.2i 
+ * (http://www.mutt.org, license: GPL)
  * 
- * Convert charset from config_console_charset to "utf-8"<br>
- * Escape xml chars using xml_escape()
- *
- * @note If config_use_unicode is set, this function return only xml_escape(@a text)
- *
- * @param text - text to reencode+escape
- *
- * @sa jabber_unescape() - For function reconverting charset back to config_console_charset
- *
- * @return Dynamic allocated string, which should be xfree()'d
+ * Copyright (C) 1999-2000 Thomas Roessler <roessler@guug.de>
+ * Modified 2004 by Maciek Pasternacki <maciekp@japhy.fnord.org>
  */
 
-char *jabber_escape(const char *text) {
-	unsigned char *utftext;
-	char *res;
+/*
+ * Like iconv, but keeps going even when the input is invalid
+ * If you're supplying inrepls, the source charset should be stateless;
+ * if you're supplying an outrepl, the target charset should be.
+ */
+static size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
+		char **outbuf, size_t *outbytesleft,
+		char **inrepls, const char *outrepl)
+{
+	size_t ret = 0, ret1;
+	char *ib = *inbuf;
+	size_t ibl = *inbytesleft;
+	char *ob = *outbuf;
+	size_t obl = *outbytesleft;
 
-	if (!text)
+	for (;;) {
+		ret1 = iconv (cd, &ib, &ibl, &ob, &obl);
+		if (ret1 != (size_t)-1)
+			ret += ret1;
+		if (ibl && obl && errno == EILSEQ) {
+			if (inrepls) {
+				/* Try replacing the input */
+				char **t;
+				for (t = inrepls; *t; t++)
+				{
+					char *ib1 = *t;
+					size_t ibl1 = xstrlen (*t);
+					char *ob1 = ob;
+					size_t obl1 = obl;
+					iconv (cd, &ib1, &ibl1, &ob1, &obl1);
+					if (!ibl1) {
+						++ib, --ibl;
+						ob = ob1, obl = obl1;
+						++ret;
+						break;
+					}
+				}
+				if (*t)
+					continue;
+			}
+			if (outrepl) {
+				/* Try replacing the output */
+				int n = xstrlen (outrepl);
+				if (n <= obl)
+				{
+					memcpy (ob, outrepl, n);
+					++ib, --ibl;
+					ob += n, obl -= n;
+					++ret;
+					continue;
+				}
+			}
+		}
+		*inbuf = ib, *inbytesleft = ibl;
+		*outbuf = ob, *outbytesleft = obl;
+		return ret;
+	}
+}
+
+/*
+ * Convert a string
+ * Used in rfc2047.c and rfc2231.c
+ */
+
+char *mutt_convert_string (char *ps, const char *from, const char *to)
+{
+	iconv_t cd;
+	char *repls[] = { "\357\277\275", "?", 0 };
+	char *s = ps;
+
+	if (!s || !*s)
 		return NULL;
 
-	utftext = ekg_convert_string_p(text, jconv_out);
-	res = xml_escape(utftext ? utftext : text);
+	if (to && from && (cd = iconv_open (to, from)) != (iconv_t)-1) {
+		int len;
+		char *ib;
+		char *buf, *ob;
+		size_t ibl, obl;
+		char **inrepls = 0;
+		char *outrepl = 0;
+
+		if ( !xstrcasecmp(to, "utf-8") )
+			outrepl = "\357\277\275";
+		else if ( !xstrcasecmp(from, "utf-8"))
+			inrepls = repls;
+		else
+			outrepl = "?";
+
+		len = xstrlen (s);
+		ib = s, ibl = len + 1;
+		obl = 16 * ibl;
+		ob = buf = xmalloc (obl + 1);
+
+		mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
+		iconv_close (cd);
+
+		*ob = '\0';
+
+		buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
+		return buf;
+	}
+	return NULL;
+}
+
+/* End of code taken from mutt. */
+
+
+/*
+ * jabber_escape()
+ *
+ * zamienia tekst w iso-8859-2 na tekst w utf-8 z eskejpniêtymi znakami,
+ * które bêd± przeszkadza³y XML-owi: ' " & < >.
+ *
+ *  - text
+ *
+ * zaalokowany bufor
+ */
+
+char *jabber_escape(const char *text)
+{
+	unsigned char *utftext;
+	char *res;
+	if (config_use_unicode)
+		return xml_escape(text);
+	if (!text)
+		return NULL;
+	if ( !(utftext = mutt_convert_string((char *)text, config_console_charset, "utf-8")) )
+		return NULL;
+	res = xml_escape(utftext);
         xfree(utftext);
 	return res;
 }
 
-/**
+/*
  * jabber_unescape()
  *
- * Convert charset from "utf-8" to config_console_charset.<br>
- * xml escaped chars are already changed by expat. so we don't care about them.
+ * zamienia tekst w utf-8 na iso-8859-2. xmlowe znaczki s± ju¿ zamieniane
+ * przez expat, wiêc nimi siê nie zajmujemy.
  *
- * @note If config_use_unicode is set, this function only xstrdup(@a text) 
+ *  - text
  *
- * @param text - text to reencode.
- *
- * @sa jabber_escape() - for function escaping xml chars + reencoding string to utf-8
- *
- * @return Dynamic allocated string, which should be xfree()'d
+ * zaalokowany bufor
  */
-
-char *jabber_unescape(const char *text) {
-	const char *s;
+char *jabber_unescape(const char *text)
+{
 	if (!text)
 		return NULL;
-	s = ekg_convert_string_p(text, jconv_in);
+	if (config_use_unicode)
+		return xstrdup(text);
 
-	return (s ? s : xstrdup(text));
+	return mutt_convert_string((char *)text, "utf-8", config_console_charset);
 }
 
 /**
@@ -277,9 +372,9 @@ char *tlen_encode(const char *what) {
 
 	if (!what) return NULL;
 
-	s = text = ekg_convert_string_p(what, tconv_out);
-	if (!text)
-		s = what;
+	if (xstrcmp(config_console_charset, "ISO-8859-2"))
+		s = text = mutt_convert_string((char *) what, config_console_charset, "ISO-8859-2");
+	else	s = what;
 
 	str = ptr = (unsigned char *) xcalloc(3 * xstrlen(s) + 1, 1);
 	while (*s) {
@@ -324,8 +419,7 @@ char *tlen_decode(const char *what) {
 		if (*data == '+')
 			*dest++ = ' ';
 		else if ((*data == '%') && xisxdigit(data[1]) && xisxdigit(data[2])) {
-			int code;
-
+			int     code;
 			sscanf(data + 1, "%2x", &code);
 			if (code != '\r')
 				*dest++ = (unsigned char) code;
@@ -335,47 +429,11 @@ char *tlen_decode(const char *what) {
 		data++;
 	}
 	*dest = '\0';
+	if (!xstrcmp(config_console_charset, "ISO-8859-2")) return retval;
 
-	if (!(text = ekg_convert_string_p(retval, tconv_in)))
-		return retval;
+	text = mutt_convert_string((char *) retval, "ISO-8859-2", config_console_charset);
 	xfree(retval);
 	return text;
-}
-
-/**
- * utfstrchr()
- *
- * Returns pointer to the first occurence of ASCII character in utf-8 string, taking care of multibyte characters.
- *
- * @note It can only find simple ASCII characters. If you need to find some multibyte char, please use wcs* instead.
- *
- * @bug  When @a s is invalid utf-8 sequence, anything can happen.
- *
- * @param s - string to search, as an utf-8 encoded char*
- * @param c - ASCII character to find
- *
- * @return Pointer to found char or NULL, if not found.
- */
-
-unsigned char *utfstrchr(unsigned char *s, unsigned char c) {
-	unsigned char *p;
-
-	for (p = s; *p; p++) {
-		/* What do we do here? First, we check if we've got single byte char.
-		 * If yes, then we do compare it with given char.
-		 * If no, then we determine how many bytes we need to skip over. */
-		if (*p < 0x80) {
-			if (*p == c)
-				return p;
-		} /* the rest stolen from ../feed/rss.c, where it was stolen from linux/drivers/char/vt.c */
-		else if ((*p & 0xe0) == 0xc0)	p++;
-		else if ((*p & 0xf0) == 0xe0)	p += 2;
-		else if ((*p & 0xf8) == 0xf0)	p += 3;
-		else if ((*p & 0xfc) == 0x78)	p += 4;
-		else if ((*p & 0xfe) == 0xfc)	p += 5;
-	}
-
-	return NULL;
 }
 
 /*
@@ -462,131 +520,6 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 	xfree(compressed);
 
 	return res;
-}
-
-/* called within jabber_session_init() */
-void jabber_convert_string_init(int is_tlen) {
-	if (is_tlen && (tconv_in == (void*) -1))
-		tconv_in = ekg_convert_string_init("ISO-8859-2", NULL, &tconv_out);
-	else if (!is_tlen && (jconv_in == (void*) -1))
-		jconv_in = ekg_convert_string_init("UTF-8", NULL, &jconv_out);
-}
-
-void jabber_convert_string_destroy() {
-	if (tconv_in != (void*) -1) {
-		ekg_convert_string_destroy(tconv_in);
-		ekg_convert_string_destroy(tconv_out);
-	}
-	if (jconv_in != (void*) -1) {
-		ekg_convert_string_destroy(jconv_in);
-		ekg_convert_string_destroy(jconv_out);
-	}
-}
-
-/* CONFIG_POSTINIT */
-QUERY(jabber_convert_string_reinit) {
-	jabber_convert_string_destroy();
-
-	if (tconv_in != (void*) -1) {
-		tconv_in = (void*) -1;
-		jabber_convert_string_init(1);
-	}
-	if (jconv_in != (void*) -1) {
-		jconv_in = (void*) -1;
-		jabber_convert_string_init(0);
-	}
-
-	return 0;
-}
-
-/* conversations */
-
-/**
- * jabber_conversation_find() searches session's conversation list for matching one.
- *
- * @param	j	- private data of session.
- * @param	uid	- UID of recipient.
- * @param	subject	- message subject (for non-threaded conversations).
- * @param	thread	- jabber thread ID, if threaded.
- * @param	result	- place to write address of jabber_conversation_t or NULL, if not needed.
- * @param	can_add	- if nonzero, we can create new conversation, if none match.
- *
- * @return	Reply-ID of conversation.
- */
-int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *subject, const char *thread, jabber_conversation_t **result, const int can_add) {
-	jabber_conversation_t *thr, *prev;
-	char *resubject;
-        int i, l;
-	
-	if (!thread && subject && !xstrncmp(subject, config_subject_reply_prefix, (l = xstrlen(config_subject_reply_prefix))))
-		resubject = subject + l;
-	
-        for (thr = j->conversations, prev = NULL, i = 1;
-                thr && ((thread ? xstrcmp(thr->thread, thread) /* try to match the thread, if avail */
-			: (subject ? xstrcmp(thr->subject, subject) /* else try to match the subject... */
-				&& xstrcmp(thr->subject, resubject) /* ...also with Re: prefix... */
-				&& (xstrncmp(thr->subject, config_subject_reply_prefix, l)
-					|| xstrcmp(thr->subject+l, subject)) /* ...on both sides... */
-				: thr->subject)) || (uid ? xstrcmp(thr->uid, uid) : 1)); /* ...and UID */
-	                prev = thr, thr = thr->next, i++); /* <- that's third param for 'for' */
-
-	if (!thr && can_add) { /* haven't found anything, but can create something */
-                thr		= xmalloc(sizeof(jabber_conversation_t));
-                thr->thread	= xstrdup(thread);
-		thr->uid	= xstrdup(uid);
-			/* IMPORTANT: thr->subject is maintained by message handler
-			 * Now I know why I haven't added it earlier here */
-                if (prev)
-                        prev->next		= thr;
-                else
-                        j->conversations	= thr;
-        }
-	
-	if (result)
-	        *result = thr;
-        return i;
-}
-
-/**
- * jabber_conversation_get() is used to get conversation by its Reply-ID.
- *
- * @param	j	- private data of session.
- * @param	n	- Reply-ID.
- *
- * @return	Pointer to jabber_conversation_t or NULL, when no conversation found.
- */
-jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, const int n) {
-	jabber_conversation_t *thr;
-	int i;
-	
-	for (thr = j->conversations, i = 1;
-		thr && (i < n);
-		thr = thr->next, i++);
-	
-	return thr;
-}
-
-/**
- * jabber_thread_gen() generates new thread-ID for outgoing messages.
- *
- * @param	j	- private data of session.
- * @param	uid	- recipient UID.
- *
- * @return	New, session-unique thread-ID.
- */
-char *jabber_thread_gen(jabber_private_t *j, const char *uid) {
-	int i, k, n	= 0;
-	char *thread	= NULL;
-
-		/* just trying to find first free one */
-	for (i = jabber_conversation_find(j, NULL, NULL, NULL, NULL, 0), k = i; n != k; i++) {
-		xfree(thread);
-		thread = saprintf("thr%d-%8x-%8x", i, rand(), time(NULL)); /* that should look gorgeous */
-		n = jabber_conversation_find(j, thread, NULL, uid, NULL, 0);
-		debug("[jabber,thread_gen] i = %d, k = %d, n = %d, t = %s\n", i, n, k, thread);
-	}
-	
-	return thread;
 }
 
 /*

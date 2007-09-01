@@ -11,32 +11,6 @@ display_crap
 	defines if information which weren't connected with interlocutor will be displayed in chat window. 
 	If it's 0, in chat window information only about interlocutor status are displayed.
 
-exit_exec
-	type: text
-	default value: none
-	
-	Command executed on EKG2 exit, just before exit(). It'll replace EKG2
-	in process table, so ekg2 will return its' exit code.
-
-session_locks
-	type: int
-	default value: 1
-	
-	Kind of session-locks used by EKG2 to avoid two copies of it
-	connecting the same session simultaneously. Possible values:
-	
-		0 - session-locks disabled,
-	
-		1 - flock-based locks (default),
-	
-		2 - file existence-based locks (simple).
-
-subject_reply_prefix
-	type: text
-	default value: 'Re: '
-	
-	Prefix used in subjects of message replies.
-
 window_session_allow
 	type: text
 	default value: 0

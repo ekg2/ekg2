@@ -37,6 +37,7 @@
 #include <ekg/userlist.h>
 #include <ekg/stuff.h>
 #include <ekg/windows.h>
+#include <ekg/xmalloc.h>
 
 #include "main.h"
 #include "palette.h"
@@ -292,11 +293,9 @@ void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 	int sel = 0;
 
 	if (pixmaps) {
-		const char *str;
+		const char *str = u->status;
 		
 	/* blah, awful */
-		str = ekg_status_string(u->status, 0);
-
 		if (!xstrcmp(str, "notavail")) 		pix = pixmaps[PIXBUF_NOTAVAIL];
 		else if (!xstrcmp(str, "invisible"))	pix = pixmaps[PIXBUF_INVISIBLE];
 		else if (!xstrcmp(str, "xa"))		pix = pixmaps[PIXBUF_XA];

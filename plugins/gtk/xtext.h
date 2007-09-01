@@ -123,9 +123,6 @@ struct _GtkXText {
 
 	int depth;		/* gdk window depth */
 
-	char num[8];		/* for parsing mirc color */
-	int nc;			/* offset into xtext->num */
-
 	textentry *hilight_ent;
 	int hilight_start;
 	int hilight_end;

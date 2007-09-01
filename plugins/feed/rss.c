@@ -54,9 +54,6 @@
 
 #include "feed.h"
 
-#define rss_convert_string(text, encoding) \
-	ekg_convert_string(text, encoding ? encoding : "UTF-8", NULL)
-
 typedef enum {
 	RSS_PROTO_UNKNOWN = 0,
 	RSS_PROTO_HTTP,
@@ -134,7 +131,7 @@ static void rss_string_append(rss_feed_t *f, const char *str) {
 	string_append_c(buf, '\n');
 }
 
-static void rss_set_statusdescr(const char *uid, int status, char *descr) {
+static void rss_set_statusdescr(const char *uid, char *status, char *descr) {
 	list_t l;
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
@@ -144,7 +141,7 @@ static void rss_set_statusdescr(const char *uid, int status, char *descr) {
 	}
 }
 
-static void rss_set_status(const char *uid, int status) {
+static void rss_set_status(const char *uid, char *status) {
 	list_t l;
 
 	for (l = sessions; l; l = l->next) {
@@ -330,11 +327,96 @@ typedef struct {
 	char *no_unicode;
 } rss_fetch_process_t;
 
-static void rss_fetch_error(rss_feed_t *f, const char *str) {
-	debug("rss_fetch_error() %s\n", str);
-	rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, xstrdup(str));
+char *mutt_iconv (iconv_t cd, 
+			char *ib, size_t ibl,
+			char *ob, size_t obl,
+			char **inrepls, const char *outrepl)
+{
+	do {
+		errno = 0;
+		iconv (cd, &ib, &ibl, &ob, &obl);
+		if (ibl && obl && errno == EILSEQ) {
+			if (inrepls) {
+				/* Try replacing the input */
+				char **t;
+				for (t = inrepls; *t; t++)
+				{
+					char *ib1 = *t;
+					char *ob1 = ob;
+					size_t ibl1 = xstrlen (*t);
+					size_t obl1 = obl;
+
+					iconv (cd, &ib1, &ibl1, &ob1, &obl1);
+					if (!ibl1) {
+						++ib, --ibl;
+						ob = ob1, obl = obl1;
+						break;
+					}
+				}
+				if (*t)
+					continue;
+			}
+			if (outrepl) {
+				/* Try replacing the output */
+				int n = xstrlen (outrepl);
+				if (n <= obl)
+				{
+					memcpy (ob, outrepl, n);
+					++ib, --ibl;
+					ob += n, obl -= n;
+					continue;
+				}
+			}
+		}
+		return ob;
+	} while(1);
 }
 
+static char *rss_iconv(const char *str, const char *enconding) {
+	char *repls[] = { "\357\277\275", "?", 0 };
+
+	char **inrepls = NULL;
+	char *outrepl = NULL;
+
+	size_t inplen = xstrlen(str);
+	size_t outlen = (inplen+1) * 16; 
+
+	char *buf, *ob;
+	char *niah;
+	iconv_t cd;
+
+	if (!enconding) enconding = "UTF-8";
+
+	if (!config_console_charset)
+		return NULL;
+
+	if (!inplen)
+		return NULL;
+
+	if ((cd = iconv_open(config_console_charset, enconding)) == (iconv_t)-1) 
+		return NULL;
+
+	if (!xstrcasecmp(config_console_charset, "UTF-8"))	outrepl = "\357\277\275";
+	else if (!xstrcasecmp(enconding, "UTF-8"))		inrepls = repls;
+	else							outrepl = "?";
+
+	buf = xmalloc(outlen);
+
+	niah = xstrdup(str);
+
+	ob = mutt_iconv(cd, str /* input */, inplen+1 /* input len */, buf /* output buffer */, outlen /* output len */, inrepls, outrepl);
+	iconv_close (cd);
+
+	xfree(niah);
+
+	*ob = '\0';
+	return xrealloc((void*)buf, ob-buf);
+}
+
+static void rss_fetch_error(rss_feed_t *f, const char *str) {
+	debug("rss_fetch_error() %s\n", str);
+	rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_ERROR), xstrdup(str));
+}
 /* ripped from jabber plugin */
 static void rss_handle_start(void *data, const char *name, const char **atts) {
 	rss_fetch_process_t *j = data;
@@ -370,10 +452,8 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 
 	if (arrcount > 0) {
 		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
-		for (i = 0; i < arrcount; i++) {
-			const char *s = rss_convert_string(atts[i], j->no_unicode);
-			newnode->atts[i] = (s ? s : xstrdup(atts[i]));
-		}
+		for (i = 0; i < arrcount; i++)
+			newnode->atts[i] = rss_iconv(atts[i], j->no_unicode);
 	} else	newnode->atts = NULL; 
 
 	j->node = newnode;
@@ -396,6 +476,7 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 	rss_fetch_process_t *j = data;
 	xmlnode_t *n;
 	char *recode;
+	char *tmp;
 	int i;
 	int rlen;
 
@@ -444,18 +525,11 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 		recode[rlen++] = znak;
 		i++;
 	}
-	{		/* I think old version leaked, if I were wrong, let mi know */
-		char *tmp = recode;
+	tmp = rss_iconv(recode, j->no_unicode);
 
-		recode = rss_convert_string(recode, j->no_unicode);
-		if (!recode)
-			recode = tmp;
-		else
-			xfree(tmp);
-	}
+	string_append(n->data, tmp);
 
-	string_append(n->data, recode);
-
+	xfree(tmp);
 	xfree(recode);
 }
 
@@ -655,8 +729,8 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 	}
 
 	if (!new_items)
-		rss_set_statusdescr(f->uid, EKG_STATUS_DND, xstrdup("Done, no new messages"));
-	else	rss_set_statusdescr(f->uid, EKG_STATUS_AVAIL, saprintf("Done, %d new messages", new_items));
+		rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_DND), xstrdup("Done, no new messages"));
+	else	rss_set_statusdescr(f->uid, xstrdup(EKG_STATUS_AVAIL), saprintf("Done, %d new messages", new_items));
 fail:
 	xmlnode_free(priv->node);
 	XML_ParserFree(parser);
@@ -763,7 +837,7 @@ static WATCHER(rss_url_fetch_resolver) {
 			rss_url_fetch(f, 0);
 
 		if (type == 2) 
-			rss_set_statusdescr(b->uid, EKG_STATUS_ERROR, saprintf("Resolver tiemout..."));
+			rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_ERROR), saprintf("Resolver tiemout..."));
 
 		xfree(b->session);
 		xfree(b->uid);
@@ -774,7 +848,7 @@ static WATCHER(rss_url_fetch_resolver) {
 	len = read(fd, &a, sizeof(a));
 
 	if ((len != sizeof(a)) || (len && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
-		rss_set_statusdescr(b->uid, EKG_STATUS_ERROR, 
+		rss_set_statusdescr(b->uid, xstrdup(EKG_STATUS_ERROR), 
 			saprintf("Resolver ERROR read: %d bytes (%s)", len, len == -1 ? strerror(errno) : ""));
 
 		return -1;
@@ -887,8 +961,11 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 			watch_t *w;
 			rss_resolver_t *b;
 
+			f->resolving = 1;
+
 			if (!(w = ekg_resolver2(&feed_plugin, f->host, rss_url_fetch_resolver, NULL))) {
 				rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, saprintf("Resolver error: %s\n", strerror(errno)));
+				f->resolving = 0;
 				return -1;
 			}
 			w->data = b = xmalloc(sizeof(rss_resolver_t));
@@ -941,7 +1018,7 @@ static COMMAND(rss_command_connect) {
 
 	session_connected_set(session, 1);
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &session->uid);
-	session->status = EKG_STATUS_AVAIL;
+	xfree(session->status);	session->status = xstrdup(EKG_STATUS_AVAIL);
 
 	return 0;
 }
@@ -1060,6 +1137,13 @@ void rss_init() {
 
 	command_add(&feed_plugin, ("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL); 
 	command_add(&feed_plugin, ("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
+
+	plugin_var_add(&feed_plugin, "display_server_headers", VAR_STR, 
+	/* display some basic server headers */
+		"HTTP/1.1 "	/* rcode? */
+		"Server: "
+		"Date: ",
+		0, NULL);
 }
 #endif
 

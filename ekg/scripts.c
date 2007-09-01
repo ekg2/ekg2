@@ -639,10 +639,10 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 #define NEXT_ARG(y) temp->argv_type[temp->argc] = y; temp->argc++;
 
 /* PROTOCOL */
-	CHECK("protocol-disconnected")      { NEXT_ARG(QUERY_ARG_CHARP);	}
+	CHECK("protocol-disconnected")      { NEXT_ARG(QUERY_ARG_CHARP);	} /* XXX */
 	else CHECK("protocol-status")       { NEXT_ARG(QUERY_ARG_CHARP); 
 					      NEXT_ARG(QUERY_ARG_CHARP); 
-					      NEXT_ARG(QUERY_ARG_CHARP); 		/* XXX, need hacks */
+					      NEXT_ARG(QUERY_ARG_CHARP); 
 					      NEXT_ARG(QUERY_ARG_CHARP);	}
 	else CHECK("protocol-message")      { NEXT_ARG(QUERY_ARG_CHARP);
 					      NEXT_ARG(QUERY_ARG_CHARP);
@@ -681,7 +681,6 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 
 				while (j < QUERY_ARGS_MAX && q->params[j] != QUERY_ARG_END)
 					NEXT_ARG(q->params[j++]);
-
 				break;
 			}
 		}

@@ -25,7 +25,6 @@
 #include <libgadu.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
-#include <ekg/userlist.h>
 
 COMMAND(gg_command_image); /* images.c */
 
@@ -60,34 +59,11 @@ void gg_register_commands();
 WATCHER_SESSION(gg_session_handler);
 
 typedef struct {
-	char *uid;
+	const char *uid;
 	session_t *session;
 } gg_currently_checked_t;
 
 extern list_t gg_currently_checked;
-
-/**
- * gg_userlist_private_t
- *
- * Here we keep all userlist things, which are private to GG protocol, and because of this were removed from core userlist_t.
- */
-typedef struct {
-	char *first_name;	/**< first name */
-	char *last_name;	/**< surname */
-	char *mobile;		/**< mobile phone number */
-
-	int protocol;		/**< Protocol version */
-
-	uint32_t ip;		/**< ipv4 address of user, use for example inet_ntoa() to get it in format: 111.222.333.444 [:)]<br>
-				 *	It's used mainly for DCC communications. */
-	uint16_t port;		/**< port of user<br> 
-				 *	It's used mainly for DCC communications. */
-        uint32_t last_ip;       /**< Lastseen ipv4 address */
-        uint16_t last_port;     /**< Lastseen port */
-} gg_userlist_private_t;
-
-/* misc.c */
-gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u);
 
 #endif /* __EKG_GG_GG_H */
 

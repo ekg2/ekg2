@@ -846,24 +846,6 @@ char *array_join(char **array, const char *sep)
 	return string_free(s, 0);
 }
 
-char *array_join_count(char **array, const char *sep, int count) {
-	string_t s = string_init(NULL);
-
-	if (array) {
-		int i;
-
-		for (i = 0; i < count; i++) {
-			if (array[i])
-				string_append(s, array[i]);
-			
-			if (i != count-1)	
-				string_append(s, sep);
-		}
-	}
-
-	return string_free(s, 0);
-}
-
 /*
  * array_contains()
  *
@@ -936,72 +918,6 @@ void array_free(char **array)
 		xfree(*tmp);
 
 	xfree(array);
-}
-
-void array_free_count(char **array, int count) {
-	char **tmp;
-
-	if (!array)
-		return;
-
-	for (tmp = array; count; tmp++, count--)
-		xfree(*tmp);
-
-	xfree(array);
-}
-
-/**
- * cssfind()
- *
- * Short for comma-separated string find, does check whether given string contains given element.
- * It's works like array_make()+array_contains(), but it's hell simpler and faster.
- *
- * @param haystack		- comma-separated string to search.
- * @param needle		- element to search for.
- * @param sep			- separator.
- * @param caseinsensitive	- take a wild guess.
- *
- * @return Pointer to found element on success, or NULL on failure.
- */
-const char *cssfind(const char *haystack, const char *needle, const char sep, int caseinsensitive) {
-	const char *comma = haystack-1;
-	const int needlelen = xstrlen(needle);
-
-	do {
-		comma += xstrspn(comma+1, " \f\n\r\t\v")+1;
-		if (!(caseinsensitive ? xstrncasecmp(comma, needle, needlelen) : xstrncmp(comma, needle, needlelen))) {
-			const char *p, *q;
-
-			p = comma + needlelen;
-			if (!(q = xstrchr(p, sep)))
-				q = p + xstrlen(p);
-			if (q-p <= xstrspn(p, " \f\n\r\t\v")) /* '<' shouldn't happen */
-				return comma;
-		}
-	} while (sep && (comma = xstrchr(comma, sep)));
-
-	return NULL;
-#if 0 /* old, exact-match code; uncomment when needed */
-{
-	const char *r = haystack-1;
-	const int needlelen = xstrlen(needle);
-
-	if (needlelen == 0) { /* workaround for searching '' */
-		char c[3];
-		c[0] = sep;	c[1] = sep;	c[2] = '\0';
-
-		r = xstrstr(haystack, c);
-		if (r) /* return pointer to 'free space' between seps */
-			r++;
-	} else {
-		while ((r = (caseinsensitive ? xstrcasestr(r+1, needle) : xstrstr(r+1, needle))) &&
-				(((r != haystack) && ((*(r-1) != sep)))
-				|| ((*(r+needlelen) != '\0') && (*(r+needlelen) != sep)))) {};
-	}
-
-	return r;
-}
-#endif
 }
 
 /*

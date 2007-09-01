@@ -575,7 +575,6 @@ static void gtk_xtext_init(GtkXText * xtext)
 	xtext->max_lines = 0;
 	xtext->col_back = XTEXT_BG;
 	xtext->col_fore = XTEXT_FG;
-	xtext->nc = 0;
 	xtext->pixel_offset = 0;
 	xtext->bold = FALSE;
 	xtext->underline = FALSE;
@@ -2312,7 +2311,6 @@ static void gtk_xtext_reset(GtkXText * xtext, int mark, int attribs)
 	}
 	xtext->col_fore = XTEXT_FG;
 	xtext->col_back = XTEXT_BG;
-	xtext->nc = 0;
 }
 
 /* render a single line, which WONT wrap, and parse fstring_t attr */
@@ -3961,7 +3959,7 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 	int space;
 	int tempindent;
 
-	size_t len = xstrlen(fstr->str.b);
+	size_t len = xstrlen(fstr->str);
 
 	if (len >= sizeof(buf->xtext->scratch_buffer))
 		len = sizeof(buf->xtext->scratch_buffer) - 1;
@@ -3975,16 +3973,16 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 	 * 	slowdown, hack.
 	 */
 
-	ent->fstr->str.b = xrealloc(ent->fstr->str.b, sizeof(char) * (len+2));
-		memmove(ent->fstr->str.b+1, ent->fstr->str.b, len);
-		ent->fstr->str.b[0] = ' ';
-		ent->fstr->str.b[len+1] = '\0';
+	ent->fstr->str = xrealloc(ent->fstr->str, sizeof(char) * (len+2));
+		memmove(ent->fstr->str+1, ent->fstr->str, len);
+		ent->fstr->str[0] = ' ';
+		ent->fstr->str[len+1] = '\0';
 	ent->fstr->attr  = xrealloc(ent->fstr->attr, sizeof(short) * (len+1));
 		memmove(ent->fstr->attr+1, ent->fstr->attr, len*sizeof(short));
 		ent->fstr->attr[0] = FSTR_NORMAL;
 
 	ent->left_len = 0;
-	ent->str = fstr->str.b;
+	ent->str = fstr->str;
 	ent->str_len = len+1;
 	ent->indent = (buf->indent) - buf->xtext->space_width;
 

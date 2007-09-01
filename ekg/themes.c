@@ -341,7 +341,8 @@ static char *va_format_string(const char *format, va_list ap) {
 						string_append(buf, "a");
 					else
 						string_append(buf, "y");
-				}
+				} else
+					string_append(buf, "y"); /* display_notify&4, I think male form would be fine for UIDs */
 				p += 2;
 				continue;
 			}
@@ -723,7 +724,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
 	/* 1) let's check if we have such window as target... */
 
 		/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
-		if (!xstrncmp(target, "jid:", 3) && (tmp = xstrchr(target, '/'))) {
+		if (!xstrncmp(target, "jid:", 4) && (tmp = xstrchr(target, '/'))) {
 			newtarget = xstrndup(target, tmp - target);
 			w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
 			/* even if w == NULL here, we use newtarget to create window without resource */
@@ -1319,14 +1320,6 @@ void theme_init()
 	format_add("contacts_blocking_header", "", 1);
 	format_add("contacts_blocking", " %m%1%n", 1);
 	format_add("contacts_blocking_footer", "", 1);
-	format_add("contacts_unknown_header", "", 1);
-	format_add("contacts_unknown", " %M%1%n", 1);
-	format_add("contacts_unknown_descr", "%Ki%M%1%n", 1);
-	format_add("contacts_unknown_descr_full", "%Ki%M%1%n %2", 1);
-	format_add("contacts_unknown_blink", " %M%i%1%n", 1);
-	format_add("contacts_unknown_descr_blink", "%K%ii%M%i%1%n", 1);
-	format_add("contacts_unknown_descr_full_blink", "%K%ii%M%i%1%n %2", 1);
-	format_add("contacts_unknown_footer", "", 1);
 	format_add("contacts_footer", "", 1);
 	format_add("contacts_footer_group", "", 1);
 	format_add("contacts_metacontacts_footer", "", 1);
@@ -1383,8 +1376,7 @@ void theme_init()
 	format_add("contacts_invisible_descr_typing", "%W*%c%1%n", 1);
 	format_add("contacts_invisible_descr_full_typing", "%W*%c%1%n %2", 1);
 	format_add("contacts_unknown_typing", "%W*%M%1%n", 1);
-	format_add("contacts_unknown_descr_typing", "%W*%M%1%n", 1);
-	format_add("contacts_unknown_descr_full_typing", "%W*%M%1%n %2", 1);
+	format_add("contacts_unknown_blink_typing", "%W%i*%M%i%1%n", 1);
 
 	/* we are saying goodbye and we are saving configuration */
 	format_add("quit", _("%> Bye\n"), 1);
@@ -1429,8 +1421,7 @@ void theme_init()
 	format_add("ack_queued", _("%> Message to %1 will be delivered later\n"), 1);
 	format_add("ack_delivered", _("%> Message to %1 delivered\n"), 1);
 	format_add("ack_unknown", _("%> Not clear what happened to message to %1\n"), 1);
-	format_add("ack_tempfail", _("%! %|Message to %1 encountered temporary delivery failure (e.g. message queue full). Please try again later.\n"), 1);
-	format_add("ack_filtered", _("%! %|Message to %1 encountered permament delivery failure (e.g. forbidden content). Before retrying, try to fix the problem yourself (e.g. ask second side to add us to userlist).\n"), 1);
+	format_add("ack_filtered", _("%! %|Message to %1 probably was not delivered. The person is unavailable, but server claims message is delivered. Message could been filtered out (e.g. because of web address in it)\n"), 1);
 	format_add("message_too_long", _("%! Message was too long and got shortened\n"), 1);
 
 	/* people are changing their statuses */
@@ -1490,19 +1481,10 @@ void theme_init()
 	format_add("variable_invalid", _("%! Invalid session variable value\n"), 1);
 	format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
 	format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or jid: jabber id, then session password and your password. enter save to save. enter connect to connect. if you dont have UID enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then number. To start conversation use query command. To add someone to roster use add command. All key shortcuts are described in README file. There is also help command."), 1);
-	format_add("no_config_gg_not_loaded", _("%! Incomplete configuration. Use:\n%!   %T/plugin +gg%n - to load gg plugin\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
-	format_add("no_config_no_libgadu", _("%! Incomplete configuration. %TBIG FAT WARNING:%n\n%!    %Tgg plugin has not been compiled, probably there is no libgadu library in the system\n%! Use:\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
 	format_add("error_reading_config", _("%! Error reading configuration file: %1\n"), 1);
 	format_add("config_read_success", _("%> Configuratin read correctly.%n\n"), 1);
 	format_add("config_line_incorrect", _("%! Invalid line '%T%1%n', skipping\n"), 1);
 	format_add("autosaved", _("%> Automatically saved settings\n"), 1);
-
-	/* config_upgrade() */
-	format_add("config_upgrade_begin", _("%) EKG2 upgrade detected. In the meantime, following changes were made:\n"), 1);
-	format_add("config_upgrade_important",	"%) %W%2) %y*%n %1\n", 1);
-	format_add("config_upgrade_major",	"%) %W%2) %Y*%n %1\n", 1);
-	format_add("config_upgrade_minor",	"%) %W%2) %c*%n %1\n", 1);
-	format_add("config_upgrade_end", _("%) To make configuration upgrade permament, please save your configuration: %c/save%n\n"), 1);
 
 	/* rejestracja nowego numeru */
 	format_add("register", _("%> Registration successful. Your number: %T%1%n\n"), 1);
@@ -1569,16 +1551,25 @@ void theme_init()
 	/* detailed info about user */
 	format_add("user_info_header", "%K.--%n %T%1%n/%2 %K--- -- -%n\n", 1);
 	format_add("user_info_nickname", _("%K| %nNickname: %T%1%n\n"), 1);
+	format_add("user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
 	format_add("user_info_status", _("%K| %nStatus: %T%1%n\n"), 1);
 	format_add("user_info_status_time_format", "%Y-%m-%d %H:%M", 1);
 	format_add("user_info_status_time", _("%K| %nCurrent status since: %T%1%n\n"), 1);
+	format_add("user_info_auth_type", _("%K| %nSubscription type: %T%1%n\n"), 1);
 	format_add("user_info_block", _("%K| %nBlocked\n"), 1);
 	format_add("user_info_offline", _("%K| %nCan't see our status\n"), 1);
+	format_add("user_info_not_in_contacts", _("%K| %nDoesn't have us in roster\n"), 1);
+	format_add("user_info_firewalled", _("%K| %nFirewalled/NATed\n"), 1);
+	format_add("user_info_ip", _("%K| %nAddress: %T%1%n\n"), 1);
+	format_add("user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
 	format_add("user_info_groups", _("%K| %nGroups: %T%1%n\n"), 1);
 	format_add("user_info_never_seen", _("%K| %nNever seen\n"), 1);
 	format_add("user_info_last_seen", _("%K| %nLast seen: %T%1%n\n"), 1);
 	format_add("user_info_last_seen_time", "%Y-%m-%d %H:%M", 1);
+	format_add("user_info_last_ip", _("%K| %nLast address: %T%1%n\n"), 1);
 	format_add("user_info_last_status", _("%K| %nLast status: %T%1%n\n"), 1);
+	format_add("user_info_version", _("%K| %nVersion: %T%1%n\n"),1);
+	format_add("user_info_voip", _("%K| %nHas voice talk\n"), 1);
 	format_add("user_info_footer", "%K`----- ---- --- -- -%n\n", 1);
 
 	format_add("user_info_avail", _("%Yavailable%n"), 1);
@@ -1710,12 +1701,12 @@ void theme_init()
 	format_add("events_del_noexist", _("%! Event %T%1%n do not exist\n"), 1);
 
 	/* contact list from the server */
-	format_add("userlist_put_ok", _("%> Roster saved on server\n"), 1);
-	format_add("userlist_put_error", _("%! Error sending roster\n"), 1);
-	format_add("userlist_get_ok", _("%> Roster read from server\n"), 1);
-	format_add("userlist_get_error", _("%! Error getting roster\n"), 1);
-	format_add("userlist_clear_ok", _("%) Removed roster from server\n"), 1);
-	format_add("userlist_clear_error", _("%! Error removing roster from server\n"), 1);
+	format_add("userlist_put_ok", _("%> (%1) Roster exported\n"), 1);
+	format_add("userlist_put_error", _("%! (%1) Error exporting roster\n"), 1);
+	format_add("userlist_get_ok", _("%> (%1) Roster imported\n"), 1);
+	format_add("userlist_get_error", _("%! (%1) Error importing roster\n"), 1);
+	format_add("userlist_clear_ok", _("%) (%1) Removed roster from server\n"), 1);
+	format_add("userlist_clear_error", _("%! (%1) Error removing roster from server\n"), 1);
 
 	/* szybka lista kontaktów pod F2 */
 	format_add("quick_list", "%)%1\n", 1);
@@ -1845,9 +1836,6 @@ void theme_init()
 	format_add("session_format", "%T%1%n", 1);
 	format_add("session_format_alias", "%T%1%n/%2", 1);
 	format_add("session_cannot_change", _("%! Can't change session in query window%n\n"), 1);
-	format_add("session_password_changed", _("%> %|(%1) Looks like you're changing password in connected session. This does only set password on the client-side. If you want you change your account password, please use dedicated function (e.g. /passwd)."), 1);
-	format_add("session_locked", _("%! %|Session %T%1%n is currently locked. If there aren't any other copy of EKG2 using it, please call: %c/session --unlock%n to unlock it.\n"), 1);
-	format_add("session_not_locked", _("%! Session %T%1%n is not locked"), 1);
 
 	format_add("metacontact_list", "%> %T%1%n", 1);
 	format_add("metacontact_list_empty", "%! Metacontact list is empty\n", 1);
@@ -1919,27 +1907,12 @@ void theme_init()
 
 	format_add("directory_cant_create", 	_("%! Can't create directory: %1 (%2)"), 1);
 
-	/* charset stuff */
-	format_add("console_charset_using",	_("%) EKG2 detected that your console works under: %W%1%n Please verify and eventually change %Gconsole_charset%n variable"), 1);
-	format_add("console_charset_bad",	_("%! EKG2 detected that your console works under: %W%1%n, but in %Gconsole_charset%n variable you've got: %W%2%n Please verify."), 1);
-	format_add("iconv_fail",		_("%! iconv_open() fail to initialize charset conversion between %W%1%n and %W%2%n. Check %Gconsole_charset%n variable, if it won't help inform ekg2 dev team and/or upgrade iconv"), 1);
-
 #ifdef WITH_ASPELL
 	/* aspell */
 	format_add("aspell_init", "%> Czekaj, inicjujê modu³ sprawdzania pisowni...\n", 1);
 	format_add("aspell_init_success", "%> Zainicjowano modu³ sprawdzania pisowni\n", 1);
 	format_add("aspell_init_error", "%! B³±d modu³u sprawdzania pisowni: %T%1%n\n", 1);
 #endif 
-	/* jogger-like I/O */
-	format_add("io_cantopen", _("%! %|Unable to open file: %T%1%n (%c%2%n)!"), 1);
-	format_add("io_nonfile", _("%! %|Given path doesn't appear to be regular file: %T%1%n!"), 1);
-	format_add("io_cantread", _("%! %|Unable to read file: %T%1%n (%c%2%n)!"), 1);
-	format_add("io_truncated", _("%! %|WARNING: Filesize smaller than before (%c%2%n vs. %c%3%n). File %T%1%n probably truncated!"), 1);
-	format_add("io_truncated", _("%! %|WARNING: EOF before reaching filesize (%c%2%n vs. %c%3%n). File %T%1%n probably truncated (somehow)!"), 1);
-	format_add("io_expanded", _("%! %|WARNING: Filesize larger than before (%c%2%n vs. %c%3%n). File %T%1%n probably got expanded!"), 1);
-	format_add("io_emptyfile", _("%! File %T%1%n is empty!"), 1);
-	format_add("io_toobig", _("%! Size of file %T%1%n exceeds maximum allowed length (%c%2%n vs. %c%3%n)!"), 1);
-	format_add("io_binaryfile", _("%! %|WARNING: The file %T%1%n probably contains NULs (is binary), so it can't be properly handled. It will be read until first encountered NUL, i.e. to offset %c%2%n (vs. filesize of %c%3%n)!"), 1);
 
 	/* dns stuff */
 	format_add("dns2_resolved",	_("%) DNS2 RESOLVED %G%1: %W%2%n"), 1);

@@ -66,24 +66,28 @@ int logsoracle_plugin_init(int prio)
 	plugin_register(&logsoracle_plugin, prio);
 
 	/* connect events with handlers */
-	query_connect(&logsoracle_plugin, ("set-vars-default"), logsoracle_handler_setvarsdef, NULL);
-	query_connect(&logsoracle_plugin, ("config-postinit"), logsoracle_handler_postinit, NULL);
-	query_connect(&logsoracle_plugin, ("session-status"), logsoracle_handler_sestatus, NULL);	
-	query_connect(&logsoracle_plugin, ("protocol-status"), logsoracle_handler_prstatus, NULL);
-	query_connect(&logsoracle_plugin, ("protocol-message-post"), logsoracle_handler_prmsg, NULL);
+	query_connect(&logsoracle_plugin, TEXT("set-vars-default"), logsoracle_handler_setvarsdef, NULL);
+	query_connect(&logsoracle_plugin, TEXT("config-postinit"), logsoracle_handler_postinit, NULL);
+	query_connect(&logsoracle_plugin, TEXT("session-status"), logsoracle_handler_sestatus, NULL);	
+        query_connect(&logsoracle_plugin, TEXT("protocol-status"), logsoracle_handler_prstatus, NULL);
+	query_connect(&logsoracle_plugin, TEXT("protocol-message-post"), logsoracle_handler_prmsg, NULL);
 		
+
+	/* set default variable values (uses query function) */
+	logsoracle_handler_setvarsdef(NULL, NULL);
+
 	/* register variables */
-	variable_add(&logsoracle_plugin, ("auto_connect"), VAR_BOOL, 1, &logsoracle_config.auto_connect, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, ("logging_active"), VAR_BOOL, 1, &logsoracle_config.logging_active, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, ("log_messages"), VAR_BOOL, 1, &logsoracle_config.log_messages, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, ("log_status"), VAR_BOOL, 1, &logsoracle_config.log_status, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, ("db_login"), VAR_STR, 1, &logsoracle_config.db_login, NULL, NULL, NULL);
-	variable_add(&logsoracle_plugin, ("db_password"), VAR_STR, 1, &logsoracle_config.db_password, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, TEXT("auto_connect"), VAR_BOOL, 1, &logsoracle_config.auto_connect, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, TEXT("logging_active"), VAR_BOOL, 1, &logsoracle_config.logging_active, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, TEXT("log_messages"), VAR_BOOL, 1, &logsoracle_config.log_messages, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, TEXT("log_status"), VAR_BOOL, 1, &logsoracle_config.log_status, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, TEXT("db_login"), VAR_STR, 1, &logsoracle_config.db_login, NULL, NULL, NULL);
+	variable_add(&logsoracle_plugin, TEXT("db_password"), VAR_STR, 1, &logsoracle_config.db_password, NULL, NULL, NULL);
 
 	/* register commands */
-	command_add(&logsoracle_plugin, ("logsoracle:connect"), NULL, logsoracle_cmd_db_connect, 0, NULL);	
-	command_add(&logsoracle_plugin, ("logsoracle:disconnect"), NULL, logsoracle_cmd_db_disconnect, 0, NULL);
-	command_add(&logsoracle_plugin, ("logsoracle:status"), NULL, logsoracle_cmd_status, 0, NULL);
+	command_add(&logsoracle_plugin, TEXT("logsoracle:connect"), NULL, logsoracle_cmd_db_connect, 0, NULL);	
+        command_add(&logsoracle_plugin, TEXT("logsoracle:disconnect"), NULL, logsoracle_cmd_db_disconnect, 0, NULL);
+	command_add(&logsoracle_plugin, TEXT("logsoracle:status"), NULL, logsoracle_cmd_status, 0, NULL);
 		
 	return 0;
 }
@@ -163,7 +167,7 @@ QUERY(logsoracle_handler_postinit)
 QUERY(logsoracle_handler_sestatus)
 {
 	char *session_uid = *(va_arg(ap, char **));	/* eg. jid:romeo@verona.net */
-	int status	  = *(va_arg(ap, int *));	/* eg. (away|back|...) */
+	char *status	  = *(va_arg(ap, char **));	/* eg. (away|back|...) */
 
 	session_t *session = (session_t *)session_find(session_uid);
 	
@@ -183,10 +187,10 @@ QUERY(logsoracle_handler_sestatus)
 	}	
 	
 	/*	
-	debug("[logsoracle] session status (session %s :: status %s :: descr '%s')\n", session_uid, ekg_status_string(status, 0), session->descr);
+	debug("[logsoracle] session status (session %s :: status %s :: descr '%s')\n", session_uid, status, session->descr);
 	*/
     
-        if(!oralog_db_new_status(session_uid, session_uid, (status) ? ekg_status_string(status, 2) : EMPTY_STATUS, (session->descr) ? session->descr : EMPTY_DESCR, time(NULL), 0))
+        if(!oralog_db_new_status(session_uid, session_uid, (status) ? status : EMPTY_STATUS, (session->descr) ? session->descr : EMPTY_DESCR, time(NULL), 0))
 		logsoracle_stat_inc_status();
 
     
@@ -202,10 +206,10 @@ QUERY(logsoracle_handler_prstatus)
 {
         char *session_uid  = *(va_arg(ap, char**));	/* eg. jid:romeo@verona.net */
 	char *uid          = *(va_arg(ap, char**));	/* eg. jid:julia@verona.net */
-	int status_n       = *(va_arg(ap, int*));	/* eg. "away" (as enum) */
+	char *status       = *(va_arg(ap, char**));	/* eg. "away" */
 	char *descr        = *(va_arg(ap, char**));	/* eg. "i'm not here" */
-	char *status       = 0;				/* status as string; written into db */
-	
+			
+	int  status_alloc = 0;
 	int  descr_alloc  = 0;
 
         if(!logsoracle_config.log_status)
@@ -222,10 +226,9 @@ QUERY(logsoracle_handler_prstatus)
 		return 0;
 	}	
 	
-	if(status_n) {
-		status = xstrdup(ekg_status_string(status, 0));
-	} else {
+	if(status == NULL) {
 		status = xstrdup(EMPTY_STATUS);
+		status_alloc = 1;
 	}
 		
 	if(descr == NULL) {
@@ -240,7 +243,9 @@ QUERY(logsoracle_handler_prstatus)
 		logsoracle_stat_inc_status();
 	  
     
-	xfree(status);
+	if(status_alloc) {
+		xfree(status);
+	}	
 
 	if(descr_alloc) {
 		xfree(descr);

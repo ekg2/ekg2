@@ -19,11 +19,9 @@ A million repetitions of "a"
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 #include <ekg/debug.h>
-#include <ekg/stuff.h>
 
 #include <stdint.h>
 
-#include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
 
 #include "jabber.h"
@@ -36,8 +34,6 @@ A million repetitions of "a"
 
 #include <stdio.h>
 #include <string.h>
-
-extern void *jconv_out; /* misc.c */
 
 typedef struct {
     uint32_t state[5];
@@ -337,7 +333,8 @@ static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 
 /* EKG2 STUFF */
 
-extern char *config_console_charset;							/* ekg/stuff.h */
+extern char *mutt_convert_string (char *ps, const char *from, const char *to);	/* jabber/misc.c */
+extern char *config_console_charset;						/* ekg/stuff.h */
 
 /**
  * base16_encode()
@@ -379,10 +376,10 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 	char *kd;
 
 /* ZERO STEP -> recode */
-	if (!(convnode = ekg_convert_string_p(sid, jconv_out)))
+	if (!(convnode = mutt_convert_string((char *) sid, config_console_charset, "utf-8")))
 		convnode = xstrdup(sid);
 
-	if (!(convpasswd = ekg_convert_string_p(password, jconv_out)))
+	if (!(convpasswd = mutt_convert_string((char *) password, config_console_charset, "utf-8")))
 		convpasswd = xstrdup(password);
 
 /* FIRST STEP */
@@ -478,7 +475,7 @@ char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
  * @return <b>static</b> buffer, with 40 digit SHA1 hash + NUL char
  */
 
-char *jabber_digest(const char *sid, const char *password, void *charset_out) {
+char *jabber_digest(const char *sid, const char *password) {
 	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
 	static char result[41];
@@ -487,12 +484,12 @@ char *jabber_digest(const char *sid, const char *password, void *charset_out) {
 
 	SHA1Init(&ctx);
 
-	tmp = ekg_convert_string_p(sid, charset_out);
-	SHA1Update(&ctx, (tmp ? tmp : sid), xstrlen(tmp ? tmp : sid));
+	tmp = mutt_convert_string((char *) sid, config_console_charset, "utf-8");
+	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
-	tmp = ekg_convert_string_p(password, charset_out);
-	SHA1Update(&ctx, (tmp ? tmp : password), xstrlen(tmp ? tmp : password));
+	tmp = mutt_convert_string((char *) password, config_console_charset, "utf-8");
+	SHA1Update(&ctx, tmp, xstrlen(tmp));
 	xfree(tmp);
 
 	SHA1Final(digest, &ctx);

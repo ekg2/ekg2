@@ -242,9 +242,7 @@ static COMMAND(cmd_tabclear)
 			if (send_nicks[i])
 				u = userlist_find(session, send_nicks[i]);
 
-			/* I think we should also remove errors and likes here
-			 * if I'm wrong, change the > to == */
-			if (!u || (u->status > EKG_STATUS_NA))
+			if (!u || xstrcasecmp(u->status, EKG_STATUS_NA))
 				continue;
 
 			tabnick_remove(send_nicks[i]);
@@ -1443,7 +1441,7 @@ next:
 		
 			u = userlist_find_n(i->s_uid, i->name);
 
-	                status = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), u->nickname, u->descr);
+	                status = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
 
 	                printq("metacontact_info_header", params0);
 			printq("metacontact_info_status", status);
@@ -1462,14 +1460,21 @@ next:
 
 list_user:
 		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), 
-				u->nickname, u->descr);
+				(u->first_name) ? u->first_name : u->nickname, u->descr);
 
 		printq("user_info_header", u->nickname, u->uid);
 		if (u->nickname && xstrcmp(u->nickname, u->nickname)) 
 			printq("user_info_nickname", u->nickname);
 
+		if (u->first_name && xstrcmp(u->first_name, "") && u->last_name && u->last_name && xstrcmp(u->last_name, ""))
+			printq("user_info_name", u->first_name, u->last_name);
+		if (u->first_name && xstrcmp(u->first_name, "") && (!u->last_name || !xstrcmp(u->last_name, "")))
+			printq("user_info_name", u->first_name, "");
+		if ((!u->first_name || !xstrcmp(u->first_name, "")) && u->last_name && xstrcmp(u->last_name, ""))
+			printq("user_info_name", u->last_name, "");
+
 		printq("user_info_status", status);
-                if (u->status_time && (u->status <= EKG_STATUS_NA)) {
+                if (u->status_time && xstrcasecmp(u->status, EKG_STATUS_NA)) {
 		        struct tm *status_time;
 			char buf[100];		
 
@@ -1483,35 +1488,49 @@ list_user:
 
 		if (u->last_status) {
 			char *last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), 
-							u->nickname, u->last_descr);
+					(u->first_name) ? u->first_name : u->nickname, u->last_descr);
 			printq("user_info_last_status", last_status);
 			xfree(last_status);
 		}
 
+		if (u->authtype)
+			printq("user_info_auth_type", u->authtype);
 		for (res = u->resources; res; res = res->next) {
 			ekg_resource_t *r = res->data;
 			char *resstatus; 
 
 			resstatus = format_string(format_find(ekg_status_label(r->status, r->descr, /* resource_info? senseless */ "user_info_")), 
 					/* here r->name ? */
-					 u->nickname, r->descr);
+					(u->first_name) ? u->first_name : u->nickname, r->descr);
 			printq("resource_info_status", r->name, resstatus, itoa(r->prio));
 			xfree(resstatus);
 		}
 
 		if (ekg_group_member(u, "__blocked"))
-			printq("user_info_block", u->nickname);
+			printq("user_info_block", ((u->first_name) ? u->first_name : u->nickname));
 		if (ekg_group_member(u, "__offline"))
-			printq("user_info_offline", u->nickname);
+			printq("user_info_offline", ((u->first_name) ? u->first_name : u->nickname));
 
 		query_emit_id(NULL, USERLIST_INFO, &u, &quiet);
 
+		if (u->ip) {
+			char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port));
+			printq("user_info_ip", ip_str);
+			xfree(ip_str);
+		} else if (u->last_ip) {
+			char *last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &u->last_ip)), itoa(u->last_port));
+                        printq("user_info_last_ip", last_ip_str);
+			xfree(last_ip_str);
+		}
+
+		if (u->mobile && xstrcmp(u->mobile, ""))
+			printq("user_info_mobile", u->mobile);
 		if (u->groups) {
 			char *groups = group_to_string(u->groups, 0, 1);
 			printq("user_info_groups", groups);
 			xfree(groups);
 		}
-		if (u->status <= EKG_STATUS_NA) {
+		if (!xstrcasecmp(u->status, EKG_STATUS_NA) || !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE) || !xstrcasecmp(u->status, EKG_STATUS_ERROR)) {
 			char buf[100];
 			struct tm *last_seen_time;
 			
@@ -1589,55 +1608,48 @@ list_user:
 		array_free(argv);
 	}
 
-	{
-			/* ip/port currently can be fetched for GG only,
-			 * so this should remove unneeded slowdown for other sessions */
-		const int is_ipport_capable = !xstrncmp(session->uid, "gg:", 3);
+	for (l = session->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
+		int show;
 
-		for (l = session->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
-			int show;
+		if (!u->nickname)
+			continue;
 
-			if (!u->nickname)
-				continue;
+		tmp = ekg_status_label(u->status, u->descr, "list_");
 
-			tmp = ekg_status_label(u->status, u->descr, "list_");
+		show = show_all;
 
-			show = show_all;
-	#define SHOW_IF_S(x,y) if (show_##x && (u->status == EKG_STATUS_##y)) show = 1;
-			SHOW_IF_S(away, AWAY)
-			SHOW_IF_S(active, AVAIL)
-			SHOW_IF_S(inactive, NA)
-			SHOW_IF_S(invisible, INVISIBLE)
-			SHOW_IF_S(blocked, BLOCKED)
-	#undef SHOW_IF_S		
-			/* XXX nie chcialo mi sie zmiennej robic */
-			if (u->status == EKG_STATUS_ERROR)
-				show = 1;
+		if (show_away && !xstrcasecmp(u->status, EKG_STATUS_AWAY))
+			show = 1;
 
-			if (show_descr && !u->descr)
-				show = 0;
+		if (show_active && !xstrcasecmp(u->status, EKG_STATUS_AVAIL))
+			show = 1;
 
-			if (show_group && !ekg_group_member(u, show_group))
-				show = 0;
+		if (show_inactive && !xstrcasecmp(u->status, EKG_STATUS_NA))
+			show = 1;
 
-			if (show_offline && ekg_group_member(u, "__offline"))
-				show = 1;
+		if (show_invisible && !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE))
+			show = 1;
 
-			if (show) {
-				const char *ip		= NULL;
-				const char *port	= NULL;
-				if (is_ipport_capable) {
-					int func		= EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT;
-					const char **__ip	= &ip;
-					const char **__port	= &port;
-					
-					query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func, &__ip, &__port);
-				}
+		if (show_blocked && !xstrcasecmp(u->status, EKG_STATUS_BLOCKED))
+			show = 1;
+		
+		/* nie chcialo mi sie zmiennej robic */
+		if (!xstrcasecmp(u->status, EKG_STATUS_ERROR))
+			show = 1;
 
-				printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), (port ? port : "0"), u->descr);
-				count++;
-			}
+		if (show_descr && !u->descr)
+			show = 0;
+
+		if (show_group && !ekg_group_member(u, show_group))
+			show = 0;
+
+		if (show_offline && ekg_group_member(u, "__offline"))
+			show = 1;
+
+		if (show) {
+			printq(tmp, format_user(session, u->uid), (u->first_name) ? u->first_name : u->nickname, inet_ntoa(*((struct in_addr*) &u->ip)), itoa(u->port), u->descr);
+			count++;
 		}
 	}
 
@@ -2134,7 +2146,7 @@ static COMMAND(cmd_test_mem) {
 			return -1;
 #endif
 		}
-		txt = saprintf(("Memory used by ekg2: %d KiB"), rozmiar);
+		txt = saprintf(("Memory used by ekg2: %d kB"), rozmiar);
 		printq("generic", txt);
 		xfree(txt);
 	} else {
@@ -2152,7 +2164,7 @@ static COMMAND(cmd_test_fds)
 {
 #ifndef NO_POSIX_SYSTEM
 	struct stat st;
-	char buf[PATH_MAX+1000];
+	char buf[1000];
 	int i;
 	
 	for (i = 0; i < 2048; i++) {
@@ -2161,23 +2173,8 @@ static COMMAND(cmd_test_fds)
 
 		sprintf(buf, "%d: ", i);
 
-		if (S_ISREG(st.st_mode)) {
-#ifdef __linux__
-			char *mypath = saprintf("/proc/%d/fd/%d", getpid(), i);
-			char newpath[PATH_MAX];
-			int r = readlink(mypath, newpath, sizeof(newpath)-1);
-
-			xfree(mypath);
-			if (r <= 0)
-				sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);
-			else {
-				newpath[r] = 0;
-				sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu, path %s", st.st_ino, st.st_size, newpath);
-			}
-#else
+		if (S_ISREG(st.st_mode))
 			sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);
-#endif
-		}
 
 		if (S_ISSOCK(st.st_mode)) {
 			/* GiM: ten sock_n, bo sockaddr_in6 > sockaddr_in */
@@ -2713,7 +2710,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 
 			if (!res && last_command->flags & COMMAND_TARGET_VALID_UID) {
-				char *tmp = target;
+				const char *tmp = target;
 				if (!(target = get_uid(session, target))) {
 					/* user_not_found vs invalid_uid */
 					printq("user_not_found", tmp);
@@ -3970,7 +3967,7 @@ COMMAND(cmd_dcc)
 			printq("not_enough_params", name);
 			return -1;
 		}
-			/* XXX, get_uid() */
+
 		uid = get_uid(session, params[1]);		
 
 		for (l = dccs; l; l = l->next) {
@@ -4046,21 +4043,15 @@ static COMMAND(cmd_plugin) {
                         plugin_register(p, -254);
                 }
 
-		queries_reconnect();
 		config_changed = 1;
-		printq("plugin_default");
+                printq("plugin_default");
         }
 
 	if (params[0][0] == '+') {
-		const int prio = (params[1] ? atoi(params[1]) : -254);
-		if ((ret = plugin_load(params[0] + 1, prio, 0))) {
-			/* if plugin cannot be founded || loaded don't reload theme. */
-			return ret;
-		}
-
-		queries_reconnect();
-		changed_theme(NULL); 
-		return 0;
+		ret = plugin_load(params[0] + 1, -254, 0);
+		if (!ret) /* if plugin cannot be founded || loaded don't reload theme. */
+			changed_theme(NULL); 
+		return ret;
 	}
 
 	if (params[0][0] == '-') {
@@ -4077,7 +4068,6 @@ static COMMAND(cmd_plugin) {
 		list_remove(&plugins, pl, 0);
 		plugin_register(pl, atoi(params[1])); 
 
-		queries_reconnect();
 		config_changed = 1;
 		printq("plugin_prio_set", pl->name, params[1]);
 
@@ -4102,12 +4092,33 @@ static COMMAND(cmd_plugin) {
  * @param params [0] New description, if NULL than "" will be used.
  */
 
-static COMMAND(cmd_desc) {
-	const char *cmd;
+static COMMAND(cmd_desc)
+{
+	const char *status, *cmd;
+	
+	if (!session)
+		return -1;
 	
 	session_unidle(session);
-	cmd = ekg_status_string(session->status, 1);
-
+	status = session_status_get(session);
+	
+	if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
+		cmd = "back";
+	} else if (!xstrcmp(status, EKG_STATUS_AWAY)) {
+		cmd = "away";
+	} else if (!xstrcmp(status, EKG_STATUS_INVISIBLE)) {
+		cmd = "invisible";
+	} else if (!xstrcmp(status, EKG_STATUS_XA)) {
+		cmd = "xa";
+	} else if (!xstrcmp(status, EKG_STATUS_DND)) {
+		cmd = "dnd";
+	} else if (!xstrcmp(status, EKG_STATUS_FREE_FOR_CHAT)) {
+		cmd = "ffc";
+	} else {
+		/* invalid self status? */
+		return -2;
+	};
+	
 	return command_exec_format(NULL, session, quiet, ("/%s %s"), cmd, (params[0] ? params[0] : ""));
 }
 
@@ -4124,7 +4135,7 @@ static LIST_ADD_COMPARE(command_add_compare, command_t *) {
 	if (!data1 || !data1->name || !data2 || !data2->name)
 		return 0;
 
-	return xstrcasecmp((char *) data1->name, (char *) data2->name);
+	return xstrcasecmp(data1->name, data2->name);
 }
 
 /**

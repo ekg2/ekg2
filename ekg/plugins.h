@@ -51,37 +51,8 @@ typedef int (*plugin_destroy_func_t)(void);
 typedef int (*plugin_theme_init_func_t)(void);
 typedef void (plugin_notify_func_t)(session_t *, const char *);
 
-#define PLUGIN_VAR_ADD(name, id, type, value, secret, notify) 	{ name, id, value, secret, type, notify }
-#define PLUGIN_VAR_ADD_ID(id, type, value, secret, notify)	{ NULL, id, value, secret, type, notify }
-#define PLUGIN_VAR_ADD_NAME(name, type, value, secret, notify)	{ name,  0, value, secret, type, notify }
-#define PLUGIN_VAR_END()					{ NULL, -1, NULL, 0, -1, NULL } 
-
-typedef enum {
-	SESSION_VAR_START = 0,
-	SESSION_VAR_ALIAS,			/* alias */
-	SESSION_VAR_ALLOW_AUTORESPONDER,	/* allow_autoresponder */
-	SESSION_VAR_AUTO_AWAY,			/* auto_away */
-	SESSION_VAR_AUTO_AWAY_DESCR,		/* auto_away_descr */
-	SESSION_VAR_AUTO_BACK,			/* auto_back */
-	SESSION_VAR_AUTO_CONNECT,		/* auto_connect */
-	SESSION_VAR_AUTO_FIND,			/* auto_find */
-	SESSION_VAR_AUTO_RECONNECT,		/* auto_reconnect */
-	SESSION_VAR_AUTO_XA,			/* auto_xa */
-	SESSION_VAR_AUTO_XA_DESCR,		/* auto_xa_descr */
-	SESSION_VAR_CONNECT_TIMEOUT,		/* connect_timeout */
-	SESSION_VAR_DCC_PORT,			/* XXX */
-	SESSION_VAR_DESCR,			/* descr */
-	SESSION_VAR_DISPLAY_NOTIFY,		/* display_notify */
-	SESSION_VAR_LOG_FORMATS,		/* log_formats */
-	SESSION_VAR_PASSWORD,			/* password */
-	SESSION_VAR_PORT,			/* port */
-	SESSION_VAR_SERVER,			/* server */
-	SESSION_VAR_STATUS,			/* status */
-} plugin_param_id_t;
-
 typedef struct {
         char *key;                      /* name */
-	int id;				/* see @ plugin_param_id_t */
         char *value;                    /* value */
         int secret;                     /* should it be hidden ? */
 	int type;			/* type */
@@ -94,7 +65,7 @@ typedef struct {
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
 	/* lt_dlhandle */ void *dl;
-	plugins_params_t *params;
+	plugins_params_t **params;
 	plugin_theme_init_func_t theme_init;
 } plugin_t;
 
@@ -106,10 +77,10 @@ int plugin_register(plugin_t *, int prio);
 int plugin_unregister(plugin_t *);
 plugin_t *plugin_find(const char *name);
 plugin_t *plugin_find_uid(const char *uid);
+#define plugin_find_s(a) plugin_find_uid(a->uid)
 int have_plugin_of_class(plugin_class_t pclass);
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify);
-int plugin_var_find(plugin_t *pl, const char *name);
-int plugin_var_find_id(plugin_t *pl, int id);
+plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 
 #endif
 
@@ -157,7 +128,6 @@ void query_external_free();
 
 int query_emit_id(plugin_t *, const int, ...);
 int query_emit(plugin_t *, const char *, ...);
-void queries_reconnect();
 
 const char *query_name(const int id);
 const struct query *query_struct(const int id);

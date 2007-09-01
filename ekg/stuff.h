@@ -221,22 +221,17 @@ extern char *config_sound_notify_file;
 extern char *config_sound_mail_file;
 extern char *config_speech_app;
 extern char *config_subject_prefix;
-extern char *config_subject_reply_prefix;
 extern char *config_tab_command;
 extern char *config_theme;
 extern int config_time_deviation;
 extern char *config_timestamp;
 extern int config_timestamp_show;
 extern int config_use_unicode; 	/* for instance in jabber plugin if this is on, than we don't need to make iconv from / to unicode.. */
-extern int config_use_iso;  /* this for ncurses */
 extern char *config_console_charset;	/* */
 extern int config_window_session_allow;
 extern char *config_windows_layout;
 extern int config_windows_save;
 extern char *config_dcc_dir;
-extern int config_version;
-extern char *config_exit_exec;
-extern int config_session_locks;
 
 extern char *home_dir;
 extern char *config_dir;
@@ -319,7 +314,6 @@ int play_sound(const char *sound_path);
 
 const char *prepare_path(const char *filename, int do_mkdir);
 const char *prepare_pathf(const char *filename, ...);
-const char *prepare_path_user(const char *path);
 char *read_file(FILE *f, int alloc);
 
 const char *timestamp(const char *format);
@@ -352,21 +346,14 @@ int timer_remove_session(session_t *session, const char *name);
 int timer_remove_user();
 TIMER(timer_handle_command);
 
-const char *ekg_status_label(const int status, const char *descr, const char *prefix);
+const char *ekg_status_label(const char *status, const char *descr, const char *prefix);
 void ekg_update_status(session_t *session);
 #define ekg_update_status_n(a) ekg_update_status(session_find(a))
-const char *ekg_status_string(const int status, const int cmd);
-int ekg_status_int(const char *text);
 
-char *ekg_draw_descr(const int status);
+char *ekg_draw_descr(const char *status);
 uint32_t *ekg_sent_message_format(const char *text);
 
 void ekg_yield_cpu();
-
-void *ekg_convert_string_init(const char *from, const char *to, void **rev);
-void ekg_convert_string_destroy(void *ptr);
-char *ekg_convert_string_p(const char *ps, void *ptr);
-char *ekg_convert_string(const char *ps, const char *from, const char *to);
 
 /* funkcje poza stuff.c */
 void ekg_exit();

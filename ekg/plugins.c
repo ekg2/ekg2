@@ -303,7 +303,8 @@ int plugin_load(const char *name, int prio, int quiet)
 		pl->dl = plugin;
 	} else {
 		debug_error("plugin_load() plugin_find(%s) not found.\n", name);
-		/* It's FATAL */
+		/* XXX, It's FATAL !!!! */
+#warning "XXX"
 	}
 
 	query_emit_id(pl, SET_VARS_DEFAULT);
@@ -319,8 +320,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		if ((tmp = prepare_pathf("sessions-%s", name)))
 			session_read(tmp);
 
-		if (pl)
-			query_emit_id(pl, CONFIG_POSTINIT);
+		query_emit_id(pl, CONFIG_POSTINIT);
 
 		in_autoexec = 0;
 		config_changed = 1;
@@ -461,53 +461,8 @@ static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) {
  *
  * 0/-1
  */
-int plugin_register(plugin_t *p, int prio) {
-	static char unknown[] = "unknown";
-	static char *plugin_name_id_struct[] = {		/* match with plugin_param_id_t, or die */
-			"alias", "allow_autorespnder", "auto_away", "auto_away_descr", "auto_back",
-			"auto_connect", "auto_find", "auto_reconnect", "auto_xa", "auto_xa_descr",
-			"connect_timeout", "dcc_port", "descr", "display_notify", "log_formats",
-			"password", "port", "server", "status", 
-			NULL };
-
-	if (p->params) {
-		int i;
-		/* sad checking if key/keyids (if NULL or 0) fix it. */
-		for (i=0; (p->params[i].key || p->params[i].id != -1); i++) {
-			const char *key = (p->params[i].key);
-			const int keyid = (p->params[i].id);
-			int j;
-
-			if (key && keyid) {
-				/* XXX, should we also do sanity check? */
-				continue;
-			}
-
-			if (key == NULL && keyid) { /* lazy programmer don't set name of param, but set it. ok, let's guess name... */
-				for (j = 0; plugin_name_id_struct[j]; j++) {
-					if (keyid == j+1) {
-						p->params[i].key = plugin_name_id_struct[j];
-						debug_error("plugin_register() [%s] associated [keyid: %d] with: %s UPDATE YOUR PLUGIN!\n", p->name, keyid, plugin_name_id_struct[j]);
-						break;
-					}
-				}
-			}
-			if (keyid == 0 && key) {  /* lazy programmers don't set id, but set name of it. let's try to guess id.. [IT's really needed by core] */
-				for (j = 0; plugin_name_id_struct[j]; j++) {
-					if (!xstrcmp(key, plugin_name_id_struct[j])) {
-						p->params[i].id = j+1;
-						debug_error("plugin_register() [%s] associated [key: %s] with: %d UPDATE YOUR PLUGIN!\n", p->name, key, j+1);
-					}
-				}
-			}
-
-			if (!(p->params[i].key)) {	/* if still no key..., it stupid. but we must react somehow? */
-				debug_error("plugin_register() [%s] FATAL, FATAL, FATAL ERROR no entry name for: id %d setting 'unknown'\n", p->name, i);
-				p->params[i].key = unknown;
-			}
-		}
-	}
-
+int plugin_register(plugin_t *p, int prio)
+{
 	if (prio == -254) {
 		switch (p->pclass) {
 			case PLUGIN_UI:
@@ -544,6 +499,8 @@ int plugin_register(plugin_t *p, int prio) {
  */
 int plugin_unregister(plugin_t *p)
 {
+	plugins_params_t **par;
+
 	/* XXX eXtreme HACK warning
 	 * (mp) na razie jest tak.  docelowo: wyladowywac pluginy tylko z
 	 * glownego programu (queriesami?)
@@ -624,64 +581,86 @@ int plugin_unregister(plugin_t *p)
 			command_freeone(c);
 	}
 
+	if ((par = p->params)) {
+		while (*par) {
+			xfree((*par)->key);
+			xfree((*par)->value);
+			xfree((*par));
+			par++;
+		}
+		xfree(p->params);
+		p->params = NULL;
+	}
+
 	list_remove(&plugins, p, 0);
 
 	return 0;
 }
 
-/**
+/* 
  * plugin_var_find()
  *
- * it looks for given variable name in given plugin
+ * it looks for given var in given plugin
  *
- * @param	pl - plugin
- * @param	name - variable name
- *
- * @sa	plugin_var_find_id() - To search for variable id
- *
- * returns sequence number+1 of variable if found, else 0
+ * returns pointer to this var or NULL if not found or error
  */
-
-int plugin_var_find(plugin_t *pl, const char *name) {
+plugins_params_t *plugin_var_find(plugin_t *pl, const char *name)
+{
 	int i;
+	
+	if (!pl)
+		return NULL;
 
-	if (!pl || !pl->params)
-		return 0;
+	if (!pl->params)
+		return NULL;
 
-	for (i = 0; (pl->params[i].key /* && pl->params[i].id != -1 */); i++) {
-		if (!xstrcasecmp(pl->params[i].key, name))
-			return i+1;
+	for (i = 0; pl->params[i]; i++) {
+		if (!xstrcasecmp(pl->params[i]->key, name))
+			return pl->params[i];
 	}
-	return 0;
+
+	return NULL;
 }
 
-/**
- * plugin_var_find_id()
+/*
+ * plugin_var_add()
  *
- * It looks for given variable idin given plugin
+ * adds given var to the given plugin
  *
- * @param	pl - plugin
- * @param	id - variable id	(plugin_param_id_t)
- *
- * @sa	plugin_var_find() - To search for variable name
- *
- * return Sequence number+1 of variable if found, else 0
+ * name - name
+ * type - VAR_INT | VAR_STR
+ * value - default_value
+ * secret - hide when showing?
  */
+int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify)
+{
+	plugins_params_t *p;
+	int i, count;
 
-int plugin_var_find_id(plugin_t *pl, int id) {
-	int i;
+        p = xmalloc(sizeof(plugins_params_t));
+        p->key = xstrdup(name);
+	p->type = type;
+	p->value = xstrdup(value);
+	p->secret = secret;
+        p->notify = notify;
 
-	if (!pl || !pl->params)
-		return 0;
+	if (!pl->params) {
+                pl->params = xmalloc(sizeof(plugins_params_t *) * 2);
+                pl->params[0] = p;
+                pl->params[1] = NULL;
+                return 0;
+        }
 
-	for (i = 0; (pl->params[i].key /* && pl->params[i].id != -1 */); i++) {
-		if (pl->params[i].id == id)
-			return i+1;
-	}
-	return 0;
+        for (i = 0, count = 0; pl->params[i]; i++)
+                count++;
+
+        pl->params = xrealloc(pl->params, (count + 2) * sizeof(plugins_params_t *));
+
+        pl->params[count] = p;
+        pl->params[count + 1] = NULL;
+
+        return 0;
 }
-
-int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify) { return -1; }
 
 /**
  * query_external_free()
@@ -924,40 +903,6 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 	return result;
 }
 
-/**
- * queries_reconnect()
- *
- * Reconnect (resort) all queries, e.g. after plugin prio change.
- */
-
-void queries_reconnect() {
-
-	int query_compare(query_t *a, query_t *b) {
-				/*	any other suggestions: vvv ? */
-		const int ap = (a->plugin ? a->plugin->prio : -666);
-		const int bp = (b->plugin ? b->plugin->prio : -666);
-		
-		return (bp-ap);
-	}
-
-	list_t tmplist	= NULL;
-	list_t l;
-
-	for (l = queries; l; l = l->next) {
-		if (l->data) {
-			if (!(LIST_ADD_SORTED(&tmplist, l->data, 0, query_compare))) {
-				debug_error("resort_queries(), list_add_sorted() failed, not continuing!\n");
-				list_destroy(tmplist, 0);
-				return;
-			}
-		}
-	}
-
-	list_destroy(queries, 0);
-	queries = tmplist;
-
-}
-
 /*
  * watch_find()
  *
@@ -969,8 +914,7 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
 	
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
-			/* XXX: added simple plugin ignoring, make something nicer? */
-		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && (w->type & type) && !(w->removed > 0))
+		if (w && w->plugin == plugin && w->fd == fd && w->type == type && !(w->removed > 0))
 			return w;
 	}
 

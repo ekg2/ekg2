@@ -290,10 +290,11 @@ int msg_queue_write()
  */
 
 int msg_queue_read() {
+	const char *dirn;
 	struct dirent *d;
 	DIR *dir;
 
-	if (!(dir = opendir(prepare_pathf("queue"))))		/* opendir() ~/.ekg2/[PROFILE/]/queue */
+	if (!(dirn = prepare_pathf("queue")) || !(dir = opendir(dirn)))		/* opendir() ~/.ekg2/[PROFILE/]/queue */
 		return -1;
 
 	while ((d = readdir(dir))) {

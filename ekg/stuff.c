@@ -49,7 +49,6 @@
 
 #ifndef NO_POSIX_SYSTEM
 #include <sched.h>
-#include <pwd.h>
 #endif
 
 #include <signal.h>
@@ -60,13 +59,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <iconv.h>
-
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
-#endif
-#ifndef HAVE_STRLCAT
-#  include "compat/strlcat.h"
 #endif
 
 #include "debug.h"
@@ -82,16 +76,21 @@
 
 #include "queries.h"
 
+#ifndef PATH_MAX
+# ifdef MAX_PATH
+#  define PATH_MAX MAX_PATH
+# else
+#  define PATH_MAX _POSIX_PATH_MAX
+# endif
+#endif
+
 list_t children = NULL;
 list_t aliases = NULL;
 list_t autofinds = NULL;
-list_t bindings = NULL;		/**< list_t struct timer <b>all</b> ekg2 timers */
-list_t timers = NULL;
+list_t bindings = NULL;
+list_t timers = NULL;		/**< list_t with <b>all</b> ekg2 timers */
 list_t conferences = NULL;
 list_t newconferences = NULL;
-#ifdef HAVE_ICONV
-list_t ekg_converters = NULL;	/**< list for internal use of ekg_convert_string_*() */
-#endif
 
 list_t buffer_debug;		/**< debug list_t struct buffer */
 list_t buffer_speech;		/**< speech list_t struct buffer */
@@ -99,7 +98,6 @@ list_t buffer_speech;		/**< speech list_t struct buffer */
 list_t bindings_added;
 int old_stderr;
 char *config_subject_prefix;
-char *config_subject_reply_prefix;
 
 int in_autoexec = 0;
 int config_auto_save = 0;
@@ -123,9 +121,8 @@ char *config_sound_sysmsg_file = NULL;
 char *config_sound_mail_file = NULL;
 char *config_sound_app = NULL;
 int config_use_unicode;
-int config_use_iso;
 int config_changed = 0;
-int config_display_ack = 12;
+int config_display_ack = 3;
 int config_completion_notify = 1;
 char *config_completion_char = NULL;
 time_t ekg_started = 0;
@@ -167,9 +164,6 @@ int config_debug = 1;
 int config_lastlog_noitems = 0;
 int config_lastlog_case = 0;
 int config_lastlog_display_all = 0;
-int config_version = 0;
-char *config_exit_exec = NULL;
-int config_session_locks = 0;
 
 char *last_search_first_name = NULL;
 char *last_search_last_name = NULL;
@@ -1519,7 +1513,7 @@ const char *prepare_pathf(const char *filename, ...) {
 
 	len = strlcpy(path, config_dir ? config_dir : "", sizeof(path));
 
-	if (len + fpassed >= sizeof(path)) {
+	if (len >= (sizeof(path)-fpassed)) {
 		debug_error("prepare_pathf() LEVEL0 %d + %d >= %d\n", len, fpassed, sizeof(path));
 		return NULL;
 	}
@@ -1534,7 +1528,7 @@ const char *prepare_pathf(const char *filename, ...) {
 		len2 = vsnprintf(&path[len], sizeof(path)-len, filename, ap);
 		va_end(ap);
 
-		if (len2 == -1 || (len + len2) >= sizeof(path)) {	/* (len + len2 == sizeof(path)) ? */
+		if (len2 == -1 || (len2 >= (sizeof(path)-len))) {	/* (len + len2 == sizeof(path)) ? */
 			debug_error("prepare_pathf() LEVEL1 %d | %d + %d >= %d\n", len2, len, len2, sizeof(path));
 			return NULL;
 		}
@@ -1586,113 +1580,6 @@ const char *prepare_path(const char *filename, int do_mkdir)
 		snprintf(path, sizeof(path), "%s/%s", config_dir, filename);
 	
 	return path;
-}
-
-/**
- * prepare_path_user()
- *
- * Converts path given by user to absolute path.
- *
- * @bug		Behaves correctly only with POSIX slashes, need to be modified for NO_POSIX_SYSTEM.
- *
- * @param	path	- input path.
- *
- * @return	Pointer to output path or NULL, if longer than PATH_MAX.
- */
-
-const char *prepare_path_user(const char *path) {
-	static char out[PATH_MAX];
-	const char *in = path;
-	const char *homedir = NULL;
-
-	if (!in || (xstrlen(in)+1 > sizeof(out))) /* sorry, but I don't want to additionally play with '..' here */
-		return NULL;
-
-#ifndef NO_POSIX_SYSTEM
-	if (*in == '/') /* absolute path */
-#endif
-		xstrcpy(out, in);
-#ifndef NO_POSIX_SYSTEM
-	else {
-		if (*in == '~') { /* magical home directory handler */
-			++in;
-			if (*in == '/') { /* own homedir */
-				if (!home_dir)
-					return NULL;
-				homedir = home_dir;
-			} else {
-				struct passwd *p;
-				const char *slash = xstrchr(in, '/');
-				
-				if (slash) {
-					char *user = xstrndup(in, slash-in);
-					if ((p = getpwnam(user))) {
-						homedir = p->pw_dir;
-						in = slash+1;
-					} else
-						homedir = "";
-					xfree(user);
-				}
-				--in;
-			}
-		}
-
-		if (!homedir || *homedir != '/') {
-			if (!(getcwd(out, sizeof(out)-xstrlen(homedir)-xstrlen(in)-2)))
-				return NULL;
-			if (*out != '/') {
-				debug_error("prepare_path_user(): what the holy shmoly? getcwd() didn't return absolute path! (windows?)\n");
-				return NULL;
-			}
-			xstrcat(out, "/");
-		} else
-			*out = 0;
-		if (homedir && strlcat(out, homedir, sizeof(out)-xstrlen(out)-1) >= sizeof(out)-xstrlen(out)-1)
-			return NULL; /* we don't add slash here, 'cause in already has it */
-		if (strlcat(out, in, sizeof(out)-xstrlen(out)) >= sizeof(out)-xstrlen(out))
-			return NULL;
-	}
-
-	{
-		char *p;
-
-		while ((p = xstrstr(out, "//"))) /* remove double slashes */
-			memmove(p, p+1, xstrlen(p+1)+1);
-		while ((p = xstrstr(out, "/./"))) /* single dots suck too */
-			memmove(p, p+2, xstrlen(p+2)+1);
-		while ((p = xstrstr(out, "/../"))) { /* and finally, '..' */
-			char *prev;
-
-			*p = 0;
-			if (!(prev = xstrrchr(out, '/')))
-				prev = p;
-			memmove(prev, p+3, xstrlen(p+3)+1);
-		}
-
-				/* clean out end of path */
-		p = out+xstrlen(out)-1;
-		if (*p == '.') {
-			if (*(p-1) == '/') /* '.' */
-				*(p--) = 0;
-			else if (*(p-1) == '.' && *(p-2) == '/') { /* '..' */
-				char *q;
-
-				p -= 2;
-				*p = 0;
-				if ((q = xstrrchr(out, '/')))
-					*(q+1) = 0;
-				else {
-					*p = '/';
-					*(p+1) = 0;
-				}
-			}
-		}
-		if (*p == '/' && out != p)
-			*p = 0;
-	}
-#endif
-
-	return out;
 }
 
 /**
@@ -2219,8 +2106,6 @@ int msg_all(session_t *s, const char *function, const char *what)
 
 		if (!u || !u->uid)
 			continue;
-		/* XXX, when adding to userlist if we check if uid is good, this code will be ok. */
-
 		command_exec_format(NULL, s, 0, "%s \"%s\" %s", function, get_nickname(s, u->uid), what);
 	}
 
@@ -2458,12 +2343,11 @@ char *split_line(char **ptr)
  *
  * tworzy etykietê formatki opisuj±cej stan.
  */
-const char *ekg_status_label(const int status, const char *descr, const char *prefix)
+const char *ekg_status_label(const char *status, const char *descr, const char *prefix)
 {
-	static char buf[100]; /* maybe dynamic buffer would be better? */
-	const char *status_string = ekg_status_string(status, 0);
-	
-	snprintf(buf, sizeof(buf), "%s%s%s", (prefix) ? prefix : "", status_string, (descr) ? "_descr" : "");
+	static char buf[100];
+
+	snprintf(buf, sizeof(buf), "%s%s%s", (prefix) ? prefix : "", __(status), (descr) ? "_descr" : "");
 
 	return buf;
 }
@@ -2474,23 +2358,22 @@ const char *ekg_status_label(const int status, const char *descr, const char *pr
  * losuje opis dla danego stanu lub pobiera ze zmiennej, lub cokolwiek
  * innego.
  */
-char *ekg_draw_descr(const int status)
+char *ekg_draw_descr(const char *status)
 {
 	const char *value;
 	char file[100];
 	char var[100];
 	variable_t *v;	
 
-	if (status <= EKG_STATUS_NA) {
+	if (!xstrcmp(status, EKG_STATUS_NA) || !xstrcmp(status, EKG_STATUS_INVISIBLE)) {
 		xstrcpy(var, ("quit_reason"));
 		xstrcpy(file, "quit.reasons");
-	} else if (status == EKG_STATUS_AVAIL) {
+	} else if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
 		xstrcpy(var, ("back_reason"));
 		xstrcpy(file, "back.reasons");
 	} else {
-		/* Wouldn't it be better to use command-names? */
-		snprintf(var, sizeof(var), "%s_reason", ekg_status_string(status, 0));
-		snprintf(file, sizeof(file), "%s.reasons", ekg_status_string(status, 0));
+		snprintf(var, sizeof(var), "%s_reason", status);
+		snprintf(file, sizeof(file), "%s.reasons", status);
 	}
 
 	if (!(v = variable_find(var)) || v->type != VAR_STR)
@@ -2521,113 +2404,14 @@ void ekg_update_status(session_t *session)
                 xfree(u->descr);
                 u->descr = xstrdup(session->descr);
 
+                xfree(u->status);
                 if (!session_connected_get(session))
-                        u->status = EKG_STATUS_NA;
+                        u->status = xstrdup(EKG_STATUS_NA);
                 else
-                        u->status = session->status;
+                        u->status = xstrdup(session->status);
 		u->xstate &= ~EKG_XSTATE_BLINK;
         }
 
-}
-
-/* status string tables */
-
-const char *ekg_statuses[] = {
-/* 0x00 */	0, "error", "blocked", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x10 */	"unknown", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x20 */	"notavail", "invisible", "dnd", "xa", "away", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x30 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x40 */	"avail", "chat", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x50 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x60 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x70 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x80 */	"autoaway", "autoxa", "autoback", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x90 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xA0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xB0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xC0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xD0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xE0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xF0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
-
-const char *ekg_status_commands[] = {
-/* 0x00 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x10 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x20 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x30 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x40 */	"back", "ffc", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x50 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x60 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x70 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
-
-const char *ekg_status_specials[] = {
-		"available" /* tlen */, "online" /* jabber */, NULL
-	};
-
-const int ekg_status_specials_i[] = {
-		EKG_STATUS_AVAIL, EKG_STATUS_AVAIL
-	};
-
-/*
- * ekg_status_string()
- *
- * converts enum status to string
- * cmd = 0 for normal labels, 1 for command names, 2 for labels+special (esp. for debug, use wisely)
- */
-
-const char *ekg_status_string(const int status, const int cmd)
-{
-	const char *r = NULL;
-
-	if ((status > 0) && (status < (cmd == 2 ? 0x100 : 0x80))) {
-		if (cmd == 1)
-			r = ekg_status_commands[status]; /* if command differs from status */
-		if (!r)
-			r = ekg_statuses[status]; /* else fetch status */
-	}
-
-	if (!r) {
-		/* we only allow 00..7F, or 00..FF with cmd==2
-		 * else we return either UNKNOWN or AVAIL if cmd==1 */
-		debug_error("ekg_status_string(): called with unexpected status: 0x%02x\n", status);
-		return (cmd == 1 ? ekg_status_commands[EKG_STATUS_AVAIL] : ekg_statuses[EKG_STATUS_UNKNOWN]);
-	}
-	
-	return r;
-}
-
-/*
- * ekg_status_int()
- *
- * converts string to enum status
- */
-
-int ekg_status_int(const char *text)
-{
-	const char **p;
-	int i;
-	const int *j;
-
-	/* At first, check statuses */
-	for (p = &ekg_statuses[0], i = 0; i < 0x80; p++, i++) {
-		if (!xstrcasecmp(text, *p))
-			return i;
-	}
-	/* then check commands */
-	for (p = &ekg_status_commands[0], i = 0; i < 0x80; p++, i++) {
-		if (!xstrcasecmp(text, *p))
-			return i;
-	}
-	/* and specials */
-	for (p = &ekg_status_specials[0], j = &ekg_status_specials_i[0]; *p; p++, j++) {
-		if (!xstrcasecmp(text, *p))
-			return *j;
-	}
-
-	debug_error("ekg_status_int(): Got unexpected status: %s\n", text);
-	return EKG_STATUS_UNKNOWN;
 }
 
 /*
@@ -2811,20 +2595,13 @@ char *saprintf(const char *format, ...)
  * zamienia wszystko znaki a na b w podanym ci±gu
  * nie robie jego kopi!
  */
-void xstrtr(char *text, char from, char to)
-{
-	
-	if (!text || !from) /* 'to' might be \0 */
+void xstrtr(char *text, char from, char to) {
+	if (!text || !from)
 		return;
 
 	while (*text++) {
-		if (*text == from) {
+		if (*text == from)
 			*text = to;
-#if 0 /* if we want to be more C-like than tr-like, uncomment this */
-			if (!to) /* if we put \0, we just cut the string */
-				break;
-#endif
-		}
 	}
 }
 
@@ -2840,371 +2617,6 @@ void inline ekg_yield_cpu()
 #ifdef _POSIX_PRIORITY_SCHEDULING
 	sched_yield();
 #endif
-}
-
-#ifdef HAVE_ICONV
-/* Following two functions shamelessly ripped from mutt-1.4.2i 
- * (http://www.mutt.org, license: GPL)
- * 
- * Copyright (C) 1999-2000 Thomas Roessler <roessler@guug.de>
- * Modified 2004 by Maciek Pasternacki <maciekp@japhy.fnord.org>
- */
-
-/*
- * Like iconv, but keeps going even when the input is invalid
- * If you're supplying inrepls, the source charset should be stateless;
- * if you're supplying an outrepl, the target charset should be.
- */
-static inline size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
-		char **outbuf, size_t *outbytesleft,
-		char **inrepls, const char *outrepl)
-{
-	size_t ret = 0, ret1;
-	char *ib = *inbuf;
-	size_t ibl = *inbytesleft;
-	char *ob = *outbuf;
-	size_t obl = *outbytesleft;
-
-	for (;;) {
-		ret1 = iconv (cd, &ib, &ibl, &ob, &obl);
-		if (ret1 != (size_t)-1)
-			ret += ret1;
-		if (ibl && obl && errno == EILSEQ) {
-			if (inrepls) {
-				/* Try replacing the input */
-				char **t;
-				for (t = inrepls; *t; t++)
-				{
-					char *ib1 = *t;
-					size_t ibl1 = xstrlen (*t);
-					char *ob1 = ob;
-					size_t obl1 = obl;
-					iconv (cd, &ib1, &ibl1, &ob1, &obl1);
-					if (!ibl1) {
-						++ib, --ibl;
-						ob = ob1, obl = obl1;
-						++ret;
-						break;
-					}
-				}
-				if (*t)
-					continue;
-			}
-			if (outrepl) {
-				/* Try replacing the output */
-				int n = xstrlen (outrepl);
-				if (n <= obl)
-				{
-					memcpy (ob, outrepl, n);
-					++ib, --ibl;
-					ob += n, obl -= n;
-					++ret;
-					continue;
-				}
-			}
-		}
-		*inbuf = ib, *inbytesleft = ibl;
-		*outbuf = ob, *outbytesleft = obl;
-		return ret;
-	}
-}
-
-/*
- * Convert a string
- * Used in rfc2047.c and rfc2231.c
- *
- * Broken for use within EKG2 (passing iconv_t instead of from/to)
- */
-
-inline char *mutt_convert_string (const char *ps, iconv_t cd, int is_utf)
-{
-	char *repls[] = { "\357\277\275", "?", 0 };
-	char *s = ps;
-
-		/* we can assume that both from and to aren't NULL in EKG2,
-		 * and cd is NULL in case of error, not -1 */
-	if (cd) {
-		int len;
-		char *ib;
-		char *buf, *ob;
-		size_t ibl, obl;
-		char **inrepls = 0;
-		char *outrepl = 0;
-
-		if ( is_utf == 2 ) /* to utf */
-			outrepl = repls[0]; /* this would be more evil */
-		else if ( is_utf == 1 ) /* from utf */
-			inrepls = repls;
-		else
-			outrepl = "?";
-
-		len = xstrlen (s);
-		ib = s, ibl = len + 1;
-		obl = 16 * ibl;
-		ob = buf = xmalloc (obl + 1);
-
-		mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
-
-		*ob = '\0';
-
-		buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
-		return buf;
-	}
-	return NULL;
-}
-
-/* End of code taken from mutt. */
-#endif /*HAVE_ICONV*/
-
-#ifdef HAVE_ICONV
-/**
- * struct ekg_converter
- *
- * Used internally by EKG2, contains information about one initialized character converter.
- */
-struct ekg_converter {
-	iconv_t		cd;	/**< Magic thing given to iconv, always not NULL (else we won't alloc struct) */
-	iconv_t		rev;	/**< Reverse conversion thing, can be NULL */
-	char		*from;	/**< Input encoding (duped), always not NULL (even on console_charset) */
-	char		*to;	/**< Output encoding (duped), always not NULL (even on console_charset) */
-	int		used;	/**< Use counter - incr on _init(), decr on _destroy(), free if 0 */
-	int		rev_used;	/**< Like above, but for rev; if !rev, value undefined */
-	int		is_utf;	/**< Used internally for mutt_convert_string() */
-};
-#endif
-
-/**
- * ekg_convert_string_init()
- *
- * Initialize string conversion thing for two given charsets.
- *
- * @param from		- input encoding (will be duped; if NULL, console_charset will be assumed).
- * @param to		- output encoding (will be duped; if NULL, console_charset will be assumed).
- * @param rev		- pointer to assign reverse conversion into; if NULL, no reverse converter will be initialized.
- * 
- * @return	Pointer that should be passed to other ekg_convert_string_*(), even if it's NULL.
- *
- * @sa ekg_convert_string_destroy()	- deinits charset conversion.
- * @sa ekg_convert_string_p()		- main charset conversion function.
- */
-void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
-#ifdef HAVE_ICONV
-	list_t lp;
-
-	if (!from)
-		from	= config_console_charset;
-	if (!to)
-		to	= config_console_charset;
-	if (!xstrcasecmp(from, to)) { /* if they're the same */
-		if (rev)
-			*rev = NULL;
-		return NULL;
-	}
-
-		/* maybe we've already got some converter for this charsets */
-	for (lp = ekg_converters; lp; lp = lp->next) {
-		struct ekg_converter *p = lp->data;
-
-		if (!xstrcasecmp(from, p->from) && !xstrcasecmp(to, p->to)) {
-			p->used++;
-			if (rev) {
-				if (!p->rev) { /* init rev */
-					p->rev = iconv_open(from, to);
-					if (p->rev == (iconv_t)-1) /* we don't want -1 */
-						p->rev = NULL;
-					else
-						p->rev_used = 1;
-				} else
-					p->rev_used++;
-				*rev = p->rev;
-			}
-			return p->cd;
-		} else if (!xstrcasecmp(from, p->to) && !xstrcasecmp(to, p->from)) {
-				/* we've got reverse thing */
-			if (rev) { /* our rev means its forw */
-				p->used++;
-				*rev = p->cd;
-			}
-			if (!p->rev) {
-				p->rev = iconv_open(to, from);
-				if (p->rev == (iconv_t)-1)
-					p->rev = NULL;
-				else
-					p->rev_used = 1;
-			} else
-				p->rev_used++;
-			return p->rev;
-		}
-	}
-
-	{
-		iconv_t cd, rcd = NULL;
-
-		if ((cd = iconv_open(to, from)) == (iconv_t)-1)
-			cd = NULL;
-		if (rev) {
-			if ((rcd = iconv_open(from, to)) == (iconv_t)-1)
-				rcd = NULL;
-			*rev = rcd;
-		}
-			
-		if (cd || rcd) { /* don't init struct if both are NULL */
-			struct ekg_converter *c	= xmalloc(sizeof(struct ekg_converter));
-
-				/* if cd is NULL, we reverse everything */
-			c->cd	= (cd ? cd		: rcd);
-			c->rev	= (cd ? rcd		: cd);
-			c->from	= (cd ? xstrdup(from)	: xstrdup(to));
-			c->to	= (cd ? xstrdup(to)	: xstrdup(from));
-			c->used		= 1;
-			c->rev_used	= (cd && rcd ? 1 : 0);
-				/* for mutt_convert_string() */
-			if (!xstrcasecmp(c->to, "UTF-8"))
-				c->is_utf = 2;
-			else if (!xstrcasecmp(c->from, "UTF-8"))
-				c->is_utf = 1;
-			list_add(&ekg_converters, c, 0);
-		}
-
-		return cd;
-	}
-#else
-	return NULL;
-#endif
-}
-
-/**
- * ekg_convert_string_destroy()
- *
- * Frees internal data associated with given pointer, and uninitalizes iconv, if it's not needed anymore.
- *
- * @note If 'rev' param was used with ekg_convert_string_init(), this functions must be called two times
- * 	- with returned value, and with rev-associated one.
- *
- * @param ptr		- pointer returned by ekg_convert_string_init().
- *
- * @sa ekg_convert_string_init()	- init charset conversion.
- * @sa ekg_convert_string_p()		- main charset conversion function.
- */
-
-void ekg_convert_string_destroy(void *ptr) {
-#ifdef HAVE_ICONV
-	list_t lp;
-
-	if (!ptr) /* we can be called with NULL ptr */
-		return;
-
-	for (lp = ekg_converters; lp; lp = lp->next) {
-		struct ekg_converter *c = lp->data;
-
-		if (c->cd == ptr)
-			c->used--;
-		else if (c->rev == ptr) /* ptr won't be NULL here */
-			c->rev_used--;
-		else
-			continue; /* we're gonna break */
-
-		if (c->rev && (c->rev_used == 0)) { /* deinit reverse converter */
-			iconv_close(c->rev);
-			c->rev = NULL;
-		}
-		if (c->used == 0) { /* deinit forward converter, if not needed */
-			iconv_close(c->cd);
-			
-			if (c->rev) { /* if reverse converter is still used, reverse the struct */
-				c->cd	= c->rev;
-				c->rev	= NULL; /* rev_used becomes undef */
-				c->used = c->rev_used;
-				{
-					char *tmp	= c->from;
-					c->from		= c->to;
-					c->to		= tmp;
-				}
-			} else { /* else, free it */
-				xfree(c->from);
-				xfree(c->to);
-				list_remove(&ekg_converters, c, 1);
-			}
-		}
-		
-		break;
-	}
-#endif
-}
-
-/**
- * ekg_convert_string_p()
- *
- * Converts string to specified encoding, using pointer returned by ekg_convert_string_init().
- * Invalid characters in input will be replaced with question marks.
- *
- * @param ps		- string to be converted (won't be freed).
- * @param ptr		- pointer returned by ekg_convert_string_init().
- *
- * @return	Pointer to allocated result or NULL, if some failure has occured or no conversion
- * 			is needed (i.e. resulting string would be same as input).
- *
- * @sa ekg_convert_string_init()	- init charset conversion.
- * @sa ekg_convert_string_destroy()	- deinits charset conversion.
- */
-
-char *ekg_convert_string_p(const char *ps, void *ptr) {
-#ifdef HAVE_ICONV
-	list_t lp;
-	int is_utf = 0;
-
-	if (!ps || !*ps || !ptr)
-		return NULL;
-
-		/* XXX, maybe some faster way? any ideas? */
-	for (lp = ekg_converters; lp; lp = lp->next) {
-		const struct ekg_converter *c = lp->data;
-
-		if (c->cd == ptr)
-			is_utf = c->is_utf;
-		else if (c->rev == ptr)
-			is_utf = (c->is_utf == 2 ? 1 : (c->is_utf == 1 ? 2 : 0));
-		else
-			continue;
-
-		break;
-	}
-
-	return mutt_convert_string(ps, ptr, is_utf);
-#else
-	return NULL;
-#endif
-}
-
-/**
- * ekg_convert_string()
- *
- * Converts string to specified encoding, replacing invalid chars with question marks.
- *
- * @note Deprecated, in favour of ekg_convert_string_p(). Should be used only on single
- * 	conversions, where charset pair won't be used again.
- *
- * @param ps		- string to be converted (it won't be freed).
- * @param from		- input encoding (if NULL, console_charset will be assumed).
- * @param to		- output encoding (if NULL, console_charset will be assumed).
- *
- * @return	Pointer to allocated result on success, NULL on failure
- * 			or when both encodings are equal.
- *
- * @sa ekg_convert_string_p()	- more optimized version.
- */
-char *ekg_convert_string(const char *ps, const char *from, const char *to) {
-	char *r;
-	void *p;
-
-	if (!ps || !*ps) /* don't even init iconv if we've got NULL string */
-		return NULL;
-
-	p = ekg_convert_string_init(from, to, NULL);
-	r = ekg_convert_string_p(ps, p);
-	ekg_convert_string_destroy(p);
-
-	return r;
 }
 
 /*

@@ -150,6 +150,7 @@ static void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
 	j->last_code	= -1;
 	j->authed	= 0;
 
+	session_connected_set(s, 0);
 	j->connecting = 0;
 	close(j->fd);
 	j->fd = -1;
@@ -412,8 +413,10 @@ NNTP_HANDLER(nntp_auth_process) {
 	switch(code) {
 		case 200: 
 		case 201: 
-			if (code == 200)	s->status = EKG_STATUS_AVAIL;
-			else			s->status = EKG_STATUS_AWAY;
+			tmp = s->status;
+			if (code == 200)	s->status = xstrdup(EKG_STATUS_AVAIL);
+			else			s->status = xstrdup(EKG_STATUS_AWAY);
+			xfree(tmp);
 
 			tmp = s->descr;
 			s->descr = xstrdup(str);
@@ -455,7 +458,7 @@ NNTP_HANDLER(nntp_group_process) {
 	if (!group->cart) group->cart = group->lart;
 
 	if ((u = userlist_find(s, group->uid))) {
-		if (u->status == EKG_STATUS_AWAY) {
+		if (!xstrcmp(u->status, EKG_STATUS_AWAY)) {
 			feed_set_descr(u, saprintf("First article: %d Last article: %d", group->fart, group->lart));
 		}
 	}
@@ -481,7 +484,7 @@ NNTP_HANDLER(nntp_group_error) {
 
 	if (!j->newsgroup) return -1;
 
-	feed_set_statusdescr(userlist_find(s, j->newsgroup->uid), EKG_STATUS_ERROR, saprintf("Generic error %d: %s", code, str));
+	feed_set_statusdescr(userlist_find(s, j->newsgroup->uid), xstrdup(EKG_STATUS_ERROR), saprintf("Generic error %d: %s", code, str));
 
 	j->newsgroup->state	= NNTP_IDLE;
 	j->newsgroup		= NULL;
@@ -599,8 +602,7 @@ static WATCHER_LINE(nntp_handle_stream) {
 static WATCHER(nntp_handle_connect) {
 	session_t *s = session_find(data);
 	nntp_private_t *j = feed_private(s);
-	int res = 0;
-	socklen_t res_size = sizeof(res);
+	int res = 0, res_size = sizeof(res);
 
 	debug("nntp_handle_connect() type: %d\n", type);
 
@@ -615,6 +617,7 @@ static WATCHER(nntp_handle_connect) {
 	}
 
 	j->connecting = 0;
+	session_connected_set(s, 1);
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &data);
 
 	watch_add_line(&feed_plugin, fd, WATCH_READ_LINE, nntp_handle_stream, xstrdup(data));
@@ -768,17 +771,17 @@ static COMMAND(nntp_command_check) {
 
 		n = nntp_newsgroup_find(session, u->uid+5);
 	
-		feed_set_statusdescr(u, EKG_STATUS_AWAY, xstrdup("Checking..."));
+		feed_set_statusdescr(u, xstrdup(EKG_STATUS_AWAY), xstrdup("Checking..."));
 
 		j->newsgroup	= n;
 		n->state 	= NNTP_CHECKING;
 		watch_write(j->send_watch, "GROUP %s\r\n", n->name);
 
 		while (n->state == NNTP_CHECKING) ekg_loop();
-		if (u->status == EKG_STATUS_ERROR) continue;
+		if (!xstrcmp(u->status, EKG_STATUS_ERROR)) continue;
 
 		if (n->cart == n->lart) {	/* nothing new */
-			feed_set_status(u, EKG_STATUS_DND);
+			feed_set_status(u, xstrdup(EKG_STATUS_DND));
 			continue;
 		}
 
@@ -798,7 +801,7 @@ static COMMAND(nntp_command_check) {
 		}
 		n->state		= NNTP_IDLE;
 		
-		feed_set_statusdescr(u, EKG_STATUS_AVAIL, saprintf("%d new articles", n->lart - n->cart));
+		feed_set_statusdescr(u, xstrdup(EKG_STATUS_AVAIL), saprintf("%d new articles", n->lart - n->cart));
 		j->newsgroup->cart = n->lart;
 
 		if (params[0]) break;
@@ -822,6 +825,7 @@ static COMMAND(nntp_command_subscribe) {
 	}
 
 	printq("feed_added", target, session_name(session));
+	return 0;
 }
 
 static COMMAND(nntp_command_unsubscribe) {
@@ -847,7 +851,13 @@ void nntp_protocol_deinit(void *priv) {
 }
 
 void nntp_init() {
+	plugin_var_add(&feed_plugin, "username", VAR_STR, 0, 0, NULL);
+        plugin_var_add(&feed_plugin, "password", VAR_STR, "foo", 1, NULL);
+	plugin_var_add(&feed_plugin, "server", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&feed_plugin, "port", VAR_INT, "119", 0, NULL);
+
 /*XXX,  :msg -- wysylanie wiadomosc na serwer... BE CAREFULL cause news aren't IM ;) */
+
 	command_add(&feed_plugin, ("nntp:connect"), "?",	nntp_command_connect, RSS_ONLY, NULL);
 	command_add(&feed_plugin, ("nntp:disconnect"), "?", nntp_command_disconnect, RSS_ONLY, NULL);
 

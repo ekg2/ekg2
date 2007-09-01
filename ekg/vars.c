@@ -47,8 +47,6 @@ static list_t *variables_lock = NULL;
 list_t variables = NULL;
 char *console_charset;
 
-void changed_session_locks(const char *varname); /* sessions.c */
-
 /*
  * dd_*()
  *
@@ -92,8 +90,6 @@ void variable_init()
 	variable_add(NULL, ("beep_notify"), VAR_BOOL, 1, &config_beep_notify, NULL, NULL, dd_beep);
 	variable_add(NULL, ("completion_char"), VAR_STR, 1, &config_completion_char, NULL, NULL, NULL);
 	variable_add(NULL, ("completion_notify"), VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
-		/* It's very, very special variable; shouldn't be used by user */
-	variable_add(NULL, ("config_version"), VAR_INT, 2, &config_version, NULL, NULL, NULL);
 		/* XXX, warn here. user should change only console_charset if it's really nesessary... we should make user know about his terminal
 		 * 	encoding... and give some tip how to correct this... it's just temporary
 		 */
@@ -102,7 +98,7 @@ void variable_init()
 	variable_add(NULL, ("debug"), VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
 /*	variable_add(NULL, ("default_protocol"), VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL); */
 	variable_add(NULL, ("default_status_window"), VAR_BOOL, 1, &config_default_status_window, NULL, NULL, NULL);
-	variable_add(NULL, ("display_ack"), VAR_MAP, 1, &config_display_ack, NULL, variable_map(6, 0, 0, "none", 1, 0, "delivered", 2, 0, "queued", 4, 0, "dropped", 8, 0, "tempfail", 16, 0, "unknown"), NULL);
+	variable_add(NULL, ("display_ack"), VAR_INT, 1, &config_display_ack, NULL, variable_map(4, 0, 0, "none", 1, 0, "all", 2, 0, "delivered", 3, 0, "queued"), NULL);
         variable_add(NULL, ("display_blinking"), VAR_BOOL, 1, &config_display_blinking, changed_display_blinking, NULL, NULL);
 	variable_add(NULL, ("display_color"), VAR_INT, 1, &config_display_color, NULL, NULL, NULL);
 	variable_add(NULL, ("display_color_map"), VAR_STR, 1, &config_display_color_map, NULL, NULL, dd_color);
@@ -114,8 +110,6 @@ void variable_init()
 	variable_add(NULL, ("display_welcome"), VAR_BOOL, 1, &config_display_welcome, NULL, NULL, NULL);
 	variable_add(NULL, ("emoticons"), VAR_BOOL, 1, &config_emoticons, NULL, NULL, NULL);
 	variable_add(NULL, ("events_delay"), VAR_INT, 1, &config_events_delay, NULL, NULL, NULL);
-	variable_add(NULL, ("expert_mode"), VAR_INT, 1, &config_expert_mode, NULL, NULL, NULL);
-	variable_add(NULL, ("exit_exec"), VAR_STR, 1, &config_exit_exec, NULL, NULL, NULL);
 	variable_add(NULL, ("keep_reason"), VAR_INT, 1, &config_keep_reason, NULL, NULL, NULL);
 	variable_add(NULL, ("last"), VAR_MAP, 1, &config_last, NULL, variable_map(4, 0, 0, "none", 1, 2, "all", 2, 1, "separate", 4, 0, "sent"), NULL);
 	variable_add(NULL, ("last_size"), VAR_INT, 1, &config_last_size, NULL, NULL, NULL);
@@ -133,7 +127,6 @@ void variable_init()
 	variable_add(NULL, ("save_password"), VAR_BOOL, 1, &config_save_password, NULL, NULL, NULL);
 	variable_add(NULL, ("save_quit"), VAR_INT, 1, &config_save_quit, NULL, NULL, NULL);
 	variable_add(NULL, ("session_default"), VAR_STR, 2, &config_session_default, NULL, NULL, NULL);
-	variable_add(NULL, ("session_locks"), VAR_INT, 1, &config_session_locks, changed_session_locks, variable_map(3, 0, 0, "off", 1, 2, "flock", 2, 1, "file"), NULL);
 	variable_add(NULL, ("sessions_save"), VAR_BOOL, 1, &config_sessions_save, NULL, NULL, NULL);
 	variable_add(NULL, ("slash_messages"), VAR_BOOL, 1, &config_slash_messages, NULL, NULL, NULL);
 	variable_add(NULL, ("sort_windows"), VAR_BOOL, 1, &config_sort_windows, NULL, NULL, NULL);
@@ -145,7 +138,6 @@ void variable_init()
 	variable_add(NULL, ("sound_sysmsg_file"), VAR_FILE, 1, &config_sound_sysmsg_file, NULL, NULL, dd_sound);
 	variable_add(NULL, ("speech_app"), VAR_STR, 1, &config_speech_app, NULL, NULL, NULL);
 	variable_add(NULL, ("subject_prefix"), VAR_STR, 1, &config_subject_prefix, NULL, NULL, NULL);
-	variable_add(NULL, ("subject_reply_prefix"), VAR_STR, 1, &config_subject_reply_prefix, NULL, NULL, NULL);
 	variable_add(NULL, ("tab_command"), VAR_STR, 1, &config_tab_command, NULL, NULL, NULL);
 	variable_add(NULL, ("theme"), VAR_THEME, 1, &config_theme, changed_theme, NULL, NULL);
 	variable_add(NULL, ("time_deviation"), VAR_INT, 1, &config_time_deviation, NULL, NULL, NULL);
@@ -169,7 +161,6 @@ void variable_set_default()
 	xfree(config_timestamp);
 	xfree(config_display_color_map);
 	xfree(config_subject_prefix);
-	xfree(config_subject_reply_prefix);
 	xfree(config_console_charset);
 	xfree(config_dcc_dir);
 
@@ -182,7 +173,6 @@ void variable_set_default()
 	config_timestamp = xstrdup("\\%H:\\%M:\\%S");
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
-	config_subject_reply_prefix = xstrdup("Re: ");
 #if HAVE_LANGINFO_CODESET
 	console_charset = xstrdup(nl_langinfo(CODESET));
 #endif
@@ -203,7 +193,6 @@ void variable_set_default()
 		debug("\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n");
 	}
 #endif
-	config_use_iso = !xstrncasecmp(console_charset, "ISO-8859-", 9);
 }
 
 /*

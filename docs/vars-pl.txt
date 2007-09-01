@@ -91,20 +91,12 @@ default_status_window
 
 display_ack
 	typ: liczba
-	domy¶lna warto¶æ: 12
+	domy¶lna warto¶æ: 3
 	
-	okre¶la, czy i które powiadomienia o (nie)dostarczeniu wiadomo¶ci
-	maj± byæ wy¶wietlane. stanowi sumê warto¶ci:
-	
-		1 - wiadomo¶æ dotar³a do adresata
-	
-		2 - wiadomo¶æ zosta³a umieszczona w kolejce dorêczania
-	
-		4 - wiadomo¶æ zosta³a odrzucona przez serwer/adresata
-	
-		8 - wiadomo¶æ tymczasowo nie mo¿e byæ przyjêta
-	
-		16 - wynik dorêczania nieznany
+	okre¶la, czy i które powiadomienia o wys³aniu wiadomo¶ci maj±
+	byæ wy¶wietlane. 0 - ¿adne, 1 - wszystkie, 2 - tylko kiedy wiadomo¶æ
+	dotar³a do adresata, 3 - tylko kiedy adresat jest niedostêpny i
+	wiadomo¶æ zosta³a zachowania na serwerze.
 
 display_blinking
         typ: bool
@@ -196,15 +188,6 @@ events_delay
 	pocz±tkowych informacji o stanie osób po po³±czeniu jako zmianê
 	ich stanu.
 
-exit_exec
-	typ: tekst
-	domy¶lna warto¶æ: brak
-	
-	Polecenie, wykonywane przy zamykaniu EKG2, zaraz przed exit().
-	Charakteryzuje siê tym, ¿e ,,zastêpuje'' owe w tablicy procesów,
-	tym samym kod wyj¶cia zwracany przez EKG2 bêdzie wynikiem danego
-	polecenia.
-
 keep_reason
 	typ: liczba
 	domy¶lna warto¶æ: 0
@@ -289,19 +272,6 @@ save_quit
 	zapisywana, je¿eli 1 to pojawia siê pytanie, je¿eli 2 to konfiguracja
 	zapisana jest bez pytania 
 
-session_locks
-	typ: liczba
-	domy¶lna warto¶æ: 1
-	
-	Typ blokad sesji, u¿ywanych przez EKG2 celem unikniêcia jednoczesnego
-	po³±czenia siê dwóch kopii owego do jednej sesji. Mo¿liwe warto¶ci:
-	
-		0 - brak blokad,
-	
-		1 - blokady oparte o flock() (domy¶lne),
-	
-		2 - blokady oparte o istnieniu pliku (uproszczone).
-
 slash_messages
 	typ: bool
 	domy¶lna warto¶æ: 1
@@ -375,12 +345,6 @@ speech_app
 	jej ustawienie powoduje równie¿ zmianê motywu na taki, który jest
 	³atwiejszy do wymówienia.
 
-subject_reply_prefix
-	typ: tekst
-	domy¶lna warto¶æ: "Re: "
-	
-	Prefiks dla tematów odpowiedzi na wiadomo¶ci.
-
 tab_command
 	typ: tekst
 	domy¶lna warto¶æ: "chat"
@@ -420,6 +384,14 @@ timestamp_show
 	
 	okre¶la czy mamy wy¶wietlaæ timestamp, okre¶lany zmienn± timestamp
 
+windows_save
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	okre¶la, czy ustawienie okienek ma byæ zachowywane przy kolejnym
+	uruchomieniu programu. przy wychodzeniu z programu pojawi siê 
+	monit o zapisanie zmian.
+
 window_session_allow
 	typ: liczba
 	domy¶lna warto¶æ: 0
@@ -442,14 +414,6 @@ windows_layout
 	zawiera informacje o okienkach. wpis ka¿dego okna jest rozdzielony
 	znakiem ,,|''. je¶li okno nie ma przypisanej rozmowy, wpis jest
 	pusty. je¶li okno nie istnieje, wpis zawiera ,,-''.
-
-windows_save
-	typ: bool
-	domy¶lna warto¶æ: 0
-	
-	okre¶la, czy ustawienie okienek ma byæ zachowywane przy kolejnym
-	uruchomieniu programu. przy wychodzeniu z programu pojawi siê 
-	monit o zapisanie zmian.
 
 
 $Id$

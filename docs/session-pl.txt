@@ -4,6 +4,14 @@ alias
 	
 	krótka nazwa sesji
 
+allow_autoresponder
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	Warto¶æ okre¶laj±ca, czy autoresponder mo¿e ,,przechwytywaæ'' wiadomo¶ci
+	przychodz±ce w danej sesji. Dzia³a tylko, je¶li wtyczka 'autoresponder'
+	jest za³adowana.
+
 auto_away
 	typ: liczba
 	domy¶lna warto¶æ: 600

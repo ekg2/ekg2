@@ -129,9 +129,7 @@ static QUERY(message_parse) {
 static rot13_key_t *rot13_key_parse(char *target, char *sesja, char *offset, char *offset2) {
 	rot13_key_t *k = xmalloc(sizeof(rot13_key_t));
 
-	if (!xstrcmp(target, "$")) {		k->target = xstrdup(get_uid_any(window_current->session, window_current->target));
-						if (!k->target) k->target = xstrdup(window_current->target);
-						xfree(target); }
+	if (!xstrcmp(target, "$")) {		k->target = xstrdup(get_uid(window_current->session, window_current->target));	xfree(target); }
 	else if (!xstrcmp(target, "*")) {	k->target = NULL;								xfree(target); }
 	else					k->target = target;
 
@@ -258,6 +256,8 @@ static int rot13_theme_init() {
 
 EXPORT int rot13_plugin_init(int prio) {
 	plugin_register(&rot13_plugin, prio);
+
+	rot13_setvar_default(NULL, NULL);
 
 	query_connect_id(&rot13_plugin, SET_VARS_DEFAULT, rot13_setvar_default, NULL);
 	query_connect_id(&rot13_plugin, MESSAGE_ENCRYPT, message_parse, (void *) 1);

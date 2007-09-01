@@ -237,17 +237,11 @@ static COMMAND(sms_command_sms)
         }
 
         if ((u = userlist_find(session, params[0]))) {
-		{
-			int function = EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
-			char *varname = "mobile";
-			char **__number = &number;
-
-			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &varname, &__number);
-		}
-                if (!number || !xstrcmp(number, "")) {
+                if (!u->mobile || !xstrcmp(u->mobile, "")) {
                         printq("sms_unknown", format_user(session, u->uid));
                         return -1;
                 }
+                number = u->mobile;
         } else
                 number = params[0];
 
@@ -272,9 +266,9 @@ static int dd_sms(const char *name)
 static QUERY(sms_session_status)
 {
         {	char **UNUSED(session)	= va_arg(ap, char**);	}
-        int status	= *(va_arg(ap, int*));
+        char *status	= *(va_arg(ap, char**));
 
-        if ((status <= EKG_STATUS_NA) || (status >= EKG_STATUS_AVAIL))
+        if (xstrcmp(status, EKG_STATUS_AWAY) && xstrcmp(status, EKG_STATUS_XA) && xstrcmp(status, EKG_STATUS_DND))
                 sms_away_free();
 
         return 0;
@@ -291,12 +285,12 @@ static QUERY(sms_protocol_message)
         char *uid	= *(va_arg(ap, char**));
         {	char ***UNUSED(rcpts)	= va_arg(ap, char***);	}
         char *text	= *(va_arg(ap, char**));
-        const int status = session_status_get_n(session);
+        const char *status = session_status_get_n(session);
 
         if (!status || !config_sms_away || !config_sms_app || !config_sms_number)
                 return 0;
 
-	if ((status <= EKG_STATUS_NA) || (status >= EKG_STATUS_AVAIL))
+        if (xstrcmp(status, EKG_STATUS_AWAY) && xstrcmp(status, EKG_STATUS_XA) && xstrcmp(status, EKG_STATUS_DND))
                 return 0;
 
         sms_away_add(uid);

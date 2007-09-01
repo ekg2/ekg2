@@ -6,12 +6,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/un.h>
-// #include <sys/socket.h>	/* <sys/socket.h> included twice, wtf? */	/* introduced in http://lists.ziew.org/mailman/pipermail/ekg2-commit/2007-May/003692.html */
 #endif
 
-#include <sys/types.h>
-#include <sys/socket.h>		/* this <sys/socket.h> introduced in: 
-					http://lists.ziew.org/mailman/pipermail/ekg2-commit/2007-April/003464.html and afair it fix freebsd compilation */
 #include <sys/stat.h>
 
 #include <stdlib.h>

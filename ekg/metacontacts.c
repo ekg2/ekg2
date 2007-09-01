@@ -176,7 +176,7 @@ COMMAND(cmd_metacontact)
 			if (!u) 
 				tmp = format_string(format_find("metacontact_info_unknown"));
 			else    
-				tmp = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), u->nickname, u->descr);
+				tmp = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), (u->first_name) ? u->first_name : u->nickname, u->descr);
 
                         printq("metacontact_item_list", session_alias_uid_n(i->s_uid), i->name, tmp, itoa(i->prio));
 			xfree(tmp);
@@ -313,7 +313,7 @@ static int metacontact_add_item(metacontact_t *m, const char *session, const cha
 		printq("session_doesnt_exist", session);
 		return 0;
 	}
-		/* XXX, bad session */
+
         if (!(uid = get_uid(s, name))) {
 		printq("user_not_found", name);
                 debug("! metacontact_add_item: UID is not on our contact lists: %s\n", name);
@@ -512,17 +512,22 @@ metacontact_item_t *metacontact_find_prio(metacontact_t *m)
 			continue;
 		}
 
-		{
-			/* hardly simplified that, XXX could you check it?
-			 * additional todo: use state priorities? */
-			const int last_na = (last->status <= EKG_STATUS_NA);
-			const int u_na = (u->status <= EKG_STATUS_NA);
+		if (xstrcasecmp(last->status, EKG_STATUS_NA) && xstrcasecmp(u->status, EKG_STATUS_NA) && ret->prio < i->prio) {
+			ret = i;
+			last = u;
+			continue;
+		}
 
-			if (((last_na == u_na) && ret->prio < i->prio) || (last_na && !u_na)) {
-				ret = i;
-				last = u;
-				continue;
-			}
+		if (!xstrcasecmp(last->status, EKG_STATUS_NA) && xstrcasecmp(u->status, EKG_STATUS_NA)) {
+			ret = i;
+			last = u;
+			continue;
+		}
+		
+		if (!xstrcasecmp(last->status, EKG_STATUS_NA) && !xstrcasecmp(u->status, EKG_STATUS_NA) && ret->prio < i->prio) {
+			ret = i;
+			last = u;
+			continue;
 		}
         }
 

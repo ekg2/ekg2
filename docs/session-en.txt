@@ -4,6 +4,13 @@ alias
 	
 	short session name
 
+allow_autoresponder
+	type: bool
+	default value: 0
+	
+	Whether autoresponder should handle incoming messages in this session.
+	Works only when 'autoresponder' plugin is loaded.
+
 auto_away
 	type: integer
 	default value: 600

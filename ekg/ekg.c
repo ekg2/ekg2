@@ -162,7 +162,7 @@ void ekg_loop() {
                         }
                 }
 
-		/* removed 'w->removed' watches, timeout checking moved below select() */
+                /* sprawd¼ timeouty ró¿nych deskryptorów, oraz przy okazji w->removed jesli rowne 1, to timer powinien zostac usuniety. */
                 for (l = watches; l; l = l->next) {
                         watch_t *w = l->data;
 
@@ -174,18 +174,38 @@ void ekg_loop() {
 				watch_free(w);
 				continue;
 			}
-		}
+
+                        if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
+                                continue;
+			w->removed = -1;
+                        if (w->buf) {
+                                int (*handler)(int, int, char*, void*) = w->handler;
+                                if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
+					w->removed = 0;
+					watch_free(w);
+					continue;
+				}
+                        } else {
+                                int (*handler)(int, int, int, void*) = w->handler;
+				if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
+					w->removed = 0;
+					watch_free(w);
+					continue;
+				}
+                        }
+			w->removed = 0;
+                }
 
                 /* sprawd¼ autoawaye ró¿nych sesji */
                 for (l = sessions; l; l = l->next) {
                         session_t *s = l->data;
                         int tmp;
 
-                        if (!s->connected || (s->status < EKG_STATUS_AWAY))
+                        if (!s->connected || (xstrcmp(s->status, EKG_STATUS_AVAIL) && xstrcmp(s->status, EKG_STATUS_FREE_FOR_CHAT) && xstrcmp(s->status, EKG_STATUS_AWAY)))
                                 continue;
 
 			do {
-				if ((s->status == EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
+				if (!xstrcmp(s->status, EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
         	                        break;
 
                 	        if (tv.tv_sec - s->activity > tmp)
@@ -368,38 +388,12 @@ void ekg_loop() {
 			/* return; */
 		}
 
-		for (l = watches; l; l = l->next) {
-                }
                 /* przejrzyj deskryptory */
 		for (l = watches; l; l = l->next) {
 			watch_t *w = l->data;
 
-			if (!w)
+			if (!w || (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
 				continue;
-
-			if (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)) { /* timeout checking */
-				if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
-					continue;
-				w->removed = -1;
-				if (w->buf) {
-					int (*handler)(int, int, char*, void*) = w->handler;
-					if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
-						w->removed = 0;
-						watch_free(w);
-						continue;
-					}
-				} else {
-					int (*handler)(int, int, int, void*) = w->handler;
-					if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
-						w->removed = 0;
-						watch_free(w);
-						continue;
-					}
-				}
-				w->removed = 0;
-
-				continue;
-			}
 
 			if (w->fd == 0) {
 				list_t session_list;
@@ -675,8 +669,8 @@ struct option ekg_options[] = {
 
 int main(int argc, char **argv)
 {
-        int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0, new_status = 0;
-        char *tmp = NULL, *new_descr = NULL;
+        int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0;
+        char *tmp = NULL, *new_status = NULL, *new_descr = NULL;
         char *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
         struct passwd *pw;
 #ifndef NO_POSIX_SYSTEM
@@ -711,10 +705,6 @@ int main(int argc, char **argv)
 
         strlcpy(argv0, argv[0], sizeof(argv0));
 
-        if (!(home_dir = xstrdup(getenv("HOME")))) {
-                if ((pw = getpwuid(getuid())))
-                        home_dir = xstrdup(pw->pw_dir);
-	}
 #ifdef NO_POSIX_SYSTEM
 	if (!home_dir)
 		home_dir = xstrdup(getenv("USERPROFILE"));
@@ -722,6 +712,11 @@ int main(int argc, char **argv)
 	if (!home_dir)
 		home_dir = xstrdup("c:\\");
 #endif
+        if (!(home_dir = xstrdup(getenv("HOME")))) {
+                if ((pw = getpwuid(getuid())))
+                        home_dir = xstrdup(pw->pw_dir);
+	}
+
 	if (!home_dir) {
 		fprintf(stderr, _("Can't find user's home directory. Ask administration to fix it.\n"));
 		return 1;
@@ -783,7 +778,7 @@ int main(int argc, char **argv)
                                 if (!optarg && argv[optind] && argv[optind][0] != '-')
                                         optarg = argv[optind++];
 
-                                new_status = EKG_STATUS_FFC;
+                                new_status = EKG_STATUS_FREE_FOR_CHAT;
                                 xfree(new_descr);
                                 new_descr = xstrdup(optarg);
                                 break;
@@ -982,7 +977,11 @@ int main(int argc, char **argv)
                 if (new_descr)
                         session_descr_set(s, new_descr);
 
-		cmd = ekg_status_string(s->status, 1);
+                if (!xstrcmp(s->status, EKG_STATUS_AVAIL) || !xstrcmp(s->status, EKG_STATUS_NA))
+                        cmd = "back";
+
+                if (!cmd)
+                        cmd = s->status;
 
                 command_exec_format(NULL, s, 2, ("/%s %s"), cmd, (new_descr) ? new_descr : "");
         }
@@ -999,16 +998,8 @@ int main(int argc, char **argv)
         if (config_auto_save)
                 last_save = time(NULL);
 
-	if (no_config) {
-#ifdef HAVE_LIBGADU
-		if (plugin_find("gg"))
-			print("no_config");
-		else
-			print("no_config_gg_not_loaded");
-#else
-		print("no_config_no_libgadu");
-#endif
-	}
+        if (no_config)
+                wcs_print("no_config");
 
         reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
@@ -1033,7 +1024,6 @@ int main(int argc, char **argv)
  */
 void ekg_exit()
 {
-	char *exit_exec = config_exit_exec;
 	extern int ekg2_dlclose(void *plugin);
 
 	list_t l;
@@ -1096,7 +1086,7 @@ void ekg_exit()
 
 		p->destroy();
 
-//		if (p->dl) ekg2_dlclose(p->dl);
+		if (p->dl) ekg2_dlclose(p->dl);
 	}
 	list_destroy(watches, 0);	 watches = NULL;
 
@@ -1137,7 +1127,6 @@ void ekg_exit()
 		if (session_write())
 			printf(_("Error while saving.\n"));
 	}
-	config_exit_exec = NULL; /* avoid freeing it */
 
 /* XXX, think about sequence of unloading. */
 
@@ -1154,7 +1143,7 @@ void ekg_exit()
 
 		p->destroy();
 
-//		if (p->dl) ekg2_dlclose(p->dl);
+		if (p->dl) ekg2_dlclose(p->dl);
 	}
 
 	audio_deinitialize();
@@ -1210,17 +1199,6 @@ void ekg_exit()
 	WSACleanup();
 #endif
 	close(stderr_backup);
-
-	if (exit_exec) {
-#ifndef NO_POSIX_SYSTEM
-		execl("/bin/sh", "sh", "-c", exit_exec, NULL);
-#else
-		/* XXX, like in cmd_exec() */
-#endif
-		/* should we return some error code if exec() failed?
-		 * AKA this line shouldn't be ever reached */
-	}
-
         exit(0);
 }
 

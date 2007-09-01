@@ -126,7 +126,7 @@ static void autoresponder_varchange(const char *varname)
 	}
 }
 
-int autoresponder_plugin_init(int prio)
+EXPORT int autoresponder_plugin_init(int prio)
 {
 	plugin_register(&autoresponder_plugin, prio);
 	

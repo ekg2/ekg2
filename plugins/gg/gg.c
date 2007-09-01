@@ -160,40 +160,19 @@ static QUERY(gg_session_deinit) {
 static QUERY(gg_userlist_info_handle) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
-	gg_userlist_private_t *up;
 
-	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1 || !(up = gg_userlist_priv_get(u)))
+	if (!u || (valid_plugin_uid(&gg_plugin, u->uid) != 1))
 		return 1;
 
-	if (up->first_name && xstrcmp(up->first_name, "") && up->last_name && up->last_name && xstrcmp(up->last_name, ""))
-		printq("gg_user_info_name", up->first_name, up->last_name);
-	if (up->first_name && xstrcmp(up->first_name, "") && (!up->last_name || !xstrcmp(up->last_name, "")))
-		printq("gg_user_info_name", up->first_name, "");
-	if ((!up->first_name || !xstrcmp(up->first_name, "")) && up->last_name && xstrcmp(up->last_name, ""))
-		printq("gg_user_info_name", up->last_name, "");
+	if (u->port == 2)
+		printq("user_info_not_in_contacts");
+	if (u->port == 1)
+		printq("user_info_firewalled");
+	if ((u->protocol & GG_HAS_AUDIO_MASK))
+		printq("user_info_voip");
 
-	if (up->mobile && xstrcmp(up->mobile, ""))
-		printq("gg_user_info_mobile", up->mobile);
-
-	if (up->ip) {
-		char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &up->ip)), itoa(up->port));
-		printq("gg_user_info_ip", ip_str);
-		xfree(ip_str);
-	} else if (up->last_ip) {
-		char *last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &up->last_ip)), itoa(up->last_port));
-		printq("gg_user_info_last_ip", last_ip_str);
-		xfree(last_ip_str);
-	}
-
-	if (up->port == 2)
-		printq("gg_user_info_not_in_contacts");
-	if (up->port == 1)
-		printq("gg_user_info_firewalled");
-	if ((up->protocol & GG_HAS_AUDIO_MASK))
-		printq("gg_user_info_voip");
-
-	if ((up->protocol & 0x00ffffff)) {
-		int v = up->protocol & 0x00ffffff;
+	if ((u->protocol & 0x00ffffff)) {
+		int v = u->protocol & 0x00ffffff;
 		const char *ver = NULL;
 
 		if (v < 0x0b)
@@ -232,10 +211,10 @@ static QUERY(gg_userlist_info_handle) {
 			ver = ("7.7 (build >= 3315)");
 
 		if (ver) {
-			printq("gg_user_info_version", ver);
+			printq("user_info_version", ver);
 		} else {
 			char *tmp = saprintf(("unknown (%#.2x)"), v);
-			printq("gg_user_info_version", tmp);
+			printq("user_info_version", tmp);
 			xfree(tmp);
 		}
 	}
@@ -431,9 +410,9 @@ static QUERY(gg_remove_notify_handle) {
 	char *uid 		= *(va_arg(ap, char **));
 
 	session_t *s = session_find(session_uid);
+
 	gg_private_t *g;
 
-/* Check session */
 	if (!s) {
 		debug("Function gg_remove_notify_handle() called with NULL data\n");
 		return 1;
@@ -450,55 +429,30 @@ static QUERY(gg_remove_notify_handle) {
 	return 0;
 }
 
-/**
+/*
  * gg_print_version()
  *
- * Handler for: <i>PLUGIN_PRINT_VERSION</i>
- * print info about libgadu version.
- *
- * @return 0
+ * wy¶wietla wersjê pluginu i biblioteki.
  */
-
 static QUERY(gg_print_version) {
-	char protov[3];
-	char clientv[sizeof(GG_DEFAULT_CLIENT_VERSION)];
+	char **tmp1 = array_make(GG_DEFAULT_CLIENT_VERSION, ", ", 0, 1, 0);
+	char *tmp2 = array_join(tmp1, ".");
+	char *tmp3 = saprintf(("libgadu %s (headers %s), protocol %s (0x%.2x)"), gg_libgadu_version(), GG_LIBGADU_VERSION, tmp2, GG_DEFAULT_PROTOCOL_VERSION);
 
-	{		/* that IMO would be lighter than array_make+array_join */
-		char *p, *q;
+	print("generic", tmp3);
 
-		for (p = GG_DEFAULT_CLIENT_VERSION, q = clientv; *p; p++) {
-			if (*p == ',')
-				*(q++) = '.';
-			else if (*p != ' ')
-				*(q++) = *p;
-		}
-		*q = '\0';
-	}
-
-	snprintf(protov, 3, "%.2x", GG_DEFAULT_PROTOCOL_VERSION);
-	print("gg_version", gg_libgadu_version(), GG_LIBGADU_VERSION, clientv, protov);
+	xfree(tmp3);
+	xfree(tmp2);
+	array_free(tmp1);
 
 	return 0;
 }
 
-/**
+/*
  * gg_validate_uid()
  *
- * handler for <i>PROTOCOL_VALIDATE_UID</i><br>
- * checks, if @a uid is <i>proper for gg plugin</i>.
- *
- * @note <i>Proper for gg plugin</i> means if @a uid starts with "gg:" and uid len > 3
- * @todo Blah, irc does xstrncasecmp() here it's only xstrncmp() let's decide... GG: and gg: is proper, or only gg:
- * @todo Maybe let's check if after gg: we have max 32b number.. because libgadu and gg protocol only support 32bit uids... ;)
- *
- * @param ap 1st param: <i>(char *) </i><b>uid</b>  - of user/session/command/whatever
- * @param ap 2nd param: <i>(int) </i><b>valid</b> - place to put 1 if uid is valid for gg plugin.
- * @param data NULL
- *
- * @return 	-1 if it's valid uid for gg plugin<br>
- * 		 0 if not
+ * sprawdza, czy dany uid jest poprawny i czy plugin do obs³uguje.
  */
-
 static QUERY(gg_validate_uid) {
 	char *uid	= *(va_arg(ap, char **));
 	int *valid	= va_arg(ap, int *);
@@ -540,113 +494,6 @@ static QUERY(gg_protocols) {
 	return 0;
 }
 
-static QUERY(gg_userlist_priv_handler) {
-	userlist_t *u	= *va_arg(ap, userlist_t **);
-	int function	= *va_arg(ap, int *);
-
-	if (!u || ((valid_plugin_uid(&gg_plugin, u->uid) != 1)
-			&& !(function == EKG_USERLIST_PRIVHANDLER_READING && atoi(u->uid))))
-		return 1;
-
-	{
-		gg_userlist_private_t *p = u->priv;
-
-		if (!u->priv) {
-			if (function == EKG_USERLIST_PRIVHANDLER_FREE)
-				return 0;
-
-			p = xmalloc(sizeof(gg_userlist_private_t));
-			u->priv = p;
-		}
-		
-		switch (function) {
-			case EKG_USERLIST_PRIVHANDLER_FREE:
-				xfree(p->first_name);
-				xfree(p->last_name);
-				xfree(p->mobile);
-				xfree(u->priv);
-				u->priv = NULL;
-				break;
-			case EKG_USERLIST_PRIVHANDLER_GET:
-				*va_arg(ap, void **) = p;
-				break;
-			case EKG_USERLIST_PRIVHANDLER_READING:
-			{
-				char **entry	= *va_arg(ap, char ***);
-
-				if (atoi(u->uid)) {	/* backwards compatibility / userlist -g hack for GG */
-					char *tmp = u->uid;
-					u->uid = saprintf("gg:%s", tmp);
-					xfree(tmp);
-				} 
-
-				p->first_name 	= entry[0];	entry[0] = NULL;
-				p->last_name	= entry[1];	entry[1] = NULL;
-				p->mobile	= entry[4];	entry[4] = NULL;
-				break;
-			}
-			case EKG_USERLIST_PRIVHANDLER_WRITING:
-			{
-				char **entry	= *va_arg(ap, char ***);
-
-				if (p->first_name) {
-					xfree(entry[0]);
-					entry[0] = xstrdup(p->first_name);
-				}
-				if (p->last_name) {
-					xfree(entry[1]);
-					entry[1] = xstrdup(p->last_name);
-				}
-				if (p->mobile) {
-					xfree(entry[4]);
-					entry[4] = xstrdup(p->mobile);
-				}
-				break;
-			}
-			case EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME:
-			{
-				const char *name	= *va_arg(ap, const char **);
-				const char **r		= *va_arg(ap, const char ***);
-
-				if (!xstrcmp(name, "mobile"))
-					*r = p->mobile;
-				else if (!xstrcmp(name, "ip"))
-					*r = inet_ntoa(*((struct in_addr*) &p->ip));
-				else if (!xstrcmp(name, "port"))
-					*r = itoa(p->port);
-				break;
-			}
-			case EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT:
-			{
-				const char **ip		= *va_arg(ap, const char ***);
-				const char **port	= *va_arg(ap, const char ***);
-
-				*ip	= inet_ntoa(*((struct in_addr*) &p->ip));
-				*port	= itoa(p->port);
-				break;
-			}
-			case EKG_USERLIST_PRIVHANDLER_SETVAR_BYNAME:
-			{
-				const char *name	= *va_arg(ap, const char **);
-				const char *val		= *va_arg(ap, const char **);
-
-				if (!xstrcmp(name, "first_name")) {
-					xfree(p->first_name);
-					p->first_name = xstrdup(val);
-				} else if (!xstrcmp(name, "last_name")) {
-					xfree(p->last_name);
-					p->last_name = xstrdup(val);
-				} else if (!xstrcmp(name, "mobile")) {
-					xfree(p->mobile);
-					p->mobile = xstrdup(val);
-				}
-				break;
-			}
-		}
-	}
-	return 1;
-}
-
 /*
  * gg_ping_timer_handler()
  *
@@ -668,30 +515,6 @@ static TIMER_SESSION(gg_ping_timer_handler) {
 	return 0;
 }
 
-/* 
- * gg_inv_check_handler()
- *
- * checks if user marked as invisible, is still connected
- */
-
-static TIMER(gg_inv_check_handler)
-{
-	const gg_currently_checked_t *c = (gg_currently_checked_t *) data;
-	userlist_t *u;
-	
-	if (type == 1) {
-		xfree(c->uid);
-		xfree(data);
-		return -1;
-	}
-	
-	if ((u = userlist_find(c->session, c->uid)) && (u->status == EKG_STATUS_INVISIBLE)) {
-		command_exec_format(c->uid, c->session, 1, ("/gg:check_conn"));
-	}
-	
-	return -1;
-}
-
 /*
  * gg_session_handler_success()
  *
@@ -700,7 +523,7 @@ static TIMER(gg_inv_check_handler)
 static void gg_session_handler_success(session_t *s) {
 	gg_private_t *g = s->priv;
 
-	int status;
+	const char *status;
 	char *__session;
 	int _status;
 	char *descr;
@@ -773,25 +596,8 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e) {
 	if (session_int_get(s, "connection_save") == 1) {
 		session_set(s, "server", NULL);
 		session_int_set(s, "port", GG_DEFAULT_PORT);
-	} else
-	{		/* If we have some servers in 'server' variable and we're unable to connect to the first one,
-			 * then we should move it to the end and set the second one as default,
-			 * maybe that's kinda dirty way, but IMO most flexible [mg] */
-		const char *oldserver = session_get(s, "server");
-		const char *comma;
-
-		if ((comma = xstrchr(oldserver, ','))) {
-			char *newserver = xmalloc(xstrlen(oldserver)+1);
-
-			xstrcpy(newserver, comma+1);
-			xstrcat(newserver, ",");
-			xstrncat(newserver, oldserver, comma-oldserver);
-
-			session_set(s, "server", newserver);
-			
-			xfree(newserver);
-		}
 	}
+
 
 	gg_free_session(g->sess);
 	g->sess = NULL;
@@ -838,25 +644,15 @@ static void gg_session_handler_disconnect(session_t *s) {
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol) {
 	char *__session	= xstrdup(session_uid_get(s));
 	char *__uid	= saprintf(("gg:%d"), uin);
-	int __status	= gg_status_to_text(status);
+	char *__status= xstrdup(gg_status_to_text(status));
 	char *__descr	= gg_cp_to_locale(xstrdup(descr));
+	char *__host	= (ip) ? xstrdup(inet_ntoa(*((struct in_addr*)(&ip)))) : NULL;
 	time_t when	= time(NULL);
-	int i, j, dlen, state = 0, m = 0;
+	int __port	= port, i, j, dlen, state = 0, m = 0;
+	userlist_t *u;
 
-	{
-		userlist_t *u;
-		gg_userlist_private_t *up;
-
-		if ((u = userlist_find(s, __uid)) && (up = gg_userlist_priv_get(u))) {
-			up->protocol = protocol;
-			/* zapisz adres IP i port */
-			up->ip = ip;
-			up->port = port;
-
-			up->last_ip = ip;
-			up->last_port = port;
-		}
-	}
+	if ((u = userlist_find(s, __uid)))
+		u->protocol = protocol;
 
 	for (i = 0; i < xstrlen(__descr); i++)
 		if (__descr[i] == 10 || __descr[i] == 13)
@@ -885,9 +681,11 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 		}
 
 	}
-	query_emit_id(NULL, PROTOCOL_STATUS, &__session, &__uid, &__status, &__descr, &when);
+	query_emit_id(NULL, PROTOCOL_STATUS, &__session, &__uid, &__status, &__descr, &__host, &__port, &when);
 
+	xfree(__host);
 	xfree(__descr);
+	xfree(__status);
 	xfree(__uid);
 	xfree(__session);
 }
@@ -898,13 +696,13 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
  * obs³uga przychodz±cych wiadomo¶ci.
  */
 static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
-	gg_private_t *g = s->priv;
-
 	char *__sender, **__rcpts = NULL;
 	char *__text;
 	uint32_t *__format = NULL;
 	int image = 0, check_inv = 0;
 	int i;
+
+	gg_private_t *g = session_private_get(s);
 
 	if (e->event.msg.msgclass & GG_CLASS_CTCP) {
 		struct gg_dcc *d;
@@ -912,14 +710,13 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 		char uid[16];
 		int __port = -1, __valid = 1;
 		userlist_t *u;
-		gg_userlist_private_t *up;
 		watch_t *w;
 
 		if (!gg_config_dcc) return;
 
 		snprintf(uid, sizeof(uid), "gg:%d", e->event.msg.sender);
 
-		if (!(u = userlist_find(s, uid)) || !(up = gg_userlist_priv_get(u)))
+		if (!(u = userlist_find(s, uid)))
 			return;
 
 		query_emit(NULL, ("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
@@ -931,7 +728,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 			return;
 		}
 
-		if (!(d = gg_dcc_get_file(up->ip, up->port, atoi(session_uid_get(s) + 3), e->event.msg.sender))) {
+		if (!(d = gg_dcc_get_file(u->ip, u->port, atoi(session_uid_get(s) + 3), e->event.msg.sender))) {
 			print_status("dcc_error", strerror(errno));
 			return;
 		}
@@ -1047,40 +844,26 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 	char *__session = xstrdup(s->uid);
 	char *__rcpt	= saprintf("gg:%d", e->event.ack.recipient);
 	char *__seq	= xstrdup(itoa(e->event.ack.seq));
-	int __status;
-
-/* ifndef + defines for old libgadu */
-#ifndef GG_ACK_BLOCKED
-#define GG_ACK_BLOCKED 0x0001
-#endif
-
-#ifndef GG_ACK_MBOXFULL
-#define GG_ACK_MBOXFULL 0x0004
-#endif
+	char *__status;
 
 	switch (e->event.ack.status) {
-		case GG_ACK_DELIVERED:		/* from libgadu.h 1.1 (15-Oct-01) */
-			__status = EKG_ACK_DELIVERED;
+		case GG_ACK_DELIVERED:
+			__status = xstrdup(EKG_ACK_DELIVERED);
 			break;
-		case GG_ACK_QUEUED:		/* from libgadu.h 1.1 (15-Oct-01) */
-			__status = EKG_ACK_QUEUED;
+		case GG_ACK_QUEUED:
+			__status = xstrdup(EKG_ACK_QUEUED);
 			break;
-		case GG_ACK_NOT_DELIVERED:	/* from libgadu.h 1.50 (21-Dec-01) */
-			__status = EKG_ACK_DROPPED;
+		case GG_ACK_NOT_DELIVERED:
+			__status = xstrdup(EKG_ACK_DROPPED);
 			break;
-		case GG_ACK_BLOCKED:		/* from libgadu.h 1.175 (21-Dec-04) */
-			__status = EKG_ACK_DROPPED;
-			break;
-		case GG_ACK_MBOXFULL:		/* from libgadu.h 1.175 (21-Dec-04) */
-			__status = EKG_ACK_TEMPFAIL;
-			break;
-		default:			/* unknown neither for ekg2 nor libgadu */
-			debug_error("gg_session_handler_ack() unknown message ack status. consider upgrade [0x%x]\n", e->event.ack.status);
-			__status = EKG_ACK_UNKNOWN;
+		default:
+			debug("[gg] unknown message ack status. consider upgrade\n");
+			__status = xstrdup(EKG_ACK_UNKNOWN);
 			break;
 	}
 	query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &__session, &__rcpt, &__seq, &__status);
 
+	xfree(__status);
 	xfree(__seq);
 	xfree(__rcpt);
 	xfree(__session);
@@ -1113,35 +896,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 						l = l->next;
 
 						if (!session_compare(c->session, s) && !xstrcmp(c->uid, tmp)) {
-							userlist_t *u = userlist_find(s, tmp);
-							if (u) {
-								const int interval = session_int_get(s, "invisible_check_interval");
-								gg_currently_checked_t *c_timer;
-								
-								if (interval > 0) {
-									c_timer = xmalloc(sizeof(gg_currently_checked_t));
-									c_timer->uid = xstrdup(tmp);
-									c_timer->session = s;
-									timer_add(&gg_plugin, NULL, interval, 0, gg_inv_check_handler, c_timer);
-								}
-								if (u->status == EKG_STATUS_NA) {
-									char *session	= xstrdup(session_uid_get(s));
-									char *uid	= xstrdup(tmp);
-									int status	= EKG_STATUS_INVISIBLE;
-									char *descr	= xstrdup(u->descr);
-									char *host	= NULL;
-									int port	= 0;
-									time_t when	= time(NULL);
-									
-									query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &when);
-									
-									xfree(session);
-									xfree(uid);
-									xfree(descr);
-								}
-							} else
-								print("gg_user_is_connected", session_name(s), format_user(s, tmp));
-							xfree(c->uid);
+							print("gg_user_is_connected", session_name(s), format_user(s, tmp));
 							list_remove(&gg_currently_checked, c, 1);
 							break;
 						}
@@ -1434,29 +1189,29 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
  */
 
 static void gg_changed_private(session_t *s, const char *var) {
-	gg_private_t *g;
-	int status;			/* status for libgadu */
-	char *cpdescr;			/* description in cp1250 for libgadu */
+	gg_private_t *g = (s) ? session_private_get(s) : NULL;
+	const char *status = session_status_get(s);
+	char *cpdescr;
+	int _status;
 
 	if (!s || !s->connected || !(g = s->priv))
 		return;
 
 	cpdescr = gg_locale_to_cp(xstrdup(s->descr));
-	status	= gg_text_to_status(s->status, cpdescr);	/* XXX, check if gg_text_to_status() return smth correct */
 
-	if (session_int_get(s, "private") > 0)
-		status |= GG_STATUS_FRIENDS_MASK;
-
+	_status = GG_S(gg_text_to_status(status, cpdescr)); 
+	if (session_int_get(s, "private"))
+		_status |= GG_STATUS_FRIENDS_MASK;
 	if (cpdescr)
-		gg_change_status_descr(g->sess, status, cpdescr);
+		gg_change_status_descr(g->sess, _status, cpdescr);
 	else
-		gg_change_status(g->sess, status);
+		gg_change_status(g->sess, _status);
 
 	xfree(cpdescr);
 }
 
 /**
- * changed_proxy()
+ * gg_changed_proxy()
  *
  * Handler execute when session variable: "proxy" change
  *
@@ -1511,17 +1266,7 @@ static void gg_changed_proxy(session_t *s, const char *var) {
 
 static int gg_theme_init() {
 #ifndef NO_DEFAULT_THEME
-	format_add("gg_version", _("%> %TGadu-Gadu%n: libgadu %g%1%n (headers %c%2%n), protocol %g%3%n (%c0x%4%n)"), 1);
-	/* /list */
-	format_add("gg_user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
-	format_add("gg_user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
-	format_add("gg_user_info_not_in_contacts", _("%K| %nDoesn't have us in roster\n"), 1);
-	format_add("gg_user_info_firewalled", _("%K| %nFirewalled/NATed\n"), 1);
-	format_add("gg_user_info_ip", _("%K| %nAddress: %T%1%n\n"), 1);
-	format_add("gg_user_info_last_ip", _("%K| %nLast address: %T%1%n\n"), 1);
-	format_add("gg_user_info_voip", _("%K| %nVoIP-capable\n"), 1);
-	format_add("gg_user_info_version", _("%K| %nVersion: %T%1%n\n"),1);
-	/* token things */
+	/* pobieranie tokenu */
 	format_add("gg_token", _("%> Token was written to the file %T%1%n\n"), 1);
 	format_add("gg_token_ocr", _("%> Token: %T%1%n\n"), 1);
 	format_add("gg_token_body", "%1\n", 1);
@@ -1530,23 +1275,21 @@ static int gg_theme_init() {
 	format_add("gg_token_timeout", _("%! Token getting timeout\n"), 1);
 	format_add("gg_token_unsupported", _("%! Your operating system doesn't support tokens\n"), 1);
 	format_add("gg_token_missing", _("%! First get token by function %Ttoken%n\n"), 1);
-	/* check_conn */
 	format_add("gg_user_is_connected", _("%> (%1) User %T%2%n is connected\n"), 1);
 	format_add("gg_user_is_not_connected", _("%> (%1) User %T%2%n is not connected\n"), 1);
-	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);
-	/* images */
 	format_add("gg_image_cant_open_file", _("%! Can't open file for image %1 (%2)\n"), 1);
 	format_add("gg_image_error_send", _("%! Error sending image\n"), 1);
 	format_add("gg_image_ok_send", _("%> Image sent properly\n"), 1);
 	format_add("gg_image_ok_get", _("%> Image <%3> saved in %1\n"), 1);	/* %1 - path, %2 - uid, %3 - name of picture */
+	format_add("gg_we_are_being_checked", _("%> (%1) We are being checked by %T%2%n\n"), 1);
 #endif
 	return 0;
 }
 
 static QUERY(gg_setvar_default) {
 	xfree(gg_config_dcc_ip);
-	xfree(gg_config_images_dir);
 	xfree(gg_config_dcc_limit);
+	xfree(gg_config_images_dir);
 
 	gg_config_display_token = 1;
 	gg_config_get_images = 0;
@@ -1586,40 +1329,9 @@ static void libgadu_debug_handler(int level, const char *format, va_list ap) {
 	ekg_debug_handler(newlevel, format, ap);
 }
 
-static plugins_params_t gg_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL), 
-	PLUGIN_VAR_ADD("auto_away", 		SESSION_VAR_AUTO_AWAY, VAR_INT, "600", 0, NULL),
-	PLUGIN_VAR_ADD("auto_away_descr", 	SESSION_VAR_AUTO_AWAY_DESCR, VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("auto_back", 		SESSION_VAR_AUTO_BACK, VAR_INT, "0", 0, NULL),	
-	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_find", 		SESSION_VAR_AUTO_FIND, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_reconnect", 	SESSION_VAR_AUTO_RECONNECT, VAR_INT, "10", 0, NULL),
-	PLUGIN_VAR_ADD("concat_multiline_status", 0, VAR_INT, "3", 0, NULL),
-	PLUGIN_VAR_ADD("connection_save", 	0, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("display_notify", 	SESSION_VAR_DISPLAY_NOTIFY, VAR_INT, "-1", 0, NULL),
-	PLUGIN_VAR_ADD("email", 		0, VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("invisible_check_interval", 0, VAR_INT, 0, 0, NULL),
-	PLUGIN_VAR_ADD("local_ip", 		0, VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "xml,simple", 0, NULL),
-	PLUGIN_VAR_ADD("password", 		SESSION_VAR_PASSWORD, VAR_STR, "foo", 1, NULL),
-	PLUGIN_VAR_ADD("port", 			SESSION_VAR_PORT, VAR_INT, "8074", 0, NULL),
-	PLUGIN_VAR_ADD("private", 		0, VAR_BOOL, "0", 0, gg_changed_private),
-	PLUGIN_VAR_ADD("protocol", 		0, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("proxy", 		0, VAR_STR, NULL, 0, gg_changed_proxy),
-	PLUGIN_VAR_ADD("proxy_forwarding", 	0, VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("scroll_long_desc", 	0, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("scroll_mode", 		0, VAR_STR, "bounce", 0, NULL),
-	PLUGIN_VAR_ADD("server", 		SESSION_VAR_SERVER, VAR_STR, NULL, 0, NULL),
-
-	PLUGIN_VAR_END()
-};
-
-int EXPORT gg_plugin_init(int prio) {
-	va_list dummy;
-	gg_plugin.params = gg_plugin_vars;
-
+EXPORT int gg_plugin_init(int prio) {
 	plugin_register(&gg_plugin, prio);
-	gg_setvar_default(NULL, dummy);
+	gg_setvar_default(NULL, NULL);
 
 	query_connect_id(&gg_plugin, SET_VARS_DEFAULT, gg_setvar_default, NULL);
 	query_connect_id(&gg_plugin, PROTOCOL_VALIDATE_UID, gg_validate_uid, NULL);
@@ -1634,8 +1346,6 @@ int EXPORT gg_plugin_init(int prio) {
 	query_connect(&gg_plugin, ("user-online"), gg_user_online_handle, NULL);
 	query_connect_id(&gg_plugin, PROTOCOL_UNIGNORE, gg_user_online_handle, (void *)1);
 	query_connect_id(&gg_plugin, USERLIST_INFO, gg_userlist_info_handle, NULL);
-	query_connect_id(&gg_plugin, USERLIST_PRIVHANDLE, gg_userlist_priv_handler, NULL);
-	query_connect_id(&gg_plugin, CONFIG_POSTINIT, gg_convert_string_init, NULL);
 
 	gg_register_commands();
 
@@ -1649,6 +1359,30 @@ int EXPORT gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("images_dir"), VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
 	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
+
+	plugin_var_add(&gg_plugin, "alias", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&gg_plugin, "allow_autoresponder", VAR_BOOL, "0", 0, NULL);
+	plugin_var_add(&gg_plugin, "auto_away", VAR_INT, "600", 0, NULL);
+	plugin_var_add(&gg_plugin, "auto_away_descr", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&gg_plugin, "auto_back", VAR_INT, "0", 0, NULL);	
+	plugin_var_add(&gg_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
+	plugin_var_add(&gg_plugin, "auto_find", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&gg_plugin, "auto_reconnect", VAR_INT, "10", 0, NULL);
+	plugin_var_add(&gg_plugin, "concat_multiline_status", VAR_INT, "3", 0, NULL);
+	plugin_var_add(&gg_plugin, "connection_save", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&gg_plugin, "display_notify", VAR_INT, "-1", 0, NULL);
+	plugin_var_add(&gg_plugin, "email", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&gg_plugin, "local_ip", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&gg_plugin, "log_formats", VAR_STR, "xml,simple", 0, NULL);
+	plugin_var_add(&gg_plugin, "password", VAR_STR, "foo", 1, NULL);
+	plugin_var_add(&gg_plugin, "protocol", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&gg_plugin, "port", VAR_INT, "8074", 0, NULL);
+	plugin_var_add(&gg_plugin, "proxy", VAR_STR, 0, 0, gg_changed_proxy);
+	plugin_var_add(&gg_plugin, "proxy_forwarding", VAR_STR, 0, 0, NULL);
+	plugin_var_add(&gg_plugin, "private", VAR_BOOL, "0", 0, gg_changed_private);
+	plugin_var_add(&gg_plugin, "scroll_long_desc", VAR_INT, "0", 0, NULL);
+	plugin_var_add(&gg_plugin, "scroll_mode", VAR_STR, "bounce", 0, NULL);
+	plugin_var_add(&gg_plugin, "server", VAR_STR, 0, 0, NULL);
 
 	gg_debug_handler	= libgadu_debug_handler;
 	gg_debug_level		= 255;
@@ -1688,7 +1422,6 @@ static int gg_plugin_destroy() {
 	gg_register_email = NULL;
 
 	image_flush_queue();
-	gg_convert_string_destroy();
 
 	plugin_unregister(&gg_plugin);
 

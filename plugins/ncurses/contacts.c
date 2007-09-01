@@ -92,12 +92,11 @@ void ncurses_backward_contacts_line(int arg)
  * funkcja zwraca pierwsze literki status avail -> av away -> aw itd... 
  * funkcja nie sprawdza czy status jest NULL, ani czy strlen(status) > 2 
  */
-static inline char *get_short_status(int status) {
+static inline char *get_short_status(char *status) {
 	static char buf[3];
-	const char *status_t = ekg_status_string(status, 0);
 
-	buf[0] = status_t[0];
-	buf[1] = status_t[1];
+	buf[0] = status[0];
+	buf[1] = status[1];
 	buf[2] = 0; 		/* ? */
 	return &buf[0];
 }
@@ -142,10 +141,10 @@ void ncurses_forward_contacts_line(int arg)
 						for (li = s->userlist; li; li = li->next) {
 							userlist_t *u = li->data;
 
-							if (!u || !u->nickname || !u->status)
+							if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
 
-							if (!contacts_nosort && xstrncmp(get_short_status(u->status), contacts_order + j, 2))
+							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 								continue;
 
 							if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
@@ -171,10 +170,10 @@ void ncurses_forward_contacts_line(int arg)
 						for (; li; li = li->next) {
 							userlist_t *u = li->data;
 
-							if (!u || !u->nickname || !u->status)
+							if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
 
-							if (!contacts_nosort && xstrncmp(get_short_status(u->status), contacts_order + j, 2))
+							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 								continue;
 
 							if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
@@ -203,10 +202,10 @@ void ncurses_forward_contacts_line(int arg)
 							metacontact_item_t *i = metacontact_find_prio(m);
 							userlist_t *u = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
 
-							if (!u || !u->nickname || !u->status)
+							if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
 
-							if (!contacts_nosort && xstrncmp(get_short_status(u->status), contacts_order + j, 2))
+							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 								continue;
 
 							if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
@@ -238,10 +237,10 @@ again:
 						for (li = current_list; li; li = li->next) {
 							userlist_t *u = li->data;
 
-							if (!u || !u->nickname || !u->status)
+							if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2)
 								continue;
 
-							if (!contacts_nosort && xstrncmp(get_short_status(u->status), contacts_order + j, 2))
+							if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 								continue;
 
 							if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
@@ -508,15 +507,12 @@ group_cleanup:
 
 		for (; l; l = l->next) {
 			userlist_t *u = l->data;
-			const char *status_t;
 			const char *format;
 
-			if (!u || !u->nickname || !u->status) 
+			if (!u || !u->nickname || !u->status || xstrlen(u->status) < 2) 
 				continue;
 
-			status_t = ekg_status_string(u->status, 0);
-
-			if (!contacts_nosort && xstrncmp(status_t, contacts_order + j, 2))
+			if (!contacts_nosort && xstrncmp(u->status, contacts_order + j, 2))
 				continue;
 
 			if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
@@ -535,7 +531,7 @@ group_cleanup:
 			}
 
 			if (!count) {
-				snprintf(tmp, sizeof(tmp), "contacts_%s_header", status_t);
+				snprintf(tmp, sizeof(tmp), "contacts_%s_header", u->status);
 				format = format_find(tmp);
 				if (xstrcmp(format, "") && count_all >= contacts_index) {
 					line = format_string(format);
@@ -543,15 +539,15 @@ group_cleanup:
 					ncurses_backlog_add(w, string);
 					xfree(line);
 				}
-				footer_status = status_t;
+				footer_status = u->status;
 			}
 
 			if (u->descr && contacts_descr)
-				snprintf(tmp, sizeof(tmp), "contacts_%s_descr_full", status_t);
+				snprintf(tmp, sizeof(tmp), "contacts_%s_descr_full", u->status);
 			else if (u->descr && !contacts_descr)
-				snprintf(tmp, sizeof(tmp), "contacts_%s_descr", status_t);
+				snprintf(tmp, sizeof(tmp), "contacts_%s_descr", u->status);
 			else
-				snprintf(tmp, sizeof(tmp), "contacts_%s", status_t);
+				snprintf(tmp, sizeof(tmp), "contacts_%s", u->status);
 
 			if (u->xstate & EKG_XSTATE_BLINK)
 				xstrcat(tmp, "_blink");
@@ -735,10 +731,9 @@ QUERY(ncurses_contacts_changed)
  */
 QUERY(ncurses_all_contacts_changed)
 {
-	va_list dummy;
 	list_destroy(sorted_all_cache, 1);
 	sorted_all_cache = NULL;
-	ncurses_contacts_changed(data, dummy);
+	ncurses_contacts_changed(data, NULL);
 	return 0;
 }
 
@@ -769,9 +764,9 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 	if (y > n->backlog_size)
 		return;
 
-	name = n->backlog[n->backlog_size - y]->str.w;
+	name = n->backlog[n->backlog_size - y]->str;
 
-	command_exec_format(NULL, NULL, 0, ("/query \"" STRING_FORMAT "\""), n->backlog[n->backlog_size - y ]->private);
+	command_exec_format(NULL, NULL, 0, ("/query \"%s\""), n->backlog[n->backlog_size - y ]->private);
 	return;
 }
 

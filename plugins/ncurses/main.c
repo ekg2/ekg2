@@ -262,6 +262,19 @@ static QUERY(ncurses_ui_window_refresh)
 	return 0;
 }
 
+static QUERY(ncurses_ui_refresh)
+{
+/* XXX, code from ncurses_ui_window_refresh() */
+	ncurses_refresh();
+	ncurses_commit();
+/* XXX, code from ekg1 /window refresh */
+/*	window_floating_update(0); */		/* done by ncurses_refresh() */
+	wrefresh(curscr);
+
+/* XXX, research */
+	return 0;
+}
+
 static QUERY(ncurses_ui_window_clear)
 {
 	window_t **w = va_arg(ap, window_t **);
@@ -381,12 +394,10 @@ static void ncurses_changed_aspell(const char *var)
 
 static QUERY(ncurses_postinit)
 {
-	va_list dummy;
-
 #ifdef WITH_ASPELL
 	ncurses_spellcheck_init();
 #endif
-	ncurses_contacts_changed(NULL, dummy);
+	ncurses_contacts_changed(NULL, NULL);
 	return 0;
 }
 
@@ -552,15 +563,18 @@ EXPORT int ncurses_plugin_init(int prio)
 {
 	list_t l;
 	int is_UI = 0;
-	va_list dummy;
 
         query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
         if (is_UI) 
                 return -1;
+#if USE_UNICODE
+	if (config_use_unicode)		sizeofchart = sizeof(wchar_t);
+	else				sizeofchart = sizeof(char);
+#endif
 	plugin_register(&ncurses_plugin, prio);
 
-	ncurses_setvar_default(NULL, dummy);
+	ncurses_setvar_default(NULL, NULL);
 
 	query_connect_id(&ncurses_plugin, SET_VARS_DEFAULT, ncurses_setvar_default, NULL);
 	query_connect_id(&ncurses_plugin, UI_BEEP, ncurses_beep, NULL);
@@ -574,6 +588,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_CLEAR, ncurses_ui_window_clear, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
+	query_connect_id(&ncurses_plugin, UI_REFRESH, ncurses_ui_refresh, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_contacts_changed, NULL);

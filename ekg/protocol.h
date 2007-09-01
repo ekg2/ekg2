@@ -40,39 +40,28 @@
 
 #define EKG_NO_THEMEBIT	256
 
-enum msgack_t {
-	EKG_ACK_DELIVERED = 0,		/* message delivered successfully */
-	EKG_ACK_QUEUED,			/* message queued for delivery */
-	EKG_ACK_DROPPED,		/* message rejected 'permamently' */
-	EKG_ACK_TEMPFAIL,		/* temporary delivery failure */
-	EKG_ACK_UNKNOWN,		/* delivery status unknown */
-	
-	EKG_ACK_MAX			/* we don't want to read after array */
-};
+#define EKG_ACK_DELIVERED	"delivered"	/* wiadomo¶æ dostarczono */
+#define EKG_ACK_QUEUED		"queued"	/* wiadomo¶æ zakolejkowano */
+#define EKG_ACK_DROPPED		"filtered"	/* wiadomo¶æ odrzucono */
+#define EKG_ACK_UNKNOWN 	"unknown"	/* nie wiadomo, co siê z ni± sta³o */
 
-enum disconnect_t {
-	EKG_DISCONNECT_USER = 0,	/* user-engaged disconnect */
-	EKG_DISCONNECT_NETWORK,		/* network problems */
-	EKG_DISCONNECT_FORCED,		/* server forced to disconnect */
-	EKG_DISCONNECT_FAILURE,		/* connecting failed */
-	EKG_DISCONNECT_STOPPED		/* connecting canceled */
-};
+#define EKG_DISCONNECT_USER 0		/* u¿ytkownik wpisa³ /disconnect */
+#define EKG_DISCONNECT_NETWORK 1	/* problemy z sieci± */
+#define EKG_DISCONNECT_FORCED 2		/* serwer kaza³ siê roz³±czyæ */
+#define EKG_DISCONNECT_FAILURE 3	/* b³±d ³±czenia siê z serwerem */
+#define EKG_DISCONNECT_STOPPED 4	/* u¿ytkownik przerwa³ ³±czenie */
 
 #define EKG_NO_BEEP 0
 #define EKG_TRY_BEEP 1
 
 enum msgclass_t {
 	/* recv */
-	EKG_MSGCLASS_MESSAGE = 0,	/* single message */
-	EKG_MSGCLASS_CHAT,		/* chat message */
-	EKG_MSGCLASS_SYSTEM,		/* system message */
-	EKG_MSGCLASS_LOG,		/* old logged message (used by logsqlite 'last_print_on_open' */
+	EKG_MSGCLASS_MESSAGE = 0,	/* pojedyncza wiadomo¶æ */
+	EKG_MSGCLASS_CHAT,		/* wiadomo¶æ w ramach rozmowy */
+	EKG_MSGCLASS_SYSTEM,		/* wiadomo¶æ systemowa */
 	/* sent */
-	EKG_MSGCLASS_SENT = 32,		/* single sent message */
-	EKG_MSGCLASS_SENT_CHAT,		/* chat sent message */
-	EKG_MSGCLASS_SENT_LOG,		/* old logged message (used by logsqlite 'last_print_on_open' */
-	/* priv */
-	EKG_MSGCLASS_PRIV_STATUS = 64	/* used by logs */
+	EKG_MSGCLASS_SENT = 32,		/* wiadomo¶æ, któr± sami wysy³amy */
+	EKG_MSGCLASS_SENT_CHAT,		/* wiadomo¶c, któr± sam wysylamy w ramach rozmowy */
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION

@@ -106,7 +106,6 @@ char *string_free(string_t s, int free_string);
 /* tablice stringow */
 char **array_make(const char *string, const char *sep, int max, int trim, int quotes);
 char *array_join(char **array, const char *sep);
-char *array_join_count(char **array, const char *sep, int count);
 
 void array_add(char ***array, char *string);
 void array_add_check(char ***array, char *string, int casesensitive);
@@ -114,12 +113,10 @@ int array_count(char **array);
 int array_contains(char **array, const char *string, int casesensitive);
 int array_item_contains(char **array, const char *string, int casesensitive);
 void array_free(char **array);
-void array_free_count(char **array, int count);
 
 /* rozszerzenia libców */
 
 const char *itoa(long int i);
-const char *cssfind(const char *haystack, const char *needle, const char sep, int caseinsensitive);
 
 #endif
 

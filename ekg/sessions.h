@@ -32,6 +32,7 @@ typedef struct {
 /**
  * session_t contains all information about session
  */
+
 typedef struct {
 	/* public: */
 	void *plugin;			/**< protocol plugin owing session */
@@ -41,7 +42,7 @@ typedef struct {
 	list_t userlist;		/**< session's userlist */
 
 	/* private: */
-	int status;			/**< session's user status */
+	char *status;			/**< session's user status */
 	char *descr;			/**< session's user description */
 	char *password;			/**< session's account password */
 	int connected;			/**< whether session is connected */
@@ -52,17 +53,11 @@ typedef struct {
 	int scroll_op;
 	time_t last_conn;               /**< timestamp of connecting */
 
-	int global_vars_count;
-	char **values;
-	list_t local_vars;
+	list_t params;
 	
 	/* new auto-away */
-	int laststatus;			/**< user's status before going into autoaway */
+	char *laststatus;		/**< user's status before going into autoaway */
 	char *lastdescr;		/**< user's description before going into autoaway */
-
-#ifdef HAVE_FLOCK /* XXX: -D for docs? */
-	int lock_fd;			/**< fd used for session locking */
-#endif
 } session_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
@@ -72,6 +67,9 @@ extern session_t *session_current;
 
 session_t *session_find(const char *uid);
 session_t *session_find_ptr(session_t *s);
+session_param_t *session_var_find(session_t *s, const char *key);
+
+int session_var_default(session_t *s);
 
 int session_is_var(session_t *s, const char *key);
 
@@ -80,9 +78,9 @@ const char *session_uid_get(session_t *s);
 const char *session_alias_get(session_t *s);
 int session_alias_set(session_t *s, const char *alias);
 
-int session_status_get(session_t *s);
+const char *session_status_get(session_t *s);
 #define session_status_get_n(a) session_status_get(session_find(a))
-int session_status_set(session_t *s, int status);
+int session_status_set(session_t *s, const char *status);
 
 const char *session_descr_get(session_t *s);
 int session_descr_set(session_t *s, const char *descr);
@@ -97,15 +95,20 @@ int session_connected_get(session_t *s);
 int session_connected_set(session_t *s, int connected);
 
 const char *session_get(session_t *s, const char *key);
+#define session_get_n(a,b) session_get(session_find(a),b)
 int session_int_get(session_t *s, const char *key);
+#define session_int_get_n(a,b) session_int_get(session_find(a),b)
 int session_set(session_t *s, const char *key, const char *value);
+#define session_set_n(a,b,c) session_set(session_find(a),b,c)
 int session_int_set(session_t *s, const char *key, int value);
+#define session_int_set_n(a,b,c) session_int_set(session_find(a),b,c)
 
 const char *session_format(session_t *s);
 #define session_format_n(a) session_format(session_find(a))
 
 /* alias or uid - formatted */
 const char *session_name(session_t *s);
+#define session_name_n(a) session_name(session_find(a))
 
 /* alias or uid - not formatted */
 #define session_alias_uid(a) (a->alias) ? a->alias : a->uid
@@ -118,6 +121,7 @@ int session_unidle(session_t *s);
 int session_compare(void *data1, void *data2);
 session_t *session_add(const char *uid);
 int session_remove(const char *uid);
+#define session_remove_s(a) session_remove(a->uid)
 
 int session_read(const char *filename);
 int session_write();

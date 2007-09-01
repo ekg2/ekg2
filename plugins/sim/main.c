@@ -228,7 +228,7 @@ static COMMAND(command_key)
 			return -1;
 		}
 
-		if (!(uid = get_uid_any(session_current, params[1]))) {
+		if (!(uid = get_uid(session_current, params[1]))) {
 			printq("user_not_found", params[1]);
 			return -1;
 		}
@@ -269,7 +269,7 @@ static COMMAND(command_key)
 		else if (params[0] && match_arg(params[0], 'l', ("list"), 2))
 			x = params[1];
 
-		if (x && !(list_uid = get_uid_any(session, x))) {
+		if (x && !(list_uid = get_uid(session, x))) {
 			printq("user_not_found", x);
 			closedir(dir);
 			return -1;

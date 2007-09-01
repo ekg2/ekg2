@@ -106,6 +106,12 @@ typedef enum {
 #define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
 #define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */
 
+static inline char *inet_ntoa_u(uint32_t ip) {
+	struct in_addr in;
+	in.s_addr = ip;
+	return inet_ntoa(in);
+}
+
 static QUERY(logs_setvar_default) {
 	xfree(config_logs_path);
 	xfree(config_logs_timestamp);
@@ -169,6 +175,7 @@ static char *log_escape(const char *str)
 
 	return res;
 }
+
 
 /* 
  * zwraca irssi lub simple lub xml lub NULL
@@ -235,7 +242,7 @@ static int logs_window_check(logs_log_t *ll, time_t t) {
 				l->file = logs_open_file(l->path, LOG_FORMAT_IRSSI);
 			logs_irssi(l->file, ll->session, NULL,
 					prepare_timestamp_format(IRSSI_LOG_DAY_CHANGED, time(NULL)),
-					0, LOG_IRSSI_INFO);
+					0, LOG_IRSSI_INFO, NULL);
 		}
 		xfree(tm);
 	}
@@ -321,7 +328,7 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 		if (ll->lw->logformat == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_OPENED)) {
 			logs_irssi(ll->lw->file, session, NULL,
 					prepare_timestamp_format(IRSSI_LOG_EKG2_OPENED, t),
-					0, LOG_IRSSI_INFO);
+					0, LOG_IRSSI_INFO, NULL);
 		} 
 		list_add(&log_logs, ll, 0);
 	}
@@ -329,15 +336,9 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 }
 
 static void logs_window_new(window_t *w) {
-	const char *uid;
-
 	if (!w->target || !w->session || w->id == 1000)
 		return;
-
-	uid = get_uid_any(w->session, w->target);
-
-/* XXX, do we really want/need to create log struct with invalid uid? XXX */
-	logs_log_new(NULL, session_uid_get(w->session), uid ? uid : w->target);
+	logs_log_new(NULL, session_uid_get(w->session), get_uid(w->session, w->target));
 }
 
 static FILE *logs_window_close(logs_log_t *l, int close) {
@@ -421,12 +422,12 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 		debug("WARN logs_print_window() called but neither ncurses plugin nor gtk found\n");
 		return -1;
 	}
+	if (!w) w = window_current;
 
-	fline = format_string(line);		/* format string */
+	fline = format_string(line);			/* format string */
 	fstr = fstring_new(fline);			/* create fstring */
 
 	fstr->ts = ts;					/* sync timestamp */
-
 	query_emit_id(ui_plugin, UI_WINDOW_PRINT, &w, &fstr);	/* let's rock */
 
 	xfree(fline);						/* cleanup */
@@ -469,13 +470,7 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	s = session_find(sesja);
 	w = window_find_s(s, target);
 
-
 	debug("[logs_buffer_raw_display()] s:0x%x; w:0x%x;\n", s, w);
-
-	if (!w)
-		w = window_current;
-
-	if (w) w->lock++;
 
 	for (l = buffer_lograw; l; l = l->next) {
 		struct buffer *b = l->data;
@@ -493,12 +488,6 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	}
 	if (bs) for (i = item < items ? 0 : item-items; i < item; i++) 
 		logs_print_window(s, w, bs[i]->line, bs[i]->ts);
-
-	if (w) {
-		w->lock--;
-		query_emit_id(NULL, UI_WINDOW_REFRESH);
-	}
-
 	xfree(bs);
 
 	xfree(profile);
@@ -530,8 +519,6 @@ static int logs_buffer_raw_add_line(const char *file, const char *line) {
 
 static QUERY(logs_handler_newwin) {
 	window_t *w = *(va_arg(ap, window_t **));
-
-/* w->floating */
 
 	logs_window_new(w);
 	if (config_logs_log_raw) {
@@ -571,6 +558,7 @@ EXPORT int logs_plugin_init(int prio) {
 	plugin_register(&logs_plugin, prio);
 	
 	buffer_lograw_tail = NULL;
+	logs_setvar_default(NULL, NULL);
 
 	query_connect_id(&logs_plugin, SET_VARS_DEFAULT,logs_setvar_default, NULL);
 	query_connect_id(&logs_plugin, PROTOCOL_MESSAGE_POST, logs_handler, NULL);
@@ -580,7 +568,6 @@ EXPORT int logs_plugin_init(int prio) {
 	query_connect_id(&logs_plugin, UI_WINDOW_KILL,	logs_handler_killwin, NULL);
 	query_connect_id(&logs_plugin, PROTOCOL_STATUS, logs_status_handler, NULL);
 	query_connect_id(&logs_plugin, CONFIG_POSTINIT, logs_postinit, NULL);
-	/* XXX, implement UI_WINDOW_TARGET_CHANGED, IMPORTANT!!!!!! */
 
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */
 	variable_add(&logs_plugin, ("log_max_open_files"), VAR_INT, 1, &config_logs_max_files, &logs_changed_maxfd, NULL, NULL); 
@@ -601,11 +588,10 @@ EXPORT int logs_plugin_init(int prio) {
 }
 
 static int logs_plugin_destroy() {
-	list_t old_logs = log_logs;
-	list_t l;
+	list_t l = log_logs;
 
-	for (; log_logs; log_logs = log_logs->next) {
-		logs_log_t *ll = log_logs->data;
+	for (l = log_logs; l; l = l->next) {
+		logs_log_t *ll = l->data;
 		FILE *f = NULL;
 		time_t t = time(NULL);
 		int ff = (ll->lw) ? ll->lw->logformat : logs_log_format(session_find(ll->session));
@@ -613,19 +599,19 @@ static int logs_plugin_destroy() {
 		/* TODO: rewrite */
 		if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
 			char *path	= (ll->lw) ? xstrdup(ll->lw->path) : logs_prepare_path(session_find(ll->session), config_logs_path, ll->uid, t);
-			f		= (ll->lw) ? logs_window_close(log_logs->data, 0) : NULL; 
+			f		= (ll->lw) ? logs_window_close(l->data, 0) : NULL; 
 
 			if (!f) 
 				f = logs_open_file(path, ff);
 			xfree(path);
 		} else 
-			logs_window_close(log_logs->data, 1);
+			logs_window_close(l->data, 1);
 
 		if (f) {
 			if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
 				logs_irssi(f, ll->session, NULL,
 						prepare_timestamp_format(IRSSI_LOG_EKG2_CLOSED, t), 0,
-						LOG_IRSSI_INFO);
+						LOG_IRSSI_INFO, NULL);
 			}
 			fclose(f);
 		}
@@ -633,7 +619,7 @@ static int logs_plugin_destroy() {
 		xfree(ll->session);
 		xfree(ll->uid);
 	}
-	list_destroy(old_logs, 1);	log_logs = NULL;
+	list_destroy(log_logs, 1);
 
 	if (config_logs_log_raw) for (l = buffer_lograw; l;) {
 		struct buffer *b = l->data;
@@ -771,28 +757,6 @@ static FILE* logs_open_file(char *path, int ff) {
 		errno = EACCES; /* = 0 ? */
 		return NULL;
 	}
-
-	{	/* check if such file was already open SLOW :( */
-		list_t l;
-
-		for (l=log_logs; l; l = l->next) {
-			logs_log_t *ll = l->data;
-			log_window_t *lw;
-
-			if (!ll || !(lw = ll->lw))
-				continue;
-
-/*			debug_error("here: %x [%s, %s] [%d %d]\n", lw->file, lw->path, path, lw->logformat, ff); */
-
-			if (lw->file && lw->logformat == ff && !xstrcmp(lw->path, path)) {
-				FILE *f = lw->file;
-				lw->file = NULL;	/* simulate fclose() on this */
-				return f;		/* simulate fopen() here */
-			}
-		}
-	}
-
-
 	xstrncpy(fullname, path, PATH_MAX);
 
 	if (mkdir_recursive(path, 0)) {
@@ -909,9 +873,9 @@ static QUERY(logs_handler) {
 
 	/* uid = uid | ruid ? */
 	if (lw->logformat == LOG_FORMAT_IRSSI)
-		logs_irssi(lw->file, session, uid, text, sent, LOG_IRSSI_MESSAGE);
+		logs_irssi(lw->file, session, uid, text, sent, LOG_IRSSI_MESSAGE, NULL);
 	else if (lw->logformat == LOG_FORMAT_SIMPLE)
-		logs_simple(lw->file, session, ruid, text, sent, class, (char*)NULL);
+		logs_simple(lw->file, session, ruid, text, sent, class, (uint32_t)NULL, (uint16_t)NULL, (char*)NULL);
 	else if (lw->logformat == LOG_FORMAT_XML)
 		logs_xml(lw->file, session, uid, text, sent, class);
 	// itd. dla innych formatow logow
@@ -926,11 +890,13 @@ static QUERY(logs_handler) {
 static QUERY(logs_status_handler) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
-	int status	= *(va_arg(ap, int*));
+	char *status	= *(va_arg(ap, char**));
 	char *descr	= *(va_arg(ap, char**));
 
 	session_t *s; // session pointer
 	userlist_t *userlist;
+	uint32_t ip;
+	uint16_t port;
 
 	log_window_t *lw;
 
@@ -957,23 +923,27 @@ static QUERY(logs_status_handler) {
 	/* jesli nie otwarl sie plik to po co mamy robic ? */
 	s = session_find(session);
 	userlist = userlist_find(s, uid);
+	ip=userlist?userlist->ip:0;
+	port=userlist?userlist->port:0;
 
 	if (!descr)
 		descr = "";
 
 	if (lw->logformat == LOG_FORMAT_IRSSI) {
 		char *_what = NULL;
+		char *_ip = saprintf("~%s@%s:%d", "notirc", inet_ntoa_u(ip), port);
 
-		_what = saprintf("%s (%s)", __(descr), __(ekg_status_string(status, 0)));
+		_what = saprintf("%s (%s)", __(descr), __(status));
 
-		logs_irssi(lw->file, session, uid, _what, time(NULL), LOG_IRSSI_STATUS);
+		logs_irssi(lw->file, session, uid, _what, time(NULL), LOG_IRSSI_STATUS, _ip);
 
 		xfree(_what);
+		xfree(_ip);
 
 	} else if (lw->logformat == LOG_FORMAT_SIMPLE) {
-		logs_simple(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, ekg_status_string(status, 0));
+		logs_simple(lw->file, session, uid, descr, time(NULL), 6, ip, port, status);
 	} else if (lw->logformat == LOG_FORMAT_XML) {
-		/*		logs_xml(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, status); */
+		/*		logs_xml(lw->file, session, uid, descr, time(NULL), 6, ip, port, status); */
 	}
 	return 0;
 }
@@ -983,8 +953,8 @@ static QUERY(logs_handler_irc) {
 	char *uid	= *(va_arg(ap, char**));
 	char *text	= *(va_arg(ap, char**));
 	{	int  *UNUSED(isour) 	= va_arg(ap, int*);	}
-	{	int  *UNUSED(foryou)	= va_arg(ap, int*);	}
-	{	int  *UNUSED(private)	= va_arg(ap, int*);	}
+	int  foryou	= *(va_arg(ap, int*));
+	int  private	= *(va_arg(ap, int*));
 	char *channame	= *(va_arg(ap, char**));
 
 	log_window_t *lw = logs_log_find(session, channame, 1)->lw;
@@ -1000,7 +970,7 @@ static QUERY(logs_handler_irc) {
 	}
 
 	if (lw->logformat == LOG_FORMAT_IRSSI) 
-		logs_irssi(lw->file, session, uid, text, time(NULL), LOG_IRSSI_MESSAGE);
+		logs_irssi(lw->file, session, uid, text, time(NULL), LOG_IRSSI_MESSAGE, NULL);
 	/* ITD dla innych formatow logow */
 	return 0;
 }
@@ -1087,7 +1057,7 @@ static QUERY(logs_handler_raw) {
 
 	/* line->str + line->attr == ascii str with formats */
 	path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0);
-	str  = logs_fstring_to_string(line->str.b, line->attr);
+	str  = logs_fstring_to_string(line->str, line->attr);
 
 	logs_buffer_raw_add(path, str);
 
@@ -1102,7 +1072,7 @@ static QUERY(logs_handler_raw) {
  * typ,uid,nickname,timestamp,{timestamp wyslania dla odleglych}, text
  */
 
-static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, enum msgclass_t class, const char *status) {
+static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, uint32_t ip, uint16_t port, const char *status) {
 	char *textcopy;
 	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(0));
 
@@ -1117,33 +1087,39 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	if (!gotten_uid)	gotten_uid = uid;
 	if (!gotten_nickname)	gotten_nickname = uid;
 
-	switch (class) {
-		case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv,", file);
-						  break;
-		case EKG_MSGCLASS_CHAT		: fputs("chatrecv,", file);
-						  break;
-		case EKG_MSGCLASS_SENT		: fputs("msgsend,", file);
-						  break;
-		case EKG_MSGCLASS_SENT_CHAT	: fputs("chatsend,", file);
-						  break;
-		case EKG_MSGCLASS_SYSTEM	: fputs("msgsystem,", file);
-						  break;
-		case EKG_MSGCLASS_PRIV_STATUS	: fputs("status,", file);
-						  break;
-		default				: fputs("chatrecv,", file);
-						  break;
-	};
+	if (class!=6) {
+		switch ((enum msgclass_t)class) {
+			case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv,", file);
+							  break;
+			case EKG_MSGCLASS_CHAT		: fputs("chatrecv,", file);
+							  break;
+			case EKG_MSGCLASS_SENT		: fputs("msgsend,", file);
+							  break;
+			case EKG_MSGCLASS_SENT_CHAT	: fputs("chatsend,", file);
+							  break;
+			case EKG_MSGCLASS_SYSTEM	: fputs("msgsystem,", file);
+							  break;
+			default				: fputs("chatrecv,", file);
+							  break;
+		};
+	} else {
+		fputs("status,",file);
+	}
 
 	/*
 	 * chatsend,<numer>,<nick>,<czas>,<tre¶æ>
 	 * chatrecv,<numer>,<nick>,<czas_otrzymania>,<czas_nadania>,<tre¶æ>
-	 * status,<numer>,<nick>,[<ip>],<time>,<status>,<descr>
+	 * status,<numer>,<nick>,<ip>,<time>,<status>,<descr>
 	 */
 
 	fputs(gotten_uid, file);      fputc(',', file);
 	fputs(gotten_nickname, file); fputc(',', file);
-	if (class == EKG_MSGCLASS_PRIV_STATUS)
+	if (class==6) {
+		fputs(inet_ntoa_u(ip), file);
+		fputc(':', file);
+		fputs(itoa(port), file); 
 		fputc(',', file);
+	}
 
 	fputs(timestamp, file); fputc(',', file);
 
@@ -1151,7 +1127,7 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 		const char *senttimestamp = prepare_timestamp_format(config_logs_timestamp, sent);
 		fputs(senttimestamp, file);
 		fputc(',', file);
-	} else if (class == EKG_MSGCLASS_PRIV_STATUS) {
+	} else if (class==6) {
 		fputs(status, file); 
 		fputc(',', file);
 	}
@@ -1166,7 +1142,7 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
  * zapis w formacie xml
  */
 
-static void logs_xml(FILE *file, const char *session, const char *uid, const char *text, time_t sent, enum msgclass_t class) {
+static void logs_xml(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class) {
 	session_t *s;
 	char *textcopy;
 	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(NULL));
@@ -1203,7 +1179,7 @@ static void logs_xml(FILE *file, const char *session, const char *uid, const cha
 
 	fputs("<message class=\"",file);
 
-	switch (class) {
+	switch ((enum msgclass_t)class) {
 		case EKG_MSGCLASS_MESSAGE	: fputs("msgrecv", file);	  break;
 		case EKG_MSGCLASS_CHAT		: fputs("chatrecv", file);	  break;
 		case EKG_MSGCLASS_SENT		: fputs("msgsend", file);	  break;
@@ -1253,7 +1229,7 @@ static void logs_gaim()
  * write to file like irssi do.
  */
 
-static void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type) {
+static void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip) {
 	const char *nuid = NULL;	/* get_nickname(session_find(session), uid) */
 
 	if (!file)
@@ -1261,7 +1237,7 @@ static void logs_irssi(FILE *file, const char *session, const char *uid, const c
 
 	switch (type) {
 		case LOG_IRSSI_STATUS: /* status message (other than @1) */
-			text = saprintf("reports status: %s /* {status} */", __(text));
+			text = saprintf("reports status: %s [%s] /* {status} */", __(text), __(ip));
 		case LOG_IRSSI_ACTION:	/* irc ACTION messages */
 			fprintf(file, "%s * %s %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
 			if (type == LOG_IRSSI_STATUS) xfree((char *) text);
@@ -1270,8 +1246,8 @@ static void logs_irssi(FILE *file, const char *session, const char *uid, const c
 			fprintf(file, "%s\n", __(text));
 			break;
 		case LOG_IRSSI_EVENT: /* text - join, part, quit, ... */
-			fprintf(file, "%s -!- %s has %s #%s\n", 
-				prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), __(session));
+			fprintf(file, "%s -!- %s [%s] has %s #%s\n", 
+				prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(ip), __(text), __(session));
 			break;
 		case LOG_IRSSI_MESSAGE:	/* just normal message */
 			fprintf(file, "%s <%s> %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));

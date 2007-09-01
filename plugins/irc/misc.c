@@ -180,25 +180,25 @@ next2:
 
 			if (!ismatch) continue;
 		}
+
 		if (!r) {
 			r = userlist_resource_add(u, p->nick, 0);
-			
-			r->status	= EKG_STATUS_AVAIL;
+
+			r->status	= xstrdup(EKG_STATUS_AVAIL);
 			r->descr	= xstrdup(chan->name+4);
 			r->private	= p;
 
-			if (u->status != EKG_STATUS_AVAIL) {
+			if (xstrcmp(u->status, EKG_STATUS_AVAIL)) {
+				xfree(u->status);
 				xfree(u->descr);
-				u->status 	= EKG_STATUS_AVAIL;
+				u->status 	= xstrdup(EKG_STATUS_AVAIL);
 				u->descr	= xstrdup("description... ?");
 				query_emit_id(NULL, USERLIST_CHANGED, &s, &(u->uid));
 			}
 		} else {
 			string_t str = string_init(r->descr);
-
 			string_append_c(str, ',');
 			string_append(str, chan->name+4);
-
 			xfree(r->descr); r->descr = string_free(str, 0);
 		}
 
@@ -1357,7 +1357,7 @@ IRC_COMMAND(irc_c_mode)
 notreallyok:
 		if (xstrchr(add, *t)) k++;
 		else if (xstrchr(mode_abc, *t) && (act || !xstrchr(mode_c, *t))) k++;
-											
+
 		if (!param[k]) break;
 	}
 

@@ -86,7 +86,7 @@ static COMMAND(gg_command_connect) {
 	int isreconnect = !xstrcmp(name, "reconnect");
 	gg_private_t *g = session_private_get(session);
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
-
+	
 	if (!xstrcmp(name, ("disconnect")) || isreconnect) {
 	        /* if ,,reconnect'' timer exists we should stop doing */
 		/* if ,,gg:reconnect'' command is executed, we should always try to do 'disconnect; connect;' */
@@ -97,9 +97,8 @@ static COMMAND(gg_command_connect) {
 
 		if (!g->sess) {
 			/* don't print message when 'gg:reconnect' */
-			if (!isreconnect) 
+			if (!isreconnect)
 				printq("not_connected", session_name(session));
-
 		} else {
 			char *__session = xstrdup(session->uid);
 			const char *__reason = params[0];
@@ -107,8 +106,7 @@ static COMMAND(gg_command_connect) {
 			unsigned char *tmp;
 			int __type = EKG_DISCONNECT_USER;
 
-			if (session->autoaway)
-				session_status_set(session, EKG_STATUS_AUTOBACK);
+			session_unidle(session);
 			if (__reason) {
 				if (!xstrcmp(__reason, "-")) 	myreason = NULL;
                         	else 				myreason = xstrdup(__reason);
@@ -151,9 +149,6 @@ static COMMAND(gg_command_connect) {
 					session_name(session));
 			return -1;
 		}
-		if (command_exec(NULL, session, "/session --lock", 0) == -1)
-			return -1;
-
 		if (local_ip == NULL)
 			gg_local_ip = htonl(INADDR_ANY);
 		else {
@@ -181,7 +176,7 @@ static COMMAND(gg_command_connect) {
 
 		memset(&p, 0, sizeof(p));
 
-		if ((session_status_get(session) == EKG_STATUS_NA))
+		if (!xstrcmp(session_status_get(session), EKG_STATUS_NA))
 			session_status_set(session, EKG_STATUS_AVAIL);
 		
 		/* dcc */
@@ -237,22 +232,11 @@ static COMMAND(gg_command_connect) {
 				realserver += 4;
 			}
 
-			{
-				char *myserver, *comma;
-
-				if ((comma = xstrchr(realserver, ',')))
-					myserver = xstrndup(realserver, comma-realserver);
-				else /* IMO duplicating the string will be more readable then using (myserver ? myserver : realserver */
-					myserver = xstrdup(realserver);
-
-				if ((tmp_in = inet_addr(myserver)) != INADDR_NONE)
-					p.server_addr = inet_addr(myserver);
-				else {
-					wcs_print("inet_addr_failed", session_name(session));
-					xfree(myserver);
-					return -1;
-				}
-				xfree(myserver);
+			if ((tmp_in = inet_addr(realserver)) != INADDR_NONE)
+				p.server_addr = inet_addr(realserver);
+			else {
+				wcs_print("inet_addr_failed", session_name(session));
+				return -1;
 			}
 			break;
 		}
@@ -342,9 +326,8 @@ noproxy:
 static COMMAND(gg_command_away) {
 	gg_private_t *g = session_private_get(session);
 	char *descr;
-	char *cpdescr, *f = NULL, *fd = NULL, *params0 = xstrdup(params[0]);
-	int df = 0; /* do we really need this? */
-	int status;
+	char *cpdescr, *f = NULL, *fd = NULL, *df = NULL, *params0 = xstrdup(params[0]);
+	const char *status;
 	int timeout = session_int_get(session, "scroll_long_desc");
 	int autoscroll = 0;
 	int _status;
@@ -355,11 +338,12 @@ static COMMAND(gg_command_away) {
 	if (!xstrcmp(name, ("_autoscroll"))) {
 		autoscroll = 1;
 		status = session_status_get(session);
-		if ((status == EKG_STATUS_AWAY)	/*|| (status == EKG_STATUS_AUTOAWAY) */) {
+		if (!xstrcasecmp(status, EKG_STATUS_AWAY) ||
+						!xstrcasecmp(status, EKG_STATUS_AUTOAWAY)) {
 				fd = "away_descr";
-		} else if (status == EKG_STATUS_AVAIL) {
+		} else if (!xstrcasecmp(status, EKG_STATUS_AVAIL)) {
 				fd = "back_descr";
-		} else if (status == EKG_STATUS_INVISIBLE) {
+		} else if (!xstrcasecmp(status, EKG_STATUS_INVISIBLE)) {
 				fd = "invisible_descr";
 		}
 		xfree(params0);
@@ -378,22 +362,22 @@ static COMMAND(gg_command_away) {
 		}
 	} else if (!xstrcmp(name, ("away"))) {
 		session_status_set(session, EKG_STATUS_AWAY);
-		df = EKG_STATUS_AWAY; f = "away"; fd = "away_descr";
+		df = "away"; f = "away"; fd = "away_descr";
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("_autoaway"))) {
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
-		df = EKG_STATUS_AWAY; f = "auto_away"; fd = "auto_away_descr";
+		df = "away"; f = "auto_away"; fd = "auto_away_descr";
 	} else if (!xstrcmp(name, ("back"))) {
 		session_status_set(session, EKG_STATUS_AVAIL);
-		df = EKG_STATUS_AVAIL; f = "back"; fd = "back_descr";
+		df = "back"; f = "back"; fd = "back_descr";
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("_autoback"))) {
 		session_status_set(session, EKG_STATUS_AUTOBACK);
-		df = EKG_STATUS_AVAIL; f = "auto_back"; fd = "auto_back_descr";
+		df = "back"; f = "auto_back"; fd = "auto_back_descr";
 		session_unidle(session);
 	} else if (!xstrcmp(name, ("invisible"))) {
 		session_status_set(session, EKG_STATUS_INVISIBLE);
-		df = EKG_STATUS_NA; f = "invisible"; fd = "invisible_descr";
+		df = "quit"; f = "invisible"; fd = "invisible_descr";
 		session_unidle(session);
 	} else {
 		xfree(params0);
@@ -1479,7 +1463,6 @@ static COMMAND(gg_command_token) {
 
 static COMMAND(gg_command_modify) {
 	userlist_t *u;
-	gg_userlist_private_t *up;
 	const char **par;
 	char **argv = NULL;
 	int i, res = 0, modified = 0;
@@ -1501,7 +1484,6 @@ static COMMAND(gg_command_modify) {
 		printq("user_not_found", par[0]);
 		return -1;
 	}
-	up = gg_userlist_priv_get(u);
 
 	if (par[1])
 		argv = array_make(par[1], " \t", 0, 1, 1);
@@ -1509,22 +1491,16 @@ static COMMAND(gg_command_modify) {
 	for (i = 0; argv && argv[i]; i++) {
 		
 		if (match_arg(argv[i], 'f', ("first"), 2) && argv[i + 1]) {
-			if (up) {
-				xfree(up->first_name);
-				up->first_name = xstrdup(argv[++i]);
-				modified = 1;
-			} else /* skip arg */
-				i++;
+			xfree(u->first_name);
+			u->first_name = xstrdup(argv[++i]);
+			modified = 1;
 			continue;
 		}
 		
 		if (match_arg(argv[i], 'l', ("last"), 2) && argv[i + 1]) {
-			if (up) {
-				xfree(up->last_name);
-				up->last_name = xstrdup(argv[++i]);
-				modified = 1;
-			} else /* skip arg */
-				i++;
+			xfree(u->last_name);
+			u->last_name = xstrdup(argv[++i]);
+			modified = 1;
 			continue;
 		}
 		
@@ -1552,12 +1528,9 @@ static COMMAND(gg_command_modify) {
 		}
 		
 		if ((match_arg(argv[i], 'p', ("phone"), 2) || match_arg(argv[i], 'm', ("mobile"), 2)) && argv[i + 1]) {
-			if (up) {
-				xfree(up->mobile);
-				up->mobile = xstrdup(argv[++i]);
-				modified = 1;
-			} else
-				i++;
+			xfree(u->mobile);
+			u->mobile = xstrdup(argv[++i]);
+			modified = 1;
 			continue;
 		}
 		
@@ -1696,9 +1669,11 @@ static COMMAND(gg_command_modify) {
 	return res;
 }
 
+/* dj, nie rozumiem */
+
 static TIMER(gg_checked_timer_handler)
 {
-	const gg_currently_checked_t *c = (gg_currently_checked_t *) data;
+        gg_currently_checked_t *c = (gg_currently_checked_t *) data;
 	list_t l;
 
 	if (type == 1) {
@@ -1710,27 +1685,7 @@ static TIMER(gg_checked_timer_handler)
 		gg_currently_checked_t *c2 = l->data;
 
 		if (!session_compare(c2->session, c->session) && !xstrcmp(c2->uid, c->uid)) {
-			userlist_t *u = userlist_find(c->session, c->uid);
-			if (u) {
-				if (u->status == EKG_STATUS_INVISIBLE) {
-					char *session	= xstrdup(session_uid_get(c->session));
-					char *uid	= xstrdup(c->uid);
-					int status	= EKG_STATUS_NA;
-					char *descr	= xstrdup(u->descr);
-					char *host	= NULL;
-					int port	= 0;
-					time_t when	= time(NULL);
-					
-					query_emit(NULL, ("protocol-status"), &session, &uid, &status, &descr, &host, &port, &when, NULL);
-					
-					xfree(session);
-					xfree(uid);
-					xfree(descr);
-				}
-			} else
-				print("gg_user_is_not_connected", session_name(c->session), format_user(c->session, c->uid));
-			xfree(c2->uid);
-			list_remove(&gg_currently_checked, c2, 1);
+			print("gg_user_is_not_connected", session_name(c->session), format_user(c->session, c->uid));
 			return -1; 
 		}
 	}
@@ -1777,10 +1732,10 @@ static COMMAND(gg_command_check_conn) {
 	}
 
         c_timer = xmalloc(sizeof(gg_currently_checked_t));
-	c_timer->uid = xstrdup(u->uid); /* if user gets deleted, we won't get undef value */
+	c_timer->uid = u->uid;
 	c_timer->session = session;
 
-        c.uid = c_timer->uid;
+        c.uid = u->uid;
         c.session = session;
 
 	list_add(&gg_currently_checked, &c, sizeof(c));
@@ -1797,8 +1752,8 @@ void gg_register_commands()
 #define GG_FLAGS       GG_ONLY | SESSION_MUSTBECONNECTED
 #define GG_FLAGS_TARGET GG_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 
-	command_add(&gg_plugin, ("gg:add"), "!U ? p", gg_command_modify, 	COMMAND_ENABLEREQPARAMS, "-f --find");
-	command_add(&gg_plugin, ("gg:connect"), NULL, gg_command_connect, 	GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:add"), "U ? p", gg_command_modify, 0, "-f --find");
+	command_add(&gg_plugin, ("gg:connect"), "r ?", gg_command_connect, 	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:disconnect"), "r", gg_command_connect, 	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:reconnect"), NULL, gg_command_connect, 	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:msg"), "!uUC !", gg_command_msg, 		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
@@ -1812,8 +1767,8 @@ void gg_register_commands()
 	command_add(&gg_plugin, ("gg:check_conn"), "!uUC", gg_command_check_conn,	GG_FLAGS_TARGET, NULL);
 	command_add(&gg_plugin, ("gg:invisible"), "r", gg_command_away, 		GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:image"), "!u !f", gg_command_image, 		COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&gg_plugin, ("gg:block"), "uUC", gg_command_block, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:unblock"), "!b", gg_command_unblock, 	GG_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&gg_plugin, ("gg:block"), "uUC ?", gg_command_block, 0, NULL);
+	command_add(&gg_plugin, ("gg:unblock"), "!b ?", gg_command_unblock, 	COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:modify"), "!Uu ?", gg_command_modify, 	COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:remind"), "? ?", gg_command_remind, 0, NULL);
 	command_add(&gg_plugin, ("gg:register"), "? ? ?", gg_command_register, 0, NULL);

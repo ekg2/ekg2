@@ -522,9 +522,9 @@ int gg_userlist_set(session_t *session, const char *contacts)
 /*
  * gg_userlist_dump()
  *
- * zapisuje listÄ™ kontaktÃ³w w postaci tekstowej.
+ * zapisuje listê kontaktów w postaci tekstowej.
  *
- * zwraca zaalokowany bufor, ktÃ³ry naleÅ¼y zwolniÄ‡.
+ * zwraca zaalokowany bufor, który nale¿y zwolniæ.
  */
 static char *gg_userlist_dump(session_t *session)
 {
@@ -535,22 +535,27 @@ static char *gg_userlist_dump(session_t *session)
 
 	for (l = session->userlist; l; l = l->next) {
 		userlist_t *u = l->data;
-		gg_userlist_private_t *p = u->priv;
+		char *line;
+		const char *uid;
 		char *groups;
+
+		uid = (!strncmp(u->uid, "gg:", 3)) ? u->uid + 3 : u->uid;
 
 		groups = group_to_string(u->groups, 1, 0);
 		
-		string_append_format(s, 
-			"%s;%s;%s;%s;%s;%s;%s%s\r\n",
-			(p && p->first_name) ? p->first_name : "",
-			(p && p->last_name) ? p->last_name : "",
+		line = saprintf(("%s;%s;%s;%s;%s;%s;%s%s\r\n"),
+			(u->first_name) ? u->first_name : "",
+			(u->last_name) ? u->last_name : "",
 			(u->nickname) ? u->nickname : "",
 			(u->nickname) ? u->nickname : "",
-			(p && p->mobile) ? p->mobile : "",
+			(u->mobile) ? u->mobile : "",
 			groups,
-			u->uid + 3 /* skip gg: */,
+			uid,
 			(u->foreign) ? u->foreign : "");
+		
+		string_append(s, line);
 
+		xfree(line);
 		xfree(groups);
 	}	
 

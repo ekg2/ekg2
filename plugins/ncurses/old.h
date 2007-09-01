@@ -1,8 +1,6 @@
 #ifndef __EKG_NCURSES_OLD_H
 #define __EKG_NCURSES_OLD_H
 
-#include "ekg2-config.h"
-
 #include "ecurses.h"
 
 #include <ekg/plugins.h>
@@ -50,6 +48,18 @@ enum window_frame_t {
 	WF_ALL = 15
 };
 
+/* aka fstring_t but with CHAR_T */
+typedef struct {
+	CHAR_T *str;
+	short *attr;
+	int ts;
+
+	int prompt_len;	
+	int prompt_empty;
+	int margin_left; 
+	void *private;
+} ncurses_fstring_t;
+
 typedef struct {
 	WINDOW *window;		/* okno okna */
 
@@ -59,7 +69,7 @@ typedef struct {
 	int margin_left, margin_right, margin_top, margin_bottom;
 				/* marginesy */
 
-	fstring_t **backlog;	/* bufor z liniami */
+	ncurses_fstring_t **backlog;	/* bufor z liniami */
 	int backlog_size;	/* rozmiar backloga */
 
 	int redraw;		/* trzeba przerysowaæ przed wy¶wietleniem */
