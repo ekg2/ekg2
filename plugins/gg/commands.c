@@ -1819,7 +1819,7 @@ void gg_register_commands()
 	command_add(&gg_plugin, ("gg:register"), "? ? ?", gg_command_register, 0, NULL);
 	command_add(&gg_plugin, ("gg:token"), NULL, gg_command_token, 0, NULL);
 	command_add(&gg_plugin, ("gg:unregister"), "! ! !", gg_command_unregister, COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&gg_plugin, ("gg:passwd"), "! ?", gg_command_passwd, 		GG_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&gg_plugin, ("gg:passwd"), "? ?", gg_command_passwd, 		GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:userlist"), "p ?", gg_command_list, 		GG_ONLY, "-c --clear -g --get -p --put");
 	command_add(&gg_plugin, ("gg:find"), "!puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC", 
 							gg_command_find, 	GG_FLAGS_TARGET, 

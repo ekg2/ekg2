@@ -711,7 +711,14 @@ static COMMAND(jabber_command_passwd)
 
 //	username = xstrndup(session->uid + 4, xstrchr(session->uid+4, '@') - session->uid+4);
 
-	passwd = jabber_escape(params[0]);
+	if (!params[0]) {
+		char *tmp = password_input();
+		if (!tmp)
+			return -1;
+		passwd = jabber_escape(tmp);
+		xfree(tmp);
+	} else
+		passwd = jabber_escape(params[0]);
 	watch_write(j->send_watch, 
 		"<iq type=\"set\" to=\"%s\" id=\"passwd%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>",
 		j->server, j->id++, username, passwd);
@@ -2826,7 +2833,7 @@ void jabber_register_commands()
 			"-n --nickname -g --group");
 	COMMAND_ADD_J(&jabber_plugin, "msg", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	COMMAND_ADD_J(&jabber_plugin, "part", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
-	COMMAND_ADD_J(&jabber_plugin, "passwd", "!", jabber_command_passwd, 	JABBER_FLAGS_REQ, NULL);
+	COMMAND_ADD_J(&jabber_plugin, "passwd", "?", jabber_command_passwd, 	JABBER_FLAGS, NULL);
 	COMMAND_ADD_J(&jabber_plugin, "privacy", "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
 	COMMAND_ADD_J(&jabber_plugin, "private", "!p ! ?", jabber_command_private,   JABBER_FLAGS_REQ, 
 			"-c --clear -d --display -p --put");

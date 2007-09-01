@@ -350,15 +350,24 @@ COMMAND(gg_command_passwd) {
 		printq("gg_token_missing");
 		return -1;
 	}
-	if (!params[1]) {
+	if (!params[0]) {
 		printq("not_enough_params", name);
 		return -1;
 	}
+	if (!params[1]) {
+#else
+	if (!params[0]) {
 #endif
+		newpasswd = gg_locale_to_cp(password_input());
+		if (!newpasswd)
+			return -1;
+	} else
+		newpasswd = gg_locale_to_cp(xstrdup(params[0]));
+
 	oldpasswd = gg_locale_to_cp(xstrdup(session_get(session, "password")));
-	newpasswd = gg_locale_to_cp(xstrdup(params[0]));
+
 #ifdef HAVE_GG_CHANGE_PASSWD4 
-	if (!(h = gg_change_passwd4(atoi(session->uid + 3), config_email, (oldpasswd) ? oldpasswd : "", newpasswd, last_tokenid, params[1], 1)))
+	if (!(h = gg_change_passwd4(atoi(session->uid + 3), config_email, (oldpasswd) ? oldpasswd : "", newpasswd, last_tokenid, params[1] ? params[1] : params[0], 1)))
 #else 
 	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? oldpasswd : "", newpasswd, "", 1)))
 #endif 
