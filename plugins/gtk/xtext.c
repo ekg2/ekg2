@@ -575,7 +575,6 @@ static void gtk_xtext_init(GtkXText * xtext)
 	xtext->max_lines = 0;
 	xtext->col_back = XTEXT_BG;
 	xtext->col_fore = XTEXT_FG;
-	xtext->nc = 0;
 	xtext->pixel_offset = 0;
 	xtext->bold = FALSE;
 	xtext->underline = FALSE;
@@ -2312,7 +2311,6 @@ static void gtk_xtext_reset(GtkXText * xtext, int mark, int attribs)
 	}
 	xtext->col_fore = XTEXT_FG;
 	xtext->col_back = XTEXT_BG;
-	xtext->nc = 0;
 }
 
 /* render a single line, which WONT wrap, and parse fstring_t attr */
