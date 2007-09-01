@@ -66,7 +66,7 @@ typedef struct {
 
 	int start;		/* od której linii zaczyna siê wy¶wietlanie */
 	int lines_count;	/* ilo¶æ linii ekranowych w backlogu */
-	struct screen_line *lines;	
+	struct screen_line *lines;
 				/* linie ekranowe */
 
 	int overflow;		/* ilo¶æ nadmiarowych linii w okienku */

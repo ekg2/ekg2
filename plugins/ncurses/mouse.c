@@ -177,17 +177,17 @@ static WATCHER(ncurses_gpm_watch_handler)
 		case GPM_DOUBLE + GPM_UP:
 			{
 				int mouse_state = EKG_UNKNOWN_DOUBLE_CLICKED;
-			        switch (event.buttons) {
-		        	        case GPM_B_LEFT:
+				switch (event.buttons) {
+					case GPM_B_LEFT:
 						mouse_state = EKG_BUTTON1_DOUBLE_CLICKED;
 						break;
-		                	case GPM_B_RIGHT:
-			                        mouse_state = EKG_BUTTON3_DOUBLE_CLICKED;
+					case GPM_B_RIGHT:
+						mouse_state = EKG_BUTTON3_DOUBLE_CLICKED;
 						break;
-			                case GPM_B_MIDDLE:
-			                        mouse_state = EKG_BUTTON2_DOUBLE_CLICKED;
+					case GPM_B_MIDDLE:
+						mouse_state = EKG_BUTTON2_DOUBLE_CLICKED;
 						break;
-		       		}
+				}
 				ncurses_mouse_clicked_handler(event.x, event.y, mouse_state);
 				break;
 			}
@@ -223,50 +223,45 @@ static WATCHER(ncurses_gpm_watch_handler)
  * it should enable mouse support
  * checks if we are in console mode or in xterm
  */
-void ncurses_enable_mouse()
-{
-#define xterm_mouse() mouseinterval(-1);\
-	if (xstrcasecmp(env, "xterm") && xstrcasecmp(env, "xterm-color")) {\
-                        debug("Mouse in %s terminal is not supported\n", env);\
-                        goto end;\
-        }\
-	\
-        printf("\033[?1001s");\
-        printf("\033[?1000h");\
-	\
-	mouse_initialized = 1;
-	
-	char *env = getenv("TERM");
+void ncurses_enable_mouse() {
+	char *env		= getenv("TERM");
 #ifdef HAVE_LIBGPM
-        Gpm_Connect conn;
+	Gpm_Connect conn;
 
-        conn.eventMask = ~0;
-	conn.defaultMask = 0;   
-	conn.minMod      = 0;
-        conn.maxMod      = 0;
+	conn.eventMask		= ~0;
+	conn.defaultMask	= 0;   
+	conn.minMod		= 0;
+	conn.maxMod		= 0;
 
-	if(Gpm_Open(&conn, 0) == -1) {
-                debug("Cannot connect to mouse server\n");
-		xterm_mouse();
-		goto end;
-	}
-	else
+	Gpm_Open(&conn, 0);
+
+	if (gpm_fd >= 0) {
 		debug("Gpm at fd no %d\n", gpm_fd);
-
-	if (gpm_fd != -2) {
-	        watch_add(&ncurses_plugin, gpm_fd, WATCH_READ, ncurses_gpm_watch_handler, NULL);
+		
+		watch_add(&ncurses_plugin, gpm_fd, WATCH_READ, ncurses_gpm_watch_handler, NULL);
 		gpm_visiblepointer = 1;
 		mouse_initialized = 1;
-	} else { /* xterm */
-		xterm_mouse();
-	}
-#else
-	xterm_mouse();
+	} else {
+		if (gpm_fd == -1)
+	                debug_error("[ncurses] Cannot connect to gpm mouse server\n");
 #endif
-end:
+//	if (xstrcasecmp(env, "xterm") && xstrcasecmp(env, "xterm-color")) {
+		if (
+#ifdef HAVE_LIBGPM
+				gpm_fd == -2 ||
+#endif
+				!xstrncmp(env, "xterm", 5) || !xstrcmp(env, "screen")) {
+
+		        printf("\033[?1001s\033[?1000h");
+			mouse_initialized = 1;
+		} else
+			debug_error("[ncurses] Mouse in %s terminal is not supported\n", env);
+#ifdef HAVE_LIBGPM
+	}
+#endif
+
 	if (mouse_initialized)
-	        timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);
-#undef xterm_mouse
+		timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);
 }
 
 /*
@@ -282,9 +277,9 @@ void ncurses_disable_mouse()
 
 	timer_remove(&ncurses_plugin, "ncurses:mouse");
 #ifdef HAVE_LIBGPM
-	if (gpm_fd != 2) {
+	if (gpm_fd >= 0)
 		watch_remove(&ncurses_plugin, gpm_fd, WATCH_READ);
-	}
+
 	Gpm_Close();
 #endif
 }
