@@ -2516,14 +2516,8 @@ JABBER_HANDLER(jabber_handle_iq) {
 						if (atsign)
 							*atsign	= 0;
 						uid = saprintf("tlen:%s@tlen.pl", jid);
-					} else {
-							/* newer jabberd2 workaround - strip resource */
-						char *tmp	= xstrchr(jid, '/');
-						
-						if (tmp)
-							*tmp	= 0;
+					} else
 						uid		= saprintf("xmpp:%s", jid);
-					}
 
 					/* je¶li element rostera ma subscription = remove to tak naprawde u¿ytkownik jest usuwany;
 					w przeciwnym wypadku - nalezy go dopisaæ do userlisty; dodatkowo, jesli uzytkownika
@@ -2577,13 +2571,21 @@ JABBER_HANDLER(jabber_handle_iq) {
 						userlist_t *u = l->data;
 
 						if (u && !u->nickname) {
+							char *myuid	= xstrdup(u->uid);
 							char *userpart	= xstrdup(u->uid);
-							char *tmp	= xstrchr(userpart, '@');
+							char *tmp;
 							const char **cp;
 							
-							const char *possibilities[] = { userpart+5, u->uid+5, u->uid, NULL };
+							const char *possibilities[] = {
+								userpart+5,	/* user-part of UID */
+								myuid+5,	/* JID without resource */
+								u->uid+5,	/* JID with resource */
+								myuid,		/* UID without resource */
+								u->uid,		/* UID with resource */
+								NULL };
 
-							if (tmp) *tmp	= 0;
+							if (tmp = xstrchr(userpart, '@')) *tmp	= 0;
+							if (tmp = xstrchr(myuid, '/')) *tmp	= 0;
 
 							for (cp = possibilities; *cp; cp++) {
 								list_t m;
@@ -2605,6 +2607,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 								debug_error("[jabber] can't find any free nickname for UID %s.. that's kinda bitch!\n", u->uid);
 
 							xfree(userpart);
+							xfree(myuid);
 						}
 					}
 				}
