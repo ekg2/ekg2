@@ -105,7 +105,7 @@ fail:
 COMMAND(gg_command_register)
 {
 	struct gg_http *h;
-	char *passwd;
+	char *passwd, *passwd_b;
 	watch_t *w;
 
 	if (gg_register_done) {
@@ -113,7 +113,7 @@ COMMAND(gg_command_register)
 		return -1;
 	}
 	
-	if (!params[0] || !params[1] || !params[2]) {
+	if (!params[0] || !params[1]) {
 		printq("not_enough_params", name);
 		return -1;
 	}
@@ -128,16 +128,23 @@ COMMAND(gg_command_register)
                 return -1;
         }
 
-	passwd = gg_locale_to_cp(xstrdup(params[1]));
+	if (params[2]) {
+		passwd_b = xstrdup(params[1]);
+		params[1] = params[2];
+		params[2] = NULL;
+	} else if (!(passwd_b = password_input()))
+			return -1;
+
+	passwd = gg_locale_to_cp(xstrdup(passwd_b));
 	
-	if (!(h = gg_register3(params[0], passwd, last_tokenid, params[2], 1))) {
+	if (!(h = gg_register3(params[0], passwd, last_tokenid, params[1], 1))) {
 		xfree(passwd);
+		xfree(passwd_b);
 		printq("register_failed", strerror(errno));
 		return -1;
 	}
 
 	xfree(last_tokenid);	last_tokenid = NULL;
-
 	xfree(passwd);
 
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_register, h); 
@@ -146,7 +153,7 @@ COMMAND(gg_command_register)
 	list_add(&gg_registers, h, 0);
 
 	gg_register_email = xstrdup(params[0]);
-	gg_register_password = xstrdup(params[1]);
+	gg_register_password = passwd_b;
 
 	return 0;
 }
