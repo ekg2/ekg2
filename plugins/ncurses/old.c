@@ -117,7 +117,7 @@ QUERY(ncurses_password_input) {
 	ncurses_lines			= NULL;
 	ncurses_line			= xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
 	ncurses_line_adjust();
-	mvwaddstr(input, 0, 0, ncurses_current->prompt);
+	ncurses_redraw_input(0);
 	
 	while (ncurses_noecho)
 		ncurses_watch_stdin(0, 0, WATCH_READ, NULL);
@@ -127,7 +127,7 @@ QUERY(ncurses_password_input) {
 		ncurses_current->prompt		= (char*) format_find("password_repeat");
 		ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
 		ncurses_noecho			= 1;
-		mvwaddstr(input, 0, 0, ncurses_current->prompt);
+		ncurses_redraw_input(0);
 		
 		while (ncurses_noecho)
 			ncurses_watch_stdin(0, 0, WATCH_READ, NULL);
