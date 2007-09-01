@@ -1130,7 +1130,6 @@ COMMAND(session_command)
 	if (match_arg(params[0], 'g', ("get"), 2)) {	/* /session --get [session uid] <variable name> */
 		const char *key;	/* variable name */
 		const char *var;	/* variable value */
-		int secret	= 0;	/* if variable should be hidden, for example passwords */
 		int paid;		/* `plugin params id`, if it's _global_ session variable */
 
 		char *tmp = NULL;
@@ -1160,12 +1159,13 @@ COMMAND(session_command)
 		else if (!xstrcasecmp(key, "alias"))    var = session_alias_get(s);
 		else if (!xstrcasecmp(key, "descr"))	var = session_descr_get(s);
 		else if (!xstrcasecmp(key, "status"))	var = ekg_status_string(session_status_get(s), 2);
-		else if (!xstrcasecmp(key, "password")) { var = session_password_get(s); secret = 1; }
+		else if (!xstrcasecmp(key, "password")) { var = s->password ? "(...)" : NULL; }
 		else if ((paid = plugin_var_find(s->plugin, key))) {
 			plugins_params_t *pa = PLUGIN_VAR_FIND_BYID(s->plugin, paid);
 
 			var = s->values[paid-1];
-			secret = pa->secret;
+			if (pa->secret)
+				var = var ? "(...)" : NULL;
 		} else {
 		/* XXX, idea, here we can do: session_localvar_find() to check if this is _local_ variable, and eventually print other info.. 
 		 * 	The same at --set ? 
@@ -1174,10 +1174,7 @@ COMMAND(session_command)
 			return -1;
 		}
 
-		if (secret)
-			printq("session_variable", session_name(s), key, (var) ? "(...)" : (tmp = format_string(format_find("value_none"))));
-		else
-			printq("session_variable", session_name(s), key, (var) ? var : (tmp = format_string(format_find("value_none"))));
+		printq("session_variable", session_name(s), key, (var) ? var : (tmp = format_string(format_find("value_none"))));
 		xfree(tmp);
 		return 0;
 	}
