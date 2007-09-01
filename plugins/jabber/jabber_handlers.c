@@ -199,7 +199,7 @@ JABBER_HANDLER(tlen_handle_notification) {	/* n->name: "m" TLEN only: typing, no
 		/* typing notification */
 		char *session	= xstrdup(session_uid_get(s));
 		int stateo	= !xstrcmp(type, "u") ? EKG_XSTATE_TYPING : 0;
-		int state	= stateo ? EKG_XSTATE_TYPING : 0;
+		int state	= !stateo ? EKG_XSTATE_TYPING : 0;
 
 		query_emit_id(NULL, PROTOCOL_XSTATE, &session, &uid, &state, &stateo);
 
@@ -850,6 +850,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	time_t bsent = 0;
 	string_t body;
 	int new_line = 0;	/* if there was headlines do we need to display seperator between them and body? */
+	int class = -1;
 	
 	if (j->istlen)	uid = saprintf("tlen:%s", juid);
 	else		uid = saprintf("xmpp:%s", juid);
@@ -1017,11 +1018,14 @@ JABBER_HANDLER(jabber_handle_message) {
 			else if (!xstrcmp(xitem->name, "inactive"))	{ } 
 			else if (!xstrcmp(xitem->name, "gone")) 	{ } 
 			else debug_error("[JABBER, MESSAGE]: INVALID CHATSTATE: %s\n", xitem->name);
-		} else debug_error("[JABBER, MESSAGE]: <%s\n", xitem->name);
+		} else if (j->istlen && !xstrcmp(xitem->name, "no"))
+			class = EKG_MSGCLASS_SYSTEM;
+		else debug_error("[JABBER, MESSAGE]: <%s\n", xitem->name);
 	}
 
 	const char *type = jabber_attr(n->atts, "type");
-	int class = (!xstrcmp(type, "chat") || !xstrcmp(type, "groupchat") ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_MESSAGE);
+	if (class == -1)
+		class = (!xstrcmp(type, "chat") || !xstrcmp(type, "groupchat") ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_MESSAGE);
 	const int nonthreaded = (!nthread || !nthread->data);
 	const int hassubject = (nsubject && nsubject->data);
 
@@ -2584,8 +2588,8 @@ JABBER_HANDLER(jabber_handle_iq) {
 								u->uid,		/* UID with resource */
 								NULL };
 
-							if (tmp = xstrchr(userpart, '@')) *tmp	= 0;
-							if (tmp = xstrchr(myuid, '/')) *tmp	= 0;
+							if ((tmp = xstrchr(userpart, '@')))	*tmp	= 0;
+							if ((tmp = xstrchr(myuid, '/')))	*tmp	= 0;
 
 							for (cp = possibilities; *cp; cp++) {
 								list_t m;

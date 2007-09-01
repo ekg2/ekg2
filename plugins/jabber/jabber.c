@@ -1496,7 +1496,7 @@ static QUERY(jabber_typing_out) {
 	const int len		= *va_arg(ap, const int *);
 	const int first		= *va_arg(ap, const int *);
 
-	const char *jid		= uid + (*uid == 'j' ? 4 : 5);
+	const char *jid		= uid + (tolower(*uid) == 'j' ? 4 : 5);
 	session_t *s		= session_find(session);
 	jabber_private_t *j;
 
@@ -1505,7 +1505,11 @@ static QUERY(jabber_typing_out) {
 
 	j = jabber_private(s);
 
-	watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\">"
+	if (j->istlen)
+		watch_write(j->send_watch, "<m to=\"%s\" tp=\"%c\"/>",
+			jid, (len ? 't' : 'u'));
+	else
+		watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\">"
 			"<x xmlns=\"jabber:x:event\"%s>"
 			"<%s xmlns=\"http://jabber.org/protocol/chatstates\"/>"
 			"</message>\n", jid, (len ? "><composing/></x" : "/"),
