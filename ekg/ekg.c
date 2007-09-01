@@ -866,6 +866,13 @@ int main(int argc, char **argv)
         xfree(tmp);
         tmp = NULL;
 
+	{
+		list_t *ll;
+
+		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++)
+			*ll = NULL;
+	}
+
         variable_init();
         variable_set_default();
 
@@ -1192,12 +1199,20 @@ void ekg_exit()
 	}
 	list_destroy(windows, 1);	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
 
-	for (l = queries; l; ) {	/* free other queries... connected by protocol_init() for example */
-		query_t *q = l->data;
+	{
+		list_t *ll;
 
-		l = l->next;
+		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
+			for (l = *ll; l; ) {	/* free other queries... connected by protocol_init() for example */
+				query_t *q = l->data;
 
-		query_free(q);
+				l = l->next;
+
+				query_free(q);
+			}
+
+			list_destroy(*ll, 0);
+		}
 	}
 	query_external_free();
 

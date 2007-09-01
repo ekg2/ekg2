@@ -30,9 +30,9 @@
 
 #ifndef EKG2_WIN32_NOFUNCTION
 extern list_t plugins;
-extern list_t queries;
 extern list_t watches;
 extern list_t idles;
+extern list_t queries[];
 #endif
 
 typedef enum {

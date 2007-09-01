@@ -52,9 +52,10 @@
 #endif
 
 list_t plugins = NULL;
-list_t queries = NULL;
 list_t watches = NULL;
 list_t idles   = NULL;
+
+list_t queries[QUERY_EXTERNAL+1];
 
 #ifdef EKG2_WIN32_HELPERS
 # define WIN32_REQUEST_HELPER
@@ -596,15 +597,20 @@ int plugin_unregister(plugin_t *p)
 			session_remove(s->uid);
 	}
 
-	for (l = queries; l; ) {
-		query_t *q = l->data;
+	{
+		list_t *ll;
 
-		l = l->next;
+		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
+			for (l = *ll; l; ) {
+				query_t *q = l->data;
 
-		if (q->plugin == p)
-			query_free(q);
+				l = l->next;
+
+				if (q->plugin == p)
+					query_free(q);
+			}
+		}
 	}
-
 
 	for (l = variables; l; ) {
 		variable_t *v = l->data;
@@ -815,7 +821,7 @@ static query_t *query_connect_common(plugin_t *plugin, const int id, query_handl
 	q->handler	= handler;
 	q->data		= data;
 
-	return list_add(&queries, q, 0);
+	return list_add(&queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id], q, 0);
 }
 
 #define ID_AND_QUERY_EXTERNAL	\
@@ -841,7 +847,7 @@ query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t 
 int query_free(query_t *q) {
 	if (!q) return -1;
 
-	list_remove(&queries, q, 1);
+	list_remove(&queries[q->id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : q->id], q, 1);
 	return 0;
 }
 
@@ -887,10 +893,10 @@ int query_emit_id(plugin_t *plugin, const int id, ...) {
 	}
 		
 	va_start(ap, id);
-	for (l = queries; l; l = l->next) {
+	for (l = queries[id]; l; l = l->next) {
 		query_t *q = l->data;
 
-		if ((!plugin || (plugin == q->plugin)) && q->id == id) {
+		if ((!plugin || (plugin == q->plugin))) {
 			result = query_emit_common(q, ap);
 
 			if (result == -1) break;
@@ -910,7 +916,7 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 	id = query_id(name);
 
 	va_start(ap, name);
-	for (l = queries; l; l = l->next) {
+	for (l = queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id]; l; l = l->next) {
 		query_t *q = l->data;
 
 		if ((!plugin || (plugin == q->plugin)) && q->id == id) {
@@ -940,22 +946,25 @@ void queries_reconnect() {
 		return (bp-ap);
 	}
 
-	list_t tmplist	= NULL;
-	list_t l;
+	list_t tmplist;
+	list_t l, *ll;
 
-	for (l = queries; l; l = l->next) {
-		if (l->data) {
-			if (!(LIST_ADD_SORTED(&tmplist, l->data, 0, query_compare))) {
-				debug_error("resort_queries(), list_add_sorted() failed, not continuing!\n");
-				list_destroy(tmplist, 0);
-				return;
+	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
+		tmplist = NULL;
+
+		for (l = *ll; l; l = l->next) {
+			if (l->data) {
+				if (!(LIST_ADD_SORTED(&tmplist, l->data, 0, query_compare))) {
+					debug_error("resort_queries(), list_add_sorted() failed, not continuing!\n");
+					list_destroy(tmplist, 0);
+					return;
+				}
 			}
 		}
+
+		list_destroy(*ll, 0);
+		*ll = tmplist;
 	}
-
-	list_destroy(queries, 0);
-	queries = tmplist;
-
 }
 
 /*

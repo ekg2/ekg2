@@ -1982,19 +1982,21 @@ static COMMAND(cmd_debug_watches)
 
 static COMMAND(cmd_debug_queries)
 {
-	list_t l;
+	list_t l, *ll;
 	
 	printq("generic", ("name                             | plugin   | count"));
 	printq("generic", ("---------------------------------|----------|------"));
 	
-	for (l = queries; l; l = l->next) {
-		query_t *q = l->data;
-		char buf[256];
-		char *plugin;
+	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
+		for (l = *ll; l; l = l->next) {
+			query_t *q = l->data;
+			char buf[256];
+			char *plugin;
 
-		plugin = (q->plugin) ? q->plugin->name : ("-");
-		snprintf(buf, sizeof(buf), "%-32s | %-8s | %d", __(query_name(q->id)), plugin, q->count);
-		printq("generic", buf);
+			plugin = (q->plugin) ? q->plugin->name : ("-");
+			snprintf(buf, sizeof(buf), "%-32s | %-8s | %d", __(query_name(q->id)), plugin, q->count);
+			printq("generic", buf);
+		}
 	}
 
 	return 0;
