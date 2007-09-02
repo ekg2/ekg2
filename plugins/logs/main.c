@@ -892,11 +892,10 @@ static QUERY(logs_status_handler) {
 	char *uid	= *(va_arg(ap, char**));
 	char *status	= *(va_arg(ap, char**));
 	char *descr	= *(va_arg(ap, char**));
+	char *host	= *(va_arg(ap, char**));
+	uint16_t port	= (uint16_t) *(va_arg(ap, int*));
 
-	session_t *s; // session pointer
-	userlist_t *userlist;
-	uint32_t ip;
-	uint16_t port;
+	uint32_t ip = 0;
 
 	log_window_t *lw;
 
@@ -920,11 +919,10 @@ static QUERY(logs_status_handler) {
 		return 0;
 	}
 
-	/* jesli nie otwarl sie plik to po co mamy robic ? */
-	s = session_find(session);
-	userlist = userlist_find(s, uid);
-	ip=userlist?userlist->ip:0;
-	port=userlist?userlist->port:0;
+	/* jesli mamy host, to zrob ip tam i z powrotem. stupido. ale nie psujemy log formatu. */
+
+	if (host)
+		ip = inet_addr(host);
 
 	if (!descr)
 		descr = "";
@@ -952,7 +950,7 @@ static QUERY(logs_handler_irc) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
 	char *text	= *(va_arg(ap, char**));
-	{	int  *UNUSED(isour) 	= va_arg(ap, int*);	}
+	int  isour 	= *(va_arg(ap, int*));
 	int  foryou	= *(va_arg(ap, int*));
 	int  private	= *(va_arg(ap, int*));
 	char *channame	= *(va_arg(ap, char**));
