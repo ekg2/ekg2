@@ -184,7 +184,7 @@ next2:
 		if (!r) {
 			r = userlist_resource_add(u, p->nick, 0);
 
-			r->status	= xstrdup(EKG_STATUS_AVAIL);
+			xfree(r->status); r->status = xstrdup(EKG_STATUS_AVAIL);
 			r->descr	= xstrdup(chan->name+4);
 			r->private	= p;
 
