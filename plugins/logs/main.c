@@ -336,9 +336,15 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 }
 
 static void logs_window_new(window_t *w) {
+	const char *uid;
+
 	if (!w->target || !w->session || w->id == 1000)
 		return;
-	logs_log_new(NULL, session_uid_get(w->session), get_uid(w->session, w->target));
+
+	uid = get_uid_any(w->session, w->target);
+
+/* XXX, do we really want/need to create log struct with invalid uid? XXX */
+	logs_log_new(NULL, session_uid_get(w->session), uid ? uid : w->target);
 }
 
 static FILE *logs_window_close(logs_log_t *l, int close) {
@@ -422,12 +428,12 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 		debug("WARN logs_print_window() called but neither ncurses plugin nor gtk found\n");
 		return -1;
 	}
-	if (!w) w = window_current;
 
-	fline = format_string(line);			/* format string */
+	fline = format_string(line);		/* format string */
 	fstr = fstring_new(fline);			/* create fstring */
 
 	fstr->ts = ts;					/* sync timestamp */
+
 	query_emit_id(ui_plugin, UI_WINDOW_PRINT, &w, &fstr);	/* let's rock */
 
 	xfree(fline);						/* cleanup */
@@ -470,7 +476,13 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	s = session_find(sesja);
 	w = window_find_s(s, target);
 
+
 	debug("[logs_buffer_raw_display()] s:0x%x; w:0x%x;\n", s, w);
+
+	if (!w)
+		w = window_current;
+
+	if (w) w->lock++;
 
 	for (l = buffer_lograw; l; l = l->next) {
 		struct buffer *b = l->data;
@@ -488,6 +500,12 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	}
 	if (bs) for (i = item < items ? 0 : item-items; i < item; i++) 
 		logs_print_window(s, w, bs[i]->line, bs[i]->ts);
+
+	if (w) {
+		w->lock--;
+		query_emit_id(NULL, UI_WINDOW_REFRESH);
+	}
+
 	xfree(bs);
 
 	xfree(profile);
@@ -519,6 +537,8 @@ static int logs_buffer_raw_add_line(const char *file, const char *line) {
 
 static QUERY(logs_handler_newwin) {
 	window_t *w = *(va_arg(ap, window_t **));
+
+/* w->floating */
 
 	logs_window_new(w);
 	if (config_logs_log_raw) {
@@ -558,7 +578,6 @@ EXPORT int logs_plugin_init(int prio) {
 	plugin_register(&logs_plugin, prio);
 	
 	buffer_lograw_tail = NULL;
-	logs_setvar_default(NULL, NULL);
 
 	query_connect_id(&logs_plugin, SET_VARS_DEFAULT,logs_setvar_default, NULL);
 	query_connect_id(&logs_plugin, PROTOCOL_MESSAGE_POST, logs_handler, NULL);
@@ -588,10 +607,11 @@ EXPORT int logs_plugin_init(int prio) {
 }
 
 static int logs_plugin_destroy() {
-	list_t l = log_logs;
+	list_t old_logs = log_logs;
+	list_t l;
 
-	for (l = log_logs; l; l = l->next) {
-		logs_log_t *ll = l->data;
+	for (; log_logs; log_logs = log_logs->next) {
+		logs_log_t *ll = log_logs->data;
 		FILE *f = NULL;
 		time_t t = time(NULL);
 		int ff = (ll->lw) ? ll->lw->logformat : logs_log_format(session_find(ll->session));
@@ -599,13 +619,13 @@ static int logs_plugin_destroy() {
 		/* TODO: rewrite */
 		if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
 			char *path	= (ll->lw) ? xstrdup(ll->lw->path) : logs_prepare_path(session_find(ll->session), config_logs_path, ll->uid, t);
-			f		= (ll->lw) ? logs_window_close(l->data, 0) : NULL; 
+			f		= (ll->lw) ? logs_window_close(log_logs->data, 0) : NULL; 
 
 			if (!f) 
 				f = logs_open_file(path, ff);
 			xfree(path);
 		} else 
-			logs_window_close(l->data, 1);
+			logs_window_close(log_logs->data, 1);
 
 		if (f) {
 			if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
@@ -619,7 +639,7 @@ static int logs_plugin_destroy() {
 		xfree(ll->session);
 		xfree(ll->uid);
 	}
-	list_destroy(log_logs, 1);
+	list_destroy(old_logs, 1);	log_logs = NULL;
 
 	if (config_logs_log_raw) for (l = buffer_lograw; l;) {
 		struct buffer *b = l->data;
@@ -757,6 +777,28 @@ static FILE* logs_open_file(char *path, int ff) {
 		errno = EACCES; /* = 0 ? */
 		return NULL;
 	}
+
+	{	/* check if such file was already open SLOW :( */
+		list_t l;
+
+		for (l=log_logs; l; l = l->next) {
+			logs_log_t *ll = l->data;
+			log_window_t *lw;
+
+			if (!ll || !(lw = ll->lw))
+				continue;
+
+/*			debug_error("here: %x [%s, %s] [%d %d]\n", lw->file, lw->path, path, lw->logformat, ff); */
+
+			if (lw->file && lw->logformat == ff && !xstrcmp(lw->path, path)) {
+				FILE *f = lw->file;
+				lw->file = NULL;	/* simulate fclose() on this */
+				return f;		/* simulate fopen() here */
+			}
+		}
+	}
+
+
 	xstrncpy(fullname, path, PATH_MAX);
 
 	if (mkdir_recursive(path, 0)) {
