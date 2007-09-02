@@ -517,7 +517,7 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 		w = window_find_s(s, pch->chanp->name);
 		if (w && (ulist = userlist_find_u(&(w->userlist), old))) {
 			newul = userlist_add_u(&(w->userlist), t2, new);
-			newul->status = xstrdup(ulist->status);
+			xfree(newul->status); newul->status = xstrdup(ulist->status);
 			userlist_remove_u(&(w->userlist), ulist);
 			/* XXX dj, userlist_replace() */
 			/* GiM: Yes, I thought about doin' this 'in place'
