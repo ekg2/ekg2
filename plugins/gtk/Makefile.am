@@ -14,8 +14,7 @@ BUILT_SOURCES = inline_pngs_gg.h inline_pngs.h
 libdir = $(plugindir)
 INCLUDES = -DDATADIR=\"$(datadir)/ekg2\" 
 
-noinst_HEADERS = inline_pngs_gg.h inline_pngs.h
-CLEANFILES = $(noinst_HEADERS)
+CLEANFILES = inline_pngs_gg.h inline_pngs.h
 
 inline_pngs_gg.h: $(GG_PNGS)
 	gdk-pixbuf-csource --raw --build-list gg_avail iconssets/gg-avail.png gg_away iconssets/gg-away.png gg_invisible iconssets/gg-invisible.png gg_notavail iconssets/gg-notavail.png > inline_pngs_gg.h
