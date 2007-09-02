@@ -929,9 +929,6 @@ static QUERY(logs_status_handler) {
 	int status	= *(va_arg(ap, int*));
 	char *descr	= *(va_arg(ap, char**));
 
-	session_t *s; // session pointer
-	userlist_t *userlist;
-
 	log_window_t *lw;
 
 	/* joiny, party	ircowe jakies inne query. lub zrobic to w pluginie irc... ? */
@@ -953,10 +950,6 @@ static QUERY(logs_status_handler) {
 		debug("[LOGS:%d] logs_status_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
 		return 0;
 	}
-
-	/* jesli nie otwarl sie plik to po co mamy robic ? */
-	s = session_find(session);
-	userlist = userlist_find(s, uid);
 
 	if (!descr)
 		descr = "";
