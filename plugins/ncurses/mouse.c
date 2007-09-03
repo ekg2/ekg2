@@ -224,6 +224,26 @@ static WATCHER(ncurses_gpm_watch_handler)
  * checks if we are in console mode or in xterm
  */
 void ncurses_enable_mouse() {
+	int ncurses_has_mouse_support(const char *term) {
+#ifdef HAVE_NCURSES_TERMINFO
+		const char *km = tigetstr("kmous");
+
+		if (km == (void*) -1 || (km && !*km))
+			km = NULL;
+		if (km)
+			return 1;
+#endif
+
+#ifdef HAVE_LIBGPM
+		if (gpm_fd == -2)
+			return 2;
+#endif
+		if (!xstrncmp(term, "xterm", 5) || !xstrcmp(term, "screen"))
+			return 2;
+
+		return 0;
+	}
+
 	char *env		= getenv("TERM");
 #ifdef HAVE_LIBGPM
 	Gpm_Connect conn;
@@ -245,16 +265,9 @@ void ncurses_enable_mouse() {
 		if (gpm_fd == -1)
 	                debug_error("[ncurses] Cannot connect to gpm mouse server\n");
 #endif
-//	if (xstrcasecmp(env, "xterm") && xstrcasecmp(env, "xterm-color")) {
-		if (
-#ifdef HAVE_LIBGPM
-				gpm_fd == -2 ||
-#endif
-				!xstrncmp(env, "xterm", 5) || !xstrcmp(env, "screen")) {
-
+		if ((mouse_initialized = ncurses_has_mouse_support(env))) {
 		        printf("\033[?1001s\033[?1000h");
 			fflush(stdout);
-			mouse_initialized = 1;
 		} else
 			debug_error("[ncurses] Mouse in %s terminal is not supported\n", env);
 #ifdef HAVE_LIBGPM

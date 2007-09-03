@@ -1892,9 +1892,9 @@ static int ekg_getch(int meta, unsigned int *ch) {
 #endif
 		*ch = wgetch(input);
 
-	/* below code is for Debian screen */
+	/* Debian screen incomplete terminfo workaround */
 
-	if (*ch == 27) { /* escape */
+	if (mouse_initialized == 2 && *ch == 27) { /* escape */
 		int tmp;
 
 		if ((tmp = wgetch(input)) != '[')
