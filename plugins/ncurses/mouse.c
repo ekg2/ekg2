@@ -253,6 +253,7 @@ void ncurses_enable_mouse() {
 				!xstrncmp(env, "xterm", 5) || !xstrcmp(env, "screen")) {
 
 		        printf("\033[?1001s\033[?1000h");
+			fflush(stdout);
 			mouse_initialized = 1;
 		} else
 			debug_error("[ncurses] Mouse in %s terminal is not supported\n", env);

@@ -1892,6 +1892,20 @@ static int ekg_getch(int meta, unsigned int *ch) {
 #endif
 		*ch = wgetch(input);
 
+	/* below code is for Debian screen */
+
+	if (*ch == 27) { /* escape */
+		int tmp;
+
+		if ((tmp = wgetch(input)) != '[')
+			ungetch(tmp);
+		else if ((tmp = wgetch(input)) != 'M') {
+			ungetch(tmp);
+			ungetch('[');
+		} else
+			*ch = KEY_MOUSE;
+	}
+
 	/* 
 	 * conception is borrowed from Midnight Commander project 
 	 *    (www.ibiblio.org/mc/) 
@@ -1932,20 +1946,12 @@ static int ekg_getch(int meta, unsigned int *ch) {
 	
 			switch (btn) {
 				case 0:
-					btn += 32;
-					break;
 				case 1:
-					btn += 32;
-					break;
 				case 2:
+                                case 64:
+                                case 65:
 					btn += 32;
 					break;
-                                case 64:
-                                        btn += 32;
-                                        break;
-                                case 65:
-                                        btn += 32;
-                                        break;
 				default:
 					btn = 0;
 					break;
