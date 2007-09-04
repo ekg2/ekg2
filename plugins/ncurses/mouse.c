@@ -217,6 +217,26 @@ static WATCHER(ncurses_gpm_watch_handler)
 }
 #endif
 
+static int ncurses_has_mouse_support(const char *term) {
+#ifdef HAVE_NCURSES_TERMINFO
+	const char *km = tigetstr("kmous");
+
+	if (km == (void*) -1 || (km && !*km))
+		km = NULL;
+	if (km)
+		return 1;
+#endif
+
+#ifdef HAVE_LIBGPM
+	if (gpm_fd == -2)
+		return 2;
+#endif
+	if (!xstrncmp(term, "xterm", 5) || !xstrcmp(term, "screen"))
+		return 2;
+
+	return 0;
+}
+
 /*
  * ncurses_enable_mouse()
  * 
@@ -224,26 +244,6 @@ static WATCHER(ncurses_gpm_watch_handler)
  * checks if we are in console mode or in xterm
  */
 void ncurses_enable_mouse() {
-	int ncurses_has_mouse_support(const char *term) {
-#ifdef HAVE_NCURSES_TERMINFO
-		const char *km = tigetstr("kmous");
-
-		if (km == (void*) -1 || (km && !*km))
-			km = NULL;
-		if (km)
-			return 1;
-#endif
-
-#ifdef HAVE_LIBGPM
-		if (gpm_fd == -2)
-			return 2;
-#endif
-		if (!xstrncmp(term, "xterm", 5) || !xstrcmp(term, "screen"))
-			return 2;
-
-		return 0;
-	}
-
 	char *env		= getenv("TERM");
 #ifdef HAVE_LIBGPM
 	Gpm_Connect conn;
