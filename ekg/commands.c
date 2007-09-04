@@ -2544,7 +2544,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		if (!correct_command)
 			return command_exec_format(target, session, quiet, ("/ %s"), xline);
 	}
-	if (target && *xline == '/' && config_slash_messages && xstrlen(xline) >= 2) {
+	if (target && *xline == '/' && config_slash_messages == 1) {
 	/* send message if we have two '/' in 1 word for instance /bin/sh /dev/hda1 other... */
 		/* code stolen from ekg1, idea stolen from irssi. */
 		char *p = strchr(xline + 1, '/');
@@ -2756,12 +2756,15 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		return res;
 	}
 
+	xfree(line_save);
+
 	if (cmdlen) {	/* if not empty command typed: ("") and we didn't found handler for it... [was: xstrcmp(cmd, "")] */
+		if (config_slash_messages == 2 && target && *xline == '/')
+			return command_exec_format(target, session, quiet, ("/ %s"), xline);
+
 		quiet = quiet & 2;
 		printq("unknown_command", cmd);	/* display warning, if !(quiet & 2) */
 	}
-
-	xfree(line_save);
 
 	return -1;
 }
