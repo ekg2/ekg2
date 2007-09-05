@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <stddef.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #define __(x) (x ? x : "(null)")
 
