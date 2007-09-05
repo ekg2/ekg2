@@ -1004,7 +1004,7 @@ JABBER_HANDLER(jabber_handle_message) {
 					new_line = 1;
 				}
 #endif
-			} else debug_error("[JABBER, MESSAGE]: <x xmlns=%s\n", ns);
+			} else debug_error("[JABBER, MESSAGE]: <x xmlns=%s>\n", __(ns));
 /* x */		} else if (!xstrcmp(xitem->name, "subject")) {
 			nsubject = xitem;
 		} else if (!xstrcmp(xitem->name, "thread")) {
@@ -1108,7 +1108,7 @@ JABBER_HANDLER(jabber_handle_message) {
 
 		if (!sent) sent = time(NULL);
 
-		debug_function("[jabber,message] type = %s\n", type);
+		debug_function("[jabber,message] type = %s\n", __(type));
 		if (!xstrcmp(type, "groupchat")) {
 			char *tuid = xstrrchr(uid, '/');				/* temporary */
 			char *uid2 = (tuid) ? xstrndup(uid, tuid-uid) : xstrdup(uid);		/* muc room */
@@ -2266,7 +2266,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 			print("passwd_failed", jabberfix(reason, "?"));
 			session_set(s, "__new_password", NULL);
 		} else if (!xstrncmp(id, "search", 6)) {
-			debug_error("[JABBER] search failed: %s\n", reason);
+			debug_error("[JABBER] search failed: %s\n", __(reason));
 		}
 		else if (!xstrncmp(id, "offer", 5)) {
 			char *uin = jabber_unescape(from);
@@ -2281,7 +2281,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 			}
 			xfree(uin);
 		}
-		else debug_error("[JABBER] GENERIC IQ ERROR: %s\n", reason);
+		else debug_error("[JABBER] GENERIC IQ ERROR: %s\n", __(reason));
 
 		xfree(reason);
 		return;			/* we don't need to go down */
@@ -2823,7 +2823,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 		if ((nerr = xmlnode_find_child(n, "error"))) { /* bledny */
 			char *ecode = jabber_attr(nerr->atts, "code");
 			char *etext = jabber_unescape(nerr->data);
-			descr = saprintf("(%s) %s", ecode, etext);
+			descr = saprintf("(%s) %s", ecode, __(etext));
 			xfree(etext);
 
 			status = EKG_STATUS_ERROR;
