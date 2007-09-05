@@ -28,9 +28,7 @@
 #define __EXTENSIONS__
 #endif
 
-#if defined(__MINGW32__) || defined(__FreeBSD__) || defined(__sun)
 #include <limits.h>
-#endif
 
 #include <stdint.h>
 
