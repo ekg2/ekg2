@@ -2756,15 +2756,17 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		return res;
 	}
 
-	xfree(line_save);
-
 	if (cmdlen) {	/* if not empty command typed: ("") and we didn't found handler for it... [was: xstrcmp(cmd, "")] */
-		if (config_slash_messages == 2 && target && *xline == '/')
+		if (config_slash_messages == 2 && target && *xline == '/') {
+			xfree(line_save);
 			return command_exec_format(target, session, quiet, ("/ %s"), xline);
+		}
 
 		quiet = quiet & 2;
 		printq("unknown_command", cmd);	/* display warning, if !(quiet & 2) */
 	}
+
+	xfree(line_save);
 
 	return -1;
 }
