@@ -638,9 +638,13 @@ JABBER_HANDLER(jabber_handle_challenge) {
 			return;
 		}
 
-		if (!xstrcmp(arr[i], "realm"))		realm	= arr[i+1];
-		if (!xstrcmp(arr[i], "rspauth"))	rspauth	= arr[i+1];
-		if (!xstrcmp(arr[i], "nonce"))		nonce	= arr[i+1];
+		{
+			char *tmp = strip_spaces(arr[i]);
+
+			if (!xstrcmp(tmp, "realm"))		realm	= arr[i+1];
+			else if (!xstrcmp(tmp, "rspauth"))	rspauth	= arr[i+1];
+			else if (!xstrcmp(tmp, "nonce"))	nonce	= arr[i+1];
+		}
 
 		i++;
 		if (arr[i]) i++;
