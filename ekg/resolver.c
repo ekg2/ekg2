@@ -35,10 +35,13 @@
  * 	THX.
  */
 
-
 #include "debug.h"
 #include "plugins.h"
 #include "xmalloc.h"
+
+#ifndef INADDR_NONE		/* XXX, xmalloc.h (?) */
+#  define INADDR_NONE (unsigned long) 0xffffffff
+#endif
 
 #ifdef LIBIDN /* stolen from squid->url.c (C) Duane Wessels */
 static const char valid_hostname_chars_u[] =
