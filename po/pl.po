@@ -411,7 +411,7 @@ msgstr "%> (%3) Automagicznie zmieniono stan na %Gzajêty%n: %T%1%n%2%n\n"
 
 #: ekg/themes.c:1190
 msgid "%> (%1) Auto %gextended away%n\n"
-msgstr "%> (%3) Automagicznie zmieniono stan na %gbardzo zajêty%n\n"
+msgstr "%> (%1) Automagicznie zmieniono stan na %gbardzo zajêty%n\n"
 
 #: ekg/themes.c:1191
 msgid "%> (%3) Auto %gextended away%n: %T%1%n%2%n\n"
