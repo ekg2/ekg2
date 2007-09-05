@@ -1455,7 +1455,7 @@ COMMAND(session_command)
 	
 	if (params[0] && params[0][0] != '-' && session && session->uid) {
 		command_exec_format(NULL, s, 0, ("%s --%cet %s %s"), name,
-				!xstrcmp(params[0], "password") ? 's' : 'c', session_alias_uid(session), params[0]);
+				!xstrcmp(params[0], "password") ? 's' : 'g', session_alias_uid(session), params[0]);
 		return 0;
 	}
 
