@@ -264,7 +264,7 @@ static QUERY(gg_user_online_handle) {
 	userlist_t *u	= *(va_arg(ap, userlist_t **));
 	session_t *s	= *(va_arg(ap, session_t **));
 	gg_private_t *g;
-	int quiet = (int) data;
+	int quiet = (data == NULL);
 	int uin;
 
 	if (!s || !(g = s->priv) || s->plugin != &gg_plugin)
@@ -1129,8 +1129,6 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 									char *uid	= xstrdup(tmp);
 									int status	= EKG_STATUS_INVISIBLE;
 									char *descr	= xstrdup(u->descr);
-									char *host	= NULL;
-									int port	= 0;
 									time_t when	= time(NULL);
 									
 									query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &when);
@@ -1166,12 +1164,12 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 				break;
 			}
 		case GG_EVENT_IMAGE_REPLY:
-			{
+			if (e->event.image_reply.image) {
 				const char *image_basedir;
 				char *image_file;
 				FILE *fp;
 				int i;
-			
+
 		/* 0th, get basedir */
 				image_basedir = gg_config_images_dir ? 
 					gg_config_images_dir : 			/* dir specified by config */
@@ -1213,6 +1211,10 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 				xfree(image_file);
 
 				break;
+			} else {
+				/* XXX, display no image, from libgadu: */
+					/* pusta odpowied¼ - klient po drugiej stronie nie ma ¿±danego obrazka */
+
 			}
 	}
 }
