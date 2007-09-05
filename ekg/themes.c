@@ -40,14 +40,6 @@
 #include "debug.h"
 #include "queries.h"
 
-#ifndef PATH_MAX
-# ifdef MAX_PATH
-#  define PATH_MAX MAX_PATH
-# else
-#  define PATH_MAX _POSIX_PATH_MAX
-# endif
-#endif
-
 static char *prompt_cache = NULL, *prompt2_cache = NULL, *error_cache = NULL;
 static const char *timestamp_cache = NULL;
 

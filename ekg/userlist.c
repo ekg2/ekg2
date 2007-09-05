@@ -63,10 +63,6 @@
 #include "debug.h"
 #include "queries.h"
 
-#ifndef PATH_MAX
-#  define PATH_MAX _POSIX_PATH_MAX
-#endif
-
 struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
 	{ IGNORE_STATUS, "status" },
 	{ IGNORE_STATUS_DESCR, "descr" },

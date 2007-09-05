@@ -55,10 +55,6 @@
 /* function inside legacyconfig.c */
 void config_upgrade();
 
-#ifndef PATH_MAX
-#  define PATH_MAX _POSIX_PATH_MAX
-#endif
-
 #define check_file() if (!(f = fopen(filename, "r")))\
                 return -1;\
 \

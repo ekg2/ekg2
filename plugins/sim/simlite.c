@@ -41,15 +41,6 @@
 #include <ekg/debug.h>
 #include <ekg/xmalloc.h>
 
-#ifndef PATH_MAX
-#  ifdef MAX_PATH
-#    define PATH_MAX MAX_PATH
-#  else
-#    define PATH_MAX _POSIX_PATH_MAX
-#  endif
-#endif
-
-
 char *sim_key_path = NULL;
 int sim_errno = 0;
 

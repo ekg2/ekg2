@@ -107,14 +107,6 @@
 
 #include "queries.h"
 
-#ifndef PATH_MAX
-# ifdef MAX_PATH
-#  define PATH_MAX MAX_PATH
-# else
-#  define PATH_MAX _POSIX_PATH_MAX
-# endif
-#endif
-
 char *config_dir;
 int mesg_startup;
 int ekg_watches_removed;

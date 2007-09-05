@@ -66,10 +66,6 @@
 
 #include "main.h"
 
-#ifndef PATH_MAX
-#  define PATH_MAX _POSIX_PATH_MAX
-#endif
-
 #undef HAVE_ZLIB		/* disable zlib fjuczer */
 
 PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
