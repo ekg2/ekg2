@@ -28,6 +28,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef __sun      /* Solaris, thanks to Beeth */
+#include <sys/filio.h>
+#endif
+
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>

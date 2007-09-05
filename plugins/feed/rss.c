@@ -33,6 +33,10 @@
 
 #include <string.h>
 
+#ifdef __sun      /* Solaris, thanks to Beeth */
+#include <sys/filio.h>
+#endif
+
 #include <ekg/dynstuff.h>
 #include <ekg/commands.h>
 #include <ekg/debug.h>
