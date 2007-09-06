@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 #
-# change 'jid:'->'xmpp:' in logsqlite database
+# strip resources in logsqlite database
 # (C) 2007 Michał Górny
 #
 
