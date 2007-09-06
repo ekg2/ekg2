@@ -284,7 +284,7 @@ int session_status_set(session_t *s, const char *status)
 					if (*c == '%') {
 						switch (*(++c)) {
 							case '?': /* write if descr is set */
-								xm = (int) (current_descr);
+								xm = !!(current_descr);
 								break;
 							case '!': /* write if descr isn't set */
 								xm = !(current_descr);
