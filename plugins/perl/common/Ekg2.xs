@@ -84,7 +84,9 @@ void print(int dest, char *str)
 CODE:
 	char *line;
         while ((line = split_line(&str))) {
-                window_print(window_target(window_exist(dest)), NULL, 0, fstring_new(va_format_string(line, NULL)));
+		char *tmp = va_format_string(line, NULL);
+		window_print(window_target(window_exist(dest)), NULL, 0, fstring_new(tmp));
+		xfree(tmp);
         }
 
 void init()

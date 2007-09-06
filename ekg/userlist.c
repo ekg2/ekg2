@@ -208,13 +208,14 @@ char *userlist_dump(session_t *session)
 	return string_free(s, 0);
 }
 
-/*
+/**
  * userlist_read()
  *
- * wczytuje listê kontaktów z pliku ~/.ekg/nazwa_sesji-userlist w postaci eksportu
+ * wczytuje listê kontaktów z pliku uid_sesji-userlist w postaci eksportu
  * tekstowego listy kontaktów windzianego klienta.
  *
- * 0/-1
+ * @param session
+ * @return 0 on success, -1 file not found
  */
 int userlist_read(session_t *session)
 {
@@ -911,12 +912,14 @@ int ignored_add(session_t *session, const char *uid, int level)
 	return 0;
 }
 
-/*
+/**
  * ignored_check()
  *
  * czy dany numerek znajduje siê na li¶cie ignorowanych.
  *
- *  - uin.
+ * @param session - sesja w ktorej mamy szukac uzytkownika
+ * @param uid - uid uzytkownika
+ *
  */
 int ignored_check(session_t *session, const char *uid)
 {
@@ -939,11 +942,18 @@ int ignored_check(session_t *session, const char *uid)
 	return 0;
 }
 
-/*
+/**
  * ignore_flags()
  *
  * zamienia ³añcuch znaków na odpowiedni
  * poziom ignorowania w postaci liczby.
+ *
+ * @param str
+ * @sa ignore_format
+ * @sa ignore_t
+ * @sa ignore_labels
+ *
+ * @return zwraca bitmaske opisana przez str
  */
 int ignore_flags(const char *str)
 {
@@ -971,11 +981,18 @@ int ignore_flags(const char *str)
 	return ret;
 }
 
-/*
+/**
  * ignore_format()
  *
  * zwraca statyczny ³añcuch znaków reprezentuj±cy
  * dany poziom ignorowania.
+ *
+ * @param level - poziom ignorowania, bitmaska z `enum ignore_t'
+ * @sa ignore_flags
+ * @sa ignore_t
+ * @sa ignore_labels
+ *
+ * @return zwraca <b>statyczny</b> bufor opisujacy bitmaske za pomoca `ignore_labels`
  */
 const char *ignore_format(int level)
 {
@@ -999,14 +1016,16 @@ const char *ignore_format(int level)
 	return buf;
 }
 
-/*
+/**
  * group_compare()
  *
- * funkcja pomocna przy list_add_sorted().
+ * wewnetrzna funkcja pomocna przy list_add_sorted().
  *
- *  - data1, data2 - dwa wpisy grup do porównania.
+ * @param data1 - pierwszy wpis do porownania
+ * @param data2 - drugi wpis do porownania
+ * @sa list_add_sorted
  *
- * zwraca wynik xstrcasecmp() na nazwach grup.
+ * @return zwraca wynik xstrcasecmp() na nazwach grup.
  */
 static int group_compare(void *data1, void *data2)
 {
@@ -1018,13 +1037,15 @@ static int group_compare(void *data1, void *data2)
 	return xstrcasecmp(a->name, b->name);
 }
 
-/*
+/**
  * ekg_group_add()
  *
  * dodaje u¿ytkownika do podanej grupy.
  *
- *  - u - wpis usera,
- *  - group - nazwa grupy.
+ * @param u - wpis usera,
+ * @param group - nazwa grupy.
+ *
+ * @return -1 jesli juz user jest w tej grupie, lub zle parametry. 0 gdy dodano.
  */
 int ekg_group_add(userlist_t *u, const char *group)
 {
@@ -1048,15 +1069,15 @@ int ekg_group_add(userlist_t *u, const char *group)
 	return 0;
 }
 
-/*
+/**
  * ekg_group_remove()
  *
  * usuwa u¿ytkownika z podanej grupy.
  *
- *  - u - wpis usera,
- *  - group - nazwa grupy.
+ * @param u - wpis usera,
+ * @param group - nazwa grupy.
  *
- * zwraca 0 je¶li siê uda³o, inaczej -1.
+ * @return 0 je¶li siê uda³o, inaczej -1.
  */
 int ekg_group_remove(userlist_t *u, const char *group)
 {
@@ -1079,12 +1100,15 @@ int ekg_group_remove(userlist_t *u, const char *group)
 	return -1;
 }
 
-/*
+/**
  * ekg_group_member()
  *
  * sprawdza czy u¿ytkownik jest cz³onkiem danej grupy.
  *
- * zwraca 1 je¶li tak, 0 je¶li nie.
+ * @param u - uzytkownik, ktorego chcemy sprawdzic
+ * @param group - grupa ktora chcemy sprawdzic
+ *
+ * @return 1 je¶li tak, 0 je¶li nie.
  */
 int ekg_group_member(userlist_t *u, const char *group)
 {
@@ -1103,15 +1127,15 @@ int ekg_group_member(userlist_t *u, const char *group)
 	return 0;
 }
 
-/*
+/**
  * group_init()
  *
  * inicjuje listê grup u¿ytkownika na podstawie danego ci±gu znaków,
  * w którym kolejne nazwy grup s± rozdzielone przecinkiem.
  * 
- *  - names - nazwy grup.
+ *  @param names - nazwy grup.
  *
- * zwraca listê `struct group' je¶li siê uda³o, inaczej NULL.
+ *  @return zwraca listê `struct group' je¶li siê uda³o, inaczej NULL.
  */
 list_t group_init(const char *names)
 {
@@ -1138,16 +1162,16 @@ list_t group_init(const char *names)
 	return l;
 }
 
-/*
+/**
  * group_to_string()
  *
  * zmienia listê grup na ci±g znaków rodzielony przecinkami.
  *
- *  - groups - lista grup.
- *  - meta - czy do³±czyæ ,,meta-grupy''?
- *  - sep - czy oddzielaæ przecinkiem _i_ spacj±?
+ *  @param groups - lista grup.
+ *  @param meta - czy do³±czyæ ,,meta-grupy''?
+ *  @param sep - czy oddzielaæ przecinkiem _i_ spacj±?
  *
- * zwraca zaalokowany ci±g znaków lub NULL w przypadku b³êdu.
+ *  @return zwraca zaalokowany ci±g znaków lub NULL w przypadku b³êdu.
  */
 char *group_to_string(list_t groups, int meta, int sep)
 {

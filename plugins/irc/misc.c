@@ -175,7 +175,7 @@ next2:
 
 		r = userlist_resource_add(u, p->nick, 0);
 
-		r->status	= xstrdup(EKG_STATUS_AVAIL);
+		xfree(r->status); r->status = xstrdup(EKG_STATUS_AVAIL);
 		r->descr	= xstrdup(chan->name+4);
 		r->private	= p;
 
@@ -350,18 +350,19 @@ IRC_COMMAND(irc_c_init)
 			s->last_conn = time(NULL);
 			session_unidle(s);
 			t = xstrchr(param[3], '!');
+			xfree(j->host_ident);
 			if (t)  j->host_ident=xstrdup(++t); 
 			else j->host_ident=NULL;
 			debug("\nspoko miejscówka ziom!...[%s:%s]\n", j->nick, j->host_ident);
 			j->connecting = 0;
 			j->autoreconnecting = 0;
 
-			SOP(_005_PREFIX) = xstrdup("(ov)@+");
-			SOP(_005_CHANTYPES) = xstrdup("#!");
-			SOP(_005_MODES) = xstrdup("3");
-			SOP(_005_NICKLEN) = xstrdup("9");
+			xfree(SOP(_005_PREFIX)); SOP(_005_PREFIX) = xstrdup("(ov)@+");
+			xfree(SOP(_005_CHANTYPES)); SOP(_005_CHANTYPES) = xstrdup("#!");
+			xfree(SOP(_005_MODES)); SOP(_005_MODES) = xstrdup("3");
+			xfree(SOP(_005_NICKLEN)); SOP(_005_NICKLEN) = xstrdup("9");
 			/* ~~ kinda optimal: */
-			SOP(_005_CHANMODES) = xstrdup("b,k,l,imnpsta");
+			xfree(SOP(_005_CHANMODES)); SOP(_005_CHANMODES) = xstrdup("b,k,l,imnpsta");
 			/* http://www.irc.org/tech_docs/005.html
 			CHANMODES= b,  k,l, imnpstr (ircu)
 			CHANMODES= b,  k,l, iLmMnOprRst (Bahamut)
@@ -373,8 +374,8 @@ IRC_COMMAND(irc_c_init)
 		case 3:
 			break;
 		case 4:
-			SOP(USERMODES) = xstrdup(param[5]);
-			SOP(CHANMODES) = xstrdup(param[6]);
+			xfree(SOP(USERMODES)); SOP(USERMODES) = xstrdup(param[5]);
+			xfree(SOP(CHANMODES)); SOP(CHANMODES) = xstrdup(param[6]);
 			break;
 		case 5:
 			/* rfc says there can be 15 params */
