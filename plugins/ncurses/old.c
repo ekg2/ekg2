@@ -133,7 +133,7 @@ QUERY(ncurses_password_input) {
 			ncurses_watch_stdin(0, 0, WATCH_READ, NULL);
 		passb = ncurses_passbuf;
 		
-		if (wcscmp(passa, passb))
+		if (xwcscmp(passa, passb))
 			print("password_nomatch");
 		else
 #if USE_UNICODE
