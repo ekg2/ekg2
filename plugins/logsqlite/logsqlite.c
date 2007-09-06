@@ -464,6 +464,7 @@ QUERY(logsqlite_msg_handler)
 	char * gotten_uid = get_uid(s, uid);
 	char * gotten_nickname = get_nickname(s, uid);
 	char * type = NULL;
+	char * myuid = NULL;
 	sqlite_t * db;
 #ifdef HAVE_SQLITE3	
 	sqlite3_stmt * stmt;
@@ -543,11 +544,21 @@ QUERY(logsqlite_msg_handler)
 
 	debug("[logsqlite] running msg query\n");
 
-		/* XXX: remove resource from UID? */
+	if ((!xstrncmp(gotten_uid, "xmpp:", 5) || !xstrncmp(gotten_uid, "jid:", 4))
+			&& xstrchr(gotten_uid, '/')) {
+		char *tmp;
+
+		myuid	= xstrdup(gotten_uid);
+		if ((tmp = xstrchr(myuid, '/')))
+			*tmp = 0;
+		else
+			debug_error("[logsqlite] WTF? Slash disappeared during xstrdup()!\n");
+	}
+
 #ifdef HAVE_SQLITE3
 	sqlite3_prepare(db, "INSERT INTO log_msg VALUES (?, ?, ?, ?, ?, ?, ?, ?)", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, session, -1, SQLITE_STATIC);
-	sqlite3_bind_text(stmt, 2, gotten_uid, -1, SQLITE_STATIC);
+	sqlite3_bind_text(stmt, 2, myuid ? myuid : gotten_uid, -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 3, gotten_nickname, -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 4, type, -1, SQLITE_STATIC);
 	sqlite3_bind_int(stmt, 5, is_sent);
@@ -561,7 +572,7 @@ QUERY(logsqlite_msg_handler)
 #else
 	sqlite_exec_printf(db, "INSERT INTO log_msg VALUES(%Q, %Q, %Q, %Q, %i, %i, %i, %Q)", 0, 0, 0,
 		session,
-		gotten_uid,
+		myuid ? myuid : gotten_uid,
 		gotten_nickname,
 		type,
 		is_sent,
@@ -569,6 +580,7 @@ QUERY(logsqlite_msg_handler)
 		sent,
 		text);
 #endif 
+	xfree(myuid);
 
 	return 0;
 };
@@ -674,16 +686,15 @@ static QUERY(logsqlite_newwin_handler) {
 
 			/* these ones stolen from /last cmd */
 #ifdef HAVE_SQLITE3
-	sqlite3_prepare(db, "SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = ?1 OR uid LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+	sqlite3_prepare(db, "SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = ?1 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, uid, -1, SQLITE_STATIC);
 	sqlite3_bind_int(stmt, 2, config_logsqlite_last_limit);
-	sqlite3_bind_text(stmt, 3, saprintf("%s/%%", uid), -1, xfree);
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		ts = (time_t) sqlite3_column_int(stmt, 0);
 
 		if (sqlite3_column_int(stmt, 2) == 0) {
 #else
-	sql = sqlite_mprintf("SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = '%q' OR uid LIKE '%q/%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", uid, uid, config_logsqlite_last_limit);
+	sql = sqlite_mprintf("SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = '%q' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", uid, config_logsqlite_last_limit);
 	sqlite_compile(db, sql, NULL, &vm, &errors);
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
 		ts = (time_t) atoi(results[0]);
