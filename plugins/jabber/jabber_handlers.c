@@ -871,12 +871,12 @@ JABBER_HANDLER(jabber_handle_message) {
 			char *mbody = xstrndup(tmp2, 15);
 			xstrtr(mbody, '\n', ' ');
 
-			print("jabber_msg_failed_long", recipient, ecode, etext, mbody);
+			print_window(uid, s, 0, "jabber_msg_failed_long", recipient, ecode, etext, mbody);
 
 			xfree(mbody);
 			xfree(tmp2);
 		} else
-			print("jabber_msg_failed", recipient, ecode, etext);
+			print_window(uid, s, 0, "jabber_msg_failed", recipient, ecode, etext);
 
 		xfree(etext);
 		xfree(uid);
