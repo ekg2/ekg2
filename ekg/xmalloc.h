@@ -24,6 +24,8 @@
 #include <sys/types.h>
 #include <stddef.h>
 #include <stdarg.h>
+
+#define _XOPEN_SOURCE 600
 #include <limits.h>
 
 #define __(x) (x ? x : "(null)")

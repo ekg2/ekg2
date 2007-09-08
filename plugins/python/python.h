@@ -20,6 +20,8 @@
 #ifndef __PYTHON_H_
 #define __PYTHON_H_
 
+#include <sys/types.h>		/* on Solaris we need to include it before Python,
+				   but I think this shouldn't make problems on others */
 #include <Python.h>
 #include <ekg/scripts.h>
 
