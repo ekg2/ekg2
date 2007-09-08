@@ -528,10 +528,12 @@ static COMMAND(jabber_command_msg)
 		}
 
 		{
-			char *tmp = xml_escape(msg);
+			if (session_int_get(session, "__gpg_enabled") == 1)
+				msg = xstrdup(msg);
+			else
+				msg = xml_escape(msg);
 			if (!config_use_unicode)
 				xfree(s);
-			msg = tmp;
 		}
 	} else	msg = tlen_encode(msg);
 
