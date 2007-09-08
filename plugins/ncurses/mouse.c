@@ -36,6 +36,10 @@
 #include "contacts.h"
 #include "mouse.h"
 
+	/* imported bindings */
+BINDING_FUNCTION(binding_previous_history);
+BINDING_FUNCTION(binding_next_history);
+
 int mouse_initialized = 0;
 
 /* 
@@ -147,6 +151,29 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 			if (n->handle_mouse)
 				n->handle_mouse(x - w->left, y - w->top, mouse_flag);
 			break;
+		}
+	}
+
+	if (!l) { /* special screen sections */
+			/* input */
+		if (y > stdscr->_maxy - input_size + 1) {
+			if (input_size == 1) {
+				if (mouse_flag == EKG_SCROLLED_UP)
+					binding_previous_history(NULL);
+				else if (mouse_flag == EKG_SCROLLED_DOWN)
+					binding_next_history(NULL);
+				else if (mouse_flag == EKG_BUTTON1_CLICKED) {
+					/* XXX: move cursor */
+				}
+			} else {
+				if (mouse_flag == EKG_SCROLLED_UP)
+					/* XXX: scroll */;
+				else if (mouse_flag == EKG_SCROLLED_DOWN)
+					/* XXX: scroll */;
+				else if (mouse_flag == EKG_BUTTON1_CLICKED) {
+					/* XXX: move cursor */
+				}
+			}
 		}
 	}
 }

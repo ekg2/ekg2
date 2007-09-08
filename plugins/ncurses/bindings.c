@@ -533,7 +533,7 @@ static BINDING_FUNCTION(binding_next_only_history)
 }
 
 
-static BINDING_FUNCTION(binding_previous_history)
+BINDING_FUNCTION(binding_previous_history)
 {
 	if (lines) {
 		if (lines_index - lines_start == 0)
@@ -551,7 +551,7 @@ static BINDING_FUNCTION(binding_previous_history)
 	binding_previous_only_history(NULL);				
 }
 
-static BINDING_FUNCTION(binding_next_history)
+BINDING_FUNCTION(binding_next_history)
 {
 	if (lines) {
 		if (lines_index - line_start == 4)
