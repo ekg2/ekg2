@@ -157,13 +157,27 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 	if (!l) { /* special screen sections */
 			/* input */
 		if (y > stdscr->_maxy - input_size + 1) {
+			y -= (stdscr->_maxy - input_size + 2);
+			x--;
+
 			if (input_size == 1) {
 				if (mouse_flag == EKG_SCROLLED_UP)
 					binding_previous_only_history(NULL);
 				else if (mouse_flag == EKG_SCROLLED_DOWN)
 					binding_next_only_history(NULL);
 				else if (mouse_flag == EKG_BUTTON1_CLICKED) {
-					/* XXX: move cursor */
+						/* the plugin already calculates offset incorrectly,
+						 * so we shall follow it */
+					const int promptlen	= ncurses_current ? xstrlen(ncurses_current->prompt) : 0;
+					const int linelen	= xwcslen(ncurses_line);
+
+					debug("ZZZ: %d, %d\n", promptlen, x);
+					line_index = x - promptlen;
+
+					if (line_index < 0)
+						line_index = 0;
+					else if (line_index > linelen)
+						line_index = linelen;
 				}
 			} else {
 				if (mouse_flag == EKG_SCROLLED_UP) {
@@ -179,7 +193,13 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 					else
 						lines_start = lines_count - 1;
 				} else if (mouse_flag == EKG_BUTTON1_CLICKED) {
-					/* XXX: move cursor */
+					const int lines_count = array_count((char **) ncurses_lines);
+
+					lines_index = lines_start + y;
+					if (lines_index >= lines_count)
+						lines_index = lines_count - 1;
+					line_index = x;
+					ncurses_lines_adjust();
 				}
 			}
 		}
