@@ -2831,6 +2831,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 			xfree(etext);
 
 			status = EKG_STATUS_ERROR;
+			na = 1;
 
 			if (istlen) { /* we need to get&fix the UID - userlist entry is sent with @tlen.pl, but error with user-given host */
 				char *tmp	= tlenjabber_unescape(jabber_attr(n->atts, "to"));
@@ -2841,18 +2842,15 @@ JABBER_HANDLER(jabber_handle_presence) {
 				uid = saprintf("tlen:%s@tlen.pl", tmp);
 				xfree(tmp);
 			}
-		} 
-		if ((nstatus = xmlnode_find_child(n, "status"))) { /* opisowy */
+		} else if ((nstatus = xmlnode_find_child(n, "status"))) { /* opisowy */
 			xfree(descr);
 			descr = tlenjabber_unescape(nstatus->data);
 		}
 
-		if (!jstatus)
-			jstatus = xstrdup("unknown");
-
-		if (!status && ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN))
+		if (!status && (jstatus || (jstatus = xstrdup("unknown"))) && ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN))
 			debug_error("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
 		xfree(jstatus);
+
 		{
 			userlist_t *u = userlist_find(s, uid);
 			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
@@ -2880,6 +2878,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 				}
 			}
 		}
+
 		{
 			char *session 	= xstrdup(session_uid_get(s));
 
