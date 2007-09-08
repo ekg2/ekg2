@@ -133,6 +133,7 @@ static BINDING_FUNCTION(binding_toggle_input)
 		else
 			ncurses_typing_win = NULL;
 
+		curs_set(1);
 		xfree(tmp);
 	}
 }
@@ -456,7 +457,7 @@ static BINDING_FUNCTION(binding_beginning_of_line)
 	line_start = 0;
 }
 
-static BINDING_FUNCTION(binding_previous_only_history)
+BINDING_FUNCTION(binding_previous_only_history)
 {
         if (history[history_index + 1]) {
                 if (history_index == 0)
@@ -494,7 +495,7 @@ static BINDING_FUNCTION(binding_previous_only_history)
         }
 }
 
-static BINDING_FUNCTION(binding_next_only_history)
+BINDING_FUNCTION(binding_next_only_history)
 {
         if (history_index > 0) {
                 if (history_index == 0)
@@ -533,12 +534,11 @@ static BINDING_FUNCTION(binding_next_only_history)
 }
 
 
-BINDING_FUNCTION(binding_previous_history)
+static BINDING_FUNCTION(binding_previous_history)
 {
 	if (lines) {
-		if (lines_index - lines_start == 0)
-			if (lines_start)
-				lines_start--;
+		if (lines_index - lines_start == 0 && lines_start)
+			lines_start--;
 
 		if (lines_index)
 			lines_index--;
@@ -551,7 +551,7 @@ BINDING_FUNCTION(binding_previous_history)
 	binding_previous_only_history(NULL);				
 }
 
-BINDING_FUNCTION(binding_next_history)
+static BINDING_FUNCTION(binding_next_history)
 {
 	if (lines) {
 		if (lines_index - line_start == 4)

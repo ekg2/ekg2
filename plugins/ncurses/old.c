@@ -2167,7 +2167,15 @@ void ncurses_redraw_input(unsigned int ch) {
 			xfree(aspell_line);
 #endif
 		}
-		wmove(input, lines_index - lines_start, line_index - line_start);
+
+		{
+			const int beforewin	= (lines_index < lines_start);
+			const int outtawin	= (beforewin || lines_index > lines_start + 4);
+			
+			wmove(input, (beforewin ? 0 : outtawin ? 4 : lines_index - lines_start),
+					outtawin ? stdscr->_maxx : line_index - line_start);
+			curs_set(!outtawin);
+		}
 	} else {
 		int i;
 		/* const */size_t linelen = xwcslen(ncurses_line);

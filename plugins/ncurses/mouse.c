@@ -37,8 +37,8 @@
 #include "mouse.h"
 
 	/* imported bindings */
-BINDING_FUNCTION(binding_previous_history);
-BINDING_FUNCTION(binding_next_history);
+BINDING_FUNCTION(binding_previous_only_history);
+BINDING_FUNCTION(binding_next_only_history);
 
 int mouse_initialized = 0;
 
@@ -159,18 +159,26 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 		if (y > stdscr->_maxy - input_size + 1) {
 			if (input_size == 1) {
 				if (mouse_flag == EKG_SCROLLED_UP)
-					binding_previous_history(NULL);
+					binding_previous_only_history(NULL);
 				else if (mouse_flag == EKG_SCROLLED_DOWN)
-					binding_next_history(NULL);
+					binding_next_only_history(NULL);
 				else if (mouse_flag == EKG_BUTTON1_CLICKED) {
 					/* XXX: move cursor */
 				}
 			} else {
-				if (mouse_flag == EKG_SCROLLED_UP)
-					/* XXX: scroll */;
-				else if (mouse_flag == EKG_SCROLLED_DOWN)
-					/* XXX: scroll */;
-				else if (mouse_flag == EKG_BUTTON1_CLICKED) {
+				if (mouse_flag == EKG_SCROLLED_UP) {
+					if (lines_start > 2)
+						lines_start -= 2;
+					else
+						lines_start = 0;
+				} else if (mouse_flag == EKG_SCROLLED_DOWN) {
+					const int lines_count = array_count((char **) ncurses_lines);
+
+					if (lines_start < lines_count - 2)
+						lines_start += 2;
+					else
+						lines_start = lines_count - 1;
+				} else if (mouse_flag == EKG_BUTTON1_CLICKED) {
 					/* XXX: move cursor */
 				}
 			}
