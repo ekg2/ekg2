@@ -4,6 +4,7 @@
  */
 
 #define _GNU_SOURCE
+#define _XOPEN_SOURCE 600
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
