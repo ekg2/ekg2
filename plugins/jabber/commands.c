@@ -443,6 +443,8 @@ static COMMAND(jabber_command_msg)
 
 	int secure		= 0;
 
+	char *s;		/* used for transcoding */
+
 	if (!xstrcmp(target, "*")) {
 		if (msg_all(session, name, params[1]) == -1)
 			printq("list_empty");
@@ -483,10 +485,7 @@ static COMMAND(jabber_command_msg)
 	if ((c = newconference_find(session, target))) 
 		ismuc = 1;
 
-	if (!j->istlen) {
-		 /* Very, very simple XEP-0071 support + 'modified' jabber_encode() */
-		char *s;
-
+	if (!j->istlen) { /* Very, very simple XEP-0071 support + 'modified' jabber_encode() */
 		if (!config_use_unicode) {
 			s = ekg_convert_string_p(msg, jconv_out);
 			if (s)
@@ -526,16 +525,7 @@ static COMMAND(jabber_command_msg)
 					return -1;
 			}
 		}
-
-		{
-			if (session_int_get(session, "__gpg_enabled") == 1)
-				msg = xstrdup(msg);
-			else
-				msg = xml_escape(msg);
-			if (!config_use_unicode)
-				xfree(s);
-		}
-	} else	msg = tlen_encode(msg);
+	}
 
 /* writing: */
 	if (j->send_watch) j->send_watch->transfer_limit = -1;
@@ -570,13 +560,17 @@ static COMMAND(jabber_command_msg)
 			xfree(e_msg);
 		}
 	}
-	if (!secure) 
-		watch_write(j->send_watch, "<body>%s</body>", msg);
+	if (!secure /* || j->istlen */) {
+		char *tmp = (j->istlen ? tlen_encode(msg) : xml_escape(msg));
+
+		watch_write(j->send_watch, "<body>%s</body>", tmp);
+		xfree(tmp);
+	}
+	if (!j->istlen && !config_use_unicode)
+		xfree(s);			/* recoded string */
 
 	if (config_last & 4) 
-		last_add(1, uid, time(NULL), 0, msg);
-	xfree(msg);
-
+		last_add(1, uid, time(NULL), 0, params[1]);
 nomsg:
 	if (htmlmsg) {
 		watch_write(j->send_watch, "%s", htmlmsg);
