@@ -326,7 +326,7 @@ static char *va_format_string(const char *format, va_list ap) {
 				if (str) {
 					char *q = str + xstrlen(str) - 1;
 
-					while (q >= str && !isalpha_pl_PL(*q))
+					while (q >= str && (isspace(*q) || ispunct(*q)))
 						q--;
 
 					if (*q == 'a')
