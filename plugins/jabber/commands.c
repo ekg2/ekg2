@@ -377,6 +377,14 @@ static COMMAND(jabber_command_disconnect)
 /* w libtlenie jest <show>unavailable</show> + eskejpiete tlen_encode() */
 
 	if (session->connected) {
+		char *lt = session_get(session, "__last_typing");
+
+		if (lt)
+			watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\">"
+						"<x xmlns=\"jabber:x:event\"/>"
+						"<gone xmlns=\"http://jabber.org/protocol/chatstates\"/>"
+						"</message>\n", lt);
+
 		if (descr) {
 			char *tmp = jabber_escape(descr);
 			watch_write(j->send_watch, "<presence type=\"unavailable\"><status>%s</status></presence>", tmp ? tmp : "");

@@ -162,7 +162,7 @@ extern plugin_t jabber_plugin;
 extern char *jabber_default_pubsub_server;
 extern char *jabber_default_search_server;
 extern int config_jabber_beep_mail;
-extern char *jabber_authtypes[];
+extern const char *jabber_authtypes[];
 
 void jabber_register_commands(void);
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data);

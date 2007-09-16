@@ -75,7 +75,7 @@ SSL_CTX *jabberSslCtx;
 char *jabber_default_search_server = NULL;
 char *jabber_default_pubsub_server = NULL;
 int config_jabber_beep_mail = 0;
-char *jabber_authtypes[] = { "none", "from", "to", "both" };
+const char *jabber_authtypes[] = { "none", "from", "to", "both" };
 
 static int session_postinit;
 static int jabber_theme_init();
@@ -1517,6 +1517,8 @@ static QUERY(jabber_typing_out) {
 			 first == 3 ? "gone" :
 			 first == 2 ? "inactive" :
 			 "paused"));
+
+	session_set(s, "__last_typing", len ? jid : NULL);
 
 	return -1;
 }
