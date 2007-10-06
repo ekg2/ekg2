@@ -231,6 +231,21 @@ TIMER(ncurses_typing) {
 	return 0;
 }
 
+/* cut prompt to given width and recalculate its' width */
+void ncurses_update_real_prompt(ncurses_window_t *n) {
+	xfree(n->prompt_real);
+#ifdef USE_UNICODE
+	n->prompt_real		= normal_to_wcs(n->prompt);
+#else
+	n->prompt_real		= xstrdup(n->prompt);
+#endif
+	n->prompt_real_len	= xwcslen(n->prompt_real);
+
+	if (n->prompt_real_len > ncurses_screen_width * 2 / 3) { /* need to cut it */
+		/* XXX: cut, cut, cut */
+	}
+}
+
 /*
  * ncurses_spellcheck_init()
  * 
@@ -1559,6 +1574,8 @@ int ncurses_window_kill(window_t *w)
 		
 	xfree(n->prompt);
 //	n->prompt = NULL;
+	xfree(n->prompt_real);
+//	n->prompt_real = NULL;
 	delwin(n->window);
 //	n->window = NULL;
 	xfree(n);
@@ -1774,7 +1791,7 @@ void ncurses_deinit()
  */
 void ncurses_line_adjust()
 {
-	int prompt_len = (ncurses_lines) ? 0 : ncurses_current->prompt_len;
+	const int prompt_len = (ncurses_lines) ? 0 : ncurses_current->prompt_real_len;
 
 	line_index = xwcslen(ncurses_line);
 	if (line_index < input->_maxx - 9 - prompt_len)
@@ -2123,10 +2140,10 @@ void ncurses_redraw_input(unsigned int ch) {
 	char *aspell_line = NULL;
 	int mispelling = 0; /* zmienna pomocnicza */
 #endif
-	if (line_index - line_start > input->_maxx - 9 - ncurses_current->prompt_len)
-		line_start += input->_maxx - 19 - ncurses_current->prompt_len;
+	if (line_index - line_start > input->_maxx - 9 - ncurses_current->prompt_real_len)
+		line_start += input->_maxx - 19 - ncurses_current->prompt_real_len;
 	if (line_index - line_start < 10) {
-		line_start -= input->_maxx - 19 - ncurses_current->prompt_len;
+		line_start -= input->_maxx - 19 - ncurses_current->prompt_real_len;
 		if (line_start < 0)
 			line_start = 0;
 	}
@@ -2180,13 +2197,17 @@ void ncurses_redraw_input(unsigned int ch) {
 		}
 	} else {
 		int i;
-		/* const */size_t linelen = xwcslen(ncurses_line);
+		/* const */size_t linelen	= xwcslen(ncurses_line);
 
 		if (ncurses_current->prompt)
-			mvwaddstr(input, 0, 0, ncurses_current->prompt);
+#ifdef USE_UNICODE /* XXX: should we check config_use_unicode here? */
+			mvwaddwstr(input, 0, 0, ncurses_current->prompt_real);
+#else
+			mvwaddstr(input, 0, 0, ncurses_current->prompt_real);
+#endif
 
 		if (ncurses_noecho) {
-			const int x		= xmbslen(ncurses_current->prompt) + 1;
+			const int x		= ncurses_current->prompt_real_len + 1;
 			static char *funnything	= ncurses_funnything;
 
 			mvwaddch(input, 0, x, *funnything);
@@ -2205,13 +2226,13 @@ void ncurses_redraw_input(unsigned int ch) {
 			spellcheck(ncurses_line, aspell_line);
 		}
 #endif
-		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < linelen - line_start; i++) {
+		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_real_len && i < linelen - line_start; i++) {
 #ifdef WITH_ASPELL
 			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start + i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-				print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i], A_UNDERLINE);
+				print_char(input, 0, i + ncurses_current->prompt_real_len, ncurses_line[line_start + i], A_UNDERLINE);
 			else 	/* jesli jest wszystko okey to wyswietlamy normalny */
 #endif				/* lub gdy nie mamy aspella */
-				print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i], A_NORMAL);
+				print_char(input, 0, i + ncurses_current->prompt_real_len, ncurses_line[line_start + i], A_NORMAL);
 		}
 #ifdef WITH_ASPELL
 		xfree(aspell_line);
@@ -2220,11 +2241,11 @@ void ncurses_redraw_input(unsigned int ch) {
 		if (ch == 3) ncurses_commit();
 		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
 		if (line_start > 0)
-			mvwaddch(input, 0, ncurses_current->prompt_len, '<');
-		if (linelen - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
+			mvwaddch(input, 0, ncurses_current->prompt_real_len, '<');
+		if (linelen - line_start > input->_maxx + 1 - ncurses_current->prompt_real_len)
 			mvwaddch(input, 0, input->_maxx, '>');
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
-		wmove(input, 0, line_index - line_start + xmbslen(ncurses_current->prompt));
+		wmove(input, 0, line_index - line_start + ncurses_current->prompt_real_len);
 	}
 }
 
@@ -2710,12 +2731,16 @@ int ncurses_window_new(window_t *w)
 
 		n->prompt = format_string(f, w->target);
 		n->prompt_len = xstrlen(n->prompt);
+
+		ncurses_update_real_prompt(n);
 	} else {
 		const char *f = format_find("ncurses_prompt_none");
 
 		if (xstrcmp(f, "")) {
 			n->prompt = format_string(f);
 			n->prompt_len = xstrlen(n->prompt);
+
+			ncurses_update_real_prompt(n);
 		}
 	}
 

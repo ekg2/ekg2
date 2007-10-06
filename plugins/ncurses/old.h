@@ -75,6 +75,9 @@ typedef struct {
 				/* obs³uga przerysowania zawarto¶ci okna */
 
 	void (*handle_mouse)(int x, int y, int state);
+
+	CHAR_T *prompt_real;	/* prompt shortened to 2/3 of window width & converted to real chartype */
+	int prompt_real_len;	/* real prompt length, including cutting, in chars instead of bytes */
 } ncurses_window_t;
 
 struct format_data {
@@ -88,6 +91,7 @@ extern WINDOW *ncurses_input;
 TIMER(ncurses_typing);
 void ncurses_main_window_mouse_handler(int x, int y, int mouse_state);
 
+void ncurses_update_real_prompt(ncurses_window_t *n);
 void ncurses_resize();
 int ncurses_backlog_add(window_t *w, fstring_t *str);
 int ncurses_backlog_split(window_t *w, int full, int removed);

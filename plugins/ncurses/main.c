@@ -254,6 +254,8 @@ static QUERY(ncurses_ui_window_target_changed)
 	n->prompt = tmp; 
 	n->prompt_len = xstrlen(tmp);
 
+	ncurses_update_real_prompt(n);
+
 	update_statusbar(1);
 
 	return 0;
@@ -310,6 +312,8 @@ static QUERY(ncurses_userlist_changed)
 		xfree(n->prompt);
                 n->prompt = format_string(format_find("ncurses_prompt_query"), w->target);
                 n->prompt_len = xstrlen(n->prompt);
+
+		ncurses_update_real_prompt(n);
         }
 
 	list_destroy(sorted_all_cache, 1);
@@ -374,6 +378,7 @@ static QUERY(ncurses_conference_renamed)
                         w->target = xstrdup(newname);
                         n->prompt = format_string(format_find("ncurses_prompt_query"), newname);
                         n->prompt_len = xstrlen(n->prompt);
+			ncurses_update_real_prompt(n);
                 }
 	}
 
