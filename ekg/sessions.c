@@ -1269,7 +1269,7 @@ COMMAND(session_command)
 			char *pass = password_input();
 
 			if (pass) {
-				session_set(session, params[1], pass);
+				session_set(session, params[2], pass);
 				config_changed = 1;
 				command_exec_format(NULL, s, 0, ("%s --get %s %s"), name, session->uid, params[2]);
 				xfree(pass);
