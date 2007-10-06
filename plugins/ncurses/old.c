@@ -233,16 +233,46 @@ TIMER(ncurses_typing) {
 
 /* cut prompt to given width and recalculate its' width */
 void ncurses_update_real_prompt(ncurses_window_t *n) {
-	xfree(n->prompt_real);
-#ifdef USE_UNICODE
-	n->prompt_real		= normal_to_wcs(n->prompt);
-#else
-	n->prompt_real		= xstrdup(n->prompt);
-#endif
-	n->prompt_real_len	= xwcslen(n->prompt_real);
+	if (!n)
+		return;
 
-	if (n->prompt_real_len > ncurses_screen_width * 2 / 3) { /* need to cut it */
-		/* XXX: cut, cut, cut */
+	const int maxlen = (n->window && n->window->_maxx ? n->window->_maxx : 80) / 3;
+	xfree(n->prompt_real);
+
+	if (maxlen <= 6) /* we assume the terminal is too narrow to display any input with prompt */
+		n->prompt_real		= NULL;
+	else {
+#ifdef USE_UNICODE
+		n->prompt_real		= normal_to_wcs(n->prompt);
+#else
+		n->prompt_real		= xstrdup(n->prompt);
+#endif
+	}
+	n->prompt_real_len		= xwcslen(n->prompt_real);
+
+	if (n->prompt_real_len > maxlen) { /* need to cut it */
+		const CHAR_T *dots	= TEXT("...");
+#ifdef USE_UNICODE
+		const wchar_t udots[2]	= { 0x2026, 0 };
+		if (config_use_unicode)	/* use unicode hellip, if using utf8 */
+			dots		= udots;
+#endif
+
+		{
+			const int dotslen	= xwcslen(dots);
+			const int taillen	= (maxlen - dotslen) / 2; /* rounded down */
+			const int headlen	= (maxlen - dotslen) - taillen; /* rounded up */
+
+			CHAR_T *tmp		= xmalloc(sizeof(CHAR_T) * (maxlen + 1));
+
+			xwcslcpy(tmp, n->prompt_real, headlen + 1);
+			xwcslcpy(tmp + headlen, dots, dotslen + 1);
+			xwcslcpy(tmp + headlen + dotslen, n->prompt_real + n->prompt_real_len - taillen, taillen + 1);
+
+			xfree(n->prompt_real);
+			n->prompt_real		= tmp;
+			n->prompt_real_len	= maxlen;
+		}
 	}
 }
 
@@ -785,6 +815,7 @@ void ncurses_resize()
 				n->start = 0;
 		}
 
+		ncurses_update_real_prompt(n);
 		n->redraw = 1;
 	}
 
@@ -972,6 +1003,9 @@ void ncurses_redraw(window_t *w)
 	}
 
 	n->redraw = 0;
+
+	if (w == window_current)
+		ncurses_redraw_input(0);
 }
 
 /*
