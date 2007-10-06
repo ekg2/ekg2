@@ -201,6 +201,11 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 					ncurses_lines_adjust();
 				}
 			}
+		} else if (y > stdscr->_maxy - input_size - config_statusbar_size + 1) {
+			if (mouse_flag == EKG_SCROLLED_UP)
+				command_exec(window_current->target, window_current->session, "/window prev", 0);
+			else if (mouse_flag == EKG_SCROLLED_DOWN)
+				command_exec(window_current->target, window_current->session, "/window next", 0);
 		}
 	}
 }
