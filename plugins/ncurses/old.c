@@ -97,6 +97,8 @@ static int ncurses_typing_count		= 0;	/* last count sent */
 window_t *ncurses_typing_win		= NULL;	/* last window for which typing was sent */
 static time_t ncurses_typing_time	= 0;	/* time at which last typing was sent */
 
+static char ncurses_funnything[5] = "|/-\\";
+
 CHAR_T *ncurses_passbuf;
 
 QUERY(ncurses_password_input) {
@@ -2183,8 +2185,17 @@ void ncurses_redraw_input(unsigned int ch) {
 		if (ncurses_current->prompt)
 			mvwaddstr(input, 0, 0, ncurses_current->prompt);
 
-		if (ncurses_noecho)
+		if (ncurses_noecho) {
+			const int x		= xmbslen(ncurses_current->prompt) + 1;
+			static char *funnything	= ncurses_funnything;
+
+			mvwaddch(input, 0, x, *funnything);
+			wmove(input, 0, x);
+			if (!*(++funnything))
+				funnything = ncurses_funnything;
 			return;
+		}
+
 #ifdef WITH_ASPELL		
 		if (spell_checker) {
 			aspell_line = xmalloc(linelen + 1);
@@ -2197,10 +2208,10 @@ void ncurses_redraw_input(unsigned int ch) {
 		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_len && i < linelen - line_start; i++) {
 #ifdef WITH_ASPELL
 			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start + i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-                        	print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i], A_UNDERLINE);
+				print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i], A_UNDERLINE);
 			else 	/* jesli jest wszystko okey to wyswietlamy normalny */
 #endif				/* lub gdy nie mamy aspella */
-                                print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i], A_NORMAL);
+				print_char(input, 0, i + ncurses_current->prompt_len, ncurses_line[line_start + i], A_NORMAL);
 		}
 #ifdef WITH_ASPELL
 		xfree(aspell_line);
@@ -2213,7 +2224,7 @@ void ncurses_redraw_input(unsigned int ch) {
 		if (linelen - line_start > input->_maxx + 1 - ncurses_current->prompt_len)
 			mvwaddch(input, 0, input->_maxx, '>');
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
-		wmove(input, 0, line_index - line_start + ncurses_current->prompt_len);
+		wmove(input, 0, line_index - line_start + xmbslen(ncurses_current->prompt));
 	}
 }
 
