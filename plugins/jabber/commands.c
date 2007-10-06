@@ -732,14 +732,16 @@ static COMMAND(jabber_command_passwd)
 		if (!tmp)
 			return -1;
 		passwd = jabber_escape(tmp);
+		session_set(session, "__new_password", tmp);
 		xfree(tmp);
-	} else
+	} else {
 		passwd = jabber_escape(params[0]);
+		session_set(session, "__new_password", params[0]);
+	}
 	watch_write(j->send_watch, 
 		"<iq type=\"set\" to=\"%s\" id=\"passwd%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>",
 		j->server, j->id++, username, passwd);
 	
-	session_set(session, "__new_password", params[0]);
 
 	xfree(username);
 	xfree(passwd);
