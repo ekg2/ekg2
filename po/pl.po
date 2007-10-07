@@ -1645,7 +1645,7 @@ msgstr "%! Zdarzenie %T%1%n nie istnieje\n"
 
 #: ekg/themes.c:1737
 msgid "%> (%1) Roster exported\n"
-msgstr "%) (%1) Eskport listy kontaktów powiód³ siê\n"
+msgstr "%) (%1) Eksport listy kontaktów powiód³ siê\n"
 
 #: ekg/themes.c:1738
 msgid "%! (%1) Error exporting roster\n"
