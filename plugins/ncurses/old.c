@@ -2170,14 +2170,15 @@ static int ncurses_redraw_input_already_exec = 0;
  * 	przy okazji jesli jest aspell to sprawdza czy tekst jest poprawny.
  */
 void ncurses_redraw_input(unsigned int ch) {
+	const int promptlen = ncurses_lines ? 0 : ncurses_current->prompt_real_len;
 #ifdef WITH_ASPELL
 	char *aspell_line = NULL;
 	int mispelling = 0; /* zmienna pomocnicza */
 #endif
-	if (line_index - line_start > input->_maxx - 9 - ncurses_current->prompt_real_len)
-		line_start += input->_maxx - 19 - ncurses_current->prompt_real_len;
+	if (line_index - line_start > input->_maxx - 9 - promptlen)
+		line_start += input->_maxx - 19 - promptlen;
 	if (line_index - line_start < 10) {
-		line_start -= input->_maxx - 19 - ncurses_current->prompt_real_len;
+		line_start -= input->_maxx - 19 - promptlen;
 		if (line_start < 0)
 			line_start = 0;
 	}
@@ -2241,7 +2242,7 @@ void ncurses_redraw_input(unsigned int ch) {
 #endif
 
 		if (ncurses_noecho) {
-			const int x		= ncurses_current->prompt_real_len + 1;
+			const int x		= promptlen + 1;
 			static char *funnything	= ncurses_funnything;
 
 			mvwaddch(input, 0, x, *funnything);
@@ -2260,13 +2261,13 @@ void ncurses_redraw_input(unsigned int ch) {
 			spellcheck(ncurses_line, aspell_line);
 		}
 #endif
-		for (i = 0; i < input->_maxx + 1 - ncurses_current->prompt_real_len && i < linelen - line_start; i++) {
+		for (i = 0; i < input->_maxx + 1 - promptlen && i < linelen - line_start; i++) {
 #ifdef WITH_ASPELL
 			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start + i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-				print_char(input, 0, i + ncurses_current->prompt_real_len, ncurses_line[line_start + i], A_UNDERLINE);
+				print_char(input, 0, i + promptlen, ncurses_line[line_start + i], A_UNDERLINE);
 			else 	/* jesli jest wszystko okey to wyswietlamy normalny */
 #endif				/* lub gdy nie mamy aspella */
-				print_char(input, 0, i + ncurses_current->prompt_real_len, ncurses_line[line_start + i], A_NORMAL);
+				print_char(input, 0, i + promptlen, ncurses_line[line_start + i], A_NORMAL);
 		}
 #ifdef WITH_ASPELL
 		xfree(aspell_line);
@@ -2275,11 +2276,11 @@ void ncurses_redraw_input(unsigned int ch) {
 		if (ch == 3) ncurses_commit();
 		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
 		if (line_start > 0)
-			mvwaddch(input, 0, ncurses_current->prompt_real_len, '<');
-		if (linelen - line_start > input->_maxx + 1 - ncurses_current->prompt_real_len)
+			mvwaddch(input, 0, promptlen, '<');
+		if (linelen - line_start > input->_maxx + 1 - promptlen)
 			mvwaddch(input, 0, input->_maxx, '>');
 		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
-		wmove(input, 0, line_index - line_start + ncurses_current->prompt_real_len);
+		wmove(input, 0, line_index - line_start + promptlen);
 	}
 }
 
