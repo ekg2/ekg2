@@ -19,6 +19,7 @@ struct list {
 
 typedef struct list *list_t;
 
+int hashes[256];
 
 void ekg_oom_handler() { printf("braklo pamieci\n"); exit(1); }
 void *xmalloc(size_t size) { void *tmp = malloc(size); if (!tmp) ekg_oom_handler(); memset(tmp, 0, size); return tmp; }
@@ -86,6 +87,8 @@ void format_add(const char *name, const char *value, int replace) {
 	f->name		= xstrdup(name);
 	f->name_hash	= hash;
 	f->value	= xstrdup(value);
+
+	hashes[hash & 0xff]++;
 
 	list_add_beginning(&formats, f);
 	return;
@@ -1268,6 +1271,18 @@ int main() {
 			
 			format_find(f->name);
 		}
+	}
+
+	{
+		int totalhash = 0;
+
+		for (i = 0; i < 0x100; i++)
+			totalhash += hashes[i];
+
+		printf("-- %d\n", totalhash);
+
+		for (i = 0; i < 0x100; i++)
+			printf("%d %.2f\n", hashes[i], (float) ( ((float) hashes[i] / (float) totalhash) * 100));
 	}
 	return 0;
 }
