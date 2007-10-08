@@ -1374,6 +1374,7 @@ static int jabber_theme_init() {
 	format_add("jabber_conversations_nosubject",	_("[no subject]"), 1);
 
 	format_add("jabber_deprecated_uid_warning",	_("%! Used UID is now deprecated, please use %Gxmpp:%1%n next time."), 1);
+	format_add("jabber_gone",			_("%> (%1) User %G%2%n has left the conversation."), 1);
 
 #endif	/* !NO_DEFAULT_THEME */
         return 0;

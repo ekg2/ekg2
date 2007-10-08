@@ -855,6 +855,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	string_t body;
 	int new_line = 0;	/* if there was headlines do we need to display seperator between them and body? */
 	int class = -1;
+	int composing = 0;
 	
 	if (j->istlen)	uid = saprintf("tlen:%s", juid);
 	else		uid = saprintf("xmpp:%s", juid);
@@ -921,7 +922,7 @@ JABBER_HANDLER(jabber_handle_message) {
 				if (xmlnode_find_child(xitem, "offline"))	acktype	|= 2;	/* queued */
 				if (xmlnode_find_child(xitem, "composing"))	acktype |= 4;	/* composing */
 
-				isack = (acktype & 1) || (acktype & 2);
+				isack = (acktype & 3);
 
 				/* jesli jest body, to mamy do czynienia z prosba o potwierdzenie */
 				if (nbody && isack) {
@@ -959,26 +960,9 @@ JABBER_HANDLER(jabber_handle_message) {
 					/* xfree(__seq); */
 				}
 
-				{
-					xmlnode_t *tmp;
+				if (!(composing & 2)) /* '& 2' means we've already got chatstate (higher prio) */
+					composing = 1 + (acktype & 4);
 
-					if (!(acktype & 4) && (tmp = xmlnode_find_child(n, "composing"))
-							&& !xstrcmp(jabber_attr(tmp->atts, "xmlns"),
-								"http://jabber.org/protocol/chatstates"))
-						acktype |= 4;
-				}
-				
-				{
-					char *__session = xstrdup(session_uid_get(s));
-					char *__rcpt	= xstrdup(uid);
-					int  state	= (!nbody && (acktype & 4) ? EKG_XSTATE_TYPING : 0);
-					int  stateo	= (!state ? EKG_XSTATE_TYPING : 0);
-
-					query_emit_id(NULL, PROTOCOL_XSTATE, &__session, &__rcpt, &state, &stateo);
-					
-					xfree(__session);
-					xfree(__rcpt);
-				}
 /* jabber:x:event */	} else if (!xstrncmp(ns, "jabber:x:oob", 12)) {
 				xmlnode_t *xurl;
 				xmlnode_t *xdesc;
@@ -1009,7 +993,15 @@ JABBER_HANDLER(jabber_handle_message) {
 				}
 #endif
 			} else debug_error("[JABBER, MESSAGE]: <x xmlns=%s>\n", __(ns));
-/* x */		} else if (!xstrcmp(xitem->name, "subject")) {
+/* x */		} else if (!xstrcmp(jabber_attr(xitem->atts, "xmlns"), "http://jabber.org/protocol/chatstates")) {
+			xmlnode_t *tmp;
+
+			composing = 3;	/* disable + higher prio */
+			if (!xstrcmp(xitem->name, "composing"))
+				composing = 7; /* enable + higher prio */
+			else if (!xstrcmp(xitem->name, "gone"))
+				print_window(uid, s, 0, "jabber_gone", session_name(s), get_nickname(s, uid));
+/* chatstate */	} else if (!xstrcmp(xitem->name, "subject")) {
 			nsubject = xitem;
 		} else if (!xstrcmp(xitem->name, "thread")) {
 			nthread = xitem;
@@ -1098,6 +1090,25 @@ JABBER_HANDLER(jabber_handle_message) {
 		string_append(body, x_encrypted);	/* encrypted message */
 	else if (nbody)
 		string_append(body, nbody->data);	/* unecrpyted message */
+
+	/* 'composing' is quite special variable:
+	 *   1st bit determines whether we should send any update,
+	 *     if its' off, then other should be too;
+	 *   2nd bit determines whether we've got chatstate-based update,
+	 *     if its' on, then jabber:x:event can't replace the state;
+	 *   3rd bit determines whether the <composing/> is on
+	 */
+	if (composing) {
+		char *__session = xstrdup(session_uid_get(s));
+		char *__rcpt	= xstrdup(uid);
+		int  state	= (!nbody && (composing & 4) ? EKG_XSTATE_TYPING : 0);
+		int  stateo	= (!state ? EKG_XSTATE_TYPING : 0);
+
+		query_emit_id(NULL, PROTOCOL_XSTATE, &__session, &__rcpt, &state, &stateo);
+		
+		xfree(__session);
+		xfree(__rcpt);
+	}
 
 	if (nbody || nsubject) {
 		char *me	= xstrdup(session_uid_get(s));
