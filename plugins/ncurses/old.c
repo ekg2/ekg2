@@ -1467,7 +1467,7 @@ void update_statusbar(int commit)
 			char tmp[33];
 			window_t *w = l->data;
 
-			if (!w->act || !w->id || (w == window_current)) 
+			if (!(w->act & 7) || !w->id || (w == window_current)) 
 				continue;
 
 			if (act)
@@ -1630,12 +1630,21 @@ int ncurses_window_kill(window_t *w)
 //	ncurses_resize();
 
 	if (w == ncurses_typing_win) { /* don't allow timer to touch removed window */
-		const int tmp = ncurses_typing_mod;
+		const int tmp		= ncurses_typing_mod;
 
 		ncurses_typing_time	= 0;
 		ncurses_typing_mod	= -1; /* prevent ncurses_typing_time modification & main loop behavior */
+
 		ncurses_typing(0, NULL);
-		ncurses_typing_mod = tmp;
+
+		ncurses_typing_mod	= tmp;
+	} else if (w->act & 8) { /* <gone/> without <composing/>, but with <active/> */
+		const window_t *tmp	= ncurses_typing_win;
+		ncurses_typing_win	= w;
+
+		ncurses_typingsend(0, 3);
+
+		ncurses_typing_win	= tmp;
 	}
 
 	return 0;
