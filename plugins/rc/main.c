@@ -78,7 +78,7 @@ static WATCHER(rc_input_handler_dgram) {
 static WATCHER(rc_input_handler_accept) {
 	rc_input_t *r = data, *rn;
 	struct sockaddr sa;
-	socklen_t salen = sizeof(sa), cfd;
+	int salen = sizeof(sa), cfd;
 
 	if (type == 1) {
 		rc_input_close(r);

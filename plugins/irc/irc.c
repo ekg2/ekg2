@@ -717,7 +717,7 @@ static WATCHER(irc_handle_connect) { /* tymczasowy */
 	const char		*real = NULL, *localhostname = NULL;
 	char			*pass = NULL;
 	int			res = 0; 
-	socklen_t		res_size = sizeof(res);
+	int			res_size = sizeof(res);
 
 	if (type == 1) {
 		debug ("[irc] handle_connect(): type %d\n", type);
