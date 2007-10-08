@@ -638,9 +638,9 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 	if (w != window_current && !w->floating) {
 		int oldact = w->act;
 		if (separate)
-			w->act = 2 | (w->act & 4);
+			w->act = 2 | (w->act & ~3);
 		else if ((w->act & 3) != 2)
-			w->act = 1 | (w->act & 4);
+			w->act = 1 | (w->act & ~3);
 
 		if (oldact != w->act)					/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
 			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);

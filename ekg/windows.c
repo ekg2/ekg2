@@ -210,7 +210,7 @@ void window_switch(int id)
 	
 		window_current = w;
 
-		w->act &= 4;
+		w->act &= ~3;
 		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) 
 			u->xstate &= ~EKG_XSTATE_BLINK;
 
