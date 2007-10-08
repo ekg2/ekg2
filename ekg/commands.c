@@ -2185,7 +2185,7 @@ static COMMAND(cmd_test_fds)
 #ifdef HAVE_GETADDRINFO
 			struct sockaddr_in6 *sin6 = (struct sockaddr_in6*) sa;
 #endif
-			socklen_t sa_len = 256;
+			int sa_len = 256;
 
 			if (getpeername(i, sa, &sa_len) == -1) {
 				getsockname(i, sa, &sa_len);

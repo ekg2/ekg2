@@ -771,7 +771,7 @@ static WATCHER_LINE(rss_fetch_handler) {
 /* handluje polaczenie, wysyla to co ma wyslac, dodaje łocza do odczytu */
 static WATCHER(rss_fetch_handler_connect) {
 	int		res = 0; 
-	socklen_t	res_size = sizeof(res);
+	int		res_size = sizeof(res);
 	rss_feed_t	*f = data;
 
 	f->connecting = 0;

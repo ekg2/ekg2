@@ -744,7 +744,7 @@ static WATCHER(jabber_handle_connect) /* tymczasowy */
         jabber_private_t *j = session_private_get(s);
 
         int res = 0;
-	socklen_t res_size = sizeof(res);
+	int res_size = sizeof(res);
 
         debug_function("[jabber] jabber_handle_connect()\n");
 
