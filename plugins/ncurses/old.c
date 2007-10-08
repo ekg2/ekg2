@@ -177,7 +177,7 @@ inline void ncurses_typingsend(const int len, const int first) {
 	const char *sid	= session_uid_get(ncurses_typing_win->session);
 	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
 	
-	if (uid)
+	if ((ncurses_typing_win->act & 8) && uid)
 		query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
 }
 
@@ -218,8 +218,7 @@ TIMER(ncurses_typing) {
 					config_typing_timeout_empty : config_typing_timeout);
 
 		if (ncurses_typing_win && ((timeout && time(NULL) - ncurses_typing_time > timeout) || !ncurses_typing_time)) {
-			ncurses_typingsend(0, (ncurses_typing_mod == -1 ? 3 :
-					(ncurses_typing_win == window_current ? 1 : 2)));
+			ncurses_typingsend(0, (ncurses_typing_mod == -1 ? 3 : 1));
 #if 0
 			debug_function("ncurses_typing(), [UNIMPL] disabling for %s [%s]\n",
 					ncurses_typing_win->target, session_uid_get(ncurses_typing_win->session));
@@ -231,14 +230,41 @@ TIMER(ncurses_typing) {
 	return 0;
 }
 
+static void ncurses_window_gone(window_t *w) {
+	if (w == ncurses_typing_win) { /* don't allow timer to touch removed window */
+		const int tmp		= ncurses_typing_mod;
+
+		ncurses_typing_time	= 0;
+		ncurses_typing_mod	= -1; /* prevent ncurses_typing_time modification & main loop behavior */
+
+		ncurses_typing(0, NULL);
+
+		ncurses_typing_mod	= tmp;
+	} else if (w->act & 8) { /* <gone/> without <composing/>, but with <active/> */
+		window_t *tmp		= ncurses_typing_win;
+		ncurses_typing_win	= w;
+
+		ncurses_typingsend(0, 3);
+
+		ncurses_typing_win	= tmp;
+	}
+}
+
 	/* this one is meant to check whether we need to send some chatstate to disconnecting session,
 	 * so jabber plugin doesn't need to care about this anymore */
 QUERY(ncurses_session_disconnect_handler) {
 	const char	*session	= *va_arg(ap, const char **);
-	const char	*typing_session	= (ncurses_typing_win ? session_uid_get(ncurses_typing_win->session) : NULL);
+	const session_t	*s		= session_find(session);
+	list_t		l;
 
-	if (session && !xstrcasecmp(session, typing_session))
-		ncurses_typingsend(0, 3);
+	for (l = windows; l; l = l->next) {
+		window_t *w = l->data;
+
+		if (!w || w->session != s)
+			continue;
+
+		ncurses_window_gone(w);
+	}
 
 	return 0;
 }
@@ -1629,23 +1655,7 @@ int ncurses_window_kill(window_t *w)
 
 //	ncurses_resize();
 
-	if (w == ncurses_typing_win) { /* don't allow timer to touch removed window */
-		const int tmp		= ncurses_typing_mod;
-
-		ncurses_typing_time	= 0;
-		ncurses_typing_mod	= -1; /* prevent ncurses_typing_time modification & main loop behavior */
-
-		ncurses_typing(0, NULL);
-
-		ncurses_typing_mod	= tmp;
-	} else if (w->act & 8) { /* <gone/> without <composing/>, but with <active/> */
-		const window_t *tmp	= ncurses_typing_win;
-		ncurses_typing_win	= w;
-
-		ncurses_typingsend(0, 3);
-
-		ncurses_typing_win	= tmp;
-	}
+	ncurses_window_gone(w);
 
 	return 0;
 }
