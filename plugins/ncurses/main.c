@@ -625,6 +625,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_ADDED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_REMOVED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, CONFIG_POSTINIT, ncurses_postinit, NULL);
+	query_connect_id(&ncurses_plugin, PROTOCOL_DISCONNECTING, ncurses_session_disconnect_handler, NULL);
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, ("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);

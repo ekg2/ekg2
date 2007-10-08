@@ -377,6 +377,7 @@ static COMMAND(jabber_command_disconnect)
 /* w libtlenie jest <show>unavailable</show> + eskejpiete tlen_encode() */
 
 	if (session->connected) {
+#if 0
 		char *lt = session_get(session, "__last_typing");
 
 		if (lt)
@@ -384,6 +385,15 @@ static COMMAND(jabber_command_disconnect)
 						"<x xmlns=\"jabber:x:event\"/>"
 						"<gone xmlns=\"http://jabber.org/protocol/chatstates\"/>"
 						"</message>\n", lt);
+#endif
+
+		{
+			char *__session = xstrdup(session_uid_get(session));
+
+			query_emit_id(NULL, PROTOCOL_DISCONNECTING, &__session);
+
+			xfree(__session);
+		}
 
 		if (descr) {
 			char *tmp = jabber_escape(descr);
@@ -586,10 +596,10 @@ nomsg:
 	}
 
 	if (!j->istlen) 
-		watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>"
-				"<active xmlns=\"http://jabber.org/protocol/chatstates\"/>", 
+		watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>",
 			( config_display_ack & 1 ? "<delivered/>" : ""), /* ? */
-			( config_display_ack & 2 ? "<offline/>"   : "") /* ? */);
+			( config_display_ack & 2 ? "<offline/>"   : ""), /* ? */
+			( chat ? "<active xmlns=\"http://jabber.org/protocol/chatstates\"/>" : ""));
 
 	watch_write(j->send_watch, "</message>");
 	JABBER_COMMIT_DATA(j->send_watch);

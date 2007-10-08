@@ -89,6 +89,7 @@ extern WINDOW *ncurses_contacts;
 extern WINDOW *ncurses_input;
 
 TIMER(ncurses_typing);
+QUERY(ncurses_session_disconnect_handler);
 void ncurses_main_window_mouse_handler(int x, int y, int mouse_state);
 
 void ncurses_update_real_prompt(ncurses_window_t *n);

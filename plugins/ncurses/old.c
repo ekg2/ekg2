@@ -231,6 +231,18 @@ TIMER(ncurses_typing) {
 	return 0;
 }
 
+	/* this one is meant to check whether we need to send some chatstate to disconnecting session,
+	 * so jabber plugin doesn't need to care about this anymore */
+QUERY(ncurses_session_disconnect_handler) {
+	const char	*session	= *va_arg(ap, const char **);
+	const char	*typing_session	= (ncurses_typing_win ? session_uid_get(ncurses_typing_win->session) : NULL);
+
+	if (session && !xstrcasecmp(session, typing_session))
+		ncurses_typingsend(0, 3);
+
+	return 0;
+}
+
 /* cut prompt to given width and recalculate its' width */
 void ncurses_update_real_prompt(ncurses_window_t *n) {
 	if (!n)

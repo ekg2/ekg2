@@ -1517,9 +1517,9 @@ static QUERY(jabber_typing_out) {
 			 first == 3 ? "gone" :
 			 first == 2 ? "inactive" :
 			 "paused"));
-
+#if 0
 	session_set(s, "__last_typing", len ? jid : NULL);
-
+#endif
 	return -1;
 }
 
