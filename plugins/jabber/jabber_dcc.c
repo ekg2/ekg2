@@ -377,7 +377,7 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 	}
 }
 
-dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const char *sid) {
+dcc_t *jabber_dcc_find(const char *uin, /* without xmpp: */ const char *id, const char *sid) {
 #define DCC_RULE(x) (!xstrncmp(x->uid, "xmpp:", 5) && !xstrcmp(x->uid+5, uin))
 	list_t l;
 	if (!id && !sid) { debug_error("jabber_dcc_find() neither id nor sid passed.. Returning NULL\n"); return NULL; }

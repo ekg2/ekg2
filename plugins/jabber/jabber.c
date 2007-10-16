@@ -245,7 +245,7 @@ static QUERY(jabber_print_version) {
  * checks, if @a uid is <i>proper for jabber plugin</i>.
  *
  * @note <i>Proper for jabber plugin</i> means either:
- * 	- If @a uid starts with jid: have got '@' (but jid:@ is wrong) and after '@' there is at least one char	[<b>xmpp protocol</b>]<br>
+ * 	- If @a uid starts with xmpp: have got '@' (but xmpp:@ is wrong) and after '@' there is at least one char	[<b>xmpp protocol</b>]<br>
  * 	- If @a uid starts with tlen: (and len > 5)								[<b>tlen protocol</b>]
  *
  * @param ap 1st param: <i>(char *) </i><b>uid</b>  - of user/session/command/whatever
@@ -259,37 +259,13 @@ static QUERY(jabber_print_version) {
 static QUERY(jabber_validate_uid) {
 	char *uid = *(va_arg(ap, char **));
 	int *valid = va_arg(ap, int *);
-	const char *m;
-	static char *lastdeprecated = NULL;
 
 	if (!uid)
 		return 0;
 
-	/* minimum: jid:a@b */
-	if (!xstrncasecmp(uid, "jid:", 4)
-#if 0 /* disable because we can also have JID without '@' - a transport, for example */
-			&& (m=xstrchr(uid+4, '@')) && ((uid+4)<m) && m[1] != '\0'
-#endif
-			) {
-		if (xstrcmp(lastdeprecated, uid+4)) { /* avoid repeating the same if function called multiple times */
-			print("jabber_deprecated_uid_warning", uid+4);
-			xfree(lastdeprecated);
-			lastdeprecated = xstrdup(uid+4);
-		}
-		(*valid)++;
-		return -1;
-	}
+	/* XXX: think about 'at' in jabber UIDs */
 
-	if (!xstrncasecmp(uid, "xmpp:", 5)
-#if 0 /* like above */
-			&& (m=xstrchr(uid+4, '@')) && ((uid+4)<m) && m[1] != '\0'
-#endif
-			) {
-		(*valid)++;
-		return -1;
-	}
-
-	if (!xstrncasecmp(uid, "tlen:", 5) && uid[5] != '\0') {
+	if (!xstrncasecmp(uid, "xmpp:", 5) || !xstrncasecmp(uid, "tlen:", 5)) {
 		(*valid)++;
 		return -1;
 	}
@@ -301,11 +277,9 @@ static QUERY(jabber_validate_uid) {
  * jabber_protocols()
  *
  * Handler for: <i>GET_PLUGIN_PROTOCOLS</i><br>
- * It just add "tlen:" and "jid:" to @a arr
+ * It just adds "tlen:" and "xmpp:" to @a arr
  *
  * @note I know it's nowhere used. It'll be used by d-bus plugin.
- *
- * @todo Instead of "jid:" add "xmpp:" ?
  *
  * @param ap 1st param: <i>(char **) </i><b>arr</b> - array with available protocols
  * @param data NULL
@@ -317,7 +291,6 @@ static QUERY(jabber_protocols) {
 	char ***arr = va_arg(ap, char ***);
 
 	array_add(arr, "tlen:");
-	array_add(arr, "jid:");
 	array_add(arr, "xmpp:");
 	return 0;
 }
@@ -332,7 +305,7 @@ static QUERY(jabber_window_kill) {
 	if (w && w->id && w->target && session_check(w->session, 1, "xmpp") && (c = newconference_find(w->session, w->target)) &&
 			(j = jabber_private(w->session)) && session_connected_get(w->session)) {
 														/* XXX: check really needed? vv */
-		watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", w->target + (tolower(w->target[0]) == 'j' ? 4 : 5), c->private, status ? status : "");
+		watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", w->target + 5, c->private, status ? status : "");
 		newconference_destroy(c, 0);
 	}
 
@@ -1151,12 +1124,13 @@ static QUERY(jabber_protocol_ignore) {
 	session_t *s	= session_find(sesion);
 
 	/* check this just to be sure... */
-	if (!(session_check(s, 1, "jid"))) return 0;
+	if (session_check(s, 1, "xmpp"))
 		/* SPOT rule, first of all here was code to check sesion, valid user, etc... 
 		 * 	then send jabber:iq:roster request... with all new & old group...
 		 * 	but it was code copied from modify command handler... so here it is.
 		 */
-	command_exec_format(NULL, s, 0, ("/jid:modify %s -x"), uid);
+		command_exec_format(NULL, s, 0, ("/xmpp:modify %s -x"), uid);
+
 	return 0;
 }
 
@@ -1373,7 +1347,6 @@ static int jabber_theme_init() {
 	format_add("jabber_conversations_nothread",	_("non-threaded"), 1);
 	format_add("jabber_conversations_nosubject",	_("[no subject]"), 1);
 
-	format_add("jabber_deprecated_uid_warning",	_("%! Used UID is now deprecated, please use %Gxmpp:%1%n next time."), 1);
 	format_add("jabber_gone",			_("%> (%1) User %G%2%n has left the conversation."), 1);
 
 #endif	/* !NO_DEFAULT_THEME */
@@ -1438,8 +1411,8 @@ static QUERY(jabber_pgp_postinit) {
 	for (l = sessions; l; l = l->next) {
 		session_t *s = l->data;
 
-		/* check if it's jabber_plugin session, and if it's starts with 'j' or 'J' [DON'T DO IT ON TLEN SESSIONS] */
-		if (s && s->plugin == &jabber_plugin && tolower(s->uid[0]) == 'j')
+		/* check if it's jabber_plugin session [DON'T DO IT ON TLEN SESSIONS] */
+		if (s && s->plugin == &jabber_plugin && !jabber_private(s)->istlen)
 			jabber_gpg_changed(s, NULL);
 	}
 	return 0;
@@ -1497,7 +1470,7 @@ static QUERY(jabber_typing_out) {
 	const int len		= *va_arg(ap, const int *);
 	const int first		= *va_arg(ap, const int *);
 
-	const char *jid		= uid + (tolower(*uid) == 'j' ? 4 : 5);
+	const char *jid		= uid + 5;
 	session_t *s		= session_find(session);
 	jabber_private_t *j;
 
