@@ -164,13 +164,7 @@ session_t *session_add(const char *uid) {
 	}
 	
 	s = xmalloc(sizeof(session_t));
-		/* jabber hack below, to be removed when 'jid:' support finally removed
-		 * dj suggested putting such a thing in session_read(), but putting it here
-		 * will also prevent user from creating 'jid:' sessions himself */
-	if (!xstrncasecmp(uid, "jid:", 4))
-		s->uid	= saprintf("xmpp:%s", uid+4);
-	else
-		s->uid	= xstrdup(uid);
+	s->uid		= xstrdup(uid);
 	s->status 	= EKG_STATUS_NA;
 	s->plugin 	= pl;
 #ifdef HAVE_FLOCK
