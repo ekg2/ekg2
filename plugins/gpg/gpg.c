@@ -493,7 +493,7 @@ static QUERY(gpg_user_keyinfo) {
 	if (!u)
 		return 0;
 
-	if (xstrncmp(u->uid, "jid:", 4)) return 0; /* only jabber for now... */
+	if (xstrncmp(u->uid, "xmpp:", 5)) return 0; /* only jabber for now... */
 
 	if ((k = gpg_keydb_find_uid(u->uid))) {
 		printq("user_info_gpg_key", k->keyid, gpg_key_status(k));

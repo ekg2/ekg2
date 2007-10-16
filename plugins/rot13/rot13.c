@@ -75,7 +75,7 @@ static rot13_key_t *rot13_find_key(char *session, char *target, int *reverted) {
 		}
 
 	/* XXX, resource strip, only jabber if no resource passed */
-		if (!((tmp = xstrchr(target, '/')) || xstrncmp(target, "jid:", 4) || xstrchr(k->target, '/'))) continue;
+		if (!((tmp = xstrchr(target, '/')) || xstrncmp(target, "xmpp:", 5) || xstrchr(k->target, '/'))) continue;
 
 		len = (int)(tmp - k->target);
 
