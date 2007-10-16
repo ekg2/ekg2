@@ -209,6 +209,7 @@ void window_switch(int id)
 			session_current = w->session;
 	
 		window_current = w;
+		query_emit_id(NULL, UI_WINDOW_SWITCH, &w);	/* XXX */
 
 		w->act &= ~3;
 		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) 
@@ -224,8 +225,6 @@ void window_switch(int id)
 		                        u->xstate &= ~EKG_XSTATE_BLINK;
 			}
                 }
-
-		query_emit_id(NULL, UI_WINDOW_SWITCH, &w);	/* XXX */
 
 		if (!w->id)
 			w->session = session_current;
