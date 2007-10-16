@@ -157,6 +157,9 @@ static QUERY(ncurses_ui_window_switch) {
 	ncurses_redraw_input(0);	/* redraw prompt... */
 	ncurses_commit();
 
+	if (w->act & 2) /* set <active/> also on incoming chat message receival */
+		w->act |= 8;
+
 	return 0;
 }
 
