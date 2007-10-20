@@ -635,7 +635,7 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 	}
 
 	/* Change w->act */
-	if (w != window_current && !w->floating) {
+	if (w != window_current && !w->floating && !(separate & 2)) {
 		int oldact = w->act;
 		if (separate)
 			w->act = 2 | (w->act & ~3);

@@ -626,9 +626,10 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (secure) 
 		securestr = format_string(format_find("secure"));
 
-	print_window(target, s, 
-		(class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT || class == EKG_MSGCLASS_LOG || class == EKG_MSGCLASS_SENT_LOG
-			|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))),
+	print_window(target, s,
+		((class == EKG_MSGCLASS_LOG || class == EKG_MSGCLASS_SENT_LOG) ? 2
+		: (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT)
+		|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))),
 		class_str, 
 		user, 
 		timestamp, 
