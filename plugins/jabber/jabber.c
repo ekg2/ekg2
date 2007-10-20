@@ -1488,6 +1488,7 @@ static QUERY(jabber_typing_out) {
 			"<%s xmlns=\"http://jabber.org/protocol/chatstates\"/>"
 			"</message>\n", jid, (len ? "><composing/></x" : "/"),
 			(len ? "composing" :
+			 first == 4 ? "active" :
 			 first == 3 ? "gone" :
 			 first == 2 ? "inactive" :
 			 "paused"));
