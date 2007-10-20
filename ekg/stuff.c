@@ -2533,7 +2533,7 @@ void ekg_update_status(session_t *session)
 /* status string tables */
 
 const char *ekg_statuses[] = {
-/* 0x00 */	0, "error", "blocked", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+/* 0x00 */	0, "error", "blocking", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 /* 0x10 */	"unknown", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 /* 0x20 */	"notavail", "invisible", "dnd", "xa", "away", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 /* 0x30 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
