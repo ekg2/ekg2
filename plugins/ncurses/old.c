@@ -177,7 +177,7 @@ inline void ncurses_typingsend(const int len, const int first) {
 	const char *sid	= session_uid_get(ncurses_typing_win->session);
 	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
 	
-	if ((ncurses_typing_win->act & 8) && uid)
+	if (((first > 1) || (ncurses_typing_win->act & 8)) && uid)
 		query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
 }
 
