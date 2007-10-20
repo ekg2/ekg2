@@ -62,6 +62,7 @@ int ncurses_initialized;
 int ncurses_plugin_destroyed;
 
 QUERY(ncurses_password_input); /* old.c */
+void ncurses_window_gone(window_t *w);
 
 /**
  * ncurses_beep()
@@ -157,8 +158,11 @@ static QUERY(ncurses_ui_window_switch) {
 	ncurses_redraw_input(0);	/* redraw prompt... */
 	ncurses_commit();
 
-	if (w->act & 2) /* set <active/> also on incoming chat message receival */
+	if (w->act & 2) { /* enable <composing/> on incoming chat message receival */
 		w->act |= 8;
+		if (!(w->act & 16)) /* send <active/>, as we showed interest in chat */
+			ncurses_window_gone(w);
+	}
 
 	return 0;
 }

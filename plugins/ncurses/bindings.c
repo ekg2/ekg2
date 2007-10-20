@@ -132,7 +132,7 @@ static BINDING_FUNCTION(binding_toggle_input)
 			ncurses_typing_mod	= 1;
 		else {
 			ncurses_typing_win	= NULL;
-			window_current->act	|= 8;
+			window_current->act	|= 16;
 		}
 
 		curs_set(1);
@@ -263,7 +263,7 @@ static BINDING_FUNCTION(binding_accept_line)
 		ncurses_typing_mod	= 1;
 	else { /* if message, assume that its' handler has already disabled <composing/> */
 		ncurses_typing_win	= NULL;
-		window_current->act	|= 8; /* but also remember that is should have set <active/> chatstate */
+		window_current->act	|= 16; /* but also remember that is should have set <active/> chatstate */
 	}
 
 	if (xwcscmp(line, TEXT(""))) {

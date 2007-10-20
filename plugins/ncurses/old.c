@@ -230,7 +230,7 @@ TIMER(ncurses_typing) {
 	return 0;
 }
 
-static void ncurses_window_gone(window_t *w) {
+void ncurses_window_gone(window_t *w) {
 	if (w == ncurses_typing_win) { /* don't allow timer to touch removed window */
 		const int tmp		= ncurses_typing_mod;
 
@@ -240,13 +240,14 @@ static void ncurses_window_gone(window_t *w) {
 		ncurses_typing(0, NULL);
 
 		ncurses_typing_mod	= tmp;
-	} else if (w->act & 8) { /* <gone/> without <composing/>, but with <active/> */
+	} else if (w->act & 24) { /* <gone/> or <active/> */
 		window_t *tmp		= ncurses_typing_win;
 		ncurses_typing_win	= w;
 
-		ncurses_typingsend(0, 3);
+		ncurses_typingsend(0, !(w->act & 16) ? 4 : 3);
 
 		ncurses_typing_win	= tmp;
+		w->act			^= 16;
 	}
 }
 
