@@ -75,6 +75,7 @@ SSL_CTX *jabberSslCtx;
 char *jabber_default_search_server = NULL;
 char *jabber_default_pubsub_server = NULL;
 int config_jabber_beep_mail = 0;
+int config_jabber_disable_chatstates = 0;
 const char *jabber_authtypes[] = { "none", "from", "to", "both" };
 
 static int session_postinit;
@@ -1472,10 +1473,14 @@ static QUERY(jabber_typing_out) {
 
 	const char *jid		= uid + 5;
 	session_t *s		= session_find(session);
+	const int confbit	= 1 << (first <= 2 ? 0 : first - 2);
 	jabber_private_t *j;
 
 	if (!first || !s || s->plugin != &jabber_plugin)
 		return 0;
+
+	if (config_jabber_disable_chatstates & confbit)
+		return -1;
 
 	j = jabber_private(s);
 
@@ -1492,10 +1497,8 @@ static QUERY(jabber_typing_out) {
 			 first == 3 ? "gone" :
 			 first == 2 ? "inactive" :
 			 "paused"));
-#if 0
-	session_set(s, "__last_typing", len ? jid : NULL);
-#endif
-	return -1;
+
+	return 0;
 }
 
 	/* KEEP IT SORTED, MEN! */
@@ -1583,6 +1586,8 @@ EXPORT int jabber_plugin_init(int prio) {
 	variable_add(&jabber_plugin, ("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("default_pubsub_server"), VAR_STR, 1, &jabber_default_pubsub_server, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
+	variable_add(&jabber_plugin, ("disable_chatstates"), VAR_MAP, 1, &config_jabber_disable_chatstates, NULL,
+			variable_map(4, 0, 0, "none", 1, 0, "composing", 2, 0, "gone", 4, 0, "active"), NULL); 
 
         jabber_register_commands();
 #ifdef JABBER_HAVE_SSL
