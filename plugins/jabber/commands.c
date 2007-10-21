@@ -1084,9 +1084,13 @@ static char *jabber_avatar_load(session_t *s, const char *path, const int quiet)
 	} else if (len >= sizeof(buf))
 		printq("io_toobig", path, itoa(len), sizeof(buf)-1);
 	else {
-		char *enc = base64_encode(buf, len);
+		char *enc		= base64_encode(buf, len);
 		char *out;
-		const char *type = "application/octet-stream";
+		const char *type	= "application/octet-stream";
+
+		string_t str		= string_init(NULL);
+		int enclen		= xstrlen(enc);
+		char *p			= enc;
 
 			/* those are from 'magic.mime', from 'file' utility */ 
 		if (len > 4 && !xstrncmp(buf, "\x89PNG", 4))
@@ -1099,8 +1103,17 @@ static char *jabber_avatar_load(session_t *s, const char *path, const int quiet)
 		fclose(fd);
 		session_set(s, "photo_hash", buffer_sha1_digest(buf, len));
 
-		out = saprintf("<PHOTO><TYPE>%s</TYPE><BINVAL>%s</BINVAL></PHOTO>", type, enc);
+		while (enclen > 72) {
+			string_append_n(str, p, 72);
+			string_append_c(str, '\n');
+			
+			p += 72;
+			enclen -= 72;
+		}
+		string_append(str, p);
 		xfree(enc);
+
+		out = saprintf("<PHOTO><TYPE>%s</TYPE><BINVAL>\n%s\n</BINVAL></PHOTO>", type, string_free(str, 0));
 		return out;
 	}
 
