@@ -1469,34 +1469,54 @@ static QUERY(jabber_typing_out) {
 	const char *session	= *va_arg(ap, const char **);
 	const char *uid		= *va_arg(ap, const char **);
 	const int len		= *va_arg(ap, const int *);
-	const int first		= *va_arg(ap, const int *);
+	int first		= *va_arg(ap, const int *);
 
 	const char *jid		= uid + 5;
 	session_t *s		= session_find(session);
-	const int confbit	= 1 << (first <= 2 ? 0 : first - 2);
+	const int confbit	= (1 << (first <= 3 ? 0 : first - 3)) | (first == 3 ? 4 : 0);
 	jabber_private_t *j;
 
 	if (!first || !s || s->plugin != &jabber_plugin)
 		return 0;
 
-	if (config_jabber_disable_chatstates & confbit)
+	if ((config_jabber_disable_chatstates & confbit) == confbit) /* all bits must be set */
 		return -1;
+
+	/* first can be:
+	 *   1 - normal first change (or <paused/>),
+	 *   2 - <inactive/> [currently not used],
+	 *   3 - <gone/> from <composing/>,
+	 *   4 - <active/> on window switch,
+	 *   5 - <gone/> from <active/> */
 
 	j = jabber_private(s);
 
-	if (j->istlen)
+	if (j->istlen) {
+		if (first >= 4)
+			return -1;
 		watch_write(j->send_watch, "<m to=\"%s\" tp=\"%c\"/>",
 			jid, (len ? 't' : 'u'));
-	else
+	} else {
+			/* if user closes window while typing,
+			 * and we are prohibited to send <gone/>,
+			 * we just send standard <active/> */
+		if (first == 3) {
+			if (config_jabber_disable_chatstates & 4)
+				first = 4;
+			else
+				first = 5;
+		}
+
 		watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\">"
 			"<x xmlns=\"jabber:x:event\"%s>"
 			"<%s xmlns=\"http://jabber.org/protocol/chatstates\"/>"
 			"</message>\n", jid, (len ? "><composing/></x" : "/"),
 			(len ? "composing" :
+			 first == 5 ? "gone" :
 			 first == 4 ? "active" :
-			 first == 3 ? "gone" :
 			 first == 2 ? "inactive" :
 			 "paused"));
+	}
 
 	return 0;
 }
@@ -1587,7 +1607,7 @@ EXPORT int jabber_plugin_init(int prio) {
 	variable_add(&jabber_plugin, ("default_pubsub_server"), VAR_STR, 1, &jabber_default_pubsub_server, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("disable_chatstates"), VAR_MAP, 1, &config_jabber_disable_chatstates, NULL,
-			variable_map(4, 0, 0, "none", 1, 0, "composing", 2, 0, "gone", 4, 0, "active"), NULL); 
+			variable_map(4, 0, 0, "none", 1, 0, "composing", 2, 0, "active", 4, 0, "gone"), NULL); 
 
         jabber_register_commands();
 #ifdef JABBER_HAVE_SSL

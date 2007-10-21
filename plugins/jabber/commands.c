@@ -598,7 +598,7 @@ nomsg:
 		watch_write(j->send_watch, "<x xmlns=\"jabber:x:event\">%s%s<displayed/><composing/></x>",
 			( config_display_ack & 1 ? "<delivered/>" : ""), /* ? */
 			( config_display_ack & 2 ? "<offline/>"   : ""), /* ? */
-			( chat ? "<active xmlns=\"http://jabber.org/protocol/chatstates\"/>" : ""));
+			( chat && ((config_jabber_disable_chatstates & 7) != 7) ? "<active xmlns=\"http://jabber.org/protocol/chatstates\"/>" : ""));
 
 	watch_write(j->send_watch, "</message>");
 	JABBER_COMMIT_DATA(j->send_watch);
