@@ -70,6 +70,7 @@
 extern void *jconv_out; /* for msg */
 
 const char *jabber_prefixes[2] = { "xmpp:", "tlen:" };
+int config_jabber_disable_chatstates; /* in jabber.c */
 
 static COMMAND(jabber_command_dcc) {
 	jabber_private_t *j = session_private_get(session);
