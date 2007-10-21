@@ -59,6 +59,8 @@ change
 	
 	  -C, --country <country>
 	
+	  -p, --photo <photo path>
+	
 	If any of these parameteres is not given, it's value will be cleared on
 	vCard. Giving ,,%T-%n'' will clear %Tall%n fields.
 

@@ -322,6 +322,7 @@ int jabber_write_status(session_t *s)
 	char *real = NULL;
 	char *priority = NULL;
 	char *x_signed = NULL;
+	char *x_vcard = NULL;
 
 #if WITH_JABBER_JINGLE
 /* This is only to enable 'call' button in GTalk .... */
@@ -345,6 +346,8 @@ int jabber_write_status(session_t *s)
 	}
 
 	if (!j->istlen) {
+		char *tmp;
+
 		priority = saprintf("<priority>%d</priority>", prio); /* priority only in real jabber session */
 
 		if (session_int_get(s, "__gpg_enabled") == 1) {
@@ -360,10 +363,13 @@ int jabber_write_status(session_t *s)
 				xfree(signpresence);
 			}
 		}
+
+		if ((x_vcard = session_get(s, "photo_hash")))
+			x_vcard = saprintf("<x xmlns=\"vcard-temp:x:update\"><photo>%s</photo></x>", x_vcard);
 	}
 #define P(x) (x ? x : "")
 	if (!j->istlen && (status == EKG_STATUS_AVAIL))
-		watch_write(j->send_watch, "<presence>%s%s%s%s</presence>", P(real), P(priority), P(x_signed), JINGLE_CAPS);
+		watch_write(j->send_watch, "<presence>%s%s%s%s%s</presence>", P(real), P(priority), P(x_signed), P(x_vcard), JINGLE_CAPS);
 	else if (status == EKG_STATUS_INVISIBLE)
 		watch_write(j->send_watch, "<presence type=\"invisible\">%s%s</presence>", P(real), P(priority));
 	else {
@@ -371,13 +377,14 @@ int jabber_write_status(session_t *s)
 
 		if (j->istlen && (status == EKG_STATUS_AVAIL)) status_s = "available";
 		else status_s = ekg_status_string(status, 0);
-		watch_write(j->send_watch, "<presence><show>%s</show>%s%s%s%s</presence>", status_s, P(real), P(priority), P(x_signed), JINGLE_CAPS);
+		watch_write(j->send_watch, "<presence><show>%s</show>%s%s%s%s%s</presence>", status_s, P(real), P(priority), P(x_signed), P(x_vcard), JINGLE_CAPS);
 	}
 #undef P
 
 	xfree(priority);
 	xfree(real);
 	xfree(x_signed);
+	xfree(x_vcard);
 	return 0;
 }
 
@@ -1547,6 +1554,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "xml,simple", 0, NULL),
 	PLUGIN_VAR_ADD("msg_gen_thread",	0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("password", 		SESSION_VAR_PASSWORD, VAR_STR, "foo", 1, NULL),
+	PLUGIN_VAR_ADD("photo_hash",		0, VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("plaintext_passwd", 	0, VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("ping_server", 		0, VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("port", 			SESSION_VAR_PORT, VAR_INT, "5222", 0, NULL),

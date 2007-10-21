@@ -67,6 +67,8 @@
 #include "jabber.h"
 #include "jabber_dcc.h"
 
+char *buffer_sha1_digest(char *buf, int len); /* digest.c */
+
 extern void *jconv_out; /* for msg */
 
 const char *jabber_prefixes[2] = { "xmpp:", "tlen:" };
@@ -1050,12 +1052,70 @@ static COMMAND(jabber_command_userinfo)
 	return 0;
 }
 
+static char *jabber_avatar_load(session_t *s, const char *path, const int quiet) {
+	const char *fn = prepare_path_user(path);
+	FILE *fd;
+	struct stat st;
+	char buf[16385]; /* XEP-0153 says we should limit avatar size to 8k,
+			    but I like to be honest and give 16k */
+	int len;
+
+		/* code from dcc */
+	if (!fn) {
+		printq("generic_error", "path too long"); /* XXX? */
+		return NULL;
+	}
+
+	if (!stat(fn, &st) && !S_ISREG(st.st_mode)) {
+		printq("io_nonfile", path);
+		return NULL;
+	}
+
+	if ((fd = fopen(fn, "r")) == NULL) {
+		printq("io_cantopen", path, strerror(errno));
+		return NULL;
+	}
+
+	if (!(len = fread(buf, 1, sizeof(buf), fd))) {
+		if (ferror(fd))
+			printq("io_cantread", path, strerror(errno)); /* can we use errno here? */
+		else
+			printq("io_emptyfile", path);
+	} else if (len >= sizeof(buf))
+		printq("io_toobig", path, itoa(len), sizeof(buf)-1);
+	else {
+		char *enc = base64_encode(buf, len);
+		char *out;
+		const char *type = "application/octet-stream";
+
+			/* those are from 'magic.mime', from 'file' utility */ 
+		if (len > 4 && !xstrncmp(buf, "\x89PNG", 4))
+			type = "image/png";
+		else if (len > 3 && !xstrncmp(buf, "GIF", 3))
+			type = "image/gif";
+		else if (len > 2 && !xstrncmp(buf, "\xFF\xD8", 2))
+			type = "image/jpeg";
+
+		fclose(fd);
+		session_set(s, "photo_hash", buffer_sha1_digest(buf, len));
+
+		out = saprintf("<PHOTO><TYPE>%s</TYPE><BINVAL>%s</BINVAL></PHOTO>", type, enc);
+		xfree(enc);
+		return out;
+	}
+
+	fclose(fd);
+	return NULL;
+}
+
 static COMMAND(jabber_command_change)
 {
 #define pub_sz 6
 #define strfix(s) (s ? s : "")
 	jabber_private_t *j = session_private_get(session);
 	char *pub[pub_sz] = { NULL, NULL, NULL, NULL, NULL, NULL };
+	char *photo;
+	const int hadphoto = !!session_get(session, "photo_hash");
 	int i;
 
 	for (i = 0; params[i]; i++) {
@@ -1071,17 +1131,28 @@ static COMMAND(jabber_command_change)
 			pub[4] = (char *) params[++i];
 		} else if (match_arg(params[i], 'C', ("country"), 2) && params[i + 1]) {
 			pub[5] = (char *) params[++i];
+		} else if (match_arg(params[i], 'p', ("photo"), 2) && params[i + 1]) {
+			photo = params[++i];
 		}
-
 	}
 	for (i=0; i<pub_sz; i++) 
 		pub[i] = jabber_escape(pub[i]);
+
+	if (photo)
+		photo = jabber_avatar_load(session, photo, quiet);
+	else if (hadphoto)
+		session_set(session, "photo_hash", NULL);
+
 	watch_write(j->send_watch, "<iq type=\"set\"><vCard xmlns='vcard-temp'>"
 			"<FN>%s</FN>" "<NICKNAME>%s</NICKNAME>"
 			"<ADR><LOCALITY>%s</LOCALITY><COUNTRY>%s</COUNTRY></ADR>"
-			"<BDAY>%s</BDAY><DESC>%s</DESC></vCard></iq>\n", 
-			strfix(pub[0]), strfix(pub[1]), strfix(pub[2]), strfix(pub[5]), strfix(pub[3]), strfix(pub[4]));
+			"<BDAY>%s</BDAY><DESC>%s</DESC>%s</vCard></iq>\n", 
+		strfix(pub[0]), strfix(pub[1]), strfix(pub[2]), strfix(pub[5]), strfix(pub[3]), strfix(pub[4]), strfix(photo));
 
+	if (photo || hadphoto)
+		jabber_write_status(session);
+
+	xfree(photo);
 	for (i=0; i<pub_sz; i++) 
 		xfree(pub[i]);
 	return 0;

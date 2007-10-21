@@ -59,6 +59,7 @@ change
 	
 	  -C, --country <kraj>
 	
+	  -p, --photo <¶cie¿ka do zdjecia>
 	
 	Je¶li który¶ z parametrów nie zostanie podany, jego warto¶æ zostanie 
 	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n'' 

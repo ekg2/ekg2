@@ -502,6 +502,22 @@ char *jabber_digest(const char *sid, const char *password, void *charset_out) {
 	return result;
 }
 
+char *buffer_sha1_digest(char *buf, int len) {
+	EKG2_SHA1_CTX ctx;
+	unsigned char digest[20];
+	static char result[41];
+	int i;
+
+	SHA1Init(&ctx);
+	SHA1Update(&ctx, buf, len);
+	SHA1Final(digest, &ctx);
+
+	for (i = 0; i < 20; i++)
+		sprintf(result + i * 2, "%.2x", digest[i]);
+	
+	return result;
+}
+
 /*
  * Local Variables:
  * mode: c
