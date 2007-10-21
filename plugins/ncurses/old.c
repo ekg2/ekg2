@@ -173,12 +173,14 @@ int ncurses_lineslen() {
 		return (ncurses_line[0] == '/' ? 0 : xwcslen(ncurses_line));
 }
 
-inline void ncurses_typingsend(const int len, const int first) {
+inline int ncurses_typingsend(const int len, const int first) {
 	const char *sid	= session_uid_get(ncurses_typing_win->session);
 	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
 	
 	if (((first > 1) || (ncurses_typing_win->act & 8)) && uid)
-		query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
+		return query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
+	else
+		return -1;
 }
 
 TIMER(ncurses_typing) {
@@ -244,10 +246,10 @@ void ncurses_window_gone(window_t *w) {
 		window_t *tmp		= ncurses_typing_win;
 		ncurses_typing_win	= w;
 
-		ncurses_typingsend(0, !(w->act & 16) ? 4 : 3);
+		if (!ncurses_typingsend(0, !(w->act & 16) ? 4 : 3) || (w->act & 16))
+			w->act		^= 16;
 
 		ncurses_typing_win	= tmp;
-		w->act			^= 16;
 	}
 }
 
