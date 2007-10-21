@@ -302,8 +302,7 @@ static int ncurses_has_mouse_support(const char *term) {
  * it should enable mouse support
  * checks if we are in console mode or in xterm
  */
-void ncurses_enable_mouse() {
-	char *env		= getenv("TERM");
+void ncurses_enable_mouse(const char *env) {
 #ifdef HAVE_LIBGPM
 	Gpm_Connect conn;
 

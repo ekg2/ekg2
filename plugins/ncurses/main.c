@@ -61,6 +61,9 @@ int config_typing_timeout_empty = 5;
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
 
+const char *ncurses_settitle_formats[3] = { NULL, "\e]0;%s%s%s\b", "\e_%s%s%s\e\\" };
+static int ncurses_settitle = 0;
+
 QUERY(ncurses_password_input); /* old.c */
 void ncurses_window_gone(window_t *w);
 
@@ -163,6 +166,9 @@ static QUERY(ncurses_ui_window_switch) {
 		if (!(w->act & 16)) /* send <active/>, as we showed interest in chat */
 			ncurses_window_gone(w);
 	}
+
+	if (ncurses_settitle)
+		printf(ncurses_settitle_formats[ncurses_settitle], w->target ? w->target : "", w->target ? " - " : "", "EKG2");
 
 	return 0;
 }
@@ -589,6 +595,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	list_t l;
 	int is_UI = 0;
 	va_list dummy;
+	char *termtype = getenv("TERM");
 
         query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
@@ -686,7 +693,18 @@ EXPORT int ncurses_plugin_init(int prio)
 	ncurses_initialized = 1;
 
 	if (!no_mouse)
-		ncurses_enable_mouse(); 
+		ncurses_enable_mouse(termtype);
+
+	/* determine window title setting support */
+	if (!xstrcasecmp(termtype, "screen"))
+		ncurses_settitle = 2;
+	else if (!xstrncasecmp(termtype, "xterm", 5) || !xstrncasecmp(termtype, "rxvt", 4) || !xstrncasecmp(termtype, "gnome", 5)
+			|| ((*termtype == 'E' || *termtype == 'a' || *termtype == 'k') && !xstrcasecmp(termtype+1, "term")))
+		ncurses_settitle = 1;
+
+	if (ncurses_settitle)
+		printf(ncurses_settitle_formats[ncurses_settitle], "", "", "EKG2");
+
 	return 0;
 }
 

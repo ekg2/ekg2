@@ -20,7 +20,7 @@
 #ifndef __EKG_NCURSES_MOUSE_H
 #define __EKG_NCURSES_MOUSE_H
 
-void ncurses_enable_mouse();
+void ncurses_enable_mouse(const char *env);
 void ncurses_disable_mouse();
 void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag);
 
