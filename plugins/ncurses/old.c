@@ -246,7 +246,7 @@ void ncurses_window_gone(window_t *w) {
 		window_t *tmp		= ncurses_typing_win;
 		ncurses_typing_win	= w;
 
-		if (!ncurses_typingsend(0, !(w->act & 16) ? 4 : 3) || (w->act & 16))
+		if (!ncurses_typingsend(0, !(w->act & 16) ? 4 : 5) || (w->act & 16))
 			w->act		^= 16;
 
 		ncurses_typing_win	= tmp;
