@@ -55,9 +55,9 @@ static int contacts_edge = WF_RIGHT;
 static int contacts_frame = WF_LEFT;
 static int contacts_descr = 0;
 static int contacts_wrap = 0;
-#define CONTACTS_ORDER_DEFAULT "chavawxadninnoer"			/* if you modify it, please modify also CONTACTS_ORDER_DEFAULT_LEN */
-#define CONTACTS_ORDER_DEFAULT_LEN 16					/* CONTACTS_ORDER_DEFAULT_LEN == strlen(CONTACTS_ORDER_DEFAULT) */
-static char contacts_order[100] = CONTACTS_ORDER_DEFAULT;
+#define CONTACTS_ORDER_DEFAULT "chavawxadninnouner"			/* if you modify it, please modify also CONTACTS_ORDER_DEFAULT_LEN */
+#define CONTACTS_ORDER_DEFAULT_LEN 18					/* CONTACTS_ORDER_DEFAULT_LEN == strlen(CONTACTS_ORDER_DEFAULT) */
+static char contacts_order[32] = CONTACTS_ORDER_DEFAULT;
 static int contacts_nosort = 0;
 static size_t corderlen	= CONTACTS_ORDER_DEFAULT_LEN;			/* it must be always equal xstrlen(contacts_order) XXX please note if you add somewhere code which modify contacts_order */
 
@@ -67,7 +67,13 @@ list_t sorted_all_cache = NULL;
 int config_contacts_size;
 int config_contacts;
 int config_contacts_groups_all_sessions;
-char *config_contacts_options;
+int config_contacts_descr;
+int config_contacts_edge;
+int config_contacts_frame;
+int config_contacts_margin;
+int config_contacts_orderbystate;
+int config_contacts_wrap;
+char *config_contacts_order;
 char *config_contacts_groups;
 int config_contacts_metacontacts_swallow;
 
@@ -630,86 +636,25 @@ QUERY(ncurses_contacts_changed)
 	if (config_contacts_size > 1000)
 		config_contacts_size = 1000;
 
-	contacts_margin = 1;
-	contacts_edge = WF_RIGHT;
-	contacts_frame = WF_LEFT;
+	if (config_contacts_margin > 10)
+		config_contacts_margin = 10;
+	contacts_margin = config_contacts_margin;
+	if (config_contacts_edge > 3)
+		config_contacts_edge = 2;
+	contacts_edge = (1 << config_contacts_edge);
+	contacts_frame = (!config_contacts_frame ? 0
+			: contacts_edge & (WF_LEFT|WF_RIGHT) ? contacts_edge ^ (WF_LEFT|WF_RIGHT)
+			: contacts_edge ^ (WF_TOP|WF_BOTTOM));
 	xstrcpy(contacts_order, CONTACTS_ORDER_DEFAULT);	corderlen = CONTACTS_ORDER_DEFAULT_LEN;	/* xstrlen(CONTACTS_ORDER_DEFAULT) eq CONTACTS_ORDER_DEFAULT_LEN */
-	contacts_wrap = 0;
-	contacts_descr = 0;
-	contacts_nosort = 0;
+	contacts_wrap = config_contacts_wrap;
+	contacts_descr = config_contacts_descr;
+	contacts_nosort = !config_contacts_orderbystate;
 
-	if (config_contacts_options) {
-		char **args = array_make(config_contacts_options, " \t,", 0, 1, 1);
-		int i;
-
-		for (i = 0; args[i]; i++) {
-			if (!xstrcasecmp(args[i], "left")) {
-				contacts_edge = WF_LEFT;
-				if (contacts_frame)
-					contacts_frame = WF_RIGHT;
-			}
-
-			else if (!xstrcasecmp(args[i], "right")) {
-				contacts_edge = WF_RIGHT;
-				if (contacts_frame)
-					contacts_frame = WF_LEFT;
-			}
-
-			else if (!xstrcasecmp(args[i], "top")) {
-				contacts_edge = WF_TOP;
-				if (contacts_frame)
-					contacts_frame = WF_BOTTOM;
-			}
-
-			else if (!xstrcasecmp(args[i], "bottom")) {
-				contacts_edge = WF_BOTTOM;
-				if (contacts_frame)
-					contacts_frame = WF_TOP;
-			}
-
-			else if (!xstrcasecmp(args[i], "noframe"))
-				contacts_frame = 0;
-
-			else if (!xstrcasecmp(args[i], "frame")) {
-				switch (contacts_edge) {
-					case WF_TOP:	contacts_frame = WF_BOTTOM;	break;
-					case WF_BOTTOM:	contacts_frame = WF_TOP;	break;
-					case WF_LEFT:	contacts_frame = WF_RIGHT;	break;
-					case WF_RIGHT:	contacts_frame = WF_LEFT;	break;
-				}
-			}
-
-			else if (!xstrncasecmp(args[i], "margin=", 7)) {
-				contacts_margin = atoi(args[i] + 7);
-				if (contacts_margin > 10)
-					contacts_margin = 10;
-				if (contacts_margin < 0)
-					contacts_margin = 0;
-			}
-
-			else if (!xstrcasecmp(args[i], "nomargin"))	contacts_margin = 0;
-
-			else if (!xstrcasecmp(args[i], "wrap"))		contacts_wrap = 1;
-
-			else if (!xstrcasecmp(args[i], "nowrap"))	contacts_wrap = 0;
-
-			else if (!xstrcasecmp(args[i], "descr"))	contacts_descr = 1;
-
-			else if (!xstrcasecmp(args[i], "nosort"))	contacts_nosort = 1;
-
-			else if (!xstrcasecmp(args[i], "nodescr"))	contacts_descr = 0;
-
-			else if (!xstrncasecmp(args[i], "order=", 6)) {
-				snprintf(contacts_order, sizeof(contacts_order), args[i] + 6);	/* snprintf returns count of char... can we count on it? */
-				corderlen = xstrlen(contacts_order);
-			}
-		}
-
-		if (contacts_margin < 0)
-			contacts_margin = 0;
-
-		array_free(args);
+	if (config_contacts_order) {
+		strlcpy(contacts_order, config_contacts_order, sizeof(contacts_order));
+		corderlen = xstrlen(contacts_order);
 	}
+
 	/* XXX destroy window only if (!config_contacts) ? XXX */
 	if ((w = window_find_sa(NULL, "__contacts", 1))) {
 		window_kill(w);
