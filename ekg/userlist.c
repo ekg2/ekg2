@@ -86,8 +86,10 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
  * @return zwraca wynik xstrcasecmp() na nazwach userów.
  */
 static LIST_ADD_COMPARE(userlist_compare, userlist_t *) {
-	if (!data1 || !data1->nickname || !data2 || !data2->nickname)
+	if (!data1 || !data2)
 		return 0;
+	if (!data1->nickname || !data2->nickname)
+		return (data1->nickname ? 1 : data2->nickname ? -1 : 0);
 
 	return xstrcasecmp(data1->nickname, data2->nickname);
 }
