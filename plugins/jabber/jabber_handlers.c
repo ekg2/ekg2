@@ -994,8 +994,6 @@ JABBER_HANDLER(jabber_handle_message) {
 #endif
 			} else debug_error("[JABBER, MESSAGE]: <x xmlns=%s>\n", __(ns));
 /* x */		} else if (!xstrcmp(jabber_attr(xitem->atts, "xmlns"), "http://jabber.org/protocol/chatstates")) {
-			xmlnode_t *tmp;
-
 			composing = 3;	/* disable + higher prio */
 			if (!xstrcmp(xitem->name, "composing"))
 				composing = 7; /* enable + higher prio */
@@ -2620,9 +2618,10 @@ JABBER_HANDLER(jabber_handle_iq) {
 									break;
 							}
 
-							if (*cp)
+							if (*cp) {
 								u->nickname = xstrdup(*cp);
-							else
+								userlist_replace(s, u);		/* resort */
+							} else
 								debug_error("[jabber] can't find any free nickname for UID %s.. that's kinda bitch!\n", u->uid);
 
 							xfree(userpart);
@@ -2841,7 +2840,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 			descr = saprintf("(%s) %s", ecode, __(etext));
 			xfree(etext);
 
-			if (ecode == 403 || ecode == 401) /* we lack auth */
+			if (atoi(ecode) == 403 || atoi(ecode) == 401) /* we lack auth */
 				status = EKG_STATUS_UNKNOWN; /* shall we remove the error description? */
 			else
 				status = EKG_STATUS_ERROR;
