@@ -71,7 +71,7 @@ COMMAND(cmd_on)
                         return -1;
                 }
 
-		if (!(prio = atoi(params[2])) || !array_contains(events_all, params[1], 0)) {
+		if (!(prio = atoi(params[2])) /*|| (!array_contains(events_all, params[1], 0))*/) {
 			printq("invalid_params", name);
 			return -1;
 		}
@@ -308,7 +308,7 @@ static event_t *event_find_all(const char *name, const char *session, const char
 	int ev_max_prio = 0;
 	char **b, **c;
 
-	debug("// event_find_all (session %s) (name (%s), target (%s)\n", session, name, target);
+//	debug("// event_find_all (session %s) (name (%s), target (%s)\n", session, name, target);
 	b = array_make(target, ("|,;"), 0, 1, 0);
 	c = array_make(name, ("|,;"), 0, 1, 0);
 	for (l = events; l; l = l->next) {

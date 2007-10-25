@@ -35,6 +35,7 @@
 #include "commands.h"
 #include "debug.h"
 #include "dynstuff.h"
+#include "events.h"
 #include "objects.h"
 #include "plugins.h"
 #include "userlist.h"
@@ -904,6 +905,14 @@ int query_emit_id(plugin_t *plugin, const int id, ...) {
 	}
 	va_end(ap);
 
+	{	/* TEMPORARY CODE
+		 * to be replaced when new event support will be ready */
+		const char *n	= query_name(id);
+
+		if (n && !array_contains(events_all, n, 0)) /* skip queries with old-style handlers */
+			event_check(NULL, n, "*", NULL);
+	}
+
 	return result;
 }
 
@@ -926,6 +935,13 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 		}
 	}
 	va_end(ap);
+
+	{	/* TEMPORARY CODE
+		 * to be replaced when new event support will be ready */
+
+		if (!array_contains(events_all, name, 0)) /* skip queries with old-style handlers */
+			event_check(NULL, name, "*", NULL);
+	}
 
 	return result;
 }
