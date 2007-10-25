@@ -2584,7 +2584,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 				{		/* nickname generator */
 					list_t l;
 
-					for (l = s->userlist; l; l = l->next) {
+					for (l = s->userlist; l;) {
 						userlist_t *u = l->data;
 
 						if (u && !u->nickname) {
@@ -2621,12 +2621,20 @@ JABBER_HANDLER(jabber_handle_iq) {
 							if (*cp) {
 								u->nickname = xstrdup(*cp);
 								userlist_replace(s, u);		/* resort */
+
+									/* sorting changes order,
+									 * so we need to start from beginning
+									 * sorry */
+								l = s->userlist;
+								continue;
 							} else
 								debug_error("[jabber] can't find any free nickname for UID %s.. that's kinda bitch!\n", u->uid);
 
 							xfree(userpart);
 							xfree(myuid);
 						}
+
+						l = l->next;
 					}
 				}
 
