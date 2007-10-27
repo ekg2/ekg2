@@ -351,6 +351,12 @@ void ncurses_disable_mouse()
 #ifdef HAVE_LIBGPM
 	if (gpm_fd >= 0)
 		watch_remove(&ncurses_plugin, gpm_fd, WATCH_READ);
+	else {		/* if GPM is not used, but we have mouse on, then it's xterm */
+#endif
+		printf("\033[?1000l\033[?1001r"); /* we would like to disable it if restoring flag won't work */
+		fflush(stdout);
+#ifdef HAVE_LIBGPM
+	}
 
 	Gpm_Close();
 #endif
