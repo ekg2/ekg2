@@ -1827,7 +1827,7 @@ const char *timestamp(const char *format) {
 	if (!format || format[0] == '\0')
 		return "";
 
-	time(&t);
+	t = time(NULL);
 	tm = localtime(&t);
 	if (!strftime(buf, sizeof(buf), format, tm))
 		return "TOOLONG";
