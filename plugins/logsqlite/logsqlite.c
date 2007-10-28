@@ -227,6 +227,14 @@ COMMAND(logsqlite_cmd_last)
 	return 0;
 }
 
+COMMAND(logsqlite_cmd_sync)
+{
+	if (logsqlite_current_db && logsqlite_in_transaction)
+		sqlite_n_exec(logsqlite_current_db, "COMMIT", NULL, NULL, NULL);
+	
+	return 0;
+}
+
 /*
  * set default configuration options
  */
@@ -755,6 +763,7 @@ int logsqlite_plugin_init(int prio)
 	logsqlite_setvar_default();
 
 	command_add(&logsqlite_plugin, "logsqlite:last", "puU puU puU puU puU", logsqlite_cmd_last, 0, "-n --number -s --search");
+	command_add(&logsqlite_plugin, "logsqlite:sync", NULL, logsqlite_cmd_sync, 0, 0);
 
 	query_connect_id(&logsqlite_plugin, PROTOCOL_MESSAGE_POST, logsqlite_msg_handler, NULL);
 	query_connect_id(&logsqlite_plugin, PROTOCOL_STATUS, logsqlite_status_handler, NULL);
