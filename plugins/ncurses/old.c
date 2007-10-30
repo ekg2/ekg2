@@ -184,6 +184,8 @@ inline int ncurses_typingsend(const int len, const int first) {
 }
 
 TIMER(ncurses_typing) {
+	window_t *oldwin	= NULL;
+
 	if (ncurses_typing_mod > 0) { /* need to update status */
 		const int curlen		= ncurses_lineslen();
 		const int winchange		= (ncurses_typing_win != window_current);
@@ -203,6 +205,8 @@ TIMER(ncurses_typing) {
 					ncurses_typing_win ? session_uid_get(ncurses_typing_win->session) : NULL,
 					curlen, ncurses_typing_count);
 #endif
+			if (winchange)
+				oldwin		= ncurses_typing_win;
 
 			ncurses_typing_win	= window_current;
 			ncurses_typing_count	= curlen;
@@ -219,13 +223,22 @@ TIMER(ncurses_typing) {
 		const int timeout = (config_typing_timeout_empty && isempty ?
 					config_typing_timeout_empty : config_typing_timeout);
 
-		if (ncurses_typing_win && ((timeout && time(NULL) - ncurses_typing_time > timeout) || !ncurses_typing_time)) {
+		if (ncurses_typing_win && (!ncurses_typing_time || (timeout && time(NULL) - ncurses_typing_time > timeout))) {
+			window_t *tmpwin;
+
+			if (oldwin) {
+				tmpwin			= ncurses_typing_win;
+				ncurses_typing_win	= oldwin;
+			}
 			ncurses_typingsend(0, (ncurses_typing_mod == -1 ? 3 : 1));
 #if 0
 			debug_function("ncurses_typing(), [UNIMPL] disabling for %s [%s]\n",
 					ncurses_typing_win->target, session_uid_get(ncurses_typing_win->session));
 #endif
-			ncurses_typing_win	= NULL;
+			if (oldwin)
+				ncurses_typing_win	= tmpwin;
+			else
+				ncurses_typing_win	= NULL;
 		}
 	}
 
