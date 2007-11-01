@@ -1,4 +1,1836 @@
-cmd_quit)
+/* $Id$ */
+
+/*
+ *  (C) Copyright 2001-2005 Wojtek Kaniewski <wojtekka@irc.pl>
+ *                          Robert J. Wo¼ny <speedy@ziew.org>
+ *                          Pawe³ Maziarz <drg@infomex.pl>
+ *                          Wojciech Bojdo³ <wojboj@htc.net.pl>
+ *                          Piotr Wysocki <wysek@linux.bydg.org>
+ *                          Dawid Jarosz <dawjar@poczta.onet.pl>
+ *                          Piotr Domagalski <szalik@szalik.net>
+ *                          Kuba Kowalski <qbq@kofeina.net>
+ *			    Piotr Kupisiewicz <deli@rzepaknet.us>
+ *			    Leszek Krupiñski <leafnode@wafel.com>
+ *			    Adam Mikuta <adamm@ekg2.org>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
+#include "ekg2-config.h"
+#include "win32.h"
+
+#ifndef __FreeBSD__
+#define _XOPEN_SOURCE 600
+#define __EXTENSIONS__
+#endif
+
+#define _BSD_SOURCE
+
+#include <sys/types.h>
+
+#ifndef NO_POSIX_SYSTEM
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#endif
+
+#include <sys/stat.h>
+#include <sys/time.h>
+
+#ifndef NO_POSIX_SYSTEM
+#include <sys/un.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#endif
+
+#include <dirent.h>
+#include <errno.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#ifndef NO_POSIX_SYSTEM
+#include <sys/utsname.h>
+#endif
+
+#ifdef __sun
+#include <procfs.h>
+#endif
+
+#ifdef __FreeBSD__
+# include <kvm.h>		/* kvm_ funcs */
+# include <limits.h>		/* _POSIX2_LINE_MAX */
+# include <sys/param.h>
+# include <sys/sysctl.h>	/* KERN_PROC_PID */
+# include <sys/user.h>
+#endif
+
+#include "commands.h"
+#include "debug.h"
+#include "events.h"
+#include "configfile.h"
+#include "dynstuff.h"
+#include "log.h"
+#include "metacontacts.h"
+#include "msgqueue.h"
+#include "protocol.h"
+#include "sessions.h"
+#ifndef HAVE_STRLCAT
+#  include "compat/strlcat.h"
+#endif
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
+#include "stuff.h"
+#include "themes.h"
+#include "vars.h"
+#include "userlist.h"
+#include "scripts.h"
+#include "windows.h"
+#include "xmalloc.h"
+
+#include "queries.h"
+
+char *send_nicks[SEND_NICKS_MAX] = { NULL };
+int send_nicks_count = 0, send_nicks_index = 0;
+static int quit_command = 0;
+
+list_t commands = NULL;
+list_t *commands_lock = NULL;
+
+/*
+ * match_arg()
+ *
+ * sprawdza, czy dany argument funkcji pasuje do podanego.
+ */
+int match_arg(const char *arg, char shortopt, const char *longopt, int longoptlen)
+{
+	if (!arg || *arg != '-')
+		return 0;
+
+	arg++;
+	if (*arg == '-') {
+		int len = xstrlen(++arg);
+
+		if (longoptlen > len)
+			len = longoptlen;
+
+		return !xstrncmp(arg, longopt, len);
+	}
+	return (*arg == shortopt) && (*(arg + 1) == 0);
+}
+
+/*
+ * tabnick_add()
+ *
+ * dodaje do listy nicków dope³nianych automagicznie tabem.
+ */
+void tabnick_add(const char *nick)
+{
+	int i;
+
+	for (i = 0; i < send_nicks_count; i++)
+		if (send_nicks[i] && !xstrcmp(nick, send_nicks[i])) {
+			tabnick_remove(nick);
+			break;
+		}
+
+	if (send_nicks_count == SEND_NICKS_MAX) {
+		xfree(send_nicks[SEND_NICKS_MAX - 1]);
+		send_nicks_count--;
+	}
+
+	for (i = send_nicks_count; i > 0; i--)
+		send_nicks[i] = send_nicks[i - 1];
+
+	if (send_nicks_count != SEND_NICKS_MAX)
+		send_nicks_count++;
+	
+	send_nicks[0] = xstrdup(nick);
+}
+
+/*
+ * tabnick_remove()
+ *
+ * usuwa z listy dope³nianych automagicznie tabem.
+ */
+void tabnick_remove(const char *nick)
+{
+	int i, j;
+
+	for (i = 0; i < send_nicks_count; i++) {
+		if (send_nicks[i] && !xstrcmp(send_nicks[i], nick)) {
+			xfree(send_nicks[i]);
+
+			for (j = i + 1; j < send_nicks_count; j++)
+				send_nicks[j - 1] = send_nicks[j];
+
+			send_nicks_count--;
+			send_nicks[send_nicks_count] = NULL;
+
+			break;
+		}
+	}
+}
+
+/*
+ * tabnick_flush()
+ *
+ * czy¶ci listê nicków dope³nianych tabem.
+ */
+void tabnick_flush()
+{
+	int i;
+
+	for (i = 0; i < send_nicks_count; i++) {
+		xfree(send_nicks[i]);
+		send_nicks[i] = NULL;
+	}
+
+	send_nicks_count = 0;
+	send_nicks_index = 0;
+}
+
+/*
+ * command_find()
+ *
+ * szuka podanej komendy.
+ */
+command_t *command_find(const char *name)
+{
+        list_t l;
+
+        if (!name)
+                return NULL;
+        for (l = commands; l; l = l->next) {
+                command_t *c = l->data;
+
+                if (!xstrcasecmp(c->name, name)) {
+                        return c;
+		}
+        }
+        return NULL;
+}
+
+
+static COMMAND(cmd_tabclear)
+{
+	int i;
+
+	if (!params[0]) {
+		tabnick_flush();
+		return 0;
+	}
+
+	if (match_arg(params[0], 'o', ("offline"), 2)) {
+		for (i = 0; i < send_nicks_count; i++) {
+			userlist_t *u = NULL;
+
+			if (send_nicks[i])
+				u = userlist_find(session, send_nicks[i]);
+
+			/* I think we should also remove errors and likes here
+			 * if I'm wrong, change the > to == */
+			if (!u || (u->status > EKG_STATUS_NA))
+				continue;
+
+			tabnick_remove(send_nicks[i]);
+		}
+
+		return 0;
+	}
+
+	printq("invalid_params", name);
+
+	return -1;
+}
+
+/* XXX, rewritten, need checking */
+COMMAND(cmd_add) {
+	int params_free = 0;	/* zmienili¶my params[] i trzeba zwolniæ */
+	int result = 0;
+	userlist_t *u = NULL;
+	
+	/* XXX, just in case? */
+	if (!target)
+		target = window_current->target;
+
+	/* XXX, check this damn session_current. */
+	if (!session)
+		session = session_current;
+
+	if (!session)
+		return -1;
+	
+	/* If we didn't have params[1] and we params[0] isn't option (for example not --find) and we have target 
+	 * 	get uid from current window, get nickname from params[0]
+	 *
+	 * 	Code for getting more options from params[1] && params[2] were senseless, cause we have !params[1] ;(
+	 */
+	if (params[0][0] != '-' && !params[1] && target) {
+		const char *name = params[0];
+
+		params_free = 1;
+		params = xmalloc(3 * sizeof(char *));
+		params[0] = target;
+		params[1] = name;
+/* 		params[2] = NULL */
+	}
+
+	/* if we have passed -f [lastfound] then get uid, nickname and other stuff from searches... */
+	/* if params[1] passed than it should be used as nickname */
+
+	/* XXX, we need to make it session-visible only.. or at least protocol-visible only.
+	 * 	cause we maybe implement it in jabber */
+	if (match_arg(params[0], 'f', ("find"), 2)) {
+		const char *nickname;
+
+		if (!last_search_uid || (!last_search_nickname && !params[1])) {
+			printq("search_no_last");
+			return -1;
+		}
+
+		nickname = last_search_nickname ? strip_spaces(last_search_nickname) : params[1];
+
+		if (nickname && nickname[0] == '\0') 
+			nickname = params[1];
+
+		if (!nickname) {
+			printq("search_no_last_nickname");
+			return -1;
+		}
+
+		params_free = 1;
+
+		params = xmalloc(4 * sizeof(char *));
+		params[0] = last_search_uid;
+		params[1] = nickname;
+		/* construct params[2] -f FIRST_NAME -l LAST_NAME */
+		params[2] = saprintf("-f \"%s\" -l \"%s\"", 
+				((last_search_first_name) ? last_search_first_name : ("")), 
+				((last_search_last_name) ? last_search_last_name : ("")));
+/*		params[3] = NULL; */
+	}
+
+	if (!params[1]) {
+		printq("not_enough_params", name);
+		result = -1;
+		goto cleanup;
+	}
+
+
+	if (!valid_plugin_uid(session->plugin, params[0])) {
+		printq("invalid_uid");
+		result = -1;
+		goto cleanup;
+	}
+
+	if (!valid_nick(params[1])) {
+		printq("invalid_nick");
+		result = -1;
+		goto cleanup;
+	}
+
+	/* XXX, parse params[2] */
+
+	if (((u = userlist_find(session, params[0])) && u->nickname) || ((u = userlist_find(session, params[1])) && u->nickname)) {
+		if (!xstrcasecmp(params[1], u->nickname) && !xstrcasecmp(params[0], u->uid))
+			printq("user_exists", params[1], session_name(session));
+		else
+			printq("user_exists_other", params[1], format_user(session, u->uid), session_name(session));
+
+		result = -1;
+		goto cleanup;
+	}
+
+	/* kto¶ by³ tylko ignorowany/blokowany, nadajmy mu nazwê */
+	if (u) {
+		xfree(u->nickname);
+		u->nickname = xstrdup(params[1]);
+	}
+
+	if (u || userlist_add(session, params[0], params[1])) {
+		char *uid = xstrdup(params[0]);
+
+		query_emit_id(NULL, USERLIST_ADDED, &uid, &params[1], &quiet);
+                query_emit_id(NULL, ADD_NOTIFY, &session->uid, &uid);
+                xfree(uid);
+
+		printq("user_added", params[1], session_name(session));
+
+		tabnick_remove(params[0]);
+		config_changed = 1;
+
+	}
+
+cleanup:
+	if (params_free) {
+		xfree((char*) params[2]);
+		xfree(params);
+	}
+
+	return result;
+}
+
+static COMMAND(cmd_alias)
+{
+	if (match_arg(params[0], 'a', ("add"), 2)) {
+		if (!params[1] || !xstrchr(params[1], ' ')) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!alias_add(params[1], quiet, 0)) {
+			config_changed = 1;
+			return 0;
+		}
+
+		return -1;
+	}
+
+	if (match_arg(params[0], 'A', ("append"), 2)) {
+		if (!params[1] || !xstrchr(params[1], ' ')) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!alias_add(params[1], quiet, 1)) {
+			config_changed = 1;
+			return 0;
+		}
+
+		return -1;
+	}
+
+	if (match_arg(params[0], 'd', ("del"), 2)) {
+		int ret;
+
+		if (!params[1]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!xstrcmp(params[1], "*"))
+			ret = alias_remove(NULL, quiet);
+		else {
+			ret = alias_remove(params[1], quiet);
+		}
+
+		if (!ret) {
+			config_changed = 1;
+			return 0;
+		}
+
+		return -1;
+	}
+	
+	if (!params[0] || match_arg(params[0], 'l', ("list"), 2) || params[0][0] != '-') {
+		list_t l;
+		int count = 0;
+		const char *aname = NULL;
+
+		if (params[0] && match_arg(params[0], 'l', ("list"), 2))
+			aname = params[1];
+		else if (params[0])
+			aname = params[0];
+
+		for (l = aliases; l; l = l->next) {
+			struct alias *a = l->data;
+			list_t m;
+			int first = 1, i;
+			char *tmp;
+			
+			if (aname && xstrcasecmp(aname, a->name))
+				continue;
+
+			tmp = xcalloc(xstrlen(a->name) + 1, sizeof(char));
+
+			for (i = 0; i < xstrlen(a->name); i++)
+				xstrcat(tmp, " ");
+
+			for (m = a->commands; m; m = m->next) {
+				printq((first) ? "aliases_list" : "aliases_list_next", a->name, (char *) m->data, tmp);
+				first = 0;
+				count++;
+			}
+
+			xfree(tmp);
+		}
+
+		if (!count) {
+			if (aname) {
+				printq("aliases_noexist", aname);
+				return -1;
+			}
+
+			printq("aliases_list_empty");
+		}
+		return 0;
+	}
+
+	printq("invalid_params", name);
+
+	return -1;
+}
+
+static COMMAND(cmd_status) {
+	struct tm *t;
+	time_t n;
+	int now_days;
+
+	char buf1[100] = { '\0' };
+	const char *format;
+	session_t *s = NULL;
+
+	printq("show_status_header");
+
+	s = params[0] ? session_find(params[0]) : session;
+
+	if (params[0] && !s) {
+		printq("invalid_uid", params[0]);
+		return -1;
+	}
+
+	if (config_profile)
+		printq("show_status_profile", config_profile);
+
+	n = time(NULL);
+	t = localtime(&n);
+	now_days = t->tm_yday;
+
+	if (s) {
+		query_emit_id(s->plugin, STATUS_SHOW, &s->uid);
+
+		/* when we connected [s->connected != 0] to server or when we lost last connection [s->connected == 0] [time from s->last_conn] */
+		if (s->last_conn) { 
+			char buf[100] = { '\0' };
+
+			t = localtime(&s->last_conn);
+			format = format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event");
+			if (format[0] && !strftime(buf, sizeof(buf), format, t))
+				xstrcpy(buf, "TOOLONG");
+
+			printq((s->connected) ? "show_status_connected_since" : "show_status_disconnected_since", buf);
+		}
+	}
+
+	t = localtime(&ekg_started);
+	format = format_find((t->tm_yday == now_days) ? "show_status_ekg_started_today" : "show_status_ekg_started");
+	if (format[0] && !strftime(buf1, sizeof(buf1), format, t))
+		xstrcpy(buf1, "TOOLONG");
+
+	printq("show_status_ekg_started_since", buf1);
+	printq("show_status_footer");
+
+	return 0;
+}
+
+static COMMAND(cmd_del)
+{
+	userlist_t *u;
+	char *tmp;
+	int del_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);
+
+	if (!session)
+		return -1;
+	
+	if (!params[0]) {
+		printq("not_enough_params", name);
+		return -1;
+	}
+
+	if (del_all) {
+		list_t l;
+		for (l = session->userlist; l; ) {
+			userlist_t *u = l->data;
+			char *p0;
+			char *tmp;
+	
+			l = l->next;
+			p0 = xstrdup(u->nickname);
+			tmp = xstrdup(u->uid);
+			query_emit_id(NULL, USERLIST_REMOVED, &p0, &tmp);
+			xfree(tmp);
+			xfree(p0);
+
+			userlist_remove(session, u);
+		}
+
+		printq("user_cleared_list", session_name(session));
+		tabnick_flush();
+		config_changed = 1;
+
+		return 0;
+	}
+
+	if (!(u = userlist_find(session, params[0])) || !u->nickname) {
+		printq("user_not_found", params[0]);
+		return -1;
+	}
+
+	tmp = xstrdup(u->uid);
+	query_emit_id(NULL, USERLIST_REMOVED, &params[0], &tmp);
+	query_emit_id(NULL, REMOVE_NOTIFY, &session->uid, &tmp);
+
+        printq("user_deleted", params[0], session_name(session));
+	xfree(tmp);
+
+	tabnick_remove(u->uid);
+	tabnick_remove(u->nickname);
+
+	config_changed = 1;
+
+	userlist_remove(session, u);
+	
+	return 0;
+}
+
+/**
+ * cmd_exec_info_t is internal structure, containing information about processes started using /exec.
+ */
+typedef struct {
+	char *target;		/**< Target UID, if redirecting output to someone */
+	char *session;		/**< Session UID */
+	int quiet;		/**< Whether to be quiet (i.e. don't print info on exit) */
+	string_t buf;		/**< Buffer */
+} cmd_exec_info_t;
+
+static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
+{
+	cmd_exec_info_t *i = data;
+	int quiet = (i) ? i->quiet : 0;
+
+	if (!i)
+		return -1;
+
+	if (type == 1) {
+		if (i->buf) {
+			command_exec_format(i->target, session_find(i->session), quiet, ("/ %s"), i->buf->str);
+			string_free(i->buf, 1);
+		}
+		xfree(i->target);
+		xfree(i->session);
+		xfree(i);
+		return 0;
+	}
+
+	if (!i->target) {
+		printq("exec", watch);
+		return 0;
+	}
+
+	if (i->buf) {
+		string_append(i->buf, watch);
+		string_append(i->buf, ("\r\n"));
+	} else {
+		command_exec_format(i->target, session_find(i->session), quiet, ("/ %s"), watch);
+	}
+	return 0;
+}
+
+void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, void *priv)
+{
+	int quiet = (name && name[0] == '^');
+
+	printq("process_exit", itoa(pid), name, itoa(status));
+}
+
+COMMAND(cmd_exec)
+{
+	list_t l;
+	int pid;
+
+	if (params[0]) {
+		int fd[2] = { 0, 0 }, buf = 0, add_commandline = 0;
+		const char *command = params[0], *target = NULL;
+		char **args = NULL;
+		cmd_exec_info_t *i;
+		watch_t *w;
+
+		if (params[0][0] == '-') {
+			int big_match = 0;
+			args = (char **) params;
+
+			if (match_arg(args[0], 'M', ("MSG"), 2) || (buf = match_arg(args[0], 'B', ("BMSG"), 2)))
+				big_match = add_commandline = 1;
+
+			if (big_match || match_arg(args[0], 'm', ("msg"), 2) || (buf = match_arg(args[0], 'b', ("bmsg"), 2))) {
+				const char *uid;
+
+				if (!args[1] || !args[2]) {
+					printq("not_enough_params", name);
+					return -1;
+				}
+
+				if (!(uid = get_uid(session, args[1]))) {
+					printq("user_not_found", args[1]);
+					return -1;
+				}
+
+				target = uid;
+				command = args[2];
+			} else {
+				printq("invalid_params", name);
+				return -1;
+			}
+		} 
+
+		if (pipe(fd) == -1) {
+			printq("exec_error", strerror(errno));
+			return -1;
+		}
+
+#ifndef NO_POSIX_SYSTEM
+		if (!(pid = fork())) {
+			dup2(open("/dev/null", O_RDONLY), 0);
+			dup2(fd[1], 1);
+			dup2(fd[1], 2);
+
+			close(fd[0]);
+			close(fd[1]);
+
+			execl("/bin/sh", "sh", "-c", (command[0] == '^') ? command + 1 : command, (void *) NULL);
+
+			exit(1);
+		}
+#else
+/* XXX, fork and execute cmd /C $command
+ * MG: I think using explicitly 'cmd /c' is very bad - in win9x we've got command.com instead;
+ *     but AFAIR $COMSPEC should be always defined; if not, we should even use command.com
+ *     (AFAIK newer versions of windows are backwards compatible with this) */
+		pid = -1;
+#endif
+
+		if (pid < 0) {
+			printq("exec_error", strerror(errno));
+			close(fd[0]);
+			close(fd[1]);
+			return -1;
+		}
+	
+		i = xmalloc(sizeof(cmd_exec_info_t));
+		
+		i->quiet = quiet;
+		i->target = xstrdup(target);
+		i->session = xstrdup(session_uid_get(session));
+
+		if (buf)
+			i->buf = string_init(NULL);
+
+		w = watch_add_line(NULL, fd[0], WATCH_READ_LINE, cmd_exec_watch_handler, i);
+
+		if (add_commandline) {
+			char *tmp = format_string(format_find("exec_prompt"), ((command[0] == '^') ? command + 1 : command));
+			string_append(w->buf, tmp);
+			xfree(tmp);
+		}
+
+		fcntl(fd[0], F_SETFL, O_NONBLOCK);
+
+		close(fd[1]);
+		child_add(NULL, pid, command, cmd_exec_child_handler, NULL);
+
+	} else {
+		for (l = children; l; l = l->next) {
+			child_t *c = l->data;
+			
+			printq("process", itoa(c->pid), ((c->name) ? (c->name) : ("?")));
+		}
+
+		if (!children) {
+			printq("no_processes");
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * cmd_eval()
+ *
+ * Execute space seperated commands from @a params[0]<br>
+ * If you want add params to command use " " sample: /eval "first_commamnd --first_param --second_param" second_command third_command
+ *
+ * Handler for: <i>/eval</i> command.
+ *
+ * @param params [0] - commands to execute
+ *
+ * @return 0
+ */
+
+static COMMAND(cmd_eval) {
+	int i;
+	char **argv;
+
+	argv = array_make(params[0], (" "), 0, 1, 1);
+	
+	for (i = 0; argv[i]; i++)
+		command_exec(NULL, session, argv[i], 0);
+
+	array_free(argv);
+
+	return 0;
+}
+
+static COMMAND(cmd_for)
+{
+	int for_all = 0;
+
+	if (!xstrcmp(params[1], "*")) 
+		for_all = 1; 
+
+	if (match_arg(params[0], 's', ("sessions"), 2)) {
+		char *param = (char *) params[2];
+		int next_is_for = 0;
+
+		if (param[0] == '/')
+			param++;
+
+		if (!xstrncasecmp(param, name, xstrlen(name)))
+			next_is_for = 1;
+
+		if (for_all) {
+			list_t l;
+			
+			if (!sessions) {
+				printq("session_list_empty");
+				return -2;
+			}
+				
+			for (l = sessions; l; l = l->next) {
+				session_t *s = l->data;
+				char *for_command;
+				
+				if (!s || !s->uid)
+					continue;
+				
+				if (!next_is_for)
+					for_command = format_string(params[2], session_alias_uid(s), s->uid);
+				else
+					for_command = xstrdup(params[2]);
+
+				command_exec(NULL, s, for_command, 0);
+				xfree(for_command);
+			}
+		} else {
+			char **tmp = array_make(params[1], ",", 0, 0, 0);
+			int i;
+			session_t **s;
+	
+			s = xmalloc(sizeof(session_t *) * array_count(tmp));
+			
+			/* first we are checking all of the parametrs */
+			for (i = 0; tmp[i]; i++) {
+				if (!(s[i] = session_find(tmp[i]))) {
+					printq("session_doesnt_exist", tmp[i]);
+					xfree(s);
+					array_free(tmp);
+					return -1;
+				}
+			}		
+			
+			for (i = 0; tmp[i]; i++) {
+				char *for_command;
+				
+				if (!s[i] || !s[i]->uid)
+					continue;
+				
+				if (!next_is_for)
+					for_command = format_string(params[2], session_alias_uid(s[i]), s[i]->uid);
+				else
+					for_command = xstrdup(params[2]);
+
+				command_exec(NULL, s[i], for_command, 0);
+				xfree(for_command);
+			}
+			array_free(tmp);
+			xfree(s);
+		}
+	} else if (match_arg(params[0], 'u', ("users"), 2)) {
+		char *param = (char *) params[2];
+                int next_is_for = 0;
+
+                if (param[0] == '/')
+                        param++;
+
+                if (!xstrncasecmp(param, name, xstrlen(name)))
+                        next_is_for = 1;
+				
+		if (!session) {
+			return -1;
+		}
+
+		if (!session->userlist) {
+			printq("list_empty");
+			return -1;
+		}
+
+		if (for_all) {
+			list_t l;
+
+			for (l = session->userlist; l; l = l->next) {
+				userlist_t *u = l->data;
+				char *for_command;
+
+				if (!u || !u->uid)
+					continue;
+				
+				if (!next_is_for)
+					for_command = format_string(params[2], (u->nickname) ? u->nickname : u->uid, u->uid);
+				else
+					for_command = xstrdup(params[2]);
+
+				command_exec(NULL, session, for_command, 0);
+				xfree(for_command);
+			}
+				
+		} else {
+                        char **tmp = array_make(params[1], ",", 0, 0, 0);
+                        int i;
+                        userlist_t **u;
+
+                        u = xmalloc(sizeof(userlist_t *) * array_count(tmp));
+
+                        /* first we are checking all of the parametrs */
+                        for (i = 0; tmp[i]; i++) {
+                                if (!(u[i] = userlist_find(session, tmp[i]))) {
+                                        printq("user_not_found", tmp[i]);
+					array_free(tmp);
+                                        xfree(u);
+					return -1;
+                                }
+                        }
+
+                        for (i = 0; tmp[i]; i++) {
+                                char *for_command;
+
+                                if (!u[i] || !u[i]->uid)
+                                        continue;
+
+				if (!next_is_for)
+	                                for_command = format_string(params[2], (u[i]->nickname) ? u[i]->nickname : u[i]->uid, u[i]->uid);
+				else
+					for_command = xstrdup(params[2]);
+
+                                command_exec(NULL, session, for_command, 0);
+                                xfree(for_command);
+                        }
+			array_free(tmp);
+                        xfree(u);
+                }
+	} else if (match_arg(params[0], 'w', ("windows"), 2)) {
+                char *param = (char *) params[2];
+                int next_is_for = 0;
+
+                if (param[0] == '/')
+                        param++;
+
+                if (!xstrncasecmp(param, name, xstrlen(name)))
+                        next_is_for = 1;
+
+                if (!windows) {
+			return -1;
+                }
+
+                if (for_all) {
+                        list_t l;
+
+                        for (l = windows; l; l = l->next) {
+                        	window_t *w = l->data;
+                                char *for_command;
+
+                                if (!w || !w->target || !w->session)
+                                        continue;
+
+                                if (!next_is_for)		/* XXX, get_uid(), get_nickname() */
+                                        for_command = format_string(params[2], get_nickname(w->session, w->target), get_uid(w->session, w->target));
+                                else
+                                        for_command = xstrdup(params[2]);
+
+                                command_exec(NULL, w->session, for_command, 0);
+                                xfree(for_command);
+			}
+                 } else {
+                       	char **tmp = array_make(params[1], ",", 0, 0, 0);
+	                int i;
+	                window_t **w;
+
+                        w = xmalloc(sizeof(window_t *) * array_count(tmp));
+
+                        /* first we are checking all of the parametrs */
+                        for (i = 0; tmp[i]; i++) {
+				if (!(w[i] = window_exist(atoi(tmp[i])))) {
+		                        printq("window_doesnt_exist", tmp[i]);
+					array_free(tmp);
+                                        xfree(w);
+					return -1;
+				}
+                        }
+
+                        for (i = 0; tmp[i]; i++) {
+                                char *for_command;
+
+                                if (!w[i] || !w[i]->target || !w[i]->session)
+                                        continue;
+
+                                if (!next_is_for)		/* XXX, get_uid(), get_nickname() */
+                                        for_command = format_string(params[2], get_nickname(w[i]->session, w[i]->target), get_uid(w[i]->session, w[i]->target));
+                                else
+                                        for_command = xstrdup(params[2]);
+                                command_exec(NULL, w[i]->session, for_command, 0);
+                                xfree(for_command);
+                        }
+			array_free(tmp);
+                        xfree(w);
+                }
+	} else {
+	        printq("invalid_params", name);
+		return -1;
+	}
+	return 0;
+}
+
+static COMMAND(cmd_help)
+{
+	list_t l;
+	if (params[0]) {
+		const char *p = (params[0][0] == '/' && xstrlen(params[0]) > 1) ? params[0] + 1 : params[0];
+		int plen;
+
+		if (!xstrcasecmp(p, ("set")) && params[1]) {
+			if (!quiet)
+				variable_help(params[1]);
+			return 0;
+		}
+
+						/* vvv - allow /help sess sth */
+                if (!xstrncasecmp(p, ("session"), xstrlen(p) > 3 ? xstrlen(p) : 3) && params[1]) {
+                        if (!quiet)
+                                session_help(session, params[1]);
+                        return 0;
+                }
+
+        	if (session && session->uid) {
+	                plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
+		} else
+			plen = 0;
+	
+		for (l = commands; l; l = l->next) {
+			command_t *c = l->data;
+			
+			if (!xstrcasecmp(c->name, p) && (c->flags & COMMAND_ISALIAS)) {
+				printq("help_alias", p);
+				return -1;
+			}
+			if (!xstrcasecmp(c->name, p) && (c->flags & COMMAND_ISSCRIPT)) {
+				printq("help_script", p);
+				return -1;
+			}
+
+			if ((!xstrcasecmp(c->name, p) || !xstrcasecmp(c->name + plen, p)) && !(c->flags & COMMAND_ISALIAS) ) {
+				FILE *f; 
+				char *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL;
+				const char *seeking_name;
+				string_t s;
+				int found = 0;
+
+				if (c->plugin && c->plugin->name) {
+					char *tmp2;
+
+                                        if (!(f = help_path("commands", c->plugin->name))) {
+                                                print("help_command_file_not_found_plugin", c->plugin->name);
+						return -1;
+			                }
+					tmp2 = xstrchr(c->name, ':');
+					if (!tmp2)
+						seeking_name = c->name;
+					else
+				                seeking_name = tmp2 + 1;
+			        } else {
+					if (!(f = help_path("commands", NULL))) {
+		                	        print("help_command_file_not_found");
+						return -1;
+			                }
+
+	                		seeking_name = c->name;
+        			}
+			        while ((line = read_file(f, 0))) {
+			                if (!xstrcasecmp(line, seeking_name)) {
+			                        found = 1;
+			                        break;
+			                }
+			        }
+
+			        if (!found) {
+			                fclose(f);
+			                print("help_command_not_found", c->name);
+			                return -1;
+			        }
+
+			        line = read_file(f, 0);
+
+			        if ((tmp = xstrstr(line, (": "))))
+			                params_help = xstrdup(tmp + 2);
+			        else
+			                params_help = xstrdup((""));
+
+				params_help_s = strip_spaces(params_help);
+
+				line = read_file(f, 0);
+
+                                if ((tmp = xstrstr(line, (": "))))
+                                        brief = xstrdup(tmp + 2);
+                                else
+                                        brief = xstrdup(("?"));
+
+				tmp = NULL;
+
+			        if (xstrstr(brief, ("%")))
+			  		tmp = format_string(brief);
+
+	                        if (!xstrcmp(brief, (""))) {
+	                                xfree(brief);
+	                                brief = xstrdup(("?"));
+	                        }
+
+	                        if (xstrcmp(params_help_s, ("")))
+        	                        printq("help", (c->name) ? (c->name) : (""), params_help_s, tmp ? tmp : brief, "");
+	                        else
+	                                printq("help_no_params", (c->name) ? (c->name) : (""), tmp ? tmp : brief, (""));
+
+				xfree(brief);
+				xfree(params_help);
+				xfree(tmp);
+
+				s = string_init(NULL);
+			        while ((line = read_file(f, 0))) {
+			                if (line[0] != ('\t'))
+			                        break;
+					
+			                if (!xstrncmp(line, ("\t- "), 3) && xstrcmp(s->str, (""))) {
+			                        print("help_command_body", line);
+			                        string_clear(s);
+			                }
+					
+					if (!xstrncmp(line, ("\t"), 1) && xstrlen(line) == 1) {
+						string_append(s, "\n\r");
+						continue;
+					}
+					
+			                string_append(s, line + 1);
+
+			                if (line[xstrlen(line) - 1] != ' ')
+			                        string_append_c(s, ' ');
+			        }
+				
+				if (xstrcmp(s->str, (""))) {
+					char *tmp = format_string(s->str);
+                                        printq("help_command_body", tmp);
+					xfree(tmp);
+				}
+				fclose(f);
+			        string_free(s, 1);
+				return 0;
+			}
+		}
+	}
+
+	for (l = commands; l; l = l->next) {
+		command_t *c = l->data;
+
+		if (xisalnum(*c->name) && !(c->flags & COMMAND_ISALIAS)) {
+		    	char *blah = NULL;
+                        FILE *f;
+                        char *line, *params_help, *params_help_s, *brief, *tmp = NULL;
+                        const char *seeking_name;
+                        int found = 0;
+
+		        if (c->plugin && c->plugin->name) {
+				char *tmp2;
+
+	                        if (!(f = help_path("commands", c->plugin->name))) continue;
+
+				tmp2 = xstrchr(c->name, (':'));
+				if (!tmp2)
+					seeking_name = c->name;
+				else 
+	                                seeking_name = tmp2 + 1;
+                        } else {
+                                if (!(f = help_path("commands", NULL))) continue;
+
+                                seeking_name = c->name;
+                        }
+
+                        while ((line = read_file(f, 0))) {
+                        	if (!xstrcasecmp(line, seeking_name)) {
+                                	found = 1;
+                                        break;
+                                }
+                        }
+
+                        if (!found) {
+		                fclose(f);
+				continue;
+                        }
+
+			line = read_file(f, 0);
+		
+			if ((tmp = xstrstr(line, (": "))))
+                               params_help = xstrdup(tmp + 2);
+                        else
+                               params_help = xstrdup((""));
+
+			params_help_s = strip_spaces(params_help);	
+
+                        line = read_file(f, 0);
+
+                        if ((tmp = xstrstr(line, (": "))))
+ 	                       brief = xstrdup(tmp + 2);
+                        else
+                               brief = xstrdup(("?"));
+
+			if (xstrstr(brief, ("%")))
+			    	blah = format_string(brief);
+
+			if (!xstrcmp(brief, (""))) {
+				xfree(brief);
+				brief = xstrdup(("?"));
+			}
+
+			if (xstrcmp(params_help_s, ("")))
+				printq("help", c->name ? (c->name) : (""), params_help_s, blah ? blah : brief, (""));
+			else
+				printq("help_no_params", (c->name) ? (c->name) : (""), blah ? blah : brief, (""));
+			xfree(blah);
+			xfree(brief);
+			xfree(params_help);
+
+			fclose(f);
+		}
+	}
+
+	printq("help_footer");
+	printq("help_quick");
+	return 0;
+}
+
+static COMMAND(cmd_ignore)
+{
+	const char *uid;
+
+	if (*name == 'i' || *name == 'I') {
+		int flags, modified = 0;
+
+		if (!params[0]) {
+			list_t l;
+			int i = 0;
+			for (l = session->userlist; l; l = l->next) {
+				userlist_t *u = l->data;
+				int level;
+
+				if (!(level = ignored_check(session, u->uid)))
+					continue;
+
+				i = 1;
+
+				printq("ignored_list", format_user(session, u->uid), ignore_format(level));
+			}
+
+			if (!i)
+				printq("ignored_list_empty");
+
+			return 0;
+		}
+
+		if (params[0][0] == '#') {
+			return command_exec_format(NULL, NULL, quiet, ("/conference --ignore %s"), params[0]);
+		}
+
+		if (!(uid = get_uid(session, params[0]))) {
+			printq("user_not_found", params[0]);
+			return -1;
+		}
+
+                if ((flags = ignored_check(session, uid)))
+                        modified = 1;
+
+		if (params[1]) {
+			int __flags = ignore_flags(params[1]);
+
+			if (!__flags) {
+				printq("invalid_params", name);
+				return -1;
+			}
+
+                        flags |= __flags;
+		} else
+			flags = IGNORE_ALL;
+
+		if (modified)
+			ignored_remove(session, uid);
+
+                if (!ignored_add(session, uid, flags)) {
+                        if (modified)
+                                printq("ignored_modified", format_user(session, uid));
+                        else
+                                printq("ignored_added", format_user(session, uid));
+                        config_changed = 1;
+                }
+
+	} else {
+		int unignore_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);
+		int level;
+
+		if (!params[0]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (params[0][0] == '#') {
+			return command_exec_format(NULL, NULL, quiet, ("/conference --unignore %s"), params[0]);
+		}
+		
+		if (!unignore_all && !(uid = get_uid(session, params[0]))) {
+			printq("user_not_found", params[0]);
+			return -1;
+		}
+
+		if (unignore_all) {
+			list_t l;
+			int x = 0;
+			
+			for (l = session->userlist; l; ) {
+				userlist_t *u = l->data;
+
+				l = l->next;
+
+				if (!ignored_remove(session, u->uid))
+					x = 1;
+
+				level = ignored_check(session, u->uid);
+			}
+
+			if (x) {
+				printq("ignored_deleted_all");
+				config_changed = 1;
+			} else {
+				printq("ignored_list_empty");
+				return -1;
+			}
+			
+			return 0;
+		}
+
+		level = ignored_check(session, uid);
+		
+		if (!ignored_remove(session, uid)) {
+			printq("ignored_deleted", format_user(session, params[0]));
+			config_changed = 1;
+		} else {
+			printq("error_not_ignored", format_user(session, params[0]));
+			return -1;
+		}
+	
+	}
+	return 0;
+}
+
+COMMAND(cmd_list)
+{
+	list_t l;
+	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, j;
+	char **argv = NULL, *show_group = NULL;
+	const char *tmp;
+	metacontact_t *m = NULL;
+	char *tparams0	= xstrdup(params[0]);		/* XXX, target */
+	char *params0;
+
+        if (!tparams0 && window_current->target) { 
+		tparams0 = xstrdup(window_current->target);
+	}
+	params0 = strip_quotes(tparams0);
+
+	if (params0 && (*params0 != '-' || userlist_find(session, params0))) {
+		char *status;
+		const char *group = params0;
+		userlist_t *u;
+		list_t res;
+		int invert = 0;
+		
+		/* list !@grupa */
+		if (group[0] == '!' && group[1] == '@') {
+			group++;
+			invert = 1;
+		}
+
+		/* list @grupa */
+		if (group[0] == '@' && xstrlen(group) > 1) {
+			string_t members = string_init(NULL);
+			char *__group;
+			int count = 0;
+			
+			for (l = session->userlist; l; l = l->next) {
+				u = l->data;
+
+				if (u->groups || invert) {
+					if ((!invert && ekg_group_member(u, group + 1)) || (invert && !ekg_group_member(u, group + 1))) {
+						if (count++)
+							string_append(members, ", ");
+						string_append(members, u->nickname);
+					}
+				}
+			}
+			
+			__group = saprintf("%s%s", ((invert) ? "!" : ""), group + 1);
+
+			if (count)
+				printq("group_members", __group, members->str);
+			else
+				printq("group_empty", __group);
+
+			xfree(__group);
+
+			string_free(members, 1);
+			
+			xfree(tparams0);
+			return 0;
+		}
+
+	        if (params0 && (tmp = xstrrchr(params0, '/'))) {
+        	        char *session_name = xstrndup(params0, xstrlen(params0) - xstrlen(tmp));
+	
+	                if (!session_find(session_name))
+	                        goto next;
+	
+	                tmp++;
+	                session = session_find(session_name);
+	        	if (!(u = userlist_find(session, tmp)) || !u->nickname) {
+	                        printq("user_not_found", tmp);
+				xfree(session_name);
+				xfree(tparams0);
+	                	return -1;
+			}
+	
+	                xfree(session_name);
+	                goto list_user;
+	        }
+
+next:
+		/* list _metacontact */
+		if (params0 && (m = metacontact_find(params0))) {
+        	        metacontact_item_t *i;
+	
+	                i = metacontact_find_prio(m);
+
+	                if (!i) {
+	                        printq("metacontact_item_list_empty");
+				xfree(tparams0);
+				return -1;
+	               	} 
+		
+			u = userlist_find_n(i->s_uid, i->name);
+
+	                status = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), u->nickname, u->descr);
+
+	                printq("metacontact_info_header", params0);
+			printq("metacontact_info_status", status);
+	                printq("metacontact_info_footer", params0);
+
+			xfree(status);
+			xfree(tparams0);
+			return 0;
+		}
+	
+		if (!(u = userlist_find(session, params0)) || !u->nickname) {
+			printq("user_not_found", params0);
+			xfree(tparams0);
+			return -1;
+		}
+
+list_user:
+		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), 
+				u->nickname, u->descr);
+
+		printq("user_info_header", u->nickname, u->uid);
+		if (u->nickname && xstrcmp(u->nickname, u->nickname)) 
+			printq("user_info_nickname", u->nickname);
+
+		printq("user_info_status", status);
+                if (u->status_time && (u->status <= EKG_STATUS_NA)) {
+		        struct tm *status_time;
+			char buf[100];		
+
+			status_time = localtime(&(u->status_time));
+	        	if (!strftime(buf, sizeof(buf), format_find("user_info_status_time_format") ,status_time) && xstrlen(format_find("user_info_status_time_format"))>0)
+				xstrcpy(buf, "TOOLONG");
+
+
+			printq("user_info_status_time", buf);
+		}
+
+		if (u->last_status) {
+			char *last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), 
+							u->nickname, u->last_descr);
+			printq("user_info_last_status", last_status);
+			xfree(last_status);
+		}
+
+		for (res = u->resources; res; res = res->next) {
+			ekg_resource_t *r = res->data;
+			char *resstatus; 
+
+			resstatus = format_string(format_find(ekg_status_label(r->status, r->descr, /* resource_info? senseless */ "user_info_")), 
+					/* here r->name ? */
+					 u->nickname, r->descr);
+			printq("resource_info_status", r->name, resstatus, itoa(r->prio));
+			xfree(resstatus);
+		}
+
+		if (ekg_group_member(u, "__blocked"))
+			printq("user_info_block", u->nickname);
+		if (ekg_group_member(u, "__offline"))
+			printq("user_info_offline", u->nickname);
+
+		query_emit_id(NULL, USERLIST_INFO, &u, &quiet);
+
+		if (u->groups) {
+			char *groups = group_to_string(u->groups, 0, 1);
+			printq("user_info_groups", groups);
+			xfree(groups);
+		}
+		if (u->status <= EKG_STATUS_NA) {
+			char buf[100];
+			struct tm *last_seen_time;
+			
+			if (u->last_seen) {
+				last_seen_time = localtime(&(u->last_seen));
+				if (!strftime(buf, sizeof(buf), format_find("user_info_last_seen_time"), last_seen_time) && xstrlen(format_find("user_info_last_seen_time"))>0)
+					xstrcpy(buf, "TOOLONG");
+				printq("user_info_last_seen", buf);
+			} else
+				printq("user_info_never_seen");
+		}
+			
+		printq("user_info_footer", u->nickname, u->uid);
+		
+		xfree(status);
+		xfree(tparams0);
+		return 0;
+	}
+	
+	/* list --active | --away | --inactive | --invisible | --description | --member | --blocked | --offline */
+	for (j = 0; params[j]; j++) {
+		int i;
+
+		argv = array_make(params[j], " \t", 0, 1, 1);
+
+	 	for (i = 0; argv[i]; i++) {
+			if (match_arg(argv[i], 'a', ("active"), 2)) {
+				show_all = 0;
+				show_active = 1;
+			}
+				
+			if (match_arg(argv[i], 'i', ("inactive"), 2) || match_arg(argv[i], 'n', ("notavail"), 2)) {
+				show_all = 0;
+				show_inactive = 1;
+			}
+			
+			if (match_arg(argv[i], 'A', ("away"), 2)) {
+				show_all = 0;
+				show_away = 1;
+			}
+			
+			if (match_arg(argv[i], 'I', ("invisible"), 2)) {
+				show_all = 0;
+				show_invisible = 1;
+			}
+
+			if (match_arg(argv[i], 'B', ("blocked"), 2)) {
+				show_all = 0;
+				show_blocked = 1;
+			}
+
+			if (match_arg(argv[i], 'o', ("offline"), 2)) {
+				show_all = 0;
+				show_offline = 1;
+			}
+
+			if (match_arg(argv[i], 'm', ("member"), 2)) {
+				if (j && argv[i+1]) {
+					int off = (argv[i+1][0] == '@' && xstrlen(argv[i+1]) > 1) ? 1 : 0;
+
+					show_group = xstrdup(argv[i+1] + off);
+				} else
+					if (params[i+1]) {
+						char **tmp = array_make(params[i+1], " \t", 0, 1, 1);
+						int off = (params[i+1][0] == '@' && xstrlen(params[i+1]) > 1) ? 1 : 0;
+
+ 						show_group = xstrdup(tmp[0] + off);
+						array_free(tmp);
+					}
+			}
+
+			if (match_arg(argv[i], 'd', ("description"), 2))
+				show_descr = 1;
+		}
+		array_free(argv);
+	}
+
+	{
+			/* ip/port currently can be fetched for GG only,
+			 * so this should remove unneeded slowdown for other sessions */
+		const int is_ipport_capable = !xstrncmp(session->uid, "gg:", 3);
+
+		for (l = session->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+			int show;
+
+			if (!u->nickname)
+				continue;
+
+			tmp = ekg_status_label(u->status, u->descr, "list_");
+
+			show = show_all;
+	#define SHOW_IF_S(x,y) if (show_##x && (u->status == EKG_STATUS_##y)) show = 1;
+			SHOW_IF_S(away, AWAY)
+			SHOW_IF_S(active, AVAIL)
+			SHOW_IF_S(inactive, NA)
+			SHOW_IF_S(invisible, INVISIBLE)
+			SHOW_IF_S(blocked, BLOCKED)
+	#undef SHOW_IF_S		
+			/* XXX nie chcialo mi sie zmiennej robic */
+			if (u->status == EKG_STATUS_ERROR)
+				show = 1;
+
+			if (show_descr && !u->descr)
+				show = 0;
+
+			if (show_group && !ekg_group_member(u, show_group))
+				show = 0;
+
+			if (show_offline && ekg_group_member(u, "__offline"))
+				show = 1;
+
+			if (show) {
+				const char *ip		= NULL;
+				const char *port	= NULL;
+				if (is_ipport_capable) {
+					int func		= EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT;
+					const char **__ip	= &ip;
+					const char **__port	= &port;
+					
+					query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func, &__ip, &__port);
+				}
+
+				printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), (port ? port : "0"), u->descr);
+				count++;
+			}
+		}
+	}
+
+	if (!count && !(show_descr || show_group) && show_all)
+		printq("list_empty");
+	xfree(show_group);
+	xfree(tparams0);
+	return 0;
+}
+
+static COMMAND(cmd_save) {
+	int ret = 0;
+	last_save = time(NULL);
+
+/* Changes 14 wrze 2006 (dj) */
+/* We try to save everything, but if smth not pass, try others */
+/* makes it executable even if we don't have sessions. */
+
+	/* set windows layout */
+	windows_save();
+
+	/* set default session */
+	if (config_sessions_save && session_current) {
+		xfree(config_session_default); config_session_default = xstrdup(session_current->uid);
+	}
+
+	if (session_write())		ret = -1;
+	if (config_write(params[0]))	ret = -1;
+	if (metacontact_write())	ret = -1;
+	if (script_variables_write())	ret = -1;
+
+	if (!ret) {
+		printq("saved");
+		config_changed = 0;
+		reason_changed = 0;
+	} else {
+		printq("error_saving");
+	}
+
+	return ret;
+}
+
+static COMMAND(cmd_set)
+{
+	const char *arg = NULL, *val = NULL;
+	int unset = 0, show_all = 0, res = 0;
+	char *value = NULL;
+	list_t l;
+
+	if (match_arg(params[0], 'a', ("all"), 1)) {
+		show_all = 1;
+		arg = params[1];
+		if (arg)
+			val = params[2];
+	} else {
+		arg = params[0];
+		if (arg)
+			val = params[1];
+	}
+	
+	if (arg && arg[0] == '-') {
+		unset = 1;
+		arg++;
+	}
+
+	if (arg && val) {
+		char **tmp = array_make(val, (""), 0, 0, 1);
+
+		value = xstrdup(tmp[0]);
+		array_free(tmp);
+	}
+
+	if ((!arg || !val) && !unset) {
+		int displayed = 0;
+
+		for (l = variables; l; l = l->next) {
+			variable_t *v = l->data;
+			
+			if ((!arg || !xstrcasecmp(arg, v->name)) && (v->display != 2 || xstrcmp(name, ("set")))) {
+				char *string = *(char**)(v->ptr);
+				int value = *(int*)(v->ptr);
+
+				if (!show_all && !arg && v->dyndisplay && !((v->dyndisplay)(v->name)))
+					continue;
+
+				if (!v->display) {
+					printq("variable", v->name, ("(...)"));
+					displayed = 1;
+					continue;
+				}
+
+				if (v->type == VAR_STR || v->type == VAR_FILE || v->type == VAR_DIR || v->type == VAR_THEME) {
+					char *tmp = (string) ? saprintf(("\"%s\""), string) : ("(none)");
+
+					printq("variable", v->name, tmp);
+					
+					if (string)
+						xfree(tmp);
+				}
+
+				if (v->type == VAR_BOOL)
+					printq("variable", v->name, (value) ? ("1 (on)") : ("0 (off)"));
+				
+				if ((v->type == VAR_INT || v->type == VAR_MAP) && !v->map)
+					printq("variable", v->name, itoa(value));
+
+				if (v->type == VAR_INT && v->map) {
+					char *tmp = NULL;
+					int i;
+
+					for (i = 0; v->map[i].label; i++)
+						if (v->map[i].value == value) {
+							tmp = saprintf(("%d (%s)"), value, v->map[i].label);
+							break;
+						}
+
+					if (!tmp)
+						tmp = saprintf(("%d"), value);
+
+					printq("variable", v->name, tmp);
+
+					xfree(tmp);
+				}
+
+				if (v->type == VAR_MAP && v->map) {
+					string_t s = string_init(itoa(value));
+					int i, first = 1;
+
+					for (i = 0; v->map[i].label; i++) {
+						if ((value & v->map[i].value) || (!value && !v->map[i].value)) {
+							string_append(s, (first) ? (" (") : (","));
+							first = 0;
+							string_append(s, v->map[i].label);
+						}
+					}
+
+					if (!first)
+						string_append_c(s, (')'));
+
+					printq("variable", v->name, s->str);
+
+					string_free(s, 1);
+				}
+
+				displayed = 1;
+			}
+		}
+
+		if (!displayed && params[0]) {
+			printq("variable_not_found", params[0]);
+			return -1;
+		}
+	} else {
+		variable_t *v = variable_find(arg);
+		theme_cache_reset();
+
+		if (!unset && !xstrcasecmp(value, ("t"))) {
+			if (v && v->type == VAR_BOOL) {
+				int t_value = *(int*)(v->ptr);
+			
+				xfree(value);
+				value = (t_value) ? xstrdup(("0")) : xstrdup(("1"));
+			}
+		} 
+
+		switch (variable_set(arg, (unset) ? NULL : value, 0)) {
+			case 0:
+			{
+				const char *my_params[2] = { (!unset) ? params[0] : params[0] + 1, NULL };
+
+				cmd_set(("set-show"), (const char **) my_params, NULL, NULL, quiet);
+				config_changed = 1;
+				last_save = time(NULL);
+				break;
+			}
+			case -1:
+				printq("variable_not_found", arg);
+				res = -1;
+				break;
+			case -2:
+				printq("variable_invalid", arg);
+				res = -1;
+				break;
+		}
+	}
+	
+	xfree(value);
+
+	return res;
+}
+
+static COMMAND(cmd_quit)
 {
     	char *reason;
 	list_t l;
