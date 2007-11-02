@@ -1113,7 +1113,9 @@ static char *jabber_avatar_load(session_t *s, const char *path, const int quiet)
 		string_append(str, p);
 		xfree(enc);
 
-		out = saprintf("<PHOTO><TYPE>%s</TYPE><BINVAL>\n%s\n</BINVAL></PHOTO>", type, string_free(str, 0));
+		out = saprintf("<PHOTO><TYPE>%s</TYPE><BINVAL>\n%s\n</BINVAL></PHOTO>", type, str->str);
+		string_free(str, 1);
+
 		return out;
 	}
 
