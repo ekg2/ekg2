@@ -75,7 +75,7 @@ SSL_CTX *jabberSslCtx;
 char *jabber_default_search_server = NULL;
 char *jabber_default_pubsub_server = NULL;
 int config_jabber_beep_mail = 0;
-int config_jabber_disable_chatstates = 0;
+int config_jabber_disable_chatstates = 6;
 const char *jabber_authtypes[] = { "none", "from", "to", "both" };
 
 static int session_postinit;
