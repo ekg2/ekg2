@@ -4191,6 +4191,7 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 static LIST_FREE_ITEM(list_command_free, command_t *) {
 	array_free(data->params);
 	array_free(data->possibilities);
+	xfree(data);
 }
 
 /*
