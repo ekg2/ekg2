@@ -181,6 +181,19 @@ static QUERY(irc_session_init) {
 	return 0;
 }
 
+static LIST_FREE_ITEM(list_irc_awaylog_free, irc_away_log_t *) {
+	xfree(data->channame);
+	xfree(data->uid);
+	xfree(data->msg);
+	xfree(data);
+}
+
+static LIST_FREE_ITEM(list_irc_resolver_free, connector_t *) {
+	xfree(data->address);
+	xfree(data->hostname);
+	xfree(data);
+}
+
 /**
  * irc_session_deinit()
  *
@@ -217,27 +230,13 @@ static QUERY(irc_session_deinit) {
 	xfree(j->host_ident);
 	xfree(j->nick);
 
-	for (tmplist=j->bindlist; tmplist; tmplist=tmplist->next) {
-		xfree( ((connector_t *)tmplist->data)->address);
-		xfree( ((connector_t *)tmplist->data)->hostname);
-	}
-	list_destroy(j->bindlist, 1);
+	LIST_DESTROY(j->bindlist, list_irc_resolver_free);
+	LIST_DESTROY(j->connlist, list_irc_resolver_free);
 
-	for (tmplist=j->connlist; tmplist; tmplist=tmplist->next) {
-		xfree( ((connector_t *)tmplist->data)->address);
-		xfree( ((connector_t *)tmplist->data)->hostname);
-	}
-	list_destroy(j->connlist, 1);
 	/* XXX, hilights list_t */
 
 	/* NOTE: j->awaylog shouldn't exists here */
-	for (tmplist=j->awaylog; tmplist; tmplist=tmplist->next) {
-		irc_awaylog_t *e = tmplist->data;
-		xfree(e->channame);
-		xfree(e->uid);
-		xfree(e->msg);
-	}
-	list_destroy(j->awaylog, 1);
+	LIST_DESTROY(j->awaylog, list_irc_awaylog_free);
 
 	irc_free_people(s, j);
 
@@ -544,12 +543,7 @@ static void irc_changed_resolve(session_t *s, const char *var) {
 	else { rlist = &(j->connlist); j->conntmplist = NULL; }
 
 	if (*rlist) {
-		list_t tmplist;
-		for (tmplist=*rlist; tmplist; tmplist=tmplist->next) {
-			xfree( ((connector_t *)tmplist->data)->address);
-			xfree( ((connector_t *)tmplist->data)->hostname);
-		}
-		list_destroy(*rlist, 1);
+		LIST_DESTROY(*rlist, list_irc_resolver_free);
 		*rlist = NULL;
 	}
 #ifdef NO_POSIX_SYSTEM
@@ -1355,10 +1349,10 @@ static COMMAND(irc_command_away) {
 				xfree(e->msg);
 			}
 			print_status("irc_awaylog_end", session_name(session));
-		}
 
-		list_destroy(j->awaylog, 1);
-		j->awaylog = NULL;
+			list_destroy(j->awaylog, 1);
+			j->awaylog = NULL;
+		}
 	}
 	return 0;
 }
