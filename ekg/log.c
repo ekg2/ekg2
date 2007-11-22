@@ -55,6 +55,12 @@ static char *utf_ent[256] =
 	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 };
 
+static LIST_FREE_ITEM(list_last_free, struct last *) {
+	xfree(data->uid);
+	xfree(data->message);
+	xfree(data);
+}
+
 /*
  * last_add()
  *
@@ -104,8 +110,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
 			ll = l->data;
 
 			if (ll->time == tmp_time && !xstrcasecmp(ll->uid, uid)) {
-				xfree(ll->message);
-				list_remove(&lasts, ll, 1);
+				LIST_REMOVE(&lasts, ll, list_last_free);
 				break;
 			}
 		}
@@ -119,12 +124,6 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
 	ll->message = xstrdup(msg);
 	
 	list_add(&lasts, ll, 0);
-}
-
-static LIST_FREE_ITEM(list_last_free, struct last *) {
-	xfree(data->uid);
-	xfree(data->message);
-	xfree(data);
 }
 
 /*
