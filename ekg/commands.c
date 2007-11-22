@@ -4188,6 +4188,11 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 	return LIST_ADD_SORTED(&commands, c, 0, command_add_compare);
 }
 
+static LIST_FREE_ITEM(list_command_free, command_t *) {
+	array_free(data->params);
+	array_free(data->possibilities);
+}
+
 /*
  * command_remove()
  *
@@ -4197,13 +4202,8 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
  *  - name - nazwa komendy.
  */
 
-void command_freeone(command_t *c)
-{
-	if (!c)
-		return;
-	array_free(c->params);
-	array_free(c->possibilities);
-	list_remove(&commands, c, 1);
+void command_freeone(command_t *c) {
+	LIST_REMOVE(&commands, c, list_command_free);
 }
 
 int command_remove(plugin_t *plugin, const char *name)
@@ -4216,11 +4216,26 @@ int command_remove(plugin_t *plugin, const char *name)
 
 		if (!xstrcasecmp(name, c->name) && plugin == c->plugin) {
 			command_freeone(c);
+
 			return 0;
 		}
 	}
 
 	return -1;
+}
+
+/**
+ * command_free()
+ *
+ * Free <b>all</b> commands
+ *
+ * @sa command_freeone() 	- To free one command [with know pointer to it]
+ * @sa command_remove()		- To free command [with known plugin and name]
+ */
+
+void command_free() {
+	LIST_DESTROY(commands, list_command_free);
+	commands = NULL;
 }
 
 /*
@@ -4401,32 +4416,6 @@ void command_init()
 	  "active clear kill last lastlog list move new next prev switch refresh left right");
 
 	commands_lock = NULL;
-}
-
-/**
- * command_free()
- *
- * Free <b>all</b> commands
- *
- * @sa command_freeone() 	- To free one command [with know pointer to it]
- * @sa command_remove()		- To free command [with known plugin and name]
- */
-
-void command_free() {
-	list_t l;
-
-	if (!commands)
-		return;
-
-	for (l = commands; l; l = l->next) {
-		command_t *c = l->data;
-
-		array_free(c->params);
-		array_free(c->possibilities);
-	}
-
-	list_destroy(commands, 1);
-	commands = NULL;
 }
 
 /*
