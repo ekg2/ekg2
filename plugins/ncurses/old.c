@@ -186,6 +186,9 @@ inline int ncurses_typingsend(const int len, const int first) {
 TIMER(ncurses_typing) {
 	window_t *oldwin	= NULL;
 
+	if (type)
+		return 0;
+
 	if (ncurses_typing_mod > 0) { /* need to update status */
 		const int curlen		= ncurses_lineslen();
 		const int winchange		= (ncurses_typing_win != window_current);
