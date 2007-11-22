@@ -182,6 +182,13 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	return 0;
 }
 
+LIST_FREE_ITEM(list_event_free, struct event *) {
+	xfree(data->name);
+	xfree(data->action);
+	xfree(data->target);
+	xfree(data);
+}
+
 /* 
  * event_remove ()
  * 
@@ -205,12 +212,8 @@ static int event_remove(unsigned int id, int quiet)
 		printq("events_del_noexist", itoa(id));
 		return -1;
 	}
-	
-        xfree(ev->name);
-        xfree(ev->action);
-        xfree(ev->target);
-	
-	list_remove(&events, ev, 1);
+
+	LIST_REMOVE(&events, list_event_free);
 
 	printq("events_del", itoa(id));
 
@@ -218,6 +221,25 @@ cleanup:
 /*        query_emit_id(NULL, EVENT_REMOVED, itoa(id)); */	/* XXX, incorrect. */
 
 	return 0;
+}
+
+/* 
+ * event_free ()
+ *
+ * it frees whole list 
+ */
+void event_free()
+{
+	list_t l;
+
+	xfree(events_all);
+	events_all = NULL;
+
+	if (!events)
+		return;
+
+	LIST_DESTROY(events, list_event_free);
+	events = NULL;
 }
 
 /* 
@@ -610,32 +632,6 @@ int event_check(const char *session, const char *name, const char *uid, const ch
 	xfree(edata);
 
         return 0;
-}
-
-/* 
- * event_free ()
- *
- * it frees whole list 
- */
-void event_free()
-{
-	list_t l;
-
-	xfree(events_all);
-	events_all = NULL;
-
-	if (!events)
-		return;
-
-	for (l = events; l; ) {
-		struct event *e = l->data;
-
-		l = l->next;
-
-		event_remove(e->id, 1);
-	}
-	list_destroy(events, 1);
-	events = NULL;
 }
 
 /*
