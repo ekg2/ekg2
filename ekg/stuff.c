@@ -465,6 +465,12 @@ void binding_free() {
 	}
 }
 
+static LIST_FREE_ITEM(list_buffer_free, struct buffer *) {
+	xfree(data->line);
+	xfree(data->target);
+	xfree(data);
+}
+
 /**
  * buffer_add()
  *
@@ -492,9 +498,7 @@ int buffer_add(list_t *type, const char *target, const char *line, int max_lines
 			b = l->data;
 			l = l->next;
 
-			xfree(b->line);
-			xfree(b->target);
-			list_remove(type, b, 1);
+			LIST_REMOVE(type, b, list_buffer_free);
 			bcount--;
 		}
 	}
@@ -547,9 +551,7 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 			b = l->data;
 			l = l->next;
 
-			xfree(b->line);
-			xfree(b->target);
-			list_remove(type, b, 1);
+			LIST_REMOVE(type, b, list_buffer_free);
 			bcount--;
 		}
 	}
@@ -601,19 +603,10 @@ char *buffer_tail(list_t *type) {
  */
 
 void buffer_free(list_t *type) {
-	list_t l;
-
 	if (!type || !(*type))
 		return;
 
-	for (l = *type; l; l = l->next) {
-		struct buffer *b = l->data;
-
-		xfree(b->line);
-		xfree(b->target);
-	}
-
-	list_destroy(*type, 1);
+	LIST_DESTROY(*type, list_buffer_free);
 	*type = NULL;
 }
 
