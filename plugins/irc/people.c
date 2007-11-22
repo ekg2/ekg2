@@ -32,6 +32,23 @@
 
 enum { OTHER_NETWORK };
 
+static LIST_FREE_ITEM(list_irc_people_free, people_t *) {
+	xfree(data->nick);
+	xfree(data->realname);
+	xfree(data->host);
+	xfree(data->ident);
+	xfree(data);
+}
+
+static LIST_FREE_ITEM(list_irc_channel_free, channel_t *) {
+	xfree(data->name);
+	xfree(data->topic);
+	xfree(data->topicby);
+	xfree(data->mode_str);
+	list_destroy(chan->banlist, 1);
+	xfree(data);
+}
+
 /* add others
  */
 int irc_xstrcasecmp_default(char *str1, char *str2)
@@ -261,13 +278,7 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
 	if (!(nick->channels)) {
 	/* delete entry in private->people 
 		debug("-%s lista ludzi, ", nick->nick); */
-					/* mh, zerowanie tego tak raczej niepotrzebne... ale jest */
-		xfree(nick->nick);	nick->nick = NULL;
-		xfree(nick->ident);	nick->ident = NULL;
-		xfree(nick->host);	nick->host = NULL;
-		xfree(nick->realname);	nick->realname = NULL;
-
-		list_remove(&(j->people), nick, 1);
+		LIST_REMOVE(&(j->people), nick, list_irc_people_free);
 		
 		list_remove(&(chan->onchan), nick, 0);
 		return 1;
@@ -559,25 +570,10 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		 */
 	}
 
-	for (t1=j->people; t1; t1=t1->next) {
-		per = (people_t *) t1->data;
-		xfree(per->nick);
-		xfree(per->realname);
-		xfree(per->host);
-		xfree(per->ident);
-	}
-	list_destroy(j->people, 1);
+	LIST_DESTROY(j->people, list_irc_people_free);
 	j->people = NULL;
 
-	for (t1=j->channels; t1; t1=t1->next) {
-		chan = t1->data;
-		xfree(chan->name);
-		xfree(chan->topic);
-		xfree(chan->topicby);
-		xfree(chan->mode_str);
-		list_destroy(chan->banlist, 1);
-	}
-	list_destroy(j->channels, 1);
+	LIST_DESTROY(j->channels, list_irc_channel_free);
 	j->channels = NULL;
 
 	return 0;
