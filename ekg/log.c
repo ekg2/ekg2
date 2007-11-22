@@ -121,6 +121,12 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
 	list_add(&lasts, ll, 0);
 }
 
+static LIST_FREE_ITEM(list_last_free, struct last *) {
+	xfree(data->uid);
+	xfree(data->message);
+	xfree(data);
+}
+
 /*
  * last_del()
  *
@@ -137,12 +143,19 @@ void last_del(const char *uid)
 
 		l = l->next;
 
-		if (!xstrcasecmp(uid, ll->uid)) {
-			xfree(ll->uid);
-			xfree(ll->message);
-			list_remove(&lasts, ll, 1);
-		}
+		if (!xstrcasecmp(uid, ll->uid))
+			LIST_REMOVE(&lasts, ll, list_last_free);
 	}
+}
+
+/*
+ * last_free()
+ *
+ * zwalnia miejsce po last.
+ */
+void last_free() {
+	LIST_DESTROY(&lasts, list_last_free);
+	lasts = NULL;
 }
 
 /*
@@ -165,29 +178,6 @@ int last_count(const char *uid)
 	}
 
 	return count;
-}
-
-/*
- * last_free()
- *
- * zwalnia miejsce po last.
- */
-void last_free()
-{
-	list_t l;
-
-	if (!lasts)
-		return;
-
-	for (l = lasts; l; l = l->next) {
-		struct last *ll = l->data;
-		
-		xfree(ll->uid);
-		xfree(ll->message);
-	}
-
-	list_destroy(lasts, 1);
-	lasts = NULL;
 }
 
 /*
