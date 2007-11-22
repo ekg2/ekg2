@@ -181,46 +181,37 @@ static QUERY(jabber_session_deinit) {
 	return 0;
 }
 
+static LIST_FREE_ITEM(list_jabber_privacy_free, jabber_iq_privacy_t *) {
+	xfree(data->type);
+	xfree(data->value);
+	xfree(data);
+}
+
 /* destroy all previously saved jabber:iq:privacy list... we DON'T DELETE LIST on jabberd server... only list saved @ j->privacy */
 
 int jabber_privacy_free(jabber_private_t *j) {
-	list_t l;
 	if (!j || !j->privacy) return -1;
 
-	for (l = j->privacy; l; l = l->next) {
-		jabber_iq_privacy_t *pr = l->data;
-		if (!pr) continue;
-
-		xfree(pr->type);
-		xfree(pr->value);
-
-		xfree(pr);
-		l->data = NULL;
-	}
-	list_destroy(j->privacy, 0);
+	LIST_DESTROY(j->privacy, list_jabber_privacy_free);
 	j->privacy = NULL;
 	return 0;
 }
 
-/* destory all previously saved bookmarks... we DON'T DELETE LIST on jabberd server... only list saved @ j->bookamarks */
+static LIST_FREE_ITEM(list_jabber_bookmarks_free, jabber_bookmark_t *) {
+	if (data->type == JABBER_BOOKMARK_URL) { xfree(data->private.url->name); xfree(data->private.url->url); }
+	else if (data->type == JABBER_BOOKMARK_CONFERENCE) { 
+		xfree(data->private.conf->name); xfree(data->private.conf->jid);
+		xfree(data->private.conf->nick); xfree(data->private.conf->pass);
+	}
+	xfree(data->private.other);
+	xfree(data);
+}
+
+/* destroy all previously saved bookmarks... we DON'T DELETE LIST on jabberd server... only list saved @ j->bookamarks */
 int jabber_bookmarks_free(jabber_private_t *j) {
-	list_t l;
 	if (!j || !j->bookmarks) return -1;
 
-	for (l = j->bookmarks; l; l = l->next) {
-		jabber_bookmark_t *book = l->data;
-		if (!book) continue;
-
-		if (book->type == JABBER_BOOKMARK_URL) { xfree(book->private.url->name); xfree(book->private.url->url); }
-		else if (book->type == JABBER_BOOKMARK_CONFERENCE) { 
-			xfree(book->private.conf->name); xfree(book->private.conf->jid);
-			xfree(book->private.conf->nick); xfree(book->private.conf->pass);
-		}
-		xfree(book->private.other);
-		xfree(book);
-		l->data = NULL;
-	}
-	list_destroy(j->bookmarks, 0); 
+	LIST_DESTROY(j->bookmarks, list_jabber_bookmarks_free);
 	j->bookmarks = NULL;
 	return 0;
 }
@@ -346,8 +337,6 @@ int jabber_write_status(session_t *s)
 	}
 
 	if (!j->istlen) {
-		char *tmp;
-
 		priority = saprintf("<priority>%d</priority>", prio); /* priority only in real jabber session */
 
 		if (session_int_get(s, "__gpg_enabled") == 1) {
