@@ -182,7 +182,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	return 0;
 }
 
-LIST_FREE_ITEM(list_event_free, struct event *) {
+static LIST_FREE_ITEM(list_event_free, struct event *) {
 	xfree(data->name);
 	xfree(data->action);
 	xfree(data->target);
@@ -213,7 +213,7 @@ static int event_remove(unsigned int id, int quiet)
 		return -1;
 	}
 
-	LIST_REMOVE(&events, list_event_free);
+	LIST_REMOVE(&events, ev, list_event_free);
 
 	printq("events_del", itoa(id));
 
@@ -230,8 +230,6 @@ cleanup:
  */
 void event_free()
 {
-	list_t l;
-
 	xfree(events_all);
 	events_all = NULL;
 

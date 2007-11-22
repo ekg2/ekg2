@@ -72,35 +72,6 @@ static int emoticon_add(const char *name, const char *value)
 }
 
 /*
- * emoticon_remove()
- *
- * usuwa emoticon o danej nazwie.
- *
- *  - name.
- *
- * 0/-1
- */
-#if 0 /* never used, never exported, uncomment when needed */
-static int emoticon_remove(const char *name)
-{
-	list_t l;
-
-	for (l = emoticons; l; l = l->next) {
-		emoticon_t *f = l->data;
-
-		if (!xstrcasecmp(f->name, name)) {
-			xfree(f->value);
-			xfree(f->name);
-			list_remove(&emoticons, f, 1);
-			return 0;
-		}
-	}
-	
-	return -1;
-}
-#endif
-
-/*
  * emoticon_read()
  *
  * ³aduje do listy wszystkie makra z pliku ~/.gg/emoticons
@@ -207,26 +178,50 @@ char *emoticon_expand(const char *s)
 	return ms;
 }
 
+static LIST_FREE_ITEM(list_emoticon_free, emoticon_t *) {
+	xfree(data->name);
+	xfree(data->value);
+	xfree(data);
+}
+
+/*
+ * emoticon_remove()
+ *
+ * usuwa emoticon o danej nazwie.
+ *
+ *  - name.
+ *
+ * 0/-1
+ */
+#if 0 /* never used, never exported, uncomment when needed */
+static int emoticon_remove(const char *name)
+{
+	list_t l;
+
+	for (l = emoticons; l; l = l->next) {
+		emoticon_t *f = l->data;
+
+		if (!xstrcasecmp(f->name, name)) {
+			LIST_REMOVE(&emoticons, f, list_emoticon_free);
+			return 0;
+		}
+	}
+	
+	return -1;
+}
+#endif
+
+
 /*
  * emoticon_free()
  *
  * usuwa pamiêæ zajêt± przez emoticony.
  */
-void emoticon_free()
-{
-	list_t l;
-
+void emoticon_free() {
 	if (!emoticons)
 		return;
 
-	for (l = emoticons; l; l = l->next) {
-		emoticon_t *e = l->data;
-
-		xfree(e->name);
-		xfree(e->value);
-	}
-
-	list_destroy(emoticons, 1);
+	LIST_DESTROY(emoticons, list_emoticon_free);
 	emoticons = NULL;
 }
 
