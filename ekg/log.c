@@ -153,7 +153,7 @@ void last_del(const char *uid)
  * zwalnia miejsce po last.
  */
 void last_free() {
-	LIST_DESTROY(&lasts, list_last_free);
+	LIST_DESTROY(lasts, list_last_free);
 	lasts = NULL;
 }
 
