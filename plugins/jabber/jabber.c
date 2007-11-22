@@ -460,7 +460,15 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 			username = xstrndup(s->uid + 5, tmp - s->uid - 5);
 		else	username = xstrdup(s->uid + 5);
 
-		if (!j->istlen && session_get(s, "__new_account")) {
+			/* XXX,
+			 * 	Here if we've got SASL-connection we should do jabber:iq:register only when
+			 * 	j->connecting == 1, 
+			 *
+			 *	but i'm not quite sure if s->connected, and j->connecting can be 0	[yeap, i know it would be stupid]
+			 *	So, to avoid regression, we use here j->connecting != 2 
+			 */
+
+		if (!j->istlen && j->connecting != 2 && session_get(s, "__new_account")) {
 			char *epasswd	= jabber_escape(passwd);
 			watch_write(j->send_watch, 
 				"<iq type=\"set\" to=\"%s\" id=\"register%d\">"
