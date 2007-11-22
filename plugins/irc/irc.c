@@ -181,7 +181,7 @@ static QUERY(irc_session_init) {
 	return 0;
 }
 
-static LIST_FREE_ITEM(list_irc_awaylog_free, irc_away_log_t *) {
+static LIST_FREE_ITEM(list_irc_awaylog_free, irc_awaylog_t *) {
 	xfree(data->channame);
 	xfree(data->uid);
 	xfree(data->msg);
@@ -216,8 +216,6 @@ static QUERY(irc_session_deinit) {
 
 	session_t *s = session_find(session);
 	irc_private_t *j;
-
-	list_t 		tmplist;
 	int i;
 
 	if (!s || !(j = s->priv) || (s->plugin != &irc_plugin))

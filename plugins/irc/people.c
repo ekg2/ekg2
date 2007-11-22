@@ -45,7 +45,7 @@ static LIST_FREE_ITEM(list_irc_channel_free, channel_t *) {
 	xfree(data->topic);
 	xfree(data->topicby);
 	xfree(data->mode_str);
-	list_destroy(chan->banlist, 1);
+	list_destroy(data->banlist, 1);
 	xfree(data);
 }
 
