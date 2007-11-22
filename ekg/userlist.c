@@ -646,10 +646,6 @@ userlist_t *userlist_find(session_t *session, const char *uid)
         return userlist_find_u(&(session->userlist), uid);
 }
 
-	/* JID hack needs this function, and we don't want to move whole
-	 * userlist_find_u because of one hack, so only adding prototype */
-int valid_uid(const char *uid);
-
 /* 
  * userlist_find_u()
  *
