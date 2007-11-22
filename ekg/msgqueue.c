@@ -65,23 +65,12 @@ int msg_queue_add(const char *session, const char *rcpts, const char *message, c
 	return (list_add(&msg_queue, m, 0) ? 0 : -1);
 }
 
-/*
- * msg_queue_remove()
- *
- * usuwa wiadomo¶æ o podanym numerze sekwencyjnym z kolejki wiadomo¶ci.
- *
- *  - msg - struktura opisuj±ca wiadomo¶æ.
- *
- * 0 je¶li usuniêto, -1 je¶li nie ma takiej wiadomo¶ci.
- */
-static void msg_queue_remove(msg_queue_t *m)
-{
-	xfree(m->session);
-	xfree(m->rcpts);
-	xfree(m->message);
-	xfree(m->seq);
-
-	list_remove(&msg_queue, m, 1);
+static LIST_FREE_ITEM(list_msg_queue_free, msg_queue_t *) {
+	xfree(data->session);
+	xfree(data->rcpts);
+	xfree(data->message);
+	xfree(data->seq);
+	xfree(data);
 }
 
 /*
@@ -105,7 +94,7 @@ int msg_queue_remove_uid(const char *uid)
 		l = l->next;
 
 		if (!xstrcasecmp(m->rcpts, uid)) {
-			msg_queue_remove(m);
+			LIST_REMOVE(&msg_queue, m, list_msg_queue_free);
 			res = 0;
 		}
 	}
@@ -136,7 +125,7 @@ int msg_queue_remove_seq(const char *seq)
 		l = l->next;
 
 		if (!xstrcasecmp(m->seq, seq)) {
-			msg_queue_remove(m);
+			LIST_REMOVE(&msg_queue, m, list_msg_queue_free);
 			res = 0;
 		}
 	}
@@ -149,19 +138,8 @@ int msg_queue_remove_seq(const char *seq)
  *
  * zwalnia pamiêæ po kolejce wiadomo¶ci.
  */
-void msg_queue_free()
-{
-	list_t l;
-
-	for (l = msg_queue; l; ) {
-		msg_queue_t *m = l->data;
-
-		l = l->next;
-
-		msg_queue_remove(m);
-	}
-
-	list_destroy(msg_queue, 1);
+void msg_queue_free() {
+	LIST_DESTROY(msg_queue, list_msg_queue_free);
 	msg_queue = NULL;
 }
 
@@ -199,7 +177,7 @@ int msg_queue_flush(const char *session)
 
 		/* wiadomo¶æ wysy³ana z nieistniej±cej ju¿ sesji? usuwamy. */
 		if (!(s = session_find(m->session))) {
-			msg_queue_remove(m);
+			LIST_REMOVE(&msg_queue, m, list_msg_queue_free);
 			continue;
 		}
 
@@ -208,7 +186,7 @@ int msg_queue_flush(const char *session)
 
 		command_exec_format(NULL, s, 1, ("/msg \"%s\" %s"), m->rcpts, m->message);
 
-		msg_queue_remove(m);
+		LIST_REMOVE(&msg_queue, m, list_msg_queue_free);
 
 		sent = 1;
 	}
