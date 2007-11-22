@@ -208,23 +208,7 @@ void list_cleanup(list_t *list) {
 	}
 }
 
-/**
- * list_remove()
- *
- * Remove item @a data from list_t pointed by @a list
- *
- * @param list - pointer to list_t
- * @param data - data to remove from @a list
- * @param free_data - if set and item was found it'll call xfree() on it.
- * @sa list_destroy() - to remove whole list
- *
- * @return 	 0 if item was founded, and was removed from list_t pointed by @a list<br>
- * 		-1 and errno set to EFAULT, if @a list was NULL<br>
- * 		-1 and errno set to ENOENT, if item was not found
- */
-
-int list_remove(list_t *list, void *data, int free_data)
-{
+int list_remove2(list_t *list, void *data, void (*func)(void *data)) {
 	list_t tmp, last = NULL;
 
 	if (!list) {
@@ -245,11 +229,30 @@ int list_remove(list_t *list, void *data, int free_data)
 		last->next = tmp->next;
 	}
 
-	if (free_data)
-		xfree(tmp->data);
+	if (func && tmp->data)
+		func(tmp->data);
 	xfree(tmp);
 
 	return 0;
+}
+
+/**
+ * list_remove()
+ *
+ * Remove item @a data from list_t pointed by @a list
+ *
+ * @param list - pointer to list_t
+ * @param data - data to remove from @a list
+ * @param free_data - if set and item was found it'll call xfree() on it.
+ * @sa list_destroy() - to remove whole list
+ *
+ * @return 	 0 if item was founded, and was removed from list_t pointed by @a list<br>
+ * 		-1 and errno set to EFAULT, if @a list was NULL<br>
+ * 		-1 and errno set to ENOENT, if item was not found
+ */
+
+int list_remove(list_t *list, void *data, int free_data) {
+	return list_remove2(list, data, free_data ? xfree : NULL);
 }
 
 /**
@@ -268,6 +271,23 @@ int list_count(list_t list)
 		count++;
 
 	return count;
+}
+
+int list_destroy2(list_t list, void (*func)(void *)) {
+	list_t tmp;
+	
+	while (list) {
+		if (func && list->data)
+			func(list->data);
+
+		tmp = list->next;
+
+		xfree(list);
+
+		list = tmp;
+	}
+
+	return 0;
 }
 
 /**
@@ -290,22 +310,8 @@ int list_count(list_t list)
  * @return 0
  */
 
-int list_destroy(list_t list, int free_data)
-{
-	list_t tmp;
-	
-	while (list) {
-		if (free_data)
-			xfree(list->data);
-
-		tmp = list->next;
-
-		xfree(list);
-
-		list = tmp;
-	}
-
-	return 0;
+int list_destroy(list_t list, int free_data) {
+	return list_destroy2(list, free_data ? xfree : NULL);
 }
 
 /*

@@ -54,12 +54,22 @@ typedef struct list *list_t;
 #define LIST_ADD_COMPARE(x, type)			int x(const type data1, const type data2)
 #define LIST_ADD_SORTED(list, data, alloc_size, comp)	list_add_sorted(list, data, alloc_size, (void *) comp)
 
+#define LIST_REMOVE(list, data, func)			list_remove2(list, data, (void *) func)
+#define LIST_FREE_ITEM(x, type)				void x(type data)
+
+#define LIST_DESTROY(list, func)			list_destroy2(list, (void *) func)
+
 void *list_add(list_t *list, void *data, int alloc_size);
 void *list_add_beginning(list_t *list, void *data, int alloc_size);
 void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparision)(void *, void *));
-int list_remove(list_t *list, void *data, int free_data);
+
 int list_count(list_t list);
+
+int list_remove(list_t *list, void *data, int free_data);
+int list_remove2(list_t *list, void *data, void (*func)(void *));
+
 int list_destroy(list_t list, int free_data);
+int list_destroy2(list_t list, void (*func)(void *));
 
 void list_cleanup(list_t *list);
 int list_remove_safe(list_t *list, void *data, int free_data);
