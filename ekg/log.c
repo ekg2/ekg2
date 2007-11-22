@@ -112,6 +112,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
 			ll = l->data;
 
 			if (ll->time == tmp_time && !xstrcasecmp(ll->uid, uid)) {
+				xfree(ll->uid);
 				xfree(ll->message);
 				list_remove(&lasts, ll, 1);
 				break;
