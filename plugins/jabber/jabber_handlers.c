@@ -2626,6 +2626,9 @@ JABBER_HANDLER(jabber_handle_iq) {
 									 * so we need to start from beginning
 									 * sorry */
 								l = s->userlist;
+
+								xfree(userpart);
+								xfree(myuid);
 								continue;
 							} else
 								debug_error("[jabber] can't find any free nickname for UID %s.. that's kinda bitch!\n", u->uid);
