@@ -1129,7 +1129,7 @@ static COMMAND(jabber_command_change)
 #define strfix(s) (s ? s : "")
 	jabber_private_t *j = session_private_get(session);
 	char *pub[pub_sz] = { NULL, NULL, NULL, NULL, NULL, NULL };
-	char *photo;
+	char *photo = NULL;
 	const int hadphoto = !!session_get(session, "photo_hash");
 	int i;
 
