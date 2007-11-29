@@ -53,6 +53,12 @@ struct format {
 };
 static list_t formats = NULL;
 
+static LIST_FREE_ITEM(list_format_free, struct format *) {
+	xfree(data->value);
+	xfree(data->name);
+	xfree(data);
+}
+
 /*
  * format_find()
  *
@@ -915,10 +921,7 @@ static int format_remove(const char *name) {
 		struct format *f = l->data;
 
 		if (hash == f->name_hash && !xstrcmp(f->name, name)) {
-			xfree(f->value);
-			xfree(f->name);
-			list_remove(&formats, f, 1);
-
+			LIST_REMOVE(&formats, f, list_format_free);
 			return 0;
 		}
 	}
@@ -1046,22 +1049,12 @@ int theme_read(const char *filename, int replace) {
  *
  * usuwa formatki z pamiêci.
  */
-void theme_free()
-{
-        list_t l;
-
-        for (l = formats; l; l = l->next) {
-                struct format *f = l->data;
-
-                xfree(f->name);
-                xfree(f->value);
-        }
-
-        list_destroy(formats, 1);
-        formats = NULL;
+void theme_free() {
+	LIST_DESTROY(formats, list_format_free);
+	formats = NULL;
 	no_prompt_cache = 0;
 
-        theme_cache_reset();
+	theme_cache_reset();
 }
 
 void theme_plugins_init() {
