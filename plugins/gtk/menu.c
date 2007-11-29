@@ -36,6 +36,8 @@
 
 #define GTK_DISABLE_DEPRECATED
 
+#include "ekg2-config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <fcntl.h>
@@ -56,10 +58,12 @@
 #include <gtk/gtkversion.h>
 #include <gdk/gdkkeysyms.h>
 
+#include <ekg/stuff.h>
 #include <ekg/windows.h>
 #include <ekg/userlist.h>
 
 #include "main.h"
+#include "palette.h"
 
 #if 0
 #include "fe-gtk.h"
@@ -85,7 +89,6 @@
 #include "notifygui.h"
 #include "pixmaps.h"
 #include "rawlog.h"
-#include "palette.h"
 #include "plugingui.h"
 #include "search.h"
 #include "textgui.h"
@@ -94,11 +97,8 @@
 #include "menu.h"
 
 #endif
-#if 0
 
 static GSList *submenu_list;
-
-#endif
 
 enum {
 	M_MENUITEM,
@@ -127,6 +127,57 @@ struct mymenu {
 #define XCMENU_SHADED 1
 #define XCMENU_MARKUP 2
 #define XCMENU_MNEMONIC 4
+
+/* XXX, move to about.c ? */
+
+static void menu_about(GtkWidget *wid, gpointer sess) {
+	GtkWidget *vbox, *label, *hbox;
+	static GtkWidget *about = NULL;
+	char buf[512];
+
+	if (about) {
+		gtk_window_present(GTK_WINDOW(about));
+		return;
+	}
+
+	about = gtk_dialog_new();
+	gtk_window_set_position(GTK_WINDOW (about), GTK_WIN_POS_CENTER);
+	gtk_window_set_resizable(GTK_WINDOW (about), FALSE);
+	gtk_window_set_title(GTK_WINDOW(about), _("About ekg2"));
+
+	vbox = GTK_DIALOG(about)->vbox;
+
+	wid = gtk_image_new_from_pixbuf(pix_ekg2);
+	gtk_container_add(GTK_CONTAINER(vbox), wid);
+
+	label = gtk_label_new(NULL);
+	gtk_label_set_selectable(GTK_LABEL (label), TRUE);
+	gtk_container_add(GTK_CONTAINER(vbox), label);
+	snprintf(buf, sizeof(buf), 
+		"<span size=\"x-large\"><b>ekg2-%s</b></span>\n\n"
+			"<b>Compiled on</b>: %s\n\n"
+			"<small>gtk frontend based on xchat: \302\251 1998-2007 Peter \305\275elezn\303\275 &lt;zed@xchat.org></small>\n"
+			"<small>iconsets in userlist copied from psi-0.10 (crystal-gadu.jisp and crystal-roster.jisp)</small>",
+			VERSION, compile_time());
+
+	gtk_label_set_markup(GTK_LABEL(label), buf);
+	gtk_label_set_justify(GTK_LABEL(label), GTK_JUSTIFY_CENTER);
+
+	hbox = gtk_hbox_new(0, 2);
+	gtk_container_add(GTK_CONTAINER(vbox), hbox);
+
+	wid = gtk_button_new_from_stock(GTK_STOCK_CLOSE);
+	GTK_WIDGET_SET_FLAGS(GTK_WIDGET(wid), GTK_CAN_DEFAULT);
+	gtk_dialog_add_action_widget(GTK_DIALOG(about), wid, GTK_RESPONSE_OK);
+	gtk_widget_grab_default(wid);
+
+	gtk_widget_show_all(about);
+
+	gtk_dialog_run(GTK_DIALOG(about));
+
+	gtk_widget_destroy(about);
+	about = NULL;
+}
 
 #if 0
 
@@ -347,9 +398,9 @@ menu_quick_item_with_callback(void *callback, char *label, GtkWidget *menu, void
 	gtk_widget_show(item);
 }
 
-static GtkWidget *
-menu_quick_sub(char *name, GtkWidget *menu, GtkWidget **sub_item_ret, int flags, int pos)
-{
+#endif
+
+static GtkWidget *menu_quick_sub(char *name, GtkWidget *menu, GtkWidget **sub_item_ret, int flags, int pos) {
 	GtkWidget *sub_menu;
 	GtkWidget *sub_item;
 
@@ -380,9 +431,7 @@ menu_quick_sub(char *name, GtkWidget *menu, GtkWidget **sub_item_ret, int flags,
 	return sub_menu;
 }
 
-static GtkWidget *
-menu_quick_endsub()
-{
+static GtkWidget *menu_quick_endsub() {
 	/* Just delete the first element in the linked list pointed to by first */
 	if (submenu_list)
 		submenu_list = g_slist_remove(submenu_list, submenu_list->data);
@@ -392,6 +441,8 @@ menu_quick_endsub()
 	else
 		return NULL;
 }
+
+#if 0
 
 static void
 toggle_cb(GtkWidget *item, char *pref_name)
@@ -520,16 +571,11 @@ void menu_nickmenu(window_t *sess, GdkEventButton * event, char *nick, int num_s
 	GtkWidget *menu = gtk_menu_new();
 	userlist_t *user;
 
-#if 0
-	char *real, *fmt;
-	struct away_msg *away;
-
 	if (str_copy)
 		free(str_copy);
-	str_copy = strdup(nick);
+	str_copy = xstrdup(nick);
 
-	submenu_list = 0;	/* first time through, might not be 0 */
-#endif
+	submenu_list = NULL;	/* first time through, might not be 0 */		/* [XXX, how does this work? memleak? */
 	/* more than 1 nick selected? */
 	if (num_sel > 1) {
 		snprintf(buf, sizeof(buf), "%d nicks selected.", num_sel);
@@ -537,66 +583,28 @@ void menu_nickmenu(window_t *sess, GdkEventButton * event, char *nick, int num_s
 		menu_quick_item(0, 0, menu, XCMENU_SHADED, 0, 0);
 	} else {
 		user = userlist_find(sess->session, nick);
-#if 0
-		if (!user)
-			user = userlist_find_global(current_sess->server, nick);
-#endif
+
+		/* XXX,
+		 * 	jesli nadal nie ma uzytkownika, to szukaj go w konferencjach */
+
 		if (user) {
-#if 0
 			GtkWidget *submenu = menu_quick_sub(nick, menu, NULL, XCMENU_DOLIST, -1);
 
-			/* let the translators tweak this if need be */
-			fmt = _("<tt><b>%-11s</b></tt> %s");
+			char *fmt = "<tt><b>%-11s</b></tt> %s";			/* XXX, gettext? (let the translators tweak this if need be) */
+			char *real;
 
-			if (user->realname) {
-				real = g_markup_escape_text(user->realname, -1);
-				snprintf(buf, sizeof(buf), fmt, _("Real Name:"), real);
-				g_free(real);
-			} else {
-				snprintf(buf, sizeof(buf), fmt, _("Real Name:"), _("Unknown"));
-			}
+		/* UID */
+			real = g_markup_escape_text(user->uid, -1);
+			snprintf(buf, sizeof(buf), fmt, "UID:", real);
+			g_free(real);
 			menu_quick_item(0, buf, submenu, XCMENU_MARKUP, 0, 0);
 
-			snprintf(buf, sizeof(buf), fmt, _("User:"),
-				 user->hostname ? user->hostname : _("Unknown"));
-			menu_quick_item(0, buf, submenu, XCMENU_MARKUP, 0, 0);
+		/* <separator> ? */
 
-			snprintf(buf, sizeof(buf), fmt, _("Country:"),
-				 user->hostname ? country(user->hostname) : _("Unknown"));
-			menu_quick_item(0, buf, submenu, XCMENU_MARKUP, 0, 0);
-
-			snprintf(buf, sizeof(buf), fmt, _("Server:"),
-				 user->servername ? user->servername : _("Unknown"));
-			menu_quick_item(0, buf, submenu, XCMENU_MARKUP, 0, 0);
-
-			if (user->away) {
-				away = server_away_find_message(current_sess->server, nick);
-				if (away) {
-					char *msg =
-						strip_color(away->message ? away->
-							    message : _("Unknown"), -1, STRIP_ALL);
-					real = g_markup_escape_text(msg, -1);
-					free(msg);
-					snprintf(buf, sizeof(buf), fmt, _("Away Msg:"), real);
-					g_free(real);
-					menu_quick_item(0, buf, submenu, XCMENU_MARKUP, 0, 0);
-				}
-			}
-
-			if (user->lasttalk) {
-				char min[96];
-
-				snprintf(min, sizeof(min), _("%u minutes ago"),
-					 (unsigned int)((time(0) - user->lasttalk) / 60));
-				snprintf(buf, sizeof(buf), fmt, _("Last Msg:"), min);
-			} else {
-				snprintf(buf, sizeof(buf), fmt, _("Last Msg:"), _("Unknown"));
-			}
-
-			menu_quick_item(0, buf, submenu, XCMENU_MARKUP, 0, 0);
+		/* XXX, get more data using USERLIST_PRIVHANDLE (?) */
+		/* the same like above */
 
 			menu_quick_endsub();
-#endif
 			menu_quick_item(0, 0, menu, XCMENU_SHADED, 0, 0);
 		}
 	}
@@ -930,70 +938,40 @@ usermenu_update(void)
 	}
 }
 
-static void
-menu_newserver_window(GtkWidget *wid, gpointer none)
-{
-	int old = prefs.tabchannels;
+#endif
 
-	prefs.tabchannels = 0;
-	new_ircwindow(NULL, NULL, SESS_SERVER, 0);
-	prefs.tabchannels = old;
+/* XXX, window_current->session */
+
+static void menu_newwindow_window(GtkWidget *wid, gpointer none) {
+	int old = new_window_in_tab_config;
+
+	new_window_in_tab_config = 0;
+	window_new(NULL, window_current->session, 0);
+	new_window_in_tab_config = old;
 }
 
-static void
-menu_newchannel_window(GtkWidget *wid, gpointer none)
-{
-	int old = prefs.tabchannels;
+static void menu_newwindow_tab(GtkWidget *wid, gpointer none) {
+	int old = new_window_in_tab_config;
 
-	prefs.tabchannels = 0;
-	new_ircwindow(current_sess->server, NULL, SESS_CHANNEL, 0);
-	prefs.tabchannels = old;
+	new_window_in_tab_config = 1;
+	window_new(NULL, window_current->session, 0);
+	new_window_in_tab_config = old;
 }
 
-static void
-menu_newserver_tab(GtkWidget *wid, gpointer none)
-{
-	int old = prefs.tabchannels;
-	int oldf = prefs.newtabstofront;
+#if 0
 
-	prefs.tabchannels = 1;
-	/* force focus if setting is "only requested tabs" */
-	if (prefs.newtabstofront == 2)
-		prefs.newtabstofront = 1;
-	new_ircwindow(NULL, NULL, SESS_SERVER, 0);
-	prefs.tabchannels = old;
-	prefs.newtabstofront = oldf;
-}
-
-static void
-menu_newchannel_tab(GtkWidget *wid, gpointer none)
-{
-	int old = prefs.tabchannels;
-
-	prefs.tabchannels = 1;
-	new_ircwindow(current_sess->server, NULL, SESS_CHANNEL, 0);
-	prefs.tabchannels = old;
-}
-
-static void
-menu_rawlog(GtkWidget *wid, gpointer none)
-{
+static void menu_rawlog(GtkWidget *wid, gpointer none) {
 	open_rawlog(current_sess->server);
 }
-
-static void
-menu_detach(GtkWidget *wid, gpointer none)
-{
-	mg_detach(current_sess, 0);
-}
-
-static void
-menu_close(GtkWidget *wid, gpointer none)
-{
-	mg_close_sess(current_sess);
-}
-
 #endif
+
+static void menu_detach(GtkWidget *wid, gpointer none) {
+	mg_detach(window_current, 0);
+}
+
+static void menu_close(GtkWidget *wid, gpointer none) {
+	mg_close_sess(window_current);
+}
 
 static void menu_quit(GtkWidget *wid, gpointer none) {
 	mg_open_quit_dialog(FALSE);
@@ -1188,30 +1166,30 @@ menu_layout_cb(GtkWidget *item, gpointer none)
 
 #endif
 
+static GdkPixbuf *pix_book = NULL;	/* XXX */
+
 static struct mymenu mymenu[] = {
 	{N_("_ekg2"), 0, 0, M_NEWMENU, 0, 0, 1},
-#if 0
-		{N_("Network Li_st..."), menu_open_server_list, (char *)&pix_book, M_MENUPIX, 0, 0, 1, GDK_s},
+#define menu_open_server_list NULL
+#define menu_loadplugin NULL
+
+		{N_("Session Li_st..."), menu_open_server_list, (char *)&pix_book, M_MENUPIX, 0, 0, 1, GDK_s},
 		{0, 0, 0, M_SEP, 0, 0, 0},
 
 		{N_("_New"), 0, GTK_STOCK_NEW, M_MENUSUB, 0, 0, 1},
-			{N_("Server Tab..."), menu_newserver_tab, 0, M_MENUITEM, 0, 0, 1, GDK_t},
-			{N_("Channel Tab..."), menu_newchannel_tab, 0, M_MENUITEM, 0, 0, 1},
-			{N_("Server Window..."), menu_newserver_window, 0, M_MENUITEM, 0, 0, 1},
-			{N_("Channel Window..."), menu_newchannel_window, 0, M_MENUITEM, 0, 0, 1},
+			{N_("Window in Tab..."), menu_newwindow_tab, 0, M_MENUITEM, 0, 0, 1, GDK_t},
+			{N_("Window in new window..."), menu_newwindow_window, 0, M_MENUITEM, 0, 0, 1},
 			{0, 0, 0, M_END, 0, 0, 0},
 		{0, 0, 0, M_SEP, 0, 0, 0},
-	/*	{N_("_Load Plugin or Script..."), menu_loadplugin, GTK_STOCK_REVERT_TO_SAVED, M_MENUSTOCK, 0, 0, 1}, */
-		{N_("_Load Plugin or Script..."), NULL, GTK_STOCK_REVERT_TO_SAVED, M_MENUSTOCK, 0, 0, 0},
+		{N_("_Load Plugin or Script..."), menu_loadplugin, GTK_STOCK_REVERT_TO_SAVED, M_MENUSTOCK, 0, 0, 1},
 
-		{0, 0, 0, M_SEP, 0, 0, 0},	/* 11 */
-#define DETACH_OFFSET (12)
-		{0, menu_detach, GTK_STOCK_REDO, M_MENUSTOCK, 0, 0, 1, GDK_I},	/* 12 */
-#define CLOSE_OFFSET (13)
+		{0, 0, 0, M_SEP, 0, 0, 0},	/* 9 */
+#define DETACH_OFFSET (10)
+		{0, menu_detach, GTK_STOCK_REDO, M_MENUSTOCK, 0, 0, 1, GDK_I},	/* 10 */
+#define CLOSE_OFFSET (11)
 		{0, menu_close, GTK_STOCK_CLOSE, M_MENUSTOCK, 0, 0, 1, GDK_w},
 		{0, 0, 0, M_SEP, 0, 0, 0},
-#endif
-		{N_("_Quit"), menu_quit, GTK_STOCK_QUIT, M_MENUSTOCK, 0, 0, 1, GDK_q},	/* 15 */
+		{N_("_Quit"), menu_quit, GTK_STOCK_QUIT, M_MENUSTOCK, 0, 0, 1, GDK_q},	/* 13 */
 	{N_("_View"), 0, 0, M_NEWMENU, 0, 0, 1},
 #if 0
 #define MENUBAR_OFFSET (17)
@@ -1265,9 +1243,7 @@ static struct mymenu mymenu[] = {
 		{N_("Save Text..."), menu_savebuffer, GTK_STOCK_SAVE, M_MENUSTOCK, 0, 0, 1},
 #endif
 	{N_("_Help"), 0, 0, M_NEWMENU, 0, 0, 1},	/* 69 */
-#if 0
 		{N_("_About"), menu_about, GTK_STOCK_ABOUT, M_MENUSTOCK, 0, 0, 1},
-#endif
 	{0, 0, 0, M_END, 0, 0, 0},
 };
 
@@ -1615,9 +1591,7 @@ fe_menu_update(menu_entry * me)
 
 /* used to add custom menus to the right-click menu */
 
-static void
-menu_add_plugin_mainmenu_items(GtkWidget *menu)
-{
+static void menu_add_plugin_mainmenu_items(GtkWidget *menu) {
 #if 0
 	GSList *list;
 	menu_entry *me;
@@ -1727,7 +1701,6 @@ menu_create_main(void *accel_group, int bar, int away, int toplevel, GtkWidget *
 			away_mask = GDK_MOD1_MASK | GDK_CONTROL_MASK;
 	}
 #endif
-#if 0
 	if (!toplevel) {
 		mymenu[DETACH_OFFSET].text = N_("_Detach Tab");
 		mymenu[CLOSE_OFFSET].text = N_("_Close Tab");
@@ -1735,7 +1708,6 @@ menu_create_main(void *accel_group, int bar, int away, int toplevel, GtkWidget *
 		mymenu[DETACH_OFFSET].text = N_("_Attach Window");
 		mymenu[CLOSE_OFFSET].text = N_("_Close Window");
 	}
-#endif
 
 	while (1) {
 		item = NULL;
@@ -1838,11 +1810,11 @@ menu_create_main(void *accel_group, int bar, int away, int toplevel, GtkWidget *
 
 		/*case M_END: */ default:
 			if (!submenu) {
-#if 0
 				if (menu) {
 					gtk_menu_item_set_submenu(GTK_MENU_ITEM(menu_item), menu);
 					menu_add_plugin_mainmenu_items(menu_bar);
 				}
+#if 0
 				if (usermenu)
 					usermenu_create(usermenu);
 #endif

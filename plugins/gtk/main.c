@@ -106,6 +106,8 @@ int ui_quit = 0;
 int gui_pane_left_size_config;
 int gui_pane_right_size_config;
 
+int new_window_in_tab_config = 1;
+
 
 /* TODO:
  *    - wrzucic zmienne do variable_add() przynajmniej te wazne..
@@ -173,11 +175,7 @@ static IDLER(ekg2_xorg_idle) {
 }
 
 void ekg_gtk_window_new(window_t *w) {			/* fe_new_window() */
-	int tab = TRUE;
-
-	/* tab == new_window_in_tab */
-
-	mg_changui_new(w, NULL, tab, 0);
+	mg_changui_new(w, NULL, new_window_in_tab_config, 0);
 }
 
 static QUERY(gtk_ui_window_new) {			/* fe_new_window() */

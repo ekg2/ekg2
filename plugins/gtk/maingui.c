@@ -1296,29 +1296,25 @@ static void mg_link_irctab(window_t *sess, int focus) {
 			gtk_widget_destroy(win);
 		return;
 	}
-#if 0
-	mg_unpopulate(sess);
+
 	win = mg_changui_destroy(sess);
-	mg_changui_new(sess, sess->res, 1, focus);
+	mg_changui_new(sess, gtk_private(sess), 1, focus);
 	/* the buffer is now attached to a different widget */
-	((xtext_buffer *) sess->res->buffer)->xtext = (GtkXText *) sess->gui->xtext;
+	((xtext_buffer *) gtk_private(sess)->buffer)->xtext = (GtkXText *) gtk_private_ui(sess)->xtext;
 	if (win)
 		gtk_widget_destroy(win);
-#endif
 }
 
-#if 0
-
-void mg_detach(session *sess, int mode) {
+void mg_detach(window_t *sess, int mode) {
 	switch (mode) {
 		/* detach only */
 	case 1:
-		if (sess->gui->is_tab)
+		if (gtk_private_ui(sess)->is_tab)
 			mg_link_irctab(sess, 1);
 		break;
 		/* attach only */
 	case 2:
-		if (!sess->gui->is_tab)
+		if (!gtk_private_ui(sess)->is_tab)
 			mg_link_irctab(sess, 1);
 		break;
 		/* toggle */
@@ -1326,8 +1322,6 @@ void mg_detach(session *sess, int mode) {
 		mg_link_irctab(sess, 1);
 	}
 }
-
-#endif
 
 static void mg_apply_entry_style(GtkWidget *entry) {
 	gtk_widget_modify_base(entry, GTK_STATE_NORMAL, &colors[COL_BG]);

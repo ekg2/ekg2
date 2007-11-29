@@ -300,7 +300,7 @@ static gint gtk_userlist_sort_func(GtkTreeModel *model, GtkTreeIter *a, GtkTreeI
 
 	if (sortcol != USERLIST_PIXMAP) {
 		printf("gtk_userlist_sort_func() IE\n");
-		return;
+		return 0;
 	}
 
 /* XXX, sequence should match sequence in contacts_options */

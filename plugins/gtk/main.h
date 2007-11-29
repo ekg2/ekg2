@@ -75,6 +75,8 @@ extern int backlog_size_config;
 extern int gui_pane_left_size_config;
 extern int gui_pane_right_size_config;
 
+extern int new_window_in_tab_config;
+
 #define hidemenu_config 0
 #define topicbar_config 1
 
