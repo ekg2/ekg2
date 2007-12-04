@@ -1481,7 +1481,9 @@ list_user:
 			printq("user_info_mobile", u->mobile);
 		if (u->groups) {
 			char *groups = group_to_string(u->groups, 0, 1);
-			printq("user_info_groups", groups);
+
+			if (strcmp(groups, ""))
+				printq("user_info_groups", groups);
 			xfree(groups);
 		}
 		if (!xstrcasecmp(u->status, EKG_STATUS_NA) || !xstrcasecmp(u->status, EKG_STATUS_INVISIBLE) || !xstrcasecmp(u->status, EKG_STATUS_ERROR)) {
