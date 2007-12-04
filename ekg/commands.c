@@ -1068,6 +1068,7 @@ static COMMAND(cmd_help)
 
 	                		seeking_name = c->name;
         			}
+
 			        while ((line = read_file(f, 0))) {
 			                if (!xstrcasecmp(line, seeking_name)) {
 			                        found = 1;
@@ -1509,7 +1510,9 @@ list_user:
 
 		if (u->groups) {
 			char *groups = group_to_string(u->groups, 0, 1);
-			printq("user_info_groups", groups);
+
+			if (strcmp(groups, ""))
+				printq("user_info_groups", groups);
 			xfree(groups);
 		}
 		if (u->status <= EKG_STATUS_NA) {
