@@ -1404,7 +1404,111 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 		case GG_EVENT_IMAGE_REPLY:
 			gg_session_handler_image(s, e);
 			break;
+#ifdef HAVE_GG_DCC7
+		case GG_EVENT_DCC7_NEW:
+		{
+			struct gg_dcc7 *dccdata = e->event.dcc7_new;
+			char *uid;
+			debug("GG_EVENT_DCC7_NEW\n");
 
+			if (!gg_config_dcc) {
+				gg_dcc7_reject(dccdata, GG_DCC7_REJECT_USER);
+				gg_dcc7_free(dccdata);
+				e->event.dcc7_new = NULL;
+				break;
+			}
+#if 0
+			if (check_dcc_limit(e) == -1)
+				break;
+#endif
+			
+			uid = saprintf("gg:%d", dccdata->peer_uin);
+
+			switch (dccdata->dcc_type) {
+				case GG_DCC7_TYPE_FILE:
+				{
+					struct stat st;
+					char *path;
+					dcc_t *d;
+
+					d = dcc_add(s, uid, DCC_GET, dccdata);
+					dcc_filename_set(d, dccdata->filename);		/* XXX< sanityzuj, cp -> iso */
+					dcc_size_set(d, dccdata->size);
+
+					print("dcc_get_offer", format_user(s, uid), d->filename, d->size, itoa(d->id));
+
+					if (config_dcc_dir)
+						path = saprintf("%s/%s", config_dcc_dir, d->filename);
+					else
+						path = xstrdup(d->filename);
+
+					if (!stat(path, &st) && st.st_size < d->size)
+						print("dcc_get_offer_resume", format_user(s, uid), d->filename, itoa(d->size), itoa(d->id));
+
+					xfree(path);
+
+					break;
+				}
+
+				case GG_DCC7_TYPE_VOICE:
+				{
+					dcc_t *d = dcc_add(s, uid, DCC_VOICE, dccdata);
+
+					print("dcc_voice_offer", format_user(s, uid), itoa(d->id));
+					break;
+				}
+
+				default:
+					debug_error("[DCC7_NEW] unknown type %d\n", dccdata->type);
+			}
+
+			xfree(uid);
+
+			/* XXX, add timeouter */
+			/* dane watcha dostajemy w _INFO [czekamy na libgadu] */
+
+			break;
+		}
+
+		case GG_EVENT_DCC7_REJECT:
+		{
+			struct gg_dcc7 *dccdata = e->event.dcc7_accept.dcc7;
+			dcc_t *dcc;
+
+			debug("GG_EVENT_DCC7_REJECT\n");
+
+			if (!(dcc = gg_dcc_find(dccdata))) {
+				debug_error("GG_EVENT_DCC7_REJECT [DCC NOT FOUND: %p]\n", dcc);
+				break;
+			}
+
+			print("dcc_error_refused", format_user(dcc->session, dcc->uid));
+
+		/* XXX, close handler powinien byc ustawiony! */
+			gg_dcc7_free(dccdata);
+			dcc_close(dcc);
+
+			break;
+		}
+
+		case GG_EVENT_DCC7_ACCEPT: 
+		{
+			struct gg_dcc7 *dccdata = e->event.dcc7_accept.dcc7;
+			dcc_t *dcc;
+
+			debug("GG_EVENT_DCC7_ACCEPT [%p]\n", dccdata);
+
+			timer_remove_data(&gg_plugin, dccdata);
+
+			if (!(dcc = gg_dcc_find(dccdata))) {
+				debug_error("GG_EVENT_DCC7_ACCEPT [DCC NOT FOUND: %p]\n", dcc);
+				break;
+			}
+
+			watch_add(&gg_plugin, dccdata->fd, dccdata->check, gg_dcc7_handler, dccdata);
+			break;
+		}
+#endif
 		default:
 			debug("[gg] unhandled event 0x%.4x, consider upgrade\n", e->type);
 	}
