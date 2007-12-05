@@ -1435,7 +1435,7 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 					dcc_filename_set(d, dccdata->filename);		/* XXX< sanityzuj, cp -> iso */
 					dcc_size_set(d, dccdata->size);
 
-					print("dcc_get_offer", format_user(s, uid), d->filename, d->size, itoa(d->id));
+					print("dcc_get_offer", format_user(s, uid), d->filename, itoa(d->size), itoa(d->id));
 
 					if (config_dcc_dir)
 						path = saprintf("%s/%s", config_dcc_dir, d->filename);

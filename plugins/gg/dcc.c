@@ -227,15 +227,29 @@ static TIMER(gg_dcc_handler_timeout) {
 		return 0;
 	}
 
-	debug("gg_dcc_handler_timeout() state: %d\n", gd->state);
+	debug("gg_dcc_handler_timeout() type: %d state: %d\n", gd->type, gd->state);
 
-	if (gd->state == GG_STATE_REQUESTING_ID) {	/* timeoutnelo na zadaniu id */
-		/* here destroy dcc */
-		return -1;
+	if (gd->type == GG_SESSION_DCC7_GET) {
+		if (gd->fd != -1) {
+			debug("gg_dcc_handler_timeout() gd->fd: %d\n", gd->fd);
+			/* great! */
+
+
+			watch_add(&gg_plugin, gd->fd, gd->check, gg_dcc7_handler, gd);	/* add watch */
+			return -1;							/* destroy timer */
+		}
+
+
+	} else {
+		if (gd->state == GG_STATE_REQUESTING_ID) {	/* timeoutnelo na zadaniu id */
+			/* here destroy dcc */
+			return -1;
+		}
+
+		if (gd->state == GG_STATE_WAITING_FOR_ACCEPT)	/* timeoutnelo na oczekiwnaiu na uzytkownika */
+			return 0;
+
 	}
-
-	if (gd->state == GG_STATE_WAITING_FOR_ACCEPT)	/* timeoutnelo na oczekiwnaiu na uzytkownika */
-		return 0;
 
 	return 0;
 }
@@ -371,7 +385,7 @@ COMMAND(gg_command_dcc)
 		}
 
 		if (!gg_config_audio) {
-			wcs_printq("dcc_voice_unsupported");
+			printq("dcc_voice_unsupported");
 			return -1;
 		}
 
@@ -382,7 +396,7 @@ COMMAND(gg_command_dcc)
 		up = gg_userlist_priv_get(u);
 
 		if (!session_connected_get(session)) {
-			wcs_printq("not_connected");
+			printq("not_connected", session_name(session));
 			return -1;
 		}
 
@@ -433,7 +447,7 @@ COMMAND(gg_command_dcc)
 		}
 #endif
 		if (audiofds[0] != -1 || audiofds[1] != -1) {
-			wcs_printq("dcc_voice_running");
+			printq("dcc_voice_running");
 			return 0;
 		}
 
@@ -447,7 +461,6 @@ COMMAND(gg_command_dcc)
 			}
 		}
 		if (!(d = dcc_add(session, u->uid, DCC_VOICE, gd))) return -1;
-
 
 		if (gd)
 			watch_add(&gg_plugin, gd->fd, gd->check, gg_dcc_handler, gd);
@@ -469,9 +482,12 @@ COMMAND(gg_command_dcc)
 	/* get, resume */
 	if (params[0] && (!xstrncasecmp(params[0], "g", 1) || !xstrncasecmp(params[0], "re", 2))) {
 		dcc_t *d = NULL;
-		struct gg_dcc *g;
+		struct gg_common *g;
 		char *path;
 		list_t l;
+
+		int fd;
+		unsigned int offset = 0;
 		
 		for (l = dccs; l; l = l->next) {
 			dcc_t *D = l->data;
@@ -520,16 +536,23 @@ COMMAND(gg_command_dcc)
 		    	path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(d));
 		else
 		    	path = xstrdup(dcc_filename_get(d));
-		
-		if (params[0][0] == 'r') {
-			g->file_fd = open(path, O_WRONLY);
-			g->offset = lseek(g->file_fd, 0, SEEK_END);
-		} else
-			g->file_fd = open(path, O_WRONLY | O_CREAT, 0600);
 
-		if (g->file_fd == -1) {
+		if (params[0][0] == 'r') {
+			fd = open(path, O_WRONLY);
+			if (fd != -1)
+				offset = lseek(fd, 0, SEEK_END);
+		} else
+			fd = open(path, O_WRONLY | O_CREAT, 0600);
+
+		if (fd == -1) {
 			printq("dcc_get_cant_create", path);
-			gg_free_dcc(g);
+#ifdef HAVE_GG_DCC7
+	/* XXX, use damn close_handler! and call only dcc_close() */
+			if (g->type == GG_SESSION_DCC7_GET)	gg_dcc7_free((struct gg_dcc7 *) g);
+			else
+#endif
+				gg_free_dcc((struct gg_dcc *) g);
+
 			dcc_close(d);
 			xfree(path);
 			
@@ -540,8 +563,27 @@ COMMAND(gg_command_dcc)
 		
 		printq("dcc_get_getting", format_user(session, dcc_uid_get(d)), dcc_filename_get(d));
 		dcc_active_set(d, 1);
-		
-		watch_add(&gg_plugin, g->fd, g->check, gg_dcc_handler, g);
+
+#ifdef HAVE_GG_DCC7
+		if (g->type == GG_SESSION_DCC7_GET) {
+			struct gg_dcc7 *gd = (struct gg_dcc7 *) g;
+
+			gd->file_fd = fd;
+			gd->offset = offset;
+
+				/* hack, active waiting */
+			timer_add(&gg_plugin, NULL, 1 /* gd->timeout */, 1, gg_dcc_handler_timeout, gd);
+
+			gg_dcc7_accept(gd, offset);		/* accept */
+		} else 
+#endif
+		{
+			struct gg_dcc *gd = (struct gg_dcc *) g;
+
+			gd->file_fd = fd;
+			gd->offset = offset;
+			watch_add(&gg_plugin, gd->fd, gd->check, gg_dcc_handler, gd);
+		}
 
 		return 0;
 	}
