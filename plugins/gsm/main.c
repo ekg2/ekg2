@@ -27,7 +27,11 @@
 #else
 #  ifdef HAVE_LIBGSM_GSM_H
 #    include <libgsm/gsm.h>
+#  else
+#  ifdef HAVE_GSM_GSM_H
+#    include <gsm/gsm.h>
 #  endif
+# endif
 #endif
 
 #include <ekg/audio.h>
