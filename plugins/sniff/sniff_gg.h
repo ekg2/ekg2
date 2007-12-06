@@ -257,4 +257,19 @@ typedef struct {
 	unsigned char hash[20];		/* hash w sha1 */
 } GG_PACKED gg_dcc7_new;
 
+#define GG_DCC7_ID_REQUEST 0x23
+
+typedef struct {
+	uint32_t type;
+} GG_PACKED gg_dcc7_id_request;
+
+#define GG_DCC7_ID_REPLY 0x23
+
+typedef struct {
+	uint32_t type;
+	unsigned char code1[8];
+} GG_PACKED gg_dcc7_id_reply;
+
+#define GG_DCC7_TYPE_VOICE 0x00000001
+#define GG_DCC7_TYPE_FILE 0x00000004
 

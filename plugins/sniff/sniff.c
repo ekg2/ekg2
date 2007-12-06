@@ -842,44 +842,30 @@ SNIFF_HANDLER(sniff_gg_disconnecting, char) {
 		else 				debug_error("%s() values not match: %s [%x != %x]\n", __FUNCTION__, #is, is, shouldbe);\
 	}
 	
-#define GG_DCC_NEW_REQUEST_ID 0x23
-
-#define GG_DCC_REQUEST_VOICE 0x01
-#define GG_DCC_REQUEST_FILE 0x04
-
-typedef struct {
-	uint32_t type;		/* GG_DCC_REQUEST_VOICE / GG_DCC_REQUEST_FILE */
-} GG_PACKED gg_dcc_new_request_id_out;
-
-SNIFF_HANDLER(sniff_gg_dcc_new_request_id_out, gg_dcc_new_request_id_out) {
-	if (len != sizeof(gg_dcc_new_request_id_out)) {
+SNIFF_HANDLER(sniff_gg_dcc7_new_id_request, gg_dcc7_id_request) {
+	if (len != sizeof(gg_dcc7_id_request)) {
 		tcp_print_payload((u_char *) pkt, len);
 		return -1;
 	}
 
-	if (pkt->type != GG_DCC_REQUEST_VOICE && pkt->type != GG_DCC_REQUEST_FILE)
-		debug_error("sniff_gg_dcc_new_request_id_out() type nor VOICE nor FILE -- %.8x\n", pkt->type);
-	else	debug("sniff_gg_dcc_new_request_id_out() %s CONNECTION\n", pkt->type == GG_DCC_REQUEST_VOICE ? "AUDIO" : "FILE");
+	if (pkt->type != GG_DCC7_TYPE_VOICE && pkt->type != GG_DCC7_TYPE_FILE)
+		debug_error("sniff_gg_dcc7_new_id_request() type nor VOICE nor FILE -- %.8x\n", pkt->type);
+	else	debug("sniff_gg_dcc7_new_id_request() %s CONNECTION\n", pkt->type == GG_DCC7_TYPE_VOICE ? "AUDIO" : "FILE");
 
 	return 0;
 }
 
-typedef struct {
-	uint32_t type;		/* GG_DCC_REQUEST_VOICE / GG_DCC_REQUEST_FILE */
-	unsigned char code1[8];
-} GG_PACKED gg_dcc_new_request_id_in;
-
-SNIFF_HANDLER(sniff_gg_dcc_new_request_id_in, gg_dcc_new_request_id_in) {
-	if (len != sizeof(gg_dcc_new_request_id_in)) {
+SNIFF_HANDLER(sniff_gg_dcc7_new_id_reply, gg_dcc7_id_reply) {
+	if (len != sizeof(gg_dcc7_id_reply)) {
 		tcp_print_payload((u_char *) pkt, len);
 		return -1;
 	}
 
-	if (pkt->type != GG_DCC_REQUEST_VOICE && pkt->type != GG_DCC_REQUEST_FILE)
-		debug_error("sniff_gg_dcc_new_request_id_in() type nor VOICE nor FILE -- %.8x\n", pkt->type);
-	else	debug("sniff_gg_dcc_new_request_id_in() %s CONNECTION\n", pkt->type == GG_DCC_REQUEST_VOICE ? "AUDIO" : "FILE");
+	if (pkt->type != GG_DCC7_TYPE_VOICE && pkt->type != GG_DCC7_TYPE_FILE)
+		debug_error("sniff_gg_dcc7_new_id_reply() type nor VOICE nor FILE -- %.8x\n", pkt->type);
+	else	debug("sniff_gg_dcc7_new_id_reply() %s CONNECTION\n", pkt->type == GG_DCC7_TYPE_VOICE ? "AUDIO" : "FILE");
 
-	debug("sniff_gg_dcc_new_request_id_in() code: %s\n", build_code(pkt->code1));
+	debug("sniff_gg_dcc7_new_id_reply() code: %s\n", build_code(pkt->code1));
 
 	return 0;
 }
@@ -892,11 +878,11 @@ SNIFF_HANDLER(sniff_gg_dcc7_new, gg_dcc7_new) {
 		debug_error("sniff_gg_dcc7_new() extra data?\n");
 
 /* print known data: */
-	if (pkt->type != GG_DCC_REQUEST_VOICE && pkt->type != GG_DCC_REQUEST_FILE)
+	if (pkt->type != GG_DCC7_TYPE_VOICE  && pkt->type != GG_DCC7_TYPE_FILE)
 		debug_error("sniff_gg_dcc7_new() unknown dcc request %x\n", pkt->type);
-	else	debug("sniff_gg_dcc_new7() REQUEST FOR: %s CONNECTION\n", pkt->type == GG_DCC_REQUEST_VOICE ? "AUDIO" : "FILE");
+	else	debug("sniff_gg_dcc_new7() REQUEST FOR: %s CONNECTION\n", pkt->type == GG_DCC7_TYPE_VOICE ? "AUDIO" : "FILE");
 
-	if (pkt->type != GG_DCC_REQUEST_FILE) {
+	if (pkt->type != GG_DCC7_TYPE_FILE) {
 		int print_hash = 0;
 		int i;
 
@@ -904,7 +890,7 @@ SNIFF_HANDLER(sniff_gg_dcc7_new, gg_dcc7_new) {
 			if (pkt->hash[i] != '\0') print_hash = 1;
 
 		if (print_hash) {
-			debug_error("sniff_gg_dcc_new7() NOT GG_DCC_REQUEST_FILE, pkt->hash NOT NULL, printing...\n");
+			debug_error("sniff_gg_dcc_new7() NOT GG_DCC7_TYPE_FILE, pkt->hash NOT NULL, printing...\n");
 			tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
 		}
 	}
@@ -1249,8 +1235,8 @@ static const struct {
 /* pakiety [nie] w libgadu: [czesc mozliwie ze nieaktualna] */
 	{ GG_DCC7_NEW,		"GG_DCC7_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc7_new, 0}, 
 	{ GG_DCC7_NEW,		"GG_DCC7_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc7_new, 0}, 
-	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_INCOMING, (void *) sniff_gg_dcc_new_request_id_in, 0},
-	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_OUTGOING, (void *) sniff_gg_dcc_new_request_id_out, 0},
+	{ GG_DCC7_ID_REPLY,	"GG_DCC7_ID_REPLY",	SNIFF_INCOMING, (void *) sniff_gg_dcc7_new_id_reply, 0},
+	{ GG_DCC7_ID_REQUEST,	"GG_DCC7_ID_REQUEST",	SNIFF_OUTGOING, (void *) sniff_gg_dcc7_new_id_request, 0},
 	{ GG_DCC7_REJECT,	"GG_DCC7_REJECT",	SNIFF_INCOMING, (void *) sniff_gg_dcc7_reject, 0},
 	{ GG_DCC7_REJECT,	"GG_DCC7_REJECT",	SNIFF_OUTGOING, (void *) sniff_gg_dcc7_reject, 0},
 /* unknown, 0x21 */
