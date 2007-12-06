@@ -241,5 +241,20 @@ typedef struct {
 	unsigned char code1[8];
 	uint32_t reason;		/* known values: 0x02 -> rejected, 0x06 -> invalid version (6.x) 
 							 0x01 -> niemozliwe teraz? [jak ktos przesyla inny plik do Ciebie?] */
-} GG_PACKED gg_dcc_reject;
+} GG_PACKED gg_dcc7_reject;
+
+#define GG_DCC7_FILENAME_LEN	255	/**< Maksymalny rozmiar nazwy pliku w połączeniach bezpośrednich */
+
+#define GG_DCC7_NEW 0x20
+typedef struct {
+	unsigned char code1[8];
+	uint32_t uin_from;		/* numer nadawcy */
+	uint32_t uin_to;		/* numer odbiorcy */
+	uint32_t type;			/* rodzaj transmisji */
+	unsigned char filename[GG_DCC7_FILENAME_LEN];
+	uint32_t size;			/* rozmiar, LE */
+	uint32_t dunno1;		/* 00 00 00 00 */
+	unsigned char hash[20];		/* hash w sha1 */
+} GG_PACKED gg_dcc7_new;
+
 

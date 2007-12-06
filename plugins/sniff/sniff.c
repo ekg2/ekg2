@@ -101,7 +101,7 @@ static char *build_gg_uid(uint32_t sender) {
 	return buf;
 }
 
-static char *inet_ntoa(struct in_addr ip) {
+static char *_inet_ntoa(struct in_addr ip) {
 	static char bufs[10][16];
 	static int index = 0;
 	char *tmp = bufs[index++];
@@ -113,7 +113,7 @@ static char *inet_ntoa(struct in_addr ip) {
 	return tmp;
 }
 
-static char *inet_ntoa6(struct in6_addr ip) {
+static char *_inet_ntoa6(struct in6_addr ip) {
 	static char bufs[10][INET6_ADDRSTRLEN+1];
 	static int index = 0;
 	char *tmp = bufs[index++];
@@ -884,45 +884,19 @@ SNIFF_HANDLER(sniff_gg_dcc_new_request_id_in, gg_dcc_new_request_id_in) {
 	return 0;
 }
 
-#define GG_DCC_NEW 0x20
-typedef struct {
-	unsigned char code1[8];
-	uint32_t uin1;		/* LE, from */
-	uint32_t uin2;		/* LE, to */
-	uint32_t dcctype;	/* GG_DCC_REQUEST_AUDIO / GG_DCC_REQUEST_FILE */
-	unsigned char filename[226];
-	uint16_t emp1;		/* 00 00 */
-	uint16_t dunno2;	/* 10 00 */
-	uint16_t emp2;		/* 00 00 */
-
-	uint16_t dunno31;
-	uint8_t	 dunno32;
-	uint8_t  dunno33;	/* 02 */
-
-	uint32_t emp3;		/* 00 00 00 00 */
-	uint32_t dunno4;	/* b4 e5 32 00 */
-	uint32_t dunno5;	/* 8e d0 4c 00 */
-	uint32_t dunno6;	/* 10 00 00 00 */
-	uint16_t dunno7;	/* unknown */
-	uint8_t dunno8;		/* unknown */
-	uint32_t size;		/* rozmiar, LE */
-	uint32_t emp4;		/* 00 00 00 00 */
-	unsigned char hash[20];	/* hash w sha1 */
-} GG_PACKED gg_dcc_new;
-
-SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
+SNIFF_HANDLER(sniff_gg_dcc7_new, gg_dcc7_new) {
 	char *fname;
-	CHECK_LEN(sizeof(gg_dcc_new));	len -= sizeof(gg_dcc_new);
+	CHECK_LEN(sizeof(gg_dcc7_new));	len -= sizeof(gg_dcc7_new);
 	
 	if (len != 0)
-		debug_error("sniff_gg_dcc_new() extra data?\n");
+		debug_error("sniff_gg_dcc7_new() extra data?\n");
 
 /* print known data: */
-	if (pkt->dcctype != GG_DCC_REQUEST_VOICE && pkt->dcctype != GG_DCC_REQUEST_FILE)
-		debug_error("sniff_gg_dcc_new() unknown dcc request %x\n", pkt->dcctype);
-	else	debug("sniff_gg_dcc_new() REQUEST FOR: %s CONNECTION\n", pkt->dcctype == GG_DCC_REQUEST_VOICE ? "AUDIO" : "FILE");
+	if (pkt->type != GG_DCC_REQUEST_VOICE && pkt->type != GG_DCC_REQUEST_FILE)
+		debug_error("sniff_gg_dcc7_new() unknown dcc request %x\n", pkt->type);
+	else	debug("sniff_gg_dcc_new7() REQUEST FOR: %s CONNECTION\n", pkt->type == GG_DCC_REQUEST_VOICE ? "AUDIO" : "FILE");
 
-	if (pkt->dcctype != GG_DCC_REQUEST_FILE) {
+	if (pkt->type != GG_DCC_REQUEST_FILE) {
 		int print_hash = 0;
 		int i;
 
@@ -930,7 +904,7 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 			if (pkt->hash[i] != '\0') print_hash = 1;
 
 		if (print_hash) {
-			debug_error("sniff_gg_dcc_new() NOT GG_DCC_REQUEST_FILE, pkt->hash NOT NULL, printing...\n");
+			debug_error("sniff_gg_dcc_new7() NOT GG_DCC_REQUEST_FILE, pkt->hash NOT NULL, printing...\n");
 			tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
 		}
 	}
@@ -938,72 +912,34 @@ SNIFF_HANDLER(sniff_gg_dcc_new, gg_dcc_new) {
 	tcp_print_payload((u_char *) pkt->filename, sizeof(pkt->filename));	/* tutaj smieci */
 
 	fname = xstrndup((u_char *) pkt->filename, sizeof(pkt->filename));
-	debug("sniff_gg_dcc_new() code: %s uin1: %d uin2: %d fname: %s [%db]\n", 
-		build_code(pkt->code1), pkt->uin1, pkt->uin2, fname, pkt->size);
+	debug("sniff_gg_dcc_new7() code: %s from: %d to: %d fname: %s [%db]\n", 
+		build_code(pkt->code1), pkt->uin_from, pkt->uin_to, fname, pkt->size);
 	xfree(fname);
 
-/* CHECK unknown vals.. */
-	/* these are known as 0 */
-	CHECK_PRINT(pkt->emp1, 0);
-	CHECK_PRINT(pkt->emp2, 0);
-	CHECK_PRINT(pkt->emp3, 0);
-	CHECK_PRINT(pkt->emp4, 0);
-
-	CHECK_PRINT(pkt->dunno2, htons(0x1000));
-
-	CHECK_PRINT(pkt->dunno31, !pkt->dunno31);
-	CHECK_PRINT(pkt->dunno32, !pkt->dunno32);
-	CHECK_PRINT(pkt->dunno33, 0x02);
-
-	CHECK_PRINT(pkt->dunno4, htonl(0xb4e53200));
-	CHECK_PRINT(pkt->dunno5, htonl(0x8ed04c00));
-	CHECK_PRINT(pkt->dunno6, htonl(0x10000000));
-	CHECK_PRINT(pkt->dunno7, !pkt->dunno7);
-	CHECK_PRINT(pkt->dunno8, !pkt->dunno8);
+	CHECK_PRINT(pkt->dunno1, 0);
 	return 0;
 }
 
-SNIFF_HANDLER(sniff_gg_dcc_reject_in, gg_dcc_reject) {
-	if (len != sizeof(gg_dcc_reject)) {
+SNIFF_HANDLER(sniff_gg_dcc7_reject, gg_dcc7_reject) {
+	if (len != sizeof(gg_dcc7_reject)) {
 		tcp_print_payload((u_char *) pkt, len);
 		return -1;
 	}
 
-	debug_error("XXX sniff_gg_dcc_reject_in() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
+	debug("sniff_gg_dcc7_reject() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
+
+	/* XXX, pkt->reason */
 
 	CHECK_PRINT(pkt->reason, !pkt->reason);
 	return 0;
 }
 
-SNIFF_HANDLER(sniff_gg_dcc_reject_out, gg_dcc_reject) {
-	if (len != sizeof(gg_dcc_reject)) {
-		tcp_print_payload((u_char *) pkt, len);
-		return -1;
-	}
-
-	debug_error("XXX sniff_gg_dcc_reject_out() uid: %d code: %s\n", pkt->uid, build_code(pkt->code1));
-
-	CHECK_PRINT(pkt->reason, !pkt->reason);
-	return 0;
-}
-
-SNIFF_HANDLER(sniff_gg_dcc7_accept_in, gg_dcc7_accept) {
+SNIFF_HANDLER(sniff_gg_dcc7_accept, gg_dcc7_accept) {
 	if (len != sizeof(gg_dcc7_accept)) {
 		tcp_print_payload((u_char *) pkt, len);
 		return -1;
 	}
-	debug_error("XXX sniff_gg_dcc7_accept_in() uid: %d code: %s from: %d\n", pkt->uin, build_code(pkt->code1), pkt->seek);
-
-	CHECK_PRINT(pkt->empty, 0);
-	return 0;
-}
-
-SNIFF_HANDLER(sniff_gg_dcc7_accept_out, gg_dcc7_accept) {
-	if (len != sizeof(gg_dcc7_accept)) {
-		tcp_print_payload((u_char *) pkt, len);
-		return -1;
-	}
-	debug_error("XXX sniff_gg_dcc7_accept_out() uid: %d code: %s from: %d\n", pkt->uin, build_code(pkt->code1), pkt->seek);
+	debug("sniff_gg_dcc7_accept() uid: %d code: %s from: %d\n", pkt->uin, build_code(pkt->code1), pkt->seek);
 
 	CHECK_PRINT(pkt->empty, 0);
 	return 0;
@@ -1311,15 +1247,15 @@ static const struct {
 	{ GG_STATUS77,		"GG_STATUS77",		SNIFF_INCOMING, (void *) sniff_gg_status77, 0},
 
 /* pakiety [nie] w libgadu: [czesc mozliwie ze nieaktualna] */
-	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc_new, 0}, 
-	{ GG_DCC_NEW,		"GG_DCC_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_new, 0}, 
+	{ GG_DCC7_NEW,		"GG_DCC7_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc7_new, 0}, 
+	{ GG_DCC7_NEW,		"GG_DCC7_NEW",		SNIFF_OUTGOING, (void *) sniff_gg_dcc7_new, 0}, 
 	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_INCOMING, (void *) sniff_gg_dcc_new_request_id_in, 0},
 	{ GG_DCC_NEW_REQUEST_ID, "GG_DCC_NEW_REQUEST_ID", SNIFF_OUTGOING, (void *) sniff_gg_dcc_new_request_id_out, 0},
-	{ GG_DCC7_REJECT,	"GG_DCC7_REJECT",	SNIFF_INCOMING, (void *) sniff_gg_dcc_reject_in, 0},
-	{ GG_DCC7_REJECT,	"GG_DCC7_REJECT",	SNIFF_OUTGOING, (void *) sniff_gg_dcc_reject_out, 0},
+	{ GG_DCC7_REJECT,	"GG_DCC7_REJECT",	SNIFF_INCOMING, (void *) sniff_gg_dcc7_reject, 0},
+	{ GG_DCC7_REJECT,	"GG_DCC7_REJECT",	SNIFF_OUTGOING, (void *) sniff_gg_dcc7_reject, 0},
 /* unknown, 0x21 */
-	{ GG_DCC_ACCEPT,	"GG_DCC_ACCEPT",	SNIFF_INCOMING, (void *) sniff_gg_dcc7_accept_in, 0}, 
-	{ GG_DCC_ACCEPT,	"GG_DCC_ACCEPT",	SNIFF_OUTGOING, (void *) sniff_gg_dcc7_accept_out, 0}, 
+	{ GG_DCC_ACCEPT,	"GG_DCC_ACCEPT",	SNIFF_INCOMING, (void *) sniff_gg_dcc7_accept, 0}, 
+	{ GG_DCC_ACCEPT,	"GG_DCC_ACCEPT",	SNIFF_OUTGOING, (void *) sniff_gg_dcc7_accept, 0}, 
 /* unknown, 0x1f */
 	{ GG_DCC_2XXX,		"GG_DCC_2XXX",		SNIFF_INCOMING, (void *) sniff_gg_dcc_2xx_in, 0},
 	{ GG_DCC_2XXX,		"GG_DCC_2XXX",		SNIFF_OUTGOING, (void *) sniff_gg_dcc_2xx_out, 0},
@@ -1493,7 +1429,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 							break;
 						}
 						print_window_w(window_status, 1, "sniff_dns_entry_aaaa",
-							host, inet_ntoa6(*((struct in6_addr *) &cur[0])));
+							host, _inet_ntoa6(*((struct in6_addr *) &cur[0])));
 
 						displayed = 1;
 						break;
@@ -1767,9 +1703,9 @@ void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *pa
 		hdr = sniff_tcp_find_connection(ip, tcp);
 
 		debug_function("sniff_loop() IP/TCP %15s:%5d <==> %15s:%5d %s (SEQ: %lx ACK: %lx len: %d)\n", 
-				inet_ntoa(hdr->srcip), 		/* src ip */
+				_inet_ntoa(hdr->srcip),		/* src ip */
 				hdr->srcport,			/* src port */
-				inet_ntoa(hdr->dstip), 		/* dest ip */
+				_inet_ntoa(hdr->dstip),		/* dest ip */
 				hdr->dstport, 			/* dest port */
 				tcp_print_flags(tcp->th_flags), /* tcp flags */
 				htonl(tcp->th_seq), 		/* seq */
@@ -1838,9 +1774,9 @@ void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *pa
 		CHECK_LEN(SIZE_ETHERNET + size_ip + sizeof(struct udphdr) + size_payload);
 
 		debug_function("sniff_loop() IP/UDP %15s:%5d <==> %15s:%5d\n",
-				inet_ntoa(hdr->srcip), 		/* src ip */
+				_inet_ntoa(hdr->srcip),		/* src ip */
 				hdr->srcport,			/* src port */
-				inet_ntoa(hdr->dstip), 		/* dest ip */
+				_inet_ntoa(hdr->dstip),		/* dest ip */
 				hdr->dstport); 			/* dest port */
 
 		if (size_payload == RIVCHAT_PACKET_LEN && !memcmp(payload, rivchat_magic, sizeof(rivchat_magic))) {		/* RIVCHAT	[check based on header (11b), ~100% hit] */
@@ -1858,8 +1794,8 @@ void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *pa
 		CHECK_LEN(sizeof(struct ethhdr) + size_ip + sizeof(struct icmphdr));	icmp = (struct icmphdr *) (packet + SIZE_ETHERNET + size_ip);
 
 		debug_function("sniff_loop() IP/ICMP %15s <==> %15s TYPE: %d CODE: %d CHKSUM: %d\n",
-				inet_ntoa(ip->ip_src),		/* src ip */
-				inet_ntoa(ip->ip_dst),		/* dest ip */
+				_inet_ntoa(ip->ip_src),		/* src ip */
+				_inet_ntoa(ip->ip_dst),		/* dest ip */
 				icmp->icmp_type,
 				icmp->icmp_code,
 				icmp->icmp_cksum);
@@ -1868,8 +1804,8 @@ void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *pa
 		/* other, implement if u want to || die. */
 		debug_error("sniff_loop() IP/0x%x %15s <==> %15s\n",
 				ip->ip_p,			/* protocol */
-				inet_ntoa(ip->ip_src),		/* src ip */
-				inet_ntoa(ip->ip_dst));		/* dest ip */
+				_inet_ntoa(ip->ip_src),		/* src ip */
+				_inet_ntoa(ip->ip_dst));	/* dest ip */
 
 	}
 #undef CHECK_LEN
@@ -1894,7 +1830,8 @@ static WATCHER_SESSION(sniff_pcap_read) {
 	return 0;
 }
 
-#define DEFAULT_FILTER "(tcp and (net 217.17.41.80/28 or net 217.17.45.128/27)) or (udp and (port 16127 or port 53))"
+#define DEFAULT_FILTER \
+	"(tcp and (net 217.17.41.80/28 or net 217.17.45.128/27 or net 85.232.236.0/24 or net 91.197.12.0/22)) or (udp and (port 16127 or port 53))"
 
 static COMMAND(sniff_command_connect) {
 	struct bpf_program fp;
