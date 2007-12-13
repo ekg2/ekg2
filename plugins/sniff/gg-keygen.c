@@ -23,6 +23,17 @@
 #include <string.h>
 #include <ctype.h>
 
+static const char digit[] = "\0abcdefghijklmnoprstuwxyz";	/* bo kto tak naprawde korzysta z trudnych hasel? */
+// static const char digit[] = "\0abcdefghijklmnoprstuwxyzABCDEFGHIJKLMOPRSTUWXYZ1234567890";
+
+#define MAX_PASS_LEN 15	/* dlugosc hasla, tak naprawde to jest+1, nie przejmowac sie. */
+
+#define ULTRA_DEBUG 	0	/* sprawdza czy dobrze generujemy hasla (w/g digit, b. niepotrzebne i b. wolne) */
+#define ULTRA_VERBOSE	1	/* rysuje kropki */
+#define ULTRA_SAFE	0	/* sprawdza czy nie bedziemy rysowac po pamieci jesli haslo zacznie miec wiecej niz MAX_PASS_LEN znakow */
+
+#define NOT_STOP_ON_FIRST 0
+
 /* sample, smb has this seed/hash. 
  *	change it to your data.
  *
@@ -50,19 +61,7 @@
 #define TEXT "alamaka" 		/* algo test */
 #endif
 
-#define NOT_STOP_ON_FIRST 0
-
-
-
 #define DIGIT_SIZE (sizeof(digit)-2)	/* glupie gcc, i konczenie stringow \0 :( */ 
-// static const char digit[] = "\0abcdefghijklmnoprstuwxyzABCDEFGHIJKLMOPRSTUWXYZ1234567890";
-static const char digit[] = "\0abcdefghijklmnoprstuwxyz";	/* bo kto tak naprawde korzysta z trudnych hasel? */
-
-#define MAX_PASS_LEN 15	/* dlugosc hasla, tak naprawde to jest+1, nie przejmowac sie. */
-
-#define ULTRA_DEBUG 	0	/* sprawdza czy dobrze generujemy hasla (w/g digit, b. niepotrzebne i b. wolne) */
-#define ULTRA_VERBOSE	0	/* rysuje kropki */
-#define ULTRA_SAFE	0	/* sprawdza czy nie bedziemy rysowac po pamieci jesli haslo zacznie miec wiecej niz MAX_PASS_LEN znakow */
 
 static unsigned char pass[MAX_PASS_LEN];
 static unsigned char realpass[MAX_PASS_LEN+1];
@@ -191,10 +190,10 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 
 #ifdef HASH
 
-/* stolen from libgadu, cache use by me. */
+/* stolen from libgadu, cache created by me. */
 
-unsigned int gg_login_hash() {
-	static int saved_y;
+static unsigned int gg_login_hash() {
+	static unsigned int saved_y;
 	static unsigned char *saved_pos;
 	static unsigned char saved_zn;
 
@@ -229,9 +228,9 @@ unsigned int gg_login_hash() {
 			y += (zn << 24);
 
 			if (password[1] == '\0') {
-				saved_pos = &password[-1];
-				saved_zn = password[-1];
 				saved_y = y;
+				saved_zn = zn;
+				saved_pos = &password[-1];
 			}
 		}
 	} while (*password);
@@ -253,7 +252,6 @@ static inline int check_text() {
 #if ULTRA_DEBUG
 	printf("%s\n", realpass);
 #endif
-
 	for (password = realpass; *password && *text; password++, text++) {
 		if (*text != *password)
 			return 1;
@@ -300,6 +298,7 @@ static inline void incr() {
 
 	bonce(0);
 }
+
 int main() {
 #ifdef HASH_SHA1
 	unsigned char digest[20];
@@ -351,15 +350,19 @@ int main() {
 		do {
 			incr();
 		} while 
-#ifdef HASH_SHA1		/* (HAS_SHA1) */
+#if defined(HASH_SHA1)		/* (HAS_SHA1) */
+#warning "You'd chosen SHA-1 cracking"
 			(gg_login_sha1hash(pass, pass_pos+1, SEED, digstate));
-#else
-#ifdef TEXT			/* !(HAS_SHA1) && (TEXT) */
-			(check_text());
-#else				/* !(HAS_SHA1) && (!(TEXT)) */
+#elif defined(HASH)		/* !(HAS_SHA1) && HASH */
+#warning "You'd chosen old HASH cracking"
 			(gg_login_hash() != HASH);
-#endif		/* !(HASH_SHA1) && ((TEXT) */
-#endif		/* !(HASH_SHA1) */
+#elif defined(TEXT)		/* !(HAS_SHA1) && !(HASH) && TEXT */
+#warning "You didn't defined HASH_SHA1 nor HASH, generator test?"
+			(check_text());
+#else				/* !(HASH_SHA1) && !(HASH) && !(TEXT) */
+#warning "You didn't defined HASH_SHA1 nor HASH nor TEXT, generator test?"
+			(1);
+#endif
 		printf("Collision found: %s\n", realpass);
 	} while(NOT_STOP_ON_FIRST);
 	return 0;
