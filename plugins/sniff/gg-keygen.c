@@ -23,7 +23,36 @@
 #include <string.h>
 #include <ctype.h>
 
-/* !!! ten kod tutaj dziala tylko na 32b LE !!! */
+/* sample, smb has this seed/hash. 
+ *	change it to your data.
+ *
+ *	you can benchmark && check if you gg-keygen.c generate good data with it.
+ *	tested under athlon-xp 2500 XP+
+ */
+
+#if 0	/* kasza */	/*   0.115s */
+#define SEED 0xe2cf3809
+#define HASH 0x4d940c10
+#endif
+
+#if 0	/* agakrht */	/* 7.834s */
+#define SEED 0xd3c742b6
+#define HASH 0x9f9b9205
+#endif
+
+/* with apended 'q2' to digit: [static const char digit[] = "\0abcdefghijklmnoprstuwxyzq2"] */
+#if 0	/* qwerty2 */	/* */
+#define SEED 0xb2b9eec8
+#define HASH_SHA1 "a266db74a7289913ec30a7872b7384ecc119e4ec"
+#endif
+
+#if 0		/* 5.154s */
+#define TEXT "alamaka" 		/* algo test */
+#endif
+
+#define NOT_STOP_ON_FIRST 0
+
+
 
 #define DIGIT_SIZE (sizeof(digit)-2)	/* glupie gcc, i konczenie stringow \0 :( */ 
 // static const char digit[] = "\0abcdefghijklmnoprstuwxyzABCDEFGHIJKLMOPRSTUWXYZ1234567890";
@@ -36,9 +65,10 @@ static const char digit[] = "\0abcdefghijklmnoprstuwxyz";	/* bo kto tak naprawde
 #define ULTRA_SAFE	0	/* sprawdza czy nie bedziemy rysowac po pamieci jesli haslo zacznie miec wiecej niz MAX_PASS_LEN znakow */
 
 static unsigned char pass[MAX_PASS_LEN];
+static unsigned char realpass[MAX_PASS_LEN+1];
 static size_t pass_pos = 0;
 
-/* SHA1 STUFF */
+#ifdef HASH_SHA1 	/* SHA-1 STUFF */
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 
@@ -144,10 +174,7 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 	}
 
 #if ULTRA_DEBUG
-	for (password = pass; *password; password++) {
-		printf("%c", digit[*password]);
-	}
-	printf(" -> %.8x%.8x%.8x%.8x%.8x\n", a, b, c, d, e);
+	printf("%s -> %.8x%.8x%.8x%.8x%.8x\n", realpass, a, b, c, d, e);
 #endif
 
 /* it returns 0 if digest match, 1 if not */
@@ -160,67 +187,89 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 	return 0;
 }
 
-/* stolen from libgadu */
-static inline unsigned int gg_login_hash(const unsigned char *password, unsigned int y /* seed */) {
-	unsigned int x = 0;
-	unsigned int z;
+#endif
+
+#ifdef HASH
+
+/* stolen from libgadu, cache use by me. */
+
+unsigned int gg_login_hash() {
+	static int saved_y;
+	static unsigned char *saved_pos;
+	static unsigned char saved_zn;
+
+	unsigned int y;
+	unsigned char *password;
+
+	if (saved_pos && *saved_pos == saved_zn) {
+		y = saved_y;
+		password = saved_pos + 1;
+	} else {
+		y = SEED;
+		password = realpass;
+	}
 
 /* I have no idea, how to crack/optimize this algo. Maybe someone? */
-	for (; *password; password++) {
-		x = (x/* & 0xffffff00 */) | digit[*password]; /* LE x86 32b, po co & ? */
-		y ^= x;
-		y += x;
-		x <<= 8;
-		y ^= x;
-		x <<= 8;
-		y -= x;
-		x <<= 8;
-		y ^= x;
+	do {
+		register unsigned char zn = *password;
+		register unsigned char z;
+
+		y ^= zn;
+		y += zn;
+
+		y ^= (zn << 8);
+		y -= (zn << 16);
+		y ^= (zn << 24);
 
 		z = y & 0x1F;
 		y = (y << z) | (y >> (32 - z));
-	}
+
+		if (*(++password)) {
+			y ^= (zn << 24);
+			y += (zn << 24);
+
+			if (password[1] == '\0') {
+				saved_pos = &password[-1];
+				saved_zn = password[-1];
+				saved_y = y;
+			}
+		}
+	} while (*password);
 
 #if ULTRA_DEBUG
-	for (password = pass; *password; password++) {
-		printf("%c", digit[*password]);
-	}
-	printf(" -> 0x%x\n", y);
+	printf("%s -> 0x%x\n", realpass, y);
 #endif
 	return y;
 }
 
-static inline int check_text(const unsigned char *password, const unsigned char *text) {
-#if ULTRA_DEBUG
-	char *password2;
-	for (password2 = pass; *password2; password2++)
-		printf("%c", digit[*password2]);
-	printf("\n");
 #endif
 
-	for (; *password && *text; password++, text++) {
-		if (*text != digit[*password])
+#ifdef TEXT
+
+static inline int check_text() {
+	unsigned char *text = TEXT;
+	unsigned char *password;
+
+#if ULTRA_DEBUG
+	printf("%s\n", realpass);
+#endif
+
+	for (password = realpass; *password && *text; password++, text++) {
+		if (*text != *password)
 			return 1;
 	}
 
 	return !(*password == '\0' && *text == '\0');
 }
 
-static void bonce(unsigned char *buf, size_t len) {
-	size_t i;
-	for (i = 0; i < len; i++) 
-		buf[i] = 1;
-}
+#endif
 
-static void print_pass(unsigned char *pass) {
-	printf("Collision found: ");
-	while (*pass) {
-		putchar(digit[*pass]);
-
-		pass++;
+static inline void bonce(size_t i) {
+	for (; i < pass_pos + 1; i++) {
+		pass[i] = 1;	realpass[i] = digit[1];
 	}
-	printf("\n");
 }
+
 static inline void incr() {
 	int i;
 
@@ -233,8 +282,9 @@ static inline void incr() {
 				fflush(stdout);
 			}
 #endif
-			pass[i]++;
-			bonce(&(pass[i+1]), pass_pos-i);
+			pass[i]++;	realpass[i] = digit[pass[i]];
+
+			bonce(i+1);
 			return;
 		}
 	}
@@ -248,37 +298,8 @@ static inline void incr() {
 	pass_pos++;
 	printf("Len: %d\n", pass_pos+1);
 
-	bonce(pass, pass_pos+1);
+	bonce(0);
 }
-
-
-/* sample, smb has this seed/hash. 
- *	change it to your data.
- *
- *	you can benchmark && check if you gg-keygen.c generate good data with it.
- *	tested under athlon-xp 2500 XP+
- */
-
-#if 0	/* kasza */	/*   0.193s */
-#define SEED 0xe2cf3809
-#define HASH 0x4d940c10
-#endif
-
-#if 0	/* agakrht */	/* 14.738s */
-#define SEED 0xd3c742b6
-#define HASH 0x9f9b9205
-#endif
-
-/* with apended 'q2' to digit: [static const char digit[] = "\0abcdefghijklmnoprstuwxyzq2"] */
-#if 0	/* qwerty2 */	/* */
-#define SEED 0xb2b9eec8
-#define HASH_SHA1 "a266db74a7289913ec30a7872b7384ecc119e4ec"
-#endif
-
-/* #define TEXT "alamaka" */		/* algo test */
-
-#define NOT_STOP_ON_FIRST 0
-
 int main() {
 #ifdef HASH_SHA1
 	unsigned char digest[20];
@@ -326,7 +347,6 @@ int main() {
 	digstate[4] -= SHA_STATE4;
 #endif
 	
-	memset(pass, 0, sizeof(pass));
 	do {
 		do {
 			incr();
@@ -335,12 +355,12 @@ int main() {
 			(gg_login_sha1hash(pass, pass_pos+1, SEED, digstate));
 #else
 #ifdef TEXT			/* !(HAS_SHA1) && (TEXT) */
-			(check_text(pass, TEXT));
+			(check_text());
 #else				/* !(HAS_SHA1) && (!(TEXT)) */
-			((hash = gg_login_hash(pass, SEED)) != HASH);
+			(gg_login_hash() != HASH);
 #endif		/* !(HASH_SHA1) && ((TEXT) */
 #endif		/* !(HASH_SHA1) */
-		print_pass(pass);
+		printf("Collision found: %s\n", realpass);
 	} while(NOT_STOP_ON_FIRST);
 	return 0;
 }
