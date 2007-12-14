@@ -90,7 +90,7 @@ list_t timers = NULL;
 list_t conferences = NULL;
 list_t newconferences = NULL;
 #ifdef HAVE_ICONV
-list_t ekg_converters = NULL;	/**< list for internal use of ekg_convert_string_*() */
+static list_t ekg_converters = NULL;	/**< list for internal use of ekg_convert_string_*() */
 #endif
 
 list_t buffer_debug;		/**< debug list_t struct buffer */
@@ -3194,6 +3194,26 @@ char *ekg_convert_string(const char *ps, const char *from, const char *to) {
 	ekg_convert_string_destroy(p);
 
 	return r;
+}
+
+int ekg_converters_display(int quiet)
+{
+#ifdef HAVE_ICONV
+	list_t l;
+
+	for (l = ekg_converters; l; l = l->next) {
+		struct ekg_converter *c = l->data;
+		/* cd, rev, from, to, used, rev_used, is_utf */
+
+		printq("iconv_list", c->from, c->to, itoa(c->used), itoa(c->rev_used));
+//		printq("iconv_list_bad", c->from, c->to, itoa(c->used), itoa(c->rev_used));
+
+	}
+	return 0;
+#else
+	printq("generic_error", "Sorry, no iconv");
+	return -1;
+#endif
 }
 
 /**

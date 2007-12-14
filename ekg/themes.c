@@ -1932,6 +1932,8 @@ void theme_init()
 	format_add("console_charset_using",	_("%) EKG2 detected that your console works under: %W%1%n Please verify and eventually change %Gconsole_charset%n variable"), 1);
 	format_add("console_charset_bad",	_("%! EKG2 detected that your console works under: %W%1%n, but in %Gconsole_charset%n variable you've got: %W%2%n Please verify."), 1);
 	format_add("iconv_fail",		_("%! iconv_open() fail to initialize charset conversion between %W%1%n and %W%2%n. Check %Gconsole_charset%n variable, if it won't help inform ekg2 dev team and/or upgrade iconv"), 1);
+	format_add("iconv_list",		_("%) %g%[-10]1%n %c<==> %g%[-10]2%n %b(%nIn use: %W%3, %4%b)"), 1);
+	format_add("iconv_list_bad",		_("%! %R%[-10]1%n %r<==> %R%[-10]2%n %b[%rINIT ERROR: %5%b] %b(%nIn use: %W%3, %4%b) "), 1);
 
 #ifdef WITH_ASPELL
 	/* aspell */

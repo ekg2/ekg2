@@ -367,6 +367,7 @@ void *ekg_convert_string_init(const char *from, const char *to, void **rev);
 void ekg_convert_string_destroy(void *ptr);
 char *ekg_convert_string_p(const char *ps, void *ptr);
 char *ekg_convert_string(const char *ps, const char *from, const char *to);
+int ekg_converters_display(int quiet);
 char *password_input();
 
 /* funkcje poza stuff.c */
