@@ -3226,13 +3226,11 @@ int ekg_converters_display(int quiet)
  */
 
 char *password_input() {
-	char *pass = (void*) -1;
+	char *pass = NULL;
 
-	query_emit_id(NULL, UI_PASSWORD_INPUT, &pass);
-
-	if (pass == (void*) -1) {
+	if (query_emit_id(NULL, UI_PASSWORD_INPUT, &pass) == -2) {
 		print("password_nosupport");
-		pass++;
+		return NULL;
 	}
 
 	return pass;
