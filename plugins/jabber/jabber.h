@@ -181,7 +181,6 @@ char *jabber_escape(const char *text);
 char *jabber_unescape(const char *text);
 char *tlen_encode(const char *what);
 char *tlen_decode(const char *what);
-unsigned char *utfstrchr(unsigned char *s, unsigned char c);
 int jabber_write_status(session_t *s);
 
 void jabber_convert_string_init(int is_tlen);

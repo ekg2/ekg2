@@ -342,42 +342,6 @@ char *tlen_decode(const char *what) {
 	return text;
 }
 
-/**
- * utfstrchr()
- *
- * Returns pointer to the first occurence of ASCII character in utf-8 string, taking care of multibyte characters.
- *
- * @note It can only find simple ASCII characters. If you need to find some multibyte char, please use wcs* instead.
- *
- * @bug  When @a s is invalid utf-8 sequence, anything can happen.
- *
- * @param s - string to search, as an utf-8 encoded char*
- * @param c - ASCII character to find
- *
- * @return Pointer to found char or NULL, if not found.
- */
-
-unsigned char *utfstrchr(unsigned char *s, unsigned char c) {
-	unsigned char *p;
-
-	for (p = s; *p; p++) {
-		/* What do we do here? First, we check if we've got single byte char.
-		 * If yes, then we do compare it with given char.
-		 * If no, then we determine how many bytes we need to skip over. */
-		if (*p < 0x80) {
-			if (*p == c)
-				return p;
-		} /* the rest stolen from ../feed/rss.c, where it was stolen from linux/drivers/char/vt.c */
-		else if ((*p & 0xe0) == 0xc0)	p++;
-		else if ((*p & 0xf0) == 0xe0)	p += 2;
-		else if ((*p & 0xf8) == 0xf0)	p += 3;
-		else if ((*p & 0xfc) == 0x78)	p += 4;
-		else if ((*p & 0xfe) == 0xfc)	p += 5;
-	}
-
-	return NULL;
-}
-
 /*
  * jabber_handle_write()
  *
