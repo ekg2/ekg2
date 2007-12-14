@@ -708,12 +708,14 @@ EXPORT int ncurses_plugin_init(int prio)
 	if (!no_mouse)
 		ncurses_enable_mouse(termtype);
 
-	/* determine window title setting support */
-	if (!xstrcasecmp(termtype, "screen"))
-		ncurses_settitle = 2;
-	else if (!xstrncasecmp(termtype, "xterm", 5) || !xstrncasecmp(termtype, "rxvt", 4) || !xstrncasecmp(termtype, "gnome", 5)
-			|| ((*termtype == 'E' || *termtype == 'a' || *termtype == 'k') && !xstrcasecmp(termtype+1, "term")))
-		ncurses_settitle = 1;
+	if (termtype) {
+		/* determine window title setting support */
+		if (!xstrcasecmp(termtype, "screen"))
+			ncurses_settitle = 2;
+		else if (!xstrncasecmp(termtype, "xterm", 5) || !xstrncasecmp(termtype, "rxvt", 4) || !xstrncasecmp(termtype, "gnome", 5)
+				|| ((*termtype == 'E' || *termtype == 'a' || *termtype == 'k') && !xstrcasecmp(termtype+1, "term")))
+			ncurses_settitle = 1;
+	}
 
 	if (ncurses_settitle)
 		printf(ncurses_settitle_formats[ncurses_settitle], "", "", "EKG2");
