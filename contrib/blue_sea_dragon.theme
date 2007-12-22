@@ -696,8 +696,8 @@ irc_quit   %> %Bquit: %b(%B%2%b)%B %b(%B%3%b)%B %b(%B%4%b)%n\n
 irc_unknown_ctcp %> %Y%2%n sent unknown CTCP %3: (%4)\n
 irc_ctcp_action_y_pub %> %y%e* %2%n %4\n
 irc_ctcp_action_y %> %Y%e* %2%n %4\n
-irc_ctcp_action_pub %> %y%h* %2%n %4\n
-irc_ctcp_action %> %Y%h* %2%n %4\n
+irc_ctcp_action_pub %> %y%h* %2%n %5\n
+irc_ctcp_action %> %Y%h* %2%n %5\n
 irc_ctcp_request_pub %> %Y%2%n requested ctcp %4 from %3\n
 irc_ctcp_request %> %Y%2%n requested ctcp %4\n
 irc_ctcp_reply %> %Y%2%n CTCP reply from %3: %4\n
@@ -713,10 +713,10 @@ IRC_ERR_NEWONE %! (%1) 1:%2 2:%3 3:%4 4:%5\n
 IRC_RPL_CANTSEND %> Cannot send to channel %T%2%n\n
 RPL_WHOISOPERATOR %G||%n %|ircOp    : %3\n
 IRC_RPL_TOPICBY %> set by %2 on %3
-IRC_TOPIC_CHANGE %> %T%4%n changed topic on %T%2%n: %3\n
+IRC_TOPIC_CHANGE %> %T%2%n changed topic on %T%4%n: %5\n
 IRC_TOPIC_UNSET %> %T%3%n unset topic on %T%2%n\n
 IRC_MODE_CHAN %> %2/%3 sets mode%4\n
 IRC_MODE %> %2 set mode %3 on You\n
 IRC_PINGPONG %) ping/pong %c%2%n\n
 IRC_YOUNEWNICK %> You are now known as %G%2%n\n
-IRC_NEWNICK %> %g%2%n is now known as %G%3%n\n
+IRC_NEWNICK %> %g%2%n is now known as %G%4%n\n
