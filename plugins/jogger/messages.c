@@ -209,7 +209,7 @@ QUERY(jogger_msghandler) {
 			const char *formats[]	= { "jogger_subscription_denied", "jogger_unsubscribed_earlier",
 					"jogger_posting_denied" };
 
-			print(formats[found-12], session_name(js));
+			print(formats[found-11], session_name(js));
 		}
 		return -1;
 	} else if (class == EKG_MSGCLASS_SENT || class == EKG_MSGCLASS_SENT_CHAT) { /* outgoing */
