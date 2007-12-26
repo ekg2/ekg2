@@ -1603,8 +1603,15 @@ find_streamhost:
 	debug_function("[FILE - BYTESTREAMS] 0x%x\n", d);
 }
 
+struct jabber_iq_generic_handler {
+	const char *name;
+	const char *xmlns;
+	void (*handler)(session_t *s, xmlnode_t *n, const char *from, const char *id);
+};
+
 #include "jabber_handlers_iq_get.c"
 #include "jabber_handlers_iq_result.c"
+
 
 JABBER_HANDLER(jabber_handle_iq) {
 	jabber_private_t *j = s->priv;
@@ -1708,116 +1715,48 @@ JABBER_HANDLER(jabber_handle_iq) {
 	if ((q = xmlnode_find_child(n, "si"))) /* JEP-0095: Stream Initiation */
 		jabber_handle_si(s, q, type, from, id);
 
+
 	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
 	        i typ "result" (przy za¿±daniu rostera od serwera) */
-	if (type == JABBER_IQ_TYPE_RESULT || type == JABBER_IQ_TYPE_SET) {
-		xmlnode_t *q;
+	if (type == JABBER_IQ_TYPE_RESULT || type == JABBER_IQ_TYPE_SET) 
+	{
+		for (q = n->children; q; q = q->next) {
+			struct jabber_iq_generic_handler *tmp = jabber_iq_result_handlers;
 
-		/* First we check if there is vCard... */
-		if ((q = xmlnode_find_child(n, "vCard"))) {
-			const char *ns = jabber_attr(q->atts, "xmlns");
+			while (tmp->handler) {
+				const char *ns = jabber_attr(q->atts, "xmlns");
 
-			if (!xstrncmp(ns, "vcard-temp", 10)) {
-				jabber_handle_vcard(s, q, from, id);
+				while (tmp->handler) {
+					int matched = !xstrcmp(q->name, tmp->name);
 
+					do {
+						if (matched && !xstrcmp(tmp->xmlns, ns)) {
+							debug_function("[jabber] <iq RESULT/SET> <%s xmlns=%s\n", q->name, ns);
+							tmp->handler(s, q, from, id);
+
+							/* XXX, read RFC if we can have more get stanzas */
+							/* <query xmlns=http://jabber.org/protocol/disco#items/>
+							 * <query xmlns=http://jabber.org/protocol/disco#info/>
+							 * ...
+							 * ...
+							 */
+							goto iq_type_reset_next;
+						}
+
+						tmp++;
+					} while (!tmp->name);
+
+					if (matched) {
+						debug_error("[jabber] <iq RESULT/SET> unknown ns: <%s xmlns=%s\n", q->name, __(ns));
+						break;
+					}
+				}
+				debug_error("[jabber] <iq RESULT/SET> unknown name: <%s xmlns=%s\n", __(q->name), __(ns));
 			}
+iq_type_reset_next:
+			continue;
 		}
-
-		if ((q = xmlnode_find_child(n, "query"))) {
-			const char *ns = jabber_attr(q->atts, "xmlns");
-
-			if (!xstrcmp(ns, "jabber:iq:privacy")) { /* RFC 3921 (10th: privacy) */
-				jabber_handle_iq_result_privacy(s, q, from, id); return;
-			}
-			
-			if (!xstrcmp(ns, "jabber:iq:private")) {
-				jabber_handle_iq_result_private(s, q, from, id); return;
-			}
-
-			if (!xstrcmp(ns, "http://jabber.org/protocol/vacation")) { /* JEP-0109: Vacation Messages */
-				xmlnode_t *temp;
-
-				char *message	= jabber_unescape( (temp = xmlnode_find_child(q, "message")) ? temp->data : NULL);
-				char *begin	= (temp = xmlnode_find_child(q, "start")) && temp->data ? temp->data : _("begin");
-				char *end	= (temp = xmlnode_find_child(q, "end")) && temp->data  ? temp->data : _("never");
-
-				print("jabber_vacation", session_name(s), message, begin, end);
-
-				xfree(message);
-				return;
-			}
-
-			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#info")) {
-				jabber_handle_iq_result_disco_info(s, q, from, id);	return;
-			}
-			
-			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#items")) {
-				jabber_handle_iq_result_disco(s, q, from, id);		return;
-			}
-
-
-			if (!xstrcmp(ns, "http://jabber.org/protocol/muc#owner")) {
-				xmlnode_t *node;
-				int formdone = 0;
-				char *uid = jabber_unescape(from);
-
-				for (node = q->children; node; node = node->next) {
-					if (!xstrcmp(node->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(node->atts, "xmlns"))) {
-						if (!xstrcmp(jabber_attr(node->atts, "type"), "form")) {
-							formdone = 1;
-							jabber_handle_xmldata_form(s, uid, "admin", node->children, NULL);
-							break;
-						} 
-					}
-				}
-//				if (!formdone) ;	// XXX
-				xfree(uid);
-				return;
-			}
-			
-			if (!xstrcmp(ns, "http://jabber.org/protocol/muc#admin")) {
-				xmlnode_t *node;
-				int count = 0;
-
-				for (node = q->children; node; node = node->next) {
-					if (!xstrcmp(node->name, "item")) {
-						char *jid		= jabber_attr(node->atts, "jid");
-//						char *aff		= jabber_attr(node->atts, "affiliation");
-						xmlnode_t *reason	= xmlnode_find_child(node, "reason");
-						char *rsn		= reason ? jabber_unescape(reason->data) : NULL;
-						
-						print("jabber_muc_banlist", session_name(s), from, jid, rsn ? rsn : "", itoa(++count));
-						xfree(rsn);
-					}
-				}
-
-			} 
-
-			if (!xstrcmp(ns, "jabber:iq:search")) {
-				jabber_handle_iq_result_search(s, q, from, id);	return;
-			}
-			
-			if (!xstrcmp(ns, "jabber:iq:register")) {
-				jabber_handle_register(s, q, from, id);		return;
-			}
-
-			if (!xstrcmp(ns, "http://jabber.org/protocol/bytestreams")) { /* JEP-0065: SOCKS5 Bytestreams */
-				jabber_handle_bytestreams(s, q, type, from, id);	return;
-			}
-
-			if (!xstrncmp(ns, "jabber:iq:version", 17)) {
-				jabber_handle_iq_result_version(s, q, from, id); 	return;
-			}
-			
-			if (!xstrncmp(ns, "jabber:iq:last", 14)) {
-				jabber_handle_iq_result_last(s, q, from, id);		return;
-			}
-			
-			if (!xstrncmp(ns, "jabber:iq:roster", 16)) {
-				jabber_handle_iq_roster(s, q, from, id);		return;
-			}
-		} /* if query */
-	} /* type == set */
+	}
 
 	if (type == JABBER_IQ_TYPE_GET) {
 		xmlnode_t *q;
