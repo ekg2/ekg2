@@ -1358,22 +1358,31 @@ JABBER_HANDLER(jabber_handle_iq) {
 	const char *id   = jabber_attr(n->atts, "id");
 	const char *from = jabber_attr(n->atts, "from");
 
-	xmlnode_t *q;
-
 	jabber_iq_type_t type = JABBER_IQ_TYPE_NONE;
+
+	struct jabber_iq_generic_handler *callbacks;
+	xmlnode_t *q;
 
 	if (!xstrcmp(atype, "get"))		type = JABBER_IQ_TYPE_GET;
 	else if (!xstrcmp(atype, "set"))	type = JABBER_IQ_TYPE_SET;
 	else if (!xstrcmp(atype, "result"))	type = JABBER_IQ_TYPE_RESULT;
 	else if (!xstrcmp(atype, "error"))	type = JABBER_IQ_TYPE_ERROR;
-
-	else if (atype)				debug_error("[jabber] <iq> wtf iq type: %s\n", atype);
-	else {					debug_error("[jabber] <iq> without type!\n");
-						return;
+	else if (!atype) {
+		debug_error("[jabber] <iq> without type!\n");
+		return;
 	}
 
-	if (type == JABBER_IQ_TYPE_ERROR) {
-		jabber_handler_iq_generic_error(s, n, from, id); return;
+	switch (type) {
+		case JABBER_IQ_TYPE_RESULT:		callbacks = jabber_iq_result_handlers;	break;
+		case JABBER_IQ_TYPE_SET:		callbacks = jabber_iq_set_handlers;	break;
+		case JABBER_IQ_TYPE_GET:		callbacks = jabber_iq_get_handlers;	break;
+
+		case JABBER_IQ_TYPE_ERROR:
+			jabber_handler_iq_generic_error(s, n, from, id);
+			return;
+		case JABBER_IQ_TYPE_NONE:
+			debug_error("[jabber] <iq> wtf iq type: %s\n", atype);
+			return;
 	}
 
 	if (!xstrcmp(id, "auth")) {
@@ -1400,21 +1409,8 @@ JABBER_HANDLER(jabber_handle_iq) {
 		return;
 	}
 
-
 	for (q = n->children; q; q = q->next) {
-		struct jabber_iq_generic_handler *tmp;
-
-		switch (type) {
-			case JABBER_IQ_TYPE_RESULT:	tmp = jabber_iq_result_handlers;	break;
-			case JABBER_IQ_TYPE_SET:	tmp = jabber_iq_set_handlers;		break;
-			case JABBER_IQ_TYPE_GET:	tmp = jabber_iq_get_handlers;		break;
-			default:
-							debug_error("[%s:%d] Internal error\n", __FILE__, __LINE__);
-							tmp = NULL;
-		}
-
-		if (!tmp)
-			return;
+		struct jabber_iq_generic_handler *tmp = callbacks;
 
 		while (tmp->handler) {
 			const char *ns = jabber_attr(q->atts, "xmlns");
@@ -1433,7 +1429,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 						 * ...
 						 * ...
 						 */
-						goto iq_type_reset_next;
+						goto iq_child_next;
 					}
 
 					tmp++;
@@ -1446,7 +1442,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 			}
 			debug_error("[jabber] <iq %s> unknown name: <%s xmlns=%s\n", atype, __(q->name), __(ns));
 		}
-iq_type_reset_next:
+iq_child_next:
 		continue;
 	}
 } /* iq */

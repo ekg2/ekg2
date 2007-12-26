@@ -148,6 +148,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_version) {
 
 /* XXX, check if this is really result. */
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
+#if 0
 	jabber_private_t *j = s->priv;
 
 	xmlnode_t *active 	= xmlnode_find_child(n, "active");
@@ -254,6 +255,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 	}
 	if (i > 0)  print("jabber_privacy_list_end", session_name(s), j->server);
 	if (i == 0) print("jabber_privacy_list_noitem", session_name(s), j->server);
+#endif
 }
 
 /* XXX, check if this is really result. */
