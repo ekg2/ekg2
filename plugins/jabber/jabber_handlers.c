@@ -175,152 +175,6 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 }
 
 
-/*
- * tlen_handle_notification()
- *
- *
- */
-
-JABBER_HANDLER(tlen_handle_notification) {	/* n->name: "m" TLEN only: typing, nottyping, and alert notifications */
-	char *type = jabber_attr(n->atts, "tp");
-	char *from = jabber_attr(n->atts, "f");
-	char *typeadd = jabber_attr(n->atts, "type");
-
-
-	if (!type || !from || (typeadd && !xstrcmp(typeadd, "error"))) {
-		debug_error("tlen_handle() %d %s/%s/%s", __LINE__, type, from, typeadd);
-		return;
-	}
-
-	if (!xstrcmp(type, "t") || !xstrcmp(type, "u")) {
-		char *uid = saprintf("tlen:%s", from);
-
-		/* typing notification */
-		char *session	= xstrdup(session_uid_get(s));
-		int stateo	= !xstrcmp(type, "u") ? EKG_XSTATE_TYPING : 0;
-		int state	= !stateo ? EKG_XSTATE_TYPING : 0;
-
-		query_emit_id(NULL, PROTOCOL_XSTATE, &session, &uid, &state, &stateo);
-
-		xfree(session);
-		xfree(uid);
-		return;
-	}
-
-	if (!xstrcmp(type, "a")) {	/* funny thing called alert */
-		char *uid = saprintf("tlen:%s", from);
-		print_window(uid, s, 0, "tlen_alert", session_name(s), format_user(s, uid));
-
-		if (config_sound_notify_file)
-			play_sound(config_sound_notify_file);
-		else if (config_beep && config_beep_notify)
-			query_emit_id(NULL, UI_BEEP, NULL);
-		xfree(uid);
-		return;
-	}
-
-}
-
-/*
- * tlen_handle_newmail()
- *
- */
-
-JABBER_HANDLER(tlen_handle_newmail) {
-	char *from = tlen_decode(jabber_attr(n->atts, "f"));
-	char *subj = tlen_decode(jabber_attr(n->atts, "s"));
-
-	print("tlen_mail", session_name(s), from, subj);
-	newmail_common(s);
-
-	xfree(from);
-	xfree(subj);
-}
-
-/*
- * tlen_handle_webmessage()
- * 
- *
- */
-
-JABBER_HANDLER(tlen_handle_webmessage) {
-	char *from = jabber_attr(n->atts, "f");
-	char *mail = jabber_attr(n->atts, "e");
-	char *content = n->data;
-	string_t body = string_init("");
-
-	char *text;
-
-	if (from || mail) {
-		string_append(body, "From:");
-		if (from) {
-			string_append_c(body, ' ');
-			string_append(body, from);
-		}
-		if (mail) {
-			string_append(body, " <");
-			string_append(body, mail);
-			string_append_c(body, '>');
-		}
-		string_append_c(body, '\n');
-	}
-
-	if (body->len) string_append_c(body, '\n');
-
-	string_append(body, content);
-	text = tlen_decode(body->str);
-	string_free(body, 1);
-
-	{
-		char *me	= xstrdup(session_uid_get(s));
-		char *uid	= xstrdup("ludzie.tlen.pl");
-		char **rcpts 	= NULL;
-		uint32_t *format= NULL;
-		time_t sent	= time(NULL);
-		int class 	= EKG_MSGCLASS_MESSAGE;
-		char *seq 	= NULL;
-		int ekgbeep 	= EKG_TRY_BEEP;
-		int secure	= 0;
-
-		query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
-
-		xfree(me);
-		xfree(uid);
-	}
-
-	xfree(text);
-}
-
-/**
- * tlen_handle()
- *
- * Handle misc tlen-only things...<br>
- * Executed by jabber_handle() when unknown n->name found, and it's tlen session.<br>
- * It handle: 
- * 	- "m" using tlen_handle_notification()		[user-notifications like: typing, stop typing, and soundalers]
- * 	- "n" using tlen_handle_newmail()		[when server inform us about new mail]
- * 	- "w" using tlen_handle_webmessage()		[when we receive webmessage]
- * 	- else print error in __debug window.
- *
- * @todo Move this and stuff to jabber_tlen_handlers.c
- */
-
-JABBER_HANDLER(tlen_handle) {
-	if (!xstrcmp(n->name, "m")) {		/* user-notifications */
-		tlen_handle_notification(s, n);	return;
-	}
-
-	if (!xstrcmp(n->name, "n")) {		/* newmail */
-		tlen_handle_newmail(s, n);	return;
-	}
-
-	if (!xstrcmp(n->name, "w")) {		/* web messages */
-		tlen_handle_webmessage(s, n);	return;
-	}
-
-	debug_error("tlen_handle() what's that: %s ?\n", n->name);
-}
-
 #define CHECK_CONNECT(connecting_, connected_, func) if (j->connecting != connecting_ || s->connected != connected_) { \
 			debug_error("[jabber] %s:%d ASSERT_CONNECT j->connecting: %d (shouldbe: %d) s->connected: %d (shouldbe: %d)\n", \
 				__FILE__, __LINE__, j->connecting, connecting_, s->connected, connected_);	func; }
@@ -709,131 +563,128 @@ JABBER_HANDLER(jabber_handle_challenge) {
 	array_free(arr);
 }
 
-/**
- * jabber_handle()
- *
- * It handle:
- * 	- <i>message</i> using jabber_handle_message()
- * 	- <i>iq</i> using jabber_handle_iq()
- *	- <i>presence</i> using jabber_handle_presence()
- *	- <i>stream:features</i> using jabber_handle_stream_features()
- *	- <i>stream:error</i>
- *	- <i>challenge</i> using jabber_handle_challenge()
- *	- <i>compressed</i> using jabber_handle_compressed()
- *	- <i>proceed</i> xmlns:<i>urn:ietf:params:xml:ns:xmpp-tls</i> using jabber_handle_connect_ssl()
- *	- <i>success</i> xmlns:<i>urn:ietf:params:xml:ns:xmpp-sasl</i>
- *	- <i>failure</i> xmlns:<i>urn:ietf:params:xml:ns:xmpp-sasl</i>
- *	- else if tlen protocol than forward to tlen_handle()
- *	- else print error in __debug window.
- *
- * @todo See XXX's
- */
+JABBER_HANDLER(jabber_handle_proceed) {
+	jabber_private_t *j = s->priv;
+
+	CHECK_CONNECT(1, 0, return)
+
+	if (!xstrcmp(jabber_attr(n->atts, "xmlns"), "urn:ietf:params:xml:ns:xmpp-tls")) {
+#ifdef JABBER_HAVE_SSL
+		debug_function("[jabber] proceed urn:ietf:params:xml:ns:xmpp-tls TLS let's rock\n");
+
+		/* XXX HERE WE SHOULD DISABLE RECV_WATCH && (SEND WATCH TOO?) */
+		// j->send_watch->type = WATCH_NONE;
+
+		jabber_handle_connect_ssl(-1, j->fd, WATCH_NONE, s);
+#else
+		debug_error("[jabber] proceed + urn:ietf:params:xml:ns:xmpp-tls but jabber compilated without ssl support?\n");
+#endif
+	} else	debug_error("[jabber] proceed what's that xmlns: %s ?\n", jabber_attr(n->atts, "xmlns"));
+}
+
+JABBER_HANDLER(jabber_handle_stream_error) {
+	jabber_private_t *j = s->priv;
+
+	/* BIG XXX, EKG_DISCONNECT_FAILURE bad here */
+	xmlnode_t *text = xmlnode_find_child(n, "text");
+	char *text2 = NULL;
+
+	if (text && text->data)
+		text2 = jabber_unescape(text->data);
+
+	j->parser = NULL; jabber_handle_disconnect(s, text2 ? text2 : n->children ? n->children->name : "stream:error XXX", EKG_DISCONNECT_FAILURE);
+	xfree(text2);
+}
+
+JABBER_HANDLER(jabber_handle_success) {
+	jabber_private_t *j = s->priv;
+
+	CHECK_CONNECT(2, 0, return)
+	CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", return)
+
+	j->parser = jabber_parser_recreate(NULL, XML_GetUserData(j->parser));	/* here could be passed j->parser to jabber_parser_recreate() but unfortunetly expat makes SIGSEGV */
+	watch_write(j->send_watch, 
+			"<stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">", 
+			j->server);
+}
+
+JABBER_HANDLER(jabber_handle_failure) {
+	jabber_private_t *j = s->priv;
+
+	char *reason;
+
+	CHECK_CONNECT(2, 0, return)
+	CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", return)
+
+	reason = n->children ? n->children->name : NULL;
+	debug_function("[jabber] failure n->child: 0x%x n->child->name: %s\n", n->children, __(reason));
+
+	/* XXX here, think about nice reasons */
+	if (!reason)						reason = "(SASL) GENERIC FAILURE";
+	else if (!xstrcmp(reason, "temporary-auth-failure"))	reason = "(SASL) TEMPORARY AUTH FAILURE";
+	else debug_error("[jabber] UNKNOWN reason: %s\n", reason);
+
+	j->parser = NULL; jabber_handle_disconnect(s, reason, EKG_DISCONNECT_FAILURE);
+}
+
+struct jabber_generic_handler {
+	const char *name;
+	void (*handler)(session_t *s, xmlnode_t *n);
+};
+
+static const struct jabber_generic_handler jabber_handlers[] =
+{
+	{ "message",		jabber_handle_message },
+	{ "presence",		jabber_handle_presence },
+	{ "iq",			jabber_handle_iq },
+
+	{ "stream:features",	jabber_handle_stream_features },
+	{ "stream:error",	jabber_handle_stream_error },
+
+	{ "challenge",		jabber_handle_challenge },
+	{ "compressed",		jabber_handle_compressed },
+
+	{ "proceed",		jabber_handle_proceed },
+	{ "success",		jabber_handle_success },
+	{ "failure",		jabber_handle_failure },
+
+	{ NULL,			NULL }
+};
+
+#include "jabber_handlers_tlen.c"
 
 void jabber_handle(void *data, xmlnode_t *n) {
 	session_t *s = (session_t *) data;
         jabber_private_t *j;
+	struct jabber_generic_handler *tmp;
 
         if (!s || !(j = s->priv) || !n) {
                 debug_error("jabber_handle() invalid parameters\n");
                 return;
         }
 
-        if (!xstrcmp(n->name, "message")) {
-		jabber_handle_message(s, n);
+/* jabber handlers */
+	for (tmp = jabber_handlers; tmp->name; tmp++) {
+		if (!xstrcmp(n->name, tmp->name)) {
+			tmp->handler(s, n);
+			return;
+		}
+	}
+
+	if (!j->istlen) {
+		debug_error("[jabber] what's that: %s ?\n", n->name);
 		return;
 	}
 
-	if (!xstrcmp(n->name, "iq")) {
-		jabber_handle_iq(s, n);
-		return;
+/* tlen handlers */
+	for (tmp = tlen_handlers; tmp->name; tmp++) {
+		if (!xstrcmp(n->name, tmp->name)) {
+			tmp->handler(s, n);
+			return;
+		}
 	}
 
-	if (!xstrcmp(n->name, "presence")) {
-		jabber_handle_presence(s, n);
-		return;
-	}
-
-	if (!xstrcmp(n->name, "stream:features")) {
-		jabber_handle_stream_features(s, n);
-		return;
-	}
-
-	if (!xstrcmp(n->name, "challenge")) {
-		jabber_handle_challenge(s, n);
-		return;
-	}
-
-	if (!xstrcmp(n->name, "compressed")) {	/* COMPRESSION HERE */
-		jabber_handle_compressed(s, n);
-		return;
-	}
-
-	if (!xstrcmp(n->name, "proceed")) {
-		CHECK_CONNECT(1, 0, return)
-
-		if (!xstrcmp(jabber_attr(n->atts, "xmlns"), "urn:ietf:params:xml:ns:xmpp-tls")) {
-#ifdef JABBER_HAVE_SSL
-			debug_function("[jabber] proceed urn:ietf:params:xml:ns:xmpp-tls TLS let's rock\n");
-
-			/* XXX HERE WE SHOULD DISABLE RECV_WATCH && (SEND WATCH TOO?) */
-			// j->send_watch->type = WATCH_NONE;
-
-			jabber_handle_connect_ssl(-1, j->fd, WATCH_NONE, s);
-#else
-			debug_error("[jabber] proceed + urn:ietf:params:xml:ns:xmpp-tls but jabber compilated without ssl support?\n");
-#endif
-		} else	debug_error("[jabber] proceed what's that xmlns: %s ?\n", jabber_attr(n->atts, "xmlns"));
-		return;
-	}
-
-	if (!xstrcmp(n->name, "success")) {
-		CHECK_CONNECT(2, 0, return)
-		CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", return)
-
-		j->parser = jabber_parser_recreate(NULL, XML_GetUserData(j->parser));	/* here could be passed j->parser to jabber_parser_recreate() but unfortunetly expat makes SIGSEGV */
-		watch_write(j->send_watch, 
-				"<stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\" version=\"1.0\">", 
-				j->server);
-		return;
-	} 
-
-	if (!xstrcmp(n->name, "failure")) {
-		char *reason;
-
-		CHECK_CONNECT(2, 0, return)
-		CHECK_XMLNS(n, "urn:ietf:params:xml:ns:xmpp-sasl", return)
-
-		reason = n->children ? n->children->name : NULL;
-		debug_function("[jabber] failure n->child: 0x%x n->child->name: %s\n", n->children, __(reason));
-
-/* XXX here, think about nice reasons */
-		if (!reason)						reason = "(SASL) GENERIC FAILURE";
-		else if (!xstrcmp(reason, "temporary-auth-failure"))	reason = "(SASL) TEMPORARY AUTH FAILURE";
-		else debug_error("[jabber] UNKNOWN reason: %s\n", reason);
-
-		j->parser = NULL; jabber_handle_disconnect(s, reason, EKG_DISCONNECT_FAILURE);
-		
-		return;
-	}
-
-	if (!xstrcmp(n->name, "stream:error")) {	/* BIG XXX, EKG_DISCONNECT_FAILURE bad here */
-		xmlnode_t *text = xmlnode_find_child(n, "text");
-		char *text2 = NULL;
-
-		if (text && text->data)
-			text2 = jabber_unescape(text->data);
-
-		j->parser = NULL; jabber_handle_disconnect(s, text2 ? text2 : n->children ? n->children->name : "stream:error XXX", EKG_DISCONNECT_FAILURE);
-		xfree(text2);
-		return;
-	}
-
-	if (j->istlen) {
-		tlen_handle(s, n);
-		return;
-	}
-
-	debug_error("[jabber] what's that: %s ?\n", n->name);
+	debug_error("[tlen] what's that: %s ?\n", n->name);
 }
 
 JABBER_HANDLER(jabber_handle_message) {
@@ -1445,7 +1296,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 iq_child_next:
 		continue;
 	}
-} /* iq */
+}
 
 static inline void mucuser_private_deinit(userlist_t *u) {
 	jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
