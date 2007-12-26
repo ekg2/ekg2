@@ -1,4 +1,5 @@
 #define JABBER_HANDLER_RESULT(x) 	static void x(session_t *s, xmlnode_t *n, const char *from, const char *id)
+#define JABBER_HANDLER_SET(x)	 	static void x(session_t *s, xmlnode_t *n, const char *from, const char *id)
 
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_disco) {
 	xmlnode_t *item = xmlnode_find_child(n, "item");
@@ -495,29 +496,25 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_search) {
 }
 
 JABBER_HANDLER_RESULT(jabber_handle_result_pubsub) {
-	const char *xmlns = jabber_attr(n->atts, "xmlns");
-	/* XXX, we really need make functions for iq's. */
-	if (!xstrcmp(xmlns, "http://jabber.org/protocol/pubsub#event")) {
-		xmlnode_t *p;
+	xmlnode_t *p;
 
-		for (p = n->children; p; p = p->next) {
-			if (!xstrcmp(p->name, "items")) {
-				const char *nodename = jabber_attr(p->atts, "node");
-				xmlnode_t *node;
+	for (p = n->children; p; p = p->next) {
+		if (!xstrcmp(p->name, "items")) {
+			const char *nodename = jabber_attr(p->atts, "node");
+			xmlnode_t *node;
 
-				debug_error("XXX %s\n", __(nodename));
+			debug_error("XXX %s\n", __(nodename));
 
-				for (node = p->children; node; node = node->next) {
-					if (!xstrcmp(node->name, "item")) {
-						const char *itemid = jabber_attr(node->atts, "id");
-						debug_error("XXX XXX %s\n", __(itemid));
+			for (node = p->children; node; node = node->next) {
+				if (!xstrcmp(node->name, "item")) {
+					const char *itemid = jabber_attr(node->atts, "id");
+					debug_error("XXX XXX %s\n", __(itemid));
 
-						/* XXX HERE, node->children... is entry. */
-					} else debug_error("[%s:%d] wtf? %s\n", __FILE__, __LINE__, __(node->name));
-				} 
-			} else debug_error("[%s:%d] wtf? %s\n", __FILE__, __LINE__, __(p->name));
-		}
-	} else debug_error("[JABBER] RESULT/PUBSUB wtf XMLNS: %s\n", __(xmlns));
+					/* XXX HERE, node->children... is entry. */
+				} else debug_error("[%s:%d] wtf? %s\n", __FILE__, __LINE__, __(node->name));
+			} 
+		} else debug_error("[%s:%d] wtf? %s\n", __FILE__, __LINE__, __(p->name));
+	}
 }
 
 
@@ -775,8 +772,143 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_muc_admin) {
 	}
 }
 
+JABBER_HANDLER_RESULT(jabber_handle_iq_result_new_mail) {
+	jabber_private_t *j = s->priv;
+
+	watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
+}
+
+JABBER_HANDLER_SET(jabber_handle_iq_set_new_mail) {
+	jabber_private_t *j = s->priv;
+
+	print("gmail_new_mail", session_name(s));
+	watch_write(j->send_watch, "<iq type='result' id='%s'/>", jabber_attr(n->atts, "id"));
+	if (j->last_gmail_result_time && j->last_gmail_tid)
+		watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\" newer-than-time=\"%s\" newer-than-tid=\"%s\" /></iq>", j->id++, 
+			j->last_gmail_result_time, j->last_gmail_tid);
+	else
+		watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
+}
+
+JABBER_HANDLER_SET(jabber_handle_si_set) {
+	xmlnode_t *p;
+
+	if (((p = xmlnode_find_child(n, "file")))) {  /* JEP-0096: File Transfer */
+		dcc_t *D;
+		char *uin = jabber_unescape(from);
+		char *uid;
+		char *filename	= jabber_unescape(jabber_attr(p->atts, "name"));
+		char *size 	= jabber_attr(p->atts, "size");
+#if 0
+		xmlnode_t *range; /* unused? */
+#endif
+		jabber_dcc_t *jdcc;
+
+		uid = saprintf("xmpp:%s", uin);
+
+		jdcc = xmalloc(sizeof(jabber_dcc_t));
+		jdcc->session	= s;
+		jdcc->req 	= xstrdup(id);
+		jdcc->sid	= jabber_unescape(jabber_attr(n->atts, "id"));
+		jdcc->sfd	= -1;
+
+		D = dcc_add(s, uid, DCC_GET, NULL);
+		dcc_filename_set(D, filename);
+		dcc_size_set(D, atoi(size));
+		dcc_private_set(D, jdcc);
+		dcc_close_handler_set(D, jabber_dcc_close_handler);
+/* XXX, result
+		if ((range = xmlnode_find_child(p, "range"))) {
+			char *off = jabber_attr(range->atts, "offset");
+			char *len = jabber_attr(range->atts, "length");
+			if (off) dcc_offset_set(D, atoi(off));
+			if (len) dcc_size_set(D, atoi(len));
+		}
+*/
+		print("dcc_get_offer", format_user(s, uid), filename, size, itoa(dcc_id_get(D))); 
+
+		xfree(uin);
+		xfree(uid);
+		xfree(filename);
+	}
+
+
+}
+
+JABBER_HANDLER_RESULT(jabber_handle_si_result) {
+	jabber_private_t *j = s->priv;
+
+	char *uin = jabber_unescape(from);
+	dcc_t *d;
+
+	if ((d = jabber_dcc_find(uin, id, NULL))) {
+		xmlnode_t *node;
+		jabber_dcc_t *p = d->priv;
+		char *stream_method = NULL;
+
+		for (node = n->children; node; node = node->next) {
+			if (!xstrcmp(node->name, "feature") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "http://jabber.org/protocol/feature-neg")) {
+				xmlnode_t *subnode;
+				for (subnode = node->children; subnode; subnode = subnode->next) {
+					if (!xstrcmp(subnode->name, "x") && !xstrcmp(jabber_attr(subnode->atts, "xmlns"), "jabber:x:data") && 
+							!xstrcmp(jabber_attr(subnode->atts, "type"), "submit")) {
+						/* var stream-method == http://jabber.org/protocol/bytestreams */
+						jabber_handle_xmldata_submit(s, subnode->children, NULL, 0, "stream-method", &stream_method, NULL);
+					}
+				}
+			}
+		}
+		if (!xstrcmp(stream_method, "http://jabber.org/protocol/bytestreams")) 	p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS; 
+		else debug_error("[JABBER] JEP-0095: ERROR, stream_method XYZ error: %s\n", stream_method);
+		xfree(stream_method);
+
+		if (p->protocol == JABBER_DCC_PROTOCOL_BYTESTREAMS) {
+			struct jabber_streamhost_item streamhost;
+			jabber_dcc_bytestream_t *b;
+			list_t l;
+
+			b = p->private.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
+			b->validate = JABBER_DCC_PROTOCOL_BYTESTREAMS;
+
+			if (jabber_dcc_ip && jabber_dcc) {
+				/* basic streamhost, our ip, default port, our jid. check if we enable it. XXX*/
+				streamhost.jid	= saprintf("%s/%s", s->uid+5, j->resource);
+				streamhost.ip	= xstrdup(jabber_dcc_ip);
+				streamhost.port	= jabber_dcc_port;
+				list_add(&(b->streamlist), &streamhost, sizeof(struct jabber_streamhost_item));
+			}
+
+			/* 	... other, proxy, etc, etc..
+				streamhost.ip = ....
+				streamhost.port = ....
+				list_add(...);
+				*/
+
+			xfree(p->req);
+			p->req = xstrdup(itoa(j->id++));
+
+			watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"%s\">"
+					"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">", 
+					d->uid+5, p->req, p->sid);
+
+			for (l = b->streamlist; l; l = l->next) {
+				struct jabber_streamhost_item *item = l->data;
+				watch_write(j->send_watch, "<streamhost port=\"%d\" host=\"%s\" jid=\"%s\"/>", item->port, item->ip, item->jid);
+			}
+			watch_write(j->send_watch, "<fast xmlns=\"http://affinix.com/jabber/stream\"/></query></iq>");
+
+		}
+	} else /* XXX */;
+}
+
 static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
 	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
+
+	{ "pubsub",	"http://jabber.org/protocol/pubsub#event",	jabber_handle_result_pubsub },
+	{ "mailbox",	"google:mail:notify",				jabber_handle_gmail_result_mailbox },
+	{ "new-mail",	"google:mail:notify",				jabber_handle_iq_result_new_mail },
+
+	{ "si",		NULL,						jabber_handle_si_result },
 
 	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },
 	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
@@ -794,4 +926,68 @@ static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
 
 	{ "",		NULL,						NULL }
 };
+
+/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
+ *      i typ "result" (przy zażądaniu rostera od serwera) */
+
+/* niektore hacki zdecydowanie za dlugo... */
+
+static const struct jabber_iq_generic_handler jabber_iq_set_handlers[] = {
+	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
+
+	{ "new-mail",	"google:mail:notify",				jabber_handle_iq_set_new_mail },
+
+	{ "si",		NULL,						jabber_handle_si_set },
+
+	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },
+	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
+	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },
+	{ NULL,		"jabber:iq:register",				jabber_handle_register },
+	{ NULL,		"jabber:iq:roster",				jabber_handle_iq_roster },
+	{ NULL,		"jabber:iq:search",				jabber_handle_iq_result_search },
+	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },
+//	{ NULL,		"http://jabber.org/protocol/bytestreams",	jabber_handle_bytestreams },
+	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_result_disco_info },
+	{ NULL,		"http://jabber.org/protocol/disco#items",	jabber_handle_iq_result_disco },
+	{ NULL,		"http://jabber.org/protocol/muc#admin",		jabber_handle_iq_muc_admin },
+	{ NULL,		"http://jabber.org/protocol/muc#owner",		jabber_handle_iq_muc_owner },
+	{ NULL,		"http://jabber.org/protocol/vacation",		jabber_handle_iq_vacation },
+
+	{ "",		NULL,						NULL }
+};
+
+JABBER_HANDLER_ERROR(jabber_handler_iq_generic_error) {
+	jabber_private_t *j = s->priv;
+
+	xmlnode_t *e = xmlnode_find_child(n, "error");
+	char *reason = (e) ? jabber_unescape(e->data) : NULL;
+
+	if (!xstrncmp(id, "register", 8)) {
+		print("register_failed", jabberfix(reason, "?"));
+	} else if (!xstrcmp(id, "auth")) {
+		j->parser = NULL; jabber_handle_disconnect(s, reason ? reason : _("Error connecting to Jabber server"), EKG_DISCONNECT_FAILURE);
+
+	} else if (!xstrncmp(id, "passwd", 6)) {
+		print("passwd_failed", jabberfix(reason, "?"));
+		session_set(s, "__new_password", NULL);
+	} else if (!xstrncmp(id, "search", 6)) {
+		debug_error("[JABBER] search failed: %s\n", __(reason));
+	}
+	else if (!xstrncmp(id, "offer", 5)) {
+		char *uin = jabber_unescape(from);
+		dcc_t *p = jabber_dcc_find(uin, id, NULL);
+
+		if (p) {
+			/* XXX, new theme it's for ip:port */
+			print("dcc_error_refused", format_user(s, p->uid));
+			dcc_close(p);
+		} else {
+			/* XXX, possible abuse attempt */
+		}
+		xfree(uin);
+	}
+	else debug_error("[JABBER] GENERIC IQ ERROR: %s\n", __(reason));
+
+	xfree(reason);
+}
 

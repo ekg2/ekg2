@@ -74,7 +74,8 @@ WATCHER_SESSION(jabber_handle_connect_ssl); /* jabber.c */
 #define jabberfix(x,a) ((x) ? x : a)
 
 #define JABBER_HANDLER(x) 		static void x(session_t *s, xmlnode_t *n)
-#define JABBER_HANDLER_IQ(x) 		static void x(session_t *s, xmlnode_t *n, jabber_iq_type_t iqtype, const char *from, const char *id)
+#define JABBER_HANDLER_ERROR(x)        static void x(session_t *s, xmlnode_t *n, const char *from, const char *id)
+
 
 JABBER_HANDLER(jabber_handle_message);
 JABBER_HANDLER(jabber_handle_iq);
@@ -1341,115 +1342,6 @@ typedef enum {
 	JABBER_IQ_TYPE_ERROR,
 } jabber_iq_type_t;
 
-JABBER_HANDLER_IQ(jabber_handle_si) {
-/* dj, I think we don't need to unescape rows (tags) when there should be int, do we?  ( <size> <offset> <length>... )*/
-	jabber_private_t *j = s->priv;
-	xmlnode_t *p;
-
-	if (iqtype == JABBER_IQ_TYPE_RESULT) {
-		char *uin = jabber_unescape(from);
-		dcc_t *d;
-
-		if ((d = jabber_dcc_find(uin, id, NULL))) {
-			xmlnode_t *node;
-			jabber_dcc_t *p = d->priv;
-			char *stream_method = NULL;
-
-			for (node = n->children; node; node = node->next) {
-				if (!xstrcmp(node->name, "feature") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "http://jabber.org/protocol/feature-neg")) {
-					xmlnode_t *subnode;
-					for (subnode = node->children; subnode; subnode = subnode->next) {
-						if (!xstrcmp(subnode->name, "x") && !xstrcmp(jabber_attr(subnode->atts, "xmlns"), "jabber:x:data") && 
-								!xstrcmp(jabber_attr(subnode->atts, "type"), "submit")) {
-							/* var stream-method == http://jabber.org/protocol/bytestreams */
-							jabber_handle_xmldata_submit(s, subnode->children, NULL, 0, "stream-method", &stream_method, NULL);
-						}
-					}
-				}
-			}
-			if (!xstrcmp(stream_method, "http://jabber.org/protocol/bytestreams")) 	p->protocol = JABBER_DCC_PROTOCOL_BYTESTREAMS; 
-			else debug_error("[JABBER] JEP-0095: ERROR, stream_method XYZ error: %s\n", stream_method);
-			xfree(stream_method);
-
-			if (p->protocol == JABBER_DCC_PROTOCOL_BYTESTREAMS) {
-				struct jabber_streamhost_item streamhost;
-				jabber_dcc_bytestream_t *b;
-				list_t l;
-
-				b = p->private.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
-				b->validate = JABBER_DCC_PROTOCOL_BYTESTREAMS;
-
-				if (jabber_dcc_ip && jabber_dcc) {
-					/* basic streamhost, our ip, default port, our jid. check if we enable it. XXX*/
-					streamhost.jid	= saprintf("%s/%s", s->uid+5, j->resource);
-					streamhost.ip	= xstrdup(jabber_dcc_ip);
-					streamhost.port	= jabber_dcc_port;
-					list_add(&(b->streamlist), &streamhost, sizeof(struct jabber_streamhost_item));
-				}
-
-/* 	... other, proxy, etc, etc..
-				streamhost.ip = ....
-				streamhost.port = ....
-				list_add(...);
- */
-
-				xfree(p->req);
-				p->req = xstrdup(itoa(j->id++));
-
-				watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"%s\">"
-						"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">", 
-						d->uid+5, p->req, p->sid);
-
-				for (l = b->streamlist; l; l = l->next) {
-					struct jabber_streamhost_item *item = l->data;
-					watch_write(j->send_watch, "<streamhost port=\"%d\" host=\"%s\" jid=\"%s\"/>", item->port, item->ip, item->jid);
-				}
-				watch_write(j->send_watch, "<fast xmlns=\"http://affinix.com/jabber/stream\"/></query></iq>");
-
-			}
-		} else /* XXX */;
-	}
-
-	if (iqtype == JABBER_IQ_TYPE_SET && ((p = xmlnode_find_child(n, "file")))) {  /* JEP-0096: File Transfer */
-		dcc_t *D;
-		char *uin = jabber_unescape(from);
-		char *uid;
-		char *filename	= jabber_unescape(jabber_attr(p->atts, "name"));
-		char *size 	= jabber_attr(p->atts, "size");
-#if 0
-		xmlnode_t *range; /* unused? */
-#endif
-		jabber_dcc_t *jdcc;
-
-		uid = saprintf("xmpp:%s", uin);
-
-		jdcc = xmalloc(sizeof(jabber_dcc_t));
-		jdcc->session	= s;
-		jdcc->req 	= xstrdup(id);
-		jdcc->sid	= jabber_unescape(jabber_attr(n->atts, "id"));
-		jdcc->sfd	= -1;
-
-		D = dcc_add(s, uid, DCC_GET, NULL);
-		dcc_filename_set(D, filename);
-		dcc_size_set(D, atoi(size));
-		dcc_private_set(D, jdcc);
-		dcc_close_handler_set(D, jabber_dcc_close_handler);
-/* XXX, result
-		if ((range = xmlnode_find_child(p, "range"))) {
-			char *off = jabber_attr(range->atts, "offset");
-			char *len = jabber_attr(range->atts, "length");
-			if (off) dcc_offset_set(D, atoi(off));
-			if (len) dcc_size_set(D, atoi(len));
-		}
-*/
-		print("dcc_get_offer", format_user(s, uid), filename, size, itoa(dcc_id_get(D))); 
-
-		xfree(uin);
-		xfree(uid);
-		xfree(filename);
-	}
-}
-
 struct jabber_iq_generic_handler {
 	const char *name;
 	const char *xmlns;
@@ -1458,7 +1350,6 @@ struct jabber_iq_generic_handler {
 
 #include "jabber_handlers_iq_get.c"
 #include "jabber_handlers_iq_result.c"
-
 
 JABBER_HANDLER(jabber_handle_iq) {
 	jabber_private_t *j = s->priv;
@@ -1482,52 +1373,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 	}
 
 	if (type == JABBER_IQ_TYPE_ERROR) {
-		xmlnode_t *e = xmlnode_find_child(n, "error");
-		char *reason = (e) ? jabber_unescape(e->data) : NULL;
-
-		if (!xstrncmp(id, "register", 8)) {
-			print("register_failed", jabberfix(reason, "?"));
-		} else if (!xstrcmp(id, "auth")) {
-			j->parser = NULL; jabber_handle_disconnect(s, reason ? reason : _("Error connecting to Jabber server"), EKG_DISCONNECT_FAILURE);
-
-		} else if (!xstrncmp(id, "passwd", 6)) {
-			print("passwd_failed", jabberfix(reason, "?"));
-			session_set(s, "__new_password", NULL);
-		} else if (!xstrncmp(id, "search", 6)) {
-			debug_error("[JABBER] search failed: %s\n", __(reason));
-		}
-		else if (!xstrncmp(id, "offer", 5)) {
-			char *uin = jabber_unescape(from);
-			dcc_t *p = jabber_dcc_find(uin, id, NULL);
-
-			if (p) {
-				/* XXX, new theme it's for ip:port */
-				print("dcc_error_refused", format_user(s, p->uid));
-				dcc_close(p);
-			} else {
-				/* XXX, possible abuse attempt */
-			}
-			xfree(uin);
-		}
-		else debug_error("[JABBER] GENERIC IQ ERROR: %s\n", __(reason));
-
-		xfree(reason);
-		return;			/* we don't need to go down */
-	}
-
-	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify"))
-		watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
-	if (type == JABBER_IQ_TYPE_SET && (q = xmlnode_find_child(n, "new-mail")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
-		print("gmail_new_mail", session_name(s));
-		watch_write(j->send_watch, "<iq type='result' id='%s'/>", jabber_attr(n->atts, "id"));
-		if (j->last_gmail_result_time && j->last_gmail_tid)
-			watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\" newer-than-time=\"%s\" newer-than-tid=\"%s\" /></iq>", j->id++, j->last_gmail_result_time, j->last_gmail_tid);
-		else
-			watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
-	}
-
-	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "mailbox")) && !xstrcmp(jabber_attr(q->atts, "xmlns"), "google:mail:notify")) {
-		jabber_handle_gmail_result_mailbox(s, q, from, id);
+		jabber_handler_iq_generic_error(s, n, from, id); return;
 	}
 
 	if (!xstrcmp(id, "auth")) {
@@ -1555,74 +1401,53 @@ JABBER_HANDLER(jabber_handle_iq) {
 	}
 
 
-	if (type == JABBER_IQ_TYPE_RESULT && (q = xmlnode_find_child(n, "pubsub"))) {
-		jabber_handle_result_pubsub(s, q, from, id);
-	}
+	for (q = n->children; q; q = q->next) {
+		struct jabber_iq_generic_handler *tmp;
 
-	if ((q = xmlnode_find_child(n, "si"))) /* JEP-0095: Stream Initiation */
-		jabber_handle_si(s, q, type, from, id);
-
-
-	if (type == JABBER_IQ_TYPE_RESULT || type == JABBER_IQ_TYPE_SET || type == JABBER_IQ_TYPE_GET) 
-	{
-		for (q = n->children; q; q = q->next) {
-			struct jabber_iq_generic_handler *tmp;
-			
-			switch (type) {
-				case JABBER_IQ_TYPE_RESULT:
-				case JABBER_IQ_TYPE_SET:
-					tmp = jabber_iq_result_handlers;
-					/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
-					 *      i typ "result" (przy za¿±daniu rostera od serwera) */
-
-					/* niektore hacki zdecydowanie za dlugo... */
-					break;
-
-				case JABBER_IQ_TYPE_GET:
-					tmp = jabber_iq_get_handlers;
-					break;
-				
-				default:
-					debug_error("[%s:%d] Internal error\n", __FILE__, __LINE__);
-					tmp = NULL;
-			}
-
-			if (!tmp)
-				break;
-			
-			while (tmp->handler) {
-				const char *ns = jabber_attr(q->atts, "xmlns");
-
-				while (tmp->handler) {
-					int matched = !xstrcmp(q->name, tmp->name);
-
-					do {
-						if (matched && !xstrcmp(tmp->xmlns, ns)) {
-							debug_function("[jabber] <iq %s> <%s xmlns=%s\n", atype, q->name, ns);
-							tmp->handler(s, q, from, id);
-
-							/* XXX, read RFC if we can have more get stanzas */
-							/* <query xmlns=http://jabber.org/protocol/disco#items/>
-							 * <query xmlns=http://jabber.org/protocol/disco#info/>
-							 * ...
-							 * ...
-							 */
-							goto iq_type_reset_next;
-						}
-
-						tmp++;
-					} while (!tmp->name);
-
-					if (matched) {
-						debug_error("[jabber] <iq %s> unknown ns: <%s xmlns=%s\n", atype, q->name, __(ns));
-						break;
-					}
-				}
-				debug_error("[jabber] <iq %s> unknown name: <%s xmlns=%s\n", atype, __(q->name), __(ns));
-			}
-iq_type_reset_next:
-			continue;
+		switch (type) {
+			case JABBER_IQ_TYPE_RESULT:	tmp = jabber_iq_result_handlers;	break;
+			case JABBER_IQ_TYPE_SET:	tmp = jabber_iq_set_handlers;		break;
+			case JABBER_IQ_TYPE_GET:	tmp = jabber_iq_get_handlers;		break;
+			default:
+							debug_error("[%s:%d] Internal error\n", __FILE__, __LINE__);
+							tmp = NULL;
 		}
+
+		if (!tmp)
+			return;
+
+		while (tmp->handler) {
+			const char *ns = jabber_attr(q->atts, "xmlns");
+
+			while (tmp->handler) {
+				int matched = !xstrcmp(q->name, tmp->name);
+
+				do {
+					if (matched && !xstrcmp(tmp->xmlns, ns)) {
+						debug_function("[jabber] <iq %s> <%s xmlns=%s\n", atype, q->name, ns);
+						tmp->handler(s, q, from, id);
+
+						/* XXX, read RFC if we can have more get stanzas */
+						/* <query xmlns=http://jabber.org/protocol/disco#items/>
+						 * <query xmlns=http://jabber.org/protocol/disco#info/>
+						 * ...
+						 * ...
+						 */
+						goto iq_type_reset_next;
+					}
+
+					tmp++;
+				} while (!tmp->name);
+
+				if (matched) {
+					debug_error("[jabber] <iq %s> unknown ns: <%s xmlns=%s\n", atype, q->name, __(ns));
+					break;
+				}
+			}
+			debug_error("[jabber] <iq %s> unknown name: <%s xmlns=%s\n", atype, __(q->name), __(ns));
+		}
+iq_type_reset_next:
+		continue;
 	}
 } /* iq */
 
