@@ -322,15 +322,16 @@ void ncurses_enable_mouse(const char *env) {
 	} else {
 		if (gpm_fd == -1)
 	                debug_error("[ncurses] Cannot connect to gpm mouse server\n");
+	}
 #endif
+
+	if (!mouse_initialized) {
 		if ((mouse_initialized = ncurses_has_mouse_support(env))) {
 		        printf("\033[?1001s\033[?1000h");
 			fflush(stdout);
 		} else
 			debug_error("[ncurses] Mouse in %s terminal is not supported\n", env);
-#ifdef HAVE_LIBGPM
 	}
-#endif
 
 	if (mouse_initialized)
 		timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);
