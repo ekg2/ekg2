@@ -1716,13 +1716,33 @@ JABBER_HANDLER(jabber_handle_iq) {
 		jabber_handle_si(s, q, type, from, id);
 
 
-	/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
-	        i typ "result" (przy za¿±daniu rostera od serwera) */
-	if (type == JABBER_IQ_TYPE_RESULT || type == JABBER_IQ_TYPE_SET) 
+	if (type == JABBER_IQ_TYPE_RESULT || type == JABBER_IQ_TYPE_SET || type == JABBER_IQ_TYPE_GET) 
 	{
 		for (q = n->children; q; q = q->next) {
-			struct jabber_iq_generic_handler *tmp = jabber_iq_result_handlers;
+			struct jabber_iq_generic_handler *tmp;
+			
+			switch (type) {
+				case JABBER_IQ_TYPE_RESULT:
+				case JABBER_IQ_TYPE_SET:
+					tmp = jabber_iq_result_handlers;
+					/* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
+					 *      i typ "result" (przy za¿±daniu rostera od serwera) */
 
+					/* niektore hacki zdecydowanie za dlugo... */
+					break;
+
+				case JABBER_IQ_TYPE_GET:
+					tmp = jabber_iq_get_handlers;
+					break;
+				
+				default:
+					debug_error("[%s:%d] Internal error\n", __FILE__, __LINE__);
+					tmp = NULL;
+			}
+
+			if (!tmp)
+				break;
+			
 			while (tmp->handler) {
 				const char *ns = jabber_attr(q->atts, "xmlns");
 
@@ -1731,7 +1751,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 
 					do {
 						if (matched && !xstrcmp(tmp->xmlns, ns)) {
-							debug_function("[jabber] <iq RESULT/SET> <%s xmlns=%s\n", q->name, ns);
+							debug_function("[jabber] <iq %s> <%s xmlns=%s\n", atype, q->name, ns);
 							tmp->handler(s, q, from, id);
 
 							/* XXX, read RFC if we can have more get stanzas */
@@ -1747,49 +1767,14 @@ JABBER_HANDLER(jabber_handle_iq) {
 					} while (!tmp->name);
 
 					if (matched) {
-						debug_error("[jabber] <iq RESULT/SET> unknown ns: <%s xmlns=%s\n", q->name, __(ns));
+						debug_error("[jabber] <iq %s> unknown ns: <%s xmlns=%s\n", atype, q->name, __(ns));
 						break;
 					}
 				}
-				debug_error("[jabber] <iq RESULT/SET> unknown name: <%s xmlns=%s\n", __(q->name), __(ns));
+				debug_error("[jabber] <iq %s> unknown name: <%s xmlns=%s\n", atype, __(q->name), __(ns));
 			}
 iq_type_reset_next:
 			continue;
-		}
-	}
-
-	if (type == JABBER_IQ_TYPE_GET) {
-		xmlnode_t *q;
-
-		if ((q = xmlnode_find_child(n, "query"))) {
-			const char *ns = jabber_attr(q->atts, "xmlns");
-
-			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#items")) {
-				jabber_handle_iq_get_disco(s, j, q, from, id);	return;
-			}
-
-			if (!xstrcmp(ns, "jabber:iq:last")) {
-				jabber_handle_iq_get_last(s, j, q, from, id);	return;
-			}
-			
-			if (!xstrcmp(ns, "http://jabber.org/protocol/disco#info")) {
-				jabber_handle_iq_get_disco_info(s, j, q, from, id); return;
-			}
-
-			if (!xstrcmp(ns, "jabber:iq:version") && id && from) {
-				jabber_handle_iq_get_version(s, j, q, from, id); return;
-			}
-
-		}
-
-		if ((q = xmlnode_find_child(n, "ping"))) {
-			const char *ns = jabber_attr(q->atts, "xmlns");
-
-			/* XEP-0199 */
-			if (!xstrcmp(ns, "urn:xmpp:ping")) {
-				watch_write(j->send_watch, "<iq to=\"%s\" id=\"%s\" type=\"result\"/>\n",
-					from, id);
-			}
 		}
 	}
 } /* iq */

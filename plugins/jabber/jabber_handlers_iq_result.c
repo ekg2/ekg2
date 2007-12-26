@@ -726,3 +726,72 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 	xfree(from_str);
 }
 
+
+
+JABBER_HANDLER_RESULT(jabber_handle_iq_vacation) {
+	xmlnode_t *temp;
+
+	char *message	= jabber_unescape( (temp = xmlnode_find_child(n, "message")) ? temp->data : NULL);
+	char *begin	= (temp = xmlnode_find_child(n, "start")) && temp->data ? temp->data : _("begin");
+	char *end	= (temp = xmlnode_find_child(n, "end")) && temp->data  ? temp->data : _("never");
+
+	print("jabber_vacation", session_name(s), message, begin, end);
+
+	xfree(message);
+}
+
+JABBER_HANDLER_RESULT(jabber_handle_iq_muc_owner) {
+	xmlnode_t *node;
+	int formdone = 0;
+	char *uid = jabber_unescape(from);
+
+	for (node = n->children; node; node = node->next) {
+		if (!xstrcmp(node->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(node->atts, "xmlns"))) {
+			if (!xstrcmp(jabber_attr(node->atts, "type"), "form")) {
+				formdone = 1;
+				jabber_handle_xmldata_form(s, uid, "admin", node->children, NULL);
+				break;
+			} 
+		}
+	}
+//	if (!formdone) ;	// XXX
+	xfree(uid);
+}
+
+JABBER_HANDLER_RESULT(jabber_handle_iq_muc_admin) {
+	xmlnode_t *node;
+	int count = 0;
+
+	for (node = n->children; node; node = node->next) {
+		if (!xstrcmp(node->name, "item")) {
+			char *jid		= jabber_attr(node->atts, "jid");
+//			char *aff		= jabber_attr(node->atts, "affiliation");
+			xmlnode_t *reason	= xmlnode_find_child(node, "reason");
+			char *rsn		= reason ? jabber_unescape(reason->data) : NULL;
+
+			print("jabber_muc_banlist", session_name(s), from, jid, rsn ? rsn : "", itoa(++count));
+			xfree(rsn);
+		}
+	}
+}
+
+static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
+	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
+
+	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },
+	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
+	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },
+	{ NULL,		"jabber:iq:register",				jabber_handle_register },
+	{ NULL,		"jabber:iq:roster",				jabber_handle_iq_roster },
+	{ NULL,		"jabber:iq:search",				jabber_handle_iq_result_search },
+	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },
+//	{ NULL,		"http://jabber.org/protocol/bytestreams",	jabber_handle_bytestreams },
+	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_result_disco_info },
+	{ NULL,		"http://jabber.org/protocol/disco#items",	jabber_handle_iq_result_disco },
+	{ NULL,		"http://jabber.org/protocol/muc#admin",		jabber_handle_iq_muc_admin },
+	{ NULL,		"http://jabber.org/protocol/muc#owner",		jabber_handle_iq_muc_owner },
+	{ NULL,		"http://jabber.org/protocol/vacation",		jabber_handle_iq_vacation },
+
+	{ "",		NULL,						NULL }
+};
+

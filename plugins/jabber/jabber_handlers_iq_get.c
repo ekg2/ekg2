@@ -1,4 +1,4 @@
-#define JABBER_HANDLER_GET_REPLY(x) 	static void x(session_t *s, jabber_private_t *j, xmlnode_t *n, const char *from, const char *id)
+#define JABBER_HANDLER_GET_REPLY(x) 	static void x(session_t *s, xmlnode_t *n, const char *from, const char *id)
 
 /**
  * jabber_handle_iq_get_disco()
@@ -13,6 +13,8 @@
  */
 
 JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco) {
+	jabber_private_t *j = s->priv;
+
 	if (!xstrcmp(jabber_attr(n->atts, "node"), "http://jabber.org/protocol/commands")) {	/* jesli node commandowe */
 		/* XXX, check if $uid can do it */
 		watch_write(j->send_watch, 
@@ -44,6 +46,8 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco) {
  */
 
 JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco_info) {
+	jabber_private_t *j = s->priv;
+
 	watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">"
 			"<query xmlns=\"http://jabber.org/protocol/disco#info\">"
 			"<feature var=\"http://jabber.org/protocol/commands\"/>"
@@ -65,6 +69,8 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco_info) {
  */
 
 JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_last) {
+	jabber_private_t *j = s->priv;
+
 	watch_write(j->send_watch, 
 			"<iq to=\"%s\" type=\"result\" id=\"%s\">"
 			"<query xmlns=\"jabber:iq:last\" seconds=\"%d\">"
@@ -85,6 +91,8 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_last) {
  */
 
 JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_version) {
+	jabber_private_t *j = s->priv;
+
 	const char *ver_os;
 	const char *tmp;
 
@@ -118,4 +126,28 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_version) {
 	xfree(escaped_client_version);
 	xfree(osversion);
 }
+
+/*
+ * jabber_handle_iq_ping()
+ *
+ * XEP-0199
+ */
+
+JABBER_HANDLER_GET_REPLY(jabber_handle_iq_ping) {
+	jabber_private_t *j = s->priv;
+
+	watch_write(j->send_watch, "<iq to=\"%s\" id=\"%s\" type=\"result\"/>\n",
+			from, id);
+}
+
+static const struct jabber_iq_generic_handler jabber_iq_get_handlers[] = {
+	{ "query",		"jabber:iq:last",				jabber_handle_iq_get_last },
+	{ NULL,			"jabber:iq:version",				jabber_handle_iq_get_version },
+	{ NULL,			"http://jabber.org/protocol/disco#items",	jabber_handle_iq_get_disco },
+	{ NULL,			"http://jabber.org/protocol/disco#info",	jabber_handle_iq_get_disco_info },
+
+	{ "ping",		"urn:xmpp:ping",				jabber_handle_iq_ping },
+
+	{ "",			NULL,						NULL }
+};
 
