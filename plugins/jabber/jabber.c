@@ -331,6 +331,8 @@ int jabber_write_status(session_t *s) {
 	}
 
 	if (!j->istlen) {
+		const char *tmp;
+
 		priority = saprintf("<priority>%d</priority>", prio); /* priority only in real jabber session */
 
 		if (session_int_get(s, "__gpg_enabled") == 1) {
@@ -347,8 +349,8 @@ int jabber_write_status(session_t *s) {
 			}
 		}
 
-		if ((x_vcard = session_get(s, "photo_hash")))
-			x_vcard = saprintf("<x xmlns=\"vcard-temp:x:update\"><photo>%s</photo></x>", x_vcard);
+		if ((tmp = session_get(s, "photo_hash")))
+			x_vcard = saprintf("<x xmlns=\"vcard-temp:x:update\"><photo>%s</photo></x>", tmp);
 	}
 #define P(x) (x ? x : "")
 	if (!j->istlen && (status == EKG_STATUS_AVAIL))
@@ -570,11 +572,7 @@ static WATCHER_SESSION(jabber_handle_stream) {
                 }
         } else
 #endif
-#ifdef NO_POSIX_SYSTEM
-                if ((len = recv(fd, buf, BUFFER_LEN-1, 0)) < 1) {
-#else
                 if ((len = read(fd, buf, BUFFER_LEN-1)) < 1) {
-#endif
 			if (len == -1 && (errno == EINPROGRESS || errno == EAGAIN)) return 0;
 			jabber_handle_disconnect(s, len == -1 ? strerror(errno) : "got disconnected", EKG_DISCONNECT_NETWORK);
 			return -1;
@@ -665,7 +663,7 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 		return 0;
 	}
 	
-	if ((int) watch == WATCH_WRITE) {
+	if (watch == WATCH_WRITE) {
 		char *req, *esc; 
 		int res = 0, res_size = sizeof(res);
 		if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
@@ -681,7 +679,7 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 		/* XXX, timeout? */
 		watch_add(&jabber_plugin, fd, WATCH_READ, jabber_handle_connect_tlen_hub, data);	/* WATCH_READ_LINE? */
 		return -1;
-	} else if ((int) watch == WATCH_READ) {	/* libtlen */
+	} else if (watch == WATCH_READ) {	/* libtlen */
 		jabber_private_t *j = jabber_private(s);
 		char *header, *body;
 		char buf[1024];
@@ -806,33 +804,30 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 #endif
 
 	const int tlenishub = (j->istlen > 1);
-        if (type)
+
+        if (type) {
+		close(fd);
                 return 0;
+	}
 
         debug_function("[jabber] jabber_handle_resolver(), tlenishub = %d\n", tlenishub);
-#ifdef NO_POSIX_SYSTEM
-	int ret = ReadFile(fd, &a, sizeof(a), &res, NULL);
-#else
+
 	res = read(fd, &a, sizeof(a));
-#endif
+
 	if ((res != sizeof(a)) || (res && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
                 if (res == -1)
                         debug_error("[jabber] unable to read data from resolver: %s\n", strerror(errno));
                 else
                         debug_error("[jabber] read %d bytes from resolver. not good\n", res);
-                close(fd);
-                print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
+
                 /* no point in reconnecting by jabber_handle_disconnect() */
+
+                print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
                 j->connecting = 0;
                 return -1;
         }
 
         debug_function("[jabber] resolved to %s\n", inet_ntoa(a));
-#ifdef NO_POSIX_SYSTEM
-	CloseHandle((HANDLE) fd);
-#else
-        close(fd);
-#endif
 
         if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
                 debug_error("[jabber] socket() failed: %s\n", strerror(errno));
@@ -871,13 +866,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
 
         res = connect(fd, (struct sockaddr*) &sin, sizeof(sin));
 
-        if (res == -1 &&
-#ifdef NO_POSIX_SYSTEM
-		(WSAGetLastError() != WSAEWOULDBLOCK)
-#else
-		errno != EINPROGRESS
-#endif
-		) {
+        if (res == -1 && errno != EINPROGRESS) {
                 debug_error("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
                 jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
                 return -1;
