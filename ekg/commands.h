@@ -36,6 +36,8 @@
 #define COMMAND_ISALIAS 		0x01
 	/* command is binded by script mangament */
 #define COMMAND_ISSCRIPT		0x02
+	/* [XXX] command uses resource, and resource should be passed */
+#define COMMAND_WITH_RESOURCE		0x04
 /* .... */
 
 /* CONDITIONAL FLAGS */
