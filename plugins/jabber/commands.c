@@ -67,8 +67,6 @@
 #include "jabber.h"
 #include "jabber_dcc.h"
 
-char *buffer_sha1_digest(char *buf, int len); /* digest.c */
-
 extern void *jconv_out; /* for msg */
 
 const char *jabber_prefixes[2] = { "xmpp:", "tlen:" };
@@ -106,6 +104,7 @@ static COMMAND(jabber_command_connect)
 		printq("wrong_id", session->uid);
 		return -1;
 	}
+
 	xfree(j->server);
 	j->server	= xstrdup(++server);
 
@@ -891,7 +890,7 @@ static char *jabber_avatar_load(session_t *s, const char *path, const int quiet)
 			type = "image/jpeg";
 
 		fclose(fd);
-		session_set(s, "photo_hash", buffer_sha1_digest(buf, len));
+		session_set(s, "photo_hash", jabber_sha1_generic(buf, len));
 
 		while (enclen > 72) {
 			string_append_n(str, p, 72);

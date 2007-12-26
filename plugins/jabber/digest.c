@@ -502,7 +502,7 @@ char *jabber_digest(const char *sid, const char *password, void *charset_out) {
 	return result;
 }
 
-char *buffer_sha1_digest(char *buf, int len) {
+char *jabber_sha1_generic(char *buf, int len) {
 	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
 	static char result[41];
