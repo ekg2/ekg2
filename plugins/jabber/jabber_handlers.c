@@ -341,11 +341,16 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				"<iq type=\"set\" id=\"bind%d\"><bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"><resource>%s</resource></bind></iq>", 
 				j->id++, resource);
 		xfree(resource);
+
+		session_int_set(s, "__session_need_start", (use_fjuczers & 1));
+
 	}
-	if (use_fjuczers & 1)	/* session */
+	else		/* else here, to avoid : 'stanza sent before session start' */
+	if (use_fjuczers & 1) {	/* session */
 		watch_write(j->send_watch, 
 				"<iq type=\"set\" id=\"auth\"><session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/></iq>",
 				j->id++);
+	}
 
 	if (j->connecting == 2 && !(use_fjuczers & 2)) {	/* STRANGE, BUT MAYBE POSSIBLE? */
 		jabber_session_connected(s);

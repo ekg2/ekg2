@@ -414,6 +414,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
         j->parser = NULL;
 	session_set(s, "__sasl_excepted", NULL);
 	session_int_set(s, "__roster_retrieved", 0);
+	session_int_set(s, "__session_need_start", 0);
 
 	{
 		char *__session = xstrdup(session_uid_get(s));

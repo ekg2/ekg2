@@ -903,6 +903,18 @@ JABBER_HANDLER_RESULT(jabber_handle_si_result) {
 	} else /* XXX */;
 }
 
+JABBER_HANDLER_RESULT(jabber_handle_bind) {
+	jabber_private_t *j = s->priv;
+	
+	if (session_int_get(s, "__session_need_start") == 1) {
+		watch_write(j->send_watch, 
+				"<iq type=\"set\" id=\"auth\"><session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/></iq>",
+				j->id++);
+
+	} else debug_error("jabber_handle_bind() but not __session_need_start\n");
+
+}
+
 static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
 	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
 
@@ -925,6 +937,8 @@ static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
 	{ NULL,		"http://jabber.org/protocol/muc#admin",		jabber_handle_iq_muc_admin },
 	{ NULL,		"http://jabber.org/protocol/muc#owner",		jabber_handle_iq_muc_owner },
 	{ NULL,		"http://jabber.org/protocol/vacation",		jabber_handle_iq_vacation },
+
+	{ "bind",	"urn:ietf:params:xml:ns:xmpp-bind",		jabber_handle_bind },
 
 	{ "",		NULL,						NULL }
 };
