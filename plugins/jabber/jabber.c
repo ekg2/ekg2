@@ -304,8 +304,9 @@ static QUERY(jabber_window_kill) {
 	return 0;
 }
 
-int jabber_write_status(session_t *s)
-{
+int jabber_write_status(session_t *s) {
+	#define JABBER_EKG_CAPS ""
+
 	jabber_private_t *j = session_private_get(s);
 	int prio = session_int_get(s, "priority");
 	int status;
@@ -314,13 +315,6 @@ int jabber_write_status(session_t *s)
 	char *priority = NULL;
 	char *x_signed = NULL;
 	char *x_vcard = NULL;
-
-#if WITH_JABBER_JINGLE
-/* This is only to enable 'call' button in GTalk .... */
-# define JINGLE_CAPS "<c xmlns=\"http://jabber.org/protocol/caps\" ext=\"voice-v1\" ver=\"0.1\" node=\"http://www.google.com/xmpp/client/caps\"/>"
-#else 
-# define JINGLE_CAPS ""
-#endif
 
 	if (!s || !j)
 		return -1;
@@ -358,7 +352,7 @@ int jabber_write_status(session_t *s)
 	}
 #define P(x) (x ? x : "")
 	if (!j->istlen && (status == EKG_STATUS_AVAIL))
-		watch_write(j->send_watch, "<presence>%s%s%s%s%s</presence>", P(real), P(priority), P(x_signed), P(x_vcard), JINGLE_CAPS);
+		watch_write(j->send_watch, "<presence>%s%s%s%s%s</presence>", P(real), P(priority), P(x_signed), P(x_vcard), JABBER_EKG_CAPS);
 	else if (status == EKG_STATUS_INVISIBLE)
 		watch_write(j->send_watch, "<presence type=\"invisible\">%s%s</presence>", P(real), P(priority));
 	else {
@@ -366,7 +360,7 @@ int jabber_write_status(session_t *s)
 
 		if (j->istlen && (status == EKG_STATUS_AVAIL)) status_s = "available";
 		else status_s = ekg_status_string(status, 0);
-		watch_write(j->send_watch, "<presence><show>%s</show>%s%s%s%s%s</presence>", status_s, P(real), P(priority), P(x_signed), P(x_vcard), JINGLE_CAPS);
+		watch_write(j->send_watch, "<presence><show>%s</show>%s%s%s%s%s</presence>", status_s, P(real), P(priority), P(x_signed), P(x_vcard), JABBER_EKG_CAPS);
 	}
 #undef P
 

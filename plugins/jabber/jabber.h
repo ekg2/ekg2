@@ -27,8 +27,6 @@
 #define tlenjabber_escape(str)	(j->istlen ? tlen_encode(str) : jabber_escape(str))
 #define tlenjabber_unescape(str) (j->istlen ? tlen_decode(str) : jabber_unescape(str))
 
-#define WITH_JABBER_JINGLE 0
-
 struct xmlnode_s {
 	char *name;
 	char *data; 
