@@ -590,14 +590,15 @@ JABBER_HANDLER(jabber_handle_proceed) {
 JABBER_HANDLER(jabber_handle_stream_error) {
 	jabber_private_t *j = s->priv;
 
-	/* BIG XXX, EKG_DISCONNECT_FAILURE bad here */
 	xmlnode_t *text = xmlnode_find_child(n, "text");
+
 	char *text2 = NULL;
 
 	if (text && text->data)
 		text2 = jabber_unescape(text->data);
 
-	j->parser = NULL; jabber_handle_disconnect(s, text2 ? text2 : n->children ? n->children->name : "stream:error XXX", EKG_DISCONNECT_FAILURE);
+			/* here we should use: EKG_DISCONNECT_FORCED, but because of noautoreconnection and noreason, we'll use: EKG_DISCONNECT_NETWORK */
+	j->parser = NULL; jabber_handle_disconnect(s, text2 ? text2 : n->children ? n->children->name : "stream:error XXX", EKG_DISCONNECT_NETWORK);
 	xfree(text2);
 }
 
@@ -984,14 +985,32 @@ JABBER_HANDLER(jabber_handle_message) {
 			newconference_t *c = newconference_find(s, uid2);
 			int isour = (c && !xstrcmp(c->private, nick)) ? 1 : 0;			/* is our message? */
 			char *formatted;
+			userlist_t *u;
+
+			char attr[2] = { ' ', 0 };
 
 		/* jesli (bsent != 0) wtedy mamy do czynienia z backlogiem */
 
 			class	|= EKG_NO_THEMEBIT;
 			ekgbeep	= EKG_NO_BEEP;
 
+			if ((u = userlist_find_u(&(c->participants), nick))) {
+				jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+
+			/* glupie, trzeba doszlifowac */
+
+				if (!xstrcmp(up->aff, "owner")) 		attr[0] = '@';
+				else if (!xstrcmp(up->aff, "admin"))		attr[0] = '@';
+
+				else if (!xstrcmp(up->role, "moderator"))	attr[0] = '%';
+
+				else						attr[0] = ' ';
+
+
+			} else debug_error("[MUC, MESSAGE] userlist_find_u(%s) failed\n", nick);
+
 			formatted = format_string(format_find(isour ? "jabber_muc_send" : "jabber_muc_recv"),
-				session_name(s), uid2, nick ? nick : uid2+5, text, "");
+				session_name(s), uid2, nick ? nick : uid2+5, text, attr);
 			
 			debug("[MUC,MESSAGE] uid2:%s uuid:%s message:%s\n", uid2, nick, text);
 			query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
