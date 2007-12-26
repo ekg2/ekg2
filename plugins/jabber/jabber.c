@@ -378,18 +378,14 @@ int jabber_write_status(session_t *s)
 }
 
 void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
-	static int lock = 0;
 	jabber_private_t *j;
 
         if (!s || !(j = s->priv))
                 return;
 
-	/* it's basic code.. I think is shouldn't fail. Hopefully we are single-threaded.. */
-	if (lock) {
-		debug("jabber_handle_disconnect() locked!\n");
+	if (!s->connected && !j->connecting)
 		return;
-	} lock = 1;
-
+	
         j->connecting = 0;
 
 	if (j->send_watch) {
@@ -401,8 +397,6 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 	if (j->connecting)
 		watch_remove(&jabber_plugin, j->fd, WATCH_WRITE);
 	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
-
-	lock = 0;		/* release lock. */	/* yeah, i know it's ugly. but we don't want jabber_handle_disconnect() calls from watcher handlers */
 
 	j->using_compress = JABBER_COMPRESSION_NONE;
 #ifdef JABBER_HAVE_SSL
