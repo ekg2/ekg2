@@ -37,8 +37,8 @@ void config_upgrade() {
 
 	if (config_version >= current_config_version)
 		return;
-	else
-		print("config_upgrade_begin");
+
+	print("config_upgrade_begin");
 	
 	switch (config_version) { /* versions MUST be sorted, break MUST NOT be used */
 		case 0: /* jabber SASL behavior change */
@@ -57,6 +57,8 @@ void config_upgrade() {
 				case 2: config_display_ack = 1; break;
 				case 3: config_display_ack = 2; break;
 			}
+
+			config_changed = 1;
 
 		case 2: /* allow_autoresponder session var */
 			print("config_upgrade_minor", 
@@ -80,7 +82,7 @@ void config_upgrade() {
 	}
 
 	config_version = current_config_version;
-	if (config_save_quit != 2)
+	if (!config_auto_save)
 		print("config_upgrade_end");
 }
 
