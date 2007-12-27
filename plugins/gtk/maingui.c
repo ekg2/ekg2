@@ -1661,6 +1661,9 @@ mg_place_userlist_and_chanview_real(gtk_window_ui_t *gui, GtkWidget *userlist, G
 	}
 
 	if (chanview) {
+		/* incase the previous pos was POS_HIDDEN */
+		gtk_widget_show(chanview);
+
 		gtk_table_set_row_spacing(GTK_TABLE(gui->main_table), 1, 0);
 		gtk_table_set_row_spacing(GTK_TABLE(gui->main_table), 2, 2);
 
@@ -1684,6 +1687,12 @@ mg_place_userlist_and_chanview_real(gtk_window_ui_t *gui, GtkWidget *userlist, G
 					 1, 2, 1, 2, GTK_FILL, GTK_FILL, 0, 0);
 			break;
 		case POS_HIDDEN:
+			gtk_widget_hide(chanview);
+			/* always attach it to something to avoid ref_count=0 */
+			if (gui_ulist_pos_config == POS_TOP)
+				gtk_table_attach(GTK_TABLE(gui->main_table), chanview, 1, 2, 3, 4, GTK_FILL, GTK_FILL, 0, 0);
+			else
+				gtk_table_attach(GTK_TABLE(gui->main_table), chanview, 1, 2, 1, 2, GTK_FILL, GTK_FILL, 0, 0);
 			break;
 		default:	/* POS_BOTTOM */
 			gtk_table_set_row_spacing(GTK_TABLE(gui->main_table), 2, 3);
@@ -1703,8 +1712,8 @@ mg_place_userlist_and_chanview_real(gtk_window_ui_t *gui, GtkWidget *userlist, G
 		case POS_BOTTOMRIGHT:
 			gtk_paned_pack2(GTK_PANED(gui->vpane_right), userlist, FALSE, TRUE);
 			break;
-		case POS_HIDDEN:
-			break;
+		/* case POS_HIDDEN:
+			break; */	/* Hide using the VIEW menu instead */
 		default:	/* POS_TOPRIGHT */
 			gtk_paned_pack1(GTK_PANED(gui->vpane_right), userlist, FALSE, TRUE);
 		}
