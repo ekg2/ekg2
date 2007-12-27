@@ -911,6 +911,8 @@ JABBER_HANDLER_RESULT(jabber_handle_bind) {
 				"<iq type=\"set\" id=\"auth\"><session xmlns=\"urn:ietf:params:xml:ns:xmpp-session\"/></iq>",
 				j->id++);
 
+		session_int_set(s, "__session_need_start", 0);
+
 	} else debug_error("jabber_handle_bind() but not __session_need_start\n");
 
 }
