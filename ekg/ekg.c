@@ -601,6 +601,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 		case DEBUG_IORECV:		theme_format = "iorecvdebug";	break;
 		case DEBUG_FUNCTION:		theme_format = "fdebug";	break;
 		case DEBUG_ERROR:		theme_format = "edebug";	break;
+		case DEBUG_WHITE:		theme_format = "wdebug";	break;
 		default:			theme_format = "debug";		break;
 	}
 

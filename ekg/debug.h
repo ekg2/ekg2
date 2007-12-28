@@ -8,6 +8,7 @@
 #define DEBUG_FUNCTION	3
 #define DEBUG_ERROR	4
 #define DEBUG_GGMISC	5		/* cause of a lot GG_DEBUG_MISC in libgadu we've got special formats for them... */
+#define DEBUG_WHITE	6
 
 void debug(const char *format, ...);
 void debug_ext(int level, const char *format, ...);
@@ -16,6 +17,7 @@ void debug_ext(int level, const char *format, ...);
 #define debug_iorecv(args...)	debug_ext(DEBUG_IORECV, args)
 #define debug_function(args...) debug_ext(DEBUG_FUNCTION, args)
 #define debug_error(args...)	debug_ext(DEBUG_ERROR, args)
+#define debug_white(args...)	debug_ext(DEBUG_WHITE, args)
 
 #endif
 

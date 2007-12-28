@@ -1126,6 +1126,7 @@ void theme_init()
 	format_add("iodebug",	"%y%1\n", 1);
 	format_add("iorecvdebug", "%Y%1\n", 1);
 	format_add("edebug",	"%R%1\n", 1);
+	format_add("wdebug",	"%W%1\n", 1);
 
 	format_add("value_none", _("(none)"), 1);
 	format_add("not_enough_params", _("%! Too few parameters. Try %Thelp %1%n\n"), 1);
