@@ -61,7 +61,7 @@ int config_typing_timeout_empty = 5;
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
 
-const char *ncurses_settitle_formats[3] = { NULL, "\e]0;%s%s%s\b", "\e_%s%s%s\e\\" };
+const char *ncurses_settitle_formats[3] = { NULL, "\e]0;%s%s%s\a", "\e_%s%s%s\e\\" };
 static int ncurses_settitle = 0;
 
 QUERY(ncurses_password_input); /* old.c */
