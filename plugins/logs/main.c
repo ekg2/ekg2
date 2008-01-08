@@ -588,8 +588,8 @@ EXPORT int logs_plugin_init(int prio) {
 			NULL);
 	variable_add(&logs_plugin, ("log_raw"), VAR_BOOL, 1, &config_logs_log_raw, &logs_changed_raw, NULL, NULL);
 	variable_add(&logs_plugin, ("log_ignored"), VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
-	variable_add(&logs_plugin, ("log_status"), VAR_BOOL, 1, &config_logs_log_status, &logs_changed_path, NULL, NULL);
-	variable_add(&logs_plugin, ("path"), VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("log_status"), VAR_BOOL, 1, &config_logs_log_status, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("path"), VAR_DIR, 1, &config_logs_path, &logs_changed_path, NULL, NULL);
 	variable_add(&logs_plugin, ("remind_number"), VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
 	variable_add(&logs_plugin, ("timestamp"), VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
 
