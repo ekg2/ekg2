@@ -644,8 +644,8 @@ int logs_plugin_init(int prio) {
 			NULL);
 	variable_add(&logs_plugin, ("log_raw"), VAR_BOOL, 1, &config_logs_log_raw, &logs_changed_raw, NULL, NULL);
 	variable_add(&logs_plugin, ("log_ignored"), VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
-	variable_add(&logs_plugin, ("log_status"), VAR_BOOL, 1, &config_logs_log_status, &logs_changed_path, NULL, NULL);
-	variable_add(&logs_plugin, ("path"), VAR_DIR, 1, &config_logs_path, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("log_status"), VAR_BOOL, 1, &config_logs_log_status, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("path"), VAR_DIR, 1, &config_logs_path, &logs_changed_path, NULL, NULL);
 	variable_add(&logs_plugin, ("remind_number"), VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
 	variable_add(&logs_plugin, ("timestamp"), VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
 
@@ -921,16 +921,34 @@ static QUERY(logs_handler) {
 
 	session_t *s = session_find(session); // session pointer
 	log_window_t *lw;
-	char *ruid;
+
+	char *fuid;			/* file uid */
+	char *ruid;			/* strange variable name (ofcorz uid) */
+	char *cuid = NULL;		/* conference uid */
 
 	/* olewamy jesli to irc i ma formatke irssi like, czekajac na irc-protocol-message */
 	if (session_check(s, 0, "irc") && logs_log_format(s) == LOG_FORMAT_IRSSI) 
 		return 0;
 
 	class &= ~EKG_NO_THEMEBIT;
+
+	if (class != EKG_MSGCLASS_SENT && class != EKG_MSGCLASS_SENT_CHAT) {
+		int recipients_count = array_count((char **) rcpts);
+
+		if (recipients_count > 0) {
+			struct conference *c = conference_find_by_uids(s, uid, (const char **) rcpts, recipients_count, 0);
+
+			if (c)	cuid = c->name;
+			else	debug("logs_handler() smth strange happen (c == NULL) && recipients_count > 0 [%d]\n", recipients_count);
+		}
+	}
+
 	ruid = (class >= EKG_MSGCLASS_SENT) ? rcpts[0] : uid;
 
-	lw = logs_log_find(session, ruid, 1)->lw;
+	if (cuid)	fuid = cuid;
+	else		fuid = ruid;
+
+	lw = logs_log_find(session, fuid, 1)->lw;
 
 	if (!lw) {
 		debug("[LOGS:%d] logs_handler, shit happen\n", __LINE__);
