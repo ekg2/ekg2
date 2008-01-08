@@ -2403,8 +2403,10 @@ next:
 		par0 = (char *) params[0];
 	}
 
-	if (!(w = window_find_s(session, par0))) {		/* if we don't have window, we need to create it, in way specified by config_make_window */
-		if (config_make_window & 1) {
+	if (!(w = window_find_s(session, par0))) {		/* if we don't have window, we need to create it, in way specified by (config_make_window & 3) */
+		int mw = (config_make_window & 3);
+
+		if (mw & 1) {
 			list_t l;
 
 			for (l = windows; l; l = l->next) {
@@ -2422,7 +2424,7 @@ next:
 				w->session = session;					/* change session */
 				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* notify ui-plugin */
 			}
-		} else if (!(config_make_window & 2) && window_current /* && window_current->id >1 && !window_current->floating */) {
+		} else if (!(mw & 2) && window_current /* && window_current->id >1 && !window_current->floating */) {
 			w = window_current;
 			xfree(w->target);	w->target = xstrdup(par0);		/* change target */
 			w->session = session;						/* change session */
