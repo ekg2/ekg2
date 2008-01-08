@@ -269,6 +269,7 @@ void buffer_free(list_t *type);
 
 void changed_auto_save(const char *var);
 void changed_display_blinking(const char *var);
+void changed_make_window(const char *var);
 void changed_mesg(const char *var);
 void changed_theme(const char *var);
 

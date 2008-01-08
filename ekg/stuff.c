@@ -610,6 +610,18 @@ void buffer_free(list_t *type) {
 	*type = NULL;
 }
 
+void changed_make_window(const char *var)
+{
+	static int old_value = 6;
+
+	if (config_make_window == 4) {
+		config_make_window = old_value;
+		print("variable_invalid", var);
+	}
+
+	old_value = config_make_window;
+}
+
 /*
  * changed_mesg()
  *
