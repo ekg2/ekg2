@@ -1388,15 +1388,6 @@ JABBER_HANDLER(jabber_handle_iq) {
 	}
 }
 
-static inline void mucuser_private_deinit(userlist_t *u) {
-	jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-
-	if (up) {
-		xfree(up->role);
-		xfree(up->aff);
-	}
-}
-
 JABBER_HANDLER(jabber_handle_presence) {
 	jabber_private_t *j = s->priv;
 
@@ -1502,7 +1493,6 @@ JABBER_HANDLER(jabber_handle_presence) {
 							jabber_userlist_private_t *up = jabber_userlist_priv_get(ulist);
 							ulist->status = EKG_STATUS_AVAIL;
 							
-							mucuser_private_deinit(ulist);		/* ??? */
 							if (up) {
 								up->role	= xstrdup(role);
 								up->aff		= xstrdup(affiliation);
