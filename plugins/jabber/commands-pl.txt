@@ -43,6 +43,37 @@ back
 	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
+bookmark
+	parametry: <opcje>
+	krotki opis: zarzadzanie zakladkami serwer-side (jabber:iq:private)
+	
+	Zarzadza zakladkami (dodaje/modyfikuje/usuwa/wyswietla).
+	Ustawienie zmiennej sesyjnej auto_bookmark_sync zalecane.
+	
+	 -d, --display                       wyswietla.
+	
+	 -g, --get                           pobiera, bez wyswietlania
+	
+	 -c, --clear                         czysci
+	
+	 -p, --put                           wysyla liste lokalna na serwer (automatycznie robione po dodaniu/modyfikacji/usunieciu)
+	
+	 -a, --add  --url <url> [-- nazwa]   dodaje nowy wpis do zakladek ze stronami WWW
+	
+	 -a, --add  --conf <jid>             dodaje nowy wpis do zakladek z konferencjami
+	
+	            [--autojoin 1]           czy automatycznie sie dolaczac po polaczeniu do serwera [niezaimplentowane w ekg2, ale wiele klientow umie :)]
+	
+	            [--nick nasznick]
+	
+	            [--pass haslo] 
+	
+	            [-- nazwa]
+	
+	 -m, --modify                       NIE ZAIMPLEMENTOWANE, modyfikuje :)
+	
+	 -r, --remove                       NIE ZAIMPLEMENTOWANE, usuwa :)
+
 change
 	parametry:  <opcje>
 	krotki opis: zmienia informacje w katalogu publicznym

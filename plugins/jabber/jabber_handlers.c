@@ -105,6 +105,18 @@ static xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name) {
 	return NULL;
 }
 
+/**
+ * xmlnode_find_child_xmlns()
+ *
+ * Find child of @a node, with @a name, which has 'xmlns' atts equal @a xmlns
+ *
+ * @param n - node
+ * @param name - name
+ * @param xmlns - xmlns
+ *
+ * @return Pointer to node if such child was found, else NULL
+ */
+
 static xmlnode_t *xmlnode_find_child_xmlns(xmlnode_t *n, const char *name, const char *xmlns) {
 	if (!n || !n->children)
 		return NULL;
@@ -1285,7 +1297,10 @@ JABBER_HANDLER(jabber_handle_iq) {
 			if (!xstrcmp(st->id, id)) {
 				/* SECURITY NOTE: for instance, mcabber in version 0.9.5 doesn't check from and id of iq is always increment by one ^^ */
 
-				if (!xstrcmp(st->to, uid) /* || jakas_iwil_zmienna [np: bypass_FROM_checkin_from_iq] */) {
+				if (	(!xstrcmp(st->to, uid) /* || jakas_iwil_zmienna [np: bypass_FROM_checkin_from_iq] */)
+					|| !xstrcmp(st->xmlns, "jabber:iq:private") 	/* makeing security HOLE for jabber:iq:private */
+				   )
+				{
 					if (type == JABBER_IQ_TYPE_RESULT) {
 						if ((q = xmlnode_find_child_xmlns(n, st->type, st->xmlns))) {
 							debug("[jabber] Executing handler id: %s <%s xmlns='%s' 0x%x\n", st->id, st->type, st->xmlns, st->handler);
@@ -1308,7 +1323,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 					return;
 				}
 
-				debug_error("[jabber] Security warning: recved iq from invalid source %s vs %s\n", st->to, __(uid));
+				debug_error("[jabber] Security warning: recved iq from invalid source %s vs %s\n", __(st->to), __(uid));
 				break;
 			}
 		}
@@ -1761,5 +1776,4 @@ const char *jabber_iq_send(session_t *s, const char *prefix, jabber_iq_type_t iq
 
 	return id;
 }
-
 

@@ -258,7 +258,6 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 #endif
 }
 
-/* XXX, check if this is really result. */
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
 	jabber_private_t *j = s->priv;
 	xmlnode_t *node;
@@ -924,8 +923,12 @@ static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
 	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
 
 	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },
+	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },
+	{ NULL,		"jabber:iq:search",				jabber_handle_iq_result_search },
 	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },
 	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_result_disco_info },
+	{ NULL,		"http://jabber.org/protocol/disco#items",	jabber_handle_iq_result_disco },
+	{ NULL,		"http://jabber.org/protocol/vacation",		jabber_handle_iq_result_vacation },
 	{ "",		NULL,						NULL }
 };
 
@@ -940,16 +943,16 @@ static const struct jabber_iq_generic_handler jabber_iq_result_handlers_old[] = 
 
 	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },			/* done */
 	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
-	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },
+	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },		/* done */
 	{ NULL,		"jabber:iq:register",				jabber_handle_iq_result_register },
 	{ NULL,		"jabber:iq:roster",				jabber_handle_iq_roster },
-	{ NULL,		"jabber:iq:search",				jabber_handle_iq_result_search },
+	{ NULL,		"jabber:iq:search",				jabber_handle_iq_result_search },		/* done */
 	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },		/* done */
 	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_result_disco_info },		/* done */
-	{ NULL,		"http://jabber.org/protocol/disco#items",	jabber_handle_iq_result_disco },
+	{ NULL,		"http://jabber.org/protocol/disco#items",	jabber_handle_iq_result_disco },		/* done */
 	{ NULL,		"http://jabber.org/protocol/muc#admin",		jabber_handle_iq_muc_admin },
 	{ NULL,		"http://jabber.org/protocol/muc#owner",		jabber_handle_iq_muc_owner },
-	{ NULL,		"http://jabber.org/protocol/vacation",		jabber_handle_iq_result_vacation },
+	{ NULL,		"http://jabber.org/protocol/vacation",		jabber_handle_iq_result_vacation },		/* done, but not checked, without ERROR */
 
 	{ "bind",	"urn:ietf:params:xml:ns:xmpp-bind",		jabber_handle_bind },
 
@@ -969,7 +972,6 @@ static const struct jabber_iq_generic_handler jabber_iq_set_handlers[] = {
 	{ "si",		NULL,						jabber_handle_si_set },
 
 	{ "query",	"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
-	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },
 	{ NULL,		"jabber:iq:roster",				jabber_handle_iq_roster },
 	{ NULL,		"http://jabber.org/protocol/muc#admin",		jabber_handle_iq_muc_admin },
 	{ NULL,		"http://jabber.org/protocol/muc#owner",		jabber_handle_iq_muc_owner },

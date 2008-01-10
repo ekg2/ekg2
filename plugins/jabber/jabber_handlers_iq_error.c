@@ -29,7 +29,7 @@ static char *jabber_iq_error_string(xmlnode_t *n) {			/* in n we have <error */
 	return reason;
 }
 
-/* this sux, no idea howto pass formatname to jabber_handler_iq_generic_error() */
+/* this sux, no idea howto pass formatname to jabber_handle_iq_error_generic() */
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_last) {
 	char *error = jabber_iq_error_string(n);
@@ -49,9 +49,29 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_disco_info) {
 	xfree(error);
 }
 
+JABBER_HANDLER_ERROR(jabber_handle_iq_error_disco) {
+	int iscontrol = !xstrncmp(id, "control", 7);
+	char *error = jabber_iq_error_string(n);
+
+	print(iscontrol ? "jabber_remotecontrols_error" : "jabber_transport_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	xfree(error);
+}
+
+JABBER_HANDLER_ERROR(jabber_handle_iq_error_private) {
+	char *error = jabber_iq_error_string(n);
+	print("jabber_private_list_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	xfree(error);
+}
+
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_vcard) {
 	char *error = jabber_iq_error_string(n);
 	print("jabber_userinfo_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	xfree(error);
+}
+
+JABBER_HANDLER_ERROR(jabber_handle_iq_error_search) {
+	char *error = jabber_iq_error_string(n);
+	print("jabber_search_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
 	xfree(error);
 }
 
@@ -64,8 +84,11 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic) {
 static const struct jabber_iq_generic_handler jabber_iq_error_handlers[] = {
 	{ "vCard",	"vcard-temp",					jabber_handle_iq_error_vcard },
 	{ "query",	"jabber:iq:last",				jabber_handle_iq_error_last },
+	{ NULL,		"jabber:iq:private",				jabber_handle_iq_error_private },
 	{ NULL,		"jabber:iq:version",				jabber_handle_iq_error_version },
+	{ NULL,		"jabber:iq:search",				jabber_handle_iq_error_search },
 	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_error_disco_info },
+	{ NULL,		"http://jabber.org/protocol/disco#items",	jabber_handle_iq_error_disco },
 	{ "",		NULL,						NULL }
 };
 
@@ -83,10 +106,7 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic_old) {
 	} else if (!xstrncmp(id, "passwd", 6)) {
 		print("passwd_failed", jabberfix(reason, "?"));
 		session_set(s, "__new_password", NULL);
-	} else if (!xstrncmp(id, "search", 6)) {
-		debug_error("[JABBER] search failed: %s\n", __(reason));
-	}
-	else if (!xstrncmp(id, "offer", 5)) {
+	} else if (!xstrncmp(id, "offer", 5)) {
 		char *uin = jabber_unescape(from);
 		dcc_t *p = jabber_dcc_find(uin, id, NULL);
 

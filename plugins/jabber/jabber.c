@@ -1193,9 +1193,12 @@ static int jabber_theme_init() {
 	/* USERLIST_INFO */
 	format_add("user_info_auth_type", _("%K| %nSubscription type: %T%1%n\n"), 1);
 
+	format_add("jabber_xmlerror_disconnect", _("Error parsing XML: %R%1%n"), 1);
+
+
+/* auth */
 	format_add("jabber_auth_subscribe", _("%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/auth -d %1\" to refuse.%n\n"), 1);
 	format_add("jabber_auth_unsubscribe", _("%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"), 1);
-	format_add("jabber_xmlerror_disconnect", _("Error parsing XML: %R%1%n"), 1);
 	format_add("jabber_auth_request", _("%> (%2) Sent authorisation request to %T%1%n.\n"), 1);
 	format_add("jabber_auth_accept", _("%> (%2) Authorised %T%1%n.\n"), 1);
 	format_add("jabber_auth_unsubscribed", _("%> (%2) Asked %T%1%n to remove authorisation.\n"), 1);
@@ -1226,49 +1229,13 @@ static int jabber_theme_init() {
 	format_add("jabber_privacy_item_allow",  "%G%1%n", 1);
 	format_add("jabber_privacy_item_deny",   "%R%1%n", 1);
 
-	/* %1 - session_name %2 - list_name %3 xmlns */
-	format_add("jabber_private_list_header",  _("%g,+=%G----- Private list: %T%2/%3%n"), 1);
 
-	/* BOOKMARKS */
-	format_add("jabber_bookmark_url",	_("%g|| %n URL: %W%3%n (%2)"), 1);		/* %1 - session_name, bookmark  url item: %2 - name %3 - url */
-	format_add("jabber_bookmark_conf",	_("%g|| %n MUC: %W%3%n (%2)"), 1);	/* %1 - session_name, bookmark conf item: %2 - name %3 - jid %4 - autojoin %5 - nick %6 - password */
-
-	/* XXX not private_list but CONFIG ? */
-	format_add("jabber_private_list_item",	    "%g|| %n %4: %W%5%n",  1);			/* %4 - item %5 - value */
-	format_add("jabber_private_list_session",   "%g|| + %n Session: %W%4%n",  1);		/* %4 - uid */
-	format_add("jabber_private_list_plugin",    "%g|| + %n Plugin: %W%4 (%5)%n",  1);	/* %4 - name %5 - prio*/
-	format_add("jabber_private_list_subitem",   "%g||  - %n %4: %W%5%n",  1);               /* %4 - item %5 - value */
-
-	format_add("jabber_private_list_footer",  _("%g`+=%G----- End of the private list%n"), 1);
-	format_add("jabber_private_list_empty",	  _("%! No list: %T%2/%3%n"), 1);
-
-	/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
-	format_add("jabber_transport_list_begin", _("%g,+=%G----- Available agents on: %T%2%n"), 1);
-	format_add("jabber_transport_list_item",  _("%g|| %n %6 - %W%3%n (%5)"), 1);
-	format_add("jabber_transport_list_item_node",("%g|| %n %6 - %W%3%n node: %g%4%n (%5)"), 1);
-	format_add("jabber_transport_list_end",   _("%g`+=%G----- End of the agents list%n\n"), 1);
-	format_add("jabber_transport_list_nolist", _("%! No agents @ %T%2%n"), 1);
-
-	format_add("jabber_remotecontrols_list_begin", _("%g,+=%G----- Available remote controls on: %T%2%n"), 1);
-	format_add("jabber_remotecontrols_list_item",  _("%g|| %n %6 - %W%4%n (%5)"), 1);		/* %3 - jid %4 - node %5 - descr %6 - seqid */
-	format_add("jabber_remotecontrols_list_end",   _("%g`+=%G----- End of the remote controls list%n\n"), 1);
-	format_add("jabber_remotecontrols_list_nolist", _("%! No remote controls @ %T%2%n"), 1);
-	format_add("jabber_remotecontrols_executing",	_("%> (%1) Executing command: %W%3%n @ %W%2%n (%4)"), 1);
-	format_add("jabber_remotecontrols_completed",	_("%> (%1) Command: %W%3%n @ %W%2 %gcompleted"), 1);
 
 	format_add("jabber_remotecontrols_preparing",	_("%> (%1) Remote client: %W%2%n is preparing to execute command @node: %W%3"), 1);	/* %2 - uid %3 - node */
 	format_add("jabber_remotecontrols_commited",	_("%> (%1) Remote client: %W%2%n executed command @node: %W%3"), 1);			/* %2 - uid %3 - node */
 	format_add("jabber_remotecontrols_commited_status", _("%> (%1) RC %W%2%n: requested changing status to: %3 %4 with priority: %5"), 1);	/* %3 - status %4 - descr %5 - prio */
 		/* %3 - command+params %4 - sessionname %5 - target %6 - quiet */
 	format_add("jabber_remotecontrols_commited_command",_("%> (%1) RC %W%2%n: requested command: %W%3%n @ session: %4 window: %5 quiet: %6"), 1);	
-
-	format_add("jabber_search_item",	_("%) JID: %T%3%n\n%) Nickname:  %T%4%n\n%) Name: %T%5 %6%n\n%) Email: %T%7%n\n"), 1);	/* like gg-search_results_single */
-		/* %3 - jid %4 - nickname %5 - firstname %6 - surname %7 - email */
-	format_add("jabber_search_begin",	_("%g,+=%G----- Search on %T%2%n"), 1);
-//	format_add("jabber_search_items", 	  "%g||%n %[-24]3 %K|%n %[10]5 %K|%n %[10]6 %K|%n %[12]4 %K|%n %[16]7\n", 1);		/* like gg-search_results_multi. TODO */
-	format_add("jabber_search_items",	  "%g||%n %3 - %5 '%4' %6 <%7>", 1);
-	format_add("jabber_search_end",		_("%g`+=%G-----"), 1);
-	format_add("jabber_search_error",	_("%! Error while searching: %3\n"), 1);
 
 	format_add("jabber_form_title",		  "%g,+=%G----- %3 %n(%T%2%n)", 1);
 	format_add("jabber_form_item",		  "%g|| %n%(21)3 (%6) %K|%n --%4 %(20)5", 1); 	/* %3 - label %4 - keyname %5 - value %6 - req; optional */
@@ -1324,6 +1291,7 @@ static int jabber_theme_init() {
 	format_add("tlen_alert", 	_("%> (%1) %T%2%n sent us an alert ...%n"), 1); 				/* sesja, from */
 	format_add("tlen_alert_send",	_("%> (%1) We send alert to %T%2%n"), 1);					/* sesja, to */
 
+/* GPG */
 	format_add("jabber_gpg_plugin",	_("%> (%1) To use OpenGPG support in jabber, first load gpg plugin!"), 1);	/* sesja */
 	format_add("jabber_gpg_config",	_("%> (%1) First set gpg_key and gpg_password before turning on gpg_active!"), 1); /* sesja */
 	format_add("jabber_gpg_ok",	_("%) (%1) GPG support: %gENABLED%n using key: %W%2%n"), 1);			/* sesja, klucz */
@@ -1331,19 +1299,38 @@ static int jabber_theme_init() {
 	format_add("jabber_gpg_fail", 	_("%> (%1) We didn't manage to sign testdata using key: %W%2%n (%R%3%n)\n"	/* sesja, klucz, error */
 					"OpenGPG support for this session disabled."), 1);
 
+
 	/* simple XEP-0071 - XML parsing error */
 	format_add("jabber_msg_xmlsyntaxerr",	_("%! Expat syntax-checking failed on your message: %T%1%n. Please correct your code or use double ^R to disable syntax-checking."), 1);
 
-	/* conversations */
+/* conversations */
 	format_add("jabber_conversations_begin",	_("%g,+=%G--%n (%1) %GAvailable Reply-IDs:%n"), 1);
 	format_add("jabber_conversations_item",		_("%g|| %n %1 - %W%2%n (%g%3%n [%c%4%n])"), 1);		/* %1 - n, %2 - user, %3 - subject, %4 - thread */
 	format_add("jabber_conversations_end",		_("%g`+=%G-- End of the available Reply-ID list%n"), 1);
 	format_add("jabber_conversations_nothread",	_("non-threaded"), 1);
 	format_add("jabber_conversations_nosubject",	_("[no subject]"), 1);
-
 	format_add("jabber_gone",			_("%> (%1) User %G%2%n has left the conversation."), 1);
 
+	format_add("jabber_remotecontrols_executing",	_("%> (%1) Executing command: %W%3%n @ %W%2%n (%4)"), 1);
+	format_add("jabber_remotecontrols_completed",	_("%> (%1) Command: %W%3%n @ %W%2 %gcompleted"), 1);
+
 	format_add("jabber_iq_stanza",			_("%> (%1) %gIQ: <%W%2 %gxmlns='%W%3%g' to='%W%4%g' id='%W%5%g'>"), 1);
+
+/* http://jabber.org/protocol/disco#items */
+	/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
+	format_add("jabber_transport_list_begin", 	_("%g,+=%G----- Available agents on: %T%2%n"), 1);
+	format_add("jabber_transport_list_item",  		("%g|| %n %6 - %W%3%n (%5)"), 1);
+	format_add("jabber_transport_list_item_node",		_("%g|| %n %6 - %W%3%n node: %g%4%n (%5)"), 1);
+	format_add("jabber_transport_list_end",   	_("%g`+=%G----- End of the agents list%n\n"), 1);
+	format_add("jabber_transport_list_nolist", 	_("%! No agents @ %T%2%n"), 1);
+	format_add("jabber_transport_error",		_("%! (%1) Error in getting %gavailable agents%n from %W%2%n: %r%3"), 1);
+
+/* http://jabber.org/protocol/disco#items ## remotecontrol */
+	format_add("jabber_remotecontrols_list_begin", _("%g,+=%G----- Available remote controls on: %T%2%n"), 1);
+	format_add("jabber_remotecontrols_list_item",  		("%g|| %n %6 - %W%4%n (%5)"), 1);		/* %3 - jid %4 - node %5 - descr %6 - seqid */
+	format_add("jabber_remotecontrols_list_end",   	_("%g`+=%G----- End of the remote controls list%n\n"), 1);
+	format_add("jabber_remotecontrols_list_nolist", _("%! No remote controls @ %T%2%n"), 1);
+	format_add("jabber_remotecontrols_error",	_("%! (%1) Error in getting %gavailable commands%n from %W%2%n: %r%3"), 1);
 
 /* http://jabber.org/protocol/disco#info */
 	format_add("jabber_transinfo_begin",		_("%g,+=%G----- Information about: %T%2%n"), 1);
@@ -1355,21 +1342,46 @@ static int jabber_theme_init() {
 	format_add("jabber_transinfo_comm_use",			_("%g|| %n %W%2%n can: %n%3 $uid (%4)"), 1);
 	format_add("jabber_transinfo_comm_not",			_("%g|| %n %W%2%n can: %n%3 (%4)"), 1);
 	format_add("jabber_transinfo_end",		_("%g`+=%G----- End of the infomations%n\n"), 1);
-
 	format_add("jabber_transinfo_error",		_("%! (%1) Error in getting %ghttp://jabber.org/protocol/disco#info%n from %W%2%n: %r%3"), 1);
 
-/* vCard xmlns=vcard-temp */
+/* vCard xmlns='vcard-temp' */
 	format_add("jabber_userinfo_response",		_("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
 	format_add("jabber_userinfo_error",		_("%! (%1) Error in getting %gvCard%n from %W%2%n: %r%3"), 1);
+
+/* jabber:iq:private */
+	/* %1 - session_name %2 - list_name %3 xmlns */
+	format_add("jabber_private_list_header",	_("%g,+=%G----- Private list: %T%2/%3%n"), 1);
+/* jabber:iq:private ## bookmarks */
+	format_add("jabber_bookmark_url",			_("%g|| %n URL: %W%3%n (%2)"), 1);/* %1 - session_name, bookmark  url item: %2 - name %3 - url */
+	format_add("jabber_bookmark_conf",			_("%g|| %n MUC: %W%3%n (%2)"), 1);/* %1 - session_name, bookmark conf item: %2 - name %3 - jid %4 - autojoin %5 - nick %6 - password */
+/* jabber:iq:private ## config */
+	format_add("jabber_private_list_item",			"%g|| %n %4: %W%5%n",  1);			/* %4 - item %5 - value */
+	format_add("jabber_private_list_session",		"%g|| + %n Session: %W%4%n",  1);		/* %4 - uid */
+	format_add("jabber_private_list_plugin",		"%g|| + %n Plugin: %W%4 (%5)%n",  1);	/* %4 - name %5 - prio*/
+	format_add("jabber_private_list_subitem",		"%g||  - %n %4: %W%5%n",  1);               /* %4 - item %5 - value */
+	format_add("jabber_private_list_footer",	_("%g`+=%G----- End of the private list%n"), 1);
+	format_add("jabber_private_list_empty",		_("%! No list: %T%2/%3%n"), 1);
+	format_add("jabber_private_list_error",		_("%! (%1) Error in request %gjabber:iq:private%n from %W%2%n: %r%3"), 1);
+
+/* jabber:iq:search */
+	format_add("jabber_search_item",	_("%) JID: %T%3%n\n%) Nickname:  %T%4%n\n%) Name: %T%5 %6%n\n%) Email: %T%7%n\n"), 1);	/* like gg-search_results_single */
+		/* %3 - jid %4 - nickname %5 - firstname %6 - surname %7 - email */
+	format_add("jabber_search_begin",	_("%g,+=%G----- Search on %T%2%n"), 1);
+//	format_add("jabber_search_items", 		("%g||%n %[-24]3 %K|%n %[10]5 %K|%n %[10]6 %K|%n %[12]4 %K|%n %[16]7"), 1);		/* like gg-search_results_multi. TODO */
+	format_add("jabber_search_items",		("%g||%n %3 - %5 '%4' %6 <%7>"), 1);
+	format_add("jabber_search_end",		_("%g`+=%G-----"), 1);
+	format_add("jabber_search_error",	_("%! (%1) Error in %gjabber:iq:search%n from %W%2%n: %r%3"), 1);
 
 /* jabber:iq:last */
 	format_add("jabber_lastseen_response",		_("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2 ago%n\n"), 1);
 	format_add("jabber_lastseen_uptime",		_("%> Jabber ID: %T%1%n\n%> Server up: %T%2 ago%n\n"), 1);
 	format_add("jabber_lastseen_idle",     		_("%> Jabber ID: %T%1%n\n%> Idle for:  %T%2%n\n"), 1);
 	format_add("jabber_lastseen_error",		_("%! (%1) Error in getting %gjabber:iq:last%n from %W%2%n: %r%3"), 1);
+
 /* jabber:iq:version */
 	format_add("jabber_version_response", 		_("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
 	format_add("jabber_version_error",		_("%! (%1) Error in getting %gjabber:iq:version%n from %W%2%n: %r%3"), 1);
+
 #endif	/* !NO_DEFAULT_THEME */
         return 0;
 }

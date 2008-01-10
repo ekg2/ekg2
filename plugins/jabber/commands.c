@@ -1027,19 +1027,37 @@ static char **jabber_params_split(const char *line, int allow_empty)
 	return ret;
 }
 
+/**
+ * jabber_command_search()
+ *
+ * @note implementation bug ? should server be last variable?
+ *
+ * @note any server support jabber:iq:search ?
+ *
+ */
+
 static COMMAND(jabber_command_search) {
 	jabber_private_t *j = session_private_get(session);
-		/* XXX implementation bug ? should server be last variable? */
-	const char *server = params[0] ? params[0] : jabber_default_search_server ? jabber_default_search_server : j->server; /* jakis server obsluguje jabber:iq:search ? :) */ 
-	char **splitted		= NULL;
+	const char *server = params[0] ? params[0] : jabber_default_search_server ? jabber_default_search_server : j->server;	/* XXX j->server */
+
+	char **splitted	= NULL;
+	const char *id;
 
 	if (array_count((char **) params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
 		printq("invalid_params", name);
 		return -1;
 	}
 
+	if (!(id = jabber_iq_reg(session, "search_", server, "query", "jabber:iq:search"))) {
+		printq("generic_error", "Error in getting id for search request, check debug window");
+		array_free(splitted);
+		return 1;
+	}
+
+	if (j->send_watch) j->send_watch->transfer_limit = -1;
+
 	watch_write(j->send_watch, 
-		"<iq type=\"%s\" to=\"%s\" id=\"search%d\"><query xmlns=\"jabber:iq:search\">", params[1] ? "set" : "get", server, j->id++);
+		"<iq type=\"%s\" to=\"%s\" id=\"%s\"><query xmlns=\"jabber:iq:search\">", params[1] ? "set" : "get", server, id);
 
 	if (splitted) {
 		int i = 0;
@@ -1061,11 +1079,258 @@ static COMMAND(jabber_command_search) {
 		if (use_x_data) watch_write(j->send_watch, "</x>");
 	}
 	watch_write(j->send_watch, "</query></iq>");
-	array_free (splitted);
+	array_free(splitted);
 
-	return -1;
+	JABBER_COMMIT_DATA(j->send_watch);
+
+	return 0;
 }
 
+/**
+ * jabber_command_private()
+ *
+ * @todo Read f**cking XEP-0048,--0049, and remove security hole in jabber_handle_iq()
+ * 	 I suspect there should be somewhere info, about to=
+ * 	 (We recv data from our JID (or requested), not server one.)
+ */
+
+static COMMAND(jabber_command_private) {
+	jabber_private_t *j = jabber_private(session);
+	char *namespace; 	/* <nazwa> */
+
+	int config = 0;			/* 1 if name == jid:config */
+	int bookmark = 0;		/* 1 if name == jid:bookmark */
+
+	if (!xstrcmp(name, ("config")))		config = 1;
+	if (!xstrcmp(name, ("bookmark")))	bookmark = 1;
+	
+	if (config)		namespace = ("ekg2 xmlns=\"ekg2:prefs\"");
+	else if (bookmark)	namespace = ("storage xmlns=\"storage:bookmarks\"");
+	else			namespace = (char *) params[1];
+
+	if (bookmark) {				/* bookmark-only-commands */
+		int bookmark_sync	= 0;			/* 0 - no sync; 1 - sync (item added); 2 - sync (item modified) 3 - sync (item removed)	*/
+	
+		if (match_arg(params[0], 'a', ("add"), 2))	bookmark_sync = 1;	/* add item */
+		if (match_arg(params[0], 'm', ("modify"), 2))	bookmark_sync = 2; 	/* modify item */
+		if (match_arg(params[0], 'r', ("remove"), 2))	bookmark_sync = 3; 	/* remove item */
+
+		if (bookmark_sync) {
+			const char *p[2]	= {("-p"), NULL};	/* --put */
+			char **splitted		= NULL;
+			
+			splitted = jabber_params_split(params[1], 1);
+
+			if (bookmark_sync && (!splitted && params[1])) {
+				printq("invalid_params", name);
+				return -1;
+			}
+
+			switch (bookmark_sync) {
+				case (1):	{	/* add item */
+						/* Usage: 
+						 *	/jid:bookmark --add --url url [-- name]
+						 * 	/jid:bookmark --add --conf jid [--autojoin 1] [--nick cos] [--pass cos] [-- name] 
+						 */
+						jabber_bookmark_t *book = NULL;
+
+						if (!xstrcmp(splitted[0], "url")) {
+							book		= xmalloc(sizeof(jabber_bookmark_t));
+							book->type	= JABBER_BOOKMARK_URL;
+
+							book->private.url = xmalloc(sizeof(jabber_bookmark_url_t));
+							book->private.url->name = xstrdup(jabber_attr(splitted, ""));
+							book->private.url->url	= xstrdup(splitted[1]);
+
+						} else if (!xstrcmp(splitted[0], "conf")) {
+							book		= xmalloc(sizeof(jabber_bookmark_t));
+							book->type	= JABBER_BOOKMARK_CONFERENCE;
+
+							book->private.conf = xmalloc(sizeof(jabber_bookmark_conference_t));
+							book->private.conf->name = xstrdup(jabber_attr(splitted, ""));
+							book->private.conf->jid	= xstrdup(splitted[1]);
+							book->private.conf->nick= xstrdup(jabber_attr(splitted, "nick")); 
+							book->private.conf->pass= xstrdup(jabber_attr(splitted, "pass"));
+
+							if (jabber_attr(splitted, "autojoin") && atoi(jabber_attr(splitted, "autojoin")))	book->private.conf->autojoin = 1;
+/*							else											book->private.conf->autojoin = 0; */
+						} else bookmark_sync = -1;
+						if (book) list_add(&(j->bookmarks), book, 0);
+					}
+					break;
+				case (2):		/* modify item XXX */
+				case (3):		/* remove item XXX */
+				default:	/* error */
+					bookmark_sync = -bookmark_sync;		/* make it negative -- error */
+					debug("[JABBER, BOOKMARKS] switch(bookmark_sync) sync=%d ?!\n", bookmark_sync);
+			}
+
+			array_free(splitted);
+			if (bookmark_sync > 0) {
+				return jabber_command_private(name, (const char **) p, session, target, quiet); /* synchronize db */
+			} else if (bookmark_sync < 0) {
+				debug("[JABBER, BOOKMARKS] sync=%d\n", bookmark_sync);
+				printq("invalid_params", name);
+				return -1;
+			}
+		}
+	}
+
+	if (match_arg(params[0], 'g', ("get"), 2) || match_arg(params[0], 'd', ("display"), 2)) {	/* get/display */
+		const char *id;
+
+		if (!(id = jabber_iq_reg(session, 
+				(match_arg(params[0], 'g', ("get"), 2) && (config || bookmark) ) ? "config_" : "private_",
+				NULL, "query", "jabber:iq:private"))) 
+		{
+			printq("generic_error", "Error in getting id for jabber:iq:private GET/DISPLAY request, check debug window");
+			return 1;
+		}
+
+		watch_write(j->send_watch, "<iq type=\"get\" id=\"%s\"><query xmlns=\"jabber:iq:private\"><%s/></query></iq>", id, namespace);
+		return 0;
+	}
+
+	if (match_arg(params[0], 'p', ("put"), 2)) {							/* put */
+		list_t l;
+		const char *id;
+
+		if (!(id = jabber_iq_reg(session, "private_", NULL, "query", "jabber:iq:private"))) {
+			printq("generic_error", "Error in getting id for jabber:iq:private PUT request, check debug window");
+			return 1;
+		}
+
+		if (j->send_watch) j->send_watch->transfer_limit = -1;
+
+		watch_write(j->send_watch, "<iq type=\"set\" id=\"%s\"><query xmlns=\"jabber:iq:private\"><%s>", id, namespace);
+
+/* Synchronize config (?) */
+		if (config) {
+			for (l = plugins; l; l = l->next) {
+				plugin_t *p = l->data;
+				list_t n;
+				watch_write(j->send_watch, "<plugin xmlns=\"ekg2:plugin\" name=\"%s\" prio=\"%d\">", p->name, p->prio);
+back:
+				for (n = variables; n; n = n->next) {
+					variable_t *v = n->data;
+					char *vname, *tname;
+					if (v->plugin != p) continue;
+					tname = vname = jabber_escape(v->name);
+
+					if (p && !xstrncmp(tname, p->name, xstrlen(p->name))) tname += xstrlen(p->name);
+					if (tname[0] == ':') tname++;
+				
+					switch (v->type) {
+						case(VAR_STR):
+						case(VAR_FOREIGN):
+						case(VAR_FILE):
+						case(VAR_DIR):
+						case(VAR_THEME):
+							if (*(char **) v->ptr)	watch_write(j->send_watch, "<%s>%s</%s>", tname, *(char **) v->ptr, tname);
+							else			watch_write(j->send_watch, "<%s/>", tname);
+							break;
+						case(VAR_INT):
+						case(VAR_BOOL):
+							watch_write(j->send_watch, "<%s>%d</%s>", tname, *(int *) v->ptr, tname);
+							break;
+						case(VAR_MAP):	/* XXX TODO */
+						default:
+							break;
+					}
+					xfree(vname);
+				}
+				if (p) watch_write(j->send_watch, "</plugin>");
+				if (p && !l->next) { p = NULL; goto back; }
+			}
+			for (l = sessions; l; l = l->next) {
+				session_t *s = l->data;
+				plugin_t *pl = s->plugin;
+				int i;
+
+				if (!pl) {
+					printq("generic_error", "Internal fatal error, plugin somewhere disappear. Report this bug");
+					continue;
+				}
+
+				watch_write(j->send_watch, "<session xmlns=\"ekg2:session\" uid=\"%s\" password=\"%s\">", s->uid, s->password);
+
+				/* XXX, escape? */
+				for (i = 0; (pl->params[i].key /* && p->params[i].id != -1 */); i++) {
+					if (s->values[i])	watch_write(j->send_watch, "<%s>%s</%s>", pl->params[i].key, s->values[i], pl->params[i].key);
+					else			watch_write(j->send_watch, "<%s/>", pl->params[i].key);
+				}
+
+				watch_write(j->send_watch, "</session>");
+			}
+
+			goto put_finish;
+		}
+
+/* Synchronize bookmarks (?) */
+		if (bookmark) {
+			list_t l;
+			for (l = j->bookmarks; l; l = l->next) {
+				jabber_bookmark_t *book = l->data;
+
+				switch (book->type) {
+					case (JABBER_BOOKMARK_URL):
+						watch_write(j->send_watch, "<url name=\"%s\" url=\"%s\"/>", book->private.url->name, book->private.url->url);
+						break;
+					case (JABBER_BOOKMARK_CONFERENCE):
+						watch_write(j->send_watch, "<conference name=\"%s\" autojoin=\"%s\" jid=\"%s\">", book->private.conf->name, 
+							book->private.conf->autojoin ? "true" : "false", book->private.conf->jid);
+						if (book->private.conf->nick) watch_write(j->send_watch, "<nick>%s</nick>", book->private.conf->nick);
+						if (book->private.conf->pass) watch_write(j->send_watch, "<password>%s</password>", book->private.conf->pass);
+						watch_write(j->send_watch, "</conference>");
+						break;
+					default:
+						debug("[JABBER, BOOKMARK] while syncing j->bookmarks... book->type = %d wtf?\n", book->type);
+				}
+			}
+
+			goto put_finish;
+		} 
+
+/* Do what user want */
+		if (params[0] && params[1] && params[2]) /* XXX check */
+			watch_write(j->send_watch, "%s", params[2]);
+
+put_finish:
+		{
+			char *beg = namespace;
+			char *end = xstrstr(namespace, (" "));
+
+/*			if (end) *end = '\0'; */	/* SEGV? where? why? :( */
+
+			if (end) beg = xstrndup(namespace, end-namespace);
+			else	 beg = xstrdup(namespace);
+
+			watch_write(j->send_watch, "</%s></query></iq>", beg);
+
+			xfree(beg);
+		}
+		JABBER_COMMIT_DATA(j->send_watch);
+		return 0;
+	}
+
+	if (match_arg(params[0], 'c', ("clear"), 2)) {						/* clear */
+		const char *id;
+
+		if (!(id = jabber_iq_reg(session, "private_", NULL, "query", "jabber:iq:private"))) {
+			printq("generic_error", "Error in getting id for jabber:iq:private CLEAR request, check debug window");
+			return 1;
+		}
+
+		if (bookmark)
+			jabber_bookmarks_free(j);			/* let's destroy previously saved bookmarks */
+
+		watch_write(j->send_watch, "<iq type=\"set\" id=\"%s\"><query xmlns=\"jabber:iq:private\"><%s/></query></iq>", id, namespace);
+		return 0;
+	}
+
+	printq("invalid_params", name);
+	return -1;
+}
 
 static COMMAND(jabber_command_register)
 {
@@ -1125,7 +1390,7 @@ static COMMAND(jabber_command_transpinfo) {
 	const char *server = params[0] ? params[0] : j->server;
 	const char *node   = (params[0] && params[1]) ? params[1] : NULL;
 	
-	char *id;
+	const char *id;
 	
 	if (!(id = jabber_iq_reg(session, "transpinfo_", server, "query", "http://jabber.org/protocol/disco#info"))) {
 		printq("generic_error", "Error in getting id for transport info request, check debug window");
@@ -1149,15 +1414,22 @@ static COMMAND(jabber_command_transports) {
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	const char *node   = (params[0] && params[1]) ? params[1] : NULL;
+
+	const char *id;
+
+	if (!(id = jabber_iq_reg(session, "transplist_", server, "query", "http://jabber.org/protocol/disco#items"))) {
+		printq("generic_error", "Error in getting id for transport list request, check debug window");
+		return 1;
+	}
 	
 	if (node) {
 		watch_write(j->send_watch,
-			"<iq type=\"get\" to=\"%s\" id=\"transplist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\" node=\"%s\"/></iq>",
-			server, j->id++, node);
+			"<iq type=\"get\" to=\"%s\" id=\"%s\"><query xmlns=\"http://jabber.org/protocol/disco#items\" node=\"%s\"/></iq>",
+			server, id, node);
 	} else {
 		watch_write(j->send_watch,
-			"<iq type=\"get\" to=\"%s\" id=\"transplist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\"/></iq>",
-			server, j->id++);
+			"<iq type=\"get\" to=\"%s\" id=\"%s\"><query xmlns=\"http://jabber.org/protocol/disco#items\"/></iq>",
+			server, id);
 	}
 	return 0;
 }
@@ -1166,7 +1438,7 @@ static COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERR
 	jabber_private_t *j = session_private_get(session);
 
 	char *message;
-	char *id;
+	const char *id;
 
 	if (!(id = jabber_iq_reg(session, "vacationreq_", NULL, "query", "http://jabber.org/protocol/vacation"))) {
 		printq("generic_error", "Error in getting id for vacation request, check debug window");
@@ -1209,7 +1481,7 @@ static COMMAND(jabber_muc_command_join) {
 	char *password = (params[1] && params[2]) ? saprintf("<password>%s</password>", params[2]) : NULL;
 
 	if (!username) { /* rather impossible */
-		wcs_printq("invalid_params", name);
+		printq("invalid_params", name);
 		return -1;
 	}
 
@@ -1483,7 +1755,7 @@ static COMMAND(jabber_command_userlist)
 			return -1;
 		}
 
-		while ((line = read_file(line, 0))) {
+		while ((line = read_file(f, 0))) {
 			char *uid = &line[2];
 			char *nickname;
 
@@ -1576,6 +1848,10 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:away", "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:back", "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:ban", "! ? ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "xmpp:bookmark", "!p ?", jabber_command_private, JABBER_FLAGS_REQ,
+			"-a --add -c --clear -d --display -m --modify -r --remove");
+	command_add(&jabber_plugin, "xmpp:config", "!p", jabber_command_private,	JABBER_FLAGS_REQ,
+			"-c --clear -d --display -g --get -p --put");
 	command_add(&jabber_plugin, "xmpp:change", "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS_REQ, 
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
 	command_add(&jabber_plugin, "xmpp:chat", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
@@ -1595,6 +1871,8 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:msg", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:part", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:passwd", "?", jabber_command_passwd, 	JABBER_FLAGS, NULL);
+	command_add(&jabber_plugin, "xmpp:private", "!p ! ?", jabber_command_private,   JABBER_FLAGS_REQ, 
+			"-c --clear -d --display -p --put");
 	command_add(&jabber_plugin, "xmpp:reconnect", NULL, jabber_command_reconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:register", "? ?", jabber_command_register, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:reply", "! !", jabber_command_reply, JABBER_FLAGS_TARGET, NULL);
