@@ -54,6 +54,14 @@ enum jabber_bookmark_type_t {			/* see JEP-0048 for details */
 	JABBER_BOOKMARK_CONFERENCE,
 };
 
+typedef enum {
+	JABBER_IQ_TYPE_NONE,
+	JABBER_IQ_TYPE_GET,
+	JABBER_IQ_TYPE_SET,
+	JABBER_IQ_TYPE_RESULT,
+	JABBER_IQ_TYPE_ERROR,
+} jabber_iq_type_t;
+
 typedef struct {
 	char *name;
 	char *url;
@@ -107,6 +115,15 @@ typedef struct {
 	void	*next;
 } jabber_conversation_t;
 
+typedef struct {
+	char *id;
+	char *to;
+	char *type;
+	char *xmlns;
+	void (*handler)(session_t *s, xmlnode_t *n, const char *from, const char *id);
+	void (*error)(session_t *s, xmlnode_t *n, const char *from, const char *id);
+} jabber_stanza_t;
+
 /**
  * jabber_private_t contains private data of jabber/tlen session.
  */
@@ -132,6 +149,7 @@ typedef struct {
 	char *last_gmail_tid;		/**< lastseen mail thread-id */
 	list_t privacy;			/**< for jabber:iq:privacy */
 	list_t bookmarks;		/**< for jabber:iq:private <storage xmlns='storage:bookmarks'> */
+	list_t iq_stanzas;
 
 	watch_t *send_watch;
 
@@ -168,6 +186,11 @@ XML_Parser jabber_parser_recreate(XML_Parser parser, void *data);
 int JABBER_COMMIT_DATA(watch_t *w);
 void jabber_handle(void *data, xmlnode_t *n);
 
+int jabber_stanza_freeone(jabber_private_t *j, jabber_stanza_t *stanza);
+
+const char *jabber_iq_reg(session_t *s, const char *prefix, const char *to, const char *type, const char *xmlns);
+const char *jabber_iq_send(session_t *s, const char *prefix, jabber_iq_type_t iqtype, const char *to, const char *type, const char *xmlns);
+
 /* digest.c hashowanie.. */
 char *jabber_digest(const char *sid, const char *password, void *charset);
 char *jabber_sha1_generic(char *buf, int len);
@@ -192,6 +215,7 @@ WATCHER(jabber_handle_resolver);
 int jabber_privacy_add_compare(void *data1, void *data2);
 int jabber_privacy_free(jabber_private_t *j);
 int jabber_bookmarks_free(jabber_private_t *j);
+int jabber_iq_stanza_free(jabber_private_t *j);
 
 #define jabber_write(s, args...) watch_write((s && s->priv) ? jabber_private(s)->send_watch : NULL, args);
 WATCHER_LINE(jabber_handle_write);

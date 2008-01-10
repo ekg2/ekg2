@@ -33,19 +33,19 @@ static char *jabber_iq_error_string(xmlnode_t *n) {			/* in n we have <error */
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_last) {
 	char *error = jabber_iq_error_string(n);
-	print("jabber_iqlast_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print("jabber_lastseen_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
 	xfree(error);
 }
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_version) {
 	char *error = jabber_iq_error_string(n);
-	print("jabber_iqversion_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print("jabber_version_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
 	xfree(error);
 }
 
-JABBER_HANDLER_ERROR(jabber_handler_iq_generic_error) {
+JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic) {
 	char *error = jabber_iq_error_string(n);
-	debug_error("jabber_handler_iq_generic_error() %s\n", __(error));
+	debug_error("jabber_handle_iq_error_generic() %s\n", __(error));
 	xfree(error);
 }
 
@@ -55,7 +55,7 @@ static const struct jabber_iq_generic_handler jabber_iq_error_handlers[] = {
 	{ "",		NULL,						NULL }
 };
 
-JABBER_HANDLER_ERROR(jabber_handler_iq_generic_error_old) {
+JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic_old) {
 	jabber_private_t *j = s->priv;
 
 	xmlnode_t *e = xmlnode_find_child(n, "error");

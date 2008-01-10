@@ -165,6 +165,7 @@ static QUERY(jabber_session_deinit) {
 		XML_ParserFree(j->parser);
 	jabber_bookmarks_free(j);
 	jabber_privacy_free(j);
+	jabber_iq_stanza_free(j);
 
 		/* conversations */
 	for (thr = j->conversations; thr; thr = next) {
@@ -178,6 +179,29 @@ static QUERY(jabber_session_deinit) {
 
 	xfree(j);
 
+	return 0;
+}
+
+static LIST_FREE_ITEM(list_jabber_stanza_free, jabber_stanza_t *) {
+	xfree(data->id);
+	xfree(data->to);
+	xfree(data->type);
+	xfree(data->xmlns);
+	xfree(data);
+}
+
+int jabber_iq_stanza_free(jabber_private_t *j) {
+	if (!j || !j->iq_stanzas) return -1;
+
+	LIST_DESTROY(j->iq_stanzas, list_jabber_stanza_free);
+	j->iq_stanzas = NULL;
+	return 0;
+}
+
+int jabber_stanza_freeone(jabber_private_t *j, jabber_stanza_t *stanza) {
+	if (!j || !stanza) return -1;
+
+	LIST_REMOVE(&(j->iq_stanzas), stanza, list_jabber_stanza_free);
 	return 0;
 }
 
@@ -408,6 +432,8 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 	j->using_ssl	= 0;
 	j->ssl_session	= NULL;
 #endif
+
+	jabber_iq_stanza_free(j);
 
         if (j->parser)
                 XML_ParserFree(j->parser);
@@ -1179,11 +1205,7 @@ static int jabber_theme_init() {
 
 	format_add("jabber_msg_failed", _("%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"),1);
 	format_add("jabber_msg_failed_long", _("%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"),1);
-	format_add("jabber_version_response", _("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
 	format_add("jabber_userinfo_response", _("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
-	format_add("jabber_lastseen_response",	_("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2 ago%n\n"), 1);
-	format_add("jabber_lastseen_uptime",	_("%> Jabber ID: %T%1%n\n%> Server up: %T%2 ago%n\n"), 1);
-	format_add("jabber_lastseen_idle",      _("%> Jabber ID: %T%1%n\n%> Idle for:  %T%2%n\n"), 1);
 	format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
 	format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
@@ -1332,6 +1354,16 @@ static int jabber_theme_init() {
 
 	format_add("jabber_gone",			_("%> (%1) User %G%2%n has left the conversation."), 1);
 
+	format_add("jabber_iq_stanza",			_("%> (%1) %gIQ: <%W%2 %gxmlns='%W%3%g' to='%W%4%g' id='%W%5%g'>"), 1);
+
+/* jabber:iq:last */
+	format_add("jabber_lastseen_response",		_("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2 ago%n\n"), 1);
+	format_add("jabber_lastseen_uptime",		_("%> Jabber ID: %T%1%n\n%> Server up: %T%2 ago%n\n"), 1);
+	format_add("jabber_lastseen_idle",     		_("%> Jabber ID: %T%1%n\n%> Idle for:  %T%2%n\n"), 1);
+	format_add("jabber_lastseen_error",		_("%! (%1) Error in getting %gjabber:iq:last%n from %W%2%n: %r%3"), 1);
+/* jabber:iq:version */
+	format_add("jabber_version_response", 		_("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
+	format_add("jabber_version_error",		_("%! (%1) Error in getting %gjabber:iq:version%n from %W%2%n: %r%3"), 1);
 #endif	/* !NO_DEFAULT_THEME */
         return 0;
 }

@@ -790,6 +790,7 @@ static COMMAND(jabber_command_ver)
 	const char *uid;
         userlist_t *ut;
 	list_t l;
+	int once = 0;
 
 	if (!(uid = jid_target2uid(session, target, quiet)))
 		return -1;
@@ -812,13 +813,12 @@ static COMMAND(jabber_command_ver)
 		jabber_private_t *j = session_private_get(session);
 		ekg_resource_t *r = l->data;
 
-		char *xquery_res = jabber_escape(r->name);
-			/* XXX: in most functions we don't escape UIDs, should we do it here? */
-		char *xuid = jabber_escape(uid + 5);
-       		watch_write(j->send_watch, "<iq id='%d' to='%s/%s' type='get'><query xmlns='jabber:iq:version'/></iq>", \
-			     j->id++, xuid, xquery_res);
-		xfree(xuid);
-		xfree(xquery_res);
+		char *to = saprintf("%s/%s", uid + 5, r->name);
+
+		if (!jabber_iq_send(session, "versionreq_", JABBER_IQ_TYPE_GET, to, "query", "jabber:iq:version") && !once) {
+			printq("generic_error", "Error while jabber:iq:version request, check debug window");
+			once = 1;
+		}
 	}
 	return 0;
 }
@@ -965,22 +965,15 @@ static COMMAND(jabber_command_change)
 static COMMAND(jabber_command_lastseen)
 {
 	const char *uid;
+
 	if (!(uid = jid_target2uid(session, target, quiet)))
 		return -1;
-#if 0 /* ? */
-	if (!userlist_find(session, uid)) {
-		print("user_not_found", session_name(session));
+	
+	if (!jabber_iq_send(session, "lastseenreq_", JABBER_IQ_TYPE_GET, uid + 5, "query", "jabber:iq:last")) {
+		printq("generic_error", "Error while jabber:iq:last request, check debug window");
 		return -1;
 	}
-#endif
-	{
-		jabber_private_t *j = session_private_get(session);
-			/* XXX: like above, really worth escaping? */
-		char *xuid = jabber_escape(uid + 5);
-	       	watch_write(j->send_watch, "<iq id='%d' to='%s' type='get'><query xmlns='jabber:iq:last'/></iq>", \
-			     j->id++, xuid);
-		xfree(xuid);
-	}
+
 	return 0;
 }
 
@@ -1515,6 +1508,18 @@ static COMMAND(jabber_command_userlist)
 	return 0;
 }
 
+static COMMAND(jabber_command_stanzas) {
+	jabber_private_t *j	= session_private_get(session);
+	list_t l;
+
+	for (l = j->iq_stanzas; l; l = l->next) {
+		jabber_stanza_t *st = l->data;
+
+		printq("jabber_iq_stanza", session_name(session), st->type, st->xmlns, st->to, st->id);
+	}
+	return 0;
+}
+
 void jabber_register_commands()
 {
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
@@ -1531,6 +1536,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:_autoaway", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:_autoxa", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:_autoback", "r", jabber_command_away,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "xmpp:_stanzas", "?", jabber_command_stanzas, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:add", "U ?", jabber_command_modify, 	JABBER_FLAGS, NULL); 
 	command_add(&jabber_plugin, "xmpp:admin", "! ?", jabber_muc_command_admin, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:auth", "!p uU", jabber_command_auth, 	JABBER_FLAGS_REQ,

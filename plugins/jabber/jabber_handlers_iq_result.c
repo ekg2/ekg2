@@ -438,7 +438,6 @@ JABBER_HANDLER_RESULT(jabber_handle_gmail_result_mailbox) {
 		newmail_common(s);
 }
 
-/* XXX, check if this is result */
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_search) {
 	jabber_private_t *j = s->priv;
 
@@ -651,7 +650,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 	session_int_set(s, "__roster_retrieved", 1);
 }
 
-JABBER_HANDLER_RESULT(jabber_handle_register) {
+JABBER_HANDLER_RESULT(jabber_handle_iq_result_register) {
 	xmlnode_t *reg;
 	char *from_str = (from) ? jabber_unescape(from) : xstrdup(_("unknown"));
 	int done = 0;
@@ -727,7 +726,7 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 
 
 
-JABBER_HANDLER_RESULT(jabber_handle_iq_vacation) {
+JABBER_HANDLER_RESULT(jabber_handle_iq_result_vacation) {
 	xmlnode_t *temp;
 
 	char *message	= jabber_unescape( (temp = xmlnode_find_child(n, "message")) ? temp->data : NULL);
@@ -917,7 +916,17 @@ JABBER_HANDLER_RESULT(jabber_handle_bind) {
 
 }
 
+JABBER_HANDLER_RESULT(jabber_handle_iq_result_generic) {
+	debug_error("jabber_handle_iq_result_generic()\n");
+}
+
 static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
+	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },
+	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },
+	{ "",		NULL,						NULL }
+};
+
+static const struct jabber_iq_generic_handler jabber_iq_result_handlers_old[] = {
 	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
 
 	{ "pubsub",	"http://jabber.org/protocol/pubsub#event",	jabber_handle_result_pubsub },
@@ -926,23 +935,22 @@ static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
 
 	{ "si",		NULL,						jabber_handle_si_result },
 
-	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },
+	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },			/* done */
 	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
 	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },
-	{ NULL,		"jabber:iq:register",				jabber_handle_register },
+	{ NULL,		"jabber:iq:register",				jabber_handle_iq_result_register },
 	{ NULL,		"jabber:iq:roster",				jabber_handle_iq_roster },
 	{ NULL,		"jabber:iq:search",				jabber_handle_iq_result_search },
-	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },
-//	{ NULL,		"http://jabber.org/protocol/bytestreams",	jabber_handle_bytestreams },
+	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },		/* done */
 	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_result_disco_info },
 	{ NULL,		"http://jabber.org/protocol/disco#items",	jabber_handle_iq_result_disco },
 	{ NULL,		"http://jabber.org/protocol/muc#admin",		jabber_handle_iq_muc_admin },
 	{ NULL,		"http://jabber.org/protocol/muc#owner",		jabber_handle_iq_muc_owner },
-	{ NULL,		"http://jabber.org/protocol/vacation",		jabber_handle_iq_vacation },
+	{ NULL,		"http://jabber.org/protocol/vacation",		jabber_handle_iq_result_vacation },
 
 	{ "bind",	"urn:ietf:params:xml:ns:xmpp-bind",		jabber_handle_bind },
 
-	{ "",		NULL,						NULL }
+	{ "",		NULL,						NULL }						/* done */
 };
 
 /* XXX: temporary hack: roster przychodzi jako typ 'set' (przy dodawaniu), jak
@@ -957,19 +965,11 @@ static const struct jabber_iq_generic_handler jabber_iq_set_handlers[] = {
 
 	{ "si",		NULL,						jabber_handle_si_set },
 
-	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },
-	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
+	{ "query",	"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
 	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },
-	{ NULL,		"jabber:iq:register",				jabber_handle_register },
 	{ NULL,		"jabber:iq:roster",				jabber_handle_iq_roster },
-	{ NULL,		"jabber:iq:search",				jabber_handle_iq_result_search },
-	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },
-//	{ NULL,		"http://jabber.org/protocol/bytestreams",	jabber_handle_bytestreams },
-	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_result_disco_info },
-	{ NULL,		"http://jabber.org/protocol/disco#items",	jabber_handle_iq_result_disco },
 	{ NULL,		"http://jabber.org/protocol/muc#admin",		jabber_handle_iq_muc_admin },
 	{ NULL,		"http://jabber.org/protocol/muc#owner",		jabber_handle_iq_muc_owner },
-	{ NULL,		"http://jabber.org/protocol/vacation",		jabber_handle_iq_vacation },
 
 	{ "",		NULL,						NULL }
 };

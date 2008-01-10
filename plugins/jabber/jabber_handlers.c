@@ -105,6 +105,16 @@ static xmlnode_t *xmlnode_find_child(xmlnode_t *n, const char *name) {
 	return NULL;
 }
 
+static xmlnode_t *xmlnode_find_child_xmlns(xmlnode_t *n, const char *name, const char *xmlns) {
+	if (!n || !n->children)
+		return NULL;
+
+	for (n = n->children; n; n = n->next)
+		if (!xstrcmp(n->name, name) && !xstrcmp(jabber_attr(n->atts, "xmlns"), xmlns))
+			return n;
+	return NULL;
+}
+
 /**
  * jabber_iq_auth_send()
  *
@@ -941,7 +951,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	if (x_encrypted) 
 		string_append(body, x_encrypted);	/* encrypted message */
 	else if (nbody)
-		string_append(body, nbody->data);	/* unecrpyted message */
+		string_append(body, nbody->data);	/* unecrypted message */
 
 	/* 'composing' is quite special variable:
 	 *   1st bit determines whether we should send any update,
@@ -1207,19 +1217,31 @@ static void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const ch
 	array_free(labels);
 }
 
-typedef enum {
-	JABBER_IQ_TYPE_NONE,
-	JABBER_IQ_TYPE_GET,
-	JABBER_IQ_TYPE_SET,
-	JABBER_IQ_TYPE_RESULT,
-	JABBER_IQ_TYPE_ERROR,
-} jabber_iq_type_t;
-
 struct jabber_iq_generic_handler {
 	const char *name;
 	const char *xmlns;
 	void (*handler)(session_t *s, xmlnode_t *n, const char *from, const char *id);
 };
+
+static const struct jabber_iq_generic_handler *jabber_iq_find_handler(const struct jabber_iq_generic_handler *items, const char *type, const char *xmlns) {
+	struct jabber_iq_generic_handler *tmp = items;
+
+	while (tmp->handler) {
+		int matched = !xstrcmp(type, tmp->name);
+
+		do {
+			if (matched && !xstrcmp(tmp->xmlns, xmlns))
+				return tmp;
+
+			tmp++;
+		} while (!tmp->name);
+
+		if (matched)
+			break;
+	}
+
+	return NULL;
+}
 
 #include "jabber_handlers_iq_error.c"
 #include "jabber_handlers_iq_get.c"
@@ -1234,7 +1256,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 
 	jabber_iq_type_t type = JABBER_IQ_TYPE_NONE;
 
-	struct jabber_iq_generic_handler *callbacks;
+	const struct jabber_iq_generic_handler *callbacks;
 	xmlnode_t *q;
 
 	if (!xstrcmp(atype, "get"))		type = JABBER_IQ_TYPE_GET;
@@ -1246,13 +1268,60 @@ JABBER_HANDLER(jabber_handle_iq) {
 		return;
 	}
 
+	if (type == JABBER_IQ_TYPE_RESULT || type == JABBER_IQ_TYPE_ERROR) {
+		list_t l;
+		char *uid = jabber_unescape(from);
+
+		/* XXX, do sprawdzenia w RFC/ napisania maila do gosci od XMPP.
+		 * 	czy jesli nie mamy nic w from, to mamy zakladac ze w from jest 'nasz.jabber.server' (j->server)
+		 */
+
+		/* XXX, note: we temporary pass here: 'from' instead of unescaped 'uid'.
+		 */
+
+		for (l = j->iq_stanzas; l; l = l->next) {
+			jabber_stanza_t *st = l->data;
+
+			if (!xstrcmp(st->id, id)) {
+				/* SECURITY NOTE: for instance, mcabber in version 0.9.5 doesn't check from and id of iq is always increment by one ^^ */
+
+				if (!xstrcmp(st->to, uid) /* || jakas_iwil_zmienna [np: bypass_FROM_checkin_from_iq] */) {
+					if (type == JABBER_IQ_TYPE_RESULT) {
+						if ((q = xmlnode_find_child_xmlns(n, st->type, st->xmlns))) {
+							debug("[jabber] Executing handler id: %s <%s xmlns='%s' 0x%x\n", st->id, st->type, st->xmlns, st->handler);
+							st->handler(s, q, from, id);
+						} else {
+							debug_error("[jabber] Warning, [<%s xmlns='%s'] Not found, calling st->error: %x\n", st->type, st->xmlns, st->error);
+
+							st->error(s, NULL, from, id);
+						}
+					} else {
+						q = xmlnode_find_child(n, "error");	/* WARN: IT CAN BE NULL, jabber_iq_error_string() handles it. */
+
+						debug("[jabber] Executing error handler id: %s q: %x <%s xmlns='%s' 0x%x%x\n", st->id, q, st->type, st->xmlns, st->error);
+						st->error(s, q, from, id);
+					}
+
+
+					jabber_stanza_freeone(j, st);
+					xfree(uid);
+					return;
+				}
+
+				debug_error("[jabber] Security warning: recved iq from invalid source %s vs %s\n", st->to, __(uid));
+				break;
+			}
+		}
+		xfree(uid);
+	}
+
 	switch (type) {
-		case JABBER_IQ_TYPE_RESULT:		callbacks = jabber_iq_result_handlers;	break;
-		case JABBER_IQ_TYPE_SET:		callbacks = jabber_iq_set_handlers;	break;
-		case JABBER_IQ_TYPE_GET:		callbacks = jabber_iq_get_handlers;	break;
+		case JABBER_IQ_TYPE_RESULT:		callbacks = jabber_iq_result_handlers_old;	break;
+		case JABBER_IQ_TYPE_SET:		callbacks = jabber_iq_set_handlers;		break;
+		case JABBER_IQ_TYPE_GET:		callbacks = jabber_iq_get_handlers;		break;
 
 		case JABBER_IQ_TYPE_ERROR:
-			jabber_handler_iq_generic_error_old(s, n, from, id);
+			jabber_handle_iq_error_generic_old(s, n, from, id);
 			return;
 		case JABBER_IQ_TYPE_NONE:
 			debug_error("[jabber] <iq> wtf iq type: %s\n", atype);
@@ -1284,40 +1353,23 @@ JABBER_HANDLER(jabber_handle_iq) {
 	}
 
 	for (q = n->children; q; q = q->next) {
-		struct jabber_iq_generic_handler *tmp = callbacks;
+		const char *ns = jabber_attr(q->atts, "xmlns");
+		const struct jabber_iq_generic_handler *tmp = jabber_iq_find_handler(callbacks, q->name, ns);
 
-		while (tmp->handler) {
-			const char *ns = jabber_attr(q->atts, "xmlns");
-
-			while (tmp->handler) {
-				int matched = !xstrcmp(q->name, tmp->name);
-
-				do {
-					if (matched && !xstrcmp(tmp->xmlns, ns)) {
-						debug_function("[jabber] <iq %s> <%s xmlns=%s\n", atype, q->name, ns);
-						tmp->handler(s, q, from, id);
-
-						/* XXX, read RFC if we can have more get stanzas */
-						/* <query xmlns=http://jabber.org/protocol/disco#items/>
-						 * <query xmlns=http://jabber.org/protocol/disco#info/>
-						 * ...
-						 * ...
-						 */
-						goto iq_child_next;
-					}
-
-					tmp++;
-				} while (!tmp->name);
-
-				if (matched) {
-					debug_error("[jabber] <iq %s> unknown ns: <%s xmlns=%s\n", atype, q->name, __(ns));
-					break;
-				}
-			}
-			debug_error("[jabber] <iq %s> unknown name: <%s xmlns=%s\n", atype, __(q->name), __(ns));
+		if (!tmp) {
+			debug_error("[jabber] <iq %s> unknown name: <%s xmlns='%s'\n", atype, __(q->name), __(ns));
+			continue;
 		}
-iq_child_next:
-		continue;
+
+		debug_function("[jabber] <iq %s> <%s xmlns=%s\n", atype, q->name, ns);
+		tmp->handler(s, q, from, id);
+
+		/* XXX, read RFC if we can have more get stanzas */
+		/* <query xmlns=http://jabber.org/protocol/disco#items/>
+		 * <query xmlns=http://jabber.org/protocol/disco#info/>
+		 * ...
+		 * ...
+		 */
 	}
 }
 
@@ -1637,4 +1689,77 @@ static time_t jabber_try_xdelay(const char *stamp) {
 	return time(NULL);
 
 }
+
+const char *jabber_iq_reg(session_t *s, const char *prefix, const char *to, const char *type, const char *xmlns) {
+	jabber_private_t *j = jabber_private(s);
+	int loop = 10;
+
+	jabber_stanza_t *st;
+	list_t l;
+
+	struct jabber_iq_generic_handler *tmp;
+	char *id;
+
+	id = saprintf("%s%x", prefix ? prefix : "", j->id++);
+again:
+	for (l = j->iq_stanzas; l; l = l->next) {
+		jabber_stanza_t *i = l->data;
+
+		if (!xstrcmp(id, i->id)) {
+			xfree(id);
+
+			if (--loop) {
+				debug_error("jabber_iq_reg() avoiding deadlock\n");
+				return NULL;
+			}
+			
+			id = saprintf("%s%x_%d", prefix ? prefix : "", j->id++, rand());
+
+			debug_white("jabber_iq_reg() found id: %s, new id: %s\n", i->id, id);
+			goto again;
+		}
+	}
+
+	st = xmalloc(sizeof(jabber_stanza_t));
+
+	st->id = id;
+	st->to = xstrdup(to);
+	st->type = xstrdup(type);
+	st->xmlns = xstrdup(xmlns);
+
+	tmp = jabber_iq_find_handler(jabber_iq_result_handlers, type, xmlns);
+	st->handler = tmp ? tmp->handler : jabber_handle_iq_result_generic;
+
+	tmp = jabber_iq_find_handler(jabber_iq_error_handlers, type, xmlns);
+	st->error = tmp ? tmp->handler : jabber_handle_iq_error_generic;
+
+	list_add_beginning(&(j->iq_stanzas), st, 0);
+
+	return id;
+}
+
+const char *jabber_iq_send(session_t *s, const char *prefix, jabber_iq_type_t iqtype, const char *to, const char *type, const char *xmlns) {
+	jabber_private_t *j = jabber_private(s);
+	const char *id;
+
+	char *tmp;
+	char *aiqtype;
+
+	if (iqtype == JABBER_IQ_TYPE_GET) 	aiqtype = "get";
+	else if (iqtype == JABBER_IQ_TYPE_SET)	aiqtype = "set";
+	else {
+		debug_error("jabber_iq_send() wrong iqtype passed\n");
+		return NULL;
+	}
+	
+	if (!(id = jabber_iq_reg(s, prefix, to, type, xmlns)))
+		return NULL;
+
+	tmp = jabber_escape(to);	/* XXX: really worth escaping? */
+	watch_write(j->send_watch, "<iq id='%s' to='%s' type='%s'><%s xmlns='%s'/></iq>", id, tmp, aiqtype, type, xmlns);
+	xfree(tmp);
+
+	return id;
+}
+
 
