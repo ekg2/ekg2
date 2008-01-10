@@ -1,4 +1,4 @@
-EXTRA_DIST = commands-pl.txt session-pl.txt commands-en.txt session-en.txt jabber_handlers_iq_get.c jabber_handlers_iq_result.c jabber_handlers_tlen.c
+EXTRA_DIST = commands-pl.txt session-pl.txt commands-en.txt session-en.txt jabber_handlers_iq_error.c jabber_handlers_iq_get.c jabber_handlers_iq_result.c jabber_handlers_tlen.c
 
 lib_LTLIBRARIES = jabber.la
 jabber_la_SOURCES = jabber.c commands.c misc.c digest.c xmlnode.c jabber_dcc.c jabber_handlers.c jabber.h jabber_dcc.h jabber-ssl.h

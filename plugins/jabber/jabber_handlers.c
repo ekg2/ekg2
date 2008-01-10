@@ -74,8 +74,6 @@ WATCHER_SESSION(jabber_handle_connect_ssl); /* jabber.c */
 #define jabberfix(x,a) ((x) ? x : a)
 
 #define JABBER_HANDLER(x) 		static void x(session_t *s, xmlnode_t *n)
-#define JABBER_HANDLER_ERROR(x)        static void x(session_t *s, xmlnode_t *n, const char *from, const char *id)
-
 
 JABBER_HANDLER(jabber_handle_message);
 JABBER_HANDLER(jabber_handle_iq);
@@ -1223,6 +1221,7 @@ struct jabber_iq_generic_handler {
 	void (*handler)(session_t *s, xmlnode_t *n, const char *from, const char *id);
 };
 
+#include "jabber_handlers_iq_error.c"
 #include "jabber_handlers_iq_get.c"
 #include "jabber_handlers_iq_result.c"
 
@@ -1253,7 +1252,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 		case JABBER_IQ_TYPE_GET:		callbacks = jabber_iq_get_handlers;	break;
 
 		case JABBER_IQ_TYPE_ERROR:
-			jabber_handler_iq_generic_error(s, n, from, id);
+			jabber_handler_iq_generic_error_old(s, n, from, id);
 			return;
 		case JABBER_IQ_TYPE_NONE:
 			debug_error("[jabber] <iq> wtf iq type: %s\n", atype);

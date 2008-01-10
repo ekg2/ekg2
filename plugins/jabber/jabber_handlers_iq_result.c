@@ -974,38 +974,3 @@ static const struct jabber_iq_generic_handler jabber_iq_set_handlers[] = {
 	{ "",		NULL,						NULL }
 };
 
-JABBER_HANDLER_ERROR(jabber_handler_iq_generic_error) {
-	jabber_private_t *j = s->priv;
-
-	xmlnode_t *e = xmlnode_find_child(n, "error");
-	char *reason = (e) ? jabber_unescape(e->data) : NULL;
-
-	if (!xstrncmp(id, "register", 8)) {
-		print("register_failed", jabberfix(reason, "?"));
-	} else if (!xstrcmp(id, "auth")) {
-		j->parser = NULL; jabber_handle_disconnect(s, reason ? reason : _("Error connecting to Jabber server"), EKG_DISCONNECT_FAILURE);
-
-	} else if (!xstrncmp(id, "passwd", 6)) {
-		print("passwd_failed", jabberfix(reason, "?"));
-		session_set(s, "__new_password", NULL);
-	} else if (!xstrncmp(id, "search", 6)) {
-		debug_error("[JABBER] search failed: %s\n", __(reason));
-	}
-	else if (!xstrncmp(id, "offer", 5)) {
-		char *uin = jabber_unescape(from);
-		dcc_t *p = jabber_dcc_find(uin, id, NULL);
-
-		if (p) {
-			/* XXX, new theme it's for ip:port */
-			print("dcc_error_refused", format_user(s, p->uid));
-			dcc_close(p);
-		} else {
-			/* XXX, possible abuse attempt */
-		}
-		xfree(uin);
-	}
-	else debug_error("[JABBER] GENERIC IQ ERROR: %s\n", __(reason));
-
-	xfree(reason);
-}
-
