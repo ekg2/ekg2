@@ -537,6 +537,7 @@ static COMMAND(jabber_command_passwd)
 		passwd = jabber_escape(params[0]);
 		session_set(session, "__new_password", params[0]);
 	}
+
 	watch_write(j->send_watch, 
 		"<iq type=\"set\" to=\"%s\" id=\"passwd%d\"><query xmlns=\"jabber:iq:register\"><username>%s</username><password>%s</password></query></iq>",
 		j->server, j->id++, username, passwd);
@@ -1472,21 +1473,19 @@ static COMMAND(jabber_command_userlist)
 	}
 
 	if (match_arg(params[0], 'g', "get", 2) || replace) {	/* fill userlist with data from file */
+		const int istlen = jabber_private(session)->istlen;
+
 		FILE *f = fopen(listfile, "r");
-		char line[512];
+		char *line;
 
 		if (!f) {
 			printq("io_cantopen", listfile, strerror(errno));
 			return -1;
 		}
 
-		while (fgets(line, sizeof(line), f)) {
-			const int istlen = jabber_private(session)->istlen;
+		while ((line = read_file(line, 0))) {
 			char *uid = &line[2];
 			char *nickname;
-
-			if (!xstrchr(line, 10)) /* discard line if too long */
-				continue;
 
 			if (xstrncmp(line, "+,", 2)) { /* XXX: '-'? */
 				debug_error("jabber_command_userlist(), unknown op on '%s'\n", line);
@@ -1496,9 +1495,9 @@ static COMMAND(jabber_command_userlist)
 			if ((nickname = xstrchr(uid, ','))) {
 				char *p;
 
-				*(nickname++) = 0;
+				*(nickname++) = '\0';
 				if ((p = xstrchr(nickname, ',')))
-					*p = 0;
+					*p = '\0';
 			}
 
 			uid = saprintf(istlen ? "tlen:%s" : "xmpp:%s", uid);
@@ -1517,7 +1516,6 @@ static COMMAND(jabber_command_userlist)
 
 			xfree(uid);
 		}
-
 		fclose(f);
 		printq("userlist_get_ok", session_name(session));
 	} else if (match_arg(params[0], 'p', "put", 2)) {	/* write userlist into file */
