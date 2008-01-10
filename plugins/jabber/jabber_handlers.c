@@ -1491,7 +1491,6 @@ JABBER_HANDLER(jabber_handle_presence) {
 
 						ulist = newconference_member_find(c, nickjid);
 						if (ulist && na) { 
-							mucuser_private_deinit(ulist); 
 							newconference_member_remove(c, ulist); 
 							ulist = NULL; 
 						} else if (!ulist) {
@@ -1503,7 +1502,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 							jabber_userlist_private_t *up = jabber_userlist_priv_get(ulist);
 							ulist->status = EKG_STATUS_AVAIL;
 							
-							mucuser_private_deinit(ulist);
+							mucuser_private_deinit(ulist);		/* ??? */
 							if (up) {
 								up->role	= xstrdup(role);
 								up->aff		= xstrdup(affiliation);
