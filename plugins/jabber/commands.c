@@ -810,34 +810,30 @@ static COMMAND(jabber_command_ver)
 	}
 
 	for (l = ut->resources; l; l = l->next) {	/* send query to each resource */
-		jabber_private_t *j = session_private_get(session);
 		ekg_resource_t *r = l->data;
 
 		char *to = saprintf("%s/%s", uid + 5, r->name);
 
 		if (!jabber_iq_send(session, "versionreq_", JABBER_IQ_TYPE_GET, to, "query", "jabber:iq:version") && !once) {
-			printq("generic_error", "Error while jabber:iq:version request, check debug window");
+			printq("generic_error", "Error while sending jabber:iq:version request, check debug window");
 			once = 1;
 		}
 	}
 	return 0;
 }
 
-static COMMAND(jabber_command_userinfo)
-{
+static COMMAND(jabber_command_userinfo) {
 	const char *uid;
 
 	/* jabber id: [user@]host[/resource] */
 	if (!(uid = jid_target2uid(session, target, quiet)))
 		return -1;
-	{ 
-		jabber_private_t *j = session_private_get(session);
-			/* XXX: like above */
-		char *xuid = jabber_escape(uid + 5);
-       		watch_write(j->send_watch, "<iq id='%d' to='%s' type='get'><vCard xmlns='vcard-temp'/></iq>", \
-			     j->id++, xuid);
-		xfree(xuid);
+	
+	if (!jabber_iq_send(session, "vcardreq_", JABBER_IQ_TYPE_GET, uid + 5, "vCard", "vcard-temp")) {
+		printq("generic_error", "Error while sending vCard request, check debug window");
+		return 1;
 	}
+	
 	return 0;
 }
 
@@ -970,7 +966,7 @@ static COMMAND(jabber_command_lastseen)
 		return -1;
 	
 	if (!jabber_iq_send(session, "lastseenreq_", JABBER_IQ_TYPE_GET, uid + 5, "query", "jabber:iq:last")) {
-		printq("generic_error", "Error while jabber:iq:last request, check debug window");
+		printq("generic_error", "Error while sending jabber:iq:last request, check debug window");
 		return -1;
 	}
 
@@ -1127,15 +1123,22 @@ static COMMAND(jabber_command_transpinfo) {
 	jabber_private_t *j = session_private_get(session);
 	const char *server = params[0] ? params[0] : j->server;
 	const char *node   = (params[0] && params[1]) ? params[1] : NULL;
+	
+	char *id;
+	
+	if (!(id = jabber_iq_reg(session, "transpinfo_", server, "query", "http://jabber.org/protocol/disco#info"))) {
+		printq("generic_error", "Error in getting id for transport info request, check debug window");
+		return 1;
+	}
 
 	if (node) {
 		watch_write(j->send_watch,
-			"<iq type=\"get\" to=\"%s\" id=\"transpinfo%d\"><query xmlns=\"http://jabber.org/protocol/disco#info\" node=\"%s\"/></iq>",
-			server, j->id++, node);
+			"<iq type=\"get\" to=\"%s\" id=\"%s\"><query xmlns=\"http://jabber.org/protocol/disco#info\" node=\"%s\"/></iq>",
+			server, id, node);
 	} else {
 		watch_write(j->send_watch, 
-			"<iq type=\"get\" to=\"%s\" id=\"transpinfo%d\"><query xmlns=\"http://jabber.org/protocol/disco#info\"/></iq>", 
-			server, j->id++);
+			"<iq type=\"get\" to=\"%s\" id=\"%s\"><query xmlns=\"http://jabber.org/protocol/disco#info\"/></iq>", 
+			server, id);
 	}
 	return 0;
 
@@ -1155,6 +1158,37 @@ static COMMAND(jabber_command_transports) {
 			"<iq type=\"get\" to=\"%s\" id=\"transplist%d\"><query xmlns=\"http://jabber.org/protocol/disco#items\"/></iq>",
 			server, j->id++);
 	}
+	return 0;
+}
+
+static COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERRED) */
+	jabber_private_t *j = session_private_get(session);
+
+	char *message;
+	char *id;
+
+	if (!(id = jabber_iq_reg(session, "vacationreq_", NULL, "query", "http://jabber.org/protocol/vacation"))) {
+		printq("generic_error", "Error in getting id for vacation request, check debug window");
+		return 1;
+	}
+
+	message = jabber_escape(params[0]);
+
+/* XXX, porobic potwierdzenia ustawiania/ usuwania. oraz jesli nie ma statusu to wyswylic jakies 'no vacation status'... */
+
+	if (!params[0]) {
+		watch_write(j->send_watch, "<iq type=\"get\" id=\"%s\"><query xmlns=\"http://jabber.org/protocol/vacation\"/></iq>", id);
+	} else if (xstrlen(params[0]) == 1 && params[0][0] == '-') {
+		watch_write(j->send_watch, "<iq type=\"set\" id=\"%s\"><query xmlns=\"http://jabber.org/protocol/vacation\"/></iq>", id);
+	} else {
+		watch_write(j->send_watch, 
+			"<iq type=\"set\" id=\"%s\"><query xmlns=\"http://jabber.org/protocol/vacation\">"
+			"<start/><end/>" /* XXX, startdate, enddate */
+			"<message>%s</message>"
+			"</query></iq>", 
+			id, message);
+	}
+	xfree(message);
 	return 0;
 }
 
@@ -1576,6 +1610,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:userinfo", "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:userlist", "! ?", jabber_command_userlist, JABBER_FLAGS_REQ,
 			"-g --get -p --put"); /* BFW: it is unlike GG, -g gets userlist from file, -p writes it into it */
+	command_add(&jabber_plugin, "xmpp:vacation", "?", jabber_command_vacation, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:ver", "!u", jabber_command_ver, 	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
 	command_add(&jabber_plugin, "xmpp:xa", "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:xml", "!", jabber_command_xml, 	JABBER_ONLY, NULL);

@@ -921,13 +921,16 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_generic) {
 }
 
 static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
+	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
+
 	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },
 	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },
+	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_result_disco_info },
 	{ "",		NULL,						NULL }
 };
 
 static const struct jabber_iq_generic_handler jabber_iq_result_handlers_old[] = {
-	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
+	{ "vCard",	"vcard-temp",					jabber_handle_vcard },				/* done */
 
 	{ "pubsub",	"http://jabber.org/protocol/pubsub#event",	jabber_handle_result_pubsub },
 	{ "mailbox",	"google:mail:notify",				jabber_handle_gmail_result_mailbox },
@@ -942,7 +945,7 @@ static const struct jabber_iq_generic_handler jabber_iq_result_handlers_old[] = 
 	{ NULL,		"jabber:iq:roster",				jabber_handle_iq_roster },
 	{ NULL,		"jabber:iq:search",				jabber_handle_iq_result_search },
 	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },		/* done */
-	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_result_disco_info },
+	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_result_disco_info },		/* done */
 	{ NULL,		"http://jabber.org/protocol/disco#items",	jabber_handle_iq_result_disco },
 	{ NULL,		"http://jabber.org/protocol/muc#admin",		jabber_handle_iq_muc_admin },
 	{ NULL,		"http://jabber.org/protocol/muc#owner",		jabber_handle_iq_muc_owner },

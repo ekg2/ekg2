@@ -1205,7 +1205,6 @@ static int jabber_theme_init() {
 
 	format_add("jabber_msg_failed", _("%! Message to %T%1%n can't be delivered: %R(%2) %r%3%n\n"),1);
 	format_add("jabber_msg_failed_long", _("%! Message to %T%1%n %y(%n%K%4(...)%y)%n can't be delivered: %R(%2) %r%3%n\n"),1);
-	format_add("jabber_userinfo_response", _("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
 	format_add("jabber_unknown_resource", _("%! (%1) User's resource unknown%n\n\n"), 1);
 	format_add("jabber_status_notavail", _("%! (%1) Unable to check version, because %2 is unavailable%n\n"), 1);
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
@@ -1262,16 +1261,6 @@ static int jabber_theme_init() {
 	format_add("jabber_remotecontrols_commited_status", _("%> (%1) RC %W%2%n: requested changing status to: %3 %4 with priority: %5"), 1);	/* %3 - status %4 - descr %5 - prio */
 		/* %3 - command+params %4 - sessionname %5 - target %6 - quiet */
 	format_add("jabber_remotecontrols_commited_command",_("%> (%1) RC %W%2%n: requested command: %W%3%n @ session: %4 window: %5 quiet: %6"), 1);	
-
-	format_add("jabber_transinfo_begin",	_("%g,+=%G----- Information about: %T%2%n"), 1);
-	format_add("jabber_transinfo_begin_node",_("%g,+=%G----- Information about: %T%2%n (%3)"), 1);
-	format_add("jabber_transinfo_identify",	_("%g|| %G --== %g%3 %G==--%n"), 1);
-		/* %4 - real fjuczer name  %3 - translated fjuczer name. */
-	format_add("jabber_transinfo_feature",	_("%g|| %n %W%2%n feature: %n%3"), 1);
-	format_add("jabber_transinfo_comm_ser",	_("%g|| %n %W%2%n can: %n%3 %2 (%4)"), 1);
-	format_add("jabber_transinfo_comm_use",	_("%g|| %n %W%2%n can: %n%3 $uid (%4)"), 1);
-	format_add("jabber_transinfo_comm_not",	_("%g|| %n %W%2%n can: %n%3 (%4)"), 1);
-	format_add("jabber_transinfo_end",	_("%g`+=%G----- End of the infomations%n\n"), 1);
 
 	format_add("jabber_search_item",	_("%) JID: %T%3%n\n%) Nickname:  %T%4%n\n%) Name: %T%5 %6%n\n%) Email: %T%7%n\n"), 1);	/* like gg-search_results_single */
 		/* %3 - jid %4 - nickname %5 - firstname %6 - surname %7 - email */
@@ -1355,6 +1344,23 @@ static int jabber_theme_init() {
 	format_add("jabber_gone",			_("%> (%1) User %G%2%n has left the conversation."), 1);
 
 	format_add("jabber_iq_stanza",			_("%> (%1) %gIQ: <%W%2 %gxmlns='%W%3%g' to='%W%4%g' id='%W%5%g'>"), 1);
+
+/* http://jabber.org/protocol/disco#info */
+	format_add("jabber_transinfo_begin",		_("%g,+=%G----- Information about: %T%2%n"), 1);
+	format_add("jabber_transinfo_begin_node",	_("%g,+=%G----- Information about: %T%2%n (%3)"), 1);
+	format_add("jabber_transinfo_identify",			_("%g|| %G --== %g%3 %G==--%n"), 1);
+		/* %4 - real fjuczer name  %3 - translated fjuczer name. */
+	format_add("jabber_transinfo_feature",			_("%g|| %n %W%2%n feature: %n%3"), 1);
+	format_add("jabber_transinfo_comm_ser",			_("%g|| %n %W%2%n can: %n%3 %2 (%4)"), 1);
+	format_add("jabber_transinfo_comm_use",			_("%g|| %n %W%2%n can: %n%3 $uid (%4)"), 1);
+	format_add("jabber_transinfo_comm_not",			_("%g|| %n %W%2%n can: %n%3 (%4)"), 1);
+	format_add("jabber_transinfo_end",		_("%g`+=%G----- End of the infomations%n\n"), 1);
+
+	format_add("jabber_transinfo_error",		_("%! (%1) Error in getting %ghttp://jabber.org/protocol/disco#info%n from %W%2%n: %r%3"), 1);
+
+/* vCard xmlns=vcard-temp */
+	format_add("jabber_userinfo_response",		_("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
+	format_add("jabber_userinfo_error",		_("%! (%1) Error in getting %gvCard%n from %W%2%n: %r%3"), 1);
 
 /* jabber:iq:last */
 	format_add("jabber_lastseen_response",		_("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2 ago%n\n"), 1);

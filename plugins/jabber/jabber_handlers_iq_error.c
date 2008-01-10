@@ -43,6 +43,18 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_version) {
 	xfree(error);
 }
 
+JABBER_HANDLER_ERROR(jabber_handle_iq_error_disco_info) {
+	char *error = jabber_iq_error_string(n);
+	print("jabber_transinfo_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	xfree(error);
+}
+
+JABBER_HANDLER_ERROR(jabber_handle_iq_error_vcard) {
+	char *error = jabber_iq_error_string(n);
+	print("jabber_userinfo_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	xfree(error);
+}
+
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic) {
 	char *error = jabber_iq_error_string(n);
 	debug_error("jabber_handle_iq_error_generic() %s\n", __(error));
@@ -50,8 +62,10 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic) {
 }
 
 static const struct jabber_iq_generic_handler jabber_iq_error_handlers[] = {
+	{ "vCard",	"vcard-temp",					jabber_handle_iq_error_vcard },
 	{ "query",	"jabber:iq:last",				jabber_handle_iq_error_last },
 	{ NULL,		"jabber:iq:version",				jabber_handle_iq_error_version },
+	{ NULL,		"http://jabber.org/protocol/disco#info",	jabber_handle_iq_error_disco_info },
 	{ "",		NULL,						NULL }
 };
 
