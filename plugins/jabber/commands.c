@@ -795,7 +795,7 @@ static COMMAND(jabber_command_ver)
 		return -1;
 
 	if (!(ut = userlist_find(session, uid))) {
-		print("user_not_found", session_name(session));
+		print("user_not_found", target);
 		return -1;
 	}
 	if (ut->status <= EKG_STATUS_NA) {
