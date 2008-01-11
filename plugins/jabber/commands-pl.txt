@@ -192,7 +192,7 @@ privacy
 	
 		[-zabron]         Parametr moze byc powtorzony wielokrotnie, znak minusa, a nastepnie jedna z opcji: iq, msg, pin, pout lub gwiazdka jesli wszystkie.
 	
-		[+dozwol]         Parametr moze byc powtorzony wielokrotnie, znak plusa, a nastepnie jedna z opcji: iq, msg, pin, pout lub gwiazdka dla okreslenia ze wszystkie.
+		[+pozwol]         Parametr moze byc powtorzony wielokrotnie, znak plusa, a nastepnie jedna z opcji: iq, msg, pin, pout lub gwiazdka dla okreslenia ze wszystkie.
 	
 		%r!!! UWAGA !!! Po dodaniu pierwszego elementu do listy, jest wymagane aktywowanie listy przez %g/privacy --session lista%n
 	
