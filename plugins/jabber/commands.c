@@ -739,43 +739,41 @@ static COMMAND(jabber_command_modify) {
 static COMMAND(jabber_command_del) {
 	jabber_private_t *j	= session->priv;
 	int del_all		= !xstrcmp(params[0], "*");
-	int n			= 0;
-	const char *uid;
-	list_t l;
+	userlist_t *u;
 
-		/* This is weird, I know. But it should take care of both single and multiple
-		 * removal the simplest way, I think */
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = (del_all ? l->data : userlist_find_u(&l, target));
+	if (del_all) {
+		list_t l;
 
-		if (u) {
-			if (!(uid = u->uid) || xstrncmp(uid, jabber_prefixes[j->istlen], 5)) {
-				printq("invalid_session");
-				return -1;
-			}
-
-			if (!n) {
-				j->send_watch->transfer_limit = -1;
-				watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
-			}
-			watch_write(j->send_watch, "<item jid=\"%s\" subscription=\"remove\"/>", uid+5);
-
-			n++;
+		if (!session->userlist) {
+			printq("list_empty", session_name(session));
+			return 1;
 		}
 
-		if (!del_all)
-			break;
-	}
+		if (j->send_watch) j->send_watch->transfer_limit = -1;
 
-	if (n) {
+		watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
+		
+		for (l = session->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+
+			watch_write(j->send_watch, "<item jid=\"%s\" subscription=\"remove\"/>", u->uid+5);
+		}
+
 		watch_write(j->send_watch, "</query></iq>");
 		JABBER_COMMIT_DATA(j->send_watch);
+
+		printq("user_cleared_list", session_name(session));
+		return 0;
 	}
 
-	if (del_all)
-		printq(n ? "user_cleared_list" : "list_empty", session_name(session));
-	else
-		printq(n ? "user_deleted" : "user_not_found", target, session_name(session));
+	if (!(u = userlist_find(session, target))) {
+		printq("user_not_found", target);
+		return 1;
+	}
+
+	watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\"><item jid=\"%s\" subscription=\"remove\"/></query></iq>", u->uid + 5);
+
+	printq("user_deleted", target, session_name(session));
 	return 0;
 }
 
