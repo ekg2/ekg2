@@ -256,6 +256,31 @@ int list_remove(list_t *list, void *data, int free_data) {
 }
 
 /**
+ * list_get_nth()
+ *
+ * Get n'th item from list_t
+ *
+ * @param list - list_t
+ * @param id - n'th item [list items are numerated from 1]
+ *
+ * @return n'th item (list->data) if found, or NULL with errno set to ENOENT
+ */
+
+void *list_get_nth(list_t list, int id) {
+	while (list) {
+		if ((--id) == 0) {
+			/* errno = !ENOENT; */
+			return list->data;
+		}
+
+		list = list->next;
+	}
+
+	errno = ENOENT;
+	return NULL;
+}
+
+/**
  * list_count()
  *
  * @param list - list_t

@@ -64,6 +64,7 @@ void *list_add_beginning(list_t *list, void *data, int alloc_size);
 void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparision)(void *, void *));
 
 int list_count(list_t list);
+void *list_get_nth(list_t list, int id);
 
 int list_remove(list_t *list, void *data, int free_data);
 int list_remove2(list_t *list, void *data, void (*func)(void *));
