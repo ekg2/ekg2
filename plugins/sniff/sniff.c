@@ -1759,7 +1759,9 @@ void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *pa
 
 		CHECK_LEN(SIZE_ETHERNET + size_ip + sizeof(struct udphdr) + size_payload);
 
-		debug_function("sniff_loop() IP/UDP %15s:%5d <==> %15s:%5d\n",
+		debug_error("sniff_loop() [%ld:%ld] IP/UDP %15s:%5d <==> %15s:%5d\n",
+				header->ts.tv_sec,
+				header->ts.tv_usec,
 				_inet_ntoa(hdr->srcip),		/* src ip */
 				hdr->srcport,			/* src port */
 				_inet_ntoa(hdr->dstip),		/* dest ip */
@@ -1834,11 +1836,16 @@ static COMMAND(sniff_command_connect) {
 		return -1;
 	}
 
-	if ((tmp = xstrchr(session->uid+6, ':')))
-		device = xstrndup(session->uid+6, tmp-(session->uid+6));
-	else	device = xstrdup(session->uid+6);
+	if (session->uid[6] != '/') {
+		if ((tmp = xstrchr(session->uid+6, ':')))
+			device = xstrndup(session->uid+6, tmp-(session->uid+6));
+		else	device = xstrdup(session->uid+6);
 
-	dev = pcap_open_live(device, SNAPLEN, PROMISC, 1000, errbuf);
+		dev = pcap_open_live(device, SNAPLEN, PROMISC, 1000, errbuf);
+	} else {
+		device = xstrdup(session->uid+6);
+		dev = pcap_open_offline(device, errbuf);
+	}
 
 	if (!dev) {
 		debug_error("Couldn't open dev: %s (%s)\n", device, errbuf);
@@ -1855,7 +1862,7 @@ static COMMAND(sniff_command_connect) {
 	}
 
 	xfree(device);
-	if (filter) {
+	if (filter && *filter) {
 		if (pcap_compile(dev, &fp, (char *) filter, 0, 0 /*net*/) == -1) {
 			debug_error("Couldn't parse filter %s: %s\n", filter, pcap_geterr(dev));
 			pcap_close(dev);
@@ -1868,8 +1875,6 @@ static COMMAND(sniff_command_connect) {
 			return -1;
 		}
 		/* pcap_freecode(&fp); */
-	} else {
-/*		printq("generic2", "filter session variable not set, this create large overhead... maybe you want set it to: " DEFAULT_FILTER "?"); */
 	}
 
 	session->priv = dev;
@@ -1992,58 +1997,58 @@ static QUERY(sniff_print_version) {
 
 static int sniff_theme_init() {
 /* sniff gg */
-	format_add("sniff_gg_welcome",	_("%) %b[GG_WELCOME] %gSEED: %W%1"), 1);
-	format_add("sniff_gg_login60",	_("%) %b[GG_LOGIN60] %gUIN: %W%1 %gHASH: %W%2"), 1);
+	format_add("sniff_gg_welcome",	 ("%) %b[GG_WELCOME] %gSEED: %W%1"), 1);
+	format_add("sniff_gg_login60",	 ("%) %b[GG_LOGIN60] %gUIN: %W%1 %gHASH: %W%2"), 1);
 
-	format_add("sniff_gg_login70_sha1",	_("%) %b[GG_LOGIN70] %gUIN: %W%1 %gSHA1: %W%2"), 1);
-	format_add("sniff_gg_login70_hash",	_("%) %b[GG_LOGIN70] %gUIN: %W%1 %gHASH: %W%2"), 1);
-	format_add("sniff_gg_login70_unknown",	_("%) %b[GG_LOGIN70] %gUIN: %W%1 %gTYPE: %W%2"), 1);
+	format_add("sniff_gg_login70_sha1",	 ("%) %b[GG_LOGIN70] %gUIN: %W%1 %gSHA1: %W%2"), 1);
+	format_add("sniff_gg_login70_hash",	 ("%) %b[GG_LOGIN70] %gUIN: %W%1 %gHASH: %W%2"), 1);
+	format_add("sniff_gg_login70_unknown",	 ("%) %b[GG_LOGIN70] %gUIN: %W%1 %gTYPE: %W%2"), 1);
 
-	format_add("sniff_gg_userlist_req",	_("%) %b[GG_USERLIST_REQUEST] %gTYPE: %W%1 (%2)"), 1);
-	format_add("sniff_gg_userlist_reply",	_("%) %b[GG_USERLIST_REPLY] %gTYPE: %W%1 (%2)"), 1);
+	format_add("sniff_gg_userlist_req",	 ("%) %b[GG_USERLIST_REQUEST] %gTYPE: %W%1 (%2)"), 1);
+	format_add("sniff_gg_userlist_reply",	 ("%) %b[GG_USERLIST_REPLY] %gTYPE: %W%1 (%2)"), 1);
 
-	format_add("sniff_gg_userlist_data",	_("%)   %b[%1] %gENTRY: %W%2"), 1);
+	format_add("sniff_gg_userlist_data",	 ("%)   %b[%1] %gENTRY: %W%2"), 1);
 
-	format_add("sniff_gg_list",		_("%) %b[%1] %gLEN: %W%2"), 1);
-	format_add("sniff_gg_list_data",	_("%)   %b[%1] %gENTRY: %W%2 %gTYPE: %W%3"), 1);
+	format_add("sniff_gg_list",		 ("%) %b[%1] %gLEN: %W%2"), 1);
+	format_add("sniff_gg_list_data",	 ("%)   %b[%1] %gENTRY: %W%2 %gTYPE: %W%3"), 1);
 
-	format_add("sniff_gg_pubdir50_req",	_("%) %b[GG_PUBDIR50_REQUEST] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
-	format_add("sniff_gg_pubdir50_reply",	_("%) %b[GG_PUBDIR50_REPLY] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
-	format_add("sniff_gg_disconnecting",	_("%) %b[GG_DISCONNECTING]"), 1);
+	format_add("sniff_gg_pubdir50_req",	 ("%) %b[GG_PUBDIR50_REQUEST] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
+	format_add("sniff_gg_pubdir50_reply",	 ("%) %b[GG_PUBDIR50_REPLY] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
+	format_add("sniff_gg_disconnecting",	 ("%) %b[GG_DISCONNECTING]"), 1);
 
-	format_add("sniff_gg_status60", _("%) %b[GG_STATUS60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
-	format_add("sniff_gg_notify60", _("%) %b[GG_NOTIFY60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
-	format_add("sniff_gg_status77", _("%) %b[GG_STATUS77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
-	format_add("sniff_gg_notify77", _("%) %b[GG_NOTIFY77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+	format_add("sniff_gg_status60",  ("%) %b[GG_STATUS60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+	format_add("sniff_gg_notify60",  ("%) %b[GG_NOTIFY60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+	format_add("sniff_gg_status77",  ("%) %b[GG_STATUS77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+	format_add("sniff_gg_notify77",  ("%) %b[GG_NOTIFY77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 
-	format_add("sniff_gg_addnotify",_("%) %b[GG_ADD_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
-	format_add("sniff_gg_delnotify",_("%) %b[GG_REMOVE_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
+	format_add("sniff_gg_addnotify", ("%) %b[GG_ADD_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
+	format_add("sniff_gg_delnotify", ("%) %b[GG_REMOVE_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
 	
 /* sniff dns */
-	format_add("sniff_dns_reply",		_("%) %b[SNIFF_DNS, %r%1%b] %gDOMAIN: %W%2"), 1);
-	format_add("sniff_dns_entry_a",		_("%)         %b[IN_A] %gDOMAIN: %W%1 %gIP: %W%2"), 1);
-	format_add("sniff_dns_entry_aaaa",	_("%)      %b[IN_AAAA] %gDOMAIN: %W%1 %gIP6: %W%2"), 1);
-	format_add("sniff_dns_entry_cname",	_("%)     %b[IN_CNAME] %gDOMAIN: %W%1 %gCNAME: %W%2"), 1);
-	format_add("sniff_dns_entry_ptr",	_("%)       %b[IN_PTR] %gIP_PTR: %W%1 %gDOMAIN: %W%2"), 1);
-	format_add("sniff_dns_entry_mx",	_("%)        %b[IN_MX] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPREF: %W%3"), 1);
-	format_add("sniff_dns_entry_srv",	_("%)       %b[IN_SRV] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPORT: %W%3 %gPRIO: %W%4 %gWEIGHT: %W%5"), 1);
-	format_add("sniff_dns_entry_?",		_("%)         %b[IN_?] %gDOMAIN: %W%1 %gTYPE: %W%2 %gLEN: %W%3"), 1);
-	format_add("sniff_dns_entry_ndisplay",	_("%)   %rZADEN REKORD NIE WYSWIETLONY DLA ZAPYTANIE POWYZEJ ;), OBEJRZYJ DEBUG"), 1);
+	format_add("sniff_dns_reply",		("%) %b[SNIFF_DNS, %r%1%b] %gDOMAIN: %W%2"), 1);
+	format_add("sniff_dns_entry_a",		("%)         %b[IN_A] %gDOMAIN: %W%1 %gIP: %W%2"), 1);
+	format_add("sniff_dns_entry_aaaa",	("%)      %b[IN_AAAA] %gDOMAIN: %W%1 %gIP6: %W%2"), 1);
+	format_add("sniff_dns_entry_cname",	("%)     %b[IN_CNAME] %gDOMAIN: %W%1 %gCNAME: %W%2"), 1);
+	format_add("sniff_dns_entry_ptr",	("%)       %b[IN_PTR] %gIP_PTR: %W%1 %gDOMAIN: %W%2"), 1);
+	format_add("sniff_dns_entry_mx",	("%)        %b[IN_MX] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPREF: %W%3"), 1);
+	format_add("sniff_dns_entry_srv",	("%)       %b[IN_SRV] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPORT: %W%3 %gPRIO: %W%4 %gWEIGHT: %W%5"), 1);
+	format_add("sniff_dns_entry_?",		("%)         %b[IN_?] %gDOMAIN: %W%1 %gTYPE: %W%2 %gLEN: %W%3"), 1);
+	format_add("sniff_dns_entry_ndisplay",	("%)   %rZADEN REKORD NIE WYSWIETLONY DLA ZAPYTANIE POWYZEJ ;), OBEJRZYJ DEBUG"), 1);
 
 /* sniff rivchat */
-	format_add("sniff_rivchat_init",	_("%) %b[RIVCHAT_INIT, %r%1%b]"), 1);
-	format_add("sniff_rivchat_me",		_("%) %b[RIVCHAT_ME, %r%1%b] %W* %2 %3"), 1);
-	format_add("sniff_rivchat_away",	_("%) %b[RIVCHAT_AWAY, %r%1%b] %gREASON: %W%2"), 1);
-	format_add("sniff_rivchat_quit",	_("%) %b[RIVCHAT_QUIT, %r%1%b]"), 1);
-	format_add("sniff_rivchat_pingaway",	_("%) %b[RIVCHAT_PINGAWAY, %r%1%b] %gREASON: %W%2"), 1);
-	format_add("sniff_rivchat_message",	_("%) %b[RIVCHAT_MESSAGE, %r%1%b] <%2> %W%3"), 1);
-	format_add("sniff_rivchat_rcinfo",	_("%) %b[RIVCHAT_INFO, %r%1%b] %gFINGER: %W%2@%3 %gOS: %W%4 %gPROGRAM: %W%5 %6"), 1);
+	format_add("sniff_rivchat_init",	("%) %b[RIVCHAT_INIT, %r%1%b]"), 1);
+	format_add("sniff_rivchat_me",		("%) %b[RIVCHAT_ME, %r%1%b] %W* %2 %3"), 1);
+	format_add("sniff_rivchat_away",	("%) %b[RIVCHAT_AWAY, %r%1%b] %gREASON: %W%2"), 1);
+	format_add("sniff_rivchat_quit",	("%) %b[RIVCHAT_QUIT, %r%1%b]"), 1);
+	format_add("sniff_rivchat_pingaway",	("%) %b[RIVCHAT_PINGAWAY, %r%1%b] %gREASON: %W%2"), 1);
+	format_add("sniff_rivchat_message",	("%) %b[RIVCHAT_MESSAGE, %r%1%b] <%2> %W%3"), 1);
+	format_add("sniff_rivchat_rcinfo",	("%) %b[RIVCHAT_INFO, %r%1%b] %gFINGER: %W%2@%3 %gOS: %W%4 %gPROGRAM: %W%5 %6"), 1);
 
 /* stats */
-	format_add("sniff_pkt_rcv", _("%) %2 packets captured"), 1);
-	format_add("sniff_pkt_drop",_("%) %2 packets dropped"), 1);
+	format_add("sniff_pkt_rcv", 		("%) %2 packets captured"), 1);
+	format_add("sniff_pkt_drop",		("%) %2 packets dropped"), 1);
 
-	format_add("sniff_conn_db", 		_("%) %2 connections founded"), 1);
+	format_add("sniff_conn_db", 		("%) %2 connections founded"), 1);
 	format_add("sniff_tcp_connection",	"TCP %1:%2 <==> %3:%4", 1);
 
 	return 0;
