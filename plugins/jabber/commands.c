@@ -1757,39 +1757,55 @@ static COMMAND(jabber_command_vacation) { /* JEP-0109: Vacation Messages (DEFERR
 	return 0;
 }
 
+/**
+ * jabber_muc_command_join()
+ *
+ * @param params [0] (<b>full channel name</b>)
+ * @param params [1] (<b>nickname</b>)
+ * @param params [2] (<b>password</b>)
+ *
+ * @todo make (session) variable jabber:default_muc && then if exists and params[0] has not specific server than append '@' jabber:default_muc and use it.
+ * @todo make (session) variable jabber:default_nickname.
+ * @todo history requesting, without history requesting.. etc
+ */
+
 static COMMAND(jabber_muc_command_join) {
-	/* params[0] - full channel name, 
-	 * params[1] - nickname || default 
-	 * params[2] - password || none
-	 *
-	 * XXX: make (session) variable jabber:default_muc && then if exists and params[0] has not specific server than append '@' jabber:default_muc and use it.
-	 * XXX: make (session) variable jabber:default_nickname.
-	 * XXX: history requesting, none history requesting.. etc
-	 */
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *conf;
+
 	char *tmp;
 	char *username = (params[1]) ? xstrdup(params[1]) : (tmp = xstrchr(session->uid, '@')) ? xstrndup(session->uid+5, tmp-session->uid-5) : NULL;
 	char *password = (params[1] && params[2]) ? saprintf("<password>%s</password>", params[2]) : NULL;
 
-	if (!username) { /* rather impossible */
+	char *mucuid;
+	
+	if (!username) {		/* shouldn't happen */
 		printq("invalid_params", name);
 		return -1;
 	}
 
 	if (!xstrncmp(target, "xmpp:", 5)) target += 5; /* remove xmpp: */
 
-	watch_write(j->send_watch, "<presence to='%s/%s'><x xmlns='http://jabber.org/protocol/muc#user'>%s</x></presence>", 
-			target, username, password ? password : "");
-	{
-		char *uid = saprintf("xmpp:%s", target);
-		conf = newconference_create(session, uid, 1);
-		conf->private = xstrdup(username);
-		xfree(uid);
+	mucuid = saprintf("xmpp:%s", target);
+
+#if 0
+	if (newconference_find(session, mucuid)) {
+		printq("conferences_already_joined", session_name(session), mucuid);
+		xfree(mucuid);
+		return 1;
 	}
+#endif
+		
+	watch_write(j->send_watch, "<presence to='%s/%s'><x xmlns='http://jabber.org/protocol/muc'>%s</x></presence>", 
+			target, username, password ? password : "");
+
+
+	conf = newconference_create(session, mucuid, 1);
+	conf->private = xstrdup(username);
 
 	xfree(username);
 	xfree(password);
+	xfree(mucuid);
 	return 0;
 }
 

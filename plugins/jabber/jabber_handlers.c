@@ -1007,32 +1007,35 @@ JABBER_HANDLER(jabber_handle_message) {
 			char *formatted;
 			userlist_t *u;
 
-			char attr[2] = { ' ', 0 };
-
 		/* jesli (bsent != 0) wtedy mamy do czynienia z backlogiem */
 
 			class	|= EKG_NO_THEMEBIT;
 			ekgbeep	= EKG_NO_BEEP;
 
-			if ((u = userlist_find_u(&(c->participants), nick))) {
-				jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+			if (nick) {	/* XXX !!! */
+				char attr[2] = { ' ', 0 };
 
-			/* glupie, trzeba doszlifowac */
+				if ((u = userlist_find_u(&(c->participants), nick))) {
+					jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 
-				if (!xstrcmp(up->aff, "owner")) 		attr[0] = '@';
-				else if (!xstrcmp(up->aff, "admin"))		attr[0] = '@';
+					/* glupie, trzeba doszlifowac */
 
-				else if (!xstrcmp(up->role, "moderator"))	attr[0] = '%';
+					if (!xstrcmp(up->aff, "owner")) 		attr[0] = '@';
+					else if (!xstrcmp(up->aff, "admin"))		attr[0] = '@';
 
-				else						attr[0] = ' ';
+					else if (!xstrcmp(up->role, "moderator"))	attr[0] = '%';
+
+					else						attr[0] = ' ';
 
 
-			} else debug_error("[MUC, MESSAGE] userlist_find_u(%s) failed\n", nick);
+				} else debug_error("[MUC, MESSAGE] userlist_find_u(%s) failed\n", nick);
 
-			formatted = format_string(format_find(isour ? "jabber_muc_send" : "jabber_muc_recv"),
-				session_name(s), uid2, nick ? nick : uid2+5, text, attr);
-			
-			debug("[MUC,MESSAGE] uid2:%s uuid:%s message:%s\n", uid2, nick, text);
+				formatted = format_string(format_find(isour ? "jabber_muc_send" : "jabber_muc_recv"),
+						session_name(s), uid2, nick, text, attr);
+			} else {
+				formatted = format_string(format_find("jabber_muc_notice"), session_name(s), uid+5, text);
+			}
+
 			query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
 			xfree(uid2);
@@ -1459,8 +1462,8 @@ JABBER_HANDLER(jabber_handle_presence) {
 
 						switch (codenr) {
 							case 201: print_window(mucuid, s, 0, "jabber_muc_room_created", session_name(s), mucuid);	break;
-							case  -1: debug("[jabber, iq, muc#user] codenr: -1 code: %s\n", code);				break;
-							default : debug("[jabber, iq, muc#user] XXX codenr: %d code: %s\n", codenr, code);
+							case  -1: debug_error("[jabber, iq, muc#user] codenr: -1 code: %s\n", __(code));		break;
+							default : debug_error("[jabber, iq, muc#user] XXX codenr: %d code: %s\n", codenr, code);
 						}
 					} else if (!xstrcmp(child->name, "item")) { /* lista userow */
 						char *jid	  = jabber_unescape(jabber_attr(child->atts, "jid"));		/* jid */
