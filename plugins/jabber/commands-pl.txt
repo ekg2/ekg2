@@ -160,6 +160,47 @@ passwd
 	parametry: 
 	krotki opis: zmienia has³o
 
+privacy
+	parametry: <opcje>
+	
+	Zarzadza lista ignorowanych serwer-side (%gjabber:iq:privacy%n).
+	Ustawienie zmiennej sesyjnej %Tauto_privacylist_sync%n wymagane.
+	Ustawienie zmiennej sesyjnej %Tprivacy_list%n zalecane (jesli nie, zakladamy ze korzystasz z listy %Tekg2%n).
+	Jesli w parametrach nie ma podanej listy, to operujemy na liscie
+	zdefiniowanej w %Tprivacy_list%n.
+	
+	%RKOMENDA EKSPERYMENTALNA, PROSZE INFORMOWAC O WSZYSTKICH BUGACH, Z DOKLADNYM OPISEM.%n
+	
+	
+	  [--lists]                                         wyswietla listy dostepne na serwerze
+	
+	  [--get] lista                                     wyswietla liste.
+	
+	  --session lista                                   ustawia lista jako aktywna, jesli podano %T-%n deaktywuje aktualna liste.
+	
+	  --default lista                                   ustawia liste jako domyslna, jesli podano %T-%n kasuje ustawienia.
+	
+	  --unset lista                                     kasuje liste %r(NIEODWRACALNE!!)%n
+	
+	  --sync                                            %g[WEWNETRZNA KOMENDA]%n Wysyla liste lokalna do serwera (automatycznie robione po dodaniu/zmianie/usunieciu)
+	
+	  --set <co> [--order numerek] [-zabron] [+dozwol]  dodaje wpis do listy
+	
+	  	<co>              albo xmpp:osoba albo @grupa albo %Tnone%n, %Tfrom%n, %Tto%n, %Tboth%n gdy definiujemy poziom autoryzacji
+	
+		[--order numerek] ustawia ktory to ma byc element na liscie.
+	
+		[-zabron]         Parametr moze byc powtorzony wielokrotnie, znak minusa, a nastepnie jedna z opcji: iq, msg, pin, pout lub gwiazdka jesli wszystkie.
+	
+		[+dozwol]         Parametr moze byc powtorzony wielokrotnie, znak plusa, a nastepnie jedna z opcji: iq, msg, pin, pout lub gwiazdka dla okreslenia ze wszystkie.
+	
+		%r!!! UWAGA !!! Po dodaniu pierwszego elementu do listy, jest wymagane aktywowanie listy przez %g/privacy --session lista%n
+	
+	 --remove #id                                       usuwa wpis z numerem id z listy.
+	
+	 --modify                                           zmienia wpis, NIEZAIMPLEMENTOWANE.
+	 
+
 reconnect
 	parametry: 
 	krotki opis: roz³±cza i ³±czy siê ponownie

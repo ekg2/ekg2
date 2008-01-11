@@ -57,6 +57,12 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_disco) {
 	xfree(error);
 }
 
+JABBER_HANDLER_ERROR(jabber_handle_iq_error_privacy) {
+	char *error = jabber_iq_error_string(n);
+	print("jabber_privacy_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	xfree(error);
+}
+
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_private) {
 	char *error = jabber_iq_error_string(n);
 	print("jabber_private_list_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
@@ -84,6 +90,7 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic) {
 static const struct jabber_iq_generic_handler jabber_iq_error_handlers[] = {
 	{ "vCard",	"vcard-temp",					jabber_handle_iq_error_vcard },
 	{ "query",	"jabber:iq:last",				jabber_handle_iq_error_last },
+	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_error_privacy },
 	{ NULL,		"jabber:iq:private",				jabber_handle_iq_error_private },
 	{ NULL,		"jabber:iq:version",				jabber_handle_iq_error_version },
 	{ NULL,		"jabber:iq:search",				jabber_handle_iq_error_search },

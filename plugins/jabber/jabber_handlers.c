@@ -1299,6 +1299,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 
 				if (	(!xstrcmp(st->to, uid) /* || jakas_iwil_zmienna [np: bypass_FROM_checkin_from_iq] */)
 					|| !xstrcmp(st->xmlns, "jabber:iq:private") 	/* makeing security HOLE for jabber:iq:private */
+					|| !xstrcmp(st->xmlns, "jabber:iq:privacy")	/* makeing security HOLE for jabber:iq:privacy */
 				   )
 				{
 					if (type == JABBER_IQ_TYPE_RESULT) {

@@ -146,9 +146,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_version) {
 	xfree(from_str);
 }
 
-/* XXX, check if this is really result. */
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
-#if 0
 	jabber_private_t *j = s->priv;
 
 	xmlnode_t *active 	= xmlnode_find_child(n, "active");
@@ -219,7 +217,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 							if (presenceout)item->items |= PRIVACY_LIST_PRESENCE_OUT;
 							item->order = atoi(jabber_attr(temp->atts, "order"));
 
-							list_add_sorted(lista, item, 0, jabber_privacy_add_compare);
+							LIST_ADD_SORTED(lista, item, 0, jabber_privacy_add_compare);
 						}
 
 						print("jabber_privacy_item", session_name(s), j->server, 
@@ -255,7 +253,6 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 	}
 	if (i > 0)  print("jabber_privacy_list_end", session_name(s), j->server);
 	if (i == 0) print("jabber_privacy_list_noitem", session_name(s), j->server);
-#endif
 }
 
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
@@ -923,6 +920,7 @@ static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
 	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
 
 	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },
+	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
 	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },
 	{ NULL,		"jabber:iq:search",				jabber_handle_iq_result_search },
 	{ NULL,		"jabber:iq:version",				jabber_handle_iq_result_version },
@@ -942,7 +940,7 @@ static const struct jabber_iq_generic_handler jabber_iq_result_handlers_old[] = 
 	{ "si",		NULL,						jabber_handle_si_result },
 
 	{ "query",	"jabber:iq:last",				jabber_handle_iq_result_last },			/* done */
-	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
+	{ NULL,		"jabber:iq:privacy",				jabber_handle_iq_result_privacy },		/* zaczete */
 	{ NULL,		"jabber:iq:private",				jabber_handle_iq_result_private },		/* done */
 	{ NULL,		"jabber:iq:register",				jabber_handle_iq_result_register },
 	{ NULL,		"jabber:iq:roster",				jabber_handle_iq_roster },
@@ -971,7 +969,7 @@ static const struct jabber_iq_generic_handler jabber_iq_set_handlers[] = {
 
 	{ "si",		NULL,						jabber_handle_si_set },
 
-	{ "query",	"jabber:iq:privacy",				jabber_handle_iq_result_privacy },
+	{ "query",	"jabber:iq:privacy",				jabber_handle_iq_result_privacy },		/* XXX: przeniesc kod ktory przychodzi jako set do innej funkcji */
 	{ NULL,		"jabber:iq:roster",				jabber_handle_iq_roster },
 	{ NULL,		"http://jabber.org/protocol/muc#admin",		jabber_handle_iq_muc_admin },
 	{ NULL,		"http://jabber.org/protocol/muc#owner",		jabber_handle_iq_muc_owner },

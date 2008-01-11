@@ -186,6 +186,7 @@ XML_Parser jabber_parser_recreate(XML_Parser parser, void *data);
 int JABBER_COMMIT_DATA(watch_t *w);
 void jabber_handle(void *data, xmlnode_t *n);
 
+int jabber_privacy_freeone(jabber_private_t *j, jabber_iq_privacy_t *item);
 int jabber_stanza_freeone(jabber_private_t *j, jabber_stanza_t *stanza);
 
 const char *jabber_iq_reg(session_t *s, const char *prefix, const char *to, const char *type, const char *xmlns);
@@ -212,7 +213,7 @@ QUERY(jabber_convert_string_reinit);
 void jabber_reconnect_handler(int type, void *data);
 WATCHER(jabber_handle_resolver);
 
-int jabber_privacy_add_compare(void *data1, void *data2);
+LIST_ADD_COMPARE(jabber_privacy_add_compare, jabber_iq_privacy_t *);
 int jabber_privacy_free(jabber_private_t *j);
 int jabber_bookmarks_free(jabber_private_t *j);
 int jabber_iq_stanza_free(jabber_private_t *j);

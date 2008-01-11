@@ -205,6 +205,10 @@ int jabber_stanza_freeone(jabber_private_t *j, jabber_stanza_t *stanza) {
 	return 0;
 }
 
+LIST_ADD_COMPARE(jabber_privacy_add_compare, jabber_iq_privacy_t *) {
+	return (data1->order - data2->order);
+}
+
 static LIST_FREE_ITEM(list_jabber_privacy_free, jabber_iq_privacy_t *) {
 	xfree(data->type);
 	xfree(data->value);
@@ -218,6 +222,13 @@ int jabber_privacy_free(jabber_private_t *j) {
 
 	LIST_DESTROY(j->privacy, list_jabber_privacy_free);
 	j->privacy = NULL;
+	return 0;
+}
+
+int jabber_privacy_freeone(jabber_private_t *j, jabber_iq_privacy_t *item) {
+	if (!j || !item) return -1;
+
+	LIST_REMOVE(&(j->privacy), item, list_jabber_privacy_free);
 	return 0;
 }
 
@@ -1213,21 +1224,6 @@ static int jabber_theme_init() {
 	format_add("jabber_charset_init_error", _("%! Error initialising charset conversion (%1->%2): %3"), 1);
 	format_add("register_change_passwd", _("%> Your password for account %T%1%n is '%T%2%n'. Change it as soon as possible, using command /xmpp:passwd <newpassword>"), 1);
 
-	/* %1 - session_name, %2 - server/ uid */
-	format_add("jabber_privacy_list_begin",   _("%g,+=%G----- Privacy list on %T%2%n"), 1);
-	format_add("jabber_privacy_list_item",	  _("%g|| %n %3 - %W%4%n"), 1);					/* %3 - lp %4 - itemname */
-	format_add("jabber_privacy_list_item_def",_("%g|| %g Default:%n %W%4%n"), 1);
-	format_add("jabber_privacy_list_item_act",_("%g|| %r  Active:%n %W%4%n"), 1); 
-	format_add("jabber_privacy_list_end",	  _("%g`+=%G----- End of the privacy list%n"), 1);
-	format_add("jabber_privacy_list_noitem",  _("%! No privacy list in %T%2%n"), 1);
-
-	format_add("jabber_privacy_item_header", _("%g,+=%G----- Details for: %T%3%n\n%g||%n JID\t\t\t\t\t  MSG  PIN POUT IQ%n"), 1);
-	format_add("jabber_privacy_item",	   "%g||%n %[-44]4 \t%K|%n %[2]5 %K|%n %[2]6 %K|%n %[2]7 %K|%n %[2]8\n", 1);
-	format_add("jabber_privacy_item_footer", _("%g`+=%G----- Legend: %n[%3] [%4]%n"), 1);
-
-	/* %1 - item [group, jid, subscri*] */
-	format_add("jabber_privacy_item_allow",  "%G%1%n", 1);
-	format_add("jabber_privacy_item_deny",   "%R%1%n", 1);
 
 
 
@@ -1347,6 +1343,22 @@ static int jabber_theme_init() {
 /* vCard xmlns='vcard-temp' */
 	format_add("jabber_userinfo_response",		_("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
 	format_add("jabber_userinfo_error",		_("%! (%1) Error in getting %gvCard%n from %W%2%n: %r%3"), 1);
+
+/* jabber:iq:privacy */
+	/* %1 - session_name, %2 - server/ uid */
+	format_add("jabber_privacy_list_begin",		_("%g,+=%G----- Privacy lists on %T%2%n"), 1);
+	format_add("jabber_privacy_list_item",			_("%g|| %n %3 - %W%4%n"), 1);					/* %3 - lp %4 - itemname */
+	format_add("jabber_privacy_list_item_def",		_("%g|| %g Default:%n %W%4%n"), 1);
+	format_add("jabber_privacy_list_item_act",		_("%g|| %r  Active:%n %W%4%n"), 1); 
+	format_add("jabber_privacy_list_end",		_("%g`+=%G----- End of the privacy list%n"), 1);
+	format_add("jabber_privacy_list_noitem",	_("%! No privacy lists in %T%2%n"), 1);
+	format_add("jabber_privacy_item_header",	_("%g,+=%G----- Details for: %T%3%n\n%g||%n JID\t\t\t\t\t  MSG  PIN POUT IQ%n"), 1);
+	format_add("jabber_privacy_item",			("%g||%n %[-44]4 \t%K|%n %[2]5 %K|%n %[2]6 %K|%n %[2]7 %K|%n %[2]8\n"), 1);
+	format_add("jabber_privacy_item_footer",	_("%g`+=%G----- Legend: %n[%3] [%4]%n"), 1);
+	/* %1 - item [group, jid, subscri*] */
+	format_add("jabber_privacy_item_allow",		"%G%1%n", 1);
+	format_add("jabber_privacy_item_deny",		"%R%1%n", 1);
+	format_add("jabber_privacy_error",		_("(%1) Error in getting/setting %gprivacy list%n from %W%2%n: %r%3"), 1);
 
 /* jabber:iq:private */
 	/* %1 - session_name %2 - list_name %3 xmlns */
