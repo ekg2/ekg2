@@ -519,6 +519,8 @@ JABBER_HANDLER_RESULT(jabber_handle_result_pubsub) {
 /* these need cleanup SET/ RESULT */
 
 JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
+	int roster_retrieved = (session_int_get(s, "__roster_retrieved") == 1);
+
 	jabber_private_t *j = s->priv;
 
 	xmlnode_t *item = xmlnode_find_child(n, "item");
@@ -536,22 +538,24 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 				*atsign	= 0;
 			uid = saprintf("tlen:%s@tlen.pl", jid);
 		} else
-			uid		= saprintf("xmpp:%s", jid);
+			uid = saprintf("xmpp:%s", jid);
 
 		/* jeśli element rostera ma subscription = remove to tak naprawde użytkownik jest usuwany;
 		   w przeciwnym wypadku - nalezy go dopisać do userlisty; dodatkowo, jesli uzytkownika
 		   mamy już w liscie, to przyszla do nas zmiana rostera; usunmy wiec najpierw, a potem
 		   sprawdzmy, czy warto dodawac :) */
 
-		if ((session_int_get(s, "__roster_retrieved") == 1) && (u = userlist_find(s, uid)))
+		if (roster_retrieved && (u = userlist_find(s, uid)))
 			userlist_remove(s, u);
 
 		if (!xstrncmp(jabber_attr(item->atts, "subscription"), "remove", 6)) {
 			/* nic nie robimy, bo juz usuniete */
 		} else {
-			char *nickname 	= tlenjabber_unescape(jabber_attr(item->atts, "name"));
+			char *nickname = tlenjabber_unescape(jabber_attr(item->atts, "name"));
+
 			const char *authval;
-			xmlnode_t *group = xmlnode_find_child(item,"group");
+			xmlnode_t *group;
+
 			u = userlist_add(s, uid, nickname); 
 
 			if ((authval = jabber_attr(item->atts, "subscription"))) {
@@ -569,13 +573,13 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 				}
 			}
 
-			for (; group ; group = group->next ) {
+			for (group = xmlnode_find_child(item, "group"); group ; group = group->next ) {
 				char *gname = jabber_unescape(group->data);
 				ekg_group_add(u, gname);
 				xfree(gname);
 			}
 
-			if ((session_int_get(s, "__roster_retrieved") == 1)) {
+			if (roster_retrieved) {
 				command_exec_format(NULL, s, 1, ("/auth --probe %s"), uid);
 			}
 			xfree(nickname); 
