@@ -99,6 +99,20 @@ static const struct jabber_iq_generic_handler jabber_iq_error_handlers[] = {
 	{ "",		NULL,						NULL }
 };
 
+#if 0			/* ERROR handler for id: offer */
+	char *uin = jabber_unescape(from);
+	dcc_t *p = jabber_dcc_find(uin, id, NULL);
+
+	if (p) {
+		/* XXX, new theme it's for ip:port */
+		print("dcc_error_refused", format_user(s, p->uid));
+		dcc_close(p);
+	} else {
+		/* XXX, possible abuse attempt */
+	}
+	xfree(uin);
+#endif
+
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic_old) {
 	jabber_private_t *j = s->priv;
 
@@ -113,20 +127,7 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic_old) {
 	} else if (!xstrncmp(id, "passwd", 6)) {
 		print("passwd_failed", jabberfix(reason, "?"));
 		session_set(s, "__new_password", NULL);
-	} else if (!xstrncmp(id, "offer", 5)) {
-		char *uin = jabber_unescape(from);
-		dcc_t *p = jabber_dcc_find(uin, id, NULL);
-
-		if (p) {
-			/* XXX, new theme it's for ip:port */
-			print("dcc_error_refused", format_user(s, p->uid));
-			dcc_close(p);
-		} else {
-			/* XXX, possible abuse attempt */
-		}
-		xfree(uin);
-	}
-	else debug_error("[JABBER] GENERIC IQ ERROR: %s\n", __(reason));
+	} else debug_error("[JABBER] GENERIC IQ ERROR: %s\n", __(reason));
 
 	xfree(reason);
 }

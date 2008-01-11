@@ -1838,21 +1838,30 @@ static COMMAND(jabber_muc_command_admin) {
 	}
 
 	if (!params[1]) {
-		watch_write(j->send_watch,
-			"<iq id=\"mucadmin%d\" to=\"%s\" type=\"get\">"
-			"<query xmlns=\"http://jabber.org/protocol/muc#owner\"/>"
-			"</iq>", j->id++, c->name+5);
+		if (!jabber_iq_send(session, "mucowner_", JABBER_IQ_TYPE_GET, c->name+5, "query", "http://jabber.org/protocol/muc#owner")) {
+			printq("generic_error", "Error while sending muc configuration request form, check debug window");
+			return 1;
+		}
 	} else {
+		const char *id;
+
 		char **splitted = NULL;
 		int i;
 		int isinstant = !xstrcmp(params[1], "--instant");
 
 		if (isinstant) {
+			const char *id;
+
+			if (!(id = jabber_iq_reg(session, "mucowner_", c->name+5, "query", "http://jabber.org/protocol/muc#owner"))) {
+				printq("generic_error", "Error in getting id for instant room configuration, check debug window");
+				return 1;
+			}
+
 			watch_write(j->send_watch,
-				"<iq type=\"set\" to=\"%s\" id=\"mucadmin%d\">"
+				"<iq type=\"set\" to=\"%s\" id=\"%s\">"
 				"<query xmlns=\"http://jabber.org/protocol/muc#owner\">"
 				"<x xmlns=\"jabber:x:data\" type=\"submit\"/>"
-				"</query></iq>", c->name+5, j->id++);
+				"</query></iq>", c->name+5, id);
 			return 0;
 		}
 
@@ -1861,14 +1870,20 @@ static COMMAND(jabber_muc_command_admin) {
 			return -1;
 		}
 
+		if (!(id = jabber_iq_reg(session, "mucowner_", c->name+5, "query", "http://jabber.org/protocol/muc#owner"))) {
+			printq("generic_error", "Error in getting id for room configuration, check debug window");
+			array_free(splitted);
+			return 1;
+		}
+
 		if (j->send_watch) j->send_watch->transfer_limit = -1;
 
 		watch_write(j->send_watch, 
-				"<iq type=\"set\" to=\"%s\" id=\"mucadmin%d\">"
+				"<iq type=\"set\" to=\"%s\" id=\"%s\">"
 				"<query xmlns=\"http://jabber.org/protocol/muc#owner\">"
 				"<x xmlns=\"jabber:x:data\" type=\"submit\">"
 /*				"<field var=\"FORM_TYPE\"><value>http://jabber.org/protocol/muc#roomconfig/value></field>" */
-				,c->name+5, j->id++);
+				,c->name+5, id);
 
 		for (i=0; (splitted[i] && splitted[i+1]); i+=2) {
 			char *name	= jabber_escape(splitted[i]);
@@ -1896,20 +1911,35 @@ static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 /* XXX, make check if command = "kick" than check if user is on the muc channel... cause we can make /unban */
 
 	if (!params[1]) {
-		watch_write(j->send_watch, 
-			"<iq id=\"%d\" to=\"%s\" type=\"get\">"
-			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"outcast\"/></query>"
-			"</iq>", j->id++, c->name+5);
+		const char *id;
+
+		if (!(id = jabber_iq_reg(session, "mucadmin_", c->name+5, "query", "http://jabber.org/protocol/muc#admin"))) {
+			printq("generic_error", "Error in getting id for banlist request, check debug window");
+			return 1;
+		}
+
+		watch_write(j->send_watch, "<iq id=\"%s\" to=\"%s\" type=\"get\"><query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"outcast\"/></query></iq>",
+			id, c->name+5);
+
 	} else {
-		char *reason	= jabber_escape(params[2]);
+		const char *id;
+
 		const char *jid	= params[1];
+		char *reason;
+
+		if (!(id = jabber_iq_reg(session, "mucadmin_", c->name+5, "query", "http://jabber.org/protocol/muc#admin"))) {
+			printq("generic_error", "Error in getting id for ban, check debug window. Lucky guy.");
+			return 1;
+		}
 
 		if (!xstrncmp(jid, "xmpp:", 5)) jid += 5;
 
+		reason = jabber_escape(params[2]);
+
 		watch_write(j->send_watch,
-			"<iq id=\"%d\" to=\"%s\" type=\"set\">"
+			"<iq id=\"%s\" to=\"%s\" type=\"set\">"
 			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"%s\" jid=\"%s\"><reason>%s</reason></item></query>"
-			"</iq>", j->id++, c->name+5, 
+			"</iq>", id, c->name+5, 
 				!xstrcmp(name, "ban") ? /* ban */ "outcast" : /* unban+kick */ "none", 
 			jid, reason ? reason : "");
 		xfree(reason);

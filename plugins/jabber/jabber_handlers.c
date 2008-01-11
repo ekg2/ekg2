@@ -357,13 +357,13 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 
 	if (use_fjuczers & 2) {	/* bind */
 		char *resource = jabber_escape(j->resource);
+
 		watch_write(j->send_watch, 
 				"<iq type=\"set\" id=\"bind%d\"><bind xmlns=\"urn:ietf:params:xml:ns:xmpp-bind\"><resource>%s</resource></bind></iq>", 
 				j->id++, resource);
 		xfree(resource);
 
 		session_int_set(s, "__session_need_start", (use_fjuczers & 1));
-
 	}
 	else		/* else here, to avoid : 'stanza sent before session start' */
 	if (use_fjuczers & 1) {	/* session */
@@ -1335,7 +1335,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 	}
 
 	switch (type) {
-		case JABBER_IQ_TYPE_RESULT:		callbacks = jabber_iq_result_handlers_old;	break;
+		case JABBER_IQ_TYPE_RESULT:		callbacks = jabber_iq_result_handlers;		break;
 		case JABBER_IQ_TYPE_SET:		callbacks = jabber_iq_set_handlers;		break;
 		case JABBER_IQ_TYPE_GET:		callbacks = jabber_iq_get_handlers;		break;
 
