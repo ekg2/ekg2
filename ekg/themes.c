@@ -1516,6 +1516,7 @@ void theme_init()
 
 	/* rejestracja nowego numeru */
 	format_add("register", _("%> Registration successful. Your number: %T%1%n\n"), 1);
+	format_add("register_change_passwd", _("%> Your password for account %T%1%n is '%T%2%n'. Change it as soon as possible, using command /passwd <newpassword>"), 1);
 	format_add("register_failed", _("%! Error during registration: %1\n"), 1);
 	format_add("register_pending", _("%! Registration in progress\n"), 1);
 	format_add("register_timeout", _("%! Registration timed out\n"), 1);
