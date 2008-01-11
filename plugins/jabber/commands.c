@@ -1146,18 +1146,16 @@ static COMMAND(jabber_command_privacy) {	/* jabber:iq:privacy in ekg2 (RFC 3921)
 	
 		if (params[1][0] == '#' && params[1][1]) {
 			int liczba = atoi(&(params[1][1]));
-			list_t l;
+			jabber_iq_privacy_t *p;
 
 			if (!liczba) {
 				printq("invalid_params", name);
 				return -1;
 			}
 
-			for (l = j->privacy; l; l = l->next) {
-				if ((--liczba) == 0) {
-					jabber_privacy_freeone(j, l->data);
-					goto privacy_delete_ok;
-				}
+			if ((p = list_get_nth(j->privacy, liczba))) {
+				jabber_privacy_freeone(j, p);
+				goto privacy_delete_ok;
 			}
 
 			printq("invalid_params", name);		/* invalid_id ? */
