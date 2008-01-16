@@ -1736,6 +1736,12 @@ void theme_init()
 	format_add("quick_list_away", " %G%1%n", 1);
 	format_add("quick_list_away,speech", _("%1 is away"), 1);
 	format_add("quick_list_invisible", " %c%1%n", 1);
+	format_add("quick_list_chat", " %W%1%n", 1);
+	format_add("quick_list_chat,speech", _("%1 is free for chat"), 1);
+	format_add("quick_list_xa", " %g%1%n", 1);
+	format_add("quick_list_xa,speech", _("%1 is extended away"), 1);
+	format_add("quick_list_dnd", " %B%1%n", 1);
+	format_add("quick_list_dnd,speech", _("%1 has 'do not disturb' status"), 1);
 
 	/* window */
 	format_add("window_add", _("%) New window created\n"), 1);
