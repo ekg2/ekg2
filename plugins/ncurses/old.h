@@ -151,6 +151,7 @@ extern int config_margin_size;
 extern int config_statusbar_size;
 extern int config_kill_irc_window;
 
+extern int config_text_bottomalign;
 extern int config_typing_timeout;
 extern int config_typing_timeout_empty;
 

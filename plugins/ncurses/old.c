@@ -965,6 +965,13 @@ void ncurses_redraw(window_t *w)
  
 	if (n->start < 0) 
 		n->start = 0;
+	if (config_text_bottomalign && (!w->floating || config_text_bottomalign == 2)
+			&& n->start == 0 && n->lines_count < height) {
+		const int tmp = height - n->lines_count;
+
+		if (tmp > top)
+			top = tmp;
+	}
 	for (y = 0; y < height && n->start + y < n->lines_count; y++) {
 		struct screen_line *l = &n->lines[n->start + y];
 		unsigned int x_real = 0;

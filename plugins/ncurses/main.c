@@ -54,6 +54,7 @@ int config_kill_irc_window = 1;
 int config_statusbar_size;
 int config_lastlog_size;
 int config_lastlog_lock;
+int config_text_bottomalign	= 0;
 int config_typing_interval	= 1;
 int config_typing_timeout	= 10;
 int config_typing_timeout_empty = 5;
@@ -675,6 +676,8 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("kill_irc_window"),  VAR_BOOL, 1, &config_kill_irc_window, NULL, NULL, NULL);
         variable_add(&ncurses_plugin, ("margin_size"), VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("statusbar_size"), VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
+	variable_add(&ncurses_plugin, ("text_bottomalign"), VAR_INT, 1, &config_text_bottomalign, NULL,
+			variable_map(3, 0, 0, "off", 1, 2, "except-floating", 2, 1, "all"), NULL);
 
 	variable_add(&ncurses_plugin, ("typing_interval"), VAR_INT, 1, &config_typing_interval, ncurses_typing_retimer, NULL, NULL);
 	variable_add(&ncurses_plugin, ("typing_timeout"), VAR_INT, 1, &config_typing_timeout, NULL, NULL, NULL);
