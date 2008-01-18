@@ -2079,27 +2079,32 @@ static COMMAND(jabber_command_find)
 		return jabber_command_userinfo("userinfo", params, session, target, quiet);
 }
 
-static COMMAND(jabber_command_userlist)
-{
-								/* we must use other userlist path, so that ekg2 will not overwrite it */
-	const char *listfile	= (params[1] ? prepare_path_user(params[1]) : prepare_pathf("%s-userlist-backup", session_uid_get(session)));
-	list_t l;
-	const int replace = match_arg(params[0], 'G', "replace", 2);
+static COMMAND(jabber_command_userlist) {
+	const char *listfile;
+	FILE *f;
+
+	int replace = match_arg(params[0], 'G', "replace", 2);
+
+	/* we must use other userlist path, so that ekg2 will not overwrite it */
+	if (params[1])
+		listfile = prepare_path_user(params[1]);
+	else	listfile = prepare_pathf("%s-userlist-backup", session->uid);	
 
 	if (match_arg(params[0], 'c', "clear", 2) || replace) {	/* clear the userlist */
 		const char *args[] = { "*", NULL };
 
 			/* if using 'replace', we don't wan't any output from 'del *' */
 		jabber_command_del("del", args, session, NULL, replace);
+
+		if (!replace) return 0;
 	}
 
 	if (match_arg(params[0], 'g', "get", 2) || replace) {	/* fill userlist with data from file */
 		const int istlen = jabber_private(session)->istlen;
 
-		FILE *f = fopen(listfile, "r");
 		char *line;
 
-		if (!f) {
+		if (!(f = fopen(listfile, "r"))) {
 			printq("io_cantopen", listfile, strerror(errno));
 			return -1;
 		}
@@ -2139,10 +2144,13 @@ static COMMAND(jabber_command_userlist)
 		}
 		fclose(f);
 		printq("userlist_get_ok", session_name(session));
-	} else if (match_arg(params[0], 'p', "put", 2)) {	/* write userlist into file */
-		FILE *f = fopen(listfile, "w");
+		return 0;
+	}
+	
+	if (match_arg(params[0], 'p', "put", 2)) {	/* write userlist into file */
+		list_t l;
 
-		if (!f) {
+		if (!(f = fopen(listfile, "w"))) {
 			printq("io_cantopen", listfile, strerror(errno));
 			return -1;
 		}
@@ -2150,15 +2158,16 @@ static COMMAND(jabber_command_userlist)
 		for (l = session->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 
-			if (u)
-				fprintf(f, "+,%s,%s,\n", u->uid+5, u->nickname /*, XXX? */); /* JRU syntax */ 
+			fprintf(f, "+,%s,%s,\n", u->uid+5, u->nickname /*, XXX? */); /* JRU syntax */ 
 		}
 
 		fclose(f);
 		printq("userlist_put_ok", session_name(session));
+		return 0;
 	}
 
-	return 0;
+	printq("invalid_params", name);
+	return -1;
 }
 
 static COMMAND(jabber_command_stanzas) {
