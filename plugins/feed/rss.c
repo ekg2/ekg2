@@ -52,8 +52,6 @@
 # include <expat.h>
 #endif
 
-#include <iconv.h>
-
 #define RSS_DEFAULT_TIMEOUT 60
 
 #include "feed.h"
@@ -386,6 +384,13 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 static void rss_handle_end(void *data, const char *name) {
 	rss_fetch_process_t *j = data;
 	xmlnode_t *n;
+	string_t recode;
+
+	unsigned char *text;
+
+	char *tmp;
+	int i;
+	int len;
 
 	if (!data || !name) {
 		debug("[rss] rss_handle_end() invalid parameters\n");
@@ -394,27 +399,60 @@ static void rss_handle_end(void *data, const char *name) {
 	if (!(n = j->node)) return;
 
 	if (n->parent) j->node = n->parent;
-}
 
-static void rss_handle_cdata(void *data, const char *text, int len) {
-	rss_fetch_process_t *j = data;
-	xmlnode_t *n;
-	char *recode;
-	int i;
-	int rlen;
+	recode = string_init(NULL);
 
-	if (!j || !text) {
-		debug("[rss] rss_handle_cdata() invalid parameters\n");
-		return;
-	}
+	len = n->data->len;
 
-	if (!(n = j->node)) return;
-
-	recode	= xmalloc(len+1);
-	rlen	= 0;
+	text = (unsigned char *) string_free(n->data, 0);
 
 	for (i = 0; i < len;) {
 		unsigned int znak = (unsigned char) text[i];
+		
+		if (znak == '&') {
+
+			if (text[i+1] == 'q' && text[i+2] == 'u' && text[i+3] == 'o' && text[i+4] == 't' && text[i+5] == ';') {
+				i = i + 6;
+				string_append_c(recode, '"');
+				continue;
+			}
+
+			if (text[i+1] == 'n' && text[i+2] == 'b' && text[i+3] == 's' && text[i+4] == 'p' && text[i+5] == ';') /* http://en.wikipedia.org/wiki/Non-breaking_space */
+			{
+				i = i + 6;
+				string_append_c(recode, 0xA0);
+				continue;
+			}
+				
+#if 0
+			if (text[i+1] == '#') {	/* khem? */
+				int j = i + 2;
+				unsigned int count = 0;
+
+				while (text[j] >= '0' && text[j] <= '9') {
+					count *= 10;
+					count += (text[j] - '0');
+					j++;
+				}
+
+				if (text[j] == ';') {
+					/* BE vs LE? */
+					debug_white("rss_handle_end() cos: %u\n", count);
+#if 0
+					if (count <= 0xff) {
+						string_append_c(recode, count);
+					} else if (count <= 0xffff) {
+						string_append_c(recode, count & 0xff);
+						string_append_c(recode, (count & 0xff) >> 8);
+					}
+#endif
+					string_append_c(recode, '?');
+					i = j + 1;
+					continue;
+				}
+			}
+#endif
+		}
 
 		if (znak > 0x7F && j->no_unicode) {
 			int ucount = 0;
@@ -432,7 +470,7 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 
 			if (i+ucount > len || ucount == 5 || !ucount) {
 				debug("invalid utf-8 char\n");	/* shouldn't happen */
-				recode[rlen++] = '?';
+				string_append_c(recode, '?');
 				i += ucount;
 				continue;
 			}
@@ -442,25 +480,34 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 				znaczek = (znaczek << 6) | (((unsigned char) text[i]) & 0x3f);
 				i++;
 			}
-			recode[rlen++] = znaczek;
+			string_append_c(recode, znaczek);
 			continue;
 		}
-		recode[rlen++] = znak;
+		string_append_c(recode, znak);
 		i++;
 	}
-	{		/* I think old version leaked, if I were wrong, let mi know */
-		char *tmp = recode;
 
-		recode = rss_convert_string(recode, j->no_unicode);
-		if (!recode)
-			recode = tmp;
-		else
-			xfree(tmp);
+	xfree(text);
+
+	if ((tmp = rss_convert_string(recode->str, j->no_unicode))) {
+		n->data = string_init(tmp);
+		string_free(recode, 1);
+
+	} else	n->data = recode;
+}
+
+static void rss_handle_cdata(void *data, const char *text, int len) {
+	rss_fetch_process_t *j = data;
+	xmlnode_t *n;
+
+	if (!j || !text) {
+		debug("[rss] rss_handle_cdata() invalid parameters\n");
+		return;
 	}
 
-	string_append(n->data, recode);
+	if (!(n = j->node)) return;
 
-	xfree(recode);
+	string_append_n(n->data, text, len);
 }
 
 static int rss_handle_encoding(void *data, const char *name, XML_Encoding *info) {
