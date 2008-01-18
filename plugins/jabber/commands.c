@@ -907,6 +907,15 @@ static char *jabber_avatar_load(session_t *s, const char *path, const int quiet)
 	return NULL;
 }
 
+/**
+ * jabber_command_change()
+ *
+ * Changes data in vcard.
+ *
+ * @todo - reimplement it using jabber_params_split()
+ *       - and implement more stuff. See http://www.xmpp.org/extensions/xep-0054.html
+ */
+
 static COMMAND(jabber_command_change)
 {
 #define pub_sz 6
@@ -955,6 +964,8 @@ static COMMAND(jabber_command_change)
 	for (i=0; i<pub_sz; i++) 
 		xfree(pub[i]);
 	return 0;
+#undef pub_sz
+#undef strfix
 }
 
 static COMMAND(jabber_command_lastseen)
