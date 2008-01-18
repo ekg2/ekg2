@@ -806,6 +806,8 @@ static WATCHER(rss_url_fetch_resolver) {
 		xfree(b->session);
 		xfree(b->uid);
 		xfree(b);
+
+		close(fd);
 		return 0;
 	}
 	
