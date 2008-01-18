@@ -2083,7 +2083,7 @@ static COMMAND(jabber_command_userlist) {
 	const char *listfile;
 	FILE *f;
 
-	int replace = match_arg(params[0], 'G', "replace", 2);
+	const int replace = match_arg(params[0], 'G', "replace", 2);
 
 	/* we must use other userlist path, so that ekg2 will not overwrite it */
 	if (params[1])
