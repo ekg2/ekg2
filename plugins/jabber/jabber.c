@@ -669,9 +669,10 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	{
 		char *tmp;
 
+		tmp = format_string(format_find("jabber_xmlerror_disconnect"), XML_ErrorString(XML_GetErrorCode(parser)));
+
 		if ((!j->parser && parser) || (parser != j->parser)) XML_ParserFree(parser);
 
-		tmp = format_string(format_find("jabber_xmlerror_disconnect"), XML_ErrorString(XML_GetErrorCode(parser)));
 		jabber_handle_disconnect(s, tmp, EKG_DISCONNECT_NETWORK);
 		xfree(tmp);
 
