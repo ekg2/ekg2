@@ -953,7 +953,7 @@ static COMMAND(jabber_command_change)
 
 	watch_write(j->send_watch, "<iq type=\"set\"><vCard xmlns='vcard-temp'>"
 			"<FN>%s</FN>" "<NICKNAME>%s</NICKNAME>"
-			"<ADR><LOCALITY>%s</LOCALITY><COUNTRY>%s</COUNTRY></ADR>"
+			"<ADR><LOCALITY>%s</LOCALITY><CTRY>%s</CTRY></ADR>"
 			"<BDAY>%s</BDAY><DESC>%s</DESC>%s</vCard></iq>\n", 
 		strfix(pub[0]), strfix(pub[1]), strfix(pub[2]), strfix(pub[5]), strfix(pub[3]), strfix(pub[4]), strfix(photo));
 
