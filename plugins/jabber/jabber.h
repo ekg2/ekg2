@@ -31,6 +31,7 @@ struct xmlnode_s {
 	char *name;
 	char *data; 
 	char **atts;
+	char *xmlns;
 
 	struct xmlnode_s *parent;
 	struct xmlnode_s *children;

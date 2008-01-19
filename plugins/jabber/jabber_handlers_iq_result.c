@@ -77,7 +77,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_disco_info) {
 
 					session_name(s), uid, tvar, var);
 			else		print("jabber_transinfo_feature", session_name(s), uid, var, var);
-		} else if (!xstrcmp(node->name, "x") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "jabber:x:data") && !xstrcmp(jabber_attr(node->atts, "type"), "result")) {
+		} else if (!xstrcmp(node->name, "x") && !xstrcmp(node->xmlns, "jabber:x:data") && !xstrcmp(jabber_attr(node->atts, "type"), "result")) {
 			jabber_handle_xmldata_result(s, node->children, uid);
 		}
 	}
@@ -261,7 +261,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
 
 	for (node = n->children; node; node = node->next) {
 		char *lname	= jabber_unescape(node->name);
-		char *ns	= jabber_attr(node->atts, "xmlns");
+		const char *ns	= node->xmlns;
 		xmlnode_t *child;
 
 		int config_display = 1;
@@ -285,7 +285,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
 			for (child = node->children; child; child = child->next) {
 				char *cname	= jabber_unescape(child->name);
 				char *cvalue	= jabber_unescape(child->data);
-				if (!xstrcmp(child->name, "plugin") && !xstrcmp(jabber_attr(child->atts, "xmlns"), "ekg2:plugin")) {
+				if (!xstrcmp(child->name, "plugin") && !xstrcmp(child->xmlns, "ekg2:plugin")) {
 					xmlnode_t *temp;
 					printq("jabber_private_list_plugin", session_name(s), lname, ns, jabber_attr(child->atts, "name"), jabber_attr(child->atts, "prio"));
 					for (temp = child->children; temp; temp = temp->next) {
@@ -295,7 +295,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
 						xfree(snname);
 						xfree(svalue);
 					}
-				} else if (!xstrcmp(child->name, "session") && !xstrcmp(jabber_attr(child->atts, "xmlns"), "ekg2:session")) {
+				} else if (!xstrcmp(child->name, "session") && !xstrcmp(child->xmlns, "ekg2:session")) {
 					xmlnode_t *temp;
 					printq("jabber_private_list_session", session_name(s), lname, ns, jabber_attr(child->atts, "uid"));
 					for (temp = child->children; temp; temp = temp->next) {
@@ -469,7 +469,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_search) {
 			if (formdone) continue;
 
 			for (reg = n->children; reg; reg = reg->next) {
-				if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(reg->atts, "xmlns"))) {
+				if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", reg->xmlns)) {
 					if (!xstrcmp(jabber_attr(reg->atts, "type"), "form")) {
 						formdone = 1;
 						jabber_handle_xmldata_form(s, uid, "search", reg->children, "--jabber_x_data");
@@ -656,7 +656,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_register) {
 	int done = 0;
 
 	for (reg = n->children; reg; reg = reg->next) {
-		if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(reg->atts, "xmlns")) && 
+		if (!xstrcmp(reg->name, "x") && !xstrcmp("jabber:x:data", reg->xmlns) && 
 				( !xstrcmp("form", jabber_attr(reg->atts, "type")) || !jabber_attr(reg->atts, "type")))
 		{
 			done = 1;
@@ -744,7 +744,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_muc_owner) {
 	char *uid = jabber_unescape(from);
 
 	for (node = n->children; node; node = node->next) {
-		if (!xstrcmp(node->name, "x") && !xstrcmp("jabber:x:data", jabber_attr(node->atts, "xmlns"))) {
+		if (!xstrcmp(node->name, "x") && !xstrcmp("jabber:x:data", node->xmlns)) {
 			if (!xstrcmp(jabber_attr(node->atts, "type"), "form")) {
 				formdone = 1;
 				jabber_handle_xmldata_form(s, uid, "admin", node->children, NULL);
@@ -848,10 +848,10 @@ JABBER_HANDLER_RESULT(jabber_handle_si_result) {
 		char *stream_method = NULL;
 
 		for (node = n->children; node; node = node->next) {
-			if (!xstrcmp(node->name, "feature") && !xstrcmp(jabber_attr(node->atts, "xmlns"), "http://jabber.org/protocol/feature-neg")) {
+			if (!xstrcmp(node->name, "feature") && !xstrcmp(node->xmlns, "http://jabber.org/protocol/feature-neg")) {
 				xmlnode_t *subnode;
 				for (subnode = node->children; subnode; subnode = subnode->next) {
-					if (!xstrcmp(subnode->name, "x") && !xstrcmp(jabber_attr(subnode->atts, "xmlns"), "jabber:x:data") && 
+					if (!xstrcmp(subnode->name, "x") && !xstrcmp(subnode->xmlns, "jabber:x:data") && 
 							!xstrcmp(jabber_attr(subnode->atts, "type"), "submit")) {
 						/* var stream-method == http://jabber.org/protocol/bytestreams */
 						jabber_handle_xmldata_submit(s, subnode->children, NULL, 0, "stream-method", &stream_method, NULL);

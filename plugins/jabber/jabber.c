@@ -479,7 +479,12 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 	 * 	XXX, rtfm expat
 	 */
 
-        if (/* !j->node && */ !(s->connected) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "stream:stream")))) {
+	/* (WO) Nie mo¿na, bo przetwarzanie rozpoczêoby siê dopiero po skompletowaniu, czyli po otrzymaniu </stream:stream>
+	 * W±tpiê, by kto¶ chcia³ czekaæ a¿ to nast±pi, ale ³adniej by³oby gdyby ca³a ta czê¶æ po if wyl±dowa³a
+	 * w jakiej¶ jabber_just_like_starting_over()
+	 */
+
+        if (/* !j->node && */ !(s->connected) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "http://etherx.jabber.org/streams\033stream")))) {
 		const char *passwd	= session_get(s, "password");
 
 		char *username;
@@ -527,7 +532,21 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 		int i;
 
 		newnode = xmalloc(sizeof(xmlnode_t));
-		newnode->name = xstrdup(name);
+
+		{
+			char *x		= NULL;
+			char *tmp	= xstrdup(name);
+			char *sep	= xstrchr(tmp, '\033');
+			if (sep) {
+				*(sep++) = '\0';
+				name	= sep;
+				x	= tmp;
+			}
+
+			newnode->name = xstrdup(name);
+			newnode->xmlns = xstrdup(x);
+			xfree(tmp);
+		}
 
 		if ((n = j->node)) {
 			newnode->parent = n;
@@ -769,7 +788,7 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
 /*	debug_function("jabber_parser_recreate() 0x%x 0x%x\n", parser, data); */
 
-	if (!parser) 	parser = XML_ParserCreate("UTF-8");	/*   new parser */
+	if (!parser) 	parser = XML_ParserCreateNS("UTF-8",'\033');	/*   new parser */
 	else		XML_ParserReset(parser, "UTF-8");	/* reset parser */
 
 	XML_SetUserData(parser, (void*) data);
@@ -1538,7 +1557,7 @@ static QUERY(jabber_typing_out) {
 			return -1;
 		watch_write(j->send_watch, "<m to=\"%s\" tp=\"%c\"/>",
 			jid, (len ? 't' : 'u'));
-	} else {
+	} else if (!newconference_find(s, uid) /* DON'T SEND CHATSTATES TO CHATS! */) {
 			/* if user closes window while typing,
 			 * and we are prohibited to send <gone/>,
 			 * we just send standard <active/> */

@@ -122,7 +122,7 @@ static xmlnode_t *xmlnode_find_child_xmlns(xmlnode_t *n, const char *name, const
 		return NULL;
 
 	for (n = n->children; n; n = n->next)
-		if (!xstrcmp(n->name, name) && !xstrcmp(jabber_attr(n->atts, "xmlns"), xmlns))
+		if (!xstrcmp(n->name, name) && !xstrcmp(n->xmlns, xmlns))
 			return n;
 	return NULL;
 }
@@ -199,8 +199,8 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 			debug_error("[jabber] %s:%d ASSERT_CONNECT j->connecting: %d (shouldbe: %d) s->connected: %d (shouldbe: %d)\n", \
 				__FILE__, __LINE__, j->connecting, connecting_, s->connected, connected_);	func; }
 
-#define CHECK_XMLNS(n, xmlns, func) if (xstrcmp(jabber_attr(n->atts, "xmlns"), xmlns)) { \
-			debug_error("[jabber] %s:%d ASSERT_XMLNS BAD XMLNS, IS: %s SHOULDBE: %s\n", __FILE__, __LINE__, jabber_attr(n->atts, "xmlns"), xmlns);	func; }
+#define CHECK_XMLNS(n, _xmlns, func) if (xstrcmp(n->xmlns, _xmlns)) { \
+			debug_error("[jabber] %s:%d ASSERT_XMLNS BAD XMLNS, IS: %s SHOULDBE: %s\n", __FILE__, __LINE__, n->xmlns, _xmlns);	func; }
 
 JABBER_HANDLER(jabber_handle_stream_features) {
 	jabber_private_t *j = s->priv;
@@ -227,12 +227,12 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 		for (ch = n->children; ch; ch = ch->next) {
 			xmlnode_t *another;
 				if (!xstrcmp(ch->name, "starttls")) {
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_tls"); 
+					print("xmpp_feature", session_name(s), j->server, ch->name, ch->xmlns, "/session use_tls"); 
 					continue;
 				}
 
 				if (!xstrcmp(ch->name, "mechanisms")) {
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session disable_sasl");
+					print("xmpp_feature", session_name(s), j->server, ch->name, ch->xmlns, "/session disable_sasl");
 					for (another = ch->children; another; another = another->next) {	
 						if (!xstrcmp(another->name, "mechanism")) {
 							if (!xstrcmp(another->data, "DIGEST-MD5"))
@@ -246,7 +246,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				}
 #if 0
 				if (!xstrcmp(ch->name, "compression")) {
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "/session use_compression method1,method2,..");
+					print("xmpp_feature", session_name(s), j->server, ch->name, ch->xmlns, "/session use_compression method1,method2,..");
 					for (another = ch->children; another; another = another->next) {
 						if (!xstrcmp(another->name, "method")) {
 							if (!xstrcmp(another->data, "zlib"))
@@ -260,12 +260,12 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				}
 #endif
 				if (!xstrcmp(ch->name, "session"))
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Manage session");
+					print("xmpp_feature", session_name(s), j->server, ch->name, ch->xmlns, "Manage session");
 				else if (!xstrcmp(ch->name, "bind"))
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Bind resource");
+					print("xmpp_feature", session_name(s), j->server, ch->name, ch->xmlns, "Bind resource");
 				else if (!xstrcmp(ch->name, "register"))
-					print("xmpp_feature", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"), "Register account using /register");
-				else	print("xmpp_feature_unknown", session_name(s), j->server, ch->name, jabber_attr(ch->atts, "xmlns"));
+					print("xmpp_feature", session_name(s), j->server, ch->name, ch->xmlns, "Register account using /register");
+				else	print("xmpp_feature_unknown", session_name(s), j->server, ch->name, ch->xmlns);
 
 		}
 		print("xmpp_feature_footer", session_name(s), j->server);
@@ -593,7 +593,7 @@ JABBER_HANDLER(jabber_handle_proceed) {
 
 	CHECK_CONNECT(1, 0, return)
 
-	if (!xstrcmp(jabber_attr(n->atts, "xmlns"), "urn:ietf:params:xml:ns:xmpp-tls")) {
+	if (!xstrcmp(n->xmlns, "urn:ietf:params:xml:ns:xmpp-tls")) {
 #ifdef JABBER_HAVE_SSL
 		debug_function("[jabber] proceed urn:ietf:params:xml:ns:xmpp-tls TLS let's rock\n");
 
@@ -604,7 +604,7 @@ JABBER_HANDLER(jabber_handle_proceed) {
 #else
 		debug_error("[jabber] proceed + urn:ietf:params:xml:ns:xmpp-tls but jabber compilated without ssl support?\n");
 #endif
-	} else	debug_error("[jabber] proceed what's that xmlns: %s ?\n", jabber_attr(n->atts, "xmlns"));
+	} else	debug_error("[jabber] proceed what's that xmlns: %s ?\n", n->xmlns);
 }
 
 JABBER_HANDLER(jabber_handle_stream_error) {
@@ -664,8 +664,10 @@ static const struct jabber_generic_handler jabber_handlers[] =
 	{ "presence",		jabber_handle_presence },
 	{ "iq",			jabber_handle_iq },
 
-	{ "stream:features",	jabber_handle_stream_features },
-	{ "stream:error",	jabber_handle_stream_error },
+//	{ "stream:features",	jabber_handle_stream_features },
+	{ "features",	jabber_handle_stream_features },
+//	{ "stream:error",	jabber_handle_stream_error },
+	{ "error",	jabber_handle_stream_error },
 
 	{ "challenge",		jabber_handle_challenge },
 	{ "compressed",		jabber_handle_compressed },
@@ -776,7 +778,7 @@ JABBER_HANDLER(jabber_handle_message) {
 
 	for (xitem = n->children; xitem; xitem = xitem->next) {
 		if (!xstrcmp(xitem->name, "x")) {
-			const char *ns = jabber_attr(xitem->atts, "xmlns");
+			const char *ns = xitem->xmlns;
 			
 			if (!xstrcmp(ns, "jabber:x:encrypted")) {	/* JEP-0027 */
 				x_encrypted = xstrdup(xitem->data);
@@ -869,25 +871,21 @@ JABBER_HANDLER(jabber_handle_message) {
 				}
 #endif
 			} else debug_error("[JABBER, MESSAGE]: <x xmlns=%s>\n", __(ns));
-/* x */		} else if (!xstrcmp(jabber_attr(xitem->atts, "xmlns"), "http://jabber.org/protocol/chatstates")) {
+/* x */		} else if (!xstrcmp(xitem->xmlns, "http://jabber.org/protocol/chatstates")) {
 			composing = 3;	/* disable + higher prio */
-			if (!xstrcmp(xitem->name, "composing"))
+			if (!xstrcmp(xitem->name, "active")) { 
+			} else if (!xstrcmp(xitem->name, "composing")) {
 				composing = 7; /* enable + higher prio */
-			else if (!xstrcmp(xitem->name, "gone"))
+			} else if (!xstrcmp(xitem->name, "paused")) {
+			} else if (!xstrcmp(xitem->name, "inactive")) {
+			} else if (!xstrcmp(xitem->name, "gone")) {
 				print_window(uid, s, 0, "jabber_gone", session_name(s), get_nickname(s, uid));
+			} else debug_error("[JABBER, MESSAGE]: INVALID CHATSTATE: %s\n", xitem->name);
 /* chatstate */	} else if (!xstrcmp(xitem->name, "subject")) {
 			nsubject = xitem;
 		} else if (!xstrcmp(xitem->name, "thread")) {
 			nthread = xitem;
 /* subject */	} else if (!xstrcmp(xitem->name, "body")) {
-		} /* XXX, JEP-0085 here */
-		else if (!xstrcmp(jabber_attr(xitem->atts, "xmlns"), "http://jabber.org/protocol/chatstates")) {
-			if (!xstrcmp(xitem->name, "active"))		{ }
-			else if (!xstrcmp(xitem->name, "composing"))	{ } 
-			else if (!xstrcmp(xitem->name, "paused"))	{ } 
-			else if (!xstrcmp(xitem->name, "inactive"))	{ } 
-			else if (!xstrcmp(xitem->name, "gone")) 	{ } 
-			else debug_error("[JABBER, MESSAGE]: INVALID CHATSTATE: %s\n", xitem->name);
 		} else if (j->istlen && !xstrcmp(xitem->name, "no"))
 			class = EKG_MSGCLASS_SYSTEM;
 		else debug_error("[JABBER, MESSAGE]: <%s\n", xitem->name);
@@ -1372,7 +1370,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 	}
 
 	for (q = n->children; q; q = q->next) {
-		const char *ns = jabber_attr(q->atts, "xmlns");
+		const char *ns = q->xmlns;
 		const struct jabber_iq_generic_handler *tmp = jabber_iq_find_handler(callbacks, q->name, ns);
 
 		if (!tmp) {
@@ -1449,7 +1447,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 	for (q = n->children; q; q = q->next) {
 		char *tmp	= xstrchr(uid, '/');
 		char *mucuid	= xstrndup(uid, tmp ? tmp - uid : -1);
-		char *ns	= jabber_attr(q->atts, "xmlns");
+		const char *ns	= q->xmlns;
 
 		if (!xstrcmp(q->name, "x")) {
 			if (!xstrcmp(ns, "http://jabber.org/protocol/muc#user")) {
