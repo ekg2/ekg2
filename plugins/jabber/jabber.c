@@ -482,13 +482,13 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 	/* (WO) Nie mo¿na, bo przetwarzanie rozpoczêoby siê dopiero po skompletowaniu, czyli po otrzymaniu </stream:stream>
 	 * W±tpiê, by kto¶ chcia³ czekaæ a¿ to nast±pi, ale ³adniej by³oby gdyby ca³a ta czê¶æ po if wyl±dowa³a
 	 * w jakiej¶ jabber_just_like_starting_over()
+	 * 					-- Wies³aw Ochmiñski
 	 */
 
-        if (/* !j->node && */ !(s->connected) && ((j->istlen && !xstrcmp(name, "s")) || (!j->istlen && !xstrcmp(name, "http://etherx.jabber.org/streams\033stream")))) {
+        if (!(s->connected) && (j->istlen ? !xstrcmp(name, "s") : !xstrcmp(name, "http://etherx.jabber.org/streams\033stream"))) {
 		const char *passwd	= session_get(s, "password");
 
-		char *username;
-		char *tmp;
+		char *username, *tmp;
 
 		if ((tmp = xstrchr(s->uid + 5, '@')))
 			username = xstrndup(s->uid + 5, tmp - s->uid - 5);
@@ -528,18 +528,17 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 		xfree(username);
 	} else {
 		xmlnode_t *n, *newnode;
-		int arrcount;
-		int i;
+		int arrcount, i;
 
 		newnode = xmalloc(sizeof(xmlnode_t));
 
-		{
+		{		/* get the namespace */
 			char *x		= NULL;
 			char *tmp	= xstrdup(name);
 			char *sep	= xstrchr(tmp, '\033');
 			if (sep) {
-				*(sep++) = '\0';
-				name	= sep;
+				*sep	= '\0';
+				name	= ++sep;
 				x	= tmp;
 			}
 
@@ -564,13 +563,10 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 		}
 		arrcount = array_count((char **) atts);
 
-/*		newnode->atts = NULL; */
-
 		if (arrcount > 0) {		/* we don't need to allocate table if arrcount = 0 */
 			newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
 			for (i = 0; i < arrcount; i++)
 				newnode->atts[i] = xstrdup(atts[i]);
-/*			newnode->atts[i] = NULL; */
 		}
 
 		j->node = newnode;
@@ -788,8 +784,8 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
 /*	debug_function("jabber_parser_recreate() 0x%x 0x%x\n", parser, data); */
 
-	if (!parser) 	parser = XML_ParserCreateNS("UTF-8",'\033');	/*   new parser */
-	else		XML_ParserReset(parser, "UTF-8");	/* reset parser */
+	if (!parser) 	parser = XML_ParserCreateNS("UTF-8", '\033');		/*   new parser */
+	else		XML_ParserReset(parser, "UTF-8");			/* reset parser */
 
 	XML_SetUserData(parser, (void*) data);
 	XML_SetElementHandler(parser, (XML_StartElementHandler) xmlnode_handle_start, (XML_EndElementHandler) xmlnode_handle_end);
@@ -1557,7 +1553,7 @@ static QUERY(jabber_typing_out) {
 			return -1;
 		watch_write(j->send_watch, "<m to=\"%s\" tp=\"%c\"/>",
 			jid, (len ? 't' : 'u'));
-	} else if (!newconference_find(s, uid) /* DON'T SEND CHATSTATES TO CHATS! */) {
+	} else if (!newconference_find(s, uid) /* DON'T SEND CHATSTATES TO MUCS! */) {
 			/* if user closes window while typing,
 			 * and we are prohibited to send <gone/>,
 			 * we just send standard <active/> */

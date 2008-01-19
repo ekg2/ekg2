@@ -20,10 +20,9 @@ static void xmlnode_free(xmlnode_t *n)
 		xmlnode_free(cur);
 	}
 
-	xfree(n->xmlns);
-
 	xfree(n->name);
 	xfree(n->data);
+	xfree(n->xmlns);
 	array_free(n->atts);
 	xfree(n);
 }

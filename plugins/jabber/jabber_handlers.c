@@ -664,10 +664,9 @@ static const struct jabber_generic_handler jabber_handlers[] =
 	{ "presence",		jabber_handle_presence },
 	{ "iq",			jabber_handle_iq },
 
-//	{ "stream:features",	jabber_handle_stream_features },
-	{ "features",	jabber_handle_stream_features },
-//	{ "stream:error",	jabber_handle_stream_error },
-	{ "error",	jabber_handle_stream_error },
+		/* XXX: shall below two have some kind of namespace? (previously they were 'stream:'-prefixed) */
+	{ "features",		jabber_handle_stream_features },
+	{ "error",		jabber_handle_stream_error },
 
 	{ "challenge",		jabber_handle_challenge },
 	{ "compressed",		jabber_handle_compressed },
