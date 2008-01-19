@@ -50,22 +50,29 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco_info) {
 
 	watch_write(j->send_watch, "<iq to=\"%s\" type=\"result\" id=\"%s\">"
 			"<query xmlns=\"http://jabber.org/protocol/disco#info\">"
-			"<feature var=\"http://jabber.org/protocol/commands\"/>"
-			"<feature var=\"http://jabber.org/protocol/bytestreams\"/>"
-			"<feature var=\"http://jabber.org/protocol/si\"/>"
-			"<feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>"
-			"<feature var=\"http://jabber.org/protocol/chatstates\"/>"
+				"<feature var=\"jabber:iq:last\"/>"						/* jabber_handle_iq_get_last() */
+				"<feature var=\"jabber:iq:version\"/>"						/* jabber_handle_iq_get_version() */
+				"<feature var=\"urn:xmpp:ping\"/>"						/* jabber_handle_iq_ping() */
+				"<feature var=\"http://jabber.org/protocol/chatstates\"/>"
 			"</query></iq>", from, id);
-
+#if 0
+				"<feature var=\"http://jabber.org/protocol/commands\"/>"
+				"<feature var=\"http://jabber.org/protocol/bytestreams\"/>"
+				"<feature var=\"http://jabber.org/protocol/si\"/>"
+				"<feature var=\"http://jabber.org/protocol/si/profile/file-transfer\"/>"
+#endif
 
 }
 
 /**
  * jabber_handle_iq_get_last()
  *
- * Handler for IQ GET QUERY xmlns="jabber:iq:last"<br>
+ * <b>XEP-0012: Last Activity</b> (http://www.xmpp.org/extensions/xep-0012.html) <i>[1.2 2007-02-15]</i> (<b><i>iq:type='get' iq::query:xmlns='jabber:iq:last'</i></b>)<br>
+ *
  * Send reply about our last activity.<br>
- * XXX info about it from XEP/RFC
+ *
+ * @todo From XEP-0012:
+ * 	 - 8. A client MUST provide a way for a human user to disable sending of Last Activity responses from the client's full JID (<node@domain.tld/resource>).
  */
 
 JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_last) {
@@ -80,14 +87,19 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_last) {
 /**
  * jabber_handle_iq_get_version()
  *
- * Handler for IQ GET QUERY xmlns="jabber:iq:version"<br>
+ * <b>XEP-0092: Software Version</b> (http://www.xmpp.org/extensions/xep-0092.html) <i>[1.1 2007-02-15]</i> (<b><i>iq:type='get' iq::query:xmlns='jabber:iq:version'</i></b>)<br>
+ *
  * Send info about our program and system<br>
  *
- * <b>PRIVACY WARNING:</b> It'll send potential useful information like: what version of kernel you use.<br>
- * If you don't want to send this information set session variables:<br>
- * 	- <i>ver_client_name</i> - If you want spoof program name. [Although I think it's good to send info about ekg2. Because it's good program.]<br>
- * 	- <i>ver_client_version</i> - If you want to spoof program version.<br>
- * 	- <i>ver_os</i> - The most useful, to spoof OS name, version and stuff.<br>
+ * @note 
+ * 	<b>PRIVACY WARNING:</b> It'll send potential useful information like: what version of kernel you use.<br>
+ * 	If you don't want to send this information set session variables:<br>
+ * 		- <i>ver_client_name</i> - If you want spoof program name. [Although I think it's good to send info about ekg2. Because it's good program.]<br>
+ * 		- <i>ver_client_version</i> - If you want to spoof program version.<br>
+ * 		- <i>ver_os</i> - The most useful, to spoof OS name, version and stuff.<br>
+ *
+ * @todo From XEP-0092:
+ * 	 - 5. an application MUST provide a way for a human user or administrator to disable sharing of information about the operating system.
  */
 
 JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_version) {
@@ -127,10 +139,15 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_version) {
 	xfree(osversion);
 }
 
-/*
+/**
  * jabber_handle_iq_ping()
  *
- * XEP-0199
+ * <b>XEP-0199: XMPP Ping</b> (http://www.xmpp.org/extensions/xep-0199.html) <i>[1.0 2007-06-12]</i> (<b><i>iq:type='get' iq::ping:xmlns='urn:xmpp:ping'</i></b>)<br>
+ *
+ * @note From XEP-0199:
+ * 	 - 6. If a connected resource receives a ping request but it does not want to reveal its network availability to the sender for any reason 
+ * 	 (e.g., because the sender is not authorized to know the connected resource's availability),
+ * 	 then it too MUST reply with a <service-unavailable/> error.
  */
 
 JABBER_HANDLER_GET_REPLY(jabber_handle_iq_ping) {
