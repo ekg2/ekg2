@@ -726,7 +726,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	const char *from = jabber_attr(n->atts, "from");
 	char *x_encrypted = NULL;
 
-	char *juid 	= jabber_unescape(from); /* was tmp */
+	char *juid 	= tlenjabber_unescape(from); /* was tmp */
 	char *uid;
 	time_t bsent = 0;
 	string_t body;
@@ -1282,7 +1282,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 
 	if (type == JABBER_IQ_TYPE_RESULT || type == JABBER_IQ_TYPE_ERROR) {
 		list_t l;
-		char *uid = jabber_unescape(from);	/* XXX: really worth unescaping? */
+		char *uid = tlenjabber_unescape(from);	/* XXX: really worth unescaping? */
 
 		/* XXX, do sprawdzenia w RFC/ napisania maila do gosci od XMPP.
 		 * 	czy jesli nie mamy nic w from, to mamy zakladac ze w from jest 'nasz.jabber.server' (j->server)
