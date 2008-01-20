@@ -883,6 +883,27 @@ void ncurses_resize()
 	ncurses_screen_height = height;
 }
 
+static inline int fstring_attr2ncurses_attr(short chattr) {
+	int attr = A_NORMAL;
+
+	if ((chattr & 64))
+		attr |= A_BOLD;
+
+	if ((chattr & 256))
+		attr |= A_BLINK;
+
+	if (!(chattr & 128))
+		attr |= color_pair(chattr & 7, 0, config_display_transparent ? COLOR_BLACK: (chattr>>3)&7);
+
+	if ((chattr & 512))
+		attr |= A_UNDERLINE;
+
+	if ((chattr & 1024))
+		attr |= A_REVERSE;
+
+	return attr;
+}
+
 /*
  * ncurses_redraw()
  *
@@ -978,40 +999,25 @@ void ncurses_redraw(window_t *w)
 
 		wattrset(n->window, A_NORMAL);
 		for (x = 0; l->ts && l->ts[x] && x < l->ts_len; x++) { 
-			int attr = A_NORMAL;
-			short chattr = l->ts_attr[x];
 			unsigned char ch = (unsigned char) l->ts[x];
+			int attr = fstring_attr2ncurses_attr(l->ts_attr[x]);
 
-                        if ((chattr & 64))
-                                attr |= A_BOLD;
-
-                        if ((chattr & 256))
-                                attr |= A_BLINK;
-
-                        if (!(chattr & 128))
-                                attr |= color_pair(chattr & 7, 0, 
-					config_display_transparent?COLOR_BLACK:
-					(chattr>>3)&7);
-
-			if ((chattr & 512))
-				attr |= A_UNDERLINE;
-
-			if ((chattr & 1024))
-				attr |= A_REVERSE;
                         if (ch < 32) {
                                 ch += 64;
                                 attr |= A_REVERSE;
                         }
+
                         if (ch > 127 && ch < 160) {
                                 ch = '?';
                                 attr |= A_REVERSE;
                         }
+
 			wattrset(n->window, attr);
 			mvwaddch(n->window, top + y, left + x, ch);
 		}
 		for (x = 0; x < l->prompt_len + l->len; x++) {
-			int attr = A_NORMAL;
 			CHAR_T ch;
+			int attr;
 			short chattr;
 			if (x < l->prompt_len) {
 				if (!l->prompt_str)
@@ -1023,38 +1029,24 @@ void ncurses_redraw(window_t *w)
 				ch = l->str[x - l->prompt_len];
 				chattr = l->attr[x - l->prompt_len];
 			}
-			if ((chattr & 64))
-				attr |= A_BOLD;
 
-                        if ((chattr & 256))
-                                attr |= A_BLINK;
+			attr = fstring_attr2ncurses_attr(chattr);
 
-                        if (!(chattr & 128))
-                                attr |= color_pair(chattr & 7, 0, 
-					config_display_transparent?COLOR_BLACK:
-					(chattr>>3)&7);
-
-			if ((chattr & 512))
-				attr |= A_UNDERLINE;
-
-			if ((chattr & 1024))
-				attr |= A_REVERSE;
 			if (ch < 32) {
 				ch += 64;
 				attr |= A_REVERSE;
 			}
-			if (
+
+			if (ch > 127 && ch < 160 &&
 #if USE_UNICODE
-#warning "XXX ?"
-				!config_use_unicode && 
+				!config_use_unicode &&
 #endif
-				config_use_iso &&
-				ch > 127 && ch < 160
-			   ) 
+				config_use_iso)
 			{
 				ch = '?';
 				attr |= A_REVERSE;
 			}
+
 			wattrset(n->window, attr);
 			if (l->margin_left != -1 && x >= l->margin_left) 
 				x_real = x - l->margin_left + config_margin_size;
