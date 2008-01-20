@@ -44,19 +44,38 @@ static char *prompt_cache = NULL, *prompt2_cache = NULL, *error_cache = NULL;
 static const char *timestamp_cache = NULL;
 
 static int no_prompt_cache = 0;
-static int no_prompt_cache_hash = 2261954;	/* hash value of "no_prompt_cache" 2261954 it's default one. i hope good one.. for 32 bit x86 sure. */
+static int no_prompt_cache_hash = 0x139dcbd6;	/* hash value of "no_prompt_cache" */
 
 struct format {
 	char *name;
 	int name_hash;
 	char *value;
 };
-static list_t formats = NULL;
+
+static list_t formats[0x100];
 
 static LIST_FREE_ITEM(list_format_free, struct format *) {
 	xfree(data->value);
 	xfree(data->name);
 	xfree(data);
+}
+
+/**
+ * gim_hash()
+ *
+ */
+
+static int gim_hash(const char *name) {
+#define ROL(x) (((x>>25)&0x7f)|((x<<7)&0xffffff80))
+	int hash = 0;
+
+	for (; *name; name++) {
+		hash ^= *name;
+		hash = ROL(hash);
+	}
+
+	return hash;
+#undef ROL
 }
 
 /*
@@ -96,9 +115,9 @@ const char *format_find(const char *name)
 			return tmp;
 	}
 
-	hash = ekg_hash(name);
+	hash = gim_hash(name);
 
-	for (l = formats; l; l = l->next) {
+	for (l = formats[hash & 0xff]; l; l = l->next) {
 		struct format *f = l->data;
 
 		if (hash == f->name_hash && !xstrcmp(f->name, name))
@@ -867,14 +886,14 @@ void format_add(const char *name, const char *value, int replace) {
 	if (!name || !value)
 		return;
 
-	hash = ekg_hash(name);
+	hash = gim_hash(name);
 
 	if (hash == no_prompt_cache_hash && !xstrcmp(name, "no_prompt_cache")) {
 		no_prompt_cache = 1;
 		return;
 	}
 
-	for (l = formats; l; l = l->next) {
+	for (l = formats[hash & 0xff]; l; l = l->next) {
 		struct format *f = l->data;
 
 		if (hash == f->name_hash && !xstrcmp(name, f->name)) {
@@ -891,7 +910,7 @@ void format_add(const char *name, const char *value, int replace) {
 	f->name_hash	= hash;
 	f->value	= xstrdup(value);
 
-	list_add_beginning(&formats, f, 0);
+	list_add_beginning(&(formats[hash & 0xff]), f, 0);
 	return;
 }
 
@@ -915,13 +934,13 @@ static int format_remove(const char *name) {
 	if (!name)
 		return -1;
 
-	hash = ekg_hash(name);
+	hash = gim_hash(name);
 
-	for (l = formats; l; l = l->next) {
+	for (l = formats[hash & 0xff]; l; l = l->next) {
 		struct format *f = l->data;
 
 		if (hash == f->name_hash && !xstrcmp(f->name, name)) {
-			LIST_REMOVE(&formats, f, list_format_free);
+			LIST_REMOVE(&(formats[hash & 0xff]), f, list_format_free);
 			return 0;
 		}
 	}
@@ -1050,8 +1069,13 @@ int theme_read(const char *filename, int replace) {
  * usuwa formatki z pamiêci.
  */
 void theme_free() {
-	LIST_DESTROY(formats, list_format_free);
-	formats = NULL;
+	int i;
+
+	for (i = 0; i < 0x100; i++) {
+		LIST_DESTROY(formats[i], list_format_free);
+		formats[i] = NULL;
+	}
+
 	no_prompt_cache = 0;
 
 	theme_cache_reset();
@@ -1078,7 +1102,7 @@ void theme_plugins_init() {
 void theme_init()
 {
 	theme_cache_reset();
-	no_prompt_cache_hash = ekg_hash("no_prompt_cache");
+	no_prompt_cache_hash = gim_hash("no_prompt_cache");
 #ifndef NO_DEFAULT_THEME
 	/* wykorzystywane w innych formatach */
 	format_add("prompt", "%K:%g:%G:%n", 1);
