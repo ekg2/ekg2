@@ -130,7 +130,7 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 	/* parent */
 	close(fd[1]);
 	xfree(myserver);
-	/* XXX dodaæ dzieciaka do przegl±dania */
+	/* XXX dodac dzieciaka do przegladania */
 	return watch_add(plugin, fd[0], WATCH_READ, async, data);
 }
 
