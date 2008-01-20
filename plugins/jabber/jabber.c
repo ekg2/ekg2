@@ -1356,6 +1356,27 @@ static int jabber_theme_init() {
 
 /* vCard xmlns='vcard-temp' */
 	format_add("jabber_userinfo_response",		_("%> Jabber ID: %T%1%n\n%> Full Name: %T%2%n\n%> Nickname: %T%3%n\n%> Birthday: %T%4%n\n%> City: %T%5%n\n%> Desc: %T%6%n\n"), 1);
+
+	format_add("jabber_userinfo_response2",		_("%g,+=%G----- vCard for:%n %T%2"), 1);
+	format_add("jabber_userinfo_fullname",		_("%g|| %n   Full Name: %T%2"), 1);
+	format_add("jabber_userinfo_nickname",		_("%g|| %n     Nickame: %T%2"), 1);
+	format_add("jabber_userinfo_birthday",		_("%g|| %n    Birthday: %T%2"), 1);
+	format_add("jabber_userinfo_email",		_("%g|| %n       Email: %T%2"), 1);
+	format_add("jabber_userinfo_url",		_("%g|| %n     Webpage: %T%2"), 1);
+	format_add("jabber_userinfo_desc",		_("%g|| %n Description: %T%2"), 1);
+	format_add("jabber_userinfo_telephone",		_("%g|| %n   Telephone: %T%2"), 1);
+	format_add("jabber_userinfo_title",		_("%g|| %n       Title: %T%2"), 1);
+	format_add("jabber_userinfo_organization",	_("%g|| %nOrganization: %T%2"), 1);
+	
+	format_add("jabber_userinfo_adr",		_("%g|| ,+=%G----- (Next) %2 address"), 1);
+	format_add("jabber_userinfo_adr_street",	_("%g|| || %n     Street: %T%2"), 1);
+	format_add("jabber_userinfo_adr_postalcode",	_("%g|| || %nPostal code: %T%2"), 1);
+	format_add("jabber_userinfo_adr_city",		_("%g|| || %n       City: %T%2"), 1);
+	format_add("jabber_userinfo_adr_country",	_("%g|| || %n    Country: %T%2"), 1);
+	format_add("jabber_userinfo_adr_end",		_("%g|| %g`+=%G-----"), 1);
+
+	format_add("jabber_userinfo_end",		_("%g`+=%G-----"), 1);
+
 	format_add("jabber_userinfo_error",		_("%! (%1) Error in getting %gvCard%n from %W%2%n: %r%3"), 1);
 
 /* jabber:iq:privacy */

@@ -697,7 +697,122 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_register) {
 	xfree(from_str);
 }
 
+static void jabber_handle_vcard_helper(session_t *s, const char *formatka, const char *data) {
+	char *tmp;
+	
+	tmp = jabber_unescape(data);
+	print(formatka, session_name(s), jabberfix(tmp, _("unknown")));
+	xfree(tmp);
+}
+
+/**
+ * jabber_handle_vcard()
+ *
+ * <b>XEP-0054: vcard-temp</b> (http://www.xmpp.org/extensions/xep-0054.html) <i>[1.1 2003-03-26]</i> (<b><i>iq:type='result' iq::vCard:xmlns='vcard-temp'</i></b>)<br>
+ *
+ *  @todo Till 20 jan 2008 ekg2 display vCard in other format, (Check: jabber_userinfo_response format), and jabber_handle_vcard_old()
+ *  	  I think old version was extremly poor in support of DTD, so everyone will be happy to switch to new one, but SHOULD we allow user to switch between implementations?
+ *  	  For instance: when format "jabber_userinfo_response2" is not found?
+ *
+ *  @todo Implement rest od DTD.
+ *
+ *  @note From XEP-0054:
+ *	  - The country abbreviation is contained in a <CTRY/> element, not a <COUNTRY/> element (even though this is at odds with draft-dawson-vcard-xml-dtd-01).
+ *	  (ekg2 till (19 jan 2008) send country in <COUNTRY/>, so I think we should use also old elemenet (even if we are broking DTD))
+ */
+
 JABBER_HANDLER_RESULT(jabber_handle_vcard) {
+	char *from_str = jabber_unescape(from);
+
+	print("jabber_userinfo_response2", session_name(s), jabberfix(from_str, _("unknown")));
+
+	for (n = n->children; n; n = n->next) {
+		if (!xstrcmp(n->name, "FN")) 		jabber_handle_vcard_helper(s, "jabber_userinfo_fullname", n->data);
+		else if (!xstrcmp(n->name, "NICKNAME")) jabber_handle_vcard_helper(s, "jabber_userinfo_nickname", n->data);
+		else if (!xstrcmp(n->name, "BDAY"))	jabber_handle_vcard_helper(s, "jabber_userinfo_birthday", n->data);
+		else if (!xstrcmp(n->name, "URL"))	jabber_handle_vcard_helper(s, "jabber_userinfo_url", n->data);
+		else if (!xstrcmp(n->name, "DESC"))	jabber_handle_vcard_helper(s, "jabber_userinfo_desc", n->data);
+		else if (!xstrcmp(n->name, "TITLE"))	jabber_handle_vcard_helper(s, "jabber_userinfo_title", n->data);
+		else if (!xstrcmp(n->name, "PHOTO"))	debug("jabber_handle_vcard() PHOTO skipping...\n");		/* skipping */
+
+		else if (!xstrcmp(n->name, "EMAIL")) {
+			const char *userid = NULL;
+
+			xmlnode_t *q;
+
+			for (q = n->children; q; q = q->next) {
+				if (!xstrcmp(q->name, "USERID")) userid = q->data;
+				/* XXX: HOME, WORK, INTERNET [*] PREF, X400 */
+
+				else debug_error("vCard EMAIL/%s data: %s\n", __(q->name), __(q->data));
+			}
+
+			jabber_handle_vcard_helper(s, "jabber_userinfo_email", userid);
+		} else if (!xstrcmp(n->name, "ADR")) {
+			const char *type = NULL;
+			const char *street = NULL;
+			const char *pcode = NULL;
+			const char *city = NULL;
+			const char *country = NULL;
+
+			xmlnode_t *q;
+
+			for (q = n->children; q; q = q->next) {
+				if (!xstrcmp(q->name, "LOCALITY"))	city = q->data;
+				else if (!xstrcmp(q->name, "STREET"))	street = q->data;
+				else if (!xstrcmp(q->name, "PCODE"))	pcode = q->data;
+				else if (!xstrcmp(q->name, "CTRY") || !xstrcmp(q->name, "COUNTRY")) /* XXX, what about COUNTRY? [See NOTE] */
+					country = q->data;
+
+				else if (!xstrcmp(q->name, "HOME"))	type = _("Home");
+				else if (!xstrcmp(q->name, "WORK"))	type = _("Work");
+
+				else debug_error("vCard ADR/%s data: %s\n", __(q->name), __(q->data));
+			}
+			
+			jabber_handle_vcard_helper(s, "jabber_userinfo_adr", type);
+
+			if (street)	jabber_handle_vcard_helper(s, "jabber_userinfo_adr_street", street);
+			if (city)	jabber_handle_vcard_helper(s, "jabber_userinfo_adr_city", city);
+			if (pcode)	jabber_handle_vcard_helper(s, "jabber_userinfo_adr_postalcode", pcode);
+			if (country)	jabber_handle_vcard_helper(s, "jabber_userinfo_adr_country", country);
+				
+			jabber_handle_vcard_helper(s, "jabber_userinfo_adr_end", "");
+		} else if (!xstrcmp(n->name, "TEL")) {
+			const char *type = NULL;
+			const char *number = NULL;
+
+			xmlnode_t *q;
+
+			for (q = n->children; q; q = q->next) {
+				if (!xstrcmp(q->name, "NUMBER"))	number = q->data;
+
+				else if (!xstrcmp(q->name, "HOME"))	type = _("Home");
+				else if (!xstrcmp(q->name, "WORK"))	type = _("Work");
+
+				else debug_error("vCard TEL/%s data: %s\n", __(q->name), __(q->data));
+			}
+
+			if (type) debug_error("XXX: vCard TEL type: %s\n", type);	/* XXX */
+
+			jabber_handle_vcard_helper(s, "jabber_userinfo_telephone", number);
+		} else if (!xstrcmp(n->name, "ORG")) {
+			xmlnode_t *q;
+
+			for (q = n->children; q; q = q->next) {
+				if (!xstrcmp(q->name, "ORGNAME")) jabber_handle_vcard_helper(s, "jabber_userinfo_organization", q->data);
+
+				else debug_error("vCard ORG/%s data: %s\n", __(q->name), __(q->data));
+			}
+
+		} else debug_error("vCard n->name: %s data: %s\n", __(n->name), __(n->data));
+
+	}
+
+	print("jabber_userinfo_end", session_name(s), jabberfix(from_str, _("unknown")));
+}
+
+JABBER_HANDLER_RESULT(jabber_handle_vcard_old) {
 	xmlnode_t *fullname = xmlnode_find_child(n, "FN");
 	xmlnode_t *nickname = xmlnode_find_child(n, "NICKNAME");
 	xmlnode_t *birthday = xmlnode_find_child(n, "BDAY");
@@ -723,8 +838,6 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 	xfree(fullname_str);
 	xfree(from_str);
 }
-
-
 
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_vacation) {
 	xmlnode_t *temp;
@@ -953,7 +1066,7 @@ static const struct jabber_iq_generic_handler jabber_iq_result_handlers[] = {
 /* niektore hacki zdecydowanie za dlugo... */
 
 static const struct jabber_iq_generic_handler jabber_iq_set_handlers[] = {
-	{ "vCard",	"vcard-temp",					jabber_handle_vcard },
+	{ "vCard",	"vcard-temp",					jabber_handle_vcard_old },		/* ??????? */
 
 	{ "new-mail",	"google:mail:notify",				jabber_handle_iq_set_new_mail },
 
