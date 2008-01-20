@@ -464,52 +464,6 @@ static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) {
  * 0/-1
  */
 int plugin_register(plugin_t *p, int prio) {
-	static char unknown[] = "unknown";
-	static char *plugin_name_id_struct[] = {		/* match with plugin_param_id_t, or die */
-			"alias", "allow_autorespnder", "auto_away", "auto_away_descr", "auto_back",
-			"auto_connect", "auto_find", "auto_reconnect", "auto_xa", "auto_xa_descr",
-			"connect_timeout", "dcc_port", "descr", "display_notify", "log_formats",
-			"password", "port", "server", "status", 
-			NULL };
-
-	if (p->params) {
-		int i;
-		/* sad checking if key/keyids (if NULL or 0) fix it. */
-		for (i=0; (p->params[i].key || p->params[i].id != -1); i++) {
-			const char *key = (p->params[i].key);
-			const int keyid = (p->params[i].id);
-			int j;
-
-			if (key && keyid) {
-				/* XXX, should we also do sanity check? */
-				continue;
-			}
-
-			if (key == NULL && keyid) { /* lazy programmer don't set name of param, but set it. ok, let's guess name... */
-				for (j = 0; plugin_name_id_struct[j]; j++) {
-					if (keyid == j+1) {
-						p->params[i].key = plugin_name_id_struct[j];
-						debug_error("plugin_register() [%s] associated [keyid: %d] with: %s UPDATE YOUR PLUGIN!\n", p->name, keyid, plugin_name_id_struct[j]);
-						break;
-					}
-				}
-			}
-			if (keyid == 0 && key) {  /* lazy programmers don't set id, but set name of it. let's try to guess id.. [IT's really needed by core] */
-				for (j = 0; plugin_name_id_struct[j]; j++) {
-					if (!xstrcmp(key, plugin_name_id_struct[j])) {
-						p->params[i].id = j+1;
-						debug_error("plugin_register() [%s] associated [key: %s] with: %d UPDATE YOUR PLUGIN!\n", p->name, key, j+1);
-					}
-				}
-			}
-
-			if (!(p->params[i].key)) {	/* if still no key..., it stupid. but we must react somehow? */
-				debug_error("plugin_register() [%s] FATAL, FATAL, FATAL ERROR no entry name for: id %d setting 'unknown'\n", p->name, i);
-				p->params[i].key = unknown;
-			}
-		}
-	}
-
 	if (prio == -254) {
 		switch (p->pclass) {
 			case PLUGIN_UI:
