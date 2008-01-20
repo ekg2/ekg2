@@ -902,7 +902,7 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 
 static LIST_ADD_COMPARE(query_compare, query_t *) {
 	/*				any other suggestions: vvv ? */
-	const int ap = (data1->plugin ? data2->plugin->prio : -666);
+	const int ap = (data1->plugin ? data1->plugin->prio : -666);
 	const int bp = (data2->plugin ? data2->plugin->prio : -666);
 
 	return (bp-ap);
