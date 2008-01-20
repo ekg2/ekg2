@@ -54,6 +54,8 @@ typedef struct list *list_t;
 #define LIST_ADD_COMPARE(x, type)			int x(const type data1, const type data2)
 #define LIST_ADD_SORTED(list, data, alloc_size, comp)	list_add_sorted(list, data, alloc_size, (void *) comp)
 
+#define LIST_RESORT(list, comp)				list_resort(list, (void *) comp)
+
 #define LIST_REMOVE(list, data, func)			list_remove2(list, data, (void *) func)
 #define LIST_FREE_ITEM(x, type)				void x(type data)
 
@@ -65,6 +67,7 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
 
 int list_count(list_t list);
 void *list_get_nth(list_t list, int id);
+void list_resort(list_t *list, int (*comparision)(void *, void *));
 
 int list_remove(list_t *list, void *data, int free_data);
 int list_remove2(list_t *list, void *data, void (*func)(void *));

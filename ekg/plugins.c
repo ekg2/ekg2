@@ -900,6 +900,14 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 	return result;
 }
 
+static LIST_ADD_COMPARE(query_compare, query_t *) {
+	/*				any other suggestions: vvv ? */
+	const int ap = (data1->plugin ? data2->plugin->prio : -666);
+	const int bp = (data2->plugin ? data2->plugin->prio : -666);
+
+	return (bp-ap);
+}
+
 /**
  * queries_reconnect()
  *
@@ -907,34 +915,10 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
  */
 
 void queries_reconnect() {
+	int i;
 
-	int query_compare(query_t *a, query_t *b) {
-				/*	any other suggestions: vvv ? */
-		const int ap = (a->plugin ? a->plugin->prio : -666);
-		const int bp = (b->plugin ? b->plugin->prio : -666);
-		
-		return (bp-ap);
-	}
-
-	list_t tmplist;
-	list_t l, *ll;
-
-	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
-		tmplist = NULL;
-
-		for (l = *ll; l; l = l->next) {
-			if (l->data) {
-				if (!(LIST_ADD_SORTED(&tmplist, l->data, 0, query_compare))) {
-					debug_error("resort_queries(), list_add_sorted() failed, not continuing!\n");
-					list_destroy(tmplist, 0);
-					return;
-				}
-			}
-		}
-
-		list_destroy(*ll, 0);
-		*ll = tmplist;
-	}
+	for (i = 0; i <= QUERY_EXTERNAL; i++)
+		LIST_RESORT(&(queries[i]), query_compare);
 }
 
 /*

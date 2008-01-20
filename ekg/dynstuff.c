@@ -280,6 +280,23 @@ void *list_get_nth(list_t list, int id) {
 	return NULL;
 }
 
+void list_resort(list_t *list, int (*comparision)(void *, void *)) {
+	list_t tmplist = NULL;
+	list_t l = *list;
+
+	while (l) {
+		list_t cur = l;
+
+		l = l->next;
+
+		list_add_sorted(&tmplist, cur->data, 0, comparision);
+
+		xfree(cur);
+	}
+
+	*list = tmplist;
+}
+
 /**
  * list_count()
  *
