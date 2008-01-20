@@ -51,7 +51,7 @@ change
 	
 	  -n, --nick <nickname>
 	
-	  -b, --born <birth year>
+	  -b, --born <birth date>	(ISO 8601-formatted, e.g. yyyy-mm-dd)
 	
 	  -c, --city <city>
 	

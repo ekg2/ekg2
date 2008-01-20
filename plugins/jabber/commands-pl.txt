@@ -82,7 +82,7 @@ change
 	
 	  -n, --nick <pseudonim>
 	
-	  -b, --born <rok urodzenia>
+	  -b, --born <data urodzenia>	(zapisana wg. ISO 8601, tj. rrrr-mm-dd)
 	
 	  -c, --city <miasto>
 	
