@@ -49,8 +49,10 @@ static QUERY(event_avail);
 static QUERY(event_online);
 static QUERY(event_away);
 static QUERY(event_na);
-static TIMER(ekg_day_timer);
 static QUERY(event_descr);
+static QUERY(event_misc);
+
+static TIMER(ekg_day_timer);
 
 static void events_add_handler(char *name, void *function);
 static event_t *event_find(const char *name, const char *target);
@@ -71,16 +73,29 @@ COMMAND(cmd_on)
                         return -1;
                 }
 
-		if (!(prio = atoi(params[2])) /*|| (!array_contains(events_all, params[1], 0))*/) {
+		if (!(prio = atoi(params[2]))) {
 			printq("invalid_params", name);
 			return -1;
 		}
+
+/* first we add event, because event_add() can fail. */
 		
-		if (event_add(params[1], prio, params[3], params[4], quiet)) {
-                        config_changed = 1;
-			return 0;
-		} else
+		if (event_add(params[1], prio, params[3], params[4], quiet)) 
 			return -1;
+
+/* after it we do query_connect() if we don't know it in events_all */
+
+		if (!array_contains(events_all, params[1], 0)) {
+			query_t *q;
+
+			debug("cmd_on, array_contains(events_all, \"%s\", 0) failed. Binding new query: %s\n", params[1], params[1]);
+
+			q = query_connect(NULL, params[1], event_misc, NULL);
+			q->data = (char *) query_name(q->id);		/* hack */
+		}
+
+		config_changed = 1;
+		return 0;
 	}
 
 	if (match_arg(params[0], 'd', ("del"), 2)) {
@@ -542,6 +557,12 @@ static QUERY(event_descr)
 	
 	event_check(session, "event_descr", uid, descr);
         return 0;
+}
+
+static QUERY(event_misc)
+{
+	event_check(NULL, data, "*", NULL);
+	return 0;
 }
 
 
