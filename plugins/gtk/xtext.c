@@ -2320,11 +2320,6 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 		     unsigned char *str, short *attr, int len, int win_width, int indent,
 		     int line, int left_only, int *x_size_ret)
 {
-// #define DEBUG_RENDER(args...) printf(args)
-#define DEBUG_RENDER(args...) 
-
-	static int kolorek = 0;
-
 	GdkGC *gc;
 	int i = 0, x = indent, j = 0;
 	unsigned char *pstr = str;
@@ -2337,8 +2332,6 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 	xtext->in_hilight = FALSE;
 
 	offset = str - ent->str;
-
-	DEBUG_RENDER("fcall() data: ");
 
 	if (line < 255 && line >= 0)
 		xtext->buffer->grid_offset[line] = offset;
@@ -2408,15 +2401,10 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 			int isbold;
 			last_attr = attr[i];
 
-			DEBUG_RENDER("\n");
-
 			if (i) {
-				DEBUG_RENDER("flushing render: %i\n", kolorek);
 				x += gtk_xtext_render_flush(xtext, x, y, pstr, j, gc, ent->mb);
 				pstr += j;
 				j = 0;
-
-				kolorek++;
 			}
 
 			gtk_xtext_reset(xtext, mark, !xtext->in_hilight);
@@ -2426,11 +2414,6 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 /*			xtext->bold = (isbold); */
 			/* more follow */
 
-			DEBUG_RENDER("[B: %d] ", isbold);
-			DEBUG_RENDER("[Bl: %d] ", last_attr & 256);
-			DEBUG_RENDER("[U: %d] ", last_attr & 512);
-			DEBUG_RENDER("[R: %d] ", last_attr & 1024);
-
                         if (!(last_attr & 128)) {
 				if (!mark) {
 					xtext_set_fg(xtext, gc, ((last_attr & 7) + 8*isbold));
@@ -2438,19 +2421,13 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 				}
 				xtext->col_fore = ((last_attr & 7) + 8*isbold);
 /*				xtext->col_back = ((last_attr >> 3) & 7); */
-
-				DEBUG_RENDER("[C:%.2d] ", xtext->col_fore);
 			} else {
 				if (isbold) {
 					if (!mark)
 						xtext_set_fg(xtext, gc, 7+8);
 					xtext->col_fore = 7+8;
-
-					DEBUG_RENDER("[C:%.2d] ", xtext->col_fore);
 				}
 			}
-
-			DEBUG_RENDER("[%.3d] data :", last_attr);
 		}
 
 
@@ -2460,8 +2437,6 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 			if (tmp + i > len)
 				tmp = len - i;
 			j += tmp;	/* move to the next utf8 char */
-
-			DEBUG_RENDER("%c", str[i]);
 		}
 
 		i += charlen(str + i);	/* move to the next utf8 char */
@@ -2584,9 +2559,6 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 	/* return how much we drew in the x direction */
 	if (x_size_ret)
 		*x_size_ret = x - indent;
-
-	DEBUG_RENDER("\n");
-
 	return ret;
 }
 
