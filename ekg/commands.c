@@ -1945,7 +1945,16 @@ static COMMAND(cmd_test_debug_dump)
 static COMMAND(cmd_test_event_test)
 {
 	char *tmp = xstrdup(params[0]);
-	event_target_check(tmp);
+	if (event_target_check(tmp)) {
+		char *tmp = saprintf("Expression: %s evaluate to true", params[0]);
+		printq("generic", tmp);
+		xfree(tmp);
+	} else {
+		char *tmp = saprintf("Expression: %s evaluate to false", params[0]);
+		printq("generic_error", tmp);
+		xfree(tmp);
+	}
+		
 	xfree(tmp);
 	return 0;
 }
