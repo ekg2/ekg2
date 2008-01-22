@@ -1942,23 +1942,6 @@ static COMMAND(cmd_test_debug_dump)
 	return 0;
 }
 
-static COMMAND(cmd_test_event_test)
-{
-	char *tmp = xstrdup(params[0]);
-	if (event_target_check(tmp)) {
-		char *tmp = saprintf("Expression: %s evaluate to true", params[0]);
-		printq("generic", tmp);
-		xfree(tmp);
-	} else {
-		char *tmp = saprintf("Expression: %s evaluate to false", params[0]);
-		printq("generic_error", tmp);
-		xfree(tmp);
-	}
-		
-	xfree(tmp);
-	return 0;
-}
-
 static COMMAND(cmd_debug_watches)
 {
 	list_t l;
@@ -4309,8 +4292,6 @@ void command_init()
 	command_add(NULL, ("_desc"), "r", cmd_desc, SESSION_MUSTHAS, NULL);
 
 	command_add(NULL, ("_dns2"), "!", cmd_test_dns2, COMMAND_ENABLEREQPARAMS, NULL);
-
-	command_add(NULL, ("_event_test"), "!", cmd_test_event_test, COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(NULL, ("_fds"), NULL, cmd_test_fds, 0, NULL);
 

@@ -60,6 +60,9 @@ static event_t *event_find_id(unsigned int id);
 static int event_remove(unsigned int id, int quiet);
 static int events_list(int id, int quiet);
 
+static int event_target_check(char *buf);
+static int event_check(const char *session, const char *name, const char *uid, const char *data);
+
 /* 
  * on function 
  */
@@ -573,7 +576,7 @@ static QUERY(event_misc)
  * it also check target and if possible uid taken from target
  *
  */
-int event_check(const char *session, const char *name, const char *uid, const char *data)
+static int event_check(const char *session, const char *name, const char *uid, const char *data)
 {
 	session_t *__session;
 	userlist_t *userlist;
@@ -775,7 +778,7 @@ static int event_target_check_compare(char *buf)
  * returns logical value of given expression
  */
 
-int event_target_check(char *buf)
+static int event_target_check(char *buf)
 {
 	char **params = array_make(buf, ("&|"), 0, 1, 1);
 	int i = 1;
