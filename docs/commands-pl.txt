@@ -30,10 +30,6 @@ _desc
 	parametry: [-/opis]
 	krotki opis: zmienia opis nie zmieniaj±c stanu
 
-_event_test
-	parametry: 
-	krotki opis: iha
-
 _fds
 	parametry: 
 	krotki opis: wy¶wietla otwarte pliki
