@@ -37,11 +37,8 @@ extern char **events_all; /* it may be help for tab complete */
 
 int event_add(const char *name, int prio, const char *target, const char *action, int quiet);
 
-int event_check(const char *session, const char *name, const char *uid, const char *data);
 void event_free();
 int events_init();
-
-int event_target_check(char *buf);
 
 #endif /* __EKG_EVENTS_H */
 
