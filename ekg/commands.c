@@ -2315,7 +2315,12 @@ static COMMAND(cmd_reload)
 	if ((res = config_read(NULL))) printq("error_reading_config", strerror(errno));
 	if (res == -1) return -1;
 
+	metacontact_free();
+
 	if ((res = session_read(NULL))) printq("error_reading_config", strerror(errno));
+	if (res == -1) return -1;
+
+	if ((res = metacontact_read())) printq("error_reading_config", strerror(errno));
 	if (res == -1) return -1;
 
 	printq("config_read_success");
