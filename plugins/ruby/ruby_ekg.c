@@ -1,6 +1,7 @@
 #include "ekg2-config.h"
 
 #include <ekg/debug.h>
+#include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/scripts.h>
 
@@ -52,7 +53,44 @@ static int ruby_initialize() {
 	return 0;
 }
 
-VALUE ruby_load_wrapper(VALUE arg) {
+/* XXX, do sprawdzenia */
+static char *ruby_geterror(const char *what) {
+	string_t err = string_init(what);
+	VALUE exception_instance;
+	VALUE message;
+	VALUE class;
+	ID id;
+
+/* where? */
+	string_append_format(err, "%s:%d", ruby_sourcefile, ruby_sourceline);
+
+	if ((id = rb_frame_last_func()))
+		string_append_format(err, " @%s()", rb_id2name(id));
+	string_append_c(err, '\n');
+
+	exception_instance = rb_gv_get("$!");
+/* class */
+	class = rb_class_path(CLASS_OF(exception_instance));
+	string_append_format(err, _("Class: %s\n"), RSTRING(class)->ptr);
+/* message */
+	message = rb_obj_as_string(exception_instance);
+	string_append_format(err, _("Message: %s\n"), RSTRING(message)->ptr);
+
+/* backtrace */
+	if(!NIL_P(ruby_errinfo)) {
+		VALUE ary = rb_funcall(ruby_errinfo, rb_intern("backtrace"), 0);
+		int c;
+
+		string_append(err, "Backtrace:\n");
+
+		for (c=0; c<RARRAY(ary)->len; c++)
+			string_append_format(err, "from %s\n", RSTRING(RARRAY(ary)->ptr[c])->ptr);
+	}
+
+	return string_free(err, 0);
+}
+
+static VALUE ruby_load_wrapper(VALUE arg) {
 	rb_require((const char *) arg);
 	return Qnil;
 }
@@ -60,11 +98,12 @@ VALUE ruby_load_wrapper(VALUE arg) {
 static int ruby_load(script_t *scr) {
 	int error = 0;
 	
-	rb_protect(ruby_load_wrapper, scr->path, &error);
+	rb_protect(ruby_load_wrapper, (VALUE) scr->path, &error);
 	
 	if (error) {
-		/* XXX */
-		debug_error("ruby_load() error: %s\n", "dupa");
+		char *err = ruby_geterror("ruby_load() ");
+		print("script_error", err);
+		xfree(err);
 		return -1;
 	}
 
