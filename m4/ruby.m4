@@ -1,3 +1,6 @@
+dnl RUBY_LIBS=`$RUBY -r mkmf -e 'c=Config::CONFIG; libs=c[["libdir"]]+"/"+c[["LIBRUBY"]]+" "+c[["LIBS"]]; print libs'`
+dnl RUBY_LIBS XXX
+
 RUBY=
 RUBY_CFLAGS=
 RUBY_LIBS=
@@ -15,7 +18,8 @@ AC_DEFUN([AM_CHECK_RUBY],
 				AC_MSG_RESULT([ruby found, but error while getting CFLAGS])
 			else
 				RUBY_CFLAGS="-I$ruby_cflags_h"
-				RUBY_LIBS=`$RUBY -r mkmf -e 'c=Config::CONFIG; libs=c[["libdir"]]+"/"+c[["LIBRUBY"]]+" "+c[["LIBS"]]; print libs'`
+				ruby_libs_r=`$RUBY -r mkmf -e 'c=Config::CONFIG; libs=c[["RUBY_SO_NAME"]]+" "+c[["LIBS"]]; print libs'`
+				RUBY_LIBS="-l$ruby_libs_r"
 
 				echo "main(){ruby_init(); return 0;}" > conftest.c
 				$CC $CFLAGS conftest.c -o conftest $LDFLAGS $RUBY_LIBS 2> ruby.error.tmp > /dev/null
