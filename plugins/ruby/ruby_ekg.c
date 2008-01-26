@@ -67,6 +67,24 @@ static VALUE ekg2_scripts_initialize(VALUE self) {
 	return ekg2_ruby_script;
 }
 
+static VALUE ruby_format_add(int argc, VALUE *argv, VALUE self) {
+	int replace = 1;
+
+	if (argc != 2 && argc != 3) rb_raise(rb_eArgError, "format_add() accepts 2 or 3 params, but %d given", argc);
+
+	Check_Type(argv[0], T_STRING);
+	Check_Type(argv[1], T_STRING);
+
+	if (argc == 3) {
+		Check_Type(argv[2], T_FIXNUM);
+		replace = FIX2INT(argv[2]);
+	}
+	
+	format_add(RSTRING(argv[0])->ptr, RSTRING(argv[1])->ptr, replace);
+
+	return Qnil;
+}
+
 static VALUE ruby_print(int argc, VALUE *argv, VALUE self) {
 	script_t *scr = ruby_find_script(self);
 
@@ -74,11 +92,23 @@ static VALUE ruby_print(int argc, VALUE *argv, VALUE self) {
 		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ handler_bind internal error");
 		return Qnil;
 	}
-	if (argc != 1) rb_raise(rb_eArgError, "print() accepts 1 param, but %d given", argc);
+	if (argc == 0 || argc > 10) rb_raise(rb_eArgError, "print() accepts 1-10 params, but %d given", argc);
 
 	Check_Type(argv[0], T_STRING);
 
-	print("script_generic", "ruby", scr->name, RSTRING(argv[0])->ptr);
+	if (argc == 1)
+		print("script_generic", "ruby", scr->name, RSTRING(argv[0])->ptr);
+	else {
+		char *args[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
+		int i;
+
+		for (i = 1; i < argc; i++) {
+			Check_Type(argv[i], T_STRING);
+			args[i-1] = RSTRING(argv[i])->ptr;
+		}
+
+		print(RSTRING(argv[0])->ptr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
+	}
 
 	return Qnil;
 }
@@ -117,7 +147,6 @@ static VALUE ruby_timer_bind(int argc, VALUE *argv, VALUE self) {
 	return Qnil;
 }
 
-
 static VALUE ruby_handler_bind(int argc, VALUE *argv, VALUE self) {
 	script_t *scr = ruby_find_script(self);
 	char *query_name = NULL;
@@ -126,7 +155,7 @@ static VALUE ruby_handler_bind(int argc, VALUE *argv, VALUE self) {
 		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ handler_bind internal error");
 		return Qnil;
 	}
-	if (argc != 2 && argc != 3) rb_raise(rb_eArgError, "handler_bind() accepts 2 or 3 params, but %d given", argc);
+	if (argc != 2) rb_raise(rb_eArgError, "handler_bind() accepts 2 params, but %d given", argc);
 
 #if 0
 	if (TYPE(obj) == T_STRING)	query_name = RSTRING(argv[0])->ptr;
@@ -155,6 +184,7 @@ static int ruby_initialize() {
 	rb_define_method(ekg2_ruby_script, "command_bind", ruby_command_bind, -1);
 	rb_define_method(ekg2_ruby_script, "handler_bind", ruby_handler_bind, -1);
 	rb_define_method(ekg2_ruby_script, "timer_bind", ruby_timer_bind, -1);
+	rb_define_method(ekg2_ruby_script, "format_add", ruby_format_add, -1);
 	rb_define_method(ekg2_ruby_script, "print", ruby_print, -1);
 	rb_define_method(ekg2_ruby_script, "initialize", ekg2_scripts_initialize, 0);
 
