@@ -20,7 +20,9 @@ class Ekg2::Script::Sample < Ekg2::Script
 	end
 
 	def handler_czasomierz()
-		print "Czas plynie a dekoral wciaz bialy"
+		$already = $already + 1;
+		$left = $left - 1;
+		print "dekoral", $already.to_s, $left.to_s
 	end
 
 	def initialize
@@ -28,6 +30,11 @@ class Ekg2::Script::Sample < Ekg2::Script
 #		handler_bind("ui-keypress", "handler_keypress")
 		command_bind("foo", "handler_foo")
 		timer_bind(1, "handler_czasomierz");
+
+		format_add("dekoral", "%) %MCzas plynie a %YDEKORAL%n %gwciaz%n %TBIALY%n %B%1 uderzenie.%n %RZostalo %2.");
+		$already = 0
+		$left = 1000000;
+
 	end
 
 end
