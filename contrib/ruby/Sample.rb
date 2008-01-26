@@ -6,7 +6,7 @@ MSG
 	exit
 end
 
-class Ekg2::Script::Test < Ekg2::Script
+class Ekg2::Script::Sample < Ekg2::Script
 	def handler_keypress(klawisz)
 		print "Nacisnales klawisz!: #" + klawisz.to_s;
 	end
