@@ -56,8 +56,6 @@ static script_t *ruby_find_script(VALUE self) {
 }
 
 static VALUE ekg2_scripts_initialize(VALUE self) {
-	debug_error("ekg2_scripts_initialize(%p) %x\n", last_scr, self);
-
 	if (!last_scr) {
 		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ initialize internal error");
 		return Qnil;	/* ??? */
@@ -85,11 +83,44 @@ static VALUE ruby_print(int argc, VALUE *argv, VALUE self) {
 	return Qnil;
 }
 
+static VALUE ruby_command_bind(int argc, VALUE *argv, VALUE self) {
+	script_t *scr = ruby_find_script(self);
+
+	if (!scr) {
+		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ command_bind internal error");
+		return Qnil;
+	}
+	if (argc != 2 && argc != 3) rb_raise(rb_eArgError, "command_bind() accepts 2 or 3 params, but %d given", argc);
+
+	Check_Type(argv[0], T_STRING);
+	Check_Type(argv[1], T_STRING);
+
+	script_command_bind(&ruby_lang, scr, RSTRING(argv[0])->ptr, xstrdup(RSTRING(argv[1])->ptr));	/* XXX, memleak */
+
+	return Qnil;
+}
+
+static VALUE ruby_timer_bind(int argc, VALUE *argv, VALUE self) {
+	script_t *scr = ruby_find_script(self);
+
+	if (!scr) {
+		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ handler_bind internal error");
+		return Qnil;
+	}
+	if (argc != 2) rb_raise(rb_eArgError, "timer_bind() accepts 2 paramss, but %d given", argc);
+
+	Check_Type(argv[0], T_FIXNUM);		/* XXX, T_BIGNUM || T_FLOAT ? */
+	Check_Type(argv[1], T_STRING);
+
+	script_timer_bind(&ruby_lang, scr, FIX2INT(argv[0]), xstrdup(RSTRING(argv[1])->ptr));	/* XXX, memleak */
+
+	return Qnil;
+}
+
+
 static VALUE ruby_handler_bind(int argc, VALUE *argv, VALUE self) {
 	script_t *scr = ruby_find_script(self);
 	char *query_name = NULL;
-
-	debug("ruby_handler_bind(%d, %p, %p)\n", argc, argv, scr);
 
 	if (!scr) {
 		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ handler_bind internal error");
@@ -118,14 +149,14 @@ static int ruby_initialize() {
 	ruby_script("ekg2");
 
 /* create ekg2 class */
-	{
-		ekg2_ruby_module = rb_define_module("Ekg2");
-		ekg2_ruby_script = rb_define_class_under(ekg2_ruby_module, "Script", rb_cObject);
+	ekg2_ruby_module = rb_define_module("Ekg2");
+	ekg2_ruby_script = rb_define_class_under(ekg2_ruby_module, "Script", rb_cObject);
 
-		rb_define_method(ekg2_ruby_script, "handler_bind", ruby_handler_bind, -1);
-		rb_define_method(ekg2_ruby_script, "print", ruby_print, -1);
-		rb_define_method(ekg2_ruby_script, "initialize", ekg2_scripts_initialize, 0);
-	}
+	rb_define_method(ekg2_ruby_script, "command_bind", ruby_command_bind, -1);
+	rb_define_method(ekg2_ruby_script, "handler_bind", ruby_handler_bind, -1);
+	rb_define_method(ekg2_ruby_script, "timer_bind", ruby_timer_bind, -1);
+	rb_define_method(ekg2_ruby_script, "print", ruby_print, -1);
+	rb_define_method(ekg2_ruby_script, "initialize", ekg2_scripts_initialize, 0);
 
 	return 0;
 }
@@ -309,6 +340,24 @@ static int ruby_query(script_t *scr, script_query_t *scr_que, void *args[]) {
 }
 
 static int ruby_commands(script_t *scr, script_command_t *comm, char **params) {
+	ruby_helper_t ruby_command;
+	VALUE *argv;
+	int argc = array_count(params);
+	int i;
+
+	argv = ALLOCA_N(VALUE, argc);
+
+	/* XXX argv == NULL ? */
+
+	for (i=0; i < argc; i++)
+		argv[i] = rb_str_new2(params[0]);
+
+	ruby_command.class = (VALUE) scr->private;
+	ruby_command.func = comm->private;
+	ruby_command.argc = argc;
+	ruby_command.argv = argv;
+
+	ruby_funcall(&ruby_command);
 
 	return 0;
 }
@@ -325,7 +374,14 @@ static int ruby_variable_changed(script_t *scr, script_var_t *scr_var, char *wha
 }
 
 static int ruby_timers(script_t *scr, script_timer_t *time, int type) {
+	ruby_helper_t ruby_timer;
 
+	ruby_timer.class = (VALUE) scr->private;
+	ruby_timer.func = time->private;
+	ruby_timer.argc = 0;
+	ruby_timer.argv = NULL;
+
+	ruby_funcall(&ruby_timer);
 	return 0;
 }
 
