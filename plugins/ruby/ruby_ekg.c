@@ -10,6 +10,8 @@
 
 #include <ruby.h>
 
+#include "ruby_ekg.h"
+
 /*
  * NOTES:
  *   - ALLOCA_N() == alloca(). it's neither 100% safe, nor 100% portable.
@@ -22,7 +24,7 @@ static int ruby_initialize();
 static int ruby_finalize_wrapper();
 static int ruby_load(script_t *scr);
 static int ruby_unload(script_t *scr);
-static int ruby_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bedzie.. nie uzywac */ int type, void *private, ...);
+static int ruby_bind_free(script_t *scr, void *data, int type, void *private, ...);
 static int ruby_query(script_t *scr, script_query_t *scr_que, void *args[]);
 static int ruby_commands(script_t *scr, script_command_t *comm, char **params);
 static int ruby_timers(script_t *scr, script_timer_t *time, int type);
@@ -57,12 +59,6 @@ static int ruby_finalize_wrapper() {
 	return 0;
 }
 
-#define RUBY_EKG_INTERNAL_ERROR rb_eArgError /* XXX */
-
-static script_t *ruby_find_script(VALUE self) {
-	SCRIPT_FINDER(scr->lang == &ruby_lang && script_private_get(scr) == (void *) self);
-}
-
 static VALUE ekg2_scripts_initialize(VALUE self) {
 	if (!last_scr) {
 		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ initialize internal error");
@@ -74,53 +70,6 @@ static VALUE ekg2_scripts_initialize(VALUE self) {
 
 	return ekg2_ruby_script;
 }
-
-static VALUE ruby_format_add(int argc, VALUE *argv, VALUE self) {
-	int replace = 1;
-
-	if (argc != 2 && argc != 3) rb_raise(rb_eArgError, "format_add() accepts 2 or 3 params, but %d given", argc);
-
-	Check_Type(argv[0], T_STRING);
-	Check_Type(argv[1], T_STRING);
-
-	if (argc == 3) {
-		Check_Type(argv[2], T_FIXNUM);
-		replace = FIX2INT(argv[2]);
-	}
-	
-	format_add(RSTRING(argv[0])->ptr, RSTRING(argv[1])->ptr, replace);
-
-	return Qnil;
-}
-
-static VALUE ruby_print(int argc, VALUE *argv, VALUE self) {
-	script_t *scr = ruby_find_script(self);
-
-	if (!scr) {
-		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ handler_bind internal error");
-		return Qnil;
-	}
-	if (argc == 0 || argc > 10) rb_raise(rb_eArgError, "print() accepts 1-10 params, but %d given", argc);
-
-	Check_Type(argv[0], T_STRING);
-
-	if (argc == 1)
-		print("script_generic", "ruby", scr->name, RSTRING(argv[0])->ptr);
-	else {
-		char *args[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
-		int i;
-
-		for (i = 1; i < argc; i++) {
-			Check_Type(argv[i], T_STRING);
-			args[i-1] = RSTRING(argv[i])->ptr;
-		}
-
-		print(RSTRING(argv[0])->ptr, args[0], args[1], args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9]);
-	}
-
-	return Qnil;
-}
-
 static VALUE ruby_command_bind(int argc, VALUE *argv, VALUE self) {
 	script_t *scr = ruby_find_script(self);
 
@@ -151,6 +100,31 @@ static VALUE ruby_timer_bind(int argc, VALUE *argv, VALUE self) {
 	Check_Type(argv[1], T_STRING);
 
 	script_timer_bind(&ruby_lang, scr, FIX2INT(argv[0]), xstrdup(RSTRING(argv[1])->ptr));	/* XXX, memleak */
+
+	return Qnil;
+}
+
+static VALUE ruby_watch_add(int argc, VALUE *argv, VALUE self) {
+	script_t *scr = ruby_find_script(self);
+	int fd;
+	int type;
+
+	if (!scr) {
+		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ watch_add() internal error");
+		return Qnil;
+	}
+	if (argc != 3) rb_raise(rb_eArgError, "watch_add() accepts 3 paramss, but %d given", argc);
+
+	Check_Type(argv[0], T_FIXNUM);		/* XXX, allow T_FILE */
+	Check_Type(argv[1], T_FIXNUM);
+	Check_Type(argv[2], T_STRING);
+
+	fd = FIX2INT(argv[0]);
+	/* XXX, test fd */
+	type = FIX2INT(argv[1]);
+	/* XXX, test type */
+
+        script_watch_add(&ruby_lang, scr, fd, type, xstrdup(RSTRING(argv[2])->ptr), NULL);	/* XXX, memleak */
 
 	return Qnil;
 }
@@ -204,6 +178,8 @@ static VALUE ruby_handler_bind(int argc, VALUE *argv, VALUE self) {
 	return Qnil;
 }
 
+extern void ruby_define_theme_methods(VALUE module);	/* ruby_theme.c */
+
 static int ruby_initialize() {
 	ruby_init();
 	ruby_init_loadpath();
@@ -213,15 +189,17 @@ static int ruby_initialize() {
 	ekg2_ruby_module = rb_define_module("Ekg2");
 	ekg2_ruby_script = rb_define_class_under(ekg2_ruby_module, "Script", rb_cObject);
 
+	rb_define_method(ekg2_ruby_script, "initialize", ekg2_scripts_initialize, 0);
+
 	rb_define_method(ekg2_ruby_script, "command_bind", ruby_command_bind, -1);
 	rb_define_method(ekg2_ruby_script, "handler_bind", ruby_handler_bind, -1);
 	rb_define_method(ekg2_ruby_script, "timer_bind", ruby_timer_bind, -1);
+	rb_define_method(ekg2_ruby_script, "watch_add", ruby_watch_add, -1);
 	rb_define_method(ekg2_ruby_script, "variable_add", ruby_variable_add, -1);
 
-	rb_define_method(ekg2_ruby_script, "format_add", ruby_format_add, -1);
-	rb_define_method(ekg2_ruby_script, "print", ruby_print, -1);
-	rb_define_method(ekg2_ruby_script, "initialize", ekg2_scripts_initialize, 0);
+	rb_define_const(ekg2_ruby_script, "WATCH_READ", INT2FIX(WATCH_READ));
 
+	ruby_define_theme_methods(ekg2_ruby_script);
 	return 0;
 }
 
@@ -290,7 +268,7 @@ static int ruby_load(script_t *scr) {
 		char *err = ruby_geterror("ruby_load() ");
 		print("script_error", err);
 		xfree(err);
-		last_scr = NULL;
+		last_scr = scr->private = NULL;
 		return -1;
 	}
 
@@ -300,7 +278,7 @@ static int ruby_load(script_t *scr) {
 		char *err = ruby_geterror("ruby_init() ");
 		print("script_error", err);
 		xfree(err);
-		last_scr = NULL;
+		last_scr = scr->private = NULL;
 		return -1;
 	}
 
@@ -308,23 +286,19 @@ static int ruby_load(script_t *scr) {
 }
 
 static VALUE ruby_deinit_wrapper(VALUE arg) {
-	/* XXX */
-	VALUE class = rb_const_get(ekg2_ruby_script, rb_intern((const char *) arg));
-	VALUE self = rb_funcall2(class, rb_intern("dispose"), 0, NULL);
-
-	return self;
+	return Qnil;
+	return rb_funcall2(arg, rb_intern("dispose"), 0, NULL);
 }
 
 static int ruby_unload(script_t *scr) {
 	int error = 0;
-	debug("ruby_unload() %d\n", !!last_scr);
 
-	if (last_scr) return 0;	/* XXX ? */
-#if 0
-	rb_protect(ruby_deinit_wrapper, (VALUE) scr->name, &error);
-#endif
+	if (!scr->private) return 0;
+
+	rb_protect(ruby_deinit_wrapper, (VALUE) scr->private, &error);
+
 	if (error) {
-		char *err = ruby_geterror("ruby_unload() ");
+		char *err = ruby_geterror("ruby_deinit() ");
 		print("script_error", err);
 		xfree(err);
 /*		return -1; */	/* XXX ? */
@@ -443,8 +417,19 @@ static int ruby_commands(script_t *scr, script_command_t *comm, char **params) {
 
 /* IF WATCH_READ_LINE int type == char *line */
 static int ruby_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch) {
-	/* STUB */
+	ruby_helper_t ruby_watch;
+	VALUE argv[3];
 
+	argv[0] = INT2FIX(type);
+	argv[1] = INT2FIX(fd);	/* XXX, temporary we pass fd instad of T_FILE */
+	argv[2] = INT2FIX(watch);
+
+	ruby_watch.class = (VALUE) scr->private;
+	ruby_watch.func = scr_wat->private;
+	ruby_watch.argc = 3;
+	ruby_watch.argv = argv;
+
+	ruby_funcall(&ruby_watch);
 	return 0;
 }
 
