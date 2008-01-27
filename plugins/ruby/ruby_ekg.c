@@ -70,6 +70,11 @@ static VALUE ekg2_scripts_initialize(VALUE self) {
 
 	return ekg2_ruby_script;
 }
+
+static VALUE ekg2_scripts_finalize(VALUE self) {
+	return Qnil;
+}
+
 static VALUE ruby_command_bind(int argc, VALUE *argv, VALUE self) {
 	script_t *scr = ruby_find_script(self);
 
@@ -190,6 +195,7 @@ static int ruby_initialize() {
 	ekg2_ruby_script = rb_define_class_under(ekg2_ruby_module, "Script", rb_cObject);
 
 	rb_define_method(ekg2_ruby_script, "initialize", ekg2_scripts_initialize, 0);
+	rb_define_method(ekg2_ruby_script, "finalize", ekg2_scripts_finalize, 0);
 
 	rb_define_method(ekg2_ruby_script, "command_bind", ruby_command_bind, -1);
 	rb_define_method(ekg2_ruby_script, "handler_bind", ruby_handler_bind, -1);
@@ -248,7 +254,10 @@ static VALUE ruby_init_wrapper(VALUE arg) {
 }
 
 static VALUE ruby_load_wrapper(VALUE arg) {
-	rb_require((const char *) arg);
+	rb_load_file((const char *) arg);
+	ruby_exec();
+
+//	rb_require((const char *) arg);
 	return Qnil;
 }
 
@@ -286,8 +295,7 @@ static int ruby_load(script_t *scr) {
 }
 
 static VALUE ruby_deinit_wrapper(VALUE arg) {
-	return Qnil;
-	return rb_funcall2(arg, rb_intern("dispose"), 0, NULL);
+	return rb_funcall2(arg, rb_intern("finalize"), 0, NULL);
 }
 
 static int ruby_unload(script_t *scr) {
