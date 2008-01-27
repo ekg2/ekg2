@@ -308,7 +308,7 @@ PyObject *ekg_cmd_watch_add(PyObject * self, PyObject * args)
         }
 
         if (!PyCallable_Check(callback)) {
-                print("generic_error", _("Second parameter to timer_bind is not callable"));
+                print("generic_error", _("Second parameter to watch_add is not callable"));
                 PyErr_SetString(PyExc_TypeError, _("Parameter must be callable"));
                 return NULL;
         }
