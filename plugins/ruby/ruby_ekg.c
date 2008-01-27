@@ -31,7 +31,13 @@ static int ruby_timers(script_t *scr, script_timer_t *time, int type);
 static int ruby_variable_changed(script_t *scr, script_var_t *scr_var, char *what);
 static int ruby_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch);
 
-PLUGIN_DEFINE(ruby, PLUGIN_SCRIPTING, NULL);
+static int ruby_script_theme_init(script_t *scr);
+
+static int allow_deinit = 0;
+
+static int ruby_theme_init();
+
+PLUGIN_DEFINE(ruby, PLUGIN_SCRIPTING, ruby_theme_init);
 
 scriptlang_t ruby_lang = { /* SCRIPT_DEFINE(ruby, ".rb"); */
 	name: "ruby",
@@ -55,25 +61,38 @@ static VALUE ekg2_ruby_module;
 static VALUE ekg2_ruby_script;
 
 static int ruby_finalize_wrapper() {
+	if (!allow_deinit) {
+		debug_error("NOT allow_deinit, but ruby_finalize_wrapper() called /script:reset ?\n");
+		return 0;
+	}
+
 	ruby_finalize();
 	return 0;
 }
 
 static VALUE ekg2_scripts_initialize(VALUE self) {
+	script_t *scr;
+
 	if (!last_scr) {
 		rb_raise(RUBY_EKG_INTERNAL_ERROR, "@ initialize internal error");
 		return Qnil;	/* ??? */
 	}
 
-	last_scr->private = (void *) self;
-	last_scr = NULL;
+	scr = last_scr; last_scr = NULL;
+
+	scr->private = (void *) self;
+
+	ruby_script_theme_init(scr);
 
 	return ekg2_ruby_script;
 }
 
-static VALUE ekg2_scripts_finalize(VALUE self) {
+static VALUE ekg2_scripts_return_qnil(VALUE self) {
 	return Qnil;
 }
+
+#define ekg2_scripts_finalize	ekg2_scripts_return_qnil
+#define ekg2_scripts_init_theme ekg2_scripts_return_qnil
 
 static VALUE ruby_command_bind(int argc, VALUE *argv, VALUE self) {
 	script_t *scr = ruby_find_script(self);
@@ -186,6 +205,14 @@ static VALUE ruby_handler_bind(int argc, VALUE *argv, VALUE self) {
 extern void ruby_define_theme_methods(VALUE module);	/* ruby_theme.c */
 
 static int ruby_initialize() {
+	static int once = 0;
+
+	if (once) {
+		print("generic_error", "Try not to use /script:reset when you're using ruby plugin. Instead do: /plugin -ruby /plugin +ruby");
+		return 0;
+	}
+	once = 1;
+
 	ruby_init();
 	ruby_init_loadpath();
 	ruby_script("ekg2");
@@ -196,12 +223,14 @@ static int ruby_initialize() {
 
 	rb_define_method(ekg2_ruby_script, "initialize", ekg2_scripts_initialize, 0);
 	rb_define_method(ekg2_ruby_script, "finalize", ekg2_scripts_finalize, 0);
+	rb_define_method(ekg2_ruby_script, "theme_init", ekg2_scripts_init_theme, -1);
 
 	rb_define_method(ekg2_ruby_script, "command_bind", ruby_command_bind, -1);
 	rb_define_method(ekg2_ruby_script, "handler_bind", ruby_handler_bind, -1);
 	rb_define_method(ekg2_ruby_script, "timer_bind", ruby_timer_bind, -1);
 	rb_define_method(ekg2_ruby_script, "watch_add", ruby_watch_add, -1);
 	rb_define_method(ekg2_ruby_script, "variable_add", ruby_variable_add, -1);
+
 
 	rb_define_const(ekg2_ruby_script, "WATCH_READ", INT2FIX(WATCH_READ));
 
@@ -469,13 +498,42 @@ static int ruby_timers(script_t *scr, script_timer_t *time, int type) {
 	return 0;
 }
 
+static int ruby_script_theme_init(script_t *scr) {
+	ruby_helper_t ruby_theme;
+
+	ruby_theme.class = (VALUE) scr->private;
+	ruby_theme.func = "theme_init";
+	ruby_theme.argc = 0;
+	ruby_theme.argv = NULL;
+
+	ruby_funcall(&ruby_theme);
+	return 1;
+}
+
+static int ruby_theme_init() {
+	list_t l;
+
+	for (l = scripts; l; l = l->next) {
+		script_t *scr = l->data;
+
+		if (scr->lang == &ruby_lang)
+			ruby_script_theme_init(scr);
+	}
+
+	return 0;
+}
+
 EXPORT int ruby_plugin_init(int prio) {
+	allow_deinit = 0;
+
 	plugin_register(&ruby_plugin, prio);
 	scriptlang_register(&ruby_lang);
 	return 0;
 }
 
 static int ruby_plugin_destroy() {
+	allow_deinit = 1;
+
 	scriptlang_unregister(&ruby_lang);
 	plugin_unregister(&ruby_plugin);
 	return 0;
