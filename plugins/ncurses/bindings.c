@@ -56,7 +56,7 @@ int bindings_added_max = 0;
 #define line ncurses_line
 #define lines ncurses_lines
 
-int ncurses_noecho;
+extern int ncurses_noecho;	/* in old.c */
 CHAR_T *ncurses_passbuf;
 
 static BINDING_FUNCTION(binding_backward_word)
