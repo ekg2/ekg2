@@ -1532,7 +1532,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 		char *jstatus = NULL;
 		char *tmp2;
 
-		int prio = (temp = xmlnode_find_child(n, "priority")) ? atoi(temp->data) : 10;
+		int prio = (temp = xmlnode_find_child(n, "priority")) && temp->data ? atoi(temp->data) : 10;
 
 		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
 			jstatus = tlenjabber_unescape(nshow->data);
