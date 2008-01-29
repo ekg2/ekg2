@@ -714,7 +714,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 		/* here new code, should work also with w->nowrap == 1 */
 		y -= 1;		/* ??? */
 
-		if (y >= n->lines_count)
+		if (y < 0 || y >= n->lines_count)
 			return;
 
 		y = n->lines[y].backlog;
