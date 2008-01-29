@@ -696,7 +696,6 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 {
 	window_t *w = window_find_sa(NULL, "__contacts", 1);
 	ncurses_window_t *n;
-	CHAR_T *name;
 
 	if (mouse_state == EKG_SCROLLED_UP) {
 		ncurses_backward_contacts_line(5);
@@ -711,12 +710,28 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 
 	n = w->private;
 
-	if (y > n->backlog_size)
+	if (!w->nowrap) {
+		/* here new code, should work also with w->nowrap == 1 */
+		y -= 1;		/* ??? */
+
+		if (y >= n->lines_count)
+			return;
+
+		y = n->lines[y].backlog;
+	} else {
+		/* here old code */
+		if (y > n->backlog_size)
+			return;
+
+		y = n->backlog_size - y;
+	}
+
+	if (y >= n->backlog_size) {
+		/* error */
 		return;
+	}
 
-	name = n->backlog[n->backlog_size - y]->str.w;
-
-	command_exec_format(NULL, NULL, 0, ("/query \"%s\""), n->backlog[n->backlog_size - y ]->private);
+	command_exec_format(NULL, NULL, 0, ("/query \"%s\""), n->backlog[y]->private);
 	return;
 }
 
