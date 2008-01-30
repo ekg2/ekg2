@@ -162,9 +162,11 @@ void userlist_add_entry(session_t *session, const char *line)
 			
 	u->groups	= group_init(entry[5]);
 
-	u->nickname	= !valid_nick(entry[3]) ? 
-		saprintf("_%s", entry[3]) :
-		xstrdup(entry[3]);
+	if (entry[3]) {
+		u->nickname	= !valid_nick(entry[3]) ? 
+			saprintf("_%s", entry[3]) :
+			xstrdup(entry[3]);
+	}
 
 	u->foreign	= entry[7] ? 
 		saprintf(";%s", entry[7]) :
