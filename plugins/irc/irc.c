@@ -97,7 +97,6 @@
  *  OTHER LESS IMPORTANT BUGS
  *    -> somewhere with altnick sending
  *      G->dj: still not as I would like it to be
- *    -> 09/12/05 01:41:27 <Greyer> czemu nie dzia³a jednoczesne opowanie kilku osób ? (wczesniej zgloszone kiedystam, czekamy na rewrite irc_getchan() :)
  *  !BUGS (?) TODO->check
  *    -> buggy auto_find. if smb type smth on the channel.
  *        *  10:58:27 ::: Nieprawidowe parametry. Sprobuj help find *
@@ -1578,6 +1577,8 @@ static COMMAND(irc_command_names) {
 	int		smlen = xstrlen(sort_modes)+1, nplen = (SOP(_005_NICKLEN)?atoi(SOP(_005_NICKLEN)):0) + 1;
 	char            mode[2], **mp, *channame, nickpad[nplen];
 
+	const int fillerchar = 160;
+
 	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN))) 
 		return -1;
 
@@ -1585,11 +1586,10 @@ static COMMAND(irc_command_names) {
 		printq("generic", "irc_command_names: wtf?");
 		return -1;
 	}
-/* jaki jest cel tego ze to bylo robione 2 razy ? */
 	mode[1] = '\0';
 
 	for (lvl =0; lvl<nplen; lvl++)
-		nickpad[lvl] = 160;
+		nickpad[lvl] = fillerchar;
 	nickpad[lvl] = '\0';
 
 	print_window(channame, session, 0, "IRC_NAMES_NAME", session_name(session), channame+4);
@@ -1597,7 +1597,14 @@ static COMMAND(irc_command_names) {
 
 	for (lvl = 0; lvl<smlen; ++lvl, ++sort_modes)
 	{
-		mode[0] = (*sort_modes)?(*sort_modes):160; /* ivil hack*/
+		/* set mode string passed to formatee to proper
+		 * sign from modes, or if there are no modes left
+		 * set it to formatee letter,
+		 * The use of 160 fillerchar will cause that "[ nickname     ]"
+		 * won't be splitted like: "[ nickname
+		 *      ]", and whole will be treated as long 'nplen+2' long string :)
+		 */
+		mode[0] = (*sort_modes)?(*sort_modes):fillerchar;
 		for (l = chan->window->userlist; l; l = l->next)
 		{
 			char *tmp;
@@ -1608,7 +1615,7 @@ static COMMAND(irc_command_names) {
 
 			nickpad[nplen -1 -xstrlen((ulist->uid + 4))] = '\0';
 			string_append(buf, (tmp = format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad))); xfree(tmp);
-			nickpad[nplen -1 -xstrlen((ulist->uid + 4))] = 160;
+			nickpad[nplen -1 -xstrlen((ulist->uid + 4))] = fillerchar;
 			++count;
 		}
 		debug("---separator---\n");

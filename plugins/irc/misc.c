@@ -251,7 +251,7 @@ separated by one (or more) ASCII space character(s) (0x20).
 The presence of a prefix is indicated with a single leading ASCII
 colon character (':', 0x3b), which must be the first character of the
 message itself.  There must be no gap (whitespace) between the colon
-and the prefix.   
+and the prefix.  
 */
 	/* GiM: nasty hack, because, prefix is optional... */
 	if (':' != *p) { q[0]=":_empty_"; c++; }

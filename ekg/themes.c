@@ -296,20 +296,34 @@ static char *va_format_string(const char *format, va_list ap) {
 			p++;
 			if (!*p)
 				break;
+			/* This is conditional formatee, it looks like:
+			 * %{NcdefSTUV}X
+			 * N - is a parameter number, first letter of this parameter will be checked against 'cdef' letters
+			 *   if N[0] == 'c', %S formatee is used
+			 *   if N[0] == 'd', %T formatee is used
+			 *   if N[0] == 'e', %U formatee is used
+			 *   if N[0] == 'f', %V formatee is used
+			 */
 			if (*p == '{') {		/* how does it works ? i czemu tego nie ma w docs/themes.txt ? */
+							/* bo to pisa³ GiM, a on jak wiadomo super komentuje kod :> */
 				int hm		= 0;
 				char *str;
 				char *cnt;
 
 				p++;
 
-				if (*p == '}') 				{  p++; p++; continue; }	/* why p++; p++; ? who wrote it? */
-				else if (!(*p >= '0' && *p <= '9'))	{	p++; continue; }	/* not number, skip it */
+				if (*p == '}') 				{  p++; p++; continue; }	/* dj: why p++; p++; ? who wrote it? */
+													/* G->dj: It's on purpose, format looks like:
+													 * ${...}X
+													 */
+				else if (!(*p >= '0' && *p <= '9'))	{	p++; continue; }	/* not number, skip it this formatee */
 				else 					str = args[*p - '1'];		/* if number, get str from args table */
 
 				p++;
+				/* there must be even, point cnt to the half of string
+				 * [according to example above p points to "cdef.." cnt points to "STUV", hm=4]
+				 */
 				cnt = (char *)p;
-
 				while (*cnt && *cnt!='}') { cnt++; hm++; }
 				hm>>=1; cnt=(char *)(p+hm);
 				/* debug(">>> [HM:%d]", hm); */
@@ -318,12 +332,21 @@ static char *va_format_string(const char *format, va_list ap) {
 					p++; cnt++;
 				}
 				/* debug(" [%c%c][%d] [%s] ", *p, *cnt, hm, p); */
+				/* hm == 0, means N-th parameter doesn't fit to any of letter specified,
+				 * so we skip this formatee, but first we must fix 'p' to point to proper place
+				 */
 				if (!hm) { 
-					p = *cnt ? *(cnt+1) ? (cnt+2) : (cnt+1) : cnt;		/* (*p points to \0) ? or p = cnt+2 ? */
+					p = *cnt ? *(cnt+1) ? (cnt+2) : (cnt+1) : cnt;		/* + point 'p' = cnt+2 if it exist
+												 *   ((cnt+2) is after end of formatee
+												 *    (there's X after enclosing '}')
+												 * + or point to '\0' */
 					continue; 
 				}
+				/* N-th param matched a letter, so point 'p' to that free X at the end,
+				 * and correct it with proper formatee letter, and go-on with theme code :)
+				 * Now you should understand why there's that 'X' at the end :>
+				 */
 				p=(cnt+hm+1);
-				/* debug(" [%s]\n"); */
 				*((char *)p)=*cnt;
 			}
 			if (*p == '%')
