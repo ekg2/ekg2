@@ -507,6 +507,27 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 			int inv = 0;
 			int len	= mbtowc(&znak, &(str->str.b[cur]), rlen-cur);
 
+			/* BIG XXX:
+			 * 	years ago, when I was writting support for unicode in ekg2, 
+			 * 	I forgot to implement support for:
+			 * 	  str->prompt_len && str->margin_left
+			 *
+			 * 	Bug was hidden, untill dmilith created theme with %| with utf-8 char :)
+			 *
+			 * 	Offsets isn't corrected here, so we have something like it: http://wafel.com/~darkjames/ekg2-prompt_len_bug.png
+			 * 	(NOTE: 'AL' is beginning of message)
+			 *
+			 * 	Currently I'm not using unicode environment (honesty i never had :)) so I won't fix it.
+			 *
+			 * 	I don't even understand this code: http://geekandpoke.typepad.com/geekandpoke/2008/01/one-year-in-a-i.html (like always)
+			 *	So again, I won't fix it. If someone want to fix it, feel free to apply && commit/send (if you're not developer) patch.
+			 *
+			 *	Workaround: 
+			 *		Don't use utf-8 chars as prompt.
+			 *
+			 *	darkjames (@ 2oo8/ Feb/ o3)
+			 */
+
 			if (len == -1) {
 /*				debug("[%s:%d] mbtowc() failed ?! (%d, %s) (%d)\n", __FILE__, __LINE__, errno, strerror(errno), i); */
 
