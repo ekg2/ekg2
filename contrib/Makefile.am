@@ -1,6 +1,6 @@
 SUBDIRS = $(CONTRIB_SUBDIRS)
 DIST_SUBDIRS = python perl 
-EXTRA_DIST = irc-irssi.theme blue_sea_dragon.theme
+EXTRA_DIST = irc-irssi.theme blue_sea_dragon.theme dmilith.theme
 
 themesdir = $(DESTDIR)$(pkgdatadir)/themes
 install-data-am:

@@ -1,0 +1,60 @@
+#
+# 2oo8
+# ekg2 theme by dmilith
+# dmilith [at] gmail.com
+# theme version 0.1
+#
+
+message %K%r#-%R%4%r-# %|%c%2%n%3\n
+chat %K%r#-%R%4%r-# %|%c%2%n%3\n
+sent %K%g#-%G%4%g-# %|%3\n
+conference %c<%C%1%c>%T %|%T%3\n
+-query_started_window
+irc_msg_sent_chan %b<%n%2%T%3%g%T%b>%n %6
+irc_msg_sent_n %b<%n%2%T%3%g%T%b>%n %6
+
+irc_msg_f_chan_n %b<%C%2%g%3%b>%n %6
+irc_msg_f_chan_nh %b<%C%2%Y%3%b>%W %6
+irc_msg_f_some %b<%g%3%b>%n %T%6
+irc_not_f_chan %B<%C%2%B%3%b/%g%5%b>%n %T%6
+irc_not_f_chanh %B<%C%2%W%3%b/%W%5%b>%W %T%6
+irc_not_f_chan_n %B<%C%2%g%3%b>%n %T%6
+irc_not_f_chan_nh %B<%C%2%zY%3%b>%Y %T%6
+irc_not_f_some %b<%B%3%b>%n %T%6
+irc_f_some %b<%3%b>%n
+
+irc_joined   %> %Kjoin: %k(%K%2%k)%B %k(%K%3%k)%n\n
+irc_left   %> %Kpart: %k(%K%2%k)%B %k(%K%3%k)%B %k(%K%5%k)%n\n
+irc_kicked   %> %Kkick: %k(%K%2%k)%K wykopany przez %k(%K%3%k)%K %k(%K%6%k)%n\n
+irc_kicked_you   %> %Kkick: zoskałeś wykopany przez %k(%K%3%k)%K %k(%K%6%k)%n\n
+irc_quit   %> %Kquit: %k(%K%2%k)%K %k(%K%3%k)%K %k(%K%4%k)%n\n
+
+irc_unknown_ctcp %> %Y%2%n sent unknown CTCP %3: (%4)\n
+irc_ctcp_action_y_pub %> %y%e* %2%n %4\n
+irc_ctcp_action_y %> %Y%e* %2%n %4\n
+irc_ctcp_action_pub %> %y%h* %2%n %5\n
+irc_ctcp_action %> %Y%h* %2%n %5\n
+irc_ctcp_request_pub %> %Y%2%n requested ctcp %4 from %3\n
+irc_ctcp_request %> %Y%2%n requested ctcp %4\n
+irc_ctcp_reply %> %Y%2%n CTCP reply from %3: %4\n
+IRC_ERR_CANNOTSENDTOCHAN %! %2: %1\n
+IRC_RPL_FIRSTSECOND %> (%1) %2 %3\n
+IRC_RPL_SECONDFIRST %> (%1) %3 %2\n
+IRC_RPL_JUSTONE %> (%1) %2\n
+IRC_RPL_NEWONE %> (%1) 1:%2 2:%3 3:%4 4:%5\n
+IRC_ERR_FIRSTSECOND %! (%1) %2 %3\n
+IRC_ERR_SECONDFIRST %! (%1) %3 %2\n
+IRC_ERR_JUSTONE %! (%1) %2\n
+IRC_ERR_NEWONE %! (%1) 1:%2 2:%3 3:%4 4:%5\n
+IRC_RPL_CANTSEND %> Brak praw do wysyłania na kanał %T%2%n\n
+RPL_WHOISOPERATOR %G||%n %|ircOp    : %3\n
+IRC_RPL_TOPICBY %> set by %2 on %3
+IRC_TOPIC_CHANGE %> %T%2%n zmienił temat kanału na %T%4%n: %5\n
+IRC_TOPIC_UNSET %> %T%3%n wyłączył temat kanału %T%2%n\n
+IRC_MODE_CHAN %> %2/%3 sets mode%4\n
+IRC_MODE %> %2 set mode %3 on You\n
+
+IRC_PINGPONG %) pi/po %K%2%n\n
+IRC_YOUNEWNICK %> Zmieniłeś nick'a na %y%2%n\n
+IRC_NEWNICK %> %K%2%n zmienił nick'a %y%4%n\n
+
