@@ -437,10 +437,11 @@ group_cleanup:
 				u->status = up->status;
 				u->private = (void *) s;
 				u->xstate = up->xstate;
-				list_add_sorted(&sorted_all, u, 0, NULL);
+				list_add_sorted(&sorted_all, u, 0, comp);
 			}
+
+			comp = contacts_compare;		/* turn on sorting */
 		}
-		if (sorted_all) comp = contacts_compare;	/* if we add smth on list turn on sorting.... */
 
 		for (l = c ? c->participants : window_current->userlist; l; l = l->next) {
 			userlist_t *up = l->data;
