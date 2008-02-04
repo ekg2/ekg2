@@ -2161,41 +2161,34 @@ static void spellcheck(CHAR_T *what, char *where) {
 			char *word;             /* aktualny wyraz */
 			size_t wordlen;		/* dlugosc aktualnego wyrazu */
 		
+		/* szukamy jakiejs pierwszej literki */
 			for (; what[i] != CHAR('\0') && what[i] != CHAR('\n') && what[i] != CHAR('\r'); i++) {
-				if (isalpha_pl(what[i])) /* szukamy jakiejs pierwszej literki */
-					break; 
+				if (isalpha_pl(what[i]))
+					break;
 			}
 
-			/* trochê poprawiona wydajno¶æ */
+		/* trochê poprawiona wydajno¶æ */
 			if (what[i] == '\0' || what[i] == '\n' || what[i] == '\r') {
 				i--;
 				continue;
-				/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */ 
-			} else if (
-							   what[i] == 'h' && 
-					what[i + 1] && what[i + 1] == 't' && 
-					what[i + 2] && what[i + 2] == 't' && 
-					what[i + 3] && what[i + 3] == 'p' && 
-					what[i + 4] && what[i + 4] == ':' &&
-					what[i + 5] && what[i + 5] == '/' && 
-					what[i + 6] && what[i + 6] == '/') {
-
+			} 
+		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */ 
+			if (what[i] == 'h' && what[i + 1] == 't' && what[i + 2] == 't' && what[i + 3] == 'p' && what[i + 4] == ':' && 
+				what[i + 5] == '/' && what[i + 6] == '/') 
+			{
 				for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
 				i--;
 				continue;
-				/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */ 
-			} else if (
-							    what[i] == 'f' && 
-					what[i + 1] && what[i + 1] == 't' && 
-					what[i + 2] && what[i + 2] == 'p' && 
-					what[i + 3] && what[i + 3] == ':' && 
-					what[i + 4] && what[i + 4] == '/' && 
-					what[i + 5] && what[i + 5] == '/') {
-
+			} 
+		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */ 
+			if (what[i] == 'f' && what[i + 1] == 't' && what[i + 2] == 'p' && what[i + 3] == ':' &&
+				what[i + 4] == '/' && what[i + 5] == '/') 
+			{
 				for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
 				i--;
 				continue;
 			}
+
 /* XXX in unicode/unicode it's wrong... */
 			word = xmalloc((xwcslen(what) + 1)*sizeof(char));
 
