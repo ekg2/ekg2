@@ -672,6 +672,8 @@ static QUERY(protocol_message)
 
 	/* display blinking */
 	if (config_display_blinking && userlist && (class < EKG_MSGCLASS_SENT) && (!rcpts || !rcpts[0])) {
+		int oldstate = userlist->xstate;
+
 		if (config_make_window && xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid))) 
 			userlist->xstate |= EKG_XSTATE_BLINK;
 		else if (!config_make_window) {
@@ -688,6 +690,9 @@ static QUERY(protocol_message)
 			if (w && window_current->id != w->id)
 				userlist->xstate |= EKG_XSTATE_BLINK;
 		}
+
+		if (oldstate != userlist->xstate)
+			query_emit_id(NULL, USERLIST_CHANGED, &session, &uid);
 	}
 	
 	if (class & EKG_NO_THEMEBIT) {
