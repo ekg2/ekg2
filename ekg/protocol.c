@@ -341,6 +341,11 @@ static QUERY(protocol_status)
 
 	/* je¶li ma³o wa¿na zmiana stanu...
 	 * XXX someone can tell me what this should do, 'cos I can't understand the way it's written? */
+	
+	/* z dokumentacji, co powinno robic:
+	 * 	warto¶æ 2 wy¶wietla tylko zmiany z niedostêpnego na dostêpny i na odwrót. 
+	 */
+
 	if ((sess_notify == -1 ? config_display_notify : sess_notify) & 2) {
 		/* je¶li na zajêty, ignorujemy */
 		if (st == EKG_STATUS_AWAY)
