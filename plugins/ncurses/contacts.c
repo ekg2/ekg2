@@ -320,6 +320,27 @@ static int contacts_compare(void *data1, void *data2)
 	return xstrcasecmp(a->nickname, b->nickname);
 }
 
+/*
+ * userlist_dup()
+ *
+ * Duplicate entry, with private set to priv.
+ *
+ * @note
+ * 	It just copy pointers, so if you delete entry which is shown in userlist, and don't call USERLIST_CHANGED. [We do it for instance in irc plugin]
+ * 	It'll be faulty :)
+ */
+
+static inline userlist_t *userlist_dup(userlist_t *up, void *priv) {
+	userlist_t *u = xmalloc(sizeof(userlist_t));
+
+	u->uid		= up->uid;
+	u->nickname	= up->nickname;
+	u->descr	= up->descr;
+	u->status	= up->status;
+	u->xstate	= up->xstate;
+	u->private	= priv;
+	return u;
+}
 
 /*
  * ncurses_contacts_update()
@@ -422,45 +443,25 @@ group_cleanup:
 		list_t l;
 
 		for (l = sessions; l; l = l->next) {
-			list_t lp;
 			session_t *s = l->data;
+			list_t lp;
 
 			if (!s->userlist)
 				continue;
 
 			for (lp = s->userlist; lp; lp = lp->next) {
-				userlist_t *u;
-				userlist_t *up = lp->data;
+				userlist_t *u = lp->data;
 
-				if (!up)
-					continue;
-				u = xmalloc(sizeof(userlist_t));
-				u->uid = up->uid;
-				u->nickname = up->nickname;
-				u->descr = up->descr;
-				u->status = up->status;
-				u->private = (void *) s;
-				u->xstate = up->xstate;
-				list_add_sorted(&sorted_all, u, 0, comp);
+				list_add_sorted(&sorted_all, userlist_dup(u, s), 0, comp);
 			}
 
 			comp = contacts_compare;		/* turn on sorting */
 		}
 
 		for (l = c ? c->participants : window_current->userlist; l; l = l->next) {
-			userlist_t *up = l->data;
-			userlist_t *u;
+			userlist_t *u = l->data;
 
-			if (!up)
-				continue;
-			u = xmalloc(sizeof(userlist_t));
-			u->uid = up->uid;
-			u->nickname = up->nickname;
-			u->descr = up->descr;
-			u->status = up->status;
-			u->private = (void *) w->session;
-			u->xstate = up->xstate;
-			list_add_sorted(&sorted_all, u, 0, comp /* contacts_compare : NULL */);
+			list_add_sorted(&sorted_all, userlist_dup(u, w->session), 0, comp);
 		}
 
 		if (sorted_all) comp = contacts_compare;	/* like above */
@@ -477,6 +478,7 @@ group_cleanup:
 
 			if (!m || !i || !up)
 				continue;
+
 			u = xmalloc(sizeof(userlist_t));
 			u->status = up->status;
 			u->descr = up->descr;
@@ -484,7 +486,7 @@ group_cleanup:
 			u->private = (void *) 2;
 			u->xstate = up->xstate;
 
-			list_add_sorted(&sorted_all, u, 0, comp /* contacts_compare ; NULL */);
+			list_add_sorted(&sorted_all, u, 0, comp);
 
 			/* Remove contacts contained in this metacontact. */
 			if ( config_contacts_metacontacts_swallow )
