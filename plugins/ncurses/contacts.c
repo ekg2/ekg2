@@ -534,7 +534,7 @@ group_cleanup:
 				continue;
 			}
 
-			if (group && (!u->private || 2!=(int)u->private)) {
+			if (group && (!u->private || (void *) 2 != u->private)) {
 				userlist_t *tmp = userlist_find(u->private ? u->private : session_current, u->uid);
 				if ((group[0]=='!' && ekg_group_member(tmp, group+1)) ||
 						(group[0]!='!' && !ekg_group_member(tmp, group)))
@@ -567,7 +567,7 @@ group_cleanup:
 
 			line = format_string(format_find(tmp), u->nickname, u->descr);
 			string = fstring_new(line);
-			if (u->private && (int) u->private == 2)
+			if (u->private && u->private == (void *) 2)
 				string->private = (void *) saprintf("%s", u->nickname);
 			else 
 				string->private = (void *) saprintf("%s/%s", (u->private) ? ((session_t *) u->private)->uid : session_current->uid, u->nickname);
