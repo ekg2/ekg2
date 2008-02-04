@@ -538,9 +538,12 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 			temp[i]		= znak;
 			str->attr[i]	= str->attr[cur]; 
 
-			if (inv) str->attr[i] |= 1024;	/* A_REVERSE ? */
+			if (inv) {
+				str->attr[i] |= FSTR_REVERSE;
+				len = 1;	/* ? */
+			}
 
-			cur += ((!inv) ? len : 1);
+			cur += len;
 			i++;
 
 			if (!len)	/* NUL */
@@ -1382,7 +1385,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 		if (!*p)
 			break;
 
-		for (i = 0; /* data && */ data[i].name; i++) {
+		for (i = 0; data[i].name; i++) {
 			int len;
 
 			if (!data[i].text)
@@ -1460,7 +1463,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 				p++;
 			}
 
-			for (i = 0; /* data && */ data[i].name; i++) {
+			for (i = 0; data[i].name; i++) {
 				int len, matched = ((data[i].text) ? 1 : 0);
 
 				if (neg)
@@ -1693,10 +1696,7 @@ void update_statusbar(int commit)
 		if (formats[i].text != empty_format)
 			xfree(formats[i].text);
 	}
-#if 0	/* never used queries, in ekg1 it was used by python, coz python can brush in ncurses interface... in ekg2 it's useless. */
-	query_emit(NULL, ("ui-redrawing-header"));
-	query_emit(NULL, ("ui-redrawing-statusbar"));
-#endif	
+
 	if (commit)
 		ncurses_commit();
 }
@@ -1734,11 +1734,8 @@ int ncurses_window_kill(window_t *w)
 	}
 		
 	xfree(n->prompt);
-//	n->prompt = NULL;
 	xfree(n->prompt_real);
-//	n->prompt_real = NULL;
 	delwin(n->window);
-//	n->window = NULL;
 	xfree(n);
 	w->private = NULL;
 
@@ -2409,9 +2406,6 @@ WATCHER(ncurses_watch_stdin)
 	int tmp;
 	unsigned int ch;
 
-	/* GiM: I'm not sure if this should be like that
-	 * deletek you should take a look at this.
-	 */
 	ncurses_redraw_input_already_exec = 0;
 	if (type)
 		return 0;
