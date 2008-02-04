@@ -904,26 +904,40 @@ void ncurses_resize()
 	ncurses_screen_height = height;
 }
 
+/*
+ * fstring_attr2ncurses_attr()
+ *
+ * Convert internal ekg2 fstring attr value, to value which ncurses understand.
+ *
+ */
+
 static inline int fstring_attr2ncurses_attr(short chattr) {
 	int attr = A_NORMAL;
 
-	if ((chattr & 64))
+	if ((chattr & FSTR_BOLD))
 		attr |= A_BOLD;
 
-	if ((chattr & 256))
+	if ((chattr & FSTR_BLINK))
 		attr |= A_BLINK;
 
-	if (!(chattr & 128))
-		attr |= color_pair(chattr & 7, 0, config_display_transparent ? COLOR_BLACK: (chattr>>3)&7);
+	if (!(chattr & FSTR_NORMAL))
+		attr |= color_pair(chattr & FSTR_FOREMASK, 0, config_display_transparent ? COLOR_BLACK: (chattr>>3)&7);
 
-	if ((chattr & 512))
+	if ((chattr & FSTR_UNDERLINE))
 		attr |= A_UNDERLINE;
 
-	if ((chattr & 1024))
+	if ((chattr & FSTR_REVERSE))
 		attr |= A_REVERSE;
 
 	return attr;
 }
+
+/*
+ * ncurses_fixchar()
+ *
+ * When we recv control character (ASCII code below 32), we can add 64 to it, and REVERSE attr.
+ * When we recv ISO control character [and we're using console under iso charset] (ASCII code between 128..159), we can REVERSE attr, and return '?'
+ */
 
 static inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 	if (ch < 32) {
