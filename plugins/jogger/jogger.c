@@ -265,15 +265,15 @@ static int jogger_theme_init(void) {
 }
 
 static plugins_params_t jogger_plugin_vars[] = {
-	PLUGIN_VAR_ADD("entry_file",		0, VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("entry_hash",		0, VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("ignore_outgoing_entries", 0, VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "simple", 0, NULL),
-	PLUGIN_VAR_ADD("newentry_open_query",	0, VAR_BOOL, "1", 0, NULL),
-	PLUGIN_VAR_ADD("own_commentformat",	0, VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("used_session",		0, VAR_STR, NULL, 0, jogger_usedchanged),
-	PLUGIN_VAR_ADD("used_uid",		0, VAR_STR, NULL, 0, jogger_usedchanged),
-	PLUGIN_VAR_ADD("userlist_keep",		0, VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("entry_file",		VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("entry_hash",		VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("ignore_outgoing_entries",VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "simple", 0, NULL),
+	PLUGIN_VAR_ADD("newentry_open_query",	VAR_BOOL, "1", 0, NULL),
+	PLUGIN_VAR_ADD("own_commentformat",	VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("used_session",		VAR_STR, NULL, 0, jogger_usedchanged),
+	PLUGIN_VAR_ADD("used_uid",		VAR_STR, NULL, 0, jogger_usedchanged),
+	PLUGIN_VAR_ADD("userlist_keep",		VAR_BOOL, "0", 0, NULL),
 
 	PLUGIN_VAR_END()
 };
