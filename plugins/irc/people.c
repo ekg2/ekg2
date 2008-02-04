@@ -255,7 +255,7 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
 	window_t *w;
 	if (!(nick && chan))
 	{
-		debug_error("programmer's mistake in call to irc_del_channel_int: nick %s chan %s\n", nick?nick:":NULL:", chan?chan:":NULL:");
+		debug_error("programmer's mistake in call to irc_del_channel_int: nick %s chan %s\n", __(nick), __(chan));
 		return -1;
 	}
 	

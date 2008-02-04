@@ -598,8 +598,6 @@ int plugin_unregister(plugin_t *p)
  * @param	pl - plugin
  * @param	name - variable name
  *
- * @sa	plugin_var_find_id() - To search for variable id
- *
  * returns sequence number+1 of variable if found, else 0
  */
 
@@ -611,32 +609,6 @@ int plugin_var_find(plugin_t *pl, const char *name) {
 
 	for (i = 0; (pl->params[i].key /* && pl->params[i].id != -1 */); i++) {
 		if (!xstrcasecmp(pl->params[i].key, name))
-			return i+1;
-	}
-	return 0;
-}
-
-/**
- * plugin_var_find_id()
- *
- * It looks for given variable idin given plugin
- *
- * @param	pl - plugin
- * @param	id - variable id	(plugin_param_id_t)
- *
- * @sa	plugin_var_find() - To search for variable name
- *
- * return Sequence number+1 of variable if found, else 0
- */
-
-int plugin_var_find_id(plugin_t *pl, int id) {
-	int i;
-
-	if (!pl || !pl->params)
-		return 0;
-
-	for (i = 0; (pl->params[i].key /* && pl->params[i].id != -1 */); i++) {
-		if (pl->params[i].id == id)
 			return i+1;
 	}
 	return 0;

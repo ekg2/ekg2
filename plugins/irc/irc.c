@@ -2195,54 +2195,54 @@ static COMMAND(irc_command_test) {
 
 static plugins_params_t irc_plugin_vars[] = {
 	/* lower case: names of variables that reffer to client itself */
-	PLUGIN_VAR_ADD("alt_nick", 		0, VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("alias",			SESSION_VAR_ALIAS, VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("auto_away",		SESSION_VAR_AUTO_AWAY, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_back",		SESSION_VAR_AUTO_BACK, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_connect",		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_find",		SESSION_VAR_AUTO_FIND, VAR_BOOL, "0", 0, NULL),		/* it's really auto_whois */
-	PLUGIN_VAR_ADD("auto_reconnect",	SESSION_VAR_AUTO_RECONNECT, VAR_INT, "10", 0, NULL), 
-	PLUGIN_VAR_ADD("auto_channel_sync",	0, VAR_BOOL, "1", 0, NULL),				/* like channel_sync in irssi; better DO NOT turn it off! */
-	PLUGIN_VAR_ADD("auto_lusers_sync", 	0, VAR_BOOL, "0", 0, NULL),				/* sync lusers, stupid ;(,  G->dj: well why ? */
-	PLUGIN_VAR_ADD("away_log",		0, VAR_BOOL, "1", 0, NULL),
-	PLUGIN_VAR_ADD("ban_type", 		0, VAR_INT, "10", 0, NULL),
-	PLUGIN_VAR_ADD("connect_timeout",	SESSION_VAR_CONNECT_TIMEOUT, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("close_windows", 	0, VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("dcc_port",		SESSION_VAR_DCC_PORT, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("display_notify", 	SESSION_VAR_DISPLAY_NOTIFY, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("hostname",		0, VAR_STR, 0, 0, irc_changed_resolve),
-	PLUGIN_VAR_ADD("identify",		0, VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("log_formats",		SESSION_VAR_LOG_FORMATS, VAR_STR, "irssi", 0, NULL),
-	PLUGIN_VAR_ADD("make_window",		0, VAR_INT, "2", 0, NULL),
-	PLUGIN_VAR_ADD("prefer_family", 	0, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("nickname",		0, VAR_STR, NULL, 0, NULL), 				/* value will be inited @ irc_plugin_init() [pwd_entry->pw_name] */
-	PLUGIN_VAR_ADD("password",		SESSION_VAR_PASSWORD, VAR_STR, 0, 1, NULL),
-	PLUGIN_VAR_ADD("port",			SESSION_VAR_PORT, VAR_INT, "6667", 0, NULL),
-	PLUGIN_VAR_ADD("realname",		0, VAR_STR, NULL, 0, NULL),				/* value will be inited @ irc_plugin_init() [pwd_entry->pw_gecos] */
-	PLUGIN_VAR_ADD("recode_out_default_charset", 0, VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
-	PLUGIN_VAR_ADD("server",		SESSION_VAR_SERVER, VAR_STR, 0, 0, irc_changed_resolve),
+	PLUGIN_VAR_ADD("alt_nick", 		VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("auto_away",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_back",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_find",		VAR_BOOL, "0", 0, NULL),		/* it's really auto_whois */
+	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT, "10", 0, NULL), 
+	PLUGIN_VAR_ADD("auto_channel_sync",	VAR_BOOL, "1", 0, NULL),		/* like channel_sync in irssi; better DO NOT turn it off! */
+	PLUGIN_VAR_ADD("auto_lusers_sync", 	VAR_BOOL, "0", 0, NULL),		/* sync lusers, stupid ;(,  G->dj: well why ? */
+	PLUGIN_VAR_ADD("away_log",		VAR_BOOL, "1", 0, NULL),
+	PLUGIN_VAR_ADD("ban_type", 		VAR_INT, "10", 0, NULL),
+	PLUGIN_VAR_ADD("connect_timeout",	VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("close_windows", 	VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("dcc_port",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("display_notify", 	VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("hostname",		VAR_STR, 0, 0, irc_changed_resolve),
+	PLUGIN_VAR_ADD("identify",		VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "irssi", 0, NULL),
+	PLUGIN_VAR_ADD("make_window",		VAR_INT, "2", 0, NULL),
+	PLUGIN_VAR_ADD("prefer_family", 	VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("nickname",		VAR_STR, NULL, 0, NULL), 		/* value will be inited @ irc_plugin_init() [pwd_entry->pw_name] */
+	PLUGIN_VAR_ADD("password",		VAR_STR, 0, 1, NULL),
+	PLUGIN_VAR_ADD("port",			VAR_INT, "6667", 0, NULL),
+	PLUGIN_VAR_ADD("realname",		VAR_STR, NULL, 0, NULL),		/* value will be inited @ irc_plugin_init() [pwd_entry->pw_gecos] */
+	PLUGIN_VAR_ADD("recode_out_default_charset", VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
+	PLUGIN_VAR_ADD("server",		VAR_STR, 0, 0, irc_changed_resolve),
 
 	/* upper case: names of variables, that reffer to protocol stuff */
-	PLUGIN_VAR_ADD("AUTO_JOIN",			0, VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("AUTO_JOIN_CHANS_ON_INVITE", 	0, VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("DEFAULT_COLOR", 		0, VAR_INT, "0", 0, NULL),			/* TODO :> */
-	PLUGIN_VAR_ADD("DISPLAY_PONG", 			0, VAR_BOOL, "1", 0, NULL),			/* GiM, do we really want/need '1' here as default? */
-	PLUGIN_VAR_ADD("DISPLAY_AWAY_NOTIFICATION", 	0, VAR_INT, "1", 0, NULL),
-	PLUGIN_VAR_ADD("DISPLAY_IN_CURRENT", 		0, VAR_INT, "2", 0, NULL),
-	PLUGIN_VAR_ADD("DISPLAY_NICKCHANGE", 		0, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("DISPLAY_QUIT", 			0, VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("AUTO_JOIN",			VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("AUTO_JOIN_CHANS_ON_INVITE", 	VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("DEFAULT_COLOR", 		VAR_INT, "0", 0, NULL),			/* TODO :> */
+	PLUGIN_VAR_ADD("DISPLAY_PONG", 			VAR_BOOL, "1", 0, NULL),		/* GiM, do we really want/need '1' here as default? */
+	PLUGIN_VAR_ADD("DISPLAY_AWAY_NOTIFICATION", 	VAR_INT, "1", 0, NULL),
+	PLUGIN_VAR_ADD("DISPLAY_IN_CURRENT", 		VAR_INT, "2", 0, NULL),
+	PLUGIN_VAR_ADD("DISPLAY_NICKCHANGE", 		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("DISPLAY_QUIT", 			VAR_INT, "0", 0, NULL),
 	/* plugin_var_add(&irc_plugin, "HIGHLIGHTS", VAR_STR, 0, 0, NULL); */
-	PLUGIN_VAR_ADD("KICK_MSG", 			0, VAR_STR, DEFKICKMSG, 0, NULL),
-	PLUGIN_VAR_ADD("PART_MSG", 			0, VAR_STR, DEFPARTMSG, 0, NULL),
-	PLUGIN_VAR_ADD("QUIT_MSG", 			0, VAR_STR, DEFQUITMSG, 0, NULL),
-	PLUGIN_VAR_ADD("REJOIN", 			0, VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("REJOIN_TIME", 			0, VAR_INT, "2", 0, NULL),
-	PLUGIN_VAR_ADD("SHOW_NICKMODE_EMPTY", 		0, VAR_INT, "1", 0, NULL),
-	PLUGIN_VAR_ADD("SHOW_MOTD", 			0, VAR_BOOL, "1", 0, NULL),
-	PLUGIN_VAR_ADD("STRIPMIRCCOL", 			0, VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("VERSION_NAME", 			0, VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("VERSION_NO", 			0, VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("VERSION_SYS", 			0, VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("KICK_MSG", 			VAR_STR, DEFKICKMSG, 0, NULL),
+	PLUGIN_VAR_ADD("PART_MSG", 			VAR_STR, DEFPARTMSG, 0, NULL),
+	PLUGIN_VAR_ADD("QUIT_MSG", 			VAR_STR, DEFQUITMSG, 0, NULL),
+	PLUGIN_VAR_ADD("REJOIN", 			VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("REJOIN_TIME", 			VAR_INT, "2", 0, NULL),
+	PLUGIN_VAR_ADD("SHOW_NICKMODE_EMPTY", 		VAR_INT, "1", 0, NULL),
+	PLUGIN_VAR_ADD("SHOW_MOTD", 			VAR_BOOL, "1", 0, NULL),
+	PLUGIN_VAR_ADD("STRIPMIRCCOL", 			VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("VERSION_NAME", 			VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("VERSION_NO", 			VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("VERSION_SYS", 			VAR_STR, 0, 0, NULL),
 
 	PLUGIN_VAR_END()
 };

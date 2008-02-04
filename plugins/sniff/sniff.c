@@ -2055,9 +2055,9 @@ static int sniff_theme_init() {
 }
 
 static plugins_params_t sniff_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("filter", 		0, VAR_STR, DEFAULT_FILTER, 0, NULL),
+	PLUGIN_VAR_ADD("alias", 		VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("filter", 		VAR_STR, DEFAULT_FILTER, 0, NULL),
 
 	PLUGIN_VAR_END()
 };

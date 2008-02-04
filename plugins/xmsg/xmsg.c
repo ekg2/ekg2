@@ -715,18 +715,18 @@ static int xmsg_theme_init(void)
 }
 
 static plugins_params_t xmsg_plugin_vars[] = {
-	PLUGIN_VAR_ADD("auto_connect",		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "1", 0, NULL),
-	PLUGIN_VAR_ADD("charset",		0, VAR_STR, "", 0, NULL),
-	PLUGIN_VAR_ADD("dotfile_suffix",	0, VAR_STR, "", 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "simple", 0, NULL),
-	PLUGIN_VAR_ADD("max_filesize", 		0, VAR_INT, XMSG_MAXFS_DEF, 0, NULL),
-	PLUGIN_VAR_ADD("max_oneshot_files",	0, VAR_INT, XMSG_MAXFC_DEF, 0, NULL),
-	PLUGIN_VAR_ADD("name_separator", 	0, VAR_STR, XMSG_NAMESEP_DEF, 0, NULL),
-	PLUGIN_VAR_ADD("oneshot_resume_timer",	0, VAR_INT, XMSG_MAXFC_TIMER, 0, NULL),
-	PLUGIN_VAR_ADD("send_cmd", 		0, VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("rescan_timer",		0, VAR_INT, XMSG_TIMER_DEF, 0, xmsg_timer_change),
-	PLUGIN_VAR_ADD("unlink_sent",		0, VAR_BOOL, "1", 0, xmsg_unlink_dotfiles),
-	PLUGIN_VAR_ADD("unlink_toobig",		0, VAR_BOOL, "0", 0, xmsg_unlink_dotfiles),
+	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "1", 0, NULL),
+	PLUGIN_VAR_ADD("charset",		VAR_STR, "", 0, NULL),
+	PLUGIN_VAR_ADD("dotfile_suffix",	VAR_STR, "", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "simple", 0, NULL),
+	PLUGIN_VAR_ADD("max_filesize", 		VAR_INT, XMSG_MAXFS_DEF, 0, NULL),
+	PLUGIN_VAR_ADD("max_oneshot_files",	VAR_INT, XMSG_MAXFC_DEF, 0, NULL),
+	PLUGIN_VAR_ADD("name_separator", 	VAR_STR, XMSG_NAMESEP_DEF, 0, NULL),
+	PLUGIN_VAR_ADD("oneshot_resume_timer",	VAR_INT, XMSG_MAXFC_TIMER, 0, NULL),
+	PLUGIN_VAR_ADD("send_cmd", 		VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("rescan_timer",		VAR_INT, XMSG_TIMER_DEF, 0, xmsg_timer_change),
+	PLUGIN_VAR_ADD("unlink_sent",		VAR_BOOL, "1", 0, xmsg_unlink_dotfiles),
+	PLUGIN_VAR_ADD("unlink_toobig",		VAR_BOOL, "0", 0, xmsg_unlink_dotfiles),
 
 	PLUGIN_VAR_END()
 };
@@ -772,5 +772,5 @@ static int xmsg_plugin_destroy(void)
 	close(in_fd);
 	xfree(ev);
 
-	return 0;
+return 0;
 }

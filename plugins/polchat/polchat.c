@@ -848,12 +848,12 @@ static COMMAND(polchat_command_inline_msg) {
 }
 
 static plugins_params_t polchat_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		SESSION_VAR_ALIAS, VAR_STR, 0, 0, NULL), 
-	PLUGIN_VAR_ADD("auto_connect", 		SESSION_VAR_AUTO_CONNECT, VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		SESSION_VAR_LOG_FORMATS, VAR_STR, "irssi", 0, NULL),
-	PLUGIN_VAR_ADD("nickname", 		0, VAR_STR, NULL, 0, NULL), 
-	PLUGIN_VAR_ADD("port", 			SESSION_VAR_PORT, VAR_INT, POLCHAT_DEFAULT_PORT_STR, 0, NULL),
-	PLUGIN_VAR_ADD("server", 		SESSION_VAR_SERVER, VAR_STR, POLCHAT_DEFAULT_HOST, 0, NULL),
+	PLUGIN_VAR_ADD("alias", 		VAR_STR, 0, 0, NULL), 
+	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "irssi", 0, NULL),
+	PLUGIN_VAR_ADD("nickname", 		VAR_STR, NULL, 0, NULL), 
+	PLUGIN_VAR_ADD("port", 			VAR_INT, POLCHAT_DEFAULT_PORT_STR, 0, NULL),
+	PLUGIN_VAR_ADD("server", 		VAR_STR, POLCHAT_DEFAULT_HOST, 0, NULL),
 	PLUGIN_VAR_END()
 };
 

@@ -198,18 +198,9 @@ session_t *session_add(const char *uid) {
 		/* set variables */
 		for (i=0; i < count; i++) {
 			const char *key   = pl->params[i].key;
-			const int keyid	  = pl->params[i].id;
 			const char *value = pl->params[i].value;
-/*			debug("session_add() Setting default var %s [%d] at %s\n", key, keyid, value); */
 
-			/* emulate session_set() */
-		/* I don't think we want to set in vars default of these, but if you really want to. */
-			if (keyid == SESSION_VAR_ALIAS)		session_alias_set(s, value);			/* set default alias  */
-			else if (keyid == SESSION_VAR_DESCR)	session_descr_set(s, value);			/* set default descr  */
-			else if (keyid == SESSION_VAR_STATUS)	session_status_set(s, ekg_status_int(value));	/* set default status */
-			else if (keyid == SESSION_VAR_PASSWORD)	session_password_set(s, value);			/* set default password */
-
-			else 					s->values[i] = xstrdup(value);			/* other variable */
+			s->values[i] = xstrdup(value);
 
 			/* notify plugin, like session_set() do */
 			if (pl->params[i].notify) 
