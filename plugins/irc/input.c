@@ -227,6 +227,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 	xfree(winname);
 	string_append(ret, p);
 	p = string_free(ret, 0);
+
 	if (xstrlen(p))
 		return p;
 	xfree(p);

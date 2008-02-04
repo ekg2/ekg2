@@ -862,7 +862,15 @@ IRC_COMMAND(irc_c_msg)
 
 	mw = session_int_get(s, "make_window");
 
-	ctcpstripped = ctcp_parser(s, prv, param[0], param[2], OMITCOLON(param[3]));
+	if (j->conv_in != (void *) -1) {
+		char *recoded = ekg_convert_string_p(OMITCOLON(param[3]), j->conv_in);
+
+		if (!recoded)
+			debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
+
+		ctcpstripped = ctcp_parser(s, prv, param[0], param[2], recoded ? recoded : OMITCOLON(param[3]));
+	} else
+		ctcpstripped = ctcp_parser(s, prv, param[0], param[2], OMITCOLON(param[3]));
 
 	if ((t = xstrchr(param[0], '!'))) *t='\0';
 	me = xstrdup(t?t+1:"");

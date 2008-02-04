@@ -176,6 +176,9 @@ static QUERY(irc_session_init) {
 	j = xmalloc(sizeof(irc_private_t));
 	j->fd = -1;
 
+	j->conv_in = (void *) -1;
+	j->conv_out = (void *) -1;
+
 	s->priv = j;
 	return 0;
 }
@@ -229,6 +232,11 @@ static QUERY(irc_session_deinit) {
 
 	LIST_DESTROY(j->bindlist, list_irc_resolver_free);
 	LIST_DESTROY(j->connlist, list_irc_resolver_free);
+
+	if (j->conv_in != (void*) -1) {
+		ekg_convert_string_destroy(j->conv_in);
+		ekg_convert_string_destroy(j->conv_out);
+	}
 
 	/* XXX, hilights list_t */
 
@@ -585,6 +593,20 @@ static void irc_changed_resolve(session_t *s, const char *var) {
 	exit(0);
 #endif
 	return;
+}
+
+static void irc_changed_recode(session_t *s, const char *var) {
+	irc_private_t *j;
+	
+	if (!s || !(j = s->priv))
+		return;
+
+	if (j->conv_in != (void*) -1) {
+		ekg_convert_string_destroy(j->conv_in);
+		ekg_convert_string_destroy(j->conv_out);
+	}
+	
+	j->conv_in = ekg_convert_string_init(session_get(s, var), NULL, &(j->conv_out));
 }
 
 /*                                                                       *
@@ -1030,7 +1052,6 @@ static COMMAND(irc_command_msg) {
 	
 	int		ischn;  /* IS CHANNEL ? */
 	char            prefix[2] = {' ', '\0'};
-	char		*__msg = NULL;
 	char		*head, *coloured;
 	const char	*frname; /* formatname */
 
@@ -1075,15 +1096,28 @@ static COMMAND(irc_command_msg) {
 
 	tmpbuf   = (mline[0] = xstrdup(params[1]));
 	while ((mline[1] = split_line(&(mline[0])))) {
+		char *__msg = NULL;
+
 		char *__mtmp;
 		int isour = 1;
 		int xosd_to_us = 0;
 		int xosd_is_priv = !ischn;
 		
-		__msg = xstrdup((const char *)mline[1]);
-
 		head = format_string(frname, session_name(session), prefix,
-				j->nick, j->nick, uid_full+4, __msg);
+				j->nick, j->nick, uid_full+4, mline[1]);
+
+/* XXX,
+ * 	Recoding should be done after emiting IRC_PROTOCOL_MESSAGE (?)
+ */
+		if (j->conv_out != (void *) -1) {
+			__msg = ekg_convert_string_p(mline[1], j->conv_out);
+
+			if (!__msg)
+				debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_out);
+		}
+
+		if (!__msg)
+			__msg = xstrdup((const char *)mline[1]);
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
@@ -2008,11 +2042,20 @@ static COMMAND(irc_command_whois) {
 
 static QUERY(irc_status_show_handle) {
 	char		**uid = va_arg(ap, char**);
+
 	session_t	*s = session_find(*uid);
+	irc_private_t	*j;
+
 	const char	*p[1];
 
 	if (!s)
 		return -1;
+
+	if ((j = s->priv)) {
+		if (j->conv_in != (void *) -1) {
+			debug("[%s] Uses recoding for: %s [%x, %x]\n", s->uid, session_get(s, "recode_out_default_charset"), j->conv_in, j->conv_out);
+		}
+	}
 
 	p[0] = irc_private(s)->nick;
 	p[1] = 0;
@@ -2176,6 +2219,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("password",		SESSION_VAR_PASSWORD, VAR_STR, 0, 1, NULL),
 	PLUGIN_VAR_ADD("port",			SESSION_VAR_PORT, VAR_INT, "6667", 0, NULL),
 	PLUGIN_VAR_ADD("realname",		0, VAR_STR, NULL, 0, NULL),				/* value will be inited @ irc_plugin_init() [pwd_entry->pw_gecos] */
+	PLUGIN_VAR_ADD("recode_out_default_charset", 0, VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
 	PLUGIN_VAR_ADD("server",		SESSION_VAR_SERVER, VAR_STR, 0, 0, irc_changed_resolve),
 
 	/* upper case: names of variables, that reffer to protocol stuff */

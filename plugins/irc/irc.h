@@ -56,6 +56,9 @@ typedef struct {
 					 * server's response */
 
 	list_t awaylog;
+
+	void *conv_in;
+	void *conv_out;
 } irc_private_t;
 
 typedef struct {
