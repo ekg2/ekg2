@@ -240,7 +240,7 @@ static COMMAND(sms_command_sms)
 		{
 			int function = EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
 			char *varname = "mobile";
-			char **__number = &number;
+			char **__number = (char **) &number;
 
 			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &varname, &__number);
 		}
