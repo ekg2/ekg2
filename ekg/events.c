@@ -143,9 +143,6 @@ COMMAND(cmd_on)
  *
  */
 static LIST_ADD_COMPARE(event_add_compare, event_t *) {
-        if (!data1 || !data1->id || !data2 || !data2->id)
-                return 0;
-
         return data1->id - data2->id;
 }
 
