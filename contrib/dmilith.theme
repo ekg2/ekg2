@@ -2,9 +2,10 @@
 # 2oo8
 # ekg2 theme by dmilith
 # dmilith [at] gmail.com
-# theme version 0.1
+# theme version 0.2
 #
 
+statusbar %b[%n%G%{time}%b]     [%n%G%{?session %{session}%b(%C%{?avail dostępny}%{?away zajęty}%{?invisible ukryty}%{?notavail niedostępny}%{?xa bardzo zajęty}%{?dnd nie przeszkadzać}%{?chat chętny do rozmowy}%b)}   %{?!session ---}%b] [%n%R%{?window %{window}} %{?query : %{query}}%{?debug debug}%{?activity %b]         [%n%Cact: }%{activity}%{?mail %b] [%n%B%l mail:}%{mail}%{?more %b] [%n%Bmore}%b]%n
 message %K%r#-%R%4%r-# %|%c%2%n%3\n
 chat %K%r#-%R%4%r-# %|%c%2%n%3\n
 sent %K%g#-%G%4%g-# %|%3\n
@@ -49,7 +50,7 @@ IRC_ERR_NEWONE %! (%1) 1:%2 2:%3 3:%4 4:%5\n
 IRC_RPL_CANTSEND %> Brak praw do wysyłania na kanał %T%2%n\n
 RPL_WHOISOPERATOR %G||%n %|ircOp    : %3\n
 IRC_RPL_TOPICBY %> set by %2 on %3
-IRC_TOPIC_CHANGE %> %T%2%n zmienił temat kanału na %T%4%n: %5\n
+IRC_TOPIC_CHANGE %> %T%2%n zmienił temat kanału %T%4%n: %5\n
 IRC_TOPIC_UNSET %> %T%3%n wyłączył temat kanału %T%2%n\n
 IRC_MODE_CHAN %> %2/%3 sets mode%4\n
 IRC_MODE %> %2 set mode %3 on You\n
