@@ -628,7 +628,7 @@ COMMAND(cmd_window)
 		for (l = windows; l; l = l->next) {
 			window_t *w = l->data;
 
-			if (w->act && !w->floating && w->id) {
+			if ((w->act & 3) && !w->floating && w->id) {
 				id = w->id;
 				break;
 			}
