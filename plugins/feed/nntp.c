@@ -826,6 +826,7 @@ static COMMAND(nntp_command_subscribe) {
 	}
 
 	printq("feed_added", target, session_name(session));
+	return 0;
 }
 
 static COMMAND(nntp_command_unsubscribe) {

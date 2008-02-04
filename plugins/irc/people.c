@@ -247,15 +247,13 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 	return 0;	
 }
 
-static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
-		people_t *nick, channel_t *chan)
-{
+static int irc_del_person_channel_int(session_t *s, irc_private_t *j, people_t *nick, channel_t *chan) {
 	userlist_t *ulist = NULL;
 	people_chan_t *tmp;
 	window_t *w;
-	if (!(nick && chan))
-	{
-		debug_error("programmer's mistake in call to irc_del_channel_int: nick %s chan %s\n", __(nick), __(chan));
+
+	if (!nick || !chan) {
+		debug_error("programmer's mistake in call to irc_del_channel_int: nick: %s chan: %s\n", nick ? "OK" : "NULL", chan ? "OK" : "NULL");
 		return -1;
 	}
 	

@@ -683,7 +683,7 @@ static const struct jabber_generic_handler jabber_handlers[] =
 void jabber_handle(void *data, xmlnode_t *n) {
 	session_t *s = (session_t *) data;
         jabber_private_t *j;
-	struct jabber_generic_handler *tmp;
+	const struct jabber_generic_handler *tmp;
 
         if (!s || !(j = s->priv) || !n) {
                 debug_error("jabber_handle() invalid parameters\n");
@@ -1236,7 +1236,7 @@ struct jabber_iq_generic_handler {
 };
 
 static const struct jabber_iq_generic_handler *jabber_iq_find_handler(const struct jabber_iq_generic_handler *items, const char *type, const char *xmlns) {
-	struct jabber_iq_generic_handler *tmp = items;
+	const struct jabber_iq_generic_handler *tmp = items;
 
 	while (tmp->handler) {
 		int matched = !xstrcmp(type, tmp->name);
@@ -1341,6 +1341,13 @@ JABBER_HANDLER(jabber_handle_iq) {
 			return;
 		case JABBER_IQ_TYPE_NONE:
 			debug_error("[jabber] <iq> wtf iq type: %s\n", atype);
+			return;
+
+		default:
+			/* never here */
+
+			/* protect from gcc warning: 
+			 * 	jabber_handlers.c:1271: warning: 'callbacks' may be used uninitialized in this function */
 			return;
 	}
 
@@ -1702,7 +1709,7 @@ const char *jabber_iq_reg(session_t *s, const char *prefix, const char *to, cons
 	jabber_stanza_t *st;
 	list_t l;
 
-	struct jabber_iq_generic_handler *tmp;
+	const struct jabber_iq_generic_handler *tmp;
 	char *id;
 
 	id = saprintf("%s%x", prefix ? prefix : "", j->id++);

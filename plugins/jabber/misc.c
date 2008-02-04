@@ -121,7 +121,7 @@ char *jabber_zlib_compress(const char *buf, int *len) {
 	size_t destlen = (*len) * 1.01 + 12;
 	char *compressed = xmalloc(destlen);
 
-	if (compress(compressed, &destlen, buf, *len) != Z_OK) {
+	if (compress((unsigned char *) compressed, &destlen, (unsigned char *) buf, *len) != Z_OK) {
 		debug_error("jabber_zlib_compress() zlib compress() != Z_OK\n");
 		xfree(compressed);
 		return NULL;
@@ -139,7 +139,7 @@ char *jabber_zlib_decompress(const char *buf, int *len) {
 	size_t size = ZLIB_BUF_SIZE+1;
 	int rlen = 0;
 
-	char *uncompressed = NULL;
+	unsigned char *uncompressed = NULL;
 
 	zlib_stream.zalloc 	= Z_NULL;
 	zlib_stream.zfree	= Z_NULL;
@@ -150,7 +150,7 @@ char *jabber_zlib_decompress(const char *buf, int *len) {
 		return NULL;
 	}
 
-	zlib_stream.next_in	= buf;
+	zlib_stream.next_in	= (unsigned char *) buf;
 	zlib_stream.avail_in	= *len;
 
 	do {
@@ -175,7 +175,7 @@ char *jabber_zlib_decompress(const char *buf, int *len) {
 
 	*len = rlen;
 
-	return uncompressed;
+	return (char *) uncompressed;
 }
 #endif
 
@@ -217,7 +217,7 @@ char *jabber_attr(char **atts, const char *att)
  */
 
 char *jabber_escape(const char *text) {
-	unsigned char *utftext;
+	char *utftext;
 	char *res;
 
 	if (!text)
@@ -287,7 +287,8 @@ char *tlen_encode(const char *what) {
 			*ptr++ = '+';
 		else if ((*s < '0' && *s != '-' && *s != '.')
 			 || (*s < 'A' && *s > '9') || (*s > 'Z' && *s < 'a' && *s != '_')
-			 || (*s > 'z')) {
+			 || (*s > 'z')) 
+		{
 			sprintf(ptr, "%%%02X", *s);
 			ptr += 3;
 		} else
@@ -479,8 +480,8 @@ QUERY(jabber_convert_string_reinit) {
  */
 int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *subject, const char *thread, jabber_conversation_t **result, const int can_add) {
 	jabber_conversation_t *thr, *prev;
-	char *resubject;
-        int i, l;
+	char *resubject = NULL;
+        int i, l = 0;
 	
 	if (!thread && subject && !xstrncmp(subject, config_subject_reply_prefix, (l = xstrlen(config_subject_reply_prefix))))
 		resubject = subject + l;

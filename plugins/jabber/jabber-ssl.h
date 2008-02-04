@@ -21,10 +21,10 @@
 
 # define SSL_SESSION		gnutls_session
 
-static int SSL_SET_FD(SSL_SESSION session, int fd) {
+static int __attribute__((unused)) SSL_SET_FD(SSL_SESSION session, int fd) {
 	gnutls_transport_set_ptr(session, (gnutls_transport_ptr)(fd));
 	return 1;	/* always success */
-}
+} 
 
 # define SSL_INIT(session)		gnutls_init((&session), GNUTLS_CLIENT)
 # define SSL_DEINIT(session)		gnutls_deinit(session)

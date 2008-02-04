@@ -34,6 +34,10 @@
 #include <termios.h>
 #include <unistd.h>
 
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
+
 #include <ekg/commands.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>

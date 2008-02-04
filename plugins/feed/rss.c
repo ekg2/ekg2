@@ -363,7 +363,7 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 	if (arrcount > 0) {
 		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
 		for (i = 0; i < arrcount; i++) {
-			const char *s = rss_convert_string(atts[i], j->no_unicode);
+			char *s = rss_convert_string(atts[i], j->no_unicode);
 			newnode->atts[i] = (s ? s : xstrdup(atts[i]));
 		}
 	} else	newnode->atts = NULL; 
@@ -376,7 +376,7 @@ static void rss_handle_end(void *data, const char *name) {
 	xmlnode_t *n;
 	string_t recode;
 
-	unsigned char *text;
+	char *text;
 
 	char *tmp;
 	int i;
@@ -394,7 +394,7 @@ static void rss_handle_end(void *data, const char *name) {
 
 	len = n->data->len;
 
-	text = (unsigned char *) string_free(n->data, 0);
+	text = string_free(n->data, 0);
 
 	for (i = 0; i < len;) {
 		unsigned int znak = (unsigned char) text[i];
@@ -464,7 +464,7 @@ static void rss_handle_end(void *data, const char *name) {
 				continue;
 			}
 
-			while (ucount && ((text[i] & 0xc0) == 0x80)) {
+			while (ucount && ((((unsigned char) text[i]) & 0xc0) == 0x80)) {
 				ucount--;
 				znaczek = (znaczek << 6) | (((unsigned char) text[i]) & 0x3f);
 				i++;

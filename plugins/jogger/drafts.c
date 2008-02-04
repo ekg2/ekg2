@@ -207,7 +207,7 @@ static int jogger_checkoutfile(const char *file, char **data, int *len, char **h
 	if (hash) {
 		char sizecont[8];
 
-		snprintf(sizecont, 8, "0x%%0%dx", sizeof(int)*2);
+		snprintf(sizecont, 8, "0x%%0%lux", sizeof(int)*2);
 		snprintf(jogger_hash, sizeof(int)*2+3, sizecont, ekg_hash(out));
 		*hash = jogger_hash;
 	}
@@ -263,7 +263,7 @@ COMMAND(jogger_prepare) {
 			WARN_PRINT("jogger_warning_wrong_value_empty");
 		else {
 			int i = 1;
-			const char **p = (sep-s < 12 ? jogger_header_keys : NULL);
+			const char **p = (const char **) (sep-s < 12 ? jogger_header_keys : NULL);
 
 			for (; *p; i++, p++) { /* awaiting second NULL here */
 				for (; *p; p++) { /* awaiting single NULL here */
@@ -308,7 +308,7 @@ COMMAND(jogger_prepare) {
 				const int jmax = i-5;
 				int j = 1;
 				char *myval = xstrndup(sep+1, end-sep-1);
-				const char **q = jogger_header_values;
+				const char **q = (const char **) jogger_header_values;
 
 				for (; *q && j <= jmax; j++, q++) { /* second NULL or jmax */
 					for (; *q; q++) { /* first NULL */

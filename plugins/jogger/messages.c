@@ -150,7 +150,7 @@ QUERY(jogger_msghandler) {
 				lmsg	= xstrdup(msg);
 				url	= NULL;
 			} else {
-				url	= msg+xstrlen(found == 3 ? owncf : jogger_text[found-1])+1;
+				url	= (char *) msg+xstrlen(found == 3 ? owncf : jogger_text[found-1])+1;
 
 				if (!(lmsg = xstrchr(tmp, '\n')) || !(lmsg = xstrchr(lmsg+1, '\n')))
 					return 0;

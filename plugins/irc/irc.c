@@ -1208,13 +1208,13 @@ static COMMAND(irc_command_alist) {
 #endif
 
 	if (!params[0] || match_arg(params[0], 'l', "list", 2) || (isshow = match_arg(params[0], 's', "show", 2))) {	/* list, list, show */
+#if 0
 		list_t l;
-
 		for (l = session->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 			/* u->resources; */
 		}
-
+#endif
 		return 0;
 	}
 

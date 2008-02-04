@@ -81,7 +81,7 @@ static QUERY(autoresponder_message)
 			break;
 		case 1: /* substring match */
 		default:
-			matchoccured = (int) (xstrstr(text, an));
+			matchoccured = !!(xstrstr(text, an));
 	}
 
 	if (matchoccured) {

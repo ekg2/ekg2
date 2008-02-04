@@ -96,10 +96,11 @@ char *generate_cookie(void)
 char *escape_single_quote(char *p, int inuni)
 {
 	string_t s = string_init(NULL);
-	int l=xstrlen(p), r;
+	int l=xstrlen(p);
 #if USE_UNICODE
 	if (inuni)
 	{
+		int r;
 		mbtowc(NULL, NULL, 0);	/* reset */
 		while (l>0)
 		{
@@ -278,7 +279,7 @@ QUERY(httprc_xajax_def_action)
 			{
 				if (!gline) {
 					char *fstringed;
-					ncurses_window_t *n = w->private;
+/*					ncurses_window_t *n = w->private; */
 					line = *(va_arg(ap, fstring_t **));
 					gline=1;
 					fstringed = http_fstring(w->id, "ch", line, 0);
@@ -412,7 +413,7 @@ QUERY(httprc_xajax_def_action)
 		if (p->fd != -1 && p->collected->len && p->waiting)
 		{
 			watch_t *send_watch = NULL;
-			int clen;
+			int clen = 0;
 
 			WATCH_FIND(send_watch, p->fd);
 

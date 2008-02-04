@@ -39,6 +39,10 @@
 #	include <regex.h>
 #endif
 
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
+
 #include <ekg/debug.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
@@ -230,7 +234,7 @@ TIMER(ncurses_typing) {
 					config_typing_timeout_empty : config_typing_timeout);
 
 		if (ncurses_typing_win && (!ncurses_typing_time || (timeout && time(NULL) - ncurses_typing_time > timeout))) {
-			window_t *tmpwin;
+			window_t *tmpwin = NULL;
 
 			if (oldwin) {
 				tmpwin			= ncurses_typing_win;

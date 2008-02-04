@@ -191,8 +191,8 @@ int gsm_codec_process(int type, codec_way_t way, string_t input, string_t output
 
 		out = xmalloc(outchunklen);
 
-		if (way == CODEC_CODE)		gsm_encode(c->codec, (gsm_signal *) (input->str + inpos), out);
-		else if (way == CODEC_DECODE) 	gsm_decode(c->codec, input->str + inpos, (gsm_signal *) out);
+		if (way == CODEC_CODE)		gsm_encode(c->codec, (gsm_signal *) (input->str + inpos), (unsigned char *) out);
+		else if (way == CODEC_DECODE) 	gsm_decode(c->codec, (unsigned char *) input->str + inpos, (gsm_signal *) out);
 
 		string_append_raw(output, out, outchunklen);
 		xfree(out);
