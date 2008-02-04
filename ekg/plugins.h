@@ -52,8 +52,6 @@ typedef int (*plugin_theme_init_func_t)(void);
 typedef void (plugin_notify_func_t)(session_t *, const char *);
 
 #define PLUGIN_VAR_ADD(name, id, type, value, secret, notify) 	{ name, id, value, secret, type, notify }
-#define PLUGIN_VAR_ADD_ID(id, type, value, secret, notify)	{ NULL, id, value, secret, type, notify }
-#define PLUGIN_VAR_ADD_NAME(name, type, value, secret, notify)	{ name,  0, value, secret, type, notify }
 #define PLUGIN_VAR_END()					{ NULL, -1, NULL, 0, -1, NULL } 
 
 typedef enum {
