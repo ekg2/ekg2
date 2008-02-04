@@ -925,6 +925,25 @@ static inline int fstring_attr2ncurses_attr(short chattr) {
 	return attr;
 }
 
+static inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
+	if (ch < 32) {
+		*attr |= A_REVERSE;
+		return ch + 64;
+	}
+
+	if (ch > 127 && ch < 160 &&
+#if USE_UNICODE
+		!config_use_unicode &&
+#endif
+		config_use_iso)
+	{
+		*attr |= A_REVERSE;
+		return '?';
+	}
+
+	return ch;
+}
+
 /*
  * ncurses_redraw()
  *
@@ -1007,78 +1026,77 @@ void ncurses_redraw(window_t *w)
  
 	if (n->start < 0) 
 		n->start = 0;
+
 	if (config_text_bottomalign && (!w->floating || config_text_bottomalign == 2)
-			&& n->start == 0 && n->lines_count < height) {
+			&& n->start == 0 && n->lines_count < height)
+	{
 		const int tmp = height - n->lines_count;
 
 		if (tmp > top)
 			top = tmp;
 	}
+
 	for (y = 0; y < height && n->start + y < n->lines_count; y++) {
 		struct screen_line *l = &n->lines[n->start + y];
-		unsigned int x_real = 0;
+
+		int cur_y = (top + y);	
+		int cur_x;
+
+		int fixup = 0;
 
 		wattrset(n->window, A_NORMAL);
-		for (x = 0; l->ts && l->ts[x] && x < l->ts_len; x++) { 
-			unsigned char ch = (unsigned char) l->ts[x];
-			int attr = fstring_attr2ncurses_attr(l->ts_attr[x]);
 
-                        if (ch < 32) {
-                                ch += 64;
-                                attr |= A_REVERSE;
-                        }
+		cur_x = (left);
+		
+		if (l->ts) {
+			/* XXX,
+			 * 	po co sprawdzamy l->ts[x] i l->ts_len? nie wystarczy jedno?
+			 */
+			for (x = 0; l->ts[x] && x < l->ts_len; x++, cur_x++) { 
+				int attr = fstring_attr2ncurses_attr(l->ts_attr[x]);
+				unsigned char ch = (unsigned char) ncurses_fixchar((CHAR_T) l->ts[x], &attr);
 
-                        if (ch > 127 && ch < 160) {
-                                ch = '?';
-                                attr |= A_REVERSE;
-                        }
-
-			wattrset(n->window, attr);
-			mvwaddch(n->window, top + y, left + x, ch);
+				wattrset(n->window, attr);
+				mvwaddch(n->window, cur_y, cur_x, ch);
+			}
 		}
-		for (x = 0; x < l->prompt_len + l->len; x++) {
-			CHAR_T ch;
-			int attr;
-			short chattr;
-			if (x < l->prompt_len) {
-				if (!l->prompt_str)
-					continue;
-				
-				ch = l->prompt_str[x];
-				chattr = l->prompt_attr[x];
-			} else {
-				ch = l->str[x - l->prompt_len];
-				chattr = l->attr[x - l->prompt_len];
-			}
 
-			attr = fstring_attr2ncurses_attr(chattr);
+		cur_x = (left + l->ts_len);	/* XXX */
 
-			if (ch < 32) {
-				ch += 64;
-				attr |= A_REVERSE;
-			}
+		if (l->prompt_str) {
+			for (x = 0; x < l->prompt_len; x++, cur_x++) {
+				int attr = fstring_attr2ncurses_attr(l->prompt_attr[x]);
+				CHAR_T ch = ncurses_fixchar(l->prompt_str[x], &attr);
 
-			if (ch > 127 && ch < 160 &&
+				wattrset(n->window, attr);
+
+				if (!fixup && (l->margin_left != -1 && x >= l->margin_left))
+					fixup = l->margin_left + config_margin_size;
 #if USE_UNICODE
-				!config_use_unicode &&
+				if (config_use_unicode) {
+					mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
+				} else
 #endif
-				config_use_iso)
-			{
-				ch = '?';
-				attr |= A_REVERSE;
+					mvwaddch(n->window, cur_y, cur_x - fixup, ch);
 			}
+		}
+
+		cur_x = (left + l->ts_len + l->prompt_len);	/* XXX */
+
+		for (x = 0; x < l->len; x++, cur_x++) {
+			int attr = fstring_attr2ncurses_attr(l->attr[x]);
+			CHAR_T ch = ncurses_fixchar(l->str[x], &attr);
 
 			wattrset(n->window, attr);
-			if (l->margin_left != -1 && x >= l->margin_left) 
-				x_real = x - l->margin_left + config_margin_size;
-			else 
-				x_real = x;
+
+			if (!fixup && (l->margin_left != -1 && (x + l->prompt_len) >= l->margin_left))
+				fixup = l->margin_left + config_margin_size;
 #if USE_UNICODE
 			if (config_use_unicode) {
-				mvwaddnwstr(n->window, top + y, left + x_real + l->ts_len, &ch, 1);
+				mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
 			} else
 #endif
-				mvwaddch(n->window, top + y, left + x_real + l->ts_len, ch);
+				mvwaddch(n->window, cur_y, cur_x - fixup, ch);
 		}
 	}
 
@@ -1476,6 +1494,8 @@ next:
  */
 void update_statusbar(int commit)
 {
+	static const char empty_format[] = "";
+
 	struct format_data formats[32];	/* if someone add his own format increment it. */
 	int formats_count = 0, i = 0, y;
 	session_t *sess = window_current->session;
@@ -1498,7 +1518,8 @@ void update_statusbar(int commit)
 		formats_count++; \
 	} 
 
-#define __add_format_dup(x, y, z) __add_format(x, y ? xstrdup(z) : NULL)
+#define __add_format_emp(x, y)		__add_format(x, y ? (char *) empty_format : NULL)
+#define __add_format_dup(x, y, z) 	__add_format(x, y ? xstrdup(z) : NULL)
 
 
 	__add_format_dup("time", 1, timestamp(format_find("statusbar_timestamp")));
@@ -1540,7 +1561,7 @@ void update_statusbar(int commit)
 
 			if (act)
 				string_append_c(s, ',');
-			sprintf(&tmp[0], "statusbar_act%s%s", (w->act & 2 ? "_important" : ""), (w->act & 4 ? "_typing" : ""));
+			sprintf(tmp, "statusbar_act%s%s", (w->act & 2 ? "_important" : ""), (w->act & 4 ? "_typing" : ""));
 			string_append(s, format_find(tmp));
 			string_append(s, itoa(w->id));
 			act = 1;
@@ -1554,36 +1575,46 @@ void update_statusbar(int commit)
 	}
 
 	__add_format_dup("debug", (!window_current->id), "");
-#define __add_format_dup_st(x, y) __add_format_dup(x, (sess && sess->connected && (sess->status == y)), "");
-	__add_format_dup_st("away", EKG_STATUS_AWAY);
-	__add_format_dup_st("avail", EKG_STATUS_AVAIL);
-	__add_format_dup_st("dnd", EKG_STATUS_DND);
-	__add_format_dup_st("chat", EKG_STATUS_FFC);
-	__add_format_dup_st("xa", EKG_STATUS_XA);
-	__add_format_dup_st("invisible", EKG_STATUS_INVISIBLE);
-#undef __add_format_dup_st
-	__add_format_dup("notavail", (!sess || !sess->connected || (sess->status == EKG_STATUS_NA)), "");
-	__add_format_dup("more", (window_current->more), "");
 
-	__add_format_dup("query_descr", (q && q->descr), q->descr);
-#define __add_format_dup_st(x, y) __add_format_dup("query_" x, (q && (q->status == y)), "");
-	__add_format_dup_st("away", EKG_STATUS_AWAY);
-	__add_format_dup_st("avail", EKG_STATUS_AVAIL);
-	__add_format_dup_st("invisible", EKG_STATUS_INVISIBLE);
-	__add_format_dup_st("notavail", EKG_STATUS_NA);
-	__add_format_dup_st("dnd", EKG_STATUS_DND);
-	__add_format_dup_st("chat", EKG_STATUS_FFC);
-	__add_format_dup_st("xa", EKG_STATUS_XA);
-	/* XXX add unknown and likes!; maybe we could use ekg_status_string()? */
-#undef __add_format_dup_st
-#if 0
-	__add_format_dup("query_ip", (q && q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 
+	if (sess && sess->connected) {
+#define __add_format_emp_st(x, y) __add_format_emp(x, (sess->status == y))
+		__add_format_emp_st("away", EKG_STATUS_AWAY);
+		__add_format_emp_st("avail", EKG_STATUS_AVAIL);
+		__add_format_emp_st("dnd", EKG_STATUS_DND);
+		__add_format_emp_st("chat", EKG_STATUS_FFC);
+		__add_format_emp_st("xa", EKG_STATUS_XA);
+		__add_format_emp_st("invisible", EKG_STATUS_INVISIBLE);
+
+		__add_format_emp_st("notavail", EKG_STATUS_NA);		/* XXX, session shouldn't be connected here */
+#undef __add_format_emp_st
+	} else
+		__add_format_emp("notavail", 1);
+
+	__add_format_emp("more", (window_current->more));
+
+	if (q) {
+#define __add_format_emp_st(x, y) __add_format_emp("query_" x, (q->status == y));
+		__add_format_emp_st("away", EKG_STATUS_AWAY);
+		__add_format_emp_st("avail", EKG_STATUS_AVAIL);
+		__add_format_emp_st("invisible", EKG_STATUS_INVISIBLE);
+		__add_format_emp_st("notavail", EKG_STATUS_NA);
+		__add_format_emp_st("dnd", EKG_STATUS_DND);
+		__add_format_emp_st("chat", EKG_STATUS_FFC);
+		__add_format_emp_st("xa", EKG_STATUS_XA);
+		/* XXX add unknown and likes!; maybe we could use ekg_status_string()? */
+#undef __add_format_emp_st
+
+		__add_format_emp("typing", (q->xstate & EKG_XSTATE_TYPING));
+		__add_format_dup("query_descr", (q->descr), q->descr);
+#if 0	
+		__add_format_dup("query_ip", (q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 	/* XXX!!! */
 #endif
+	}
 
-        __add_format_dup("typing", (q && (q->xstate & EKG_XSTATE_TYPING)), "");
 	__add_format_dup("url", 1, "http://www.ekg2.org/");
 	__add_format_dup("version", 1, VERSION);
 
+#undef __add_format_emp
 #undef __add_format_dup
 #undef __add_format
 
@@ -1644,8 +1675,10 @@ void update_statusbar(int commit)
 		}
 	}
 
-	for (i = 0; i < formats_count; i++)
-		xfree(formats[i].text);
+	for (i = 0; i < formats_count; i++) {
+		if (formats[i].text != empty_format)
+			xfree(formats[i].text);
+	}
 #if 0	/* never used queries, in ekg1 it was used by python, coz python can brush in ncurses interface... in ekg2 it's useless. */
 	query_emit(NULL, ("ui-redrawing-header"));
 	query_emit(NULL, ("ui-redrawing-statusbar"));
