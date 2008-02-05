@@ -173,7 +173,8 @@ void ekg_loop() {
                         session_t *s = l->data;
                         int tmp;
 
-                        if (!s->connected || (s->status < EKG_STATUS_XA))
+                        if (!s->connected || (s->status < EKG_STATUS_AWAY)) /* lowest autostatus is autoxa, so from xa and lower ones
+									       we can't go further */
                                 continue;
 
 			do {
