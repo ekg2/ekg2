@@ -117,7 +117,7 @@ enum status_t {
 	EKG_STATUS_UNKNOWN	= 0x10,	/* will be used in Jabber */
 	EKG_STATUS_NA		= 0x20,	/* universal */
 	/* These should be considered as 'probably available' */
-	EKG_STATUS_INVISIBLE,		/* will be used in GG; hard to prioritize... */
+	EKG_STATUS_INVISIBLE,		/* GG; hard to prioritize... */
 	EKG_STATUS_DND,			/* Jabber */
 	EKG_STATUS_XA,			/* Jabber */
 	EKG_STATUS_AWAY,		/* universal */
