@@ -596,6 +596,7 @@ static void irc_changed_resolve(session_t *s, const char *var) {
 }
 
 static void irc_changed_recode(session_t *s, const char *var) {
+	const char *val;
 	irc_private_t *j;
 	
 	if (!s || !(j = s->priv))
@@ -605,8 +606,14 @@ static void irc_changed_recode(session_t *s, const char *var) {
 		ekg_convert_string_destroy(j->conv_in);
 		ekg_convert_string_destroy(j->conv_out);
 	}
-	
-	j->conv_in = ekg_convert_string_init(session_get(s, var), NULL, &(j->conv_out));
+
+	if (!(val = session_get(s, var)) || !*val) {
+		j->conv_in = (void *) -1;
+		j->conv_out = (void *) -1;
+		return;
+	}
+
+	j->conv_in = ekg_convert_string_init(val, NULL, &(j->conv_out));
 }
 
 /*                                                                       *
