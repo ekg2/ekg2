@@ -2486,7 +2486,7 @@ char *ekg_draw_descr(const int status)
 	char var[100];
 	variable_t *v;	
 
-	if (status <= EKG_STATUS_NA) {
+	if (EKG_STATUS_IS_NA(status)) { /* or maybe == NA ? */
 		xstrcpy(var, ("quit_reason"));
 		xstrcpy(file, "quit.reasons");
 	} else if (status == EKG_STATUS_AVAIL) {

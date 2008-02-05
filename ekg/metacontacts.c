@@ -515,8 +515,8 @@ metacontact_item_t *metacontact_find_prio(metacontact_t *m)
 		{
 			/* hardly simplified that, XXX could you check it?
 			 * additional todo: use state priorities? */
-			const int last_na = (last->status <= EKG_STATUS_NA);
-			const int u_na = (u->status <= EKG_STATUS_NA);
+			const int last_na = EKG_STATUS_IS_NA(last->status);
+			const int u_na = EKG_STATUS_IS_NA(u->status);
 
 			if (((last_na == u_na) && ret->prio < i->prio) || (last_na && !u_na)) {
 				ret = i;

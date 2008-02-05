@@ -173,7 +173,7 @@ void ekg_loop() {
                         session_t *s = l->data;
                         int tmp;
 
-                        if (!s->connected || (s->status < EKG_STATUS_AWAY))
+                        if (!s->connected || (s->status < EKG_STATUS_XA))
                                 continue;
 
 			do {

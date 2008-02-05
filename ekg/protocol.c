@@ -325,17 +325,17 @@ static QUERY(protocol_status)
 		return 0;
 
 	/* je¶li kto¶ nam znika, zapamiêtajmy kiedy go widziano */
-	if (!u->resources && (u->status > EKG_STATUS_NA) && (status <= EKG_STATUS_NA))
+	if (!u->resources && !EKG_STATUS_IS_NA(u->status) && EKG_STATUS_IS_NA(status))
 		u->last_seen = when ? when : time(NULL);
 
 	/* XXX dodaæ events_delay */
 	
 	/* je¶li dostêpny lub zajêty, dopisz to taba. je¶li niedostêpny, usuñ */
-	if ((status >= EKG_STATUS_AVAIL) && config_completion_notify && u->nickname)
+	if (EKG_STATUS_IS_AVAIL(status) && config_completion_notify && u->nickname)
 		tabnick_add(u->nickname);
-	if ((status > EKG_STATUS_NA) && (status < EKG_STATUS_AVAIL) /* == aways */ && (config_completion_notify & 4) && u->nickname)
+	if (!EKG_STATUS_IS_AWAY(status) && (config_completion_notify & 4) && u->nickname)
 		tabnick_add(u->nickname);
-	if ((status < EKG_STATUS_NA) && (config_completion_notify & 2) && u->nickname)
+	if (EKG_STATUS_IS_NA(status) && (config_completion_notify & 2) && u->nickname)
 		tabnick_remove(u->nickname);
 
 
@@ -346,15 +346,9 @@ static QUERY(protocol_status)
 	 * 	warto¶æ 2 wy¶wietla tylko zmiany z niedostêpnego na dostêpny i na odwrót. 
 	 */
 
-	if ((sess_notify == -1 ? config_display_notify : sess_notify) & 2) {
-		/* je¶li na zajêty, ignorujemy */
-		if (st == EKG_STATUS_AWAY)
-			goto notify_plugins;
-
-		/* je¶li na dostêpny, ignorujemy */
-		if (st == EKG_STATUS_AVAIL)
-			goto notify_plugins;
-	}
+	if (((sess_notify == -1 ? config_display_notify : sess_notify) & 2)
+			&& !(EKG_STATUS_IS_NA(st) ^ EKG_STATUS_IS_NA(status)))
+		goto notify_plugins;
 
 	/* ignorowanie statusu - nie wy¶wietlamy, ale pluginy niech robi± co chc± */
         if (ignore_status)
@@ -383,13 +377,13 @@ static QUERY(protocol_status)
 	}
 
 notify_plugins:
-	if (st > EKG_STATUS_NA) {
+	if (!EKG_STATUS_IS_NA(st)) {
 	        u->last_status = st;
 	        xfree(u->last_descr);
 	        u->last_descr = xstrdup(de);
 	}
 
-	if ((st <= EKG_STATUS_NA) && (status > EKG_STATUS_NA) && !ignore_events)
+	if (EKG_STATUS_IS_NA(st) && !EKG_STATUS_IS_NA(status) && !ignore_events)
 		query_emit_id(NULL, EVENT_ONLINE, __session, __uid);
 
 	if (!ignore_status) {
@@ -432,11 +426,11 @@ notify_plugins:
 	 * 	EVENT_AWAY for away&xa&dnd
 	 * 	... */
 	if (!ignore_events) {
-		if (status >= EKG_STATUS_AVAIL)
+		if (EKG_STATUS_IS_AVAIL(status))
 			query_emit_id(NULL, EVENT_AVAIL, __session, __uid);
-		else if (status > EKG_STATUS_NA)
+		else if (EKG_STATUS_IS_AWAY(status))
 			query_emit_id(NULL, EVENT_AWAY, __session, __uid);
-		else if (status <= EKG_STATUS_NA)
+		else if (EKG_STATUS_IS_NA(status))
 			query_emit_id(NULL, EVENT_NA, __session, __uid);
 	}
 

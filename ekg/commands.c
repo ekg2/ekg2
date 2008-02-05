@@ -243,8 +243,8 @@ static COMMAND(cmd_tabclear)
 				u = userlist_find(session, send_nicks[i]);
 
 			/* I think we should also remove errors and likes here
-			 * if I'm wrong, change the > to == */
-			if (!u || (u->status > EKG_STATUS_NA))
+			 * if I'm wrong, change the macro to comparison */
+			if (!u || !EKG_STATUS_IS_NA(u->status))
 				continue;
 
 			tabnick_remove(send_nicks[i]);
@@ -1471,7 +1471,7 @@ list_user:
 			printq("user_info_nickname", u->nickname);
 
 		printq("user_info_status", status);
-                if (u->status_time && (u->status <= EKG_STATUS_NA)) {
+                if (u->status_time && EKG_STATUS_IS_NA(u->status)) {
 		        struct tm *status_time;
 			char buf[100];		
 
@@ -1515,7 +1515,7 @@ list_user:
 				printq("user_info_groups", groups);
 			xfree(groups);
 		}
-		if (u->status <= EKG_STATUS_NA) {
+		if (EKG_STATUS_IS_NA(u->status)) {
 			char buf[100];
 			struct tm *last_seen_time;
 			
