@@ -1174,34 +1174,6 @@ void ncurses_clear(window_t *w, int full)
 }
 
 /*
- * window_floating_update()
- *
- * uaktualnia zawarto¶æ p³ywaj±cego okna o id == i
- * lub wszystkich okienek, gdy i == 0.
- */
-static void window_floating_update(window_t *w)
-{
-	ncurses_window_t *n = w->private;
-
-	/* je¶li ma w³asn± obs³ugê od¶wie¿ania, nie ruszamy */
-	if (n->handle_redraw) {
-		/* ma tylko gdy: n->handle_redraw() zwroci -1 */
-		if (n->handle_redraw(w) != -1) 
-			ncurses_redraw(w);
-		return;
-	}
-		
-	if (w->last_update == time(NULL))
-		return;
-
-	w->last_update = time(NULL);
-
-	ncurses_clear(w, 1);
-
-	ncurses_redraw(w);
-}
-
-/*
  * ncurses_refresh()
  *
  * wnoutrefresh()uje aktualnie wy¶wietlane okienko.
@@ -1210,20 +1182,13 @@ void ncurses_refresh()
 {
 	list_t l;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-		ncurses_window_t *n = w->private;
-
-		if (!n)
-			continue;
-
-		if (w->floating || window_current->id != w->id)
-			continue;
+	if (window_current && window_current->private /* !window_current->floating */) {
+		ncurses_window_t *n = window_current->private;
 
 		if (n->redraw)
-			ncurses_redraw(w);
+			ncurses_redraw(window_current);
 
-		if (!w->hide)
+		if (!window_current->hide)
 			wnoutrefresh(n->window);
 	}
 
@@ -1234,11 +1199,20 @@ void ncurses_refresh()
 		if (!w->floating || w->hide)
 			continue;
 
-		if (n->handle_redraw)
+		if (n->handle_redraw) {
 			ncurses_redraw(w);
-		else
-			window_floating_update(w->id);
+		} else {
+			/* window_floating_update() */
 
+			if (w->last_update != time(NULL)) {
+				w->last_update = time(NULL);
+
+				ncurses_clear(w, 1);
+
+				ncurses_redraw(w);
+			}
+
+		}
 		touchwin(n->window);
 		wnoutrefresh(n->window);
 	}
