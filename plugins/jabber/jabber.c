@@ -416,8 +416,17 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 
 	if (!s->connected && !j->connecting)
 		return;
+
+	{
+		char *__session = xstrdup(session_uid_get(s));
+		char *__reason = xstrdup(reason);
+		
+		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &type, NULL);
+
+		xfree(__session);
+		xfree(__reason);
+	}
 	
-	s->connected = 0;
 	j->connecting = 0;
 
 	if (j->send_watch) {
@@ -453,16 +462,6 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 	session_set(s, "__sasl_excepted", NULL);
 	session_int_set(s, "__roster_retrieved", 0);
 	session_int_set(s, "__session_need_start", 0);
-
-	{
-		char *__session = xstrdup(session_uid_get(s));
-		char *__reason = xstrdup(reason);
-		
-		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &type, NULL);
-
-		xfree(__session);
-		xfree(__reason);
-	}
 }
 
 static void xmlnode_handle_start(void *data, const char *name, const char **atts) {
