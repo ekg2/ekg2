@@ -1558,14 +1558,13 @@ void update_statusbar(int commit)
 		__add_format_dup("mail", (mail_count > 0), itoa(mail_count));
 	}
 	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find(("irc")))) {
-		/* yeah, I know, shitty way */
+		char *t1 = NULL;
 		char *t2 = NULL;
 		char *t3 = NULL; 
-		query_emit_id(plug, IRC_TOPIC, &tmp, &t2, &t3);
-		__add_format("irctopic", tmp);
+		query_emit_id(plug, IRC_TOPIC, &t1, &t2, &t3);
+		__add_format("irctopic", t1);
 		__add_format("irctopicby", t2);
 		__add_format("ircmode", t3);
-		tmp = NULL;
 	}
 
 	{
