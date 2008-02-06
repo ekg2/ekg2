@@ -46,6 +46,8 @@ void ncurses_binding_delete(const char *key, int quiet);
 int  ncurses_binding_default(void *, va_list);
 void ncurses_binding_set(int quiet, const char *key, const char *sequence);
 
+void binding_helper_scroll(window_t *w, int offset);
+
 #endif /* __EKG_NCURSES_BINDINGS_H */
 
 /*

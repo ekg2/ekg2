@@ -150,7 +150,6 @@ static QUERY(ncurses_ui_window_switch) {
 
 	ncurses_window_t *n = w->private;
 
-	contacts_index = 0;
 	if ((wc = window_find_sa(NULL, "__contacts", 1))) {
 		ncurses_contacts_update(wc);
 		ncurses_redraw(wc);

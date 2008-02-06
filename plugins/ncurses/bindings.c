@@ -573,88 +573,79 @@ static BINDING_FUNCTION(binding_next_history)
 	binding_next_only_history(NULL);
 }
 
-static BINDING_FUNCTION(binding_backward_page)
-{
-	ncurses_current->start -= window_current->height / 2;
-	if (ncurses_current->start < 0)
-		ncurses_current->start = 0;
-	ncurses_redraw(window_current);
-	ncurses_commit();
-}
-
-static BINDING_FUNCTION(binding_forward_page)
-{
-	ncurses_current->start += window_current->height / 2;
-
-	if (ncurses_current->start > ncurses_current->lines_count - window_current->height + ncurses_current->overflow)
-		ncurses_current->start = ncurses_current->lines_count - window_current->height + ncurses_current->overflow;
-
-	if (ncurses_current->start < 0)
-		ncurses_current->start = 0;
-
-	if (ncurses_current->start == ncurses_current->lines_count - window_current->height + ncurses_current->overflow) {
-		window_current->more = 0;
-		update_statusbar(0);
-	}
-
-	ncurses_redraw(window_current);
-	ncurses_commit();
-}
-
-static BINDING_FUNCTION(binding_forward_lastlog_page) {
-	window_t *w = window_find_sa(NULL, "__lastlog", 1);
-	ncurses_window_t *n;
-
-	if (!w || !(n = w->private)) 
-		return;
-	
-	n->start += w->height / 2;
-
-	if (n->start > n->lines_count - w->height + n->overflow)
-		n->start = n->lines_count - w->height + n->overflow;
-
-	if (n->start < 0)
-		n->start = 0;
-
-	ncurses_redraw(w);
-	ncurses_commit();
-}
-
-static BINDING_FUNCTION(binding_backward_lastlog_page) {
-	window_t *w = window_find_sa(NULL, "__lastlog", 1);
+void binding_helper_scroll(window_t *w, int offset) {
 	ncurses_window_t *n;
 
 	if (!w || !(n = w->private))
 		return;
-	
-	n->start -= w->height / 2;
-	if (n->start < 0)
-		n->start = 0;
+
+	if (offset < 0) {
+		n->start += offset;
+		if (n->start < 0)
+			n->start = 0;
+
+	} else {
+		n->start += offset;
+
+		if (n->start > n->lines_count - w->height + n->overflow)
+			n->start = n->lines_count - w->height + n->overflow;
+
+		if (n->start < 0)
+			n->start = 0;
+
+	/* old code from: binding_forward_page() need it */
+		if (w == window_current) {
+			if (ncurses_current->start == ncurses_current->lines_count - window_current->height + ncurses_current->overflow) {
+				window_current->more = 0;
+				update_statusbar(0);
+			}
+		}
+	}
 
 	ncurses_redraw(w);
 	ncurses_commit();
 }
 
+static void binding_helper_scroll_page(window_t *w, int backward) {
+	if (!w)
+		return;
 
-static BINDING_FUNCTION(binding_backward_contacts_line)
-{
-	ncurses_backward_contacts_line(1);
+	if (backward)
+		binding_helper_scroll(w, -(w->height / 2));
+	else
+		binding_helper_scroll(w, +(w->height / 2));
 }
 
-static BINDING_FUNCTION(binding_forward_contacts_line)
-{
-	ncurses_forward_contacts_line(1);
+static BINDING_FUNCTION(binding_backward_page) {
+	binding_helper_scroll_page(window_current, 1);
 }
 
-
-static BINDING_FUNCTION(binding_backward_contacts_page)
-{
-	ncurses_backward_contacts_page(0);
+static BINDING_FUNCTION(binding_forward_page) {
+	binding_helper_scroll_page(window_current, 0);
 }
 
-static BINDING_FUNCTION(binding_forward_contacts_page)
-{
-	ncurses_forward_contacts_page(0);
+static BINDING_FUNCTION(binding_backward_lastlog_page) {
+	binding_helper_scroll_page(window_find_sa(NULL, "__lastlog", 1), 1);
+}
+
+static BINDING_FUNCTION(binding_forward_lastlog_page) {
+	binding_helper_scroll_page(window_find_sa(NULL, "__lastlog", 1), 0);
+}
+
+static BINDING_FUNCTION(binding_backward_contacts_page) {
+	binding_helper_scroll_page(window_find_sa(NULL, "__contacts", 1), 1);
+}
+
+static BINDING_FUNCTION(binding_forward_contacts_page) {
+	binding_helper_scroll_page(window_find_sa(NULL, "__contacts", 1), 0);
+}
+
+static BINDING_FUNCTION(binding_backward_contacts_line) {
+	binding_helper_scroll(window_find_sa(NULL, "__contacts", 1), -1);
+}
+
+static BINDING_FUNCTION(binding_forward_contacts_line) {
+	binding_helper_scroll(window_find_sa(NULL, "__contacts", 1), 1);
 }
 
 static BINDING_FUNCTION(binding_ignore_query)
@@ -689,7 +680,6 @@ static BINDING_FUNCTION(binding_toggle_contacts_wrapper)
 static BINDING_FUNCTION(binding_next_contacts_group)
 {
 	contacts_group_index++;
-	contacts_index = 0;
 	ncurses_contacts_update(NULL);
 	ncurses_resize();
 	ncurses_commit();
