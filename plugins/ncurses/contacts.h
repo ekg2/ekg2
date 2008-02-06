@@ -14,7 +14,6 @@ extern char *config_contacts_order;
 extern char *config_contacts_groups;
 extern int config_contacts_metacontacts_swallow;
 
-extern list_t sorted_all_cache;
 extern int contacts_index;
 extern int contacts_group_index;
 

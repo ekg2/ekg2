@@ -146,12 +146,15 @@ static QUERY(ncurses_ui_is_initialized) {
 
 static QUERY(ncurses_ui_window_switch) {
 	window_t *w 	= *(va_arg(ap, window_t **));
+	window_t *wc;
 
 	ncurses_window_t *n = w->private;
 
-        list_destroy(sorted_all_cache, 1);
-        sorted_all_cache = NULL;
 	contacts_index = 0;
+	if ((wc = window_find_sa(NULL, "__contacts", 1))) {
+		ncurses_contacts_update(wc);
+		ncurses_redraw(wc);
+	}
 
 	if (n->redraw)
 		ncurses_redraw(w);
@@ -329,9 +332,6 @@ static QUERY(ncurses_userlist_changed)
 
 		ncurses_update_real_prompt(n);
         }
-
-	list_destroy(sorted_all_cache, 1);
-	sorted_all_cache = NULL;
 
 	if ((w = window_find_sa(NULL, "__contacts", 1))) {
 		ncurses_contacts_update(w);
@@ -628,7 +628,6 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, UI_PASSWORD_INPUT, ncurses_password_input, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
-	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_EVENT, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_RENAMED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, USERLIST_CHANGED, ncurses_userlist_changed, NULL);
@@ -641,12 +640,20 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, VARIABLE_CHANGED, ncurses_variable_changed, NULL);
 	query_connect_id(&ncurses_plugin, CONFERENCE_RENAMED, ncurses_conference_renamed, NULL);
 
+	query_connect_id(&ncurses_plugin, CONFIG_POSTINIT, ncurses_postinit, NULL);
+	query_connect_id(&ncurses_plugin, PROTOCOL_DISCONNECTING, ncurses_session_disconnect_handler, NULL);
+
+/* redraw userlisty: */
+	query_connect_id(&ncurses_plugin, UI_REFRESH, ncurses_all_contacts_changed, NULL);
+
+	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, SESSION_EVENT, ncurses_all_contacts_changed, NULL);
+
 	query_connect_id(&ncurses_plugin, METACONTACT_ADDED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, METACONTACT_REMOVED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_ADDED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_REMOVED, ncurses_all_contacts_changed, NULL);
-	query_connect_id(&ncurses_plugin, CONFIG_POSTINIT, ncurses_postinit, NULL);
-	query_connect_id(&ncurses_plugin, PROTOCOL_DISCONNECTING, ncurses_session_disconnect_handler, NULL);
+
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, ("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
@@ -738,11 +745,6 @@ static int ncurses_plugin_destroy()
 		watch_remove(&ncurses_plugin, winch_pipe[0], WATCH_READ);
 
 	timer_remove(&ncurses_plugin, "ncurses:clock");
-
-	if (sorted_all_cache) {
-		list_destroy(sorted_all_cache, 1);
-		sorted_all_cache = NULL;
-	}
 
 	ncurses_deinit();
 

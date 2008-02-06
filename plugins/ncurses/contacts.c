@@ -65,8 +65,6 @@ static char contacts_order[32] = CONTACTS_ORDER_DEFAULT;
 static int contacts_nosort = 0;
 static size_t corderlen	= CONTACTS_ORDER_DEFAULT_LEN;			/* it must be always equal xstrlen(contacts_order) XXX please note if you add somewhere code which modify contacts_order */
 
-list_t sorted_all_cache = NULL;
-
 /* vars */
 int config_contacts_size;
 int config_contacts;
@@ -439,7 +437,7 @@ group_cleanup:
 		xfree(tmp);
 	}
 
-	if (all == 1 && !sorted_all_cache) {
+	if (all == 1) {
 		list_t l;
 
 		for (l = sessions; l; l = l->next) {
@@ -466,7 +464,7 @@ group_cleanup:
 
 		if (sorted_all) comp = contacts_compare;	/* like above */
 	}
-	if ((all == 1 && !sorted_all_cache) || all == 2) {
+	if (all == 1 || all == 2) {
 		list_t l;
 
 		for (l = metacontacts; l; l = l->next) {
@@ -502,9 +500,6 @@ group_cleanup:
 				}
 		}
 	} 
-
-	if (sorted_all_cache && all != 2) 	
-		sorted_all = sorted_all_cache;
 
 	for (j = 0; j < corderlen; /* xstrlen(contacts_order); */ j += 2) {
 		int count = 0;
@@ -608,9 +603,8 @@ group_cleanup:
 		xfree(tmp);
 	}
 
-	if (sorted_all && !sorted_all_cache && all != 2) {
-		sorted_all_cache = sorted_all;
-	}
+
+	list_destroy(sorted_all, 1);
 
 	xfree(group);
 
@@ -687,10 +681,15 @@ QUERY(ncurses_contacts_changed)
  */
 QUERY(ncurses_all_contacts_changed)
 {
-	va_list dummy;
-	list_destroy(sorted_all_cache, 1);
-	sorted_all_cache = NULL;
-	ncurses_contacts_changed(data, dummy);
+	window_t *w;
+
+/*	ncurses_contacts_changed(data, dummy); */
+
+	if ((w = window_find_sa(NULL, "__contacts", 1))) {
+		ncurses_contacts_update(w);
+		ncurses_redraw(w);
+		ncurses_commit();
+	}
 	return 0;
 }
 
@@ -742,6 +741,8 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 	return;
 }
 
+static int ncurses_contacts_update_redraw(window_t *w) { return 0; } 
+
 /*
  * ncurses_contacts_new()
  *
@@ -774,7 +775,7 @@ void ncurses_contacts_new(window_t *w)
 	w->floating = 1;
 	w->edge = contacts_edge;
 	w->frames = contacts_frame;
-	n->handle_redraw = ncurses_contacts_update;
+	n->handle_redraw = ncurses_contacts_update_redraw;
 	n->handle_mouse = ncurses_contacts_mouse_handler;
 	w->nowrap = !contacts_wrap;
 	n->start = 0;
