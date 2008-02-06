@@ -1179,33 +1179,26 @@ void ncurses_clear(window_t *w, int full)
  * uaktualnia zawarto¶æ p³ywaj±cego okna o id == i
  * lub wszystkich okienek, gdy i == 0.
  */
-static void window_floating_update(int i)
+static void window_floating_update(window_t *w)
 {
-	list_t l;
+	ncurses_window_t *n = w->private;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-		ncurses_window_t *n = w->private;
-
-		if (i && (w->id != i))
-			continue;
-
-		if (!w->floating)
-			continue;
-
-		/* je¶li ma w³asn± obs³ugê od¶wie¿ania, nie ruszamy */
-		if (n->handle_redraw)
-			continue;
-		
-		if (w->last_update == time(NULL))
-			continue;
-
-		w->last_update = time(NULL);
-
-		ncurses_clear(w, 1);
-
-		ncurses_redraw(w);
+	/* je¶li ma w³asn± obs³ugê od¶wie¿ania, nie ruszamy */
+	if (n->handle_redraw) {
+		/* ma tylko gdy: n->handle_redraw() zwroci -1 */
+		if (n->handle_redraw(w) != -1) 
+			ncurses_redraw(w);
+		return;
 	}
+		
+	if (w->last_update == time(NULL))
+		return;
+
+	w->last_update = time(NULL);
+
+	ncurses_clear(w, 1);
+
+	ncurses_redraw(w);
 }
 
 /*
