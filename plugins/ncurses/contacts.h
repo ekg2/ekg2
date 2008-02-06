@@ -18,7 +18,7 @@ extern int contacts_group_index;
 
 #define CONTACTS_MAX_HEADERS 20
 
-int ncurses_contacts_update(window_t *w);
+int ncurses_contacts_update(window_t *w, int save_pos);
 int ncurses_contacts_changed(void *vname, va_list b);
 int ncurses_all_contacts_changed(void *vname, va_list b);
 void ncurses_contacts_new(window_t *w);

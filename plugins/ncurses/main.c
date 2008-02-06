@@ -151,8 +151,8 @@ static QUERY(ncurses_ui_window_switch) {
 	ncurses_window_t *n = w->private;
 
 	if ((wc = window_find_sa(NULL, "__contacts", 1))) {
-		ncurses_contacts_update(wc);
-		ncurses_redraw(wc);
+		/* XXX, na pewno nie chcemy zapisywac polozenia userlisty podczas zmiany okna? */
+		ncurses_contacts_update(wc, 0);
 	}
 
 	if (n->redraw)
@@ -332,10 +332,9 @@ static QUERY(ncurses_userlist_changed)
 		ncurses_update_real_prompt(n);
         }
 
-	if ((w = window_find_sa(NULL, "__contacts", 1))) {
-		ncurses_contacts_update(w);
-		ncurses_redraw(w);
-	}
+	if ((w = window_find_sa(NULL, "__contacts", 1)))
+		ncurses_contacts_update(w, 1);
+
 	ncurses_commit();
 	return 0;
 }
@@ -369,7 +368,7 @@ static QUERY(ncurses_variable_changed)
                 ncurses_resize();
         }
 
-        ncurses_contacts_update(NULL);
+/*	ncurses_contacts_update(NULL); */
         update_statusbar(1);
 
 	return 0;
@@ -395,7 +394,7 @@ static QUERY(ncurses_conference_renamed)
                 }
 	}
 
-        ncurses_contacts_update(NULL);
+/*	ncurses_contacts_update(NULL); */
         update_statusbar(1);
 
         return 0;
@@ -447,7 +446,7 @@ static QUERY(ncurses_binding_adddelete_query)
 	if (add)	ncurses_binding_add(p2, p3, 0, quiet);
 	else		ncurses_binding_delete(p2, quiet);
 
-	ncurses_contacts_update(NULL);
+/*	ncurses_contacts_update(NULL); */
 	update_statusbar(1);
 
 	return 0;
@@ -643,9 +642,11 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, PROTOCOL_DISCONNECTING, ncurses_session_disconnect_handler, NULL);
 
 /* redraw userlisty: */
-	query_connect_id(&ncurses_plugin, UI_REFRESH, ncurses_all_contacts_changed, NULL);
+	/* podanie czegokolwiek jako data do ncurses_all_contacts_changed() powoduje wyzerowanie n->start */
 
-	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, UI_REFRESH, ncurses_all_contacts_changed, (void *) 1);
+
+	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_all_contacts_changed, (void *) 1);
 	query_connect_id(&ncurses_plugin, SESSION_EVENT, ncurses_all_contacts_changed, NULL);
 
 	query_connect_id(&ncurses_plugin, METACONTACT_ADDED, ncurses_all_contacts_changed, NULL);

@@ -677,12 +677,16 @@ static BINDING_FUNCTION(binding_toggle_contacts_wrapper)
 	ncurses_contacts_changed("contacts", dummy);
 }
 
-static BINDING_FUNCTION(binding_next_contacts_group)
-{
+static BINDING_FUNCTION(binding_next_contacts_group) {
+	window_t *w;
+
 	contacts_group_index++;
-	ncurses_contacts_update(NULL);
-	ncurses_resize();
-	ncurses_commit();
+	
+	if ((w = window_find_sa(NULL, "__contacts", 1))) {
+		ncurses_contacts_update(w, 0);
+/*		ncurses_resize(); */ 
+		ncurses_commit();
+	}
 }
 
 static BINDING_FUNCTION(binding_ui_ncurses_debug_toggle)
@@ -695,10 +699,8 @@ static BINDING_FUNCTION(binding_ui_ncurses_debug_toggle)
 
 static BINDING_FUNCTION(binding_cycle_sessions)
 {
-	if (window_session_cycle(window_current) == 0) {
-		ncurses_contacts_update(NULL);
+	if (window_session_cycle(window_current) == 0)
 		update_statusbar(1);
-	}
 }
 
 /*

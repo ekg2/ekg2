@@ -139,8 +139,9 @@ static inline userlist_t *userlist_dup(userlist_t *up, void *priv) {
  * details in documentation
  * 
  */
-int ncurses_contacts_update(window_t *w)
-{
+int ncurses_contacts_update(window_t *w, int save_pos) {
+	int old_start;
+
 	const char *header = NULL, *footer = NULL;
 	char *group = NULL;
 	int j;
@@ -157,14 +158,20 @@ int ncurses_contacts_update(window_t *w)
 
 	
 	if (!w) w = window_find_sa(NULL, "__contacts", 1);
-	if (!w) return -1;
+	if (!w)
+		return -1;
 
 	n = w->private;
+	
+	if (save_pos) 
+		old_start = n->start;
+	else
+		old_start = 0;
 	
 	ncurses_clear(w, 1);
 
 	if (!session_current)
-		return -1;
+		goto kon;
 
 	if (config_contacts_groups) {
 		char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
@@ -211,10 +218,8 @@ group_cleanup:
 	}
 
 	c = newconference_find(window_current->session, window_current->target);
-	if (!session_current->userlist && !window_current->userlist && (!c || !c->participants) && !all && contacts_group_index == 0) {
-		n->redraw = 1;
-		return 0;
-	}
+	if (!session_current->userlist && !window_current->userlist && (!c || !c->participants) && !all && contacts_group_index == 0)
+		goto kon;
 
 	if (!header || !footer) {
 		header = format_find("contacts_header");
@@ -393,9 +398,21 @@ group_cleanup:
 
 	xfree(group);
 
-	n->redraw = 1;
+kon:
+/* restore old index */
+	n->start = old_start;
+	
+	if (n->start > n->lines_count - w->height + n->overflow)
+		n->start = n->lines_count - w->height + n->overflow;
 
-	return 0;
+	if (n->start < 0)
+		n->start = 0;
+
+/* redraw */
+	n->redraw = 1;
+	ncurses_redraw(w);
+
+	return -1;
 }
 
 /*
@@ -449,7 +466,7 @@ QUERY(ncurses_contacts_changed)
 
 	if (config_contacts /* && !w */) {
 		w = window_new("__contacts", NULL, 1000);
-		ncurses_contacts_update(w);
+		ncurses_contacts_update(w, 0);
 	}
 
 	ncurses_resize();
@@ -464,6 +481,8 @@ QUERY(ncurses_contacts_changed)
  * podkasowania sorted_all_cache (zmiany w metakontaktach 
  * i ncurses:contacts_metacontacts_swallow)
  */
+
+/* podanie NULL jako data do ncurses_all_contacts_changed() nie spowoduje zmiany polozenia userlisty (co wcale nie znaczy ze bedzie pokazywac na stary element) */
 QUERY(ncurses_all_contacts_changed)
 {
 	window_t *w;
@@ -471,8 +490,7 @@ QUERY(ncurses_all_contacts_changed)
 /*	ncurses_contacts_changed(data, dummy); */
 
 	if ((w = window_find_sa(NULL, "__contacts", 1))) {
-		ncurses_contacts_update(w);
-		ncurses_redraw(w);
+		ncurses_contacts_update(w, !data);
 		ncurses_commit();
 	}
 	return 0;
