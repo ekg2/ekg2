@@ -498,8 +498,9 @@ int python_unload(script_t *s)
 {
 	PyObject         *module = python_module(s);
 	PyObject	 *obj;
-        if (!module)
-                return -1;
+
+	if (!module)
+		return 0;
 #if 0
 	if ((obj = python_get_func(module, "deinit"))) {
 		PyObject *res = PyObject_CallFunction(obj, "()");
