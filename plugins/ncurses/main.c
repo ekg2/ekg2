@@ -645,6 +645,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	/* podanie czegokolwiek jako data do ncurses_all_contacts_changed() powoduje wyzerowanie n->start */
 
 	query_connect_id(&ncurses_plugin, UI_REFRESH, ncurses_all_contacts_changed, (void *) 1);
+	query_connect_id(&ncurses_plugin, USERLIST_REFRESH, ncurses_all_contacts_changed, NULL /* ? */);
 
 	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_all_contacts_changed, (void *) 1);
 	query_connect_id(&ncurses_plugin, SESSION_EVENT, ncurses_all_contacts_changed, NULL);
