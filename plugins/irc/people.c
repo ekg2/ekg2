@@ -387,7 +387,6 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		if (session_int_get(s, "close_windows") > 0) {
 			debug("[irc] del_person() window_kill(w, 1); %s\n", w->target);
 			window_kill(w);
-			window_switch(window_current->id);
 		}
 		if (doprint)
 			print_window(longnick,s, 0, "irc_quit",
@@ -429,7 +428,6 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	if (w && (session_int_get(s, "close_windows") > 0)) {
 		debug("[irc]_del_channel() window_kill(w); %s\n", w->target);
 		window_kill(w);
-		window_switch(window_current->id);
 	}
 	xfree(tmp);
 
