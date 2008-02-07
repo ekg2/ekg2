@@ -647,16 +647,10 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 		}
 	}
 	
-	if (!roster_retrieved) {
+	if (!roster_retrieved)
 		session_int_set(s, "__roster_retrieved", 1);
 
-		/* XXX:
-		 * NOTIFY UI
-		 *
-		 * - emit some event
-		 * - set some variable
-		 */
-	}
+	query_emit_id(NULL, USERLIST_REFRESH);
 }
 
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_register) {
