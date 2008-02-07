@@ -355,6 +355,7 @@ static QUERY(gtk_variable_changed) {
         if (!xstrcasecmp(name, "timestamp_show")) {
 		mg_apply_setup();
 	}
+	return 0;
 }
 
 static QUERY(gtk_userlist_changed) {
@@ -467,6 +468,11 @@ EXPORT int gtk_plugin_init(int prio) {
 	query_connect_id(&gtk_plugin, USERLIST_ADDED,	gtk_userlist_changed, NULL);
 	query_connect_id(&gtk_plugin, USERLIST_REMOVED,	gtk_userlist_changed, NULL);
 	query_connect_id(&gtk_plugin, USERLIST_RENAMED,	gtk_userlist_changed, NULL);
+
+	query_connect_id(&gtk_plugin, SESSION_EVENT,	gtk_userlist_changed, NULL);
+	query_connect_id(&gtk_plugin, UI_WINDOW_REFRESH, gtk_userlist_changed, NULL);
+	query_connect_id(&gtk_plugin, USERLIST_REFRESH,	gtk_userlist_changed, NULL);
+
 /*
 	query_connect_id(&ncurses_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);

@@ -262,6 +262,9 @@ void fe_flash_window(window_t *sess) {
 void fe_set_tab_color(window_t *sess, int col) {
 	if (!gtk_private_ui(sess)->is_tab)
 		return;
+
+	if (sess == window_current || sess->id == 0)
+		col = 0;	/* XXX */
 	
 //    col value, what todo                                            values                                                  comment.
 //      0: chan_set_color(sess->tab, plain_list);           [new_data = NULL, msg_said = NULL, nick_said = NULL]    /* no particular color (theme default) */
@@ -272,7 +275,6 @@ void fe_set_tab_color(window_t *sess, int col) {
 	if (col == 0) chan_set_color(gtk_private(sess)->tab, plain_list);
 	if (col == 1) chan_set_color(gtk_private(sess)->tab, newdata_list);
 	if (col == 2) chan_set_color(gtk_private(sess)->tab, newmsg_list);
-
 }
 
 #if 0
