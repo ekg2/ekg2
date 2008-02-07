@@ -1187,7 +1187,7 @@ IRC_COMMAND(irc_c_kick)
 IRC_COMMAND(irc_c_quit)
 {
 	char	*tmp, *reason;
-	int	dq;
+	int	display_quit;
 	/* TODO: SPLIT MODE! */
 	int	split = 0;
 
@@ -1195,23 +1195,23 @@ IRC_COMMAND(irc_c_quit)
 	reason = param[2]?xstrlen(OMITCOLON(param[2]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[2]), 1):
 		xstrdup("no reason"):xstrdup("no reason");
-	
+
 	if (split) 
-		dq = 0; /* (?) */
+		display_quit = 0; /* (?) */
 	else
-		dq = session_int_get(s, "DISPLAY_QUIT");
-	
-	irc_del_person(s, j, param[0]+1, tmp?tmp+1:"", reason, !dq);
-	
-	if (dq)
-		print_window(dq==2?window_current->target:"__status",
+		display_quit = session_int_get(s, "DISPLAY_QUIT");
+
+	irc_del_person(s, j, param[0]+1, tmp?tmp+1:"", reason, !display_quit);
+
+	if (display_quit)
+		print_window(display_quit==2?window_current->target:"__status",
 				s, 0, (split)?"irc_split":"irc_quit",
 				session_name(s), param[0]+1, tmp?tmp+1:"",
 				reason);
-	
+
 	xfree(reason);
 	if (tmp) *tmp='!';
-	
+
 	return 0;
 }
 

@@ -325,9 +325,8 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
 
 /* irc_del_person()
  *
- * this is quite silly way of deleting structures of given user e/g when he
- * /quits from IRC, this function is poorly written, and
- * porbably should be changed ;/
+ * delete structures associated with given user, e.g. when he
+ * /quits from IRC
  *
  * @param s - current session structure
  * @param j - irc private structure of current session
@@ -345,12 +344,26 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 	people_chan_t *pech;
 	window_t *w;
 	list_t tmp;
-	char *temp;
+	char *longnick;
 
 	if (!(person = irc_find_person(j->people, nick))) 
 		return -1;
 
-	while ((tmp = (person->channels))) {
+	/* if person doesn't have any channels, we shouldn't get here
+	 */
+	if (! (tmp = person->channels) ) {
+		debug_error("logic error in call to irc_del_person!, %s doesn't have any channels\n", nick);
+		/* I'm not adding memory freeing here, since we shouldn't get here by any chance,
+		 */
+		return -1;
+	}
+	/* 
+	 * GiM: removing from private->people is in
+	 * 	irc_del_person_channel_int
+	 *
+	 * tmp is set, we can run the loop
+	 */
+	while (1) {
 		if (!(tmp && (pech = tmp->data))) break;
 
 		if (doprint)
@@ -358,27 +371,32 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 				s, 0, "irc_quit", session_name(s), 
 				nick, wholenick, reason);
 
-		temp = saprintf("%s%s", IRC4, nick);
-		w = window_find_s(s, temp);
-		if (w) {
-			if (session_int_get(s, "close_windows") > 0) {
-				debug("[irc] del_person() window_kill(w, 1); %s\n", w->target);
-				window_kill(w);
-				window_switch(window_current->id);
-			}
-			if (doprint)
-				print_window(temp,s, 0, "irc_quit",
-						session_name(s), nick,
-						wholenick, reason);
-		}
-		xfree(temp);
-
+		/* if this call returns !0 it means
+		 * person has been deleted, so let's break
+		 * the loop
+		 */
 		if (irc_del_person_channel_int(s, j, person, pech->chanp))
 			break;
+
+		tmp = person->channels;
 	}
-	/* GiM: removing from private->people is in
-	 * irc_del_person_channel_int
-	 */
+
+	longnick = saprintf("%s%s", IRC4, nick);
+	w = window_find_s(s, longnick);
+	if (w) {
+		if (session_int_get(s, "close_windows") > 0) {
+			debug("[irc] del_person() window_kill(w, 1); %s\n", w->target);
+			window_kill(w);
+			window_switch(window_current->id);
+		}
+		if (doprint)
+			print_window(longnick,s, 0, "irc_quit",
+					session_name(s), nick,
+					wholenick, reason);
+	}
+	xfree(longnick);
+
+	query_emit_id(NULL, USERLIST_REFRESH);
 	return 0;
 }
 
