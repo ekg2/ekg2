@@ -65,6 +65,8 @@ enum queries_id {
 	UI_PASSWORD_INPUT,
 	PROTOCOL_DISCONNECTING,
 
+	USERLIST_REFRESH,
+
 	QUERY_EXTERNAL,
 };
 
@@ -441,6 +443,9 @@ const struct query query_list[] = {
 	{ PROTOCOL_DISCONNECTING, "protocol-disconnecting", { /* meant to be send before user-initiated disconnect,
 								 when we can still send some data, e.g. <gone/> chatstate */
 		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_END } },
+
+	{ USERLIST_REFRESH, "userlist-refresh", {
 		QUERY_ARG_END } },
 };
 
