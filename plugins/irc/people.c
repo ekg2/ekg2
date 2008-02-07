@@ -27,6 +27,8 @@
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/queries.h>
+
 #include "people.h"
 #include "irc.h"
 
@@ -204,6 +206,7 @@ people_t *irc_add_person(session_t *s, irc_private_t *j,
 		char *nick, char *channame)
 {
 	channel_t *chan;
+	people_t *ret;
 	if (!nick)
 		return NULL;
 
@@ -212,8 +215,9 @@ people_t *irc_add_person(session_t *s, irc_private_t *j,
 		 * and he's not on that channel... */
 		return NULL;
 
-	//query_emit(NULL, "userlist-changed", __session, __uid);
-	return irc_add_person_int(s, j, nick, chan);
+	ret = irc_add_person_int(s, j, nick, chan);
+	query_emit_id(NULL, USERLIST_REFRESH);
+	return ret;
 }
 
 int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
@@ -242,6 +246,8 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 		irc_add_person_int(s, j, *nick, chan);
 		nick++;
 	}
+
+	query_emit_id(NULL, USERLIST_REFRESH);
 
 	array_free(save);
 	return 0;	
@@ -303,6 +309,7 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j, people_t *
  */
 int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *channame)
 {
+	int ret;
 	people_t *person;
 	channel_t *chan;
 	if (!(chan = irc_find_channel(j->channels, channame)))
@@ -310,7 +317,10 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
 	if (!(person = irc_find_person(j->people, nick)))
 		return -1;
 
-	return irc_del_person_channel_int(s, j, person, chan);
+	ret = irc_del_person_channel_int(s, j, person, chan);
+
+	query_emit_id(NULL, USERLIST_REFRESH);
+	return ret;
 }
 
 /* irc_del_person()
@@ -405,6 +415,7 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	}
 	xfree(tmp);
 
+	query_emit_id(NULL, USERLIST_REFRESH);
 	return 0;
 }
 
@@ -532,6 +543,8 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 			 * this way */
 		}
 	}
+
+	query_emit_id(NULL, USERLIST_REFRESH);
 
 	t1 = per->nick;
 	per->nick = t2;
