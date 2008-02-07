@@ -299,10 +299,9 @@ PyObject *ekg_session_users(ekg_sessionObj * self)
 
 PyObject *ekg_session_status_set(ekg_sessionObj * self, PyObject * pyargs)
 {
-        char *status = NULL;
-        char *descr = NULL;
-        char *command = NULL;
-	char *s;
+	char *status = NULL;
+	char *descr = NULL;
+	const char *command;
 
         if (!PyArg_ParseTuple(pyargs, "s|s", &status, &descr))
                 return NULL;
@@ -311,8 +310,8 @@ PyObject *ekg_session_status_set(ekg_sessionObj * self, PyObject * pyargs)
         if (descr == NULL)
                 descr = xstrdup("-");
 
-        command_exec(NULL, session_find(self->name), (s = saprintf("/%s %s", command, descr)), 0);
-	xfree(s); xfree(descr); xfree(status); /* ? */
+        command_exec_format(NULL, session_find(self->name), 0, "/%s %s", command, descr);
+	xfree(descr); xfree(status); /* ? */
         Py_RETURN_TRUE;
 }
 

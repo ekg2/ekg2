@@ -457,7 +457,9 @@ int python_load(script_t *s)
         node *n;
         if (fp && (n = PyParser_SimpleParseFile(fp, s->path, Py_file_input))) {
 		PyCodeObject *co;
-		if ((co = PyNode_CompileFlags(n, s->path, /* &flags */ NULL)))
+
+	/* Python 2.5 doesn't have PyNode_CompileFlags() */
+		if ((co = PyNode_Compile(n, s->path)))
 			module = PyImport_ExecCodeModuleEx(s->name, (PyObject *)co, s->path);
 	        PyNode_Free(n);
 		fclose(fp);
@@ -557,18 +559,17 @@ int python_initialize()
 
 	// Const - status types
 	/* XXX, someone take a look at it? */
-	PyModule_AddStringConstant(ekg, "STATUS_NA",		ekg_status_string(EKG_STATUS_NA, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_AVAIL",		ekg_status_string(EKG_STATUS_AVAIL, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_AWAY",		ekg_status_string(EKG_STATUS_AWAY, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_AUTOAWAY",	ekg_status_string(EKG_STATUS_AUTOAWAY, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_INVISIBLE",	ekg_status_string(EKG_STATUS_INVISIBLE, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_XA",		ekg_status_string(EKG_STATUS_XA, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_DND",		ekg_status_string(EKG_STATUS_DND, 0));
-		/* XXX, break compatibility and use FFC? */
-	PyModule_AddStringConstant(ekg, "STATUS_FREE_FOR_CHAT",	ekg_status_string(EKG_STATUS_FFC, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_BLOCKED",	ekg_status_string(EKG_STATUS_BLOCKED, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_UNKNOWN",	ekg_status_string(EKG_STATUS_UNKNOWN, 0));
-	PyModule_AddStringConstant(ekg, "STATUS_ERROR",		ekg_status_string(EKG_STATUS_ERROR, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_NA",		(char *) ekg_status_string(EKG_STATUS_NA, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_AVAIL",		(char *) ekg_status_string(EKG_STATUS_AVAIL, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_AWAY",		(char *) ekg_status_string(EKG_STATUS_AWAY, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_AUTOAWAY",	(char *) ekg_status_string(EKG_STATUS_AUTOAWAY, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_INVISIBLE",	(char *) ekg_status_string(EKG_STATUS_INVISIBLE, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_XA",		(char *) ekg_status_string(EKG_STATUS_XA, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_DND",		(char *) ekg_status_string(EKG_STATUS_DND, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_FREE_FOR_CHAT",	(char *) ekg_status_string(EKG_STATUS_FFC, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_BLOCKED",	(char *) ekg_status_string(EKG_STATUS_BLOCKED, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_UNKNOWN",	(char *) ekg_status_string(EKG_STATUS_UNKNOWN, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_ERROR",		(char *) ekg_status_string(EKG_STATUS_ERROR, 0));
 
 	// Const - ignore levels
 	PyModule_AddIntConstant(ekg, "IGNORE_STATUS",		IGNORE_STATUS);
