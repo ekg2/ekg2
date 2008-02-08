@@ -582,11 +582,8 @@ static COMMAND(cmd_del)
 	}
 
 	tmp = xstrdup(u->uid);
-	query_emit_id(NULL, USERLIST_REMOVED, &params[0], &tmp);
-	query_emit_id(NULL, REMOVE_NOTIFY, &session->uid, &tmp);
 
         printq("user_deleted", params[0], session_name(session));
-	xfree(tmp);
 
 	tabnick_remove(u->uid);
 	tabnick_remove(u->nickname);
@@ -594,6 +591,11 @@ static COMMAND(cmd_del)
 	config_changed = 1;
 
 	userlist_remove(session, u);
+
+	query_emit_id(NULL, USERLIST_REMOVED, &params[0], &tmp);
+	query_emit_id(NULL, REMOVE_NOTIFY, &session->uid, &tmp);
+
+	xfree(tmp);
 	
 	return 0;
 }

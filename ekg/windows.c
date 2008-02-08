@@ -185,16 +185,10 @@ window_t *window_find(const char *target) {
  *  
  *  - id - numer okna
  */
-void window_switch(int id)
-{
+void window_switch(int id) {
 	list_t l;
 	userlist_t *u;
-
-#if 0
-	/* XXX, need testing */
-	if (window_current && window_current->id == id)
-		return;
-#endif
+	int ul_refresh = 0;
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
@@ -212,8 +206,10 @@ void window_switch(int id)
 		query_emit_id(NULL, UI_WINDOW_SWITCH, &w);	/* XXX */
 
 		w->act &= ~3;
-		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) 
+		if (w->target && w->session && (u = userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) {
 			u->xstate &= ~EKG_XSTATE_BLINK;
+			ul_refresh = 1;
+		}
 
 		if (!(config_make_window & 3) && w->id == 1 && session_current) {
 			list_t l;
@@ -221,16 +217,19 @@ void window_switch(int id)
 
 			for (l = s->userlist; l; l = l->next) {
                         	userlist_t *u = l->data;
-				if (!window_find_s(s, u->uid))
+
+				if ((u->xstate & EKG_XSTATE_BLINK) && !window_find_s(s, u->uid)) {
 		                        u->xstate &= ~EKG_XSTATE_BLINK;
+					ul_refresh = 1;
+				}
 			}
                 }
 
-		if (!w->id)
-			w->session = session_current;
-
 		break;
 	}
+
+	if (ul_refresh)
+		query_emit_id(NULL, USERLIST_REFRESH);
 }
 
 /**
@@ -383,24 +382,21 @@ void window_print(window_t *w, fstring_t *line) {
  *
  * przechodzi do kolejnego okna.
  */
-void window_next()
-{
+void window_next() {
 	window_t *next = NULL;
 	int passed = 0;
 	list_t l;
 
 	for (l = windows; l; l = l->next) {
-		if (l->data == window_current)
-			passed = 1;
+		window_t *w = l->data;
 
-		if (passed && l->next) {
-			window_t *w = l->next->data;
-
-			if (!w->floating) {
-				next = w;
-				break;
-			}
+		if (passed && !w->floating) {
+			next = w;
+			break;
 		}
+
+		if (w == window_current)
+			passed = 1;
 	}
 
 	if (!next)
@@ -430,7 +426,7 @@ void window_prev()
 		if (w == window_current && l != windows)
 			break;
 
-		prev = l->data;
+		prev = w;
 	}
 
 	if (!prev->id) {
