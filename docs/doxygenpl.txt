@@ -1,0 +1,156 @@
+/**
+@defgroup plugins		Pluginy w ekg2
+
+Wiec chcesz zbudowac plugin dla ekg2?
+
+W tej czesci dokumentacji sa (jesli czegos brakuje daj nam znac na ekg2-devel)
+informacje nt. jak zbudowac nowy modul do ekg2, jesli jest on szczegolnego
+typu (innego niz PLUGIN_GENERIC) znajdziesz informacje jak on powinien sie
+zachowywac w podgrupach.
+
+Zaczynamy tworzenie plugina od stworzenia nowego katalogu w ekg2/plugins
+<pre>
+  ekg2/plugins $ mkdir foo
+  ekg2/plugins $ cd foo
+  ekg2/plugins/foo $
+</pre>
+Nasz przykladowy plugin bedzie sie nazywac foo :)
+Nastepnie tworzymy plik foo.c (moglby sie nazywac main.c, ale jednak unikajmy potocznych nazw)<br>
+I edytujemy go naszym ulubionym edytorem
+<pre>
+  ekg2/plugins/foo $ $EDITOR foo.c 
+</pre>
+  I wklepujemy:
+<pre>
+  \#include <ekg/plugins.h>
+
+  PLUGIN_DEFINE(foo, PLUGIN_GENERIC, NULL);		(1)
+
+  EXPORT int foo_plugin_init(int prio) {		(2)
+	plugin_register(&foo_plugin, prio);		(3)
+	return 0;					(4)
+  }
+
+  static int foo_plugin_destroy() {			(5)
+	plugin_unregister(&foo_plugin);			(6)
+	return 0;					(7)
+  }
+
+</pre>
+Komentarz:
+<pre>
+ (1) - definiuje plugin o nazwie 'foo' w foo_plugin, o typie PLUGIN_GENERIC.
+       Trzeci parametr bede wyjasniac w dalszej czesci dokumentacji, na razie
+       nie potrzebujemy :)
+
+ (2) - podczas ladowania plugina, ekg2 szuka symbolu o nazwie PLUGIN_plugin_init() 
+       atrybut EXPORT jest zdefiniowany w plugins.h, dzieki temu i
+       -fvisibility=hidden zmniejszamy czas potrzebny na szukanie symbolu
+       (oraz rozmiar binarki)
+       W prio mamy priorytet. Wypada go nie zmieniac, tylko go przekazac do
+       plugin_register()
+ 
+ (3) - Rejestrujemy plugin.
+
+ (3,4) - Zwracamy 0 - udalo sie ladowanie.
+ 	Pluginy moga zwracac -1 jak sie nie udalo zainicjowac plugina 
+	(np z powodu tego ze nie udalo sie utworzyc/odczytac jakiegos pliku,
+	or smth), Tylko wazne zeby ten powrot byl robiony _przed_
+	plugin_register()
+
+ (5) - definiujemy funkcje niszczaca plugin, deklaracja jest robiona przy PLUGIN_DEFINE()
+       wiec jak chcemy zeby sie ona inaczej nazywala, albo byla w innym pliku
+       niz foo.c, to nie mozemy korzystac z PLUGIN_DEFINE() [co jest niezalecane]
+
+ (6, 7) - odrejestrujemy plugin, i zwracamy 0.
+</pre>
+
+Teraz wypadaloby go skompilowac i sprawdzic czy dziala :)
+
+ekg2 korzysta z GNU autotoolsow i GNU libtoola, wiec pisanie Makefile'a
+sprowadza sie tylko do wklepania w $EDITOR Makefile.am
+
+<pre>
+	lib_LTLIBRARIES = foo.la
+	foo_la_SOURCES = foo.c
+	foo_la_LDFLAGS = -module -avoid-version
+	foo_la_CPPFLAGS = \$(C_FVISIBILITY)
+	libdir = $(plugindir)
+</pre>
+oraz w ekg2/configure.ac
+	dodania do AC_CONFIG_FILES() plugins/foo/Makefile
+	albo mniejszego babrania sie i zrobienia osobno wpisu:
+
+	AC_CONFIG_FILES([plugins/foo/Makefile])
+
+[XXX, ta czesc dokumentacji do sprawdzenia. Wystarczy samo make teraz?]
+
+Nastepnie robimy ./autogen.sh co wygeneruje nam nowe ./configure oraz je uruchomi.
+
+Teraz jesli nie wyswietlilo nam sie:<br>
+ config.status: creating plugins/foo/Makefile<br>
+<br>
+bo ./autogen.sh uruchomilo ./configure z --no-create to uruchamiamy chociazby
+gmake, co powinno to zrobic.<br>
+
+Kiedy juz mamy ekg2/plugins/foo/Makefile to uruchamiamy:
+<pre>
+	ekg2/plugins/foo $ gmake
+	ekg2/plugins/foo $ sudo gmake install
+	ekg2/plugins/foo $ ekg2 -u foo 
+</pre>
+Sprobujmy zaladowac plugin w ekg2..
+<pre>
+	/plugin +foo
+	xx:yy:zz ::: Plugin foo zostal zaladowany
+
+	Hurray :)
+</pre>
+
+[XXX, na razie tyle, dokonczyc]
+
+*/
+
+/**
+@defgroup plugins_proto		Pluginy protokolow (PLUGIN_PROTOCOL)
+@ingroup plugins
+
+*/
+
+/**
+@defgroup plugins_ui 		Pluginy interfejsow (PLUGIN_UI)
+@ingroup plugins
+
+*/
+
+/**
+@defgroup plugins_log		Pluginy logowania (PLUGIN_LOG)
+@ingroup plugins
+
+*/
+
+/**
+@defgroup plugins_scripting	Pluginy do oskryptowywania ekg2 (PLUGIN_SCRIPTING)
+@ingroup plugins
+
+*/
+
+/**
+@defgroup plugins_audio		Pluginy do obslugi dzwiekow (odtwarzanie/nagrywanie) (PLUGIN_AUDIO)
+@ingroup plugins
+
+*/
+
+
+/**
+@defgroup plugins_codec		Pluginy do obslugi kodekow audio (PLUGIN_CODEC)
+@ingroup plugins
+
+
+*/
+
+/**
+@defgroup plugins_crypt 	Pluginy szyfrujace w ekg2 (PLUGIN_CRYPT)
+@ingroup plugins
+
+*/
