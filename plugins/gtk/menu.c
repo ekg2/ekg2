@@ -44,6 +44,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <gtk/gtkbutton.h>
 #include <gtk/gtkhbox.h>
 #include <gtk/gtkcheckmenuitem.h>
 #include <gtk/gtkentry.h>
@@ -63,7 +64,9 @@
 #include <ekg/userlist.h>
 
 #include "main.h"
+#include "maingui.h"
 #include "palette.h"
+#include "xtext.h"
 
 #if 0
 #include "fe-gtk.h"
@@ -77,7 +80,6 @@
 #include "../common/fe.h"
 #include "../common/server.h"
 #include "../common/util.h"
-#include "xtext.h"
 #include "about.h"
 #include "ascii.h"
 #include "banlist.h"
@@ -88,7 +90,6 @@
 #include "maingui.h"
 #include "notifygui.h"
 #include "pixmaps.h"
-#include "rawlog.h"
 #include "plugingui.h"
 #include "search.h"
 #include "textgui.h"
@@ -127,8 +128,6 @@ struct mymenu {
 #define XCMENU_SHADED 1
 #define XCMENU_MARKUP 2
 #define XCMENU_MNEMONIC 4
-
-/* XXX, move to about.c ? */
 
 static void menu_about(GtkWidget *wid, gpointer sess) {
 	GtkWidget *vbox, *label, *hbox;
@@ -657,7 +656,6 @@ static void menu_setting_foreach(void (*callback) (window_t *), int id, guint st
 			if (callback)
 				callback(w);
 		}
-
 	}
 }
 
@@ -883,13 +881,6 @@ static void menu_newwindow_tab(GtkWidget *wid, gpointer none) {
 	new_window_in_tab_config = old;
 }
 
-#if 0
-
-static void menu_rawlog(GtkWidget *wid, gpointer none) {
-	open_rawlog(current_sess->server);
-}
-#endif
-
 static void menu_detach(GtkWidget *wid, gpointer none) {
 	mg_detach(window_current, 0);
 }
@@ -907,32 +898,17 @@ static void menu_quit(GtkWidget *wid, gpointer none) {
 static void menu_search() {
 	search_open(current_sess);
 }
+#endif
 
 static void menu_resetmarker(GtkWidget *wid, gpointer none) {
-	gtk_xtext_reset_marker_pos(GTK_XTEXT(current_sess->gui->xtext));
+	gtk_xtext_reset_marker_pos(GTK_XTEXT(gtk_private_ui(window_current)->xtext));
 }
 
 static void menu_flushbuffer(GtkWidget *wid, gpointer none) {
-	fe_text_clear(current_sess);
+	gtk_xtext_clear(gtk_private(window_current)->buffer);
 }
 
-static void savebuffer_req_done(session *sess, char *file) {
-	int fh;
-
-	if (!file)
-		return;
-
-	fh = open(file, O_TRUNC | O_WRONLY | O_CREAT, 0600);
-	if (fh != -1) {
-		gtk_xtext_save(GTK_XTEXT(sess->gui->xtext), fh);
-		close(fh);
-	}
-}
-
-static void menu_savebuffer(GtkWidget *wid, gpointer none) {
-	gtkutil_file_req(_("Select an output filename"), savebuffer_req_done,
-			 current_sess, NULL, FRF_WRITE);
-}
+#if 0
 
 static void menu_disconnect(GtkWidget *wid, gpointer none) {
 	handle_command(current_sess, "DISCON", FALSE);
@@ -1122,22 +1098,23 @@ static struct mymenu mymenu[] = {
 		{N_("Ignore List..."), ignore_gui_open, 0, M_MENUITEM, 0, 0, 1},
 		{N_("Notify List..."), notify_opengui, 0, M_MENUITEM, 0, 0, 1},
 		{N_("Plugins and Scripts..."), menu_pluginlist, 0, M_MENUITEM, 0, 0, 1},
-		{N_("Raw Log..."), menu_rawlog, 0, M_MENUITEM, 0, 0, 1},	/* 62 */
+#endif
 		{0, 0, 0, M_SEP, 0, 0, 0},
 		{N_("Reset Marker Line"), menu_resetmarker, 0, M_MENUITEM, 0, 0, 1, GDK_m},
 		{N_("C_lear Text"), menu_flushbuffer, GTK_STOCK_CLEAR, M_MENUSTOCK, 0, 0, 1, GDK_l},
-#define SEARCH_OFFSET 67
+
+#define menu_search NULL
+
+#define SEARCH_OFFSET 20	/* ? */
 		{N_("Search Text..."), menu_search, GTK_STOCK_FIND, M_MENUSTOCK, 0, 0, 1, GDK_f},
-		{N_("Save Text..."), menu_savebuffer, GTK_STOCK_SAVE, M_MENUSTOCK, 0, 0, 1},
+#if 0
 #endif
 	{N_("_Help"), 0, 0, M_NEWMENU, 0, 0, 1},	/* 69 */
 		{N_("_About"), menu_about, GTK_STOCK_ABOUT, M_MENUSTOCK, 0, 0, 1},
 	{0, 0, 0, M_END, 0, 0, 0},
 };
 
-GtkWidget *
-create_icon_menu(char *labeltext, void *stock_name, int is_stock)
-{
+GtkWidget *create_icon_menu(char *labeltext, void *stock_name, int is_stock) {
 	GtkWidget *item, *img;
 
 	if (is_stock)
@@ -1151,22 +1128,18 @@ create_icon_menu(char *labeltext, void *stock_name, int is_stock)
 	return item;
 }
 
-#if 0
-
-
 #if GTK_CHECK_VERSION(2,4,0)
 
 /* Override the default GTK2.4 handler, which would make menu
    bindings not work when the menu-bar is hidden. */
-static gboolean
-menu_canacaccel(GtkWidget *widget, guint signal_id, gpointer user_data)
-{
+static gboolean menu_canacaccel(GtkWidget *widget, guint signal_id, gpointer user_data) {
 	/* GTK2.2 behaviour */
 	return GTK_WIDGET_IS_SENSITIVE(widget);
 }
 
 #endif
 
+#if 0
 
 /* === STUFF FOR /MENU === */
 
@@ -1524,11 +1497,9 @@ GtkWidget *menu_create_main(void *accel_group, int bar, int away, int toplevel, 
 
 	/* /MENU needs to know this later */
 	g_object_set_data(G_OBJECT(menu_bar), "accel", accel_group);
-#if DARK
 
 #if GTK_CHECK_VERSION(2,4,0)
 	g_signal_connect(G_OBJECT(menu_bar), "can-activate-accel", G_CALLBACK(menu_canacaccel), 0);
-#endif
 #endif
 
 #if 0
@@ -1552,13 +1523,12 @@ GtkWidget *menu_create_main(void *accel_group, int bar, int away, int toplevel, 
 			mymenu[TABS_OFFSET + 1].state = 1;
 	}
 
-#if 0
 	/* change Close binding to ctrl-shift-w when using emacs keys */
 	settings = gtk_widget_get_settings(menu_bar);
 	if (settings) {
 		g_object_get(settings, "gtk-key-theme-name", &key_theme, NULL);
 		if (key_theme) {
-			if (!strcasecmp(key_theme, "Emacs")) {
+			if (!xstrcasecmp(key_theme, "Emacs")) {
 				close_mask = GDK_SHIFT_MASK | GDK_CONTROL_MASK;
 				mymenu[SEARCH_OFFSET].key = 0;
 			}
@@ -1573,7 +1543,7 @@ GtkWidget *menu_create_main(void *accel_group, int bar, int away, int toplevel, 
 		if (under && (under[1] == 'a' || under[1] == 'A'))
 			away_mask = GDK_MOD1_MASK | GDK_CONTROL_MASK;
 	}
-#endif
+
 	if (!toplevel) {
 		mymenu[DETACH_OFFSET].text = N_("_Detach Tab");
 		mymenu[CLOSE_OFFSET].text = N_("_Close Tab");
@@ -1703,3 +1673,10 @@ GtkWidget *menu_create_main(void *accel_group, int bar, int away, int toplevel, 
 		i++;
 	}
 }
+
+/* usuniete itemy z menu:
+ * 	rawlog [fajne, ale trudne do realizacji, my mamy osobne okienko debug
+ *
+	{N_("Save Text..."), menu_savebuffer, GTK_STOCK_SAVE, M_MENUSTOCK, 0, 0, 1},
+ */
+

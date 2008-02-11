@@ -240,60 +240,6 @@ gfloat userlist_get_value(GtkWidget *treeview)
 	return gtk_tree_view_get_vadjustment(GTK_TREE_VIEW(treeview))->value;
 }
 
-#if 0
-
-int fe_userlist_remove(session *sess, struct User *user)
-{
-	GtkTreeIter *iter;
-/*	GtkAdjustment *adj;
-	gfloat val, end;*/
-	int sel;
-
-	iter = find_row(GTK_TREE_VIEW(sess->gui->user_tree), sess->res->user_model, user, &sel);
-	if (!iter)
-		return 0;
-
-/*	adj = gtk_tree_view_get_vadjustment (GTK_TREE_VIEW (sess->gui->user_tree));
-	val = adj->value;*/
-
-	gtk_list_store_remove(sess->res->user_model, iter);
-
-	/* is it the front-most tab? */
-/*	if (gtk_tree_view_get_model (GTK_TREE_VIEW (sess->gui->user_tree))
-		 == sess->res->user_model)
-	{
-		end = adj->upper - adj->lower - adj->page_size;
-		if (val > end)
-			val = end;
-		gtk_adjustment_set_value (adj, val);
-	}*/
-
-	return sel;
-}
-
-void fe_userlist_rehash(session *sess, struct User *user)
-{
-	GtkTreeIter *iter;
-	int sel;
-	int do_away = TRUE;
-
-	iter = find_row(GTK_TREE_VIEW(sess->gui->user_tree), sess->res->user_model, user, &sel);
-	if (!iter)
-		return;
-
-	if (prefs.away_size_max < 1 || !prefs.away_track)
-		do_away = FALSE;
-
-	gtk_list_store_set(GTK_LIST_STORE(sess->res->user_model), iter,
-			   2, user->hostname, 4, (do_away)
-			   ? (user->away ? &colors[COL_AWAY] : NULL)
-			   : (NULL), -1);
-}
-
-#endif
-
-#warning "fe_userlist_rehash() dobre do zmian stanow"
-
 static gint gtk_userlist_sort_func(GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b, gpointer userdata) {
 	GdkPixbuf *a1, *b1;
 
@@ -392,14 +338,6 @@ void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 		gtk_tree_selection_select_iter(gtk_tree_view_get_selection(GTK_TREE_VIEW(gtk_private_ui(sess)->user_tree)), &iter);
 	}
 }
-
-#if 0
-
-void fe_userlist_move(session *sess, struct User *user, int new_row)
-{
-	fe_userlist_insert(sess, user, new_row, fe_userlist_remove(sess, user));
-}
-#endif
 
 void fe_userlist_clear(window_t *sess)
 {
