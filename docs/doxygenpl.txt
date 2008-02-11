@@ -1,3 +1,4 @@
+/* ================================== PLUGINY =================================== */
 /**
 @defgroup plugins		Pluginy w ekg2
 
@@ -24,16 +25,16 @@ I edytujemy go naszym ulubionym edytorem
 <pre>
   \#include <ekg/plugins.h>
 
-  PLUGIN_DEFINE(foo, PLUGIN_GENERIC, NULL);		(1)
+  PLUGIN_DEFINE(foo, PLUGIN_GENERIC, NULL);		/* (1) */
 
-  EXPORT int foo_plugin_init(int prio) {		(2)
-	plugin_register(&foo_plugin, prio);		(3)
-	return 0;					(4)
+  EXPORT int foo_plugin_init(int prio) {		/* (2) */
+	plugin_register(&foo_plugin, prio);		/* (3) */
+	return 0;					/* (4) */
   }
 
-  static int foo_plugin_destroy() {			(5)
-	plugin_unregister(&foo_plugin);			(6)
-	return 0;					(7)
+  static int foo_plugin_destroy() {			/* (5) */
+	plugin_unregister(&foo_plugin);			/* (6) */
+	return 0;					/* (7) */
   }
 
 </pre>
@@ -91,7 +92,7 @@ Teraz jesli nie wyswietlilo nam sie:<br>
  config.status: creating plugins/foo/Makefile<br>
 <br>
 bo ./autogen.sh uruchomilo ./configure z --no-create to uruchamiamy chociazby
-gmake, co powinno to zrobic.<br>
+gmake, co powinno wygenerowac Makefile'a<br>
 
 Kiedy juz mamy ekg2/plugins/foo/Makefile to uruchamiamy:
 <pre>
@@ -133,6 +134,11 @@ Sprobujmy zaladowac plugin w ekg2..
 @defgroup plugins_scripting	Pluginy do oskryptowywania ekg2 (PLUGIN_SCRIPTING)
 @ingroup plugins
 
+ekg2 obsluguje calkiem przyjemne API do stworzenia plugina pozwalajacego na
+pisanie w innych jezykach niz C.
+
+[XXX]
+
 */
 
 /**
@@ -154,3 +160,160 @@ Sprobujmy zaladowac plugin w ekg2..
 @ingroup plugins
 
 */
+
+/* ===================================== SKRYPTY ====================================== */
+
+/**
+@defgroup scripts		Jezyki skryptowe w ekg2
+
+Tutaj sa tylko informacje nt. tworzenia skryptow w poszczegolnych jezykach,
+jak chcesz sie dowiedziec jak zbudowac taki plugin zobacz w dziale: plugins_scripting [XXX]
+
+Jak chcesz wiedziec jak wyglada uzytkowanie skryptow, to powinienes zobaczyc
+ekg2book, ale w zwiazku z tym ze tam nic nie ma to tutaj masz tipsy:
+
+[XXX, przeniesc informacje stad do ekg2booka]
+
+<pre>
+	Najpierw ladujesz plugin obslugujacy ten jezyk:
+		/plugin +perl
+		/plugin +python
+		/plugin +ruby
+		.....
+	Powinien sie zaladowac, jak nie, to albo brakuje Ci jakiegos symbolu
+	uzytego przez plugin, albo brakuje Ci pliku.. Wszystko jest w oknie
+	debug.
+
+	Potem ladujesz skrypt przez:
+		/script:load skrypt
+		/script +skrypt
+		[
+		Nie musisz podawac rozszerzenia, ekg2 potrafi sobie je wykryc
+		samemu bazujac na podstawie zaladowanych wtyczek.
+			python - *.py
+			perl   - *.pl
+			ruby   - *.rb
+
+		Sciezki tez nie musisz podawac jesli bedzie w:
+			w $DATADIR/scripts/
+			albo w .ekg2/profil/scripts
+			[lub .ekg2/scripts gdy nie korzystasz z profilu]
+		]
+
+	Mozesz tez zaladowac przez odpowiednie komende dostarczona przez
+	plugin:
+
+	/python:load skrypt 
+		Tym sposobem nie zaladujesz skryptu perla :)
+		Jesli bedzie istnialo skrypt.pl	
+
+	Duzo tych sposobow, wiec wybierz jaki chcesz.
+
+	Jak sie zaladuje to sie wyswietli komunikat.
+	Jesli nie, to tez. Jak skrypt bedzie bledny to tez.
+
+	Jak skrypt o podanej nazwie jest zaladowany, to go wyladuje, a potem
+	zaladuje jeszcze raz.
+
+	Jeszcze istnieje trik ze mozna dodac skrypt do autoruna, i bedzie sie
+	uruchamial przy starcie:
+		/script:autorun skrypt		<-- dodaje/usuwa skrypt o nazwie skrypt do autostartu
+
+	To tak na szybko napisane, tekst tutaj ma byc bardziej techniczny niz
+	user-friendly, wiec jak jakies pytania to pisac na ekg2-users.
+</pre>
+
+*/
+
+/**
+@defgroup scripts_python	Pisanie skryptow w pythonie.
+@ingroup scripts
+
+*/
+
+/**
+@defgroup scripts_perl		Pisanie skryptow w perlu.
+@ingroup scripts
+
+*/
+
+/**
+@defgroup scripts_ruby		Pisanie skryptow w ruby.
+@ingroup scripts
+
+@note	Plugin ruby byl pisany przez osobe ktora z rubym ma b. malo wspolnego.
+	Dokumentacja tez. Ksztalt skryptow byl konsultowany z uzytkownikami ruby'ego;
+	Jednakze jesli myslisz ze aktualne API nie jest ruby-like, i uwazasz
+	ze powinno byc zrobione inaczej, pisz na ekg2-devel.
+
+@note	Plugin ruby jest under development, co znaczy ze calkiem mozliwe ze API 
+	jutro bedzie inaczej wygladac, niz wyglada dzis.
+
+Najpierw sprawdzmy czy plugin ruby sie skompilowal - bez niego nic nie zrobimy!
+
+<pre>
+$ ls `ekg2-config --plugin-dir`/ruby.so
+/usr/local/lib/ekg2/plugins/ruby.so
+</pre>
+
+Wiec jest ok :)
+
+Ponizej najprostszy skrypt w ruby dla ekg2.
+
+<pre>
+if \$0 != "ekg2"
+	print <<MSG
+	warning: you are executing an embedded ruby file!
+	this file is suppose to be run only from ekg2.
+MSG
+	exit
+end
+
+include Ekg2
+
+class Ekg2::Script::HelloWorld < Ekg2::Script
+	def initialize
+		super
+
+		print "Hello World!"
+	end
+
+	def finalize
+		print "Zegnaj swiecie!"
+	end
+end
+</pre>
+<pre>
+Nie, ogolnie to nie bedzie dokumentacja: "Jak programuje sie w ruby dla ekg2 - dla topornych"
+Tylko chcialbym zakreslic pewne niuanse, jakich wymaga ekg2, do poprawnej obslugi skryptow.
+
+Na poczatku jest kod, ktory uniemozliwia uruchamianie skryptu poza ekg2.
+Potem mamy definicje klasy o nazwie Ekg2::Script::HelloWorld, dziedziczacej po Ekg2::Script
+ - nazwa klasy musi sie zaczynac z duzej litery.
+ - musi miec taka sama nazwe jak skrypt. (Czyli ten skrypt nalezy zapisac jako HelloWorld.rb)
+ - musi dziedziczyc po Ekg2::Script
+ - funkcja initialize musi miec na samym poczatku 'super'
+
+Zapisujemy skrypt w ~/.ekg2/ruby/scripts/HelloWorld.rb
+~/.ekg2/ruby/scripts $ ruby HelloWorld.rb 
+	warning: you are executing an embedded ruby file!
+	this file is suppose to be run only from ekg2.
+
+ekg2 -u ruby
+/plugin +ruby
+/script +HelloWorld
+
+21:11:44 ::: [script,HelloWorld] (ruby) Hello World!
+21:11:44 ::: Skrypt HelloWorld (/home/darkjames/.ekg2/ruby/scripts/HelloWorld.rb) zostal zaladowany (ruby)
+
+/script -HelloWorld
+21:12:57 ::: [script,HelloWorld] (ruby) Zegnaj swiecie!
+21:12:57 ::: Skrypt HelloWorld (/home/darkjames/.ekg2/ruby/scripts/HelloWorld.rb) zostal usuniety (ruby)
+
+Hurray.
+</pre>
+
+[XXX, tutaj juz konkretnie pisac o API]
+
+*/
+
