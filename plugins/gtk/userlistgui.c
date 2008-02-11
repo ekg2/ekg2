@@ -41,6 +41,7 @@
 
 #include "main.h"
 #include "palette.h"
+#include "userlistgui.h"
 
 enum {
 	USERLIST_PIXMAP = 0,

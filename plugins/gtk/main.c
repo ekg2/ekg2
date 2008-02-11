@@ -58,18 +58,7 @@
 #include "xtext.h"
 #include "bindings.h"
 
-	/* maingui.c */
-gboolean mg_populate_userlist(window_t *sess);
-void mg_populate(window_t *sess);
-
-/* extern */
-void fe_set_channel(session_t *sess);
-void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus);
-void fe_set_tab_color(window_t *sess, int col);
-void fe_close_window(window_t *sess);
-void mg_apply_setup(void);
-void mg_change_layout(int type);
-void mg_switch_page(int relative, int num);
+#include "maingui.h"
 
 
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
@@ -137,6 +126,10 @@ int new_window_in_tab_config = 1;
  *    - jak zrobimy detach okienek, to prawdopodobnie operacje beda robione na zlych oknach, 
  *    	xchat mial current_tab, ja myslalem ze to jest to samo co window_current, wiec do pupy.
  */
+
+/* XXX, here, we update whole window, it's enough to update only statusbar && headerbar */
+	#define _ncurses_update_statusbar(commit) mg_populate(window_current);
+
 
 static QUERY(gtk_ui_is_initialized) {
 	int *tmp = va_arg(ap, int *);
@@ -210,36 +203,9 @@ static QUERY(gtk_ui_window_kill) {			/* fe_session_callback() || fe_close_window
 	return 0;
 }
 
-
 static QUERY(gtk_ui_window_print) {			/* fe_print_text() */
 	window_t *w = *(va_arg(ap, window_t **));
 	fstring_t *line = *(va_arg(ap, fstring_t **));
-
-/*	PrintTextRaw (sess->res->buffer, (unsigned char *)text, prefs.indent_nicks, stamp); */
-
-#if 0
-	size_t len = xstrlen(line->str.b);
-
-	if (!indent_nicks_config) {
-		if (config_timestamp_show) {
-#warning "XXX, use config_timestamp instead"
-			const char *ts = timestamp_time("%H:%M:%S", line->ts);	
-			char *text;
-			
-			text = saprintf("%s %s", ts, line->str.b);
-
-			gtk_xtext_append(gtk_private(w)->buffer, text, xstrlen(ts) + 1 + len);
-
-			xfree(text);
-
-		} else	gtk_xtext_append(gtk_private(w)->buffer, line->str.b, len);
-
-
-	} else {
-		#warning "XXX"
-		gtk_xtext_append_indent(gtk_private(w)->buffer, 0, 0, line->str.b, len, line->ts);
-	}
-#endif
 
 	gtk_xtext_append_fstring(gtk_private(w)->buffer, line);
 
@@ -249,19 +215,7 @@ static QUERY(gtk_ui_window_print) {			/* fe_print_text() */
 static QUERY(gtk_ui_window_target_changed) {
 	window_t *w = *(va_arg(ap, window_t **));
 
-#warning "ncurses do much more here"
-#if 0
-	ncurses_window_t *n = w->private;
-	char *tmp;
-
-	xfree(n->prompt);
-
-	tmp = format_string(format_find((w->target) ? "ncurses_prompt_query" : "ncurses_prompt_none"), w->target);
-	n->prompt = tmp; 
-	n->prompt_len = xstrlen(tmp);
-
-	update_statusbar(1);
-#endif
+	_ncurses_update_statusbar(1);
 	fe_set_channel(w);
 	return 0;
 }
@@ -371,9 +325,7 @@ static QUERY(gtk_session_changed) {
 }
 
 static QUERY(gtk_statusbar_query) {
-#warning "gtk_statusbar_query() workaround"
-	/* XXX, here, we update whole window, it's enough to update only statusbar && headerbar */
-	mg_populate(window_current);
+	_ncurses_update_statusbar(1);
 
 	return 0;
 }

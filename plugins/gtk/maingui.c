@@ -82,14 +82,8 @@
 #include "bindings.h"
 #include "userlistgui.h"
 
-/* extern */
-
-void fe_userlist_numbers(window_t *sess);
-void fe_userlist_clear(window_t *sess);
-void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf *pixmaps);
-
-/* forward */
-void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus);
+#include "maingui.h"
+#include "userlistgui.h"
 
 #if 0
 
@@ -585,7 +579,7 @@ static idle_t *ul_tag = NULL;
 
 /* static */ gboolean mg_populate_userlist(window_t *sess) {
 	gtk_window_ui_t *gui;
-	GdkPixmap *pxs;
+	GdkPixbuf **pxs;
 
 	if (!sess)
 		sess = window_current;
@@ -642,7 +636,7 @@ static IDLER(mg_populate_userlist_idle) {
 	gtk_window_t *res = gtk_private(sess);
 	gtk_window_ui_t *gui = res->gui;
 
-	int i, render = TRUE;
+	int render = TRUE;
 	guint16 vis = gui->ul_hidden;
 
 #if 0
@@ -684,12 +678,10 @@ static IDLER(mg_populate_userlist_idle) {
 	if (gui->is_tab)
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(gui->note_book), 0);
 
-#if 0
 	/* xtext size change? Then don't render, wait for the expose caused
 	   by showing/hidding the userlist */
 	if (vis != gui->ul_hidden && gui->user_box->allocation.width > 1)
 		render = FALSE;
-#endif
 
 	gtk_xtext_buffer_show(GTK_XTEXT(gui->xtext), res->buffer, render);
 	if (gui->is_tab)
@@ -1191,7 +1183,7 @@ static gboolean mg_tab_contextmenu_cb(chanview * cv, chan * ch, int tag, gpointe
 static void mg_add_chan(window_t *sess) {
 	GdkPixbuf *icon = NULL;	/* pix_channel || pix_server || pix_dialog */
 
-	gtk_private(sess)->tab = chanview_add(gtk_private_ui(sess)->chanview, gtk_window_target(sess),	/* sess->session, */
+	gtk_private(sess)->tab = chanview_add(gtk_private_ui(sess)->chanview, (char *) gtk_window_target(sess),	/* sess->session, */
 						  sess, FALSE, TAG_IRC, icon);
 	if (plain_list == NULL)
 		mg_create_tab_colors();
@@ -2173,7 +2165,7 @@ void fe_set_away(session_t * serv) {
 
 void fe_set_channel(window_t *sess) {
 	if (gtk_private(sess)->tab != NULL)
-		chan_rename(gtk_private(sess)->tab, gtk_window_target(sess), truncchans_config);
+		chan_rename(gtk_private(sess)->tab, (char *) gtk_window_target(sess), truncchans_config);
 }
 
 void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus) {
