@@ -79,26 +79,48 @@ static VALUE ruby_print_window(int argc, VALUE *argv, VALUE self) {
 	return Qnil;
 }
 
+static VALUE ekg2_ruby_theme;
+
 static VALUE ruby_format_add(int argc, VALUE *argv, VALUE self) {
 	int replace = 1;
+	char *name;
 
 	if (argc != 2 && argc != 3) rb_raise(rb_eArgError, "format_add() accepts 2 or 3 params, but %d given", argc);
 
 	Check_Type(argv[0], T_STRING);
 	Check_Type(argv[1], T_STRING);
 
+	name = RSTRING(argv[0])->ptr;
+
 	if (argc == 3) {
 		Check_Type(argv[2], T_FIXNUM);
 		replace = FIX2INT(argv[2]);
 	}
 	
-	format_add(RSTRING(argv[0])->ptr, RSTRING(argv[1])->ptr, replace);
+	format_add(name, RSTRING(argv[1])->ptr, replace);
 
-	return Qnil;
+	rb_iv_set(self, "@name", rb_str_new2(name));
+
+	return ekg2_ruby_theme;
 }
 
-void ruby_define_theme_methods(VALUE module) {
+static VALUE ruby_format_find(int argc, VALUE *argv, VALUE self) {
+	if (argc != 1) rb_raise(rb_eArgError, "format_find() accepts 1 param, but %d given", argc);
+
+	Check_Type(argv[0], T_STRING);
+	return rb_str_new2(format_find(RSTRING(argv[0])->ptr));
+//	return ekg2_ruby_theme;
+}
+
+void ruby_define_theme_class(VALUE module) {
+	ekg2_ruby_theme = rb_define_class_under(module, "Format", rb_cObject);
+
+	rb_define_method(ekg2_ruby_theme, "initialize", ruby_format_add, -1);			/* format_add() */
+	rb_define_singleton_method(ekg2_ruby_theme, "find", ruby_format_find, -1);		/* format_find() */
+
 	rb_define_method(module, "format_add", ruby_format_add, -1);
+	rb_define_method(module, "format_find", ruby_format_find, -1);
+
 	rb_define_method(module, "print", ruby_print, -1);
 	rb_define_method(module, "print_window", ruby_print_window, -1);
 }

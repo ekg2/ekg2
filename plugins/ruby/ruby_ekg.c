@@ -202,7 +202,7 @@ static VALUE ruby_handler_bind(int argc, VALUE *argv, VALUE self) {
 	return Qnil;
 }
 
-extern void ruby_define_theme_methods(VALUE module);	/* ruby_theme.c */
+extern void ruby_define_theme_class(VALUE module);	/* ruby_theme.c */
 
 static int ruby_initialize() {
 	static int once = 0;
@@ -234,7 +234,7 @@ static int ruby_initialize() {
 
 	rb_define_const(ekg2_ruby_script, "WATCH_READ", INT2FIX(WATCH_READ));
 
-	ruby_define_theme_methods(ekg2_ruby_script);
+	ruby_define_theme_class(ekg2_ruby_module);
 	return 0;
 }
 
