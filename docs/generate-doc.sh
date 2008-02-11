@@ -25,7 +25,7 @@ rm -rf ./doxygen
 
 echo -ne \
 	"PROJECT_NAME=ekg2\n" \
-	"FILE_PATTERNS=*.c *.h\n" \
+	"FILE_PATTERNS=*.c *.h doxygenpl.txt\n" \
 	"OPTIMIZE_OUTPUT_FOR_C=YES\n" \
 	\
 	"ENABLE_PREPROCESSING=YES\n" \
