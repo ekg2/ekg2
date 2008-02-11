@@ -61,6 +61,7 @@ static QUERY(protocol_message_ack);
 static QUERY(protocol_status);
 static QUERY(protocol_message);
 static QUERY(protocol_xstate);
+static QUERY(protocol_userlist_changed);
 
 /**
  * protocol_init()
@@ -73,6 +74,7 @@ static QUERY(protocol_xstate);
  * 	- acknowledge of messages: 		<i>PROTOCOL_MESSAGE_ACK</i><br>
  * 	- misc user events like typing notifies:<i>PROTOCOL_XSTATE</i><br>
  * 	- session connection/disconnection: 	<i>PROTOCOL_CONNECTED</i> and <i>PROTOCOL_DISCONNECTED</i>
+ * 	- roster changes:			<i>USERLIST_CHANGED</i> and <i>USERLIST_ADDED</i> and <i>USERLIST_REMOVED</i> and <i>USERLIST_RENAMED</i>
  *
  * @sa query_connect()	- Function to add listener on specified events.
  * @sa query_emit()	- Function to emit specified events.
@@ -86,6 +88,42 @@ void protocol_init() {
 
 	query_connect_id(NULL, PROTOCOL_CONNECTED, protocol_connected, NULL);
 	query_connect_id(NULL, PROTOCOL_DISCONNECTED, protocol_disconnected, NULL);
+
+	query_connect_id(NULL, USERLIST_CHANGED,	protocol_userlist_changed, NULL);
+	query_connect_id(NULL, USERLIST_ADDED,		protocol_userlist_changed, NULL);
+	query_connect_id(NULL, USERLIST_REMOVED,	protocol_userlist_changed, NULL);
+	query_connect_id(NULL, USERLIST_RENAMED,	protocol_userlist_changed, NULL);
+}
+
+/*
+ * XXX,
+ * 	This code is from ncurses ncurses_userlist_changed()
+ *
+ * 	It's now proper ekg2-way (and also for gtk/readline)
+ *
+ * 	However in USERLIST_* event we don't pass session...
+ * 	Yep, it's buggy.
+ */
+
+static QUERY(protocol_userlist_changed) {
+	char **p1 = va_arg(ap, char**);
+	char **p2 = va_arg(ap, char**);
+
+	list_t l;
+
+        for (l = windows; l; l = l->next) {
+       		window_t *w = l->data;
+
+		if (!w->target || xstrcasecmp(w->target, *p1))
+			continue;
+
+		xfree(w->target);
+		w->target = xstrdup(*p2);
+
+		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+        }
+
+	return 0;
 }
 
 
