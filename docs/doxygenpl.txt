@@ -98,7 +98,7 @@ Kiedy juz mamy ekg2/plugins/foo/Makefile to uruchamiamy:
 <pre>
 	ekg2/plugins/foo $ gmake
 	ekg2/plugins/foo $ sudo gmake install
-	ekg2/plugins/foo $ ekg2 -u foo 
+	ekg2/plugins/foo $ ekg2 -u testfoo42135627
 </pre>
 Sprobujmy zaladowac plugin w ekg2..
 <pre>
@@ -294,21 +294,21 @@ Potem mamy definicje klasy o nazwie Ekg2::Script::HelloWorld, dziedziczacej po E
  - musi dziedziczyc po Ekg2::Script
  - funkcja initialize musi miec na samym poczatku 'super'
 
-Zapisujemy skrypt w ~/.ekg2/ruby/scripts/HelloWorld.rb
-~/.ekg2/ruby/scripts $ ruby HelloWorld.rb 
+Zapisujemy skrypt w ~/.ekg2/truby/scripts/HelloWorld.rb
+\$ ~/.ekg2/truby/scripts $ ruby HelloWorld.rb 
 	warning: you are executing an embedded ruby file!
 	this file is suppose to be run only from ekg2.
 
-ekg2 -u ruby
+\$ ekg2 -u truby
 /plugin +ruby
 /script +HelloWorld
 
-21:11:44 ::: [script,HelloWorld] (ruby) Hello World!
-21:11:44 ::: Skrypt HelloWorld (/home/darkjames/.ekg2/ruby/scripts/HelloWorld.rb) zostal zaladowany (ruby)
+xx:yy:aa ::: [script,HelloWorld] (ruby) Hello World!
+xx:yy:aa ::: Skrypt HelloWorld (/home/darkjames/.ekg2/truby/scripts/HelloWorld.rb) zostal zaladowany (ruby)
 
 /script -HelloWorld
-21:12:57 ::: [script,HelloWorld] (ruby) Zegnaj swiecie!
-21:12:57 ::: Skrypt HelloWorld (/home/darkjames/.ekg2/ruby/scripts/HelloWorld.rb) zostal usuniety (ruby)
+xx:yy:zz ::: [script,HelloWorld] (ruby) Zegnaj swiecie!
+xx:yy:zz ::: Skrypt HelloWorld (/home/darkjames/.ekg2/truby/scripts/HelloWorld.rb) zostal usuniety (ruby)
 
 Hurray.
 </pre>
