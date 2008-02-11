@@ -308,36 +308,28 @@ static QUERY(ncurses_ui_window_clear)
 	return 0;
 }
 
-static QUERY(ncurses_userlist_changed)
+/*
+ * ncurses_all_contacts_changed()
+ *
+ * wywo³ywane przy zmianach userlisty powoduj±cych konieczno¶æ
+ * podkasowania sorted_all_cache (zmiany w metakontaktach 
+ * i ncurses:contacts_metacontacts_swallow)
+ */
+
+/* podanie NULL jako data do ncurses_all_contacts_changed() nie spowoduje zmiany polozenia userlisty (co wcale nie znaczy ze bedzie pokazywac na stary element) */
+static QUERY(ncurses_all_contacts_changed)
 {
-	char **p1 = va_arg(ap, char**);
-	char **p2 = va_arg(ap, char**);
-        window_t *w = NULL;
-	list_t l;
+	window_t *w;
 
-        for (l = windows; l; l = l->next) {
-       		window_t *w = l->data;
-                ncurses_window_t *n = w->private;
+/*	ncurses_contacts_changed(data); */
 
-                if (!w->target || xstrcasecmp(w->target, *p1))
-                	continue;
-
-                xfree(w->target);
-                w->target = xstrdup(*p2);
-                
-		xfree(n->prompt);
-                n->prompt = format_string(format_find("ncurses_prompt_query"), w->target);
-                n->prompt_len = xstrlen(n->prompt);
-
-		ncurses_update_real_prompt(n);
-        }
-
-	if ((w = window_find_sa(NULL, "__contacts", 1)))
-		ncurses_contacts_update(w, 1);
-
-	ncurses_commit();
+	if ((w = window_find_sa(NULL, "__contacts", 1))) {
+		ncurses_contacts_update(w, !data);
+		ncurses_commit();
+	}
 	return 0;
 }
+
 
 static QUERY(ncurses_variable_changed)
 {
@@ -416,12 +408,10 @@ static void ncurses_changed_aspell(const char *var)
 
 static QUERY(ncurses_postinit)
 {
-	va_list dummy;
-
 #ifdef WITH_ASPELL
 	ncurses_spellcheck_init();
 #endif
-	ncurses_contacts_changed(NULL, dummy);
+	ncurses_contacts_changed(NULL);
 	return 0;
 }
 
@@ -628,10 +618,6 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_EVENT, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_RENAMED, ncurses_statusbar_query, NULL);
-	query_connect_id(&ncurses_plugin, USERLIST_CHANGED, ncurses_userlist_changed, NULL);
-	query_connect_id(&ncurses_plugin, USERLIST_ADDED, ncurses_userlist_changed, NULL);
-	query_connect_id(&ncurses_plugin, USERLIST_REMOVED, ncurses_userlist_changed, NULL);
-	query_connect_id(&ncurses_plugin, USERLIST_RENAMED, ncurses_userlist_changed, NULL);
 	query_connect_id(&ncurses_plugin, BINDING_SET, ncurses_binding_set_query, NULL);
 	query_connect_id(&ncurses_plugin, BINDING_COMMAND, ncurses_binding_adddelete_query, NULL);
 	query_connect_id(&ncurses_plugin, BINDING_DEFAULT, ncurses_binding_default, NULL);
@@ -655,6 +641,11 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_ADDED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_REMOVED, ncurses_all_contacts_changed, NULL);
 
+	query_connect_id(&ncurses_plugin, USERLIST_CHANGED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_ADDED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_REMOVED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_RENAMED, ncurses_all_contacts_changed, NULL);
+
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, ("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
@@ -663,19 +654,19 @@ EXPORT int ncurses_plugin_init(int prio)
 	/* this isn't very nice solution, but other solutions would require _more_
 	 * changes...
 	 */
-	variable_add(&ncurses_plugin, ("contacts"), VAR_INT, 1, &config_contacts, (void (*)(const char *))ncurses_contacts_changed, NULL, NULL);
-	variable_add(&ncurses_plugin, ("contacts_descr"), VAR_BOOL, 1, &config_contacts_descr, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_edge"), VAR_INT, 1, &config_contacts_edge,(void (*)(const char *))ncurses_contacts_changed, variable_map(4, 0, 0, "left", 1, 0, "top", 2, 0, "right", 3, 0, "bottom"), dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts"), VAR_INT, 1, &config_contacts, ncurses_contacts_changed, NULL, NULL);
+	variable_add(&ncurses_plugin, ("contacts_descr"), VAR_BOOL, 1, &config_contacts_descr, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_edge"), VAR_INT, 1, &config_contacts_edge, ncurses_contacts_changed, variable_map(4, 0, 0, "left", 1, 0, "top", 2, 0, "right", 3, 0, "bottom"), dd_contacts);
 
-	variable_add(&ncurses_plugin, ("contacts_frame"), VAR_BOOL, 1, &config_contacts_frame, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_groups"), VAR_STR, 1, &config_contacts_groups, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_groups_all_sessons"), VAR_BOOL, 1, &config_contacts_groups_all_sessions, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_margin"), VAR_INT, 1, &config_contacts_margin, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_frame"), VAR_BOOL, 1, &config_contacts_frame, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_groups"), VAR_STR, 1, &config_contacts_groups, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_groups_all_sessons"), VAR_BOOL, 1, &config_contacts_groups_all_sessions, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_margin"), VAR_INT, 1, &config_contacts_margin, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("contacts_metacontacts_swallow"), VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const char *))ncurses_all_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_order"), VAR_STR, 1, &config_contacts_order, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_orderbystate"), VAR_BOOL, 1, &config_contacts_orderbystate, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_size"), VAR_INT, 1, &config_contacts_size, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_wrap"), VAR_BOOL, 1, &config_contacts_wrap, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_order"), VAR_STR, 1, &config_contacts_order, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_orderbystate"), VAR_BOOL, 1, &config_contacts_orderbystate, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_size"), VAR_INT, 1, &config_contacts_size, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_wrap"), VAR_BOOL, 1, &config_contacts_wrap, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("lastlog_size"), VAR_INT, 1, &config_lastlog_size, (void (*)(const char *))ncurses_lastlog_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, ("lastlog_lock"), VAR_BOOL, 1, &config_lastlog_lock, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);

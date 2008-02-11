@@ -1509,7 +1509,6 @@ void update_statusbar(int commit)
 #define __add_format_emp(x, y)		__add_format(x, y ? (char *) empty_format : NULL)
 #define __add_format_dup(x, y, z) 	__add_format(x, y ? xstrdup(z) : NULL)
 
-
 	__add_format_dup("time", 1, timestamp(format_find("statusbar_timestamp")));
 
 	__add_format_dup("window", window_current->id, itoa(window_current->id));
@@ -1518,6 +1517,9 @@ void update_statusbar(int commit)
 
 	tmp = (sess && q) ? saprintf("%s/%s", q->nickname, q->uid) : xstrdup(window_current->target);
 	__add_format("query", tmp);
+
+	__add_format_emp("debug", (!window_current->id));
+	__add_format_emp("more", (window_current->more));
 
 	if ((plug = plugin_find(("mail")))) {
 		int mail_count = -1;
@@ -1561,8 +1563,6 @@ void update_statusbar(int commit)
 		}
 	}
 
-	__add_format_dup("debug", (!window_current->id), "");
-
 	if (sess && sess->connected) {
 #define __add_format_emp_st(x, y) __add_format_emp(x, (sess->status == y))
 		__add_format_emp_st("away", EKG_STATUS_AWAY);
@@ -1576,8 +1576,6 @@ void update_statusbar(int commit)
 #undef __add_format_emp_st
 	} else
 		__add_format_emp("notavail", 1);
-
-	__add_format_emp("more", (window_current->more));
 
 	if (q) {
 #define __add_format_emp_st(x, y) __add_format_emp("query_" x, (q->status == y));
@@ -1735,7 +1733,6 @@ static void sigwinch_handler()
 void ncurses_init()
 {
 	int background;
-	va_list dummy;
 
 	ncurses_screen_width = getenv("COLUMNS") ? atoi(getenv("COLUMNS")) : 80;
 	ncurses_screen_height = getenv("LINES") ? atoi(getenv("LINES")) : 24;
@@ -1799,7 +1796,7 @@ void ncurses_init()
 
 #undef __init_bg
 
-	ncurses_contacts_changed("contacts", dummy);
+	ncurses_contacts_changed("contacts");
 	ncurses_commit();
 
 	/* deaktywujemy klawisze INTR, QUIT, SUSP i DSUSP */
@@ -2341,6 +2338,13 @@ void ncurses_redraw_input(unsigned int ch) {
 			spellcheck(ncurses_line, aspell_line);
 		}
 #endif
+		/* XXX,
+		 * 	line_start can be negative, 
+		 * 	line_start can be larger than line_len
+		 *
+		 * Research.
+		 */
+
 		for (i = 0; i < input->_maxx + 1 - promptlen && i < linelen - line_start; i++) {
 #ifdef WITH_ASPELL
 			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start + i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */

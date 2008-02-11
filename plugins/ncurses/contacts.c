@@ -420,12 +420,12 @@ kon:
  *
  * wywo³ywane przy zmianach rozmiaru i w³±czeniu klienta.
  */
-QUERY(ncurses_contacts_changed)
-{
-	const char *name = data;
+
+void ncurses_contacts_changed(const char *name) {
 	window_t *w = NULL;
+
 	if (in_autoexec)
-		return 0;
+		return;
 
 	if (!xstrcasecmp(name, "ncurses:contacts_size"))
 		config_contacts = 1;
@@ -471,29 +471,6 @@ QUERY(ncurses_contacts_changed)
 
 	ncurses_resize();
 	ncurses_commit();
-	return 0;
-}
-
-/*
- * ncurses_all_contacts_changed()
- *
- * wywo³ywane przy zmianach userlisty powoduj±cych konieczno¶æ
- * podkasowania sorted_all_cache (zmiany w metakontaktach 
- * i ncurses:contacts_metacontacts_swallow)
- */
-
-/* podanie NULL jako data do ncurses_all_contacts_changed() nie spowoduje zmiany polozenia userlisty (co wcale nie znaczy ze bedzie pokazywac na stary element) */
-QUERY(ncurses_all_contacts_changed)
-{
-	window_t *w;
-
-/*	ncurses_contacts_changed(data, dummy); */
-
-	if ((w = window_find_sa(NULL, "__contacts", 1))) {
-		ncurses_contacts_update(w, !data);
-		ncurses_commit();
-	}
-	return 0;
 }
 
 /* 
