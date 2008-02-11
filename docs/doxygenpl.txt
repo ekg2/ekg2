@@ -75,7 +75,7 @@ sprowadza sie tylko do wklepania w $EDITOR Makefile.am
 	foo_la_SOURCES = foo.c
 	foo_la_LDFLAGS = -module -avoid-version
 	foo_la_CPPFLAGS = \$(C_FVISIBILITY)
-	libdir = $(plugindir)
+	libdir = \$(plugindir)
 </pre>
 oraz w ekg2/configure.ac
 	dodania do AC_CONFIG_FILES() plugins/foo/Makefile
