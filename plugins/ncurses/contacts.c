@@ -108,17 +108,13 @@ static int contacts_compare(void *data1, void *data2)
  * userlist_dup()
  *
  * Duplicate entry, with private set to priv.
- *
- * @note
- * 	It just copy pointers, so if you delete entry which is shown in userlist, and don't call USERLIST_CHANGED. [We do it for instance in irc plugin]
- * 	It'll be faulty :)
  */
 
-static inline userlist_t *userlist_dup(userlist_t *up, void *priv) {
+static inline userlist_t *userlist_dup(userlist_t *up, char *uid, char *nickname, void *priv) {
 	userlist_t *u = xmalloc(sizeof(userlist_t));
 
-	u->uid		= up->uid;
-	u->nickname	= up->nickname;
+	u->uid		= uid;
+	u->nickname	= nickname;
 	u->descr	= up->descr;
 	u->status	= up->status;
 	u->xstate	= up->xstate;
@@ -241,7 +237,7 @@ group_cleanup:
 			for (lp = s->userlist; lp; lp = lp->next) {
 				userlist_t *u = lp->data;
 
-				list_add_sorted(&sorted_all, userlist_dup(u, s), 0, comp);
+				list_add_sorted(&sorted_all, userlist_dup(u, u->uid, u->nickname, s), 0, comp);
 			}
 
 			comp = contacts_compare;		/* turn on sorting */
@@ -250,67 +246,88 @@ group_cleanup:
 		for (l = c ? c->participants : window_current->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 
-			list_add_sorted(&sorted_all, userlist_dup(u, w->session), 0, comp);
+			list_add_sorted(&sorted_all, userlist_dup(u, u->uid, u->nickname, w->session), 0, comp);
 		}
 
 		if (sorted_all) comp = contacts_compare;	/* like above */
 	}
+
 	if (all == 1 || all == 2) {
 		list_t l;
 
+		/* Remove contacts contained in metacontacts. */
+		if (all == 1 && config_contacts_metacontacts_swallow) {
+			for (l = metacontacts; l; l = l->next) {
+				metacontact_t *m = l->data;
+				list_t ml;
+
+				/* metacontact_find_prio() should always success [for current API] */
+/*
+				if (!metacontact_find_prio(m)) 
+					continue;
+*/
+				for (ml = m->metacontact_items; ml; ml = ml->next) {
+					metacontact_item_t *i = ml->data;
+					userlist_t *u;
+					list_t sl;
+
+					if (!(u = userlist_find_n(i->s_uid, i->name)))
+						continue;
+
+					for (sl = sorted_all; sl; sl = sl->next) {
+						userlist_t *up = sl->data;
+
+			/* up->uid == u->uid (?) */
+						if (up->uid && !xstrcmp(up->uid, u->uid))
+							list_remove(&sorted_all, up, 1);
+					}
+				}
+			}
+		}
+
 		for (l = metacontacts; l; l = l->next) {
 			metacontact_t *m = l->data;
-			metacontact_item_t *i = metacontact_find_prio(m);
-			userlist_t *uu, *up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
-			userlist_t *u;
-			list_t ml, sl;
 
-			if (!m || !i || !up)
+			metacontact_item_t *i;
+			userlist_t *u;
+
+			if (!(i = metacontact_find_prio(m)))
 				continue;
 
-			u = xmalloc(sizeof(userlist_t));
-			u->status = up->status;
-			u->descr = up->descr;
-			u->nickname = m->name;
-			u->private = (void *) 2;
-			u->xstate = up->xstate;
+			if (!(u = userlist_find_n(i->s_uid, i->name)))
+				continue;
 
-			list_add_sorted(&sorted_all, u, 0, comp);
-
-			/* Remove contacts contained in this metacontact. */
-			if ( config_contacts_metacontacts_swallow )
-				for (ml = m->metacontact_items; ml; ml = ml->next) {
-					i = ml->data;
-					up = (i) ? userlist_find_n(i->s_uid, i->name) : NULL;
-					if (up)
-						for ( sl = sorted_all ; sl ; sl = sl->next ) {
-							uu = sl->data;
-							if ( uu->uid && !xstrcmp(uu->uid, up->uid) )
-								list_remove(&sorted_all, uu, 1);
-						}
-				}
+			list_add_sorted(&sorted_all, userlist_dup(u, NULL, m->name, (void *) 2), 0, comp);
 		}
-	} 
+	}
+
+	if (!all) {
+		sorted_all = session_current->userlist;
+
+		if (c && c->participants) 
+			sorted_all = c->participants;
+		else if (window_current->userlist)
+			sorted_all = window_current->userlist;
+	}
+
+	if (!sorted_all)
+		goto after_loop;	/* it skips this loop below */
 
 	for (j = 0; j < corderlen; /* xstrlen(contacts_order); */ j += 2) {
-		int count = 0;
-		list_t l = (!all) ? session_current->userlist : sorted_all;
 		const char *footer_status = NULL;
+		int count = 0;
 		fstring_t *string;
 		char *line;
 		char tmp[100];
+		list_t l;
 
-		if (!all && c && c->participants)		l = c->participants;
-		else if (!all && window_current->userlist)	l = window_current->userlist;
-
-		if (!l) break;
-
-		for (; l; l = l->next) {
+		for (l = sorted_all; l; l = l->next) {
 			userlist_t *u = l->data;
+
 			const char *status_t;
 			const char *format;
 
-			if (!u || !u->nickname || !u->status) 
+			if (!u->nickname || !u->status) 
 				continue;
 
 			status_t = ekg_status_string(u->status, 0);
@@ -354,10 +371,12 @@ group_cleanup:
 
 			line = format_string(format_find(tmp), u->nickname, u->descr);
 			string = fstring_new(line);
-			if (u->private && u->private == (void *) 2)
-				string->private = (void *) saprintf("%s", u->nickname);
+
+			if (u->private == (void *) 2)
+				string->private = (void *) xstrdup(u->nickname);
 			else 
 				string->private = (void *) saprintf("%s/%s", (u->private) ? ((session_t *) u->private)->uid : session_current->uid, u->nickname);
+
 			ncurses_backlog_add(w, string);
 			xfree(line);
 
@@ -382,14 +401,15 @@ group_cleanup:
 			break;
 	}
 
+after_loop:
 	if (xstrcmp(footer, "")) {
 		char *tmp = format_string(footer, group);
 		ncurses_backlog_add(w, fstring_new(tmp));
 		xfree(tmp);
 	}
 
-
-	list_destroy(sorted_all, 1);
+	if (all)
+		list_destroy(sorted_all, 1);
 
 	xfree(group);
 
