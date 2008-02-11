@@ -54,27 +54,23 @@
 
 int contacts_group_index = 0;
 
-static int contacts_margin = 1;
 static int contacts_edge = WF_RIGHT;
 static int contacts_frame = WF_LEFT;
-static int contacts_descr = 0;
-static int contacts_wrap = 0;
 #define CONTACTS_ORDER_DEFAULT "chavawxadninnouner"			/* if you modify it, please modify also CONTACTS_ORDER_DEFAULT_LEN */
 #define CONTACTS_ORDER_DEFAULT_LEN 18					/* CONTACTS_ORDER_DEFAULT_LEN == strlen(CONTACTS_ORDER_DEFAULT) */
 static char contacts_order[32] = CONTACTS_ORDER_DEFAULT;
-static int contacts_nosort = 0;
 static size_t corderlen	= CONTACTS_ORDER_DEFAULT_LEN;			/* it must be always equal xstrlen(contacts_order) XXX please note if you add somewhere code which modify contacts_order */
 
 /* vars */
 int config_contacts_size;
 int config_contacts;
 int config_contacts_groups_all_sessions;
-int config_contacts_descr;
+int config_contacts_descr = 0;
 int config_contacts_edge;
 int config_contacts_frame;
-int config_contacts_margin;
-int config_contacts_orderbystate;
-int config_contacts_wrap;
+int config_contacts_margin = 1;
+int config_contacts_orderbystate = 1;
+int config_contacts_wrap = 0;
 char *config_contacts_order;
 char *config_contacts_groups;
 int config_contacts_metacontacts_swallow;
@@ -319,10 +315,10 @@ group_cleanup:
 
 			status_t = ekg_status_string(u->status, 0);
 
-			if (!contacts_nosort && xstrncmp(status_t, contacts_order + j, 2))
+			if (config_contacts_orderbystate && xstrncmp(status_t, contacts_order + j, 2))
 				continue;
 
-			if (contacts_nosort && !xstrstr(contacts_order, get_short_status(u->status)))
+			if (!config_contacts_orderbystate && !xstrstr(contacts_order, get_short_status(u->status)))
 				continue;
 
 			if (group && (!u->private || (void *) 2 != u->private)) {
@@ -344,9 +340,9 @@ group_cleanup:
 				footer_status = status_t;
 			}
 
-			if (u->descr && contacts_descr)
+			if (u->descr && config_contacts_descr)
 				snprintf(tmp, sizeof(tmp), "contacts_%s_descr_full", status_t);
-			else if (u->descr && !contacts_descr)
+			else if (u->descr && !config_contacts_descr)
 				snprintf(tmp, sizeof(tmp), "contacts_%s_descr", status_t);
 			else
 				snprintf(tmp, sizeof(tmp), "contacts_%s", status_t);
@@ -382,9 +378,8 @@ group_cleanup:
 			}
 		}
 
-		if (contacts_nosort) {
+		if (!config_contacts_orderbystate)
 			break;
-		}
 	}
 
 	if (xstrcmp(footer, "")) {
@@ -441,21 +436,21 @@ void ncurses_contacts_changed(const char *name) {
 
 	if (config_contacts_margin > 10)
 		config_contacts_margin = 10;
-	contacts_margin = config_contacts_margin;
+
 	if (config_contacts_edge > 3)
 		config_contacts_edge = 2;
+
 	contacts_edge = (1 << config_contacts_edge);
 	contacts_frame = (!config_contacts_frame ? 0
 			: contacts_edge & (WF_LEFT|WF_RIGHT) ? contacts_edge ^ (WF_LEFT|WF_RIGHT)
 			: contacts_edge ^ (WF_TOP|WF_BOTTOM));
-	xstrcpy(contacts_order, CONTACTS_ORDER_DEFAULT);	corderlen = CONTACTS_ORDER_DEFAULT_LEN;	/* xstrlen(CONTACTS_ORDER_DEFAULT) eq CONTACTS_ORDER_DEFAULT_LEN */
-	contacts_wrap = config_contacts_wrap;
-	contacts_descr = config_contacts_descr;
-	contacts_nosort = !config_contacts_orderbystate;
 
 	if (config_contacts_order) {
 		strlcpy(contacts_order, config_contacts_order, sizeof(contacts_order));
 		corderlen = xstrlen(contacts_order);
+	} else {
+		xstrcpy(contacts_order, CONTACTS_ORDER_DEFAULT);
+		corderlen = CONTACTS_ORDER_DEFAULT_LEN;	/* xstrlen(CONTACTS_ORDER_DEFAULT) eq CONTACTS_ORDER_DEFAULT_LEN */
 	}
 
 	/* XXX destroy window only if (!config_contacts) ? XXX */
@@ -530,25 +525,25 @@ static int ncurses_contacts_update_redraw(window_t *w) { return 0; }
  */
 void ncurses_contacts_new(window_t *w)
 {
-	int size = config_contacts_size + contacts_margin + ((contacts_frame) ? 1 : 0);
+	int size = config_contacts_size + config_contacts_margin + ((contacts_frame) ? 1 : 0);
 	ncurses_window_t *n = w->private;
 
 	switch (contacts_edge) {
 		case WF_LEFT:
 			w->width = size;
-			n->margin_right = contacts_margin;
+			n->margin_right = config_contacts_margin;
 			break;
 		case WF_RIGHT:
 			w->width = size;
-			n->margin_left = contacts_margin;
+			n->margin_left = config_contacts_margin;
 			break;
 		case WF_TOP:
 			w->height = size;
-			n->margin_bottom = contacts_margin;
+			n->margin_bottom = config_contacts_margin;
 			break;
 		case WF_BOTTOM:
 			w->height = size;
-			n->margin_top = contacts_margin;
+			n->margin_top = config_contacts_margin;
 			break;
 	}
 
@@ -557,7 +552,7 @@ void ncurses_contacts_new(window_t *w)
 	w->frames = contacts_frame;
 	n->handle_redraw = ncurses_contacts_update_redraw;
 	n->handle_mouse = ncurses_contacts_mouse_handler;
-	w->nowrap = !contacts_wrap;
+	w->nowrap = !config_contacts_wrap;
 	n->start = 0;
 }
 

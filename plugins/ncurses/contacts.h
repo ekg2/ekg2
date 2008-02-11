@@ -16,8 +16,6 @@ extern int config_contacts_metacontacts_swallow;
 
 extern int contacts_group_index;
 
-#define CONTACTS_MAX_HEADERS 20
-
 int ncurses_contacts_update(window_t *w, int save_pos);
 void ncurses_contacts_changed(const char *name);
 void ncurses_contacts_new(window_t *w);
