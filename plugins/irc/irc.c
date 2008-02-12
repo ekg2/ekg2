@@ -1068,11 +1068,15 @@ static COMMAND(irc_command_msg) {
 	char		*format=NULL, *seq=NULL;
 	int		secure = 0;
 	
-	char		**rcpts;
-	const char	*uid=NULL;
-	char		*sid = NULL, *uid_full = NULL;
+	char **rcpts;
+	char *uid, *sid;
 
-	uid = target;
+	if (!xstrncmp(target, IRC4, 4)) {
+		uid = xstrdup(target);
+	} else {
+		uid = saprintf("irc:%s", target);
+	}
+
 	w = window_find_s(session, uid);
 
 	prv = xstrcmp(name, ("notice"));
@@ -1090,16 +1094,11 @@ static COMMAND(irc_command_msg) {
 				ischn?"irc_not_sent_chan":w?"irc_not_sent_n":"irc_not_sent");
 
 	sid 	 = xstrdup(session_uid_get(session));
-	if (!xstrncasecmp(uid, IRC4, 4)) {
-		uid_full = xstrdup(uid);
-	} else {
-		uid_full = saprintf("%s:%s", IRC3, uid);
-	}
 	rcpts    = xmalloc(sizeof(char *) * 2);
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
 
-	debug ("%s - %s\n", uid_full, rcpts[0]);
+	debug ("%s - %s\n", uid, rcpts[0]);
 
 	tmpbuf   = (mline[0] = xstrdup(params[1]));
 	while ((mline[1] = split_line(&(mline[0])))) {
@@ -1111,7 +1110,7 @@ static COMMAND(irc_command_msg) {
 		int xosd_is_priv = !ischn;
 		
 		head = format_string(frname, session_name(session), prefix,
-				j->nick, j->nick, uid_full+4, mline[1]);
+				j->nick, j->nick, uid+4, mline[1]);
 
 /* XXX,
  * 	Recoding should be done after emiting IRC_PROTOCOL_MESSAGE (?)
@@ -1128,9 +1127,9 @@ static COMMAND(irc_command_msg) {
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
-		query_emit_id(NULL, IRC_PROTOCOL_MESSAGE, &(sid), &(j->nick), &__msg, &isour, &xosd_to_us, &xosd_is_priv, &uid_full);
+		query_emit_id(NULL, IRC_PROTOCOL_MESSAGE, &(sid), &(j->nick), &__msg, &isour, &xosd_to_us, &xosd_is_priv, &uid);
 
-		query_emit_id(NULL, MESSAGE_ENCRYPT, &sid, &uid_full, &__msg, &secure);
+		query_emit_id(NULL, MESSAGE_ENCRYPT, &sid, &uid, &__msg, &secure);
 				
 		query_emit_id(NULL, PROTOCOL_MESSAGE, &sid, &sid, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
 
@@ -1140,17 +1139,17 @@ static COMMAND(irc_command_msg) {
 		__mtmp = __msg;
 		debug ("%s ! %s\n", j->nick, j->host_ident);
 		xosd_is_priv = xstrlen(__msg);
-		isour = 510 - (prv?7:6) - 6 - xstrlen(uid_full+4) - xstrlen(j->host_ident) - xstrlen(j->nick);
+		isour = 510 - (prv?7:6) - 6 - xstrlen(uid+4) - xstrlen(j->host_ident) - xstrlen(j->nick);
 		/* 6 = 3xspace + '!' + 2xsemicolon; -> [:nick!ident@hostident PRIVMSG dest :mesg] */
 		while (xstrlen(__mtmp) > isour && __mtmp < __msg + xosd_is_priv)
 		{
 			xosd_to_us = __mtmp[isour];
 			__mtmp[isour] = '\0';
-			watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __mtmp);
+			watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __mtmp);
 			__mtmp[isour] = xosd_to_us;
 			__mtmp += isour;
 		}
-		watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid_full+4, __mtmp);
+		watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __mtmp);
 
 		xfree(__msg);
 		xfree(coloured);
@@ -1161,7 +1160,7 @@ static COMMAND(irc_command_msg) {
 	xfree(rcpts);
 	
 	xfree(sid);
-	xfree(uid_full);
+	xfree(uid);
 	xfree(tmpbuf);
 
 	if (!quiet)
