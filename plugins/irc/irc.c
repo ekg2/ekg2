@@ -357,61 +357,6 @@ static int irc_resolver_sort(void *s1, void *s2) {
 	return 0;
 }
 
-static int irc_resolver2(session_t *session, char ***arr, char *hostname, int port, int dobind) {
-#ifdef HAVE_GETADDRINFO
-	struct  addrinfo *ai, *aitmp, hint;
-	void *tm = NULL;
-#else
-#warning "irc: You don't have getaddrinfo() resolver may not work! (ipv6 for sure)"
-	struct hostent *he4;
-#endif	
-
-/*	debug("[IRC] %s fd = %d\n", hostname, fd); */
-#ifdef HAVE_GETADDRINFO
-	memset(&hint, 0, sizeof(struct addrinfo));
-	hint.ai_socktype=SOCK_STREAM;
-	if (!getaddrinfo(hostname, NULL, &hint, &ai)) {
-		for (aitmp = ai; aitmp; aitmp = aitmp->ai_next) {
-			char *ip = NULL, *buf;
-
-			if (aitmp->ai_family == AF_INET6)
-				tm = &(((struct sockaddr_in6 *) aitmp->ai_addr)->sin6_addr);
-			if (aitmp->ai_family == AF_INET) 
-				tm = &(((struct sockaddr_in *) aitmp->ai_addr)->sin_addr);
-#ifdef HAVE_INET_NTOP
-			ip = xmalloc(100);
-			inet_ntop(aitmp->ai_family, tm, ip, 100);
-#else
-			if (aitmp->ai_family == AF_INET6) {
-				/* G: this doesn't have a sense since we're in child */
-				/* print("generic_error", "You don't have inet_ntop() and family == AF_INET6. Please contact with developers if it happens."); */
-				ip =  xstrdup("::");
-			} else
-				ip = xstrdup(inet_ntoa(*(struct in_addr *)tm));
-#endif 
-			buf = saprintf("%s %s %d %d\n", hostname, ip, aitmp->ai_family, (!dobind) ? port : 0);
-			//write(fd, buf, xstrlen(buf));
-			array_add(arr, buf);
-//			xfree(buf);
-			xfree(ip);
-		}
-		freeaddrinfo(ai);
-	}
-#else 
-	if ((he4 = gethostbyname(hostname))) {
-		/* copied from http://webcvs.ekg2.org/ekg2/plugins/irc/irc.c.diff?r1=1.79&r2=1.80 OLD RESOLVER VERSION...
-		 * .. huh, it was 8 months ago..*/
-		char *ip = xstrdup(inet_ntoa(*(struct in_addr *) he4->h_addr));
-		array_add(arr, saprintf("%s %s %d %d\n", hostname, ip, AF_INET, (!dobind) ? port : 0));
-	} else array_add(arr, saprintf("%s : no_host_get_addrinfo()\n", hostname));
-#endif
-
-/* G->dj: getaddrinfo was returninig 3 times, cause you haven't given hints...
- * dj->G: thx ;>
- */
-	return 0;
-}
-
 /**
  * irc_validate_uid()
  *
@@ -464,135 +409,62 @@ static QUERY(irc_protocols) {
 	return 0;
 }
 
-#ifdef NO_POSIX_SYSTEM
-static void irc_changed_resolve_child(session_t *s, const char *var, HANDLE fd) {
-#else
-static void irc_changed_resolve_child(session_t *s, const char *var, int fd) {
-#endif
-	int isbind	= !xstrcmp((char *) var, "hostname");
-	char *tmp	= xstrdup(session_get(s, var));
-
-	if (tmp) {
-		char *tmp1 = tmp, *tmp2;
-		char **arr = NULL;
-
-		/* G->dj: I'm changing order, because
-		 * we should connect first to first specified host from list...
-		 * Yeah I know code look worse ;)
-		 */
-		do {
-			if ((tmp2 = xstrchr(tmp1, ','))) *tmp2 = '\0';
-			irc_resolver2(s, &arr, tmp1, -1, isbind);
-			tmp1 = tmp2+1;
-		} while (tmp2);
-
-		tmp2 = array_join(arr, NULL);
-		array_free(arr);
-#ifdef NO_POSIX_SYSTEM
-		DWORD written;
-		WriteFile(fd, tmp2, xstrlen(tmp2), &written, NULL);
-		WriteFile(fd, "EOR\n", 4, &written, NULL);
-#else
-		write(fd, tmp2, xstrlen(tmp2));
-		write(fd, "EOR\n", 4);
-#endif
-		sleep(3);
-#ifdef NO_POSIX_SYSTEM
-		CloseHandle(fd);
-#else
-		close(fd);
-#endif
-		xfree(tmp2);
-	}
-	xfree(tmp);
-}
-
-#ifdef NO_POSIX_SYSTEM
-struct win32_tmp {	char session[100]; 
-			char var[11]; 
-			HANDLE fd; 
-			HANDLE fd2; 
-		};
-
-static THREAD(irc_changed_resolve_child_win32) {
-	struct win32_tmp *helper = data;
-
-	CloseHandle(helper->fd);
-
-	irc_changed_resolve_child(session_find(helper->session), helper->var, helper->fd2);
-	xfree(helper);
-
-/*	TerminateThread(GetCurrentThread(), 1); */
-	return 0;
-}
-#endif
-
 static void irc_changed_resolve(session_t *s, const char *var) {
-	irc_private_t	*j = irc_private(s);
-	int		isbind;
-	int		res, fd[2];
-	list_t		*rlist = NULL;
-	if (!j)
-		return;
+	irc_private_t *j;
+	list_t *rlist;
+	int isbind;
 
-	if (pipe(fd) == -1) {
-		print("generic_error", strerror(errno));
+	list_t oldlist, tmpoldlist;
+
+	irc_resolver_t *irdata;
+
+	if (!s || !(j = s->priv))
 		return;
-	}
 
 	isbind = !xstrcmp((char *) var, "hostname");
-	/* G->dj: THIS WAS VERY, VERY NASTY BUG... 
-	 *        SUCH A LITTLE ONE, AND SO TIME-CONSUMING ;/
-	 */
-	if (isbind) { rlist = &(j->bindlist); j->bindtmplist = NULL; }
-	else { rlist = &(j->connlist); j->conntmplist = NULL; }
 
-	if (*rlist) {
-		LIST_DESTROY(*rlist, list_irc_resolver_free);
-		*rlist = NULL;
+	if (isbind) {
+		oldlist		= j->bindlist;
+		tmpoldlist	= j->bindtmplist;
+
+		j->bindtmplist = j->bindlist = NULL;
+
+		rlist = &(j->bindlist);
+	} else {
+		oldlist		= j->connlist;
+		tmpoldlist	= j->conntmplist;
+
+		j->conntmplist = j->connlist = NULL;
+
+		rlist = &(j->connlist);
 	}
-#ifdef NO_POSIX_SYSTEM
-	struct win32_tmp *helper = xmalloc(sizeof(struct win32_tmp));
 
-	strncpy((char *) &helper->session, s->uid, sizeof(helper->session)-1);
-	strncpy((char *) &helper->var, var, sizeof(helper->var)-1);
-
-	DuplicateHandle(GetCurrentProcess(), (HANDLE) fd[1], GetCurrentProcess(), &(helper->fd2), DUPLICATE_SAME_ACCESS, TRUE, DUPLICATE_SAME_ACCESS);
-	DuplicateHandle(GetCurrentProcess(), (HANDLE) fd[0], GetCurrentProcess(), &(helper->fd), DUPLICATE_SAME_ACCESS, TRUE, DUPLICATE_SAME_ACCESS);
-	debug("[fds] after dupliaction: [0, %d] [1, %d]\n", helper->fd, helper->fd2);
-
-	if ((res = (int) win32_fork(irc_changed_resolve_child_win32, helper)) == 0)
-#else
-	if ((res = fork()) < 0)
-#endif
-	{
-		print("generic_error", strerror(errno));
-		close(fd[0]);
-		close(fd[1]);
-		return;
-	}
 	j->resolving++;
-	if (res) {
-		irc_resolver_t *irdata = xmalloc(sizeof(irc_resolver_t));
-		irdata->session = xstrdup(s->uid);
-		irdata->plist   = rlist;
 
-#ifndef NO_POSIX_SYSTEM
-		close(fd[1]);
-#else
-		CloseHandle(fd[1]);
-#endif
-		watch_add_line(&irc_plugin, fd[0], WATCH_READ_LINE, irc_handle_resolver, irdata);
+	irdata = xmalloc(sizeof(irc_resolver_t));
+	irdata->session = xstrdup(s->uid);
+	irdata->plist   = rlist;
+	irdata->isbind = isbind;
+
+	if (!(ekg_resolver3(&irc_plugin, session_get(s, var), irc_handle_resolver, irdata))) {
+		print("generic_error", strerror(errno));
+
+		j->resolving--;
+		
+		xfree(irdata->session);
+		xfree(irdata);
+
+		if (isbind) {
+			j->bindlist = oldlist;
+			j->bindtmplist = tmpoldlist;
+		} else {
+			j->connlist = oldlist;
+			j->conntmplist = tmpoldlist;
+		}
 
 		return;
-	} 
-	/* Child */
-#ifndef NO_POSIX_SYSTEM
-	close(fd[0]);
-	irc_changed_resolve_child(s, var, fd[1]);
-	exit(0);
-#endif
-	return;
+	}
+	LIST_DESTROY(oldlist, list_irc_resolver_free);
 }
 
 static void irc_changed_recode(session_t *s, const char *var) {
@@ -695,7 +567,8 @@ static WATCHER_LINE(irc_handle_resolver) {
 	irc_private_t *j;
 	char **p;
 
-	if (!s || !(j = irc_private(s)) ) return -1;
+	if (!s || !(j = s->priv)) 
+		return -1;
 
 	if (type) {
 		debug("[irc] handle_resolver for session %s type = 1 !! 0x%x resolving = %d connecting = %d\n", resolv->session, resolv->plist, j->resolving, j->connecting);
@@ -713,15 +586,17 @@ static WATCHER_LINE(irc_handle_resolver) {
  * %s %s %d %d hostname ip family port\n
  */
 	if (!xstrcmp(watch, "EOR")) return -1;	/* koniec resolvowania */
-	if ((p = array_make(watch, " ", 4, 1, 0)) && p[0] && p[1] && p[2] && p[3]) {
+	if ((p = array_make(watch, " ", 3, 1, 0)) && p[0] && p[1] && p[2]) {
 		connector_t *listelem = xmalloc(sizeof(connector_t));
+
     		listelem->session = s;
 		listelem->hostname = xstrdup(p[0]);
 		listelem->address  = xstrdup(p[1]);
-		listelem->port     = atoi(p[3]);
+		listelem->port     = (resolv->isbind ? 0 : -1);
 		listelem->family   = atoi(p[2]);
 		list_add_sorted((resolv->plist), listelem, 0, &irc_resolver_sort);
-		debug("%s (%s %s) %x %x\n", p[0], p[1], p[3], resolv->plist, listelem); 
+
+		debug("%s (%s %s) %x %x\n", p[0], p[1], p[2], resolv->plist, listelem); 
 		array_free(p);
 	} else { 
 		debug("[irc] received some kind of junk from resolver thread: %s\n", watch);

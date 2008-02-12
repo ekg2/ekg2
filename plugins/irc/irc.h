@@ -113,6 +113,7 @@ typedef struct {
 typedef struct {
 	char *session;
 	list_t *plist;
+	int isbind;
 } irc_resolver_t;
 
 #define irc_private(s) ((irc_private_t*) session_private_get(s))
