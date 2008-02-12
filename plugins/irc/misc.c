@@ -1363,6 +1363,8 @@ IRC_COMMAND(irc_c_mode)
 
 			irc_nick_prefix(j, ch, irc_color_in_contacts(add, 
 						ch->mode, ul));
+
+			query_emit_id(NULL, USERLIST_REFRESH);
 		} 
 notreallyok:
 		if (xstrchr(add, *t)) k++;
