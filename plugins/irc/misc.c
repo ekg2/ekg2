@@ -826,8 +826,10 @@ IRC_COMMAND(irc_c_nick)
 		if ((w = window_find_s(s, temp))) {
 			xfree(w->target);
 			w->target = saprintf("%s%s", IRC4, OMITCOLON(param[2]));
-			print_window(w->target,
-					s, 0, "IRC_NEWNICK", session_name(s),
+
+			query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+
+			print_window_w(w, 0, "IRC_NEWNICK", session_name(s),
 					param[0]+1, t?t+1:"", OMITCOLON(param[2]));
 		}
 		xfree(temp);
