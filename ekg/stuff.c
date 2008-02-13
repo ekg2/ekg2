@@ -532,7 +532,7 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 	if (!type || !str)
 		return -1;
 
-	for (sep = str; xisdigit(*sep); sep++) {
+	for (sep = (char *) str; xisdigit(*sep); sep++) {
 		/* XXX check if there's no time_t overflow? */
 		ts *= 10;
 		ts += (*sep - '0');
@@ -2920,8 +2920,7 @@ static inline size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
 inline char *mutt_convert_string (const char *ps, iconv_t cd, int is_utf)
 {
 	char *repls[] = { "\357\277\275", "?", 0 };
-	char *s = ps;
-
+	char *s = (char *) ps;
 		/* we can assume that both from and to aren't NULL in EKG2,
 		 * and cd is NULL in case of error, not -1 */
 	if (cd) {

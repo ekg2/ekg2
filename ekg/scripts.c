@@ -616,7 +616,7 @@ script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void
 {
 	char *tempname;
 	SCRIPT_BIND_HEADER(script_timer_t);
-	tempname   = saprintf("scr_%x", (int) temp); /* truly unique ;p */
+	tempname   = saprintf("scr_%p", temp); /* truly unique ;p */
 	temp->self = timer_add(NULL, (const char *) tempname, freq, 1, &script_timer_handlers, (void *) temp);
 	xfree(tempname);
 	SCRIPT_BIND_FOOTER(script_timers);
