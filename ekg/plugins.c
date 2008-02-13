@@ -441,7 +441,7 @@ int plugin_unload(plugin_t *p)
  * plugin_register_compare()
  *
  * internal function used to sort plugins by prio
- * used by list_add_sorted() 
+ * used by LIST_ADD_SORTED() 
  *
  * @param data1 - First plugin_t to compare
  * @param data2 - Second plugin_t to compare

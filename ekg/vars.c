@@ -274,14 +274,9 @@ variable_map_t *variable_map(int count, ...)
  *
  * zwraca wynik xstrcasecmp() na nazwach zmiennych.
  */
-static int variable_add_compare(void *data1, void *data2)
-{
-        variable_t *a = data1, *b = data2;
 
-        if (!a || !a->name || !b || !b->name)
-                return 0;
-
-        return xstrcasecmp(a->name, b->name);
+static LIST_ADD_COMPARE(variable_add_compare, variable_t *) {
+        return xstrcasecmp(data1->name, data2->name);
 }
 
 /*
@@ -361,7 +356,7 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 		return v;
 	}
 
-	return list_add_sorted(&variables, v, 0, variable_add_compare);
+	return LIST_ADD_SORTED(&variables, v, 0, variable_add_compare);
 }
 
 /*
@@ -376,6 +371,7 @@ int variable_remove(plugin_t *plugin, const char *name)
 
 	if (!name)
 		return -1;
+
 	hash = ekg_hash(name);
 
 	for (l = variables; l; l = l->next) {

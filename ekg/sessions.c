@@ -109,26 +109,16 @@ session_t *session_find(const char *uid)
 /**
  * session_compare()
  *
- * funkcja pomocna przy list_add_sorted().
+ * funkcja pomocna przy LIST_ADD_SORTED().
  *
- * @note To raczej powinna byc wewnetrzna funkcja w session.c ale nie wiedziec czemu kilka pluginow z tego korzysta...
- * 	W koncu nie mozemy miec dwoch sesji o takich samych uidach... ? to chyba wystarczy porownac adresy?
- * 
  * @param data1 - pierwsza sesja do porownania
  * @param data2 - druga sesja do porownania
- * @sa list_add_sorted
  *
  * @return zwraca wynik xstrcasecmp() na nazwach sesji.
  */
 
-int session_compare(void *data1, void *data2)
-{
-	session_t *a = data1, *b = data2;
-	
-	if (!a || !a->uid || !b || !b->uid)
-		return 1;
-
-	return xstrcasecmp(a->uid, b->uid);
+static LIST_ADD_COMPARE(session_compare, session_t *) {
+	return xstrcasecmp(data1->uid, data2->uid);
 }
 
 /**
@@ -171,7 +161,7 @@ session_t *session_add(const char *uid) {
 	s->lock_fd	= -1;
 #endif
 	
-	list_add_sorted(&sessions, s, 0, session_compare);
+	LIST_ADD_SORTED(&sessions, s, 0, session_compare);
 
 	/* XXX, wywalic sprawdzanie czy juz jest sesja? w koncu jak dodajemy sesje.. to moze chcemy sie od razu na nia przelaczyc? */
 	if (!window_current->session && (window_current->id == 0 || window_current->id == 1)) {

@@ -61,7 +61,7 @@ static const char valid_hostname_chars_u[] =
  * ekg_resolver2()
  *
  * Resolver copied from jabber plugin, 
- * it use gethostbyname()
+ * it uses gethostbyname()
  *
  *  - async	- watch handler.
  *  - data	- watch data handler.
@@ -188,6 +188,28 @@ static int irc_resolver2(char ***arr, char *hostname) {
 
 	return 0;
 }
+
+/*
+ * ekg_resolver3()
+ *
+ * Resolver copied from irc plugin, 
+ * it uses getaddrinfo() [or gethostbyname() if you don't have getaddrinfo]
+ *
+ *  - async	- watch handler.
+ *  - data	- watch data handler.
+ *
+ *  in @a async watch you'll recv lines:
+ *  	HOSTNAME IPv4 PF_INET 
+ *  	HOSTNAME IPv4 PF_INET
+ *  	HOSTNAME IPv6 PF_INET6
+ *  	....
+ *  	EOR means end of resolving, you should return -1 (temporary watch) and in type == 1 close fd.
+ *
+ *  NOTE, EKG2-RESOLVER-API IS NOT STABLE.
+ *  	IT'S JUST COPY-PASTE OF SOME FUNCTION FROM OTHER PLUGINS, TO AVOID DUPLICATION OF CODE (ALSO CLEANUP CODE A LITTLE)
+ *  	AND TO AVOID REGRESSION. 
+ *  THX.
+ */
 
 watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data) {
 	int res, fd[2];

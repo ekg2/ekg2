@@ -236,24 +236,16 @@ void window_switch(int id) {
  * window_new_compare()
  *
  * internal function to sort windows by id
- * used by list_add_sorted()
+ * used by LIST_ADD_SORTED()
  *
  * @param data1 - first window_t to compare
  * @param data2 - second window_t to compare
  *
- * @sa list_add_sorted() 
- *
  * @return It returns result of window id subtractions.
  */
 
-static int window_new_compare(void *data1, void *data2)
-{
-	window_t *a = data1, *b = data2;
-
-	if (!a || !b)
-		return 0;
-
-	return a->id - b->id;
+static LIST_ADD_COMPARE(window_new_compare, window_t *) {
+	return data1->id - data2->id;
 }
 
 /**
@@ -347,7 +339,7 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 	w->session = session;
 /*	w->userlist = NULL; */		/* xmalloc memset() to 0 memory */
 
-	list_add_sorted(&windows, w, 0, window_new_compare);
+	LIST_ADD_SORTED(&windows, w, 0, window_new_compare);
 
 	query_emit_id(NULL, UI_WINDOW_NEW, &w);	/* XXX */
 
@@ -557,8 +549,8 @@ static void window_move(int first, int second) {
         list_remove(&windows, w2, 0);
 	w2->id = first;
 
-	list_add_sorted(&windows, w1, 0, window_new_compare);
-	list_add_sorted(&windows, w2, 0, window_new_compare);
+	LIST_ADD_SORTED(&windows, w1, 0, window_new_compare);
+	LIST_ADD_SORTED(&windows, w2, 0, window_new_compare);
 }
 
 /**

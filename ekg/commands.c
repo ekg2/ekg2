@@ -4136,9 +4136,6 @@ static COMMAND(cmd_desc) {
  * zwraca wynik xstrcasecmp() na nazwach komend.
  */
 static LIST_ADD_COMPARE(command_add_compare, command_t *) {
-	if (!data1 || !data1->name || !data2 || !data2->name)
-		return 0;
-
 	return xstrcasecmp(data1->name, data2->name);
 }
 
@@ -4169,12 +4166,17 @@ static LIST_ADD_COMPARE(command_add_compare, command_t *) {
  * @param flags		- bitmask from commands.h (read note for more details!)
  * @param possibilities	- eventually space separated list of possible params.. completion useful
  *
- * @return Pointer to added command_t *. It shouldn't return NULL
+ * @return Pointer to added command_t *, or NULL if name was NULL.
  *
  */
 
 command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities) {
-	command_t *c = xmalloc(sizeof(command_t));
+	command_t *c;
+
+	if (!name) 
+		return NULL;
+
+	c = xmalloc(sizeof(command_t));
 
 	c->name = name;
 	c->params = params ? array_make(params, (" "), 0, 1, 1) : NULL;
