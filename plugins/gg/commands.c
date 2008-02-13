@@ -1709,7 +1709,7 @@ static TIMER(gg_checked_timer_handler)
 	for (l = gg_currently_checked; l; l = l->next) {
 		gg_currently_checked_t *c2 = l->data;
 
-		if (!session_compare(c2->session, c->session) && !xstrcmp(c2->uid, c->uid)) {
+		if (c2->session == c->session) {
 			userlist_t *u = userlist_find(c->session, c->uid);
 			if (u) {
 				if (u->status == EKG_STATUS_INVISIBLE) {

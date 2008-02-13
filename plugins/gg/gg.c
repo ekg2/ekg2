@@ -1112,7 +1112,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 
 						l = l->next;
 
-						if (!session_compare(c->session, s) && !xstrcmp(c->uid, tmp)) {
+						if (c->session == s) {
 							userlist_t *u = userlist_find(s, tmp);
 							if (u) {
 								const int interval = session_int_get(s, "invisible_check_interval");
