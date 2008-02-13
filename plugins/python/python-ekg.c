@@ -514,7 +514,12 @@ PyObject *ekg_cmd_session_get(PyObject * self, PyObject * pyargs)
 
 PyObject *ekg_cmd_session_current(PyObject * self, PyObject * pyargs)
 {
-        return (PyObject *)python_build_session(session_current->uid);
+	if (!session_current) {
+/*		PyErr_SetString(PyExc_KeyError, "Some error?"); */
+		return NULL;
+	}
+
+	return (PyObject *)python_build_session(session_current->uid);
 }
 
 /**
