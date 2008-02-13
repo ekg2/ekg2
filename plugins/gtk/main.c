@@ -340,21 +340,12 @@ static QUERY(gtk_ui_window_clear) {
 
 EXPORT int gtk_plugin_init(int prio) {
 	const char ekg2_another_ui[] = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
-	const char ekg2_no_display[] = "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa...\n";
 
         int is_UI = 0;
 	int xfd;
 	list_t l;
 
         query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
-
-	if (!getenv("DISPLAY")) {
-/* po czyms takim for sure bedzie initowane ncurses... no ale moze to jest wlasciwe zachowanie? jatam nie wiem.
- * gorsze to ze ten komunikat nigdzie sie nie pojawi... */
-		if (is_UI) debug(ekg2_no_display);
-		else	   fprintf(stderr, ekg2_no_display);
-		return -1;
-	}
 
         if (is_UI) {
 		debug(ekg2_another_ui);

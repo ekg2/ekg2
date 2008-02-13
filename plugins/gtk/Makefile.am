@@ -3,7 +3,7 @@ PNGS = iconssets/ffc.png iconssets/avail.png iconssets/away.png iconssets/dnd.pn
 EXTRA_DIST = chanview-tabs.c chanview-tree.c iconssets/COPYING $(GG_PNGS) $(PNGS)
 
 lib_LTLIBRARIES = gtk.la
-gtk_la_SOURCES = main.c main.h maingui.c xtext.c xtext.h gtkutil.c gtkutil.h palette.c palette.h menu.c menu.h chanview.c chanview.h bindings.c bindings.h completion.c completion.h userlistgui.c userlistgui.h
+gtk_la_SOURCES = main.c main.h maingui.c maingui.h xtext.c xtext.h gtkutil.c gtkutil.h palette.c palette.h menu.c menu.h chanview.c chanview.h bindings.c bindings.h completion.c completion.h userlistgui.c userlistgui.h
 
 gtk_la_LDFLAGS = -module -avoid-version
 gtk_la_LIBADD = $(GTK_LIBS)
