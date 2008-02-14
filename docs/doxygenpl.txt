@@ -116,6 +116,96 @@ Sprobujmy zaladowac plugin w ekg2..
 @defgroup plugins_proto		Pluginy protokolow (PLUGIN_PROTOCOL)
 @ingroup plugins
 
+@note	ekg2 aktualnie obsluguje 4 protokoly: gg, irc, jabber, tlen
+	Wiec jesli nie znajdziesz tutaj informacji nt. jak zrobic dana rzecz,
+	mozesz poszukac jej w zrodlach innego plugina, albo zapytac na
+	ekg2-devel
+
+@note	Opieramy sie na pluginie foo, ktory zaczelismy pisac wczesniej.
+
+Dodajmy naszemu pluginow mozliwosci zalozenia sesji.
+Do tego sluzy event: <i>PROTOCOL_VALIDATE_UID</i>
+Zmienimy przy okazji typ plugina na PLUGIN_PROTOCOL
+
+Ponizej caly kod:
+
+<pre>
+  \#include <ekg/plugins.h>
+  \#include <ekg/queries.h>			/* (1) */
+  \#include <ekg/xmalloc.h>
+
+  \#include <stdarg.h>
+
+  PLUGIN_DEFINE(foo, PLUGIN_PROTOCOL, NULL);
+
+  static QUERY(foo_validate_uid) {		/* (2) */
+  	char *uid       = *(va_arg(ap, char **));
+	int *valid      = va_arg(ap, int *);
+
+	if (!xstrncmp(uid, "foo:", 3) && uid[4]) {	/* (3) */
+		(*valid)++;
+		return -1;
+	}
+
+	return 0;
+  }
+
+  EXPORT int foo_plugin_init(int prio) {
+	plugin_register(&foo_plugin, prio);
+
+	query_connect_id(&foo_plugin, PROTOCOL_VALIDATE_UID, foo_validate_uid, NULL); /* (4) */
+
+	return 0;
+  }
+
+  static int foo_plugin_destroy() {
+	plugin_unregister(&foo_plugin);
+	return 0;
+  }
+
+</pre>
+Komentarz:
+<pre>
+	(1) - plik naglowkowy, zawierajacy numeryczne wartosci dla query_connect_id() i query_emit_id()
+	(2) - w ekg2 lubimy korzystac z makr deklarujace funkcje.
+	      QUERY(baz) jest rozwijane na int baz(void *data, va_list ap);
+	      Jesli nie wierzysz mozesz sprawdzic w plugins.h
+
+	(3) - Sprawdzamy czy sesja zaczyna sie od foo: i czy wystepuje jakis znak po protokole
+	      (konwencja nazywania sesji w ekg2 to protokol:smth...)
+	
+	(4) - chcemy dostawac PROTOCOL_VALIDATE_UID, odbieramy w funkcji foo_validate_uid()
+	      4 parametr query_connect_id() oznacza co nalezy przekazac w polu data.
+	      W tym przypadku niepotrzebujemy wiec wpisujemy NULL.
+
+	Zdarzenie PROTOCOL_VALIDATE_UID, sluzy m. in do sprawdzenia czy dany ciag znakow moze byc sesja.
+	- Jesli tak, to nalezy zinkrementowac wartosc wskaznika przekazanego w II zmiennej (w tym przypadku zmienna valid) na 1, a nastepnie zwrocic -1.
+	- Jesli nie, to nalezy zwrocic 0.
+</pre>
+
+
+<pre>
+Kompilujemy plugin, instalujemy. 
+Uruchamiamy nasze z profilem testfoo42135627 (to z zaladowanym pluginem)
+I sprobujmy utworzyc sesje:
+
+	/session -a foo:bar
+	00:00:00 ::: Utworzono sesje foo:test
+
+Ok, no to teraz sprobujmy sie polaczyc :)
+
+	/connect
+	00:00:02 ::: Nieznane polecenie: connect
+</pre>
+<pre>
+Bylo do przewidzenia, mamy swoj wlasny plugin, mamy swoja wlasna sesje,
+(ktora jak zrobimy /save a potem uruchomimy jeszcze raz ekg2, nam sie pojawi)
+ale nic z nia nie mozemy zrobic.
+
+
+
+</pre>
+
 */
 
 /**
@@ -170,7 +260,7 @@ Tutaj sa tylko informacje nt. tworzenia skryptow w poszczegolnych jezykach,
 jak chcesz sie dowiedziec jak zbudowac taki plugin zobacz w dziale: plugins_scripting [XXX]
 
 Jak chcesz wiedziec jak wyglada uzytkowanie skryptow, to powinienes zobaczyc
-ekg2book, ale w zwiazku z tym ze tam nic nie ma to tutaj masz tipsy:
+ekg2book, ale w zwiazku z tym ze tam nic nie ma to tutaj masz wskazowki:
 
 [XXX, przeniesc informacje stad do ekg2booka]
 
