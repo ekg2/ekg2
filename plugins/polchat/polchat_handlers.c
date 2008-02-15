@@ -189,6 +189,7 @@ POLCHAT_HANDLER(polchat_msg) {
 		char *tmp = html_to_ekg2(strings[0]);
 		char *tmp2= format_string(tmp);
 
+/* XXX, wysylac przez PROTOCOL-MESSAGE */
 		print_window(j->room, s, 1, "none", tmp2);
 
 		xfree(tmp2);
@@ -200,11 +201,37 @@ POLCHAT_HANDLER(polchat_msg) {
 }
 
 POLCHAT_HANDLER(polchat_privmsg) {
-	if (nheaders == 1 && nstrings == 2) {
-		debug("polchat_processpkt() HEADER0_PRIVMSG INC(?) : NICK: %s MSG: %s\n", strings[1], strings[0]);
+	if (nheaders == 1 && nstrings == 2) {			/* wiadomosc ktora ktos nam wyslal */
+		char *tmp = html_to_ekg2(strings[0]);
+		char *tmp2= format_string(tmp);
+
+		char *uid = saprintf("polchat:%s", strings[1]);
+
+/* XXX, wysylac przez PROTOCOL-MESSAGE */
+		print_window(uid, s, 1, "none", tmp2);
+
+		xfree(uid);
+
+		xfree(tmp2);
+		xfree(tmp);
+
 		return 0;
-	} else if (nheaders == 1 && nstrings == 3) {
-		debug("polchat_processpkt() HEADER0_PRIVMSG OUT(?) : UNK[0]: %s\nUNK[1]: %s\nMSG: %s\n", strings[0], strings[1], strings[2]);
+	} else if (nheaders == 1 && nstrings == 3) {		/* wiadomosc ktora wyslalismy */
+		char *tmp = html_to_ekg2(strings[0]);
+		char *tmp2= format_string(tmp);
+
+		char *uid = saprintf("polchat:%s", strings[2]);
+
+/* XXX, wysylac przez PROTOCOL-MESSAGE */
+		print_window(uid, s, 1, "none", tmp2);
+
+		/* mozemy sprawdzic czy strings[1] == my */
+
+		xfree(uid);
+
+		xfree(tmp2);
+		xfree(tmp);
+
 		return 0;
 	}
 	

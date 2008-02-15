@@ -50,9 +50,16 @@
 
 #include <ekg/queries.h>
 
+#define DEFPARTMSG "EKG2 bejbi! http://ekg2.org/"
 #define DEFQUITMSG "EKG2 - It's better than sex!"
+
+#define SGPARTMSG(x) session_get(x, "PART_MSG")
 #define SGQUITMSG(x) session_get(x, "QUIT_MSG")
+
+#define PARTMSG(x,r) (r?r: SGPARTMSG(x)?SGPARTMSG(x):DEFPARTMSG)
 #define QUITMSG(x) (SGQUITMSG(x)?SGQUITMSG(x):DEFQUITMSG)
+
+#define DEFPART
 
 typedef struct {
 	int fd;
@@ -592,11 +599,26 @@ static COMMAND(polchat_command_reconnect) {
 }
 
 static COMMAND(polchat_command_msg) {
-	/* w target -> target */
+	polchat_private_t   *j = session->priv;
+
 	/* NOTE: sending `/quit` msg disconnect session */	/* XXX, escape? */
 
-/*	polchat_sendpkt(session, 0x019a, params[1], NULL); */
-	polchat_sendmsg(session, "%s", params[1]);
+	if (!xstrncmp(target, "polchat:", 8))
+		target += 8;
+
+	if (j->room && !xstrcmp(target, j->room+8)) {
+		/* polchat_sendpkt(session, 0x019a, params[1], NULL); */
+		polchat_sendmsg(session, "%s", params[1]);
+	} else {
+#if 0	/* nie musimy tego sprawdzac, serwer za nas to robi */
+		if (!(userlist_find(session, target))) {
+			debug_error("polchat_command_msg() but target: %s not found in userlist, neither eq j->room: %s\n", target, j->room);
+			printq("generic_error", "see debug");
+			return 0;
+		}
+#endif
+		polchat_sendmsg(session, "/msg %s %s", target, params[1]);
+	}
 
 	return 0;
 }
@@ -615,19 +637,29 @@ static COMMAND(polchat_command_inline_msg) {
 
 static COMMAND(polchat_command_part) {
 	polchat_private_t   *j = session->priv;
+	const char *reason = PARTMSG(session, params[0]);
 
 	if (!j->room) {
 		printq("invalid_params", name);
 		return 0;
 	}
 
-	polchat_sendmsg(session, "/part");
+	polchat_sendmsg(session, "/part %s", reason);
 
 	return 0;
 }
 
 static COMMAND(polchat_command_join) {
 	polchat_private_t   *j = session->priv;
+
+	if (!xstrncmp(target, "polchat:", 8))
+		target += 8;
+
+	if (j->room && !xstrcmp(j->room + 8, target)) {
+		/* ten sam pokoj, ignoruj */
+		printq("generic", "Jestes wlasnie w tym pokoju"); /* XXX */
+		return 0;
+	}
 
 	if (j->newroom) {
 		debug_error("/join but j->newroom: %s\n", j->newroom);
@@ -636,10 +668,19 @@ static COMMAND(polchat_command_join) {
 		return 0;
 	}
 
-	polchat_sendmsg(session, "/join %s", params[0]);
+	polchat_sendmsg(session, "/join %s", target);
 
-	j->newroom = saprintf("polchat:%s", params[0]);
+	j->newroom = saprintf("polchat:%s", target);
 
+	return 0;
+}
+
+static COMMAND(polchat_command_raw) {
+	if (params[0])
+		polchat_sendmsg(session, "/%s %s", name, params[0]);
+	else
+		polchat_sendmsg(session, "/%s", name);
+	
 	return 0;
 }
 
@@ -693,6 +734,21 @@ EXPORT int polchat_plugin_init(int prio) {
 
 	command_add(&polchat_plugin, "polchat:part", "r",	polchat_command_part, POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:join", "!uUw",	polchat_command_join, POLCHAT_FLAGS_TARGET, NULL);
+
+/* XXX, REQ params ? */
+	command_add(&polchat_plugin, "polchat:info", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:op", "?",		polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:unop", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:halfop", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:tmphalfop", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+
+	/* /guest /unguest */
+	/* /buddy /unbuddy /ignore /unignore */
+
+	command_add(&polchat_plugin, "polchat:kick", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:ban", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:banip", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:unban", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
 
 	return 0;
 }
