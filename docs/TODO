@@ -54,6 +54,10 @@ rozwi±zanie.
 
 
 *** *** *** *** ***
+W userlist_free() kasujemy przyporzadkowanie w->uid <==> w->nickname
+Dlatego trzeba dla kazdego okna danej sesji poprawic w->target na taki ktory bedzie dzialac
+nawet jak skasujemy userliste.
+
 [Zmienne sesyjne]
    gdy zmienna zaczyna sie od '__' wtedy sprawdzajmy tylko s->local_vars, oraz gdy nie istnieje dodajmy.
    Jesli nie, to wtedy sprawdz tylko zmienne zdefiniowane przez PLUGIN_VAR_ADD, a gdy nie ma nie dodawaj.
