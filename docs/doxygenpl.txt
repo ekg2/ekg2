@@ -168,7 +168,7 @@ Komentarz:
 <pre>
 	(1) - plik naglowkowy, zawierajacy numeryczne wartosci dla query_connect_id() i query_emit_id()
 	(2) - w ekg2 lubimy korzystac z makr deklarujace funkcje.
-	      QUERY(baz) jest rozwijane na int baz(void *data, va_list ap);
+	      QUERY\alamakota(baz) jest rozwijane na int baz(void *data, va_list ap);
 	      Jesli nie wierzysz mozesz sprawdzic w plugins.h
 
 	(3) - Sprawdzamy czy sesja zaczyna sie od foo: i czy wystepuje jakis znak po protokole
@@ -176,17 +176,17 @@ Komentarz:
 	
 	(4) - chcemy dostawac PROTOCOL_VALIDATE_UID, odbieramy w funkcji foo_validate_uid()
 	      4 parametr query_connect_id() oznacza co nalezy przekazac w polu data.
-	      W tym przypadku niepotrzebujemy wiec wpisujemy NULL.
+	      W tym przypadku nie potrzebujemy wiec wpisujemy NULL.
 
 	Zdarzenie PROTOCOL_VALIDATE_UID, sluzy m. in do sprawdzenia czy dany ciag znakow moze byc sesja.
-	- Jesli tak, to nalezy zinkrementowac wartosc wskaznika przekazanego w II zmiennej (w tym przypadku zmienna valid) na 1, a nastepnie zwrocic -1.
-	- Jesli nie, to nalezy zwrocic 0.
+		.- Jesli tak, to nalezy zinkrementowac wartosc wskaznika przekazanego w II zmiennej (w tym przypadku zmienna valid) na 1, a nastepnie zwrocic -1.
+		.- Jesli nie, to nalezy zwrocic 0.
 </pre>
 
 
 <pre>
 Kompilujemy plugin, instalujemy. 
-Uruchamiamy nasze z profilem testfoo42135627 (to z zaladowanym pluginem)
+Uruchamiamy nasze ekg2 z profilem testfoo42135627 (to z zaladowanym pluginem foo)
 I sprobujmy utworzyc sesje:
 
 	/session -a foo:bar
