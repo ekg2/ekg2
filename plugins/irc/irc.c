@@ -1836,8 +1836,10 @@ static COMMAND(irc_command_ping) {
 
 static COMMAND(irc_command_me) {
 	irc_private_t	*j = irc_private(session);
-	char		**mp, *chan, *chantypes = SOP(_005_CHANTYPES), *str, *col;
+	char		**mp, *chan, *chantypes = SOP(_005_CHANTYPES), *col;
 	int		mw = session_int_get(session, "make_window"), ischn;
+
+	char *str = NULL;
 
 	if (!(chan=irc_getchan(session, params, name,
 					&mp, 1, IRC_GC_ANY)))
@@ -1845,12 +1847,20 @@ static COMMAND(irc_command_me) {
 
 	ischn = chantypes?!!xstrchr(chantypes, chan[4]):0;
 	
-	str = xstrdup(*mp);
+	if (j->conv_out != (void *) -1) {
+		str = ekg_convert_string_p(*mp, j->conv_out);
+
+		if (!str)
+			debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_out);
+	}
+
+	if (!str)
+		str = xstrdup(*mp);
 
 	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01ACTION %s\01\r\n",
 			chan+4, str?str:"");
 
-	col = irc_ircoldcolstr_to_ekgcolstr(session, str, 1);
+	col = irc_ircoldcolstr_to_ekgcolstr(session, *mp, 1);
 	print_window(chan, session, ischn?(mw&1):!!(mw&2),
 			ischn?"irc_ctcp_action_y_pub":"irc_ctcp_action_y",
 			session_name(session), j->nick, chan, col);
