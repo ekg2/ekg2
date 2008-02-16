@@ -252,20 +252,19 @@ static char *irc_tolower_int(char *buf, int casemapping)
 	char *p = buf;
 	int upper_bound;
 	/* please, do not change this code, to something like:
-	 * 0 - 122, 1 - 126, 2 - 125
+	 * 122 + (!!casemapping * (5-casemapping))
 	 */
 	switch (casemapping)
 	{
-		case IRC_CASEMAPPING_ASCII:		upper_bound = 122; break;
-		case IRC_CASEMAPPING_RFC1459_STRICT:	upper_bound = 125; break;
-		case IRC_CASEMAPPING_RFC1459:		upper_bound = 126; break;
+		case IRC_CASEMAPPING_ASCII:		upper_bound = 'z'; break;
+		case IRC_CASEMAPPING_RFC1459_STRICT:	upper_bound = '}'; break;
+		case IRC_CASEMAPPING_RFC1459:		upper_bound = '~'; break;
 		default: debug_error ("bad value in call to irc_tolower_int: %d\n", casemapping); return 0;
 	}
 	while (*p)
 	{
-		/* 97 ascii for 'a' */
-		if (*p >= 97 && *p <= upper_bound)
-			*p -= 32;
+		if (*p >= 'a' && *p <= upper_bound)
+			*p ^= 32; /* substract 32, to lower case */
 		p++;
 	}
 	return buf;
@@ -287,20 +286,20 @@ static char *irc_toupper_int(char *buf, int casemapping)
 	char *p;
 	int upper_bound;
 	/* please, do not change this code, to something like:
-	 * 0 - 122, 1 - 126, 2 - 125
+	 * 90 + (!!casemapping * (5 - casemapping))
 	 */
 	switch (casemapping)
 	{
-		case IRC_CASEMAPPING_ASCII:		upper_bound = 90; break;
-		case IRC_CASEMAPPING_RFC1459_STRICT:	upper_bound = 93; break;
-		case IRC_CASEMAPPING_RFC1459:		upper_bound = 94; break;
+		case IRC_CASEMAPPING_ASCII:		upper_bound = 'Z'; break;
+		case IRC_CASEMAPPING_RFC1459_STRICT:	upper_bound = ']'; break;
+		case IRC_CASEMAPPING_RFC1459:		upper_bound = '^'; break;
 		default: debug_error ("bad value in call to irc_toupper_int: %d\n", casemapping); return 0;
 	}
 	while (*p)
 	{
-		/* 97 ascii for 'a' */
-		if (*p >= 65 && *p <= upper_bound)
-			*p += 32;
+		/* 65 ascii for 'A' */
+		if (*p >= 'A' && *p <= upper_bound)
+			*p ^= 32; /* add 32, to upper case */
 		p++;
 	}
 	return buf;
