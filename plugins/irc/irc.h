@@ -29,11 +29,16 @@
 #include <ekg/sessions.h>
 #include <ekg/windows.h>
 
+/* irc_private->sopt */
 enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
 	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, SERVOPTS };
+
+/* irc_private_t->casemapping values */
+enum { IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT, IRC_CASEMAPPING_COUNT };
+
 extern char *sopt_keys[];
 
-typedef struct {
+typedef struct _irc_private_t {
 	int fd;				/* connection's fd */
 	int connecting;			/* are we connecting _now_ ? */
 	int autoreconnecting;		/* are we in reconnecting mode now? */
@@ -54,6 +59,7 @@ typedef struct {
 	char *sopt[SERVOPTS];		/* just a few options from
 					 * www.irc.org/tech_docs/005.html
 					 * server's response */
+	int casemapping;
 
 	list_t awaylog;
 
@@ -61,7 +67,7 @@ typedef struct {
 	void *conv_out;
 } irc_private_t;
 
-typedef struct {
+typedef struct _irc_awaylog_t {
 	char *channame;	/* channel name, (null if priv) */
 	char *uid;	/* nickname who wrote to us	*/
 	char *msg;	/* msg 				*/

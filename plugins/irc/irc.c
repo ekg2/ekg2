@@ -125,8 +125,6 @@
  *     /connect :6665
  *     or we can use both.
  *     /connect poznan.irc.pl:6665 || /connect 150.254.64.64 6665.
- * ---
- *  G->dj: you have to, cause del will kill me for another comment in PL ;)
  */
 /*                                                                       *
  * ======================================== STARTUP AND STANDARD FUNCS - *

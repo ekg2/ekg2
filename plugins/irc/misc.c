@@ -51,6 +51,8 @@
 #include "autoacts.h"
 
 char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES", "CHANLIMIT", "NICKLEN" };
+char sopt_casemapping[] = "CASEMAPPING";
+char *sopt_casemapping_values[IRC_CASEMAPPING_COUNT] = { "ascii", "rfc1459", "strict-rfc1459" };
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 
@@ -215,7 +217,16 @@ next3:
 #undef dchar
 }
 
-
+/**
+ * int gatoi(char *buf, int *returnvalue)
+ *
+ * Simple wrapper around strtol. 
+ * Convert string pointed by buf to base 10 number, and save it in int value pointed at
+ * returnvalue.
+ *
+ * @return	0 - OK
+ *		1 - conversion failed, memory content of *number is unknown
+ */
 static int gatoi(char *buf, int *a) {
         char	*x[1];
         long	t;
@@ -225,6 +236,86 @@ static int gatoi(char *buf, int *a) {
         *a=t;
         return (0);
 }
+
+/**
+ * irc_tolower_int(char *buf, int casemapping)
+ *
+ * Converts buffer pointed at buf to lower case using one of casmapping's:
+ * IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT
+ *
+ * DO NOT pass strings that can be in unicode;
+ *
+ * @return	pointer to beginning of a string
+ */
+static char *irc_tolower_int(char *buf, int casemapping)
+{
+	char *p = buf;
+	int upper_bound;
+	/* please, do not change this code, to something like:
+	 * 0 - 122, 1 - 126, 2 - 125
+	 */
+	switch (casemapping)
+	{
+		case IRC_CASEMAPPING_ASCII:		upper_bound = 122; break;
+		case IRC_CASEMAPPING_RFC1459_STRICT:	upper_bound = 125; break;
+		case IRC_CASEMAPPING_RFC1459:		upper_bound = 126; break;
+		default: debug_error ("bad value in call to irc_tolower_int: %d\n", casemapping); return 0;
+	}
+	while (*p)
+	{
+		/* 97 ascii for 'a' */
+		if (*p >= 97 && *p <= upper_bound)
+			*p -= 32;
+		p++;
+	}
+	return buf;
+}
+
+/**
+ * irc_toupper_int(char *buf, int casemapping)
+ *
+ * Converts buffer pointed at buf to upper case using one of casmapping's:
+ * IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT
+ *
+ * DO NOT pass strings that can be in unicode;
+ *
+ * @return	pointer to beginning of a string
+ */
+
+static char *irc_toupper_int(char *buf, int casemapping)
+{
+	char *p;
+	int upper_bound;
+	/* please, do not change this code, to something like:
+	 * 0 - 122, 1 - 126, 2 - 125
+	 */
+	switch (casemapping)
+	{
+		case IRC_CASEMAPPING_ASCII:		upper_bound = 90; break;
+		case IRC_CASEMAPPING_RFC1459_STRICT:	upper_bound = 93; break;
+		case IRC_CASEMAPPING_RFC1459:		upper_bound = 94; break;
+		default: debug_error ("bad value in call to irc_toupper_int: %d\n", casemapping); return 0;
+	}
+	while (*p)
+	{
+		/* 97 ascii for 'a' */
+		if (*p >= 65 && *p <= upper_bound)
+			*p += 32;
+		p++;
+	}
+	return buf;
+}
+
+/**
+ * IRC_TO_UPPER - macro around irc_upper_int, that passes currently
+ * casemapping used by server
+ */
+#define IRC_TO_UPPER(x) irc_toupper_int(x, j->casemapping)
+/**
+ * IRC_TO_LOWER - macro around irc_upper_int, that passes currently
+ * casemapping used by server
+ */
+#define IRC_TO_LOWER(x) irc_tolower_int(x, j->casemapping)
 
 /*****************************************************************************/
 /*
@@ -367,6 +458,7 @@ IRC_COMMAND(irc_c_init)
 			j->connecting = 0;
 			j->autoreconnecting = 0;
 
+			j->casemapping = IRC_CASEMAPPING_RFC1459;
 			xfree(SOP(_005_PREFIX)); SOP(_005_PREFIX) = xstrdup("(ov)@+");
 			xfree(SOP(_005_CHANTYPES)); SOP(_005_CHANTYPES) = xstrdup("#!");
 			xfree(SOP(_005_MODES)); SOP(_005_MODES) = xstrdup("3");
@@ -390,9 +482,9 @@ IRC_COMMAND(irc_c_init)
 		case 5:
 			/* rfc says there can be 15 params */
 			/* yes I know it should be i<15 */
-			for (i=3; i<16; i++) {
+			for (i = 3; i < 16; i++) {
 				if (!param[i]) break;
-				for (k=0; k<SERVOPTS; k++)
+				for (k = 0; k < SERVOPTS; k++)
 				{
 					if (sopt_keys[k] == NULL)
 						continue;
@@ -406,6 +498,22 @@ IRC_COMMAND(irc_c_init)
 						SOP(k) = NULL;
 					}
 				}
+
+				if (!xstrncmp(param[i], sopt_casemapping, xstrlen(sopt_casemapping)))
+					if ((t = xstrchr(param[i], '='))) {
+						/* I know this could be 'for', but I'm leavin' it for readability */
+						if (!xstrcmp(t+1, sopt_casemapping_values[IRC_CASEMAPPING_ASCII])) {
+							j->casemapping = IRC_CASEMAPPING_ASCII;
+						} else if (!xstrcmp(t+1, sopt_casemapping_values[IRC_CASEMAPPING_RFC1459])) {
+							j->casemapping = IRC_CASEMAPPING_RFC1459;
+						} else if (!xstrcmp(t+1, sopt_casemapping_values[IRC_CASEMAPPING_RFC1459_STRICT])) {
+							j->casemapping = IRC_CASEMAPPING_RFC1459_STRICT;
+						/* this one is already set above, as default
+						} else {
+							j->casemapping = IRC_CASEMAPPING_RFC1459;
+						*/
+						}
+					}
 			}
 
 			irc_autorejoin(s, IRC_REJOIN_CONNECT, NULL);
@@ -880,6 +988,8 @@ IRC_COMMAND(irc_c_msg)
 	me = xstrdup(t?t+1:"");
 	xosd_nick = OMITCOLON(param[0]);
 	xosd_chan = param[2];
+	/* remember, below in 'else' clause there is IRC_TO_LOWER, which can affect this,
+	 */
 
 	/* probably message from server ... */
 	if (j->connecting && !prv) {
@@ -917,6 +1027,7 @@ IRC_COMMAND(irc_c_msg)
 	} else {
 		class = EKG_MSGCLASS_CHAT;
 		// class = (mw&1)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
+		IRC_TO_LOWER(param[2]);
 		dest = saprintf("%s%s", IRC4, param[2]);
 		if ((pubtous = xstrcasestr(ctcpstripped, j->nick))) {
 			tous = pubtous[xstrlen(j->nick)];
@@ -1030,46 +1141,50 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
  */
 IRC_COMMAND(irc_c_join)
 {
-	char		*channel, *tmp;
+	char		*ekg2_channel, *irc_channel, *tmp;
 	channel_t	*ischan;
 	window_t	*newwin;
 	people_t	*person;
 	int		me = 0;
 	char		*ignore_nick;
 
-	channel = saprintf("%s:%s", IRC3, OMITCOLON(param[2]));
+	/* irc channels are said to be case insensitive, so I think
+	 * we can do it 'in place', without a copy
+	 */
+	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
+	ekg2_channel = saprintf("%s:%s", IRC3, irc_channel);
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp='\0';
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
 	 * but I have no head to this now... */
 	me = !xstrcmp(j->nick, param[0]+1); /* We join ? */
 	if (me) {
-		newwin = window_new(channel, s, 0);
+		newwin = window_new(ekg2_channel, s, 0);
 		window_switch(newwin->id);
 		debug("[irc] c_join() %08X\n", newwin);
-		ischan = irc_add_channel(s, j , OMITCOLON(param[2]), newwin);
+		ischan = irc_add_channel(s, j , irc_channel, newwin);
 	/* someone joined */
 	} else {
-		person = irc_add_person(s, j, param[0]+1, OMITCOLON(param[2])); 
+		person = irc_add_person(s, j, param[0]+1, irc_channel);
 		if (person && tmp && !(person->ident) && !(person->host))
 			irc_parse_identhost(tmp+1, &(person->ident), &(person->host));
 
-		irc_access_parse(s, irc_find_channel(j->channels, OMITCOLON(param[2])), person, 0);
+		irc_access_parse(s, irc_find_channel(j->channels, irc_channel), person, 0);
 	}
 
 	ignore_nick = saprintf("%s%s", IRC4, param[0]+1);
 	if (!(ignored_check(s, ignore_nick) & IGNORE_NOTIFY)) {
-		print_window(channel, s, 0, me ? "irc_joined_you" : "irc_joined",
-				session_name(s), param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]));
+		print_window(ekg2_channel, s, 0, me ? "irc_joined_you" : "irc_joined",
+				session_name(s), param[0]+1, tmp?tmp+1:"", irc_channel);
 		if (me)	{
 			int __secure = 0;
     			char *__sid      = xstrdup(session_uid_get(s));
-    			char *__uid_full = xstrdup(channel);
+    			char *__uid_full = xstrdup(ekg2_channel);
 			char *__msg	 = xstrdup("test");
 
 			if (query_emit_id(NULL, MESSAGE_ENCRYPT, &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
-				print_window(channel, s, 0, "irc_channel_secure", session_name(s), OMITCOLON(param[2]));
-			else 	print_window(channel, s, 0, "irc_channel_unsecure", session_name(s), OMITCOLON(param[2]));
+				print_window(ekg2_channel, s, 0, "irc_channel_secure", session_name(s), irc_channel);
+			else 	print_window(ekg2_channel, s, 0, "irc_channel_unsecure", session_name(s), irc_channel);
 			xfree(__msg);
 			xfree(__uid_full);
 			xfree(__sid);
@@ -1078,7 +1193,7 @@ IRC_COMMAND(irc_c_join)
 	if (tmp) *tmp='!';
 
 	xfree(ignore_nick);
-	xfree(channel);
+	xfree(ekg2_channel);
 	return 0;
 }
 
@@ -1089,13 +1204,17 @@ IRC_COMMAND(irc_c_join)
  */
 IRC_COMMAND(irc_c_part)
 {
-	char	*channel, *tmp, *coloured, *ignore_nick;
+	char	*ekg2_channel, *irc_channel, *tmp, *coloured, *ignore_nick;
 	int	me = 0;
 	
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
 	me = !xstrcmp(j->nick, param[0]+1); /* we part ? */
 	
 	debug("[irc]_c_part: %s %s\n", j->nick, param[0]+1);
+
+	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
+	ekg2_channel = saprintf("%s:%s", IRC3, irc_channel);
+
 	/* Servers MUST be able to parse arguments in the form of
 	 * a list of target, but SHOULD NOT use lists when sending
 	 * PART messages to clients.
@@ -1104,12 +1223,10 @@ IRC_COMMAND(irc_c_part)
 	 * SHOULD NOT ;/
 	 */
 	if (me) 
-		irc_del_channel(s, j, OMITCOLON(param[2]));
+		irc_del_channel(s, j, irc_channel);
 	else 
-		irc_del_person_channel(s, j, param[0]+1, OMITCOLON(param[2]));
-		
-	channel = saprintf("%s%s", IRC4, param[2]);
-		
+		irc_del_person_channel(s, j, param[0]+1, irc_channel);
+
 	coloured = param[3]?xstrlen(OMITCOLON(param[3]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1)
 		:xstrdup("no reason"):xstrdup("no reason");
@@ -1121,15 +1238,15 @@ IRC_COMMAND(irc_c_part)
 	 */
 	ignore_nick = saprintf("%s%s", IRC4, param[0]+1);
 	if (!(ignored_check(s, ignore_nick) & IGNORE_NOTIFY)) {
-		print_window(channel, s, 0, (me)?"irc_left_you":"irc_left", session_name(s),
-				param[0]+1, tmp?tmp+1:"", OMITCOLON(param[2]), coloured);
+		print_window(ekg2_channel, s, 0, (me)?"irc_left_you":"irc_left", session_name(s),
+				param[0]+1, tmp?tmp+1:"", irc_channel, coloured);
 	}
 	xfree(ignore_nick);
 	
 	if (tmp) *tmp='!';
 	
 	xfree(coloured);
-	xfree(channel);
+	xfree(ekg2_channel);
 	
 	return 0;
 }
@@ -1143,41 +1260,43 @@ IRC_COMMAND(irc_c_part)
  */
 IRC_COMMAND(irc_c_kick)
 {
-	char			*channel, *tmp, *uid, *coloured;
+	char			*ekg2_channel, *irc_channel, *tmp, *uid, *coloured;
 	char			*_session, *_nick;
 	int			me = !xstrcmp(j->nick, param[3]);
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
+
+	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
+	ekg2_channel = saprintf("%s:%s", IRC3, irc_channel);
+
 	/* we were kicked out */
 	if (me)
-		irc_del_channel(s, j, param[2]);
+		irc_del_channel(s, j, irc_channel);
 	else
-		irc_del_person_channel(s, j, OMITCOLON(param[3]), param[2]);
+		irc_del_person_channel(s, j, OMITCOLON(param[3]), irc_channel);
 
 	uid = saprintf("%s%s", IRC4, param[0]+1);
 
 	if (tmp) *tmp='!';
 
-	channel = saprintf("%s:%s", IRC3, param[2]);
-	
 	coloured = param[4]?xstrlen(OMITCOLON(param[4]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[4]), 1):
 				xstrdup("no reason"):xstrdup("no reason");
 
 	/* session, kicked_nick, kicker_nick, kicker_ident+host, chan, reason */
-	print_window(channel, s, 0, me ? "irc_kicked_you" : "irc_kicked",  session_name(s), 
+	print_window(ekg2_channel, s, 0, me ? "irc_kicked_you" : "irc_kicked",  session_name(s), 
 			OMITCOLON(param[3]), uid+4, tmp?tmp+1:"",
-			param[2], coloured);
+			irc_channel, coloured);
 	xfree(coloured);
 
 /*sending irc-kick event*/
 	_session = xstrdup(session_uid_get(s));
 	_nick = saprintf("%s%s", IRC4, OMITCOLON(param[3]));
-	query_emit_id(NULL, IRC_KICK, &_session, &_nick, &channel, &uid);
+	query_emit_id(NULL, IRC_KICK, &_session, &_nick, &ekg2_channel, &uid);
 	xfree(_nick);
 	xfree(_session);
 
-	xfree(channel);
+	xfree(ekg2_channel);
 	xfree(uid);
 	return 0;
 }
@@ -1230,10 +1349,13 @@ IRC_COMMAND(irc_c_namerpl)
 		debug("[irc] c_namerpl() even more shitty!\n");
 		return -1;
 	}
-	irc_add_people (s, j, OMITCOLON(param[5]), param[4]);
+	irc_add_people (s, j, OMITCOLON(param[5]), IRC_TO_LOWER(param[4]));
 	return 0;
 }
 
+/*
+ * p[2] - channel
+ */
 IRC_COMMAND(irc_c_topic)
 {
 	window_t	*w;
@@ -1241,6 +1363,7 @@ IRC_COMMAND(irc_c_topic)
 	char		*coloured;
 	channel_t	*chanp = NULL;
 
+	IRC_TO_LOWER(param[2]);
 	t = saprintf("%s%s", IRC4, param[2]);
 	w = window_find_s(s, t);
 	chanp = irc_find_channel(j->channels, param[2]);
@@ -1290,6 +1413,8 @@ IRC_COMMAND(irc_c_invite)
 	if ((tmp = xstrchr(param[0], '!')))
 		*tmp = '\0';
 
+	IRC_TO_LOWER(param[3]);
+
 	print_window(window_current->target, s, 0, "IRC_INVITE",
 			session_name(s), param[0]+1, tmp?tmp+1:"",
 			param[2], OMITCOLON(param[3]));
@@ -1305,7 +1430,7 @@ IRC_COMMAND(irc_c_invite)
 IRC_COMMAND(irc_c_mode)
 {
 	int		i, k, len, val=0, act=1, is324=irccommands[ecode].num==324;
-	char		*t, *bang, *add, **pars, *channame, *mode_abc, *mode_c;
+	char		*t, *bang, *add, **pars, *ekg2_channame, *irc_channame, *mode_abc, *mode_c;
 	people_t	*per;
 	people_chan_t	*ch;
 	channel_t	*chan;
@@ -1316,13 +1441,15 @@ IRC_COMMAND(irc_c_mode)
 	/* MODE <channel|nick> <mode> <modeparams>
 	 * <nick> <chan> <mode> <modeparams>
 	 */
-	/* GiM: FIXME TODO [this shouldn't be xstrcasecmp! user mode */
+	/* GiM: FIXME TODO [this shouldn't be xstrcasecmp! user mode
+	 *	[well now [o3:o5:o4 CET 2oo8-16-o2] I think it's ok]
+	 */
 	if (is324) {
 		param = &(param[1]);
 	} else if (!xstrcasecmp(param[2], j->nick)) {
 		print_window(window_current->target, s, 0, 
 				"IRC_MODE", session_name(s), 
-				param[0]+1, OMITCOLON(param[3]));
+				param[0]+1, IRC_TO_LOWER(OMITCOLON(param[3])) );
 		return 0;
 	/* channel mode */
 	}
@@ -1339,6 +1466,10 @@ IRC_COMMAND(irc_c_mode)
 				*xstrchr(mode_c, ',')='\0';
 
 	t=param[3];
+
+	irc_channame = IRC_TO_LOWER(param[2]);
+	ekg2_channame = saprintf("%s%s", IRC4, irc_channame);
+
 	for (i=0,k=4; i<xstrlen(param[3]) && xstrlen(param[k]); i++, t++) {
 		if (*t=='+' || *t=='-') {
 			act=*t-'-';
@@ -1355,7 +1486,7 @@ IRC_COMMAND(irc_c_mode)
 			/* ok new irc-find-person checked */
 			per = irc_find_person(j->people, param[k]);
 			if (!per) goto notreallyok;
-			ch = irc_find_person_chan(per->channels, param[2]); 
+			ch = irc_find_person_chan(per->channels, irc_channame); 
 			if (!ch) goto notreallyok;
 			/* GiM: ivil hack ;) */
 			val = 1<<(len-(bang-add)-1);
@@ -1375,8 +1506,7 @@ notreallyok:
 		if (!param[k]) break;
 	}
 
-	channame = saprintf("%s%s", IRC4, param[2]);
-	w = window_find_s(s, channame);
+	w = window_find_s(s, ekg2_channame);
 	bang = xstrchr(param[0], '!');
 	if (bang) *bang='\0';
 	moderpl =  string_init("");
@@ -1389,15 +1519,15 @@ notreallyok:
 	}
 	if (!is324) {
 		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN_NEW", session_name(s),
-				param[0]+1, bang?bang+1:"", param[2], moderpl->str);
+				param[0]+1, bang?bang+1:"", irc_channame, moderpl->str);
 /*		if (moderpl->str[1] == 'b')
- *			watch_write(j->send_watch, "MODE %s +%c\r\n",  param[2], moderpl->str[1]);
+ *			watch_write(j->send_watch, "MODE %s +%c\r\n",  irc_channame, moderpl->str[1]);
  */
 	} else {
 		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
-				param[2], moderpl->str);
+				irc_channame, moderpl->str);
 
-		if ((chan = irc_find_channel(j->channels, param[2]))) {
+		if ((chan = irc_find_channel(j->channels, irc_channame))) {
 			xfree(chan->mode_str);
 			chan->mode_str = xstrdup(moderpl->str);
 		}
@@ -1406,7 +1536,7 @@ notreallyok:
 	string_free(moderpl, 1);
 
 	xfree(add);
-	xfree(channame);
+	xfree(ekg2_channame);
         xfree(mode_abc);
 	return 0;
 }

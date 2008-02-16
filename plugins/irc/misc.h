@@ -46,6 +46,7 @@ enum { IRC_ERR_12=0, IRC_ERR_21, IRC_ERR_ONLY1, IRC_ERR_NEW, IRC_ERR_IGNO,
 
 	IRC_RPL_12=256, IRC_RPL_21, IRC_RPL_ONLY1, IRC_RPL_NEW, IRC_RPL_IGNO,
 	IRC_RPL_OTHER };
+
 typedef struct {
 	int 		type;
 	int 		num;
