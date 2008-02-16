@@ -264,7 +264,7 @@ static char *irc_toupper_int(char *buf, int casemapping)
 	while (*p)
 	{
 		if (*p >= 'a' && *p <= upper_bound)
-			*p -= 32; /* substract 32, to lower case */
+			*p -= 32; /* substract 32, convesion 'a' -> 'A' */
 		p++;
 	}
 	return buf;
@@ -299,7 +299,7 @@ static char *irc_tolower_int(char *buf, int casemapping)
 	{
 		/* 65 ascii for 'A' */
 		if (*p >= 'A' && *p <= upper_bound)
-			*p += 32; /* add 32, to upper case */
+			*p += 32; /* add 32, conversion 'A' -> 'a' */
 		p++;
 	}
 	return buf;
