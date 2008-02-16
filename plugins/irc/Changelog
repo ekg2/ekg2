@@ -1,3 +1,10 @@
+startdate: 15:26:o3 CET 2oo8-16-o2
+ * from now on all channel names are kept in lower case,
+  mind that, when dealing with channel names,
+  before operating on channel name, you should convert
+  it's name to lower case BUT using:
+  irc_tolower_int or IRC_TOLOWER macro
+
 stardate: 12:4o:o9 CET 2oo6-19-o2 version 0.9 (GiM)
  * this changelog is obsolete, please read
    commit-messages for more infor :)
