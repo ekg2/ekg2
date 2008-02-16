@@ -228,26 +228,26 @@ next3:
  *		1 - conversion failed, memory content of *number is unknown
  */
 static int gatoi(char *buf, int *a) {
-        char	*x[1];
+        char	*x;
         long	t;
 	if(!buf) return (1);
-        t=strtol(buf, x, 10);
-        if (*x == buf) return (1);
+        t=strtol(buf, &x, 10);
+        if (x == buf) return (1);
         *a=t;
         return (0);
 }
 
 /**
- * irc_tolower_int(char *buf, int casemapping)
+ * irc_toupper_int(char *buf, int casemapping)
  *
- * Converts buffer pointed at buf to lower case using one of casmapping's:
+ * Converts buffer pointed at buf to upper case using one of casmapping's:
  * IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT
  *
  * DO NOT pass strings that can be in unicode;
  *
  * @return	pointer to beginning of a string
  */
-static char *irc_tolower_int(char *buf, int casemapping)
+static char *irc_toupper_int(char *buf, int casemapping)
 {
 	char *p = buf;
 	int upper_bound;
@@ -264,16 +264,16 @@ static char *irc_tolower_int(char *buf, int casemapping)
 	while (*p)
 	{
 		if (*p >= 'a' && *p <= upper_bound)
-			*p ^= 32; /* substract 32, to lower case */
+			*p -= 32; /* substract 32, to lower case */
 		p++;
 	}
 	return buf;
 }
 
 /**
- * irc_toupper_int(char *buf, int casemapping)
+ * irc_tolower_int(char *buf, int casemapping)
  *
- * Converts buffer pointed at buf to upper case using one of casmapping's:
+ * Converts buffer pointed at buf to lower case using one of casmapping's:
  * IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT
  *
  * DO NOT pass strings that can be in unicode;
@@ -281,7 +281,7 @@ static char *irc_tolower_int(char *buf, int casemapping)
  * @return	pointer to beginning of a string
  */
 
-static char *irc_toupper_int(char *buf, int casemapping)
+static char *irc_tolower_int(char *buf, int casemapping)
 {
 	char *p;
 	int upper_bound;
@@ -299,7 +299,7 @@ static char *irc_toupper_int(char *buf, int casemapping)
 	{
 		/* 65 ascii for 'A' */
 		if (*p >= 'A' && *p <= upper_bound)
-			*p ^= 32; /* add 32, to upper case */
+			*p += 32; /* add 32, to upper case */
 		p++;
 	}
 	return buf;
@@ -578,9 +578,18 @@ IRC_COMMAND(irc_c_error)
 			break;
 	}
 	i = irccommands[ecode].num;
+	/* GiM : XXX FIX IT
+	 *
+	 */
 	if (param[3]) {
+		char *temp2;
 		t = saprintf("%s%s", IRC4, param[3]);
+		temp2 = saprintf("%s%s", IRC4, param[3]);
+		IRC_TO_LOWER(temp2);
 		w = window_find_s(s, t);
+		if (!w)
+			w = window_find_s(s, temp2);
+		xfree(temp2);
 		dest = w?t:NULL;
 	}
 	switch (i) {
@@ -590,9 +599,7 @@ IRC_COMMAND(irc_c_error)
 			if (j->connecting) {
 				altnick = (char *) session_get(s, "alt_nick");
 				/* G->dj: why this !xstrcmp ? */
-									
 				if (altnick && !xstrcmp(param[3], session_get(s, "nickname")) && xstrcmp(param[3], altnick)) {
-									
 					print_window(NULL, s, 0, "IRC_TRYNICK",
 							session_name(s), altnick);
 					xfree(j->nick);
@@ -612,6 +619,7 @@ IRC_COMMAND(irc_c_error)
 		/* topic */
 		case 331:
 		case 332:
+			IRC_TO_LOWER(param[3]);
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
 				xfree(chanp->topic);
@@ -624,6 +632,7 @@ IRC_COMMAND(irc_c_error)
 			}
 			break;
 		case 333:
+			IRC_TO_LOWER(param[3]);
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
 				xfree(chanp->topicby);
@@ -752,6 +761,14 @@ IRC_COMMAND(irc_c_whois)
 }
 
 int mode_act = 0;
+
+/**
+ * irc_c_list - this function is only for evil hackers,
+ * do not touch this stuff unless you want yourself get burned :>
+ *
+ * handling some list stuff
+ * STATS, WHO, LIST, LINKS, IVITELIST, EXCEPTLIST, BANLIST
+ */
 IRC_COMMAND(irc_c_list)
 {
 #define PRINT_WINDOW if (!chan || !chan->syncmode) print_window
@@ -771,47 +788,50 @@ IRC_COMMAND(irc_c_list)
 
 	if (ltype == IRC_LISTWHO || ltype == IRC_LISTCHA || ltype == IRC_LISTSTA)
 		t = NULL;
-	else
+	else {
+		IRC_TO_LOWER(IOK(3));
 		t = saprintf("%s%s", IRC4, IOK(3));
+	}
 
 	w    = window_find_s(s, t);
 	dest = w?t:NULL;
 
 	if (ltype == IRC_LISTWHO || ltype == IRC_LISTBAN) {
+		IRC_TO_LOWER(IOK(3));
  		chan = irc_find_channel(j->channels, IOK(3));
-		/* debug("!!!> %s %08X %d\n", IOK(3), chan, ltype); */
+		/* debug("!!!> %s %08X %d %d\n", IOK(3), chan, chan?chan->syncmode:-1, ltype); */
 	}
 
 	if (!mode_act && ltype != IRC_LISTCHA) 
 		PRINT_WINDOW(dest, s, 0, "RPL_LISTSTART", session_name(s));
 
 	if (endlist) {
-			if (!mode_act)
-				PRINT_WINDOW(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
+		if (!mode_act)
+			PRINT_WINDOW(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
 
-			if (ltype == IRC_LISTSTA) {
-				print_window(dest, s, 0, "RPL_STATSEND", session_name(s), IOK2(4), IOK2(3)); 
-			} else if (ltype == IRC_LISTCHA) {
-				print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(3));
-			} else {
-				PRINT_WINDOW(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(4));
-			}
-			if (chan) {
-				if (chan->syncmode > 0)  {
-					chan->syncmode--;
-					if (chan->syncmode == 0) {
-						struct timeval tv;
-						gettimeofday(&tv, NULL);
-						tv.tv_usec+=(1000000-chan->syncstart.tv_usec);
-						if (tv.tv_usec>1000000)
-							tv.tv_sec++, tv.tv_usec-=1000000;
-						tv.tv_sec-=chan->syncstart.tv_sec;
+		if (ltype == IRC_LISTSTA) {
+			print_window(dest, s, 0, "RPL_STATSEND", session_name(s), IOK2(4), IOK2(3)); 
+		} else if (ltype == IRC_LISTCHA) {
+			print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(3));
+		} else {
+			PRINT_WINDOW(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(4));
+		}
+		if (chan) {
+			if (chan->syncmode > 0)  {
+				chan->syncmode--;
+				if (chan->syncmode == 0) {
+					struct timeval tv;
+					gettimeofday(&tv, NULL);
+					tv.tv_usec+=(1000000-chan->syncstart.tv_usec);
+					if (tv.tv_usec>1000000)
+						tv.tv_sec++, tv.tv_usec-=1000000;
+					tv.tv_sec-=chan->syncstart.tv_sec;
 
-						print_window(dest, s, 0, "IRC_CHANNEL_SYNCED", session_name(s), chan->name+4, itoa(tv.tv_sec), itoa(tv.tv_usec));
-					}
+					print_window(dest, s, 0, "IRC_CHANNEL_SYNCED", session_name(s), chan->name+4, itoa(tv.tv_sec), itoa(tv.tv_usec));
 				}
 			}
-			mode_act = 0; 
+		}
+		mode_act = 0; 
 	} else {
 		if (irccommands[ecode].num != 321)
 			mode_act++;
