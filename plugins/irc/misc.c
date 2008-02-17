@@ -283,7 +283,7 @@ static char *irc_toupper_int(char *buf, int casemapping)
 
 static char *irc_tolower_int(char *buf, int casemapping)
 {
-	char *p;
+	char *p = buf;
 	int upper_bound;
 	/* please, do not change this code, to something like:
 	 * 90 + (!!casemapping * (5 - casemapping))
