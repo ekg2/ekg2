@@ -231,10 +231,10 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
                                 break;
                         }
                         case (QUERY_ARG_CHARPP): {
-                                char *tmp = array_join((char **) args[i], " ");
-                                w = PyString_FromString(tmp); /* CHECK: xstrdup ? */
-                                xfree(tmp);
-                                break;
+				char *tmp = array_join((* (char ***) args[i]), " ");
+				w = PyString_FromString(tmp); /* CHECK: xstrdup ? */
+				xfree(tmp);
+				break;
                         }
                         default:
                                debug("[NIMP] %s %d %d\n", __(query_name(scr_que->self->id)), i, scr_que->argv_type[i]);

@@ -144,7 +144,7 @@ int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 				perlarg = new_pv(*(char **) args[i]);
 				break;
 			case (QUERY_ARG_CHARPP): {/* char ** */
-				char *tmp = array_join((char **) args[i], " ");
+				char *tmp = array_join((* (char ***) args[i]), " ");
 				if (xstrlen(tmp)) 
 					perlarg = new_pv(tmp);
 				xfree(tmp);
