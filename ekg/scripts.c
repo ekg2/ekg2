@@ -679,8 +679,9 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 				const struct query *q = query_struct(i);
 				int j = 0;
 
-				while (j < QUERY_ARGS_MAX && q->params[j] != QUERY_ARG_END)
+				while (j < QUERY_ARGS_MAX && q->params[j] != QUERY_ARG_END) {
 					NEXT_ARG(q->params[j++]);
+				}
 
 				break;
 			}
