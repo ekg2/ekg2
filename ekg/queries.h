@@ -11,6 +11,8 @@ enum query_arg_type {
 	QUERY_ARG_INT, 		/* int */
 	QUERY_ARG_UINT,		/* unsgined int */		/* -> time_t, uint32_t */
 
+	QUERY_SCRIPT_ARG_SKIP,	/* [only scripts, skip it!] */
+
 	QUERY_ARG_WINDOW = 100, /* window_t	*/
 	QUERY_ARG_FSTRING, 	/* fstring_t	*/
 	QUERY_ARG_USERLIST,	/* userlist_t	*/

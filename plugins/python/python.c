@@ -215,11 +215,24 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 {
         int python_handle_result;
         PyObject *argz;
-        int i;
-        if (!(argz = PyTuple_New(scr_que->argc)))
+        int i, j;
+	int count = 0;
+
+	for (i=0; i < scr_que->argc; i++) {
+		if (scr_que->argv_type[i] != QUERY_SCRIPT_ARG_SKIP)
+			count++;	
+	}
+
+        if (!(argz = PyTuple_New(count)))
                 return 1;
-        for (i=0; i < scr_que->argc; i++) {
+        for (i=0, j = 0; i < scr_que->argc; i++) {
                 PyObject *w = NULL;
+
+		if (scr_que->argv_type[i] != QUERY_SCRIPT_ARG_SKIP)
+			continue;
+
+		j++;
+
                 switch ( scr_que->argv_type[i] ) {
                         case (QUERY_ARG_INT):
                                 w = PyInt_FromLong((long) *(int *) args[i] );
@@ -243,12 +256,19 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
                         Py_INCREF(Py_None);
                         w = Py_None;
                 }
-                PyTuple_SetItem(argz, i, w);
+                PyTuple_SetItem(argz, j, w);
         }
 	PYTHON_HANDLE_HEADER(scr_que->private, argz)
 	if (__py_r && PyTuple_Check(__py_r)) { /* __py_r - return value */
-		for (i=0; i < scr_que->argc; i++) {
-			PyObject *w = PyTuple_GetItem(__py_r, i);
+		for (i=0, j = 0; i < scr_que->argc; i++) {
+			PyObject *w;
+
+			if (scr_que->argv_type[i] != QUERY_SCRIPT_ARG_SKIP)
+				continue;
+
+			j++;
+
+			w = PyTuple_GetItem(__py_r, j);
 			switch (scr_que->argv_type[i]) {
 				case (QUERY_ARG_INT):
 					if (PyInt_Check(w)) *( (int *) args[i]) = PyInt_AsLong(w);

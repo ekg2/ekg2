@@ -648,21 +648,21 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 					      NEXT_ARG(QUERY_ARG_CHARP);
 					      NEXT_ARG(QUERY_ARG_CHARPP);
 					      NEXT_ARG(QUERY_ARG_CHARP);
-/*					      NEXT_ARG(QUERY_ARG_UNITPP); */
+					      NEXT_ARG(QUERY_SCRIPT_ARG_SKIP);
 					      NEXT_ARG(QUERY_ARG_INT);	/* time_t */
 					      NEXT_ARG(QUERY_ARG_INT);	}
 	else CHECK("protocol-message-post") { NEXT_ARG(QUERY_ARG_CHARP);
 					      NEXT_ARG(QUERY_ARG_CHARP);
 					      NEXT_ARG(QUERY_ARG_CHARPP);
 					      NEXT_ARG(QUERY_ARG_CHARP);
-/*					      NEXT_ARG(QUERY_ARG_UNITPP); */
+					      NEXT_ARG(QUERY_SCRIPT_ARG_SKIP);
 					      NEXT_ARG(QUERY_ARG_INT);	/* time_t */
 					      NEXT_ARG(QUERY_ARG_INT);	}
 	else CHECK("protocol-message-received") { NEXT_ARG(QUERY_ARG_CHARP);
 					      NEXT_ARG(QUERY_ARG_CHARP);
 					      NEXT_ARG(QUERY_ARG_CHARPP);
 					      NEXT_ARG(QUERY_ARG_CHARP);
-/*					      NEXT_ARG(QUERY_ARG_UNITPP); */
+					      NEXT_ARG(QUERY_SCRIPT_ARG_SKIP);
 					      NEXT_ARG(QUERY_ARG_INT);	/* time_t */
 					      NEXT_ARG(QUERY_ARG_INT);	}
 	else CHECK("protocol-message-sent") { NEXT_ARG(QUERY_ARG_CHARP);
