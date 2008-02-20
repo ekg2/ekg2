@@ -16,6 +16,7 @@ typedef enum {
 	BLESS_VARIABLE,
 	BLESS_PLUGIN,
 	BLESS_WINDOW,
+	BLESS_WATCH,
 	BLESS_COMMAND,
 	BLESS_SESSION_PARAM,
 	BLESS_TIMER,
@@ -48,6 +49,9 @@ SV *ekg2_bless(perl_bless_t flag, int flag2, void *object);
 
 #define bless_window(window)\
 	(SV *) ekg2_bless(BLESS_WINDOW, 0, window)
+
+#define bless_watch(watch)\
+	(SV *) ekg2_bless(BLESS_WATCH, 0, watch)
 
 #define bless_command(command)\
 	(SV *) ekg2_bless(BLESS_COMMAND, 0, command)

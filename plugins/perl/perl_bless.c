@@ -126,6 +126,16 @@ void ekg2_bless_fstring(HV *hv, fstring_t *fstr)
 	hv_store(hv, "attr",4, create_sv_ptr(fstr->attr), 0);
 }
 
+void ekg2_bless_watch(HV *hv, watch_t *watch)
+{
+	hv_store(hv, "fd", 2, newSViv(watch->fd), 0);
+	hv_store(hv, "type", 4, newSViv(watch->type), 0);
+	hv_store(hv, "removed", 7, newSViv(watch->removed), 0);
+	hv_store(hv, "timeout", 7, newSViv(watch->timeout), 0);
+	hv_store(hv, "plugin", 6, ekg2_bless(BLESS_PLUGIN, 0, watch->plugin), 0);
+	hv_store(hv, "started", 7, newSViv(watch->started), 0);
+}
+
 void ekg2_bless_window(HV *hv, window_t *window)
 {
 	char *target = window_target(window);
@@ -221,6 +231,10 @@ SV *ekg2_bless(perl_bless_t flag, int flag2, void *object)
                 case BLESS_PLUGIN:
                         stash = gv_stashpv("Ekg2::Plugin", 1);
                         ekg2_bless_plugin(hv, object);
+                        break;
+		case BLESS_WATCH:
+                        stash = gv_stashpv("Ekg2::Watch", 1);
+                        ekg2_bless_watch(hv, object);
                         break;
 		case BLESS_WINDOW:
                         stash = gv_stashpv("Ekg2::Window", 1);

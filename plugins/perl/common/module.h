@@ -12,6 +12,7 @@
 
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
+#include <ekg/plugins.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
@@ -38,6 +39,7 @@ typedef variable_t	*Ekg2__Variable;
 typedef command_t 	*Ekg2__Command;
 typedef window_t	*Ekg2__Window;
 typedef plugin_t	*Ekg2__Plugin;
+typedef watch_t		*Ekg2__Watch;
 
 typedef struct timer	*Ekg2__Timer;
 
