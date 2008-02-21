@@ -4,12 +4,12 @@ import ekg
 import time
 
 def status_handler(session, uid, status, desc):
-    for sesja in ekg.sessions():
-	if sesja.connected():
-	    ekg.echo("sesja '%s' po³±czona" % (name,))
-	    ekg.echo("status: "+sesja['status'])
-	else:
-	    ekg.echo("sesja '%s' nie jest po³±czona" % (name,))
+#   for sesja in ekg.sessions():
+#	if sesja.connected():
+#	    ekg.echo("sesja '%s' po³±czona" % (name,))
+#	    ekg.echo("status: "+sesja['status'])
+#	else:
+#	    ekg.echo("sesja '%s' nie jest po³±czona" % (name,))
     ekg.echo("Dosta³em status!")
     ekg.echo("Sesja : "+session)
     ekg.echo("UID   : "+uid)
@@ -17,7 +17,7 @@ def status_handler(session, uid, status, desc):
     if desc:
 	ekg.echo("Opis  : "+desc)
     sesja = ekg.session_get(session)
-    ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
+#    ekg.echo('Lista userów sesji: '+", ".join(sesja.users()))
     user = sesja.user_get(uid)
     if user.last_status:
 	ekg.echo(str(user.last_status))
@@ -27,8 +27,10 @@ def status_handler(session, uid, status, desc):
 	    ekg.echo("Ostatni opis  : "+des)
     else:
 	ekg.echo("Nie ma poprzedniego stanu - pewnie dopiero siê ³±czymy...")
-    ekg.echo("IP: "+user.ip)
-    ekg.echo("Grupy: "+", ".join(user.groups()))
+    if user.ip:
+	ekg.echo("IP: "+user.ip)
+    if user.groups:
+	ekg.echo("Grupy: "+", ".join(user.groups()))
     if status == ekg.STATUS_AWAY:
 	ekg.echo("Chyba go nie ma...")
     if status == ekg.STATUS_XA:
