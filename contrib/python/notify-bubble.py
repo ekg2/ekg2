@@ -19,7 +19,7 @@ notif = dbus.Interface (obj, "org.freedesktop.Notifications")
 
 def status_handler(session, uid, status, desc):
 	if status == ekg.STATUS_AVAIL:
-		current_encoding = ekg.config["jabber:console_charset"] or "iso-8859-2"
+		current_encoding = ekg.config["console_charset"] or "iso-8859-2"
 		
 		user = ekg.session_get(session).user_get(uid)
 		uname = unicode(user.nickname or uid, current_encoding)
