@@ -136,9 +136,6 @@ int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 	PERL_HANDLER_HEADER((char *) scr_que->private);
 	for (i=0; i < scr_que->argc; i++) {
 
-		if (scr_que->argv_type[i] == QUERY_SCRIPT_ARG_SKIP) 
-			continue;
-
 		perlarg = NULL;
 		switch ( scr_que->argv_type[i] ) {
 			case (QUERY_ARG_INT):   /* int */

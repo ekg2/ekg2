@@ -218,14 +218,16 @@ PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
                         Py_RETURN_NONE;
                 }
         } else { /* XXX, take a look at this */
-		char **val;
+		char **val = NULL;
 		int f = EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
 
 		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &f, &attr, &val);
 		if (val)
                         return PyString_FromString(*val);
-		else
-	                return Py_FindMethod(ekg_user_methods, (PyObject *) self, attr);
+		else {
+/*	                return Py_FindMethod(ekg_user_methods, (PyObject *) self, attr); */
+			Py_RETURN_NONE;
+		}
         }
 }
 
