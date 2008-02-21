@@ -206,7 +206,7 @@ reconnect
 	krotki opis: roz³±cza i ³±czy siê ponownie
 
 reply
-	parametry: #reply-id ...
+	parametry: <#reply-id> ...
 	krotki opis: odpisuje na w±tek
 	
 	Wysy³a wiadomo¶æ jako kontynuacjê wskazanego przez reply-id w±tku.
@@ -215,7 +215,7 @@ reply
 	subject_reply_prefix).
 
 tmsg
-	parametry: uid/nick id-watku ...
+	parametry: <uid/nick> <id-watku> ...
 	krotki opis: wysy³a wiadomo¶æ w±tkowan±
 	
 	Dzia³a podobnie jak msg, z tym, ¿e dodatkowy, drugi parametr zawiera
