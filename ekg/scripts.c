@@ -633,44 +633,28 @@ script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int typ
 script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, void *handler)
 {
 	SCRIPT_BIND_HEADER(script_query_t);
-/* argc i argv_type uzupelnic... z czego ? xstrcmp() ?  */
-#define CHECK(x) if (!xstrcmp(qname, x)) 
-#define CHECK_(x) if (!xstrncmp(qname, x, xstrlen(x)))
+
 #define NEXT_ARG(y) temp->argv_type[temp->argc] = y; temp->argc++;
 
-/* PROTOCOL */
-	CHECK("protocol-disconnected")      { NEXT_ARG(QUERY_ARG_CHARP);	}
-	else CHECK("protocol-status")       { NEXT_ARG(QUERY_ARG_CHARP); 
-					      NEXT_ARG(QUERY_ARG_CHARP); 
-					      NEXT_ARG(QUERY_ARG_CHARP); 		/* XXX, need hacks */
-					      NEXT_ARG(QUERY_ARG_CHARP);	}
-	else CHECK("protocol-message")      { NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_ARG_CHARPP);
-					      NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_SCRIPT_ARG_SKIP);
-					      NEXT_ARG(QUERY_ARG_INT);	/* time_t */
-					      NEXT_ARG(QUERY_ARG_INT);	}
-	else CHECK("protocol-message-post") { NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_ARG_CHARPP);
-					      NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_SCRIPT_ARG_SKIP);
-					      NEXT_ARG(QUERY_ARG_INT);	/* time_t */
-					      NEXT_ARG(QUERY_ARG_INT);	}
-	else CHECK("protocol-message-received") { NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_ARG_CHARPP);
-					      NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_SCRIPT_ARG_SKIP);
-					      NEXT_ARG(QUERY_ARG_INT);	/* time_t */
-					      NEXT_ARG(QUERY_ARG_INT);	}
-	else CHECK("protocol-message-sent") { NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_ARG_CHARP);  }
+/* hacki */
+	if (!xstrcmp(qname, "protocol-disconnected"))		temp->hack = 1;
+	else if (!xstrcmp(qname, "protocol-status"))		temp->hack = 2;
+	else if (!xstrcmp(qname, "protocol-message"))		temp->hack = 3;
+	else if (!xstrcmp(qname, "protocol-message-post"))	temp->hack = 4;
+	else if (!xstrcmp(qname, "protocol-message-received"))	temp->hack = 5;
+
+	if (!xstrcmp(qname, "protocol-disconnected-2"))		qname = "protocol-disconnected";
+	else if (!xstrcmp(qname, "protocol-status-2"))		qname = "protocol-status";
+	else if (!xstrcmp(qname, "protocol-message-2"))		qname = "protocol-message";
+	else if (!xstrcmp(qname, "protocol-message-post-2"))	qname = "protocol-message-post";
+	else if (!xstrcmp(qname, "protocol-message-received-2"))qname = "protocol-message-received";
+
 /* IRC */
-	else CHECK_("irc-protocol-numeric") { NEXT_ARG(QUERY_ARG_CHARP);
-					      NEXT_ARG(QUERY_ARG_CHARPP);	}
+	if (!xstrncmp(qname, "irc-protocol-numeric", sizeof("irc-protocol-numeric")-1)) {
+		/* XXX, obciaz nazwe do irc-protocl-numeric i wrzucic to ponizej do queries.h */
+		NEXT_ARG(QUERY_ARG_CHARP);
+		NEXT_ARG(QUERY_ARG_CHARPP);
+	}
 /* other */
 	else {
 		int i;
@@ -687,11 +671,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 			}
 		}
 	}
-
-#undef CHECK
-#undef CHECK_
 #undef NEXT_ARG
-
 	temp->self = query_connect(s->plugin, qname, script_query_handlers, temp);
 	SCRIPT_BIND_FOOTER(script_queries);
 }
@@ -756,14 +736,95 @@ static QUERY(script_query_handlers)
 {
 	script_query_t	*temp = data;
 	void 		*args[MAX_ARGS];
+	void		*args2[MAX_ARGS];
 	int		i;
+	script_query_t saved;
+	char *status = NULL;			/* for temp->hack == 2 */
+	int ign_level = 0;
 
 	SCRIPT_HANDLER_HEADER(script_handler_query_t);
 
 	for (i=0; i < temp->argc; i++) 
-		args[i] = (void *) va_arg(ap, void *);
-	
+		args2[i] = args[i] = (void *) va_arg(ap, void *);
+
+	if (temp->hack)
+		memcpy(&saved, temp, sizeof(script_query_t));
+
+	switch (temp->hack) {
+		case 0:	break;			/* without hack, thats gr8! */
+
+		case 1:				/* scripts protocol-disconnected (v 1.0) 
+							- takes only (reason) */
+			temp->argv_type[0] = QUERY_ARG_CHARP;	/* OK */
+			temp->argc = 1;
+			break;
+		case 2:				/* scripts protocol-status (v 1.0) 
+							- takes (session, uid, status, descr) 
+							- takes char *status, instead of int status */
+			{
+				temp->argc = 4;
+				temp->argv_type[0] = QUERY_ARG_CHARP;	/* OK */
+				temp->argv_type[1] = QUERY_ARG_CHARP;	/* OK */
+
+				temp->argv_type[2] = QUERY_ARG_CHARP;	/* status: int -> char * */
+				status = xstrdup(ekg_status_string(*((int *) args2[2]), 0));	/* status, int -> char * */
+				args[2] = &status;
+
+				temp->argv_type[3] = QUERY_ARG_CHARP;	/* OK */
+				temp->argv_type[4] = QUERY_ARG_CHARP;	/* OK */
+
+				break;
+			}
+		case 3:
+		case 4:
+		case 5:				/* scripts protocol-message, protocol-message-post, protocol-message-received (v 1.0) 
+							- ts (session, uid, class, text, sent_time, ignore_level)
+							- vs (session, uid, rcpts, text, format, sent, class, seq, secure) [protocol-message-post, protocol-message-recv]
+							- vs (session, uid, rcpts, text, format, sent, class, seq, dobeep, secure) [protocol-message]
+						 */
+			{
+				temp->argc = 6;
+
+				temp->argv_type[0] = QUERY_ARG_CHARP;	/* session, OK */
+				temp->argv_type[1] = QUERY_ARG_CHARP;	/* uid, OK */
+
+				temp->argv_type[2] = QUERY_ARG_INT;	/* class, N_OK, BAD POS */
+				args[2] = args2[6];
+
+				temp->argv_type[3] = QUERY_ARG_CHARP;	/* text, OK */
+
+				temp->argv_type[4] = QUERY_ARG_INT;	/* sent_time, N_OK, BAD POS */
+				args[4] = args2[5];
+
+				temp->argv_type[5] = QUERY_ARG_INT;	/* ignore_level, N_OK, DONTEXISTS */
+				/* XXX, find ign_level */
+				args[5] = &ign_level;
+
+				break;
+			}
+
+		default:
+			debug("script_query_handlers() unk temp->hack: %d assuming 0.\n", temp->hack);
+			break;
+	}
+
 	SCRIPT_HANDLER_FOOTER(script_handler_query, (void **) &args);
+
+	if (temp->hack) {
+		memcpy(temp, &saved, sizeof(script_query_t));
+
+		switch (temp->hack) {
+			case 2:
+				/* XXX, status CHANGED BY SCRIPT !!! args2[i] <==> args[i] */
+				xfree(status);
+				break;
+			case 3:
+			case 4:
+			case 5:
+				/* XXX, ignore level changed by script !!! */
+				break;
+		}
+	}
 
 	return ret;
 }

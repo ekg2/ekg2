@@ -11,8 +11,6 @@ enum query_arg_type {
 	QUERY_ARG_INT, 		/* int */
 	QUERY_ARG_UINT,		/* unsgined int */		/* -> time_t, uint32_t */
 
-	QUERY_SCRIPT_ARG_SKIP,	/* [only scripts, skip it!] */
-
 	QUERY_ARG_WINDOW = 100, /* window_t	*/
 	QUERY_ARG_FSTRING, 	/* fstring_t	*/
 	QUERY_ARG_USERLIST,	/* userlist_t	*/
@@ -145,11 +143,20 @@ const struct query query_list[] = {
 		QUERY_ARG_END } },
 
 	{ PROTOCOL_MESSAGE_SENT, "protocol-message-sent", {
-		/* XXX */
+		QUERY_ARG_CHARP,	/* session */
+		QUERY_ARG_CHARP,	/* uid */
+		QUERY_ARG_CHARP,  	/* text */
 		QUERY_ARG_END } },
 
 	{ PROTOCOL_MESSAGE_RECEIVED, "protocol-message-received", {
-		/* XXX */
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_CHARPP,		/* rcpts */
+		QUERY_ARG_UINT,	/* uint32_t */	/* format */
+		QUERY_ARG_UINT, /* time_t */	/* sent */
+		QUERY_ARG_INT,			/* class */
+		QUERY_ARG_CHARP,		/* seq */
+		QUERY_ARG_INT,			/* secure */
 		QUERY_ARG_END } },
 	
 	{ PROTOCOL_MESSAGE_POST, "protocol-message-post", {

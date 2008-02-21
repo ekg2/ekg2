@@ -59,6 +59,7 @@ typedef struct {
 	int 		argc;
 	int             argv_type[MAX_ARGS];
 	void 		*private;
+	int		hack;
 } script_query_t; 
 
 typedef struct {
