@@ -630,7 +630,8 @@ static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 	}
 
 	if (!i->target) {
-		printq("exec", watch);
+		if (*watch)
+			printq("exec", watch);
 		return 0;
 	}
 
