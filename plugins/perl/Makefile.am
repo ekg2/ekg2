@@ -1,5 +1,5 @@
 # TODO: inaczej
-EXTRA_DIST = common/Makefile.PL common/Ekg2.pm common/Command.xs  common/Ekg2.xs  common/Plugin.xs  common/Session.xs  common/Timer.xs  common/Userlist.xs  common/Variable.xs  common/Window.xs common/module.h common/typemap\
+EXTRA_DIST = common/Makefile.PL common/Ekg2.pm common/Command.xs  common/Ekg2.xs  common/Plugin.xs  common/Session.xs  common/Timer.xs  common/Userlist.xs  common/Variable.xs common/Watch.xs  common/Window.xs common/module.h common/typemap\
              irc/Makefile.PL irc/Irc.pm irc/Channel.xs  irc/Irc.xs  irc/Server.xs  irc/User.xs irc/typemap irc/module.h
 
 lib_LTLIBRARIES = perl.la
