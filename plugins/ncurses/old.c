@@ -147,7 +147,7 @@ QUERY(ncurses_password_input) {
 #if USE_UNICODE
 			*buf = wcs_to_normal(passa);
 #else
-			*buf = xstrdup(passa);
+			*buf = xstrdup((char *) passa);
 #endif
 	} else
 		print("password_empty");

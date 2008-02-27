@@ -66,7 +66,7 @@ inline size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 #define xwcscpy(dst, str) xstrcpy((char *) dst, (char *) str)
 #define xwcsdup(str) (CHAR_T *) xstrdup((char *) str)
 #define xwcscat(dst, src) xstrcat((char *) dst, (char *) src)
-#define xwcscmp(s1, s2)	xstrcmp((char *) s1, s2)
+#define xwcscmp(s1, s2)	xstrcmp((char *) s1, (char *) s2)
 #define xwcschr(s, c) xstrchr((char *) s, c)
 #define wcs_to_normal(x) (char *) x
 #define wcs_array_make(str, sep, max, trim, quotes) (CHAR_T **) array_make((char *) str, sep, max, trim, quotes)
