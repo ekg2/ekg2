@@ -1477,20 +1477,27 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 /*****************************************************************************/
 
 static COMMAND(irc_command_names) {
-	irc_private_t	*j = irc_private(session);
-	channel_t       *chan;
-	userlist_t      *ulist;
-        list_t          l;
-	string_t	buf;
-	int		sort_status[5] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, 0};
-	int             lvl_total[5]    = {0, 0, 0, 0, 0};
-	int             lvl, count = 0;
-	char            *sort_modes     = xstrchr(SOP(_005_PREFIX), ')')+1;
+	const char fillchars_utf8[] = "\xC2\xA0";
+	const char fillchars_norm[] = "\xA0";
 
-	int		smlen = xstrlen(sort_modes)+1, nplen = (SOP(_005_NICKLEN)?atoi(SOP(_005_NICKLEN)):0) + 1;
-	char            mode[2], **mp, *channame, nickpad[nplen];
+	irc_private_t *j = irc_private(session);
 
-	const int fillerchar = 160;
+	int sort_status[5] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, 0};
+	int lvl_total[5]   = {0, 0, 0, 0, 0};
+
+	char *sort_modes = xstrchr(SOP(_005_PREFIX), ')')+1;
+
+	int smlen = xstrlen(sort_modes)+1;
+	char **mp, *channame;
+	string_t nickpad;
+	int nplen = 1;
+
+	const char *fillchars = (config_use_unicode ? fillchars_utf8 : fillchars_norm);
+
+	channel_t *chan;
+	string_t buf;
+	list_t l;
+	int lvl, count = 0;
 
 	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN))) 
 		return -1;
@@ -1499,17 +1506,32 @@ static COMMAND(irc_command_names) {
 		printq("generic", "irc_command_names: wtf?");
 		return -1;
 	}
-	mode[1] = '\0';
 
-	for (lvl =0; lvl<nplen; lvl++)
-		nickpad[lvl] = fillerchar;
-	nickpad[lvl] = '\0';
+/* znajdz najdluzszy nick */
+	for (l = chan->window->userlist; l; l = l->next) {
+		userlist_t *u = l->data;
 
+		int tmplen = xstrlen(u->uid + 4);
+		
+		if (tmplen > nplen)
+			nplen = tmplen;
+	}
+
+	if (nplen < (SOP(_005_NICKLEN)?atoi(SOP(_005_NICKLEN)):0) + 1)
+		debug_error("[irc, names] funny %d vs %s\n", nplen, SOP(_005_NICKLEN));
+
+/* stworz stringa wyrownujacego tekst */
+	nickpad = string_init(NULL);
+	for (lvl = 0; lvl < nplen; lvl++)
+		string_append(nickpad, fillchars);
+		
 	print_window(channame, session, 0, "IRC_NAMES_NAME", session_name(session), channame+4);
 	buf = string_init(NULL);
 
-	for (lvl = 0; lvl<smlen; ++lvl, ++sort_modes)
-	{
+	for (lvl = 0; lvl < smlen; ++lvl, ++sort_modes) {
+		static char mode_str[2] = { '?', '\0' };
+		const char *mode;
+
 		/* set mode string passed to formatee to proper
 		 * sign from modes, or if there are no modes left
 		 * set it to formatee letter,
@@ -1517,22 +1539,42 @@ static COMMAND(irc_command_names) {
 		 * won't be splitted like: "[ nickname
 		 *      ]", and whole will be treated as long 'nplen+2' long string :)
 		 */
-		mode[0] = (*sort_modes)?(*sort_modes):fillerchar;
-		for (l = chan->window->userlist; l; l = l->next)
-		{
-			char *tmp;
-			ulist = (userlist_t *)l->data;
-			if (!ulist || (ulist->status != sort_status[lvl]))
-				continue;
-			++lvl_total[lvl];
 
-			nickpad[nplen -1 -xstrlen((ulist->uid + 4))] = '\0';
-			string_append(buf, (tmp = format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad))); xfree(tmp);
-			nickpad[nplen -1 -xstrlen((ulist->uid + 4))] = fillerchar;
+		if (*sort_modes) {
+			mode = mode_str;
+			mode_str[0] = *sort_modes;
+		} else {
+			mode = fillchars;
+		}
+
+		for (l = chan->window->userlist; l; l = l->next) {
+			userlist_t *ulist = l->data;
+			char *tmp;
+			int pos;
+
+			if (ulist->status != sort_status[lvl])
+				continue;
+
+			pos = nplen-xstrlen(ulist->uid+4);
+			if (config_use_unicode)
+				pos <<= 1;
+
+			if (pos < nickpad->len && pos >= 0) {
+				nickpad->str[pos] = '\0';
+				string_append(buf, (tmp = format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad->str))); xfree(tmp);
+				nickpad->str[pos] = fillchars[0];
+			} else {		/* XXX */
+				debug_error("[irc, names] %x vs %x\n", pos, nickpad->len);
+				string_append(buf, (tmp = format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad->str))); xfree(tmp);
+			}
+
+			++lvl_total[lvl];
 			++count;
 		}
 		debug("---separator---\n");
 	}
+
+	string_free(nickpad, 1);
 
 	if (count)
 		printq("none", buf->str);
@@ -1549,7 +1591,7 @@ static COMMAND(irc_command_names) {
 
 	array_free(mp);
 	string_free (buf, 1);
-	xfree (channame);
+	xfree(channame);
 	return 0;
 }
 
