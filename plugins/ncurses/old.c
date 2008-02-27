@@ -586,9 +586,10 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 int ncurses_backlog_split(window_t *w, int full, int removed)
 {
 	int i, res = 0, bottom = 0;
-	ncurses_window_t *n = w->private;
+	int render_timstamp = (config_timestamp && config_timestamp[0]);
+	ncurses_window_t *n;
 
-	if (!w)
+	if (!w || !(n = w->private))
 		return 0;
 
 	/* przy pe³nym przebudowaniu ilo¶ci linii nie musz± siê koniecznie
@@ -672,7 +673,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 					l->ts_attr = s->attr;
 
 					xfree(s);
-				} else if (xstrcmp(config_timestamp, "")) {
+				} else if (render_timstamp) {
 					struct tm *tm = localtime(&ts);
 					char *tmp = NULL, *format;
 
