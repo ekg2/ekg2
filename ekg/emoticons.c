@@ -48,8 +48,7 @@ int config_emoticons = 1;
  *
  * 0/-1
  */
-static int emoticon_add(const char *name, const char *value)
-{
+static int emoticon_add(const char *name, const char *value) {
 	emoticon_t *e;
 	list_t l;
 
@@ -79,13 +78,12 @@ static int emoticon_add(const char *name, const char *value)
  *
  * 0/-1
  */
-int emoticon_read()
-{
+int emoticon_read() {
 	const char *filename;
 	char *buf;
 	FILE *f;
 
-	if (!(filename = prepare_path("emoticons", 0)))
+	if (!(filename = prepare_pathf("emoticons")))
 		return -1;
 	
 	if (!(f = fopen(filename, "r")))
@@ -119,8 +117,7 @@ int emoticon_read()
  *
  * zwraca zaalokowany, rozwiniêty string.
  */
-char *emoticon_expand(const char *s)
-{
+char *emoticon_expand(const char *s) {
 	list_t l = NULL;
 	const char *ss;
 	char *ms;
