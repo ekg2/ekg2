@@ -69,12 +69,12 @@ void config_upgrade() {
 			print("config_upgrade_minor",
 				_("'logs:away_log' plugin variable have been replaced by 'away_log' irc session variable. " \
 				"Also away_log_* formats have been changed to irc_awaylog_* formats. Enjoy"), "2007-07-06");
-		
+#if 0		
 		case 4:
 			print("config_upgrade_major",
 				_("Jabber UIDs prefix has been changed from 'jid:' to 'xmpp:'. Your session UIDs were changed " \
 				"automagically, and in other areas old prefix will be still supported for some time."), "2007-10-16");
-
+#endif
 		case 5:
 			print("config_upgrade_minor",
 				_("'ping-server' jabber session variable has been renamed to 'ping_server', please set it by hand " \
