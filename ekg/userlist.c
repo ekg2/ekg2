@@ -85,14 +85,7 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
  *
  * @return zwraca wynik xstrcasecmp() na nazwach userów.
  */
-static LIST_ADD_COMPARE(userlist_compare, userlist_t *) {
-	if (!data1 || !data2)
-		return 0;
-	if (!data1->nickname || !data2->nickname)
-		return (data1->nickname ? 1 : data2->nickname ? -1 : 0);
-
-	return xstrcasecmp(data1->nickname, data2->nickname);
-}
+static LIST_ADD_COMPARE(userlist_compare, userlist_t *) { return xstrcasecmp(data1->nickname, data2->nickname); }
 
 /**
  * userlist_resource_compare()
@@ -110,12 +103,10 @@ static LIST_ADD_COMPARE(userlist_compare, userlist_t *) {
  */
 
 static LIST_ADD_COMPARE(userlist_resource_compare, ekg_resource_t *) {
-	if (!data1 || !data2)
-		return 0;
+	if (data1->prio != data2->prio)			
+		return (data2->prio - data1->prio);	/* sort by prio */
 
-	if (data1->prio != data2->prio) return (data2->prio - data1->prio);	/* first sort by prio,	first users with larger prio! */
-
-	return xstrcmp(data1->name, data2->name);				/* than sort by name */
+	return xstrcasecmp(data1->name, data2->name);	/* sort by name */
 }
 
 /*
@@ -123,8 +114,7 @@ static LIST_ADD_COMPARE(userlist_resource_compare, ekg_resource_t *) {
  *
  * dodaje do listy kontaktów pojedyncz± liniê z pliku lub z serwera.
  */
-void userlist_add_entry(session_t *session, const char *line)
-{
+void userlist_add_entry(session_t *session, const char *line) {
 	char **entry = array_make(line, ";", 8, 0, 0);
 	userlist_t *u;
 	int count, i;
@@ -185,8 +175,7 @@ void userlist_add_entry(session_t *session, const char *line)
  * @param session
  * @return 0 on success, -1 file not found
  */
-int userlist_read(session_t *session)
-{
+int userlist_read(session_t *session) {
         const char *filename;
         char *buf;
         FILE *f;
@@ -224,8 +213,7 @@ int userlist_read(session_t *session)
  * 		-2 if we fail to create/open userlist file in rw mode
  */
 
-int userlist_write(session_t *session)
-{
+int userlist_write(session_t *session) {
 	const char *filename;
 	FILE *f;
 	list_t l;
@@ -345,8 +333,7 @@ void userlist_write_crash() {
  * @param uid
  */
 
-void userlist_clear_status(session_t *session, const char *uid)
-{
+void userlist_clear_status(session_t *session, const char *uid) {
         list_t l;
 
 	if (!session)
@@ -370,8 +357,7 @@ void userlist_clear_status(session_t *session, const char *uid)
  *
  * czy¶ci listê u¿ytkowników i zwalnia pamiêæ.
  */
-void userlist_free(session_t *session)
-{
+void userlist_free(session_t *session) {
 	if (!session)
 		return;
 
@@ -518,8 +504,7 @@ void userlist_resource_free(userlist_t *u) {
  *  - uin,
  *  - display.
  */
-userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname)
-{
+userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname) {
 	if (!session)
 		return NULL;
 
@@ -538,20 +523,13 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
  * uid - uid,
  * nickname - display.
  */
-userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickname)
-{
+userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickname) {
         userlist_t *u = xmalloc(sizeof(userlist_t));
 
         u->uid = xstrdup(uid);
         u->nickname = xstrdup(nickname);
         u->status = EKG_STATUS_NA;
-#if 0 /* if 0 != NULL */
-        u->descr = NULL;
-        u->foreign = NULL;
-        u->last_status = NULL;
-        u->last_descr = NULL;
-        u->resources = NULL;
-#endif
+
         return LIST_ADD_SORTED(userlist, u, 0, userlist_compare);
 }
 
@@ -562,8 +540,7 @@ userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickna
  *
  *  - u.
  */
-int userlist_remove(session_t *session, userlist_t *u)
-{
+int userlist_remove(session_t *session, userlist_t *u) {
 	return userlist_remove_u(&(session->userlist), u);
 }
 
@@ -574,8 +551,7 @@ int userlist_remove(session_t *session, userlist_t *u)
  *
  *  - u.
  */
-int userlist_remove_u(list_t *userlist, userlist_t *u)
-{
+int userlist_remove_u(list_t *userlist, userlist_t *u) {
         list_t l;
 
         if (!u)
@@ -620,8 +596,7 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
  *
  * 0/-1
  */
-int userlist_replace(session_t *session, userlist_t *u)
-{
+int userlist_replace(session_t *session, userlist_t *u) {
 	if (!u)
 		return -1;
 	if (list_remove(&(session->userlist), u, 0))
@@ -640,8 +615,7 @@ int userlist_replace(session_t *session, userlist_t *u)
  *
  *  - uid,
  */
-userlist_t *userlist_find(session_t *session, const char *uid)
-{
+userlist_t *userlist_find(session_t *session, const char *uid) {
 	if (!uid || !session)
 		return NULL;
 
@@ -654,8 +628,7 @@ userlist_t *userlist_find(session_t *session, const char *uid)
  * finds and returns pointer to userlist_t which includes given
  * uid
  */
-userlist_t *userlist_find_u(list_t *userlist, const char *uid)
-{
+userlist_t *userlist_find_u(list_t *userlist, const char *uid) {
 	list_t l;
 
 	if (!uid || !userlist)
@@ -694,11 +667,10 @@ userlist_t *userlist_find_u(list_t *userlist, const char *uid)
  *
  * zwraca 1 je¶li nick jest w porz±dku, w przeciwnym razie 0.
  */
-int valid_nick(const char *nick)
-{
-	int i;
+int valid_nick(const char *nick) {
 	const char *wrong[] = { "(null)", "__debug", "__status",
 				 "__current", "__contacts", "*", "$", NULL };
+	int i;
 
 	if (!nick)
 		return 0;
@@ -768,7 +740,6 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid) {
         xfree(tmp);
 
         return (valid > 0);
-
 }
 
 /**
@@ -821,8 +792,7 @@ char *get_uid_any(session_t *session, const char *text) {
  * @return If we found proper uid for @a text, than return it. Otherwise NULL
  */
 
-char *get_uid(session_t *session, const char *text)
-{
+char *get_uid(session_t *session, const char *text) {
 	userlist_t *u;
 
 	if (text && !xstrcmp(text, "$"))
@@ -850,8 +820,7 @@ char *get_uid(session_t *session, const char *text)
  * no nickname it returns uid, else if contacts doesnt exist
  * it returns text if it is a correct uid, else NULL
  */
-char *get_nickname(session_t *session, const char *text)
-{
+char *get_nickname(session_t *session, const char *text) {
         userlist_t *u;
 
 	if (text && !xstrcmp(text, "$"))
@@ -883,14 +852,9 @@ char *get_nickname(session_t *session, const char *text)
  *
  *  - uin - numerek danej osoby.
  */
-const char *format_user(session_t *session, const char *uid)
-{
+const char *format_user(session_t *session, const char *uid) {
 	userlist_t *u = userlist_find(session, uid);
 	static char buf[256], *tmp;
-/* 	
-	if (uid && xstrchr(uid, ':'))
-		uid = xstrchr(uid, ':') + 1;
- */
 
 	if (!u || !u->nickname)
 		tmp = format_string(format_find("unknown_user"), uid, uid);
@@ -911,8 +875,7 @@ const char *format_user(session_t *session, const char *uid)
  *
  *  - uin.
  */
-int ignored_remove(session_t *session, const char *uid)
-{
+int ignored_remove(session_t *session, const char *uid) {
 	userlist_t *u = userlist_find(session, uid);
 	char *tmps, *tmp;
 	list_t l;
@@ -962,8 +925,7 @@ int ignored_remove(session_t *session, const char *uid)
  *  - uin.
  *  - level.
  */
-int ignored_add(session_t *session, const char *uid, int level)
-{
+int ignored_add(session_t *session, const char *uid, int level) {
 	userlist_t *u;
 	char *tmps, *tmp;
 	int oldlevel = 0;
@@ -1004,8 +966,7 @@ int ignored_add(session_t *session, const char *uid, int level)
  * @param uid - uid uzytkownika
  *
  */
-int ignored_check(session_t *session, const char *uid)
-{
+int ignored_check(session_t *session, const char *uid) {
 	userlist_t *u = userlist_find(session, uid);
 	list_t l;
 
@@ -1038,8 +999,7 @@ int ignored_check(session_t *session, const char *uid)
  *
  * @return zwraca bitmaske opisana przez str
  */
-int ignore_flags(const char *str)
-{
+int ignore_flags(const char *str) {
 	int x, y, ret = 0;
 	char **arr;
 
@@ -1077,8 +1037,7 @@ int ignore_flags(const char *str)
  *
  * @return zwraca <b>statyczny</b> bufor opisujacy bitmaske za pomoca `ignore_labels`
  */
-const char *ignore_format(int level)
-{
+const char *ignore_format(int level) {
 	static char buf[200];
 	int i, comma = 0;
 
@@ -1110,15 +1069,7 @@ const char *ignore_format(int level)
  *
  * @return zwraca wynik xstrcasecmp() na nazwach grup.
  */
-static int group_compare(void *data1, void *data2)
-{
-	struct ekg_group *a = data1, *b = data2;
-	
-	if (!a || !a->name || !b || !b->name)
-		return 0;
-
-	return xstrcasecmp(a->name, b->name);
-}
+static LIST_ADD_COMPARE(group_compare, struct ekg_group *) { return xstrcasecmp(data1->name, data2->name); }
 
 /**
  * ekg_group_add()
@@ -1130,8 +1081,7 @@ static int group_compare(void *data1, void *data2)
  *
  * @return -1 jesli juz user jest w tej grupie, lub zle parametry. 0 gdy dodano.
  */
-int ekg_group_add(userlist_t *u, const char *group)
-{
+int ekg_group_add(userlist_t *u, const char *group) {
 	struct ekg_group *g;
 	list_t l;
 
@@ -1147,7 +1097,7 @@ int ekg_group_add(userlist_t *u, const char *group)
 	g = xmalloc(sizeof(struct ekg_group));
 	g->name = xstrdup(group);
 
-	list_add_sorted(&u->groups, g, 0, group_compare);
+	LIST_ADD_SORTED(&u->groups, g, 0, group_compare);
 
 	return 0;
 }
@@ -1162,8 +1112,7 @@ int ekg_group_add(userlist_t *u, const char *group)
  *
  * @return 0 je¶li siê uda³o, inaczej -1.
  */
-int ekg_group_remove(userlist_t *u, const char *group)
-{
+int ekg_group_remove(userlist_t *u, const char *group) {
 	list_t l;
 
 	if (!u || !group)
@@ -1193,8 +1142,7 @@ int ekg_group_remove(userlist_t *u, const char *group)
  *
  * @return 1 je¶li tak, 0 je¶li nie.
  */
-int ekg_group_member(userlist_t *u, const char *group)
-{
+int ekg_group_member(userlist_t *u, const char *group) {
 	list_t l;
 
 	if (!u || !group)
@@ -1220,8 +1168,7 @@ int ekg_group_member(userlist_t *u, const char *group)
  *
  *  @return zwraca listê `struct group' je¶li siê uda³o, inaczej NULL.
  */
-list_t group_init(const char *names)
-{
+list_t group_init(const char *names) {
 	list_t l = NULL;
 	char **groups;
 	int i;
@@ -1235,7 +1182,7 @@ list_t group_init(const char *names)
 		struct ekg_group *g = xmalloc(sizeof(struct ekg_group));
 
 		g->name = groups[i];
-		list_add_sorted(&l, g, 0, group_compare);
+		LIST_ADD_SORTED(&l, g, 0, group_compare);
 	}
 	/* NOTE: we don't call here array_free() cause we use items of this
 	 * 	array @ initing groups. We don't use strdup()
@@ -1256,8 +1203,7 @@ list_t group_init(const char *names)
  *
  *  @return zwraca zaalokowany ci±g znaków lub NULL w przypadku b³êdu.
  */
-char *group_to_string(list_t groups, int meta, int sep)
-{
+char *group_to_string(list_t groups, int meta, int sep) {
 	string_t foo = string_init(NULL);
 	list_t l;
 	int comma = 0;
