@@ -35,26 +35,6 @@ list_t lasts = NULL;
 int config_last_size = 10;
 int config_last = 0;
 
-static char *utf_ent[256] =
-{
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, "&quot;", 0, 0, 0, "&amp;", "&apos;", 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, "&lt;", 0, "&gt;", 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-};
-
 static LIST_FREE_ITEM(list_last_free, struct last *) {
 	xfree(data->uid);
 	xfree(data->message);
@@ -72,8 +52,7 @@ static LIST_FREE_ITEM(list_last_free, struct last *) {
  *  - st - czas nadania,
  *  - msg - tre¶æ wiadomo¶ci.
  */
-void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
-{
+void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
 	list_t l;
 	struct last *ll;
 	int count = 0;
@@ -133,8 +112,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg)
  *
  *  - uin - numerek osoby.
  */
-void last_del(const char *uid)
-{
+void last_del(const char *uid) {
 	list_t l;
 
 	for (l = lasts; l; ) {
@@ -164,8 +142,7 @@ void last_free() {
  *
  *  - uin.
  */
-int last_count(const char *uid)
-{
+int last_count(const char *uid) {
 	int count = 0;
 	list_t l;
 
@@ -180,6 +157,47 @@ int last_count(const char *uid)
 }
 
 /*
+ * It's wrong, I think we could create one function which cover this two function.
+ * But I don't have any idea howto
+ *
+ * However, that ent[] table, like someone already said, was waste of space.
+ *
+ * Code looks better. (So please don't change to somethink like: if (!ent) q++;) 
+ *
+ * I was thinking about some static pointer, 
+ * 	static char buf[2];
+ *
+ * 	buf[0] = znak;
+ * 	return buf;
+ * 
+ * to remove if (ent) and always use strcpy() however it's still only idea.
+ */
+
+static int xml_escape_l(const char znak) {
+	switch (znak) {
+		case '"': 	return (sizeof("&quot;")-1);
+		case '&': 	return (sizeof("&amp;")-1);
+		case '\'':	return (sizeof("&apos;")-1);
+		case '<':	return (sizeof("&lt;")-1);
+		case '>':	return (sizeof("&gt;")-1);
+	}
+
+	return 1;
+}
+
+static const char *xml_escape_c(const char znak) {
+	switch (znak) {
+		case '"': 	return "&quot;";
+		case '&': 	return "&amp;";
+		case '\'':	return "&apos;";
+		case '<':	return "&lt;";
+		case '>':	return "&gt;";
+	}
+
+	return NULL;
+}
+
+/*
  * xml_escape()
  *
  *    escapes text to be xml-compliant
@@ -188,8 +206,7 @@ int last_count(const char *uid)
  *
  * allocated buffer
  */
-char *xml_escape(const char *text)
-{
+char *xml_escape(const char *text) {
 	const char *p;
 	char *res, *q;
 	int len;
@@ -197,22 +214,21 @@ char *xml_escape(const char *text)
 	if (!text)
 		return NULL;
 
-	for (p = text, len = 0; *p; p++) {
-		if (*p >= sizeof(utf_ent)/sizeof(char)) len += 1;
-		else len += (utf_ent[(int) *p] ? xstrlen(utf_ent[(int) *p]) : 1);
-	}
+	for (p = text, len = 0; *p; p++)
+		len += xml_escape_l(*p);
 
-	res = xmalloc((len + 1)*sizeof(char));
-	for (p = text, q = res; *p; p++) {
-		const char *ent = utf_ent[(int) *p];
-		if (*p >= sizeof(utf_ent)/sizeof(char)) ent = NULL;
+	q = res = xmalloc((len + 1)*sizeof(char));
+
+	for (p = text; *p; p++) {
+		const char *ent = xml_escape_c(*p);
 
 		if (ent)
 			xstrcpy(q, ent);
 		else
 			*q = *p;
 
-		q += ent ? xstrlen(ent) : 1;
+		q += xml_escape_l(*p);
+
 	}
 
 	return res;
