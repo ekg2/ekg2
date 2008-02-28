@@ -52,7 +52,12 @@ typedef struct {
 	int left, top;		/* pozycja (x, y) wzglêdem pocz±tku ekranu */
 	int width, height;	/* wymiary okna */
 
-	int act;		/* czy co¶ siê zmieni³o? */
+	unsigned int act	: 2;	/* activity: 1 - status/junk; 2 - msg */
+	unsigned int in_typing	: 1;	/* user is composing a message to us */
+	unsigned int in_active	: 1;	/* user has sent some kind of message,
+					   so we can start sending composing to him/her */
+	unsigned int out_active	: 1;	/* we 'started' sending messages to user (considered
+					   ourselves active), so we shall say goodbye when done */
 	int more;		/* pojawi³o siê co¶ poza ekranem */
 
 	int floating;		/* czy p³ywaj±ce? */

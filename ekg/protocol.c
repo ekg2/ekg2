@@ -772,7 +772,7 @@ static QUERY(protocol_message)
 	}
 
         /* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
-	if (!userlist) 
+	if (!userlist && !our_msg)	/* don't add us to tabnick */ 
 		tabnick_add(uid);
 
         if (!userlist && xstrcasecmp(session_class->uid, uid) && session_int_get(session_class, "auto_find") >= 1) {
@@ -868,12 +868,12 @@ static QUERY(protocol_xstate)
 
 	if (!(s = session_find(session)))
 		return 0;
-	
+
 	if ((w = window_find_s(s, uid))) {
 		if (offstate & EKG_XSTATE_TYPING)
-			w->act &= ~4;
+			w->in_typing = 0;
 		else if (state & EKG_XSTATE_TYPING)
-			w->act |= 4;
+			w->in_typing = 1;
 		query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
 	}
 

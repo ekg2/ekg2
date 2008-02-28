@@ -184,7 +184,7 @@ inline int ncurses_typingsend(const int len, const int first) {
 	const char *sid	= session_uid_get(ncurses_typing_win->session);
 	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
 	
-	if (((first > 1) || (ncurses_typing_win->act & 8)) && uid)
+	if (((first > 1) || (ncurses_typing_win->in_active)) && uid)
 		return query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
 	else
 		return -1;
@@ -265,12 +265,12 @@ void ncurses_window_gone(window_t *w) {
 		ncurses_typing(0, NULL);
 
 		ncurses_typing_mod	= tmp;
-	} else if (w->act & 24) { /* <gone/> or <active/> */
+	} else if (w->in_active || w->out_active) { /* <gone/> or <active/> */
 		window_t *tmp		= ncurses_typing_win;
 		ncurses_typing_win	= w;
 
-		if (!ncurses_typingsend(0, !(w->act & 16) ? 4 : 5) || (w->act & 16))
-			w->act		^= 16;
+		if (!ncurses_typingsend(0, !w->out_active ? 4 : 5) || w->out_active)
+			w->out_active	^= 1;
 
 		ncurses_typing_win	= tmp;
 	}
@@ -1546,12 +1546,12 @@ void update_statusbar(int commit)
 			char tmp[33];
 			window_t *w = l->data;
 
-			if (!(w->act & 7) || !w->id || (w == window_current)) 
+			if ((!w->act && !w->in_typing) || !w->id || (w == window_current)) 
 				continue;
 
 			if (act)
 				string_append_c(s, ',');
-			sprintf(tmp, "statusbar_act%s%s", (w->act & 2 ? "_important" : ""), (w->act & 4 ? "_typing" : ""));
+			sprintf(tmp, "statusbar_act%s%s", (w->act == 2 ? "_important" : ""), (w->in_typing ? "_typing" : ""));
 			string_append(s, format_find(tmp));
 			string_append(s, itoa(w->id));
 			act = 1;

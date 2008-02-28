@@ -192,7 +192,7 @@ static QUERY(gtk_ui_window_switch) {
 		mg_switch_page(FALSE, w->id);
 	gtk_ui_window_switch_lock = 0;
 
-	fe_set_tab_color(w, w->act & 3);
+	fe_set_tab_color(w, w->act);
 	return 0;
 }
 
@@ -230,7 +230,7 @@ static QUERY(gtk_ui_window_act_changed) { 		/* fe_set_tab_color() */
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
-		fe_set_tab_color(w, w->act & 3);
+		fe_set_tab_color(w, w->act);
 	}
 
 	return 0;

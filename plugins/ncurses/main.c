@@ -165,8 +165,8 @@ static QUERY(ncurses_ui_window_switch) {
 	ncurses_commit();
 
 	if (w->act & 2) { /* enable <composing/> on incoming chat message receival */
-		w->act |= 8;
-		if (!(w->act & 16)) /* send <active/>, as we showed interest in chat */
+		w->in_active = 1;
+		if (!w->out_active) /* send <active/>, as we showed interest in chat */
 			ncurses_window_gone(w);
 	}
 

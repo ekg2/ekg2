@@ -129,10 +129,10 @@ static BINDING_FUNCTION(binding_toggle_input)
 		command_exec(window_current->target, window_current->session, tmp, 0);
 
 		if (!tmp[0] || tmp[0] == '/' || !window_current->target)
-			ncurses_typing_mod	= 1;
+			ncurses_typing_mod		= 1;
 		else {
-			ncurses_typing_win	= NULL;
-			window_current->act	|= 16;
+			ncurses_typing_win		= NULL;
+			window_current->out_active	= 1;
 		}
 
 		curs_set(1);
@@ -260,10 +260,10 @@ static BINDING_FUNCTION(binding_accept_line)
 	if (ncurses_plugin_destroyed)
 		return;
 	if (!line[0] || line[0] == '/' || !window_current->target) /* if empty or command, just mark as modified */
-		ncurses_typing_mod	= 1;
+		ncurses_typing_mod		= 1;
 	else { /* if message, assume that its' handler has already disabled <composing/> */
-		ncurses_typing_win	= NULL;
-		window_current->act	|= 16; /* but also remember that is should have set <active/> chatstate */
+		ncurses_typing_win		= NULL;
+		window_current->out_active	= 1; /* but also remember that it should have set <active/> chatstate */
 	}
 
 	if (xwcscmp(line, TEXT(""))) {

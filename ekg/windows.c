@@ -205,7 +205,7 @@ void window_switch(int id) {
 		window_current = w;
 		query_emit_id(NULL, UI_WINDOW_SWITCH, &w);	/* XXX */
 
-		w->act &= ~3;
+		w->act = 0;
 		if (w->target && w->session && (u = userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) {
 			u->xstate &= ~EKG_XSTATE_BLINK;
 			ul_refresh = 1;
@@ -614,7 +614,7 @@ COMMAND(cmd_window) {
 		for (l = windows; l; l = l->next) {
 			window_t *w = l->data;
 
-			if ((w->act & 3) && !w->floating && w->id) {
+			if (w->act && !w->floating && w->id) {
 				id = w->id;
 				break;
 			}
