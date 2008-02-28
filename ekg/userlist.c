@@ -404,6 +404,12 @@ void userlist_free_u (list_t *userlist)
         *userlist = NULL;
 }
 
+static LIST_FREE_ITEM(list_userlist_resource_free, ekg_resource_t *) {
+	xfree(data->name);
+	xfree(data->descr);
+	xfree(data);
+}
+
 /**
  * userlist_resource_add()
  *
@@ -466,11 +472,7 @@ ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name) {
  */
 void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
 	if (!u || !r) return;
-	
-	xfree(r->name);
-	xfree(r->descr);
-
-	list_remove(&(u->resources), r, 1);
+	LIST_REMOVE(&(u->resources), r, list_userlist_resource_free);
 }
 
 /**
@@ -483,16 +485,9 @@ void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
  * @sa userlist_resource_remove - to remove given resource
  */
 void userlist_resource_free(userlist_t *u) {
-	list_t l;
 	if (!u || !(u->resources)) return;
 
-	for (l = u->resources; l; l = l->next) {
-		ekg_resource_t *r = l->data;
-
-		xfree(r->name);
-		xfree(r->descr);
-	}
-	list_destroy(u->resources, 1);
+	LIST_DESTROY(u->resources, list_userlist_resource_free);
 	u->resources = NULL;
 }
 
