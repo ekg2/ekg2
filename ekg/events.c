@@ -66,8 +66,7 @@ static int event_check(const char *session, const char *name, const char *uid, c
 /* 
  * on function 
  */
-COMMAND(cmd_on)
-{
+COMMAND(cmd_on) {
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		int prio;
 
@@ -142,10 +141,7 @@ COMMAND(cmd_on)
  * it helps in list_add() of events
  *
  */
-static LIST_ADD_COMPARE(event_add_compare, event_t *) {
-        return data1->id - data2->id;
-}
-
+static LIST_ADD_COMPARE(event_add_compare, event_t *) { return data1->id - data2->id; }
 
 /* 
  * event_add ()
@@ -156,8 +152,7 @@ static LIST_ADD_COMPARE(event_add_compare, event_t *) {
  *
  * 0/-1
  */
-int event_add(const char *name, int prio, const char *target, const char *action, int quiet)
-{
+int event_add(const char *name, int prio, const char *target, const char *action, int quiet) {
 	event_t *ev;
 	char *tmp;
 	int done = 0, id = 1;
@@ -213,8 +208,7 @@ static LIST_FREE_ITEM(list_event_free, struct event *) {
  * 
  * 0/-1 
  */
-static int event_remove(unsigned int id, int quiet)
-{
+static int event_remove(unsigned int id, int quiet) {
         event_t *ev;
 	
 	if (id == 0) {
@@ -243,8 +237,7 @@ cleanup:
  *
  * it frees whole list 
  */
-void event_free()
-{
+void event_free() {
 	xfree(events_all);
 	events_all = NULL;
 
@@ -260,8 +253,7 @@ void event_free()
  * 
  * it shows the list of events 
  */
-static int events_list(int id, int quiet)
-{
+static int events_list(int id, int quiet) {
         list_t l;
 
 	if (!events) {
@@ -288,8 +280,7 @@ static int events_list(int id, int quiet)
  * to event
  *
  */
-event_t *event_find(const char *name, const char *target)
-{
+event_t *event_find(const char *name, const char *target) {
 	list_t l;
 	event_t *ev_max = NULL;
 	int ev_max_prio = 0;
@@ -336,8 +327,7 @@ event_t *event_find(const char *name, const char *target)
  * descriptor to event
  *
  */
-static event_t *event_find_all(const char *name, const char *session, const char *uid, const char *target, const char *data)
-{
+static event_t *event_find_all(const char *name, const char *session, const char *uid, const char *target, const char *data) {
 	list_t l;
 	event_t *ev_max = NULL;
 	int ev_max_prio = 0;
@@ -389,8 +379,7 @@ static event_t *event_find_all(const char *name, const char *session, const char
  * descriptor to event
  *
  */
-static event_t *event_find_id(unsigned int id)
-{
+static event_t *event_find_id(unsigned int id) {
         list_t l;
 
         for (l = events; l; l = l->next) {
@@ -405,8 +394,7 @@ static event_t *event_find_id(unsigned int id)
         return 0;
 }
 
-static void events_add_handler(char *name, void *function)
-{
+static void events_add_handler(char *name, void *function) {
         query_connect(NULL, name, function, NULL);
         array_add(&events_all, name);
 }
@@ -416,8 +404,7 @@ static void events_add_handler(char *name, void *function)
  * 
  * initializing of events and its handlers
  */
-int events_init()
-{
+int events_init() {
 	timer_add(NULL, "daytimer", 1, 1, ekg_day_timer, NULL);
 
 	events_add_handler(("protocol-message"), event_protocol_message);
@@ -477,8 +464,7 @@ static TIMER(ekg_day_timer) {
  * 
  * handler for protocol-message 
  */
-static QUERY(event_protocol_message)
-{
+static QUERY(event_protocol_message) {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
         {	char ***UNUSED(rcpts)	= va_arg(ap, char***);	}
@@ -493,8 +479,7 @@ static QUERY(event_protocol_message)
  *
  * handler for changing status on available
  */
-static QUERY(event_avail)
-{
+static QUERY(event_avail) {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
 
@@ -507,8 +492,7 @@ static QUERY(event_avail)
  *
  * handler for changing status on away
  */
-static QUERY(event_away)
-{
+static QUERY(event_away) {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
 
@@ -521,8 +505,7 @@ static QUERY(event_away)
  *
  * handler for changing status on NA
  */
-static QUERY(event_na)
-{
+static QUERY(event_na) {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
 
@@ -535,8 +518,7 @@ static QUERY(event_na)
  *
  * handler for changing status from NA to avail
  */
-static QUERY(event_online)
-{
+static QUERY(event_online) {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
 
@@ -549,8 +531,7 @@ static QUERY(event_online)
  *
  * handler for changing description
  */
-static QUERY(event_descr)
-{
+static QUERY(event_descr) {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
 	char *descr	= *(va_arg(ap, char**));
@@ -559,8 +540,7 @@ static QUERY(event_descr)
         return 0;
 }
 
-static QUERY(event_misc)
-{
+static QUERY(event_misc) {
 	event_check(NULL, data, "*", NULL);
 	return 0;
 }
@@ -573,8 +553,7 @@ static QUERY(event_misc)
  * it also check target and if possible uid taken from target
  *
  */
-static int event_check(const char *session, const char *name, const char *uid, const char *data)
-{
+static int event_check(const char *session, const char *name, const char *uid, const char *data) {
 	session_t *__session;
 	userlist_t *userlist;
 	event_t *ev;
@@ -660,11 +639,10 @@ static int event_check(const char *session, const char *name, const char *uid, c
  *
  * returns logical value
  */
-static int event_target_check_compare(char *buf)
-{
+static int event_target_check_compare(char *buf) {
 	string_t s;
 
-	s = string_init((""));
+	s = string_init(NULL);
 
 	while(*buf) {
 		if (*buf == '/') {
@@ -775,8 +753,7 @@ static int event_target_check_compare(char *buf)
  * returns logical value of given expression
  */
 
-static int event_target_check(char *buf)
-{
+static int event_target_check(char *buf) {
 	char **params = array_make(buf, ("&|"), 0, 1, 1);
 	int i = 1;
 	char *separators;
