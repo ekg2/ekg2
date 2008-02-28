@@ -57,29 +57,16 @@ void changed_session_locks(const char *varname); /* sessions.c */
  * byæ ró¿na od zera, ale dziêki funkcjom nie trzeba bêdzie mieszaæ w 
  * przysz³o¶ci.
  */
-static int dd_sound(const char *name)
-{
-	return (config_sound_app != NULL);
-}
-
-static int dd_color(const char *name)
-{
-	return (config_display_color);
-}
-
-static int dd_beep(const char *name)
-{
-	return (config_beep);
-}
-
+static int dd_sound(const char *name) { return (config_sound_app != NULL); }
+static int dd_color(const char *name) { return (config_display_color); }
+static int dd_beep(const char *name) { return (config_beep); }
 
 /*
  * variable_init()
  *
  * inicjuje listê zmiennych.
  */
-void variable_init()
-{
+void variable_init() {
 	variables_lock = &variables; /* keep it sorted */
 
 	variable_add(NULL, ("auto_save"), VAR_INT, 1, &config_auto_save, changed_auto_save, NULL, NULL);
@@ -164,8 +151,7 @@ void variable_init()
  * ustawia pewne standardowe warto¶ci zmiennych
  * nieliczbowych.
  */
-void variable_set_default()
-{
+void variable_set_default() {
 	xfree(config_timestamp);
 	xfree(config_display_color_map);
 	xfree(config_subject_prefix);
@@ -213,8 +199,7 @@ void variable_set_default()
  *
  * - name.
  */
-variable_t *variable_find(const char *name)
-{
+variable_t *variable_find(const char *name) {
 	list_t l;
 	int hash;
 
@@ -244,8 +229,7 @@ variable_t *variable_find(const char *name)
  *
  * zaalokowana tablica.
  */
-variable_map_t *variable_map(int count, ...)
-{
+variable_map_t *variable_map(int count, ...) {
 	variable_map_t *res;
 	va_list ap;
 	int i;
@@ -274,10 +258,7 @@ variable_map_t *variable_map(int count, ...)
  *
  * zwraca wynik xstrcasecmp() na nazwach zmiennych.
  */
-
-static LIST_ADD_COMPARE(variable_add_compare, variable_t *) {
-        return xstrcasecmp(data1->name, data2->name);
-}
+static LIST_ADD_COMPARE(variable_add_compare, variable_t *) { return xstrcasecmp(data1->name, data2->name); }
 
 /*
  * variable_add()
@@ -295,8 +276,7 @@ static LIST_ADD_COMPARE(variable_add_compare, variable_t *) {
  *
  * zwraca 0 je¶li siê nie uda³o, w przeciwnym wypadku adres do strutury.
  */
-variable_t *variable_add(plugin_t *plugin, const char *name, int type, int display, void *ptr, variable_notify_func_t *notify, variable_map_t *map, variable_display_func_t *dyndisplay)
-{
+variable_t *variable_add(plugin_t *plugin, const char *name, int type, int display, void *ptr, variable_notify_func_t *notify, variable_map_t *map, variable_display_func_t *dyndisplay) {
 	variable_t *v;
 	int hash;
 	char *__name;
@@ -336,6 +316,7 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 
 		return v;
 	}
+
 	v 	= xmalloc(sizeof(variable_t));
 	v->name		= __name;
 	v->name_hash 	= hash;
@@ -364,8 +345,7 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
  *
  * usuwa zmienn±.
  */
-int variable_remove(plugin_t *plugin, const char *name)
-{
+int variable_remove(plugin_t *plugin, const char *name) {
 	list_t l;
 	int hash;
 
@@ -414,8 +394,7 @@ int variable_remove(plugin_t *plugin, const char *name)
  *  - value - nowa warto¶æ,
  *  - allow_foreign - czy ma pozwalaæ dopisywaæ obce zmienne.
  */
-int variable_set(const char *name, const char *value, int allow_foreign)
-{
+int variable_set(const char *name, const char *value, int allow_foreign) {
 	variable_t *v = variable_find(name);
 	char *tmpname;
 
@@ -571,8 +550,7 @@ notify:
  *
  * zwalnia pamiêæ u¿ywan± przez zmienne.
  */
-void variable_free()
-{
+void variable_free() {
 	list_t l;
 
 	for (l = variables; l; l = l->next) {
@@ -585,16 +563,14 @@ void variable_free()
 			case VAR_FILE:
 			case VAR_THEME:
 			case VAR_DIR:
-			{
 	                        xfree(*((char**) v->ptr));
 	                        *((char**) v->ptr) = NULL;
 				break;
-			}
+
 			case VAR_FOREIGN:
-			{
 				xfree((char*) v->ptr);
 				break;
-			}
+
 			default:
 				break;
 		}
@@ -621,8 +597,7 @@ void variable_free()
  *
  * name - name of the variable
  */
-void variable_help(const char *name)
-{
+void variable_help(const char *name) {
 	FILE *f; 
 	char *line, *type = NULL, *def = NULL, *tmp;
 	const char *seeking_name;
