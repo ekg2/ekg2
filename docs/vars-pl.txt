@@ -205,6 +205,13 @@ exit_exec
 	tym samym kod wyj¶cia zwracany przez EKG2 bêdzie wynikiem danego
 	polecenia.
 
+history_savedups
+	typ: liczba
+	domy¶lna warto¶æ: 1
+
+	je¶li ustawiona na 0, to wiersze pasuj±ce do ostatniego wiersza
+	historii nie s± wprowadzane do listy historii.
+
 keep_reason
 	typ: liczba
 	domy¶lna warto¶æ: 0

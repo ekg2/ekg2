@@ -267,11 +267,13 @@ static BINDING_FUNCTION(binding_accept_line)
 	}
 
 	if (xwcscmp(line, TEXT(""))) {
+	    if (config_history_savedups || xwcscmp(line, history[1])) {
 		if (history[0] != line)
 			xfree(history[0]);
 		history[0] = xwcsdup(line);
 		xfree(history[HISTORY_MAX - 1]);
 		memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
+	    }
 	} else {
 		if (config_enter_scrolls)
 			print("none", "");

@@ -18,6 +18,12 @@ exit_exec
 	Command executed on EKG2 exit, just before exit(). It'll replace EKG2
 	in process table, so ekg2 will return its' exit code.
 
+history_savedups
+	type: integer
+	default value: 1
+
+	if set to 0, don't save lines matching the previous history entry
+
 session_locks
 	type: int
 	default value: 1

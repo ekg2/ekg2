@@ -103,6 +103,7 @@ void variable_init() {
 	variable_add(NULL, ("events_delay"), VAR_INT, 1, &config_events_delay, NULL, NULL, NULL);
 	variable_add(NULL, ("expert_mode"), VAR_INT, 1, &config_expert_mode, NULL, NULL, NULL);
 	variable_add(NULL, ("exit_exec"), VAR_STR, 1, &config_exit_exec, NULL, NULL, NULL);
+	variable_add(NULL, ("history_savedups"),  VAR_BOOL, 1, &config_history_savedups, NULL, NULL, NULL);
 	variable_add(NULL, ("keep_reason"), VAR_INT, 1, &config_keep_reason, NULL, NULL, NULL);
 	variable_add(NULL, ("last"), VAR_MAP, 1, &config_last, NULL, variable_map(4, 0, 0, "none", 1, 2, "all", 2, 1, "separate", 4, 0, "sent"), NULL);
 	variable_add(NULL, ("last_size"), VAR_INT, 1, &config_last_size, NULL, NULL, NULL);
@@ -162,6 +163,7 @@ void variable_set_default() {
 	xfree(console_charset);
 
 	config_slash_messages = 1;
+	config_history_savedups = 1;		/* save lines matching the previous history entry */
 
 	config_dcc_dir = NULL;
 
