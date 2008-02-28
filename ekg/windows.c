@@ -243,10 +243,7 @@ void window_switch(int id) {
  *
  * @return It returns result of window id subtractions.
  */
-
-static LIST_ADD_COMPARE(window_new_compare, window_t *) {
-	return data1->id - data2->id;
-}
+static LIST_ADD_COMPARE(window_new_compare, window_t *) { return data1->id - data2->id; }
 
 /**
  * window_new()
@@ -404,8 +401,7 @@ void window_next() {
  */
 
 /* XXX, need check */
-void window_prev()
-{
+void window_prev() {
 	window_t *prev = NULL;
 	list_t l;
 
@@ -420,6 +416,9 @@ void window_prev()
 
 		prev = w;
 	}
+
+	if (!prev)
+		return;
 
 	if (!prev->id) {
 		for (l = windows; l; l = l->next) {
@@ -581,8 +580,7 @@ char *window_target(window_t *window) {
  *
  * komenda ekg obs³uguj±ca okna
  */
-COMMAND(cmd_window)
-{
+COMMAND(cmd_window) {
 	if (!xstrcmp(name, ("clear")) || (params[0] && !xstrcasecmp(params[0], ("clear")))) {
 		window_t *w = xmemdup(window_current, sizeof(window_t));
 		query_emit_id(NULL, UI_WINDOW_CLEAR, &w);
@@ -899,8 +897,7 @@ COMMAND(cmd_window)
  * 		-1 - if not
  */
 
-int window_session_cycle(window_t *w)
-{
+int window_session_cycle(window_t *w) {
 	list_t l;
 	session_t *new_session = NULL;
 	int once = 0;
@@ -1018,8 +1015,7 @@ again:
 	return 0;
 }
 
-int window_lock_inc(window_t *w)
-{
+int window_lock_inc(window_t *w) {
 	if (!w)
 		return -1;
 
@@ -1028,8 +1024,7 @@ int window_lock_inc(window_t *w)
 	return 0;
 }
 
-int window_lock_dec(window_t *w)
-{
+int window_lock_dec(window_t *w) {
 	if (!w || w->lock < 1)
 		return -1;
 
