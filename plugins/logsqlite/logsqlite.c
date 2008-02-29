@@ -758,6 +758,8 @@ static int logsqlite_plugin_destroy()
 
 int logsqlite_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("logsqlite");
+
 	plugin_register(&logsqlite_plugin, prio);
 
 	logsqlite_setvar_default();

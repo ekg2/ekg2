@@ -849,6 +849,8 @@ int httprc_xajax_plugin_init(int prio) {
 	int fd;
 	struct sockaddr_in sin;
 
+	PLUGIN_CHECK_VER("httprc_xajax");
+
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(atoi(HTTPRCXAJAX_DEFPORT));
 	sin.sin_addr.s_addr = INADDR_ANY;

@@ -1722,6 +1722,9 @@ static plugins_params_t gg_plugin_vars[] = {
 
 int EXPORT gg_plugin_init(int prio) {
 	va_list dummy;
+
+	PLUGIN_CHECK_VER("gg");
+
 	gg_plugin.params = gg_plugin_vars;
 
 	plugin_register(&gg_plugin, prio);

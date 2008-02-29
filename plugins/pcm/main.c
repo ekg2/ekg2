@@ -262,6 +262,8 @@ CODEC_RECODE(pcm_codec_decode) {
 
 EXPORT int pcm_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("pcm");
+
 	plugin_register(&pcm_plugin, prio);
 	codec_register(&pcm_codec);
 	return 0;

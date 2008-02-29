@@ -215,6 +215,8 @@ CODEC_RECODE(gsm_codec_decode) {
 
 EXPORT int gsm_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("gsm");
+
 	plugin_register(&gsm_plugin, prio);
 	codec_register(&gsm_codec);
 

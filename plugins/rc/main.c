@@ -273,6 +273,9 @@ static void rc_paths_changed(const char *name)
 }
 
 EXPORT int rc_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("rc");
+
 	plugin_register(&rc_plugin, prio);
 
 	variable_add(&rc_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);

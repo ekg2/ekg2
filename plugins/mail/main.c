@@ -537,6 +537,8 @@ static QUERY(mail_count_query)
 
 EXPORT int mail_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("mail");
+	
 	plugin_register(&mail_plugin, prio);
 
 	query_connect_id(&mail_plugin, MAIL_COUNT, mail_count_query, NULL);

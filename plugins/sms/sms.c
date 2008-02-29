@@ -327,6 +327,8 @@ static QUERY(sms_protocol_message)
 
 int sms_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("sms");
+
         plugin_register(&sms_plugin, prio);
 
         command_add(&sms_plugin, ("sms:sms"), ("u ?"), sms_command_sms, 0, NULL);

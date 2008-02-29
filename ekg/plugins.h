@@ -26,6 +26,8 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
+#define EKG_ABI_VER 3826
+
 #define EXPORT __attribute__ ((visibility("default")))
 
 #ifndef EKG2_WIN32_NOFUNCTION
@@ -53,6 +55,8 @@ typedef void (plugin_notify_func_t)(session_t *, const char *);
 
 #define PLUGIN_VAR_ADD(name, type, value, secret, notify) 	{ name, value, secret, type, notify }
 #define PLUGIN_VAR_END()					{ NULL, NULL, 0, -1, NULL } 
+extern int plugin_abi_version(int plugin_abi_ver, const char * plugin_name);
+#define PLUGIN_CHECK_VER(name) { if (!plugin_abi_version(EKG_ABI_VER, name)) return -1; }
 
 typedef struct {
         char *key;                      /* name */

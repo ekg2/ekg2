@@ -211,6 +211,8 @@ void ekg2_dbus_toggle_watch(DBusWatch *watch, void *data)
 EXPORT int dbus_plugin_init(int prio) {
 	int ret, i;
 
+	PLUGIN_CHECK_VER("dbus");
+
    	dbus_error_init(&err);
 
 	conn = dbus_bus_get(DBUS_BUS_SESSION, &err);

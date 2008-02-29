@@ -2063,6 +2063,9 @@ static plugins_params_t sniff_plugin_vars[] = {
 };
 
 EXPORT int sniff_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("sniff");
+
 	sniff_plugin.params = sniff_plugin_vars;
 	plugin_register(&sniff_plugin, prio);
 

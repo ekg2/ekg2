@@ -2187,6 +2187,8 @@ EXPORT int irc_plugin_init(int prio)
 	static char pwd_name[2000] 	= { '\0'};
 	static char pwd_realname[2000]	= { '\0'};
 
+	PLUGIN_CHECK_VER("irc");
+
 	if (pwd_entry) {
 		xstrncpy(pwd_name, pwd_entry->pw_name, sizeof(pwd_name));
 		xstrncpy(pwd_realname, pwd_entry->pw_gecos, sizeof(pwd_realname));

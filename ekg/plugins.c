@@ -1259,6 +1259,23 @@ int have_plugin_of_class(plugin_class_t pclass) {
 PROPERTY_INT_SET(watch, timeout, time_t)
 
 /*
+ *  plugin_abi_version()
+ *
+ * @param plugin_abi_ver, plugin_name
+ *
+ * @return	1 - if core ABI version is the sama as plugin ABI version
+ *		else 0
+ */
+int plugin_abi_version(int plugin_abi_ver, const char * plugin_name) {
+
+	if (EKG_ABI_VER == plugin_abi_ver)
+		return 1;
+
+	debug_error("ABI versions mismatch.  %s_plugin ABI ver. %d,  core ABI ver. %d\n", plugin_name, plugin_abi_ver, EKG_ABI_VER);
+	return 0;
+
+}
+/*
  * Local Variables:
  * mode: c
  * c-file-style: "k&r"

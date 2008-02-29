@@ -279,6 +279,9 @@ static plugins_params_t jogger_plugin_vars[] = {
 };
 
 int jogger_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("jogger");
+
 	jogger_plugin.params = jogger_plugin_vars;
 
 	query_connect_id(&jogger_plugin, PLUGIN_PRINT_VERSION, jogger_print_version, NULL);

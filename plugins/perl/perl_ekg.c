@@ -88,7 +88,9 @@ int perl_plugin_destroy()
 int perl_plugin_init(int prio)
 {
 	auto_load = 1;
-	
+
+	PLUGIN_CHECK_VER("perl");
+
 	plugin_register(&perl_plugin, prio);
 	scriptlang_register(&perl_lang);
 /* TODO

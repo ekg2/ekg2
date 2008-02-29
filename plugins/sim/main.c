@@ -349,6 +349,9 @@ static int sim_theme_init() {
  */
 EXPORT int sim_plugin_init(int prio)
 {
+
+	PLUGIN_CHECK_VER("sim");
+
 	plugin_register(&sim_plugin, prio);
 
 	query_connect_id(&sim_plugin, MESSAGE_ENCRYPT, message_encrypt, NULL);

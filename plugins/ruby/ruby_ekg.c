@@ -524,6 +524,9 @@ static int ruby_theme_init() {
 }
 
 EXPORT int ruby_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("ruby");
+
 	allow_deinit = 0;
 
 	plugin_register(&ruby_plugin, prio);

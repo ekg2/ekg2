@@ -131,6 +131,8 @@ static void autoresponder_varchange(const char *varname)
 
 EXPORT int autoresponder_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("autoresponder");
+
 	plugin_register(&autoresponder_plugin, prio);
 	
 	query_connect_id(&autoresponder_plugin, PROTOCOL_MESSAGE, autoresponder_message, NULL);

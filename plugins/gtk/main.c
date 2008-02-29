@@ -345,6 +345,8 @@ EXPORT int gtk_plugin_init(int prio) {
 	int xfd;
 	list_t l;
 
+	PLUGIN_CHECK_VER("gtk");
+
         query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
         if (is_UI) {

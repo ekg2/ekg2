@@ -1659,6 +1659,9 @@ static plugins_params_t jabber_plugin_vars[] = {
  */
 
 EXPORT int jabber_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("jabber");
+
 	jabber_plugin.params = jabber_plugin_vars;
 
         plugin_register(&jabber_plugin, prio);

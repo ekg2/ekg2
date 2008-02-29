@@ -592,6 +592,8 @@ EXPORT int ncurses_plugin_init(int prio)
 	va_list dummy;
 	char *termtype = getenv("TERM");
 
+	PLUGIN_CHECK_VER("ncurses");
+
         query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
         if (is_UI) 

@@ -342,6 +342,8 @@ int xosd_plugin_init(int prio)
 {
 	va_list dummy;
 
+	PLUGIN_CHECK_VER("xosd");
+
 	osd = xosd_create(2);
 	if (!osd) {
 		debug("xosd: error creating osd: %s\n", xosd_error);

@@ -633,6 +633,8 @@ static int python_plugin_destroy()
 
 int python_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("python");
+
 	plugin_register(&python_plugin, prio);
 
 	scriptlang_register(&python_lang);

@@ -627,6 +627,8 @@ EXPORT int gpg_plugin_init(int prio) {
 	gpgme_error_t err;
 	const char *dbfile = prepare_pathf("keys/gpgkeydb.txt");
 
+	PLUGIN_CHECK_VER("gpg");
+
 	if (mkdir_recursive(dbfile, 0)) {
 		debug_error("Creating of directory keys failed, gpg plugin needs it!\n");	/* it's not 100% true.. but... */
 		return -1;

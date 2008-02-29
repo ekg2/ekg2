@@ -265,6 +265,8 @@ EXPORT int readline_plugin_init(int prio) {
 	list_t l;
 	int is_UI = 0;
 
+	PLUGIN_CHECK_VER("readline");
+
         query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
         if (is_UI)

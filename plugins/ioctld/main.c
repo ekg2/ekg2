@@ -203,6 +203,9 @@ static COMMAND(command_blink_leds)
 EXPORT int ioctld_plugin_init(int prio)
 {
 	const char *ioctld_sock_path;
+
+	PLUGIN_CHECK_VER("ioctld");
+
 	plugin_register(&ioctld_plugin, prio);
 
 	ioctld_sock_path = prepare_path(".socket", 1);

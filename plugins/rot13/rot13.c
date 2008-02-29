@@ -257,6 +257,9 @@ static int rot13_theme_init() {
 }
 
 EXPORT int rot13_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("rot13");
+
 	plugin_register(&rot13_plugin, prio);
 
 	query_connect_id(&rot13_plugin, SET_VARS_DEFAULT, rot13_setvar_default, NULL);

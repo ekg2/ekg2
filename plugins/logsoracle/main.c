@@ -63,6 +63,8 @@ PLUGIN_DEFINE(logsoracle, PLUGIN_LOG, logsoracle_theme_init);
  */
 int logsoracle_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("logsoracle");
+
 	plugin_register(&logsoracle_plugin, prio);
 
 	/* connect events with handlers */

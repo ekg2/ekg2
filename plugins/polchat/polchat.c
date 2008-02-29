@@ -707,6 +707,9 @@ static plugins_params_t polchat_plugin_vars[] = {
 };
 
 EXPORT int polchat_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("polchat");
+
 	polchat_plugin.params = polchat_plugin_vars;
 
 	plugin_register(&polchat_plugin, prio);

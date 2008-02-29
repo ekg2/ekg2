@@ -739,6 +739,7 @@ static plugins_params_t xmsg_plugin_vars[] = {
 
 int xmsg_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("xmsg");
 #ifdef HAVE_INOTIFY
 	if ((in_fd = inotify_init()) == -1)
 		xerrn("unable to init inotify");

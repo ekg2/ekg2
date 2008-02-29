@@ -564,6 +564,9 @@ static QUERY(logs_handler_newwin) {
 }
 
 EXPORT int logs_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("logs");
+
 	plugin_register(&logs_plugin, prio);
 	
 	buffer_lograw_tail = NULL;
