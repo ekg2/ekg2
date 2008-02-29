@@ -460,11 +460,12 @@ static void handle_sigsegv()
         if (stderr_backup && stderr_backup != -1)
                 dup2(stderr_backup, 2);
 
-        /* wy³±cz pluginy ui, ¿eby odda³y terminal */
+        /* wy³±cz pluginy ui, ¿eby odda³y terminal
+	 * destroy also log plugins to make sure that latest changes are written */
         for (l = plugins; l; l = l->next) {
                 plugin_t *p = l->data;
 
-                if (p->pclass != PLUGIN_UI)
+                if (p->pclass != PLUGIN_UI && p->pclass != PLUGIN_LOG)
                         continue;
 
                 p->destroy();
