@@ -3,7 +3,7 @@ AC_DEFUN([AC_CHECK_ORACLE],
 [
 
         dnl $have_pthread is defined by 'resolver libgadu'
-        if test "x$have_pthread" == "xyes"; then
+        if test "x$have_pthread" = "xyes"; then
                 if test -z "$ORACLE_HOME"; then
                         AC_MSG_WARN([logsoracle plugin requires enviroment variable ORACLE_HOME to be set (incomplete oracle installation?)]);
                 else
@@ -19,7 +19,7 @@ AC_DEFUN([AC_CHECK_ORACLE],
 
                         AC_CHECK_LIB(clntsh, sqlcxt,[have_clntsh=yes],[have_clntsh=no])
 
-                        if test "x$have_clntsh" == "xyes"; then
+                        if test "x$have_clntsh" = "xyes"; then
                                 AC_CHECK_HEADER(oci.h,[have_oci_h=yes],[have_oci_h=no])
                                 if test "x$have_oci_h" != "xyes"; then
                                         AC_MSG_WARN([logsoracle plugin : oracle headers not found (oci.h)]);
