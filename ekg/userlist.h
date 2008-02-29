@@ -110,21 +110,26 @@ enum userlist_privhandler_func_t {
 
 enum status_t {
 	EKG_STATUS_NULL		= 0x00, /* special value */
+
 	/* These statuses should be considered as no-delivery */
 	EKG_STATUS_ERROR,		/* used in Jabber */
 	EKG_STATUS_BLOCKED,		/* used in GG */
+
 	/* These statuses should be considered as 'not sure' */
-	EKG_STATUS_UNKNOWN	= 0x10,	/* will be used in Jabber */
+	EKG_STATUS_UNKNOWN	= 0x10,	/* used in Jabber */
 	EKG_STATUS_NA		= 0x20,	/* universal */
+
 	/* These should be considered as 'probably available' */
 	EKG_STATUS_INVISIBLE,		/* GG; hard to prioritize... */
 	EKG_STATUS_DND,			/* Jabber */
 	EKG_STATUS_XA,			/* Jabber */
 	EKG_STATUS_AWAY,		/* universal */
+
 	/* These should be considered as 'sure available' */
 	EKG_STATUS_AVAIL	= 0x40,	/* universal */
-	EKG_STATUS_FFC,			/* Jabber; FREE_FOR_CHAT was too long */
-	/* These are special statuses, which can be used only with special functions */
+	EKG_STATUS_FFC,			/* Jabber */
+
+	/* These are special statuses, which are to be used only with dedicated functions */
 	EKG_STATUS_AUTOAWAY	= 0x80,	/* putting in auto-away */
 	EKG_STATUS_AUTOXA,		/* putting in auto-xa */
 	EKG_STATUS_AUTOBACK		/* returning to previous status */

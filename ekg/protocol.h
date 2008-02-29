@@ -41,7 +41,7 @@
 #define EKG_NO_THEMEBIT	256
 
 enum msgack_t {
-	EKG_ACK_DELIVERED = 0,		/* message delivered successfully */
+	EKG_ACK_DELIVERED	= 0,	/* message delivered successfully */
 	EKG_ACK_QUEUED,			/* message queued for delivery */
 	EKG_ACK_DROPPED,		/* message rejected 'permamently' */
 	EKG_ACK_TEMPFAIL,		/* temporary delivery failure */
@@ -51,7 +51,7 @@ enum msgack_t {
 };
 
 enum disconnect_t {
-	EKG_DISCONNECT_USER = 0,	/* user-engaged disconnect */
+	EKG_DISCONNECT_USER	= 0,	/* user-engaged disconnect */
 	EKG_DISCONNECT_NETWORK,		/* network problems */
 	EKG_DISCONNECT_FORCED,		/* server forced to disconnect */
 	EKG_DISCONNECT_FAILURE,		/* connecting failed */
@@ -63,16 +63,16 @@ enum disconnect_t {
 
 enum msgclass_t {
 	/* recv */
-	EKG_MSGCLASS_MESSAGE = 0,	/* single message */
+	EKG_MSGCLASS_MESSAGE	= 0,	/* single message */
 	EKG_MSGCLASS_CHAT,		/* chat message */
 	EKG_MSGCLASS_SYSTEM,		/* system message */
-	EKG_MSGCLASS_LOG,		/* old logged message (used by logsqlite 'last_print_on_open' */
+	EKG_MSGCLASS_LOG,		/* old logged message (used by logsqlite 'last_print_on_open') */
 	/* sent */
-	EKG_MSGCLASS_SENT = 32,		/* single sent message */
+	EKG_MSGCLASS_SENT	= 32,	/* single sent message */
 	EKG_MSGCLASS_SENT_CHAT,		/* chat sent message */
-	EKG_MSGCLASS_SENT_LOG,		/* old logged message (used by logsqlite 'last_print_on_open' */
+	EKG_MSGCLASS_SENT_LOG,		/* old logged message (used by logsqlite 'last_print_on_open') */
 	/* priv */
-	EKG_MSGCLASS_PRIV_STATUS = 64	/* used by logs */
+	EKG_MSGCLASS_PRIV_STATUS= 64	/* used by logs */
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION
