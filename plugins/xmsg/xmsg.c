@@ -4,7 +4,13 @@
  */
 
 #define _GNU_SOURCE
-#define _XOPEN_SOURCE 600
+
+#ifdef __NetBSD__
+# define _NETBSD_SOURCE
+#else
+# define _XOPEN_SOURCE 600
+#endif
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -215,7 +221,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 
 	char *msg = NULL;
 	int err, fs;
-	time_t ft;
+	time_t ft = 0;
 	
 	if (*fn == '.') /* we're skipping ALL dotfiles */
 		return -1;
