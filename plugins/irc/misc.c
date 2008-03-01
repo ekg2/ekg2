@@ -1400,7 +1400,7 @@ IRC_COMMAND(irc_c_topic)
 				param[0]+1, t?t+1:"", param[2], coloured);
 		xfree(coloured);
 	} else {
-		chanp->topic   = xstrdup("No topic set!\n");
+		chanp->topic   = xstrdup("No topic set!");
 		chanp->topicby = xstrdup(OMITCOLON(param[0]));
 		print_window(dest, s, 0, "IRC_TOPIC_UNSET", session_name(s),
 				param[0]+1, t?t+1:"", param[2]);
