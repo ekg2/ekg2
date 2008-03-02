@@ -844,6 +844,12 @@ void ncurses_resize()
 		n->redraw = 1;
 	}
 
+	if (left < 0)			left = 0;
+	if (left > stdscr->_maxx)	left = stdscr->_maxx;
+
+	if (top < 0)			top = 0;
+	if (top > stdscr->_maxy)	top = stdscr->_maxy;
+
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
 		ncurses_window_t *n = w->private;
@@ -885,16 +891,6 @@ void ncurses_resize()
 
 		w->top = top;
 		w->left = left;
-
-		if (w->left < 0)
-			w->left = 0;
-		if (w->left > stdscr->_maxx)
-			w->left = stdscr->_maxx;
-
-		if (w->top < 0)
-			w->top = 0;
-		if (w->top > stdscr->_maxy)
-			w->top = stdscr->_maxy;
 
 		mvwin(n->window, w->top, w->left);
 
