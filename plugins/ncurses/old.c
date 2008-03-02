@@ -1590,7 +1590,7 @@ void update_statusbar(int commit)
 		/* XXX add unknown and likes!; maybe we could use ekg_status_string()? */
 #undef __add_format_emp_st
 
-		__add_format_emp("typing", (q->xstate & EKG_XSTATE_TYPING));
+		__add_format_emp("typing", q->typing);
 		__add_format_dup("query_descr", (q->descr), q->descr);
 #if 0	
 		__add_format_dup("query_ip", (q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 	/* XXX!!! */

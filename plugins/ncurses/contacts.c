@@ -117,7 +117,10 @@ static inline userlist_t *userlist_dup(userlist_t *up, char *uid, char *nickname
 	u->nickname	= nickname;
 	u->descr	= up->descr;
 	u->status	= up->status;
-	u->xstate	= up->xstate;
+		/* XXX: we need to copy these two? or maybe we shall memcpy() whole struct,
+		 * then change invidual fields? */
+	u->blink	= up->blink;
+	u->typing	= up->typing;
 	u->private	= priv;
 	return u;
 }
@@ -364,9 +367,9 @@ group_cleanup:
 			else
 				snprintf(tmp, sizeof(tmp), "contacts_%s", status_t);
 
-			if (u->xstate & EKG_XSTATE_BLINK)
+			if (u->blink)
 				xstrcat(tmp, "_blink");
-			if (u->xstate & EKG_XSTATE_TYPING)
+			if (u->typing)
 				xstrcat(tmp, "_typing");
 
 			line = format_string(format_find(tmp), u->nickname, u->descr);
