@@ -43,11 +43,11 @@
 /* stringo-naprawiacz, taki jak ufix() w xmalloc */
 #define ufix(x)	((wchar_t *) x ? (wchar_t *) x : (wchar_t *) L"")
 
-inline int xwcslen(const CHAR_T *str) {
+inline size_t xwcslen(const CHAR_T *str) {
 	return wcslen(ufix(str));
 }
 
-inline int xmbslen(const char *str) {
+inline size_t xmbslen(const char *str) {
 	return mbstowcs(NULL, str ? str : "", 0);
 }
 

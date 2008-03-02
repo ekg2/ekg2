@@ -709,10 +709,10 @@ static QUERY(protocol_message)
 
 	/* display blinking */
 	if (config_display_blinking && userlist && (class < EKG_MSGCLASS_SENT) && (!rcpts || !rcpts[0])) {
-		int oldstate = userlist->xstate;
+		int oldstate = userlist->blink;
 
 		if (config_make_window && xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid))) 
-			userlist->xstate |= EKG_XSTATE_BLINK;
+			userlist->blink = 1;
 		else if (!config_make_window) {
 			window_t *w;
 
@@ -722,13 +722,11 @@ static QUERY(protocol_message)
 			 */
 			w = window_find_s(session_class, uid);
 
-			if (!w && window_current->id != 1)
-				userlist->xstate |= EKG_XSTATE_BLINK; 
-			if (w && window_current->id != w->id)
-				userlist->xstate |= EKG_XSTATE_BLINK;
+			if (w ? (window_current->id != w->id) : (window_current->id != 1))
+				userlist->blink = 1;
 		}
 
-		if (oldstate != userlist->xstate)
+		if (oldstate != userlist->blink)
 			query_emit_id(NULL, USERLIST_CHANGED, &session, &uid);
 	}
 	
@@ -871,17 +869,24 @@ static QUERY(protocol_xstate)
 
 	if ((w = window_find_s(s, uid))) {
 		if (offstate & EKG_XSTATE_TYPING)
-			w->in_typing = 0;
+			w->in_typing	= 0;
 		else if (state & EKG_XSTATE_TYPING)
-			w->in_typing = 1;
+			w->in_typing	= 1;
+		else
+			goto xs_userlist;
+
 		query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
 	}
 
+xs_userlist:
 	if ((u = userlist_find(s, uid)) || (config_auto_user_add && (u = userlist_add(s, uid, uid)))) {
 		if (offstate & EKG_XSTATE_TYPING)
-			u->xstate &= ~EKG_XSTATE_TYPING;
+			u->typing	= 0;
 		else if (state & EKG_XSTATE_TYPING)
-			u->xstate |= EKG_XSTATE_TYPING;
+			u->typing	= 1;
+		else
+			return 0;
+
 		query_emit_id(NULL, USERLIST_CHANGED, __session, __uid);
 	}
 

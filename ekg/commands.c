@@ -3825,7 +3825,7 @@ static COMMAND(cmd_last)
 					&& xstrlen(format_find("last_list_timestamp"))>0)
 				xstrcpy(buf, "TOOLONG");
 
-			if (show_sent && ll->type == 0 && !(ll->sent_time - config_time_deviation <= ll->time && ll->time <= ll->sent_time + config_time_deviation)) {
+			if (show_sent && !ll->type && !(ll->sent_time - config_time_deviation <= ll->time && ll->time <= ll->sent_time + config_time_deviation)) {
 				st = localtime(&ll->sent_time);
 				form = format_find((tm->tm_yday == now->tm_yday) ? "last_list_timestamp_today" : "last_list_timestamp");
 				if (!strftime(buf2, sizeof(buf2), form, st) && xstrlen(form)>0)
@@ -3834,11 +3834,7 @@ static COMMAND(cmd_last)
 			} else
 				time_str = xstrdup(buf);
 
-			if (config_last & 4 && ll->type == 1)
-				printq("last_list_out", time_str, format_user(session, ll->uid), ll->message);
-			else
-				printq("last_list_in", time_str, format_user(session, ll->uid), ll->message);
-
+			printq(config_last & 4 && ll->type ? "last_list_out" : "last_list_in", time_str, format_user(session, ll->uid), ll->message);
 			xfree(time_str);
 		}
         }

@@ -920,7 +920,7 @@ int ignored_remove(session_t *session, const char *uid) {
  *  - uin.
  *  - level.
  */
-int ignored_add(session_t *session, const char *uid, int level) {
+int ignored_add(session_t *session, const char *uid, ignore_t level) {
 	userlist_t *u;
 	char *tmps, *tmp;
 	int oldlevel = 0;

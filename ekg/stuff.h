@@ -58,11 +58,11 @@ struct child_s;
 typedef void (*child_handler_t)(struct child_s *c, int pid, const char *name, int status, void *data);
 
 typedef struct child_s {
-	int pid;			/* id procesu */
-	plugin_t *plugin;		/* obs³uguj±cy plugin */
-	char *name;			/* nazwa, wy¶wietlana przy /exec */
-	child_handler_t handler;	/* zak³ad pogrzebowy */
-	void *private;			/* dane procesu */
+	pid_t		pid;		/* id procesu */
+	plugin_t	*plugin;	/* obs³uguj±cy plugin */
+	char		*name;		/* nazwa, wy¶wietlana przy /exec */
+	child_handler_t	handler;	/* zak³ad pogrzebowy */
+	void		*private;	/* dane procesu */
 } child_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
@@ -72,29 +72,29 @@ child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t 
 
 #ifndef EKG2_WIN32_NOFUNCTION
 struct alias {
-	char *name;		/* nazwa aliasu */
-	list_t commands;	/* commands->data to (char*) */
+	char		*name;		/* nazwa aliasu */
+	list_t		commands;	/* commands->data to (char*) */
 };
 #endif
 
 #define BINDING_FUNCTION(x) void x(const char *arg) 
 
 struct binding {
-	char *key;
+	char		*key;
 
-	char *action;					/* akcja */
-	int internal;					/* czy domy¶lna kombinacja? */
-	void (*function)(const char *arg);		/* funkcja obs³uguj±ca */
-	char *arg;					/* argument funkcji */
+	char		*action;			/* akcja */
+	unsigned int	internal		: 1;	/* czy domy¶lna kombinacja? */
+	void	(*function)(const char *arg);		/* funkcja obs³uguj±ca */
+	char		*arg;				/* argument funkcji */
 
-	char *default_action;				/* domy¶lna akcja */
-	void (*default_function)(const char *arg);	/* domy¶lna funkcja */
-	char *default_arg;				/* domy¶lny argument */
+	char		*default_action;		/* domy¶lna akcja */
+	void	(*default_function)(const char *arg);	/* domy¶lna funkcja */
+	char		*default_arg;			/* domy¶lny argument */
 };
 
 typedef struct {
-        char *sequence;
-        struct binding *binding;
+        char		*sequence;
+        struct binding	*binding;
 } binding_added_t;
 
 enum mesg_t {
@@ -108,41 +108,41 @@ enum mesg_t {
 #define TIMER_SESSION(x)	int x(int type, session_t *s)
 
 struct timer {
-	char *name;		/* nazwa timera */
-	plugin_t *plugin;	/* wtyczka obs³uguj±ca deksryptor */
-	struct timeval ends;	/* kiedy siê koñczy? */
-	time_t period;		/* ile sekund ma trwaæ czekanie */
-	int persist;		/* czy ma byæ na zawsze? */
-	int (*function)(int, void *);
-				/* funkcja do wywo³ania */
-	void *data;		/* dane dla funkcji */
-	int at;			/* /at? trzeba siê tego jako¶ pozbyæ
-				 * i ujednoliciæ z /timer */
-	int is_session;		/* czy sesyjny */
+	char		*name;			/* nazwa timera */
+	plugin_t	*plugin;		/* wtyczka obs³uguj±ca deksryptor */
+	struct timeval	ends;			/* kiedy siê koñczy? */
+	time_t		period;			/* ile sekund ma trwaæ czekanie */
+	int	(*function)(int, void *);	/* funkcja do wywo³ania */
+	void		*data;			/* dane dla funkcji */
+
+	unsigned int	persist		: 1;	/* czy ma byæ na zawsze? */
+	unsigned int	at		: 1;	/* /at? trzeba siê tego jako¶ pozbyæ
+						 * i ujednoliciæ z /timer */
+	unsigned int	is_session	: 1;	/* czy sesyjny */
 };
 
 struct conference {
-	char *name;
-	int ignore;
-	list_t recipients;
+	char		*name;
+	ignore_t	ignore;
+	list_t		recipients;
 };
 
 typedef struct {
-	char *session;
-	char *name;
-	list_t participants;
-	void *private;
+	char		*session;
+	char		*name;
+	list_t		participants;
+	void		*private;
 } newconference_t;
 
 struct buffer {
-	time_t ts;
-	char *target;
-	char *line;
+	time_t		ts;
+	char		*target;
+	char		*line;
 };
 
 struct color_map {
-	int color;
-	unsigned char r, g, b;
+	int		color;
+	unsigned char	r, g, b;
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION

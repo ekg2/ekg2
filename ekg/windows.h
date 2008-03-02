@@ -34,23 +34,23 @@
 #endif
 
 typedef struct {
-	void *w;		/* window, if NULL it means current */
-	int casense;		/* 0 - ignore case; 1 - don't ignore case, -1 - use global variable */
-	int lock;		/* if 0, don't update */
-	int isregex;		/* 1 - in target regexp */
+	void *w;			/* window, if NULL it means current */
+	int casense		: 2;	/* 0 - ignore case; 1 - don't ignore case, -1 - use global variable */
+	unsigned int lock	: 1;	/* if 0, don't update */
+	unsigned int isregex	: 1;	/* 1 - in target regexp */
 #ifdef HAVE_REGEX_H
-	regex_t reg;		/* regexp compilated expression */
+	regex_t reg;			/* regexp compilated expression */
 #endif
-	char *expression;	/* expression */
+	char *expression;		/* expression */
 } window_lastlog_t;
 
 typedef struct {
-	int id;			/* numer okna */
-	char *target;		/* nick query albo inna nazwa albo NULL */
-	session_t *session;	/* której sesji dotyczy okno */
+	unsigned short int id;		/* numer okna */
+	char *target;			/* nick query albo inna nazwa albo NULL */
+	session_t *session;		/* której sesji dotyczy okno */
 
-	int left, top;		/* pozycja (x, y) wzglêdem pocz±tku ekranu */
-	int width, height;	/* wymiary okna */
+	unsigned short int left, top;		/* pozycja (x, y) wzglêdem pocz±tku ekranu */
+	unsigned short int width, height;	/* wymiary okna */
 
 	unsigned int act	: 2;	/* activity: 1 - status/junk; 2 - msg */
 	unsigned int in_typing	: 1;	/* user is composing a message to us */
@@ -58,21 +58,23 @@ typedef struct {
 					   so we can start sending composing to him/her */
 	unsigned int out_active	: 1;	/* we 'started' sending messages to user (considered
 					   ourselves active), so we shall say goodbye when done */
-	int more;		/* pojawi³o siê co¶ poza ekranem */
+	unsigned int more	: 1;	/* pojawi³o siê co¶ poza ekranem */
+	unsigned int floating	: 1;	/* czy p³ywaj±ce? */
+	unsigned int doodle	: 1;	/* czy do gryzmolenia?		[we don't set it anywhere] */
 
-	int floating;		/* czy p³ywaj±ce? */
-	int doodle;		/* czy do gryzmolenia? */
-	int frames;		/* informacje o ramkach */
-	int edge;		/* okienko brzegowe */
-	int last_update;	/* czas ostatniego uaktualnienia */
-	int nowrap;		/* nie zawijamy linii */
-	int hide;		/* ukrywamy, bo jest zbyt du¿e */
-	int lock;		/* blokowanie zmian w obrêbie komendy */
+	unsigned int frames	: 4;	/* informacje o ramkach */
+	unsigned int edge	: 4;	/* okienko brzegowe */
 
-	list_t userlist;	/* sometimes window may require separate userlist */
+	unsigned int nowrap	: 1;	/* nie zawijamy linii */
+	unsigned int hide	: 1;	/* ukrywamy, bo jest zbyt du¿e */
+
+	time_t last_update;		/* czas ostatniego uaktualnienia */
+	unsigned short int lock;	/* blokowanie zmian w obrêbie komendy */
+
+	list_t userlist;		/* sometimes window may require separate userlist */
 
 	window_lastlog_t *lastlog;	/* prywatne informacje lastloga */
-	void *private;		/* prywatne informacje ui */
+	void *private;			/* prywatne informacje ui */
 } window_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION

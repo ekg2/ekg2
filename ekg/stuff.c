@@ -657,13 +657,14 @@ void changed_display_blinking(const char *var)
 {
 	list_t sl;
 
-	/* wy³anczamy wszystkie blinkaj±ce uid'y */
+	/* wy³±czamy wszystkie blinkaj±ce uid'y */
         for (sl = sessions; sl; sl = sl->next) {
 		list_t l;
         	session_t *s = sl->data;
+
 		for (l = s->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
-			u->xstate &= ~EKG_XSTATE_BLINK;			
+			userlist_t *u	= l->data;
+			u->blink	= 0;;
 		}
 	}
 }
@@ -2280,7 +2281,7 @@ int say_it(const char *str)
 #endif
 }
 
-void debug_ext(int level, const char *format, ...) {
+void debug_ext(debug_level_t level, const char *format, ...) {
 	va_list ap;
 	if (!config_debug) return;
 
@@ -2531,7 +2532,8 @@ void ekg_update_status(session_t *session)
                         u->status = EKG_STATUS_NA;
                 else
                         u->status = session->status;
-		u->xstate &= ~EKG_XSTATE_BLINK;
+
+		u->blink = 0;
         }
 
 }

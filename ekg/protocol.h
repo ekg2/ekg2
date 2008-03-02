@@ -27,6 +27,8 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <time.h>
+#include <stdlib.h> /* size_t */
+#include <sys/types.h> /* off_t */
 
 #define EKG_FORMAT_RGB_MASK 0x00ffffffL	/* 0x00BBGGRR */
 #define EKG_FORMAT_R_MASK 0x00ff0000L
@@ -78,7 +80,8 @@ enum msgclass_t {
 #ifndef EKG2_WIN32_NOFUNCTION
 void protocol_init();
 
-char *message_print(const char *session, const char *sender, const char **rcpts, const char *text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure);
+char *message_print(const char *session, const char *sender, const char **rcpts, const char *text, const uint32_t *format,
+		time_t sent, int class, const char *seq, int dobeep, int secure);
 #endif
 
 typedef enum {
@@ -93,18 +96,18 @@ struct dcc_s;
 typedef void (*dcc_close_handler_t)(struct dcc_s *);
 
 typedef struct dcc_s {
-	session_t *session;		/* ktora sesja? */
-	char *uid;			/* z kim po³±czenie */
-	dcc_type_t type;		/* rodzaj po³±czenia */
-	int id;				/* numer po³±czenia */
-	void *priv;			/* dane prywatne pluginu */
+	session_t	*session;		/* ktora sesja? */
+	char		*uid;			/* z kim po³±czenie */
+	dcc_type_t	type;			/* rodzaj po³±czenia */
+	int		id;			/* numer po³±czenia */
+	void		*priv;			/* dane prywatne pluginu */
 	dcc_close_handler_t close_handler;	/* obs³uga /dcc close */
-	int active;			/* czy po³±czono? */
-	time_t started;			/* kiedy utworzono? */
+	unsigned int	active		: 1;	/* czy po³±czono? */
+	time_t		started;		/* kiedy utworzono? */
 	
-	char *filename;			/* nazwa pliku */
-	int size;			/* rozmiar pliku */
-	int offset;			/* ile ju¿ wykonano */
+	char		*filename;		/* nazwa pliku */
+	size_t		size;			/* rozmiar pliku */
+	off_t		offset;			/* ile ju¿ wykonano */
 } dcc_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION

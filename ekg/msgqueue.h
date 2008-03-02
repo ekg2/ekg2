@@ -27,12 +27,12 @@
 #include "dynstuff.h"
 
 typedef struct {
-	char *session;		/* do której sesji nale¿y */
-	char *rcpts;		/* uidy odbiorców */
-	char *message;		/* tre¶æ */
-	char *seq;		/* numer sekwencyjny */
-	time_t time;		/* czas wys³ania */
-	int mark;
+	char		*session;		/* do której sesji nale¿y */
+	char		*rcpts;			/* uidy odbiorców */
+	char		*message;		/* tre¶æ */
+	char		*seq;			/* numer sekwencyjny */
+	time_t		time;			/* czas wys³ania */
+	unsigned int	mark		: 1;	/* if added during cleanup */
 } msg_queue_t;
 
 extern list_t msg_queue;

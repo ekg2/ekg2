@@ -36,8 +36,8 @@ extern int config_use_unicode;	/* not everyone want to include stuff.h */
 #define STRING_FORMAT "%ls"
 #define CHAR_FORMAT "%lc"
 
-inline int xwcslen(const CHAR_T *str);
-inline int xmbslen(const char *str);
+inline size_t xwcslen(const CHAR_T *str);
+inline size_t xmbslen(const char *str);
 inline CHAR_T *xwcscpy(CHAR_T *dst, CHAR_T *src);
 inline CHAR_T *xwcsdup(CHAR_T *str);
 inline CHAR_T *xwcscat(CHAR_T *dst, const CHAR_T *src);

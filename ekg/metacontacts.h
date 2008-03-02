@@ -22,9 +22,9 @@
 #include "dynstuff.h" 
 
 typedef struct {
-	char *name; /* uid or name */
-	unsigned int prio; /* prio */
-	char *s_uid; /* session uid */
+	char		*name; /* uid or name */
+	unsigned int	prio; /* prio */
+	char		*s_uid; /* session uid */
 } metacontact_item_t;
 
 typedef struct {

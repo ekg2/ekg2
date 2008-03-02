@@ -206,9 +206,9 @@ void window_switch(int id) {
 		query_emit_id(NULL, UI_WINDOW_SWITCH, &w);	/* XXX */
 
 		w->act = 0;
-		if (w->target && w->session && (u = userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) {
-			u->xstate &= ~EKG_XSTATE_BLINK;
-			ul_refresh = 1;
+		if (w->target && w->session && (u = userlist_find(w->session, w->target)) && u->blink) {
+			u->blink	= 0;
+			ul_refresh	= 1;
 		}
 
 		if (!(config_make_window & 3) && w->id == 1 && session_current) {
@@ -218,9 +218,9 @@ void window_switch(int id) {
 			for (l = s->userlist; l; l = l->next) {
                         	userlist_t *u = l->data;
 
-				if ((u->xstate & EKG_XSTATE_BLINK) && !window_find_s(s, u->uid)) {
-		                        u->xstate &= ~EKG_XSTATE_BLINK;
-					ul_refresh = 1;
+				if (u->blink && !window_find_s(s, u->uid)) {
+		                        u->blink	= 0;
+					ul_refresh	= 1;
 				}
 			}
                 }
@@ -596,7 +596,7 @@ COMMAND(cmd_window) {
 
 			if (w->id) {
 				if (w->target) {
-					if (!w->floating)	
+					if (!w->floating)
 						printq("window_list_query", itoa(w->id), w->target);
 					else
 						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);

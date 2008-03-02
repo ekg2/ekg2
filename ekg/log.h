@@ -30,11 +30,11 @@
 #include "dynstuff.h"
 
 struct last {
-	int type;		/* 0 - przychodz±ca, 1 - wychodz±ca */
-	char *uid;		/* od kogo, lub do kogo przy wysy³anych */
-	time_t time;		/* czas */
-	time_t sent_time;	/* czas wys³ania wiadomo¶ci przychodz±cej */
-	char *message;		/* wiadomo¶æ */
+	unsigned int type	: 1;	/* 0 - przychodz±ca, 1 - wychodz±ca */
+	char *uid;			/* od kogo, lub do kogo przy wysy³anych */
+	time_t time;			/* czas */
+	time_t sent_time;		/* czas wys³ania wiadomo¶ci przychodz±cej */
+	char *message;			/* wiadomo¶æ */
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION

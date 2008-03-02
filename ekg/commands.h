@@ -31,45 +31,41 @@
 
 #define COMMAND(x) int x(const char *name, const char **params, session_t *session, const char *target, int quiet)
 
+typedef enum {
 /* INFORMATIONAL FLAGS */
-	/* command is binded by alias managment */
-#define COMMAND_ISALIAS 		0x01
-	/* command is binded by script mangament */
-#define COMMAND_ISSCRIPT		0x02
-	/* [XXX] command uses resource, and resource should be passed */
-#define COMMAND_WITH_RESOURCE		0x04
+	COMMAND_ISALIAS			= 0x01,		/* command is binded by alias management */
+	COMMAND_ISSCRIPT		= 0x02,		/* command is binded by script management */
+	COMMAND_WITH_RESOURCE		= 0x04,		/* [XXX] command uses resource, and resource should be passed */
 /* .... */
 
 /* CONDITIONAL FLAGS */
-	/* '!' in params means that arg must exist in par[..] (?) */
-#define COMMAND_ENABLEREQPARAMS 	0x10
-	/* when par[0] != NULL, than target = par[0] and than par list moves up (par++ ; par[0] == par[1] and so on */
-#define COMMAND_PARAMASTARGET		0x20
-	/* session must be connected to execute that command */
-#define SESSION_MUSTBECONNECTED 	0x40
-	/* command must come from the same plugin as session (?) */
-#define SESSION_MUSTBELONG		0x80
-	/* if session == NULL, we try session_current, if still NULL. we return -1... mh, i really don't know if this 
-	 * flag is obsolete... but we do simillar thing in many places in code, so implemented. */
-#define SESSION_MUSTHAS			0x100
-	/* session must exist and has private struct */
-#define SESSION_MUSTHASPRIVATE		0x200
-	/* before executing handler, check if target (or params[0] if COMMAND_PARAMASTARGET set) is valid uid for current session, or we've got smb with this nickname
-	 * on userlist... (read: we check if get_uid(session, target) return smth, if not we print message) */
-#define COMMAND_TARGET_VALID_UID	0x400
+	COMMAND_ENABLEREQPARAMS		= 0x10,		/* '!' in params means that arg must exist in par[..] (?) */
+	COMMAND_PARAMASTARGET		= 0x20,		/* when par[0] != NULL, than target = par[0] and than par list moves up
+							   (par++ ; par[0] == par[1] and so on */
+	SESSION_MUSTBECONNECTED 	= 0x40,		/* session must be connected to execute that command */
+	SESSION_MUSTBELONG		= 0x80,		/* command must come from the same plugin as session (?) */
+	SESSION_MUSTHAS			= 0x100,	/* if session == NULL, we try session_current, if still NULL. we return -1...
+							   mh, i really don't know if this flag is obsolete... but we do simillar thing
+							   in many places in code, so implemented. */
+	SESSION_MUSTHASPRIVATE		= 0x200,	/* session must exist and has private struct */
+	COMMAND_TARGET_VALID_UID	= 0x400		/* before executing handler, check if target (or params[0] if COMMAND_PARAMASTARGET
+							   set) is valid uid for current session, or we've got smb with this nickname
+							   on userlist... (read: we check if get_uid(session, target) return smth,
+							   if not we print message) */
+} command_flags_t;
 
 typedef COMMAND(command_func_t);
 
 typedef struct {
-	/* public: */
-	const char *name;
-	plugin_t *plugin;
+/* public: */
+	const char	*name;
+	plugin_t	*plugin;
 
-	/* private: */
-	char**params;
-	command_func_t *function;
-	int flags;
-	char **possibilities;
+/* private: */
+	char		**params;
+	command_func_t	*function;
+	command_flags_t	flags;
+	char		**possibilities;
 } command_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION

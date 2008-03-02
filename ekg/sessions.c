@@ -324,7 +324,7 @@ int session_remove(const char *uid)
 	xfree(s->uid);
 	xfree(s->descr);
 	xfree(s->password);
-	xfree(s->lastdescr);
+	xfree(s->last_descr);
 
 	/* free memory like sessions_free() do */
 	userlist_free(s);
@@ -335,7 +335,7 @@ int session_remove(const char *uid)
 
 PROPERTY_INT_GET(session, status, int)
 
-int session_status_set(session_t *s, int status)
+int session_status_set(session_t *s, status_t status)
 {
 	int is_xa;
 
@@ -359,9 +359,9 @@ int session_status_set(session_t *s, int status)
 
 	/* save current status/ descr && turn autoaway on */
 		if (!s->autoaway) { /* don't overwrite laststatus, if already on aa */
-			xfree(s->lastdescr);		/* just in case */
-			s->laststatus	= s->status;
-			s->lastdescr	= xstrdup(s->descr);
+			xfree(s->last_descr);		/* just in case */
+			s->last_status	= s->status;
+			s->last_descr	= xstrdup(s->descr);
 			s->autoaway = 1;
 		}
 	/* new status */
@@ -372,7 +372,7 @@ int session_status_set(session_t *s, int status)
 			xfree(s->descr);
 
 			if (xstrchr(tmp, '%')) { /* the New&Better-AutoAway-Markup^TM */
-				const char *current_descr = (s->autoaway ? s->lastdescr : s->descr);
+				const char *current_descr = (s->autoaway ? s->last_descr : s->descr);
 				char *c, *xbuf, *xc;
 				int xm = 0;
 
@@ -430,15 +430,15 @@ int session_status_set(session_t *s, int status)
 /* if it's autoback */
 	if (status == EKG_STATUS_AUTOBACK) {
 	/* set status */
-		s->status	= s->laststatus ? s->laststatus : EKG_STATUS_AVAIL;
+		s->status	= s->last_status ? s->last_status : EKG_STATUS_AVAIL;
 	/* set descr */
-		if (s->autoaway || s->lastdescr) {
+		if (s->autoaway || s->last_descr) {
 			xfree(s->descr);
-			s->descr = s->lastdescr;
+			s->descr = s->last_descr;
 		}
 
-		s->laststatus	= 0;
-		s->lastdescr	= NULL;
+		s->last_status	= 0;
+		s->last_descr	= NULL;
 		s->autoaway	= 0;
 		return 0;
 	}
@@ -447,8 +447,8 @@ int session_status_set(session_t *s, int status)
 
 /* if it wasn't neither _autoback nor _autoaway|_autoxa, it should be one of valid status types... */
 	if (s->autoaway) {	/* if we're @ away, set previous, set lastdescr status & free data */
-		s->laststatus	= 0;	/* EKG_STATUS_NULL */
-		xfree(s->descr);	s->descr	= s->lastdescr;	s->lastdescr = NULL;
+		s->last_status	= 0;	/* EKG_STATUS_NULL */
+		xfree(s->descr);	s->descr	= s->last_descr;	s->last_descr = NULL;
 		s->autoaway	= 0;
 	}
 	return 0;
@@ -509,8 +509,8 @@ int session_descr_set(session_t *s, const char *descr)
 		return -1;
 	
 	if (s->autoaway) {
-		xfree(s->lastdescr);
-		s->lastdescr = xstrdup(descr);
+		xfree(s->last_descr);
+		s->last_descr = xstrdup(descr);
 	} else {
 		xfree(s->descr);
 		s->descr = xstrdup(descr);
@@ -848,9 +848,9 @@ int session_write()
 			if (s->alias)
 				fprintf(f, "alias=%s\n", s->alias);
 			if (s->status && config_keep_reason != 2)
-				fprintf(f, "status=%s\n", ekg_status_string(s->autoaway ? s->laststatus : s->status, 0));
+				fprintf(f, "status=%s\n", ekg_status_string(s->autoaway ? s->last_status : s->status, 0));
 			if (s->descr && config_keep_reason) {
-				char *myvar = (s->autoaway ? s->lastdescr : s->descr);
+				char *myvar = (s->autoaway ? s->last_descr : s->descr);
 				xstrtr(myvar, '\n', '\002');
 				fprintf(f, "descr=%s\n", myvar);
 				xstrtr(myvar, '\002', '\n');
@@ -1024,9 +1024,9 @@ COMMAND(session_command)
 			if (s->alias)
 				debug("alias=%s\n", s->alias);
 			if (s->status)
-				debug("status=%s\n", ekg_status_string(s->autoaway ? s->laststatus : s->status, 0));
+				debug("status=%s\n", ekg_status_string(s->autoaway ? s->last_status : s->status, 0));
 			if (s->descr)
-				debug("descr=%s\n", (s->autoaway ? s->lastdescr : s->descr));
+				debug("descr=%s\n", (s->autoaway ? s->last_descr : s->descr));
 
 			/*  _global_ vars: */
 			if (p) {
@@ -1503,7 +1503,7 @@ void sessions_free() {
 	        xfree(s->uid);
         	xfree(s->descr);
 	        xfree(s->password);
-		xfree(s->lastdescr);
+		xfree(s->last_descr);
 		userlist_free(s);
         }
 
