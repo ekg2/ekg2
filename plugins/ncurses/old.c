@@ -796,7 +796,6 @@ void ncurses_resize()
 				w->left = left;
 				w->top = top;
 				w->height = height;
-				w->hide = 0;
 				width -= w->width;
 				left += w->width;
 			}
