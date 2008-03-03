@@ -41,7 +41,7 @@ typedef struct {
 	short		*attr;			/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
 	time_t		ts;			/* timestamp */
 
-	size_t		prompt_len;		/* d³ugo¶æ promptu, który bêdzie powtarzany przy
+	int		prompt_len;		/* d³ugo¶æ promptu, który bêdzie powtarzany przy
 						   przej¶ciu do kolejnej linii. */
 	unsigned int	prompt_empty	: 1;	/* prompt przy przenoszeniu bêdzie pusty */
 	int		margin_left;		/* where the margin is set (on what char) */

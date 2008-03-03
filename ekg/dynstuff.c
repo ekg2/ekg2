@@ -40,7 +40,7 @@
  *
  * zwraca wska¼nik zaalokowanego elementu lub NULL w przpadku b³êdu.
  */
-void *list_add_sorted(list_t *list, void *data, size_t alloc_size, int (*comparision)(void *, void *))
+void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparision)(void *, void *))
 {
 	list_t new, tmp;
 
@@ -100,7 +100,7 @@ void *list_add_sorted(list_t *list, void *data, size_t alloc_size, int (*compari
  * @sa list_remove()
  */
 
-void *list_add_beginning(list_t *list, void *data, size_t alloc_size) {
+void *list_add_beginning(list_t *list, void *data, int alloc_size) {
 
 	list_t new;
 
@@ -134,7 +134,7 @@ void *list_add_beginning(list_t *list, void *data, size_t alloc_size) {
  * @sa list_add_sorted()
  */
 
-void *list_add(list_t *list, void *data, size_t alloc_size)
+void *list_add(list_t *list, void *data, int alloc_size)
 {
 	return list_add_sorted(list, data, alloc_size, NULL);
 }
@@ -266,7 +266,7 @@ int list_remove(list_t *list, void *data, int free_data) {
  * @return n'th item (list->data) if found, or NULL with errno set to ENOENT
  */
 
-void *list_get_nth(list_t list, off_t id) {
+void *list_get_nth(list_t list, int id) {
 	while (list) {
 		if ((--id) == 0) {
 			/* errno = !ENOENT; */
@@ -364,7 +364,7 @@ int list_destroy(list_t list, int free_data) {
  *  - s - ci±g znaków,
  *  - count - wymagana ilo¶æ znaków (bez koñcowego '\0').
  */
-static void string_realloc(string_t s, size_t count)
+static void string_realloc(string_t s, int count)
 {
 	char *tmp;
 	
@@ -423,7 +423,7 @@ int string_append_c(string_t s, char c)
  *		-1 and errno set to EFAULT if input params were wrong (s == NULL || str == NULL)
  */
 
-int string_append_n(string_t s, const char *str, size_t count)
+int string_append_n(string_t s, const char *str, int count)
 {
 	if (!s || !str) {
 		errno = EFAULT;
@@ -493,7 +493,7 @@ int string_append_format(string_t s, const char *format, ...) {
  * @todo XXX Protect from negative count (and less than -1) ?
  */
 
-int string_append_raw(string_t s, const char *str, size_t count) {
+int string_append_raw(string_t s, const char *str, int count) {
 	if (!s || !str) {
 		errno = EFAULT;
 		return -1;
@@ -535,7 +535,7 @@ int string_append(string_t s, const char *str)
  *  - str - tekst do dopisania,
  *  - count - ilo¶æ znaków do dopisania (-1 znaczy, ¿e wszystkie).
  */
-void string_insert_n(string_t s, off_t index, const char *str, size_t count)
+void string_insert_n(string_t s, int index, const char *str, int count)
 {
 	if (!s || !str)
 		return;
@@ -567,7 +567,7 @@ void string_insert_n(string_t s, off_t index, const char *str, size_t count)
  * @sa string_insert_n()
  */
 
-void string_insert(string_t s, off_t index, const char *str)
+void string_insert(string_t s, int index, const char *str)
 {
 	string_insert_n(s, index, str, -1);
 }
@@ -605,7 +605,7 @@ string_t string_init(const char *value) {
  *
  */
 
-void string_remove(string_t s, size_t count) {
+void string_remove(string_t s, int count) {
 	if (!s || count <= 0)
 		return;
 	
@@ -717,7 +717,7 @@ const char *itoa(long int i)
  * zaalokowan± tablicê z zaalokowanymi ci±gami znaków, któr± nale¿y
  * zwolniæ funkcj± array_free()
  */
-char **array_make(const char *string, const char *sep, size_t max, int trim, int quotes)
+char **array_make(const char *string, const char *sep, int max, int trim, int quotes)
 {
 	const char *p, *q;
 	char **result = NULL;
@@ -894,7 +894,7 @@ char *array_join(char **array, const char *sep)
 	return string_free(s, 0);
 }
 
-char *array_join_count(char **array, const char *sep, size_t count) {
+char *array_join_count(char **array, const char *sep, int count) {
 	string_t s = string_init(NULL);
 
 	if (array) {
@@ -986,7 +986,7 @@ void array_free(char **array)
 	xfree(array);
 }
 
-void array_free_count(char **array, size_t count) {
+void array_free_count(char **array, int count) {
 	char **tmp;
 
 	if (!array)

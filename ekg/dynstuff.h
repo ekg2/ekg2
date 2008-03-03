@@ -21,9 +21,6 @@
 #ifndef __EKG_DYNSTUFF_H
 #define __EKG_DYNSTUFF_H
 
-#include <stdlib.h> /* size_t */
-#include <sys/types.h> /* off_t */
-
 /*
  * typedef list_t
  *
@@ -64,12 +61,12 @@ typedef struct list *list_t;
 
 #define LIST_DESTROY(list, func)			list_destroy2(list, (void *) func)
 
-void *list_add(list_t *list, void *data, size_t alloc_size);
-void *list_add_beginning(list_t *list, void *data, size_t alloc_size);
-void *list_add_sorted(list_t *list, void *data, size_t alloc_size, int (*comparision)(void *, void *));
+void *list_add(list_t *list, void *data, int alloc_size);
+void *list_add_beginning(list_t *list, void *data, int alloc_size);
+void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparision)(void *, void *));
 
 int list_count(list_t list);
-void *list_get_nth(list_t list, off_t id);
+void *list_get_nth(list_t list, int id);
 void list_resort(list_t *list, int (*comparision)(void *, void *));
 
 int list_remove(list_t *list, void *data, int free_data);
@@ -101,7 +98,7 @@ int list_remove_safe(list_t *list, void *data, int free_data);
 
 struct string {
 	char *str;
-	size_t len, size;
+	int len, size;
 };
 
 typedef struct string *string_t;
@@ -110,20 +107,20 @@ typedef struct string *string_t;
 
 string_t string_init(const char *str);
 int string_append(string_t s, const char *str);
-int string_append_n(string_t s, const char *str, size_t count);
+int string_append_n(string_t s, const char *str, int count);
 int string_append_c(string_t s, char ch);
-int string_append_raw(string_t s, const char *str, size_t count);
+int string_append_raw(string_t s, const char *str, int count);
 int string_append_format(string_t s, const char *format, ...);
-void string_insert(string_t s, off_t index, const char *str);
-void string_insert_n(string_t s, off_t index, const char *str, size_t count);
-void string_remove(string_t s, size_t count);
+void string_insert(string_t s, int index, const char *str);
+void string_insert_n(string_t s, int index, const char *str, int count);
+void string_remove(string_t s, int count);
 void string_clear(string_t s);
 char *string_free(string_t s, int free_string);
 
 /* tablice stringow */
-char **array_make(const char *string, const char *sep, size_t max, int trim, int quotes);
+char **array_make(const char *string, const char *sep, int max, int trim, int quotes);
 char *array_join(char **array, const char *sep);
-char *array_join_count(char **array, const char *sep, size_t count);
+char *array_join_count(char **array, const char *sep, int count);
 
 void array_add(char ***array, char *string);
 void array_add_check(char ***array, char *string, int casesensitive);
@@ -131,7 +128,7 @@ int array_count(char **array);
 int array_contains(char **array, const char *string, int casesensitive);
 int array_item_contains(char **array, const char *string, int casesensitive);
 void array_free(char **array);
-void array_free_count(char **array, size_t count);
+void array_free_count(char **array, int count);
 
 /* rozszerzenia libców */
 
