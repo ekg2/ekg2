@@ -1983,19 +1983,11 @@ void ncurses_input_update()
  * wy¶wietla w danym okienku znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
  * 	gdy attr A_UNDERLINE wtedy podkreslony
  */
-static void print_char(WINDOW *w, int y, int x, CHAR_T ch, int attr)
-{
+static void print_char(WINDOW *w, int y, int x, CHAR_T ch, int attr) {
+	ch = ncurses_fixchar(ch, &attr);
+
 	wattrset(w, attr);
 
-	if (ch < 32) {
-		wattrset(w, A_REVERSE | attr);
-		ch += 64;
-	}
-
-	if (ch >= 128 && ch < 160) {
-		ch = '?';
-		wattrset(w, A_REVERSE | attr);
-	}
 #if USE_UNICODE
 	if (config_use_unicode)
 		mvwaddnwstr(w, y, x, &ch, 1);
