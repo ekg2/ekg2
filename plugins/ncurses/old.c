@@ -2348,7 +2348,7 @@ void ncurses_redraw_input(unsigned int ch) {
 #endif
 		/* this mut be here if we don't want 'timeout' after pressing ^C */
 		if (ch == 3) ncurses_commit();
-		wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK));
+		wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
 		if (line_start > 0)
 			mvwaddch(input, 0, promptlen, '<');
 		if (linelen - line_start > input->_maxx + 1 - promptlen)
