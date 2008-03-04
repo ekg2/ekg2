@@ -386,19 +386,14 @@ void ncurses_spellcheck_init(void) {
  * color_pair()
  *
  * zwraca numer COLOR_PAIR odpowiadaj±cej danej parze atrybutów: kolorze
- * tekstu (plus pogrubienie) i kolorze t³a.
+ * tekstu i kolorze t³a.
  */
-static int color_pair(int fg, int bold, int bg) {
+static int color_pair(int fg, int bg) {
 	if (!config_display_color) {
 		if (bg != COLOR_BLACK)
 			return A_REVERSE;
 		else
-			return A_NORMAL | ((bold) ? A_BOLD : 0);
-	}
-
-	if (fg >= 8) {
-		bold = 1;
-		fg &= 7;
+			return A_NORMAL;
 	}
 
 	if (fg == COLOR_BLACK && bg == COLOR_BLACK) {
@@ -407,7 +402,14 @@ static int color_pair(int fg, int bold, int bg) {
 		fg = 0;
 	}
 
-	return COLOR_PAIR(fg + 8 * bg) | ((bold) ? A_BOLD : 0);
+	return COLOR_PAIR(fg + 8 * bg);
+}
+
+static inline int color_pair_bold(int fg, int bold, int bg) {
+	if (bold)
+		return (color_pair(fg, bg) | A_BOLD);
+	else
+		return color_pair(fg, bg);
 }
 
 /*
@@ -924,7 +926,7 @@ static inline int fstring_attr2ncurses_attr(short chattr) {
 		attr |= A_BLINK;
 
 	if (!(chattr & FSTR_NORMAL))
-		attr |= color_pair(chattr & FSTR_FOREMASK, 0, config_display_transparent ? COLOR_BLACK: (chattr>>3)&7);
+		attr |= color_pair(chattr & FSTR_FOREMASK, config_display_transparent ? COLOR_BLACK: (chattr>>3)&7);
 
 	if ((chattr & FSTR_UNDERLINE))
 		attr |= A_UNDERLINE;
@@ -995,7 +997,7 @@ void ncurses_redraw(window_t *w)
 	}
 	
 	werase(n->window);
-	wattrset(n->window, color_pair(COLOR_BLUE, 0, COLOR_BLACK));
+	wattrset(n->window, color_pair(COLOR_BLUE, COLOR_BLACK));
 
 	if (w->floating) {
 		const char *vertical_line_char	= format_find("contacts_vertical_line_char");
@@ -1232,7 +1234,7 @@ static void update_header(int commit)
 	if (!ncurses_header)
 		return;
 
-	wattrset(ncurses_header, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
+	wattrset(ncurses_header, color_pair(COLOR_WHITE, COLOR_BLUE));
 
 	for (y = 0; y < config_header_size; y++) {
 		int x;
@@ -1284,7 +1286,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 	if (x == 0) {
 		int i;
 
-		wattrset(w, color_pair(fgcolor, 0, bgcolor));
+		wattrset(w, color_pair(fgcolor, bgcolor));
 
 		wmove(w, y, 0);
 
@@ -1340,7 +1342,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 			}
 			p++;
 
-			wattrset(w, color_pair(fgcolor, bold, bgcolor));
+			wattrset(w, color_pair_bold(fgcolor, bold, bgcolor));
 			
 			continue;
 		}
@@ -1406,7 +1408,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
                 		        }
 					
 					text++;
-		                        wattrset(w, color_pair(fgcolor, bold, bgcolor));
+		                        wattrset(w, color_pair_bold(fgcolor, bold, bgcolor));
 				}
 
 //				waddstr(w, text);
@@ -1487,9 +1489,9 @@ void update_statusbar(int commit)
 	plugin_t *plug;
 	char *tmp;
 
-	wattrset(ncurses_status, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
+	wattrset(ncurses_status, color_pair(COLOR_WHITE, COLOR_BLUE));
 	if (ncurses_header)
-		wattrset(ncurses_header, color_pair(COLOR_WHITE, 0, COLOR_BLUE));
+		wattrset(ncurses_header, color_pair(COLOR_WHITE, COLOR_BLUE));
 
 	/* inicjalizujemy wszystkie opisowe bzdurki */
 
@@ -2250,7 +2252,7 @@ void ncurses_redraw_input(unsigned int ch) {
 	ncurses_redraw_input_already_exec = 1;
 
 	werase(input);
-	wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
+	wattrset(input, color_pair(COLOR_WHITE, COLOR_BLACK));
 
 	if (ncurses_lines) {
 		int i;
@@ -2346,12 +2348,12 @@ void ncurses_redraw_input(unsigned int ch) {
 #endif
 		/* this mut be here if we don't want 'timeout' after pressing ^C */
 		if (ch == 3) ncurses_commit();
-		wattrset(input, color_pair(COLOR_BLACK, 1, COLOR_BLACK));
+		wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK));
 		if (line_start > 0)
 			mvwaddch(input, 0, promptlen, '<');
 		if (linelen - line_start > input->_maxx + 1 - promptlen)
 			mvwaddch(input, 0, input->_maxx, '>');
-		wattrset(input, color_pair(COLOR_WHITE, 0, COLOR_BLACK));
+		wattrset(input, color_pair(COLOR_WHITE, COLOR_BLACK));
 		wmove(input, 0, line_index - line_start + promptlen);
 	}
 }
