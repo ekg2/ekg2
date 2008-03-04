@@ -535,23 +535,28 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			attrmap = "nTgGbBrR";
 
 		for (i = 0; text[i]; i++) {
-			if (i == 0 || format[i] != format[i - 1]) {
+
+			uint32_t f = format[i];
+
+			if (i == 0 || f != format[i - 1]) {
 				char attr = 'n';
 
-				if ((format[i] & EKG_FORMAT_COLOR)) {
-					attr = color_map(format[i] & 0x0000ff, (format[i] & 0x0000ff00) >> 8, (format[i] & 0x00ff0000) >> 16);
+				if ((f & EKG_FORMAT_COLOR)) {
+					attr = color_map(f & EKG_FORMAT_B_MASK, (f & EKG_FORMAT_G_MASK) >> 8, (f & EKG_FORMAT_B_MASK) >> 16);
 					if (attr == 'k')
 						attr = 'n';
 				}
 
-				if ((format[i] & 0xfe000000)) {
-					uint32_t f = (format[i] & 0xff000000);
+				if ((f & ~(EKG_FORMAT_COLOR | EKG_FORMAT_RGB_MASK))) {
 
-					if ((format[i] & EKG_FORMAT_COLOR))
+					if ((f & EKG_FORMAT_COLOR))
 						attr = toupper(attr);
 					else
 						attr = attrmap[(f >> 25) & 7];
 				}
+
+				if (attr=='N')
+					attr='T';
 
 				string_append_c(s, '%');
 				string_append_c(s, attr);
