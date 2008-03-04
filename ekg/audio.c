@@ -226,7 +226,7 @@ codec_t *codec_find(const char *name) {
 int codec_register(codec_t *codec) {
 	if (!codec)			return -1;
 	if (codec_find(codec->name))	return -2;
-	list_add(&audio_codecs, codec, 0);
+	list_add(&audio_codecs, codec);
 	return 0;
 }
 
@@ -297,7 +297,7 @@ int audio_register(audio_t *audio) {
 	if (!audio)			return -1;
 	if (audio_find(audio->name))	return -2;
 
-	list_add(&audio_inputs, audio, 0);
+	list_add(&audio_inputs, audio);
 	return 0;
 }
 
@@ -688,7 +688,7 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 	s->codec	= co;
 	s->output	= out;
 
-	list_add(&streams, s, 0);
+	list_add(&streams, s);
 
 	watch_add(NULL, in->fd, WATCH_READ, stream_handle, s);
 /* allocate buffers */

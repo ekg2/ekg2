@@ -52,7 +52,7 @@ typedef struct list *list_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
 #define LIST_ADD_COMPARE(x, type)			int x(const type data1, const type data2)
-#define LIST_ADD_SORTED(list, data, alloc_size, comp)	list_add_sorted(list, data, alloc_size, (void *) comp)
+#define LIST_ADD_SORTED(list, data, comp)		list_add_sorted(list, data, (void *) comp)
 
 #define LIST_RESORT(list, comp)				list_resort(list, (void *) comp)
 
@@ -61,9 +61,9 @@ typedef struct list *list_t;
 
 #define LIST_DESTROY(list, func)			list_destroy2(list, (void *) func)
 
-void *list_add(list_t *list, void *data, int alloc_size);
-void *list_add_beginning(list_t *list, void *data, int alloc_size);
-void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparision)(void *, void *));
+void *list_add(list_t *list, void *data);
+void *list_add_beginning(list_t *list, void *data);
+void *list_add_sorted(list_t *list, void *data, int (*comparision)(void *, void *));
 
 int list_count(list_t list);
 void *list_get_nth(list_t list, int id);

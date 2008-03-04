@@ -1745,7 +1745,7 @@ again:
 	tmp = jabber_iq_find_handler(jabber_iq_error_handlers, type, xmlns);
 	st->error = tmp ? tmp->handler : jabber_handle_iq_error_generic;
 
-	list_add_beginning(&(j->iq_stanzas), st, 0);
+	list_add_beginning(&(j->iq_stanzas), st);
 
 	return id;
 }

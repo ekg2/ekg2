@@ -587,7 +587,7 @@ WATCHER(http_watch_read) {
 			client->cookie = generate_cookie();
 			client->httpver = ver;
 			client->fd	= fd;		/* XXX -1 ? */
-			list_add(&clients, client, 0);
+			list_add(&clients, client);
 			debug("Adding client %s!\n", client->cookie);
 		}
 		/* reszta, e.g POST */

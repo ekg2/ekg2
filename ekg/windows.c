@@ -336,7 +336,7 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 	w->session = session;
 /*	w->userlist = NULL; */		/* xmalloc memset() to 0 memory */
 
-	LIST_ADD_SORTED(&windows, w, 0, window_new_compare);
+	LIST_ADD_SORTED(&windows, w, window_new_compare);
 
 	query_emit_id(NULL, UI_WINDOW_NEW, &w);	/* XXX */
 
@@ -548,8 +548,8 @@ static void window_move(int first, int second) {
         list_remove(&windows, w2, 0);
 	w2->id = first;
 
-	LIST_ADD_SORTED(&windows, w1, 0, window_new_compare);
-	LIST_ADD_SORTED(&windows, w2, 0, window_new_compare);
+	LIST_ADD_SORTED(&windows, w1, window_new_compare);
+	LIST_ADD_SORTED(&windows, w2, window_new_compare);
 }
 
 /**

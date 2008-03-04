@@ -107,7 +107,7 @@ static nntp_article_t *nntp_article_find(nntp_newsgroup_t *group, int articleid,
 	article->header	= string_init(NULL);
 	article->body	= string_init(NULL);
 
-	list_add(&group->articles, article, 0);
+	list_add(&group->articles, article);
 	return article;
 }
 
@@ -129,7 +129,7 @@ static nntp_newsgroup_t *nntp_newsgroup_find(session_t *s, const char *name) {
 	newsgroup->uid	= saprintf("nntp:%s", name);
 	newsgroup->name = xstrdup(name);
 
-	list_add(&(j->newsgroups), newsgroup, 0);
+	list_add(&(j->newsgroups), newsgroup);
 	return newsgroup;
 }
 

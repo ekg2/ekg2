@@ -163,7 +163,7 @@ void userlist_add_entry(session_t *session, const char *line) {
 		NULL;
 	
 	array_free_count(entry, count);
-	LIST_ADD_SORTED(&(session->userlist), u, 0, userlist_compare);
+	LIST_ADD_SORTED(&(session->userlist), u, userlist_compare);
 }
 
 /**
@@ -434,7 +434,7 @@ ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio)
 	r->prio		= prio;				/* resource prio */
 	r->status	= EKG_STATUS_NA;		/* this is quite stupid but we must be legal with ekg2 ABI ? */
 
-	LIST_ADD_SORTED(&(u->resources), r, 0, userlist_resource_compare);	/* add to list sorted by prio && than by name */
+	LIST_ADD_SORTED(&(u->resources), r, userlist_resource_compare);	/* add to list sorted by prio && than by name */
 	return r;
 }
 
@@ -525,7 +525,7 @@ userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickna
         u->nickname = xstrdup(nickname);
         u->status = EKG_STATUS_NA;
 
-        return LIST_ADD_SORTED(userlist, u, 0, userlist_compare);
+        return LIST_ADD_SORTED(userlist, u, userlist_compare);
 }
 
 /*
@@ -596,7 +596,7 @@ int userlist_replace(session_t *session, userlist_t *u) {
 		return -1;
 	if (list_remove(&(session->userlist), u, 0))
 		return -1;
-	if (!LIST_ADD_SORTED(&(session->userlist), u, 0, userlist_compare))
+	if (!LIST_ADD_SORTED(&(session->userlist), u, userlist_compare))
 		return -1;
 
 	return 0;
@@ -1092,7 +1092,7 @@ int ekg_group_add(userlist_t *u, const char *group) {
 	g = xmalloc(sizeof(struct ekg_group));
 	g->name = xstrdup(group);
 
-	LIST_ADD_SORTED(&u->groups, g, 0, group_compare);
+	LIST_ADD_SORTED(&u->groups, g, group_compare);
 
 	return 0;
 }
@@ -1177,7 +1177,7 @@ list_t group_init(const char *names) {
 		struct ekg_group *g = xmalloc(sizeof(struct ekg_group));
 
 		g->name = groups[i];
-		LIST_ADD_SORTED(&l, g, 0, group_compare);
+		LIST_ADD_SORTED(&l, g, group_compare);
 	}
 	/* NOTE: we don't call here array_free() cause we use items of this
 	 * 	array @ initing groups. We don't use strdup()

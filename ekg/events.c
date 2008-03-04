@@ -181,7 +181,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	ev->prio 	= prio;
 	ev->target 	= xstrdup(target);
 	ev->action 	= xstrdup(action);
-	LIST_ADD_SORTED(&events, ev, 0, event_add_compare);
+	LIST_ADD_SORTED(&events, ev, event_add_compare);
 
 	tmp = xstrdup(name);
 	query_emit_id(NULL, EVENT_ADDED, &tmp);

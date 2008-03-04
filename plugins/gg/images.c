@@ -143,7 +143,7 @@ static image_t *image_add_queue(const char *filename, char *data, uint32_t size,
 	i->size = size;
 	i->crc32 = crc32; 
 
-	return list_add(&images, i, 0);
+	return list_add(&images, i);
 }
 
 void image_remove_queue(image_t *i)

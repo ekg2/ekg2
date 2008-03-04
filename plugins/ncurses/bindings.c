@@ -796,14 +796,14 @@ static int binding_key(struct binding *b, const char *key, int add)
 		if (!xstrcasecmp(key + 4, ("Enter"))) {
 			b->key = xstrdup(("Alt-Enter"));
 			if (add)
-				ncurses_binding_map_meta[13] = list_add(&bindings, b, sizeof(struct binding));
+				ncurses_binding_map_meta[13] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
 			return 0;
 		}
 
 		if (!xstrcasecmp(key + 4, ("Backspace"))) {
 			b->key = xstrdup(("Alt-Backspace"));
 			if (add) {
-				ncurses_binding_map_meta[KEY_BACKSPACE] = list_add(&bindings, b, sizeof(struct binding));
+				ncurses_binding_map_meta[KEY_BACKSPACE] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
 				ncurses_binding_map_meta[127] = ncurses_binding_map_meta[KEY_BACKSPACE];
 			}
 			return 0;
@@ -817,7 +817,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("Alt-%c"), ch);
 
 		if (add) {
-			ncurses_binding_map_meta[ch] = list_add(&bindings, b, sizeof(struct binding));
+			ncurses_binding_map_meta[ch] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
 			if (xisalpha(ch))
 				ncurses_binding_map_meta[xtolower(ch)] = ncurses_binding_map_meta[ch];
 		}
@@ -834,7 +834,7 @@ static int binding_key(struct binding *b, const char *key, int add)
         if (!xstrcasecmp(key + 5, (x))) { \
                 b->key = xstrdup(key); \
                 if (add) { \
-                        ncurses_binding_map[y] = list_add(&bindings, b, sizeof(struct binding)); \
+                        ncurses_binding_map[y] = list_add(&bindings, xmemdup(b, sizeof(struct binding))); \
                         if (z) \
                                 ncurses_binding_map[z] = ncurses_binding_map[y]; \
                 } \
@@ -856,7 +856,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 
 		if (add) {
                         if (xisalpha(ch))
-				ncurses_binding_map[ch - 64] = list_add(&bindings, b, sizeof(struct binding));
+				ncurses_binding_map[ch - 64] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
 			else
 				return -1;
 		}
@@ -873,7 +873,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("F%d"), f);
 		
 		if (add)
-			ncurses_binding_map[KEY_F(f)] = list_add(&bindings, b, sizeof(struct binding));
+			ncurses_binding_map[KEY_F(f)] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
 		
 		return 0;
 	}
@@ -882,7 +882,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 	if (!xstrcasecmp(key, (x))) { \
 		b->key = xstrdup((x)); \
 		if (add) { \
-			ncurses_binding_map[y] = list_add(&bindings, b, sizeof(struct binding)); \
+			ncurses_binding_map[y] = list_add(&bindings, xmemdup(b, sizeof(struct binding))); \
 			if (z) \
 				ncurses_binding_map[z] = ncurses_binding_map[y]; \
 		} \
@@ -963,7 +963,7 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 
 	b->sequence = joined;
 	b->binding = binding_orginal;
-	list_add(&bindings_added, b, 0);
+	list_add(&bindings_added, b);
 end:
 	if (!in_autoexec)
 		config_changed = 1;

@@ -67,7 +67,7 @@ static int emoticon_add(const char *name, const char *value) {
 	e->name = xstrdup(name);
 	e->value = xstrdup(value);
 
-	return (list_add_beginning(&emoticons, e, 0) ? 0 : -1);
+	return (list_add_beginning(&emoticons, e) ? 0 : -1);
 }
 
 /*

@@ -217,7 +217,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 							if (presenceout)item->items |= PRIVACY_LIST_PRESENCE_OUT;
 							item->order = atoi(jabber_attr(temp->atts, "order"));
 
-							LIST_ADD_SORTED(lista, item, 0, jabber_privacy_add_compare);
+							LIST_ADD_SORTED(lista, item, jabber_privacy_add_compare);
 						}
 
 						print("jabber_privacy_item", session_name(s), j->server, 
@@ -342,7 +342,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
 
 				} else { debug_error("[JABBER:IQ:PRIVATE:BOOKMARK UNKNOWNITEM=%s\n", child->name); xfree(book); book = NULL; }
 
-				if (book) list_add(&j->bookmarks, book, 0);
+				if (book) list_add(&j->bookmarks, book);
 			}
 		} else {
 			/* DISPLAY IT ? w jakim formacie?
@@ -992,7 +992,7 @@ JABBER_HANDLER_RESULT(jabber_handle_si_result) {
 				streamhost.jid	= saprintf("%s/%s", s->uid+5, j->resource);
 				streamhost.ip	= xstrdup(jabber_dcc_ip);
 				streamhost.port	= jabber_dcc_port;
-				list_add(&(b->streamlist), &streamhost, sizeof(struct jabber_streamhost_item));
+				list_add(&(b->streamlist), xmemdup(&streamhost, sizeof(struct jabber_streamhost_item)));
 			}
 
 			/* 	... other, proxy, etc, etc..

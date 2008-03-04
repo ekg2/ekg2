@@ -1316,7 +1316,7 @@ privacy_delete_ok:
  				allowlist->type	 = xstrdup(type);
  				allowlist->allow = 1;
  				allowlist->order += order;
- 				LIST_ADD_SORTED(&j->privacy, allowlist, 0, jabber_privacy_add_compare);
+ 				LIST_ADD_SORTED(&j->privacy, allowlist, jabber_privacy_add_compare);
  			} 
   
  			if (denylist && !denylist->value) {
@@ -1324,7 +1324,7 @@ privacy_delete_ok:
  				denylist->type	= xstrdup(type);
  /*				denylist->allow = 0; */
  				denylist->order += order;
- 				LIST_ADD_SORTED(&j->privacy, denylist, 0, jabber_privacy_add_compare);
+ 				LIST_ADD_SORTED(&j->privacy, denylist, jabber_privacy_add_compare);
  			} 
  		}
  		needsync = 1;
@@ -1458,7 +1458,7 @@ static COMMAND(jabber_command_private) {
 							if (jabber_attr(splitted, "autojoin") && atoi(jabber_attr(splitted, "autojoin")))	book->private.conf->autojoin = 1;
 /*							else											book->private.conf->autojoin = 0; */
 						} else bookmark_sync = -1;
-						if (book) list_add(&(j->bookmarks), book, 0);
+						if (book) list_add(&(j->bookmarks), book);
 					}
 					break;
 				case (2):		/* modify item XXX */

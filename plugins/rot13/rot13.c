@@ -196,7 +196,7 @@ static COMMAND(command_key) {
 			return -1;
 		}
 
-		list_add_sorted(&keys, rot13_key_parse(target, sesja, offset, offset2), 0, rot13_key_compare);
+		list_add_sorted(&keys, rot13_key_parse(target, sesja, offset, offset2), rot13_key_compare);
 
 		xfree(arr);
 		return 0;
@@ -230,7 +230,7 @@ static QUERY(rot13_setvar_default) {
 			char **arr = array_make(tmp, " ", 0, 1, 1);
 			
 			if (arr[0] && arr[1] && arr[2] && arr[3] && !arr[4]) {
-				list_add(&keys, rot13_key_parse(arr[0], arr[1], arr[2], arr[3]), 0);
+				list_add(&keys, rot13_key_parse(arr[0], arr[1], arr[2], arr[3]));
 
 				xfree(arr);
 			} else {

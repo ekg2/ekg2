@@ -246,7 +246,7 @@ metacontact_t *metacontact_add(const char *name)
 	m = xmalloc(sizeof(metacontact_t));
 	m->name = xstrdup(name);
 
-	return LIST_ADD_SORTED(&metacontacts, m, 0, metacontact_add_compare);
+	return LIST_ADD_SORTED(&metacontacts, m, metacontact_add_compare);
 }
 
 /*
@@ -326,7 +326,7 @@ static int metacontact_add_item(metacontact_t *m, const char *session, const cha
 	i->s_uid	= xstrdup(s->uid);
 	i->prio		= prio;
 
-	LIST_ADD_SORTED(&m->metacontact_items, i, 0, metacontact_add_item_compare);
+	LIST_ADD_SORTED(&m->metacontact_items, i, metacontact_add_item_compare);
 
 	return 1;
 }

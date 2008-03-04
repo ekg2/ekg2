@@ -335,11 +335,11 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 		if (*variables_lock == variables) {
 			for (; *variables_lock && (variable_add_compare((*variables_lock)->data, v) < 0); variables_lock = &((*variables_lock)->next));
 		} else		variables_lock = &((*variables_lock)->next);
-		list_add_beginning(variables_lock, v, 0);
+		list_add_beginning(variables_lock, v);
 		return v;
 	}
 
-	return LIST_ADD_SORTED(&variables, v, 0, variable_add_compare);
+	return LIST_ADD_SORTED(&variables, v, variable_add_compare);
 }
 
 /*

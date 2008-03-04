@@ -639,17 +639,18 @@ int bind_sequence(const char *seq, const char *command, int quiet)
 	}
 
 	if (command) {
-		struct binding s;
-		
-		s.key = nice_seq;
-		s.action = xstrdup(command);
-		s.internal = 0;
-		s.arg = s.default_action = s.default_arg = NULL;
+		struct binding *s;
 
-		list_add(&bindings, &s, sizeof(s));
+		s = xmalloc(sizeof(struct binding));
+		
+		s->key = nice_seq;
+		s->action = xstrdup(command);
+		s->internal = 0;
+
+		list_add(&bindings, s);
 
 		if (!quiet) {
-			print("bind_seq_add", s.key);
+			print("bind_seq_add", s->key);
 			config_changed = 1;
 		}
 	} else {

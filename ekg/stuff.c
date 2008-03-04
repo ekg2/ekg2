@@ -279,7 +279,7 @@ int alias_add(const char *string, int quiet, int append)
 			} else {
 				list_t l;
 
-				list_add(&j->commands, cmd, xstrlen(cmd) + 1);
+				list_add(&j->commands, xstrdup(cmd));
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
 				for (l = commands; l; l = l->next) {
@@ -314,8 +314,8 @@ int alias_add(const char *string, int quiet, int append)
 	a = xmalloc(sizeof(struct alias));
 	a->name = xstrdup(string);
 	a->commands = NULL;
-	list_add(&(a->commands), cmd, (xstrlen(cmd) + 1) * sizeof(char));
-	list_add(&aliases, a, 0);
+	list_add(&(a->commands), xstrdup(cmd));
+	list_add(&aliases, a);
 
 	array = (params) ? array_join(params, (" ")) : xstrdup(("?"));
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
@@ -508,7 +508,7 @@ int buffer_add(list_t *type, const char *target, const char *line, int max_lines
 	b->target = xstrdup(target);
 	b->line = xstrdup(line);
 
-	list_add(type, b, 0);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
+	list_add(type, b);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
 	return 0;			/* so always return success here */
 }
 
@@ -562,7 +562,7 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 	b->target	= xstrdup(target);
 	b->line		= xstrdup(sep+1);
 
-	list_add(type, b, 0);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
+	list_add(type, b);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
 	return 0;			/* so always return success here */
 }
 
@@ -761,7 +761,7 @@ newconference_t *newconference_create(session_t *s, const char *name, int create
 	c->session	= xstrdup(s->uid);
 	c->name		= xstrdup(name);
 	
-	return list_add(&newconferences, c, 0);
+	return list_add(&newconferences, c);
 }
 
 void newconference_destroy(newconference_t *conf, int kill_wnd) {
@@ -893,7 +893,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		uid = get_uid(session, *p);
 
 		if (uid)
-			list_add(&(c.recipients), xstrdup(uid), 0);
+			list_add(&(c.recipients), xstrdup(uid));
 		i++;
 	}
 
@@ -912,7 +912,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	tabnick_add(name);
 
-	return list_add(&conferences, &c, sizeof(c));
+	return list_add(&conferences, xmemdup(&c, sizeof(c)));
 }
 
 /*
@@ -1063,7 +1063,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 			int comma = 0;
 
 			if (xstrcasecmp(from, s->uid) && !conference_participant(c, from)) {
-				list_add(&c->recipients, &from, sizeof(from));
+				list_add(&c->recipients, xmemdup(&from, sizeof(from)));
 
 				comma++;
 				string_append(new, format_user(s, from));
@@ -1071,7 +1071,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 
 			for (i = 0; i < count; i++) {
 				if (xstrcasecmp(recipients[i], s->uid) && !conference_participant(c, recipients[i])) {
-					list_add(&c->recipients, &recipients[i], sizeof(recipients[0]));
+					list_add(&c->recipients, xmemdup(&recipients[i], sizeof(recipients[0])));
 			
 					if (comma++)
 						string_append(new, ", ");
@@ -1451,7 +1451,7 @@ child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t 
 	c->handler	= handler;
 	c->private	= private;
 	
-	list_add(&children, c, 0);
+	list_add(&children, c);
 	return c;
 }
 
@@ -1931,7 +1931,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	t->data = data;
 	t->plugin = plugin;
 
-	list_add(&timers, t, 0);
+	list_add(&timers, t);
 	return t;
 }
 
@@ -3066,7 +3066,7 @@ void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
 				c->is_utf = 2;
 			else if (!xstrcasecmp(c->from, "UTF-8"))
 				c->is_utf = 1;
-			list_add(&ekg_converters, c, 0);
+			list_add(&ekg_converters, c);
 		}
 
 		return cd;

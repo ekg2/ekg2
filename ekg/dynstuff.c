@@ -40,7 +40,7 @@
  *
  * zwraca wska¼nik zaalokowanego elementu lub NULL w przpadku b³êdu.
  */
-void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparision)(void *, void *))
+void *list_add_sorted(list_t *list, void *data, int (*comparision)(void *, void *))
 {
 	list_t new, tmp;
 
@@ -54,11 +54,6 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
 	new->data = data;
 	new->next = NULL;
 	/*new->prev = NULL;*/
-
-	if (alloc_size) {
-		new->data = xmalloc(alloc_size);
-		memcpy(new->data, data, alloc_size);
-	}
 
 	if (!(tmp = *list)) {
 		*list = new;
@@ -100,7 +95,7 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
  * @sa list_remove()
  */
 
-void *list_add_beginning(list_t *list, void *data, int alloc_size) {
+void *list_add_beginning(list_t *list, void *data) {
 
 	list_t new;
 
@@ -113,10 +108,7 @@ void *list_add_beginning(list_t *list, void *data, int alloc_size) {
 	new->next = *list;
 	*list	  = new;
 
-	if (alloc_size) {	/* xmemdup() ? */
-		new->data = xmalloc(alloc_size);
-		memcpy(new->data, data, alloc_size);
-	} else	new->data = data;
+	new->data = data;
 
 	return new->data;
 
@@ -134,9 +126,9 @@ void *list_add_beginning(list_t *list, void *data, int alloc_size) {
  * @sa list_add_sorted()
  */
 
-void *list_add(list_t *list, void *data, int alloc_size)
+void *list_add(list_t *list, void *data)
 {
-	return list_add_sorted(list, data, alloc_size, NULL);
+	return list_add_sorted(list, data, NULL);
 }
 
 /**
@@ -289,7 +281,7 @@ void list_resort(list_t *list, int (*comparision)(void *, void *)) {
 
 		l = l->next;
 
-		list_add_sorted(&tmplist, cur->data, 0, comparision);
+		list_add_sorted(&tmplist, cur->data, comparision);
 
 		xfree(cur);
 	}

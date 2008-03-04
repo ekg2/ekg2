@@ -161,7 +161,7 @@ session_t *session_add(const char *uid) {
 	s->lock_fd	= -1;
 #endif
 	
-	LIST_ADD_SORTED(&sessions, s, 0, session_compare);
+	LIST_ADD_SORTED(&sessions, s, session_compare);
 
 	/* XXX, wywalic sprawdzanie czy juz jest sesja? w koncu jak dodajemy sesje.. to moze chcemy sie od razu na nia przelaczyc? */
 	if (!window_current->session && (window_current->id == 0 || window_current->id == 1)) {
@@ -707,7 +707,7 @@ int session_set(session_t *s, const char *key, const char *value) {
 	v->key = xstrdup(key);
 	v->value = xstrdup(value);
 
-	return (list_add_beginning(&s->local_vars, v, 0) != NULL) ? 0 : -1;
+	return (list_add_beginning(&s->local_vars, v) != NULL) ? 0 : -1;
 
 notify:
 	if (pa && pa->notify)

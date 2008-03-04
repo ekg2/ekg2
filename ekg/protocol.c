@@ -797,7 +797,7 @@ static QUERY(protocol_message)
                                 list_remove(&autofinds, autofinds->data, 1);
                         }
 
-                        list_add(&autofinds, (void *) xstrdup(uid), 0);
+                        list_add(&autofinds, (void *) xstrdup(uid));
 
                         command_exec_format(target, session_class, 0, ("/find %s"), uid);
                 }
@@ -934,7 +934,7 @@ dcc_t *dcc_add(session_t *session, const char *uid, dcc_type_t type, void *priv)
 	d->started = time(NULL);
 	d->id = id;
 
-	list_add(&dccs, d, 0);
+	list_add(&dccs, d);
 
 	return d;
 }

@@ -102,7 +102,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
 	ll->sent_time = st;
 	ll->message = xstrdup(msg);
 	
-	list_add(&lasts, ll, 0);
+	list_add(&lasts, ll);
 }
 
 /*

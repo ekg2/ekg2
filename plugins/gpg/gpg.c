@@ -72,7 +72,7 @@ static egpg_key_t *gpg_keydb_add(const char *uid, const char *keyid, const char 
 	a->keyid 	= xstrdup(keyid);
 	a->keynotok	= -1;
 	
-	list_add(&gpg_keydb, a, 0);
+	list_add(&gpg_keydb, a);
 
 	return a;
 }

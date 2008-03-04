@@ -486,7 +486,7 @@ int plugin_register(plugin_t *p, int prio) {
 		p->prio = prio;
 	}
 
-	LIST_ADD_SORTED(&plugins, p, 0, plugin_register_compare);
+	LIST_ADD_SORTED(&plugins, p, plugin_register_compare);
 
 	return 0;
 }
@@ -681,7 +681,7 @@ static int query_id(const char *name) {
 	a->id 	= queries_count++;
 	a->name	= xstrdup(name);
 
-	list_add(&queries_external, a, 0);
+	list_add(&queries_external, a);
 
 	return a->id;
 }
@@ -748,7 +748,7 @@ static query_t *query_connect_common(plugin_t *plugin, const int id, query_handl
 	q->handler	= handler;
 	q->data		= data;
 
-	return list_add(&queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id], q, 0);
+	return list_add(&queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id], q);
 }
 
 #define ID_AND_QUERY_EXTERNAL	\
@@ -1167,7 +1167,7 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	w->handler = handler;
 	w->data    = data;
 
-	list_add_beginning(&watches, w, 0);
+	list_add_beginning(&watches, w);
 
 	return w;
 }
@@ -1220,7 +1220,7 @@ void idle_handle(idle_t *i) {
 			
 	} else {
 		/* add idler again [at end] */
-		list_add(&idles, i, 0);
+		list_add(&idles, i);
 	}
 }
 
@@ -1231,7 +1231,7 @@ idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data) {
 	i->data		= data;
 
 	/* XXX, prios? */
-	list_add_beginning(&idles, i, 0);		/* first item */
+	list_add_beginning(&idles, i);		/* first item */
 
 	return i;
 }

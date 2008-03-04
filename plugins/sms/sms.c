@@ -135,14 +135,11 @@ static int sms_send(const char *recipient, const char *message)
  */
 static void sms_away_add(const char *uid)
 {
-        sms_away_t sa;
+	sms_away_t *sa;
         list_t l;
 
         if (!config_sms_away_limit)
                 return;
-
-        sa.uid = xstrdup(uid);
-        sa.count = 1;
 
         for (l = sms_away; l; l = l->next) {
                 sms_away_t *s = l->data;
@@ -153,7 +150,11 @@ static void sms_away_add(const char *uid)
                 }
         }
 
-        list_add(&sms_away, &sa, sizeof(sa));
+	sa = xmalloc(sizeof(sms_away_t));
+	sa->uid = xstrdup(uid);
+	sa->count = 1;
+
+	list_add(&sms_away, sa);
 }
 
 /*

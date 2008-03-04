@@ -69,7 +69,7 @@ scriptlang_t *scriptlang_from_ext(char *name)
 
 int scriptlang_register(scriptlang_t *s)
 {
-	list_add(&scriptlang, s, 0);
+	list_add(&scriptlang, s);
 
 	s->init();
 	
@@ -401,7 +401,7 @@ int script_load(scriptlang_t *s, char *tname)
 		scr->lang = slang;
 		scr->inited = 1;
 		
-		list_add(&scripts, scr, 0); /* BUG: this should be before `script_loaded`...  */
+		list_add(&scripts, scr); /* BUG: this should be before `script_loaded`...  */
 
 		ret = slang->script_load(scr);
 

@@ -176,12 +176,12 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		person = xmalloc(sizeof(people_t));
 		person->nick = xstrdup(ircnick);
 		/* K&Rv2 5.4 */
-		list_add(&(j->people), person, 0);
+		list_add(&(j->people), person);
 	}
 	/* add entry in private->channels->onchan if nick's not yet there */
 	if (!(peronchan = irc_find_person(chan->onchan, nick)))  {
 	/*	debug("+do kana³u, "); */
-		list_add(&(chan->onchan), person, 0);
+		list_add(&(chan->onchan), person);
 	}
 	xfree(ircnick);
 
@@ -194,7 +194,7 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		pch_tmp->mode = mode;
 		pch_tmp->chanp = chan;
 		irc_nick_prefix(j, pch_tmp, irccol);
-		list_add(&(person->channels), pch_tmp, 0);
+		list_add(&(person->channels), pch_tmp);
 	/*	debug(" %08X\n", person->channels); */
 	} //else { pch_tmp->mode = mode; }
 
@@ -459,7 +459,7 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 		debug("[irc] add_channel() WINDOW %08X\n", win);
 		if (session_int_get(s, "auto_channel_sync") != 0)
 			irc_sync_channel(s, j, p);
-		list_add(&(j->channels), p, 0);
+		list_add(&(j->channels), p);
 		return p;
 	}
 	return NULL;

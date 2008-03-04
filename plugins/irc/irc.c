@@ -592,7 +592,7 @@ static WATCHER_LINE(irc_handle_resolver) {
 		listelem->address  = xstrdup(p[1]);
 		listelem->port     = (resolv->isbind ? 0 : -1);
 		listelem->family   = atoi(p[2]);
-		list_add_sorted((resolv->plist), listelem, 0, &irc_resolver_sort);
+		list_add_sorted((resolv->plist), listelem, &irc_resolver_sort);
 
 		debug("%s (%s %s) %x %x\n", p[0], p[1], p[2], resolv->plist, listelem); 
 		array_free(p);

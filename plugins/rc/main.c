@@ -98,7 +98,7 @@ static WATCHER(rc_input_handler_accept) {
 	rn->fd		= cfd;
 	rn->path	= saprintf("%sc", r->path);	/* maybe ip:port of client or smth? */
 	rn->type	= (r->type == RC_INPUT_TCP) ? RC_INPUT_TCP_CLIENT : RC_INPUT_UNIX_CLIENT;
-	list_add(&rc_inputs, rn, 0);
+	list_add(&rc_inputs, rn);
 	watch_add_line(&rc_plugin, cfd, WATCH_READ_LINE, rc_input_handler_line, rn);
 	return 0;
 }
@@ -245,7 +245,7 @@ static void rc_paths_changed(const char *name)
 			r->path	= xstrdup(paths[i]);
 			r->type	= type;
 			
-			list_add(&rc_inputs, r, 0);
+			list_add(&rc_inputs, r);
 
 			watch_add(&rc_plugin, rfd, 
 				((void *) rc_input_handler != (void *) rc_input_handler_line) ? WATCH_READ : WATCH_READ_LINE, 

@@ -876,7 +876,7 @@ IRC_COMMAND(irc_c_list)
 						*tlist = NULL;
 					}
 					/*debug("[IRC_LIST] Add to list (id=%d; co=%s) 0x%x\n", mode_act, IOK2(4), tlist);*/
-					list_add(tlist, xstrdup(IOK2(4)) , 0);
+					list_add(tlist, xstrdup(IOK2(4)));
 				}
 			default:
 				if (param[5] && *param[5] == ':') {
@@ -1126,7 +1126,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 			e->msg		= xstrdup(coloured);
 			e->t 		= time(NULL);
 
-			list_add(&(j->awaylog), e, 0);
+			list_add(&(j->awaylog), e);
 
 		}
 

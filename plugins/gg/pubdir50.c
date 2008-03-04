@@ -182,7 +182,7 @@ no_argv:
 	}
 
 	if (all)
-		list_add(&g->searches, req, 0);
+		list_add(&g->searches, req);
 	else
 		gg_pubdir50_free(req);
 

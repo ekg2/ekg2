@@ -240,7 +240,7 @@ group_cleanup:
 			for (lp = s->userlist; lp; lp = lp->next) {
 				userlist_t *u = lp->data;
 
-				list_add_sorted(&sorted_all, userlist_dup(u, u->uid, u->nickname, s), 0, comp);
+				list_add_sorted(&sorted_all, userlist_dup(u, u->uid, u->nickname, s), comp);
 			}
 
 			comp = contacts_compare;		/* turn on sorting */
@@ -249,7 +249,7 @@ group_cleanup:
 		for (l = c ? c->participants : window_current->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 
-			list_add_sorted(&sorted_all, userlist_dup(u, u->uid, u->nickname, w->session), 0, comp);
+			list_add_sorted(&sorted_all, userlist_dup(u, u->uid, u->nickname, w->session), comp);
 		}
 
 		if (sorted_all) comp = contacts_compare;	/* like above */
@@ -300,7 +300,7 @@ group_cleanup:
 			if (!(u = userlist_find_n(i->s_uid, i->name)))
 				continue;
 
-			list_add_sorted(&sorted_all, userlist_dup(u, NULL, m->name, (void *) 2), 0, comp);
+			list_add_sorted(&sorted_all, userlist_dup(u, NULL, m->name, (void *) 2), comp);
 		}
 	}
 

@@ -62,7 +62,7 @@ int msg_queue_add(const char *session, const char *rcpts, const char *message, c
 	m->seq 		= xstrdup(seq);
 	m->time 	= time(NULL);
 
-	return (list_add(&msg_queue, m, 0) ? 0 : -1);
+	return (list_add(&msg_queue, m) ? 0 : -1);
 }
 
 static LIST_FREE_ITEM(list_msg_queue_free, msg_queue_t *) {
@@ -341,7 +341,7 @@ int msg_queue_read() {
 
 		m.message = string_free(msg, 0);
 
-		list_add(&msg_queue, &m, sizeof(m));
+		list_add(&msg_queue, xmemdup(&m, sizeof(m)));
 
 		fclose(f);
 		unlink(fn);

@@ -198,7 +198,7 @@ static rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *
 	item->other_tags= string_init(NULL);
 	item->new	= 1;
 	
-	list_add(&(c->rss_items), item, 0);
+	list_add(&(c->rss_items), item);
 	return item;
 }
 
@@ -237,7 +237,7 @@ static rss_channel_t *rss_channel_find(rss_feed_t *f, const char *url, const cha
 
 	channel->new	= 1;
 
-	list_add(&(f->rss_channels), channel, 0);
+	list_add(&(f->rss_channels), channel);
 	return channel;
 }
 
@@ -301,7 +301,7 @@ static rss_feed_t *rss_feed_find(session_t *s, const char *url) {
 
 	debug_white("[rss] proto: %d url: %s port: %d url: %s file: %s\n", feed->proto, feed->url, feed->port, feed->url, feed->file);
 
-	list_add(&(feeds), feed, 0);
+	list_add(&(feeds), feed);
 	return feed;
 }
 

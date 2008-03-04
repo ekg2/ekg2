@@ -213,7 +213,7 @@ int script_variables_write();
 		xfree(temp);\
 		return NULL;\
 	}\
-	list_add(&y, temp, 0);\
+	list_add(&y, temp);\
 	return temp;
 
 /* HANDLERS */

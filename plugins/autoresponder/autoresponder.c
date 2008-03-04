@@ -86,7 +86,7 @@ static QUERY(autoresponder_message)
 
 	if (matchoccured) {
 		/* we've got the answer, hail the user! */
-		list_add(&autoresponder_allowed_uids, uid, xstrlen(uid)+1);
+		list_add(&autoresponder_allowed_uids, xstrdup(uid));
 		if (config_autoresponder_greeting && (*config_autoresponder_greeting))
 			command_exec_format(NULL, s, 1, "/msg %s %s", uid, config_autoresponder_greeting);
 	} else {

@@ -319,7 +319,7 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 					prepare_timestamp_format(IRSSI_LOG_EKG2_OPENED, t),
 					0, LOG_IRSSI_INFO);
 		} 
-		list_add(&log_logs, ll, 0);
+		list_add(&log_logs, ll);
 	}
 	return ll;
 }

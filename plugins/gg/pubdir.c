@@ -150,7 +150,7 @@ COMMAND(gg_command_register)
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_register, h); 
 	watch_timeout_set(w, h->timeout);
 
-	list_add(&gg_registers, h, 0);
+	list_add(&gg_registers, h);
 
 	gg_register_email = xstrdup(params[0]);
 	gg_register_password = passwd_b;
@@ -237,7 +237,7 @@ COMMAND(gg_command_unregister)
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_unregister, h); 
 	watch_timeout_set(w, h->timeout);
 
-	list_add(&gg_unregisters, h, 0);
+	list_add(&gg_unregisters, h);
 
 	return 0;
 }
@@ -394,7 +394,7 @@ COMMAND(gg_command_passwd) {
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_passwd, h); 
 	watch_timeout_set(w, h->timeout);
 
-	list_add(&g->passwds, h, 0);
+	list_add(&g->passwds, h);
 
 	xfree(newpasswd);
 	xfree(oldpasswd);
@@ -510,7 +510,7 @@ COMMAND(gg_command_remind)
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_remind, h); 
 	watch_timeout_set(w, h->timeout);
 
-	list_add(&gg_reminds, h, 0);
+	list_add(&gg_reminds, h);
 
 	return 0;
 }

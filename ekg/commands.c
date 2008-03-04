@@ -2904,7 +2904,7 @@ COMMAND(cmd_alias_exec)
 				need_args = __need;
 		}
 
-		list_add(&m, tmp->data, (xstrlen(tmp->data) + 1)*sizeof(char));
+		list_add(&m, xstrdup(tmp->data));
 	}
 	
 	for (tmp = m; tmp; tmp = tmp->next) {
@@ -3593,7 +3593,7 @@ static COMMAND(cmd_conference)
 			return -1;
 		}
 
-		list_add(&c->recipients, (void*) xstrdup(uid), 0);
+		list_add(&c->recipients, (void*) xstrdup(uid));
 
 		printq("conferences_joined", format_user(session, uid), params[1]);
 
@@ -4187,10 +4187,10 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 			/* then we need to find place where to add it.. */
 			for (; *commands_lock && (command_add_compare((*commands_lock)->data, c) < 0); commands_lock = &((*commands_lock)->next));
 		} else		commands_lock = &((*commands_lock)->next);	/* otherwise if we have list... move to next */
-		list_add_beginning(commands_lock, c, 0);	/* add to commands */
+		list_add_beginning(commands_lock, c);		/* add to commands */
 		return c;
 	}
-	return LIST_ADD_SORTED(&commands, c, 0, command_add_compare);
+	return LIST_ADD_SORTED(&commands, c, command_add_compare);
 }
 
 static LIST_FREE_ITEM(list_command_free, command_t *) {
