@@ -1690,6 +1690,7 @@ static COMMAND(irc_command_unban) {
 
 	if (!(*mp)) {
 		printq("not_enough_params", name);
+		array_free(mp);
 		xfree(channame);
 		return -1;
 	} else {
