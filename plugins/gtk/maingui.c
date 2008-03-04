@@ -592,7 +592,21 @@ static idle_t *ul_tag = NULL;
 
 #warning "xchat->ekg2, mg_populate_userlist() xchat here check if param is valid window_t, XXX"
 
-	if (sess->session) {
+	if (sess->userlist) {
+		list_t l;
+		
+		/* XXX, irc_pixs! */
+		pxs = pixs;
+
+		for (l = sess->userlist; l; l = l->next) {
+			userlist_t *u = l->data;
+
+			if (!u || !u->nickname || !u->status)
+				continue;
+
+			fe_userlist_insert(sess, u, pxs);
+		}
+	} else if (sess->session) {
 		list_t l;
 		
 	/* check what network, and select pixs */
