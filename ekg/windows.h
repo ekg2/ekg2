@@ -45,12 +45,12 @@ typedef struct {
 } window_lastlog_t;
 
 typedef struct {
-	unsigned short int id;		/* numer okna */
+	unsigned short id;		/* numer okna */
 	char *target;			/* nick query albo inna nazwa albo NULL */
 	session_t *session;		/* której sesji dotyczy okno */
 
-	unsigned short int left, top;		/* pozycja (x, y) wzglêdem pocz±tku ekranu */
-	unsigned short int width, height;	/* wymiary okna */
+	unsigned short left, top;	/* pozycja (x, y) wzglêdem pocz±tku ekranu */
+	unsigned short width, height;	/* wymiary okna */
 
 	unsigned int act	: 2;	/* activity: 1 - status/junk; 2 - msg */
 	unsigned int in_typing	: 1;	/* user is composing a message to us */
@@ -69,7 +69,7 @@ typedef struct {
 	unsigned int hide	: 1;	/* ukrywamy, bo jest zbyt du¿e */
 
 	time_t last_update;		/* czas ostatniego uaktualnienia */
-	unsigned short int lock;	/* blokowanie zmian w obrêbie komendy */
+	unsigned short lock;		/* blokowanie zmian w obrêbie komendy */
 
 	list_t userlist;		/* sometimes window may require separate userlist */
 
