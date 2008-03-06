@@ -4167,7 +4167,7 @@ static LIST_ADD_COMPARE(command_add_compare, command_t *) {
  *
  */
 
-command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities) {
+command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, command_flags_t flags, char *possibilities) {
 	command_t *c;
 
 	if (!name) 

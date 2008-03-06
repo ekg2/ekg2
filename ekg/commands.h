@@ -72,7 +72,7 @@ typedef struct {
 extern list_t commands;
 extern list_t *commands_lock;
 
-command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, int flags, char *possibilities);
+command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, command_flags_t flags, char *possibilities);
 void command_freeone(command_t *c);
 int command_remove(plugin_t *plugin, const char *name);
 command_t *command_find (const char *name);
