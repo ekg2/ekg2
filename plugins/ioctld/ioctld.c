@@ -65,6 +65,10 @@
 #  endif
 #endif
 
+#include "ekg2-config.h" /* because of socklen_t */
+#ifndef HAVE_SOCKLEN_T
+typedef unsigned int socklen_t;
+#endif
 
 char sock_path[PATH_MAX] = "";
 
@@ -159,7 +163,8 @@ void quit()
 
 int main(int argc, char **argv) 
 {
-    	int sock, length;
+    	int sock;
+	socklen_t length;
 	struct sockaddr_un addr;
 	struct action_data data;
 	
@@ -196,7 +201,7 @@ int main(int argc, char **argv)
 	chown(sock_path, getuid(), -1);
 
 	while (1) {
-	    	if (recvfrom(sock, &data, sizeof(data), 0, (struct sockaddr *)&addr,&length) == -1) 
+	    	if (recvfrom(sock, &data, sizeof(data), 0, (struct sockaddr *) &addr, &length) == -1) 
 		    	continue;
 		
 		if (data.act == ACT_BLINK_LEDS)  
