@@ -444,7 +444,7 @@ static void irc_changed_resolve(session_t *s, const char *var) {
 	irdata->plist   = rlist;
 	irdata->isbind = isbind;
 
-	if (!(ekg_resolver3(&irc_plugin, session_get(s, var), irc_handle_resolver, irdata))) {
+	if (!(ekg_resolver3(&irc_plugin, session_get(s, var), (watcher_handler_func_t*) irc_handle_resolver, irdata))) {
 		print("generic_error", strerror(errno));
 
 		j->resolving--;

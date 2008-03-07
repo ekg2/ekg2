@@ -546,7 +546,7 @@ void polchat_processpkt(session_t *s, unsigned short nheaders, unsigned short ns
 
 		/* rekoduj, uzywaj cache (?) */
 		{
-			char *tmp = xstrndup(&data[2], strlen);
+			char *tmp = xstrndup((char*) &data[2], strlen);
 
 			if ((strings[i] = ekg_convert_string(tmp, "UTF-8", NULL)))
 				xfree(tmp);
