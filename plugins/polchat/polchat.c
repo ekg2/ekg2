@@ -213,7 +213,7 @@ static watch_t *polchat_sendpkt(session_t *s, short headercode, ...)  {
 		array_free(arr);
 	}
 	
-	w->data = (void *) w->buf->len;
+	w->data = (void *) (long int) w->buf->len;
 	return w;
 }
 

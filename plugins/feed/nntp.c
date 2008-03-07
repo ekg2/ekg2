@@ -183,7 +183,6 @@ static void nntp_children_died(struct child_s *c, int pid, const char *name, int
 	session_t *s = session_find(d->session);
 	nntp_private_t *j;
 	struct stat st;
-	FILE *f;
 
 	if (!s || !s->priv) {
 		print("nntp_posting_failed", session_name(s), d->newsgroup, "session not found", d->filename);
@@ -350,7 +349,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 			ENCODING_8BIT,
 		} cte = ENCODING_UNKNOWN;
 
-		char *encoding;
+//		char *encoding;
 		char *tmp; 
 
 		char *text;

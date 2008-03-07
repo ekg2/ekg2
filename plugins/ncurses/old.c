@@ -1275,9 +1275,9 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 	if (!w)
 		return -1;
 	
-	if (!config_display_pl_chars) {
+	if (!config_display_pl_chars) { /* XXX: oops, we're capable only of iso2 */
 		ftext = xstrdup(format);
-		iso_to_ascii(ftext);
+		iso_to_ascii((unsigned char*) ftext);
 		p = ftext;
 	} else	p = format;
 
@@ -1368,7 +1368,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
                              	
 				if (!config_display_pl_chars) {
                                 	ftext = text = xstrdup(text);
-                                	iso_to_ascii(text);
+                                	iso_to_ascii((unsigned char*) text);
                               	}
 
 				while (*text) {
