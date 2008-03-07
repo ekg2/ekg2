@@ -402,10 +402,10 @@ static COMMAND(xmsg_disconnect)
 	}
 
 #ifdef HAVE_INOTIFY
-	if (session->priv && inotify_rm_watch(in_fd, (uint32_t) session->priv))
+	if (session->priv && inotify_rm_watch(in_fd, (long int) session->priv))
 		xdebug2(DEBUG_ERROR, "rmwatch failed");
 	else
-		xdebug("inotify watch removed: %d", (uint32_t) session->priv);
+		xdebug("inotify watch removed: %d", (long int) session->priv);
 #endif /*HAVE_INOTIFY*/
 
 	return 0;
@@ -438,7 +438,7 @@ static WATCHER(xmsg_handle_data)
 		for (sp = sessions; sp; sp = sp->next) {
 			s = sp->data;
 
-			if (s && (s->priv == (void*) evp->wd) && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
+			if (s && (s->priv == (void*) (long int) evp->wd) && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
 				break;
 		}
 		
@@ -524,10 +524,10 @@ static inline int xmsg_add_watch(session_t *s, const char *f)
 	}
 
 #ifdef HAVE_INOTIFY
-	if ((s->priv = (void*) inotify_add_watch(in_fd, dir, (IN_CLOSE_WRITE|IN_MOVED_TO|IN_ONLYDIR))) == (void*) -1)
+	if ((s->priv = (void*) (long int) inotify_add_watch(in_fd, dir, (IN_CLOSE_WRITE|IN_MOVED_TO|IN_ONLYDIR))) == (void*) -1)
 		xerrn("unable to add inotify watch");
 	
-	xdebug("inotify watch added: %d", (uint32_t) s->priv);
+	xdebug("inotify watch added: %d", (long int) s->priv);
 #endif /*HAVE_INOTIFY*/
 	
 	return 0;
