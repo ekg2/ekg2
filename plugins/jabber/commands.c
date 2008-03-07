@@ -267,9 +267,9 @@ static COMMAND(jabber_command_msg)
 		/* threaded messages */
 	if (!xstrcmp(name, "tmsg")) {
 			/* just make it compatible with /msg */
-		thread = params[1];
-		params[1] = params[2];
-		params[2] = thread;
+		const char *tmp	= params[1];
+		params[1]	= params[2];
+		params[2]	= tmp;
 		
 			/* and now we can set real thread */
 		thread = jabber_escape(params[2]);
@@ -290,7 +290,7 @@ static COMMAND(jabber_command_msg)
 			msg	= NULL;
 		}
 	} else 
-		msg = params[1]; /* bez tematu */
+		msg = (char*) params[1]; /* bez tematu */
 	if ((c = newconference_find(session, target))) 
 		ismuc = 1;
 

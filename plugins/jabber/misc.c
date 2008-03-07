@@ -389,7 +389,6 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 			break;
 
 		case JABBER_COMPRESSION_LZW:	/* XXX */
-#warning "LZW SUPPORT !!!"
 		default:
 			debug_error("[jabber] jabber_handle_write() unknown compression: %d\n", j->using_compress);
 	}
@@ -491,7 +490,7 @@ int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *s
 				&& xstrcmp(thr->subject, resubject) /* ...also with Re: prefix... */
 				&& (xstrncmp(thr->subject, config_subject_reply_prefix, l)
 					|| xstrcmp(thr->subject+l, subject)) /* ...on both sides... */
-				: thr->subject)) || !uid || xstrcmp(thr->uid, uid)); /* ...and UID */
+				: !!thr->subject)) || !uid || xstrcmp(thr->uid, uid)); /* ...and UID */
 	                prev = thr, thr = thr->next, i++); /* <- that's third param for 'for' */
 
 	if (!thr && can_add) { /* haven't found anything, but can create something */

@@ -359,8 +359,6 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 	d->priv = NULL;
 
 	if (p) {
-		list_t l;
-
 		if (p->protocol == JABBER_DCC_PROTOCOL_BYTESTREAMS) {
 			/* XXX, free protocol-specified data */
 
