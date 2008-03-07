@@ -96,8 +96,10 @@ CODEC_CONTROL(pcm_codec_control) {
 		if (priv->ich < 1 || priv->ich > 2 || priv->och < 1 || priv->och > 2)			valid = 0;	/* CHECK CHANNELS */
 
 	/* return valid 	1 - succ ; 0 - failed*/
-		return (void *) valid;
-
+			/* XXX: yeah, that's awesome, but gcc is stupid like trunk,
+			 * and prints warning (on amd64, where sizeof(int) != sizeof(void*))
+			 * for both !!valid and even (valid ? 1 : 0) */
+		return (valid ? (void*) 1 : NULL);
 	} else if ((type == AUDIO_CONTROL_SET && !aco) || (type == AUDIO_CONTROL_GET && aco)) {	/* pcm_codec_init()  | _get() */
 		const char *from = NULL, *to = NULL;
 		char *attr;
