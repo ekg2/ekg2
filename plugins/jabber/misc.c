@@ -245,7 +245,8 @@ char *jabber_escape(const char *text) {
  */
 
 char *jabber_unescape(const char *text) {
-	const char *s;
+	char *s;
+
 	if (!text)
 		return NULL;
 	s = ekg_convert_string_p(text, jconv_in);
@@ -271,17 +272,16 @@ char *jabber_unescape(const char *text) {
  */
 
 char *tlen_encode(const char *what) {
-	const unsigned char *s;
+	unsigned char *s;
 	unsigned char *ptr, *str;
 	char *text = NULL;
 
 	if (!what) return NULL;
 
-	s = text = ekg_convert_string_p(what, tconv_out);
-	if (!text)
-		s = what;
+	text = ekg_convert_string_p(what, tconv_out);
+	s = (unsigned char *) (text ? text : what);
 
-	str = ptr = (unsigned char *) xcalloc(3 * xstrlen(s) + 1, 1);
+	str = ptr = (unsigned char *) xcalloc(3 * xstrlen((char*) s) + 1, 1);
 	while (*s) {
 		if (*s == ' ')
 			*ptr++ = '+';
@@ -289,14 +289,14 @@ char *tlen_encode(const char *what) {
 			 || (*s < 'A' && *s > '9') || (*s > 'Z' && *s < 'a' && *s != '_')
 			 || (*s > 'z')) 
 		{
-			sprintf(ptr, "%%%02X", *s);
+			sprintf((char*) ptr, "%%%02X", *s);
 			ptr += 3;
 		} else
 			*ptr++ = *s;
 		s++;
 	}
 	xfree(text);
-	return str;
+	return (char*) str;
 }
 
 /**
@@ -320,14 +320,14 @@ char *tlen_decode(const char *what) {
 	char *text;
 
 	if (!what) return NULL;
-	dest = data = retval = xstrdup(what);
+	dest = data = retval = (unsigned char *) xstrdup(what);
 	while (*data) {
 		if (*data == '+')
 			*dest++ = ' ';
 		else if ((*data == '%') && xisxdigit(data[1]) && xisxdigit(data[2])) {
 			int code;
 
-			sscanf(data + 1, "%2x", &code);
+			sscanf((char*) (data + 1), "%2x", &code);
 			if (code != '\r')
 				*dest++ = (unsigned char) code;
 			data += 2;
@@ -337,8 +337,8 @@ char *tlen_decode(const char *what) {
 	}
 	*dest = '\0';
 
-	if (!(text = ekg_convert_string_p(retval, tconv_in)))
-		return retval;
+	if (!(text = ekg_convert_string_p((char*) retval, tconv_in)))
+		return (char*) retval;
 	xfree(retval);
 	return text;
 }
@@ -353,8 +353,7 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 {
 	jabber_private_t *j = data;
 	char *compressed = NULL;
-	int res = 0;
-	size_t len;
+	int res = 0, len;
 
 	if (type) {
 		/* XXX, do we need to make jabber_handle_disconnect() or smth simillar? */
@@ -399,7 +398,7 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 
 #ifdef JABBER_HAVE_SSL
 	if (j->using_ssl) {
-		res = SSL_SEND(j->ssl_session, watch, len);
+		res = SSL_SEND(j->ssl_session, watch, (size_t) len);
 
 #ifdef JABBER_HAVE_OPENSSL		/* OpenSSL */
 		if ((res == 0 && SSL_get_error(j->ssl_session, res) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
@@ -480,7 +479,7 @@ QUERY(jabber_convert_string_reinit) {
  */
 int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *subject, const char *thread, jabber_conversation_t **result, const int can_add) {
 	jabber_conversation_t *thr, *prev;
-	char *resubject = NULL;
+	const char *resubject = NULL;
         int i, l = 0;
 	
 	if (!thread && subject && !xstrncmp(subject, config_subject_reply_prefix, (l = xstrlen(config_subject_reply_prefix))))
@@ -492,7 +491,7 @@ int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *s
 				&& xstrcmp(thr->subject, resubject) /* ...also with Re: prefix... */
 				&& (xstrncmp(thr->subject, config_subject_reply_prefix, l)
 					|| xstrcmp(thr->subject+l, subject)) /* ...on both sides... */
-				: thr->subject)) || (uid ? xstrcmp(thr->uid, uid) : 1)); /* ...and UID */
+				: thr->subject)) || !uid || xstrcmp(thr->uid, uid)); /* ...and UID */
 	                prev = thr, thr = thr->next, i++); /* <- that's third param for 'for' */
 
 	if (!thr && can_add) { /* haven't found anything, but can create something */
@@ -546,7 +545,7 @@ char *jabber_thread_gen(jabber_private_t *j, const char *uid) {
 		/* just trying to find first free one */
 	for (i = jabber_conversation_find(j, NULL, NULL, NULL, NULL, 0), k = i; n != k; i++) {
 		xfree(thread);
-		thread = saprintf("thr%d-%8x-%8x", i, rand(), time(NULL)); /* that should look gorgeous */
+		thread = saprintf("thr%d-%8x-%8x", i, rand(), (unsigned int) time(NULL)); /* that should look gorgeous */
 		n = jabber_conversation_find(j, thread, NULL, uid, NULL, 0);
 		debug("[jabber,thread_gen] i = %d, k = %d, n = %d, t = %s\n", i, n, k, thread);
 	}

@@ -940,7 +940,7 @@ static COMMAND(jabber_command_change)
 		} else if (match_arg(params[i], 'C', ("country"), 2) && params[i + 1]) {
 			pub[5] = (char *) params[++i];
 		} else if (match_arg(params[i], 'p', ("photo"), 2) && params[i + 1]) {
-			photo = params[++i];
+			photo  = (char *) params[++i];
 		}
 	}
 	for (i=0; i<pub_sz; i++) 

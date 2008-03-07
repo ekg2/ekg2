@@ -719,7 +719,9 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 	
 	if (watch == WATCH_WRITE) {
 		char *req, *esc; 
-		int res = 0, res_size = sizeof(res);
+		int res = 0;
+		socklen_t res_size = sizeof(res);
+
 		if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 			jabber_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
 			return -1;

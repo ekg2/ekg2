@@ -21,7 +21,7 @@
 
 # define SSL_SESSION		gnutls_session
 
-static int __attribute__((unused)) SSL_SET_FD(SSL_SESSION session, int fd) {
+static int __attribute__((unused)) SSL_SET_FD(SSL_SESSION session, long int fd) {
 	gnutls_transport_set_ptr(session, (gnutls_transport_ptr)(fd));
 	return 1;	/* always success */
 } 
@@ -38,7 +38,7 @@ static int __attribute__((unused)) SSL_SET_FD(SSL_SESSION session, int fd) {
 # define SSL_SEND(session, str, len)	gnutls_record_send(session, str, len)
 # define SSL_RECV(session, buf, size)	gnutls_record_recv(session, buf, size)
 
-# define SSL_GET_FD(session, fd)		(int) gnutls_transport_get_ptr(session)
+# define SSL_GET_FD(session, fd)		(long int) gnutls_transport_get_ptr(session)
 # define SSL_WRITE_DIRECTION(session, ret)	gnutls_record_get_direction(session)
 
 #else				/* HAVE_OPENSSL */
