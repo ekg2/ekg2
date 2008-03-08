@@ -399,6 +399,8 @@ static int metacontact_session_renamed_handler(void *data, va_list ap)
 	/* We don't change alias so frequently,
 	 * so we can resort whole list, not only items w/ that session */
 
+	/* XXX: exactly, why we do it? we don't even look at session alias
+	 * 	in sorting function */
 	LIST_RESORT2(metacontacts, metacontact_add_item_compare);
 #if 0
 	char **tmp = va_arg(ap, char**);
