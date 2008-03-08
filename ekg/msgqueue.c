@@ -38,7 +38,7 @@
 #include "stuff.h"
 #include "xmalloc.h"
 
-list_t msg_queue = NULL;
+msg_queue_t *msg_queue = NULL;
 
 /*
  * msg_queue_add()
@@ -62,7 +62,7 @@ int msg_queue_add(const char *session, const char *rcpts, const char *message, c
 	m->seq 		= xstrdup(seq);
 	m->time 	= time(NULL);
 
-	return (list_add(&msg_queue, m) ? 0 : -1);
+	return (LIST_ADD2(&msg_queue, m) ? 0 : -1);
 }
 
 static LIST_FREE_ITEM(list_msg_queue_free, msg_queue_t *) {
@@ -70,7 +70,6 @@ static LIST_FREE_ITEM(list_msg_queue_free, msg_queue_t *) {
 	xfree(data->rcpts);
 	xfree(data->message);
 	xfree(data->seq);
-	xfree(data);
 }
 
 /*
@@ -85,18 +84,18 @@ static LIST_FREE_ITEM(list_msg_queue_free, msg_queue_t *) {
  */
 int msg_queue_remove_uid(const char *uid)
 {
-	list_t l;
+	msg_queue_t *m;
 	int res = -1;
 
-	for (l = msg_queue; l; ) {
-		msg_queue_t *m = l->data;
-
-		l = l->next;
+	for (m = msg_queue; m; ) {
+		msg_queue_t *next = m->next;
 
 		if (!xstrcasecmp(m->rcpts, uid)) {
-			LIST_REMOVE(&msg_queue, m, list_msg_queue_free);
+			LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 			res = 0;
 		}
+
+		m = next;
 	}
 
 	return res;
@@ -114,20 +113,20 @@ int msg_queue_remove_uid(const char *uid)
 int msg_queue_remove_seq(const char *seq)
 {
 	int res = -1;
-	list_t l;
+	msg_queue_t *m;
 
 	if (!seq) 
 		return -1;
 
-	for (l = msg_queue; l; ) {
-		msg_queue_t *m = l->data;
-
-		l = l->next;
+	for (m = msg_queue; m; ) {
+		msg_queue_t *next = m->next;
 
 		if (!xstrcasecmp(m->seq, seq)) {
-			LIST_REMOVE(&msg_queue, m, list_msg_queue_free);
+			LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 			res = 0;
 		}
+
+		m = next;
 	}
 
 	return res;
@@ -139,7 +138,7 @@ int msg_queue_remove_seq(const char *seq)
  * zwalnia pamiêæ po kolejce wiadomo¶ci.
  */
 void msg_queue_free() {
-	LIST_DESTROY(msg_queue, list_msg_queue_free);
+	LIST_DESTROY2(msg_queue, list_msg_queue_free);
 	msg_queue = NULL;
 }
 
@@ -153,45 +152,41 @@ void msg_queue_free() {
  */
 int msg_queue_flush(const char *session)
 {
-	list_t l;
-	int sent = 0;
+	msg_queue_t *m;
+	int ret = -1;
 
 	if (!msg_queue)
 		return -2;
 
-	for (l = msg_queue; l; l = l->next) {
-		msg_queue_t *m = l->data;
-
+	for (m = msg_queue; m; m = m->next)
 		m->mark = 1;
-	}
 
-	for (l = msg_queue; l;) {
-		msg_queue_t *m = l->data;
+	for (m = msg_queue; m;) {
 		session_t *s;
-
-		l = l->next;
+		msg_queue_t *next = m->next;
 
 		/* czy wiadomo¶æ dodano w trakcie opró¿niania kolejki? */
 		if (!m->mark)
 			continue;
 
-		/* wiadomo¶æ wysy³ana z nieistniej±cej ju¿ sesji? usuwamy. */
-		if (!(s = session_find(m->session))) {
-			LIST_REMOVE(&msg_queue, m, list_msg_queue_free);
-			continue;
-		}
 
 		if (session && xstrcmp(m->session, session)) 
 			continue;
+				/* wiadomo¶æ wysy³ana z nieistniej±cej ju¿ sesji? usuwamy. */
+		else if (!(s = session_find(m->session))) {
+			LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+			continue;
+		}
 
 		command_exec_format(NULL, s, 1, ("/msg \"%s\" %s"), m->rcpts, m->message);
 
-		LIST_REMOVE(&msg_queue, m, list_msg_queue_free);
+		LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 
-		sent = 1;
+		ret = 0;
+		m = next;
 	}
 
-	return (sent) ? 0 : -1;
+	return ret;
 }
 
 /*
@@ -203,12 +198,10 @@ int msg_queue_flush(const char *session)
  */
 int msg_queue_count_session(const char *uid)
 {
-	list_t l;
+	msg_queue_t *m;
 	int count = 0;
 
-	for (l = msg_queue; l; l = l->next) {
-		msg_queue_t *m = l->data;
-
+	for (m = msg_queue; m; m = m->next) {
 		if (!xstrcasecmp(m->session, uid))
 			count++;
 	}
@@ -225,7 +218,7 @@ int msg_queue_count_session(const char *uid)
  */
 int msg_queue_write()
 {
-	list_t l;
+	msg_queue_t *m;
 	int num = 0;
 
 	if (!msg_queue)
@@ -234,8 +227,7 @@ int msg_queue_write()
 	if (mkdir_recursive(prepare_pathf("queue"), 1))		/* create ~/.ekg2/[PROFILE/]queue/ */
 		return -1;
 
-	for (l = msg_queue; l; l = l->next) {
-		msg_queue_t *m = l->data;
+	for (m = msg_queue; m; m = m->next) {
 		const char *fn;
 		FILE *f;
 
@@ -341,7 +333,7 @@ int msg_queue_read() {
 
 		m.message = string_free(msg, 0);
 
-		list_add(&msg_queue, xmemdup(&m, sizeof(m)));
+		LIST_ADD2(&msg_queue, xmemdup(&m, sizeof(m)));
 
 		fclose(f);
 		unlink(fn);

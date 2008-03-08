@@ -26,7 +26,9 @@
 
 #include "dynstuff.h"
 
-typedef struct {
+typedef struct msg_queue {
+	struct msg_queue	*next;
+
 	char		*session;		/* do której sesji nale¿y */
 	char		*rcpts;			/* uidy odbiorców */
 	char		*message;		/* tre¶æ */
@@ -35,7 +37,7 @@ typedef struct {
 	unsigned int	mark		: 1;	/* if added during cleanup */
 } msg_queue_t;
 
-extern list_t msg_queue;
+extern msg_queue_t *msg_queue;
 
 int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq);
 void msg_queue_free();
