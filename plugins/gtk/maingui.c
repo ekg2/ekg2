@@ -360,7 +360,6 @@ void mg_inputbox_cb(GtkWidget *igad, gtk_window_ui_t *gui) {
 	if (sess) {
 		command_exec(sess->target, sess->session, cmd, 0);
 
-					/*      vvv - previously there was wcs, XXX: why? */
 		if (config_history_savedups || xstrcmp(cmd, gtk_history[1])) {
 			gtk_history[0] = cmd;
 			xfree(gtk_history[HISTORY_MAX - 1]);
