@@ -1391,7 +1391,7 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 	char		*chan, *tmpname;
 	const char	*tf, *ts, *tp; /* first, second */
 	int		i = 0, parnum = 0, argnum = 0, hasq = 0;
-	list_t		l;
+	command_t	*c;
 
 	if (params) tf = params[0];
 	else tf = NULL;
@@ -1411,9 +1411,7 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 	}
 
 	tmpname = saprintf("irc:%s", name);
-	for (l = commands; l; l = l->next) {
-		command_t *c = l->data;
-
+	for (c = commands; c; c = c->next) {
 		if (&irc_plugin == c->plugin && !xstrcmp(tmpname, c->name))
 		{
 			while (c->params[parnum])

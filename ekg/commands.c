@@ -108,8 +108,8 @@ char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;
 
-list_t commands = NULL;
-list_t *commands_lock = NULL;
+command_t *commands = NULL;
+command_t **commands_lock = NULL;
 
 /*
  * match_arg()
@@ -211,13 +211,11 @@ void tabnick_flush()
  */
 command_t *command_find(const char *name)
 {
-        list_t l;
+        command_t *c;
 
         if (!name)
                 return NULL;
-        for (l = commands; l; l = l->next) {
-                command_t *c = l->data;
-
+        for (c = commands; c; c = c->next) {
                 if (!xstrcasecmp(c->name, name)) {
                         return c;
 		}
@@ -1009,7 +1007,7 @@ static COMMAND(cmd_for)
 
 static COMMAND(cmd_help)
 {
-	list_t l;
+	command_t *c;
 	if (params[0]) {
 		const char *p = (params[0][0] == '/' && xstrlen(params[0]) > 1) ? params[0] + 1 : params[0];
 		int plen;
@@ -1032,9 +1030,7 @@ static COMMAND(cmd_help)
 		} else
 			plen = 0;
 	
-		for (l = commands; l; l = l->next) {
-			command_t *c = l->data;
-			
+		for (c = commands; c; c = c->next) {
 			if (!xstrcasecmp(c->name, p) && (c->flags & COMMAND_ISALIAS)) {
 				printq("help_alias", p);
 				return -1;
@@ -1153,9 +1149,7 @@ static COMMAND(cmd_help)
 		}
 	}
 
-	for (l = commands; l; l = l->next) {
-		command_t *c = l->data;
-
+	for (c = commands; c; c = c->next) {
 		if (xisalnum(*c->name) && !(c->flags & COMMAND_ISALIAS)) {
 		    	char *blah = NULL;
                         FILE *f;
@@ -2523,7 +2517,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 	int exact = 0;
 
-	list_t l;
+	command_t *c;
 
 	if (!xline)
 		return 0;
@@ -2534,8 +2528,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	
 		/* wykrywanie przypadkowo wpisanych poleceñ */
 		if (config_query_commands) {
-			for (l = commands; l; l = l->next) {
-				command_t *c = l->data;
+			for (c = commands; c; c = c->next) {
 				size_t l = xstrlen(c->name);
 
 				if (l < 3 || xstrncasecmp(xline, c->name, l))
@@ -2573,9 +2566,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		line++;
 	}
 
-	for (l = commands; l; l = l->next) {
-		command_t *c = l->data;
-
+	for (c = commands; c; c = c->next) {
 		if (!isalpha_pl_PL(c->name[0]) && xstrlen(c->name) == 1 && line[0] == c->name[0]) {
 			short_cmd[0] = c->name[0];
 			cmd = short_cmd;
@@ -2599,9 +2590,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	if (session && session->uid) {
 		int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 		
-		for (l = commands; l; l = l->next) {
-			command_t *c = l->data;
-
+		for (c = commands; c; c = c->next) {
 			if (xstrncasecmp(c->name, session->uid, plen))
 				continue;
 		
@@ -2622,9 +2611,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		}
 	}
 	if (!exact) {
-		for (l = commands; l; l = l->next) {
-			command_t *c = l->data;
-
+		for (c = commands; c; c = c->next) {
 			if (!xstrcasecmp(c->name, cmd)) {
 				last_command = c;
 				abbrs = 1;
@@ -4185,18 +4172,17 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 	if (commands_lock) {				/* if we lock commands */
 		if (*commands_lock == commands) {	/* if lock_command points to commands */
 			/* then we need to find place where to add it.. */
-			for (; *commands_lock && (command_add_compare((*commands_lock)->data, c) < 0); commands_lock = &((*commands_lock)->next));
+			for (; *commands_lock && (command_add_compare(*commands_lock, c) < 0); commands_lock = &((*commands_lock)->next));
 		} else		commands_lock = &((*commands_lock)->next);	/* otherwise if we have list... move to next */
-		list_add_beginning(commands_lock, c);		/* add to commands */
+		LIST_ADD_BEGINNING2(commands_lock, c);		/* add to commands */
 		return c;
 	}
-	return LIST_ADD_SORTED(&commands, c, command_add_compare);
+	return LIST_ADD_SORTED2(&commands, c, command_add_compare);
 }
 
 static LIST_FREE_ITEM(list_command_free, command_t *) {
 	array_free(data->params);
 	array_free(data->possibilities);
-	xfree(data);
 }
 
 /*
@@ -4209,22 +4195,23 @@ static LIST_FREE_ITEM(list_command_free, command_t *) {
  */
 
 void command_freeone(command_t *c) {
-	LIST_REMOVE(&commands, c, list_command_free);
+	LIST_REMOVE2(&commands, c, list_command_free);
 }
 
 int command_remove(plugin_t *plugin, const char *name)
 {
-	list_t l;
+	command_t *c;
 
-	for (l = commands; l;) {
-		command_t *c = l->data;
-		l = l->next;
+	for (c = commands; c;) {
+		command_t *next = c->next;
 
 		if (!xstrcasecmp(name, c->name) && plugin == c->plugin) {
 			command_freeone(c);
 
 			return 0;
 		}
+
+		c = next;
 	}
 
 	return -1;
@@ -4240,7 +4227,7 @@ int command_remove(plugin_t *plugin, const char *name)
  */
 
 void command_free() {
-	LIST_DESTROY(commands, list_command_free);
+	LIST_DESTROY2(commands, list_command_free);
 	commands = NULL;
 }
 

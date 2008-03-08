@@ -512,6 +512,7 @@ int plugin_unregister(plugin_t *p)
 	 */
 
 	list_t l;
+	command_t *c;
 
 	if (!p)
 		return -1;
@@ -576,13 +577,13 @@ int plugin_unregister(plugin_t *p)
 			variable_remove(v->plugin, v->name);
 	}
 
-	for (l = commands; l; ) {
-		command_t *c = l->data;
-
-		l = l->next;
+	for (c = commands; c; ) {
+		command_t *next = c->next;
 
 		if (c->plugin == p)
 			command_freeone(c);
+
+		c = next;
 	}
 
 	list_remove(&plugins, p, 0);

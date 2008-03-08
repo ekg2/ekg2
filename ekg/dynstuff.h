@@ -42,10 +42,31 @@
  * jest dostêpne bezpo¶rednio, reszta przez odpowiednie funkcje.
  */
 
+/*
+ * New *3() lists
+ *
+ * Instead of allocing additional list of dual-pointer structs, we add
+ * 'next' field to the beginning of real struct. C allows us to point
+ * to that first field independently of which struct is it, so we can
+ * use some type-indepdendent functions for that. The main target is
+ * to totally remove old functions, but leave 'list_t'.
+ *
+ * Then, for example, session_t would point to first entry of userlist
+ * (as userlist_t*), and that entry would point to second one, second
+ * one to third, etc. But if we want to group few userlist entries
+ * independently of their original structure, we could just catch them
+ * in standard list_t and use its' 'next' field.
+ */
+
 struct list {
-	void *data;
-	/*struct list *prev;*/
+		/* it is important that we keep 'next' first field,
+		 * because C allows us to call first field of any structure
+		 * without knowing its' type
+		 *
+		 * so *3() would work peacefully w/ both list_t and not-list_t lists */
 	struct list *next;
+
+	void *data;
 };
 
 typedef struct list *list_t;
@@ -53,27 +74,41 @@ typedef struct list *list_t;
 #ifndef EKG2_WIN32_NOFUNCTION
 #define LIST_ADD_COMPARE(x, type)			int x(const type data1, const type data2)
 #define LIST_ADD_SORTED(list, data, comp)		list_add_sorted(list, data, (void *) comp)
+#define LIST_ADD_SORTED2(list, data, comp)		list_add_sorted3((list_t *) list, (list_t) data, (void *) comp)
+#define LIST_ADD_BEGINNING2(list, data)			list_add_beginning((list_t *) list, (list_t) data)
 
 #define LIST_RESORT(list, comp)				list_resort(list, (void *) comp)
+#define LIST_RESORT2(list, comp)			list_resort3((list_t *) list, (void *) comp)
 
 #define LIST_REMOVE(list, data, func)			list_remove2(list, data, (void *) func)
+#define LIST_REMOVE2(list, elem, func)			list_remove3((list_t *) list, (list_t) elem, (void *) func)
 #define LIST_FREE_ITEM(x, type)				void x(type data)
 
 #define LIST_DESTROY(list, func)			list_destroy2(list, (void *) func)
+#define LIST_DESTROY2(list, func)			list_destroy3((list_t) list, (void *) func)
 
 void *list_add(list_t *list, void *data);
 void *list_add_beginning(list_t *list, void *data);
 void *list_add_sorted(list_t *list, void *data, int (*comparision)(void *, void *));
 
+void *list_add3(list_t *list, list_t new);
+void *list_add_beginning3(list_t *list, list_t new);
+void *list_add_sorted3(list_t *list, list_t new, int (*comparision)(void *, void *));
+
+
 int list_count(list_t list);
 void *list_get_nth(list_t list, int id);
+void *list_get_nth3(list_t list, int id);
 void list_resort(list_t *list, int (*comparision)(void *, void *));
+void list_resort3(list_t *list, int (*comparision)(void *, void *));
 
 int list_remove(list_t *list, void *data, int free_data);
 int list_remove2(list_t *list, void *data, void (*func)(void *));
+int list_remove3(list_t *list, void *elem, void (*func)(void *));
 
 int list_destroy(list_t list, int free_data);
 int list_destroy2(list_t list, void (*func)(void *));
+int list_destroy3(list_t list, void (*func)(void *));
 
 void list_cleanup(list_t *list);
 int list_remove_safe(list_t *list, void *data, int free_data);

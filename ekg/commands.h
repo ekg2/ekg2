@@ -56,7 +56,9 @@ typedef enum {
 
 typedef COMMAND(command_func_t);
 
-typedef struct {
+typedef struct command {
+	struct command	*next;
+
 /* public: */
 	const char	*name;
 	plugin_t	*plugin;
@@ -69,8 +71,8 @@ typedef struct {
 } command_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern list_t commands;
-extern list_t *commands_lock;
+extern command_t *commands;
+extern command_t **commands_lock;
 
 command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, command_flags_t flags, char *possibilities);
 void command_freeone(command_t *c);

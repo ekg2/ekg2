@@ -157,7 +157,7 @@ GENERATOR(theme) {
 
 GENERATOR(command) {
 	static int len;
-	static list_t el;
+	static command_t *c;
 	int slash = 0;
 	int dash = 0;
 
@@ -204,7 +204,7 @@ GENERATOR(command) {
 #endif
 
 	if (!state) {
-		el = commands;
+		c = commands;
 		len = xstrlen(text);
 	}
 
@@ -222,13 +222,11 @@ GENERATOR(command) {
 
 	if (window_current->target) slash = 1;
 
-	while (el) {
-		command_t *c = el->data;
+	while (c) {
 		char *without_sess_id = NULL;
+		command_t *next = c->next;
 		int plen = 0;
 		session_t *session = session_current;
-
-		el = el->next;
 
 		if (session && session->uid)
 			plen =  (int)(xstrchr(session->uid, ':') - session->uid) + 1;
@@ -246,6 +244,8 @@ GENERATOR(command) {
 					slash ? "/" : "",
 					dash ? "^" : "",
 					without_sess_id + 1);
+
+		c = next;
 	}
 
 	return NULL;
@@ -493,7 +493,7 @@ char **my_completion(char *text, int start, int end) {
 	char **params = NULL;
 	int word = 0, i, abbrs = 0;
 	CPFunction *func = known_uin_generator;
-	list_t l;
+	command_t *c;
 	static int my_send_nicks_count = 0;
 
 	if (start) {
@@ -556,8 +556,7 @@ char **my_completion(char *text, int start, int end) {
 		}
 		word--;
 
-		for (l = commands; l; l = l->next) {
-			command_t *c = l->data;
+		for (c = commands; c; c = c->next) {
 			int len = xstrlen(c->name);
 			char *cmd = (*rl_line_buffer == '/') ? rl_line_buffer + 1 : rl_line_buffer;
 

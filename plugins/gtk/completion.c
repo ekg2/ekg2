@@ -57,7 +57,7 @@ session_t *session_in_line;
 static void command_generator(const char *text, int len)
 {
 	const char *slash = (""), *dash = ("");
-	list_t l;
+	command_t *c;
 	session_t *session = session_current;
 	if (*text == ('/')) {
 		slash = ("/");
@@ -74,8 +74,7 @@ static void command_generator(const char *text, int len)
 	if (window_current->target)
 		slash = ("/");
 
-	for (l = commands; l; l = l->next) {
-		command_t *c = l->data;
+	for (c = commands; c; c = c->next) {
 		char *without_sess_id = NULL;
 		int plen = 0;
 		if (session && session->uid)
@@ -999,7 +998,7 @@ void ncurses_complete(int *line_index, char *line)
 	} else {
 		char **params = NULL;
 		int i;
-		list_t l;
+		command_t *c;
                 char *cmd = (line[0] == '/') ? line + 1 : line;
 		int len;
 
@@ -1010,9 +1009,7 @@ void ncurses_complete(int *line_index, char *line)
 			session_t *session = session_current;
 			int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
-			for (l = commands; l; l = l->next) {
-				command_t *c = l->data;
-
+			for (c = commands; c; c = c->next) {
 	                        if (xstrncasecmp(c->name, session->uid, plen))
 	                                continue;
 
@@ -1024,9 +1021,7 @@ void ncurses_complete(int *line_index, char *line)
 			}
 		}
 
-        	for (l = commands; l; l = l->next) {
-	                command_t *c = l->data;
-
+        	for (c = commands; c; c = c->next) {
 	                if (!xstrncasecmp(c->name, cmd, len)) {
 	                        params = c->params;
 	                        actual_completed_command = c;

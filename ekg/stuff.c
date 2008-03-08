@@ -260,6 +260,7 @@ int alias_add(const char *string, int quiet, int append)
 {
 	char *cmd;
 	list_t l;
+	command_t *c;
 	struct alias *a;
 	char **params = NULL;
 	char *array;
@@ -277,14 +278,10 @@ int alias_add(const char *string, int quiet, int append)
 				printq("aliases_exist", string);
 				return -1;
 			} else {
-				list_t l;
-
 				list_add(&j->commands, xstrdup(cmd));
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
-				for (l = commands; l; l = l->next) {
-					command_t *c = l->data;
-
+				for (c = commands; c; c = c->next) {
 					if (!xstrcasecmp(c->name, j->name)) {
 						xfree(c->params);
 						c->params = array_make(("?"), (" "), 0, 1, 1);
@@ -299,8 +296,7 @@ int alias_add(const char *string, int quiet, int append)
 		}
 	}
 
-	for (l = commands; l; l = l->next) {
-		command_t *c = l->data;
+	for (c = commands; c; c = c->next) {
 		char *tmp = ((*cmd == '/') ? cmd + 1 : cmd);
 
 		if (!xstrcasecmp(string, c->name) && !(c->flags & COMMAND_ISALIAS)) {

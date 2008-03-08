@@ -131,6 +131,65 @@ void *list_add(list_t *list, void *data)
 	return list_add_sorted(list, data, NULL);
 }
 
+void *list_add_sorted3(list_t *list, list_t new, int (*comparision)(void *, void *))
+{
+	list_t tmp;
+
+	if (!list) {
+		errno = EFAULT;
+		return NULL;
+	}
+
+	new->next = NULL;
+	if (!(tmp = *list)) {
+		*list = new;
+	} else {
+		if (!comparision) {
+			while (tmp->next)
+				tmp = tmp->next;
+			tmp->next = new;
+		} else {
+			list_t prev = NULL;
+			
+			while (comparision(new, tmp) > 0) {
+				prev = tmp;
+				tmp = tmp->next;
+				if (!tmp)
+					break;
+			}
+			
+			if (!prev) {
+				new->next = *list;
+				*list = new;
+			} else {
+				prev->next = new;
+				new->next = tmp;
+			}
+		}
+	}
+
+	return new;
+}
+
+void *list_add_beginning3(list_t *list, list_t new)
+{
+	if (!list) {
+		errno = EFAULT;
+		return NULL;
+	}
+
+	new->next = *list;
+	*list	  = new;
+
+	return new;
+
+}
+
+void *list_add3(list_t *list, list_t new)
+{
+	return list_add_sorted3(list, new, NULL);
+}
+
 /**
  * list_remove_safe()
  *
@@ -228,6 +287,34 @@ int list_remove2(list_t *list, void *data, void (*func)(void *data)) {
 	return 0;
 }
 
+int list_remove3(list_t *list, void *data, void (*func)(void *data)) {
+	list_t tmp, last = NULL;
+
+	if (!list) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	tmp = *list;
+	if (tmp && tmp == data) {
+		*list = tmp->next;
+	} else {
+		for (; tmp && tmp != data; tmp = tmp->next)
+			last = tmp;
+		if (!tmp) {
+			errno = ENOENT;
+			return -1;
+		}
+		last->next = tmp->next;
+	}
+
+	if (func)
+		func(tmp);
+	xfree(tmp);
+
+	return 0;
+}
+
 /**
  * list_remove()
  *
@@ -272,6 +359,20 @@ void *list_get_nth(list_t list, int id) {
 	return NULL;
 }
 
+void *list_get_nth3(list_t list, int id) {
+	while (list) {
+		if ((--id) == 0) {
+			/* errno = !ENOENT; */
+			return list;
+		}
+
+		list = list->next;
+	}
+
+	errno = ENOENT;
+	return NULL;
+}
+
 void list_resort(list_t *list, int (*comparision)(void *, void *)) {
 	list_t tmplist = NULL;
 	list_t l = *list;
@@ -282,6 +383,23 @@ void list_resort(list_t *list, int (*comparision)(void *, void *)) {
 		l = l->next;
 
 		list_add_sorted(&tmplist, cur->data, comparision);
+
+		xfree(cur);
+	}
+
+	*list = tmplist;
+}
+
+void list_resort3(list_t *list, int (*comparision)(void *, void *)) {
+	list_t tmplist = NULL;
+	list_t l = *list;
+
+	while (l) {
+		list_t cur = l;
+
+		l = l->next;
+
+		list_add_sorted3(&tmplist, cur, comparision);
 
 		xfree(cur);
 	}
@@ -313,6 +431,23 @@ int list_destroy2(list_t list, void (*func)(void *)) {
 	while (list) {
 		if (func && list->data)
 			func(list->data);
+
+		tmp = list->next;
+
+		xfree(list);
+
+		list = tmp;
+	}
+
+	return 0;
+}
+
+int list_destroy3(list_t list, void (*func)(void *)) {
+	list_t tmp;
+	
+	while (list) {
+		if (func)
+			func(list);
 
 		tmp = list->next;
 
