@@ -513,7 +513,7 @@ static COMMAND(gg_command_away) {
 }
 	
 static COMMAND(gg_command_msg) {
-	int count, valid = 0, chat, secure = 0, formatlen = 0;
+	int count, valid = 0, secure = 0, formatlen = 0;
 	char **nicks = NULL, *nick = NULL, **p = NULL, *add_send = NULL;
 	unsigned char *msg = NULL, *raw_msg = NULL;
 	unsigned char *cpmsg = NULL, *format = NULL;
