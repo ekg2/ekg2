@@ -401,7 +401,7 @@ static int metacontact_session_renamed_handler(void *data, va_list ap)
 
 	/* XXX: exactly, why we do it? we don't even look at session alias
 	 * 	in sorting function */
-	LIST_RESORT2(metacontacts, metacontact_add_item_compare);
+	LIST_RESORT2(&metacontacts, metacontact_add_item_compare);
 #if 0
 	char **tmp = va_arg(ap, char**);
 	session_t *s = session_find(*tmp);
