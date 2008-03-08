@@ -522,7 +522,8 @@ static COMMAND(gg_command_msg) {
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
 
-	chat = (xstrcmp(name, ("msg")));
+	const int chat = (xstrcmp(name, ("msg")));
+	const int class = (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
 
 	if (!quiet)
 		session_unidle(session);
@@ -762,7 +763,7 @@ static COMMAND(gg_command_msg) {
 			else
 				seq = "offline";
 
-			msg_queue_add(session_uid_get(session), target, params[1], seq);
+			msg_queue_add(session_uid_get(session), target, params[1], seq, class);
 			valid++;
 			xfree(__msg);
 		}
@@ -786,7 +787,7 @@ static COMMAND(gg_command_msg) {
 		else
 			seq = "offline";
 
-		msg_queue_add(session_uid_get(session), target, params[1], seq);
+		msg_queue_add(session_uid_get(session), target, params[1], seq, class);
 		valid++;
 
 		xfree(uins);
@@ -805,7 +806,6 @@ static COMMAND(gg_command_msg) {
 
 	if (valid && !quiet) {
 		char **rcpts = xmalloc(sizeof(char *) * 2);
-		const int class = (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
 		const int ekgbeep = EKG_TRY_BEEP;
 		char *me = xstrdup(session_uid_get(session));
 		const time_t sent = time(NULL);

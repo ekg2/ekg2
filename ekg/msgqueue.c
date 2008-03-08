@@ -31,9 +31,11 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "debug.h"
 #include "dynstuff.h"
 #include "commands.h"
 #include "msgqueue.h"
+#include "protocol.h"
 #include "sessions.h"
 #include "stuff.h"
 #include "xmalloc.h"
@@ -52,7 +54,7 @@ msg_queue_t *msg_queue = NULL;
  *
  * 0/-1
  */
-int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq)
+int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq, msgclass_t class)
 {
 	msg_queue_t *m = xmalloc(sizeof(msg_queue_t));
 
@@ -61,6 +63,7 @@ int msg_queue_add(const char *session, const char *rcpts, const char *message, c
 	m->message 	= xstrdup(message);
 	m->seq 		= xstrdup(seq);
 	m->time 	= time(NULL);
+	m->class	= class;
 
 	return (LIST_ADD2(&msg_queue, m) ? 0 : -1);
 }
@@ -164,11 +167,11 @@ int msg_queue_flush(const char *session)
 	for (m = msg_queue; m;) {
 		session_t *s;
 		msg_queue_t *next = m->next;
+		char *cmd = "/msg \"%s\" %s";
 
 		/* czy wiadomo¶æ dodano w trakcie opró¿niania kolejki? */
 		if (!m->mark)
 			continue;
-
 
 		if (session && xstrcmp(m->session, session)) 
 			continue;
@@ -178,7 +181,16 @@ int msg_queue_flush(const char *session)
 			continue;
 		}
 
-		command_exec_format(NULL, s, 1, ("/msg \"%s\" %s"), m->rcpts, m->message);
+		switch (m->class) {
+			case EKG_MSGCLASS_SENT_CHAT:
+				cmd = "/chat \"%s\" %s";
+				break;
+			case EKG_MSGCLASS_SENT:
+				break;
+			default:
+				debug_error("msg_queue_flush(), unsupported message class in query: %d\n", m->class);
+		}
+		command_exec_format(NULL, s, 1, cmd, m->rcpts, m->message);
 
 		LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 
@@ -238,7 +250,7 @@ int msg_queue_write()
 			continue;
 
 		chmod(fn, 0600);
-		fprintf(f, "v1\n%s\n%s\n%ld\n%s\n%s", m->session, m->rcpts, m->time, m->seq, m->message);
+		fprintf(f, "v2\n%s\n%s\n%ld\n%s\n%d\n%s", m->session, m->rcpts, m->time, m->seq, m->class, m->message);
 		fclose(f);
 	}
 
@@ -274,6 +286,7 @@ int msg_queue_read() {
 		string_t msg;
 		char *buf;
 		FILE *f;
+		int filever = 0;
 
 		if (!(fn = prepare_pathf("queue/%s", d->d_name)))
 			continue;
@@ -287,8 +300,10 @@ int msg_queue_read() {
 		memset(&m, 0, sizeof(m));
 
 		buf = read_file(f, 0);
-
-		if (!buf || xstrcmp(buf, "v1")) {
+		
+		if (buf && *buf == 'v')
+			filever = atoi(buf+1);
+		if (!filever || filever > 2) {
 			fclose(f);
 			continue;
 		}
@@ -319,7 +334,19 @@ int msg_queue_read() {
 			fclose(f);
 			continue;
 		}
-		
+	
+		if (filever == 2) {
+			if (!(buf = read_file(f, 0))) {
+				xfree(m.session);
+				xfree(m.rcpts);
+				fclose(f);
+				continue;
+			}
+
+			m.class = atoi(buf);
+		} else
+			m.class = EKG_MSGCLASS_SENT;
+
 		msg = string_init(NULL);
 
 		buf = read_file(f, 0);

@@ -3840,7 +3840,7 @@ static COMMAND(cmd_last)
  */
 
 static COMMAND(cmd_queue) {
-	list_t l;
+	msg_queue_t *m;
 	int isempty = 1;
 	const char *queue_list_timestamp_f;	/* cached result of format_find("queue_list_timestamp") */
 	
@@ -3864,8 +3864,7 @@ static COMMAND(cmd_queue) {
 
 	queue_list_timestamp_f = format_find("queue_list_timestamp");
 
-        for (l = msg_queue; l; l = l->next) {
-                msg_queue_t *m = l->data;
+        for (m = msg_queue; m; m = m->next) {
 		struct tm *tm;
 		char buf[100] = { '\0' };	/* we need to init it to '\0' cause queue_list_timestamp_f can be empty. and if buf was not NUL terminated string, than printq() can do SIGSEGV */
 

@@ -52,18 +52,18 @@ enum msgack_t {
 	EKG_ACK_MAX			/* we don't want to read after array */
 };
 
-enum disconnect_t {
+typedef enum {
 	EKG_DISCONNECT_USER	= 0,	/* user-engaged disconnect */
 	EKG_DISCONNECT_NETWORK,		/* network problems */
 	EKG_DISCONNECT_FORCED,		/* server forced to disconnect */
 	EKG_DISCONNECT_FAILURE,		/* connecting failed */
 	EKG_DISCONNECT_STOPPED		/* connecting canceled */
-};
+} disconnect_t;
 
 #define EKG_NO_BEEP 0
 #define EKG_TRY_BEEP 1
 
-enum msgclass_t {
+typedef enum {
 	/* recv */
 	EKG_MSGCLASS_MESSAGE	= 0,	/* single message */
 	EKG_MSGCLASS_CHAT,		/* chat message */
@@ -75,7 +75,7 @@ enum msgclass_t {
 	EKG_MSGCLASS_SENT_LOG,		/* old logged message (used by logsqlite 'last_print_on_open') */
 	/* priv */
 	EKG_MSGCLASS_PRIV_STATUS= 64	/* used by logs */
-};
+} msgclass_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
 void protocol_init();

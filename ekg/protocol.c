@@ -280,9 +280,6 @@ static QUERY(protocol_connected) {
 	else
 		print("connected", session_name(s));
 
-	if (!msg_queue_flush(session))
-		print("queue_flush", session_name(s));
-
 	if (s) {
 		int two = 2;
 
@@ -294,6 +291,9 @@ static QUERY(protocol_connected) {
 
 		query_emit_id(NULL, SESSION_EVENT, &s, &two);	/* Notify UI */
 	}
+
+	if (!msg_queue_flush(session))
+		print("queue_flush", session_name(s));
 
 	return 0;
 }

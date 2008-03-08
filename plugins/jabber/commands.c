@@ -61,6 +61,7 @@
 #include <ekg/themes.h>
 #include <ekg/vars.h>
 #include <ekg/log.h>
+#include <ekg/msgqueue.h>
 
 #include <ekg/queries.h>
 
@@ -276,7 +277,12 @@ static COMMAND(jabber_command_msg)
 	} else if (!xstrcmp(name, "msg") && (session_int_get(session, "msg_gen_thread")))
 		thread = jabber_thread_gen(j, uid); /* we don't return any chars to escape */
 
-		/* message subject, TheNewBetterWay^TM */
+	if (!session_connected_get(session)) {
+		xfree(thread);
+		goto msgdisplay;
+	}
+
+		/* message subject */
 	if (!j->istlen && config_subject_prefix && !xstrncmp(params[1], config_subject_prefix, subjectlen)) {
 		char *last = xstrchr(params[1]+subjectlen, 10);
 
@@ -395,6 +401,7 @@ nomsg:
 	watch_write(j->send_watch, "</message>");
 	JABBER_COMMIT_DATA(j->send_watch);
 
+msgdisplay:
 	if (!quiet && !ismuc) { /* if (1) ? */ 
 		char *me 	= xstrdup(session_uid_get(session));
 		char **rcpts 	= xcalloc(2, sizeof(char *));
@@ -416,6 +423,9 @@ nomsg:
 		xfree(msg);
 		xfree(me);
 		array_free(rcpts);
+
+		if (!session_connected_get(session))
+			return msg_queue_add(session_uid_get(session), uid, params[1], "offline", class);
 	}
 
 	if (!quiet)
@@ -2186,12 +2196,10 @@ void jabber_register_commands()
 {
 #define JABBER_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define JABBER_FLAGS        JABBER_ONLY  | SESSION_MUSTBECONNECTED
-		/* XXX: I changed all '* | COMMAND_ENABLEREQPARAMS' to JABBER_FLAGS_REQ,
-		 * 'cause I don't see any sense in executing connection-requiring commands
-		 * without SESSION_MUSTBECONNECTED */
 #define JABBER_FLAGS_REQ    		JABBER_FLAGS | COMMAND_ENABLEREQPARAMS
 #define JABBER_FLAGS_TARGET 		JABBER_FLAGS_REQ | COMMAND_PARAMASTARGET
-#define JABBER_FLAGS_TARGET_VALID	JABBER_FLAGS_TARGET | COMMAND_TARGET_VALID_UID	/* need audit, if it can be used everywhere instead JABBER_FLAGS_TARGET */ 
+#define JABBER_FLAGS_TARGET_VALID	JABBER_FLAGS_TARGET | COMMAND_TARGET_VALID_UID
+#define JABBER_FLAGS_MSG		JABBER_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 	commands_lock = &commands;	/* keep it sorted or die */
 
 	command_add(&jabber_plugin, "xmpp:", "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
@@ -2212,7 +2220,7 @@ void jabber_register_commands()
 			"-c --clear -d --display -g --get -p --put");
 	command_add(&jabber_plugin, "xmpp:change", "!p ? p ? p ? p ? p ? p ?", jabber_command_change, JABBER_FLAGS_REQ, 
 			"-f --fullname -c --city -b --born -d --description -n --nick -C --country");
-	command_add(&jabber_plugin, "xmpp:chat", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "xmpp:chat", "!uU !", jabber_command_msg, 	JABBER_FLAGS_MSG, NULL);
 	command_add(&jabber_plugin, "xmpp:connect", NULL, jabber_command_connect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:conversations", NULL, jabber_command_conversations,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:del", "!u", jabber_command_del, 	JABBER_FLAGS_TARGET, NULL);
@@ -2226,7 +2234,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:lastseen", "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:modify", "!Uu ?", jabber_command_modify,JABBER_FLAGS_REQ, 
 			"-n --nickname -g --group");
-	command_add(&jabber_plugin, "xmpp:msg", "!uU !", jabber_command_msg, 	JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "xmpp:msg", "!uU !", jabber_command_msg, 	JABBER_FLAGS_MSG, NULL);
 	command_add(&jabber_plugin, "xmpp:part", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:passwd", "?", jabber_command_passwd, 	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:privacy", "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
@@ -2270,7 +2278,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "tlen:invisible", "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "tlen:modify", "!Uu ?",	jabber_command_modify,		JABBER_FLAGS_REQ, 
 			"-n --nickname -g --group");
-	command_add(&jabber_plugin, "tlen:msg", "!uU !",	jabber_command_msg, 		JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "tlen:msg", "!uU !",	jabber_command_msg, 		JABBER_FLAGS_MSG, NULL);
 	command_add(&jabber_plugin, "tlen:reconnect", NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
 
 	commands_lock = NULL;
