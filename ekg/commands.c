@@ -3709,7 +3709,7 @@ static COMMAND(cmd_conference)
 
 static COMMAND(cmd_last)
 {
-        list_t l;
+        struct last *ll;
 	const char *uid = NULL;
 	int show_sent = 0, last_n = 0, count = 0, i = 0, show_all = 0;
 	char **arr = NULL;
@@ -3724,7 +3724,7 @@ static COMMAND(cmd_last)
 			return -1;
 		}
 
-		if ((uid && !last_count(uid)) || !list_count(lasts)) {
+		if ((uid && !last_count(uid)) || !LIST_COUNT2(lasts)) {
 			if (uid)
 				printq("last_list_empty_nick", format_user(session, uid));
 			else
@@ -3781,7 +3781,7 @@ static COMMAND(cmd_last)
 
 	array_free(arr);
 		
-	if (!((uid) ? (count = last_count(uid)) : (count = list_count(lasts)))) {
+	if (!((uid) ? (count = last_count(uid)) : (count = LIST_COUNT2(lasts)))) {
 		if (uid) {
 			printq("last_list_empty_nick", format_user(session, uid));
 			return -1;
@@ -3796,8 +3796,7 @@ static COMMAND(cmd_last)
 
         printq("last_begin");
 
-        for (l = lasts; l; l = l->next) {
-                struct last *ll = l->data;
+        for (ll = lasts; ll; ll = ll->next) {
 		struct tm *tm, *st;
 		char buf[100], buf2[100], *time_str = NULL;
 		const char *form;

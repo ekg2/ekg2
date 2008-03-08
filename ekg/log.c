@@ -30,7 +30,7 @@
 #include "log.h"
 #include "xmalloc.h"
 
-list_t lasts = NULL;
+struct last *lasts = NULL;
 
 int config_last_size = 10;
 int config_last = 0;
@@ -38,7 +38,6 @@ int config_last = 0;
 static LIST_FREE_ITEM(list_last_free, struct last *) {
 	xfree(data->uid);
 	xfree(data->message);
-	xfree(data);
 }
 
 /*
@@ -53,7 +52,6 @@ static LIST_FREE_ITEM(list_last_free, struct last *) {
  *  - msg - tre¶æ wiadomo¶ci.
  */
 void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
-	list_t l;
 	struct last *ll;
 	int count = 0;
 
@@ -64,16 +62,14 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
 	if (config_last & 2) 
 		count = last_count(uid);
 	else
-		count = list_count(lasts);
+		count = LIST_COUNT2(lasts);
 				
 	/* usuwamy ostatni± wiadomo¶æ, w razie potrzeby... */
 	if (count >= config_last_size) {
 		time_t tmp_time = 0;
 		
 		/* najpierw j± znajdziemy... */
-		for (l = lasts; l; l = l->next) {
-			ll = l->data;
-
+		for (ll = lasts; ll; ll = ll->next) {
 			if (config_last & 2 && xstrcasecmp(ll->uid, uid))
 				continue;
 
@@ -85,16 +81,15 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
 		}
 		
 		/* ...by teraz usun±æ */
-		for (l = lasts; l; l = l->next) {
-			ll = l->data;
-
+		for (ll = lasts; ll; ll = ll->next) {
 			if (ll->time == tmp_time && !xstrcasecmp(ll->uid, uid)) {
-				LIST_REMOVE(&lasts, ll, list_last_free);
+				LIST_REMOVE2(&lasts, ll, list_last_free);
 				break;
 			}
 		}
 
 	}
+
 	ll = xmalloc(sizeof(struct last));
 	ll->type = type;
 	ll->uid = xstrdup(uid);
@@ -102,7 +97,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
 	ll->sent_time = st;
 	ll->message = xstrdup(msg);
 	
-	list_add(&lasts, ll);
+	LIST_ADD2(&lasts, ll);
 }
 
 /*
@@ -113,15 +108,15 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
  *  - uin - numerek osoby.
  */
 void last_del(const char *uid) {
-	list_t l;
+	struct last *ll;
 
-	for (l = lasts; l; ) {
-		struct last *ll = l->data;
-
-		l = l->next;
+	for (ll = lasts; ll; ) {
+		struct last *next = ll->next;
 
 		if (!xstrcasecmp(uid, ll->uid))
-			LIST_REMOVE(&lasts, ll, list_last_free);
+			LIST_REMOVE2(&lasts, ll, list_last_free);
+
+		ll = next;
 	}
 }
 
@@ -131,7 +126,7 @@ void last_del(const char *uid) {
  * zwalnia miejsce po last.
  */
 void last_free() {
-	LIST_DESTROY(lasts, list_last_free);
+	LIST_DESTROY2(lasts, list_last_free);
 	lasts = NULL;
 }
 
@@ -144,11 +139,9 @@ void last_free() {
  */
 int last_count(const char *uid) {
 	int count = 0;
-	list_t l;
+	struct last *ll;
 
-	for (l = lasts; l; l = l->next) {
-		struct last *ll = l->data;
-
+	for (ll = lasts; ll; ll = ll->next) {
 		if (!xstrcasecmp(uid, ll->uid))
 			count++;
 	}

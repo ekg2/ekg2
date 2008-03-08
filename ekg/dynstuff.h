@@ -76,7 +76,9 @@ typedef struct list *list_t;
 #define LIST_ADD_SORTED(list, data, comp)		list_add_sorted(list, data, (void *) comp)
 #define LIST_ADD_SORTED2(list, data, comp)		list_add_sorted3((list_t *) list, (list_t) data, (void *) comp)
 #define LIST_ADD_BEGINNING2(list, data)			list_add_beginning3((list_t *) list, (list_t) data)
+#define LIST_ADD2(list, data)				list_add3((list_t *) list, (list_t) data)
 
+#define LIST_COUNT2(list)				list_count((list_t) list)
 #define LIST_RESORT(list, comp)				list_resort(list, (void *) comp)
 #define LIST_RESORT2(list, comp)			list_resort3((list_t *) list, (void *) comp)
 

@@ -383,6 +383,7 @@ static void config_write_plugins(FILE *f)
 static void config_write_main(FILE *f)
 {
 	list_t l;
+	event_t *e;
 
 	if (!f)
 		return;
@@ -402,9 +403,7 @@ static void config_write_main(FILE *f)
 			fprintf(f, "alias %s %s\n", a->name, (char *) m->data);
 	}
 
-        for (l = events; l; l = l->next) {
-                event_t *e = l->data;
-
+        for (e = events; e; e = e->next) {
                 fprintf(f, "on %s %d %s %s\n", e->name, e->prio, e->target, e->action);
         }
 

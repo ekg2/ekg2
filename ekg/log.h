@@ -30,6 +30,7 @@
 #include "dynstuff.h"
 
 struct last {
+	struct last *next;
 	unsigned int type	: 1;	/* 0 - przychodz±ca, 1 - wychodz±ca */
 	char *uid;			/* od kogo, lub do kogo przy wysy³anych */
 	time_t time;			/* czas */
@@ -38,7 +39,7 @@ struct last {
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern list_t lasts;
+extern struct last *lasts;
 
 void last_add(int type, const char *uid, time_t t, time_t st, const char *msg);
 void last_del(const char *uid);
