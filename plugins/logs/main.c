@@ -1094,7 +1094,7 @@ static QUERY(logs_handler_raw) {
  * typ,uid,nickname,timestamp,{timestamp wyslania dla odleglych}, text
  */
 
-static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, enum msgclass_t class, const char *status) {
+static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class, const char *status) {
 	char *textcopy;
 	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(0));
 
@@ -1158,7 +1158,7 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
  * zapis w formacie xml
  */
 
-static void logs_xml(FILE *file, const char *session, const char *uid, const char *text, time_t sent, enum msgclass_t class) {
+static void logs_xml(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class) {
 	session_t *s;
 	char *textcopy;
 	const char *timestamp = prepare_timestamp_format(config_logs_timestamp, time(NULL));
