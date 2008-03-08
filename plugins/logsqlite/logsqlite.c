@@ -487,7 +487,7 @@ QUERY(logsqlite_msg_handler)
 	if (!session)
 		return 0;
 
-	switch ((enum msgclass_t)class) {
+	switch ((msgclass_t) class) {
 		case EKG_MSGCLASS_MESSAGE:
 			type = ("msg");
 			is_sent = 0;
