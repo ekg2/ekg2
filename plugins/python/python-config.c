@@ -72,11 +72,12 @@ void ekg_config_dealloc(PyObject * o)
 int ekg_config_len(ekg_configObj * self)
 {
 	int cnt = 0;
-	list_t l;
-    for (l = variables; l; l = l->next) {
+	variable_t *v;
+
+	for (v = variables; v; v = v->next) {
 		cnt++;
-    }
-    return cnt;
+	}
+	return cnt;
 }
 
 /**
@@ -89,13 +90,10 @@ int ekg_config_len(ekg_configObj * self)
 PyObject *ekg_config_get(ekg_configObj * self, PyObject * key)
 {
     char *name = PyString_AsString(key);
-    list_t l;
     variable_t *v;
     debug("[python] Getting value for '%s' config option\n", name);
 
-    for (l = variables; l; l = l->next) {
-		v = l->data;
-		
+    for (v = variables; v; v = v->next) {
 		if (!strcmp(v->name, name)) {
 			if (v->type == VAR_BOOL || v->type == VAR_INT
 					|| v->type == VAR_MAP) {

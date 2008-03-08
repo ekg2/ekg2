@@ -403,7 +403,7 @@ int ui_readline_loop()
 	}
 		
 	/* if no empty line and we save duplicate lines, add it to history */
-	if (line && *line && (config_history_savedups || !history_length || xwcscmp(line, history_get(history_length)->line)))
+	if (line && *line && (config_history_savedups || !history_length || xstrcmp(line, history_get(history_length)->line)))
 		add_history(line);
 	
 	pager_lines = 0;

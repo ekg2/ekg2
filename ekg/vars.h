@@ -44,7 +44,9 @@ typedef void (variable_notify_func_t)(const char *);
 typedef void (variable_check_func_t)(const char *, const char *);
 typedef int (variable_display_func_t)(const char *);
 
-typedef struct {
+typedef struct variable {
+	struct variable *next;
+
 	char *name;		/* nazwa zmiennej */
 	plugin_t *plugin;	/* wstyczka obs³uguj±ca zmienn± */
 	int name_hash;		/* hash nazwy zmiennej */
@@ -64,7 +66,7 @@ typedef struct {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-extern list_t variables;
+extern variable_t *variables;
 
 void variable_init();
 void variable_set_default();

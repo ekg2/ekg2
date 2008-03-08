@@ -1686,7 +1686,6 @@ static COMMAND(cmd_set)
 	const char *arg = NULL, *val = NULL;
 	int unset = 0, show_all = 0, res = 0;
 	char *value = NULL;
-	list_t l;
 
 	if (match_arg(params[0], 'a', ("all"), 1)) {
 		show_all = 1;
@@ -1712,11 +1711,10 @@ static COMMAND(cmd_set)
 	}
 
 	if ((!arg || !val) && !unset) {
+		variable_t *v;
 		int displayed = 0;
 
-		for (l = variables; l; l = l->next) {
-			variable_t *v = l->data;
-			
+		for (v = variables; v; v = v->next) {
 			if ((!arg || !xstrcasecmp(arg, v->name)) && (v->display != 2 || xstrcmp(name, ("set")))) {
 				char *string = *(char**)(v->ptr);
 				int value = *(int*)(v->ptr);

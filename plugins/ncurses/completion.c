@@ -237,10 +237,8 @@ static void plugin_generator(const char *text, int len)
 
 static void variable_generator(const char *text, int len)
 {
-	list_t l;
-	for (l = variables; l; l = l->next) {
-		variable_t *v = l->data;
-
+	variable_t *v;
+	for (v = variables; v; v = v->next) {
 		if (v->type == VAR_FOREIGN)
 			continue;
 

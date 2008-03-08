@@ -43,8 +43,8 @@
 
 #include "queries.h"
 
-static list_t *variables_lock = NULL;
-list_t variables = NULL;
+static variable_t **variables_lock = NULL;
+variable_t *variables = NULL;
 char *console_charset;
 
 void changed_session_locks(const char *varname); /* sessions.c */
@@ -202,7 +202,7 @@ void variable_set_default() {
  * - name.
  */
 variable_t *variable_find(const char *name) {
-	list_t l;
+	variable_t *v;
 	int hash;
 
 	if (!name)
@@ -210,8 +210,7 @@ variable_t *variable_find(const char *name) {
 
 	hash = variable_hash(name);
 
-	for (l = variables; l; l = l->next) {
-		variable_t *v = l->data;
+	for (v = variables; v; v = v->next) {
 		if (v->name_hash == hash && !xstrcasecmp(v->name, name))
 			return v;
 	}
@@ -282,7 +281,6 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 	variable_t *v;
 	int hash;
 	char *__name;
-	list_t l;
 
 	if (!name)
 		return NULL;
@@ -294,8 +292,7 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 
 	hash = variable_hash(__name);
 
-	for (l = variables; l; l = l->next) {
-		v = l->data;
+	for (v = variables; v; v = v->next) {
 		if (v->name_hash != hash || xstrcasecmp(v->name, __name) || v->type != VAR_FOREIGN)
 			continue;
 
@@ -333,13 +330,13 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 /* like commands_lock in command_add() @ commands.c */
 	if (variables_lock) {
 		if (*variables_lock == variables) {
-			for (; *variables_lock && (variable_add_compare((*variables_lock)->data, v) < 0); variables_lock = &((*variables_lock)->next));
+			for (; *variables_lock && (variable_add_compare(*variables_lock, v) < 0); variables_lock = &((*variables_lock)->next));
 		} else		variables_lock = &((*variables_lock)->next);
-		list_add_beginning(variables_lock, v);
+		LIST_ADD_BEGINNING2(variables_lock, v);
 		return v;
 	}
 
-	return LIST_ADD_SORTED(&variables, v, variable_add_compare);
+	return LIST_ADD_SORTED2(&variables, v, variable_add_compare);
 }
 
 /*
@@ -348,17 +345,15 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
  * usuwa zmienn±.
  */
 int variable_remove(plugin_t *plugin, const char *name) {
-	list_t l;
 	int hash;
+	variable_t *v;
 
 	if (!name)
 		return -1;
 
 	hash = ekg_hash(name);
 
-	for (l = variables; l; l = l->next) {
-		variable_t *v = l->data;
-		
+	for (v = variables; v; v = v->next) {
 		if (!v->name)
 			continue;
 		
@@ -547,47 +542,43 @@ notify:
 	return 0;
 }
 
+LIST_FREE_ITEM(variable_list_freeone, variable_t *) {
+	xfree(data->name);
+
+	switch (data->type) {
+		case VAR_STR:
+		case VAR_FILE:
+		case VAR_THEME:
+		case VAR_DIR:
+			xfree(*((char**) data->ptr));
+			*((char**) data->ptr) = NULL;
+			break;
+
+		case VAR_FOREIGN:
+			xfree((char*) data->ptr);
+			break;
+
+		default:
+			break;
+	}
+
+	if (data->map) {
+		int i;
+
+		for (i = 0; data->map[i].label; i++)
+			xfree(data->map[i].label);
+
+		xfree(data->map);
+	}
+}
+
 /*
  * variable_free()
  *
  * zwalnia pamiêæ u¿ywan± przez zmienne.
  */
 void variable_free() {
-	list_t l;
-
-	for (l = variables; l; l = l->next) {
-		variable_t *v = l->data;
-
-		xfree(v->name);
-
-		switch (v->type) {
-			case VAR_STR:
-			case VAR_FILE:
-			case VAR_THEME:
-			case VAR_DIR:
-	                        xfree(*((char**) v->ptr));
-	                        *((char**) v->ptr) = NULL;
-				break;
-
-			case VAR_FOREIGN:
-				xfree((char*) v->ptr);
-				break;
-
-			default:
-				break;
-		}
-
-		if (v->map) {
-			int i;
-
-			for (i = 0; v->map[i].label; i++)
-				xfree(v->map[i].label);
-
-			xfree(v->map);
-		}
-	}
-
-	list_destroy(variables, 1);
+	LIST_DESTROY2(variables, variable_list_freeone);
 	variables = NULL;
 }
 

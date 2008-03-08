@@ -331,19 +331,15 @@ GENERATOR(unknown_uin) {
 }
 
 GENERATOR(variable) {
-	static list_t el;
+	static variable_t *v;
 	static int len;
 
 	if (!state) {
-		el = variables;
+		v = variables;
 		len = xstrlen(text);
 	}
 
-	while (el) {
-		variable_t *v = el->data;
-		
-		el = el->next;
-		
+	while (v) {
 		if (v->type == VAR_FOREIGN)
 			continue;
 
@@ -354,6 +350,8 @@ GENERATOR(variable) {
 			if (!xstrncasecmp(text, v->name, len))
 				return xstrdup(v->name);
 		}
+
+		v = v->next;
 	}
 
 	return NULL;

@@ -383,16 +383,17 @@ static void config_write_plugins(FILE *f)
 static void config_write_main(FILE *f)
 {
 	list_t l;
-	event_t *e;
 
 	if (!f)
 		return;
 
-	for (l = variables; l; l = l->next) {
-		variable_t *v = l->data;
+	{
+		variable_t *v;
 
-		if (!v->plugin)
-			config_write_variable(f, v);
+		for (v = variables; v; v = v->next) {
+			if (!v->plugin)
+				config_write_variable(f, v);
+		}
 	}
 
 	for (l = aliases; l; l = l->next) {
@@ -403,9 +404,13 @@ static void config_write_main(FILE *f)
 			fprintf(f, "alias %s %s\n", a->name, (char *) m->data);
 	}
 
-        for (e = events; e; e = e->next) {
-                fprintf(f, "on %s %d %s %s\n", e->name, e->prio, e->target, e->action);
-        }
+	{
+		event_t *e;
+
+	        for (e = events; e; e = e->next) {
+        	        fprintf(f, "on %s %d %s %s\n", e->name, e->prio, e->target, e->action);
+	        }
+	}
 
 	for (l = bindings; l; l = l->next) {
 		struct binding *b = l->data;
@@ -503,7 +508,7 @@ int config_write()
 	for (l = plugins; l; l = l->next) {
 		plugin_t *p = l->data;
 		const char *tmp;
-		list_t lv;
+		variable_t *v;
 
 		if (!(tmp = prepare_pathf("config-%s", p->name)))
 			return -1;
@@ -513,9 +518,7 @@ int config_write()
 
 		fchmod(fileno(f), 0600);
 
-		for (lv = variables; lv; lv = lv->next) {
-			variable_t *v = lv->data;
-
+		for (v = variables; v; v = v->next) {
 			if (p == v->plugin) {
 				config_write_variable(f, v);
 			}
@@ -689,8 +692,8 @@ void config_write_crash()
 
         /* now plugins variables */
         for (l = plugins; l; l = l->next) {
-                list_t lv;
                 plugin_t *p = l->data;
+		variable_t *v;
 
 		snprintf(name, sizeof(name), "config-%s.%d", p->name, (int) getpid());
 
@@ -699,9 +702,7 @@ void config_write_crash()
 	
 		chmod(name, 0400);
 
-                for (lv = variables; lv; lv = lv->next) {
-                        variable_t *v = lv->data;
-
+                for (v = variables; v; v = v->next) {
                         if (p == v->plugin) {
                                 config_write_variable(f, v);
                         }
