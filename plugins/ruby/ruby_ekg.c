@@ -4,6 +4,7 @@
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/scripts.h>
+#include <ekg/xmalloc.h>
 
 #undef __
 #undef _
