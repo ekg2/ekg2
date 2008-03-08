@@ -40,6 +40,7 @@
 #include <ekg/xmalloc.h>
 
 #include "main.h"
+#include "menu.h"
 #include "palette.h"
 #include "userlistgui.h"
 
@@ -273,8 +274,6 @@ void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 	int sel = 0;
 
 	if (pixmaps) {
-		const char *str;
-		
 		switch (u->status) {
 			case EKG_STATUS_NA:
 				pix = pixmaps[PIXBUF_NOTAVAIL];

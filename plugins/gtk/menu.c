@@ -62,6 +62,7 @@
 #include <ekg/stuff.h>
 #include <ekg/windows.h>
 #include <ekg/userlist.h>
+#include <ekg/xmalloc.h>
 
 #include "main.h"
 #include "maingui.h"
