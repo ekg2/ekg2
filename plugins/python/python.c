@@ -170,7 +170,7 @@ int python_variable_changed(script_t *scr, script_var_t *scr_var, char *newval)
 	return python_handle_result;
 }
 
-int python_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch)
+int python_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, long int watch)
 {
 	int python_handle_result;
         PyObject * args;

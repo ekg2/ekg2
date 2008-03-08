@@ -110,7 +110,7 @@ int perl_commands(script_t *scr, script_command_t *comm, char **params)
 	PERL_HANDLER_FOOTER();
 }
 /* IF WATCH_READ_LINE int type == char *line */
-int perl_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch)
+int perl_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, long int watch)
 {
 //	if (type) return -1;
 	

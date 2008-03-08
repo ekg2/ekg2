@@ -123,6 +123,10 @@ extern list_t scriptlang;
 	}\
 	return NULL;
 
+/* XXX: split *_watches() into normal and line-ones,
+ * 	else we can have epic fails if void* > long int */
+#warning "POSSIBLE EPIC FAIL: when void* > long int, WATCH_LINE pointer may be shortened"
+
 #define SCRIPT_DEFINE(x, y)\
 	extern int x##_load(script_t *);\
 	extern int x##_unload(script_t *);\
@@ -131,7 +135,7 @@ extern list_t scriptlang;
 	extern int x##_timers(script_t *, script_timer_t *, int );\
 	extern int x##_variable_changed(script_t *, script_var_t *, char *);\
 	extern int x##_query(script_t *, script_query_t *, void **);\
-	extern int x##_watches(script_t *, script_watch_t *, int, int, int);\
+	extern int x##_watches(script_t *, script_watch_t *, int, int, long int);\
 	\
 	extern int x##_bind_free(script_t *, void *, int type, void *, ...);\
 	\

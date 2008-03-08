@@ -29,7 +29,7 @@ static int ruby_query(script_t *scr, script_query_t *scr_que, void *args[]);
 static int ruby_commands(script_t *scr, script_command_t *comm, char **params);
 static int ruby_timers(script_t *scr, script_timer_t *time, int type);
 static int ruby_variable_changed(script_t *scr, script_var_t *scr_var, char *what);
-static int ruby_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch);
+static int ruby_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, long int watch);
 
 static int ruby_script_theme_init(script_t *scr);
 
@@ -453,7 +453,8 @@ static int ruby_commands(script_t *scr, script_command_t *comm, char **params) {
 }
 
 /* IF WATCH_READ_LINE int type == char *line */
-static int ruby_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch) {
+/* ^ mg: rather watch */
+static int ruby_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, long int watch) {
 	ruby_helper_t ruby_watch;
 	VALUE argv[3];
 
