@@ -35,7 +35,7 @@
 #include "metacontacts.h"
 #include "queries.h"
 
-list_t metacontacts = NULL;
+metacontact_t *metacontacts = NULL;
 
 static int metacontact_add_item(metacontact_t *m, const char *session, const char *name, unsigned int prio, int quiet);
 static int metacontact_remove_item(metacontact_t *m, const char *session, const char *name, int quiet);
@@ -49,13 +49,10 @@ COMMAND(cmd_metacontact)
         metacontact_t *m;
 
 	if (!params[0] || match_arg(params[0], 'l', ("list"), 2)) {
-                list_t l;
+        	metacontact_t *m;
 
-                for (l = metacontacts; l; l = l->next) {
-                        metacontact_t *m = l->data;
-                        
+                for (m = metacontacts; m; m = m->next)
 			printq("metacontact_list", m->name);
-                }
 
                 if (!metacontacts)
                         printq("metacontact_list_empty");
@@ -159,17 +156,16 @@ COMMAND(cmd_metacontact)
 
 
 	if (params[0] && (m = metacontact_find(params[0]))) {
-                list_t l;
+                metacontact_item_t *i = m->metacontact_items;
 
-                if (!m->metacontact_items) {
+                if (!i) {
                         printq("metacontact_item_list_empty");
 			return 0;
 		}
 
 		printq("metacontact_item_list_header", params[0]);
 		
-                for (l = m->metacontact_items; l; l = l->next) {
-                        metacontact_item_t *i = l->data;
+                for (; i; i = i->next) {
 			userlist_t *u = userlist_find_n(i->s_uid, i->name);
 			char *tmp;
 
@@ -206,11 +202,9 @@ COMMAND(cmd_metacontact)
  */
 metacontact_t *metacontact_find(const char *name) 
 {
-	list_t l;
+	metacontact_t *m;
 
-	for (l = metacontacts; l; l = l->next) {
-        	metacontact_t *m = l->data;
-
+	for (m = metacontacts; m; m = m->next) {
         	if (!xstrcasecmp(name, m->name))
 			return m;
 	}
@@ -246,7 +240,7 @@ metacontact_t *metacontact_add(const char *name)
 	m = xmalloc(sizeof(metacontact_t));
 	m->name = xstrdup(name);
 
-	return LIST_ADD_SORTED(&metacontacts, m, metacontact_add_compare);
+	return LIST_ADD_SORTED2(&metacontacts, m, metacontact_add_compare);
 }
 
 /*
@@ -272,14 +266,12 @@ static LIST_ADD_COMPARE(metacontact_add_item_compare, metacontact_item_t *) {
  */
 static metacontact_item_t *metacontact_find_item(metacontact_t *m, const char *name, const char *uid)
 {
-        list_t l;
+        metacontact_item_t *i;
 
 	if (!m)
 		return NULL;
 
-        for (l = m->metacontact_items; l; l = l->next) {
-                metacontact_item_t *i = l->data;
-
+        for (i = m->metacontact_items; i; i = i->next) {
                 if (!xstrcasecmp(name, i->name) && !xstrcasecmp(uid, i->s_uid))
                         return i;
         }
@@ -326,9 +318,19 @@ static int metacontact_add_item(metacontact_t *m, const char *session, const cha
 	i->s_uid	= xstrdup(s->uid);
 	i->prio		= prio;
 
-	LIST_ADD_SORTED(&m->metacontact_items, i, metacontact_add_item_compare);
+	LIST_ADD_SORTED2(&m->metacontact_items, i, metacontact_add_item_compare);
 
 	return 1;
+}
+
+static LIST_FREE_ITEM(metacontact_item_free, metacontact_item_t *) {
+	xfree(data->name);
+	xfree(data->s_uid);
+}
+
+static LIST_FREE_ITEM(metacontact_list_free, metacontact_t *) {
+        LIST_DESTROY2(data->metacontact_items, metacontact_item_free);
+	xfree(data->name);
 }
 
 /* 
@@ -358,9 +360,7 @@ static int metacontact_remove_item(metacontact_t *m, const char *session, const 
 		return 0;
 	}	
 
-	xfree(i->name);
-	xfree(i->s_uid);
-	list_remove(&m->metacontact_items, i, 1);
+	LIST_REMOVE2(&m->metacontact_items, i, metacontact_item_free);
 	
 	return 1;
 }
@@ -374,20 +374,16 @@ static int metacontact_remove_item(metacontact_t *m, const char *session, const 
 static int metacontact_remove(const char *name)
 {
 	metacontact_t *m = metacontact_find(name);
-	list_t l;
+	metacontact_item_t *i;
 
-        for (l = m->metacontact_items; l; ) {
-		metacontact_item_t *i = l->data;
-
-		l = l->next;
+        for (i = m->metacontact_items; i; ) {
+		metacontact_item_t *next = i->next;
 
 		metacontact_remove_item(m, i->s_uid, i->name, 1);
+		i = next;
 	}
 
-        list_destroy(m->metacontact_items, 1);
-        xfree(m->name);
-
-        list_remove(&metacontacts, m, 1);
+        LIST_REMOVE2(&metacontacts, m, metacontact_list_free);
 
 	return 1;
 }
@@ -400,27 +396,26 @@ static int metacontact_remove(const char *name)
  */
 static int metacontact_session_renamed_handler(void *data, va_list ap)
 {
+	/* We don't change alias so frequently,
+	 * so we can resort whole list, not only items w/ that session */
+
+	LIST_RESORT2(metacontacts, metacontact_add_item_compare);
+#if 0
 	char **tmp = va_arg(ap, char**);
 	session_t *s = session_find(*tmp);
         char *session;
-	list_t l;
+	metacontact_t *m;
 
 	if (!s)
 		return 0;
 
 	session = s->uid;
 
-	for (l = metacontacts; l; l = l->next) {
-        	metacontact_t *m = l->data;
-		list_t l2;
+	for (m = metacontacts; m; m = m->next) {
+		metacontact_item_t *i;
 
-		for (l2 = m->metacontact_items; l2;) {
-			metacontact_item_t *i = (l2 && l2->data) ? l2->data : NULL;
-			
-			if (!i)
-				break;
-
-			l2 = l2->next;
+		for (i = m->metacontact_items; i;) {
+			metacontact_item_t *next = i->next;
 
 			if (!xstrcasecmp(session, i->s_uid)) {
 				char *s_uid, *name;
@@ -435,9 +430,16 @@ static int metacontact_session_renamed_handler(void *data, va_list ap)
 			
 				xfree(s_uid);
 				xfree(name);
+
+					/* list has changed, so we need to start from beginning */
+				m = metacontacts;
+				break;
 			}
+
+			i = next;
 		}
 	}
+#endif
 	
 	return 1;
 }
@@ -450,15 +452,16 @@ static int metacontact_session_renamed_handler(void *data, va_list ap)
  */
 static int metacontact_userlist_removed_handler(void *data, va_list ap)
 {
+	/* XXX: disabled it to allow jabber metacontacts
+	 * 	but think about it */
+#if 0
         char **name = va_arg(ap, char**);
-        list_t l;
+	metacontact_t *m;
 
-        for (l = metacontacts; l; l = l->next) {
-                metacontact_t *m = l->data;
-                list_t l2;
+        for (m = metacontacts; m; m = m->next) {
+		metacontact_item_t *i;
 
-                for (l2 = m->metacontact_items; l2; l2 = l2->next) {
-			metacontact_item_t *i = (l2 && l2->data) ? l2->data : NULL;
+                for (i = m->metacontact_items; i; i = i->next) {
 			userlist_t *u;
 			
 			if (!i) 
@@ -480,6 +483,7 @@ static int metacontact_userlist_removed_handler(void *data, va_list ap)
 			}
 		}		
 	}
+#endif
 
 	return 0;
 }
@@ -487,21 +491,20 @@ static int metacontact_userlist_removed_handler(void *data, va_list ap)
 /* 
  * metacontact_find_prio()
  * 
- * it finds and return metacontact_item with the higher priority 
- * first it looks at the status, then if all are notavail the one 
- * with higher priority is returned 
+ * it finds and return metacontact_item with the 'most available'
+ * status; if more than uids have the same one, it also looks
+ * at the priority
  */
 metacontact_item_t *metacontact_find_prio(metacontact_t *m)
 {
-        list_t l;
+        metacontact_item_t *i;
 	metacontact_item_t *ret = NULL;
 	userlist_t *last = NULL;
 
         if (!m)
                 return NULL;
 
-        for (l = m->metacontact_items; l; l = l->next) {
-                metacontact_item_t *i = l->data;
+        for (i = m->metacontact_items; i; i = i->next) {
 		userlist_t *u = userlist_find_n(i->s_uid, i->name);
 		
 		if (!u)
@@ -512,17 +515,10 @@ metacontact_item_t *metacontact_find_prio(metacontact_t *m)
 			continue;
 		}
 
-		{
-			/* hardly simplified that, XXX could you check it?
-			 * additional todo: use state priorities? */
-			const int last_na = EKG_STATUS_IS_NA(last->status);
-			const int u_na = EKG_STATUS_IS_NA(u->status);
-
-			if (((last_na == u_na) && ret->prio < i->prio) || (last_na && !u_na)) {
-				ret = i;
-				last = u;
-				continue;
-			}
+		if (u->status > last->status || (u->status == last->status && i->prio > ret->prio)) {
+			ret = i;
+			last = u;
+			continue;
 		}
         }
 
@@ -547,16 +543,8 @@ void metacontact_init()
  */
 void metacontact_free()
 {
-	list_t l;
 
-        for (l = metacontacts; l;) {
-                metacontact_t *m = l->data;
-		
-		l = l->next;
-		metacontact_remove(m->name);		
-	}
-
-        list_destroy(metacontacts, 1);
+	LIST_DESTROY2(metacontacts, metacontact_list_free);
 }
 
 /*
@@ -566,7 +554,7 @@ void metacontact_free()
  */
 int metacontact_write()
 {
-        list_t l;
+        metacontact_t *m;
         FILE *f = NULL;
 
         f = fopen(prepare_path("metacontacts", 1), "w");
@@ -574,17 +562,12 @@ int metacontact_write()
         if (!f)
                 return -1;
 
-        for (l = metacontacts; l; l = l->next) {
-                metacontact_t *m = l->data;
-                list_t lp;
-
+        for (m = metacontacts; m; m = m->next) {
+		metacontact_item_t *i;
                 fprintf(f, "[%s]\n", m->name);
 
-                for (lp = m->metacontact_items; lp; lp = lp->next) {
-                        metacontact_item_t *i = lp->data;
-
+                for (i = m->metacontact_items; i; i = i->next)
                         fprintf(f, "%s %s %d\n", i->s_uid, i->name, i->prio);
-                }
         }
         fclose(f);
 

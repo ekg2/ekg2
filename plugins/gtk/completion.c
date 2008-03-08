@@ -605,11 +605,9 @@ static void sessions_generator(const char *text, int len)
 
 static void metacontacts_generator(const char *text, int len)
 {
-        list_t l;
+        metacontact_t *m;
 
-        for (l = metacontacts; l; l = l->next) {
-		metacontact_t *m = l->data;
-		
+        for (m = metacontacts; m; m = m->next) {
 		if (!xstrncasecmp(text, m->name, len)) 
                 	array_add_check(&completions, xstrdup(m->name), 1);
         }

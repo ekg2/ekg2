@@ -132,20 +132,18 @@ GENERATOR(dir) {
 
 GENERATOR(metacontacts) {
 	static int len;
-	static list_t el;
+	static metacontact_t *m;
 
 	if (!state) {
 		len = xstrlen(text);
-		el = metacontacts;
+		m = metacontacts;
 	}
 
-	while (el) {
-		metacontact_t *m = el->data;
-
-		el = el->next;
-
+	while (m) {
 		if (!xstrncasecmp(text, m->name, len)) 
 			return xstrdup(m->name);
+
+		m = m->next;
 	}
 	return NULL;
 }
@@ -224,7 +222,6 @@ GENERATOR(command) {
 
 	while (c) {
 		char *without_sess_id = NULL;
-		command_t *next = c->next;
 		int plen = 0;
 		session_t *session = session_current;
 
@@ -245,7 +242,7 @@ GENERATOR(command) {
 					dash ? "^" : "",
 					without_sess_id + 1);
 
-		c = next;
+		c = c->next;
 	}
 
 	return NULL;

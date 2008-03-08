@@ -21,19 +21,23 @@
 #define __EKG_METACONTACTS_H
 #include "dynstuff.h" 
 
-typedef struct {
-	char		*name; /* uid or name */
-	unsigned int	prio; /* prio */
-	char		*s_uid; /* session uid */
+typedef struct metacontact_item {
+	struct metacontact_item	*next;
+
+	char			*name;	/* uid or name */
+	unsigned int		prio;	/* prio */
+	char			*s_uid;	/* session uid */
 } metacontact_item_t;
 
-typedef struct {
-	char *name; /* name of metacontact */
-	list_t metacontact_items;
+typedef struct metacontact {
+	struct metacontact	*next;
+
+	char			*name; /* name of metacontact */
+	metacontact_item_t	*metacontact_items;
 } metacontact_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION 
-extern list_t metacontacts;
+extern metacontact_t *metacontacts;
 
 metacontact_t *metacontact_add(const char *name);
 metacontact_t *metacontact_find(const char *name);

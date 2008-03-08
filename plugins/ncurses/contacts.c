@@ -256,21 +256,19 @@ group_cleanup:
 	}
 
 	if (all == 1 || all == 2) {
-		list_t l;
+		metacontact_t *m;
 
 		/* Remove contacts contained in metacontacts. */
 		if (all == 1 && config_contacts_metacontacts_swallow) {
-			for (l = metacontacts; l; l = l->next) {
-				metacontact_t *m = l->data;
-				list_t ml;
+			for (m = metacontacts; m; m = m->next) {
+				metacontact_item_t *i;
 
 				/* metacontact_find_prio() should always success [for current API] */
 /*
 				if (!metacontact_find_prio(m)) 
 					continue;
 */
-				for (ml = m->metacontact_items; ml; ml = ml->next) {
-					metacontact_item_t *i = ml->data;
+				for (i = m->metacontact_items; i; i = i->next) {
 					userlist_t *u;
 					list_t sl;
 
@@ -288,9 +286,7 @@ group_cleanup:
 			}
 		}
 
-		for (l = metacontacts; l; l = l->next) {
-			metacontact_t *m = l->data;
-
+		for (m = metacontacts; m; m = m->next) {
 			metacontact_item_t *i;
 			userlist_t *u;
 
