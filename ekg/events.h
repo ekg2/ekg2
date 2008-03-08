@@ -25,6 +25,8 @@
 #include "stuff.h"
 
 typedef struct event {
+	struct event *next;
+
 	unsigned int id; /* identyficator */
 	char *name;     /* name of the event */
 	char *target;   /* uid(s), alias(es), group(s) */
@@ -32,7 +34,7 @@ typedef struct event {
 	int prio;	/* priority of this event */
 } event_t;
 
-extern list_t events;
+extern event_t *events;
 extern char **events_all; /* it may be help for tab complete */
 
 int event_add(const char *name, int prio, const char *target, const char *action, int quiet);

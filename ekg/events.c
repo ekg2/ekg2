@@ -39,7 +39,7 @@
 
 #include "queries.h"
 
-list_t events = NULL;
+event_t *events = NULL;
 char **events_all = NULL;
 
 int config_display_day_changed = 1;
@@ -156,7 +156,6 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	event_t *ev;
 	char *tmp;
 	int done = 0, id = 1;
-	list_t l;
 
 	if (event_find(name, target)) {
 		printq("events_exist", name, target);
@@ -166,8 +165,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	while (!done) {
                 done = 1;
 
-                for (l = events; l; l = l->next) {
-			ev = l->data;
+                for (ev = events; ev; ev = ev->next) {
                         if (ev->id == id) {
                                 done = 0;
                                 id++;
@@ -175,13 +173,13 @@ int event_add(const char *name, int prio, const char *target, const char *action
                         }
                 }
         }
-	ev	= xmalloc(sizeof(event_t));
+	ev		= xmalloc(sizeof(event_t));
 	ev->id		= id;
 	ev->name 	= xstrdup(name);
 	ev->prio 	= prio;
 	ev->target 	= xstrdup(target);
 	ev->action 	= xstrdup(action);
-	LIST_ADD_SORTED(&events, ev, event_add_compare);
+	LIST_ADD_SORTED2(&events, ev, event_add_compare);
 
 	tmp = xstrdup(name);
 	query_emit_id(NULL, EVENT_ADDED, &tmp);
@@ -196,7 +194,6 @@ static LIST_FREE_ITEM(list_event_free, struct event *) {
 	xfree(data->name);
 	xfree(data->action);
 	xfree(data->target);
-	xfree(data);
 }
 
 /* 
@@ -222,7 +219,7 @@ static int event_remove(unsigned int id, int quiet) {
 		return -1;
 	}
 
-	LIST_REMOVE(&events, ev, list_event_free);
+	LIST_REMOVE2(&events, ev, list_event_free);
 
 	printq("events_del", itoa(id));
 
@@ -244,7 +241,7 @@ void event_free() {
 	if (!events)
 		return;
 
-	LIST_DESTROY(events, list_event_free);
+	LIST_DESTROY2(events, list_event_free);
 	events = NULL;
 }
 
@@ -254,7 +251,7 @@ void event_free() {
  * it shows the list of events 
  */
 static int events_list(int id, int quiet) {
-        list_t l;
+        event_t *ev;
 
 	if (!events) {
         	printq("events_list_empty");
@@ -263,9 +260,7 @@ static int events_list(int id, int quiet) {
 
 	printq("events_list_header");
 
-	for (l = events; l; l = l->next) {
-	        event_t *ev = l->data;
-
+	for (ev = events; ev; ev = ev->next) {
 		if (!id || id == ev->id)
 	                printq("events_list", ev->name, itoa(ev->prio), ev->target, ev->action, itoa(ev->id));
         }
@@ -281,16 +276,14 @@ static int events_list(int id, int quiet) {
  *
  */
 event_t *event_find(const char *name, const char *target) {
-	list_t l;
-	event_t *ev_max = NULL;
+	event_t *ev, *ev_max = NULL;
 	int ev_max_prio = 0;
 	char **b, **c;
 
 	debug("// event_find (name (%s), target (%s)\n", name, target);
 	b = array_make(target, ("|,;"), 0, 1, 0);
 	c = array_make(name, ("|,;"), 0, 1, 0);
-	for (l = events; l; l = l->next) {
-		event_t *ev = l->data;
+	for (ev = events; ev; ev = ev->next) {
 		char **a, **d;
 		int i, j, k, m;
 
@@ -328,16 +321,14 @@ event_t *event_find(const char *name, const char *target) {
  *
  */
 static event_t *event_find_all(const char *name, const char *session, const char *uid, const char *target, const char *data) {
-	list_t l;
-	event_t *ev_max = NULL;
+	event_t *ev, *ev_max = NULL;
 	int ev_max_prio = 0;
 	char **b, **c;
 
 //	debug("// event_find_all (session %s) (name (%s), target (%s)\n", session, name, target);
 	b = array_make(target, ("|,;"), 0, 1, 0);
 	c = array_make(name, ("|,;"), 0, 1, 0);
-	for (l = events; l; l = l->next) {
-		event_t *ev = l->data;
+	for (ev = events; ev; ev = ev->next) {
 		char **a, **d;
 		int i, j, k, m;
 
@@ -380,11 +371,9 @@ static event_t *event_find_all(const char *name, const char *session, const char
  *
  */
 static event_t *event_find_id(unsigned int id) {
-        list_t l;
+	event_t *ew;
 
-        for (l = events; l; l = l->next) {
-                event_t *ew = l->data;
-
+        for (ew = events; ew; ew = ew->next) {
                 if (ew->id != id)
                         continue;
                 else
