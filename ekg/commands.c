@@ -3888,14 +3888,12 @@ static COMMAND(cmd_queue) {
 
 COMMAND(cmd_dcc)
 {
-	list_t l;
+	dcc_t *d;
 
 	if (!params[0] || !xstrncasecmp(params[0], "li", 2)) {	/* list */
 		int empty = 1, passed = 0;
 
-		for (l = dccs; l; l = l->next) {
-			dcc_t *d = l->data;
-
+		for (d = dccs; d; d = d->next) {
 			if (d->active)
 				continue;
 			
@@ -3921,9 +3919,7 @@ COMMAND(cmd_dcc)
 
 		passed = 0;
 
-		for (l = dccs; l; l = l->next) {
-			dcc_t *d = l->data;
-
+		for (d = dccs; d; d = d->next) {
 			if (!d->active)
 				continue;
 
@@ -3957,6 +3953,7 @@ COMMAND(cmd_dcc)
 
 	if (!xstrncasecmp(params[0], "c", 1)) {		/* close */
 		dcc_t *d = NULL;
+		dcc_t *D;
 		const char *uid;
 
 		if (!params[1]) {
@@ -3966,9 +3963,7 @@ COMMAND(cmd_dcc)
 			/* XXX, get_uid() */
 		uid = get_uid(session, params[1]);		
 
-		for (l = dccs; l; l = l->next) {
-			dcc_t *D = l->data;
-
+		for (D = dccs; D; D = D->next) {
 			if (params[1][0] == '#' && atoi(params[1] + 1) == D->id) {
 				d = D;
 				uid = dcc_uid_get(d);
