@@ -82,8 +82,8 @@
 
 #include "queries.h"
 
-list_t children = NULL;
-list_t aliases = NULL;
+child_t *children = NULL;
+alias_t *aliases = NULL;
 list_t autofinds = NULL;
 list_t bindings = NULL;		/**< list_t struct timer <b>all</b> ekg2 timers */
 list_t timers = NULL;
@@ -259,9 +259,8 @@ void windows_save() {
 int alias_add(const char *string, int quiet, int append)
 {
 	char *cmd;
-	list_t l;
 	command_t *c;
-	struct alias *a;
+	alias_t *a;
 	char **params = NULL;
 	char *array;
 
@@ -270,19 +269,17 @@ int alias_add(const char *string, int quiet, int append)
 
 	*cmd++ = 0;
 
-	for (l = aliases; l; l = l->next) {
-		struct alias *j = l->data;
-
-		if (!xstrcasecmp(string, j->name)) {
+	for (a = aliases; a; a = a->next) {
+		if (!xstrcasecmp(string, a->name)) {
 			if (!append) {
 				printq("aliases_exist", string);
 				return -1;
 			} else {
-				list_add(&j->commands, xstrdup(cmd));
+				list_add(&a->commands, xstrdup(cmd));
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
 				for (c = commands; c; c = c->next) {
-					if (!xstrcasecmp(c->name, j->name)) {
+					if (!xstrcasecmp(c->name, a->name)) {
 						xfree(c->params);
 						c->params = array_make(("?"), (" "), 0, 1, 1);
 						break;
@@ -311,7 +308,7 @@ int alias_add(const char *string, int quiet, int append)
 	a->name = xstrdup(string);
 	a->commands = NULL;
 	list_add(&(a->commands), xstrdup(cmd));
-	list_add(&aliases, a);
+	LIST_ADD2(&aliases, a);
 
 	array = (params) ? array_join(params, (" ")) : xstrdup(("?"));
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
@@ -334,23 +331,26 @@ int alias_add(const char *string, int quiet, int append)
  */
 int alias_remove(const char *name, int quiet)
 {
-	list_t l;
+	alias_t *a;
 	int removed = 0;
 
-	for (l = aliases; l; ) {
-		struct alias *a = l->data;
-
-		l = l->next;
+	for (a = aliases; a; ) {
+		alias_t *next = a->next;
 
 		if (!name || !xstrcasecmp(a->name, name)) {
+			alias_t *tmp;
+
 			if (name)
 				printq("aliases_del", name);
 			command_remove(NULL, a->name);
 			xfree(a->name);
 			list_destroy(a->commands, 1);
-			list_remove(&aliases, a, 1);
+			if ((tmp = (alias_t *) LIST_REMOVE2(&aliases, a, NULL)))
+				next = tmp;
 			removed = 1;
 		}
+
+		a = next;
 	}
 
 	if (!removed) {
@@ -375,18 +375,16 @@ int alias_remove(const char *name, int quiet)
  */
 
 void alias_free() {
-	list_t l;
+	alias_t *a;
 
 	if (!aliases)
 		return;
 
-	for (l = aliases; l; l = l->next) {
-		struct alias *a = l->data;
-		
+	for (a = aliases; a; a = a->next) {
 		xfree(a->name);
 		list_destroy(a->commands, 1);
 	}
-	list_destroy(aliases, 1);
+	LIST_DESTROY2(aliases, NULL);
 	aliases = NULL;
 }
 
@@ -1437,7 +1435,7 @@ int play_sound(const char *sound_path)
  *
  * 0/-1
  */
-child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t handler, void *private)
+child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *private)
 {
 	child_t *c = xmalloc(sizeof(child_t));
 
@@ -1447,7 +1445,7 @@ child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t 
 	c->handler	= handler;
 	c->private	= private;
 	
-	list_add(&children, c);
+	LIST_ADD2(&children, c);
 	return c;
 }
 

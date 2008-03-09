@@ -395,12 +395,15 @@ static void config_write_main(FILE *f)
 		}
 	}
 
-	for (l = aliases; l; l = l->next) {
-		struct alias *a = l->data;
-		list_t m;
+	{
+		alias_t *a;
 
-		for (m = a->commands; m; m = m->next)
-			fprintf(f, "alias %s %s\n", a->name, (char *) m->data);
+		for (a = aliases; a; a = a->next) {
+			list_t m;
+
+			for (m = a->commands; m; m = m->next)
+				fprintf(f, "alias %s %s\n", a->name, (char *) m->data);
+		}
 	}
 
 	{

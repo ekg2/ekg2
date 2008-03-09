@@ -436,7 +436,7 @@ static COMMAND(cmd_alias)
 	}
 	
 	if (!params[0] || match_arg(params[0], 'l', ("list"), 2) || params[0][0] != '-') {
-		list_t l;
+		alias_t *a;
 		int count = 0;
 		const char *aname = NULL;
 
@@ -445,8 +445,7 @@ static COMMAND(cmd_alias)
 		else if (params[0])
 			aname = params[0];
 
-		for (l = aliases; l; l = l->next) {
-			struct alias *a = l->data;
+		for (a = aliases; a; a = a->next) {
 			list_t m;
 			int first = 1, i;
 			char *tmp;
@@ -651,8 +650,7 @@ void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, v
 
 COMMAND(cmd_exec)
 {
-	list_t l;
-	int pid;
+	pid_t pid;
 
 	if (params[0]) {
 		int fd[2] = { 0, 0 }, buf = 0, add_commandline = 0;
@@ -745,11 +743,10 @@ COMMAND(cmd_exec)
 		child_add(NULL, pid, command, cmd_exec_child_handler, NULL);
 
 	} else {
-		for (l = children; l; l = l->next) {
-			child_t *c = l->data;
-			
+		child_t *c;
+
+		for (c = children; c; c = c->next)
 			printq("process", itoa(c->pid), ((c->name) ? (c->name) : ("?")));
-		}
 
 		if (!children) {
 			printq("no_processes");
@@ -2849,12 +2846,11 @@ int binding_quick_list(int a, int b)
 
 COMMAND(cmd_alias_exec)
 {	
-	list_t l, tmp = NULL, m = NULL;
+	list_t tmp = NULL, m = NULL;
+	alias_t *a;
 	int need_args = 0;
 
-	for (l = aliases; l; l = l->next) {
-		struct alias *a = l->data;
-
+	for (a = aliases; a; a = a->next) {
 		if (!xstrcasecmp(name, a->name)) {
 			tmp = a->commands;
 			break;

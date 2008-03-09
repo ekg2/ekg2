@@ -131,7 +131,8 @@ void ekg_loop() {
         struct timeval stv;
         list_t l;
         fd_set rd, wd;
-        int ret, maxfd, pid, status;
+        int ret, maxfd, status;
+	pid_t pid;
 
 	gettimeofday(&tv, NULL);
 
@@ -230,12 +231,11 @@ void ekg_loop() {
                 /* przegl±danie zdech³ych dzieciaków */
 #ifndef NO_POSIX_SYSTEM
                 while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+			child_t *c, *next;
                         debug("child process %d exited with status %d\n", pid, WEXITSTATUS(status));
 
-                        for (l = children; l;) {
-                                child_t *c = l->data;
-
-                                l = l->next;
+                        for (c = children; c; c = next) {
+				next = c->next;
 
                                 if (pid != c->pid)
                                         continue;
@@ -257,7 +257,7 @@ void ekg_loop() {
                                         c->handler(c, c->pid, c->name, WEXITSTATUS(status), c->private);
 
                                 xfree(c->name);
-                                list_remove(&children, c, 1);
+                                LIST_REMOVE2(&children, c, NULL);
                         }
                 }
 #endif
@@ -1082,17 +1082,19 @@ void ekg_exit()
 	}
 	send_nicks_count = 0;
 
-	for (l = children; l; l = l->next) {
-		child_t *c = l->data;
+	{
+		child_t *c;
 
+		for (c = children; c; c = c->next) {
 #ifndef NO_POSIX_SYSTEM
-		kill(c->pid, SIGTERM);
+			kill(c->pid, SIGTERM);
 #else
-		/* TerminateProcess / TerminateThread */
+			/* TerminateProcess / TerminateThread */
 #endif
-		xfree(c->name);
+			xfree(c->name);
+		}
+		LIST_DESTROY2(children, NULL);	children = NULL;
 	}
-	list_destroy(children, 1);	children = NULL;
 
 	{
 		watch_t *w;

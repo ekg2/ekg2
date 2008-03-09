@@ -55,9 +55,11 @@
 
 struct child_s;
 
-typedef void (*child_handler_t)(struct child_s *c, int pid, const char *name, int status, void *data);
+typedef void (*child_handler_t)(struct child_s *c, pid_t pid, const char *name, int status, void *data);
 
 typedef struct child_s {
+	struct child_s	*next;
+
 	pid_t		pid;		/* id procesu */
 	plugin_t	*plugin;	/* obs³uguj±cy plugin */
 	char		*name;		/* nazwa, wy¶wietlana przy /exec */
@@ -66,15 +68,18 @@ typedef struct child_s {
 } child_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
-child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t handler, void *private);
+child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *private);
 #endif
 
 
 #ifndef EKG2_WIN32_NOFUNCTION
-struct alias {
+typedef struct alias {
+	struct alias	*next;
+
 	char		*name;		/* nazwa aliasu */
 	list_t		commands;	/* commands->data to (char*) */
-};
+		/* XXX: maybe commands to *char[]? */
+} alias_t;
 #endif
 
 #define BINDING_FUNCTION(x) void x(const char *arg) 
@@ -146,9 +151,9 @@ struct color_map {
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern list_t children;
+extern child_t *children;
 extern list_t autofinds;
-extern list_t aliases;
+extern alias_t *aliases;
 extern list_t bindings;
 extern list_t bindings_added;
 extern list_t timers;
