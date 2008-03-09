@@ -1099,11 +1099,12 @@ void ekg_exit()
 
 		for (w = watches; w;) {
 			watch_t *tmp;
+			watch_t *next = w->next;
 
 			if ((tmp = watch_free(w)))
-				w = tmp;
-			else
-				w = w->next;
+				next = tmp;
+
+			w = next;
 		}
 	}
 

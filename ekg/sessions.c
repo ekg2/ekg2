@@ -1469,11 +1469,12 @@ void sessions_free() {
 
 		for (w = watches; w;) {
 			watch_t *tmp;
+			watch_t *next = w->next;
 
 			if (w->is_session && ((tmp = watch_free(w))))
-				w = tmp;
-			else
-				w = w->next;
+				next = tmp;
+
+			w = next;
 		}
 	}
 
