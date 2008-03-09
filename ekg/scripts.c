@@ -30,8 +30,8 @@
  * - memleaks ?
  */
 
-list_t	scripts;
-list_t	scriptlang;
+script_t	*scripts;
+scriptlang_t	*scriptlang;
 
 static list_t script_timers;
 static list_t script_plugins;
@@ -54,13 +54,11 @@ static char *script_find_path(const char *name);
 scriptlang_t *scriptlang_from_ext(char *name)
 {
 	scriptlang_t *s;
-	list_t l;
 	char *ext = xrindex(name, '.');
 	
 	if (!ext) return NULL;
 	
-	for (l = scriptlang; l; l = l->next) {
-		s = l->data;
+	for (s = scriptlang; s; s = s->next) {
 		if (!xstrcmp(ext, s->ext))
 			return s;
 	}
@@ -69,7 +67,7 @@ scriptlang_t *scriptlang_from_ext(char *name)
 
 int scriptlang_register(scriptlang_t *s)
 {
-	list_add(&scriptlang, s);
+	LIST_ADD2(&scriptlang, s);
 
 	s->init();
 	
@@ -82,8 +80,9 @@ int scriptlang_unregister(scriptlang_t *s)
 {
 	script_unload_lang(s);
 	s->deinit();
+	LIST_UNLINK2(&scriptlang, s);
 	
-	return list_remove(&scriptlang, s, 0);
+	return 0;
 }
 
 /**************************************************************************************/
@@ -165,12 +164,9 @@ int script_autorun(char *scriptname,
 
 int script_reset(scriptlang_t *scr)
 {
-	list_t l;
 	scriptlang_t *s;
 	
-	for (l = scriptlang; l; l = l->next) {
-		s = l->data;
-
+	for (s = scriptlang; s; s = s->next) {
 		script_unload_lang(s);
     		s->deinit();
 		
@@ -182,13 +178,11 @@ int script_reset(scriptlang_t *scr)
 
 int script_list(scriptlang_t *s)
 {
-	list_t l;
 	script_t *scr;
 	scriptlang_t *lang;
 	int i = 0;
 	
-	for (l = scripts; l; l = l->next) {
-		scr = l->data;
+	for (scr = scripts; scr; scr = scr->next) {
 		lang = scr->lang;
 		if (!s || scr->lang == s) {
 			print("script_list", scr->name, scr->path, lang->name);
@@ -225,11 +219,10 @@ static char *script_find_path(const char *name) {
 	char 		*nametmp;
 	char 		*path = NULL;
 
-	scriptlang_t 	*s = NULL;
-	list_t 		l  = scriptlang;
+	scriptlang_t 	*s = scriptlang;
 
 	nametmp = xstrdup(name);
-	while ((ext = xrindex(nametmp, '.')) || l) {
+	while ((ext = xrindex(nametmp, '.')) || s) {
 		if (ext) {
 			if (nametmp[0] == '/' && (fajl = (fopen(nametmp, "r")))) {
 				fclose(fajl);
@@ -254,10 +247,9 @@ static char *script_find_path(const char *name) {
 				return path;
 			}
 		}
-		if (!l) return NULL;
-		s = l->data;
+		if (!s) return NULL;
 		nametmp  = saprintf("%s%s", name, s->ext);
-		l = l->next;
+		s = s->next;
 	}
 	return NULL;
 }
@@ -297,7 +289,9 @@ int script_unload(script_t *scr)
 	
 	xfree(scr->name);
 	xfree(scr->path);
-	return list_remove(&scripts, scr, 1);
+	LIST_REMOVE2(&scripts, scr, NULL);
+
+	return 0;
 }
 
 script_t *script_find(scriptlang_t *s, char *name)
@@ -331,18 +325,16 @@ int script_unload_lang(scriptlang_t *s)
 {
 	scriptlang_t *lang;
 	script_t *scr;
-	list_t l;
 
-	for (l = scripts; l;) {
-		scr = l->data;
-		l   = l->next;
-		if (!scr) 
-			continue;
+	for (scr = scripts; scr;) {
+		script_t *next	= scr->next;
 		
 		lang = scr->lang;
 		if (!s || scr->lang == s) {
 			script_unload(scr);
 		}
+
+		scr = next;
 	}
 	return 0;
 }
@@ -401,7 +393,7 @@ int script_load(scriptlang_t *s, char *tname)
 		scr->lang = slang;
 		scr->inited = 1;
 		
-		list_add(&scripts, scr); /* BUG: this should be before `script_loaded`...  */
+		LIST_ADD2(&scripts, scr); /* BUG: this should be before `script_loaded`...  */
 
 		ret = slang->script_load(scr);
 

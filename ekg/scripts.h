@@ -22,14 +22,16 @@ typedef enum {
 	SCRIPT_PLUGINTYPE, 
 } script_type_t;
 
-typedef struct {
+typedef struct script {
+	struct script	*next;
+
 	void 		*lang;
 	char 		*name;
 	char 		*path;
 	void 		*private;
 	int		inited;
 } script_t;
-extern list_t 		scripts;
+extern script_t 	*scripts;
 
 typedef struct {
 	script_t 	*scr;
@@ -88,7 +90,9 @@ typedef int (script_handler_watch_t)  (script_t *, script_watch_t *, int, int, i
 
 typedef int (script_free_bind_t)      (script_t *, void *, int, void *, ...);
 
-typedef struct {
+typedef struct scriptlang {
+	struct scriptlang	*next;
+
 	char  	 *name;		/* perl, python, php *g* and so on. */
 	char 	 *ext;		/*  .pl,    .py, .php ... */
 	plugin_t *plugin;
@@ -108,15 +112,13 @@ typedef struct {
 	
 	void *private;
 } scriptlang_t;
-extern list_t scriptlang;
+extern scriptlang_t *scriptlang;
 
 #define SCRIPT_FINDER(bool)\
 	script_t *scr = NULL;\
 	scriptlang_t *slang = NULL;\
-	list_t l;\
 	\
-	for (l = scripts; l; l = l->next) {\
-		scr = l->data;\
+	for (scr = scripts; scr; scr = scr->next) {\
 		slang = scr->lang;\
 		if (bool)\
 			return scr;\

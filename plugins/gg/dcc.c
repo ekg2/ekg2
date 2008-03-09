@@ -483,7 +483,6 @@ COMMAND(gg_command_dcc)
 		dcc_t *d = NULL, *D;
 		struct gg_common *g;
 		char *path;
-		list_t l;
 
 		int fd;
 		unsigned int offset = 0;

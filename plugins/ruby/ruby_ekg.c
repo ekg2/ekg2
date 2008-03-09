@@ -513,11 +513,9 @@ static int ruby_script_theme_init(script_t *scr) {
 }
 
 static int ruby_theme_init() {
-	list_t l;
+	script_t *scr;
 
-	for (l = scripts; l; l = l->next) {
-		script_t *scr = l->data;
-
+	for (scr = scripts; scr; scr = scr->next) {
 		if (scr->lang == &ruby_lang)
 			ruby_script_theme_init(scr);
 	}
