@@ -426,8 +426,6 @@ void list_resort3(list_t *list, int (*comparision)(void *, void *)) {
 		l = l->next;
 
 		list_add_sorted3(&tmplist, cur, comparision);
-
-		xfree(cur);
 	}
 
 	*list = tmplist;
