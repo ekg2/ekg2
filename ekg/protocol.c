@@ -53,7 +53,7 @@
 #include "queries.h"
 
 static int auto_find_limit = 100; /* counter of persons who we were looking for when autofind */
-list_t dccs = NULL;
+dcc_t *dccs = NULL;
 
 static QUERY(protocol_disconnected);
 static QUERY(protocol_connected);
@@ -906,14 +906,11 @@ xs_userlist:
 dcc_t *dcc_add(session_t *session, const char *uid, dcc_type_t type, void *priv) {
 	dcc_t *d;
 	int id = 1, id_ok;
-	list_t l;
 
 	do {
 		id_ok = 1;
 
-		for (l = dccs; l; l = l->next) {
-			dcc_t *d = l->data;
-	
+		for (d = dccs; d; d = d->next) {
 			if (d->id == id) {
 				id++;
 				id_ok = 0;
@@ -934,9 +931,17 @@ dcc_t *dcc_add(session_t *session, const char *uid, dcc_type_t type, void *priv)
 	d->started = time(NULL);
 	d->id = id;
 
-	list_add(&dccs, d);
+	LIST_ADD2(&dccs, d);
 
 	return d;
+}
+
+static LIST_FREE_ITEM(dcc_free_item, dcc_t *) {
+	if (data->close_handler)
+		data->close_handler(data);
+
+	xfree(data->uid);
+	xfree(data->filename);
 }
 
 int dcc_close(dcc_t *d)
@@ -944,13 +949,7 @@ int dcc_close(dcc_t *d)
 	if (!d)
 		return -1;
 
-	if (d->close_handler)
-		d->close_handler(d);
-
-	xfree(d->uid);
-	xfree(d->filename);
-
-	list_remove(&dccs, d, 1);
+	LIST_REMOVE2(&dccs, d, dcc_free_item);
 
 	return 0;
 }

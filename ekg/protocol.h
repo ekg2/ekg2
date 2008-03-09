@@ -96,6 +96,8 @@ struct dcc_s;
 typedef void (*dcc_close_handler_t)(struct dcc_s *);
 
 typedef struct dcc_s {
+	struct dcc_s	*next;
+
 	session_t	*session;		/* ktora sesja? */
 	char		*uid;			/* z kim po³±czenie */
 	dcc_type_t	type;			/* rodzaj po³±czenia */
@@ -131,7 +133,7 @@ int dcc_filename_set(dcc_t *, const char *);
 const char *dcc_filename_get(dcc_t *);
 dcc_type_t dcc_type_get(dcc_t *);
 
-extern list_t dccs;
+extern dcc_t *dccs;
 
 #endif
 

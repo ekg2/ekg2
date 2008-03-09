@@ -213,11 +213,10 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 		char req[47];
 
 		dcc_t *d = NULL;
-		list_t l;
+		dcc_t *D;
 		int i;
 
-		for (l=dccs; l; l = l->next) {
-			dcc_t *D	= l->data;
+		for (D=dccs; D; D = D->next) {
 			jabber_dcc_t *p = D->priv;
 
 			char *this_sha1;
@@ -377,11 +376,10 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 
 dcc_t *jabber_dcc_find(const char *uin, /* without xmpp: */ const char *id, const char *sid) {
 #define DCC_RULE(x) (!xstrncmp(x->uid, "xmpp:", 5) && !xstrcmp(x->uid+5, uin))
-	list_t l;
+	dcc_t *d;
 	if (!id && !sid) { debug_error("jabber_dcc_find() neither id nor sid passed.. Returning NULL\n"); return NULL; }
 
-	for (l = dccs; l; l = l->next) {
-		dcc_t *d = l->data;
+	for (d = dccs; d; d = d->next) {
 		jabber_dcc_t *p = d->priv;
 
 		if (DCC_RULE(d) && (!sid || !xstrcmp(p->sid, sid)) && (!id || !xstrcmp(p->req, id))) {

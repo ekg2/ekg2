@@ -86,9 +86,8 @@ AUDIO_CONTROL(gg_dcc_audio_control) {
 		}
 		va_end(ap);
 		{ 
-			list_t l;
-			for (l = dccs; l; l = l->next) {
-				dcc_t *d = l->data;
+			dcc_t *d;
+			for (d = dccs; d; d = d->next) {
 				if (d->id == dccid) {
 					priv->dcc = d;
 					break;
@@ -481,7 +480,7 @@ COMMAND(gg_command_dcc)
 	
 	/* get, resume */
 	if (params[0] && (!xstrncasecmp(params[0], "g", 1) || !xstrncasecmp(params[0], "re", 2))) {
-		dcc_t *d = NULL;
+		dcc_t *d = NULL, *D;
 		struct gg_common *g;
 		char *path;
 		list_t l;
@@ -489,8 +488,7 @@ COMMAND(gg_command_dcc)
 		int fd;
 		unsigned int offset = 0;
 		
-		for (l = dccs; l; l = l->next) {
-			dcc_t *D = l->data;
+		for (D = dccs; D; D = D->next) {
 			userlist_t *u;
 
 			if (!dcc_private_get(D) || !dcc_filename_get(D) || dcc_type_get(D) != DCC_GET)
@@ -634,11 +632,9 @@ static void gg_dcc_close_handler(dcc_t *d)
  */
 dcc_t *gg_dcc_find(void *d)
 {
-	list_t l;
+	dcc_t *D;
 
-	for (l = dccs; l; l = l->next) {
-		dcc_t *D = l->data;
-
+	for (D = dccs; D; D = D->next) {
 		if (D && D->priv == d)
 			return D;
 	}
@@ -766,7 +762,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 	struct gg_event *e;
 	struct gg_dcc *d = data;
 	int again = 1;
-	list_t l;
+	dcc_t *D;
 
 	if (type != 0)
 		return 0;
@@ -858,15 +854,12 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 		{
 			int found = 0;
 			char peer[16];
-			list_t l;
 			
 			debug("[gg] GG_EVENT_DCC_CALLBACK\n");
 
 			snprintf(peer, sizeof(peer), "gg:%d", d->peer_uin);
 			
-			for (l = dccs; l; l = l->next) {
-				dcc_t *D = l->data;
-
+			for (D = dccs; D; D = D->next) {
 				debug("[gg] dcc id=%d, uid=%d, type=%d\n", dcc_id_get(D), dcc_uid_get(D), dcc_type_get(D));
 
 				if (!xstrcmp(dcc_uid_get(D), peer) && !dcc_private_get(D)) {
@@ -892,13 +885,9 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 
 		case GG_EVENT_DCC_NEED_FILE_INFO:
 		{
-			list_t l;
-
 			debug("[gg] GG_EVENT_DCC_NEED_FILE_INFO\n");
 
-			for (l = dccs; l; l = l->next) {
-				dcc_t *D = l->data;
-
+			for (D = dccs; D; D = D->next) {
 				if (dcc_private_get(D) != d)
 					continue;
 
@@ -922,7 +911,6 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			char *path, *p;
 			char uin[16];
 			struct stat st;
-			dcc_t *D;
 
 			debug("[gg] GG_EVENT_DCC_NEED_FILE_ACK\n");
 		        snprintf(uin, sizeof(uin), "gg:%d", d->uin);
@@ -999,7 +987,6 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			break;
 		case GG_EVENT_DCC_DONE:
 		{
-			dcc_t *D;
 			char uin[16];
 
 			debug("[gg] GG_EVENT_DCC_DONE\n");
@@ -1079,9 +1066,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 	}
 
 	/* uaktualnij statystyki */
-	for (l = dccs; l; l = l->next) {
-		dcc_t *D = l->data;
-
+	for (D = dccs; D; D = D->next) {
 		if (dcc_private_get(D) != d)
 			continue;
 
