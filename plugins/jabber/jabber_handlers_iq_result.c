@@ -726,6 +726,7 @@ static void jabber_handle_vcard_helper(session_t *s, const char *formatka, const
 
 JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 	char *from_str = jabber_unescape(from);
+	int hadphoto = 0;
 
 	print("jabber_userinfo_response2", session_name(s), jabberfix(from_str, _("unknown")));
 
@@ -736,7 +737,7 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 		else if (!xstrcmp(n->name, "URL"))	jabber_handle_vcard_helper(s, "jabber_userinfo_url", n->data);
 		else if (!xstrcmp(n->name, "DESC"))	jabber_handle_vcard_helper(s, "jabber_userinfo_desc", n->data);
 		else if (!xstrcmp(n->name, "TITLE"))	jabber_handle_vcard_helper(s, "jabber_userinfo_title", n->data);
-		else if (!xstrcmp(n->name, "PHOTO"))	debug("jabber_handle_vcard() PHOTO skipping...\n");		/* skipping */
+		else if (!xstrcmp(n->name, "PHOTO"))	hadphoto = 1;		/* skipping */
 
 		else if (!xstrcmp(n->name, "EMAIL")) {
 			const char *userid = NULL;
@@ -812,6 +813,8 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 
 	}
 
+	if (hadphoto && from_str)
+		print("jabber_userinfo_photourl", from_str);
 	print("jabber_userinfo_end", session_name(s), jabberfix(from_str, _("unknown")));
 }
 
