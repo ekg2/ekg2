@@ -601,7 +601,7 @@ int plugin_unregister(plugin_t *p)
 		}
 	}
 
-	LIST_REMOVE2(&plugins, p, NULL);
+	LIST_UNLINK2(&plugins, p);
 
 	return 0;
 }
