@@ -493,14 +493,12 @@ static void changed_check_mail_folders(const char *var)
 static void changed_check_mail(const char *var)
 {
 	if (config_check_mail) {
-		list_t l;
+		struct timer *t;
 
 		/* konieczne, je¶li by³a zmiana typu skrzynek */
 		changed_check_mail_folders(("check_mail_folders"));
 
-		for (l = timers; l; l = l->next) {
-			struct timer *t = l->data;
-
+		for (t = timers; t; t = t->next) {
 			if (!xstrcmp(t->name, "mail-check")) {
 				t->period = config_check_mail_frequency;
 				return;

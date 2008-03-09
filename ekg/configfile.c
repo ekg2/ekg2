@@ -428,45 +428,48 @@ static void config_write_main(FILE *f)
                 fprintf(f, "bind-set %s %s\n", d->binding->key, d->sequence);
         }
 
-	for (l = timers; l; l = l->next) {
-		struct timer *t = l->data;
-		const char *name = NULL;
+	{
+		struct timer *t;
 
-		if (t->function != timer_handle_command)
-			continue;
+		for (t = timers; t; t = t->next) {
+			const char *name = NULL;
 
-		/* nie ma sensu zapisywaæ */
-		if (!t->persist && t->ends.tv_sec - time(NULL) < 5)
-			continue;
+			if (t->function != timer_handle_command)
+				continue;
 
-		/* posortuje, je¶li nie ma nazwy */
-		if (t->name && !xisdigit(t->name[0]))
-			name = t->name;
-		else
-			name = "(null)";
+			/* nie ma sensu zapisywaæ */
+			if (!t->persist && t->ends.tv_sec - time(NULL) < 5)
+				continue;
 
-		if (t->at) {
-			char buf[100];
-			time_t foo = (time_t) t->ends.tv_sec;
-			struct tm *tt = localtime(&foo);
-
-			strftime(buf, sizeof(buf), "%G%m%d%H%M.%S", tt);
-
-			if (t->persist)
-				fprintf(f, "at %s %s/%s %s\n", name, buf, itoa(t->period), (char*)(t->data));
+			/* posortuje, je¶li nie ma nazwy */
+			if (t->name && !xisdigit(t->name[0]))
+				name = t->name;
 			else
-				fprintf(f, "at %s %s %s\n", name, buf, (char*)(t->data));
-		} else {
-			char *foo;
+				name = "(null)";
 
-			if (t->persist)
-				foo = saprintf("*/%s", itoa(t->period));
-			else
-				foo = saprintf("%s", itoa(t->ends.tv_sec));
+			if (t->at) {
+				char buf[100];
+				time_t foo = (time_t) t->ends.tv_sec;
+				struct tm *tt = localtime(&foo);
 
-			fprintf(f, "timer %s %s %s\n", name, foo, (char*)(t->data));
+				strftime(buf, sizeof(buf), "%G%m%d%H%M.%S", tt);
 
-			xfree(foo);
+				if (t->persist)
+					fprintf(f, "at %s %s/%s %s\n", name, buf, itoa(t->period), (char*)(t->data));
+				else
+					fprintf(f, "at %s %s %s\n", name, buf, (char*)(t->data));
+			} else {
+				char *foo;
+
+				if (t->persist)
+					foo = saprintf("*/%s", itoa(t->period));
+				else
+					foo = saprintf("%s", itoa(t->ends.tv_sec));
+
+				fprintf(f, "timer %s %s %s\n", name, foo, (char*)(t->data));
+
+				xfree(foo);
+			}
 		}
 	}
 }

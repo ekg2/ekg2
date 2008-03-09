@@ -11,10 +11,10 @@ CODE:
 	
 void plugins()
 PREINIT:
-        list_t l;
+        plugin_t *p;
 PPCODE:
-        for (l = plugins; l; l = l->next) {
-                XPUSHs(sv_2mortal(bless_plugin( (plugin_t *) l->data)));
+        for (p = plugins; p; p = p->next) {
+                XPUSHs(sv_2mortal(bless_plugin( p )));
         }
 
 int plugin_load(const char *name)

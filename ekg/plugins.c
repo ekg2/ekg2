@@ -529,13 +529,17 @@ int plugin_unregister(plugin_t *p)
 		}
 	}
 
-	for (l = timers; l; ) {
-		struct timer *t = l->data;
+	{
+		struct timer *t;
 
-		l = l->next;
+		for (t = timers; t; ) {
+			struct timer *next = t->next;
 
-		if (t->plugin == p)
-			timer_free(t);
+			if (t->plugin == p)
+				timer_free(t);
+
+			t = next;
+		}
 	}
 
 	{

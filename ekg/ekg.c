@@ -137,27 +137,31 @@ void ekg_loop() {
 	gettimeofday(&tv, NULL);
 
 	{
-                /* przejrzyj timery u¿ytkownika, ui, skryptów */
-                for (l = timers; l; ) {
-                        struct timer *t = l->data;
-                        l = l->next;
+		{		/* przejrzyj timery u¿ytkownika, ui, skryptów */
+			struct timer *t;
+			
+			for (t = timers; t; ) {
+				struct timer *next = t->next;
 
-                        if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
-				int ispersist = t->persist;
-				
-                                if (ispersist) {
-                                        memcpy(&t->ends, &tv, sizeof(tv));
-                                        t->ends.tv_sec += t->period;
-                                }
+				if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
+					int ispersist = t->persist;
+					
+					if (ispersist) {
+						memcpy(&t->ends, &tv, sizeof(tv));
+						t->ends.tv_sec += t->period;
+					}
 
-				if ((t->function(0, t->data) == -1) || !ispersist)
-					timer_free(t);
-                        }
-                }
+					if ((t->function(0, t->data) == -1) || !ispersist)
+						timer_free(t);
+				}
 
-		{
+				t = next;
+			}
+		}
+
+		{		/* removed 'w->removed' watches, timeout checking moved below select() */
 			watch_t *w;
-				/* removed 'w->removed' watches, timeout checking moved below select() */
+
 			for (w = watches; w;) {
 				watch_t *next = w->next;
 
@@ -286,26 +290,29 @@ void ekg_loop() {
 
 		stv.tv_sec = 1;
 		stv.tv_usec = 0;
-		for (l = timers; l; l = l->next) {
-			struct timer *t = l->data;
-			int usec = 0;
+		{
+			struct timer *t;
 
-			/* zeby uniknac przekrecenia licznika mikrosekund przy
-			 * wiekszych czasach, pomijamy dlugie timery */
-			if (t->ends.tv_sec - tv.tv_sec > 1)
-				continue;
+			for (t = timers; t; t = t->next) {
+				int usec = 0;
 
-			/* zobacz, ile zostalo do wywolania timera */
-			usec = (t->ends.tv_sec - tv.tv_sec) * 1000000 + (t->ends.tv_usec - tv.tv_usec);
+				/* zeby uniknac przekrecenia licznika mikrosekund przy
+				 * wiekszych czasach, pomijamy dlugie timery */
+				if (t->ends.tv_sec - tv.tv_sec > 1)
+					continue;
 
-			/* jesli wiecej niz sekunda, to nie ma znacznia */
-			if (usec >= 1000000)
-				continue;
-			
-			/* jesli mniej niz aktualny timeout, zmniejsz */
-			if (stv.tv_sec * 1000000 + stv.tv_usec > usec) {
-				stv.tv_sec = 0;
-				stv.tv_usec = usec;
+				/* zobacz, ile zostalo do wywolania timera */
+				usec = (t->ends.tv_sec - tv.tv_sec) * 1000000 + (t->ends.tv_usec - tv.tv_usec);
+
+				/* jesli wiecej niz sekunda, to nie ma znacznia */
+				if (usec >= 1000000)
+					continue;
+				
+				/* jesli mniej niz aktualny timeout, zmniejsz */
+				if (stv.tv_sec * 1000000 + stv.tv_usec > usec) {
+					stv.tv_sec = 0;
+					stv.tv_usec = usec;
+				}
 			}
 		}
 	
@@ -1195,12 +1202,16 @@ void ekg_exit()
 	emoticon_free();
 	command_free();
 
-	for (l = timers; l;) {
-		struct timer *t = l->data;
-		
-		l = l->next;
+	{
+		struct timer *t;
 
-		timer_free(t);
+		for (t = timers; t;) {
+			struct timer *next = t->next;
+
+			timer_free(t);
+
+			t = next;
+		}
 	}
 
 	binding_free();

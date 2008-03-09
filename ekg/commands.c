@@ -2948,7 +2948,7 @@ COMMAND(cmd_alias_exec)
 
 static COMMAND(cmd_at)
 {
-	list_t l;
+	struct timer *t;
 
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		const char *p, *a_name = NULL;
@@ -2969,9 +2969,7 @@ static COMMAND(cmd_at)
 				return -1;
 			}
 
-			for (l = timers; l; l = l->next) {
-				t = l->data;
-
+			for (t = timers; t; t = t->next) {
 				if (!xstrcasecmp(t->name, a_name)) {
 					printq("at_exist", a_name);
 					return -1;
@@ -3180,8 +3178,7 @@ static COMMAND(cmd_at)
 		else if (params[0])
 			a_name = params[0];
 
-		for (l = timers; l; l = l->next) {
-			struct timer *t = l->data;
+		for (t = timers; t; t = t->next) {
 			struct timeval tv;
 			struct tm *at_time;
 			char tmp[100], tmp2[150];
@@ -3264,7 +3261,7 @@ static COMMAND(cmd_at)
 
 static COMMAND(cmd_timer)
 {
-	list_t l;
+	struct timer *t;
 
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		const char *t_name = NULL, *p;
@@ -3286,9 +3283,7 @@ static COMMAND(cmd_timer)
 				return -1;
 			}
 
-			for (l = timers; l; l = l->next) {
-				t = l->data;
-
+			for (t = timers; t; t = t->next) {
 				if (!t->at && !xstrcasecmp(t->name, t_name)) {
 					printq("timer_exist", t_name);
 					return -1;
@@ -3402,8 +3397,7 @@ static COMMAND(cmd_timer)
 		else if (params[0])
 			t_name = params[0];
 
-		for (l = timers; l; l = l->next) {
-			struct timer *t = l->data;
+		for (t = timers; t; t = t->next) {
 			struct timeval tv;
 			char *tmp;
 			long usec, sec, minutes = 0, hours = 0, days = 0;

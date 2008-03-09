@@ -5,9 +5,9 @@ PROTOTYPES: ENABLE
 
 void watches()
 PREINIT:
-        list_t l;
+        watch_t *w;
 PPCODE:
-        for (l = watches; l; l = l->next) {
-		XPUSHs(sv_2mortal(bless_watch( (watch_t *) l->data)));
+        for (w = watches; w; w = w->next) {
+		XPUSHs(sv_2mortal(bless_watch( w )));
         }
 

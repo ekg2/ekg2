@@ -78,7 +78,6 @@ typedef struct alias {
 
 	char		*name;		/* nazwa aliasu */
 	list_t		commands;	/* commands->data to (char*) */
-		/* XXX: maybe commands to *char[]? */
 } alias_t;
 #endif
 
@@ -113,6 +112,8 @@ enum mesg_t {
 #define TIMER_SESSION(x)	int x(int type, session_t *s)
 
 struct timer {
+	struct timer	*next;
+
 	char		*name;			/* nazwa timera */
 	plugin_t	*plugin;		/* wtyczka obs³uguj±ca deksryptor */
 	struct timeval	ends;			/* kiedy siê koñczy? */
@@ -152,16 +153,15 @@ struct color_map {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 extern child_t *children;
-extern list_t autofinds;
 extern alias_t *aliases;
+extern list_t autofinds;
 extern list_t bindings;
-extern list_t bindings_added;
-extern list_t timers;
+extern struct timer *timers;
 extern list_t conferences;
 extern list_t newconferences;
-
 extern list_t buffer_debug;
 extern list_t buffer_speech;
+extern list_t bindings_added;
 
 extern time_t last_save;
 extern char *config_profile;

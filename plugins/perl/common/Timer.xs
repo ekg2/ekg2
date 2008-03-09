@@ -5,10 +5,10 @@ PROTOTYPES: ENABLE
 
 void timers()
 PREINIT:
-        list_t l;
+        struct timer *t;
 PPCODE:
-        for (l = timers; l; l = l->next) {
-                XPUSHs(sv_2mortal(bless_timer( (struct timer *) l->data)));
+        for (t = timers; t; t = t->next) {
+                XPUSHs(sv_2mortal(bless_timer( t )));
         }
 
 # Ekg2::Timer timer_find(const char *uid)
