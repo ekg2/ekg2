@@ -1109,10 +1109,10 @@ void ekg_exit()
 	}
 
 	{
-		plugin_t *p;
+		plugin_t *p, *next;
 
-		for (p = plugins; p; ) {
-			plugin_t *next = p->next;
+		for (p = plugins; p; p = next) {
+			next = p->next;
 
 			if (p->pclass != PLUGIN_UI)
 				continue;
@@ -1120,8 +1120,6 @@ void ekg_exit()
 			p->destroy();
 
 //			if (p->dl) ekg2_dlclose(p->dl);
-			
-			p = next;
 		}
 	}
 	LIST_DESTROY2(watches, NULL);	 watches = NULL;
