@@ -111,12 +111,10 @@ void last_del(const char *uid) {
 	struct last *ll;
 
 	for (ll = lasts; ll; ) {
-		struct last *next = ll->next;
-
 		if (!xstrcasecmp(uid, ll->uid))
-			LIST_REMOVE2(&lasts, ll, list_last_free);
-
-		ll = next;
+			ll = (struct last *) LIST_REMOVE2(&lasts, ll, list_last_free);
+		else
+			ll = ll->next;
 	}
 }
 

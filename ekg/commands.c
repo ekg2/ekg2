@@ -1939,13 +1939,12 @@ static COMMAND(cmd_test_debug_dump)
 
 static COMMAND(cmd_debug_watches)
 {
-	list_t l;
+	watch_t *w;
 	char buf[256];
 	
 	printq("generic_bold", ("fd     wa   plugin  pers tout  started     rm"));
 	
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
+	for (w = watches; w; w = w->next) {
 		char wa[4];
 		char *plugin;
 
@@ -1972,7 +1971,7 @@ static COMMAND(cmd_debug_watches)
 
 static COMMAND(cmd_debug_queries)
 {
-	list_t l, *ll;
+	query_t **ll, *q;
 	
 	printq("generic", ("name                             | plugin      | count"));
 	printq("generic", ("---------------------------------|-------------|------"));
@@ -1980,9 +1979,8 @@ static COMMAND(cmd_debug_queries)
 	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
 		if (ll == &queries[QUERY_EXTERNAL] && *ll)
 			printq("generic", ("------EXTERNAL-QUERIES-----------|-------------|-----"));
-		for (l = *ll; l; l = l->next) {
+		for (q = *ll; q; q = q->next) {
 			char buf[256];
-			query_t *q = l->data;
 			const char *plugin = (q->plugin) ? q->plugin->name : ("-");
 
 			snprintf(buf, sizeof(buf), "%-32s | %-11s | %d", __(query_name(q->id)), plugin, q->count);
@@ -4014,13 +4012,10 @@ static COMMAND(cmd_plugin) {
 	plugin_t *pl;
 
 	if (!params[0]) {
-		list_t l;
+		plugin_t *p;
 
-		for (l = plugins; l; l = l->next) {
-			plugin_t *p = l->data;
-
+		for (p = plugins; p; p = p->next)
 			printq("plugin_list", p->name ? p->name : ("?"), itoa(p->prio));
-		}
 
 		if (!plugins) {
 			/* XXX, display info: no plugins. */
@@ -4030,15 +4025,15 @@ static COMMAND(cmd_plugin) {
 	}
 
         if (match_arg(params[0], 'd', ("default"), 2)) {
-                list_t l;
+                plugin_t *p;
 
-                for (l = plugins; l;) {
-                        plugin_t *p = l->data;
+                for (p = plugins; p;) {
+			plugin_t *next;
 
-                        l = l->next;
-
-                        list_remove(&plugins, p, 0);
+                        next = (plugin_t *) LIST_UNLINK2(&plugins, p);
                         plugin_register(p, -254);
+
+			p = next;
                 }
 
 		queries_reconnect();
@@ -4069,7 +4064,7 @@ static COMMAND(cmd_plugin) {
 	}
 
 	if (params[1] && (pl = plugin_find(params[0]))) {
-		list_remove(&plugins, pl, 0);
+		LIST_UNLINK2(&plugins, pl);
 		plugin_register(pl, atoi(params[1])); 
 
 		queries_reconnect();

@@ -26,16 +26,9 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-#define EKG_ABI_VER 3870
+#define EKG_ABI_VER 3873
 
 #define EXPORT __attribute__ ((visibility("default")))
-
-#ifndef EKG2_WIN32_NOFUNCTION
-extern list_t plugins;
-extern list_t watches;
-extern list_t idles;
-extern list_t queries[];
-#endif
 
 typedef enum {
 	PLUGIN_ANY = 0,
@@ -66,7 +59,9 @@ typedef struct {
 	plugin_notify_func_t *notify;	/* notify */
 } plugins_params_t;
 
-typedef struct {
+typedef struct plugin {
+	struct plugin *next;
+
 	char *name;
 	int prio;
 	plugin_class_t pclass;
@@ -117,7 +112,9 @@ int plugin_var_find(plugin_t *pl, const char *name);
 #define QUERY(x) int x(void *data, va_list ap)
 typedef QUERY(query_handler_func_t);
 
-typedef struct {
+typedef struct queryx {
+	struct queryx *next;
+
 	int id;
 	plugin_t *plugin;
 	void *data;
@@ -137,7 +134,7 @@ int query_emit(plugin_t *, const char *, ...);
 void queries_reconnect();
 
 const char *query_name(const int id);
-const struct query *query_struct(const int id);
+const struct query_def *query_struct(const int id);
 
 #endif
 
@@ -158,7 +155,9 @@ typedef WATCHER(watcher_handler_func_t);
 /* typedef WATCHER_LINE(watcher_handler_line_func_t); */
 typedef WATCHER_SESSION(watcher_session_handler_func_t);
 
-typedef struct {
+typedef struct watch {
+	struct watch *next;
+
 	int fd;			/* obserwowany deskryptor */
 	watch_type_t type;	/* co sprawdzamy */
 	plugin_t *plugin;	/* wtyczka obs³uguj±ca deskryptor */
@@ -189,7 +188,7 @@ int watch_write(watch_t *w, const char *format, ...);
 #endif
 
 watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type);
-void watch_free(watch_t *w);
+watch_t *watch_free(watch_t *w);
 
 typedef void *watch_handler_func_t;
 
@@ -210,7 +209,9 @@ int watch_handle_write(watch_t *w);
 
 typedef IDLER(idle_handler_func_t);
 
-typedef struct {
+typedef struct idle {
+	struct idle *next;
+
 	plugin_t *plugin;
 	idle_handler_func_t *handler;
 	void *data;
@@ -223,6 +224,13 @@ void idle_handle(idle_t *i);
 
 int ekg2_dlinit();
 
+#endif
+
+#ifndef EKG2_WIN32_NOFUNCTION
+extern plugin_t *plugins;
+extern watch_t *watches;
+extern idle_t *idles;
+extern query_t *queries[];
 #endif
 
 #endif /* __EKG_PLUGINS_H */

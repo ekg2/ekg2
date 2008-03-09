@@ -52,11 +52,11 @@
 #define va_copy(DST,SRC) __va_copy(DST,SRC)
 #endif
 
-list_t plugins = NULL;
-list_t watches = NULL;
-list_t idles   = NULL;
+plugin_t *plugins = NULL;
+watch_t *watches = NULL;
+idle_t *idles   = NULL;
 
-list_t queries[QUERY_EXTERNAL+1];
+query_t *queries[QUERY_EXTERNAL+1];
 
 #ifdef EKG2_WIN32_HELPERS
 # define WIN32_REQUEST_HELPER
@@ -342,12 +342,10 @@ int plugin_load(const char *name, int prio, int quiet)
 
 plugin_t *plugin_find(const char *name)
 {
-	list_t l;
+	plugin_t *p;
 
-	for (l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
-
-		if (p && !xstrcmp(p->name, name))
+	for (p = plugins; p; p = p->next) {
+		if (!xstrcmp(p->name, name))
 			return p;
 	}
 
@@ -367,11 +365,9 @@ plugin_t *plugin_find(const char *name)
  */
 
 plugin_t *plugin_find_uid(const char *uid) {
-        list_t l;
+        plugin_t *p;
 
-        for (l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
-
+        for (p = plugins; p; p = p->next) {
                 if (p && p->pclass == PLUGIN_PROTOCOL && p->name && valid_plugin_uid(p, uid))
                 	return p;
         }
@@ -390,17 +386,16 @@ plugin_t *plugin_find_uid(const char *uid) {
 int plugin_unload(plugin_t *p)
 {
 	char *name; 
-	list_t l;
 
 	if (!p)
 		return -1;
 
 
 	if (config_expert_mode == 0 && p->pclass == PLUGIN_UI) {
-		list_t l;
+		plugin_t *plug;
+
 		int unloadable = 0;
-		for (l=plugins; l; l = l->next) {
-			plugin_t *plug = l->data;
+		for (plug = plugins; plug; plug = plug->next) {
 			if (plug->pclass == PLUGIN_UI && plug != p) 
 				unloadable = 1;
 		}
@@ -410,11 +405,14 @@ int plugin_unload(plugin_t *p)
 		}
 	}
 
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
-		if (w && w->plugin == p && (w->removed == 1 || w->removed == -1)) {
-			print("generic_error", "XXX cannot remove this plugin when there some watches active");
-			return -1;
+	{
+		watch_t *w;
+
+		for (w = watches; w; w = w->next) {
+			if (w && w->plugin == p && (w->removed == 1 || w->removed == -1)) {
+				print("generic_error", "XXX cannot remove this plugin when there some watches active");
+				return -1;
+			}
 		}
 	}
 	/* XXX, to samo dla timerow */
@@ -486,7 +484,7 @@ int plugin_register(plugin_t *p, int prio) {
 		p->prio = prio;
 	}
 
-	LIST_ADD_SORTED(&plugins, p, plugin_register_compare);
+	LIST_ADD_SORTED2(&plugins, p, plugin_register_compare);
 
 	return 0;
 }
@@ -518,11 +516,17 @@ int plugin_unregister(plugin_t *p)
 
 /* XXX think about sequence of unloading....: currently: watches, timers, sessions, queries, variables, commands */
 
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
+	{
+		watch_t *w;
 
-		if (w && w->plugin == p)
-			watch_free(w);
+		for (w = watches; w;) {
+			watch_t *next = w->next;
+
+			if (w && w->plugin == p)
+				watch_free(w);
+
+			w = next;
+		}
 	}
 
 	for (l = timers; l; ) {
@@ -534,13 +538,15 @@ int plugin_unregister(plugin_t *p)
 			timer_free(t);
 	}
 
-	for (l = idles; l; ) {
-		idle_t *i = l->data;
-
-		l = l->next;
-
-		if (i->plugin == p)
-			list_remove(&idles, i, 1);
+	{
+		idle_t *i;
+		
+		for (i = idles; i; ) {
+			if (i->plugin == p)
+				i = (idle_t *) LIST_REMOVE2(&idles, i, NULL);
+			else
+				i = i->next;
+		}
 	}
 
 	for (l = sessions; l; ) {
@@ -553,16 +559,18 @@ int plugin_unregister(plugin_t *p)
 	}
 
 	{
-		list_t *ll;
+		query_t **ll;
 
 		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
-			for (l = *ll; l; ) {
-				query_t *q = l->data;
+			query_t *q;
 
-				l = l->next;
+			for (q = *ll; q; ) {
+				query_t *next = q->next;
 
 				if (q->plugin == p)
 					query_free(q);
+
+				q = next;
 			}
 		}
 	}
@@ -593,7 +601,7 @@ int plugin_unregister(plugin_t *p)
 		}
 	}
 
-	list_remove(&plugins, p, 0);
+	LIST_REMOVE2(&plugins, p, NULL);
 
 	return 0;
 }
@@ -624,6 +632,10 @@ int plugin_var_find(plugin_t *pl, const char *name) {
 
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify) { return -1; }
 
+static LIST_FREE_ITEM(query_external_free_data, struct query_def *) {
+	xfree(data->name);
+}
+
 /**
  * query_external_free()
  *
@@ -634,17 +646,10 @@ int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, 
  */
 
 void query_external_free() {
-	list_t l;
-
 	if (!queries_external)
 		return;
 
-	for (l = queries_external; l; l = l->next) {
-		struct query *a = l->data;
-
-		xfree(a->name);
-	}
-	list_destroy(queries_external, 1);
+	LIST_DESTROY(queries_external, query_external_free_data);
 
 	queries_external 	= NULL;
 	queries_count		= QUERY_EXTERNAL;
@@ -664,7 +669,7 @@ void query_external_free() {
  */
 
 static int query_id(const char *name) {
-	struct query *a = NULL;
+	struct query_def *a = NULL;
 	list_t l;
 	int i;
 
@@ -685,11 +690,11 @@ static int query_id(const char *name) {
 	}
 	debug_error("query_id() NOT FOUND[%d]: %s\n", queries_count - QUERY_EXTERNAL, __(name));
 
-	a 	= xmalloc(sizeof(struct query));
+	a 	= xmalloc(sizeof(struct query_def));
 	a->id 	= queries_count++;
 	a->name	= xstrdup(name);
 
-	list_add(&queries_external, a);
+	LIST_ADD2(&queries_external, a);
 
 	return a->id;
 }
@@ -701,14 +706,14 @@ static int query_id(const char *name) {
  *
  */
 
-const struct query *query_struct(const int id) {
+const struct query_def *query_struct(const int id) {
 	list_t l;
 
 	if (id < QUERY_EXTERNAL) 
 		return &(query_list[id]);
 
 	for (l = queries_external; l; l = l->next) {
-		struct query* a = l->data;
+		struct query_def *a = l->data;
 
 		if (a->id == id) 
 			return a;
@@ -737,7 +742,7 @@ const char *query_name(const int id) {
 		return query_list[id].name;
 
 	for (l = queries_external; l; l = l->next) {
-		struct query* a = l->data;
+		struct query_def *a = l->data;
 
 		if (a->id == id) 
 			return a->name;
@@ -756,7 +761,7 @@ static query_t *query_connect_common(plugin_t *plugin, const int id, query_handl
 	q->handler	= handler;
 	q->data		= data;
 
-	return list_add(&queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id], q);
+	return LIST_ADD2(&queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id], q);
 }
 
 #define ID_AND_QUERY_EXTERNAL	\
@@ -782,7 +787,7 @@ query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t 
 int query_free(query_t *q) {
 	if (!q) return -1;
 
-	list_remove(&queries[q->id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : q->id], q, 1);
+	LIST_REMOVE2(&queries[q->id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : q->id], q, NULL);
 	return 0;
 }
 
@@ -820,7 +825,7 @@ static int query_emit_common(query_t *q, va_list ap) {
 int query_emit_id(plugin_t *plugin, const int id, ...) {
 	int result = -2;
 	va_list ap;
-	list_t l;
+	query_t *q;
 
 	if (id >= QUERY_EXTERNAL) {
 		debug_error("%s", ID_AND_QUERY_EXTERNAL);
@@ -828,9 +833,7 @@ int query_emit_id(plugin_t *plugin, const int id, ...) {
 	}
 		
 	va_start(ap, id);
-	for (l = queries[id]; l; l = l->next) {
-		query_t *q = l->data;
-
+	for (q = queries[id]; q; q = q->next) {
 		if ((!plugin || (plugin == q->plugin))) {
 			result = query_emit_common(q, ap);
 
@@ -844,15 +847,13 @@ int query_emit_id(plugin_t *plugin, const int id, ...) {
 int query_emit(plugin_t *plugin, const char *name, ...) {
 	int result = -2;
 	va_list ap;
-	list_t l;
+	query_t *q;
 	int id;
 
 	id = query_id(name);
 
 	va_start(ap, name);
-	for (l = queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id]; l; l = l->next) {
-		query_t *q = l->data;
-
+	for (q = queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id]; q; q = q->next) {
 		if ((!plugin || (plugin == q->plugin)) && q->id == id) {
 			result = query_emit_common(q, ap);
 
@@ -881,7 +882,7 @@ void queries_reconnect() {
 	int i;
 
 	for (i = 0; i <= QUERY_EXTERNAL; i++)
-		LIST_RESORT(&(queries[i]), query_compare);
+		LIST_RESORT2(&(queries[i]), query_compare);
 }
 
 /*
@@ -891,10 +892,9 @@ void queries_reconnect() {
  */
 watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
 {
-	list_t l;
+	watch_t *w;
 	
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
+	for (w = watches; w; w = w->next) {
 			/* XXX: added simple plugin ignoring, make something nicer? */
 		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && (w->type & type) && !(w->removed > 0))
 			return w;
@@ -903,44 +903,53 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
 	return NULL;
 }
 
+static LIST_FREE_ITEM(watch_free_data, watch_t *) {
+	data->removed = 2;	/* to avoid situation: when handler of watch, execute watch_free() on this watch... stupid */
+
+	if (data->buf) {
+		int (*handler)(int, int, const char *, void *) = data->handler;
+		string_free(data->buf, 1);
+		/* DO WE WANT TO SEND ALL  IN BUFOR TO FD ? IF IT'S WATCH_WRITE_LINE? or parse all data if it's WATCH_READ_LINE? mmh. XXX */
+		if (handler)
+			handler(1, data->fd, NULL, data->data);
+	} else {
+		int (*handler)(int, int, int, void *) = data->handler;
+		if (handler)
+			handler(1, data->fd, data->type, data->data);
+	}
+}
+
 /*
  * watch_free()
  *
  * zwalnia pamiêæ po obiekcie watch_t.
+ * zwraca wska¼nik do nastêpnego obiektu do iterowania
+ * albo NULL, jak nie mo¿na skasowaæ.
  */
-void watch_free(watch_t *w) {
+watch_t *watch_free(watch_t *w) {
+	void *next;
+
 	if (!w)
-		return;
+		return NULL;
 
 	if (w->removed == 2)
-		return;
+		return NULL;
 
 	if (w->removed == -1 || w->removed == 1) { /* watch is running.. we cannot remove it */
 		w->removed = 1;
-		return;
+		return NULL;
 	}
 
 	if (w->type == WATCH_WRITE && w->buf && !w->handler) { 
 		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
-		return;
+		return NULL;
 	}
 
-	w->removed = 2;	/* to avoid situation: when handler of watch, execute watch_free() on this watch... stupid */
-
-	if (w->buf) {
-		int (*handler)(int, int, const char *, void *) = w->handler;
-		string_free(w->buf, 1);
-		/* DO WE WANT TO SEND ALL  IN BUFOR TO FD ? IF IT'S WATCH_WRITE_LINE? or parse all data if it's WATCH_READ_LINE? mmh. XXX */
-		if (handler)
-			handler(1, w->fd, NULL, w->data);
-	} else {
-		int (*handler)(int, int, int, void *) = w->handler;
-		if (handler)
-			handler(1, w->fd, w->type, w->data);
-	}
-	list_remove_safe(&watches, w, 1);
+	next = LIST_REMOVE2(&watches, w, watch_free_data);
 	ekg_watches_removed++;
 	debug("watch_free() REMOVED WATCH, watches removed this loop: %d oldwatch: 0x%x\n", ekg_watches_removed, w);
+
+	return next;
 }
 
 /*
@@ -1175,7 +1184,7 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	w->handler = handler;
 	w->data    = data;
 
-	list_add_beginning(&watches, w);
+	LIST_ADD_BEGINNING2(&watches, w);
 
 	return w;
 }
@@ -1228,7 +1237,7 @@ void idle_handle(idle_t *i) {
 			
 	} else {
 		/* add idler again [at end] */
-		list_add(&idles, i);
+		LIST_ADD2(&idles, i);
 	}
 }
 
@@ -1239,7 +1248,7 @@ idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data) {
 	i->data		= data;
 
 	/* XXX, prios? */
-	list_add_beginning(&idles, i);		/* first item */
+	LIST_ADD_BEGINNING2(&idles, i);		/* first item */
 
 	return i;
 }
@@ -1256,11 +1265,12 @@ idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data) {
  */
 
 int have_plugin_of_class(plugin_class_t pclass) {
-	list_t l;
-	for(l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
+	plugin_t *p;
+
+	for (p = plugins; p; p = p->next) {
 		if (p->pclass == pclass) return 1;
 	}
+
 	return 0;
 }
 

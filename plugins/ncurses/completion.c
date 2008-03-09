@@ -220,11 +220,9 @@ static void conference_generator(const char *text, int len)
 
 static void plugin_generator(const char *text, int len)
 {
-        list_t l;
+        plugin_t *p;
 
-        for (l = plugins; l; l = l->next) {
-                plugin_t *p = l->data;
-
+        for (p = plugins; p; p = p->next) {
                 if (!xstrncasecmp(text, p->name, len)) {
                         array_add_check(&completions, xstrdup(p->name), 1);
 		}

@@ -286,12 +286,21 @@ int session_remove(const char *uid)
 	}
 #endif
 
-	/* remove session watches */
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
+	{		/* remove session watches */
+		watch_t *w;
 
-		if (w && w->is_session && w->data == s)
-			watch_free(w);
+		for (w = watches; w;) {
+			watch_t *next = w->next;
+
+			if (w && w->is_session && w->data == s) {
+				watch_t *tmp;
+				
+				if ((tmp = watch_free(w)))
+					next = tmp;
+			}
+
+			w = next;
+		}
 	}
 
 	for (l = timers; l;) {
@@ -735,10 +744,11 @@ int session_read(const char *filename) {
 	char *line;
 	FILE *f;
 	session_t *s = NULL;
-	list_t l;
 	int ret = 0;
 
 	if (!filename) {
+		plugin_t *p;
+
 		if (!in_autoexec) {
 			list_t l;
 
@@ -751,8 +761,7 @@ int session_read(const char *filename) {
 			debug("	 flushed sessions\n");
 		}
 
-		for (l = plugins; l; l = l->next) {
-			plugin_t *p = l->data;
+		for (p = plugins; p; p = p->next) {
 			const char *tmp;
 
 			if (!p || p->pclass != PLUGIN_PROTOCOL)
@@ -812,15 +821,15 @@ int session_read(const char *filename) {
  */
 int session_write()
 {
-	list_t l, ls;
+	plugin_t *p;
 	FILE *f = NULL;
 	int ret = 0;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 */
 		return -1;
 
-	for (l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
+	for (p = plugins; p; p = p->next) {
+		list_t ls;
 		const char *tmp;
 
 		if (p->pclass != PLUGIN_PROTOCOL) continue; /* skip no protocol plugins */
@@ -1455,12 +1464,17 @@ void sessions_free() {
         if (!sessions)
                 return;
 
-	/* remove _ALL_ session watches */
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
+	{		/* remove _ALL_ session watches */
+		watch_t *w;
 
-		if (w && w->is_session)
-			watch_free(w);
+		for (w = watches; w;) {
+			watch_t *tmp;
+
+			if (w->is_session && ((tmp = watch_free(w))))
+				w = tmp;
+			else
+				w = w->next;
+		}
 	}
 
 	for (l = timers; l;) {

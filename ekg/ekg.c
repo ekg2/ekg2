@@ -154,17 +154,21 @@ void ekg_loop() {
                         }
                 }
 
-		/* removed 'w->removed' watches, timeout checking moved below select() */
-                for (l = watches; l; l = l->next) {
-                        watch_t *w = l->data;
+		{
+			watch_t *w;
+				/* removed 'w->removed' watches, timeout checking moved below select() */
+			for (w = watches; w;) {
+				watch_t *next = w->next;
 
-			if (!w)
-				continue;
+				if (w->removed == 1) {
+					watch_t *tmp;
 
-			if (w->removed == 1) {
-				w->removed = 0;
-				watch_free(w);
-				continue;
+					w->removed = 0;
+					if ((tmp = watch_free(w))) /* if watch was really deleted, we shall jump */
+						next = tmp;
+				}
+
+				w = next;
 			}
 		}
 
@@ -262,21 +266,23 @@ void ekg_loop() {
                 FD_ZERO(&rd);
                 FD_ZERO(&wd);
 
-                for (maxfd = 0, l = watches; l; l = l->next) {
-                        watch_t *w = l->data;
+		{
+			watch_t *w;
 
-			if (!w)
-				continue;
+			for (maxfd = 0, w = watches; w; w = w->next) {
+				if (!w)
+					continue;
 
-                        if (w->fd > maxfd)
-                                maxfd = w->fd;
-                        if ((w->type & WATCH_READ))
-                                FD_SET(w->fd, &rd);
-                        if ((w->type & WATCH_WRITE)) {
-				if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
-				FD_SET(w->fd, &wd); 
+				if (w->fd > maxfd)
+					maxfd = w->fd;
+				if ((w->type & WATCH_READ))
+					FD_SET(w->fd, &rd);
+				if ((w->type & WATCH_WRITE)) {
+					if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
+					FD_SET(w->fd, &wd); 
+				}
 			}
-                }
+		}
 
 		stv.tv_sec = 1;
 		stv.tv_usec = 0;
@@ -328,15 +334,20 @@ void ekg_loop() {
                          * ekg mog³o dzia³aæ dalej, sprawd¼my który to i go
                          * usuñmy z listy. */
 			if (errno == EBADF) {
-				for (l = watches; l; l = l->next) {
-					watch_t *w = l->data;
+				watch_t *w;
+
+				for (w = watches; w;) {
 					struct stat st;
+					watch_t *next = w->next;
 
-					if (!w || !fstat(w->fd, &st))
-						continue;
+					if (w && fstat(w->fd, &st)) {
+						watch_t *tmp;
+						debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
+						if ((tmp = watch_free(w)))
+							next = tmp;
+					}
 
-					debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
-					watch_free(w);
+					w = next;
 				}
 			} else if (errno != EINTR)
 				debug("select() failed: %s\n", strerror(errno));
@@ -352,8 +363,8 @@ void ekg_loop() {
 			 *  yeah, i know it can be do better. note: it's just for gtk.. maybe later we have prios and so (and ekg2 become operation system with scheduler)
 			 */
 
-			idle_handle((idle_t *) idles->data);
-			list_remove(&idles, idles->data, 0);
+			idle_handle(idles);
+			LIST_REMOVE2(&idles, idles, 0);
 
 			/* Here I think we can do return; coz select() return 0 when nothing happen on given fds */
 			/* but to avoid regression on broken systems */
@@ -361,70 +372,72 @@ void ekg_loop() {
 			/* return; */
 		}
 
-		for (l = watches; l; l = l->next) {
-                }
-                /* przejrzyj deskryptory */
-		for (l = watches; l; l = l->next) {
-			watch_t *w = l->data;
+		{		/* przejrzyj deskryptory */
+			watch_t *w, *next;
 
-			if (!w)
-				continue;
+			for (w = watches; w; w = next) {
+				next = w->next;
 
-			if (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)) { /* timeout checking */
-				if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
+				if (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)) { /* timeout checking */
+					watch_t *tmp;
+
+					if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
+						continue;
+					w->removed = -1;
+					if (w->buf) {
+						int (*handler)(int, int, char*, void*) = w->handler;
+						if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
+							w->removed = 0;
+							if ((tmp = watch_free(w)))
+								next = tmp;
+							continue;
+						}
+					} else {
+						int (*handler)(int, int, int, void*) = w->handler;
+						if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
+							w->removed = 0;
+							if ((tmp = watch_free(w)))
+								next = tmp;
+							continue;
+						}
+					}
+					w->removed = 0;
+
 					continue;
-				w->removed = -1;
-				if (w->buf) {
-					int (*handler)(int, int, char*, void*) = w->handler;
-					if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
-						w->removed = 0;
-						watch_free(w);
-						continue;
+				}
+
+				if (w->fd == 0) {
+					list_t session_list;
+					for (
+						session_list = sessions;
+						session_list;
+						session_list = session_list->next) 
+					{
+						session_t *s = session_list->data;
+
+						if (!s->connected || !s->autoaway)
+							continue;
+
+						if (session_int_get(s, "auto_back") != 2)
+							continue;
+
+						command_exec(NULL, s, ("/_autoback"), 2);
 					}
+				}
+				if (!w->buf) {
+					if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) ||
+							((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
+						watch_handle(w);
 				} else {
-					int (*handler)(int, int, int, void*) = w->handler;
-					if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
-						w->removed = 0;
-						watch_free(w);
-						continue;
-					}
+					if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ) 		watch_handle_line(w);
+					else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
 				}
-				w->removed = 0;
-
-				continue;
-			}
-
-			if (w->fd == 0) {
-				list_t session_list;
-				for (
-					session_list = sessions;
-					session_list;
-					session_list = session_list->next) 
-				{
-					session_t *s = session_list->data;
-
-					if (!s->connected || !s->autoaway)
-						continue;
-
-					if (session_int_get(s, "auto_back") != 2)
-						continue;
-
-					command_exec(NULL, s, ("/_autoback"), 2);
-				}
-			}
-			if (!w->buf) {
-				if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) ||
-						((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
-					watch_handle(w);
-			} else {
-				if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ) 		watch_handle_line(w);
-				else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
 			}
 		}
 
 		if (ekg_watches_removed > 0) {
 			debug("ekg_loop() Removed %d watches this loop, let's cleanup calling: list_cleanup() ...\n", ekg_watches_removed);
-			list_cleanup(&watches);
+			//list_cleanup(&watches); /* not needed anymore, left for historical reasons ( ; */
 			ekg_watches_removed = 0;
 		}
 	}
@@ -453,7 +466,7 @@ static void handle_sighup()
 
 static void handle_sigsegv()
 {
-        list_t l;
+        plugin_t *p;
 
         signal(SIGSEGV, SIG_DFL);
 
@@ -462,9 +475,7 @@ static void handle_sigsegv()
 
         /* wy³±cz pluginy ui, ¿eby odda³y terminal
 	 * destroy also log plugins to make sure that latest changes are written */
-        for (l = plugins; l; l = l->next) {
-                plugin_t *p = l->data;
-
+        for (p = plugins; p; p = p->next) {
                 if (p->pclass != PLUGIN_UI && p->pclass != PLUGIN_LOG)
                         continue;
 
@@ -862,7 +873,7 @@ int main(int argc, char **argv)
         tmp = NULL;
 
 	{
-		list_t *ll;
+		query_t **ll;
 
 		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++)
 			*ll = NULL;
@@ -1083,25 +1094,36 @@ void ekg_exit()
 	}
 	list_destroy(children, 1);	children = NULL;
 
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
+	{
+		watch_t *w;
 
-		watch_free(w);
+		for (w = watches; w;) {
+			watch_t *tmp;
+
+			if ((tmp = watch_free(w)))
+				w = tmp;
+			else
+				w = w->next;
+		}
 	}
 
-	for (l = plugins; l; ) {
-		plugin_t *p = l->data;
+	{
+		plugin_t *p;
 
-		l = l->next;
+		for (p = plugins; p; ) {
+			plugin_t *next = p->next;
 
-		if (p->pclass != PLUGIN_UI)
-			continue;
+			if (p->pclass != PLUGIN_UI)
+				continue;
 
-		p->destroy();
+			p->destroy();
 
-//		if (p->dl) ekg2_dlclose(p->dl);
+//			if (p->dl) ekg2_dlclose(p->dl);
+			
+			p = next;
+		}
 	}
-	list_destroy(watches, 0);	 watches = NULL;
+	LIST_DESTROY2(watches, NULL);	 watches = NULL;
 
 	if (config_changed && !config_speech_app && config_save_quit == 1) {
 		char line[80];
@@ -1150,14 +1172,18 @@ void ekg_exit()
 	metacontact_free();
 	sessions_free();
 
-	for (l = plugins; l; ) {
-		plugin_t *p = l->data;
+	{
+		plugin_t *p;
 
-		l = l->next;
+		for (p = plugins; p; ) {
+			plugin_t *next = p->next;
 
-		p->destroy();
+			p->destroy();
 
-//		if (p->dl) ekg2_dlclose(p->dl);
+//			if (p->dl) ekg2_dlclose(p->dl);
+
+			p = next;
+		}
 	}
 
 	audio_deinitialize();
@@ -1195,18 +1221,20 @@ void ekg_exit()
 	list_destroy(windows, 1);	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
 
 	{
-		list_t *ll;
+		query_t **ll;
 
 		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
-			for (l = *ll; l; ) {	/* free other queries... connected by protocol_init() for example */
-				query_t *q = l->data;
+			query_t *q;
 
-				l = l->next;
+			for (q = *ll; q; ) {	/* free other queries... connected by protocol_init() for example */
+				query_t *next = q->next;
 
 				query_free(q);
+
+				q = next;
 			}
 
-			list_destroy(*ll, 0);
+			LIST_DESTROY2(*ll, NULL); /* XXX: really needed? */
 		}
 	}
 	query_external_free();

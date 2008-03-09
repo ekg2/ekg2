@@ -660,7 +660,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 		int i;
 		for (i = 0; i < QUERY_EXTERNAL; i++) {
 			if (!xstrcmp(qname, (query_name(i)))) {
-				const struct query *q = query_struct(i);
+				const struct query_def *q = query_struct(i);
 				int j = 0;
 
 				while (j < QUERY_ARGS_MAX && q->params[j] != QUERY_ARG_END) {

@@ -123,11 +123,9 @@ static rc_input_t *rc_input_find(const char *path)
 }
 
 static watch_t *rc_watch_find(int fd) {
-	list_t l;
+	watch_t *w;
 	
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
-
+	for (w = watches; w; w = w->next) {
 		if (w && w->plugin == &rc_plugin && w->fd == fd)
 			return w;
 	}

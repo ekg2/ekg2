@@ -171,7 +171,6 @@ int config_read(const char *filename)
 {
 	char *buf, *foo;
 	FILE *f;
-	list_t l;
 	int i = 0, good_file = 0, first = (filename) ? 0 : 1, ret = 1;
 	struct stat st;
 
@@ -312,8 +311,9 @@ int config_read(const char *filename)
 	fclose(f);
 
 	if (first) {
-		for (l = plugins; l; l = l->next) {
-			plugin_t *p = l->data;
+		plugin_t *p;
+
+		for (p = plugins; p; p = p->next) {
 			const char *tmp;
 			
 			if ((tmp = prepare_pathf("config-%s", p->name)))
@@ -362,14 +362,13 @@ static void config_write_variable(FILE *f, variable_t *v)
  */
 static void config_write_plugins(FILE *f)
 {
-	list_t l;
+	plugin_t *p;
 
 	if (!f)
 		return;
 
-        for (l = plugins; l; l = l->next) {
-                plugin_t *p = l->data;
-                if (p && p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
+        for (p = plugins; p; p = p->next) {
+                if (p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
         }
 }
 
@@ -479,7 +478,7 @@ static void config_write_main(FILE *f)
 int config_write()
 {
 	FILE *f;
-	list_t l;
+	plugin_t *p;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
@@ -505,8 +504,7 @@ int config_write()
         fclose(f);
 
 	/* now plugins variables */
-	for (l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
+	for (p = plugins; p; p = p->next) {
 		const char *tmp;
 		variable_t *v;
 
@@ -661,7 +659,7 @@ void config_write_crash()
 {
 	char name[32];
 	FILE *f;
-	list_t l;
+	plugin_t *p;
 
 	chdir(config_dir);
 
@@ -691,8 +689,7 @@ void config_write_crash()
 	fclose(f);
 
         /* now plugins variables */
-        for (l = plugins; l; l = l->next) {
-                plugin_t *p = l->data;
+        for (p = plugins; p; p = p->next) {
 		variable_t *v;
 
 		snprintf(name, sizeof(name), "config-%s.%d", p->name, (int) getpid());

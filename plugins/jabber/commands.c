@@ -1519,8 +1519,9 @@ static COMMAND(jabber_command_private) {
 
 /* Synchronize config (?) */
 		if (config) {
-			for (l = plugins; l; l = l->next) {
-				plugin_t *p = l->data;
+			plugin_t *p;
+
+			for (p = plugins; p; p = p->next) {
 				variable_t *v;
 				watch_write(j->send_watch, "<plugin xmlns=\"ekg2:plugin\" name=\"%s\" prio=\"%d\">", p->name, p->prio);
 back:

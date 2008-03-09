@@ -1449,9 +1449,9 @@ fail:
 	/* if we free token... we must search for it in all watches, and point data to NULL */
 	/* XXX, hack... let's copy token data to all watch ? */
 
-	list_t l;
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
+	watch_t *w;
+
+	for (w = watches; w; w = w->next) {
 		if (w && w->data == h) {
 			w->data = NULL;
 			/* maybe we call remove here ? */

@@ -84,6 +84,7 @@ typedef struct list *list_t;
 
 #define LIST_REMOVE(list, data, func)			list_remove2(list, data, (void *) func)
 #define LIST_REMOVE2(list, elem, func)			list_remove3((list_t *) list, (list_t) elem, (void *) func)
+#define LIST_UNLINK2(list, elem)			list_unlink3((list_t *) list, (list_t) elem)
 #define LIST_FREE_ITEM(x, type)				void x(type data)
 
 #define LIST_DESTROY(list, func)			list_destroy2(list, (void *) func)
@@ -106,7 +107,8 @@ void list_resort3(list_t *list, int (*comparision)(void *, void *));
 
 int list_remove(list_t *list, void *data, int free_data);
 int list_remove2(list_t *list, void *data, void (*func)(void *));
-int list_remove3(list_t *list, void *elem, void (*func)(void *));
+list_t list_remove3(list_t *list, list_t elem, void (*func)(void *));
+list_t list_unlink3(list_t *list, list_t elem);
 
 int list_destroy(list_t list, int free_data);
 int list_destroy2(list_t list, void (*func)(void *));

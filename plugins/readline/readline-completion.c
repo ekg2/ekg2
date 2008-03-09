@@ -36,23 +36,21 @@ GENERATOR(possibilities) {
 
 GENERATOR(plugin) {
 	static int len;
-	static list_t el;
+	static plugin_t *p;
 
 	if (!state) {
 		len = xstrlen(text);
-		el = plugins;
+		p = plugins;
 	}
 
-	while (el) {
-		plugin_t *p = el->data;
-
-		el = el->next;
-
+	while (p) {
 		if (!xstrncasecmp(text, p->name, len)) 
 			return xstrdup(p->name);
 
 		if ((text[0] == '+' || text[0] == '-') && !xstrncasecmp(text + 1, p->name, len - 1))
 			return saprintf("%c%s", text[0], p->name);
+
+		p = p->next;
 	}
 	return NULL;
 }

@@ -17,7 +17,7 @@ enum query_arg_type {
 	QUERY_ARG_SESSION	/* session_t	*/
 };
 
-struct query {
+struct query_def {
 	int id;
 	char *name;
 	enum query_arg_type params[QUERY_ARGS_MAX];	/* scripts will use it */
@@ -75,7 +75,7 @@ enum queries_id {
 
 /* list of known queries. keep it sorted with enum. */
 
-const struct query query_list[] = {
+const struct query_def query_list[] = {
 	{ MAIL_COUNT, "mail-count", {
 		QUERY_ARG_INT,			/* mail count */
 		QUERY_ARG_END } },
@@ -467,7 +467,7 @@ static list_t queries_external;
 static int queries_count = QUERY_EXTERNAL;	/* list_count(queries_other)+QUERY_EXTERNAL */
 #else
 
-extern struct query query_list[];		/* for: events.h scripts.h */
+extern struct query_def query_list[];		/* for: events.h scripts.h */
 
 #endif
 

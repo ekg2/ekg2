@@ -1105,11 +1105,9 @@ void theme_free() {
 }
 
 void theme_plugins_init() {
-        list_t l;
+	plugin_t *p;
 
-        for (l = plugins; l; l = l->next) {
-                plugin_t *p = l->data;
-
+        for (p = plugins; p; p = p->next) {
                 if (!p || !p->theme_init)
                         continue;
 

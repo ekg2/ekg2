@@ -91,14 +91,11 @@ int msg_queue_remove_uid(const char *uid)
 	int res = -1;
 
 	for (m = msg_queue; m; ) {
-		msg_queue_t *next = m->next;
-
 		if (!xstrcasecmp(m->rcpts, uid)) {
-			LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+			m = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 			res = 0;
-		}
-
-		m = next;
+		} else
+			m = m->next;
 	}
 
 	return res;
@@ -122,14 +119,11 @@ int msg_queue_remove_seq(const char *seq)
 		return -1;
 
 	for (m = msg_queue; m; ) {
-		msg_queue_t *next = m->next;
-
 		if (!xstrcasecmp(m->seq, seq)) {
-			LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+			m = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 			res = 0;
-		}
-
-		m = next;
+		} else
+			m = m->next;
 	}
 
 	return res;
@@ -166,7 +160,6 @@ int msg_queue_flush(const char *session)
 
 	for (m = msg_queue; m;) {
 		session_t *s;
-		msg_queue_t *next = m->next;
 		char *cmd = "/msg \"%s\" %s";
 
 		/* czy wiadomo¶æ dodano w trakcie opró¿niania kolejki? */
@@ -177,7 +170,7 @@ int msg_queue_flush(const char *session)
 			continue;
 				/* wiadomo¶æ wysy³ana z nieistniej±cej ju¿ sesji? usuwamy. */
 		else if (!(s = session_find(m->session))) {
-			LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+			m = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 			continue;
 		}
 
@@ -192,10 +185,8 @@ int msg_queue_flush(const char *session)
 		}
 		command_exec_format(NULL, s, 1, cmd, m->rcpts, m->message);
 
-		LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
-
+		m = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 		ret = 0;
-		m = next;
 	}
 
 	return ret;

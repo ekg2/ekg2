@@ -410,18 +410,17 @@ PyObject *ekg_cmd_debug(PyObject * self, PyObject * pyargs)
 PyObject *ekg_cmd_plugins(PyObject * self, PyObject * pyargs)
 {
         PyObject *list;
-        list_t l;
+        plugin_t *p;
         int len = 0;
 
-        for (l = plugins; l; l = l->next) {
+        for (p = plugins; p; p = p->next) {
                 len++;
         }
 
         list = PyList_New(len);
         len = 0;
 
-        for (l = plugins; l; l = l->next) {
-                plugin_t *p = l->data;
+        for (p = plugins; p; p = p->next) {
                 PyList_SetItem(list, len, PyString_FromString(p->name));
                 len++;
         }

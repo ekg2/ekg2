@@ -287,32 +287,58 @@ int list_remove2(list_t *list, void *data, void (*func)(void *data)) {
 	return 0;
 }
 
-int list_remove3(list_t *list, void *data, void (*func)(void *data)) {
+list_t list_remove3(list_t *list, list_t elem, void (*func)(void *data)) {
 	list_t tmp, last = NULL;
+	void *ret = NULL;
 
 	if (!list) {
 		errno = EFAULT;
-		return -1;
+		return ret;
 	}
 
 	tmp = *list;
-	if (tmp && tmp == data) {
-		*list = tmp->next;
+	if (tmp && tmp == elem) {
+		*list = ret = tmp->next;
 	} else {
-		for (; tmp && tmp != data; tmp = tmp->next)
+		for (; tmp && tmp != elem; tmp = tmp->next)
 			last = tmp;
 		if (!tmp) {
 			errno = ENOENT;
-			return -1;
+			return ret;
 		}
-		last->next = tmp->next;
+		last->next = ret = tmp->next;
 	}
 
 	if (func)
 		func(tmp);
 	xfree(tmp);
 
-	return 0;
+	return ret;
+}
+
+list_t list_unlink3(list_t *list, list_t elem) {
+	list_t tmp, last = NULL;
+	void *ret = NULL;
+
+	if (!list) {
+		errno = EFAULT;
+		return ret;
+	}
+
+	tmp = *list;
+	if (tmp && tmp == elem) {
+		*list = ret = tmp->next;
+	} else {
+		for (; tmp && tmp != elem; tmp = tmp->next)
+			last = tmp;
+		if (!tmp) {
+			errno = ENOENT;
+			return ret;
+		}
+		last->next = ret = tmp->next;
+	}
+
+	return ret;
 }
 
 /**

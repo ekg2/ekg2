@@ -116,13 +116,11 @@ static WATCHER_LINE(polchat_handle_write) {
 
 	if (len == fulllen) {	/* we sent all data, ok.. */
 		watch_t *next_watch = NULL;
-		list_t l;
+		watch_t *w;
 
 		/* turn on next watch */
 
-		for (l = watches; l; l = l->next) {	/* watche sa od najnowszego po najstarszy.. dlatego musimy znalezc ostatni... */
-			watch_t *w = l->data;
-
+		for (w = watches; w; w = w->next) {	/* watche sa od najnowszego po najstarszy.. dlatego musimy znalezc ostatni... */
 			if (w && w->fd == fd && w->type == WATCH_NONE) 
 				next_watch = w;
 		}
@@ -133,11 +131,9 @@ static WATCHER_LINE(polchat_handle_write) {
 		errno = 0;
 
 	} else if (len > 0) {
-		list_t l;
+		watch_t *w;
 
-		for (l = watches; l; l = l->next) {
-			watch_t *w = l->data;
-
+		for (w = watches; w; w = w->next) {
 			if (w && w->fd == fd && w->type == WATCH_WRITE_LINE && w->data == data) { /* this watch */
 				w->data = (void *) fulllen - len;
 				break;
@@ -314,15 +310,17 @@ static void polchat_handle_disconnect(session_t *s, const char *reason, int type
 	}
 
 	if (j->fd != -1) {
-		list_t l;
+		watch_t *w;
 
-		for (l = watches; l; l = l->next) {
-			watch_t *w = l->data;
+		for (w = watches; w;) {
+			watch_t *tmp;
 
-			if (!w || w->fd != j->fd) continue;
-
-			if (1 /* || w->type == WATCH_NONE || w->type == WATCH_WRITE_LINE */)
-				watch_free(w);
+			if (w && w->fd == j->fd &&
+					(1 /* || w->type == WATCH_NONE || w->type == WATCH_WRITE_LINE */)
+					&& ((tmp = watch_free(w))))
+				w = tmp;
+			else
+				w = w->next;
 		}
 
 		close(j->fd);
