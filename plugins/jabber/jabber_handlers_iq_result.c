@@ -735,9 +735,13 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 		 * If it is, then we shall leave the resource (as it points to user),
 		 * and not display vCard-daemon link (as it wouldn't work). */
 	if ((tmp = xstrchr(from_str, '/'))) {
+		char *mucid;
 		*tmp = 0;
-		if ((ismuc = !!newconference_find(s, from_str)))
+
+		mucid = saprintf("xmpp:%s", from_str);
+		if ((ismuc = !!newconference_find(s, mucid)))
 			*tmp = '/';
+		xfree(mucid);
 	}
 	print("jabber_userinfo_response2", session_name(s), jabberfix(from_str, _("unknown")));
 
