@@ -84,6 +84,8 @@ typedef struct alias {
 #define BINDING_FUNCTION(x) void x(const char *arg) 
 
 struct binding {
+	struct binding	*next;
+
 	char		*key;
 
 	char		*action;			/* akcja */
@@ -96,7 +98,9 @@ struct binding {
 	char		*default_arg;			/* domy¶lny argument */
 };
 
-typedef struct {
+typedef struct binding_added {
+	struct binding_added	*next;
+
         char		*sequence;
         struct binding	*binding;
 } binding_added_t;
@@ -155,13 +159,13 @@ struct color_map {
 extern child_t *children;
 extern alias_t *aliases;
 extern list_t autofinds;
-extern list_t bindings;
+extern struct binding *bindings;
 extern struct timer *timers;
 extern list_t conferences;
 extern list_t newconferences;
 extern list_t buffer_debug;
 extern list_t buffer_speech;
-extern list_t bindings_added;
+extern binding_added_t *bindings_added;
 
 extern time_t last_save;
 extern char *config_profile;

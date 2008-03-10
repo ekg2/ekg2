@@ -524,14 +524,12 @@ char *window_activity()
  */
 char *bind_find_command(const char *seq)
 {
-	list_t l;
+	struct binding *s;
 
 	if (!seq)
 		return NULL;
 	
-	for (l = bindings; l; l = l->next) {
-		struct binding *s = l->data;
-
+	for (s = bindings; s; s = s->next) {
 		if (s->key && !xstrcasecmp(s->key, seq))
 			return s->action;
 	}
@@ -647,20 +645,18 @@ int bind_sequence(const char *seq, const char *command, int quiet)
 		s->action = xstrdup(command);
 		s->internal = 0;
 
-		list_add(&bindings, s);
+		LIST_ADD2(&bindings, s);
 
 		if (!quiet) {
 			print("bind_seq_add", s->key);
 			config_changed = 1;
 		}
 	} else {
-		list_t l;
+		struct binding *s;
 
-		for (l = bindings; l; l = l->next) {
-			struct binding *s = l->data;
-
+		for (s = bindings; s; s = s->next) {
 			if (s->key && !xstrcasecmp(s->key, seq)) {
-				list_remove(&bindings, s, 1);
+				LIST_REMOVE2(&bindings, s, NULL);
 				if (!quiet) {
 					print("bind_seq_remove", seq);
 					config_changed = 1;

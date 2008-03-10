@@ -2387,7 +2387,7 @@ WATCHER(ncurses_watch_stdin)
 	if (bindings_added && ch != KEY_MOUSE) {
 		char **chars = NULL, *joined;
 		int i = 0, count = 0, success = 0;
-		list_t l;
+		binding_added_t *d;
 		int c;
 		array_add(&chars, xstrdup(itoa(ch)));
 
@@ -2400,9 +2400,7 @@ WATCHER(ncurses_watch_stdin)
 
 		joined = array_join(chars, (" "));
 
-		for (l = bindings_added; l; l = l->next) {
-			binding_added_t *d = l->data;
-
+		for (d = bindings_added; d; d = d->next) {
 			if (!xstrcasecmp(d->sequence, joined)) {
 				struct binding *b = d->binding;
 

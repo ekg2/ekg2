@@ -796,14 +796,14 @@ static int binding_key(struct binding *b, const char *key, int add)
 		if (!xstrcasecmp(key + 4, ("Enter"))) {
 			b->key = xstrdup(("Alt-Enter"));
 			if (add)
-				ncurses_binding_map_meta[13] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
+				ncurses_binding_map_meta[13] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 			return 0;
 		}
 
 		if (!xstrcasecmp(key + 4, ("Backspace"))) {
 			b->key = xstrdup(("Alt-Backspace"));
 			if (add) {
-				ncurses_binding_map_meta[KEY_BACKSPACE] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
+				ncurses_binding_map_meta[KEY_BACKSPACE] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 				ncurses_binding_map_meta[127] = ncurses_binding_map_meta[KEY_BACKSPACE];
 			}
 			return 0;
@@ -817,7 +817,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("Alt-%c"), ch);
 
 		if (add) {
-			ncurses_binding_map_meta[ch] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
+			ncurses_binding_map_meta[ch] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 			if (xisalpha(ch))
 				ncurses_binding_map_meta[xtolower(ch)] = ncurses_binding_map_meta[ch];
 		}
@@ -834,7 +834,7 @@ static int binding_key(struct binding *b, const char *key, int add)
         if (!xstrcasecmp(key + 5, (x))) { \
                 b->key = xstrdup(key); \
                 if (add) { \
-                        ncurses_binding_map[y] = list_add(&bindings, xmemdup(b, sizeof(struct binding))); \
+                        ncurses_binding_map[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
                         if (z) \
                                 ncurses_binding_map[z] = ncurses_binding_map[y]; \
                 } \
@@ -856,7 +856,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 
 		if (add) {
                         if (xisalpha(ch))
-				ncurses_binding_map[ch - 64] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
+				ncurses_binding_map[ch - 64] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 			else
 				return -1;
 		}
@@ -873,7 +873,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("F%d"), f);
 		
 		if (add)
-			ncurses_binding_map[KEY_F(f)] = list_add(&bindings, xmemdup(b, sizeof(struct binding)));
+			ncurses_binding_map[KEY_F(f)] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 		
 		return 0;
 	}
@@ -882,7 +882,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 	if (!xstrcasecmp(key, (x))) { \
 		b->key = xstrdup((x)); \
 		if (add) { \
-			ncurses_binding_map[y] = list_add(&bindings, xmemdup(b, sizeof(struct binding))); \
+			ncurses_binding_map[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
 			if (z) \
 				ncurses_binding_map[z] = ncurses_binding_map[y]; \
 		} \
@@ -915,15 +915,13 @@ static int binding_key(struct binding *b, const char *key, int add)
  */
 void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 {
-	list_t l;
+	struct binding *d;
 	binding_added_t *b;
 	struct binding *binding_orginal = NULL;
 	char *joined = NULL;
 	int count = 0;
 
-        for (l = bindings; l; l = l->next) {
-                struct binding *d = l->data;
-
+        for (d = bindings; d; d = d->next) {
                 if (!xstrcasecmp(key, d->key)) {
                         binding_orginal = d;
                         break;
@@ -950,20 +948,18 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 	} else
 		joined = xstrdup(sequence);
 
-	for (l = bindings_added; l; l = l->next) {
-		binding_added_t *d = l->data;
-
-		if (!xstrcasecmp(d->sequence, joined)) {
-			d->binding = binding_orginal;
+	for (b = bindings_added; b; b = b->next) {
+		if (!xstrcasecmp(b->sequence, joined)) {
+			b->binding = binding_orginal;
 			xfree(joined);
 			goto end;
 		}
 	}
-	b = xmalloc(sizeof(binding_added_t));
 
+	b = xmalloc(sizeof(binding_added_t));
 	b->sequence = joined;
 	b->binding = binding_orginal;
-	list_add(&bindings_added, b);
+	LIST_ADD2(&bindings_added, b);
 end:
 	if (!in_autoexec)
 		config_changed = 1;
@@ -984,8 +980,7 @@ end:
  */
 void ncurses_binding_add(const char *key, const char *action, int internal, int quiet)
 {
-	struct binding b, *c = NULL;
-	list_t l;
+	struct binding b, *c = NULL, *d;
 	
 	if (!key || !action)
 		return;
@@ -994,9 +989,7 @@ void ncurses_binding_add(const char *key, const char *action, int internal, int 
 
 	b.internal = internal;
 	
-	for (l = bindings; l; l = l->next) {
-		struct binding *d = l->data;
-
+	for (d = bindings; d; d = d->next) {
 		if (!xstrcasecmp(key, d->key)) {
 			if (d->internal) {
 				c = d;
@@ -1049,13 +1042,12 @@ void ncurses_binding_add(const char *key, const char *action, int internal, int 
  */
 void ncurses_binding_delete(const char *key, int quiet)
 {
-	list_t l;
+	struct binding *b;
 
 	if (!key)
 		return;
 
-	for (l = bindings; l; l = l->next) {
-		struct binding *b = l->data;
+	for (b = bindings; b; b = b->next) {
 		int i;
 
 		if (!b->key || xstrcasecmp(key, b->key))
@@ -1084,7 +1076,7 @@ void ncurses_binding_delete(const char *key, int quiet)
 
 			}
 
-			list_remove(&bindings, b, 1);
+			LIST_REMOVE2(&bindings, b, NULL);
 		}
 
 		config_changed = 1;

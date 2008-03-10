@@ -381,8 +381,6 @@ static void config_write_plugins(FILE *f)
  */
 static void config_write_main(FILE *f)
 {
-	list_t l;
-
 	if (!f)
 		return;
 
@@ -414,19 +412,24 @@ static void config_write_main(FILE *f)
 	        }
 	}
 
-	for (l = bindings; l; l = l->next) {
-		struct binding *b = l->data;
+	{
+		struct binding *b;
 
-		if (b->internal)
-			continue;
+		for (b = bindings; b; b = b->next) {
+			if (b->internal)
+				continue;
 
-		fprintf(f, "bind %s %s\n", b->key, b->action);
+			fprintf(f, "bind %s %s\n", b->key, b->action);
+		}
 	}
 
-        for (l = bindings_added; l; l = l->next) {
-                binding_added_t *d = l->data;
-                fprintf(f, "bind-set %s %s\n", d->binding->key, d->sequence);
-        }
+	{
+		binding_added_t *d;
+
+		for (d = bindings_added; d; d = d->next) {
+			fprintf(f, "bind-set %s %s\n", d->binding->key, d->sequence);
+		}
+	}
 
 	{
 		struct timer *t;

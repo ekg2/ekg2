@@ -85,7 +85,7 @@
 child_t *children = NULL;
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
-list_t bindings = NULL;		/**< list_t struct timer <b>all</b> ekg2 timers */
+struct binding *bindings = NULL;	/**< list_t struct timer <b>all</b> ekg2 timers */
 struct timer *timers = NULL;
 list_t conferences = NULL;
 list_t newconferences = NULL;
@@ -96,7 +96,7 @@ static list_t ekg_converters = NULL;	/**< list for internal use of ekg_convert_s
 list_t buffer_debug;		/**< debug list_t struct buffer */
 list_t buffer_speech;		/**< speech list_t struct buffer */
 
-list_t bindings_added;
+binding_added_t *bindings_added;
 int old_stderr;
 char *config_subject_prefix;
 char *config_subject_reply_prefix;
@@ -395,15 +395,13 @@ void alias_free() {
  */
 void binding_list(int quiet, const char *name, int all) 
 {
-	list_t l;
+	struct binding *b;
 	int found = 0;
 
 	if (!bindings)
 		printq("bind_seq_list_empty");
 
-	for (l = bindings; l; l = l->next) {
-		struct binding *b = l->data;
-
+	for (b = bindings; b; b = b->next) {
 		if (name) {
 			if (xstrcasestr(b->key, name)) {
 				printq("bind_seq_list", b->key, b->action);
@@ -417,13 +415,23 @@ void binding_list(int quiet, const char *name, int all)
 	}
 
 	if (name && !found) {
-		for (l = bindings; l; l = l->next) {
-			struct binding *b = l->data;
-
+		for (b = bindings; b; b = b->next) {
 			if (xstrcasestr(b->action, name))
 				printq("bind_seq_list", b->key, b->action);
 		}
 	}
+}
+
+static LIST_FREE_ITEM(binding_free_item, struct binding *) {
+	xfree(data->key);
+	xfree(data->action);
+	xfree(data->arg);
+	xfree(data->default_action);
+	xfree(data->default_arg);
+}
+
+static LIST_FREE_ITEM(binding_added_free_item, binding_added_t *) {
+	xfree(data->sequence);
 }
 
 /**
@@ -433,29 +441,13 @@ void binding_list(int quiet, const char *name, int all)
  */
 
 void binding_free() {
-	list_t l;
-
 	if (bindings) {
-		for (l = bindings; l; l = l->next) {
-			struct binding *b = l->data;
-
-			xfree(b->key);
-			xfree(b->action);
-			xfree(b->arg);
-			xfree(b->default_action);
-			xfree(b->default_arg);
-		}
-		list_destroy(bindings, 1);
+		LIST_DESTROY2(bindings, binding_free_item);
 		bindings = NULL;
 	}
 
 	if (bindings_added) {
-		for (l = bindings_added; l; l = l->next) {
-			binding_added_t *b = l->data;
-
-			xfree(b->sequence);
-		}
-		list_destroy(bindings_added, 1);
+		LIST_DESTROY2(bindings_added, binding_added_free_item);
 		bindings_added = NULL;
 	}
 }
