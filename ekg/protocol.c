@@ -794,10 +794,10 @@ static QUERY(protocol_message)
                 if (do_find) {
                         if (i == auto_find_limit) {
                                 debug("// autofind reached %d limit, removing the oldest uin: %d\n", auto_find_limit, *((char *)autofinds->data));
-                                list_remove(&autofinds, autofinds->data, 1);
+                                list_remove3(&autofinds, autofinds->data, list_t_free_item);
                         }
 
-                        list_add(&autofinds, (void *) xstrdup(uid));
+                        list_add3(&autofinds, list_t_new(xstrdup(uid)));
 
                         command_exec_format(target, session_class, 0, ("/find %s"), uid);
                 }

@@ -107,7 +107,7 @@ void list_resort3(list_t *list, int (*comparision)(void *, void *));
 
 int list_remove(list_t *list, void *data, int free_data);
 int list_remove2(list_t *list, void *data, void (*func)(void *));
-list_t list_remove3(list_t *list, list_t elem, void (*func)(void *));
+list_t list_remove3(list_t *list, list_t elem, void (*func)(list_t));
 list_t list_unlink3(list_t *list, list_t elem);
 
 int list_destroy(list_t list, int free_data);
@@ -116,6 +116,9 @@ int list_destroy3(list_t list, void (*func)(void *));
 
 void list_cleanup(list_t *list);
 int list_remove_safe(list_t *list, void *data, int free_data);
+
+LIST_FREE_ITEM(list_t_free_item, list_t);
+list_t list_t_new(void *data);
 #endif
 
 /*
