@@ -395,6 +395,8 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		}
 		gender = format_string(format_find(__format("_unknown")), "");
 
+			/* XXX: why do we _exactly_ use it here? can't we just always
+			 * 	define target and thus display result in right conversation window? */
 		for (l = autofinds; l; l = l->next) {
 			char *d = (char *) l->data;
 		
