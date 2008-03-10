@@ -247,17 +247,16 @@ GENERATOR(command) {
 }
 
 GENERATOR(conference) {
-	static list_t el;
+	static struct conference *c;
 	static int len;
 
 	if (!state) {
 		len = xstrlen(text);
-		el = conferences;
+		c = conferences;
 	}
 
-	while (el) {
-		struct conference *c = el->data;
-		el = el->next;
+	while (c) {
+		c = c->next;
 		
 		if (!xstrncasecmp(text, c->name, len))
 			return xstrdup(c->name);

@@ -87,8 +87,8 @@ alias_t *aliases = NULL;
 list_t autofinds = NULL;
 struct binding *bindings = NULL;	/**< list_t struct timer <b>all</b> ekg2 timers */
 struct timer *timers = NULL;
-list_t conferences = NULL;
-list_t newconferences = NULL;
+struct conference *conferences = NULL;
+newconference_t *newconferences = NULL;
 #ifdef HAVE_ICONV
 static list_t ekg_converters = NULL;	/**< list for internal use of ekg_convert_string_*() */
 #endif
@@ -722,10 +722,9 @@ int newconference_member_remove(newconference_t *conf, userlist_t *u) {
 }
 
 newconference_t *newconference_find(session_t *s, const char *name) {
-	list_t l;
-	for (l = newconferences; l; l = l->next) {
-		newconference_t *c = l->data;
-
+	newconference_t *c;
+	
+	for (c = newconferences; c; c = c->next) {
 		if ((!s || !xstrcmp(s->uid, c->session)) && !xstrcmp(name, c->name)) return c;
 	}
 	return NULL;
@@ -747,7 +746,13 @@ newconference_t *newconference_create(session_t *s, const char *name, int create
 	c->session	= xstrdup(s->uid);
 	c->name		= xstrdup(name);
 	
-	return list_add(&newconferences, c);
+	return LIST_ADD2(&newconferences, c);
+}
+
+static LIST_FREE_ITEM(newconference_free_item, newconference_t *) {
+	xfree(data->name);
+	xfree(data->session);
+	userlist_free_u(&data->participants);
 }
 
 void newconference_destroy(newconference_t *conf, int kill_wnd) {
@@ -755,25 +760,13 @@ void newconference_destroy(newconference_t *conf, int kill_wnd) {
 	if (!conf) return;
 	if (kill_wnd) w = window_find_s(session_find(conf->session), conf->name);
 
-	xfree(conf->name);
-	xfree(conf->session);
-	userlist_free_u(&conf->participants);
-	list_remove(&newconferences, conf, 1);
+	LIST_REMOVE2(&newconferences, conf, newconference_free_item);
 
 	window_kill(w);
 }
 
 void newconference_free() {
-	list_t l;
-	for (l = newconferences; l; l = l->next) {
-		newconference_t *c = l->data;
-
-		xfree(c->session);
-		xfree(c->name);
-		userlist_free_u(&c->participants);
-	}
-
-	list_destroy(newconferences, 1);
+	LIST_DESTROY2(newconferences, newconference_free_item);
 	newconferences = NULL;
 }
 
@@ -792,7 +785,7 @@ void newconference_free() {
  */
 struct conference *conference_add(session_t *session, const char *name, const char *nicklist, int quiet)
 {
-	struct conference c;
+	struct conference c, *cf;
 	char **nicks;
 	list_t l, sl;
 	int i, count;
@@ -856,9 +849,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	count = array_count(nicks);
 
-	for (l = conferences; l; l = l->next) {
-		struct conference *cf = l->data;
-		
+	for (cf = conferences; cf; cf = cf->next) {
 		if (!xstrcasecmp(name, cf->name)) {
 			printq("conferences_exist", name);
 
@@ -898,7 +889,12 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	tabnick_add(name);
 
-	return list_add(&conferences, xmemdup(&c, sizeof(c)));
+	return LIST_ADD2(&conferences, xmemdup(&c, sizeof(c)));
+}
+
+static LIST_FREE_ITEM(conference_free_item, struct conference *) {
+	xfree(data->name);
+	list_destroy(data->recipients, 1);
 }
 
 /*
@@ -913,23 +909,24 @@ struct conference *conference_add(session_t *session, const char *name, const ch
  */
 int conference_remove(const char *name, int quiet)
 {
-	list_t l;
+	struct conference *c;
 	int removed = 0;
 
-	for (l = conferences; l; ) {
-		struct conference *c = l->data;
-
-		l = l->next;
+	for (c = conferences; c; ) {
+		struct conference *next = c->next;
 
 		if (!name || !xstrcasecmp(c->name, name)) {
+			struct conference *tmp;
+
 			if (name)
 				printq("conferences_del", name);
 			tabnick_remove(c->name);
-			xfree(c->name);
-			list_destroy(c->recipients, 1);
-			list_remove(&conferences, c, 1);
+			if ((tmp = (struct conference *) LIST_REMOVE2(&conferences, c, conference_free_item)))
+				next = tmp;
 			removed = 1;
 		}
+
+		c = next;
 	}
 
 	if (!removed) {
@@ -977,11 +974,9 @@ struct conference *conference_create(session_t *session, const char *nicks)
  */
 struct conference *conference_find(const char *name) 
 {
-	list_t l;
+	struct conference *c;
 
-	for (l = conferences; l; l = l->next) {
-		struct conference *c = l->data;
-
+	for (c = conferences; c; c = c->next) {
 		if (!xstrcmp(c->name, name))
 			return c;
 	}
@@ -1029,10 +1024,9 @@ int conference_participant(struct conference *c, const char *uid)
 struct conference *conference_find_by_uids(session_t *s, const char *from, const char **recipients, int count, int quiet) 
 {
 	int i;
-	list_t l;
+	struct conference *c;
 
-	for (l = conferences; l; l = l->next) {
-		struct conference *c = l->data;
+	for (c = conferences; c; c = c->next) {
 		int matched = 0;
 
 		for (i = 0; i < count; i++)
@@ -1148,19 +1142,10 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
  */
 
 void conference_free() {
-	list_t l;
-
 	if (!conferences)
 		return;
 
-	for (l = conferences; l; l = l->next) {
-		struct conference *c = l->data;
-		
-		xfree(c->name);
-		list_destroy(c->recipients, 1);
-	}
-
-	list_destroy(conferences, 1);
+	LIST_DESTROY2(conferences, conference_free_item);
 	conferences = NULL;
 }
 

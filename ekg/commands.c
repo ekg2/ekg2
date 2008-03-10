@@ -3469,7 +3469,7 @@ static COMMAND(cmd_timer)
 static COMMAND(cmd_conference) 
 {
 	if (!params[0] || match_arg(params[0], 'l', ("list"), 2) || params[0][0] == '#') {
-		list_t l, r;
+		list_t r;
 		int count = 0;
 		const char *cname = NULL;
 	
@@ -3478,8 +3478,10 @@ static COMMAND(cmd_conference)
 		else if (params[0])
 			cname = params[0];
 
-		for (l = newconferences; l; l = l->next) {
-			newconference_t *c = l->data;
+		{
+			newconference_t *c;
+
+			for (c = newconferences; c; c = c->next) {
 /* XXX, 
  * 	::: konferencje:
  * 		-- konferencja1/sesja
@@ -3489,41 +3491,45 @@ static COMMAND(cmd_conference)
  * 	albo jak /names w ircu, albo jak?
  * 	XXX
  */
-			print("conferences_list", c->name, "");
-			count++;
-		}
-
-		for (l = conferences; l; l = l->next) {
-			struct conference *c = l->data;
-			string_t recipients;
-			const char *recipient;
-			int first = 0;
-
-			recipients = string_init(NULL);
-
-			if (cname && xstrcasecmp(cname, c->name))
-				continue;
-			
-			for (r = c->recipients; r; r = r->next) {
-				char *uid = r->data;
-				userlist_t *u = userlist_find(session, uid);
-
-				if (u && u->nickname)
-					recipient = u->nickname;
-				else
-					recipient = uid;
-
-				if (first++)
-					string_append_c(recipients, ',');
-				
-				string_append(recipients, recipient);
-
+				print("conferences_list", c->name, "");
 				count++;
 			}
+		}
 
-		        print(c->ignore ? "conferences_list_ignored" : "conferences_list", c->name, recipients->str);
+		{
+			struct conference *c;
 
-			string_free(recipients, 1);
+			for (c = conferences; c; c = c->next) {
+				string_t recipients;
+				const char *recipient;
+				int first = 0;
+
+				recipients = string_init(NULL);
+
+				if (cname && xstrcasecmp(cname, c->name))
+					continue;
+				
+				for (r = c->recipients; r; r = r->next) {
+					char *uid = r->data;
+					userlist_t *u = userlist_find(session, uid);
+
+					if (u && u->nickname)
+						recipient = u->nickname;
+					else
+						recipient = uid;
+
+					if (first++)
+						string_append_c(recipients, ',');
+					
+					string_append(recipients, recipient);
+
+					count++;
+				}
+
+				print(c->ignore ? "conferences_list_ignored" : "conferences_list", c->name, recipients->str);
+
+				string_free(recipients, 1);
+			}
 		}
 
 		if (!count) {

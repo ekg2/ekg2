@@ -132,12 +132,16 @@ struct timer {
 };
 
 struct conference {
+	struct conference	*next;
+
 	char		*name;
 	ignore_t	ignore;
 	list_t		recipients;
 };
 
-typedef struct {
+typedef struct newconference {
+	struct newconference	*next;
+
 	char		*session;
 	char		*name;
 	list_t		participants;
@@ -158,11 +162,11 @@ struct color_map {
 #ifndef EKG2_WIN32_NOFUNCTION
 extern child_t *children;
 extern alias_t *aliases;
-extern list_t autofinds;
+extern list_t autofinds; /* char* data */
 extern struct binding *bindings;
 extern struct timer *timers;
-extern list_t conferences;
-extern list_t newconferences;
+extern struct conference *conferences;
+extern newconference_t *newconferences;
 extern list_t buffer_debug;
 extern list_t buffer_speech;
 extern binding_added_t *bindings_added;
