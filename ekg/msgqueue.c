@@ -149,7 +149,7 @@ void msg_queue_free() {
  */
 int msg_queue_flush(const char *session)
 {
-	msg_queue_t *m;
+	msg_queue_t *m, *next;
 	int ret = -1;
 
 	if (!msg_queue)
@@ -158,9 +158,10 @@ int msg_queue_flush(const char *session)
 	for (m = msg_queue; m; m = m->next)
 		m->mark = 1;
 
-	for (m = msg_queue; m;) {
+	for (m = msg_queue; m; m = next) {
 		session_t *s;
 		char *cmd = "/msg \"%s\" %s";
+		next = m->next;
 
 		/* czy wiadomo¶æ dodano w trakcie opró¿niania kolejki? */
 		if (!m->mark)
@@ -170,7 +171,7 @@ int msg_queue_flush(const char *session)
 			continue;
 				/* wiadomo¶æ wysy³ana z nieistniej±cej ju¿ sesji? usuwamy. */
 		else if (!(s = session_find(m->session))) {
-			m = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+			next = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 			continue;
 		}
 
@@ -185,7 +186,7 @@ int msg_queue_flush(const char *session)
 		}
 		command_exec_format(NULL, s, 1, cmd, m->rcpts, m->message);
 
-		m = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+		next = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 		ret = 0;
 	}
 
