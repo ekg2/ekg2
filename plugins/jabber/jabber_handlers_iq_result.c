@@ -725,9 +725,20 @@ static void jabber_handle_vcard_helper(session_t *s, const char *formatka, const
  */
 
 JABBER_HANDLER_RESULT(jabber_handle_vcard) {
-	char *from_str = jabber_unescape(from);
-	int hadphoto = 0;
+	char *from_str	= jabber_unescape(from);
+	char *tmp;	
+	int hadphoto	= 0;
+	int ismuc	= 0;
 
+		/* Normally vCard is resource-independent, so we can strip it.
+		 * We also strip it to check whether it ain't conference UID.
+		 * If it is, then we shall leave the resource (as it points to user),
+		 * and not display vCard-daemon link (as it wouldn't work). */
+	if ((tmp = xstrchr(from_str, '/'))) {
+		*tmp = 0;
+		if ((ismuc = !!newconference_find(s, mucuid)))
+			*tmp = '/';
+	}
 	print("jabber_userinfo_response2", session_name(s), jabberfix(from_str, _("unknown")));
 
 	for (n = n->children; n; n = n->next) {
@@ -813,9 +824,10 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 
 	}
 
-	if (hadphoto && from_str)
+	if (hadphoto && from_str && !ismuc) /* XXX: maybe we could get JID of conference user and use it instead? */
 		print("jabber_userinfo_photourl", from_str);
 	print("jabber_userinfo_end", session_name(s), jabberfix(from_str, _("unknown")));
+	xfree(from_str);
 }
 
 JABBER_HANDLER_RESULT(jabber_handle_vcard_old) {
