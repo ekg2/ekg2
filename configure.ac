@@ -99,7 +99,10 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 #include <sys/user.h>
 ])
 
+dnl Maybe we should rather check both includes alone, and then define which one we should use
+dnl and blah blah blah, but I think we'll always include both files
 AC_CHECK_TYPE(socklen_t,[AC_DEFINE(HAVE_SOCKLEN_T, 1, [define if you've got socklen_t])],,[
+#include <sys/types.h>
 #include <sys/socket.h>
 ])
 
