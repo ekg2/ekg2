@@ -387,10 +387,8 @@ void *list_get_nth(list_t list, int id) {
 
 void *list_get_nth3(list_t list, int id) {
 	while (list) {
-		if ((--id) == 0) {
-			/* errno = !ENOENT; */
+		if ((--id) == 0)
 			return list;
-		}
 
 		list = list->next;
 	}
