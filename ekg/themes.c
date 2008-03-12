@@ -1107,12 +1107,10 @@ void theme_free() {
 void theme_plugins_init() {
 	plugin_t *p;
 
-        for (p = plugins; p; p = p->next) {
-                if (!p || !p->theme_init)
-                        continue;
-
-		p->theme_init();
-        }
+	for (p = plugins; p; p = p->next) {
+		if (p->theme_init)
+			p->theme_init();
+	}
 }
 
 /*
