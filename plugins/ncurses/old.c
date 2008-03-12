@@ -510,58 +510,46 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 
 		while (cur <= rlen) {
 			wchar_t znak;
-			int inv = 0;
 			int len	= mbtowc(&znak, &(str->str.b[cur]), rlen-cur);
 
-			/* BIG XXX:
-			 * 	years ago, when I was writting support for unicode in ekg2, 
-			 * 	I forgot to implement support for:
-			 * 	  str->prompt_len && str->margin_left
-			 *
-			 * 	Bug was hidden, untill dmilith created theme with %| with utf-8 char :)
-			 *
-			 * 	Offsets isn't corrected here, so we have something like it: http://wafel.com/~darkjames/ekg2-prompt_len_bug.png
-			 * 	(NOTE: 'AL' is beginning of message)
-			 *
-			 * 	Currently I'm not using unicode environment (honesty i never had :)) so I won't fix it.
-			 *
-			 * 	I don't even understand this code: http://geekandpoke.typepad.com/geekandpoke/2008/01/one-year-in-a-i.html (like always)
-			 *	So again, I won't fix it. If someone want to fix it, feel free to apply && commit/send (if you're not developer) patch.
-			 *
-			 *	Workaround: 
-			 *		Don't use utf-8 chars as prompt.
-			 *
-			 *	darkjames (@ 2oo8/ Feb/ o3)
-			 */
+			if (!len) {	/* NUL, just in case */
+/*				temp[i]         = '\0'; */
+				str->attr[i]    = str->attr[cur]; 
+				i++;		/* just in case x 2 */
+				
+				/* It always hit here. So while (cur <= rlen) can be replaced with while (1) */
+				break;
+			}
 
-			if (len == -1) {
+			if (len > 0) {
+				temp[i]		= znak;
+				str->attr[i]	= str->attr[cur]; 
+
+			} else {
+				/* here mbtowc() returns -1 */
+
 /*				debug("[%s:%d] mbtowc() failed ?! (%d, %s) (%d)\n", __FILE__, __LINE__, errno, strerror(errno), i); */
 
-				znak		= '?'; 
-				inv 		= 1;
+				len		= 1;		/* always move forward */
+				temp[i]		= '?';
+				str->attr[i]	= str->attr[cur] | FSTR_REVERSE; 
 			}
-			
-			temp[i]		= znak;
-			str->attr[i]	= str->attr[cur]; 
 
-			if (inv) {
-				str->attr[i] |= FSTR_REVERSE;
-				len = 1;	/* ? */
-			}
+			if (cur == str->prompt_len)
+				str->prompt_len = i;
+
+			if (cur == str->margin_left)
+				str->margin_left = i;
 
 			cur += len;
 			i++;
-
-			if (!len)	/* NUL */
-				break;
 		}
 
-	/* resize str->attr && str->str to match newlen */
+	/* resize str->attr && str->str to match newlen. [I think we could use `i` instead of `i+1` but just in case] */
 		xfree(str->str.b); 
 
-		str->str.w  = xrealloc(temp, (i+1) * sizeof(CHAR_T));		/* i ? */
-		str->attr = xrealloc(str->attr, (i+1) * sizeof(short));		/* i ? */
-
+		str->str.w 	= xrealloc(temp, (i+1) * sizeof(CHAR_T));
+		str->attr	= xrealloc(str->attr, (i+1) * sizeof(short));
 	}
 #endif
 	n->backlog[0] = str;
