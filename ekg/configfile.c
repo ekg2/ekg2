@@ -728,7 +728,7 @@ void debug_write_crash()
 {
 	char name[32];
 	FILE *f;
-	list_t l;
+	struct buffer *b;
 
 	chdir(config_dir);
 
@@ -738,11 +738,8 @@ void debug_write_crash()
 
 	chmod(name, 0400);
 	
-	for (l = buffer_debug; l; l = l->next) {
-		struct buffer *b = l->data;
-
+	for (b = buffer_debug.data; b; b = b->next)
 		fprintf(f, "%s\n", b->line);
-	}
 	
 	fclose(f);
 }

@@ -74,8 +74,7 @@ PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
 
-static list_t buffer_lograw;
-static list_t buffer_lograw_tail;	/* last item of buffer_lograw */
+static struct buffer_info buffer_lograw = { NULL, 0, 0 };
 
 static logs_log_t *log_curlog = NULL;
 
@@ -384,10 +383,8 @@ static void logs_changed_path(const char *var) {
 
 static void logs_changed_raw(const char *var) {
 	/* if logs:log_raw == 0, clean LOGRAW buffer */
-	if (!config_logs_log_raw) {
+	if (!config_logs_log_raw)
 		buffer_free(&buffer_lograw);
-		buffer_lograw_tail = NULL;
-	}
 }
 
 static QUERY(logs_postinit) {
@@ -433,7 +430,7 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 	/* items == -1 display all */
 static int logs_buffer_raw_display(const char *file, int items) {
 	struct buffer **bs = NULL;
-	list_t l;
+	struct buffer *b;
 	char *beg = NULL, *profile = NULL, *sesja = NULL, *target = NULL;
 
 	int item = 0;
@@ -473,8 +470,7 @@ static int logs_buffer_raw_display(const char *file, int items) {
 
 	if (w) w->lock++;
 
-	for (l = buffer_lograw; l; l = l->next) {
-		struct buffer *b = l->data;
+	for (b = buffer_lograw.data; b; b = b->next) {
 		if (!xstrcmp(b->target, file)) {
 			/* we asume that (b->ts < (b->next)->ts, it's quite correct unless other plugin do this trick... */
 			if (items == -1) { 
@@ -505,23 +501,11 @@ static int logs_buffer_raw_display(const char *file, int items) {
 
 static int logs_buffer_raw_add(const char *file, const char *str) {
 	/* XXX, get global maxsize variable and if > than current ..... */
-	if (buffer_add(buffer_lograw_tail ? &buffer_lograw_tail : &buffer_lograw, file, str, 0) == 0) {
-		if (!buffer_lograw_tail)
-			buffer_lograw_tail = buffer_lograw;
-		else	buffer_lograw_tail = buffer_lograw_tail->next;
-		return 0;
-	}
-	return -1;
+	return buffer_add(&buffer_lograw, file, str);
 }
 
 static int logs_buffer_raw_add_line(const char *file, const char *line) {
-	if (buffer_add_str(buffer_lograw_tail ? &buffer_lograw_tail : &buffer_lograw, file, line, 0) == 0) {
-		if (!buffer_lograw_tail)
-			buffer_lograw_tail = buffer_lograw;
-		else	buffer_lograw_tail = buffer_lograw_tail->next;
-		return 0;
-	}
-	return -1;
+	return buffer_add_str(&buffer_lograw, file, line);
 }
 
 static QUERY(logs_handler_newwin) {
@@ -569,8 +553,6 @@ EXPORT int logs_plugin_init(int prio) {
 
 	plugin_register(&logs_plugin, prio);
 	
-	buffer_lograw_tail = NULL;
-
 	query_connect_id(&logs_plugin, SET_VARS_DEFAULT,logs_setvar_default, NULL);
 	query_connect_id(&logs_plugin, PROTOCOL_MESSAGE_POST, logs_handler, NULL);
 	query_connect_id(&logs_plugin, IRC_PROTOCOL_MESSAGE, logs_handler_irc, NULL);
@@ -601,7 +583,7 @@ EXPORT int logs_plugin_init(int prio) {
 
 static int logs_plugin_destroy() {
 	list_t old_logs = log_logs;
-	list_t l;
+	struct buffer *b;
 
 	for (; log_logs; log_logs = log_logs->next) {
 		logs_log_t *ll = log_logs->data;
@@ -634,9 +616,7 @@ static int logs_plugin_destroy() {
 	}
 	list_destroy(old_logs, 1);	log_logs = NULL;
 
-	if (config_logs_log_raw) for (l = buffer_lograw; l;) {
-		struct buffer *b = l->data;
-
+	if (config_logs_log_raw) for (b = buffer_lograw.data; b;) {
 		static FILE *f = NULL;
 		static char *oldtarget = NULL;
 		/*
@@ -644,8 +624,6 @@ static int logs_plugin_destroy() {
 		 *   ts: b->ts
 		 *  str: b->line
 		 */
-		l = l->next;
-
 		if (f && !xstrcmp(b->target, oldtarget)); 		/* if file is already opened and current target match old one, use it */
 		else {
 			if (f) fclose(f);				/* close file */
@@ -660,16 +638,16 @@ static int logs_plugin_destroy() {
 		xfree(oldtarget);
 		oldtarget = b->target;
 
-		list_remove(&buffer_lograw, b, 1);
+		b = (struct buffer *) LIST_REMOVE2(&(buffer_lograw.data), b, NULL);
 
-		if (!l) {
+		if (!b) {
 			if (f) fclose(f);
 			xfree(oldtarget);
 		}
 	}
 	debug_error("[logs] 0x%x\n", buffer_lograw);
 	/* just in case */
-	buffer_free(&buffer_lograw);	buffer_lograw_tail = NULL;
+	buffer_free(&buffer_lograw);
 
 	plugin_unregister(&logs_plugin);
 	return 0;

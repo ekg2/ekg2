@@ -149,9 +149,18 @@ typedef struct newconference {
 } newconference_t;
 
 struct buffer {
+	struct buffer	*next;
+
 	time_t		ts;
 	char		*target;
 	char		*line;
+};
+
+struct buffer_info {
+	struct buffer	*data;
+	int		count;
+	int		max_lines;
+	struct buffer	*last;		/* fast access to last element, esp. for log_raw */
 };
 
 struct color_map {
@@ -167,8 +176,8 @@ extern struct binding *bindings;
 extern struct timer *timers;
 extern struct conference *conferences;
 extern newconference_t *newconferences;
-extern list_t buffer_debug;
-extern list_t buffer_speech;
+extern struct buffer_info buffer_debug;
+extern struct buffer_info buffer_speech;
 extern binding_added_t *bindings_added;
 
 extern time_t last_save;
@@ -276,10 +285,10 @@ char *base64_decode(const char *buf);
 void binding_list(int quiet, const char *name, int all);
 void binding_free();
 
-int buffer_add(list_t *type, const char *target, const char *line, int max_lines);
-int buffer_add_str(list_t *type, const char *target, const char *str, int max_lines);
-char *buffer_tail(list_t *type);
-void buffer_free(list_t *type);
+int buffer_add(struct buffer_info *type, const char *target, const char *line);
+int buffer_add_str(struct buffer_info *type, const char *target, const char *str);
+char *buffer_tail(struct buffer_info *type);
+void buffer_free(struct buffer_info *type);
 
 void changed_auto_save(const char *var);
 void changed_display_blinking(const char *var);

@@ -250,7 +250,7 @@ void ekg_loop() {
                                         if (!config_speech_app)
                                                 buffer_free(&buffer_speech);
 
-                                        if (buffer_speech && !WEXITSTATUS(status)) {
+                                        if (buffer_speech.count && !WEXITSTATUS(status)) {
                                                 char *str = buffer_tail(&buffer_speech);
                                                 say_it(str);
                                                 xfree(str);
@@ -625,7 +625,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 		default:			theme_format = "debug";		break;
 	}
 
-	buffer_add(&buffer_debug, theme_format, tmp, DEBUG_MAX_LINES);
+	buffer_add(&buffer_debug, theme_format, tmp);
 
 	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
@@ -925,9 +925,10 @@ int main(int argc, char **argv)
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
 #endif
 	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
-	else for (l = buffer_debug; l; l = l->next) {
-		struct buffer *b = l->data;
-		print_window_w(window_debug, 0, b->target, b->line);
+	else {
+		struct buffer *b;
+		for (b = buffer_debug.data; b; b = b->next)
+			print_window_w(window_debug, 0, b->target, b->line);
 	}
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {

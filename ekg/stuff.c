@@ -93,8 +93,8 @@ newconference_t *newconferences = NULL;
 static list_t ekg_converters = NULL;	/**< list for internal use of ekg_convert_string_*() */
 #endif
 
-list_t buffer_debug;		/**< debug list_t struct buffer */
-list_t buffer_speech;		/**< speech list_t struct buffer */
+struct buffer_info buffer_debug = { NULL, 0, DEBUG_MAX_LINES };		/**< debug buffer */
+struct buffer_info buffer_speech = { NULL, 0, 50 };		/**< speech buffer */
 
 binding_added_t *bindings_added;
 int old_stderr;
@@ -455,7 +455,33 @@ void binding_free() {
 static LIST_FREE_ITEM(list_buffer_free, struct buffer *) {
 	xfree(data->line);
 	xfree(data->target);
-	xfree(data);
+}
+
+inline static void buffer_add_common(struct buffer_info *type, const char *target, const char *line, time_t ts) {
+	struct buffer *b;
+
+	if (type->max_lines) { /* XXX: move to idles? */
+		b = type->data;
+		int n		= type->count - type->max_lines + 1;
+		
+		if (n > 0) { /* list slice removal */
+			b = LIST_GET_NTH2(b, n);		/* last element to remove */
+			type->data	= b->next;
+			b->next		= NULL;			/* unlink elements to be removed */
+			LIST_DESTROY2(b, list_buffer_free);	/* and remove them */
+			type->count -= n;
+		}
+	}
+	
+	b		= xmalloc(sizeof(struct buffer));
+	b->ts		= time(NULL);
+	b->target	= xstrdup(target);
+	b->line 	= xstrdup(line);
+
+	LIST_ADD2(type->last ? &(type->last) : &(type->data), b);
+
+	type->last	= b;
+	type->count++;
 }
 
 /**
@@ -463,38 +489,19 @@ static LIST_FREE_ITEM(list_buffer_free, struct buffer *) {
  *
  * Add new line to given buffer_t, if max_lines > 0 than it maintain list that we can have max: @a max_lines items on it.
  *
- * @param type 		- pointer to buffer list_t 
+ * @param type 		- pointer to buffer beginning ptr
  * @param target	- name of target.. or just name of smth we want to keep in b->target
  * @param line		- line which we want to save.
- * @param max_lines	- max number of items in buffer
  *
  * @return 	0 - when line was successfully added to buffer, else -1	(when @a type was NULL)
  */
 
-int buffer_add(list_t *type, const char *target, const char *line, int max_lines) {
-	struct buffer *b;
-
+int buffer_add(struct buffer_info *type, const char *target, const char *line) {
 	if (!type)
 		return -1;
 
-	if (max_lines) {
-		list_t l = *type;
-		int bcount = list_count(*type);
-		
-		while (bcount >= max_lines && l) {
-			b = l->data;
-			l = l->next;
+	buffer_add_common(type, target, line, time(NULL));
 
-			LIST_REMOVE(type, b, list_buffer_free);
-			bcount--;
-		}
-	}
-	b = xmalloc(sizeof(struct buffer));
-	b->ts	= time(NULL);
-	b->target = xstrdup(target);
-	b->line = xstrdup(line);
-
-	list_add(type, b);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
 	return 0;			/* so always return success here */
 }
 
@@ -503,16 +510,14 @@ int buffer_add(list_t *type, const char *target, const char *line, int max_lines
  *
  * Add new line to given buffer_t, if max_lines > 0 than it maintain list that we can have max: @a max_lines items on it.
  *
- * @param type		- pointer to buffer list_t
+ * @param type		- pointer to buffer beginning ptr
  * @param target	- name of target, or just name of smth we want to keep in b->target
  * @param str		- string in format: [time_when_it_happen proper line... blah, blah] <i>time_when_it_happen</i> should be in digits.
- * @param max_lines	- max number of items in buffer
  *
  * @return	0 - when line was successfully added to buffer, else -1 (when @a type was NULL, or @a line was in wrong format)
  */
 
-int buffer_add_str(list_t *type, const char *target, const char *str, int max_lines) {
-	struct buffer *b;
+int buffer_add_str(struct buffer_info *type, const char *target, const char *str) {
 	char *sep;
 	time_t ts = 0;
 
@@ -530,25 +535,7 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 		return -1;
 	}
 
-	if (max_lines) {
-		list_t l = *type;
-		int bcount = list_count(*type);
-		
-		while (bcount >= max_lines && l) {
-			b = l->data;
-			l = l->next;
-
-			LIST_REMOVE(type, b, list_buffer_free);
-			bcount--;
-		}
-	}
-
-	b	= xmalloc(sizeof(struct buffer));
-	b->ts		= ts;
-	b->target	= xstrdup(target);
-	b->line		= xstrdup(sep+1);
-
-	list_add(type, b);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
+	buffer_add_common(type, target, sep+1, ts);
 	return 0;			/* so always return success here */
 }
 
@@ -557,24 +544,24 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
  *
  * Return oldest b->line, free b->target and remove whole buffer_t from list
  * 
- * @param type	- pointer to buffer list_t 
+ * @param type	- pointer to buffer beginning ptr
  *
  * @return First b->line on the list, or NULL, if no items on list.
  */
 
-char *buffer_tail(list_t *type) {
+char *buffer_tail(struct buffer_info *type) {
 	struct buffer *b;
 	char *str;
 
-	if (!type || !(*type))
+	if (!type || !type->data)
 		return NULL;
 
-	b = (*type)->data;
-
+	b = type->data;
 	str = b->line;			/* save b->line */
 
 	xfree(b->target);		/* free b->target */
-	list_remove(type, b, 1);	/* remove struct */
+	LIST_REMOVE2(type, b, NULL);	/* remove struct */
+	type->count--;
 
 	return str;			/* return saved b->line */
 }
@@ -585,16 +572,17 @@ char *buffer_tail(list_t *type) {
  * Free memory after given buffer.<br>
  * After it set *type to NULL
  *
- * @param type - pointer to list_t
+ * @param type - pointer to buffer beginning ptr
  * 
  */
 
-void buffer_free(list_t *type) {
-	if (!type || !(*type))
+void buffer_free(struct buffer_info *type) {
+	if (!type || !type->data)
 		return;
 
-	LIST_DESTROY(*type, list_buffer_free);
-	*type = NULL;
+	LIST_DESTROY2(type->data, list_buffer_free);
+	type->data	= NULL;
+	type->count	= 0;
 }
 
 void changed_make_window(const char *var)
@@ -2219,7 +2207,7 @@ int say_it(const char *str)
 		return -1;
 
 	if (speech_pid) {
-		buffer_add(&buffer_speech, NULL, str, 50);
+		buffer_add(&buffer_speech, NULL, str);
 		return -2;
 	}
 
