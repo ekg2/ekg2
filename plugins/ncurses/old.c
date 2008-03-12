@@ -1133,7 +1133,8 @@ void ncurses_redraw(window_t *w)
 void ncurses_clear(window_t *w, int full)
 {
 	ncurses_window_t *n = w->private;
-		
+	w->more = 0;
+	
 	if (!full) {
 		n->start = n->lines_count;
 		n->redraw = 1;
