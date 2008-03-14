@@ -1,6 +1,10 @@
 mark
-	parametry:  [opcje]
-	krotki opis: dodaje znacznik do aktualnego okna
+	parametry:  [numer|opcje]
+	krotki opis: dodaje znacznik do okna
 	
 	-a, --all   dodaje znacznik do wszystkich nieaktywnych okien
 
+
+	Je¶li wywo³anie nast±pi³o bez podania numeru okna, to marker
+	wstawiany jest w bie¿±cym oknie. Je¶li numer jest ujemny, to
+	marker wstawiany jest w poprzednio aktywnym oknie.

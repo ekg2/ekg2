@@ -43,7 +43,7 @@
 
 #include "queries.h"
 
-static int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
+int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
 
 list_t windows = NULL;			/* lista okien */
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */

@@ -973,13 +973,18 @@ COMMAND(cmd_mark) {
 			}
 		}
 		return 0;
+	} else if (params[0] && (atoi(params[0]) || xstrcmp(params[1], ("0")))) {
+		extern int window_last_id;
+		int id = atoi(params[0]);
+		w = window_exist(id<0 ? window_last_id : id);
+	} else
+		w = window_current;
+
+	if (w && !w->floating && (w->act != 2)) {
+		n = w->private;
+		n->last_red_line = time(0);
+		n->redraw = 1;
 	}
-
-	w = window_current;
-	n = w->private;
-	n->last_red_line = time(0);
-	n->redraw = 1;
-
 	return 0;
 }
 
@@ -1042,17 +1047,25 @@ void ncurses_redraw(window_t *w)
 	if (w->floating) {
 		const char *vertical_line_char	= format_find("contacts_vertical_line_char");
 		const char *horizontal_line_char= format_find("contacts_horizontal_line_char");
+		char vline_ch = vertical_line_char[0];
+		char hline_ch = horizontal_line_char[0];
+
+		if (!vline_ch || !hline_ch) {
+			vline_ch = ACS_VLINE;
+			hline_ch = ACS_HLINE;
+			wattrset(n->window, color_pair(COLOR_BLUE, COLOR_BLACK) | A_ALTCHARSET);
+		}
 
 		if ((w->frames & WF_LEFT)) {
 			left++;
 
 			for (y = 0; y < w->height; y++)
-				mvwaddch(n->window, y, n->margin_left, vertical_line_char[0]);
+				mvwaddch(n->window, y, n->margin_left, vline_ch);
 		}
 
 		if ((w->frames & WF_RIGHT)) {
 			for (y = 0; y < w->height; y++)
-				mvwaddch(n->window, y, w->width - 1 - n->margin_right, vertical_line_char[0]);
+				mvwaddch(n->window, y, w->width - 1 - n->margin_right, vline_ch);
 		}
 			
 		if ((w->frames & WF_TOP)) {
@@ -1060,14 +1073,14 @@ void ncurses_redraw(window_t *w)
 			height--;
 
 			for (x = 0; x < w->width; x++)
-				mvwaddch(n->window, n->margin_top, x, horizontal_line_char[0]);
+				mvwaddch(n->window, n->margin_top, x, hline_ch);
 		}
 
 		if ((w->frames & WF_BOTTOM)) {
 			height--;
 
 			for (x = 0; x < w->width; x++)
-				mvwaddch(n->window, w->height - 1 - n->margin_bottom, x, horizontal_line_char[0]);
+				mvwaddch(n->window, w->height - 1 - n->margin_bottom, x, hline_ch);
 		}
 
 		if ((w->frames & WF_LEFT) && (w->frames & WF_TOP))
