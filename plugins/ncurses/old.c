@@ -952,6 +952,54 @@ static inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 }
 
 /*
+ * cmd_mark()
+ *
+ * add marker (red line) to window
+ *
+ */
+COMMAND(cmd_mark) {
+	window_t *w;
+	ncurses_window_t *n;
+
+	if (match_arg(params[0], 'a', ("all"), 2)) {
+		list_t l;
+
+		for (l = windows; l; l = l->next) {
+			w = l->data;
+			if (!w->floating && (w->act != 2)) {
+				n = w->private;
+				n->last_red_line = time(0);
+				n->redraw = 1;
+			}
+		}
+		return 0;
+	}
+
+	w = window_current;
+	n = w->private;
+	n->last_red_line = time(0);
+	n->redraw = 1;
+
+	return 0;
+}
+
+/*
+ * draw_thin_red_line()
+ *
+ */
+static void draw_thin_red_line(window_t *w, int y)
+{
+	ncurses_window_t *n = w->private;
+	int x;
+	int attr = color_pair(COLOR_RED, COLOR_BLACK) | A_BOLD | A_ALTCHARSET;
+	unsigned char ch = (unsigned char) ncurses_fixchar((CHAR_T) ACS_HLINE, &attr);
+
+	wattrset(n->window, attr);
+	for (x = 0; x < w->width; x++)
+		mvwaddch(n->window, y, x, ch);
+}
+
+/*
  * ncurses_redraw()
  *
  * przerysowuje zawarto¶æ okienka.
@@ -960,8 +1008,12 @@ static inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
  */
 void ncurses_redraw(window_t *w)
 {
-	int x, y, left, top, height, width;
+	int x, y, left, top, height, width, fix_trl;
 	ncurses_window_t *n = w->private;
+	int dtrl = 0;	/* dtrl -- draw thin red line
+			 *	0 - not on this page or line already drawn
+			 *	1 - mayby on this page, we'll see later
+			 */
 	
 	if (!n)
 		return;
@@ -1043,18 +1095,35 @@ void ncurses_redraw(window_t *w)
 			top = tmp;
 	}
 
+	fix_trl=0;
 	for (y = 0; y < height && n->start + y < n->lines_count; y++) {
 		struct screen_line *l = &n->lines[n->start + y];
 
-		int cur_y = (top + y);	
+		int cur_y = (top + y + fix_trl);
 		int cur_x;
 
 		int fixup = 0;
 
+		if (( y == 0 ) && n->last_red_line && (n->backlog[l->backlog]->ts < n->last_red_line))
+			dtrl = 1;	/* First line timestamp is less then mark. Mayby marker is on this page? */
+
+		if (dtrl && (n->backlog[l->backlog]->ts >= n->last_red_line)) {
+			draw_thin_red_line(w, cur_y);
+			if (n->lines_count-n->start == height) {
+				/* we have stolen line for marker, so we scroll up */
+				wmove(n->window, top, 0);
+				winsdelln(n->window,-1);
+			} else {
+				fix_trl = 1;
+				cur_y++;
+			}
+			dtrl = 0;
+		}
+
 		wattrset(n->window, A_NORMAL);
 
 		cur_x = (left);
-		
+
 		if (l->ts) {
 			/* XXX,
 			 * 	po co sprawdzamy l->ts[x] i l->ts_len? nie wystarczy jedno?
@@ -1108,6 +1177,16 @@ void ncurses_redraw(window_t *w)
 	}
 
 	n->redraw = 0;
+
+	if (dtrl && (n->start + y >= n->lines_count)) {
+		/* marker still not drawn and last line from backlog. */
+		if (y >= height) {
+			wmove(n->window, top, 0);
+			winsdelln(n->window,-1);
+			y--;
+		}
+		draw_thin_red_line(w, top+y);
+	}
 
 	if (w == window_current)
 		ncurses_redraw_input(0);

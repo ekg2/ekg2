@@ -648,6 +648,8 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, USERLIST_REMOVED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, USERLIST_RENAMED, ncurses_all_contacts_changed, NULL);
 
+	command_add(&ncurses_plugin, ("mark"), NULL, cmd_mark, 0, "-a --all");
+
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
         variable_add(&ncurses_plugin, ("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);

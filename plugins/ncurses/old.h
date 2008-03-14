@@ -5,6 +5,7 @@
 
 #include "ecurses.h"
 
+#include <ekg/commands.h>
 #include <ekg/plugins.h>
 #include <ekg/themes.h>
 #include <ekg/windows.h>
@@ -78,6 +79,7 @@ typedef struct {
 
 	CHAR_T *prompt_real;	/* prompt shortened to 2/3 of window width & converted to real chartype */
 	int prompt_real_len;	/* real prompt length, including cutting, in chars instead of bytes */
+	time_t last_red_line;	/* timestamp for red line marker */
 } ncurses_window_t;
 
 struct format_data {
@@ -163,6 +165,7 @@ extern int config_lastlog_lock;
 WATCHER(ncurses_watch_stdin);
 WATCHER(ncurses_watch_winch);
 int ncurses_command_window(void *data, va_list ap);
+COMMAND(cmd_mark);
 
 extern int have_winch_pipe;
 extern int winch_pipe[2];

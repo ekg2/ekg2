@@ -1,0 +1,6 @@
+mark
+	parametry:  [opcje]
+	krotki opis: dodaje znacznik do aktualnego okna
+	
+	-a, --all   dodaje znacznik do wszystkich nieaktywnych okien
+
