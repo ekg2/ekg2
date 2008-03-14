@@ -1552,8 +1552,13 @@ back:
 					}
 					xfree(vname);
 				}
-				if (p) watch_write(j->send_watch, "</plugin>");
-				if (p && !l->next) { p = NULL; goto back; }
+				if (p) {
+					watch_write(j->send_watch, "</plugin>");
+					if (!p->next) { /* if last plugin, then jump back and write core vars */
+						p = NULL;
+						goto back;
+					}
+				}
 			}
 			for (l = sessions; l; l = l->next) {
 				session_t *s = l->data;
