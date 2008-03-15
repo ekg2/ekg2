@@ -458,7 +458,19 @@ static LIST_FREE_ITEM(list_buffer_free, struct buffer *) {
 }
 
 inline static void buffer_add_common(struct buffer_info *type, const char *target, const char *line, time_t ts) {
-	struct buffer *b;
+	struct buffer *b, **addpoint = &(type->last);
+
+	/* What the heck with addpoint thing?
+	 * - if type->last ain't NULL, it points to last element of the list;
+	 *   we can pass it directly to LIST_ADD2() to avoid iterating through all items,
+	 *   it just sets its' 'next' field and everything is fine,
+	 * - but if it's NULL, then data is NULL too. That means LIST_ADD2() would need
+	 *   to modify the list pointer, so we need to pass it &(type->data) instead.
+	 *   Else type->last would point to the list, but type->data would be still NULL,
+	 * - if last is NULL, but data ain't, that means something broke. But that's
+	 *   no problem, as we're still passing &(type->data), so adding works fine
+	 *   and then type->last is fixed.
+	 */
 
 	if (type->max_lines) { /* XXX: move to idles? */
 		b = type->data;
@@ -466,10 +478,19 @@ inline static void buffer_add_common(struct buffer_info *type, const char *targe
 		
 		if (n > 0) { /* list slice removal */
 			b = LIST_GET_NTH2(b, n);		/* last element to remove */
-			type->data	= b->next;
-			b->next		= NULL;			/* unlink elements to be removed */
+			if (b) {
+				type->data	= b->next;
+				b->next		= NULL;		/* unlink elements to be removed */
+				type->count -= n;
+				if (!*addpoint)	/* no 'last'? then use beginning */
+					addpoint = &(type->data);
+			} else { /* failsafe */
+				type->count	= 0;
+				b		= type->data;
+				type->data	= NULL;
+				addpoint	= &(type->data);/* we need some &NULL here ( ; */
+			}
 			LIST_DESTROY2(b, list_buffer_free);	/* and remove them */
-			type->count -= n;
 		}
 	}
 	
@@ -478,7 +499,7 @@ inline static void buffer_add_common(struct buffer_info *type, const char *targe
 	b->target	= xstrdup(target);
 	b->line 	= xstrdup(line);
 
-	LIST_ADD2(type->last ? &(type->last) : &(type->data), b);
+	LIST_ADD2(addpoint, b);
 
 	type->last	= b;
 	type->count++;
