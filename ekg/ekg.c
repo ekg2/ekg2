@@ -369,9 +369,10 @@ void ekg_loop() {
 			 *
 			 *  yeah, i know it can be do better. note: it's just for gtk.. maybe later we have prios and so (and ekg2 become operation system with scheduler)
 			 */
+			idle_t *idler = idles;
 
-			idle_handle(idles);
-			LIST_REMOVE2(&idles, idles, 0);
+			LIST_UNLINK2(&idles, idles);
+			idle_handle(idler);
 
 			/* Here I think we can do return; coz select() return 0 when nothing happen on given fds */
 			/* but to avoid regression on broken systems */
