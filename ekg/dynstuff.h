@@ -74,49 +74,59 @@ typedef struct list *list_t;
 #ifndef EKG2_WIN32_NOFUNCTION
 #define LIST_ADD_COMPARE(x, type)			int x(const type data1, const type data2)
 #define LIST_ADD_SORTED(list, data, comp)		list_add_sorted(list, data, (void *) comp)
-#define LIST_ADD_SORTED2(list, data, comp)		list_add_sorted3((list_t *) list, (list_t) data, (void *) comp)
-#define LIST_ADD_BEGINNING2(list, data)			list_add_beginning3((list_t *) list, (list_t) data)
-#define LIST_ADD2(list, data)				list_add3((list_t *) list, (list_t) data)
 
-#define LIST_COUNT2(list)				list_count((list_t) list)
-#define LIST_GET_NTH2(list, id)				list_get_nth3((list_t) list, id)
 #define LIST_RESORT(list, comp)				list_resort(list, (void *) comp)
-#define LIST_RESORT2(list, comp)			list_resort3((list_t *) list, (void *) comp)
-
 #define LIST_REMOVE(list, data, func)			list_remove2(list, data, (void *) func)
-#define LIST_REMOVE2(list, elem, func)			list_remove3((list_t *) list, (list_t) elem, (void *) func)
-#define LIST_UNLINK2(list, elem)			list_unlink3((list_t *) list, (list_t) elem)
 #define LIST_FREE_ITEM(x, type)				void x(type data)
 
 #define LIST_DESTROY(list, func)			list_destroy2(list, (void *) func)
-#define LIST_DESTROY2(list, func)			list_destroy3((list_t) list, (void *) func)
 
 void *list_add(list_t *list, void *data);
 void *list_add_beginning(list_t *list, void *data);
 void *list_add_sorted(list_t *list, void *data, int (*comparision)(void *, void *));
 
-void *list_add3(list_t *list, list_t new);
-void *list_add_beginning3(list_t *list, list_t new);
-void *list_add_sorted3(list_t *list, list_t new, int (*comparision)(void *, void *));
-
-
 int list_count(list_t list);
 void *list_get_nth(list_t list, int id);
-void *list_get_nth3(list_t list, int id);
 void list_resort(list_t *list, int (*comparision)(void *, void *));
-void list_resort3(list_t *list, int (*comparision)(void *, void *));
 
 int list_remove(list_t *list, void *data, int free_data);
 int list_remove2(list_t *list, void *data, void (*func)(void *));
-list_t list_remove3(list_t *list, list_t elem, void (*func)(list_t));
-list_t list_unlink3(list_t *list, list_t elem);
 
 int list_destroy(list_t list, int free_data);
 int list_destroy2(list_t list, void (*func)(void *));
-int list_destroy3(list_t list, void (*func)(void *));
 
 void list_cleanup(list_t *list);
 int list_remove_safe(list_t *list, void *data, int free_data);
+
+/** lists3 **/
+
+#define LIST_ADD_SORTED2(list, data, comp)		list_add_sorted3(list, data, (void *) comp)
+#define LIST_ADD_BEGINNING2(list, data)			list_add_beginning3(list, data)
+#define LIST_ADD2(list, data)				list_add3(list, data)
+
+#define LIST_COUNT2(list)				list_count3(list)
+#define LIST_GET_NTH2(first, id)			list_get_nth3(first, id)
+#define LIST_RESORT2(list, comp)			list_resort3(list, (void *) comp)
+
+#define LIST_REMOVE2(list, elem, func)			list_remove3(list, elem, (void *) func)
+#define LIST_UNLINK2(list, elem)			list_unlink3(list, elem)
+#define LIST_DESTROY2(first, func)			list_destroy3(first, (void *) func)
+
+/* This is pretty fscked up, but some ppl like no-stupid-warnings more than readable types,
+ * so here we use void* for almost everything; *list shall be pointer to pointer to var
+ * pointing on first elem (like list_t*), *first only ptr to first element (like list_t). */
+
+void *list_add3(void *list, void *new);
+void *list_add_beginning3(void *list, void *new);
+void *list_add_sorted3(void *list, void *new, int (*comparison)(void *, void *));
+
+int list_count3(void *first);
+void *list_get_nth3(void *first, int id);
+void list_resort3(void *list, int (*comparison)(void *, void *));
+
+void *list_remove3(void *list, void *elem, void (*func)(list_t));
+void *list_unlink3(void *list, void *elem);
+int list_destroy3(void *first, void (*func)(void *));
 
 LIST_FREE_ITEM(list_t_free_item, list_t);
 list_t list_t_new(void *data);
