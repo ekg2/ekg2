@@ -493,7 +493,7 @@ inline static void buffer_add_common(struct buffer_info *type, const char *targe
 			LIST_DESTROY2(b, list_buffer_free);	/* and remove them */
 		}
 	}
-	
+
 	b		= xmalloc(sizeof(struct buffer));
 	b->ts		= time(NULL);
 	b->target	= xstrdup(target);
@@ -502,6 +502,10 @@ inline static void buffer_add_common(struct buffer_info *type, const char *targe
 	LIST_ADD2(addpoint, b);
 
 	type->last	= b;
+
+	if (!type->data)
+		type->data = b;
+
 	type->count++;
 }
 
