@@ -638,7 +638,7 @@ static int logs_plugin_destroy() {
 		xfree(oldtarget);
 		oldtarget = b->target;
 
-		b = (struct buffer *) LIST_REMOVE2(&(buffer_lograw.data), b, NULL);
+		b = LIST_REMOVE2(&(buffer_lograw.data), b, NULL);
 
 		if (!b) {
 			if (f) fclose(f);

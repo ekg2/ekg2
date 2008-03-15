@@ -4021,7 +4021,7 @@ static COMMAND(cmd_plugin) {
                 for (p = plugins; p;) {
 			plugin_t *next;
 
-                        next = (plugin_t *) LIST_UNLINK2(&plugins, p);
+                        next = LIST_UNLINK2(&plugins, p);
                         plugin_register(p, -254);
 
 			p = next;

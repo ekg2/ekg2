@@ -547,7 +547,7 @@ int plugin_unregister(plugin_t *p)
 		
 		for (i = idles; i; ) {
 			if (i->plugin == p)
-				i = (idle_t *) LIST_REMOVE2(&idles, i, NULL);
+				i = LIST_REMOVE2(&idles, i, NULL);
 			else
 				i = i->next;
 		}

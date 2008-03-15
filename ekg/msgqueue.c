@@ -92,7 +92,7 @@ int msg_queue_remove_uid(const char *uid)
 
 	for (m = msg_queue; m; ) {
 		if (!xstrcasecmp(m->rcpts, uid)) {
-			m = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+			m = LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 			res = 0;
 		} else
 			m = m->next;
@@ -120,7 +120,7 @@ int msg_queue_remove_seq(const char *seq)
 
 	for (m = msg_queue; m; ) {
 		if (!xstrcasecmp(m->seq, seq)) {
-			m = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+			m = LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 			res = 0;
 		} else
 			m = m->next;
@@ -171,7 +171,7 @@ int msg_queue_flush(const char *session)
 			continue;
 				/* wiadomo¶æ wysy³ana z nieistniej±cej ju¿ sesji? usuwamy. */
 		else if (!(s = session_find(m->session))) {
-			next = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+			next = LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 			continue;
 		}
 
@@ -186,7 +186,7 @@ int msg_queue_flush(const char *session)
 		}
 		command_exec_format(NULL, s, 1, cmd, m->rcpts, m->message);
 
-		next = (msg_queue_t *) LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
+		next = LIST_REMOVE2(&msg_queue, m, list_msg_queue_free);
 		ret = 0;
 	}
 

@@ -345,7 +345,7 @@ int alias_remove(const char *name, int quiet)
 			command_remove(NULL, a->name);
 			xfree(a->name);
 			list_destroy(a->commands, 1);
-			if ((tmp = (alias_t *) LIST_REMOVE2(&aliases, a, NULL)))
+			if ((tmp = LIST_REMOVE2(&aliases, a, NULL)))
 				next = tmp;
 			removed = 1;
 		}
@@ -909,7 +909,7 @@ int conference_remove(const char *name, int quiet)
 			if (name)
 				printq("conferences_del", name);
 			tabnick_remove(c->name);
-			if ((tmp = (struct conference *) LIST_REMOVE2(&conferences, c, conference_free_item)))
+			if ((tmp = LIST_REMOVE2(&conferences, c, conference_free_item)))
 				next = tmp;
 			removed = 1;
 		}
