@@ -47,14 +47,14 @@ static QUERY(autoresponder_message)
 {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
-	{	char **UNUSED(rcpts)	= *(va_arg(ap, char***));	}
+		char **UNUSED(rcpts)	= *(va_arg(ap, char***));
 	char *text	= *(va_arg(ap, char**));
-	{	uint32_t *UNUSED(format)= *(va_arg(ap, uint32_t**));
-		time_t UNUSED(sent)	= *(va_arg(ap, time_t*));	}
+		uint32_t *UNUSED(format)= *(va_arg(ap, uint32_t**));
+		time_t UNUSED(sent)	= *(va_arg(ap, time_t*));
 	int class	= *(va_arg(ap, int*));
-	{	char *UNUSED(seq)	= *(va_arg(ap, char**));
+		char *UNUSED(seq)	= *(va_arg(ap, char**));
 		int UNUSED(dobeep)	= *(va_arg(ap, int*));
-		int UNUSED(secure)	= *(va_arg(ap, int*));		}
+		int UNUSED(secure)	= *(va_arg(ap, int*));
 	
 	session_t *s;
 	/* if user didn't give us any answer to his question, we assume that sender should rewrite the question string */

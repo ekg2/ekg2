@@ -120,7 +120,7 @@ static QUERY(rss_message) {
 	char *body	= *(va_arg(ap, char **));
 
 	int *new	= va_arg(ap, int *); 		/* 0 - old; 1 - new; 2 - modified */
-	{	int UNUSED(mtags)	= *(va_arg(ap, int *));		}
+		int UNUSED(mtags)	= *(va_arg(ap, int *));
 
 	session_t *s	= session_find(session);
 	char *tmp;

@@ -272,7 +272,7 @@ static int dd_sms(const char *name)
  */
 static QUERY(sms_session_status)
 {
-        {	char **UNUSED(session)	= va_arg(ap, char**);	}
+        	char **UNUSED(session)	= va_arg(ap, char**);
         int status	= *(va_arg(ap, int*));
 
         if ((status <= EKG_STATUS_NA) || (status >= EKG_STATUS_AVAIL))
@@ -290,7 +290,7 @@ static QUERY(sms_protocol_message)
 {
         char *session	= *(va_arg(ap, char**));
         char *uid	= *(va_arg(ap, char**));
-        {	char ***UNUSED(rcpts)	= va_arg(ap, char***);	}
+        	char ***UNUSED(rcpts)	= va_arg(ap, char***);
         char *text	= *(va_arg(ap, char**));
         const int status = session_status_get_n(session);
 

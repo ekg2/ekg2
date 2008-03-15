@@ -84,7 +84,7 @@ QUERY(jogger_msghandler) {
 	const char *uid		= *(va_arg(ap, char **));
 	char **rcpts		= *(va_arg(ap, char ***));
 	const char *msg		= *(va_arg(ap, char **));
-								{ uint32_t **UNUSED(format) = va_arg(ap, uint32_t **); }
+		uint32_t **UNUSED(format) = va_arg(ap, uint32_t **);
 	time_t sent		= *(va_arg(ap, const time_t *));
 	const int class		= *(va_arg(ap, const int *));
 	const char *seq		= *(va_arg(ap, char**));

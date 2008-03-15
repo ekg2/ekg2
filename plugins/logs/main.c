@@ -854,10 +854,10 @@ static QUERY(logs_handler) {
 	char *uid	= *(va_arg(ap, char**));
 	char **rcpts	= *(va_arg(ap, char***));
 	char *text	= *(va_arg(ap, char**));
-	{	uint32_t **UNUSED(format)= va_arg(ap, uint32_t**);	}
+		uint32_t **UNUSED(format)	= va_arg(ap, uint32_t**);
 	time_t   sent	= *(va_arg(ap, time_t*));
 	int  class	= *(va_arg(ap, int*));
-	{	char **UNUSED(seq)	= va_arg(ap, char**);	}
+		char **UNUSED(seq)		= va_arg(ap, char**);
 
 	session_t *s = session_find(session); // session pointer
 	log_window_t *lw;
@@ -952,9 +952,9 @@ static QUERY(logs_handler_irc) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
 	char *text	= *(va_arg(ap, char**));
-	{	int  *UNUSED(isour) 	= va_arg(ap, int*);	}
-	{	int  *UNUSED(foryou)	= va_arg(ap, int*);	}
-	{	int  *UNUSED(private)	= va_arg(ap, int*);	}
+		int  *UNUSED(isour) 	= va_arg(ap, int*);
+		int  *UNUSED(foryou)	= va_arg(ap, int*);
+		int  *UNUSED(private)	= va_arg(ap, int*);
 	char *channame	= *(va_arg(ap, char**));
 
 	log_window_t *lw = logs_log_find(session, channame, 1)->lw;

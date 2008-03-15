@@ -351,7 +351,7 @@ char *sim_message_encrypt(const unsigned char *message, const char *uid)
 
 	BIO_write(cbio, &head, sizeof(head));
 	BIO_write(cbio, message, xstrlen((char*) message));
-	{	int UNUSED(ret) = BIO_flush(cbio);	}
+		(void) BIO_flush(cbio);
 
 	/* zachowaj wynik */
 	res_len = BIO_get_mem_data(mbio, (unsigned char*) &tmp);
@@ -418,7 +418,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	BIO_set_flags(bbio, BIO_FLAGS_BASE64_NO_NL);
 	BIO_push(bbio, mbio);
 	BIO_write(mbio, message, xstrlen((char*) message));
-	{	int UNUSED(ret) = BIO_flush(mbio);	}
+		(void) BIO_flush(mbio);
 
 	if (BIO_read(bbio, bf_key_rsa, sizeof(bf_key_rsa)) < sizeof(bf_key_rsa)) {
 		sim_errno = SIM_ERROR_INVALID;
@@ -459,7 +459,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	BIO_push(cbio, mbio);
 
 	BIO_write(cbio, buf, len);
-	{	int UNUSED(ret) = BIO_flush(cbio);	}
+		(void) BIO_flush(cbio);
 
 	free(buf);
 	buf = NULL;

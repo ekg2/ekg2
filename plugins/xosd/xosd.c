@@ -189,10 +189,10 @@ static QUERY(xosd_protocol_message)
 {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
-	{	char **UNUSED(rcpts)	= *(va_arg(ap, char***));	}
+		char **UNUSED(rcpts)	= *(va_arg(ap, char***));
 	char *text	= *(va_arg(ap, char**));
-	{	uint32_t *UNUSED(format) = *(va_arg(ap, uint32_t**));	}
-	{	time_t UNUSED(sent)	 = *(va_arg(ap, time_t*));	}
+		uint32_t *UNUSED(format) = *(va_arg(ap, uint32_t**));
+		time_t UNUSED(sent)	 = *(va_arg(ap, time_t*));
 	int class	= *(va_arg(ap, int*));
 	
 	userlist_t *u;
