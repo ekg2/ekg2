@@ -458,7 +458,8 @@ static LIST_FREE_ITEM(list_buffer_free, struct buffer *) {
 }
 
 inline static void buffer_add_common(struct buffer_info *type, const char *target, const char *line, time_t ts) {
-	struct buffer *b, **addpoint = &(type->last);
+	struct buffer *b;
+	struct buffer **addpoint = (type->last ? &(type->last) : &(type->data));
 
 	/* What the heck with addpoint thing?
 	 * - if type->last ain't NULL, it points to last element of the list;
@@ -473,23 +474,19 @@ inline static void buffer_add_common(struct buffer_info *type, const char *targe
 	 */
 
 	if (type->max_lines) { /* XXX: move to idles? */
+bac_countupd:
 		b = type->data;
 		int n		= type->count - type->max_lines + 1;
 		
 		if (n > 0) { /* list slice removal */
 			b = LIST_GET_NTH2(b, n);		/* last element to remove */
-			if (b) {
-				type->data	= b->next;
-				b->next		= NULL;		/* unlink elements to be removed */
-				type->count -= n;
-				if (!*addpoint)	/* no 'last'? then use beginning */
-					addpoint = &(type->data);
-			} else { /* failsafe */
-				type->count	= 0;
-				b		= type->data;
-				type->data	= NULL;
-				addpoint	= &(type->data);/* we need some &NULL here ( ; */
+			if (!b) { /* count has been broken */
+				type->count = LIST_COUNT2(type->data);
+				goto bac_countupd;
 			}
+			type->data	= b->next;
+			b->next		= NULL;			/* unlink elements to be removed */
+			type->count -= n;
 			LIST_DESTROY2(b, list_buffer_free);	/* and remove them */
 		}
 	}
@@ -502,10 +499,6 @@ inline static void buffer_add_common(struct buffer_info *type, const char *targe
 	LIST_ADD2(addpoint, b);
 
 	type->last	= b;
-
-	if (!type->data)
-		type->data = b;
-
 	type->count++;
 }
 
