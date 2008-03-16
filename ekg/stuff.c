@@ -89,9 +89,6 @@ struct binding *bindings = NULL;	/**< list_t struct timer <b>all</b> ekg2 timers
 struct timer *timers = NULL;
 struct conference *conferences = NULL;
 newconference_t *newconferences = NULL;
-#ifdef HAVE_ICONV
-static list_t ekg_converters = NULL;	/**< list for internal use of ekg_convert_string_*() */
-#endif
 
 struct buffer_info buffer_debug = { NULL, 0, DEBUG_MAX_LINES };		/**< debug buffer */
 struct buffer_info buffer_speech = { NULL, 0, 50 };		/**< speech buffer */
@@ -2941,14 +2938,18 @@ inline char *mutt_convert_string (const char *ps, iconv_t cd, int is_utf)
  * Used internally by EKG2, contains information about one initialized character converter.
  */
 struct ekg_converter {
-	iconv_t		cd;	/**< Magic thing given to iconv, always not NULL (else we won't alloc struct) */
-	iconv_t		rev;	/**< Reverse conversion thing, can be NULL */
-	char		*from;	/**< Input encoding (duped), always not NULL (even on console_charset) */
-	char		*to;	/**< Output encoding (duped), always not NULL (even on console_charset) */
-	int		used;	/**< Use counter - incr on _init(), decr on _destroy(), free if 0 */
+	struct ekg_converter *next;
+
+	iconv_t		cd;		/**< Magic thing given to iconv, always not NULL (else we won't alloc struct) */
+	iconv_t		rev;		/**< Reverse conversion thing, can be NULL */
+	char		*from;		/**< Input encoding (duped), always not NULL (even on console_charset) */
+	char		*to;		/**< Output encoding (duped), always not NULL (even on console_charset) */
+	int		used;		/**< Use counter - incr on _init(), decr on _destroy(), free if 0 */
 	int		rev_used;	/**< Like above, but for rev; if !rev, value undefined */
-	int		is_utf;	/**< Used internally for mutt_convert_string() */
+	int		is_utf;		/**< Used internally for mutt_convert_string() */
 };
+
+static struct ekg_converter *ekg_converters = NULL;	/**< list for internal use of ekg_convert_string_*() */
 #endif
 
 /**
@@ -2967,7 +2968,7 @@ struct ekg_converter {
  */
 void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
 #ifdef HAVE_ICONV
-	list_t lp;
+	struct ekg_converter *p;
 
 	if (!from)
 		from	= config_console_charset;
@@ -2980,9 +2981,7 @@ void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
 	}
 
 		/* maybe we've already got some converter for this charsets */
-	for (lp = ekg_converters; lp; lp = lp->next) {
-		struct ekg_converter *p = lp->data;
-
+	for (p = ekg_converters; p; p = p->next) {
 		if (!xstrcasecmp(from, p->from) && !xstrcasecmp(to, p->to)) {
 			p->used++;
 			if (rev) {
@@ -3041,7 +3040,7 @@ void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
 				c->is_utf = 2;
 			else if (!xstrcasecmp(c->from, "UTF-8"))
 				c->is_utf = 1;
-			list_add(&ekg_converters, c);
+			LIST_ADD2(&ekg_converters, c);
 		}
 
 		return cd;
@@ -3067,14 +3066,12 @@ void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
 
 void ekg_convert_string_destroy(void *ptr) {
 #ifdef HAVE_ICONV
-	list_t lp;
+	struct ekg_converter *c;
 
 	if (!ptr) /* we can be called with NULL ptr */
 		return;
 
-	for (lp = ekg_converters; lp; lp = lp->next) {
-		struct ekg_converter *c = lp->data;
-
+	for (c = ekg_converters; c; c = c->next) {
 		if (c->cd == ptr)
 			c->used--;
 		else if (c->rev == ptr) /* ptr won't be NULL here */
@@ -3101,7 +3098,7 @@ void ekg_convert_string_destroy(void *ptr) {
 			} else { /* else, free it */
 				xfree(c->from);
 				xfree(c->to);
-				list_remove(&ekg_converters, c, 1);
+				LIST_REMOVE2(&ekg_converters, c, NULL);
 			}
 		}
 		
@@ -3128,16 +3125,14 @@ void ekg_convert_string_destroy(void *ptr) {
 
 char *ekg_convert_string_p(const char *ps, void *ptr) {
 #ifdef HAVE_ICONV
-	list_t lp;
+	struct ekg_converter *c;
 	int is_utf = 0;
 
 	if (!ps || !*ps || !ptr)
 		return NULL;
 
 		/* XXX, maybe some faster way? any ideas? */
-	for (lp = ekg_converters; lp; lp = lp->next) {
-		const struct ekg_converter *c = lp->data;
-
+	for (c = ekg_converters; c; c = c->next) {
 		if (c->cd == ptr)
 			is_utf = c->is_utf;
 		else if (c->rev == ptr)
@@ -3188,10 +3183,9 @@ char *ekg_convert_string(const char *ps, const char *from, const char *to) {
 int ekg_converters_display(int quiet)
 {
 #ifdef HAVE_ICONV
-	list_t l;
+	struct ekg_converter *c;
 
-	for (l = ekg_converters; l; l = l->next) {
-		struct ekg_converter *c = l->data;
+	for (c = ekg_converters; c; c = c->next) {
 		/* cd, rev, from, to, used, rev_used, is_utf */
 
 		printq("iconv_list", c->from, c->to, itoa(c->used), itoa(c->rev_used));
