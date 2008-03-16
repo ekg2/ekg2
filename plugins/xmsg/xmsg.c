@@ -435,7 +435,7 @@ static WATCHER(xmsg_handle_data)
 		session_t *s;
 
 		for (s = sessions; s; s = s->next) {
-			if (s && (s->priv == (void*) (long int) evp->wd) && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
+			if (s && (s->priv == (void*) (long int) evp->wd) && (s->plugin == &xmsg_plugin))
 				break;
 		}
 		
@@ -450,7 +450,7 @@ static WATCHER(xmsg_handle_data)
 		
 		if ((evp->mask & IN_Q_OVERFLOW) || ((config_maxinotifycount > 0) && c >= config_maxinotifycount)) {
 			for (s = sessions; s; s = s->next) {
-				if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5)) {
+				if (s && (s->plugin == &xmsg_plugin)) {
 					const int i = session_int_get(s, "oneshot_resume_timer");
 					if (!timer_remove_session(s, "o"))
 						xdebug("old oneshot resume timer removed");
@@ -480,7 +480,7 @@ static QUERY(xmsg_handle_sigusr)
 	for (s = sessions; s; s = s->next) {
 		if (!timer_remove_session(s, "o"))
 			xdebug("old oneshot resume timer removed");
-		if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
+		if (s && (s->plugin == &xmsg_plugin))
 			xmsg_iterate_dir(0, (void*) s);
 	}
 
