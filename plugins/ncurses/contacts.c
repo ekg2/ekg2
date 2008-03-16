@@ -229,9 +229,9 @@ group_cleanup:
 
 	if (all == 1) {
 		list_t l;
+		session_t *s;
 
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
+		for (s = sessions; s; s = s->next) {
 			list_t lp;
 
 			if (!s->userlist)

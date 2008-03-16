@@ -76,7 +76,7 @@ GENERATOR(events) {
 
 GENERATOR(sessions_var) {
 	static int len;
-	static list_t el;
+	static session_t *el;
 #warning "GENERATOR: sessions_var TODO"
 	return NULL;
 
@@ -452,16 +452,15 @@ GENERATOR(reason) {
 }
 
 GENERATOR(session) {
-	static list_t l;
+	static session_t *s;
 	static int len;
 
 	if (!state) {
-		l = sessions;
+		s = sessions;
 		len = xstrlen(text);
 	}
 
-	while (l) {
-		session_t *s = l->data;
+	while (s) {
 		if (*text == '-') {
 			if (!xstrncasecmp(text+1, s->uid, len-1))
 				return saprintf("-%s", s->uid);
@@ -473,7 +472,7 @@ GENERATOR(session) {
 			if (!xstrncasecmp(text, s->alias, len)) 
 				return xstrdup(s->alias);
 		}
-	}
+	} /* XXX: shouldn't we iterate or do sth here? I think can get into deadlock */
 	return NULL;
 }
 

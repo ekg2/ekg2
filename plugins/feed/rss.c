@@ -137,31 +137,27 @@ static void rss_string_append(rss_feed_t *f, const char *str) {
 }
 
 static void rss_set_statusdescr(const char *uid, int status, char *descr) {
-	list_t l;
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
+	session_t *s;
 
+	for (s = sessions; s; s = s->next) {
 		if (!xstrncmp(s->uid, "rss:", 4))
 			feed_set_statusdescr(userlist_find(s, uid), status, descr);
 	}
 }
 
 static void rss_set_status(const char *uid, int status) {
-	list_t l;
+	session_t *s;
 
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
-
+	for (s = sessions; s; s = s->next) {
 		if (!xstrncmp(s->uid, "rss:", 4))
 			feed_set_status(userlist_find(s, uid), status);
 	}
 }
 
 static void rss_set_descr(const char *uid, char *descr) {
-	list_t l;
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
+	session_t *s;
 
+	for (s = sessions; s; s = s->next) {
 		if (!xstrncmp(s->uid, "rss:", 4)) 
 			feed_set_descr(userlist_find(s, uid), descr);
 	}

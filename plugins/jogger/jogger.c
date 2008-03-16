@@ -55,11 +55,9 @@ PLUGIN_DEFINE(jogger, PLUGIN_PROTOCOL, jogger_theme_init);
  * @return	Session pointer or NULL if none match.
  */
 session_t *jogger_session_find_uid(session_t *s, const char *uid) {
-	list_t l;
+	session_t *js;
 
-	for (l = sessions; l; l = l->next) {
-		session_t *js = l->data;
-
+	for (js = sessions; js; js = js->next) {
 		if (js->plugin == &jogger_plugin) {
 			const char *jsw	= session_get(js, "used_session");
 
@@ -112,14 +110,12 @@ static QUERY(jogger_statuscleanup) {
 	const char *suid	= *(va_arg(ap, const char **));
 
 	session_t *s		= session_find(suid);
-	list_t l;
+	session_t *js;
 
 	if (!s)
 		return 0;
 
-	for (l = sessions; l; l = l->next) {
-		session_t *js = l->data;
-
+	for (js = sessions; js; js = js->next) {
 		if (js->plugin == &jogger_plugin) {
 			const char *jsw	= session_get(js, "used_session");
 
@@ -210,16 +206,14 @@ static QUERY(jogger_newsession) {
 }
 
 static QUERY(jogger_postconfig) {
-	list_t l;
+	session_t *js;
 	void *p = ekg_convert_string_init("UTF-8", NULL, NULL);
 
 	jogger_localize_texts(p);
 	jogger_localize_headers(p);
 	ekg_convert_string_destroy(p);
 
-	for (l = sessions; l; l = l->next) {
-		session_t *js = l->data;
-
+	for (js = sessions; js; js = js->next) {
 		if ((js->plugin == &jogger_plugin) && !session_int_get(js, "userlist_keep"))
 			userlist_free(js);
 	}

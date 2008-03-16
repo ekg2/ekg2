@@ -580,10 +580,9 @@ static void window_generator(const char *text, int len)
 
 static void sessions_generator(const char *text, int len)
 {
-        list_t l;
+        session_t *v;
 
-        for (l = sessions; l; l = l->next) {
-                session_t *v = l->data;
+        for (v = sessions; v; v = v->next) {
                 if (*text == '-') {
                         if (!xstrncasecmp(text + 1, v->uid, len - 1))
                                 array_add_check(&completions, saprintf("-%s", v->uid), 1);

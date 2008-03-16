@@ -432,12 +432,9 @@ static WATCHER(xmsg_handle_data)
 		xerrn("inotify read() failed");
 	
 	for (evp = ev; n > 0; n -= (evp->len + sizeof(struct inotify_event)), evp = (void*) evp + (evp->len + sizeof(struct inotify_event))) {
-		list_t sp;
-		session_t *s = NULL;
+		session_t *s;
 
-		for (sp = sessions; sp; sp = sp->next) {
-			s = sp->data;
-
+		for (s = sessions; s; s = s->next) {
 			if (s && (s->priv == (void*) (long int) evp->wd) && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))
 				break;
 		}
@@ -452,9 +449,7 @@ static WATCHER(xmsg_handle_data)
 			c++;
 		
 		if ((evp->mask & IN_Q_OVERFLOW) || ((config_maxinotifycount > 0) && c >= config_maxinotifycount)) {
-			for (sp = sessions; sp; sp = sp->next) {
-				s = sp->data;
-
+			for (s = sessions; s; s = s->next) {
 				if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5)) {
 					const int i = session_int_get(s, "oneshot_resume_timer");
 					if (!timer_remove_session(s, "o"))
@@ -480,12 +475,9 @@ static WATCHER(xmsg_handle_data)
 
 static QUERY(xmsg_handle_sigusr)
 {
-	list_t sp;
 	session_t *s;
 
-	for (sp = sessions; sp; sp = sp->next) {
-		s = sp->data;
-
+	for (s = sessions; s; s = s->next) {
 		if (!timer_remove_session(s, "o"))
 			xdebug("old oneshot resume timer removed");
 		if (s && !xstrncasecmp(session_uid_get(s), "xmsg:", 5))

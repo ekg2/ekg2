@@ -802,15 +802,14 @@ static COMMAND(cmd_for)
 			next_is_for = 1;
 
 		if (for_all) {
-			list_t l;
+			session_t *s;
 			
 			if (!sessions) {
 				printq("session_list_empty");
 				return -2;
 			}
 				
-			for (l = sessions; l; l = l->next) {
-				session_t *s = l->data;
+			for (s = sessions; s; s = s->next) {
 				char *for_command;
 				
 				if (!s || !s->uid)
@@ -1828,15 +1827,13 @@ static COMMAND(cmd_set)
 static COMMAND(cmd_quit)
 {
     	char *reason;
-	list_t l;
+	session_t *s;
 	
 	reason = xstrdup(params[0]);
 	query_emit_id(NULL, QUITTING, &reason);
 	xfree(reason);
 
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
-		
+	for (s = sessions; s; s = s->next) {
 		if (params[0])
 			command_exec_format(NULL, s, 3, ("/disconnect %s"), params[0]);
 		else
@@ -2811,9 +2808,10 @@ int binding_help(int a, int b)
 int binding_quick_list(int a, int b)
 {
 	string_t list = string_init(NULL);
-	list_t l, sl;
-	for (sl = sessions; sl; sl = sl->next) {
-		session_t *s = sl->data;
+	list_t l;
+	session_t *s;
+
+	for (s = sessions; s; s = s->next) {
 		for (l = s->userlist; l; l = l->next) {
 			userlist_t *u = l->data;
 			const char *format;

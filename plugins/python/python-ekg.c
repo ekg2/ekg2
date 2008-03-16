@@ -117,7 +117,7 @@ PyObject *python_build_window_w(window_t *w)
         ekg_windowObj *pywindow;
 
         if (!w->session && sessions) {
-                w->session = (session_t*) sessions->data;
+                w->session = sessions;
         }
         pywindow = PyObject_New(ekg_windowObj, &ekg_window_type);
         pywindow->w = w;
@@ -472,15 +472,14 @@ PyObject *ekg_cmd_plugin_get(PyObject * self, PyObject * pyargs)
 PyObject *ekg_cmd_sessions(PyObject * self, PyObject * pyargs)
 {
         PyObject *list;
-        list_t l;
-        int len = list_count(sessions);
+        session_t *s;
+        int len = LIST_COUNT2(sessions);
 
         list = PyList_New(len);
         len = 0;
 
-        for (l = sessions; l; l = l->next) {
-                session_t *p = l->data;
-                PyList_SetItem(list, len, python_build_session(p->uid));
+        for (s = sessions; s; s = s->next) {
+                PyList_SetItem(list, len, python_build_session(s->uid));
                 len++;
         }
         Py_INCREF(list);

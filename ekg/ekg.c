@@ -129,7 +129,6 @@ int no_mouse = 0;
 void ekg_loop() {
 	struct timeval tv;
         struct timeval stv;
-        list_t l;
         fd_set rd, wd;
         int ret, maxfd, status;
 	pid_t pid;
@@ -177,46 +176,48 @@ void ekg_loop() {
 			}
 		}
 
-                /* sprawd¼ autoawaye ró¿nych sesji */
-                for (l = sessions; l; l = l->next) {
-                        session_t *s = l->data;
-                        int tmp;
+		{			/* XXX: maybe make this some kind of idler? */
+			session_t *s;
 
-                        if (!s->connected || (s->status < EKG_STATUS_AWAY)) /* lowest autostatus is autoxa, so from xa and lower ones
-									       we can't go further */
-                                continue;
+			/* sprawd¼ autoawaye ró¿nych sesji */
+			for (s = sessions; s; s = s->next) {
+				int tmp;
 
-			do {
-				if ((s->status == EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
-        	                        break;
+				if (!s->connected || (s->status < EKG_STATUS_AWAY)) /* lowest autostatus is autoxa, so from xa and lower ones
+										       we can't go further */
+					continue;
 
-                	        if (tv.tv_sec - s->activity > tmp)
-                        	        command_exec(NULL, s, ("/_autoaway"), 0);
-			} while (0);
+				do {
+					if ((s->status == EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
+						break;
 
-			do {
-	                        if ((tmp = session_int_get(s, "auto_xa")) < 1 || !s->activity)
-        	                        break;
+					if (tv.tv_sec - s->activity > tmp)
+						command_exec(NULL, s, ("/_autoaway"), 0);
+				} while (0);
 
-                	        if (tv.tv_sec - s->activity > tmp)
-                        	        command_exec(NULL, s, ("/_autoxa"), 0);
-			} while (0);
-                }
+				do {
+					if ((tmp = session_int_get(s, "auto_xa")) < 1 || !s->activity)
+						break;
 
-		/* sprawd¼ scroll timeouty */
-		/* XXX: nie tworzyæ variabla globalnego! */
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
-			int tmp;
+					if (tv.tv_sec - s->activity > tmp)
+						command_exec(NULL, s, ("/_autoxa"), 0);
+				} while (0);
+			}
 
-			if (!s->connected)
-				continue;
+			/* sprawd¼ scroll timeouty */
+			/* XXX: nie tworzyæ variabla globalnego! */
+			for (s = sessions; s; s = s->next) {
+				int tmp;
 
-			if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
-				continue;
+				if (!s->connected)
+					continue;
 
-			if (tv.tv_sec - s->scroll_last > tmp)
-				command_exec(NULL, s, ("/_autoscroll"), 0);
+				if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
+					continue;
+
+				if (tv.tv_sec - s->scroll_last > tmp)
+					command_exec(NULL, s, ("/_autoscroll"), 0);
+			}
 		}
 
                 /* auto save */
@@ -415,14 +416,9 @@ void ekg_loop() {
 				}
 
 				if (w->fd == 0) {
-					list_t session_list;
-					for (
-						session_list = sessions;
-						session_list;
-						session_list = session_list->next) 
+					session_t *s;
+					for (s = sessions; s; s = s->next) 
 					{
-						session_t *s = session_list->data;
-
 						if (!s->connected || !s->autoaway)
 							continue;
 
@@ -698,7 +694,6 @@ int main(int argc, char **argv)
 #else
 	WSADATA wsaData;
 #endif
-        list_t l;
 
 #ifndef NO_POSIX_SYSTEM
         /* zostaw po sobie core */
@@ -985,39 +980,40 @@ int main(int argc, char **argv)
 
         config_postread();
 
-        /* status window takes first session if not setted before*/
+        /* status window takes first session if not set before*/
 	if (!session_current && sessions)
-			session_current = (session_t*) sessions->data;
+			session_current = sessions;
 
 	if (session_current != window_current->session)
 		window_current->session = session_current;
 
         metacontact_read(); /* read the metacontacts info */
 
-        /* wylosuj opisy i zmieñ stany klientów */
-        for (l = sessions; l; l = l->next) {
-                session_t *s = l->data;
-                const char *cmd = NULL;
+	{
+		session_t *s;
 
-                if (new_status)
-                        session_status_set(s, new_status);
+		/* wylosuj opisy i zmieñ stany klientów */
+		for (s = sessions; s; s = s->next) {
+			const char *cmd = NULL;
 
-                if (new_descr)
-                        session_descr_set(s, new_descr);
+			if (new_status)
+				session_status_set(s, new_status);
 
-		cmd = ekg_status_string(s->status, 1);
+			if (new_descr)
+				session_descr_set(s, new_descr);
 
-                command_exec_format(NULL, s, 2, ("/%s %s"), cmd, (new_descr) ? new_descr : "");
-        }
+			cmd = ekg_status_string(s->status, 1);
 
-        /* po zainicjowaniu protoko³ów, po³±cz siê automagicznie ze
-         * wszystkim, co chce siê automagicznie ³±czyæ. */
-        for (l = sessions; l; l = l->next) {
-                session_t *s = l->data;
+			command_exec_format(NULL, s, 2, ("/%s %s"), cmd, (new_descr) ? new_descr : "");
+		}
 
-                if (auto_connect && session_int_get(s, "auto_connect") == 1)
-                        command_exec(NULL, s, ("/connect"), 0);
-        }
+		/* po zainicjowaniu protoko³ów, po³±cz siê automagicznie ze
+		 * wszystkim, co chce siê automagicznie ³±czyæ. */
+		for (s = sessions; s; s = s->next) {
+			if (auto_connect && session_int_get(s, "auto_connect") == 1)
+				command_exec(NULL, s, ("/connect"), 0);
+		}
+	}
 
         if (config_auto_save)
                 last_save = time(NULL);

@@ -644,16 +644,15 @@ void changed_auto_save(const char *var)
  */
 void changed_display_blinking(const char *var)
 {
-	list_t sl;
+	session_t *s;
 
 	/* wy³±czamy wszystkie blinkaj±ce uid'y */
-        for (sl = sessions; sl; sl = sl->next) {
+        for (s = sessions; s; s = s->next) {
 		list_t l;
-        	session_t *s = sl->data;
 
 		for (l = s->userlist; l; l = l->next) {
 			userlist_t *u	= l->data;
-			u->blink	= 0;;
+			u->blink	= 0;
 		}
 	}
 }
@@ -790,7 +789,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 {
 	struct conference c, *cf;
 	char **nicks;
-	list_t l, sl;
+	list_t l;
 	int i, count;
 	char **p;
 
@@ -807,12 +806,12 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 	/* grupy zamieniamy na niki */
 	for (i = 0; nicks[i]; i++) {
 		if (nicks[i][0] == '@') {
+			session_t *s;
 			char *gname = xstrdup(nicks[i] + 1);
 			int first = 0;
 			int nig = 0; /* nicks in group */
 		
-			for (sl = sessions; sl; sl = sl->next) {
-				session_t *s = sl->data;
+			for (s = sessions; s; s = s->next) {
 			        for (l = s->userlist; l; l = l->next) {
 					userlist_t *u = l->data;
 					list_t m;

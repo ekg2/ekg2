@@ -258,7 +258,7 @@ COMMAND(gg_command_unregister)
 static WATCHER(gg_handle_passwd) {
 	struct gg_http *h = data;
 	struct gg_pubdir *p = NULL;
-	list_t l;
+	session_t *s;
 
 	if (type == 2) {
 		debug("[gg] gg_handle_passwd() timeout\n");
@@ -296,8 +296,7 @@ static WATCHER(gg_handle_passwd) {
 	print("passwd");
 
 fail:
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
+	for (s = sessions; s; s = s->next) {
 		gg_private_t *g;
 		list_t m;
 

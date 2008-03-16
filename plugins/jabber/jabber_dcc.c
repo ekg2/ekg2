@@ -220,7 +220,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 			jabber_dcc_t *p = D->priv;
 
 			char *this_sha1;
-			list_t k;
+			session_t *s;
 
 			if (xstrncmp(D->uid, "xmpp:", 5)) continue; /* we skip not jabber dccs */
 
@@ -228,8 +228,7 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 			if (p->sfd != -1) 	{ debug_error("[%s:%d] p->sfd  != -1, already associated ?\n", __FILE__, __LINE__); continue; }	/* we skip associated dccs */
 			if (p->protocol != JABBER_DCC_PROTOCOL_BYTESTREAMS) continue; 								/* we skip not BYTESTREAMS dccs */
 
-			for (k = sessions; k; k = k->next) {
-				session_t *s = k->data;
+			for (s = sessions; s; s = s->next) {
 				jabber_private_t *j = s->priv;
 				char *fulluid;
 

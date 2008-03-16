@@ -1486,13 +1486,11 @@ void jabber_gpg_changed(session_t *s, const char *name) {
  */
 
 static QUERY(jabber_pgp_postinit) {
-	list_t l;
+	session_t *s;
 
 	session_postinit = 1;
 
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
-
+	for (s = sessions; s; s = s->next) {
 		/* check if it's jabber_plugin session [DON'T DO IT ON TLEN SESSIONS] */
 		if (s && s->plugin == &jabber_plugin && !jabber_private(s)->istlen)
 			jabber_gpg_changed(s, NULL);

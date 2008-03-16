@@ -1505,7 +1505,6 @@ static COMMAND(jabber_command_private) {
 	}
 
 	if (match_arg(params[0], 'p', ("put"), 2)) {							/* put */
-		list_t l;
 		const char *id;
 
 		if (!(id = jabber_iq_reg(session, "private_", NULL, "query", "jabber:iq:private"))) {
@@ -1520,6 +1519,7 @@ static COMMAND(jabber_command_private) {
 /* Synchronize config (?) */
 		if (config) {
 			plugin_t *p;
+			session_t *s;
 
 			for (p = plugins; p; p = p->next) {
 				variable_t *v;
@@ -1560,8 +1560,7 @@ back:
 					}
 				}
 			}
-			for (l = sessions; l; l = l->next) {
-				session_t *s = l->data;
+			for (s = sessions; s; s = s->next) {
 				plugin_t *pl = s->plugin;
 				int i;
 

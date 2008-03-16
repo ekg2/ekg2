@@ -103,7 +103,9 @@ typedef struct {
 /**
  * session_t contains all information about session
  */
-typedef struct {
+typedef struct session {
+	struct session	*next;
+
 /* public: */
 	void		*plugin;	/**< protocol plugin owing session */
 	char		*uid;		/**< user ID */
@@ -137,7 +139,7 @@ typedef struct {
 } session_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern list_t sessions;
+extern session_t *sessions;
 
 extern session_t *session_current;
 

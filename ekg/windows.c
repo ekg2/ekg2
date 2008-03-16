@@ -124,10 +124,8 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 		return NULL;
 
 	if (xstrncmp(target, "__", 2)) {
-		list_t sl;
-		for (sl = sessions; sl; sl = sl->next) {
-			session_t *s = sl->data;
-
+		session_t *s;
+		for (s = sessions; s; s = s->next) {
 		/* if sessions mishmash, and it wasn't NULL session, skip this session */
 			if (session != s && session)
 				continue;
@@ -631,7 +629,7 @@ COMMAND(cmd_window) {
 		w->session = window_current->session;
 
 		if (!w->session && sessions)
-			w->session = (session_t*) sessions->data;
+			w->session = sessions;
 
 		if (!w->floating)
 			window_switch(w->id);
@@ -898,7 +896,7 @@ COMMAND(cmd_window) {
  */
 
 int window_session_cycle(window_t *w) {
-	list_t l;
+	session_t *s;
 	session_t *new_session = NULL;
 	int once = 0;
 	char *uid;
@@ -926,12 +924,10 @@ int window_session_cycle(window_t *w) {
 	}
 
 
-	/* find sessions->(...next..)->data == w->session */
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
-
+	/* find sessions->(...next..) == w->session */
+	for (s = sessions; s; s = s->next) {
 		if (w->session == s) {
-			l = l->next;
+			s = s->next;
 			break;
 		}
 	}
@@ -940,26 +936,24 @@ int window_session_cycle(window_t *w) {
 		uid = w->target;
 
 again:
-	if (l) {
-		list_t k;
+	if (s) {
+		session_t *k;
 
-		for (k = l; k; k = k->next) {
-			session_t *s = k->data;
-
-			if (s == w->session)
+		for (k = s; k; k = k->next) {
+			if (k == w->session)
 				break;
 
 			once = 1;
 
-			if (config_window_session_allow == 2 || !w->target || (config_window_session_allow != 0 && get_uid(s, uid))) {
-				new_session = s;
+			if (config_window_session_allow == 2 || !w->target || (config_window_session_allow != 0 && get_uid(k, uid))) {
+				new_session = k;
 				break;
 			}
 		}
 	} 
 		
-	if (!new_session && l != sessions) {
-		l = sessions;
+	if (!new_session && s != sessions) {
+		s = sessions;
 		goto again;
 	}
 

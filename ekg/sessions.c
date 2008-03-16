@@ -49,7 +49,7 @@
 
 #include "queries.h"
 
-list_t sessions = NULL;
+session_t *sessions = NULL;
 session_t *session_current = NULL;
 
 /**
@@ -68,9 +68,10 @@ session_t *session_current = NULL;
  */
 
 session_t *session_find_ptr(session_t *s) {
-	list_t l;
-	for (l = sessions; l; l = l->next) {
-		if (l->data == s)
+	session_t *sl;
+
+	for (sl = sessions; sl; sl = sl->next) {
+		if (sl == s)
 			return s;
 
 	}
@@ -91,14 +92,12 @@ session_t *session_find_ptr(session_t *s) {
 
 session_t *session_find(const char *uid)
 {
-	list_t l;
+	session_t *s;
 
 	if (!uid)
 		return NULL;
 
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
-
+	for (s = sessions; s; s = s->next) {
                 if (!xstrcasecmp(s->uid, uid) || (s->alias && !xstrcasecmp(s->alias, uid)))
 			return s;
 	}
@@ -161,7 +160,7 @@ session_t *session_add(const char *uid) {
 	s->lock_fd	= -1;
 #endif
 	
-	LIST_ADD_SORTED(&sessions, s, session_compare);
+	LIST_ADD_SORTED2(&sessions, s, session_compare);
 
 	/* XXX, wywalic sprawdzanie czy juz jest sesja? w koncu jak dodajemy sesje.. to moze chcemy sie od razu na nia przelaczyc? */
 	if (!window_current->session && (window_current->id == 0 || window_current->id == 1)) {
@@ -222,6 +221,31 @@ session_t *session_add(const char *uid) {
 	return s;
 }
 
+static LIST_FREE_ITEM(session_free_item, session_t *) {
+	list_t l;
+
+/* free _global_ session variables */
+	array_free_count(data->values, data->global_vars_count);
+
+/* free _local_ session variables */
+        for (l = data->local_vars; l; l = l->next) {
+                session_param_t *v = l->data;
+
+                xfree(v->key);
+		xfree(v->value);
+        }
+	list_destroy(data->local_vars, 1);
+
+	xfree(data->alias);
+	xfree(data->uid);
+	xfree(data->descr);
+	xfree(data->password);
+	xfree(data->last_descr);
+
+	/* free memory like sessions_free() do */
+	userlist_free(data);
+}
+
 /**
  * session_remove()
  *
@@ -254,8 +278,8 @@ session_t *session_add(const char *uid) {
 int session_remove(const char *uid)
 {
 	session_t *s;
-	char *tmp;
 	list_t l;
+	char *tmp;
 	int count;
 
 	if (!(s = session_find(uid)))
@@ -263,7 +287,7 @@ int session_remove(const char *uid)
 	if (s == session_current)
 		session_current = NULL;
 
-	count = list_count(sessions);
+	count = LIST_COUNT2(sessions);
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
@@ -321,28 +345,7 @@ int session_remove(const char *uid)
 	query_emit_id(NULL, SESSION_REMOVED, &tmp);
 	xfree(tmp);
 
-/* free _global_ session variables */
-	array_free_count(s->values, s->global_vars_count);
-
-/* free _local_ session variables */
-        for (l = s->local_vars; l; l = l->next) {
-                session_param_t *v = l->data;
-
-                xfree(v->key);
-		xfree(v->value);
-        }
-	list_destroy(s->local_vars, 1);
-
-	xfree(s->alias);
-	xfree(s->uid);
-	xfree(s->descr);
-	xfree(s->password);
-	xfree(s->last_descr);
-
-	/* free memory like sessions_free() do */
-	userlist_free(s);
-
-	list_remove(&sessions, s, 1);
+	LIST_REMOVE2(&sessions, s, session_free_item);
 	return 0;
 }
 
@@ -754,13 +757,10 @@ int session_read(const char *filename) {
 		plugin_t *p;
 
 		if (!in_autoexec) {
-			list_t l;
+			session_t *sf;
 
-			for (l = sessions; l; l = l->next) {
-				session_t *s = l->data;
-
-				command_exec(NULL, s, ("/disconnect"), 1);
-			}
+			for (sf = sessions; sf; sf = sf->next)
+				command_exec(NULL, sf, ("/disconnect"), 1);
 			sessions_free();
 			debug("	 flushed sessions\n");
 		}
@@ -833,7 +833,7 @@ int session_write()
 		return -1;
 
 	for (p = plugins; p; p = p->next) {
-		list_t ls;
+		session_t *s;
 		const char *tmp;
 
 		if (p->pclass != PLUGIN_PROTOCOL) continue; /* skip no protocol plugins */
@@ -849,8 +849,7 @@ int session_write()
 			continue;
                 }
 
-		for (ls = sessions; ls; ls = ls->next) {
-			session_t *s = ls->data;
+		for (s = sessions; s; s = s->next) {
 			int i;
 
 			if (s->plugin != p)
@@ -999,11 +998,7 @@ COMMAND(session_command)
 	session_t *s;
 
 	if (!params[0] || match_arg(params[0], 'l', ("list"), 2)) {
-		list_t l;
-
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
-
+		for (s = sessions; s; s = s->next) {
 			const char *descr = (s->connected) ? s->descr : NULL;
 			const int status = (s->connected) ? s->status : EKG_STATUS_NA;
 			char *tmp;
@@ -1025,10 +1020,7 @@ COMMAND(session_command)
 	}
 	
 	if (!xstrcasecmp(params[0], "--dump")) {
-		list_t l;
-		
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
+		for (s = sessions; s; s = s->next) {
 			plugin_t *p = s->plugin;
 			list_t lp;
 			int i;
@@ -1462,7 +1454,7 @@ COMMAND(session_command)
  * zwalnia wszystkie dostêpne sesje
  */
 void sessions_free() {
-	list_t old_sessions;
+	session_t *s;
 	list_t l;
 
         if (!sessions)
@@ -1498,37 +1490,14 @@ void sessions_free() {
 /* it's sessions, not 'l' because we emit SESSION_REMOVED, which might want to search over sessions list...
  * This bug was really time-wasting ;(
  */
-        for (old_sessions = sessions; sessions; sessions = sessions->next) {
-                session_t *s = sessions->data;
-		list_t lp;
-
-		if (!s)
-			continue;
-
+/* mg: I modified it so it'll first emit all the events, and then start to free everything
+ * That shouldn't be a problem, should it? */
+        for (s = sessions; s; s = s->next)
 		query_emit_id(s->plugin, SESSION_REMOVED, &(s->uid));	/* it notify only that plugin here, to free internal data. 
 									 * ui-plugin already removed.. other plugins @ quit.
 									 * shouldn't be aware about it. too...
 									 * XXX, think about it?
 									 */
-		/* free _global_ variables */
-		array_free_count(s->values, s->global_vars_count);
-
-		/* free _local_ variables */
-	        for (lp = s->local_vars; lp; lp = lp->next) {
-        	        session_param_t *v = lp->data;
-	
-	                xfree(v->key);
-	                xfree(v->value);
-	        }
-	        list_destroy(s->local_vars, 1);
-
-	        xfree(s->alias);
-	        xfree(s->uid);
-        	xfree(s->descr);
-	        xfree(s->password);
-		xfree(s->last_descr);
-		userlist_free(s);
-        }
 
 	for (l = windows; l; l = l->next) {
 		window_t *w = l->data;
@@ -1539,7 +1508,7 @@ void sessions_free() {
 		w->session = NULL;
 	}
 
-        list_destroy(old_sessions, 1);
+        LIST_DESTROY2(sessions, session_free_item);
         sessions = NULL;
 	session_current = NULL;
 	window_current->session = NULL;
@@ -1678,14 +1647,12 @@ void session_help(session_t *s, const char *name)
  * It should cleanup old locks and reinit new, if needed.
  */
 void changed_session_locks(const char *varname) {
-	list_t l;
+	session_t *s;
 
 #ifdef HAVE_FLOCK
 	if (config_session_locks != 1) {
 			/* unlock all files, close fds */
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
-
+		for (s = sessions; s; s = s->next) {
 			if (s->lock_fd != -1) {
 				flock(s->lock_fd, LOCK_UN);
 				close(s->lock_fd);
@@ -1697,9 +1664,7 @@ void changed_session_locks(const char *varname) {
 
 	if (!config_session_locks) {
 			/* unlink all lockfiles */
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
-
+		for (s = sessions; s; s = s->next) {
 			if (s->connected) { /* don't break locks of other copy of ekg2 */
 				const char *path = prepare_pathf("%s-lock", session_uid_get(s));
 				if (path)
@@ -1708,9 +1673,7 @@ void changed_session_locks(const char *varname) {
 		}
 	} else {
 			/* lock all connected sessions */
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
-
+		for (s = sessions; s; s = s->next) {
 			if (s->connected
 #ifdef HAVE_FLOCK
 					&& ((config_session_locks != 1) || (s->lock_fd == -1))

@@ -5,10 +5,10 @@ PROTOTYPES: ENABLE
 
 void sessions()
 PREINIT:
-        list_t l;
+        session_t *s;
 PPCODE:
-        for (l = sessions; l; l = l->next) {
-                XPUSHs(sv_2mortal(bless_session( (session_t *) l->data)));
+        for (s = sessions; s; s = s->next) {
+                XPUSHs(sv_2mortal(bless_session( s )));
         }
 
 Ekg2::Session session_add(char *name)

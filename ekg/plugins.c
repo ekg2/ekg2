@@ -509,8 +509,6 @@ int plugin_unregister(plugin_t *p)
 	 * ekg2 do SEGV.
 	 */
 
-	list_t l;
-
 	if (!p)
 		return -1;
 
@@ -553,13 +551,16 @@ int plugin_unregister(plugin_t *p)
 		}
 	}
 
-	for (l = sessions; l; ) {
-		session_t *s = l->data;
+	{
+		session_t *s;
 
-		l = l->next;
+		for (s = sessions; s; ) {
+			session_t *next = s->next;
 
-		if (s->plugin == p)
-			session_remove(s->uid);
+			if (s->plugin == p)
+				session_remove(s->uid);
+			s = next;
+		}
 	}
 
 	{

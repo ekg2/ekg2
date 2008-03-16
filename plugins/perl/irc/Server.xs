@@ -5,11 +5,11 @@ PROTOTYPES: ENABLE
 
 void servers()
 PREINIT:
-        list_t l;
+        session_t *s;
 PPCODE:
-        for (l = sessions; l; l = l->next) {
-		if (!xstrncasecmp( session_uid_get( (session_t *) l->data), IRC4, 4)) {
-            		XPUSHs(sv_2mortal(bless_server( (session_t *) l->data)));
+        for (s = sessions; s; s = s->next) {
+		if (!xstrncasecmp( session_uid_get( s ), IRC4, 4)) {
+            		XPUSHs(sv_2mortal(bless_server( s )));
 		}
         }
 	
