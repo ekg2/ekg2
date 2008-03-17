@@ -517,13 +517,14 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 		if (y < 0 || y >= n->lines_count)
 			return;
 
-		y = n->lines[y].backlog;
+		y = n->lines[n->start + y].backlog;
 	} else {
 		/* here old code */
+
 		if (y > n->backlog_size)
 			return;
 
-		y = n->backlog_size - y;
+		y = n->backlog_size - (n->start + y);
 	}
 
 	if (y >= n->backlog_size) {
