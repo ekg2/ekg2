@@ -1042,19 +1042,20 @@ void ncurses_redraw(window_t *w)
 	}
 	
 	werase(n->window);
-	wattrset(n->window, color_pair(COLOR_BLUE, COLOR_BLACK));
 
 	if (w->floating) {
 		const char *vertical_line_char	= format_find("contacts_vertical_line_char");
 		const char *horizontal_line_char= format_find("contacts_horizontal_line_char");
 		char vline_ch = vertical_line_char[0];
 		char hline_ch = horizontal_line_char[0];
+		int attr = color_pair(COLOR_BLUE, COLOR_BLACK);
 
 		if (!vline_ch || !hline_ch) {
 			vline_ch = ACS_VLINE;
 			hline_ch = ACS_HLINE;
-			wattrset(n->window, color_pair(COLOR_BLUE, COLOR_BLACK) | A_ALTCHARSET);
+			attr |= A_ALTCHARSET;
 		}
+		wattrset(n->window, attr);
 
 		if ((w->frames & WF_LEFT)) {
 			left++;
@@ -1122,9 +1123,9 @@ void ncurses_redraw(window_t *w)
 
 		if (dtrl && (n->backlog[l->backlog]->ts >= n->last_red_line)) {
 			draw_thin_red_line(w, cur_y);
-			if (n->lines_count-n->start == height) {
+			if ((n->lines_count-n->start == height - (top - n->margin_top)) ) {
 				/* we have stolen line for marker, so we scroll up */
-				wmove(n->window, top, 0);
+				wmove(n->window, n->margin_top, 0);
 				winsdelln(n->window,-1);
 			} else {
 				fix_trl = 1;
@@ -1193,8 +1194,8 @@ void ncurses_redraw(window_t *w)
 
 	if (dtrl && (n->start + y >= n->lines_count)) {
 		/* marker still not drawn and last line from backlog. */
-		if (y >= height) {
-			wmove(n->window, top, 0);
+		if (y >= height - (top - n->margin_top)) {
+			wmove(n->window, n->margin_top, 0);
 			winsdelln(n->window,-1);
 			y--;
 		}
