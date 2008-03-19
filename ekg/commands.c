@@ -4090,6 +4090,19 @@ static COMMAND(cmd_desc) {
 	return command_exec_format(NULL, session, quiet, ("/%s %s"), cmd, (params[0] ? params[0] : ""));
 }
 
+/* this command allows user to type /me in Jabber, GG and other not-overriding it protocols
+ * without need to prefix with space (to keep syntax the same as with overriding ones) */
+
+static COMMAND(cmd_me)
+{
+        if (!target) {
+		printq("invalid_params", name);
+                return -1;
+	}
+	
+	return command_exec_format(target, session, 0, " /me %s", params[0]);
+}
+
 /*
  * command_add_compare()
  *
@@ -4327,6 +4340,8 @@ void command_init()
 
 	command_add(NULL, ("list"), "CpuUsm", cmd_list, SESSION_MUSTHAS,
 	  "-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online");
+
+	command_add(NULL, ("me"), "?", cmd_me, SESSION_MUSTBECONNECTED, NULL);
 
         command_add(NULL, ("metacontact"), "mp m s uU ?", cmd_metacontact, 0,
           "-a --add -d --del -i --add-item -r --del-item -l --list");
