@@ -1261,7 +1261,7 @@ static int jabber_theme_init() {
 	format_add("jabber_muc_recv", 	"%B<%w%X%5%3%B>%n %4", 1);
 	format_add("jabber_muc_send",	"%B<%n%X%5%W%3%B>%n %4", 1);
 	format_add("jabber_muc_me", 	"%y*%X%5%3%B%n  %4", 1);
-	format_add("jabber_muc_me_sent","%Y*%X%5%W%3%B%n  %4", 1);
+	format_add("jabber_muc_me_sent","%Y*%X%5%3%B%n  %4", 1);
 
 	/* %1 - sessionname, %2 - mucjid %3 - text */
 	format_add("jabber_muc_notice", "%n-%P%2%n- %3", 1);
