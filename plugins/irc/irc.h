@@ -31,7 +31,7 @@
 
 /* irc_private->sopt */
 enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
-	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, SERVOPTS };
+	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, _005_IDCHAN, SERVOPTS };
 
 /* irc_private_t->casemapping values */
 enum { IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT, IRC_CASEMAPPING_COUNT };
@@ -145,6 +145,7 @@ enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 
 int irc_parse_line(session_t *s, char *buf, int fd);	/* misc.c */
 
+extern int irc_config_experimental_chan_name_clean;
 #endif /* __EKG_PLUGINS_IRC_IRC_H */
 
 /*

@@ -50,7 +50,7 @@
 #include "input.h"
 #include "autoacts.h"
 
-char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES", "CHANLIMIT", "NICKLEN" };
+char *sopt_keys[SERVOPTS] = { NULL, NULL, "PREFIX", "CHANTYPES", "CHANMODES", "MODES", "CHANLIMIT", "NICKLEN", "IDCHAN" };
 char sopt_casemapping[] = "CASEMAPPING";
 char *sopt_casemapping_values[IRC_CASEMAPPING_COUNT] = { "ascii", "rfc1459", "strict-rfc1459" };
 
@@ -688,6 +688,85 @@ IRC_COMMAND(irc_c_error)
 	return 0;
 }
 
+static void clean_channel_name(session_t *session, char *channel)
+{
+	char chpfx;
+	int skip;
+
+	if (!irc_config_experimental_chan_name_clean)
+		return;
+
+	irc_private_t *j = irc_private(session);
+	char *idchan = SOP(_005_IDCHAN);
+
+	if (!idchan)
+		return;
+
+	while (*idchan) {
+		chpfx = *idchan;
+
+		if (idchan[1] != ':')		/* ?WO? Check it only when IDCHAN is set & dot't check here */
+			return;
+
+		skip = strtoul(idchan+2, &idchan, 10);
+		if (*idchan == ',')
+			idchan++;
+		else if (*idchan)		/* ?WO? Again: Check it only when IDCHAN is set & dot't check here */
+			return;
+
+		if (chpfx != channel[0])
+			continue;
+
+		if (strlen(channel) < skip)
+			return;
+
+		strcpy(channel + 1, channel + skip + 1);
+	}
+}
+
+static void clean_channel_names_list(session_t *session, char *channels)
+{
+	char *dest, *src, *next, *p;
+	int l;
+
+	if (!irc_config_experimental_chan_name_clean)
+		return;
+
+	irc_private_t *j = irc_private(session);
+	const char *idchan = SOP(_005_IDCHAN);
+
+	if (!idchan)				/* ?WO? Faster then check in clean_channel_name() ? */
+		return;
+
+	char *chmode = SOP(_005_PREFIX);
+
+	if ( ( p = strchr(chmode,')') ) )	/* ?WO? Would be nice to have '@%+' not '(ohv)@%+' */
+		chmode = ++p;
+	
+	dest = src = channels;
+	while ( src && *src ) {
+		if ((*src == ' ') || (strchr(chmode, *src))) {
+			*dest++ = *src++;
+			continue;
+		}
+		p = src;
+
+		next = strchr(src, ' ');
+
+		if (next)
+			*next = '\0';
+
+		clean_channel_name(session, p);
+		l = strlen(p);
+		strcpy(dest, p);
+		dest += l;
+		src = next;
+		if (next)
+			*next=' ';
+	}
+	*dest='\0';
+}
+
 IRC_COMMAND(irc_c_whois)
 {
 	char		*t = saprintf("%s%s", IRC4, param[3]), *dest = NULL;
@@ -705,6 +784,8 @@ IRC_COMMAND(irc_c_whois)
 			col[i] = irc_ircoldcolstr_to_ekgcolstr(s,
 					param[3+i]?OMITCOLON(param[3+i]):NULL,1);
 
+	if (irccommands[ecode].num == 319)
+		clean_channel_names_list(s, col[1]);
 		/*
 		if (irccommands[ecode].future & IRC_WHOERR)
 			print_window(dest, s, 0, "IRC_WHOERROR", session_name(s), col[0],  col[1]);

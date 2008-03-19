@@ -139,6 +139,7 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
       char ***v, int pr, int checkchan);
 
 static char *irc_config_default_access_groups;
+int irc_config_experimental_chan_name_clean;
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
@@ -2282,6 +2283,7 @@ EXPORT int irc_plugin_init(int prio)
 	commands_lock = NULL;
 
 	variable_add(&irc_plugin, "access_groups", VAR_STR, 1, &irc_config_default_access_groups, NULL, NULL, NULL);
+	variable_add(&irc_plugin, "experimental_chan_name_clean", VAR_BOOL, 1, &irc_config_experimental_chan_name_clean, NULL, NULL, NULL);
 
 	return 0;
 }
