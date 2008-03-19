@@ -1006,11 +1006,12 @@ JABBER_HANDLER(jabber_handle_message) {
 
 		/* jesli (bsent != 0) wtedy mamy do czynienia z backlogiem */
 
-			class	|= EKG_NO_THEMEBIT;
+			class	|= EKG_NO_THEMEBIT;	/* XXX: maybe some core-side support instead of forcing our themes? */
 			ekgbeep	= EKG_NO_BEEP;
 
 			if (nick) {	/* XXX !!! */
 				char attr[2] = { ' ', 0 };
+				const int is_me = !xstrncmp(text, "/me ", 4);
 
 				if ((u = userlist_find_u(&(c->participants), nick))) {
 					jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
@@ -1027,8 +1028,10 @@ JABBER_HANDLER(jabber_handle_message) {
 
 				} else debug_error("[MUC, MESSAGE] userlist_find_u(%s) failed\n", nick);
 
-				formatted = format_string(format_find(isour ? "jabber_muc_send" : "jabber_muc_recv"),
-						session_name(s), uid2, nick, text, attr);
+				formatted = format_string(format_find(
+							is_me ? ( isour ? "jabber_muc_me_sent" : "jabber_muc_me" )
+							      : ( isour ? "jabber_muc_send" : "jabber_muc_recv")),
+						session_name(s), uid2, nick, is_me ? text+4 : text, attr);
 			} else {
 				formatted = format_string(format_find("jabber_muc_notice"), session_name(s), uid+5, text);
 			}

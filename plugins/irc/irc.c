@@ -2338,10 +2338,10 @@ static int irc_theme_init()
 	format_add("irc_quit",		_("%> %Y%2%n has quit irc (%4)\n"), 1);
 	format_add("irc_split",		"%> ", 1);
 	format_add("irc_unknown_ctcp",	_("%> %Y%2%n sent unknown CTCP %3: (%4)\n"), 1);
-	format_add("irc_ctcp_action_y_pub",	"%> %y%e* %2%n %4\n", 1);
-	format_add("irc_ctcp_action_y",		"%> %Y%e* %2%n %4\n", 1);
-	format_add("irc_ctcp_action_pub",	"%> %y%h* %2%n %5\n", 1);
-	format_add("irc_ctcp_action",		"%> %Y%h* %2%n %5\n", 1);
+	format_add("irc_ctcp_action_y_pub",	"%y%e* %2%n  %4\n", 1);
+	format_add("irc_ctcp_action_y",		"%Y%e* %2%n  %4\n", 1);
+	format_add("irc_ctcp_action_pub",	"%y%h* %2%n  %5\n", 1);
+	format_add("irc_ctcp_action",		"%Y%h* %2%n  %5\n", 1);
 	format_add("irc_ctcp_request_pub",	_("%> %Y%2%n requested ctcp %5 from %4\n"), 1);
 	format_add("irc_ctcp_request",		_("%> %Y%2%n requested ctcp %5\n"), 1);
 	format_add("irc_ctcp_reply",		_("%> %Y%2%n CTCP reply from %3: %5\n"), 1);
