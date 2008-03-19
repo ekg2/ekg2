@@ -484,13 +484,13 @@ notify_plugins:
  */
 char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure)
 {
-	char *class_str, timestamp[100], *text = xstrdup(__text), *emotted = NULL;
+	char *class_str, timestamp[100], *text = xstrdup(__text);
 	char *securestr = NULL;
 	const char *target = sender, *user;
         time_t now;
 	session_t *s = session_find(session);
         struct conference *c = NULL;
-	int empty_theme = 0;
+	int empty_theme = 0, is_me = 0;
 
 	if (class & EKG_NO_THEMEBIT) {
 		empty_theme = 1;
@@ -500,11 +500,19 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	switch (class) {
 		case EKG_MSGCLASS_SENT:
 		case EKG_MSGCLASS_SENT_CHAT:
-			class_str = "sent";
+			if (/*config_display_me && */ !xstrncmp(text, "/me ", 4)) {
+				class_str = "sent_me";
+				is_me = 1;
+			} else
+				class_str = "sent";
 			target = (rcpts) ? rcpts[0] : NULL;
 			break;
 		case EKG_MSGCLASS_CHAT:
-			class_str = "chat";
+			if (/*config_display_me && */ !xstrncmp(text, "/me ", 4)) {
+				class_str = "chat_me";
+				is_me = 1;
+			} else
+				class_str = "chat";
 			break;
 		case EKG_MSGCLASS_SYSTEM:
 			class_str = "system";
@@ -654,13 +662,16 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (class == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
 			play_sound(config_sound_sysmsg_file);
 	
-        if (config_last & 3 && xstrcmp(class_str, "sent")) 
+        if (config_last & 3 && (class < EKG_MSGCLASS_SENT))
 	        last_add(0, sender, now, sent, text);
 	
 	user = (class < EKG_MSGCLASS_SENT) ? format_user(s, sender) : session_format_n(sender);
 
-	if (config_emoticons && text)
-		emotted = emoticon_expand(text);
+	if (config_emoticons && text) {
+		char *tmp = emoticon_expand(text);
+		xfree(text);
+		text = tmp;
+	}
 
 	if (empty_theme)
 		class_str = "empty";
@@ -672,18 +683,19 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		((class == EKG_MSGCLASS_LOG || class == EKG_MSGCLASS_SENT_LOG) ? 2
 		: (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT)
 		|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))),
-		class_str, 
-		user, 
-		timestamp, 
-		(emotted) ? emotted : text, 
+		class_str,
+		user,
+		timestamp,
+		(is_me ? text+4 : text),
 					/* XXX, get_uid() get_nickname() */
-		(class >= EKG_MSGCLASS_SENT ? session_alias_uid(s) : get_nickname(s, sender)), 
+		(class >= EKG_MSGCLASS_SENT ?
+			(is_me && config_me_nick ? config_me_nick : session_alias_uid(s))
+			: get_nickname(s, sender)),
 		(class >= EKG_MSGCLASS_SENT ? s->uid : get_uid(s, sender)), 
 		(secure ? securestr : ""));
 
 	xfree(text);
 	xfree(securestr);
-	xfree(emotted);
 	return xstrdup(target);
 }
 

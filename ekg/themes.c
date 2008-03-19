@@ -1449,12 +1449,14 @@ void theme_init()
 	format_add("confrence,speech", _("message from %1: %3."), 1);
 
 	format_add("chat", "%c.-- %n%1 %c%2%n%6%n%c--- -- -%n\n%c|%n %|%3%n\n%|%c`----- ---- --- -- -%n\n", 1);
+	format_add("chat_me", "%) %|%C%4%n %3\n", 1);
 	format_add("chat_timestamp", "(%Y-%m-%d %H:%M) ", 1);
 	format_add("chat_timestamp_today", "(%H:%M) ", 1);
 	format_add("chat_timestamp_now", "", 1);
 	format_add("chat,speech", _("message from %1: %3."), 1);
 
 	format_add("sent", "%b.-- %n%1 %c%2%n%6%n%b--- -- -%n\n%b|%n %|%3%n\n%|%b`----- ---- --- -- -%n\n", 1);
+	format_add("sent_me", "%> %|%G%4%n %3\n", 1);
 	format_add("sent_timestamp", "(%Y-%m-%d %H:%M) ", 1);
 	format_add("sent_timestamp_today", "(%H:%M) ", 1);
 	format_add("sent_timestamp_now", "", 1);
