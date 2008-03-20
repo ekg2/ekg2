@@ -784,8 +784,8 @@ IRC_COMMAND(irc_c_whois)
 			col[i] = irc_ircoldcolstr_to_ekgcolstr(s,
 					param[3+i]?OMITCOLON(param[3+i]):NULL,1);
 
-	if (irccommands[ecode].num == 319)
-		clean_channel_names_list(s, col[1]);
+		if (irccommands[ecode].num == 319)
+			clean_channel_names_list(s, col[1]);
 		/*
 		if (irccommands[ecode].future & IRC_WHOERR)
 			print_window(dest, s, 0, "IRC_WHOERROR", session_name(s), col[0],  col[1]);

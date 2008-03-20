@@ -1576,9 +1576,9 @@ static COMMAND(irc_command_names) {
 	string_free(nickpad, 1);
 
 	if (count)
-		printq("none", buf->str);
+		print_window(channame, session, 0, "none", buf->str);
 
-	printq("none2", "");
+	print_window(channame, session, 0, "none2", "");
 #define plvl(x) lvl_total[x] ? itoa(lvl_total[x]) : "0"
 	if (smlen > 3) /* has halfops */
 		print_window(channame, session, 0, "IRC_NAMES_TOTAL_H", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2), plvl(3), plvl(4));
