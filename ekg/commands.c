@@ -4097,7 +4097,7 @@ static COMMAND(cmd_me)
                 return -1;
 	}
 	
-	return command_exec_format(target, session, 0, " /me %s", params[0]);
+	return command_exec_format(target, session, 0, "/ /me %s", params[0]);
 }
 
 /*
