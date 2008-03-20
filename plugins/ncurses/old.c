@@ -357,7 +357,7 @@ void ncurses_spellcheck_init(void) {
 		return;
 	}
 
-	wcs_print("aspell_init");
+	print("aspell_init");
 	
         if (spell_checker)	{ delete_aspell_speller(spell_checker);	spell_checker = NULL; }
 	if (!spell_config) 	spell_config = new_aspell_config();
@@ -375,7 +375,7 @@ void ncurses_spellcheck_init(void) {
 		spell_config = NULL;
 	} else {
 		spell_checker = to_aspell_speller(possible_err);
-		wcs_print("aspell_init_success");
+		print("aspell_init_success");
 	}
 }
 #endif
