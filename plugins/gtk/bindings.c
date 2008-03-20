@@ -195,15 +195,13 @@ gboolean key_handle_key_press(GtkWidget *wid, GdkEventKey * evt, window_t *sess)
 	int keyval = evt->keyval;
 	int mod, n;
 	int was_complete = 0;
-	list_t l;
+	window_t *w;
 
 	{
 		sess = NULL;
 
 		/* where did this event come from? */
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (gtk_private_ui(w)->input_box == wid) {
 				sess = w;
 				if (gtk_private_ui(w)->is_tab)

@@ -215,12 +215,10 @@ static QUERY(readline_ui_window_print) {
 static QUERY(readline_variable_changed) {
 	char *name = *(va_arg(ap, char**));
 	if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
-		list_t l;
+		window_t *w;
 		int id = 1;
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
+		for (w = windows; w; w = w->next)
 			w->id = id++;
-		}
 	}
 	return 0;
 }
@@ -262,7 +260,7 @@ static WATCHER(readline_watch_stdin) {
 EXPORT int readline_plugin_init(int prio) {
 	char c;
 	struct sigaction sa;
-	list_t l;
+	window_t *w;
 	int is_UI = 0;
 
 	PLUGIN_CHECK_VER("readline");
@@ -289,10 +287,8 @@ EXPORT int readline_plugin_init(int prio) {
 
 	watch_add(&readline_plugin, 0, WATCH_READ, readline_watch_stdin, NULL);
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next)
 		w->private = xmalloc(sizeof(readline_window_t));
-	}
 	
 	window_refresh();
 	rl_initialize();

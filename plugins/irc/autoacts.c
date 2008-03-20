@@ -147,7 +147,6 @@ static TIMER(irc_autorejoin_timer) {
 
 int irc_autorejoin(session_t *s, int when, char *chan) {
 	irc_private_t *j;
-	list_t l;
 	string_t st;
 	window_t *w;
 	char *chanprefix;
@@ -166,9 +165,7 @@ int irc_autorejoin(session_t *s, int when, char *chan) {
 	switch (when) {
 		case IRC_REJOIN_CONNECT:
 			st = string_init(NULL);
-			for (l = windows; l; l = l->next) {
-				w = l->data;
-
+			for (w = windows; w; w = w->next) {
 				if (!w->target || w->session != s)			/* check if sessions match and has w->target */
 					continue;
 

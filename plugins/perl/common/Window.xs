@@ -28,10 +28,10 @@ OUTPUT:
 
 void windows()
 PREINIT:
-        list_t l;
+        window_t *w;
 PPCODE:
-        for (l = windows; l; l = l->next) {
-                XPUSHs(sv_2mortal(bless_window( (window_t *) l->data)));
+        for (w = windows; w; w = w->next) {
+                XPUSHs(sv_2mortal(bless_window( w )));
         }
 
 #####################

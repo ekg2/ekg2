@@ -298,14 +298,12 @@ void mg_set_access_icon(gtk_window_ui_t *gui, GdkPixbuf *pix, gboolean away) {
 #endif
 
 static gboolean mg_inputbox_focus(GtkWidget *widget, GdkEventFocus *event, gtk_window_ui_t *gui) {
-	list_t l;
+	window_t *w;
 
 	if (gui->is_tab)
 		return FALSE;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		if (gtk_private(w)->gui == gui) {
 #warning "window_switch() XXX"
 			window_switch(w->id);
@@ -342,11 +340,9 @@ void mg_inputbox_cb(GtkWidget *igad, gtk_window_ui_t *gui) {
 	if (gui->is_tab) {
 		sess = window_current;
 	} else {
-		list_t l;
+		window_t *w;
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (gtk_private_ui(w) == gui) {
 				sess = w;
 				break;
@@ -2062,13 +2058,11 @@ static void mg_create_tabwindow(window_t *sess) {
 
 void mg_apply_setup(void) {
 	int done_main = FALSE;
-	list_t l;
+	window_t *w;
 
 	mg_create_tab_colors();
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		gtk_xtext_set_time_stamp(gtk_private(w)->buffer, config_timestamp_show);
 		((xtext_buffer *) gtk_private(w)->buffer)->needs_recalc = TRUE;
 
@@ -2162,11 +2156,9 @@ fe_dlgbuttons_update(window_t *sess)
 #endif
 
 void fe_set_away(session_t * serv) {
-	list_t l;
+	window_t *w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		if (w->session == serv) {
 #if DARK
 			if (!sess->gui->is_tab || sess == current_tab) {

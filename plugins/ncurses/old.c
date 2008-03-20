@@ -281,12 +281,10 @@ void ncurses_window_gone(window_t *w) {
 QUERY(ncurses_session_disconnect_handler) {
 	const char	*session	= *va_arg(ap, const char **);
 	const session_t	*s		= session_find(session);
-	list_t		l;
+	window_t	*w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
-		if (!w || w->session != s)
+	for (w = windows; w; w = w->next) {
+		if (w->session != s)
 			continue;
 
 		ncurses_window_gone(w);
@@ -753,7 +751,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 void ncurses_resize()
 {
 	int left, right, top, bottom, width, height;
-	list_t l;
+	window_t *w;
 
 	left = 0;
 	right = stdscr->_maxx + 1;
@@ -767,8 +765,7 @@ void ncurses_resize()
 	if (height < 1)
 		height = 1;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->private;
 
 		if (!n)
@@ -839,8 +836,7 @@ void ncurses_resize()
 	if (top < 0)			top = 0;
 	if (top > stdscr->_maxy)	top = stdscr->_maxy;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->private;
 		int delta;
 
@@ -962,10 +958,7 @@ COMMAND(cmd_mark) {
 	ncurses_window_t *n;
 
 	if (match_arg(params[0], 'a', ("all"), 2)) {
-		list_t l;
-
-		for (l = windows; l; l = l->next) {
-			w = l->data;
+		for (w = windows; w; w = w->next) {
 			if (!w->floating && (w->act != 2)) {
 				n = w->private;
 				n->last_red_line = time(0);
@@ -1260,7 +1253,7 @@ void ncurses_clear(window_t *w, int full)
  */
 void ncurses_refresh()
 {
-	list_t l;
+	window_t *w;
 
 	if (window_current && window_current->private /* !window_current->floating */) {
 		ncurses_window_t *n = window_current->private;
@@ -1272,8 +1265,7 @@ void ncurses_refresh()
 			wnoutrefresh(n->window);
 	}
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->private;
 
 		if (!w->floating || w->hide)
@@ -1619,11 +1611,10 @@ void update_statusbar(int commit)
 	{
 		string_t s = string_init("");
 		int act = 0;
-		list_t l;
+		window_t *w;
 
-		for (l = windows; l; l = l->next) {
+		for (w = windows; w; w = w->next) {
 			char tmp[33];
-			window_t *w = l->data;
 
 			if ((!w->act && !w->in_typing) || !w->id || (w == window_current)) 
 				continue;
@@ -1922,7 +1913,7 @@ void ncurses_init()
 void ncurses_deinit()
 {
 	static int done = 0;
-	list_t l;
+	window_t *w;
 	int i;
 
 #ifdef SIGWINCH
@@ -1933,12 +1924,12 @@ void ncurses_deinit()
 		close(winch_pipe[1]);
 	}
 
-	for (l = windows; l; ) {
-		window_t *w = l->data;
-
-		l = l->next;
+	for (w = windows; w; ) {
+		window_t *next = w;
 
 		ncurses_window_kill(w);
+
+		w = next;
 	}
 
 	tcsetattr(0, TCSADRAIN, &old_tio);
@@ -2673,13 +2664,12 @@ void header_statusbar_resize(const char *dummy)
  */
 void changed_backlog_size(const char *var)
 {
-	list_t l;
+	window_t *w;
 
 	if (config_backlog_size < ncurses_screen_height)
 		config_backlog_size = ncurses_screen_height;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->private;
 		int i;
 				
@@ -2807,7 +2797,7 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 
 int ncurses_lastlog_update(window_t *w) {
 	ncurses_window_t *n;
-	list_t l;
+	window_t *ww;
 	int retval = 0;
 
 	int old_start;
@@ -2831,8 +2821,7 @@ int ncurses_lastlog_update(window_t *w) {
 
 	if (config_lastlog_display_all) {
 /* 3rd, other windows? */
-		for (l = windows; l; l = l->next) {
-			window_t *ww = l->data;
+		for (ww = windows; ww; w = ww->next) {
 			if (ww == window_current) continue;
 			if (ww == w) continue; /* ;p */
 

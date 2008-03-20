@@ -268,30 +268,25 @@ PyObject *ekg_window_next(ekg_windowObj * self, PyObject * pyargs)
 PyObject *ekg_window_prev(ekg_windowObj * self, PyObject * pyargs)
 {
         int id;
-        window_t *w = NULL;
-	list_t l;
+        window_t *w = NULL, *wnd;
 
         id = self->w->id;
 
         if (id < 2 || !(w = window_exist(id-1))) {
-                for (l = windows; l; l = l->next) {
-                        window_t *wnd = l->data;
-
+                for (wnd = windows; wnd; wnd = wnd->next) {
                         if (wnd->floating)
                                 continue;
 
-                        if (wnd == window_current && l != windows)
+                        if (wnd == window_current && wnd != windows)
                                 break;
 
-                        w = l->data;
+                        w = wnd;
                 }
 
                 if (!w->id) {
-                        for (l = windows; l; l = l->next) {
-                                window_t *wnd = l->data;
-
+                        for (wnd = windows; wnd; wnd = wnd->next) {
                                 if (!wnd->floating)
-                                        w = l->data;
+                                        w = wnd;
                         }
                 }
         }

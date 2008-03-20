@@ -257,7 +257,7 @@ const char *current_prompt()
 {
 	static char buf[80];
 	const char *prompt = buf;
-	int count = list_count(windows);
+	int count = LIST_COUNT2(windows);
 	char *tmp, *act = window_activity();
 
         if (window_current->target) {
@@ -494,10 +494,9 @@ char *window_activity()
 {
 	string_t s = string_init("");
 	int first = 1;
-	list_t l;
+	window_t *w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next) {
 /* we cannot make it colorful with default formats because grey on black doesn't look so good... */
 		if (!w->act || !w->id) 
 			continue;

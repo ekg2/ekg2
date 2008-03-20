@@ -108,12 +108,10 @@ void protocol_init() {
 static QUERY(protocol_userlist_changed) {
 	char **p1 = va_arg(ap, char**);
 	char **p2 = va_arg(ap, char**);
+	
+	window_t *w;
 
-	list_t l;
-
-        for (l = windows; l; l = l->next) {
-       		window_t *w = l->data;
-
+        for (w = windows; w; w = w->next) {
 		if (!w->target || xstrcasecmp(w->target, *p1))
 			continue;
 

@@ -388,10 +388,9 @@ static void logs_changed_raw(const char *var) {
 }
 
 static QUERY(logs_postinit) {
-	list_t w;
-	for (w = windows; w; w = w->next) {
-		logs_window_new((window_t *) w->data);
-	}
+	window_t *w;
+	for (w = windows; w; w = w->next)
+		logs_window_new(w);
 	return 0;
 }
 

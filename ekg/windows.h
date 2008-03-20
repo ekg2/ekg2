@@ -44,7 +44,9 @@ typedef struct {
 	char *expression;		/* expression */
 } window_lastlog_t;
 
-typedef struct {
+typedef struct window {
+	struct window *next;
+
 	unsigned short id;		/* numer okna */
 	char *target;			/* nick query albo inna nazwa albo NULL */
 	session_t *session;		/* której sesji dotyczy okno */
@@ -79,7 +81,7 @@ typedef struct {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-extern list_t windows;
+extern window_t *windows;
 extern window_t *window_debug;
 extern window_t *window_status;
 extern window_t *window_current;

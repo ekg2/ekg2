@@ -584,15 +584,14 @@ PyObject *ekg_cmd_window_get(PyObject * self, PyObject * pyargs)
 PyObject *ekg_cmd_windows(PyObject * self, PyObject * pyargs)
 {
         PyObject *list;
-        list_t l;
-        int len = list_count(windows);
+        window_t *w;
+        int len = LIST_COUNT2(windows);
 
         list = PyList_New(len);
         len = 0;
 
-        for (l = windows; l; l = l->next) {
-                window_t *p = l->data;
-                PyList_SetItem(list, len, python_build_window_w(p));
+        for (w = windows; w; w = w->next) {
+                PyList_SetItem(list, len, python_build_window_w(w));
                 len++;
         }
         Py_INCREF(list);

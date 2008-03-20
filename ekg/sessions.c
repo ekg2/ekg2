@@ -142,7 +142,7 @@ session_t *session_add(const char *uid) {
 	plugin_t *pl;
 
 	session_t *s;
-	list_t l;
+	window_t *w;
 
 	if (!uid)
 		return NULL;
@@ -199,9 +199,7 @@ session_t *session_add(const char *uid) {
 
 	query_emit_id(NULL, SESSION_ADDED, &(s->uid));		/* It's read-only query, XXX */
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 /* previous version was unacceptable. So we do now this trick:
  * 	userlist (if plugin has one) have been already read by SESSION_ADDED emit. so now, 
  * 	we check throught get_uid() if this plugin can handle it.. [userlist must be read, if we have nosession window 
@@ -278,7 +276,7 @@ static LIST_FREE_ITEM(session_free_item, session_t *) {
 int session_remove(const char *uid)
 {
 	session_t *s;
-	list_t l;
+	window_t *w;
 	char *tmp;
 	int count;
 
@@ -289,10 +287,8 @@ int session_remove(const char *uid)
 
 	count = LIST_COUNT2(sessions);
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
-		if (w && w->session == s) {
+	for (w = windows; w; w = w->next) {
+		if (w->session == s) {
 			if (count > 1)
 				window_session_cycle(w);
 			else
@@ -1455,7 +1451,6 @@ COMMAND(session_command)
  */
 void sessions_free() {
 	session_t *s;
-	list_t l;
 
         if (!sessions)
                 return;
@@ -1499,13 +1494,11 @@ void sessions_free() {
 									 * XXX, think about it?
 									 */
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	{
+		window_t *w;
 
-		if (!w)
-			continue;
-
-		w->session = NULL;
+		for (w = windows; w; w = w->next)
+			w->session = NULL;
 	}
 
         LIST_DESTROY2(sessions, session_free_item);

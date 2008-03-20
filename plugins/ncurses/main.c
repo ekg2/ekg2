@@ -340,12 +340,10 @@ static QUERY(ncurses_variable_changed)
 	char *name = *(va_arg(ap, char**));
 
         if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
-	        list_t l;
+	        window_t *w;
                 int id = 2;
 
-                for (l = windows; l; l = l->next) {
-	                window_t *w = l->data;
-                               
+                for (w = windows; w; w = w->next) {
 			if (w->floating)
                         	continue;
 
@@ -353,13 +351,10 @@ static QUERY(ncurses_variable_changed)
 	                        w->id = id++;
                 }
         } else if (!xstrcasecmp(name, "timestamp") || !xstrcasecmp(name, "ncurses:margin_size")) {
-       		list_t l;
+       		window_t *w;
 
-                for (l = windows; l; l = l->next) {
-	                window_t *w = l->data;
-
+                for (w = windows; w; w = w->next)
 	                ncurses_backlog_split(w, 1, 0);
-                }
 
                 ncurses_resize();
         }
@@ -374,10 +369,9 @@ static QUERY(ncurses_conference_renamed)
 {
 	char *oldname = *(va_arg(ap, char**));
 	char *newname = *(va_arg(ap, char**));
-        list_t l;
+        window_t *w;
 
-        for (l = windows; l; l = l->next) {
-	        window_t *w = l->data;
+        for (w = windows; w; w = w->next) {
                 ncurses_window_t *n = w->private;
 
 	        if (w->target && !xstrcasecmp(w->target, oldname)) {
@@ -592,7 +586,7 @@ static void ncurses_typing_retimer(const char *dummy) {
 
 EXPORT int ncurses_plugin_init(int prio)
 {
-	list_t l;
+	window_t *w;
 	int is_UI = 0;
 	va_list dummy;
 	char *termtype = getenv("TERM");
@@ -712,8 +706,8 @@ EXPORT int ncurses_plugin_init(int prio)
 	header_statusbar_resize(NULL);
 	ncurses_typing_retimer(NULL);
 
-	for (l = windows; l; l = l->next)
-		ncurses_window_new(l->data);
+	for (w = windows; w; w = w->next)
+		ncurses_window_new(w);
 
 	ncurses_initialized = 1;
 

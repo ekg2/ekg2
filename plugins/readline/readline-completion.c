@@ -422,17 +422,16 @@ GENERATOR(blocked_uin) {
 }
 
 GENERATOR(window) {
-	static list_t el;
+	static window_t *w;
 	static int len;
 
 	if (!state) {
-		el = windows;
+		w = windows;
 		len = xstrlen(text);
 	}
 
-	while (el) {
-		window_t *w = el->data;
-		el = el->next;
+	while (w) {
+		w = w->next;
 
 		if (!xstrncmp(text, w->target, len))
 			return xstrdup(w->target);

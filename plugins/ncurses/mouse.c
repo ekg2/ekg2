@@ -90,7 +90,7 @@ static void ncurses_mouse_move_handler(int x, int y)
  */
 void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 {
-	list_t l;
+	window_t *w;
 #if 0
 	char *tmp;
 
@@ -132,21 +132,16 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 
 	/* debug("stalo sie: %s x: %d y: %d\n", tmp, x, y); */
 #endif
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-		
-		if (!w)
-			continue;
-
+	for (w = windows; w; w = w->next) {
 		if (x > w->left && x <= w->left + w->width && y > w->top && y <= w->top + w->height) {
 			ncurses_window_t *n;
 			if (w->id == 0) { /* if we are reporting status window it means that we clicked 
 					 * on window_current and some other functions should be called */
 				ncurses_main_window_mouse_handler(x - w->left, y - w->top, mouse_flag);
 				break;
-			} else
-				n = w->private;
-
+			}
+			
+			n = w->private;
 			/* debug("window id:%d y %d height %d\n", w->id, w->top, w->height); */
 			if (n->handle_mouse)
 				n->handle_mouse(x - w->left, y - w->top, mouse_flag);
@@ -154,7 +149,7 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 		}
 	}
 
-	if (!l) { /* special screen sections */
+	if (!w) { /* special screen sections */
 			/* input */
 		if (y > stdscr->_maxy - input_size + 1) {
 			y -= (stdscr->_maxy - input_size + 2);

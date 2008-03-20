@@ -802,11 +802,9 @@ void print_window(const char *target, session_t *session, int separate, const ch
 
 	/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
 		if ((config_make_window & 3) == 1) {
-			list_t l;
+			window_t *wa;
 		
-			for (l = windows; l; l = l->next) {
-				window_t *wa = l->data;
-
+			for (wa = windows; wa; wa = wa->next) {
 				if (!wa->target && wa->id > 1) {
 					w = wa;
 

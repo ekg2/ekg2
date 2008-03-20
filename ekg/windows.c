@@ -45,7 +45,7 @@
 
 int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
 
-list_t windows = NULL;			/* lista okien */
+window_t *windows = NULL;		/* lista okien */
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
 
 window_t *window_current = NULL;	/* okno aktualne, zawsze na co¶ musi wskazywaæ! */
@@ -72,9 +72,10 @@ window_lastlog_t *lastlog_current = NULL;
  */
 
 window_t *window_find_ptr(window_t *w) {
-	list_t l;
-	for (l = windows; l; l = l->next) {
-		if (w == l->data)
+	window_t *v;
+
+	for (v = windows; v; v = v->next) {
+		if (w == v)
 			return w;
 	}
 	return NULL;
@@ -100,7 +101,7 @@ window_t *window_find_ptr(window_t *w) {
 
 window_t *window_find_sa(session_t *session, const char *target, int session_null_means_no_session) {
 	userlist_t *u;
-	list_t l;
+	window_t *w;
 
 	if (!target || !xstrcasecmp(target, "__current"))
 		return window_current->id ? window_current : window_status;
@@ -111,9 +112,7 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 	if (!xstrcasecmp(target, "__debug"))
 		return window_debug;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		/* if targets match, and (sessions match or [no session was specified, and it doesn't matter to which session window belongs to]) */
 		if (w->target && ((session == w->session) || (!session && !session_null_means_no_session)) && !xstrcasecmp(target, w->target))
 			return w;
@@ -134,9 +133,7 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 			if (!(u = userlist_find(s, target))) 
 				continue;
 
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
-
+			for (w = windows; w; w = w->next) {
 				/* if there's target, and sessions match [no session specified, or sessions equal, check if entry (from userlist) match */
 				if ((!session || session == w->session) && w->target) {
 					if (u->nickname && !xstrcasecmp(u->nickname, w->target))
@@ -184,13 +181,11 @@ window_t *window_find(const char *target) {
  *  - id - numer okna
  */
 void window_switch(int id) {
-	list_t l;
+	window_t *w;
 	userlist_t *u;
 	int ul_refresh = 0;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		if (id != w->id || w->floating)
 			continue;
 
@@ -287,17 +282,16 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 
 	/* if no new_id given, than let's search for window id.. */
 	if (new_id == 0) {
-		list_t l	= windows;	/* set to the beginning of the window list */
+		window_t *v	= windows;	/* set to the beginning of the window list */
 		int id		= 2;		/* [XXX] set to first valid id? */
 		
 		/* XXX, after it, we exactly know where to put new window to list, without list_add_sorted() we can do list_add_beggining() 
 		 * but it'll ugly code. So not doing it :) */
 
 		/* we can do this stuff. because windows are sorted by id */
-		while (l) {
-			window_t *w = l->data;
-
-			l = l->next;		/* goto next window */
+		while (v) {
+			window_t *w = v;
+			v = v->next;		/* goto next window */
 
 			if (w->id < 2)					/* [RESERVED CLASS: 0-1] 	0 for __debug, 1 for __status */
 				continue;
@@ -334,8 +328,7 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 	w->session = session;
 /*	w->userlist = NULL; */		/* xmalloc memset() to 0 memory */
 
-	LIST_ADD_SORTED(&windows, w, window_new_compare);
-
+	LIST_ADD_SORTED2(&windows, w, window_new_compare);
 	query_emit_id(NULL, UI_WINDOW_NEW, &w);	/* XXX */
 
 	return w;
@@ -370,13 +363,10 @@ void window_print(window_t *w, fstring_t *line) {
  * przechodzi do kolejnego okna.
  */
 void window_next() {
-	window_t *next = NULL;
+	window_t *next = NULL, *w;
 	int passed = 0;
-	list_t l;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		if (passed && !w->floating) {
 			next = w;
 			break;
@@ -400,16 +390,13 @@ void window_next() {
 
 /* XXX, need check */
 void window_prev() {
-	window_t *prev = NULL;
-	list_t l;
+	window_t *prev = NULL, *w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		if (w->floating)
 			continue;
 
-		if (w == window_current && l != windows)
+		if (w == window_current && w != windows)
 			break;
 
 		prev = w;
@@ -419,11 +406,9 @@ void window_prev() {
 		return;
 
 	if (!prev->id) {
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (!w->floating)
-				prev = l->data;
+				prev = w;
 		}
 	}
 
@@ -478,11 +463,9 @@ void window_kill(window_t *w) {
 
 	/* if config_sort_windows set, and it was not floating window... than resort stuff. */
 	if (config_sort_windows && !w->floating) {
-		list_t l;
+		window_t *w;
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (w->floating)
 				continue;
 			/* XXX, i'm leaving it. however if we set sort_windows for example when we have: windows: 1, 3, 5, 7 and we will remove 3.. We'll still have: 1, 4, 6 not: 1, 2, 3 bug? */
@@ -495,7 +478,7 @@ void window_kill(window_t *w) {
 
 	xfree(w->target);
 	userlist_free_u(&(w->userlist));
-	list_remove(&windows, w, 1);
+	LIST_REMOVE2(&windows, w, NULL);	/* XXX: LIST_ITEM_FREE ? */
 }
 
 /**
@@ -513,11 +496,9 @@ void window_kill(window_t *w) {
  */
 
 window_t *window_exist(int id) {
-	list_t l;
+	window_t *w;
 
-        for (l = windows; l; l = l->next) {
-	        window_t *w = l->data;
-
+        for (w = windows; w; w = w->next) {
                 if (w->id == id) 
 			return w;
         }
@@ -532,6 +513,8 @@ window_t *window_exist(int id) {
  *
  * @param first		- 1st window id.
  * @param second 	- 2nd window id.
+ *
+ * @todo XXX: Rename to _swap, and make some real move.
  */
 
 static void window_move(int first, int second) {
@@ -540,14 +523,14 @@ static void window_move(int first, int second) {
 	if (!(w1 = window_exist(first)) || !(w2 = window_exist(second)))
 		return;
 
-        list_remove(&windows, w1, 0);
+        LIST_UNLINK2(&windows, w1);
 	w1->id = second;
 
-        list_remove(&windows, w2, 0);
+        LIST_UNLINK2(&windows, w2);
 	w2->id = first;
 
-	LIST_ADD_SORTED(&windows, w1, window_new_compare);
-	LIST_ADD_SORTED(&windows, w2, window_new_compare);
+	LIST_ADD_SORTED2(&windows, w1, window_new_compare);
+	LIST_ADD_SORTED2(&windows, w2, window_new_compare);
 }
 
 /**
@@ -587,11 +570,9 @@ COMMAND(cmd_window) {
 	}
 
 	if (!params[0] || !xstrcasecmp(params[0], ("list"))) {
-		list_t l;
+		window_t *w;
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (w->id) {
 				if (w->target) {
 					if (!w->floating)
@@ -606,12 +587,10 @@ COMMAND(cmd_window) {
 	}
 
 	if (!xstrcasecmp(params[0], ("active"))) {
-		list_t l;
+		window_t *w;
 		int id = 0;
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (w->act && !w->floating && w->id) {
 				id = w->id;
 				break;
@@ -766,11 +745,9 @@ COMMAND(cmd_window) {
 		window_t *w = window_current;
 
 		if (params[1]) {
-			list_t l;
+			window_t *ww;
 
-			for (w = NULL, l = windows; l; l = l->next) {
-				window_t *ww = l->data;
-
+			for (w = NULL, ww = windows; ww; ww = ww->next) {
 				if (ww->id == atoi(params[1])) {
 					w = ww;
 					break;

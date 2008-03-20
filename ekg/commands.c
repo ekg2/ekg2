@@ -944,11 +944,11 @@ static COMMAND(cmd_for)
                 }
 
                 if (for_all) {
-                        list_t l;
+                        window_t *w, *next;
 
-                        for (l = windows; l; l = l->next) {
-                        	window_t *w = l->data;
+                        for (w = windows; w; w = next) {
                                 char *for_command;
+				next = w->next;		/* this shall protect us from window killing (current one, not next) */
 
                                 if (!w || !w->target || !w->session)
                                         continue;
@@ -2389,11 +2389,9 @@ next:
 
 	if (!(w = window_find_s(session, par0))) {		/* if we don't have window, we need to create it, in way specified by (config_make_window) */
 		if (config_make_window & 1) {
-			list_t l;
+			window_t *v;
 
-			for (l = windows; l; l = l->next) {
-				window_t *v = l->data;
-
+			for (v = windows; v; v = v->next) {
 				if (v->id < 2 || v->floating || v->target)
 					continue;
 
@@ -2716,13 +2714,12 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
 				if (window_find_ptr(w) || (w == window_find_sa(s, target, 0)))
 					window_lock_dec(w);
-				else {
-					list_t l;
+				else { 
+					window_t *w;
 					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=%s]\n", __(target), __(last_name));
 					/* may be faultly */
-					for (l=windows; l; l = l->next) {
-						window_t *w = l->data;
-						if ((!w) || !(w->lock)) continue;
+					for (w=windows; w; w = w->next) {
+						if (!(w->lock)) continue;
 						w->lock = 0;
 					}
 				}

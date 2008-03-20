@@ -226,12 +226,10 @@ static QUERY(gtk_beep) {				/* fe_beep() */
 }
 
 static QUERY(gtk_ui_window_act_changed) { 		/* fe_set_tab_color() */
-	list_t l;
+	window_t *w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next)
 		fe_set_tab_color(w, w->act);
-	}
 
 	return 0;
 }
@@ -343,7 +341,7 @@ EXPORT int gtk_plugin_init(int prio) {
 
         int is_UI = 0;
 	int xfd;
-	list_t l;
+	window_t *w;
 
 	PLUGIN_CHECK_VER("gtk");
 
@@ -447,8 +445,8 @@ EXPORT int gtk_plugin_init(int prio) {
 
 	idle_add(&gtk_plugin, ekg2_xorg_idle, NULL);
 
-	for (l = windows; l; l = l->next)
-		ekg_gtk_window_new(l->data);	
+	for (w = windows; w; w = w->next)
+		ekg_gtk_window_new(w);
 
 	memset(gtk_history, 0, sizeof(gtk_history));
 

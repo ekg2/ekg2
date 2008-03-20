@@ -565,11 +565,8 @@ static void possibilities_generator(const char *text, int len)
 static void window_generator(const char *text, int len)
 {
 	window_t *w;
-	list_t l;
 
-	for (l = windows; l; l=l->next)	{
-		w = (window_t *)l->data;
-
+	for (w = windows; w; w=w->next)	{
 		if (!w->target || xstrncmp(text, w->target, len))
 			continue;
 

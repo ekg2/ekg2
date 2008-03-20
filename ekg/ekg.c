@@ -1054,8 +1054,6 @@ void ekg_exit()
 {
 	char *exit_exec = config_exit_exec;
 	extern int ekg2_dlclose(void *plugin);
-
-	list_t l;
 	int i;
 
 	msg_queue_write();
@@ -1220,15 +1218,14 @@ void ekg_exit()
 
 	xfree(read_file(NULL, -1));	/* free internal read_file() buffer */
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	{
+		window_t *w;
 
-		if (!w)
-			continue;
+		for (w = windows; w; w = w->next) /* XXX: some LIST_ITEM_FREE ? */
+			xfree(w->target);
 
-		xfree(w->target);
+		LIST_DESTROY2(windows, NULL);	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
 	}
-	list_destroy(windows, 1);	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
 
 	{
 		query_t **ll;

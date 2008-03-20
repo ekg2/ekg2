@@ -643,10 +643,9 @@ WATCHER(http_watch_read) {
 		} else {
 			char *temp;
 			int i, j;
-			list_t l;
-
 			window_t *w = window_current; 
 			ncurses_window_t *n;
+			list_t l;
 
 			/* if user is making a refresh, we must clear collected events
 			 * whether he has a cookie or not
@@ -695,8 +694,7 @@ WATCHER(http_watch_read) {
 			string_append (htheader, itoa(window_current->id));
 			string_append (htheader, ";\n");
 
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
+			for (w = windows; w; w = w->next) {
 				char *tempdata;
 				if (w == window_current)
 					string_append_format(htheader, "gwins[%d] = new Array(2, \"%s\", new Array());\n ", w->id, window_target(w));

@@ -643,10 +643,9 @@ static void menu_cmbuttons_showhide_cb(session *sess) {
 
 static void menu_setting_foreach(void (*callback) (window_t *), int id, guint state) {
 	int maindone = FALSE;	/* do it only once for EVERY tab */
-	list_t l;
+	window_t *w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next) {
 		gtk_window_ui_t *gui = gtk_private_ui(w);
 
 		if (!gui->is_tab || !maindone) {

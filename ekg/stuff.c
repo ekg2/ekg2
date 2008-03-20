@@ -186,15 +186,13 @@ int reason_changed = 0;
  */
 
 void windows_save() {
-	list_t l;
+	window_t *w;
 
 	if (config_windows_save) {
 		string_t s = string_init(NULL);
 		int maxid = 0, i;
 		
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (!w->floating && w->id > maxid)
 				maxid = w->id;
 		}
@@ -203,9 +201,7 @@ void windows_save() {
 			const char *target = "-";
 			const char *session_name = NULL;
 			
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
-
+			for (w = windows; w; w = w->next) {
 				if (w->id == i) {
 					target = w->target;
 					if (w->session)
@@ -229,9 +225,7 @@ void windows_save() {
 				string_append_c(s, '|');
 		}
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (w->floating && (!w->target || xstrncmp(w->target, "__", 2))) {
 				char *tmp = saprintf("|*%d,%d,%d,%d,%d,%s", w->left, w->top, w->width, w->height, w->frames, w->target);
 				string_append(s, tmp);

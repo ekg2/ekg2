@@ -418,11 +418,10 @@ static TIMER(ekg_day_timer) {
 #define dayischanged(x) (oldtm->tm_##x != tm->tm_##x)
 	if (oldtm && (dayischanged(mday) /* day */ || dayischanged(mon) /* month */ || dayischanged(year)) /* year */)  {
 		if (config_display_day_changed) {
-			list_t l;
+			window_t *w;
 			char *ts = xstrdup(timestamp("%d %b %Y"));
 
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
+			for (w = windows; w; w = w->next) {
 				int oldact;
 				
 				if (!w || w->id == 0 || w->floating) continue; /* skip __debug && (floatings windows [__lastlog, __contacts, ...]) */
