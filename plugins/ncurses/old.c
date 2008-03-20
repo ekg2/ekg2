@@ -1924,13 +1924,8 @@ void ncurses_deinit()
 		close(winch_pipe[1]);
 	}
 
-	for (w = windows; w; ) {
-		window_t *next = w;
-
+	for (w = windows; w; w = w->next)
 		ncurses_window_kill(w);
-
-		w = next;
-	}
 
 	tcsetattr(0, TCSADRAIN, &old_tio);
 
