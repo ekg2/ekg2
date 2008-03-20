@@ -214,7 +214,7 @@ void gg_changed_dcc(const char *var)
 	}
 
 	if (!in_autoexec)
-		wcs_print("config_must_reconnect");
+		print("config_must_reconnect");
 }
 
 #ifdef HAVE_GG_DCC7
@@ -272,7 +272,7 @@ COMMAND(gg_command_dcc)
 		void *dccdata = NULL;
 
 		if (!params[1] || !params[2]) {
-			wcs_printq("not_enough_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -801,7 +801,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
                                 dcc_limit_count++;
 
                                 if (dcc_limit_count > c) {
-                                        wcs_print("dcc_limit");
+                                        print("dcc_limit");
                                         gg_config_dcc = 0;
                                         gg_changed_dcc(("dcc"));
 

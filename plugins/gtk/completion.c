@@ -748,7 +748,7 @@ void ncurses_complete(int *line_index, char *line)
 				}
 			}
 			if (tmp[0])
-				wcs_print("none", tmp);
+				print("none", tmp);
 		}
 #endif
 		

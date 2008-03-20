@@ -744,7 +744,7 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 				}
 			}
 			if (tmp[0])
-				wcs_print("none", tmp);
+				print("none", tmp);
 		}
 		
 		/* w³±czamy nastêpny etap dope³nienia - przeskakiwanie miêdzy dope³nianymi wyrazami */

@@ -41,7 +41,7 @@ COMMAND(gg_command_find)
 	int i, res = 0, all = 0;
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
-		wcs_printq("not_connected", session_name(session));
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -56,7 +56,7 @@ COMMAND(gg_command_find)
 			list_remove(&g->searches, s, 0);
 		}
 		
-		wcs_printq("search_stopped");
+		printq("search_stopped");
 
 		return 0;
 	}
@@ -80,7 +80,7 @@ COMMAND(gg_command_find)
 		}
 
 		if (xstrncasecmp(uid, "gg:", 3)) {
-			wcs_printq("generic_error", ("Tylko GG"));
+			printq("generic_error", ("Tylko GG"));
 			return -1;
 		}
 
@@ -161,7 +161,7 @@ COMMAND(gg_command_find)
 			continue;
 		}
 
-		wcs_printq("invalid_params", name);
+		printq("invalid_params", name);
 		gg_pubdir50_free(req);
 
 #if (USE_UNICODE || HAVE_GTK)
@@ -177,7 +177,7 @@ COMMAND(gg_command_find)
 
 no_argv:
 	if (!gg_pubdir50(g->sess, req)) {
-		wcs_printq("search_failed", ("Nie wiem o co chodzi"));
+		printq("search_failed", ("Nie wiem o co chodzi"));
 		res = -1;
 	}
 
@@ -196,12 +196,12 @@ COMMAND(gg_command_change)
 	gg_pubdir50_t req;
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
-		wcs_printq("not_connected");
+		printq("not_connected");
 		return -1;
 	}
 
 	if (!params[0]) {
-		wcs_printq("not_enough_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -261,7 +261,7 @@ COMMAND(gg_command_change)
 				gg_pubdir50_add(req, GG_PUBDIR50_GENDER, GG_PUBDIR50_GENDER_SET_MALE);
 				continue;
 			}
-			wcs_printq("invalid_params", name);
+			printq("invalid_params", name);
 #if (USE_UNICODE || HAVE_GTK)
 			if (config_use_unicode) { 
 				for (i = 0; argv[i]; i++) {
@@ -291,7 +291,7 @@ COMMAND(gg_command_change)
 	}
 
 	if (!gg_pubdir50(g->sess, req)) {
-		wcs_printq("change_failed", (""));
+		printq("change_failed", (""));
 		gg_pubdir50_free(req);
 		return -1;
 	}
@@ -467,7 +467,7 @@ void gg_session_handler_change50(session_t *s, struct gg_event *e)
 		return;
 
 	quiet = (g->quiet & GG_QUIET_CHANGE);
-	wcs_printq("change");
+	printq("change");
 }
 
 

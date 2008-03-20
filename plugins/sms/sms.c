@@ -233,7 +233,7 @@ static COMMAND(sms_command_sms)
         const char *number = NULL;
 
         if (!params[0] || !params[1] || !config_sms_app) {
-                wcs_printq("not_enough_params", name);
+                printq("not_enough_params", name);
                 return -1;
         }
 

@@ -65,7 +65,7 @@ void gg_changed_images(const char *var)
 			gg_config_image_size = 20;
 
 	if (!in_autoexec) 
-		wcs_print("config_must_reconnect");
+		print("config_must_reconnect");
 }
 
 
@@ -120,11 +120,11 @@ COMMAND(gg_command_image)
 	image_add_queue(filename, data, size, crc32); 
 
         if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(uid + 3), "", (const char *) &msg, sizeof(msg)) == -1) {
-		wcs_printq("gg_image_error_send");
+		printq("gg_image_error_send");
                 return -1;
         }
 		
-	wcs_printq("gg_image_ok_send");
+	printq("gg_image_ok_send");
 
 	return 0;
 }

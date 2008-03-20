@@ -49,7 +49,6 @@ typedef struct {
 } fstring_t;
 
 #define print(x...)		print_window_w(NULL, 0, x) 
-#define wcs_print(x...) 	print_window_w(NULL, 0, x)
 #define print_status(x...) 	print_window_w(window_status, 0, x)
 
 #ifndef EKG2_WIN32_NOFUNCTION

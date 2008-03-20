@@ -147,7 +147,7 @@ static COMMAND(gg_command_connect) {
 		char *password = (char *) session_get(session, "password");
 
 		if (g->sess) {
-			wcs_printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", 
+			printq((g->sess->state == GG_STATE_CONNECTED) ? "already_connected" : "during_connect", 
 					session_name(session));
 			return -1;
 		}
@@ -161,7 +161,7 @@ static COMMAND(gg_command_connect) {
 			int tmp = inet_pton(AF_INET, local_ip, &gg_local_ip);
 
 			if (tmp == 0 || tmp == -1) {
-				wcs_print("invalid_local_ip", session_name(session));
+				print("invalid_local_ip", session_name(session));
 				session_set(session, "local_ip", NULL);
 				config_changed = 1;
 				gg_local_ip = htonl(INADDR_ANY);
@@ -173,11 +173,11 @@ static COMMAND(gg_command_connect) {
 
 
 		if (!uin || !password) {
-			wcs_printq("no_config");
+			printq("no_config");
 			return -1;
 		}
 
-		wcs_printq("connecting", session_name(session));
+		printq("connecting", session_name(session));
 
 		memset(&p, 0, sizeof(p));
 
@@ -248,7 +248,7 @@ static COMMAND(gg_command_connect) {
 				if ((tmp_in = inet_addr(myserver)) != INADDR_NONE)
 					p.server_addr = inet_addr(myserver);
 				else {
-					wcs_print("inet_addr_failed", session_name(session));
+					print("inet_addr_failed", session_name(session));
 					xfree(myserver);
 					return -1;
 				}
@@ -258,7 +258,7 @@ static COMMAND(gg_command_connect) {
 		}
 
 		if ((port < 1) || (port > 65535)) {
-			wcs_print("port_number_error", session_name(session));
+			print("port_number_error", session_name(session));
 			return -1;
 		}
 		p.server_port = port;
@@ -329,7 +329,7 @@ noproxy:
 		xfree(p.status_descr);
 
 		if (!g->sess)
-			wcs_printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"), session_name(session));
+			printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"), session_name(session));
 		else {
 			watch_t *w = watch_add_session(session, g->sess->fd, g->sess->check, gg_session_handler);
 			watch_timeout_set(w, g->sess->timeout);
@@ -485,9 +485,9 @@ static COMMAND(gg_command_away) {
 
 	if (!autoscroll) {
 		if (descr)
-			wcs_printq(fd, descr, (""), session_name(session));
+			printq(fd, descr, (""), session_name(session));
 		else
-			wcs_printq(f, session_name(session));
+			printq(f, session_name(session));
 	}
 
 	if (!g->sess || !session_connected_get(session)) {
@@ -530,7 +530,7 @@ static COMMAND(gg_command_msg) {
 
         if (!xstrcmp(params[0], ("*"))) {
 		if (msg_all(session, name, params[1]) == -1)
-			wcs_printq("list_empty");
+			printq("list_empty");
 		return 0;
 	}
 	
@@ -616,7 +616,7 @@ static COMMAND(gg_command_msg) {
 		return 0;
 
 	} else if (xstrlen(params[1]) > 1989) {
-              wcs_printq("message_too_long");
+              printq("message_too_long");
 	}
 
 	msg = xstrmid(params[1], 0, 1989);
@@ -802,7 +802,7 @@ static COMMAND(gg_command_msg) {
 	xfree(add_send);
 
 	if (valid && (!g->sess || g->sess->state != GG_STATE_CONNECTED))
-		wcs_printq("not_connected_msg_queued", session_name(session));
+		printq("not_connected_msg_queued", session_name(session));
 
 	if (valid && !quiet) {
 		char **rcpts = xmalloc(sizeof(char *) * 2);
@@ -1671,7 +1671,7 @@ static COMMAND(gg_command_modify) {
 			continue;
 		} 
 		
-		wcs_printq("invalid_params", name);
+		printq("invalid_params", name);
 		array_free(argv);
 		return -1;
 	}
@@ -1679,7 +1679,7 @@ static COMMAND(gg_command_modify) {
 	if (xstrcmp(name, ("add"))) {
 		switch (modified) {
 			case 0:
-				wcs_printq("not_enough_params", name);
+				printq("not_enough_params", name);
 				res = -1;
 				break;
 			case 1:
