@@ -1430,8 +1430,19 @@ JABBER_HANDLER(jabber_handle_presence) {
 			/* else ignore */
 		} else if ((auto_auth & 4)) /* auto-deny */
 			command_exec_format(NULL, s, 2, "/auth --deny %s", uid);
-		else /* ask */
+		else { /* ask */
+			userlist_t *u = userlist_find(s, uid);
+			if (u) {
+				jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+				if ((up->authtype & EKG_JABBER_AUTH_FROM)) { /* XXX: maybe just auto-auth? */
+					debug_error("[jabber] subscribe req for already subscribed uid (%s), authtype=%d, wtf?\n",
+							uid, up->authtype);
+					up->authtype &= ~EKG_JABBER_AUTH_FROM;
+				}
+				up->authtype |= EKG_JABBER_AUTH_REQ;
+			}
 			print("jabber_auth_subscribe", uid, session_name(s));
+		}
 		xfree(uid);
 		return;
 	}
@@ -1447,8 +1458,19 @@ JABBER_HANDLER(jabber_handle_presence) {
 			/* else ignore */
 		} else if ((auto_auth & 8)) /* auto-deny, czyli robienie na opak? */
 			command_exec_format(NULL, s, 2, "/auth --accept %s", uid);
-		else /* ask */
+		else { /* ask */
+			userlist_t *u = userlist_find(s, uid);
+			if (u) {
+				jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+				if (!(up->authtype & EKG_JABBER_AUTH_FROM)) { /* XXX: maybe just auto-auth? or some other wtf? */
+					debug_error("[jabber] unsubscribe req for not subscribed uid (%s), authtype=%d, wtf?\n",
+							uid, up->authtype);
+					up->authtype |= EKG_JABBER_AUTH_FROM;
+				}
+				up->authtype |= EKG_JABBER_AUTH_UNREQ;
+			}
 			print("jabber_auth_unsubscribe", uid, session_name(s));
+		}
 		xfree(uid);
 		return;
 	}

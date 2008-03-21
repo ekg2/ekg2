@@ -609,9 +609,9 @@ auth_first:
 		action = "subscribe";
 		printq("jabber_auth_request", uid+5, session_name(session));
 	} else if (match_arg(params[0], 'a', ("accept"), 2)) {
-		if (multi) { /* XXX: maybe some asking-list ? */
+		if (multi) {
 			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-			if ((up->authtype & EKG_JABBER_AUTH_FROM)) /* already authorized */
+			if (!(up->authtype & EKG_JABBER_AUTH_REQ)) /* already authorized */
 				goto auth_loop;
 		}
 		action = "subscribed";
@@ -625,17 +625,22 @@ auth_first:
 		action = "unsubscribe";
 		printq("jabber_auth_unsubscribed", uid+5, session_name(session));
 	} else if (match_arg(params[0], 'd', ("deny"), 2)) {
-		if (multi) { /* XXX: like above, some asking-list? */
-			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-			if (!(up->authtype & EKG_JABBER_AUTH_FROM)) /* not yet authorized */
+		jabber_userlist_private_t *up;
+
+		if (!multi)
+			u = userlist_find(session, uid);
+		if (u)
+			up = jabber_userlist_priv_get(u);
+		if (multi) {
+			if (!(up->authtype & (EKG_JABBER_AUTH_FROM|EKG_JABBER_AUTH_UNREQ))) /* not yet authorized */
 				goto auth_loop;
 		}
+
 		action = "unsubscribed";
 
-			/* mg: could anyone explain real meaning of following to me ? */
-		if (userlist_find(session, uid))  // mamy w rosterze
+		if (u && (up->authtype & EKG_JABBER_AUTH_FROM))
 			printq("jabber_auth_cancel", uid+5, session_name(session));
-		else // nie mamy w rosterze
+		else
 			printq("jabber_auth_denied", uid+5, session_name(session));
 	
 	} else if (match_arg(params[0], 'p', ("probe"), 2)) {	/* TLEN ? */

@@ -170,7 +170,9 @@ enum jabber_auth_t {
 	EKG_JABBER_AUTH_NONE	= 0,
 	EKG_JABBER_AUTH_FROM	= 1,
 	EKG_JABBER_AUTH_TO	= 2,
-	EKG_JABBER_AUTH_BOTH	= 3
+	EKG_JABBER_AUTH_BOTH	= 3,
+	EKG_JABBER_AUTH_REQ	= 4,
+	EKG_JABBER_AUTH_UNREQ	= 8
 };
 
 #define jabber_private(s) ((jabber_private_t*) session_private_get(s))
