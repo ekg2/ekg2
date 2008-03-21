@@ -23,11 +23,13 @@ auth
 	
 	  -a, --accept <JID>    autoryzuje JID
 	
-	  -d, --deny <JID>      odmawia udzielenia autoryzacji
+	  -d, --deny <JID>      odmawia udzielenia autoryzacji lub j± odbiera
 	
 	  -r, --request <JID>   wysy³a ¿±danie autoryzacji
 	
 	  -c, --cancel <JID>    wysy³a ¿±danie cofniêcia autoryzacji
+	
+	  -j, --reject <JID>	odrzuca ¿±danie autoryzacji
 
 away
 	parametry: [opis/-]

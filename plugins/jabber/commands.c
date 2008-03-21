@@ -566,7 +566,7 @@ static COMMAND(jabber_command_auth) {
 	const char *uid;
 	list_t ul;
 	userlist_t *u;
-	int multi = 0;
+	int multi = 0, reject;
 
 	if (params[1])
 		target = params[1];
@@ -609,22 +609,6 @@ auth_first:
 		action = "subscribe";
 		printq("jabber_auth_request", uid+5, session_name(session));
 	} else if (match_arg(params[0], 'a', ("accept"), 2)) {
-		if (multi) {
-			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-			if (!(up->authtype & EKG_JABBER_AUTH_REQ)) /* already authorized */
-				goto auth_loop;
-		}
-		action = "subscribed";
-		printq("jabber_auth_accept", uid+5, session_name(session));
-	} else if (match_arg(params[0], 'c', ("cancel"), 2)) {
-		if (multi) {
-			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-			if (!(up->authtype & EKG_JABBER_AUTH_TO)) /* not yet authorized */
-				goto auth_loop;
-		}
-		action = "unsubscribe";
-		printq("jabber_auth_unsubscribed", uid+5, session_name(session));
-	} else if (match_arg(params[0], 'd', ("deny"), 2)) {
 		jabber_userlist_private_t *up;
 
 		if (!multi)
@@ -632,8 +616,35 @@ auth_first:
 		if (u)
 			up = jabber_userlist_priv_get(u);
 		if (multi) {
-			if (!(up->authtype & (EKG_JABBER_AUTH_FROM|EKG_JABBER_AUTH_UNREQ))) /* not yet authorized */
+			if (!(up->authtype & EKG_JABBER_AUTH_REQ)) /* already authorized */
 				goto auth_loop;
+		}
+		action = "subscribed";
+		if (u && !(up->authtype & EKG_JABBER_AUTH_REQ))
+			printq("jabber_auth_acceptnoreq", uid+5, session_name(session));
+		else
+			printq("jabber_auth_accept", uid+5, session_name(session));
+	} else if (match_arg(params[0], 'c', ("cancel"), 2)) {
+		jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+		if (multi) {
+			if (!(up->authtype & EKG_JABBER_AUTH_TO)) /* not yet authorized */
+				goto auth_loop;
+		}
+		action = "unsubscribe";
+		printq("jabber_auth_unsubscribed", uid+5, session_name(session));
+	} else if (((reject = match_arg(params[0], 'j', "reject", 3))) || match_arg(params[0], 'd', ("deny"), 2)) {
+		jabber_userlist_private_t *up;
+
+		if (!multi)
+			u = userlist_find(session, uid);
+		if (u)
+			up = jabber_userlist_priv_get(u);
+		if (multi) {
+			if (!(up->authtype & (( reject ? 0 : EKG_JABBER_AUTH_FROM ) | EKG_JABBER_AUTH_REQ | EKG_JABBER_AUTH_UNREQ)))
+				goto auth_loop;
+		} else if (reject && !(up->authtype & (EKG_JABBER_AUTH_REQ | EKG_JABBER_AUTH_UNREQ))) {
+			printq("jabber_auth_noreq", uid+5, session_name(session));
+			return -1;
 		}
 
 		action = "unsubscribed";

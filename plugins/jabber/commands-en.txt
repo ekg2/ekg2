@@ -23,11 +23,13 @@ auth
 	
 	  -a, --accept <JID>    authorize JID
 	
-	  -d, --deny <JID>      deny JID authorization
+	  -d, --deny <JID>      deny JID authorization or revokes it
 	
 	  -r, --request <JID>   send autorization request
 	
 	  -c, --cancel <JID>    cancel authorization
+	
+	  -j, --reject <JID>	reject authorization request
 
 away
 	parameters: [description/-]
