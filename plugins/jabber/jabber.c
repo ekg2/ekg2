@@ -1516,7 +1516,7 @@ static QUERY(jabber_userlist_info) {
 	if (!u || valid_plugin_uid(&jabber_plugin, u->uid) != 1 || !(up = jabber_userlist_priv_get(u))) 
 		return 1;
 
-	printq("user_info_auth_type", jabber_authtypes[up->authtype == (up->authtype & EKG_JABBER_AUTH_BOTH) ? up->authtype : EKG_JABBER_AUTH_NONE]);
+	printq("user_info_auth_type", jabber_authtypes[up->authtype & EKG_JABBER_AUTH_BOTH]);
 
 	return 0;
 }
