@@ -563,7 +563,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 
 				if (up) {
 					int tmp;
-					for (tmp |= EKG_JABBER_AUTH_BOTH;
+					for (tmp = EKG_JABBER_AUTH_BOTH;
 						(tmp > EKG_JABBER_AUTH_NONE) && xstrcasecmp(authval, jabber_authtypes[tmp]);
 						tmp--);
 
