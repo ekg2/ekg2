@@ -561,8 +561,16 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 			if ((authval = jabber_attr(item->atts, "subscription"))) {
 				jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 
-				if (up)
-					for (up->authtype = EKG_JABBER_AUTH_BOTH; (up->authtype > EKG_JABBER_AUTH_NONE) && xstrcasecmp(authval, jabber_authtypes[up->authtype]); (up->authtype)--);
+				if (up) {
+					for (up->authtype |= EKG_JABBER_AUTH_BOTH;
+						(up->authtype > EKG_JABBER_AUTH_NONE) && xstrcasecmp(authval, jabber_authtypes[up->authtype]);
+						(up->authtype)--);
+
+						/* clear appropriate request bit */
+					up->authtype &= ~((up->authtype & EKG_JABBER_AUTH_FROM)
+								? EKG_JABBER_AUTH_REQ
+								: EKG_JABBER_AUTH_UNREQ);
+				}
 
 				if (!up || !(up->authtype & EKG_JABBER_AUTH_TO)) {
 					if (u && u->status == EKG_STATUS_NA)
