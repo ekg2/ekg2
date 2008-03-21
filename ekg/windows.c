@@ -588,14 +588,15 @@ COMMAND(cmd_window) {
 
 	if (!xstrcasecmp(params[0], ("active"))) {
 		window_t *w;
-		int id = 0;
+		int a,id = 0;
 
-		for (w = windows; w; w = w->next) {
-			if (w->act && !w->floating && w->id) {
-				id = w->id;
-				break;
+		for (a=2; !id && a>0; a--)
+			for (w = windows; w; w = w->next) {
+				if ((w->act==a) && !w->floating && w->id) {
+					id = w->id;
+					break;
+				}
 			}
-		}
 
 		if (id)
 			window_switch(id);
