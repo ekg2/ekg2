@@ -568,6 +568,33 @@ static COMMAND(jabber_command_auth) {
 	userlist_t *u;
 	int multi = 0, reject;
 
+	if (match_arg(params[0], 'l', "list", 2)) {
+		const char *formats[2] = { "jabber_auth_list_req", "jabber_auth_list_unreq" };
+		const int masks[2] = { EKG_JABBER_AUTH_REQ, EKG_JABBER_AUTH_UNREQ };
+		int i, ph = -1;
+
+		for (i = 0; i < 2; i++) {
+			for (ul = session->userlist; ul; ul = ul->next) {
+				userlist_t *u = ul->data;
+				jabber_userlist_private_t *up = u ? jabber_userlist_priv_get(u) : NULL;
+
+				if (!u)
+					continue;
+
+				if ((up->authtype & masks[i])) {
+					if (ph < i) {
+						print(formats[i], session_name(session));
+						ph = i;
+					}
+					print("jabber_auth_list", u->uid+5, session_name(session));
+				}
+			}
+		}
+		if (ph == -1)
+			print("jabber_auth_list_empty", session_name(session));
+		return 0;
+	}
+
 	if (params[1])
 		target = params[1];
 	else if (!target) {

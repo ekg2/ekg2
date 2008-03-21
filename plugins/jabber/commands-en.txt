@@ -30,6 +30,8 @@ auth
 	  -c, --cancel <JID>    cancel authorization
 	
 	  -j, --reject <JID>	reject authorization request
+	
+	  -l, --list		display pending requests
 
 away
 	parameters: [description/-]

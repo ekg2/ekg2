@@ -30,6 +30,8 @@ auth
 	  -c, --cancel <JID>    wysy³a ¿±danie cofniêcia autoryzacji
 	
 	  -j, --reject <JID>	odrzuca ¿±danie autoryzacji
+	
+	  -l, --list		wy¶wietla oczekuj±ce ¿±dania
 
 away
 	parametry: [opis/-]

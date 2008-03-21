@@ -1303,8 +1303,15 @@ static int jabber_theme_init() {
 	format_add("jabber_auth_cancel",	_("%> (%2) Authorisation for %T%1%n revoked.\n"), 1);
 	format_add("jabber_auth_denied",	_("%> (%2) Authorisation for %T%1%n denied.\n"), 1);
 	format_add("jabber_auth_probe",		_("%> (%2) Sent presence probe to %T%1%n.\n"), 1);
-	format_add("jabber_auth_rejectnoreq",	_("%! (%2) No awaiting authorization request from %T%1%n. Use \"/auth -d %1\" to force unauth.\n"), 1);
-	format_add("jabber_auth_acceptnoreq",	_("%>%| (%2) No awaiting authorization request from %T%1%n. Permission has been sent, but the user would probably need to request one first.\n"), 1);
+	format_add("jabber_auth_rejectnoreq",	_("%! (%2) No pending authorization request from %T%1%n. Use \"/auth -d %1\" to force unauth.\n"), 1);
+	format_add("jabber_auth_acceptnoreq",	_("%> %|(%2) No pending authorization request from %T%1%n. Permission has been sent, but the user would probably need to request one first.\n"), 1);
+
+		/* XXX: some table? different coloring of different request types? */
+	format_add("jabber_auth_list_req",	_("%> (%1) Pending authorization requests:\n"), 1);
+	format_add("jabber_auth_list_unreq",	_("%> (%1) Pending removal requests:\n"), 1);
+	format_add("jabber_auth_list",		_("%) - %G%1%n\n"), 1);
+	format_add("jabber_auth_list_empty",	_("%> (%1) No pending requests."), 1);
+
 /* conversations */
 	format_add("jabber_conversations_begin",	_("%g,+=%G--%n (%1) %GAvailable Reply-IDs:%n"), 1);
 	format_add("jabber_conversations_item",		_("%g|| %n %1 - %W%2%n (%g%3%n [%c%4%n])"), 1);		/* %1 - n, %2 - user, %3 - subject, %4 - thread */
