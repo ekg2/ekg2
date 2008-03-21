@@ -562,14 +562,17 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 				jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 
 				if (up) {
-					for (up->authtype |= EKG_JABBER_AUTH_BOTH;
-						(up->authtype > EKG_JABBER_AUTH_NONE) && xstrcasecmp(authval, jabber_authtypes[up->authtype]);
-						(up->authtype)--);
+					int tmp;
+					for (tmp |= EKG_JABBER_AUTH_BOTH;
+						(tmp > EKG_JABBER_AUTH_NONE) && xstrcasecmp(authval, jabber_authtypes[tmp]);
+						tmp--);
 
-						/* clear appropriate request bit */
-					up->authtype &= ~((up->authtype & EKG_JABBER_AUTH_FROM)
+						/* clear appropriate request bit and old authtype */
+					up->authtype &= ~(EKG_JABBER_AUTH_BOTH | ((tmp & EKG_JABBER_AUTH_FROM)
 								? EKG_JABBER_AUTH_REQ
-								: EKG_JABBER_AUTH_UNREQ);
+								: EKG_JABBER_AUTH_UNREQ));
+						/* and set new one */
+					up->authtype |= tmp;
 				}
 
 				if (!up || !(up->authtype & EKG_JABBER_AUTH_TO)) {
