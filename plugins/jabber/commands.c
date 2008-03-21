@@ -564,6 +564,9 @@ static COMMAND(jabber_command_auth) {
 
 	const char *action;
 	const char *uid;
+	list_t ul;
+	userlist_t *u;
+	int multi = 0;
 
 	if (params[1])
 		target = params[1];
@@ -572,24 +575,64 @@ static COMMAND(jabber_command_auth) {
 		return -1;
 	}
 
-	if (!(uid = jid_target2uid(session, target, quiet)))
+	if (!xstrcmp(target, "*")) {
+		j->send_watch->transfer_limit = -1;
+		multi = 1;
+		ul = session->userlist;
+		goto auth_first;
+	} else if ((uid = jid_target2uid(session, target, quiet)))
+		tabnick_add(uid);	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
+	else
 		return -1;
 
-	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
-	tabnick_add(uid);
+auth_loop:
+	if (multi) {
+		ul = ul->next;
+auth_first:
+		while (ul && !(ul->data))
+			ul = ul->next; /* skip empty entries */
+		if (!ul) {
+			JABBER_COMMIT_DATA(j->send_watch);
+			return 0;
+		}
+		u = ul->data;
+		uid = u->uid;
+		/* XXX: shall we check uid ? */
+	}
 
 	if (match_arg(params[0], 'r', ("request"), 2)) {
+		if (multi) {
+			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+			if ((up->authtype & EKG_JABBER_AUTH_TO)) /* already authorized */
+				goto auth_loop;
+		}
 		action = "subscribe";
 		printq("jabber_auth_request", uid+5, session_name(session));
 	} else if (match_arg(params[0], 'a', ("accept"), 2)) {
+		if (multi) { /* XXX: maybe some asking-list ? */
+			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+			if ((up->authtype & EKG_JABBER_AUTH_FROM)) /* already authorized */
+				goto auth_loop;
+		}
 		action = "subscribed";
 		printq("jabber_auth_accept", uid+5, session_name(session));
 	} else if (match_arg(params[0], 'c', ("cancel"), 2)) {
+		if (multi) {
+			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+			if (!(up->authtype & EKG_JABBER_AUTH_TO)) /* not yet authorized */
+				goto auth_loop;
+		}
 		action = "unsubscribe";
 		printq("jabber_auth_unsubscribed", uid+5, session_name(session));
 	} else if (match_arg(params[0], 'd', ("deny"), 2)) {
+		if (multi) { /* XXX: like above, some asking-list? */
+			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+			if (!(up->authtype & EKG_JABBER_AUTH_FROM)) /* not yet authorized */
+				goto auth_loop;
+		}
 		action = "unsubscribed";
 
+			/* mg: could anyone explain real meaning of following to me ? */
 		if (userlist_find(session, uid))  // mamy w rosterze
 			printq("jabber_auth_cancel", uid+5, session_name(session));
 		else // nie mamy w rosterze
@@ -606,6 +649,9 @@ static COMMAND(jabber_command_auth) {
 	}
 	/* NOTE: libtlen send this without id */
 	watch_write(j->send_watch, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid+5, action);
+
+	if (multi)
+		goto auth_loop;
 	return 0;
 }
 
