@@ -104,7 +104,7 @@ static COMMAND(gg_command_connect) {
 			char *__session = xstrdup(session->uid);
 			const char *__reason = params[0];
 			char *myreason;
-			unsigned char *tmp;
+			char *tmp;
 			int __type = EKG_DISCONNECT_USER;
 
 			if (session->autoaway)
@@ -516,8 +516,10 @@ static COMMAND(gg_command_away) {
 static COMMAND(gg_command_msg) {
 	int count, valid = 0, secure = 0, formatlen = 0;
 	char **nicks = NULL, *nick = NULL, **p = NULL, *add_send = NULL;
-	unsigned char *msg = NULL, *raw_msg = NULL;
-	unsigned char *cpmsg = NULL, *format = NULL;
+	unsigned char *msg = NULL;
+	char *raw_msg = NULL;
+	unsigned char *format = NULL;
+	char *cpmsg = NULL;
 	const char *seq;
 	uint32_t *ekg_format = NULL;
 	userlist_t *u;
@@ -620,8 +622,8 @@ static COMMAND(gg_command_msg) {
               printq("message_too_long");
 	}
 
-	msg = xstrmid(params[1], 0, 1989);
-	ekg_format = ekg_sent_message_format(msg);
+	msg = (unsigned char *) xstrmid(params[1], 0, 1989);
+	ekg_format = ekg_sent_message_format((char *) msg);
 
 	/* analiz�tekstu zrobimy w osobnym bloku dla porzdku */
 	{
@@ -725,8 +727,8 @@ static COMMAND(gg_command_msg) {
 		}
 	}
 
-	raw_msg = xstrdup(msg);
-	cpmsg = gg_locale_to_cp(msg);
+	raw_msg = xstrdup((char *) msg);
+	cpmsg = gg_locale_to_cp((char *) msg);
 
 	count = array_count(nicks);
 
@@ -760,7 +762,8 @@ static COMMAND(gg_command_msg) {
 			xfree(uid_tmp);
 
 			if (g->sess)
-				seq = itoa(gg_send_message_richtext(g->sess, (chat) ? GG_CLASS_CHAT : GG_CLASS_MSG, uin, __msg, format, formatlen));
+				seq = itoa(gg_send_message_richtext(g->sess, (chat) ? GG_CLASS_CHAT : GG_CLASS_MSG, uin, 
+						(unsigned char *) __msg, (unsigned char *) format, formatlen));
 			else
 				seq = "offline";
 
@@ -784,7 +787,7 @@ static COMMAND(gg_command_msg) {
 		}
 
 		if (g->sess) 
-			seq = itoa(gg_send_message_confer_richtext(g->sess, GG_CLASS_CHAT, realcount, uins, cpmsg, format, formatlen));
+			seq = itoa(gg_send_message_confer_richtext(g->sess, GG_CLASS_CHAT, realcount, uins, (unsigned char *) cpmsg, format, formatlen));
 		else
 			seq = "offline";
 
@@ -1773,7 +1776,7 @@ static COMMAND(gg_command_check_conn) {
 		}
         }
 
-	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid + 3), "", (const char *) &msg, sizeof(msg)) == -1) {
+	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid + 3), (const unsigned char *) "", (const unsigned char *) &msg, sizeof(msg)) == -1) {
                  debug("-- check_conn - shits happens\n");
                  return -1;
 	}

@@ -107,7 +107,7 @@ COMMAND(gg_command_image)
 	}
 	fclose(f);
 
-	crc32 = gg_crc32(0, data, size);
+	crc32 = gg_crc32(0, (unsigned char *) data, size);
 	
         msg.rt.flag=2;
         msg.rt.length=13;
@@ -119,7 +119,7 @@ COMMAND(gg_command_image)
 
 	image_add_queue(filename, data, size, crc32); 
 
-        if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(uid + 3), "", (const char *) &msg, sizeof(msg)) == -1) {
+        if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(uid + 3), (const unsigned char *) "", (const unsigned char *) &msg, sizeof(msg)) == -1) {
 		printq("gg_image_error_send");
                 return -1;
         }

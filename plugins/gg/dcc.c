@@ -907,7 +907,8 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			
 		case GG_EVENT_DCC_NEED_FILE_ACK:
 		{
-			char *path, *p;
+			char *path;
+			unsigned char *p;
 			char uin[16];
 			struct stat st;
 
@@ -930,7 +931,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			if (d->file_info.filename[0] == '.')
 				d->file_info.filename[0] = '_';
 
-			dcc_filename_set(D, d->file_info.filename);
+			dcc_filename_set(D, (const char *) d->file_info.filename);
 			dcc_size_set(D, d->file_info.size);
 
 			print("dcc_get_offer", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), itoa(dcc_id_get(D)));

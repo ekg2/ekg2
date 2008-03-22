@@ -944,7 +944,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	for (i = 0; i < e->event.msg.recipients_count; i++)
 		array_add(&__rcpts, saprintf("gg:%d", e->event.msg.recipients[i]));
 
-	__text = gg_cp_to_locale(xstrdup(e->event.msg.message));
+	__text = gg_cp_to_locale(xstrdup((const char *) e->event.msg.message));
 
 	if (e->event.msg.formats && e->event.msg.formats_length) {
 		unsigned char *p = e->event.msg.formats;

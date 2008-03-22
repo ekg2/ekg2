@@ -134,19 +134,21 @@ static const unsigned short table_cp1250[] = {
 };
 #endif
 
-unsigned char *gg_locale_to_cp(unsigned char *buf) {
+char *gg_locale_to_cp(char *b) {
+	unsigned char *buf = (unsigned char *) b;
+
 	if (!buf)
 		return NULL;
 #if (USE_UNICODE || HAVE_GTK)
 	if (config_use_unicode) {	/* why not iconv? iconv is too big for recoding only utf-8 <==> cp1250 */
-		int len 	= mbstowcs(NULL, buf, 0)+1;	/* it's safe mbstowcs() can return -1 */
+		int len 	= mbstowcs(NULL, b, 0)+1;	/* it's safe mbstowcs() can return -1 */
 		wchar_t *tmp	= xmalloc(len*sizeof(wchar_t)); /* so here we malloc(0) it returns NULL */
 		int i;
 		
-		if (len == 0 || (mbstowcs(tmp, buf, len-1)) == -1) {	/* invalid multibyte seq */
+		if (len == 0 || (mbstowcs(tmp, b, len-1)) == -1) {	/* invalid multibyte seq */
 			if (len) debug("[%s:%d] mbstowcs() failed with: %s (%d)\n", errno, strerror(errno));
 			xfree(tmp);
-			return buf;		/* return `unicode` seq? */
+			return b;		/* return `unicode` seq? */
 		}
 		buf = xrealloc(buf, len * sizeof(char));
 
@@ -163,27 +165,29 @@ unsigned char *gg_locale_to_cp(unsigned char *buf) {
 		}
 		xfree(tmp);
 		buf[len-1] = 0;
-		return buf;
+		return (char *) buf;
 	} else
 #endif
 	if (conv_out != (void*) -1) {
-		char *out = ekg_convert_string_p(buf, conv_out);
+		char *out = ekg_convert_string_p(b, conv_out);
 		if (out)
 			xfree(buf);
 		else
-			out = buf;
+			out = b;
 		return out;
 	} else
-		return gg_iso_to_cp(buf);
+		return (char *) gg_iso_to_cp(buf);
 }
 
-char *gg_cp_to_locale(unsigned char *buf) {
+char *gg_cp_to_locale(char *b) {
+	unsigned char *buf = (unsigned char *) b;
+
 	if (!buf)
 		return NULL;
 #if (USE_UNICODE || HAVE_GTK)
 	if (config_use_unicode) { /* shitty way with string_t */
 	/* wchar */
-		int len = xstrlen(buf);
+		int len = xstrlen(b);
 		wchar_t *tmp = xmalloc((len+1)*sizeof(wchar_t));	/* optimize len ? DELAYED */
 	/* char */
 		char *newbuf;
@@ -203,7 +207,7 @@ char *gg_cp_to_locale(unsigned char *buf) {
 			debug("[%s:%d] wcstombs() failed with: %s (%d)\n", errno, strerror(errno));
 			xfree(newbuf);
 			xfree(tmp);
-			return buf;		/* return `cp` seq ? */
+			return b;		/* return `cp` seq ? */
 		}
 		xfree(tmp);
 		xfree(buf); 			/* XXX, need testing */
@@ -211,14 +215,14 @@ char *gg_cp_to_locale(unsigned char *buf) {
 	} else
 #endif
 	if (conv_in != (void*) -1) {
-		char *out = ekg_convert_string_p(buf, conv_in);
+		char *out = ekg_convert_string_p(b, conv_in);
 		if (out)
-			xfree(buf);
+			xfree(b);
 		else
-			out = buf;
+			out = b;
 		return out;
 	} else
-		return gg_cp_to_iso(buf);
+		return (char *) gg_cp_to_iso(buf);
 }
 
 /*

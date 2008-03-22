@@ -26,8 +26,8 @@
 
 int gg_status_to_text(const int status);
 int gg_text_to_status(const int status, const char *descr);
-unsigned char *gg_locale_to_cp(char *buf);
-char *gg_cp_to_locale(unsigned char *buf);
+char *gg_locale_to_cp(char *buf);
+char *gg_cp_to_locale(char *buf);
 char gg_userlist_type(userlist_t *u);
 int gg_blocked_add(session_t *s, const char *uid);
 int gg_blocked_remove(session_t *s, const char *uid);
