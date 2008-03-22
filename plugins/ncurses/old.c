@@ -1555,6 +1555,7 @@ next:
 void update_statusbar(int commit)
 {
 	static const char empty_format[] = "";
+	static int connecting_counter = 0;
 
 	struct format_data formats[32];	/* if someone add his own format increment it. */
 	int formats_count = 0, i = 0, y;
@@ -1634,7 +1635,7 @@ void update_statusbar(int commit)
 		}
 	}
 
-	if (sess && sess->connected) {
+	if (sess && (sess->connected || (sess->connecting && connecting_counter))) {
 #define __add_format_emp_st(x, y) __add_format_emp(x, (sess->status == y))
 		__add_format_emp_st("away", EKG_STATUS_AWAY);
 		__add_format_emp_st("avail", EKG_STATUS_AVAIL);
@@ -1647,6 +1648,9 @@ void update_statusbar(int commit)
 #undef __add_format_emp_st
 	} else
 		__add_format_emp("notavail", 1);
+
+	if (sess && sess->connecting) /* statusbar update shall be called at least once per second */
+		connecting_counter ^= 1;
 
 	if (q) {
 #define __add_format_emp_st(x, y) __add_format_emp("query_" x, (q->status == y));
