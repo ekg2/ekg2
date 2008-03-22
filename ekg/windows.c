@@ -856,16 +856,15 @@ COMMAND(cmd_window) {
 			return -1;
                 }
 
-                if (!window_exist(dest)) {
-			window_new(NULL, NULL, dest);
-                }
-
 		if (dest == source)
 			return 0;
 
-		if (!xstrcasecmp(params[0], "swap"))
+		if (!xstrcasecmp(params[0], "swap")) {
+	                if (!window_exist(dest)) 
+				window_new(NULL, NULL, dest);
+
 			window_move(source, dest);
-		else
+		} else
 			window_real_move(source, dest);
 		window_switch(dest);
 		return 0;
