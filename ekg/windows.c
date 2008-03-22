@@ -543,11 +543,20 @@ static void window_real_move(int source, int dest) {
 	if ((wd = window_exist(dest))) { /* need to move ids */
 		window_t *wl;
 
-		for (wl = windows; wl; wl = wl->next) {
-			window_t *w = wl;
+		if (dest < source) {
+			for (wl = windows; wl; wl = wl->next) {
+				window_t *w = wl;
 
-			if (w->id >= dest && w->id < source)
-				(w->id)++;	/* XXX: move only when ids overlap? */
+				if (w->id >= dest && w->id < source)
+					(w->id)++;	/* XXX: move only when ids overlap? */
+			}
+		} else {
+			for (wl = windows; wl; wl = wl->next) {
+				window_t *w = wl;
+
+				if (w->id <= dest && w->id > source)
+					(w->id)--;	/* XXX: move only when ids overlap? */
+			}
 		}
 	}
 	ws->id = dest;
