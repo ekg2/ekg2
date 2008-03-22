@@ -118,12 +118,12 @@ typedef struct session {
 	char		*descr;			/**< session's user description */
 	char		*password;		/**< session's account password */
 
-	int		connected	: 1;	/**< whether session is connected */
-	int		connecting	: 1;	/**< whether session is currently being connected */
-	int		autoaway	: 1;	/**< whether we're in autoaway */
+	unsigned int	connected	: 1;	/**< whether session is connected */
+	unsigned int	connecting	: 1;	/**< whether session is currently being connected */
+	unsigned int	autoaway	: 1;	/**< whether we're in autoaway */
 
 /* XXX: move below directly into gg? */
-	int		scroll_op	: 1;
+	unsigned int	scroll_op	: 1;
 	int		scroll_pos;
 	time_t		scroll_last;
 
