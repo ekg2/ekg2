@@ -552,7 +552,8 @@ static void window_real_move(int source, int dest) {
 	}
 	ws->id = dest;
 
-	LIST_RESORT2(&windows, window_new_compare);
+	LIST_UNLINK2(&windows, ws);
+	LIST_ADD_SORTED2(&windows, ws, window_new_compare);
 }
 
 /**
