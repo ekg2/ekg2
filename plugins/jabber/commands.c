@@ -130,6 +130,7 @@ static COMMAND(jabber_command_connect)
 	j->resource = xstrdup(resource);
 
 	session->connecting = 1;
+	j->sasl_connecting = 0;
 
 	printq("connecting", session_name(session));
 	if (session_status_get(session) == EKG_STATUS_NA)
