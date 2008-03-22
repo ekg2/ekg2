@@ -198,7 +198,8 @@ static QUERY(protocol_disconnected) {
 			s->last_conn = time(NULL);
 			s->connected = 0;
 			query_emit_id(NULL, SESSION_EVENT, &s, &one);	/* notify UI */
-		}
+		} else
+			s->connecting = 0;
 		command_exec(NULL, s, "/session --unlock", 1);
 	}
 
@@ -229,7 +230,8 @@ static QUERY(protocol_disconnected) {
 			 * 2) we don't want to risk if some _autoback could make magic at this state of connection */
 			if (s && s->autoaway)
 				session_status_set(s, EKG_STATUS_AUTOBACK);
-			s->activity = 0; /* mark we'd like PROTOCOL_CONNECTED to set activity */
+			if (s)
+				s->activity = 0; /* mark we'd like PROTOCOL_CONNECTED to set activity */
 			break;
 
 		case EKG_DISCONNECT_FORCED:
@@ -284,6 +286,7 @@ static QUERY(protocol_connected) {
 		s->last_conn = time(NULL);
 		if (!s->activity) /* someone asks us to set activity */
 			s->activity  = s->last_conn;
+		s->connecting = 0;
 		s->connected = 1;
 		timer_remove_session(s, "reconnect");
 
