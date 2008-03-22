@@ -331,6 +331,7 @@ noproxy:
 		if (!g->sess)
 			printq("conn_failed", format_find((errno == ENOMEM) ? "conn_failed_memory" : "conn_failed_connecting"), session_name(session));
 		else {
+			session->connecting = 1;
 			watch_t *w = watch_add_session(session, g->sess->fd, g->sess->check, gg_session_handler);
 			watch_timeout_set(w, g->sess->timeout);
 		}
