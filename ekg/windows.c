@@ -533,6 +533,28 @@ static void window_move(int first, int second) {
 	LIST_ADD_SORTED2(&windows, w2, window_new_compare);
 }
 
+/* really move window, i.e. insert it at given id and move right all other windows */
+static void window_real_move(int source, int dest) {
+	window_t *ws, *wd;
+
+	if (!(ws = window_exist(source)))
+		return;
+
+	if ((wd = window_exist(dest))) { /* need to move ids */
+		window_t *wl;
+
+		for (wl = windows; wl; wl = wl->next) {
+			window_t *w = wl;
+
+			if (w->id >= dest && w->id < source)
+				(w->id)++;	/* XXX: move only when ids overlap? */
+		}
+	}
+	ws->id = dest;
+
+	LIST_RESORT2(&windows, window_new_compare);
+}
+
 /**
  * window_target()
  *
@@ -776,7 +798,7 @@ COMMAND(cmd_window) {
 		return 0;
 	}
 
-        if (!xstrcasecmp(params[0], ("move"))) {
+        if (!xstrcasecmp(params[0], ("move")) || !xstrcasecmp(params[0], "swap")) {
 		int source, dest;
 
 		if (!window_current)
@@ -831,7 +853,10 @@ COMMAND(cmd_window) {
 		if (dest == source)
 			return 0;
 
-		window_move(source, dest);
+		if (!xstrcasecmp(params[0], "swap"))
+			window_move(source, dest);
+		else
+			window_real_move(source, dest);
 		window_switch(dest);
 		return 0;
         }
