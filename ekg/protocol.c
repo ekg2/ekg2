@@ -141,7 +141,7 @@ static TIMER_SESSION(protocol_reconnect_handler) {
 	if (type == 1)
 		return 0;
 
-        if (!s || s->connected == 1)
+        if (!s || s->connected)
                 return -1;
 
 	debug("protocol_reconnect_handler() reconnecting session %s\n", s->uid);

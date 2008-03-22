@@ -107,34 +107,39 @@ typedef struct session {
 	struct session	*next;
 
 /* public: */
-	void		*plugin;	/**< protocol plugin owing session */
-	char		*uid;		/**< user ID */
-	char		*alias;		/**< short name */
-	void		*priv;		/**< protocol plugin's private data */
-	list_t		userlist;	/**< session's userlist */
+	void		*plugin;		/**< protocol plugin owing session */
+	char		*uid;			/**< user ID */
+	char		*alias;			/**< short name */
+	void		*priv;			/**< protocol plugin's private data */
+	list_t		userlist;		/**< session's userlist */
 
 /* private: */
-	status_t	status;		/**< session's user status */
-	char		*descr;		/**< session's user description */
-	char		*password;	/**< session's account password */
-	int		connected;	/**< whether session is connected */
-	time_t		activity;	/**< timestamp of last activity */
-	int		autoaway;	/**< whether we're in autoaway */
-	int		scroll_last;
+	status_t	status;			/**< session's user status */
+	char		*descr;			/**< session's user description */
+	char		*password;		/**< session's account password */
+
+	int		connected	: 1;	/**< whether session is connected */
+	int		connecting	: 1;	/**< whether session is currently being connected */
+	int		autoaway	: 1;	/**< whether we're in autoaway */
+
+/* XXX: move below directly into gg? */
+	int		scroll_op	: 1;
 	int		scroll_pos;
-	int		scroll_op;
-	time_t		last_conn;	/**< timestamp of connecting */
+	time_t		scroll_last;
+
+	time_t		activity;		/**< timestamp of last activity */
+	time_t		last_conn;		/**< timestamp of connecting */
 
 	int		global_vars_count;
 	char		**values;
 	list_t		local_vars;
 	
 /* new auto-away */
-	status_t	last_status;	/**< user's status before going into autoaway */
-	char		*last_descr;	/**< user's description before going into autoaway */
+	status_t	last_status;		/**< user's status before going into autoaway */
+	char		*last_descr;		/**< user's description before going into autoaway */
 
 #ifdef HAVE_FLOCK /* XXX: -D for docs? */
-	int		lock_fd;	/**< fd used for session locking */
+	int		lock_fd;		/**< fd used for session locking */
 #endif
 } session_t;
 
