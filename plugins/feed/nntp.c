@@ -755,16 +755,16 @@ static COMMAND(nntp_command_check) {
 	extern void ekg_loop();
 
 	nntp_private_t *j = feed_private(session);
+	userlist_t *ul;
 
-	list_t l;
 	if (j->lock) {
 		debug("nntp_command_check() j->lock = 1\n");	/* XXX, usleep ? czy please try again later ? */
 		return 0;
 	}
 	j->lock = 1;
 
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u 		= l->data;
+	for (ul = session->userlist; ul; ul = ul->next) {
+		userlist_t *u 		= ul;
 		nntp_newsgroup_t *n;
 		int i;
 

@@ -1495,8 +1495,8 @@ static COMMAND(irc_command_names) {
 
 	channel_t *chan;
 	string_t buf;
-	list_t l;
 	int lvl, count = 0;
+	userlist_t *ul;
 
 	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN))) 
 		return -1;
@@ -1507,8 +1507,8 @@ static COMMAND(irc_command_names) {
 	}
 
 /* znajdz najdluzszy nick */
-	for (l = chan->window->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = chan->window->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		int tmplen = xstrlen(u->uid + 4);
 		
@@ -1546,8 +1546,8 @@ static COMMAND(irc_command_names) {
 			mode = fillchars;
 		}
 
-		for (l = chan->window->userlist; l; l = l->next) {
-			userlist_t *ulist = l->data;
+		for (ul = chan->window->userlist; ul; ul = ul->next) {
+			userlist_t *ulist = ul;
 			char *tmp;
 			int pos;
 

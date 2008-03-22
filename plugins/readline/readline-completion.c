@@ -266,7 +266,7 @@ GENERATOR(conference) {
 }
 
 GENERATOR(known_uin) {
-	static list_t el;
+	static userlist_t *el;
 	static int len;
 	static session_t *s;
 
@@ -290,7 +290,7 @@ GENERATOR(known_uin) {
 /* XXX, search window_current->userlist && conference */
 
 	while (el) {
-		userlist_t *u = el->data;
+		userlist_t *u = el;
 
 		el = el->next;
 
@@ -389,7 +389,7 @@ GENERATOR(ignored_uin) {
 }
 
 GENERATOR(blocked_uin) {
-	static list_t el;
+	static userlist_t *el;
 	static int len;
 	session_t *s = session_current;
 
@@ -402,7 +402,7 @@ GENERATOR(blocked_uin) {
 	}
 
 	while (el) {
-		userlist_t *u = el->data;
+		userlist_t *u = el;
 
 		el = el->next;
 

@@ -140,7 +140,7 @@ static void unknown_uin_generator(const char *text, int len)
 static void known_uin_generator(const char *text, int len)
 {
 	int done = 0;
-	list_t l;
+	userlist_t *ul;
 	session_t *s;
 	char *tmp = NULL, *session_name = NULL;
 	int tmp_len = 0;
@@ -160,8 +160,8 @@ static void known_uin_generator(const char *text, int len)
 			s = session_find(session_name);
 	}
 
-	for (l = s->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = s->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 		if (u->nickname && !xstrncasecmp(text, u->nickname, len)) {
 			array_add_check(&completions, xstrdup(u->nickname), 1);
 			done = 1;
@@ -173,8 +173,8 @@ static void known_uin_generator(const char *text, int len)
 		}
 	}
 
-	for (l = s->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = s->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		if (!done && !xstrncasecmp(text, u->uid, len)) {
 			array_add_check(&completions, xstrdup(u->uid), 1);
@@ -186,11 +186,11 @@ static void known_uin_generator(const char *text, int len)
 	if (!window_current) 
 		goto end;
 
-	if ((c = newconference_find(window_current->session, window_current->target)))	l = c->participants;
-	else										l = window_current->userlist;
+	if ((c = newconference_find(window_current->session, window_current->target)))	ul = c->participants;
+	else										ul = window_current->userlist;
 
-        for (; l; l = l->next) {
-                userlist_t *u = l->data;
+        for (; ul; ul = ul->next) {
+                userlist_t *u = ul;
 
                 if (u->uid && !xstrncasecmp(text, u->uid, len)) {
                         array_add_check(&completions, xstrdup(u->uid), 1);
@@ -254,15 +254,15 @@ static void variable_generator(const char *text, int len)
 static void ignored_uin_generator(const char *text, int len)
 {
         session_t *s;
-	list_t l;
+	userlist_t *ul;
 
         if (!session_current)
                 return;
 
         s  = session_current;
 
-	for (l = s->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = s->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		if (!ignored_check(s, u->uid))
 			continue;
@@ -280,15 +280,15 @@ static void ignored_uin_generator(const char *text, int len)
 static void blocked_uin_generator(const char *text, int len)
 {
         session_t *s;
-	list_t l;
+	userlist_t *ul;
 
         if (!session_current)
                 return;
 
         s  = session_current;
 
-	for (l = s->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = s->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		if (!ekg_group_member(u, "__blocked"))
 			continue;

@@ -143,7 +143,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 	int all = 0; /* 1 - all, 2 - metacontacts */
 	ncurses_window_t *n;
 	newconference_t *c	= NULL;
-	list_t sorted_all	= NULL;
+	userlist_t *sorted_all	= NULL;
 	int (*comp)(void *, void *) = NULL;		/* coz userlist's list are sorted we don't need to sort it again... 
 								unfortunetly if we create list from serveral userlists (for instance: session && window)
 								we must resort... --- in ekg2 we do 
@@ -228,28 +228,28 @@ group_cleanup:
 	}
 
 	if (all == 1) {
-		list_t l;
+		userlist_t *l;
 		session_t *s;
 
 		for (s = sessions; s; s = s->next) {
-			list_t lp;
+			userlist_t *lp;
 
 			if (!s->userlist)
 				continue;
 
 			for (lp = s->userlist; lp; lp = lp->next) {
-				userlist_t *u = lp->data;
+				userlist_t *u = lp;
 
-				list_add_sorted(&sorted_all, userlist_dup(u, u->uid, u->nickname, s), comp);
+				LIST_ADD_SORTED2(&sorted_all, userlist_dup(u, u->uid, u->nickname, s), comp);
 			}
 
 			comp = contacts_compare;		/* turn on sorting */
 		}
 
 		for (l = c ? c->participants : window_current->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+			userlist_t *u = l;
 
-			list_add_sorted(&sorted_all, userlist_dup(u, u->uid, u->nickname, w->session), comp);
+			LIST_ADD_SORTED2(&sorted_all, userlist_dup(u, u->uid, u->nickname, w->session), comp);
 		}
 
 		if (sorted_all) comp = contacts_compare;	/* like above */
@@ -270,17 +270,17 @@ group_cleanup:
 */
 				for (i = m->metacontact_items; i; i = i->next) {
 					userlist_t *u;
-					list_t sl;
+					userlist_t *sl;
 
 					if (!(u = userlist_find_n(i->s_uid, i->name)))
 						continue;
 
 					for (sl = sorted_all; sl; sl = sl->next) {
-						userlist_t *up = sl->data;
+						userlist_t *up = sl;
 
 			/* up->uid == u->uid (?) */
 						if (up->uid && !xstrcmp(up->uid, u->uid))
-							list_remove(&sorted_all, up, 1);
+							LIST_REMOVE2(&sorted_all, up, NULL);
 					}
 				}
 			}
@@ -296,7 +296,7 @@ group_cleanup:
 			if (!(u = userlist_find_n(i->s_uid, i->name)))
 				continue;
 
-			list_add_sorted(&sorted_all, userlist_dup(u, NULL, m->name, (void *) 2), comp);
+			LIST_ADD_SORTED2(&sorted_all, userlist_dup(u, NULL, m->name, (void *) 2), comp);
 		}
 	}
 
@@ -318,10 +318,10 @@ group_cleanup:
 		fstring_t *string;
 		char *line;
 		char tmp[100];
-		list_t l;
+		userlist_t *ul;
 
-		for (l = sorted_all; l; l = l->next) {
-			userlist_t *u = l->data;
+		for (ul = sorted_all; ul; ul = ul->next) {
+			userlist_t *u = ul;
 
 			const char *status_t;
 			const char *format;
@@ -408,7 +408,7 @@ after_loop:
 	}
 
 	if (all)
-		list_destroy(sorted_all, 1);
+		LIST_DESTROY2(sorted_all, NULL);
 
 	xfree(group);
 

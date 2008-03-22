@@ -562,8 +562,7 @@ static COMMAND(jabber_command_auth) {
 
 	const char *action;
 	const char *uid;
-	list_t ul;
-	userlist_t *u;
+	userlist_t *ul, *u;
 	int multi = 0, reject;
 
 	if (match_arg(params[0], 'l', "list", 2)) {
@@ -573,7 +572,7 @@ static COMMAND(jabber_command_auth) {
 
 		for (i = 0; i < 2; i++) {
 			for (ul = session->userlist; ul; ul = ul->next) {
-				userlist_t *u = ul->data;
+				userlist_t *u = ul;
 				jabber_userlist_private_t *up = u ? jabber_userlist_priv_get(u) : NULL;
 
 				if (!u)
@@ -614,13 +613,13 @@ auth_loop:
 	if (multi) {
 		ul = ul->next;
 auth_first:
-		while (ul && !(ul->data))
+		while (ul)
 			ul = ul->next; /* skip empty entries */
 		if (!ul) {
 			JABBER_COMMIT_DATA(j->send_watch);
 			return 0;
 		}
-		u = ul->data;
+		u = ul;
 		uid = u->uid;
 		/* XXX: shall we check uid ? */
 	}
@@ -839,7 +838,7 @@ static COMMAND(jabber_command_del) {
 	userlist_t *u;
 
 	if (del_all) {
-		list_t l;
+		userlist_t *ul;
 
 		if (!session->userlist) {
 			printq("list_empty", session_name(session));
@@ -850,8 +849,8 @@ static COMMAND(jabber_command_del) {
 
 		watch_write(j->send_watch, "<iq type=\"set\" id=\"roster\"><query xmlns=\"jabber:iq:roster\">");
 		
-		for (l = session->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+		for (ul = session->userlist; ul; ul = ul->next) {
+			userlist_t *u = ul;
 
 			watch_write(j->send_watch, "<item jid=\"%s\" subscription=\"remove\"/>", u->uid+5);
 		}
@@ -2249,15 +2248,15 @@ static COMMAND(jabber_command_userlist) {
 	}
 	
 	if (match_arg(params[0], 'p', "put", 2)) {	/* write userlist into file */
-		list_t l;
+		userlist_t *ul;
 
 		if (!(f = fopen(listfile, "w"))) {
 			printq("io_cantopen", listfile, strerror(errno));
 			return -1;
 		}
 
-		for (l = session->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+		for (ul = session->userlist; ul; ul = ul->next) {
+			userlist_t *u = ul;
 
 			fprintf(f, "+,%s,%s,\n", u->uid+5, u->nickname /*, XXX? */); /* JRU syntax */ 
 		}

@@ -47,7 +47,9 @@
  * @bug There are two private fields [u->private and u->priv] one need to be removed.
  */
 
-typedef struct {
+typedef struct userlist {
+	struct userlist	*next;
+
 	char		*uid;		/**< uin in form protocol:id */
 	char		*nickname;	/**< nickname */
 	list_t		groups;		/**< list_t with ekg_group<br>
@@ -156,16 +158,16 @@ int userlist_write_wap();
 void userlist_write_crash();
 void userlist_clear_status(session_t *session, const char *uid);
 userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname);
-userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickname);
+userlist_t *userlist_add_u(userlist_t **userlist, const char *uid, const char *nickname);
 void userlist_add_entry(session_t *session,const char *line);
 int userlist_remove(session_t *session, userlist_t *u);
-int userlist_remove_u(list_t *userlist, userlist_t *u);
+int userlist_remove_u(userlist_t **userlist, userlist_t *u);
 int userlist_replace(session_t *session, userlist_t *u);
 userlist_t *userlist_find(session_t *session, const char *uid);
-userlist_t *userlist_find_u(list_t *userlist, const char *uid);
+userlist_t *userlist_find_u(userlist_t **userlist, const char *uid);
 #define userlist_find_n(a, b) userlist_find(session_find(a), b)
 void userlist_free(session_t *session);
-void userlist_free_u(list_t *userlist);
+void userlist_free_u(userlist_t **userlist);
 
 /* u->resource */
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio);

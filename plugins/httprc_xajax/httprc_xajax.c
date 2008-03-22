@@ -645,7 +645,6 @@ WATCHER(http_watch_read) {
 			int i, j;
 			window_t *w = window_current; 
 			ncurses_window_t *n;
-			list_t l;
 
 			/* if user is making a refresh, we must clear collected events
 			 * whether he has a cookie or not
@@ -755,12 +754,14 @@ WATCHER(http_watch_read) {
 					"\t\t\t<dl>\n");
 			/* USERLISTA */
 			if (session_current) {
+				userlist_t *ul;
+
 				httprc_write(send_watch, "\t\t\t\t<dt>Aktualna sesja: %s</dt>\n",
 						session_current->alias ? session_current->alias : session_current->uid);
 				if (session_current->userlist)
 					httprc_write2(send_watch, "\t\t\t\t<dd><ul>\n");
-				for (l = session_current->userlist; l; l = l->next) {
-					userlist_t *u = l->data;
+				for (ul = session_current->userlist; ul; ul = ul->next) {
+					userlist_t *u = ul;
 					httprc_write(send_watch, "\t\t\t\t\t<li class=\"%s\"><a href=\"#\">%s</a></li>\n", ekg_status_string(u->status, 0), u->nickname ? u->nickname : u->uid);
 				}
 				if (session_current->userlist)

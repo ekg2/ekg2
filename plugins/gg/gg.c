@@ -1232,12 +1232,12 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 
 			if (e->event.userlist.reply) {
 				char *reply;
-				list_t l;
+				userlist_t *ul;
 				gg_private_t *g = session_private_get(s);
 
 				/* remove all contacts from notification list on server */
-				for (l = s->userlist; l; l = l->next) {
-					userlist_t *u = l->data;
+				for (ul = s->userlist; ul; ul = ul->next) {
+					userlist_t *u = ul;
 					char *parsed;
 
 					if (!u || !(parsed = xstrchr(u->uid, ':')))

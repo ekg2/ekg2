@@ -70,15 +70,15 @@ static int do_sample_wildcard_match(const char *str, const char *matchstr, const
 }
 
 static void irc_access_parse(session_t *s, channel_t *chan, people_t *p, int flags) {
-	list_t l;
+	userlist_t *ul;
 
 	if (!s || !chan || !p)
 		return;
 
 #define dchar(x) debug("%c", x);
 
-	for (l = s->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = s->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 		ekg_resource_t *r = NULL;
 		list_t m;
 

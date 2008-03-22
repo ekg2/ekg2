@@ -643,10 +643,10 @@ void changed_display_blinking(const char *var)
 
 	/* wy³±czamy wszystkie blinkaj±ce uid'y */
         for (s = sessions; s; s = s->next) {
-		list_t l;
+		userlist_t *ul;
 
-		for (l = s->userlist; l; l = l->next) {
-			userlist_t *u	= l->data;
+		for (ul = s->userlist; ul; ul = ul->next) {
+			userlist_t *u	= ul;
 			u->blink	= 0;
 		}
 	}
@@ -691,12 +691,12 @@ const char *compile_time() {
 /* NEW CONFERENCE API HERE, WHEN OLD CONFERENCE API BECOME OBSOLETE CHANGE FUNCTION NAME, ETC.... */
 
 userlist_t *newconference_member_find(newconference_t *conf, const char *uid) {
-	list_t l;
+	userlist_t *ul;
 
 	if (!conf || !uid) return NULL;
 
-	for (l = conf->participants; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = conf->participants; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		if (!xstrcasecmp(u->uid, uid))
 			return u;
@@ -784,7 +784,6 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 {
 	struct conference c, *cf;
 	char **nicks;
-	list_t l;
 	int i, count;
 	char **p;
 
@@ -807,8 +806,9 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 			int nig = 0; /* nicks in group */
 		
 			for (s = sessions; s; s = s->next) {
-			        for (l = s->userlist; l; l = l->next) {
-					userlist_t *u = l->data;
+				userlist_t *ul;
+			        for (ul = s->userlist; ul; ul = ul->next) {
+					userlist_t *u = ul;
 					list_t m;
 
 					if (!u->nickname)
@@ -2179,7 +2179,7 @@ char *strcasestr(const char *haystack, const char *needle)
  */
 int msg_all(session_t *s, const char *function, const char *what)
 {
-	list_t l;
+	userlist_t *ul;
 
 	if (!s->userlist)
 		return -1;
@@ -2187,8 +2187,8 @@ int msg_all(session_t *s, const char *function, const char *what)
 	if (!function)
 		return -2;
 
-	for (l = s->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = s->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		if (!u || !u->uid)
 			continue;

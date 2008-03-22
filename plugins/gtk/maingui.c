@@ -589,13 +589,13 @@ static idle_t *ul_tag = NULL;
 #warning "xchat->ekg2, mg_populate_userlist() xchat here check if param is valid window_t, XXX"
 
 	if (sess->userlist) {
-		list_t l;
+		userlist_t *ul;
 		
 		/* XXX, irc_pixs! */
 		pxs = pixs;
 
-		for (l = sess->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+		for (ul = sess->userlist; ul; ul = ul->next) {
+			userlist_t *u = ul;
 
 			if (!u || !u->nickname || !u->status)
 				continue;
@@ -603,14 +603,14 @@ static idle_t *ul_tag = NULL;
 			fe_userlist_insert(sess, u, pxs);
 		}
 	} else if (sess->session) {
-		list_t l;
+		userlist_t *ul;
 		
 	/* check what network, and select pixs */
 		if (sess->session->plugin == plugin_find("gg"))	pxs = gg_pixs;
 		else						pxs = pixs;
 
-		for (l = sess->session->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+		for (ul = sess->session->userlist; ul; ul = ul->next) {
+			userlist_t *u = ul;
 
 			if (!u || !u->nickname || !u->status)
 				continue;

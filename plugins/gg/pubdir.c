@@ -544,12 +544,12 @@ int gg_userlist_set(session_t *session, const char *contacts)
 static char *gg_userlist_dump(session_t *session)
 {
 	string_t s;
-	list_t l;
+	userlist_t *ul;
 
 	s = string_init(NULL);
 
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = session->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 		gg_userlist_private_t *p = u->priv;
 		char *groups;
 

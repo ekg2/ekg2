@@ -163,7 +163,7 @@ void userlist_add_entry(session_t *session, const char *line) {
 		NULL;
 	
 	array_free_count(entry, count);
-	LIST_ADD_SORTED(&(session->userlist), u, userlist_compare);
+	LIST_ADD_SORTED2(&(session->userlist), u, userlist_compare);
 }
 
 /**
@@ -216,7 +216,7 @@ int userlist_read(session_t *session) {
 int userlist_write(session_t *session) {
 	const char *filename;
 	FILE *f;
-	list_t l;
+	userlist_t *ul;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
@@ -230,8 +230,8 @@ int userlist_write(session_t *session) {
 	fchmod(fileno(f), 0600);
 
 	/* userlist_dump() */
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = session->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 		char **entry = xcalloc(7, sizeof(char *));
 		char *line;
 
@@ -334,13 +334,13 @@ void userlist_write_crash() {
  */
 
 void userlist_clear_status(session_t *session, const char *uid) {
-        list_t l;
+        userlist_t *ul;
 
 	if (!session)
 		return;
 
-        for (l = session->userlist; l; l = l->next) {
-                userlist_t *u = l->data;
+        for (ul = session->userlist; ul; ul = ul->next) {
+                userlist_t *u = ul;
 
 		if (!uid || !xstrcasecmp(uid, u->uid)) {
 			u->status = EKG_STATUS_NA;
@@ -364,43 +364,41 @@ void userlist_free(session_t *session) {
 	userlist_free_u(&(session->userlist));
 }
 
+static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
+	userlist_t *u = data;
+	list_t lp;
+
+	if (u->priv) {
+		int func = EKG_USERLIST_PRIVHANDLER_FREE;
+
+		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func);
+	}
+	xfree(u->nickname);
+	xfree(u->uid);
+	xfree(u->descr);
+	xfree(u->foreign);
+	xfree(u->last_descr);
+
+	for (lp = u->groups; lp; lp = lp->next) {
+		struct ekg_group *g = lp->data;
+
+		xfree(g->name);
+	}
+	list_destroy(u->groups, 1);
+	userlist_resource_free(u);
+}
+
 /* 
  * userlist_free_u()
  *
  * clear and remove from memory given userlist
  */
-void userlist_free_u (list_t *userlist)
+void userlist_free_u (userlist_t **userlist)
 {
-        list_t l;
-
         if (!*userlist)
                 return;
 
-        for (l = *userlist; l; l = l->next) {
-                userlist_t *u = l->data;
-                list_t lp;
-
-		if (u->priv) {
-			int func = EKG_USERLIST_PRIVHANDLER_FREE;
-
-			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func);
-		}
-                xfree(u->nickname);
-                xfree(u->uid);
-                xfree(u->descr);
-                xfree(u->foreign);
-                xfree(u->last_descr);
-
-                for (lp = u->groups; lp; lp = lp->next) {
-                        struct ekg_group *g = lp->data;
-
-                        xfree(g->name);
-                }
-                list_destroy(u->groups, 1);
-		userlist_resource_free(u);
-        }
-
-        list_destroy(*userlist, 1);
+        LIST_DESTROY2(*userlist, userlist_free_item);
         *userlist = NULL;
 }
 
@@ -518,14 +516,14 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
  * uid - uid,
  * nickname - display.
  */
-userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickname) {
+userlist_t *userlist_add_u(userlist_t **userlist, const char *uid, const char *nickname) {
         userlist_t *u = xmalloc(sizeof(userlist_t));
 
         u->uid = xstrdup(uid);
         u->nickname = xstrdup(nickname);
         u->status = EKG_STATUS_NA;
 
-        return LIST_ADD_SORTED(userlist, u, userlist_compare);
+        return LIST_ADD_SORTED2(userlist, u, userlist_compare);
 }
 
 /*
@@ -546,35 +544,11 @@ int userlist_remove(session_t *session, userlist_t *u) {
  *
  *  - u.
  */
-int userlist_remove_u(list_t *userlist, userlist_t *u) {
-        list_t l;
-
+int userlist_remove_u(userlist_t **userlist, userlist_t *u) {
         if (!u)
                 return -1;
 
-	if (u->priv) {
-		int func = EKG_USERLIST_PRIVHANDLER_FREE;
-
-		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func);
-	}
-        xfree(u->nickname);
-        xfree(u->uid);
-        xfree(u->descr);
-        xfree(u->foreign);
-        xfree(u->last_descr);
-
-	if (u->groups) {
-		for (l = u->groups; l; l = l->next) {
-			struct ekg_group *g = l->data;
-
-			xfree(g->name);
-		}
-		list_destroy(u->groups, 1);
-	}
-
-	userlist_resource_free(u);
-
-        list_remove(userlist, u, 1);
+        LIST_REMOVE2(userlist, u, userlist_free_item);
 
         return 0;
 }
@@ -594,9 +568,9 @@ int userlist_remove_u(list_t *userlist, userlist_t *u) {
 int userlist_replace(session_t *session, userlist_t *u) {
 	if (!u)
 		return -1;
-	if (list_remove(&(session->userlist), u, 0))
+	if (!LIST_UNLINK2(&(session->userlist), u) && (errno == ENOENT))
 		return -1;
-	if (!LIST_ADD_SORTED(&(session->userlist), u, userlist_compare))
+	if (!LIST_ADD_SORTED2(&(session->userlist), u, userlist_compare))
 		return -1;
 
 	return 0;
@@ -623,14 +597,14 @@ userlist_t *userlist_find(session_t *session, const char *uid) {
  * finds and returns pointer to userlist_t which includes given
  * uid
  */
-userlist_t *userlist_find_u(list_t *userlist, const char *uid) {
-	list_t l;
+userlist_t *userlist_find_u(userlist_t **userlist, const char *uid) {
+	userlist_t *ul;
 
 	if (!uid || !userlist)
 		return NULL;
 
-	for (l = *userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = *userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 		const char *tmp;
 		int len;
 

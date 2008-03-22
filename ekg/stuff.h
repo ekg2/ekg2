@@ -144,7 +144,7 @@ typedef struct newconference {
 
 	char		*session;
 	char		*name;
-	list_t		participants;
+	struct userlist	*participants;
 	void		*private;
 } newconference_t;
 

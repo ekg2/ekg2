@@ -941,7 +941,7 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 
 
 static COMMAND(rss_command_check) {
-	list_t l;
+	userlist_t *ul;
 
 	if (params[0]) {
 		userlist_t *u = userlist_find(session, params[0]);
@@ -956,8 +956,8 @@ static COMMAND(rss_command_check) {
 	}
 
 	/* if param not given, check all */
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = session->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 		rss_feed_t *f = rss_feed_find(session, u->uid);
 
 		rss_url_fetch(f, quiet);

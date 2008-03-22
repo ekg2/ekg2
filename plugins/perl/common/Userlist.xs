@@ -24,10 +24,10 @@ MODULE = Ekg2::Userlist	PACKAGE = Ekg2::Userlist  PREFIX = userlist_
 
 void userlist_users(Ekg2::Userlist userlist)
 PREINIT:
-        list_t l;
+        userlist_t *ul;
 PPCODE:
-        for (l = userlist ; l; l = l->next) {
-                XPUSHs(sv_2mortal(bless_user( (userlist_t *) l->data)));
+        for (ul = userlist ; ul; ul = ul->next) {
+                XPUSHs(sv_2mortal(bless_user( ul )));
         }
 
 Ekg2::User userlist_add(Ekg2::Userlist userlist, const char *uid, const char *nickname)

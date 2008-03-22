@@ -111,7 +111,7 @@ typedef struct session {
 	char		*uid;			/**< user ID */
 	char		*alias;			/**< short name */
 	void		*priv;			/**< protocol plugin's private data */
-	list_t		userlist;		/**< session's userlist */
+	struct userlist	*userlist;		/**< session's userlist */
 
 /* private: */
 	status_t	status;			/**< session's user status */

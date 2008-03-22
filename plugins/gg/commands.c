@@ -570,7 +570,7 @@ static COMMAND(gg_command_msg) {
 
 		for (i = 0; tmp[i]; i++) {
 			int count = 0;
-			list_t l;
+			userlist_t *ul;
 
 			if (tmp[i][0] != '@') {
 				if (!array_contains(nicks, tmp[i], 0))
@@ -578,8 +578,8 @@ static COMMAND(gg_command_msg) {
 				continue;
 			}
 
-			for (l = session->userlist; l; l = l->next) {
-				userlist_t *u = l->data;			
+			for (ul = session->userlist; ul; ul = ul->next) {
+				userlist_t *u = ul;			
 				list_t m;
 
 				for (m = u->groups; m; m = m->next) {
@@ -862,11 +862,11 @@ static COMMAND(gg_command_block) {
 	const char *uid;
 
 	if (!params[0]) {
-		list_t l;
+		userlist_t *ul;
 		int i = 0;
 
-		for (l = session->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+		for (ul = session->userlist; ul; ul = ul->next) {
+			userlist_t *u = ul;
 				
 			if (!ekg_group_member(u, "__blocked"))
 				continue;
@@ -919,16 +919,17 @@ static COMMAND(gg_command_unblock) {
 	const char *uid;
 
 	if (!xstrcmp(params[0], "*")) {
-		list_t l;
+		userlist_t *ul;
 		int x = 0;
 
-		for (l = session->userlist; l; ) {
-			userlist_t *u = l->data;
+		for (ul = session->userlist; ul; ) {
+			userlist_t *u = ul;
+			userlist_t *next = ul->next;
 			
-			l = l->next;
-	
 			if (gg_blocked_remove(session, u->uid) != -1)
 				x = 1;
+
+			ul = next;
 		}
 
 		if (!x) {

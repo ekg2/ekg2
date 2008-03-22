@@ -550,13 +550,13 @@ static COMMAND(cmd_del)
 	}
 
 	if (del_all) {
-		list_t l;
-		for (l = session->userlist; l; ) {
-			userlist_t *u = l->data;
+		userlist_t *ul;
+		for (ul = session->userlist; ul; ) {
+			userlist_t *u = ul;
+			userlist_t *next = ul->next;
 			char *p0;
 			char *tmp;
 	
-			l = l->next;
 			p0 = xstrdup(u->nickname);
 			tmp = xstrdup(u->uid);
 			query_emit_id(NULL, USERLIST_REMOVED, &p0, &tmp);
@@ -564,6 +564,7 @@ static COMMAND(cmd_del)
 			xfree(p0);
 
 			userlist_remove(session, u);
+			ul = next;
 		}
 
 		printq("user_cleared_list", session_name(session));
@@ -877,10 +878,10 @@ static COMMAND(cmd_for)
 		}
 
 		if (for_all) {
-			list_t l;
+			userlist_t *ul;
 
-			for (l = session->userlist; l; l = l->next) {
-				userlist_t *u = l->data;
+			for (ul = session->userlist; ul; ul = ul->next) {
+				userlist_t *u = ul;
 				char *for_command;
 
 				if (!u || !u->uid)
@@ -1230,10 +1231,10 @@ static COMMAND(cmd_ignore)
 		int flags, modified = 0;
 
 		if (!params[0]) {
-			list_t l;
+			userlist_t *ul;
 			int i = 0;
-			for (l = session->userlist; l; l = l->next) {
-				userlist_t *u = l->data;
+			for (ul = session->userlist; ul; ul = ul->next) {
+				userlist_t *u = ul;
 				int level;
 
 				if (!(level = ignored_check(session, u->uid)))
@@ -1304,18 +1305,19 @@ static COMMAND(cmd_ignore)
 		}
 
 		if (unignore_all) {
-			list_t l;
+			userlist_t *ul;
 			int x = 0;
 			
-			for (l = session->userlist; l; ) {
-				userlist_t *u = l->data;
-
-				l = l->next;
+			for (ul = session->userlist; ul; ) {
+				userlist_t *u = ul;
+				userlist_t *next = ul->next;
 
 				if (!ignored_remove(session, u->uid))
 					x = 1;
 
 				level = ignored_check(session, u->uid);
+
+				ul = next;
 			}
 
 			if (x) {
@@ -1345,7 +1347,7 @@ static COMMAND(cmd_ignore)
 
 COMMAND(cmd_list)
 {
-	list_t l;
+	userlist_t *ul;
 	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, j;
 	char **argv = NULL, *show_group = NULL;
 	const char *tmp;
@@ -1377,8 +1379,8 @@ COMMAND(cmd_list)
 			char *__group;
 			int count = 0;
 			
-			for (l = session->userlist; l; l = l->next) {
-				u = l->data;
+			for (ul = session->userlist; ul; ul = ul->next) {
+				u = ul;
 
 				if (u->groups || invert) {
 					if ((!invert && ekg_group_member(u, group + 1)) || (invert && !ekg_group_member(u, group + 1))) {
@@ -1591,8 +1593,8 @@ list_user:
 			 * so this should remove unneeded slowdown for other sessions */
 		const int is_ipport_capable = !xstrncmp(session->uid, "gg:", 3);
 
-		for (l = session->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+		for (ul = session->userlist; ul; ul = ul->next) {
+			userlist_t *u = ul;
 			int show;
 
 			if (!u->nickname)
@@ -2805,12 +2807,12 @@ int binding_help(int a, int b)
 int binding_quick_list(int a, int b)
 {
 	string_t list = string_init(NULL);
-	list_t l;
+	userlist_t *ul;
 	session_t *s;
 
 	for (s = sessions; s; s = s->next) {
-		for (l = s->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+		for (ul = s->userlist; ul; ul = ul->next) {
+			userlist_t *u = ul;
 			const char *format;
 			char *tmp;
 

@@ -599,12 +599,12 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 	}; /* for */
 
 	{		/* nickname generator */
-		list_t l;
+		userlist_t *ul;
 
-		for (l = s->userlist; l;) {
-			userlist_t *u = l->data;
+		for (ul = s->userlist; ul;) {
+			userlist_t *u = ul;
 
-			if (u && !u->nickname) {
+			if (!u->nickname) {
 				char *myuid	= xstrdup(u->uid);
 				char *userpart	= xstrdup(u->uid);
 				char *tmp;
@@ -622,10 +622,10 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 				if ((tmp = xstrchr(myuid, '/')))	*tmp	= 0;
 
 				for (cp = possibilities; *cp; cp++) {
-					list_t m;
+					userlist_t *m;
 
 					for (m = s->userlist; m; m = m->next) {
-						userlist_t *w = m->data;
+						userlist_t *w = m;
 
 						if (w && w->nickname && !xstrcasecmp(w->nickname, *cp))
 							break;
@@ -642,7 +642,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 					/* sorting changes order,
 					 * so we need to start from beginning
 					 * sorry */
-					l = s->userlist;
+					ul = s->userlist;
 
 					xfree(userpart);
 					xfree(myuid);
@@ -654,7 +654,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 				xfree(myuid);
 			}
 
-			l = l->next;
+			ul = ul->next;
 		}
 	}
 	

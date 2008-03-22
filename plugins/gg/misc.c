@@ -406,17 +406,17 @@ const char *gg_http_error_string(int h)
  * @return result of gg_notify_ex()
  */
 
-int gg_userlist_send(struct gg_session *s, list_t userlist) {
+int gg_userlist_send(struct gg_session *s, userlist_t *userlist) {
 	int i, res;
 
-	int count = list_count(userlist);
-	list_t l;
+	int count = LIST_COUNT2(userlist);
+	userlist_t *ul;
 
 	uin_t *uins	= xmalloc(count * sizeof(uin_t));
 	char *types	= xmalloc(count * sizeof(char));
 
-	for (l = userlist, i = 0; l; l = l->next, i++) {
-		userlist_t *u = l->data;
+	for (ul = userlist, i = 0; ul; ul = ul->next, i++) {
+		userlist_t *u = ul;
 
 		uins[i] = atoi(u->uid + 3);
 		types[i] = gg_userlist_type(u);

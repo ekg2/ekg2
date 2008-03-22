@@ -271,18 +271,14 @@ PyObject *ekg_session_users(ekg_sessionObj * self)
 {
         session_t * s = session_find(self->name);
         PyObject *list;
-        list_t l;
-        int len = 0;
+        userlist_t *ul;
+        int len = LIST_COUNT2(s->userlist);
 
-        for (l = s->userlist; l; l = l->next) {
-                len++;
-        }
-
-        list = PyList_New(len);
+	list = PyList_New(len);
         len = 0;
 
-        for (l = s->userlist; l; l = l->next) {
-                userlist_t * u = l->data;
+        for (ul = s->userlist; ul; ul = ul->next) {
+                userlist_t * u = ul;
                 PyList_SetItem(list, len, python_build_user(self->name, u->uid));
                 len++;
         }

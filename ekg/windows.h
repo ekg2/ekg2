@@ -73,7 +73,7 @@ typedef struct window {
 	time_t last_update;		/* czas ostatniego uaktualnienia */
 	unsigned short lock;		/* blokowanie zmian w obrêbie komendy */
 
-	list_t userlist;		/* sometimes window may require separate userlist */
+	struct userlist *userlist;	/* sometimes window may require separate userlist */
 
 	window_lastlog_t *lastlog;	/* prywatne informacje lastloga */
 	void *private;			/* prywatne informacje ui */

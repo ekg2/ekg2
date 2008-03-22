@@ -516,6 +516,7 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 {
 	userlist_t *ulist, *newul;
 	list_t i;
+	userlist_t *ul;
 	people_t *per;
 	people_chan_t *pch;
 	window_t *w;
@@ -527,8 +528,8 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 		return 0;
 	}
 
-	for (i=s->userlist; i; i = i->next) {
-		userlist_t *u = i->data;
+	for (ul=s->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 		list_t m;
 
 		for (m = u->resources; m; m = m->next) {

@@ -205,11 +205,11 @@ void window_switch(int id) {
 		}
 
 		if (!(config_make_window & 3) && w->id == 1 && session_current) {
-			list_t l;
+			userlist_t *ul;
 	                session_t *s = session_current;
 
-			for (l = s->userlist; l; l = l->next) {
-                        	userlist_t *u = l->data;
+			for (ul = s->userlist; ul; ul = ul->next) {
+                        	userlist_t *u = ul;
 
 				if (u->blink && !window_find_s(s, u->uid)) {
 		                        u->blink	= 0;
