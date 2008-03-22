@@ -414,7 +414,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
         if (!s || !(j = s->priv))
                 return;
 
-	if (!s->connected && !j->connecting)
+	if (!s->connected && !s->connecting)
 		return;
 
 	{
@@ -427,7 +427,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 		xfree(__reason);
 	}
 	
-	j->connecting = 0;
+	s->connecting = 0;
 
 	if (j->send_watch) {
 		j->send_watch->type = WATCH_NONE;
@@ -435,7 +435,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 		j->send_watch = NULL;
 	}
 
-	if (j->connecting)
+	if (s->connecting)
 		watch_remove(&jabber_plugin, j->fd, WATCH_WRITE);
 	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
 
@@ -501,7 +501,7 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 			 *	So, to avoid regression, we use here j->connecting != 2 
 			 */
 
-		if (!j->istlen && j->connecting != 2 && session_get(s, "__new_account")) {
+		if (!j->istlen && !j->sasl_connecting && session_get(s, "__new_account")) {
 			char *epasswd	= jabber_escape(passwd);
 			watch_write(j->send_watch, 
 				"<iq type=\"set\" to=\"%s\" id=\"register%d\">"
@@ -879,7 +879,7 @@ WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
                 /* no point in reconnecting by jabber_handle_disconnect() */
 
                 print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
-                j->connecting = 0;
+                s->connecting = 0;
                 return -1;
         }
 
@@ -1211,7 +1211,7 @@ static QUERY(jabber_status_show_handle) {
 	if (session_int_get(s, "__gpg_enabled") == 1)
 		print("jabber_gpg_sok", session_name(s), session_get(s, "gpg_key"));
 			
-        if (j->connecting)
+        if (s->connecting)
                 print("show_status_connecting");
 	
 	return 0;

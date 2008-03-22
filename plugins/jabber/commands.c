@@ -81,7 +81,7 @@ static COMMAND(jabber_command_connect)
 
 	jabber_private_t *j = session_private_get(session);
 	
-	if (j->connecting) {
+	if (session->connecting) {
 		printq("during_connect", session_name(session));
 		return -1;
 	}
@@ -129,7 +129,7 @@ static COMMAND(jabber_command_connect)
 	xfree(j->resource);
 	j->resource = xstrdup(resource);
 
-	j->connecting = 1;
+	session->connecting = 1;
 
 	printq("connecting", session_name(session));
 	if (session_status_get(session) == EKG_STATUS_NA)
@@ -148,7 +148,7 @@ static COMMAND(jabber_command_disconnect)
 		return 0;
 	}
 
-	if (!j->connecting && !session_connected_get(session)) {
+	if (!session->connecting && !session_connected_get(session)) {
 		printq("not_connected", session_name(session));
 		return -1;
 	}
@@ -202,7 +202,7 @@ static COMMAND(jabber_command_disconnect)
 	else		watch_write(j->send_watch, "</s>");
 
 	userlist_free(session);
-	if (j->connecting)
+	if (session->connecting)
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_STOPPED);
 	else
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_USER);
@@ -213,9 +213,7 @@ static COMMAND(jabber_command_disconnect)
 
 static COMMAND(jabber_command_reconnect)
 {
-	jabber_private_t *j = session_private_get(session);
-
-	if (j->connecting || session_connected_get(session)) {
+	if (session->connecting || session_connected_get(session)) {
 		jabber_command_disconnect(name, params, session, target, quiet);
 	}
 

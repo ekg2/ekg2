@@ -194,10 +194,10 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 	xfree(resource);
 }
 
-
-#define CHECK_CONNECT(connecting_, connected_, func) if (j->connecting != connecting_ || s->connected != connected_) { \
-			debug_error("[jabber] %s:%d ASSERT_CONNECT j->connecting: %d (shouldbe: %d) s->connected: %d (shouldbe: %d)\n", \
-				__FILE__, __LINE__, j->connecting, connecting_, s->connected, connected_);	func; }
+	/* XXX: temporary solution */
+#define CHECK_CONNECT(connecting_, connected_, func) if ((j->sasl_connecting && s->connecting ? 2 : s->connecting) != connecting_ || s->connected != connected_) { \
+			debug_error("[jabber] %s:%d ASSERT_CONNECT connecting: %d+%d (shouldbe: %d) s->connected: %d (shouldbe: %d)\n", \
+				__FILE__, __LINE__, s->connecting, j->sasl_connecting, connecting_, s->connected, connected_);	func; }
 
 #define CHECK_XMLNS(n, _xmlns, func) if (xstrcmp(n->xmlns, _xmlns)) { \
 			debug_error("[jabber] %s:%d ASSERT_XMLNS BAD XMLNS, IS: %s SHOULDBE: %s\n", __FILE__, __LINE__, n->xmlns, _xmlns);	func; }
@@ -205,7 +205,7 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 JABBER_HANDLER(jabber_handle_stream_features) {
 	jabber_private_t *j = s->priv;
 
-	int use_sasl = j->connecting == 1 && (session_int_get(s, "disable_sasl") != 2);
+	int use_sasl = !j->sasl_connecting && (session_int_get(s, "disable_sasl") != 2);
 	int use_fjuczers = 0;	/* bitmaska (& 1 -> session) (& 2 -> bind) */
 
 	int display_fjuczers = session_int_get(s, "display_server_features");
@@ -372,12 +372,12 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				j->id++);
 	}
 
-	if (j->connecting == 2 && !(use_fjuczers & 2)) {	/* STRANGE, BUT MAYBE POSSIBLE? */
+	if (j->sasl_connecting && !(use_fjuczers & 2)) {	/* STRANGE, BUT MAYBE POSSIBLE? */
 		jabber_session_connected(s);
 	}
 	
 	/* i think it's done here.. */
-	if (j->connecting == 2 && display_fjuczers)
+	if (j->sasl_connecting && display_fjuczers)
 		session_int_set(s, "__features_displayed", 1);
 
 	JABBER_COMMIT_DATA(j->send_watch);	
@@ -406,7 +406,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 		}
 
 		if (auth_type != JABBER_SASL_AUTH_UNKNOWN) 
-			j->connecting = 2;
+			j->sasl_connecting = 1;
 
 		switch (auth_type) {
 			string_t str;
@@ -1359,7 +1359,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 			jabber_session_connected(s);
 		} else {	/* Can someone look at that, i don't undestand for what is it here... */
 			s->last_conn = time(NULL);
-			j->connecting = 0;
+			s->connecting = 0;
 		}
 	}
 
@@ -1653,7 +1653,7 @@ static void jabber_session_connected(session_t *s) {
 	jabber_private_t *j = jabber_private(s);
 	char *__session = xstrdup(session_uid_get(s));
 
-	j->connecting = 0;
+	s->connecting = 0;
 
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
 

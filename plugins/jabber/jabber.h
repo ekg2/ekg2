@@ -144,7 +144,7 @@ typedef struct {
 	XML_Parser parser;		/**< expat instance */
 	char *server;			/**< server name */
 	int port;			/**< server's port number */
-	int connecting;			/**< whether we're connecting, 2 if connecting over SASL */
+	int sasl_connecting;		/**< whether we're connecting over SASL */
 	char *resource;			/**< resource used when connecting to daemon */
 	char *last_gmail_result_time; 	/**< last time we're checking mail (this seems not to work correctly ;/) */
 	char *last_gmail_tid;		/**< lastseen mail thread-id */
