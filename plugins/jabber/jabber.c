@@ -411,7 +411,7 @@ int jabber_write_status(session_t *s) {
 void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 	jabber_private_t *j;
 
-        if (!s || !(j = s->priv))
+	if (!s || !(j = s->priv))
                 return;
 
 	if (!s->connected && !s->connecting)
@@ -427,16 +427,13 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 		xfree(__reason);
 	}
 	
-	s->connecting = 0;
-
 	if (j->send_watch) {
 		j->send_watch->type = WATCH_NONE;
 		watch_free(j->send_watch);
 		j->send_watch = NULL;
 	}
 
-	if (s->connecting)
-		watch_remove(&jabber_plugin, j->fd, WATCH_WRITE);
+	watch_remove(&jabber_plugin, j->fd, WATCH_WRITE);
 	watch_remove(&jabber_plugin, j->fd, WATCH_READ);
 
 	j->using_compress = JABBER_COMPRESSION_NONE;
@@ -459,6 +456,23 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
         if (j->parser)
                 XML_ParserFree(j->parser);
         j->parser = NULL;
+
+	{
+		window_t *wl;
+
+		for (wl = windows; wl; wl = wl->next) {
+			window_t *w = wl;
+
+			if (w->session == s) {
+				const char *tmp = get_uid(s, w->target);
+				xfree(w->target);
+				w->target = xstrdup(tmp);
+			}
+		}
+
+		userlist_free(s);
+	}
+
 	session_set(s, "__sasl_excepted", NULL);
 	session_int_set(s, "__roster_retrieved", 0);
 	session_int_set(s, "__session_need_start", 0);

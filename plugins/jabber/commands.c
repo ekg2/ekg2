@@ -202,7 +202,6 @@ static COMMAND(jabber_command_disconnect)
 	if (!j->istlen) watch_write(j->send_watch, "</stream:stream>");
 	else		watch_write(j->send_watch, "</s>");
 
-	userlist_free(session);
 	if (session->connecting)
 		jabber_handle_disconnect(session, descr, EKG_DISCONNECT_STOPPED);
 	else
