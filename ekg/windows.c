@@ -594,14 +594,17 @@ char *window_target(window_t *window) {
  * komenda ekg obs³uguj±ca okna
  */
 COMMAND(cmd_window) {
-	if (!xstrcmp(name, ("clear")) || (params[0] && !xstrcasecmp(params[0], ("clear")))) {
+	const int par0_len	= xstrlen(params[0]);
+	const int par0_matchlen	= par0_len > 2 ? par0_len : 2;
+
+	if (!xstrcmp(name, "clear") || (params[0] && !xstrncasecmp(params[0], "clear", par0_matchlen))) {
 		window_t *w = xmemdup(window_current, sizeof(window_t));
 		query_emit_id(NULL, UI_WINDOW_CLEAR, &w);
 		xfree(w);
 		return 0;
 	}
 
-	if (!params[0] || !xstrcasecmp(params[0], ("list"))) {
+	if (!params[0] || !xstrncasecmp(params[0], "list", par0_matchlen)) {
 		window_t *w;
 
 		for (w = windows; w; w = w->next) {
@@ -618,7 +621,7 @@ COMMAND(cmd_window) {
 		return 0;
 	}
 
-	if (!xstrcasecmp(params[0], ("active"))) {
+	if (!xstrncasecmp(params[0], "active", par0_matchlen)) {
 		window_t *w;
 		int a,id = 0;
 
@@ -635,7 +638,7 @@ COMMAND(cmd_window) {
 		return 0;
 	}
 
-	if (!xstrcasecmp(params[0], ("new"))) {
+	if (!xstrncasecmp(params[0], "new", par0_matchlen)) {
 		window_t *w = window_new(params[1], session, 0);
 
 		w->session = window_current->session;
@@ -654,7 +657,7 @@ COMMAND(cmd_window) {
 		return 0;
 	}
 
-	if (!xstrcasecmp(params[0], ("switch"))) {
+	if (!xstrncasecmp(params[0], "switch", par0_matchlen)) {
 		if (!params[1] || (!atoi(params[1]) && xstrcmp(params[1], ("0"))))
 			printq("not_enough_params", name);
 		else
@@ -662,12 +665,13 @@ COMMAND(cmd_window) {
 		return 0;
 	}			
 
-	if (!xstrcasecmp(params[0], ("last"))) {
+	if (!xstrncasecmp(params[0], "last", par0_matchlen)) {
 		window_switch(window_last_id);
 		return 0;
 	}
 
-	if (!xstrcmp(params[0], "lastlog")) {
+		/* at least 'lastl' */
+	if (!xstrncasecmp(params[0], "lastlog", par0_matchlen)) {
 		static window_lastlog_t lastlog_current_static;
 
 		window_lastlog_t *lastlog;
@@ -774,7 +778,7 @@ COMMAND(cmd_window) {
 		return query_emit_id(NULL, UI_WINDOW_UPDATE_LASTLOG);
 	}
 	
-	if (!xstrcasecmp(params[0], ("kill"))) {
+	if (!xstrncasecmp(params[0], "kill", par0_matchlen)) {
 		window_t *w = window_current;
 
 		if (params[1]) {
@@ -798,17 +802,18 @@ COMMAND(cmd_window) {
 		return 0;
 	}
 
-	if (!xstrcasecmp(params[0], ("next"))) {
+		/* two first chars are same as with new, so it's like par0_matchlen was at least 3 */
+	if (!xstrncasecmp(params[0], "next", par0_matchlen)) {
 		window_next();
 		return 0;
 	}
 	
-	if (!xstrcasecmp(params[0], ("prev"))) {
+	if (!xstrncasecmp(params[0], "prev", par0_matchlen)) {
 		window_prev();
 		return 0;
 	}
 
-        if (!xstrcasecmp(params[0], ("move")) || !xstrcasecmp(params[0], "swap")) {
+        if (!xstrncasecmp(params[0], "move", par0_matchlen) || !xstrncasecmp(params[0], "swap", par0_matchlen)) {
 		int source, dest;
 
 		if (!window_current)
@@ -859,7 +864,7 @@ COMMAND(cmd_window) {
 		if (dest == source)
 			return 0;
 
-		if (!xstrcasecmp(params[0], "swap")) {
+		if (!xstrncasecmp(params[0], "swap", par0_matchlen)) {
 	                if (!window_exist(dest)) 
 				window_new(NULL, NULL, dest);
 
@@ -871,7 +876,7 @@ COMMAND(cmd_window) {
         }
 
 	
-	if (!xstrcasecmp(params[0], ("refresh"))) {
+	if (!xstrncasecmp(params[0], "refresh", par0_matchlen)) {
 		query_emit_id(NULL, UI_REFRESH);
 		return 0;
 	}
