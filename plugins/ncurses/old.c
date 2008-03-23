@@ -1357,23 +1357,22 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 
 	if (config_display_color == 2)	config_display_color = 0;
 
-	if (x == 0) {
-		int i;
-
-		wattrset(w, color_pair(fgcolor, bgcolor));
-
-		wmove(w, y, 0);
-
-		for (i = 0; i <= w->_maxx; i++)
-			waddch(w, ' ');
-	}
-
 	wmove(w, y, x);
 			
 	while (*p && *p != '}' && x <= w->_maxx) {
 		int i, nest;
 
-		if (*p != '%') {
+		if (config_use_unicode && *p >> 7) {
+			do {
+				waddch(w, (unsigned char) *p);
+				p++;
+			} while ((unsigned char) *p >> 6 == 2); // p == 10xxxxxx
+
+			x++;
+			continue;
+		}
+
+ 		if (*p != '%') {
 			waddch(w, (unsigned char) *p);
 			p++;
 			x++;
@@ -1446,6 +1445,16 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
                               	}
 
 				while (*text) {
+					if (config_use_unicode && *text >> 7) {
+						do {
+							waddch(w, (unsigned char) *text);
+							text++;
+						} while ((unsigned char) *text >> 6 == 2); // text == 10xxxxxx
+
+						x++;
+						continue;
+					}
+
 					if (*text != '%') {
 						waddch(w, (unsigned char) *text);
 						text++;	
@@ -1537,6 +1546,17 @@ next:
 				nest++;
 			p++;
 		}
+	}
+
+	if (orig_x == 0) {
+		int i;
+
+		wattrset(w, color_pair(fgcolor, bgcolor));
+
+		wmove(w, y, x);
+
+		for (i = x; i <= w->_maxx; i++)
+			waddch(w, ' ');
 	}
 
 	config_display_color = backup_display_color;
