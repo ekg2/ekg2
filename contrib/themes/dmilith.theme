@@ -1,0 +1,67 @@
+#
+# 2oo8 on MIT license
+# ekg2 theme by dmilith
+# dmilith [at] gmail.com
+# theme version 0.5
+#
+
+-query_started_window
+irc_channel_unsecure 
+statusbar %k%s[%W%s%{time}%k]    %G%{?session %{session}%k(%W%{?avail dostępny}%{?away zajęty}%{?invisible ukryty}%{?notavail niedostępny}%{?xa bardzo zajęty}%{?dnd nie przeszkadzać}%{?chat chętny do rozmowy}%k)}%{?!session brak sesji}%k    [%s%Y%{?window %{window}} %{?query : %{query}}%{?debug debug}%{?activity %k]    [%Waktywność: }%{activity}%{?mail %k] [%n%B%s mail:}%{mail}%{?more %s%k]    [%Gwięcej}%k]%s
+statusbar_timestamp %H:%M.%S
+statusbar_act_important %G
+statusbar_act %K
+contacts_vertical_line_char 
+curses_prompt_none [puste]                                                     
+
+message %K%r#-%R%4%r-# %|%c%2%n%3
+chat %K%r#-%R%4%r-# %|%c%2%n%3
+sent %K%g#-%G%4%g-# %|%3
+conference %c<%C%1%c>%T %|%T%3
+irc_msg_sent_chan %b<%n%2%T%3%g%T%b>%n %6
+irc_msg_sent_n %b<%n%2%T%3%g%T%b>%n %6
+
+irc_msg_f_chan_n %b<%C%2%g%3%b>%n %6
+irc_msg_f_chan_nh %b<%C%2%Y%3%b>%W %6
+irc_msg_f_some %b<%g%3%b>%n %T%6
+irc_not_f_chan %B<%C%2%B%3%b/%g%5%b>%n %T%6
+irc_not_f_chanh %B<%C%2%W%3%b/%W%5%b>%W %T%6
+irc_not_f_chan_n %B<%C%2%g%3%b>%n %T%6
+irc_not_f_chan_nh %l%y * %3%n  %6
+irc_not_f_some %b<%B%3%b>%n %T%6
+irc_f_some %b<%3%b>%n
+
+irc_joined   %> %Kjoin: %k(%K%2%k)%B %k(%K%3%k)%n
+irc_left   %> %Kpart: %k(%K%2%k)%B %k(%K%3%k)%B %k(%K%5%k)%n
+irc_kicked   %> %Kkick: %k(%K%2%k)%K wykopany przez %k(%K%3%k)%K %k(%K%6%k)%n
+irc_kicked_you   %> %Kkick: zoskałeś wykopany przez %k(%K%3%k)%K %k(%K%6%k)%n
+irc_quit   %> %Kquit: %k(%K%2%k)%K %k(%K%3%k)%K %k(%K%4%k)%n
+
+irc_unknown_ctcp %> %y%2%n przesłano nierozpoznane CTCP %3: (%4)
+irc_ctcp_action_y_pub %> %l%y* %2%n %4
+irc_ctcp_action_y %> %l%y* %2%n %4
+irc_ctcp_action_pub %> %l%y* %2%n %5
+irc_ctcp_action %> %l%y* %2%n %5
+irc_ctcp_request_pub %> %l%y%2%n zażądano CTCP %4 od %3
+irc_ctcp_request %> %l%y%2%n zażądał CTCP %4
+irc_ctcp_reply %> %l%y%2%n odpowiedź CTCP od %3: %4
+IRC_ERR_CANNOTSENDTOCHAN %! %2: %1
+IRC_RPL_FIRSTSECOND %> (%1) %2 %3
+IRC_RPL_SECONDFIRST %> (%1) %3 %2
+IRC_RPL_JUSTONE %> (%1) %2
+IRC_RPL_NEWONE %> (%1) 1:%2 2:%3 3:%4 4:%5
+IRC_ERR_FIRSTSECOND %! (%1) %2 %3
+IRC_ERR_SECONDFIRST %! (%1) %3 %2
+IRC_ERR_JUSTONE %! (%1) %2
+IRC_ERR_NEWONE %! (%1) 1:%2 2:%3 3:%4 4:%5
+IRC_RPL_CANTSEND %> Brak praw do wysyłania na kanał %T%2%n
+RPL_WHOISOPERATOR %G||%n %|ircOp    : %3
+IRC_RPL_TOPICBY %> ustawiony przez %2 na %3
+IRC_TOPIC_CHANGE %> %T%2%n zmienił temat kanału %T%4%n na: %5
+IRC_TOPIC_UNSET %> %T%3%n wyłączył temat kanału %T%4
+IRC_MODE_CHAN %> %2/%3
+IRC_MODE %> %2 ustawił tryb %3 na Tobie
+IRC_PINGPONG %) pi/po %K%2%n
+IRC_YOUNEWNICK %> %l%y* %2%n zmienił nicka na %l%y%3%n
+IRC_NEWNICK %> %l%y* %2%n zmienił nicka na %l%y%3%n
+
