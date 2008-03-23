@@ -26,7 +26,7 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-#define EKG_ABI_VER 3947
+#define EKG_ABI_VER 3952
 
 #define EXPORT __attribute__ ((visibility("default")))
 

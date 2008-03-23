@@ -351,7 +351,7 @@ static COMMAND(gg_command_away) {
 	int _status;
 
 	if (xstrlen(params0))
-		session->scroll_pos = 0;
+		g->scroll_pos = 0;
 
 	if (!xstrcmp(name, ("_autoscroll"))) {
 		autoscroll = 1;
@@ -365,7 +365,7 @@ static COMMAND(gg_command_away) {
 		}
 		xfree(params0);
 		params0 = xstrdup(session_descr_get(session));
-		session->scroll_last = time(NULL);
+		g->scroll_last = time(NULL);
 
 		if (!xstrlen(params0)) {
 			xfree(params0);
@@ -408,7 +408,7 @@ static COMMAND(gg_command_away) {
 				char *descr_not_poss = xstrdup(params0 + GG_STATUS_DESCR_MAXSIZE);
 
 				printq("descr_too_long", itoa(xstrlen(params0) - GG_STATUS_DESCR_MAXSIZE), descr_poss, descr_not_poss);
-				session->scroll_op = 0;
+				g->scroll_op = 0;
 
 				xfree(descr_poss);
 				xfree(descr_not_poss);
@@ -439,7 +439,7 @@ static COMMAND(gg_command_away) {
 		char *desk;
 
 		timeout = autoscroll;
-		autoscroll = session -> scroll_pos;
+		autoscroll = g->scroll_pos;
 		desk = xstrndup(session_descr_get(session) + autoscroll,
 							GG_STATUS_DESCR_MAXSIZE-1);
 		/* this is made especially to make other people happy ;)
@@ -452,25 +452,23 @@ static COMMAND(gg_command_away) {
 		xfree(desk);
 
 		if (!xstrcmp(mode, "bounce")) {
-			if (!session->scroll_op) {
-				session->scroll_pos++;
+			if (!g->scroll_op) {
+				g->scroll_pos++;
 			} else {
-				session->scroll_pos--;
+				g->scroll_pos--;
 			}
 			/* I've changed xor to simple setting to 0 and 1 because
 			 * it was possible to screw things up by playing with
 			 * scroll_mode session variable
 			 */
-			if (session->scroll_pos <= 0)
-					session->scroll_op=0;
-			else if (session->scroll_pos >=
-							xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
-					session->scroll_op=1;
+			if (g->scroll_pos <= 0)
+					g->scroll_op=0;
+			else if (g->scroll_pos >= xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
+					g->scroll_op=1;
 		} else if (!xstrcmp(mode, "simple")) {
-			session->scroll_pos++;
-			if (session->scroll_pos >
-							xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
-				session->scroll_pos=0;
+			g->scroll_pos++;
+			if (g->scroll_pos > xstrlen(session_descr_get(session)) - GG_STATUS_DESCR_MAXSIZE+1)
+				g->scroll_pos=0;
 		}
 		/* I wanted to add one more 'constant' to the left [or right]
 		 * but I'd have to change some things, and I'm soooo lazy

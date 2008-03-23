@@ -49,10 +49,15 @@ typedef enum {
 } gg_quiet_t;
 
 typedef struct {
-	struct gg_session *sess;	/* sesja */
-	list_t searches;		/* operacje szukania */
-	list_t passwds;			/* operacje zmiany has³a */
-	gg_quiet_t quiet;		/* co ma byæ cicho */
+	struct		gg_session *sess;	/* sesja */
+	list_t		searches;		/* operacje szukania */
+	list_t		passwds;		/* operacje zmiany has³a */
+	gg_quiet_t	quiet;			/* co ma byæ cicho */
+
+		/* (annoying) description scrolling */
+	unsigned int	scroll_op	: 1;
+	int		scroll_pos;
+	time_t		scroll_last;
 } gg_private_t;
 
 void gg_register_commands();

@@ -1692,6 +1692,31 @@ static void libgadu_debug_handler(int level, const char *format, va_list ap) {
 	ekg_debug_handler(newlevel, format, ap);
 }
 
+	/* XXX: move whole scrolling into timer? */
+int gg_idle_handler(void *data) {
+	time_t now = time(NULL);
+	session_t *sl;
+
+	/* sprawd¼ scroll timeouty */
+	/* XXX: nie tworzyæ variabla globalnego! */
+	for (sl = sessions; sl; sl = sl->next) {
+		session_t *s	= sl;
+		gg_private_t *g	= s->priv;
+		int tmp;
+
+		if (!s->connected || s->plugin != &gg_plugin || !g)
+			continue;
+
+		if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
+			continue;
+
+		if (now - g->scroll_last > tmp)
+			command_exec(NULL, s, ("/_autoscroll"), 0);
+	}
+
+	return 0;
+}
+
 static plugins_params_t gg_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias", 		VAR_STR, 0, 0, NULL), 
 	PLUGIN_VAR_ADD("auto_away", 		VAR_INT, "600", 0, NULL),
@@ -1758,6 +1783,8 @@ int EXPORT gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("images_dir"), VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
 	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
+
+	idle_add(&gg_plugin, gg_idle_handler, NULL);
 
 	gg_debug_handler	= libgadu_debug_handler;
 	gg_debug_level		= 255;

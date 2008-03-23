@@ -122,11 +122,6 @@ typedef struct session {
 	unsigned int	connecting	: 1;	/**< whether session is currently being connected */
 	unsigned int	autoaway	: 1;	/**< whether we're in autoaway */
 
-/* XXX: move below directly into gg? */
-	unsigned int	scroll_op	: 1;
-	int		scroll_pos;
-	time_t		scroll_last;
-
 	time_t		activity;		/**< timestamp of last activity */
 	time_t		last_conn;		/**< timestamp of connecting */
 

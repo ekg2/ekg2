@@ -204,20 +204,6 @@ void ekg_loop() {
 				} while (0);
 			}
 
-			/* sprawd¼ scroll timeouty */
-			/* XXX: nie tworzyæ variabla globalnego! */
-			for (s = sessions; s; s = s->next) {
-				int tmp;
-
-				if (!s->connected)
-					continue;
-
-				if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
-					continue;
-
-				if (tv.tv_sec - s->scroll_last > tmp)
-					command_exec(NULL, s, ("/_autoscroll"), 0);
-			}
 		}
 
                 /* auto save */
