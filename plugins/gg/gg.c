@@ -1694,7 +1694,7 @@ static void libgadu_debug_handler(int level, const char *format, va_list ap) {
 
 	/* XXX: move whole scrolling into timer? */
 int gg_idle_handler(void *data) {
-	time_t now = time(NULL);
+	struct timeval *tv = data;
 	session_t *sl;
 
 	/* sprawd¼ scroll timeouty */
@@ -1710,7 +1710,7 @@ int gg_idle_handler(void *data) {
 		if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
 			continue;
 
-		if (now - g->scroll_last > tmp)
+		if (tv->tv_sec - g->scroll_last > tmp)
 			command_exec(NULL, s, ("/_autoscroll"), 0);
 	}
 
@@ -1784,7 +1784,7 @@ int EXPORT gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
 	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
-	idle_add(&gg_plugin, gg_idle_handler, NULL);
+	idle_add(&gg_plugin, gg_idle_handler, &ekg_tv);
 
 	gg_debug_handler	= libgadu_debug_handler;
 	gg_debug_level		= 255;

@@ -92,6 +92,7 @@
 #include "log.h"
 #include "metacontacts.h"
 #include "msgqueue.h"
+#include "plugins.h"
 #include "protocol.h"
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
@@ -110,6 +111,7 @@
 char *config_dir;
 int mesg_startup;
 int ekg_watches_removed;
+struct timeval ekg_tv;
 static pid_t ekg_pid = 0;
 static char argv0[PATH_MAX];
 
@@ -119,6 +121,41 @@ static int stderr_backup = -1;
 
 int no_mouse = 0;
 
+	/* less important things which don't need to be checked every main loop iteration
+	 * e.g. autoaways */
+int ekg_less_important_handler(void *data) {
+	struct timeval *tv = data;
+	session_t *sl;
+
+	/* sprawd¼ autoawaye ró¿nych sesji */
+	for (sl = sessions; sl; sl = sl->next) {
+		session_t *s = sl;
+		int tmp;
+
+		if (!s->connected || (s->status < EKG_STATUS_AWAY)) /* lowest autostatus is autoxa, so from xa and lower ones
+								       we can't go further */
+			continue;
+
+		do {
+			if ((s->status == EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
+				break;
+
+			if (tv->tv_sec - s->activity > tmp)
+				command_exec(NULL, s, ("/_autoaway"), 0);
+		} while (0);
+
+		do {
+			if ((tmp = session_int_get(s, "auto_xa")) < 1 || !s->activity)
+				break;
+
+			if (tv->tv_sec - s->activity > tmp)
+				command_exec(NULL, s, ("/_autoxa"), 0);
+		} while (0);
+	}
+
+	return 0;
+}
+
 /*
  * ekg_loop()
  *
@@ -127,14 +164,14 @@ int no_mouse = 0;
  */
 
 void ekg_loop() {
-	struct timeval tv;
         struct timeval stv;
         fd_set rd, wd;
         int ret, maxfd, status;
 	pid_t pid;
 
-	gettimeofday(&tv, NULL);
+	gettimeofday(&ekg_tv, NULL);
 
+#define tv ekg_tv
 	{
 		{		/* przejrzyj timery u¿ytkownika, ui, skryptów */
 			struct timer *t;
@@ -174,36 +211,6 @@ void ekg_loop() {
 
 				w = next;
 			}
-		}
-
-		{			/* XXX: maybe make this some kind of idler? */
-			session_t *s;
-
-			/* sprawd¼ autoawaye ró¿nych sesji */
-			for (s = sessions; s; s = s->next) {
-				int tmp;
-
-				if (!s->connected || (s->status < EKG_STATUS_AWAY)) /* lowest autostatus is autoxa, so from xa and lower ones
-										       we can't go further */
-					continue;
-
-				do {
-					if ((s->status == EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
-						break;
-
-					if (tv.tv_sec - s->activity > tmp)
-						command_exec(NULL, s, ("/_autoaway"), 0);
-				} while (0);
-
-				do {
-					if ((tmp = session_int_get(s, "auto_xa")) < 1 || !s->activity)
-						break;
-
-					if (tv.tv_sec - s->activity > tmp)
-						command_exec(NULL, s, ("/_autoxa"), 0);
-				} while (0);
-			}
-
 		}
 
                 /* auto save */
@@ -431,6 +438,7 @@ void ekg_loop() {
 			ekg_watches_removed = 0;
 		}
 	}
+#undef tv
 
         return;
 }
@@ -1015,6 +1023,7 @@ int main(int argc, char **argv)
 #endif
 	}
 
+	idle_add(NULL, ekg_less_important_handler, &ekg_tv);
         reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
