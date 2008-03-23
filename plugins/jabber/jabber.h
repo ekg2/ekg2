@@ -71,7 +71,7 @@ typedef struct {
 typedef struct {
 	char *name;
 	char *jid;
-	int autojoin;
+	unsigned int autojoin : 1;
 	char *nick;
 	char *pass;
 } jabber_bookmark_conference_t;
@@ -95,17 +95,19 @@ enum jabber_compression_method {
 };
 
 	/* name				bit			allow/block:	*/
-#define PRIVACY_LIST_MESSAGE		1		/* 	incoming messages */
-#define PRIVACY_LIST_IQ			2		/*      incoming iq packets */
-#define PRIVACY_LIST_PRESENCE_IN	4		/*      incoming presence packets */
-#define PRIVACY_LIST_PRESENCE_OUT	8		/*      outgoint presence packets */
-#define PRIVACY_LIST_ALL		(PRIVACY_LIST_MESSAGE | PRIVACY_LIST_IQ | PRIVACY_LIST_PRESENCE_IN | PRIVACY_LIST_PRESENCE_OUT)
+typedef enum {
+	PRIVACY_LIST_MESSAGE		= 1,		/* 	incoming messages */
+	PRIVACY_LIST_IQ			= 2,		/*      incoming iq packets */
+	PRIVACY_LIST_PRESENCE_IN	= 4,		/*      incoming presence packets */
+	PRIVACY_LIST_PRESENCE_OUT	= 8,		/*      outgoint presence packets */
+	PRIVACY_LIST_ALL		= (PRIVACY_LIST_MESSAGE | PRIVACY_LIST_IQ | PRIVACY_LIST_PRESENCE_IN | PRIVACY_LIST_PRESENCE_OUT)
+} jabber_iq_privacy_flags_t;
 
 typedef struct {
 	char *type;						/* jid/group/subscription/ */
 	char *value;						/* jid:.../@group/subscription ---- value */
-	int allow;						/* 1 - allow 0 - deny */
-	int items;						/* lista bitmaski j/w */
+	unsigned int allow : 1;					/* 1 - allow 0 - deny */
+	jabber_iq_privacy_flags_t items;			/* lista bitmaski j/w */
 	unsigned int order;					/* order */
 } jabber_iq_privacy_t;
 
@@ -130,11 +132,11 @@ typedef struct {
  */
 typedef struct {
 	int fd;				/**< connection's fd */
-	int istlen;			/**< whether this is a tlen session */
+	unsigned int istlen	: 1;	/**< whether this is a tlen session */
 
 	enum jabber_compression_method using_compress;	/**< whether we're using compressed connection, and what method */
 #ifdef JABBER_HAVE_SSL
-	char using_ssl;			/**< 1 if we're using SSL, 2 if we're using TLS, else 0 */
+	unsigned char using_ssl	: 2;	/**< 1 if we're using SSL, 2 if we're using TLS, else 0 */
 	SSL_SESSION ssl_session;	/**< SSL session */
 #ifdef JABBER_HAVE_GNUTLS
 	gnutls_certificate_credentials xcred;	/**< gnutls credentials (?) */
@@ -143,8 +145,8 @@ typedef struct {
 	int id;				/**< queries ID */
 	XML_Parser parser;		/**< expat instance */
 	char *server;			/**< server name */
-	int port;			/**< server's port number */
-	int sasl_connecting;		/**< whether we're connecting over SASL */
+	uint16_t port;			/**< server's port number */
+	unsigned int sasl_connecting :1;/**< whether we're connecting over SASL */
 	char *resource;			/**< resource used when connecting to daemon */
 	char *last_gmail_result_time; 	/**< last time we're checking mail (this seems not to work correctly ;/) */
 	char *last_gmail_tid;		/**< lastseen mail thread-id */

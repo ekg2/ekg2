@@ -209,7 +209,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 
 							item->type  = xstrdup(type);
 							item->value = xstrdup(value);
-							item->allow = !xstrcmp(action,"allow");
+							item->allow = !xstrcmp(action, "allow");
 
 							if (iq)		item->items |= PRIVACY_LIST_IQ;
 							if (message)	item->items |= PRIVACY_LIST_MESSAGE;
