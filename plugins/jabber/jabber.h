@@ -243,6 +243,7 @@ int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *s
 jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, const int n);
 char *jabber_thread_gen(jabber_private_t *j, const char *uid);
 
+uint32_t *jabber_msg_format(const char *plaintext, const char *html);
 #endif /* __EKG_JABBER_JABBER_H */
 
 /*

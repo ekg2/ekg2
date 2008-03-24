@@ -407,7 +407,7 @@ msgdisplay:
 		time_t sent 	= time(NULL);
 		int class 	= (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
 		int ekgbeep 	= EKG_NO_BEEP;
-		char *format 	= NULL;
+		uint32_t *format= jabber_msg_format(msg, NULL);
 		char *seq 	= NULL;
 
 		rcpts[0] 	= xstrdup(uid);

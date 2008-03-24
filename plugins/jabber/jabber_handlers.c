@@ -987,10 +987,9 @@ JABBER_HANDLER(jabber_handle_message) {
 		int secure	= (x_encrypted != NULL);
 		char **rcpts 	= NULL;
 		char *seq 	= NULL;
-		uint32_t *format= NULL;
 		time_t sent	= bsent;
-
-		char *text = tlenjabber_unescape(body->str);
+		char *text	= tlenjabber_unescape(body->str);
+		uint32_t *format= jabber_msg_format(text, NULL);
 
 		if (!sent) sent = time(NULL);
 
@@ -1041,6 +1040,7 @@ JABBER_HANDLER(jabber_handle_message) {
 			xfree(uid2);
 			xfree(nick);
 			xfree(formatted);
+			xfree(format);
 		} else {
 			query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
 		}

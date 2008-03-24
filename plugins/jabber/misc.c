@@ -12,6 +12,7 @@
 
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
+#include <ekg/protocol.h>
 #include <ekg/themes.h>
 #include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
@@ -550,6 +551,83 @@ char *jabber_thread_gen(jabber_private_t *j, const char *uid) {
 	}
 	
 	return thread;
+}
+
+static inline uint32_t jabber_formatchar(const char c) {
+	if (c == '*')	return EKG_FORMAT_BOLD;
+	if (c == '_')	return EKG_FORMAT_UNDERLINE;
+	if (c == '/')	return EKG_FORMAT_ITALIC;
+	
+	return 0;
+}
+
+/* detect whether formatchar is surrounded by space,
+ * when beginning == NULL, check following chars,
+ * else check preceding chars */
+static inline int jabber_fc_check(const char *curr, const char *beginning) {
+	while (beginning ? --curr >= beginning : *(++curr)) {
+		if (isspace(*curr))
+			return 1;
+		else if (!jabber_formatchar(*curr))
+			return 0;
+	}
+
+	return 1;
+}
+
+/* currently parses message text and tries to add some formatting,
+ * e.g. *bold* /italic/
+ *
+ * some time may also parse XHTML */
+uint32_t *jabber_msg_format(const char *plaintext, const char *html) {
+	uint32_t *fmtstring = NULL, *p = NULL, *pf = NULL;
+	const char *c;
+
+	for (c = plaintext; *c; c++) {
+		int enabling;
+		int flag = jabber_formatchar(*c);
+	
+		if (p) {
+			*p |= *pf; /* 'or' to not lose just-enabled formatting */
+			pf = p++;
+		}
+
+		if (flag) {
+			enabling = (!pf || !(*pf & flag));
+
+			if (enabling) {
+				const char *tmp = c+1;
+				if (!jabber_fc_check(c, plaintext)) /* ignore middle-of-a-word formatstrings */
+					continue;
+
+				do {		/* check if formatstring is finished */
+					tmp = xstrchr(tmp, *c);
+					if (tmp && !jabber_fc_check(tmp, NULL))
+						tmp += 1;
+					else
+						break;
+				} while (1);
+				if (!tmp)
+					continue;
+
+			} else if (!jabber_fc_check(c, NULL)) /* like above */
+				continue;
+
+			if (!p) {
+				fmtstring = xcalloc(xstrlen(plaintext), sizeof(uint32_t));
+				pf = &fmtstring[c - plaintext];
+				p = pf+1;
+			}
+
+				/* p is always +1 here */
+			if (enabling)
+				*p	|= flag; /* don't need to check p+1 - unfinished formatting check does it for us */
+			else
+				*pf	&= ~flag;
+		}
+	}
+
+	return fmtstring;
 }
 
 /*
