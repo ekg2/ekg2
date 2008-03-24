@@ -1400,7 +1400,7 @@ static int jabber_theme_init() {
 	format_add("jabber_userinfo_adr_country",	_("%g|| || %n    Country: %T%2"), 1);
 	format_add("jabber_userinfo_adr_end",		_("%g|| %g`+=%G-----"), 1);
 
-	format_add("jabber_userinfo_photourl",		_("%g||\n%g|| %nYou can view attached photo at: %Thttp://vcard.drakor.eu/%1"), 1);
+//	format_add("jabber_userinfo_photourl",		_("%g||\n%g|| %nYou can view attached photo at: %Thttp://vcard.ekg2.org/%1"), 1);
 	format_add("jabber_userinfo_end",		_("%g`+=%G-----"), 1);
 
 	format_add("jabber_userinfo_error",		_("%! (%1) Error in getting %gvCard%n from %W%2%n: %r%3"), 1);
