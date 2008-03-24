@@ -37,9 +37,9 @@
 
 #include "audio_wav.h"
 
-list_t audio_codecs;
-list_t audio_inputs;
-list_t streams;
+codec_t *audio_codecs;
+audio_t *audio_inputs;
+stream_t *streams;
 
 AUDIO_DEFINE(stream);
 
@@ -63,11 +63,13 @@ COMMAND(cmd_streams) {
 /* i think that api if i (we?) write it... will be nice, but code can be obscure... sorry */
 
 	if (!params[0] || match_arg(params[0], 'l', "list", 2) || !params[0]) {	/* list if --list. default action is --list (if we don't have params)  */
-		list_t l;
+		stream_t *sl;
+		audio_t *al;
+		codec_t *cl;
 
 		/* XXX, add more debug info, get info using  */
-		for (l = streams; l; l = l->next) {
-			stream_t *s = l->data;
+		for (sl = streams; sl; sl = sl->next) {
+			stream_t *s = sl;
 
 			/* co->c->control_handler(AUDIO_CONTROL_GET, AUDIO_WRITE, co, "freq", &freq, "sample", &sample, "channels", &channels, NULL); */
 			
@@ -85,8 +87,8 @@ COMMAND(cmd_streams) {
 			if (s->output)	debug("	OUT, AUDIO: %s fd: %d bufferlen: %d\n", s->output->a->name, s->output->fd, s->output->buffer->len);
 		}
 
-		for (l = audio_inputs; l; l = l->next) {
-			audio_t *a = l->data;
+		for (al = audio_inputs; al; al = al->next) {
+			audio_t *a = al;
 			char **arr;
 
 			printq("audio_device", a->name);
@@ -100,8 +102,8 @@ COMMAND(cmd_streams) {
 			}
 		}
 
-		for (l = audio_codecs; l; l = l->next) {
-			codec_t *c = l->data;
+		for (cl = audio_codecs; cl; cl = cl->next) {
+			codec_t *c = cl;
 			char **arr;
 
 			printq("audio_codec", c->name);
@@ -192,11 +194,12 @@ COMMAND(cmd_streams) {
  */
 
 codec_t *codec_find(const char *name) {
-	list_t l;
+	codec_t *cl;
+
 	if (!name) 
 		return NULL;
-	for (l = audio_codecs; l; l = l->next) {
-		codec_t *c = l->data;
+	for (cl = audio_codecs; cl; cl = cl->next) {
+		codec_t *c = cl;
 		if (!xstrcmp(c->name, name)) 
 			return c;
 
@@ -226,7 +229,7 @@ codec_t *codec_find(const char *name) {
 int codec_register(codec_t *codec) {
 	if (!codec)			return -1;
 	if (codec_find(codec->name))	return -2;
-	list_add(&audio_codecs, codec);
+	LIST_ADD2(&audio_codecs, codec);
 	return 0;
 }
 
@@ -246,7 +249,7 @@ void codec_unregister(codec_t *codec) {
 
 	/* XXX here, we should search for <b>all</b> streams using this codec, and unload them */
 
-	list_remove(&audio_codecs, codec, 0);
+	LIST_UNLINK2(&audio_codecs, codec);
 }
 
 /**
@@ -260,13 +263,13 @@ void codec_unregister(codec_t *codec) {
  */
 
 audio_t *audio_find(const char *name) {
-	list_t l;
+	audio_t *al;
 
 	if (!name) 
 		return NULL;
 
-	for (l = audio_inputs; l; l = l->next) {
-		audio_t *a = l->data;
+	for (al = audio_inputs; al; al = al->next) {
+		audio_t *a = al;
 		if (!xstrcmp(a->name, name)) 
 			return a;
 
@@ -297,7 +300,7 @@ int audio_register(audio_t *audio) {
 	if (!audio)			return -1;
 	if (audio_find(audio->name))	return -2;
 
-	list_add(&audio_inputs, audio);
+	LIST_ADD2(&audio_inputs, audio);
 	return 0;
 }
 
@@ -317,7 +320,7 @@ void audio_unregister(audio_t *audio) {
 
 	/* XXX here, we should search for <b>all</b> streams using this audio, and unload them */
 	
-	list_remove(&audio_inputs, audio, 0);
+	LIST_UNLINK2(&audio_inputs, audio);
 }
 		/* READING / WRITING FROM FILEs */
 WATCHER_AUDIO(stream_audio_read) {
@@ -688,7 +691,7 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 	s->codec	= co;
 	s->output	= out;
 
-	list_add(&streams, s);
+	LIST_ADD2(&streams, s);
 
 	watch_add(NULL, in->fd, WATCH_READ, stream_handle, s);
 /* allocate buffers */

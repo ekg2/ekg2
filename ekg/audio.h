@@ -66,7 +66,9 @@ typedef WATCHER_AUDIO(audio_handler_func_t);
 		.decode_handler = x##_codec_decode,	\
 	}
 
-typedef struct {
+typedef struct audio {
+	struct audio *next;
+
 	char *name;	/* nazwa urzadzenia */
 	
 	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);	/* initing / checking if audio_io_t is correct / deiniting */
@@ -84,7 +86,9 @@ typedef struct {
 	void *private;
 } audio_io_t;
 
-typedef struct {
+typedef struct codec {
+	struct codec *next;
+
 	char *name;	/* nazwa codeca */
 
 	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);    /* initing / checking if audio_codec_t is correct / deiniting */
@@ -103,7 +107,9 @@ typedef struct {
 	void *private;
 } audio_codec_t;
 
-typedef struct {
+typedef struct stream {
+	struct stream *next;
+
 	char *stream_name;
 	audio_io_t	*input;
 	audio_codec_t	*codec;
