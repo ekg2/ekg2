@@ -11,7 +11,7 @@ Ekg2::Plugin		T_Ekg2Plu
 Ekg2::User		T_Ekg2User
 Ekg2::Timer		T_Ekg2Time
 
-Ekg2::Userlist		T_PlainList
+Ekg2::Userlist		T_Ekg2User
 Ekg2::Watch		T_PlainList
 short *			T_PlainList
 

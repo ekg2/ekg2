@@ -809,13 +809,13 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 				userlist_t *ul;
 			        for (ul = s->userlist; ul; ul = ul->next) {
 					userlist_t *u = ul;
-					list_t m;
+					struct ekg_group *gl;
 
 					if (!u->nickname)
 						continue;
 
-					for (m = u->groups; m; m = m->next) {
-						struct ekg_group *g = m->data;
+					for (gl = u->groups; gl; gl = gl->next) {
+						struct ekg_group *g = gl;
 
 						if (!xstrcasecmp(gname, g->name)) {
 							if (first++)

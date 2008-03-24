@@ -306,7 +306,6 @@ int gg_blocked_remove(session_t *s, const char *uid)
 {
 	userlist_t *u = userlist_find(s, uid);
 	gg_private_t *g = session_private_get(s);
-	list_t l;
 
 	if (!u || !s || !g)
 		return -1;
@@ -317,17 +316,7 @@ int gg_blocked_remove(session_t *s, const char *uid)
 	if (g->sess && g->sess->state == GG_STATE_CONNECTED)
 		gg_remove_notify_ex(g->sess, atoi(u->uid + 3), gg_userlist_type(u));
 
-	for (l = u->groups; l; ) {
-		struct ekg_group *g = l->data;
-
-		l = l->next;
-
-		if (xstrcasecmp(g->name, "__blocked"))
-			continue;
-
-		xfree(g->name);
-		list_remove(&u->groups, g, 1);
-	}
+	ekg_group_remove(u, "__blocked");
 
 	if (!u->nickname && !u->groups)
 		userlist_remove(s, u);

@@ -52,7 +52,7 @@ typedef struct userlist {
 
 	char		*uid;		/**< uin in form protocol:id */
 	char		*nickname;	/**< nickname */
-	list_t		groups;		/**< list_t with ekg_group<br>
+	struct ekg_group *groups;	/**< list_t with ekg_group<br>
 					 * 	Groups to which this user belongs like: work, friends, family..<br>
 					 *	It's also used internally by ekg2, for example when user is ignore he has group with name: __ignore */
 	
@@ -125,6 +125,8 @@ typedef struct {
  */
 
 struct ekg_group {
+	struct ekg_group *next;
+
 	char *name;		/**< name of group */
 };
 
@@ -184,8 +186,8 @@ const char *ignore_format(int level);
 int ekg_group_add(userlist_t *u, const char *group);
 int ekg_group_remove(userlist_t *u, const char *group);
 int ekg_group_member(userlist_t *u, const char *group);
-char *group_to_string(list_t l, int meta, int sep);
-list_t group_init(const char *groups);
+char *group_to_string(struct ekg_group *l, int meta, int sep);
+struct ekg_group *group_init(const char *groups);
 
 int valid_nick(const char *nick);
 int valid_plugin_uid(plugin_t *plugin, const char *uid);

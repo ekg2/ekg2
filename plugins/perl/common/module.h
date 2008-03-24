@@ -45,7 +45,7 @@ typedef struct timer	*Ekg2__Timer;
 
 typedef userlist_t	*Ekg2__User;
 
-typedef struct list	*Ekg2__Userlist;
+typedef userlist_t	*Ekg2__Userlist;
 
 typedef session_param_t *Ekg2__Session__Param;
 typedef script_t	*Ekg2__Script;

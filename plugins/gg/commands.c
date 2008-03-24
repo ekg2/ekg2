@@ -580,10 +580,10 @@ static COMMAND(gg_command_msg) {
 
 			for (ul = session->userlist; ul; ul = ul->next) {
 				userlist_t *u = ul;			
-				list_t m;
+				struct ekg_group *gl;
 
-				for (m = u->groups; m; m = m->next) {
-					struct ekg_group *g = m->data;
+				for (gl = u->groups; gl; gl = gl->next) {
+					struct ekg_group *g = gl;
 
 					if (!xstrcasecmp(g->name, tmp[i] + 1)) {
 						if (u->nickname && !array_contains(nicks, u->nickname, 0))

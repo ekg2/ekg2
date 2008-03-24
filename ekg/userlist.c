@@ -364,9 +364,12 @@ void userlist_free(session_t *session) {
 	userlist_free_u(&(session->userlist));
 }
 
+static LIST_FREE_ITEM(group_item_free, struct ekg_group *) {
+	xfree(data->name);
+}
+
 static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
 	userlist_t *u = data;
-	list_t lp;
 
 	if (u->priv) {
 		int func = EKG_USERLIST_PRIVHANDLER_FREE;
@@ -379,12 +382,7 @@ static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
 	xfree(u->foreign);
 	xfree(u->last_descr);
 
-	for (lp = u->groups; lp; lp = lp->next) {
-		struct ekg_group *g = lp->data;
-
-		xfree(g->name);
-	}
-	list_destroy(u->groups, 1);
+	LIST_DESTROY2(u->groups, group_item_free);
 	userlist_resource_free(u);
 }
 
@@ -847,7 +845,7 @@ const char *format_user(session_t *session, const char *uid) {
 int ignored_remove(session_t *session, const char *uid) {
 	userlist_t *u = userlist_find(session, uid);
 	char *tmps, *tmp;
-	list_t l;
+	struct ekg_group *gl;
 	int level, tmp2 = 0;
 
 	if (!u)
@@ -856,16 +854,15 @@ int ignored_remove(session_t *session, const char *uid) {
 	if (!(level = ignored_check(session,uid)))
 		return -1;
 
-	for (l = u->groups; l; ) {
-		struct ekg_group *g = l->data;
+	for (gl = u->groups; gl; ) {
+		struct ekg_group *g = gl;
 
-		l = l->next;
+		gl = gl->next;
 
 		if (xstrncasecmp(g->name, "__ignored", 9))
 			continue;
 
-		xfree(g->name);
-		list_remove(&u->groups, g, 1);
+		LIST_REMOVE2(&u->groups, g, group_item_free);
 	}
 
 	if (!u->nickname && !u->groups) {
@@ -937,13 +934,13 @@ int ignored_add(session_t *session, const char *uid, ignore_t level) {
  */
 int ignored_check(session_t *session, const char *uid) {
 	userlist_t *u = userlist_find(session, uid);
-	list_t l;
+	struct ekg_group *gl;
 
 	if (!u)
 		return 0;
 
-	for (l = u->groups; l; l = l->next) {
-		struct ekg_group *g = l->data;
+	for (gl = u->groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 
 		if (!xstrcasecmp(g->name, "__ignored"))
 			return IGNORE_ALL;
@@ -1051,14 +1048,13 @@ static LIST_ADD_COMPARE(group_compare, struct ekg_group *) { return xstrcasecmp(
  * @return -1 jesli juz user jest w tej grupie, lub zle parametry. 0 gdy dodano.
  */
 int ekg_group_add(userlist_t *u, const char *group) {
-	struct ekg_group *g;
-	list_t l;
+	struct ekg_group *g, *gl;
 
 	if (!u || !group)
 		return -1;
 
-	for (l = u->groups; l; l = l->next) {
-		g = l->data;
+	for (gl = u->groups; gl; gl = gl->next) {
+		g = gl;
 
 		if (!xstrcasecmp(g->name, group))
 			return -1;
@@ -1066,7 +1062,7 @@ int ekg_group_add(userlist_t *u, const char *group) {
 	g = xmalloc(sizeof(struct ekg_group));
 	g->name = xstrdup(group);
 
-	LIST_ADD_SORTED(&u->groups, g, group_compare);
+	LIST_ADD_SORTED2(&u->groups, g, group_compare);
 
 	return 0;
 }
@@ -1082,17 +1078,16 @@ int ekg_group_add(userlist_t *u, const char *group) {
  * @return 0 je¶li siê uda³o, inaczej -1.
  */
 int ekg_group_remove(userlist_t *u, const char *group) {
-	list_t l;
+	struct ekg_group *gl;
 
 	if (!u || !group)
 		return -1;
 	
-	for (l = u->groups; l; l = l->next) {
-		struct ekg_group *g = l->data;
+	for (gl = u->groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 
 		if (!xstrcasecmp(g->name, group)) {
-			xfree(g->name);
-			list_remove(&u->groups, g, 1);
+			LIST_REMOVE2(&u->groups, g, group_item_free);
 			
 			return 0;
 		}
@@ -1112,13 +1107,13 @@ int ekg_group_remove(userlist_t *u, const char *group) {
  * @return 1 je¶li tak, 0 je¶li nie.
  */
 int ekg_group_member(userlist_t *u, const char *group) {
-	list_t l;
+	struct ekg_group *gl;
 
 	if (!u || !group)
 		return 0;
 
-	for (l = u->groups; l; l = l->next) {
-		struct ekg_group *g = l->data;
+	for (gl = u->groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 
 		if (!xstrcasecmp(g->name, group))
 			return 1;
@@ -1137,8 +1132,8 @@ int ekg_group_member(userlist_t *u, const char *group) {
  *
  *  @return zwraca listê `struct group' je¶li siê uda³o, inaczej NULL.
  */
-list_t group_init(const char *names) {
-	list_t l = NULL;
+struct ekg_group *group_init(const char *names) {
+	struct ekg_group *gl = NULL;
 	char **groups;
 	int i;
 
@@ -1151,14 +1146,14 @@ list_t group_init(const char *names) {
 		struct ekg_group *g = xmalloc(sizeof(struct ekg_group));
 
 		g->name = groups[i];
-		LIST_ADD_SORTED(&l, g, group_compare);
+		LIST_ADD_SORTED2(&gl, g, group_compare);
 	}
 	/* NOTE: we don't call here array_free() cause we use items of this
 	 * 	array @ initing groups. We don't use strdup()
 	 */
 	xfree(groups);
 	
-	return l;
+	return gl;
 }
 
 /**
@@ -1172,16 +1167,16 @@ list_t group_init(const char *names) {
  *
  *  @return zwraca zaalokowany ci±g znaków lub NULL w przypadku b³êdu.
  */
-char *group_to_string(list_t groups, int meta, int sep) {
+char *group_to_string(struct ekg_group *groups, int meta, int sep) {
 	string_t foo = string_init(NULL);
-	list_t l;
+	struct ekg_group *gl;
 	int comma = 0;
 
-	for (l = groups; l; l = l->next) {
-		struct ekg_group *g = l->data;
+	for (gl = groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 
 		if (!meta && !xstrncmp(g->name, "__", 2)) {
-			comma = 0;
+			comma = 0; /* mg: why? */
 			continue;
 		}
 

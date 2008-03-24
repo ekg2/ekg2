@@ -702,7 +702,7 @@ static COMMAND(jabber_command_modify) {
 
 	const char *uid = NULL;
 	char *nickname = NULL;
-	list_t m;
+	struct ekg_group *gl;
 	userlist_t *u;
 
 		/* instead of PARAMASTARGET, 'cause that one fails with /add username in query */
@@ -809,8 +809,8 @@ static COMMAND(jabber_command_modify) {
 	if (nickname)	watch_write(j->send_watch, "<item jid=\"%s\" name=\"%s\"%s>", uid+5, nickname, (u->groups ? "" : "/"));
 	else		watch_write(j->send_watch, "<item jid=\"%s\"%s>", uid+5, (u->groups ? "" : "/"));
 
-	for (m = u->groups; m ; m = m->next) {
-		struct ekg_group *g = m->data;
+	for (gl = u->groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 		char *gname = tlenjabber_escape(g->name);
 
 		watch_write(j->send_watch, "<group>%s</group>", gname);

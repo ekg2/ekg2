@@ -286,19 +286,15 @@ PyObject *ekg_user_groups(ekg_userObj * self)
 {
         session_t * s = session_find((const char *) self->session);
         userlist_t * u = userlist_find(s, self->name);
-        list_t l;
+        struct ekg_group *gl;
         PyObject *list;
-        int len = 0;
-
-        for (l = u->groups; l; l = l->next) {
-                len++;
-        }
+        int len = LIST_COUNT2(u->groups);
 
         list = PyList_New(len);
         len = 0;
 
-        for (l = u->groups; l; l = l->next) {
-                struct ekg_group *g = l->data;
+        for (gl = u->groups; gl; gl = gl->next) {
+                struct ekg_group *g = gl;
                 PyList_SetItem(list, len, PyString_FromString(g->name));
                 len++;
         }
