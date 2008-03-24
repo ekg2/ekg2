@@ -884,7 +884,7 @@ static COMMAND(jabber_command_ver)
 {
 	const char *uid;
         userlist_t *ut;
-	list_t l;
+	ekg_resource_t *rl;
 	int once = 0;
 
 	if (!(uid = jid_target2uid(session, target, quiet)))
@@ -904,8 +904,8 @@ static COMMAND(jabber_command_ver)
 		return -1;
 	}
 
-	for (l = ut->resources; l; l = l->next) {	/* send query to each resource */
-		ekg_resource_t *r = l->data;
+	for (rl = ut->resources; rl; rl = rl->next) {	/* send query to each resource */
+		ekg_resource_t *r = rl;
 
 		char *to = saprintf("%s/%s", uid + 5, r->name);
 

@@ -530,10 +530,10 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 
 	for (ul=s->userlist; ul; ul = ul->next) {
 		userlist_t *u = ul;
-		list_t m;
+		ekg_resource_t *rl;
 
-		for (m = u->resources; m; m = m->next) {
-			ekg_resource_t *r = m->data;
+		for (rl = u->resources; rl; rl = rl->next) {
+			ekg_resource_t *r = rl;
 
 			if (r->private != per) continue;
 

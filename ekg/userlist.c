@@ -403,7 +403,6 @@ void userlist_free_u (userlist_t **userlist)
 static LIST_FREE_ITEM(list_userlist_resource_free, ekg_resource_t *) {
 	xfree(data->name);
 	xfree(data->descr);
-	xfree(data);
 }
 
 /**
@@ -430,7 +429,7 @@ ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio)
 	r->prio		= prio;				/* resource prio */
 	r->status	= EKG_STATUS_NA;		/* this is quite stupid but we must be legal with ekg2 ABI ? */
 
-	LIST_ADD_SORTED(&(u->resources), r, userlist_resource_compare);	/* add to list sorted by prio && than by name */
+	LIST_ADD_SORTED2(&(u->resources), r, userlist_resource_compare);	/* add to list sorted by prio && than by name */
 	return r;
 }
 
@@ -445,11 +444,11 @@ ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio)
  * @return It returns resource with given name if founded, otherwise NULL
  */
 ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name) {
-	list_t l;
+	ekg_resource_t *rl;
 	if (!u) return NULL;
 
-	for (l = u->resources; l; l = l->next) {
-		ekg_resource_t *r = l->data;
+	for (rl = u->resources; rl; rl = rl->next) {
+		ekg_resource_t *r = rl;
 
 		if (!xstrcmp(r->name, name))
 			return r;
@@ -468,7 +467,7 @@ ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name) {
  */
 void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
 	if (!u || !r) return;
-	LIST_REMOVE(&(u->resources), r, list_userlist_resource_free);
+	LIST_REMOVE2(&(u->resources), r, list_userlist_resource_free);
 }
 
 /**
@@ -483,7 +482,7 @@ void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
 void userlist_resource_free(userlist_t *u) {
 	if (!u || !(u->resources)) return;
 
-	LIST_DESTROY(u->resources, list_userlist_resource_free);
+	LIST_DESTROY2(u->resources, list_userlist_resource_free);
 	u->resources = NULL;
 }
 

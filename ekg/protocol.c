@@ -431,7 +431,7 @@ notify_plugins:
 		}
 
 		if (u->resources) { 		/* get higest prio status */
-			u->status = ((ekg_resource_t *) (u->resources->data))->status;
+			u->status = u->resources->status;
 		} else {
 			u->status = status;
 		}
@@ -448,13 +448,13 @@ notify_plugins:
 
 		if (u->resources) { 	/* get highest prio descr */
 			xfree(u->descr);
-			u->descr = xstrdup( ((ekg_resource_t *) (u->resources->data))->descr);
+			u->descr = xstrdup(u->resources->descr);
 		} else {
 			xfree(u->descr);
 			u->descr = xstrdup(descr);
 		}
 
-		if (!u->resources || u->resources->data == r) 
+		if (!u->resources || u->resources == r) 
 			u->status_time = when ? when : time(NULL);
 	}
 	

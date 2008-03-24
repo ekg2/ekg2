@@ -79,8 +79,7 @@ static void irc_access_parse(session_t *s, channel_t *chan, people_t *p, int fla
 
 	for (ul = s->userlist; ul; ul = ul->next) {
 		userlist_t *u = ul;
-		ekg_resource_t *r = NULL;
-		list_t m;
+		ekg_resource_t *r = NULL, *rl;
 
 		int i, j;
 
@@ -88,8 +87,8 @@ static void irc_access_parse(session_t *s, channel_t *chan, people_t *p, int fla
 
 		if (xstrncmp(u->uid, "irc:", 4)) continue;	/* check for irc: */
 
-		for (m = u->resources; m; m = m->next) {
-			r = m->data;
+		for (rl = u->resources; rl; rl = rl->next) {
+			r = rl;
 
 			if (r->private == p) {
 				char *tmp = &(u->uid[4]);

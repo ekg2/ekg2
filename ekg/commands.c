@@ -1364,7 +1364,7 @@ COMMAND(cmd_list)
 		char *status;
 		const char *group = params0;
 		userlist_t *u;
-		list_t res;
+		ekg_resource_t *rl;
 		int invert = 0;
 		
 		/* list !@grupa */
@@ -1485,8 +1485,8 @@ list_user:
 			xfree(last_status);
 		}
 
-		for (res = u->resources; res; res = res->next) {
-			ekg_resource_t *r = res->data;
+		for (rl = u->resources; rl; rl = rl->next) {
+			ekg_resource_t *r = rl;
 			char *resstatus; 
 
 			resstatus = format_string(format_find(ekg_status_label(r->status, r->descr, /* resource_info? senseless */ "user_info_")), 

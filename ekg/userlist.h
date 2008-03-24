@@ -58,7 +58,7 @@ typedef struct userlist {
 	
 	status_t	status;		/**< current status */
 	char		*descr;		/**< description of status. */
-	list_t		resources;	/**< list_t with ekg_resource_t<br>It's used to handle Jabber resources, and also by irc friendlist. */
+	struct ekg_resource *resources;	/**< list_t with ekg_resource_t<br>It's used to handle Jabber resources, and also by irc friendlist. */
 
 	time_t		last_seen;	/**< Last time when user was available [when u->status was > notavail] */
 	
@@ -112,7 +112,9 @@ typedef enum {
  * For example jabber resources, or irc friendlist
  */
 
-typedef struct {
+typedef struct ekg_resource {
+	struct ekg_resource *next;
+
 	char		*name;		/**< name of resource */
 	status_t	status;		/**< status, like u->status 	[status of resource]		*/
 	char		*descr;		/**< descr, like u->descr	[description of resource]	*/
