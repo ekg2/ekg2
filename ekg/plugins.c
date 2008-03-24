@@ -640,7 +640,7 @@ int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, 
 static LIST_FREE_ITEM(query_external_free_data, list_t) {
 	struct query_def *def = data->data;
 	xfree(def->name);
-	xfree(data);
+	xfree(def);
 }
 
 /**
