@@ -219,20 +219,17 @@ session_t *session_add(const char *uid) {
 	return s;
 }
 
-static LIST_FREE_ITEM(session_free_item, session_t *) {
-	list_t l;
+static LIST_FREE_ITEM(session_param_free_item, session_param_t *) {
+	xfree(data->key);
+	xfree(data->value);
+}
 
+static LIST_FREE_ITEM(session_free_item, session_t *) {
 /* free _global_ session variables */
 	array_free_count(data->values, data->global_vars_count);
 
 /* free _local_ session variables */
-        for (l = data->local_vars; l; l = l->next) {
-                session_param_t *v = l->data;
-
-                xfree(v->key);
-		xfree(v->value);
-        }
-	list_destroy(data->local_vars, 1);
+	LIST_DESTROY2(data->local_vars, session_param_free_item);
 
 	xfree(data->alias);
 	xfree(data->uid);
@@ -553,13 +550,13 @@ PROPERTY_STRING_GET(session, uid)
  * it looks for given _local_ var in given session
  */
 session_param_t *session_localvar_find(session_t *s, const char *key) {
-	list_t l;
+	session_param_t *pl;
 
 	if (!s)
 		return NULL;
 
-	for (l = s->local_vars; l; l = l->next) {
-                session_param_t *v = l->data;
+	for (pl = s->local_vars; pl; pl = pl->next) {
+                session_param_t *v = pl;
 		if (!xstrcmp(v->key, key)) 
 			return v;
 	}
@@ -719,7 +716,7 @@ int session_set(session_t *s, const char *key, const char *value) {
 	v->key = xstrdup(key);
 	v->value = xstrdup(value);
 
-	return (list_add_beginning(&s->local_vars, v) != NULL) ? 0 : -1;
+	return (LIST_ADD_BEGINNING2(&s->local_vars, v) != NULL) ? 0 : -1;
 
 notify:
 	if (pa && pa->notify)
@@ -1018,7 +1015,7 @@ COMMAND(session_command)
 	if (!xstrcasecmp(params[0], "--dump")) {
 		for (s = sessions; s; s = s->next) {
 			plugin_t *p = s->plugin;
-			list_t lp;
+			session_param_t *pl;
 			int i;
 
 			debug("[%s]\n", s->uid);
@@ -1036,8 +1033,8 @@ COMMAND(session_command)
 			} else	debug_error("FATAL: [%s] plugin somewhere disappear :(\n", s->uid);
 
 			/* _local_ vars: */
-			for (lp = s->local_vars; lp; lp = lp->next) {
-		                session_param_t *v = lp->data;
+			for (pl = s->local_vars; pl; pl = pl->next) {
+		                session_param_t *v = pl;
 
 				if (v->value)
 					debug("%s=%s\n", v->key, v->value);

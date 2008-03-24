@@ -267,7 +267,7 @@ int alias_add(const char *string, int quiet, int append)
 				printq("aliases_exist", string);
 				return -1;
 			} else {
-				list_add(&a->commands, xstrdup(cmd));
+				LIST_ADD2(&a->commands, list_t_new(xstrdup(cmd)));
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
 				for (c = commands; c; c = c->next) {
@@ -299,7 +299,7 @@ int alias_add(const char *string, int quiet, int append)
 	a = xmalloc(sizeof(struct alias));
 	a->name = xstrdup(string);
 	a->commands = NULL;
-	list_add(&(a->commands), xstrdup(cmd));
+	LIST_ADD2(&(a->commands), list_t_new(xstrdup(cmd)));
 	LIST_ADD2(&aliases, a);
 
 	array = (params) ? array_join(params, (" ")) : xstrdup(("?"));
@@ -336,7 +336,7 @@ int alias_remove(const char *name, int quiet)
 				printq("aliases_del", name);
 			command_remove(NULL, a->name);
 			xfree(a->name);
-			list_destroy(a->commands, 1);
+			LIST_DESTROY2(a->commands, list_t_free_item);
 			if ((tmp = LIST_REMOVE2(&aliases, a, NULL)))
 				next = tmp;
 			removed = 1;
@@ -374,7 +374,7 @@ void alias_free() {
 
 	for (a = aliases; a; a = a->next) {
 		xfree(a->name);
-		list_destroy(a->commands, 1);
+		LIST_DESTROY2(a->commands, list_t_free_item);
 	}
 	LIST_DESTROY2(aliases, NULL);
 	aliases = NULL;
@@ -867,7 +867,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		uid = get_uid(session, *p);
 
 		if (uid)
-			list_add(&(c.recipients), xstrdup(uid));
+			LIST_ADD2(&(c.recipients), list_t_new(xstrdup(uid)));
 		i++;
 	}
 
@@ -876,7 +876,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	if (i != count) {
 		printq("conferences_not_added", name);
-		list_destroy(c.recipients, 1);
+		LIST_DESTROY2(c.recipients, list_t_free_item);
 		return NULL;
 	}
 
@@ -891,7 +891,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 static LIST_FREE_ITEM(conference_free_item, struct conference *) {
 	xfree(data->name);
-	list_destroy(data->recipients, 1);
+	LIST_DESTROY2(data->recipients, list_t_free_item);
 }
 
 /*
@@ -1033,14 +1033,14 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 		if (conference_participant(c, from))
 			matched++;
 
-		debug_function("// conference_find_by_uids(): from=%s, rcpt count=%d, matched=%d, list_count(c->recipients)=%d\n", from, count, matched, list_count(c->recipients));
+		debug_function("// conference_find_by_uids(): from=%s, rcpt count=%d, matched=%d, list_count(c->recipients)=%d\n", from, count, matched, LIST_COUNT2(c->recipients));
 
-		if (matched == list_count(c->recipients) && matched <= (!xstrcasecmp(from, s->uid) ? count : count + 1)) {
+		if (matched == LIST_COUNT2(c->recipients) && matched <= (!xstrcasecmp(from, s->uid) ? count : count + 1)) {
 			string_t new = string_init(NULL);
 			int comma = 0;
 
 			if (xstrcasecmp(from, s->uid) && !conference_participant(c, from)) {
-				list_add(&c->recipients, xmemdup(&from, sizeof(from)));
+				LIST_ADD2(&c->recipients, list_t_new(xmemdup(&from, sizeof(from))));
 
 				comma++;
 				string_append(new, format_user(s, from));
@@ -1048,7 +1048,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 
 			for (i = 0; i < count; i++) {
 				if (xstrcasecmp(recipients[i], s->uid) && !conference_participant(c, recipients[i])) {
-					list_add(&c->recipients, xmemdup(&recipients[i], sizeof(recipients[0])));
+					LIST_ADD2(&c->recipients, list_t_new(xmemdup(&recipients[i], sizeof(recipients[0]))));
 			
 					if (comma++)
 						string_append(new, ", ");

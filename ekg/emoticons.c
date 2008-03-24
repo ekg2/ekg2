@@ -30,12 +30,14 @@
 #include "stuff.h"
 #include "xmalloc.h"
 
-typedef struct {
+typedef struct emoticon {
+	struct emoticon *next;
+
         char *name;
         char *value;
 } emoticon_t;
 
-list_t emoticons = NULL;
+emoticon_t *emoticons = NULL;
 int config_emoticons = 1;
 
 /*
@@ -49,14 +51,13 @@ int config_emoticons = 1;
  * 0/-1
  */
 static int emoticon_add(const char *name, const char *value) {
-	emoticon_t *e;
-	list_t l;
+	emoticon_t *e, *el;
 
 	if (!name || !value)
 		return -1;
 
-	for (l = emoticons; l; l = l->next) {
-		e = l->data;
+	for (el = emoticons; el; el = el->next) {
+		e = el;
 		if (!xstrcasecmp(name, e->name)) {
 			xfree(e->value);
 			e->value = xstrdup(value);
@@ -67,7 +68,7 @@ static int emoticon_add(const char *name, const char *value) {
 	e->name = xstrdup(name);
 	e->value = xstrdup(value);
 
-	return (list_add_beginning(&emoticons, e) ? 0 : -1);
+	return (LIST_ADD_BEGINNING2(&emoticons, e) ? 0 : -1);
 }
 
 /*
@@ -118,7 +119,7 @@ int emoticon_read() {
  * zwraca zaalokowany, rozwiniêty string.
  */
 char *emoticon_expand(const char *s) {
-	list_t l = NULL;
+	emoticon_t *el = NULL;
 	const char *ss;
 	char *ms;
 	size_t n = 0;
@@ -131,17 +132,17 @@ char *emoticon_expand(const char *s) {
 		size_t ns = xstrlen(ss);
 		int ret = 1;
 
-		for (l = emoticons; l && ret; l = (ret ? l->next : l)) {
+		for (el = emoticons; el && ret; el = (ret ? el->next : el)) {
 			size_t nn;
 
-			e = l->data;
+			e = el;
 			nn = xstrlen(e->name);
 			if (ns >= nn)
 				ret = xstrncmp(ss, e->name, nn);
 		}
 
-		if (l) {
-			e = l->data;
+		if (el) {
+			e = el;
 			n += xstrlen(e->value);
 			ss += xstrlen(e->name) - 1;
 		} else
@@ -155,17 +156,17 @@ char *emoticon_expand(const char *s) {
 		size_t ns = xstrlen(ss);
 		int ret = 1;
 
-		for (l = emoticons; l && ret; l = (ret ? l->next : l)) {
+		for (el = emoticons; el && ret; el = (ret ? el->next : el)) {
 			size_t n;
 
-			e = l->data;
+			e = el;
 			n = xstrlen(e->name);
 			if (ns >= n)
 				ret = xstrncmp(ss, e->name, n);
 		}
 
-		if (l) {
-			e = l->data;
+		if (el) {
+			e = el;
 			xstrcat(ms, e->value);
 			ss += xstrlen(e->name) - 1;
 		} else
@@ -178,7 +179,6 @@ char *emoticon_expand(const char *s) {
 static LIST_FREE_ITEM(list_emoticon_free, emoticon_t *) {
 	xfree(data->name);
 	xfree(data->value);
-	xfree(data);
 }
 
 /*
@@ -218,7 +218,7 @@ void emoticon_free() {
 	if (!emoticons)
 		return;
 
-	LIST_DESTROY(emoticons, list_emoticon_free);
+	LIST_DESTROY2(emoticons, list_emoticon_free);
 	emoticons = NULL;
 }
 

@@ -95,7 +95,9 @@ typedef enum {
 #define EKG_STATUS_IS_AWAY(x)		((x > EKG_STATUS_NA) && (x < EKG_STATUS_AVAIL))
 #define EKG_STATUS_IS_AVAIL(x)		(x >= EKG_STATUS_AVAIL)
 
-typedef struct {
+typedef struct session_param {
+	struct session_param *next;
+
 	char *key;			/* nazwa parametru */
 	char *value;			/* warto¶æ parametru */
 } session_param_t;
@@ -127,7 +129,7 @@ typedef struct session {
 
 	int		global_vars_count;
 	char		**values;
-	list_t		local_vars;
+	session_param_t	*local_vars;
 	
 /* new auto-away */
 	status_t	last_status;		/**< user's status before going into autoaway */

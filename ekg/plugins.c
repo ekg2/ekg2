@@ -637,8 +637,10 @@ int plugin_var_find(plugin_t *pl, const char *name) {
 
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify) { return -1; }
 
-static LIST_FREE_ITEM(query_external_free_data, struct query_def *) {
-	xfree(data->name);
+static LIST_FREE_ITEM(query_external_free_data, list_t) {
+	struct query_def *def = data->data;
+	xfree(def->name);
+	xfree(data);
 }
 
 /**
@@ -654,7 +656,7 @@ void query_external_free() {
 	if (!queries_external)
 		return;
 
-	LIST_DESTROY(queries_external, query_external_free_data);
+	LIST_DESTROY2(queries_external, query_external_free_data);
 
 	queries_external 	= NULL;
 	queries_count		= QUERY_EXTERNAL;
@@ -699,7 +701,7 @@ static int query_id(const char *name) {
 	a->id 	= queries_count++;
 	a->name	= xstrdup(name);
 
-	list_add(&queries_external, a);
+	LIST_ADD2(&queries_external, list_t_new(a));
 
 	return a->id;
 }
