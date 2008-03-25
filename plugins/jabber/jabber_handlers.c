@@ -721,6 +721,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	xmlnode_t *nbody   	= xmlnode_find_child(n, "body");
 	xmlnode_t *nsubject	= NULL;
 	xmlnode_t *nthread	= NULL;
+	xmlnode_t *nhtml	= NULL;
 	xmlnode_t *xitem;
 	
 	const char *from = jabber_attr(n->atts, "from");
@@ -885,6 +886,16 @@ JABBER_HANDLER(jabber_handle_message) {
 		} else if (!xstrcmp(xitem->name, "thread")) {
 			nthread = xitem;
 /* subject */	} else if (!xstrcmp(xitem->name, "body")) {
+		} else if (!xstrcmp(xitem->name, "html") && !xstrcmp(xitem->xmlns, "http://jabber.org/protocol/xhtml-im")) { /* xep-0071 */
+			xmlnode_t *tmp;
+
+			if (!((tmp = xmlnode_find_child(xitem, "body"))))
+				debug_error("[JABBER, MESSAGE, XEP0071]: <html/> w/o <body/>!\n");
+			else {
+				if (xstrcmp(tmp->xmlns, "http://www.w3.org/1999/xhtml"))
+					debug_error("[JABBER, MESSAGE, XEP0071]: <body xmlns='%s'/> ?\n", tmp->xmlns);
+				nhtml = xitem;
+			}
 		} else if (j->istlen && !xstrcmp(xitem->name, "no"))
 			class = EKG_MSGCLASS_SYSTEM;
 		else debug_error("[JABBER, MESSAGE]: <%s\n", xitem->name);
@@ -989,7 +1000,7 @@ JABBER_HANDLER(jabber_handle_message) {
 		char *seq 	= NULL;
 		time_t sent	= bsent;
 		char *text	= tlenjabber_unescape(body->str);
-		uint32_t *format= jabber_msg_format(text, NULL);
+		uint32_t *format= jabber_msg_format(text, nhtml);
 
 		if (!sent) sent = time(NULL);
 

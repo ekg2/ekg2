@@ -583,7 +583,7 @@ static inline int jabber_fc_check(const char *curr, const char *beginning, const
  * e.g. *bold* /italic/
  *
  * some time may also parse XHTML */
-uint32_t *jabber_msg_format(const char *plaintext, const char *html) {
+uint32_t *jabber_msg_format(const char *plaintext, const xmlnode_t *html) {
 	uint32_t *fmtstring = NULL, *p = NULL, *pf = NULL;
 	const char *c;
 
