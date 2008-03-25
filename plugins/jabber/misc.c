@@ -563,16 +563,20 @@ static inline uint32_t jabber_formatchar(const char c) {
 
 /* detect whether formatchar is surrounded by space,
  * when beginning == NULL, check following chars,
- * else check preceding chars */
-static inline int jabber_fc_check(const char *curr, const char *beginning) {
+ * else check preceding chars
+ * mode:	0 - check for spaces
+ * 		1 - check for previous/following occurence */
+static inline int jabber_fc_check(const char *curr, const char *beginning, const int mode) {
+	const char c = *curr;
+
 	while (beginning ? --curr >= beginning : *(++curr)) {
-		if (isspace(*curr))
+		if (mode ? *curr == c : isspace(*curr))
 			return 1;
 		else if (!jabber_formatchar(*curr))
 			return 0;
 	}
 
-	return 1;
+	return !mode;
 }
 
 /* currently parses message text and tries to add some formatting,
@@ -583,10 +587,17 @@ uint32_t *jabber_msg_format(const char *plaintext, const char *html) {
 	uint32_t *fmtstring = NULL, *p = NULL, *pf = NULL;
 	const char *c;
 
+	return NULL; /* disable, because of XXX:
+		1) slash-asterisk-slash test slash-asterisk-slash - first slash disabler is still italic
+		2) it collides with popular emoticons
+		3) and needs to be also updated to match more special chars than spaces - for example, question marks
+		4) and after that modification, it would match more popular emoticons
+		5) thou it sucks */
+
 	for (c = plaintext; *c; c++) {
 		int enabling;
 		int flag = jabber_formatchar(*c);
-	
+
 		if (p) {
 			*p |= *pf; /* 'or' to not lose just-enabled formatting */
 			pf = p++;
@@ -597,12 +608,14 @@ uint32_t *jabber_msg_format(const char *plaintext, const char *html) {
 
 			if (enabling) {
 				const char *tmp = c+1;
-				if (!jabber_fc_check(c, plaintext)) /* ignore middle-of-a-word formatstrings */
+				if (!jabber_fc_check(c, plaintext, 0)) /* ignore middle-of-a-word formatstrings */
+					continue;
+				if (jabber_fc_check(c, NULL, 1)) /* use last formatchar in a row */
 					continue;
 
 				do {		/* check if formatstring is finished */
 					tmp = xstrchr(tmp, *c);
-					if (tmp && !jabber_fc_check(tmp, NULL))
+					if (tmp && !jabber_fc_check(tmp, NULL, 0))
 						tmp += 1;
 					else
 						break;
@@ -610,8 +623,10 @@ uint32_t *jabber_msg_format(const char *plaintext, const char *html) {
 				if (!tmp)
 					continue;
 
-			} else if (!jabber_fc_check(c, NULL)) /* like above */
+			} else if (!jabber_fc_check(c, NULL, 0)) /* like above */
 				continue;
+			else if (jabber_fc_check(c, plaintext, 1)) /* use first disabling formatchar in a row */
+					continue;
 
 			if (!p) {
 				fmtstring = xcalloc(xstrlen(plaintext), sizeof(uint32_t));
