@@ -604,7 +604,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 		for (ul = s->userlist; ul;) {
 			userlist_t *u = ul;
 
-			if (!u->nickname) {
+			if (!u->nickname && !ekg_group_member(u, "__authreq")) {
 				char *myuid	= xstrdup(u->uid);
 				char *userpart	= xstrdup(u->uid);
 				char *tmp;

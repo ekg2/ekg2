@@ -648,6 +648,8 @@ auth_first:
 			printq("jabber_auth_acceptnoreq", uid+5, session_name(session));
 		else
 			printq("jabber_auth_accept", uid+5, session_name(session));
+		if (u && ekg_group_member(u, "__authreq")) /* (s)he would be readded in a moment */
+			userlist_remove(session, u);
 	} else if (match_arg(params[0], 'c', ("cancel"), 2)) {
 		jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 		if (multi) {
@@ -677,7 +679,8 @@ auth_first:
 			printq("jabber_auth_cancel", uid+5, session_name(session));
 		else
 			printq("jabber_auth_denied", uid+5, session_name(session));
-	
+		if (u && ekg_group_member(u, "__authreq")) /* we don't want you! */
+			userlist_remove(session, u);
 	} else if (match_arg(params[0], 'p', ("probe"), 2)) {	/* TLEN ? */
 	/* ha! undocumented :-); bo 
 	   [Used on server only. Client authors need not worry about this.] */
