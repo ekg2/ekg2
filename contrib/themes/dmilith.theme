@@ -2,12 +2,12 @@
 # 2oo8 on MIT license
 # ekg2 theme by dmilith
 # dmilith [at] gmail.com
-# theme version 0.5
+# theme version 0.6
 #
 
 -query_started_window
 irc_channel_unsecure 
-statusbar %k%s[%W%s%{time}%k]    %G%{?session %{session}%k(%W%{?avail dostępny}%{?away zajęty}%{?invisible ukryty}%{?notavail niedostępny}%{?xa bardzo zajęty}%{?dnd nie przeszkadzać}%{?chat chętny do rozmowy}%k)}%{?!session brak sesji}%k    [%s%Y%{?window %{window}} %{?query : %{query}}%{?debug debug}%{?activity %k]    [%Waktywność: }%{activity}%{?mail %k] [%n%B%s mail:}%{mail}%{?more %s%k]    [%Gwięcej}%k]%s
+statusbar %k%s[%W%s%{time}%k]    %G%{?session %{session}%k(%W%{?avail dostępny}%{?away zajęty}%{?invisible ukryty}%{?notavail niedostępny}%{?xa bardzo zajęty}%{?dnd nie przeszkadzać}%{?chat chętny do rozmowy}%k)}%{?!session brak sesji}%k    [%s%Y%{?window %{window}}%{?query : %{query}}%{?debug debug}%{?activity %k]    [%Waktywność: }%{activity}%{?mail %k] [%n%B%s mail:}%{mail}%{?more %s%k]    [%Gwięcej}%k]%s
 statusbar_timestamp %H:%M.%S
 statusbar_act_important %G
 statusbar_act %K
@@ -62,6 +62,6 @@ IRC_TOPIC_UNSET %> %T%3%n wyłączył temat kanału %T%4
 IRC_MODE_CHAN %> %2/%3
 IRC_MODE %> %2 ustawił tryb %3 na Tobie
 IRC_PINGPONG %) pi/po %K%2%n
-IRC_YOUNEWNICK %> %l%y* %2%n zmienił nicka na %l%y%3%n
-IRC_NEWNICK %> %l%y* %2%n zmienił nicka na %l%y%3%n
+IRC_YOUNEWNICK %> %l%y* Zmieniłeś nicka na %l%y%3%n
+IRC_NEWNICK %> %l%y* %2%n zmienił nicka na %l%y%4%n
 
