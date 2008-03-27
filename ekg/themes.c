@@ -192,6 +192,10 @@ static const char *format_ansi(char ch) {
 		return ("\033[5m");
 	if (ch == 'V')                  /* reverse */
 		return ("\033[7m");
+	if (ch == 'A')
+		return ("\033(0");
+	if (ch == 'a')
+		return ("\033(B");
 
 	return ("");
 }
@@ -514,7 +518,16 @@ fstring_t *fstring_new(const char *str) {
  */
 
         for (i = 0, j = 0; str[i]; i++) {
-                if (str[i] == 27) {		/* ESC- */
+		if ((str[i] == 27) && (str[i+1] == '(')) {
+			i += 2;
+			if (str[i] == '0') {
+				attr |= FSTR_ALTCHARSET;
+				continue;
+			} else if (str[i] == 'B') {
+				attr &= ~FSTR_ALTCHARSET;
+				continue;
+			}
+		} else if (str[i] == 27) {		/* ESC- */
 			unsigned short par[NPAR]	= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
 			unsigned short parlen[NPAR]	= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
 

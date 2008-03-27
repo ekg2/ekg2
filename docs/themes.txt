@@ -18,6 +18,11 @@
 
 * * *
 
+  %A	wybranie mapowania grafiki vt100
+  %a	powrót do mapowania domy¶lnego
+
+* * *
+
 przy %1-%9 mo¿na kazaæ dope³niaæ do konkretnej szeroko¶ci. przydaje siê
 do wszelkiego rodzaju tabelek.
 

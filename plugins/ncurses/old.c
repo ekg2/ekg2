@@ -918,6 +918,9 @@ static inline int fstring_attr2ncurses_attr(short chattr) {
 	if ((chattr & FSTR_REVERSE))
 		attr |= A_REVERSE;
 
+	if ((chattr & FSTR_ALTCHARSET))
+		attr |= A_ALTCHARSET;
+
 	return attr;
 }
 

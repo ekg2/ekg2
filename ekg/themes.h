@@ -89,7 +89,8 @@ typedef enum {
 	FSTR_NORMAL 		= 128,
 	FSTR_BLINK 		= 256,
 	FSTR_UNDERLINE 		= 512,
-	FSTR_REVERSE 		= 1024
+	FSTR_REVERSE 		= 1024,
+	FSTR_ALTCHARSET		= 2048
 } fstr_t;
 
 #endif /* __EKG_THEMES_H */
