@@ -1,0 +1,22 @@
+# Example theme.
+#
+# (C) Copyright 2008 Wieslaw Ochminski <wiechu at wiechu dot com> 
+#
+# Now ekg2 shines like Lucy in the Sky with Diamonds
+#
+
+# IRC
+RPL_MOTDSTART %c%Alwqqqqqq%a Message Of The Day %c%Aqqqqq%a\n
+RPL_MOTD %c%Axx %a%n%2\n
+RPL_ENDOFMOTD %c%Amvqqqqqq%a\n
+
+RPL_WHOISUSER %G%Alwqqqqqqqq%a\n%G%Axx%a%n (%T%2%n) (%3@%4)\n%G%Axx%a%n realname : %6\n
+RPL_WHOISCHANNELS %G%Axx%a%n %|channels : %3\n
+RPL_WHOISOPERATOR %G%Axx%a%n %|ircOp    : %3\n
+RPL_WHOREPLY %g%Axx%a %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n
+RPL_WHOISSERVER %G%Axx%a%n %|server   : %3 (%4)\n
+RPL_WHOISIDLE %G%Axx%a%n %|idle     : %3 (signon: %4)\n
+RPL_ENDOFWHOIS %G%Amvqqqqqqqq%a\n
+
+RPL_WHOWASUSER %G%Alwqqqqqqqq%a\n%G%Axx%a%n (%T%2%n) (%3@%4)\n%G%Axx%a%n realname : %6\n
+RPL_ENDOFWHOWAS %G%Amvqqqqqqqq%a\n
