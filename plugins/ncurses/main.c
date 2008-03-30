@@ -60,6 +60,8 @@ int config_typing_interval	= 1;
 int config_typing_timeout	= 10;
 int config_typing_timeout_empty = 5;
 
+static int config_traditional_clear	= 1;
+
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
 
@@ -306,7 +308,7 @@ static QUERY(ncurses_ui_window_clear)
 {
 	window_t **w = va_arg(ap, window_t **);
 
-	ncurses_clear(*w, 0);
+	ncurses_clear(*w, !config_traditional_clear);
 	ncurses_commit();
 
 	return 0;
@@ -681,6 +683,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("statusbar_size"), VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
 	variable_add(&ncurses_plugin, ("text_bottomalign"), VAR_INT, 1, &config_text_bottomalign, NULL,
 			variable_map(3, 0, 0, "off", 1, 2, "except-floating", 2, 1, "all"), NULL);
+	variable_add(&ncurses_plugin, ("traditional_clear"), VAR_BOOL, 1, &config_traditional_clear, NULL, NULL, NULL);
 
 	variable_add(&ncurses_plugin, ("typing_interval"), VAR_INT, 1, &config_typing_interval, ncurses_typing_retimer, NULL, NULL);
 	variable_add(&ncurses_plugin, ("typing_timeout"), VAR_INT, 1, &config_typing_timeout, NULL, NULL, NULL);
