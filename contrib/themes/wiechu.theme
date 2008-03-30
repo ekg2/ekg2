@@ -1,10 +1,8 @@
-# Example theme.
 #
 # (C) Copyright 2008 Wieslaw Ochminski <wiechu at wiechu dot com> 
 #
-# Now ekg2 shines like Lucy in the Sky with Diamonds
-#
 
+contacts_vertical_line_char 
 # IRC
 RPL_MOTDSTART %c%Alwqqqqqq%a Message Of The Day %c%Aqqqqq%a\n
 RPL_MOTD %c%Axx %a%n%2\n
@@ -13,10 +11,109 @@ RPL_ENDOFMOTD %c%Amvqqqqqq%a\n
 RPL_WHOISUSER %G%Alwqqqqqqqq%a\n%G%Axx%a%n (%T%2%n) (%3@%4)\n%G%Axx%a%n realname : %6\n
 RPL_WHOISCHANNELS %G%Axx%a%n %|channels : %3\n
 RPL_WHOISOPERATOR %G%Axx%a%n %|ircOp    : %3\n
-RPL_WHOREPLY %g%Axx%a %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n
+RPL_WHOREPLY %G%Axx%a %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n
 RPL_WHOISSERVER %G%Axx%a%n %|server   : %3 (%4)\n
 RPL_WHOISIDLE %G%Axx%a%n %|idle     : %3 (signon: %4)\n
 RPL_ENDOFWHOIS %G%Amvqqqqqqqq%a\n
 
 RPL_WHOWASUSER %G%Alwqqqqqqqq%a\n%G%Axx%a%n (%T%2%n) (%3@%4)\n%G%Axx%a%n realname : %6\n
 RPL_ENDOFWHOWAS %G%Amvqqqqqqqq%a\n
+
+RPL_AWAY %G%Axx%a%n away     : %2 - %3\n
+RPL_BANLIST %G%Axx%a %n %5 - %W%2%n: ban %c%3\n
+RPL_CHLIST %G%Axx%a %n %5 %2\t%3\t%4\n
+RPL_LISTSTART %G%Alwqqqqqqqq%a\n
+RPL_EMPTYLIST %G%Axx%a %n Empty list \n
+RPL_ENDOFLIST %G%Amvqqqqqqqq%a %2%n\n
+
+RPL_EXCEPTLIST %G%Axx%a %n %5 - %W%2%n: except %c%3\n
+RPL_INVITELIST %G%Axx%a %n %5 - %W%2%n: invite %c%3\n
+RPL_LINKS %G%Axx%a %n %5 - %2  %3  %4\n
+RPL_LIST %G%Axx%a %n %5 %2\t%3\t%4\n
+
+RPL_STATS %G%Axx%a %3 %n %4 %5 %6 %7 %8\n
+RPL_STATSEND %G%Amvqqq%a%g%3%G%Aqqq%a %2\n
+RPL_STATS_EXT %G%Axx%a %3 %n %2 %4 %5 %6 %7 %8\n
+
+IRC_WHOERROR %G%Alwqqqqqqqq%a\n%G||%n %3 (%2)\n
+
+irc_awaylog_begin %G%Alwqqqqqqqq%a Awaylog for: (%1)\n
+irc_awaylog_end %G%Amvqqqqqqqq%a\n
+irc_awaylog_msg %G%Axx%a %n[%Y%2%n] <%W%4%n> %5\n
+irc_awaylog_msg_chan %G%Axx%a %n[%Y%2%n] [%G%3%n] <%W%4%n> %5\n
+
+# GG
+system %m%Alqqq%a %TSystem message %m%Aqqq qq q%a\n%m%Ax%a%n %|%3%n\n%|%m%Amqqqqq qqqq qqq qq q%a%n\n
+
+gg_user_info_version %c%Ax%x %nVersion: %T%1%n\n
+gg_user_info_firewalled %c%Ax%a %nFirewalled/NATed\n
+gg_user_info_ip %c%Ax%a %nAddress: %T%1%n\n
+gg_user_info_last_ip %c%Ax%a %nLast address: %T%1%n\n
+gg_user_info_mobile %c%Ax%a %nTelephone: %T%1%n\n
+gg_user_info_name %c%Ax%a %nName: %T%1 %2%n\n
+gg_user_info_not_in_contacts %c%Ax%a %nDoesn't have us in roster\n
+gg_user_info_voip %c%Ax%a %nVoIP-capable\n
+
+user_info_header %c%Alqq%a%n %T%1%n/%2 %c%Aqqq qq q%a%n\n
+user_info_status %c%Ax%a %nStatus: %T%1%n\n
+user_info_status_time %c%Ax%a %nCurrent status since: %T%1%n\n
+user_info_last_status %c%Ax%a %nLast status: %T%1%n\n
+user_info_last_seen %c%Ax%a %nLast seen: %T%1%n\n
+user_info_never_seen %c%Ax%a %nNever seen\n
+user_info_block %c%Ax%a %nBlocked\n
+user_info_auth_type %c%Ax%a %nSubscription type: %T%1%n\n
+user_info_footer %c%Amqqqqq qqqq qqq qq q%a%n\n
+user_info_gpg_key %c%Ax%a %nGPGKEY: %T%1%n (%2)%n
+user_info_groups %c%Ax%a %nGroups: %T%1%n\n
+user_info_name %c%Ax%a %nName: %T%1 %2%n\n
+user_info_nickname %c%Ax%a %nNickname: %T%1%n\n
+user_info_offline %c%Ax%a %nCan't see our status\n
+
+search_results_multi %7 %c%Ax%a%n %[-8]1 %c%Ax%a%n %[12]3 %c%Ax%a%n %[12]2 %c%Ax%a%n %[4]5 %c%Ax%a%n %[12]4\n
+
+metacontact_info_header %c%Alqq%a%n Metacontact %T%1%n %c%Aqqq qq q%a%n\n
+metacontact_info_status %c%Ax%a %nStatus: %T%1%n\n
+metacontact_info_footer %c%Amqqqqq qqqq qqq qq q%a%n\n
+
+# Jabber
+xmpp_feature_header %g%Alwqqqqqq%a%G XMPP features %n(%T%2%n%3%n)
+xmpp_feature %g%Axx%a %n %W%2%n can: %5 [%G%3%g,%4%n]
+xmpp_feature_sub %g%Axx%a %n     %W%3%n: %5 [%G%4%n]
+xmpp_feature_sub_unknown %g%Axx%a %n     %W%3%n: Unknown, report to devs [%G%4%n]
+xmpp_feature_unknown %g%Axx%a %n %W%2%n feature: %r%3 %n[%G%3%g,%4%n]
+xmpp_feature_footer %g%Amvqqqqqq%a %n Turn it off using: /session display_server_features 0\n
+
+jabber_transinfo_begin %g%Alwqqqqqq%a%G Information about: %T%2%n
+jabber_transinfo_begin_node %g%Alwqqqqqq%a%G Information about: %T%2%n (%3)
+jabber_transinfo_identify %g%Axx%a %G --== %g%3 %G==--%n
+jabber_transinfo_comm_not %g%Axx%a %n %W%2%n can: %n%3 (%4)
+jabber_transinfo_comm_ser %g%Axx%a %n %W%2%n can: %n%3 %2 (%4)
+jabber_transinfo_comm_use %g%Axx%a %n %W%2%n can: %n%3 $uid (%4)
+#
+jabber_transinfo_feature %g%Axx%a %n %W%2%n feature: %n%3
+jabber_transinfo_end %g%Amvqqqqqq%a%G End of the infomations%n\n
+
+jabber_transport_list_begin %g%Alwqqqqqq%a%G Available agents on: %T%2%n
+jabber_transport_list_item %g%Axx%a %n %6 - %W%3%n (%5)
+jabber_transport_list_item_node %g%Axx%a %n %6 - %W%3%n node: %g%4%n (%5)
+jabber_transport_list_end %g%Amvqqqqqq%a%G End of the agents list%n\n
+
+jabber_userinfo_response2 %g%Alwqqqqqq%a%G vCard for:%n %T%2
+jabber_userinfo_fullname %g%Axx%a %n   Full Name: %T%2
+jabber_userinfo_nickname %g%Axx%a %n     Nickame: %T%2
+jabber_userinfo_birthday %g%Axx%a %n    Birthday: %T%2
+jabber_userinfo_desc %g%Axx%a %n Description: %T%2
+jabber_userinfo_email %g%Axx%a %n       Email: %T%2
+jabber_userinfo_organization %g%Axx%a %nOrganization: %T%2
+jabber_userinfo_telephone %g%Axx%a %n   Telephone: %T%2
+jabber_userinfo_title %g%Axx%a %n       Title: %T%2
+jabber_userinfo_url %g%Axx%a %n     Webpage: %T%2
+jabber_userinfo_end %g%Amvqqqqqq\n
+
+jabber_form_command %g%Axx%a %nType %W/%3 %g%2 %W%4%n; 
+
+resource_info_status %c%Ax%a %nResource: %W%1%n Status: %T%2 Prio: %g%3%n
+
+feed_message_header %g%Alwqqqqqq%a%W  %1 %n(ID: %W%2%n)
+feed_message_body %g%Axx%a%n %|%1
+feed_message_footer %g%Amvqqqqqq%a%G End of message...%n\n
