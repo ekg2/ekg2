@@ -56,6 +56,8 @@ int bindings_added_max = 0;
 #define line ncurses_line
 #define lines ncurses_lines
 
+static const void *BINDING_HISTORY_NOEXEC = (void*) -1;
+
 extern int ncurses_noecho;	/* in old.c */
 extern CHAR_T *ncurses_passbuf;	/* in old.c */
 
@@ -255,7 +257,10 @@ static BINDING_FUNCTION(binding_accept_line)
 	
 		return;
 	}
-	command_exec(window_current->target, window_current->session, (txt = wcs_to_normal(line)), 0);	free_utf(txt);
+	if (arg != BINDING_HISTORY_NOEXEC) {
+		command_exec(window_current->target, window_current->session, (txt = wcs_to_normal(line)), 0);
+		free_utf(txt);
+	}
 
 	if (ncurses_plugin_destroyed)
 		return;
@@ -504,8 +509,6 @@ BINDING_FUNCTION(binding_previous_only_history)
 BINDING_FUNCTION(binding_next_only_history)
 {
         if (history_index > 0) {
-                if (history_index == 0)
-                        history[0] = xwcsdup(line);
                 history_index--;
                 if (xwcschr(history[history_index], ('\015'))) {
                         CHAR_T **tmp;
@@ -536,7 +539,8 @@ BINDING_FUNCTION(binding_next_only_history)
                         xwcscpy(line, history[history_index]);
                         line_adjust();
                 }
-        }
+        } else /* history_index == 0 */
+		binding_accept_line(BINDING_HISTORY_NOEXEC);
 }
 
 
