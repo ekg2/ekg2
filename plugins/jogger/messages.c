@@ -99,6 +99,7 @@ QUERY(jogger_msghandler) {
 			return 0;
 
 		const char *owncf = session_get(js, "own_commentformat");
+		const int owncfau = atoi(session_get(js, "own_commentformat_autodetect"));
 		int found = 0;
 		char *tmp;
 
@@ -136,6 +137,16 @@ QUERY(jogger_msghandler) {
 
 			if (!tmp)
 				found	= 0;
+			else if (owncfau) { /* own commentformat autodetect & bug workaround */
+				char *urltmp = xstrstr(msg, " http://");
+
+				if (urltmp && urltmp < tmp) {
+					*urltmp	= 0;
+					owncf	= msg;
+					found	= 3;
+				}
+			}
+
 
 			const int oq	= ((found > 0) && (session_int_get(js, "newentry_open_query") || (found < 4)));
 			char *suid, *uid, *lmsg, *url;
