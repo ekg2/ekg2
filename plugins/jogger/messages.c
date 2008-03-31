@@ -135,9 +135,10 @@ QUERY(jogger_msghandler) {
 		if (found <= 4) { /* we get id here */
 			const char *tmp = xstrstr(msg, " (#");
 
+au_retry:
 			if (!tmp)
 				found	= 0;
-			else if (owncfau) { /* own commentformat autodetect & bug workaround */
+			else if (owncfau && !found) { /* own commentformat autodetect & bug workaround */
 				char *urltmp = xstrstr(msg, " http://");
 
 				if (urltmp && urltmp < tmp) {
@@ -174,6 +175,10 @@ QUERY(jogger_msghandler) {
 				xfree(url);
 				xfree(lmsg);
 
+				if (owncfau) {
+					found = 0;
+					goto au_retry;
+				}
 				lmsg	= xstrdup(msg);
 				url	= NULL;
 			}
