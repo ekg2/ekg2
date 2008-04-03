@@ -1852,15 +1852,25 @@ void theme_init()
 	/* last */
 	format_add("last_list_in", "%) %Y <<%n [%1] %2 %3\n", 1);
 	format_add("last_list_out", "%) %G >>%n [%1] %2 %3\n", 1);
+	format_add("last_list_status", "%) %G *%n [%1] %2 is %3\n", 1);
+	format_add("last_list_status_descr", "%) %G *%n [%1] %2 is %3: %4\n", 1);
 	format_add("last_list_empty", _("%! No messages logged\n"), 1);
+	format_add("last_list_empty_status", _("%! No change status logged\n"), 1);
 	format_add("last_list_empty_nick", _("%! No messages from %T%1%n logged\n"), 1);
+	format_add("last_list_empty_nick_status", _("%! No change status by %T%1%n logged\n"), 1);
 	format_add("last_list_timestamp", "%d-%m-%Y %H:%M", 1);
 	format_add("last_list_timestamp_today", "%H:%M", 1);
 	format_add("last_clear_uin", _("%) Messages from %T%1%n cleared\n"), 1);
+	format_add("last_clear_uin_status", _("%) Statuses from %T%1%n cleared\n"), 1);
 	format_add("last_clear", _("%) All messages cleared\n"), 1);
+	format_add("last_clear_status", _("%) All statuses cleared\n"), 1);
 	format_add("last_begin_uin", _("%) Lastlog from %T%1%n begins\n"), 1);
+	format_add("last_begin_uin_status", _("%) Lastlog status from %T%1%n begins\n"), 1);
 	format_add("last_begin", _("%) Lastlog begin\n"), 1);
+	format_add("last_begin_status", _("%) Lastlog status begin\n"), 1);
 	format_add("last_end", _("%) Lastlog end\n"), 1);
+	format_add("last_end_status", _("%) Lastlog status end\n"), 1);
+
 
 	/* lastlog */
 	format_add("lastlog_title", 	_("%) %gLastlog [%B%2%n%g] from window: %W%T%1%n"), 1);
