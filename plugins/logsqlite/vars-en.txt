@@ -1,0 +1,77 @@
+// short description of vairables
+// (c) copyright 2005 Leszek Krupiñski <leafnode@wafel.com>
+
+log
+	type: number
+	default value: 0
+	
+	define if plugin logs messages 
+
+log_ignored
+	type: bool
+	default value: 0
+	
+	define if plugin logs ignored messages (NFY).
+
+log_status
+	type: bool
+	default value: 0
+	define if plugin logs changes of people's statuses from contact list
+        list (variable ,,log'' must be other than 0)
+
+path
+	type: text 
+	default value: ~/.ekg2/logsqlite.db
+	
+	Path to file with database. If file doesn't exists, it will be created.
+	Recognized codes:
+	* %S - our session
+	* %Y, %M, %D - year, month, day
+	Examples:
+	- logging to directores by session:
+	    log_path = "~/.ekg2/logsqlite/%S.db"
+	  F.ex. /home/users/leafnode/.ekg/logsqlite/gg:123.db
+	- logging to directores by session (directory) and date (file):
+	    log_path = "~/.ekg2/logsqlite/%S/%Y-%M-%D.db"
+	  F.ex. /home/users/leafnode/.ekg2/logsqlite/jid:fr@h.pl/2004-05-31.db
+	- logging to /tmp with session and date:
+	    log_path = "/tmp/%S-%Y.%M.%D.db"
+	  F.ex. /tmp/gg:31337-2004.05.31.db
+
+
+last_limit
+	type: number
+	default value: 10
+	
+	maximal number of messages displayed by command logsqlite:last
+
+last_in_window
+	type: bool
+	default value: 0
+	
+	define if messages displayed by command will be displayed in chat
+        window with this person. Opening of unexisting window will be defined
+        by variable logsqlite:last_open_window. 
+
+last_open_window
+	type: bool
+	default value: 0
+	
+        define if in the case of displaying of the person's message by lastlong
+        in chat window with him the window will be opened if it's not
+        (anybody understand that description?)
+
+last_print_on_open
+	type: bool
+	default value: 0
+	
+        define if after opening a new chat window, logsqlite will display there 
+        last_limit last messages with this person
+
+persistent_open
+	type: bool
+	default value: 1
+	
+        define if database will be opened only one time when plugin is loading
+        and is unloading (1) or if will be opened every time when is requested
+
