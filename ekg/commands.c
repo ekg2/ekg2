@@ -1275,13 +1275,16 @@ static COMMAND(cmd_ignore)
 		} else
 			flags = IGNORE_ALL;
 
-		if (modified)
+		if (modified) {
+			uid = xstrdup(uid);
 			ignored_remove(session, uid);
+		}
 
                 if (!ignored_add(session, uid, flags)) {
-                        if (modified)
+                        if (modified) {
                                 printq("ignored_modified", format_user(session, uid));
-                        else
+                                xfree(uid);
+                        } else
                                 printq("ignored_added", format_user(session, uid));
                         config_changed = 1;
                 }

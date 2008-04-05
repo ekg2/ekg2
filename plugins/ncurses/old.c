@@ -1611,7 +1611,7 @@ void update_statusbar(int commit)
 	__add_format_dup("session", (sess), (sess->alias) ? sess->alias : sess->uid);
 	__add_format_dup("descr", (sess && sess->descr && session_connected_get(sess)), sess->descr);
 
-	tmp = (sess && q) ? saprintf("%s/%s", q->nickname, q->uid) : xstrdup(window_current->target);
+	tmp = (sess && q && q->nickname) ? saprintf("%s/%s", q->nickname, q->uid) : xstrdup(window_current->target);
 	__add_format("query", tmp);
 
 	__add_format_emp("debug", (!window_current->id));
