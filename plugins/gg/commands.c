@@ -917,7 +917,8 @@ static COMMAND(gg_command_block) {
  */
 
 static COMMAND(gg_command_unblock) {
-	const char *uid;
+	char *uid;
+	int ret;
 
 	if (!xstrcmp(params[0], "*")) {
 		userlist_t *ul;
@@ -948,15 +949,18 @@ static COMMAND(gg_command_unblock) {
 		return -1;
 	}
 
-	if (gg_blocked_remove(session, uid) == -1) {
-		printq("error_not_blocked", format_user(session, uid));
-		return -1;
-	}
-		
-	printq("blocked_deleted", format_user(session, uid));
-	config_changed = 1;
+	uid = xstrdup(uid);
 
-	return 0;
+	if ( ( ret = gg_blocked_remove(session, uid) ) == -1)
+		printq("error_not_blocked", format_user(session, uid));
+	else {		
+		printq("blocked_deleted", format_user(session, uid));
+		config_changed = 1;
+	}
+
+	xfree(uid);
+
+	return ret;
 }
 
 #ifdef GIF_OCR
