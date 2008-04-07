@@ -735,6 +735,7 @@ int main(int argc, char **argv)
 #ifndef NO_POSIX_SYSTEM
         signal(SIGSEGV, handle_sigsegv);
         signal(SIGHUP, handle_sighup);
+	signal(SIGTERM, handle_sighup);
         signal(SIGUSR1, handle_sigusr1);
         signal(SIGUSR2, handle_sigusr2);
         signal(SIGALRM, SIG_IGN);
