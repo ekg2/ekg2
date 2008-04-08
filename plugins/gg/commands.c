@@ -1538,7 +1538,7 @@ static COMMAND(gg_command_modify) {
 		if (match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1]) {
 			char *tmp1, *tmp2;
 
-			if (userlist_find(session, argv[i + 1])) {
+			if ( u != userlist_find(session, argv[i + 1]) ) {
 				printq("user_exists", argv[i + 1], session_name(session));
 				continue;
 			}
@@ -1553,6 +1553,7 @@ static COMMAND(gg_command_modify) {
 			u->nickname = tmp2;
 
 			userlist_replace(session, u);
+			query_emit_id(NULL, USERLIST_REFRESH);
 			
 			modified = 1;
 			continue;
