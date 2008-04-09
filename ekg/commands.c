@@ -3558,7 +3558,7 @@ static COMMAND(cmd_conference)
 		}
 
 		if (!(c = conference_find(params[1]))) {
-			printq("conferences_noexist");
+			printq("conferences_noexist", params[1]);
 			return -1;
 		}
 
