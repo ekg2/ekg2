@@ -3,7 +3,7 @@
 //                           Adam Mikuta <adamm@ekg2.org>
 
 last
-	arguments: [options] [uid]
+	parameters: [options] [uid]
 	short description: shows last logged messages
 	
 	  -n, --number <number>  Number of messages to show
@@ -13,7 +13,7 @@ last
 	  <uid>                  UID of user whose messages will be shown
 
 laststatus
-	arguments: [options] [uid]
+	parameters: [options] [uid]
 	short description: shows last logged changes of statuses
 	
 	  -n, --number <number>  Number of statuses to show

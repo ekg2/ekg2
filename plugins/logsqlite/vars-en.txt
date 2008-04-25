@@ -16,6 +16,7 @@ log_ignored
 log_status
 	type: bool
 	default value: 0
+	
 	define if plugin logs changes of people's statuses from contact list
         list (variable ,,log'' must be other than 0)
 
@@ -30,14 +31,13 @@ path
 	Examples:
 	- logging to directores by session:
 	    log_path = "~/.ekg2/logsqlite/%S.db"
-	  F.ex. /home/users/leafnode/.ekg/logsqlite/gg:123.db
+	  e.g. /home/users/leafnode/.ekg/logsqlite/gg:123.db
 	- logging to directores by session (directory) and date (file):
 	    log_path = "~/.ekg2/logsqlite/%S/%Y-%M-%D.db"
-	  F.ex. /home/users/leafnode/.ekg2/logsqlite/jid:fr@h.pl/2004-05-31.db
+	  e.g. /home/users/leafnode/.ekg2/logsqlite/jid:fr@h.pl/2004-05-31.db
 	- logging to /tmp with session and date:
 	    log_path = "/tmp/%S-%Y.%M.%D.db"
-	  F.ex. /tmp/gg:31337-2004.05.31.db
-
+	  e.g. /tmp/gg:31337-2004.05.31.db
 
 last_limit
 	type: number

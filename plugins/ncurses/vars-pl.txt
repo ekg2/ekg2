@@ -177,7 +177,7 @@ margin_size
 mark_on_window_change
 	typ: bool
 	domy¶lna warto¶æ: 0
-
+	
 	okre¶la czy wstawiaæ marker do okna przy przej¶ciu z niego do innego okna
 
 statusbar_size
