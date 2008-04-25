@@ -1,4 +1,4 @@
-EXTRA_DIST = vars-pl.txt commands-pl.txt
+EXTRA_DIST = vars-pl.txt vars-en.txt commands-pl.txt commands-en.txt
 
 lib_LTLIBRARIES = logsqlite.la
 logsqlite_la_SOURCES = logsqlite.c logsqlite.h

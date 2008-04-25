@@ -1,4 +1,4 @@
-EXTRA_DIST = vars-pl.txt vars-en.txt
+EXTRA_DIST = vars-pl.txt vars-en.txt commands-pl.txt
 
 lib_LTLIBRARIES = ncurses.la
 ncurses_la_SOURCES = main.c old.c completion.c bindings.c contacts.c mouse.c\
