@@ -286,10 +286,9 @@ int session_remove(const char *uid)
 
 	for (w = windows; w; w = w->next) {
 		if (w->session == s) {
+			w->session = NULL;
 			if (count > 1)
 				window_session_cycle(w);
-			else
-				w->session = NULL;
 		} 
 	}
 	
