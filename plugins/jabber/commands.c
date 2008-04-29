@@ -651,8 +651,8 @@ auth_first:
 		if (u && ekg_group_member(u, "__authreq")) /* (s)he would be readded in a moment */
 			userlist_remove(session, u);
 	} else if (match_arg(params[0], 'c', ("cancel"), 2)) {
-		jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 		if (multi) {
+			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
 			if (!(up->authtype & EKG_JABBER_AUTH_TO)) /* not yet authorized */
 				goto auth_loop;
 		}
