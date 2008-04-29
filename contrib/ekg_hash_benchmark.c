@@ -278,7 +278,7 @@ int main() {
 	format_add("list_notavail_descr", _("%> %1 %r(offline: %n%5%r)%n\n"), 1);
 	format_add("list_invisible", _("%> %1 %c(invisible)%n %b%3:%4%n\n"), 1);
 	format_add("list_invisible_descr", _("%> %1 %c(invisible: %n%5%c)%n %b%3:%4%n\n"), 1);
-	format_add("list_blocked", _("%> %1 %m(blocking)%n\n"), 1);
+	format_add("list_blocking", _("%> %1 %m(blocking)%n\n"), 1);
 	format_add("list_unknown", "%> %1\n", 1);
 	format_add("modify_offline", _("%> %1 will not see your status\n"), 1);
 	format_add("modify_online", _("%> %1 will see your status\n"), 1);
@@ -827,8 +827,8 @@ int main() {
 	format_add("metacontact_info_error_descr", _("%merror%n %K(%n%2%K)%n"), 1);
 	format_add("metacontact_info_xa", _("%gextended away%n"), 1);
 	format_add("metacontact_info_xa_descr", _("%gextended away%n %K(%n%2%K)%n"), 1);
-	format_add("metacontact_info_blocked", _("%mblocking%n"), 1);
-	format_add("metacontact_info_blocked_descr", _("%mblocking%n %K(%n%2%K)%n"), 1);
+	format_add("metacontact_info_blocking", _("%mblocking%n"), 1);
+	format_add("metacontact_info_blocking_descr", _("%mblocking%n %K(%n%2%K)%n"), 1);
 	format_add("metacontact_info_unknown", _("%Munknown%n"), 1);
 	format_add("plugin_already_loaded", _("%! Plugin %T%1%n already loaded%n.\n"), 1);
 	format_add("plugin_doesnt_exist", _("%! Plugin %T%1%n can not be found%n\n"), 1);
