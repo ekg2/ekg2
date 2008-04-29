@@ -82,7 +82,7 @@ void config_postread()
                 for (i = 1; targets[i]; i++) {
 			char *tmp;
 
-                        if (!strcmp(targets[i], "-"))
+                        if (!xstrcmp(targets[i], "\"-\""))
                                 continue;
 
 		        if (xstrcmp(targets[i], "") && (tmp = xstrrchr(targets[i], '/'))) {
