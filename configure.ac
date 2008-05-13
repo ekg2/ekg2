@@ -114,7 +114,7 @@ AC_CHECK_LIBIDN
 
 AC_CONFIG_FILES([Makefile ekg/Makefile ekg/ekg2-config compat/Makefile docs/Makefile po/Makefile.in])
 AC_CONFIG_FILES([contrib/Makefile contrib/python/Makefile contrib/perl/Makefile])
-AC_CONFIG_FILES([plugins/Makefile plugins/polchat/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gg/Makefile plugins/sim/Makefile plugins/jabber/Makefile plugins/ncurses/Makefile plugins/gtk/Makefile plugins/readline/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/perl/Makefile plugins/python/Makefile plugins/ruby/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile plugins/gpg/Makefile plugins/autoresponder/Makefile plugins/feed/Makefile plugins/jogger/Makefile])
+AC_CONFIG_FILES([plugins/Makefile plugins/polchat/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gg/Makefile plugins/sim/Makefile plugins/jabber/Makefile plugins/ncurses/Makefile plugins/gtk/Makefile plugins/readline/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/perl/Makefile plugins/python/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile plugins/gpg/Makefile plugins/autoresponder/Makefile plugins/feed/Makefile plugins/jogger/Makefile])
 
 PLUGINS="logs mail rc sms pcm irc polchat rot13 httprc_xajax xmsg autoresponder jogger"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
@@ -446,15 +446,15 @@ if test "x$with_python" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(ruby,		AC_HELP_STRING([--without-ruby],		[Compile without ruby support (ruby plugin)]))
-
-if test "x$with_ruby" != "xno"; then
-	AM_CHECK_RUBY
-
-	if test "x$have_ruby" = "xyes"; then
-		PLUGINS="$PLUGINS ruby"
-	fi
-fi
+dnl AC_ARG_WITH(ruby,		AC_HELP_STRING([--without-ruby],		[Compile without ruby support (ruby plugin)]))
+dnl 
+dnl if test "x$with_ruby" != "xno"; then
+dnl	AM_CHECK_RUBY
+dnl
+dnl 	if test "x$have_ruby" = "xyes"; then
+dnl		PLUGINS="$PLUGINS ruby"
+dnl 	fi
+dnl fi
 
 AC_ARG_WITH(sqlite3,		AC_HELP_STRING([--without-sqlite3],		[Compile without sqlite3 support (sqlite plugin)]))
 
@@ -628,9 +628,9 @@ echo -en " - Scripting:\t "
 		echo -n "perl "
 	fi
 
-	if test "x$have_ruby" = "xyes"; then
-		echo -n "ruby "
-	fi
+dnl	if test "x$have_ruby" = "xyes"; then
+dnl		echo -n "ruby "
+dnl	fi
 echo ""
 
 # - MISC PLUGINS
