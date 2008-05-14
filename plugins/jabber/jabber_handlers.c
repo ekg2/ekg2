@@ -424,9 +424,9 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				string_append_raw(str, "\0", 1);
 				string_append_n(str, s->uid+5, xstrchr(s->uid+5, '@')-s->uid-5);
 				string_append_raw(str, "\0", 1);
-				string_append(str, session_get(s, "password"));
+				string_append(str, session_get(s, "password"));		/* XXX, haslo rekodowac na UTF-8 */
 
-				encoded = base64_encode(str->str, str->len);
+				encoded = base64_encode(str->str, str->len-1);
 
 				watch_write(j->send_watch,
 					"<auth xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\" mechanism=\"PLAIN\">%s</auth>", encoded);
