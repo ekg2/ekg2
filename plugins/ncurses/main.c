@@ -352,7 +352,7 @@ static QUERY(ncurses_variable_changed)
                         if (w->id > 1)
 	                        w->id = id++;
                 }
-        } else if (!xstrcasecmp(name, "timestamp") || !xstrcasecmp(name, "ncurses:margin_size")) {
+        } else if (!xstrcasecmp(name, "timestamp") || !xstrcasecmp(name, "timestamp_show") || !xstrcasecmp(name, "ncurses:margin_size")) {
        		window_t *w;
 
                 for (w = windows; w; w = w->next)
