@@ -1516,6 +1516,8 @@ void theme_init()
 	format_add("status_error_descr", _("%> (%3) %1 %merror fetching status%n: %T%4%n\n"), 1);
 	format_add("status_chat", _("%> (%3) %1 is %Wfree for chat%n\n"), 1);
 	format_add("status_chat_descr", _("%> (%3) %1 is %Wfree for chat%n: %T%4%n\n"), 1);
+	format_add("status_unknown", _("%> (%3) %1 is %Munknown%n\n"), 1);
+	format_add("status_unknown_descr", _("%> (%3) %1 is %Munknown%n: %T%4%n\n"), 1);
 
 	/* connection with server */
 	format_add("connecting", _("%> (%1) Connecting to server %n\n"), 1);
