@@ -406,7 +406,7 @@ static QUERY(protocol_status)
 		play_sound(config_sound_notify_file);
 
         /* wy¶wietlaæ na ekranie? */
-	if (!((sess_notify == -1 ? config_display_notify : sess_notify) & 3))
+	if (!((sess_notify == -1 ? config_display_notify : sess_notify) & 3) || ignore_notify)
                 goto notify_plugins;
 
 	/* poka¿ */
