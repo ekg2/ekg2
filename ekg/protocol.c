@@ -390,7 +390,7 @@ static QUERY(protocol_status)
 		goto notify_plugins;
 
 	/* ignorowanie statusu - nie wy¶wietlamy, ale pluginy niech robi± co chc± */
-        if (ignore_status)
+        if (ignore_status || ignore_notify)
 		goto notify_plugins;
 
 	/* nie zmieni³ siê status, zmieni³ siê opis */
@@ -406,7 +406,7 @@ static QUERY(protocol_status)
 		play_sound(config_sound_notify_file);
 
         /* wy¶wietlaæ na ekranie? */
-	if (!((sess_notify == -1 ? config_display_notify : sess_notify) & 3) || ignore_notify)
+	if (!((sess_notify == -1 ? config_display_notify : sess_notify) & 3))
                 goto notify_plugins;
 
 	/* poka¿ */
