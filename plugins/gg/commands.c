@@ -1485,7 +1485,7 @@ static COMMAND(gg_command_token) {
 }
 
 static COMMAND(gg_command_modify) {
-	userlist_t *u;
+	userlist_t *u, *u1;
 	gg_userlist_private_t *up;
 	const char **par;
 	char **argv = NULL;
@@ -1538,7 +1538,8 @@ static COMMAND(gg_command_modify) {
 		if (match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1]) {
 			char *tmp1, *tmp2;
 
-			if ( u != userlist_find(session, argv[i + 1]) ) {
+			u1 = userlist_find(session, argv[i + 1]);
+			if ( u1 && (u != u1) ) {
 				printq("user_exists", argv[i + 1], session_name(session));
 				continue;
 			}
@@ -1621,7 +1622,7 @@ static COMMAND(gg_command_modify) {
 			char *tmp1, *tmp2;
 			int q = 1;
 
-			if (!valid_plugin_uid(&gg_plugin, argv[i + 1]) != 1) {
+			if (valid_plugin_uid(&gg_plugin, argv[i + 1]) != 1) {
 				printq("invalid_uid");
 				array_free(argv);
 				return -1;
