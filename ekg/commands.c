@@ -1685,11 +1685,12 @@ static COMMAND(cmd_save) {
 static COMMAND(cmd_set)
 {
 	const char *arg = NULL, *val = NULL;
-	int unset = 0, show_all = 0, res = 0;
+	int unset = 0, show_all = 0, res = 0, be_quiet = 0;
 	char *value = NULL;
 
-	if (match_arg(params[0], 'a', ("all"), 1)) {
-		show_all = 1;
+	show_all = match_arg(params[0], 'a', ("all"), 1);
+	be_quiet = match_arg(params[0], 'q', ("quiet"), 1);
+	if (show_all || be_quiet) {
 		arg = params[1];
 		if (arg)
 			val = params[2];
@@ -1806,6 +1807,9 @@ static COMMAND(cmd_set)
 		switch (variable_set(arg, (unset) ? NULL : value, 0)) {
 			case 0:
 			{
+				if (be_quiet)
+					break;
+
 				const char *my_params[2] = { (!unset) ? params[0] : params[0] + 1, NULL };
 
 				cmd_set(("set-show"), (const char **) my_params, NULL, NULL, quiet);
@@ -4388,7 +4392,7 @@ void command_init()
         command_add(NULL, ("session"), "psS psS sS ?", session_command, 0,
           "-a --add -d --del -l --list -g --get -s --set -w --sw");
 
-	command_add(NULL, ("set"), "v ?s", cmd_set, 0, NULL);
+	command_add(NULL, ("set"), "pv v ?", cmd_set, 0, "-a --all -q --quiet");
 
         command_add(NULL, ("status"), "s", cmd_status, 0, NULL);
 
