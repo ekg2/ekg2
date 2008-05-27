@@ -275,12 +275,15 @@ group_cleanup:
 					if (!(u = userlist_find_n(i->s_uid, i->name)))
 						continue;
 
-					for (sl = sorted_all; sl; sl = sl->next) {
+					for (sl = sorted_all; sl;) {
 						userlist_t *up = sl;
+						userlist_t *next = sl->next;;
 
 			/* up->uid == u->uid (?) */
 						if (up->uid && !xstrcmp(up->uid, u->uid))
 							LIST_REMOVE2(&sorted_all, up, NULL);
+
+						sl = next;
 					}
 				}
 			}
