@@ -174,20 +174,14 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 
 		if (contacts_group_index > count + 2) {
 			contacts_group_index = 0;
-			all = 0;
-		}
-
-		if (contacts_group_index > count + 1) {
-			all = (metacontacts) ? 2 : 0;
-			goto group_cleanup;
-		}
-
-		if (contacts_group_index > count) {
+		} else if (contacts_group_index > count + 1) {
+			if (metacontacts)
+				all = 2;
+			else
+				contacts_group_index = 0;
+		} else if (contacts_group_index > count) {
 			all = 1;
-			goto group_cleanup;
-		}
-
-		if (contacts_group_index > 0) {
+		} else if (contacts_group_index > 0) {
 			all = config_contacts_groups_all_sessions ? 1 : 0;
 			group = groups[contacts_group_index - 1];
 			if (*group == '@')
@@ -196,15 +190,12 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			header = format_find("contacts_header_group");
 			footer = format_find("contacts_footer_group");
 		}
-group_cleanup:
 		array_free(groups);
 	} else if (contacts_group_index) {
-		if (contacts_group_index > 2) {
-			all = 0;
+		if (contacts_group_index > ((metacontacts) ? 2 :1) )
 			contacts_group_index = 0;
-		} else {
+		else
 			all = contacts_group_index;
-		}
 	}
 
 	if (all == 2) {
