@@ -328,8 +328,15 @@ static QUERY(protocol_status)
 	sess_notify = session_int_get(s, "display_notify");
 	/* we are checking who user we know */
 	if (!(u = userlist_find(s, uid))) {
-		if (config_auto_user_add && xstrncmp(uid, session, xstrlen(session)) )
-			u = userlist_add(s, uid, uid);
+		if (config_auto_user_add && xstrncmp(uid, session, xstrlen(session)) ) {
+			char *tmp = xstrdup(uid);
+			char *p = xstrchr(tmp, '/');
+			if (p) *p = 0;
+
+			u = userlist_add(s, tmp, tmp);
+
+			xfree(tmp);
+		}
 		if (!u) {
 			if ((sess_notify == -1 ? config_display_notify : sess_notify) & 4) {
 				const char *format = ekg_status_label(status, descr, "status_");
