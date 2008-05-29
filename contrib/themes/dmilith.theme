@@ -3,7 +3,7 @@
 # ekg2 theme by dmilith & wiechu
 # dmilith [at] gmail.com
 # wiechu at wiechu dot com
-# theme version 0.7
+# theme version 0.8
 #
 
 -query_started_window
@@ -15,9 +15,9 @@ statusbar_act %K
 contacts_vertical_line_char 
 curses_prompt_none [puste]                                                     
 
-message %K%r#-%R%4%r-# %|%c%2%n%3
-chat %K%r#-%R%4%r-# %|%c%2%n%3
-sent %K%g#-%G%4%g-# %|%3
+message %K%r#-%R%4%r-# %n%2%n%3
+chat %K%r#-%R%4%r-# %n%2%n%3
+sent %K%g#-%G%4%g-# %n%3
 conference %c<%C%1%c>%T %|%T%3
 irc_msg_sent_chan %b<%n%2%T%3%g%T%b>%n %6
 irc_msg_sent_n %b<%n%2%T%3%g%T%b>%n %6
