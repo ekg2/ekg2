@@ -719,7 +719,7 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 			if ((p = xstrstr(line, "\033[00m"))) {
 				xfree(prompt);
 				if (p != line)
-					prompt = xstrndup(line, (int) (p - line) + 5);
+					prompt = xstrndup(line, (int) (p - line));
 				else
 					prompt = NULL;
 				line = p;
