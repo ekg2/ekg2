@@ -296,6 +296,7 @@ static char *va_format_string(const char *format, va_list ap) {
 			int fill_soft	= 1;
 			int fill_length = 0;
 			char fill_char	= ' ';
+			int center 	= 0;
 
 			p++;
 			if (!*p)
@@ -397,6 +398,10 @@ static char *va_format_string(const char *format, va_list ap) {
 				fill_soft = (*p == '(');
 				p++;
 
+				if (*p == '^') {
+					center = 1;
+					p++;
+				}
 				/* fill_char = ' '; */		/* zadeklarowane wczesniej */
 
 				if (*p == '.') {
@@ -438,8 +443,14 @@ static char *va_format_string(const char *format, va_list ap) {
 						fill_length -= len;
 				}
 
+				if (center) {
+					fill_before = fill_after = 1;
+					center = fill_length & 1;
+					fill_length /= 2;
+				}
+
 				if (fill_before)
-					for (i = 0; i < fill_length; i++)
+					for (i = 0; i < fill_length+center; i++)
 						string_append_c(buf, fill_char);
 
 				string_append_n(buf, str, len);
