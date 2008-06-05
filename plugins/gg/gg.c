@@ -230,6 +230,8 @@ static QUERY(gg_userlist_info_handle) {
 			ver = ("7.6 (build >= 1688)");
 		if (v == 0x2a)
 			ver = ("7.7 (build >= 3315)");
+		if (v == 0x2d)
+			ver = ("8.0 (build >= 4881)");
 
 		if (ver) {
 			printq("gg_user_info_version", ver);
