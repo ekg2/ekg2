@@ -259,8 +259,9 @@ static const unsigned char cp_to_iso_table[] = {
 	0xb8, 0xb1, 0xba,  '?', 0xa5, 0xbd, 0xb5, 0xbf,
 };
 
-static unsigned char *gg_cp_to_iso(unsigned char *buf) {
-	unsigned char *tmp = buf;
+static char *gg_cp_to_iso(char *b) {
+	char *tmp = b;
+	unsigned char *buf = (unsigned char *) b;
 
 	if (!buf)
 		return NULL;
@@ -278,13 +279,10 @@ static void tcp_print_payload(u_char *payload, size_t len) {
 	#define MAX_BYTES_PER_LINE 16
         int offset = 0;
 
-	while (1) {
+	while (len) {
 		int display_len;
 		int i;
 
-		if (len <= 0) 
-			break;
-		
 		if (len > MAX_BYTES_PER_LINE)
 			display_len = MAX_BYTES_PER_LINE;
 		else	display_len = len;
@@ -583,7 +581,7 @@ SNIFF_HANDLER(sniff_gg_del_notify, gg_add_remove) {
 	return 0;
 }
 
-SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
+SNIFF_HANDLER(sniff_gg_notify_reply60, gg_notify_reply60) {
 	unsigned char *next;
 
 	uint32_t uin;
@@ -613,7 +611,7 @@ SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 		next += desc_len;
 	}
 
-	descr = has_descr ? gg_cp_to_iso(xstrndup(&pkt->next[1], desc_len)) : NULL;
+	descr = has_descr ? gg_cp_to_iso(xstrndup((char *) &pkt->next[1], desc_len)) : NULL;
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
@@ -633,7 +631,7 @@ SNIFF_HANDLER(sniff_notify_reply60, gg_notify_reply60) {
 
 	if (len > 0) {
 		debug_error("gg_notify_reply60: again? leftlen: %d\n", len);
-		sniff_notify_reply60(s, hdr, (gg_notify_reply60 *) next, len);
+		sniff_gg_notify_reply60(s, hdr, (gg_notify_reply60 *) next, len);
 	}
 	return 0;
 }
@@ -897,7 +895,7 @@ SNIFF_HANDLER(sniff_gg_dcc7_new, gg_dcc7_new) {
 
 	tcp_print_payload((u_char *) pkt->filename, sizeof(pkt->filename));	/* tutaj smieci */
 
-	fname = xstrndup((u_char *) pkt->filename, sizeof(pkt->filename));
+	fname = xstrndup((char *) pkt->filename, sizeof(pkt->filename));
 	debug("sniff_gg_dcc_new7() code: %s from: %d to: %d fname: %s [%db]\n", 
 		build_code(pkt->code1), pkt->uin_from, pkt->uin_to, fname, pkt->size);
 	xfree(fname);
@@ -947,7 +945,7 @@ SNIFF_HANDLER(sniff_gg_dcc_2xx_in, gg_dcc_2xx) {
 		return -1;
 	}
 
-	ipport = xstrndup(pkt->ipport, 21);
+	ipport = xstrndup((char *) pkt->ipport, 21);
 	debug_error("XXX sniff_gg_dcc_2xx_in() uin: %d ip: %s code: %s\n", pkt->uin, ipport, build_code(pkt->code1));
 	xfree(ipport);
 	tcp_print_payload((u_char *) pkt->ipport, sizeof(pkt->ipport));
@@ -1022,7 +1020,70 @@ SNIFF_HANDLER(sniff_gg_dcc_4xx_out, gg_dcc_4xx_out) {
 	return 0;
 }
 
-SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
+SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
+	int status;
+	char *descr;
+	int has_time = 0;	/* XXX */
+	int has_descr = 0;
+	int print_payload = 0;
+	int i; 
+
+	int sughash_len;
+
+	CHECK_LEN(sizeof(gg_login70));	len -= sizeof(gg_login70);
+
+	if (pkt->hash_type == GG_LOGIN_HASH_GG32) {
+		sughash_len = 4;
+
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_login70_hash",
+
+			build_gg_uid(pkt->uin),
+			build_hex(pkt->hash_type));
+
+	} else if (pkt->hash_type == GG_LOGIN_HASH_SHA1) {
+		sughash_len = 20;
+
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_login70_sha1",
+
+			build_gg_uid(pkt->uin),
+			build_sha1(pkt->hash));
+	} else {
+		sughash_len = 0;
+
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			"sniff_gg_login70_unknown",
+
+			build_gg_uid(pkt->uin), build_hex(pkt->hash_type));
+	}
+
+
+	status = gg_status_to_text(pkt->status, &has_descr);
+	descr = has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+	sniff_gg_print_new_status(s, hdr, pkt->uin, status, descr);
+	xfree(descr);
+	
+	debug_error("sniff_gg_login70() XXX ip %d:%d\n", pkt->external_ip, pkt->external_port);
+
+	CHECK_PRINT(pkt->dunno1, 0x00);
+	CHECK_PRINT(pkt->dunno2, 0xbe);
+
+	for (i = sughash_len; i < sizeof(pkt->hash); i++)
+		if (pkt->hash[i] != 0) {
+			print_payload = 1;
+			break;
+		}
+
+	if (print_payload) {
+		tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
+		print_window(build_windowip_name(hdr->srcip), s, 1,
+			"generic_error", "gg_login70() print_payload flag set, see debug");
+	}
+	return 0;
+}
+
+SNIFF_HANDLER(sniff_gg_notify_reply77, gg_notify_reply77) {
 	unsigned char *next;
 
 	uint32_t uin;
@@ -1055,7 +1116,7 @@ SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
 		next += desc_len;
 	}
 
-	descr = has_descr ? gg_cp_to_iso(xstrndup(&pkt->next[1], desc_len)) : NULL;
+	descr = has_descr ? gg_cp_to_iso(xstrndup((char *) &pkt->next[1], desc_len)) : NULL;
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
@@ -1076,7 +1137,7 @@ SNIFF_HANDLER(sniff_notify_reply77, gg_notify_reply77) {
 #endif
 	if (len > 0) {
 		debug_error("gg_notify_reply77: again? leftlen: %d\n", len);
-		sniff_notify_reply77(s, hdr, (gg_notify_reply77 *) next, len);
+		sniff_gg_notify_reply77(s, hdr, (gg_notify_reply77 *) next, len);
 	}
 	return 0;
 }
@@ -1121,7 +1182,26 @@ SNIFF_HANDLER(sniff_gg_status77, gg_status77) {
 	return 0;
 }
 
-SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
+#define GG_LOGIN80 0x29
+
+typedef struct {
+	uint32_t uin;			/* mój numerek */
+	uint8_t hash_type;		/* rodzaj hashowania hasła */
+	uint8_t hash[64];		/* hash hasła dopełniony zerami */
+	uint32_t status;		/* status na dzień dobry */
+	uint32_t version;		/* moja wersja klienta */
+	uint8_t dunno1;			/* 0x00 */
+	uint32_t local_ip;		/* mój adres ip */
+	uint16_t local_port;		/* port, na którym słucham */
+	uint32_t external_ip;		/* zewnętrzny adres ip (???) */
+	uint16_t external_port;		/* zewnętrzny port (???) */
+	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno2;			/* 0x64 */
+	char status_data[];
+} GG_PACKED gg_login80;	
+	/* like gg_login70, pkt->dunno2 diff [0xbe vs 0x64] */
+
+SNIFF_HANDLER(sniff_gg_login80, gg_login80) {
 	int status;
 	char *descr;
 	int has_time = 0;	/* XXX */
@@ -1131,13 +1211,13 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 
 	int sughash_len;
 
-	CHECK_LEN(sizeof(gg_login70));	len -= sizeof(gg_login70);
+	CHECK_LEN(sizeof(gg_login80));	len -= sizeof(gg_login80);
 
-	if (pkt->hash_type == GG_LOGIN_HASH_GG32) {
+	if (pkt->hash_type == GG_LOGIN_HASH_GG32) {	/* untested */
 		sughash_len = 4;
 
 		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-			"sniff_gg_login70_hash",
+			"sniff_gg_login80_hash",
 
 			build_gg_uid(pkt->uin),
 			build_hex(pkt->hash_type));
@@ -1146,7 +1226,7 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 		sughash_len = 20;
 
 		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-			"sniff_gg_login70_sha1",
+			"sniff_gg_login80_sha1",
 
 			build_gg_uid(pkt->uin),
 			build_sha1(pkt->hash));
@@ -1154,10 +1234,9 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 		sughash_len = 0;
 
 		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
-			"sniff_gg_login70_unknown",
+			"sniff_gg_login80_unknown",
 
 			build_gg_uid(pkt->uin), build_hex(pkt->hash_type));
-
 	}
 
 
@@ -1166,10 +1245,10 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	sniff_gg_print_new_status(s, hdr, pkt->uin, status, descr);
 	xfree(descr);
 	
-	debug_error("sniff_gg_login70() XXX ip %d:%d\n", pkt->external_ip, pkt->external_port);
+	debug_error("sniff_gg_login80() XXX ip %d:%d\n", pkt->external_ip, pkt->external_port);
 
 	CHECK_PRINT(pkt->dunno1, 0x00);
-	CHECK_PRINT(pkt->dunno2, 0xbe);
+	CHECK_PRINT(pkt->dunno2, 0x64);
 
 	for (i = sughash_len; i < sizeof(pkt->hash); i++)
 		if (pkt->hash[i] != 0) {
@@ -1180,8 +1259,190 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	if (print_payload) {
 		tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
 		print_window(build_windowip_name(hdr->srcip), s, 1,
-			"generic_error", "gg_login70() print_payload flag set, see debug");
+			"generic_error", "gg_login80() print_payload flag set, see debug");
 	}
+	return 0;
+}
+
+#define GG_NOTIFY_REPLY80 0x2b
+
+typedef struct {
+	uint32_t uin;			/* [gg_notify_reply60] numerek plus flagi w MSB */
+	uint8_t status;			/* [gg_notify_reply60] status danej osoby */
+	uint32_t remote_ip;		/* [XXX] adres ip delikwenta */
+	uint16_t remote_port;		/* [XXX] port, na którym słucha klient */
+	uint8_t version;		/* [gg_notify_reply60] wersja klienta */
+	uint8_t image_size;		/* [gg_notify_reply60] maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno1;			/* 0x00 */
+	uint32_t dunno2;		/* 0x00000000 */
+	unsigned char next[];		/* [like gg_notify_reply60] nastepny (gg_notify_reply77), lub DLUGOSC_OPISU+OPIS + nastepny (gg_notify_reply77) */
+} GG_PACKED gg_notify_reply80;
+	/* identiko z gg_notify_reply77 */
+
+SNIFF_HANDLER(sniff_gg_notify_reply80, gg_notify_reply80) {
+	unsigned char *next;
+
+	uint32_t uin;
+	int desc_len;
+	int has_descr;
+	int status;
+	char *descr;
+
+	CHECK_LEN(sizeof(gg_notify_reply80));	len -= sizeof(gg_notify_reply80);
+
+	CHECK_PRINT(pkt->dunno2, 0x00);
+	CHECK_PRINT(pkt->dunno1, 0x00);
+
+	next = pkt->next;
+
+	uin = pkt->uin & 0x00ffffff;
+
+	status = gg_status_to_text(pkt->status, &has_descr);
+
+	if (has_descr) {
+		CHECK_LEN(1)
+		desc_len = pkt->next[0];
+		len--;	next++;
+
+		if (!desc_len)
+			debug_error("gg_notify_reply80() has_descr BUT NOT desc_len?\n");
+
+		CHECK_LEN(desc_len)
+		len  -= desc_len;
+		next += desc_len;
+	}
+
+	descr = has_descr ? gg_cp_to_iso(xstrndup((char *) &pkt->next[1], desc_len)) : NULL;
+	sniff_gg_print_status(s, hdr, uin, status, descr);
+	xfree(descr);
+
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_notify80",
+
+		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
+		itoa(pkt->remote_port),
+		itoa(pkt->version), build_hex(pkt->version),
+		itoa(pkt->image_size));
+
+	if (len > 0) {
+		debug_error("gg_notify_reply80: again? leftlen: %d\n", len);
+		sniff_gg_notify_reply77(s, hdr, (gg_notify_reply77 *) next, len);
+	}
+	return 0;
+}
+
+#define GG_STATUS80 0x2a
+
+typedef struct {
+	uint32_t uin;			/* [gg_status60, gg_status77] numerek plus flagi w MSB [XXX?] */
+	uint8_t status;			/* [gg_status60, gg_status77] status danej osoby */
+	uint32_t remote_ip;		/* [XXX] adres ip delikwenta */
+	uint16_t remote_port;		/* [XXX] port, na którym słucha klient */
+	uint8_t version;		/* [gg_status60] wersja klienta */
+	uint8_t image_size;		/* [gg_status60] maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno1;			/* 0x64 lub 0x00 */
+	uint32_t dunno2;		/* 0x00 */
+	char status_data[];
+} GG_PACKED gg_status80;
+
+SNIFF_HANDLER(sniff_gg_status80, gg_status80) {
+	uint32_t uin;
+	int status;
+	int has_descr;
+	char *descr;
+
+	uint32_t dunno2;
+	uint8_t uinflag;
+
+	CHECK_LEN(sizeof(gg_status80)); len -= sizeof(gg_status80);
+
+	uin	= pkt->uin & 0x00ffffff;
+
+	uinflag = pkt->uin >> 24;
+	dunno2	= pkt->dunno2;
+
+	if (dunno2 & GG_STATUS_VOICE_MASK) dunno2 -= GG_STATUS_VOICE_MASK;
+
+	CHECK_PRINT(uinflag, 0x00);
+	CHECK_PRINT(pkt->dunno1, 0x64);
+	/* 23:12:31 sniff_gg_status80() values not match: pkt->dunno1 [0 != 64] */
+
+	CHECK_PRINT(dunno2, 0x00);
+
+	status	= gg_status_to_text(pkt->status, &has_descr);
+	descr 	= has_descr ? gg_cp_to_iso(xstrndup(pkt->status_data, len)) : NULL;
+	sniff_gg_print_status(s, hdr, uin, status, descr);
+	xfree(descr);
+
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+		"sniff_gg_status80",
+
+		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
+		itoa(pkt->remote_port),
+		itoa(pkt->version), build_hex(pkt->version),
+		itoa(pkt->image_size));
+
+	return 0;
+}
+
+#define GG_RECV_MSG80 0x2e
+
+typedef struct {
+	uint32_t sender;
+	uint32_t seq;
+	uint32_t time;
+	uint32_t msgclass;
+	uint32_t offset_plaintext;
+	uint32_t offset_attr;
+	char msg_data[];
+	/* '\0' */
+	/* plaintext msg */
+	/* '\0' */
+	/* uint32_t dunno3; */						/* { 02 06 00 00 } */
+	/* uint8_t dunno4; */						/* { 00 } */
+	/* uint32_t dunno5; */		/* like msgclass? */		/* { 08 00 00 00 } */
+} GG_PACKED gg_recv_msg80;
+
+SNIFF_HANDLER(sniff_gg_recv_msg80, gg_recv_msg80) {
+	/* XXX, like sniff_gg_send_msg80() */
+}
+
+#define GG_SEND_MSG80 0x2d
+
+typedef struct {
+	uint32_t recipient;
+	uint32_t seq;			/* time(0) */
+	uint32_t msgclass;						/* GG_CLASS_CHAT  { 08 00 00 00 } */
+	uint32_t offset_plaintext;
+	uint32_t offset_attr;
+	char html_data[];
+	/* '\0' */
+	/* plaintext msg */
+	/* '\0' */
+	/* uint32_t dunno3; */						/* { 02 06 00 00 } */
+	/* uint8_t dunno4; */						/* { 00 } */
+	/* uint32_t dunno5; */		/* like msgclass? */		/* { 08 00 00 00 } */
+} GG_PACKED gg_send_msg80;
+
+SNIFF_HANDLER(sniff_gg_send_msg80, gg_send_msg80) {
+	int orglen = len;
+	char *msg;
+
+	CHECK_LEN(sizeof(gg_send_msg80))  len -= sizeof(gg_send_msg80);
+
+	tcp_print_payload(pkt->html_data, len);
+
+	if (pkt->offset_plaintext < orglen) 
+		tcp_print_payload(((char *) pkt) + pkt->offset_plaintext, orglen - pkt->offset_plaintext);
+	if (pkt->offset_attr < orglen) 
+		tcp_print_payload(((char *) pkt) + pkt->offset_attr, orglen - pkt->offset_attr);
+
+	if (pkt->offset_plaintext < orglen) {
+		msg = gg_cp_to_iso(xstrndup(((char *) pkt) + pkt->offset_plaintext, orglen - pkt->offset_plaintext));
+			sniff_gg_print_message(s, hdr, pkt->recipient, EKG_MSGCLASS_SENT_CHAT, msg, time(NULL));
+		xfree(msg);
+	}
+
 	return 0;
 }
 
@@ -1215,7 +1476,7 @@ static const struct {
 
 	{ GG_ADD_NOTIFY,	"GG_ADD_NOTIFY",	SNIFF_OUTGOING, (void *) sniff_gg_add_notify, 0},
 	{ GG_REMOVE_NOTIFY,	"GG_REMOVE_NOTIFY", 	SNIFF_OUTGOING, (void *) sniff_gg_del_notify, 0},
-	{ GG_NOTIFY_REPLY60,	"GG_NOTIFY_REPLY60",	SNIFF_INCOMING, (void *) sniff_notify_reply60, 0}, 
+	{ GG_NOTIFY_REPLY60,	"GG_NOTIFY_REPLY60",	SNIFF_INCOMING, (void *) sniff_gg_notify_reply60, 0}, 
 
 	{ GG_LIST_EMPTY,	"GG_LIST_EMPTY",	SNIFF_OUTGOING, (void *) sniff_gg_list_empty, 0},
 	{ GG_NOTIFY_FIRST,	"GG_NOTIFY_FIRST",	SNIFF_OUTGOING, (void *) sniff_gg_list_first, 0},
@@ -1229,8 +1490,16 @@ static const struct {
 	{ GG_PUBDIR50_REQUEST,	"GG_PUBDIR50_REQUEST",	SNIFF_OUTGOING, (void *) sniff_gg_pubdir50_req, 0},
 	{ GG_DISCONNECTING,	"GG_DISCONNECTING",	SNIFF_INCOMING, (void *) sniff_gg_disconnecting, 0},
 
-	{ GG_NOTIFY_REPLY77,	"GG_NOTIFY_REPLY77",	SNIFF_INCOMING, (void *) sniff_notify_reply77, 0},
+	{ GG_NOTIFY_REPLY77,	"GG_NOTIFY_REPLY77",	SNIFF_INCOMING, (void *) sniff_gg_notify_reply77, 0},
 	{ GG_STATUS77,		"GG_STATUS77",		SNIFF_INCOMING, (void *) sniff_gg_status77, 0},
+
+#define GG_NEW_STATUS80 0x28
+	{ GG_LOGIN80,		"GG_LOGIN80",		SNIFF_OUTGOING, (void *) sniff_gg_login80, 0},			/* XXX, UTF-8 */
+	{ GG_NEW_STATUS80, 	"GG_NEW_STATUS80",	SNIFF_OUTGOING, (void *) sniff_gg_new_status, 0},		/* XXX, UTF-8 */
+	{ GG_NOTIFY_REPLY80,	"GG_NOTIFY_REPLY80",	SNIFF_INCOMING, (void *) sniff_gg_notify_reply80, 0},		/* XXX, UTF-8 */
+	{ GG_STATUS80,	   	"GG_STATUS80",		SNIFF_INCOMING, (void *) sniff_gg_status80, 0},			/* XXX, UTF-8 */
+	{ GG_RECV_MSG80,	"GG_RECV_MSG80",	SNIFF_INCOMING, (void *) sniff_gg_recv_msg80, 0},		/* XXX, UTF-8 */
+	{ GG_SEND_MSG80,	"GG_SEND_MSG80",	SNIFF_OUTGOING, (void *) sniff_gg_send_msg80, 0},		/* XXX, UTF-8 */
 
 /* pakiety [nie] w libgadu: [czesc mozliwie ze nieaktualna] */
 	{ GG_DCC7_NEW,		"GG_DCC7_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc7_new, 0}, 
@@ -1260,11 +1529,13 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 	pkt_way_t way = SNIFF_OUTGOING;
 	int ret = 0;
 
+//	tcp_print_payload((u_char *) pkt, len);
+
 	CHECK_LEN(sizeof(gg_header)) 	len -= sizeof(gg_header);
 	CHECK_LEN(pkt->len)
 
 	/* XXX, check direction!!!!!111, in better way: */
-	if (!xstrncmp(inet_ntoa(hdr->srcip), "217.17.", 7))
+	if (!xstrncmp(inet_ntoa(hdr->srcip), "91.197.13.41", 7))
 		way = SNIFF_INCOMING;
 
 	/* XXX, jesli mamy podejrzenia ze to nie jest pakiet gg, to wtedy powinnismy zwrocic -2 i pozwolic zeby inni za nas to przetworzyli */
@@ -1272,7 +1543,7 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 		if (sniff_gg_callbacks[i].type == pkt->type && sniff_gg_callbacks[i].way == way) {
 			debug("sniff_gg() %s [%d,%d,%db] %s\n", sniff_gg_callbacks[i].sname, pkt->type, way, pkt->len, inet_ntoa(way ? hdr->dstip : hdr->srcip));
 			if (sniff_gg_callbacks[i].handler) 
-				sniff_gg_callbacks[i].handler(s, hdr, pkt->data, pkt->len);
+				sniff_gg_callbacks[i].handler(s, hdr, (char *) pkt->data, pkt->len);
 
 			handled = 1;
 		}
@@ -1526,7 +1797,7 @@ SNIFF_HANDLER(sniff_rivchat_info, rivchat_packet_rcinfo) {
 	char *program	= gg_cp_to_iso(xstrndup(pkt->prog, sizeof(pkt->prog)));
 	char *username	= gg_cp_to_iso(xstrndup(pkt->user, sizeof(pkt->user)));
 
-	char program_ver[7];	/* ddd '.' ddd */
+	char program_ver[8];	/* ddd '.' ddd */
 
 	sprintf(program_ver, "%d.%d", pkt->version[0], pkt->version[1]);
 
@@ -1543,7 +1814,6 @@ SNIFF_HANDLER(sniff_rivchat_info, rivchat_packet_rcinfo) {
 	xfree(username);
 	return 0;
 }
-
 
 SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 	int type = pkt->type;		/* pkt->type is LE, if you're using BE you know what to do */
@@ -1627,161 +1897,155 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 }
 
 #undef CHECK_LEN
-void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *packet) {
-	const struct ethhdr *ethernet;
-	const struct iphdr *ip;
-	int size_ip;
-	uint16_t ethtype;		/* ntohs(ethernet->ether_type) */
-
 #define CHECK_LEN(x) \
-	if (header->caplen < x) {\
-		debug_error("sniff_loop()  * READ less than: %d (%d %d) (%s)\n", x, header->caplen, header->len, #x);\
-		return;\
+	if (len < x) {\
+		debug_error("%s()  * READ less than: %d (len: %d) (%s)\n", __FUNCTION__, x, len, #x);	\
+		return;											\
 	}
 
-	CHECK_LEN(sizeof(struct ethhdr))					ethernet = (struct ethhdr *) (packet);
 
-	ethtype = ntohs(ethernet->ether_type);
+/* XXX, some notes about tcp fragment*
+ * 		@ sniff_loop_tcp() we'll do: sniff_find_tcp_connection(connection_t *hdr);
+ * 		it'll find (or create) struct with inited string_t buf...
+ * 		than we append to that string_t recv data from packet, and than pass this to sniff_gg() [or anyother sniff handler]
+ * 		than in sniff_loop() we'll remove already data.. [of length len, len returned from sniff_gg()]
+ */
 
-	if (ethtype == ETHERTYPE_ARP) {
-		debug_function("sniff_loop() ARP\n");
-		/* stub? display in __status? */
+static inline void sniff_loop_tcp(session_t *s, int len, const u_char *packet, const struct iphdr *ip, int size_ip) {
+	/* XXX here, make some struct with known TCP services, and demangler-function */
+	const struct tcphdr *tcp;
+	int size_tcp;
+	connection_t *hdr;
+
+	const char *payload;
+	int size_payload;
+
+	CHECK_LEN(sizeof(struct tcphdr))	tcp = (struct tcphdr*) (packet);
+	size_tcp = TH_OFF(tcp)*4;
+
+	if (size_tcp < 20) {
+		debug_error("sniff_loop_tcp()   * Invalid TCP header length: %u bytes\n", size_tcp);
 		return;
 	}
 
-	if (ethtype != ETHERTYPE_IP) {
-		debug_error("sniff_loop() ethtype [0x%x] != ETHERTYPE_IP, CUL\n", ethtype);
-		return;
-	}
-	/* HERE ONLY IP PROTO */
+	size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
 
-	CHECK_LEN(sizeof(struct ethhdr) + sizeof(struct iphdr))			ip = (struct iphdr *) (packet + SIZE_ETHERNET);
-	size_ip = ip->ip_hl*4;
-	
-	if (size_ip < 20) {
-		debug_error("sniff_loop()   * Invalid IP header length: %u bytes\n", size_ip);
-		return;
-	}
-	
-	if (ip->ip_p == IPPROTO_TCP) {		/* here TCP packets */
-		/* XXX here, make some struct with known TCP services, and demangler-function */
-		const struct tcphdr *tcp;
-		int size_tcp;
-		connection_t *hdr;
+	CHECK_LEN(size_tcp + size_payload);
 
-		const char *payload;
-		int size_payload;
+	payload = (char *) (packet + size_tcp);
 
-		CHECK_LEN(sizeof(struct ethhdr) + size_ip + sizeof(struct tcphdr))	tcp = (struct tcphdr*) (packet + SIZE_ETHERNET + size_ip);
-		size_tcp = TH_OFF(tcp)*4;
+	hdr = sniff_tcp_find_connection(ip, tcp);
 
-		if (size_tcp < 20) {
-			debug_error("sniff_loop()   * Invalid TCP header length: %u bytes\n", size_tcp);
-			return;
-		}
+	debug_function("sniff_loop_tcp() IP/TCP %15s:%5d <==> %15s:%5d %s (SEQ: %lx ACK: %lx len: %d)\n", 
+			_inet_ntoa(hdr->srcip),		/* src ip */
+			hdr->srcport,			/* src port */
+			_inet_ntoa(hdr->dstip),		/* dest ip */
+			hdr->dstport, 			/* dest port */
+			tcp_print_flags(tcp->th_flags), /* tcp flags */
+			htonl(tcp->th_seq), 		/* seq */
+			htonl(tcp->th_ack), 		/* ack */
+			size_payload);			/* payload len */
 
-		size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
+	/* XXX check tcp flags */
+	if (!size_payload) return;
 
-		CHECK_LEN(SIZE_ETHERNET + size_ip + size_tcp + size_payload);
+	/* XXX what proto ? check based on ip + port? */
 
-		payload = (u_char *) (packet + SIZE_ETHERNET + size_ip + size_tcp);
+	if (hdr->dstport == 80 || hdr->srcport == 80) {		/* HTTP		[basic check on magic values, ~80% hit] */
+		static const char http_magic11[] = { 'H', 'T', 'T', 'P', '/', '1', '.', '1', ' ' };	/* HTTP/1.1 */
+		static const char http_magic10[] = { 'H', 'T', 'T', 'P', '/', '1', '.', '0', ' ' };	/* HTTP/1.0 */
 
-		hdr = sniff_tcp_find_connection(ip, tcp);
+		static const char http_get_magic[] = { 'G', 'E', 'T', ' ' };				/* GET */
+		static const char http_post_magic[] = { 'P', 'O', 'S', 'T', ' ' };			/* POST */
 
-		debug_function("sniff_loop() IP/TCP %15s:%5d <==> %15s:%5d %s (SEQ: %lx ACK: %lx len: %d)\n", 
-				_inet_ntoa(hdr->srcip),		/* src ip */
-				hdr->srcport,			/* src port */
-				_inet_ntoa(hdr->dstip),		/* dest ip */
-				hdr->dstport, 			/* dest port */
-				tcp_print_flags(tcp->th_flags), /* tcp flags */
-				htonl(tcp->th_seq), 		/* seq */
-				htonl(tcp->th_ack), 		/* ack */
-				size_payload);			/* payload len */
+		/* SERVER REPLIES: */
 
-		/* XXX check tcp flags */
-		if (!size_payload) return;
-
-		/* XXX what proto ? check based on ip + port? */
-
-		if (hdr->dstport == 80 || hdr->srcport == 80) {									/* HTTP		[basic check on magic values, ~80% hit] */
-			static const char http_magic11[] = { 'H', 'T', 'T', 'P', '/', '1', '.', '1', ' ' };	/* HTTP/1.1 */
-			static const char http_magic10[] = { 'H', 'T', 'T', 'P', '/', '1', '.', '0', ' ' };	/* HTTP/1.0 */
-
-			static const char http_get_magic[] = { 'G', 'E', 'T', ' ' };				/* GET */
-			static const char http_post_magic[] = { 'P', 'O', 'S', 'T', ' ' };			/* POST */
-
-			/* SERVER REPLIES: */
-			
-			if (	(size_payload > sizeof(http_magic10) && !memcmp(payload, http_magic10, sizeof(http_magic10))) ||
+		if (	(size_payload > sizeof(http_magic10) && !memcmp(payload, http_magic10, sizeof(http_magic10))) ||
 				(size_payload > sizeof(http_magic11) && !memcmp(payload, http_magic11, sizeof(http_magic11)))
-			   ) {
+		   ) {
 //				debug_error("HTTP DATA FOLLOW\n");
 //				tcp_print_payload((u_char *) payload, size_payload);
 
-				return;		/* done */
-			}
+			return;		/* done */
+		}
 
 
-			/* CLIENT REQUESTs: */
+		/* CLIENT REQUESTs: */
 
-			if (	(size_payload > sizeof(http_get_magic) && !memcmp(payload, http_get_magic, sizeof(http_get_magic))) ||
+		if (	(size_payload > sizeof(http_get_magic) && !memcmp(payload, http_get_magic, sizeof(http_get_magic))) ||
 				(size_payload > sizeof(http_post_magic) && !memcmp(payload, http_post_magic, sizeof(http_post_magic)))
 
-			   ) {
+		   ) {
 //				debug_error("HTTP DATA FOLLOW?\n");
 //				tcp_print_payload((u_char *) payload, size_payload);
 
-				return;		/* done */
-			}
+			return;		/* done */
 		}
+	}
 
-		sniff_gg((session_t *) data, hdr, (gg_header *) payload, size_payload);						/* GG		[no check, ~3% hit] */
+	sniff_gg(s, hdr, (gg_header *) payload, size_payload);		/* GG		[no check, ~3% hit] */
+}
 
-	} else if (ip->ip_p == IPPROTO_UDP) {	/* here UDP datagrams */
+static inline void sniff_loop_udp(session_t *s, int len, const u_char *packet, const struct iphdr *ip) {
 #define	RIVCHAT_PACKET_LEN 328
-		static const char rivchat_magic[11] = { 'R', 'i', 'v', 'C', 'h', 'a', 't' /* here NULs */};	/* RivChat\0\0\0\0 */
+	static const char rivchat_magic[11] = { 'R', 'i', 'v', 'C', 'h', 'a', 't' /* here NULs */};	/* RivChat\0\0\0\0 */
 
-		/* XXX here, make some struct with known UDP services, and demangler-function */
-		const struct udphdr *udp;
-		connection_t *hdr;
+	/* XXX here, make some struct with known UDP services, and demangler-function */
+	const struct udphdr *udp;
+	connection_t *hdr;
 
-		const char *payload;
-		int size_payload;
+	const char *payload;
+	int size_payload;
 
-		/* XXX, it's enough? */
-		/* code copied from: http://gpsbots.com/tutorials/sniff_packets.php */
-		CHECK_LEN(sizeof(struct ethhdr) + size_ip + sizeof(struct udphdr));	udp = (struct udphdr *) (packet + SIZE_ETHERNET + size_ip);
+	/* XXX, it's enough? */
+	/* code copied from: http://gpsbots.com/tutorials/sniff_packets.php */
+	CHECK_LEN(sizeof(struct udphdr));	udp = (struct udphdr *) (packet);
 
-		hdr = sniff_udp_get(ip, udp);
+	hdr = sniff_udp_get(ip, udp);
 
-		payload = (u_char *) (packet + SIZE_ETHERNET + size_ip + sizeof(struct udphdr));
-		size_payload = ntohs(udp->th_len)-sizeof(struct udphdr);
+	payload = (char *) (packet + sizeof(struct udphdr));
+	size_payload = ntohs(udp->th_len)-sizeof(struct udphdr);
 
-		CHECK_LEN(SIZE_ETHERNET + size_ip + sizeof(struct udphdr) + size_payload);
+	CHECK_LEN(sizeof(struct udphdr) + size_payload);
 
-		debug_error("sniff_loop() [%ld:%ld] IP/UDP %15s:%5d <==> %15s:%5d\n",
-				header->ts.tv_sec,
-				header->ts.tv_usec,
-				_inet_ntoa(hdr->srcip),		/* src ip */
-				hdr->srcport,			/* src port */
-				_inet_ntoa(hdr->dstip),		/* dest ip */
-				hdr->dstport); 			/* dest port */
+	debug_error("sniff_loop_udp() IP/UDP %15s:%5d <==> %15s:%5d\n",
+			_inet_ntoa(hdr->srcip),		/* src ip */
+			hdr->srcport,			/* src port */
+			_inet_ntoa(hdr->dstip),		/* dest ip */
+			hdr->dstport); 			/* dest port */
 
-		if (size_payload == RIVCHAT_PACKET_LEN && !memcmp(payload, rivchat_magic, sizeof(rivchat_magic))) {		/* RIVCHAT	[check based on header (11b), ~100% hit] */
-			sniff_rivchat((session_t *) data, hdr, (rivchat_packet *) payload, size_payload);
-		} else if (hdr->srcport == 53 || hdr->dstport == 53) {								/* DNS		[check based on port, ~80% hit] */
-			sniff_dns((session_t *) data, hdr, (DNS_HEADER *) payload, size_payload);
-		} else {													/* OTHER PROTOs, feel free */
-			debug_error("NOT RIVCHAT/ NOT DNS:\n");
-			tcp_print_payload((u_char *) payload, size_payload);
-		}
+	if (size_payload == RIVCHAT_PACKET_LEN && !memcmp(payload, rivchat_magic, sizeof(rivchat_magic))) {		/* RIVCHAT	[check based on header (11b), ~100% hit] */
+		sniff_rivchat(s, hdr, (rivchat_packet *) payload, size_payload);
+	} else if (hdr->srcport == 53 || hdr->dstport == 53) {								/* DNS		[check based on port, ~80% hit] */
+		sniff_dns(s, hdr, (DNS_HEADER *) payload, size_payload);
+	} else {													/* OTHER PROTOs, feel free */
+		debug_error("NOT RIVCHAT/ NOT DNS:\n");
+		tcp_print_payload((u_char *) payload, size_payload);
+	}
+}
 
-	} else if (ip->ip_p == IPPROTO_ICMP) {	/* ICMP, stub only */
+static inline void sniff_loop_ip(session_t *s, int len, const u_char *packet) {
+	const struct iphdr *ip;
+	int size_ip;
+
+	CHECK_LEN(sizeof(struct iphdr))			ip = (struct iphdr *) (packet);
+	size_ip = ip->ip_hl*4;
+	
+	if (size_ip < 20) {
+		debug_error("sniff_loop_ip()   * Invalid IP header length: %u bytes\n", size_ip);
+		return;
+	}
+	
+	if (ip->ip_p == IPPROTO_TCP)
+		sniff_loop_tcp(s, len - size_ip, packet + size_ip, ip, size_ip);
+	else if (ip->ip_p == IPPROTO_UDP) 
+		sniff_loop_udp(s, len - size_ip, packet + size_ip, ip);
+	else if (ip->ip_p == IPPROTO_ICMP) {	/* ICMP, stub only */
 		const struct icmphdr *icmp;
 
-		CHECK_LEN(sizeof(struct ethhdr) + size_ip + sizeof(struct icmphdr));	icmp = (struct icmphdr *) (packet + SIZE_ETHERNET + size_ip);
+		CHECK_LEN(size_ip + sizeof(struct icmphdr));	icmp = (struct icmphdr *) (packet + size_ip);
 
-		debug_function("sniff_loop() IP/ICMP %15s <==> %15s TYPE: %d CODE: %d CHKSUM: %d\n",
+		debug_function("sniff_loop_ip() IP/ICMP %15s <==> %15s TYPE: %d CODE: %d CHKSUM: %d\n",
 				_inet_ntoa(ip->ip_src),		/* src ip */
 				_inet_ntoa(ip->ip_dst),		/* dest ip */
 				icmp->icmp_type,
@@ -1790,33 +2054,69 @@ void sniff_loop(u_char *data, const struct pcap_pkthdr *header, const u_char *pa
 		/* XXX */
 	} else {
 		/* other, implement if u want to || die. */
-		debug_error("sniff_loop() IP/0x%x %15s <==> %15s\n",
+		debug_error("sniff_loop_ip() IP/0x%x %15s <==> %15s\n",
 				ip->ip_p,			/* protocol */
 				_inet_ntoa(ip->ip_src),		/* src ip */
 				_inet_ntoa(ip->ip_dst));	/* dest ip */
 
 	}
+}
+
 #undef CHECK_LEN
-}
 
-/* XXX, some notes about tcp fragment*
- * 		@ sniff_loop() we'll do: sniff_find_tcp_connection(connection_t *hdr);
- * 		it'll find (or create) struct with inited string_t buf...
- * 		than we append to that string_t recv data from packet, and than pass this to sniff_gg() [or anyother sniff handler]
- * 		than in sniff_loop() we'll remove already data.. [of length len, len returned from sniff_gg()]
- */
+static inline void sniff_loop_ether(u_char *data, const struct pcap_pkthdr *header, const u_char *packet) {
+	const struct ethhdr *ethernet;
+	uint16_t ethtype;		/* ntohs(ethernet->ether_type) */
 
-static WATCHER_SESSION(sniff_pcap_read) {
-	if (type)
-		return 0;
-
-	if (!s) {
-		debug_error("sniff_pcap_read() no session!\n");
-		return -1;
+	if (header->caplen < sizeof(struct ethhdr)) {
+		debug_error("sniff_loop_ether() %x %x\n", header->caplen, sizeof(struct ethhdr));
+		return;
 	}
-	pcap_dispatch(GET_DEV(s), 1, sniff_loop, (void *) s);
-	return 0;
+
+	ethernet = (const struct ethhdr *) packet;
+	ethtype = ntohs(ethernet->ether_type);
+
+	if (ethtype == ETHERTYPE_ARP)
+		debug_function("sniff_loop_ether() ARP\n");
+	else if (ethtype == ETHERTYPE_IP) 
+		sniff_loop_ip((session_t *) data, header->caplen - sizeof(struct ethhdr), packet + SIZE_ETHERNET);
+	else
+		debug_error("sniff_loop_ether() ethtype [0x%x] != ETHERTYPE_IP, CUL\n", ethtype);
 }
+
+void sniff_loop_sll(u_char *data, const struct pcap_pkthdr *header, const u_char *packet) {
+	const struct sll_header *sll;
+	uint16_t ethtype;
+
+	if (header->caplen < sizeof(struct sll_header)) {
+		debug_error("sniff_loop_ssl() %x %x\n", header->caplen, sizeof(struct sll_header));
+		return;
+	}
+
+	sll = (const struct sll_header *) packet;
+	ethtype = ntohs(sll->sll_protocol);
+	
+	if (ethtype == ETHERTYPE_IP) 
+		sniff_loop_ip((session_t *) data, header->caplen - sizeof(struct sll_header), packet + SIZE_SLL);
+	else
+		debug_error("sniff_loop_sll() ethtype [0x%x] != ETHERTYPE_IP, CUL\n", ethtype);
+}
+
+#define WATCHER_PCAP(x, y)						\
+	static WATCHER_SESSION(x) {					\
+		if (type) return 0;					\
+		if (!s) {						\
+			debug_error("sniff_pcap_read() no session!\n");	\
+			return -1;					\
+		}							\
+		pcap_dispatch(GET_DEV(s), 1, y, (void *) s);		\
+		return 0;						\
+	}
+	
+
+WATCHER_PCAP(sniff_pcap_read_EN10MB, sniff_loop_ether);
+WATCHER_PCAP(sniff_pcap_read_SLL, sniff_loop_sll);
+WATCHER_PCAP(sniff_pcap_read, sniff_loop_ether);
 
 #define DEFAULT_FILTER \
 	"(tcp and (net 217.17.41.80/28 or net 217.17.45.128/27 or net 85.232.236.0/24 or net 91.197.12.0/22)) or (udp and (port 16127 or port 53))"
@@ -1878,8 +2178,21 @@ static COMMAND(sniff_command_connect) {
 	}
 
 	session->priv = dev;
+	
+	switch (pcap_datalink(dev)) {
+		case DLT_LINUX_SLL:
+			watch_add_session(session, pcap_fileno(dev), WATCH_READ, sniff_pcap_read_SLL);
+			break;
 
-	watch_add_session(session, pcap_fileno(dev), WATCH_READ, sniff_pcap_read);
+		case DLT_EN10MB:
+			watch_add_session(session, pcap_fileno(dev), WATCH_READ, sniff_pcap_read_EN10MB);
+			break;
+
+		default:
+			debug_error("_connect() unk: %s\n", pcap_datalink_val_to_name(pcap_datalink(dev)));
+			watch_add_session(session, pcap_fileno(dev), WATCH_READ, sniff_pcap_read);
+	}
+	
 
 	session->status = EKG_STATUS_AVAIL;
 	query_emit_id(NULL, PROTOCOL_CONNECTED, &(session->uid));
@@ -2018,8 +2331,16 @@ static int sniff_theme_init() {
 
 	format_add("sniff_gg_status60",  ("%) %b[GG_STATUS60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 	format_add("sniff_gg_notify60",  ("%) %b[GG_NOTIFY60] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+
 	format_add("sniff_gg_status77",  ("%) %b[GG_STATUS77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 	format_add("sniff_gg_notify77",  ("%) %b[GG_NOTIFY77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+
+	format_add("sniff_gg_login80_sha1",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gSHA1: %W%2"), 1);
+	format_add("sniff_gg_login80_hash",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gHASH: %W%2"), 1);	/* untested */
+	format_add("sniff_gg_login80_unknown",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gTYPE: %W%2"), 1);
+
+	format_add("sniff_gg_status80",  ("%) %b[GG_STATUS80] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+	format_add("sniff_gg_notify80",  ("%) %b[GG_NOTIFY80] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 
 	format_add("sniff_gg_addnotify", ("%) %b[GG_ADD_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
 	format_add("sniff_gg_delnotify", ("%) %b[GG_REMOVE_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
@@ -2063,7 +2384,6 @@ static plugins_params_t sniff_plugin_vars[] = {
 };
 
 EXPORT int sniff_plugin_init(int prio) {
-
 	PLUGIN_CHECK_VER("sniff");
 
 	sniff_plugin.params = sniff_plugin_vars;

@@ -17,6 +17,19 @@ struct ethhdr { /* Ethernet header */
         u_short ether_type;                     /* IP? ARP? RARP? etc */
 };
 
+/* from tcpdump sll.h */
+
+#define SIZE_SLL	16		/* total header length */
+#define SLL_ADDRLEN	8		/* length of address field */
+
+struct sll_header {
+	u_int16_t	sll_pkttype;	/* packet type */
+	u_int16_t	sll_hatype;	/* link-layer address type */
+	u_int16_t	sll_halen;	/* link-layer address length */
+	u_int8_t	sll_addr[SLL_ADDRLEN];	/* link-layer address */
+	u_int16_t	sll_protocol;	/* protocol */
+};
+
 struct iphdr { /* IP header */
 //        u_char  ip_vhl;                 /* version << 4 | header length >> 2 */
 	unsigned int ip_hl:4;               /* header length */
