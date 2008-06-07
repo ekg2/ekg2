@@ -447,6 +447,8 @@ const struct query_def query_list[] = {
 
 	{ UI_PASSWORD_INPUT, "ui-password-input", {
 		QUERY_ARG_CHARP,		/* password pointer storage */
+		QUERY_ARG_CHARP,		/* alternate input prompt (&NULL = default) */
+		QUERY_ARG_CHARP,		/* alternate repeat prompt (&NULL = default, NULL = no) */
 		QUERY_ARG_END } },
 
 	{ PROTOCOL_DISCONNECTING, "protocol-disconnecting", { /* meant to be send before user-initiated disconnect,

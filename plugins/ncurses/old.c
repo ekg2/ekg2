@@ -107,6 +107,9 @@ CHAR_T *ncurses_passbuf;
 
 QUERY(ncurses_password_input) {
 	char **buf		= va_arg(ap, char**);
+	const char *prompt	= *va_arg(ap, const char**);
+	const char **rprompt	= va_arg(ap, const char**);
+
 	char *oldprompt;
 	CHAR_T *oldline, *passa, *passb = NULL;
 	CHAR_T **oldlines;
@@ -118,7 +121,7 @@ QUERY(ncurses_password_input) {
 	oldpromptlen			= ncurses_current->prompt_len;
 	oldline				= ncurses_line;
 	oldlines			= ncurses_lines;
-	ncurses_current->prompt		= (char*) format_find("password_input");
+	ncurses_current->prompt		= (char*) prompt ? prompt : format_find("password_input");
 	ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
 	ncurses_update_real_prompt(ncurses_current);
 	ncurses_lines			= NULL;
@@ -131,17 +134,19 @@ QUERY(ncurses_password_input) {
 	passa = ncurses_passbuf;
 	
 	if (xwcslen(passa)) {
-		ncurses_current->prompt		= (char*) format_find("password_repeat");
-		ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
-		ncurses_noecho			= 1;
-		ncurses_update_real_prompt(ncurses_current);
-		ncurses_redraw_input(0);
-		
-		while (ncurses_noecho)
-			ncurses_watch_stdin(0, 0, WATCH_READ, NULL);
-		passb = ncurses_passbuf;
-		
-		if (xwcscmp(passa, passb))
+		if (rprompt) {
+			ncurses_current->prompt		= (char*) *rprompt ? *rprompt : format_find("password_repeat");
+			ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
+			ncurses_noecho			= 1;
+			ncurses_update_real_prompt(ncurses_current);
+			ncurses_redraw_input(0);
+			
+			while (ncurses_noecho)
+				ncurses_watch_stdin(0, 0, WATCH_READ, NULL);
+			passb = ncurses_passbuf;
+		}
+
+		if (passb && xwcscmp(passa, passb))
 			print("password_nomatch");
 		else
 #if USE_UNICODE

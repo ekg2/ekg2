@@ -1197,7 +1197,9 @@ COMMAND(session_command)
 			}
 
 			if (!xstrcmp(params[1], "password")) {
-				char *pass = password_input();
+				char *prompt	= format_string("session_password_input", session_name(session));
+				char *pass	= password_input(prompt, NULL, 1);
+				xfree(prompt);
 
 				if (pass) {
 					session_set(session, params[1], pass);
@@ -1238,7 +1240,9 @@ COMMAND(session_command)
 		}
 		
 		if (!xstrcmp(params[2], "password")) {
-			char *pass = password_input();
+			char *prompt	= format_string(format_find("session_password_input"), session->uid);
+			char *pass	= password_input(prompt, NULL, 1);
+			xfree(prompt);
 
 			if (pass) {
 				session_set(session, params[2], pass);

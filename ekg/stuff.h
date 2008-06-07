@@ -38,6 +38,7 @@
 #include <ctype.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdbool.h>
 #include <time.h>
 
 #include "dynstuff.h"
@@ -393,7 +394,7 @@ void ekg_convert_string_destroy(void *ptr);
 char *ekg_convert_string_p(const char *ps, void *ptr);
 char *ekg_convert_string(const char *ps, const char *from, const char *to);
 int ekg_converters_display(int quiet);
-char *password_input();
+char *password_input(const char *prompt, const char *rprompt, const bool norepeat);
 
 /* funkcje poza stuff.c */
 void ekg_exit();

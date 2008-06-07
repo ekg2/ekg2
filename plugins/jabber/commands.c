@@ -535,7 +535,7 @@ static COMMAND(jabber_command_passwd)
 	*(xstrchr(username, '@')) = 0;
 
 	if (!params[0]) {
-		char *tmp = password_input();
+		char *tmp = password_input(NULL, NULL, 0);
 		if (!tmp)
 			return -1;
 		passwd = jabber_escape(tmp);

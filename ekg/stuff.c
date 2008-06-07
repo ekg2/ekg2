@@ -3202,10 +3202,10 @@ int ekg_converters_display(int quiet)
  * 		succeeded (wrong input / no support).
  */
 
-char *password_input() {
+char *password_input(const char *prompt, const char *rprompt, const bool norepeat) {
 	char *pass = NULL;
 
-	if (query_emit_id(NULL, UI_PASSWORD_INPUT, &pass) == -2) {
+	if (query_emit_id(NULL, UI_PASSWORD_INPUT, &pass, &prompt, norepeat ? NULL : &rprompt) == -2) {
 		print("password_nosupport");
 		return NULL;
 	}

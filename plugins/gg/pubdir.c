@@ -132,7 +132,7 @@ COMMAND(gg_command_register)
 		passwd_b = xstrdup(params[1]);
 		params[1] = params[2];
 		params[2] = NULL;
-	} else if (!(passwd_b = password_input()))
+	} else if (!(passwd_b = password_input(NULL, NULL, 0)))
 			return -1;
 
 	passwd = gg_locale_to_cp(xstrdup(passwd_b));
@@ -364,7 +364,7 @@ COMMAND(gg_command_passwd) {
 #else
 	if (!params[0]) {
 #endif
-		newpasswd = gg_locale_to_cp(password_input());
+		newpasswd = gg_locale_to_cp(password_input(NULL, NULL, 0));
 		if (!newpasswd)
 			return -1;
 	} else

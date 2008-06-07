@@ -1167,11 +1167,13 @@ void theme_init()
 	format_add("statusbar_timestamp", "%H:%M", 1);
 
 	/* ui-password-input */
-	format_add("password_input", _("Please input your password: "), 1);
-	format_add("password_repeat", _("Please repeat your password: "), 1);
+	format_add("password_input", _("Please input password:"), 1);
+	format_add("password_repeat", _("Please repeat password:"), 1);
 	format_add("password_empty", _("%! No password entered"), 1);
 	format_add("password_nomatch", _("%! Entered passwords do not match"), 1);
 	format_add("password_nosupport", _("%! %|UI-plugin doesn't seem to support password input, please use command-line input."), 1);
+
+	format_add("session_password_input", _("Password for %1:"), 1);
 
 	/* dla funkcji format_user() */
 	format_add("known_user", "%T%1%n/%2", 1);
