@@ -2885,11 +2885,11 @@ msgstr "%> %Y%2%n wys³a³ nieznany CTCP %3: (%4)\n"
 
 #: plugins/irc/irc.c:2344
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
-msgstr "%> %Y%2%n zarz±da³ CTCP %5 od %4\n"
+msgstr "%> %Y%2%n za¿±da³ CTCP %5 od %4\n"
 
 #: plugins/irc/irc.c:2345
 msgid "%> %Y%2%n requested ctcp %5\n"
-msgstr "%> %Y%2%n zarz±da³ CTCP %5\n"
+msgstr "%> %Y%2%n za¿±da³ CTCP %5\n"
 
 #: plugins/irc/irc.c:2346
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
