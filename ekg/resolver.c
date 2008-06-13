@@ -18,6 +18,7 @@
 #include <unistd.h>
 
 #define __USE_POSIX
+#define __USE_GNU	/* glibc-2.8, needed for (struct hostent->h_addr) */
 #ifndef NO_POSIX_SYSTEM
 #include <netdb.h>	/* OK */
 #endif
