@@ -658,8 +658,10 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 		}
 	}
 	
-	if (!roster_retrieved)
+	if (!roster_retrieved) {
 		session_int_set(s, "__roster_retrieved", 1);
+		jabber_write_status(s);
+	}
 
 	query_emit_id(NULL, USERLIST_REFRESH);
 }

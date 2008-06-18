@@ -1685,7 +1685,6 @@ static void jabber_session_connected(session_t *s) {
 
 	userlist_free(s);
 	watch_write(j->send_watch, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
-	jabber_write_status(s);
 
 	if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, ("/xmpp:bookmark --get"), 1);
 	if (session_int_get(s, "auto_privacylist_sync") != 0) {
