@@ -404,9 +404,14 @@ int gg_userlist_send(struct gg_session *s, userlist_t *userlist) {
 
 	int count = LIST_COUNT2(userlist);
 	userlist_t *ul;
+	char *types;
+	uin_t *uins;
 
-	uin_t *uins	= xmalloc(count * sizeof(uin_t));
-	char *types	= xmalloc(count * sizeof(char));
+	if (!count)
+		return gg_notify(s, NULL, 0);
+	
+	uins = xmalloc(count * sizeof(uin_t));
+	types = xmalloc(count * sizeof(char));
 
 	for (ul = userlist, i = 0; ul; ul = ul->next, i++) {
 		userlist_t *u = ul;
