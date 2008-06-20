@@ -907,6 +907,7 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 
 		if (quotes && (*p == '\'' || *p == '\"')) {
 			char sep = *p;
+			char *r;
 
 			for (q = p + 1, len = 0; *q; q++, len++) {
 				if (*q == '\\') {
@@ -922,46 +923,41 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 
                         len++;
 
-			if ((token = xcalloc(1, len + 1))) {
-				char *r = token;
-			
-				for (q = p + 1; *q; q++, r++) {
-					if (*q == '\\') {
-						q++;
-						
-						if (!*q)
-							break;
-						
-						switch (*q) {
-							case 'n':
-								*r = '\n';
-								break;
-							case 'r':
-								*r = '\r';
-								break;
-							case 't':
-								*r = '\t';
-								break;
-							default:
-								*r = *q;
-						}
-					} else if (*q == sep) {
+			r = token = xmalloc(len + 1);
+			for (q = p + 1; *q; q++, r++) {
+				if (*q == '\\') {
+					q++;
+
+					if (!*q)
 						break;
-					} else 
-						*r = *q;
-				}
-				
-				*r = 0;
+
+					switch (*q) {
+						case 'n':
+							*r = '\n';
+							break;
+						case 'r':
+							*r = '\r';
+							break;
+						case 't':
+							*r = '\t';
+							break;
+						default:
+							*r = *q;
+					}
+				} else if (*q == sep) {
+					break;
+				} else 
+					*r = *q;
 			}
+
+			*r = 0;
 			
 			p = (*q) ? q + 1 : q;
 
 		} else {
 way2:
 			for (q = p, len = 0; *q && (last || !xstrchr(sep, *q)); q++, len++);
-			token = xcalloc(1, len + 1);
-			xstrncpy(token, p, len);
-			token[len] = 0;
+			token = xstrndup(p, len);
 			p = q;
 		}
 		
