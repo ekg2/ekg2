@@ -905,7 +905,7 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 				break;
 		}
 
-		if (!last && quotes && (*p == '\'' || *p == '\"')) {
+		if (quotes && (*p == '\'' || *p == '\"')) {
 			char sep = *p;
 
 			for (q = p + 1, len = 0; *q; q++, len++) {
@@ -916,6 +916,9 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 				} else if (*q == sep)
 					break;
 			}
+
+			if (last && q[0] && q[1])
+				goto way2;
 
                         len++;
 
@@ -954,6 +957,7 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 			p = (*q) ? q + 1 : q;
 
 		} else {
+way2:
 			for (q = p, len = 0; *q && (last || !xstrchr(sep, *q)); q++, len++);
 			token = xcalloc(1, len + 1);
 			xstrncpy(token, p, len);
