@@ -1355,13 +1355,11 @@ COMMAND(cmd_list)
 	char **argv = NULL, *show_group = NULL;
 	const char *tmp;
 	metacontact_t *m = NULL;
-	char *tparams0	= xstrdup(params[0]);		/* XXX, target */
-	char *params0;
+	char *params0 = params[0];
 
-        if (!tparams0 && window_current->target) { 
-		tparams0 = xstrdup(window_current->target);
+        if (!params0 && window_current->target) { 
+		params0 = window_current->target;
 	}
-	params0 = strip_quotes(tparams0);
 
 	if (params0 && (*params0 != '-' || userlist_find(session, params0))) {
 		char *status;
@@ -1405,7 +1403,6 @@ COMMAND(cmd_list)
 
 			string_free(members, 1);
 			
-			xfree(tparams0);
 			return 0;
 		}
 
@@ -1420,7 +1417,6 @@ COMMAND(cmd_list)
 	        	if (!(u = userlist_find(session, tmp)) || !u->nickname) {
 	                        printq("user_not_found", tmp);
 				xfree(session_name);
-				xfree(tparams0);
 	                	return -1;
 			}
 	
@@ -1437,7 +1433,6 @@ next:
 
 	                if (!i) {
 	                        printq("metacontact_item_list_empty");
-				xfree(tparams0);
 				return -1;
 	               	} 
 		
@@ -1450,13 +1445,11 @@ next:
 	                printq("metacontact_info_footer", params0);
 
 			xfree(status);
-			xfree(tparams0);
 			return 0;
 		}
 	
 		if (!(u = userlist_find(session, params0)) || !u->nickname) {
 			printq("user_not_found", params0);
-			xfree(tparams0);
 			return -1;
 		}
 
@@ -1529,7 +1522,6 @@ list_user:
 		printq("user_info_footer", u->nickname, u->uid);
 		
 		xfree(status);
-		xfree(tparams0);
 		return 0;
 	}
 	
@@ -1646,7 +1638,6 @@ list_user:
 	if (!count && !(show_descr || show_group) && show_all)
 		printq("list_empty");
 	xfree(show_group);
-	xfree(tparams0);
 	return 0;
 }
 
@@ -2682,14 +2673,11 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			char **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make(("?"), (" "), 0, 1, 1) : last_command->params;
 			int parcount = array_count(last_params);
 			char **par = array_make(p, (" \t"), parcount, 1, 1);
-			char *ntarget;
 
 			if ((last_command->flags & COMMAND_PARAMASTARGET) && par[0]) {
 /*				debug("[command_exec] oldtarget = %s newtarget = %s\n", target, par[0]); */
-				ntarget = xstrdup(par[0]);
-			} else	ntarget = xstrdup(target);
-
-			target = strip_quotes(ntarget);
+				target = par[0];
+			}
 
 			if (/* !res && */ last_command->flags & COMMAND_ENABLEREQPARAMS) {
 				int i;
@@ -2736,7 +2724,6 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 			if (last_command->flags & COMMAND_ISALIAS) array_free(last_params);
 			array_free(par);
-			xfree(ntarget);
 		}
 		xfree(line_save);
 
