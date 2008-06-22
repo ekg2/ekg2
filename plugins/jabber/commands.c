@@ -613,8 +613,7 @@ auth_loop:
 	if (multi) {
 		ul = ul->next;
 auth_first:
-		while (ul)
-			ul = ul->next; /* skip empty entries */
+		ul = NULL;
 		if (!ul) {
 			JABBER_COMMIT_DATA(j->send_watch);
 			return 0;
