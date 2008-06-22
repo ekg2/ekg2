@@ -32,6 +32,8 @@ auth
 	  -j, --reject <JID>	odrzuca ¿±danie autoryzacji
 	
 	  -l, --list		wy¶wietla oczekuj±ce ¿±dania
+	
+	  -p, --probe		wysy³a pytanie o obecno¶æ u¿ytkownika
 
 away
 	parametry: [opis/-]

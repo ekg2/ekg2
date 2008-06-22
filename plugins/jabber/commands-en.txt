@@ -32,6 +32,8 @@ auth
 	  -j, --reject <JID>	reject authorization request
 	
 	  -l, --list		display pending requests
+	
+	  -p, --probe		request presence information
 
 away
 	parameters: [description/-]

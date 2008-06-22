@@ -563,7 +563,8 @@ static COMMAND(jabber_command_auth) {
 	const char *action;
 	const char *uid;
 	userlist_t *ul, *u;
-	int multi = 0, reject;
+	jabber_userlist_private_t *up;
+	int multi = 0, reject, result = 0;
 
 	if (match_arg(params[0], 'l', "list", 2)) {
 		const char *formats[2] = { "jabber_auth_list_req", "jabber_auth_list_unreq" };
@@ -572,12 +573,8 @@ static COMMAND(jabber_command_auth) {
 
 		for (i = 0; i < 2; i++) {
 			for (ul = session->userlist; ul; ul = ul->next) {
-				userlist_t *u = ul;
-				jabber_userlist_private_t *up = u ? jabber_userlist_priv_get(u) : NULL;
-
-				if (!u)
-					continue;
-
+				u = ul;
+				up = jabber_userlist_priv_get(u);
 				if ((up->authtype & masks[i])) {
 					if (ph < i) {
 						print(formats[i], session_name(session));
@@ -600,101 +597,83 @@ static COMMAND(jabber_command_auth) {
 	}
 
 	if (!xstrcmp(target, "*")) {
+		if (!(ul = session->userlist))
+			return -1;
 		j->send_watch->transfer_limit = -1;
 		multi = 1;
-		ul = session->userlist;
-		goto auth_first;
-	} else if ((uid = jid_target2uid(session, target, quiet)))
+	} else if ((uid = jid_target2uid(session, target, quiet))) {
 		tabnick_add(uid);	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
-	else
+		if (!(ul = userlist_find(session, uid)))
+			ul = userlist_add(session, uid, NULL);
+	} else
 		return -1;
 
-auth_loop:
-	if (multi) {
-		ul = ul->next;
-auth_first:
-		ul = NULL;
-		if (!ul) {
-			JABBER_COMMIT_DATA(j->send_watch);
-			return 0;
-		}
-		u = ul;
-		uid = u->uid;
-		/* XXX: shall we check uid ? */
-	}
+	do {
+		u   = ul;
+		uid = u->uid;		/* XXX: shall we check uid ? */
+		up  = jabber_userlist_priv_get(u);
 
-	if (match_arg(params[0], 'r', ("request"), 2)) {
-		if (multi) {
-			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-			if ((up->authtype & EKG_JABBER_AUTH_TO)) /* already authorized */
-				goto auth_loop;
-		}
-		action = "subscribe";
-		printq("jabber_auth_request", uid+5, session_name(session));
-	} else if (match_arg(params[0], 'a', ("accept"), 2)) {
-		jabber_userlist_private_t *up;
+		if (match_arg(params[0], 'r', ("request"), 2)) {
+			if (multi && (up->authtype & EKG_JABBER_AUTH_TO)) /* already authorized */
+			    continue;
 
-		if (!multi)
-			u = userlist_find(session, uid);
-		if (u)
-			up = jabber_userlist_priv_get(u);
-		if (multi) {
-			if (!(up->authtype & EKG_JABBER_AUTH_REQ)) /* already authorized */
-				goto auth_loop;
-		}
-		action = "subscribed";
-		if (u && !(up->authtype & EKG_JABBER_AUTH_REQ))
-			printq("jabber_auth_acceptnoreq", uid+5, session_name(session));
-		else
-			printq("jabber_auth_accept", uid+5, session_name(session));
-		if (u && ekg_group_member(u, "__authreq")) /* (s)he would be readded in a moment */
-			userlist_remove(session, u);
-	} else if (match_arg(params[0], 'c', ("cancel"), 2)) {
-		if (multi) {
-			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-			if (!(up->authtype & EKG_JABBER_AUTH_TO)) /* not yet authorized */
-				goto auth_loop;
-		}
-		action = "unsubscribe";
-		printq("jabber_auth_unsubscribed", uid+5, session_name(session));
-	} else if (((reject = match_arg(params[0], 'j', "reject", 3))) || match_arg(params[0], 'd', ("deny"), 2)) {
-		jabber_userlist_private_t *up;
+			action = "subscribe";
+			printq("jabber_auth_request", uid+5, session_name(session));
 
-		if (!multi)
-			u = userlist_find(session, uid);
-		if (u)
-			up = jabber_userlist_priv_get(u);
-		if (multi) {
-			if (!(up->authtype & (( reject ? 0 : EKG_JABBER_AUTH_FROM ) | EKG_JABBER_AUTH_REQ | EKG_JABBER_AUTH_UNREQ)))
-				goto auth_loop;
-		} else if (reject && !(up->authtype & (EKG_JABBER_AUTH_REQ | EKG_JABBER_AUTH_UNREQ))) {
-			printq("jabber_auth_noreq", uid+5, session_name(session));
-			return -1;
+		} else if (match_arg(params[0], 'a', ("accept"), 2)) {
+			if (multi && !(up->authtype & EKG_JABBER_AUTH_REQ)) /* already authorized */
+				continue;
+
+			action = "subscribed";
+			printq((up->authtype & EKG_JABBER_AUTH_REQ) ? "jabber_auth_accept" : "jabber_auth_acceptnoreq", uid+5, session_name(session));
+			if (ekg_group_member(u, "__authreq")) /* (s)he would be readded in a moment */
+				userlist_remove(session, u);
+
+		} else if (match_arg(params[0], 'c', ("cancel"), 2)) {
+			if (multi && !(up->authtype & EKG_JABBER_AUTH_TO)) /* not yet authorized */
+				continue;
+
+			action = "unsubscribe";
+			printq("jabber_auth_unsubscribed", uid+5, session_name(session));
+
+		} else if (((reject = match_arg(params[0], 'j', "reject", 3))) || match_arg(params[0], 'd', ("deny"), 2)) {
+			if (multi) {
+				if (!(up->authtype & (( reject ? 0 : EKG_JABBER_AUTH_FROM ) | EKG_JABBER_AUTH_REQ | EKG_JABBER_AUTH_UNREQ)))
+					continue;
+			} else if (reject && !(up->authtype & (EKG_JABBER_AUTH_REQ | EKG_JABBER_AUTH_UNREQ))) {
+				printq("jabber_auth_noreq", uid+5, session_name(session));
+				result = -1;
+				break;
+			}
+
+			action = "unsubscribed";
+			printq( (up->authtype & EKG_JABBER_AUTH_FROM) ? "jabber_auth_cancel" :"jabber_auth_denied", uid+5, session_name(session));
+			if (ekg_group_member(u, "__authreq")) /* we don't want you! */
+				userlist_remove(session, u);
+
+		} else if (match_arg(params[0], 'p', ("probe"), 2)) {	/* TLEN ? */
+			/* ha! undocumented :-); [Used on server only. Client authors need not worry about this.] */
+
+			action = "probe";
+			printq("jabber_auth_probe", uid+5, session_name(session));
+
+		} else {
+
+			printq("invalid_params", name);
+			result = -1;
+			break;
+
 		}
 
-		action = "unsubscribed";
+		/* NOTE: libtlen send this without id */
+		watch_write(j->send_watch, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid+5, action);
 
-		if (u && (up->authtype & EKG_JABBER_AUTH_FROM))
-			printq("jabber_auth_cancel", uid+5, session_name(session));
-		else
-			printq("jabber_auth_denied", uid+5, session_name(session));
-		if (u && ekg_group_member(u, "__authreq")) /* we don't want you! */
-			userlist_remove(session, u);
-	} else if (match_arg(params[0], 'p', ("probe"), 2)) {	/* TLEN ? */
-	/* ha! undocumented :-); bo 
-	   [Used on server only. Client authors need not worry about this.] */
-		action = "probe";
-		printq("jabber_auth_probe", uid+5, session_name(session));
-	} else {
-		printq("invalid_params", name);
-		return -1;
-	}
-	/* NOTE: libtlen send this without id */
-	watch_write(j->send_watch, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid+5, action);
+	} while ( multi && (u = u->next) );
 
 	if (multi)
-		goto auth_loop;
-	return 0;
+		JABBER_COMMIT_DATA(j->send_watch);
+
+	return result;
 }
 
 static COMMAND(jabber_command_modify) {
