@@ -76,7 +76,7 @@ void config_upgrade();
 void config_postread()
 {
         if (config_windows_save && config_windows_layout) {
-                char **targets = array_make(config_windows_layout, "|", 0, 0, 0);
+                char **targets = array_make(config_windows_layout, "|", 0, 0, 1);
                 int i;
 
                 for (i = 1; targets[i]; i++) {
