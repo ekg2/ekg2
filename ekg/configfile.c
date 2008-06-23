@@ -68,6 +68,22 @@ void config_upgrade();
         }
 
 
+static char *strip_quotes(char *line) {
+	size_t linelen;
+	char *buf;
+
+	if (!(linelen = xstrlen(line))) return line;
+
+	for (buf = line; *buf == '\"'; buf++);
+
+	while (linelen > 0 && line[linelen - 1] == '\"') {
+		line[linelen - 1] = 0;
+		linelen--;
+	}
+
+	return buf;
+}
+
 /* 
  * config_postread()
  *
@@ -76,7 +92,7 @@ void config_upgrade();
 void config_postread()
 {
         if (config_windows_save && config_windows_layout) {
-                char **targets = array_make(config_windows_layout, "|", 0, 0, 1);
+                char **targets = array_make(config_windows_layout, "|", 0, 0, 0);
                 int i;
 
                 for (i = 1; targets[i]; i++) {
@@ -96,6 +112,7 @@ void config_postread()
 
 		                tmp++;
 				tmp = strip_spaces(tmp);
+				tmp = strip_quotes(tmp);
 
 				window_new(tmp, s, i + 1);	
 	
