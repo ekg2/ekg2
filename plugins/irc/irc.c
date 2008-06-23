@@ -2020,20 +2020,16 @@ static COMMAND(irc_command_query) {
 		return -1;
 	}
 
-	tmp = xstrdup(tar);
-	tmp = strip_quotes(tmp);
-
-	w = window_find_s(session, tmp);
+	w = window_find_s(session, tar);
 
 	if (!w) {
-		w = window_new(tmp, session, 0);
+		w = window_new(tar, session, 0);
 		if (session_int_get(session, "auto_lusers_sync") > 0)
-			watch_write(j->send_watch, "USERHOST %s\r\n", tmp+4);
+			watch_write(j->send_watch, "USERHOST %s\r\n", tar+4);
 	}
 
 	window_switch(w->id);
 
-	xfree(tmp);
 	array_free(mp);
         array_free(p);
 	xfree(tar);

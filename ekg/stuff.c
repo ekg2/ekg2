@@ -1310,36 +1310,6 @@ void iso_to_ascii(unsigned char *buf) {
 }
 
 /**
- * strip_quotes()
- *
- * strips quotes from the begining and the end of string @a line
- *
- * @param line - given string ;-)
- * @sa strip_spaces - for spaces striping function
- *
- * @note If you pass here smth which was strdup'ed() malloc'ed() or smth which was allocated.<br>
- * 		You <b>must</b> xfree() string passed, not result of this function.
- *
- * @return buffer without quotes.
- */
-
-char *strip_quotes(char *line) {
-	size_t linelen;
-	char *buf;
-
-	if (!(linelen = xstrlen(line))) return line;
-
-	for (buf = line; *buf == '\"'; buf++);
-
-	while (linelen > 0 && line[linelen - 1] == '\"') {
-		line[linelen - 1] = 0;
-		linelen--;
-	}
-
-	return buf;
-}
-
-/**
  * strip_spaces()
  *
  * strips spaces from the begining and the end of string @a line

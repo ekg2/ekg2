@@ -136,7 +136,6 @@ int last(const char **params, session_t *session, int quiet, int status)
 	if (! (db = logsqlite_prepare_db(session, time(0), 0)))
 		return -1;
 
-	keep_nick = xstrdup(keep_nick);
 	sql_search = sql_search ? sql_search : "";	/* XXX: use fix() */
 #ifdef HAVE_SQLITE3
 	sql_search = sqlite3_mprintf("%%%s%%", sql_search);
@@ -144,7 +143,7 @@ int last(const char **params, session_t *session, int quiet, int status)
 
 
 	if (keep_nick) {
-		nick = strip_quotes(keep_nick);
+		nick = keep_nick;
 		gotten_uid = get_uid(session, nick);
 		if (! gotten_uid) 
 			gotten_uid = nick;
@@ -276,8 +275,6 @@ int last(const char **params, session_t *session, int quiet, int status)
 		else
 			print_window(target_window, session, config_logsqlite_last_open_window, "last_end_status");
 	}
-
-	xfree(keep_nick);
 
 #ifdef HAVE_SQLITE3
 	sqlite3_free(sql_search);
