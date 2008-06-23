@@ -1315,7 +1315,6 @@ void iso_to_ascii(unsigned char *buf) {
  * strips spaces from the begining and the end of string @a line
  *
  * @param line - given string
- * @sa strip_quotes - for quotes striping function
  *
  * @note If you pass here smth which was strdup'ed() malloc'ed() or smth which was allocated.<br>
  * 		You <b>must</b> xfree() string passed, not result of this function.

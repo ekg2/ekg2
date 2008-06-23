@@ -95,8 +95,7 @@ void config_postread()
 				}
 
 		                tmp++;
-				strip_spaces(tmp);
-				tmp = strip_quotes(tmp);
+				tmp = strip_spaces(tmp);
 
 				window_new(tmp, s, i + 1);	
 	
