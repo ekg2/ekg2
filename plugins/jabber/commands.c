@@ -2042,18 +2042,29 @@ static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 static COMMAND(jabber_muc_command_topic) {
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
+	char *subject, *tmp=NULL;
+
 /* XXX da, /topic is possible in normal talk too... current limit only to muc. */
-	if (!(c = newconference_find(session, target))) {
+	if (params[0] && (c = newconference_find(session, params[0]))) {
+		subject = jabber_escape(params[1]);
+	} else if (c = newconference_find(session, target)) {
+		if (params[0] && params[1]) {
+			tmp = saprintf("%s %s", params[0], params[1]);
+			subject = jabber_escape(tmp);
+			xfree(tmp);
+		} else
+			subject = jabber_escape(params[0]);
+	} else {
 		printq("generic_error", "/xmpp:topic only valid in MUC");
 		return -1;
 	}
 	
-	if (!params[1]) {
+	if (!subject) {
 		/* XXX, display current topic */
-
+		debug_error("jabber_muc_command_topic: Current topic is ??? -- not implemented yet\n");
 	} else {
-		char *subject = jabber_escape(params[1]);
 		watch_write(j->send_watch, "<message to=\"%s\" type=\"groupchat\"><subject>%s</subject></message>", c->name+5, subject);
+		xfree(subject);
 	} 
 
 	return 0;
@@ -2316,7 +2327,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:reply", "! !", jabber_command_reply, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:search", "? ?", jabber_command_search, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:tmsg", "!uU ! !", jabber_command_msg, JABBER_FLAGS_TARGET, NULL); /* threaded msg */
-	command_add(&jabber_plugin, "xmpp:topic", "! ?", jabber_muc_command_topic, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "xmpp:topic", "? ?", jabber_muc_command_topic, JABBER_FLAGS_REQ, NULL);
 	command_add(&jabber_plugin, "xmpp:transpinfo", "? ?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:transports", "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:unban", "! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);

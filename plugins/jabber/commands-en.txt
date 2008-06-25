@@ -152,6 +152,10 @@ tmsg
 	
 	Like msg, but additional, second arg specifies thread-ID to use.
 
+topic
+	parameters: [uid] <new topic>
+	short description: set MUC topic
+
 userinfo
 	parameters: 
 	short description: retrieves Jabber Directory info about given jid

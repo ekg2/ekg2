@@ -227,6 +227,10 @@ tmsg
 	Dzia³a podobnie jak msg, z tym, ¿e dodatkowy, drugi parametr zawiera
 	identyfikator w±tku dla wiadomo¶ci.
 
+topic
+	parametry:  [konferencja] <nowy temat>
+	krotki opis: ustawia topic MUC
+
 userinfo
 	parametry: 
 	krotki opis: pobiera informacje z katalogu Jabbera o danym jid
