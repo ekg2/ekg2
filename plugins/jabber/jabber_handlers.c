@@ -1090,12 +1090,14 @@ static void jabber_handle_xmldata_form(session_t *s, const char *uid, const char
 		} else if (!xstrcmp(node->name, "field")) {
 			xmlnode_t *child;
 			char *label	= jabber_unescape(jabber_attr(node->atts, "label"));
+			char *type	= jabber_unescape(jabber_attr(node->atts, "type"));
 			char *var	= jabber_unescape(jabber_attr(node->atts, "var"));
 			char *def_option = NULL;
 			string_t sub = NULL;
 			int subcount = 0;
 
 			int isreq = 0;	/* -1 - optional; 1 - required */
+			/* ?WO? XEP-0004 tells nothing about optional values ??? */
 			
 			if (!fieldcount) print("jabber_form_command", session_name(s), uid, command, param);
 
@@ -1126,8 +1128,13 @@ static void jabber_handle_xmldata_form(session_t *s, const char *uid, const char
 				} else debug_error("[jabber] wtf? FIELD->CHILD: %s\n", child->name);
 			}
 
-			print("jabber_form_item", session_name(s), uid, label, var, def_option, 
-				isreq == -1 ? "X" : isreq == 1 ? "V" : " ");
+			if (!(xstrcmp(type, "fixed")))
+				print("jabber_form_description", session_name(s), uid, def_option);
+			else if (!(xstrcmp(type, "hidden")))
+				print("jabber_form_hidden", session_name(s), uid, label, var, def_option);
+			else
+				print("jabber_form_item", session_name(s), uid, label, var, def_option, 
+					isreq == -1 ? "X" : isreq == 1 ? "V" : " ", type);
 
 			if (sub && sub->len > 1) {
 				int len = sub->len;
@@ -1137,6 +1144,7 @@ static void jabber_handle_xmldata_form(session_t *s, const char *uid, const char
 			}
 			fieldcount++;
 			xfree(var);
+			xfree(type);
 			xfree(label);
 		}
 	}

@@ -1262,6 +1262,7 @@ static int jabber_theme_init() {
 
 	format_add("jabber_form_command",	_("%g|| %nType %W/%3 %g%2 %W%4%n"), 1); 
 	format_add("jabber_form_instructions", 	  "%g|| %n%|%3", 1);
+	format_add("jabber_form_description", 	  "%g|| %n%|%3", 1);
 	format_add("jabber_form_end",		_("%g`+=%G----- End of this %3 form ;)%n"), 1);
 
 	format_add("jabber_registration_item", 	  "%g|| %n            --%3 %4%n", 1); /* %3 - keyname %4 - value */ /* XXX, merge */
