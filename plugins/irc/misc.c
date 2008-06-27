@@ -1460,6 +1460,7 @@ IRC_COMMAND(irc_c_topic)
 	window_t	*w;
 	char		*t, *dest=NULL;
 	char		*coloured;
+	char		*__topic, *__topicby;
 	channel_t	*chanp = NULL;
 
 	IRC_TO_LOWER(param[2]);
@@ -1472,16 +1473,28 @@ IRC_COMMAND(irc_c_topic)
 		*t = '\0';
 	xfree(chanp->topic);
 	xfree(chanp->topicby);
-	if (xstrlen(OMITCOLON(param[3]))) {
-		chanp->topic   = xstrdup(OMITCOLON(param[3]));
-		chanp->topicby = xstrdup(OMITCOLON(param[0]));
-		coloured = irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1);
+
+	__topicby = OMITCOLON(param[0]);
+	__topic   = OMITCOLON(param[3]);
+	if (xstrlen(__topic)) {
+		if (j->conv_in != (void *) -1) {
+			char *recoded = ekg_convert_string_p(__topic, j->conv_in);
+			if (recoded) {
+				chanp->topic   = recoded;
+			} else {
+				debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
+				chanp->topic   = xstrdup(__topic);
+			}
+		} else
+			chanp->topic   = xstrdup(__topic);
+		chanp->topicby = xstrdup(__topicby);
+		coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
 		print_window(dest, s, 0, "IRC_TOPIC_CHANGE", session_name(s),
 				param[0]+1, t?t+1:"", param[2], coloured);
 		xfree(coloured);
 	} else {
 		chanp->topic   = xstrdup("No topic set!");
-		chanp->topicby = xstrdup(OMITCOLON(param[0]));
+		chanp->topicby = xstrdup(__topicby);
 		print_window(dest, s, 0, "IRC_TOPIC_UNSET", session_name(s),
 				param[0]+1, t?t+1:"", param[2]);
 	}

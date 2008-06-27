@@ -1611,6 +1611,17 @@ static COMMAND(irc_command_topic) {
 	else
 		newtop = saprintf("TOPIC %s\r\n", chan+4);
 
+	if (j->conv_out != (void *) -1) {
+		char *recode = ekg_convert_string_p(newtop, j->conv_out);
+
+		if (!recode)
+			debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_out);
+		else {
+			xfree(newtop);
+			newtop = recode;
+		}
+	}
+
 	watch_write(j->send_watch, newtop);
 	array_free(mp);
 	xfree (newtop);
