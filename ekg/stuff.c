@@ -2855,7 +2855,7 @@ static inline size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
  * Broken for use within EKG2 (passing iconv_t instead of from/to)
  */
 
-inline char *mutt_convert_string (const char *ps, iconv_t cd, int is_utf)
+static inline char *mutt_convert_string (const char *ps, iconv_t cd, int is_utf)
 {
 	char *repls[] = { "\357\277\275", "?", 0 };
 	char *s = (char *) ps;
