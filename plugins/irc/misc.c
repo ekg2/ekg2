@@ -621,10 +621,23 @@ IRC_COMMAND(irc_c_error)
 			IRC_TO_LOWER(param[3]);
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
+				char *__topic   = OMITCOLON(param[4]);
+
 				xfree(chanp->topic);
-				chanp->topic = xstrdup(OMITCOLON(param[4]));
+
+				if (j->conv_in != (void *) -1) {
+					char *recoded = ekg_convert_string_p(__topic, j->conv_in);
+					if (recoded) {
+						chanp->topic   = recoded;
+					} else {
+						debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
+						chanp->topic   = xstrdup(__topic);
+					}
+				} else
+					chanp->topic = xstrdup(__topic);
+
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
-						OMITCOLON(param[4]), 1);
+						chanp->topic, 1);
 				print_window(dest, s, 0, irccommands[ecode].name,
 						session_name(s), param[3], coloured);
 				xfree(coloured);
