@@ -1047,6 +1047,8 @@ static COMMAND(irc_command_msg) {
 
 /* XXX,
  * 	Recoding should be done after emiting IRC_PROTOCOL_MESSAGE (?)
+ *
+ * 	wo: Yes! We should use uncoded message for proper encoding in logs.
  */
 		if (j->conv_out != (void *) -1) {
 			__msg = ekg_convert_string_p(mline[1], j->conv_out);
@@ -1060,7 +1062,7 @@ static COMMAND(irc_command_msg) {
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
-		query_emit_id(NULL, IRC_PROTOCOL_MESSAGE, &(sid), &(j->nick), &__msg, &isour, &xosd_to_us, &xosd_is_priv, &uid);
+		query_emit_id(NULL, IRC_PROTOCOL_MESSAGE, &(sid), &(j->nick), &mline[1], &isour, &xosd_to_us, &xosd_is_priv, &uid);
 
 		query_emit_id(NULL, MESSAGE_ENCRYPT, &sid, &uid, &__msg, &secure);
 				
