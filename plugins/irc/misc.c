@@ -22,6 +22,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
+#include <iconv.h>
 
 #ifndef NO_POSIX_SYSTEM
 #include <arpa/inet.h>
@@ -55,6 +56,55 @@ char sopt_casemapping[] = "CASEMAPPING";
 char *sopt_casemapping_values[IRC_CASEMAPPING_COUNT] = { "ascii", "rfc1459", "strict-rfc1459" };
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
+
+static char *try_convert_string_p(const char *ps, iconv_t cd) {
+#ifdef HAVE_ICONV
+	char *s = (char *) ps;
+		/* we can assume that both from and to aren't NULL in EKG2,
+		 * and cd is NULL in case of error, not -1 */
+	if (cd) {
+		char *buf, *ib, *ob;
+		size_t ibl, obl;
+
+		ib = s, ibl = xstrlen(s) + 1;
+		obl = 16 * ibl;
+		ob = buf = xmalloc(obl + 1);
+
+		iconv (cd, &ib, &ibl, &ob, &obl);
+
+		if (!ibl) {
+			*ob = '\0';
+			buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
+			return buf;
+		}
+		xfree(buf);
+	}
+#endif
+	return NULL;
+}
+
+static char *irc_convert_in(irc_private_t *j, const char *line) {
+	char *recoded;
+	conv_in_out_t *e;
+	list_t el;
+
+	/* auto guess encoding */
+	for (el=j->auto_guess_encoding; el; el=el->next) {
+		e = el->data;
+		recoded = try_convert_string_p(line, e->conv_in);
+		if (recoded)
+			return recoded;
+	}
+
+	/* default recode */
+	if (j->conv_in == (void *) -1)
+		return NULL;
+
+	if (!(recoded = ekg_convert_string_p(line, j->conv_in)))
+		debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
+
+	return recoded;
+}
 
 /* cos co blabla, zwraca liczbe pochlonietych znakow przez '*' XXX */
 static int do_sample_wildcard_match(const char *str, const char *matchstr, const char stopon) {
@@ -625,17 +675,8 @@ IRC_COMMAND(irc_c_error)
 
 				xfree(chanp->topic);
 
-				if (j->conv_in != (void *) -1) {
-					char *recoded = ekg_convert_string_p(__topic, j->conv_in);
-					if (recoded) {
-						chanp->topic   = recoded;
-					} else {
-						debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
-						chanp->topic   = xstrdup(__topic);
-					}
-				} else
-					chanp->topic = xstrdup(__topic);
-
+				char *recoded = irc_convert_in(j, __topic);
+				chanp->topic  = recoded ? recoded : xstrdup(__topic);
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
 						chanp->topic, 1);
 				print_window(dest, s, 0, irccommands[ecode].name,
@@ -1077,6 +1118,7 @@ IRC_COMMAND(irc_c_msg)
 	time_t		sent;
 	int		secure = 0, xosd_to_us = 0, xosd_is_priv = 0;
 	char		*ignore_nick = NULL;
+	char *recoded;
 
 	prv = !xstrcasecmp(param[1], "privmsg");
 	if (!prv && xstrcasecmp(param[1], "notice"))
@@ -1084,17 +1126,11 @@ IRC_COMMAND(irc_c_msg)
 
 	mw = session_int_get(s, "make_window");
 
-	if (j->conv_in != (void *) -1) {
-		char *recoded = ekg_convert_string_p(OMITCOLON(param[3]), j->conv_in);
+	recoded = irc_convert_in(j, OMITCOLON(param[3]));
 
-		if (!recoded)
-			debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
+	ctcpstripped = ctcp_parser(s, prv, param[0], param[2], recoded ? recoded : OMITCOLON(param[3]));
 
-		ctcpstripped = ctcp_parser(s, prv, param[0], param[2], recoded ? recoded : OMITCOLON(param[3]));
-
-		xfree(recoded);
-	} else
-		ctcpstripped = ctcp_parser(s, prv, param[0], param[2], OMITCOLON(param[3]));
+	xfree(recoded);
 
 	if ((t = xstrchr(param[0], '!'))) *t='\0';
 	me = xstrdup(t?t+1:"");
@@ -1490,16 +1526,8 @@ IRC_COMMAND(irc_c_topic)
 	__topicby = OMITCOLON(param[0]);
 	__topic   = OMITCOLON(param[3]);
 	if (xstrlen(__topic)) {
-		if (j->conv_in != (void *) -1) {
-			char *recoded = ekg_convert_string_p(__topic, j->conv_in);
-			if (recoded) {
-				chanp->topic   = recoded;
-			} else {
-				debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
-				chanp->topic   = xstrdup(__topic);
-			}
-		} else
-			chanp->topic   = xstrdup(__topic);
+		char *recoded = irc_convert_in(j, __topic);
+		chanp->topic  = recoded ? recoded : xstrdup(__topic);;
 		chanp->topicby = xstrdup(__topicby);
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
 		print_window(dest, s, 0, "IRC_TOPIC_CHANGE", session_name(s),

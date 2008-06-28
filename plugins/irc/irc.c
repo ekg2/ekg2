@@ -487,6 +487,65 @@ static void irc_changed_recode(session_t *s, const char *var) {
 	j->conv_in = ekg_convert_string_init(val, NULL, &(j->conv_out));
 }
 
+static void irc_changed_auto_guess_encoding(session_t *s, const char *var) {
+	const char *val;
+	irc_private_t *j;
+	conv_in_out_t *e;
+	list_t el;
+
+	if (!s || !(j = s->priv))
+		return;
+	
+	/* Clean old list */
+	for (el=j->auto_guess_encoding; el;) {
+		e = el->data;
+		el = el->next;
+		if (e->conv_in != (void*) -1) {
+			ekg_convert_string_destroy(e->conv_in);
+			ekg_convert_string_destroy(e->conv_out);
+		}
+		list_remove(&el, e, 1);
+	}
+
+	if (!(val = session_get(s, var)) || !*val) {
+		return;
+	}
+
+	char **args;
+	args = array_make(val, ",", 0, 1, 0);
+	int i;
+	for (i=0; args[i]; i++) {
+		char *to = NULL;
+		char *from = args[i];
+		if (!xstrcasecmp(from, config_console_charset)) {
+			/* ekg2 can't convert when from and to are the same 
+			 * trick: lets convert iso-8859-2 -> iso8859-2; utf8 -> utf-8; etc.
+			 */
+			char *p = from, *q;
+			to = xmalloc(xstrlen(from)+2);
+			q = to;
+			while ( (*p=tolower(*p)) && (*p>='a') && (*p<='z') )
+			    *q++ = *p++;
+			if (*p == '-')
+			    p++;
+			else
+			    *q++ = '-';
+			while ( (*q++ = *p++) )
+			    ;
+			*q = '\0';
+		}
+		e = xmalloc(sizeof(conv_in_out_t));
+		e->conv_in = ekg_convert_string_init(from, to, &(e->conv_out));
+		if (e->conv_in)
+		    list_add(&(j->auto_guess_encoding), e);
+		else
+		    debug_error("auto_guess_encoding skips unknown '%s' value\n", from);
+		xfree(to);
+	}
+
+	array_free(args);
+
+}
 /*                                                                       *
  * ======================================== HANDLERS ------------------- *
  *                                                                       */
@@ -2139,6 +2198,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_back",		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_find",		VAR_BOOL, "0", 0, NULL),		/* it's really auto_whois */
+	PLUGIN_VAR_ADD("auto_guess_encoding",	VAR_STR, NULL, 0, irc_changed_auto_guess_encoding),
 	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT, "10", 0, NULL), 
 	PLUGIN_VAR_ADD("auto_channel_sync",	VAR_BOOL, "1", 0, NULL),		/* like channel_sync in irssi; better DO NOT turn it off! */
 	PLUGIN_VAR_ADD("auto_lusers_sync", 	VAR_BOOL, "0", 0, NULL),		/* sync lusers, stupid ;(,  G->dj: well why ? */

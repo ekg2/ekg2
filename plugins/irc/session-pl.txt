@@ -2,6 +2,12 @@
 // (c) 2004-2005 Michal 'GiM' Spadlinski
 //		Jakub 'darkjames' Zawadzki
 
+auto_guess_encoding
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	lista kodowañ, wed³ug których bêdziemy próbowaæ przekodowaæ przychodz±cy tekst
+
 ban_type
 	typ: liczba
 	domy¶lna warto¶æ: 10

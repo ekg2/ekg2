@@ -63,9 +63,17 @@ typedef struct _irc_private_t {
 
 	list_t awaylog;
 
+	list_t auto_guess_encoding;
+
 	void *conv_in;
 	void *conv_out;
 } irc_private_t;
+
+/* data for private->auto_guess_encoding */
+typedef struct {
+	void *conv_in;
+	void *conv_out;
+} conv_in_out_t;
 
 typedef struct _irc_awaylog_t {
 	char *channame;	/* channel name, (null if priv) */
