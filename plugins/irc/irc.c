@@ -537,6 +537,8 @@ static void irc_changed_recode_list(session_t *s, const char *var) {
 		xfree(r_channel->name);
 		list_remove(&rcl, r_channel, 1);
 	}
+	j->recoded_channels = NULL;
+
 	for (rl = j->out_recodes; rl; ) {
 		recode = rl->data;
 		rl = rl->next;
@@ -545,6 +547,7 @@ static void irc_changed_recode_list(session_t *s, const char *var) {
 		ekg_convert_string_destroy(recode->conv_out);
 		list_remove(&rl, recode, 1);
 	}
+	j->out_recodes = NULL;
 
 	if (!(val = session_get(s, var)) || !*val)
 		return;
@@ -636,6 +639,7 @@ static void irc_changed_auto_guess_encoding(session_t *s, const char *var) {
 		}
 		list_remove(&el, e, 1);
 	}
+	j->auto_guess_encoding = NULL;
 
 	if (!(val = session_get(s, var)) || !*val)
 		return;
