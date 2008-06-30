@@ -804,9 +804,7 @@ static int query_emit_common(query_t *q, va_list ap) {
 	int result;
 	va_list ap_plugin;
 
-	nested++;
-
-	if (nested > 32) {
+	if (nested >= 32) {
 /*
 		if (nested == 33)
 			debug("too many nested queries. exiting to avoid deadlock\n");
@@ -814,6 +812,7 @@ static int query_emit_common(query_t *q, va_list ap) {
 		return -1;
 	}
 
+	nested++;
 	q->count++;
 
 	/*
