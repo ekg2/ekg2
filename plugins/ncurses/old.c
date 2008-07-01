@@ -185,7 +185,7 @@ int ncurses_lineslen() {
 		return (ncurses_line[0] == '/' ? 0 : xwcslen(ncurses_line));
 }
 
-inline int ncurses_typingsend(const int len, const int first) {
+static inline int ncurses_typingsend(const int len, const int first) {
 	const char *sid	= session_uid_get(ncurses_typing_win->session);
 	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
 	
