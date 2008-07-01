@@ -46,7 +46,7 @@ if test "$gettext_ver" -lt 01038; then
 fi
 
 rm -rf intl
-if test "$gettext_ver" -ge 01100; then
+if test "$gettext_ver" -ge 01100 && (cvs -v) >/dev/null 2>&1; then
 	if test "$gettext_ver" -lt 01105; then
 		echo "Upgrade gettext to at least 0.11.5 or downgrade to 0.10.40" 2>&1
 		exit 1
