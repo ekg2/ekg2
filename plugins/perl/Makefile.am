@@ -32,5 +32,5 @@ clean-generic:
 
 install-exec-local:
 	for dir in $(perl_dirs); do \
-	 cd $$dir && $(MAKE) install $(perl_install_args) && cd ..; \
+	 cd $$dir && $(MAKE) install DESTDIR=$(DESTDIR) $(perl_install_args) && cd ..; \
 	done
