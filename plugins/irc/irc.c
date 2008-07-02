@@ -498,7 +498,7 @@ static char *irc_convert_out(irc_private_t *j, char *recipient, const char *line
 	char *recoded;
 	recoded_channels_t *r_channel;
 
-	if (!(j->recoded_channels)) {
+	if ((j->recoded_channels)) {
 		/* channel/nick recode */
 		char *channame = (!xstrncasecmp(recipient, IRC4, 4)) ? recipient+4 : recipient;
 		if ((r_channel = irc_find_recode_channel(j->recoded_channels, channame))) {
@@ -572,7 +572,7 @@ static void irc_changed_recode_list(session_t *s, const char *var) {
 		}
 
 		if (!(recode = irc_find_out_recode(j->out_recodes, encoding))) {
-			if (!(conv_in = ekg_convert_string_init(NULL, encoding, &(conv_out)))) {
+			if (!(conv_in = ekg_convert_string_init(encoding, NULL, &(conv_out)))) {
 				debug_error("[irc] recode_list error: unknown encoding '%s'\n", encoding);
 				continue;
 			}
