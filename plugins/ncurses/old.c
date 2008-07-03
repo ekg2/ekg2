@@ -2243,82 +2243,91 @@ WATCHER(ncurses_watch_winch)
 	return 0;
 }
 
+#ifdef WITH_ASPELL
+
+static inline int isalpha_locale(int x) {
+#ifdef USE_UNICODE
+	if (config_use_unicode)
+		return (isalpha(x) || (x > 0x7f));	/* moze i nie najlepsze wyjscie... */
+	else
+#endif
+		return isalpha_pl(x);
+}
+
 /* 
  * spellcheck()
  *
  * it checks if the given word is correct
  */
-#ifdef WITH_ASPELL
 static void spellcheck(CHAR_T *what, char *where) {
 	register int i = 0;     /* licznik */
 	register int j = 0;     /* licznik */
 
-	/* Sprawdzamy czy nie mamy doczynienia z 47 (wtedy nie sprawdzamy reszty ) */
-	if (!what || *what == 47)
-		return;       /* konczymy funkcje */
-	    
-	for (i = 0; what[i] != CHAR('\0') && what[i] != CHAR('\n') && what[i] != CHAR('\r'); i++) {
-		if ((!isalpha_pl(what[i]) || i == 0 ) && what[i+1] != CHAR('\0')) { // separator/koniec lini/koniec stringu
-			char *word;             /* aktualny wyraz */
-			size_t wordlen;		/* dlugosc aktualnego wyrazu */
-		
-		/* szukamy jakiejs pierwszej literki */
-			for (; what[i] != CHAR('\0') && what[i] != CHAR('\n') && what[i] != CHAR('\r'); i++) {
-				if (isalpha_pl(what[i]))
+	/* Sprawdzamy czy nie mamy doczynienia z / (wtedy nie sprawdzamy reszty ) */
+	if (!what || *what == '/')
+		return;
+
+	for (i = 0; what[i] != '\0' && what[i] != '\n' && what[i] != '\r';) {
+		if ((!isalpha_locale(what[i]) || i == 0 ) && what[i+1] != '\0') { // separator/koniec lini/koniec stringu
+#if USE_UNICODE
+			CHAR_T what_j; /* zeby nie uzywac wcsndup() ktorego nie mamy. */
+			char *word_mbs;
+#endif
+			char fillznak;	/* do wypelnienia where[] (ASPELLCHAR gdy blednie napisane slowo) */
+
+			/* szukamy jakiejs pierwszej literki */
+			for (; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++) {
+				if (isalpha_locale(what[i]))
 					break;
 			}
 
-		/* trochê poprawiona wydajno¶æ */
-			if (what[i] == '\0' || what[i] == '\n' || what[i] == '\r') {
-				i--;
+			/* trochê poprawiona wydajno¶æ */
+			if (what[i] == '\0' || what[i] == '\n' || what[i] == '\r')
 				continue;
-			} 
-		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */ 
-			if (what[i] == 'h' && what[i + 1] == 't' && what[i + 2] == 't' && what[i + 3] == 'p' && what[i + 4] == ':' && 
-				what[i + 5] == '/' && what[i + 6] == '/') 
-			{
+
+			/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */
+			if (what[i] == 'h' && what[i + 1] == 't' && what[i + 2] == 't' && what[i + 3] == 'p' && what[i + 4] == ':' &&
+					what[i + 5] == '/' && what[i + 6] == '/') {
 				for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
-				i--;
 				continue;
-			} 
-		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */ 
+			}
+
+			/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */
 			if (what[i] == 'f' && what[i + 1] == 't' && what[i + 2] == 'p' && what[i + 3] == ':' &&
-				what[i + 4] == '/' && what[i + 5] == '/') 
+					what[i + 4] == '/' && what[i + 5] == '/')
 			{
 				for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
-				i--;
 				continue;
 			}
 
-/* XXX in unicode/unicode it's wrong... */
-			word = xmalloc((xwcslen(what) + 1)*sizeof(char));
-
-			/* wrzucamy aktualny wyraz do zmiennej word */
-			for (j = 0; what[i] != '\n' && what[i] != '\0' && isalpha_pl(what[i]); i++) {
-				if (isalpha_pl(what[i])) {
-					word[j]= what[i];
-					j++;
-				} else 
+			for (j = i; what[j] != '\n' && what[j] != '\0'; j++) {
+				if (!isalpha_locale(what[j]))
 					break;
 			}
-/*			word[j] = (char) 0; */	/* xmalloc() zero memory */
-			wordlen = j;		/* xstrlen(word) */
 
-			if (i > 0)
-				i--;
-
-/*			debug(GG_DEBUG_MISC, "Word: %s\n", word);  */
-
-			/* sprawdzamy pisownie tego wyrazu */
-			if (aspell_speller_check(spell_checker, word, xstrlen(word) ) == 0) { /* jesli wyraz jest napisany blednie */
-				for (j = wordlen - 1; j >= 0; j--)
-					where[i - j] = ASPELLCHAR;
-			} else { /* jesli wyraz jest napisany poprawnie */
-				for (j = wordlen - 1; j >= 0; j--)
-					where[i - j] = ' ';
+			if (j == i) {		/* Jak dla mnie nie powinno sie wydarzyc. */
+				i++;
+				continue;
 			}
-			xfree(word);
-		}
+
+#if USE_UNICODE
+			what_j = what[j];
+			what[j] = '\0';
+
+			word_mbs = wcs_to_normal(&what[i]);
+			fillznak = (aspell_speller_check(spell_checker, word_mbs, -1) == 0) ? ASPELLCHAR : ' ';
+			free_utf(word_mbs);
+
+			what[j] = what_j;
+#else
+			/* sprawdzamy pisownie tego wyrazu */
+			fillznak = (aspell_speller_check(spell_checker, &what[i], j - i) == 0) ? ASPELLCHAR : ' ';
+#endif
+
+			for (; i < j; i++)
+				where[i] = fillznak;
+		} else
+			i++;
 	}
 }
 #endif
