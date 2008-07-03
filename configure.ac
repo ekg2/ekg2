@@ -674,21 +674,6 @@ fi
 echo -en " - Charset support:\t "
 	if test "x$enable_unicode" = "xyes"; then
 	        echo "utf-8&ansi (EXPERIMENTAL)"
-		echo "*****************************************************************************************************"
-		echo "WARNING: USING THE RESULTING EKG2 BINARY IN A NON-UTF-8 (ASCII or LATIN) TERMINAL IS CURRENTLY"
-		echo "NOT SUPPORTED WHEN BUILT WITH GCC 4.x OR LATER."
-		echo "This is due to a known bug in the ncurses UI module - a symptom is ekg2 going into AN INFINITE LOOP."
-		echo "Workarounds:"
-		echo " - specify --disable-unicode if you do not need UTF-8 support"
-		echo " - pass -U to ekg2 to force UTF-8 output to terminal."
-		echo " - use a UTF-8 terminal (e.g. uxterm)"
-		echo " - disable strict aliasing rules (-fno-strict-aliasing in CFLAGS)"
-		echo " - disable optimization (-O1 in CFLAGS is enough)"
-		echo " - build with older GCC (3.4 seems to be OK)"
-		echo "IT'S A KNOWN BUG, PLEASE DON'T REPORT IT. FEEL FREE TO SEND IN A PATCH."
-		echo "IT'LL EVENTUALLY BE FIXED. SOMEDAY."
-		echo "******************************************************************************************************"
-		echo "AND ENJOY USING EKG2-UNICODE"
 	else
 	        echo "iso-8859-2"
 	fi
