@@ -6,7 +6,7 @@ logsqlite_la_LDFLAGS = -module -avoid-version
 logsqlite_la_LIBADD = $(SQLITE_LIBS)
 logsqlite_la_CFLAGS = $(SQLITE_CFLAGS)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/logsqlite/

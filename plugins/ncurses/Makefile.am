@@ -7,7 +7,7 @@ ncurses_la_LDFLAGS = -module -avoid-version
 ncurses_la_LIBADD = $(NCURSES_LIBS) $(ASPELL_LIBS) $(LIBGPM_LIBS)
 ncurses_la_CPPFLAGS = $(C_FVISIBILITY) $(NCURSES_CPPFLAGS) 
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 
 
 install-data-am:

@@ -11,7 +11,7 @@ gtk_la_CPPFLAGS = $(C_FVISIBILITY) $(GTK_CFLAGS)
 
 BUILT_SOURCES = inline_pngs_gg.h inline_pngs.h
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 INCLUDES = -DDATADIR=\"$(datadir)/ekg2\" 
 
 CLEANFILES = inline_pngs_gg.h inline_pngs.h

@@ -8,7 +8,7 @@ perl_la_LDFLAGS = -module -avoid-version
 perl_la_LIBADD = $(PERL_LIBS)
 perl_la_CPPFLAGS = $(PERL_CFLAGS)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 perl_dirs = common irc
 

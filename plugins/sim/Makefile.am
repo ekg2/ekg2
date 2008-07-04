@@ -6,7 +6,7 @@ sim_la_LDFLAGS = -module -avoid-version
 sim_la_LIBADD = $(OPENSSL_LIBS)
 sim_la_CPPFLAGS = $(C_FVISIBILITY) $(OPENSSL_INCLUDES)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/sim/

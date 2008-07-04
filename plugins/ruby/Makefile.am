@@ -4,4 +4,4 @@ ruby_la_LDFLAGS = -module -avoid-version
 ruby_la_LIBADD = $(RUBY_LIBS)
 ruby_la_CPPFLAGS = $(C_FVISIBILITY) $(RUBY_CFLAGS)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)

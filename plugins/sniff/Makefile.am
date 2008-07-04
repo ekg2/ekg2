@@ -8,5 +8,5 @@ sniff_la_LIBADD = -lpcap
 
 CFLAGS = -std=gnu89 -g -Wall
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 

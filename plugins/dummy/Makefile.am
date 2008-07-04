@@ -8,5 +8,5 @@ dummy_la_LIBADD =
 # tutaj dodajemy opcje kompilatora typu -I
 INCLUDES = 
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 

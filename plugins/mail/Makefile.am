@@ -5,7 +5,7 @@ mail_la_SOURCES = main.c
 mail_la_LDFLAGS = -module -avoid-version
 mail_la_CPPFLAGS = $(C_FVISIBILITY)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/mail/

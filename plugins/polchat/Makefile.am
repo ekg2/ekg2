@@ -5,6 +5,6 @@ polchat_la_SOURCES = polchat.c
 polchat_la_LDFLAGS = -module -avoid-version
 polchat_la_CPPFLAGS = $(C_FVISIBILITY)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 

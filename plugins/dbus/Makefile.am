@@ -3,6 +3,6 @@ dbus_la_SOURCES = dbus.c dbus_iface_im.c dbus_iface_im_ekg.c dbus_iface_im_ekg_u
 dbus_la_CFLAGS = $(C_FVISIBILITY) `pkg-config dbus-1 --cflags` -Werror-implicit-function-declaration
 dbus_la_LDFLAGS = `pkg-config dbus-1 --libs` -module -avoid-version
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 

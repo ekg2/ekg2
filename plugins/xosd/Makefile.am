@@ -6,7 +6,7 @@ xosd_la_LDFLAGS = -module -avoid-version
 xosd_la_LIBADD = $(LIBXOSD_LIBS) -lxosd
 xosd_la_CPPFLAGS = $(LIBXOSD_CFLAGS)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/xosd/

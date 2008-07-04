@@ -5,5 +5,5 @@ gpg_la_LDFLAGS = -module -avoid-version
 gpg_la_LIBADD	= $(GPGME_LIBS)
 gpg_la_CPPFLAGS = $(GPGME_CFLAGS)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 

@@ -6,7 +6,7 @@ logs_la_LDFLAGS = -module -avoid-version
 logs_la_CPPFLAGS = $(C_FVISIBILITY)
 logs_la_LIBADD = $(ZLIB_LIBS)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/logs/

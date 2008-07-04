@@ -7,7 +7,7 @@ gg_la_LDFLAGS = -module -avoid-version
 gg_la_LIBADD = $(LIBGADU_LIBS) $(LIBJPEG_LIBS) $(GG_TOKENGIF_LIBS)
 gg_la_CPPFLAGS = $(LIBGADU_CPPFLAGS) $(C_FVISIBILITY)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/gg/

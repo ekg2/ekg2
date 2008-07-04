@@ -5,7 +5,7 @@ rc_la_SOURCES = main.c inputs.c rc.h
 rc_la_CPPFLAGS = $(C_FVISIBILITY)
 rc_la_LDFLAGS = -module -avoid-version
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/rc/
