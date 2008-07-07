@@ -497,93 +497,69 @@ int plugin_unregister(plugin_t *p)
 	 * ekg2 do SEGV.
 	 */
 
+	watch_t *w;
+	struct timer *t;
+	idle_t *i;
+	session_t *s;
+	query_t **ll;
+	variable_t *v;
+	command_t *c;
+
 	if (!p)
 		return -1;
 
 /* XXX think about sequence of unloading....: currently: watches, timers, sessions, queries, variables, commands */
 
-	{
-		watch_t *w;
+	for (w = watches; w;) {
+		watch_t *next = w->next;
 
-		for (w = watches; w;) {
-			watch_t *next = w->next;
+		if (w->plugin == p)
+			watch_free(w);
 
-			if (w && w->plugin == p)
-				watch_free(w);
+		w = next;
+	}
 
-			w = next;
+	for (t = timers; t; t = t->next) {
+		if (t->plugin == p)
+			t = timers_removei(t);
+	}
+
+	for (i = idles; i; ) {
+		if (i->plugin == p)
+			i = LIST_REMOVE2(&idles, i, NULL);
+		else
+			i = i->next;
+	}
+
+	for (s = sessions; s; ) {
+		session_t *next = s->next;
+
+		if (s->plugin == p)
+			session_remove(s->uid);
+		s = next;
+	}
+
+	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
+		query_t *q;
+
+		for (q = *ll; q; ) {
+			query_t *next = q->next;
+
+			if (q->plugin == p)
+				query_free(q);
+
+			q = next;
 		}
 	}
 
-	{
-		struct timer *t;
-
-		for (t = timers; t; t = t->next) {
-			if (t->plugin == p)
-				t = timers_removei(t);
-		}
+	for (v = variables; v; v = v->next) {
+		if (v->plugin == p) 
+			variable_remove(v->plugin, v->name);
 	}
 
-	{
-		idle_t *i;
-		
-		for (i = idles; i; ) {
-			if (i->plugin == p)
-				i = LIST_REMOVE2(&idles, i, NULL);
-			else
-				i = i->next;
-		}
-	}
-
-	{
-		session_t *s;
-
-		for (s = sessions; s; ) {
-			session_t *next = s->next;
-
-			if (s->plugin == p)
-				session_remove(s->uid);
-			s = next;
-		}
-	}
-
-	{
-		query_t **ll;
-
-		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
-			query_t *q;
-
-			for (q = *ll; q; ) {
-				query_t *next = q->next;
-
-				if (q->plugin == p)
-					query_free(q);
-
-				q = next;
-			}
-		}
-	}
-
-	{
-		variable_t *v;
-
-		for (v = variables; v; ) {
-			variable_t *next = v->next;
-
-			if (v && v->plugin == p) 
-				variable_remove(v->plugin, v->name);
-
-			v = next;
-		}
-	}
-
-	{
-		command_t *c;
-
-		for (c = commands; c; c = c->next) {
-			if (c->plugin == p)
-				c = commands_removei(c);
-		}
+	for (c = commands; c; c = c->next) {
+		if (c->plugin == p)
+			c = commands_removei(c);
 	}
 
 	LIST_UNLINK2(&plugins, p);
