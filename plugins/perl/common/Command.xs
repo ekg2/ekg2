@@ -47,4 +47,4 @@ OUTPUT:
 
 void command_remove(Ekg2::Command comm)
 CODE:
-	command_freeone(comm);
+	commands_remove(comm);

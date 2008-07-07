@@ -19,12 +19,12 @@
 
 #define __DYNSTUFF_LIST_REMOVE_ITER(lista, typ, free_func)					\
 	typ *lista##_removei(typ *elem) { 							\
-		return list_removei3((list_t *) &lista, (list_t) elem, (void *) free_func);	\
+		return list_remove3i((list_t *) &lista, (list_t) elem, (void *) free_func);	\
 	}
 
 #define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func)					\
 	void lista##_destroy(void) { 							\
-		list_destroy3((list_t) &lista, (void *) free_func);			\
+		list_destroy3((list_t) lista, (void *) free_func);			\
 		lista = NULL;								\
 	}
 

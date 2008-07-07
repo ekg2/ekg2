@@ -1193,7 +1193,7 @@ void ekg_exit()
 	variable_free();
 	script_variables_free(1);
 	emoticon_free();
-	command_free();
+	commands_destroy();
 
 	{
 		struct timer *t;

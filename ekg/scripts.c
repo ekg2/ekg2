@@ -502,7 +502,7 @@ int script_command_unbind(script_command_t *temp, int free)
 	int notfound = 1; /* TODO */
 	SCRIPT_UNBIND_HANDLER(SCRIPT_COMMANDTYPE, temp->private);
 	if (notfound)
-		command_freeone(temp->self);
+		commands_remove(temp->self);
 	return list_remove(&script_commands, temp, 1);
 }
 

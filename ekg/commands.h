@@ -73,11 +73,12 @@ typedef struct command {
 extern command_t *commands;
 
 command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, command_flags_t flags, char *possibilities);
-void command_freeone(command_t *c);
 int command_remove(plugin_t *plugin, const char *name);
 command_t *command_find (const char *name);
 void command_init();
-void command_free();
+void commands_remove(command_t *c);
+command_t *commands_removei(command_t *c);
+void commands_destroy();
 int command_exec(const char *target, session_t *session, const char *line, int quiet);
 int command_exec_format(const char *target, session_t *session, int quiet, const char *format, ...);
 

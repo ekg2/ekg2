@@ -103,12 +103,21 @@
 #include "xmalloc.h"
 
 #include "queries.h"
+#include "dynstuff_inline.h"
 
 char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;
 
 command_t *commands = NULL;
+
+static LIST_ADD_COMPARE(command_add_compare, command_t *) { return xstrcasecmp(data1->name, data2->name); }
+static LIST_FREE_ITEM(list_command_free, command_t *) { array_free(data->params); array_free(data->possibilities); }
+
+__DYNSTUFF_LIST_ADD_SORTED(commands, command_t, command_add_compare);		/* commands_add() */
+__DYNSTUFF_LIST_REMOVE_SAFE(commands, command_t, list_command_free);		/* commands_remove() */
+__DYNSTUFF_LIST_REMOVE_ITER(commands, command_t, list_command_free);		/* commands_removei() */
+__DYNSTUFF_LIST_DESTROY(commands, command_t, list_command_free);		/* commands_destroy() */
 
 /*
  * match_arg()
@@ -4095,19 +4104,6 @@ static COMMAND(cmd_me)
 	return command_exec_format(target, session, 0, "/ /me %s", params[0]);
 }
 
-/*
- * command_add_compare()
- *
- * funkcja porównuj±ca nazwy komend, by wystêpowa³y alfabetycznie w li¶cie.
- *
- *  - data1, data2 - dwa wpisy komend do porównania.
- *
- * zwraca wynik xstrcasecmp() na nazwach komend.
- */
-static LIST_ADD_COMPARE(command_add_compare, command_t *) {
-	return xstrcasecmp(data1->name, data2->name);
-}
-
 /**
  * command_add()
  *
@@ -4154,12 +4150,8 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 	c->plugin = plugin;
 	c->possibilities = possibilities ? array_make(possibilities, " ", 0, 1, 1) : NULL;
 
-	return LIST_ADD_SORTED2(&commands, c, command_add_compare);
-}
-
-static LIST_FREE_ITEM(list_command_free, command_t *) {
-	array_free(data->params);
-	array_free(data->possibilities);
+	commands_add(c);
+	return c;
 }
 
 /*
@@ -4171,10 +4163,6 @@ static LIST_FREE_ITEM(list_command_free, command_t *) {
  *  - name - nazwa komendy.
  */
 
-void command_freeone(command_t *c) {
-	LIST_REMOVE2(&commands, c, list_command_free);
-}
-
 int command_remove(plugin_t *plugin, const char *name)
 {
 	command_t *c;
@@ -4183,7 +4171,7 @@ int command_remove(plugin_t *plugin, const char *name)
 		command_t *next = c->next;
 
 		if (!xstrcasecmp(name, c->name) && plugin == c->plugin) {
-			command_freeone(c);
+			commands_remove(c);
 
 			return 0;
 		}
@@ -4192,20 +4180,6 @@ int command_remove(plugin_t *plugin, const char *name)
 	}
 
 	return -1;
-}
-
-/**
- * command_free()
- *
- * Free <b>all</b> commands
- *
- * @sa command_freeone() 	- To free one command [with know pointer to it]
- * @sa command_remove()		- To free command [with known plugin and name]
- */
-
-void command_free() {
-	LIST_DESTROY2(commands, list_command_free);
-	commands = NULL;
 }
 
 /*

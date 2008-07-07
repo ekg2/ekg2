@@ -596,13 +596,9 @@ int plugin_unregister(plugin_t *p)
 	{
 		command_t *c;
 
-		for (c = commands; c; ) {
-			command_t *next = c->next;
-
+		for (c = commands; c; c = c->next) {
 			if (c->plugin == p)
-				command_freeone(c);
-
-			c = next;
+				c = commands_removei(c);
 		}
 	}
 
