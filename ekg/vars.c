@@ -43,7 +43,6 @@
 
 #include "queries.h"
 
-static variable_t **variables_lock = NULL;
 variable_t *variables = NULL;
 char *console_charset;
 
@@ -67,8 +66,6 @@ static int dd_beep(const char *name) { return (config_beep); }
  * inicjuje listê zmiennych.
  */
 void variable_init() {
-	variables_lock = &variables; /* keep it sorted */
-
 	variable_add(NULL, ("auto_save"), VAR_INT, 1, &config_auto_save, changed_auto_save, NULL, NULL);
 	variable_add(NULL, ("auto_user_add"), VAR_BOOL, 1, &config_auto_user_add, NULL, NULL, NULL);
 	variable_add(NULL, ("away_reason"), VAR_STR, 1, &config_away_reason, NULL, NULL, NULL);
@@ -143,8 +140,6 @@ void variable_init() {
 	variable_add(NULL, ("window_session_allow"), VAR_INT, 1, &config_window_session_allow, NULL, variable_map(4, 0, 0, "deny", 1, 6, "uid-capable", 2, 5, "any", 4, 3, "switch-to-status"), NULL);
 	variable_add(NULL, ("windows_layout"), VAR_STR, 2, &config_windows_layout, NULL, NULL, NULL);
 	variable_add(NULL, ("windows_save"), VAR_BOOL, 1, &config_windows_save, NULL, NULL, NULL);
-
-	variables_lock = NULL;
 }
 
 /*
@@ -327,15 +322,6 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 	v->map 		= map;
 	v->dyndisplay 	= dyndisplay;
 	v->plugin 	= plugin;
-
-/* like commands_lock in command_add() @ commands.c */
-	if (variables_lock) {
-		if (*variables_lock == variables) {
-			for (; *variables_lock && (variable_add_compare(*variables_lock, v) < 0); variables_lock = &((*variables_lock)->next));
-		} else		variables_lock = &((*variables_lock)->next);
-		LIST_ADD_BEGINNING2(variables_lock, v);
-		return v;
-	}
 
 	return LIST_ADD_SORTED2(&variables, v, variable_add_compare);
 }

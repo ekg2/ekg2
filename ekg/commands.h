@@ -71,7 +71,6 @@ typedef struct command {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 extern command_t *commands;
-extern command_t **commands_lock;
 
 command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, command_flags_t flags, char *possibilities);
 void command_freeone(command_t *c);

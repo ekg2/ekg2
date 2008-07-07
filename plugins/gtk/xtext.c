@@ -2049,6 +2049,7 @@ gtk_xtext_selection_get(GtkWidget *widget,
 			gdk_free_compound_text(new_text);
 		}
 		break;
+	/* case TARGET_STRING */
 	default:
 		new_text = g_locale_from_utf8(stripped, len, NULL, &glen, NULL);
 		gtk_selection_data_set(selection_data_ptr, GDK_SELECTION_TYPE_STRING,

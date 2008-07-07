@@ -2409,8 +2409,6 @@ EXPORT int irc_plugin_init(int prio)
 #define IRC_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS 		IRC_ONLY | SESSION_MUSTBECONNECTED
 #define IRC_FLAGS_TARGET	IRC_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
-	commands_lock = &commands;	/* keep it sorted or die */
-	
 	command_add(&irc_plugin, ("irc:"), "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:_autoaway"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:_autoback"), NULL,	irc_command_away, 	IRC_FLAGS, NULL);
@@ -2464,8 +2462,6 @@ EXPORT int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:stats"), "\"STATS\" ?",irc_command_quote, 0, NULL); V q stats
 	command:add(&irc_plugin, ("irc:list"), .....)			V q list 
 */
-	commands_lock = NULL;
-
 	variable_add(&irc_plugin, "access_groups", VAR_STR, 1, &irc_config_default_access_groups, NULL, NULL, NULL);
 	variable_add(&irc_plugin, "experimental_chan_name_clean", VAR_BOOL, 1, &irc_config_experimental_chan_name_clean, NULL, NULL, NULL);
 

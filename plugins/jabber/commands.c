@@ -2282,8 +2282,6 @@ void jabber_register_commands()
 #define JABBER_FLAGS_TARGET 		JABBER_FLAGS_REQ | COMMAND_PARAMASTARGET
 #define JABBER_FLAGS_TARGET_VALID	JABBER_FLAGS_TARGET | COMMAND_TARGET_VALID_UID
 #define JABBER_FLAGS_MSG		JABBER_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
-	commands_lock = &commands;	/* keep it sorted or die */
-
 	command_add(&jabber_plugin, "xmpp:", "?", jabber_command_inline_msg, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:_autoaway", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:_autoxa", "r", jabber_command_away,	JABBER_ONLY, NULL);
@@ -2340,8 +2338,6 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:xa", "r", jabber_command_away, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:xml", "!", jabber_command_xml, 	JABBER_ONLY, NULL);
 
-	commands_lock = &commands;
-
 	command_add(&jabber_plugin, "tlen:", "?",		jabber_command_inline_msg, 	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "tlen:_autoaway", "r", 	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "tlen:_autoxa", "r", 	jabber_command_away,		JABBER_ONLY, NULL);
@@ -2362,8 +2358,6 @@ void jabber_register_commands()
 			"-n --nickname -g --group");
 	command_add(&jabber_plugin, "tlen:msg", "!uU !",	jabber_command_msg, 		JABBER_FLAGS_MSG, NULL);
 	command_add(&jabber_plugin, "tlen:reconnect", NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
-
-	commands_lock = NULL;
 };
 
 /*

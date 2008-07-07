@@ -109,7 +109,6 @@ int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;
 
 command_t *commands = NULL;
-command_t **commands_lock = NULL;
 
 /*
  * match_arg()
@@ -4155,14 +4154,6 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 	c->plugin = plugin;
 	c->possibilities = possibilities ? array_make(possibilities, " ", 0, 1, 1) : NULL;
 
-	if (commands_lock) {				/* if we lock commands */
-		if (*commands_lock == commands) {	/* if lock_command points to commands */
-			/* then we need to find place where to add it.. */
-			for (; *commands_lock && (command_add_compare(*commands_lock, c) < 0); commands_lock = &((*commands_lock)->next));
-		} else		commands_lock = &((*commands_lock)->next);	/* otherwise if we have list... move to next */
-		LIST_ADD_BEGINNING2(commands_lock, c);		/* add to commands */
-		return c;
-	}
 	return LIST_ADD_SORTED2(&commands, c, command_add_compare);
 }
 
@@ -4254,8 +4245,6 @@ void command_free() {
  */
 void command_init()
 {
-	commands_lock = &commands;	/* keep it sorted, or die */
-
 	command_add(NULL, ("!"), "?", cmd_exec, 0, NULL);
 
 	command_add(NULL, ("?"), "c vS", cmd_help, 0, NULL);
@@ -4395,8 +4384,6 @@ void command_init()
 	  
 	command_add(NULL, ("window"), "p ? p", cmd_window, 0,
 	  "active clear kill last lastlog list move new next prev switch refresh left right");
-
-	commands_lock = NULL;
 }
 
 /*
