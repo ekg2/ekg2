@@ -740,9 +740,6 @@ static int event_target_check(char *buf) {
 	
 #define s separators[i]
 
-	if (!params)
-		return -1;
-	
 	separators = xmalloc(array_count(params) * sizeof(char) + 1);
 	
 	while (*buf) {
