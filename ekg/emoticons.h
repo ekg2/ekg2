@@ -26,7 +26,7 @@
 
 int emoticon_read();
 char *emoticon_expand(const char *s);
-void emoticon_free();
+void emoticons_destroy();
 
 #endif /* __EKG_EMOTICONS_H */
 

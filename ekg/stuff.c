@@ -435,6 +435,9 @@ static LIST_FREE_ITEM(binding_added_free_item, binding_added_t *) {
 	xfree(data->sequence);
 }
 
+__DYNSTUFF_LIST_DESTROY(bindings, struct binding, binding_free_item);				/* bindings_destroy() */
+__DYNSTUFF_LIST_DESTROY(bindings_added, binding_added_t, binding_added_free_item);		/* bindings_added_destroy() */
+
 /**
  * binding_free()
  *
@@ -442,15 +445,8 @@ static LIST_FREE_ITEM(binding_added_free_item, binding_added_t *) {
  */
 
 void binding_free() {
-	if (bindings) {
-		LIST_DESTROY2(bindings, binding_free_item);
-		bindings = NULL;
-	}
-
-	if (bindings_added) {
-		LIST_DESTROY2(bindings_added, binding_added_free_item);
-		bindings_added = NULL;
-	}
+	bindings_destroy();
+	bindings_added_destroy();
 }
 
 static LIST_FREE_ITEM(list_buffer_free, struct buffer *) {

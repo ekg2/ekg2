@@ -1163,7 +1163,7 @@ void ekg_exit()
 
 /* XXX, think about sequence of unloading. */
 
-	msg_queue_free();
+	msgs_queue_destroy();
 	conference_free();
 	newconference_free();
 	metacontact_free();
@@ -1188,7 +1188,7 @@ void ekg_exit()
 	theme_free();
 	variable_free();
 	script_variables_free(1);
-	emoticon_free();
+	emoticons_destroy();
 	commands_destroy();
 	timers_destroy();
 	binding_free();

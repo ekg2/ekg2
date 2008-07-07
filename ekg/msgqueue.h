@@ -39,10 +39,10 @@ typedef struct msg_queue {
 	msgclass_t	class;
 } msg_queue_t;
 
-extern msg_queue_t *msg_queue;
+extern msg_queue_t *msgs_queue;
 
 int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq, msgclass_t class);
-void msg_queue_free();
+void msgs_queue_destroy();
 int msg_queue_count_session(const char *uid);
 int msg_queue_remove_uid(const char *uid);
 int msg_queue_remove_seq(const char *seq);

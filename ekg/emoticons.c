@@ -27,6 +27,7 @@
 #include <stdio.h>
 
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "stuff.h"
 #include "xmalloc.h"
 
@@ -38,6 +39,11 @@ typedef struct emoticon {
 } emoticon_t;
 
 emoticon_t *emoticons = NULL;
+
+static LIST_FREE_ITEM(list_emoticon_free, emoticon_t *) { xfree(data->name); xfree(data->value); }
+__DYNSTUFF_LIST_ADD(emoticons, emoticon_t);					/* emoticons_add() */
+__DYNSTUFF_LIST_DESTROY(emoticons, emoticon_t, list_emoticon_free);		/* emoticons_destroy() */
+
 int config_emoticons = 1;
 
 /*
@@ -68,7 +74,9 @@ static int emoticon_add(const char *name, const char *value) {
 	e->name = xstrdup(name);
 	e->value = xstrdup(value);
 
-	return (LIST_ADD_BEGINNING2(&emoticons, e) ? 0 : -1);
+	emoticons_add(e);
+
+	return 0;
 }
 
 /*
@@ -176,11 +184,6 @@ char *emoticon_expand(const char *s) {
 	return ms;
 }
 
-static LIST_FREE_ITEM(list_emoticon_free, emoticon_t *) {
-	xfree(data->name);
-	xfree(data->value);
-}
-
 /*
  * emoticon_remove()
  *
@@ -199,7 +202,7 @@ static int emoticon_remove(const char *name)
 		emoticon_t *f = l->data;
 
 		if (!xstrcasecmp(f->name, name)) {
-			LIST_REMOVE(&emoticons, f, list_emoticon_free);
+			emoticons_remove(f);
 			return 0;
 		}
 	}
@@ -207,20 +210,6 @@ static int emoticon_remove(const char *name)
 	return -1;
 }
 #endif
-
-
-/*
- * emoticon_free()
- *
- * usuwa pamiêæ zajêt± przez emoticony.
- */
-void emoticon_free() {
-	if (!emoticons)
-		return;
-
-	LIST_DESTROY2(emoticons, list_emoticon_free);
-	emoticons = NULL;
-}
 
 /*
  * Local Variables:

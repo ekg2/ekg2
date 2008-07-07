@@ -3836,7 +3836,7 @@ static COMMAND(cmd_queue) {
 	const char *queue_list_timestamp_f;	/* cached result of format_find("queue_list_timestamp") */
 	
 	if (match_arg(params[0], 'c', ("clear"), 2)) {
-		if (!msg_queue) {
+		if (!msgs_queue) {
 			printq("queue_empty");
 			return 0;
 		}
@@ -3846,7 +3846,7 @@ static COMMAND(cmd_queue) {
 				printq("queue_clear_uid", format_user(session, params[1]));
 			else	printq("queue_empty_uid", format_user(session, params[1]));	/* queue for user empty */
 		} else {
-			msg_queue_free();
+			msgs_queue_destroy();
 			printq("queue_clear");
 		}
 
@@ -3855,7 +3855,7 @@ static COMMAND(cmd_queue) {
 
 	queue_list_timestamp_f = format_find("queue_list_timestamp");
 
-        for (m = msg_queue; m; m = m->next) {
+        for (m = msgs_queue; m; m = m->next) {
 		struct tm *tm;
 		char buf[100] = { '\0' };	/* we need to init it to '\0' cause queue_list_timestamp_f can be empty. and if buf was not NUL terminated string, than printq() can do SIGSEGV */
 
