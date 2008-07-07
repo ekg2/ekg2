@@ -107,14 +107,16 @@
 				if (tmp == elem)		\
 					break;			\
 				if (tmp->next == NULL) {	\
-					errno = ENOENT;		\
+					/* errno = ENOENT; */	\
 					return;			\
 				}				\
 				last = tmp;			\
 			}					\
 			last->next = tmp->next;			\
 		}						\
-		free_func(elem);				\
+		/* if (free_func) */				\
+			free_func(elem);			\
+		xfree(elem);					\
 	}
 
 #define __DYNSTUFF_LIST_REMOVE_ITER(lista, typ, free_func)	\
@@ -122,11 +124,12 @@
 		typ *ret;					\
 								\
 		if (lista == elem) { 				\
-			ret = lista = lista->next;		\
+			lista = lista->next;			\
+			ret = (typ *) &lista;			\
 		} else {					\
-			typ *tmp, *last;			\
+			typ *tmp, *last = lista;		\
 								\
-			for (tmp = lista; tmp; tmp = tmp->next){\
+			for (tmp = lista->next; tmp; tmp = tmp->next){\
 				if (tmp == elem)		\
 					break;			\
 				last = tmp;			\
@@ -134,7 +137,9 @@
 			last->next = tmp->next;			\
 			ret = last;				\
 		}						\
-		free_func(elem);				\
+		/* if (free_func) */				\
+			free_func(elem);			\
+		xfree(elem);					\
 		return ret;					\
 	}
 
@@ -145,7 +150,7 @@
 								\
 			lista = lista->next;			\
 								\
-			if (free_func)				\
+			/* if (free_func) */			\
 				free_func(tmp);			\
 								\
 			xfree(tmp);				\
@@ -155,7 +160,7 @@
 #define __DYNSTUFF_LIST_COUNT(lista, typ)				\
 	int lista##_count(void) {					\
 		int count = 0;						\
-		typ list;						\
+		typ *list;						\
 									\
 		for (list = lista; list; list = list->next)		\
 			count++;					\
