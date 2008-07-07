@@ -1804,7 +1804,7 @@ static COMMAND(irc_command_topic) {
 		newtop = recode;
 	}
 
-	watch_write(j->send_watch, newtop);
+	watch_write(j->send_watch, "%s", newtop);
 	array_free(mp);
 	xfree (newtop);
 	xfree (chan);
