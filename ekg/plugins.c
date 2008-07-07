@@ -43,7 +43,7 @@
 #include "vars.h"
 #include "themes.h"
 #include "xmalloc.h"
-
+#include "dynstuff_inline.h"
 
 #define __DECLARE_QUERIES_STUFF
 #include "queries.h"
@@ -53,7 +53,12 @@
 #endif
 
 plugin_t *plugins = NULL;
+static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) { return data2->prio - data1->prio; }
+__DYNSTUFF_LIST_ADD_SORTED(plugins, plugin_t, plugin_register_compare);
+
 watch_t *watches = NULL;
+__DYNSTUFF_LIST_ADD_BEGINNING(watches, watch_t);
+
 idle_t *idles   = NULL;
 
 query_t *queries[QUERY_EXTERNAL+1];
@@ -435,23 +440,6 @@ int plugin_unload(plugin_t *p)
 	return 0;
 }
 
-/**
- * plugin_register_compare()
- *
- * internal function used to sort plugins by prio
- * used by LIST_ADD_SORTED() 
- *
- * @param data1 - First plugin_t to compare
- * @param data2 - Second plugin_t to compare
- *
- * @sa plugin_register()
- *
- * @return Result of prio subtraction
- */
-
-static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) {
-        return data2->prio - data1->prio;
-}
 
 
 /*
@@ -484,7 +472,7 @@ int plugin_register(plugin_t *p, int prio) {
 		p->prio = prio;
 	}
 
-	LIST_ADD_SORTED2(&plugins, p, plugin_register_compare);
+	plugins_add(p);
 
 	return 0;
 }
@@ -530,13 +518,9 @@ int plugin_unregister(plugin_t *p)
 	{
 		struct timer *t;
 
-		for (t = timers; t; ) {
-			struct timer *next = t->next;
-
+		for (t = timers; t; t = t->next) {
 			if (t->plugin == p)
-				timer_free(t);
-
-			t = next;
+				t = timers_removei(t);
 		}
 	}
 
@@ -1186,7 +1170,7 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	w->handler = handler;
 	w->data    = data;
 
-	LIST_ADD_BEGINNING2(&watches, w);
+	watches_add(w);
 
 	return w;
 }

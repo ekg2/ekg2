@@ -80,13 +80,22 @@
 #include "windows.h"
 #include "xmalloc.h"
 
+#include "dynstuff_inline.h"
 #include "queries.h"
 
 child_t *children = NULL;
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
-struct binding *bindings = NULL;	/**< list_t struct timer <b>all</b> ekg2 timers */
+struct binding *bindings = NULL;
+
 struct timer *timers = NULL;
+static LIST_FREE_ITEM(timer_free_item, struct timer *) { data->function(1, data->data); xfree(data->name); }
+
+__DYNSTUFF_LIST_ADD(timers, struct timer);					/* timers_add() */
+__DYNSTUFF_LIST_REMOVE_SAFE(timers, struct timer, timer_free_item);		/* timers_remove() */
+__DYNSTUFF_LIST_REMOVE_ITER(timers, struct timer, timer_free_item);		/* timers_removei() */
+__DYNSTUFF_LIST_DESTROY(timers, struct timer, timer_free_item);			/* timers_destroy() */
+
 struct conference *conferences = NULL;
 newconference_t *newconferences = NULL;
 
@@ -1865,7 +1874,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	t->data = data;
 	t->plugin = plugin;
 
-	LIST_ADD2(&timers, t);
+	timers_add(t);
 	return t;
 }
 
@@ -1880,19 +1889,6 @@ struct timer *timer_add_session(session_t *session, const char *name, time_t per
 	t = timer_add(session->plugin, name, period, persist, (void *) function, session);
 	t->is_session = 1;
 	return t;
-}
-
-static LIST_FREE_ITEM(timer_free_item, struct timer *) {
-	data->function(1, data->data); 
-	xfree(data->name);
-}
-
-int timer_free(struct timer *t) {
-	if (!t) 
-		return -1;
-
-	LIST_REMOVE2(&timers, t, timer_free_item);
-	return 0;
 }
 
 /*
@@ -1910,15 +1906,11 @@ int timer_remove(plugin_t *plugin, const char *name)
 	struct timer *t;
 	int removed = 0;
 
-	for (t = timers; t; ) {
-		struct timer *next = t->next;
-
+	for (t = timers; t; t = t->next) {
 		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
-			timer_free(t);
+			t = timers_removei(t);
 			removed++;
 		}
-
-		t = next;
 	}
 
 	return ((removed) ? 0 : -1);
@@ -1947,15 +1939,11 @@ int timer_remove_session(session_t *session, const char *name)
 	if (!session || (!(p = session->plugin)))
 		return -1;
 
-	for (t = timers; t; ) {
-		struct timer *next = t->next;
-
+	for (t = timers; t; t = t->next) {
 		if (t->is_session && t->data == session && !xstrcmp(name, t->name)) {
-			timer_free(t);
+			t = timers_removei(t);
 			removed++;
 		}
-
-		t = next;
 	}
 
 	return ((removed) ? 0 : -1);
@@ -1989,15 +1977,11 @@ int timer_remove_user(int at)
 	struct timer *t;
 	int removed = 0;
 
-	for (t = timers; t; ) {
-		struct timer *next = t->next;
-
+	for (t = timers; t; t = t->next) {
 		if (t->at == at && t->function == timer_handle_command) { 
-			timer_free(t);
+			t = timers_removei(t);
 			removed = 1;
 		}
-
-		t = next;
 	}
 
 	return ((removed) ? 0 : -1);

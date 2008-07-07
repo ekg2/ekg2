@@ -176,9 +176,7 @@ void ekg_loop() {
 		{		/* przejrzyj timery u¿ytkownika, ui, skryptów */
 			struct timer *t;
 			
-			for (t = timers; t; ) {
-				struct timer *next = t->next;
-
+			for (t = timers; t; t = t->next) {
 				if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
 					int ispersist = t->persist;
 					
@@ -188,10 +186,8 @@ void ekg_loop() {
 					}
 
 					if ((t->function(0, t->data) == -1) || !ispersist)
-						timer_free(t);
+						t = timers_removei(t);
 				}
-
-				t = next;
 			}
 		}
 
@@ -1194,19 +1190,7 @@ void ekg_exit()
 	script_variables_free(1);
 	emoticon_free();
 	commands_destroy();
-
-	{
-		struct timer *t;
-
-		for (t = timers; t;) {
-			struct timer *next = t->next;
-
-			timer_free(t);
-
-			t = next;
-		}
-	}
-
+	timers_destroy();
 	binding_free();
 	last_free();
 

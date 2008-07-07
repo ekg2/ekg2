@@ -539,7 +539,7 @@ int script_timer_unbind(script_timer_t *temp, int remove)
 	if (temp->removed) return -1;
 	temp->removed = 1;
 	if (remove) 
-		timer_free(temp->self);
+		timers_remove(temp->self);
 	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->private);
 	return list_remove(&script_timers, temp, 0 /* 0 is ok */);
 }

@@ -38,8 +38,17 @@
 #include "windows.h"
 
 #include "queries.h"
+#include "dynstuff_inline.h"
 
 event_t *events = NULL;
+
+static LIST_ADD_COMPARE(event_add_compare, event_t *) { return data1->id - data2->id; }
+static LIST_FREE_ITEM(list_event_free, struct event *) { xfree(data->name); xfree(data->action); xfree(data->target); }
+
+__DYNSTUFF_LIST_ADD_SORTED(events, event_t, event_add_compare);           /* events_add() */
+__DYNSTUFF_LIST_REMOVE_SAFE(events, event_t, list_event_free);            /* events_remove() */
+__DYNSTUFF_LIST_DESTROY(events, event_t, list_event_free);                /* events_destroy() */
+
 char **events_all = NULL;
 
 int config_display_day_changed = 1;
@@ -134,15 +143,6 @@ COMMAND(cmd_on) {
 	return -1;
 }
 
-/*
- * event_add_compare()
- *
- * function that compare two events and returns bigger
- * it helps in list_add() of events
- *
- */
-static LIST_ADD_COMPARE(event_add_compare, event_t *) { return data1->id - data2->id; }
-
 /* 
  * event_add ()
  * 
@@ -179,7 +179,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	ev->prio 	= prio;
 	ev->target 	= xstrdup(target);
 	ev->action 	= xstrdup(action);
-	LIST_ADD_SORTED2(&events, ev, event_add_compare);
+	events_add(ev);
 
 	tmp = xstrdup(name);
 	query_emit_id(NULL, EVENT_ADDED, &tmp);
@@ -188,12 +188,6 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	printq("events_add", name);
 
 	return 0;
-}
-
-static LIST_FREE_ITEM(list_event_free, struct event *) {
-	xfree(data->name);
-	xfree(data->action);
-	xfree(data->target);
 }
 
 /* 
@@ -219,7 +213,7 @@ static int event_remove(unsigned int id, int quiet) {
 		return -1;
 	}
 
-	LIST_REMOVE2(&events, ev, list_event_free);
+	events_remove(ev);
 
 	printq("events_del", itoa(id));
 
@@ -238,11 +232,7 @@ void event_free() {
 	xfree(events_all);
 	events_all = NULL;
 
-	if (!events)
-		return;
-
-	LIST_DESTROY2(events, list_event_free);
-	events = NULL;
+	events_destroy();
 }
 
 /* 

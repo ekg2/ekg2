@@ -41,6 +41,7 @@
 #include "windows.h"
 #include "xmalloc.h"
 
+#include "dynstuff_inline.h"
 #include "objects.h"
 
 #ifndef HAVE_STRLCPY
@@ -50,6 +51,12 @@
 #include "queries.h"
 
 session_t *sessions = NULL;
+
+static LIST_ADD_COMPARE(session_compare, session_t *) { return xstrcasecmp(data1->uid, data2->uid); }
+
+__DYNSTUFF_LIST_ADD_SORTED(sessions, session_t, session_compare);	/* sessions_add() */
+__DYNSTUFF_LIST_COUNT(sessions, session_t);				/* sessions_count() */
+
 session_t *session_current = NULL;
 
 /**
@@ -106,21 +113,6 @@ session_t *session_find(const char *uid)
 }
 
 /**
- * session_compare()
- *
- * funkcja pomocna przy LIST_ADD_SORTED().
- *
- * @param data1 - pierwsza sesja do porownania
- * @param data2 - druga sesja do porownania
- *
- * @return zwraca wynik xstrcasecmp() na nazwach sesji.
- */
-
-static LIST_ADD_COMPARE(session_compare, session_t *) {
-	return xstrcasecmp(data1->uid, data2->uid);
-}
-
-/**
  * session_add()
  *
  * Add session with @a uid to session list.<br>
@@ -159,8 +151,8 @@ session_t *session_add(const char *uid) {
 #ifdef HAVE_FLOCK
 	s->lock_fd	= -1;
 #endif
-	
-	LIST_ADD_SORTED2(&sessions, s, session_compare);
+
+	sessions_add(s);
 
 	/* XXX, wywalic sprawdzanie czy juz jest sesja? w koncu jak dodajemy sesje.. to moze chcemy sie od razu na nia przelaczyc? */
 	if (!window_current->session && (window_current->id == 0 || window_current->id == 1)) {
@@ -241,6 +233,9 @@ static LIST_FREE_ITEM(session_free_item, session_t *) {
 	userlist_free(data);
 }
 
+__DYNSTUFF_LIST_REMOVE_SAFE(sessions, session_t, session_free_item);	/* sessions_remove() */
+__DYNSTUFF_LIST_DESTROY(sessions, session_t, session_free_item);	/* sessions_destroy() */
+
 /**
  * session_remove()
  *
@@ -282,7 +277,7 @@ int session_remove(const char *uid)
 	if (s == session_current)
 		session_current = NULL;
 
-	count = LIST_COUNT2(sessions);
+	count = sessions_count();
 
 	for (w = windows; w; w = w->next) {
 		if (w->session == s) {
@@ -322,13 +317,9 @@ int session_remove(const char *uid)
 	{
 		struct timer *t;
 
-		for (t = timers; t;) {
-			struct timer *next = t->next;
-
+		for (t = timers; t; t = t->next) {
 			if (t->is_session && t->data == s)
-				timer_free(t);
-
-			t = next;
+				t = timers_removei(t);
 		}
 	}
 
@@ -337,7 +328,7 @@ int session_remove(const char *uid)
 	query_emit_id(NULL, SESSION_REMOVED, &tmp);
 	xfree(tmp);
 
-	LIST_REMOVE2(&sessions, s, session_free_item);
+	sessions_remove(s);
 	return 0;
 }
 
@@ -1472,13 +1463,9 @@ void sessions_free() {
 	{
 		struct timer *t;
 
-		for (t = timers; t;) {
-			struct timer *next = t->next;
-
+		for (t = timers; t; t = t->next) {
 			if (t->is_session)
-				timer_free(t);
-
-			t = next;
+				t = timers_removei(t);
 		}
 	}
 
@@ -1501,8 +1488,7 @@ void sessions_free() {
 			w->session = NULL;
 	}
 
-        LIST_DESTROY2(sessions, session_free_item);
-        sessions = NULL;
+	sessions_destroy();
 	session_current = NULL;
 	window_current->session = NULL;
 }

@@ -6,8 +6,16 @@
 #define DYNSTUFF_USE_LIST3 1
 
 #if DYNSTUFF_USE_LIST3
+# include <ekg/dynstuff.h>
+#endif
 
-#include <ekg/dynstuff.h>
+#if DYNSTUFF_USE_LIST3
+
+#define __DYNSTUFF_LIST_ADD(lista, typ)				\
+	void lista##_add(typ *new) { list_add3((list_t *) &lista, (list_t) new); }
+
+#define __DYNSTUFF_LIST_ADD_BEGINNING(lista, typ) 		\
+	void lista##_add(typ *new) { list_add_beginning3((list_t *) &lista, (list_t) new); }
 
 #define __DYNSTUFF_LIST_ADD_SORTED(lista, typ, comparision) \
 	void lista##_add(typ *new) { list_add_sorted3((list_t *) &lista, (list_t) new, (void *) comparision); }
@@ -22,10 +30,15 @@
 		return list_remove3i((list_t *) &lista, (list_t) elem, (void *) free_func);	\
 	}
 
-#define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func)					\
-	void lista##_destroy(void) { 							\
-		list_destroy3((list_t) lista, (void *) free_func);			\
-		lista = NULL;								\
+#define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func)			\
+	void lista##_destroy(void) { 					\
+		list_destroy3((list_t) lista, (void *) free_func);	\
+		lista = NULL;						\
+	}
+
+#define __DYNSTUFF_LIST_COUNT(lista, typ)				\
+	int lista##_count(void) {					\
+		return list_count((list_t) lista);			\
 	}
 
 #else
@@ -125,7 +138,6 @@
 		return ret;					\
 	}
 
-
 #define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func)		\
 	void lista##_destroy(void) {				\
 		while (lista) {					\
@@ -140,6 +152,51 @@
 		}						\
 	}
 
+#define __DYNSTUFF_LIST_COUNT(lista, typ)				\
+	int lista##_count(void) {					\
+		int count = 0;						\
+		typ list;						\
+									\
+		for (list = lista; list; list = list->next)		\
+			count++;					\
+		return count;						\
+	}
+
 #endif	/* !DYNSTUFF_USE_LIST3 */
+
+/* !!! for other lists !!! [when we (have many || don't know) head of list during compilation time] */
+
+#if DYNSTUFF_USE_LIST3
+
+#define __DYNSTUFF_ADD_BEGINNING(prefix, typ) 		\
+	void prefix##_add(typ **lista, typ *new) { list_add_beginning3((list_t *) lista, (list_t) new); }
+
+#define __DYNSTUFF_ADD_SORTED(prefix, typ, comparision) \
+	void prefix##_add(typ **lista, typ *new) { list_add_sorted3((list_t *) lista, (list_t) new, (void *) comparision); }
+
+#define __DYNSTUFF_REMOVE_SAFE(prefix, typ, free_func)					\
+	void prefix##_remove(typ **lista, typ *elem) { 					\
+		list_remove3((list_t *) lista, (list_t) elem, (void *) free_func);	\
+	}
+
+#define __DYNSTUFF_REMOVE_ITER(prefix, typ, free_func)						\
+	typ *prefix##_removei(typ **lista, typ *elem) { 					\
+		return list_remove3i((list_t *) lista, (list_t) elem, (void *) free_func);	\
+	}
+
+#define __DYNSTUFF_DESTROY(prefix, typ, free_func)			\
+	void prefix##_destroy(typ **lista) { 				\
+		list_destroy3((list_t) *lista, (void *) free_func);	\
+		*lista = NULL;						\
+	}
+
+#define __DYNSTUFF_COUNT(prefix, typ)					\
+	int prefix##_count(typ *lista) {				\
+		return list_count((list_t) lista);			\
+	}
+
+#else
+
+#endif
 
 #endif
