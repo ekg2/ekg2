@@ -316,6 +316,36 @@ void *list_remove3(list_t *list, list_t elem, void (*func)(list_t data)) {
 	return ret;
 }
 
+void *list_remove3i(list_t *list, list_t elem, void (*func)(list_t data)) {
+	list_t tmp, last = NULL;
+	void *ret = NULL;
+
+	if (!list) {
+		errno = EFAULT;
+		return ret;
+	}
+
+	tmp = *list;
+	if (tmp && tmp == elem) {
+		*list = ret = tmp->next;
+	} else {
+		for (; tmp && tmp != elem; tmp = tmp->next)
+			last = tmp;
+		if (!tmp) {
+			errno = ENOENT;
+			return ret;
+		}
+		last->next = tmp->next;
+		ret = last;
+	}
+
+	if (func)
+		func(tmp);
+	xfree(tmp);
+
+	return ret;
+}
+
 void *list_unlink3(list_t *list, list_t elem) {
 	list_t tmp, last = NULL;
 	void *ret = NULL;

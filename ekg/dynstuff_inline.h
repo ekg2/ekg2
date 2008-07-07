@@ -7,12 +7,19 @@
 
 #if DYNSTUFF_USE_LIST3
 
+#include <ekg/dynstuff.h>
+
 #define __DYNSTUFF_LIST_ADD_SORTED(lista, typ, comparision) \
 	void lista##_add(typ *new) { list_add_sorted3((list_t *) &lista, (list_t) new, (void *) comparision); }
 
 #define __DYNSTUFF_LIST_REMOVE_SAFE(lista, typ, free_func)				\
 	void lista##_remove(typ *elem) { 						\
 		list_remove3((list_t *) &lista, (list_t) elem, (void *) free_func);	\
+	}
+
+#define __DYNSTUFF_LIST_REMOVE_ITER(lista, typ, free_func)					\
+	typ *lista##_removei(typ *elem) { 							\
+		return list_removei3((list_t *) &lista, (list_t) elem, (void *) free_func);	\
 	}
 
 #define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func)					\
@@ -73,23 +80,6 @@
 		}						\
 	}
 
-#define __DYNSTUFF_LIST_REMOVE(lista, typ, free_func)		\
-	void lista##_remove(typ *elem) {			\
-		if (lista == elem) 				\
-			lista = lista->next;			\
-		else {						\
-			typ *tmp, *last;			\
-								\
-			for (tmp = lista; tmp; tmp = tmp->next){\
-				if (tmp == elem)		\
-					break;			\
-				last = tmp;			\
-			}					\
-			last->next = tmp->next;			\
-		}						\
-		free_func(elem);				\
-	}
-
 #define __DYNSTUFF_LIST_REMOVE_SAFE(lista, typ, free_func)	\
 	void lista##_remove(typ *elem) {			\
 		if (!lista)	/* programmer's fault */	\
@@ -113,6 +103,28 @@
 		}						\
 		free_func(elem);				\
 	}
+
+#define __DYNSTUFF_LIST_REMOVE_ITER(lista, typ, free_func)	\
+	typ *lista##_removei(typ *elem) {			\
+		typ *ret;					\
+								\
+		if (lista == elem) { 				\
+			ret = lista = lista->next;		\
+		} else {					\
+			typ *tmp, *last;			\
+								\
+			for (tmp = lista; tmp; tmp = tmp->next){\
+				if (tmp == elem)		\
+					break;			\
+				last = tmp;			\
+			}					\
+			last->next = tmp->next;			\
+			ret = last;				\
+		}						\
+		free_func(elem);				\
+		return ret;					\
+	}
+
 
 #define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func)		\
 	void lista##_destroy(void) {				\
