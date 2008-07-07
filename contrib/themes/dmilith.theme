@@ -3,7 +3,7 @@
 # ekg2 theme by dmilith & wiechu
 # dmilith [at] gmail.com
 # wiechu at wiechu dot com
-# theme version 0.8
+# theme version 0.9
 #
 
 -query_started_window
@@ -182,4 +182,6 @@ resource_info_status %c%Ax%a %nResource: %W%1%n Status: %T%2 Prio: %g%3%n
 feed_message_header %g%Alwqqqqqq%a%W  %1 %n(ID: %W%2%n)
 feed_message_body %g%Axx%a%n %|%1
 feed_message_footer %g%Amvqqqqqq%a%G End of message...%n\n
+
+header %s%{?query_descr %{query_descr}}%{?query_ip (%wip%c/%w%{query_ip}%c)} %{irctopic}%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}
 
