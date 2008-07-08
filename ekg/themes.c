@@ -38,6 +38,7 @@
 #include "userlist.h"
 
 #include "debug.h"
+#include "dynstuff_inline.h"
 #include "queries.h"
 
 static char *prompt_cache = NULL, *prompt2_cache = NULL, *error_cache = NULL;
@@ -47,18 +48,23 @@ static int no_prompt_cache = 0;
 static int no_prompt_cache_hash = 0x139dcbd6;	/* hash value of "no_prompt_cache" */
 
 struct format {
+	struct format *next;
 	char *name;
 	int name_hash;
 	char *value;
 };
 
-static list_t formats[0x100];
+static struct format* formats[0x100];
 
 static LIST_FREE_ITEM(list_format_free, struct format *) {
 	xfree(data->value);
 	xfree(data->name);
-	xfree(data);
 }
+
+__DYNSTUFF_ADD_BEGINNING(formats, struct format);				/* formats_add() */
+__DYNSTUFF_REMOVE_ITER(formats, struct format, list_format_free);		/* formats_removei() */
+__DYNSTUFF_DESTROY(formats, struct format, list_format_free);			/* formats_destroy() */
+
 
 /**
  * gim_hash()
@@ -88,9 +94,9 @@ static int gim_hash(const char *name) {
  */
 const char *format_find(const char *name)
 {
+	struct format *fl;
 	const char *tmp;
 	int hash;
-	list_t l;
 
 	if (!name)
 		return "";
@@ -117,8 +123,8 @@ const char *format_find(const char *name)
 
 	hash = gim_hash(name);
 
-	for (l = formats[hash & 0xff]; l; l = l->next) {
-		struct format *f = l->data;
+	for (fl = formats[hash & 0xff]; fl; fl = fl->next) {
+		struct format *f = fl;
 
 		if (hash == f->name_hash && !xstrcmp(f->name, name))
 			return f->value;
@@ -924,8 +930,8 @@ void theme_cache_reset() {
  */
 
 void format_add(const char *name, const char *value, int replace) {
+	struct format *fl;
 	struct format *f;
-	list_t l;
 	int hash;
 
 	if (!name || !value)
@@ -938,8 +944,8 @@ void format_add(const char *name, const char *value, int replace) {
 		return;
 	}
 
-	for (l = formats[hash & 0xff]; l; l = l->next) {
-		struct format *f = l->data;
+	for (fl = formats[hash & 0xff]; fl; fl = fl->next) {
+		struct format *f = fl;
 
 		if (hash == f->name_hash && !xstrcmp(name, f->name)) {
 			if (replace) {
@@ -955,7 +961,7 @@ void format_add(const char *name, const char *value, int replace) {
 	f->name_hash	= hash;
 	f->value	= xstrdup(value);
 
-	list_add_beginning(&(formats[hash & 0xff]), f);
+	formats_add(&(formats[hash & 0xff]), f);
 	return;
 }
 
@@ -973,7 +979,7 @@ void format_add(const char *name, const char *value, int replace) {
  */
 
 static int format_remove(const char *name) {
-	list_t l;
+	struct format *fl;
 	int hash;
 
 	if (!name)
@@ -981,11 +987,11 @@ static int format_remove(const char *name) {
 
 	hash = gim_hash(name);
 
-	for (l = formats[hash & 0xff]; l; l = l->next) {
-		struct format *f = l->data;
+	for (fl = formats[hash & 0xff]; fl; fl = fl->next) {
+		struct format *f = fl;
 
 		if (hash == f->name_hash && !xstrcmp(f->name, name)) {
-			LIST_REMOVE(&(formats[hash & 0xff]), f, list_format_free);
+			(void) formats_removei(&(formats[hash & 0xff]), f);
 			return 0;
 		}
 	}
@@ -1116,10 +1122,8 @@ int theme_read(const char *filename, int replace) {
 void theme_free() {
 	int i;
 
-	for (i = 0; i < 0x100; i++) {
-		LIST_DESTROY(formats[i], list_format_free);
-		formats[i] = NULL;
-	}
+	for (i = 0; i < 0x100; i++)
+		formats_destroy(&(formats[i]));
 
 	no_prompt_cache = 0;
 

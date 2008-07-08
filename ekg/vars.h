@@ -88,7 +88,7 @@ int variable_remove(plugin_t *plugin, const char *name);
 
 int variable_set(const char *name, const char *value, int allow_foreign);
 void variable_help(const char *name);
-void variable_free();
+void variables_destroy();
 
 #endif
 

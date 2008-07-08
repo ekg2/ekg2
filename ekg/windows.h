@@ -105,6 +105,8 @@ int window_session_cycle(window_t *w);
 
 int window_lock_inc(window_t *w);
 int window_lock_dec(window_t *w);
+
+void windows_destroy(void);
 #endif
 
 COMMAND(cmd_window);

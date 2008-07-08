@@ -77,10 +77,6 @@
 			typ *tmp = lista;			\
 			typ *prev = NULL;			\
 								\
-			while (tmp->next)			\
-				tmp = tmp->next;		\
-			tmp->next = new;			\
-								\
 			while (comparision(new, tmp) > 0) {	\
 				prev = tmp;			\
 				tmp = tmp->next;		\

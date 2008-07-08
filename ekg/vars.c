@@ -41,12 +41,16 @@
 #include "xmalloc.h"
 #include "plugins.h"
 
+#include "dynstuff_inline.h"
 #include "queries.h"
 
-variable_t *variables = NULL;
+void changed_session_locks(const char *varname); /* sessions.c */
 char *console_charset;
 
-void changed_session_locks(const char *varname); /* sessions.c */
+static LIST_ADD_COMPARE(variable_add_compare, variable_t *) { return xstrcasecmp(data1->name, data2->name); }
+__DYNSTUFF_LIST_ADD_SORTED(variables, variable_t, variable_add_compare);	/* variables_add() */
+
+variable_t *variables = NULL;
 
 /*
  * dd_*()
@@ -247,17 +251,6 @@ variable_map_t *variable_map(int count, ...) {
 }
 
 /*
- * variable_add_compare()
- *
- * funkcja porównuj±ca nazwy zmiennych,, by wystêpowa³y alfabetycznie w li¶cie.
- *
- *  - data1, data2 - dwa wpisy zmiennychd do porównania.
- *
- * zwraca wynik xstrcasecmp() na nazwach zmiennych.
- */
-static LIST_ADD_COMPARE(variable_add_compare, variable_t *) { return xstrcasecmp(data1->name, data2->name); }
-
-/*
  * variable_add()
  *
  * dodaje zmienn± do listy zmiennych.
@@ -323,7 +316,8 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 	v->dyndisplay 	= dyndisplay;
 	v->plugin 	= plugin;
 
-	return LIST_ADD_SORTED2(&variables, v, variable_add_compare);
+	variables_add(v);
+	return v;
 }
 
 /*
@@ -559,15 +553,7 @@ LIST_FREE_ITEM(variable_list_freeone, variable_t *) {
 	}
 }
 
-/*
- * variable_free()
- *
- * zwalnia pamiêæ u¿ywan± przez zmienne.
- */
-void variable_free() {
-	LIST_DESTROY2(variables, variable_list_freeone);
-	variables = NULL;
-}
+__DYNSTUFF_LIST_DESTROY(variables, variable_t, variable_list_freeone);	/* variables_destroy() */
 
 /*
  * variable_help()

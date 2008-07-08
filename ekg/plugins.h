@@ -83,6 +83,7 @@ int have_plugin_of_class(plugin_class_t pclass);
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify);
 int plugin_var_find(plugin_t *pl, const char *name);
 
+void plugins_unlink(plugin_t *pl);
 #endif
 
 #ifdef USINGANANTIQUECOMPILER

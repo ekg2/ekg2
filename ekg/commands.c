@@ -4054,7 +4054,7 @@ static COMMAND(cmd_plugin) {
 	}
 
 	if (params[1] && (pl = plugin_find(params[0]))) {
-		LIST_UNLINK2(&plugins, pl);
+		plugins_unlink(pl);
 		plugin_register(pl, atoi(params[1])); 
 
 		queries_reconnect();

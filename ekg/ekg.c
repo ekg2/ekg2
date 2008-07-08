@@ -1182,7 +1182,7 @@ void ekg_exit()
 	audio_deinitialize();
 	alias_free();
 	theme_free();
-	variable_free();
+	variables_destroy();
 	script_variables_free(1);
 	emoticons_destroy();
 	commands_destroy();
@@ -1195,15 +1195,11 @@ void ekg_exit()
 
 	xfree(read_file(NULL, -1));	/* free internal read_file() buffer */
 
-	{
-		window_t *w;
+/* windows: */
+	windows_destroy();
+	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
 
-		for (w = windows; w; w = w->next) /* XXX: some LIST_ITEM_FREE ? */
-			xfree(w->target);
-
-		LIST_DESTROY2(windows, NULL);	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
-	}
-
+/* queries: */
 	{
 		query_t **ll;
 

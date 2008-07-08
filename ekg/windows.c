@@ -41,11 +41,21 @@
 #include "stuff.h"
 #include "xmalloc.h"
 
+#include "dynstuff_inline.h"
 #include "queries.h"
 
 int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
 
 window_t *windows = NULL;		/* lista okien */
+
+static LIST_ADD_COMPARE(window_new_compare, window_t *) { return data1->id - data2->id; }
+static LIST_FREE_ITEM(list_window_free, window_t *) { xfree(data->target);  userlist_free_u(&(data->userlist)); }
+
+__DYNSTUFF_LIST_ADD_SORTED(windows, window_t, window_new_compare);				/* windows_add() */
+__DYNSTUFF_LIST_UNLINK(windows, window_t);							/* windows_unlink() */
+__DYNSTUFF_LIST_REMOVE_SAFE(windows, window_t, list_window_free);				/* windows_remove() */
+__DYNSTUFF_LIST_DESTROY(windows, window_t, list_window_free);					/* windows_destroy() */
+
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
 
 window_t *window_current = NULL;	/* okno aktualne, zawsze na co¶ musi wskazywaæ! */
@@ -226,19 +236,6 @@ void window_switch(int id) {
 }
 
 /**
- * window_new_compare()
- *
- * internal function to sort windows by id
- * used by LIST_ADD_SORTED()
- *
- * @param data1 - first window_t to compare
- * @param data2 - second window_t to compare
- *
- * @return It returns result of window id subtractions.
- */
-static LIST_ADD_COMPARE(window_new_compare, window_t *) { return data1->id - data2->id; }
-
-/**
  * window_new()
  *
  * Create new window_t, with given @a new_id (if @a new_id != 0)
@@ -328,7 +325,7 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 	w->session = session;
 /*	w->userlist = NULL; */		/* xmalloc memset() to 0 memory */
 
-	LIST_ADD_SORTED2(&windows, w, window_new_compare);
+	windows_add(w);
 	query_emit_id(NULL, UI_WINDOW_NEW, &w);	/* XXX */
 
 	return w;
@@ -441,10 +438,10 @@ void window_kill(window_t *w) {
 
 	if (id == 1 && w->target) {
 		print("query_finished", w->target, session_name(w->session));
-		xfree(window_current->target);
+		list_window_free(w);
+
 		w->target	= NULL;
 /*		w->session	= NULL; */
-		userlist_free_u(&(w->userlist));	/* wtf? */
 
 		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
 		return;
@@ -475,10 +472,7 @@ void window_kill(window_t *w) {
 	}
 
 	query_emit_id(NULL, UI_WINDOW_KILL, &w);
-
-	xfree(w->target);
-	userlist_free_u(&(w->userlist));
-	LIST_REMOVE2(&windows, w, NULL);	/* XXX: LIST_ITEM_FREE ? */
+	windows_remove(w);
 }
 
 /**
@@ -523,14 +517,14 @@ static void window_move(int first, int second) {
 	if (!(w1 = window_exist(first)) || !(w2 = window_exist(second)))
 		return;
 
-        LIST_UNLINK2(&windows, w1);
-	w1->id = second;
+	windows_unlink(w1);
+	windows_unlink(w2);
 
-        LIST_UNLINK2(&windows, w2);
+	w1->id = second;
 	w2->id = first;
 
-	LIST_ADD_SORTED2(&windows, w1, window_new_compare);
-	LIST_ADD_SORTED2(&windows, w2, window_new_compare);
+	windows_add(w1);
+	windows_add(w2);
 }
 
 /* really move window, i.e. insert it at given id and move right all other windows */
@@ -561,8 +555,8 @@ static void window_real_move(int source, int dest) {
 	}
 	ws->id = dest;
 
-	LIST_UNLINK2(&windows, ws);
-	LIST_ADD_SORTED2(&windows, ws, window_new_compare);
+	windows_unlink(ws);
+	windows_add(ws);
 }
 
 /**
