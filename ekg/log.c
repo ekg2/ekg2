@@ -41,10 +41,11 @@ static LIST_FREE_ITEM(list_last_free, struct last *) {
 	xfree(data->message);
 }
 
-__DYNSTUFF_LIST_ADD(lasts, struct last);				/* lasts_add() */
-__DYNSTUFF_LIST_REMOVE_ITER(lasts, struct last, list_last_free);	/* lasts_removei() */
-__DYNSTUFF_LIST_DESTROY(lasts, struct last, list_last_free);		/* lasts_destroy() */
-__DYNSTUFF_LIST_COUNT(lasts, struct last);				/* lasts_count() */
+DYNSTUFF_LIST_DECLARE_WC(lasts, struct last, list_last_free,
+	__DYNSTUFF_LIST_ADD,			/* lasts_add() */
+	__DYNSTUFF_LIST_REMOVE_ITER,		/* lasts_removei() */
+	__DYNSTUFF_LIST_DESTROY,		/* lasts_destroy() */
+	__DYNSTUFF_LIST_COUNT)			/* lasts_count() */
 
 /*
  * last_add()

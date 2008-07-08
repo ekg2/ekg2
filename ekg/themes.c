@@ -61,10 +61,10 @@ static LIST_FREE_ITEM(list_format_free, struct format *) {
 	xfree(data->name);
 }
 
-__DYNSTUFF_ADD_BEGINNING(formats, struct format);				/* formats_add() */
-__DYNSTUFF_REMOVE_ITER(formats, struct format, list_format_free);		/* formats_removei() */
-__DYNSTUFF_DESTROY(formats, struct format, list_format_free);			/* formats_destroy() */
-
+DYNSTUFF_LIST_DECLARE(formats, struct format, list_format_free,
+	__DYNSTUFF_ADD_BEGINNING,	/* formats_add() */
+	__DYNSTUFF_REMOVE_ITER,		/* formats_removei() */
+	__DYNSTUFF_DESTROY)		/* formats_destroy() */
 
 /**
  * gim_hash()

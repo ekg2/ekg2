@@ -48,17 +48,19 @@ static LIST_ADD_COMPARE(metacontact_add_item_compare, metacontact_item_t *) {
 
 static LIST_FREE_ITEM(metacontact_item_free, metacontact_item_t *) { xfree(data->name); xfree(data->s_uid); }
 
-__DYNSTUFF_ADD_SORTED(metacontact_items, metacontact_item_t, metacontact_add_item_compare);	/* metacontact_items_add() */
-__DYNSTUFF_REMOVE_SAFE(metacontact_items, metacontact_item_t, metacontact_item_free);		/* metacontact_items_remove() */	/* removei() ? */
-__DYNSTUFF_DESTROY(metacontact_items, metacontact_item_t, metacontact_item_free);		/* metacontact_items_destroy() */
+DYNSTUFF_LIST_DECLARE_SORTED(metacontact_items, metacontact_item_t, metacontact_add_item_compare, metacontact_item_free,
+	__DYNSTUFF_ADD_SORTED,		/* metacontact_items_add() */
+	__DYNSTUFF_REMOVE_SAFE,		/* metacontact_items_remove() */	/* maybe removei() ? */
+	__DYNSTUFF_DESTROY)		/* metacontact_items_destroy() */
 
 /* metacontacts: */
 static LIST_ADD_COMPARE(metacontact_add_compare, metacontact_t *) { return xstrcasecmp(data1->name, data2->name); }
 static LIST_FREE_ITEM(metacontact_list_free, metacontact_t *) { metacontact_items_destroy(&(data->metacontact_items)); xfree(data->name); }
 
-__DYNSTUFF_LIST_ADD_SORTED(metacontacts, metacontact_t, metacontact_add_compare);	/* metacontacts_add() */
-__DYNSTUFF_LIST_REMOVE_SAFE(metacontacts, metacontact_t, metacontact_list_free);	/* metacontacts_remove() */	/* removei() ? */
-__DYNSTUFF_LIST_DESTROY(metacontacts, metacontact_t, metacontact_list_free);		/* metacontacts_destroy() */
+DYNSTUFF_LIST_DECLARE_SORTED(metacontacts, metacontact_t, metacontact_add_compare, metacontact_list_free,
+	__DYNSTUFF_LIST_ADD_SORTED,	/* metacontacts_add() */
+	__DYNSTUFF_LIST_REMOVE_SAFE,	/* metacontacts_remove() */		/* maybe removei() ? */
+	__DYNSTUFF_LIST_DESTROY)	/* metacontacts_destroy() */
 
 static int metacontact_add_item(metacontact_t *m, const char *session, const char *name, unsigned int prio, int quiet);
 static int metacontact_remove_item(metacontact_t *m, const char *session, const char *name, int quiet);

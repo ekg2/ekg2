@@ -59,7 +59,7 @@ __DYNSTUFF_LIST_COUNT(sessions, session_t);				/* sessions_count() */
 
 static LIST_FREE_ITEM(session_param_free_item, session_param_t *) { xfree(data->key); xfree(data->value);  }
 
-__DYNSTUFF_ADD_BEGINNING(session_vars, session_param_t);			/* session_vars_add() */
+__DYNSTUFF_ADD_BEGINNING(session_vars, session_param_t, NULL);			/* session_vars_add() */
 __DYNSTUFF_DESTROY(session_vars, session_param_t, session_param_free_item);	/* session_vars_destroy() */
 
 session_t *session_current = NULL;

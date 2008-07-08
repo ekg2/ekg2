@@ -46,9 +46,10 @@ msg_queue_t *msgs_queue = NULL;
 
 static LIST_FREE_ITEM(list_msg_queue_free, msg_queue_t *) { xfree(data->session); xfree(data->rcpts); xfree(data->message); xfree(data->seq); }
 
-__DYNSTUFF_LIST_ADD(msgs_queue, msg_queue_t);					/* msgs_queue_add() */
-__DYNSTUFF_LIST_REMOVE_ITER(msgs_queue, msg_queue_t, list_msg_queue_free);	/* msgs_queue_removei() */
-__DYNSTUFF_LIST_DESTROY(msgs_queue, msg_queue_t, list_msg_queue_free);		/* msgs_queue_destroy() */
+DYNSTUFF_LIST_DECLARE(msgs_queue, msg_queue_t, list_msg_queue_free,
+		__DYNSTUFF_LIST_ADD,		/* msgs_queue_add() */
+		__DYNSTUFF_LIST_REMOVE_ITER,	/* msgs_queue_removei() */
+		__DYNSTUFF_LIST_DESTROY)	/* msgs_queue_destroy() */
 
 /*
  * msg_queue_add()
