@@ -63,6 +63,11 @@ images_size
 	
 	varible which define size of images in kB
 
+skip_default_format
+	type: bool
+	default value: 0
+	
+	if set, skip default (for windows client) format (black on white)
 
 split_messages
         type: bool

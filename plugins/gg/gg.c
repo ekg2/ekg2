@@ -68,6 +68,7 @@ PLUGIN_DEFINE(gg, PLUGIN_PROTOCOL, gg_theme_init);
 list_t gg_currently_checked = NULL;
 char *last_tokenid;
 int gg_config_display_token;
+int gg_config_skip_default_format;
 int gg_config_split_messages;
 
 /**
@@ -950,17 +951,22 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 
 	if (e->event.msg.formats && e->event.msg.formats_length) {
 		unsigned char *p = e->event.msg.formats;
-		int i, len = xstrlen(__text), ii;
-
-		__format = xcalloc(len, sizeof(uint32_t));
+		int i, len = xstrlen(__text), ii, skip = gg_config_skip_default_format;
+		static char win_gg_default_format[6] = { 0x00, 0x00, 0x08, 0x00, 0x00, 0x00 };
 
 		gg_debug(GG_DEBUG_DUMP, "// formats:");
-		for (ii = 0; ii < e->event.msg.formats_length; ii++)
+		for (ii = 0; ii < e->event.msg.formats_length; ii++) {
+			skip &= (p[ii] == win_gg_default_format[ii]);
 			gg_debug(GG_DEBUG_DUMP, " %.2x", (unsigned char) p[ii]);
+		}
+		if (skip)
+			gg_debug(GG_DEBUG_DUMP, " <- skipping");
+		else
+			__format = xcalloc(len, sizeof(uint32_t));
 		gg_debug(GG_DEBUG_DUMP, "\n");
 
 /* XXX, check it. especially this 'pos' */
-		for (i = 0; i < e->event.msg.formats_length; ) {
+		for (i = skip ? 0 : e->event.msg.formats_length; i < e->event.msg.formats_length; ) {
 			int j, pos = p[i] + p[i + 1] * 256;
 			uint32_t val = 0;
 
@@ -1784,6 +1790,7 @@ int EXPORT gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("get_images"), VAR_BOOL, 1, &gg_config_get_images, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("images_dir"), VAR_STR, 1, &gg_config_images_dir, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
+	variable_add(&gg_plugin, ("skip_default_format"), VAR_BOOL, 1, &gg_config_skip_default_format, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
 	idle_add(&gg_plugin, gg_idle_handler, &ekg_tv);
