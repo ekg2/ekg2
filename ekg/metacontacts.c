@@ -40,9 +40,6 @@ metacontact_t *metacontacts = NULL;
 
 /* metacontacts_items: */
 static LIST_ADD_COMPARE(metacontact_add_item_compare, metacontact_item_t *) {
-        if (!data1 || !data1->name || !data1->s_uid || !data2 || !data2->name || !data2->s_uid)
-                return 0;
-
 	if (!xstrcasecmp(data1->s_uid, data2->s_uid))
 		return xstrcasecmp(data1->name, data2->name);
 
@@ -391,6 +388,7 @@ static int metacontact_session_renamed_handler(void *data, va_list ap)
 
 	/* XXX: exactly, why we do it? we don't even look at session alias
 	 * 	in sorting function */
+	/* Hint: session_alias_uid_n() */
 	LIST_RESORT2(&metacontacts, metacontact_add_item_compare);
 #if 0
 	char **tmp = va_arg(ap, char**);
