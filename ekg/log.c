@@ -44,6 +44,7 @@ static LIST_FREE_ITEM(list_last_free, struct last *) {
 __DYNSTUFF_LIST_ADD(lasts, struct last);				/* lasts_add() */
 __DYNSTUFF_LIST_REMOVE_ITER(lasts, struct last, list_last_free);	/* lasts_removei() */
 __DYNSTUFF_LIST_DESTROY(lasts, struct last, list_last_free);		/* lasts_destroy() */
+__DYNSTUFF_LIST_COUNT(lasts, struct last);				/* lasts_count() */
 
 /*
  * last_add()
@@ -67,7 +68,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
 	if (config_last & 2) 
 		count = last_count(uid);
 	else
-		count = LIST_COUNT2(lasts);
+		count = lasts_count();
 				
 	/* usuwamy ostatni± wiadomo¶æ, w razie potrzeby... */
 	if (count >= config_last_size) {
@@ -88,7 +89,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
 		/* ...by teraz usun±æ */
 		for (ll = lasts; ll; ll = ll->next) {
 			if (ll->time == tmp_time && !xstrcasecmp(ll->uid, uid)) {
-				LIST_REMOVE2(&lasts, ll, list_last_free);
+				(void) lasts_removei(ll);
 				break;
 			}
 		}

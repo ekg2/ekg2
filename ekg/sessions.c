@@ -57,6 +57,11 @@ static LIST_ADD_COMPARE(session_compare, session_t *) { return xstrcasecmp(data1
 __DYNSTUFF_LIST_ADD_SORTED(sessions, session_t, session_compare);	/* sessions_add() */
 __DYNSTUFF_LIST_COUNT(sessions, session_t);				/* sessions_count() */
 
+static LIST_FREE_ITEM(session_param_free_item, session_param_t *) { xfree(data->key); xfree(data->value);  }
+
+__DYNSTUFF_ADD_BEGINNING(session_vars, session_param_t);			/* session_vars_add() */
+__DYNSTUFF_DESTROY(session_vars, session_param_t, session_param_free_item);	/* session_vars_destroy() */
+
 session_t *session_current = NULL;
 
 /**
@@ -211,17 +216,12 @@ session_t *session_add(const char *uid) {
 	return s;
 }
 
-static LIST_FREE_ITEM(session_param_free_item, session_param_t *) {
-	xfree(data->key);
-	xfree(data->value);
-}
-
 static LIST_FREE_ITEM(session_free_item, session_t *) {
 /* free _global_ session variables */
 	array_free_count(data->values, data->global_vars_count);
 
 /* free _local_ session variables */
-	LIST_DESTROY2(data->local_vars, session_param_free_item);
+	session_vars_destroy(&(data->local_vars));
 
 	xfree(data->alias);
 	xfree(data->uid);
@@ -706,7 +706,8 @@ int session_set(session_t *s, const char *key, const char *value) {
 	v->key = xstrdup(key);
 	v->value = xstrdup(value);
 
-	return (LIST_ADD_BEGINNING2(&s->local_vars, v) != NULL) ? 0 : -1;
+	session_vars_add(&s->local_vars, v);
+	return 0;
 
 notify:
 	if (pa && pa->notify)
@@ -1443,30 +1444,27 @@ COMMAND(session_command)
 void sessions_free() {
 	session_t *s;
 
+	struct timer *t;
+	watch_t *w;
+	window_t *wl;
+
         if (!sessions)
                 return;
 
-	{		/* remove _ALL_ session watches */
-		watch_t *w;
+/* remove _ALL_ session watches */
+	for (w = watches; w;) {
+		watch_t *next = w->next;
+		watch_t *tmp;
 
-		for (w = watches; w;) {
-			watch_t *tmp;
-			watch_t *next = w->next;
+		if (w->is_session && ((tmp = watch_free(w))))
+			next = tmp;
 
-			if (w->is_session && ((tmp = watch_free(w))))
-				next = tmp;
-
-			w = next;
-		}
+		w = next;
 	}
 
-	{
-		struct timer *t;
-
-		for (t = timers; t; t = t->next) {
-			if (t->is_session)
-				t = timers_removei(t);
-		}
+	for (t = timers; t; t = t->next) {
+		if (t->is_session)
+			t = timers_removei(t);
 	}
 
 /* it's sessions, not 'l' because we emit SESSION_REMOVED, which might want to search over sessions list...
@@ -1474,19 +1472,16 @@ void sessions_free() {
  */
 /* mg: I modified it so it'll first emit all the events, and then start to free everything
  * That shouldn't be a problem, should it? */
-        for (s = sessions; s; s = s->next)
+        for (s = sessions; s; s = s->next) {
 		query_emit_id(s->plugin, SESSION_REMOVED, &(s->uid));	/* it notify only that plugin here, to free internal data. 
 									 * ui-plugin already removed.. other plugins @ quit.
 									 * shouldn't be aware about it. too...
 									 * XXX, think about it?
 									 */
-
-	{
-		window_t *w;
-
-		for (w = windows; w; w = w->next)
-			w->session = NULL;
 	}
+
+	for (wl = windows; wl; wl = wl->next)
+		wl->session = NULL;
 
 	sessions_destroy();
 	session_current = NULL;

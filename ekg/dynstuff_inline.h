@@ -225,6 +225,150 @@
 	}
 
 #else
+	/* XXX, checkit */
+
+#define __DYNSTUFF_ADD(prefix, typ) 				\
+	void prefix##_add(typ **lista, typ *new) {		\
+		typ *tmp = *lista;				\
+								\
+		new->next = NULL;				\
+		if (!(tmp = *lista)) {				\
+			*lista = new;				\
+		} else {					\
+			while (tmp->next)			\
+				tmp = tmp->next;		\
+			tmp->next = new;			\
+		}						\
+}
+
+#define __DYNSTUFF_ADD_BEGINNING(prefix, typ) 			\
+	void prefix##_add(typ **lista, typ *new) {		\
+		new->next = *lista;				\
+		*lista  = new;					\
+	}
+
+#define __DYNSTUFF_ADD_SORTED(prefix, typ, comparision) 	\
+	void prefix##_add(typ **lista, typ *new) {		\
+		typ *tmp = lista;				\
+								\
+		new->next = NULL;				\
+		if (!(tmp = *lista)) {				\
+			*lista = new;				\
+		} else {					\
+			typ *prev = NULL;			\
+								\
+			while (comparision(new, tmp) > 0) {	\
+				prev = tmp;			\
+				tmp = tmp->next;		\
+				if (!tmp)			\
+					break;			\
+			}					\
+								\
+			if (!prev) {				\
+				new->next = lista;		\
+				lista = new;			\
+			} else {				\
+				prev->next = new;		\
+				new->next = tmp;		\
+			}					\
+		}						\
+	}
+
+#define __DYNSTUFF_REMOVE_SAFE(prefix, typ, free_func)		\
+	void prefix##_remove(typ **lista, typ *elem) {		\
+		if (!lista || !(*lista))	/* programmer's fault */\
+			return;					\
+								\
+		if (*lista == elem) 				\
+			*lista = (*lista)->next;		\
+		else {						\
+			typ *tmp, *last = *lista;		\
+								\
+			for (tmp = (*lista)->next; tmp; tmp = tmp->next) { \
+				if (tmp == elem)		\
+					break;			\
+				if (tmp->next == NULL) {	\
+					/* errno = ENOENT; */	\
+					return;			\
+				}				\
+				last = tmp;			\
+			}					\
+			last->next = tmp->next;			\
+		}						\
+		/* if (free_func) */				\
+			free_func(elem);			\
+		xfree(elem);					\
+	}
+
+#define __DYNSTUFF_REMOVE_ITER(prefix, typ, free_func)		\
+	typ *prefix##_removei(typ **lista, typ *elem) {		\
+		typ *ret;					\
+								\
+		if (*lista == elem) { 				\
+			*lista = (*lista)->next;		\
+			ret = (typ *) lista;			\
+		} else {					\
+			typ *tmp, *last = *lista;		\
+								\
+			for (tmp = (*lista)->next; tmp; tmp = tmp->next) { \
+				if (tmp == elem)		\
+					break;			\
+				last = tmp;			\
+			}					\
+			last->next = tmp->next;			\
+			ret = last;				\
+		}						\
+		/* if (free_func) */				\
+			free_func(elem);			\
+		xfree(elem);					\
+		return ret;					\
+	}
+
+#define __DYNSTUFF_UNLINK(prefix, typ)				\
+	void prefix##_unlink(typ **lista, typ *elem) {		\
+		if (!lista || !(*lista))	/* programmer's fault */	\
+			return;					\
+								\
+		if (*lista == elem) 				\
+			*lista = (*lista)->next;		\
+		else {						\
+			typ *tmp, *last = *lista;		\
+								\
+			for (tmp = (*lista)->next; tmp; tmp = tmp->next) { \
+				if (tmp == elem)		\
+					break;			\
+				if (tmp->next == NULL) {	\
+					/* errno = ENOENT; */	\
+					return;			\
+				}				\
+				last = tmp;			\
+			}					\
+			last->next = tmp->next;			\
+		}						\
+	}
+
+#define __DYNSTUFF_DESTROY(prefix, typ, free_func)		\
+	void prefix##_destroy(typ **lista) {			\
+		while (*lista) {				\
+			typ *tmp = *lista;			\
+								\
+			*lista = (*lista)->next;		\
+								\
+			/* if (free_func) */			\
+				free_func(tmp);			\
+								\
+			xfree(tmp);				\
+		}						\
+	}
+
+#define __DYNSTUFF_COUNT(prefix, typ)					\
+	int prefix##_count(typ *list) {					\
+		int count = 0;						\
+									\
+		for (; list; list = list->next)				\
+			count++;					\
+		return count;						\
+	}
 
 #endif
 
