@@ -966,7 +966,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 		gg_debug(GG_DEBUG_DUMP, "\n");
 
 /* XXX, check it. especially this 'pos' */
-		for (i = skip ? 0 : e->event.msg.formats_length; i < e->event.msg.formats_length; ) {
+		for (i = skip ? e->event.msg.formats_length : 0; i < e->event.msg.formats_length; ) {
 			int j, pos = p[i] + p[i + 1] * 256;
 			uint32_t val = 0;
 
