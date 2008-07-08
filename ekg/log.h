@@ -44,7 +44,7 @@ extern struct last *lasts;
 void last_add(int type, const char *uid, time_t t, time_t st, const char *msg);
 void last_del(const char *uid);
 int last_count(const char *uid);
-void last_free();
+void lasts_destroy();
 
 char *xml_escape(const char *text);
 

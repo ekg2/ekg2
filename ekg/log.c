@@ -27,6 +27,7 @@
 #include <time.h>
 
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "log.h"
 #include "xmalloc.h"
 
@@ -39,6 +40,10 @@ static LIST_FREE_ITEM(list_last_free, struct last *) {
 	xfree(data->uid);
 	xfree(data->message);
 }
+
+__DYNSTUFF_LIST_ADD(lasts, struct last);				/* lasts_add() */
+__DYNSTUFF_LIST_REMOVE_ITER(lasts, struct last, list_last_free);	/* lasts_removei() */
+__DYNSTUFF_LIST_DESTROY(lasts, struct last, list_last_free);		/* lasts_destroy() */
 
 /*
  * last_add()
@@ -97,7 +102,7 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
 	ll->sent_time = st;
 	ll->message = xstrdup(msg);
 	
-	LIST_ADD2(&lasts, ll);
+	lasts_add(ll);
 }
 
 /*
@@ -110,22 +115,10 @@ void last_add(int type, const char *uid, time_t t, time_t st, const char *msg) {
 void last_del(const char *uid) {
 	struct last *ll;
 
-	for (ll = lasts; ll; ) {
+	for (ll = lasts; ll; ll = ll->next) {
 		if (!xstrcasecmp(uid, ll->uid))
-			ll = LIST_REMOVE2(&lasts, ll, list_last_free);
-		else
-			ll = ll->next;
+			ll = lasts_removei(ll);
 	}
-}
-
-/*
- * last_free()
- *
- * zwalnia miejsce po last.
- */
-void last_free() {
-	LIST_DESTROY2(lasts, list_last_free);
-	lasts = NULL;
 }
 
 /*

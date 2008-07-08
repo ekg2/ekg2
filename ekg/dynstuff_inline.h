@@ -30,6 +30,11 @@
 		return list_remove3i((list_t *) &lista, (list_t) elem, (void *) free_func);	\
 	}
 
+#define __DYNSTUFF_LIST_UNLINK(lista, typ)				\
+	void lista##_unlink(typ *elem) {				\
+		list_unlink3((list_t *) &lista, (list_t) elem);		\
+	}
+
 #define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func)			\
 	void lista##_destroy(void) { 					\
 		list_destroy3((list_t) lista, (void *) free_func);	\
@@ -101,9 +106,9 @@
 		if (lista == elem) 				\
 			lista = lista->next;			\
 		else {						\
-			typ *tmp, *last;			\
+			typ *tmp, *last = lista;		\
 								\
-			for (tmp = lista; tmp; tmp = tmp->next){\
+			for (tmp = lista->next; tmp; tmp = tmp->next) { \
 				if (tmp == elem)		\
 					break;			\
 				if (tmp->next == NULL) {	\
@@ -129,7 +134,7 @@
 		} else {					\
 			typ *tmp, *last = lista;		\
 								\
-			for (tmp = lista->next; tmp; tmp = tmp->next){\
+			for (tmp = lista->next; tmp; tmp = tmp->next) { \
 				if (tmp == elem)		\
 					break;			\
 				last = tmp;			\
@@ -141,6 +146,29 @@
 			free_func(elem);			\
 		xfree(elem);					\
 		return ret;					\
+	}
+
+#define __DYNSTUFF_LIST_UNLINK(lista, typ)			\
+	void lista##_unlink(typ *elem) {			\
+		if (!lista)	/* programmer's fault */	\
+			return;					\
+								\
+		if (lista == elem) 				\
+			lista = lista->next;			\
+		else {						\
+			typ *tmp, *last = lista;		\
+								\
+			for (tmp = lista->next; tmp; tmp = tmp->next) { \
+				if (tmp == elem)		\
+					break;			\
+				if (tmp->next == NULL) {	\
+					/* errno = ENOENT; */	\
+					return;			\
+				}				\
+				last = tmp;			\
+			}					\
+			last->next = tmp->next;			\
+		}						\
 	}
 
 #define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func)		\

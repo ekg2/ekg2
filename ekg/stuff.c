@@ -84,6 +84,12 @@
 #include "queries.h"
 
 child_t *children = NULL;
+
+static LIST_FREE_ITEM(child_free_item, child_t *) { xfree(data->name); }
+__DYNSTUFF_LIST_ADD(children, child_t);						/* children_add() */
+__DYNSTUFF_LIST_REMOVE_ITER(children, child_t, child_free_item);		/* children_removei() */
+__DYNSTUFF_LIST_DESTROY(children, child_t, child_free_item);			/* children_destroy() */
+
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
 struct binding *bindings = NULL;
@@ -1393,7 +1399,7 @@ child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_
 	c->handler	= handler;
 	c->private	= private;
 	
-	LIST_ADD2(&children, c);
+	children_add(c);
 	return c;
 }
 

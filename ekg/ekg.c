@@ -225,12 +225,10 @@ void ekg_loop() {
                 /* przegl±danie zdech³ych dzieciaków */
 #ifndef NO_POSIX_SYSTEM
                 while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-			child_t *c, *next;
-                        debug("child process %d exited with status %d\n", pid, WEXITSTATUS(status));
+			child_t *c;
+			debug("child process %d exited with status %d\n", pid, WEXITSTATUS(status));
 
-                        for (c = children; c; c = next) {
-				next = c->next;
-
+                        for (c = children; c; c = c->next) {
                                 if (pid != c->pid)
                                         continue;
 
@@ -250,8 +248,7 @@ void ekg_loop() {
                                 if (c->handler)
                                         c->handler(c, c->pid, c->name, WEXITSTATUS(status), c->private);
 
-                                xfree(c->name);
-                                LIST_REMOVE2(&children, c, NULL);
+				c = children_removei(c);
                         }
                 }
 #endif
@@ -1087,9 +1084,8 @@ void ekg_exit()
 #else
 			/* TerminateProcess / TerminateThread */
 #endif
-			xfree(c->name);
 		}
-		LIST_DESTROY2(children, NULL);	children = NULL;
+		children_destroy();
 	}
 
 	{
@@ -1192,7 +1188,7 @@ void ekg_exit()
 	commands_destroy();
 	timers_destroy();
 	binding_free();
-	last_free();
+	lasts_destroy();
 
 	buffer_free(&buffer_debug);	buffer_free(&buffer_speech);
 	event_free();

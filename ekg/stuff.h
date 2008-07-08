@@ -70,6 +70,8 @@ typedef struct child_s {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *private);
+child_t *children_removei(child_t *c);
+void children_destroy(void);
 #endif
 
 

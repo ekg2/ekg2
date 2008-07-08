@@ -54,10 +54,11 @@
 
 plugin_t *plugins = NULL;
 static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) { return data2->prio - data1->prio; }
-__DYNSTUFF_LIST_ADD_SORTED(plugins, plugin_t, plugin_register_compare);
+__DYNSTUFF_LIST_ADD_SORTED(plugins, plugin_t, plugin_register_compare);		/* plugins_add() */
+__DYNSTUFF_LIST_UNLINK(plugins, plugin_t);					/* plugins_unlink() */
 
 watch_t *watches = NULL;
-__DYNSTUFF_LIST_ADD_BEGINNING(watches, watch_t);
+__DYNSTUFF_LIST_ADD_BEGINNING(watches, watch_t);				/* watches_add() */
 
 idle_t *idles   = NULL;
 
@@ -562,7 +563,7 @@ int plugin_unregister(plugin_t *p)
 			c = commands_removei(c);
 	}
 
-	LIST_UNLINK2(&plugins, p);
+	plugins_unlink(p);
 
 	return 0;
 }

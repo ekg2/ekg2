@@ -3728,7 +3728,7 @@ static COMMAND(cmd_last)
 			last_del(uid);
 			printq("last_clear_uin", format_user(session, uid));
 		} else {
-			last_free();
+			lasts_destroy();
 			printq("last_clear");
 		}
 
