@@ -61,6 +61,7 @@
 #include "log.h"
 
 #include "debug.h"
+#include "dynstuff_inline.h"
 #include "queries.h"
 
 struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
@@ -74,40 +75,34 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
 	{ 0, NULL }
 };
 
-/**
- * userlist_compare()
- *
- * wewnetrzna funkcja pomocna przy list_add_sorted().
- *
- * @param data1 - pierwszy wpis userlisty do porównania.
- * @param data2 - drugi wpis userlisty do porówniania.
- * @sa list_add_sorted
- *
- * @return zwraca wynik xstrcasecmp() na nazwach userów.
- */
+/* userlist: */
 static LIST_ADD_COMPARE(userlist_compare, userlist_t *) { return xstrcasecmp(data1->nickname, data2->nickname); }
 
-/**
- * userlist_resource_compare()
- *
- * internal function used to sort resources by prio and by name
- * used by list_add_sorted() 
- *
- * @param data1 - first ekg_resource_t to compare.
- * @param data2 - second ekg_resource_t to compare.
- * @sa userlist_resource_add
- * @sa list_add_sorted
- *
- * @return It returns result of prio subtraction if resource prio is diffrent.
- * 	Otherwise result of xstrcasecmp() by resources name
- */
+__DYNSTUFF_ADD_SORTED(userlists, userlist_t, userlist_compare);		/* userlists_add() */
 
+
+/* groups: */
+static LIST_ADD_COMPARE(group_compare, struct ekg_group *) { return xstrcasecmp(data1->name, data2->name); }
+static LIST_FREE_ITEM(group_item_free, struct ekg_group *) { xfree(data->name); }
+
+__DYNSTUFF_ADD_SORTED(ekg_groups, struct ekg_group, group_compare);		/* ekg_groups_add() */
+__DYNSTUFF_REMOVE_ITER(ekg_groups, struct ekg_group, group_item_free);		/* ekg_groups_removei() */
+__DYNSTUFF_DESTROY(ekg_groups, struct ekg_group, group_item_free);		/* ekg_groups_destroy() */
+
+/* resources: */
 static LIST_ADD_COMPARE(userlist_resource_compare, ekg_resource_t *) {
 	if (data1->prio != data2->prio)			
 		return (data2->prio - data1->prio);	/* sort by prio */
 
 	return xstrcasecmp(data1->name, data2->name);	/* sort by name */
 }
+
+static LIST_FREE_ITEM(list_userlist_resource_free, ekg_resource_t *) { xfree(data->name); xfree(data->descr); }
+
+__DYNSTUFF_ADD_SORTED(ekg_resources, ekg_resource_t, userlist_resource_compare);	/* ekg_resources_add() */
+__DYNSTUFF_REMOVE_SAFE(ekg_resources, ekg_resource_t, list_userlist_resource_free);	/* ekg_resources_remove() */
+__DYNSTUFF_DESTROY(ekg_resources, ekg_resource_t, list_userlist_resource_free);		/* ekg_resources_destroy() */
+
 
 /*
  * userlist_add_entry()
@@ -163,7 +158,7 @@ void userlist_add_entry(session_t *session, const char *line) {
 		NULL;
 	
 	array_free_count(entry, count);
-	LIST_ADD_SORTED2(&(session->userlist), u, userlist_compare);
+	userlists_add(&(session->userlist), u);
 }
 
 /**
@@ -364,10 +359,6 @@ void userlist_free(session_t *session) {
 	userlist_free_u(&(session->userlist));
 }
 
-static LIST_FREE_ITEM(group_item_free, struct ekg_group *) {
-	xfree(data->name);
-}
-
 static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
 	userlist_t *u = data;
 
@@ -382,28 +373,18 @@ static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
 	xfree(u->foreign);
 	xfree(u->last_descr);
 
-	LIST_DESTROY2(u->groups, group_item_free);
+	ekg_groups_destroy(&(u->groups));
 	userlist_resource_free(u);
 }
+
+__DYNSTUFF_DESTROY(userlists, userlist_t, userlist_free_item);		/* userlists_destroy() */
 
 /* 
  * userlist_free_u()
  *
  * clear and remove from memory given userlist
  */
-void userlist_free_u (userlist_t **userlist)
-{
-        if (!*userlist)
-                return;
-
-        LIST_DESTROY2(*userlist, userlist_free_item);
-        *userlist = NULL;
-}
-
-static LIST_FREE_ITEM(list_userlist_resource_free, ekg_resource_t *) {
-	xfree(data->name);
-	xfree(data->descr);
-}
+void userlist_free_u (userlist_t **userlist) { userlists_destroy(userlist); }		/* XXX, remove */
 
 /**
  * userlist_resource_add()
@@ -422,14 +403,15 @@ static LIST_FREE_ITEM(list_userlist_resource_free, ekg_resource_t *) {
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio) {
 	ekg_resource_t *r;
 
-	if (!u) return NULL;
+	if (!u) 
+		return NULL;
 
 	r	= xmalloc(sizeof(ekg_resource_t));
-	r->name		= xstrdup(name);		/* resource name */
-	r->prio		= prio;				/* resource prio */
-	r->status	= EKG_STATUS_NA;		/* this is quite stupid but we must be legal with ekg2 ABI ? */
+	r->name		= xstrdup(name);
+	r->prio		= prio;
+	r->status	= EKG_STATUS_NA;
 
-	LIST_ADD_SORTED2(&(u->resources), r, userlist_resource_compare);	/* add to list sorted by prio && than by name */
+	ekg_resources_add(&(u->resources), r);
 	return r;
 }
 
@@ -465,9 +447,9 @@ ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name) {
  * @param u - user
  * @param r - resource
  */
-void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
+void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {		/* XXX, remove */
 	if (!u || !r) return;
-	LIST_REMOVE2(&(u->resources), r, list_userlist_resource_free);
+	ekg_resources_remove(&(u->resources), r);
 }
 
 /**
@@ -479,11 +461,9 @@ void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
  * @param u - user
  * @sa userlist_resource_remove - to remove given resource
  */
-void userlist_resource_free(userlist_t *u) {
-	if (!u || !(u->resources)) return;
-
-	LIST_DESTROY2(u->resources, list_userlist_resource_free);
-	u->resources = NULL;
+void userlist_resource_free(userlist_t *u) {					/* XXX, remove */
+	if (!u) return;
+	ekg_resources_destroy(&(u->resources));
 }
 
 /*
@@ -520,7 +500,8 @@ userlist_t *userlist_add_u(userlist_t **userlist, const char *uid, const char *n
         u->nickname = xstrdup(nickname);
         u->status = EKG_STATUS_NA;
 
-        return LIST_ADD_SORTED2(userlist, u, userlist_compare);
+	userlists_add(userlist, u);
+	return u;
 }
 
 /*
@@ -567,8 +548,7 @@ int userlist_replace(session_t *session, userlist_t *u) {
 		return -1;
 	if (!LIST_UNLINK2(&(session->userlist), u) && (errno == ENOENT))
 		return -1;
-	if (!LIST_ADD_SORTED2(&(session->userlist), u, userlist_compare))
-		return -1;
+	userlists_add(&(session->userlist), u);
 
 	return 0;
 }
@@ -853,15 +833,13 @@ int ignored_remove(session_t *session, const char *uid) {
 	if (!(level = ignored_check(session,uid)))
 		return -1;
 
-	for (gl = u->groups; gl; ) {
+	for (gl = u->groups; gl; gl = gl->next) {
 		struct ekg_group *g = gl;
-
-		gl = gl->next;
 
 		if (xstrncasecmp(g->name, "__ignored", 9))
 			continue;
 
-		LIST_REMOVE2(&u->groups, g, group_item_free);
+		gl = ekg_groups_removei(&u->groups, g);
 	}
 
 	if (!u->nickname && !u->groups) {
@@ -1024,19 +1002,6 @@ const char *ignore_format(int level) {
 }
 
 /**
- * group_compare()
- *
- * wewnetrzna funkcja pomocna przy list_add_sorted().
- *
- * @param data1 - pierwszy wpis do porownania
- * @param data2 - drugi wpis do porownania
- * @sa list_add_sorted
- *
- * @return zwraca wynik xstrcasecmp() na nazwach grup.
- */
-static LIST_ADD_COMPARE(group_compare, struct ekg_group *) { return xstrcasecmp(data1->name, data2->name); }
-
-/**
  * ekg_group_add()
  *
  * dodaje u¿ytkownika do podanej grupy.
@@ -1061,7 +1026,7 @@ int ekg_group_add(userlist_t *u, const char *group) {
 	g = xmalloc(sizeof(struct ekg_group));
 	g->name = xstrdup(group);
 
-	LIST_ADD_SORTED2(&u->groups, g, group_compare);
+	ekg_groups_add(&u->groups, g);
 
 	return 0;
 }
@@ -1086,7 +1051,7 @@ int ekg_group_remove(userlist_t *u, const char *group) {
 		struct ekg_group *g = gl;
 
 		if (!xstrcasecmp(g->name, group)) {
-			LIST_REMOVE2(&u->groups, g, group_item_free);
+			(void) ekg_groups_removei(&u->groups, g);
 			
 			return 0;
 		}
@@ -1145,7 +1110,7 @@ struct ekg_group *group_init(const char *names) {
 		struct ekg_group *g = xmalloc(sizeof(struct ekg_group));
 
 		g->name = groups[i];
-		LIST_ADD_SORTED2(&gl, g, group_compare);
+		ekg_groups_add(&gl, g);
 	}
 	/* NOTE: we don't call here array_free() cause we use items of this
 	 * 	array @ initing groups. We don't use strdup()
