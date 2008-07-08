@@ -191,7 +191,7 @@ int config_read(const char *filename)
 	struct stat st;
 
 	if (!in_autoexec && !filename) {
-		alias_free();
+		aliases_destroy();
 		timer_remove_user(-1);
 		event_free();
 		variable_set_default();

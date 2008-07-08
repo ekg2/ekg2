@@ -252,6 +252,12 @@ void windows_save() {
 	}
 }
 
+static LIST_FREE_ITEM(list_alias_free, alias_t *) { xfree(data->name); LIST_DESTROY2(data->commands, list_t_free_item); }
+
+__DYNSTUFF_LIST_ADD(aliases, alias_t);				/* aliases_add() */
+__DYNSTUFF_LIST_REMOVE_ITER(aliases, alias_t, list_alias_free);	/* aliases_removei() */
+__DYNSTUFF_LIST_DESTROY(aliases, alias_t, list_alias_free);	/* aliases_destroy() */
+
 /*
  * alias_add()
  *
@@ -315,7 +321,7 @@ int alias_add(const char *string, int quiet, int append)
 	a->name = xstrdup(string);
 	a->commands = NULL;
 	LIST_ADD2(&(a->commands), list_t_new(xstrdup(cmd)));
-	LIST_ADD2(&aliases, a);
+	aliases_add(a);
 
 	array = (params) ? array_join(params, (" ")) : xstrdup(("?"));
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
@@ -341,23 +347,15 @@ int alias_remove(const char *name, int quiet)
 	alias_t *a;
 	int removed = 0;
 
-	for (a = aliases; a; ) {
-		alias_t *next = a->next;
-
+	for (a = aliases; a; a = a->next) {
 		if (!name || !xstrcasecmp(a->name, name)) {
-			alias_t *tmp;
-
 			if (name)
 				printq("aliases_del", name);
 			command_remove(NULL, a->name);
-			xfree(a->name);
-			LIST_DESTROY2(a->commands, list_t_free_item);
-			if ((tmp = LIST_REMOVE2(&aliases, a, NULL)))
-				next = tmp;
+			
+			a = aliases_removei(a);
 			removed = 1;
 		}
-
-		a = next;
 	}
 
 	if (!removed) {
@@ -373,26 +371,6 @@ int alias_remove(const char *name, int quiet)
 		printq("aliases_del_all");
 
 	return 0;
-}
-
-/**
- * alias_free()
- *
- * Free memory allocated by aliases
- */
-
-void alias_free() {
-	alias_t *a;
-
-	if (!aliases)
-		return;
-
-	for (a = aliases; a; a = a->next) {
-		xfree(a->name);
-		LIST_DESTROY2(a->commands, list_t_free_item);
-	}
-	LIST_DESTROY2(aliases, NULL);
-	aliases = NULL;
 }
 
 /*
@@ -701,6 +679,12 @@ const char *compile_time() {
 
 /* NEW CONFERENCE API HERE, WHEN OLD CONFERENCE API BECOME OBSOLETE CHANGE FUNCTION NAME, ETC.... */
 
+static LIST_FREE_ITEM(newconference_free_item, newconference_t *) { xfree(data->name); xfree(data->session); userlists_destroy(&(data->participants)); }
+
+__DYNSTUFF_LIST_ADD(newconferences, newconference_t);						/* newconferences_add() */
+__DYNSTUFF_LIST_REMOVE_SAFE(newconferences, newconference_t, newconference_free_item);		/* newconferences_remove() */
+__DYNSTUFF_LIST_DESTROY(newconferences, newconference_t, newconference_free_item);		/* newconferences_destroy() */
+
 userlist_t *newconference_member_find(newconference_t *conf, const char *uid) {
 	userlist_t *ul;
 
@@ -754,13 +738,8 @@ newconference_t *newconference_create(session_t *s, const char *name, int create
 	c->session	= xstrdup(s->uid);
 	c->name		= xstrdup(name);
 	
-	return LIST_ADD2(&newconferences, c);
-}
-
-static LIST_FREE_ITEM(newconference_free_item, newconference_t *) {
-	xfree(data->name);
-	xfree(data->session);
-	userlists_destroy(&(data->participants));
+	newconferences_add(c);
+	return c;
 }
 
 void newconference_destroy(newconference_t *conf, int kill_wnd) {
@@ -768,17 +747,17 @@ void newconference_destroy(newconference_t *conf, int kill_wnd) {
 	if (!conf) return;
 	if (kill_wnd) w = window_find_s(session_find(conf->session), conf->name);
 
-	LIST_REMOVE2(&newconferences, conf, newconference_free_item);
-
+	newconferences_remove(conf);
 	window_kill(w);
 }
 
-void newconference_free() {
-	LIST_DESTROY2(newconferences, newconference_free_item);
-	newconferences = NULL;
-}
-
 /* OLD CONFERENCE API HERE, REQUEST REWRITING/USING NEW-ONE */
+
+static LIST_FREE_ITEM(conference_free_item, struct conference *) { xfree(data->name); LIST_DESTROY2(data->recipients, list_t_free_item); }
+
+__DYNSTUFF_LIST_ADD(conferences, struct conference);					/* conferences_add() */
+__DYNSTUFF_LIST_REMOVE_ITER(conferences, struct conference, conference_free_item);	/* conferences_removei() */
+__DYNSTUFF_LIST_DESTROY(conferences, struct conference, conference_free_item);		/* conferences_destroy() */
 
 /*
  * conference_add()
@@ -897,12 +876,9 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	tabnick_add(name);
 
-	return LIST_ADD2(&conferences, xmemdup(&c, sizeof(c)));
-}
-
-static LIST_FREE_ITEM(conference_free_item, struct conference *) {
-	xfree(data->name);
-	LIST_DESTROY2(data->recipients, list_t_free_item);
+	cf = xmemdup(&c, sizeof(c));
+	conferences_add(cf);
+	return cf;
 }
 
 /*
@@ -920,21 +896,15 @@ int conference_remove(const char *name, int quiet)
 	struct conference *c;
 	int removed = 0;
 
-	for (c = conferences; c; ) {
-		struct conference *next = c->next;
-
+	for (c = conferences; c; c = c->next) {
 		if (!name || !xstrcasecmp(c->name, name)) {
-			struct conference *tmp;
-
 			if (name)
 				printq("conferences_del", name);
 			tabnick_remove(c->name);
-			if ((tmp = LIST_REMOVE2(&conferences, c, conference_free_item)))
-				next = tmp;
+
+			c = conferences_removei(c);
 			removed = 1;
 		}
-
-		c = next;
 	}
 
 	if (!removed) {
@@ -1141,20 +1111,6 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	query_emit_id(NULL, CONFERENCE_RENAMED, &oldname, &newname);	/* XXX READ-ONLY QUERY */
 
 	return 0;
-}
-
-/**
- * conference_free()
- *
- * Free memory allocated by conferences.
- */
-
-void conference_free() {
-	if (!conferences)
-		return;
-
-	LIST_DESTROY2(conferences, conference_free_item);
-	conferences = NULL;
 }
 
 /*

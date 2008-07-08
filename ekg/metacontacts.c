@@ -32,10 +32,36 @@
 #include "userlist.h"
 #include "xmalloc.h"
 
+#include "dynstuff_inline.h"
 #include "metacontacts.h"
 #include "queries.h"
 
 metacontact_t *metacontacts = NULL;
+
+/* metacontacts_items: */
+static LIST_ADD_COMPARE(metacontact_add_item_compare, metacontact_item_t *) {
+        if (!data1 || !data1->name || !data1->s_uid || !data2 || !data2->name || !data2->s_uid)
+                return 0;
+
+	if (!xstrcasecmp(data1->s_uid, data2->s_uid))
+		return xstrcasecmp(data1->name, data2->name);
+
+        return xstrcasecmp(session_alias_uid_n(data1->s_uid), session_alias_uid_n(data2->s_uid));
+}
+
+static LIST_FREE_ITEM(metacontact_item_free, metacontact_item_t *) { xfree(data->name); xfree(data->s_uid); }
+
+__DYNSTUFF_ADD_SORTED(metacontact_items, metacontact_item_t, metacontact_add_item_compare);	/* metacontact_items_add() */
+__DYNSTUFF_REMOVE_SAFE(metacontact_items, metacontact_item_t, metacontact_item_free);		/* metacontact_items_remove() */	/* removei() ? */
+__DYNSTUFF_DESTROY(metacontact_items, metacontact_item_t, metacontact_item_free);		/* metacontact_items_destroy() */
+
+/* metacontacts: */
+static LIST_ADD_COMPARE(metacontact_add_compare, metacontact_t *) { return xstrcasecmp(data1->name, data2->name); }
+static LIST_FREE_ITEM(metacontact_list_free, metacontact_t *) { metacontact_items_destroy(&(data->metacontact_items)); xfree(data->name); }
+
+__DYNSTUFF_LIST_ADD_SORTED(metacontacts, metacontact_t, metacontact_add_compare);	/* metacontacts_add() */
+__DYNSTUFF_LIST_REMOVE_SAFE(metacontacts, metacontact_t, metacontact_list_free);	/* metacontacts_remove() */	/* removei() ? */
+__DYNSTUFF_LIST_DESTROY(metacontacts, metacontact_t, metacontact_list_free);		/* metacontacts_destroy() */
 
 static int metacontact_add_item(metacontact_t *m, const char *session, const char *name, unsigned int prio, int quiet);
 static int metacontact_remove_item(metacontact_t *m, const char *session, const char *name, int quiet);
@@ -212,18 +238,6 @@ metacontact_t *metacontact_find(const char *name)
 	return NULL;
 }
 
-/* 
- * metacontact_add_compare()
- *
- * helpfull function when adding to the metacontacts list 
- */
-static LIST_ADD_COMPARE(metacontact_add_compare, metacontact_t *) {
-        if (!data1 || !data1->name || !data2 || !data2->name)
-                return 0;
-
-        return xstrcasecmp(data1->name, data2->name);
-}
-
 /*
  * metacontact_add()
  * 
@@ -240,22 +254,8 @@ metacontact_t *metacontact_add(const char *name)
 	m = xmalloc(sizeof(metacontact_t));
 	m->name = xstrdup(name);
 
-	return LIST_ADD_SORTED2(&metacontacts, m, metacontact_add_compare);
-}
-
-/*
- * metacontact_add_item_compare()
- * 
- * heplfull when adding to items list
- */
-static LIST_ADD_COMPARE(metacontact_add_item_compare, metacontact_item_t *) {
-        if (!data1 || !data1->name || !data1->s_uid || !data2 || !data2->name || !data2->s_uid)
-                return 0;
-
-	if (!xstrcasecmp(data1->s_uid, data2->s_uid))
-		return xstrcasecmp(data1->name, data2->name);
-
-        return xstrcasecmp(session_alias_uid_n(data1->s_uid), session_alias_uid_n(data2->s_uid));
+	metacontacts_add(m);
+	return m;
 }
 
 /*
@@ -318,19 +318,9 @@ static int metacontact_add_item(metacontact_t *m, const char *session, const cha
 	i->s_uid	= xstrdup(s->uid);
 	i->prio		= prio;
 
-	LIST_ADD_SORTED2(&m->metacontact_items, i, metacontact_add_item_compare);
+	metacontact_items_add(&m->metacontact_items, i);
 
 	return 1;
-}
-
-static LIST_FREE_ITEM(metacontact_item_free, metacontact_item_t *) {
-	xfree(data->name);
-	xfree(data->s_uid);
-}
-
-static LIST_FREE_ITEM(metacontact_list_free, metacontact_t *) {
-        LIST_DESTROY2(data->metacontact_items, metacontact_item_free);
-	xfree(data->name);
 }
 
 /* 
@@ -360,7 +350,7 @@ static int metacontact_remove_item(metacontact_t *m, const char *session, const 
 		return 0;
 	}	
 
-	LIST_REMOVE2(&m->metacontact_items, i, metacontact_item_free);
+	metacontact_items_remove(&m->metacontact_items, i);
 	
 	return 1;
 }
@@ -383,7 +373,7 @@ static int metacontact_remove(const char *name)
 		i = next;
 	}
 
-        LIST_REMOVE2(&metacontacts, m, metacontact_list_free);
+	metacontacts_remove(m);
 
 	return 1;
 }
@@ -536,17 +526,6 @@ void metacontact_init()
 {
 	query_connect_id(NULL, SESSION_RENAMED, metacontact_session_renamed_handler, NULL);
 	query_connect_id(NULL, USERLIST_REMOVED, metacontact_userlist_removed_handler, NULL);
-}
-
-/* 
- * metacontact_free()
- * 
- * it should free all memory user by metacontacts
- */
-void metacontact_free()
-{
-
-	LIST_DESTROY2(metacontacts, metacontact_list_free);
 }
 
 /*

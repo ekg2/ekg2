@@ -281,7 +281,7 @@ void windows_save();
 
 int alias_add(const char *string, int quiet, int append);
 int alias_remove(const char *name, int quiet);
-void alias_free();
+void aliases_destroy();
 
 char *base64_encode(const char *buf, size_t len);
 char *base64_decode(const char *buf);
@@ -310,7 +310,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 int conference_set_ignore(const char *name, int flag, int quiet);
 int conference_rename(const char *oldname, const char *newname, int quiet);
 int conference_participant(struct conference *c, const char *uid);
-void conference_free();
+void conferences_destroy();
 
 /* BEGIN OF newconference API HERE */
 userlist_t *newconference_member_add(newconference_t *conf, const char *uid, const char *nick);
@@ -319,7 +319,7 @@ int newconference_member_remove(newconference_t *conf, userlist_t *u);
 newconference_t *newconference_create(session_t *s, const char *name, int create_wnd);
 newconference_t *newconference_find(session_t *s, const char *name);
 void newconference_destroy(newconference_t *conf, int kill_wnd);
-void newconference_free();
+void newconferences_destroy();
 /* END of newconference API */
 
 void ekg_connect();

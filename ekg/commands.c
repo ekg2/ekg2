@@ -2310,7 +2310,7 @@ static COMMAND(cmd_reload)
 	if ((res = config_read(NULL))) printq("error_reading_config", strerror(errno));
 	if (res == -1) return -1;
 
-	metacontact_free();
+	metacontacts_destroy();
 
 	if ((res = session_read(NULL))) printq("error_reading_config", strerror(errno));
 	if (res == -1) return -1;

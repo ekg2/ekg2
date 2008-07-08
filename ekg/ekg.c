@@ -1160,9 +1160,9 @@ void ekg_exit()
 /* XXX, think about sequence of unloading. */
 
 	msgs_queue_destroy();
-	conference_free();
-	newconference_free();
-	metacontact_free();
+	conferences_destroy();
+	newconferences_destroy();
+	metacontacts_destroy();
 	sessions_free();
 
 	{
@@ -1180,7 +1180,7 @@ void ekg_exit()
 	}
 
 	audio_deinitialize();
-	alias_free();
+	aliases_destroy();
 	theme_free();
 	variables_destroy();
 	script_variables_free(1);

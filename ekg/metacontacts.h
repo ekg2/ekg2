@@ -44,7 +44,7 @@ metacontact_t *metacontact_find(const char *name);
 metacontact_item_t *metacontact_find_prio(metacontact_t *m);
 
 void metacontact_init();
-void metacontact_free();
+void metacontacts_destroy();
 
 int metacontact_write();
 int metacontact_read();
