@@ -103,7 +103,6 @@ __DYNSTUFF_ADD_SORTED(ekg_resources, ekg_resource_t, userlist_resource_compare);
 __DYNSTUFF_REMOVE_SAFE(ekg_resources, ekg_resource_t, list_userlist_resource_free);	/* ekg_resources_remove() */
 __DYNSTUFF_DESTROY(ekg_resources, ekg_resource_t, list_userlist_resource_free);		/* ekg_resources_destroy() */
 
-
 /*
  * userlist_add_entry()
  *
@@ -342,7 +341,7 @@ void userlist_clear_status(session_t *session, const char *uid) {
 			xfree(u->descr);
 			u->descr = NULL;
 
-			userlist_resource_free(u);
+			ekg_resources_destroy(&(u->resources));
 		}
         }
 }
@@ -356,7 +355,7 @@ void userlist_free(session_t *session) {
 	if (!session)
 		return;
 
-	userlist_free_u(&(session->userlist));
+	userlists_destroy(&(session->userlist));
 }
 
 static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
@@ -374,17 +373,10 @@ static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
 	xfree(u->last_descr);
 
 	ekg_groups_destroy(&(u->groups));
-	userlist_resource_free(u);
+	ekg_resources_destroy(&(u->resources));
 }
 
 __DYNSTUFF_DESTROY(userlists, userlist_t, userlist_free_item);		/* userlists_destroy() */
-
-/* 
- * userlist_free_u()
- *
- * clear and remove from memory given userlist
- */
-void userlist_free_u (userlist_t **userlist) { userlists_destroy(userlist); }		/* XXX, remove */
 
 /**
  * userlist_resource_add()
@@ -450,20 +442,6 @@ ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name) {
 void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {		/* XXX, remove */
 	if (!u || !r) return;
 	ekg_resources_remove(&(u->resources), r);
-}
-
-/**
- * userlist_resource_free()
- *
- * Remove all user @a u resources.<br>
- * Free allocated memory.
- *
- * @param u - user
- * @sa userlist_resource_remove - to remove given resource
- */
-void userlist_resource_free(userlist_t *u) {					/* XXX, remove */
-	if (!u) return;
-	ekg_resources_destroy(&(u->resources));
 }
 
 /*

@@ -760,7 +760,7 @@ newconference_t *newconference_create(session_t *s, const char *name, int create
 static LIST_FREE_ITEM(newconference_free_item, newconference_t *) {
 	xfree(data->name);
 	xfree(data->session);
-	userlist_free_u(&data->participants);
+	userlists_destroy(&(data->participants));
 }
 
 void newconference_destroy(newconference_t *conf, int kill_wnd) {

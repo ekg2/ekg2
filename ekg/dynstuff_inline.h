@@ -249,7 +249,7 @@
 
 #define __DYNSTUFF_ADD_SORTED(prefix, typ, comparision) 	\
 	void prefix##_add(typ **lista, typ *new) {		\
-		typ *tmp = lista;				\
+		typ *tmp;					\
 								\
 		new->next = NULL;				\
 		if (!(tmp = *lista)) {				\
@@ -265,8 +265,8 @@
 			}					\
 								\
 			if (!prev) {				\
-				new->next = lista;		\
-				lista = new;			\
+				new->next = *lista;		\
+				*lista = new;			\
 			} else {				\
 				prev->next = new;		\
 				new->next = tmp;		\

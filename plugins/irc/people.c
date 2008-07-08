@@ -592,7 +592,7 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		/* GiM: check if window isn't allready destroyed */
 		w = window_find_s(s, chan->name);
 		if (w && w->userlist)
-			userlist_free_u(&(w->userlist));
+			userlists_destroy(&(w->userlist));
 		/* 
 		 * window_kill(chan->window, 1);
 		 */

@@ -171,13 +171,12 @@ userlist_t *userlist_find(session_t *session, const char *uid);
 userlist_t *userlist_find_u(userlist_t **userlist, const char *uid);
 #define userlist_find_n(a, b) userlist_find(session_find(a), b)
 void userlist_free(session_t *session);
-void userlist_free_u(userlist_t **userlist);
+void userlists_destroy(userlist_t **userlist);
 
 /* u->resource */
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio);
 ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name);
 void userlist_resource_remove(userlist_t *u, ekg_resource_t *r);
-void userlist_resource_free(userlist_t *u);
 
 int ignored_add(session_t *session, const char *uid, ignore_t level);
 int ignored_remove(session_t *session, const char *uid);
