@@ -1180,13 +1180,6 @@ void ncurses_binding_init()
 	ncurses_binding_complete	= binding_complete;
 	ncurses_binding_accept_line	= binding_accept_line;
 }
-#if 0
-static void ncurses_binding_destroy()
-{
-
-}
-#endif
-
 
 /*
  * Local Variables:

@@ -884,12 +884,6 @@ static WATCHER_SESSION(irc_handle_connect) { /* tymczasowy */
 /*                                                                       *
  * ======================================== COMMANDS ------------------- *
  *                                                                       */
-#if 0
-static void resolver_child_handler(child_t *c, int pid, const char *name, int status, void *priv) {
-	debug("(%s) resolver [%d] exited with %d\n", name, pid, status);
-}
-#endif
-
 static int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **address) {
 	struct sockaddr_in  *ipv4;
 	struct sockaddr_in6 *ipv6;
@@ -1949,7 +1943,6 @@ static COMMAND(irc_command_ban) {
 }
 
 static COMMAND(irc_command_kickban) {
-	const char	*p[4] = { params[0], params[1], params[2], NULL };
 
 	if (!xstrcmp(name, ("kickban")))
 	{
@@ -1959,7 +1952,7 @@ static COMMAND(irc_command_kickban) {
 		irc_command_ban(("ban"), params, session, target, quiet);
 		irc_command_kick(("kick"), params, session, target, quiet);
 	}
-	if (p) ;
+
 	return 0;
 }
 

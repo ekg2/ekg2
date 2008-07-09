@@ -337,7 +337,3 @@ gboolean key_handle_key_press(GtkWidget *wid, GdkEventKey * evt, window_t *sess)
 void gtk_binding_init() {
 
 }
-
-static void gtk_binding_destroy() {
-
-}

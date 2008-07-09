@@ -2047,7 +2047,7 @@ static COMMAND(jabber_muc_command_topic) {
 /* XXX da, /topic is possible in normal talk too... current limit only to muc. */
 	if (params[0] && (c = newconference_find(session, params[0]))) {
 		subject = jabber_escape(params[1]);
-	} else if (c = newconference_find(session, target)) {
+	} else if ((c = newconference_find(session, target))) {
 		if (params[0] && params[1]) {
 			tmp = saprintf("%s %s", params[0], params[1]);
 			subject = jabber_escape(tmp);
