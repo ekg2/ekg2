@@ -1261,13 +1261,14 @@ IRC_COMMAND(irc_c_join)
 	window_t	*newwin;
 	people_t	*person;
 	int		me = 0;
-	char		*ignore_nick;
+	char		*irc_nick;
 
 	/* irc channels are said to be case insensitive, so I think
 	 * we can do it 'in place', without a copy
 	 */
 	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
 	ekg2_channel = saprintf("%s:%s", IRC3, irc_channel);
+	irc_nick = saprintf("%s:%s", IRC3, param[0]+1);
 
 	if ((tmp = xstrchr(param[0], '!'))) *tmp='\0';
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
@@ -1287,8 +1288,7 @@ IRC_COMMAND(irc_c_join)
 		irc_access_parse(s, irc_find_channel(j->channels, irc_channel), person, 0);
 	}
 
-	ignore_nick = saprintf("%s%s", IRC4, param[0]+1);
-	if (!(ignored_check(s, ignore_nick) & IGNORE_NOTIFY)) {
+	if (!(ignored_check(s, ekg2_channel) & IGNORE_NOTIFY) && !(ignored_check(s, irc_nick) & IGNORE_NOTIFY)) {
 		print_window(ekg2_channel, s, 0, me ? "irc_joined_you" : "irc_joined",
 				session_name(s), param[0]+1, tmp?tmp+1:"", irc_channel);
 		if (me)	{
@@ -1307,7 +1307,7 @@ IRC_COMMAND(irc_c_join)
 	}
 	if (tmp) *tmp='!';
 
-	xfree(ignore_nick);
+	xfree(irc_nick);
 	xfree(ekg2_channel);
 	return 0;
 }
@@ -1319,7 +1319,7 @@ IRC_COMMAND(irc_c_join)
  */
 IRC_COMMAND(irc_c_part)
 {
-	char	*ekg2_channel, *irc_channel, *tmp, *coloured, *ignore_nick;
+	char	*ekg2_channel, *irc_channel, *tmp, *coloured, *irc_nick;
 	int	me = 0;
 	
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
@@ -1329,6 +1329,7 @@ IRC_COMMAND(irc_c_part)
 
 	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
 	ekg2_channel = saprintf("%s:%s", IRC3, irc_channel);
+	irc_nick = saprintf("%s:%s", IRC3, param[0]+1);
 
 	/* Servers MUST be able to parse arguments in the form of
 	 * a list of target, but SHOULD NOT use lists when sending
@@ -1351,17 +1352,16 @@ IRC_COMMAND(irc_c_part)
 	 * G->dj: yep, but we can make this behaviour dependent on something
 	 * e.g: on my fave: DISPLAY_IN_CURRENT :)
 	 */
-	ignore_nick = saprintf("%s%s", IRC4, param[0]+1);
-	if (!(ignored_check(s, ignore_nick) & IGNORE_NOTIFY)) {
+	if (!(ignored_check(s, ekg2_channel) & IGNORE_NOTIFY) && !(ignored_check(s, irc_nick) & IGNORE_NOTIFY)) {
 		print_window(ekg2_channel, s, 0, (me)?"irc_left_you":"irc_left", session_name(s),
 				param[0]+1, tmp?tmp+1:"", irc_channel, coloured);
 	}
-	xfree(ignore_nick);
 	
 	if (tmp) *tmp='!';
 	
 	xfree(coloured);
 	xfree(ekg2_channel);
+	xfree(irc_nick);
 	
 	return 0;
 }
