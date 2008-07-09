@@ -162,11 +162,9 @@ void tabnick_add(const char *nick)
 		send_nicks_count--;
 	}
 
-	for (i = send_nicks_count; i > 0; i--)
-		send_nicks[i] = send_nicks[i - 1];
+	memmove(send_nicks[1], send_nicks[0], send_nicks_count * sizeof(send_nicks[0]) );
 
-	if (send_nicks_count != SEND_NICKS_MAX)
-		send_nicks_count++;
+	send_nicks_count++;
 	
 	send_nicks[0] = xstrdup(nick);
 }
@@ -200,7 +198,7 @@ void tabnick_remove(const char *nick)
  *
  * czy¶ci listê nicków dope³nianych tabem.
  */
-void tabnick_flush()
+static void tabnick_flush()
 {
 	int i;
 
@@ -632,7 +630,7 @@ static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 	return 0;
 }
 
-void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, void *priv)
+static void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, void *priv)
 {
 	int quiet = (name && name[0] == '^');
 
@@ -1215,7 +1213,7 @@ static COMMAND(cmd_help)
 
 static COMMAND(cmd_ignore)
 {
-	const char *uid;
+	char *uid;
 
 	if (*name == 'i' || *name == 'I') {
 		int flags, modified = 0;
@@ -1281,7 +1279,6 @@ static COMMAND(cmd_ignore)
 
 	} else {
 		int unignore_all = ((params[0] && !xstrcmp(params[0], "*")) ? 1 : 0);
-		int level;
 
 		if (!params[0]) {
 			printq("not_enough_params", name);
@@ -1308,8 +1305,6 @@ static COMMAND(cmd_ignore)
 				if (!ignored_remove(session, u->uid))
 					x = 1;
 
-				level = ignored_check(session, u->uid);
-
 				ul = next;
 			}
 
@@ -1324,8 +1319,6 @@ static COMMAND(cmd_ignore)
 			return 0;
 		}
 
-		level = ignored_check(session, uid);
-		
 		if (!ignored_remove(session, uid)) {
 			printq("ignored_deleted", format_user(session, params[0]));
 			config_changed = 1;
@@ -1345,7 +1338,7 @@ COMMAND(cmd_list)
 	char **argv = NULL, *show_group = NULL;
 	const char *tmp;
 	metacontact_t *m = NULL;
-	char *params0 = params[0];
+	const char *params0 = params[0];
 
         if (!params0 && window_current->target) { 
 		params0 = window_current->target;
@@ -4149,16 +4142,12 @@ int command_remove(plugin_t *plugin, const char *name)
 {
 	command_t *c;
 
-	for (c = commands; c;) {
-		command_t *next = c->next;
-
+	for (c = commands; c; c = c->next) {
 		if (!xstrcasecmp(name, c->name) && plugin == c->plugin) {
 			commands_remove(c);
 
 			return 0;
 		}
-
-		c = next;
 	}
 
 	return -1;

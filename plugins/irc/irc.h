@@ -36,8 +36,6 @@ enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
 /* irc_private_t->casemapping values */
 enum { IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT, IRC_CASEMAPPING_COUNT };
 
-extern char *sopt_keys[];
-
 typedef struct _irc_private_t {
 	int fd;				/* connection's fd */
 	int connecting;			/* are we connecting _now_ ? */

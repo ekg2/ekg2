@@ -104,7 +104,6 @@ extern int send_nicks_count, send_nicks_index;
 #ifndef EKG2_WIN32_NOFUNCTION
 void tabnick_add(const char *nick);
 void tabnick_remove(const char *nick);
-void tabnick_flush();
 
 int binding_help(int a, int b);
 int binding_quick_list(int a, int b);

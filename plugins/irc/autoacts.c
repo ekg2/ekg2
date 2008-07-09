@@ -25,7 +25,6 @@
 #include "irc.h"
 #include "autoacts.h"
 
-extern plugin_t irc_plugin; 
 static TIMER(irc_autorejoin_timer);
 
 /**
