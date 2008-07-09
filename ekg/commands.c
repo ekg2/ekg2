@@ -162,7 +162,7 @@ void tabnick_add(const char *nick)
 		send_nicks_count--;
 	}
 
-	memmove(send_nicks[1], send_nicks[0], send_nicks_count * sizeof(send_nicks[0]) );
+	memmove(&send_nicks[1], &send_nicks[0], send_nicks_count * sizeof(send_nicks[0]) );
 
 	send_nicks_count++;
 	
