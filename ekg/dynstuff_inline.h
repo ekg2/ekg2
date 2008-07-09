@@ -377,14 +377,18 @@
 #define DYNSTUFF_LIST_DECLARE(lista, type, free_func, list_add, list_remove, list_destroy)	\
 		DYNSTUFF_LIST_DECLARE_WC(lista, type, free_func, list_add, list_remove, list_destroy, __DYNSTUFF_NOCOUNT)
 
+#define DYNSTUFF_LIST_DECLARE_NF(lista, type, list_add, list_unlink) \
+		DYNSTUFF_LIST_DECLARE_FULL(lista, type, NULL, NULL, list_add, __DYNSTUFF_NOREMOVE, __DYNSTUFF_NOREMOVE, list_unlink, __DYNSTUFF_NODESTROY, __DYNSTUFF_NOCOUNT)
+
 #define DYNSTUFF_LIST_DECLARE_WC(lista, type, free_func, list_add, list_remove, list_destroy, list_count) \
 		DYNSTUFF_LIST_DECLARE_FULL(lista, type, NULL, free_func, list_add, list_remove, __DYNSTUFF_NOREMOVE, __DYNSTUFF_NOUNLINK, list_destroy, list_count)
 
-#define DYNSTUFF_LIST_DECLARE2(lista, type, free_func, list_add, list_remove, list_remove2, list_destroy)	\
-		DYNSTUFF_LIST_DECLARE_FULL(lista, type, NULL, free_func, list_add, list_remove, list_remove2, __DYNSTUFF_NOUNLINK, list_destroy, __DYNSTUFF_NOCOUNT)
-
 #define DYNSTUFF_LIST_DECLARE_SORTED(lista, type, compare_func, free_func, list_add, list_remove, list_destroy)	\
 		DYNSTUFF_LIST_DECLARE_FULL(lista, type, compare_func, free_func, list_add, list_remove, __DYNSTUFF_NOREMOVE, __DYNSTUFF_NOUNLINK, list_destroy, __DYNSTUFF_NOCOUNT)
+
+
+#define DYNSTUFF_LIST_DECLARE2(lista, type, free_func, list_add, list_remove, list_remove2, list_destroy)	\
+		DYNSTUFF_LIST_DECLARE_FULL(lista, type, NULL, free_func, list_add, list_remove, list_remove2, __DYNSTUFF_NOUNLINK, list_destroy, __DYNSTUFF_NOCOUNT)
 
 #define DYNSTUFF_LIST_DECLARE2_SORTED(lista, type, compare_func, free_func, list_add, list_remove, list_remove2, list_destroy)	\
 		DYNSTUFF_LIST_DECLARE_FULL(lista, type, compare_func, free_func, list_add, list_remove, list_remove2, __DYNSTUFF_NOUNLINK, list_destroy, __DYNSTUFF_NOCOUNT)

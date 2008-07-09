@@ -4144,8 +4144,7 @@ int command_remove(plugin_t *plugin, const char *name)
 
 	for (c = commands; c; c = c->next) {
 		if (!xstrcasecmp(name, c->name) && plugin == c->plugin) {
-			commands_remove(c);
-
+			(void) commands_removei(c);
 			return 0;
 		}
 	}

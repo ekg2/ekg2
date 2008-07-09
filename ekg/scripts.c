@@ -14,6 +14,7 @@
 
 #include "debug.h"
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "scripts.h"
 #include "xmalloc.h"
 
@@ -31,7 +32,18 @@
  */
 
 script_t	*scripts;
+
+static LIST_FREE_ITEM(list_script_free, script_t *) { xfree(data->name); xfree(data->path); }
+DYNSTUFF_LIST_DECLARE(scripts, script_t, list_script_free,
+	static __DYNSTUFF_LIST_ADD,		/* scripts_add() */
+	static __DYNSTUFF_LIST_REMOVE_SAFE,	/* scripts_remove() */
+	__DYNSTUFF_NODESTROY)
+
 scriptlang_t	*scriptlang;
+
+DYNSTUFF_LIST_DECLARE_NF(scriptlang, scriptlang_t,
+	static __DYNSTUFF_LIST_ADD,		/* scriptlang_add() */
+	static __DYNSTUFF_LIST_UNLINK)		/* scriptlang_unlink() */
 
 static list_t script_timers;
 static list_t script_plugins;
@@ -67,7 +79,7 @@ scriptlang_t *scriptlang_from_ext(char *name)
 
 int scriptlang_register(scriptlang_t *s)
 {
-	LIST_ADD2(&scriptlang, s);
+	scriptlang_add(s);
 
 	s->init();
 	
@@ -80,7 +92,7 @@ int scriptlang_unregister(scriptlang_t *s)
 {
 	script_unload_lang(s);
 	s->deinit();
-	LIST_UNLINK2(&scriptlang, s);
+	scriptlang_unlink(s);
 	
 	return 0;
 }
@@ -287,9 +299,7 @@ int script_unload(script_t *scr)
 
 	print("script_removed", scr->name, scr->path, slang->name);
 	
-	xfree(scr->name);
-	xfree(scr->path);
-	LIST_REMOVE2(&scripts, scr, NULL);
+	scripts_remove(scr);
 
 	return 0;
 }
@@ -393,7 +403,7 @@ int script_load(scriptlang_t *s, char *tname)
 		scr->lang = slang;
 		scr->inited = 1;
 		
-		LIST_ADD2(&scripts, scr); /* BUG: this should be before `script_loaded`...  */
+		scripts_add(scr);	/* BUG: this should be before `script_loaded`...  */
 
 		ret = slang->script_load(scr);
 

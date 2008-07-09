@@ -2862,6 +2862,13 @@ struct ekg_converter {
 };
 
 static struct ekg_converter *ekg_converters = NULL;	/**< list for internal use of ekg_convert_string_*() */
+
+static LIST_FREE_ITEM(list_ekg_converter_free, struct ekg_converter *) { xfree(data->from); xfree(data->to); }
+DYNSTUFF_LIST_DECLARE(ekg_converters, struct ekg_converter, list_ekg_converter_free,
+	static __DYNSTUFF_LIST_ADD,		/* ekg_converters_add() */
+	static __DYNSTUFF_LIST_REMOVE_ITER,	/* ekg_converters_removei() */
+	__DYNSTUFF_NODESTROY)			/* XXX? */
+
 #endif
 
 /**
@@ -2952,7 +2959,7 @@ void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
 				c->is_utf = 2;
 			else if (!xstrcasecmp(c->from, "UTF-8"))
 				c->is_utf = 1;
-			LIST_ADD2(&ekg_converters, c);
+			ekg_converters_add(c);
 		}
 
 		return cd;
@@ -3008,9 +3015,7 @@ void ekg_convert_string_destroy(void *ptr) {
 					c->to		= tmp;
 				}
 			} else { /* else, free it */
-				xfree(c->from);
-				xfree(c->to);
-				LIST_REMOVE2(&ekg_converters, c, NULL);
+				(void) ekg_converters_removei(c);
 			}
 		}
 		
