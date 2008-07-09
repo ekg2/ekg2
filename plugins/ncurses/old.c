@@ -2350,7 +2350,6 @@ void ncurses_redraw_input(unsigned int ch) {
 	const int promptlen = ncurses_lines ? 0 : ncurses_current->prompt_real_len;
 #ifdef WITH_ASPELL
 	char *aspell_line = NULL;
-	int mispelling = 0; /* zmienna pomocnicza */
 #endif
 	if (line_index - line_start > input->_maxx - 9 - promptlen)
 		line_start += input->_maxx - 19 - promptlen;
@@ -2380,9 +2379,6 @@ void ncurses_redraw_input(unsigned int ch) {
 #ifdef WITH_ASPELL
 			if (spell_checker) {
 				aspell_line = xmalloc(plen);
-				if (line_start == 0) 
-					mispelling = 0;
-					    
 				spellcheck(p, aspell_line);
 	                }
 #endif
@@ -2432,9 +2428,6 @@ void ncurses_redraw_input(unsigned int ch) {
 #ifdef WITH_ASPELL		
 		if (spell_checker) {
 			aspell_line = xmalloc(linelen + 1);
-			if (line_start == 0) 
-				mispelling = 0;
-	
 			spellcheck(ncurses_line, aspell_line);
 		}
 #endif
