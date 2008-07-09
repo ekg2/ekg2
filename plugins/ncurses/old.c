@@ -1444,6 +1444,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 			len = xstrlen(data[i].name);
 
 			if (!strncmp(p, data[i].name, len) && p[len] == '}') {
+				int percent_ok = (!xstrcmp(data[i].name, "activity") || !xstrcmp(data[i].name, "time"));	/* XXX */
 				char *text = data[i].text;
 				char *ftext = NULL;
                              	
@@ -1463,43 +1464,43 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 						continue;
 					}
 
-					if (*text != '%') {
+					if (*text == '%' && percent_ok) {
+						text++;
+
+						if (!*text)	
+							break;
+
+						switch (*text) {
+							__fgcolor('k', 'K', COLOR_BLACK);
+							__fgcolor('r', 'R', COLOR_RED);
+							__fgcolor('g', 'G', COLOR_GREEN);
+							__fgcolor('y', 'Y', COLOR_YELLOW);
+							__fgcolor('b', 'B', COLOR_BLUE);
+							__fgcolor('m', 'M', COLOR_MAGENTA);
+							__fgcolor('c', 'C', COLOR_CYAN);
+							__fgcolor('w', 'W', COLOR_WHITE);
+							__bgcolor('l', COLOR_BLACK);
+							__bgcolor('s', COLOR_RED);
+							__bgcolor('h', COLOR_GREEN);
+							__bgcolor('z', COLOR_YELLOW);
+							__bgcolor('e', COLOR_BLUE);
+							__bgcolor('q', COLOR_MAGENTA);
+							__bgcolor('d', COLOR_CYAN);
+							__bgcolor('x', COLOR_WHITE);
+							case 'n':
+								bgcolor = COLOR_BLUE;
+								fgcolor = COLOR_WHITE;
+								bold = 0;
+								break;
+						}
+
+						text++;
+						wattrset(w, color_pair_bold(fgcolor, bold, bgcolor));
+					} else {
 						waddch(w, (unsigned char) *text);
 						text++;	
 						x++;
-						continue;
 					}
-					text++;
-					
-					if (!*text)	
-						break;
-
-		                        switch (*text) {
-		                                __fgcolor('k', 'K', COLOR_BLACK);
-                		                __fgcolor('r', 'R', COLOR_RED);
-		                                __fgcolor('g', 'G', COLOR_GREEN);
-                		                __fgcolor('y', 'Y', COLOR_YELLOW);
-                                		__fgcolor('b', 'B', COLOR_BLUE);
-		                                __fgcolor('m', 'M', COLOR_MAGENTA);
-		                                __fgcolor('c', 'C', COLOR_CYAN);
-		                                __fgcolor('w', 'W', COLOR_WHITE);
-		                                __bgcolor('l', COLOR_BLACK);
-		                                __bgcolor('s', COLOR_RED);
-		                                __bgcolor('h', COLOR_GREEN);
-		                                __bgcolor('z', COLOR_YELLOW);
-		                                __bgcolor('e', COLOR_BLUE);
-		                                __bgcolor('q', COLOR_MAGENTA);
-		                                __bgcolor('d', COLOR_CYAN);
-		                                __bgcolor('x', COLOR_WHITE);
-		                                case 'n':
-		                                        bgcolor = COLOR_BLUE;
-		                                        fgcolor = COLOR_WHITE;
-		                                        bold = 0;
-		                                        break;
-                		        }
-					
-					text++;
-		                        wattrset(w, color_pair_bold(fgcolor, bold, bgcolor));
 				}
 
 //				waddstr(w, text);
