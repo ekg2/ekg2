@@ -373,8 +373,56 @@ cleanup:
 
 static COMMAND(cmd_alias)
 {
-	int ok = 0;
+	if (match_arg(params[0], 'a', ("add"), 2)) {
+		if (!params[1] || !xstrchr(params[1], ' ')) {
+			printq("not_enough_params", name);
+			return -1;
+		}
 
+		if (!alias_add(params[1], quiet, 0)) {
+			config_changed = 1;
+			return 0;
+		}
+
+		return -1;
+	}
+
+	if (match_arg(params[0], 'A', ("append"), 2)) {
+		if (!params[1] || !xstrchr(params[1], ' ')) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!alias_add(params[1], quiet, 1)) {
+			config_changed = 1;
+			return 0;
+		}
+
+		return -1;
+	}
+
+	if (match_arg(params[0], 'd', ("del"), 2)) {
+		int ret;
+
+		if (!params[1]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!xstrcmp(params[1], "*"))
+			ret = alias_remove(NULL, quiet);
+		else {
+			ret = alias_remove(params[1], quiet);
+		}
+
+		if (!ret) {
+			config_changed = 1;
+			return 0;
+		}
+
+		return -1;
+	}
+	
 	if (!params[0] || match_arg(params[0], 'l', ("list"), 2) || params[0][0] != '-') {
 		alias_t *a;
 		int count = 0;
@@ -416,27 +464,7 @@ static COMMAND(cmd_alias)
 		return 0;
 	}
 
-	if (!params[1] || !xstrchr(params[1], ' ')) {
-		printq("not_enough_params", name);
-		return -1;
-	}
-
-	if (match_arg(params[0], 'a', ("add"), 2)) {
-		ok = !alias_add(params[1], quiet, 0);
-	} else if (match_arg(params[0], 'A', ("append"), 2)) {
-		ok = !alias_add(params[1], quiet, 1);
-	} if (match_arg(params[0], 'd', ("del"), 2)) {
-		if (!xstrcmp(params[1], "*"))
-			ok = !alias_remove(NULL, quiet);
-		else
-			ok = !alias_remove(params[1], quiet);
-	} else
-		printq("invalid_params", name);
-
-	if (ok) {
-		config_changed = 1;
-		return 0;
-	}
+	printq("invalid_params", name);
 
 	return -1;
 }
