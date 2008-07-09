@@ -387,16 +387,14 @@ static COMMAND(cmd_alias)
 
 		for (a = aliases; a; a = a->next) {
 			list_t m;
-			int first = 1, i;
+			int first = 1;
 			char *tmp;
 			
 			if (aname && xstrcasecmp(aname, a->name))
 				continue;
 
 			tmp = xcalloc(xstrlen(a->name) + 1, sizeof(char));
-
-			for (i = 0; i < xstrlen(a->name); i++)
-				xstrcat(tmp, " ");
+			memset(tmp, ' ', xstrlen(a->name));
 
 			for (m = a->commands; m; m = m->next) {
 				printq((first) ? "aliases_list" : "aliases_list_next", a->name, (char *) m->data, tmp);
