@@ -74,18 +74,18 @@ typedef struct list *list_t;
 #ifndef EKG2_WIN32_NOFUNCTION
 #define LIST_ADD_COMPARE(x, type)			int x(const type data1, const type data2)
 #define LIST_ADD_SORTED(list, data, comp)		list_add_sorted(list, data, (void *) comp)
-#define LIST_ADD_SORTED2(list, data, comp)		list_add_sorted3((list_t *) list, (list_t) data, (void *) comp)
-#define LIST_ADD_BEGINNING2(list, data)			list_add_beginning3((list_t *) list, (list_t) data)
-#define LIST_ADD2(list, data)				list_add3((list_t *) list, (list_t) data)
+#define LIST_ADD_SORTED2(list, data, comp)		list_add_sorted3((list_t *) (void *) list, (list_t) data, (void *) comp)
+#define LIST_ADD_BEGINNING2(list, data)			list_add_beginning3((list_t *) (void *) list, (list_t) data)
+#define LIST_ADD2(list, data)				list_add3((list_t *) (void *) list, (list_t) data)
 
 #define LIST_COUNT2(list)				list_count((list_t) list)
 #define LIST_GET_NTH2(list, id)				list_get_nth3((list_t) list, id)
 #define LIST_RESORT(list, comp)				list_resort(list, (void *) comp)
-#define LIST_RESORT2(list, comp)			list_resort3((list_t *) list, (void *) comp)
+#define LIST_RESORT2(list, comp)			list_resort3((list_t *) (void *) list, (void *) comp)
 
 #define LIST_REMOVE(list, data, func)			list_remove2(list, data, (void *) func)
-#define LIST_REMOVE2(list, elem, func)			list_remove3((list_t *) list, (list_t) elem, (void *) func)
-#define LIST_UNLINK2(list, elem)			list_unlink3((list_t *) list, (list_t) elem)
+#define LIST_REMOVE2(list, elem, func)			list_remove3((list_t *) (void *) list, (list_t) elem, (void *) func)
+#define LIST_UNLINK2(list, elem)			list_unlink3((list_t *) (void *) list, (list_t) elem)
 #define LIST_FREE_ITEM(x, type)				void x(type data)
 
 #define LIST_DESTROY(list, func)			list_destroy2(list, (void *) func)
