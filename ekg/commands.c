@@ -371,34 +371,20 @@ cleanup:
 	return result;
 }
 
-static COMMAND(cmd_alias)
-{
-	if (match_arg(params[0], 'a', ("add"), 2)) {
+static COMMAND(cmd_alias) {
+	int append = match_arg(params[0], 'A', ("append"), 2);
+
+	if (append || match_arg(params[0], 'a', ("add"), 2)) {
 		if (!params[1] || !xstrchr(params[1], ' ')) {
 			printq("not_enough_params", name);
 			return -1;
 		}
 
-		if (!alias_add(params[1], quiet, 0)) {
-			config_changed = 1;
-			return 0;
-		}
-
-		return -1;
-	}
-
-	if (match_arg(params[0], 'A', ("append"), 2)) {
-		if (!params[1] || !xstrchr(params[1], ' ')) {
-			printq("not_enough_params", name);
+		if (alias_add(params[1], quiet, append))
 			return -1;
-		}
 
-		if (!alias_add(params[1], quiet, 1)) {
-			config_changed = 1;
-			return 0;
-		}
-
-		return -1;
+		config_changed = 1;
+		return 0;
 	}
 
 	if (match_arg(params[0], 'd', ("del"), 2)) {
@@ -411,27 +397,25 @@ static COMMAND(cmd_alias)
 
 		if (!xstrcmp(params[1], "*"))
 			ret = alias_remove(NULL, quiet);
-		else {
+		else
 			ret = alias_remove(params[1], quiet);
-		}
 
-		if (!ret) {
-			config_changed = 1;
-			return 0;
-		}
+		if (ret)
+			return -1;
 
-		return -1;
+		config_changed = 1;
+		return 0;
 	}
 	
 	if (!params[0] || match_arg(params[0], 'l', ("list"), 2) || params[0][0] != '-') {
-		alias_t *a;
+		const char *aname;
 		int count = 0;
-		const char *aname = NULL;
+		alias_t *a;
 
 		if (match_arg(params[0], 'l', ("list"), 2))
 			aname = params[1];
-		else if (params[0])
-			aname = params[0];
+		else
+			aname = params[0];	/* it can be NULL */
 
 		for (a = aliases; a; a = a->next) {
 			list_t m;
@@ -441,7 +425,7 @@ static COMMAND(cmd_alias)
 			if (aname && xstrcasecmp(aname, a->name))
 				continue;
 
-			tmp = xcalloc(xstrlen(a->name) + 1, sizeof(char));
+			tmp = xmalloc(xstrlen(a->name) + 1);
 			memset(tmp, ' ', xstrlen(a->name));
 
 			for (m = a->commands; m; m = m->next) {
@@ -465,7 +449,6 @@ static COMMAND(cmd_alias)
 	}
 
 	printq("invalid_params", name);
-
 	return -1;
 }
 
