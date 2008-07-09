@@ -36,16 +36,13 @@ struct last *lasts = NULL;
 int config_last_size = 10;
 int config_last = 0;
 
-static LIST_FREE_ITEM(list_last_free, struct last *) {
-	xfree(data->uid);
-	xfree(data->message);
-}
+static LIST_FREE_ITEM(list_last_free, struct last *) { xfree(data->uid); xfree(data->message); }
 
 DYNSTUFF_LIST_DECLARE_WC(lasts, struct last, list_last_free,
-	__DYNSTUFF_LIST_ADD,			/* lasts_add() */
-	__DYNSTUFF_LIST_REMOVE_ITER,		/* lasts_removei() */
-	__DYNSTUFF_LIST_DESTROY,		/* lasts_destroy() */
-	__DYNSTUFF_LIST_COUNT)			/* lasts_count() */
+	static __DYNSTUFF_LIST_ADD,			/* lasts_add() */
+	static __DYNSTUFF_LIST_REMOVE_ITER,		/* lasts_removei() */
+	__DYNSTUFF_LIST_DESTROY,			/* lasts_destroy() */
+	static __DYNSTUFF_LIST_COUNT)			/* lasts_count() */
 
 /*
  * last_add()

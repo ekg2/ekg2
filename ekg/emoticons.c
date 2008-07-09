@@ -43,9 +43,9 @@ emoticon_t *emoticons = NULL;
 static LIST_FREE_ITEM(list_emoticon_free, emoticon_t *) { xfree(data->name); xfree(data->value); }
 
 DYNSTUFF_LIST_DECLARE(emoticons, emoticon_t, list_emoticon_free,
-	__DYNSTUFF_LIST_ADD,		/* emoticons_add() */
+	static __DYNSTUFF_LIST_ADD,		/* emoticons_add() */
 	__DYNSTUFF_NOREMOVE,
-	__DYNSTUFF_LIST_DESTROY)	/* emoticons_destroy() */
+	__DYNSTUFF_LIST_DESTROY)		/* emoticons_destroy() */
 
 int config_emoticons = 1;
 

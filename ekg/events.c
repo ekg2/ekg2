@@ -46,9 +46,9 @@ static LIST_ADD_COMPARE(event_add_compare, event_t *) { return data1->id - data2
 static LIST_FREE_ITEM(list_event_free, struct event *) { xfree(data->name); xfree(data->action); xfree(data->target); }
 
 DYNSTUFF_LIST_DECLARE_SORTED(events, event_t, event_add_compare, list_event_free, 
-	__DYNSTUFF_LIST_ADD_SORTED,	/* events_add() */
-	__DYNSTUFF_LIST_REMOVE_SAFE, 	/* events_remove() */
-	__DYNSTUFF_LIST_DESTROY)	/* events_destroy() */
+	static __DYNSTUFF_LIST_ADD_SORTED,	/* events_add() */
+	static __DYNSTUFF_LIST_REMOVE_SAFE, 	/* events_remove() */
+	static __DYNSTUFF_LIST_DESTROY)		/* events_destroy() */
 
 char **events_all = NULL;
 

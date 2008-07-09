@@ -51,9 +51,9 @@ window_t *windows = NULL;		/* lista okien */
 static LIST_ADD_COMPARE(window_new_compare, window_t *) { return data1->id - data2->id; }
 static LIST_FREE_ITEM(list_window_free, window_t *) { xfree(data->target);  userlists_destroy(&(data->userlist)); }
 
-__DYNSTUFF_LIST_ADD_SORTED(windows, window_t, window_new_compare);				/* windows_add() */
-__DYNSTUFF_LIST_UNLINK(windows, window_t);							/* windows_unlink() */
-__DYNSTUFF_LIST_REMOVE_SAFE(windows, window_t, list_window_free);				/* windows_remove() */
+static __DYNSTUFF_LIST_ADD_SORTED(windows, window_t, window_new_compare);			/* windows_add() */
+static __DYNSTUFF_LIST_UNLINK(windows, window_t);						/* windows_unlink() */
+static __DYNSTUFF_LIST_REMOVE_SAFE(windows, window_t, list_window_free);			/* windows_remove() */
 __DYNSTUFF_LIST_DESTROY(windows, window_t, list_window_free);					/* windows_destroy() */
 
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */

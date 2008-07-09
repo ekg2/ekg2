@@ -54,13 +54,13 @@ session_t *sessions = NULL;
 
 static LIST_ADD_COMPARE(session_compare, session_t *) { return xstrcasecmp(data1->uid, data2->uid); }
 
-__DYNSTUFF_LIST_ADD_SORTED(sessions, session_t, session_compare);	/* sessions_add() */
-__DYNSTUFF_LIST_COUNT(sessions, session_t);				/* sessions_count() */
+static __DYNSTUFF_LIST_ADD_SORTED(sessions, session_t, session_compare);	/* sessions_add() */
+static __DYNSTUFF_LIST_COUNT(sessions, session_t);				/* sessions_count() */
 
 static LIST_FREE_ITEM(session_param_free_item, session_param_t *) { xfree(data->key); xfree(data->value);  }
 
-__DYNSTUFF_ADD_BEGINNING(session_vars, session_param_t, NULL);			/* session_vars_add() */
-__DYNSTUFF_DESTROY(session_vars, session_param_t, session_param_free_item);	/* session_vars_destroy() */
+static __DYNSTUFF_ADD_BEGINNING(session_vars, session_param_t, NULL);			/* session_vars_add() */
+static __DYNSTUFF_DESTROY(session_vars, session_param_t, session_param_free_item);	/* session_vars_destroy() */
 
 session_t *session_current = NULL;
 
@@ -233,8 +233,8 @@ static LIST_FREE_ITEM(session_free_item, session_t *) {
 	userlist_free(data);
 }
 
-__DYNSTUFF_LIST_REMOVE_SAFE(sessions, session_t, session_free_item);	/* sessions_remove() */
-__DYNSTUFF_LIST_DESTROY(sessions, session_t, session_free_item);	/* sessions_destroy() */
+static __DYNSTUFF_LIST_REMOVE_SAFE(sessions, session_t, session_free_item);	/* sessions_remove() */
+static __DYNSTUFF_LIST_DESTROY(sessions, session_t, session_free_item);	/* sessions_destroy() */
 
 /**
  * session_remove()

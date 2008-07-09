@@ -56,8 +56,8 @@ plugin_t *plugins = NULL;
 static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) { return data2->prio - data1->prio; }
 
 DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
-	__DYNSTUFF_LIST_ADD_SORTED,		/* plugins_add() */
-	__DYNSTUFF_LIST_UNLINK)			/* plugins_unlink() */
+	static __DYNSTUFF_LIST_ADD_SORTED,		/* plugins_add() */
+	__DYNSTUFF_LIST_UNLINK)				/* plugins_unlink() */
 
 watch_t *watches = NULL;
 __DYNSTUFF_LIST_ADD_BEGINNING(watches, watch_t, NULL);				/* watches_add() */

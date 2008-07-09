@@ -88,9 +88,9 @@ child_t *children = NULL;
 static LIST_FREE_ITEM(child_free_item, child_t *) { xfree(data->name); }
 
 DYNSTUFF_LIST_DECLARE(children, child_t, child_free_item,
-	__DYNSTUFF_LIST_ADD,		/* children_add() */
-	__DYNSTUFF_LIST_REMOVE_ITER,	/* children_removei() */
-	__DYNSTUFF_LIST_DESTROY)	/* children_destroy() */
+	static __DYNSTUFF_LIST_ADD,		/* children_add() */
+	__DYNSTUFF_LIST_REMOVE_ITER,		/* children_removei() */
+	__DYNSTUFF_LIST_DESTROY)		/* children_destroy() */
 
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
@@ -101,10 +101,10 @@ static LIST_FREE_ITEM(timer_free_item, struct timer *) { data->function(1, data-
 
 
 DYNSTUFF_LIST_DECLARE2(timers, struct timer, timer_free_item,
-	__DYNSTUFF_LIST_ADD,		/* timers_add() */
-	__DYNSTUFF_LIST_REMOVE_SAFE,	/* timers_remove() */
-	__DYNSTUFF_LIST_REMOVE_ITER,	/* timers_removei() */
-	__DYNSTUFF_LIST_DESTROY)	/* timers_destroy() */
+	static __DYNSTUFF_LIST_ADD,		/* timers_add() */
+	__DYNSTUFF_LIST_REMOVE_SAFE,		/* timers_remove() */
+	__DYNSTUFF_LIST_REMOVE_ITER,		/* timers_removei() */
+	__DYNSTUFF_LIST_DESTROY)		/* timers_destroy() */
 
 struct conference *conferences = NULL;
 newconference_t *newconferences = NULL;
@@ -259,9 +259,9 @@ void windows_save() {
 static LIST_FREE_ITEM(list_alias_free, alias_t *) { xfree(data->name); LIST_DESTROY2(data->commands, list_t_free_item); }
 
 DYNSTUFF_LIST_DECLARE(aliases, alias_t, list_alias_free,
-	__DYNSTUFF_LIST_ADD, 		/* aliases_add() */
-	__DYNSTUFF_LIST_REMOVE_ITER,	/* aliases_removei() */
-	__DYNSTUFF_LIST_DESTROY)	/* aliases_destroy() */
+	static __DYNSTUFF_LIST_ADD, 		/* aliases_add() */
+	static __DYNSTUFF_LIST_REMOVE_ITER,	/* aliases_removei() */
+	__DYNSTUFF_LIST_DESTROY)		/* aliases_destroy() */
 
 /*
  * alias_add()
@@ -424,8 +424,8 @@ static LIST_FREE_ITEM(binding_added_free_item, binding_added_t *) {
 	xfree(data->sequence);
 }
 
-__DYNSTUFF_LIST_DESTROY(bindings, struct binding, binding_free_item);				/* bindings_destroy() */
-__DYNSTUFF_LIST_DESTROY(bindings_added, binding_added_t, binding_added_free_item);		/* bindings_added_destroy() */
+static __DYNSTUFF_LIST_DESTROY(bindings, struct binding, binding_free_item);				/* bindings_destroy() */
+static __DYNSTUFF_LIST_DESTROY(bindings_added, binding_added_t, binding_added_free_item);		/* bindings_added_destroy() */
 
 /**
  * binding_free()
@@ -687,9 +687,9 @@ const char *compile_time() {
 static LIST_FREE_ITEM(newconference_free_item, newconference_t *) { xfree(data->name); xfree(data->session); userlists_destroy(&(data->participants)); }
 
 DYNSTUFF_LIST_DECLARE(newconferences, newconference_t, newconference_free_item,
-	__DYNSTUFF_LIST_ADD,		/* newconferences_add() */
-	__DYNSTUFF_LIST_REMOVE_SAFE,	/* newconferences_remove() */
-	__DYNSTUFF_LIST_DESTROY)	/* newconferences_destroy() */
+	static __DYNSTUFF_LIST_ADD,		/* newconferences_add() */
+	static __DYNSTUFF_LIST_REMOVE_SAFE,	/* newconferences_remove() */
+	__DYNSTUFF_LIST_DESTROY)		/* newconferences_destroy() */
 
 userlist_t *newconference_member_find(newconference_t *conf, const char *uid) {
 	userlist_t *ul;
@@ -762,9 +762,9 @@ void newconference_destroy(newconference_t *conf, int kill_wnd) {
 static LIST_FREE_ITEM(conference_free_item, struct conference *) { xfree(data->name); LIST_DESTROY2(data->recipients, list_t_free_item); }
 
 DYNSTUFF_LIST_DECLARE(conferences, struct conference, conference_free_item,
-	__DYNSTUFF_LIST_ADD,		/* conferences_add() */
-	__DYNSTUFF_LIST_REMOVE_ITER,	/* conferences_removei() */
-	__DYNSTUFF_LIST_DESTROY)	/* conferences_destroy() */
+	static __DYNSTUFF_LIST_ADD,		/* conferences_add() */
+	static __DYNSTUFF_LIST_REMOVE_ITER,	/* conferences_removei() */
+	__DYNSTUFF_LIST_DESTROY)		/* conferences_destroy() */
 
 /*
  * conference_add()

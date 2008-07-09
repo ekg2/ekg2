@@ -114,10 +114,11 @@ command_t *commands = NULL;
 static LIST_ADD_COMPARE(command_add_compare, command_t *) { return xstrcasecmp(data1->name, data2->name); }
 static LIST_FREE_ITEM(list_command_free, command_t *) { array_free(data->params); array_free(data->possibilities); }
 
-__DYNSTUFF_LIST_ADD_SORTED(commands, command_t, command_add_compare);		/* commands_add() */
-__DYNSTUFF_LIST_REMOVE_SAFE(commands, command_t, list_command_free);		/* commands_remove() */
-__DYNSTUFF_LIST_REMOVE_ITER(commands, command_t, list_command_free);		/* commands_removei() */
-__DYNSTUFF_LIST_DESTROY(commands, command_t, list_command_free);		/* commands_destroy() */
+DYNSTUFF_LIST_DECLARE2_SORTED(commands, command_t, command_add_compare, list_command_free,
+	static __DYNSTUFF_LIST_ADD_SORTED,	/* commands_add() */
+	__DYNSTUFF_LIST_REMOVE_SAFE,		/* commands_remove() */
+	__DYNSTUFF_LIST_REMOVE_ITER,		/* commands_removei() */
+	__DYNSTUFF_LIST_DESTROY)		/* commands_destroy() */
 
 /*
  * match_arg()

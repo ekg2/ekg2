@@ -78,17 +78,16 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
 /* userlist: */
 static LIST_ADD_COMPARE(userlist_compare, userlist_t *) { return xstrcasecmp(data1->nickname, data2->nickname); }
 
-__DYNSTUFF_ADD_SORTED(userlists, userlist_t, userlist_compare);		/* userlists_add() */
-
+static __DYNSTUFF_ADD_SORTED(userlists, userlist_t, userlist_compare);		/* userlists_add() */
 
 /* groups: */
 static LIST_ADD_COMPARE(group_compare, struct ekg_group *) { return xstrcasecmp(data1->name, data2->name); }
 static LIST_FREE_ITEM(group_item_free, struct ekg_group *) { xfree(data->name); }
 
 DYNSTUFF_LIST_DECLARE_SORTED(ekg_groups, struct ekg_group, group_compare, group_item_free,
-	__DYNSTUFF_ADD_SORTED,		/* ekg_groups_add() */
-	__DYNSTUFF_REMOVE_ITER,		/* ekg_groups_removei() */
-	__DYNSTUFF_DESTROY)		/* ekg_groups_destroy() */
+	static __DYNSTUFF_ADD_SORTED,		/* ekg_groups_add() */
+	static __DYNSTUFF_REMOVE_ITER,		/* ekg_groups_removei() */
+	static __DYNSTUFF_DESTROY)		/* ekg_groups_destroy() */
 
 /* resources: */
 static LIST_ADD_COMPARE(userlist_resource_compare, ekg_resource_t *) {
@@ -101,9 +100,9 @@ static LIST_ADD_COMPARE(userlist_resource_compare, ekg_resource_t *) {
 static LIST_FREE_ITEM(list_userlist_resource_free, ekg_resource_t *) { xfree(data->name); xfree(data->descr); }
 
 DYNSTUFF_LIST_DECLARE_SORTED(ekg_resources, ekg_resource_t, userlist_resource_compare, list_userlist_resource_free,
-	__DYNSTUFF_ADD_SORTED,		/* ekg_resources_add() */
-	__DYNSTUFF_REMOVE_SAFE,		/* ekg_resources_remove() */
-	__DYNSTUFF_DESTROY)		/* ekg_resources_destroy() */
+	static __DYNSTUFF_ADD_SORTED,		/* ekg_resources_add() */
+	static __DYNSTUFF_REMOVE_SAFE,		/* ekg_resources_remove() */
+	static __DYNSTUFF_DESTROY)		/* ekg_resources_destroy() */
 
 /*
  * userlist_add_entry()

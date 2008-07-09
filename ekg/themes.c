@@ -62,9 +62,9 @@ static LIST_FREE_ITEM(list_format_free, struct format *) {
 }
 
 DYNSTUFF_LIST_DECLARE(formats, struct format, list_format_free,
-	__DYNSTUFF_ADD_BEGINNING,	/* formats_add() */
-	__DYNSTUFF_REMOVE_ITER,		/* formats_removei() */
-	__DYNSTUFF_DESTROY)		/* formats_destroy() */
+	static __DYNSTUFF_ADD_BEGINNING,	/* formats_add() */
+	static __DYNSTUFF_REMOVE_ITER,		/* formats_removei() */
+	static __DYNSTUFF_DESTROY)		/* formats_destroy() */
 
 /**
  * gim_hash()

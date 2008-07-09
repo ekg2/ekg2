@@ -48,7 +48,7 @@ void changed_session_locks(const char *varname); /* sessions.c */
 char *console_charset;
 
 static LIST_ADD_COMPARE(variable_add_compare, variable_t *) { return xstrcasecmp(data1->name, data2->name); }
-__DYNSTUFF_LIST_ADD_SORTED(variables, variable_t, variable_add_compare);	/* variables_add() */
+static __DYNSTUFF_LIST_ADD_SORTED(variables, variable_t, variable_add_compare);	/* variables_add() */
 
 variable_t *variables = NULL;
 
