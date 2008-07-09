@@ -12,39 +12,28 @@
 #if DYNSTUFF_USE_LIST3
 
 #define __DYNSTUFF_LIST_ADD(lista, typ, __notused)		\
-	void lista##_add(typ *new) { list_add3((list_t *) &lista, (list_t) new); }
+	void lista##_add(typ *new) { list_add3((list_t *) (void *) &lista, (list_t) new); }
 
 #define __DYNSTUFF_LIST_ADD_BEGINNING(lista, typ, __notused)	\
-	void lista##_add(typ *new) { list_add_beginning3((list_t *) &lista, (list_t) new); }
+	void lista##_add(typ *new) { list_add_beginning3((list_t *) (void *) &lista, (list_t) new); }
 
-#define __DYNSTUFF_LIST_ADD_SORTED(lista, typ, comparision) \
-	void lista##_add(typ *new) { list_add_sorted3((list_t *) &lista, (list_t) new, (void *) comparision); }
+#define __DYNSTUFF_LIST_ADD_SORTED(lista, typ, comparision)	\
+	void lista##_add(typ *new) { list_add_sorted3((list_t *) (void *) &lista, (list_t) new, (void *) comparision); }
 
-#define __DYNSTUFF_LIST_REMOVE_SAFE(lista, typ, free_func)				\
-	void lista##_remove(typ *elem) { 						\
-		list_remove3((list_t *) &lista, (list_t) elem, (void *) free_func);	\
-	}
+#define __DYNSTUFF_LIST_REMOVE_SAFE(lista, typ, free_func)	\
+	void lista##_remove(typ *elem) { list_remove3((list_t *) (void *) &lista, (list_t) elem, (void *) free_func); }
 
-#define __DYNSTUFF_LIST_REMOVE_ITER(lista, typ, free_func)					\
-	typ *lista##_removei(typ *elem) { 							\
-		return list_remove3i((list_t *) &lista, (list_t) elem, (void *) free_func);	\
-	}
+#define __DYNSTUFF_LIST_REMOVE_ITER(lista, typ, free_func)	\
+	typ *lista##_removei(typ *elem) { return list_remove3i((list_t *) (void *) &lista, (list_t) elem, (void *) free_func); }
 
-#define __DYNSTUFF_LIST_UNLINK(lista, typ)				\
-	void lista##_unlink(typ *elem) {				\
-		list_unlink3((list_t *) &lista, (list_t) elem);		\
-	}
+#define __DYNSTUFF_LIST_UNLINK(lista, typ)			\
+	void lista##_unlink(typ *elem) { list_unlink3((list_t *) (void *) &lista, (list_t) elem); }
 
-#define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func)			\
-	void lista##_destroy(void) { 					\
-		list_destroy3((list_t) lista, (void *) free_func);	\
-		lista = NULL;						\
-	}
+#define __DYNSTUFF_LIST_DESTROY(lista, typ, free_func) 		\
+	void lista##_destroy(void) { list_destroy3((list_t) lista, (void *) free_func);	lista = NULL; }
 
-#define __DYNSTUFF_LIST_COUNT(lista, typ)				\
-	int lista##_count(void) {					\
-		return list_count((list_t) lista);			\
-	}
+#define __DYNSTUFF_LIST_COUNT(lista, typ) 			\
+	int lista##_count(void) { return list_count((list_t) lista); }
 
 #else
 
