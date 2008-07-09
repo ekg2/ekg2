@@ -630,6 +630,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		
 		for (;;) {
 			int word = 0, width;
+			int ts_len = 0;	/* xstrlen(l->ts) */
 
 			if (!i)
 				res++;
@@ -642,7 +643,6 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			l->attr = attr;
 			l->len = xwcslen(str);
 			l->ts = NULL;
-			l->ts_len = 0;
 			l->ts_attr = NULL;
 			l->backlog = i;
 			l->margin_left = (!wrapping || margin_left == -1) ? margin_left : 0;
@@ -658,37 +658,31 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			if (!w->floating && config_timestamp && config_timestamp_show) {
 				fstring_t *s = NULL;
-				if (ts && lastts == ts) {	/* use cached value */
-					s = fstring_new(lasttsbuf);
 
-					l->ts = s->str.b;
-					l->ts_len = xstrlen(l->ts);
-					l->ts_attr = s->attr;
-
-					xfree(s);
-				} else if (render_timstamp) {
+				if (!ts || lastts != ts) {	/* generate new */
 					struct tm *tm = localtime(&ts);
-					char *tmp = NULL, *format;
+					char *tmp, *format;
 
 					tmp = format_string(config_timestamp);
 					format = saprintf("%s ", tmp);
 					strftime(lasttsbuf, sizeof(lasttsbuf)-1, format, tm);
 
-					s = fstring_new(lasttsbuf);
-
-					l->ts = s->str.b;
-					l->ts_len = xstrlen(l->ts);
-					l->ts_attr = s->attr;
-
-					xfree(s);
 					xfree(tmp);
 					xfree(format);
 
 					lastts = ts;
 				}
+
+				s = fstring_new(lasttsbuf);
+
+				l->ts = s->str.b;
+				ts_len = xstrlen(l->ts);
+				l->ts_attr = s->attr;
+
+				xfree(s);
 			}
 
-			width = w->width - l->ts_len - l->prompt_len - n->margin_left - n->margin_right; 
+			width = w->width - ts_len - l->prompt_len - n->margin_left - n->margin_right; 
 
 			if ((w->frames & WF_LEFT))
 				width -= 1;
@@ -1140,10 +1134,7 @@ void ncurses_redraw(window_t *w)
 		cur_x = (left);
 
 		if (l->ts) {
-			/* XXX,
-			 * 	po co sprawdzamy l->ts[x] i l->ts_len? nie wystarczy jedno?
-			 */
-			for (x = 0; l->ts[x] && x < l->ts_len; x++, cur_x++) { 
+			for (x = 0; l->ts[x]; x++, cur_x++) { 
 				int attr = fstring_attr2ncurses_attr(l->ts_attr[x]);
 				unsigned char ch = (unsigned char) ncurses_fixchar((CHAR_T) l->ts[x], &attr);
 
@@ -1151,8 +1142,6 @@ void ncurses_redraw(window_t *w)
 				mvwaddch(n->window, cur_y, cur_x, ch);
 			}
 		}
-
-		cur_x = (left + l->ts_len);	/* XXX */
 
 		if (l->prompt_str) {
 			for (x = 0; x < l->prompt_len; x++, cur_x++) {
@@ -1171,8 +1160,6 @@ void ncurses_redraw(window_t *w)
 					mvwaddch(n->window, cur_y, cur_x - fixup, ch);
 			}
 		}
-
-		cur_x = (left + l->ts_len + l->prompt_len);	/* XXX */
 
 		for (x = 0; x < l->len; x++, cur_x++) {
 			int attr = fstring_attr2ncurses_attr(l->attr[x]);

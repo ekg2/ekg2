@@ -36,7 +36,6 @@ struct screen_line {
 	int prompt_len;		/* d³ugo¶æ promptu */
 	
 	char *ts;		/* timestamp */
-	int ts_len;		/* d³ugo¶æ timestampu */
 	short *ts_attr;		/* attributes of the timestamp */
 
 	int backlog;		/* z której linii backlogu pochodzi? */
