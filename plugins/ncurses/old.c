@@ -579,7 +579,7 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 int ncurses_backlog_split(window_t *w, int full, int removed)
 {
 	int i, res = 0, bottom = 0;
-	int render_timstamp = (config_timestamp && config_timestamp[0]);
+	int render_timestamp = (config_timestamp && config_timestamp_show && config_timestamp[0]);
 	ncurses_window_t *n;
 
 	if (!w || !(n = w->private))
@@ -656,7 +656,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				l->prompt_attr = NULL;
 			}
 
-			if (!w->floating && config_timestamp && config_timestamp_show) {
+			if (!w->floating && render_timestamp) {
 				fstring_t *s = NULL;
 
 				if (!ts || lastts != ts) {	/* generate new */
