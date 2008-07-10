@@ -438,12 +438,15 @@ void binding_free() {
 	bindings_added_destroy();
 }
 
-static LIST_FREE_ITEM(list_buffer_free, struct buffer *) {
-	xfree(data->line);
-	xfree(data->target);
-}
+static LIST_FREE_ITEM(list_buffer_free, struct buffer *) { xfree(data->line); xfree(data->target); }
 
-inline static void buffer_add_common(struct buffer_info *type, const char *target, const char *line, time_t ts) {
+static __DYNSTUFF_ADD(buffers, struct buffer, NULL)			/* buffers_add() */
+static __DYNSTUFF_REMOVE_ITER(buffers, struct buffer, list_buffer_free)	/* buffers_removei() */
+static __DYNSTUFF_DESTROY(buffers, struct buffer, list_buffer_free)	/* buffers_destroy() */
+static __DYNSTUFF_COUNT(buffers, struct buffer)				/* buffers_count() */
+static __DYNSTUFF_GET_NTH(buffers, struct buffer)			/* buffers_get_nth() */
+
+static void buffer_add_common(struct buffer_info *type, const char *target, const char *line, time_t ts) {
 	struct buffer *b;
 	struct buffer **addpoint = (type->last ? &(type->last) : &(type->data));
 
@@ -460,20 +463,25 @@ inline static void buffer_add_common(struct buffer_info *type, const char *targe
 	 */
 
 	if (type->max_lines) { /* XXX: move to idles? */
+		int n;
 bac_countupd:
-		b = type->data;
-		int n		= type->count - type->max_lines + 1;
+		n = type->count - type->max_lines + 1;
 		
 		if (n > 0) { /* list slice removal */
-			b = LIST_GET_NTH2(b, n);		/* last element to remove */
+			b = buffers_get_nth(type->data, n);		/* last element to remove */
 			if (!b) { /* count has been broken */
-				type->count = LIST_COUNT2(type->data);
+				type->count = buffers_count(type->data);
 				goto bac_countupd;
 			}
 			type->data	= b->next;
 			b->next		= NULL;			/* unlink elements to be removed */
 			type->count -= n;
-			LIST_DESTROY2(b, list_buffer_free);	/* and remove them */
+	/* XXX,
+	 * 	b->next == NULL
+	 * 	so buffers_destroy(&b) will free only b,
+	 * 	shouldn't be saved type->data value?
+	 */
+			buffers_destroy(&b);			/* and remove them */
 		}
 	}
 
@@ -482,7 +490,7 @@ bac_countupd:
 	b->target	= xstrdup(target);
 	b->line 	= xstrdup(line);
 
-	LIST_ADD2(addpoint, b);
+	buffers_add(addpoint, b);
 
 	type->last	= b;
 	type->count++;
@@ -562,9 +570,13 @@ char *buffer_tail(struct buffer_info *type) {
 
 	b = type->data;
 	str = b->line;			/* save b->line */
+	b->line = NULL;
 
-	xfree(b->target);		/* free b->target */
-	LIST_REMOVE2(type, b, NULL);	/* remove struct */
+	(void) buffers_removei(&(type->data), b);
+
+	if (type->last == b) 
+		type->last = NULL;
+
 	type->count--;
 
 	return str;			/* return saved b->line */
@@ -584,8 +596,9 @@ void buffer_free(struct buffer_info *type) {
 	if (!type || !type->data)
 		return;
 
-	LIST_DESTROY2(type->data, list_buffer_free);
-	type->data	= NULL;
+	buffers_destroy(&(type->data));
+
+	type->last	= NULL;
 	type->count	= 0;
 }
 

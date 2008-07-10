@@ -186,6 +186,9 @@
 
 #if DYNSTUFF_USE_LIST3
 
+#define __DYNSTUFF_ADD(prefix, typ, __notused)		\
+	void prefix##_add(typ **lista, typ *new) { list_add3((list_t *) lista, (list_t) new); }
+
 #define __DYNSTUFF_ADD_BEGINNING(prefix, typ, __notused) \
 	void prefix##_add(typ **lista, typ *new) { list_add_beginning3((list_t *) lista, (list_t) new); }
 
@@ -211,6 +214,11 @@
 #define __DYNSTUFF_COUNT(prefix, typ)					\
 	int prefix##_count(typ *lista) {				\
 		return list_count((list_t) lista);			\
+	}
+
+#define __DYNSTUFF_GET_NTH(prefix, typ)					\
+	typ *prefix##_get_nth(typ *lista, int id) {			\
+		return list_get_nth3((list_t) lista, id);		\
 	}
 
 #else
@@ -357,6 +365,17 @@
 		for (; list; list = list->next)				\
 			count++;					\
 		return count;						\
+	}
+
+#define __DYNSTUFF_GET_NTH(prefix, typ)					\
+	typ *prefix##_get_nth(typ *lista, int id) {			\
+		while (lista) {						\
+			if ((--id) == 0)				\
+				return lista;				\
+									\
+			lista = lista->next;				\
+		}							\
+		return NULL;						\
 	}
 
 #endif
