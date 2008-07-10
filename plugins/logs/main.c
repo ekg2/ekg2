@@ -310,7 +310,7 @@ static int logs_window_check(logs_log_t *ll, time_t t) {
 	}
 	if (chan > 0) {
 		if (l->file) { /* jesli plik byl otwarty otwieramy go z nowa sciezka */
-			fclose(l->file);
+			fclose(l->file); l->file = NULL;
 			l->file = logs_open_file(l->path, l->logformat);
 		} 
 	}	
@@ -340,9 +340,10 @@ static logs_log_t *logs_log_find(const char *session, const char *uid, int creat
 	if (log_curlog && log_curlog->lw) {
 		log_window_t *lw = log_curlog->lw;
 		xfree(lw->path);
-		if (lw->file) /* w sumie jesli jest NULL to byl jakis blad przy fopen()... */
+		if (lw->file) {
 			fclose(lw->file);
-		lw->file = NULL;
+			lw->file = NULL;
+		}
 		xfree(lw);
 		log_curlog->lw = NULL;
 	}
@@ -423,13 +424,16 @@ static void logs_changed_path(const char *var) {
 		logs_log_t *ll = l->data;
 
 		if (ll->lw) {
-			FILE *f   = ll->lw->file;
-			char *tmp = ll->lw->path;
-			ll->lw->path = NULL;
-			ll->lw->file = NULL;
-			if (f) fclose(f);
-			xfree(tmp);
 			/* We don't need reopening file../ recreate magic struct.. because it'd be done when we try log smth into it. */
+			if (ll->lw->file) {
+				fclose(ll->lw->file);
+				ll->lw->file = NULL;
+			}
+
+			if (ll->lw->path) {
+				xfree(ll->lw->path);
+				ll->lw->path = NULL;
+			}
 		}
 	}
 }
