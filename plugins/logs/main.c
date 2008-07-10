@@ -64,6 +64,13 @@
 #include <zlib.h>
 #endif
 
+#ifndef HAVE_STRLCAT
+#  include "compat/strlcat.h"
+#endif
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
+
 #include "main.h"
 
 #undef HAVE_ZLIB		/* disable zlib fjuczer */
@@ -317,19 +324,25 @@ static int logs_window_check(logs_log_t *ll, time_t t) {
 	return chan;
 }
 
+static FILE *logs_window_close(logs_log_t *l, int close);	/* forward */
+
 static logs_log_t *logs_log_find(const char *session, const char *uid, int create) {
 	list_t l;
 	logs_log_t *temp = NULL;
 
-	if (log_curlog && !xstrcmp(log_curlog->session, session) && !xstrcmp(log_curlog->uid, uid))
+	if (log_curlog && !xstrcmp(log_curlog->session, session) && !xstrcmp(log_curlog->uid, uid)) {
+		if (log_curlog->lw) 
+			logs_window_check(ll, time(NULL)); /* tutaj ? */
 		return log_curlog->lw ? log_curlog : logs_log_new(log_curlog, session, uid);
+	}
 
 	for (l=log_logs; l; l = l->next) {
 		logs_log_t *ll = l->data;
 		if ( (!ll->session || !xstrcmp(ll->session, session)) && !xstrcmp(ll->uid, uid)) {
 			log_window_t *lw = ll->lw;
 			if (lw || !create) {
-				if (lw) logs_window_check(ll, time(NULL)); /* tutaj ? */
+				if (lw)
+					logs_window_check(ll, time(NULL)); /* tutaj ? */
 				return ll;
 			} else {
 				temp = ll;
@@ -337,16 +350,7 @@ static logs_log_t *logs_log_find(const char *session, const char *uid, int creat
 			}
 		}
 	}
-	if (log_curlog && log_curlog->lw) {
-		log_window_t *lw = log_curlog->lw;
-		xfree(lw->path);
-		if (lw->file) {
-			fclose(lw->file);
-			lw->file = NULL;
-		}
-		xfree(lw);
-		log_curlog->lw = NULL;
-	}
+	logs_window_close(log_curlog, 1);
 
 	if (!create)
 		return NULL;
@@ -368,16 +372,17 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 		ll->uid = xstrdup(uid);
 		created = 1;
 	}
+
 	if (!(ll->lw)) {
 		ll->lw = xmalloc(sizeof(log_window_t));
 		logs_window_check(ll, time(NULL)); /* l->log_format i l->path, l->t */
 		ll->lw->file = logs_open_file(ll->lw->path, ll->lw->logformat);
 	}
+
 	if (created) {
-		time_t t = time(NULL);
 		if (ll->lw->logformat == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_OPENED)) {
 			logs_irssi(ll->lw->file, session, NULL,
-					prepare_timestamp_format(IRSSI_LOG_EKG2_OPENED, t),
+					prepare_timestamp_format(IRSSI_LOG_EKG2_OPENED, time(NULL)),
 					0, EKG_MSGCLASS_SYSTEM);
 		} 
 		list_add(&log_logs, ll);
@@ -618,8 +623,7 @@ attach:
  */
 
 static FILE* logs_open_file(char *path, int ff) {
-	char fullname[PATH_MAX+1];
-	int len;
+	char fullname[PATH_MAX];
 #ifdef HAVE_ZLIB
 	int zlibmode = 0;
 #endif
@@ -657,45 +661,42 @@ static FILE* logs_open_file(char *path, int ff) {
 		}
 	}
 
-
-	xstrncpy(fullname, path, PATH_MAX);
-
 	if (mkdir_recursive(path, 0)) {
 		print("directory_cant_create", path, strerror(errno));
 		return NULL;
 	}
 
-	len = xstrlen(path);
-	
-	if (len+5 < PATH_MAX) {
-		if (ff == LOG_FORMAT_IRSSI)		xstrcat(fullname, ".log");
-		else if (ff == LOG_FORMAT_SIMPLE)	xstrcat(fullname, ".txt");
-		else if (ff == LOG_FORMAT_XML)		xstrcat(fullname, ".xml");
-		else if (ff == LOG_FORMAT_RAW)		xstrcat(fullname, ".raw");
-		len+=4;
+	strlcpy(fullname, path, PATH_MAX);
+
+	if (ff == LOG_FORMAT_IRSSI)		strlcat(fullname, ".log", PATH_MAX);
+	else if (ff == LOG_FORMAT_SIMPLE)	strlcat(fullname, ".txt", PATH_MAX);
+	else if (ff == LOG_FORMAT_XML)		strlcat(fullname, ".xml", PATH_MAX);
+	else if (ff == LOG_FORMAT_RAW)		strlcat(fullname, ".raw", PATH_MAX);
+
 #ifdef HAVE_ZLIB /* z log.c i starego ekg1. Wypadaloby zaimplementowac... */
-		/* nawet je¶li chcemy gzipowane logi, a istnieje nieskompresowany log,
-		 * olewamy kompresjê. je¶li loga nieskompresowanego nie ma, dodajemy
-		 * rozszerzenie .gz i balujemy. */
-		if (config_log & 4) {
-			struct stat st;
-			if (stat(fullname, &st) == -1) {
-				gzFile f;
+	/* nawet je¶li chcemy gzipowane logi, a istnieje nieskompresowany log,
+	 * olewamy kompresjê. je¶li loga nieskompresowanego nie ma, dodajemy
+	 * rozszerzenie .gz i balujemy. */
+	if (config_log & 4) {
+		struct stat st;
+		if (stat(fullname, &st) == -1) {
+			gzFile f;
 
-				if (!(f = gzopen(path, "a")))
-					goto cleanup;
+			if (!(f = gzopen(path, "a")))
+				goto cleanup;
 
-				gzputs(f, buf);
-				gzclose(f);
+			gzputs(f, buf);
+			gzclose(f);
 
-				zlibmode = 1;
-			}
+			zlibmode = 1;
 		}
-		if (zlibmode && len+4 < PATH_MAX)
-			xstrcat(fullname, ".gz");
-		/* XXX, ustawic jakas flage... */
-#endif
 	}
+	if (zlibmode) {
+		/* XXX, ustawic jakas flage... */
+		strlcat(fullname, ".gz", PATH_MAX);
+	}
+#endif
+
 	/* if xml, prepare xml file */
 	if (ff == LOG_FORMAT_XML) {
 		FILE *fdesc = fopen(fullname, "r+");
