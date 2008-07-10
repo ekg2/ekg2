@@ -1585,32 +1585,49 @@ JABBER_HANDLER(jabber_handle_presence) {
 	}
 	if (!ismuc && (!type || ( na || !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
 		xmlnode_t *nshow, *nstatus, *nerr, *temp;
-		char *descr = NULL;
-		int status = 0;
-		char *jstatus = NULL;
+		userlist_t *u = userlist_find(s, uid);
+		char *descr = u ? xstrdup(u->descr) : NULL;
+		int status = /*u ? u->status :*/ 0;		/* it'll probably always get replaced */
 		char *tmp2;
 
 		int prio = (temp = xmlnode_find_child(n, "priority")) && temp->data ? atoi(temp->data) : 10;
 
-		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
-			jstatus = tlenjabber_unescape(nshow->data);
-			if (!xstrcmp(jstatus, "na") || na) {
-				status = EKG_STATUS_NA;
-				na = 1;
-			}
-		} else {
-			if (na)
-				status = EKG_STATUS_NA;
-			else	status = EKG_STATUS_AVAIL;
+		{		/* first set unknown if we have no auth */
+			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
+			
+			if ((!up || !(up->authtype & EKG_JABBER_AUTH_TO)))
+				status = EKG_STATUS_UNKNOWN;
 		}
 
+				/* then check if we've got another status */
+		if ((nshow = xmlnode_find_child(n, "show"))) {	/* typ */
+			char *jstatus;
+
+			if (!(jstatus = tlenjabber_unescape(nshow->data)))
+				jstatus = xstrdup("unknown");
+			
+			if (!xstrcmp(jstatus, "na"))
+				na = 1;
+			else if ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN)
+				debug_error("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
+
+			xfree(jstatus);
+		} else if (!na) /* XXX: check auth? */
+			status = EKG_STATUS_AVAIL;
+
+				/* set NA only if we have auth, else leave UNKNOWN */
+		if (na && (status != EKG_STATUS_UNKNOWN))
+			status = EKG_STATUS_NA;
+
+				/* replace any status with error, if we've got one, XXX: or maybe not? */
 		if ((nerr = xmlnode_find_child(n, "error"))) { /* bledny */
 			char *ecode = jabber_attr(nerr->atts, "code");
 			char *etext = jabber_unescape(nerr->data);
+			xfree(descr);
 			descr = saprintf("(%s) %s", ecode, __(etext));
 			xfree(etext);
 
-			if (atoi(ecode) == 403 || atoi(ecode) == 401) /* we lack auth */
+			if (!istlen && (atoi(ecode) == 403 || atoi(ecode) == 401)) /* we lack auth */
 				status = EKG_STATUS_UNKNOWN; /* shall we remove the error description? */
 			else
 				status = EKG_STATUS_ERROR;
@@ -1624,22 +1641,13 @@ JABBER_HANDLER(jabber_handle_presence) {
 					*atsign	= 0;
 				uid = saprintf("tlen:%s@tlen.pl", tmp);
 				xfree(tmp);
+				u = userlist_find(s, uid);
 			}
-		} else if ((nstatus = xmlnode_find_child(n, "status"))) { /* opisowy */
-			xfree(descr);
-			descr = tlenjabber_unescape(nstatus->data);
-		}
-
-		if (!status && (jstatus || (jstatus = xstrdup("unknown"))) && ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN))
-			debug_error("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
-		xfree(jstatus);
-
-		{
-			userlist_t *u = userlist_find(s, uid);
-			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-			
-			if ((status == EKG_STATUS_NA) && (!up || !(up->authtype & EKG_JABBER_AUTH_TO)))
-				status = EKG_STATUS_UNKNOWN;
+		} else {
+			if ((nstatus = xmlnode_find_child(n, "status"))) { /* opisowy */
+				xfree(descr);
+				descr = tlenjabber_unescape(nstatus->data);
+			}
 		}
 
 		if ((tmp2 = xstrchr(uid, '/'))) {
@@ -1667,7 +1675,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 
 			if (!when) when = time(NULL);
 			query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &when);
-			
+
 			xfree(session);
 		}
 		xfree(descr);
