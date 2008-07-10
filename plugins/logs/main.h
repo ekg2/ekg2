@@ -43,6 +43,20 @@ struct {
 	log_window_t *lw;
 } typedef logs_log_t;
 
+/* log ff types... */
+typedef enum {
+	LOG_FORMAT_NONE = 0,
+	LOG_FORMAT_SIMPLE,
+	LOG_FORMAT_XML,
+	LOG_FORMAT_IRSSI,
+	LOG_FORMAT_RAW, 
+} log_format_t;
+
+	/* irssi style info messages */
+#define IRSSI_LOG_EKG2_OPENED	"--- Log opened %a %b %d %H:%M:%S %Y" 	/* defaultowy log_open_string irssi , jak cos to dodac zmienna... */
+#define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
+#define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */
+
 static char *logs_prepare_path(session_t *session, const char *logs_path, const char *uid, time_t sent);
 static const char *prepare_timestamp_format(const char *format, time_t t);
 
@@ -53,7 +67,7 @@ static FILE *logs_open_file(char *path, int ff);
 
 static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class, const char *status);
 static void logs_xml	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class);
-static void logs_irssi	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type);
+static void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class);
 #if 0 /* never started? */
 static void logs_gaim();
 #endif

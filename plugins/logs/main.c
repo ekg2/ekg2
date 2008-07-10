@@ -78,29 +78,6 @@ static struct buffer_info buffer_lograw = { NULL, 0, 0 };
 
 static logs_log_t *log_curlog = NULL;
 
-	/* log ff types... */
-typedef enum {
-	LOG_FORMAT_NONE = 0,
-	LOG_FORMAT_SIMPLE,
-	LOG_FORMAT_XML,
-	LOG_FORMAT_IRSSI,
-	LOG_FORMAT_RAW, 
-} log_format_t;
-
-	/* irssi types */
-typedef enum {
-	LOG_IRSSI_MESSAGE = 0,
-	LOG_IRSSI_EVENT,
-	LOG_IRSSI_STATUS,
-	LOG_IRSSI_INFO,
-	LOG_IRSSI_ACTION, 
-} log_irssi_t;
-
-	/* irssi style info messages */
-#define IRSSI_LOG_EKG2_OPENED	"--- Log opened %a %b %d %H:%M:%S %Y" 	/* defaultowy log_open_string irssi , jak cos to dodac zmienna... */
-#define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
-#define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */
-
 /*
  * log_escape()
  *
@@ -314,7 +291,7 @@ static int logs_window_check(logs_log_t *ll, time_t t) {
 				l->file = logs_open_file(l->path, LOG_FORMAT_IRSSI);
 			logs_irssi(l->file, ll->session, NULL,
 					prepare_timestamp_format(IRSSI_LOG_DAY_CHANGED, time(NULL)),
-					0, LOG_IRSSI_INFO);
+					0, EKG_MSGCLASS_SYSTEM);
 		}
 		xfree(tm);
 	}
@@ -400,7 +377,7 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 		if (ll->lw->logformat == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_OPENED)) {
 			logs_irssi(ll->lw->file, session, NULL,
 					prepare_timestamp_format(IRSSI_LOG_EKG2_OPENED, t),
-					0, LOG_IRSSI_INFO);
+					0, EKG_MSGCLASS_SYSTEM);
 		} 
 		list_add(&log_logs, ll);
 	}
@@ -473,7 +450,7 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 	if (!ui_plugin) ui_plugin = plugin_find(("ncurses"));
 	if (!ui_plugin) ui_plugin = plugin_find(("gtk"));
 	if (!ui_plugin) {
-		debug("WARN logs_print_window() called but neither ncurses plugin nor gtk found\n");
+		debug_error("WARN logs_print_window() called but neither ncurses plugin nor gtk found\n");
 		return -1;
 	}
 
@@ -558,15 +535,6 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	xfree(sesja);
 	xfree(target);
 	return item;
-}
-
-static int logs_buffer_raw_add(const char *file, const char *str) {
-	/* XXX, get global maxsize variable and if > than current ..... */
-	return buffer_add(&buffer_lograw, file, str);
-}
-
-static int logs_buffer_raw_add_line(const char *file, const char *line) {
-	return buffer_add_str(&buffer_lograw, file, line);
 }
 
 /*
@@ -898,31 +866,27 @@ static void logs_gaim()
  * write to file like irssi do.
  */
 
-static void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type) {
+static void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class) {
 	const char *nuid = NULL;	/* get_nickname(session_find(session), uid) */
 
 	if (!file)
 		return;
 
-	switch (type) {
-		case LOG_IRSSI_STATUS: /* status message (other than @1) */
-			text = saprintf("reports status: %s /* {status} */", __(text));
-		case LOG_IRSSI_ACTION:	/* irc ACTION messages */
-			fprintf(file, "%s * %s %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
-			if (type == LOG_IRSSI_STATUS) xfree((char *) text);
+	switch (class) {
+		case EKG_MSGCLASS_PRIV_STATUS:
+			fprintf(file, "%s * %s reports status: %s /* {status} */\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
 			break;
-		case LOG_IRSSI_INFO: /* other messages like session started, session closed and so on */
+
+		case EKG_MSGCLASS_SYSTEM: /* other messages like session started, session closed and so on */
 			fprintf(file, "%s\n", __(text));
 			break;
-		case LOG_IRSSI_EVENT: /* text - join, part, quit, ... */
-			fprintf(file, "%s -!- %s has %s #%s\n", 
-				prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), __(session));
-			break;
-		case LOG_IRSSI_MESSAGE:	/* just normal message */
+
+		case EKG_MSGCLASS_MESSAGE:	/* just normal message */
 			fprintf(file, "%s <%s> %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
 			break;
+
 		default: /* everythink else */
-			debug("[LOGS_IRSSI] UTYPE = %d\n", type);
+			debug("[LOGS_IRSSI] UTYPE = %d\n", class);
 			return; /* to avoid flushisk file */
 	}
 	fflush(file);
@@ -942,9 +906,14 @@ static const char *prepare_timestamp_format(const char *format, time_t t)  {
 	if (!format)
 		return itoa(t);
 
+	if (!format[0])
+		return "";
+
 	i = i % 2;
-	if (!strftime(buf[i], sizeof(buf[0]), format, tm) && xstrlen(format)>0)
-		xstrcpy(buf[i], "TOOLONG");
+
+	if (!strftime(buf[i], sizeof(buf[0]), format, tm))
+		return "TOOLONG";
+
 	return buf[i++];
 }
 
@@ -976,12 +945,12 @@ static QUERY(logs_handler) {
 	lw = logs_log_find(session, ruid, 1)->lw;
 
 	if (!lw) {
-		debug("[LOGS:%d] logs_handler, shit happen\n", __LINE__);
+		debug_error("[LOGS:%d] logs_handler, shit happen\n", __LINE__);
 		return 0;
 	}
 
 	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
-		debug("[LOGS:%d] logs_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
+		debug_error("[LOGS:%d] logs_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
 		return 0;
 	}
 
@@ -989,7 +958,7 @@ static QUERY(logs_handler) {
 
 	/* uid = uid | ruid ? */
 	if (lw->logformat == LOG_FORMAT_IRSSI)
-		logs_irssi(lw->file, session, uid, text, sent, LOG_IRSSI_MESSAGE);
+		logs_irssi(lw->file, session, uid, text, sent, EKG_MSGCLASS_MESSAGE);
 	else if (lw->logformat == LOG_FORMAT_SIMPLE)
 		logs_simple(lw->file, session, ruid, text, sent, class, (char*)NULL);
 	else if (lw->logformat == LOG_FORMAT_XML)
@@ -1022,12 +991,12 @@ static QUERY(logs_status_handler) {
 	lw = logs_log_find(session, uid, 1)->lw;
 
 	if (!lw) {
-		debug("[LOGS:%d] logs_status_handler, shit happen\n", __LINE__);
+		debug_error("[LOGS:%d] logs_status_handler, shit happen\n", __LINE__);
 		return 0;
 	}
 
 	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
-		debug("[LOGS:%d] logs_status_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
+		debug_error("[LOGS:%d] logs_status_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
 		return 0;
 	}
 
@@ -1037,16 +1006,16 @@ static QUERY(logs_status_handler) {
 	if (lw->logformat == LOG_FORMAT_IRSSI) {
 		char *_what = NULL;
 
-		_what = saprintf("%s (%s)", __(descr), __(ekg_status_string(status, 0)));
+		_what = saprintf("%s (%s)", descr, __(ekg_status_string(status, 0)));
 
-		logs_irssi(lw->file, session, uid, _what, time(NULL), LOG_IRSSI_STATUS);
+		logs_irssi(lw->file, session, uid, _what, time(NULL), EKG_MSGCLASS_PRIV_STATUS);
 
 		xfree(_what);
 
 	} else if (lw->logformat == LOG_FORMAT_SIMPLE) {
 		logs_simple(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, ekg_status_string(status, 0));
 	} else if (lw->logformat == LOG_FORMAT_XML) {
-		/*		logs_xml(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, status); */
+		// logs_xml(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, status);
 	}
 	return 0;
 }
@@ -1063,17 +1032,17 @@ static QUERY(logs_handler_irc) {
 	log_window_t *lw = logs_log_find(session, channame, 1)->lw;
 
 	if (!lw) {
-		debug("[LOGS:%d] logs_handler_irc, shit happen\n", __LINE__);
+		debug_error("[LOGS:%d] logs_handler_irc, shit happen\n", __LINE__);
 		return 0;
 	}
 
 	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) { 
-		debug("[LOGS:%d] logs_handler_irc Cannot open/create file: %s\n", __LINE__, __(lw->path));
+		debug_error("[LOGS:%d] logs_handler_irc Cannot open/create file: %s\n", __LINE__, __(lw->path));
 		return 0;
 	}
 
 	if (lw->logformat == LOG_FORMAT_IRSSI) 
-		logs_irssi(lw->file, session, uid, text, time(NULL), LOG_IRSSI_MESSAGE);
+		logs_irssi(lw->file, session, uid, text, time(NULL), EKG_MSGCLASS_MESSAGE);
 	/* ITD dla innych formatow logow */
 	return 0;
 }
@@ -1091,7 +1060,7 @@ static QUERY(logs_handler_raw) {
 	path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0);
 	str  = fstring_reverse(line);
 
-	logs_buffer_raw_add(path, str);
+	buffer_add(&buffer_lograw, path, str);
 
 	xfree(str);
 	xfree(path);
@@ -1123,7 +1092,7 @@ static QUERY(logs_handler_newwin) {
 
 		/* XXX, in fjuczer it can be gzipped file, WARN HERE */
 		while ((line = read_file(f, 0)))
-			logs_buffer_raw_add_line(path, line);
+			buffer_add_str(&buffer_lograw, path, line);
 
 		ftruncate(fileno(f), 0);	/* works? */
 		fclose(f);
@@ -1218,7 +1187,7 @@ static int logs_plugin_destroy() {
 			if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
 				logs_irssi(f, ll->session, NULL,
 						prepare_timestamp_format(IRSSI_LOG_EKG2_CLOSED, t), 0,
-						LOG_IRSSI_INFO);
+						EKG_MSGCLASS_SYSTEM);
 			}
 			fclose(f);
 		}
@@ -1244,7 +1213,7 @@ static int logs_plugin_destroy() {
 
 		if (f) {
 			fprintf(f, "%i %s\n", (unsigned int) b->ts, b->line);
-		} else debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(b->target));
+		} else debug_error("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(b->target));
 
 		xfree(b->line);
 		xfree(oldtarget);
@@ -1257,7 +1226,6 @@ static int logs_plugin_destroy() {
 			xfree(oldtarget);
 		}
 	}
-	debug_error("[logs] 0x%x\n", buffer_lograw);
 	/* just in case */
 	buffer_free(&buffer_lograw);
 
