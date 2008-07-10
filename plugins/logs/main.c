@@ -332,7 +332,7 @@ static logs_log_t *logs_log_find(const char *session, const char *uid, int creat
 
 	if (log_curlog && !xstrcmp(log_curlog->session, session) && !xstrcmp(log_curlog->uid, uid)) {
 		if (log_curlog->lw) 
-			logs_window_check(ll, time(NULL)); /* tutaj ? */
+			logs_window_check(log_curlog, time(NULL)); /* tutaj ? */
 		return log_curlog->lw ? log_curlog : logs_log_new(log_curlog, session, uid);
 	}
 
@@ -403,8 +403,9 @@ static void logs_window_new(window_t *w) {
 }
 
 static FILE *logs_window_close(logs_log_t *l, int close) {
-	FILE *f;
 	log_window_t *lw;
+	FILE *f;
+
 	if (!l || !(lw = l->lw))
 		return NULL;
 
@@ -683,7 +684,7 @@ static FILE* logs_open_file(char *path, int ff) {
 			gzFile f;
 
 			if (!(f = gzopen(path, "a")))
-				goto cleanup;
+				return NULL;
 
 			gzputs(f, buf);
 			gzclose(f);
@@ -897,7 +898,6 @@ static void logs_irssi(FILE *file, const char *session, const char *uid, const c
 	fflush(file);
 }
 
-
 /* 
  * zwraca na przemian jeden z dwóch statycznych buforów, wiêc w obrêbie
  * jednego wyra¿enia mo¿na wywo³aæ tê funkcjê dwukrotnie.
@@ -947,9 +947,7 @@ static QUERY(logs_handler) {
 	class &= ~EKG_NO_THEMEBIT;
 	ruid = (class >= EKG_MSGCLASS_SENT) ? rcpts[0] : uid;
 
-	lw = logs_log_find(session, ruid, 1)->lw;
-
-	if (!lw) {
+	if (!(lw = logs_log_find(session, ruid, 1)->lw)) {
 		debug_error("[LOGS:%d] logs_handler, shit happen\n", __LINE__);
 		return 0;
 	}
@@ -962,14 +960,20 @@ static QUERY(logs_handler) {
 	/*	debug("[LOGS_MSG_HANDLER] %s : %s %d %x\n", ruid, lw->path, lw->logformat, lw->file); */
 
 	/* uid = uid | ruid ? */
-	if (lw->logformat == LOG_FORMAT_IRSSI)
-		logs_irssi(lw->file, session, uid, text, sent, EKG_MSGCLASS_MESSAGE);
-	else if (lw->logformat == LOG_FORMAT_SIMPLE)
-		logs_simple(lw->file, session, ruid, text, sent, class, (char*)NULL);
-	else if (lw->logformat == LOG_FORMAT_XML)
-		logs_xml(lw->file, session, uid, text, sent, class);
-	// itd. dla innych formatow logow
 
+	switch (lw->logformat) {
+		case LOG_FORMAT_SIMPLE:
+			logs_simple(lw->file, session, ruid, text, sent, class, (char*)NULL);
+			break;
+
+		case LOG_FORMAT_XML:
+			logs_xml(lw->file, session, uid, text, sent, class);
+			break;
+
+		case LOG_FORMAT_IRSSI:
+			logs_irssi(lw->file, session, uid, text, sent, EKG_MSGCLASS_MESSAGE);
+			break;
+	}
 	return 0;
 }
 
@@ -993,9 +997,7 @@ static QUERY(logs_status_handler) {
 	if (config_logs_log_status <= 0)
 		return 0;
 
-	lw = logs_log_find(session, uid, 1)->lw;
-
-	if (!lw) {
+	if (!(lw = logs_log_find(session, uid, 1)->lw)) {
 		debug_error("[LOGS:%d] logs_status_handler, shit happen\n", __LINE__);
 		return 0;
 	}
@@ -1008,19 +1010,26 @@ static QUERY(logs_status_handler) {
 	if (!descr)
 		descr = "";
 
-	if (lw->logformat == LOG_FORMAT_IRSSI) {
-		char *_what = NULL;
+	switch (lw->logformat) {
+		case LOG_FORMAT_SIMPLE:
+		{
+			logs_simple(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, ekg_status_string(status, 0));
+			break;
+		}
 
-		_what = saprintf("%s (%s)", descr, __(ekg_status_string(status, 0)));
+		case LOG_FORMAT_XML:
+		{
+			// logs_xml(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, status);
+			break;
+		}
 
-		logs_irssi(lw->file, session, uid, _what, time(NULL), EKG_MSGCLASS_PRIV_STATUS);
-
-		xfree(_what);
-
-	} else if (lw->logformat == LOG_FORMAT_SIMPLE) {
-		logs_simple(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, ekg_status_string(status, 0));
-	} else if (lw->logformat == LOG_FORMAT_XML) {
-		// logs_xml(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, status);
+		case LOG_FORMAT_IRSSI:
+		{
+			char *_what = saprintf("%s (%s)", descr, __(ekg_status_string(status, 0)));
+			logs_irssi(lw->file, session, uid, _what, time(NULL), EKG_MSGCLASS_PRIV_STATUS);
+			xfree(_what);
+			break;
+		}
 	}
 	return 0;
 }
@@ -1033,10 +1042,9 @@ static QUERY(logs_handler_irc) {
 		int  *UNUSED(foryou)	= va_arg(ap, int*);
 		int  *UNUSED(private)	= va_arg(ap, int*);
 	char *channame	= *(va_arg(ap, char**));
+	log_window_t *lw;
 
-	log_window_t *lw = logs_log_find(session, channame, 1)->lw;
-
-	if (!lw) {
+	if (!(lw = logs_log_find(session, channame, 1)->lw)) {
 		debug_error("[LOGS:%d] logs_handler_irc, shit happen\n", __LINE__);
 		return 0;
 	}
@@ -1046,9 +1054,11 @@ static QUERY(logs_handler_irc) {
 		return 0;
 	}
 
-	if (lw->logformat == LOG_FORMAT_IRSSI) 
-		logs_irssi(lw->file, session, uid, text, time(NULL), EKG_MSGCLASS_MESSAGE);
-	/* ITD dla innych formatow logow */
+	switch (lw->logformat) {
+		case LOG_FORMAT_IRSSI:
+			logs_irssi(lw->file, session, uid, text, time(NULL), EKG_MSGCLASS_MESSAGE);
+			break;
+	}
 	return 0;
 }
 
