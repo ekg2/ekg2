@@ -271,6 +271,7 @@ int session_remove(const char *uid)
 	window_t *w;
 	char *tmp;
 	int count;
+	list_t l;
 
 	if (!(s = session_find(uid)))
 		return -1;
@@ -297,21 +298,13 @@ int session_remove(const char *uid)
 	}
 #endif
 
-	{		/* remove session watches */
-		watch_t *w;
+/* remove session watches */
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
 
-		for (w = watches; w;) {
-			watch_t *next = w->next;
+		if (w && w->is_session && w->data == s)
+			watch_free(w);
 
-			if (w && w->is_session && w->data == s) {
-				watch_t *tmp;
-				
-				if ((tmp = watch_free(w)))
-					next = tmp;
-			}
-
-			w = next;
-		}
 	}
 
 	{
@@ -1445,21 +1438,18 @@ void sessions_free() {
 	session_t *s;
 
 	struct timer *t;
-	watch_t *w;
 	window_t *wl;
+	list_t l;
 
         if (!sessions)
                 return;
 
 /* remove _ALL_ session watches */
-	for (w = watches; w;) {
-		watch_t *next = w->next;
-		watch_t *tmp;
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
 
-		if (w->is_session && ((tmp = watch_free(w))))
-			next = tmp;
-
-		w = next;
+		if (w && w->is_session)
+			watch_free(w);
 	}
 
 	for (t = timers; t; t = t->next) {

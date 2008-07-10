@@ -1897,16 +1897,18 @@ static COMMAND(cmd_test_debug_dump)
 
 static COMMAND(cmd_debug_watches)
 {
-	watch_t *w;
 	char buf[256];
+	list_t l;
 	
 	printq("generic_bold", ("fd     wa   plugin  pers tout  started     rm"));
 	
-	for (w = watches; w; w = w->next) {
-		char wa[4];
+	for (l = watches; l; l = l->next) {
 		char *plugin;
+		char wa[4];
+		watch_t *w = l->data;
 
-		if (!w) continue;
+		if (!w)
+			continue;
 
 		xstrcpy(wa, "");
 

@@ -59,9 +59,7 @@ DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
 	static __DYNSTUFF_LIST_ADD_SORTED,		/* plugins_add() */
 	__DYNSTUFF_LIST_UNLINK)				/* plugins_unlink() */
 
-watch_t *watches = NULL;
-__DYNSTUFF_LIST_ADD_BEGINNING(watches, watch_t, NULL);				/* watches_add() */
-
+list_t watches = NULL;
 idle_t *idles   = NULL;
 
 query_t *queries[QUERY_EXTERNAL+1];
@@ -394,10 +392,10 @@ plugin_t *plugin_find_uid(const char *uid) {
 int plugin_unload(plugin_t *p)
 {
 	char *name; 
+	list_t l;
 
 	if (!p)
 		return -1;
-
 
 	if (config_expert_mode == 0 && p->pclass == PLUGIN_UI) {
 		plugin_t *plug;
@@ -413,14 +411,12 @@ int plugin_unload(plugin_t *p)
 		}
 	}
 
-	{
-		watch_t *w;
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
 
-		for (w = watches; w; w = w->next) {
-			if (w && w->plugin == p && (w->removed == 1 || w->removed == -1)) {
-				print("generic_error", "XXX cannot remove this plugin when there some watches active");
-				return -1;
-			}
+		if (w && w->plugin == p && (w->removed == 1 || w->removed == -1)) {
+			print("generic_error", "XXX cannot remove this plugin when there some watches active");
+			return -1;
 		}
 	}
 	/* XXX, to samo dla timerow */
@@ -442,8 +438,6 @@ int plugin_unload(plugin_t *p)
 
 	return 0;
 }
-
-
 
 /*
  * plugin_register()
@@ -500,26 +494,24 @@ int plugin_unregister(plugin_t *p)
 	 * ekg2 do SEGV.
 	 */
 
-	watch_t *w;
 	struct timer *t;
 	idle_t *i;
 	session_t *s;
 	query_t **ll;
 	variable_t *v;
 	command_t *c;
+	list_t l;
 
 	if (!p)
 		return -1;
 
 /* XXX think about sequence of unloading....: currently: watches, timers, sessions, queries, variables, commands */
 
-	for (w = watches; w;) {
-		watch_t *next = w->next;
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
 
-		if (w->plugin == p)
+		if (w && w->plugin == p)
 			watch_free(w);
-
-		w = next;
 	}
 
 	for (t = timers; t; t = t->next) {
@@ -855,11 +847,12 @@ void queries_reconnect() {
  *
  * zwraca obiekt watch_t o podanych parametrach.
  */
-watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
-{
-	watch_t *w;
+watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type) {
+	list_t l;
 	
-	for (w = watches; w; w = w->next) {
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
+
 			/* XXX: added simple plugin ignoring, make something nicer? */
 		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && (w->type & type) && !(w->removed > 0))
 			return w;
@@ -891,30 +884,28 @@ static LIST_FREE_ITEM(watch_free_data, watch_t *) {
  * zwraca wska¼nik do nastêpnego obiektu do iterowania
  * albo NULL, jak nie mo¿na skasowaæ.
  */
-watch_t *watch_free(watch_t *w) {
-	void *next;
-
+void watch_free(watch_t *w) {
 	if (!w)
-		return NULL;
+		return;
 
 	if (w->removed == 2)
-		return NULL;
+		return;
 
 	if (w->removed == -1 || w->removed == 1) { /* watch is running.. we cannot remove it */
 		w->removed = 1;
-		return NULL;
+		return;
 	}
 
 	if (w->type == WATCH_WRITE && w->buf && !w->handler) { 
 		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
-		return NULL;
+		return;
 	}
 
-	next = LIST_REMOVE2(&watches, w, watch_free_data);
+	watch_free_data(w);
+	list_remove_safe(&watches, w, 1);
+
 	ekg_watches_removed++;
 	debug("watch_free() REMOVED WATCH, watches removed this loop: %d oldwatch: 0x%x\n", ekg_watches_removed, w);
-
-	return next;
 }
 
 /*
@@ -1149,8 +1140,7 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	w->handler = handler;
 	w->data    = data;
 
-	watches_add(w);
-
+	list_add_beginning(&watches, w);
 	return w;
 }
 

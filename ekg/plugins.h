@@ -26,7 +26,7 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-#define EKG_ABI_VER 4055
+#define EKG_ABI_VER 4090
 
 #define EXPORT __attribute__ ((visibility("default")))
 
@@ -157,8 +157,6 @@ typedef WATCHER(watcher_handler_func_t);
 typedef WATCHER_SESSION(watcher_session_handler_func_t);
 
 typedef struct watch {
-	struct watch *next;
-
 	int fd;			/* obserwowany deskryptor */
 	watch_type_t type;	/* co sprawdzamy */
 	plugin_t *plugin;	/* wtyczka obs³uguj±ca deskryptor */
@@ -189,7 +187,7 @@ int watch_write(watch_t *w, const char *format, ...);
 #endif
 
 watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type);
-watch_t *watch_free(watch_t *w);
+void watch_free(watch_t *w);
 
 typedef void *watch_handler_func_t;
 
@@ -233,7 +231,7 @@ int ekg2_dlinit();
 
 #ifndef EKG2_WIN32_NOFUNCTION
 extern plugin_t *plugins;
-extern watch_t *watches;
+extern list_t watches;
 extern idle_t *idles;
 extern query_t *queries[];
 #endif

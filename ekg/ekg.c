@@ -192,20 +192,15 @@ void ekg_loop() {
 		}
 
 		{		/* removed 'w->removed' watches, timeout checking moved below select() */
-			watch_t *w;
+			list_t l;
 
-			for (w = watches; w;) {
-				watch_t *next = w->next;
+			for (l = watches; l; l = l->next) {
+				watch_t *w = l->data;
 
-				if (w->removed == 1) {
-					watch_t *tmp;
-
+				if (w && w->removed == 1) {
 					w->removed = 0;
-					if ((tmp = watch_free(w))) /* if watch was really deleted, we shall jump */
-						next = tmp;
+					watch_free(w);
 				}
-
-				w = next;
 			}
 		}
 
@@ -258,9 +253,10 @@ void ekg_loop() {
                 FD_ZERO(&wd);
 
 		{
-			watch_t *w;
+			list_t l;
 
-			for (maxfd = 0, w = watches; w; w = w->next) {
+			for (maxfd = 0, l = watches; l; l = l->next) {
+				watch_t *w = l->data;
 				if (!w)
 					continue;
 
@@ -328,20 +324,16 @@ void ekg_loop() {
                          * ekg mog³o dzia³aæ dalej, sprawd¼my który to i go
                          * usuñmy z listy. */
 			if (errno == EBADF) {
-				watch_t *w;
+				list_t l;
 
-				for (w = watches; w;) {
+				for (l = watches; l; l = l->next) {
+					watch_t *w = l->data;
 					struct stat st;
-					watch_t *next = w->next;
 
 					if (w && fstat(w->fd, &st)) {
-						watch_t *tmp;
 						debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
-						if ((tmp = watch_free(w)))
-							next = tmp;
+						watch_free(w);
 					}
-
-					w = next;
 				}
 			} else if (errno != EINTR)
 				debug("select() failed: %s\n", strerror(errno));
@@ -368,14 +360,15 @@ void ekg_loop() {
 		}
 
 		{		/* przejrzyj deskryptory */
-			watch_t *w, *next;
+			list_t l;
 
-			for (w = watches; w; w = next) {
-				next = w->next;
+			for (l = watches; l; l = l->next) {
+				watch_t *w = l->data;
+
+				if (!w)
+					continue;
 
 				if (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)) { /* timeout checking */
-					watch_t *tmp;
-
 					if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
 						continue;
 					w->removed = -1;
@@ -383,16 +376,14 @@ void ekg_loop() {
 						int (*handler)(int, int, char*, void*) = w->handler;
 						if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
 							w->removed = 0;
-							if ((tmp = watch_free(w)))
-								next = tmp;
+							watch_free(w);
 							continue;
 						}
 					} else {
 						int (*handler)(int, int, int, void*) = w->handler;
 						if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
 							w->removed = 0;
-							if ((tmp = watch_free(w)))
-								next = tmp;
+							watch_free(w);
 							continue;
 						}
 					}
@@ -427,7 +418,7 @@ void ekg_loop() {
 
 		if (ekg_watches_removed > 0) {
 			debug("ekg_loop() Removed %d watches this loop, let's cleanup calling: list_cleanup() ...\n", ekg_watches_removed);
-			//list_cleanup(&watches); /* not needed anymore, left for historical reasons ( ; */
+			list_cleanup(&watches);
 			ekg_watches_removed = 0;
 		}
 	}
@@ -1089,16 +1080,12 @@ void ekg_exit()
 	}
 
 	{
-		watch_t *w;
+		list_t l;
 
-		for (w = watches; w;) {
-			watch_t *tmp;
-			watch_t *next = w->next;
+		for (l = watches; l; l = l->next) {
+			watch_t *w = l->data;
 
-			if ((tmp = watch_free(w)))
-				next = tmp;
-
-			w = next;
+			watch_free(w);
 		}
 	}
 
@@ -1116,7 +1103,7 @@ void ekg_exit()
 //			if (p->dl) ekg2_dlclose(p->dl);
 		}
 	}
-	LIST_DESTROY2(watches, NULL);	 watches = NULL;
+	list_destroy(watches, 0); watches = NULL;
 
 	if (config_changed && !config_speech_app && config_save_quit == 1) {
 		char line[80];
