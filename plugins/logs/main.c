@@ -101,14 +101,6 @@ typedef enum {
 #define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
 #define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */
 
-static QUERY(logs_setvar_default) {
-	xfree(config_logs_path);
-	xfree(config_logs_timestamp);
-	config_logs_path = xstrdup("~/.ekg2/logs/%S/%u");
-	config_logs_timestamp = NULL;
-	return 0;
-}
-
 /*
  * log_escape()
  *
@@ -163,6 +155,98 @@ static char *log_escape(const char *str)
 	*q = 0;
 
 	return res;
+}
+
+static char *fstring_reverse(fstring_t *fstr) {
+	const char *str;
+	const short *attr;
+	string_t asc;
+	int i;
+
+	if (!fstr)
+		return NULL;
+
+	attr = fstr->attr;
+	str = fstr->str.b;
+
+	if (!attr || !str)
+		return NULL;
+
+	asc = string_init(NULL);
+
+	for (i = 0; str[i]; i++) {
+#define prev	attr[i-1]
+#define cur	attr[i] 
+		int reset = 0;
+
+		if (i) {
+			if (!(cur & FSTR_BOLD) && (prev & FSTR_BOLD))		reset = 1;
+			if (!(cur & FSTR_BLINK) && (prev & FSTR_BLINK))		reset = 1;
+			if (!(cur & FSTR_UNDERLINE) && (prev & FSTR_UNDERLINE))	reset = 1;
+			if (!(cur & FSTR_REVERSE) && (prev & FSTR_REVERSE))	reset = 1;
+			if ((cur & FSTR_NORMAL) && !(prev & FSTR_NORMAL))	reset = 1;	/* colors disappear */
+
+			if (reset) 
+				string_append(asc, "%n");
+		} else
+			reset = 1;
+
+	/* attr */
+		if ((cur & FSTR_BLINK) &&	(reset || !(prev & FSTR_BLINK)))	string_append(asc, "%i");
+//		if ((cur & FSTR_UNDERLINE) &&	(reset || !(prev & FSTR_UNDERLINE)))	string_append(asc, "%");
+//		if ((cur & FSTR_REVERSE) &&	(reset || !(prev & FSTR_REVERSE)))	string_append(asc, "%");
+
+		if (!(cur & FSTR_NORMAL)) {
+		/* background color XXX */
+#define BGCOLOR(x)	-1
+			if (0 && ((reset || BGCOLOR(cur) != BGCOLOR(prev)))) {
+				string_append_c(asc, '%');
+				switch (BGCOLOR(cur)) {
+					case (0): string_append_c(asc, 'l'); break;
+					case (1): string_append_c(asc, 's'); break;
+					case (2): string_append_c(asc, 'h'); break;
+					case (3): string_append_c(asc, 'z'); break;
+					case (4): string_append_c(asc, 'e'); break;
+					case (5): string_append_c(asc, 'q'); break;
+					case (6): string_append_c(asc, 'd'); break;
+					case (7): string_append_c(asc, 'x'); break;
+				}
+			}
+#undef BGCOLOR
+
+		/* foreground color */
+#define FGCOLOR(x)	((!(x & FSTR_NORMAL)) ? (x & FSTR_FOREMASK) : -1)
+			if (((reset || FGCOLOR(cur) != FGCOLOR(prev)) || (i && (prev & FSTR_BOLD) != (cur & FSTR_BOLD)))) {
+				string_append_c(asc, '%');
+				switch ((cur & FSTR_FOREMASK)) {
+					case (0): string_append_c(asc, (cur & FSTR_BOLD) ? 'K' : 'k'); break;
+					case (1): string_append_c(asc, (cur & FSTR_BOLD) ? 'R' : 'r'); break;
+					case (2): string_append_c(asc, (cur & FSTR_BOLD) ? 'G' : 'g'); break;
+					case (3): string_append_c(asc, (cur & FSTR_BOLD) ? 'Y' : 'y'); break;
+					case (4): string_append_c(asc, (cur & FSTR_BOLD) ? 'B' : 'b'); break;
+					case (5): string_append_c(asc, (cur & FSTR_BOLD) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
+					case (6): string_append_c(asc, (cur & FSTR_BOLD) ? 'C' : 'c'); break;
+					case (7): string_append_c(asc, (cur & FSTR_BOLD) ? 'W' : 'w'); break;
+				}
+			}
+#undef FGCOLOR
+		} else {	/* no color */
+			if ((cur & FSTR_BOLD) && (reset || !(prev & FSTR_BOLD)))
+				string_append(asc, "%T");
+		}
+
+	/* str */
+		if (str[i] == '%' || str[i] == '\\') 
+			string_append_c(asc, '\\');
+		string_append_c(asc, str[i]);
+	}
+
+/* reset, and return. */
+	string_append(asc, "%n");
+	return string_free(asc, 0);
+
+#undef prev
+#undef cur
 }
 
 /* 
@@ -353,14 +437,6 @@ static FILE *logs_window_close(logs_log_t *l, int close) {
 	return f;
 }
 
-static void logs_changed_maxfd(const char *var) {
-	int maxfd = config_logs_max_files;
-	if (in_autoexec) 
-		return;
-	debug("maxfd limited to %d\n", maxfd);
-/* TODO: sprawdzic ile fd aktualnie jest otwartych jak cos to zamykac najstarsze... dodac kiedy otwarlismy plik i zapisalismy ostatnio cos do log_window_t ? */
-}
-
 static void logs_changed_path(const char *var) {
 	list_t l;
 	if (in_autoexec || !log_logs) 
@@ -387,19 +463,6 @@ static void logs_changed_raw(const char *var) {
 		buffer_free(&buffer_lograw);
 }
 
-static QUERY(logs_postinit) {
-	window_t *w;
-	for (w = windows; w; w = w->next)
-		logs_window_new(w);
-	return 0;
-}
-
-static QUERY(logs_handler_killwin)  {
-	window_t *w = *(va_arg(ap, window_t **));
-	logs_window_close(logs_log_find(w->session ? w->session->uid : NULL, w->target, 0), 1);
-	return 0;
-}
-
 static int logs_print_window(session_t *s, window_t *w, const char *line, time_t ts) {
 	static plugin_t *ui_plugin = NULL;
 
@@ -414,7 +477,7 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 		return -1;
 	}
 
-	fline = format_string(line);		/* format string */
+	fline = format_string(line);			/* format string */
 	fstr = fstring_new(fline);			/* create fstring */
 
 	fstr->ts = ts;					/* sync timestamp */
@@ -422,7 +485,6 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 	query_emit_id(ui_plugin, UI_WINDOW_PRINT, &w, &fstr);	/* let's rock */
 
 	xfree(fline);						/* cleanup */
-
 	return 0;
 }
 
@@ -505,151 +567,6 @@ static int logs_buffer_raw_add(const char *file, const char *str) {
 
 static int logs_buffer_raw_add_line(const char *file, const char *line) {
 	return buffer_add_str(&buffer_lograw, file, line);
-}
-
-static QUERY(logs_handler_newwin) {
-	window_t *w = *(va_arg(ap, window_t **));
-
-/* w->floating */
-
-	logs_window_new(w);
-	if (config_logs_log_raw) {
-		FILE *f;
-		char *line;
-		char *path;
-
-		path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0 /* time(NULL) */ ); 
-		debug("logs_handler_newwin() loading buffer from: %s\n", __(path));
-
-		f = logs_open_file(path, LOG_FORMAT_RAW);
-
-		if (!f) {
-			debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(path));
-			xfree(path);
-			return 0;
-		}
-
-		/* XXX, in fjuczer it can be gzipped file, WARN HERE */
-		while ((line = read_file(f, 0)))
-			logs_buffer_raw_add_line(path, line);
-
-		ftruncate(fileno(f), 0);	/* works? */
-		fclose(f);
-
-/*	XXX, unlink file instead of truncating? 
-		if (unlink(path+'.raw') == -1) debug("[LOGS:%d] Cannot unlink file: %s (%d %s)\n", __LINE__, __(path), errno, strerror(errno));
-*/		
-
-		logs_buffer_raw_display(path, config_logs_remind_number);
-		xfree(path);
-	}
-	return 0;
-}
-
-EXPORT int logs_plugin_init(int prio) {
-
-	PLUGIN_CHECK_VER("logs");
-
-	plugin_register(&logs_plugin, prio);
-	
-	query_connect_id(&logs_plugin, SET_VARS_DEFAULT,logs_setvar_default, NULL);
-	query_connect_id(&logs_plugin, PROTOCOL_MESSAGE_POST, logs_handler, NULL);
-	query_connect_id(&logs_plugin, IRC_PROTOCOL_MESSAGE, logs_handler_irc, NULL);
-	query_connect_id(&logs_plugin, UI_WINDOW_NEW,	logs_handler_newwin, NULL);
-	query_connect_id(&logs_plugin, UI_WINDOW_PRINT,	logs_handler_raw, NULL);
-	query_connect_id(&logs_plugin, UI_WINDOW_KILL,	logs_handler_killwin, NULL);
-	query_connect_id(&logs_plugin, PROTOCOL_STATUS, logs_status_handler, NULL);
-	query_connect_id(&logs_plugin, CONFIG_POSTINIT, logs_postinit, NULL);
-	/* XXX, implement UI_WINDOW_TARGET_CHANGED, IMPORTANT!!!!!! */
-
-	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */
-	variable_add(&logs_plugin, ("log_max_open_files"), VAR_INT, 1, &config_logs_max_files, &logs_changed_maxfd, NULL, NULL); 
-	variable_add(&logs_plugin, ("log"), VAR_MAP, 1, &config_logs_log, &logs_changed_path, 
-			variable_map(3, 
-				LOG_FORMAT_NONE, 0, "none", 
-				LOG_FORMAT_SIMPLE, LOG_FORMAT_XML, "simple", 
-				LOG_FORMAT_XML, LOG_FORMAT_SIMPLE, "xml"), 
-			NULL);
-	variable_add(&logs_plugin, ("log_raw"), VAR_BOOL, 1, &config_logs_log_raw, &logs_changed_raw, NULL, NULL);
-	variable_add(&logs_plugin, ("log_ignored"), VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
-	variable_add(&logs_plugin, ("log_status"), VAR_BOOL, 1, &config_logs_log_status, NULL, NULL, NULL);
-	variable_add(&logs_plugin, ("path"), VAR_DIR, 1, &config_logs_path, &logs_changed_path, NULL, NULL);
-	variable_add(&logs_plugin, ("remind_number"), VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
-	variable_add(&logs_plugin, ("timestamp"), VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
-
-	return 0;
-}
-
-static int logs_plugin_destroy() {
-	list_t old_logs = log_logs;
-	struct buffer *b;
-
-	for (; log_logs; log_logs = log_logs->next) {
-		logs_log_t *ll = log_logs->data;
-		FILE *f = NULL;
-		time_t t = time(NULL);
-		int ff = (ll->lw) ? ll->lw->logformat : logs_log_format(session_find(ll->session));
-
-		/* TODO: rewrite */
-		if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
-			char *path	= (ll->lw) ? xstrdup(ll->lw->path) : logs_prepare_path(session_find(ll->session), config_logs_path, ll->uid, t);
-			f		= (ll->lw) ? logs_window_close(log_logs->data, 0) : NULL; 
-
-			if (!f) 
-				f = logs_open_file(path, ff);
-			xfree(path);
-		} else 
-			logs_window_close(log_logs->data, 1);
-
-		if (f) {
-			if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
-				logs_irssi(f, ll->session, NULL,
-						prepare_timestamp_format(IRSSI_LOG_EKG2_CLOSED, t), 0,
-						LOG_IRSSI_INFO);
-			}
-			fclose(f);
-		}
-
-		xfree(ll->session);
-		xfree(ll->uid);
-	}
-	list_destroy(old_logs, 1);	log_logs = NULL;
-
-	if (config_logs_log_raw) for (b = buffer_lograw.data; b;) {
-		static FILE *f = NULL;
-		static char *oldtarget = NULL;
-		/*
-		 * path: b->target
-		 *   ts: b->ts
-		 *  str: b->line
-		 */
-		if (f && !xstrcmp(b->target, oldtarget)); 		/* if file is already opened and current target match old one, use it */
-		else {
-			if (f) fclose(f);				/* close file */
-			f = logs_open_file(b->target, LOG_FORMAT_RAW);	/* otherwise try to open new file/reopen */
-		}
-
-		if (f) {
-			fprintf(f, "%i %s\n", (unsigned int) b->ts, b->line);
-		} else debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(b->target));
-
-		xfree(b->line);
-		xfree(oldtarget);
-		oldtarget = b->target;
-
-		b = LIST_REMOVE2(&(buffer_lograw.data), b, NULL);
-
-		if (!b) {
-			if (f) fclose(f);
-			xfree(oldtarget);
-		}
-	}
-	debug_error("[logs] 0x%x\n", buffer_lograw);
-	/* just in case */
-	buffer_free(&buffer_lograw);
-
-	plugin_unregister(&logs_plugin);
-	return 0;
 }
 
 /*
@@ -823,247 +740,6 @@ static FILE* logs_open_file(char *path, int ff) {
 	}
 
 	return fopen(fullname, "a+");
-}
-
-/* 
- * zwraca na przemian jeden z dwóch statycznych buforów, wiêc w obrêbie
- * jednego wyra¿enia mo¿na wywo³aæ tê funkcjê dwukrotnie.
- */
-/* w sumie starczylby 1 statyczny bufor ... */
-static const char *prepare_timestamp_format(const char *format, time_t t)  {
-	static char buf[2][100];
-	struct tm *tm = localtime(&t);
-	static int i = 0;
-
-	if (!format)
-		return itoa(t);
-
-	i = i % 2;
-	if (!strftime(buf[i], sizeof(buf[0]), format, tm) && xstrlen(format)>0)
-		xstrcpy(buf[i], "TOOLONG");
-	return buf[i++];
-}
-
-/**
- * glowny handler
- */
-
-static QUERY(logs_handler) {
-	char *session	= *(va_arg(ap, char**));
-	char *uid	= *(va_arg(ap, char**));
-	char **rcpts	= *(va_arg(ap, char***));
-	char *text	= *(va_arg(ap, char**));
-		uint32_t **UNUSED(format)	= va_arg(ap, uint32_t**);
-	time_t   sent	= *(va_arg(ap, time_t*));
-	int  class	= *(va_arg(ap, int*));
-		char **UNUSED(seq)		= va_arg(ap, char**);
-
-	session_t *s = session_find(session); // session pointer
-	log_window_t *lw;
-	char *ruid;
-
-	/* olewamy jesli to irc i ma formatke irssi like, czekajac na irc-protocol-message */
-	if (session_check(s, 0, "irc") && logs_log_format(s) == LOG_FORMAT_IRSSI) 
-		return 0;
-
-	class &= ~EKG_NO_THEMEBIT;
-	ruid = (class >= EKG_MSGCLASS_SENT) ? rcpts[0] : uid;
-
-	lw = logs_log_find(session, ruid, 1)->lw;
-
-	if (!lw) {
-		debug("[LOGS:%d] logs_handler, shit happen\n", __LINE__);
-		return 0;
-	}
-
-	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
-		debug("[LOGS:%d] logs_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
-		return 0;
-	}
-
-	/*	debug("[LOGS_MSG_HANDLER] %s : %s %d %x\n", ruid, lw->path, lw->logformat, lw->file); */
-
-	/* uid = uid | ruid ? */
-	if (lw->logformat == LOG_FORMAT_IRSSI)
-		logs_irssi(lw->file, session, uid, text, sent, LOG_IRSSI_MESSAGE);
-	else if (lw->logformat == LOG_FORMAT_SIMPLE)
-		logs_simple(lw->file, session, ruid, text, sent, class, (char*)NULL);
-	else if (lw->logformat == LOG_FORMAT_XML)
-		logs_xml(lw->file, session, uid, text, sent, class);
-	// itd. dla innych formatow logow
-
-	return 0;
-}
-
-/*
- * status handler
- */
-
-static QUERY(logs_status_handler) {
-	char *session	= *(va_arg(ap, char**));
-	char *uid	= *(va_arg(ap, char**));
-	int status	= *(va_arg(ap, int*));
-	char *descr	= *(va_arg(ap, char**));
-
-	log_window_t *lw;
-
-	/* joiny, party	ircowe jakies inne query. lub zrobic to w pluginie irc... ? */
-	/* 
-	   if (session_check(s, 0, "irc") && !xstrcmp(logs_log_format(s), "irssi"))
-	   return 0;
-	   */
-	if (config_logs_log_status <= 0)
-		return 0;
-
-	lw = logs_log_find(session, uid, 1)->lw;
-
-	if (!lw) {
-		debug("[LOGS:%d] logs_status_handler, shit happen\n", __LINE__);
-		return 0;
-	}
-
-	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
-		debug("[LOGS:%d] logs_status_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
-		return 0;
-	}
-
-	if (!descr)
-		descr = "";
-
-	if (lw->logformat == LOG_FORMAT_IRSSI) {
-		char *_what = NULL;
-
-		_what = saprintf("%s (%s)", __(descr), __(ekg_status_string(status, 0)));
-
-		logs_irssi(lw->file, session, uid, _what, time(NULL), LOG_IRSSI_STATUS);
-
-		xfree(_what);
-
-	} else if (lw->logformat == LOG_FORMAT_SIMPLE) {
-		logs_simple(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, ekg_status_string(status, 0));
-	} else if (lw->logformat == LOG_FORMAT_XML) {
-		/*		logs_xml(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, status); */
-	}
-	return 0;
-}
-
-static QUERY(logs_handler_irc) {
-	char *session	= *(va_arg(ap, char**));
-	char *uid	= *(va_arg(ap, char**));
-	char *text	= *(va_arg(ap, char**));
-		int  *UNUSED(isour) 	= va_arg(ap, int*);
-		int  *UNUSED(foryou)	= va_arg(ap, int*);
-		int  *UNUSED(private)	= va_arg(ap, int*);
-	char *channame	= *(va_arg(ap, char**));
-
-	log_window_t *lw = logs_log_find(session, channame, 1)->lw;
-
-	if (!lw) {
-		debug("[LOGS:%d] logs_handler_irc, shit happen\n", __LINE__);
-		return 0;
-	}
-
-	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) { 
-		debug("[LOGS:%d] logs_handler_irc Cannot open/create file: %s\n", __LINE__, __(lw->path));
-		return 0;
-	}
-
-	if (lw->logformat == LOG_FORMAT_IRSSI) 
-		logs_irssi(lw->file, session, uid, text, time(NULL), LOG_IRSSI_MESSAGE);
-	/* ITD dla innych formatow logow */
-	return 0;
-}
-
-static char *logs_fstring_to_string(const char *str, const short *attr) {
-	int i;
-	string_t asc = string_init(NULL);
-
-	for (i = 0; i < xstrlen(str); i++) {
-#define ISBOLD(x)	(x & 64)
-#define ISBLINK(x)	(x & 256) 
-#define ISUNDERLINE(x)	(x & 512)
-#define ISREVERSE(x)	(x & 1024)
-#define FGCOLOR(x)	((!(x & 128)) ? (x & 7) : -1)
-#define BGCOLOR(x)	-1	/* XXX */
-
-#define prev	attr[i-1]
-#define cur	attr[i] 
-
-		int reset = 1;
-
-	/* attr */
-		if (i && !ISBOLD(cur)  && ISBOLD(prev));		/* NOT BOLD */
-		else if (i && !ISBLINK(cur) && ISBLINK(prev));		/* NOT BLINK */
-		else if (i && !ISUNDERLINE(cur) && ISUNDERLINE(prev));	/* NOT UNDERLINE */
-		else if (i && !ISREVERSE(cur) && ISREVERSE(prev));	/* NOT REVERSE */
-		else if (i && FGCOLOR(cur) == -1 && FGCOLOR(prev) != -1);/* NO FGCOLOR */
-		else if (i && BGCOLOR(cur) == -1 && BGCOLOR(prev) != -1);/* NO BGCOLOR */
-		else reset = 0;
-		
-		if (reset) string_append(asc, ("%n"));
-
-		if (ISBOLD(cur)	&& (!i || reset || ISBOLD(cur) != ISBOLD(prev)) && FGCOLOR(cur) == -1)
-			string_append(asc, ("%T"));		/* no color + bold. */
-
-		if (ISBLINK(cur)	&& (!i || reset || ISBLINK(cur) != ISBLINK(prev)))		string_append(asc, ("%i"));
-//		if (ISUNDERLINE(cur)	&& (!i || reset || ISUNDERLINE(cur) != ISUNDERLINE(prev)));	string_append(asc, ("%"));
-//		if (ISREVERSE(cur)	&& (!i || reset || ISREVERSE(cur) != ISREVERSE(prev)));		string_append(asc, ("%"));
-
-		if (BGCOLOR(cur) != -1 && ((!i || reset || BGCOLOR(cur) != BGCOLOR(prev)))) {	/* if there's a background color... add it */
-			string_append_c(asc, '%');
-			switch (BGCOLOR(cur)) {
-				case (0): string_append_c(asc, 'l'); break;
-				case (1): string_append_c(asc, 's'); break;
-				case (2): string_append_c(asc, 'h'); break;
-				case (3): string_append_c(asc, 'z'); break;
-				case (4): string_append_c(asc, 'e'); break;
-				case (5): string_append_c(asc, 'q'); break;
-				case (6): string_append_c(asc, 'd'); break;
-				case (7): string_append_c(asc, 'x'); break;
-			}
-		}
-
-		if (FGCOLOR(cur) != -1 && ((!i || reset || FGCOLOR(cur) != FGCOLOR(prev)) || (i && ISBOLD(prev) != ISBOLD(cur)))) {	/* if there's a foreground color... add it */
-			string_append_c(asc, '%');
-			switch (FGCOLOR(cur)) {
-				 case (0): string_append_c(asc, ISBOLD(cur) ? 'K' : 'k'); break;
-				 case (1): string_append_c(asc, ISBOLD(cur) ? 'R' : 'r'); break;
-				 case (2): string_append_c(asc, ISBOLD(cur) ? 'G' : 'g'); break;
-				 case (3): string_append_c(asc, ISBOLD(cur) ? 'Y' : 'y'); break;
-				 case (4): string_append_c(asc, ISBOLD(cur) ? 'B' : 'b'); break;
-				 case (5): string_append_c(asc, ISBOLD(cur) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
-				 case (6): string_append_c(asc, ISBOLD(cur) ? 'C' : 'c'); break;
-				 case (7): string_append_c(asc, ISBOLD(cur) ? 'W' : 'w'); break;
-			}
-		}
-
-	/* str */
-		if (str[i] == '%' || str[i] == '\\') string_append_c(asc, '\\');	/* escape chars.. */
-		string_append_c(asc, str[i]);					/* append current char */
-	}
-	string_append(asc, ("%n"));	/* reset */
-	return string_free(asc, 0);
-}
-
-static QUERY(logs_handler_raw) {
-	window_t *w	= *(va_arg(ap, window_t **));
-	fstring_t *line = *(va_arg(ap, fstring_t **));
-	char *path;
-	char *str;
-
-	if (!config_logs_log_raw) return 0;
-	if (!w || !line || w->id == 0) return 0;	/* don't log debug window */
-
-	/* line->str + line->attr == ascii str with formats */
-	path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0);
-	str  = logs_fstring_to_string(line->str.b, line->attr);
-
-	logs_buffer_raw_add(path, str);
-
-	xfree(str);
-	xfree(path);
-
-	return 0;
 }
 
 /*
@@ -1250,6 +926,343 @@ static void logs_irssi(FILE *file, const char *session, const char *uid, const c
 			return; /* to avoid flushisk file */
 	}
 	fflush(file);
+}
+
+
+/* 
+ * zwraca na przemian jeden z dwóch statycznych buforów, wiêc w obrêbie
+ * jednego wyra¿enia mo¿na wywo³aæ tê funkcjê dwukrotnie.
+ */
+/* w sumie starczylby 1 statyczny bufor ... */
+static const char *prepare_timestamp_format(const char *format, time_t t)  {
+	static char buf[2][100];
+	struct tm *tm = localtime(&t);
+	static int i = 0;
+
+	if (!format)
+		return itoa(t);
+
+	i = i % 2;
+	if (!strftime(buf[i], sizeof(buf[0]), format, tm) && xstrlen(format)>0)
+		xstrcpy(buf[i], "TOOLONG");
+	return buf[i++];
+}
+
+/**
+ * glowny handler
+ */
+
+static QUERY(logs_handler) {
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+	char **rcpts	= *(va_arg(ap, char***));
+	char *text	= *(va_arg(ap, char**));
+		uint32_t **UNUSED(format)	= va_arg(ap, uint32_t**);
+	time_t   sent	= *(va_arg(ap, time_t*));
+	int  class	= *(va_arg(ap, int*));
+		char **UNUSED(seq)		= va_arg(ap, char**);
+
+	session_t *s = session_find(session); // session pointer
+	log_window_t *lw;
+	char *ruid;
+
+	/* olewamy jesli to irc i ma formatke irssi like, czekajac na irc-protocol-message */
+	if (session_check(s, 0, "irc") && logs_log_format(s) == LOG_FORMAT_IRSSI) 
+		return 0;
+
+	class &= ~EKG_NO_THEMEBIT;
+	ruid = (class >= EKG_MSGCLASS_SENT) ? rcpts[0] : uid;
+
+	lw = logs_log_find(session, ruid, 1)->lw;
+
+	if (!lw) {
+		debug("[LOGS:%d] logs_handler, shit happen\n", __LINE__);
+		return 0;
+	}
+
+	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
+		debug("[LOGS:%d] logs_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
+		return 0;
+	}
+
+	/*	debug("[LOGS_MSG_HANDLER] %s : %s %d %x\n", ruid, lw->path, lw->logformat, lw->file); */
+
+	/* uid = uid | ruid ? */
+	if (lw->logformat == LOG_FORMAT_IRSSI)
+		logs_irssi(lw->file, session, uid, text, sent, LOG_IRSSI_MESSAGE);
+	else if (lw->logformat == LOG_FORMAT_SIMPLE)
+		logs_simple(lw->file, session, ruid, text, sent, class, (char*)NULL);
+	else if (lw->logformat == LOG_FORMAT_XML)
+		logs_xml(lw->file, session, uid, text, sent, class);
+	// itd. dla innych formatow logow
+
+	return 0;
+}
+
+/*
+ * status handler
+ */
+
+static QUERY(logs_status_handler) {
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+	int status	= *(va_arg(ap, int*));
+	char *descr	= *(va_arg(ap, char**));
+
+	log_window_t *lw;
+
+	/* joiny, party	ircowe jakies inne query. lub zrobic to w pluginie irc... ? */
+	/* 
+	   if (session_check(s, 0, "irc") && !xstrcmp(logs_log_format(s), "irssi"))
+	   return 0;
+	   */
+	if (config_logs_log_status <= 0)
+		return 0;
+
+	lw = logs_log_find(session, uid, 1)->lw;
+
+	if (!lw) {
+		debug("[LOGS:%d] logs_status_handler, shit happen\n", __LINE__);
+		return 0;
+	}
+
+	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) {
+		debug("[LOGS:%d] logs_status_handler Cannot open/create file: %s\n", __LINE__, __(lw->path));
+		return 0;
+	}
+
+	if (!descr)
+		descr = "";
+
+	if (lw->logformat == LOG_FORMAT_IRSSI) {
+		char *_what = NULL;
+
+		_what = saprintf("%s (%s)", __(descr), __(ekg_status_string(status, 0)));
+
+		logs_irssi(lw->file, session, uid, _what, time(NULL), LOG_IRSSI_STATUS);
+
+		xfree(_what);
+
+	} else if (lw->logformat == LOG_FORMAT_SIMPLE) {
+		logs_simple(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, ekg_status_string(status, 0));
+	} else if (lw->logformat == LOG_FORMAT_XML) {
+		/*		logs_xml(lw->file, session, uid, descr, time(NULL), EKG_MSGCLASS_PRIV_STATUS, status); */
+	}
+	return 0;
+}
+
+static QUERY(logs_handler_irc) {
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+	char *text	= *(va_arg(ap, char**));
+		int  *UNUSED(isour) 	= va_arg(ap, int*);
+		int  *UNUSED(foryou)	= va_arg(ap, int*);
+		int  *UNUSED(private)	= va_arg(ap, int*);
+	char *channame	= *(va_arg(ap, char**));
+
+	log_window_t *lw = logs_log_find(session, channame, 1)->lw;
+
+	if (!lw) {
+		debug("[LOGS:%d] logs_handler_irc, shit happen\n", __LINE__);
+		return 0;
+	}
+
+	if ( !(lw->file) && !(lw->file = logs_open_file(lw->path, lw->logformat)) ) { 
+		debug("[LOGS:%d] logs_handler_irc Cannot open/create file: %s\n", __LINE__, __(lw->path));
+		return 0;
+	}
+
+	if (lw->logformat == LOG_FORMAT_IRSSI) 
+		logs_irssi(lw->file, session, uid, text, time(NULL), LOG_IRSSI_MESSAGE);
+	/* ITD dla innych formatow logow */
+	return 0;
+}
+
+static QUERY(logs_handler_raw) {
+	window_t *w	= *(va_arg(ap, window_t **));
+	fstring_t *line = *(va_arg(ap, fstring_t **));
+	char *path;
+	char *str;
+
+	if (!config_logs_log_raw) return 0;
+	if (!w || !line || w->id == 0) return 0;	/* don't log debug window */
+
+	/* line->str + line->attr == ascii str with formats */
+	path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0);
+	str  = fstring_reverse(line);
+
+	logs_buffer_raw_add(path, str);
+
+	xfree(str);
+	xfree(path);
+
+	return 0;
+}
+
+static QUERY(logs_handler_newwin) {
+	window_t *w = *(va_arg(ap, window_t **));
+
+/* w->floating */
+
+	logs_window_new(w);
+	if (config_logs_log_raw) {
+		FILE *f;
+		char *line;
+		char *path;
+
+		path = logs_prepare_path(w->id != 1 ? w->session : NULL, "~/.ekg2/logs/__internal__/%P/%S/%u", window_target(w), 0 /* time(NULL) */ ); 
+		debug("logs_handler_newwin() loading buffer from: %s\n", __(path));
+
+		f = logs_open_file(path, LOG_FORMAT_RAW);
+
+		if (!f) {
+			debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(path));
+			xfree(path);
+			return 0;
+		}
+
+		/* XXX, in fjuczer it can be gzipped file, WARN HERE */
+		while ((line = read_file(f, 0)))
+			logs_buffer_raw_add_line(path, line);
+
+		ftruncate(fileno(f), 0);	/* works? */
+		fclose(f);
+
+/*	XXX, unlink file instead of truncating? 
+		if (unlink(path+'.raw') == -1) debug("[LOGS:%d] Cannot unlink file: %s (%d %s)\n", __LINE__, __(path), errno, strerror(errno));
+*/		
+
+		logs_buffer_raw_display(path, config_logs_remind_number);
+		xfree(path);
+	}
+	return 0;
+}
+
+static QUERY(logs_postinit) {
+	window_t *w;
+	for (w = windows; w; w = w->next)
+		logs_window_new(w);
+	return 0;
+}
+
+static QUERY(logs_handler_killwin)  {
+	window_t *w = *(va_arg(ap, window_t **));
+	logs_window_close(logs_log_find(w->session ? w->session->uid : NULL, w->target, 0), 1);
+	return 0;
+}
+
+static QUERY(logs_setvar_default) {
+	xfree(config_logs_path);
+	xfree(config_logs_timestamp);
+	config_logs_path = xstrdup("~/.ekg2/logs/%S/%u");
+	config_logs_timestamp = NULL;
+	return 0;
+}
+
+EXPORT int logs_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("logs");
+
+	plugin_register(&logs_plugin, prio);
+	
+	query_connect_id(&logs_plugin, SET_VARS_DEFAULT,logs_setvar_default, NULL);
+	query_connect_id(&logs_plugin, PROTOCOL_MESSAGE_POST, logs_handler, NULL);
+	query_connect_id(&logs_plugin, IRC_PROTOCOL_MESSAGE, logs_handler_irc, NULL);
+	query_connect_id(&logs_plugin, UI_WINDOW_NEW,	logs_handler_newwin, NULL);
+	query_connect_id(&logs_plugin, UI_WINDOW_PRINT,	logs_handler_raw, NULL);
+	query_connect_id(&logs_plugin, UI_WINDOW_KILL,	logs_handler_killwin, NULL);
+	query_connect_id(&logs_plugin, PROTOCOL_STATUS, logs_status_handler, NULL);
+	query_connect_id(&logs_plugin, CONFIG_POSTINIT, logs_postinit, NULL);
+	/* XXX, implement UI_WINDOW_TARGET_CHANGED, IMPORTANT!!!!!! */
+
+	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */
+	variable_add(&logs_plugin, ("log_max_open_files"), VAR_INT, 1, &config_logs_max_files, NULL /* XXX: logs_changed_maxfd */, NULL, NULL); 
+	variable_add(&logs_plugin, ("log"), VAR_MAP, 1, &config_logs_log, &logs_changed_path, 
+			variable_map(3, 
+				LOG_FORMAT_NONE, 0, "none", 
+				LOG_FORMAT_SIMPLE, LOG_FORMAT_XML, "simple", 
+				LOG_FORMAT_XML, LOG_FORMAT_SIMPLE, "xml"), 
+			NULL);
+	variable_add(&logs_plugin, ("log_raw"), VAR_BOOL, 1, &config_logs_log_raw, &logs_changed_raw, NULL, NULL);
+	variable_add(&logs_plugin, ("log_ignored"), VAR_INT, 1, &config_logs_log_ignored, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("log_status"), VAR_BOOL, 1, &config_logs_log_status, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("path"), VAR_DIR, 1, &config_logs_path, &logs_changed_path, NULL, NULL);
+	variable_add(&logs_plugin, ("remind_number"), VAR_INT, 1, &config_logs_remind_number, NULL, NULL, NULL);
+	variable_add(&logs_plugin, ("timestamp"), VAR_STR, 1, &config_logs_timestamp, NULL, NULL, NULL);
+
+	return 0;
+}
+
+static int logs_plugin_destroy() {
+	list_t old_logs = log_logs;
+	struct buffer *b;
+
+	for (; log_logs; log_logs = log_logs->next) {
+		logs_log_t *ll = log_logs->data;
+		FILE *f = NULL;
+		time_t t = time(NULL);
+		int ff = (ll->lw) ? ll->lw->logformat : logs_log_format(session_find(ll->session));
+
+		/* TODO: rewrite */
+		if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
+			char *path	= (ll->lw) ? xstrdup(ll->lw->path) : logs_prepare_path(session_find(ll->session), config_logs_path, ll->uid, t);
+			f		= (ll->lw) ? logs_window_close(log_logs->data, 0) : NULL; 
+
+			if (!f) 
+				f = logs_open_file(path, ff);
+			xfree(path);
+		} else 
+			logs_window_close(log_logs->data, 1);
+
+		if (f) {
+			if (ff == LOG_FORMAT_IRSSI && xstrlen(IRSSI_LOG_EKG2_CLOSED)) {
+				logs_irssi(f, ll->session, NULL,
+						prepare_timestamp_format(IRSSI_LOG_EKG2_CLOSED, t), 0,
+						LOG_IRSSI_INFO);
+			}
+			fclose(f);
+		}
+
+		xfree(ll->session);
+		xfree(ll->uid);
+	}
+	list_destroy(old_logs, 1);	log_logs = NULL;
+
+	if (config_logs_log_raw) for (b = buffer_lograw.data; b;) {
+		static FILE *f = NULL;
+		static char *oldtarget = NULL;
+		/*
+		 * path: b->target
+		 *   ts: b->ts
+		 *  str: b->line
+		 */
+		if (f && !xstrcmp(b->target, oldtarget)); 		/* if file is already opened and current target match old one, use it */
+		else {
+			if (f) fclose(f);				/* close file */
+			f = logs_open_file(b->target, LOG_FORMAT_RAW);	/* otherwise try to open new file/reopen */
+		}
+
+		if (f) {
+			fprintf(f, "%i %s\n", (unsigned int) b->ts, b->line);
+		} else debug("[LOGS:%d] Cannot open/create file: %s\n", __LINE__, __(b->target));
+
+		xfree(b->line);
+		xfree(oldtarget);
+		oldtarget = b->target;
+
+		b = LIST_REMOVE2(&(buffer_lograw.data), b, NULL);
+
+		if (!b) {
+			if (f) fclose(f);
+			xfree(oldtarget);
+		}
+	}
+	debug_error("[logs] 0x%x\n", buffer_lograw);
+	/* just in case */
+	buffer_free(&buffer_lograw);
+
+	plugin_unregister(&logs_plugin);
+	return 0;
 }
 
 /*

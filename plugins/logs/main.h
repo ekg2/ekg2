@@ -43,7 +43,6 @@ struct {
 	log_window_t *lw;
 } typedef logs_log_t;
 
-static char *log_escape(const char *str);
 static char *logs_prepare_path(session_t *session, const char *logs_path, const char *uid, time_t sent);
 static const char *prepare_timestamp_format(const char *format, time_t t);
 
@@ -51,11 +50,6 @@ static logs_log_t *logs_log_find(const char *session, const char *uid, int creat
 static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *uid);
 
 static FILE *logs_open_file(char *path, int ff);
-static QUERY(logs_handler);
-static QUERY(logs_handler_newwin);
-static QUERY(logs_status_handler);
-static QUERY(logs_handler_irc);
-static QUERY(logs_handler_raw);
 
 static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class, const char *status);
 static void logs_xml	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class);
