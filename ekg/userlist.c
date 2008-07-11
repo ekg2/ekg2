@@ -377,6 +377,7 @@ static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
 	ekg_resources_destroy(&(u->resources));
 }
 
+__DYNSTUFF_REMOVE_SAFE(userlists, userlist_t, userlist_free_item);	/* userlists_remove() */
 __DYNSTUFF_DESTROY(userlists, userlist_t, userlist_free_item);		/* userlists_destroy() */
 
 /**
@@ -505,7 +506,7 @@ int userlist_remove_u(userlist_t **userlist, userlist_t *u) {
         if (!u)
                 return -1;
 
-        LIST_REMOVE2(userlist, u, userlist_free_item);
+	userlists_remove(userlist, u);
 
         return 0;
 }

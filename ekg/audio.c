@@ -30,6 +30,7 @@
 #include "commands.h"
 #include "debug.h"
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "plugins.h"
 #include "themes.h"
 #include "stuff.h"
@@ -42,6 +43,16 @@ audio_t *audio_inputs;
 stream_t *streams;
 
 AUDIO_DEFINE(stream);
+
+DYNSTUFF_LIST_DECLARE_NF(audio_inputs, audio_t, 
+	static __DYNSTUFF_LIST_ADD,		/* audio_inputs_add() */
+	static __DYNSTUFF_LIST_UNLINK)		/* audio_inputs_unlink() */
+
+DYNSTUFF_LIST_DECLARE_NF(audio_codecs, codec_t, 
+	static __DYNSTUFF_LIST_ADD,		/* audio_codecs_add() */
+	static __DYNSTUFF_LIST_UNLINK)		/* audio_codecs_unlink() */
+
+static __DYNSTUFF_LIST_ADD(streams, stream_t, NULL);	/* streams_add() */
 
 /*********************************************************************************/
 
@@ -229,7 +240,8 @@ codec_t *codec_find(const char *name) {
 int codec_register(codec_t *codec) {
 	if (!codec)			return -1;
 	if (codec_find(codec->name))	return -2;
-	LIST_ADD2(&audio_codecs, codec);
+
+	audio_codecs_add(codec);
 	return 0;
 }
 
@@ -248,8 +260,7 @@ void codec_unregister(codec_t *codec) {
 	if (!codec) return;
 
 	/* XXX here, we should search for <b>all</b> streams using this codec, and unload them */
-
-	LIST_UNLINK2(&audio_codecs, codec);
+	audio_codecs_unlink(codec);
 }
 
 /**
@@ -300,7 +311,7 @@ int audio_register(audio_t *audio) {
 	if (!audio)			return -1;
 	if (audio_find(audio->name))	return -2;
 
-	LIST_ADD2(&audio_inputs, audio);
+	audio_inputs_add(audio);
 	return 0;
 }
 
@@ -319,8 +330,7 @@ void audio_unregister(audio_t *audio) {
 	if (!audio) return;
 
 	/* XXX here, we should search for <b>all</b> streams using this audio, and unload them */
-	
-	LIST_UNLINK2(&audio_inputs, audio);
+	audio_inputs_unlink(audio);
 }
 		/* READING / WRITING FROM FILEs */
 WATCHER_AUDIO(stream_audio_read) {
@@ -691,7 +701,7 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 	s->codec	= co;
 	s->output	= out;
 
-	LIST_ADD2(&streams, s);
+	streams_add(s);
 
 	watch_add(NULL, in->fd, WATCH_READ, stream_handle, s);
 /* allocate buffers */
