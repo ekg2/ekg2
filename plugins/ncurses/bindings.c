@@ -659,7 +659,7 @@ static BINDING_FUNCTION(binding_ignore_query)
 	if (!window_current->target)
 		return;
 	
-	command_exec_format(window_current->target, window_current->session, 0, ("/ignore %s"), window_current->target);
+	command_exec_format(window_current->target, window_current->session, 0, ("/ignore \"%s\""), window_current->target);
 }
 
 static BINDING_FUNCTION(binding_quick_list_wrapper)
