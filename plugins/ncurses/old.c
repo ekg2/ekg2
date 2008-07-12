@@ -121,7 +121,7 @@ QUERY(ncurses_password_input) {
 	oldpromptlen			= ncurses_current->prompt_len;
 	oldline				= ncurses_line;
 	oldlines			= ncurses_lines;
-	ncurses_current->prompt		= (char*) prompt ? prompt : format_find("password_input");
+	ncurses_current->prompt		= (char*) (prompt ? prompt : format_find("password_input"));
 	ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
 	ncurses_update_real_prompt(ncurses_current);
 	ncurses_lines			= NULL;
@@ -135,7 +135,7 @@ QUERY(ncurses_password_input) {
 	
 	if (xwcslen(passa)) {
 		if (rprompt) {
-			ncurses_current->prompt		= (char*) *rprompt ? *rprompt : format_find("password_repeat");
+			ncurses_current->prompt		= (char*) (*rprompt ? *rprompt : format_find("password_repeat"));
 			ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
 			ncurses_noecho			= 1;
 			ncurses_update_real_prompt(ncurses_current);
@@ -312,13 +312,13 @@ void ncurses_update_real_prompt(ncurses_window_t *n) {
 #ifdef USE_UNICODE
 		n->prompt_real		= normal_to_wcs(n->prompt);
 #else
-		n->prompt_real		= xstrdup(n->prompt);
+		n->prompt_real		= (CHAR_T *) xstrdup(n->prompt);
 #endif
 	}
 	n->prompt_real_len		= xwcslen(n->prompt_real);
 
 	if (n->prompt_real_len > maxlen) { /* need to cut it */
-		const CHAR_T *dots	= TEXT("...");
+		const CHAR_T *dots	= (CHAR_T *) TEXT("...");
 #ifdef USE_UNICODE
 		const wchar_t udots[2]	= { 0x2026, 0 };
 		if (config_use_unicode)	/* use unicode hellip, if using utf8 */
@@ -2309,7 +2309,7 @@ static void spellcheck(CHAR_T *what, char *where) {
 			what[j] = what_j;
 #else
 			/* sprawdzamy pisownie tego wyrazu */
-			fillznak = (aspell_speller_check(spell_checker, &what[i], j - i) == 0) ? ASPELLCHAR : ' ';
+			fillznak = (aspell_speller_check(spell_checker, (char *) &what[i], j - i) == 0) ? ASPELLCHAR : ' ';
 #endif
 
 			for (; i < j; i++)
@@ -2398,7 +2398,7 @@ void ncurses_redraw_input(unsigned int ch) {
 #ifdef USE_UNICODE /* XXX: should we check config_use_unicode here? */
 			mvwaddwstr(input, 0, 0, ncurses_current->prompt_real);
 #else
-			mvwaddstr(input, 0, 0, ncurses_current->prompt_real);
+			mvwaddstr(input, 0, 0, (char *) ncurses_current->prompt_real);
 #endif
 
 		if (ncurses_noecho) {
@@ -2757,7 +2757,7 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		if (lastlog->isregex) {		/* regexp */
 #ifdef HAVE_REGEX_H
 			int rs;
-			if (!(rs = regexec(&(lastlog->reg), n->backlog[i]->str.w, 0, NULL, 0))) 
+			if (!(rs = regexec(&(lastlog->reg), (char *) n->backlog[i]->str.w, 0, NULL, 0))) 
 				found = 1;
 			else if (rs != REG_NOMATCH) {
 				char errbuf[512];
@@ -2772,8 +2772,8 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 #endif
 		} else {				/* substring */
 			if (local_config_lastlog_case) 
-				found = !!xstrstr(n->backlog[i]->str.w, lastlog->expression);
-			else	found = !!xstrcasestr(n->backlog[i]->str.w, lastlog->expression);
+				found = !!xstrstr((char *) n->backlog[i]->str.w, lastlog->expression);
+			else	found = !!xstrcasestr((char *) n->backlog[i]->str.w, lastlog->expression);
 		}
 
 		if (!config_lastlog_noitems && found && !items) { /* add header only when found */

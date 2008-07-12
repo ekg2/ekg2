@@ -626,7 +626,7 @@ static COMMAND(gg_command_msg) {
 	/* analiz�tekstu zrobimy w osobnym bloku dla porzdku */
 	{
 		unsigned char attr = 0, last_attr = 0;
-		const unsigned char *p = msg, *end = p + xstrlen(p);
+		const unsigned char *p = msg, *end = p + xstrlen((char *) p);
 		int msglen = 0;
 		unsigned char rgb[3], last_rgb[3];
 
@@ -635,7 +635,7 @@ static COMMAND(gg_command_msg) {
 				p++;
 
 				if (xisdigit(*p)) {
-					int num = atoi(p);
+					int num = atoi((char *) p);
 					
 					if (num < 0 || num > 15)
 						num = 0;
