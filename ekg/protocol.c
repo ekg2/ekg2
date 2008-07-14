@@ -697,7 +697,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		separate = 2;
 	else if ( (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT) || 
 		  (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT)) )
-		separate = to_me ? 3 : 1;
+		separate = to_me ? 1 : 3;
 
 	print_window(target, s, separate, class_str, user, timestamp,
 		(is_me ? text+4 : text),
