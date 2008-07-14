@@ -69,6 +69,9 @@ typedef enum {
 	EKG_MSGCLASS_CHAT,		/* chat message */
 	EKG_MSGCLASS_SYSTEM,		/* system message */
 	EKG_MSGCLASS_LOG,		/* old logged message (used by logsqlite 'last_print_on_open') */
+
+	EKG_MSGCLASS_NOT2US	= 16,	/* message is not to us */
+
 	/* sent */
 	EKG_MSGCLASS_SENT	= 32,	/* single sent message */
 	EKG_MSGCLASS_SENT_CHAT,		/* chat sent message */

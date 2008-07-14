@@ -54,7 +54,7 @@ typedef struct window {
 	unsigned short left, top;	/* pozycja (x, y) wzglêdem pocz±tku ekranu */
 	unsigned short width, height;	/* wymiary okna */
 
-	unsigned int act	: 2;	/* activity: 1 - status/junk; 2 - msg */
+	unsigned int act	: 2;	/* activity: 1 - status/junk; 2 - msg ; 3 - msg to us */
 	unsigned int in_typing	: 1;	/* user is composing a message to us */
 	unsigned int in_active	: 1;	/* user has sent some kind of message,
 					   so we can start sending composing to him/her */

@@ -699,6 +699,12 @@ char *format_string(const char *format, ...)
  * Common stuff for: print_window() and print_window_w()<br>
  * Change w->act if needed, format theme, make fstring() and send everything to window_print()
  *
+ * @param separate:
+ *		1 - EKG_MSGCLASS_MESSAGE || EKG_MSGCLASS_SENT
+ *		2 - EKG_MSGCLASS_LOG || EKG_MSGCLASS_SENT_LOG
+ *		4 - EKG_MSGCLASS_NOT2US
+ *		0 - other
+ *
  * @note 	We only check if @a w == NULL, if you send here wrong window_t ptr, everything can happen. don't do it.
  * 		Yeah, we can do here window_find_ptr() but it'll slow down code a lot.
  */
@@ -716,8 +722,8 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 	if (w != window_current && !w->floating && !(separate & 2)) {
 		int oldact = w->act;
 		if (separate)
-			w->act = 2;
-		else if (w->act != 2)
+			w->act |= (separate & 4) ? 3 : 2;
+		else if (!w->act)
 			w->act = 1;
 
 		if (oldact != w->act)					/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
@@ -1164,10 +1170,12 @@ void theme_init()
 	format_add("ncurses_prompt_query", "[%1] ", 1);
 	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %G}%{?avail %Y}%{?chat %W}%{?dnd %K}%{?xa %g}%{?invisible %C}%{?notavail %r}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{?typing %C}%{window}}%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
 	format_add("header", " %{?query %c(%{?query_away %w}%{?query_avail %W}%{?query_invisible %K}%{?query_notavail %k}%{query}%{?query_descr %c/%w%{query_descr}}%c) %{?query_ip (%wip%c/%w%{query_ip}%c)} %{irctopic}}%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}", 1);
-	format_add("statusbar_act_important", "%W", 1);
+	format_add("statusbar_act_important", "%Y", 1);
+	format_add("statusbar_act_important2us", "%W", 1);
 	format_add("statusbar_act", "%K", 1);
 	format_add("statusbar_act_typing", "%c", 1);
 	format_add("statusbar_act_important_typing", "%C", 1);
+	format_add("statusbar_act_important2us_typing", "%C", 1);
 	format_add("statusbar_timestamp", "%H:%M", 1);
 
 	/* ui-password-input */

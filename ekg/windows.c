@@ -617,9 +617,9 @@ COMMAND(cmd_window) {
 
 	if (!xstrncasecmp(params[0], "active", par0_matchlen)) {
 		window_t *w;
-		int a,id = 0;
+		int a, id = 0;
 
-		for (a=2; !id && a>0; a--)
+		for (a=3; !id && a>0; a--)
 			for (w = windows; w; w = w->next) {
 				if ((w->act==a) && !w->floating && w->id) {
 					id = w->id;

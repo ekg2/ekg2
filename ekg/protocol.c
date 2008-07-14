@@ -499,7 +499,12 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
         time_t now;
 	session_t *s = session_find(session);
         struct conference *c = NULL;
-	int empty_theme = 0, is_me = 0;
+	int empty_theme = 0, is_me = 0, to_me = 1, separate = 0;
+
+	if (class & EKG_MSGCLASS_NOT2US) {
+		to_me = 0;
+		class &= ~EKG_MSGCLASS_NOT2US;
+	}
 
 	if (class & EKG_NO_THEMEBIT) {
 		empty_theme = 1;
@@ -688,19 +693,19 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (secure) 
 		securestr = format_string(format_find("secure"));
 
-	print_window(target, s,
-		((class == EKG_MSGCLASS_LOG || class == EKG_MSGCLASS_SENT_LOG) ? 2
-		: (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT)
-		|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))),
-		class_str,
-		user,
-		timestamp,
+	if (class == EKG_MSGCLASS_LOG || class == EKG_MSGCLASS_SENT_LOG)
+		separate = 2;
+	else if ( (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT) || 
+		  (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT)) )
+		separate = to_me ? 4 : 1;
+
+	print_window(target, s, separate, class_str, user, timestamp,
 		(is_me ? text+4 : text),
 					/* XXX, get_uid() get_nickname() */
 		(class >= EKG_MSGCLASS_SENT ?
 			(is_me && config_me_nick ? config_me_nick : session_alias_uid(s))
 			: get_nickname(s, sender)),
-		(class >= EKG_MSGCLASS_SENT ? s->uid : get_uid(s, sender)), 
+		(class >= EKG_MSGCLASS_SENT ? s->uid : get_uid(s, sender)),
 		(secure ? securestr : ""));
 
 	xfree(text);

@@ -1157,6 +1157,8 @@ IRC_COMMAND(irc_c_msg)
 
 		format = saprintf("irc_%s_f_chan%s%s", prv?"msg":"not",
 					(!w)?"":"_n", ekgbeep?"h":"");
+		if (!xosd_to_us)
+			class |= EKG_MSGCLASS_NOT2US;
 
 		/* ok new irc-find-person checked */
 		if ((person = irc_find_person(j->people, param[0]+1)))

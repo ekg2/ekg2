@@ -1631,14 +1631,14 @@ void update_statusbar(int commit)
 		window_t *w;
 
 		for (w = windows; w; w = w->next) {
-			char tmp[33];
+			char tmp[36];
 
 			if ((!w->act && !w->in_typing) || !w->id || (w == window_current)) 
 				continue;
 
 			if (act)
 				string_append_c(s, ',');
-			sprintf(tmp, "statusbar_act%s%s", (w->act == 2 ? "_important" : ""), (w->in_typing ? "_typing" : ""));
+			sprintf(tmp, "statusbar_act%s%s%s", (w->act > 1 ? "_important" : ""), (w->act > 2 ? "2us" : ""), (w->in_typing ? "_typing" : ""));
 			string_append(s, format_find(tmp));
 			string_append(s, itoa(w->id));
 			act = 1;
