@@ -719,15 +719,20 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 	}
 
 	/* Change w->act */
-	if (w != window_current && !w->floating && !(separate & 2)) {
-		int oldact = w->act;
-		if (separate)
-			w->act |= (separate & 4) ? 3 : 2;
-		else if (!w->act)
-			w->act = 1;
+	if (w != window_current && !w->floating && (separate != 2)) {
+		int newact;
+		if (separate == 1)
+			newact = 2;	/* msg to us */
+		else if (separate == 4)
+			newact = 3;	/* msg, but not to us */
+		else
+			newact = 1;	/* junk */
 
-		if (oldact != w->act)					/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
+		if (newact > w->act) {
+			w->act = newact;
+				/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
 			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
+		}
 	}
 
 	stmp = va_format_string(format_find(theme), ap);
