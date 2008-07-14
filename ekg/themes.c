@@ -702,7 +702,7 @@ char *format_string(const char *format, ...)
  * @param separate:
  *		1 - EKG_MSGCLASS_MESSAGE || EKG_MSGCLASS_SENT
  *		2 - EKG_MSGCLASS_LOG || EKG_MSGCLASS_SENT_LOG
- *		4 - EKG_MSGCLASS_NOT2US
+ *		3 - msg to us
  *		0 - other
  *
  * @note 	We only check if @a w == NULL, if you send here wrong window_t ptr, everything can happen. don't do it.
@@ -721,10 +721,10 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 	/* Change w->act */
 	if (w != window_current && !w->floating && (separate != 2)) {
 		int newact;
-		if (separate == 1)
-			newact = 2;	/* msg to us */
-		else if (separate == 4)
-			newact = 3;	/* msg, but not to us */
+		if (separate == 3)
+			newact = 3;	/* msg to us */
+		else if (separate == 1)
+			newact = 2;	/* msg not to us */
 		else
 			newact = 1;	/* junk */
 
