@@ -1670,14 +1670,10 @@ JABBER_HANDLER(jabber_handle_presence) {
 			}
 		}
 
-		{
-			char *session 	= xstrdup(session_uid_get(s));
+		if (!when)
+			when = time(NULL);
 
-			if (!when) when = time(NULL);
-			query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &when);
-
-			xfree(session);
-		}
+		query_emit_id_ro(NULL, PROTOCOL_STATUS, &(s->uid), &uid, &status, &descr, &when);
 		xfree(descr);
 	}
 	xfree(uid);

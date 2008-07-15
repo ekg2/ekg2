@@ -417,15 +417,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 	if (!s->connected && !s->connecting)
 		return;
 
-	{
-		char *__session = xstrdup(session_uid_get(s));
-		char *__reason = xstrdup(reason);
-		
-		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &type, NULL);
-
-		xfree(__session);
-		xfree(__reason);
-	}
+	query_emit_id_ro(NULL, PROTOCOL_DISCONNECTED, &(s->uid), &reason, &type, NULL);
 	
 	if (j->send_watch) {
 		j->send_watch->type = WATCH_NONE;

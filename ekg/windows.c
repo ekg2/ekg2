@@ -592,9 +592,7 @@ COMMAND(cmd_window) {
 	const int par0_matchlen	= par0_len > 2 ? par0_len : 2;
 
 	if (!xstrcmp(name, "clear") || (params[0] && !xstrncasecmp(params[0], "clear", par0_matchlen))) {
-		window_t *w = xmemdup(window_current, sizeof(window_t));
-		query_emit_id(NULL, UI_WINDOW_CLEAR, &w);
-		xfree(w);
+		query_emit_id_ro(NULL, UI_WINDOW_CLEAR, &window_current);
 		return 0;
 	}
 
