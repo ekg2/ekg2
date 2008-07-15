@@ -804,7 +804,7 @@ int query_emit_id_ro(plugin_t *plugin, const int id, ...) {
 	 * 	- call everything.
 	 * 	- free stuff
 	 *
-	 * for now it's not very unnecessary,
+	 * for now it's useless.
 	 */
 
 	va_start(ap, id);
