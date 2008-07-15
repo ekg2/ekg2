@@ -976,7 +976,7 @@ static COMMAND(rss_command_connect) {
 	}
 
 	session_connected_set(session, 1);
-	query_emit_id(NULL, PROTOCOL_CONNECTED, &session->uid);
+	query_emit_id_ro(NULL, PROTOCOL_CONNECTED, &session->uid);
 	session->status = EKG_STATUS_AVAIL;
 
 	return 0;
