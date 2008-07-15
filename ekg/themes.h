@@ -66,6 +66,7 @@ void theme_cache_reset();
 void theme_free();
 
 fstring_t *fstring_new(const char *str);
+fstring_t *fstring_new_format(const char *format, ...);
 void fstring_free(fstring_t *str);
 
 #endif

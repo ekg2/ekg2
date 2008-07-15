@@ -453,7 +453,6 @@ static void logs_changed_raw(const char *var) {
 static int logs_print_window(session_t *s, window_t *w, const char *line, time_t ts) {
 	static plugin_t *ui_plugin = NULL;
 
-	char *fline;
 	fstring_t *fstr;
 
 	/* it's enough to look for ui_plugin once */
@@ -464,14 +463,10 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 		return -1;
 	}
 
-	fline = format_string(line);			/* format string */
-	fstr = fstring_new(fline);			/* create fstring */
+	fstr = fstring_new_format(line);
+	fstr->ts = ts;
 
-	fstr->ts = ts;					/* sync timestamp */
-
-	query_emit_id(ui_plugin, UI_WINDOW_PRINT, &w, &fstr);	/* let's rock */
-
-	xfree(fline);						/* cleanup */
+	query_emit_id(ui_plugin, UI_WINDOW_PRINT, &w, &fstr);
 	return 0;
 }
 

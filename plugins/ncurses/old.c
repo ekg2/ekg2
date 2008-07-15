@@ -2743,11 +2743,8 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	if (!w || !(n = w->private))
 		return items;
 
-	if (config_lastlog_noitems) {	/* always add header */
-		char *tmp = format_string(header, window_target(w), lastlog->expression);
-		ncurses_backlog_add(lastlog_w, fstring_new(tmp));
-		xfree(tmp);
-	}
+	if (config_lastlog_noitems) /* always add header */
+		ncurses_backlog_add(lastlog_w, fstring_new_format(header, window_target(w), lastlog->expression));
 
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
 
@@ -2776,12 +2773,9 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 			else	found = !!xstrcasestr((char *) n->backlog[i]->str.w, lastlog->expression);
 		}
 
-		if (!config_lastlog_noitems && found && !items) { /* add header only when found */
-			char *tmp = format_string(header, window_target(w), lastlog->expression);
-			ncurses_backlog_add(lastlog_w, fstring_new(tmp));
-			xfree(tmp);
-		}
-		
+		if (!config_lastlog_noitems && found && !items) /* add header only when found */
+			ncurses_backlog_add(lastlog_w, fstring_new_format(header, window_target(w), lastlog->expression));
+
 		if (found) {
 			fstring_t *dup;
 			size_t len;

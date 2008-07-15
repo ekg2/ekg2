@@ -623,7 +623,7 @@ static COMMAND(gg_command_msg) {
 	msg = (unsigned char *) xstrmid(params[1], 0, 1989);
 	ekg_format = ekg_sent_message_format((char *) msg);
 
-	/* analiz�tekstu zrobimy w osobnym bloku dla porzdku */
+	/* analize tekstu zrobimy w osobnym bloku dla porzdku */
 	{
 		unsigned char attr = 0, last_attr = 0;
 		const unsigned char *p = msg, *end = p + xstrlen((char *) p);

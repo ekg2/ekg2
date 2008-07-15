@@ -654,6 +654,28 @@ fstring_t *fstring_new(const char *str) {
 }
 
 /**
+ * fstring_new_format()
+ *
+ * 	char *tmp = format_string("format", .....);
+ * 	fstr = fstring_new(tmp);
+ * 	xfree(tmp);
+ */
+
+fstring_t *fstring_new_format(const char *format, ...) {
+	fstring_t *fstr;
+	va_list ap;
+	char *tmp;
+
+	va_start(ap, format);
+	tmp = va_format_string(format, ap);
+
+	fstr = fstring_new(tmp);
+
+	xfree(tmp);
+	return fstr;
+}
+
+/**
  * fstring_free()
  *
  * Free memory allocated by @a str
