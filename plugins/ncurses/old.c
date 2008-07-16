@@ -1392,6 +1392,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 				__fgcolor('y', 'Y', COLOR_YELLOW);
 				__fgcolor('b', 'B', COLOR_BLUE);
 				__fgcolor('m', 'M', COLOR_MAGENTA);
+				__fgcolor('p', 'P', COLOR_MAGENTA);
 				__fgcolor('c', 'C', COLOR_CYAN);
 				__fgcolor('w', 'W', COLOR_WHITE);
 				__bgcolor('l', COLOR_BLACK);
@@ -1464,6 +1465,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 							__fgcolor('y', 'Y', COLOR_YELLOW);
 							__fgcolor('b', 'B', COLOR_BLUE);
 							__fgcolor('m', 'M', COLOR_MAGENTA);
+							__fgcolor('p', 'P', COLOR_MAGENTA);
 							__fgcolor('c', 'C', COLOR_CYAN);
 							__fgcolor('w', 'W', COLOR_WHITE);
 							__bgcolor('l', COLOR_BLACK);
