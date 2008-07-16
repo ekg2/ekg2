@@ -1707,7 +1707,7 @@ void update_statusbar(int commit)
 		if (!y) {
 			p = format_find("header1");
 
-			if (!xstrcmp(p, ""))
+			if (!format_ok(p))
 				p = format_find("header");
 		} else {
 			char *tmp = saprintf("header%d", y + 1);
@@ -1724,7 +1724,7 @@ void update_statusbar(int commit)
 		if (!y) {
 			p = format_find("statusbar1");
 
-			if (!xstrcmp(p, ""))
+			if (!format_ok(p))
 				p = format_find("statusbar");
 		} else {
 			char *tmp = saprintf("statusbar%d", y + 1);
@@ -2929,7 +2929,7 @@ int ncurses_window_new(window_t *w)
 	} else {
 		const char *f = format_find("ncurses_prompt_none");
 
-		if (xstrcmp(f, "")) {
+		if (format_ok(f)) {
 			n->prompt = format_string(f);
 			n->prompt_len = xstrlen(n->prompt);
 

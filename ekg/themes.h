@@ -57,6 +57,8 @@ void print_window(const char *target, session_t *session, int separate, const ch
 
 void format_add(const char *name, const char *value, int replace);
 const char *format_find(const char *name);
+#define format_ok(format_find_result) 	(format_find_result[0])
+#define format_exists(format)		(format_ok(format_find(format)))
 char *format_string(const char *format, ...);
 
 void theme_init();

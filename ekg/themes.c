@@ -107,7 +107,7 @@ const char *format_find(const char *name)
 
 		xfree(name2);
 
-		if (tmp[0] != '\0')
+		if (format_ok(tmp))
 			return tmp;
 	}
 
@@ -117,7 +117,7 @@ const char *format_find(const char *name)
 
 		xfree(name2);
 
-		if (tmp[0] != '\0')
+		if (format_ok(tmp))
 			return tmp;
 	}
 

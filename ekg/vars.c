@@ -657,7 +657,7 @@ void variable_help(const char *name) {
 
 	string_free(s, 1);
 	
-	if (xstrcmp(format_find("help_set_footer"), ""))
+	if (format_exists("help_set_footer"))
 		print("help_set_footer", name);
 
 	fclose(f);

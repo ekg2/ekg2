@@ -157,7 +157,7 @@ static int ioctld_send(const char *seq, int act, int quiet)
 	if (!xisdigit(*seq)) {
 		const char *tmp = format_find(seq);
 
-		if (tmp[0] == '\0') {
+		if (!format_ok(tmp)) {
 			printq("events_seq_not_found", seq);
 			return -1;
 		}

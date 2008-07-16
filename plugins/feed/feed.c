@@ -180,7 +180,7 @@ static QUERY(rss_message) {
 			}
 
 			formatka = saprintf("feed_server_header_%s", tmp);
-			if ((!xstrcmp(format_find(formatka), ""))) { xfree(formatka); formatka = NULL; }
+			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_server_header_generic"), tmp, value ? value+1 : "");
 			print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
@@ -206,7 +206,7 @@ static QUERY(rss_message) {
 			}
 
 			formatka = saprintf("feed_message_header_%s", tmp);
-			if ((!xstrcmp(format_find(formatka), ""))) { xfree(formatka); formatka = NULL; }
+			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_message_header_generic"), tmp, value ? value+1 : "");
 			print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
@@ -239,7 +239,9 @@ static QUERY(rss_message) {
 					if (i > 0) 			/* buggy clients quote:   >>>>>aaaa */
 					{
 						quote_name = saprintf("nntp_message_quote_level%d", i+1);
-						if (!xstrcmp(f = format_find(quote_name), "")) {
+
+						f = format_find(quote_name);
+						if (!format_ok(f)) {
 							debug("[NNTP, QUOTE] format: %s not found, using global one...\n", quote_name);
 							f = format_find("nntp_message_quote_level");
 						}

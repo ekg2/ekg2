@@ -486,7 +486,7 @@ static COMMAND(cmd_status) {
 
 			t = localtime(&s->last_conn);
 			format = format_find((t->tm_yday == now_days) ? "show_status_last_conn_event_today" : "show_status_last_conn_event");
-			if (format[0] && !strftime(buf, sizeof(buf), format, t))
+			if (format_ok(format) && !strftime(buf, sizeof(buf), format, t))
 				xstrcpy(buf, "TOOLONG");
 
 			printq((s->connected) ? "show_status_connected_since" : "show_status_disconnected_since", buf);
@@ -495,7 +495,7 @@ static COMMAND(cmd_status) {
 
 	t = localtime(&ekg_started);
 	format = format_find((t->tm_yday == now_days) ? "show_status_ekg_started_today" : "show_status_ekg_started");
-	if (format[0] && !strftime(buf1, sizeof(buf1), format, t))
+	if (format_ok(format) && !strftime(buf1, sizeof(buf1), format, t))
 		xstrcpy(buf1, "TOOLONG");
 
 	printq("show_status_ekg_started_since", buf1);
@@ -1431,9 +1431,8 @@ list_user:
 			char buf[100];		
 
 			status_time = localtime(&(u->status_time));
-	        	if (!strftime(buf, sizeof(buf), format_find("user_info_status_time_format") ,status_time) && xstrlen(format_find("user_info_status_time_format"))>0)
+	        	if (!strftime(buf, sizeof(buf), format_find("user_info_status_time_format") ,status_time) && format_exists("user_info_status_time_format"))
 				xstrcpy(buf, "TOOLONG");
-
 
 			printq("user_info_status_time", buf);
 		}
@@ -1476,7 +1475,7 @@ list_user:
 			
 			if (u->last_seen) {
 				last_seen_time = localtime(&(u->last_seen));
-				if (!strftime(buf, sizeof(buf), format_find("user_info_last_seen_time"), last_seen_time) && xstrlen(format_find("user_info_last_seen_time"))>0)
+				if (!strftime(buf, sizeof(buf), format_find("user_info_last_seen_time"), last_seen_time) && format_exists("user_info_last_seen_time"))
 					xstrcpy(buf, "TOOLONG");
 				printq("user_info_last_seen", buf);
 			} else
@@ -2774,22 +2773,18 @@ int binding_quick_list(int a, int b)
 		for (ul = s->userlist; ul; ul = ul->next) {
 			userlist_t *u = ul;
 			const char *format;
-			char *tmp;
 
 			if (!u->nickname)
 				continue;
 		
 			format = format_find(ekg_status_label(u->status, NULL, "quick_list_"));
 
-			if (!xstrcmp(format, ""))	/* format_find returns "" if not found! */
-				continue;
+			if (format_ok(format)) {
+				char *tmp = format_string(format, u->nickname);
+				string_append(list, tmp);
 
-			if (!(tmp = format_string(format, u->nickname)))
-				continue;
-
-			string_append(list, tmp);
-
-			xfree(tmp);
+				xfree(tmp);
+			}
 		}
 	}
 
@@ -3152,8 +3147,7 @@ static COMMAND(cmd_at)
 			gettimeofday(&tv, NULL);
 
 			at_time = localtime((time_t *) &t->ends.tv_sec);
-			if (!strftime(tmp, sizeof(tmp), format_find("at_timestamp"), at_time)
-					&& xstrlen(format_string("at_timestamp"))>0)
+			if (!strftime(tmp, sizeof(tmp), format_find("at_timestamp"), at_time) && format_exists("at_timestamp"))
 				xstrcpy(tmp, "TOOLONG");
 
 			if (t->persist) {
@@ -3756,8 +3750,7 @@ static COMMAND(cmd_last)
 				continue;
 
 			tm = localtime(&ll->time);
-			if (!strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm)
-					&& xstrlen(format_find("last_list_timestamp"))>0)
+			if (!strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm) && format_exists("last_list_timestamp"))
 				xstrcpy(buf, "TOOLONG");
 
 			if (show_sent && !ll->type && !(ll->sent_time - config_time_deviation <= ll->time && ll->time <= ll->sent_time + config_time_deviation)) {
@@ -3821,7 +3814,7 @@ static COMMAND(cmd_queue) {
 			tm = localtime(&m->time);
 
 			/* [if queue_list_timestamp_f != "", (format_find() returns "" if format not found]] && if strftime() fails */
-			if (queue_list_timestamp_f[0] && !strftime(buf, sizeof(buf), queue_list_timestamp_f, tm))
+			if (format_ok(queue_list_timestamp_f) && !strftime(buf, sizeof(buf), queue_list_timestamp_f, tm))
 				xstrcpy(buf, "TOOLONG");	/* use 'TOOLONG' */
 
 			printq("queue_list_message", buf, m->rcpts, m->message);

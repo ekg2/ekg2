@@ -212,7 +212,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 		footer = format_find("contacts_footer");
 	}
 
-	if (xstrcmp(header, ""))
+	if (format_ok(header))
 		ncurses_backlog_add(w, fstring_new_format(header, group));
 
 	if (all == 1) {
@@ -337,7 +337,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			if (!count) {
 				snprintf(tmp, sizeof(tmp), "contacts_%s_header", status_t);
 				format = format_find(tmp);
-				if (xstrcmp(format, ""))
+				if (format_ok(format))
 					ncurses_backlog_add(w, fstring_new_format(format));
 				footer_status = status_t;
 			}
@@ -372,7 +372,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			snprintf(tmp, sizeof(tmp), "contacts_%s_footer", footer_status);
 			format = format_find(tmp);
 
-			if (xstrcmp(format, ""))
+			if (format_ok(format))
 				ncurses_backlog_add(w, fstring_new_format(format));
 		}
 
@@ -381,7 +381,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 	}
 
 after_loop:
-	if (xstrcmp(footer, ""))
+	if (format_ok(footer))
 		ncurses_backlog_add(w, fstring_new_format(footer, group));
 	if (all)
 		LIST_DESTROY2(sorted_all, NULL);
