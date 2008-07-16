@@ -22,6 +22,7 @@
 #include "irc.h"
 
 char *irc_ircoldcolstr_to_ekgcolstr(session_t *s, char *str, int strip);
+char *irc_ircoldcolstr_to_ekgcolstr_nf(session_t *sess, char *str, int strip);
 char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s);
 
 

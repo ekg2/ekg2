@@ -77,7 +77,7 @@ static int irc_getircoldcol(char *org)
 	return ret;
 }
 
-char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str, int strip)
+char *irc_ircoldcolstr_to_ekgcolstr_nf(session_t *sess, char *str, int strip)
 {
 	int		col, oldstrip = strip;
 	char		mirc_sux_so_much[16] =  "WkbgrypRYGcCBPKw";
@@ -85,7 +85,8 @@ char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str, int strip)
 	char		*p;
 	string_t	s;
 
-	if(!(str && xstrlen(str))) return xstrdup("");
+	if (!str || !(*str))
+		return xstrdup("");
 
 	s = string_init("");
 	if (strip)
@@ -133,11 +134,23 @@ coloring_finito:
 	}
 	if (oldstrip)
 		string_append(s, "%n");
-	p = format_string(s->str);
-	string_free(s, 1);
-	return p;
+	return string_free(s, 0);
 }
 
+char *irc_ircoldcolstr_to_ekgcolstr(session_t *sess, char *str, int strip)
+{
+	char *format;
+	char *formatted;
+
+	if (!str || !(*str))
+		return xstrdup("");
+	
+	format = irc_ircoldcolstr_to_ekgcolstr_nf(sess, str, strip);
+	formatted = format_string(format);
+
+	xfree(format);
+	return formatted;
+}
 
 /*
  *

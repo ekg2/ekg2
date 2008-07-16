@@ -1523,7 +1523,7 @@ static QUERY(irc_topic_header) {
 		if ((tmp = SOP(_005_CHANTYPES)) && 
 		     xstrchr(tmp, targ[4]) && 
 		     (chanp = irc_find_channel((j->channels), targ))) {
-			*top   = xstrdup(chanp->topic);
+			*top   = irc_ircoldcolstr_to_ekgcolstr_nf(window_current->session, chanp->topic, 1);
 			*setby = xstrdup(chanp->topicby);
 			*modes = xstrdup(chanp->mode_str);
 			return 1;

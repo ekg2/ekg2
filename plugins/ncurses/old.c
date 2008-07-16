@@ -1431,7 +1431,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 			len = xstrlen(data[i].name);
 
 			if (!strncmp(p, data[i].name, len) && p[len] == '}') {
-				int percent_ok = (!xstrcmp(data[i].name, "activity") || !xstrcmp(data[i].name, "time"));	/* XXX */
+				int percent_ok = (!xstrcmp(data[i].name, "activity") || !xstrcmp(data[i].name, "time") || !xstrcmp(data[i].name, "irctopic"));	/* XXX */
 				char *text = data[i].text;
 				char *ftext = NULL;
                              	
