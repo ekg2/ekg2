@@ -1336,10 +1336,10 @@ static void update_header(int commit)
 /* 13 wrz 06 	removed status cause it was always 1 (dj)  */
 		
 static int window_printat(WINDOW *w, int x, int y, const char *format, struct format_data *data, int fgcolor, int bold, int bgcolor) {
-	int orig_x = x;
 	int backup_display_color = config_display_color;
 	char *ftext = NULL;		/* tekst do zwolnienia jesli !config_display_pl_chars */
 	const char *p;			/* parsowanie format lub ftext jesli !config_display_pl_chars */
+	int orig_x = x;
 
 	if (!w)
 		return -1;
@@ -1350,7 +1350,12 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 		p = ftext;
 	} else	p = format;
 
-	if (config_display_color == 2)	config_display_color = 0;
+	if (orig_x == 0) {
+		if (config_display_color == 2) 
+			config_display_color = 0;
+
+		wattrset(w, color_pair(fgcolor, bgcolor));
+	}
 
 	wmove(w, y, x);
 			
@@ -1555,9 +1560,9 @@ next:
 
 		for (i = x; i <= w->_maxx; i++)
 			waddch(w, ' ');
-	}
 
-	config_display_color = backup_display_color;
+		config_display_color = backup_display_color;
+	}
 
 	if (ftext) xfree(ftext);
 	return x - orig_x;
