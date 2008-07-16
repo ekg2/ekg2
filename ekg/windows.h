@@ -79,6 +79,13 @@ typedef struct window {
 	void *private;			/* prywatne informacje ui */
 } window_t;
 
+typedef enum {
+	EKG_WINACT_NONE = 0,
+	EKG_WINACT_JUNK,
+	EKG_WINACT_MSG,
+	EKG_WINACT_IMPORTANT
+} winact_t;
+
 #ifndef EKG2_WIN32_NOFUNCTION
 
 extern window_t *windows;
