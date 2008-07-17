@@ -413,15 +413,13 @@ static TIMER(ekg_day_timer) {
 			char *ts = xstrdup(timestamp("%d %b %Y"));
 
 			for (w = windows; w; w = w->next) {
-				int oldact;
 				
-				if (!w || w->id == 0 || w->floating) continue; /* skip __debug && (floatings windows [__lastlog, __contacts, ...]) */
+				if (!w || w->id == 0 || w->floating)
+					continue; /* skip __debug && (floatings windows [__lastlog, __contacts, ...]) */
 
-				oldact = w->act;	/* save old act */
 				w->lock++;		/* lock window */
-				print_window_w(w, 0, "day_changed", ts);
+				print_window_w(w, EKG_WINACT_NONE, "day_changed", ts);
 				w->lock--;		/* unlock window */
-				w->act = oldact;	/* restore old act */
 			}
 			xfree(ts);
 

@@ -871,8 +871,8 @@ static window_t *print_window_find(const char *target, session_t *session, int s
 	/* [FOR 3) and 4)] If we create window or we change target. notify user */
 
 	print("window_id_query_started", itoa(w->id), target, session_name(session));
-	print_window_w(w, 1, "query_started", target, session_name(session));
-	print_window_w(w, 1, "query_started_window", target);
+	print_window_w(w, EKG_WINACT_JUNK, "query_started", target, session_name(session));
+	print_window_w(w, EKG_WINACT_JUNK, "query_started_window", target);
 
 	xfree(newtarget);
 
