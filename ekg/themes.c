@@ -774,7 +774,10 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 }
 
 /**
- * new_print_window()
+ * print_window_find()
+ *
+ * Find given window [based on @a target and @a session]
+ * if not found, and separate set, create new one.
  *
  * Print given text in given window [@a target+ @a session]
  *
@@ -788,104 +791,92 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
  *
  * @param target	- target to look for.
  * @param session	- session to look for.
- * @param activity	- how important is text?
  * @param separate	- if essence of text is important to create new window
- * @param theme		- Name of format to format_string() with @a ... Text will be be built.
- * @param ...
  */
 
-static void new_print_window(const char *target, session_t *session, int activity, int separate, const char *theme, va_list ap) {
+static window_t *print_window_find(const char *target, session_t *session, int separate) {
+	char *newtarget = NULL;
+	const char *tmp;
+	userlist_t *u;
 
-	window_t *w = NULL;
+	window_t *w;
 
 	/* first of all, let's check if config_display_crap is unset and target is current window */
 	if (!config_display_crap) {	/* it was with && (config_make_window & 3) */
 		if (!target || !xstrcmp(target, "__current"))
-			w = window_status;
+			return window_status;
 	}
-
-	while (w == NULL) {
-		const char *tmp;
-		char *newtarget = NULL;
-
-		userlist_t *u;
 
 	/* 1) let's check if we have such window as target... */
 
-		/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
-		if ((!xstrncmp(target, "xmpp:", 5)) && (tmp = xstrchr(target, '/'))) {
-			newtarget = xstrndup(target, tmp - target);
-			w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
-			/* even if w == NULL here, we use newtarget to create window without resource */
-			/* Yeah, we search for target on userlist, but u can be NULL also... */
-			/* XXX, optimize and think about it */
+	/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
+	if ((!xstrncmp(target, "xmpp:", 5)) && (tmp = xstrchr(target, '/'))) {
+		newtarget = xstrndup(target, tmp - target);
+		w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
+		/* even if w == NULL here, we use newtarget to create window without resource */
+		/* Yeah, we search for target on userlist, but u can be NULL also... */
+		/* XXX, optimize and think about it */
+	} else
+		w = window_find_s(session, target);
 
-		} else	w = window_find_s(session, target);
-
-		if (w) {
-			xfree(newtarget);
-			break;
-		}
+	if (w) {
+		xfree(newtarget);
+		return w;
+	}
 
 	/* 2) if message is not important (not @a seperate) or we don't want create new windows at all [config_make_window & 3 == 0] 
 	 *    than get __status window  */
 
-		if (!separate || (config_make_window & 3) == 0) {
-			w = window_status;
-			xfree(newtarget);
-			break;
-		}
-
-		/* if we have no window, let's find for it in userlist */
-		u = userlist_find(session, target);
-
-		/* if found, and we have nickname, than great! */
-		if (u && u->nickname)
-			target = u->nickname;			/* use nickname instead of target */
-		else if (u && u->uid && ( /* don't use u->uid, if it has resource attached */
-				xstrncmp(u->uid, "xmpp:", 5) || !xstrchr(u->uid, '/')))
-			target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
-		else if (newtarget)
-			target = newtarget;			/* use target with stripped '/' */
-								/* XXX, window resources */
-
-	/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
-		if ((config_make_window & 3) == 1) {
-			window_t *wa;
-		
-			for (wa = windows; wa; wa = wa->next) {
-				if (!wa->target && wa->id > 1) {
-					w = wa;
-
-					xfree(w->target);
-					w->target = xstrdup(target);
-					w->session = session;
-
-					query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* XXX */
-					break;
-				}
-				if (w)
-					break;
-			}
-		}
-
-	/* 4) if not found unused window, or ((config_make_window & 3) == 2) [always] than just create it */
-		if (!w)
-			w = window_new(target, session, 0);
-
-		/* [FOR 3) and 4)] If we create window or we change target. notify user */
-
-		print("window_id_query_started", itoa(w->id), target, session_name(session));
-		print_window_w(w, 1, "query_started", target, session_name(session));
-		print_window_w(w, 1, "query_started_window", target);
-
+	if (!separate || (config_make_window & 3) == 0) {
 		xfree(newtarget);
-		break;
+		return window_status;
 	}
 
-//	va_start(ap, theme);
-	print_window_c(w, activity, theme, ap);
-//	va_end(ap);
+	/* if we have no window, let's find for it in userlist */
+	u = userlist_find(session, target);
+
+	/* if found, and we have nickname, than great! */
+	if (u && u->nickname)
+		target = u->nickname;			/* use nickname instead of target */
+	else if (u && u->uid && ( /* don't use u->uid, if it has resource attached */
+			xstrncmp(u->uid, "xmpp:", 5) || !xstrchr(u->uid, '/')))
+		target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
+	else if (newtarget)
+		target = newtarget;			/* use target with stripped '/' */
+							/* XXX, window resources */
+
+	/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
+	if ((config_make_window & 3) == 1) {
+		window_t *wa;
+
+		for (wa = windows; wa; wa = wa->next) {
+			if (!wa->target && wa->id > 1) {
+				w = wa;
+
+				w->target = xstrdup(target);
+				w->session = session;
+
+				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* XXX */
+				break;
+			}
+			if (w)		/* wtf? */
+				break;
+		}
+	}
+
+	/* 4) if not found unused window, or ((config_make_window & 3) == 2) [always] than just create it */
+	if (!w)
+		w = window_new(target, session, 0);
+
+	/* [FOR 3) and 4)] If we create window or we change target. notify user */
+
+	print("window_id_query_started", itoa(w->id), target, session_name(session));
+	print_window_w(w, 1, "query_started", target, session_name(session));
+	print_window_w(w, 1, "query_started_window", target);
+
+	xfree(newtarget);
+
+	return w;
 }
 
 /**
@@ -910,30 +901,37 @@ static void new_print_window(const char *target, session_t *session, int activit
  */
 
 void print_window(const char *target, session_t *session, int activity, int separate, const char *theme, ...) {
-        va_list ap;
+	window_t *w;
+	va_list ap;
+
+	w = print_window_find(target, session, separate);
 
 	va_start(ap, theme);
-	new_print_window(target, session, activity, separate, theme, ap);
+	print_window_c(w, activity, theme, ap);
 	va_end(ap);
 }
 
 void print_info(const char *target, session_t *session, const char *theme, ...) {
-        va_list ap;
+	window_t *w;
+	va_list ap;
 
 	/* info configuration goes here... */
+	w = print_window_find(target, session, 0);
 
 	va_start(ap, theme);
-	new_print_window(target, session, EKG_WINACT_JUNK, 0, theme, ap);
+	print_window_c(w, EKG_WINACT_JUNK, theme, ap);
 	va_end(ap);
 }
 
 void print_warning(const char *target, session_t *session, const char *theme, ...) {
-        va_list ap;
+	window_t *w;
+	va_list ap;
 
 	/* warning configuration goes here... */
+	w = print_window_find(target, session, 0);
 
 	va_start(ap, theme);
-	new_print_window(target, session, EKG_WINACT_JUNK, 0, theme, ap);
+	print_window_c(w, EKG_WINACT_JUNK, theme, ap);
 	va_end(ap);
 }
 
