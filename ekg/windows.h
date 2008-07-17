@@ -49,6 +49,7 @@ typedef struct window {
 
 	unsigned short id;		/* numer okna */
 	char *target;			/* nick query albo inna nazwa albo NULL */
+	char *alias;			/* name for display */
 	session_t *session;		/* której sesji dotyczy okno */
 
 	unsigned short left, top;	/* pozycja (x, y) wzglêdem pocz±tku ekranu */

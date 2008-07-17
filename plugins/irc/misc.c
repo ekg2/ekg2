@@ -1263,7 +1263,7 @@ IRC_COMMAND(irc_c_join)
 	window_t	*newwin;
 	people_t	*person;
 	int		me = 0;
-	char		*irc_nick;
+	char		*irc_nick, *tmp;
 
 	/* irc channels are said to be case insensitive, so I think
 	 * we can do it 'in place', without a copy
@@ -1278,6 +1278,13 @@ IRC_COMMAND(irc_c_join)
 	me = !xstrcmp(j->nick, param[0]+1); /* We join ? */
 	if (me) {
 		newwin = window_new(ekg2_channel, s, 0);
+
+		tmp = xstrdup(irc_channel);
+		clean_channel_name(s, tmp);
+		if (xstrcmp(irc_channel, tmp))
+			newwin->alias = xstrdup(tmp);	/* ?WO? format for alias here??? */
+		xfree(tmp);
+
 		window_switch(newwin->id);
 		debug("[irc] c_join() %08X\n", newwin);
 		ischan = irc_add_channel(s, j , irc_channel, newwin);
