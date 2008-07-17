@@ -1263,7 +1263,7 @@ IRC_COMMAND(irc_c_join)
 	window_t	*newwin;
 	people_t	*person;
 	int		me = 0;
-	char		*irc_nick, *tmp;
+	char		*irc_nick;
 
 	/* irc channels are said to be case insensitive, so I think
 	 * we can do it 'in place', without a copy
