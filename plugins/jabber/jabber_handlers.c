@@ -1586,7 +1586,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 	if (!ismuc && (!type || ( na || !xstrcmp(type, "error") || !xstrcmp(type, "available")))) {
 		xmlnode_t *nshow, *nstatus, *nerr, *temp;
 		userlist_t *u = userlist_find(s, uid);
-		char *descr = u ? xstrdup(u->descr) : NULL;
+		char *descr = /*u ? xstrdup(u->descr) :*/ NULL;
 		int status = /*u ? u->status :*/ 0;		/* it'll probably always get replaced */
 		char *tmp2;
 
