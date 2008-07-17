@@ -4051,8 +4051,8 @@ static COMMAND(cmd_me)
 		printq("invalid_params", name);
                 return -1;
 	}
-	
-	return command_exec_format(target, session, 0, "/ /me %s", params[0]);
+
+	return command_exec_format(target, session, 0, "/ /me %s", params[0]?params[0]:"");	
 }
 
 /**
