@@ -406,7 +406,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 			}
 		}
 		
-		print_window(target, s, 0, __format(""), 
+		print_info(target, s, __format(""), 
 			uin 		? uin : ("?"), name, 
 			nickname 	? nickname : (""), 
 			city		? city : (""), 

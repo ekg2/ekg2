@@ -605,7 +605,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
 	if (is_UI && window_debug)
-		print_window_w(window_debug, 0, theme_format, tmp);
+		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
 #if 0			/* STDERR debug */
 	else
 		fprintf(stderr, "%s\n", tmp);
@@ -904,7 +904,7 @@ int main(int argc, char **argv)
 	else {
 		struct buffer *b;
 		for (b = buffer_debug.data; b; b = b->next)
-			print_window_w(window_debug, 0, b->target, b->line);
+			print_window_w(window_debug, EKG_WINACT_NONE, b->target, b->line);
 	}
 
         if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {

@@ -721,17 +721,11 @@ char *format_string(const char *format, ...)
  * Common stuff for: print_window() and print_window_w()<br>
  * Change w->act if needed, format theme, make fstring() and send everything to window_print()
  *
- * @param separate:
- *		1 - EKG_MSGCLASS_MESSAGE || EKG_MSGCLASS_SENT
- *		2 - EKG_MSGCLASS_LOG || EKG_MSGCLASS_SENT_LOG
- *		3 - msg NOT to us
- *		0 - other
- *
  * @note 	We only check if @a w == NULL, if you send here wrong window_t ptr, everything can happen. don't do it.
  * 		Yeah, we can do here window_find_ptr() but it'll slow down code a lot.
  */
 
-static void print_window_c(window_t *w, int separate, const char *theme, va_list ap) {
+static void print_window_c(window_t *w, int activity, const char *theme, va_list ap) {
         char *stmp;
 
 	/* w here shouldn't here be NULL. In case. */
@@ -741,17 +735,9 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 	}
 
 	/* Change w->act */
-	if (w != window_current && !w->floating && (separate != 2)) {
-		int newact;
-		if (separate == 1)
-			newact = 3;	/* msg to us */
-		else if (separate == 3)
-			newact = 2;	/* msg not to us */
-		else
-			newact = 1;	/* junk */
-
-		if (newact > w->act) {
-			w->act = newact;
+	if (w != window_current && !w->floating) {
+		if (activity > w->act) {
+			w->act = activity;
 				/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
 			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
 		}
@@ -788,7 +774,7 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 }
 
 /**
- * print_window()
+ * new_print_window()
  *
  * Print given text in given window [@a target+ @a session]
  *
@@ -802,13 +788,13 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
  *
  * @param target	- target to look for.
  * @param session	- session to look for.
- * @param separate	- if essence of text if important...
+ * @param activity	- how important is text?
+ * @param separate	- if essence of text is important to create new window
  * @param theme		- Name of format to format_string() with @a ... Text will be be built.
  * @param ...
  */
 
-void print_window(const char *target, session_t *session, int separate, const char *theme, ...) {
-        va_list ap;
+static void new_print_window(const char *target, session_t *session, int activity, int separate, const char *theme, va_list ap) {
 
 	window_t *w = NULL;
 
@@ -897,8 +883,57 @@ void print_window(const char *target, session_t *session, int separate, const ch
 		break;
 	}
 
+//	va_start(ap, theme);
+	print_window_c(w, activity, theme, ap);
+//	va_end(ap);
+}
+
+/**
+ * print_window()
+ *
+ * Print given text in given window [@a target+ @a session]
+ *
+ * @todo 	We have no policy for displaying messages by e.g. jabber resources.<br>
+ * 		For now we do: [only jabber]<br>
+ * 			- If @a target has '/' inside. We put there NUL char.<br>
+ * 			- After it we search for window with stripped '/'<br>
+ * 			- If founded, than done.<br>
+ * 		If not, we look for user in userlist.. And if not found, than we'll create new window with stripped '/' [only jabber]
+ * 		
+ *
+ * @param target	- target to look for.
+ * @param session	- session to look for.
+ * @param activity	- how important is text?
+ * @param separate	- if essence of text is important to create new window
+ * @param theme		- Name of format to format_string() with @a ... Text will be be built.
+ * @param ...
+ */
+
+void print_window(const char *target, session_t *session, int activity, int separate, const char *theme, ...) {
+        va_list ap;
+
 	va_start(ap, theme);
-	print_window_c(w, separate, theme, ap);
+	new_print_window(target, session, activity, separate, theme, ap);
+	va_end(ap);
+}
+
+void print_info(const char *target, session_t *session, const char *theme, ...) {
+        va_list ap;
+
+	/* info configuration goes here... */
+
+	va_start(ap, theme);
+	new_print_window(target, session, EKG_WINACT_JUNK, 0, theme, ap);
+	va_end(ap);
+}
+
+void print_warning(const char *target, session_t *session, const char *theme, ...) {
+        va_list ap;
+
+	/* warning configuration goes here... */
+
+	va_start(ap, theme);
+	new_print_window(target, session, EKG_WINACT_JUNK, 0, theme, ap);
 	va_end(ap);
 }
 
@@ -916,7 +951,7 @@ void print_window(const char *target, session_t *session, int separate, const ch
  * 			if NULL than __status or __current will be used. it depends on: config_default_status_window and config_display_crap variables.
  */
 
-void print_window_w(window_t *w, int separate, const char *theme, ...) {
+void print_window_w(window_t *w, int activity, const char *theme, ...) {
         va_list ap;
 
 	if (!w) {	/* if no window passed, then get window based of */
@@ -926,7 +961,7 @@ void print_window_w(window_t *w, int separate, const char *theme, ...) {
 	}
 
 	va_start(ap, theme);
-	print_window_c(w, separate, theme, ap);
+	print_window_c(w, activity, theme, ap);
 	va_end(ap);
 }
 

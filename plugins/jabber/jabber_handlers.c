@@ -750,12 +750,12 @@ JABBER_HANDLER(jabber_handle_message) {
 			char *mbody = xstrndup(tmp2, 15);
 			xstrtr(mbody, '\n', ' ');
 
-			print_window(uid, s, 0, "jabber_msg_failed_long", recipient, ecode, etext, mbody);
+			print_warning(uid, s, "jabber_msg_failed_long", recipient, ecode, etext, mbody);
 
 			xfree(mbody);
 			xfree(tmp2);
 		} else
-			print_window(uid, s, 0, "jabber_msg_failed", recipient, ecode, etext);
+			print_warning(uid, s, "jabber_msg_failed", recipient, ecode, etext);
 
 		xfree(etext);
 		xfree(uid);
@@ -879,7 +879,7 @@ JABBER_HANDLER(jabber_handle_message) {
 			} else if (!xstrcmp(xitem->name, "paused")) {
 			} else if (!xstrcmp(xitem->name, "inactive")) {
 			} else if (!xstrcmp(xitem->name, "gone")) {
-				print_window(uid, s, 0, "jabber_gone", session_name(s), get_nickname(s, uid));
+				print_info(uid, s, "jabber_gone", session_name(s), get_nickname(s, uid));
 			} else debug_error("[JABBER, MESSAGE]: INVALID CHATSTATE: %s\n", xitem->name);
 /* chatstate */	} else if (!xstrcmp(xitem->name, "subject")) {
 			nsubject = xitem;
@@ -1516,7 +1516,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 						int codenr = code ? atoi(code) : -1;
 
 						switch (codenr) {
-							case 201: print_window(mucuid, s, 0, "jabber_muc_room_created", session_name(s), mucuid);	break;
+							case 201: print_info(mucuid, s, "jabber_muc_room_created", session_name(s), mucuid);	break;
 							case  -1: debug_error("[jabber, iq, muc#user] codenr: -1 code: %s\n", __(code));		break;
 							default : debug_error("[jabber, iq, muc#user] XXX codenr: %d code: %s\n", codenr, code);
 						}
@@ -1537,7 +1537,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 						if (tmp) nickjid = saprintf("xmpp:%s", tmp + 1);
 						else	 nickjid = xstrdup(uid);
 
-						if (na) 	print_window(mucuid, s, 0, "muc_left", session_name(s), nickjid + 5, jid, mucuid+5, "");
+						if (na) 	print_info(mucuid, s, "muc_left", session_name(s), nickjid + 5, jid, mucuid+5, "");
 
 						ulist = newconference_member_find(c, nickjid);
 						if (ulist && na) { 
@@ -1545,7 +1545,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 							ulist = NULL; 
 						} else if (!ulist) {
 							ulist = newconference_member_add(c, nickjid, nickjid + 5);
-							print_window(mucuid, s, 0, "muc_joined", session_name(s), nickjid + 5, jid, mucuid+5, "", role, affiliation);
+							print_info(mucuid, s, "muc_joined", session_name(s), nickjid + 5, jid, mucuid+5, "", role, affiliation);
 						}
 
 						if (ulist) {

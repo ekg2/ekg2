@@ -1212,7 +1212,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 
 				{
 					char *uid = saprintf("gg:%d", e->event.image_reply.sender);
-					print_window(uid, s, 0, "gg_image_ok_get", image_file, uid, e->event.image_reply.filename);
+					print_info(uid, s, "gg_image_ok_get", image_file, uid, e->event.image_reply.filename);
 					xfree(uid);
 				}
 

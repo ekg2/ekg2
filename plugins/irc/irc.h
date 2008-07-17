@@ -19,7 +19,7 @@
 #define __EKG_PLUGINS_IRC_IRC_H
 
 #define DOT(a,x,y,z,error) \
-	print_window("__status", z, 0, a, session_name(z), x, y->hostname, y->address, \
+	print_info("__status", z, a, session_name(z), x, y->hostname, y->address, \
 			itoa(y->port < 0 ? \
 				session_int_get(z, "port") < 0 ? DEFPORT : session_int_get(z, "port") : y->port), \
 			itoa(y->family), error ? strerror(error) : "")

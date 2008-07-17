@@ -2379,8 +2379,8 @@ next:
 		if (!w) w = window_new(par0, session, 0);	/* jesli jest config_make_window => 2 lub nie mielismy wolnego okienka przy config_make_window == 1, stworzmy je */
 
 		if (!quiet) {		/* display some beauty info */
-			print_window(par0, session, 0, "query_started", par0, session_name(session));
-			print_window(par0, session, 0, "query_started_window", par0, session_name(session));
+			print_info(par0, session, "query_started", par0, session_name(session));
+			print_info(par0, session, "query_started_window", par0, session_name(session));
 		}
 	}
 	if (w != window_current) window_switch(w->id);	/* switch to that window */

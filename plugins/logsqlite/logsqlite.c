@@ -197,15 +197,15 @@ int last(const char **params, session_t *session, int quiet, int status)
 		if (count2 == 0) {
 			if (gotten_uid)
 				if (!status)
-					print_window(target_window, session, config_logsqlite_last_open_window, "last_begin_uin", gotten_uid);
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_begin_uin", gotten_uid);
 				else
-					print_window(target_window, session, config_logsqlite_last_open_window, "last_begin_uin_status", gotten_uid);
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_begin_uin_status", gotten_uid);
 
 			else
 				if (!status)
-					print_window(target_window, session, config_logsqlite_last_open_window, "last_begin");
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_begin");
 				else
-					print_window(target_window, session, config_logsqlite_last_open_window, "last_begin_status");
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_begin_status");
 
 		}
 		count2++;
@@ -222,7 +222,7 @@ int last(const char **params, session_t *session, int quiet, int status)
 			else
 				last_direction = "last_list_out";
 
-		print_window(target_window, session, config_logsqlite_last_open_window, last_direction, buf,
+		print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, last_direction, buf,
 #ifdef HAVE_SQLITE3
 			sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3));
 #else
@@ -238,7 +238,7 @@ int last(const char **params, session_t *session, int quiet, int status)
 #endif
 				last_direction = "last_list_status_descr";
 
-				print_window(target_window, session, config_logsqlite_last_open_window, last_direction, buf,
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, last_direction, buf,
 #ifdef HAVE_SQLITE3
 				sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3), sqlite3_column_text(stmt, 4));
 #else
@@ -247,7 +247,7 @@ int last(const char **params, session_t *session, int quiet, int status)
 			} else {
 				last_direction = "last_list_status";
 
-				print_window(target_window, session, config_logsqlite_last_open_window, last_direction, buf,
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, last_direction, buf,
 #ifdef HAVE_SQLITE3
 				sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3));
 #else
@@ -260,20 +260,20 @@ int last(const char **params, session_t *session, int quiet, int status)
 	if (count2 == 0) {
 		if (nick) {
 			if (!status)
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty_nick", nick);
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_list_empty_nick", nick);
 			else
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty_nick_status", nick);
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_list_empty_nick_status", nick);
 		} else {
 			if (!status) 
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty");
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_list_empty");
 			else
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty_status");
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_list_empty_status");
 		}
 	} else {
 		if (!status) 
-			print_window(target_window, session, config_logsqlite_last_open_window, "last_end");
+			print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_end");
 		else
-			print_window(target_window, session, config_logsqlite_last_open_window, "last_end_status");
+			print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_end_status");
 	}
 
 #ifdef HAVE_SQLITE3
@@ -612,7 +612,7 @@ QUERY(logsqlite_msg_handler)
 	if (config_logsqlite_last_print_on_open
 			&& (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT
 			|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))))
-		print_window(gotten_uid, s, 1, NULL); /* this isn't meant to print anything, just open the window */
+		print_window(gotten_uid, s, EKG_WINACT_NONE, 1, NULL); /* this isn't meant to print anything, just open the window */
 
 		/* moved to not break transaction due to above hack, sorry */
 	db = logsqlite_prepare_db(s, sent, 1);

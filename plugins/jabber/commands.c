@@ -326,8 +326,8 @@ static COMMAND(jabber_command_msg)
 					const char *errs;
 
 					if (errc && (errs = XML_ErrorString(errc)))
-						print_window(target, session, 0, "jabber_msg_xmlsyntaxerr", errs);
-					else	print_window(target, session, 0, "jabber_msg_xmlsyntaxerr", "unknown");
+						print_warning(target, session, "jabber_msg_xmlsyntaxerr", errs);
+					else	print_warning(target, session, "jabber_msg_xmlsyntaxerr", "unknown");
 
 					xfree(htmlmsg);
 					xfree(subject);

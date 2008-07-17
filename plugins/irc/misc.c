@@ -558,7 +558,7 @@ IRC_COMMAND(irc_c_error)
 		 *   21:03:35 [:_empty_][ERROR][:Trying to reconnect too fast.]
 		 * no I:line's etc.. everything that disconnects fd
 		 */
-/*		print_window(NULL, s, 0, "IRC_ERR_FIRSTSECOND", session_name(s), irccommands[ecode].comm, IOK2(2)); */
+/*		print_info(NULL, s, "IRC_ERR_FIRSTSECOND", session_name(s), irccommands[ecode].comm, IOK2(2)); */
 		if (j->connecting)
 			irc_handle_disconnect(s, IOK2(2), EKG_DISCONNECT_FAILURE); 
 		else    debug("!j->connecting\n");
@@ -568,25 +568,25 @@ IRC_COMMAND(irc_c_error)
 	switch (irccommands[ecode].future&0xff)
 	{
 		case IRC_ERR_21:
-			print_window(NULL, s, 0,
+			print_info(NULL, s,
 					i?"IRC_RPL_SECONDFIRST":"IRC_ERR_SECONDFIRST", 
 					session_name(s), param[3], IOK2(4));
 			return (0);
 		case IRC_ERR_12:
-			print_window(NULL, s, 0,
+			print_info(NULL, s,
 					i?"IRC_RPL_FIRSTSECOND":"IRC_ERR_FIRSTSECOND", 
 					session_name(s), param[3], IOK2(4));
 			return (0);
 		case IRC_ERR_ONLY1:
-			print_window(NULL, s, 0,
+			print_info(NULL, s,
 					i?"IRC_RPL_JUSTONE":"IRC_ERR_JUSTONE", 
 					session_name(s), IOK2(3));
 			return (0);
 #define IOK(x) param[x]?param[x]:""
 		case IRC_ERR_NEW:
-			print_window(NULL, s, 0, i?"IRC_RPL_NEWONE":
-					"IRC_ERR_NEWONE", session_name(s), param[1],
-					IOK(3), IOK(4), IOK(5), IOK(6));
+			print_info(NULL, s,
+					i?"IRC_RPL_NEWONE":"IRC_ERR_NEWONE",
+					session_name(s), param[1], IOK(3), IOK(4), IOK(5), IOK(6));
 			return (0);
 		case IRC_ERR_IGNO:
 			return(0);
@@ -610,13 +610,13 @@ IRC_COMMAND(irc_c_error)
 	}
 	switch (i) {
 		case 433:
-			print_window(NULL, s, 0, "IRC_ERR_SECONDFIRST", 
+			print_info(NULL, s, "IRC_ERR_SECONDFIRST", 
 					session_name(s), param[3], IOK2(4));
 			if (j->connecting) {
 				altnick = (char *) session_get(s, "alt_nick");
 				/* G->dj: why this !xstrcmp ? */
 				if (altnick && !xstrcmp(param[3], session_get(s, "nickname")) && xstrcmp(param[3], altnick)) {
-					print_window(NULL, s, 0, "IRC_TRYNICK",
+					print_info(NULL, s, "IRC_TRYNICK",
 							session_name(s), altnick);
 					xfree(j->nick);
 					j->nick = xstrdup(altnick);
@@ -625,7 +625,7 @@ IRC_COMMAND(irc_c_error)
 			}
 			break;
 		case 404:
-			print_window(dest, s, 0, "IRC_RPL_CANTSEND", session_name(s), param[3]);
+			print_info(dest, s, "IRC_RPL_CANTSEND", session_name(s), param[3]);
 			break;
 		case 301:
 			if (!session_int_get(s, "DISPLAY_AWAY_NOTIFICATION")) 
@@ -646,7 +646,7 @@ IRC_COMMAND(irc_c_error)
 				chanp->topic  = recoded ? recoded : xstrdup(__topic);
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
 						chanp->topic, 1);
-				print_window(dest, s, 0, irccommands[ecode].name,
+				print_info(dest, s, irccommands[ecode].name,
 						session_name(s), param[3], coloured);
 				xfree(coloured);
 			}
@@ -659,7 +659,7 @@ IRC_COMMAND(irc_c_error)
 				try = param[5]?atol(OMITCOLON(param[5])):0; 
 				if ((bang = xstrchr(param[4], '!'))) *bang = '\0';
 				chanp->topicby = xstrdup(param[4]);
-				print_window(dest, s, 0, "IRC_RPL_TOPICBY",
+				print_info(dest, s, "IRC_RPL_TOPICBY",
 						session_name(s), param[4], bang?bang+1:"",
 						param[5]?ctime(&try):"unknown\n");
 				if (bang) *bang ='!';
@@ -667,7 +667,7 @@ IRC_COMMAND(irc_c_error)
 			break;
 
 		case 341:
-			print_window(dest, s, 0, irccommands[ecode].name, session_name(s), param[3], param[4]);
+			print_info(dest, s, irccommands[ecode].name, session_name(s), param[3], param[4]);
 			break;
 		case 376:
 			/* zero, identify with nickserv */
@@ -694,7 +694,7 @@ IRC_COMMAND(irc_c_error)
 			if (session_int_get(s, "SHOW_MOTD") != 0) {
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s,
 						IOK2(3), 1);
-				print_window("__status", s, 0,
+				print_info("__status", s,
 						irccommands[ecode].name,
 						session_name(s), coloured);
 				xfree(coloured);
@@ -808,10 +808,10 @@ IRC_COMMAND(irc_c_whois)
 			clean_channel_names_list(s, col[1]);
 		/*
 		if (irccommands[ecode].future & IRC_WHOERR)
-			print_window(dest, s, 0, "IRC_WHOERROR", session_name(s), col[0],  col[1]);
+			print_info(dest, s, "IRC_WHOERROR", session_name(s), col[0],  col[1]);
 		else
 		*/
-			print_window(dest, s, 0, irccommands[ecode].name, 
+			print_info(dest, s, irccommands[ecode].name, 
 					session_name(s), col[0], col[1],
 					col[2], col[3], col[4]);
 
@@ -852,7 +852,7 @@ IRC_COMMAND(irc_c_whois)
 	tmp = xstrdup(ctime(&timek));
 	if (tmp && tmp[xstrlen(tmp)-1] == '\n') tmp[xstrlen(tmp)-1]='\0';
 
-	print_window(dest, s, 0, irccommands[ecode].name, 
+	print_info(dest, s, irccommands[ecode].name, 
 			session_name(s), IOK(3), str, 
 			which?"N/A":tmp);
 	xfree(t);
@@ -872,7 +872,7 @@ int mode_act = 0;
  */
 IRC_COMMAND(irc_c_list)
 {
-#define PRINT_WINDOW if (!chan || !chan->syncmode) print_window
+#define PRINT_INFO if (!chan || !chan->syncmode) print_info
 	char		*dest, *t = NULL;
 	int		ltype = irccommands[ecode].future;
 
@@ -904,18 +904,18 @@ IRC_COMMAND(irc_c_list)
 	}
 
 	if (!mode_act && ltype != IRC_LISTCHA) 
-		PRINT_WINDOW(dest, s, 0, "RPL_LISTSTART", session_name(s));
+		PRINT_INFO(dest, s, "RPL_LISTSTART", session_name(s));
 
 	if (endlist) {
 		if (!mode_act)
-			PRINT_WINDOW(dest, s, 0, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
+			PRINT_INFO(dest, s, "RPL_EMPTYLIST", session_name(s), IOK(3)); 
 
 		if (ltype == IRC_LISTSTA) {
-			print_window(dest, s, 0, "RPL_STATSEND", session_name(s), IOK2(4), IOK2(3)); 
+			print_info(dest, s, "RPL_STATSEND", session_name(s), IOK2(4), IOK2(3)); 
 		} else if (ltype == IRC_LISTCHA) {
-			print_window(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(3));
+			print_info(dest, s, "RPL_ENDOFLIST", session_name(s), IOK2(3));
 		} else {
-			PRINT_WINDOW(dest, s, 0, "RPL_ENDOFLIST", session_name(s), IOK2(4));
+			PRINT_INFO(dest, s, "RPL_ENDOFLIST", session_name(s), IOK2(4));
 		}
 		if (chan) {
 			if (chan->syncmode > 0)  {
@@ -928,7 +928,7 @@ IRC_COMMAND(irc_c_list)
 						tv.tv_sec++, tv.tv_usec-=1000000;
 					tv.tv_sec-=chan->syncstart.tv_sec;
 
-					print_window(dest, s, 0, "IRC_CHANNEL_SYNCED", session_name(s), chan->name+4, itoa(tv.tv_sec), itoa(tv.tv_usec));
+					print_info(dest, s, "IRC_CHANNEL_SYNCED", session_name(s), chan->name+4, itoa(tv.tv_sec), itoa(tv.tv_usec));
 				}
 			}
 		}
@@ -939,13 +939,13 @@ IRC_COMMAND(irc_c_list)
 		switch (ltype) {
 			/* TODO: poprawic te 2 pierwsze... */
 			case (IRC_LISTSTA):
-				print_window(dest, s, 0, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8));
+				print_info(dest, s, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8));
 				break;
 			case (IRC_LISTWHO): 
 				/* ok new irc-find-person checked */
 				osoba    = irc_find_person(j->people, IOK(7));
 				realname = xstrchr(IOK2(9), ' ');
-				PRINT_WINDOW(dest, s, 0, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), realname);
+				PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), realname);
 				if (osoba) {
 					xfree(osoba->host);
 					osoba->host = xstrdup(IOK(5));
@@ -982,9 +982,9 @@ IRC_COMMAND(irc_c_list)
 			default:
 				if (param[5] && *param[5] == ':') {
 					coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[5]+1, 1);
-					PRINT_WINDOW(dest, s, 0, irccommands[ecode].name, session_name(s), IOK(3), IOK2(4), coloured, itoa(mode_act));
+					PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), IOK(3), IOK2(4), coloured, itoa(mode_act));
 				} else {
-					PRINT_WINDOW(dest, s, 0, irccommands[ecode].name, session_name(s), IOK2(3), IOK2(4), IOK2(5), itoa(mode_act));
+					PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), IOK2(3), IOK2(4), IOK2(5), itoa(mode_act));
 				}
 				xfree(coloured);
 				break;
@@ -993,7 +993,7 @@ IRC_COMMAND(irc_c_list)
 
 	xfree(t);
 	return 0;
-#undef PRINT_WINDOW
+#undef PRINT_INFO
 }
 
 #undef IOK
@@ -1006,7 +1006,7 @@ IRC_COMMAND(irc_c_ping)
 {
 	watch_write(j->send_watch, "PONG %s\r\n", param[2]);
 	if (session_int_get(s, "DISPLAY_PONG"))
-		print_window("__status", s, 0, "IRC_PINGPONG", session_name(s), OMITCOLON(param[2]));
+		print_info("__status", s, "IRC_PINGPONG", session_name(s), OMITCOLON(param[2]));
 	return 0;
 }
 
@@ -1027,7 +1027,7 @@ IRC_COMMAND(irc_c_nick)
 	/* debug("irc_nick> %s %s\n", j->nick, param[0]+1); */
 	irc_nick_change(s, j, param[0]+1, OMITCOLON(param[2]));
 	if (!xstrcmp(j->nick, param[0]+1)) {
-		print_window(window_current->target, s, 0, "IRC_YOUNEWNICK", 
+		print_info(window_current->target, s, "IRC_YOUNEWNICK", 
 				session_name(s), t?t+1:"", OMITCOLON(param[2]));
 		
 		xfree(j->nick);
@@ -1037,15 +1037,15 @@ IRC_COMMAND(irc_c_nick)
 		per = irc_find_person(j->people, OMITCOLON(param[2]));
 		debug("[irc]_c_nick %08X %s\n", per, param[0]+1);
 		if (nickdisp || !per)
-			print_window(nickdisp==2?window_current->target:"__status",
-					s, 0, "IRC_NEWNICK", session_name(s),
+			print_info(nickdisp==2?window_current->target:"__status",
+					s, "IRC_NEWNICK", session_name(s),
 					param[0]+1, t?t+1:"", OMITCOLON(param[2]));
 		else if (per) {
 			for (l = per->channels; l; l=l->next)
 			{
 				ch = (people_chan_t *)l->data;
-				print_window(ch->chanp->name,
-						s, 0, "IRC_NEWNICK", session_name(s),
+				print_info(ch->chanp->name,
+						s, "IRC_NEWNICK", session_name(s),
 						param[0]+1, t?t+1:"", OMITCOLON(param[2]));
 			}
 		}
@@ -1057,7 +1057,7 @@ IRC_COMMAND(irc_c_nick)
 
 			query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
 
-			print_window_w(w, 0, "IRC_NEWNICK", session_name(s),
+			print_window_w(w, EKG_WINACT_JUNK, "IRC_NEWNICK", session_name(s),
 					param[0]+1, t?t+1:"", OMITCOLON(param[2]));
 		}
 		xfree(temp);
@@ -1291,7 +1291,7 @@ IRC_COMMAND(irc_c_join)
 	}
 
 	if (!(ignored_check(s, ekg2_channel) & IGNORE_NOTIFY) && !(ignored_check(s, irc_nick) & IGNORE_NOTIFY)) {
-		print_window(ekg2_channel, s, 0, me ? "irc_joined_you" : "irc_joined",
+		print_info(ekg2_channel, s, me ? "irc_joined_you" : "irc_joined",
 				session_name(s), param[0]+1, tmp?tmp+1:"", irc_channel);
 		if (me)	{
 			int __secure = 0;
@@ -1300,8 +1300,8 @@ IRC_COMMAND(irc_c_join)
 			char *__msg	 = xstrdup("test");
 
 			if (query_emit_id(NULL, MESSAGE_ENCRYPT, &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
-				print_window(ekg2_channel, s, 0, "irc_channel_secure", session_name(s), irc_channel);
-			else 	print_window(ekg2_channel, s, 0, "irc_channel_unsecure", session_name(s), irc_channel);
+				print_info(ekg2_channel, s, "irc_channel_secure", session_name(s), irc_channel);
+			else 	print_info(ekg2_channel, s, "irc_channel_unsecure", session_name(s), irc_channel);
 			xfree(__msg);
 			xfree(__uid_full);
 			xfree(__sid);
@@ -1348,14 +1348,14 @@ IRC_COMMAND(irc_c_part)
 	coloured = param[3]?xstrlen(OMITCOLON(param[3]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1)
 		:xstrdup("no reason"):xstrdup("no reason");
-	/* TODO: if channel window exists do print_window, else do nothing (?)
+	/* TODO: if channel window exists do print_info, else do nothing (?)
 	 * now after alt+k if user was on that channel-window, we recved info
 	 * about parting on __status window, is it right ?
 	 * G->dj: yep, but we can make this behaviour dependent on something
 	 * e.g: on my fave: DISPLAY_IN_CURRENT :)
 	 */
 	if (!(ignored_check(s, ekg2_channel) & IGNORE_NOTIFY) && !(ignored_check(s, irc_nick) & IGNORE_NOTIFY)) {
-		print_window(ekg2_channel, s, 0, (me)?"irc_left_you":"irc_left", session_name(s),
+		print_info(ekg2_channel, s, (me)?"irc_left_you":"irc_left", session_name(s),
 				param[0]+1, tmp?tmp+1:"", irc_channel, coloured);
 	}
 	
@@ -1401,7 +1401,7 @@ IRC_COMMAND(irc_c_kick)
 				xstrdup("no reason"):xstrdup("no reason");
 
 	/* session, kicked_nick, kicker_nick, kicker_ident+host, chan, reason */
-	print_window(ekg2_channel, s, 0, me ? "irc_kicked_you" : "irc_kicked",  session_name(s), 
+	print_info(ekg2_channel, s, me ? "irc_kicked_you" : "irc_kicked",  session_name(s), 
 			OMITCOLON(param[3]), uid+4, tmp?tmp+1:"",
 			irc_channel, coloured);
 	xfree(coloured);
@@ -1442,8 +1442,8 @@ IRC_COMMAND(irc_c_quit)
 	irc_del_person(s, j, param[0]+1, tmp?tmp+1:"", reason, !display_quit);
 
 	if (display_quit)
-		print_window(display_quit==2?window_current->target:"__status",
-				s, 0, (split)?"irc_split":"irc_quit",
+		print_info(display_quit==2?window_current->target:"__status",
+				s, (split)?"irc_split":"irc_quit",
 				session_name(s), param[0]+1, tmp?tmp+1:"",
 				reason);
 
@@ -1499,13 +1499,13 @@ IRC_COMMAND(irc_c_topic)
 		chanp->topic  = recoded ? recoded : xstrdup(__topic);;
 		chanp->topicby = xstrdup(__topicby);
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
-		print_window(dest, s, 0, "IRC_TOPIC_CHANGE", session_name(s),
+		print_info(dest, s, "IRC_TOPIC_CHANGE", session_name(s),
 				param[0]+1, t?t+1:"", param[2], coloured);
 		xfree(coloured);
 	} else {
 		chanp->topic   = xstrdup("No topic set!");
 		chanp->topicby = xstrdup(__topicby);
-		print_window(dest, s, 0, "IRC_TOPIC_UNSET", session_name(s),
+		print_info(dest, s, "IRC_TOPIC_UNSET", session_name(s),
 				param[0]+1, t?t+1:"", param[2]);
 	}
 	if (t) *t='!';
@@ -1537,7 +1537,7 @@ IRC_COMMAND(irc_c_invite)
 
 	IRC_TO_LOWER(param[3]);
 
-	print_window(window_current->target, s, 0, "IRC_INVITE",
+	print_info(window_current->target, s, "IRC_INVITE",
 			session_name(s), param[0]+1, tmp?tmp+1:"",
 			param[2], OMITCOLON(param[3]));
 
@@ -1569,7 +1569,7 @@ IRC_COMMAND(irc_c_mode)
 	if (is324) {
 		param = &(param[1]);
 	} else if (!xstrcasecmp(param[2], j->nick)) {
-		print_window(window_current->target, s, 0, 
+		print_info(window_current->target, s,
 				"IRC_MODE", session_name(s), 
 				param[0]+1, IRC_TO_LOWER(OMITCOLON(param[3])) );
 		return 0;
@@ -1640,13 +1640,13 @@ notreallyok:
 			string_append_c(moderpl, ' ');
 	}
 	if (!is324) {
-		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN_NEW", session_name(s),
+		print_info(w?w->target:NULL, s, "IRC_MODE_CHAN_NEW", session_name(s),
 				param[0]+1, bang?bang+1:"", irc_channame, moderpl->str);
 /*		if (moderpl->str[1] == 'b')
  *			watch_write(j->send_watch, "MODE %s +%c\r\n",  irc_channame, moderpl->str[1]);
  */
 	} else {
-		print_window(w?w->target:NULL, s, 0, "IRC_MODE_CHAN", session_name(s),
+		print_info(w?w->target:NULL, s, "IRC_MODE_CHAN", session_name(s),
 				irc_channame, moderpl->str);
 
 		if ((chan = irc_find_channel(j->channels, irc_channame))) {

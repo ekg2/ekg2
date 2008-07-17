@@ -232,11 +232,9 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 	{
 		tmp = saprintf("People on %s: %s", channame, names);
 		if (session_int_get(s, "DISPLAY_IN_CURRENT")&1)
-			print_window(window_current->target, s, 0, "generic",
-					tmp);
+			print_info(window_current->target, s, "generic", tmp);
 		else
-			print_window("__status", s, 0, "generic",
-					tmp);
+			print_info("__status", s, "generic", tmp);
 
 		return 0;
 	}
@@ -367,8 +365,8 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		if (!(tmp && (pech = tmp->data))) break;
 
 		if (doprint)
-			print_window(pech->chanp->name,
-				s, 0, "irc_quit", session_name(s), 
+			print_info(pech->chanp->name,
+				s, "irc_quit", session_name(s), 
 				nick, wholenick, reason);
 
 		/* if this call returns !0 it means
@@ -389,7 +387,7 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 			window_kill(w);
 		}
 		if (doprint)
-			print_window(longnick,s, 0, "irc_quit",
+			print_info(longnick,s, "irc_quit",
 					session_name(s), nick,
 					wholenick, reason);
 	}

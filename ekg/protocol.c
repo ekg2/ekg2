@@ -340,7 +340,7 @@ static QUERY(protocol_status)
 		if (!u) {
 			if ((sess_notify == -1 ? config_display_notify : sess_notify) & 4) {
 				const char *format = ekg_status_label(status, descr, "status_");
-				print_window(uid, s, 0, format, format_user(s, uid), NULL, session_name(s), descr);
+				print_info(uid, s, format, format_user(s, uid), NULL, session_name(s), descr);
 			}
 			return 0;
 		}
@@ -420,7 +420,7 @@ static QUERY(protocol_status)
 	/* poka¿ */
 	if (u->nickname) {
 		const char *format = ekg_status_label(status, ignore_status_descr ? NULL : descr, "status_");
-		print_window(u->nickname, s, 0, format, format_user(s, uid), u->nickname, session_name(s), descr);
+		print_info(u->nickname, s, format, format_user(s, uid), u->nickname, session_name(s), descr);
 	}
 
 notify_plugins:
@@ -499,7 +499,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
         time_t now;
 	session_t *s = session_find(session);
         struct conference *c = NULL;
-	int empty_theme = 0, is_me = 0, to_me = 1, separate = 0;
+	int empty_theme = 0, is_me = 0, to_me = 1, activity = 0, separate = 0;
 
 	if (class & EKG_MSGCLASS_NOT2US) {
 		to_me = 0;
@@ -694,12 +694,15 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		securestr = format_string(format_find("secure"));
 
 	if (class == EKG_MSGCLASS_LOG || class == EKG_MSGCLASS_SENT_LOG)
-		separate = 2;
-	else if ( (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT) || 
-		  (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT)) )
-		separate = to_me ? 1 : 3;
+		separate = 1;
 
-	print_window(target, s, separate, class_str, user, timestamp,
+	if ( (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT) || 
+		  (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT)) ) {
+		activity = to_me ? EKG_WINACT_IMPORTANT : EKG_WINACT_MSG;
+		separate = 1;
+	}
+
+	print_window(target, s, activity, separate, class_str, user, timestamp,
 		(is_me ? text+4 : text),
 					/* XXX, get_uid() get_nickname() */
 		(class >= EKG_MSGCLASS_SENT ?
@@ -878,7 +881,7 @@ static QUERY(protocol_message_ack) {
 	msg_queue_remove_seq(seq);
 	
 	if ((__status >= 0) && (__status < EKG_ACK_MAX) && (config_display_ack & (1 << __status)))
-		print_window(target, s, 0, ackformats[__status], format_user(s, rcpt));
+		print_info(target, s, ackformats[__status], format_user(s, rcpt));
 
 	return 0;
 }

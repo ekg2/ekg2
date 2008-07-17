@@ -213,14 +213,14 @@ au_retry:
 			char *id		= (found == 6 ? saprintf("jogger:%d", atoi(url+1)) : NULL);
 
 			*(tmp-1) = '\0';
-			print_window((id ? id : url), js, 0, formats[found-5], session_name(js), url);
+			print_info((id ? id : url), js, formats[found-5], session_name(js), url);
 			*(tmp-1) = ' ';
 			xfree(id);
 		} else if (found <= 10) {
 			const char *formats[]	= { "jogger_published", "jogger_comment_added" };
 			const char *url		= msg+xstrlen(jogger_text[found-4])+1;
 
-			print_window(url, js, 0, formats[found-9], session_name(js), url);
+			print_info(url, js, formats[found-9], session_name(js), url);
 		} else if (found <= 13) {
 			const char *formats[]	= { "jogger_subscription_denied", "jogger_unsubscribed_earlier",
 					"jogger_posting_denied" };

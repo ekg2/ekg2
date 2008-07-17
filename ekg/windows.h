@@ -80,10 +80,10 @@ typedef struct window {
 } window_t;
 
 typedef enum {
-	EKG_WINACT_NONE = 0,
-	EKG_WINACT_JUNK,
-	EKG_WINACT_MSG,
-	EKG_WINACT_IMPORTANT
+	EKG_WINACT_NONE = 0,		/* No activity in window */
+	EKG_WINACT_JUNK,		/* Junks: status change, irc join/part, etc. */
+	EKG_WINACT_MSG,			/* Message, but not to us */
+	EKG_WINACT_IMPORTANT		/* important message */
 } winact_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
@@ -105,7 +105,7 @@ void window_kill(window_t *w);
 void window_switch(int id);
 window_t *window_exist(int id);
 void window_print(window_t *w, fstring_t *line);
-void print_window_w(window_t *w, int separate, const char *theme, ...);	/* themes.c */
+void print_window_w(window_t *w, int activity, const char *theme, ...);	/* themes.c */
 char *window_target(window_t *window);
 
 int window_session_cycle(window_t *w);

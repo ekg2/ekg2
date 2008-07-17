@@ -190,7 +190,7 @@ POLCHAT_HANDLER(polchat_msg) {
 		char *tmp2= format_string(tmp);
 
 /* XXX, wysylac przez PROTOCOL-MESSAGE */
-		print_window(j->room, s, 1, "none", tmp2);
+		print_window(j->room, s, EKG_WINACT_IMPORTANT, 1, "none", tmp2);
 
 		xfree(tmp2);
 		xfree(tmp);
@@ -208,7 +208,7 @@ POLCHAT_HANDLER(polchat_privmsg) {
 		char *uid = saprintf("polchat:%s", strings[1]);
 
 /* XXX, wysylac przez PROTOCOL-MESSAGE */
-		print_window(uid, s, 1, "none", tmp2);
+		print_window(uid, s, EKG_WINACT_IMPORTANT, 1, "none", tmp2);
 
 		xfree(uid);
 
@@ -223,7 +223,7 @@ POLCHAT_HANDLER(polchat_privmsg) {
 		char *uid = saprintf("polchat:%s", strings[2]);
 
 /* XXX, wysylac przez PROTOCOL-MESSAGE */
-		print_window(uid, s, 1, "none", tmp2);
+		print_window(uid, s, EKG_WINACT_IMPORTANT, 1, "none", tmp2);
 
 		/* mozemy sprawdzic czy strings[1] == my */
 
@@ -360,7 +360,7 @@ POLCHAT_HANDLER(polchat_welcomemsg) {
 			char *tmp = html_to_ekg2(strings[0]);
 			char *tmp2= format_string(tmp);
 
-			print_window_w(w, 1, "none", tmp2);
+			print_window_w(w, EKG_WINACT_MSG, "none", tmp2);
 
 			xfree(tmp2);
 			xfree(tmp);
@@ -382,7 +382,7 @@ POLCHAT_HANDLER(polchat_goodbyemsg) {
 			char *tmp = html_to_ekg2(strings[0]);
 			char *tmp2= format_string(tmp);
 
-			print_window(j->room, s, 1, "none", tmp2);
+			print_window(j->room, s, EKG_WINACT_IMPORTANT, 1, "none", tmp2);
 
 			xfree(tmp2);
 			xfree(tmp);
@@ -463,7 +463,7 @@ POLCHAT_HANDLER(polchat_wejoin) {
 			j->nick = xstrdup(strings[0]);
 		}
 
-/*		print_window(j->room, s, 1, "polchat_joined_you", session_name(s), j->nick, j->room + 8); */
+/*		print_window(j->room, s, EKG_WINACT_IMPORTANT, 1, "polchat_joined_you", session_name(s), j->nick, j->room + 8); */
 
 		return 0;
 	}

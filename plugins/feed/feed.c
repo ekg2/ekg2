@@ -154,7 +154,7 @@ static QUERY(rss_message) {
 		targetwnd = window_new(target, s, 0);
 
 	switch (dmode) {
-		case 0:	 print_window_w(targetwnd, 1, "feed_message_new", title, url);	/* only notify */
+		case 0:	 print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_new", title, url);	/* only notify */
 		case -1: return 0;							/* do nothing */
 
 		case 2:	body		= NULL;					/* only headers */
@@ -164,7 +164,7 @@ static QUERY(rss_message) {
 		case 4:	break;							/* shreaders+headers+body */
 	}
 
-	print_window_w(targetwnd, 1, "feed_message_header", title, url);
+	print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_header", title, url);
 
 	if (sheaders) {
 		char *str = xstrdup(sheaders);
@@ -183,11 +183,11 @@ static QUERY(rss_message) {
 			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_server_header_generic"), tmp, value ? value+1 : "");
-			print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
+			print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", formated ? formated : tmp);
 
 			xfree(formatka);
 		}
-		if (headers || body) print_window_w(targetwnd, 1, "feed_message_body", "");	/* rozdziel */
+		if (headers || body) print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", "");	/* rozdziel */
 	}
 	if (headers) {
 		char *str, *org;
@@ -209,12 +209,12 @@ static QUERY(rss_message) {
 			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_message_header_generic"), tmp, value ? value+1 : "");
-			print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
+			print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", formated ? formated : tmp);
 			
 			xfree(formated);
 			xfree(formatka);
 		}
-		if (body) print_window_w(targetwnd, 1, "feed_message_body", "");	/* rozdziel */
+		if (body) print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", "");	/* rozdziel */
 		xfree(org);
 	}
 	if (body) {
@@ -251,16 +251,16 @@ static QUERY(rss_message) {
 						formated = format_string(f, tmp);
 				}
 
-				print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
+				print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", formated ? formated : tmp);
 				xfree(formated);
 			}
 			xfree(org);
 		} else {
-			print_window_w(targetwnd, 1, "feed_message_body", body);
+			print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", body);
 		}
 	}
 
-	print_window_w(targetwnd, 1, "feed_message_footer");
+	print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_footer");
 
 	*new = 0;
 	return 0;

@@ -179,7 +179,7 @@ PyObject *ekg_window_echo(ekg_windowObj * self, PyObject *args)
 
         debug("[python] Printing on window '%s'\n", self->w->target);
 
-        print_window(self->w->target, self->w->session, 0, "generic", str);
+        print_info(self->w->target, self->w->session, "generic", str);
 
         Py_INCREF(Py_None);
         return Py_None;
@@ -207,7 +207,7 @@ PyObject *ekg_window_echo_format(ekg_windowObj * self, PyObject *args)
 
         debug("[python] Printing on window '%s'\n", self->w->target);
 
-        print_window(self->w->target, self->w->session, 0, format, str);
+        print_info(self->w->target, self->w->session, format, str);
 
         Py_INCREF(Py_None);
         return Py_None;

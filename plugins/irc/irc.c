@@ -1706,7 +1706,7 @@ static COMMAND(irc_command_names) {
 	for (lvl = 0; lvl < nplen; lvl++)
 		string_append(nickpad, fillchars);
 		
-	print_window(channame, session, 0, "IRC_NAMES_NAME", session_name(session), channame+4);
+	print_info(channame, session, "IRC_NAMES_NAME", session_name(session), channame+4);
 	buf = string_init(NULL);
 
 	for (lvl = 0; lvl < smlen; ++lvl, ++sort_modes) {
@@ -1758,14 +1758,14 @@ static COMMAND(irc_command_names) {
 	string_free(nickpad, 1);
 
 	if (count)
-		print_window(channame, session, 0, "none", buf->str);
+		print_info(channame, session, "none", buf->str);
 
-	print_window(channame, session, 0, "none2", "");
+	print_info(channame, session, "none2", "");
 #define plvl(x) lvl_total[x] ? itoa(lvl_total[x]) : "0"
 	if (smlen > 3) /* has halfops */
-		print_window(channame, session, 0, "IRC_NAMES_TOTAL_H", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2), plvl(3), plvl(4));
+		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2), plvl(3), plvl(4));
 	else
-		print_window(channame, session, 0, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2));
+		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2));
 	debug("[IRC_NAMES] levelcounts = %d %d %d %d %d\n",
 			lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3], lvl_total[4], lvl_total[5]);
 #undef plvl
@@ -2080,7 +2080,7 @@ static COMMAND(irc_command_me) {
 			chan+4, str?str:"");
 
 	col = irc_ircoldcolstr_to_ekgcolstr(session, *mp, 1);
-	print_window(chan, session, ischn?(mw&1):!!(mw&2),
+	print_window(chan, session, EKG_WINACT_MSG, ischn?(mw&1):!!(mw&2),
 			ischn?"irc_ctcp_action_y_pub":"irc_ctcp_action_y",
 			session_name(session), j->nick, chan, col);
 
@@ -2274,7 +2274,7 @@ static COMMAND(irc_command_test) {
 	irc_private_t	*j = irc_private(session);
 	list_t		tlist = j->connlist;
 
-//#define DOT(a,x,y,z,error) print_window("__status", z, 0, a, session_name(z), x, y->hostname, y->address, itoa(y->port), itoa(y->family), error ? strerror(error) : "")
+//#define DOT(a,x,y,z,error) print_info("__status", z, a, session_name(z), x, y->hostname, y->address, itoa(y->port), itoa(y->family), error ? strerror(error) : "")
 	
 	for (tlist = j->connlist; tlist; tlist = tlist->next)
 		DOT("IRC_TEST", "Connect to:", ((connector_t *) tlist->data), session, 0);

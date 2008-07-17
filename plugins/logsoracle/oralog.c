@@ -620,7 +620,7 @@ static int oralog_is_error(OCIError *lhp_error, sword status, int print_messages
 		debug("[logsoracle] function returned OCI_ERROR\n");
 		debug("[logsoracle] message is : \n%s\n", buff);
 		if(print_messages) {
-		    print_window("__status", session_current, 0, "logsoracle_error", buff ); 
+		    print_window("__status", session_current, EKG_WINACT_JUNK, 0, "logsoracle_error", buff ); 
 		}
 		break;
 	    case OCI_INVALID_HANDLE:

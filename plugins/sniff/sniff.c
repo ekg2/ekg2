@@ -342,7 +342,7 @@ static void sniff_gg_print_message(session_t *s, const connection_t *hdr, uint32
 	if (timestamp_f[0] && !strftime(timestamp, sizeof(timestamp), timestamp_f, tm_msg))
 			xstrcpy(timestamp, "TOOLONG");
 
-	print_window(build_windowip_name(type == EKG_MSGCLASS_CHAT ? hdr->dstip : hdr->srcip) /* ip and/or gg# */, s, 1, 
+	print_window(build_windowip_name(type == EKG_MSGCLASS_CHAT ? hdr->dstip : hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		type == EKG_MSGCLASS_CHAT ? "message" : "sent", 	/* formatka */
 
 		format_user(s, sender),			/* do kogo */
@@ -354,7 +354,7 @@ static void sniff_gg_print_message(session_t *s, const connection_t *hdr, uint32
 }
 
 static void sniff_gg_print_status(session_t *s, const connection_t *hdr, uint32_t uin, int status, const char *descr) {
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1, 
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		ekg_status_label(status, descr, "status_"), /* formatka */
 
 		format_user(s, build_gg_uid(uin)),		/* od */
@@ -389,17 +389,17 @@ static void sniff_gg_print_new_status(session_t *s, const connection_t *hdr, uin
 
 	if (descr) {
 		if (status == EKG_STATUS_NA) {
-			print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 				fname, 					/* formatka */
 				descr, whom);
 
 		} else {
-			print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+			print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 				fname,					/* formatka */
 				descr, "", whom);
 		}
 	} else 
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 				fname,					 /* formatka */
 				whom);
 }
@@ -463,7 +463,7 @@ SNIFF_HANDLER(sniff_gg_send_msg_ack, gg_send_msg_ack) {
 						break;
 	}
 
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			format, 
 			build_gg_uid(pkt->recipient));
 	return 0;
@@ -472,7 +472,7 @@ SNIFF_HANDLER(sniff_gg_send_msg_ack, gg_send_msg_ack) {
 SNIFF_HANDLER(sniff_gg_welcome, gg_welcome) {
 	CHECK_LEN(sizeof(gg_welcome))		len -= sizeof(gg_welcome);
 
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_welcome",
 
 			build_hex(pkt->key));
@@ -527,7 +527,7 @@ SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_status60",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
@@ -546,7 +546,7 @@ SNIFF_HANDLER(sniff_gg_login60, gg_login60) {
 
 	CHECK_LEN(sizeof(gg_login60))	len -= sizeof(gg_login60);
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_login60",
 
 			build_gg_uid(pkt->uin),
@@ -562,7 +562,7 @@ SNIFF_HANDLER(sniff_gg_login60, gg_login60) {
 SNIFF_HANDLER(sniff_gg_add_notify, gg_add_remove) {
 	CHECK_LEN(sizeof(gg_add_remove));	len -= sizeof(gg_add_remove);
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_addnotify",
 
 			build_gg_uid(pkt->uin),
@@ -573,7 +573,7 @@ SNIFF_HANDLER(sniff_gg_add_notify, gg_add_remove) {
 SNIFF_HANDLER(sniff_gg_del_notify, gg_add_remove) {
 	CHECK_LEN(sizeof(gg_add_remove));	len -= sizeof(gg_add_remove);
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_delnotify",
 
 			build_gg_uid(pkt->uin),
@@ -615,7 +615,7 @@ SNIFF_HANDLER(sniff_gg_notify_reply60, gg_notify_reply60) {
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_notify60",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
@@ -662,13 +662,13 @@ SNIFF_HANDLER(sniff_gg_userlist_reply, gg_userlist_reply) {
 
 	datatmp = data = len ? gg_cp_to_iso(xstrndup(pkt->data, len)) : NULL;
 	
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_userlist_reply",
 		sniff_gg_userlist_reply_str(pkt->type),
 		build_hex(pkt->type));
 
 	while ((dataline = split_line(&datatmp))) {
-		print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+		print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_userlist_data", "REPLY",
 			dataline);
 	}
@@ -701,13 +701,13 @@ SNIFF_HANDLER(sniff_gg_userlist_req, gg_userlist_request) {
 
 	datatmp = data = len ? gg_cp_to_iso(xstrndup(pkt->data, len)) : NULL;
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_userlist_req",
 		sniff_gg_userlist_req_str(pkt->type),
 		build_hex(pkt->type));
 
 	while ((dataline = split_line(&datatmp))) {
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_userlist_data", "REQUEST",
 			dataline);
 	}
@@ -738,7 +738,7 @@ SNIFF_HANDLER(sniff_gg_pubdir50_reply, gg_pubdir50_reply) {
 		tcp_print_payload((u_char *) pkt->data, len);
 	}
 	
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_pubdir50_reply",
 		sniff_gg_pubdir50_str(pkt->type),
 		build_hex(pkt->type),
@@ -755,7 +755,7 @@ SNIFF_HANDLER(sniff_gg_pubdir50_req, gg_pubdir50_request) {
 		tcp_print_payload((u_char *) pkt->data, len);
 	}
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_pubdir50_req",
 		sniff_gg_pubdir50_str(pkt->type),
 		build_hex(pkt->type),
@@ -767,11 +767,11 @@ SNIFF_HANDLER(sniff_gg_pubdir50_req, gg_pubdir50_request) {
 SNIFF_HANDLER(sniff_gg_list_first, gg_notify) {
 	CHECK_LEN(sizeof(gg_notify));
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_list", "GG_LIST_FIRST", itoa(len));
 
 	while (len >= sizeof(gg_notify)) {
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1, "sniff_gg_list_data", 
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1, "sniff_gg_list_data", 
 			"GG_LIST_FIRST",
 			build_gg_uid(pkt->uin),
 			build_hex(pkt->dunno1));
@@ -790,11 +790,11 @@ SNIFF_HANDLER(sniff_gg_list_first, gg_notify) {
 SNIFF_HANDLER(sniff_gg_list_last, gg_notify) {
 	CHECK_LEN(sizeof(gg_notify));
 
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_list", "GG_LIST_LAST", itoa(len));
 
 	while (len >= sizeof(gg_notify)) {
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1, "sniff_gg_list_data", 
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s,  EKG_WINACT_MSG, 1, "sniff_gg_list_data", 
 			"GG_LIST_LAST",
 			build_gg_uid(pkt->uin),
 			build_hex(pkt->dunno1));
@@ -812,7 +812,7 @@ SNIFF_HANDLER(sniff_gg_list_last, gg_notify) {
 }
 
 SNIFF_HANDLER(sniff_gg_list_empty, gg_notify) {
-	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s,  EKG_WINACT_MSG, 1,
 		"sniff_gg_list", "GG_LIST_EMPTY", itoa(len));
 
 	if (len) {
@@ -823,7 +823,7 @@ SNIFF_HANDLER(sniff_gg_list_empty, gg_notify) {
 }
 
 SNIFF_HANDLER(sniff_gg_disconnecting, char) {
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_disconnecting");
 
 	if (len) {
@@ -1035,7 +1035,7 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	if (pkt->hash_type == GG_LOGIN_HASH_GG32) {
 		sughash_len = 4;
 
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_login70_hash",
 
 			build_gg_uid(pkt->uin),
@@ -1044,7 +1044,7 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	} else if (pkt->hash_type == GG_LOGIN_HASH_SHA1) {
 		sughash_len = 20;
 
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_login70_sha1",
 
 			build_gg_uid(pkt->uin),
@@ -1052,7 +1052,7 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 	} else {
 		sughash_len = 0;
 
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_login70_unknown",
 
 			build_gg_uid(pkt->uin), build_hex(pkt->hash_type));
@@ -1077,7 +1077,7 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 
 	if (print_payload) {
 		tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
-		print_window(build_windowip_name(hdr->srcip), s, 1,
+		print_window(build_windowip_name(hdr->srcip), s, EKG_WINACT_MSG, 1,
 			"generic_error", "gg_login70() print_payload flag set, see debug");
 	}
 	return 0;
@@ -1120,7 +1120,7 @@ SNIFF_HANDLER(sniff_gg_notify_reply77, gg_notify_reply77) {
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_notify77",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
@@ -1171,7 +1171,7 @@ SNIFF_HANDLER(sniff_gg_status77, gg_status77) {
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_status77",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
@@ -1216,7 +1216,7 @@ SNIFF_HANDLER(sniff_gg_login80, gg_login80) {
 	if (pkt->hash_type == GG_LOGIN_HASH_GG32) {	/* untested */
 		sughash_len = 4;
 
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_login80_hash",
 
 			build_gg_uid(pkt->uin),
@@ -1225,7 +1225,7 @@ SNIFF_HANDLER(sniff_gg_login80, gg_login80) {
 	} else if (pkt->hash_type == GG_LOGIN_HASH_SHA1) {
 		sughash_len = 20;
 
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_login80_sha1",
 
 			build_gg_uid(pkt->uin),
@@ -1233,7 +1233,7 @@ SNIFF_HANDLER(sniff_gg_login80, gg_login80) {
 	} else {
 		sughash_len = 0;
 
-		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, 1,
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_login80_unknown",
 
 			build_gg_uid(pkt->uin), build_hex(pkt->hash_type));
@@ -1258,7 +1258,7 @@ SNIFF_HANDLER(sniff_gg_login80, gg_login80) {
 
 	if (print_payload) {
 		tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
-		print_window(build_windowip_name(hdr->srcip), s, 1,
+		print_window(build_windowip_name(hdr->srcip), s, EKG_WINACT_MSG, 1,
 			"generic_error", "gg_login80() print_payload flag set, see debug");
 	}
 	return 0;
@@ -1316,7 +1316,7 @@ SNIFF_HANDLER(sniff_gg_notify_reply80, gg_notify_reply80) {
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_notify80",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
@@ -1374,7 +1374,7 @@ SNIFF_HANDLER(sniff_gg_status80, gg_status80) {
 	sniff_gg_print_status(s, hdr, uin, status, descr);
 	xfree(descr);
 
-	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, 1,
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_status80",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
@@ -1617,7 +1617,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 			debug_function("sniff_dns() NOERROR qdcount: %d, ancount: %d\n", qdcount, ancount);
 
 			if (qdcount == 0 || !(cur < eom))
-				print_window_w(window_status, 1, "sniff_dns_reply", inet_ntoa(hdr->dstip), "????");
+				print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_reply", inet_ntoa(hdr->dstip), "????");
 
 			i = 0;
 			while (qdcount > 0 && cur < eom) {
@@ -1631,7 +1631,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 
 				cur += (len + DNS_QFIXEDSZ);	/* naglowek + payload */
 
-				print_window_w(window_status, 1, "sniff_dns_reply", inet_ntoa(hdr->dstip), host);
+				print_window_w(window_status,  EKG_WINACT_MSG, "sniff_dns_reply", inet_ntoa(hdr->dstip), host);
 
 				qdcount--;
 				i++;
@@ -1674,7 +1674,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 							break;
 						}
 
-						print_window_w(window_status, 1, "sniff_dns_entry_a", 
+						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_a", 
 							host, inet_ntoa(*((struct in_addr *) &cur[0])));
 
 						displayed = 1;
@@ -1685,7 +1685,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 							debug_error("T_AAAA record but size != 16 [%d]\n", payload);
 							break;
 						}
-						print_window_w(window_status, 1, "sniff_dns_entry_aaaa",
+						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_aaaa",
 							host, _inet_ntoa6(*((struct in6_addr *) &cur[0])));
 
 						displayed = 1;
@@ -1697,7 +1697,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 							break;
 						}
 
-						print_window_w(window_status, 1, "sniff_dns_entry_cname",
+						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_cname",
 							host, tmp_addr);
 						displayed = 1;
 						break;
@@ -1708,7 +1708,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 							break;
 						}
 
-						print_window_w(window_status, 1, "sniff_dns_entry_ptr",
+						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_ptr",
 							host, tmp_addr);
 						displayed = 1;
 						break;
@@ -1727,7 +1727,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 							break;
 						}
 
-						print_window_w(window_status, 1, "sniff_dns_entry_mx",
+						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_mx",
 							host, tmp_addr, itoa(prio));
 						displayed = 1;
 						break;
@@ -1749,7 +1749,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 							break;
 						}
 
-						print_window_w(window_status, 1, "sniff_dns_entry_srv",
+						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_srv",
 							host, tmp_addr, itoa(port), itoa(prio), itoa(weight));
 						displayed = 1;
 						break;
@@ -1760,7 +1760,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 						debug_error("ancount[%d] %d size: %d\n", i, type, payload);
 						tcp_print_payload((u_char *) cur, payload);
 
-						print_window_w(window_status, 1, "sniff_dns_entry_?", 
+						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_?", 
 							host, itoa(type), itoa(payload));
 						displayed = 1;
 				}
@@ -1771,7 +1771,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 			}
 
 			if (!displayed)
-				print_window_w(window_status, 1, "sniff_dns_entry_ndisplay");
+				print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_ndisplay");
 		}
 
 		return 0;
@@ -1801,7 +1801,7 @@ SNIFF_HANDLER(sniff_rivchat_info, rivchat_packet_rcinfo) {
 
 	sprintf(program_ver, "%d.%d", pkt->version[0], pkt->version[1]);
 
-	print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
+	print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, EKG_WINACT_MSG, 1,
 			"sniff_rivchat_rcinfo", inet_ntoa(hdr->srcip),
 
 			username, hostname, os, program, program_ver);
@@ -1835,7 +1835,7 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 			debug_function("sniff_rivchat() RIVCHAT_ME\n");
 
 			data = gg_cp_to_iso(xstrndup(pkt->data, sizeof(pkt->data)));
-			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
+			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, EKG_WINACT_MSG, 1,
 				"sniff_rivchat_me", inet_ntoa(hdr->srcip),
 				nick,
 				data);
@@ -1850,7 +1850,7 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 			/* XXX secure, not secure */
 
 			data = gg_cp_to_iso(xstrndup(pkt->data, sizeof(pkt->data)));
-			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
+			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, EKG_WINACT_MSG, 1,
 				"sniff_rivchat_message", inet_ntoa(hdr->srcip),
 				nick,
 				data);
@@ -1859,7 +1859,7 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 			break;
 
 		case RIVCHAT_INIT:
-			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
+			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, EKG_WINACT_MSG, 1,
 				"sniff_rivchat_init", inet_ntoa(hdr->srcip));
 			/* no break */
 		case RIVCHAT_PING:
@@ -1872,7 +1872,7 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 			debug_function("sniff_rivchat() RIVCHAT_AWAY/RIVCHAT_PINGAWAY\n");
 
 			data = gg_cp_to_iso(xstrndup(pkt->data, sizeof(pkt->data)));
-			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
+			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, EKG_WINACT_MSG, 1,
 				type == RIVCHAT_AWAY ? "sniff_rivchat_away" : "sniff_rivchat_pingaway", inet_ntoa(hdr->srcip),
 
 				data);
@@ -1882,7 +1882,7 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 		case RIVCHAT_QUIT:
 			debug_function("sniff_rivchat() RIVCHAT_QUIT\n");
 			
-			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, 1,
+			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, EKG_WINACT_MSG, 1,
 				"sniff_rivchat_quit", inet_ntoa(hdr->srcip));
 				/* data discarded, however in some time maybe there'd be reason */
 
@@ -2232,7 +2232,7 @@ static COMMAND(sniff_command_connections) {
 		char src_ip[INET_ADDRSTRLEN];
 		char dst_ip[INET_ADDRSTRLEN];
 
-		print_window("__status", session, 0,
+		print_window("__status", session, EKG_WINACT_MSG, 1,
 			"sniff_tcp_connection", 
 				inet_ntop(AF_INET, &c->srcip, src_ip, sizeof(src_ip)),
 				itoa(c->srcport),

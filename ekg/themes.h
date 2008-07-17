@@ -48,12 +48,15 @@ typedef struct {
 	void		*private;		/* can be helpfull */
 } fstring_t;
 
-#define print(x...)		print_window_w(NULL, 0, x) 
-#define print_status(x...) 	print_window_w(window_status, 0, x)
+#define print(x...)		print_window_w(NULL, EKG_WINACT_JUNK, x) 
+#define print_status(x...) 	print_window_w(window_status, EKG_WINACT_JUNK, x)
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-void print_window(const char *target, session_t *session, int separate, const char *theme, ...);
+void print_window(const char *target, session_t *session, int activity, int separate, const char *theme, ...);
+
+void print_info(const char *target, session_t *session, const char *theme, ...);
+void print_warning(const char *target, session_t *session, const char *theme, ...);
 
 void format_add(const char *name, const char *value, int replace);
 const char *format_find(const char *name);
