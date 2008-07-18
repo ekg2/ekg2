@@ -28,7 +28,6 @@ path
 	Rozpoznawane znaki:
 	* %S - sesja nasza
 	* %Y, %M, %D - rok, miesi±c, dzieñ
-	Rozszerzenie pliku zale¿y od typu pliku logowanie (txt, xml, itp.)
 	Przyk³ady:
 	- logowanie do katalogów wg. sesji:
 	    log_path = "~/.ekg2/logsqlite/%S.db"
