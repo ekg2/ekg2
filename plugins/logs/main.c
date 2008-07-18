@@ -933,16 +933,32 @@ static QUERY(logs_handler) {
 
 	session_t *s = session_find(session); // session pointer
 	log_window_t *lw;
-	char *ruid;
+	char *conf_uid = NULL;		/* conference-uid */
+	char *target_uid;
 
 	/* olewamy jesli to irc i ma formatke irssi like, czekajac na irc-protocol-message */
 	if (session_check(s, 0, "irc") && logs_log_format(s) == LOG_FORMAT_IRSSI) 
 		return 0;
 
-	class &= ~EKG_NO_THEMEBIT;
-	ruid = (class >= EKG_MSGCLASS_SENT) ? rcpts[0] : uid;
+	class &= ~(EKG_NO_THEMEBIT | EKG_MSGCLASS_NOT2US);
 
-	if (!(lw = logs_log_find(session, ruid, 1)->lw)) {
+	target_uid = (class >= EKG_MSGCLASS_SENT) ? rcpts[0] : uid;
+
+	/* XXX, think more about conferences-logging */
+	if (class < EKG_MSGCLASS_SENT) {
+		int recipients_count = array_count((char **) rcpts);
+
+		if (recipients_count > 0) {
+			struct conference *c;
+			
+			if ((c = conference_find_by_uids(s, uid, (const char **) rcpts, recipients_count, 0)))
+				conf_uid = c->name;
+			else
+				debug_error("logs_handler() smth strange happen (c == NULL) && recipients_count > 0 [%d]\n", recipients_count);
+		}
+	}
+
+	if (!(lw = logs_log_find(session, conf_uid ? conf_uid : target_uid, 1)->lw)) {
 		debug_error("[LOGS:%d] logs_handler, shit happen\n", __LINE__);
 		return 0;
 	}
@@ -952,13 +968,13 @@ static QUERY(logs_handler) {
 		return 0;
 	}
 
-	/*	debug("[LOGS_MSG_HANDLER] %s : %s %d %x\n", ruid, lw->path, lw->logformat, lw->file); */
+	/*	debug("[LOGS_MSG_HANDLER] %s : %s %d %x\n", target_uid, lw->path, lw->logformat, lw->file); */
 
-	/* uid = uid | ruid ? */
+	/* uid = uid | target_uid ? */
 
 	switch (lw->logformat) {
 		case LOG_FORMAT_SIMPLE:
-			logs_simple(lw->file, session, ruid, text, sent, class, (char*)NULL);
+			logs_simple(lw->file, session, target_uid, text, sent, class, (char*)NULL);
 			break;
 
 		case LOG_FORMAT_XML:
