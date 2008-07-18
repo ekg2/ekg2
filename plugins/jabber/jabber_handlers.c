@@ -426,7 +426,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				string_append_raw(str, "\0", 1);
 				string_append(str, session_get(s, "password"));		/* XXX, haslo rekodowac na UTF-8 */
 
-				encoded = base64_encode(str->str, str->len-1);
+				encoded = base64_encode(str->str, str->len);
 
 				watch_write(j->send_watch,
 					"<auth xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\" mechanism=\"PLAIN\">%s</auth>", encoded);
@@ -577,7 +577,7 @@ JABBER_HANDLER(jabber_handle_challenge) {
 		string_append(str, ",response=");	string_append(str, auth_resp);
 		string_append(str, ",charset=utf-8");
 
-		encoded = base64_encode(str->str, str->len);
+		encoded = base64_encode(str->str, str->len);					/* XXX base64_encoded() CHANGED!! str->len+1 ? */
 		watch_write(j->send_watch, "<response xmlns=\"urn:ietf:params:xml:ns:xmpp-sasl\">%s</response>", encoded);
 		xfree(encoded);
 

@@ -945,7 +945,7 @@ static char *jabber_avatar_load(session_t *s, const char *path, const int quiet)
 	} else if (len >= sizeof(buf))
 		printq("io_toobig", path, itoa(len), sizeof(buf)-1);
 	else {
-		char *enc		= base64_encode(buf, len);
+		char *enc		= base64_encode(buf, len);			/* XXX base64_encode() CHANGED!! len+1 ? */
 		char *out;
 		const char *type	= "application/octet-stream";
 

@@ -2226,13 +2226,13 @@ char *base64_encode(const char *buf, size_t len)
 	
 	res = out = xmalloc((len / 3 + 1) * 4 + 2);
 
-	while (j <= len) {
+	while (j < len) {
 		switch (i % 4) {
 			case 0:
 				k = (buf[j] & 252) >> 2;
 				break;
 			case 1:
-				if (j < len)
+				if (j+1 < len)
 					k = ((buf[j] & 3) << 4) | ((buf[j + 1] & 240) >> 4);
 				else
 					k = (buf[j] & 3) << 4;
@@ -2240,7 +2240,7 @@ char *base64_encode(const char *buf, size_t len)
 				j++;
 				break;
 			case 2:
-				if (j < len)
+				if (j+1 < len)
 					k = ((buf[j] & 15) << 2) | ((buf[j + 1] & 192) >> 6);
 				else
 					k = (buf[j] & 15) << 2;
