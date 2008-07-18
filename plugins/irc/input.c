@@ -82,7 +82,6 @@ char *irc_ircoldcolstr_to_ekgcolstr_nf(session_t *sess, char *str, int strip)
 	int		col, oldstrip = strip;
 	char		mirc_sux_so_much[16] =  "WkbgrypRYGcCBPKw";
 	char		mirc_sux_even_more[16] = "xlehszqszhddeqlx";
-	char		*p;
 	string_t	s;
 
 	if (!str || !(*str))

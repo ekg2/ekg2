@@ -594,7 +594,7 @@ static void irc_changed_recode_list(session_t *s, const char *var) {
 			r_channel->recode = recode;
 			list_add(&(j->recoded_channels), r_channel);
 		}
-		xfree(list2);
+		array_free(list2);
 	}
 	array_free(list1);
 }
