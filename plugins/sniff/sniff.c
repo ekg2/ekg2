@@ -329,7 +329,7 @@ static char *tcp_print_flags(u_char tcpflag) {
 }
 
 /*  ****************************************************** */
-static void sniff_gg_print_message(session_t *s, const connection_t *hdr, uint32_t recpt, enum msgclass_t type, const char *msg, time_t sent) {
+static void sniff_gg_print_message(session_t *s, const connection_t *hdr, uint32_t recpt, msgclass_t type, const char *msg, time_t sent) {
 	struct tm *tm_msg;
 	char timestamp[100] = { '\0' };
 	const char *timestamp_f;
