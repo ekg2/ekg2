@@ -1568,6 +1568,49 @@ next:
 	return x - orig_x;
 }
 
+static char *ncurses_window_activity(void) {
+	string_t s = string_init("");
+	int act = 0;
+	window_t *w;
+
+	for (w = windows; w; w = w->next) {
+		char tmp[36];
+
+		if ((!w->act && !w->in_typing) || !w->id || (w == window_current)) 
+			continue;
+
+		if (act)
+			string_append_c(s, ',');
+
+		switch (w->act) {
+			case EKG_WINACT_NONE:
+			case EKG_WINACT_JUNK:
+				strcpy(tmp, "statusbar_act");
+				break;
+			case EKG_WINACT_MSG:
+				strcpy(tmp, "statusbar_act_important");
+				break;
+			case EKG_WINACT_IMPORTANT:
+			default:
+				strcpy(tmp, "statusbar_act_important2us");
+				break;
+		}
+
+		if (w->in_typing)
+			strcat(tmp, "_typing");
+
+		string_append(s, format_find(tmp));
+		string_append(s, itoa(w->id));
+		act = 1;
+	}
+
+	if (!act) {
+		string_free(s, 1);
+		return NULL;
+	} else
+		return string_free(s, 0);
+}
+
 /*
  * update_statusbar()
  *
@@ -1632,31 +1675,7 @@ void update_statusbar(int commit)
 		__add_format("ircmode", t3);
 	}
 
-	{
-		string_t s = string_init("");
-		int act = 0;
-		window_t *w;
-
-		for (w = windows; w; w = w->next) {
-			char tmp[36];
-
-			if ((!w->act && !w->in_typing) || !w->id || (w == window_current)) 
-				continue;
-
-			if (act)
-				string_append_c(s, ',');
-			sprintf(tmp, "statusbar_act%s%s%s", (w->act > 1 ? "_important" : ""), (w->act > 2 ? "2us" : ""), (w->in_typing ? "_typing" : ""));
-			string_append(s, format_find(tmp));
-			string_append(s, itoa(w->id));
-			act = 1;
-		}
-		if (act) {
-			__add_format("activity", string_free(s, 0));
-		} else {
-			__add_format("activity", NULL);
-			string_free(s, 1);
-		}
-	}
+	__add_format("activity", ncurses_window_activity());
 
 	if (sess && (sess->connected || (sess->connecting && connecting_counter))) {
 #define __add_format_emp_st(x, y) __add_format_emp(x, (sess->status == y))
