@@ -902,6 +902,10 @@ static QUERY(protocol_message_ack) {
 	return 0;
 }
 
+int protocol_message_ack_emit(const session_t *s, const char *rcpt, const char *seq, int status) {
+	return query_emit_id_ro(NULL, PROTOCOL_MESSAGE_ACK, &(s->uid), &rcpt, &seq, &status);
+}
+
 static QUERY(protocol_xstate)
 {
 	/* state contains xstate bits, which should be set, offstate those, which should be cleared */
@@ -941,6 +945,10 @@ xs_userlist:
 	}
 
 	return 0;
+}
+
+int protocol_xstate_emit(const session_t *s, const char *uid, int state, int offstate) {
+	return query_emit_id_ro(NULL, PROTOCOL_XSTATE, &(s->uid), &uid, &state, &offstate);
 }
 
 /**

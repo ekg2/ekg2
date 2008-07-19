@@ -88,8 +88,10 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 
 int protocol_connected_emit(const session_t *s);
 int protocol_disconnected_emit(const session_t *s, const char *reason, int type);
+int protocol_message_ack_emit(const session_t *s, const char *rcpt, const char *seq, int status);
 int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, const char *text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure);
 int protocol_status_emit(const session_t *s, const char *uid, int status, char *descr, time_t when);
+int protocol_xstate_emit(const session_t *s, const char *uid, int state, int offstate);
 
 #endif
 

@@ -762,17 +762,8 @@ JABBER_HANDLER(jabber_handle_message) {
 		return;
 	} /* <error> */
 
-	if (j->istlen) {	/* disable typing notify, tlen protocol doesn't send info about it (?) XXX */
-		char *session 	= xstrdup(session_uid_get(s));
-		char *rcpt	= xstrdup(uid);
-		int state 	= 0;
-		int stateo 	= EKG_XSTATE_TYPING;
-
-		query_emit_id(NULL, PROTOCOL_XSTATE, &session, &rcpt, &state, &stateo);
-
-		xfree(session);
-		xfree(rcpt);
-	}
+	if (j->istlen)	/* disable typing notify, tlen protocol doesn't send info about it (?) XXX */
+		protocol_xstate_emit(s, uid, 0, EKG_XSTATE_TYPING);
 	
 	body = string_init("");
 
@@ -825,17 +816,10 @@ JABBER_HANDLER(jabber_handle_message) {
 				}
 				/* je¶li body nie ma, to odpowiedz na nasza prosbe */
 				if (!nbody && isack) {
-					char *__session = xstrdup(session_uid_get(s));
-					char *__rcpt	= xstrdup(uid);
 					int __status  = ((acktype & 1) ? EKG_ACK_DELIVERED : 
 							(acktype & 2) ? EKG_ACK_QUEUED : 
 							EKG_ACK_UNKNOWN);
-					char *__seq	= NULL; /* id ? */
-					/* protocol_message_ack; sesja ; uid ; seq (NULL ? ) ; status - delivered ; queued ) */
-					query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &__session, &__rcpt, &__seq, &__status);
-					xfree(__session);
-					xfree(__rcpt);
-					/* xfree(__seq); */
+					protocol_message_ack_emit(s, uid, NULL, __status);
 				}
 
 				if (!(composing & 2)) /* '& 2' means we've already got chatstate (higher prio) */
@@ -981,15 +965,10 @@ JABBER_HANDLER(jabber_handle_message) {
 	 *   3rd bit determines whether the <composing/> is on
 	 */
 	if (composing) {
-		char *__session = xstrdup(session_uid_get(s));
-		char *__rcpt	= xstrdup(uid);
 		int  state	= (!nbody && (composing & 4) ? EKG_XSTATE_TYPING : 0);
 		int  stateo	= (!state ? EKG_XSTATE_TYPING : 0);
 
-		query_emit_id(NULL, PROTOCOL_XSTATE, &__session, &__rcpt, &state, &stateo);
-		
-		xfree(__session);
-		xfree(__rcpt);
+		protocol_xstate_emit(s, uid, state, stateo);
 	}
 
 	if (nbody || nsubject) {

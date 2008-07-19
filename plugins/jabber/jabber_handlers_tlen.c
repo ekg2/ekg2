@@ -19,13 +19,10 @@ JABBER_HANDLER(tlen_handle_notification) {	/* n->name: "m" TLEN only: typing, no
 		char *uid = saprintf("tlen:%s", from);
 
 		/* typing notification */
-		char *session	= xstrdup(session_uid_get(s));
-		int stateo	= !xstrcmp(type, "u") ? EKG_XSTATE_TYPING : 0;
-		int state	= !stateo ? EKG_XSTATE_TYPING : 0;
-
-		query_emit_id(NULL, PROTOCOL_XSTATE, &session, &uid, &state, &stateo);
-
-		xfree(session);
+		if (!xstrcmp(type, "u"))
+			protocol_xstate_emit(s, uid, 0, EKG_XSTATE_TYPING);
+		else
+			protocol_xstate_emit(s, uid, EKG_XSTATE_TYPING, 0);
 		xfree(uid);
 		return;
 	}

@@ -1022,7 +1022,6 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
  */
 
 static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
-	char *__session = xstrdup(s->uid);
 	char *__rcpt	= saprintf("gg:%d", e->event.ack.recipient);
 	char *__seq	= xstrdup(itoa(e->event.ack.seq));
 	int __status;
@@ -1057,11 +1056,10 @@ static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 			__status = EKG_ACK_UNKNOWN;
 			break;
 	}
-	query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &__session, &__rcpt, &__seq, &__status);
+	protocol_message_ack_emit(s, __rcpt, __seq, __status);
 
 	xfree(__seq);
 	xfree(__rcpt);
-	xfree(__session);
 }
 
 /*
