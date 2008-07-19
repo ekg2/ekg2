@@ -243,13 +243,8 @@ static COMMAND(sms_command_sms)
 	}
 
         if ((u = userlist_find(session, params[0]))) {
-		{
-			int function = EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
-			char *varname = "mobile";
-			char **__number = (char **) &number;
+		number = userlist_private_item_get(u, "mobile");
 
-			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &varname, &__number);
-		}
                 if (!number || !xstrcmp(number, "")) {
                         printq("sms_unknown", format_user(session, u->uid));
                         return -1;

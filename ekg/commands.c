@@ -1546,55 +1546,55 @@ list_user:
 		array_free(argv);
 	}
 
-	{
-			/* ip/port currently can be fetched for GG only,
-			 * so this should remove unneeded slowdown for other sessions */
-		const int is_ipport_capable = !xstrncmp(session->uid, "gg:", 3);
+	for (ul = session->userlist; ul; ul = ul->next) {
+		static int plugin_knows_what_ip_is;
+		static int plugin_knows_what_port_is;
 
-		for (ul = session->userlist; ul; ul = ul->next) {
-			userlist_t *u = ul;
-			int show;
+		userlist_t *u = ul;
+		int show;
 
-			if (!u->nickname)
-				continue;
+		if (ul == session->userlist) {
+			char *test;
 
-			tmp = ekg_status_label(u->status, u->descr, "list_");
+			plugin_knows_what_ip_is		= userlist_private_item_get_safe(u, "ip", &test);
+			plugin_knows_what_port_is	= userlist_private_item_get_safe(u, "port", &test);
 
-			show = show_all;
-	#define SHOW_IF_S(x,y) if (show_##x && (u->status == EKG_STATUS_##y)) show = 1;
-			SHOW_IF_S(away, AWAY)
+			debug_white("%s: IP_OK: %d; PORT_OK: %d\n", session->uid, plugin_knows_what_ip_is, plugin_knows_what_port_is);
+		}
+
+
+		if (!u->nickname)
+			continue;
+
+		tmp = ekg_status_label(u->status, u->descr, "list_");
+
+		show = show_all;
+#define SHOW_IF_S(x,y) if (show_##x && (u->status == EKG_STATUS_##y)) show = 1;
+		SHOW_IF_S(away, AWAY)
 			SHOW_IF_S(active, AVAIL)
 			SHOW_IF_S(inactive, NA)
 			SHOW_IF_S(invisible, INVISIBLE)
 			SHOW_IF_S(blocked, BLOCKED)
-	#undef SHOW_IF_S		
+#undef SHOW_IF_S		
 			/* XXX nie chcialo mi sie zmiennej robic */
 			if (u->status == EKG_STATUS_ERROR)
 				show = 1;
 
-			if (show_descr && !u->descr)
-				show = 0;
+		if (show_descr && !u->descr)
+			show = 0;
 
-			if (show_group && !ekg_group_member(u, show_group))
-				show = 0;
+		if (show_group && !ekg_group_member(u, show_group))
+			show = 0;
 
-			if (show_offline && ekg_group_member(u, "__offline"))
-				show = 1;
+		if (show_offline && ekg_group_member(u, "__offline"))
+			show = 1;
 
-			if (show) {
-				const char *ip		= NULL;
-				const char *port	= NULL;
-				if (is_ipport_capable) {
-					int func		= EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT;
-					const char **__ip	= &ip;
-					const char **__port	= &port;
-					
-					query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func, &__ip, &__port);
-				}
+		if (show) {
+			const char *port = plugin_knows_what_port_is ? userlist_private_item_get(u, "port") : NULL;
+			const char *ip = plugin_knows_what_ip_is ? userlist_private_item_get(u, "ip") : NULL;
 
-				printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), (port ? port : "0"), u->descr);
-				count++;
-			}
+			printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), (port ? port : "0"), u->descr);
+			count++;
 		}
 	}
 

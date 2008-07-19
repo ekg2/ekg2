@@ -1531,34 +1531,35 @@ static QUERY(jabber_userlist_info) {
 static QUERY(jabber_userlist_priv_handler) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int function	= *va_arg(ap, int *);
+	jabber_userlist_private_t *j;
 
 	if (!u || (valid_plugin_uid(&jabber_plugin, u->uid) != 1))
 		return 1;
 
-	{
-		jabber_userlist_private_t *j = u->priv;
-		if (!j) {
-			if (function == EKG_USERLIST_PRIVHANDLER_FREE)
-				return 0;
+	if (!(j = u->priv)) {
+		if (function == EKG_USERLIST_PRIVHANDLER_FREE)
+			return -1;
 
-			j = xmalloc(sizeof(jabber_userlist_private_t));
-			u->priv = j;
-		}
-
-		switch (function) {
-			case EKG_USERLIST_PRIVHANDLER_FREE:
-				xfree(j->role);
-				xfree(j->aff);
-				xfree(u->priv);
-				u->priv = NULL;
-				break;
-			case EKG_USERLIST_PRIVHANDLER_GET:
-				*va_arg(ap, void **) = j;
-				break;
-		}
+		j = xmalloc(sizeof(jabber_userlist_private_t));
+		u->priv = j;
 	}
 
-	return 0;
+	switch (function) {
+		case EKG_USERLIST_PRIVHANDLER_FREE:
+			xfree(j->role);
+			xfree(j->aff);
+			xfree(u->priv);
+			u->priv = NULL;
+			break;
+
+		case EKG_USERLIST_PRIVHANDLER_GET:
+			*va_arg(ap, void **) = j;
+			break;
+
+		default:
+			return 2;
+	}
+	return -1;
 }
 
 static QUERY(jabber_typing_out) {

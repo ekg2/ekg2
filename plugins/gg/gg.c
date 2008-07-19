@@ -546,108 +546,107 @@ static QUERY(gg_protocols) {
 static QUERY(gg_userlist_priv_handler) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int function	= *va_arg(ap, int *);
+	gg_userlist_private_t *p;
 
 	if (!u || ((valid_plugin_uid(&gg_plugin, u->uid) != 1)
 			&& !(function == EKG_USERLIST_PRIVHANDLER_READING && atoi(u->uid))))
 		return 1;
 
-	{
-		gg_userlist_private_t *p = u->priv;
+	if (!(p = u->priv)) {
+		if (function == EKG_USERLIST_PRIVHANDLER_FREE)
+			return -1;
 
-		if (!u->priv) {
-			if (function == EKG_USERLIST_PRIVHANDLER_FREE)
-				return 0;
-
-			p = xmalloc(sizeof(gg_userlist_private_t));
-			u->priv = p;
-		}
-		
-		switch (function) {
-			case EKG_USERLIST_PRIVHANDLER_FREE:
-				xfree(p->first_name);
-				xfree(p->last_name);
-				xfree(p->mobile);
-				xfree(u->priv);
-				u->priv = NULL;
-				break;
-			case EKG_USERLIST_PRIVHANDLER_GET:
-				*va_arg(ap, void **) = p;
-				break;
-			case EKG_USERLIST_PRIVHANDLER_READING:
-			{
-				char **entry	= *va_arg(ap, char ***);
-
-				if (atoi(u->uid)) {	/* backwards compatibility / userlist -g hack for GG */
-					char *tmp = u->uid;
-					u->uid = saprintf("gg:%s", tmp);
-					xfree(tmp);
-				} 
-
-				p->first_name 	= entry[0];	entry[0] = NULL;
-				p->last_name	= entry[1];	entry[1] = NULL;
-				p->mobile	= entry[4];	entry[4] = NULL;
-				break;
-			}
-			case EKG_USERLIST_PRIVHANDLER_WRITING:
-			{
-				char **entry	= *va_arg(ap, char ***);
-
-				if (p->first_name) {
-					xfree(entry[0]);
-					entry[0] = xstrdup(p->first_name);
-				}
-				if (p->last_name) {
-					xfree(entry[1]);
-					entry[1] = xstrdup(p->last_name);
-				}
-				if (p->mobile) {
-					xfree(entry[4]);
-					entry[4] = xstrdup(p->mobile);
-				}
-				break;
-			}
-			case EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME:
-			{
-				const char *name	= *va_arg(ap, const char **);
-				const char **r		= *va_arg(ap, const char ***);
-
-				if (!xstrcmp(name, "mobile"))
-					*r = p->mobile;
-				else if (!xstrcmp(name, "ip"))
-					*r = inet_ntoa(*((struct in_addr*) &p->ip));
-				else if (!xstrcmp(name, "port"))
-					*r = itoa(p->port);
-				break;
-			}
-			case EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT:
-			{
-				const char **ip		= *va_arg(ap, const char ***);
-				const char **port	= *va_arg(ap, const char ***);
-
-				*ip	= inet_ntoa(*((struct in_addr*) &p->ip));
-				*port	= itoa(p->port);
-				break;
-			}
-			case EKG_USERLIST_PRIVHANDLER_SETVAR_BYNAME:
-			{
-				const char *name	= *va_arg(ap, const char **);
-				const char *val		= *va_arg(ap, const char **);
-
-				if (!xstrcmp(name, "first_name")) {
-					xfree(p->first_name);
-					p->first_name = xstrdup(val);
-				} else if (!xstrcmp(name, "last_name")) {
-					xfree(p->last_name);
-					p->last_name = xstrdup(val);
-				} else if (!xstrcmp(name, "mobile")) {
-					xfree(p->mobile);
-					p->mobile = xstrdup(val);
-				}
-				break;
-			}
-		}
+		p = xmalloc(sizeof(gg_userlist_private_t));
+		u->priv = p;
 	}
-	return 1;
+		
+	switch (function) {
+		case EKG_USERLIST_PRIVHANDLER_FREE:
+			xfree(p->first_name);
+			xfree(p->last_name);
+			xfree(p->mobile);
+			xfree(u->priv);
+			u->priv = NULL;
+			break;
+
+		case EKG_USERLIST_PRIVHANDLER_GET:
+			*va_arg(ap, void **) = p;
+			break;
+
+		case EKG_USERLIST_PRIVHANDLER_READING:
+		{
+			char **entry	= *va_arg(ap, char ***);
+
+			if (atoi(u->uid)) {	/* backwards compatibility / userlist -g hack for GG */
+				char *tmp = u->uid;
+				u->uid = saprintf("gg:%s", tmp);
+				xfree(tmp);
+			} 
+
+			p->first_name 	= entry[0];	entry[0] = NULL;
+			p->last_name	= entry[1];	entry[1] = NULL;
+			p->mobile	= entry[4];	entry[4] = NULL;
+			break;
+		}
+
+		case EKG_USERLIST_PRIVHANDLER_WRITING:
+		{
+			char **entry	= *va_arg(ap, char ***);
+
+			if (p->first_name) {
+				xfree(entry[0]);
+				entry[0] = xstrdup(p->first_name);
+			}
+			if (p->last_name) {
+				xfree(entry[1]);
+				entry[1] = xstrdup(p->last_name);
+			}
+			if (p->mobile) {
+				xfree(entry[4]);
+				entry[4] = xstrdup(p->mobile);
+			}
+			break;
+		}
+
+		case EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME:
+		{
+			const char *name	= *va_arg(ap, const char **);
+			const char **r		= va_arg(ap, const char **);
+
+			if (!xstrcmp(name, "mobile"))
+				*r = p->mobile;
+			else if (!xstrcmp(name, "ip"))
+				*r = inet_ntoa(*((struct in_addr*) &p->ip));
+			else if (!xstrcmp(name, "port"))
+				*r = itoa(p->port);
+			else
+				return 2;
+			break;
+		}
+
+		case EKG_USERLIST_PRIVHANDLER_SETVAR_BYNAME:
+		{
+			const char *name	= *va_arg(ap, const char **);
+			const char *val		= *va_arg(ap, const char **);
+
+			if (!xstrcmp(name, "first_name")) {
+				xfree(p->first_name);
+				p->first_name = xstrdup(val);
+			} else if (!xstrcmp(name, "last_name")) {
+				xfree(p->last_name);
+				p->last_name = xstrdup(val);
+			} else if (!xstrcmp(name, "mobile")) {
+				xfree(p->mobile);
+				p->mobile = xstrdup(val);
+			}
+			break;
+		}
+
+		default:
+			return 2;
+	}
+
+	return -1;
 }
 
 /*

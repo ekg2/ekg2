@@ -309,6 +309,21 @@ void userlist_write_crash() {
  */
 }
 
+int userlist_private_item_get_safe(userlist_t *u, const char *item_name, char **result) {
+	int function = EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
+
+	return (query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &item_name, result) == -1);
+}
+
+const char *userlist_private_item_get(userlist_t *u, const char *item_name) {
+	int function = EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME;
+	char *result = NULL;
+
+	query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &item_name, &result);
+
+	return result;
+}
+
 void *userlist_private_get(plugin_t *plugin, userlist_t *u) {
 	int func = EKG_USERLIST_PRIVHANDLER_GET;
 	void *up = NULL;

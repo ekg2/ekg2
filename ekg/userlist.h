@@ -97,12 +97,7 @@ typedef enum {
 	EKG_USERLIST_PRIVHANDLER_WRITING,		/**< Called when writing userlist file, arg is char*** with data array */
 
 	EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME	= 0x80,	/**< Get private 'variable' by name, args are char** with var name
-							 *	and char*** for value ptr (not duplicated) */
-	EKG_USERLIST_PRIVHANDLER_GETVAR_IPPORT,		/**< Get user's IP&port, created to be used within /list (fetching
-							 *	two variables by name would be kinda slow).
-							 *	args should be one char*** for IP,
-							 *	and the second one for port */
-
+							 *	and char** for value ptr (not duplicated) */
 	EKG_USERLIST_PRIVHANDLER_SETVAR_BYNAME	= 0xC0,	/**< Set private 'variable' by name, args care char** with var name
 							 *	and char** with value (will be duplicated) */
 } userlist_privhandler_func_t;
@@ -174,6 +169,8 @@ void userlist_free(session_t *session);
 void userlists_destroy(userlist_t **userlist);
 
 void *userlist_private_get(plugin_t *plugin, userlist_t *u);
+int userlist_private_item_get_safe(userlist_t *u, const char *item_name, char **result);
+const char *userlist_private_item_get(userlist_t *u, const char *item_name);
 
 /* u->resource */
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio);

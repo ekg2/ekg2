@@ -1708,9 +1708,7 @@ void update_statusbar(int commit)
 
 		__add_format_emp("typing", q->typing);
 		__add_format_dup("query_descr", (q->descr), q->descr);
-#if 0	
-		__add_format_dup("query_ip", (q->ip), inet_ntoa(*((struct in_addr*)(&q->ip)))); 	/* XXX!!! */
-#endif
+		__add_format_dup("query_ip", 1, userlist_private_item_get(q, "ip"));
 	}
 
 	__add_format_dup("url", 1, "http://www.ekg2.org/");
