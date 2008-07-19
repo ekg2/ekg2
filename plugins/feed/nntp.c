@@ -159,7 +159,7 @@ static void nntp_handle_disconnect(session_t *s, const char *reason, int type) {
 	close(j->fd);
 	j->fd = -1;
 
-	query_emit_id_ro(NULL, PROTOCOL_DISCONNECTED, &s->uid, &reason, &type, NULL);
+	protocol_disconnected_emit(s, reason, type);
 }
 
 typedef struct {
@@ -611,7 +611,7 @@ static WATCHER(nntp_handle_connect) {
 	}
 
 	j->connecting = 0;
-	query_emit_id(NULL, PROTOCOL_CONNECTED, &data);
+	protocol_connected_emit(s);
 
 	watch_add_line(&feed_plugin, fd, WATCH_READ_LINE, nntp_handle_stream, xstrdup(data));
 	j->send_watch = watch_add_line(&feed_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);

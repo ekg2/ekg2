@@ -91,22 +91,7 @@ JABBER_HANDLER(tlen_handle_webmessage) {
 	text = tlen_decode(body->str);
 	string_free(body, 1);
 
-	{
-		char *me	= xstrdup(session_uid_get(s));
-		char *uid	= xstrdup("ludzie.tlen.pl");
-		char **rcpts 	= NULL;
-		uint32_t *format= NULL;
-		time_t sent	= time(NULL);
-		int class 	= EKG_MSGCLASS_MESSAGE;
-		char *seq 	= NULL;
-		int ekgbeep 	= EKG_TRY_BEEP;
-		int secure	= 0;
-
-		query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
-
-		xfree(me);
-		xfree(uid);
-	}
+	protocol_message_emit(s, "ludzie.tlen.pl", NULL, text, NULL, time(NULL), EKG_MSGCLASS_MESSAGE, NULL, EKG_TRY_BEEP, 0);
 
 	xfree(text);
 }

@@ -335,13 +335,7 @@ POLCHAT_HANDLER(polchat_welcomemsg) {
 			s->status = EKG_STATUS_AVAIL;
 			/* connected */
 			j->connecting = 0;
-
-			{
-				char *__session = xstrdup(s->uid);
-				query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
-				xfree(__session);
-			}
-
+			protocol_connected_emit(s);
 		}
 
 		if (j->room) {

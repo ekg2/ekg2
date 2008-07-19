@@ -40,6 +40,7 @@
 #include <ekg/dynstuff.h>
 #include <ekg/commands.h>
 #include <ekg/debug.h>
+#include <ekg/protocol.h>
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
 #include <ekg/stuff.h>
@@ -976,8 +977,8 @@ static COMMAND(rss_command_connect) {
 	}
 
 	session_connected_set(session, 1);
-	query_emit_id_ro(NULL, PROTOCOL_CONNECTED, &session->uid);
 	session->status = EKG_STATUS_AVAIL;
+	protocol_connected_emit(session);
 
 	return 0;
 }

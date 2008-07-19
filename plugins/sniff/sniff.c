@@ -2195,7 +2195,7 @@ static COMMAND(sniff_command_connect) {
 	
 
 	session->status = EKG_STATUS_AVAIL;
-	query_emit_id(NULL, PROTOCOL_CONNECTED, &(session->uid));
+	protocol_connected_emit(session);
 	return 0;
 }
 
@@ -2205,13 +2205,7 @@ static COMMAND(sniff_command_disconnect) {
 		return -1;
 	}
 
-	{
-		char *uid = session->uid;
-		char *reason = NULL;
-		int type = EKG_DISCONNECT_USER;
-
-		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &uid, &reason, &type);
-	}
+	protocol_disconnected_emit(session, NULL, EKG_DISCONNECT_USER);
 
 	if (!GET_DEV(session)) {
 		debug_error("sniff_command_disconnect() not dev?!\n");

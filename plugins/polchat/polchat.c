@@ -303,15 +303,8 @@ static void polchat_handle_disconnect(session_t *s, const char *reason, int type
 	
 	j->connecting = 0;
 	userlist_free(s);
-	{
-		char *__session = xstrdup(session_uid_get(s));
-		char *__reason = xstrdup(reason);
 
-		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &type);
-
-		xfree(__session);
-		xfree(__reason);
-	}
+	protocol_disconnected_emit(s, reason, type);
 
 	if (j->fd != -1) {
 		list_t l;
