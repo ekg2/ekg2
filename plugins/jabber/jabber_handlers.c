@@ -965,10 +965,10 @@ JABBER_HANDLER(jabber_handle_message) {
 	 *   3rd bit determines whether the <composing/> is on
 	 */
 	if (composing) {
-		int  state	= (!nbody && (composing & 4) ? EKG_XSTATE_TYPING : 0);
-		int  stateo	= (!state ? EKG_XSTATE_TYPING : 0);
-
-		protocol_xstate_emit(s, uid, state, stateo);
+		if (!nbody && (composing & 4))
+			protocol_xstate_emit(s, uid, EKG_XSTATE_TYPING, 0);
+		else
+			protocol_xstate_emit(s, uid, 0, EKG_XSTATE_TYPING);
 	}
 
 	if (nbody || nsubject) {
