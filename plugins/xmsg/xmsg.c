@@ -279,47 +279,36 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	else if (err == EINVAL)
 		xdebug("empty file, not submitting");
 	else {
+		char *uid	= xmalloc(strlen(fn) + 6);
+		char *msgx	= NULL;
+
 		{
-			char *session	= xstrdup(session_uid_get(s));
-			char *uid	= xmalloc(strlen(fn) + 6);
-			char **rcpts    = NULL;
-			uint32_t *format= NULL;
-			time_t sent	= ft;
-			int class	= EKG_MSGCLASS_CHAT;
-			char *seq	= NULL;
-			int dobeep	= EKG_TRY_BEEP;
-			int secure	= 0;
-			char *msgx	= NULL;
+			const char *charset = session_get(s, "charset");
 
-			{
-				const char *charset = session_get(s, "charset");
-
-				if (charset && (msgx = ekg_convert_string(msg, charset, NULL)))
-					xfree(msg);
-				else
-					msgx = msg;
-			}
-
-			xstrcpy(uid, "xmsg:");
-			xstrcat(uid, fn);
-			if (namesep) {
-				char *p, *q = NULL;
-
-				for (p = namesep; *p; p++) {
-					char *r = xstrrchr(uid+XMSG_UID_DIROFFSET, *p);
-					if (r > q)
-						q = r;
-				}
-				if (q)
-					*q = '\0';
-			}
-
-			query_emit_id(NULL, PROTOCOL_MESSAGE, &session, &uid, &rcpts, &msgx, &format, &sent, &class, &seq, &dobeep, &secure);
-
-			xfree(msgx);
-			xfree(uid);
-			xfree(session);
+			if (charset && (msgx = ekg_convert_string(msg, charset, NULL)))
+				xfree(msg);
+			else
+				msgx = msg;
 		}
+
+		xstrcpy(uid, "xmsg:");
+		xstrcat(uid, fn);
+		if (namesep) {
+			char *p, *q = NULL;
+
+			for (p = namesep; *p; p++) {
+				char *r = xstrrchr(uid+XMSG_UID_DIROFFSET, *p);
+				if (r > q)
+					q = r;
+			}
+			if (q)
+				*q = '\0';
+		}
+
+		protocol_message_emit(s, uid, NULL, msgx, NULL, ft, EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
+
+		xfree(msgx);
+		xfree(uid);
 	}
 	
 	return 0;
@@ -390,16 +379,11 @@ static COMMAND(xmsg_disconnect)
 	if (!timer_remove_session(session, "o"))
 		xdebug("old oneshot resume timer removed");
 	session_status_set(session, EKG_STATUS_NA);
-	{
-		char *sess = xstrdup(session_uid_get(session));
-		char *reason = (quiet == -1 ? xstrdup(format_find("xmsg_umount")) : NULL);
-		int type = (quiet == -1 ? EKG_DISCONNECT_NETWORK : EKG_DISCONNECT_USER);
-		
-		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &sess, &reason, &type, NULL);
-		
-		xfree(reason);
-		xfree(sess);
-	}
+
+	if (quiet == -1)
+		protocol_disconnected_emit(session, format_find("xmsg_umount"), EKG_DISCONNECT_NETWORK);
+	else
+		protocol_disconnected_emit(session, NULL, EKG_DISCONNECT_USER);
 
 #ifdef HAVE_INOTIFY
 	if (session->priv && inotify_rm_watch(in_fd, (long int) session->priv))
@@ -540,13 +524,7 @@ static COMMAND(xmsg_connect)
 	}
 	
 	session_status_set(session, EKG_STATUS_AVAIL);
-	{
-		char *sess = xstrdup(session_uid_get(session));
-
-		query_emit_id(NULL, PROTOCOL_CONNECTED, &sess);
-
-		xfree(sess);
-	}
+	protocol_connected_emit(session);
 
 	xmsg_iterate_dir(0, (void*) session);
 	xmsg_timer_change(session, "rescan_timer");
@@ -666,25 +644,14 @@ static COMMAND(xmsg_msg)
 		xerr("msgcmd exec failed");
 	
 	{
-		char *sess	= xstrdup(session_uid_get(session));
-		char *me	= xstrdup(sess);
 		char **rcpts	= xcalloc(2, sizeof(char *));
-		char *msg	= xstrdup(params[1]);
-		time_t sent	= time(NULL);
 		int class	= (xstrcmp(name, "chat") ? EKG_MSGCLASS_SENT : EKG_MSGCLASS_SENT_CHAT);
-		int ekgbeep	= EKG_NO_BEEP;
-		char *format	= NULL;
-		char *seq	= NULL;
-		int secure	= 0;
 
 		rcpts[0]	= xstrdup(uid);
 		rcpts[1]	= NULL;
 
-		query_emit_id(NULL, PROTOCOL_MESSAGE, &sess, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
+		protocol_message_emit(session, session->uid, rcpts, params[1], NULL, time(NULL), class, NULL, EKG_NO_BEEP, 0);
 
-		xfree(msg);
-		xfree(me);
-		xfree(sess);
 		array_free(rcpts);
 	}
 			
