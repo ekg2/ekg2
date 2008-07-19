@@ -694,8 +694,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
  * EKG_DISCONNECT_USER    @ irc_command_disconnect when we do /disconnect when we are connected.
  */
 	irc_private_t	*j = irc_private(s);
-        char		*__session, *__reason;
-        int		__type = type;
+        char		*__reason;
 
 	if (!j) {
 		debug("[irc_ierror] @irc_handle_disconnect j == NULL");
@@ -740,16 +739,13 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 			 */
 	}
 	__reason  = xstrdup(format_find(reason));
-	__session = xstrdup(session_uid_get(s));
 	
 	if (!xstrcmp(__reason, "")) {
 		xfree(__reason);
 		__reason = xstrdup(reason);
 	}
-			
-	query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type, NULL);
+	protocol_disconnected_emit(s, __reason, type);
 	xfree(__reason);
-	xfree(__session);
 }
 
 static WATCHER_LINE(irc_handle_resolver) {
@@ -1122,10 +1118,6 @@ static COMMAND(irc_command_msg) {
 	char		*head, *coloured;
 	const char	*frname; /* formatname */
 
-        int		class = EKG_MSGCLASS_SENT | EKG_NO_THEMEBIT;
-	int		ekgbeep = EKG_NO_BEEP;
-	const time_t	sent = time(NULL);
-	char		*format=NULL, *seq=NULL;
 	int		secure = 0;
 	
 	char **rcpts;
@@ -1186,8 +1178,8 @@ static COMMAND(irc_command_msg) {
 		query_emit_id(NULL, IRC_PROTOCOL_MESSAGE, &(sid), &(j->nick), &mline[1], &isour, &xosd_to_us, &xosd_is_priv, &uid);
 
 		query_emit_id(NULL, MESSAGE_ENCRYPT, &sid, &uid, &__msg, &secure);
-				
-		query_emit_id(NULL, PROTOCOL_MESSAGE, &sid, &sid, &rcpts, &coloured, &format, &sent, &class, &seq, &ekgbeep, &secure);
+
+		protocol_message_emit(session, session->uid, rcpts, coloured, NULL, time(NULL), (EKG_MSGCLASS_SENT | EKG_NO_THEMEBIT), NULL, EKG_NO_BEEP, secure);
 
 		/* "Thus, there are 510 characters maximum allowed for the command and its parameters." [rfc2812]
 		 * yes, I know it's a nasty variable reusing ;)

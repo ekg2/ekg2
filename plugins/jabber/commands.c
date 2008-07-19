@@ -401,14 +401,10 @@ nomsg:
 
 msgdisplay:
 	if (!quiet && !ismuc) { /* if (1) ? */ 
-		char *me 	= xstrdup(session_uid_get(session));
 		char **rcpts 	= xcalloc(2, sizeof(char *));
 		char *msg	= xstrdup(params[1]);
-		time_t sent 	= time(NULL);
 		int class 	= (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
-		int ekgbeep 	= EKG_NO_BEEP;
 		uint32_t *format= jabber_msg_format(msg, NULL /*XXX: pass htmlmsg as xmlnode_t ...*/);
-		char *seq 	= NULL;
 
 		rcpts[0] 	= xstrdup(uid);
 		rcpts[1] 	= NULL;
@@ -416,10 +412,9 @@ msgdisplay:
 		if (ismuc)
 			class |= EKG_NO_THEMEBIT;
 		
-		query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &me, &rcpts, &msg, &format, &sent, &class, &seq, &ekgbeep, &secure);
+		protocol_message_emit(session, session->uid, rcpts, msg, format, time(NULL), class, NULL, EKG_NO_BEEP, secure);
 
 		xfree(msg);
-		xfree(me);
 		array_free(rcpts);
 
 		if (!session_connected_get(session))

@@ -704,7 +704,6 @@ static void gg_session_handler_success(session_t *s) {
 	gg_private_t *g = s->priv;
 
 	int status;
-	char *__session;
 	int _status;
 	char *descr;
 	char *cpdescr; 
@@ -714,9 +713,7 @@ static void gg_session_handler_success(session_t *s) {
 		return;
 	}
 
-	__session = xstrdup(session_uid_get(s));
-	query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
-	xfree(__session);
+	protocol_connected_emit(s);
 
 	gg_userlist_send(g->sess, s->userlist);
 
@@ -799,16 +796,7 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e) {
 	gg_free_session(g->sess);
 	g->sess = NULL;
 
-	{
-		char *__session = xstrdup(session_uid_get(s));
-		char *__reason = xstrdup(format_find(reason));
-		int __type = EKG_DISCONNECT_FAILURE;
-
-		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type, NULL);
-
-		xfree(__reason);
-		xfree(__session);
-	}
+	protocol_disconnected_emit(s, format_find(reason), EKG_DISCONNECT_FAILURE);
 }
 
 /*
@@ -819,14 +807,7 @@ static void gg_session_handler_failure(session_t *s, struct gg_event *e) {
 static void gg_session_handler_disconnect(session_t *s) {
 	gg_private_t *g = s->priv;
 
-	char *__session	= xstrdup(s->uid);
-	char *__reason	= NULL;
-	int __type	= EKG_DISCONNECT_FORCED;
-
-	query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type);
-
-	xfree(__session);
-	xfree(__reason);
+	protocol_disconnected_emit(s, NULL, EKG_DISCONNECT_FORCED);
 
 	gg_logoff(g->sess);		/* zamknie gniazdo */
 	gg_free_session(g->sess);
@@ -839,11 +820,8 @@ static void gg_session_handler_disconnect(session_t *s) {
  * obs³uga zmiany stanu przez u¿ytkownika.
  */
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol) {
-	char *__session	= xstrdup(session_uid_get(s));
 	char *__uid	= saprintf(("gg:%d"), uin);
-	int __status	= gg_status_to_text(status);
 	char *__descr	= gg_cp_to_locale(xstrdup(descr));
-	time_t when	= time(NULL);
 	int i, j, dlen, state = 0, m = 0;
 
 	{
@@ -888,11 +866,11 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 		}
 
 	}
-	query_emit_id(NULL, PROTOCOL_STATUS, &__session, &__uid, &__status, &__descr, &when);
+
+	protocol_status_emit(s, __uid, gg_status_to_text(status), __descr, time(NULL));
 
 	xfree(__descr);
 	xfree(__uid);
-	xfree(__session);
 }
 
 /*
@@ -1022,20 +1000,12 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	if (image && check_inv) {
 		print("gg_we_are_being_checked", session_name(s), format_user(s, __sender));
 	} else {
-		char *__session = xstrdup(session_uid_get(s));
-		char *__seq	= NULL;
-		time_t __sent	= e->event.msg.time;
 		int __class	= e->event.msg.sender ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_SYSTEM;
-		int ekgbeep	= EKG_TRY_BEEP;
-		int secure	= 0;
 
 /*		if (!check_inv || xstrcmp(__text, ""))
 			printq("generic", "image in message.\n"); - or something
  */
-		query_emit_id(NULL, PROTOCOL_MESSAGE, &__session, &__sender, &__rcpts, &__text, &__format, &__sent, &__class, &__seq, &ekgbeep, &secure);
-		xfree(__session);
-
-/*		xfree(__seq); */
+		protocol_message_emit(s, __sender, __rcpts, __text, __format, e->event.msg.time, __class, NULL, EKG_TRY_BEEP, 0);
 	}
 	
 	xfree(__text);
@@ -1132,19 +1102,8 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 									c_timer->session = s;
 									timer_add(&gg_plugin, NULL, interval, 0, gg_inv_check_handler, c_timer);
 								}
-								if (u->status == EKG_STATUS_NA) {
-									char *session	= xstrdup(session_uid_get(s));
-									char *uid	= xstrdup(tmp);
-									int status	= EKG_STATUS_INVISIBLE;
-									char *descr	= xstrdup(u->descr);
-									time_t when	= time(NULL);
-									
-									query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid, &status, &descr, &when);
-									
-									xfree(session);
-									xfree(uid);
-									xfree(descr);
-								}
+								if (u->status == EKG_STATUS_NA)
+									protocol_status_emit(s, tmp, EKG_STATUS_INVISIBLE, u->descr, time(NULL));
 							} else
 								print("gg_user_is_connected", session_name(s), format_user(s, tmp));
 							xfree(c->uid);
@@ -1300,14 +1259,8 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 
 	if (type == 2) {
 		if (g->sess->state != GG_STATE_CONNECTING_GG) {
-			char *__session = xstrdup(s->uid);
-			char *__reason = NULL;
-			int __type = EKG_DISCONNECT_FAILURE;
+			protocol_disconnected_emit(s, NULL, EKG_DISCONNECT_FAILURE);
 
-			query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type);
-
-			xfree(__reason);
-			xfree(__session);
 			gg_free_session(g->sess);
 			g->sess = NULL;
 
@@ -1319,14 +1272,7 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 	}
 
 	if (!(e = gg_watch_fd(g->sess))) {
-		char *__session = xstrdup(s->uid);
-		char *__reason = NULL;
-		int __type = EKG_DISCONNECT_NETWORK;
-
-		query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &__reason, &__type);
-
-		xfree(__reason);
-		xfree(__session);
+		protocol_disconnected_emit(s, NULL, EKG_DISCONNECT_NETWORK);
 
 		gg_free_session(g->sess);
 		g->sess = NULL;

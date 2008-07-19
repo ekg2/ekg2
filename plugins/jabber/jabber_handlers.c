@@ -993,11 +993,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	}
 
 	if (nbody || nsubject) {
-		char *me	= xstrdup(session_uid_get(s));
-		int ekgbeep 	= EKG_TRY_BEEP;
 		int secure	= (x_encrypted != NULL);
-		char **rcpts 	= NULL;
-		char *seq 	= NULL;
 		time_t sent	= bsent;
 		char *text	= tlenjabber_unescape(body->str);
 		uint32_t *format= jabber_msg_format(text, nhtml);
@@ -1017,7 +1013,6 @@ JABBER_HANDLER(jabber_handle_message) {
 		/* jesli (bsent != 0) wtedy mamy do czynienia z backlogiem */
 
 			class	|= EKG_NO_THEMEBIT;	/* XXX: maybe some core-side support instead of forcing our themes? */
-			ekgbeep	= EKG_NO_BEEP;
 
 			if (nick) {	/* XXX !!! */
 				char attr[2] = { ' ', 0 };
@@ -1046,23 +1041,17 @@ JABBER_HANDLER(jabber_handle_message) {
 				formatted = format_string(format_find("jabber_muc_notice"), session_name(s), uid+5, text);
 			}
 
-			query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &formatted, &format, &sent, &class, &seq, &ekgbeep, &secure);
+			protocol_message_emit(s, uid, NULL, formatted, format, sent, class, NULL, EKG_NO_BEEP, secure);
 
 			xfree(uid2);
 			xfree(nick);
 			xfree(formatted);
 			xfree(format);
 		} else {
-			query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &uid, &rcpts, &text, &format, &sent, &class, &seq, &ekgbeep, &secure);
+			protocol_message_emit(s, uid, NULL, text, format, sent, class, NULL, EKG_TRY_BEEP, secure);
 		}
 
-		xfree(me);
 		xfree(text);
-		array_free(rcpts);
-/*
-		xfree(seq);
-		xfree(format);
-*/
 	}
 	xfree(x_encrypted);
 
@@ -1673,7 +1662,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 		if (!when)
 			when = time(NULL);
 
-		query_emit_id_ro(NULL, PROTOCOL_STATUS, &(s->uid), &uid, &status, &descr, &when);
+		protocol_status_emit(s, uid, status, descr, when);
 		xfree(descr);
 	}
 	xfree(uid);
@@ -1681,15 +1670,14 @@ JABBER_HANDLER(jabber_handle_presence) {
 
 static void jabber_session_connected(session_t *s) {
 	jabber_private_t *j = jabber_private(s);
-	char *__session = xstrdup(session_uid_get(s));
 
 	s->connecting = 0;
 
-	query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
+	protocol_connected_emit(s);
 
 	if (session_get(s, "__new_account")) {
-		print("register", __session);
-		if (!xstrcmp(session_get(s, "password"), "foo")) print("register_change_passwd", __session, "foo");
+		print("register", s->uid);
+		if (!xstrcmp(session_get(s, "password"), "foo")) print("register_change_passwd", s->uid, "foo");
 		session_set(s, "__new_account", NULL);
 	}
 
@@ -1716,7 +1704,6 @@ static void jabber_session_connected(session_t *s) {
 			"<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>",
 			j->id++);
 	}
-	xfree(__session);
 }
 
 static void newmail_common(session_t *s) { /* maybe inline? */

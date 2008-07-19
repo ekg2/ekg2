@@ -250,6 +250,10 @@ static QUERY(protocol_disconnected) {
 	return 0;
 }
 
+int protocol_disconnected_emit(const session_t *s, const char *reason, int type) {
+       return query_emit_id_ro(NULL, PROTOCOL_DISCONNECTED, &(s->uid), &reason, &type);
+}
+
 /**
  * protocol_connected()
  *
@@ -297,6 +301,10 @@ static QUERY(protocol_connected) {
 		print("queue_flush", session_name(s));
 
 	return 0;
+}
+
+int protocol_connected_emit(const session_t *s) {
+       return query_emit_id_ro(NULL, PROTOCOL_CONNECTED, &(s->uid));
 }
 
 /*
@@ -482,6 +490,10 @@ notify_plugins:
 	}
 
 	return 0;
+}
+
+int protocol_status_emit(const session_t *s, const char *uid, int status, char *descr, time_t when) {
+       return query_emit_id_ro(NULL, PROTOCOL_STATUS, &(s->uid), &uid, &status, &descr, &when);
 }
 
 /*
@@ -834,6 +846,10 @@ static QUERY(protocol_message)
 
 	xfree(target);
 	return 0;
+}
+
+int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, const char *text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure) {
+       return query_emit_id_ro(NULL, PROTOCOL_MESSAGE, &(s->uid), &uid, &rcpts, &text, &format, &sent, &class, &seq, &dobeep, &secure);
 }
 
 /**

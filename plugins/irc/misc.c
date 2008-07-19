@@ -458,13 +458,12 @@ IRC_COMMAND(irc_c_init)
 {
 	int		i, k;
 	char		*t;
-	char		*__session = xstrdup(session_uid_get(s));
 	connector_t	*temp;
 	switch (irccommands[ecode].num)
 	{
 		case 1:
 			temp = j->conntmplist->data;
-			query_emit_id(NULL, PROTOCOL_CONNECTED, &__session);
+			protocol_connected_emit(s);
 			t = xstrchr(param[3], '!');
 			xfree(j->host_ident);
 			if (t)  j->host_ident=xstrdup(++t); 
@@ -537,8 +536,6 @@ IRC_COMMAND(irc_c_init)
 		default:
 			break;
 	}
-
-	xfree(__session);
 	return 0;
 }
 
@@ -1074,7 +1071,7 @@ IRC_COMMAND(irc_c_nick)
  */
 IRC_COMMAND(irc_c_msg)
 {
-	char		*t, *dest, *me, *form=NULL, *seq=NULL, *format;
+	char		*t, *dest, *me, *format;
 	char		*head, *xosd_nick, *xosd_chan, **rcpts = NULL;
 	char		*ctcpstripped, *coloured, *pubtous, tous, prefix[2];
 	int		class, ekgbeep= EKG_NO_BEEP;
@@ -1082,7 +1079,6 @@ IRC_COMMAND(irc_c_msg)
 	window_t	*w = NULL;
 	people_t	*person;
 	people_chan_t	*perchn = NULL;
-	time_t		sent;
 	int		secure = 0, xosd_to_us = 0, xosd_is_priv = 0;
 	char		*ignore_nick = NULL;
 	char *recoded;
@@ -1231,14 +1227,12 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 		xfree(ctcpstripped);
 		xfree(coloured);
 		xfree(me);
-		me = xstrdup(session_uid_get(s));
-		sent = time(NULL);
+		me = NULL;
 		class |= EKG_NO_THEMEBIT;
 
 		ignore_nick = saprintf("%s%s", IRC4, OMITCOLON(param[0]));
 		if (xosd_is_priv || !(ignored_check(s, ignore_nick) & IGNORE_MSG))
-			query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &dest, &rcpts, &head,
-					&form, &sent, &class, &seq, &ekgbeep, &secure);
+			protocol_message_emit(s, dest, rcpts, head, NULL, time(NULL), class, NULL, ekgbeep, secure);
 		xfree(ignore_nick);
 
 		xfree(head);

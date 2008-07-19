@@ -101,11 +101,9 @@ static COMMAND(gg_command_connect) {
 				printq("not_connected", session_name(session));
 
 		} else {
-			char *__session = xstrdup(session->uid);
 			const char *__reason = params[0];
 			char *myreason;
 			char *tmp;
-			int __type = EKG_DISCONNECT_USER;
 
 			if (session->autoaway)
 				session_status_set(session, EKG_STATUS_AUTOBACK);
@@ -130,10 +128,9 @@ static COMMAND(gg_command_connect) {
 			gg_free_session(g->sess);
 			g->sess = NULL;
 
-			query_emit_id(NULL, PROTOCOL_DISCONNECTED, &__session, &myreason, &__type, NULL);
+			protocol_disconnected_emit(session, myreason, EKG_DISCONNECT_USER);
 
 			xfree(myreason);
-			xfree(__session);
 		}
 	}
 
@@ -808,16 +805,12 @@ static COMMAND(gg_command_msg) {
 
 	if (valid && !quiet) {
 		char **rcpts = xmalloc(sizeof(char *) * 2);
-		const int ekgbeep = EKG_TRY_BEEP;
-		char *me = xstrdup(session_uid_get(session));
-		const time_t sent = time(NULL);
 		
 		rcpts[0] = xstrdup(nick);
 		rcpts[1] = NULL;
 
-		query_emit_id(NULL, PROTOCOL_MESSAGE, &me, &me, &rcpts, &raw_msg, &ekg_format, &sent, &class, &seq, &ekgbeep, &secure);
+		protocol_message_emit(session, session->uid, rcpts, raw_msg, ekg_format, time(NULL), class, seq, EKG_TRY_BEEP, secure);
 
-		xfree(me);
 		xfree(rcpts[0]);
 		xfree(rcpts);
 	}
