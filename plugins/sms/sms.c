@@ -232,10 +232,15 @@ static COMMAND(sms_command_sms)
         userlist_t *u;
         const char *number = NULL;
 
-        if (!params[0] || !params[1] || !config_sms_app) {
+        if (!params[0] || !params[1]) {
                 printq("not_enough_params", name);
                 return -1;
         }
+
+	if (!config_sms_app) {
+		printq("var_not_set", name, "sms:sms_send_app");
+		return -1;
+	}
 
         if ((u = userlist_find(session, params[0]))) {
 		{
