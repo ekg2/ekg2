@@ -1635,9 +1635,6 @@ void update_statusbar(int commit)
 		wattrset(ncurses_header, color_pair(COLOR_WHITE, COLOR_BLUE));
 
 	/* inicjalizujemy wszystkie opisowe bzdurki */
-
-	memset(&formats, 0, sizeof(formats));
-
 #define __add_format(x, z) \
 	{ \
 		formats[formats_count].name = x; \
@@ -1678,15 +1675,18 @@ void update_statusbar(int commit)
 	__add_format("activity", ncurses_window_activity());
 
 	if (sess && (sess->connected || (sess->connecting && connecting_counter))) {
-#define __add_format_emp_st(x, y) __add_format_emp(x, (sess->status == y))
-		__add_format_emp_st("away", EKG_STATUS_AWAY);
-		__add_format_emp_st("avail", EKG_STATUS_AVAIL);
-		__add_format_emp_st("dnd", EKG_STATUS_DND);
-		__add_format_emp_st("chat", EKG_STATUS_FFC);
-		__add_format_emp_st("xa", EKG_STATUS_XA);
-		__add_format_emp_st("invisible", EKG_STATUS_INVISIBLE);
+#define __add_format_emp_st(x, y) case y: __add_format(x, (char *) empty_format) break
+		switch (sess->status) {
+			__add_format_emp_st("away", EKG_STATUS_AWAY);
+			__add_format_emp_st("avail", EKG_STATUS_AVAIL);
+			__add_format_emp_st("dnd", EKG_STATUS_DND);
+			__add_format_emp_st("chat", EKG_STATUS_FFC);
+			__add_format_emp_st("xa", EKG_STATUS_XA);
+			__add_format_emp_st("invisible", EKG_STATUS_INVISIBLE);
 
-		__add_format_emp_st("notavail", EKG_STATUS_NA);		/* XXX, session shouldn't be connected here */
+			__add_format_emp_st("notavail", EKG_STATUS_NA);		/* XXX, session shouldn't be connected here */
+			default: ;
+		}
 #undef __add_format_emp_st
 	} else
 		__add_format_emp("notavail", 1);
@@ -1695,15 +1695,18 @@ void update_statusbar(int commit)
 		connecting_counter ^= 1;
 
 	if (q) {
-#define __add_format_emp_st(x, y) __add_format_emp("query_" x, (q->status == y));
-		__add_format_emp_st("away", EKG_STATUS_AWAY);
-		__add_format_emp_st("avail", EKG_STATUS_AVAIL);
-		__add_format_emp_st("invisible", EKG_STATUS_INVISIBLE);
-		__add_format_emp_st("notavail", EKG_STATUS_NA);
-		__add_format_emp_st("dnd", EKG_STATUS_DND);
-		__add_format_emp_st("chat", EKG_STATUS_FFC);
-		__add_format_emp_st("xa", EKG_STATUS_XA);
-		/* XXX add unknown and likes!; maybe we could use ekg_status_string()? */
+#define __add_format_emp_st(x, y) case y: __add_format("query_" x, (char *) empty_format); break
+		switch (q->status) {
+			__add_format_emp_st("away", EKG_STATUS_AWAY);
+			__add_format_emp_st("avail", EKG_STATUS_AVAIL);
+			__add_format_emp_st("invisible", EKG_STATUS_INVISIBLE);
+			__add_format_emp_st("notavail", EKG_STATUS_NA);
+			__add_format_emp_st("dnd", EKG_STATUS_DND);
+			__add_format_emp_st("chat", EKG_STATUS_FFC);
+			__add_format_emp_st("xa", EKG_STATUS_XA);
+			default: ;
+			/* XXX add unknown and likes!; maybe we could use ekg_status_string()? */
+		}
 #undef __add_format_emp_st
 
 		__add_format_emp("typing", q->typing);
@@ -1713,6 +1716,8 @@ void update_statusbar(int commit)
 
 	__add_format_dup("url", 1, "http://www.ekg2.org/");
 	__add_format_dup("version", 1, VERSION);
+
+	__add_format(NULL, NULL);	/* NULL-terminator */
 
 #undef __add_format_emp
 #undef __add_format_dup
