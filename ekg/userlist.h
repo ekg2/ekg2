@@ -173,6 +173,8 @@ userlist_t *userlist_find_u(userlist_t **userlist, const char *uid);
 void userlist_free(session_t *session);
 void userlists_destroy(userlist_t **userlist);
 
+void *userlist_private_get(plugin_t *plugin, userlist_t *u);
+
 /* u->resource */
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio);
 ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name);

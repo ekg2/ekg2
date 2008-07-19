@@ -177,13 +177,14 @@ enum jabber_auth_t {
 	EKG_JABBER_AUTH_UNREQ	= 8
 };
 
-#define jabber_private(s) ((jabber_private_t*) session_private_get(s))
-
 extern plugin_t jabber_plugin;
 extern char *jabber_default_pubsub_server;
 extern char *jabber_default_search_server;
 extern int config_jabber_beep_mail;
 extern const char *jabber_authtypes[];
+
+#define jabber_private(s) 		((jabber_private_t*) session_private_get(s))
+#define jabber_userlist_priv_get(u)	((jabber_userlist_private_t *) userlist_private_get(&jabber_plugin, u))
 
 void jabber_register_commands(void);
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data);
@@ -236,8 +237,6 @@ char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_
 char *jabber_zlib_decompress(const char *buf, int *len);
 char *jabber_zlib_compress(const char *buf, int *len);
 #endif
-
-jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u);
 
 int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *subject, const char *thread, jabber_conversation_t **result, const int can_add);
 jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, const int n);

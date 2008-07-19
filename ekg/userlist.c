@@ -309,6 +309,15 @@ void userlist_write_crash() {
  */
 }
 
+void *userlist_private_get(plugin_t *plugin, userlist_t *u) {
+	int func = EKG_USERLIST_PRIVHANDLER_GET;
+	void *up = NULL;
+
+	query_emit_id(plugin, USERLIST_PRIVHANDLE, &u, &func, &up);
+
+	return up;
+}
+
 /**
  * userlist_clear_status()
  *

@@ -91,8 +91,7 @@ typedef struct {
         uint16_t last_port;     /**< Lastseen port */
 } gg_userlist_private_t;
 
-/* misc.c */
-gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u);
+#define gg_userlist_priv_get(u) ((gg_userlist_private_t *) userlist_private_get(&gg_plugin, u))
 
 #endif /* __EKG_GG_GG_H */
 

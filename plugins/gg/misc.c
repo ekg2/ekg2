@@ -33,21 +33,10 @@
 #include <ekg/debug.h>
 #include <ekg/stuff.h>
 
-#include <ekg/queries.h>
-
 #include "gg.h"
 
 void *conv_in	= (void*) -1;
 void *conv_out	= (void*) -1;
-
-gg_userlist_private_t *gg_userlist_priv_get(userlist_t *u) {
-	int func			= EKG_USERLIST_PRIVHANDLER_GET;
-	gg_userlist_private_t *up	= NULL;
-
-	query_emit_id(&gg_plugin, USERLIST_PRIVHANDLE, &u, &func, &up);
-
-	return up;
-}
 
 /* 80..9F = ?; here is A0..BF, C0..FF is the same */
 static const unsigned char iso_to_cp_table[] = {

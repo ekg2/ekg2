@@ -28,15 +28,6 @@ void *jconv_out = (void*) -1;
 void *tconv_in = (void*) -1;
 void *tconv_out = (void*) -1;
 
-jabber_userlist_private_t *jabber_userlist_priv_get(userlist_t *u) {
-	int func			= EKG_USERLIST_PRIVHANDLER_GET;
-	jabber_userlist_private_t *up	= NULL;
-
-	query_emit_id(&jabber_plugin, USERLIST_PRIVHANDLE, &u, &func, &up);
-
-	return up;
-}
-	
 /* XXX, It's the same function from mcjabber, but uses one buffor. */
 static char *jabber_gpg_strip_header_footer(char *data) {
 	char *p, *q;
