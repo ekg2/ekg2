@@ -705,10 +705,10 @@ IRC_COMMAND(irc_c_error)
 	return 0;
 }
 
-static void clean_channel_name(session_t *session, char *channel)
+static void clean_channel_names(session_t *session, char *channels)
 {
-	char chpfx;
-	int skip;
+	char *dest, *src, *next, *p;
+	int len, skip;
 
 	if (!irc_config_experimental_chan_name_clean)
 		return;
@@ -717,42 +717,6 @@ static void clean_channel_name(session_t *session, char *channel)
 	char *idchan = SOP(_005_IDCHAN);
 
 	if (!idchan)
-		return;
-
-	while (*idchan) {
-		chpfx = *idchan;
-
-		if (idchan[1] != ':')		/* ?WO? Check it only when IDCHAN is set & dot't check here */
-			return;
-
-		skip = strtoul(idchan+2, &idchan, 10);
-		if (*idchan == ',')
-			idchan++;
-		else if (*idchan)		/* ?WO? Again: Check it only when IDCHAN is set & dot't check here */
-			return;
-
-		if (chpfx != channel[0])
-			continue;
-
-		if (strlen(channel) < skip)
-			return;
-
-		strcpy(channel + 1, channel + skip + 1);
-	}
-}
-
-static void clean_channel_names_list(session_t *session, char *channels)
-{
-	char *dest, *src, *next, *p;
-	int l;
-
-	if (!irc_config_experimental_chan_name_clean)
-		return;
-
-	irc_private_t *j = irc_private(session);
-	const char *idchan = SOP(_005_IDCHAN);
-
-	if (!idchan)				/* ?WO? Faster then check in clean_channel_name() ? */
 		return;
 
 	char *chmode = SOP(_005_PREFIX);
@@ -773,10 +737,31 @@ static void clean_channel_names_list(session_t *session, char *channels)
 		if (next)
 			*next = '\0';
 
-		clean_channel_name(session, p);
-		l = strlen(p);
+		idchan = SOP(_005_IDCHAN);
+		while (*idchan) {
+			char chpfx = *idchan;
+
+			if (idchan[1] != ':')		/* ?WO? Check it only when IDCHAN is set & dot't check here */
+				break;
+
+			skip = strtoul(idchan+2, &idchan, 10);
+			if (*idchan == ',')
+				idchan++;
+			else if (*idchan)		/* ?WO? Again: Check it only when IDCHAN is set & dot't check here */
+				break;
+
+			if (chpfx != p[0])
+				break;
+
+			if (strlen(p)-2 < skip)		/* we need prefix and one (or more) chars in channel name */
+				break;
+
+			strcpy(p + 1, p + skip + 1);
+		}
+
+		len = strlen(p);
 		strcpy(dest, p);
-		dest += l;
+		dest += len;
 		src = next;
 		if (next)
 			*next=' ';
@@ -802,7 +787,7 @@ IRC_COMMAND(irc_c_whois)
 					param[3+i]?OMITCOLON(param[3+i]):NULL,1);
 
 		if (irccommands[ecode].num == 319)
-			clean_channel_names_list(s, col[1]);
+			clean_channel_names(s, col[1]);
 		/*
 		if (irccommands[ecode].future & IRC_WHOERR)
 			print_info(dest, s, "IRC_WHOERROR", session_name(s), col[0],  col[1]);
@@ -1276,7 +1261,7 @@ IRC_COMMAND(irc_c_join)
 		newwin = window_new(ekg2_channel, s, 0);
 
 		tmp = xstrdup(irc_channel);
-		clean_channel_name(s, tmp);
+		clean_channel_names(s, tmp);
 		if (xstrcmp(irc_channel, tmp))
 			newwin->alias = xstrdup(tmp);	/* ?WO? format for alias here??? */
 		xfree(tmp);
