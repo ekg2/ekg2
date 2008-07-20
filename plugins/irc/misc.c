@@ -1271,6 +1271,8 @@ IRC_COMMAND(irc_c_join)
 	 * but I have no head to this now... */
 	me = !xstrcmp(j->nick, param[0]+1); /* We join ? */
 	if (me) {
+		char *tmp;
+
 		newwin = window_new(ekg2_channel, s, 0);
 
 		tmp = xstrdup(irc_channel);
