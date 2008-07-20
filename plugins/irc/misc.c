@@ -705,26 +705,27 @@ IRC_COMMAND(irc_c_error)
 	return 0;
 }
 
-static void clean_channel_names(session_t *session, char *channels)
+static char *clean_channel_names(session_t *session, char *channels)
 {
 	char *dest, *src, *next, *p;
 	int len, skip;
+	char *ret = xstrdup(channels);
 
 	if (!irc_config_experimental_chan_name_clean)
-		return;
+		return ret;
 
 	irc_private_t *j = irc_private(session);
 	char *idchan = SOP(_005_IDCHAN);
 
 	if (!idchan)
-		return;
+		return ret;
 
 	char *chmode = SOP(_005_PREFIX);
 
 	if ( ( p = strchr(chmode,')') ) )	/* ?WO? Would be nice to have '@%+' not '(ohv)@%+' */
 		chmode = ++p;
 	
-	dest = src = channels;
+	dest = src = ret;
 	while ( src && *src ) {
 		if ((*src == ' ') || (strchr(chmode, *src))) {
 			*dest++ = *src++;
@@ -767,6 +768,7 @@ static void clean_channel_names(session_t *session, char *channels)
 			*next=' ';
 	}
 	*dest='\0';
+	return ret;
 }
 
 IRC_COMMAND(irc_c_whois)
@@ -782,24 +784,27 @@ IRC_COMMAND(irc_c_whois)
         	dest = w?t:NULL;
 
 	if (irccommands[ecode].num != 317) { /* idle */
+		char *chlist = NULL;
+
 		for (i=0; i<5; i++)
 			col[i] = irc_ircoldcolstr_to_ekgcolstr(s,
 					param[3+i]?OMITCOLON(param[3+i]):NULL,1);
 
 		if (irccommands[ecode].num == 319)
-			clean_channel_names(s, col[1]);
+			chlist = clean_channel_names(s, col[1]);
 		/*
 		if (irccommands[ecode].future & IRC_WHOERR)
 			print_info(dest, s, "IRC_WHOERROR", session_name(s), col[0],  col[1]);
 		else
 		*/
 			print_info(dest, s, irccommands[ecode].name, 
-					session_name(s), col[0], col[1],
+					session_name(s), col[0], chlist,
 					col[2], col[3], col[4]);
 
 		for (i=0; i<5; i++)
 			xfree(col[i]);
 
+		xfree(chlist);
 		xfree(t);
 		return (0);
 	}
@@ -1237,7 +1242,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
  */
 IRC_COMMAND(irc_c_join)
 {
-	char		*ekg2_channel, *irc_channel, *tmp;
+	char		*ekg2_channel, *irc_channel, *tmp, *chname;
 	channel_t	*ischan;
 	window_t	*newwin;
 	people_t	*person;
@@ -1251,20 +1256,18 @@ IRC_COMMAND(irc_c_join)
 	ekg2_channel = saprintf("%s:%s", IRC3, irc_channel);
 	irc_nick = saprintf("%s:%s", IRC3, param[0]+1);
 
+	chname = clean_channel_names(s, irc_channel);
+
 	if ((tmp = xstrchr(param[0], '!'))) *tmp='\0';
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
 	 * but I have no head to this now... */
 	me = !xstrcmp(j->nick, param[0]+1); /* We join ? */
 	if (me) {
-		char *tmp;
 
 		newwin = window_new(ekg2_channel, s, 0);
 
-		tmp = xstrdup(irc_channel);
-		clean_channel_names(s, tmp);
-		if (xstrcmp(irc_channel, tmp))
-			newwin->alias = xstrdup(tmp);	/* ?WO? format for alias here??? */
-		xfree(tmp);
+		if (xstrcmp(irc_channel, chname))
+			newwin->alias = xstrdup(chname);	/* ?WO? format for alias here??? */
 
 		window_switch(newwin->id);
 		debug("[irc] c_join() %08X\n", newwin);
@@ -1280,7 +1283,7 @@ IRC_COMMAND(irc_c_join)
 
 	if (!(ignored_check(s, ekg2_channel) & IGNORE_NOTIFY) && !(ignored_check(s, irc_nick) & IGNORE_NOTIFY)) {
 		print_info(ekg2_channel, s, me ? "irc_joined_you" : "irc_joined",
-				session_name(s), param[0]+1, tmp?tmp+1:"", irc_channel);
+				session_name(s), param[0]+1, tmp?tmp+1:"", chname);
 		if (me)	{
 			int __secure = 0;
     			char *__sid      = xstrdup(session_uid_get(s));
@@ -1288,8 +1291,8 @@ IRC_COMMAND(irc_c_join)
 			char *__msg	 = xstrdup("test");
 
 			if (query_emit_id(NULL, MESSAGE_ENCRYPT, &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
-				print_info(ekg2_channel, s, "irc_channel_secure", session_name(s), irc_channel);
-			else 	print_info(ekg2_channel, s, "irc_channel_unsecure", session_name(s), irc_channel);
+				print_info(ekg2_channel, s, "irc_channel_secure", session_name(s), chname);
+			else 	print_info(ekg2_channel, s, "irc_channel_unsecure", session_name(s), chname);
 			xfree(__msg);
 			xfree(__uid_full);
 			xfree(__sid);
@@ -1297,6 +1300,7 @@ IRC_COMMAND(irc_c_join)
 	}
 	if (tmp) *tmp='!';
 
+	xfree(chname);
 	xfree(irc_nick);
 	xfree(ekg2_channel);
 	return 0;
@@ -1343,8 +1347,10 @@ IRC_COMMAND(irc_c_part)
 	 * e.g: on my fave: DISPLAY_IN_CURRENT :)
 	 */
 	if (!(ignored_check(s, ekg2_channel) & IGNORE_NOTIFY) && !(ignored_check(s, irc_nick) & IGNORE_NOTIFY)) {
+		char *cchn = clean_channel_names(s, irc_channel);
 		print_info(ekg2_channel, s, (me)?"irc_left_you":"irc_left", session_name(s),
-				param[0]+1, tmp?tmp+1:"", irc_channel, coloured);
+				param[0]+1, tmp?tmp+1:"", cchn, coloured);
+		xfree(cchn);
 	}
 	
 	if (tmp) *tmp='!';
@@ -1365,7 +1371,7 @@ IRC_COMMAND(irc_c_part)
  */
 IRC_COMMAND(irc_c_kick)
 {
-	char			*ekg2_channel, *irc_channel, *tmp, *uid, *coloured;
+	char			*ekg2_channel, *irc_channel, *tmp, *uid, *coloured, *cchn;
 	char			*_session, *_nick;
 	int			me = !xstrcmp(j->nick, param[3]);
 
@@ -1388,10 +1394,11 @@ IRC_COMMAND(irc_c_kick)
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[4]), 1):
 				xstrdup("no reason"):xstrdup("no reason");
 
+	cchn = clean_channel_names(s, irc_channel);
 	/* session, kicked_nick, kicker_nick, kicker_ident+host, chan, reason */
 	print_info(ekg2_channel, s, me ? "irc_kicked_you" : "irc_kicked",  session_name(s), 
 			OMITCOLON(param[3]), uid+4, tmp?tmp+1:"",
-			irc_channel, coloured);
+			cchn, coloured);
 	xfree(coloured);
 
 /*sending irc-kick event*/
@@ -1401,6 +1408,7 @@ IRC_COMMAND(irc_c_kick)
 	xfree(_nick);
 	xfree(_session);
 
+	xfree(cchn);
 	xfree(ekg2_channel);
 	xfree(uid);
 	return 0;
@@ -1465,7 +1473,7 @@ IRC_COMMAND(irc_c_topic)
 {
 	window_t	*w;
 	char		*t, *dest=NULL;
-	char		*coloured;
+	char		*coloured, *cchn;
 	char		*__topic, *__topicby;
 	channel_t	*chanp = NULL;
 
@@ -1482,21 +1490,23 @@ IRC_COMMAND(irc_c_topic)
 
 	__topicby = OMITCOLON(param[0]);
 	__topic   = OMITCOLON(param[3]);
+	cchn = clean_channel_names(s, param[2]);
 	if (xstrlen(__topic)) {
 		char *recoded = irc_convert_in(j, __topic);
 		chanp->topic  = recoded ? recoded : xstrdup(__topic);;
 		chanp->topicby = xstrdup(__topicby);
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
 		print_info(dest, s, "IRC_TOPIC_CHANGE", session_name(s),
-				param[0]+1, t?t+1:"", param[2], coloured);
+				param[0]+1, t?t+1:"", cchn, coloured);
 		xfree(coloured);
 	} else {
 		chanp->topic   = xstrdup("No topic set!");
 		chanp->topicby = xstrdup(__topicby);
 		print_info(dest, s, "IRC_TOPIC_UNSET", session_name(s),
-				param[0]+1, t?t+1:"", param[2]);
+				param[0]+1, t?t+1:"", cchn);
 	}
 	if (t) *t='!';
+	xfree(cchn);
 	return 0;
 }
 
@@ -1514,7 +1524,7 @@ IRC_COMMAND(irc_c_topic)
 /* TODO: add the person, that invites us, to list ? */
 IRC_COMMAND(irc_c_invite)
 {
-	char	*tmp;
+	char	*tmp, *cchn;
 	/*
 	char *nick = NULL;
 	char *dest = NULL; 
@@ -1525,9 +1535,12 @@ IRC_COMMAND(irc_c_invite)
 
 	IRC_TO_LOWER(param[3]);
 
+	cchn = clean_channel_names(s, OMITCOLON(param[3]));
+
 	print_info(window_current->target, s, "IRC_INVITE",
 			session_name(s), param[0]+1, tmp?tmp+1:"",
-			param[2], OMITCOLON(param[3]));
+			param[2], cchn);
+	xfree(cchn);
 
 	if (session_int_get(s, "AUTO_JOIN_CHANS_ON_INVITE") == 1)
 		watch_write(j->send_watch, "JOIN %s\r\n", OMITCOLON(param[3]));
