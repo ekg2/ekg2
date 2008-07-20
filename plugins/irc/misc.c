@@ -57,6 +57,8 @@ char *sopt_casemapping_values[IRC_CASEMAPPING_COUNT] = { "ascii", "rfc1459", "st
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 
+static char *clean_channel_names(session_t *session, char *channels);
+
 static char *try_convert_string_p(const char *ps, iconv_t cd) {
 #ifdef HAVE_ICONV
 	char *s = (char *) ps;
@@ -636,6 +638,7 @@ IRC_COMMAND(irc_c_error)
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
 				char *__topic   = OMITCOLON(param[4]);
+				char *tmpchn	= clean_channel_names(s, param[3]);
 
 				xfree(chanp->topic);
 
@@ -644,8 +647,9 @@ IRC_COMMAND(irc_c_error)
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
 						chanp->topic, 1);
 				print_info(dest, s, irccommands[ecode].name,
-						session_name(s), param[3], coloured);
+						session_name(s), tmpchn, coloured);
 				xfree(coloured);
+				xfree(tmpchn);
 			}
 			break;
 		case 333:
@@ -908,6 +912,7 @@ IRC_COMMAND(irc_c_list)
 			if (chan->syncmode > 0)  {
 				chan->syncmode--;
 				if (chan->syncmode == 0) {
+					char *tmpchn = clean_channel_names(s, chan->name+4);
 					struct timeval tv;
 					gettimeofday(&tv, NULL);
 					tv.tv_usec+=(1000000-chan->syncstart.tv_usec);
@@ -915,7 +920,8 @@ IRC_COMMAND(irc_c_list)
 						tv.tv_sec++, tv.tv_usec-=1000000;
 					tv.tv_sec-=chan->syncstart.tv_sec;
 
-					print_info(dest, s, "IRC_CHANNEL_SYNCED", session_name(s), chan->name+4, itoa(tv.tv_sec), itoa(tv.tv_usec));
+					print_info(dest, s, "IRC_CHANNEL_SYNCED", session_name(s), tmpchn, itoa(tv.tv_sec), itoa(tv.tv_usec));
+					xfree(tmpchn);
 				}
 			}
 		}
@@ -1553,7 +1559,7 @@ IRC_COMMAND(irc_c_invite)
 IRC_COMMAND(irc_c_mode)
 {
 	int		i, k, len, val=0, act=1, is324=irccommands[ecode].num==324;
-	char		*t, *bang, *add, **pars, *ekg2_channame, *irc_channame, *mode_abc, *mode_c;
+	char		*t, *bang, *add, **pars, *ekg2_channame, *irc_channame, *mode_abc, *mode_c, *cchn;
 	people_t	*per;
 	people_chan_t	*ch;
 	channel_t	*chan;
@@ -1592,6 +1598,7 @@ IRC_COMMAND(irc_c_mode)
 
 	irc_channame = IRC_TO_LOWER(param[2]);
 	ekg2_channame = saprintf("%s%s", IRC4, irc_channame);
+	cchn = clean_channel_names(s, irc_channame);
 
 	for (i=0,k=4; i<xstrlen(param[3]) && xstrlen(param[k]); i++, t++) {
 		if (*t=='+' || *t=='-') {
@@ -1642,13 +1649,13 @@ notreallyok:
 	}
 	if (!is324) {
 		print_info(w?w->target:NULL, s, "IRC_MODE_CHAN_NEW", session_name(s),
-				param[0]+1, bang?bang+1:"", irc_channame, moderpl->str);
+				param[0]+1, bang?bang+1:"", cchn, moderpl->str);
 /*		if (moderpl->str[1] == 'b')
  *			watch_write(j->send_watch, "MODE %s +%c\r\n",  irc_channame, moderpl->str[1]);
  */
 	} else {
 		print_info(w?w->target:NULL, s, "IRC_MODE_CHAN", session_name(s),
-				irc_channame, moderpl->str);
+				cchn, moderpl->str);
 
 		if ((chan = irc_find_channel(j->channels, irc_channame))) {
 			xfree(chan->mode_str);
@@ -1659,6 +1666,7 @@ notreallyok:
 	string_free(moderpl, 1);
 
 	xfree(add);
+	xfree(cchn);
 	xfree(ekg2_channame);
         xfree(mode_abc);
 	return 0;
