@@ -118,9 +118,6 @@ int list_destroy3(list_t list, void (*func)(void *));
 
 void list_cleanup(list_t *list);
 int list_remove_safe(list_t *list, void *data, int free_data);
-
-LIST_FREE_ITEM(list_t_free_item, list_t);
-list_t list_t_new(void *data);
 #endif
 
 /*

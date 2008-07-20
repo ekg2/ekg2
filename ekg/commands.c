@@ -2835,7 +2835,7 @@ COMMAND(cmd_alias_exec)
 				need_args = __need;
 		}
 
-		LIST_ADD2(&m, list_t_new(xstrdup(tmp->data)));
+		list_add(&m, xstrdup(tmp->data));
 	}
 	
 	for (tmp = m; tmp; tmp = tmp->next) {
@@ -2853,7 +2853,7 @@ COMMAND(cmd_alias_exec)
 			if (!params[0]) {
 				printq("aliases_not_enough_params", name);
 				string_free(str, 1);
-				LIST_DESTROY2(m, list_t_free_item);
+				list_destroy(m, 1);
 				return -1;
 			}
 
@@ -2863,7 +2863,7 @@ COMMAND(cmd_alias_exec)
 				printq("aliases_not_enough_params", name);
 				string_free(str, 1);
 				array_free(arr);
-				LIST_DESTROY2(m, list_t_free_item);
+				list_destroy(m, 1);
 				return -1;
 			}
 
@@ -2893,7 +2893,7 @@ COMMAND(cmd_alias_exec)
 		string_free(str, 1);
 	}
 	
-	LIST_DESTROY2(m, list_t_free_item);
+	list_destroy(m, 1);
 		
 	return 0;
 }
@@ -3523,7 +3523,7 @@ static COMMAND(cmd_conference)
 			return -1;
 		}
 
-		LIST_ADD2(&c->recipients, list_t_new(xstrdup(uid)));
+		list_add(&c->recipients, xstrdup(uid));
 
 		printq("conferences_joined", format_user(session, uid), params[1]);
 

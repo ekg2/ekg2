@@ -256,7 +256,7 @@ void windows_save() {
 	}
 }
 
-static LIST_FREE_ITEM(list_alias_free, alias_t *) { xfree(data->name); LIST_DESTROY2(data->commands, list_t_free_item); }
+static LIST_FREE_ITEM(list_alias_free, alias_t *) { xfree(data->name); list_destroy(data->commands, 1); }
 
 DYNSTUFF_LIST_DECLARE(aliases, alias_t, list_alias_free,
 	static __DYNSTUFF_LIST_ADD, 		/* aliases_add() */
@@ -293,7 +293,7 @@ int alias_add(const char *string, int quiet, int append)
 				printq("aliases_exist", string);
 				return -1;
 			} else {
-				LIST_ADD2(&a->commands, list_t_new(xstrdup(cmd)));
+				list_add(&a->commands, xstrdup(cmd));
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
 				for (c = commands; c; c = c->next) {
@@ -325,7 +325,7 @@ int alias_add(const char *string, int quiet, int append)
 	a = xmalloc(sizeof(struct alias));
 	a->name = xstrdup(string);
 	a->commands = NULL;
-	LIST_ADD2(&(a->commands), list_t_new(xstrdup(cmd)));
+	list_add(&(a->commands), xstrdup(cmd));
 	aliases_add(a);
 
 	array = (params) ? array_join(params, (" ")) : xstrdup(("?"));
@@ -772,7 +772,7 @@ void newconference_destroy(newconference_t *conf, int kill_wnd) {
 
 /* OLD CONFERENCE API HERE, REQUEST REWRITING/USING NEW-ONE */
 
-static LIST_FREE_ITEM(conference_free_item, struct conference *) { xfree(data->name); LIST_DESTROY2(data->recipients, list_t_free_item); }
+static LIST_FREE_ITEM(conference_free_item, struct conference *) { xfree(data->name); list_destroy(data->recipients, 1); }
 
 DYNSTUFF_LIST_DECLARE(conferences, struct conference, conference_free_item,
 	static __DYNSTUFF_LIST_ADD,		/* conferences_add() */
@@ -877,7 +877,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		uid = get_uid(session, *p);
 
 		if (uid)
-			LIST_ADD2(&(c.recipients), list_t_new(xstrdup(uid)));
+			list_add(&(c.recipients), xstrdup(uid));
 		i++;
 	}
 
@@ -886,7 +886,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	if (i != count) {
 		printq("conferences_not_added", name);
-		LIST_DESTROY2(c.recipients, list_t_free_item);
+		list_destroy(c.recipients, 1);
 		return NULL;
 	}
 
@@ -1041,7 +1041,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 			int comma = 0;
 
 			if (xstrcasecmp(from, s->uid) && !conference_participant(c, from)) {
-				LIST_ADD2(&c->recipients, list_t_new(xmemdup(&from, sizeof(from))));
+				list_add(&c->recipients, xmemdup(&from, sizeof(from)));
 
 				comma++;
 				string_append(new, format_user(s, from));
@@ -1049,7 +1049,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 
 			for (i = 0; i < count; i++) {
 				if (xstrcasecmp(recipients[i], s->uid) && !conference_participant(c, recipients[i])) {
-					LIST_ADD2(&c->recipients, list_t_new(xmemdup(&recipients[i], sizeof(recipients[0]))));
+					list_add(&c->recipients, xmemdup(&recipients[i], sizeof(recipients[0])));
 			
 					if (comma++)
 						string_append(new, ", ");

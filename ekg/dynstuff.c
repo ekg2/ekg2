@@ -536,22 +536,6 @@ int list_destroy(list_t list, int free_data) {
 	return list_destroy2(list, free_data ? xfree : NULL);
 }
 
-
-/* list_t compatibility toolkit ( ; */
-
-	/* helper handler for using list_remove3() w/ list_t
-	 * like list_remove(..., 1) */
-LIST_FREE_ITEM(list_t_free_item, list_t) {
-	xfree(data->data);
-}
-
-list_t list_t_new(void *data) {
-	list_t out = xmalloc(sizeof(struct list));
-	out->data = data;
-
-	return out;
-}
-
 /*
  * string_realloc()
  *

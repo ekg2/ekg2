@@ -652,7 +652,7 @@ static int query_id(const char *name) {
 	a->id 	= queries_count++;
 	a->name	= xstrdup(name);
 
-	LIST_ADD2(&queries_external, list_t_new(a));
+	list_add(&queries_external, a);
 
 	return a->id;
 }
