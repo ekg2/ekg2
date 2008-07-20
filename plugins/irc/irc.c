@@ -1497,36 +1497,43 @@ static QUERY(irc_window_kill) {
  */
 
 static QUERY(irc_topic_header) {
-	char		**top   = va_arg(ap, char **);
-	char		**setby = va_arg(ap, char **);
-	char		**modes = va_arg(ap, char **);
+	char **top   = va_arg(ap, char **);
+	char **setby = va_arg(ap, char **);
+	char **modes = va_arg(ap, char **);
 
-	char		*targ	= window_current->target;
-	channel_t	*chanp	= NULL;
-	people_t 	*per  	= NULL;
+	session_t *sess	= window_current->session;
+	char *targ = window_current->target;
 
-	irc_private_t	*j	= irc_private(window_current->session);
-	char		*tmp	= NULL;
-
-	*top = *setby = *modes = NULL;
-	if (targ && window_current->session && window_current->session->plugin == &irc_plugin && session_connected_get(window_current->session) )
+	if (targ && sess && sess->plugin == &irc_plugin && sess->priv && sess->connected)
 	{ 
+		irc_private_t *j = sess->priv;
+		char *tmp;
+		channel_t *chanp;
+		people_t *per;
+
 		/* channel */
 		if ((tmp = SOP(_005_CHANTYPES)) && 
 		     xstrchr(tmp, targ[4]) && 
-		     (chanp = irc_find_channel((j->channels), targ))) {
-			*top   = irc_ircoldcolstr_to_ekgcolstr_nf(window_current->session, chanp->topic, 1);
+		     (chanp = irc_find_channel((j->channels), targ))) 
+		{
+			*top   = irc_ircoldcolstr_to_ekgcolstr_nf(sess, chanp->topic, 1);
 			*setby = xstrdup(chanp->topicby);
 			*modes = xstrdup(chanp->mode_str);
 			return 1;
-
+		}
+		
 		/* person */
 		/* ok new irc-find-person checked */
-		} else if ((per = irc_find_person((j->people), targ+4))) { 
+		if ((per = irc_find_person((j->people), targ+4))) { 
 			*top   = saprintf("%s@%s", per->ident, per->host);
 			*setby = xstrdup(per->realname);
+			*modes = NULL;
 			return 2;
-		} else return 0;
+		}
+
+		*top = *setby = *modes = NULL;
+
+		return 0;
 	}
 	return -3;
 }
