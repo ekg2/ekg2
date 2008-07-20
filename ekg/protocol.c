@@ -36,6 +36,7 @@
 
 #include "debug.h"
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "xmalloc.h"
 
 #include "commands.h"
@@ -951,6 +952,17 @@ int protocol_xstate_emit(const session_t *s, const char *uid, int state, int off
 	return query_emit_id_ro(NULL, PROTOCOL_XSTATE, &(s->uid), &uid, &state, &offstate);
 }
 
+static LIST_FREE_ITEM(dcc_free_item, dcc_t *) {
+	if (data->close_handler)
+		data->close_handler(data);
+	xfree(data->uid); xfree(data->filename);
+}
+
+DYNSTUFF_LIST_DECLARE(dccs, dcc_t, dcc_free_item, 
+	static __DYNSTUFF_LIST_ADD,			/* dccs_add() */
+	static __DYNSTUFF_LIST_REMOVE_SAFE,		/* dccs_remove() */
+	__DYNSTUFF_NODESTROY)				/* XXX dccs_destroy() XXX, we don't care? */
+
 /**
  * dcc_add()
  *
@@ -984,17 +996,9 @@ dcc_t *dcc_add(session_t *session, const char *uid, dcc_type_t type, void *priv)
 	d->started = time(NULL);
 	d->id = id;
 
-	LIST_ADD2(&dccs, d);
+	dccs_add(d);
 
 	return d;
-}
-
-static LIST_FREE_ITEM(dcc_free_item, dcc_t *) {
-	if (data->close_handler)
-		data->close_handler(data);
-
-	xfree(data->uid);
-	xfree(data->filename);
 }
 
 int dcc_close(dcc_t *d)
@@ -1002,8 +1006,7 @@ int dcc_close(dcc_t *d)
 	if (!d)
 		return -1;
 
-	LIST_REMOVE2(&dccs, d, dcc_free_item);
-
+	dccs_remove(d);
 	return 0;
 }
 
