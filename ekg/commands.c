@@ -1894,6 +1894,74 @@ static COMMAND(cmd_test_debug_dump)
 	return 0;
 }
 
+static char *timer_next_call(struct timer *t) {
+	long usec, sec, minutes = 0, hours = 0, days = 0;
+	struct timeval tv;
+
+	gettimeofday(&tv, NULL);
+
+	if (t->ends.tv_usec < tv.tv_usec) {
+		sec = t->ends.tv_sec - tv.tv_sec - 1;
+		usec = (t->ends.tv_usec - tv.tv_usec + 1000000) / 1000;
+	} else {
+		sec = t->ends.tv_sec - tv.tv_sec;
+		usec = (t->ends.tv_usec - tv.tv_usec) / 1000;
+	}
+
+	if (sec > 86400) {
+		days = sec / 86400;
+		sec -= days * 86400;
+	}
+
+	if (sec > 3600) {
+		hours = sec / 3600;
+		sec -= hours * 3600;
+	}
+
+	if (sec > 60) {
+		minutes = sec / 60;
+		sec -= minutes * 60;
+	}
+
+	if (days)
+		return saprintf("%ldd %ldh %ldm %ld.%.3ld", days, hours, minutes, sec, usec);
+
+	if (hours)
+		return saprintf("%ldh %ldm %ld.%.3ld", hours, minutes, sec, usec);
+
+	if (minutes)
+		return saprintf("%ldm %ld.%.3ld", minutes, sec, usec);
+
+	return saprintf("%ld.%.3ld", sec, usec);
+}
+
+static COMMAND(cmd_debug_timers) {
+/* XXX, */
+	char buf[256];
+	struct timer *t;
+	
+	printq("generic_bold", ("name               pers peri handler  next"));
+	
+	for (t = timers; t; t = t->next) {
+		char *plugin;
+		char *tmp;
+
+		if (t->plugin)
+			plugin = t->plugin->name;
+		else
+			plugin = "-";
+
+		tmp = timer_next_call(t);
+
+		/* XXX: pointer truncated */
+		snprintf(buf, sizeof(buf), "%-20s %-2d %-4d %.8x %-20s", t->name, t->persist, (int) t->period, (int) (long) t->function, tmp);
+		printq("generic", buf);
+		xfree(tmp);
+	}
+
+	return 0;
+}
+
 static COMMAND(cmd_debug_watches)
 {
 	char buf[256];
@@ -3349,9 +3417,7 @@ static COMMAND(cmd_timer)
 			t_name = params[0];
 
 		for (t = timers; t; t = t->next) {
-			struct timeval tv;
 			char *tmp;
-			long usec, sec, minutes = 0, hours = 0, days = 0;
 
 			if (t->function != timer_handle_command)
 				continue;
@@ -3361,42 +3427,7 @@ static COMMAND(cmd_timer)
 
 			count++;
 
-			gettimeofday(&tv, NULL);
-
-			if (t->ends.tv_usec < tv.tv_usec) {
-				sec = t->ends.tv_sec - tv.tv_sec - 1;
-				usec = (t->ends.tv_usec - tv.tv_usec + 1000000) / 1000;
-			} else {
-				sec = t->ends.tv_sec - tv.tv_sec;
-				usec = (t->ends.tv_usec - tv.tv_usec) / 1000;
-			}
-
-			if (sec > 86400) {
-				days = sec / 86400;
-				sec -= days * 86400;
-			}
-
-			if (sec > 3600) {
-				hours = sec / 3600;
-				sec -= hours * 3600;
-			}
-		
-			if (sec > 60) {
-				minutes = sec / 60;
-				sec -= minutes * 60;
-			}
-
-			if (days)
-				tmp = saprintf("%ldd %ldh %ldm %ld.%.3ld", days, hours, minutes, sec, usec);
-			else
-				if (hours)
-					tmp = saprintf("%ldh %ldm %ld.%.3ld", hours, minutes, sec, usec);
-				else
-					if (minutes)
-						tmp = saprintf("%ldm %ld.%.3ld", minutes, sec, usec);
-					else
-						tmp = saprintf("%ld.%.3ld", sec, usec);
-
+			tmp = timer_next_call(t);
 			printq("timer_list", t->name, tmp, (char*)(t->data), "", (t->persist) ? "*" : "");
 			xfree(tmp);
 		}
@@ -4197,7 +4228,9 @@ void command_init()
 
 	command_add(NULL, ("_streams"), "p ? ? ? ?", cmd_streams, 0, "-c --create -l --list");
 
-	command_add(NULL, ("_watches"), NULL, cmd_debug_watches, 0,NULL);
+	command_add(NULL, ("_timers"), NULL, cmd_debug_timers, 0, NULL);
+
+	command_add(NULL, ("_watches"), NULL, cmd_debug_watches, 0, NULL);
 
 	command_add(NULL, ("add"), "!U ? p", cmd_add, COMMAND_ENABLEREQPARAMS, "-f --find");
 
