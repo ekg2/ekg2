@@ -26,12 +26,15 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
+#include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/queries.h>
+#include <ekg/userlist.h>
 #include <ekg/vars.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
@@ -41,6 +44,9 @@
 #define QUITMSG(x) (SGQUITMSG(x)?SGQUITMSG(x):DEFQUITMSG)
 
 #include "rivchat.h"	/* only protocol-stuff */
+
+extern char *rivchat_cp_to_locale(char *b);	/* misc.c */
+extern char *rivchat_locale_to_cp(char *b);	/* misc.c */
 
 typedef struct {
 	int fd;
@@ -53,6 +59,17 @@ typedef struct {
 	uint32_t uptime;
 } rivchat_private_t;
 
+typedef struct {
+	int user_locked;
+
+	uint32_t id;		/* unikatowy numerek usera... czyt. ma byc unikatowy*/
+	time_t packet_time;
+	time_t ping_packet_time;
+	rivchat_info_t ping_packet;
+
+	char *ip;
+} rivchat_userlist_private_t;
+
 /* XXX:
  *  - pozwolic podac adres do nasluchu i broadcast-do-wysylania 
  *  - uzywac protocol_message_emit() zeby moc logowac... 
@@ -61,6 +78,8 @@ typedef struct {
 static int rivchat_theme_init();
 
 PLUGIN_DEFINE(rivchat, PLUGIN_PROTOCOL, rivchat_theme_init);
+
+#define rivchat_userlist_priv_get(u) ((rivchat_userlist_private_t *) userlist_private_get(&rivchat_plugin, u))
 
 static QUERY(rivchat_validate_uid) {
 	char *uid = *(va_arg(ap, char **));
@@ -113,6 +132,87 @@ static QUERY(rivchat_session_deinit) {
 static QUERY(rivchat_print_version) {
 	print("generic", "ekg2 plugin for RivChat protocol http://rivchat.prv.pl/");
 	return 0;
+}
+
+static QUERY(rivchat_userlist_info_handle) {
+	userlist_t *u	= *va_arg(ap, userlist_t **);
+	int quiet	= *va_arg(ap, int *);
+	rivchat_userlist_private_t *user;
+
+	if (!u || !(user = u->priv))
+		return 1;
+
+	if (valid_plugin_uid(&rivchat_plugin, u->uid) != 1) 
+		return 1;
+
+	if (user->ip)
+		printq("rivchat_info_ip", user->ip, "");
+
+	if (user->ping_packet_time) {
+		rivchat_info_t *ping = &(user->ping_packet);
+		char ver[8];
+		char *user, *host;
+		char *prog, *os;
+
+		if (ping->filetransfer)
+			printq("rivchat_info_have_dcc");
+
+		if (ping->master)
+			printq("rivchat_info_master");
+
+		printq("rivchat_info_words", itoa(ping->slowa));
+
+		printq("rivchat_info_connected", itoa(ping->online * 10));
+
+	/* user, host */
+		user = rivchat_cp_to_locale(xstrndup(ping->user, sizeof(ping->user)));
+		host = rivchat_cp_to_locale(xstrndup(ping->host, sizeof(ping->host)));
+		printq("rivchat_info_username", user, host);
+		xfree(user); xfree(host);
+
+	/* prog, os, version */
+		prog = rivchat_cp_to_locale(xstrndup(ping->prog, sizeof(ping->prog)));
+		os = rivchat_cp_to_locale(xstrndup(ping->os, sizeof(ping->os)));
+		sprintf(ver, "%u.%u", ping->version[0], ping->version[1]);
+		printq("rivchat_info_version", prog, ver, os);
+		xfree(prog); xfree(os);
+	}
+
+	return 0;
+}
+
+static QUERY(rivchat_userlist_priv_handler) {
+	userlist_t *u	= *va_arg(ap, userlist_t **);
+	int function	= *va_arg(ap, int *);
+	rivchat_userlist_private_t *p;
+
+	if (!u || (valid_plugin_uid(&rivchat_plugin, u->uid) != 1))
+		return 1;
+
+	if (!(p = u->priv)) {
+		if (function == EKG_USERLIST_PRIVHANDLER_FREE)
+			return -1;
+
+		p = xmalloc(sizeof(rivchat_userlist_private_t));
+		u->priv = p;
+	}
+		
+	switch (function) {
+		case EKG_USERLIST_PRIVHANDLER_FREE:
+			xfree(p->ip);
+			xfree(u->priv);
+			u->priv = NULL;
+			break;
+
+		case EKG_USERLIST_PRIVHANDLER_GET:
+			*va_arg(ap, void **) = p;
+			break;
+
+		default:
+			return 2;
+	}
+
+	return -1;
 }
 
 static QUERY(rivchat_topic_header) {
@@ -205,9 +305,6 @@ static userlist_t *rivchat_find_user(session_t *s, const char *target) {
 
 	return userlist_find(s, target); 
 }
-
-extern char *rivchat_cp_to_locale(char *b);	/* misc.c */
-extern char *rivchat_locale_to_cp(char *b);	/* misc.c */
 
 static void memncpy(char *dest, const char *src, size_t len) {
 	size_t srclen = xstrlen(src);
@@ -343,6 +440,7 @@ static int rivchat_send_packet_string(session_t *s, uint32_t type, userlist_t *u
 
 static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const char *ip) {
 	rivchat_private_t *j = s->priv;
+	rivchat_userlist_private_t *p = NULL;
 
 /* XXX, fix byte-order */
 /* XXX, protect from spoofing, i've got some ideas... */
@@ -352,7 +450,9 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 
 	int display_activity = EKG_WINACT_NONE;
 	char *display_data = NULL;
+	userlist_t *u;
 	char *nick, *uid;
+	int userlist_changed = 0;
 
 	if (is_priv && _hdr->toid != j->ourid) {
 		/* leave-them-alone */
@@ -362,8 +462,59 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 	nick = rivchat_cp_to_locale(xstrndup(_hdr->nick, sizeof(_hdr->nick)));
 	uid = saprintf("rivchat:%s", nick);
 
-	/* XXX, decrypt if needed */
+	u = userlist_find(s, nick);
 
+	if (!u && _hdr->type != RC_QUIT) {	/* stworzmy */
+		u = userlist_add(s, uid, nick);
+		userlist_changed = 1;
+	}
+
+	if (u)
+		p = rivchat_userlist_priv_get(u);
+
+	if (u && !p) {
+		/* XXX, smth bad happened */
+	}
+
+	if (p && p->user_locked) {
+		/* spoof, protect */
+	}
+
+	if (p && !p->user_locked) {
+		p->user_locked = 1;
+		xfree(p->ip); p->ip = xstrdup(ip);
+		/* ... */
+	}
+
+	if (u->status == EKG_STATUS_NA) {
+		u->status = EKG_STATUS_AVAIL;
+		userlist_changed = 1;
+	}
+
+	if (p) {
+		switch (_hdr->type) {
+			case RC_PING:
+			case RC_INIT:
+				memcpy(&p->ping_packet, (rivchat_info_t *) _hdr->data, sizeof(p->ping_packet));
+				p->ping_packet_time = time(NULL);
+				break;
+
+		}
+
+		p->packet_time = time(NULL);
+	}
+
+#if 0
+	/* DLA RC_PING [stary kod...] */
+	if (prevaway != user->ping_packet.away && pkt->type == RC_PING) {
+		if (user->ping_packet.away == 0)	{ pkt->type = RC_REAWAY;	locale_datagram = NULL; }
+		else 					{ pkt->type = RC_AWAY;		locale_datagram = NULL; }
+		user->away = user->ping_packet.away;
+	}
+#endif
+
+
+	/* XXX, decrypt message if needed */
 	switch (_hdr->type) {
 		case RC_MESSAGE:
 		{
@@ -387,7 +538,9 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 				window_t *w = window_new(rivchat_make_window(j->port), s, 0);
 
 				window_switch(w->id);
-			}
+			} else
+				/* XXX, instead of NULL pass user? */
+				rivchat_send_packet(s, RC_PING, NULL, rivchat_generate_data(s), RC_INFOSIZE);	/* dajmy znac o sobie */
 
 			display_data = saprintf("%s!%s", user, host);
 			display_activity = EKG_WINACT_JUNK;
@@ -395,6 +548,40 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 			xfree(user); xfree(host);
 			break;
 		}
+
+		case RC_PINGAWAY:
+		{
+			/* if user is already in away state, do nothing... else do type = RC_AWAY */
+			display_data = rivchat_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			if (u->status == EKG_STATUS_AWAY && !xstrcmp(u->descr, display_data)) {
+				xfree(display_data);
+				display_data = NULL;
+				break;	
+			}
+			type = RC_AWAY;
+			/* no-break */
+		}
+
+		case RC_AWAY:
+		{
+			display_activity = EKG_WINACT_JUNK;
+			if (!display_data)
+				display_data = rivchat_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+
+			xfree(u->descr); u->descr = xstrdup(display_data);
+			u->status = EKG_STATUS_AWAY;
+			userlist_changed = 1;
+			break;
+		}
+
+		case RC_REAWAY:
+			display_activity = EKG_WINACT_JUNK;
+			display_data = NULL;
+
+			xfree(u->descr); u->descr = NULL;
+			u->status = EKG_STATUS_AVAIL;
+			userlist_changed = 1;
+			break;
 
 		case RC_QUIT:
 		{
@@ -404,6 +591,9 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 				display_data = xstrdup("no reason");
 			}
 			display_activity = EKG_WINACT_JUNK;
+
+			userlist_remove(s, u); u = NULL;
+			userlist_changed = 1;
 			break;
 		}
 
@@ -439,21 +629,31 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 			break;
 		}
 
+		case RC_NICKPROTEST:
+			/* XXX */
+			break;
+
+		/* dont-display */
+		case RC_PING:
+			break;
+
 		default:
 		{
 			debug_error("rivchat_parse_packet() recv pkt->type: 0x%.4x\n", type);
 			/* XXX, dump it */
-			return;
 		}
 	}
 
 	if (display_activity != EKG_WINACT_NONE) {
 		char *fname = rivchat_make_formatname(type, is_our, is_priv);
 
-		print_window(rivchat_make_window(j->port), s, display_activity, 1, fname, s->uid, nick, display_data, ip);
+		print_window(is_priv ? uid : rivchat_make_window(j->port), s, display_activity, 1, fname, s->uid, nick, display_data, ip);
 
 		xfree(display_data);
 	}
+
+	if (userlist_changed)
+		query_emit_id(NULL, USERLIST_REFRESH);
 
 	xfree(nick);
 	xfree(uid);
@@ -499,26 +699,26 @@ static WATCHER_SESSION(rivchat_handle_stream) {
 
 static TIMER_SESSION(rivchat_pingpong) {
 	rivchat_private_t *j;
-
-	if (type) {
+	userlist_t *ul;
+	time_t cur_time;
+	
+	if (type)
 		return 0;
-	}
 
 	if (!s || !(j = s->priv))
 		return -1;
 
+	cur_time = time(NULL);
+
 	j->uptime++;
-#if 0
-	list_t l;
 	
-	debug("[rivchat pingpong session: %s type: %d s: 0x%x s->priv: 0x%x\n", (char *) data, type, s, j);
+	for (ul = s->userlist; ul;) {
+		userlist_t *u = ul;
+		rivchat_userlist_private_t *user = u->priv;
+		/* sprawdzic wszystkich userow last_ping_time i jesli mniejszy niz (now - ping_remove) to usun usera. */
 
-	for (l = s->userlist; l;) {
-// sprawdzic wszystkich userow last_ping_time i jesli mniejszy niz (now - ping_remove) to usun usera.
-		userlist_t *u = l->data;
-		rivchat_user_private_t *user = u->priv;
+		ul = ul->next;
 
-		l = l->next;
 
 		if (!u) {
 			debug("[RIVCHAT_PING_TIMEOUT] USER %s removed cause of non private data...\n", u->uid);
@@ -526,18 +726,16 @@ static TIMER_SESSION(rivchat_pingpong) {
 			continue;
 		}
 
-		if ((user->ping_packet_time && (user->ping_packet_time + RIVCHAT_PING_TIMEOUT < time(NULL))) ||	/* if we have ping_packet_time */
-			(user->packet_time + RIVCHAT_PING_TIMEOUT < time(NULL)))				/* otherwise... */
+		if ((user->ping_packet_time && (user->ping_packet_time + RC_PING_TIMEOUT < cur_time)) || 
+			(user->packet_time + RC_TIMEOUT < cur_time))
 		{
 			print("rivchat_user_timeout", session_name(s), u->uid);
-			debug("[RIVCHAT_PING_TIMEOUT] USER %s removed cause of timeout. PING: %d LAST:%d NOW: %d\n", 
-				u->uid, user->ping_packet_time, user->packet_time, time(NULL));
-			xfree(user);
-			u->priv = NULL;
+
+			debug("[RIVCHAT_PING_TIMEOUT] USER %s removed cause of timeout. PING: %d LAST:%d NOW: %d\n", u->uid, user->ping_packet_time, user->packet_time, cur_time);
 			userlist_remove(s, u);
 		}
 	}
-#endif
+
 	rivchat_send_packet(s, RC_PING, NULL, rivchat_generate_data(s), RC_INFOSIZE);
 	return 0;
 }
@@ -741,7 +939,7 @@ static int rivchat_theme_init() {
 
 	format_add("rivchat_me",		"%W%e* %2%n %3", 1);
 
-	format_add("rivchat_newnick_send", 	"%> You're now known as %W%3", 1);
+	format_add("rivchat_newnick_send", 	"%> You're now known as %T%3", 1);
 	format_add("rivchat_newnick_recv", 	"%> %c%2%n is now known as %C%3", 1);
 
 	format_add("rivchat_newtopic",		"%> %T%2%n changed topic to: %3", 1);
@@ -749,11 +947,26 @@ static int rivchat_theme_init() {
 
 	/* dziwne */
 	format_add("rivchat_ignore_send",	"%) You starts ignoring %3", 1);
-	format_add("rivchat_ignore_recv",	"%) %W%2%n starts ignoring %3", 1);
+	format_add("rivchat_ignore_recv",	"%) %T%2%n starts ignoring %3", 1);
 
 	format_add("rivchat_noignore_send",	"%) You stops ignoring %3", 1);
-	format_add("rivchat_noignore_recv",	"%) %W%2%n stops ignoring %3", 1);
+	format_add("rivchat_noignore_recv",	"%) %T%2%n stops ignoring %3", 1);
+
+	format_add("rivchat_reaway",		"%) %T%2%n back", 1);
+	format_add("rivchat_away",		"%) %T%2%n is away: %T%3", 1);
+
+/* not-protocol-stuff */
+	format_add("rivchat_info_connected",	_("%K| %nConnected for: %T%1%n seconds"), 1);
+	format_add("rivchat_info_have_dcc",	_("%K| %nHas dcc support"), 1);
+	format_add("rivchat_info_master",	_("%K| %nHe's a master! ;p"), 1);
+	format_add("rivchat_info_words",	_("%K| %nWords count: %T%1"), 1);			/* %1 - wcount */
+	format_add("rivchat_info_username",	_("%K| %nLogged as: %T%1@%2"), 1);			/* %1 info->user %2 info->host */
+	format_add("rivchat_info_version",	_("%K| %nWorking @ %T%1%n ver %T%2%n OS: %T%3%n"), 1);	/* %1 - progname, %2 - version %3 - os */
+	format_add("rivchat_info_ip",		_("%K| %nAddress: %T%1:%2"), 1);
+
+	format_add("rivchat_user_timeout",	_("%> Utracono kontakt z uzytkownikiem %T%2"), 1);	/* %1 - sesja %2 - uid */
 #endif
+
 	return 0;
 }
 
@@ -793,6 +1006,9 @@ EXPORT int rivchat_plugin_init(int prio) {
 	query_connect_id(&rivchat_plugin, SESSION_ADDED, rivchat_session_init, NULL);
 	query_connect_id(&rivchat_plugin, SESSION_REMOVED, rivchat_session_deinit, NULL);
 	query_connect_id(&rivchat_plugin, PLUGIN_PRINT_VERSION, rivchat_print_version, NULL);
+
+	query_connect_id(&rivchat_plugin, USERLIST_INFO, rivchat_userlist_info_handle, NULL);
+	query_connect_id(&rivchat_plugin, USERLIST_PRIVHANDLE, rivchat_userlist_priv_handler, NULL);
 
 	query_connect_id(&rivchat_plugin, IRC_TOPIC, rivchat_topic_header, NULL);
 

@@ -2,6 +2,9 @@
 
 #define RC_BROADCAST	0xFFFFFFFF
 
+#define RC_TIMEOUT	30	/* soft-timeout */
+#define RC_PING_TIMEOUT	60	/* hard-timeout */
+
 #define RC_MAGICSIZE	 11
 #define RC_SIZE		328
 #define RC_DATASIZE	256
