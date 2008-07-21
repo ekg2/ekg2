@@ -28,6 +28,8 @@
 
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <pwd.h>
+#include <sys/utsname.h>
 
 #include <ekg/commands.h>
 #include <ekg/debug.h>
@@ -42,6 +44,10 @@
 #include <ekg/vars.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
+
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
 
 #define DEFQUITMSG "EKG2 - It's better than sex!"
 #define SGQUITMSG(x) session_get(x, "QUIT_MSG")
@@ -375,9 +381,7 @@ static void rivchat_dcc_close(struct dcc_s *dcc) {
 			rivchat_send_packet_string(dcc->session, RC_FILECANCEL2, rivchat_find_user(dcc->session, dcc->uid), dcc->filename);
 		}
 
-
 	} else {
-
 
 
 	}
@@ -401,19 +405,38 @@ static void memncpy(char *dest, const char *src, size_t len) {
 
 static char *rivchat_generate_data(session_t *s) {
 /* XXX, this struct in j->info_hdr? */
+/* XXX, if nothing changed, do nothing.... */
 	static rivchat_info_t hdr;
 	rivchat_private_t *j = s->priv;
+	const char *os;
+	const char *prog;
 
 	memncpy(hdr.host, session_get(s, "hostname"), sizeof(hdr.host));
-	memncpy(hdr.user, session_get(s, "username"), sizeof(hdr.user));	/* TODO getpwuid(getuid()); && configuation */
+	memncpy(hdr.user, session_get(s, "username"), sizeof(hdr.user));
 
-	memncpy(hdr.host, "fob", sizeof(hdr.host));
-	memncpy(hdr.user, "fobbar", sizeof(hdr.user));
+/* VERSION_SYS */
+	if ((os = session_get(s, "VERSION_SYS"))) {
+		memncpy(hdr.os, os, sizeof(hdr.os));
+	} else {
+		struct utsname un;
 
-	memncpy(hdr.os,   "Linux", sizeof(hdr.os));				/* TODO uname() && configuration */
-	memncpy(hdr.prog, "ekg2-rivchat", sizeof(hdr.prog));
+		if (uname(&un) != -1) {
+			memncpy(hdr.os, un.sysname, sizeof(hdr.os));
+			/* XXX: un.release, un.machine */
+		} else {
+			memncpy(hdr.os, "unknown OS", sizeof(hdr.os));
+		}
+	}
 
-	/* ekg-rivchat 0.1 */
+/* VERSION_NAME, VERSION_NO, default: ekg2-rivchat 0.1 */
+	if ((prog = session_get(s, "VERSION_NAME"))) {
+		memncpy(hdr.prog, prog, sizeof(hdr.prog));
+	} else {
+		memncpy(hdr.prog, "ekg2-rivchat", sizeof(hdr.prog));
+	}
+
+	/* XXX, VERSION-NO */
+
 	hdr.version[0]	= 0;
 	hdr.version[1]	= 1;
 
@@ -481,7 +504,7 @@ static int rivchat_send_packet(session_t *s, uint32_t type, userlist_t *user, co
 	/* RGB colors */
 	hdr.colors[0] = 0;
 	hdr.colors[1] = 0;
-	hdr.colors[2] = 0;
+	hdr.colors[2] = 0xFF;
 
 	hdr.seq = j->seq_nr++;		/* XXX */
 	hdr.encrypted = (user) ? RC_ENCRYPTED : 0;
@@ -1315,6 +1338,11 @@ static void rivchat_notify_reconnect(session_t *s, const char *var) {
 		print("config_must_reconnect");
 }
 
+static void rivchat_resend_ping(session_t *s, const char *var) {
+	if (s && s->connected)
+		rivchat_send_packet(s, RC_PING, NULL, rivchat_generate_data(s), RC_INFOSIZE);
+}
+
 static int rivchat_theme_init() {
 #ifndef NO_DEFAULT_THEME
 /* format of formats ;] 
@@ -1350,6 +1378,8 @@ static int rivchat_theme_init() {
 
 	format_add("rivchat_newtopic",		"%> %T%2%n changed topic to: %3", 1);
 	format_add("rivchat_topic",		"%> Topic: %3", 1);
+
+	format_add("rivchat_kicked",		"%> %c%4%n was kicked from %T%1%n by %T%2%n", 1);
 
 	/* dziwne */
 	format_add("rivchat_ignore_send",	"%) You starts ignoring %3", 1);
@@ -1391,21 +1421,50 @@ static int rivchat_theme_init() {
 }
 
 static plugins_params_t rivchat_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		VAR_STR, NULL, 0, NULL), 
-	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_reconnect", 	VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("nickname",		VAR_STR, NULL, 0, rivchat_changed_nick),
-	PLUGIN_VAR_ADD("port",			VAR_STR, "16127", 0, rivchat_notify_reconnect),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "irssi", 0, NULL),
+	PLUGIN_VAR_ADD("alias", 		VAR_STR, NULL, 0, NULL), 				//  0
+	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),				//  1
+	PLUGIN_VAR_ADD("auto_reconnect", 	VAR_INT, "0", 0, NULL),					//  2
+#define RIVCHAT_VAR_HOSTNAME 3
+	PLUGIN_VAR_ADD("hostname",		VAR_STR, NULL, 0, rivchat_resend_ping),			//  3
+	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "irssi", 0, NULL),				//  4
+#define RIVCHAT_VAR_NICKNAME 5
+	PLUGIN_VAR_ADD("nickname",		VAR_STR, NULL, 0, rivchat_changed_nick),		//  5
+	PLUGIN_VAR_ADD("port",			VAR_STR, "16127", 0, rivchat_notify_reconnect),		//  6
+#define RIVCHAT_VAR_USERNAME 7
+	PLUGIN_VAR_ADD("username",		VAR_STR, NULL, 0, rivchat_resend_ping),			//  7
+	PLUGIN_VAR_ADD("VERSION_NAME", 		VAR_STR, 0, 0, rivchat_resend_ping),			//  8
+	PLUGIN_VAR_ADD("VERSION_NO", 		VAR_STR, 0, 0, rivchat_resend_ping),			//  9	TODO
+	PLUGIN_VAR_ADD("VERSION_SYS", 		VAR_STR, 0, 0, rivchat_resend_ping),			// 10
 	PLUGIN_VAR_END()
 };
 
 EXPORT int rivchat_plugin_init(int prio) {
+	static char pwd_name[100];
+	static char pwd_hostname[100];
+
+	struct passwd *pwd_entry;
+	
 	/* moze segvowac na niektorych architekturach */
 	/* we assume you're using LE processor :> */
 	/* XXX, test BE/LE or use <endian.h> */
 
 	PLUGIN_CHECK_VER("rivchat");
+
+/* magic stuff */
+	if ((pwd_entry = getpwuid(getuid()))) {
+		strlcpy(pwd_name, pwd_entry->pw_name, sizeof(pwd_name));
+		/* XXX, we need to free buffer allocated by getpwuid()? */
+
+		rivchat_plugin_vars[RIVCHAT_VAR_NICKNAME].value = pwd_name;
+		rivchat_plugin_vars[RIVCHAT_VAR_USERNAME].value = pwd_name;
+	}
+
+	if (gethostname(pwd_hostname, sizeof(pwd_hostname))) {
+		debug_error("[rivchat] gethostname() failed\n");
+		strlcpy(pwd_hostname, "localhost", sizeof(pwd_hostname));
+	}
+
+	rivchat_plugin_vars[RIVCHAT_VAR_HOSTNAME].value = pwd_hostname;
 
 	rivchat_plugin.params = rivchat_plugin_vars;
 
