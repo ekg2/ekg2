@@ -33,8 +33,11 @@
 #define RC_FILEPROPOSE	20
 #define RC_FILEREQUEST	21
 #define RC_FILECANCEL	22
+#define RC_FILECANCEL2	23	/* XXX, nie w protokole */
 
 static const char rivchat_magic[RC_MAGICSIZE] = { 'R', 'i', 'v', 'C', 'h', 'a', 't' /* here NULs */};	/* RivChat\0\0\0\0 */
+
+#define RC_PACKED __attribute__ ((packed))
 
 typedef struct {
 	char host[50];
@@ -47,24 +50,32 @@ typedef struct {
 	char user[32];
 	char kod;
 	char plec;
+	char __pad1[2];
 	uint32_t online;
 	char filetransfer;
 	char pisze;
-} rivchat_info_t;
+        char __pad2[2];
+} RC_PACKED rivchat_info_t;
 
 typedef struct {
 	char header[RC_MAGICSIZE];		/* rivchat_magic */
+	char __pad1;
 	uint32_t size;
 	uint32_t fromid;
 	uint32_t toid;
 	char nick[30];
+	char __pad2[2];
 	uint32_t type;
 	char data[RC_DATASIZE]; 		/* or RCINFO */
 	uint8_t colors[3];			/* colors RGB values */
 	uint8_t seq;				/* sequence */
+/* these 8bytes, can be uint64_t -> filesize */
 	uint8_t gender;				/* 1 - man, 2 - woman */
 	uint8_t encrypted;			/* we support encryption? */
 	uint8_t bold;				/* ? */
-	uint8_t resvered[3];
-} rivchat_header_t; 
+	uint8_t reserved[5];
+} RC_PACKED rivchat_header_t; 
 
+#define RC_FILETRANSFER 2
+// #define RC_FILETRANSFER 0
+#define RC_ENCRYPTED 0

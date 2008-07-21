@@ -247,3 +247,14 @@ char *rivchat_cp_to_locale(char *b) {
 		return (char *) rivchat_cp_to_iso(buf);
 }
 
+uint32_t rivchat_fix32(uint32_t x) {
+	return x;
+/*
+	return (uint32_t)
+		(((x & (uint32_t) 0x000000ffU) << 24) |
+		((x & (uint32_t) 0x0000ff00U) << 8) |
+		((x & (uint32_t) 0x00ff0000U) >> 8) |
+		((x & (uint32_t) 0xff000000U) >> 24));
+*/
+}
+
