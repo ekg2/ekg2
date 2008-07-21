@@ -709,28 +709,29 @@ IRC_COMMAND(irc_c_error)
 	return 0;
 }
 
-static char *clean_channel_names(session_t *session, char *channels)
-{
+static char *clean_channel_names(session_t *session, char *channels) {
+	irc_private_t *j = session->priv;
+	char *chmode;
+
 	char *dest, *src, *next, *p;
 	int len, skip;
-	char *ret = xstrdup(channels);
-
+	char *ret;
+	
 	if (!irc_config_experimental_chan_name_clean)
-		return ret;
+		return xstrdup(channels);
 
-	irc_private_t *j = irc_private(session);
-	char *idchan = SOP(_005_IDCHAN);
+	if (!SOP(_005_IDCHAN))
+		return xstrdup(channels);
 
-	if (!idchan)
-		return ret;
-
-	char *chmode = SOP(_005_PREFIX);
+	chmode = SOP(_005_PREFIX);
 
 	if ( ( p = strchr(chmode,')') ) )	/* ?WO? Would be nice to have '@%+' not '(ohv)@%+' */
 		chmode = ++p;
 	
-	dest = src = ret;
+	dest = src = ret = xstrdup(channels);
 	while ( src && *src ) {
+		char *idchan;
+
 		if ((*src == ' ') || (strchr(chmode, *src))) {
 			*dest++ = *src++;
 			continue;
@@ -802,7 +803,7 @@ IRC_COMMAND(irc_c_whois)
 		else
 		*/
 			print_info(dest, s, irccommands[ecode].name, 
-					session_name(s), col[0], chlist,
+					session_name(s), col[0], chlist ? chlist : col[1],
 					col[2], col[3], col[4]);
 
 		for (i=0; i<5; i++)
