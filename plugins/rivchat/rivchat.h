@@ -43,28 +43,28 @@ typedef struct {
 	char host[50];
 	char os[20];
 	char prog[18];
-	char version[2];
-	char away;
-	char master;
+	uint8_t version[2];
+	uint8_t away;
+	uint8_t master;
 	uint32_t slowa;
 	char user[32];
-	char kod;
-	char plec;
-	char __pad1[2];
+	uint8_t kod;
+	uint8_t plec;
+	uint8_t __pad1[2];
 	uint32_t online;
-	char filetransfer;
-	char pisze;
-        char __pad2[2];
+	uint8_t filetransfer;
+	uint8_t pisze;
+        uint8_t __pad2[2];
 } RC_PACKED rivchat_info_t;
 
 typedef struct {
 	char header[RC_MAGICSIZE];		/* rivchat_magic */
-	char __pad1;
+	uint8_t __pad1;
 	uint32_t size;
 	uint32_t fromid;
 	uint32_t toid;
 	char nick[30];
-	char __pad2[2];
+	uint8_t __pad2[2];
 	uint32_t type;
 	char data[RC_DATASIZE]; 		/* or RCINFO */
 	uint8_t colors[3];			/* colors RGB values */
