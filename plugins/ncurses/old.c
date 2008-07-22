@@ -629,7 +629,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		margin_left = (!w->floating) ? n->backlog[i]->margin_left : -1;
 		
 		for (;;) {
-			int word = 0, width;
+			int word, width;
 			int ts_len = 0;	/* xstrlen(l->ts) */
 
 			if (!i)
@@ -691,10 +691,20 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			if (l->len < width)
 				break;
+
+			if (w->nowrap) {
+				l->len = width;		/* XXX, what for? for not drawing outside screen-area? ncurses can handle with it */
+
+				if (str[width] == CHAR(' ')) {
+					l->len--;
+					/* str++; attr++; */
+				}
+				/* while (*str) { str++; attr++; } */
+				break;
+			}
 		
 			for (j = 0, word = 0; j < l->len; j++) {
-
-				if (str[j] == CHAR(' ') && !w->nowrap)
+				if (str[j] == CHAR(' '))
 					word = j + 1;
 
 				if (j == width) {
@@ -708,13 +718,6 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				}
 			}
 
-			if (w->nowrap) {
-				while (*str) {
-					str++;
-					attr++;
-				}
-				break;
-			}
 			str += l->len;
 			attr += l->len;
 
@@ -766,6 +769,7 @@ void ncurses_resize()
 
 	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->private;
+		int old_width = w->width;
 
 		if (!n)
 			continue;
@@ -825,8 +829,13 @@ void ncurses_resize()
 
 		wresize(n->window, w->height, w->width);
 		mvwin(n->window, w->top, w->left);
-
+		
 		n->redraw = 1;
+
+		/* if width changed, we should recalculate screen_lines, like for normal windows. */
+		/* XXX, only for !w->nowrap windows? */
+		if (old_width != w->width && w->floating /* XXX ? */)
+			ncurses_backlog_split(w, 1, 0);
 	}
 
 	if (left < 0)			left = 0;
