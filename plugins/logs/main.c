@@ -759,15 +759,16 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	if (class == EKG_MSGCLASS_PRIV_STATUS) {
 		userlist_t *u = userlist_find(s, gotten_uid);
 		const char *ip, *port;
-		
-		if ((ip = userlist_private_item_get(u, "ip")))
-			fputs(ip, file);
-		
-		if ((port = userlist_private_item_get(u, "port"))) {
-			fputc(':', file);
-			fputs(port, file); 
-		}
 
+		if (!(ip = userlist_private_item_get(u, "ip")))
+			ip = "0.0.0.0";
+
+		if (!(port = userlist_private_item_get(u, "port")))
+			port = "0";
+
+		fputs(ip, file);
+		fputc(':', file);
+		fputs(port, file); 
 		fputc(',', file);
 	}
 
@@ -892,10 +893,10 @@ static void logs_irssi(FILE *file, const char *session, const char *uid, const c
 			const char *ip, *port;
 
 			if (!(ip = userlist_private_item_get(u, "ip")))
-				ip = "";
+				ip = "0.0.0.0";
 
 			if (!(port = userlist_private_item_get(u, "port")))
-				port = "";
+				port = "0";
 
 			fprintf(file, "%s * %s reports status: %s [~notirc@%s:%s] /* {status} */\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), ip, port);
 			break;
