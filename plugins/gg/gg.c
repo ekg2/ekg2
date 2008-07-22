@@ -616,7 +616,7 @@ static QUERY(gg_userlist_priv_handler) {
 			if (!xstrcmp(name, "mobile"))
 				*r = p->mobile;
 			else if (!xstrcmp(name, "ip"))
-				*r = inet_ntoa(*((struct in_addr*) &p->ip));
+				*r = (p->ip) ? inet_ntoa(*((struct in_addr*) &p->ip)) : NULL;
 			else if (!xstrcmp(name, "port"))
 				*r = itoa(p->port);
 			else
