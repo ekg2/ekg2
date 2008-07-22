@@ -661,13 +661,11 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 				if (!ts || lastts != ts) {	/* generate new */
 					struct tm *tm = localtime(&ts);
-					char *tmp, *format;
+					char *format;
 
-					tmp = format_string(config_timestamp);
-					format = saprintf("%s ", tmp);
+					format = format_string(config_timestamp);
 					strftime(lasttsbuf, sizeof(lasttsbuf)-1, format, tm);
 
-					xfree(tmp);
 					xfree(format);
 
 					lastts = ts;
@@ -677,6 +675,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 				l->ts = s->str.b;
 				ts_len = xstrlen(l->ts);
+				ts_len++;			/* for separator between timestamp and text */
 				l->ts_attr = s->attr;
 
 				xfree(s);
@@ -1150,6 +1149,10 @@ void ncurses_redraw(window_t *w)
 				wattrset(n->window, attr);
 				mvwaddch(n->window, cur_y, cur_x, ch);
 			}
+		/* render separator */
+			cur_x++;
+			wattrset(n->window, A_NORMAL);
+			mvwaddch(n->window, cur_y, cur_x, ' ');
 		}
 
 		if (l->prompt_str) {
@@ -1810,26 +1813,8 @@ int ncurses_window_kill(window_t *w)
 	if (!n) 
 		return -1;
 
-	if (n->backlog) {
-		int i;
+	ncurses_clear(w, 1);
 
-		for (i = 0; i < n->backlog_size; i++)
-			fstring_free(n->backlog[i]);
-
-		xfree(n->backlog);
-	}
-
-	if (n->lines) {
-		int i;
-
-		for (i = 0; i < n->lines_count; i++) {
-			xfree(n->lines[i].ts);
-			xfree(n->lines[i].ts_attr);
-		}
-		
-		xfree(n->lines);
-	}
-		
 	xfree(n->prompt);
 	xfree(n->prompt_real);
 	delwin(n->window);
