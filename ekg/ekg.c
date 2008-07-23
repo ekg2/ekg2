@@ -302,10 +302,10 @@ void ekg_loop() {
                 /* na wszelki wypadek sprawd¼ warto¶ci */
 
 		if (idles) {
-			stv.tv_sec = 0;
-			if (stv.tv_usec > 20000)
+			if (stv.tv_usec > 20000 || stv.tv_sec)
 				stv.tv_usec = 20000;
 			/* max 50 times per second for idler.. i think it's ok */
+			stv.tv_sec = 0;
 
 			/* execute idles only when stv.tv_usec > 20000? */
 		} else {
