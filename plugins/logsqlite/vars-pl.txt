@@ -39,12 +39,20 @@ path
 	    log_path = "/tmp/%S-%Y.%M.%D.db"
 	  np. /tmp/gg:31337-2004.05.31.db
 
-last_limit
+last_limit_msg
 	typ: liczba
 	domy¶lna warto¶æ: 10
 	
 	maksymalna ilo¶æ wiadomo¶ci wy¶wietlanych przez polecenie
 	logsqlite:last
+
+last_limit_status
+	typ: liczba
+	domy¶lna warto¶æ: 10
+	
+	maksymalna ilo¶æ wiadomo¶ci wy¶wietlanych przez polecenie
+	logsqlite:laststatus
+
 
 last_in_window
 	typ: bool

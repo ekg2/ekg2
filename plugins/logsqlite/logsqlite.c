@@ -63,7 +63,8 @@ PLUGIN_DEFINE(logsqlite, PLUGIN_LOG, logsqlite_theme_init);
 char *config_logsqlite_path = NULL;
 int config_logsqlite_last_in_window = 0;
 int config_logsqlite_last_open_window = 0;
-int config_logsqlite_last_limit = 10;
+int config_logsqlite_last_limit_msg = 10;
+int config_logsqlite_last_limit_status = 10;
 int config_logsqlite_last_print_on_open = 0;
 int config_logsqlite_log = 0;
 int config_logsqlite_log_ignored = 0;
@@ -100,7 +101,8 @@ int last(const char **params, session_t *session, int quiet, int status)
 	char * gotten_uid = NULL;
 	char * nick = NULL;
 	char * keep_nick = NULL;
-	int limit = config_logsqlite_last_limit;
+	int limit_msg = config_logsqlite_last_limit_msg;
+	int limit_status = config_logsqlite_last_limit_status;
 	int i = 0;
 	char * target_window = "__current";
 	char *sql_search = NULL;
@@ -116,13 +118,23 @@ int last(const char **params, session_t *session, int quiet, int status)
 	for (i = 0; params[i]; i++) {
 		
 		if (match_arg(params[i], 'n', "number", 2) && params[i + 1]) {
-			limit = atoi(params[++i]);
+			if(!status) {
+				limit_msg = atoi(params[++i]);
 
-			if (limit <= 0) {
-				printq("invalid_params", "logsqlite:last");
-				return 0;
+				if (limit_msg <= 0) {
+					printq("invalid_params", "logsqlite:last");
+					return 0;
+				}
+				continue;
+			} else {
+				limit_status = atoi(params[++i]);
+
+				if (limit_status <= 0) {
+					printq("invalid_params", "logsqlite:laststatus");
+					return 0;
+				}
+				continue;
 			}
-			continue;
 		}
 
 		if (match_arg(params[i], 's', "search", 2) && params[i + 1]) {
@@ -160,9 +172,9 @@ int last(const char **params, session_t *session, int quiet, int status)
 		sqlite3_bind_text(stmt, 3, sql_search, -1, SQLITE_STATIC);
 #else
 		if(!status)
-			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = '%q' AND body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", gotten_uid, sql_search, limit);
+			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = '%q' AND body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", gotten_uid, sql_search, limit_msg);
 		else
-			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, status, desc FROM log_status WHERE uid = '%q' AND desc LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", gotten_uid, sql_search, limit);
+			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, status, desc FROM log_status WHERE uid = '%q' AND desc LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", gotten_uid, sql_search, limit_status);
 
 #endif
 	} else {
@@ -178,15 +190,19 @@ int last(const char **params, session_t *session, int quiet, int status)
 		sqlite3_bind_text(stmt, 3, sql_search, -1, SQLITE_STATIC);
 #else
 		if(!status)
-			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", sql_search, limit);
+			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", sql_search, limit_msg);
 		else
-			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, status, desc FROM log_status WHERE desc LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", sql_search, limit);
+			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, status, desc FROM log_status WHERE desc LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", sql_search, limit_status);
 
 #endif
 	}
 
 #ifdef HAVE_SQLITE3
-	sqlite3_bind_int(stmt, 2, limit);
+	if(status)
+		sqlite3_bind_int(stmt, 2, limit_status);
+	else
+		sqlite3_bind_int(stmt, 2, limit_msg);
+
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		ts = (time_t) sqlite3_column_int(stmt, 2);
 #else
@@ -767,13 +783,13 @@ static QUERY(logsqlite_newwin_handler) {
 	sqlite3_prepare(db, "SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = ?1 AND session = ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, uid, -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 3, sess, -1, SQLITE_STATIC);
-	sqlite3_bind_int(stmt, 2, config_logsqlite_last_limit);
+	sqlite3_bind_int(stmt, 2, config_logsqlite_last_limit_msg);
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		ts = (time_t) sqlite3_column_int(stmt, 0);
 
 		if (sqlite3_column_int(stmt, 2) == 0) {
 #else
-	sql = sqlite_mprintf("SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = '%q' AND session = '%q' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", uid, config_logsqlite_last_limit, sess);
+	sql = sqlite_mprintf("SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = '%q' AND session = '%q' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", uid, config_logsqlite_last_limit_msg, sess);
 	sqlite_compile(db, sql, NULL, &vm, &errors);
 	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
 		ts = (time_t) atoi(results[0]);
@@ -843,7 +859,8 @@ int logsqlite_plugin_init(int prio)
 
 	variable_add(&logsqlite_plugin, ("last_open_window"), VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("last_in_window"), VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, ("last_limit"), VAR_INT, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, ("last_limit_msg"), VAR_INT, 1, &config_logsqlite_last_limit_msg, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, ("last_limit_status"), VAR_INT, 1, &config_logsqlite_last_limit_status, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("last_print_on_open"), VAR_BOOL, 1, &config_logsqlite_last_print_on_open, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log_ignored"), VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log_status"), VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
