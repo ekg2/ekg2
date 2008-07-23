@@ -298,23 +298,21 @@ void ekg_loop() {
 				}
 			}
 		}
-	
-                /* na wszelki wypadek sprawd¼ warto¶ci */
 
 		if (idles) {
+			/* XXX execute idles only when stv.tv_usec > 20000? */
 			if (stv.tv_usec > 20000 || stv.tv_sec)
 				stv.tv_usec = 20000;
 			/* max 50 times per second for idler.. i think it's ok */
 			stv.tv_sec = 0;
-
-			/* execute idles only when stv.tv_usec > 20000? */
-		} else {
-
-			if (stv.tv_sec != 1) 
-				stv.tv_sec = 0;
-			if (stv.tv_usec < 0)
-				stv.tv_usec = 1;
 		}
+
+                /* na wszelki wypadek sprawd¼ warto¶ci */
+		if (stv.tv_sec != 1)
+			stv.tv_sec = 0;
+		if (stv.tv_usec < 0)
+			stv.tv_usec = 1;
+
                 /* sprawd¼, co siê dzieje */
 		ret = select(maxfd + 1, &rd, &wd, NULL, &stv);
 
