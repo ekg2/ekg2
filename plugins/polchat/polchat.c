@@ -441,6 +441,9 @@ static WATCHER(polchat_handle_resolver) {
 	if (!s || !(j = s->priv))
 		return -1;
 
+	if (!j->connecting)		/* user makes /disconnect before resolver finished */
+		return -1;
+
 	res = read(fd, &a, sizeof(a));
 
 	if ((res != sizeof(a)) || (res && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
@@ -482,6 +485,7 @@ static WATCHER(polchat_handle_resolver) {
 	if (res == -1 && errno != EINPROGRESS) {
 		int err = errno;
 
+		close(fd);
                 debug_error("[polchat] connect() failed: %s (errno=%d)\n", strerror(err), err);
 		polchat_handle_disconnect(s, strerror(err), EKG_DISCONNECT_FAILURE);
 		return -1;
@@ -549,7 +553,6 @@ static COMMAND(polchat_command_connect) {
 	}
 
 	printq("connecting", session_name(session));
-
 
 	return 0;
 }
