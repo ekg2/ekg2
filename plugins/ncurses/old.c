@@ -2278,67 +2278,68 @@ static void spellcheck(CHAR_T *what, char *where) {
 	if (!what || *what == '/')
 		return;
 
-	for (i = 0; what[i] != '\0' && what[i] != '\n' && what[i] != '\r';) {
-		if ((!isalpha_locale(what[i]) || i == 0 ) && what[i+1] != '\0') { // separator/koniec lini/koniec stringu
+	while (what[i] && what[i] != '\n' && what[i] != '\r') {
 #if USE_UNICODE
-			CHAR_T what_j; /* zeby nie uzywac wcsndup() ktorego nie mamy. */
-			char *word_mbs;
+		CHAR_T what_j; /* zeby nie uzywac wcsndup() ktorego nie mamy. */
+		char *word_mbs;
 #endif
-			char fillznak;	/* do wypelnienia where[] (ASPELLCHAR gdy blednie napisane slowo) */
+		char fillznak;	/* do wypelnienia where[] (ASPELLCHAR gdy blednie napisane slowo) */
 
-			/* szukamy jakiejs pierwszej literki */
-			for (; what[i] != '\0' && what[i] != '\n' && what[i] != '\r'; i++) {
-				if (isalpha_locale(what[i]))
-					break;
-			}
-
-			/* trochê poprawiona wydajno¶æ */
-			if (what[i] == '\0' || what[i] == '\n' || what[i] == '\r')
-				continue;
-
-			/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */
-			if (what[i] == 'h' && what[i + 1] == 't' && what[i + 2] == 't' && what[i + 3] == 'p' && what[i + 4] == ':' &&
-					what[i + 5] == '/' && what[i + 6] == '/') {
-				for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
-				continue;
-			}
-
-			/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */
-			if (what[i] == 'f' && what[i + 1] == 't' && what[i + 2] == 'p' && what[i + 3] == ':' &&
-					what[i + 4] == '/' && what[i + 5] == '/')
-			{
-				for(; what[i] != ' ' && what[i] != '\n' && what[i] != '\r' && what[i] != '\0'; i++);
-				continue;
-			}
-
-			for (j = i; what[j] != '\n' && what[j] != '\0'; j++) {
-				if (!isalpha_locale(what[j]))
-					break;
-			}
-
-			if (j == i) {		/* Jak dla mnie nie powinno sie wydarzyc. */
-				i++;
-				continue;
-			}
-
-#if USE_UNICODE
-			what_j = what[j];
-			what[j] = '\0';
-
-			word_mbs = wcs_to_normal(&what[i]);
-			fillznak = (aspell_speller_check(spell_checker, word_mbs, -1) == 0) ? ASPELLCHAR : ' ';
-			free_utf(word_mbs);
-
-			what[j] = what_j;
-#else
-			/* sprawdzamy pisownie tego wyrazu */
-			fillznak = (aspell_speller_check(spell_checker, (char *) &what[i], j - i) == 0) ? ASPELLCHAR : ' ';
-#endif
-
-			for (; i < j; i++)
-				where[i] = fillznak;
-		} else
+		if ((isalpha_locale(what[i]) && i != 0) || what[i+1] == '\0') {		/* separator/koniec lini/koniec stringu */
 			i++;
+			continue;
+		}
+
+		/* szukamy jakiejs pierwszej literki */
+		for (; what[i] && what[i] != '\n' && what[i] != '\r'; i++) {
+			if (isalpha_locale(what[i]))
+				break;
+		}
+
+		/* trochê poprawiona wydajno¶æ */
+		if (!what[i] || what[i] == '\n' || what[i] == '\r')
+			continue;
+
+		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */
+		if (what[i] == 'h' && what[i + 1] == 't' && what[i + 2] == 't' && what[i + 3] == 'p' && what[i + 4] == ':' && what[i + 5] == '/' &&
+				what[i + 6] == '/')
+		{
+			while (what[i] && what[i] != ' ' && what[i] != '\n' && what[i] != '\r') i++;
+			continue;
+		}
+
+		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */
+		if (what[i] == 'f' && what[i + 1] == 't' && what[i + 2] == 'p' && what[i + 3] == ':' && what[i + 4] == '/' && what[i + 5] == '/')
+		{
+			while (what[i] && what[i] != ' ' && what[i] != '\n' && what[i] != '\r') i++;
+			continue;
+		}
+
+		for (j = i; what[j] && what[j] != '\n'; j++) {
+			if (!isalpha_locale(what[j]))
+				break;
+		}
+
+		if (j == i) {		/* Jak dla mnie nie powinno sie wydarzyc. */
+			i++;
+			continue;
+		}
+
+#if USE_UNICODE
+		what_j = what[j];
+		what[j] = '\0';
+
+		word_mbs = wcs_to_normal(&what[i]);
+		fillznak = (aspell_speller_check(spell_checker, word_mbs, -1) == 0) ? ASPELLCHAR : ' ';
+		free_utf(word_mbs);
+
+		what[j] = what_j;
+#else
+		/* sprawdzamy pisownie tego wyrazu */
+		fillznak = (aspell_speller_check(spell_checker, (char *) &what[i], j - i) == 0) ? ASPELLCHAR : ' ';
+#endif
+		for (; i < j; i++)
+			where[i] = fillznak;
 	}
 }
 #endif
