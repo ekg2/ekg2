@@ -734,9 +734,8 @@ JABBER_HANDLER(jabber_handle_message) {
 	int new_line = 0;	/* if there was headlines do we need to display seperator between them and body? */
 	int class = -1;
 	int composing = 0;
-	
-	if (j->istlen)	uid = saprintf("tlen:%s", juid);
-	else		uid = saprintf("xmpp:%s", juid);
+
+	uid = tlenjabber_uid(juid);
 
 	xfree(juid);
 
@@ -1400,9 +1399,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 	int na = !xstrcmp(type, "unavailable");
 
 	jid = tlenjabber_unescape(from);
-
-	if (istlen)	uid = saprintf("tlen:%s", jid);
-	else		uid = saprintf("xmpp:%s", jid);
+	uid = tlenjabber_uid(jid);
 
 	xfree(jid);
 
@@ -1502,7 +1499,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 							xfree(jid); xfree(role); xfree(affiliation);
 							break;
 						}
-						if (tmp) nickjid = saprintf("xmpp:%s", tmp + 1);
+						if (tmp) nickjid = xmpp_uid(tmp + 1);
 						else	 nickjid = xstrdup(uid);
 
 						if (na) 	print_info(mucuid, s, "muc_left", session_name(s), nickjid + 5, jid, mucuid+5, "");

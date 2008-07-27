@@ -1126,7 +1126,7 @@ static COMMAND(irc_command_msg) {
 	if (!xstrncmp(target, IRC4, 4)) {
 		uid = xstrdup(target);
 	} else {
-		uid = saprintf("irc:%s", target);
+		uid = irc_uid(target);
 	}
 
 	w = window_find_s(session, uid);
@@ -1549,7 +1549,7 @@ static char *irc_getchan_int(session_t *s, const char *name, int checkchan)
 	if (!xstrncasecmp(name, IRC4, 4))
 		ret = xstrdup(name);
 	else
-		ret = saprintf("%s%s", IRC4, name);
+		ret = irc_uid(name);
 
 	if (checkchan == 2) 
 		return ret;
@@ -1592,7 +1592,7 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 		pr = !!!pr;
 	}
 
-	tmpname = saprintf("irc:%s", name);
+	tmpname = irc_uid(name);
 	for (c = commands; c; c = c->next) {
 		if (&irc_plugin == c->plugin && !xstrcmp(tmpname, c->name))
 		{

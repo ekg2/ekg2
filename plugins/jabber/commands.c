@@ -1873,7 +1873,7 @@ static COMMAND(jabber_muc_command_join) {
 
 	if (!xstrncmp(target, "xmpp:", 5)) target += 5; /* remove xmpp: */
 
-	mucuid = saprintf("xmpp:%s", target);
+	mucuid = xmpp_uid(target);
 
 #if 0
 	if (newconference_find(session, mucuid)) {
@@ -2187,7 +2187,7 @@ static COMMAND(jabber_command_userlist) {
 	}
 
 	if (match_arg(params[0], 'g', "get", 2) || replace) {	/* fill userlist with data from file */
-		const int istlen = jabber_private(session)->istlen;
+		jabber_private_t *j = session->priv;
 
 		char *line;
 
@@ -2213,7 +2213,7 @@ static COMMAND(jabber_command_userlist) {
 					*p = '\0';
 			}
 
-			uid = saprintf(istlen ? "tlen:%s" : "xmpp:%s", uid);
+			uid = tlenjabber_uid(uid);
 
 			if (userlist_find(session, uid)) {
 				if (nickname) {

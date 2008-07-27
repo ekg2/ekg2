@@ -7,6 +7,7 @@
 
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
+#include <ekg/protocol.h>		/* XXX, protocol_uid() */
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
 
@@ -24,8 +25,12 @@
 #define TLEN_FALLBACK_SERVER "s1.tlen.pl"	/* fallback server 	*/
 #define TLEN_FALLBACK_PORT 443			/* fallback port 	*/
 
-#define tlenjabber_escape(str)	(j->istlen ? tlen_encode(str) : jabber_escape(str))
+#define tlenjabber_escape(str)   (j->istlen ? tlen_encode(str) : jabber_escape(str))
 #define tlenjabber_unescape(str) (j->istlen ? tlen_decode(str) : jabber_unescape(str))
+#define tlenjabber_uid(target)   protocol_uid(j->istlen ? "tlen" : "xmpp", target)
+
+#define tlen_uid(target) protocol_uid("tlen", target)
+#define xmpp_uid(target) protocol_uid("xmpp", target)
 
 struct xmlnode_s {
 	char *name;

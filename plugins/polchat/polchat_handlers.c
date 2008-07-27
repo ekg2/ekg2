@@ -205,7 +205,7 @@ POLCHAT_HANDLER(polchat_privmsg) {
 		char *tmp = html_to_ekg2(strings[0]);
 		char *tmp2= format_string(tmp);
 
-		char *uid = saprintf("polchat:%s", strings[1]);
+		char *uid = polchat_uid(strings[1]);
 
 /* XXX, wysylac przez PROTOCOL-MESSAGE */
 		print_window(uid, s, EKG_WINACT_IMPORTANT, 1, "none", tmp2);
@@ -220,7 +220,7 @@ POLCHAT_HANDLER(polchat_privmsg) {
 		char *tmp = html_to_ekg2(strings[0]);
 		char *tmp2= format_string(tmp);
 
-		char *uid = saprintf("polchat:%s", strings[2]);
+		char *uid = polchat_uid(strings[2]);
 
 /* XXX, wysylac przez PROTOCOL-MESSAGE */
 		print_window(uid, s, EKG_WINACT_IMPORTANT, 1, "none", tmp2);
@@ -281,7 +281,7 @@ POLCHAT_HANDLER(polchat_join) {
 		userlist_t *u;
 		char *uid;
 
-		uid = saprintf("polchat:%s", strings[0]);
+		uid = polchat_uid(strings[0]);
 
 		/* XXX, userlist_find() */
 
@@ -404,7 +404,7 @@ POLCHAT_HANDLER(polchat_nicklist) {
 
 			debug_function("polchat_processpkt() HEADER0_NICKLIST: %s\n", strings[i]);
 
-			uid = saprintf("polchat:%s", strings[i]);
+			uid = polchat_uid(strings[i]);
 
 			/* XXX, userlist_find() */
 

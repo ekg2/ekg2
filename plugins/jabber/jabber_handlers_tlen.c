@@ -16,7 +16,7 @@ JABBER_HANDLER(tlen_handle_notification) {	/* n->name: "m" TLEN only: typing, no
 	}
 
 	if (!xstrcmp(type, "t") || !xstrcmp(type, "u")) {
-		char *uid = saprintf("tlen:%s", from);
+		char *uid = tlen_uid(from);
 
 		/* typing notification */
 		if (!xstrcmp(type, "u"))
@@ -28,7 +28,7 @@ JABBER_HANDLER(tlen_handle_notification) {	/* n->name: "m" TLEN only: typing, no
 	}
 
 	if (!xstrcmp(type, "a")) {	/* funny thing called alert */
-		char *uid = saprintf("tlen:%s", from);
+		char *uid = tlen_uid(from);
 		print_info(uid, s, "tlen_alert", session_name(s), format_user(s, uid));
 
 		if (config_sound_notify_file)

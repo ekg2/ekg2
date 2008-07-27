@@ -952,6 +952,20 @@ int protocol_xstate_emit(const session_t *s, const char *uid, int state, int off
 	return query_emit_id_ro(NULL, PROTOCOL_XSTATE, &(s->uid), &uid, &state, &offstate);
 }
 
+/*
+ * protocol_uid()
+ *
+ * return saprintf("%s:%s", proto, target);
+ */
+char *protocol_uid(const char *proto, const char *target) {
+/* XXX, simplify some code inside plugins?
+ *
+ * 	if (!xstrncmp(target, proto, xstrlen(proto)))
+ * 		return xstrdup(target);
+ */
+	return saprintf("%s:%s", proto, target);
+}
+
 static LIST_FREE_ITEM(dcc_free_item, dcc_t *) {
 	if (data->close_handler)
 		data->close_handler(data);

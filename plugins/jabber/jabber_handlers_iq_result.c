@@ -191,7 +191,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 						char *jid, *formated;
 						char *formatedx;
 
-						if (!xstrcmp(type, "jid")) 		jid = saprintf("xmpp:%s", value);
+						if (!xstrcmp(type, "jid")) 		jid = xmpp_uid(value);
 						else if (!xstrcmp(type, "group")) 	jid = saprintf("@%s", value);
 						else					jid = xstrdup(value);
 
@@ -538,7 +538,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 				*atsign	= 0;
 			uid = saprintf("tlen:%s@tlen.pl", jid);
 		} else
-			uid = saprintf("xmpp:%s", jid);
+			uid = xmpp_uid(jid);
 
 		/* jeśli element rostera ma subscription = remove to tak naprawde użytkownik jest usuwany;
 		   w przeciwnym wypadku - nalezy go dopisać do userlisty; dodatkowo, jesli uzytkownika
@@ -751,7 +751,7 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 		char *mucid;
 		*tmp = 0;
 
-		mucid = saprintf("xmpp:%s", from_str);
+		mucid = xmpp_uid(from_str);
 		if ((ismuc = !!newconference_find(s, mucid)))
 			*tmp = '/';
 		xfree(mucid);
@@ -953,7 +953,7 @@ JABBER_HANDLER_SET(jabber_handle_si_set) {
 #endif
 		jabber_dcc_t *jdcc;
 
-		uid = saprintf("xmpp:%s", uin);
+		uid = xmpp_uid(uin);
 
 		jdcc = xmalloc(sizeof(jabber_dcc_t));
 		jdcc->session	= s;

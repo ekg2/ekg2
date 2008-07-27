@@ -598,8 +598,8 @@ IRC_COMMAND(irc_c_error)
 	 */
 	if (param[3]) {
 		char *temp2;
-		t = saprintf("%s%s", IRC4, param[3]);
-		temp2 = saprintf("%s%s", IRC4, param[3]);
+		t = irc_uid(param[3]);
+		temp2 = irc_uid(param[3]);
 		IRC_TO_LOWER(temp2);
 		w = window_find_s(s, t);
 		if (!w)
@@ -778,7 +778,7 @@ static char *clean_channel_names(session_t *session, char *channels) {
 
 IRC_COMMAND(irc_c_whois)
 {
-	char		*t = saprintf("%s%s", IRC4, param[3]), *dest = NULL;
+	char		*t = irc_uid(param[3]), *dest = NULL;
 	char		*str, *tmp, *col[5];
 	int		secs, mins, hours, days, which, i;
 	time_t		timek;
@@ -883,7 +883,7 @@ IRC_COMMAND(irc_c_list)
 		t = NULL;
 	else {
 		IRC_TO_LOWER(IOK(3));
-		t = saprintf("%s%s", IRC4, IOK(3));
+		t = irc_uid(IOK(3));
 	}
 
 	w    = window_find_s(s, t);
@@ -1044,10 +1044,10 @@ IRC_COMMAND(irc_c_nick)
 			}
 		}
 
-		temp = saprintf("%s%s",IRC4, param[0]+1);
+		temp = irc_uid(param[0]+1);
 		if ((w = window_find_s(s, temp))) {
 			xfree(w->target);
-			w->target = saprintf("%s%s", IRC4, OMITCOLON(param[2]));
+			w->target = irc_uid(OMITCOLON(param[2]));
 
 			query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
 
@@ -1127,7 +1127,7 @@ IRC_COMMAND(irc_c_msg)
 			irc_parse_identhost(t+1, &(person->ident), &(person->host));
 		*/
 		class = (mw&2)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
-		dest = saprintf("%s%s", IRC4, OMITCOLON(param[0]));
+		dest = irc_uid(OMITCOLON(param[0]));
 		format = xstrdup(prv?"irc_msg_f_some":"irc_not_f_some");
 		ekgbeep = EKG_TRY_BEEP;
 		xosd_to_us = xosd_is_priv = 1;
@@ -1136,7 +1136,7 @@ IRC_COMMAND(irc_c_msg)
 		class = EKG_MSGCLASS_CHAT;
 		// class = (mw&1)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
 		IRC_TO_LOWER(param[2]);
-		dest = saprintf("%s%s", IRC4, param[2]);
+		dest = irc_uid(param[2]);
 		if ((pubtous = xstrcasestr(ctcpstripped, j->nick))) {
 			tous = pubtous[xstrlen(j->nick)];
 			if (!isalnum(tous) && !isalpha_pl(tous))
@@ -1210,7 +1210,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 				e->channame 	= NULL;
 				e->uid		= xstrdup(dest);
 			} else {
-				e->uid		= saprintf("irc:%s", xosd_nick);
+				e->uid		= irc_uid(xosd_nick);
 				e->channame	= xstrdup(dest);
 			}
 				
@@ -1227,7 +1227,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 		me = NULL;
 		class |= EKG_NO_THEMEBIT;
 
-		ignore_nick = saprintf("%s%s", IRC4, OMITCOLON(param[0]));
+		ignore_nick = irc_uid(OMITCOLON(param[0]));
 		if (xosd_is_priv || !(ignored_check(s, ignore_nick) & IGNORE_MSG))
 			protocol_message_emit(s, dest, rcpts, head, NULL, time(NULL), class, NULL, ekgbeep, secure);
 		xfree(ignore_nick);
@@ -1260,8 +1260,8 @@ IRC_COMMAND(irc_c_join)
 	 * we can do it 'in place', without a copy
 	 */
 	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
-	ekg2_channel = saprintf("%s:%s", IRC3, irc_channel);
-	irc_nick = saprintf("%s:%s", IRC3, param[0]+1);
+	ekg2_channel = irc_uid(irc_channel);
+	irc_nick = irc_uid(param[0]+1);
 
 	chname = clean_channel_names(s, irc_channel);
 
@@ -1329,8 +1329,8 @@ IRC_COMMAND(irc_c_part)
 	debug("[irc]_c_part: %s %s\n", j->nick, param[0]+1);
 
 	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
-	ekg2_channel = saprintf("%s:%s", IRC3, irc_channel);
-	irc_nick = saprintf("%s:%s", IRC3, param[0]+1);
+	ekg2_channel = irc_uid(irc_channel);
+	irc_nick = irc_uid(param[0]+1);
 
 	/* Servers MUST be able to parse arguments in the form of
 	 * a list of target, but SHOULD NOT use lists when sending
@@ -1385,7 +1385,7 @@ IRC_COMMAND(irc_c_kick)
 	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
 
 	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
-	ekg2_channel = saprintf("%s:%s", IRC3, irc_channel);
+	ekg2_channel = irc_uid(irc_channel);
 
 	/* we were kicked out */
 	if (me)
@@ -1393,7 +1393,7 @@ IRC_COMMAND(irc_c_kick)
 	else
 		irc_del_person_channel(s, j, OMITCOLON(param[3]), irc_channel);
 
-	uid = saprintf("%s%s", IRC4, param[0]+1);
+	uid = irc_uid(param[0]+1);
 
 	if (tmp) *tmp='!';
 
@@ -1410,7 +1410,7 @@ IRC_COMMAND(irc_c_kick)
 
 /*sending irc-kick event*/
 	_session = xstrdup(session_uid_get(s));
-	_nick = saprintf("%s%s", IRC4, OMITCOLON(param[3]));
+	_nick = irc_uid(OMITCOLON(param[3]));
 	query_emit_id(NULL, IRC_KICK, &_session, &_nick, &ekg2_channel, &uid);
 	xfree(_nick);
 	xfree(_session);
@@ -1485,7 +1485,7 @@ IRC_COMMAND(irc_c_topic)
 	channel_t	*chanp = NULL;
 
 	IRC_TO_LOWER(param[2]);
-	t = saprintf("%s%s", IRC4, param[2]);
+	t = irc_uid(param[2]);
 	w = window_find_s(s, t);
 	chanp = irc_find_channel(j->channels, param[2]);
 	dest = w?w->target:NULL;
@@ -1598,7 +1598,7 @@ IRC_COMMAND(irc_c_mode)
 	t=param[3];
 
 	irc_channame = IRC_TO_LOWER(param[2]);
-	ekg2_channame = saprintf("%s%s", IRC4, irc_channame);
+	ekg2_channame = irc_uid(irc_channame);
 	cchn = clean_channel_names(s, irc_channame);
 
 	for (i=0,k=4; i<xstrlen(param[3]) && xstrlen(param[k]); i++, t++) {

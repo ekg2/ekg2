@@ -186,7 +186,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 	if (!s || xstrlen(s) < 2)
 		return s?xstrdup(s):NULL;
 
-	winname = saprintf("%s%s", IRC4, recp);
+	winname = irc_uid(recp);
 	ret = string_init("");
 	p = begin = s;
 
@@ -203,7 +203,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 			if ((bang = xstrchr(sender+1, '!'))) 
 				*bang = '\0';
 
-			newsender = saprintf("%s%s", IRC4, sender+1);
+			newsender = irc_uid(sender+1);
 
 			coloured = irc_ircoldcolstr_to_ekgcolstr(sess, begin,1);
 			if (ispriv) {

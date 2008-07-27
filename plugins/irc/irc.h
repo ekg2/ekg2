@@ -26,6 +26,7 @@
 
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
+#include <ekg/protocol.h>	/* XXX, protocol_uid() */
 #include <ekg/sessions.h>
 #include <ekg/windows.h>
 
@@ -147,7 +148,7 @@ typedef struct {
 
 /* DO NOT TOUCH THIS! */
 #define IRC4 "irc:"
-#define IRC3 "irc"
+#define irc_uid(target) protocol_uid("irc", target)
 
 extern plugin_t irc_plugin;
 

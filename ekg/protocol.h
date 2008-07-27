@@ -93,6 +93,7 @@ int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, con
 int protocol_status_emit(const session_t *s, const char *uid, int status, char *descr, time_t when);
 int protocol_xstate_emit(const session_t *s, const char *uid, int state, int offstate);
 
+char *protocol_uid(const char *proto, const char *target);	/* XXX ? */
 #endif
 
 typedef enum {

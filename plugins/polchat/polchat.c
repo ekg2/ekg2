@@ -61,6 +61,8 @@
 
 #define DEFPART
 
+#define polchat_uid(target) protocol_uid("polchat", target)
+
 typedef struct {
 	int fd;
 	int connecting;
@@ -540,7 +542,7 @@ static COMMAND(polchat_command_connect) {
 	j->nick = xstrdup(nick);
 
 	xfree(j->newroom);
-	j->newroom = saprintf("polchat:%s", room);
+	j->newroom = polchat_uid(room);
 
 	string_clear(j->recvbuf);
 
@@ -664,7 +666,7 @@ static COMMAND(polchat_command_join) {
 
 	polchat_sendmsg(session, "/join %s", target);
 
-	j->newroom = saprintf("polchat:%s", target);
+	j->newroom = polchat_uid(target);
 
 	return 0;
 }

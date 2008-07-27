@@ -160,7 +160,7 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	/* debug("irc_add_person_int: %s %d %d\n", modes, mode, k); */
 	if (mode) nick++;
 
-	ircnick = saprintf("%s%s", IRC4, nick);
+	ircnick = irc_uid(nick);
 	w = window_find_s(s, chan->name);
 	/* add user to userlist of window (of a given channel) if not yet there */
 	if (w && !(ulist = userlist_find_u(&(w->userlist), ircnick))) {
@@ -379,7 +379,7 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		tmp = person->channels;
 	}
 
-	longnick = saprintf("%s%s", IRC4, nick);
+	longnick = irc_uid(nick);
 	w = window_find_s(s, longnick);
 	if (w) {
 		if (session_int_get(s, "close_windows") > 0) {
@@ -452,7 +452,7 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 	p = irc_find_channel(j->channels, name);
 	if (!p) {
 		p		= xmalloc(sizeof(channel_t));
-		p->name		= saprintf("%s%s", IRC4, name);
+		p->name		= irc_uid(name);
 		p->window	= win;
 		debug("[irc] add_channel() WINDOW %08X\n", win);
 		if (session_int_get(s, "auto_channel_sync") != 0)
@@ -518,7 +518,7 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 	people_t *per;
 	people_chan_t *pch;
 	window_t *w;
-	char *t1, *t2 = saprintf("%s%s", IRC4, new);
+	char *t1, *t2 = irc_uid(new);
 
 	if (!(per = irc_find_person(j->people, old))) {
 		debug_error("irc_nick_change() person not found?\n");
