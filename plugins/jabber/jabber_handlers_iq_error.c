@@ -6,7 +6,7 @@ static char *jabber_iq_error_string(xmlnode_t *n) {			/* in n we have <error */
 
 	if (!n) {
 		debug_error("[JABBER] jabber_iq_error_string() IQ ERROR, but without <error?\n");
-		return NULL;
+		return xstrdup("ekg2 sux in parsing errors, for more info check debug");
 	}
 
 	/* XXX, przeczytac RFC, i zobaczyc jak prawdziwe klienty XMPP to robia */
@@ -26,26 +26,26 @@ static char *jabber_iq_error_string(xmlnode_t *n) {			/* in n we have <error */
 
 	debug_error("[JABBER] jabber_iq_error_string: code=%s, [%s]\n", __(ecode), __(reason));
 
-	return reason;
+	return reason ? reason : xstrdup("ekg2 sux in parsing errors, for more info check debug");
 }
 
 /* this sux, no idea howto pass formatname to jabber_handle_iq_error_generic() */
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_last) {
 	char *error = jabber_iq_error_string(n);
-	print("jabber_lastseen_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print("jabber_lastseen_error", session_name(s), from, error);
 	xfree(error);
 }
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_version) {
 	char *error = jabber_iq_error_string(n);
-	print("jabber_version_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print("jabber_version_error", session_name(s), from, error);
 	xfree(error);
 }
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_disco_info) {
 	char *error = jabber_iq_error_string(n);
-	print("jabber_transinfo_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print("jabber_transinfo_error", session_name(s), from, error);
 	xfree(error);
 }
 
@@ -53,31 +53,31 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_disco) {
 	int iscontrol = !xstrncmp(id, "control", 7);
 	char *error = jabber_iq_error_string(n);
 
-	print(iscontrol ? "jabber_remotecontrols_error" : "jabber_transport_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print(iscontrol ? "jabber_remotecontrols_error" : "jabber_transport_error", session_name(s), from, error);
 	xfree(error);
 }
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_privacy) {
 	char *error = jabber_iq_error_string(n);
-	print("jabber_privacy_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print("jabber_privacy_error", session_name(s), from, error);
 	xfree(error);
 }
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_private) {
 	char *error = jabber_iq_error_string(n);
-	print("jabber_private_list_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print("jabber_private_list_error", session_name(s), from, error);
 	xfree(error);
 }
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_vcard) {
 	char *error = jabber_iq_error_string(n);
-	print("jabber_userinfo_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print("jabber_userinfo_error", session_name(s), from, error);
 	xfree(error);
 }
 
 JABBER_HANDLER_ERROR(jabber_handle_iq_error_search) {
 	char *error = jabber_iq_error_string(n);
-	print("jabber_search_error", session_name(s), from, error ? error : "ekg2 sux in parsing errors, for more info check debug");
+	print("jabber_search_error", session_name(s), from, error);
 	xfree(error);
 }
 
