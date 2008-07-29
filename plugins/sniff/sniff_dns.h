@@ -390,8 +390,8 @@ int ns_name_uncompress(const u_char *msg, const u_char *eom, const u_char *src, 
 	return (n);
 }
 
-int dn_expand(const u_char *msg, const u_char *eom, const u_char *src, char *dst, int dstsiz) {
-	int n = ns_name_uncompress(msg, eom, src, dst, (size_t)dstsiz);
+int dn_expand(const char *msg, const char *eom, const char *src, char *dst, int dstsiz) {
+	int n = ns_name_uncompress((u_char *) msg, (u_char *) eom, (u_char *) src, dst, (size_t)dstsiz);
 
 	if (n > 0 && dst[0] == '.')
 		dst[0] = '\0';
