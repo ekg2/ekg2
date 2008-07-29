@@ -17,8 +17,8 @@ static char *jabber_iq_error_string(xmlnode_t *n) {			/* in n we have <error */
 		reason = jabber_unescape(n->data);
 	} else {
 		for (n = n->children; n; n = n->next) {
-			if (n->data) {
-				reason = jabber_unescape(n->data);
+			if (n->name) {
+				reason = jabber_unescape(n->name);
 				break;
 			}
 		}
