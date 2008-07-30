@@ -586,6 +586,63 @@ static void ncurses_typing_retimer(const char *dummy) {
 		timer_add(&ncurses_plugin, "ncurses:typing", config_typing_interval, 1, ncurses_typing, NULL);
 }
 
+static COMMAND(ncurses_cmd_dump) {
+	window_t *w = NULL;
+	ncurses_window_t *n;
+	FILE *f;
+	const char *fname = NULL, *fmode = "w";
+	int i, id;
+
+	for (i=0; params[i]; i++) {
+		if (match_arg(params[i], 'a', ("append"), 2))
+			fmode = "a";
+		else if (match_arg(params[i], 'w', ("window"), 2)) {
+			if (!params[i+1]) {
+				printq("not_enough_params", name);
+				return -1;
+			}
+			i++;
+			w = window_find(params[i]);	// window target?
+			if (!w && ((id = atoi(params[i])) || !xstrcmp(params[i], "0")))	// window id?
+				w = window_exist(id);
+			if (!w) {
+				printq("window_doesnt_exist", params[i]);
+				return -1;
+			}
+		} else if (!fname)
+			fname = params[i];
+		else {	// fname again?
+			printq("invalid_params", name);
+			return -1;
+		}
+	}
+
+	if (!w)
+		w = window_current;
+
+	if (!fname)
+		fname = "ekg2-dump.txt";
+
+	if (!(f = fopen(fname, fmode)))
+		return -1;
+
+	fprintf(f, "---------- Window %s (id:%d) dump. ----------\n", window_target(w), w->id);
+
+	n = w->private;
+
+	for (i = n->backlog_size; i; i--) {
+		fstring_t *backlog = n->backlog[i-1];
+		/* XXX, unicode, wcs_to_normal() + free_utf() */
+		/* XXX, kolorki gdy user chce */
+
+		fprintf(f, "%ld %s\n", backlog->ts, backlog->str.b);
+	}
+
+	fclose(f);
+	// XXX add print_info() about dump success???
+	return 0;
+}
+
 EXPORT int ncurses_plugin_init(int prio)
 {
 	window_t *w;
@@ -650,6 +707,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, USERLIST_RENAMED, ncurses_all_contacts_changed, NULL);
 
 	command_add(&ncurses_plugin, ("mark"), NULL, cmd_mark, 0, "-a --all");
+	command_add(&ncurses_plugin, ("dump"), NULL, ncurses_cmd_dump, 0, "-a --append -w --window");
 
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
