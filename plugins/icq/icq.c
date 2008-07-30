@@ -41,6 +41,7 @@
 #include "misc.h"
 
 #include "icq_flap_handlers.h"
+#include "icq_snac_handlers.h"
 
 #define ICQ_HUB_SERVER "login.icq.com"
 #define ICQ_HUB_PORT	5190
@@ -76,6 +77,180 @@ int icq_send_pkt(session_t *s, string_t buf) {
 
 	watch_handle_write(w);
 	return 0;
+}
+
+static TIMER_SESSION(icq_ping) {
+	icq_private_t *j;
+
+	if (type)
+		return 0;
+
+	if (!s || !(j = s->priv) || !s->connected)
+		return -1;
+
+/* 	write_flap(&packet, ICQ_PING_CHAN); */
+
+	return 0;
+}
+
+void icq_session_connected(session_t *s) {
+	string_t pkt;
+
+	/* SNAC 3,4: Tell server who's on our list */
+	if (s->userlist) {
+		pkt = string_init(NULL);
+		/* XXX, dla kazdego kontaktu... */
+		icq_makesnac(s, pkt, 0x03, 0x04, 0, 0);
+		icq_send_pkt(s, pkt); pkt = NULL;
+	}
+
+	if (s->status == EKG_STATUS_INVISIBLE) {
+		/* Tell server who's on our visible list */
+#if MIRANDA
+		if (!j->ssi)
+			sendEntireListServ(ICQ_BOS_FAMILY, ICQ_CLI_ADDVISIBLE, BUL_VISIBLE);
+		else
+			updateServVisibilityCode(3);
+#endif
+	}
+
+	if (s->status != EKG_STATUS_INVISIBLE)
+	{
+		/* Tell server who's on our invisible list */
+#if MIRANDA
+		if (!j->ssi)
+			sendEntireListServ(ICQ_BOS_FAMILY, ICQ_CLI_ADDINVISIBLE, BUL_INVISIBLE);
+		else
+			updateServVisibilityCode(4);
+#endif
+		;
+	}
+
+	/* SNAC 1,1E: Set status */
+	{
+#if MIRANDA
+		DWORD dwDirectCookie = rand() ^ (rand() << 16);
+		BYTE bXStatus = getContactXStatus(NULL);
+		char szMoodId[32];
+		WORD cbMoodId = 0;
+		WORD cbMoodData = 0;
+
+		if (bXStatus && moodXStatus[bXStatus-1] != -1)
+		{ // prepare mood id
+			null_snprintf(szMoodId, SIZEOF(szMoodId), "icqmood%d", moodXStatus[bXStatus-1]);
+			cbMoodId = strlennull(szMoodId);
+			cbMoodData = 8;
+		}
+#endif
+		string_t pkt;
+		uint16_t status;
+
+		status = icq_status(s->status);
+		
+		pkt = string_init(NULL);
+
+		icq_pack_append(pkt, "tI", icq_pack_tlv_dword(0x06, (0x00 << 8 | status)));	/* TLV 6: Status mode and security flags */
+		icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x08, 0x00));			/* TLV 8: Error code */
+
+	/* TLV C: Direct connection info */
+		icq_pack_append(pkt, "I", (uint32_t) 0x000c0025);
+		icq_pack_append(pkt, "I", (uint32_t) 0x00000000);	/* XXX, getSettingDword(NULL, "RealIP", 0) */
+		icq_pack_append(pkt, "I", (uint32_t) 0x00000000);	/* XXX, nPort */
+		icq_pack_append(pkt, "C", (uint32_t) 0x04);		/* Normal direct connection (without proxy/firewall) */
+		icq_pack_append(pkt, "W", (uint32_t) 0x08);		/* Protocol version */
+		icq_pack_append(pkt, "I", (uint32_t) 0x00);		/* XXX, DC Cookie */
+		icq_pack_append(pkt, "I", (uint32_t) 0x50);		/* WEBFRONTPORT */
+		icq_pack_append(pkt, "I", (uint32_t) 0x03);		/* CLIENTFEATURES */
+		icq_pack_append(pkt, "I", (uint32_t) 0xffffffff);	/* gbUnicodeCore ? 0x7fffffff : 0xffffffff */ /* Abused timestamp */
+		icq_pack_append(pkt, "I", (uint32_t) 0x80050003);	/* Abused timestamp */
+		icq_pack_append(pkt, "I", (uint32_t) 0x00000000);	/* XXX, Timestamp */
+		icq_pack_append(pkt, "W", (uint32_t) 0x0000);		/* Unknown */
+
+		icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x1F, 0x00));
+
+#if MIRANDA
+		if (cbMoodId)
+		{ // Pack mood data
+			packWord(&packet, 0x1D);              // TLV 1D
+			packWord(&packet, (WORD)(cbMoodId + 4)); // TLV length
+			packWord(&packet, 0x0E);              // Item Type
+			packWord(&packet, cbMoodId);          // Flags + Item Length
+			packBuffer(&packet, (LPBYTE)szMoodId, cbMoodId); // Mood
+		}
+#endif
+		icq_makesnac(s, pkt, 0x01, 0x1E, 0, 0);
+		icq_send_pkt(s, pkt); pkt = NULL;
+	}
+	/* SNAC 1,11 */
+	pkt = icq_pack("I", (uint32_t) 0x00000000);
+	icq_makesnac(s, pkt, 0x01, 0x11, 0, 0);
+	icq_send_pkt(s, pkt);
+
+	/* j->idleAllow = 0; */
+
+	/* Finish Login sequence */
+
+#if 0	/* XXX, wtf? */
+	pkt = string_init(NULL);
+
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x22, (uint32_t) 0x01, (uint32_t) 0x0110161b);	/* imitate ICQ 6 behaviour */
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x01, (uint32_t) 0x04, (uint32_t) 0x0110161b);
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x13, (uint32_t) 0x04, (uint32_t) 0x0110161b);
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x02, (uint32_t) 0x01, (uint32_t) 0x0110161b);
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x03, (uint32_t) 0x01, (uint32_t) 0x0110161b);
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x15, (uint32_t) 0x01, (uint32_t) 0x0110161b);
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x04, (uint32_t) 0x01, (uint32_t) 0x0110161b);
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x06, (uint32_t) 0x01, (uint32_t) 0x0110161b);
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x09, (uint32_t) 0x01, (uint32_t) 0x0110161b);
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x0a, (uint32_t) 0x01, (uint32_t) 0x0110161b);
+	icq_pack_append(pkt, "WWI", (uint32_t) 0x0b, (uint32_t) 0x01, (uint32_t) 0x0110161b);
+
+	icq_makesnac(s, pkt, 0x01, 0x02, 0, 0);
+	icq_send_pkt(s, pkt); pkt = NULL;
+#endif
+
+	debug_white(" *** Yeehah, login sequence complete\n");
+
+#if 0
+	info->bLoggedIn = 1;
+#endif
+	/* login sequence is complete enter logged-in mode */
+
+	if (!s->connected) {
+		/* Get Offline Messages Reqeust */
+		/* XXX, cookie */
+		pkt = string_init(NULL);
+		icq_makesnac(s, pkt, 0x4, 0x10, 0, 0);
+		icq_send_pkt(s, pkt);
+
+#if MIRANDA
+		// Update our information from the server
+		sendOwnerInfoRequest();
+#endif
+		/* Start sending Keep-Alive packets */
+		timer_remove_session(s, "ping");
+		timer_add_session(s, "ping", 60, 1, icq_ping);
+#if 0
+		if (m_bAvatarsEnabled)
+		{ // Send SNAC 1,4 - request avatar family 0x10 connection
+			icq_requestnewfamily(ICQ_AVATAR_FAMILY, &CIcqProto::StartAvatarThread);
+
+			m_pendingAvatarsStart = 1;
+			NetLog_Server("Requesting Avatar family entry point.");
+		}
+#endif
+	}
+	protocol_connected_emit(s);
+
+#if MIRANDA
+	if (m_bAimEnabled)
+	{
+		char **szMsg = MirandaStatusToAwayMsg(m_iStatus);
+
+		if (szMsg)
+			icq_sendSetAimAwayMsgServ(*szMsg);
+	}
+#endif
 }
 
 static int icq_theme_init();
@@ -154,6 +329,7 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 		return;
 
 	j->connecting = 0;
+	timer_remove_session(s, "ping");
 	protocol_disconnected_emit(s, reason, type);
 
 	/* XXX, watch_free() */
@@ -389,9 +565,10 @@ static COMMAND(icq_command_away) {
 	
 	printq(format, session_name(session));
 
+/* XXX
 	if (session->connected)
-		icq_write_status(session, 1);
-	
+		icq_write_status(session);
+ */	
 	return 0;
 }
 
@@ -426,6 +603,7 @@ static COMMAND(icq_command_connect) {
 		hubserver = ICQ_HUB_SERVER;
 
 	j->connecting = 1;
+	j->ssi = 1;	/* XXX */
 
 	if (ekg_resolver2(&icq_plugin, hubserver, icq_handle_hubresolver, xstrdup(session->uid)) == NULL) {
 		print("generic_error", strerror(errno));
@@ -466,20 +644,54 @@ static COMMAND(icq_command_reconnect) {
 	return icq_command_connect(name, params, session, target, quiet);
 }
 
+static COMMAND(icq_command_userinfo) {
+	const char *uid;
+
+	string_t pkt;
+	int number;
+	int minimal_req = 0;	/* XXX */
+
+	if (!(uid = get_uid(session, target)))
+		uid = target;
+
+	if (!xstrncmp(uid, "icq:", 4))
+		uid += 4;
+
+	/* XXX */
+
+	number = atoi(uid);
+
+	if (number <= 0) {
+		printq("invalid_params", name);
+		return -1;
+	}
+
+	/* XXX */
+
+	pkt = icq_pack("i", number);
+	icq_makemetasnac(session, pkt, 2000, (minimal_req == 0) ? 1202 : 1210, 0);
+	icq_send_pkt(session, pkt);
+	return 0;
+}
+
 static COMMAND(icq_command_register) {
-	/* XXX, some clients, like: micq have got option to in-band registration */
 	printq("generic_error", "Create a new ICQ account on http://lite.icq.com/register");
 	return 0;
 }
 
 static int icq_theme_init() {
 #ifndef NO_DEFAULT_THEME
+	format_add("icq_userinfo_start",	"%g,+=%G----- %g%3%G info for: %Ticq:%2%n", 1);
+
 	format_add("icq_userinfo_basic",	"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_more",		"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_work",		"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_interests",	"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_affilations",	"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_notes",	"%g|| %n  %T%3:%n %4", 1);
+
+	format_add("icq_userinfo_end",		"%g`+=%G----- End%n", 1);
+
 #endif
 	return 0;
 }
@@ -516,7 +728,7 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:ffc",  NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:invisible", NULL, icq_command_away, ICQ_ONLY, NULL);
 
-//	command_add(&icq_plugin, "icq:userinfo", "?",	icq_command_userinfo,	ICQ_FLAGS, NULL);
+	command_add(&icq_plugin, "icq:userinfo", "!u",	icq_command_userinfo,	ICQ_FLAGS_TARGET, NULL);
 	command_add(&icq_plugin, "icq:register", NULL,	icq_command_register,	0, NULL);
 
 	command_add(&icq_plugin, "icq:connect", NULL,	icq_command_connect, 	ICQ_ONLY, NULL);

@@ -41,14 +41,19 @@ typedef int (*metasnac_subhandler_t) (session_t *s, unsigned char *, int, uint32
 
 #include "icq_fieldnames.c"
 
-/* XXX, pododawac jakies ramki? */
-
 METASNAC_SUBHANDLER(icq_snac_extensions_hpagecat) {
 	debug_function("icq_snac_extensions_hpagecat() uid: %u\n", uid);
 	return 0;
 }
 
-#define printq_userinfo(theme, param, paramval) print(theme, session_name(s), itoa(uid), param, paramval)
+static int __displayed = 0;	/* Luckily we're not multithreaded */
+
+#define printq_userinfo(theme, param, paramval)	{					\
+		if (!__displayed)							\
+			print("icq_userinfo_start", session_name(s), itoa(uid), theme);	\
+		print(theme, session_name(s), itoa(uid), param, paramval);		\
+		__displayed = 1;							\
+	}
 
 #define expand_display_byte(formatka, param)		\
 	{									\
@@ -260,6 +265,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 		uint8_t result;
 		unsigned char *data;
 	} pkt;
+
 	metasnac_subhandler_t handler;
 
 	if (!ICQ_UNPACK(&pkt.data, "wc", &pkt.subtype, &pkt.result)) {
@@ -282,8 +288,14 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 		debug_error("icq_snac_extension_replyreq_2010() ignored: %.4x\n", pkt.subtype);
 		icq_hexdump(DEBUG_ERROR, pkt.data, len);
 		return 0;
-	} else
+	} else {
+		__displayed = 0;
+
 		handler(s, pkt.data, len, -1, pkt.result);
+
+		if (__displayed)
+			print("icq_userinfo_end", session_name(s), itoa(-1));
+	}
 		#warning "XXX, -1 uid!"
 
 	return 0;
