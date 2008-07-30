@@ -833,7 +833,8 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 			up->ip = ip;
 			up->port = port;
 
-			up->last_ip = ip;
+			if (ip)
+				up->last_ip = ip;
 			up->last_port = port;
 		}
 	}
