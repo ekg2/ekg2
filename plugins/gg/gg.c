@@ -166,11 +166,11 @@ static QUERY(gg_userlist_info_handle) {
 	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1 || !(up = gg_userlist_priv_get(u)))
 		return 1;
 
-	if (up->first_name && xstrcmp(up->first_name, "") && up->last_name && up->last_name && xstrcmp(up->last_name, ""))
+	if (up->first_name && xstrcmp(up->first_name, "") && up->last_name && xstrcmp(up->last_name, ""))
 		printq("gg_user_info_name", up->first_name, up->last_name);
-	if (up->first_name && xstrcmp(up->first_name, "") && (!up->last_name || !xstrcmp(up->last_name, "")))
+	else if (up->first_name && xstrcmp(up->first_name, ""))
 		printq("gg_user_info_name", up->first_name, "");
-	if ((!up->first_name || !xstrcmp(up->first_name, "")) && up->last_name && xstrcmp(up->last_name, ""))
+	else if (up->last_name && xstrcmp(up->last_name, ""))
 		printq("gg_user_info_name", up->last_name, "");
 
 	if (up->mobile && xstrcmp(up->mobile, ""))
