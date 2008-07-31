@@ -178,7 +178,13 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 	expand_display_str("icq_userinfo_basic", "Cellular");
 	expand_display_str("icq_userinfo_basic", "Zip");
 	expand_display_wordT("icq_userinfo_more", countryField, "Country");
-	expand_display_word("icq_userinfo_basic", "Timezone");
+{
+	int8_t tz;
+	if (!ICQ_UNPACK(&buf, "c", &tz)) return -1;
+	char *p = saprintf("GMT%+d", tz/2);
+	printq_userinfo("icq_userinfo_more", "Timezone", p);
+	xfree(p);
+}
 
 	debug_error("icq_snac_extensions_basicinfo() more data follow: %u\n", len);
 #warning "icq_snac_extensions_basicinfo()"
