@@ -760,6 +760,8 @@ static COMMAND(icq_command_userinfo) {
 	return 0;
 }
 
+#define ROT16(x) ((x & 0xff) << 8 | x >> 8)
+
 static COMMAND(icq_command_searchuin) {
 	const char *uid;
 
@@ -784,7 +786,7 @@ static COMMAND(icq_command_searchuin) {
 
 	/* XXX, cookie */
 
-	pkt = icq_pack("tI", icq_pack_tlv_dword(0x0136, uin));	/* TLV_UID */
+	pkt = icq_pack("ti", icq_pack_tlv_dword(ROT16(0x0136), uin));	/* TLV_UID */
 
 	icq_makemetasnac(session, pkt, 2000, 0x0569, 0);	/* META_SEARCH_UIN */
 	icq_send_pkt(session, pkt);
@@ -819,13 +821,13 @@ static COMMAND(icq_command_searchname) {
 	pkt = string_init(NULL);
 
 	if (first_name)
-		icq_pack_append(pkt, "T", icq_pack_tlv_str(0x0140, first_name));	/* TLV_FIRSTNAME */
+		icq_pack_append(pkt, "T", icq_pack_tlv_str(ROT16(0x0140), first_name));	/* TLV_FIRSTNAME */
 
 	if (last_name)
-		icq_pack_append(pkt, "T", icq_pack_tlv_str(0x014A, last_name));		/* TLV_LASTNAME */
+		icq_pack_append(pkt, "T", icq_pack_tlv_str(ROT16(0x014A), last_name));	/* TLV_LASTNAME */
 	
 	if (nickname)
-		icq_pack_append(pkt, "T", icq_pack_tlv_str(0x0154, nickname));		/* TLV_NICKNAME */
+		icq_pack_append(pkt, "T", icq_pack_tlv_str(ROT16(0x0154), nickname));	/* TLV_NICKNAME */
 
 	icq_makemetasnac(session, pkt, 2000, 0x055F, 0);	/* META_SEARCH_GENERIC */
 	icq_send_pkt(session, pkt);
@@ -840,7 +842,7 @@ static COMMAND(icq_command_searchmail) {
 
 	/* XXX, cookie */
 
-	pkt = icq_pack("T", icq_pack_tlv_str(0x015E, params[0]));	/* TLV_EMAIL */
+	pkt = icq_pack("T", icq_pack_tlv_str(ROT16(0x015E), params[0]));	/* TLV_EMAIL */
 
 	icq_makemetasnac(session, pkt, 2000, 0x0573, 0);	/* META_SEARCH_EMAIL */
 	icq_send_pkt(session, pkt);
