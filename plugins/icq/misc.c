@@ -138,6 +138,14 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
+			case 'P':	/* caps */
+			{
+				uint32_t t_new = 0x09460000 | va_arg(ap, uint32_t);
+
+				icq_pack_append(str, "IIII", (uint32_t) t_new, (uint32_t) 0x4c7f11d1, (uint32_t) 0x82224445, (uint32_t) 0x53540000);
+				break;
+			}
+
 			default:
 				debug_error("icq_pack() unknown format: %c\n", *format);
 				break;

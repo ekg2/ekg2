@@ -71,6 +71,45 @@ SNAC_SUBHANDLER(icq_snac_message_recv) {
 	return -3;
 }
 
+SNAC_SUBHANDLER(icq_snac_message_queue) {	/* SNAC(4, 0x17) Offline Messages response */
+	debug_error("icq_snac_message_queue() XXX\n");
+
+#if MIRANDA
+	offline_message_cookie *cookie;
+
+	if (FindCookie(dwRef, NULL, (void**)&cookie))
+	{
+		NetLog_Server("End of offline msgs, %u received", cookie->nMessages);
+		if (cookie->nMissed)
+		{ // NASTY WORKAROUND!!
+			// The ICQ server has a bug that causes offline messages to be received again and again when some 
+			// missed message notification is present (most probably it is not processed correctly and causes
+			// the server to fail the purging process); try to purge them using the old offline messages
+			// protocol.  2008/05/21
+			NetLog_Server("Warning: Received %u missed message notifications, trying to fix the server.", cookie->nMissed);
+
+			icq_packet packet;
+			// This will delete the messages stored on server
+			serverPacketInit(&packet, 24);
+			packFNACHeader(&packet, ICQ_EXTENSIONS_FAMILY, ICQ_META_CLI_REQ);
+			packWord(&packet, 1);             // TLV Type
+			packWord(&packet, 10);            // TLV Length
+			packLEWord(&packet, 8);           // Data length
+			packLEDWord(&packet, m_dwLocalUIN); // My UIN
+			packLEWord(&packet, CLI_DELETE_OFFLINE_MSGS_REQ); // Ack offline msgs
+			packLEWord(&packet, 0x0000);      // Request sequence number (we dont use this for now)
+
+			sendServPacket(&packet);
+		}
+
+		ReleaseCookie(dwRef);
+	}
+	else
+		NetLog_Server("Error: Received unexpected end of offline msgs.");
+#endif
+	return -3;
+}
+
 SNAC_HANDLER(icq_snac_message_handler) {
 	snac_subhandler_t handler;
 
@@ -78,6 +117,7 @@ SNAC_HANDLER(icq_snac_message_handler) {
 		case 0x01: handler = icq_snac_message_error; break;
 		case 0x05: handler = icq_snac_message_replyicbm; break;		/* Miranda: OK */
 		case 0x07: handler = icq_snac_message_recv; break;
+		case 0x17: handler = icq_snac_message_queue; break;
 		default:   handler = NULL; break;
 	}
 

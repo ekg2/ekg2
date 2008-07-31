@@ -96,6 +96,83 @@ static TIMER_SESSION(icq_ping) {
 void icq_session_connected(session_t *s) {
 	string_t pkt;
 
+	{
+		#define m_bAvatarsEnabled 0
+		#define m_bUtfEnabled 0
+		#define m_bAimEnabled 0
+
+		string_t pkt, tlv_5;
+
+		tlv_5 = string_init(NULL);
+
+#ifdef DBG_CAPMTN
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x563FC809);		/* CAP_TYPING */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x0B6F41BD);
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x9F794226);
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x09DFA2F3);
+#endif
+
+		icq_pack_append(tlv_5, "P", (uint32_t) 0x1349);			/* AIM_CAPS_ICQSERVERRELAY */
+	
+		/* Broadcasts the capability to receive UTF8 encoded messages */
+		if (m_bUtfEnabled) 
+			icq_pack_append(tlv_5, "I", (uint32_t) 0x134E);		/* CAP_UTF8MSGS */
+#ifdef DBG_NEWCAPS			/* Tells server we understand to new format of caps */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x0000);			/* CAP_NEWCAPS */
+#endif
+
+#ifdef DBG_CAPXTRAZ
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x1a093c6c);		/* CAP_XTRAZ */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0xd7fd4ec5);		/* Broadcasts the capability to handle */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x9d51a647);		/* Xtraz */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x4e34f5a0);
+#endif
+		if (m_bAvatarsEnabled)
+			icq_pack_append(tlv_5, "I", (uint32_t) 0x134C);		/* CAP_DEVILS */
+
+#ifdef DBG_OSCARFT
+		/* Broadcasts the capability to receive Oscar File Transfers */
+		icq_pack_append(tlv_5, "P", (uint32_t) 0x1343); 		/* CAP_AIM_FILE */
+#endif
+
+		if (m_bAimEnabled)
+			icq_pack_append(tlv_5, "I", (uint32_t) 0x134D);	/* Tells the server we can speak to AIM */
+#ifdef DBG_AIMCONTACTSEND
+		icq_pack_append(tlv_5, "P", (uint32_t) 0x134B);		/* CAP_AIM_SENDBUDDYLIST */
+#endif
+#if 0
+		BYTE bXStatus = getContactXStatus(NULL);
+		if (bXStatus)
+		{
+			packBuffer(tlv_5, capXStatus[bXStatus-1], 0x10);
+		}
+#endif
+		icq_pack_append(tlv_5, "P", (uint32_t) 0x1344);		/* AIM_CAPS_ICQDIRECT */
+
+		/*packDWord(&packet, 0x178c2d9b); // Unknown cap
+		  packDWord(&packet, 0xdaa545bb);
+		  packDWord(&packet, 0x8ddbf3bd);
+		  packDWord(&packet, 0xbd53a10a);*/
+
+#ifdef DBG_CAPHTML
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x0138ca7b);	/* CAP_HTMLMSGS */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x769a4915);	/* Broadcasts the capability to receive */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x88f213fc);	/* HTML messages */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x00979ea8);
+#endif
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x4D697261);   /* Miranda Signature */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x6E64614D);
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x12345678);	/* XXX, MIRANDA_VERSION */
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x80050003);
+
+		pkt = icq_pack("T", icq_pack_tlv(0x05, tlv_5->str, tlv_5->len));
+		
+		icq_makesnac(s, pkt, 0x01, 0x04, 0, 0);
+		icq_send_pkt(s, pkt);
+
+		string_free(tlv_5, 1);
+	}
+
 	/* SNAC 3,4: Tell server who's on our list */
 	if (s->userlist) {
 		pkt = string_init(NULL);
@@ -143,28 +220,33 @@ void icq_session_connected(session_t *s) {
 		}
 #endif
 		string_t pkt;
+		string_t tlv_c;
 		uint16_t status;
 
 		status = icq_status(s->status);
-		
+
 		pkt = string_init(NULL);
 
 		icq_pack_append(pkt, "tI", icq_pack_tlv_dword(0x06, (0x00 << 8 | status)));	/* TLV 6: Status mode and security flags */
 		icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x08, 0x00));			/* TLV 8: Error code */
 
 	/* TLV C: Direct connection info */
-		icq_pack_append(pkt, "I", (uint32_t) 0x000c0025);
-		icq_pack_append(pkt, "I", (uint32_t) 0x00000000);	/* XXX, getSettingDword(NULL, "RealIP", 0) */
-		icq_pack_append(pkt, "I", (uint32_t) 0x00000000);	/* XXX, nPort */
-		icq_pack_append(pkt, "C", (uint32_t) 0x04);		/* Normal direct connection (without proxy/firewall) */
-		icq_pack_append(pkt, "W", (uint32_t) 0x08);		/* Protocol version */
-		icq_pack_append(pkt, "I", (uint32_t) 0x00);		/* XXX, DC Cookie */
-		icq_pack_append(pkt, "I", (uint32_t) 0x50);		/* WEBFRONTPORT */
-		icq_pack_append(pkt, "I", (uint32_t) 0x03);		/* CLIENTFEATURES */
-		icq_pack_append(pkt, "I", (uint32_t) 0xffffffff);	/* gbUnicodeCore ? 0x7fffffff : 0xffffffff */ /* Abused timestamp */
-		icq_pack_append(pkt, "I", (uint32_t) 0x80050003);	/* Abused timestamp */
-		icq_pack_append(pkt, "I", (uint32_t) 0x00000000);	/* XXX, Timestamp */
-		icq_pack_append(pkt, "W", (uint32_t) 0x0000);		/* Unknown */
+		tlv_c = string_init(NULL);
+		icq_pack_append(tlv_c, "I", (uint32_t) 0x00000000);	/* XXX, getSettingDword(NULL, "RealIP", 0) */
+		icq_pack_append(tlv_c, "I", (uint32_t) 0x00000000);	/* XXX, nPort */
+		icq_pack_append(tlv_c, "C", (uint32_t) 0x04);		/* Normal direct connection (without proxy/firewall) */
+		icq_pack_append(tlv_c, "W", (uint32_t) 0x08);		/* Protocol version */
+		icq_pack_append(tlv_c, "I", (uint32_t) 0x00);		/* XXX, DC Cookie */
+		icq_pack_append(tlv_c, "I", (uint32_t) 0x50);		/* WEBFRONTPORT */
+		icq_pack_append(tlv_c, "I", (uint32_t) 0x03);		/* CLIENTFEATURES */
+		icq_pack_append(tlv_c, "I", (uint32_t) 0xffffffff);	/* gbUnicodeCore ? 0x7fffffff : 0xffffffff */ /* Abused timestamp */
+		icq_pack_append(tlv_c, "I", (uint32_t) 0x80050003);	/* Abused timestamp */
+		icq_pack_append(tlv_c, "I", (uint32_t) 0x00000000);	/* XXX, Timestamp */
+		icq_pack_append(tlv_c, "W", (uint32_t) 0x0000);		/* Unknown */
+
+		icq_pack_append(pkt, "T", icq_pack_tlv(0x0C, tlv_c->str, tlv_c->len));
+		/* XXX, assert(tlv_c->len == 0x25) */
+		string_free(tlv_c, 1);
 
 		icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x1F, 0x00));
 
@@ -190,7 +272,7 @@ void icq_session_connected(session_t *s) {
 
 	/* Finish Login sequence */
 
-#if 0	/* XXX, wtf? */
+#if 1	/* XXX, wtf? */
 	pkt = string_init(NULL);
 
 	icq_pack_append(pkt, "WWI", (uint32_t) 0x22, (uint32_t) 0x01, (uint32_t) 0x0110161b);	/* imitate ICQ 6 behaviour */
