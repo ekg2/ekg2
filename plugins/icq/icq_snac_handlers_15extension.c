@@ -85,14 +85,12 @@ static int __displayed = 0;	/* Luckily we're not multithreaded */
 
 #define expand_display_str(formatka, param) 		\
 	{							\
-		uint16_t __len;					\
-		if (!ICQ_UNPACK(&buf, "w", &__len)) return -1;	\
-		if (len < __len) return -1;			\
-		if (__len > 0) {				\
-			char *__str = xstrndup((char *) buf, __len); /* XXX, recode */ \
-			if (__str[0]) printq_userinfo(formatka, param, __str);\
-			buf += __len; len -= __len;		\
-			xfree(__str);				\
+		char *__str;					\
+		if (!ICQ_UNPACK(&buf, "S", &__str)) return -1;	\
+		if (__str[0]) {					\
+			char *___str = xstrdup(__str); /* XXX, recode */ \
+			printq_userinfo(formatka, param, ___str);\
+			xfree(___str);				\
 		}						\
 	}
 
@@ -221,6 +219,51 @@ METASNAC_SUBHANDLER(icq_snac_extensions_workinfo) {
 	return 0;
 }
 
+METASNAC_SUBHANDLER(icq_snac_extensions_short_info) {
+	debug_function("icq_snac_extensions_short_info() %u\n", uid);
+
+	if (retcode != 0x0A)
+		return 0;
+
+	expand_display_str("icq_userinfo_short", "Nickname");
+	expand_display_str("icq_userinfo_short", "Firstname");
+	expand_display_str("icq_userinfo_short", "Lastname");
+	expand_display_str("icq_userinfo_short", "Email");
+
+	return 0;
+}
+
+METASNAC_SUBHANDLER(icq_snac_extensions_email) {
+	uint8_t count_discard;
+	int i;
+
+	debug_function("icq_snac_extensions_email() %u\n", uid);
+
+	if (retcode != 0x0A)
+		return 0;
+
+	/* This value used to be a e-mail counter. Either that was wrong or
+	 * Mirabilis changed the behaviour again. It usually says NULL now so
+	 * I use the packet byte count to extract the e-mails instead.
+	 */
+	
+	if (!ICQ_UNPACK(&buf, "C", &count_discard))
+		return -1;
+
+
+	for (i = 0; (len > 4); i++) {
+		uint8_t publish_flag;	/* Don't publish flag */
+		char *email;
+
+		if (!ICQ_UNPACK(&buf, "C", &publish_flag))
+			return -1;
+
+		expand_display_str("icq_userinfo_email", "Email");
+	}
+
+	return 0;
+}
+
 METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
 	debug_function("icq_snac_extensions_moreinfo() uid: %u\n", uid);
 #define printq_userinfo_more(param, paramval)	printq_userinfo("icq_userinfo_more", param, paramval)
@@ -281,6 +324,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 		case 0x00d2: handler = icq_snac_extensions_workinfo; break;	/* Miranda: OK, META_WORK_USERINFO */
 		case 0x00DC: handler = icq_snac_extensions_moreinfo; break;	/* Miranda: OK, META_MORE_USERINFO */
 		case 0x00FA: handler = icq_snac_extensions_affilations;	break;	/* Miranda: OK, META_AFFILATIONS_USERINFO */
+		case 0x00EB: handler = icq_snac_extensions_email; break;	/* Miranda: OK, META_EMAIL_USERINFO */
 		default:     handler = NULL;
 	}
 

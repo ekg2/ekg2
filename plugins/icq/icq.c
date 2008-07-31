@@ -223,10 +223,12 @@ void icq_session_connected(session_t *s) {
 		icq_makesnac(s, pkt, 0x4, 0x10, 0, 0);
 		icq_send_pkt(s, pkt);
 
-#if MIRANDA
-		// Update our information from the server
-		sendOwnerInfoRequest();
-#endif
+		/* Update our information from the server */
+		pkt = icq_pack("i", atoi(s->uid+4));
+		/* XXX, cookie, in-quiet-mode */
+		icq_makemetasnac(s, pkt, 2000, 0x04D0, 0);
+		icq_send_pkt(s, pkt);
+
 		/* Start sending Keep-Alive packets */
 		timer_remove_session(s, "ping");
 		timer_add_session(s, "ping", 60, 1, icq_ping);
@@ -683,11 +685,13 @@ static int icq_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	format_add("icq_userinfo_start",	"%g,+=%G----- %g%3%G info for: %Ticq:%2%n", 1);
 
+	format_add("icq_userinfo_affilations",	"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_basic",	"%g|| %n  %T%3:%n %4", 1);
+	format_add("icq_userinfo_email",	"%g|| %n  %T%3:%n %4", 1);
+	format_add("icq_userinfo_short",	"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_more",		"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_work",		"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_interests",	"%g|| %n  %T%3:%n %4", 1);
-	format_add("icq_userinfo_affilations",	"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_notes",	"%g|| %n  %T%3:%n %4", 1);
 
 	format_add("icq_userinfo_end",		"%g`+=%G----- End%n", 1);

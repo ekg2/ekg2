@@ -278,6 +278,7 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 			}
 
 			case 'U':
+			case 'S':
 			{
 				uint16_t Ulen;
 				char **dest = va_arg(ap, char **);
@@ -290,7 +291,10 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 				if (len < 2)
 					goto err;
 
-				Ulen = buf[0] << 8 | buf[1];
+				if (*format == 'S')
+					Ulen = buf[1] << 8 | buf[0];
+				else	Ulen = buf[0] << 8 | buf[1];
+
 				buf += 2; len -= 2;
 
 				if (len < Ulen)
