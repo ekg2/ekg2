@@ -219,11 +219,13 @@ METASNAC_SUBHANDLER(icq_snac_extensions_workinfo) {
 	return 0;
 }
 
-METASNAC_SUBHANDLER(icq_snac_extensions_short_info) {
-	debug_function("icq_snac_extensions_short_info() %u\n", uid);
+METASNAC_SUBHANDLER(icq_snac_extensions_shortinfo) {
+	debug_function("icq_snac_extensions_shortinfo() %u\n", uid);
 
 	if (retcode != 0x0A)
 		return 0;
+	
+	/* XXX miranda-Broken */
 
 	expand_display_str("icq_userinfo_short", "Nickname");
 	expand_display_str("icq_userinfo_short", "Firstname");
@@ -253,7 +255,6 @@ METASNAC_SUBHANDLER(icq_snac_extensions_email) {
 
 	for (i = 0; (len > 4); i++) {
 		uint8_t publish_flag;	/* Don't publish flag */
-		char *email;
 
 		if (!ICQ_UNPACK(&buf, "C", &publish_flag))
 			return -1;
@@ -325,6 +326,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 		case 0x00DC: handler = icq_snac_extensions_moreinfo; break;	/* Miranda: OK, META_MORE_USERINFO */
 		case 0x00FA: handler = icq_snac_extensions_affilations;	break;	/* Miranda: OK, META_AFFILATIONS_USERINFO */
 		case 0x00EB: handler = icq_snac_extensions_email; break;	/* Miranda: OK, META_EMAIL_USERINFO */
+		case 0x0104: handler = icq_snac_extensions_shortinfo; break;	/* Miranda: OK, META_SHORT_USERINFO */
 		default:     handler = NULL;
 	}
 

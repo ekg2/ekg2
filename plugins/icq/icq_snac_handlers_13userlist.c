@@ -230,6 +230,7 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 		default:
 			 debug_error("icq_userlist_parse_entry() unkown type: %.4x\n", type);
 	}
+	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_userlist_roster) {
@@ -307,6 +308,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 	} else {
 		debug("icq_snac_userlist_roster() Waiting for more packets...");
 	}
+	return 0;
 }
 
 SNAC_SUBHANDLER(SNAC_USR_0E) {

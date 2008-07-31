@@ -95,7 +95,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 	return 0;
 }
 
-SNAC_HANDLER(icq_snac_buddy_notify_rejected) {
+SNAC_SUBHANDLER(icq_snac_buddy_notify_rejected) {
 	char *uid;
 
 	if (!ICQ_UNPACK(&buf, "u", &uid))

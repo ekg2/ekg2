@@ -37,6 +37,7 @@ SNAC_SUBHANDLER(icq_snac_lookup_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_lookup_replyreq) {
+	return -3;
 }
 
 SNAC_HANDLER(icq_snac_lookup_handler) {
