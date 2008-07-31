@@ -177,7 +177,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 	expand_display_str("icq_userinfo_basic", "Street");
 	expand_display_str("icq_userinfo_basic", "Cellular");
 	expand_display_str("icq_userinfo_basic", "Zip");
-	expand_display_word("icq_userinfo_basic", "Country");
+	expand_display_wordT("icq_userinfo_more", countryField, "Country");
 	expand_display_word("icq_userinfo_basic", "Timezone");
 
 	debug_error("icq_snac_extensions_basicinfo() more data follow: %u\n", len);
