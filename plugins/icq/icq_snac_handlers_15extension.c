@@ -177,14 +177,15 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 	expand_display_str("icq_userinfo_basic", "Street");
 	expand_display_str("icq_userinfo_basic", "Cellular");
 	expand_display_str("icq_userinfo_basic", "Zip");
-	expand_display_wordT("icq_userinfo_more", countryField, "Country");
-{
-	int8_t tz;
-	if (!ICQ_UNPACK(&buf, "c", &tz)) return -1;
-	char *p = saprintf("GMT%+d", tz/2);
-	printq_userinfo("icq_userinfo_more", "Timezone", p);
-	xfree(p);
-}
+	expand_display_wordT("icq_userinfo_basic", countryField, "Country");
+	{
+		int8_t tz;
+		if (!ICQ_UNPACK(&buf, "c", &tz)) return -1;
+		char *p = saprintf("GMT%+d", tz/2);
+
+		printq_userinfo("icq_userinfo_basic", "Timezone", p); __displayed = 1;
+		xfree(p);
+	}
 
 	debug_error("icq_snac_extensions_basicinfo() more data follow: %u\n", len);
 #warning "icq_snac_extensions_basicinfo()"
@@ -309,6 +310,84 @@ METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
 	return 0;
 }
 
+METASNAC_SUBHANDLER(icq_snac_extension_userfound) {
+	char *nickname = NULL;
+	char *first_name = NULL;
+	char *last_name = NULL;
+	char *email = NULL;
+	char *temp;
+
+	uint32_t uin;
+	uint16_t len2;
+
+	debug_function("icq_snac_extension_userfound()\n");
+
+	/* XXX, sprawdzic czy mamy cookie. */
+
+	if (retcode == 0xA) {
+		/* Failed search */
+		debug_error("icq_snac_extension_userfound() search error: %u\n", retcode);
+		return 0;
+	}
+	icq_hexdump(DEBUG_WHITE, buf, len);
+
+	if (!ICQ_UNPACK(&buf, "w", &len2))
+		return -1;
+
+	if (len < len2)
+		return -1;
+
+	if (!ICQ_UNPACK(&buf, "i", &uin))
+		return -1;
+
+	if (!ICQ_UNPACK(&buf, "S", &temp)) goto cleanup;
+	nickname = xstrdup(temp);
+
+	if (!ICQ_UNPACK(&buf, "S", &temp)) goto cleanup;
+	first_name = xstrdup(temp);
+
+	if (!ICQ_UNPACK(&buf, "S", &temp)) goto cleanup;
+	last_name = xstrdup(temp);
+
+	if (!ICQ_UNPACK(&buf, "S", &temp)) goto cleanup;
+	email = xstrdup(temp);
+
+	debug("[/search] %u nick: %s first: %s last: %s email: %s\n", uin, nickname, first_name, last_name, email);
+
+#if 0
+	// Authentication needed flag
+	if (wPacketLen < 1)
+		break;
+	unpackByte(&databuf, &sr.auth);
+
+	sr.uid = NULL; // icq contact
+	// Finally, broadcast the result
+	BroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)wCookie, (LPARAM)&sr);
+
+	// Broadcast "Last result" ack if this was the last user found
+	if (wReplySubtype == SRV_LAST_USER_FOUND)
+	{
+		if (wPacketLen>=10)
+		{
+			DWORD dwLeft;
+
+			databuf += 5;
+			unpackLEDWord(&databuf, &dwLeft);
+			if (dwLeft)
+				NetLog_Server("Warning: %d search results omitted", dwLeft);
+		}
+		ReleaseSearchCookie(wCookie, pCookie);
+	}
+#endif
+
+	xfree(nickname); xfree(first_name); xfree(last_name); xfree(email);
+	return 0;
+
+cleanup:
+	xfree(nickname); xfree(first_name); xfree(last_name); xfree(email);
+	return -1;
+}
+
 SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 	struct {
 		uint16_t subtype;
@@ -324,6 +403,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 	}
 
 	switch (pkt.subtype) {
+	/* userinfo */
 		case 0x00C8: handler = icq_snac_extensions_basicinfo; break;	/* Miranda: OK, META_BASIC_USERINFO */
 		case 0x00F0: handler = icq_snac_extensions_interests; break;	/* Miranda: OK, META_INTERESTS_USERINFO */
 		case 0x00E6: handler = icq_snac_extensions_notes; break;	/* Miranda: OK, META_NOTES_USERINFO */
@@ -333,6 +413,12 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 		case 0x00FA: handler = icq_snac_extensions_affilations;	break;	/* Miranda: OK, META_AFFILATIONS_USERINFO */
 		case 0x00EB: handler = icq_snac_extensions_email; break;	/* Miranda: OK, META_EMAIL_USERINFO */
 		case 0x0104: handler = icq_snac_extensions_shortinfo; break;	/* Miranda: OK, META_SHORT_USERINFO */
+	/* search */
+		case 0x01AE: 							/* Miranda: OK, SRV_LAST_USER_FOUND */
+			/* XXX, ekg2 */
+		case 0x01A4: handler = icq_snac_extension_userfound; break;	/* Miranda: OK, SRV_USER_FOUND */
+
+		case 0x0366: handler = NULL; break;				/* XXX, SRV_RANDOM_FOUND */
 		default:     handler = NULL;
 	}
 

@@ -36,8 +36,6 @@ SNAC_SUBHANDLER(icq_snac_message_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
-#warning "Miranda: icq_snac_message_replyicbm() -DDBG_CAPHTML -DDBG_CAPMTN"
-
 	string_t pkt;
 	uint32_t flags;
 

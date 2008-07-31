@@ -117,7 +117,8 @@ void icq_session_connected(session_t *s) {
 		/* Broadcasts the capability to receive UTF8 encoded messages */
 		if (m_bUtfEnabled) 
 			icq_pack_append(tlv_5, "I", (uint32_t) 0x134E);		/* CAP_UTF8MSGS */
-#ifdef DBG_NEWCAPS			/* Tells server we understand to new format of caps */
+#ifdef DBG_NEWCAPS
+		/* Tells server we understand to new format of caps */
 		icq_pack_append(tlv_5, "I", (uint32_t) 0x0000);			/* CAP_NEWCAPS */
 #endif
 
@@ -272,7 +273,7 @@ void icq_session_connected(session_t *s) {
 
 	/* Finish Login sequence */
 
-#if 1	/* XXX, wtf? */
+#if 0	/* XXX, wtf? */
 	pkt = string_init(NULL);
 
 	icq_pack_append(pkt, "WWI", (uint32_t) 0x22, (uint32_t) 0x01, (uint32_t) 0x0110161b);	/* imitate ICQ 6 behaviour */
@@ -750,10 +751,98 @@ static COMMAND(icq_command_userinfo) {
 		return -1;
 	}
 
-	/* XXX */
+	/* XXX xookie */
 
 	pkt = icq_pack("i", number);
 	icq_makemetasnac(session, pkt, 2000, (minimal_req == 0) ? 1202 : 1210, 0);
+
+	icq_send_pkt(session, pkt);
+	return 0;
+}
+
+static COMMAND(icq_command_searchuin) {
+	const char *uid;
+
+	string_t pkt;
+	int uin;
+
+	debug_function("icq_command_searchuin() %s\n", params[0]);
+
+	if (!(uid = get_uid(session, target)))
+		uid = target;
+
+	if (!xstrncmp(uid, "icq:", 4))
+		uid += 4;
+
+	/* XXX */
+	uin = atoi(uid);
+
+	if (uin <= 0) {
+		printq("invalid_params", name);
+		return -1;
+	}
+
+	/* XXX, cookie */
+
+	pkt = icq_pack("tI", icq_pack_tlv_dword(0x0136, uin));	/* TLV_UID */
+
+	icq_makemetasnac(session, pkt, 2000, 0x0569, 0);	/* META_SEARCH_UIN */
+	icq_send_pkt(session, pkt);
+	return 0;
+}
+
+static COMMAND(icq_command_searchname) {
+	const char *first_name = NULL;
+	const char *last_name = NULL;
+	const char *nickname = NULL;
+
+	string_t pkt;
+
+	/* XXX, --nickname --lastname... */
+
+	if (params[0]) {
+		first_name = params[0];
+		if (params[1]) {
+			last_name = params[1];
+			nickname = params[2];
+		}
+	}
+
+	if (!first_name && !last_name && !nickname) {
+		/* XXX */
+		return -1;
+	}
+
+	/* XXX, cookie */
+
+	/* Pack the search details */
+	pkt = string_init(NULL);
+
+	if (first_name)
+		icq_pack_append(pkt, "T", icq_pack_tlv_str(0x0140, first_name));	/* TLV_FIRSTNAME */
+
+	if (last_name)
+		icq_pack_append(pkt, "T", icq_pack_tlv_str(0x014A, last_name));		/* TLV_LASTNAME */
+	
+	if (nickname)
+		icq_pack_append(pkt, "T", icq_pack_tlv_str(0x0154, nickname));		/* TLV_NICKNAME */
+
+	icq_makemetasnac(session, pkt, 2000, 0x055F, 0);	/* META_SEARCH_GENERIC */
+	icq_send_pkt(session, pkt);
+
+	return 0;
+}
+
+static COMMAND(icq_command_searchmail) {
+	string_t pkt;
+
+	debug_function("icq_command_searchemail() %s\n", params[0]);
+
+	/* XXX, cookie */
+
+	pkt = icq_pack("T", icq_pack_tlv_str(0x015E, params[0]));	/* TLV_EMAIL */
+
+	icq_makemetasnac(session, pkt, 2000, 0x0573, 0);	/* META_SEARCH_EMAIL */
 	icq_send_pkt(session, pkt);
 	return 0;
 }
@@ -816,6 +905,11 @@ EXPORT int icq_plugin_init(int prio) {
 
 	command_add(&icq_plugin, "icq:userinfo", "!u",	icq_command_userinfo,	ICQ_FLAGS_TARGET, NULL);
 	command_add(&icq_plugin, "icq:register", NULL,	icq_command_register,	0, NULL);
+
+	/* XXX, makes generic icq:search */
+	command_add(&icq_plugin, "icq:searchuin", "!u",	icq_command_searchuin,	ICQ_FLAGS_TARGET, NULL);
+	command_add(&icq_plugin, "icq:searchmail", "!",	icq_command_searchmail,	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&icq_plugin, "icq:search", "? ? ?",	icq_command_searchname,	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(&icq_plugin, "icq:connect", NULL,	icq_command_connect, 	ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:disconnect", NULL,icq_command_disconnect,	ICQ_ONLY, NULL);

@@ -326,13 +326,13 @@ SNAC_SUBHANDLER(SNAC_USR_09) {
 	return -3;
 }
 
-SNAC_SUBHANDLER(SNAC_USR_11) {
-	debug_white("SNAC_USR_11() Server is modifying contact list\n");
+SNAC_SUBHANDLER(icq_snac_userlist_modifystart) {
+	debug_white("icq_snac_userlist_modifystart() Server is modifying contact list\n");
 	return 0;
 }
 
-SNAC_SUBHANDLER(SNAC_USR_12) {
-	debug_white("SNAC_USR_12() End of server modification\n");
+SNAC_SUBHANDLER(icq_snac_userlist_modifyend) {
+	debug_white("icq_snac_userlist_modifyend() End of server modification\n");
 	return 0;
 }
 
@@ -341,13 +341,13 @@ SNAC_HANDLER(icq_snac_userlist_handler) {
 
 	switch (cmd) {
 		case 0x01: handler = icq_snac_userlist_error; break;
-		case 0x03: handler = icq_snac_userlist_reply; break;	/* Miranda: OK */
-		case 0x06: handler = icq_snac_userlist_roster; break;	/* Miranda: 1/3 OK */	/* XXX, handleServerCList() */
+		case 0x03: handler = icq_snac_userlist_reply; break;		/* Miranda: OK */
+		case 0x06: handler = icq_snac_userlist_roster; break;		/* Miranda: 1/3 OK */	/* XXX, handleServerCList() */
 		case 0x09: handler = SNAC_USR_09; break;
 		case 0x0E: handler = SNAC_USR_0E; break;
 		case 0x0F: handler = SNAC_USR_0F; break;
-		case 0x11: handler = SNAC_USR_11; break;
-		case 0x12: handler = SNAC_USR_12; break;
+		case 0x11: handler = icq_snac_userlist_modifystart; break;	/* Miranda: OK */
+		case 0x12: handler = icq_snac_userlist_modifyend; break;	/* Miranda: OK */
 		default:   handler = NULL; break;
 	}
 
