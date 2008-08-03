@@ -324,7 +324,7 @@ METASNAC_SUBHANDLER(icq_snac_extension_userfound) {
 
 	/* XXX, sprawdzic czy mamy cookie. */
 
-	if (retcode == 0xA) {
+	if (retcode != 0xA) {
 		/* Failed search */
 		debug_error("icq_snac_extension_userfound() search error: %u\n", retcode);
 		return 0;
@@ -351,6 +351,8 @@ METASNAC_SUBHANDLER(icq_snac_extension_userfound) {
 
 	if (!ICQ_UNPACK(&buf, "S", &temp)) goto cleanup;
 	email = xstrdup(temp);
+
+	/* ?WO? gender, age, etc... ??? */
 
 	debug("[/search] %u nick: %s first: %s last: %s email: %s\n", uin, nickname, first_name, last_name, email);
 

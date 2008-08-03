@@ -820,14 +820,24 @@ static COMMAND(icq_command_searchname) {
 	/* Pack the search details */
 	pkt = string_init(NULL);
 
+
+#define wo_idnhtni(type, str) \
+	{ \
+	uint32_t len = xstrlen(str); \
+	icq_pack_append(pkt, "www", (uint32_t) type, len+3, len+1); \
+	string_append_raw(pkt, (char *) str, len+1); \
+	}
+
 	if (first_name)
-		icq_pack_append(pkt, "T", icq_pack_tlv_str(ROT16(0x0140), first_name));	/* TLV_FIRSTNAME */
+		wo_idnhtni(0x0140, first_name);	/* TLV_FIRSTNAME */
 
 	if (last_name)
-		icq_pack_append(pkt, "T", icq_pack_tlv_str(ROT16(0x014A), last_name));	/* TLV_LASTNAME */
+		wo_idnhtni(0x014A, last_name);	/* TLV_LASTNAME */
 	
 	if (nickname)
-		icq_pack_append(pkt, "T", icq_pack_tlv_str(ROT16(0x0154), nickname));	/* TLV_NICKNAME */
+		wo_idnhtni(0x0154, nickname);	/* TLV_NICKNAME */
+
+#undef wo_idnhtni
 
 	icq_makemetasnac(session, pkt, 2000, 0x055F, 0);	/* META_SEARCH_GENERIC */
 	icq_send_pkt(session, pkt);
@@ -838,9 +848,12 @@ static COMMAND(icq_command_searchname) {
 static COMMAND(icq_command_searchmail) {
 	string_t pkt;
 
-	debug_function("icq_command_searchemail() %s\n", params[0]);
+	debug_function("icq_command_searchmail() %s\n", params[0]);
 
 	/* XXX, cookie */
+
+	if (!params[0])
+		return -1;
 
 	pkt = icq_pack("T", icq_pack_tlv_str(ROT16(0x015E), params[0]));	/* TLV_EMAIL */
 
