@@ -112,9 +112,21 @@ AM_ICONV
 
 AC_CHECK_LIBIDN
 
-AC_CONFIG_FILES([Makefile ekg/Makefile compat/Makefile docs/Makefile po/Makefile.in])
-AC_CONFIG_FILES([contrib/Makefile contrib/python/Makefile contrib/perl/Makefile])
-AC_CONFIG_FILES([plugins/Makefile plugins/polchat/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gg/Makefile plugins/sim/Makefile plugins/jabber/Makefile plugins/ncurses/Makefile plugins/gtk/Makefile plugins/readline/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/perl/Makefile plugins/python/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile plugins/gpg/Makefile plugins/autoresponder/Makefile plugins/feed/Makefile plugins/jogger/Makefile])
+dnl core 
+AC_CONFIG_FILES([Makefile ekg/Makefile contrib/Makefile compat/Makefile docs/Makefile plugins/Makefile po/Makefile.in])
+dnl protocol-plugins
+AC_CONFIG_FILES([plugins/feed/Makefile plugins/gg/Makefile plugins/irc/Makefile plugins/jabber/Makefile plugins/polchat/Makefile])
+dnl ui-plugins
+AC_CONFIG_FILES([plugins/gtk/Makefile plugins/httprc_xajax/Makefile plugins/ncurses/Makefile plugins/rc/Makefile plugins/readline/Makefile])
+dnl log-plugins
+AC_CONFIG_FILES([plugins/logs/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile])
+dnl scripting-plugins and samples-scripts
+AC_CONFIG_FILES([plugins/perl/Makefile plugins/python/Makefile])
+AC_CONFIG_FILES([contrib/python/Makefile contrib/perl/Makefile])
+dnl crypt-plugins
+AC_CONFIG_FILES([plugins/gpg/Makefile plugins/rot13/Makefile plugins/sim/Makefile])
+dnl misc-plugins
+AC_CONFIG_FILES([plugins/mail/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/autoresponder/Makefile plugins/jogger/Makefile])
 
 PLUGINS="logs mail rc sms pcm irc polchat rot13 httprc_xajax xmsg autoresponder jogger"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
