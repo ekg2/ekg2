@@ -103,13 +103,11 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 		servlistcookie* ack;
 		DWORD dwCookie;
 #endif
-
 		/* CLI_REQLISTS - we want to use SSI */
+		str = string_init(NULL);
 //		str = icq_pack("tW", icq_pack_tlv_word(0x0B, 0x000F));	/* mimic ICQ 6 */
-		/* ?WO? 01,02 ??? */
-//		icq_makesnac(s, str, 0x01, 0x02, 0, 0);
-//		icq_send_pkt(s, str);
-
+		icq_makesnac(s, str, 0x13, 0x02, 0, 0);
+		icq_send_pkt(s, str);
 #if 0
 		if (!wRecordCount) { /* CLI_REQROSTER */
 			/* we do not have any data - request full list */
@@ -154,14 +152,8 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 			sendServPacket(&packet);
 		}
 #else
-
-		/* temporary always send: CLI_REQROSTER */
 		str = string_init(NULL);
 //		icq_makesnac(s, str, 0x13, 0x04, 0, 0);
-		icq_makesnac(s, str, 0x13, 0x02, 0, 0);
-		icq_send_pkt(s, str);
-
-		str = string_init(NULL);
 		icq_pack_append(str, "I", (uint32_t) 0x0000);
 		icq_pack_append(str, "I", (uint32_t) 0x0000);
 		icq_makesnac(s, str, 0x13, 0x05, 0, 0);

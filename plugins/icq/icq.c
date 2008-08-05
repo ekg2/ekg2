@@ -850,9 +850,6 @@ static COMMAND(icq_command_searchmail) {
 
 	/* XXX, cookie */
 
-	if (!params[0])
-		return -1;
-
 	pkt = icq_pack("T", icq_pack_tlv_str(ROT16(0x015E), params[0]));	/* TLV_EMAIL */
 
 	icq_makemetasnac(session, pkt, 2000, 0x0573, 0);	/* META_SEARCH_EMAIL */
