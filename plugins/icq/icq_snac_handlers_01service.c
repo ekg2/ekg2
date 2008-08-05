@@ -162,8 +162,6 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 		icq_send_pkt(s, str);
 
 		str = string_init(NULL);
-		
-		str = string_init(NULL);
 		icq_pack_append(str, "I", (uint32_t) 0x0000);
 		icq_pack_append(str, "I", (uint32_t) 0x0000);
 		icq_makesnac(s, str, 0x13, 0x05, 0, 0);
