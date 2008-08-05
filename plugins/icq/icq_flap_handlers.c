@@ -164,6 +164,7 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		str = icq_pack("I", (uint32_t) 1);			/* spkt.flap.pkt.login.id CLI_HELLO */
 		icq_pack_append(str, "T", icq_pack_tlv(0x06, j->cookie->str, j->cookie->len));
 
+#if 0	/* wo -- not necessary */
 		/* Pack client identification details. */
 		icq_pack_append(str, "T", icq_pack_tlv_str(0x03, "ICQ Client"));
 		icq_pack_append(str, "tW", icq_pack_tlv_word(0x16, 0x010a)); 			/* CLIENT_ID_CODE */
@@ -175,7 +176,7 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		icq_pack_append(str, "T", icq_pack_tlv_str(0x0f, "en"));
 		icq_pack_append(str, "T", icq_pack_tlv_str(0x0e, "en"));
 		icq_pack_append(str, "tI", icq_pack_tlv_word(0x8003, 0x00100000));	/* Unknown */
-
+#endif
 		icq_makeflap(s, str, ICQ_FLAP_LOGIN);
 		icq_send_pkt(s, str); str = NULL;
 

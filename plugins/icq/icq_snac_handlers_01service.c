@@ -51,16 +51,19 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 	 * Miranda mimics the behaviour of ICQ 6 */
 
 	icq_pack_append(pkt, "WW", (uint32_t) 0x22, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x01, (uint32_t) 0x04);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x01, (uint32_t) 0x03);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x13, (uint32_t) 0x04);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x02, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x03, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x04, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x06, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x08, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x09, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0a, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0b, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x0c, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x25, (uint32_t) 0x01);
 
 	icq_makesnac(s, pkt, 0x01, 0x17, 0, 0);
 	icq_send_pkt(s, pkt);
@@ -102,9 +105,10 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 #endif
 
 		/* CLI_REQLISTS - we want to use SSI */
-		str = icq_pack("tW", icq_pack_tlv_word(0x0B, 0x000F));	/* mimic ICQ 6 */
-		icq_makesnac(s, str, 0x01, 0x02, 0, 0);
-		icq_send_pkt(s, str);
+//		str = icq_pack("tW", icq_pack_tlv_word(0x0B, 0x000F));	/* mimic ICQ 6 */
+		/* ?WO? 01,02 ??? */
+//		icq_makesnac(s, str, 0x01, 0x02, 0, 0);
+//		icq_send_pkt(s, str);
 
 #if 0
 		if (!wRecordCount) { /* CLI_REQROSTER */
@@ -153,7 +157,16 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 
 		/* temporary always send: CLI_REQROSTER */
 		str = string_init(NULL);
-		icq_makesnac(s, str, 0x13, 0x04, 0, 0);
+//		icq_makesnac(s, str, 0x13, 0x04, 0, 0);
+		icq_makesnac(s, str, 0x13, 0x02, 0, 0);
+		icq_send_pkt(s, str);
+
+		str = string_init(NULL);
+		
+		str = string_init(NULL);
+		icq_pack_append(str, "I", (uint32_t) 0x0000);
+		icq_pack_append(str, "I", (uint32_t) 0x0000);
+		icq_makesnac(s, str, 0x13, 0x05, 0, 0);
 		icq_send_pkt(s, str);
 #endif
 	}
@@ -168,7 +181,8 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 	                2 = Enable offline status message notification
 	                4 = Enable Avatars for offline contacts
 	 */
-	str = icq_pack("tW", icq_pack_tlv_word(0x05, 0x0003));	/* mimic ICQ 6 */
+//	str = icq_pack("tW", icq_pack_tlv_word(0x05, 0x0003));	/* mimic ICQ 6 */
+	str = string_init(NULL);
 	icq_makesnac(s, str, 0x03, 0x02, 0, 0);
 	icq_send_pkt(s, str);
 

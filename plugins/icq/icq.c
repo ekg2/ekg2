@@ -95,7 +95,6 @@ static TIMER_SESSION(icq_ping) {
 
 void icq_session_connected(session_t *s) {
 	string_t pkt;
-
 	{
 		#define m_bAvatarsEnabled 0
 		#define m_bUtfEnabled 0
@@ -168,7 +167,7 @@ void icq_session_connected(session_t *s) {
 
 		pkt = icq_pack("T", icq_pack_tlv(0x05, tlv_5->str, tlv_5->len));
 		
-		icq_makesnac(s, pkt, 0x01, 0x04, 0, 0);
+		icq_makesnac(s, pkt, 0x02, 0x04, 0, 0);
 		icq_send_pkt(s, pkt);
 
 		string_free(tlv_5, 1);
@@ -264,6 +263,7 @@ void icq_session_connected(session_t *s) {
 		icq_makesnac(s, pkt, 0x01, 0x1E, 0, 0);
 		icq_send_pkt(s, pkt); pkt = NULL;
 	}
+
 	/* SNAC 1,11 */
 	pkt = icq_pack("I", (uint32_t) 0x00000000);
 	icq_makesnac(s, pkt, 0x01, 0x11, 0, 0);
@@ -273,7 +273,6 @@ void icq_session_connected(session_t *s) {
 
 	/* Finish Login sequence */
 
-#if 0	/* XXX, wtf? */
 	pkt = string_init(NULL);
 
 	icq_pack_append(pkt, "WWI", (uint32_t) 0x22, (uint32_t) 0x01, (uint32_t) 0x0110161b);	/* imitate ICQ 6 behaviour */
@@ -290,7 +289,6 @@ void icq_session_connected(session_t *s) {
 
 	icq_makesnac(s, pkt, 0x01, 0x02, 0, 0);
 	icq_send_pkt(s, pkt); pkt = NULL;
-#endif
 
 	debug_white(" *** Yeehah, login sequence complete\n");
 

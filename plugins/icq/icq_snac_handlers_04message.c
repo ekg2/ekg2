@@ -48,8 +48,26 @@ SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
 	flags |= 0x00000008;
 #endif
 	/* SnacCliSeticbm() */
+flags = 0x0b;
 	pkt = icq_pack("WIWWWWW",
-		(uint32_t) 0x0000, (uint32_t) flags,		/* channel, flags */
+		(uint32_t) 0x0001, (uint32_t) flags,		/* channel, flags */
+		(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
+		(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
+		(uint32_t) 0);					/* unknown */
+	icq_makesnac(s, pkt, 0x04, 0x02, 0, 0);
+	icq_send_pkt(s, pkt);
+
+flags = 0x03;
+	pkt = icq_pack("WIWWWWW",
+		(uint32_t) 0x0002, (uint32_t) flags,		/* channel, flags */
+		(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
+		(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
+		(uint32_t) 0);					/* unknown */
+	icq_makesnac(s, pkt, 0x04, 0x02, 0, 0);
+	icq_send_pkt(s, pkt);
+
+	pkt = icq_pack("WIWWWWW",
+		(uint32_t) 0x0004, (uint32_t) flags,		/* channel, flags */
 		(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
 		(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
 		(uint32_t) 0);					/* unknown */
