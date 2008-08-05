@@ -329,7 +329,6 @@ METASNAC_SUBHANDLER(icq_snac_extension_userfound) {
 		debug_error("icq_snac_extension_userfound() search error: %u\n", retcode);
 		return 0;
 	}
-	icq_hexdump(DEBUG_WHITE, buf, len);
 
 	if (!ICQ_UNPACK(&buf, "w", &len2))
 		return -1;
@@ -353,6 +352,7 @@ METASNAC_SUBHANDLER(icq_snac_extension_userfound) {
 	email = xstrdup(temp);
 
 	/* ?WO? gender, age, etc... ??? */
+	icq_hexdump(DEBUG_WHITE, buf, len);
 
 	debug("[/search] %u nick: %s first: %s last: %s email: %s\n", uin, nickname, first_name, last_name, email);
 

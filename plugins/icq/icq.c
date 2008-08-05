@@ -94,7 +94,9 @@ static TIMER_SESSION(icq_ping) {
 }
 
 void icq_session_connected(session_t *s) {
+	icq_private_t *j = s->priv;
 	string_t pkt;
+
 	{
 		#define m_bAvatarsEnabled 0
 		#define m_bUtfEnabled 0
@@ -324,6 +326,7 @@ void icq_session_connected(session_t *s) {
 #endif
 	}
 	protocol_connected_emit(s);
+	j->connecting = 0;
 
 #if MIRANDA
 	if (m_bAimEnabled)

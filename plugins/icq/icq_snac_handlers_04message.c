@@ -155,8 +155,10 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 		sent = time(NULL);
 
 		if (msg->len) {
+			char *uid = icq_uid(sender);
 			/* XXX, class? */
-			protocol_message_emit(s, sender, NULL, msg->str, NULL, sent, EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
+			protocol_message_emit(s, uid, NULL, msg->str, NULL, sent, EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
+			xfree(uid);
 		}
 
 		string_free(msg, 1);
