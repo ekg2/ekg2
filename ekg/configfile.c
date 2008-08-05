@@ -125,7 +125,7 @@ void config_postread()
                 array_free(targets);
         }
 
-	if (config_sessions_save && config_session_default) {
+	if (config_session_default) {
 		session_t *s = session_find(config_session_default);
 
 		if (s) {
