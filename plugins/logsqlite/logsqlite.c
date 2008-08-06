@@ -572,6 +572,9 @@ QUERY(logsqlite_msg_handler)
 	if (!session)
 		return 0;
 
+	if (!xstrstr(session_get(s, "log_formats"), "sqlite"))
+		return 0;
+
 	switch ((msgclass_t) class) {
 		case EKG_MSGCLASS_MESSAGE:
 			type = ("msg");
@@ -700,6 +703,9 @@ QUERY(logsqlite_status_handler) {
 		return 0;
 
 	if (!session)
+		return 0;
+
+	if (!xstrstr(session_get(s, "log_formats"), "sqlite"))
 		return 0;
 
 	db = logsqlite_prepare_db(s, time(0), 1);

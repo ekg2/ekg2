@@ -1641,7 +1641,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("gpg_active", 		VAR_BOOL, "0", 0, jabber_gpg_changed),
 	PLUGIN_VAR_ADD("gpg_key", 		VAR_STR, NULL, 0, jabber_gpg_changed),
 	PLUGIN_VAR_ADD("gpg_password", 		VAR_STR, NULL, 1, jabber_gpg_changed),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "xml,simple", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "xml,simple,sqlite", 0, NULL),
 	PLUGIN_VAR_ADD("msg_gen_thread",	VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("password", 		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("photo_hash",		VAR_STR, NULL, 0, NULL),

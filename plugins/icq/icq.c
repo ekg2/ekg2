@@ -85,6 +85,7 @@ int icq_send_pkt(session_t *s, string_t buf) {
 
 static TIMER_SESSION(icq_ping) {
 	icq_private_t *j;
+	string_t pkt;
 
 	if (type)
 		return 0;
@@ -92,7 +93,9 @@ static TIMER_SESSION(icq_ping) {
 	if (!s || !(j = s->priv) || !s->connected)
 		return -1;
 
-/* 	write_flap(&packet, ICQ_PING_CHAN); */
+	pkt = string_init(NULL);
+	icq_makeflap(s, pkt, 0x05);
+	icq_send_pkt(s, pkt);
 
 	return 0;
 }
@@ -1042,7 +1045,7 @@ static plugins_params_t icq_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias", 		VAR_STR, NULL, 0, NULL), 
 	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_reconnect", 	VAR_INT,  "0", 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "xml,simple", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "xml,simple,sqlite", 0, NULL),
 	PLUGIN_VAR_ADD("password", 		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("plaintext_passwd",	VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_END()

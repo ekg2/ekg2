@@ -1683,7 +1683,7 @@ static plugins_params_t gg_plugin_vars[] = {
 	PLUGIN_VAR_ADD("email", 		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("invisible_check_interval",VAR_INT, 0, 0, NULL),
 	PLUGIN_VAR_ADD("local_ip", 		VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "xml,simple", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "xml,simple,sqlite", 0, NULL),
 	PLUGIN_VAR_ADD("password", 		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("port", 			VAR_INT, "8074", 0, NULL),
 	PLUGIN_VAR_ADD("private", 		VAR_BOOL, "0", 0, gg_changed_private),

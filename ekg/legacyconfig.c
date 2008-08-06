@@ -79,6 +79,10 @@ void config_upgrade() {
 			print("config_upgrade_minor",
 				_("'ping-server' jabber session variable has been renamed to 'ping_server', please set it by hand " \
 				"where needed. Sorry for that inconvenience."), "2007-08-24");
+		case 6:
+			print("config_upgrade_major",
+				_("sqlite only logs messages and status-changes when in log_formats session variable you have 'sqlite' " \
+				"Your config couldn't be updated automagically, so you must set it by hand."), "2008-08-06");
 	}
 
 	config_version = current_config_version;
