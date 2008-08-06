@@ -138,6 +138,15 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
+			case 'U':
+			{
+				char *buf = va_arg(ap, char *);
+
+				icq_pack_append(str, "W", (uint32_t) xstrlen(buf));
+				string_append(str, buf);
+				break;
+			}
+
 			case 'u':	/* uid */
 			{
 				uint32_t uin = va_arg(ap, uint32_t);
@@ -145,7 +154,6 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 
 				icq_pack_append(str, "C", (uint32_t) xstrlen(buf));
 				string_append(str, buf);
-
 				break;
 			}
 

@@ -957,6 +957,61 @@ static COMMAND(icq_command_searchmail) {
 	return 0;
 }
 
+static COMMAND(icq_command_auth) {
+	uint32_t number;
+
+	if (params[1]) {
+		target = params[1];
+	} else if (!target) {
+		printq("invalid_params", name);
+		return -1;
+	}
+
+	if (!(number = icq_get_uid(session, target))) {
+		printq("invalid_uid", target);
+		return -1;
+	}
+
+	/* XXX, pending auth!!! like /auth -l in jabber */
+	/* XXX, reasons!! */
+	/* XXX, messages */
+
+	if (match_arg(params[0], 'r', "request", 2)) {
+		char *req_reason = "Please add me.";
+		string_t pkt;
+
+		pkt = icq_pack("uUW", number, req_reason, (uint32_t) 0x00);
+		icq_makesnac(session, pkt, 0x13, 0x18, 0, 0);
+		icq_send_pkt(session, pkt);
+		return 0;
+	}
+
+	if (match_arg(params[0], 'c', "cancel", 2)) {
+		string_t pkt;
+
+		pkt = icq_pack("u", number);
+		icq_makesnac(session, pkt, 0x13, 0x16, 0, 0);
+		icq_send_pkt(session, pkt);
+
+		return 0;
+	}
+
+	if (match_arg(params[0], 'a', "accept", 2) || match_arg(params[0], 'd', "deny", 2)) {	/* accept / deny */
+		int auth = (match_arg(params[0], 'a', "accept", 2) != 0);
+
+		char *deny_reason = "";
+		string_t pkt;
+
+		pkt = icq_pack("ucUW", number, (uint32_t) auth, auth == 0 ? deny_reason : "", (uint32_t) 0x00);
+		icq_makesnac(session, pkt, 0x13, 0x1a, 0, 0);
+		icq_send_pkt(session, pkt);
+		return 0;
+	}
+
+	printq("invalid_params", name);
+	return -1;
+}
+
 static COMMAND(icq_command_register) {
 	printq("generic_error", "Create a new ICQ account on http://lite.icq.com/register");
 	return 0;
@@ -1012,6 +1067,8 @@ EXPORT int icq_plugin_init(int prio) {
 
 	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
+
+	command_add(&icq_plugin, "icq:auth", "!p uU", icq_command_auth, ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, "-a --accept -d --deny -r --request -c --cancel");
 
 	command_add(&icq_plugin, "icq:away", NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:back", NULL, icq_command_away, ICQ_ONLY, NULL);
