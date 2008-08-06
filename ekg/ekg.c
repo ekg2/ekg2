@@ -960,11 +960,15 @@ int main(int argc, char **argv)
 
         /* status window takes first session if not set before*/
 	if (!session_current && sessions)
-			session_current = sessions;
+		session_current = sessions;
 
 	if (session_current != window_current->session)
 		window_current->session = session_current;
-
+	window_debug->session = window_current->session;
+/*
+	query_emit_id(NULL, SESSION_CHANGED);
+	query_emit_id(NULL, UI_REFRESH);
+ */
         metacontact_read(); /* read the metacontacts info */
 
 	{
