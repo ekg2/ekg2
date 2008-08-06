@@ -97,17 +97,15 @@ SNAC_SUBHANDLER(icq_snac_sigon_reply) {
 	return -3;
 }
 
+extern char *icq_md5_digest(const char *password, const unsigned char *key, int key_len);	/* digest.c */
+
 SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
 	struct {
 		uint16_t key_len;
 	} pkt;
 	string_t str;
 
-	unsigned char digest[16];
-
-#warning "icq_snac_sigon_authkey() dokonczyc"
-
-	icq_hexdump(DEBUG_ERROR, buf, len);
+	char *digest;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.key_len)) {
 		icq_handle_disconnect(s, "Secure login failed. Invalid server response.", 0);		/* XXX */
@@ -120,27 +118,13 @@ SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
 	}
 
 	/* XXX, miranda limit key to 64B */
-
-#if 0
-	mir_md5_state_t state;
-
-	unpackString(&buf, szKey, wKeyLen);
-
-	mir_md5_init(&state);
-	mir_md5_append(&state, info->szAuthKey, info->wAuthKeyLen);
-	mir_md5_finish(&state, digest);
-
-	mir_md5_init(&state);
-	mir_md5_append(&state, (LPBYTE)szKey, wKeyLen);
-	mir_md5_append(&state, digest, 16);
-	mir_md5_append(&state, (LPBYTE)CLIENT_MD5_STRING, sizeof(CLIENT_MD5_STRING)-1);
-	mir_md5_finish(&state, digest);
-#endif
 	
+	digest = icq_md5_digest(session_password_get(s), buf, pkt.key_len);
+
 	str = string_init(NULL);
 
-	icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));		/* uid */
-	icq_pack_append(str, "T", icq_pack_tlv(0x25, digest, sizeof(digest)));	/* MD5-digest */
+	icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));	/* uid */
+	icq_pack_append(str, "T", icq_pack_tlv(0x25, digest, 16));	/* MD5-digest */
 
 	icq_pack_append(str, "T", icq_pack_tlv_str(3, "ICQ Inc. - Product of ICQ (TM).2003b.5.37.1.3728.85"));
 	icq_pack_append(str, "tW", icq_pack_tlv_word(0x16, 0x010A));	/* unk, 0x01 0x0A */

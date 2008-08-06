@@ -143,7 +143,7 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 				case 0x03:	/* ANSI */
 				default:
 				{
-					string_append_n(msg, t_msg.message, t_len);
+					string_append_n(msg, (char *) t_msg.message, t_len);
 				}
 
 				/* XXX, recode */
@@ -222,6 +222,26 @@ SNAC_SUBHANDLER(icq_snac_message_recv) {
 	return 0;
 }
 
+SNAC_SUBHANDLER(icq_snac_message_server_ack) {
+	struct {
+		uint32_t discard1;
+		uint32_t discard2;
+		uint16_t channel;
+		char *uid;
+	} pkt;
+
+	if (!ICQ_UNPACK(&buf, "IIWu", &pkt.discard1, &pkt.discard2, &pkt.channel, &pkt.uid)) {
+		debug_error("icq_snac_message_server_ack() packet to short!\n");
+		return -1;
+	}
+
+	debug_error("XXX icq_snac_message_server_ack() chan=%.4x uid=%s\n", pkt.channel, pkt.uid);
+
+	/* XXX, cookie, etc.. */
+
+	return 0;
+}
+
 SNAC_SUBHANDLER(icq_snac_message_queue) {	/* SNAC(4, 0x17) Offline Messages response */
 	debug_error("icq_snac_message_queue() XXX\n");
 
@@ -268,6 +288,7 @@ SNAC_HANDLER(icq_snac_message_handler) {
 		case 0x01: handler = icq_snac_message_error; break;
 		case 0x05: handler = icq_snac_message_replyicbm; break;		/* Miranda: OK */
 		case 0x07: handler = icq_snac_message_recv; break;
+		case 0x0C: handler = icq_snac_message_server_ack; break;
 		case 0x17: handler = icq_snac_message_queue; break;
 		default:   handler = NULL; break;
 	}
