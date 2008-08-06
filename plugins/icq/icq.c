@@ -100,31 +100,20 @@ static TIMER_SESSION(icq_ping) {
 	return 0;
 }
 
-static uint32_t icq_get_uid(session_t *s, const char *target) {
-	char *uid;
-	long int uin;
 
-	if (!target)
+int icq_write_status(session_t *s) {
+	uint16_t status;
+	string_t pkt;
+
+	if (!s)
 		return 0;
 
-	if (!(uid = get_uid(s, target)))
-		uid = (char *) target;
+	status = icq_status(s->status);
 
-	if (!xstrncmp(uid, "icq:", 4))
-		uid += 4;
-
-	if (!uid[0])
-		return 0;
-
-	uin = strtol(uid, &uid, 10);	/* XXX, strtoll() */
-
-	if (uid[0])
-		return 0;
-
-	if (uin <= 0)
-		return 0;
-
-	return uin;
+	pkt = icq_pack("tI", icq_pack_tlv_dword(0x06, (0x00 << 8 | status)));	/* TLV 6: Status mode and security flags */
+	icq_makesnac(s, pkt, 0x01, 0x001e, 0, 0);
+	icq_send_pkt(s, pkt);
+	return 1;
 }
 
 void icq_session_connected(session_t *s) {
@@ -371,6 +360,33 @@ void icq_session_connected(session_t *s) {
 			icq_sendSetAimAwayMsgServ(*szMsg);
 	}
 #endif
+}
+
+static uint32_t icq_get_uid(session_t *s, const char *target) {
+	char *uid;
+	long int uin;
+
+	if (!target)
+		return 0;
+
+	if (!(uid = get_uid(s, target)))
+		uid = (char *) target;
+
+	if (!xstrncmp(uid, "icq:", 4))
+		uid += 4;
+
+	if (!uid[0])
+		return 0;
+
+	uin = strtol(uid, &uid, 10);	/* XXX, strtoll() */
+
+	if (uid[0])
+		return 0;
+
+	if (uin <= 0)
+		return 0;
+
+	return uin;
 }
 
 static int icq_theme_init();
@@ -774,10 +790,8 @@ static COMMAND(icq_command_away) {
 	
 	printq(format, session_name(session));
 
-/* XXX
 	if (session->connected)
 		icq_write_status(session);
- */	
 	return 0;
 }
 
@@ -1078,6 +1092,7 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:dnd",  NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:ffc",  NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:invisible", NULL, icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:xa",  NULL, icq_command_away, ICQ_ONLY, NULL);
 
 	command_add(&icq_plugin, "icq:userinfo", "!u",	icq_command_userinfo,	ICQ_FLAGS_TARGET, NULL);
 	command_add(&icq_plugin, "icq:register", NULL,	icq_command_register,	0, NULL);
