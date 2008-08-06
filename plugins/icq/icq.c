@@ -964,6 +964,8 @@ static COMMAND(icq_command_register) {
 
 static int icq_theme_init() {
 #ifndef NO_DEFAULT_THEME
+	format_add("icq_auth_subscribe", _("%> (%1) %T%2%n asks for authorisation. Use \"/auth -a %2\" to accept, \"/auth -d %2 [reason]\" to refuse. Reason: %T%3%n"), 1);
+
 	format_add("icq_userinfo_start",	"%g,+=%G----- %g%3%G info for: %Ticq:%2%n", 1);
 
 	format_add("icq_userinfo_affilations",	"%g|| %n  %T%3:%n %4", 1);

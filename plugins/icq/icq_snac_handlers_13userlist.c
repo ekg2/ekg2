@@ -336,6 +336,26 @@ SNAC_SUBHANDLER(icq_snac_userlist_modifyend) {
 	return 0;
 }
 
+SNAC_SUBHANDLER(icq_snac_userlist_auth_req) {
+	struct {
+		char *uid;
+		char *reason;
+	} pkt;
+	char *uid;
+
+	if (!ICQ_UNPACK(&buf, "uU", &pkt.uid, &pkt.reason))
+		return -1;
+
+	debug_function("icq_snac_userlist_auth_req() uid: %s reason: %s\n", pkt.uid, pkt.reason);
+
+	/* XXX, pkt.reason recode */
+
+	uid = icq_uid(pkt.uid);
+	print("icq_auth_subscribe", session_name(s), uid, pkt.reason);
+	xfree(uid);
+	return 0;
+}
+
 SNAC_HANDLER(icq_snac_userlist_handler) {
 	snac_subhandler_t handler;
 
@@ -348,6 +368,7 @@ SNAC_HANDLER(icq_snac_userlist_handler) {
 		case 0x0F: handler = SNAC_USR_0F; break;
 		case 0x11: handler = icq_snac_userlist_modifystart; break;	/* Miranda: OK */
 		case 0x12: handler = icq_snac_userlist_modifyend; break;	/* Miranda: OK */
+		case 0x19: handler = icq_snac_userlist_auth_req; break;
 		default:   handler = NULL; break;
 	}
 
