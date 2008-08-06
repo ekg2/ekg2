@@ -2,6 +2,8 @@
 # 	some formats (C) Michal 'GiM' Spadlinski 
 
 statusbar_timestamp %H:%M:%S
+statusbar_act_important %W
+statusbar_act_important2us %M
 
 # IRSSI @ ekg2 
 
