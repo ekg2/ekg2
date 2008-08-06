@@ -438,7 +438,7 @@ uint16_t icq_status(int status) {
 		case EKG_STATUS_DND:		return ICQ_STATUS_DND;
 		case EKG_STATUS_FFC:		return ICQ_STATUS_FFC;
 		case EKG_STATUS_INVISIBLE:	return ICQ_STATUS_INVISIBLE;
-		/* XXX, ICQ_STATUS_OCCUPIED */
+		case EKG_STATUS_XA:		return ICQ_STATUS_OCCUPIED;	/* XXX good choice? */
 
 		default:			return STATUS_ICQONLINE;
 	}
@@ -450,12 +450,20 @@ status_t icq2ekg_status(int icq_status) {
 		case ICQ_STATUS_AWAY:		return EKG_STATUS_AWAY;
 		case ICQ_STATUS_DND:		return EKG_STATUS_DND;
 		case ICQ_STATUS_NA:		return EKG_STATUS_NA;
-		case ICQ_STATUS_OCCUPIED:	return EKG_STATUS_XA;
+		case ICQ_STATUS_OCCUPIED:	return EKG_STATUS_XA;	/* XXX good choice? */
 		case ICQ_STATUS_FFC:		return EKG_STATUS_FFC;
 		case ICQ_STATUS_INVISIBLE:	return EKG_STATUS_INVISIBLE;
 
 		default:			return EKG_STATUS_UNKNOWN;
 	}
+}
+
+int tvl_length_check(char *name, icq_tlv_t *t, int length) {
+	if (t->len == length)
+		return 0;
+
+	debug_error("%s Incorrect TVL type=0x%02x. Length=%d, should be %d.\n", name, t->type, t->len, length);
+	return 1;
 }
 
 /* hash password, ripped from micq */

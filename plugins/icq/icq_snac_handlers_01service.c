@@ -6,6 +6,7 @@
  *
  * ekg2 port:
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -273,17 +274,17 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 	for (t = tlvs; t; t = t->next) {
 		switch (t->type) {
 			case 0x03:
-				if (t->len != 4) { debug_error("icq_snac_service_reqinfo() [0x03] len != 4\n"); goto def; }
+				if (tvl_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
 				debug_white("icq_snac_service_reqinfo() Logon TS: %u\n", t->nr);
 				break;
 
 			case 0x05:
-				if (t->len != 4) { debug_error("icq_snac_service_reqinfo() [0x05] len != 4\n"); goto def; }
+				if (tvl_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
 				debug_white("icq_snac_service_reqinfo() ICQ Member since: %u\n", t->nr);
 				break;
 
 			case 0x0A:
-				if (t->len != 4) { debug_error("icq_snac_service_reqinfo() [0x0A] len != 4\n"); goto def; }
+				if (tvl_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
 				debug_white("icq_snac_service_reqinfo() External IP: %u.%u.%u.%u\n", t->buf[0], t->buf[1], t->buf[2], t->buf[3]);
 				break;
 

@@ -6,6 +6,7 @@
  *
  * ekg2 port:
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -76,6 +77,23 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	tlvs = icq_unpack_tlvs(buf, len, count);
 
 	for (t = tlvs; t; t = t->next) {
+
+		/* darkjames said: "I don't trust anything. Wiechu, check t->len" */
+		switch (t->type) {
+			case 0x01:
+				if (tvl_length_check("icq_snac_buddy_online()", t, 2))
+					continue;
+				break;
+			case 0x03:
+			case 0x05:
+			case 0x06:
+			case 0x0a:
+			case 0x0f:
+				if (tvl_length_check("icq_snac_buddy_online()", t, 4))
+					continue;
+				break;
+		}
+		/* now we've got trusted length */
 
 		switch (t->type) {
 			case 0x06:
