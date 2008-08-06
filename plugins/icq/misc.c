@@ -436,6 +436,20 @@ uint16_t icq_status(int status) {
 	}
 }
 
+status_t icq2ekg_status(int icq_status) {
+	switch (icq_status) {
+		case ICQ_STATUS_ONLINE:		return EKG_STATUS_AVAIL;
+		case ICQ_STATUS_AWAY:		return EKG_STATUS_AWAY;
+		case ICQ_STATUS_DND:		return EKG_STATUS_DND;
+		case ICQ_STATUS_NA:		return EKG_STATUS_NA;
+		case ICQ_STATUS_OCCUPIED:	return EKG_STATUS_XA;
+		case ICQ_STATUS_FFC:		return EKG_STATUS_FFC;
+		case ICQ_STATUS_INVISIBLE:	return EKG_STATUS_INVISIBLE;
+
+		default:			return EKG_STATUS_UNKNOWN;
+	}
+}
+
 /* hash password, ripped from micq */
 char *icq_encryptpw(const char *pw) {
 	uint8_t tb[] = { 0xf3, 0x26, 0x81, 0xc4, 0x39, 0x86, 0xdb, 0x92, 0x71, 0xa3, 0xb9, 0xe6, 0x53, 0x7a, 0x95, 0x7c };

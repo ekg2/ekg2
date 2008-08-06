@@ -44,4 +44,6 @@ uint16_t icq_status(int status);
 
 #define ICQ_UNPACK(endbuf, args...) (icq_unpack(buf, endbuf, &len, args))
 
+status_t icq2ekg_status(int icq_status);
+
 #endif

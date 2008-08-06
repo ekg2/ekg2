@@ -37,7 +37,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_buddy_reply) {
-	struct icq_tlv_list *tlvs;	
+	struct icq_tlv_list *tlvs;
 
 	if ((tlvs = icq_unpack_tlvs(buf, len, 0))) {
 		icq_tlv_t *t_max_uins = icq_tlv_get(tlvs, 1);
@@ -56,9 +56,75 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 }
 
 SNAC_SUBHANDLER(icq_snac_buddy_online) {
-	debug_error("icq_snac_buddy_online() XXX\n");
-	icq_hexdump(DEBUG_ERROR, buf, len);
-	return -3;
+	/*
+	 * Handle SNAC(0x3,0xb) -- User online notification
+	 *
+	 * Server sends this snac when user from your contact list goes online.
+	 * Also you'll receive this snac on user status change.
+	 */
+
+	struct icq_tlv_list *tlvs;
+	icq_tlv_t *t;
+	char *uid, *tmp;
+	uint16_t warning, count, status, status2;
+
+	if (!icq_unpack(buf, &buf, &len, "uWW", &tmp, &warning, &count))
+		return -1;
+
+	uid = saprintf("icq:%s", tmp);
+
+	tlvs = icq_unpack_tlvs(buf, len, count);
+
+	for (t = tlvs; t; t = t->next) {
+
+		switch (t->type) {
+			case 0x06:
+				/* User status
+				 *
+				 * ICQ service presence notifications use user status field which consist
+				 * of two parts. First is a various flags (birthday flag, webaware flag,
+				 * etc). Second is a user status (online, away, busy, etc) flags.
+				 */
+				status  = t->nr & 0xffff;
+				status2 = t->nr >> 16;
+				debug_white("icq_snac_buddy_online()  %s status2=0x%04x status=0x%04x\n", uid, status2, status);
+				protocol_status_emit(s, uid, icq2ekg_status(status), NULL, time(NULL));
+				break;
+
+			case 0x0a: /* IP address */
+				/* XXX (?wo?) add to private */
+				debug_white("icq_snac_buddy_online()  %s IP=%d.%d.%d.%d\n", uid, t->buf[0], t->buf[1], t->buf[2], t->buf[3]);
+				break;
+
+			case 0x01: /* User class */
+				debug_white("icq_snac_buddy_online()  %s class 0x%02x\n", uid, t->nr);
+				break;
+			case 0x03: /* Time when client gone online (unix time_t) */
+				debug_white("icq_snac_buddy_online()  %s online since %d\n", uid, t->nr);
+				break;
+			case 0x05: /* Time when this account was registered (unix time_t) */
+				debug_white("icq_snac_buddy_online()  %s is ICQ Member since %d\n", uid, t->nr);
+				break;
+			case 0x0f: /* Online time in seconds */
+				debug_white("icq_snac_buddy_online()  %s is %d seconds online\n", uid, t->nr);
+				break;
+
+			case 0x0c: /* DC info */
+			case 0x0d: /* Client capabilities list */
+			case 0x1d: /* user icon id & hash */
+				debug_white("icq_snac_buddy_online() Not supported type=0x%02x\n", t->type);
+				break;
+
+			default:
+				debug_error("icq_snac_buddy_online() Unknown type=0x%02x\n", t->type);
+		}
+
+	}
+
+	icq_tlvs_destroy(&tlvs);
+	xfree(uid);
+
+	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_buddy_offline) {
