@@ -154,7 +154,7 @@ typedef int (*snac_subhandler_t) (session_t *s, unsigned char *, int );
 int icq_snac_handler(session_t *s, uint16_t family, uint16_t cmd, unsigned char *buf, int len) {
 	snac_handler_t handler;
 
-	debug_function("icq_snac_handler() family: %.4x cmd: %.4x len: %d\n", family, cmd, len);
+	debug_white("icq_snac_handler() family=%.4x cmd=%.4x (len=%d)\n", family, cmd, len);
 
 	/* XXX, queue */
 //	debug_error("icq_flap_data() XXX\n");

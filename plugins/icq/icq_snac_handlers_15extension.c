@@ -310,11 +310,12 @@ METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
 	return 0;
 }
 
-METASNAC_SUBHANDLER(icq_snac_extension_userfound) {
+static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf, int len, uint32_t uid, uint8_t retcode, int islast) {
 	char *nickname = NULL;
 	char *first_name = NULL;
 	char *last_name = NULL;
 	char *email = NULL;
+	char *full_name;
 	char *temp;
 
 	uint32_t uin;
@@ -351,11 +352,44 @@ METASNAC_SUBHANDLER(icq_snac_extension_userfound) {
 	if (!ICQ_UNPACK(&buf, "S", &temp)) goto cleanup;
 	email = xstrdup(temp);
 
+	if (first_name[0] && last_name[0])
+		full_name = saprintf("%s %s", first_name, last_name);
+	else
+		full_name = xstrdup(first_name[0] ? first_name : last_name);
+
+#define birthyear	NULL
+#define gender		""
+#define active		""
+
+	/* XXX, "search_results_multi", "search_results_single" */
+	/* XXX, instead of email we had city */
+	/* XXX, some time ago i was thinking to of function which
+	 * 	if data was truncated [because of width in format]
+	 * 	it'd take another line to complete..
+	 *
+	 * 	i don't like truncation of data for instance:
+	 * 	 08:17:12  97320776 | darkjames    | Jakub Zawadz | -    | darkjames@po
+	 *
+	 * 	i was thinking about:
+	 * 	           97320776 | darkjames    | Jakub Zawwdz | -    | darkjames@po
+	 * 	                                     ki                    czta.onet.pl
+	 *
+	 * 	of course we can do more magic, and wrap...
+	 * 					     Jakub
+	 * 					     Zawadzki
+	 *
+	 * 	or maybe let's  align to center? :)
+	 * 						 Jakub
+	 * 					       Zawadzki
+	 */
+
+	print_info(NULL, s, "search_results_multi", itoa(uin), full_name, nickname, email,
+			birthyear ? birthyear : ("-"), gender, active);
+
+	xfree(full_name);
+
 	/* ?WO? gender, age, etc... ??? */
 	icq_hexdump(DEBUG_WHITE, buf, len);
-
-	debug("[/search] %u nick: %s first: %s last: %s email: %s\n", uin, nickname, first_name, last_name, email);
-
 #if 0
 	// Authentication needed flag
 	if (wPacketLen < 1)
@@ -390,6 +424,9 @@ cleanup:
 	return -1;
 }
 
+METASNAC_SUBHANDLER(icq_snac_extension_userfound) { return icq_snac_extension_userfound_common(s, buf, len, uid, retcode, 0); }
+METASNAC_SUBHANDLER(icq_snac_extension_userfound_last) { return icq_snac_extension_userfound_common(s, buf, len, uid, retcode, 1); }
+
 SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 	struct {
 		uint16_t subtype;
@@ -404,6 +441,8 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 		return -1;
 	}
 
+	debug_white("icq_snac_extension_replyreq_2010() subtype=%.4x result=%.2x (len=%d)\n", pkt.subtype, pkt.result, len);
+
 	switch (pkt.subtype) {
 	/* userinfo */
 		case 0x00C8: handler = icq_snac_extensions_basicinfo; break;	/* Miranda: OK, META_BASIC_USERINFO */
@@ -416,8 +455,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 		case 0x00EB: handler = icq_snac_extensions_email; break;	/* Miranda: OK, META_EMAIL_USERINFO */
 		case 0x0104: handler = icq_snac_extensions_shortinfo; break;	/* Miranda: OK, META_SHORT_USERINFO */
 	/* search */
-		case 0x01AE: 							/* Miranda: OK, SRV_LAST_USER_FOUND */
-			/* XXX, ekg2 */
+		case 0x01AE: handler = icq_snac_extension_userfound_last; break;/* Miranda: OK, SRV_LAST_USER_FOUND */
 		case 0x01A4: handler = icq_snac_extension_userfound; break;	/* Miranda: OK, SRV_USER_FOUND */
 
 		case 0x0366: handler = NULL; break;				/* XXX, SRV_RANDOM_FOUND */
@@ -479,7 +517,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 		return -1;
 	}
 
-	debug("icq_snac_extension_replyreq() (rlen: %d) rlen2: %d uid: %d type: %d\n", len, pkt.len, pkt.uid, pkt.type);
+	debug_white("icq_snac_extension_replyreq() uid=%d type=%.4x (len=%d, len2=%d)\n", pkt.uid, pkt.type, len, pkt.len);
 
 	if (xstrcmp(s->uid+4, itoa(pkt.uid))) {
 		debug_error("icq_snac_extension_replyreq() 1919 UIN mismatch: %s vs %ld.\n", s->uid+4, pkt.uid);

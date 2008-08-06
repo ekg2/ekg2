@@ -203,7 +203,7 @@ static ICQ_FLAP_HANDLER(icq_flap_data) {
 
 	data = snac.data;
 
-	debug_white("icq_flap_data() SNAC pkt, fam=0x%x cmd=0x%x flags=0x%x ref=0x%x (datalen=%d)\n", snac.family, snac.cmd, snac.flags, snac.ref, len);
+	debug_white("icq_flap_data() SNAC pkt, fam=0x%x cmd=0x%x flags=0x%x ref=0x%x (len=%d)\n", snac.family, snac.cmd, snac.flags, snac.ref, len);
 
 	if (snac.flags & 0x8000) {
 		uint16_t skip_len;
