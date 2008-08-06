@@ -29,6 +29,7 @@ string_t icq_pack(char *format, ...);
 string_t icq_pack_append(string_t str, char *format, ...);
 
 #define icq_pack_tlv(type, data, datalen)	(uint32_t) type, (uint32_t) datalen, (uint8_t *) data
+#define icq_pack_tlv_char(type, data)		(uint32_t) type, (uint32_t) 1, (uint32_t) data
 #define icq_pack_tlv_word(type, data)		(uint32_t) type, (uint32_t) 2, (uint32_t) data
 #define icq_pack_tlv_dword(type, data)		(uint32_t) type, (uint32_t) 4, (uint32_t) data
 #define icq_pack_tlv_str(type, str)		icq_pack_tlv(type, str, xstrlen(str))

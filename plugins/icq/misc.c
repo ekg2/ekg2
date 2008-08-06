@@ -138,6 +138,17 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
+			case 'u':	/* uid */
+			{
+				uint32_t uin = va_arg(ap, uint32_t);
+				const char *buf = itoa(uin);	/* XXX, enough? */
+
+				icq_pack_append(str, "C", (uint32_t) xstrlen(buf));
+				string_append(str, buf);
+
+				break;
+			}
+
 			case 'P':	/* caps */
 			{
 				uint32_t t_new = 0x09460000 | va_arg(ap, uint32_t);

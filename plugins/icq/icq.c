@@ -15,6 +15,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
@@ -36,6 +37,9 @@
 #include <ekg/stuff.h>
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
+
+#include <ekg/log.h>
+#include <ekg/msgqueue.h>
 
 #include "icq.h"
 #include "misc.h"
@@ -91,6 +95,33 @@ static TIMER_SESSION(icq_ping) {
 /* 	write_flap(&packet, ICQ_PING_CHAN); */
 
 	return 0;
+}
+
+static uint32_t icq_get_uid(session_t *s, const char *target) {
+	char *uid;
+	long int uin;
+
+	if (!target)
+		return 0;
+
+	if (!(uid = get_uid(s, target)))
+		uid = (char *) target;
+
+	if (!xstrncmp(uid, "icq:", 4))
+		uid += 4;
+
+	if (!uid[0])
+		return 0;
+
+	uin = strtol(uid, &uid, 10);	/* XXX, strtoll() */
+
+	if (uid[0])
+		return 0;
+
+	if (uin <= 0)
+		return 0;
+
+	return uin;
 }
 
 void icq_session_connected(session_t *s) {
@@ -607,6 +638,95 @@ static WATCHER(icq_handle_hubresolver) {
 	return -1;
 }
 
+static COMMAND(icq_command_msg) {
+	uint32_t uin;
+	char *uid;
+
+	if (!xstrcmp(target, "*")) {
+		if (msg_all(session, name, params[1]) == -1)
+			printq("list_empty");
+		return 0;
+	}
+
+	if (!(uin = icq_get_uid(session, target))) {
+		printq("invalid_uid", target);
+		return -1;
+	}
+
+	uid = saprintf("icq:%u", uin);
+
+	if (!session->connected)
+		goto msgdisplay;
+
+	if (config_last & 4)
+		last_add(1, uid, time(NULL), 0, params[1]);
+
+	/* XXX, recode, and do other magic stuff :( */
+	/* sent message */
+	{
+		/* for now params[1] should be US-ASCII encoded message.
+		 * sorry */
+		string_t pkt;
+		string_t tlv_2, tlv_101;
+
+	/* TLV(101) */
+		tlv_101 = icq_pack("WW", 0x03, 0x00);		/* codepage, encoding, copied from ICQ lite */
+		string_append(tlv_101, params[1]);
+
+	/* TLV(2) */
+		tlv_2 = icq_pack("tcT",
+					icq_pack_tlv_char(0x501, 0x1),			/* TLV(501) features, meaning unknown, duplicated from ICQ Lite */
+					icq_pack_tlv(0x0101, tlv_101->str, tlv_101->len)/* TLV(101) text TLV. */
+				);
+		string_free(tlv_101, 1);
+
+	/* main packet */
+		pkt = icq_pack("iiWu", (uint32_t) rand(), (uint32_t) rand(), 0x01, (uint32_t) uin);
+		icq_pack_append(pkt, "TTT", 
+					icq_pack_tlv(0x02, tlv_2->str, tlv_2->len),	/* TLV(2) message-block */
+					icq_pack_tlv(0x03, NULL, 0),			/* TLV(3) server-ack */
+					icq_pack_tlv(0x06, NULL, 0)			/* TLV(6) received-offline */
+					);
+
+	/* message-header */
+		icq_makesnac(session, pkt, 0x04, 0x06, 0, 0);
+		icq_send_pkt(session, pkt);
+
+		string_free(tlv_2, 1);
+	}
+
+msgdisplay:
+	if (!quiet) { /* if (1) ? */ 
+		char **rcpts 	= xcalloc(2, sizeof(char *));
+		int class 	= EKG_MSGCLASS_SENT_CHAT;	/* XXX? */
+
+		rcpts[0] 	= xstrdup(uid);
+		rcpts[1] 	= NULL;
+
+		/* XXX, encrypt */
+		
+		protocol_message_emit(session, session->uid, rcpts, params[1], NULL, time(NULL), class, NULL, EKG_NO_BEEP, 0);
+
+		array_free(rcpts);
+
+		/* XXX, it's copied from jabber-plugin, however i think we should _always_ add message to queue (if we're offline), even if we want do it quiet */
+		if (!session->connected)
+			return msg_queue_add(session_uid_get(session), uid, params[1], "offline", class);
+	}
+
+	if (!quiet)
+		session_unidle(session);
+
+	return 0;
+}
+
+static COMMAND(icq_command_inline_msg) {
+	const char *p[2] = { NULL, params[0] };
+	if (!params[0] || !target)
+		return -1;
+	return icq_command_msg(("msg"), p, session, target, quiet);
+}
+
 static COMMAND(icq_command_away) {
 	const char *format;
 
@@ -731,24 +851,12 @@ static COMMAND(icq_command_reconnect) {
 }
 
 static COMMAND(icq_command_userinfo) {
-	const char *uid;
-
 	string_t pkt;
-	int number;
+	uint32_t number;
 	int minimal_req = 0;	/* XXX */
 
-	if (!(uid = get_uid(session, target)))
-		uid = target;
-
-	if (!xstrncmp(uid, "icq:", 4))
-		uid += 4;
-
-	/* XXX */
-
-	number = atoi(uid);
-
-	if (number <= 0) {
-		printq("invalid_params", name);
+	if (!(number = icq_get_uid(session, target))) {
+		printq("invalid_uid", target);
 		return -1;
 	}
 
@@ -764,24 +872,13 @@ static COMMAND(icq_command_userinfo) {
 #define ROT16(x) ((x & 0xff) << 8 | x >> 8)
 
 static COMMAND(icq_command_searchuin) {
-	const char *uid;
-
 	string_t pkt;
-	int uin;
+	uint32_t uin;
 
 	debug_function("icq_command_searchuin() %s\n", params[0]);
 
-	if (!(uid = get_uid(session, target)))
-		uid = target;
-
-	if (!xstrncmp(uid, "icq:", 4))
-		uid += 4;
-
-	/* XXX */
-	uin = atoi(uid);
-
-	if (uin <= 0) {
-		printq("invalid_params", name);
+	if (!(uin = icq_get_uid(session, target))) {
+		printq("invalid_uid", target);
 		return -1;
 	}
 
@@ -898,6 +995,7 @@ EXPORT int icq_plugin_init(int prio) {
 #define ICQ_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE 
 #define ICQ_FLAGS 		ICQ_ONLY | SESSION_MUSTBECONNECTED
 #define ICQ_FLAGS_TARGET	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+#define ICQ_FLAGS_MSG		ICQ_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 
 	PLUGIN_CHECK_VER("icq");
 
@@ -909,6 +1007,9 @@ EXPORT int icq_plugin_init(int prio) {
 	query_connect_id(&icq_plugin, PLUGIN_PRINT_VERSION, icq_print_version, NULL);
 	query_connect_id(&icq_plugin, SESSION_ADDED, icq_session_init, NULL);
 	query_connect_id(&icq_plugin, SESSION_REMOVED, icq_session_deinit, NULL);
+
+	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 
 	command_add(&icq_plugin, "icq:away", NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:back", NULL, icq_command_away, ICQ_ONLY, NULL);
