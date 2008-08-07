@@ -242,6 +242,137 @@ SNAC_SUBHANDLER(icq_snac_message_server_ack) {
 	return 0;
 }
 
+void icq_snac_message_status_reply(session_t *s, const char *from, char *uin, uint16_t version, uint8_t msg_type, char *msg) {
+	status_t status = icq2ekg_status2(msg_type);
+	char *uid;
+	
+#if 0
+	CCSDATA ccs;
+	PROTORECVEVENT pre = {0};
+	int status;
+	char* pszMsg;
+#endif
+	if (status == EKG_STATUS_UNKNOWN)
+	{
+		debug_error("%s Ignoring unknown status message from %s", from, uin);
+		return;
+	}
+#if 0
+	pszMsg = null_strdup((char*)msg);
+
+	// it is probably UTF-8 status reply
+	if (wVersion == 9)
+		pszMsg = detect_decode_utf8(pszMsg);
+
+	ccs.szProtoService = PSR_AWAYMSG;
+	ccs.hContact = hContact;
+	ccs.wParam = status;
+	ccs.lParam = (LPARAM)&pre;
+	pre.szMessage = pszMsg;
+	pre.timestamp = time(NULL);
+
+	CallService(MS_PROTO_CHAINRECV,0,(LPARAM)&ccs);
+
+	SAFE_FREE((void**)&pszMsg);
+#endif
+	debug_function("icq_snac_message_status_reply() status from: %s msg: %s\n", uin, msg);
+
+	uid = icq_uid(uin);
+	protocol_status_emit(s, uid, status, msg, time(NULL));
+	xfree(uid);
+}
+
+SNAC_SUBHANDLER(icq_snac_message_response) {
+	struct {
+		uint32_t msg_id1;
+		uint32_t msg_id2;
+		uint16_t format;
+		char *uid;
+		uint16_t dunno1;
+
+		/* next part.. */
+		uint16_t len;
+	} pkt;
+
+	if (!ICQ_UNPACK(&buf, "iiWuw", &pkt.msg_id1, &pkt.msg_id2, &pkt.format, &pkt.uid, &pkt.dunno1))
+		return -1;
+
+	debug_function("icq_snac_message_response() uid: %s\n", pkt.uid);
+
+	if (pkt.format != 0x02) {
+		debug_error("icq_snac_message_response() unknown type: %.4x\n", pkt.format);
+		return 0;
+	}
+
+	/* XXX, cookie, check cookie uid */
+
+	if (!ICQ_UNPACK(&buf, "w", &pkt.len)) {
+		/* XXX */
+		icq_hexdump(DEBUG_ERROR, buf, len);
+		return 0;
+	}
+
+	if (pkt.len == 0x1b && 1 /* XXX */) {
+		/* this can be v8 greeting message reply */
+		uint16_t version;
+		uint16_t seq2;
+		uint8_t msg_type, flags;
+		uint16_t status;
+
+		if (!ICQ_UNPACK(&buf, "w", &version))
+			return -1;
+
+		/* unknowns from the msg we sent */
+		if (len < 27)
+			return -1;
+		buf += 27; len -= 27;
+
+		/* Message sequence (SEQ2) */
+		if (!ICQ_UNPACK(&buf, "w", &seq2))
+			return -1;
+
+		/* Unknown (12 bytes) */
+		if (len < 12)
+			return -1;
+		buf += 12; len -= 12;
+
+		/* Message type */
+		if (!ICQ_UNPACK(&buf, "cc", &msg_type, &flags))
+			return -1;
+
+		/* Status */
+		if (!ICQ_UNPACK(&buf, "w", &status))
+			return -1;
+
+		/* Priority? */
+		if (len < 2)
+			return -1;
+		buf += 2; len -= 2;
+
+		/* XXX, more cookies... */
+
+		icq_hexdump(DEBUG_ERROR, buf, len);
+
+		if (flags == 3) {     /* A status message reply */
+			char *reason;
+
+			if (len < 2)
+				return -1;
+
+			reason = xstrndup(buf + 2, len);
+			icq_snac_message_status_reply(s, "SNAC(4.B)", pkt.uid, version, msg_type, reason);
+			xfree(reason);
+			return 0;
+		}
+	} else {
+		/* XXX */
+		icq_hexdump(DEBUG_ERROR, buf, len);
+		return 0;
+	}
+
+	return 0;
+}
+
 SNAC_SUBHANDLER(icq_snac_message_queue) {	/* SNAC(4, 0x17) Offline Messages response */
 	debug_error("icq_snac_message_queue() XXX\n");
 
@@ -288,6 +419,7 @@ SNAC_HANDLER(icq_snac_message_handler) {
 		case 0x01: handler = icq_snac_message_error; break;
 		case 0x05: handler = icq_snac_message_replyicbm; break;		/* Miranda: OK */
 		case 0x07: handler = icq_snac_message_recv; break;
+		case 0x0B: handler = icq_snac_message_response; break;
 		case 0x0C: handler = icq_snac_message_server_ack; break;
 		case 0x17: handler = icq_snac_message_queue; break;
 		default:   handler = NULL; break;

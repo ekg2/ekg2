@@ -7,6 +7,11 @@
 #define ICQ_STATUS_INVISIBLE        0x0100
 
 
+#define MTYPE_AUTOAWAY              0xE8 // Auto away message
+#define MTYPE_AUTOBUSY              0xE9 // Auto occupied message
+#define MTYPE_AUTONA                0xEA // Auto not available message
+#define MTYPE_AUTODND               0xEB // Auto do not disturb message
+#define MTYPE_AUTOFFC               0xEC // Auto free for chat message
 
 #define STATUSF_WEBAWARE	0x00010000	/* The user is web-aware. */
 #define STATUSF_DCAUTH		0x10000000	/* The user allows direct connections only upon authorization. */

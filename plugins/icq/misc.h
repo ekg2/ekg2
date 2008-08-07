@@ -45,6 +45,7 @@ uint16_t icq_status(int status);
 #define ICQ_UNPACK(endbuf, args...) (icq_unpack(buf, endbuf, &len, args))
 
 status_t icq2ekg_status(int icq_status);
+status_t icq2ekg_status2(int nMsgType);
 
 /* misc */
 int tlv_length_check(char *name, icq_tlv_t *t, int length);

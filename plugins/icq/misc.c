@@ -450,12 +450,24 @@ uint16_t icq_status(int status) {
 	}
 }
 
+status_t icq2ekg_status2(int nMsgType) {
+	switch (nMsgType) {
+		case MTYPE_AUTOAWAY:	return EKG_STATUS_AWAY;
+		case MTYPE_AUTOBUSY:	return EKG_STATUS_XA;	/* XXX good choice? */
+		case MTYPE_AUTONA:	return EKG_STATUS_NA;	/* XXX, client is still connected!!! */
+		case MTYPE_AUTODND:	return EKG_STATUS_DND;
+		case MTYPE_AUTOFFC:	return EKG_STATUS_FFC;
+
+		default:		return EKG_STATUS_UNKNOWN;
+	}
+}
+
 status_t icq2ekg_status(int icq_status) {
 	switch (icq_status) {
 		case ICQ_STATUS_ONLINE:		return EKG_STATUS_AVAIL;
 		case ICQ_STATUS_AWAY:		return EKG_STATUS_AWAY;
 		case ICQ_STATUS_DND:		return EKG_STATUS_DND;
-		case ICQ_STATUS_NA:		return EKG_STATUS_NA;
+		case ICQ_STATUS_NA:		return EKG_STATUS_NA;	/* XXX, client is still connected!!! */
 		case ICQ_STATUS_OCCUPIED:	return EKG_STATUS_XA;	/* XXX good choice? */
 		case ICQ_STATUS_FFC:		return EKG_STATUS_FFC;
 		case ICQ_STATUS_INVISIBLE:	return EKG_STATUS_INVISIBLE;
