@@ -48,10 +48,6 @@
 
 #define DEBUG_MAX_LINES	50	/* ile linii z debug zrzucaæ do pliku */
 
-#ifndef INADDR_NONE
-#  define INADDR_NONE (unsigned long) 0xffffffff
-#endif
-
 /* obs³uga procesów potomnych */
 
 struct child_s;
@@ -322,9 +318,6 @@ void newconference_destroy(newconference_t *conf, int kill_wnd);
 void newconferences_destroy();
 /* END of newconference API */
 
-void ekg_connect();
-void ekg_reconnect();
-
 int ekg_hash(const char *name);
 
 FILE *help_path(char *name, char *plugin);
@@ -402,9 +395,6 @@ char *password_input(const char *prompt, const char *rprompt, const bool norepea
 /* funkcje poza stuff.c */
 void ekg_exit();
 void ekg_debug_handler(int level, const char *format, va_list ap);
-/* funkcje w resolver.c */
-watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
-watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
 
 int ekg_close(int fd);
 int ekg_write(int fd, const char *buf, int len);

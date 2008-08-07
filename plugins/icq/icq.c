@@ -29,6 +29,7 @@
 #include <arpa/inet.h>
 
 #include <ekg/debug.h>
+#include <ekg/net.h>
 #include <ekg/plugins.h>
 #include <ekg/queries.h>
 #include <ekg/protocol.h>

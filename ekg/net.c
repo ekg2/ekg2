@@ -1,3 +1,22 @@
+/* $Id$ */
+
+/*
+ *  (C) Copyright XXX
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
@@ -16,6 +35,7 @@
 #include <string.h>
 #include <stdarg.h>	/* ? */
 #include <unistd.h>
+#include <stdbool.h>
 
 #define __USE_POSIX
 #define __USE_GNU	/* glibc-2.8, needed for (struct hostent->h_addr) */
@@ -277,5 +297,83 @@ watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_fun
 
 	/* XXX dodac dzieciaka do przegladania */
 	return watch_add_line(plugin, fd[0], WATCH_READ_LINE, async, data);
+}
+
+struct ekg_connect_data {
+		/* internal data */
+	char	**resolver_queue;	/* here we keep list of domains to be resolved	*/
+	char	**connect_queue;	/* here we keep list of IPs to try to connect	*/
+
+		/* data provided by user */
+	session_t *session;
+	watcher_handler_func_t *async;
+	int (*prefer_comparison)(void *, void *);
+};
+
+	/* XXX: would we use it anywhere else? if yes, then move to dynstuff */
+static char *array_shift(char ***array) {
+	char *out	= NULL;
+	int i		= 1;
+
+	if (array && *array) {
+		if (**array) {
+			const int count = array_count(*array);
+
+			out = *array[0];
+			for (; i < count; i++)
+				*array[i-1] = *array[i];
+			*array[i] = NULL;
+		}
+
+		if (i == 1) { /* last element, free array */
+			array_free(*array);
+			*array = NULL;
+		}
+	}
+
+	return out;
+}
+
+static bool ekg_connect_loop(struct ekg_connect_data *c) {
+	char *host;
+
+	/* 1) if anything is in connect_queue, try to connect */
+	if ((host = array_shift(&(c->connect_queue)))) {
+		debug_function("ekg_connect_loop(), connect: %s", host);
+		/* XXX */
+		xfree(host);
+
+		return true;
+	}
+
+	/* 2) if anything is in resolver_queue, try to resolve */
+	if ((host = array_shift(&(c->resolver_queue)))) {
+		debug_function("ekg_connect_loop(), resolve: %s", host);
+		/* XXX */
+		xfree(host);
+
+		return true;
+	}
+
+	/* 3) fail */
+	c->async(0, 0, 0, c->session); /* XXX: pass error? */
+	xfree(c); /* arrays should be already freed */
+	return false;
+}
+
+bool ekg_connect(session_t *session, const char *server, int (*prefer_comparison)(void *, void *), watcher_handler_func_t async) {
+	struct ekg_connect_data	*c = xmalloc(sizeof(struct ekg_connect_data));
+
+	if (!session || !server || !async)
+		return false;
+
+	/* 1) fill struct */
+	c->resolver_queue	= array_make(server, ",", 0, 1, 1);
+	c->session		= session;
+	c->async		= async;
+	c->prefer_comparison	= prefer_comparison;
+
+	/* 2) call in the loop */
+	return ekg_connect_loop(c);
 }
 

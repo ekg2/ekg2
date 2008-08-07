@@ -41,6 +41,7 @@
 #include <errno.h>
 
 #include <ekg/debug.h>
+#include <ekg/net.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/stuff.h>

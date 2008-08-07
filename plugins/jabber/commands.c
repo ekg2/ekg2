@@ -51,6 +51,7 @@
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
+#include <ekg/net.h>
 #include <ekg/userlist.h>
 #include <ekg/sessions.h>
 #include <ekg/xmalloc.h>

@@ -40,6 +40,7 @@
 #include <ekg/dynstuff.h>
 #include <ekg/commands.h>
 #include <ekg/debug.h>
+#include <ekg/net.h>
 #include <ekg/protocol.h>
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
