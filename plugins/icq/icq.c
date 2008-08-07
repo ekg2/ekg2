@@ -892,6 +892,7 @@ static COMMAND(icq_command_search) {
 	const char *last_name = NULL;
 	const char *first_name = NULL;
 	int only_online = 0;
+	int gender = 0;	/* XXX? 1-> female, 2->male. check. */
 
 	char **argv;
 	int i;
@@ -923,6 +924,16 @@ static COMMAND(icq_command_search) {
 
 		if (match_arg(argv[i], 'l', "lastname", 2) && argv[i+1]) {
 			last_name = argv[++i];
+			continue;
+		}
+
+		if (!xstrcasecmp(argv[i], "--female")) {
+			gender = 1;
+			continue;
+		}
+
+		if (!xstrcasecmp(argv[i], "--male")) {
+			gender = 2;
 			continue;
 		}
 
@@ -964,7 +975,11 @@ static COMMAND(icq_command_search) {
 	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_KEYWORDS, TLV_KEYWORDS);
 
 	ppackTLVDWord(&buf, &buflen, (DWORD)getCurItemData(hwndDlg, IDC_AGERANGE),      TLV_AGERANGE,  0);
-	ppackTLVByte(&buf,  &buflen, (BYTE)getCurItemData(hwndDlg,  IDC_GENDER),        TLV_GENDER,    0);
+*/
+
+	if (gender) icq_pack_append(pkt, "wwc", icq_pack_tlv_char(0x017C, gender));
+
+/*
 	ppackTLVByte(&buf,  &buflen, (BYTE)getCurItemData(hwndDlg,  IDC_MARITALSTATUS), TLV_MARITAL,   0);
 	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_LANGUAGE),      TLV_LANGUAGE,  0);
 	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_COUNTRY),       TLV_COUNTRY,   0);

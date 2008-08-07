@@ -71,7 +71,7 @@ void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, u
 
 /* XXX */
 	if (j->snacmeta_seq)
-		(j->snacmeta_seq++) % 0x7fff;
+		j->snacmeta_seq = (j->snacmeta_seq + 1) % 0x7fff;
 	else
 		j->snacmeta_seq = 2;
 

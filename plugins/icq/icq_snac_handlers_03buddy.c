@@ -109,6 +109,12 @@ static void icq_get_description(session_t *s, char *uin) {
 }
 
 SNAC_SUBHANDLER(icq_snac_buddy_online) {
+	struct {
+		char *uid;
+		uint16_t warning;
+		uint16_t count;
+	} pkt;
+
 	/*
 	 * Handle SNAC(0x3,0xb) -- User online notification
 	 *
@@ -118,15 +124,18 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
-	char *uid, *tmp;
-	uint16_t warning, count, status, status2;
+	int status;
+	char *uid;
 
-	if (!icq_unpack(buf, &buf, &len, "uWW", &tmp, &warning, &count))
+	if (!ICQ_UNPACK(&buf, "uWW", &pkt.uid, &pkt.warning, &pkt.count))
 		return -1;
 
-	uid = saprintf("icq:%s", tmp);
+	tlvs = icq_unpack_tlvs(buf, len, pkt.count);
 
-	tlvs = icq_unpack_tlvs(buf, len, count);
+	status = EKG_STATUS_AVAIL;	/* assume avail */
+	uid = icq_uid(pkt.uid);
+
+	debug_white("icq_snac_buddy_online() %s\n", uid);
 
 	for (t = tlvs; t; t = t->next) {
 
@@ -138,7 +147,6 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 				break;
 			case 0x03:
 			case 0x05:
-			case 0x06:
 			case 0x0a:
 			case 0x0f:
 				if (tlv_length_check("icq_snac_buddy_online()", t, 4))
@@ -149,48 +157,129 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 		switch (t->type) {
 			case 0x06:
+			{
 				/* User status
 				 *
 				 * ICQ service presence notifications use user status field which consist
 				 * of two parts. First is a various flags (birthday flag, webaware flag,
 				 * etc). Second is a user status (online, away, busy, etc) flags.
 				 */
-				status  = t->nr & 0xffff;
-				status2 = t->nr >> 16;
-				debug_white("icq_snac_buddy_online()  %s status2=0x%04x status=0x%04x\n", uid, status2, status);
-				protocol_status_emit(s, uid, icq2ekg_status(status), NULL, time(NULL));
-				icq_get_description(s, uid+4);
+				uint16_t icq_status, icq_status_flags;
+
+				if (!icq_unpack_nc(t->buf, t->len, "WW", &icq_status_flags, &icq_status)) {
+					debug_error("icq_snac_buddy_online() TLV(6) corrupted?\n");
+					continue;
+				}
+
+				debug_white("icq_snac_buddy_online() status2=0x%04x status=0x%04x\n", icq_status_flags, icq_status);
+				status = icq2ekg_status(icq_status);
+				icq_get_description(s, pkt.uid);
 				break;
+			}
 
 			case 0x0a: /* IP address */
 				/* XXX (?wo?) add to private */
-				debug_white("icq_snac_buddy_online()  %s IP=%d.%d.%d.%d\n", uid, t->buf[0], t->buf[1], t->buf[2], t->buf[3]);
+				debug_white("icq_snac_buddy_online() IP=%d.%d.%d.%d\n", t->buf[0], t->buf[1], t->buf[2], t->buf[3]);
 				break;
 
 			case 0x01: /* User class */
-				debug_white("icq_snac_buddy_online()  %s class 0x%02x\n", uid, t->nr);
+				debug_white("icq_snac_buddy_online() class 0x%02x\n", t->nr);
 				break;
 			case 0x03: /* Time when client gone online (unix time_t) */
-				debug_white("icq_snac_buddy_online()  %s online since %d\n", uid, t->nr);
+				debug_white("icq_snac_buddy_online() online since %d\n", t->nr);
 				break;
 			case 0x05: /* Time when this account was registered (unix time_t) */
-				debug_white("icq_snac_buddy_online()  %s is ICQ Member since %d\n", uid, t->nr);
+				debug_white("icq_snac_buddy_online() ICQ Member since %d\n", t->nr);
 				break;
 			case 0x0f: /* Online time in seconds */
-				debug_white("icq_snac_buddy_online()  %s is %d seconds online\n", uid, t->nr);
+				debug_white("icq_snac_buddy_online() %d seconds online\n", t->nr);
 				break;
 
 			case 0x0c: /* DC info */
-			case 0x0d: /* Client capabilities list */
+			{
+				struct {
+					uint32_t ip;
+					uint32_t port;
+					uint8_t tcp_flag;
+					uint16_t version;
+					uint32_t conn_cookie;
+
+					uint32_t web_port;
+					uint32_t client_features;
+					/* faked time signatures, used to identify clients */
+					uint32_t ts1;
+					uint32_t ts2;
+					uint32_t ts3;
+				} tlv_c;
+
+				if (!icq_unpack_nc(t->buf, t->len, "IICWI",
+						&tlv_c.ip, &tlv_c.port,
+						&tlv_c.tcp_flag, &tlv_c.version,
+						&tlv_c.conn_cookie))
+				{
+					debug_error("icq_snac_buddy_online() TLV(C) corrupted?\n");
+					continue;
+				}
+
+				/* XXX, this info should be saved for /dcc ! */
+
+				break;
+			}
+
 			case 0x1d: /* user icon id & hash */
+			{
+				unsigned char *t_data = t->buf;
+				int t_len = t->len;
+
+				while (t_len > 0) {
+					static char empty_item[0x10] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+					uint32_t item_type;
+					uint8_t item_flags;
+					uint8_t item_len;
+
+					if (!icq_unpack(t_data, &t_data, &t_len, "WCC", &item_type, &item_flags, &item_len)) {
+						debug_error("icq_snac_buddy_online() TLV(1D) corrupted?\n");
+						break;
+					}
+					
+					/* just some validity check */
+					if (item_len > t_len)
+						item_len = t_len;
+
+					if (memcmp(t_data, empty_item, (item_len < 0x10) ? item_len : 0x10)) {
+						/* Item types
+						 * 	0000: AIM mini avatar
+						 * 	0001: AIM/ICQ avatar ID/hash (len 5 or 16 bytes)
+						 * 	0002: iChat online message
+						 *	0008: ICQ Flash avatar hash (16 bytes)
+						 * 	0009: iTunes music store link
+						 *	000C: ICQ contact photo (16 bytes)
+						 *	000D: ?
+						 *	000E: Custom Status (ICQ6)
+						 */
+
+						debug_white("icq_snac_buddy_online() user has got avatar: type: %d flags: %d\n", item_type, item_flags);
+						icq_hexdump(DEBUG_WHITE, t_data, item_len);
+						/* XXX, display message, get? do something? */
+					}
+
+					t_data += item_len;
+					t_len -= item_len;
+				}
+				break;
+			}
+
+			case 0x0d: /* Client capabilities list */
 				debug_white("icq_snac_buddy_online() Not supported type=0x%02x\n", t->type);
 				break;
 
 			default:
 				debug_error("icq_snac_buddy_online() Unknown type=0x%02x\n", t->type);
 		}
-
 	}
+
+	protocol_status_emit(s, uid, status, NULL, time(NULL));
 
 	icq_tlvs_destroy(&tlvs);
 	xfree(uid);
