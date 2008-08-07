@@ -441,6 +441,7 @@ static WATCHER(ekg_connect_handler) {
 	struct ekg_connect_data *c = (struct ekg_connect_data*) data;
 	int res = 0; 
 	socklen_t res_size = sizeof(res);
+	session_t *s;
 	
 	if (!c)
 		return -1;
@@ -454,7 +455,11 @@ static WATCHER(ekg_connect_handler) {
 			debug_error("ekg_connect_handler(), error: %s\n", strerror(res));
 		ekg_connect_loop(c);
 		close(fd);
-	} else if (c->async(type, fd, WATCH_WRITE, c->session) > 0) {
+	} 
+	
+	s = session_find(c->session);
+	
+	if (s && c->async(type, fd, WATCH_WRITE, s) > 0) {
 		debug_error("ekg_connect_handler(), looks like caller didn't like our job.\n");
 		ekg_connect_loop(c);
 		close(fd);
@@ -533,7 +538,8 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 	}
 
 	/* 3) fail */
-	c->async(2, 0, WATCH_WRITE, c->session);
+	if (s)
+		c->async(2, -1, WATCH_WRITE, s);
 	ekg_connect_data_free(c);
 	return 0;
 }
