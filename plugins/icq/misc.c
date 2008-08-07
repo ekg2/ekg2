@@ -165,6 +165,12 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
+			case ' ':	/* skip whitespaces */
+			case 0x09:
+			case 0x0A:
+			case 0x0D:
+				break;
+
 			default:
 				debug_error("icq_pack() unknown format: %c\n", *format);
 				break;
