@@ -109,7 +109,6 @@ void icq_session_connected(session_t *s) {
 	{
 		#define m_bAvatarsEnabled 0
 		#define m_bUtfEnabled 0
-		#define m_bAimEnabled 0
 
 		string_t pkt, tlv_5;
 
@@ -146,7 +145,7 @@ void icq_session_connected(session_t *s) {
 		icq_pack_append(tlv_5, "P", (uint32_t) 0x1343); 		/* CAP_AIM_FILE */
 #endif
 
-		if (m_bAimEnabled)
+		if (j->aim)
 			icq_pack_append(tlv_5, "I", (uint32_t) 0x134D);	/* Tells the server we can speak to AIM */
 #ifdef DBG_AIMCONTACTSEND
 		icq_pack_append(tlv_5, "P", (uint32_t) 0x134B);		/* CAP_AIM_SENDBUDDYLIST */
@@ -337,15 +336,14 @@ void icq_session_connected(session_t *s) {
 	protocol_connected_emit(s);
 	j->connecting = 0;
 
+	if (j->aim) {
 #if MIRANDA
-	if (m_bAimEnabled)
-	{
 		char **szMsg = MirandaStatusToAwayMsg(m_iStatus);
 
 		if (szMsg)
 			icq_sendSetAimAwayMsgServ(*szMsg);
-	}
 #endif
+	}
 }
 
 static uint32_t icq_get_uid(session_t *s, const char *target) {
@@ -808,6 +806,7 @@ static COMMAND(icq_command_connect) {
 
 	j->connecting = 1;
 	j->ssi = 1;	/* XXX */
+	j->aim = 1;	/* XXX */
 
 	if (ekg_resolver2(&icq_plugin, hubserver, icq_handle_hubresolver, xstrdup(session->uid)) == NULL) {
 		print("generic_error", strerror(errno));
@@ -867,8 +866,6 @@ static COMMAND(icq_command_userinfo) {
 	return 0;
 }
 
-#define ROT16(x) ((x & 0xff) << 8 | x >> 8)
-
 static COMMAND(icq_command_searchuin) {
 	string_t pkt;
 	uint32_t uin;
@@ -881,33 +878,62 @@ static COMMAND(icq_command_searchuin) {
 	}
 
 	/* XXX, cookie */
-
-	pkt = icq_pack("ti", icq_pack_tlv_dword(ROT16(0x0136), uin));	/* TLV_UID */
+	pkt = icq_pack("wwi", icq_pack_tlv_dword(0x0136, uin));		/* TLV_UID */
 
 	icq_makemetasnac(session, pkt, 2000, 0x0569, 0);	/* META_SEARCH_UIN */
 	icq_send_pkt(session, pkt);
 	return 0;
 }
 
-static COMMAND(icq_command_searchname) {
-	const char *first_name = NULL;
-	const char *last_name = NULL;
+static COMMAND(icq_command_search) {
+	const char *city = NULL;
+	const char *email = NULL;
 	const char *nickname = NULL;
+	const char *last_name = NULL;
+	const char *first_name = NULL;
+	int only_online = 0;
+
+	char **argv;
+	int i;
 
 	string_t pkt;
 
-	/* XXX, --nickname --lastname... */
+	argv = array_make(params[0], " \t", 0, 1, 1);
 
-	if (params[0]) {
-		first_name = params[0];
-		if (params[1]) {
-			last_name = params[1];
-			nickname = params[2];
+	for (i = 0; argv[i]; i++) {
+		if (match_arg(argv[i], 'c', "city", 2) && argv[i+1]) {
+			city = argv[++i];
+			continue;
 		}
-	}
 
-	if (!first_name && !last_name && !nickname) {
-		/* XXX */
+		if (match_arg(argv[i], 'e', "email", 2) && argv[i+1]) {
+			email = argv[++i];
+			continue;
+		}
+
+		if (match_arg(argv[i], 'f', "firstname", 2) && argv[i+1]) {
+			first_name = argv[++i];
+			continue;
+		}
+
+		if (match_arg(argv[i], 'n', "nickname", 2) && argv[i+1]) {
+			nickname = argv[++i];
+			continue;
+		}
+
+		if (match_arg(argv[i], 'l', "lastname", 2) && argv[i+1]) {
+			last_name = argv[++i];
+			continue;
+		}
+
+		if (!xstrcasecmp(argv[i], "--online")) {
+			only_online = 1;
+			continue;
+		}
+
+		/* XXX, madrzej? zgadywanie? */
+		printq("invalid_params", name);
+		array_free(argv);
 		return -1;
 	}
 
@@ -916,43 +942,49 @@ static COMMAND(icq_command_searchname) {
 	/* Pack the search details */
 	pkt = string_init(NULL);
 
-
 #define wo_idnhtni(type, str) \
 	{ \
-	uint32_t len = xstrlen(str); \
-	icq_pack_append(pkt, "www", (uint32_t) type, len+3, len+1); \
-	string_append_raw(pkt, (char *) str, len+1); \
+		uint32_t len = xstrlen(str); \
+		icq_pack_append(pkt, "www", (uint32_t) type, len+3, len+1); \
+		string_append_raw(pkt, (char *) str, len+1); \
 	}
 
-	if (first_name)
-		wo_idnhtni(0x0140, first_name);	/* TLV_FIRSTNAME */
+	if (first_name) wo_idnhtni(0x0140, first_name);	/* TLV_FIRSTNAME */
+	if (last_name) wo_idnhtni(0x014A, last_name);	/* TLV_LASTNAME */
+	if (nickname) wo_idnhtni(0x0154, nickname);	/* TLV_NICKNAME */
+	if (email) wo_idnhtni(0x015E, email);		/* TLV_EMAIL */
+	if (city) wo_idnhtni(0x0190, city);		/* TLV_CITY */
 
-	if (last_name)
-		wo_idnhtni(0x014A, last_name);	/* TLV_LASTNAME */
-	
-	if (nickname)
-		wo_idnhtni(0x0154, nickname);	/* TLV_NICKNAME */
+/* more options:
 
-#undef wo_idnhtni
+	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_STATE, TLV_STATE);
+	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_COMPANY, TLV_COMPANY);
+	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_DEPARTMENT, TLV_DEPARTMENT);
+	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_POSITION, TLV_POSITION);
+	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_KEYWORDS, TLV_KEYWORDS);
+
+	ppackTLVDWord(&buf, &buflen, (DWORD)getCurItemData(hwndDlg, IDC_AGERANGE),      TLV_AGERANGE,  0);
+	ppackTLVByte(&buf,  &buflen, (BYTE)getCurItemData(hwndDlg,  IDC_GENDER),        TLV_GENDER,    0);
+	ppackTLVByte(&buf,  &buflen, (BYTE)getCurItemData(hwndDlg,  IDC_MARITALSTATUS), TLV_MARITAL,   0);
+	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_LANGUAGE),      TLV_LANGUAGE,  0);
+	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_COUNTRY),       TLV_COUNTRY,   0);
+	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_WORKFIELD),     TLV_OCUPATION, 0);
+
+	searchPackTLVWordLNTS(&buf, &buflen, hwndDlg, IDC_PASTKEY, (WORD)getCurItemData(hwndDlg, IDC_PASTCAT), TLV_PASTINFO);
+	searchPackTLVWordLNTS(&buf, &buflen, hwndDlg, IDC_INTERESTSKEY, (WORD)getCurItemData(hwndDlg, IDC_INTERESTSCAT), TLV_INTERESTS);
+	searchPackTLVWordLNTS(&buf, &buflen, hwndDlg, IDC_ORGKEYWORDS, (WORD)getCurItemData(hwndDlg, IDC_ORGANISATION), TLV_AFFILATIONS);
+	searchPackTLVWordLNTS(&buf, &buflen, hwndDlg, IDC_HOMEPAGEKEY, (WORD)getCurItemData(hwndDlg, IDC_HOMEPAGECAT), TLV_HOMEPAGE);
+ */
+
+	icq_pack_append(pkt, "wwc", icq_pack_tlv_char(0x0230, only_online));
 
 	icq_makemetasnac(session, pkt, 2000, 0x055F, 0);	/* META_SEARCH_GENERIC */
 	icq_send_pkt(session, pkt);
 
+	array_free(argv);
+
 	return 0;
-}
-
-static COMMAND(icq_command_searchmail) {
-	string_t pkt;
-
-	debug_function("icq_command_searchmail() %s\n", params[0]);
-
-	/* XXX, cookie */
-
-	pkt = icq_pack("T", icq_pack_tlv_str(ROT16(0x015E), params[0]));	/* TLV_EMAIL */
-
-	icq_makemetasnac(session, pkt, 2000, 0x0573, 0);	/* META_SEARCH_EMAIL */
-	icq_send_pkt(session, pkt);
-	return 0;
+#undef wo_idnhtni
 }
 
 static COMMAND(icq_command_auth) {
@@ -1080,8 +1112,7 @@ EXPORT int icq_plugin_init(int prio) {
 
 	/* XXX, makes generic icq:search */
 	command_add(&icq_plugin, "icq:searchuin", "!u",	icq_command_searchuin,	ICQ_FLAGS_TARGET, NULL);
-	command_add(&icq_plugin, "icq:searchmail", "!",	icq_command_searchmail,	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&icq_plugin, "icq:search", "? ? ?",	icq_command_searchname,	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&icq_plugin, "icq:search", "!p",	icq_command_search,	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(&icq_plugin, "icq:connect", NULL,	icq_command_connect, 	ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:disconnect", NULL,icq_command_disconnect,	ICQ_ONLY, NULL);

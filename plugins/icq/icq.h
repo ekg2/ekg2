@@ -15,6 +15,7 @@ typedef struct {
 	int snacmeta_seq;	/* META SNAC seq id */
 
 	int ssi;		/* server-side-userlist? */
+	int aim;		/* aim-ok? */
 	string_t cookie;	/* connection login cookie */
 } icq_private_t;
 
