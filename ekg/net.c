@@ -405,16 +405,14 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 #else
 #warning "irc: You don't have inet_pton() connecting to ipv4 hosts may not work"
 #ifdef HAVE_INET_ATON /* XXX */
-		if (!inet_aton(addr, &(ipv4->sin_addr))) {
-			debug("inet_aton() failed on addr: %s.\n", addr);
-		}
+		if (!inet_aton(addr, &(ipv4->sin_addr)))
+			debug_error("inet_aton() failed on addr: %s.\n", addr);
 #else
 #warning "irc: You don't have inet_aton() connecting to ipv4 hosts may not work"
 #endif
 #warning "irc: Yeah, You have inet_addr() connecting to ipv4 hosts may work :)"
-		if ((ipv4->sin_addr.s_addr = inet_addr(co->address)) == -1) {
-			debug("inet_addr() failed or returns 255.255.255.255? on %s\n", addr);
-		}
+		if ((ipv4->sin_addr.s_addr = inet_addr(co->address)) == -1)
+			debug_error("inet_addr() failed or returns 255.255.255.255? on %s\n", addr);
 #endif
 
 		*address = (struct sockaddr *) ipv4;
@@ -440,10 +438,29 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 }
 
 static WATCHER(ekg_connect_handler) {
-	/* XXX */
+	struct ekg_connect_data *c = (struct ekg_connect_data*) data;
+	int res = 0; 
+	socklen_t res_size = sizeof(res);
+	
+	if (!c)
+		return -1;
+	
+	debug_function("ekg_connect_handler(), type = %d.\n", type);
 
-	debug_function("ekg_connect_handler()\n");
-
+	if (type == 1)
+		return 0;
+	else if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
+		if (res)
+			debug_error("ekg_connect_handler(), error: %s\n", strerror(res));
+		ekg_connect_loop(c);
+		close(fd);
+	} else if (c->async(type, fd, WATCH_WRITE, c->session) > 0) {
+		debug_error("ekg_connect_handler(), looks like caller didn't like our job.\n");
+		ekg_connect_loop(c);
+		close(fd);
+	} else
+		ekg_connect_data_free(c);
+	
 	return -1;
 }
 
@@ -464,7 +481,7 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 		watch_t *w;
 
 		do {
-			const int one = 1;
+			int one = 1;
 
 			len = ekg_build_sin(host, c->port, &addr, &family);
 			debug_function("ekg_connect_loop(), connect: %s, sinlen: %d\n", host, len);
@@ -497,8 +514,8 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 				break;
 			}
 
-			w = watch_add_session(s, fd, WATCH_WRITE, ekg_connect_handler);
-			watch_timeout_set(w, 30 /* XXX */);
+			w = watch_add(s->plugin, fd, WATCH_WRITE, ekg_connect_handler, c);
+			watch_timeout_set(w, 10 /* XXX */);
 
 			return 1;
 		} while (0);
@@ -516,7 +533,7 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 	}
 
 	/* 3) fail */
-//	c->async(0, 0, 0, c->session); /* XXX: pass error? */
+	c->async(2, 0, WATCH_WRITE, c->session);
 	ekg_connect_data_free(c);
 	return 0;
 }
