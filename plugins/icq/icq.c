@@ -50,6 +50,9 @@
 #define ICQ_HUB_SERVER "login.icq.com"
 #define ICQ_HUB_PORT	5190
 
+static int icq_theme_init();
+PLUGIN_DEFINE(icq, PLUGIN_PROTOCOL, icq_theme_init);
+
 int icq_send_pkt(session_t *s, string_t buf) {
 	icq_private_t *j;
 	watch_t *w;
@@ -67,10 +70,15 @@ int icq_send_pkt(session_t *s, string_t buf) {
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
 
-		if (w && w->is_session && w->data == s && w->type == WATCH_WRITE_LINE && w->fd == fd) {
+		if (w && w->plugin == &icq_plugin && w->is_session && w->data == s && w->type == WATCH_WRITE && w->buf && w->fd == fd) {
+			int ready = (w->buf->len == 0);
+
 			string_append_raw(w->buf, buf->str, buf->len);
 			string_free(buf, 1);
-			return 1;
+
+			if (ready)
+				watch_handle_write(w);
+			return !ready;
 		}
 	}
 
@@ -388,9 +396,6 @@ static uint32_t icq_get_uid(session_t *s, const char *target) {
 
 	return uin;
 }
-
-static int icq_theme_init();
-PLUGIN_DEFINE(icq, PLUGIN_PROTOCOL, icq_theme_init);
 
 static QUERY(icq_session_init) {
 	char		*session = *(va_arg(ap, char**));
