@@ -88,9 +88,9 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			icq_tlv_t *t_auth = icq_tlv_get(tlvs, 0x66);
 			icq_tlv_t *t_comment = icq_tlv_get(tlvs, 0x013C);
 
-			char *comment = (t_comment && t_comment->len) ? xstrndup(t_comment->buf, t_comment->len) : NULL;	/* XXX, recode */
+			char *comment = (t_comment && t_comment->len) ? xstrndup((char *) t_comment->buf, t_comment->len) : NULL;	/* XXX, recode */
 			char *uid = icq_uid(name);
-			char *nick = (t_nick && t_nick->len) ? xstrndup(t_nick->buf, t_nick->len) : xstrdup(uid);		/* XXX, recode */
+			char *nick = (t_nick && t_nick->len) ? xstrndup((char *) t_nick->buf, t_nick->len) : xstrdup(uid);		/* XXX, recode */
 
 			userlist_t *u;
 

@@ -56,9 +56,7 @@ PLUGIN_DEFINE(icq, PLUGIN_PROTOCOL, icq_theme_init);
 
 int icq_send_pkt(session_t *s, string_t buf) {
 	icq_private_t *j;
-	watch_t *w;
 	int fd;
-	list_t l;
 
 	if (!s || !(j = s->priv) || !buf)
 		return -1;

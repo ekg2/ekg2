@@ -217,26 +217,20 @@ SNAC_SUBHANDLER(icq_snac_service_ratechange) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_pause) {
+	string_t pkt;
+
 	debug("icq_snac_service_pause() Server is going down in a few seconds...\n");
-#warning "icq_snac_service_pause XXX"
 
-#if MIRANDA
 	/* This is the list of groups that we want to have on the next server */
-	serverPacketInit(&packet, 30);
-	packFNACHeader(&packet, ICQ_SERVICE_FAMILY, ICQ_CLIENT_PAUSE_ACK);
+	pkt = icq_pack("WWWWWWWWWW", 
+			(uint32_t) 0x01, (uint32_t) 0x13,
+			(uint32_t) 0x02, (uint32_t) 0x03,
+			(uint32_t) 0x17, (uint32_t) 0x04,
+			(uint32_t) 0x06, (uint32_t) 0x09,
+			(uint32_t) 0x0a, (uint32_t) 0x0b);
 
-	packWord(&packet,ICQ_SERVICE_FAMILY);
-	packWord(&packet,ICQ_LISTS_FAMILY);
-	packWord(&packet,ICQ_LOCATION_FAMILY);
-	packWord(&packet,ICQ_BUDDY_FAMILY);
-	packWord(&packet,ICQ_EXTENSIONS_FAMILY);
-	packWord(&packet,ICQ_MSG_FAMILY);
-	packWord(&packet,0x06);
-	packWord(&packet,ICQ_BOS_FAMILY);
-	packWord(&packet,ICQ_LOOKUP_FAMILY);
-	packWord(&packet,ICQ_STATS_FAMILY);
-	sendServPacket(&packet);
-#endif
+	icq_makesnac(s, pkt, 0x01, 0x0c, 0, 0);
+	icq_send_pkt(s, pkt);
 	return 0;
 }
 
