@@ -98,9 +98,6 @@ static int contacts_compare(void *data1, void *data2)
 {
 	userlist_t *a = data1, *b = data2;
 
-	if (!a || !a->nickname || !b || !b->nickname)
-		return 0;
-
 	return xstrcasecmp(a->nickname, b->nickname);
 }
 
@@ -228,6 +225,9 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			for (lp = s->userlist; lp; lp = lp->next) {
 				userlist_t *u = lp;
 
+				if (!u->nickname)	/* don't add users without nickname.. */
+					continue;
+
 				LIST_ADD_SORTED2(&sorted_all, userlist_dup(u, u->uid, u->nickname, s), comp);
 			}
 
@@ -236,6 +236,9 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 
 		for (l = c ? c->participants : window_current->userlist; l; l = l->next) {
 			userlist_t *u = l;
+
+			if (!u->nickname)	/* don't add users without nickname.. */
+				continue;
 
 			LIST_ADD_SORTED2(&sorted_all, userlist_dup(u, u->uid, u->nickname, w->session), comp);
 		}
@@ -285,6 +288,9 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 				continue;
 
 			if (!(u = userlist_find_n(i->s_uid, i->name)))
+				continue;
+
+			if (!m->name)	/* don't add metacontacts without name.. */
 				continue;
 
 			LIST_ADD_SORTED2(&sorted_all, userlist_dup(u, NULL, m->name, (void *) 2), comp);
