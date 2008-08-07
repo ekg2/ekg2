@@ -17,6 +17,7 @@
  */
 
 #include <stdint.h>
+#include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
@@ -239,6 +240,18 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 		return 0;
 
 	while (*format) {
+		if (*format >= '0' && *format <= '9') {
+			long int skip = strtol(format, &format, 10);
+
+			if (len < skip) {
+				debug_error("icq_unpack() len: %d skiplen: %ld\n", len, skip);
+				goto err2;
+			}
+
+			buf += skip; len -= skip;
+			continue;
+		}
+
 		switch (*format) {
 			case 'c':	/* uint8_t */
 			case 'C':

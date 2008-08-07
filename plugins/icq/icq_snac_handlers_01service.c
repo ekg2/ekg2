@@ -198,15 +198,7 @@ SNAC_SUBHANDLER(icq_snac_service_ratechange) {
 		uint32_t level;
 	} pkt;
 
-	if (!ICQ_UNPACK(&buf, "WW", &pkt.status, &pkt.class))
-		return -1;
-
-	if (len < 20)
-		return -1;
-
-	buf += 20; len -= 20;
-
-	if (!ICQ_UNPACK(&buf, "I", &pkt.level))
+	if (!ICQ_UNPACK(&buf, "WW20I", &pkt.status, &pkt.class, &pkt.level))
 		return -1;
 
 	/* XXX, Miranda do smth here :> */

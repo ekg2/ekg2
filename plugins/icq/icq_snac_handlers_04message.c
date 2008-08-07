@@ -315,39 +315,15 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 	if (pkt.len == 0x1b && 1 /* XXX */) {
 		/* this can be v8 greeting message reply */
 		uint16_t version;
-		uint16_t seq2;
-		uint8_t msg_type, flags;
-		uint16_t status;
+		/* 27b unknowns from the msg we sent */
+		uint16_t seq2;					/* Message sequence (SEQ2) */
+		/* 12b Unknown */
+		uint8_t msg_type, flags;			/* Message type */
+		uint16_t status;				/* Status */
+		/* 2b Priority? */
 
-		if (!ICQ_UNPACK(&buf, "w", &version))
+		if (!ICQ_UNPACK(&buf, "w27w12ccw2", &version, &seq2, &msg_type, &flags, &status))
 			return -1;
-
-		/* unknowns from the msg we sent */
-		if (len < 27)
-			return -1;
-		buf += 27; len -= 27;
-
-		/* Message sequence (SEQ2) */
-		if (!ICQ_UNPACK(&buf, "w", &seq2))
-			return -1;
-
-		/* Unknown (12 bytes) */
-		if (len < 12)
-			return -1;
-		buf += 12; len -= 12;
-
-		/* Message type */
-		if (!ICQ_UNPACK(&buf, "cc", &msg_type, &flags))
-			return -1;
-
-		/* Status */
-		if (!ICQ_UNPACK(&buf, "w", &status))
-			return -1;
-
-		/* Priority? */
-		if (len < 2)
-			return -1;
-		buf += 2; len -= 2;
 
 		/* XXX, more cookies... */
 
