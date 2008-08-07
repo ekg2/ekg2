@@ -86,6 +86,31 @@ static TIMER_SESSION(icq_ping) {
 	return 0;
 }
 
+int icq_write_status_msg(session_t *s, const char *msg) {
+	string_t pkt;
+	char *dup_msg;
+
+	if (!s)
+		return -1;
+
+	if (s->status != EKG_STATUS_AWAY && s->status != EKG_STATUS_XA && s->status != EKG_STATUS_FFC && s->status != EKG_STATUS_DND)
+		return -1;
+	/* XXX, NA also supported */
+
+	dup_msg = xstrndup(msg, 0x1000);	/* XXX, recode */
+
+	/* XXX, cookie */
+
+	/* packTLV(&packet, 0x03, 0x21, (LPBYTE)"text/x-aolrtf; charset=\"utf-8\""); */ 	/* XXX, 0x21? why? */
+
+	pkt = icq_pack("T", icq_pack_tlv_str(0x04, dup_msg));
+
+	icq_makesnac(s, pkt, 0x02, 0x04, 0, 0);
+	icq_send_pkt(s, pkt);
+
+	xfree(dup_msg);
+	return 0;
+}
 
 int icq_write_status(session_t *s) {
 	uint16_t status;
@@ -336,14 +361,8 @@ void icq_session_connected(session_t *s) {
 	protocol_connected_emit(s);
 	j->connecting = 0;
 
-	if (j->aim) {
-#if MIRANDA
-		char **szMsg = MirandaStatusToAwayMsg(m_iStatus);
-
-		if (szMsg)
-			icq_sendSetAimAwayMsgServ(*szMsg);
-#endif
-	}
+	if (j->aim)
+		icq_write_status_msg(s, s->descr);
 }
 
 static uint32_t icq_get_uid(session_t *s, const char *target) {
@@ -636,6 +655,61 @@ static WATCHER(icq_handle_hubresolver) {
 	return -1;
 }
 
+static COMMAND(icq_command_addssi) {
+	userlist_t *u;
+	uint32_t uin;
+
+	char *nickname = NULL;
+
+		/* instead of PARAMASTARGET, 'cause that one fails with /add username in query */
+	if (get_uid(session, params[0])) {
+		/* XXX: create&use shift()? */
+		target = params[0];
+		params++;
+	}
+	
+	if ((u = userlist_find(session, target))) {		/* don't allow to add user again */
+		printq("user_exists_other", (params[0] ? params[0] : target), format_user(session, u->uid), session_name(session));
+		return -1;
+	}
+
+	if (!(uin = icq_get_uid(session, target))) {
+		printq("invalid_uid", target);
+		return -1;
+	}
+
+	if (params[0]) {
+		char **argv = array_make(params[0], " \t", 0, 1, 1);
+		int i;
+
+		for (i = 0; argv[i]; i++) {
+			if (match_arg(argv[i], 'g', "group", 2)) {
+				/* XXX */
+				continue;
+			}
+
+			/*    if this is -n smth */
+			/* OR if param doesn't looks like command treat as a nickname */
+			if ((match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1] && i++) || argv[i][0] != '-') {
+				if (userlist_find(session, argv[i])) {
+					printq("user_exists", argv[i], session_name(session));
+					continue;
+				}
+
+				xfree(nickname);
+				nickname = xstrdup(argv[i]);
+				continue;
+			}
+		}
+		array_free(argv);
+	}
+	/* XXX, sent packet */
+
+	xfree(nickname);
+
+	return 0;
+}
+
 static COMMAND(icq_command_msg) {
 	uint32_t uin;
 	char *uid;
@@ -726,7 +800,8 @@ static COMMAND(icq_command_inline_msg) {
 }
 
 static COMMAND(icq_command_away) {
-	const char *format;
+	const char *descr, *format;
+	int allow_descr = 0;
 
 	if (!xstrcmp(name, ("_autoback"))) {
 		format = "auto_back";
@@ -739,25 +814,31 @@ static COMMAND(icq_command_away) {
 	} else if (!xstrcmp(name, ("_autoaway"))) {
 		format = "auto_away";
 		session_status_set(session, EKG_STATUS_AUTOAWAY);
+		allow_descr = 1;
 	} else if (!xstrcmp(name, ("_autoxa"))) {
 		format = "auto_xa";
 		session_status_set(session, EKG_STATUS_AUTOXA);
+		allow_descr = 1;
 	} else if (!xstrcmp(name, ("away"))) {
 		format = "away"; 
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
+		allow_descr = 1;
 	} else if (!xstrcmp(name, ("dnd"))) {
 		format = "dnd";
 		session_status_set(session, EKG_STATUS_DND);
 		session_unidle(session);
+		allow_descr = 1;
 	} else if (!xstrcmp(name, ("ffc"))) {
 	        format = "ffc";
 	        session_status_set(session, EKG_STATUS_FFC);
                 session_unidle(session);
+		allow_descr = 1;
         } else if (!xstrcmp(name, ("xa"))) {
 		format = "xa";
 		session_status_set(session, EKG_STATUS_XA);
 		session_unidle(session);
+		allow_descr = 1;
 	} else if (!xstrcmp(name, ("invisible"))) {
 		format = "invisible";
 		session_status_set(session, EKG_STATUS_INVISIBLE);
@@ -765,10 +846,34 @@ static COMMAND(icq_command_away) {
 	} else
 		return -1;
 
+	if (allow_descr) {
+		if (params[0]) {
+			session_descr_set(session, (!xstrcmp(params[0], "-")) ? NULL : params[0]);
+			reason_changed = 1;
+		} else { 
+			char *tmp;
+
+			if (!config_keep_reason) {
+				session_descr_set(session, NULL);
+			} else if ((tmp = ekg_draw_descr(session_status_get(session)))) {
+				session_descr_set(session, tmp);
+				xfree(tmp);
+			}
+		}
+	} else
+		session_descr_set(session, NULL);
+
+	descr = (char *) session_descr_get(session);
+
+	if (descr) {
+		char *f = saprintf("%s_descr", format);
+		printq(f, descr, "", session_name(session));
+		xfree(f);
+	} else
+		printq(format, session_name(session));
+
 	ekg_update_status(session);
 	
-	printq(format, session_name(session));
-
 	if (session->connected)
 		icq_write_status(session);
 	return 0;
@@ -1113,14 +1218,16 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 
+	command_add(&icq_plugin, "icq:addssi", "U ?", icq_command_addssi, ICQ_FLAGS, NULL);
+
 	command_add(&icq_plugin, "icq:auth", "!p uU", icq_command_auth, ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, "-a --accept -d --deny -r --request -c --cancel");
 
-	command_add(&icq_plugin, "icq:away", NULL, icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:away", "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:back", NULL, icq_command_away, ICQ_ONLY, NULL);
-	command_add(&icq_plugin, "icq:dnd",  NULL, icq_command_away, ICQ_ONLY, NULL);
-	command_add(&icq_plugin, "icq:ffc",  NULL, icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:dnd",  "r", icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:ffc",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:invisible", NULL, icq_command_away, ICQ_ONLY, NULL);
-	command_add(&icq_plugin, "icq:xa",  NULL, icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:xa",  "r", icq_command_away, ICQ_ONLY, NULL);
 
 	command_add(&icq_plugin, "icq:userinfo", "!u",	icq_command_userinfo,	ICQ_FLAGS_TARGET, NULL);
 	command_add(&icq_plugin, "icq:register", NULL,	icq_command_register,	0, NULL);
