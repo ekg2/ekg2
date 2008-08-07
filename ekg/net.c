@@ -35,7 +35,6 @@
 #include <string.h>
 #include <stdarg.h>	/* ? */
 #include <unistd.h>
-#include <stdbool.h>
 
 #define __USE_POSIX
 #define __USE_GNU	/* glibc-2.8, needed for (struct hostent->h_addr) */
@@ -64,12 +63,11 @@
  */
 
 #include "debug.h"
+#include "dynstuff.h"
+#include "net.h"
 #include "plugins.h"
+#include "sessions.h"
 #include "xmalloc.h"
-
-#ifndef INADDR_NONE		/* XXX, xmalloc.h (?) */
-#  define INADDR_NONE (unsigned long) 0xffffffff
-#endif
 
 #ifdef LIBIDN /* stolen from squid->url.c (C) Duane Wessels */
 static const char valid_hostname_chars_u[] =
@@ -334,7 +332,7 @@ static char *array_shift(char ***array) {
 	return out;
 }
 
-static bool ekg_connect_loop(struct ekg_connect_data *c) {
+static int ekg_connect_loop(struct ekg_connect_data *c) {
 	char *host;
 
 	/* 1) if anything is in connect_queue, try to connect */
@@ -343,7 +341,7 @@ static bool ekg_connect_loop(struct ekg_connect_data *c) {
 		/* XXX */
 		xfree(host);
 
-		return true;
+		return 1;
 	}
 
 	/* 2) if anything is in resolver_queue, try to resolve */
@@ -352,20 +350,20 @@ static bool ekg_connect_loop(struct ekg_connect_data *c) {
 		/* XXX */
 		xfree(host);
 
-		return true;
+		return 1;
 	}
 
 	/* 3) fail */
 	c->async(0, 0, 0, c->session); /* XXX: pass error? */
 	xfree(c); /* arrays should be already freed */
-	return false;
+	return 0;
 }
 
-bool ekg_connect(session_t *session, const char *server, int (*prefer_comparison)(void *, void *), watcher_handler_func_t async) {
+int ekg_connect(session_t *session, const char *server, int (*prefer_comparison)(void *, void *), watcher_handler_func_t async) {
 	struct ekg_connect_data	*c = xmalloc(sizeof(struct ekg_connect_data));
 
 	if (!session || !server || !async)
-		return false;
+		return 0;
 
 	/* 1) fill struct */
 	c->resolver_queue	= array_make(server, ",", 0, 1, 1);

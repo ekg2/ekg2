@@ -101,7 +101,7 @@
 #include "scripts.h"
 #include "windows.h"
 #include "xmalloc.h"
-
+#include "net.h"
 #include "queries.h"
 #include "dynstuff_inline.h"
 
