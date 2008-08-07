@@ -56,6 +56,57 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 	return 0;
 }
 
+static void icq_get_description(session_t *s, char *uin) {
+	string_t pkt, tlv5, rdv;
+	uint32_t cookie1=rand(), cookie2=rand();
+
+	debug_function("icq_get_description() for: %s\n", uin);
+
+	pkt = string_init(NULL);
+	icq_pack_append(pkt, "II", cookie1, cookie2);		// cookie
+	icq_pack_append(pkt, "W", (uint32_t) 2);		// message type
+	icq_pack_append(pkt, "u", atoi(uin));
+
+	tlv5 = string_init(NULL);
+	icq_pack_append(tlv5, "W", (uint32_t) 0);
+	icq_pack_append(tlv5, "II", cookie1, cookie2);		// cookie
+	icq_pack_append(tlv5, "P", (uint32_t) 0x1349);		// AIM_CAPS_ICQSERVERRELAY
+	icq_pack_append(tlv5, "tW", icq_pack_tlv_word(0xA, 1));	// TLV 0x0A: acktype (1 = normal message)
+	icq_pack_append(tlv5, "T", icq_pack_tlv(0x0F, NULL, 0));	// TLV 0x0F: unknown
+
+	// RendezvousMessageData
+	rdv = string_init(NULL);
+	icq_pack_append(rdv, "wwiiiiwicwwwiiiccwwwcii",
+				(uint32_t) 27,		// length of this data segment, always 27
+				(uint32_t) 8,		// protocol version
+				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // pluginID
+				(uint32_t) 0,		// unknown
+				(uint32_t) 3,		// unknown
+				(uint32_t) 0, 		// unknown
+				(uint32_t) 0x7fff,	// channel 2 counter XXX
+				(uint32_t) 14,		// length of this data segment, always 14
+				(uint32_t) 0x7fff,	// channel 2 counter XXX
+				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // unknown, usually all zeros
+				(uint32_t) 0xe8,	// msg type   XXX ???
+				(uint32_t) 3,		// msg flags  XXX ???
+				(uint32_t) 1,		// status code ??? XXX
+				(uint32_t) 1,		// priority ??? XXX
+				(uint32_t) 1,		// 
+				(uint32_t) 0,		//
+				(uint32_t) 0,		// foreground
+				(uint32_t) 0x00ffffff); // foreground
+
+	icq_pack_append(tlv5, "T", icq_pack_tlv(0x2711, rdv->str, rdv->len));
+	string_free(rdv, 1);
+
+	icq_pack_append(pkt, "T", icq_pack_tlv(0x05, tlv5->str, tlv5->len));
+	string_free(tlv5, 1);
+
+	icq_pack_append(pkt, "T", icq_pack_tlv(0x03, NULL, 0));		// empty TLV 3 to get an ack from the server
+
+	icq_makesnac(s, pkt, 0x04, 0x06, 0, 0);
+	icq_send_pkt(s, pkt);
+}
 
 SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	/*
@@ -108,6 +159,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 				status2 = t->nr >> 16;
 				debug_white("icq_snac_buddy_online()  %s status2=0x%04x status=0x%04x\n", uid, status2, status);
 				protocol_status_emit(s, uid, icq2ekg_status(status), NULL, time(NULL));
+				icq_get_description(s, uid+4);
 				break;
 
 			case 0x0a: /* IP address */
