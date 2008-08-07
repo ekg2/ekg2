@@ -79,6 +79,8 @@
 #include "vars.h"
 #include "windows.h"
 #include "xmalloc.h"
+#include "plugins.h"
+#include "sessions.h"
 
 #include "dynstuff_inline.h"
 #include "queries.h"
@@ -3127,6 +3129,77 @@ int ekg_converters_display(int quiet)
 	printq("generic_error", "Sorry, no iconv");
 	return -1;
 #endif
+}
+
+/**
+ * ekg_write()
+ *
+ * write data to given fd, if it cannot be done [because system buffer is too small. it'll create watch, and write as soon as possible]
+ * XXX, for now it'll always create watch.
+ * (You can be notified about state of buffer when you call ekg_write(fd, NULL, -1))
+ *
+ * @note
+ * 	This _should_ be used as replacement for write() 
+ */
+
+int ekg_write(int fd, const char *buf, int len) {
+	watch_t *wl = NULL;
+	list_t l;
+
+	if (fd == -1)
+		return -1;
+
+	/* first check if we have watch for this fd */
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
+
+		if (w && w->fd == fd && w->type == WATCH_WRITE && w->buf) {
+			wl = w;
+			break;
+		}
+	}
+
+	if (wl) {
+		if (!buf && len == -1) /* smells stupid, but do it */
+			return wl->buf->len;
+	} else {
+		/* if we have no watch, let's create it. */	/* XXX, first try write() ? */
+		wl = watch_add(NULL, fd, WATCH_WRITE_LINE, NULL, NULL);
+	}
+
+	return watch_write_data(wl, buf, len);
+}
+
+/* XXX, int ekg_writef(int fd, const char *format, ...); */
+
+/**
+ * ekg_close()
+ *
+ * close fd and all watches associated with that fd
+ *
+ * @note
+ * 	This _should_ be used as replacement for close() (especially in protocol plugins)
+ */
+
+int ekg_close(int fd) {
+	list_t l;
+
+	if (fd == -1)
+		return -1;
+
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
+
+		if (w && w->fd == fd) {
+			debug("ekg_close(%d) w->plugin: %s w->session: %s w->type: %d w->buf: %d\n", 
+				fd, w->plugin ? w->plugin->name : "-",
+				w->is_session ? ((session_t *) w->data)->uid : "-",
+				w->type, !!w->buf);
+
+			watch_free(w);
+		}
+	}
+	return close(fd);
 }
 
 /**

@@ -186,6 +186,7 @@ int watch_write(watch_t *w, const char *format, ...) __attribute__ ((format (pri
 #else
 int watch_write(watch_t *w, const char *format, ...);
 #endif
+int watch_write_data(watch_t *w, const char *buf, int len);
 
 watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type);
 void watch_free(watch_t *w);

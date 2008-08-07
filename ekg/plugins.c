@@ -936,7 +936,7 @@ void watch_free(watch_t *w) {
 		return;
 	}
 
-	if (w->type == WATCH_WRITE && w->buf && !w->handler) { 
+	if (w->type == WATCH_WRITE && w->buf && !w->handler && w->plugin) { 	/* XXX */
 		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
 		return;
 	}
@@ -1083,11 +1083,25 @@ int watch_handle_write(watch_t *w) {
 	return res;
 }
 
-int watch_write(watch_t *w, const char *format, ...) {
+int watch_write_data(watch_t *w, const char *buf, int len) {		/* XXX, refactory: watch_write() */
+	int was_empty;
+
+	if (!w || !buf || len <= 0)
+		return -1;
+
+	was_empty = !w->buf->len;
+	string_append_raw(w->buf, buf, len);
+
+	if (was_empty) 
+		return watch_handle_write(w); /* let's try to write somethink ? */
+	return 0;
+}
+
+int watch_write(watch_t *w, const char *format, ...) {			/* XXX, refactory: watch_writef() */
 	char		*text;
-	int		was_empty;
 	int		textlen;
 	va_list		ap;
+	int		res;
 
 	if (!w || !format)
 		return -1;
@@ -1099,16 +1113,16 @@ int watch_write(watch_t *w, const char *format, ...) {
 	textlen = xstrlen(text); 
 
 	debug_io("[watch]_send: %s\n", text ? textlen ? text: "[0LENGTH]":"[FAILED]");
-	if (!text) return -1;
 
-	was_empty = !w->buf->len;
-	string_append_n(w->buf, text, textlen);
+	if (!text) 
+		return -1;
+
+	res = watch_write_data(w, text, textlen);
 
 	xfree(text);
-
-	if (was_empty) return watch_handle_write(w); /* let's try to write somethink ? */
-	return 0;
+	return res;
 }
+
 
 /**
  * watch_handle()

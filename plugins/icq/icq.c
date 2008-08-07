@@ -66,28 +66,7 @@ int icq_send_pkt(session_t *s, string_t buf) {
 
 	debug_io("icq_send_pkt(%s) fd: %d len: %d\n", s->uid, fd, buf->len);
 	icq_hexdump(DEBUG_IO, (unsigned char *) buf->str, buf->len);
-
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
-
-		if (w && w->plugin == &icq_plugin && w->is_session && w->data == s && w->type == WATCH_WRITE && w->buf && w->fd == fd) {
-			int ready = (w->buf->len == 0);
-
-			string_append_raw(w->buf, buf->str, buf->len);
-			string_free(buf, 1);
-
-			if (ready)
-				watch_handle_write(w);
-			return !ready;
-		}
-	}
-
-	w = watch_add_session(s, fd, WATCH_WRITE_LINE, NULL);
-
-	string_append_raw(w->buf, buf->str, buf->len);
-	string_free(buf, 1);
-
-	watch_handle_write(w);
+	ekg_write(fd, buf->str, buf->len);
 	return 0;
 }
 
@@ -473,15 +452,13 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 	timer_remove_session(s, "ping");
 	protocol_disconnected_emit(s, reason, type);
 
-	/* XXX, watch_free() */
-
 	if (j->fd != -1) {
-		close(j->fd);
+		ekg_close(j->fd);
 		j->fd = -1;
 	}
 
 	if (j->fd2 != -1) {
-		close(j->fd2);
+		ekg_close(j->fd2);
 		j->fd2 = -1;
 	}
 }
@@ -572,7 +549,7 @@ static WATCHER_SESSION(icq_handle_stream) {
 	}
 
 	if (j->fd2 != -1) {	/* fd changed */
-		close(j->fd);
+		ekg_close(j->fd);
 		j->fd = j->fd2;
 		j->fd2 = -1;
 

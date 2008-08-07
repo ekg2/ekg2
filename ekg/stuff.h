@@ -406,6 +406,9 @@ void ekg_debug_handler(int level, const char *format, va_list ap);
 watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
 watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
 
+int ekg_close(int fd);
+int ekg_write(int fd, const char *buf, int len);
+
 #endif
 	
 #endif /* __EKG_STUFF_H */
