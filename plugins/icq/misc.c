@@ -1,3 +1,21 @@
+/*
+ *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include <stdint.h>
 #include <stdarg.h>
 #include <string.h>
@@ -340,6 +358,16 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 				used_Ubuf = 1;
 				break;
 			}
+
+			case 'x':	/* skip this byte */
+				buf += 1;
+				len -= 1;
+				break;
+
+			case 'X':	/* skip this byte */
+				buf += 2;
+				len -= 2;
+				break;
 
 			default:
 				debug_error("icq_unpack() unknown format: %c\n", *format);
