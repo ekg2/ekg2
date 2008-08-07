@@ -303,6 +303,7 @@ struct ekg_connect_data {
 	char	**connect_queue;	/* here we keep list of IPs to try to connect	*/
 
 		/* data provided by user */
+	int	port;
 	char	*session;
 	watcher_handler_func_t *async;
 	int (*prefer_comparison)(const char *, const char *);
@@ -327,10 +328,10 @@ static char *array_shift(char ***array) {
 		if (**array) {
 			const int count = array_count(*array);
 
-			out = *array[0];
+			out = (*array)[0];
 			for (; i < count; i++)
-				*array[i-1] = *array[i];
-			*array[i-1] = NULL;
+				(*array)[i-1] = (*array)[i];
+			(*array)[i-1] = NULL;
 		}
 
 		if (i == 1) { /* last element, free array */
@@ -370,6 +371,74 @@ static WATCHER_LINE(ekg_connect_resolver_handler) {
 	return 0;
 }
 
+static int ekg_build_sin(const char *data, const int defport, struct sockaddr **address) {
+	struct sockaddr_in  *ipv4;
+	struct sockaddr_in6 *ipv6;
+
+	int len	= 0;
+	int port, family;
+	const char *addr;
+
+	char **a = array_make(data, " ", 4, 1, 0);
+
+	*address = NULL;
+
+	if (array_count(a) < 3) 
+		return 0;
+
+	addr	= a[1];
+	family	= atoi(a[2]);
+	port	= a[3] ? atoi(a[3]) : 0;
+
+	if (port <= 0 || port > 66535)
+		port = defport;
+
+	if (family == AF_INET) {
+		len = sizeof(struct sockaddr_in);
+
+		ipv4 = xmalloc(len);
+
+		ipv4->sin_family = AF_INET;
+		ipv4->sin_port   = htons(port);
+#ifdef HAVE_INET_PTON
+		inet_pton(AF_INET, addr, &(ipv4->sin_addr));
+#else
+#warning "irc: You don't have inet_pton() connecting to ipv4 hosts may not work"
+#ifdef HAVE_INET_ATON /* XXX */
+		if (!inet_aton(addr, &(ipv4->sin_addr))) {
+			debug("inet_aton() failed on addr: %s.\n", addr);
+		}
+#else
+#warning "irc: You don't have inet_aton() connecting to ipv4 hosts may not work"
+#endif
+#warning "irc: Yeah, You have inet_addr() connecting to ipv4 hosts may work :)"
+		if ((ipv4->sin_addr.s_addr = inet_addr(co->address)) == -1) {
+			debug("inet_addr() failed or returns 255.255.255.255? on %s\n", addr);
+		}
+#endif
+
+		*address = (struct sockaddr *) ipv4;
+	} else if (family == AF_INET6) {
+		len = sizeof(struct sockaddr_in6);
+
+		ipv6 = xmalloc(len);
+		ipv6->sin6_family  = AF_INET6;
+		ipv6->sin6_port    = htons(port);
+#ifdef HAVE_INET_PTON
+		inet_pton(AF_INET6, addr, &(ipv6->sin6_addr));
+#else
+#warning "irc: You don't have inet_pton() connecting to ipv6 hosts may not work"
+#endif
+
+		*address = (struct sockaddr *) ipv6;
+	} else
+		debug_function("ekg_build_sin(), unknown addr family %d!\n", family);
+
+	array_free(a);
+
+	return len;
+}
+
 static int ekg_connect_loop(struct ekg_connect_data *c) {
 	char *host;
 	session_t *s = session_find(c->session);
@@ -382,11 +451,21 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 
 	/* 1) if anything is in connect_queue, try to connect */
 	if ((host = array_shift(&(c->connect_queue)))) {
-		debug_function("ekg_connect_loop(), connect: %s\n", host);
-		/* XXX */
-		xfree(host);
+		struct sockaddr *addr;
+		int len;
 
-		return 1;
+		do {
+			len = ekg_build_sin(host, c->port, &addr);
+			debug_function("ekg_connect_loop(), connect: %s, sinlen: %d\n", host, len);
+			if (!len)
+				break;
+
+			xfree(host);
+
+			return 1;
+		} while (0);
+
+		xfree(host);
 	}
 
 	/* 2) if anything is in resolver_queue, try to resolve */
@@ -404,7 +483,7 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 	return 0;
 }
 
-int ekg_connect(session_t *session, const char *server, int (*prefer_comparison)(const char *, const char *), watcher_handler_func_t async) {
+int ekg_connect(session_t *session, const char *server, const int port, int (*prefer_comparison)(const char *, const char *), watcher_handler_func_t async) {
 	struct ekg_connect_data	*c;
 
 	if (!session || !server || !async)
@@ -416,6 +495,7 @@ int ekg_connect(session_t *session, const char *server, int (*prefer_comparison)
 	c->session		= xstrdup(session_uid_get(session));
 	c->async		= async;
 	c->prefer_comparison	= prefer_comparison;
+	c->port			= port;
 
 	/* 2) call in the loop */
 	return ekg_connect_loop(c);
