@@ -86,29 +86,33 @@ static TIMER_SESSION(icq_ping) {
 	return 0;
 }
 
-int icq_write_status_msg(session_t *s, const char *msg) {
+int icq_write_status_msg(session_t *s) {
+	icq_private_t *j;
 	string_t pkt;
-	char *dup_msg;
+	char *msg;
 
-	if (!s)
+	if (!s || !(j = s->priv))
+		return -1;
+
+	if (j->aim == 0)
 		return -1;
 
 	if (s->status != EKG_STATUS_AWAY && s->status != EKG_STATUS_XA && s->status != EKG_STATUS_FFC && s->status != EKG_STATUS_DND)
 		return -1;
 	/* XXX, NA also supported */
 
-	dup_msg = xstrndup(msg, 0x1000);	/* XXX, recode */
+	msg = xstrndup(s->descr, 0x1000);	/* XXX, recode */
 
 	/* XXX, cookie */
 
 	/* packTLV(&packet, 0x03, 0x21, (LPBYTE)"text/x-aolrtf; charset=\"utf-8\""); */ 	/* XXX, 0x21? why? */
 
-	pkt = icq_pack("T", icq_pack_tlv_str(0x04, dup_msg));
+	pkt = icq_pack("T", icq_pack_tlv_str(0x04, msg));
 
 	icq_makesnac(s, pkt, 0x02, 0x04, 0, 0);
 	icq_send_pkt(s, pkt);
 
-	xfree(dup_msg);
+	xfree(msg);
 	return 0;
 }
 
@@ -361,8 +365,7 @@ void icq_session_connected(session_t *s) {
 	protocol_connected_emit(s);
 	j->connecting = 0;
 
-	if (j->aim)
-		icq_write_status_msg(s, s->descr);
+	icq_write_status_msg(s);
 }
 
 static uint32_t icq_get_uid(session_t *s, const char *target) {
@@ -874,8 +877,10 @@ static COMMAND(icq_command_away) {
 
 	ekg_update_status(session);
 	
-	if (session->connected)
+	if (session->connected) {
 		icq_write_status(session);
+		icq_write_status_msg(session);
+	}
 	return 0;
 }
 
