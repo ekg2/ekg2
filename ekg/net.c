@@ -383,8 +383,10 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 
 	*address = NULL;
 
-	if (array_count(a) < 3) 
+	if (array_count(a) < 3) {
+		array_free(a);
 		return 0;
+	}
 
 	addr	= a[1];
 	*family	= atoi(a[2]);
@@ -450,7 +452,8 @@ static WATCHER(ekg_connect_handler) {
 
 	if (type == 1)
 		return 0;
-	else if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
+
+	if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		if (res)
 			debug_error("ekg_connect_handler(), error: %s\n", strerror(res));
 		ekg_connect_loop(c);
@@ -490,7 +493,6 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 
 			len = ekg_build_sin(host, c->port, &addr, &family);
 			debug_function("ekg_connect_loop(), connect: %s, sinlen: %d\n", host, len);
-			xfree(host);
 			if (!len)
 				break;
 
@@ -503,19 +505,15 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 			if (ioctl(fd, FIONBIO, &one) == -1) {
 				const int err = errno;
 				debug_error("ekg_connect_loop(), ioctl() failed: %s\n", strerror(err));
+				close(fd);
 				break;
 			}
 
 			connret = connect(fd, addr, len);
-			if (connret &&
-#ifdef NO_POSIX_SYSTEM
-					(WSAGetLastError() != WSAEWOULDBLOCK)
-#else
-					(errno != EINPROGRESS)
-#endif
-					) {
+			if (connret && errno != EINPROGRESS) {
 				const int err = errno;
 				debug_error("ekg_connect_loop(), connect() failed: %s\n", strerror(err));
+				close(fd);
 				break;
 			}
 
@@ -525,6 +523,7 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 			return 1;
 		} while (0);
 
+		xfree(host);
 		xfree(addr);
 	}
 
