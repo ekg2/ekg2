@@ -371,12 +371,12 @@ static WATCHER_LINE(ekg_connect_resolver_handler) {
 	return 0;
 }
 
-static int ekg_build_sin(const char *data, const int defport, struct sockaddr **address) {
+static int ekg_build_sin(const char *data, const int defport, struct sockaddr **address, int *family) {
 	struct sockaddr_in  *ipv4;
 	struct sockaddr_in6 *ipv6;
 
 	int len	= 0;
-	int port, family;
+	int port;
 	const char *addr;
 
 	char **a = array_make(data, " ", 4, 1, 0);
@@ -387,13 +387,13 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 		return 0;
 
 	addr	= a[1];
-	family	= atoi(a[2]);
+	*family	= atoi(a[2]);
 	port	= a[3] ? atoi(a[3]) : 0;
 
 	if (port <= 0 || port > 66535)
 		port = defport;
 
-	if (family == AF_INET) {
+	if (*family == AF_INET) {
 		len = sizeof(struct sockaddr_in);
 
 		ipv4 = xmalloc(len);
@@ -418,7 +418,7 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 #endif
 
 		*address = (struct sockaddr *) ipv4;
-	} else if (family == AF_INET6) {
+	} else if (*family == AF_INET6) {
 		len = sizeof(struct sockaddr_in6);
 
 		ipv6 = xmalloc(len);
@@ -439,6 +439,14 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 	return len;
 }
 
+static WATCHER(ekg_connect_handler) {
+	/* XXX */
+
+	debug_function("ekg_connect_handler()\n");
+
+	return -1;
+}
+
 static int ekg_connect_loop(struct ekg_connect_data *c) {
 	char *host;
 	session_t *s = session_find(c->session);
@@ -452,20 +460,50 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 	/* 1) if anything is in connect_queue, try to connect */
 	if ((host = array_shift(&(c->connect_queue)))) {
 		struct sockaddr *addr;
-		int len;
+		int len, fd, family, connret;
+		watch_t *w;
 
 		do {
-			len = ekg_build_sin(host, c->port, &addr);
+			const int one = 1;
+
+			len = ekg_build_sin(host, c->port, &addr, &family);
 			debug_function("ekg_connect_loop(), connect: %s, sinlen: %d\n", host, len);
+			xfree(host);
 			if (!len)
 				break;
 
-			xfree(host);
+			if ((fd = socket(family, SOCK_STREAM, 0)) == -1) {
+				const int err = errno;
+				debug_error("ekg_connect_loop(), socket() failed: %s\n", strerror(err));
+				break;
+			}
+			setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
+			if (ioctl(fd, FIONBIO, &one) == -1) {
+				const int err = errno;
+				debug_error("ekg_connect_loop(), ioctl() failed: %s\n", strerror(err));
+				break;
+			}
+
+			connret = connect(fd, addr, len);
+			if (connret &&
+#ifdef NO_POSIX_SYSTEM
+					(WSAGetLastError() != WSAEWOULDBLOCK)
+#else
+					(errno != EINPROGRESS)
+#endif
+					) {
+				const int err = errno;
+				debug_error("ekg_connect_loop(), connect() failed: %s\n", strerror(err));
+				break;
+			}
+
+			w = watch_add_session(s, fd, WATCH_WRITE, ekg_connect_handler);
+			watch_timeout_set(w, 30 /* XXX */);
 
 			return 1;
 		} while (0);
 
-		xfree(host);
+		xfree(addr);
 	}
 
 	/* 2) if anything is in resolver_queue, try to resolve */
