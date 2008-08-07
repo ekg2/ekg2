@@ -274,17 +274,17 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 	for (t = tlvs; t; t = t->next) {
 		switch (t->type) {
 			case 0x03:
-				if (tvl_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
+				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
 				debug_white("icq_snac_service_reqinfo() Logon TS: %u\n", t->nr);
 				break;
 
 			case 0x05:
-				if (tvl_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
+				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
 				debug_white("icq_snac_service_reqinfo() ICQ Member since: %u\n", t->nr);
 				break;
 
 			case 0x0A:
-				if (tvl_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
+				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
 				debug_white("icq_snac_service_reqinfo() External IP: %u.%u.%u.%u\n", t->buf[0], t->buf[1], t->buf[2], t->buf[3]);
 				break;
 

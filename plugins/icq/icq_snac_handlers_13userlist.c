@@ -37,6 +37,9 @@ SNAC_SUBHANDLER(icq_snac_userlist_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_userlist_reply) {
+	/*
+	 * Handle SNAC(0x13,0x03)
+	 */
 	debug_error("icq_snac_userlist_reply() XXX\n");
 
 #if 0
@@ -234,6 +237,18 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 }
 
 SNAC_SUBHANDLER(icq_snac_userlist_roster) {
+	/*
+	 * Handle SNAC(0x13, 0x6) -- Server contact list reply
+	 *
+	 * This is the server reply to client roster requests: SNAC(13,04), SNAC(13,05).
+	 * 
+	 * Server can split up the roster in several parts. This is indicated with
+	 * SNAC flags bit 1 as usual, however the "SSI list last change time" only
+	 * exists in the last packet. And the "Number of items" field indicates the
+	 * number of items in the current packet, not the entire list.
+	 *
+	 */
+
 	struct {
 		uint8_t unk1;		/* empty */	/* possible version */
 		uint16_t count;		/* COUNT */

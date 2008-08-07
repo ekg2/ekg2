@@ -458,7 +458,7 @@ status_t icq2ekg_status(int icq_status) {
 	}
 }
 
-int tvl_length_check(char *name, icq_tlv_t *t, int length) {
+int tlv_length_check(char *name, icq_tlv_t *t, int length) {
 	if (t->len == length)
 		return 0;
 

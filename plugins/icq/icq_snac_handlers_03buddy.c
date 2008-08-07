@@ -56,6 +56,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 	return 0;
 }
 
+
 SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	/*
 	 * Handle SNAC(0x3,0xb) -- User online notification
@@ -81,7 +82,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 		/* darkjames said: "I don't trust anything. Wiechu, check t->len" */
 		switch (t->type) {
 			case 0x01:
-				if (tvl_length_check("icq_snac_buddy_online()", t, 2))
+				if (tlv_length_check("icq_snac_buddy_online()", t, 2))
 					continue;
 				break;
 			case 0x03:
@@ -89,7 +90,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 			case 0x06:
 			case 0x0a:
 			case 0x0f:
-				if (tvl_length_check("icq_snac_buddy_online()", t, 4))
+				if (tlv_length_check("icq_snac_buddy_online()", t, 4))
 					continue;
 				break;
 		}
