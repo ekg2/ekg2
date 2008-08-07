@@ -141,40 +141,46 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 	return watch_add(plugin, fd[0], WATCH_READ, async, data);
 }
 
-static int irc_resolver2(char ***arr, char *hostname) {
+static int irc_resolver2(char ***arr, const char *hostname) {
 #ifdef HAVE_GETADDRINFO
-	struct  addrinfo *ai, *aitmp, hint;
-	void *tm = NULL;
+	struct addrinfo	*ai, *aitmp, hint;
+	void		*tm = NULL;
 #else
-#warning "irc: You don't have getaddrinfo() resolver may not work! (ipv6 for sure)"
-	struct hostent *he4;
-#endif	
+#warning "resolver: You don't have getaddrinfo(), resolver may not work! (ipv6 for sure)"
+	struct hostent	*he4;
+#endif
 
 #ifdef HAVE_GETADDRINFO
 	memset(&hint, 0, sizeof(struct addrinfo));
-	hint.ai_socktype=SOCK_STREAM;
+	hint.ai_socktype = SOCK_STREAM;
+
 	if (!getaddrinfo(hostname, NULL, &hint, &ai)) {
 		for (aitmp = ai; aitmp; aitmp = aitmp->ai_next) {
-			char *ip = NULL, *buf;
+#ifdef HAVE_INET_NTOP
+#define RESOLVER_MAXLEN INET6_ADDRSTRLEN
+			static char	ip[RESOLVER_MAXLEN];
+#else
+			const char	*ip;
+#endif
 
 			if (aitmp->ai_family == AF_INET6)
 				tm = &(((struct sockaddr_in6 *) aitmp->ai_addr)->sin6_addr);
-			if (aitmp->ai_family == AF_INET) 
+			else if (aitmp->ai_family == AF_INET) 
 				tm = &(((struct sockaddr_in *) aitmp->ai_addr)->sin_addr);
+			else
+				continue;
 #ifdef HAVE_INET_NTOP
-			ip = xmalloc(100);
-			inet_ntop(aitmp->ai_family, tm, ip, 100);
+			inet_ntop(aitmp->ai_family, tm, ip, RESOLVER_MAXLEN);
 #else
+#warning "resolver: You have getaddrinfo() but no inet_ntop(), IPv6 won't work!"
 			if (aitmp->ai_family == AF_INET6) {
 				/* G: this doesn't have a sense since we're in child */
 				/* print("generic_error", "You don't have inet_ntop() and family == AF_INET6. Please contact with developers if it happens."); */
-				ip =  xstrdup("::");
+				ip = "::";
 			} else
-				ip = xstrdup(inet_ntoa(*(struct in_addr *)tm));
+				ip = inet_ntoa(*(struct in_addr *)tm);
 #endif 
-			buf = saprintf("%s %s %d\n", hostname, ip, aitmp->ai_family);
-			array_add(arr, buf);
-			xfree(ip);
+			array_add(arr, saprintf("%s %s %d\n", hostname, ip, aitmp->ai_family));
 		}
 		freeaddrinfo(ai);
 	}
@@ -182,8 +188,7 @@ static int irc_resolver2(char ***arr, char *hostname) {
 	if ((he4 = gethostbyname(hostname))) {
 		/* copied from http://webcvs.ekg2.org/ekg2/plugins/irc/irc.c.diff?r1=1.79&r2=1.80 OLD RESOLVER VERSION...
 		 * .. huh, it was 8 months ago..*/
-		char *ip = xstrdup(inet_ntoa(*(struct in_addr *) he4->h_addr));
-		array_add(arr, saprintf("%s %s %d\n", hostname, ip, AF_INET));
+		array_add(arr, saprintf("%s %s %d\n", hostname, inet_ntoa(*(struct in_addr *) he4->h_addr), AF_INET));
 	} else array_add(arr, saprintf("%s : no_host_get_addrinfo()\n", hostname));
 #endif
 
