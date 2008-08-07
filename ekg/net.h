@@ -31,7 +31,7 @@
 watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
 watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
 
-int ekg_connect(session_t *session, const char *server, int (*prefer_comparison)(void *, void *), watcher_handler_func_t async);
+int ekg_connect(session_t *session, const char *server, int (*prefer_comparison)(const char *, const char *), watcher_handler_func_t async);
 
 #endif /* EKG2_WIN32_NOFUNCTION */
 #endif /* __EKG_NET_H */

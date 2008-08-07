@@ -303,10 +303,20 @@ struct ekg_connect_data {
 	char	**connect_queue;	/* here we keep list of IPs to try to connect	*/
 
 		/* data provided by user */
-	session_t *session;
+	char	*session;
 	watcher_handler_func_t *async;
-	int (*prefer_comparison)(void *, void *);
+	int (*prefer_comparison)(const char *, const char *);
 };
+
+static void ekg_connect_data_free(struct ekg_connect_data *c) {
+	/* XXX: call async with type==1? */
+
+	array_free(c->resolver_queue);
+	array_free(c->connect_queue);
+	xfree(c->session);
+
+	xfree(c);
+}
 
 	/* XXX: would we use it anywhere else? if yes, then move to dynstuff */
 static char *array_shift(char ***array) {
@@ -320,7 +330,7 @@ static char *array_shift(char ***array) {
 			out = *array[0];
 			for (; i < count; i++)
 				*array[i-1] = *array[i];
-			*array[i] = NULL;
+			*array[i-1] = NULL;
 		}
 
 		if (i == 1) { /* last element, free array */
@@ -332,12 +342,47 @@ static char *array_shift(char ***array) {
 	return out;
 }
 
+static int ekg_connect_loop(struct ekg_connect_data *c);
+
+static WATCHER_LINE(ekg_connect_resolver_handler) {
+	struct ekg_connect_data *c = (struct ekg_connect_data*) data;
+
+	if (!data)
+		return -1;
+
+	if (type) {
+		debug_function("ekg_connect_resolver_handler(), resolving done.\n");
+		if (c->prefer_comparison)
+			qsort(c->connect_queue, array_count(c->connect_queue), sizeof(char*),
+					(void*) c->prefer_comparison);
+		ekg_connect_loop(c);
+		close(fd);
+		return -1;
+	}
+
+	debug_function("ekg_connect_resolver_handler() = %s\n", watch);
+
+	if (!xstrcmp(watch, "EOR"))
+		return -1;
+	
+	array_add(&(c->connect_queue), xstrdup(watch));
+
+	return 0;
+}
+
 static int ekg_connect_loop(struct ekg_connect_data *c) {
 	char *host;
+	session_t *s = session_find(c->session);
+
+	if (!s) { /* session vanished! */
+		debug_error("ekg_connect_loop(), looks like session '%s' vanished!\n", c->session);
+		ekg_connect_data_free(c);
+		return 0;
+	}
 
 	/* 1) if anything is in connect_queue, try to connect */
 	if ((host = array_shift(&(c->connect_queue)))) {
-		debug_function("ekg_connect_loop(), connect: %s", host);
+		debug_function("ekg_connect_loop(), connect: %s\n", host);
 		/* XXX */
 		xfree(host);
 
@@ -346,28 +391,29 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 
 	/* 2) if anything is in resolver_queue, try to resolve */
 	if ((host = array_shift(&(c->resolver_queue)))) {
-		debug_function("ekg_connect_loop(), resolve: %s", host);
-		/* XXX */
+		debug_function("ekg_connect_loop(), resolve: %s\n", host);
+		ekg_resolver3(s->plugin, host, (void*) ekg_connect_resolver_handler, c);
 		xfree(host);
 
 		return 1;
 	}
 
 	/* 3) fail */
-	c->async(0, 0, 0, c->session); /* XXX: pass error? */
-	xfree(c); /* arrays should be already freed */
+//	c->async(0, 0, 0, c->session); /* XXX: pass error? */
+	ekg_connect_data_free(c);
 	return 0;
 }
 
-int ekg_connect(session_t *session, const char *server, int (*prefer_comparison)(void *, void *), watcher_handler_func_t async) {
-	struct ekg_connect_data	*c = xmalloc(sizeof(struct ekg_connect_data));
+int ekg_connect(session_t *session, const char *server, int (*prefer_comparison)(const char *, const char *), watcher_handler_func_t async) {
+	struct ekg_connect_data	*c;
 
 	if (!session || !server || !async)
 		return 0;
+	c = xmalloc(sizeof(struct ekg_connect_data));
 
 	/* 1) fill struct */
 	c->resolver_queue	= array_make(server, ",", 0, 1, 1);
-	c->session		= session;
+	c->session		= xstrdup(session_uid_get(session));
 	c->async		= async;
 	c->prefer_comparison	= prefer_comparison;
 
