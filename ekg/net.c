@@ -373,7 +373,7 @@ static WATCHER_LINE(ekg_connect_resolver_handler) {
 
 	if (!c)
 		return -1;
-	abort = (!((s = session_find(c->session))) || !(s->connecting));
+	abort = !((s = session_find(c->session)));
 
 	if (type) {
 		if (!abort) {
@@ -482,7 +482,7 @@ static WATCHER(ekg_connect_handler) {
 		return 0;
 
 	s = session_find(c->session);
-	abort = (!((s = session_find(c->session))) || !(s->connecting));
+	abort = !((s = session_find(c->session)));
 
 	if (abort) {
 		ekg_connect_loop(c);
@@ -513,9 +513,8 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 	char *host;
 	session_t *s = session_find(c->session);
 
-	if (!s || !(s->connecting)) { /* session vanished! */
-		debug_error("ekg_connect_loop(), looks like%s session '%s' vanished!\n",
-				s ? " connecting on" : "", c->session);
+	if (!s) { /* session vanished! */
+		debug_error("ekg_connect_loop(), looks like session '%s' vanished!\n", c->session);
 		ekg_connect_data_free(c);
 		return 0;
 	}
