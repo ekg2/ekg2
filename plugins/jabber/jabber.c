@@ -434,8 +434,10 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
         if (j->using_ssl && j->ssl_session)
 		SSL_BYE(j->ssl_session);
 #endif
-        close(j->fd);
-        j->fd = -1;
+	if (j->fd != -1) {
+		close(j->fd);
+		j->fd = -1;
+	}
 
 #ifdef JABBER_HAVE_SSL
         if (j->using_ssl && j->ssl_session)
@@ -715,24 +717,42 @@ static TIMER_SESSION(jabber_ping_timer_handler) {
 	return 0;
 }
 
-static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
-	session_t *s = (session_t *) data;
+static WATCHER(jabber_handle_connect_tlen_hub);
 
-	if (type) {
-		if (watch != WATCH_WRITE) close(fd);
-		if (type == 2) debug_error("[TLEN, HUB] TIMEOUT\n");
+WATCHER(jabber_handle_connect2)
+{
+	session_t *s = (session_t *) data;
+	jabber_private_t *j = jabber_private(s);
+	int tlenishub;
+	
+	if (type == -1) {	/* special ekg_connect() state */
+		jabber_handle_disconnect(s, _("No server could be reached"), EKG_DISCONNECT_FAILURE);
+		/* fd == -1 */
 		return 0;
 	}
-	
-	if (watch == WATCH_WRITE) {
-		char *req, *esc; 
-		int res = 0;
-		socklen_t res_size = sizeof(res);
 
-		if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-			jabber_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
-			return -1;
-		}
+	if (type == 2) {
+		jabber_handle_disconnect(s, _("No server could be reached"), EKG_DISCONNECT_FAILURE);
+		/* XXX, session timeouted */
+		return 0;
+	}
+
+        debug_function("[jabber] socket() = %d\n", fd);
+
+	tlenishub = (j->istlen > 1);
+        j->fd = fd;
+
+#ifdef JABBER_HAVE_SSL
+	if (session_int_get(s, "use_ssl")) {
+		jabber_handle_connect_ssl(-1, fd, 0, s);
+		return -1;
+        }
+#endif
+	if (tlenishub) {
+		char *req, *esc; 
+
+		j->istlen = 1;		/* reset */
+
 		esc = tlen_encode(s->uid+5);
 		req = saprintf("GET /4starters.php?u=%s&v=10 HTTP/1.0\r\nHost: %s\r\n\r\n", esc, TLEN_HUB);	/* libtlen */
 		write(fd, req, xstrlen(req));
@@ -742,52 +762,100 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 		/* XXX, timeout? */
 		watch_add(&jabber_plugin, fd, WATCH_READ, jabber_handle_connect_tlen_hub, data);	/* WATCH_READ_LINE? */
 		return -1;
-	} else if (watch == WATCH_READ) {	/* libtlen */
-		jabber_private_t *j = jabber_private(s);
-		char *header, *body;
-		char buf[1024];
-		int len;
+	} else	{
+		session_t *s = (session_t *) data;
+		jabber_private_t *j = session_private_get(s);
 
-		len = read(fd, buf, sizeof(buf));
-		buf[len] = 0;
+		session_int_set(s, "__roster_retrieved", 0);
 
-		header	= xstrstr(buf, "\r\n");
-		body	= xstrstr(buf, "\r\n\r\n");
-		if (header && body) {
-			*header = '\0';
-			body += 4;
-			debug_function("[TLEN, HUB]: %s / %s\n", buf, body);
-			if (!xstrstr(buf, " 200 "))
-				return -1;
+		watch_add_session(s, fd, WATCH_READ, jabber_handle_stream);
+		j->using_compress = JABBER_COMPRESSION_NONE;
 
-			/* XXX: use XML parser instead of hardcoded lengths */
-			/* <t s='s1.tlen.pl' p='443' v='91' c='0' i='83.20.106.210'>91</t> */
-			{
-				char *end, *endb;
+#ifdef JABBER_HAVE_SSL
+		j->send_watch = watch_add_line(&jabber_plugin, fd, WATCH_WRITE_LINE, j->using_ssl ? jabber_handle_write : NULL, j);
+#else
+		j->send_watch = watch_add_line(&jabber_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
+#endif
+		if (!(j->istlen)) {
+			watch_write(j->send_watch, 
+					"<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\"%s>", 
+					j->server, (session_int_get(s, "disable_sasl") != 2) ? " version=\"1.0\"" : "");
+		} else {
+			watch_write(j->send_watch, "<s v=\'2\'>");
+		}
 
-				body += 6;
-				if ((end = xstrchr(body, '\''))) {
-					*end	= 0;
-					end	+= 5;
-					if ((endb = xstrchr(end, '\'')))
-						*endb	= 0;
-					
-					const int newport	= atoi(end);
-					if (newport != 0)
-						j->port	= newport;
-				}
+		j->id = 1;
+		j->parser = jabber_parser_recreate(NULL, s);
+
+		if (j->istlen || (session_int_get(s, "ping_server") != 0)) {
+			if (timer_find_session(s, "ping") == NULL) {
+				/* w/g dokumentacji do libtlen powinnismy wysylac pinga co 60 sekund */
+				timer_add_session(s, "ping", j->istlen ? 60 : 180, 1, jabber_ping_timer_handler);
 			}
+		}
 
-			debug_function("[TLEN, HUB]: host = %s, port = %d\n", body, j->port);
-			if (ekg_resolver2(&jabber_plugin, body, jabber_handle_resolver, s) == NULL)
-				print("generic_error", strerror(errno));
+	}
+	return -1;
+}
 
+static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
+	session_t *s = (session_t *) data;
+	jabber_private_t *j = jabber_private(s);
+
+	char *header, *body;
+	char buf[1024];
+	int len;
+
+	if (type) {
+		close(fd);
+		return 0;
+	}
+	
+	/* libtlen */
+
+	len = read(fd, buf, sizeof(buf));
+	buf[len] = 0;
+
+	header	= xstrstr(buf, "\r\n");
+	body	= xstrstr(buf, "\r\n\r\n");
+	if (header && body) {
+		*header = '\0';
+		body += 4;
+		debug_function("[TLEN, HUB]: %s / %s\n", buf, body);
+		if (!xstrstr(buf, " 200 "))
+			return -1;
+
+		/* XXX: use XML parser instead of hardcoded lengths */
+		/* <t s='s1.tlen.pl' p='443' v='91' c='0' i='83.20.106.210'>91</t> */
+		{
+			char *end, *endb;
+
+			body += 6;
+			if ((end = xstrchr(body, '\''))) {
+				*end	= 0;
+				end	+= 5;
+				if ((endb = xstrchr(end, '\'')))
+					*endb	= 0;
+
+				const int newport	= atoi(end);
+				if (newport != 0)
+					j->port	= newport;
+			}
+		}
+
+		debug_function("[TLEN, HUB]: host = %s, port = %d\n", body, j->port);
+
+		if (!ekg_connect(s, body, j->port, NULL, jabber_handle_connect2)) {
+			/* XXX, we should have disconnect here.. */
+			print("generic_error", strerror(errno));
 			return -1;
 		}
-			/* XXX: hm? */
-		if (len == 0)	return -1;
-		else		return 0;
-	} else return -1;
+
+		return -1;
+	}
+	/* XXX: hm? */
+	if (len == 0)	return -1;
+	else		return 0;
 }
 
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
@@ -801,151 +869,6 @@ XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
 	XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) xmlnode_handle_cdata);
 
 	return parser;
-}
-
-static WATCHER(jabber_handle_connect) /* tymczasowy */
-{
-	session_t *s = (session_t *) data;
-        jabber_private_t *j = session_private_get(s);
-
-        int res = 0;
-	socklen_t res_size = sizeof(res);
-
-        debug_function("[jabber] jabber_handle_connect()\n");
-
-        if (type) {
-                return 0;
-        }
-
-        if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-                jabber_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
-                return -1;
-        }
-
-	session_int_set(s, "__roster_retrieved", 0);
-
-	watch_add_session(s, fd, WATCH_READ, jabber_handle_stream);
-	j->using_compress = JABBER_COMPRESSION_NONE;
-
-#ifdef JABBER_HAVE_SSL
-	j->send_watch = watch_add_line(&jabber_plugin, fd, WATCH_WRITE_LINE, j->using_ssl ? jabber_handle_write : NULL, j);
-#else
-	j->send_watch = watch_add_line(&jabber_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
-#endif
-	if (!(j->istlen)) {
-		watch_write(j->send_watch, 
-			"<?xml version=\"1.0\" encoding=\"utf-8\"?><stream:stream to=\"%s\" xmlns=\"jabber:client\" xmlns:stream=\"http://etherx.jabber.org/streams\"%s>", 
-			j->server, (session_int_get(s, "disable_sasl") != 2) ? " version=\"1.0\"" : "");
-	} else {
-		watch_write(j->send_watch, "<s v=\'2\'>");
-	}
-
-        j->id = 1;
-	j->parser = jabber_parser_recreate(NULL, s);
-
-	if (j->istlen || (session_int_get(s, "ping_server") != 0)) {
-		if (timer_find_session(s, "ping") == NULL) {
-			/* w/g dokumentacji do libtlen powinnismy wysylac pinga co 60 sekund */
-			timer_add_session(s, "ping", j->istlen ? 60 : 180, 1, jabber_ping_timer_handler);
-		}
-	}
-
-	return -1;
-}
-
-WATCHER(jabber_handle_resolver) /* tymczasowy watcher */
-{
-	session_t *s = (session_t *) data;
-	jabber_private_t *j = jabber_private(s);
-	struct in_addr a;
-	int one = 1, res;
-	struct sockaddr_in sin;
-	const int port = session_int_get(s, "port");
-#ifdef JABBER_HAVE_SSL
-	int ssl_port = session_int_get(s, "ssl_port");
-	int use_ssl = session_int_get(s, "use_ssl");
-#endif
-
-	const int tlenishub = (j->istlen > 1);
-
-        if (type) {
-		close(fd);
-                return 0;
-	}
-
-        debug_function("[jabber] jabber_handle_resolver(), tlenishub = %d\n", tlenishub);
-
-	res = read(fd, &a, sizeof(a));
-
-	if ((res != sizeof(a)) || (res && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
-                if (res == -1)
-                        debug_error("[jabber] unable to read data from resolver: %s\n", strerror(errno));
-                else
-                        debug_error("[jabber] read %d bytes from resolver. not good\n", res);
-
-                /* no point in reconnecting by jabber_handle_disconnect() */
-
-                print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
-                s->connecting = 0;
-                return -1;
-        }
-
-        debug_function("[jabber] resolved to %s\n", inet_ntoa(a));
-
-        if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-                debug_error("[jabber] socket() failed: %s\n", strerror(errno));
-                jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
-                return -1;
-        }
-
-        debug_function("[jabber] socket() = %d\n", fd);
-
-        j->fd = fd;
-
-        if (ioctl(fd, FIONBIO, &one) == -1) {
-                debug_error("[jabber] ioctl() failed: %s\n", strerror(errno));
-                jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
-                return -1;
-        }
-
-        /* failure here isn't fatal, don't bother with checking return code */
-        setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
-
-        sin.sin_family = AF_INET;
-        sin.sin_addr.s_addr = a.s_addr;
-#ifdef JABBER_HAVE_SSL
-	j->using_ssl = 0;
-        if (use_ssl)
-                j->port = ssl_port < 1 ? 5223 : ssl_port;
-        else
-#endif
-		j->port = port < 1 ? 5222 : port;
-
-	if (tlenishub) j->port = 80; 
-
-	sin.sin_port = htons(j->port);
-
-        debug_function("[jabber] connecting to %s:%d\n", inet_ntoa(sin.sin_addr), j->port);
-
-        res = connect(fd, (struct sockaddr*) &sin, sizeof(sin));
-
-        if (res == -1 && errno != EINPROGRESS) {
-                debug_error("[jabber] connect() failed: %s (errno=%d)\n", strerror(errno), errno);
-                jabber_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
-                return -1;
-        }
-
-#ifdef JABBER_HAVE_SSL
-        if (use_ssl) {
-		jabber_handle_connect_ssl(-1, fd, 0, s);
-		return -1;
-        } // use_ssl
-#endif
-	if (tlenishub) {
-		j->istlen = 1;		/* reset */
-		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect_tlen_hub, s);
-	} else	watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
-	return -1;
 }
 
 #ifdef JABBER_HAVE_SSL
@@ -1152,7 +1075,7 @@ handshake_ok:
 	} else {
 		// handshake successful
 		j->using_ssl = 1;
-		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
+		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect2, s);
 	}
 
 	return -1;

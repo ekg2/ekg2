@@ -222,7 +222,6 @@ void jabber_convert_string_destroy();
 QUERY(jabber_convert_string_reinit);
 
 void jabber_reconnect_handler(int type, void *data);
-WATCHER(jabber_handle_resolver);
 
 LIST_ADD_COMPARE(jabber_privacy_add_compare, jabber_iq_privacy_t *);
 int jabber_privacy_free(jabber_private_t *j);

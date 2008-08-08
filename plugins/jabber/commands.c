@@ -74,6 +74,8 @@ extern void *jconv_out; /* for msg */
 const char *jabber_prefixes[2] = { "xmpp:", "tlen:" };
 extern int config_jabber_disable_chatstates; /* in jabber.c */
 
+WATCHER(jabber_handle_connect2);
+
 static COMMAND(jabber_command_connect)
 {
 	const char *realserver	= session_get(session, "server"); 
@@ -118,11 +120,27 @@ static COMMAND(jabber_command_connect)
 			realserver = server;
 	}
 
-	if (ekg_resolver2(&jabber_plugin, realserver, jabber_handle_resolver, session) == NULL) {
-		printq("generic_error", strerror(errno));
-		return -1;
+	{
+		int port = session_int_get(session, "port");
+#ifdef JABBER_HAVE_SSL
+		int ssl_port = session_int_get(session, "ssl_port");
+		int use_ssl = session_int_get(session, "use_ssl");
+#endif
+
+#ifdef JABBER_HAVE_SSL
+		j->using_ssl = 0;
+		if (use_ssl)
+			j->port = ssl_port < 1 ? 5223 : ssl_port;
+		else
+#endif
+			j->port = port < 1 ? 5222 : port;
+
+		if (!ekg_connect(session, realserver, j->port, NULL, jabber_handle_connect2)) {
+			printq("generic_error", strerror(errno));
+			return -1;
+		}
+
 	}
-	/* XXX, set resolver-watch timeout? */
 
 	if (!resource)
 		resource = JABBER_DEFAULT_RESOURCE;
