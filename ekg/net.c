@@ -318,6 +318,7 @@ struct ekg_connect_data {
 		/* internal data */
 	char	**resolver_queue;	/* here we keep list of domains to be resolved	*/
 	char	**connect_queue;	/* here we keep list of IPs to try to connect	*/
+	watch_t	*current_watch;
 
 		/* data provided by user */
 	int	port;
@@ -555,10 +556,11 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 
 			w = watch_add(s->plugin, fd, WATCH_WRITE, ekg_connect_handler, c);
 
-			if (timeout)
+			if (timeout > 0)
 				watch_timeout_set(w, timeout);
 
 			xfree(addr);
+			c->current_watch = w;
 			return 1;
 		} while (0);
 
@@ -567,10 +569,13 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 
 	/* 2) if anything is in resolver_queue, try to resolve */
 	if ((host = array_shift(&(c->resolver_queue)))) {
+		watch_t *w;
+
 		debug_function("ekg_connect_loop(), resolve: %s\n", host);
-		ekg_resolver3(s->plugin, host, (void*) ekg_connect_resolver_handler, c);
+		w = ekg_resolver3(s->plugin, host, (void*) ekg_connect_resolver_handler, c);
 		xfree(host);
 
+		c->current_watch = w;
 		return 1;
 	}
 
