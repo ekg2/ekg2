@@ -159,7 +159,7 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 	return watch_add(plugin, fd[0], WATCH_READ, async, data);
 }
 
-static int irc_resolver2(char ***arr, const char *hostname) {
+static int irc_resolver2(char ***arr, const char *hostname, const int port) {
 #ifdef HAVE_GETADDRINFO
 	struct addrinfo	*ai, *aitmp, hint;
 	void		*tm = NULL;
@@ -198,7 +198,7 @@ static int irc_resolver2(char ***arr, const char *hostname) {
 			} else
 				ip = inet_ntoa(*(struct in_addr *)tm);
 #endif 
-			array_add(arr, saprintf("%s %s %d\n", hostname, ip, aitmp->ai_family));
+			array_add(arr, saprintf("%s %s %d %d\n", hostname, ip, aitmp->ai_family, port));
 		}
 		freeaddrinfo(ai);
 	}
@@ -206,9 +206,23 @@ static int irc_resolver2(char ***arr, const char *hostname) {
 	if ((he4 = gethostbyname(hostname))) {
 		/* copied from http://webcvs.ekg2.org/ekg2/plugins/irc/irc.c.diff?r1=1.79&r2=1.80 OLD RESOLVER VERSION...
 		 * .. huh, it was 8 months ago..*/
-		array_add(arr, saprintf("%s %s %d\n", hostname, inet_ntoa(*(struct in_addr *) he4->h_addr), AF_INET));
+		array_add(arr, saprintf("%s %s %d %d\n", hostname, inet_ntoa(*(struct in_addr *) he4->h_addr), AF_INET, port));
 	} else array_add(arr, saprintf("%s : no_host_get_addrinfo()\n", hostname));
 #endif
+
+	return 0;
+}
+
+/* Removes port from 'hostname' and returns it
+ * WARN: hostname is modified */
+static const int ekg_resolver_split(char *hostname) {
+	char *p = xstrrchr(hostname, ':');
+	int i;
+
+	if (p && (i = atoi(p+1)) > 0 && (i <= 65535) && (xstrspn(p+1, "0123456789") == xstrlen(p+1))) {
+		*p = 0;
+		return i;
+	}
 
 	return 0;
 }
@@ -223,11 +237,13 @@ static int irc_resolver2(char ***arr, const char *hostname) {
  *  - data	- watch data handler.
  *
  *  in @a async watch you'll recv lines:
- *  	HOSTNAME IPv4 PF_INET 
- *  	HOSTNAME IPv4 PF_INET
- *  	HOSTNAME IPv6 PF_INET6
+ *  	HOSTNAME IPv4 PF_INET port
+ *  	HOSTNAME IPv4 PF_INET port
+ *  	HOSTNAME IPv6 PF_INET6 port
  *  	....
  *  	EOR means end of resolving, you should return -1 (temporary watch) and in type == 1 close fd.
+ *
+ *  	port may be 0 if no port specified
  *
  *  NOTE, EKG2-RESOLVER-API IS NOT STABLE.
  *  	IT'S JUST COPY-PASTE OF SOME FUNCTION FROM OTHER PLUGINS, TO AVOID DUPLICATION OF CODE (ALSO CLEANUP CODE A LITTLE)
@@ -257,6 +273,7 @@ watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_fun
 
 	if (!res) {
 		char *tmp	= xstrdup(server);
+		const int port	= ekg_resolver_split(tmp);
 
 		/* Child */
 		close(fd[0]);
@@ -271,7 +288,7 @@ watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_fun
 			 */
 			do {
 				if ((tmp2 = xstrchr(tmp1, ','))) *tmp2 = '\0';
-				irc_resolver2(&arr, tmp1);
+				irc_resolver2(&arr, tmp1, port);
 				tmp1 = tmp2+1;
 			} while (tmp2);
 
@@ -371,7 +388,7 @@ static WATCHER_LINE(ekg_connect_resolver_handler) {
 	return 0;
 }
 
-static int ekg_build_sin(const char *data, const int defport, struct sockaddr **address, int *family) {
+static const int ekg_build_sin(const char *data, const int defport, struct sockaddr **address, int *family) {
 	struct sockaddr_in  *ipv4;
 	struct sockaddr_in6 *ipv6;
 
