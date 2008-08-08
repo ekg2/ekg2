@@ -493,6 +493,7 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 
 			len = ekg_build_sin(host, c->port, &addr, &family);
 			debug_function("ekg_connect_loop(), connect: %s, sinlen: %d\n", host, len);
+			xfree(host);
 			if (!len)
 				break;
 
@@ -520,10 +521,10 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 			w = watch_add(s->plugin, fd, WATCH_WRITE, ekg_connect_handler, c);
 			watch_timeout_set(w, 10 /* XXX */);
 
+			xfree(addr);
 			return 1;
 		} while (0);
 
-		xfree(host);
 		xfree(addr);
 	}
 
