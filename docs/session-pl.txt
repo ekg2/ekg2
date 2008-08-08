@@ -77,4 +77,10 @@ auto_reconnect
 	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
 	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
 
+connect_timeout
+	type: liczba
+	domy¶lna warto¶æ: 30
+	
+	liczba sekund, po których up³ywie próba ³±czenia z danym serwerem
+	zostanie przerwana. ustawienie na 0 wy³±cza timeouty (niezalecane).
 

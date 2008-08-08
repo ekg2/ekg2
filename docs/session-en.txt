@@ -75,4 +75,10 @@ auto_reconnect
 	after disconnect or invalid connection.
 	If 0, program won't try.
 
+connect_timeout
+	type: integer
+	default value: 30
+	
+	Number of seconds after which connecting will timeout. Set to 0
+	to disable timeouting (not recommended).
 
