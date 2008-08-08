@@ -105,9 +105,9 @@ int icq_write_status_msg(session_t *s) {
 
 	/* XXX, cookie */
 
-	/* packTLV(&packet, 0x03, 0x21, (LPBYTE)"text/x-aolrtf; charset=\"utf-8\""); */ 	/* XXX, 0x21? why? */
-
-	pkt = icq_pack("T", icq_pack_tlv_str(0x04, msg));
+	pkt = icq_pack("TT", 
+			icq_pack_tlv_str(0x03, "text/x-aolrtf; charset=\"utf-8\""),
+			icq_pack_tlv_str(0x04, msg));
 
 	icq_makesnac(s, pkt, 0x02, 0x04, 0, 0);
 	icq_send_pkt(s, pkt);
@@ -131,86 +131,94 @@ int icq_write_status(session_t *s) {
 	return 1;
 }
 
+int icq_write_info(session_t *s) {
+	icq_private_t *j;
+	
+	if (!s || !(j = s->priv))
+		return -1;
+
+#define m_bAvatarsEnabled 0
+#define m_bUtfEnabled 0
+
+	string_t pkt, tlv_5;
+
+	tlv_5 = string_init(NULL);
+
+#ifdef DBG_CAPMTN
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x563FC809);		/* CAP_TYPING */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x0B6F41BD);
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x9F794226);
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x09DFA2F3);
+#endif
+
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x1349);			/* AIM_CAPS_ICQSERVERRELAY */
+
+	/* Broadcasts the capability to receive UTF8 encoded messages */
+	if (m_bUtfEnabled) 
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x134E);		/* CAP_UTF8MSGS */
+#ifdef DBG_NEWCAPS
+	/* Tells server we understand to new format of caps */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x0000);			/* CAP_NEWCAPS */
+#endif
+
+#ifdef DBG_CAPXTRAZ
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x1a093c6c);		/* CAP_XTRAZ */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0xd7fd4ec5);		/* Broadcasts the capability to handle */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x9d51a647);		/* Xtraz */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x4e34f5a0);
+#endif
+	if (m_bAvatarsEnabled)
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x134C);		/* CAP_DEVILS */
+
+#ifdef DBG_OSCARFT
+	/* Broadcasts the capability to receive Oscar File Transfers */
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x1343); 		/* CAP_AIM_FILE */
+#endif
+
+	if (j->aim)
+		icq_pack_append(tlv_5, "I", (uint32_t) 0x134D);	/* Tells the server we can speak to AIM */
+#ifdef DBG_AIMCONTACTSEND
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x134B);		/* CAP_AIM_SENDBUDDYLIST */
+#endif
+#if 0
+	BYTE bXStatus = getContactXStatus(NULL);
+	if (bXStatus)
+	{
+		packBuffer(tlv_5, capXStatus[bXStatus-1], 0x10);
+	}
+#endif
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x1344);		/* AIM_CAPS_ICQDIRECT */
+
+	/*packDWord(&packet, 0x178c2d9b); // Unknown cap
+	  packDWord(&packet, 0xdaa545bb);
+	  packDWord(&packet, 0x8ddbf3bd);
+	  packDWord(&packet, 0xbd53a10a);*/
+
+#ifdef DBG_CAPHTML
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x0138ca7b);	/* CAP_HTMLMSGS */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x769a4915);	/* Broadcasts the capability to receive */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x88f213fc);	/* HTML messages */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x00979ea8);
+#endif
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x4D697261);   /* Miranda Signature */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x6E64614D);
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x12345678);	/* XXX, MIRANDA_VERSION */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x80050003);
+
+	pkt = icq_pack("T", icq_pack_tlv(0x05, tlv_5->str, tlv_5->len));
+
+	icq_makesnac(s, pkt, 0x02, 0x04, 0, 0);
+	icq_send_pkt(s, pkt);
+
+	string_free(tlv_5, 1);
+	return 0;
+}
+
 void icq_session_connected(session_t *s) {
 	icq_private_t *j = s->priv;
 	string_t pkt;
 
-	{
-		#define m_bAvatarsEnabled 0
-		#define m_bUtfEnabled 0
-
-		string_t pkt, tlv_5;
-
-		tlv_5 = string_init(NULL);
-
-#ifdef DBG_CAPMTN
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x563FC809);		/* CAP_TYPING */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x0B6F41BD);
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x9F794226);
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x09DFA2F3);
-#endif
-
-		icq_pack_append(tlv_5, "P", (uint32_t) 0x1349);			/* AIM_CAPS_ICQSERVERRELAY */
-	
-		/* Broadcasts the capability to receive UTF8 encoded messages */
-		if (m_bUtfEnabled) 
-			icq_pack_append(tlv_5, "I", (uint32_t) 0x134E);		/* CAP_UTF8MSGS */
-#ifdef DBG_NEWCAPS
-		/* Tells server we understand to new format of caps */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x0000);			/* CAP_NEWCAPS */
-#endif
-
-#ifdef DBG_CAPXTRAZ
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x1a093c6c);		/* CAP_XTRAZ */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0xd7fd4ec5);		/* Broadcasts the capability to handle */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x9d51a647);		/* Xtraz */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x4e34f5a0);
-#endif
-		if (m_bAvatarsEnabled)
-			icq_pack_append(tlv_5, "I", (uint32_t) 0x134C);		/* CAP_DEVILS */
-
-#ifdef DBG_OSCARFT
-		/* Broadcasts the capability to receive Oscar File Transfers */
-		icq_pack_append(tlv_5, "P", (uint32_t) 0x1343); 		/* CAP_AIM_FILE */
-#endif
-
-		if (j->aim)
-			icq_pack_append(tlv_5, "I", (uint32_t) 0x134D);	/* Tells the server we can speak to AIM */
-#ifdef DBG_AIMCONTACTSEND
-		icq_pack_append(tlv_5, "P", (uint32_t) 0x134B);		/* CAP_AIM_SENDBUDDYLIST */
-#endif
-#if 0
-		BYTE bXStatus = getContactXStatus(NULL);
-		if (bXStatus)
-		{
-			packBuffer(tlv_5, capXStatus[bXStatus-1], 0x10);
-		}
-#endif
-		icq_pack_append(tlv_5, "P", (uint32_t) 0x1344);		/* AIM_CAPS_ICQDIRECT */
-
-		/*packDWord(&packet, 0x178c2d9b); // Unknown cap
-		  packDWord(&packet, 0xdaa545bb);
-		  packDWord(&packet, 0x8ddbf3bd);
-		  packDWord(&packet, 0xbd53a10a);*/
-
-#ifdef DBG_CAPHTML
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x0138ca7b);	/* CAP_HTMLMSGS */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x769a4915);	/* Broadcasts the capability to receive */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x88f213fc);	/* HTML messages */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x00979ea8);
-#endif
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x4D697261);   /* Miranda Signature */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x6E64614D);
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x12345678);	/* XXX, MIRANDA_VERSION */
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x80050003);
-
-		pkt = icq_pack("T", icq_pack_tlv(0x05, tlv_5->str, tlv_5->len));
-		
-		icq_makesnac(s, pkt, 0x02, 0x04, 0, 0);
-		icq_send_pkt(s, pkt);
-
-		string_free(tlv_5, 1);
-	}
+	icq_write_info(s);
 
 	/* SNAC 3,4: Tell server who's on our list */
 	if (s->userlist) {
@@ -878,6 +886,7 @@ static COMMAND(icq_command_away) {
 	ekg_update_status(session);
 	
 	if (session->connected) {
+		icq_write_info(session);
 		icq_write_status(session);
 		icq_write_status_msg(session);
 	}

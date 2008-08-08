@@ -35,8 +35,25 @@ SNAC_SUBHANDLER(icq_snac_message_error) {
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
+static void icq_snac_message_set_msg_channel(session_t *s, uint16_t chan, uint32_t flags) {
 	string_t pkt;
+
+	pkt = icq_pack("WIWWWWW",
+		(uint32_t) chan, (uint32_t) flags,		/* channel, flags */
+		(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
+		(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
+		(uint32_t) 0);					/* unknown */
+	icq_makesnac(s, pkt, 0x04, 0x02, 0, 0);
+	icq_send_pkt(s, pkt);
+}
+
+SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
+#if 1
+	icq_snac_message_set_msg_channel(s, 0x01, 0x0b);
+	icq_snac_message_set_msg_channel(s, 0x02, 0x03);
+	icq_snac_message_set_msg_channel(s, 0x04, 0x03);
+
+#else	/* Miranda-like */
 	uint32_t flags;
 
 	/* Set message parameters for all channels (imitate ICQ 6) */
@@ -47,32 +64,9 @@ SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
 #ifdef DBG_CAPMTN
 	flags |= 0x00000008;
 #endif
-	/* SnacCliSeticbm() */
-flags = 0x0b;
-	pkt = icq_pack("WIWWWWW",
-		(uint32_t) 0x0001, (uint32_t) flags,		/* channel, flags */
-		(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
-		(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
-		(uint32_t) 0);					/* unknown */
-	icq_makesnac(s, pkt, 0x04, 0x02, 0, 0);
-	icq_send_pkt(s, pkt);
 
-flags = 0x03;
-	pkt = icq_pack("WIWWWWW",
-		(uint32_t) 0x0002, (uint32_t) flags,		/* channel, flags */
-		(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
-		(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
-		(uint32_t) 0);					/* unknown */
-	icq_makesnac(s, pkt, 0x04, 0x02, 0, 0);
-	icq_send_pkt(s, pkt);
-
-	pkt = icq_pack("WIWWWWW",
-		(uint32_t) 0x0004, (uint32_t) flags,		/* channel, flags */
-		(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
-		(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
-		(uint32_t) 0);					/* unknown */
-	icq_makesnac(s, pkt, 0x04, 0x02, 0, 0);
-	icq_send_pkt(s, pkt);
+	icq_snac_message_set_msg_channel(s, 0x00, flags);
+#endif
 
 	return 0;
 }
@@ -335,7 +329,7 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 			if (len < 2)
 				return -1;
 
-			reason = xstrndup(buf + 2, len);
+			reason = xstrndup((char *) buf + 2, len);
 			icq_snac_message_status_reply(s, "SNAC(4.B)", pkt.uid, version, msg_type, reason);
 			xfree(reason);
 			return 0;

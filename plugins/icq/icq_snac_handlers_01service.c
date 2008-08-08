@@ -314,8 +314,9 @@ SNAC_SUBHANDLER(icq_snac_service_families2) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_extstatus) {
-	debug_error("!!! icq_snac_service_extstatus() XXX\n");
-	return -3;
+	debug_function("icq_snac_service_extstatus() Received our avatar hash & status. XXX\n");
+	icq_hexdump(DEBUG_ERROR, buf, len);
+	return 0;
 }
 
 SNAC_HANDLER(icq_snac_service_handler) {
