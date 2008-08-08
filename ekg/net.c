@@ -539,7 +539,7 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 
 	/* 3) fail */
 	if (s)
-		c->async(2, -1, WATCH_WRITE, s);
+		c->async(-1, -1, WATCH_WRITE, s);
 	ekg_connect_data_free(c);
 	return 0;
 }

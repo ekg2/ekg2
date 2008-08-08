@@ -719,35 +719,20 @@ static TIMER_SESSION(jabber_ping_timer_handler) {
 
 static WATCHER(jabber_handle_connect_tlen_hub);
 
-WATCHER(jabber_handle_connect2)
+WATCHER(jabber_handle_connect)
 {
 	session_t *s = (session_t *) data;
 	jabber_private_t *j = jabber_private(s);
 	int tlenishub;
+
+	if (type)
+		return -1;
 	
-	if (type == -1) {	/* special ekg_connect() state */
-		jabber_handle_disconnect(s, _("No server could be reached"), EKG_DISCONNECT_FAILURE);
-		/* fd == -1 */
-		return 0;
-	}
-
-	if (type == 2) {
-		jabber_handle_disconnect(s, _("No server could be reached"), EKG_DISCONNECT_FAILURE);
-		/* XXX, session timeouted */
-		return 0;
-	}
-
         debug_function("[jabber] socket() = %d\n", fd);
 
 	tlenishub = (j->istlen > 1);
         j->fd = fd;
 
-#ifdef JABBER_HAVE_SSL
-	if (session_int_get(s, "use_ssl")) {
-		jabber_handle_connect_ssl(-1, fd, 0, s);
-		return -1;
-        }
-#endif
 	if (tlenishub) {
 		char *req, *esc; 
 
@@ -796,6 +781,31 @@ WATCHER(jabber_handle_connect2)
 
 	}
 	return -1;
+}
+
+WATCHER(jabber_handle_connect2) {
+	session_t *s = (session_t *) data;
+
+	if (type == -1) {	/* special ekg_connect() state */
+		jabber_handle_disconnect(s, _("No server could be reached"), EKG_DISCONNECT_FAILURE);
+		/* fd == -1 */
+		return 0;
+	}
+
+	if (type == 2) {
+		jabber_handle_disconnect(s, _("No server could be reached"), EKG_DISCONNECT_FAILURE);
+		/* XXX, session timeouted */
+		return 0;
+	}
+
+#ifdef JABBER_HAVE_SSL
+	if (session_int_get(s, "use_ssl")) {
+		jabber_handle_connect_ssl(-1, fd, 0, s);
+		return -1;
+        }
+#endif
+	
+	return jabber_handle_connect(type, fd, watch, data);
 }
 
 static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
@@ -1075,7 +1085,7 @@ handshake_ok:
 	} else {
 		// handshake successful
 		j->using_ssl = 1;
-		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect2, s);
+		watch_add(&jabber_plugin, fd, WATCH_WRITE, jabber_handle_connect, s);
 	}
 
 	return -1;
