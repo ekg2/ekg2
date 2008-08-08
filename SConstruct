@@ -1,8 +1,9 @@
 #!/usr/bin/scons
+# vim:set fileencoding=utf-8 :
 #  Alternate build system for EKG2, unstable and unfinished yet
 #  (C) 2008 Michał Górny
 #
-#  configure.ac ported to: regex.h
+#  configure.ac ported to: iconv
 
 consts = {
 	'VERSION': 'SVN'
@@ -35,6 +36,17 @@ def writedef(var, val):
 	elif isinstance(val, int):
 		definefile.write(('#define %s %d\n' % (var, val)))
 
+def CheckStructMember(context, struct, member, headers):
+	context.Message('Checking for %s.%s... ' % (struct, member))
+	testprog = ''
+	for header in headers:
+		testprog += '#include <%s>\n' % (header)
+	testprog += '\nint main(void) {\n\tstatic %s tmp;\n\tif (tmp.%s)\n\t\treturn 0;\n\treturn 0;\n}\n' % (struct, member)
+	
+	result = context.TryCompile(testprog, 'C')
+	context.Result(result)
+	return not not result
+
 opts = Options('options.cache')
 
 plugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')];
@@ -58,7 +70,7 @@ for var,val in consts.items():
 for var,val in mapped.items():
 	writedef(val, env[var])
 
-conf = env.Configure()
+conf = env.Configure(custom_tests = {'CheckStructMember': CheckStructMember})
 
 std_funcs = [
 	'inet_aton', 'inet_ntop', 'inet_pton', 'getaddrinfo',
@@ -122,6 +134,36 @@ for lib, funcs in platform_libs.items():
 		if conf.CheckLib(lib, func):
 			ekg_libs.append(lib)
 			break
+
+
+	# XXX: needs testing
+struct_members = {
+	'struct kinfo_proc':	['ki_size', 'sys/param.h', 'sys/user.h']
+	}
+
+for struct, headers in struct_members.items():
+	member = headers.pop(0)
+	writedef('HAVE_%s_%s' % (struct.upper().replace(' ', '_'), member.upper().replace('.', '_')),
+			conf.CheckStructMember(struct, member, headers))
+
+sys_types = {
+	'socklen_t':			['sys/types.h', 'sys/socket.h']
+	}
+
+for type, headers in sys_types.items():
+	includes = ''
+	for inc in headers:
+		includes += '#include <%s>\n' % (inc)
+	writedef('HAVE_%s' % (type.upper()), conf.CheckType(type, includes))
+
+# iconv
+if conf.CheckFunc('iconv_open'):
+	writedef('HAVE_ICONV', True)
+elif conf.CheckLib('iconv', 'iconv_open'):
+	writedef('HAVE_ICONV', True)
+	ekg_libs.append('iconv')
+else:
+	writedef('HAVE_ICONV', False)
 
 conf.Finish()
 
