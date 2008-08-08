@@ -200,10 +200,10 @@ int icq_write_info(session_t *s) {
 	icq_pack_append(tlv_5, "I", (uint32_t) 0x88f213fc);	/* HTML messages */
 	icq_pack_append(tlv_5, "I", (uint32_t) 0x00979ea8);
 #endif
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x4D697261);   /* Miranda Signature */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x4D697261);	/* Miranda Signature */
 	icq_pack_append(tlv_5, "I", (uint32_t) 0x6E64614D);
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x12345678);	/* XXX, MIRANDA_VERSION */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x80050003);
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x00070800);	/* MIRANDA_VERSION */
+	icq_pack_append(tlv_5, "I", (uint32_t) 0x00030a0e);
 
 	pkt = icq_pack("T", icq_pack_tlv(0x05, tlv_5->str, tlv_5->len));
 
@@ -883,7 +883,7 @@ static COMMAND(icq_command_away) {
 	ekg_update_status(session);
 	
 	if (session->connected) {
-		icq_write_info(session);
+		/* icq_write_info(session); */
 		icq_write_status(session);
 		icq_write_status_msg(session);
 	}

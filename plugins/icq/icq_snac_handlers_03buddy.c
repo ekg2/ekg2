@@ -288,8 +288,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 }
 
 SNAC_SUBHANDLER(icq_snac_buddy_offline) {
-	debug_white("icq_snac_buddy_offline() untested XXX\n");
-	icq_hexdump(DEBUG_WHITE, buf, len);
+	debug_function("icq_snac_buddy_offline()\n");
 
 	do {
 		char *cont = NULL;
@@ -298,7 +297,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 
 		if (!ICQ_UNPACK(&buf, "uWW", &cont, &discard, &t_count))
 			return -1;
-		
+
 		while (t_count) {
 			uint16_t t_type, t_len;
 
@@ -314,6 +313,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 		}
 
 		uid = icq_uid(cont);
+		debug_white("icq_snac_buddy_offline() uid: %s\n", uid);
 		protocol_status_emit(s, uid, EKG_STATUS_NA, NULL, time(NULL));
 		xfree(uid);
 	} while (len >= 1);
@@ -340,7 +340,7 @@ SNAC_HANDLER(icq_snac_buddy_handler) {
 		case 0x0a: handler = icq_snac_buddy_notify_rejected;	/* Miranda: OK */
 								break;	/*        .... */
 		case 0x0b: handler = icq_snac_buddy_online;	break;	/* Miranda: handleUserOnline() */
-		case 0x0c: handler = icq_snac_buddy_offline;	break;	/* Miranda: OK, untested */
+		case 0x0c: handler = icq_snac_buddy_offline;	break;	/* Miranda: OK */
 		default:   handler = NULL;		break;
 	}
 
