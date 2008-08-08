@@ -368,15 +368,12 @@ static int ekg_connect_loop(struct ekg_connect_data *c);
 
 static WATCHER_LINE(ekg_connect_resolver_handler) {
 	struct ekg_connect_data *c = (struct ekg_connect_data*) data;
-	session_t *s;
-	int abort;
 
 	if (!c)
 		return -1;
-	abort = !((s = session_find(c->session)));
 
 	if (type) {
-		if (!abort) {
+		if (!session_find(c->session)) {
 			debug_function("ekg_connect_resolver_handler(), resolving done.\n");
 			if (c->prefer_comparison)
 				qsort(c->connect_queue, array_count(c->connect_queue), sizeof(char*),
@@ -385,7 +382,7 @@ static WATCHER_LINE(ekg_connect_resolver_handler) {
 		ekg_connect_loop(c);
 		close(fd);
 		return -1;
-	} else if (abort)
+	} else if (!session_find(c->session))
 		return -1;
 
 	debug_function("ekg_connect_resolver_handler() = %s\n", watch);
@@ -471,7 +468,6 @@ static WATCHER(ekg_connect_handler) {
 	int res = 0; 
 	socklen_t res_size = sizeof(res);
 	session_t *s;
-	int abort;
 
 	if (!c)
 		return -1;
@@ -481,10 +477,7 @@ static WATCHER(ekg_connect_handler) {
 	if (type == 1)
 		return 0;
 
-	s = session_find(c->session);
-	abort = !((s = session_find(c->session)));
-
-	if (abort) {
+	if (!((s = session_find(c->session)))) {
 		ekg_connect_loop(c);
 		close(fd);
 		return -1;
