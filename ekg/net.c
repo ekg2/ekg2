@@ -488,6 +488,8 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 		int len, fd, family, connret;
 		watch_t *w;
 
+		const int timeout = session_int_get(s, "connect_timeout");
+
 		do {
 			int one = 1;
 
@@ -519,7 +521,9 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 			}
 
 			w = watch_add(s->plugin, fd, WATCH_WRITE, ekg_connect_handler, c);
-			watch_timeout_set(w, 10 /* XXX */);
+
+			if (timeout)
+				watch_timeout_set(w, timeout);
 
 			xfree(addr);
 			return 1;

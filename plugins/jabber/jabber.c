@@ -1569,6 +1569,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_reconnect", 	VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_xa", 		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_xa_descr", 	VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("connect_timeout",	VAR_INT, "30", 0, NULL),
 	PLUGIN_VAR_ADD("disable_sasl",		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("display_notify", 	VAR_INT, "-1", 0, NULL),
 	PLUGIN_VAR_ADD("display_server_features", VAR_INT, "1", 0, NULL),
