@@ -101,7 +101,7 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		return -2;
 	}
 
-	if (j->connecting == 1) {	/* hub connecting */
+	if (s->connecting == 1) {	/* hub connecting */
 		if (session_int_get(s, "plaintext_passwd") == 1) {
 			string_t str;
 			char *password;
@@ -151,7 +151,7 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 
 	}
 	else
-	if (j->connecting == 2) {	/* server connecting */
+	if (s->connecting == 2) {	/* server connecting */
 		string_t str;
 
 		debug("icq_flap_login(2) s=0x%x cookie=0x%x cookielen=%d\n", s, j->cookie, j->cookie ? j->cookie->len : -1);
@@ -183,7 +183,7 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		string_free(j->cookie, 1); j->cookie = NULL;
 	}
 	else {
-		debug_error("icq_flap_login(%d) XXX?\n", j->connecting);
+		debug_error("icq_flap_login(%d) XXX?\n", s->connecting);
 		return -2;
 	}
 
@@ -288,7 +288,7 @@ static ICQ_FLAP_HANDLER(icq_flap_close) {
 		icq_makeflap(s, pkt, ICQ_FLAP_CLOSE);
 		icq_send_pkt(s, pkt); pkt = NULL;
 
-		j->connecting = 2;
+		s->connecting = 2;
 
 		if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 			int err = errno;

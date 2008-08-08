@@ -330,11 +330,10 @@ POLCHAT_HANDLER(polchat_welcomemsg) {
 	if (nheaders == 1 && nstrings == 1) {
 		window_t *w;
 
-		if (j->connecting) {
+		if (s->connecting) {
 			/* new-status */
 			s->status = EKG_STATUS_AVAIL;
 			/* connected */
-			j->connecting = 0;
 			protocol_connected_emit(s);
 		}
 

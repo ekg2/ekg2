@@ -39,7 +39,6 @@ enum { IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_S
 
 typedef struct _irc_private_t {
 	int fd;				/* connection's fd */
-	int connecting;			/* are we connecting _now_ ? */
 	int autoreconnecting;		/* are we in reconnecting mode now? */
 	int resolving;			/* count of resolver threads. */
 	list_t bindlist, bindtmplist;

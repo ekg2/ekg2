@@ -121,7 +121,7 @@ typedef struct session {
 	char		*password;		/**< session's account password */
 
 	unsigned int	connected	: 1;	/**< whether session is connected */
-	unsigned int	connecting	: 1;	/**< whether session is currently being connected */
+	unsigned int	connecting	: 2;	/**< whether session is currently being connected */
 	unsigned int	autoaway	: 1;	/**< whether we're in autoaway */
 
 	time_t		activity;		/**< timestamp of last activity */

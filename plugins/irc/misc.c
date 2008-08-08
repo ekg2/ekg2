@@ -471,7 +471,6 @@ IRC_COMMAND(irc_c_init)
 			if (t)  j->host_ident=xstrdup(++t); 
 			else j->host_ident=NULL;
 			debug("\nspoko miejscówka ziom!...[%s:%s]\n", j->nick, j->host_ident);
-			j->connecting = 0;
 			j->autoreconnecting = 0;
 
 			j->casemapping = IRC_CASEMAPPING_RFC1459;
@@ -558,9 +557,9 @@ IRC_COMMAND(irc_c_error)
 		 * no I:line's etc.. everything that disconnects fd
 		 */
 /*		print_info(NULL, s, "IRC_ERR_FIRSTSECOND", session_name(s), irccommands[ecode].comm, IOK2(2)); */
-		if (j->connecting)
+		if (s->connecting)
 			irc_handle_disconnect(s, IOK2(2), EKG_DISCONNECT_FAILURE); 
-		else    debug("!j->connecting\n");
+		else    debug("!s->connecting\n");
 		return -1;
 	}
 	i = irccommands[ecode].future&0x100;
@@ -611,7 +610,7 @@ IRC_COMMAND(irc_c_error)
 		case 433:
 			print_info(NULL, s, "IRC_ERR_SECONDFIRST", 
 					session_name(s), param[3], IOK2(4));
-			if (j->connecting) {
+			if (s->connecting) {
 				altnick = (char *) session_get(s, "alt_nick");
 				/* G->dj: why this !xstrcmp ? */
 				if (altnick && !xstrcmp(param[3], session_get(s, "nickname")) && xstrcmp(param[3], altnick)) {
@@ -1100,7 +1099,7 @@ IRC_COMMAND(irc_c_msg)
 	 */
 
 	/* probably message from server ... */
-	if (j->connecting && !prv) {
+	if (s->connecting && !prv) {
 		/* (!xstrcmp(":_empty_", param[0]) || !xstrcmp("AUTH", param[2])) */
 		class = (mw&16)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
 		dest = xstrdup(param[2]);

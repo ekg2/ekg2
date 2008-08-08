@@ -702,8 +702,6 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 		return;
 	}
 
-	j->connecting = 0;
-
 	// !!! 
 	if (j->send_watch) {
 		j->send_watch->type = WATCH_NONE;
@@ -759,12 +757,12 @@ static WATCHER_LINE(irc_handle_resolver) {
 		return -1;
 
 	if (type) {
-		debug("[irc] handle_resolver for session %s type = 1 !! 0x%x resolving = %d connecting = %d\n", resolv->session, resolv->plist, j->resolving, j->connecting);
+		debug("[irc] handle_resolver for session %s type = 1 !! 0x%x resolving = %d connecting = %d\n", resolv->session, resolv->plist, j->resolving, s->connecting);
 		xfree(resolv->session);
 		xfree(resolv);
 		if (j->resolving > 0)
 			j->resolving--;
-		if (j->resolving == 0 && j->connecting == 2) {
+		if (j->resolving == 0 && s->connecting == 2) {
 			debug("[irc] hadnle_resolver calling really_connect\n");
 			irc_really_connect(s);
 		}
@@ -806,10 +804,10 @@ static WATCHER_SESSION_LINE(irc_handle_stream) {
 	if (type == 1) {
 		j->recv_watch = NULL;
 		/* this will cause  'Removed more than one watch...' */
-		debug ("[irc] handle_stream(): ROZ£¡CZY£O %d %d\n", s->connected, j->connecting);
+		debug ("[irc] handle_stream(): ROZ£¡CZY£O %d %d\n", s->connected, s->connecting);
 		
 		/* avoid reconnecting when we do /disconnect */
-		if (s->connected || j->connecting)
+		if (s->connected || s->connecting)
 			irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
 		return 0;
 	}
@@ -1003,7 +1001,7 @@ static int irc_really_connect(session_t *session) {
 		} else
 			break;
 	}
-	j->connecting = 1;
+	session->connecting = 1;
 	DOT("IRC_TEST", "Connecting", connco, session, 0);
 	connret = connect(fd, sinco, sinlen);
 	debug("connecting: %s %s\n", connco->hostname, connco->address);
@@ -1049,7 +1047,7 @@ static COMMAND(irc_command_connect) {
 		printq("generic_error", "gdzie lecimy ziom ?! [/session server]");
 		return -1;
 	}
-	if (j->connecting) {
+	if (session->connecting) {
 		printq("during_connect", session_name(session));
 		return -1;
 	}
@@ -1066,7 +1064,7 @@ static COMMAND(irc_command_connect) {
 	}
 	if (j->resolving) {
 		printq("generic", "resolving in progress... you will be connected as soon as possible");
-		j->connecting = 2;
+		session->connecting = 2;
 		return -1;
 	}
 	return irc_really_connect(session);
@@ -1077,7 +1075,7 @@ static COMMAND(irc_command_disconnect) {
 	const char	*reason = params[0]?params[0]:QUITMSG(session);
 	debug("[irc] comm_disconnect() !!!\n");
 
-	if (!j->connecting && !session_connected_get(session) && !j->autoreconnecting) {
+	if (!session->connecting && !session_connected_get(session) && !j->autoreconnecting) {
 		printq("not_connected", session_name(session));
 		return -1;
 	}
@@ -1085,7 +1083,7 @@ static COMMAND(irc_command_disconnect) {
 	if (reason && session_connected_get(session))
 		watch_write(j->send_watch, "QUIT :%s\r\n", reason);
 
-	if (j->connecting || j->autoreconnecting)
+	if (session->connecting || j->autoreconnecting)
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
 	else
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_USER);
@@ -1094,9 +1092,7 @@ static COMMAND(irc_command_disconnect) {
 }
 
 static COMMAND(irc_command_reconnect) {
-	irc_private_t	*j = irc_private(session);
-
-	if (j->connecting || session_connected_get(session)) 
+	if (session->connecting || session_connected_get(session)) 
 		irc_command_disconnect(name, params, session, target, quiet);
 	return irc_command_connect(name, params, session, target, quiet);
 }
@@ -2254,14 +2250,14 @@ static COMMAND(irc_command_jopacy) {
 static COMMAND(irc_command_nick) {
 	irc_private_t	*j = irc_private(session);
 
-	/* GiM: XXX FIXME TODO think more about j->connecting... */
-	if (j->connecting || session_connected_get(session)) {
+	/* GiM: XXX FIXME TODO think more about session->connecting... */
+	if (session->connecting || session_connected_get(session)) {
 		watch_write(j->send_watch, "NICK %s\r\n", params[0]);
 		/* this is needed, couse, when connecting and server will
 		 * respond, nickname is already in use, and user
 		 * will type /nick somethin', server doesn't send respond
 		 * about nickname.... */
-		if (j->connecting) {
+		if (session->connecting) {
 			xfree(j->nick);
 			j->nick = xstrdup(params[0]);
 		}
@@ -2282,7 +2278,7 @@ static COMMAND(irc_command_test) {
 		DOT("IRC_TEST", "Bind to:", ((connector_t *) tlist->data), session, 0);
 
 	if (j->conntmplist && j->conntmplist->data) {
-		if (j->connecting)
+		if (session->connecting)
 			DOT("IRC_TEST", "Connecting:", ((connector_t *) j->conntmplist->data), session, 0);
 		else if (session_connected_get(session))
 			DOT("IRC_TEST", "Connected:", ((connector_t *) j->conntmplist->data), session, 0);

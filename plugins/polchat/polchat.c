@@ -66,7 +66,6 @@
 
 typedef struct {
 	int fd;
-	int connecting;
 
 	char *nick;
 	char *room;
@@ -301,10 +300,9 @@ static void polchat_handle_disconnect(session_t *s, const char *reason, int type
 	if (!s || !(j = s->priv))
 		return;
 
-	if (!s->connected && !j->connecting)
+	if (!s->connected && !s->connecting)
 		return;
 	
-	j->connecting = 0;
 	userlist_free(s);
 
 	protocol_disconnected_emit(s, reason, type);
@@ -406,7 +404,7 @@ static WATCHER_SESSION(polchat_handle_connect) {
 
 	/* here we shouldn't have any WATCH_WRITE watch */
 
-	j->connecting = 2;
+	s->connecting = 2;
 
 	polchat_sendpkt(s, 0x0578, 
 		j->nick,						/* nickname */
@@ -444,7 +442,7 @@ static WATCHER(polchat_handle_resolver) {
 	if (!s || !(j = s->priv))
 		return -1;
 
-	if (!j->connecting)		/* user makes /disconnect before resolver finished */
+	if (!s->connecting)		/* user makes /disconnect before resolver finished */
 		return -1;
 
 	res = read(fd, &a, sizeof(a));
@@ -458,7 +456,7 @@ static WATCHER(polchat_handle_resolver) {
 		/* no point in reconnecting by polchat_handle_disconnect() */
 
 		print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
-		j->connecting = 0;
+		s->connecting = 0;
 		return -1;
 	}
 
@@ -507,7 +505,7 @@ static COMMAND(polchat_command_connect) {
 	const char *nick;
 	const char *room;
 
-	if (j->connecting) {
+	if (session->connecting) {
 		printq("during_connect", session_name(session));
 		return -1;
 	}
@@ -547,11 +545,11 @@ static COMMAND(polchat_command_connect) {
 
 	string_clear(j->recvbuf);
 
-	j->connecting = 1;
+	session->connecting = 1;
 
 	if (ekg_resolver2(&polchat_plugin, server, polchat_handle_resolver, xstrdup(session->uid)) == NULL) {
 		print("generic_error", strerror(errno));
-		j->connecting = 0;
+		session->connecting = 0;
 		return -1;
 	}
 
@@ -561,7 +559,6 @@ static COMMAND(polchat_command_connect) {
 }
 
 static COMMAND(polchat_command_disconnect) {
-	polchat_private_t *j = session->priv;
 	const char *reason = params[0]?params[0]:QUITMSG(session);
 
 	if (timer_remove_session(session, "reconnect") == 0) {
@@ -569,7 +566,7 @@ static COMMAND(polchat_command_disconnect) {
 		return 0;
 	}
 
-	if (!j->connecting && !session_connected_get(session)) {
+	if (!session->connecting && !session_connected_get(session)) {
 		printq("not_connected", session_name(session));
 		return -1;
 	}
@@ -578,7 +575,7 @@ static COMMAND(polchat_command_disconnect) {
 		polchat_sendmsg(session, "/quit %s", reason);
 	}
 
-	if (j->connecting)
+	if (session->connecting)
 		polchat_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
 	else    
 		polchat_handle_disconnect(session, reason, EKG_DISCONNECT_USER);
@@ -587,9 +584,7 @@ static COMMAND(polchat_command_disconnect) {
 }
 
 static COMMAND(polchat_command_reconnect) {
-	polchat_private_t   *j = session->priv;
-
-	if (j->connecting || session_connected_get(session))
+	if (session->connecting || session_connected_get(session))
 		polchat_command_disconnect(name, params, session, target, quiet);
 
 	return polchat_command_connect(name, params, session, target, quiet);

@@ -215,7 +215,6 @@ int icq_write_info(session_t *s) {
 }
 
 void icq_session_connected(session_t *s) {
-	icq_private_t *j = s->priv;
 	string_t pkt;
 
 	icq_write_info(s);
@@ -371,7 +370,6 @@ void icq_session_connected(session_t *s) {
 #endif
 	}
 	protocol_connected_emit(s);
-	j->connecting = 0;
 
 	icq_write_status_msg(s);
 }
@@ -472,10 +470,9 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 	if (!s || !(j = s->priv))
 		return;
 
-	if (!s->connected && !j->connecting)
+	if (!s->connected && !s->connecting)
 		return;
 
-	j->connecting = 0;
 	timer_remove_session(s, "ping");
 	protocol_disconnected_emit(s, reason, type);
 
@@ -510,7 +507,7 @@ static WATCHER_SESSION(icq_handle_connect) {
 		return -1;
 	}
 
-	debug("[icq] handle_connect(%d)\n", j->connecting);
+	debug("[icq] handle_connect(%d)\n", s->connecting);
 
 	if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		if (type) 
@@ -540,7 +537,7 @@ static WATCHER_SESSION(icq_handle_stream) {
 
 	len = read(fd, buf, sizeof(buf));
 
-	debug("icq_handle_stream(%d) rcv: %d\n", j->connecting, len);
+	debug("icq_handle_stream(%d) rcv: %d\n", s->connecting, len);
 
 	if (len < 1) {
 		icq_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_NETWORK);
@@ -580,10 +577,10 @@ static WATCHER_SESSION(icq_handle_stream) {
 		j->fd = j->fd2;
 		j->fd2 = -1;
 
-		if (j->connecting == 2) {
+		if (s->connecting == 2) {
 			watch_add_session(s, j->fd, WATCH_WRITE, icq_handle_connect);
 		} else {
-			debug_error("unknown j->connecting: %d\n", j->connecting);
+			debug_error("unknown s->connecting: %d\n", s->connecting);
 		}
 		return -1;
 	}
@@ -610,7 +607,7 @@ static WATCHER(icq_handle_hubresolver) {
 	if (!s || !(j = s->priv))
 		return -1;
 
-	if (!j->connecting)	/* user makes /disconnect before resolver finished */
+	if (!s->connecting)	/* user makes /disconnect before resolver finished */
 		return -1;
 
 	res = read(fd, &a, sizeof(a));
@@ -624,7 +621,7 @@ static WATCHER(icq_handle_hubresolver) {
 		/* no point in reconnecting by icq_handle_disconnect() XXX? */
 
 		print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
-		j->connecting = 0;
+		s->connecting = 0;
 		return -1;
 	}
 
@@ -897,7 +894,7 @@ static COMMAND(icq_command_connect) {
 	icq_private_t *j = session->priv;
 	const char *hubserver;
 
-	if (j->connecting) {
+	if (session->connecting) {
 		printq("during_connect", session_name(session));
 		return -1;
 	}
@@ -923,13 +920,13 @@ static COMMAND(icq_command_connect) {
 	if (!(hubserver = session_get(session, "hubserver"))) 
 		hubserver = ICQ_HUB_SERVER;
 
-	j->connecting = 1;
+	session->connecting = 1;
 	j->ssi = 1;	/* XXX */
 	j->aim = 1;	/* XXX */
 
 	if (ekg_resolver2(&icq_plugin, hubserver, icq_handle_hubresolver, xstrdup(session->uid)) == NULL) {
 		print("generic_error", strerror(errno));
-		j->connecting = 0;
+		session->connecting = 0;
 		return -1;
 	}
 
@@ -937,19 +934,17 @@ static COMMAND(icq_command_connect) {
 }
 
 static COMMAND(icq_command_disconnect) {
-	icq_private_t *j = session->priv;
-
 	if (timer_remove_session(session, "reconnect") == 0) {
 		printq("auto_reconnect_removed", session_name(session));
 		return 0;
 	}
 
-	if (!j->connecting && !session->connected) {
+	if (!session->connecting && !session->connected) {
 		printq("not_connected", session_name(session));
 		return -1;
 	}
 
-	if (j->connecting)
+	if (session->connecting)
 		icq_handle_disconnect(session, NULL, EKG_DISCONNECT_STOPPED);
 	else    
 		icq_handle_disconnect(session, NULL, EKG_DISCONNECT_USER);
@@ -958,9 +953,7 @@ static COMMAND(icq_command_disconnect) {
 }
 
 static COMMAND(icq_command_reconnect) {
-	icq_private_t   *j = session->priv;
-
-	if (j->connecting || session->connected)
+	if (session->connecting || session->connected)
 		icq_command_disconnect(name, params, session, target, quiet);
 
 	return icq_command_connect(name, params, session, target, quiet);

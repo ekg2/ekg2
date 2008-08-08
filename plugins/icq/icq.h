@@ -8,7 +8,6 @@
 typedef struct {
 	int fd;
 	int fd2;
-	int connecting;
 
 	int flap_seq;		/* FLAP seq id */
 	int snac_seq;		/* SNAC seq id */
