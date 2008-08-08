@@ -319,6 +319,7 @@ struct ekg_connect_data {
 	char	**resolver_queue;	/* here we keep list of domains to be resolved	*/
 	char	**connect_queue;	/* here we keep list of IPs to try to connect	*/
 	watch_t	*current_watch;
+	watch_t	*internal_watch;	/* allowing user to abort connecting */
 
 		/* data provided by user */
 	int	port;
@@ -328,8 +329,10 @@ struct ekg_connect_data {
 };
 
 static void ekg_connect_data_free(struct ekg_connect_data *c) {
-	/* XXX: call async with type==1? */
-
+	if (c->internal_watch) {
+		c->internal_watch->data = NULL;	/* avoid double free */
+		watch_free(c->internal_watch);
+	}
 	array_free(c->resolver_queue);
 	array_free(c->connect_queue);
 	xfree(c->session);
@@ -469,18 +472,19 @@ static WATCHER(ekg_connect_handler) {
 	socklen_t res_size = sizeof(res);
 	session_t *s;
 	int abort;
-	
+
 	if (!c)
 		return -1;
 
 	debug_function("ekg_connect_handler(), type = %d.\n", type);
 
+	if (type == 1)
+		return 0;
+
 	s = session_find(c->session);
 	abort = (!((s = session_find(c->session))) || !(s->connecting));
 
-	if (type == 1)
-		return 0;
-	else if (abort) {
+	if (abort) {
 		ekg_connect_loop(c);
 		close(fd);
 		return -1;
@@ -501,7 +505,7 @@ static WATCHER(ekg_connect_handler) {
 		close(fd);
 	} else
 		ekg_connect_data_free(c);
-	
+
 	return -1;
 }
 
@@ -586,7 +590,25 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 	return 0;
 }
 
-int ekg_connect(session_t *session, const char *server, const int port, int (*prefer_comparison)(const char *, const char *), watcher_handler_func_t async) {
+static WATCHER(ekg_connect_abort) {
+	struct ekg_connect_data *c = (struct ekg_connect_data*) data;
+
+	if (type == 1) {
+		if (data) {
+			c->internal_watch		= NULL;	/* avoid freeing twice */
+			c->current_watch->data		= NULL;	/* avoid running handler, just make watch disappear */
+			watch_free(c->current_watch);
+			ekg_connect_data_free(c);
+
+			debug_function("ekg_connect_abort(), data freed.\n");
+		}
+	} else
+		debug_error("ekg_connect_abort() called with incorrect type!\n");
+
+	return -1;
+}
+
+watch_t *ekg_connect(session_t *session, const char *server, const int port, int (*prefer_comparison)(const char *, const char *), watcher_handler_func_t async) {
 	struct ekg_connect_data	*c;
 
 	if (!session || !server || !async)
@@ -600,7 +622,15 @@ int ekg_connect(session_t *session, const char *server, const int port, int (*pr
 	c->prefer_comparison	= prefer_comparison;
 	c->port			= port;
 
+	c->internal_watch		= xmalloc(sizeof(watch_t));
+	c->internal_watch->type		= WATCH_NONE;
+	c->internal_watch->handler	= ekg_connect_abort;
+	c->internal_watch->data		= c;
+
 	/* 2) call in the loop */
-	return ekg_connect_loop(c);
+	ekg_connect_loop(c);
+
+	/* 3) return internal watch, allowing caller to abort */
+	return c->internal_watch;
 }
 
