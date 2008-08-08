@@ -135,7 +135,9 @@ static COMMAND(jabber_command_connect)
 #endif
 			j->port = port < 1 ? 5222 : port;
 
-		if (!ekg_connect(session, realserver, j->port, NULL, jabber_handle_connect2)) {
+		session->connecting = 1;
+		if (!(( j->connect_watch = ekg_connect(session, realserver, j->port, NULL, jabber_handle_connect2)))) {
+			session->connecting = 0;
 			printq("generic_error", strerror(errno));
 			return -1;
 		}
@@ -148,7 +150,6 @@ static COMMAND(jabber_command_connect)
 	xfree(j->resource);
 	j->resource = xstrdup(resource);
 
-	session->connecting = 1;
 	j->sasl_connecting = 0;
 
 	printq("connecting", session_name(session));

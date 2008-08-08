@@ -419,7 +419,11 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 		return;
 
 	protocol_disconnected_emit(s, reason, type);
-	
+
+	if (j->connect_watch) {
+		watch_free(j->connect_watch);
+		j->connect_watch = NULL;
+	}
 	if (j->send_watch) {
 		j->send_watch->type = WATCH_NONE;
 		watch_free(j->send_watch);
@@ -785,7 +789,9 @@ WATCHER(jabber_handle_connect)
 
 WATCHER(jabber_handle_connect2) {
 	session_t *s = (session_t *) data;
+	jabber_private_t *j = jabber_private(s);
 
+	j->connect_watch = NULL;
 	if (type == -1) {	/* special ekg_connect() state */
 		jabber_handle_disconnect(s, _("No server could be reached"), EKG_DISCONNECT_FAILURE);
 		/* fd == -1 */

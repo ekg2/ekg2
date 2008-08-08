@@ -160,6 +160,7 @@ typedef struct {
 	list_t iq_stanzas;
 
 	watch_t *send_watch;
+	watch_t *connect_watch;
 
 	xmlnode_t *node;		/**< current XML branch */
 	jabber_conversation_t *conversations;	/**< known conversations */
