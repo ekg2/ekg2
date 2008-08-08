@@ -537,3 +537,6 @@ char *icq_encryptpw(const char *pw) {
 	return cpw;
 }
 
+#if ICQ_SNAC_NAMES_DEBUG
+ #include "icq_debug.c"
+#endif

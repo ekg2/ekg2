@@ -89,6 +89,13 @@ void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, u
 	string_free(newbuf, 1);
 
 	debug_function("icq_makemetasnac() 0x%x 0x0%x 0x%x\n", sub, type, ref);
+#if ICQ_SNAC_NAMES_DEBUG
+	{
+	char *tmp = icq_snac_name(sub, type);
+	if (tmp)
+		debug_white("icq_makemetasnac() //  SNAC(0x%x, 0x%x) -- %s\n", sub, type, tmp);
+	}
+#endif
 	icq_makesnac(s, pkt, 0x15, 2, 0, (ref ? ref : rand () % 0x7fff) + (j->snacmeta_seq << 16));	/* XXX */
 }
 

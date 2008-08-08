@@ -204,6 +204,13 @@ static ICQ_FLAP_HANDLER(icq_flap_data) {
 	data = snac.data;
 
 	debug_white("icq_flap_data() SNAC pkt, fam=0x%x cmd=0x%x flags=0x%x ref=0x%x (len=%d)\n", snac.family, snac.cmd, snac.flags, snac.ref, len);
+#if ICQ_SNAC_NAMES_DEBUG
+	{
+	char *tmp = icq_snac_name(snac.family, snac.cmd);
+	if (tmp)
+		debug_white("icq_flap_data() //  SNAC(0x%x, 0x%x) -- %s\n", snac.family, snac.cmd, tmp);
+	}
+#endif
 
 	if (snac.flags & 0x8000) {
 		uint16_t skip_len;

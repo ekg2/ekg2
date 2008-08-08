@@ -50,4 +50,11 @@ status_t icq2ekg_status2(int nMsgType);
 /* misc */
 int tlv_length_check(char *name, icq_tlv_t *t, int length);
 
+#define ICQ_SNAC_NAMES_DEBUG 1
+
+#if ICQ_SNAC_NAMES_DEBUG
+char *icq_snac_name(int family, int cmd);
+#endif
+
+
 #endif
