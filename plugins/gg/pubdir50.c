@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/sessions.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
@@ -305,7 +306,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		return;
 	}
 
-	gg_debug(GG_DEBUG_MISC, "handle_search50, count = %d\n", gg_pubdir50_count(res));
+	debug_function("gg_session_handler_search50() handle_search50, count = %d\n", gg_pubdir50_count(res));
 
 	for (l = g->searches; l; l = l->next) {
 		gg_pubdir50_t req = l->data;

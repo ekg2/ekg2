@@ -932,16 +932,16 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 		int i, len = xstrlen(__text), ii, skip = gg_config_skip_default_format;
 		static char win_gg_default_format[6] = { 0x00, 0x00, 0x08, 0x00, 0x00, 0x00 };
 
-		gg_debug(GG_DEBUG_DUMP, "// formats:");
+		debug_white("// formats:");
 		for (ii = 0; ii < e->event.msg.formats_length; ii++) {
 			skip &= (p[ii] == win_gg_default_format[ii]);
-			gg_debug(GG_DEBUG_DUMP, " %.2x", (unsigned char) p[ii]);
+			debug_white(" %.2x", (unsigned char) p[ii]);
 		}
 		if (skip)
-			gg_debug(GG_DEBUG_DUMP, " <- skipping");
+			debug_white(" <- skipping");
 		else
 			__format = xcalloc(len, sizeof(uint32_t));
-		gg_debug(GG_DEBUG_DUMP, "\n");
+		debug_white("\n");
 
 /* XXX, check it. especially this 'pos' */
 		if (!skip) for (i = 0; i < e->event.msg.formats_length; ) {
