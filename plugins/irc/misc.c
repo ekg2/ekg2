@@ -1136,21 +1136,9 @@ IRC_COMMAND(irc_c_msg)
 		// class = (mw&1)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
 		IRC_TO_LOWER(param[2]);
 		dest = irc_uid(param[2]);
-		if ((pubtous = xstrcasestr(ctcpstripped, j->nick))) {
-			tous = pubtous[xstrlen(j->nick)];
-			if (!isalnum(tous) && !isalpha_pl(tous))
-				if (pubtous == ctcpstripped || (!isalnum(*(pubtous-1)) && !isalpha_pl(*(pubtous-1))))
-				{
-					ekgbeep = EKG_TRY_BEEP;
-					xosd_to_us = 1;
-				}
-		}
-		w = window_find_s(s, dest);
 
-		format = saprintf("irc_%s_f_chan%s%s", prv?"msg":"not",
-					(!w)?"":"_n", ekgbeep?"h":"");
-		if (!xosd_to_us)
-			class |= EKG_MSGCLASS_NOT2US;
+		w = window_find_s(s, dest);
+		format = NULL;
 
 		/* ok new irc-find-person checked */
 		if ((person = irc_find_person(j->people, param[0]+1)))
@@ -1167,6 +1155,7 @@ IRC_COMMAND(irc_c_msg)
 	}
 
 	if (ctcpstripped) {
+		char *clear_string;
 		int isour = 0;
   		if (xosd_is_priv) /* @ wrong place */
 			query_emit_id(NULL, MESSAGE_DECRYPT, &(s->uid), &dest, &ctcpstripped, &secure , NULL);
@@ -1175,16 +1164,51 @@ IRC_COMMAND(irc_c_msg)
 
 		/* TODO 'secure' var checking, but still don't know how to react to it (GiM)
 		 */
-		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,1);
-		debug("<%c%s/%s> %s\n", perchn?*(perchn->sign):' ', param[0]+1, param[2], OMITCOLON(param[3]));
+		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped, 1);
+		clear_string = irc_ircoldcolstr_juststrip(s, ctcpstripped);
+		debug("<%c%s/%s> %s [%s]\n", perchn?*(perchn->sign):' ', param[0]+1, param[2], OMITCOLON(param[3]), clear_string);
+
 		prefix[1] = '\0';
 		prefix[0] = perchn?*(perchn->sign):' ';
 		if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
 			*prefix='\0';
+		/* privmsg on channel */
+                if (NULL == format)
+		{
+			if ((pubtous = xstrcasestr(clear_string, j->nick))) {
+				/* pubtus - points to beginning of a nickname
+				 * tous   - points after end    of a nickname
+				 */
+				tous = pubtous[xstrlen(j->nick)];
+				if (!isalnum(tous) && !isalpha_pl(tous))
+				{
+					if (pubtous == clear_string || (!isalnum(*(pubtous-1)) && !isalpha_pl(*(pubtous-1))))
+					{
+						ekgbeep = EKG_TRY_BEEP;
+						xosd_to_us = 1;
+					}
+				}
+			}
+			/* rest */
+
+			/* privmsg <--> notice
+			 * w -> window not yet created (other format)
+			 * ekgbeep -> higlight format or normal
+			 */
+			format = saprintf("irc_%s_f_chan%s%s", prv?"msg":"not",
+					(!w)?"":"_n", ekgbeep?"h":"");
+
+			if (!xosd_to_us)
+				class |= EKG_MSGCLASS_NOT2US;
+                }
+		xfree (clear_string);
+
 		head = format_string(format_find(format), session_name(s),
 				prefix, param[0]+1, me, param[2], coloured, "Y ");
+
 		xfree(coloured);
-		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped,0);
+		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped, 0);
+
 	/*
 234707 <@dredzik> GiM, string nadawca, string wiadomo¶æ, bool
 234707 wiadomo¶æ_do_ciebie, bool kana³_czy_priv, string

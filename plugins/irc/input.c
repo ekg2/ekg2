@@ -77,6 +77,36 @@ static int irc_getircoldcol(char *org)
 	return ret;
 }
 
+char *irc_ircoldcolstr_juststrip(session_t *sess, char *inp)
+{
+	int		col;
+	char		*ret, *str, *back;
+
+	if (!inp || !(*inp))
+		return xstrdup("");
+
+	ret = str = xstrdup(inp);
+	back = str;
+
+
+	for (;*str;)
+	{
+		if (*str == 3) /* ^c */
+		{
+			col = irc_getircoldcol(str+1);
+			str+=(col>>24)&0xff;
+		} else if (*str == 2) /* ^b */ {} 
+		else if (*str == 15) /* ^o */ {}
+		else if (*str == 18 || *str == 22) /* ^r */ {}
+		else if (*str == 31) /* ^_ */ {}
+		else 
+			*back++ = *str;
+		str++;
+	}
+	*back = '\0';
+	return ret;
+}
+
 char *irc_ircoldcolstr_to_ekgcolstr_nf(session_t *sess, char *str, int strip)
 {
 	int		col, oldstrip = strip;
