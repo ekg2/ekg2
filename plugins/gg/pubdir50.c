@@ -210,45 +210,43 @@ COMMAND(gg_command_change)
 
 	if (xstrcmp(params[0], ("-"))) {
 		char **argv = array_make(params[0], (" \t"), 0, 1, 1);
-		char **uargv = xcalloc(array_count(argv)+1, sizeof(char *));
 		
-		for (i = 0; argv[i]; i++) {
-			uargv[i] = gg_locale_to_cp(argv[i]);
-		}
+		for (i = 0; argv[i]; i++)
+			argv[i] = gg_locale_to_cp(argv[i]);
 
 		for (i = 0; argv[i]; i++) {
 			if (match_arg(argv[i], 'f', ("first"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, argv[++i]);
 				continue;
 			}
 
 			if (match_arg(argv[i], 'N', ("familyname"), 7) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYNAME, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYNAME, argv[++i]);
 				continue;
 			}
 		
 			if (match_arg(argv[i], 'l', ("last"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, argv[++i]);
 				continue;
 			}
 		
 			if (match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, argv[++i]);
 				continue;
 			}
 			
 			if (match_arg(argv[i], 'c', ("city"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_CITY, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_CITY, argv[++i]);
 				continue;
 			}
 			
 			if (match_arg(argv[i], 'C', ("familycity"), 7) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYCITY, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYCITY, argv[++i]);
 				continue;
 			}
 			
 			if (match_arg(argv[i], 'b', ("born"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, argv[++i]);
 				continue;
 			}
 			
@@ -261,33 +259,14 @@ COMMAND(gg_command_change)
 				gg_pubdir50_add(req, GG_PUBDIR50_GENDER, GG_PUBDIR50_GENDER_SET_MALE);
 				continue;
 			}
+
 			printq("invalid_params", name);
-#if (USE_UNICODE || HAVE_GTK)
-			if (config_use_unicode) { 
-				for (i = 0; argv[i]; i++) {
-					if (argv[i] != uargv[i]) 	xfree(uargv[i]);
-					else				xfree(argv[i]);
-				} 
-				xfree(argv);
-			} else
-#endif
-				array_free(argv);
-			xfree(uargv);
+			array_free(argv);
 
 			gg_pubdir50_free(req);
 			return -1;
 		}
-#if (USE_UNICODE || HAVE_GTK)
-		if (config_use_unicode) {
-			for (i = 0; argv[i]; i++) {
-				if (argv[i] != uargv[i]) 	xfree(uargv[i]);
-				else				xfree(argv[i]);
-			}
-			xfree(argv);
-		} else
-#endif
-			array_free(argv);
-		xfree(uargv);
+		array_free(argv);
 	}
 
 	if (!gg_pubdir50(g->sess, req)) {
