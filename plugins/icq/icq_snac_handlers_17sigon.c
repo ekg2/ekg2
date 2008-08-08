@@ -37,64 +37,9 @@ SNAC_SUBHANDLER(icq_snac_sigon_error) {		/* Miranda: OK */
 }
 
 SNAC_SUBHANDLER(icq_snac_sigon_reply) {
-#warning "icq_snac_sigon_reply() dokonczyc"
-	debug_error("icq_snac_sigon_reply() XXX\n");
+	debug_function("icq_snac_sigon_reply()\n");
 
-#if 0
-	oscar_tlv_chain* chain = NULL;
-	WORD wError;
-
-	icq_sendCloseConnection(); // imitate icq5 behaviour
-
-	if (!(chain = readIntoTLVChain(&buf, datalen, 0)))
-	{
-		NetLog_Server("Error: Missing chain on close channel");
-		NetLib_CloseConnection(&hServerConn, TRUE);
-		return; // Invalid data
-	}
-
-	// TLV 8 errors (signon errors?)
-	wError = getWordFromChain(chain, 0x08, 1);
-	if (wError)
-	{
-		handleSignonError(wError);
-
-		// we return only if the server did not gave us cookie (possible to connect with soft error)
-		if (!getLenFromChain(chain, 0x06, 1)) 
-		{
-			disposeChain(&chain);
-			SetCurrentStatus(ID_STATUS_OFFLINE);
-			NetLib_CloseConnection(&hServerConn, TRUE);
-			return; // Failure
-		}
-	}
-
-	// We are in the login phase and no errors were reported.
-	// Extract communication server info.
-	info->newServer = (char*)getStrFromChain(chain, 0x05, 1);
-	info->cookieData = getStrFromChain(chain, 0x06, 1);
-	info->cookieDataLen = getLenFromChain(chain, 0x06, 1);
-
-	// We dont need this anymore
-	disposeChain(&chain);
-
-	if (!info->newServer || !info->cookieData)
-	{
-		icq_LogMessage(LOG_FATAL, LPGEN("You could not sign on because the server returned invalid data. Try again."));
-
-		SAFE_FREE((void**)&info->newServer);
-		SAFE_FREE((void**)&info->cookieData);
-		info->cookieDataLen = 0;
-
-		SetCurrentStatus(ID_STATUS_OFFLINE);
-		NetLib_CloseConnection(&hServerConn, TRUE);
-		return; // Failure
-	}
-
-	NetLog_Server("Authenticated.");
-	info->newServerReady = 1;
-#endif
-	return -3;
+	return icq_flap_close_helper(s, buf, len);
 }
 
 extern char *icq_md5_digest(const char *password, const unsigned char *key, int key_len);	/* digest.c */
@@ -123,18 +68,22 @@ SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
 
 	str = string_init(NULL);
 
+	/* XXX, SPOT duplicated code @ icq_flap_login() */
+
 	icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));	/* uid */
 	icq_pack_append(str, "T", icq_pack_tlv(0x25, digest, 16));	/* MD5-digest */
+	icq_pack_append(str, "T", icq_pack_tlv(0x4C, NULL, 0));		/* empty TLV(0x4C): unknown */
 
-	icq_pack_append(str, "T", icq_pack_tlv_str(3, "ICQ Inc. - Product of ICQ (TM).2003b.5.37.1.3728.85"));
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x16, 0x010A));	/* unk, 0x01 0x0A */
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x17, 5));		/* FLAP_VER_MAJOR */
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x18, 37));	/* FLAP_VER_MINOR */
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x19, 1));		/* FLAP_VER_LESSER */
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x1A, 3828));	/* FLAP_VER_BUILD */
-	icq_pack_append(str, "tI", icq_pack_tlv_dword(0x14, 85));	/* FLAP_VER_SUBBUILD */
-	icq_pack_append(str, "T", icq_pack_tlv_str(0x0F, "pl"));	/* language 2 chars */ /* XXX, en */
-	icq_pack_append(str, "T", icq_pack_tlv_str(0x0E, "pl"));	/* country 2 chars */ /* XXX, en */
+	/* Pack client identification details. */
+	icq_pack_append(str, "T", icq_pack_tlv_str(3, "ICQ Client"));
+	icq_pack_append(str, "tW", icq_pack_tlv_word(0x16, 0x010a)); 			/* CLIENT_ID_CODE */
+	icq_pack_append(str, "tW", icq_pack_tlv_word(0x17, 0x0006));			/* CLIENT_VERSION_MAJOR */
+	icq_pack_append(str, "tW", icq_pack_tlv_word(0x18, 0x0000));			/* CLIENT_VERSION_MINOR */
+	icq_pack_append(str, "tW", icq_pack_tlv_word(0x19, 0x0000));			/* CLIENT_VERSION_LESSER */
+	icq_pack_append(str, "tW", icq_pack_tlv_word(0x1a, 0x17AB));			/* CLIENT_VERSION_BUILD */
+	icq_pack_append(str, "tI", icq_pack_tlv_dword(0x14, 0x00007535));		/* CLIENT_DISTRIBUTION */
+	icq_pack_append(str, "T", icq_pack_tlv_str(0x0f, "en"));
+	icq_pack_append(str, "T", icq_pack_tlv_str(0x0e, "en"));
 
 	icq_makesnac(s, str, 0x17, 2, 0, 0);
 	icq_send_pkt(s, str);
@@ -146,8 +95,8 @@ SNAC_HANDLER(icq_snac_sigon_handler) {
 
 	switch (cmd) {
 		case 0x01: handler = icq_snac_sigon_error; break;	/* Miranda: OK */
-		case 0x03: handler = icq_snac_sigon_reply; break;	/* Miranda: START */
-		case 0x07: handler = icq_snac_sigon_authkey; break;	/* Miranda: START */
+		case 0x03: handler = icq_snac_sigon_reply; break;	/* Miranda: OK */
+		case 0x07: handler = icq_snac_sigon_authkey; break;	/* Miranda: OK */
 		default:   handler = NULL; break;
 	}
 

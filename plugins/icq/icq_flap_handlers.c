@@ -239,13 +239,13 @@ static ICQ_FLAP_HANDLER(icq_flap_error) {
 
 #define ICQ_FLAP_CLOSE	0x04
 
-static ICQ_FLAP_HANDLER(icq_flap_close) {
+int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 	icq_private_t *j = s->priv;
 
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *login_tlv;
 
-	debug_function("icq_flap_close()\n");
+	/* XXX, icq_handle_disconnect() */
 
 	if (!(tlvs = icq_unpack_tlvs(buf, len, 0)))
 		return -1;
@@ -350,6 +350,70 @@ static ICQ_FLAP_HANDLER(icq_flap_close) {
 	icq_tlvs_destroy(&tlvs);
 
 	return 0;
+#if 0	/* Miranda code: */
+
+	oscar_tlv_chain* chain = NULL;
+	WORD wError;
+
+	icq_sendCloseConnection(); // imitate icq5 behaviour
+
+	if (!(chain = readIntoTLVChain(&buf, datalen, 0)))
+	{
+		NetLog_Server("Error: Missing chain on close channel");
+		NetLib_CloseConnection(&hServerConn, TRUE);
+		return; // Invalid data
+	}
+
+	// TLV 8 errors (signon errors?)
+	wError = getWordFromChain(chain, 0x08, 1);
+	if (wError)
+	{
+		handleSignonError(wError);
+
+		// we return only if the server did not gave us cookie (possible to connect with soft error)
+		if (!getLenFromChain(chain, 0x06, 1)) 
+		{
+			disposeChain(&chain);
+			SetCurrentStatus(ID_STATUS_OFFLINE);
+			NetLib_CloseConnection(&hServerConn, TRUE);
+			return; // Failure
+		}
+	}
+
+	// We are in the login phase and no errors were reported.
+	// Extract communication server info.
+	info->newServer = (char*)getStrFromChain(chain, 0x05, 1);
+	info->cookieData = getStrFromChain(chain, 0x06, 1);
+	info->cookieDataLen = getLenFromChain(chain, 0x06, 1);
+
+	// We dont need this anymore
+	disposeChain(&chain);
+
+	if (!info->newServer || !info->cookieData)
+	{
+		icq_LogMessage(LOG_FATAL, LPGEN("You could not sign on because the server returned invalid data. Try again."));
+
+		SAFE_FREE((void**)&info->newServer);
+		SAFE_FREE((void**)&info->cookieData);
+		info->cookieDataLen = 0;
+
+		SetCurrentStatus(ID_STATUS_OFFLINE);
+		NetLib_CloseConnection(&hServerConn, TRUE);
+		return; // Failure
+	}
+
+	NetLog_Server("Authenticated.");
+	info->newServerReady = 1;
+
+	return;
+
+#endif
+}
+
+static ICQ_FLAP_HANDLER(icq_flap_close) {
+	debug_function("icq_flap_close()\n");
+
+	return icq_flap_close_helper(s, buf, len);
 }
 
 #define ICQ_FLAP_PING	0x05
