@@ -364,19 +364,25 @@ static int ekg_connect_loop(struct ekg_connect_data *c);
 
 static WATCHER_LINE(ekg_connect_resolver_handler) {
 	struct ekg_connect_data *c = (struct ekg_connect_data*) data;
+	session_t *s;
+	int abort;
 
-	if (!data)
+	if (!c)
 		return -1;
+	abort = (!((s = session_find(c->session))) || !(s->connecting));
 
 	if (type) {
-		debug_function("ekg_connect_resolver_handler(), resolving done.\n");
-		if (c->prefer_comparison)
-			qsort(c->connect_queue, array_count(c->connect_queue), sizeof(char*),
-					(void*) c->prefer_comparison);
+		if (!abort) {
+			debug_function("ekg_connect_resolver_handler(), resolving done.\n");
+			if (c->prefer_comparison)
+				qsort(c->connect_queue, array_count(c->connect_queue), sizeof(char*),
+						(void*) c->prefer_comparison);
+		}
 		ekg_connect_loop(c);
 		close(fd);
 		return -1;
-	}
+	} else if (abort)
+		return -1;
 
 	debug_function("ekg_connect_resolver_handler() = %s\n", watch);
 
@@ -461,24 +467,33 @@ static WATCHER(ekg_connect_handler) {
 	int res = 0; 
 	socklen_t res_size = sizeof(res);
 	session_t *s;
+	int abort;
 	
 	if (!c)
 		return -1;
-	
+
 	debug_function("ekg_connect_handler(), type = %d.\n", type);
+
+	s = session_find(c->session);
+	abort = (!((s = session_find(c->session))) || !(s->connecting));
 
 	if (type == 1)
 		return 0;
+	else if (abort) {
+		ekg_connect_loop(c);
+		close(fd);
+		return -1;
+	}
 
 	if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		if (res)
 			debug_error("ekg_connect_handler(), error: %s\n", strerror(res));
 		ekg_connect_loop(c);
 		close(fd);
+
+		return -1;
 	} 
-	
-	s = session_find(c->session);
-	
+
 	if (s && c->async(type, fd, WATCH_WRITE, s) > 0) {
 		debug_error("ekg_connect_handler(), looks like caller didn't like our job.\n");
 		ekg_connect_loop(c);
@@ -493,8 +508,9 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 	char *host;
 	session_t *s = session_find(c->session);
 
-	if (!s) { /* session vanished! */
-		debug_error("ekg_connect_loop(), looks like session '%s' vanished!\n", c->session);
+	if (!s || !(s->connecting)) { /* session vanished! */
+		debug_error("ekg_connect_loop(), looks like%s session '%s' vanished!\n",
+				s ? " connecting on" : "", c->session);
 		ekg_connect_data_free(c);
 		return 0;
 	}
