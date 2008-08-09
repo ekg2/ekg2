@@ -5,7 +5,7 @@ plugin	= {
 	'type':			'protocol',
 	'state':		'stable',
 	'depends':		['expat'],
-	'optdepends':	['gnutls', 'openssl', 'zlib']
+	'optdepends':	[['gnutls', 'openssl'], 'zlib']
 	}
 
 Return('plugin')

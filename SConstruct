@@ -184,12 +184,17 @@ for plugin in list(plugins.keys()):
 
 	optdeps = []
 	for dep in info['optdepends']:
-		have_it = ExtTest(dep, ['libs', 'ccflags', 'linkflags'])
+		if not isinstance(dep, list):
+			dep = [dep]
+		for xdep in dep: # exclusive depends
+			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags'])
+			if have_it:
+				optdeps.append('%s' % (xdep))
+				break
+
 		if not have_it:
 			print '[%s] Optional dependency not satisfied: %s' % (plugin, dep)
-			optdeps.append('-%s' % (dep))
-		else:
-			optdeps.append('%s' % (dep))
+			optdeps.append('-%s' % (' -'.join(dep)))
 
 	if not ccflags:
 		ccflags = ['']
