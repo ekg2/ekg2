@@ -178,14 +178,15 @@ plugin_def = {
 	}
 
 plugins = env['PLUGINS']
-plugin_states = ['experimental', 'unstable', 'stable']
-plugins_state = 0
+plugin_states = ['nocompile', 'deprecated', 'experimental', 'unstable', 'stable']
+plugins_state = plugin_states.index('experimental')
 
 for st in plugin_states:
-	avplugins.remove(st)
+	if st in avplugins:
+		avplugins.remove(st)
 
 for st in reversed(plugin_states):
-	while plugins.count(st):
+	while st in plugins:
 		plugins.remove(st)
 		plugins_state = plugin_states.index(st)
 	plugins.extend(avplugins)
@@ -203,6 +204,16 @@ for plugin in list(plugins):
 	if plugin_states.index(info['state']) < plugins_state:
 		plugins.remove(plugin)
 		continue
+
+	if 'nocompile' in info:
+		plugins.remove(plugin)
+		print '[%s] Disabling due to build system incompatibility (probably junk in srcdir).' % (plugin)
+		continue
+	if info['depends']:
+		plugins.remove(plugin)
+		print '[%s] Unknown dependencies: %s' % (plugin, ', '.join(info['depends']))
+		continue
+
 	type = info['type']
 	if not pl.has_key(type):
 		pl[type] = []
@@ -214,7 +225,6 @@ if pl:
 		print '- %s: %s' % (type, ', '.join(plugs))
 
 conf.Finish()
-die(1)
 
 definefile.close()
 
