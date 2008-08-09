@@ -367,6 +367,9 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 			__age = itoa(age);		// XXX calculate birthyear?
 		if (gender)
 			__gender = (gender==2) ? "m" : "f";
+		/* XXX
+		 * status (0 - offline, 1 - online, 2 - non_webaware)
+		 */
 	} else {
 		debug_error("icq_snac_extension_userfound_common() broken\n");
 		auth = status = gender = age = 0;
@@ -436,7 +439,7 @@ cleanup:
 METASNAC_SUBHANDLER(icq_snac_extension_userfound) { return icq_snac_extension_userfound_common(s, buf, len, uid, retcode, 0); }
 METASNAC_SUBHANDLER(icq_snac_extension_userfound_last) { return icq_snac_extension_userfound_common(s, buf, len, uid, retcode, 1); }
 
-SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
+SNAC_SUBHANDLER(icq_snac_extension_replyreq_0x7da) {
 	struct {
 		uint16_t subtype;
 		uint8_t result;
@@ -446,11 +449,11 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 	metasnac_subhandler_t handler;
 
 	if (!ICQ_UNPACK(&pkt.data, "wc", &pkt.subtype, &pkt.result)) {
-		debug_error("icq_snac_extension_replyreq_2010() broken\n");
+		debug_error("icq_snac_extension_replyreq_0x7da() broken\n");
 		return -1;
 	}
 
-	debug_white("icq_snac_extension_replyreq_2010() subtype=%.4x result=%.2x (len=%d)\n", pkt.subtype, pkt.result, len);
+	debug_white("icq_snac_extension_replyreq_0x7da() subtype=%.4x result=%.2x (len=%d)\n", pkt.subtype, pkt.result, len);
 
 	switch (pkt.subtype) {
 	/* userinfo */
@@ -472,7 +475,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 	}
 
 	if (!handler) {
-		debug_error("icq_snac_extension_replyreq_2010() ignored: %.4x\n", pkt.subtype);
+		debug_error("icq_snac_extension_replyreq_0x7da() ignored: %.4x\n", pkt.subtype);
 		icq_hexdump(DEBUG_ERROR, pkt.data, len);
 		return 0;
 	} else {
@@ -546,8 +549,8 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 	}
 
 	switch (pkt.type) {
-		case 2010:
-			icq_snac_extension_replyreq_2010(s, tlv_data, tlv_len);		/* Miranda: STARTED */
+		case 0x7da:
+			icq_snac_extension_replyreq_0x7da(s, tlv_data, tlv_len);		/* Miranda: STARTED */
 			break;
 		default:
 			debug_error("icq_snac_extension_replyreq() METASNAC with unknown code: %x received.\n", pkt.type);
