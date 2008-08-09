@@ -5,7 +5,8 @@ Import('*')
 
 out = conf.PkgConfig('openssl', libs, ccflags, linkflags)
 defines['HAVE_OPENSSL'] = out
-defines['JABBER_HAVE_OPENSSL'] = out # stupid?
+if plugin == 'jabber':
+	defines['JABBER_HAVE_OPENSSL'] = out
 
 Return('out')
 

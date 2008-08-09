@@ -175,7 +175,7 @@ for plugin in list(plugins.keys()):
 	ccflags = []
 	linkflags = []
 	for dep in info['depends']:
-		if not ExtTest(dep, ['libs', 'ccflags', 'linkflags']):
+		if not ExtTest(dep, ['libs', 'ccflags', 'linkflags', 'plugin']):
 			print '[%s] Dependency not satisfied: %s' % (plugin, dep)
 			info['fail'] = True
 	if 'fail' in info:
@@ -187,7 +187,7 @@ for plugin in list(plugins.keys()):
 		if not isinstance(dep, list):
 			dep = [dep]
 		for xdep in dep: # exclusive depends
-			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags'])
+			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags', 'plugin'])
 			if have_it:
 				optdeps.append('%s' % (xdep))
 				break
