@@ -3,7 +3,7 @@
 #  Alternate build system for EKG2, unstable and unfinished yet
 #  (C) 2008 Michał Górny
 #
-#  configure.ac ported to: iconv
+#  configure.ac ported to: idn
 
 consts = {
 	'VERSION': 'SVN'
@@ -110,11 +110,6 @@ for func, files in compat_spec.items():
 ekg_libs = []
 if compat:
 	ekg_libs.append('compat')
-if not conf.CheckFunc('dlopen'):
-	if conf.CheckLib('dl', 'dlopen'):
-		ekg_libs.append('dl')
-	else:
-		die('dlopen not found!') # XXX: on windows, we use LoadLibraryA() instead
 
 platform_libs = {
 	'kvm':		'kvm_openfiles', # bsd
@@ -156,14 +151,24 @@ for type, headers in sys_types.items():
 		includes += '#include <%s>\n' % (inc)
 	writedef('HAVE_%s' % (type.upper()), conf.CheckType(type, includes))
 
-# iconv
-if conf.CheckFunc('iconv_open'):
-	writedef('HAVE_ICONV', True)
-elif conf.CheckLib('iconv', 'iconv_open'):
-	writedef('HAVE_ICONV', True)
-	ekg_libs.append('iconv')
-else:
-	writedef('HAVE_ICONV', False)
+possibly_libbized = {
+	'dlopen':	'dl',
+	'iconv':	'iconv'
+	}
+
+for func, lib in possibly_libbized.items():
+	if conf.CheckFunc(func):
+		ret = True
+	elif conf.CheckLib(lib, func):
+		ret = True
+		ekg_libs.append(lib)
+	else:
+		ret = False
+	writedef('HAVE_%s' % (func.upper()), ret)
+
+have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_check_version(NULL);')
+writedef('LIBIDN', have_idn)
+ekg_libs.append('idn')
 
 conf.Finish()
 
@@ -176,4 +181,4 @@ env.Program('ekg/ekg2', Glob('ekg/*.c'), LIBS = ekg_libs, LIBPATH = './compat')
 for plugin in env['PLUGINS']:
 	plugpath = 'plugins/%s' % (plugin)
 	Mkdir('%s/.libs' % (plugin))
-	env.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
+	env.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '', LIBS = [])
