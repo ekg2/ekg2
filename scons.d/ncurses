@@ -1,0 +1,24 @@
+
+# expat (used by jabber and feed)
+
+Import('*')
+
+if env['UNICODE']:
+	nc_lib = 'ncursesw'
+	out = conf.CheckLibWithHeader(nc_lib, ['ncursesw/ncurses.h'], 'C', 'initscr();')
+else:
+	nc_lib = 'ncurses'
+	out = conf.CheckLibWithHeader(nc_lib, ['ncurses/ncurses.h'], 'C', 'initscr();')
+	defines['HAVE_NCURSES_NCURSES_H'] = out
+	if not out:
+		out = conf.CheckLibWithHeader('ncurses', ['ncurses.h'], 'C', 'initscr();')
+		defines['HAVE_NCURSES_H'] = out
+
+if out:
+	libs.append(nc_lib)
+	defines['HAVE_NCURSES_ULC'] = conf.CheckLib(nc_lib, 'use_legacy_coding')
+	defines['HAVE_NCURSES_TERMINFO'] = conf.CheckLib(nc_lib, 'tigetstr')
+
+Return('out')
+
+# vim:ts=4:sts=4:syntax=python
