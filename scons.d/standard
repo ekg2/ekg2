@@ -48,7 +48,7 @@ for lib, funcs in platform_libs.items():
 	if not isinstance(funcs, list):
 		funcs = [funcs]
 	for func in funcs:
-		if conf.CheckLib(lib, func):
+		if conf.CheckLib(lib, func, None, None, 0):
 			ekg_libs.append(lib)
 			break
 
@@ -66,16 +66,16 @@ for type, headers in sys_types.items():
 for func, lib in possibly_libbized.items():
 	if conf.CheckFunc(func):
 		ret = True
-	elif conf.CheckLib(lib, func):
+	elif conf.CheckLib(lib, func, None, None, 0):
 		ret = True
 		ekg_libs.append(lib)
 	else:
 		ret = False
 	defines['HAVE_%s' % (func.upper())] = ret
 
-defines['HAVE_LANGINFO_CODESET'] = conf.CheckLibWithHeader(None, ['langinfo.h'], 'C', 'nl_langinfo(CODESET);')
+defines['HAVE_LANGINFO_CODESET'] = conf.CheckLibWithHeader(None, ['langinfo.h'], 'C', 'nl_langinfo(CODESET);'), 0
 
-have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_check_version(NULL);')
+have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_check_version(NULL);', 0)
 defines['LIBIDN'] = have_idn
 ekg_libs.append('idn')
 

@@ -5,19 +5,19 @@ Import('*')
 
 if env['UNICODE']:
 	nc_lib = 'ncursesw'
-	out = conf.CheckLibWithHeader(nc_lib, ['ncursesw/ncurses.h'], 'C', 'initscr();')
+	out = conf.CheckLibWithHeader(nc_lib, ['ncursesw/ncurses.h'], 'C', 'initscr();', 0)
 else:
 	nc_lib = 'ncurses'
-	out = conf.CheckLibWithHeader(nc_lib, ['ncurses/ncurses.h'], 'C', 'initscr();')
+	out = conf.CheckLibWithHeader(nc_lib, ['ncurses/ncurses.h'], 'C', 'initscr();', 0)
 	defines['HAVE_NCURSES_NCURSES_H'] = out
 	if not out:
-		out = conf.CheckLibWithHeader('ncurses', ['ncurses.h'], 'C', 'initscr();')
+		out = conf.CheckLibWithHeader('ncurses', ['ncurses.h'], 'C', 'initscr();', 0)
 		defines['HAVE_NCURSES_H'] = out
 
 if out:
 	libs.append(nc_lib)
-	defines['HAVE_NCURSES_ULC'] = conf.CheckLib(nc_lib, 'use_legacy_coding')
-	defines['HAVE_NCURSES_TERMINFO'] = conf.CheckLib(nc_lib, 'tigetstr')
+	defines['HAVE_NCURSES_ULC'] = conf.CheckLib(nc_lib, 'use_legacy_coding', None, None, 0)
+	defines['HAVE_NCURSES_TERMINFO'] = conf.CheckLib(nc_lib, 'tigetstr', None, None, 0)
 
 defines['HAVE_NCURSES'] = out # used by core, I think the use is stupid
 Return('out')
