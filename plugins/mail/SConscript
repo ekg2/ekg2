@@ -4,7 +4,8 @@
 plugin	= {
 	'type':			'misc',
 	'state':		'stable',
-	'depends':		[]
+	'depends':		[],
+#	'optdepends':	['inotify'] # XXX: use it ( ;
 	}
 
 Return('plugin')

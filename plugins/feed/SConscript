@@ -4,7 +4,8 @@
 plugin	= {
 	'type':			'protocol',
 	'state':		'unstable',
-	'depends':		['expat']
+	'depends':		[],
+	'optdepends':	['expat']
 	}
 
 Return('plugin')

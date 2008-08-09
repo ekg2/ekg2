@@ -4,7 +4,8 @@
 plugin	= {
 	'type':			'protocol',
 	'state':		'stable',
-	'depends':		['libgadu']
+	'depends':		['libgadu'],
+	'optdepends':	['gif', 'jpeg'] # pthread ?
 	}
 
 Return('plugin')

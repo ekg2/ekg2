@@ -4,7 +4,8 @@
 plugin	= {
 	'type':			'ui',
 	'state':		'stable',
-	'depends':		['ncurses']
+	'depends':		['ncurses'],
+	'optdepends':	['gpm', 'aspell']
 	}
 
 Return('plugin')
