@@ -1,5 +1,5 @@
 #!/usr/bin/scons
-# vim:set fileencoding=utf-8 :
+# vim:set fileencoding=utf-8
 #  Alternate build system for EKG2, unstable and unfinished yet
 #  (C) 2008 Michał Górny
 #
@@ -49,8 +49,9 @@ def CheckStructMember(context, struct, member, headers):
 
 opts = Options('options.cache')
 
-plugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')];
-opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'all', plugins))
+avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
+avplugins.extend(['stable', 'unstable', 'experimental'])
+opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'unstable', avplugins))
 opts.Add(BoolOption('UNICODE', 'Whether to build unicode version of ekg2', True))
 
 for var,path in dirs.items():
@@ -170,7 +171,50 @@ have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_che
 writedef('LIBIDN', have_idn)
 ekg_libs.append('idn')
 
+plugin_def = {
+	'type':			'misc',
+	'state':		'experimental',
+	'depends':		[]
+	}
+
+plugins = env['PLUGINS']
+plugin_states = ['experimental', 'unstable', 'stable']
+plugins_state = 0
+
+for st in plugin_states:
+	avplugins.remove(st)
+
+for st in reversed(plugin_states):
+	while plugins.count(st):
+		plugins.remove(st)
+		plugins_state = plugin_states.index(st)
+	plugins.extend(avplugins)
+
+plugins = {}.fromkeys(plugins).keys() # uniq()
+plugins.sort()
+
+pl = {}
+
+for plugin in list(plugins):
+	plugpath = 'plugins/%s' % (plugin)
+	info = SConscript('%s/SConscript' % (plugpath))
+	if not info:
+		info = plugin_def
+	if plugin_states.index(info['state']) < plugins_state:
+		plugins.remove(plugin)
+		continue
+	type = info['type']
+	if not pl.has_key(type):
+		pl[type] = []
+	pl[type].append(plugin)
+
+if pl:
+	print 'Enabled plugins:'
+	for type, plugs in pl.items():
+		print '- %s: %s' % (type, ', '.join(plugs))
+
 conf.Finish()
+die(1)
 
 definefile.close()
 
@@ -178,7 +222,9 @@ StaticLibrary('compat/compat', compat)
 
 env.Program('ekg/ekg2', Glob('ekg/*.c'), LIBS = ekg_libs, LIBPATH = './compat')
 
-for plugin in env['PLUGINS']:
+for plugin in plugins:
 	plugpath = 'plugins/%s' % (plugin)
 	Mkdir('%s/.libs' % (plugin))
 	env.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '', LIBS = [])
+
+# vim:ts=4:sts=4:syntax=python
