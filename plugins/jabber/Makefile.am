@@ -1,4 +1,4 @@
-EXTRA_DIST = $(EXTRA_DIST_DOC) jabber_handlers_iq_error.c jabber_handlers_iq_get.c jabber_handlers_iq_result.c jabber_handlers_tlen.c
+EXTRA_DIST = $(EXTRA_DIST_DOC) jabber_handlers_iq_error.inc jabber_handlers_iq_get.inc jabber_handlers_iq_result.inc jabber_handlers_tlen.inc
 
 EXTRA_DIST_DOC = commands-pl.txt session-pl.txt commands-en.txt session-en.txt
 

@@ -678,7 +678,7 @@ static const struct jabber_generic_handler jabber_handlers[] =
 	{ NULL,			NULL }
 };
 
-#include "jabber_handlers_tlen.c"
+#include "jabber_handlers_tlen.inc"
 
 void jabber_handle(void *data, xmlnode_t *n) {
 	session_t *s = (session_t *) data;
@@ -1244,9 +1244,9 @@ static const struct jabber_iq_generic_handler *jabber_iq_find_handler(const stru
 	return NULL;
 }
 
-#include "jabber_handlers_iq_error.c"
-#include "jabber_handlers_iq_get.c"
-#include "jabber_handlers_iq_result.c"
+#include "jabber_handlers_iq_error.inc"
+#include "jabber_handlers_iq_get.inc"
+#include "jabber_handlers_iq_result.inc"
 
 JABBER_HANDLER(jabber_handle_iq) {
 	jabber_private_t *j = s->priv;
