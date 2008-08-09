@@ -29,4 +29,6 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type);
 #define MIRANDAOK 1
 #define MIRANDA_COMPILANT_CLIENT 1
 
+#define ICQ_DEBUG_UNUSED_INFORMATIONS 1
+
 #endif

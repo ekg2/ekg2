@@ -37,12 +37,92 @@ SNAC_SUBHANDLER(icq_snac_location_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_location_replyreq) {
+	/*
+	 * Handle SNAC(0x2,0x3) -- Limitations/params response
+	 *
+	 */
+
 	debug_function("icq_snac_location_replyreq()\n");
+
+#ifdef ICQ_DEBUG_UNUSED_INFORMATIONS
+	struct icq_tlv_list *tlvs;
+	icq_tlv_t *t;
+
+	tlvs = icq_unpack_tlvs(buf, len, 0);
+	for (t = tlvs; t; t = t->next) {
+		if (tlv_length_check("icq_snac_location_replyreq()", t, 2))
+			continue;
+		switch (t->type) {
+			case 0x01:
+				debug_white("Maximum signature length for this user: %d\n", t->nr);
+				break;
+			case 0x02:
+				debug_white("Number of full UUID capabilities allowed: %d\n", t->nr);
+				break;
+			case 0x03:
+				debug_white("Maximum number of email addresses to look up at once: %d\n", t->nr);
+				break;
+			case 0x04:
+				debug_white("Largest CERT length for end to end encryption: %d\n", t->nr);
+				break;
+			case 0x05:
+				debug_white("Number of short UUID capabilities allowed: %d\n", t->nr);
+				break;
+			default:
+				debug_error("icq_snac_location_replyreq() Unknown type=0x%x\n", t->type);
+		}
+	}
+	icq_tlvs_destroy(&tlvs);
+#endif
 	return 0;
 }
 
 SNAC_SUBHANDLER(SNAC_LOC_06) {
+	/*
+	 * Handle SNAC(0x2,0x6) -- User information response
+	 *
+	 */
 	debug_error("SNAC_LOC_06() XXX\n");
+
+	return -3;
+}
+
+SNAC_SUBHANDLER(SNAC_LOC_08) {
+	/*
+	 * Handle SNAC(0x2,0x8) -- Watcher notification
+	 *
+	 */
+	debug_error("SNAC_LOC_08() XXX\n");
+
+	return -3;
+}
+
+SNAC_SUBHANDLER(SNAC_LOC_0A) {
+	/*
+	 * Handle SNAC(0x2,0xa) -- Update directory info reply
+	 *
+	 */
+	debug_error("SNAC_LOC_0A() XXX\n");
+
+	return -3;
+}
+
+SNAC_SUBHANDLER(SNAC_LOC_0C) {
+	/*
+	 * Handle SNAC(0x2,0xc) -- Reply to SNAC(02,0B) ???
+	 *
+	 */
+	debug_error("SNAC_LOC_0C() XXX\n");
+
+	return -3;
+}
+
+SNAC_SUBHANDLER(SNAC_LOC_10) {
+	/*
+	 * Handle SNAC(0x2,0x10) -- Update user directory interests reply
+	 *
+	 */
+	debug_error("SNAC_LOC_10() XXX\n");
 
 	return -3;
 }
@@ -54,6 +134,10 @@ SNAC_HANDLER(icq_snac_location_handler) {
 		case 0x01: handler = icq_snac_location_error;	break;
 		case 0x03: handler = icq_snac_location_replyreq; break;	/* Miranda: OK */
 		case 0x06: handler = SNAC_LOC_06;		break;
+		case 0x08: handler = SNAC_LOC_08;		break;
+		case 0x0A: handler = SNAC_LOC_0A;		break;
+		case 0x0C: handler = SNAC_LOC_0C;		break;
+		case 0x10: handler = SNAC_LOC_10;		break;
 		default:   handler = NULL;			break;
 	}
 
