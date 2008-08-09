@@ -186,7 +186,7 @@ conf.Finish()
 
 writedefines()
 
-env.Program('ekg/ekg2', Glob('ekg/*.c'), LIBS = ekg_libs, LIBPATH = './compat')
+env.Program('ekg/ekg2', Glob('ekg/*.c'), LIBS = ekg_libs, LIBPATH = './compat', LINKFLAGS = '-Wl,--export-dynamic')
 
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
