@@ -23,7 +23,7 @@ mapped = {
 plugin_states = ['nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable']
 plugin_symbols = ['!', '!', '?', '*', '~', '']
 
-import glob, sys
+import glob, sys, subprocess
 
 def die(reason):
 	print reason
@@ -58,6 +58,35 @@ def CheckStructMember(context, struct, member, headers):
 	result = context.TryCompile(testprog, 'C')
 	context.Result(result)
 	return not not result
+
+def StupidPythonExec(cmd):
+	p		= subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, stdin = subprocess.PIPE)
+	stdout	= p.stdout.read().strip()
+	stderr	= p.stderr.read().strip()
+	ret		= p.wait()
+	
+	return ret, stdout, stderr
+
+def PkgConfig(context, pkg, libs, ccflags, linkflags):
+	context.Message('Asking pkg-config about %s... ' % (pkg))
+	res = StupidPythonExec('pkg-config --libs-only-l %s' % (pkg))
+	ret = not res[0]
+	if ret:
+		libs.extend([s[2:] for s in res[1].split()])
+		res = StupidPythonExec('pkg-config --libs-only-L %s' % (pkg))
+		ret = not res[0]
+		if ret:
+			libs.extend([s[2:] for s in res[1].split()])
+			res = StupidPythonExec('pkg-config --libs-only-other %s' % (pkg))
+			ret = not res[0]
+			if ret:
+				linkflags.append(res[1])
+				res = StupidPythonExec('pkg-config --cflags %s' % (pkg))
+				ret = not res[0]
+				if ret:
+					ccflags.append(res[1])
+	context.Result(ret)
+	return ret
 
 ExtTestsCache = {}
 
@@ -98,7 +127,7 @@ for var,val in consts.items():
 for var,val in mapped.items():
 	defines[val] = env[var]
 
-conf = env.Configure(custom_tests = {'CheckStructMember': CheckStructMember})
+conf = env.Configure(custom_tests = {'CheckStructMember': CheckStructMember, 'PkgConfig': PkgConfig})
 ekg_libs = []
 
 ExtTest('standard', ['ekg_libs'])
@@ -148,8 +177,10 @@ for plugin in list(plugins.keys()):
 		continue
 
 	libs = []
+	ccflags = []
+	linkflags = []
 	for dep in info['depends']:
-		if not ExtTest(dep, ['libs']):
+		if not ExtTest(dep, ['libs', 'ccflags', 'linkflags']):
 			print '[%s] Dependency not satisfied: %s' % (plugin, dep)
 			info['fail'] = True
 	if 'fail' in info:
@@ -158,15 +189,21 @@ for plugin in list(plugins.keys()):
 
 	optdeps = []
 	for dep in info['optdepends']:
-		have_it = ExtTest(dep, ['libs'])
+		have_it = ExtTest(dep, ['libs', 'ccflags', 'linkflags'])
 		if not have_it:
 			print '[%s] Optional dependency not satisfied: %s' % (plugin, dep)
 			optdeps.append('-%s' % (dep))
 		else:
 			optdeps.append('%s' % (dep))
 
+	if not ccflags:
+		ccflags = ['']
+	if not linkflags:
+		linkflags = ['']
 	plugins[plugin] = {
-		'libs':	libs
+		'libs':			libs,
+		'ccflags':		ccflags.pop(),
+		'linkflags':	linkflags.pop()
 		}
 
 	type = info['type']
@@ -197,18 +234,27 @@ for k in dirs.keys():
 	print '- %s: %s' % (k, env[k])
 print
 print 'Build environment:'
-for k in ['CC', 'CCFLAGS', 'LINK', 'LINKFLAGS']:
+for k in ['CC', 'CCFLAGS', 'LIBS', 'LINK', 'LINKFLAGS']:
 	print '- %s: %s' % (k, env[k])
 
 conf.Finish()
 
 writedefines()
 
-env.Program('ekg/ekg2', Glob('ekg/*.c'), LIBS = ekg_libs, LIBPATH = './compat', LINKFLAGS = '-Wl,--export-dynamic')
+cenv = env.Clone()
+cenv.Append(LIBS = ekg_libs)
+cenv.Append(LIBPATH = 'compat')
+cenv.Append(LINKFLAGS = '-Wl,--export-dynamic')
+cenv.Program('ekg/ekg2', Glob('ekg/*.c'))
 
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
 	Mkdir('%s/.libs' % (plugin))
-	env.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '', LIBS = data['libs'])
+
+	penv = env.Clone()
+	penv.Append(LIBS = data['libs'])
+	penv.Append(CCFLAGS = data['ccflags'])
+	penv.Append(LINKFLAGS = data['linkflags'])
+	penv.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
 
 # vim:ts=4:sts=4:syntax=python
