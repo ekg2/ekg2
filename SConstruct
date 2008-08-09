@@ -10,10 +10,11 @@ consts = {
 	'SHARED_LIBS':	True
 	}
 dirs = {
+	'PREFIX':		'/usr',
 	'SYSCONFDIR':	'/etc',
-	'LOCALEDIR':	'/usr/share/locale',
-	'DATADIR':		'/usr/share',
-	'PLUGINDIR':	'/usr/lib/ekg2/plugins'
+	'LOCALEDIR':	'$PREFIX/share/locale',
+	'DATADIR':		'$PREFIX/share',
+	'PLUGINDIR':	'$PREFIX/lib/ekg2/plugins'
 	}
 mapped = {
 	'UNICODE':		'USE_UNICODE'
@@ -88,6 +89,9 @@ env.Help(opts.GenerateHelpText(env))
 defines = {}
 
 for var in dirs.keys():
+	if var == 'PREFIX':
+		continue
+	env[var] = env.subst(env[var])
 	defines[var] = env[var]
 for var,val in consts.items():
 	defines[var] = val
@@ -176,11 +180,25 @@ for plugin in list(plugins.keys()):
 
 	pl[type].append('%s%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin, optdeps))
 
+# some fancy output
+
 print
 if pl:
 	print 'Enabled plugins:'
 	for type, plugs in pl.items():
 		print '- %s: %s' % (type, ', '.join(plugs))
+	print
+
+print 'Options:'
+print '- unicode: %s' % (env['UNICODE'])
+print
+print 'Paths:'
+for k in dirs.keys():
+	print '- %s: %s' % (k, env[k])
+print
+print 'Build environment:'
+for k in ['CC', 'CCFLAGS', 'LINK', 'LINKFLAGS']:
+	print '- %s: %s' % (k, env[k])
 
 conf.Finish()
 
