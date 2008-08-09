@@ -78,7 +78,7 @@ opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'unstable', avplugins
 opts.Add(BoolOption('UNICODE', 'Whether to build unicode version of ekg2', True))
 
 for var,path in dirs.items():
-	opts.Add(PathOption(var, '', path))
+	opts.Add(PathOption(var, '', path, PathOption.PathAccept))
 
 env = Environment()
 env.Append(CCFLAGS = ' -I.')
