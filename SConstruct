@@ -69,19 +69,19 @@ def StupidPythonExec(cmd):
 
 def PkgConfig(context, pkg, libs, ccflags, linkflags):
 	context.Message('Asking pkg-config about %s... ' % (pkg))
-	res = StupidPythonExec('pkg-config --libs-only-l %s' % (pkg))
+	res = StupidPythonExec('pkg-config --libs-only-l "%s"' % (pkg))
 	ret = not res[0]
 	if ret:
 		libs.extend([s[2:] for s in res[1].split()])
-		res = StupidPythonExec('pkg-config --libs-only-L %s' % (pkg))
+		res = StupidPythonExec('pkg-config --libs-only-L "%s"' % (pkg))
 		ret = not res[0]
 		if ret:
 			libs.extend([s[2:] for s in res[1].split()])
-			res = StupidPythonExec('pkg-config --libs-only-other %s' % (pkg))
+			res = StupidPythonExec('pkg-config --libs-only-other "%s"' % (pkg))
 			ret = not res[0]
 			if ret:
 				linkflags.append(res[1])
-				res = StupidPythonExec('pkg-config --cflags %s' % (pkg))
+				res = StupidPythonExec('pkg-config --cflags "%s"' % (pkg))
 				ret = not res[0]
 				if ret:
 					ccflags.append(res[1])

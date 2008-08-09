@@ -4,8 +4,8 @@
 Import('*')
 
 out = conf.PkgConfig('openssl', libs, ccflags, linkflags)
-
-# XXX: search for non pkg-config installation?
+defines['HAVE_OPENSSL'] = out
+defines['JABBER_HAVE_OPENSSL'] = out # stupid?
 
 Return('out')
 

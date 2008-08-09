@@ -4,8 +4,8 @@
 Import('*')
 
 out = conf.PkgConfig('gnutls > 1.0.0', libs, ccflags, linkflags)
-
-# XXX: search for non pkg-config installation?
+defines['HAVE_GNUTLS'] = out
+defines['JABBER_HAVE_GNUTLS'] = out # stupid?
 
 Return('out')
 
