@@ -1,3 +1,5 @@
+#if 0
+
 /*
  * Unused stuff.
  *
@@ -24,3 +26,4 @@ command_t *command_find(const char *name)
         return NULL;
 }
 
+#endif

@@ -1,3 +1,4 @@
+#if 0
 /*
  * Unused stuff.
  *
@@ -42,4 +43,4 @@ static char *irc_toupper_int(char *buf, int casemapping)
 static void resolver_child_handler(child_t *c, int pid, const char *name, int status, void *priv) {
 	debug("(%s) resolver [%d] exited with %d\n", name, pid, status);
 }
-
+#endif

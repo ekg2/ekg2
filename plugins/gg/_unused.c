@@ -1,3 +1,4 @@
+#if 0
 /*
  * Unused stuff.
  *
@@ -22,4 +23,4 @@ static void gg_dcc_close_handler(dcc_t *d)
 
 	gg_dcc_free(g);
 }
-
+#endif
