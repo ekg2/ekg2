@@ -6,12 +6,14 @@
 EnsureSConsVersion(0, 98)
 
 consts = {
-	'VERSION': 'SVN'
+	'VERSION':		'SVN',
+	'SHARED_LIBS':	True
 	}
 dirs = {
 	'SYSCONFDIR':	'/etc',
 	'LOCALEDIR':	'/usr/share/locale',
-	'DATADIR':		'/usr/share'
+	'DATADIR':		'/usr/share',
+	'PLUGINDIR':	'/usr/lib/ekg2/plugins'
 	}
 mapped = {
 	'UNICODE':		'USE_UNICODE'
