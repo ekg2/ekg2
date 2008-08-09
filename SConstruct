@@ -2,8 +2,8 @@
 # vim:set fileencoding=utf-8
 #  Alternate build system for EKG2, unstable and unfinished yet
 #  (C) 2008 Michał Górny
-#
-#  configure.ac ported to: idn
+
+EnsureSConsVersion(0, 98)
 
 consts = {
 	'VERSION': 'SVN'
@@ -61,7 +61,7 @@ ExtTestsCache = {}
 def ExtTest(name, addexports = []):
 	if name in ExtTestsCache.keys():
 		return ExtTestsCache[name]
-	exports = ['conf', 'defines']
+	exports = ['conf', 'defines', 'env']
 	exports.extend(addexports)
 	ret = SConscript('scons.d/%s' % (name), exports)
 	ExtTestsCache[name] = ret
@@ -96,7 +96,7 @@ conf = env.Configure(custom_tests = {'CheckStructMember': CheckStructMember})
 ekg_libs = []
 
 ExtTest('standard', ['ekg_libs'])
-ExtTest('compat', ['ekg_libs', 'env'])
+ExtTest('compat', ['ekg_libs'])
 
 plugin_def = {
 	'type':			'misc',
@@ -149,9 +149,15 @@ for plugin in list(plugins.keys()):
 	if 'fail' in info:
 		del plugins[plugin]
 		continue
+
+	optdeps = []
 	for dep in info['optdepends']:
-		if not ExtTest(dep, ['libs']):
+		have_it = ExtTest(dep, ['libs'])
+		if not have_it:
 			print '[%s] Optional dependency not satisfied: %s' % (plugin, dep)
+			optdeps.append('-%s' % (dep))
+		else:
+			optdeps.append('%s' % (dep))
 
 	plugins[plugin] = {
 		'libs':	libs
@@ -160,8 +166,15 @@ for plugin in list(plugins.keys()):
 	type = info['type']
 	if not pl.has_key(type):
 		pl[type] = []
-	pl[type].append('%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin))
 
+	if optdeps:
+		optdeps = ' [%s]' % (' '.join(optdeps))
+	else:
+		optdeps = ''
+
+	pl[type].append('%s%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin, optdeps))
+
+print
 if pl:
 	print 'Enabled plugins:'
 	for type, plugs in pl.items():
