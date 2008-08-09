@@ -118,12 +118,12 @@ for st in reversed(plugin_states):
 		plugins_state = plugin_states.index(st)
 	plugins.extend(avplugins)
 
-plugins = {}.fromkeys(plugins).keys() # uniq()
 plugins.sort()
+plugins = {}.fromkeys(plugins)
 
 pl = {}
 
-for plugin in list(plugins):
+for plugin in list(plugins.keys()):
 	plugpath = 'plugins/%s' % (plugin)
 	info = SConscript('%s/SConscript' % (plugpath))
 	if not info:
@@ -133,20 +133,29 @@ for plugin in list(plugins):
 			if not k in info:
 				info[k] = plugin_def[k]
 	if plugin_states.index(info['state']) < plugins_state:
-		plugins.remove(plugin)
+		del plugins[plugin]
 		continue
 
 	if 'nocompile' in info:
-		plugins.remove(plugin)
+		del plugins[plugin]
 		print '[%s] Disabling due to build system incompatibility (probably junk in srcdir).' % (plugin)
 		continue
+
+	libs = []
 	for dep in info['depends']:
-		if not ExtTest(dep):
-			plugins.remove(plugin)
+		if not ExtTest(dep, ['libs']):
 			print '[%s] Dependency not satisfied: %s' % (plugin, dep)
 			info['fail'] = True
 	if 'fail' in info:
+		del plugins[plugin]
 		continue
+	for dep in info['optdepends']:
+		if not ExtTest(dep, ['libs']):
+			print '[%s] Optional dependency not satisfied: %s' % (plugin, dep)
+
+	plugins[plugin] = {
+		'libs':	libs
+		}
 
 	type = info['type']
 	if not pl.has_key(type):
@@ -164,9 +173,9 @@ writedefines()
 
 env.Program('ekg/ekg2', Glob('ekg/*.c'), LIBS = ekg_libs, LIBPATH = './compat')
 
-for plugin in plugins:
+for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
 	Mkdir('%s/.libs' % (plugin))
-	env.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '', LIBS = [])
+	env.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '', LIBS = data['libs'])
 
 # vim:ts=4:sts=4:syntax=python
