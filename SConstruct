@@ -88,15 +88,10 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags):
 	context.Result(ret)
 	return ret
 
-ExtTestsCache = {}
-
 def ExtTest(name, addexports = []):
-	if name in ExtTestsCache.keys():
-		return ExtTestsCache[name]
 	exports = ['conf', 'defines', 'env']
 	exports.extend(addexports)
 	ret = SConscript('scons.d/%s' % (name), exports)
-	ExtTestsCache[name] = ret
 	return ret
 
 opts = Options('options.cache')
