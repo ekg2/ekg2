@@ -6,6 +6,7 @@
  *
  * ekg2 port:
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -317,9 +318,13 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	char *email = NULL;
 	char *full_name;
 	char *temp;
+	const char *__age = NULL;
+	const char *__gender = "";
+	const char *__active = "";
 
 	uint32_t uin;
 	uint16_t len2;
+	uint8_t auth, status, gender, age;
 
 	debug_function("icq_snac_extension_userfound()\n");
 
@@ -357,10 +362,15 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	else
 		full_name = xstrdup(first_name[0] ? first_name : last_name);
 
-#define birthyear	NULL
-#define gender		""
-#define active		""
-
+	if (ICQ_UNPACK(&buf, "cc x cc", &auth, &status, &gender, &age)) {
+		if (age)
+			__age = itoa(age);		// XXX calculate birthyear?
+		if (gender)
+			__gender = (gender==2) ? "m" : "f";
+	} else {
+		debug_error("icq_snac_extension_userfound_common() broken\n");
+		auth = status = gender = age = 0;
+	}
 	/* XXX, "search_results_multi", "search_results_single" */
 	/* XXX, instead of email we had city */
 	/* XXX, some time ago i was thinking to of function which
@@ -384,11 +394,10 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	 */
 
 	print_info(NULL, s, "search_results_multi", itoa(uin), full_name, nickname, email,
-			birthyear ? birthyear : ("-"), gender, active);
+			__age ? __age : ("-"), __gender, __active);
 
 	xfree(full_name);
 
-	/* ?WO? gender, age, etc... ??? */
 	icq_hexdump(DEBUG_WHITE, buf, len);
 #if 0
 	// Authentication needed flag
@@ -480,6 +489,11 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_2010) {
 }
 
 SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
+	/*
+	 * Handle SNAC(0x15, 0x3) -- Meta information response
+	 *
+	 */
+
 	struct {
 		uint16_t len;
 		uint32_t uid;

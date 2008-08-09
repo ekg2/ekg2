@@ -1,5 +1,6 @@
 /*
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -1004,7 +1005,7 @@ static COMMAND(icq_command_search) {
 	const char *last_name = NULL;
 	const char *first_name = NULL;
 	int only_online = 0;
-	int gender = 0;	/* XXX? 1-> female, 2->male. check. */
+	int gender = 0;
 
 	char **argv;
 	int i;

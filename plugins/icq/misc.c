@@ -382,6 +382,12 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 				len -= 2;
 				break;
 
+			case ' ':	/* skip whitespaces */
+			case 0x09:
+			case 0x0A:
+			case 0x0D:
+				break;
+
 			default:
 				debug_error("icq_unpack() unknown format: %c\n", *format);
 				goto err2;
