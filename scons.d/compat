@@ -9,24 +9,24 @@ compat_spec = {
 		'getopt_long': ['getopt', 'getopt1']
 	}
 
-#compat = []
+compat = []
 
 for func in compat_funcs:
 	have_it = conf.CheckFunc(func)
 	defines['HAVE_%s' % (func.upper())] = have_it
 	if not have_it:
-		compat.append('compat/%s.c' % (func))
+		compat.append('../compat/%s.c' % (func))
 
 for func, files in compat_spec.items():
 	have_it = conf.CheckFunc(func)
 	defines['HAVE_%s' % (func.upper())] = have_it
 	if not have_it:
 		for file in files:
-			compat.append('compat/%s.c' % (file))
+			compat.append('../compat/%s.c' % (file))
 
 if compat:
 	ekg_libs.append('compat')
-#	StaticLibrary('compat/compat', compat)
+	env.StaticLibrary('../compat/compat', compat)
 
 ret = True
 Return('ret')

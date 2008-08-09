@@ -17,6 +17,9 @@ mapped = {
 	'UNICODE':		'USE_UNICODE'
 	}
 
+plugin_states = ['nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable']
+plugin_symbols = ['!', '!', '?', '*', '~', '']
+
 import glob, sys
 
 def die(reason):
@@ -53,16 +56,21 @@ def CheckStructMember(context, struct, member, headers):
 	context.Result(result)
 	return not not result
 
+ExtTestsCache = {}
+
 def ExtTest(name, addexports = []):
+	if name in ExtTestsCache.keys():
+		return ExtTestsCache[name]
 	exports = ['conf', 'defines']
 	exports.extend(addexports)
 	ret = SConscript('scons.d/%s' % (name), exports)
+	ExtTestsCache[name] = ret
 	return ret
 
 opts = Options('options.cache')
 
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
-avplugins.extend(['stable', 'unstable', 'experimental'])
+avplugins.extend(plugin_states)
 opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'unstable', avplugins))
 opts.Add(BoolOption('UNICODE', 'Whether to build unicode version of ekg2', True))
 
@@ -88,18 +96,17 @@ conf = env.Configure(custom_tests = {'CheckStructMember': CheckStructMember})
 ekg_libs = []
 
 ExtTest('standard', ['ekg_libs'])
-compat = []
-ExtTest('compat', ['ekg_libs', 'compat'])
+ExtTest('compat', ['ekg_libs', 'env'])
 
 plugin_def = {
 	'type':			'misc',
-	'state':		'experimental',
-	'depends':		[]
+	'state':		'unknown',
+	'depends':		[],
+	'optdepends':	[]
 	}
 
 plugins = env['PLUGINS']
-plugin_states = ['nocompile', 'deprecated', 'experimental', 'unstable', 'stable']
-plugins_state = plugin_states.index('experimental')
+plugins_state = 0
 
 for st in plugin_states:
 	if st in avplugins:
@@ -121,6 +128,10 @@ for plugin in list(plugins):
 	info = SConscript('%s/SConscript' % (plugpath))
 	if not info:
 		info = plugin_def
+	else:
+		for k in plugin_def.keys():
+			if not k in info:
+				info[k] = plugin_def[k]
 	if plugin_states.index(info['state']) < plugins_state:
 		plugins.remove(plugin)
 		continue
@@ -129,15 +140,18 @@ for plugin in list(plugins):
 		plugins.remove(plugin)
 		print '[%s] Disabling due to build system incompatibility (probably junk in srcdir).' % (plugin)
 		continue
-	if info['depends']:
-		plugins.remove(plugin)
-		print '[%s] Unknown dependencies: %s' % (plugin, ', '.join(info['depends']))
+	for dep in info['depends']:
+		if not ExtTest(dep):
+			plugins.remove(plugin)
+			print '[%s] Dependency not satisfied: %s' % (plugin, dep)
+			info['fail'] = True
+	if 'fail' in info:
 		continue
 
 	type = info['type']
 	if not pl.has_key(type):
 		pl[type] = []
-	pl[type].append(plugin)
+	pl[type].append('%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin))
 
 if pl:
 	print 'Enabled plugins:'
@@ -147,9 +161,6 @@ if pl:
 conf.Finish()
 
 writedefines()
-
-if compat:
-	StaticLibrary('compat/compat', compat)
 
 env.Program('ekg/ekg2', Glob('ekg/*.c'), LIBS = ekg_libs, LIBPATH = './compat')
 
