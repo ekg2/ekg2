@@ -23,7 +23,7 @@ def die(reason):
 	print reason
 	sys.exit(1)
 
-def writedef(var, val):
+def writedef(definefile, var, val):
 	if val is None:
 		definefile.write('#undef %s\n' % (var))
 	if isinstance(val, str):
@@ -36,6 +36,12 @@ def writedef(var, val):
 	elif isinstance(val, int):
 		definefile.write(('#define %s %d\n' % (var, val)))
 
+def writedefines():
+	definefile = open('ekg2-config.h', 'w')
+	for k, v in defines.items():
+		writedef(definefile, k, v)
+	definefile.close()
+
 def CheckStructMember(context, struct, member, headers):
 	context.Message('Checking for %s.%s... ' % (struct, member))
 	testprog = ''
@@ -46,6 +52,12 @@ def CheckStructMember(context, struct, member, headers):
 	result = context.TryCompile(testprog, 'C')
 	context.Result(result)
 	return not not result
+
+def ExtTest(name, addexports = []):
+	exports = ['conf', 'defines']
+	exports.extend(addexports)
+	ret = SConscript('scons.d/%s' % (name), exports)
+	return ret
 
 opts = Options('options.cache')
 
@@ -63,113 +75,21 @@ opts.Update(env)
 opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
 
-definefile = open('ekg2-config.h', 'w')
+defines = {}
+
 for var in dirs.keys():
-	writedef(var, env[var])
+	defines[var] = env[var]
 for var,val in consts.items():
-	writedef(var, val)
+	defines[var] = val
 for var,val in mapped.items():
-	writedef(val, env[var])
+	defines[val] = env[var]
 
 conf = env.Configure(custom_tests = {'CheckStructMember': CheckStructMember})
-
-std_funcs = [
-	'inet_aton', 'inet_ntop', 'inet_pton', 'getaddrinfo',
-	'utimes', 'flock',
-	'mkstemp'
-	]
-
-std_headers = [
-	'regex.h'
-	]
-
-compat_funcs = ['strfry', 'strlcat', 'strlcpy', 'strndup', 'strnlen', 'scandir']
-
-compat_spec = {
-		'getopt_long': ['getopt', 'getopt1']
-	}
-
-for func in std_funcs:
-	writedef('HAVE_%s' % (func.upper()), conf.CheckFunc(func))
-for header in std_headers:
-	writedef('HAVE_%s' % (header.upper().replace('.', '_')), conf.CheckHeader(header))
-
-compat = []
-for func in compat_funcs:
-	have_it = conf.CheckFunc(func)
-	writedef('HAVE_%s' % (func.upper()), have_it)
-	if not have_it:
-		compat.append('compat/%s.c' % (func))
-
-for func, files in compat_spec.items():
-	have_it = conf.CheckFunc(func)
-	writedef('HAVE_%s' % (func.upper()), have_it)
-	if not have_it:
-		for file in files:
-			compat.append('compat/%s.c' % (file))
-
 ekg_libs = []
-if compat:
-	ekg_libs.append('compat')
 
-platform_libs = {
-	'kvm':		'kvm_openfiles', # bsd
-
-	'nsl':		'gethostbyname', # sunos
-	'socket':	'socket',
-	'rt':		'sched_yield',
-
-	'bind':		['inet_addr', '__inet_addr'],
-	'wsock32':	None
-	}
-
-for lib, funcs in platform_libs.items():
-	if not isinstance(funcs, list):
-		funcs = [funcs]
-	for func in funcs:
-		if conf.CheckLib(lib, func):
-			ekg_libs.append(lib)
-			break
-
-
-	# XXX: needs testing
-struct_members = {
-	'struct kinfo_proc':	['ki_size', 'sys/param.h', 'sys/user.h']
-	}
-
-for struct, headers in struct_members.items():
-	member = headers.pop(0)
-	writedef('HAVE_%s_%s' % (struct.upper().replace(' ', '_'), member.upper().replace('.', '_')),
-			conf.CheckStructMember(struct, member, headers))
-
-sys_types = {
-	'socklen_t':			['sys/types.h', 'sys/socket.h']
-	}
-
-for type, headers in sys_types.items():
-	includes = ''
-	for inc in headers:
-		includes += '#include <%s>\n' % (inc)
-	writedef('HAVE_%s' % (type.upper()), conf.CheckType(type, includes))
-
-possibly_libbized = {
-	'dlopen':	'dl',
-	'iconv':	'iconv'
-	}
-
-for func, lib in possibly_libbized.items():
-	if conf.CheckFunc(func):
-		ret = True
-	elif conf.CheckLib(lib, func):
-		ret = True
-		ekg_libs.append(lib)
-	else:
-		ret = False
-	writedef('HAVE_%s' % (func.upper()), ret)
-
-have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_check_version(NULL);')
-writedef('LIBIDN', have_idn)
-ekg_libs.append('idn')
+ExtTest('standard', ['ekg_libs'])
+compat = []
+ExtTest('compat', ['ekg_libs', 'compat'])
 
 plugin_def = {
 	'type':			'misc',
@@ -226,9 +146,10 @@ if pl:
 
 conf.Finish()
 
-definefile.close()
+writedefines()
 
-StaticLibrary('compat/compat', compat)
+if compat:
+	StaticLibrary('compat/compat', compat)
 
 env.Program('ekg/ekg2', Glob('ekg/*.c'), LIBS = ekg_libs, LIBPATH = './compat')
 

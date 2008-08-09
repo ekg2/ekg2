@@ -1,0 +1,83 @@
+
+# Standard checks for ekg2 core
+
+Import('*')
+
+std_funcs = [
+	'inet_aton', 'inet_ntop', 'inet_pton', 'getaddrinfo',
+	'utimes', 'flock',
+	'mkstemp'
+	]
+
+std_headers = [
+	'regex.h'
+	]
+
+platform_libs = {
+	'kvm':		'kvm_openfiles', # bsd
+
+	'nsl':		'gethostbyname', # sunos
+	'socket':	'socket',
+	'rt':		'sched_yield',
+
+	'bind':		['inet_addr', '__inet_addr'], # beos
+	'wsock32':	None # win32
+	}
+
+	# XXX: needs testing
+struct_members = {
+	'struct kinfo_proc':	['ki_size', 'sys/param.h', 'sys/user.h']
+	}
+
+sys_types = {
+	'socklen_t':			['sys/types.h', 'sys/socket.h']
+	}
+
+possibly_libbized = {
+	'dlopen':	'dl',
+	'iconv':	'iconv'
+	}
+
+for func in std_funcs:
+	defines['HAVE_%s' % (func.upper())] = conf.CheckFunc(func)
+
+for header in std_headers:
+	defines['HAVE_%s' % (header.upper().replace('.', '_'))] = conf.CheckHeader(header)
+
+for lib, funcs in platform_libs.items():
+	if not isinstance(funcs, list):
+		funcs = [funcs]
+	for func in funcs:
+		if conf.CheckLib(lib, func):
+			ekg_libs.append(lib)
+			break
+
+
+for struct, headers in struct_members.items():
+	member = headers.pop(0)
+	defines['HAVE_%s_%s' % (struct.upper().replace(' ', '_'), member.upper().replace('.', '_'))] = conf.CheckStructMember(struct, member, headers)
+
+for type, headers in sys_types.items():
+	includes = ''
+	for inc in headers:
+		includes += '#include <%s>\n' % (inc)
+	defines['HAVE_%s' % (type.upper())] = conf.CheckType(type, includes)
+
+for func, lib in possibly_libbized.items():
+	if conf.CheckFunc(func):
+		ret = True
+	elif conf.CheckLib(lib, func):
+		ret = True
+		ekg_libs.append(lib)
+	else:
+		ret = False
+	defines['HAVE_%s' % (func.upper())] = ret
+
+have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_check_version(NULL);')
+defines['LIBIDN'] = have_idn
+ekg_libs.append('idn')
+
+out = True
+Return('out')
+
+# vim:ts=4:sts=4:syntax=python
