@@ -14,7 +14,8 @@ dirs = {
 	'SYSCONFDIR':	'/etc',
 	'LOCALEDIR':	'$PREFIX/share/locale',
 	'DATADIR':		'$PREFIX/share',
-	'PLUGINDIR':	'$PREFIX/lib/ekg2/plugins'
+	'PLUGINDIR':	'$PREFIX/lib/ekg2/plugins',
+	'IOCTLD_PATH':	'$PREFIX/libexec/ekg2'
 	}
 mapped = {
 	'UNICODE':		'USE_UNICODE'
@@ -170,7 +171,7 @@ for plugin in list(plugins.keys()):
 
 	if 'nocompile' in info:
 		del plugins[plugin]
-		print '[%s] Disabling due to build system incompatibility (probably junk in srcdir).' % (plugin)
+		print '[%s] Disabling due to build system incompatibility.' % (plugin)
 		continue
 
 	optdeps = []
