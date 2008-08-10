@@ -40,7 +40,7 @@ SNAC_SUBHANDLER(icq_snac_extension_error) {
 #define METASNAC_SUBHANDLER(x) static int x(session_t *s, unsigned char *buf, int len, uint32_t uid, uint8_t retcode)
 typedef int (*metasnac_subhandler_t) (session_t *s, unsigned char *, int, uint32_t, uint8_t ); 
 
-#include "icq_fieldnames.c"
+#include "icq_fieldnames.inc"
 
 METASNAC_SUBHANDLER(icq_snac_extensions_hpagecat) {
 	debug_function("icq_snac_extensions_hpagecat() uid: %u\n", uid);

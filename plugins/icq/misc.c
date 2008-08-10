@@ -544,5 +544,5 @@ char *icq_encryptpw(const char *pw) {
 }
 
 #if ICQ_SNAC_NAMES_DEBUG
- #include "icq_debug.c"
+ #include "icq_debug.inc"
 #endif

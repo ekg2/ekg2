@@ -147,16 +147,16 @@ typedef int (*snac_handler_t) (session_t *, uint16_t cmd, unsigned char *, int )
 #define SNAC_SUBHANDLER(x) static int x(session_t *s, unsigned char *buf, int len)
 typedef int (*snac_subhandler_t) (session_t *s, unsigned char *, int ); 
 
-#include "icq_snac_handlers_01service.c"
-#include "icq_snac_handlers_02location.c"
-#include "icq_snac_handlers_03buddy.c"
-#include "icq_snac_handlers_04message.c"
-#include "icq_snac_handlers_09bos.c"
-#include "icq_snac_handlers_0Alookup.c"
-#include "icq_snac_handlers_0Bstatus.c"
-#include "icq_snac_handlers_13userlist.c"
-#include "icq_snac_handlers_15extension.c"
-#include "icq_snac_handlers_17sigon.c"
+#include "icq_snac_handlers_01service.inc"
+#include "icq_snac_handlers_02location.inc"
+#include "icq_snac_handlers_03buddy.inc"
+#include "icq_snac_handlers_04message.inc"
+#include "icq_snac_handlers_09bos.inc"
+#include "icq_snac_handlers_0Alookup.inc"
+#include "icq_snac_handlers_0Bstatus.inc"
+#include "icq_snac_handlers_13userlist.inc"
+#include "icq_snac_handlers_15extension.inc"
+#include "icq_snac_handlers_17sigon.inc"
 
 int icq_snac_handler(session_t *s, uint16_t family, uint16_t cmd, unsigned char *buf, int len) {
 	snac_handler_t handler;
