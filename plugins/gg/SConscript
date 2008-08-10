@@ -5,7 +5,7 @@ plugin	= {
 	'type':			'protocol',
 	'state':		'stable',
 	'depends':		['libgadu'],
-	'optdepends':	['gif', 'jpeg'] # pthread ?
+	'optdepends':	['gif', 'jpeg'] # openssl & pthread are already contained in .pc
 	}
 
 Return('plugin')
