@@ -105,8 +105,8 @@ typedef struct session_param {
 /**
  * session_t contains all information about session
  */
-typedef struct session {
-	struct session	*next;
+typedef struct ekg_session {
+	struct ekg_session	*next;
 
 /* public: */
 	void		*plugin;		/**< protocol plugin owing session */
