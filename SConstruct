@@ -67,24 +67,21 @@ def StupidPythonExec(cmd):
 	
 	return ret, stdout, stderr
 
-def PkgConfig(context, pkg, libs, ccflags, linkflags):
-	context.Message('Asking pkg-config about %s... ' % (pkg))
-	res = StupidPythonExec('pkg-config --libs-only-l "%s"' % (pkg))
+def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config'):
+	context.Message('Asking %s about %s... ' % (pkgconf, pkg))
+	res = StupidPythonExec('"%s" --libs "%s"' % (pkgconf, pkg))
 	ret = not res[0]
 	if ret:
-		libs.extend([s[2:] for s in res[1].split()])
-		res = StupidPythonExec('pkg-config --libs-only-L "%s"' % (pkg))
+		for arg in res[1].split():
+			if arg[0:2] == '-l':
+				libs.append(arg[2:])
+			else:
+				linkflags.append(arg)
+
+		res = StupidPythonExec('"%s" --cflags "%s"' % (pkgconf, pkg))
 		ret = not res[0]
 		if ret:
-			libs.extend([s[2:] for s in res[1].split()])
-			res = StupidPythonExec('pkg-config --libs-only-other "%s"' % (pkg))
-			ret = not res[0]
-			if ret:
-				linkflags.append(res[1])
-				res = StupidPythonExec('pkg-config --cflags "%s"' % (pkg))
-				ret = not res[0]
-				if ret:
-					ccflags.append(res[1])
+			ccflags.append(res[1])
 	context.Result(ret)
 	return ret
 
@@ -211,8 +208,8 @@ for plugin in list(plugins.keys()):
 		linkflags = ['']
 	plugins[plugin] = {
 		'libs':			libs,
-		'ccflags':		ccflags.pop(),
-		'linkflags':	linkflags.pop()
+		'ccflags':		' '.join(ccflags),
+		'linkflags':	' '.join(linkflags)
 		}
 
 	type = info['type']
