@@ -172,6 +172,24 @@ def RecodeDocs(target, source, env):
 		df.close()
 	return None
 
+def CompileMsgEmitter(target, source, env):
+	""" Fill targets to match source .po. """
+	target	= []
+	for f in source:
+		if str(f)[-3:] == '.po':
+			target.append(str(f).replace('.po', '.mo'))
+	
+	return target, source
+
+def CompileMsgGen(source, target, env, for_signature):
+	""" Compile .po to .mo. """
+	map = dict(zip(target, source))
+	ret = []
+	for d,s in map.items():
+		ret.append('msgfmt -o "%s" "%s"' % (d,s))
+	return ret
+
+
 opts = Options('options.cache')
 
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
@@ -186,8 +204,9 @@ for var,desc in envs.items():
 	opts.Add(var, desc, '')
 
 recoder = Builder(action = RecodeDocs, emitter = RecodeDocsEmitter, suffix = '-utf.txt', src_suffix = '.txt')
+msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix = '.mo', src_suffix = '.po')
 
-env = Environment(BUILDERS = {'RecodeDocs': recoder})
+env = Environment(BUILDERS = {'RecodeDocs': recoder, 'CompileMsg': msgfmt})
 opts.Update(env)
 opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
@@ -355,6 +374,11 @@ cenv.RecodeDocs('docs/', docfiles)
 docfiles = []					# we must glob twice to include *utf*
 for doc in docglobs:
 	docfiles.extend(glob.glob('docs/%s' % doc))
+
+cenv.CompileMsg('po/', glob.glob('po/*.po'))
+for f in glob.glob('po/*.mo'):
+	lang = str(f)[str(f).rindex('/') + 1:-3]
+	cenv.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = str(f))
 
 cenv.Install(env['BINDIR'], 'ekg/ekg2')
 #cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
