@@ -31,8 +31,8 @@ plugin_symbols = ['!', '!', '?', '*', '~', '']
 
 import glob, subprocess, codecs
 
-""" Write define to definefile, choosing correct format. """
 def writedef(definefile, var, val):
+	""" Write define to definefile, choosing correct format. """
 	if val is None:
 		definefile.write('#undef %s\n' % (var))
 	if isinstance(val, str):
@@ -45,16 +45,16 @@ def writedef(definefile, var, val):
 	elif isinstance(val, int):
 		definefile.write(('#define %s %d\n' % (var, val)))
 
-""" Write list 'defines' to definefile. """
 def writedefines():
+	""" Write list 'defines' to definefile. """
 	definefile = open('ekg2-config.h', 'w')
 	for k, v in defines.items():
 		writedef(definefile, k, v)
 	definefile.close()
 
 
-""" Check whether struct with given member is available. """
 def CheckStructMember(context, struct, member, headers):
+	""" Check whether struct with given member is available. """
 	context.Message('Checking for %s.%s... ' % (struct, member))
 	testprog = ''
 	for header in headers:
@@ -65,8 +65,8 @@ def CheckStructMember(context, struct, member, headers):
 	context.Result(result)
 	return not not result
 
-""" Execute given cmd and return tuple with errorcode, data written to stdout and to stderr. """
 def StupidPythonExec(cmd):
+	""" Execute given cmd and return tuple with errorcode, data written to stdout and to stderr. """
 	p		= subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, stdin = subprocess.PIPE)
 	stdout	= p.stdout.read().strip()
 	stderr	= p.stderr.read().strip()
@@ -74,8 +74,8 @@ def StupidPythonExec(cmd):
 	
 	return ret, stdout, stderr
 
-""" Ask pkg-config (or *-config) about given package. """
 def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config', version = None):
+	""" Ask pkg-config (or *-config) about given package. """
 	context.Message('Asking %s about %s... ' % (pkgconf, pkg))
 	if pkgconf != 'pkg-config':
 		pkg = ''
@@ -108,8 +108,8 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config', ve
 	context.Result(ret)
 	return ret
 
-""" Check whether threads can be used with given flags and libs. """
 def CheckThreads(context, variant):
+	""" Check whether threads can be used with given flags and libs. """
 	context.Message('Trying to get threading with %s... ' % variant)
 	testprog = '''#include <pthread.h>
 int main(void) {
@@ -125,15 +125,15 @@ int main(void) {
 	return not not ret
 
 
-""" Execute external test from scons.d/. """
 def ExtTest(name, addexports = []):
+	""" Execute external test from scons.d/. """
 	exports = ['conf', 'defines', 'env']
 	exports.extend(addexports)
 	ret = SConscript('scons.d/%s' % (name), exports)
 	return ret
 
-""" Fill targets to match source recoding. """
 def RecodeDocsEmitter(target, source, env):
+	""" Fill targets to match source recoding. """
 	src		= []
 	target	= []
 	for f in source:
@@ -152,8 +152,8 @@ langmap = {
 	'pl':	'iso-8859-2'
 	}
 
-""" Recode documentation file from correct encoding to UTF-8. """
 def RecodeDocs(target, source, env):
+	""" Recode documentation file from correct encoding to UTF-8. """
 	map = dict(zip(target, source))
 	for d,s in map.items():
 		lang = str(s)[str(s)[:-4].rindex('-') + 1:-4]
