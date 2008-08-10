@@ -69,7 +69,12 @@ def StupidPythonExec(cmd):
 
 def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config'):
 	context.Message('Asking %s about %s... ' % (pkgconf, pkg))
-	res = StupidPythonExec('"%s" --libs "%s"' % (pkgconf, pkg))
+	if pkg is None:
+		pkg = ''
+	else:
+		pkg = ' "%s"' % (pkg)
+
+	res = StupidPythonExec('"%s" --libs%s' % (pkgconf, pkg))
 	ret = not res[0]
 	if ret:
 		for arg in res[1].split():
@@ -78,7 +83,7 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config'):
 			else:
 				linkflags.append(arg)
 
-		res = StupidPythonExec('"%s" --cflags "%s"' % (pkgconf, pkg))
+		res = StupidPythonExec('"%s" --cflags%s' % (pkgconf, pkg))
 		ret = not res[0]
 		if ret:
 			ccflags.append(res[1])

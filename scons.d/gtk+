@@ -1,5 +1,5 @@
 
-# openssl (optional in jabber, required by sim)
+# GTK+ 2
 
 Import('*')
 
