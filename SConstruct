@@ -20,6 +20,10 @@ dirs = {
 mapped = {
 	'UNICODE':		'USE_UNICODE'
 	}
+envs = {
+	'CCFLAGS':		'Compiler flags',
+	'LINKFLAGS':	'Linker flags'
+	}
 
 plugin_states = ['nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable']
 plugin_symbols = ['!', '!', '?', '*', '~', '']
@@ -131,9 +135,10 @@ opts.Add(BoolOption('UNICODE', 'Whether to build unicode version of ekg2', True)
 
 for var,path in dirs.items():
 	opts.Add(PathOption(var, '', path, PathOption.PathAccept))
+for var,desc in envs.items():
+	opts.Add(var, desc, '')
 
 env = Environment()
-env.Append(CCFLAGS = ' -I.')
 opts.Update(env)
 opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
@@ -257,6 +262,7 @@ for plugin in pllist:
 	pl[type].append('%s%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin, optdeps))
 
 # some fancy output
+env.Append(CCFLAGS = ' -I.')
 
 print
 if pl:
@@ -292,8 +298,8 @@ for plugin, data in plugins.items():
 
 	penv = env.Clone()
 	penv.Append(LIBS = data['libs'])
-	penv.Append(CCFLAGS = data['ccflags'])
-	penv.Append(LINKFLAGS = data['linkflags'])
+	penv.Append(CCFLAGS = ' ' + data['ccflags'])
+	penv.Append(LINKFLAGS = ' ' + data['linkflags'])
 	penv.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
 
 # vim:ts=4:sts=4:sw=4:syntax=python
