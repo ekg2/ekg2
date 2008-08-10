@@ -152,11 +152,11 @@ int icq_write_info(session_t *s) {
 	icq_pack_append(tlv_5, "I", (uint32_t) 0x09DFA2F3);
 #endif
 
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x1349);			/* AIM_CAPS_ICQSERVERRELAY */
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x1349);			/* AIM_CAPS_ICQSERVERRELAY - Client supports channel 2 extended, TLV(0x2711) based messages. */
 
 	/* Broadcasts the capability to receive UTF8 encoded messages */
 	if (m_bUtfEnabled) 
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x134E);		/* CAP_UTF8MSGS */
+		icq_pack_append(tlv_5, "P", (uint32_t) 0x134E);		/* CAP_UTF8MSGS - Client supports UTF-8 messages.*/
 #ifdef DBG_NEWCAPS
 	/* Tells server we understand to new format of caps */
 	icq_pack_append(tlv_5, "I", (uint32_t) 0x0000);			/* CAP_NEWCAPS */
@@ -169,17 +169,17 @@ int icq_write_info(session_t *s) {
 	icq_pack_append(tlv_5, "I", (uint32_t) 0x4e34f5a0);
 #endif
 	if (m_bAvatarsEnabled)
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x134C);		/* CAP_DEVILS */
+		icq_pack_append(tlv_5, "P", (uint32_t) 0x134C);		/* CAP_DEVILS */
 
 #ifdef DBG_OSCARFT
 	/* Broadcasts the capability to receive Oscar File Transfers */
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x1343); 		/* CAP_AIM_FILE */
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x1343); 		/* CAP_AIM_FILE - Client supports file transfer (can send files). */
 #endif
 
 	if (j->aim)
 		icq_pack_append(tlv_5, "I", (uint32_t) 0x134D);	/* Tells the server we can speak to AIM */
 #ifdef DBG_AIMCONTACTSEND
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x134B);		/* CAP_AIM_SENDBUDDYLIST */
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x134B);		/* CAP_AIM_SENDBUDDYLIST - Client supports buddy lists transfer. */
 #endif
 #if 0
 	BYTE bXStatus = getContactXStatus(NULL);
@@ -188,7 +188,7 @@ int icq_write_info(session_t *s) {
 		packBuffer(tlv_5, capXStatus[bXStatus-1], 0x10);
 	}
 #endif
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x1344);		/* AIM_CAPS_ICQDIRECT */
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x1344);		/* AIM_CAPS_ICQDIRECT - Something called "route finder". */
 
 	/*packDWord(&packet, 0x178c2d9b); // Unknown cap
 	  packDWord(&packet, 0xdaa545bb);

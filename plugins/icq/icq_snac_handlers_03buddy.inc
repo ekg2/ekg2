@@ -70,7 +70,7 @@ static void icq_get_description(session_t *s, char *uin) {
 	tlv5 = string_init(NULL);
 	icq_pack_append(tlv5, "W", (uint32_t) 0);
 	icq_pack_append(tlv5, "II", cookie1, cookie2);		// cookie
-	icq_pack_append(tlv5, "P", (uint32_t) 0x1349);		// AIM_CAPS_ICQSERVERRELAY
+	icq_pack_append(tlv5, "P", (uint32_t) 0x1349);		// AIM_CAPS_ICQSERVERRELAY - Client supports channel 2 extended, TLV(0x2711) based messages.
 	icq_pack_append(tlv5, "tW", icq_pack_tlv_word(0xA, 1));	// TLV 0x0A: acktype (1 = normal message)
 	icq_pack_append(tlv5, "T", icq_pack_tlv(0x0F, NULL, 0));	// TLV 0x0F: unknown
 
