@@ -543,6 +543,32 @@ char *icq_encryptpw(const char *pw) {
 	return cpw;
 }
 
-#if ICQ_SNAC_NAMES_DEBUG
- #include "icq_debug.inc"
-#endif
+#include "icq_debug.inc"
+
+const char *icq_capability_name(unsigned char *data) {
+	uint32_t c0, c1, c2, c3;
+	int len = 16;
+	(void) icq_unpack(data, &data, &len, "IIII", &c0, &c1, &c2, &c3);
+	if ( ((c0 >> 16) == 0x0946) && (c1==0x4c7f11d1) && (c2==0x82224445) && (c3==0x53540000) )
+		return icq_lookuptable(caps_names, c0 & 0xffff);
+	else {
+		// debug_error("Unknown CAP %08x-%08x-%08x-%08x\n", c0, c1, c2, c3);
+		return "Unknown CAP";
+	}
+}
+
+const char *icq_lookuptable(struct fieldnames_t *table, int code) {
+	int i;
+
+	if (code == 0)
+		return NULL;
+
+	for(i = 0; table[i].code != -1 && table[i].text; i++) {
+		if (table[i].code == code)
+			return table[i].text;
+	}
+
+	debug_error("icq_lookuptable() invalid lookup: %x\n", code);
+	return NULL;
+}
+

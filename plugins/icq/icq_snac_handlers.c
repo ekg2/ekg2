@@ -91,7 +91,7 @@ void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, u
 	debug_function("icq_makemetasnac() 0x%x 0x0%x 0x%x\n", sub, type, ref);
 #if ICQ_SNAC_NAMES_DEBUG
 	{
-	char *tmp = icq_snac_name(sub, type);
+	const char *tmp = icq_snac_name(sub, type);
 	if (tmp)
 		debug_white("icq_makemetasnac() //  SNAC(0x%x, 0x%x) -- %s\n", sub, type, tmp);
 	}

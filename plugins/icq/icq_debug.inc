@@ -3,6 +3,8 @@
  *
  */
 
+#if ICQ_SNAC_NAMES_DEBUG
+
 typedef struct cmdnames_t {
 	int code;
 	char *text;
@@ -289,7 +291,32 @@ struct cmdtable_t snac_names_table[] = {
 	{0x85, snac_names_85},
 	{-1,   NULL}};
 
-char *icq_snac_name(int family, int cmd) {
+#endif
+
+/*
+ * Other names
+ */
+
+struct fieldnames_t caps_names[]={
+	{0x1341, "Client supports voice chat."},
+	{0x1342, "Client supports direct play service."},
+	{0x1343, "Client supports file transfer (can send files)."},
+	{0x1344, "Something called \"route finder\"."},
+	{0x1345, "Client supports DirectIM/IMImage."},
+	{0x1346, "Client supports avatar service."},
+	{0x1347, "Client supports stocks (add-ins)."},
+	{0x1348, "Client supports filetransfers (can receive files)."},
+	{0x1349, "Client supports channel 2 extended, TLV(0x2711) based messages."},
+	{0x134A, "Client supports games."},
+	{0x134B, "Client supports buddy lists transfer."},
+	{0x134D, "Client supports from/to AIM and ICQ."},
+	{0x134E, "Client supports UTF-8 messages."},
+	{-1, NULL}};
+
+
+
+#if ICQ_SNAC_NAMES_DEBUG
+const char *icq_snac_name(int family, int cmd) {
 
 	cmdnames_t *cmsg = NULL;
 	cmdtable_t *f = snac_names_table;
@@ -312,4 +339,4 @@ char *icq_snac_name(int family, int cmd) {
 	debug_error("icq_snac_name() Unknown SNAC(0x%x, 0x%x) name.\n", family, cmd);
 	return NULL;
 }
-
+#endif

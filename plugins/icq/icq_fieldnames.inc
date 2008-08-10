@@ -25,11 +25,6 @@
 // Revision       : $Revision: 7484 $
 // Last change by : $Author: ghazan $
 
-struct fieldnames_t {
-	int code;
-	char *text;
-};
-
 #define LPGEN(x) x
 
 struct fieldnames_t interestsField[]={
@@ -442,17 +437,3 @@ struct fieldnames_t maritalField[]={
 	{40, LPGEN("Widowed")},
 	{-1, NULL}};
 
-static const char *icq_lookuptable(struct fieldnames_t *table, int code) {
-	int i;
-
-	if (code == 0)
-		return NULL;
-
-	for(i = 0; table[i].code != -1 && table[i].text; i++) {
-		if (table[i].code == code)
-			return table[i].text;
-	}
-
-	debug_error("icq_lookuptable() invalid lookup: %x\n", code);
-	return NULL;
-}
