@@ -4,7 +4,7 @@
 plugin	= {
 	'type':			'log',
 	'state':		'stable',
-	'depends':		['sqlite']
+	'depends':		[['sqlite3', 'sqlite']]
 	}
 
 Return('plugin')

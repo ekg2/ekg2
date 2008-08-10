@@ -171,18 +171,27 @@ for plugin in list(plugins.keys()):
 		print '[%s] Disabling due to build system incompatibility (probably junk in srcdir).' % (plugin)
 		continue
 
+	optdeps = []
 	libs = []
 	ccflags = []
 	linkflags = []
 	for dep in info['depends']:
-		if not ExtTest(dep, ['libs', 'ccflags', 'linkflags', 'plugin']):
+		if not isinstance(dep, list):
+			dep = [dep]
+		for xdep in dep: # exclusive depends
+			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags', 'plugin'])
+			if have_it:
+				if dep > 1:
+					optdeps.append('%s' % (xdep)) # well, it's not so optional, but pretty print it
+				break
+
+		if not have_it:
 			print '[%s] Dependency not satisfied: %s' % (plugin, dep)
 			info['fail'] = True
 	if 'fail' in info:
 		del plugins[plugin]
 		continue
 
-	optdeps = []
 	for dep in info['optdepends']:
 		if not isinstance(dep, list):
 			dep = [dep]
