@@ -27,7 +27,10 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_ekg2_getSessions)
 		session_t *s = l->data;
 
 		EKG2_DBUS_ADD_STRING(&(s->uid));
+#warning "XXX: Old API here, need updating."
+#if 0
 		EKG2_DBUS_ADD(DBUS_TYPE_BOOLEAN, &(s->connected));
+#endif
 		tmp = (char *)session_get(s, "status");
 		EKG2_DBUS_ADD_STRING(&tmp);
 		/* XXX convert to utf before sending, d-bus sux? XXX */
