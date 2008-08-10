@@ -3,7 +3,10 @@
 
 Import('*')
 
-out = conf.PkgConfig(None, libs, ccflags, linkflags, version, 'gpgme-config')
+version = []
+out = conf.PkgConfig(None, libs, ccflags, linkflags, 'gpgme-config', version)
+
+# check version >= 1.0.0
 
 Return('out')
 

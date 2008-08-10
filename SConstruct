@@ -55,7 +55,7 @@ def CheckStructMember(context, struct, member, headers):
 	for header in headers:
 		testprog += '#include <%s>\n' % (header)
 	testprog += '\nint main(void) {\n\tstatic %s tmp;\n\tif (tmp.%s)\n\t\treturn 0;\n\treturn 0;\n}\n' % (struct, member)
-	
+
 	result = context.TryCompile(testprog, 'C')
 	context.Result(result)
 	return not not result
@@ -68,12 +68,21 @@ def StupidPythonExec(cmd):
 	
 	return ret, stdout, stderr
 
-def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config'):
+def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config', version = None):
 	context.Message('Asking %s about %s... ' % (pkgconf, pkg))
 	if pkg is None:
 		pkg = ''
 	else:
 		pkg = ' "%s"' % (pkg)
+
+	if version is not None:
+		if pkgconf == 'pkg-config':
+			vermod = 'mod'
+		else:
+			vermod = ''
+		res = StupidPythonExec('"%s" --%sversion%s' % (pkgconf, vermod, pkg))
+		if not res[0]:
+			version.append(res[1])
 
 	res = StupidPythonExec('"%s" --libs%s' % (pkgconf, pkg))
 	ret = not res[0]
@@ -88,6 +97,7 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config'):
 		ret = not res[0]
 		if ret:
 			ccflags.append(res[1])
+
 	context.Result(ret)
 	return ret
 
@@ -269,4 +279,4 @@ for plugin, data in plugins.items():
 	penv.Append(LINKFLAGS = data['linkflags'])
 	penv.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
 
-# vim:ts=4:sts=4:syntax=python
+# vim:ts=4:sts=4:sw=4:syntax=python
