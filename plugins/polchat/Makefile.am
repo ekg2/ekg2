@@ -1,4 +1,4 @@
-EXTRA_DIST = polchat_handlers.c
+EXTRA_DIST = polchat_handlers.inc
 
 lib_LTLIBRARIES = polchat.la
 polchat_la_SOURCES = polchat.c

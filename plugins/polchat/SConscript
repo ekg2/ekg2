@@ -4,8 +4,7 @@
 plugin	= {
 	'type':			'protocol',
 	'state':		'unstable',
-	'depends':		[],
-	'nocompile':	True
+	'depends':		[]
 	}
 
 Return('plugin')

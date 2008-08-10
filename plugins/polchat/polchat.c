@@ -322,7 +322,7 @@ static void polchat_handle_disconnect(session_t *s, const char *reason, int type
 	}
 }
 
-#include "polchat_handlers.c"
+#include "polchat_handlers.inc"
 /* extern void polchat_processpkt(session_t *s, unsigned short nheaders, unsigned short nstrings, unsigned char *data, size_t len); */
 
 static WATCHER_SESSION(polchat_handle_stream) {
