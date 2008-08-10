@@ -4,7 +4,8 @@
 plugin	= {
 	'type':			'ui',
 	'state':		'unstable',
-	'depends':		['gtk+']
+	'depends':		['gtk+'],
+	'nocompile':	True
 	}
 
 Return('plugin')

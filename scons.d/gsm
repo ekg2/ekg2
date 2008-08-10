@@ -1,0 +1,16 @@
+
+# aspell (ncurses)
+
+Import('*')
+
+for p in ['', 'libgsm/', 'gsm/']:
+	out = conf.CheckLibWithHeader('gsm', ['%sgsm.h' % p], 'C', 'gsm_create();', 0)
+	defines['HAVE_%sGSM_H' % p.upper().replace('/', '_')] = out
+	if (out):
+		libs.append('gsm')
+		break
+
+Return('out')
+
+# vim:ts=4:sts=4:syntax=python
+
