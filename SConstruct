@@ -10,8 +10,11 @@ consts = {
 	'SHARED_LIBS':	True
 	}
 dirs = {
+	'DESTDIR':		'',
 	'PREFIX':		'/usr',
 	'SYSCONFDIR':	'/etc',
+	'BINDIR':		'$PREFIX/bin',
+#	'INCLUDEDIR':	'$PREFIX/include/ekg',
 	'LOCALEDIR':	'$PREFIX/share/locale',
 	'DATADIR':		'$PREFIX/share',
 	'PLUGINDIR':	'$PREFIX/lib/ekg2/plugins',
@@ -74,7 +77,7 @@ def StupidPythonExec(cmd):
 
 def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config', version = None):
 	context.Message('Asking %s about %s... ' % (pkgconf, pkg))
-	if pkg is None:
+	if pkgconf != 'pkg-config':
 		pkg = ''
 	else:
 		pkg = ' "%s"' % (pkg)
@@ -286,11 +289,19 @@ conf.Finish()
 
 writedefines()
 
+for k in dirs.keys():
+	if k != 'DESTDIR':
+		env[k] = '%s%s' % (env['DESTDIR'], env[k])
+
+env.Alias('install', env['DESTDIR'])
 cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)
 cenv.Append(LIBPATH = 'compat')
 cenv.Append(LINKFLAGS = '-Wl,--export-dynamic')
 cenv.Program('ekg/ekg2', Glob('ekg/*.c'))
+cenv.Install(env['BINDIR'], 'ekg/ekg2')
+#cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
+# XXX: install docs, contrib, blah blah
 
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
@@ -300,6 +311,10 @@ for plugin, data in plugins.items():
 	penv.Append(LIBS = data['libs'])
 	penv.Append(CCFLAGS = ' ' + data['ccflags'])
 	penv.Append(LINKFLAGS = ' ' + data['linkflags'])
-	penv.SharedLibrary('%s/.libs/%s' % (plugpath, plugin), Glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
+
+	libfile = '%s/.libs/%s' % (plugpath, plugin)
+	penv.SharedLibrary(libfile, Glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
+	penv.Install(env['PLUGINDIR'], libfile + env['SHLIBSUFFIX']) 
+	# XXX: as above: docs
 
 # vim:ts=4:sts=4:sw=4:syntax=python
