@@ -470,7 +470,11 @@ IRC_COMMAND(irc_c_init)
 			xfree(j->host_ident);
 			if (t)  j->host_ident=xstrdup(++t); 
 			else j->host_ident=NULL;
-			debug("\nspoko miejscówka ziom!...[%s:%s]\n", j->nick, j->host_ident);
+			debug("\nspoko miejscówka ziom!...[%s:%s] given: %s\n", j->nick, j->host_ident, param[2]);
+
+			xfree(j->nick);
+			j->nick = xstrdup(param[2]);
+
 			j->autoreconnecting = 0;
 
 			j->casemapping = IRC_CASEMAPPING_RFC1459;
