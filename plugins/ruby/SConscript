@@ -4,7 +4,8 @@
 plugin	= {
 	'type':			'scripting',
 	'state':		'experimental',
-	'depends':		['ruby']
+	'depends':		['ruby'],
+	'nocompile':	True
 	}
 
 Return('plugin')
