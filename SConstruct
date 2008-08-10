@@ -3,8 +3,6 @@
 #  Alternate build system for EKG2, unstable and unfinished yet
 #  (C) 2008 Michał Górny
 
-EnsureSConsVersion(0, 98)
-
 consts = {
 	'VERSION':		'SVN',
 	'SHARED_LIBS':	True
@@ -31,12 +29,9 @@ envs = {
 plugin_states = ['nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable']
 plugin_symbols = ['!', '!', '?', '*', '~', '']
 
-import glob, sys, subprocess
+import glob, subprocess, codecs
 
-def die(reason):
-	print reason
-	sys.exit(1)
-
+""" Write define to definefile, choosing correct format. """
 def writedef(definefile, var, val):
 	if val is None:
 		definefile.write('#undef %s\n' % (var))
@@ -50,12 +45,15 @@ def writedef(definefile, var, val):
 	elif isinstance(val, int):
 		definefile.write(('#define %s %d\n' % (var, val)))
 
+""" Write list 'defines' to definefile. """
 def writedefines():
 	definefile = open('ekg2-config.h', 'w')
 	for k, v in defines.items():
 		writedef(definefile, k, v)
 	definefile.close()
 
+
+""" Check whether struct with given member is available. """
 def CheckStructMember(context, struct, member, headers):
 	context.Message('Checking for %s.%s... ' % (struct, member))
 	testprog = ''
@@ -67,6 +65,7 @@ def CheckStructMember(context, struct, member, headers):
 	context.Result(result)
 	return not not result
 
+""" Execute given cmd and return tuple with errorcode, data written to stdout and to stderr. """
 def StupidPythonExec(cmd):
 	p		= subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, stdin = subprocess.PIPE)
 	stdout	= p.stdout.read().strip()
@@ -75,6 +74,7 @@ def StupidPythonExec(cmd):
 	
 	return ret, stdout, stderr
 
+""" Ask pkg-config (or *-config) about given package. """
 def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config', version = None):
 	context.Message('Asking %s about %s... ' % (pkgconf, pkg))
 	if pkgconf != 'pkg-config':
@@ -108,6 +108,7 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config', ve
 	context.Result(ret)
 	return ret
 
+""" Check whether threads can be used with given flags and libs. """
 def CheckThreads(context, variant):
 	context.Message('Trying to get threading with %s... ' % variant)
 	testprog = '''#include <pthread.h>
@@ -123,11 +124,51 @@ int main(void) {
 	context.Result(ret)
 	return not not ret
 
+
+""" Execute external test from scons.d/. """
 def ExtTest(name, addexports = []):
 	exports = ['conf', 'defines', 'env']
 	exports.extend(addexports)
 	ret = SConscript('scons.d/%s' % (name), exports)
 	return ret
+
+""" Fill targets to match source recoding. """
+def RecodeDocsEmitter(target, source, env):
+	target = []
+	for f in source:
+		if str(f)[-4:] != '.txt':
+			continue
+		s = str(f)[:-4]
+		if s[-4:] == '-utf':
+			source.remove(f)
+		target.append(s + '-utf.txt')
+	
+	return target, source
+
+langmap = {
+	'en':	'iso-8859-1',
+	'pl':	'iso-8859-2'
+	}
+
+""" Recode documentation file from correct encoding to UTF-8. """
+def RecodeDocs(target, source, env):
+	map = dict(zip(target, source))
+	for d,s in map.items():
+		lang = str(s)[str(s)[:-4].rindex('-') + 1:-4]
+		if lang in langmap:
+			enc = langmap[lang]
+		else:
+			continue
+
+		sf = codecs.open(str(s), 'r', enc)
+		df = codecs.open(str(d), 'w', 'utf-8')
+
+		data = sf.read()
+		df.write(data)
+
+		sf.close()
+		df.close()
+	return None
 
 opts = Options('options.cache')
 
@@ -142,7 +183,9 @@ for var,path in dirs.items():
 for var,desc in envs.items():
 	opts.Add(var, desc, '')
 
-env = Environment()
+recoder = Builder(action = RecodeDocs, emitter = RecodeDocsEmitter, suffix = '-utf.txt', src_suffix = '.txt')
+
+env = Environment(BUILDERS = {'RecodeDocs': recoder})
 opts.Update(env)
 opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
@@ -294,12 +337,20 @@ for k in dirs.keys():
 	if k != 'DESTDIR':
 		env[k] = '%s%s' % (env['DESTDIR'], env[k])
 
+docglobs = ['commands*.txt', 'vars*.txt', 'session*.txt']
+
 env.Alias('install', '%s/' % env['DESTDIR'])
 cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)
 cenv.Append(LIBPATH = 'compat')
 cenv.Append(LINKFLAGS = '-Wl,--export-dynamic')
-cenv.Program('ekg/ekg2', Glob('ekg/*.c'))
+cenv.Program('ekg/ekg2', glob.glob('ekg/*.c'))
+
+docfiles = []
+for doc in docglobs:
+	docfiles.extend(glob.glob('docs/%s' % doc))
+cenv.RecodeDocs('docs/', docfiles)
+
 cenv.Install(env['BINDIR'], 'ekg/ekg2')
 #cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
 # XXX: install docs, contrib, blah blah
@@ -314,7 +365,13 @@ for plugin, data in plugins.items():
 	penv.Append(LINKFLAGS = ' ' + data['linkflags'])
 
 	libfile = '%s/.libs/%s' % (plugpath, plugin)
-	penv.SharedLibrary(libfile, Glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
+	penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
+
+	docfiles = []
+	for doc in docglobs:
+		docfiles.extend(glob.glob('%s/%s' % (plugpath, doc)))
+	penv.RecodeDocs(plugpath, docfiles)
+
 	penv.Install(env['PLUGINDIR'], libfile + env['SHLIBSUFFIX']) 
 	# XXX: as above: docs
 
