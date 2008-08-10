@@ -14,7 +14,7 @@ dirs = {
 	'BINDIR':		'$PREFIX/bin',
 #	'INCLUDEDIR':	'$PREFIX/include/ekg',
 	'LOCALEDIR':	'$PREFIX/share/locale',
-	'DATADIR':		'$PREFIX/share',
+	'DATADIR':		'$PREFIX/share/ekg2',
 	'PLUGINDIR':	'$PREFIX/lib/ekg2/plugins',
 	'IOCTLD_PATH':	'$PREFIX/libexec/ekg2'
 	}
@@ -134,16 +134,18 @@ def ExtTest(name, addexports = []):
 
 """ Fill targets to match source recoding. """
 def RecodeDocsEmitter(target, source, env):
-	target = []
+	src		= []
+	target	= []
 	for f in source:
 		if str(f)[-4:] != '.txt':
 			continue
 		s = str(f)[:-4]
 		if s[-4:] == '-utf':
-			source.remove(f)
+			continue
+		src.append(str(f))
 		target.append(s + '-utf.txt')
 	
-	return target, source
+	return target, src
 
 langmap = {
 	'en':	'iso-8859-1',
@@ -350,9 +352,13 @@ docfiles = []
 for doc in docglobs:
 	docfiles.extend(glob.glob('docs/%s' % doc))
 cenv.RecodeDocs('docs/', docfiles)
+docfiles = []					# we must glob twice to include *utf*
+for doc in docglobs:
+	docfiles.extend(glob.glob('docs/%s' % doc))
 
 cenv.Install(env['BINDIR'], 'ekg/ekg2')
 #cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
+cenv.Install(env['DATADIR'], docfiles)
 # XXX: install docs, contrib, blah blah
 
 for plugin, data in plugins.items():
@@ -371,8 +377,11 @@ for plugin, data in plugins.items():
 	for doc in docglobs:
 		docfiles.extend(glob.glob('%s/%s' % (plugpath, doc)))
 	penv.RecodeDocs(plugpath, docfiles)
+	docfiles = []					# we must glob twice to include *utf*
+	for doc in docglobs:
+		docfiles.extend(glob.glob('%s/%s' % (plugpath, doc)))
 
 	penv.Install(env['PLUGINDIR'], libfile + env['SHLIBSUFFIX']) 
-	# XXX: as above: docs
+	penv.Install('%s/plugins/%s' % (env['DATADIR'], plugin), docfiles)
 
 # vim:ts=4:sts=4:sw=4:syntax=python
