@@ -1,0 +1,13 @@
+
+# gpm (ncurses)
+
+Import('*')
+
+out = conf.CheckLibWithHeader('gpm', ['gpm.h'], 'C', 'Gpm_Open(NULL, 0);', 0)
+defines['HAVE_LIBGPM'] = out
+if (out):
+	libs.append('gpm')
+
+Return('out')
+
+# vim:ts=4:sts=4:syntax=python

@@ -1,0 +1,13 @@
+
+# aspell (ncurses)
+
+Import('*')
+
+out = conf.CheckLibWithHeader('aspell', ['aspell.h'], 'C', 'new_aspell_config();', 0)
+defines['WITH_ASPELL'] = out
+if (out):
+	libs.append('aspell')
+
+Return('out')
+
+# vim:ts=4:sts=4:syntax=python
