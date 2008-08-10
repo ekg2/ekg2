@@ -4,7 +4,7 @@
 plugin	= {
 	'type':			'log',
 	'state':		'unstable',
-	'depends':		['oracle']
+	'depends':		['pthread', 'oracle']
 	}
 
 Return('plugin')

@@ -56,7 +56,7 @@ def CheckStructMember(context, struct, member, headers):
 		testprog += '#include <%s>\n' % (header)
 	testprog += '\nint main(void) {\n\tstatic %s tmp;\n\tif (tmp.%s)\n\t\treturn 0;\n\treturn 0;\n}\n' % (struct, member)
 
-	result = context.TryCompile(testprog, 'C')
+	result = context.TryCompile(testprog, '.c')
 	context.Result(result)
 	return not not result
 
@@ -101,6 +101,21 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config', ve
 	context.Result(ret)
 	return ret
 
+def CheckThreads(context, variant):
+	context.Message('Trying to get threading with %s... ' % variant)
+	testprog = '''#include <pthread.h>
+int main(void) {
+	pthread_t th;
+	pthread_join(th, 0);
+	pthread_attr_init(0);
+	pthread_cleanup_push(0, 0);
+	pthread_create(0,0,0,0);
+	pthread_cleanup_pop(0);
+}'''
+	ret = context.TryLink(testprog, '.c')
+	context.Result(ret)
+	return not not ret
+
 def ExtTest(name, addexports = []):
 	exports = ['conf', 'defines', 'env']
 	exports.extend(addexports)
@@ -135,7 +150,7 @@ for var,val in consts.items():
 for var,val in mapped.items():
 	defines[val] = env[var]
 
-conf = env.Configure(custom_tests = {'CheckStructMember': CheckStructMember, 'PkgConfig': PkgConfig})
+conf = env.Configure(custom_tests = {'CheckStructMember': CheckStructMember, 'PkgConfig': PkgConfig, 'CheckThreads': CheckThreads})
 ekg_libs = []
 
 ExtTest('standard', ['ekg_libs'])
