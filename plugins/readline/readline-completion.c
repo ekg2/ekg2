@@ -1,3 +1,5 @@
+#include "ekg2-config.h"
+
 #include <stdio.h>
 #include <strings.h>
 
@@ -5,7 +7,11 @@
 #  include <compat/strlcpy.h>
 #endif
 
-#include <readline.h>
+#ifdef HAVE_READLINE_READLINE_H
+#	include <readline/readline.h>
+#else
+#	include <readline.h>
+#endif
 
 #include <ekg/dynstuff.h>
 #include <ekg/events.h>

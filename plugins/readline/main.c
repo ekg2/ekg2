@@ -20,7 +20,11 @@
 
 #include <ekg/queries.h>
 
-#include <readline.h>
+#ifdef HAVE_READLINE_READLINE_H
+#	include <readline/readline.h>
+#else
+#	include <readline.h>
+#endif
 #include "ui-readline.h"
 
 static int readline_theme_init();

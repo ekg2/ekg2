@@ -38,8 +38,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <history.h>
-#include <readline.h>
+#ifdef HAVE_READLINE_READLINE_H
+#	include <readline/history.h>
+#	include <readline/readline.h>
+#else
+#	include <history.h>
+#	include <readline.h>
+#endif
 
 #include <ekg/commands.h>
 #ifndef HAVE_STRLCPY
