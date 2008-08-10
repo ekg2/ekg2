@@ -181,7 +181,7 @@ for plugin in list(plugins.keys()):
 		for xdep in dep: # exclusive depends
 			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags', 'plugin'])
 			if have_it:
-				if dep > 1:
+				if len(dep) > 1:
 					optdeps.append('%s' % (xdep)) # well, it's not so optional, but pretty print it
 				break
 
