@@ -4,7 +4,7 @@
 plugin	= {
 	'type':			'protocol',
 	'state':		'experimental',
-	'depends':		[]
+	'depends':		['pcap']
 	}
 
 Return('plugin')
