@@ -166,7 +166,9 @@ plugins = {}.fromkeys(plugins)
 
 pl = {}
 
-for plugin in list(plugins.keys()):
+pllist = list(plugins.keys())
+pllist.sort()
+for plugin in pllist:
 	plugpath = 'plugins/%s' % (plugin)
 	info = SConscript('%s/SConscript' % (plugpath))
 	if not info:
