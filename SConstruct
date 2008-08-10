@@ -19,7 +19,8 @@ dirs = {
 	'IOCTLD_PATH':	'$PREFIX/libexec/ekg2'
 	}
 mapped = {
-	'UNICODE':		'USE_UNICODE'
+	'UNICODE':		'USE_UNICODE',
+	'NLS':			'ENABLE_NLS'
 	}
 envs = {
 	'CCFLAGS':		'Compiler flags',
@@ -196,6 +197,7 @@ avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
 avplugins.extend(plugin_states)
 opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'unstable', avplugins))
 opts.Add(BoolOption('UNICODE', 'Whether to build unicode version of ekg2', True))
+opts.Add(BoolOption('NLS', 'Whether to enable NLS (l10n)', True))
 opts.Add(BoolOption('NOCONF', 'Whether to skip configure', False))
 
 for var,path in dirs.items():
@@ -258,7 +260,7 @@ pllist = list(plugins.keys())
 pllist.sort()
 for plugin in pllist:
 	plugpath = 'plugins/%s' % (plugin)
-	info = SConscript('%s/SConscript' % (plugpath))
+	info = SConscript('%s/SConscript' % (plugpath), ['env'])
 	if not info:
 		info = plugin_def
 	else:
@@ -313,6 +315,7 @@ for plugin in pllist:
 	if not linkflags:
 		linkflags = ['']
 	plugins[plugin] = {
+		'info':			info,
 		'libs':			libs,
 		'ccflags':		' '.join(ccflags),
 		'linkflags':	' '.join(linkflags)
