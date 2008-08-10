@@ -525,8 +525,9 @@ static WATCHER_SESSION(icq_handle_connect) {
 static WATCHER_SESSION(icq_handle_stream) {
 	icq_private_t *j = NULL;
 
-	char buf[8192];
-	int len, ret;
+	static char buf[8192];
+	static int len = 0;
+	int ret, read_len, buf_len;
 
 	if (!s || !(j = s->priv)) { 
 		debug_error("icq_handle_stream() s: 0x%x j: 0x%x\n", s, j);
@@ -536,9 +537,11 @@ static WATCHER_SESSION(icq_handle_stream) {
 	if (type)
 		return 0;
 
-	len = read(fd, buf, sizeof(buf));
+	read_len = read(fd, buf+len, sizeof(buf)-len);
+	len += read_len;
+	buf_len = len;
 
-	debug("icq_handle_stream(%d) rcv: %d\n", s->connecting, len);
+	debug("icq_handle_stream(%d) rcv: %d, %d in buffer.\n", s->connecting, read_len, len);
 
 	if (len < 1) {
 		icq_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_NETWORK);
@@ -552,7 +555,7 @@ static WATCHER_SESSION(icq_handle_stream) {
 	 * 	- icq_flap_handler(s, buffer);
 	 */
 
-	ret = icq_flap_handler(s, fd, buf, len);
+	ret = icq_flap_handler(s, fd, buf, &len);
 
 	switch (ret) {		/* XXX, magic values */
 		case 0:
@@ -560,7 +563,7 @@ static WATCHER_SESSION(icq_handle_stream) {
 			break;
 
 		case -1:
-			/* XXX, fragmentacja */
+			memmove(buf, buf+buf_len-len, len);
 			debug_white("icq_flap_loop() NEED MORE DATA\n");
 			break;
 

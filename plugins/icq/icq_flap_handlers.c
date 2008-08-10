@@ -437,9 +437,10 @@ static ICQ_FLAP_HANDLER(icq_flap_ping) {
 	return 0;
 }
 
-int icq_flap_handler(session_t *s, int fd, char *b, int len) {
+int icq_flap_handler(session_t *s, int fd, char *b, int *ret_len) {
 	unsigned char *buf = (unsigned char *) b;
 	int next_flap = 0;
+	int len = *ret_len;
 
 	debug_iorecv("icq_flap_loop(%s) fd: %d len: %d\n", s->uid, fd, len);
 
@@ -486,7 +487,8 @@ int icq_flap_handler(session_t *s, int fd, char *b, int len) {
 
 	/* next flap? */
 		buf += (flap.len);
-		len -= (flap.len);		
+		len -= (flap.len);
+		*ret_len = len;
 		next_flap = 1;
 	}
 
