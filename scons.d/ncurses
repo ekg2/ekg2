@@ -22,4 +22,4 @@ if out:
 defines['HAVE_NCURSES'] = out # used by core, I think the use is stupid
 Return('out')
 
-# vim:ts=4:sts=4:syntax=python
+# vim:ts=4:sts=4:sw=4:syntax=python

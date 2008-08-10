@@ -7,4 +7,4 @@ out = conf.PkgConfig('sqlite', libs, ccflags, linkflags)
 
 Return('out')
 
-# vim:ts=4:sts=4:syntax=python
+# vim:ts=4:sts=4:sw=4:syntax=python
