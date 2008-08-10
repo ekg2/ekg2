@@ -7,6 +7,9 @@ version = []
 out = conf.PkgConfig(None, libs, ccflags, linkflags, 'gpgme-config', version)
 
 # check version >= 1.0.0
+if version.pop().split('.')[0] < 1:
+	print '[gpg] gpgme-1.0.0 or newer required.'
+	ret = False
 
 Return('out')
 
