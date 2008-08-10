@@ -417,6 +417,11 @@ static int xosd_plugin_destroy()
 	return 0;
 }
 
+#if USE_UNICODE
+#	warning "NOTE: xosd uses deprecated X11 interface and thus doesn't support unicode!"
+#	warning "It's problem with the library itself, not ekg2 plugin."
+#endif
+
 /*
  * Local Variables:
  * mode: c
