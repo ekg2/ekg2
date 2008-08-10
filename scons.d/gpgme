@@ -10,7 +10,7 @@ out = conf.PkgConfig(None, libs, ccflags, linkflags, 'gpgme-config', version)
 if out and version:
 	if int(version.pop().split('.')[0]) < 1:
 		print '[gpg] gpgme-1.0.0 or newer required, disabling.'
-		ret = False
+		out = False
 
 Return('out')
 
