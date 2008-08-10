@@ -135,6 +135,7 @@ avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
 avplugins.extend(plugin_states)
 opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'unstable', avplugins))
 opts.Add(BoolOption('UNICODE', 'Whether to build unicode version of ekg2', True))
+opts.Add(BoolOption('NOCONF', 'Whether to skip configure', False))
 
 for var,path in dirs.items():
 	opts.Add(PathOption(var, '', path, PathOption.PathAccept))
@@ -293,7 +294,7 @@ for k in dirs.keys():
 	if k != 'DESTDIR':
 		env[k] = '%s%s' % (env['DESTDIR'], env[k])
 
-env.Alias('install', env['DESTDIR'])
+env.Alias('install', '%s/' % env['DESTDIR'])
 cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)
 cenv.Append(LIBPATH = 'compat')
