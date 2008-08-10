@@ -9,7 +9,7 @@ consts = {
 	}
 dirs = {
 	'DESTDIR':		'',
-	'PREFIX':		'/usr',
+	'PREFIX':		'/usr/local',
 	'SYSCONFDIR':	'/etc',
 	'BINDIR':		'$PREFIX/bin',
 #	'INCLUDEDIR':	'$PREFIX/include/ekg',
@@ -359,7 +359,7 @@ for doc in docglobs:
 cenv.Install(env['BINDIR'], 'ekg/ekg2')
 #cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
 cenv.Install(env['DATADIR'], docfiles)
-# XXX: install docs, contrib, blah blah
+cenv.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
 
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
