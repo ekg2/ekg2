@@ -279,9 +279,9 @@ typedef enum {
 } pkt_way_t;
 
 
-#include "sniff_dns.c"
-#include "sniff_gg.c"
-#include "sniff_rivchat.c"
+#include "sniff_dns.inc"
+#include "sniff_gg.inc"
+#include "sniff_rivchat.inc"
 
 #undef CHECK_LEN
 #define CHECK_LEN(x) \

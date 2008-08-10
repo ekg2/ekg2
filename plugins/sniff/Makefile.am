@@ -1,3 +1,5 @@
+EXTRA_DIST = sniff_dns.inc sniff_gg.inc sniff_rivchat.inc
+
 lib_LTLIBRARIES = sniff.la
 sniff_la_SOURCES = sniff.c
 sniff_la_LDFLAGS = -module -avoid-version
