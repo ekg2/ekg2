@@ -10,7 +10,7 @@ consts = {
 indirs = [ # pseudo-hash, 'coz we want to keep order
 	['DESTDIR',		'',							'Virtual installation root'],
 	['PREFIX',		'/usr/local',				'Prefix for arch-independent data'],
-	['EPREFIX',		'/usr/local',				'Prefix for arch-dependent data'],
+	['EPREFIX',		'$PREFIX',				'Prefix for arch-dependent data'],
 
 	['BINDIR',		'$EPREFIX/bin',				'User executables'],
 	['LIBEXECDIR',	'$EPREFIX/libexec',			'Program executables'],
