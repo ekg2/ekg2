@@ -8,29 +8,29 @@ consts = {
 	'SHARED_LIBS':	True
 	}
 indirs = [ # pseudo-hash, 'coz we want to keep order
-	'DESTDIR',		'',
-	'PREFIX',		'/usr/local',
-	'EPREFIX',		'/usr/local',
+	['DESTDIR',		'',							'Virtual installation root'],
+	['PREFIX',		'/usr/local',				'Prefix for arch-independent data'],
+	['EPREFIX',		'/usr/local',				'Prefix for arch-dependent data'],
 
-	'BINDIR',		'$EPREFIX/bin',
-	'LIBEXECDIR',	'$EPREFIX/libexec',
-	'LIBDIR',		'$EPREFIX/lib',
-#	'INCLUDEDIR',	'$PREFIX/include',
-	'DATAROOTDIR',	'$PREFIX/share',
-	'SYSCONFDIR',	'/etc',
+	['BINDIR',		'$EPREFIX/bin',				'User executables'],
+	['LIBEXECDIR',	'$EPREFIX/libexec',			'Program executables'],
+	['LIBDIR',		'$EPREFIX/lib',				'Libraries'],
+#	['INCLUDEDIR',	'$PREFIX/include',			'Headers'],
+	['DATAROOTDIR',	'$PREFIX/share',			'Arch-independent data'],
+	['SYSCONFDIR',	'/etc',						'System-wide configuration'],
 
-	'LOCALEDIR',	'$DATAROOTDIR/locale',
-	'DATADIR',		'$DATAROOTDIR/ekg2',
-	'PLUGINDIR',	'$LIBDIR/ekg2/plugins',
-	'IOCTLD_PATH',	'$LIBEXECDIR/ekg2'
+	['LOCALEDIR',	'$DATAROOTDIR/locale',		'Locales'],
+	['DATADIR',		'$DATAROOTDIR/ekg2',		'EKG2 data'],
+	['PLUGINDIR',	'$LIBDIR/ekg2/plugins',		'EKG2 plugins'],
+	['IOCTLD_PATH',	'$LIBEXECDIR/ekg2',			'EKG2 ioctld']
 	]
 mapped = {
-	'UNICODE':		'USE_UNICODE',
-	'NLS':			'ENABLE_NLS'
+	'UNICODE':		['USE_UNICODE', 'Enable unicode support'],
+	'NLS':			['ENABLE_NLS', 'Enable l10n in core'],
 	}
 envs = {
-	'CCFLAGS':		'CFLAGS',
-	'LINKFLAGS':	'LDFLAGS'
+	'CCFLAGS':		['CFLAGS', 'Compiler flags'],
+	'LINKFLAGS':	['LDFLAGS', 'Linker flags']
 	}
 
 plugin_states = ['nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable']
@@ -217,22 +217,21 @@ opts = Options('options.cache')
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
 avplugins.extend(plugin_states)
 opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'unstable', avplugins))
-opts.Add(BoolOption('UNICODE', 'Whether to build unicode version of ekg2', True))
-opts.Add(BoolOption('NLS', 'Whether to enable NLS (l10n)', True))
+
+for k,v in mapped.items():
+	opts.Add(BoolOption(k, v[1], True))
 
 dirs = []
-while indirs:
-	k = indirs.pop(0)
-	v = indirs.pop(0)
+for k,v,d in indirs:
 	dirs.append(k)
-	opts.Add(PathOption(k, '', v, PathOption.PathAccept))
+	opts.Add(PathOption(k, d, v, PathOption.PathAccept))
 
-for var,envname in envs.items():
-	if envname in os.environ:
-		envvar = os.environ[envname]
+for k,v in envs.items():
+	if v[0] in os.environ:
+		var = os.environ[v[0]]
 	else:
-		envvar = ''
-	opts.Add(var, '', envvar)
+		var = ''
+	opts.Add(k, v[1], var)
 
 recoder = Builder(action = RecodeDocs, emitter = RecodeDocsEmitter, suffix = '-utf.txt', src_suffix = '.txt')
 msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix = '.mo', src_suffix = '.po')
@@ -250,7 +249,15 @@ for var in dirs:
 for var,val in consts.items():
 	defines[var] = val
 for var,val in mapped.items():
-	defines[val] = env[var]
+	defines[val[0]] = env[var]
+
+linkflags = []
+for arg in env['LINKFLAGS'].split():
+	if arg[0:2] == '-l':
+		env.Append(LIBS = [arg[2:]])
+	else:
+		linkflags.append(arg)
+env['LINKFLAGS'] = ' '.join(linkflags)
 
 conf = env.Configure(custom_tests = {
 		'CheckStructMember':	CheckStructMember,
