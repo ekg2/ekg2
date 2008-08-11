@@ -30,7 +30,7 @@ envs = {
 plugin_states = ['nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable']
 plugin_symbols = ['!', '!', '?', '*', '~', '']
 
-import glob, subprocess, codecs
+import glob, subprocess, codecs, os.path
 
 def writedef(definefile, var, val):
 	""" Write define to definefile, choosing correct format. """
@@ -415,6 +415,10 @@ for plugin, data in plugins.items():
 	penv.Append(LIBS = data['libs'])
 	penv.Append(CCFLAGS = ' ' + data['ccflags'])
 	penv.Append(LINKFLAGS = ' ' + data['linkflags'])
+
+	sconshelper = '%s/SConscript' % plugpath
+	if os.path.exists(sconshelper):
+		SConscript([sconshelper], ['penv'])
 
 	libfile = '%s/.libs/%s' % (plugpath, plugin)
 	penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
