@@ -33,8 +33,9 @@ envs = {
 	'LINKFLAGS':	['LDFLAGS', 'LIBS', 'Linker flags']
 	}
 
-plugin_states = ['nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable']
-plugin_symbols = ['!', '!', '?', '*', '~', '']
+	# first and last one are special keywords
+plugin_states = ['all', 'nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable', 'none']
+plugin_symbols = ['', '!', '!', '?', '*', '~', '', '']
 
 import glob, subprocess, codecs, os, os.path
 
@@ -146,7 +147,6 @@ int main(void) {
 	context.Result(ret)
 	return not not ret
 
-
 def ExtTest(name, addexports = []):
 	""" Execute external test from scons.d/. """
 	exports = ['conf', 'defines', 'env']
@@ -154,13 +154,14 @@ def ExtTest(name, addexports = []):
 	ret = SConscript('scons.d/%s' % (name), exports)
 	return ret
 
+
 def RecodeDocsEmitter(target, source, env):
 	""" Fill targets to match source recoding. """
 	src		= []
 	target	= []
 	for f in source:
-		if str(f)[-4:] != '.txt':
-			continue
+#		if str(f)[-4:] != '.txt':
+#			continue
 		s = str(f)[:-4]
 		if s[-4:] == '-utf':
 			continue
@@ -198,8 +199,8 @@ def CompileMsgEmitter(target, source, env):
 	""" Fill targets to match source .po. """
 	target	= []
 	for f in source:
-		if str(f)[-3:] == '.po':
-			target.append(str(f).replace('.po', '.mo'))
+#		if str(f)[-3:] == '.po':
+		target.append(str(f).replace('.po', '.mo'))
 	
 	return target, source
 
@@ -215,8 +216,9 @@ def CompileMsgGen(source, target, env, for_signature):
 opts = Options('options.cache')
 
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
-avplugins.extend(plugin_states)
-opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'unstable', avplugins))
+xplugins = ['-%s' % elem for elem in avplugins]
+xplugins.extend(['@%s' % elem for elem in plugin_states])
+opts.Add(ListOption('PLUGINS', 'List of plugins or @sets to build', '@unstable', avplugins + xplugins))
 
 for k,v in mapped.items():
 	opts.Add(BoolOption(k, v[1], True))
@@ -280,24 +282,20 @@ plugin_def = {
 	'extradist':	[]
 	}
 
-plugins = env['PLUGINS']
-plugins_state = 0
+specplugins = env['PLUGINS']
 
-for st in plugin_states:
-	if st in avplugins:
-		avplugins.remove(st)
+plugins_state = plugin_states.index('none')
 
 for st in reversed(plugin_states):
-	while st in plugins:
-		plugins.remove(st)
+	while '@%s' % st in specplugins:
+		specplugins.remove('@%s' % st)
 		plugins_state = plugin_states.index(st)
-	plugins.extend(avplugins)
 
-plugins.sort()
-plugins = {}.fromkeys(plugins)
+avplugins = {}.fromkeys(avplugins)
 
 pl = {}
 
+plugins = avplugins
 pllist = list(plugins.keys())
 pllist.sort()
 for plugin in pllist:
@@ -309,7 +307,12 @@ for plugin in pllist:
 		for k in plugin_def.keys():
 			if not k in info:
 				info[k] = plugin_def[k]
+
 	if plugin_states.index(info['state']) < plugins_state:
+		if not plugin in specplugins:
+			del plugins[plugin]
+			continue
+	elif '-%s' % plugin in specplugins and not plugin in specplugins:
 		del plugins[plugin]
 		continue
 
@@ -374,8 +377,8 @@ for plugin in pllist:
 
 	pl[type].append('%s%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin, optdeps))
 
-# some fancy output
 env.Append(CCFLAGS = ' -I.')
+# some fancy output
 
 print
 if pl:
