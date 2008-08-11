@@ -6,6 +6,7 @@
  *
  * ekg2 port:
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                     2008 Wiesław Ochmiński <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -45,6 +46,10 @@ SNAC_SUBHANDLER(icq_snac_sigon_reply) {
 extern char *icq_md5_digest(const char *password, const unsigned char *key, int key_len);	/* digest.c */
 
 SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
+	/*
+	 * This is the second snac in md5 crypted login sequence. Server send this for SNAC(17,06) request.
+	 * This snac contain server generated auth key. Client should use it to crypt password.
+	 */
 	struct {
 		uint16_t key_len;
 	} pkt;
@@ -68,25 +73,14 @@ SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
 
 	str = string_init(NULL);
 
-	/* XXX, SPOT duplicated code @ icq_flap_login() */
-
 	icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));	/* uid */
 	icq_pack_append(str, "T", icq_pack_tlv(0x25, digest, 16));	/* MD5-digest */
 	icq_pack_append(str, "T", icq_pack_tlv(0x4C, NULL, 0));		/* empty TLV(0x4C): unknown */
 
-	/* Pack client identification details. */
-	icq_pack_append(str, "T", icq_pack_tlv_str(3, "ICQ Client"));
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x16, 0x010a)); 			/* CLIENT_ID_CODE */
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x17, 0x0006));			/* CLIENT_VERSION_MAJOR */
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x18, 0x0000));			/* CLIENT_VERSION_MINOR */
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x19, 0x0000));			/* CLIENT_VERSION_LESSER */
-	icq_pack_append(str, "tW", icq_pack_tlv_word(0x1a, 0x17AB));			/* CLIENT_VERSION_BUILD */
-	icq_pack_append(str, "tI", icq_pack_tlv_dword(0x14, 0x00007535));		/* CLIENT_DISTRIBUTION */
-	icq_pack_append(str, "T", icq_pack_tlv_str(0x0f, "en"));
-	icq_pack_append(str, "T", icq_pack_tlv_str(0x0e, "en"));
+	icq_pack_append_client_identification(str);			// Pack client identification details.
 
 	icq_makesnac(s, str, 0x17, 2, 0, 0);
-	icq_send_pkt(s, str);
+	icq_send_pkt(s, str);					// Send CLI_MD5_LOGIN 
 	return 0;
 }
 

@@ -64,5 +64,6 @@ const char *icq_capability_name(unsigned char *data);
 
 const char *icq_lookuptable(struct fieldnames_t *table, int code);
 
+void icq_pack_append_client_identification(string_t pkt);
 
 #endif

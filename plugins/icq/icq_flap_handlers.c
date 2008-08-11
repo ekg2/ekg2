@@ -1,5 +1,6 @@
 /*
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -36,6 +37,7 @@
 
 #include "icq.h"
 #include "misc.h"
+#include "miscicq.h"
 
 #include "icq_flap_handlers.h"
 #include "icq_snac_handlers.h"
@@ -102,37 +104,53 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 	}
 
 	if (s->connecting == 1) {	/* hub connecting */
+		/*
+		 * Currently there is two ways to pass authentification in OSCAR protocol.
+		 * First is FLAP channel 0x01 authorization (password not crypted but roasted),
+		 * second is MD5 based where password is MD5 crypted.  In both
+		 * ways server could return error or authorization cookie + BOS address.
+		 */
+
 		if (session_int_get(s, "plaintext_passwd") == 1) {
+			/*
+			 * Client use this packet in FLAP channel 0x01 based authorization sequence.
+			 * So client should send it on FLAP channel 0x01. Server should reply via
+			 * srv_cookie packet, containing BOS address/cookie or via auth_failed
+			 * packet, containing error code.
+			 */
+
 			string_t str;
 			char *password;
 
 			debug("icq_flap_login(1) PLAINTEXT\n");
 
+			// Start channel 0x01 authorization
+
 			str = string_init(NULL);
 
 			icq_pack_append(str, "I", (uint32_t) 1);			/* spkt.flap.pkt.login.id CLI_HELLO */
-			/* TLVs */
-			icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));	/* uid */
 
-/* XXX, miranda assume hash has got max 20 chars? */
+			/* TLVs */
+			icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));			// TLV(0x01) - uin
+
+			/* XXX, miranda assume hash has got max 20 chars? */
 			password = icq_encryptpw(session_get(s, "password"));
-			icq_pack_append(str, "T", icq_pack_tlv_str(2, password));	/* password */
+			icq_pack_append(str, "T", icq_pack_tlv_str(2, password));			// TLV(0x02) - roasted password
 			xfree(password);
 
-			icq_pack_append(str, "T", icq_pack_tlv_str(0x03, "ICQ Client"));
-			icq_pack_append(str, "tW", icq_pack_tlv_word(0x16, 0x010a)); 			/* CLIENT_ID_CODE */
-			icq_pack_append(str, "tW", icq_pack_tlv_word(0x17, 0x0006));			/* CLIENT_VERSION_MAJOR */
-			icq_pack_append(str, "tW", icq_pack_tlv_word(0x18, 0x0000));			/* CLIENT_VERSION_MINOR */
-			icq_pack_append(str, "tW", icq_pack_tlv_word(0x19, 0x0000));			/* CLIENT_VERSION_LESSER */
-			icq_pack_append(str, "tW", icq_pack_tlv_word(0x1a, 0x17AB));			/* CLIENT_VERSION_BUILD */
-			icq_pack_append(str, "tI", icq_pack_tlv_dword(0x14, 0x00007535));		/* CLIENT_DISTRIBUTION */
-			icq_pack_append(str, "T", icq_pack_tlv_str(0x0f, "en"));
-			icq_pack_append(str, "T", icq_pack_tlv_str(0x0e, "en"));
+			icq_pack_append_client_identification(str);					// Pack client identification details.
 
 			icq_makeflap(s, str, ICQ_FLAP_LOGIN);
-			icq_send_pkt(s, str);	str = NULL;
+			icq_send_pkt(s, str);	str = NULL;		// Send CLI_IDENT packet
 
 		} else {
+			// Second way is MD5 based where password is MD5 crypted.
+			/*
+			 * This is the first snac in md5 crypted login sequence. Client use this snac
+			 * to request login random key from server. It contain screenname and some
+			 * unknown stuff. Server should reply with SNAC(17,07), containing auth key string.
+			 */
+
 			string_t str;
 
 			debug("icq_flap_login(1) MD5\n");
@@ -142,16 +160,24 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 			icq_makeflap(s, str, ICQ_FLAP_LOGIN);
 			icq_send_pkt(s, str);	str = NULL;
 
+			/*
+			 * This is the first snac in md5 crypted login sequence. Client use this
+			 * snac to request login random key from server. Server could return SNAC(17,07)
+			 */
 			str = string_init(NULL);
-
 			icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));	/* uid */
-			icq_makesnac(s, str, 0x17, 6, 0, 0);
+			icq_makesnac(s, str, 0x17, 6, 0, 0);		// Send CLI_AUTH_REQUEST
 			icq_send_pkt(s, str); str = NULL;
 		}
 
 	}
 	else
 	if (s->connecting == 2) {	/* server connecting */
+		/*
+		 * After authorization client should send cookie to BOS via special FLAP channel 0x01
+		 * packet named CLI_COOKIE. In reply server will return list of supported services - SNAC(01,03).
+		 */
+
 		string_t str;
 
 		debug("icq_flap_login(2) s=0x%x cookie=0x%x cookielen=%d\n", s, j->cookie, j->cookie ? j->cookie->len : -1);
@@ -164,21 +190,8 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		str = icq_pack("I", (uint32_t) 1);			/* spkt.flap.pkt.login.id CLI_HELLO */
 		icq_pack_append(str, "T", icq_pack_tlv(0x06, j->cookie->str, j->cookie->len));
 
-#if 0	/* wo -- not necessary */
-		/* Pack client identification details. */
-		icq_pack_append(str, "T", icq_pack_tlv_str(0x03, "ICQ Client"));
-		icq_pack_append(str, "tW", icq_pack_tlv_word(0x16, 0x010a)); 			/* CLIENT_ID_CODE */
-		icq_pack_append(str, "tW", icq_pack_tlv_word(0x17, 0x0006));			/* CLIENT_VERSION_MAJOR */
-		icq_pack_append(str, "tW", icq_pack_tlv_word(0x18, 0x0000));			/* CLIENT_VERSION_MINOR */
-		icq_pack_append(str, "tW", icq_pack_tlv_word(0x19, 0x0000));			/* CLIENT_VERSION_LESSER */
-		icq_pack_append(str, "tW", icq_pack_tlv_word(0x1a, 0x17AB));			/* CLIENT_VERSION_BUILD */
-		icq_pack_append(str, "tI", icq_pack_tlv_word(0x14, 0x00007535));		/* CLIENT_DISTRIBUTION */
-		icq_pack_append(str, "T", icq_pack_tlv_str(0x0f, "en"));
-		icq_pack_append(str, "T", icq_pack_tlv_str(0x0e, "en"));
-		icq_pack_append(str, "tI", icq_pack_tlv_word(0x8003, 0x00100000));	/* Unknown */
-#endif
 		icq_makeflap(s, str, ICQ_FLAP_LOGIN);
-		icq_send_pkt(s, str); str = NULL;
+		icq_send_pkt(s, str); str = NULL;			// Send CLI_COOKIE
 
 		string_free(j->cookie, 1); j->cookie = NULL;
 	}
@@ -240,6 +253,12 @@ static ICQ_FLAP_HANDLER(icq_flap_error) {
 #define ICQ_FLAP_CLOSE	0x04
 
 int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
+	/*
+	 * SRV_COOKIE
+	 * This is the server reply for for CLI_IDENT packet. It contain BOS
+	 * address / authorization cookie. It always come from FLAP channel 0x04.
+	 */
+
 	icq_private_t *j = s->priv;
 
 	struct icq_tlv_list *tlvs;
@@ -290,6 +309,7 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 
 		s->connecting = 2;
 
+		// Client disconnects from authorizer
 		if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 			int err = errno;
 
@@ -314,10 +334,10 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 
 		j->fd2 = fd;
 	} else {
-		icq_tlv_t *t_uid = icq_tlv_get(tlvs, 0x01);
-		icq_tlv_t *t_url = icq_tlv_get(tlvs, 0x04);			/* [NOT ALWAYS] url, str */
-		icq_tlv_t *t_err1= icq_tlv_get(tlvs, 0x08);
-		icq_tlv_t *t_err2= icq_tlv_get(tlvs, 0x09);
+		icq_tlv_t *t_uid = icq_tlv_get(tlvs, 0x01);			// uin
+		icq_tlv_t *t_url = icq_tlv_get(tlvs, 0x04);			// [NOT ALWAYS] error description url string
+		icq_tlv_t *t_err1= icq_tlv_get(tlvs, 0x08);			// error subcode (family specific)
+		icq_tlv_t *t_err2= icq_tlv_get(tlvs, 0x09);			// disconnect reason
 //		icq_tlv_t *unk	=  icq_tlv_get(l, 0x0C);			/* unk, seen 0x5F 0x65 */
 
 		char *reason = NULL;

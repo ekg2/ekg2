@@ -583,3 +583,18 @@ const char *icq_lookuptable(struct fieldnames_t *table, int code) {
 	return NULL;
 }
 
+void icq_pack_append_client_identification(string_t pkt) {
+	/*
+	 * Pack client identification details.
+	 */
+	icq_pack_append(pkt, "T", icq_pack_tlv_str(0x03, "ICQ Client"));		// TLV(0x03) - client id string
+
+	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x16, CLIENT_ID_CODE));		// TLV(0x16) - client id
+	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x17, CLIENT_VERSION_MAJOR));	// TLV(0x17) - client major version
+	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x18, CLIENT_VERSION_MINOR));	// TLV(0x18) - client minor version
+	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x19, CLIENT_VERSION_LESSER));	// TLV(0x19) - client lesser version
+	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x1a, CLIENT_VERSION_BUILD));	// TLV(0x1A) - client build number
+	icq_pack_append(pkt, "tI", icq_pack_tlv_dword(0x14, CLIENT_DISTRIBUTION));	// TLV(0x14) - distribution number
+	icq_pack_append(pkt, "T",  icq_pack_tlv_str(0x0f, CLIENT_LANGUAGE));		// TLV(0x0F) - client language (2 symbols)
+	icq_pack_append(pkt, "T",  icq_pack_tlv_str(0x0e, CLIENT_COUNTRY));		// TLV(0x0E) - client country (2 symbols)
+}
