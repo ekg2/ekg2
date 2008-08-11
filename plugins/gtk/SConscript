@@ -7,33 +7,4 @@ plugin	= {
 	'depends':		['gtk+']
 	}
 
-# generate inline_pngs
-
-import glob
-
-def InlinePNGGen(target, source, env, for_signature):
-	src = []
-	for f in source:
-		src.append(str(f)[str(f).rindex('/') + 1:-4].replace('-', '_'))
-		src.append(str(f))
-	return 'gdk-pixbuf-csource --raw --build-list %s > "%s"' % (' '.join(src), target[0])
-
-pnggen = Builder(generator = InlinePNGGen, suffix = '.h', src_suffix = '.png')
-
-Import('*')
-
-pngs	= []
-gg_pngs	= []
-for f in glob.glob('iconssets/*.png'):
-	if f[10:13] == 'gg-':
-		gg_pngs.append(f)
-	else:
-		pngs.append(f)
-
-env['BUILDERS']['InlinePNGGen'] = pnggen
-env.InlinePNGGen('inline_pngs.h', pngs)
-env.InlinePNGGen('inline_pngs_gg.h', gg_pngs)
-
-Return('plugin')
-
-# vim:ts=4:sts=4:sw=4:syntax=python
+# vim:ts=4:sts=4:sw=4:syntax=python:sw=4:syntax=python
