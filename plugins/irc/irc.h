@@ -114,6 +114,9 @@ typedef struct {
 	char		*topic, *topicby, *mode_str;
 	window_t	*window;
 	list_t		onchan;
+	char            *nickpad_str;
+	int		nickpad_len, nickpad_pos;
+	int		longest_nick;
 	list_t		banlist;
 	/* needed ?
 	list_t exclist;
@@ -167,6 +170,11 @@ enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 int irc_parse_line(session_t *s, char *buf, int fd);	/* misc.c */
 
 extern int irc_config_experimental_chan_name_clean;
+
+char *nickpad_string_create(channel_t *chan);
+char *nickpad_string_apply(channel_t *chan, char *str);
+char *nickpad_string_restore(channel_t *chan);
+
 #endif /* __EKG_PLUGINS_IRC_IRC_H */
 
 /*

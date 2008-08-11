@@ -142,6 +142,12 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 static char *irc_config_default_access_groups;
 int irc_config_experimental_chan_name_clean;
 
+char fillchars_utf8[] = "\xC2\xA0";
+char fillchars_norm[] = "\xA0";
+char *fillchars = NULL; 
+int fillchars_len = 0; 
+
+
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
 #ifdef EKG2_WIN32_SHARED_LIB
@@ -1153,13 +1159,17 @@ static COMMAND(irc_command_msg) {
 	while ((mline[1] = split_line(&(mline[0])))) {
 		char *__msg = NULL;
 
-		char *__mtmp;
+		char *__mtmp, *padding = NULL;
 		int isour = 1;
 		int xosd_to_us = 0;
 		int xosd_is_priv = !ischn;
 		
-		head = format_string(frname, session_name(session), prefix,
-				j->nick, j->nick, uid+4, mline[1]);
+		if (perchn)
+			padding = nickpad_string_apply(perchn->chanp, j->nick);
+		head = format_string(frname, session_name(session),
+			prefix,	j->nick, j->nick, uid+4, mline[1], padding);
+		if (perchn)
+			nickpad_string_restore(perchn->chanp);
 
 /* XXX,
  * 	Recoding should be done after emiting IRC_PROTOCOL_MESSAGE (?)
@@ -1654,9 +1664,6 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 /*****************************************************************************/
 
 static COMMAND(irc_command_names) {
-	const char fillchars_utf8[] = "\xC2\xA0";
-	const char fillchars_norm[] = "\xA0";
-
 	irc_private_t *j = irc_private(session);
 
 	int sort_status[5] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, 0};
@@ -1666,10 +1673,6 @@ static COMMAND(irc_command_names) {
 
 	int smlen = xstrlen(sort_modes)+1;
 	char **mp, *channame;
-	string_t nickpad;
-	int nplen = 1;
-
-	const char *fillchars = (config_use_unicode ? fillchars_utf8 : fillchars_norm);
 
 	channel_t *chan;
 	string_t buf;
@@ -1684,24 +1687,9 @@ static COMMAND(irc_command_names) {
 		return -1;
 	}
 
-/* znajdz najdluzszy nick */
-	for (ul = chan->window->userlist; ul; ul = ul->next) {
-		userlist_t *u = ul;
+	if (chan->longest_nick > atoi(SOP(_005_NICKLEN)))
+		debug_error("[irc, names] funny %d vs %s\n", chan->longest_nick, SOP(_005_NICKLEN));
 
-		int tmplen = xstrlen(u->uid + 4);
-		
-		if (tmplen > nplen)
-			nplen = tmplen;
-	}
-
-	if (nplen < (SOP(_005_NICKLEN)?atoi(SOP(_005_NICKLEN)):0) + 1)
-		debug_error("[irc, names] funny %d vs %s\n", nplen, SOP(_005_NICKLEN));
-
-/* stworz stringa wyrownujacego tekst */
-	nickpad = string_init(NULL);
-	for (lvl = 0; lvl < nplen; lvl++)
-		string_append(nickpad, fillchars);
-		
 	print_info(channame, session, "IRC_NAMES_NAME", session_name(session), channame+4);
 	buf = string_init(NULL);
 
@@ -1714,7 +1702,7 @@ static COMMAND(irc_command_names) {
 		 * set it to formatee letter,
 		 * The use of 160 fillerchar will cause that "[ nickname     ]"
 		 * won't be splitted like: "[ nickname
-		 *      ]", and whole will be treated as long 'nplen+2' long string :)
+		 *      ]", and whole will be treated as long 'longest_nick+2' long string :)
 		 */
 
 		if (*sort_modes) {
@@ -1727,31 +1715,19 @@ static COMMAND(irc_command_names) {
 		for (ul = chan->window->userlist; ul; ul = ul->next) {
 			userlist_t *ulist = ul;
 			char *tmp;
-			int pos;
 
 			if (ulist->status != sort_status[lvl])
 				continue;
 
-			pos = nplen-xstrlen(ulist->uid+4);
-			if (config_use_unicode)
-				pos <<= 1;
-
-			if (pos < nickpad->len && pos >= 0) {
-				nickpad->str[pos] = '\0';
-				string_append(buf, (tmp = format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad->str))); xfree(tmp);
-				nickpad->str[pos] = fillchars[0];
-			} else {		/* XXX */
-				debug_error("[irc, names] %x vs %x\n", pos, nickpad->len);
-				string_append(buf, (tmp = format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), nickpad->str))); xfree(tmp);
-			}
+			nickpad_string_apply(chan, ulist->uid+4);
+			string_append(buf, (tmp = format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), chan->nickpad_str))); xfree(tmp);
+			nickpad_string_restore(chan);
 
 			++lvl_total[lvl];
 			++count;
 		}
 		debug("---separator---\n");
 	}
-
-	string_free(nickpad, 1);
 
 	if (count)
 		print_info(channame, session, "none", buf->str);
@@ -2289,6 +2265,46 @@ static COMMAND(irc_command_test) {
 	return 0;
 }
 
+/* nickpad, these funcs should go to misc.c */
+char *nickpad_string_create(channel_t *chan)
+{
+	int i;
+	chan->nickpad_len = (chan->longest_nick + 1) * fillchars_len;
+	xfree (chan->nickpad_str);
+	chan->nickpad_str = (char *)xmalloc(chan->nickpad_len);
+
+	/* fill string */
+	for (i = 0; i < chan->nickpad_len; i++)
+		chan->nickpad_str[i] = fillchars[ i % fillchars_len ];
+
+	debug("created NICKPAD with len: %d\n", chan->nickpad_len);
+	return chan->nickpad_str;
+}
+
+char *nickpad_string_apply(channel_t *chan, char *str)
+{
+	chan->nickpad_pos = chan->longest_nick - xstrlen(str);
+	if (config_use_unicode)
+		chan->nickpad_pos <<= 1;
+	if (chan->nickpad_pos < chan->nickpad_len && chan->nickpad_pos >= 0)
+	{
+		chan->nickpad_str[chan->nickpad_pos] = '\0';
+	} else {
+		debug_error ("[irc, misc, nickpad], problem with padding %x against %x\n", chan->nickpad_pos, chan->nickpad_len);
+	}
+	return chan->nickpad_str;
+}
+
+char *nickpad_string_restore(channel_t *chan)
+{
+	if (chan->nickpad_pos < chan->nickpad_len && chan->nickpad_pos >= 0)
+	{
+		chan->nickpad_str[chan->nickpad_pos] = fillchars[ chan->nickpad_pos % fillchars_len ];
+	} 
+	return chan->nickpad_str;
+}
+
+
 /*                                                                       *
  * ======================================== INIT/DESTROY --------------- *
  *                                                                       */
@@ -2384,6 +2400,9 @@ EXPORT int irc_plugin_init(int prio)
 
 	plugin_register(&irc_plugin, prio);
 
+	fillchars = (config_use_unicode ? fillchars_utf8 : fillchars_norm);
+	fillchars_len = (config_use_unicode ? 2 : 1);
+
 	query_connect_id(&irc_plugin, PROTOCOL_VALIDATE_UID,	irc_validate_uid, NULL);
 	query_connect_id(&irc_plugin, GET_PLUGIN_PROTOCOLS,	irc_protocols, NULL);
 	query_connect_id(&irc_plugin, PLUGIN_PRINT_VERSION,	irc_print_version, NULL);
@@ -2474,18 +2493,18 @@ static int irc_theme_init()
 	/* %2 - prefix, %3 - nick, %4 - nick+ident+host, %5 - chan, %6 - msg*/
 	format_add("irc_msg_sent",	"%P<%n%3/%5%P>%n %6", 1);
 	format_add("irc_msg_sent_n",	"%P<%n%3%P>%n %6", 1);
-	format_add("irc_msg_sent_chan",	"%P<%w%{2@%+gcp}X%2%3%P>%n %6", 1);
-	format_add("irc_msg_sent_chanh","%P<%W%{2@%+GCP}X%2%3%P>%n %6", 1);
+	format_add("irc_msg_sent_chan",	"%P%7<%w%{2@%+gcp}X%2%3%P>%n %6", 1);
+	format_add("irc_msg_sent_chanh","%P%7<%W%{2@%+GCP}X%2%3%P>%n %6", 1);
 	
 	format_add("irc_not_sent",	"%P(%n%3/%5%P)%n %6", 1);
 	format_add("irc_not_sent_n",	"%P(%n%3%P)%n %6", 1);
-	format_add("irc_not_sent_chan",	"%P(%w%{2@%+gcp}X%2%3%P)%n %6", 1);
-	format_add("irc_not_sent_chanh","%P(%W%{2@%+GCP}X%2%3%P)%n %6", 1);
+	format_add("irc_not_sent_chan",	"%P%7(%w%{2@%+gcp}X%2%3%P)%n %6", 1);
+	format_add("irc_not_sent_chanh","%P%7(%W%{2@%+GCP}X%2%3%P)%n %6", 1);
 
 //	format_add("irc_msg_f_chan",	"%B<%w%{2@%+gcp}X%2%3/%5%B>%n %6", 1); /* NOT USED */
 //	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%3/%5%B>%n %6", 1); /* NOT USED */
-	format_add("irc_msg_f_chan_n",	"%B<%w%{2@%+gcp}X%2%3%B>%n %6", 1);
-	format_add("irc_msg_f_chan_nh",	"%B<%W%{2@%+GCP}X%2%3%B>%n %6", 1);
+	format_add("irc_msg_f_chan_n",	"%B%7<%w%{2@%+gcp}X%2%3%B>%n %6", 1);
+	format_add("irc_msg_f_chan_nh",	"%B%7<%W%{2@%+GCP}X%2%3%B>%n %6", 1);
 	format_add("irc_msg_f_some",	"%b<%n%3%b>%n %6", 1);
 
 //	format_add("irc_not_f_chan",	"%B(%w%{2@%+gcp}X%2%3/%5%B)%n %6", 1); /* NOT USED */

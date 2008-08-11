@@ -43,6 +43,7 @@ static LIST_FREE_ITEM(list_irc_people_free, people_t *) {
 }
 
 static LIST_FREE_ITEM(list_irc_channel_free, channel_t *) {
+	xfree(data->nickpad_str);
 	xfree(data->name);
 	xfree(data->topic);
 	xfree(data->topicby);
@@ -124,6 +125,30 @@ people_chan_t *irc_find_person_chan(list_t p, char *channame)
 	return NULL;
 }
 
+/* update_longest_nick()
+ *
+ * this helper function iterates over people present on a channel,
+ * finds the one with longest.. nickname and changes value of
+ * longest_nick private variable
+ *
+ * this function is used by irc_del_person_channel (e.g person /parts
+ * or is kicked from channel) and by irc_nick_change.
+ *
+ * @param chan - channel_t structure
+ */
+static void update_longest_nick(channel_t *chan)
+{
+	list_t p;
+	chan->longest_nick = 0;
+	for (p=chan->onchan; p; p=p->next)
+	{
+		people_t *person = (people_t *)p->data;
+		if (person->nick && xstrlen(person->nick+4) > chan->longest_nick)
+			chan->longest_nick = xstrlen(person->nick+4);
+	}
+	nickpad_string_create(chan);
+}
+
 /* irc_add_person_int()
  *
  * this is internal function
@@ -161,6 +186,7 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	if (mode) nick++;
 
 	ircnick = irc_uid(nick);
+	
 	w = window_find_s(s, chan->name);
 	/* add user to userlist of window (of a given channel) if not yet there */
 	if (w && !(ulist = userlist_find_u(&(w->userlist), ircnick))) {
@@ -216,6 +242,15 @@ people_t *irc_add_person(session_t *s, irc_private_t *j,
 		return NULL;
 
 	ret = irc_add_person_int(s, j, nick, chan);
+	/* instead of putting this code to irc_add_person_int,
+	 * I'm placing it here and in irc_add_people,
+	 * to lower number of allocations (made by nickpad_string_create)
+	 */
+	if (xstrlen(nick) > chan->longest_nick)
+	{
+		chan->longest_nick = xstrlen(nick);
+		nickpad_string_create(chan);
+	}
 	query_emit_id(NULL, USERLIST_REFRESH);
 	return ret;
 }
@@ -228,6 +263,13 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 	if (!(channame && names))
 		return -1;
 
+	/* I'm not sure if this is working on IRCNet, but on freenode
+	 * you can do: /quote NAMES #channelname
+	 * (if you're not on given channel, irc plugin doesn't allow
+	 * you to do /names #channel if you're not on that channel)
+	 *
+	 * this if-case is responsible for handling the response
+	 */
 	if (!(chan = irc_find_channel(j->channels, channame)))
 	{
 		tmp = saprintf("People on %s: %s", channame, names);
@@ -242,8 +284,16 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 	save = nick = array_make(names, " ", 0, 1, 0);
 	while (*nick) {
 		irc_add_person_int(s, j, *nick, chan);
+		/* instead of putting this code to irc_add_person_int,
+		 * I'm placing it here and in irc_add_people,
+		 * to lower number of allocations (made by nickpad_string_create)
+		 */
+		if (xstrlen(*nick) > chan->longest_nick)
+			chan->longest_nick = xstrlen(*nick);
+
 		nick++;
 	}
+	nickpad_string_create(chan);
 
 	query_emit_id(NULL, USERLIST_REFRESH);
 
@@ -291,6 +341,7 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j, people_t *
 	list_remove(&(chan->onchan), nick, 0);
 	return 0;
 }
+
 /* irc_del_person_channel()
  * 
  * deletes data from internal structures, when user has been kicked of or parts from a given channel
@@ -310,10 +361,14 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
 	int ret;
 	people_t *person;
 	channel_t *chan;
+
 	if (!(chan = irc_find_channel(j->channels, channame)))
 		return -1;
 	if (!(person = irc_find_person(j->people, nick)))
 		return -1;
+
+	if (xstrlen(nick) == chan->longest_nick)
+		update_longest_nick(chan);
 
 	ret = irc_del_person_channel_int(s, j, person, chan);
 
@@ -542,10 +597,11 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 		}
 	}
 
-	debug("[irc] nick_change():\n");
+	/* update userlists of proper windows */
 	for (i=per->channels; i; i=i->next)
 	{
 		pch = (people_chan_t *)i->data;
+
 		w = window_find_s(s, pch->chanp->name);
 		if (w && (ulist = userlist_find_u(&(w->userlist), old))) {
 			newul = userlist_add_u(&(w->userlist), t2, new);
@@ -558,11 +614,22 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 			 * this way */
 		}
 	}
-
 	query_emit_id(NULL, USERLIST_REFRESH);
 
+	/* update nickname in internal structures */
 	t1 = per->nick;
 	per->nick = t2;
+
+	for (i=per->channels; i; i=i->next)
+	{
+		pch = (people_chan_t *)i->data;
+		/* if person who changed nick had longest nick,
+		 * update longest_nick variable
+		 */
+		if (xstrlen(old) == pch->chanp->longest_nick)
+			update_longest_nick (pch->chanp);
+	}
+
 	xfree(t1);
 	return 0;
 }

@@ -1159,7 +1159,7 @@ IRC_COMMAND(irc_c_msg)
 	}
 
 	if (ctcpstripped) {
-		char *clear_string;
+		char *clear_string, *padding = NULL;
 		int isour = 0;
   		if (xosd_is_priv) /* @ wrong place */
 			query_emit_id(NULL, MESSAGE_DECRYPT, &(s->uid), &dest, &ctcpstripped, &secure , NULL);
@@ -1176,6 +1176,10 @@ IRC_COMMAND(irc_c_msg)
 		prefix[0] = perchn?*(perchn->sign):' ';
 		if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
 			*prefix='\0';
+
+		if (perchn)
+			padding = nickpad_string_apply (perchn->chanp, param[0]+1);
+
 		/* privmsg on channel */
                 if (NULL == format)
 		{
@@ -1208,7 +1212,10 @@ IRC_COMMAND(irc_c_msg)
 		xfree (clear_string);
 
 		head = format_string(format_find(format), session_name(s),
-				prefix, param[0]+1, me, param[2], coloured, "Y ");
+				prefix, param[0]+1, me, param[2], coloured, padding, "Y ");
+
+		if (perchn)
+			nickpad_string_restore (perchn->chanp);
 
 		xfree(coloured);
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped, 0);
@@ -1488,7 +1495,7 @@ IRC_COMMAND(irc_c_namerpl)
 {
 	if (!param[3]) return -1;
 	/* rfc2812 */
-	if (*param[3]!='*' && *param[3]!='=' && *param[3]!='@')	{
+	if (*param[3] != '*' && *param[3] != '=' && *param[3] != '@')	{
 		debug("[irc] c_namerpl() kindda shitty ;/\n");
 		return -1;
 	}
