@@ -510,17 +510,28 @@ status_t icq2ekg_status2(int nMsgType) {
 }
 
 status_t icq2ekg_status(int icq_status) {
-	switch (icq_status) {
-		case ICQ_STATUS_ONLINE:		return EKG_STATUS_AVAIL;
-		case ICQ_STATUS_AWAY:		return EKG_STATUS_AWAY;
-		case ICQ_STATUS_DND:		return EKG_STATUS_DND;
-		case ICQ_STATUS_NA:		return EKG_STATUS_NA;	/* XXX, client is still connected!!! */
-		case ICQ_STATUS_OCCUPIED:	return EKG_STATUS_XA;	/* XXX good choice? */
-		case ICQ_STATUS_FFC:		return EKG_STATUS_FFC;
-		case ICQ_STATUS_INVISIBLE:	return EKG_STATUS_INVISIBLE;
+	/*
+	 * idea from IcqStatusToMiranda()
+	 *
+	 * Maps the ICQ status flag (as seen in the status change SNACS) and returns a EKG2 style status.
+	 *
+	 * NOTE: The order in which the flags are compared are important!
+	 */
+	if (icq_status & ICQ_STATUS_FLAG_INVISIBLE)
+		return EKG_STATUS_INVISIBLE;
+	if (icq_status & ICQ_STATUS_FLAG_DND)
+		return EKG_STATUS_DND;
+	if (icq_status & ICQ_STATUS_FLAG_OCCUPIED)
+		return EKG_STATUS_XA;	/* XXX good choice? */
+	if (icq_status & ICQ_STATUS_FLAG_NA)
+		return EKG_STATUS_NA;	/* XXX, client is still connected!!! */
+	if (icq_status & ICQ_STATUS_FLAG_AWAY)
+		return EKG_STATUS_AWAY;
+	if (icq_status & ICQ_STATUS_FLAG_FFC)
+		return EKG_STATUS_FFC;
 
-		default:			return EKG_STATUS_UNKNOWN;
-	}
+	return EKG_STATUS_AVAIL;
+
 }
 
 int tlv_length_check(char *name, icq_tlv_t *t, int length) {

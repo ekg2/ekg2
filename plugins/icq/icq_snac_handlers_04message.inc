@@ -6,6 +6,7 @@
  *
  * ekg2 port:
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                     2008 Wiesław Ochmiński <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -236,8 +237,9 @@ SNAC_SUBHANDLER(icq_snac_message_server_ack) {
 	return 0;
 }
 
-void icq_snac_message_status_reply(session_t *s, const char *from, char *uin, uint16_t version, uint8_t msg_type, char *msg) {
-	status_t status = icq2ekg_status2(msg_type);
+void icq_snac_message_status_reply(session_t *s, const char *from, char *uin, uint16_t version, char *msg) {
+	status_t status;
+	userlist_t *u;
 	char *uid;
 	
 #if 0
@@ -246,11 +248,7 @@ void icq_snac_message_status_reply(session_t *s, const char *from, char *uin, ui
 	int status;
 	char* pszMsg;
 #endif
-	if (status == EKG_STATUS_UNKNOWN)
-	{
-		debug_error("%s Ignoring unknown status message from %s", from, uin);
-		return;
-	}
+
 #if 0
 	pszMsg = null_strdup((char*)msg);
 
@@ -272,6 +270,8 @@ void icq_snac_message_status_reply(session_t *s, const char *from, char *uin, ui
 	debug_function("icq_snac_message_status_reply() status from: %s msg: %s\n", uin, msg);
 
 	uid = icq_uid(uin);
+	/* We change only description, not status */
+	status = (u = userlist_find(s, uid)) ? u->status : EKG_STATUS_UNKNOWN;
 	protocol_status_emit(s, uid, status, msg, time(NULL));
 	xfree(uid);
 }
@@ -312,7 +312,7 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 		/* 27b unknowns from the msg we sent */
 		uint16_t seq2;					/* Message sequence (SEQ2) */
 		/* 12b Unknown */
-		uint8_t msg_type, flags;			/* Message type */
+		uint8_t msg_type, flags;			/* Message type: MTYPE_AUTOAWAY, MTYPE_AUTOBUSY, etc. */
 		uint16_t status;				/* Status */
 		/* 2b Priority? */
 
@@ -330,7 +330,7 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 				return -1;
 
 			reason = xstrndup((char *) buf + 2, len);
-			icq_snac_message_status_reply(s, "SNAC(4.B)", pkt.uid, version, msg_type, reason);
+			icq_snac_message_status_reply(s, "SNAC(4,B)", pkt.uid, version, reason);
 			xfree(reason);
 			return 0;
 		}

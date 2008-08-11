@@ -125,7 +125,8 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
 	int status;
-	char *uid;
+	userlist_t *u;
+	char *uid, *descr = NULL;
 
 	if (!ICQ_UNPACK(&buf, "uWW", &pkt.uid, &pkt.warning, &pkt.count))
 		return -1;
@@ -173,7 +174,6 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 				debug_white("icq_snac_buddy_online() status2=0x%04x status=0x%04x\n", icq_status_flags, icq_status);
 				status = icq2ekg_status(icq_status);
-				icq_get_description(s, pkt.uid);
 				break;
 			}
 
@@ -292,10 +292,16 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 		}
 	}
 
-	protocol_status_emit(s, uid, status, NULL, time(NULL));
+	/* We change only status, not description */
+	if (u = userlist_find(s, uid))
+		descr = xstrdup(u->descr);
+
+	protocol_status_emit(s, uid, status, descr, time(NULL));
+	icq_get_description(s, pkt.uid);
 
 	icq_tlvs_destroy(&tlvs);
 	xfree(uid);
+	xfree(descr);
 
 	return 0;
 }

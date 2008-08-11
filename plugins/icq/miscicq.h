@@ -6,6 +6,15 @@
 #define ICQ_STATUS_FFC              0x0020
 #define ICQ_STATUS_INVISIBLE        0x0100
 
+// Status FLAGS (used to determine status of other users)
+#define ICQ_STATUS_FLAG_ONLINE          0x0000
+#define ICQ_STATUS_FLAG_AWAY            0x0001
+#define ICQ_STATUS_FLAG_DND             0x0002
+#define ICQ_STATUS_FLAG_NA              0x0004
+#define ICQ_STATUS_FLAG_OCCUPIED        0x0010
+#define ICQ_STATUS_FLAG_FFC             0x0020
+#define ICQ_STATUS_FLAG_INVISIBLE       0x0100
+
 
 #define MTYPE_AUTOAWAY              0xE8 // Auto away message
 #define MTYPE_AUTOBUSY              0xE9 // Auto occupied message
