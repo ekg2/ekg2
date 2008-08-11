@@ -3,6 +3,7 @@
 
 Import('*')
 
+ver = []
 out = conf.PkgConfig('gtk+-2.0', libs, ccflags, linkflags)
 defines['HAVE_GTK'] = out
 

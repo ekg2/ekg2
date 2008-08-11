@@ -4,8 +4,7 @@
 plugin	= {
 	'type':			'scripting',
 	'state':		'stable',
-	'depends':		['perl'],
-	'nocompile':	True
+	'depends':		['perl']
 	}
 
 Return('plugin')

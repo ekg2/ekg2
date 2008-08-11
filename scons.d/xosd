@@ -3,7 +3,7 @@
 
 Import('*')
 
-out = conf.PkgConfig('xosd', libs, ccflags, linkflags, 'xosd-config')
+out = conf.PkgConfig(None, libs, ccflags, linkflags, None, 'xosd-config')
 
 Return('out')
 

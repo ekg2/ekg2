@@ -66,34 +66,50 @@ def CheckStructMember(context, struct, member, headers):
 	context.Result(result)
 	return not not result
 
-def StupidPythonExec(cmd):
-	""" Execute given cmd and return tuple with errorcode, data written to stdout and to stderr. """
-	p		= subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, stdin = subprocess.PIPE)
-	stdout	= p.stdout.read().strip()
-	stderr	= p.stderr.read().strip()
-	ret		= p.wait()
-	
-	return ret, stdout, stderr
+def StupidPythonExec(context, cmds, result):
+	""" Execute given commands and put errorcode, data written to stdout and to stderr onto result. """
+	if not isinstance(cmds, list):
+		cmds = [cmds]
 
-def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config', version = None):
-	""" Ask pkg-config (or *-config) about given package. """
-	context.Message('Asking %s about %s... ' % (pkgconf, pkg))
-	if pkgconf != 'pkg-config':
+	if context is not None:
+		context.Message('Querying %s... ' % cmds[0].split()[0])
+
+	fret = 0
+	for cmd in cmds:
+		p		= subprocess.Popen(cmd, shell = True, stdout = subprocess.PIPE, stderr = subprocess.PIPE, stdin = subprocess.PIPE)
+		stdout	= p.stdout.read().strip()
+		stderr	= p.stderr.read().strip()
+		ret		= p.wait()
+
+		result.extend([ret, stdout, stderr])
+		fret	+= int(ret)
+
+	if context is not None:
+		context.Result(not fret)
+
+	return not fret
+
+def PkgConfig(context, pkg, libs, ccflags, linkflags, version = None, pkgconf = 'pkg-config',
+			versionquery = '--version', ccflagquery = '--cflags', ldflagquery = '--libs'):
+	""" Ask pkg-config (or *-config) about given package, and put results in [libs, ccflags, linkflags].
+		If specific -config (pkg-config, for example) needs package name, then give it as pkg. If not,
+		just set pkgconf correctly. When using something incompatible with *-config, give correct
+		[versionquery, ccflagquery, ldflagquery] """
+	if pkg is None:
+		context.Message('Querying %s... ' % pkgconf)
 		pkg = ''
 	else:
+		context.Message('Asking %s about %s... ' % (pkgconf, pkg))
 		pkg = ' "%s"' % (pkg)
 
+	queries = [ldflagquery, ccflagquery]
 	if version is not None:
-		if pkgconf == 'pkg-config':
-			vermod = 'mod'
-		else:
-			vermod = ''
-		res = StupidPythonExec('"%s" --%sversion%s' % (pkgconf, vermod, pkg))
-		if not res[0]:
-			version.append(res[1])
+		if pkgconf == 'pkg-config' and versionquery == '--version': # defaults
+			versionquery = '--mod%s' % versionquery[2:]
+		queries.append(versionquery)
 
-	res = StupidPythonExec('"%s" --libs%s' % (pkgconf, pkg))
-	ret = not res[0]
+	res = []
+	ret = StupidPythonExec(None, ['"%s" %s%s' % (pkgconf, q, pkg) for q in queries], res)
 	if ret:
 		for arg in res[1].split():
 			if arg[0:2] == '-l':
@@ -101,10 +117,9 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, pkgconf = 'pkg-config', ve
 			else:
 				linkflags.append(arg)
 
-		res = StupidPythonExec('"%s" --cflags%s' % (pkgconf, pkg))
-		ret = not res[0]
-		if ret:
-			ccflags.append(res[1])
+		ccflags.append(res[4])
+		if version is not None:
+			version.append(res[7])
 
 	context.Result(ret)
 	return ret
@@ -198,7 +213,6 @@ avplugins.extend(plugin_states)
 opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'unstable', avplugins))
 opts.Add(BoolOption('UNICODE', 'Whether to build unicode version of ekg2', True))
 opts.Add(BoolOption('NLS', 'Whether to enable NLS (l10n)', True))
-opts.Add(BoolOption('NOCONF', 'Whether to skip configure', False))
 
 for var,path in dirs.items():
 	opts.Add(PathOption(var, '', path, PathOption.PathAccept))
@@ -225,7 +239,12 @@ for var,val in consts.items():
 for var,val in mapped.items():
 	defines[val] = env[var]
 
-conf = env.Configure(custom_tests = {'CheckStructMember': CheckStructMember, 'PkgConfig': PkgConfig, 'CheckThreads': CheckThreads})
+conf = env.Configure(custom_tests = {
+		'CheckStructMember':	CheckStructMember,
+		'PkgConfig':			PkgConfig,
+		'CheckThreads':			CheckThreads,
+		'External':				StupidPythonExec
+	})
 ekg_libs = []
 
 ExtTest('standard', ['ekg_libs'])
