@@ -7,17 +7,23 @@ consts = {
 	'VERSION':		'SVN',
 	'SHARED_LIBS':	True
 	}
-dirs = {
-	'DESTDIR':		'',
-	'PREFIX':		'/usr/local',
-	'SYSCONFDIR':	'/etc',
-	'BINDIR':		'$PREFIX/bin',
-#	'INCLUDEDIR':	'$PREFIX/include/ekg',
-	'LOCALEDIR':	'$PREFIX/share/locale',
-	'DATADIR':		'$PREFIX/share/ekg2',
-	'PLUGINDIR':	'$PREFIX/lib/ekg2/plugins',
-	'IOCTLD_PATH':	'$PREFIX/libexec/ekg2'
-	}
+indirs = [ # pseudo-hash, 'coz we want to keep order
+	'DESTDIR',		'',
+	'PREFIX',		'/usr/local',
+	'EPREFIX',		'/usr/local',
+
+	'BINDIR',		'$EPREFIX/bin',
+	'LIBEXECDIR',	'$EPREFIX/libexec',
+	'LIBDIR',		'$EPREFIX/lib',
+#	'INCLUDEDIR',	'$PREFIX/include',
+	'DATAROOTDIR',	'$PREFIX/share',
+	'SYSCONFDIR',	'/etc',
+
+	'LOCALEDIR',	'$DATAROOTDIR/locale',
+	'DATADIR',		'$DATAROOTDIR/ekg2',
+	'PLUGINDIR',	'$LIBDIR/ekg2/plugins',
+	'IOCTLD_PATH',	'$LIBEXECDIR/ekg2'
+	]
 mapped = {
 	'UNICODE':		'USE_UNICODE',
 	'NLS':			'ENABLE_NLS'
@@ -214,8 +220,13 @@ opts.Add(ListOption('PLUGINS', 'List of plugins to build', 'unstable', avplugins
 opts.Add(BoolOption('UNICODE', 'Whether to build unicode version of ekg2', True))
 opts.Add(BoolOption('NLS', 'Whether to enable NLS (l10n)', True))
 
-for var,path in dirs.items():
-	opts.Add(PathOption(var, '', path, PathOption.PathAccept))
+dirs = []
+while indirs:
+	k = indirs.pop(0)
+	v = indirs.pop(0)
+	dirs.append(k)
+	opts.Add(PathOption(k, '', v, PathOption.PathAccept))
+
 for var,envname in envs.items():
 	if envname in os.environ:
 		envvar = os.environ[envname]
@@ -233,9 +244,7 @@ env.Help(opts.GenerateHelpText(env))
 
 defines = {}
 
-for var in dirs.keys():
-	if var == 'PREFIX':
-		continue
+for var in dirs:
 	env[var] = env.subst(env[var])
 	defines[var] = env[var]
 for var,val in consts.items():
@@ -370,7 +379,7 @@ print 'Options:'
 print '- unicode: %s' % (env['UNICODE'])
 print
 print 'Paths:'
-for k in dirs.keys():
+for k in dirs:
 	print '- %s: %s' % (k, env[k])
 print
 print 'Build environment:'
@@ -381,7 +390,7 @@ conf.Finish()
 
 writedefines()
 
-for k in dirs.keys():
+for k in dirs:
 	if k != 'DESTDIR':
 		env[k] = '%s%s' % (env['DESTDIR'], env[k])
 
