@@ -1,5 +1,5 @@
 ekg2_headers = audio.h audio_wav.h configfile.h dynstuff.h dynstuff_inline.h events.h metacontacts.h queries.h objects.h protocol.h sessions.h strings.h themes.h vars.h xmalloc.h \
-		commands.h debug.h emoticons.h log.h msgqueue.h plugins.h scripts.h stuff.h userlist.h windows.h win32.h ../gettext.h ../ekg2-config.h
+		commands.h debug.h emoticons.h log.h msgqueue.h net.h plugins.h scripts.h stuff.h userlist.h windows.h win32.h ../gettext.h ../ekg2-config.h
 
 bin_PROGRAMS = ekg2
 ekg2_SOURCES = audio.c commands.c configfile.c dynstuff.c ekg.c emoticons.c events.c legacyconfig.c log.c metacontacts.c \
