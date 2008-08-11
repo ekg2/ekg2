@@ -59,6 +59,13 @@ void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, uint16
 	string_insert_n(pkt, 0, _icq_makesnac(fam, cmd, flags, ref), SNAC_PACKET_LEN);
 
 	debug_function("icq_makesnac() 0x%x 0x0%x 0x%x 0x%x\n", fam, cmd, flags, ref);
+#if ICQ_SNAC_NAMES_DEBUG
+	{
+	const char *tmp = icq_snac_name(fam, cmd);
+	if (tmp)
+		debug_white("icq_makesnac() //  SNAC(0x%x, 0x%x) -- %s\n", fam, cmd, tmp);
+	}
+#endif
 	icq_makeflap(s, pkt, 0x02);
 }
 
@@ -89,13 +96,6 @@ void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, u
 	string_free(newbuf, 1);
 
 	debug_function("icq_makemetasnac() 0x%x 0x0%x 0x%x\n", sub, type, ref);
-#if ICQ_SNAC_NAMES_DEBUG
-	{
-	const char *tmp = icq_snac_name(sub, type);
-	if (tmp)
-		debug_white("icq_makemetasnac() //  SNAC(0x%x, 0x%x) -- %s\n", sub, type, tmp);
-	}
-#endif
 	icq_makesnac(s, pkt, 0x15, 2, 0, (ref ? ref : rand () % 0x7fff) + (j->snacmeta_seq << 16));	/* XXX */
 }
 
