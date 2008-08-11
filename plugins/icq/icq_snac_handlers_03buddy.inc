@@ -293,7 +293,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	}
 
 	/* We change only status, not description */
-	if (u = userlist_find(s, uid))
+	if ( (u = userlist_find(s, uid)) )
 		descr = xstrdup(u->descr);
 
 	protocol_status_emit(s, uid, status, descr, time(NULL));

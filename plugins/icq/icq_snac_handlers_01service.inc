@@ -81,6 +81,40 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 	icq_private_t *j = s->priv;
 	string_t str;
 
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
+{
+	struct {
+		uint16_t no;	// Number of rate classes
+	} pkt;
+	int i;
+
+	if (!ICQ_UNPACK(&buf, "W", &pkt.no))
+		goto wrong;
+	if (pkt.no*(2+8*4+1) > len)
+		goto wrong;
+	for (i=0; i<pkt.no; i++) {
+		uint16_t id;
+		uint32_t x0, x1, x2, x3, x4, x5, x6, x7;
+		uint8_t b;
+		(void) ICQ_UNPACK(&buf, "W IIII IIII x", &id,	// Rate class ID
+					&x0,			// Window size
+					&x1,			// Clear level
+					&x2,			// Alert level
+					&x3,			// Limit level
+					&x4,			// Disconnect level
+					&x5,			// Current level
+					&x6,			// Max level
+					&x7,			// Last time; not present in protocol version 2
+					&b			// Current state; not present in protocol version 2
+				);
+debug_white("Rate info class #%d (%d, %d, %d, %d, %d, %d, %d, %d)\n", id, x0, x1, x2, x3, x4, x5, x6, x7);
+	}
+
+wrong:
+	icq_hexdump(DEBUG_ERROR, buf, len);
+}
+#endif
+
 #if MIRANDA
 	/* init rates management */
 	m_rates = ratesCreate(pBuffer, wBufferLength);
