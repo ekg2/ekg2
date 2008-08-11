@@ -34,8 +34,8 @@ envs = {
 	}
 
 	# first and last one are special keywords
-plugin_states = ['all', 'nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable', 'none']
-plugin_symbols = ['', '!', '!', '?', '*', '~', '', '']
+plugin_states = ['all', 'nocompile', 'deprecated', 'unknown', 'experimental', 'def', 'unstable', 'stable', 'none']
+plugin_symbols = ['', '!', '!', '?', '*', '', '~', '', '']
 
 import glob, subprocess, codecs, os, os.path
 
@@ -218,7 +218,7 @@ opts = Options('options.cache')
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
 xplugins = ['-%s' % elem for elem in avplugins]
 xplugins.extend(['@%s' % elem for elem in plugin_states])
-opts.Add(ListOption('PLUGINS', 'List of plugins or @sets to build', '@unstable', avplugins + xplugins))
+opts.Add(ListOption('PLUGINS', 'List of plugins or @sets to build', '@def', avplugins + xplugins))
 
 for k,v in mapped.items():
 	opts.Add(BoolOption(k, v[1], True))
