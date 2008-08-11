@@ -367,10 +367,10 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
 	if (!(person = irc_find_person(j->people, nick)))
 		return -1;
 
+	ret = irc_del_person_channel_int(s, j, person, chan);
+
 	if (xstrlen(nick) == chan->longest_nick)
 		update_longest_nick(chan);
-
-	ret = irc_del_person_channel_int(s, j, person, chan);
 
 	query_emit_id(NULL, USERLIST_REFRESH);
 	return ret;
@@ -394,9 +394,11 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		char *wholenick, char *reason, int doprint)
 {
 	people_t *person;
+	channel_t *chan;
 	people_chan_t *pech;
 	window_t *w;
 	list_t tmp;
+	int ret;
 	char *longnick;
 
 	if (!(person = irc_find_person(j->people, nick))) 
@@ -428,7 +430,13 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		 * person has been deleted, so let's break
 		 * the loop
 		 */
-		if (irc_del_person_channel_int(s, j, person, pech->chanp))
+		chan = pech->chanp;
+		ret = irc_del_person_channel_int(s, j, person, pech->chanp);
+
+		if (xstrlen(nick) == chan->longest_nick)
+			update_longest_nick(chan);
+
+		if (ret)
 			break;
 
 		tmp = person->channels;
