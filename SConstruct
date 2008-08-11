@@ -279,7 +279,7 @@ pllist = list(plugins.keys())
 pllist.sort()
 for plugin in pllist:
 	plugpath = 'plugins/%s' % (plugin)
-	info = SConscript('%s/SConscript' % (plugpath), ['env'])
+	info = SConscript('%s/PluginInfo' % (plugpath), ['env'])
 	if not info:
 		info = plugin_def
 	else:
