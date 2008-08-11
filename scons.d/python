@@ -3,7 +3,7 @@
 
 Import('*')
 
-import sys, re
+import sys, distutils.sysconfig
 
 pyver		= sys.version[0:3]
 pyprefix	= sys.prefix
@@ -19,22 +19,16 @@ env['CCFLAGS']	= old_ccflags
 if out:
 	try:
 		libdir		= '%s/lib/python%s/config' % (pyxprefix, pyver)
-		makefile	= open('%s/Makefile' % libdir, 'r')
+		makefile	= distutils.sysconfig.parse_makefile('%s/Makefile' % libdir)
 		
-		matcher		= re.compile('^\s*([A-Z]+)\s*=\s*(.*)\s*$')
-
-		for l in makefile:
-			match	= matcher.match(l)
-			if match:
-				var	= match.group(1)
-				val	= match.group(2)
-
-				if var in ['LOCALMODLIBS', 'BASEMODLIBS', 'OTHER_LIBS', 'OTHER_LIBC', 'OTHER_LIBM']:
-					for arg in val.split():
-						if arg[0:2] == '-l':
-							libs.append(arg[2:])
-						else:
-							linkflags.append(arg)
+		for var, val in makefile.items():
+			if var in ['LOCALMODLIBS', 'BASEMODLIBS', 'OTHER_LIBS', 'OTHER_LIBC', 'OTHER_LIBM']:
+				val = distutils.sysconfig.expand_makefile_vars(val, makefile)
+				for arg in val.split():
+					if arg[0:2] == '-l':
+						libs.append(arg[2:])
+					else:
+						linkflags.append(arg)
 
 		libs.append('python%s' % pyver)
 		linkflags.append('-L%s/lib' % pyxprefix)
