@@ -4,7 +4,8 @@
 plugin	= {
 	'type':			'ui',
 	'state':		'unstable',
-	'depends':		[]
+	'depends':		[],
+	'extradist':	['xajax_0.2.4.js', 'ekg2.js', 'ekg2.css']
 	}
 
 Return('plugin')

@@ -254,7 +254,8 @@ plugin_def = {
 	'type':			'misc',
 	'state':		'unknown',
 	'depends':		[],
-	'optdepends':	[]
+	'optdepends':	[],
+	'extradist':	[]
 	}
 
 plugins = env['PLUGINS']
@@ -430,6 +431,9 @@ for plugin, data in plugins.items():
 	docfiles = []					# we must glob twice to include *utf*
 	for doc in docglobs:
 		docfiles.extend(glob.glob('%s/%s' % (plugpath, doc)))
+	
+	for f in data['info']['extradist']:
+		docfiles.extend(glob.glob('%s/%s' % (plugpath, f)))
 
 	penv.Install(env['PLUGINDIR'], libfile + env['SHLIBSUFFIX']) 
 	penv.Install('%s/plugins/%s' % (env['DATADIR'], plugin), docfiles)
