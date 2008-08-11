@@ -30,7 +30,7 @@ mapped = {
 	}
 envs = {
 	'CCFLAGS':		['CFLAGS', 'Compiler flags'],
-	'LINKFLAGS':	['LDFLAGS', 'Linker flags']
+	'LINKFLAGS':	['LDFLAGS', 'LIBS', 'Linker flags']
 	}
 
 plugin_states = ['nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable']
@@ -227,11 +227,13 @@ for k,v,d in indirs:
 	opts.Add(PathOption(k, d, v, PathOption.PathAccept))
 
 for k,v in envs.items():
-	if v[0] in os.environ:
-		var = os.environ[v[0]]
-	else:
-		var = ''
-	opts.Add(k, v[1], var)
+	desc = v.pop()
+	var = []
+	for val in v:
+		if val in os.environ:
+			var.append(os.environ[val])
+	var = ' '.join(var)
+	opts.Add(k, desc, var)
 
 recoder = Builder(action = RecodeDocs, emitter = RecodeDocsEmitter, suffix = '-utf.txt', src_suffix = '.txt')
 msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix = '.mo', src_suffix = '.po')
