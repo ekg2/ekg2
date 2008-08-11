@@ -3,7 +3,7 @@
 
 plugin	= {
 	'type':			'log',
-	'state':		'unstable',
+	'state':		'experimental',
 	'depends':		['pthread', 'oracle']
 	}
 

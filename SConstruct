@@ -37,7 +37,7 @@ envs = {
 plugin_states = ['all', 'nocompile', 'deprecated', 'unknown', 'experimental', 'def', 'unstable', 'stable', 'none']
 plugin_symbols = ['', '!', '!', '?', '*', '', '~', '', '']
 
-import glob, subprocess, codecs, os, os.path
+import glob, subprocess, codecs, os, os.path, sys
 
 def writedef(definefile, var, val):
 	""" Write define to definefile, choosing correct format. """
@@ -219,7 +219,7 @@ avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
 xplugins = ['-%s' % elem for elem in avplugins]
 xplugins.extend(['@%s' % elem for elem in plugin_states])
 opts.Add(ListOption('PLUGINS', 'List of plugins or @sets to build', '@def', avplugins + xplugins))
-
+opts.Add(BoolOption('HARDDEPS', 'Fail if specified plugin could not be built due to unfulfilled depends', False))
 for k,v in mapped.items():
 	opts.Add(BoolOption(k, v[1], True))
 
@@ -337,6 +337,9 @@ for plugin in pllist:
 
 		if not have_it:
 			print '[%s] Dependency not satisfied: %s' % (plugin, dep)
+			if env['HARDDEPS']:
+				print 'HARDDEPS specified, aborting.'
+				sys.exit(1)
 			info['fail'] = True
 	if 'fail' in info:
 		del plugins[plugin]
