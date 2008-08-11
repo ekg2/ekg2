@@ -626,7 +626,11 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 		/* if person who changed nick had longest nick,
 		 * update longest_nick variable
 		 */
-		if (xstrlen(old) == pch->chanp->longest_nick)
+		if (xstrlen(new) > pch->chanp->longest_nick)
+		{
+			pch->chanp->longest_nick = xstrlen(new);
+			nickpad_string_create(pch->chanp);
+		} else if (xstrlen(old) == pch->chanp->longest_nick)
 			update_longest_nick (pch->chanp);
 	}
 
