@@ -8,7 +8,7 @@ defines['HAVE_LIBGADU'] = out
 
 if out:
 	for f in ['gg_remind_passwd3', 'gg_change_passwd4']:
-		defines['HAVE_%s' % (f.upper())] = conf.CheckLib(libs, f, None, None, 0)
+		defines['HAVE_%s' % (f.upper())] = conf.CheckLib('gadu', f, None, None, 0)
 
 Return('out')
 
