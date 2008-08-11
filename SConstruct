@@ -23,14 +23,14 @@ mapped = {
 	'NLS':			'ENABLE_NLS'
 	}
 envs = {
-	'CCFLAGS':		'Compiler flags',
-	'LINKFLAGS':	'Linker flags'
+	'CCFLAGS':		'CFLAGS',
+	'LINKFLAGS':	'LDFLAGS'
 	}
 
 plugin_states = ['nocompile', 'deprecated', 'unknown', 'experimental', 'unstable', 'stable']
 plugin_symbols = ['!', '!', '?', '*', '~', '']
 
-import glob, subprocess, codecs, os.path
+import glob, subprocess, codecs, os, os.path
 
 def writedef(definefile, var, val):
 	""" Write define to definefile, choosing correct format. """
@@ -216,8 +216,12 @@ opts.Add(BoolOption('NLS', 'Whether to enable NLS (l10n)', True))
 
 for var,path in dirs.items():
 	opts.Add(PathOption(var, '', path, PathOption.PathAccept))
-for var,desc in envs.items():
-	opts.Add(var, desc, '')
+for var,envname in envs.items():
+	if envname in os.environ:
+		envvar = os.environ[envname]
+	else:
+		envvar = ''
+	opts.Add(var, '', envvar)
 
 recoder = Builder(action = RecodeDocs, emitter = RecodeDocsEmitter, suffix = '-utf.txt', src_suffix = '.txt')
 msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix = '.mo', src_suffix = '.po')
