@@ -4,8 +4,7 @@
 plugin	= {
 	'type':			'scripting',
 	'state':		'stable',
-	'depends':		['python'],
-	'nocompile':	True
+	'depends':		['python']
 	}
 
 Return('plugin')

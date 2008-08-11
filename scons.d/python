@@ -1,0 +1,48 @@
+
+# python
+
+Import('*')
+
+import sys, re
+
+pyver		= sys.version[0:3]
+pyprefix	= sys.prefix
+pyxprefix	= sys.exec_prefix
+
+includedir	= '%s/include/python%s' % (pyprefix, pyver)
+
+old_ccflags	= env['CCFLAGS']
+env.Append(CCFLAGS = ' -I%s' % includedir)
+out = conf.CheckHeader(['Python.h'])
+env['CCFLAGS']	= old_ccflags
+
+if out:
+	try:
+		libdir		= '%s/lib/python%s/config' % (pyxprefix, pyver)
+		makefile	= open('%s/Makefile' % libdir, 'r')
+		
+		matcher		= re.compile('^\s*([A-Z]+)\s*=\s*(.*)\s*$')
+
+		for l in makefile:
+			match	= matcher.match(l)
+			if match:
+				var	= match.group(1)
+				val	= match.group(2)
+
+				if var in ['LOCALMODLIBS', 'BASEMODLIBS', 'OTHER_LIBS', 'OTHER_LIBC', 'OTHER_LIBM']:
+					for arg in val.split():
+						if arg[0:2] == '-l':
+							libs.append(arg[2:])
+						else:
+							linkflags.append(arg)
+
+		libs.append('python%s' % pyver)
+		linkflags.append('-L%s/lib' % pyxprefix)
+		linkflags.append('-L%s' % libdir)
+		ccflags.append('-I%s/include/python%s' % (pyxprefix, pyver))
+	except:
+		out = False
+
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python
