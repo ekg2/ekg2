@@ -3,6 +3,9 @@
 #  Alternate build system for EKG2, unstable and unfinished yet
 #  (C) 2008 Michał Górny
 
+EnsureSConsVersion(0,96,90)
+EnsurePythonVersion(2,4)
+
 consts = {
 	'VERSION':		'SVN',
 	'SHARED_LIBS':	True,
