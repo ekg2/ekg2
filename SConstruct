@@ -14,7 +14,7 @@ consts = {
 indirs = [ # pseudo-hash, 'coz we want to keep order
 	['DESTDIR',		'',							'Virtual installation root'],
 	['PREFIX',		'/usr/local',				'Prefix for arch-independent data'],
-	['EPREFIX',		'$PREFIX',				'Prefix for arch-dependent data'],
+	['EPREFIX',		'$PREFIX',					'Prefix for arch-dependent data'],
 
 	['BINDIR',		'$EPREFIX/bin',				'User executables'],
 	['LIBEXECDIR',	'$EPREFIX/libexec',			'Program executables'],
@@ -253,6 +253,7 @@ msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix 
 
 env = Environment(BUILDERS = {'RecodeDocs': recoder, 'CompileMsg': msgfmt})
 opts.Update(env)
+opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
 
 defines = {}
