@@ -3,16 +3,26 @@
 
 Import('*')
 
+out = False
 if env['UNICODE']:
 	nc_lib = 'ncursesw'
 	out = conf.CheckLibWithHeader(nc_lib, ['ncursesw/ncurses.h'], 'C', 'initscr();', 0)
-else:
+
+if not out:
 	nc_lib = 'ncurses'
 	out = conf.CheckLibWithHeader(nc_lib, ['ncurses/ncurses.h'], 'C', 'initscr();', 0)
 	defines['HAVE_NCURSES_NCURSES_H'] = out
 	if not out:
 		out = conf.CheckLibWithHeader('ncurses', ['ncurses.h'], 'C', 'initscr();', 0)
 		defines['HAVE_NCURSES_H'] = out
+	
+	if out and env['UNICODE']:
+		warnings.append('''Compiling with UNICODE=1, but ncurses without unicode support. You can either:
+a) install *ncursesw* using your favourite package manager,
+b) compile ncurses with --enable-widec,
+c) set UNICODE=0 to compile non-unicode ekg2,
+d) leave it as is and have ekg2 without ncurses plugin.''')
+		out = False
 
 if out:
 	libs.append(nc_lib)

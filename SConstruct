@@ -65,6 +65,8 @@ def writedefines():
 	definefile.close()
 
 
+warnings = []
+
 def CheckStructMember(context, struct, member, headers):
 	""" Check whether struct with given member is available. """
 	context.Message('Checking for %s.%s... ' % (struct, member))
@@ -133,8 +135,8 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, version = None, pkgconf = 
 			version.append(res[7])
 
 	context.Result(ret)
-	if int(res[0]) == 127:
-		print 'NOTE: %s not found!' % pkgconf
+	if int(res[0]) == 127 and pkgconf == 'pkg-config':
+		warnings.append('%s not found!' % pkgconf)
 	return ret
 
 def CheckThreads(context, variant):
@@ -155,7 +157,7 @@ int main(void) {
 
 def ExtTest(name, addexports = []):
 	""" Execute external test from scons.d/. """
-	exports = ['conf', 'defines', 'env']
+	exports = ['conf', 'defines', 'env', 'warnings']
 	exports.extend(addexports)
 	ret = SConscript('scons.d/%s' % (name), exports)
 	return ret
@@ -408,6 +410,13 @@ print
 print 'Build environment:'
 for k in ['CC', 'CCFLAGS', 'LIBS', 'LINK', 'LINKFLAGS']:
 	print '- %s: %s' % (k, env[k])
+print
+
+if warnings:
+	print 'Warnings:'
+	for w in {}.fromkeys(warnings).keys():
+		print '- %s' % w.replace('\n', '\n  ')
+	print
 
 conf.Finish()
 
