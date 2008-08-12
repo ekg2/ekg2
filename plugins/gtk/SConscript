@@ -4,7 +4,10 @@ import glob
 Import('*')
 
 try:
-	env	# stage 2
+	env
+except NameError:
+	pass
+else:
 	plugin	= {
 		'type':			'ui',
 		'state':		'unstable',
@@ -12,14 +15,12 @@ try:
 		}
 
 	Return('plugin')
-except NameError:
-	pass
-
-# generate inline_pngs
 
 try:
-	penv # stage 3
-
+	penv
+except NameError:
+	pass
+else:
 	def InlinePNGGen(target, source, env, for_signature):
 		src = []
 		for f in source:
@@ -42,7 +43,5 @@ try:
 	penv['BUILDERS']['InlinePNGGen'] = pnggen
 	penv.InlinePNGGen('inline_pngs.h', pngs)
 	penv.InlinePNGGen('inline_pngs_gg.h', gg_pngs)
-except NameError:
-	pass
 
 # vim:ts=4:sts=4:sw=4:syntax=python:sw=4:syntax=python
