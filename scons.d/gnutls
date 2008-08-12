@@ -5,8 +5,6 @@ Import('*')
 
 out = conf.PkgConfig('gnutls > 1.0.0', libs, ccflags, linkflags)
 defines['HAVE_GNUTLS'] = out
-if plugin == 'jabber':
-	defines['JABBER_HAVE_GNUTLS'] = out
 
 Return('out')
 

@@ -368,6 +368,7 @@ for plugin in pllist:
 			print '[%s] Optional dependency not satisfied: %s' % (plugin, dep)
 			optdeps.append('-%s' % (' -'.join(dep)))
 
+	SConscript('%s/SConscript' % (plugpath), ['defines', 'optdeps'])
 	if not ccflags:
 		ccflags = ['']
 	if not linkflags:

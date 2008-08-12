@@ -9,6 +9,16 @@ except NameError:
 	pass
 
 try:
+	defines
+except NameError:
+	pass
+else:
+	for o in sslbackends:
+		if o in optdeps:
+			defines['JABBER_HAVE_%s' % o.upper()] = True
+			break
+
+try:
 	jssl = env['JABBER_SSL']
 except NameError:
 	pass
