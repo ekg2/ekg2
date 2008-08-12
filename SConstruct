@@ -133,6 +133,8 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, version = None, pkgconf = 
 			version.append(res[7])
 
 	context.Result(ret)
+	if int(res[0]) == 127:
+		print 'NOTE: %s not found!' % pkgconf
 	return ret
 
 def CheckThreads(context, variant):
