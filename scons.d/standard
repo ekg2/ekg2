@@ -75,7 +75,10 @@ for func, lib in possibly_libbized.items():
 
 defines['HAVE_LANGINFO_CODESET'] = conf.CheckLibWithHeader(None, ['langinfo.h'], 'C', 'nl_langinfo(CODESET);', 0)
 
-have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_check_version(NULL);', 0)
+if env['IDN']:
+	have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_check_version(NULL);', 0)
+else:
+	have_idn = False
 defines['LIBIDN'] = have_idn
 if have_idn:
 	ekg_libs.append('idn')
