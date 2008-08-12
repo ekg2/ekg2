@@ -228,9 +228,11 @@ xplugins = ['-%s' % elem for elem in avplugins]
 xplugins.extend(['@%s' % elem for elem in plugin_states])
 opts.Add(ListOption('PLUGINS', 'List of plugins or @sets to build', '@def', avplugins + xplugins))
 opts.Add(BoolOption('HARDDEPS', 'Fail if specified plugin could not be built due to unfulfilled depends', False))
-opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 for k,v in mapped.items():
 	opts.Add(BoolOption(k, v[1], True))
+opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
+for p in avplugins:
+	SConscript('plugins/%s/SConscript' % p, ['opts'])
 
 dirs = []
 for k,v,d in indirs:
@@ -251,7 +253,6 @@ msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix 
 
 env = Environment(BUILDERS = {'RecodeDocs': recoder, 'CompileMsg': msgfmt})
 opts.Update(env)
-opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
 
 defines = {}

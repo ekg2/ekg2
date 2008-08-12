@@ -1,17 +1,30 @@
 
 Import('*')
 
+sslbackends = ['gnutls', 'openssl']
+
 try:
-	env	# stage 2
+	opts.Add(EnumOption('JABBER_SSL', 'SSL implementation to use with jabber plugin', 'both', sslbackends + ['both', 'none']))
+except NameError:
+	pass
+
+try:
+	jssl = env['JABBER_SSL']
+except NameError:
+	pass
+else:
+	ssldeps = []
+	for o in sslbackends:
+		if jssl == o or jssl == 'both':
+			ssldeps.append(o)
+
 	plugin	= {
 		'type':			'protocol',
 		'state':		'stable',
 		'depends':		['expat'],
-		'optdepends':	[['gnutls', 'openssl'], 'zlib']
+		'optdepends':	[ssldeps, 'zlib']
 		}
 
 	Return('plugin')
-except NameError:
-	pass
 
 # vim:ts=4:sts=4:sw=4:syntax=python
