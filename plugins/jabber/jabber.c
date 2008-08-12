@@ -1589,6 +1589,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("plaintext_passwd", 	VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("ping_server", 		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("port", 			VAR_INT, "5222", 0, NULL),
+	PLUGIN_VAR_ADD("prefer_family",		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("priority", 		VAR_INT, "5", 0, NULL),
 	PLUGIN_VAR_ADD("privacy_list", 		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("resource", 		VAR_STR, 0, 0, NULL),
