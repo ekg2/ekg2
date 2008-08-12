@@ -28,24 +28,24 @@
 
 * ¿eby skorzystaæ z jabbera, wpisujemy:
 
-	/session --add jid:jankowalski@jabber.org
+	/session --add xmpp:jankowalski@jabber.org
 	/session password mojetajnehas³o
 	/connect
 
   ¿eby dodaæ kogo¶ do listy kontaktów:
 
-   	/jid:add hamlet@denmark.dk Hamlet
+   	/xmpp:add xmpp:hamlet@denmark.dk Hamlet
 
   Dodanie do listy kontaktów powoduje automatyczne wys³anie zapytania o
   autoryzacjê.
 
   ¿eby kogo¶ autoryzowaæ:
 
-  	/jid:auth --accept jid:julia@verona.it
+  	/xmpp:auth --accept xmpp:julia@verona.it
 
   ¯eby usun±æ z listy kontaków:
 
-	/jid:del hamlet@denmark.dk 
+	/xmpp:del hamlet@denmark.dk 
 
 * dodano zmienn± debug. mo¿liwo¶æ zg³aszania b³êdów to jedno, przero¶niêta
   binarka to drugie, ale np. przy ³±czeniu lub przy przesy³aniu plików ekg
