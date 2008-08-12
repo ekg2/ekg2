@@ -27,6 +27,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_error) {
 		uint16_t error;
 	} pkt;
 	uint16_t error;
+	// XXX ?wo? TLV(8) - error subcode
 
 	if (ICQ_UNPACK(&buf, "W", &pkt.error))
 		error = pkt.error;
@@ -41,18 +42,18 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 	struct icq_tlv_list *tlvs;
 
 	if ((tlvs = icq_unpack_tlvs(buf, len, 0))) {
-		icq_tlv_t *t_max_uins = icq_tlv_get(tlvs, 1);
-		icq_tlv_t *t_max_watchers = icq_tlv_get(tlvs, 2);
+		icq_tlv_t *t_max_uins = icq_tlv_get(tlvs, 1);		// Max number of contact list entries
+		icq_tlv_t *t_max_watchers = icq_tlv_get(tlvs, 2);	// Max number of watcher list entries
 		uint16_t max_uins = 0, max_watchers = 0;
 
 		icq_unpack_tlv_word(t_max_uins, max_uins);
 		icq_unpack_tlv_word(t_max_watchers, max_watchers);
 
-		debug_white("icq_snac_buddy_03() maxUins = %u maxWatchers = %u\n", max_uins, max_watchers);
+		debug_white("icq_snac_buddy_reply() maxUins = %u maxWatchers = %u\n", max_uins, max_watchers);
 
 		icq_tlvs_destroy(&tlvs);
 	} else
-		debug_error("icq_snac_buddy_03() tlvs == NULL\n");
+		debug_error("icq_snac_buddy_reply() tlvs == NULL\n");
 	return 0;
 }
 
@@ -343,7 +344,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 SNAC_SUBHANDLER(icq_snac_buddy_notify_rejected) {
 	char *uid;
 
-	if (!ICQ_UNPACK(&buf, "u", &uid))
+	if (!ICQ_UNPACK(&buf, "u", &uid))	// XXX ?wo? may be repeated more then once?
 		return -1;
 
 	debug_function("icq_snac_buddy_notify_rejected() for: %s\n", uid);

@@ -38,8 +38,10 @@ SNAC_SUBHANDLER(icq_snac_sigon_error) {		/* Miranda: OK */
 }
 
 SNAC_SUBHANDLER(icq_snac_sigon_reply) {
+
 	debug_function("icq_snac_sigon_reply()\n");
 
+	// XXX ?wo? Is icq_flap_close_helper() adequate to handle it?
 	return icq_flap_close_helper(s, buf, len);
 }
 
@@ -73,14 +75,15 @@ SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
 
 	str = string_init(NULL);
 
-	icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));	/* uid */
-	icq_pack_append(str, "T", icq_pack_tlv(0x25, digest, 16));	/* MD5-digest */
-	icq_pack_append(str, "T", icq_pack_tlv(0x4C, NULL, 0));		/* empty TLV(0x4C): unknown */
+	icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));	// TLV(0x01) - uin
+	icq_pack_append(str, "T", icq_pack_tlv(0x25, digest, 16));	// TLV(0x25) - password md5 hash
+	icq_pack_append(str, "T", icq_pack_tlv(0x4C, NULL, 0));		// empty TLV(0x4C): unknown	XXX ?wo? ssi flag?
 
 	icq_pack_append_client_identification(str);			// Pack client identification details.
 
 	icq_makesnac(s, str, 0x17, 2, 0, 0);
-	icq_send_pkt(s, str);					// Send CLI_MD5_LOGIN 
+	icq_send_pkt(s, str);						// Send CLI_MD5_LOGIN
+
 	return 0;
 }
 

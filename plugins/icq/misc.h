@@ -20,6 +20,8 @@ struct fieldnames_t {
 	char *text;
 };
 
+extern struct fieldnames_t snac_families[];
+
 /* pack, unpack */
 int icq_unpack(unsigned char *buf, unsigned char **endbuf, int *l, char *format, ...);
 int icq_unpack_nc(unsigned char *buf, int len, char *format, ...);

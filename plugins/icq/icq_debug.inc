@@ -313,7 +313,28 @@ struct fieldnames_t caps_names[]={
 	{0x134E, "Client supports UTF-8 messages."},
 	{-1, NULL}};
 
-
+struct fieldnames_t snac_families[]={
+	{0x01, "Generic service controls"},
+	{0x02, "Location services"},
+	{0x03, "Buddy List management service"},
+	{0x04, "ICBM (messages) service"},
+	{0x05, "Advertisements service"},
+	{0x06, "Invitation service"},
+	{0x07, "Administrative service"},
+	{0x08, "Popup notices service"},
+	{0x09, "Privacy management service"},
+	{0x0a, "User lookup service"},
+	{0x0b, "Usage stats service"},
+	{0x0c, "Translation service"},
+	{0x0d, "Chat navigation service"},
+	{0x0e, "Chat service"},
+	{0x0f, "Directory user search"},
+	{0x10, "Server-stored buddy icons (SSBI) service"},
+	{0x13, "Server Side Information (SSI) service"},
+	{0x15, "ICQ specific extensions service"},
+	{0x17, "Authorization/registration service"},
+	{0x85, "Broadcast service - IServerd extension"},
+	{-1, NULL}};
 
 #if ICQ_SNAC_NAMES_DEBUG
 const char *icq_snac_name(int family, int cmd) {

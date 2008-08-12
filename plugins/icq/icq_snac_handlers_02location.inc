@@ -6,6 +6,7 @@
  *
  * ekg2 port:
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                     2008 Wiesław Ochmiński <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -77,52 +78,32 @@ SNAC_SUBHANDLER(icq_snac_location_replyreq) {
 	return 0;
 }
 
-SNAC_SUBHANDLER(SNAC_LOC_06) {
+SNAC_SUBHANDLER(icq_user_online_info) {
 	/*
 	 * Handle SNAC(0x2,0x6) -- User information response
 	 *
 	 */
-	debug_error("SNAC_LOC_06() XXX\n");
+	debug_error("icq_user_online_info() XXX\n");
 
 	return -3;
 }
 
-SNAC_SUBHANDLER(SNAC_LOC_08) {
+SNAC_SUBHANDLER(icq_watcher_notification) {
 	/*
 	 * Handle SNAC(0x2,0x8) -- Watcher notification
 	 *
 	 */
-	debug_error("SNAC_LOC_08() XXX\n");
+	debug_error("icq_watcher_notification() XXX\n");
 
 	return -3;
 }
 
-SNAC_SUBHANDLER(SNAC_LOC_0A) {
+SNAC_SUBHANDLER(icq__update_dir_info_result) {
 	/*
 	 * Handle SNAC(0x2,0xa) -- Update directory info reply
 	 *
 	 */
-	debug_error("SNAC_LOC_0A() XXX\n");
-
-	return -3;
-}
-
-SNAC_SUBHANDLER(SNAC_LOC_0C) {
-	/*
-	 * Handle SNAC(0x2,0xc) -- Reply to SNAC(02,0B) ???
-	 *
-	 */
-	debug_error("SNAC_LOC_0C() XXX\n");
-
-	return -3;
-}
-
-SNAC_SUBHANDLER(SNAC_LOC_10) {
-	/*
-	 * Handle SNAC(0x2,0x10) -- Update user directory interests reply
-	 *
-	 */
-	debug_error("SNAC_LOC_10() XXX\n");
+	debug_error("icq__update_dir_info_result() XXX\n");
 
 	return -3;
 }
@@ -131,13 +112,11 @@ SNAC_HANDLER(icq_snac_location_handler) {
 	snac_subhandler_t handler;
 
 	switch (cmd) {
-		case 0x01: handler = icq_snac_location_error;	break;
-		case 0x03: handler = icq_snac_location_replyreq; break;	/* Miranda: OK */
-		case 0x06: handler = SNAC_LOC_06;		break;
-		case 0x08: handler = SNAC_LOC_08;		break;
-		case 0x0A: handler = SNAC_LOC_0A;		break;
-		case 0x0C: handler = SNAC_LOC_0C;		break;
-		case 0x10: handler = SNAC_LOC_10;		break;
+		case 0x01: handler = icq_snac_location_error;		break;
+		case 0x03: handler = icq_snac_location_replyreq;	break;	/* Miranda: OK */
+		case 0x06: handler = icq_user_online_info;		break;
+		case 0x08: handler = icq_watcher_notification;		break;
+		case 0x0A: handler = icq__update_dir_info_result;	break;
 		default:   handler = NULL;			break;
 	}
 

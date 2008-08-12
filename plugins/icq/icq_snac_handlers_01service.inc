@@ -43,7 +43,19 @@ SNAC_SUBHANDLER(icq_snac_service_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_families) {
-	string_t pkt = string_init(NULL);
+	string_t pkt;
+
+	debug_function("icq_snac_service_families()\n");
+	// Handle incoming packet
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
+	debug_white("icq_snac_service_families() Server knows families:");
+	while (len>=2) {
+		uint16_t family;
+		ICQ_UNPACK(&buf, "W", &family);
+		debug_white(" 0x%x", family);
+	}
+	debug_white("\n");
+#endif
 
 	/* This packet is a response to SRV_FAMILIES SNAC(1,3).
 	 * This tells the server which SNAC families and their corresponding
@@ -51,23 +63,35 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 	 * the client as an ICQ vice AIM client to the server.
 	 * Miranda mimics the behaviour of ICQ 6 */
 
+	pkt = string_init(NULL);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x22, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x01, (uint32_t) 0x03);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x13, (uint32_t) 0x04);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x02, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x03, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x01, (uint32_t) 0x03);	// Generic service controls
+	icq_pack_append(pkt, "WW", (uint32_t) 0x13, (uint32_t) 0x04);	// Server Side Information (SSI) service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x02, (uint32_t) 0x01);	// Location services
+	icq_pack_append(pkt, "WW", (uint32_t) 0x03, (uint32_t) 0x01);	// Buddy List management service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x04, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x06, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x08, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x09, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0a, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0b, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0c, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x04, (uint32_t) 0x01);	// ICBM (messages) service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x06, (uint32_t) 0x01);	// Invitation service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x08, (uint32_t) 0x01);	// Popup notices service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x09, (uint32_t) 0x01);	// Privacy management service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x0a, (uint32_t) 0x01);	// User lookup service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x0b, (uint32_t) 0x01);	// Usage stats service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x0c, (uint32_t) 0x01);	// Translation service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x25, (uint32_t) 0x01);
+#if 0
+	icq_pack_append(pkt, "WW", (uint32_t) 0x05, (uint32_t) 0x01);	//  Advertisements service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x07, (uint32_t) 0x01);	//  Administrative service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x0d, (uint32_t) 0x01);	//  Chat navigation service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x0e, (uint32_t) 0x01);	//  Chat service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x0f, (uint32_t) 0x01);	//  Directory user search
+	icq_pack_append(pkt, "WW", (uint32_t) 0x10, (uint32_t) 0x01);	//  Server-stored buddy icons (SSBI) service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x01);	//  ICQ specific extensions service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x17, (uint32_t) 0x01);	//  Authorization/registration service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x85, (uint32_t) 0x01);	//  Broadcast service - IServerd extension
+#endif
 
 	icq_makesnac(s, pkt, 0x01, 0x17, 0, 0);
-	icq_send_pkt(s, pkt);
+	icq_send_pkt(s, pkt);						// Send CLI_FAMILIES_VERSIONS
 
 	return 0;
 }
@@ -107,9 +131,9 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 					&x7,			// Last time; not present in protocol version 2
 					&b			// Current state; not present in protocol version 2
 				);
-debug_white("Rate info class #%d (%d, %d, %d, %d, %d, %d, %d, %d)\n", id, x0, x1, x2, x3, x4, x5, x6, x7);
+		debug_white("Rate info class #%d (%d, %d, %d, %d, %d, %d, %d, %d)\n", id, x0, x1, x2, x3, x4, x5, x6, x7);
 	}
-
+	// XXX ?wo? handle rate groups
 wrong:
 	icq_hexdump(DEBUG_ERROR, buf, len);
 }
@@ -140,7 +164,6 @@ wrong:
 #endif
 		/* CLI_REQLISTS - we want to use SSI */
 		str = string_init(NULL);
-//		str = icq_pack("tW", icq_pack_tlv_word(0x0B, 0x000F));	/* mimic ICQ 6 */
 		icq_makesnac(s, str, 0x13, 0x02, 0, 0);
 		icq_send_pkt(s, str);
 #if 0
@@ -188,9 +211,9 @@ wrong:
 		}
 #else
 		str = string_init(NULL);
-//		icq_makesnac(s, str, 0x13, 0x04, 0, 0);
-		icq_pack_append(str, "I", (uint32_t) 0x0000);
-		icq_pack_append(str, "I", (uint32_t) 0x0000);
+		icq_pack_append(str, "I", (uint32_t) 0x0000);		// modification date/time of client local SSI copy
+		// XXX ?wo? number of items should be "W" ?
+		icq_pack_append(str, "I", (uint32_t) 0x0000);		// number of items in client local SSI copy
 		icq_makesnac(s, str, 0x13, 0x05, 0, 0);
 		icq_send_pkt(s, str);
 #endif
@@ -201,12 +224,6 @@ wrong:
 	icq_makesnac(s, str, 0x02, 0x02, 0, 0);
 	icq_send_pkt(s, str);
 
-	/* CLI_REQBUDDY */
-	/* Query flags: 1 = Enable Avatars
-	                2 = Enable offline status message notification
-	                4 = Enable Avatars for offline contacts
-	 */
-//	str = icq_pack("tW", icq_pack_tlv_word(0x05, 0x0003));	/* mimic ICQ 6 */
 	str = string_init(NULL);
 	icq_makesnac(s, str, 0x03, 0x02, 0, 0);
 	icq_send_pkt(s, str);
@@ -332,13 +349,24 @@ SNAC_SUBHANDLER(icq_snac_service_migrate) {
 	return -3;
 }
 
-SNAC_SUBHANDLER(icq_snac_service_motd) { return 0; }
+SNAC_SUBHANDLER(icq_snac_service_motd) {
+	return 0;
+}
 
 SNAC_SUBHANDLER(icq_snac_service_families2) {
 	string_t pkt = string_init(NULL);
 
 	/* This is a reply to CLI_FAMILIES and it tells the client which families and their versions that this server understands.
 	 * We send a rate request packet */
+	debug_function("icq_snac_service_families2()\n");
+	// Handle incoming packet
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
+	while (len>=2) {
+		uint16_t fam, ver;
+		ICQ_UNPACK(&buf, "WW", &fam, &ver);
+		debug_white("icq_snac_service_families2() fam=0x%x ver=0x%x // %s\n",  fam, ver, icq_lookuptable(snac_families, fam));
+	}
+#endif
 
 	pkt = string_init(NULL);
 
