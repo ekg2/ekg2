@@ -77,7 +77,8 @@ defines['HAVE_LANGINFO_CODESET'] = conf.CheckLibWithHeader(None, ['langinfo.h'],
 
 have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_check_version(NULL);', 0)
 defines['LIBIDN'] = have_idn
-ekg_libs.append('idn')
+if have_idn:
+	ekg_libs.append('idn')
 
 out = True
 Return('out')
