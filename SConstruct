@@ -3,7 +3,7 @@
 #  Alternate build system for EKG2, unstable and unfinished yet
 #  (C) 2008 Michał Górny
 
-EnsureSConsVersion(0,96,90)
+EnsureSConsVersion(0,97)
 EnsurePythonVersion(2,4)
 
 consts = {
@@ -230,11 +230,7 @@ for k,v in mapped.items():
 dirs = []
 for k,v,d in indirs:
 	dirs.append(k)
-	try:
-		opts.Add(PathOption(k, d, v, PathOption.PathAccept))
-	except AttributeError:
-		print 'Ancient SCons version detected, build may fail, please upgrade!'
-		opts.Add(k, d, v)
+	opts.Add(PathOption(k, d, v, PathOption.PathAccept))
 
 for k,v in envs.items():
 	desc = v.pop()
