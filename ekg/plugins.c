@@ -213,25 +213,30 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 #ifdef SHARED_LIBS
 #ifndef NO_POSIX_SYSTEM
+#ifdef SCONS
+#	define DOTLIBS "" 
+#else
+#	define DOTLIBS ".libs/"
+#endif
         if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
                 lib = saprintf("%s/%s.so", env_ekg_plugins_path, name);
                 plugin = ekg2_dlopen(lib);
                 if (!plugin) {
                         xfree(lib);
-                        lib = saprintf("%s/%s/.libs/%s.so", env_ekg_plugins_path, name, name);
+                        lib = saprintf("%s/%s/" DOTLIBS "%s.so", env_ekg_plugins_path, name, name);
                         plugin = ekg2_dlopen(lib);
                 }
         }
 
         if (!plugin) {
                 xfree(lib);
-                lib = saprintf("plugins/%s/.libs/%s.so", name, name);
+                lib = saprintf("plugins/%s/" DOTLIBS "%s.so", name, name);
                 plugin = ekg2_dlopen(lib);
         }
 
         if (!plugin) {
                 xfree(lib);
-                lib = saprintf("../plugins/%s/.libs/%s.so", name, name);
+                lib = saprintf("../plugins/%s/" DOTLIBS "%s.so", name, name);
                 plugin = ekg2_dlopen(lib);
         }
 

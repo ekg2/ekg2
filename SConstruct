@@ -5,7 +5,8 @@
 
 consts = {
 	'VERSION':		'SVN',
-	'SHARED_LIBS':	True
+	'SHARED_LIBS':	True,
+	'SCONS':		True
 	}
 indirs = [ # pseudo-hash, 'coz we want to keep order
 	['DESTDIR',		'',							'Virtual installation root'],
@@ -438,7 +439,6 @@ cenv.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
 
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
-	Mkdir('%s/.libs' % (plugin))
 
 	penv = env.Clone()
 	penv.Append(LIBS = data['libs'])
@@ -449,7 +449,7 @@ for plugin, data in plugins.items():
 	if os.path.exists(sconshelper):
 		SConscript([sconshelper], ['penv'])
 
-	libfile = '%s/.libs/%s' % (plugpath, plugin)
+	libfile = '%s/%s' % (plugpath, plugin)
 	penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
 
 	docfiles = []
