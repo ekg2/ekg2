@@ -419,7 +419,7 @@ for k in dirs:
 
 docglobs = ['commands*', 'vars*', 'session*']
 
-env.Alias('install', '%s/' % env['DESTDIR'])
+env.Alias('install', [env['PREFIX'], env['EPREFIX']])
 cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)
 cenv.Append(LIBPATH = 'compat')
