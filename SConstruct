@@ -465,9 +465,7 @@ for plugin, data in plugins.items():
 	penv.Append(CCFLAGS = ' ' + data['ccflags'])
 	penv.Append(LINKFLAGS = ' ' + data['linkflags'])
 
-	sconshelper = '%s/SConscript' % plugpath
-	if os.path.exists(sconshelper):
-		SConscript([sconshelper], ['penv'])
+	SConscript('%s/SConscript' % plugpath, ['penv'])
 
 	libfile = '%s/%s' % (plugpath, plugin)
 	penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
