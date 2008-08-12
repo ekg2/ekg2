@@ -227,7 +227,11 @@ for k,v in mapped.items():
 dirs = []
 for k,v,d in indirs:
 	dirs.append(k)
-	opts.Add(PathOption(k, d, v, PathOption.PathAccept))
+	try:
+		opts.Add(PathOption(k, d, v, PathOption.PathAccept))
+	except AttributeError:
+		print 'Ancient SCons version detected, build may fail, please upgrade!'
+		opts.Add(PathOption(k, d, v))
 
 for k,v in envs.items():
 	desc = v.pop()
