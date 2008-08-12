@@ -393,6 +393,7 @@ if pl:
 
 print 'Options:'
 print '- unicode: %s' % (env['UNICODE'])
+print '- nls: %s' % (env['NLS'])
 print
 print 'Paths:'
 for k in dirs:
@@ -410,7 +411,7 @@ for k in dirs:
 	if k != 'DESTDIR':
 		env[k] = '%s%s' % (env['DESTDIR'], env[k])
 
-docglobs = ['commands*.txt', 'vars*.txt', 'session*.txt']
+docglobs = ['commands*', 'vars*', 'session*']
 
 env.Alias('install', '%s/' % env['DESTDIR'])
 cenv = env.Clone()
@@ -421,16 +422,18 @@ cenv.Program('ekg/ekg2', glob.glob('ekg/*.c'))
 
 docfiles = []
 for doc in docglobs:
-	docfiles.extend(glob.glob('docs/%s' % doc))
-cenv.RecodeDocs('docs/', docfiles)
-docfiles = []					# we must glob twice to include *utf*
-for doc in docglobs:
-	docfiles.extend(glob.glob('docs/%s' % doc))
+	docfiles.extend(glob.glob('docs/%s.txt' % doc))
+if env['UNICODE']:
+	cenv.RecodeDocs('docs/', docfiles)
+	docfiles = []
+	for doc in docglobs:
+		docfiles.extend(glob.glob('docs/%s.txt' % doc))
 
-cenv.CompileMsg('po/', glob.glob('po/*.po'))
-for f in glob.glob('po/*.mo'):
-	lang = str(f)[str(f).rindex('/') + 1:-3]
-	cenv.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = str(f))
+if env['NLS']:
+	cenv.CompileMsg('po/', glob.glob('po/*.po'))
+	for f in glob.glob('po/*.mo'):
+		lang = str(f)[str(f).rindex('/') + 1:-3]
+		cenv.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = str(f))
 
 cenv.Install(env['BINDIR'], 'ekg/ekg2')
 #cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
@@ -454,11 +457,12 @@ for plugin, data in plugins.items():
 
 	docfiles = []
 	for doc in docglobs:
-		docfiles.extend(glob.glob('%s/%s' % (plugpath, doc)))
-	penv.RecodeDocs(plugpath, docfiles)
-	docfiles = []					# we must glob twice to include *utf*
-	for doc in docglobs:
-		docfiles.extend(glob.glob('%s/%s' % (plugpath, doc)))
+		docfiles.extend(glob.glob('%s/%s.txt' % (plugpath, doc)))
+	if env['UNICODE']:
+		penv.RecodeDocs(plugpath, docfiles)
+		docfiles = []					# we must glob twice to include *utf*
+		for doc in docglobs:
+			docfiles.extend(glob.glob('%s/%s.txt' % (plugpath, doc)))
 	
 	for f in data['info']['extradist']:
 		docfiles.extend(glob.glob('%s/%s' % (plugpath, f)))
