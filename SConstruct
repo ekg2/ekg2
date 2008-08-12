@@ -231,7 +231,7 @@ for k,v,d in indirs:
 		opts.Add(PathOption(k, d, v, PathOption.PathAccept))
 	except AttributeError:
 		print 'Ancient SCons version detected, build may fail, please upgrade!'
-		opts.Add(PathOption(k, d, v))
+		opts.Add(k, d, v)
 
 for k,v in envs.items():
 	desc = v.pop()
