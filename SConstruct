@@ -339,7 +339,7 @@ for plugin in pllist:
 		if not isinstance(dep, list):
 			dep = [dep]
 		for xdep in dep: # exclusive depends
-			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags', 'plugin'])
+			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags'])
 			if have_it:
 				if len(dep) > 1:
 					optdeps.append('%s' % (xdep)) # well, it's not so optional, but pretty print it
@@ -359,7 +359,7 @@ for plugin in pllist:
 		if not isinstance(dep, list):
 			dep = [dep]
 		for xdep in dep: # exclusive depends
-			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags', 'plugin'])
+			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags'])
 			if have_it:
 				optdeps.append('%s' % (xdep))
 				break
