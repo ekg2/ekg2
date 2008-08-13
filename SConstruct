@@ -25,6 +25,7 @@ indirs = [ # pseudo-hash, 'coz we want to keep order
 
 	['LOCALEDIR',	'$DATAROOTDIR/locale',		'Locales'],
 	['DATADIR',		'$DATAROOTDIR/ekg2',		'EKG2 data'],
+	['DOCDIR',		'$DATAROOTDIR/doc/ekg2',	'EKG2 additional documentation'],
 	['PLUGINDIR',	'$LIBDIR/ekg2/plugins',		'EKG2 plugins'],
 	['IOCTLD_PATH',	'$LIBEXECDIR/ekg2',			'EKG2 ioctld']
 	]
@@ -163,8 +164,8 @@ def ExtTest(name, addexports = []):
 	return ret
 
 
-def RecodeDocsEmitter(target, source, env):
-	""" Fill targets to match source recoding. """
+def RecodeHelpEmitter(target, source, env):
+	""" Fill targets to match sources. """
 	src		= []
 	target	= []
 	for f in source:
@@ -183,8 +184,8 @@ langmap = {
 	'pl':	'iso-8859-2'
 	}
 
-def RecodeDocs(target, source, env):
-	""" Recode documentation file from correct encoding to UTF-8. """
+def RecodeHelp(target, source, env):
+	""" Recode help file from correct encoding to UTF-8. """
 	map = dict(zip(target, source))
 	for d,s in map.items():
 		lang = str(s)[str(s)[:-4].rindex('-') + 1:-4]
@@ -221,10 +222,10 @@ def CompileMsgGen(source, target, env, for_signature):
 	return ret
 
 
-recoder = Builder(action = RecodeDocs, emitter = RecodeDocsEmitter, suffix = '-utf.txt', src_suffix = '.txt')
+recoder = Builder(action = RecodeHelp, emitter = RecodeHelpEmitter, suffix = '-utf.txt', src_suffix = '.txt')
 msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix = '.mo', src_suffix = '.po')
 
-env = Environment(BUILDERS = {'RecodeDocs': recoder, 'CompileMsg': msgfmt})
+env = Environment(BUILDERS = {'RecodeHelp': recoder, 'CompileMsg': msgfmt})
 opts = Options('options.cache')
 
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
@@ -495,7 +496,7 @@ docfiles = []
 for doc in docglobs:
 	docfiles.extend(glob.glob('docs/%s.txt' % doc))
 if env['UNICODE']:
-	cenv.RecodeDocs('docs/', docfiles)
+	cenv.RecodeHelp('docs/', docfiles)
 	docfiles = []
 	for doc in docglobs:
 		docfiles.extend(glob.glob('docs/%s.txt' % doc))
@@ -510,6 +511,26 @@ cenv.Install(env['BINDIR'], 'ekg/ekg2')
 #cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
 cenv.Install(env['DATADIR'], docfiles)
 cenv.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
+
+adddocs = [elem for elem in glob.glob('docs/*.txt') if not elem in docfiles]
+for a in glob.glob('*') + glob.glob('docs/*'):
+	i = a.find('.')
+	if (i != -1):
+		b = a[:i]
+	else:
+		b = a
+	i = b.find('/')
+	if (b != -1):
+		b = b[i + 1:]
+
+	if b.upper() == b: # all uppercase
+		if a != 'docs/README': # what ekg1 readme does there? O O
+			adddocs.append(a)
+	else:
+		i = b.rfind('.')
+		if b[i:] == '.txt' and not b in docfiles:
+			adddocs.append(a)
+cenv.Install(env['DOCDIR'], adddocs)
 
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
@@ -528,7 +549,7 @@ for plugin, data in plugins.items():
 	for doc in docglobs:
 		docfiles.extend(glob.glob('%s/%s.txt' % (plugpath, doc)))
 	if env['UNICODE']:
-		penv.RecodeDocs(plugpath, docfiles)
+		penv.RecodeHelp(plugpath, docfiles)
 		docfiles = []					# we must glob twice to include *utf*
 		for doc in docglobs:
 			docfiles.extend(glob.glob('%s/%s.txt' % (plugpath, doc)))
