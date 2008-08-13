@@ -25,6 +25,7 @@ indirs = [ # pseudo-hash, 'coz we want to keep order
 
 	['LOCALEDIR',	'$DATAROOTDIR/locale',		'Locales'],
 	['DATADIR',		'$DATAROOTDIR/ekg2',		'EKG2 data'],
+	['MANDIR',		'$DATAROOTDIR/man',			'EKG2 manfiles'],
 	['DOCDIR',		'$DATAROOTDIR/doc/ekg2',	'EKG2 additional documentation'],
 	['PLUGINDIR',	'$LIBDIR/ekg2/plugins',		'EKG2 plugins'],
 	['IOCTLD_PATH',	'$LIBEXECDIR/ekg2',			'EKG2 ioctld']
@@ -505,7 +506,7 @@ if env['NLS']:
 	cenv.CompileMsg('po/', glob.glob('po/*.po'))
 	for f in glob.glob('po/*.mo'):
 		lang = str(f)[str(f).rindex('/') + 1:-3]
-		cenv.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = str(f))
+		cenv.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = f)
 
 cenv.Install(env['BINDIR'], 'ekg/ekg2')
 #cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
@@ -531,6 +532,22 @@ for a in glob.glob('*') + glob.glob('docs/*'):
 		if b[i:] == '.txt' and not b in docfiles:
 			adddocs.append(a)
 cenv.Install(env['DOCDIR'], adddocs)
+
+for f in glob.glob('docs/*.[12345678]'):
+	i = f.rindex('.')
+	cat = f[i+1:]
+	j = f.rindex('.', 0, i)
+	lng = f[j+1:i]
+	i = f.rindex('/')
+	fn = f[i + 1:].replace('%s.' % lng, '')
+
+	if lng == 'en':
+		lng = ''
+	else:
+		lng = '%s/' % lng
+
+	fn = '%s/%sman%s/%s' % (env['MANDIR'], lng, cat, fn)
+	cenv.InstallAs(target = fn, source = f)
 
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
