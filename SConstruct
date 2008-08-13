@@ -221,8 +221,11 @@ def CompileMsgGen(source, target, env, for_signature):
 	return ret
 
 
+recoder = Builder(action = RecodeDocs, emitter = RecodeDocsEmitter, suffix = '-utf.txt', src_suffix = '.txt')
+msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix = '.mo', src_suffix = '.po')
+
+env = Environment(BUILDERS = {'RecodeDocs': recoder, 'CompileMsg': msgfmt})
 opts = Options('options.cache')
-plugopts = {}
 
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
 xplugins = ['-%s' % elem for elem in avplugins]
@@ -232,27 +235,26 @@ opts.Add(BoolOption('HARDDEPS', 'Fail if specified plugin could not be built due
 for k,v in mapped.items():
 	opts.Add(BoolOption(k, v[1], True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
+
 for p in avplugins:
-	props = SConscript('plugins/%s/SConscript' % p, ['opts'])
-	if props is not None:
-		for t,n,d,o in props:
-			if n.find('_') == -1:
-				n = '%s_%s' % (p.upper(), n)
-
-			if t == 'list':
-				if len(o) == 2: # we need to use enum, 'coz scons 0.97 has real problems with 2-element lists
-					opts.Add(EnumOption(n, d, 'any', o + ['any', 'both', 'none']))
-				else:
-					opts.Add(ListOption(n, d, 'any', o + ['any']))
-				# hereup with HARDDEPS 'both' means at least one of them
-				# and 'any' means none is also acceptable
-
-			elif t == 'enum':
-				opts.Add(EnumOption(n, d, 'any', o + ['any']))
+	info = SConscript('plugins/%s/SConscript' % p, ['env', 'opts'])
+	values = []
+	if 'depends' in info:
+		for a in info['depends']:
+			if isinstance(a, list):
+				values.extend(a)
+	if 'optdepends' in info:
+		for a in info['optdepends']:
+			if isinstance(a, list):
+				values.extend(a)
 			else:
-				raise ValueError("Unknown type '%s' in props" % t)
+				values.append(a)
 
-			plugopts[n] = o
+	if values:
+		xvals = ['-%s' % elem for elem in values]
+		xvals.extend(['+%s' % elem for elem in values])
+		opts.Add(ListOption('%s_DEPS' % p.upper(), 'Optional/exclusive dependencies of %s plugin to disable or force' % p,
+			'none', values + xvals))
 
 dirs = []
 for k,v,d in indirs:
@@ -268,10 +270,6 @@ for k,v in envs.items():
 	var = ' '.join(var)
 	opts.Add(k, desc, var)
 
-recoder = Builder(action = RecodeDocs, emitter = RecodeDocsEmitter, suffix = '-utf.txt', src_suffix = '.txt')
-msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix = '.mo', src_suffix = '.po')
-
-env = Environment(BUILDERS = {'RecodeDocs': recoder, 'CompileMsg': msgfmt})
 opts.Update(env)
 opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
@@ -359,22 +357,43 @@ for plugin in pllist:
 
 	for dep in info['depends'] + info['optdepends']:
 		isopt = dep in info['optdepends']
-		optname = None
 
 		if not isinstance(dep, list):
-			if dep[0] == '@': # option reference
-				optname = dep[1:]
-				dep = []
-				if optname.find('_') == -1:
-					optname = '%s_%s' % (plugin.upper(), optname)
-				for o in plugopts[optname]:
-					if env[optname] == o or env[optname] == 'both' or env[optname] == 'any':
-						dep.append(o)
-			else:
-				dep = [dep]
+			dep = [dep]
+		try:
+			prefs = env['%s_DEPS' % plugin.upper()]
+		except KeyError:
+			prefs = []
 
+		for a in prefs:
+			if a[0] == '-':
+				pass
+			elif a[0] == '+':
+				if '-%s' % a[1:] in prefs:
+					raise ValueError('More than one variant of depend %s specified (%s and -%s)' % (a[1:],a,a[1:]))
+			else:
+				if '-%s' % a in prefs or '+%s' % a in prefs:
+					raise ValueError('More than one variant of depend %s specified (%s, +%s and/or -%s)' % (a,a,a,a))
+
+		forced = False
 		have_it = True # if empty set is given, don't complain
-		for xdep in dep: # exclusive depends
+		sdep = []
+		for xdep in dep:
+			if '+%s' % xdep in prefs: # if user forces dep, then forget about the rest
+				for a in dep:
+					if a != xdep and '+%s' % a in prefs:
+						raise ValueError('More than one exclusive dependency forced (%s and %s)' % (xdep, a))
+				forced = True
+				sdep = [xdep]
+				break
+			elif xdep in prefs: # if he prefers it, place it before others
+				sdep.append(xdep)
+		if not forced:
+			for xdep in dep:
+				if not xdep in sdep and not '-%s' % xdep in prefs: # and rest of possibilities
+					sdep.append(xdep)
+
+		for xdep in sdep:
 			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags'])
 			if have_it:
 				if isopt or len(dep) > 1: # pretty-print optional and selected required (if more than one possibility)
@@ -383,16 +402,17 @@ for plugin in pllist:
 
 		if not have_it:
 			if isopt:
-				if optname is not None and env[optname] != 'any':
-					print '[%s] User-chosen optional dependency not satisfied: %s' % (plugin, dep)
+				if forced:
+					print '[%s] User-forced optional dependency not satisfied: %s' % (plugin, sdep)
 					if env['HARDDEPS']:
 						print 'HARDDEPS specified, aborting.'
 						sys.exit(1)
+					info['fail'] = True
 				else:
-					print '[%s] Optional dependency not satisfied: %s' % (plugin, dep)
+					print '[%s] Optional dependency not satisfied: %s' % (plugin, sdep)
 				optdeps.append('-%s' % (' -'.join(dep)))
 			else:
-				print '[%s] Dependency not satisfied: %s' % (plugin, dep)
+				print '[%s] Dependency not satisfied: %s' % (plugin, sdep)
 				if env['HARDDEPS']:
 					print 'HARDDEPS specified, aborting.'
 					sys.exit(1)

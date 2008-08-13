@@ -1,16 +1,6 @@
 
 Import('*')
 
-sqlvers = ['sqlite', 'sqlite3']
-
-try:
-	opts
-except NameError:
-	pass
-else:
-	props = [['enum', 'SQLITE_VER', 'Which SQLite version to use', sqlvers]]
-	Return('props')
-
 try:
 	env
 except NameError:
@@ -19,7 +9,7 @@ else:
 	plugin	= {
 		'type':			'log',
 		'state':		'stable',
-		'depends':		['@SQLITE_VER']
+		'depends':		[['sqlite3', 'sqlite']]
 		}
 
 	Return('plugin')

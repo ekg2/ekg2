@@ -1,22 +1,12 @@
 
 Import('*')
 
-sslbackends = ['gnutls', 'openssl']
-
-try:
-	opts
-except NameError:
-	pass
-else:
-	props = [['list', 'SSL', 'SSL implementation to use with jabber plugin', sslbackends]]
-	Return('props')
-
 try:
 	defines
 except NameError:
 	pass
 else:
-	for o in sslbackends:
+	for o in ['gnutls', 'openssl']:
 		if o in optdeps:
 			defines['JABBER_HAVE_%s' % o.upper()] = True
 			break
@@ -30,7 +20,7 @@ else:
 		'type':			'protocol',
 		'state':		'stable',
 		'depends':		['expat'],
-		'optdepends':	['@SSL', 'zlib']
+		'optdepends':	[['gnutls', 'openssl'], 'zlib']
 		}
 
 	Return('plugin')
