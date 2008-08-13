@@ -1,27 +1,25 @@
 
 Import('*')
 
-sqlvers = ['2', '3']
+sqlvers = ['sqlite', 'sqlite3']
 
 try:
-	opts.Add(EnumOption('SQLITE_VER', 'Which SQLite version to use', 'any', ['any'] + sqlvers))
-except NameError:
-	pass
-
-try:
-	sqlver = env['SQLITE_VER']
+	opts
 except NameError:
 	pass
 else:
-	sqldeps = []
-	for o in sqlvers:
-		if sqlver == o or sqlver == 'any':
-			sqldeps.append('sqlite%s' % o)
+	props = [['enum', 'SQLITE_VER', 'Which SQLite version to use', sqlvers]]
+	Return('props')
 
+try:
+	env
+except NameError:
+	pass
+else:
 	plugin	= {
 		'type':			'log',
 		'state':		'stable',
-		'depends':		[sqldeps]
+		'depends':		['@SQLITE_VER']
 		}
 
 	Return('plugin')

@@ -222,6 +222,7 @@ def CompileMsgGen(source, target, env, for_signature):
 
 
 opts = Options('options.cache')
+plugopts = {}
 
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
 xplugins = ['-%s' % elem for elem in avplugins]
@@ -232,7 +233,26 @@ for k,v in mapped.items():
 	opts.Add(BoolOption(k, v[1], True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 for p in avplugins:
-	SConscript('plugins/%s/SConscript' % p, ['opts'])
+	props = SConscript('plugins/%s/SConscript' % p, ['opts'])
+	if props is not None:
+		for t,n,d,o in props:
+			if n.find('_') == -1:
+				n = '%s_%s' % (p.upper(), n)
+
+			if t == 'list':
+				if len(o) == 2: # we need to use enum, 'coz scons 0.97 has real problems with 2-element lists
+					opts.Add(EnumOption(n, d, 'any', o + ['any', 'both', 'none']))
+				else:
+					opts.Add(ListOption(n, d, 'any', o + ['any']))
+				# hereup with HARDDEPS 'both' means at least one of them
+				# and 'any' means none is also acceptable
+
+			elif t == 'enum':
+				opts.Add(EnumOption(n, d, 'any', o + ['any']))
+			else:
+				raise ValueError("Unknown type '%s' in props" % t)
+
+			plugopts[n] = o
 
 dirs = []
 for k,v,d in indirs:
@@ -336,38 +356,51 @@ for plugin in pllist:
 	libs = []
 	ccflags = []
 	linkflags = []
-	for dep in info['depends']:
+
+	for dep in info['depends'] + info['optdepends']:
+		isopt = dep in info['optdepends']
+		optname = None
+
 		if not isinstance(dep, list):
-			dep = [dep]
+			if dep[0] == '@': # option reference
+				optname = dep[1:]
+				dep = []
+				if optname.find('_') == -1:
+					optname = '%s_%s' % (plugin.upper(), optname)
+				for o in plugopts[optname]:
+					if env[optname] == o or env[optname] == 'both' or env[optname] == 'any':
+						dep.append(o)
+			else:
+				dep = [dep]
+
+		have_it = True # if empty set is given, don't complain
 		for xdep in dep: # exclusive depends
 			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags'])
 			if have_it:
-				if len(dep) > 1:
-					optdeps.append('%s' % (xdep)) # well, it's not so optional, but pretty print it
+				if isopt or len(dep) > 1: # pretty-print optional and selected required (if more than one possibility)
+					optdeps.append('%s' % (xdep))
 				break
 
 		if not have_it:
-			print '[%s] Dependency not satisfied: %s' % (plugin, dep)
-			if env['HARDDEPS']:
-				print 'HARDDEPS specified, aborting.'
-				sys.exit(1)
-			info['fail'] = True
+			if isopt:
+				if optname is not None and env[optname] != 'any':
+					print '[%s] User-chosen optional dependency not satisfied: %s' % (plugin, dep)
+					if env['HARDDEPS']:
+						print 'HARDDEPS specified, aborting.'
+						sys.exit(1)
+				else:
+					print '[%s] Optional dependency not satisfied: %s' % (plugin, dep)
+				optdeps.append('-%s' % (' -'.join(dep)))
+			else:
+				print '[%s] Dependency not satisfied: %s' % (plugin, dep)
+				if env['HARDDEPS']:
+					print 'HARDDEPS specified, aborting.'
+					sys.exit(1)
+				info['fail'] = True
+
 	if 'fail' in info:
 		del plugins[plugin]
 		continue
-
-	for dep in info['optdepends']:
-		if not isinstance(dep, list):
-			dep = [dep]
-		for xdep in dep: # exclusive depends
-			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags'])
-			if have_it:
-				optdeps.append('%s' % (xdep))
-				break
-
-		if not have_it:
-			print '[%s] Optional dependency not satisfied: %s' % (plugin, dep)
-			optdeps.append('-%s' % (' -'.join(dep)))
 
 	SConscript('%s/SConscript' % (plugpath), ['defines', 'optdeps'])
 	if not ccflags:

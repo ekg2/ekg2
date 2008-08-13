@@ -4,9 +4,12 @@ Import('*')
 sslbackends = ['gnutls', 'openssl']
 
 try:
-	opts.Add(EnumOption('JABBER_SSL', 'SSL implementation to use with jabber plugin', 'both', sslbackends + ['both', 'none']))
+	opts
 except NameError:
 	pass
+else:
+	props = [['list', 'SSL', 'SSL implementation to use with jabber plugin', sslbackends]]
+	Return('props')
 
 try:
 	defines
@@ -19,20 +22,15 @@ else:
 			break
 
 try:
-	jssl = env['JABBER_SSL']
+	env
 except NameError:
 	pass
 else:
-	ssldeps = []
-	for o in sslbackends:
-		if jssl == o or jssl == 'both':
-			ssldeps.append(o)
-
 	plugin	= {
 		'type':			'protocol',
 		'state':		'stable',
 		'depends':		['expat'],
-		'optdepends':	[ssldeps, 'zlib']
+		'optdepends':	['@SSL', 'zlib']
 		}
 
 	Return('plugin')
