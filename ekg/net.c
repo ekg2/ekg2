@@ -159,7 +159,33 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 	return watch_add(plugin, fd[0], WATCH_READ, async, data);
 }
 
-static int irc_resolver2(char ***arr, const char *hostname, const int port) {
+static int srv_resolver(char ***arr, const char *hostname, const int port, const int proto) {
+#ifndef NO_POSIX_SYSTEM
+#if 0
+	struct protoent *pro;
+	struct servent *srv;
+	const char *prots;
+
+	pro = getprotobynumber(proto ? proto : IPPROTO_TCP);
+	if (pro) {
+		srv = getservbyport(htons(port), pro->p_name);
+
+		if (srv) {
+			char *srvhost = saprintf("_%s._%s.%s", srv->s_name, pro->p_name, hostname);
+
+			xfree(srvhost);
+		}
+
+		endservent();
+	}
+	endprotoent();
+#endif
+#endif
+
+	return 0;
+}
+
+static int irc_resolver2(char ***arr, const char *hostname, const int port, const int proto) {
 #ifdef HAVE_GETADDRINFO
 	struct addrinfo	*ai, *aitmp, hint;
 	void		*tm = NULL;
@@ -167,6 +193,9 @@ static int irc_resolver2(char ***arr, const char *hostname, const int port) {
 #warning "resolver: You don't have getaddrinfo(), resolver may not work! (ipv6 for sure)"
 	struct hostent	*he4;
 #endif
+
+	if (port)
+		srv_resolver(arr, hostname, port, proto);
 
 #ifdef HAVE_GETADDRINFO
 	memset(&hint, 0, sizeof(struct addrinfo));
@@ -215,7 +244,7 @@ static int irc_resolver2(char ***arr, const char *hostname, const int port) {
 
 /* Removes port from 'hostname' and returns it
  * WARN: hostname is modified */
-static const int ekg_resolver_split(char *hostname) {
+static const int ekg_resolver_split(char *hostname, const int defport) {
 	char *p = xstrrchr(hostname, ':');
 	int i;
 
@@ -224,7 +253,7 @@ static const int ekg_resolver_split(char *hostname) {
 		return i;
 	}
 
-	return 0;
+	return defport;
 }
 
 /*
@@ -235,6 +264,8 @@ static const int ekg_resolver_split(char *hostname) {
  *
  *  - async	- watch handler.
  *  - data	- watch data handler.
+ *  - port	- default port (used also to build SRV hostname
+ *  - proto	- proto (used with SRV), if 0 then defaults to TCP
  *
  *  in @a async watch you'll recv lines:
  *  	HOSTNAME IPv4 PF_INET port
@@ -251,7 +282,7 @@ static const int ekg_resolver_split(char *hostname) {
  *  THX.
  */
 
-watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data) {
+watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data, const int port, const int proto) {
 	int res, fd[2];
 
 	debug("ekg_resolver3() resolving: %s\n", server);
@@ -273,7 +304,7 @@ watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_fun
 
 	if (!res) {
 		char *tmp	= xstrdup(server);
-		const int port	= ekg_resolver_split(tmp);
+		const int sport	= ekg_resolver_split(tmp, port);
 
 		/* Child */
 		close(fd[0]);
@@ -288,7 +319,7 @@ watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_fun
 			 */
 			do {
 				if ((tmp2 = xstrchr(tmp1, ','))) *tmp2 = '\0';
-				irc_resolver2(&arr, tmp1, port);
+				irc_resolver2(&arr, tmp1, port, proto);
 				tmp1 = tmp2+1;
 			} while (tmp2);
 
@@ -568,7 +599,7 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 		watch_t *w;
 
 		debug_function("ekg_connect_loop(), resolve: %s\n", host);
-		w = ekg_resolver3(s->plugin, host, (void*) ekg_connect_resolver_handler, c);
+		w = ekg_resolver3(s->plugin, host, (void*) ekg_connect_resolver_handler, c, c->port, IPPROTO_TCP);
 		xfree(host);
 
 		c->current_watch = w;
