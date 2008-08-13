@@ -343,6 +343,39 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 	return 0;
 }
 
+SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
+	struct {
+		uint32_t msg_id1;
+		uint32_t msg_id2;
+		uint16_t format;
+		char *uid;
+		uint16_t typing;
+	} pkt;
+	char *tmp;
+
+	if (!ICQ_UNPACK(&buf, "iiWuW", &pkt.msg_id1, &pkt.msg_id2, &pkt.format, &pkt.uid, &pkt.typing))
+		return -1;
+
+	switch (pkt.typing) {
+		case 0x0000:
+			tmp = "typing finished";
+			break;
+		case 0x0001:
+			tmp = "text typed";
+			break;
+		case 0x0002:
+			tmp = "typing begin";
+			break;
+		default:
+			tmp = "UNKNOWN typing!!!";
+	}
+
+	debug_function("icq_snac_message_mini_typing_notification() uid: %s %s (%d)\n", pkt.uid, tmp, pkt.typing);
+	// XXX ?wo? 2do: change u->xstate
+
+	return 0;
+}
+
 SNAC_SUBHANDLER(icq_snac_message_queue) {	/* SNAC(4, 0x17) Offline Messages response */
 	debug_error("icq_snac_message_queue() XXX\n");
 
@@ -391,6 +424,7 @@ SNAC_HANDLER(icq_snac_message_handler) {
 		case 0x07: handler = icq_snac_message_recv; break;
 		case 0x0B: handler = icq_snac_message_response; break;
 		case 0x0C: handler = icq_snac_message_server_ack; break;
+		case 0x14: handler = icq_snac_message_mini_typing_notification; break;
 		case 0x17: handler = icq_snac_message_queue; break;
 		default:   handler = NULL; break;
 	}

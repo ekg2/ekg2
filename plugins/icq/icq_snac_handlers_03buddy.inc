@@ -235,7 +235,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 				while (t_len > 0) {
 					static char empty_item[0x10] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
-					uint32_t item_type;
+					uint16_t item_type;
 					uint8_t item_flags;
 					uint8_t item_len;
 
@@ -273,7 +273,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 			case 0x0d: /* Client capabilities list */
 			{
-				debug_white("icq_snac_buddy_online() Not supported type=0x%02x\n", t->type);
+				debug_white("icq_snac_buddy_online() Capability list.\n");
 				if (tlv_length_check("icq_snac_buddy_online()", t, t->len & ~0xF))
 					break;
 #if ICQ_DEBUG_UNUSED_INFORMATIONS
@@ -289,7 +289,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 			}
 
 			default:
-				debug_error("icq_snac_buddy_online() Unknown type=0x%02x\n", t->type);
+				debug_error("icq_snac_buddy_online() Unknown TLV(0x%x)\n", t->type);
 		}
 	}
 

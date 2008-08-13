@@ -140,16 +140,18 @@ int icq_write_info(session_t *s) {
 
 #define m_bAvatarsEnabled 0
 #define m_bUtfEnabled 0
+#define DBG_CAPMTN 1
+#define DBG_AIMCONTACTSEND 1
 
 	string_t pkt, tlv_5;
 
 	tlv_5 = string_init(NULL);
 
 #ifdef DBG_CAPMTN
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x563FC809);		/* CAP_TYPING */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x0B6F41BD);
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x9F794226);
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x09DFA2F3);
+	icq_pack_append(tlv_5, "IIII",  (uint32_t) 0x563FC809,		/* CAP_TYPING */
+					(uint32_t) 0x0B6F41BD,
+					(uint32_t) 0x9F794226,
+					(uint32_t) 0x09DFA2F3);
 #endif
 
 	icq_pack_append(tlv_5, "P", (uint32_t) 0x1349);			/* AIM_CAPS_ICQSERVERRELAY - Client supports channel 2 extended, TLV(0x2711) based messages. */
