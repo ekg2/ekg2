@@ -73,6 +73,12 @@ typedef struct userlist {
 	char		*last_descr;	/**< Lastseen description */
 	time_t		status_time;	/**< From when we have this status, description */
 	void		*private;          /**< Alternate private data, used by ncurses plugin */
+	private_data_t	*new_private;	/* New user private data
+					 * 2do:
+					 *	1. migrate data from private to new_private
+					 *	2. remove private
+					 *	3. rename new_private to private
+					 */
 } userlist_t;
 
 typedef enum {
@@ -194,6 +200,19 @@ char *get_uid_any(session_t *session, const char *text);
 char *get_nickname(session_t *session, const char *text);
 
 #endif
+
+#define user_private_get_safe(user, name, result) \
+	private_item_get_safe(&(user)->new_private, name, result)
+#define user_private_get(user, name) \
+	private_item_get(&(user)->new_private, name)
+#define user_private_get_int_safe(user, name, result) \
+	private_item_get_int_safe(&(user)->new_private), name, int *result)
+#define user_private_get_int(user, name) \
+	private_item_get_int(&(user)->new_private, name)
+#define user_private_set(user, name, value) \
+	private_item_set(&(user)->new_private, name, value)
+#define user_private_set_int(user, name, value) \
+	private_item_set_int(&(user)->new_private, name, value)
 
 #endif /* __EKG_USERLIST_H */
 

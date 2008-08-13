@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "xmalloc.h"
 
 /*
@@ -1230,6 +1231,94 @@ const char *cssfind(const char *haystack, const char *needle, const char sep, in
 	return r;
 }
 #endif
+}
+
+
+/*
+ * handle private data
+ */
+static int private_data_cmp(private_data_t *item1, private_data_t *item2) {
+	return xstrcmp(item1->name, item2->name);
+}
+
+static void private_data_free(private_data_t *item) {
+	xfree(item->name);
+	xfree(item->value);
+}
+
+static __DYNSTUFF_ADD_SORTED(private_item, private_data_t, private_data_cmp)
+
+static __DYNSTUFF_REMOVE_SAFE(private_item, private_data_t, private_data_free)
+
+static private_data_t *private_item_find(private_data_t **data, const char *item_name) {
+	private_data_t *item;
+
+	if (!item_name)
+		return NULL;
+
+	for (item = *data; item; item = item->next) {
+		int cmp = xstrcmp(item->name, item_name);
+		if (!cmp)
+			return item;
+	}
+
+	return NULL;
+}
+
+int private_item_get_safe(private_data_t **data, const char *item_name, char **result) {
+	private_data_t *item = private_item_find(data, item_name);
+
+	if (item) {
+		*result = item->value;
+		return 1;
+	}
+
+	return 0;
+}
+
+const char *private_item_get(private_data_t **data, const char *item_name) {
+	char *result = NULL;
+	(void )private_item_get_safe(data, item_name, &result);
+
+	return result;
+}
+
+int private_item_get_int_safe(private_data_t **data, const char *item_name, int *result) {
+	char *tmp;
+	if (!private_item_get_safe(data, item_name, &tmp))
+		return 0;
+
+	*result = atoi(tmp);
+	return 1;
+}
+
+int private_item_get_int(private_data_t **data, const char *item_name) {
+	int result = 0;
+	(void) private_item_get_int_safe(data, item_name, &result);
+	return result;
+}
+
+void private_item_set(private_data_t **data, const char *item_name, const char *value) {
+	private_data_t *item = private_item_find(data, item_name);
+	int unset = !(value && *value);
+
+	if (item) {
+		if (unset) {
+			private_item_remove(data, item);
+		} else if (xstrcmp(item->value, value)) {
+			xfree(item->value);
+			item->value = xstrdup(value);
+		}
+	} else if (!unset) {
+		item = xmalloc(sizeof(private_data_t));
+		item->name = xstrdup(item_name);
+		item->value = xstrdup(value);
+		private_item_add(data, item);
+	}
+}
+
+void private_item_set_int(private_data_t **data, const char *item_name, int value) {
+	private_item_set(data, item_name, itoa(value));
 }
 
 /*

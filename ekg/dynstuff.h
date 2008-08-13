@@ -178,6 +178,26 @@ const char *cssfind(const char *haystack, const char *needle, const char sep, in
 
 #endif
 
+/*
+ * handle private data
+ */
+typedef struct private_data_s {
+	struct private_data_s *next;
+
+	char *name;
+	char *value;
+} private_data_t;
+
+int private_item_get_safe(private_data_t **data, const char *item_name, char **result);
+const char *private_item_get(private_data_t **data, const char *item_name);
+
+int private_item_get_int_safe(private_data_t **data, const char *item_name, int *result);
+int private_item_get_int(private_data_t **data, const char *item_name);
+
+void private_item_set(private_data_t **data, const char *item_name, const char *value);
+void private_item_set_int(private_data_t **data, const char *item_name, int value);
+
+
 #endif /* __EKG_DYNSTUFF_H */
 
 /*
