@@ -10,6 +10,7 @@
 #else
 # define _XOPEN_SOURCE 600
 #endif
+#define __BSD_VISIBLE 1
 
 #include <dirent.h>
 #include <errno.h>
