@@ -60,7 +60,9 @@
 #include <time.h>
 #include <unistd.h>
 
-#include <iconv.h>
+#ifdef HAVE_ICONV
+#	include <iconv.h>
+#endif
 
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
