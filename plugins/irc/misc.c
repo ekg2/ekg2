@@ -22,7 +22,9 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
-#include <iconv.h>
+#ifdef HAVE_ICONV
+#	include <iconv.h>
+#endif
 
 #ifndef NO_POSIX_SYSTEM
 #include <arpa/inet.h>
