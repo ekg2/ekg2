@@ -1,0 +1,10 @@
+
+# inotify (xmsg)
+
+Import('*')
+
+out = conf.CheckHeader(['linux/soundcard.h'])
+
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python

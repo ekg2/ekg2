@@ -9,7 +9,7 @@ else:
 	plugin	= {
 		'type':			'codec',
 		'state':		'experimental',
-		'depends':		[]
+		'depends':		['oss']
 		}
 
 	Return('plugin')
