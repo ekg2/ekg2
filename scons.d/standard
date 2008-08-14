@@ -83,6 +83,17 @@ defines['LIBIDN'] = have_idn
 if have_idn:
 	ekg_libs.append('idn')
 
+if env['NLS']:
+	gettext_p = 'gettext(""); bindtextdomain("", "");'
+	have_gettext = conf.CheckLibWithHeader(None, ['libintl.h'], 'C', gettext_p, 0)
+	if not have_gettext:
+		have_gettext = conf.CheckLibWithHeader('intl', ['libintl.h'], 'C', gettext_p, 0)
+		if have_gettext:
+			ekg_libs.append('intl')
+else:
+	have_gettext = False
+defines['ENABLE_NLS'] = have_gettext
+
 out = True
 Return('out')
 

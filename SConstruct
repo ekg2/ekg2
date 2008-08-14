@@ -32,7 +32,6 @@ indirs = [ # pseudo-hash, 'coz we want to keep order
 	]
 mapped = {
 	'UNICODE':		['USE_UNICODE', 'Enable unicode support'],
-	'NLS':			['ENABLE_NLS', 'Enable l10n in core'],
 	}
 envs = {
 	'CCFLAGS':		['CFLAGS', 'Compiler flags'],
@@ -237,6 +236,7 @@ opts.Add(BoolOption('HARDDEPS', 'Fail if specified plugin could not be built due
 for k,v in mapped.items():
 	opts.Add(BoolOption(k, v[1], True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
+opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
 
 for p in avplugins:
 	info = SConscript('plugins/%s/SConscript' % p, ['env', 'opts'])
