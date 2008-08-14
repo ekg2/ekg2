@@ -235,6 +235,7 @@ opts.Add(ListOption('PLUGINS', 'List of plugins or @sets to build', '@def', avpl
 opts.Add(BoolOption('HARDDEPS', 'Fail if specified plugin could not be built due to unfulfilled depends', False))
 for k,v in mapped.items():
 	opts.Add(BoolOption(k, v[1], True))
+opts.Add(BoolOption('RESOLV', 'Use libresolv-based domain resolver with SRV support', True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
 opts.Add(EnumOption('DEBUG', 'Internal debug level', 'std', ['none', 'std', 'stderr']))
