@@ -2180,6 +2180,7 @@ int say_it(const char *str)
 #endif
 }
 
+#ifndef DISABLE_DEBUG
 void debug_ext(debug_level_t level, const char *format, ...) {
 	va_list ap;
 	if (!config_debug) return;
@@ -2205,6 +2206,7 @@ void debug(const char *format, ...)
 	ekg_debug_handler(0, format, ap);
 	va_end(ap);
 }
+#endif
 
 static char base64_charset[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";

@@ -604,7 +604,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 
 	if (is_UI && window_debug)
 		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
-#if 0			/* STDERR debug */
+#ifdef STDERR_DEBUG	/* STDERR debug */
 	else
 		fprintf(stderr, "%s\n", tmp);
 #endif

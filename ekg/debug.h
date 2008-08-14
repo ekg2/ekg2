@@ -12,8 +12,13 @@ typedef enum {
 	DEBUG_WHITE
 } debug_level_t;
 
+#ifndef DISABLE_DEBUG
 void debug(const char *format, ...);
 void debug_ext(debug_level_t level, const char *format, ...);
+#else
+#define debug(...)
+#define debug_ext(...)
+#endif
 
 #define debug_io(args...)	debug_ext(DEBUG_IO, args)
 #define debug_iorecv(args...)	debug_ext(DEBUG_IORECV, args)

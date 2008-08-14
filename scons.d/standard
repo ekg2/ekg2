@@ -94,6 +94,12 @@ else:
 	have_gettext = False
 defines['ENABLE_NLS'] = have_gettext
 
+if env['DEBUG'] == 'none':
+	defines['DISABLE_DEBUG'] = True
+	warnings.append("debug() disabled, you're on your own now!")
+elif env['DEBUG'] == 'stderr':
+	defines['STDERR_DEBUG'] = True
+
 out = True
 Return('out')
 

@@ -237,6 +237,7 @@ for k,v in mapped.items():
 	opts.Add(BoolOption(k, v[1], True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
+opts.Add(EnumOption('DEBUG', 'Internal debug level', 'std', ['none', 'std', 'stderr']))
 
 for p in avplugins:
 	info = SConscript('plugins/%s/SConscript' % p, ['env', 'opts'])
