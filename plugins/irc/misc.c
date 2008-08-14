@@ -61,8 +61,8 @@ char *sopt_casemapping_values[IRC_CASEMAPPING_COUNT] = { "ascii", "rfc1459", "st
 
 static char *clean_channel_names(session_t *session, char *channels);
 
-static char *try_convert_string_p(const char *ps, iconv_t cd) {
 #ifdef HAVE_ICONV
+static char *try_convert_string_p(const char *ps, iconv_t cd) {
 	char *s = (char *) ps;
 		/* we can assume that both from and to aren't NULL in EKG2,
 		 * and cd is NULL in case of error, not -1 */
@@ -83,6 +83,8 @@ static char *try_convert_string_p(const char *ps, iconv_t cd) {
 		}
 		xfree(buf);
 	}
+#else
+static char *try_convert_string_p(const char *ps, void *cd) {
 #endif
 	return NULL;
 }
