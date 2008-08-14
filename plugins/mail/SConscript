@@ -10,7 +10,7 @@ else:
 		'type':			'misc',
 		'state':		'stable',
 		'depends':		[],
-#		'optdepends':	['inotify'] # XXX: use it ( ;
+		'optdepends':	['inotify']
 		}
 
 	Return('plugin')

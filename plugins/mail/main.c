@@ -42,6 +42,13 @@
 #  include <utime.h>
 #endif
 
+#ifdef HAVE_INOTIFY
+#include <termios.h>
+#include <sys/inotify.h>
+#include <sys/ioctl.h>
+#endif /*HAVE_INOTIFY*/
+
+#include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
@@ -57,6 +64,10 @@ struct mail_folder {
 	off_t size;
 	int count;
 	int check;
+
+#ifdef HAVE_INOTIFY
+	uint32_t watch;
+#endif
 };
 int config_beep_mail = 1;
 
@@ -76,11 +87,65 @@ static int check_mail_update(const char *, int);
 static void check_mail_free();
 
 static int mail_theme_init();
+
+#ifdef HAVE_INOTIFY
+static int inotify_fd;
+static struct inotify_event *ev = NULL;
+#endif
+
 PLUGIN_DEFINE(mail, PLUGIN_GENERIC, mail_theme_init);
 
 #ifdef EKG2_WIN32_SHARED_LIB
 	EKG2_WIN32_SHARED_LIB_HELPER
 #endif
+
+#ifdef HAVE_INOTIFY
+static WATCHER(mail_inotify) {
+	int n;
+	struct inotify_event *evp;
+
+	if (type)
+		return -1;
+
+	ioctl(fd, FIONREAD, &n);
+	if (n == 0)
+		return 0;
+	ev = xrealloc(ev, n);
+	n = read(fd, ev, n);
+
+	if (n < 0) {
+		const int err = errno;
+		debug_error("[mail] inotify read() failed, errno = %d\n", err);
+		return -1;
+	}
+
+	for (evp = ev; n > 0; n -= (evp->len + sizeof(struct inotify_event)),
+			evp = (void*) evp + (evp->len + sizeof(struct inotify_event))) {
+		list_t l;
+		struct mail_folder *m;
+
+		for (l = mail_folders; l; l = l->next) {
+			m = l->data;
+
+			if (m->watch == evp->wd)
+				break;
+		}
+
+		if (!l || !m || (evp->mask & (IN_IGNORED|IN_UNMOUNT)))
+			return 0;
+		/* XXX: handle IN_Q_OVERFLOW */
+
+		/* XXX: check only correct mbox/mdir */
+		if (config_check_mail & 1)
+			check_mail_mbox();
+		else
+			if (config_check_mail & 2)
+				check_mail_maildir();
+		return; /* we already checked all of them, so just ignore rest */
+	}
+}
+
+#else /* HAVE_INOTIFY */
 
 /*
  * check_mail()
@@ -101,6 +166,7 @@ static TIMER(check_mail)
 			check_mail_maildir();
 	return 0;
 }
+#endif
 
 /*
  * check_mail_update()
@@ -447,6 +513,12 @@ static void changed_check_mail_folders(const char *var)
 			foo.fhash = ekg_hash(f[i]);
 			foo.fname = f[i];
 			foo.check = 1;
+#ifdef HAVE_INOTIFY
+			if (((foo.watch = inotify_add_watch(inotify_fd, foo.fname, IN_CLOSE_WRITE))) == -1) {
+				debug_error("[mail] unable to set inotify watch for %s\n", foo.fname);
+				xfree(foo.fname);
+			} else
+#endif
 
 			list_add(&mail_folders, xmemdup(&foo, sizeof(foo)));
 		}
@@ -470,6 +542,13 @@ static void changed_check_mail_folders(const char *var)
 		foo.fname = inbox;
 		foo.check = 1;
 
+#ifdef HAVE_INOTIFY
+		if (((foo.watch = inotify_add_watch(inotify_fd, foo.fname, IN_CLOSE_WRITE))) == -1) {
+			debug_error("[mail] unable to set inotify watch for %s\n", foo.fname);
+			xfree(foo.fname);
+		} else
+#endif
+
 		list_add(&mail_folders, xmemdup(&foo, sizeof(foo)));
 	} else {
 		if (config_check_mail & 2) {
@@ -478,6 +557,13 @@ static void changed_check_mail_folders(const char *var)
 			foo.fhash = ekg_hash(inbox);
 			foo.fname = inbox;
 			foo.check = 1;
+
+#ifdef HAVE_INOTIFY
+			if (((foo.watch = inotify_add_watch(inotify_fd, foo.fname, IN_CLOSE_WRITE))) == -1) {
+				debug_error("[mail] unable to set inotify watch for %s\n", foo.fname);
+				xfree(foo.fname);
+			} else
+#endif
 
 			list_add(&mail_folders, xmemdup(&foo, sizeof(foo)));
 		}
@@ -492,6 +578,7 @@ static void changed_check_mail_folders(const char *var)
  */
 static void changed_check_mail(const char *var)
 {
+#ifndef HAVE_INOTIFY
 	if (config_check_mail) {
 		struct timer *t;
 
@@ -512,6 +599,9 @@ static void changed_check_mail(const char *var)
 	}
 
 	timer_remove(&mail_plugin, "mail-check");
+#else
+	changed_check_mail_folders(("check_mail_folders"));
+#endif
 }
 
 static int dd_beep(const char *name)
@@ -536,15 +626,27 @@ static QUERY(mail_count_query)
 EXPORT int mail_plugin_init(int prio)
 {
 	PLUGIN_CHECK_VER("mail");
-	
+
+#ifdef HAVE_INOTIFY
+	if ((inotify_fd = inotify_init()) == -1) {
+		print("generic_error", "inotify init failed.");
+		return -1;
+	}
+#endif
 	plugin_register(&mail_plugin, prio);
 
 	query_connect_id(&mail_plugin, MAIL_COUNT, mail_count_query, NULL);
 
 	variable_add(&mail_plugin, ("beep_mail"), VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
 	variable_add(&mail_plugin, ("check_mail"), VAR_MAP, 1, &config_check_mail, changed_check_mail, variable_map(4, 0, 0, "no", 1, 2, "mbox", 2, 1, "maildir", 4, 0, "notify"), NULL);
+#ifndef HAVE_INOTIFY
 	variable_add(&mail_plugin, ("check_mail_frequency"), VAR_INT, 1, &config_check_mail_frequency, changed_check_mail, NULL, dd_check_mail);
+#endif
 	variable_add(&mail_plugin, ("check_mail_folders"), VAR_STR, 1, &config_check_mail_folders, changed_check_mail_folders, NULL, dd_check_mail);
+
+#ifdef HAVE_INOTIFY
+	watch_add(&mail_plugin, inotify_fd, WATCH_READ, mail_inotify, NULL);
+#endif
 
 	return 0;
 }
@@ -574,6 +676,9 @@ static void check_mail_free()
 		struct mail_folder *m = l->data;
 
 		xfree(m->fname);
+#ifdef HAVE_INOTIFY
+		inotify_rm_watch(inotify_fd, m->watch);
+#endif
 	}
 
 	list_destroy(mail_folders, 1);
@@ -583,6 +688,10 @@ static void check_mail_free()
 static int mail_plugin_destroy()
 {
 	check_mail_free();
+
+#ifdef HAVE_INOTIFY
+	close(inotify_fd);
+#endif
 
 	plugin_unregister(&mail_plugin);
 
