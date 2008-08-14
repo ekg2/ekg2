@@ -50,6 +50,11 @@ FEW NOTES ABOUT USING SCONS AS EKG2 BUILD SYSTEM
 	DESTDIR= option to it. To clean up, use 'scons -c'. To uninstall, use
 	'scons -c install'.
 
+9)	We require SCons 0.97 and Python 2.4. Sorry, Debian users, but <0.97 has too
+	many differences, and even maintaining compatibility with bugged 0.97 is
+	hard. And as it's pure python, so you won't have much trouble installing
+	newer version. If someone needs compatibility with older Python (and scons
+	works with it), then please let us know.
 
 
 ~~: vim:set tw=80 ts=3 sts=3 sw=3 :~~
