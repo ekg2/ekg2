@@ -1,6 +1,12 @@
+#include "ekg2-config.h"
+
 #include <stdlib.h>
 #include <sys/ioctl.h>
-#include <linux/soundcard.h>
+#ifdef HAVE_SYS_SOUNDCARD_H /* BSD */
+#	include <sys/soundcard.h>
+#else
+#	include <linux/soundcard.h>
+#endif
 #include <unistd.h>
 #include <fcntl.h>
 

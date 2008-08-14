@@ -4,6 +4,9 @@
 Import('*')
 
 out = conf.CheckHeader(['linux/soundcard.h'])
+if not out:
+	out = conf.CheckHeader(['sys/soundcard.h'])
+	defines['HAVE_SYS_SOUNDCARD_H'] = out
 
 Return('out')
 
