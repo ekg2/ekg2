@@ -614,16 +614,16 @@ static COMMAND(jabber_command_auth) {
 		if (!(ul = session->userlist))
 			return -1;
 		j->send_watch->transfer_limit = -1;
+		u   = ul;
 		multi = 1;
 	} else if ((uid = jid_target2uid(session, target, quiet))) {
 		tabnick_add(uid);	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
-		if (!(ul = userlist_find(session, uid)))
-			ul = userlist_add(session, uid, NULL);
+		if (!(u = userlist_find(session, uid)))
+			u = userlist_add(session, uid, NULL);
 	} else
 		return -1;
 
 	do {
-		u   = ul;
 		uid = u->uid;		/* XXX: shall we check uid ? */
 		up  = jabber_userlist_priv_get(u);
 
