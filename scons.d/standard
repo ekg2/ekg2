@@ -105,7 +105,7 @@ if env['RESOLV']:
 else:
 	have_resolv = False
 
-defines['HAVE_RESOLV'] = have_resolv
+defines['HAVE_RESOLV_H'] = have_resolv
 
 out = True
 Return('out')
