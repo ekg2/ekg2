@@ -23,6 +23,7 @@
 
 #include "plugins.h"
 #include "sessions.h"
+#include "srv.h"
 
 #ifndef INADDR_NONE
 #  define INADDR_NONE (unsigned long) 0xffffffff
@@ -30,8 +31,9 @@
 
 watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
 watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data, const int port, const int proto);
+watch_t *ekg_resolver4(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data, const int proto_port, const int port, const int proto);
 
-watch_t *ekg_connect(session_t *session, const char *server, const int port, int (*prefer_comparison)(const char **, const char **), watcher_handler_func_t async);
+watch_t *ekg_connect(session_t *session, const char *server, const int proto_port, const int port, int (*prefer_comparison)(const char **, const char **), watcher_handler_func_t async);
 
 #endif /* EKG2_WIN32_NOFUNCTION */
 #endif /* __EKG_NET_H */

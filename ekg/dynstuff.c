@@ -780,6 +780,32 @@ string_t string_init(const char *value) {
 }
 
 /**
+ * string_init_n()
+ *
+ * init string_t struct, allocating memory string of length n
+ *
+ *  @param n - number of bytes to allocate
+ *  @sa string_free() - to free memory used by string_t
+ *
+ *  @return pointer to allocated string_t struct.
+ */
+string_t string_init_n(int n)
+{
+	string_t tmp;
+
+	/* this is an error */
+	if (n <= 0)
+		return NULL;
+
+	tmp = xmalloc(sizeof(struct string));
+	tmp->str = (char *)xmalloc(n);
+	tmp->len = 0;
+	tmp->size = n;
+
+	return tmp;
+}
+
+/**
  * string_remove()
  *
  * Remove first @a count chars from string.
@@ -1019,13 +1045,15 @@ int array_count(char **array)
  *
  * dodaje element do tablicy.
  */
-void array_add(char ***array, char *string)
+int array_add(char ***array, char *string)
 {
 	int count = array_count(*array);
 
 	*array = xrealloc(*array, (count + 2) * sizeof(char*));
 	(*array)[count + 1] = NULL;
 	(*array)[count] = string;
+
+	return count + 1;
 }
 
 /*
@@ -1037,13 +1065,17 @@ void array_add(char ***array, char *string)
  *  - array - tablica,
  *  - string - szukany ci±g znaków,
  *  - casesensitive - czy mamy zwracaæ uwagê na wielko¶æ znaków?
+ *
+ * zwraca zero w przypadku, je¶li ci±g ju¿ jest na li¶cie
+ * lub aktualn± liczbê ci±gów na li¶cie, po dodaniu
  */ 
-void array_add_check(char ***array, char *string, int casesensitive)
+int array_add_check(char ***array, char *string, int casesensitive)
 {
 	if (!array_item_contains(*array, string, casesensitive))
-		array_add(array, string);
+		return array_add(array, string);
 	else
 		xfree(string);
+	return 0;
 }
 
 /*

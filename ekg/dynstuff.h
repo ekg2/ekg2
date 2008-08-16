@@ -163,8 +163,8 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 char *array_join(char **array, const char *sep);
 char *array_join_count(char **array, const char *sep, int count);
 
-void array_add(char ***array, char *string);
-void array_add_check(char ***array, char *string, int casesensitive);
+int array_add(char ***array, char *string);
+int array_add_check(char ***array, char *string, int casesensitive);
 int array_count(char **array);
 int array_contains(char **array, const char *string, int casesensitive);
 int array_item_contains(char **array, const char *string, int casesensitive);

@@ -2060,7 +2060,8 @@ static WATCHER(cmd_test_dns2_watch) {
 static COMMAND(cmd_test_dns2) {
 	watch_t *w;
 
-	if (!(w = ekg_resolver2(NULL, params[0], cmd_test_dns2_watch, NULL))) {
+	/* hacked just to get it compile, fix it l8r */
+	if (!(w = ekg_resolver4(NULL, params[0], cmd_test_dns2_watch, NULL, 0, 0, 0))) {
 		printq("generic_error", strerror(errno));
 		return -1;
 	}

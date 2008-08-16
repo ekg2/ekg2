@@ -50,6 +50,18 @@ AC_CHECK_FUNC(inet_addr, [], [AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind
 dnl windows
 AC_CHECK_LIB(wsock32, main, LIBS="$LIBS -lwsock32")
 
+dnl linux, sunos
+AC_CHECK_FUNC(dn_expand, [], [
+    AC_CHECK_LIB(resolv, dn_expand, 
+    [
+	AC_CHECK_HEADERS(resolv.h,
+	[
+	    AC_DEFINE(HAVE_LIBRESOLV, 1, [define if you have libresolv])
+	    LIBS="$LIBS -lresolv"
+	])
+    ])
+])
+
 dnl  sprawdzamy, czy system ma getopt_long
 AC_CHECK_FUNC(getopt_long, , [COMPAT="$COMPAT getopt.o getopt1.o"])
 
