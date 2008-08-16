@@ -315,7 +315,7 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 #warning "irc: You don't have inet_aton() connecting to ipv4 hosts may not work"
 #endif
 #warning "irc: Yeah, You have inet_addr() connecting to ipv4 hosts may work :)"
-		if ((ipv4->sin_addr.s_addr = inet_addr(co->address)) == -1)
+		if ((ipv4->sin_addr.s_addr = inet_addr(addr)) == -1)
 			debug_error("inet_addr() failed or returns 255.255.255.255? on %s\n", addr);
 #endif
 
