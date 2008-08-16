@@ -79,16 +79,9 @@ extern list_t gg_currently_checked;
 typedef struct {
 	char *first_name;	/**< first name */
 	char *last_name;	/**< surname */
-	char *mobile;		/**< mobile phone number */
 
 	int protocol;		/**< Protocol version */
 
-	uint32_t ip;		/**< ipv4 address of user, use for example inet_ntoa() to get it in format: 111.222.333.444 [:)]<br>
-				 *	It's used mainly for DCC communications. */
-	uint16_t port;		/**< port of user<br> 
-				 *	It's used mainly for DCC communications. */
-        uint32_t last_ip;       /**< Lastseen ipv4 address */
-        uint16_t last_port;     /**< Lastseen port */
 } gg_userlist_private_t;
 
 #define gg_userlist_priv_get(u) ((gg_userlist_private_t *) userlist_private_get(&gg_plugin, u))

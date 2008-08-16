@@ -552,6 +552,7 @@ static char *gg_userlist_dump(session_t *session)
 		userlist_t *u = ul;
 		gg_userlist_private_t *p = u->priv;
 		char *groups;
+		const char *__mobile = user_private_item_get(u, "mobile");
 
 		groups = group_to_string(u->groups, 1, 0);
 		
@@ -561,7 +562,7 @@ static char *gg_userlist_dump(session_t *session)
 			(p && p->last_name) ? p->last_name : "",
 			(u->nickname) ? u->nickname : "",
 			(u->nickname) ? u->nickname : "",
-			(p && p->mobile) ? p->mobile : "",
+			__mobile ? __mobile : "",
 			groups,
 			u->uid + 3 /* skip gg: */,
 			(u->foreign) ? u->foreign : "");

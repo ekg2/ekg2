@@ -73,12 +73,7 @@ typedef struct userlist {
 	char		*last_descr;	/**< Lastseen description */
 	time_t		status_time;	/**< From when we have this status, description */
 	void		*private;          /**< Alternate private data, used by ncurses plugin */
-	private_data_t	*new_private;	/* New user private data
-					 * 2do:
-					 *	1. migrate data from private to new_private
-					 *	2. remove private
-					 *	3. rename new_private to private
-					 */
+	private_data_t	*priv_list;	/* New user private data */
 } userlist_t;
 
 typedef enum {
@@ -102,8 +97,6 @@ typedef enum {
 							 *		at the very beginning of userlist_add_entry() */
 	EKG_USERLIST_PRIVHANDLER_WRITING,		/**< Called when writing userlist file, arg is char*** with data array */
 
-	EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME	= 0x80,	/**< Get private 'variable' by name, args are char** with var name
-							 *	and char** for value ptr (not duplicated) */
 	EKG_USERLIST_PRIVHANDLER_SETVAR_BYNAME	= 0xC0,	/**< Set private 'variable' by name, args care char** with var name
 							 *	and char** with value (will be duplicated) */
 } userlist_privhandler_func_t;
@@ -172,8 +165,6 @@ void userlist_free(session_t *session);
 void userlists_destroy(userlist_t **userlist);
 
 void *userlist_private_get(plugin_t *plugin, userlist_t *u);
-int userlist_private_item_get_safe(userlist_t *u, const char *item_name, char **result);
-const char *userlist_private_item_get(userlist_t *u, const char *item_name);
 
 /* u->resource */
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio);
@@ -201,18 +192,21 @@ char *get_nickname(session_t *session, const char *text);
 
 #endif
 
-#define user_private_get_safe(user, name, result) \
-	private_item_get_safe(&(user)->new_private, name, result)
-#define user_private_get(user, name) \
-	private_item_get(&(user)->new_private, name)
-#define user_private_get_int_safe(user, name, result) \
-	private_item_get_int_safe(&(user)->new_private), name, int *result)
-#define user_private_get_int(user, name) \
-	private_item_get_int(&(user)->new_private, name)
-#define user_private_set(user, name, value) \
-	private_item_set(&(user)->new_private, name, value)
-#define user_private_set_int(user, name, value) \
-	private_item_set_int(&(user)->new_private, name, value)
+#define user_private_item_get_safe(user, name, result) \
+	private_item_get_safe(&(user)->priv_list, name, result)
+#define user_private_item_get(user, name) \
+	private_item_get(&(user)->priv_list, name)
+#define user_private_item_get_int_safe(user, name, result) \
+	private_item_get_int_safe(&(user)->priv_list), name, int *result)
+#define user_private_item_get_int(user, name) \
+	private_item_get_int(&(user)->priv_list, name)
+#define user_private_item_set(user, name, value) \
+	private_item_set(&(user)->priv_list, name, value)
+#define user_private_item_set_int(user, name, value) \
+	private_item_set_int(&(user)->priv_list, name, value)
+
+#define user_private_items_destroy(user) \
+	private_items_destroy(&(user)->priv_list);
 
 #endif /* __EKG_USERLIST_H */
 

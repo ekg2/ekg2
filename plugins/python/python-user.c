@@ -220,7 +220,7 @@ PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
         } else { /* XXX, take a look at this */
 		char *val;
 
-		if (userlist_private_item_get_safe(u, attr, &val)) 
+		if (user_private_item_get_safe(u, attr, &val)) 
                         return PyString_FromString(val);
 		else {
 /*	                return Py_FindMethod(ekg_user_methods, (PyObject *) self, attr); */

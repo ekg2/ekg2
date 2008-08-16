@@ -1278,9 +1278,11 @@ static void private_data_free(private_data_t *item) {
 	xfree(item->value);
 }
 
-static __DYNSTUFF_ADD_SORTED(private_item, private_data_t, private_data_cmp)
+static __DYNSTUFF_ADD_SORTED(private_items, private_data_t, private_data_cmp)
 
-static __DYNSTUFF_REMOVE_SAFE(private_item, private_data_t, private_data_free)
+static __DYNSTUFF_REMOVE_SAFE(private_items, private_data_t, private_data_free)
+
+__DYNSTUFF_DESTROY(private_items, private_data_t, private_data_free)
 
 static private_data_t *private_item_find(private_data_t **data, const char *item_name) {
 	private_data_t *item;
@@ -1336,7 +1338,7 @@ void private_item_set(private_data_t **data, const char *item_name, const char *
 
 	if (item) {
 		if (unset) {
-			private_item_remove(data, item);
+			private_items_remove(data, item);
 		} else if (xstrcmp(item->value, value)) {
 			xfree(item->value);
 			item->value = xstrdup(value);
@@ -1345,7 +1347,7 @@ void private_item_set(private_data_t **data, const char *item_name, const char *
 		item = xmalloc(sizeof(private_data_t));
 		item->name = xstrdup(item_name);
 		item->value = xstrdup(value);
-		private_item_add(data, item);
+		private_items_add(data, item);
 	}
 }
 

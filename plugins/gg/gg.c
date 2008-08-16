@@ -162,9 +162,15 @@ static QUERY(gg_userlist_info_handle) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
 	gg_userlist_private_t *up;
+	const char *tmp;
+	int __ip, __port, __last_ip;
 
 	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1 || !(up = gg_userlist_priv_get(u)))
 		return 1;
+
+	__ip = user_private_item_get_int(u, "ip");
+	__port = user_private_item_get_int(u, "port");
+	__last_ip = user_private_item_get_int(u, "last_ip");
 
 	if (up->first_name && xstrcmp(up->first_name, "") && up->last_name && xstrcmp(up->last_name, ""))
 		printq("gg_user_info_name", up->first_name, up->last_name);
@@ -173,22 +179,23 @@ static QUERY(gg_userlist_info_handle) {
 	else if (up->last_name && xstrcmp(up->last_name, ""))
 		printq("gg_user_info_name", up->last_name, "");
 
-	if (up->mobile && xstrcmp(up->mobile, ""))
-		printq("gg_user_info_mobile", up->mobile);
+	if ( (tmp = user_private_item_get(u, "mobile")) )
+		printq("gg_user_info_mobile", tmp);
 
-	if (up->ip) {
-		char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &up->ip)), itoa(up->port));
+	if (__ip) {
+		char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &__ip)), itoa(__port));
 		printq("gg_user_info_ip", ip_str);
 		xfree(ip_str);
-	} else if (up->last_ip) {
-		char *last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &up->last_ip)), itoa(up->last_port));
+	} else if (__last_ip) {
+		char *last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &__last_ip)),
+							user_private_item_get(u, "last_port"));
 		printq("gg_user_info_last_ip", last_ip_str);
 		xfree(last_ip_str);
 	}
 
-	if (up->port == 2)
+	if (__port == 2)
 		printq("gg_user_info_not_in_contacts");
-	if (up->port == 1)
+	if (__port == 1)
 		printq("gg_user_info_firewalled");
 	if ((up->protocol & GG_HAS_AUDIO_MASK))
 		printq("gg_user_info_voip");
@@ -547,6 +554,7 @@ static QUERY(gg_userlist_priv_handler) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int function	= *va_arg(ap, int *);
 	gg_userlist_private_t *p;
+	const char *tmp;
 
 	if (!u || ((valid_plugin_uid(&gg_plugin, u->uid) != 1)
 			&& !(function == EKG_USERLIST_PRIVHANDLER_READING && atoi(u->uid))))
@@ -564,9 +572,10 @@ static QUERY(gg_userlist_priv_handler) {
 		case EKG_USERLIST_PRIVHANDLER_FREE:
 			xfree(p->first_name);
 			xfree(p->last_name);
-			xfree(p->mobile);
 			xfree(u->priv);
 			u->priv = NULL;
+			user_private_items_destroy(u);
+			u->priv_list = NULL;
 			break;
 
 		case EKG_USERLIST_PRIVHANDLER_GET:
@@ -585,7 +594,7 @@ static QUERY(gg_userlist_priv_handler) {
 
 			p->first_name 	= entry[0];	entry[0] = NULL;
 			p->last_name	= entry[1];	entry[1] = NULL;
-			p->mobile	= entry[4];	entry[4] = NULL;
+			user_private_item_set(u, "mobile",     entry[4]);	entry[4] = NULL;
 			break;
 		}
 
@@ -601,26 +610,10 @@ static QUERY(gg_userlist_priv_handler) {
 				xfree(entry[1]);
 				entry[1] = xstrdup(p->last_name);
 			}
-			if (p->mobile) {
+			if ( (tmp = user_private_item_get(u, "mobile")) ) {
 				xfree(entry[4]);
-				entry[4] = xstrdup(p->mobile);
+				entry[4] = xstrdup(tmp);
 			}
-			break;
-		}
-
-		case EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME:
-		{
-			const char *name	= *va_arg(ap, const char **);
-			const char **r		= va_arg(ap, const char **);
-
-			if (!xstrcmp(name, "mobile"))
-				*r = p->mobile;
-			else if (!xstrcmp(name, "ip"))
-				*r = (p->ip) ? inet_ntoa(*((struct in_addr*) &p->ip)) : NULL;
-			else if (!xstrcmp(name, "port"))
-				*r = itoa(p->port);
-			else
-				return 2;
 			break;
 		}
 
@@ -635,10 +628,8 @@ static QUERY(gg_userlist_priv_handler) {
 			} else if (!xstrcmp(name, "last_name")) {
 				xfree(p->last_name);
 				p->last_name = xstrdup(val);
-			} else if (!xstrcmp(name, "mobile")) {
-				xfree(p->mobile);
-				p->mobile = xstrdup(val);
 			}
+			user_private_item_set(u, name, val);		// XXX ?wo? ???
 			break;
 		}
 
@@ -825,17 +816,17 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 
 	{
 		userlist_t *u;
-		gg_userlist_private_t *up;
 
-		if ((u = userlist_find(s, __uid)) && (up = gg_userlist_priv_get(u))) {
-			up->protocol = protocol;
+		if ( (u = userlist_find(s, __uid)) ) {
+			user_private_item_set_int(u, "protocol", protocol);
 			/* zapisz adres IP i port */
-			up->ip = ip;
-			up->port = port;
+			user_private_item_set_int(u, "ip", ip);
+			user_private_item_set_int(u, "port", port);
 
-			if (ip)
-				up->last_ip = ip;
-			up->last_port = port;
+			if (ip) {
+				user_private_item_set_int(u, "last_ip", ip);
+				user_private_item_set_int(u, "last_port", port);
+			}
 		}
 	}
 
@@ -891,16 +882,15 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 		struct gg_dcc *d;
 		char *__host = NULL;
 		char uid[16];
-		int __port = -1, __valid = 1;
+		int __ip, __port = -1, __valid = 1;
 		userlist_t *u;
-		gg_userlist_private_t *up;
 		watch_t *w;
 
 		if (!gg_config_dcc) return;
 
 		snprintf(uid, sizeof(uid), "gg:%d", e->event.msg.sender);
 
-		if (!(u = userlist_find(s, uid)) || !(up = gg_userlist_priv_get(u)))
+		if (!(u = userlist_find(s, uid)))
 			return;
 
 		query_emit(NULL, ("protocol-dcc-validate"), &__host, &__port, &__valid, NULL);
@@ -912,7 +902,9 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 			return;
 		}
 
-		if (!(d = gg_dcc_get_file(up->ip, up->port, atoi(session_uid_get(s) + 3), e->event.msg.sender))) {
+		__ip = user_private_item_get_int(u, "ip");
+		__port = user_private_item_get_int(u, "port");
+		if (!(d = gg_dcc_get_file(__ip, __port, atoi(session_uid_get(s) + 3), e->event.msg.sender))) {
 			print_status("dcc_error", strerror(errno));
 			return;
 		}

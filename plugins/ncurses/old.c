@@ -1707,6 +1707,8 @@ void update_statusbar(int commit)
 		connecting_counter ^= 1;
 
 	if (q) {
+		int __ip = user_private_item_get_int(q, "ip");
+		char *ip = __ip ? inet_ntoa(*((struct in_addr*) &__ip)) : NULL;;
 #define __add_format_emp_st(x, y) case y: __add_format("query_" x, (char *) empty_format); break
 		switch (q->status) {
 			__add_format_emp_st("away", EKG_STATUS_AWAY);
@@ -1723,7 +1725,7 @@ void update_statusbar(int commit)
 
 		__add_format_emp("typing", q->typing);
 		__add_format_dup("query_descr", (q->descr), q->descr);
-		__add_format_dup("query_ip", 1, userlist_private_item_get(q, "ip"));
+		__add_format_dup("query_ip", 1, ip);
 	}
 
 	__add_format_dup("url", 1, "http://www.ekg2.org/");

@@ -243,7 +243,7 @@ static COMMAND(sms_command_sms)
 	}
 
         if ((u = userlist_find(session, params[0]))) {
-		number = userlist_private_item_get(u, "mobile");
+		number = user_private_item_get(u, "mobile");
 
                 if (!number || !xstrcmp(number, "")) {
                         printq("sms_unknown", format_user(session, u->uid));

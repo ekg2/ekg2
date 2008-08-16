@@ -1547,21 +1547,9 @@ list_user:
 	}
 
 	for (ul = session->userlist; ul; ul = ul->next) {
-		static int plugin_knows_what_ip_is;
-		static int plugin_knows_what_port_is;
 
 		userlist_t *u = ul;
 		int show;
-
-		if (ul == session->userlist) {
-			char *test;
-
-			plugin_knows_what_ip_is		= userlist_private_item_get_safe(u, "ip", &test);
-			plugin_knows_what_port_is	= userlist_private_item_get_safe(u, "port", &test);
-
-			debug_white("%s: IP_OK: %d; PORT_OK: %d\n", session->uid, plugin_knows_what_ip_is, plugin_knows_what_port_is);
-		}
-
 
 		if (!u->nickname)
 			continue;
@@ -1590,10 +1578,11 @@ list_user:
 			show = 1;
 
 		if (show) {
-			const char *port = plugin_knows_what_port_is ? userlist_private_item_get(u, "port") : NULL;
-			const char *ip = plugin_knows_what_ip_is ? userlist_private_item_get(u, "ip") : NULL;
+			const char *port = user_private_item_get(u, "port");
+			int __ip = user_private_item_get_int(u, "ip");
+			char *ip = __ip ? inet_ntoa(*((struct in_addr*) &__ip)) : NULL;
 
-			printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), (port ? port : "0"), u->descr);
+			printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), port, u->descr);
 			count++;
 		}
 	}

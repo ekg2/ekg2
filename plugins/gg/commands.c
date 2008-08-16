@@ -1556,12 +1556,8 @@ static COMMAND(gg_command_modify) {
 		}
 		
 		if ((match_arg(argv[i], 'p', ("phone"), 2) || match_arg(argv[i], 'm', ("mobile"), 2)) && argv[i + 1]) {
-			if (up) {
-				xfree(up->mobile);
-				up->mobile = xstrdup(argv[++i]);
-				modified = 1;
-			} else
-				i++;
+			user_private_item_set(u, "mobile", argv[++i]);
+			modified = 1;
 			continue;
 		}
 		
