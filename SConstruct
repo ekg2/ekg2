@@ -412,6 +412,7 @@ for plugin in pllist:
 						print 'HARDDEPS specified, aborting.'
 						sys.exit(1)
 					info['fail'] = True
+					break
 				else:
 					print '[%s] Optional dependency not satisfied: %s' % (plugin, sdep)
 				optdeps.append('-%s' % (' -'.join(dep)))
@@ -421,8 +422,10 @@ for plugin in pllist:
 					print 'HARDDEPS specified, aborting.'
 					sys.exit(1)
 				info['fail'] = True
+				break
 
 	if 'fail' in info:
+		warnings.append("Plugin '%s' disabled due to unsatisfied dependency: %s" % (plugin, sdep))
 		del plugins[plugin]
 		continue
 
@@ -458,6 +461,13 @@ if pl:
 	for type, plugs in pl.items():
 		print '- %s: %s' % (type, ', '.join(plugs))
 	print
+
+	if not 'ui' in pl:
+		warnings.append('No UI-plugin selected. EKG2 might be unusable to you.')
+	if not 'protocol' in pl:
+		warnings.append("No protocol plugin selected. EKG2 won't be instant messenger anymore.")
+else:
+	warnings.append('You are compiling ekg2 without any plugin. Are you sure this is what you mean to do?')
 
 print 'Options:'
 print '- unicode: %s' % (env['UNICODE'])
