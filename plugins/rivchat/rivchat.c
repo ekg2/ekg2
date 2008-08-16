@@ -225,20 +225,6 @@ static QUERY(rivchat_userlist_priv_handler) {
 			*va_arg(ap, void **) = p;
 			break;
 
-		case EKG_USERLIST_PRIVHANDLER_GETVAR_BYNAME:
-		{
-			const char *name	= *va_arg(ap, const char **);
-			const char **r		= va_arg(ap, const char **);
-
-			if (!xstrcmp(name, "ip"))
-				*r = p->ip;
-			else if (!xstrcmp(name, "port"))
-				*r = itoa(p->port);
-			else
-				return 2;
-			break;
-		}
-
 		default:
 			return 2;
 	}
