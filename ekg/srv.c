@@ -29,7 +29,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
-#if HAVE_RESOLV_H
+#ifdef HAVE_RESOLV_H
 #include <resolv.h> /* res_init, res_query */
 #endif
 
@@ -138,7 +138,7 @@ char *ekg_inet_ntostr(int family,  void *buf)
  */
 int extract_rr(unsigned char *start, unsigned char *end, unsigned char **ptr, ns_rr *rr)
 {
-#ifdef HAVE_LIBRESOLV
+#ifdef HAVE_RESOLV_H
 	unsigned char *rrs;
 	char exp_dn[2048];
 	int exp_len;
@@ -181,7 +181,7 @@ int extract_rr(unsigned char *start, unsigned char *end, unsigned char **ptr, ns
 
 int extract_rr_srv(unsigned char *start, unsigned char *end, unsigned char **ptr, gim_host *srv)
 {
-#ifdef HAVE_LIBRESOLV
+#ifdef HAVE_RESOLV_H
 	char exp_dn[2048];
 	int exp_len;
 	/* arpa/nameser.h */
@@ -333,7 +333,8 @@ int srv_resolver(gim_host **hostlist, const char *hostname, const int proto_port
 			 * this is temporary hack and final solution
 			 * will probably be different
 			 */
-			srv->port = port;
+			if (srv->port == proto_port)
+				srv->port = port;
 			LIST_ADD_SORTED2(hostlist, srv, gim_host_cmp);
 		}
 		/* PARSE (skip) NS SECTION */
