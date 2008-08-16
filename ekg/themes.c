@@ -1261,7 +1261,7 @@ void theme_init()
 	format_add("generic_error", "%! %1\n", 1);
 	/* debug */
 	format_add("debug", 	"%n%1\n", 1);
-	format_add("fdebug",	"%b%1\n", 1);
+	format_add("fdebug",	"%B%1\n", 1);
 	format_add("iodebug",	"%y%1\n", 1);
 	format_add("iorecvdebug", "%Y%1\n", 1);
 	format_add("edebug",	"%R%1\n", 1);
