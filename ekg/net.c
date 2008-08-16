@@ -80,17 +80,19 @@ static const char valid_hostname_chars_u[] =
 
 struct ekg_connect_data {
 		/* internal data */
-	char	**resolver_queue;	/* here we keep list of domains to be resolved	*/
-	char	**connect_queue;	/* here we keep list of IPs to try to connect	*/
+	char	**resolver_queue;	/* here we keep list of domains to be resolved		*/
+	char	**connect_queue;	/* here we keep list of IPs to try to connect		*/
+	char	**connect_queue2;	/* another list of IPs, this time unpreferred family	*/
 	watch_t	*current_watch;
 	watch_t	*internal_watch;	/* allowing user to abort connecting */
 
 		/* data provided by user */
-	int     proto_port; /* default port of a protocol */
+	int	prefer_family;		/* preferred address family */
+	int     proto_port;		/* default port of a protocol */
 	int	port;
 	char	*session;
 	watcher_handler_func_t *async;
-	int (*prefer_comparison)(const char *, const char *);
+	int	(*prefer_comparison)(const char *, const char *);
 };
 
 
@@ -222,7 +224,8 @@ static char *array_shift(char ***array) {
 	return out;
 }
 
-static int ekg_connect_loop(struct ekg_connect_data *c);
+static int ekg_connect_loop(struct ekg_connect_data *c); /* predeclared */
+
 static WATCHER_LINE(ekg_connect_resolver_handler) {
 	struct ekg_connect_data *c = (struct ekg_connect_data*) data;
 
@@ -246,7 +249,25 @@ static WATCHER_LINE(ekg_connect_resolver_handler) {
 
 	if (!xstrcmp(watch, "EOR"))
 		return -1;
-	
+	else if (c->prefer_family) {			/* determine address family */
+		const char *ax = xstrchr(watch, ' ');
+		int af;
+
+		if (ax)
+			ax = xstrchr(ax+1, ' ');
+		if (!ax) { /* WTF?! */
+			debug_error("ekg_connect_resolver_handler(), unable to determine address family with '%s'\n", watch);
+			return 0;
+		}
+
+		af = atoi(ax+1);
+
+		if (af != c->prefer_family) { /* unpreferred go to queue2 */
+			array_add(&(c->connect_queue2), xstrdup(watch));
+			return 0;
+		}
+	}
+	/* if preferred or no preference */
 	array_add(&(c->connect_queue), xstrdup(watch));
 
 	return 0;
@@ -370,7 +391,10 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 	}
 
 	/* 1) if anything is in connect_queue, try to connect */
-	if ((host = array_shift(&(c->connect_queue)))) {
+	/* 1b) if connect_queue is empty, try unpreferred families too
+	 * 	if anyone would like ekg_connect() to try other servers with pref family too,
+	 * 	please let me know */
+	if ((host = array_shift(&(c->connect_queue))) || (host = array_shift(&(c->connect_queue2)))) {
 		struct sockaddr *addr;
 		int len, fd, family, connret;
 		watch_t *w;
@@ -457,39 +481,9 @@ static WATCHER(ekg_connect_abort) {
 	return -1;
 }
 
-static int prefer_family = 0; /* qsort() doesn't accept userdata */
-
 /* default comparison function, based on 'prefer_family' sessionvar */
-static int ekg_connect_preferfamily(const char **a, const char **b) {
-	const char *ax = xstrchr(*a, ' ');
-	const char *bx = xstrchr(*b, ' ');
-	int af, bf;
-
-	if (ax && bx) {
-		ax = xstrchr(ax+1, ' ');
-		bx = xstrchr(bx+1, ' ');
-	}
-	if (!ax || !bx) { /* WTF?! */
-		debug_error("ekg_connect_preferfamily(), unable to determine address family with '%s' and/or '%s'\n", *a, *b);
-		return 0;
-	}
-
-	af = atoi(ax+1);
-	bf = atoi(bx+1);
-
-	if (af == bf)
-		return 0;
-	else if (af == AF_INET && bf == AF_INET6)
-		return (prefer_family == 4 ? -1 : 1);
-	else if (af == AF_INET6 && bf == AF_INET)
-		return (prefer_family == 6 ? -1 : 1);
-	else {
-		debug_error("ekg_connect_preferfamily(), unknown address family %d and/or %d\n", af, bf);
-		return 0;
-	}
-}
-
 watch_t *ekg_connect(session_t *session, const char *server, const int proto_port, const int port, int (*prefer_comparison)(const char **, const char **), watcher_handler_func_t async) {
+	const int pref	= session_int_get(session, "prefer_family");
 	struct ekg_connect_data	*c;
 
 	if (!session || !server || !async)
@@ -509,17 +503,10 @@ watch_t *ekg_connect(session_t *session, const char *server, const int proto_por
 	c->internal_watch->handler	= ekg_connect_abort;
 	c->internal_watch->data		= c;
 
-		/* if plugin didn't specify its own comparison function,
-		 * and user did specify sessionvare 'prefer_family',
-		 * then we use our own comparison func. */
-	if (!prefer_comparison) {
-		const int pref	= session_int_get(session, "prefer_family");
-
-		if (pref == 4 || pref == 6) {
-			prefer_family = pref;
-			c->prefer_comparison = &ekg_connect_preferfamily;
-		}
-	}
+	if (pref == 4)
+		c->prefer_family = AF_INET;
+	else if (pref == 6)
+		c->prefer_family = AF_INET6;
 
 	/* 2) call in the loop */
 	ekg_connect_loop(c);
