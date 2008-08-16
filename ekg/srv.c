@@ -484,8 +484,6 @@ int basic_resolver(gim_host **hostlist, const char *hostname, int port)
 			 * sin_addr6 in sockaddr_in6 struct
 			 */
 			ip_cnt = array_add_check (&(srv->ip), ekg_inet_ntostr(aitmp->ai_family, &((struct sockaddr_in *)aitmp->ai_addr)->sin_addr), 0);
-			FILE *fp=fopen("dupa", "a"); fprintf(fp, "current %s: %d\n",
-					srv->name, ip_cnt); fflush(fp); fclose(fp);
 			if (ip_cnt)
 			{
 			    srv->ai_family = xrealloc(srv->ai_family, ip_cnt*sizeof(srv->ai_family));
