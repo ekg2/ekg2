@@ -502,7 +502,7 @@ env.Alias('install', [env['PREFIX'], env['EPREFIX']])
 cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)
 cenv.Append(LIBPATH = 'compat')
-cenv.Append(LINKFLAGS = '-Wl,--export-dynamic')
+cenv.Append(LINKFLAGS = ' -Wl,--export-dynamic')
 cenv.Program('ekg/ekg2', glob.glob('ekg/*.c'))
 
 docfiles = []
