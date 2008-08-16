@@ -532,7 +532,6 @@ watch_t *ekg_connect(session_t *session, const char *server, const int proto_por
 
 /**** OLD STUFFF *****/
 
-#if 0
 
 /*
  * ekg_resolver2()
@@ -617,6 +616,7 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 	return watch_add(plugin, fd[0], WATCH_READ, async, data);
 }
 
+#if 0
 static int irc_resolver2(char ***arr, const char *hostname, const int port, const int proto) {
 #ifdef HAVE_GETADDRINFO
 	struct addrinfo	*ai, *aitmp, hint;
