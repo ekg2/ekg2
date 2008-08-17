@@ -1273,7 +1273,7 @@ static int private_data_cmp(private_data_t *item1, private_data_t *item2) {
 	return xstrcmp(item1->name, item2->name);
 }
 
-static void private_data_free(private_data_t *item) {
+void private_data_free(private_data_t *item) {
 	xfree(item->name);
 	xfree(item->value);
 }
