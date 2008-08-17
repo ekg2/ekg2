@@ -598,6 +598,8 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	/* session dissapear, shouldn't happen */
 	if (!s || !(j = s->priv))
 		return -1;
+	if (!(j->send_watch) || (j->send_watch->type == WATCH_NONE)) /* TLS in progress; XXX: check if it doesn't collide with sth */
+		return 0;
 
 /*	s->activity = time(NULL); */
 

@@ -598,7 +598,8 @@ JABBER_HANDLER(jabber_handle_proceed) {
 		debug_function("[jabber] proceed urn:ietf:params:xml:ns:xmpp-tls TLS let's rock\n");
 
 		/* XXX HERE WE SHOULD DISABLE RECV_WATCH && (SEND WATCH TOO?) */
-		// j->send_watch->type = WATCH_NONE;
+		/* mg: using disabled send watch in jabber_handle_stream() to mark that TLS is in progress */
+		j->send_watch->type = WATCH_NONE;
 
 		jabber_handle_connect_ssl(-1, j->fd, WATCH_NONE, s);
 #else
