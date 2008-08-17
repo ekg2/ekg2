@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
- *                2004 - 2006 Adam Mikuta <adamm@ekg2.org>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 - 2006 Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as

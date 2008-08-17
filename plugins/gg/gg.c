@@ -82,7 +82,7 @@ int gg_config_split_messages;
  * @param data NULL
  *
  * @return	0 if @a session is gg one, and we init memory<br>
- * 		1 if we don't found such session, or it wasn't gg session <b>[most probable]</b>, or we already init memory.
+ *		1 if we don't found such session, or it wasn't gg session <b>[most probable]</b>, or we already init memory.
  */
 
 static QUERY(gg_session_init) {
@@ -114,8 +114,8 @@ static QUERY(gg_session_init) {
  *
  * @todo Check if we really free all memory allocated by session.
  *
- * @return 	0 if @a session is gg one, and memory allocated where xfree()'d.<br>
- * 		1 if not such session, or it wasn't gg session <b>[most probable]</b>, or we already free memory.
+ * @return	0 if @a session is gg one, and memory allocated where xfree()'d.<br>
+ *		1 if not such session, or it wasn't gg session <b>[most probable]</b>, or we already free memory.
  */
 
 static QUERY(gg_session_deinit) {
@@ -154,8 +154,8 @@ static QUERY(gg_session_deinit) {
  * @param ap 2nd param: <i>(int) </i><b>quiet</b>	- If quiet for printq()
  * @param data NULL
  *
- * @return 	1 - If no @a u passed, or it's invalid for gg plugin<br>
- * 		else printq() info and return 0
+ * @return	1 - If no @a u passed, or it's invalid for gg plugin<br>
+ *		else printq() info and return 0
  */
 
 static QUERY(gg_userlist_info_handle) {
@@ -386,17 +386,17 @@ uin_t str_to_uin(const char *text) {
  *
  * @todo	We ignore gg_add_notify_ex() result
  *
- * @param ap 1st param: <i>(char *) </i><b>session_uid</b> 	- session uid
+ * @param ap 1st param: <i>(char *) </i><b>session_uid</b>	- session uid
  * @param ap 2nd param: <i>(char *) </i><b>uid</b>		- user uid
  * @param data NULL
  *
- * @return 	1 - If smth is wrong, @a session_uid or @a uid isn't valid gg number, or session is without private struct.<br>
- * 		else 0
+ * @return	1 - If smth is wrong, @a session_uid or @a uid isn't valid gg number, or session is without private struct.<br>
+ *		else 0
  *
  */
 
 static QUERY(gg_add_notify_handle) {
-	char *session_uid 	= *(va_arg(ap, char **));
+	char *session_uid	= *(va_arg(ap, char **));
 	char *uid		= *(va_arg(ap, char **));
 
 	session_t *s = session_find(session_uid);
@@ -433,12 +433,12 @@ static QUERY(gg_add_notify_handle) {
  * @param data NULL
  *
  * @return	1 - If smth is wrong, @a session_uid or @a uid isn't valid gg number, or session is without private struct.<br>
- * 		else 0
+ *		else 0
  */
 
 static QUERY(gg_remove_notify_handle) {
-	char *session_uid 	= *(va_arg(ap, char **));
-	char *uid 		= *(va_arg(ap, char **));
+	char *session_uid	= *(va_arg(ap, char **));
+	char *uid		= *(va_arg(ap, char **));
 
 	session_t *s = session_find(session_uid);
 	gg_private_t *g;
@@ -505,8 +505,8 @@ static QUERY(gg_print_version) {
  * @param ap 2nd param: <i>(int) </i><b>valid</b> - place to put 1 if uid is valid for gg plugin.
  * @param data NULL
  *
- * @return 	-1 if it's valid uid for gg plugin<br>
- * 		 0 if not
+ * @return	-1 if it's valid uid for gg plugin<br>
+ *		 0 if not
  */
 
 static QUERY(gg_validate_uid) {
@@ -592,7 +592,7 @@ static QUERY(gg_userlist_priv_handler) {
 				xfree(tmp);
 			} 
 
-			p->first_name 	= entry[0];	entry[0] = NULL;
+			p->first_name	= entry[0];	entry[0] = NULL;
 			p->last_name	= entry[1];	entry[1] = NULL;
 			user_private_item_set(u, "mobile",     entry[4]);	entry[4] = NULL;
 			break;
@@ -1129,7 +1129,7 @@ static void gg_session_handler_image(session_t *s, struct gg_event *e) {
 
 		/* 0th, get basedir */
 				image_basedir = gg_config_images_dir ? 
-					gg_config_images_dir : 			/* dir specified by config */
+					gg_config_images_dir :			/* dir specified by config */
 					prepare_pathf("images");		/* (ekg_config)/images */
 
 		/* 1st, create directories.. */
@@ -1511,8 +1511,8 @@ static void gg_changed_private(session_t *s, const char *var) {
  * Handler execute when session variable: "proxy" change
  *
  * @bug BIG XXX, Mistake at art, it should use global config variable, not session ones, because it's used to inform libgadu about proxy servers.<br>
- * 	And libgadu has got this variables global, not session private. Maybe we somehow can update these variables before gg_login() by callng gg_changed_proxy() 
- * 	but now it's BAD, BAD, BAD.
+ *	And libgadu has got this variables global, not session private. Maybe we somehow can update these variables before gg_login() by callng gg_changed_proxy() 
+ *	but now it's BAD, BAD, BAD.
  */
 
 static void gg_changed_proxy(session_t *s, const char *var) {
@@ -1626,8 +1626,8 @@ static void libgadu_debug_handler(int level, const char *format, va_list ap) {
 
 	switch (level) {
 		/* stale z libgadu.h */
-/*		case GG_DEBUG_NET: 		 1:	newlevel = 0;	break; */		/* never used ? */
-		case /* GG_DEBUG_TRAFFIC */ 	 2:	newlevel = DEBUG_IO;		break;
+/*		case GG_DEBUG_NET:		 1:	newlevel = 0;	break; */		/* never used ? */
+		case /* GG_DEBUG_TRAFFIC */	 2:	newlevel = DEBUG_IO;		break;
 		case /* GG_DEBUG_DUMP */	 4:	newlevel = DEBUG_IO;		break;
 		case /* GG_DEBUG_FUNCTION */	 8:	newlevel = DEBUG_FUNCTION;	break;
 		case /* GG_DEBUG_MISC */	16:	newlevel = DEBUG_GGMISC;	break;
@@ -1662,29 +1662,29 @@ int gg_idle_handler(void *data) {
 }
 
 static plugins_params_t gg_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		VAR_STR, 0, 0, NULL), 
-	PLUGIN_VAR_ADD("auto_away", 		VAR_INT, "600", 0, NULL),
-	PLUGIN_VAR_ADD("auto_away_descr", 	VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("auto_back", 		VAR_INT, "0", 0, NULL),	
-	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_find", 		VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_reconnect", 	VAR_INT, "10", 0, NULL),
+	PLUGIN_VAR_ADD("alias",			VAR_STR, 0, 0, NULL), 
+	PLUGIN_VAR_ADD("auto_away",		VAR_INT, "600", 0, NULL),
+	PLUGIN_VAR_ADD("auto_away_descr",	VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("auto_back",		VAR_INT, "0", 0, NULL),	
+	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_find",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT, "10", 0, NULL),
 	PLUGIN_VAR_ADD("concat_multiline_status",VAR_INT, "3", 0, NULL),
-	PLUGIN_VAR_ADD("connection_save", 	VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("display_notify", 	VAR_INT, "-1", 0, NULL),
-	PLUGIN_VAR_ADD("email", 		VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("connection_save",	VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("display_notify",	VAR_INT, "-1", 0, NULL),
+	PLUGIN_VAR_ADD("email",			VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("invisible_check_interval",VAR_INT, 0, 0, NULL),
-	PLUGIN_VAR_ADD("local_ip", 		VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "xml,simple,sqlite", 0, NULL),
-	PLUGIN_VAR_ADD("password", 		VAR_STR, NULL, 1, NULL),
-	PLUGIN_VAR_ADD("port", 			VAR_INT, "8074", 0, NULL),
-	PLUGIN_VAR_ADD("private", 		VAR_BOOL, "0", 0, gg_changed_private),
-	PLUGIN_VAR_ADD("protocol", 		VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("proxy", 		VAR_STR, NULL, 0, gg_changed_proxy),
-	PLUGIN_VAR_ADD("proxy_forwarding", 	VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("scroll_long_desc", 	VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("scroll_mode", 		VAR_STR, "bounce", 0, NULL),
-	PLUGIN_VAR_ADD("server", 		VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("local_ip",		VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "xml,simple,sqlite", 0, NULL),
+	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
+	PLUGIN_VAR_ADD("port",			VAR_INT, "8074", 0, NULL),
+	PLUGIN_VAR_ADD("private",		VAR_BOOL, "0", 0, gg_changed_private),
+	PLUGIN_VAR_ADD("protocol",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("proxy",			VAR_STR, NULL, 0, gg_changed_proxy),
+	PLUGIN_VAR_ADD("proxy_forwarding",	VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("scroll_long_desc",	VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("scroll_mode",		VAR_STR, "bounce", 0, NULL),
+	PLUGIN_VAR_ADD("server",		VAR_STR, NULL, 0, NULL),
 
 	PLUGIN_VAR_END()
 };

@@ -33,7 +33,7 @@ AUDIO_DEFINE(gg_dcc);
 
 struct gg_dcc *gg_dcc_socket = NULL;
 
-static int dcc_limit_time = 0;  /* time from the first connection */
+static int dcc_limit_time = 0;	/* time from the first connection */
 static int dcc_limit_count = 0; /* how many connections from the last time */
 
 /* vars */
@@ -99,8 +99,8 @@ AUDIO_CONTROL(gg_dcc_audio_control) {
 
 		aio		= xmalloc(sizeof(audio_io_t));
 		aio->a		= &gg_dcc_audio;
-		aio->private 	= priv;
-		aio->fd 	= dccfd;
+		aio->private	= priv;
+		aio->fd		= dccfd;
 	} else if (type == AUDIO_CONTROL_HELP) {
 		return NULL;
 	}
@@ -200,8 +200,8 @@ void gg_changed_dcc(const char *var)
 			gg_dcc_ip = 0;
 			gg_dcc_port = 0;
 
-                        if (gg_dcc_socket_open(gg_config_dcc_port) == -1)
-                                print("dcc_create_error", strerror(errno));
+			if (gg_dcc_socket_open(gg_config_dcc_port) == -1)
+				print("dcc_create_error", strerror(errno));
 	
 		}
 	} else if (!xstrcmp(var, ("gg:audio"))) {
@@ -539,9 +539,9 @@ COMMAND(gg_command_dcc)
 		}
 
 		if (config_dcc_dir) 
-		    	path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(d));
+			path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(d));
 		else
-		    	path = xstrdup(dcc_filename_get(d));
+			path = xstrdup(dcc_filename_get(d));
 
 		if (params[0][0] == 'r') {
 			fd = open(path, O_WRONLY);
@@ -775,35 +775,35 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 
 			debug("[gg] GG_EVENT_DCC_CLIENT_NEW\n");
 
-                        if (gg_config_dcc_limit) {
-                                int c, t = 60;
-                                char *tmp;
+			if (gg_config_dcc_limit) {
+				int c, t = 60;
+				char *tmp;
 
-                                if ((tmp = xstrchr(gg_config_dcc_limit, '/')))
-                                        t = atoi(tmp + 1);
+				if ((tmp = xstrchr(gg_config_dcc_limit, '/')))
+					t = atoi(tmp + 1);
 
-                                c = atoi(gg_config_dcc_limit);
+				c = atoi(gg_config_dcc_limit);
 
-                                if (time(NULL) - dcc_limit_time > t) {
-                                        dcc_limit_time = time(NULL);
-                                        dcc_limit_count = 0;
-                                }
+				if (time(NULL) - dcc_limit_time > t) {
+					dcc_limit_time = time(NULL);
+					dcc_limit_count = 0;
+				}
 
-                                dcc_limit_count++;
+				dcc_limit_count++;
 
-                                if (dcc_limit_count > c) {
-                                        print("dcc_limit");
-                                        gg_config_dcc = 0;
-                                        gg_changed_dcc(("dcc"));
+				if (dcc_limit_count > c) {
+					print("dcc_limit");
+					gg_config_dcc = 0;
+					gg_changed_dcc(("dcc"));
 
-                                        dcc_limit_time = 0;
-                                        dcc_limit_count = 0;
+					dcc_limit_time = 0;
+					dcc_limit_count = 0;
 
-                                        gg_dcc_free(e->event.dcc_new);
-                                        e->event.dcc_new = NULL;
-                                        break;
-                                }
-                        }
+					gg_dcc_free(e->event.dcc_new);
+					e->event.dcc_new = NULL;
+					break;
+				}
+			}
 
 			__host = inet_ntoa(*((struct in_addr*) &d->remote_addr));
 			__port = d->remote_port;
@@ -904,7 +904,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			struct stat st;
 
 			debug("[gg] GG_EVENT_DCC_NEED_FILE_ACK\n");
-		        snprintf(uin, sizeof(uin), "gg:%d", d->uin);
+			snprintf(uin, sizeof(uin), "gg:%d", d->uin);
 
 			again = 0;
 
@@ -981,7 +981,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			char uin[16];
 
 			debug("[gg] GG_EVENT_DCC_DONE\n");
-		 	snprintf(uin, sizeof(uin), "gg:%d", d->uin);
+			snprintf(uin, sizeof(uin), "gg:%d", d->uin);
 
 			if (!(D = gg_dcc_find(d))) {
 				gg_free_dcc(d);
@@ -1004,7 +1004,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			unsigned short port = d->remote_port;
 			char *tmp;
 			char uin[16];
-		 	snprintf(uin, sizeof(uin), "gg:%d", d->uin);
+			snprintf(uin, sizeof(uin), "gg:%d", d->uin);
 
 			addr.s_addr = d->remote_addr;
 

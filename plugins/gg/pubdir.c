@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -123,10 +123,10 @@ COMMAND(gg_command_register)
 		return -1;
 	}
 
-        if (!last_tokenid) {
-	        printq("gg_token_missing");
-                return -1;
-        }
+	if (!last_tokenid) {
+		printq("gg_token_missing");
+		return -1;
+	}
 
 	if (params[2]) {
 		passwd_b = xstrdup(params[1]);
@@ -209,10 +209,10 @@ COMMAND(gg_command_unregister)
 	uin_t uin;
 	char *passwd;
 
-        if (!last_tokenid) {
-                printq("token_missing");
-                return -1;
-        }
+	if (!last_tokenid) {
+		printq("token_missing");
+		return -1;
+	}
 
 	if (!xstrncasecmp(params[0], "gg:", 3))
 		uin = atoi(params[0] + 3);
@@ -250,7 +250,7 @@ COMMAND(gg_command_unregister)
  * Here we wait for server reply, and if it success we set new password in session variable.<br>
  *
  * @todo Need rewriting, it's buggy. We don't free memory @ type == 1, when watch wasn't executed...
- * 		We always create watch @@ not GG_STATE_DONE, even if there's no need, and maybe more. XXX
+ *		We always create watch @@ not GG_STATE_DONE, even if there's no need, and maybe more. XXX
  *
  * @return -1 [TEMPORARY WATCH]
  */
@@ -586,10 +586,10 @@ COMMAND(gg_command_list)
 		}
 #endif
 
-                if (gg_userlist_request(g->sess, GG_USERLIST_GET, NULL) == -1) {
-                        printq("userlist_get_error", strerror(errno));
+		if (gg_userlist_request(g->sess, GG_USERLIST_GET, NULL) == -1) {
+			printq("userlist_get_error", strerror(errno));
 			return -1;
-	        }
+		}
 
 		session_int_set(session, "__userlist_get_config", 0);
 		return 0;
@@ -604,10 +604,10 @@ COMMAND(gg_command_list)
 		}
 #endif
 
-                if (gg_userlist_request(g->sess, GG_USERLIST_PUT, NULL) == -1) {
-                        printq("userlist_clear_error", strerror(errno));
-                        return -1;
-                }
+		if (gg_userlist_request(g->sess, GG_USERLIST_PUT, NULL) == -1) {
+			printq("userlist_clear_error", strerror(errno));
+			return -1;
+		}
 		session_int_set(session, "__userlist_put_config", 2);
 		return 0;
 	}
@@ -625,11 +625,11 @@ COMMAND(gg_command_list)
 		contacts	= gg_userlist_dump(session);
 		cpcontacts	= gg_locale_to_cp(contacts);
 
-                if (gg_userlist_request(g->sess, GG_USERLIST_PUT, cpcontacts) == -1) {
-                        printq("userlist_put_error", strerror(errno));
-                        xfree(cpcontacts);
-                        return -1;
-                }
+		if (gg_userlist_request(g->sess, GG_USERLIST_PUT, cpcontacts) == -1) {
+			printq("userlist_put_error", strerror(errno));
+			xfree(cpcontacts);
+			return -1;
+		}
 
 		session_int_set(session, "__userlist_put_config", 0);
 		xfree(cpcontacts);

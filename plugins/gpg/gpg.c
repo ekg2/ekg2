@@ -1,10 +1,10 @@
 /*
  *  Code ported from mcabber 0.9.0 to ekg2
- *  	Copyright (C) 2006 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *	Copyright (C) 2006 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  Orginal code:
- *  	Copyright (C) 2006 Mikael Berthe <bmikael@lists.lilotux.net>
- *  	Some parts inspired by centericq (impgp.cc)
+ *	Copyright (C) 2006 Mikael Berthe <bmikael@lists.lilotux.net>
+ *	Some parts inspired by centericq (impgp.cc)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -69,7 +69,7 @@ static egpg_key_t *gpg_keydb_add(const char *uid, const char *keyid, const char 
 	egpg_key_t *a = xmalloc(sizeof(egpg_key_t));
 
 	a->uid		= xstrdup(uid);
-	a->keyid 	= xstrdup(keyid);
+	a->keyid	= xstrdup(keyid);
 	a->keynotok	= -1;
 	
 	list_add(&gpg_keydb, a);
@@ -100,7 +100,7 @@ static gpgme_error_t gpg_passphrase_cb(void *data, const char *uid_hint, const c
 	len = xstrlen((char *) data);
 
 	if (write(fd, (char *) data, len) != len)	return gpg_error(GPG_ERR_CANCELED);
-	if (write(fd, "\n", 1) != 1) 			return gpg_error(GPG_ERR_CANCELED);
+	if (write(fd, "\n", 1) != 1)			return gpg_error(GPG_ERR_CANCELED);
 
 	return 0;	/* success */
 }
@@ -131,7 +131,7 @@ static const char *gpg_find_keyid(const char *uid, const char **password, char *
 	}
 
 /* XXX here, we need to search gpg key db for search of key = 'key' coz we can have here everything... uid, name, etc, etc...
- * 	and if we have multiiple choices we should allow user to select proper one. 
+ *	and if we have multiiple choices we should allow user to select proper one. 
  */
 
 	return key;
@@ -142,7 +142,7 @@ static const char *gpg_find_keyid(const char *uid, const char **password, char *
 static QUERY(gpg_message_encrypt) {
 	char *uid	= *(va_arg(ap, char **));		/* uid */
 	char **message	= va_arg(ap, char **);			/* message to encrypt */
-	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
+	char **error	= va_arg(ap, char **);			/* place to put errormsg */
 
 	char *gpg_data	= *message;
 
@@ -219,7 +219,7 @@ static QUERY(gpg_message_encrypt) {
 static QUERY(gpg_message_decrypt) {
 	char *uid	= *(va_arg(ap, char **));		/* uid */
 	char **message	= va_arg(ap, char **);			/* message to decrypt */
-	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
+	char **error	= va_arg(ap, char **);			/* place to put errormsg */
 
 	char *gpg_data	= saprintf(data, *message);
 	const char *key  = NULL;
@@ -283,7 +283,7 @@ static QUERY(gpg_message_decrypt) {
 static QUERY(gpg_sign) {
 	char *uid	= *(va_arg(ap, char **));		/* uid */
 	char **message	= va_arg(ap, char **);			/* message to sign */
-	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
+	char **error	= va_arg(ap, char **);			/* place to put errormsg */
 
 	const char *key  = NULL;
 	const char *pass = NULL;
@@ -483,7 +483,7 @@ static char *gpg_key_status(egpg_key_t *k) {
 
 static QUERY(gpg_user_keyinfo) {
 /* HERE, we display info about gpg support for user 'u' 
- * 	query emited by /list 
+ *	query emited by /list 
  */
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
@@ -615,7 +615,7 @@ static int gpg_theme_init() {
 
 	format_add("gpg_keys_list",		"%> %W%1%n/%W%2%n %3", 1);		/* uid, keyid, key status */
 
-	format_add("user_info_gpg_key", 	_("%K| %nGPGKEY: %T%1%n (%2)%n"), 1);	/* keyid, key status */
+	format_add("user_info_gpg_key",		_("%K| %nGPGKEY: %T%1%n (%2)%n"), 1);	/* keyid, key status */
 #endif
 	return 0;
 }
@@ -671,8 +671,8 @@ EXPORT int gpg_plugin_init(int prio) {
 	command_add(&gpg_plugin, "gpg:key", "p u ?", gpg_command_key, 0, 
 		"-d --delkey -f --forcekey -i --infokey -l --listkeys -s --setkey");
 
-	query_connect_id(&gpg_plugin, GPG_MESSAGE_ENCRYPT, 	gpg_message_encrypt, NULL);
-	query_connect_id(&gpg_plugin, GPG_MESSAGE_DECRYPT, 	gpg_message_decrypt, 
+	query_connect_id(&gpg_plugin, GPG_MESSAGE_ENCRYPT,	gpg_message_encrypt, NULL);
+	query_connect_id(&gpg_plugin, GPG_MESSAGE_DECRYPT,	gpg_message_decrypt, 
 						"-----BEGIN PGP MESSAGE-----\n\n"
 						"%s\n"
 						"-----END PGP MESSAGE-----\n");

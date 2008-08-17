@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -130,7 +130,7 @@ char *gg_locale_to_cp(char *b) {
 		return NULL;
 #if (USE_UNICODE || HAVE_GTK)
 	if (config_use_unicode) {	/* why not iconv? iconv is too big for recoding only utf-8 <==> cp1250 */
-		int len 	= mbstowcs(NULL, b, 0)+1;	/* it's safe mbstowcs() can return -1 */
+		int len		= mbstowcs(NULL, b, 0)+1;	/* it's safe mbstowcs() can return -1 */
 		wchar_t *tmp	= xmalloc(len*sizeof(wchar_t)); /* so here we malloc(0) it returns NULL */
 		int i;
 		
@@ -199,7 +199,7 @@ char *gg_cp_to_locale(char *b) {
 			return b;		/* return `cp` seq ? */
 		}
 		xfree(tmp);
-		xfree(buf); 			/* XXX, need testing */
+		xfree(buf);			/* XXX, need testing */
 		return newbuf;
 	} else
 #endif

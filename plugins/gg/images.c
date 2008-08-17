@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2004 Piotr Kupisiewicz <deletek@ekg2.org>
- *  		  2006 Adam Mikuta <adamm@ekg2.org>
+ *		  2006 Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -79,11 +79,11 @@ COMMAND(gg_command_image)
 	const char *filename	= params[1];
 	char *data, *uid;
 
-        struct gg_msg_richtext_format_img {
-                struct gg_msg_richtext rt;
-                struct gg_msg_richtext_format f;
-                struct gg_msg_richtext_image image;
-        } msg;
+	struct gg_msg_richtext_format_img {
+		struct gg_msg_richtext rt;
+		struct gg_msg_richtext_format f;
+		struct gg_msg_richtext_image image;
+	} msg;
 
 	if (!(uid = get_uid(session, params[0]))) {
 		printq("user_not_found", params[0]);
@@ -109,20 +109,20 @@ COMMAND(gg_command_image)
 
 	crc32 = gg_crc32(0, (unsigned char *) data, size);
 	
-        msg.rt.flag=2;
-        msg.rt.length=13;
-        msg.f.position=0;
-        msg.f.font=GG_FONT_IMAGE;
-        msg.image.unknown1=0x0109;
-        msg.image.size=size;
-        msg.image.crc32=crc32;
+	msg.rt.flag=2;
+	msg.rt.length=13;
+	msg.f.position=0;
+	msg.f.font=GG_FONT_IMAGE;
+	msg.image.unknown1=0x0109;
+	msg.image.size=size;
+	msg.image.crc32=crc32;
 
 	image_add_queue(filename, data, size, crc32); 
 
-        if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(uid + 3), (const unsigned char *) "", (const unsigned char *) &msg, sizeof(msg)) == -1) {
+	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(uid + 3), (const unsigned char *) "", (const unsigned char *) &msg, sizeof(msg)) == -1) {
 		printq("gg_image_error_send");
-                return -1;
-        }
+		return -1;
+	}
 		
 	printq("gg_image_ok_send");
 
@@ -165,10 +165,10 @@ void image_flush_queue()
 	for (l = images; l; l = l->next) {
 		image_t *i = l->data;
 
-	        xfree(i->filename);
-	        xfree(i->data);
+		xfree(i->filename);
+		xfree(i->data);
 	}
 
-        list_destroy(images, 1);
-        images = NULL;
+	list_destroy(images, 1);
+	images = NULL;
 }

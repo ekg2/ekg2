@@ -2,8 +2,8 @@
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
 
-#define RSS_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
-#define RSS_FLAGS        RSS_ONLY  | SESSION_MUSTBECONNECTED
+#define RSS_ONLY	 SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define RSS_FLAGS	 RSS_ONLY  | SESSION_MUSTBECONNECTED
 #define RSS_FLAGS_TARGET RSS_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 
 #define feed_private(s) ((s && s->priv) ? ((feed_private_t *) s->priv)->private : NULL)

@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -326,12 +326,12 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		const char *__birthyear = gg_pubdir50_get(res, i, "birthyear");
 		const char *__city	= gg_pubdir50_get(res, i, "city");
 
-		char *firstname 	= gg_cp_to_locale(xstrdup(__firstname));
-		char *lastname 		= gg_cp_to_locale(xstrdup(__lastname));
-		char *nickname 		= gg_cp_to_locale(xstrdup(__nickname));
+		char *firstname		= gg_cp_to_locale(xstrdup(__firstname));
+		char *lastname		= gg_cp_to_locale(xstrdup(__lastname));
+		char *nickname		= gg_cp_to_locale(xstrdup(__nickname));
 		char *city		= gg_cp_to_locale(xstrdup(__city));
-		int status 		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
-		const char *birthyear 	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
+		int status		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
+		const char *birthyear	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
 
 		char *name, *active, *gender;
 		const char *target = NULL;
@@ -344,7 +344,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 			last_search_first_name	= xstrdup(firstname);
 			last_search_last_name	= xstrdup(lastname);
 			last_search_nickname	= xstrdup(nickname);
-			last_search_uid 	= saprintf("gg:%s", uin);
+			last_search_uid		= saprintf("gg:%s", uin);
 		}
 
 		name = saprintf(
@@ -376,7 +376,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		gender = format_string(format_find(__format("_unknown")), "");
 
 			/* XXX: why do we _exactly_ use it here? can't we just always
-			 * 	define target and thus display result in right conversation window? */
+			 *	define target and thus display result in right conversation window? */
 		for (l = autofinds; l; l = l->next) {
 			char *d = (char *) l->data;
 		
@@ -387,8 +387,8 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		}
 		
 		print_info(target, s, __format(""), 
-			uin 		? uin : ("?"), name, 
-			nickname 	? nickname : (""), 
+			uin		? uin : ("?"), name, 
+			nickname	? nickname : (""), 
 			city		? city : (""), 
 			birthyear	? birthyear : ("-"),
 			gender, active);

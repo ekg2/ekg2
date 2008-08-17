@@ -35,12 +35,12 @@ typedef struct {
 typedef struct {
 	gtk_window_ui_t *gui;
 
-	void *tab;                      /* (chan *) */
+	void *tab;			/* (chan *) */
 
 	/* information stored when this tab isn't front-most */
-	void *user_model;       /* for filling the GtkTreeView */
-	void *buffer;           /* xtext_Buffer */
-	gfloat old_ul_value;    /* old userlist value (for adj) */
+	void *user_model;	/* for filling the GtkTreeView */
+	void *buffer;		/* xtext_Buffer */
+	gfloat old_ul_value;	/* old userlist value (for adj) */
 } gtk_window_t;
 
 

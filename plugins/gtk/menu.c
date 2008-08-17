@@ -447,7 +447,7 @@ static int is_in_path(char *cmd) {
 
 	orig = prog;		/* save for free()ing */
 	/* special-case these default entries. */
-	/*                  123456789012345678 */
+	/*		    123456789012345678 */
 	if (strncmp(prog, "gnome-terminal -x ", 18) == 0)
 		/* don't check for gnome-terminal, but the thing it's executing! */
 		prog += 18;
@@ -560,7 +560,7 @@ void menu_nickmenu(window_t *sess, GdkEventButton * event, char *nick, int num_s
 		user = userlist_find(sess->session, nick);
 
 		/* XXX,
-		 * 	jesli nadal nie ma uzytkownika, to szukaj go w konferencjach */
+		 *	jesli nadal nie ma uzytkownika, to szukaj go w konferencjach */
 
 		if (user) {
 			GtkWidget *submenu = menu_quick_sub(nick, menu, NULL, XCMENU_DOLIST, -1);
@@ -1675,7 +1675,7 @@ GtkWidget *menu_create_main(void *accel_group, int bar, int away, int toplevel, 
 }
 
 /* usuniete itemy z menu:
- * 	rawlog [fajne, ale trudne do realizacji, my mamy osobne okienko debug
+ *	rawlog [fajne, ale trudne do realizacji, my mamy osobne okienko debug
  *
 	{N_("Save Text..."), menu_savebuffer, GTK_STOCK_SAVE, M_MENUSTOCK, 0, 0, 1},
  */

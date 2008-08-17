@@ -29,7 +29,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
-#ifdef __sun      /* Solaris, thanks to Beeth */
+#ifdef __sun	  /* Solaris, thanks to Beeth */
 #include <sys/filio.h>
 #endif
 
@@ -70,7 +70,7 @@ typedef struct {
 
 	int fart;	/* first article in the group		*/
 	int cart;	/* current artcile (downloading)	*/
-	int lart;	/* last article 			*/
+	int lart;	/* last article				*/
 	list_t articles;/* list of articles, nntp_article_t	*/
 } nntp_newsgroup_t;
 
@@ -103,7 +103,7 @@ static nntp_article_t *nntp_article_find(nntp_newsgroup_t *group, int articleid,
 	}
 	article		= xmalloc(sizeof(nntp_article_t));
 	article->new	= 1;
-	article->artid 	= articleid;
+	article->artid	= articleid;
 	article->msgid	= xstrdup(msgid);
 	article->header	= string_init(NULL);
 	article->body	= string_init(NULL);
@@ -229,7 +229,7 @@ static char hextochar(char t) {
 }
 
 NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
-	nntp_private_t *j 	= feed_private(s);
+	nntp_private_t *j	= feed_private(s);
 	int article_headers	= (code == 220 || code == 221);
 	int article_body	= (code == 220 || code == 222);
 	char *mbody, **tmpbody;
@@ -252,7 +252,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		return -1;
 	}
 	
-	if (article_headers) 	string_clear(art->header);
+	if (article_headers)	string_clear(art->header);
 	if (article_body)	string_clear(art->body);
 
 	if (article_headers && article_body) {
@@ -295,10 +295,10 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 			string_append(art->header, ": ");
 
 			while (value[i]) {
-				if 	(!xstrncmp(&value[i], "=?", 2) &&			/* begins with =? */
-					(charque = xstrchr(&value[i+2], '?')) && 		/* charset end with '?' */
-					(encque = xstrchr(charque+1, '?')) && 			/* encoding end with '?' */
-					(endque = xstrstr(encque+1, "?=")) && 			/* end */
+				if	(!xstrncmp(&value[i], "=?", 2) &&			/* begins with =? */
+					(charque = xstrchr(&value[i+2], '?')) &&		/* charset end with '?' */
+					(encque = xstrchr(charque+1, '?')) &&			/* encoding end with '?' */
+					(endque = xstrstr(encque+1, "?=")) &&			/* end */
 					((*(encque-1) == 'Q' || *(encque-1) == 'B'))		/* valid encodings are: 'B' -- base64 && 'Q' -- quoted-printable */
 					) {
 					
@@ -352,7 +352,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		if ((tmp = xstrstr(art->header->str, "Content-Transfer-Encoding: "))) { /* base64 || quoted-printable || 8bit || .... */
 			char *value = xstrchr(tmp, ' ')+1;
 
-			if (!xstrncmp(value, "8bit", 4)) 		cte = ENCODING_8BIT;
+			if (!xstrncmp(value, "8bit", 4))		cte = ENCODING_8BIT;
 			if (!xstrncmp(value, "base64", 6))		cte = ENCODING_BASE64;
 			if (!xstrncmp(value, "quoted-printable", 16))	cte = ENCODING_QUOTEDPRINTABLE;
 		}
@@ -383,9 +383,9 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 
 	
 	{
-		char *uid	= j->newsgroup		? j->newsgroup->uid 	: NULL;
+		char *uid	= j->newsgroup		? j->newsgroup->uid	: NULL;
 		char *sheaders	= NULL;
-		char *headers	= article_headers	? art->header->str 	: NULL;
+		char *headers	= article_headers	? art->header->str	: NULL;
 		char *body	= article_body		? art->body->str	: NULL;
 		char *artid	= (char *) itoa(art->artid);
 		int modify	= 0;						/* XXX */
@@ -402,7 +402,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 }
 
 NNTP_HANDLER(nntp_auth_process) {
-	nntp_private_t *j 	= feed_private(s);
+	nntp_private_t *j	= feed_private(s);
 	char *tmp;
 
 	switch(code) {
@@ -436,7 +436,7 @@ NNTP_HANDLER(nntp_null_process) {
 }
 
 NNTP_HANDLER(nntp_group_process) {
-	nntp_private_t *j 	= feed_private(s);
+	nntp_private_t *j	= feed_private(s);
 	char **p = array_make(str, " ", 4, 1, 0);
 	nntp_newsgroup_t *group; 
 	userlist_t *u;
@@ -464,16 +464,16 @@ NNTP_HANDLER(nntp_group_process) {
 }
 
 NNTP_HANDLER(nntp_message_error) {
-	nntp_private_t *j       = feed_private(s);
+	nntp_private_t *j	= feed_private(s);
 
-	if (!j->newsgroup) 	return -1;
+	if (!j->newsgroup)	return -1;
 
 	j->newsgroup->state	= NNTP_IDLE;
 	return 0;
 }
 
 NNTP_HANDLER(nntp_group_error) {
-	nntp_private_t *j       = feed_private(s);
+	nntp_private_t *j	= feed_private(s);
 
 	if (!j->newsgroup) return -1;
 
@@ -491,7 +491,7 @@ NNTP_HANDLER(nntp_xover_process) {
 }
 
 typedef	struct {
-	int 		num;
+	int		num;
 	nntp_handler	handler;
 	int is_multi;
 	void *data;
@@ -505,7 +505,7 @@ nntp_handler_t nntp_handlers[] = {
 	{381, nntp_auth_process,	0, NULL}, 
 	{480, nntp_auth_process,	0, NULL}, 
 
-	{220, nntp_message_process, 	1, NULL},
+	{220, nntp_message_process,	1, NULL},
 	{221, nntp_message_process,	1, NULL}, 
 	{222, nntp_message_process,	1, NULL},
 	{423, nntp_message_error,	0, NULL}, 
@@ -516,12 +516,12 @@ nntp_handler_t nntp_handlers[] = {
 	{224, nntp_xover_process,	1, "xover"}, 
 
 	{282, nntp_null_process,	1, "xgitle"}, 
-	{-1, NULL, 			0, NULL},
+	{-1, NULL,			0, NULL},
 }; 
 
 static void nntp_string_append(session_t *s, const char *str) {
-	nntp_private_t *j       = feed_private(s);
-	string_t buf            = j->buf;
+	nntp_private_t *j	= feed_private(s);
+	string_t buf		= j->buf;
 
 	string_append(buf, str);
 	string_append_c(buf, '\n');
@@ -657,14 +657,14 @@ static COMMAND(nntp_command_connect) {
 
 	j->fd = fd = socket(AF_INET, SOCK_STREAM, 0);
 
-        sin.sin_family		= AF_INET;
-        sin.sin_addr.s_addr	= inet_addr(ip);
+	sin.sin_family		= AF_INET;
+	sin.sin_addr.s_addr	= inet_addr(ip);
 	sin.sin_port		= ntohs(session_int_get(session, "port"));
 
-        ioctl(fd, FIONBIO, &one);
+	ioctl(fd, FIONBIO, &one);
 
 	j->connecting = 1;
-        res = connect(fd, (struct sockaddr*) &sin, sizeof(sin));
+	res = connect(fd, (struct sockaddr*) &sin, sizeof(sin));
 
 	if (res && (errno != EINPROGRESS)) {
 		nntp_handle_disconnect(session, strerror(errno), EKG_DISCONNECT_FAILURE);
@@ -689,7 +689,7 @@ static COMMAND(nntp_command_nextprev) {
 		printq("invalid_params", name);
 		return -1;
 	}
-	if (!xstrcmp(name, "next")) 	j->newsgroup->article++;
+	if (!xstrcmp(name, "next"))	j->newsgroup->article++;
 	else				j->newsgroup->article--;
 
 	if (mode == 2)				watch_write(j->send_watch, "HEAD %d\r\n", j->newsgroup->article);
@@ -707,9 +707,9 @@ static COMMAND(nntp_command_get) {
 	nntp_article_t *art = NULL;
 
 	if (params[0] && params[1])	{ group = params[0]; article = params[1]; }
-	else 				{ article = params[0]; }
+	else				{ article = params[0]; }
 
-	if (!group && target) 		group = target;
+	if (!group && target)		group = target;
 	if (!group && j->newsgroup)	group = j->newsgroup->uid;
 
 	if (!article) {
@@ -756,7 +756,7 @@ static COMMAND(nntp_command_check) {
 	j->lock = 1;
 
 	for (ul = session->userlist; ul; ul = ul->next) {
-		userlist_t *u 		= ul;
+		userlist_t *u		= ul;
 		nntp_newsgroup_t *n;
 		int i;
 
@@ -767,7 +767,7 @@ static COMMAND(nntp_command_check) {
 		feed_set_statusdescr(u, EKG_STATUS_AWAY, xstrdup("Checking..."));
 
 		j->newsgroup	= n;
-		n->state 	= NNTP_CHECKING;
+		n->state	= NNTP_CHECKING;
 		watch_write(j->send_watch, "GROUP %s\r\n", n->name);
 
 		while (n->state == NNTP_CHECKING) ekg_loop();
@@ -834,7 +834,7 @@ static COMMAND(nntp_command_unsubscribe) {
 }
 
 void *nntp_protocol_init() {
-	nntp_private_t *p 	= xmalloc(sizeof(nntp_private_t));
+	nntp_private_t *p	= xmalloc(sizeof(nntp_private_t));
 	p->buf			= string_init(NULL);
 	return p;
 }
@@ -844,20 +844,20 @@ void nntp_protocol_deinit(void *priv) {
 }
 
 void nntp_init() {
-/*XXX,  :msg -- wysylanie wiadomosc na serwer... BE CAREFULL cause news aren't IM ;) */
+/*XXX,	:msg -- wysylanie wiadomosc na serwer... BE CAREFULL cause news aren't IM ;) */
 	command_add(&feed_plugin, ("nntp:connect"), "?",	nntp_command_connect, RSS_ONLY, NULL);
 	command_add(&feed_plugin, ("nntp:disconnect"), "?", nntp_command_disconnect, RSS_ONLY, NULL);
 
 	command_add(&feed_plugin, ("nntp:subscribe"), "!",	nntp_command_subscribe, RSS_FLAGS_TARGET, NULL); 
 	command_add(&feed_plugin, ("nntp:unsubscibe"), "!", nntp_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
 
-	command_add(&feed_plugin, ("nntp:check"), "u", 	nntp_command_check, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:check"), "u",	nntp_command_check, RSS_FLAGS, NULL);
 
 	command_add(&feed_plugin, ("nntp:article"), "? ?",	nntp_command_get, RSS_FLAGS, NULL);
 	command_add(&feed_plugin, ("nntp:body"),	"? ?",	nntp_command_get, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, ("nntp:raw"), "?", 	nntp_command_raw, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:raw"), "?",	nntp_command_raw, RSS_FLAGS, NULL);
 
-	command_add(&feed_plugin, ("nntp:next"), "?", 	nntp_command_nextprev, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, ("nntp:prev"), "?", 	nntp_command_nextprev, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:next"), "?",	nntp_command_nextprev, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:prev"), "?",	nntp_command_nextprev, RSS_FLAGS, NULL);
 }
 

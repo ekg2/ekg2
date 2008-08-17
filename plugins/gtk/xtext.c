@@ -70,7 +70,7 @@
 #define charlen(str) g_utf8_skip[*(guchar *)(str)]
 
 /* is delimiter */
-#define is_del(c) 	(c == ' ' || c == '\n' || c == ')' || c == '(' || c == '>' || c == '<' || c == 0)
+#define is_del(c)	(c == ' ' || c == '\n' || c == ')' || c == '(' || c == '>' || c == '<' || c == 0)
 #warning "XXX, ATTR_* stuff"
 /* is_del includes ATTR_RESET, ATTR_BOLD */
 
@@ -742,7 +742,7 @@ static void gtk_xtext_destroy(GtkObject * object)
 	if (xtext->adj) {
 		g_signal_handlers_disconnect_matched(G_OBJECT(xtext->adj),
 						     G_SIGNAL_MATCH_DATA, 0, 0, NULL, NULL, xtext);
-		/*      gtk_signal_disconnect_by_data (GTK_OBJECT (xtext->adj), xtext); */
+		/*	gtk_signal_disconnect_by_data (GTK_OBJECT (xtext->adj), xtext); */
 		g_object_unref(G_OBJECT(xtext->adj));
 		xtext->adj = NULL;
 	}
@@ -2415,7 +2415,7 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 /*			xtext->bold = (isbold); */
 			/* more follow */
 
-                        if (!(last_attr & 128)) {
+			if (!(last_attr & 128)) {
 				if (!mark) {
 					xtext_set_fg(xtext, gc, ((last_attr & 7) + 8*isbold));
 /*					xtext_set_bg(xtext, gc, ((last_attr >> 3) & 7)); */
@@ -3447,7 +3447,7 @@ static int gtk_xtext_lines_taken(xtext_buffer * buf, textentry * ent)
 }
 
 /* Calculate number of actual lines (with wraps), to set adj->lower. *
- * This should only be called when the window resizes.               */
+ * This should only be called when the window resizes.		     */
 
 static void gtk_xtext_calc_lines(xtext_buffer * buf, int fire_signal)
 {
@@ -3852,7 +3852,7 @@ static void gtk_xtext_append_entry(xtext_buffer * buf, textentry * ent)
 	unsigned int mb;
 
 /* xchat->ekg2, note: i removed here strtr(ent->str, '\t', ' ') 
- * 		coz we should pass here only fstring_t, where fstring_t can't have \t */
+ *		coz we should pass here only fstring_t, where fstring_t can't have \t */
 
 	ent->str_width = gtk_xtext_text_width(buf->xtext, ent->str, ent->str_len, &mb);
 	ent->mb = FALSE;
@@ -3941,9 +3941,9 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 	ent->fstr = fstr;
 
 	/* NOTE, xchat create new string with str[0] = ' ' str[1...] = str[0...] 
-	 * 	i don't know why, but without it, ui looks ugly.
+	 *	i don't know why, but without it, ui looks ugly.
 	 *
-	 * 	slowdown, hack.
+	 *	slowdown, hack.
 	 */
 
 	ent->fstr->str.b = xrealloc(ent->fstr->str.b, sizeof(char) * (len+2));
@@ -4126,8 +4126,8 @@ void gtk_xtext_buffer_show(GtkXText * xtext, xtext_buffer * buf, int render)
 
 xtext_buffer *gtk_xtext_buffer_new(GtkXText * xtext) {
 	xtext_buffer *buf = xmalloc(sizeof(xtext_buffer));
-	buf->old_value 		= -1;
-	buf->xtext 		= xtext;
+	buf->old_value		= -1;
+	buf->xtext		= xtext;
 	buf->scrollbar_down	= TRUE;
 	buf->indent		= xtext->space_width * 2;
 	dontscroll(buf);

@@ -104,14 +104,14 @@ int new_window_in_tab_config = 1;
  *    - zrobic traya
  *    - zrobic userliste
  *    - zaimplementowac w xtext kolorki ekg2			[done, nie wszystkie atrybuty zrobione, ale xtext.c juz wie co to jest fstring_t
- *    									i ze ma tam atrybuty, see gtk_xtext_render_str()]
+ *									i ze ma tam atrybuty, see gtk_xtext_render_str()]
  *    - timestamp powinien byc renderowany z config_timestamp, i zamieniany na fstring_t !!!
  *    - implementowac wiecej waznych dla UI QUERY()
  *    - brakuje funkcjonalnosci detach-okienka z XChata, trzeba przejrzec ten kod i dokonczyc.
  *    - w XChacie byl jeszcze drag-drop np. plikow... jak ktos potrzebuje to wie co zrobic.
  *
  *    - zaimplementowac do konca ten dialog zamykania ekg2-gtk i dodac do niego opcje zapisu...
- *       zeby ekg2 sie na konsoli nie pytalo czy zapisac.
+ *	 zeby ekg2 sie na konsoli nie pytalo czy zapisac.
  */
 
 /* BUGS:
@@ -119,12 +119,12 @@ int new_window_in_tab_config = 1;
  *    - zabijanie okienek zle zrobione [czyt. w ogole nic nie dziala]
  *
  *    - sa lagi, nie wszystko w gtk sie dzieje jak user rusza myszka, klika klawiszami...
- *      niektore operacje sa robione zeby byly ,,animacja'' a select() 1s powoduje calkiem duze latencje.
- *      watch wykonywany co 0.03s bylby calkiem dobrym pomyslem... 
+ *	niektore operacje sa robione zeby byly ,,animacja'' a select() 1s powoduje calkiem duze latencje.
+ *	watch wykonywany co 0.03s bylby calkiem dobrym pomyslem... 
  *
  *    - duzo innych, roznych bledow..
  *    - jak zrobimy detach okienek, to prawdopodobnie operacje beda robione na zlych oknach, 
- *    	xchat mial current_tab, ja myslalem ze to jest to samo co window_current, wiec do pupy.
+ *	xchat mial current_tab, ja myslalem ze to jest to samo co window_current, wiec do pupy.
  */
 
 /* XXX, here, we update whole window, it's enough to update only statusbar && headerbar */
@@ -183,7 +183,7 @@ int gtk_ui_window_switch_lock = 0;
 
 static QUERY(gtk_ui_window_switch) {
 #warning "XXX, fast implementation"
-	window_t *w 	= *(va_arg(ap, window_t **));
+	window_t *w	= *(va_arg(ap, window_t **));
 
 	if (gtk_ui_window_switch_lock)
 		return 0;
@@ -225,7 +225,7 @@ static QUERY(gtk_beep) {				/* fe_beep() */
 	return -1;
 }
 
-static QUERY(gtk_ui_window_act_changed) { 		/* fe_set_tab_color() */
+static QUERY(gtk_ui_window_act_changed) {		/* fe_set_tab_color() */
 	window_t *w;
 
 	for (w = windows; w; w = w->next)
@@ -237,7 +237,7 @@ static QUERY(gtk_ui_window_act_changed) { 		/* fe_set_tab_color() */
 static QUERY(gtk_print_version) {
 	char *ver = saprintf("GTK2 plugin for ekg2 ported from XChat gtk frontend ((C) Peter Zelezny) using gtk: %d.%d.%d.%d",
 				gtk_major_version, gtk_minor_version, gtk_micro_version, gtk_binary_age);
-/* 				GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION GTK_BINARY_AGE );*/
+/*				GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION GTK_BINARY_AGE );*/
 	print("generic", ver);
 	xfree(ver);
 	return 0;
@@ -304,7 +304,7 @@ static void gtk_tab_layout_change(const char *var) {
 static QUERY(gtk_variable_changed) {
 	char *name = *(va_arg(ap, char**));
 
-        if (!xstrcasecmp(name, "timestamp_show")) {
+	if (!xstrcasecmp(name, "timestamp_show")) {
 		mg_apply_setup();
 	}
 	return 0;
@@ -339,17 +339,17 @@ static QUERY(gtk_ui_window_clear) {
 EXPORT int gtk_plugin_init(int prio) {
 	const char ekg2_another_ui[] = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
 
-        int is_UI = 0;
+	int is_UI = 0;
 	int xfd;
 	window_t *w;
 
 	PLUGIN_CHECK_VER("gtk");
 
-        query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
-        if (is_UI) {
+	if (is_UI) {
 		debug(ekg2_another_ui);
-                return -1;
+		return -1;
 	}
 
 	/* fe_args() */

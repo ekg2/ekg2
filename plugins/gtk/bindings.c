@@ -75,7 +75,7 @@ int gtk_history_index;
 #define GTK_BINDING_FUNCTION(x) int x(GtkWidget *wid, GdkEventKey *evt, char *d1, window_t *sess)
 
 /* These are cp'ed from history.c --AGL */
-#define STATE_SHIFT     GDK_SHIFT_MASK
+#define STATE_SHIFT	GDK_SHIFT_MASK
 #define	STATE_ALT	GDK_MOD1_MASK
 #define STATE_CTRL	GDK_CONTROL_MASK
 
@@ -224,7 +224,7 @@ gboolean key_handle_key_press(GtkWidget *wid, GdkEventKey * evt, window_t *sess)
 	n = -1;
 
 /* yeah, i know it's awful. */
-	if (keyval == GDK_Page_Up)		 	n = key_action_scroll_page(wid, evt, "up", sess);
+	if (keyval == GDK_Page_Up)			n = key_action_scroll_page(wid, evt, "up", sess);
 	else if (keyval == GDK_Page_Down)		n = key_action_scroll_page(wid, evt, "down", sess);
 
 	else if (keyval == GDK_Up)			n = key_action_history_up(wid, evt, NULL, sess);

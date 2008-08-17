@@ -33,7 +33,7 @@
 
 #include <string.h>
 
-#ifdef __sun      /* Solaris, thanks to Beeth */
+#ifdef __sun	  /* Solaris, thanks to Beeth */
 #include <sys/filio.h>
 #endif
 
@@ -83,8 +83,8 @@ typedef struct {
 
 	string_t other_tags;	/* place for other headers saved in format: (tag: value\n)
 				 * sample:
-				 * 	author: someone\n
-				 * 	pubDate: someday\n
+				 *	author: someone\n
+				 *	pubDate: someday\n
 				 */
 } rss_item_t;
 
@@ -122,10 +122,10 @@ typedef struct {
 	string_t buf;		/* buf with requested file */
 /* PROTOs: */
 	rss_proto_t proto;
-	char *host;	/* protos: RSS_PROTO_HTTP, RSS_PROTO_HTTPS, RSS_PROTO_FTP			hostname 	*/
+	char *host;	/* protos: RSS_PROTO_HTTP, RSS_PROTO_HTTPS, RSS_PROTO_FTP			hostname	*/
 	char *ip;	/*		j/w								cached ip addr	*/
-	int port;	/* 		j/w								port		*/
-	char *file;	/* protos: 	j/w RSS_PROTO_FILE 						file		*/
+	int port;	/*		j/w								port		*/
+	char *file;	/* protos:	j/w RSS_PROTO_FILE						file		*/
 } rss_feed_t;
 
 static list_t feeds;			/* list of feeds, rss_feed_t struct */
@@ -133,7 +133,7 @@ static list_t feeds;			/* list of feeds, rss_feed_t struct */
 static void rss_string_append(rss_feed_t *f, const char *str) {
 	string_t buf		= f->buf;
 
-	if (!buf) buf = f->buf = 	string_init(str);
+	if (!buf) buf = f->buf =	string_init(str);
 	else				string_append(buf, str);
 	string_append_c(buf, '\n');
 }
@@ -185,8 +185,8 @@ static rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *
 		return item;
 	}
 
-	item 		= xmalloc(sizeof(rss_item_t));
-	item->url 	= xstrdup(url);
+	item		= xmalloc(sizeof(rss_item_t));
+	item->url	= xstrdup(url);
 	item->hash_url	= hash_url;
 	item->title	= xstrdup(title);
 	item->hash_title= hash_title;
@@ -217,7 +217,7 @@ static rss_channel_t *rss_channel_find(rss_feed_t *f, const char *url, const cha
 		if (channel->hash_url != hash_url || xstrcmp(url, channel->url)) continue;
 		if (session_int_get(s, "channel_enable_title_checking") == 1 && (channel->hash_title != hash_title || xstrcmp(title, channel->title))) continue;
 		if (session_int_get(s, "channel_enable_descr_checking") == 1 && (channel->hash_descr != hash_descr || xstrcmp(descr, channel->descr))) continue;
-		if (session_int_get(s, "channel_enable_lang_checking")  == 1 && (channel->hash_lang  != hash_lang  || xstrcmp(lang, channel->lang))) continue;
+		if (session_int_get(s, "channel_enable_lang_checking")	== 1 && (channel->hash_lang  != hash_lang  || xstrcmp(lang, channel->lang))) continue;
 
 		return channel;
 	}
@@ -256,7 +256,7 @@ static rss_feed_t *rss_feed_find(session_t *s, const char *url) {
 	feed		= xmalloc(sizeof(rss_feed_t));
 	feed->session	= xstrdup(s->uid);
 	feed->uid	= saprintf("rss:%s", url);
-	feed->url 	= xstrdup(url);
+	feed->url	= xstrdup(url);
 
 /*  URI: ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))? */
 
@@ -448,7 +448,7 @@ static void rss_handle_end(void *data, const char *name) {
 			/* mapowanie takie samo jak iso-8859-1 <==> utf-8 */
 			/* stolen from linux/drivers/char/vt.c do_con_write() */
 
-			if ((znak & 0xe0) == 0xc0) 	{ ucount = 1; znaczek = (znak & 0x1f); }
+			if ((znak & 0xe0) == 0xc0)	{ ucount = 1; znaczek = (znak & 0x1f); }
 			else if ((znak & 0xf0) == 0xe0) { ucount = 2; znaczek = (znak & 0x0f); }
 			else if ((znak & 0xf8) == 0xf0) { ucount = 3; znaczek = (znak & 0x07); }
 			else if ((znak & 0xfc) == 0x78) { ucount = 4; znaczek = (znak & 0x03); }
@@ -498,7 +498,7 @@ static void rss_handle_cdata(void *data, const char *text, int len) {
 }
 
 static int rss_handle_encoding(void *data, const char *name, XML_Encoding *info) {
-	rss_fetch_process_t      *j = data;
+	rss_fetch_process_t	 *j = data;
 	int i;
 
 	debug_function("rss_handle_encoding() %s\n", name);
@@ -530,9 +530,9 @@ static void rss_parsexml_rdf(rss_feed_t *f, xmlnode_t *node) {
 			/* DUZE XXX */
 
 		} else if (!xstrcmp(node->name, "item")) {
-			const char *itemtitle   = NULL;
-			const char *itemdescr   = NULL;
-			const char *itemlink    = NULL;
+			const char *itemtitle	= NULL;
+			const char *itemdescr	= NULL;
+			const char *itemlink	= NULL;
 
 			xmlnode_t *subnode;
 			rss_item_t *item;
@@ -578,8 +578,8 @@ static void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
 			xmlnode_t *subnode;
 
 			for (subnode = node->children; subnode; subnode = subnode->next) {
-				if (!xstrcmp(subnode->name, "title")) 		chantitle 	= subnode->data->str;
-				else if (!xstrcmp(subnode->name, "link")) 	chanlink	= subnode->data->str;
+				if (!xstrcmp(subnode->name, "title"))		chantitle	= subnode->data->str;
+				else if (!xstrcmp(subnode->name, "link"))	chanlink	= subnode->data->str;
 				else if (!xstrcmp(subnode->name, "description"))chandescr	= subnode->data->str;
 				else if (!xstrcmp(subnode->name, "language"))	chanlang	= subnode->data->str;
 				else if (!xstrcmp(subnode->name, "item"))	; /* later */
@@ -601,7 +601,7 @@ static void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
 					for (items = subnode->children; items; items = items->next) {
 						if (!xstrcmp(items->name, "title"))		itemtitle = items->data->str;
 						else if (!xstrcmp(items->name, "description"))	itemdescr = items->data->str;
-						else if (!xstrcmp(items->name, "link")) 	itemlink  = items->data->str;
+						else if (!xstrcmp(items->name, "link"))		itemlink  = items->data->str;
 						else {	/* other, format tag: value\n */
 							string_append(tmp, items->name);
 							string_append(tmp, ": ");
@@ -645,9 +645,9 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 	xmlnode_t *node;
 	XML_Parser parser = XML_ParserCreate(NULL);
 
-        XML_SetUserData(parser, (void*) priv);
-        XML_SetElementHandler(parser, (XML_StartElementHandler) rss_handle_start, (XML_EndElementHandler) rss_handle_end);
-        XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) rss_handle_cdata);
+	XML_SetUserData(parser, (void*) priv);
+	XML_SetElementHandler(parser, (XML_StartElementHandler) rss_handle_start, (XML_EndElementHandler) rss_handle_end);
+	XML_SetCharacterDataHandler(parser, (XML_CharacterDataHandler) rss_handle_cdata);
 
 //	XML_SetParamEntityParsing(parser, XML_PARAM_ENTITY_PARSING_ALWAYS);
 	XML_SetUnknownEncodingHandler(parser, (XML_UnknownEncodingHandler) rss_handle_encoding, priv);
@@ -677,7 +677,7 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 		list_t k;
 
 		for (k = channel->rss_items; k; k = k->next) {
-			rss_item_t *item 	= k->data;
+			rss_item_t *item	= k->data;
 			char *proto_headers	= f->headers->len	? f->headers->str	: NULL;
 			char *headers		= item->other_tags->len	? item->other_tags->str : NULL;
 			int modify		= 0;			/* XXX */
@@ -702,7 +702,7 @@ fail:
 }
 
 static WATCHER_LINE(rss_fetch_handler) {
-	rss_feed_t      *f = data;
+	rss_feed_t	*f = data;
 
 	if (type) {
 		if (f->buf) 
@@ -816,7 +816,7 @@ static WATCHER(rss_url_fetch_resolver) {
 			saprintf("Resolver ERROR read: %d bytes (%s)", len, len == -1 ? strerror(errno) : ""));
 
 		return -1;
-        }
+	}
 
 	f->ip = xstrdup(inet_ntoa(a));
 	rss_set_descr(b->uid, saprintf("Resolved to: %s", f->ip));
@@ -909,7 +909,7 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 
 			fd = socket(AF_INET, SOCK_STREAM, 0);
 
-			sin.sin_addr.s_addr 	= inet_addr(f->ip);
+			sin.sin_addr.s_addr	= inet_addr(f->ip);
 			sin.sin_port		= htons(f->port);
 			sin.sin_family		= AF_INET;
 
@@ -930,7 +930,7 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 				return -1;
 			}
 			w->data = b = xmalloc(sizeof(rss_resolver_t));
-			b->session 	= xstrdup(f->session);
+			b->session	= xstrdup(f->session);
 			b->uid		= saprintf("rss:%s", f->url);
 
 			rss_set_descr(f->uid, xstrdup("Resolving..."));
@@ -1001,7 +1001,7 @@ static COMMAND(rss_command_subscribe) {
 
 	uidnoproto = target + 4;
 
-	if (!xstrncmp(uidnoproto, "http://", 7)) 	uidnoproto += 7;
+	if (!xstrncmp(uidnoproto, "http://", 7))	uidnoproto += 7;
 	else if (!xstrncmp(uidnoproto, "file://", 7))	uidnoproto += 7;
 	else if (!xstrncmp(uidnoproto, "exec:", 5))	uidnoproto += 5;
 	else {

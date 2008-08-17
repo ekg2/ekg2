@@ -2,9 +2,9 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                2003 Adam Czerwiski <acze@acze.net>
- * 		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
- * 		  2006 Adam Mikuta <adamm@ekg2.org>
+ *		  2003 Adam Czerwiski <acze@acze.net>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2006 Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -70,7 +70,7 @@
 #  include <jpeglib.h>
 #endif
 #ifdef HAVE_GIF_LIB_H
-#  include <fcntl.h>    /* open() */
+#  include <fcntl.h>	/* open() */
 #  include <gif_lib.h>
 #endif
 
@@ -88,11 +88,11 @@ static COMMAND(gg_command_connect) {
 	uin_t uin = (session) ? atoi(session->uid + 3) : 0;
 
 	if (!xstrcmp(name, ("disconnect")) || isreconnect) {
-	        /* if ,,reconnect'' timer exists we should stop doing */
+		/* if ,,reconnect'' timer exists we should stop doing */
 		/* if ,,gg:reconnect'' command is executed, we should always try to do 'disconnect; connect;' */
-	        if (timer_remove_session(session, "reconnect") == 0 && !isreconnect) {
+		if (timer_remove_session(session, "reconnect") == 0 && !isreconnect) {
 			printq("auto_reconnect_removed", session_name(session));
-	                return 0;
+			return 0;
 		}
 
 		if (!g->sess) {
@@ -108,11 +108,11 @@ static COMMAND(gg_command_connect) {
 			if (session->autoaway)
 				session_status_set(session, EKG_STATUS_AUTOBACK);
 			if (__reason) {
-				if (!xstrcmp(__reason, "-")) 	myreason = NULL;
-                        	else 				myreason = xstrdup(__reason);
+				if (!xstrcmp(__reason, "-"))	myreason = NULL;
+				else				myreason = xstrdup(__reason);
 				tmp = gg_locale_to_cp(xstrdup(myreason));
 				session_descr_set(session, tmp ? myreason : NULL);
-        		} else {
+			} else {
 				myreason = xstrdup(session_descr_get(session));
 				tmp = gg_locale_to_cp(xstrdup(myreason));
 			}
@@ -185,17 +185,17 @@ static COMMAND(gg_command_connect) {
 		if (gg_config_dcc) {
 			gg_dcc_socket_close();
 	
-                        if (!gg_config_dcc_ip || !xstrcasecmp(gg_config_dcc_ip, "auto")) {
-                                gg_dcc_ip = inet_addr("255.255.255.255");
-                        } else {
-                                if (inet_addr(gg_config_dcc_ip) != INADDR_NONE)
-                                        gg_dcc_ip = inet_addr(gg_config_dcc_ip);
-                                else {
-                                        print("dcc_invalid_ip");
+			if (!gg_config_dcc_ip || !xstrcasecmp(gg_config_dcc_ip, "auto")) {
+				gg_dcc_ip = inet_addr("255.255.255.255");
+			} else {
+				if (inet_addr(gg_config_dcc_ip) != INADDR_NONE)
+					gg_dcc_ip = inet_addr(gg_config_dcc_ip);
+				else {
+					print("dcc_invalid_ip");
 					gg_config_dcc_ip = NULL;
-                                        gg_dcc_ip = 0;
-                                }
-                        }
+					gg_dcc_ip = 0;
+				}
+			}
 			if (gg_config_audio)
 				p.has_audio = 1;
 
@@ -208,9 +208,9 @@ static COMMAND(gg_command_connect) {
 		p.password = (char*) password;
 		p.image_size = gg_config_image_size;
 
-                _status = GG_S(_status);
-                if (session_int_get(session, "private"))
-                        _status |= GG_STATUS_FRIENDS_MASK;
+		_status = GG_S(_status);
+		if (session_int_get(session, "private"))
+			_status |= GG_STATUS_FRIENDS_MASK;
 
 		if ((tmpi = session_int_get(session, "protocol")) != -1)
 			p.protocol_version = tmpi;
@@ -498,7 +498,7 @@ static COMMAND(gg_command_away) {
 	_status = GG_S(gg_text_to_status(status, cpdescr)); /* descr can be NULL it doesn't matter... */
 
 	if (session_int_get(session, "private"))
-                _status |= GG_STATUS_FRIENDS_MASK;
+		_status |= GG_STATUS_FRIENDS_MASK;
 
 	if (descr)	gg_change_status_descr(g->sess, _status, cpdescr);
 	else		gg_change_status(g->sess, _status);
@@ -526,7 +526,7 @@ static COMMAND(gg_command_msg) {
 	if (!quiet)
 		session_unidle(session);
 
-        if (!xstrcmp(params[0], ("*"))) {
+	if (!xstrcmp(params[0], ("*"))) {
 		if (msg_all(session, name, params[1]) == -1)
 			printq("list_empty");
 		return 0;
@@ -614,7 +614,7 @@ static COMMAND(gg_command_msg) {
 		return 0;
 
 	} else if (xstrlen(params[1]) > 1989) {
-              printq("message_too_long");
+	      printq("message_too_long");
 	}
 
 	msg = (unsigned char *) xstrmid(params[1], 0, 1989);
@@ -738,7 +738,7 @@ static COMMAND(gg_command_msg) {
 			continue;
 		}
 		
-	        u = userlist_find(session, uid);
+		u = userlist_find(session, uid);
 
 		if (config_last & 4) 
 			last_add(1, uid, time(NULL), 0, raw_msg);
@@ -848,8 +848,8 @@ static COMMAND(gg_command_inline_msg) {
  * @sa gg_command_unblock()	- for unblock command
  *
  * @return	 0 - if @a uid == NULL, or @a uid was successfully blocked.<br>
- * 		-1 - if @a uid was neither valid gg uid, nor user nickname<br>
- * 		-2 - if @a uid is already blocked.
+ *		-1 - if @a uid was neither valid gg uid, nor user nickname<br>
+ *		-2 - if @a uid is already blocked.
  */
 
 static COMMAND(gg_command_block) {
@@ -905,8 +905,8 @@ static COMMAND(gg_command_block) {
  * @sa gg_blocked_remove()	- for unblock function.
  * @sa gg_command_block()	- for block command
  *
- * @return 	 0 - if somebody was unblocked.<br>
- * 		-1 - if smth went wrong.
+ * @return	 0 - if somebody was unblocked.<br>
+ *		-1 - if smth went wrong.
  */
 
 static COMMAND(gg_command_unblock) {
@@ -1274,7 +1274,7 @@ static void ekg_jpeg_error_exit(j_common_ptr j)
 
 static WATCHER(gg_handle_token)
 {
-        struct gg_http *h = data;
+	struct gg_http *h = data;
 	struct gg_token *t = NULL;
 	char *file = NULL;
 
@@ -1282,13 +1282,13 @@ static WATCHER(gg_handle_token)
 		return -1;
 	
        if (type == 2) {
-                debug("[gg] gg_handle_token() timeout\n");
-                print("register_timeout");
-                goto fail;
-        }
+		debug("[gg] gg_handle_token() timeout\n");
+		print("register_timeout");
+		goto fail;
+	}
 
-        if (type != 0)
-                return 0;
+	if (type != 0)
+		return 0;
 
 	if (gg_token_watch_fd(h) || h->state == GG_STATE_ERROR) {
 		print("gg_token_failed", gg_http_error_string(h->error));
@@ -1387,8 +1387,8 @@ static WATCHER(gg_handle_token)
 
 		size = j.output_width * j.output_components;
 		buf[0] = xmalloc(size);
-                
-                token = xmalloc((j.output_width + 1) * j.output_height);
+		
+		token = xmalloc((j.output_width + 1) * j.output_height);
 		
 		while (j.output_scanline < j.output_height) {
 			int i;
@@ -1465,18 +1465,18 @@ fail:
 }
 
 static COMMAND(gg_command_token) {
-        struct gg_http *h;
+	struct gg_http *h;
 	watch_t *w;
 
-        if (!(h = gg_token(1))) {
-                printq("gg_token_failed", strerror(errno));
-                return -1;
-        }
+	if (!(h = gg_token(1))) {
+		printq("gg_token_failed", strerror(errno));
+		return -1;
+	}
 
-        w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_token, h);
-        watch_timeout_set(w, h->timeout);
+	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_token, h);
+	watch_timeout_set(w, h->timeout);
 
-        return 0;
+	return 0;
 }
 
 static COMMAND(gg_command_modify) {
@@ -1493,7 +1493,7 @@ static COMMAND(gg_command_modify) {
 		/* if adding fails, quit */
 		if (ret != 0 || !params[1]) return ret;
 	/* params[1] cause of: in commands.c, 
-	 *	 	query_emit(NULL, ("userlist-added"), &uid, &params[1], &quiet);
+	 *		query_emit(NULL, ("userlist-added"), &uid, &params[1], &quiet);
 	 *	and we emulate old behavior (via query handler executing command) with command handler... rewrite ? 
 	 */
 		par = &(params[1]);
@@ -1762,26 +1762,26 @@ static COMMAND(gg_command_check_conn) {
 		return -1;
 	}
 
-        for (l = gg_currently_checked; l; l = l->next) {
-                gg_currently_checked_t *c = l->data;
+	for (l = gg_currently_checked; l; l = l->next) {
+		gg_currently_checked_t *c = l->data;
 
-                if (!xstrcmp(c->uid, u->uid) && c->session == session) {
+		if (!xstrcmp(c->uid, u->uid) && c->session == session) {
 			debug("-- check_conn - we are already waiting for user to be connected\n");
-                        return 0;
+			return 0;
 		}
-        }
-
-	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid + 3), (const unsigned char *) "", (const unsigned char *) &msg, sizeof(msg)) == -1) {
-                 debug("-- check_conn - shits happens\n");
-                 return -1;
 	}
 
-        c_timer = xmalloc(sizeof(gg_currently_checked_t));
+	if (gg_send_message_richtext(g->sess, GG_CLASS_MSG, atoi(u->uid + 3), (const unsigned char *) "", (const unsigned char *) &msg, sizeof(msg)) == -1) {
+		 debug("-- check_conn - shits happens\n");
+		 return -1;
+	}
+
+	c_timer = xmalloc(sizeof(gg_currently_checked_t));
 	c_timer->uid = xstrdup(u->uid); /* if user gets deleted, we won't get undef value */
 	c_timer->session = session;
 
-        c.uid = c_timer->uid;
-        c.session = session;
+	c.uid = c_timer->uid;
+	c.session = session;
 
 	list_add(&gg_currently_checked, xmemdup(&c, sizeof(c)));
 
@@ -1797,36 +1797,36 @@ void gg_register_commands()
 #define GG_FLAGS       GG_ONLY | SESSION_MUSTBECONNECTED
 #define GG_FLAGS_TARGET GG_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 
-	command_add(&gg_plugin, ("gg:add"), "!U ? p", gg_command_modify, 	COMMAND_ENABLEREQPARAMS, "-f --find");
-	command_add(&gg_plugin, ("gg:connect"), NULL, gg_command_connect, 	GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:disconnect"), "r", gg_command_connect, 	GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:reconnect"), NULL, gg_command_connect, 	GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:msg"), "!uUC !", gg_command_msg, 		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
-	command_add(&gg_plugin, ("gg:chat"), "!uUC !", gg_command_msg, 		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
-	command_add(&gg_plugin, ("gg:"), "?", gg_command_inline_msg, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:away"), "r", gg_command_away, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:_autoaway"), "?", gg_command_away, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:back"), "r", gg_command_away, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:_autoback"), "?", gg_command_away, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:_autoscroll"), "?", gg_command_away, 	GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:add"), "!U ? p", gg_command_modify,	COMMAND_ENABLEREQPARAMS, "-f --find");
+	command_add(&gg_plugin, ("gg:connect"), NULL, gg_command_connect,	GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:disconnect"), "r", gg_command_connect,	GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:reconnect"), NULL, gg_command_connect,	GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:msg"), "!uUC !", gg_command_msg,		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
+	command_add(&gg_plugin, ("gg:chat"), "!uUC !", gg_command_msg,		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
+	command_add(&gg_plugin, ("gg:"), "?", gg_command_inline_msg,		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:away"), "r", gg_command_away,		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:_autoaway"), "?", gg_command_away,			GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:back"), "r", gg_command_away,		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:_autoback"), "?", gg_command_away,			GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:_autoscroll"), "?", gg_command_away,	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:check_conn"), "!uUC", gg_command_check_conn,	GG_FLAGS_TARGET, NULL);
-	command_add(&gg_plugin, ("gg:invisible"), "r", gg_command_away, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:image"), "!u !f", gg_command_image, 		COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&gg_plugin, ("gg:block"), "uUC", gg_command_block, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:unblock"), "!b", gg_command_unblock, 	GG_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&gg_plugin, ("gg:modify"), "!Uu ?", gg_command_modify, 	COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&gg_plugin, ("gg:invisible"), "r", gg_command_away,			GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:image"), "!u !f", gg_command_image,		COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&gg_plugin, ("gg:block"), "uUC", gg_command_block,		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:unblock"), "!b", gg_command_unblock,	GG_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&gg_plugin, ("gg:modify"), "!Uu ?", gg_command_modify,	COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&gg_plugin, ("gg:remind"), "? ?", gg_command_remind, 0, NULL);
 	command_add(&gg_plugin, ("gg:register"), "? ? ?", gg_command_register, 0, NULL);
 	command_add(&gg_plugin, ("gg:token"), NULL, gg_command_token, 0, NULL);
 	command_add(&gg_plugin, ("gg:unregister"), "! ! !", gg_command_unregister, COMMAND_ENABLEREQPARAMS, NULL);
-	command_add(&gg_plugin, ("gg:passwd"), "? ?", gg_command_passwd, 		GG_ONLY, NULL);
-	command_add(&gg_plugin, ("gg:userlist"), "p ?", gg_command_list, 		GG_ONLY, "-c --clear -g --get -p --put");
+	command_add(&gg_plugin, ("gg:passwd"), "? ?", gg_command_passwd,		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:userlist"), "p ?", gg_command_list,		GG_ONLY, "-c --clear -g --get -p --put");
 	command_add(&gg_plugin, ("gg:find"), "!puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC puUC", 
-							gg_command_find, 	GG_FLAGS_TARGET, 
+							gg_command_find,	GG_FLAGS_TARGET, 
 			"-u --uin -f --first -l --last -n --nick -c --city -b --born -a --active -F --female -M --male -s --start -A --all -S --stop");
-	command_add(&gg_plugin, ("gg:change"), "p", gg_command_change, 		GG_ONLY, 
+	command_add(&gg_plugin, ("gg:change"), "p", gg_command_change,		GG_ONLY, 
 			"-f --first -l --last -n --nick -b --born -c --city -N --familyname -C --familycity -F --female -M --male");
-	command_add(&gg_plugin, ("gg:dcc"), "p uU f ?", gg_command_dcc, 		GG_ONLY, "send rsend get resume rvoice voice close list");
+	command_add(&gg_plugin, ("gg:dcc"), "p uU f ?", gg_command_dcc,			GG_ONLY, "send rsend get resume rvoice voice close list");
 
 }
 

@@ -64,7 +64,7 @@ static ekg2_dbus_iface_proto_t const ekg2_dbus_interfaces[] =
 };
 
 #define EKG2_DBUS_MATCH(str)  do { \
-   			dbus_bus_add_match(conn, str, &err); \
+			dbus_bus_add_match(conn, str, &err); \
 			if (dbus_error_is_set(&err)) { \
 				debug("match error at %s (probably resources exhausted): %s\n", str, err.message); \
 				dbus_connection_close(conn); conn = NULL; \
@@ -213,7 +213,7 @@ EXPORT int dbus_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("dbus");
 
-   	dbus_error_init(&err);
+	dbus_error_init(&err);
 
 	conn = dbus_bus_get(DBUS_BUS_SESSION, &err);
 	if (dbus_error_is_set(&err)) { 

@@ -156,7 +156,7 @@ const char *gtk_window_target(window_t *window) {
 	if (window->target)		return window->target;
 	else if (window->id == 1)	return "__status";
 	else if (window->id == 0)	return "__debug";
-        else                            return "";
+	else				return "";
 }
 
 
@@ -234,7 +234,7 @@ int fe_gui_info(window_t *sess, int info_type) {	/* code from fe-gtk.c */
 	/* 2.4.0 -> gtk_window_is_active(GTK_WINDOW(gtk_private_ui(sess)->window))
 	 * 2.2.0 -> GTK_WINDOW(gtk_private_ui(sess)->window)->is_active)
 	 *
-	 * 		return 1
+	 *		return 1
 	 */
 		return 0;		/* normal (no keyboard focus or behind a window) */
 	}
@@ -260,11 +260,11 @@ void fe_set_tab_color(window_t *sess, int col) {
 	if (sess == window_current || sess->id == 0)
 		col = 0;	/* XXX */
 	
-//    col value, what todo                                            values                                                  comment.
-//      0: chan_set_color(sess->tab, plain_list);           [new_data = NULL, msg_said = NULL, nick_said = NULL]    /* no particular color (theme default) */
-//      1: chan_set_color(sess->tab, newdata_list);         [new_data = TRUE, msg_said = NULL, nick_said = NULL]    /* new data has been displayed (dark red) */
-//      2: chan_set_color(sess->tab, newmsg_list);          [new_data = NULL, msg_said = TRUE, nick_said = NULL]    /* new message arrived in channel (light red) */
-//      3: chan_set_color(sess->tab, nickseen_list) ;       [new_data = NULL, msg_said = NULL, nick_said = TRUE]    /* your nick has been seen (blue) */    
+//    col value, what todo					      values						      comment.
+//	0: chan_set_color(sess->tab, plain_list);	    [new_data = NULL, msg_said = NULL, nick_said = NULL]    /* no particular color (theme default) */
+//	1: chan_set_color(sess->tab, newdata_list);	    [new_data = TRUE, msg_said = NULL, nick_said = NULL]    /* new data has been displayed (dark red) */
+//	2: chan_set_color(sess->tab, newmsg_list);	    [new_data = NULL, msg_said = TRUE, nick_said = NULL]    /* new message arrived in channel (light red) */
+//	3: chan_set_color(sess->tab, nickseen_list) ;	    [new_data = NULL, msg_said = NULL, nick_said = TRUE]    /* your nick has been seen (blue) */    
 
 	if (col == 0) chan_set_color(gtk_private(sess)->tab, plain_list);
 	if (col == 1) chan_set_color(gtk_private(sess)->tab, newdata_list);
@@ -620,7 +620,7 @@ static idle_t *ul_tag = NULL;
 	}
 
 
-//	if (is_session(sess)) 	-> if (window_find_ptr(sess)
+//	if (is_session(sess))	-> if (window_find_ptr(sess)
 	if (1)
 	{
 		gui = gtk_private_ui(sess);
@@ -881,18 +881,18 @@ void mg_open_quit_dialog(gboolean minimize_button) {
 	if (config_save_quit == 1) {
 #warning "Display question if user want to /save config"
 /*
-		if (config_changed) 				format_find("config_changed")
+		if (config_changed)				format_find("config_changed")
 		else if (config_keep_reason && reason_changed)	format_find("quit_keep_reason");
 */
 		config_save_quit = 0;
 	}
 
 #warning "xchat->ekg2 XXX"
-	/* 	xchat count dcc's + connected network, and display warning about it.
+	/*	xchat count dcc's + connected network, and display warning about it.
 	 *
-	 * 		"<span weight=\"bold\" size=\"larger\">Are you sure you want to quit?</span>\n
-	 * 			"You are connected to %i IRC networks."
-	 * 			"Some file transfers are still active."
+	 *		"<span weight=\"bold\" size=\"larger\">Are you sure you want to quit?</span>\n
+	 *			"You are connected to %i IRC networks."
+	 *			"Some file transfers are still active."
 	 */
 
 
@@ -1281,7 +1281,7 @@ static GtkWidget *mg_changui_destroy(window_t *sess) {
 		/*gtk_widget_destroy (sess->gui->window); */
 		/* don't destroy until the new one is created. Not sure why, but */
 		/* it fixes: Gdk-CRITICAL **: gdk_colormap_get_screen: */
-		/*           assertion `GDK_IS_COLORMAP (cmap)' failed */
+		/*	     assertion `GDK_IS_COLORMAP (cmap)' failed */
 		ret = gtk_private_ui(sess)->window;
 		free(gtk_private_ui(sess));
 		gtk_private(sess)->gui = NULL;
@@ -1449,7 +1449,7 @@ mg_update_xtext(GtkWidget *wid)
 	gtk_xtext_set_palette(xtext, colors);
 	gtk_xtext_set_max_lines(xtext, backlog_size_config);
 	gtk_xtext_set_tint(xtext, tint_red_config, tint_green_config, tint_blue_config);
-//      gtk_xtext_set_background (xtext, channelwin_pix, transparent_config);
+//	gtk_xtext_set_background (xtext, channelwin_pix, transparent_config);
 	gtk_xtext_set_wordwrap(xtext, wordwrap_config);
 	gtk_xtext_set_show_marker(xtext, show_marker_config);
 	gtk_xtext_set_show_separator(xtext, indent_nicks_config ? show_separator_config : 0);
@@ -1471,10 +1471,10 @@ mg_xtext_error(int type)
 	printf("mg_xtext_error() %d\n", type);
 
 	/* @ type == 0 "Unable to set transparent background!\n\n"
-	 *              "You may be using a non-compliant window\n"
-	 *              "manager that is not currently supported.\n"), FE_MSG_WARN);
+	 *		"You may be using a non-compliant window\n"
+	 *		"manager that is not currently supported.\n"), FE_MSG_WARN);
 	 *
-	 *              config_transparent = 0; 
+	 *		config_transparent = 0; 
 	 */
 }
 
@@ -1621,7 +1621,7 @@ mg_create_center(window_t *sess, gtk_window_ui_t *gui, GtkWidget *box)
 static void mg_sessionclick_cb(GtkWidget *button, gpointer userdata) {
 #warning "xchat->ekg2: mg_sessionclick_cb() XXX, change session using this [like ^X] implement"
 	/* xchat: 
-	 *      fe_get_str (_("Enter new nickname:"), current_sess->server->nick, mg_change_nick, NULL);
+	 *	fe_get_str (_("Enter new nickname:"), current_sess->server->nick, mg_change_nick, NULL);
 	 */
 }
 
