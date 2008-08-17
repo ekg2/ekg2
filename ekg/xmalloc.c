@@ -120,8 +120,8 @@ void *xcalloc(size_t nmemb, size_t size)
  * Wrapper to <code>malloc()+memset()</code><br>
  *
  * @bug Possible bug: Some libc may return NULL if size is 0, from man malloc:<br>
- * 	<i>If @a size is 0 (...) a <b>null pointer</b> (...) shall be returned.</i><br>
- * 	XXX, check it in configure.ac if malloc() returns NULL on 0 size, and check here if size is 0.
+ *	<i>If @a size is 0 (...) a <b>null pointer</b> (...) shall be returned.</i><br>
+ *	XXX, check it in configure.ac if malloc() returns NULL on 0 size, and check here if size is 0.
  *
  * @sa xcalloc()
  * @sa xfree()
@@ -192,20 +192,20 @@ char *xstrdup(const char *s)
 
 size_t xstrnlen(const char *s, size_t n) 
 {
-        return strnlen(fix(s), n);
+	return strnlen(fix(s), n);
 }
 
 char *xstrndup(const char *s, size_t n)
 {
-        char *tmp;
+	char *tmp;
 
-        if (!s)
-                return NULL;
+	if (!s)
+		return NULL;
 
 	if (!(tmp = strndup((char *) s, n)))
 		ekg_oom_handler();
 
-        return tmp;
+	return tmp;
 }
 
 void *xmemdup(void *ptr, size_t size)
@@ -256,7 +256,7 @@ char *xstrstr(const char *haystack, const char *needle)
 
 char *xstrcasestr(const char *haystack, const char *needle)
 {
-        return strcasestr(fix(haystack), fix(needle));
+	return strcasestr(fix(haystack), fix(needle));
 }
 
 int xstrcasecmp(const char *s1, const char *s2) 

@@ -2,10 +2,10 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@o2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@o2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -148,18 +148,18 @@ int last_count(const char *uid) {
  * Code looks better. (So please don't change to somethink like: if (!ent) q++;) 
  *
  * I was thinking about some static pointer, 
- * 	static char buf[2];
+ *	static char buf[2];
  *
- * 	buf[0] = znak;
- * 	return buf;
+ *	buf[0] = znak;
+ *	return buf;
  * 
  * to remove if (ent) and always use strcpy() however it's still only idea.
  */
 
 static int xml_escape_l(const char znak) {
 	switch (znak) {
-		case '"': 	return (sizeof("&quot;")-1);
-		case '&': 	return (sizeof("&amp;")-1);
+		case '"':	return (sizeof("&quot;")-1);
+		case '&':	return (sizeof("&amp;")-1);
 		case '\'':	return (sizeof("&apos;")-1);
 		case '<':	return (sizeof("&lt;")-1);
 		case '>':	return (sizeof("&gt;")-1);
@@ -170,8 +170,8 @@ static int xml_escape_l(const char znak) {
 
 static const char *xml_escape_c(const char znak) {
 	switch (znak) {
-		case '"': 	return "&quot;";
-		case '&': 	return "&amp;";
+		case '"':	return "&quot;";
+		case '&':	return "&amp;";
 		case '\'':	return "&apos;";
 		case '<':	return "&lt;";
 		case '>':	return "&gt;";

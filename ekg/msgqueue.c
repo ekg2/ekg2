@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2001-2002 Piotr Domagalski <szalik@szalik.net>
- *                          Wojtek Kaniewski <wojtekka@irc.pl>
+ *			    Wojtek Kaniewski <wojtekka@irc.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -69,9 +69,9 @@ int msg_queue_add(const char *session, const char *rcpts, const char *message, c
 
 	m->session	= xstrdup(session);
 	m->rcpts	= xstrdup(rcpts);
-	m->message 	= xstrdup(message);
-	m->seq 		= xstrdup(seq);
-	m->time 	= time(NULL);
+	m->message	= xstrdup(message);
+	m->seq		= xstrdup(seq);
+	m->time		= time(NULL);
 	m->class	= class;
 
 	msgs_queue_add(m);
@@ -251,7 +251,7 @@ int msg_queue_write()
  * @todo	code which handle errors is awful and it need rewriting.
  *
  * @return	-1 if fail to open msgqueue directory<br>
- * 		 0 on success.
+ *		 0 on success.
  */
 
 int msg_queue_read() {

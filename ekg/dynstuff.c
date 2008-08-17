@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -383,9 +383,9 @@ void *list_unlink3(list_t *list, list_t elem) {
  * @param free_data - if set and item was found it'll call xfree() on it.
  * @sa list_destroy() - to remove whole list
  *
- * @return 	 0 if item was founded, and was removed from list_t pointed by @a list<br>
- * 		-1 and errno set to EFAULT, if @a list was NULL<br>
- * 		-1 and errno set to ENOENT, if item was not found
+ * @return	 0 if item was founded, and was removed from list_t pointed by @a list<br>
+ *		-1 and errno set to EFAULT, if @a list was NULL<br>
+ *		-1 and errno set to ENOENT, if item was not found
  */
 
 int list_remove(list_t *list, void *data, int free_data) {
@@ -519,12 +519,12 @@ int list_destroy3(list_t list, void (*func)(void *)) {
  * Destroy all items from list_t @a list
  *
  * @note It doesn't take pointer to list_t, and it don't cleanup memory with \\0, so after list_destroy() you must remember that
- * 	@a list is <b>unaccessible</b>. So if you have list as global variable, or if you keep pointer to it in some struct.. you must NULL pointer.
- * 	so always do: <br>
- * 	<code>
- * 		list_destroy(my_list, free_data);
- * 		my_list = NULL;
- * 	</code>
+ *	@a list is <b>unaccessible</b>. So if you have list as global variable, or if you keep pointer to it in some struct.. you must NULL pointer.
+ *	so always do: <br>
+ *	<code>
+ *		list_destroy(my_list, free_data);
+ *		my_list = NULL;
+ *	</code>
  *
  * @param list - list_t
  * @param free_data - if set we will call xfree() on each item data
@@ -592,13 +592,13 @@ int string_append_c(string_t s, char c)
  *
  * Append to string_t @a s, first @a count chars, from @a str<br>
  *
- * @param s     - string_t
- * @param str   - buffer to append.
+ * @param s	- string_t
+ * @param str	- buffer to append.
  * @param count - how many chars copy copy from @a str, or -1 to copy whole.
  *
- * @todo 	We append here NUL terminated string, so maybe let's <b>always</b> do <code>count = xstrnlen(str, count);</code>?<br>
- * 		Because now programmer can pass negative value, and it'll possible do SIGSEGV<br>
- * 		Also we can allocate less memory for string, when for example str[count-3] was NUL char.<br>
+ * @todo	We append here NUL terminated string, so maybe let's <b>always</b> do <code>count = xstrnlen(str, count);</code>?<br>
+ *		Because now programmer can pass negative value, and it'll possible do SIGSEGV<br>
+ *		Also we can allocate less memory for string, when for example str[count-3] was NUL char.<br>
  *
  * @return	 0 on success<br>
  *		-1 and errno set to EFAULT if input params were wrong (s == NULL || str == NULL)
@@ -629,19 +629,19 @@ int string_append_n(string_t s, const char *str, int count)
  *
  * Append to string_t @a s, formatted output of @a format + params<br>
  * Equivalent to:<br>
- * 	<code>
- * 		char *tmp = saprintf(format, ...);<br>
- * 		string_append(s, tmp);<br>
- * 		xfree(tmp);<br>
- * 	</code>
+ *	<code>
+ *		char *tmp = saprintf(format, ...);<br>
+ *		string_append(s, tmp);<br>
+ *		xfree(tmp);<br>
+ *	</code>
  *
  * @note For more details about string formating functions read man 3 vsnprintf
  *
  * @sa string_append()	- If you want/can use non-formating function..
  * @sa saprintf()	- If you want to format output but to normal char *, not to string_t
  *
- * @return 	 0 on success<br>
- * 		-1 and errno set to EFAULT if input params were wrong (s == NULL || format == NULL)
+ * @return	 0 on success<br>
+ *		-1 and errno set to EFAULT if input params were wrong (s == NULL || format == NULL)
  */
 
 int string_append_format(string_t s, const char *format, ...) {
@@ -741,9 +741,9 @@ void string_insert_n(string_t s, int index, const char *str, int count)
  * Insert given text (@a str) to given string_t (@a s) at given pos (@a index)<br>
  * Wrapper to: <code>string_insert_t(s, index, str, -1)</code>
  *
- * @param s     - string_t
+ * @param s	- string_t
  * @param index - pos
- * @param str   - text 
+ * @param str	- text 
  *
  * @sa string_insert_n()
  */
@@ -860,8 +860,8 @@ void string_clear(string_t s)
  * @param free_string	- do we want to free memory after char buffer?
  * @sa string_clear()	- if you just want to clear saved char buffer, and you don't want to free internal string_t struct.
  *
- * @return 	if @a free_string != 0 always NULL<br>
- * 		else returns saved char buffer, which need be free()'d after use by xfree()
+ * @return	if @a free_string != 0 always NULL<br>
+ *		else returns saved char buffer, which need be free()'d after use by xfree()
  */
 
 char *string_free(string_t s, int free_string)
@@ -915,11 +915,11 @@ const char *itoa(long int i)
  *  - string - tekst wej¶ciowy,
  *  - sep - lista elementów oddzielaj±cych,
  *  - max - maksymalna ilo¶æ elementów tablicy. je¶li równe 0, nie ma
- *          ograniczeñ rozmiaru tablicy.
+ *	    ograniczeñ rozmiaru tablicy.
  *  - trim - czy wiêksz± ilo¶æ elementów oddzielaj±cych traktowaæ jako
- *           jeden (na przyk³ad spacje, tabulacja itp.)
+ *	     jeden (na przyk³ad spacje, tabulacja itp.)
  *  - quotes - czy pola mog± byæ zapisywane w cudzys³owiach lub
- *             apostrofach z escapowanymi znakami.
+ *	       apostrofach z escapowanymi znakami.
  *
  * zaalokowan± tablicê z zaalokowanymi ci±gami znaków, któr± nale¿y
  * zwolniæ funkcj± array_free()
@@ -963,7 +963,7 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 			if (last && q[0] && q[1])
 				goto way2;
 
-                        len++;
+			len++;
 
 			r = token = xmalloc(len + 1);
 			for (q = p + 1; *q; q++, r++) {
@@ -1166,19 +1166,19 @@ int array_contains(char **array, const char *string, int casesensitive)
  */
 int array_item_contains(char **array, const char *string, int casesensitive)
 {
-        int i;
+	int i;
 
-        if (!array || !string)
-                return 0;
+	if (!array || !string)
+		return 0;
 
-        for (i = 0; array[i]; i++) {
-                if (casesensitive && xstrstr(array[i], string))
-                        return 1;
-                if (!casesensitive && xstrcasestr(array[i], string))
-                        return 1;
-        }
+	for (i = 0; array[i]; i++) {
+		if (casesensitive && xstrstr(array[i], string))
+			return 1;
+		if (!casesensitive && xstrcasestr(array[i], string))
+			return 1;
+	}
 
-        return 0;
+	return 0;
 }
 
 /*

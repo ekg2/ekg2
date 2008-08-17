@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -178,26 +178,26 @@ void userlist_add_entry(session_t *session, const char *line) {
  * @return 0 on success, -1 file not found
  */
 int userlist_read(session_t *session) {
-        const char *filename;
-        char *buf;
-        FILE *f;
+	const char *filename;
+	char *buf;
+	FILE *f;
 
 	if (!(filename = prepare_pathf("%s-userlist", session->uid)))
 		return -1;
-        
-        if (!(f = fopen(filename, "r")))
-                return -1;
-                        
-        while ((buf = read_file(f, 0))) {
-                if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/'))
-                        continue;
-                
-                userlist_add_entry(session, buf);
-        }
+	
+	if (!(f = fopen(filename, "r")))
+		return -1;
+			
+	while ((buf = read_file(f, 0))) {
+		if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/'))
+			continue;
+		
+		userlist_add_entry(session, buf);
+	}
 
-        fclose(f);
-                
-        return 0;
+	fclose(f);
+		
+	return 0;
 } 
 
 /**
@@ -206,13 +206,13 @@ int userlist_read(session_t *session) {
  * It writes @a session userlist to file: <i>session->uid</i>-userlist in ekg2 config directory
  *
  * @todo	Each plugin should've own userlist_write()/ userlist_read()
- * 		This format is obsolete.
+ *		This format is obsolete.
  *
  * @param session
  *
- * @return 	 0 on succees<br>
- * 		-1 if smth went wrong<br>
- * 		-2 if we fail to create/open userlist file in rw mode
+ * @return	 0 on succees<br>
+ *		-1 if smth went wrong<br>
+ *		-2 if we fail to create/open userlist file in rw mode
  */
 
 int userlist_write(session_t *session) {
@@ -254,7 +254,7 @@ int userlist_write(session_t *session) {
 		line = array_join_count(entry, ";", 7);
 
 		fprintf(f, "%s%s\n", 
-			line, 					/* look upper */
+			line,					/* look upper */
 			u->foreign ? u->foreign : "");		/* backwards compatibility */
 
 		xfree(line);
@@ -273,7 +273,7 @@ int userlist_write(session_t *session) {
  *
  * @sa userlist_write
  * @bug It was copied from ekg1 and it doesn't match ekg2 abi.
- * 	It's bad so i comment it out... Reimplement it or delete
+ *	It's bad so i comment it out... Reimplement it or delete
  */
 void userlist_write_crash() {
 /*
@@ -342,24 +342,24 @@ void *userlist_private_get(plugin_t *plugin, userlist_t *u) {
  * However if that happen you shouldn't use this function but emit query <i>PROTOCOL_STATUS</i> or <i>PROTOCOL_DISCONNECTED</i>
  *
  * @note By <i>presence informations</i> I mean:<br>
- * 	-> status 	- user's status [avail, away, ffc, dnd], it'll be: @a EKG_STATUS_NA ("notavail")<br>
- * 	-> descr 	- user's description, it'll be: NULL<br>
- * 	-> ip		- user's ip, il'll be: 0.0.0.0<br>
- * 	-> port		- user's port, it'll be: 0<br>
- * 	-> resources	- user's resource, list will be destroyed.
+ *	-> status	- user's status [avail, away, ffc, dnd], it'll be: @a EKG_STATUS_NA ("notavail")<br>
+ *	-> descr	- user's description, it'll be: NULL<br>
+ *	-> ip		- user's ip, il'll be: 0.0.0.0<br>
+ *	-> port		- user's port, it'll be: 0<br>
+ *	-> resources	- user's resource, list will be destroyed.
  *
  * @param session
  * @param uid
  */
 
 void userlist_clear_status(session_t *session, const char *uid) {
-        userlist_t *ul;
+	userlist_t *ul;
 
 	if (!session)
 		return;
 
-        for (ul = session->userlist; ul; ul = ul->next) {
-                userlist_t *u = ul;
+	for (ul = session->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		if (!uid || !xstrcasecmp(uid, u->uid)) {
 			u->status = EKG_STATUS_NA;
@@ -368,7 +368,7 @@ void userlist_clear_status(session_t *session, const char *uid) {
 
 			ekg_resources_destroy(&(u->resources));
 		}
-        }
+	}
 }
 
 /*
@@ -389,7 +389,7 @@ void userlist_free(session_t *session) {
  * It adds <b>new</b> user resource to resources list, with given data.
  *
  * @note It <b>doesn't</b> check if prio already exists.. So you must remember about
- * 	calling userlist_resource_find() if you don't want two (or more) same resources...
+ *	calling userlist_resource_find() if you don't want two (or more) same resources...
  *
  * @param u - user
  * @param name - name of resource
@@ -477,11 +477,11 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
  * nickname - display.
  */
 userlist_t *userlist_add_u(userlist_t **userlist, const char *uid, const char *nickname) {
-        userlist_t *u = xmalloc(sizeof(userlist_t));
+	userlist_t *u = xmalloc(sizeof(userlist_t));
 
-        u->uid = xstrdup(uid);
-        u->nickname = xstrdup(nickname);
-        u->status = EKG_STATUS_NA;
+	u->uid = xstrdup(uid);
+	u->nickname = xstrdup(nickname);
+	u->status = EKG_STATUS_NA;
 
 	userlists_add(userlist, u);
 	return u;
@@ -506,12 +506,12 @@ int userlist_remove(session_t *session, userlist_t *u) {
  *  - u.
  */
 int userlist_remove_u(userlist_t **userlist, userlist_t *u) {
-        if (!u)
-                return -1;
+	if (!u)
+		return -1;
 
 	userlists_remove(userlist, u);
 
-        return 0;
+	return 0;
 }
 
 /*
@@ -548,7 +548,7 @@ userlist_t *userlist_find(session_t *session, const char *uid) {
 	if (!uid || !session)
 		return NULL;
 
-        return userlist_find_u(&(session->userlist), uid);
+	return userlist_find_u(&(session->userlist), uid);
 }
 
 /* 
@@ -625,7 +625,7 @@ int valid_nick(const char *nick) {
  * @sa valid_plugin_uid()	- You can specify plugin
  *
  * @return	1 - if uid can be handled by ekg2<br>
- * 		0 - if not
+ *		0 - if not
  */
 
 int valid_uid(const char *uid) {
@@ -644,31 +644,31 @@ int valid_uid(const char *uid) {
  *
  * Check if @a uid can be handled by given @a plugin
  * 
- * @param plugin 	- plugin to check for
+ * @param plugin	- plugin to check for
  * @param uid		- uid to check for
  *
  * @sa valid_uid()	- if we want to know if this @a uid can be handled by ekg2 [when it doesn't matter which plugin]
  *
- * @return 	 1 - if @a uid can be handled by @a plugin<br>
- * 		 0 - if not<br>
+ * @return	 1 - if @a uid can be handled by @a plugin<br>
+ *		 0 - if not<br>
  *		-1 - if @a plugin == NULL
  */
 
 int valid_plugin_uid(plugin_t *plugin, const char *uid) {
-        int valid = 0;
-        char *tmp;
+	int valid = 0;
+	char *tmp;
 
 	if (!plugin) {
 		debug_error("valid_plugin_uid() no plugin passed. In current api, it means than something really bad happen.\n");
 		return -1;
 	}
 
-        tmp = xstrdup(uid);
+	tmp = xstrdup(uid);
 
-        query_emit_id(plugin, PROTOCOL_VALIDATE_UID, &tmp, &valid);
-        xfree(tmp);
+	query_emit_id(plugin, PROTOCOL_VALIDATE_UID, &tmp, &valid);
+	xfree(tmp);
 
-        return (valid > 0);
+	return (valid > 0);
 }
 
 /**
@@ -676,7 +676,7 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid) {
  *
  * Return and checks if uid passed @a text is proper for at least one session, or it's nickname of smb on @a session userlist
  *
- * @param session 	- session to search for item on userlist
+ * @param session	- session to search for item on userlist
  * @param text		- uid to check for, if '$' then check current window.
  *
  * @sa get_uid()	- to search only specified session.
@@ -702,7 +702,7 @@ char *get_uid_any(session_t *session, const char *text) {
  * Return and checks if uid passed @a text is proper for @a session or it's nickname of smb on @a session userlist.
  *
  * @note It also work with userlist_find() and if @a text is nickname of smb in session userlist.. 
- * 	 Than it return uid of this user. 
+ *	 Than it return uid of this user. 
  *	 So you shouldn't call userlist_find() with get_uid() as param, cause it's senseless
  *	 userlist_find() don't check for "$" target, so you must do it by hand. Rest is the same.
  *	 If there are such user:
@@ -713,10 +713,10 @@ char *get_uid_any(session_t *session, const char *text) {
  * @param text - uid to check for, if '$' than check current window.
  *
  * @sa userlist_find()
- * @sa get_nickname() 	- to look for nickname..
+ * @sa get_nickname()	- to look for nickname..
  * @sa get_uid_any()	- to do all session searching+specified session userlist search..
- * 				This function does only all session searching if @a session is NULL... and than
- * 				it doesn't look at userlist. Do you feel difference?
+ *				This function does only all session searching if @a session is NULL... and than
+ *				it doesn't look at userlist. Do you feel difference?
  *
  * @return If we found proper uid for @a text, than return it. Otherwise NULL
  */
@@ -750,7 +750,7 @@ char *get_uid(session_t *session, const char *text) {
  * it returns text if it is a correct uid, else NULL
  */
 char *get_nickname(session_t *session, const char *text) {
-        userlist_t *u;
+	userlist_t *u;
 
 	if (text && !xstrcmp(text, "$"))
 		text = window_current->target;
@@ -758,18 +758,18 @@ char *get_nickname(session_t *session, const char *text) {
 	if (!session)
 		return valid_uid(text) ? (char *) text : NULL;
 
-        u = userlist_find(session, text);
+	u = userlist_find(session, text);
 
-        if (u && u->nickname)
-                return u->nickname;
+	if (u && u->nickname)
+		return u->nickname;
 
 	if (u && u->uid)
 		return u->uid;
 
 	if (valid_plugin_uid(session->plugin, text) == 1)
-	        return (char *)text;
+		return (char *)text;
 
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -1096,7 +1096,7 @@ struct ekg_group *group_init(const char *names) {
 		ekg_groups_add(&gl, g);
 	}
 	/* NOTE: we don't call here array_free() cause we use items of this
-	 * 	array @ initing groups. We don't use strdup()
+	 *	array @ initing groups. We don't use strdup()
 	 */
 	xfree(groups);
 	

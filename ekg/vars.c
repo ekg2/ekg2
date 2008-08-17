@@ -2,9 +2,9 @@
 
 /*
  *  (C) Copyright 2001-2004 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Leszek Krupiñski <leafnode@wafel.com>
- *                          Adam Mikuta <adammikuta@poczta.onet.pl>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Leszek Krupiñski <leafnode@wafel.com>
+ *			    Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -83,7 +83,7 @@ void variable_init() {
 		/* It's very, very special variable; shouldn't be used by user */
 	variable_add(NULL, ("config_version"), VAR_INT, 2, &config_version, NULL, NULL, NULL);
 		/* XXX, warn here. user should change only console_charset if it's really nesessary... we should make user know about his terminal
-		 * 	encoding... and give some tip how to correct this... it's just temporary
+		 *	encoding... and give some tip how to correct this... it's just temporary
 		 */
 	variable_add(NULL, ("console_charset"), VAR_STR, 1, &config_console_charset, NULL, NULL, NULL);
 	variable_add(NULL, ("dcc_dir"), VAR_STR, 1, &config_dcc_dir, NULL, NULL, NULL); 
@@ -91,7 +91,7 @@ void variable_init() {
 /*	variable_add(NULL, ("default_protocol"), VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL); */
 	variable_add(NULL, ("default_status_window"), VAR_BOOL, 1, &config_default_status_window, NULL, NULL, NULL);
 	variable_add(NULL, ("display_ack"), VAR_MAP, 1, &config_display_ack, NULL, variable_map(6, 0, 0, "none", 1, 0, "delivered", 2, 0, "queued", 4, 0, "dropped", 8, 0, "tempfail", 16, 0, "unknown"), NULL);
-        variable_add(NULL, ("display_blinking"), VAR_BOOL, 1, &config_display_blinking, changed_display_blinking, NULL, NULL);
+	variable_add(NULL, ("display_blinking"), VAR_BOOL, 1, &config_display_blinking, changed_display_blinking, NULL, NULL);
 	variable_add(NULL, ("display_color"), VAR_INT, 1, &config_display_color, NULL, NULL, NULL);
 	variable_add(NULL, ("display_color_map"), VAR_STR, 1, &config_display_color_map, NULL, NULL, dd_color);
 	variable_add(NULL, ("display_crap"),  VAR_BOOL, 1, &config_display_crap, NULL, NULL, NULL);
@@ -305,16 +305,16 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 		return v;
 	}
 
-	v 	= xmalloc(sizeof(variable_t));
+	v	= xmalloc(sizeof(variable_t));
 	v->name		= __name;
-	v->name_hash 	= hash;
-	v->type 	= type;
-	v->display 	= display;
-	v->ptr 		= ptr;
-	v->notify 	= notify;
-	v->map 		= map;
-	v->dyndisplay 	= dyndisplay;
-	v->plugin 	= plugin;
+	v->name_hash	= hash;
+	v->type		= type;
+	v->display	= display;
+	v->ptr		= ptr;
+	v->notify	= notify;
+	v->map		= map;
+	v->dyndisplay	= dyndisplay;
+	v->plugin	= plugin;
 
 	variables_add(v);
 	return v;
@@ -641,10 +641,10 @@ void variable_help(const char *name) {
 			string_clear(s);
 		}
 
-                if (!xstrncmp(line, ("\t"), 1) && xstrlen(line) == 1) {
-	                string_append(s, ("\n\r"));
-                        continue;
-                }
+		if (!xstrncmp(line, ("\t"), 1) && xstrlen(line) == 1) {
+			string_append(s, ("\n\r"));
+			continue;
+		}
 	
 		string_append(s, line + 1);
 

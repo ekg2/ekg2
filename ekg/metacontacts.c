@@ -43,7 +43,7 @@ static LIST_ADD_COMPARE(metacontact_add_item_compare, metacontact_item_t *) {
 	if (!xstrcasecmp(data1->s_uid, data2->s_uid))
 		return xstrcasecmp(data1->name, data2->name);
 
-        return xstrcasecmp(session_alias_uid_n(data1->s_uid), session_alias_uid_n(data2->s_uid));
+	return xstrcasecmp(session_alias_uid_n(data1->s_uid), session_alias_uid_n(data2->s_uid));
 }
 
 static LIST_FREE_ITEM(metacontact_item_free, metacontact_item_t *) { xfree(data->name); xfree(data->s_uid); }
@@ -71,83 +71,83 @@ static int metacontact_remove(const char *name);
  */
 COMMAND(cmd_metacontact)
 {
-        metacontact_t *m;
+	metacontact_t *m;
 
 	if (!params[0] || match_arg(params[0], 'l', ("list"), 2)) {
-        	metacontact_t *m;
+		metacontact_t *m;
 
-                for (m = metacontacts; m; m = m->next)
+		for (m = metacontacts; m; m = m->next)
 			printq("metacontact_list", m->name);
 
-                if (!metacontacts)
-                        printq("metacontact_list_empty");
+		if (!metacontacts)
+			printq("metacontact_list_empty");
 
-                return 0;
-        }
-
-	if (match_arg(params[0], 'a', ("add"), 2)) {
-                if (!params[1]) {
-			printq("invalid_params", name);
-			return -1;
-		}
-
-		if (metacontact_find(params[1])) {
-                        printq("metacontact_exists", params[1]);
-                        return -1;
-		}
-
-		if (metacontact_add(params[1])) {
-			char *tmp = xstrdup(params[1]);
-
-	                config_changed = 1;
-	                printq("metacontact_added", params[1]);
-
-	                query_emit_id(NULL, METACONTACT_ADDED, &tmp);
-			xfree(tmp);
-		}
-		return 0;	
+		return 0;
 	}
 
-        if (match_arg(params[0], 'd', ("del"), 2)) {
+	if (match_arg(params[0], 'a', ("add"), 2)) {
 		if (!params[1]) {
 			printq("invalid_params", name);
 			return -1;
 		}
 
-                if (!metacontact_find(params[1])) {
-                        printq("metacontact_doesnt_exist", params[1]);
-                        return -1;
-                }
+		if (metacontact_find(params[1])) {
+			printq("metacontact_exists", params[1]);
+			return -1;
+		}
 
-                if (metacontact_remove(params[1])) {
+		if (metacontact_add(params[1])) {
 			char *tmp = xstrdup(params[1]);
 
-	                config_changed = 1;
-	                printq("metacontact_removed", params[1]);
-			
-	                query_emit_id(NULL, METACONTACT_REMOVED, &tmp);
+			config_changed = 1;
+			printq("metacontact_added", params[1]);
+
+			query_emit_id(NULL, METACONTACT_ADDED, &tmp);
 			xfree(tmp);
 		}
-                return 0;
+		return 0;	
 	}
 
-	if (match_arg(params[0], 'i', ("add-item"), 2)) {
-                if (!params[1] || !params[2] || !params[3] || !params[4]) {
+	if (match_arg(params[0], 'd', ("del"), 2)) {
+		if (!params[1]) {
 			printq("invalid_params", name);
 			return -1;
 		}
 
-                if (!(m = metacontact_find(params[1]))) {
-                        printq("metacontact_doesnt_exist", params[1]);
-                        return -1;
-                }
+		if (!metacontact_find(params[1])) {
+			printq("metacontact_doesnt_exist", params[1]);
+			return -1;
+		}
+
+		if (metacontact_remove(params[1])) {
+			char *tmp = xstrdup(params[1]);
+
+			config_changed = 1;
+			printq("metacontact_removed", params[1]);
+			
+			query_emit_id(NULL, METACONTACT_REMOVED, &tmp);
+			xfree(tmp);
+		}
+		return 0;
+	}
+
+	if (match_arg(params[0], 'i', ("add-item"), 2)) {
+		if (!params[1] || !params[2] || !params[3] || !params[4]) {
+			printq("invalid_params", name);
+			return -1;
+		}
+
+		if (!(m = metacontact_find(params[1]))) {
+			printq("metacontact_doesnt_exist", params[1]);
+			return -1;
+		}
 
 		if (metacontact_add_item(m, params[2], params[3], atoi(params[4]), 0)) {
 			char *tmp1 = xstrdup(params[2]), *tmp2 = xstrdup(params[3]), *tmp3 = xstrdup(params[1]);
 
 			printq("metacontact_added_item", session_alias_uid_n(params[2]), params[3], params[1]);
 
-	                query_emit_id(NULL, METACONTACT_ITEM_ADDED, &tmp1, &tmp2, &tmp3);
+			query_emit_id(NULL, METACONTACT_ITEM_ADDED, &tmp1, &tmp2, &tmp3);
 			xfree(tmp1);
 			xfree(tmp2);
 			xfree(tmp3);
@@ -155,63 +155,63 @@ COMMAND(cmd_metacontact)
 		return 0;
 	}
 
-        if (match_arg(params[0], 'r', ("del-item"), 2)) {
-                if (!params[1] || !params[2] || !params[3]) {
+	if (match_arg(params[0], 'r', ("del-item"), 2)) {
+		if (!params[1] || !params[2] || !params[3]) {
 			printq("invalid_params", name);
 			return -1;
 		}
 
-                if (!(m = metacontact_find(params[1]))) {
-                        printq("metacontact_doesnt_exist", params[1]);
-                        return -1;
-                }
+		if (!(m = metacontact_find(params[1]))) {
+			printq("metacontact_doesnt_exist", params[1]);
+			return -1;
+		}
 
-                if (metacontact_remove_item(m, params[2], params[3], 0)) {
-                        char *tmp1 = xstrdup(params[2]), *tmp2 = xstrdup(params[3]), *tmp3 = xstrdup(params[1]);
+		if (metacontact_remove_item(m, params[2], params[3], 0)) {
+			char *tmp1 = xstrdup(params[2]), *tmp2 = xstrdup(params[3]), *tmp3 = xstrdup(params[1]);
 
-                        printq("metacontact_removed_item", session_alias_uid_n(params[2]), params[3], params[1]);
+			printq("metacontact_removed_item", session_alias_uid_n(params[2]), params[3], params[1]);
 
-                        query_emit_id(NULL, METACONTACT_ITEM_REMOVED, &tmp1, &tmp2, &tmp3);
-                        xfree(tmp1);
-                        xfree(tmp2);
-                        xfree(tmp3);
-                }
-                return 0;
-        }
+			query_emit_id(NULL, METACONTACT_ITEM_REMOVED, &tmp1, &tmp2, &tmp3);
+			xfree(tmp1);
+			xfree(tmp2);
+			xfree(tmp3);
+		}
+		return 0;
+	}
 
 
 	if (params[0] && (m = metacontact_find(params[0]))) {
-                metacontact_item_t *i = m->metacontact_items;
+		metacontact_item_t *i = m->metacontact_items;
 
-                if (!i) {
-                        printq("metacontact_item_list_empty");
+		if (!i) {
+			printq("metacontact_item_list_empty");
 			return 0;
 		}
 
 		printq("metacontact_item_list_header", params[0]);
 		
-                for (; i; i = i->next) {
+		for (; i; i = i->next) {
 			userlist_t *u = userlist_find_n(i->s_uid, i->name);
 			char *tmp;
 
 			if (!u) 
 				tmp = format_string(format_find("metacontact_info_unknown"));
-			else    
+			else	
 				tmp = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), u->nickname, u->descr);
 
-                        printq("metacontact_item_list", session_alias_uid_n(i->s_uid), i->name, tmp, itoa(i->prio));
+			printq("metacontact_item_list", session_alias_uid_n(i->s_uid), i->name, tmp, itoa(i->prio));
 			xfree(tmp);
-                }
+		}
 
 		printq("metacontact_item_list_footer", params[0]);
 
-                return 0;
+		return 0;
 	
 	}
 
 	if (params[0] && !params[1]) {
-	        printq("metacontact_doesnt_exist", params[0]);
-                return -1;
+		printq("metacontact_doesnt_exist", params[0]);
+		return -1;
 	}
 
 	printq("invalid_params", name);
@@ -230,7 +230,7 @@ metacontact_t *metacontact_find(const char *name)
 	metacontact_t *m;
 
 	for (m = metacontacts; m; m = m->next) {
-        	if (!xstrcasecmp(name, m->name))
+		if (!xstrcasecmp(name, m->name))
 			return m;
 	}
 
@@ -247,8 +247,8 @@ metacontact_t *metacontact_add(const char *name)
 {
 	metacontact_t *m;
 
-        if (!name)
-                return NULL;
+	if (!name)
+		return NULL;
 
 	m = xmalloc(sizeof(metacontact_t));
 	m->name = xstrdup(name);
@@ -265,17 +265,17 @@ metacontact_t *metacontact_add(const char *name)
  */
 static metacontact_item_t *metacontact_find_item(metacontact_t *m, const char *name, const char *uid)
 {
-        metacontact_item_t *i;
+	metacontact_item_t *i;
 
 	if (!m)
 		return NULL;
 
-        for (i = m->metacontact_items; i; i = i->next) {
-                if (!xstrcasecmp(name, i->name) && !xstrcasecmp(uid, i->s_uid))
-                        return i;
-        }
+	for (i = m->metacontact_items; i; i = i->next) {
+		if (!xstrcasecmp(name, i->name) && !xstrcasecmp(uid, i->s_uid))
+			return i;
+	}
 
-        return NULL;
+	return NULL;
 }
 
 /* 
@@ -305,11 +305,11 @@ static int metacontact_add_item(metacontact_t *m, const char *session, const cha
 		return 0;
 	}
 		/* XXX, bad session */
-        if (!(uid = get_uid(s, name))) {
+	if (!(uid = get_uid(s, name))) {
 		printq("user_not_found", name);
-                debug("! metacontact_add_item: UID is not on our contact lists: %s\n", name);
-                return 0;
-        }
+		debug("! metacontact_add_item: UID is not on our contact lists: %s\n", name);
+		return 0;
+	}
 
 	i = xmalloc(sizeof(metacontact_item_t));
 	
@@ -333,15 +333,15 @@ static int metacontact_remove_item(metacontact_t *m, const char *session, const 
 	metacontact_item_t *i;
 	session_t *s;
 
-        if (!m || !name || !session) {
-                debug("! metacontact_add_item: NULL data on input\n");
-                return 0;
-        }
+	if (!m || !name || !session) {
+		debug("! metacontact_add_item: NULL data on input\n");
+		return 0;
+	}
 
-        if (!(s = session_find(session))) {
-                printq("session_doesnt_exist", session);
-                return 0;
-        }
+	if (!(s = session_find(session))) {
+		printq("session_doesnt_exist", session);
+		return 0;
+	}
 
 
 	if (!(i = metacontact_find_item(m, name, s->uid))) {
@@ -365,7 +365,7 @@ static int metacontact_remove(const char *name)
 	metacontact_t *m = metacontact_find(name);
 	metacontact_item_t *i;
 
-        for (i = m->metacontact_items; i; ) {
+	for (i = m->metacontact_items; i; ) {
 		metacontact_item_t *next = i->next;
 
 		metacontact_remove_item(m, i->s_uid, i->name, 1);
@@ -389,13 +389,13 @@ static int metacontact_session_renamed_handler(void *data, va_list ap)
 	 * so we can resort whole list, not only items w/ that session */
 
 	/* XXX: exactly, why we do it? we don't even look at session alias
-	 * 	in sorting function */
+	 *	in sorting function */
 	/* Hint: session_alias_uid_n() */
 	LIST_RESORT2(&metacontacts, metacontact_add_item_compare);
 #if 0
 	char **tmp = va_arg(ap, char**);
 	session_t *s = session_find(*tmp);
-        char *session;
+	char *session;
 	metacontact_t *m;
 
 	if (!s)
@@ -445,15 +445,15 @@ static int metacontact_session_renamed_handler(void *data, va_list ap)
 static int metacontact_userlist_removed_handler(void *data, va_list ap)
 {
 	/* XXX: disabled it to allow jabber metacontacts
-	 * 	but think about it */
+	 *	but think about it */
 #if 0
-        char **name = va_arg(ap, char**);
+	char **name = va_arg(ap, char**);
 	metacontact_t *m;
 
-        for (m = metacontacts; m; m = m->next) {
+	for (m = metacontacts; m; m = m->next) {
 		metacontact_item_t *i;
 
-                for (i = m->metacontact_items; i; i = i->next) {
+		for (i = m->metacontact_items; i; i = i->next) {
 			userlist_t *u;
 			
 			if (!i) 
@@ -470,7 +470,7 @@ static int metacontact_userlist_removed_handler(void *data, va_list ap)
 			}
 
 			if (!xstrcasecmp(*name, u->uid)) {
-                                metacontact_remove_item(m, i->s_uid, i->name, 1);
+				metacontact_remove_item(m, i->s_uid, i->name, 1);
 				break;
 			}
 		}		
@@ -489,14 +489,14 @@ static int metacontact_userlist_removed_handler(void *data, va_list ap)
  */
 metacontact_item_t *metacontact_find_prio(metacontact_t *m)
 {
-        metacontact_item_t *i;
+	metacontact_item_t *i;
 	metacontact_item_t *ret = NULL;
 	userlist_t *last = NULL;
 
-        if (!m)
-                return NULL;
+	if (!m)
+		return NULL;
 
-        for (i = m->metacontact_items; i; i = i->next) {
+	for (i = m->metacontact_items; i; i = i->next) {
 		userlist_t *u = userlist_find_n(i->s_uid, i->name);
 		
 		if (!u)
@@ -512,9 +512,9 @@ metacontact_item_t *metacontact_find_prio(metacontact_t *m)
 			last = u;
 			continue;
 		}
-        }
+	}
 
-        return ret;
+	return ret;
 }
 
 /* 
@@ -535,24 +535,24 @@ void metacontact_init()
  */
 int metacontact_write()
 {
-        metacontact_t *m;
-        FILE *f = NULL;
+	metacontact_t *m;
+	FILE *f = NULL;
 
-        f = fopen(prepare_path("metacontacts", 1), "w");
+	f = fopen(prepare_path("metacontacts", 1), "w");
 
-        if (!f)
-                return -1;
+	if (!f)
+		return -1;
 
-        for (m = metacontacts; m; m = m->next) {
+	for (m = metacontacts; m; m = m->next) {
 		metacontact_item_t *i;
-                fprintf(f, "[%s]\n", m->name);
+		fprintf(f, "[%s]\n", m->name);
 
-                for (i = m->metacontact_items; i; i = i->next)
-                        fprintf(f, "%s %s %d\n", i->s_uid, i->name, i->prio);
-        }
-        fclose(f);
+		for (i = m->metacontact_items; i; i = i->next)
+			fprintf(f, "%s %s %d\n", i->s_uid, i->name, i->prio);
+	}
+	fclose(f);
 
-        return 0;
+	return 0;
 }
 
 /* 
@@ -562,28 +562,28 @@ int metacontact_write()
  */
 int metacontact_read()
 {
-        char *line;
-        FILE *f;
-        metacontact_t *m = NULL;
+	char *line;
+	FILE *f;
+	metacontact_t *m = NULL;
 
-        if (!(f = fopen(prepare_path("metacontacts", 0), "r")))
-                return -1;
+	if (!(f = fopen(prepare_path("metacontacts", 0), "r")))
+		return -1;
 
-        while ((line = read_file(f, 0))) {
-                char *tmp;
+	while ((line = read_file(f, 0))) {
+		char *tmp;
 		char **array = NULL;
 
-                if (line[0] == '[') {
-                        tmp = xstrchr(line, ']');
+		if (line[0] == '[') {
+			tmp = xstrchr(line, ']');
 
-                        if (!tmp)
-                                continue;
+			if (!tmp)
+				continue;
 
-                        *tmp = 0;
-                        m = metacontact_add(line + 1);
+			*tmp = 0;
+			m = metacontact_add(line + 1);
 
 			continue;
-                } 
+		} 
 
 		array = array_make(line, " ", 3, 1, 1);
 		
@@ -595,11 +595,11 @@ int metacontact_read()
 		metacontact_add_item(m, array[0], array[1], atoi(array[2]), 1);
 next:
 		array_free(array);
-        }
+	}
 
-        fclose(f);
+	fclose(f);
 
-        return 0;
+	return 0;
 }
 
 

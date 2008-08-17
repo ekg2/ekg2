@@ -149,7 +149,7 @@ int script_autorun(char *scriptname,
 		xfree(path);
 		if (ret && isautorun == -1)
 			isautorun = 0;
-		else    isautorun = 1;
+		else	isautorun = 1;
 
 		old_errno = errno;
 	}
@@ -183,7 +183,7 @@ int script_reset(scriptlang_t *scr)
 	
 	for (s = scriptlang; s; s = s->next) {
 		script_unload_lang(s);
-    		s->deinit();
+		s->deinit();
 		
 		s->init();
 		scripts_autoload(s);
@@ -214,27 +214,27 @@ int script_var_list(script_t *scr)
 {
 	list_t l;
 	int i = 0;
-        for (l = script_vars; l; l = l->next) {
+	for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
-                if (!scr || v->scr == scr) {
+		if (!scr || v->scr == scr) {
 			print("script_varlist", v->self->name, v->value, v->private);
 			i++;
 		}
-        }
+	}
 	if (!i)
 		print("script_varlist_empty");
-        return i;
+	return i;
 }
 
 /***********************************************************************************/
 
 static char *script_find_path(const char *name) {
-	FILE 		*fajl;
-	char 		*ext;
-	char 		*nametmp;
-	char 		*path = NULL;
+	FILE		*fajl;
+	char		*ext;
+	char		*nametmp;
+	char		*path = NULL;
 
-	scriptlang_t 	*s = scriptlang;
+	scriptlang_t	*s = scriptlang;
 
 	nametmp = xstrdup(name);
 	while ((ext = xrindex(nametmp, '.')) || s) {
@@ -274,24 +274,24 @@ int script_unload(script_t *scr)
 	typedef struct { script_t *scr; } tmpstruct;
 
 	scriptlang_t *slang = scr->lang;
-	void 	     *t;    /* t comes from temporary !from timer ;> */
-	list_t 	      l;
+	void	     *t;    /* t comes from temporary !from timer ;> */
+	list_t	      l;
 
 	scr->inited = 0;
 
 #define s(x) ((tmpstruct *) x)
 /* przeszukac liste timerow i komand, jak cos to je wywalic */
 	for (l = script_timers; l;)   { t = l->data; l = l->next; if (!t) continue;
-                if (s(t)->scr == scr) { script_timer_unbind(t, 1); } }
+		if (s(t)->scr == scr) { script_timer_unbind(t, 1); } }
 
 	for (l = script_commands; l;) { t = l->data; l = l->next; if (!t) continue;
-                if (s(t)->scr == scr) { script_command_unbind(t, 1); } }
+		if (s(t)->scr == scr) { script_command_unbind(t, 1); } }
 
 	for (l = script_vars; l;)     { t = l->data; l = l->next; if (!t) continue;
-                if (s(t)->scr == scr) { script_var_unbind(t, 1); } }
+		if (s(t)->scr == scr) { script_var_unbind(t, 1); } }
 
 	for (l = script_queries; l;)  { t = l->data; l = l->next; if (!t) continue;
-                if (s(t)->scr == scr) { script_query_unbind(t, 1); } }
+		if (s(t)->scr == scr) { script_query_unbind(t, 1); } }
 
 	for (l = script_watches; l;)  { t = l->data; l = l->next; if (!t) continue;
 		if (s(t)->scr == scr) { script_watch_unbind(t, 1); } }
@@ -356,9 +356,9 @@ int script_load(scriptlang_t *s, char *tname)
 {
 	scriptlang_t	*slang;
 	script_t	*scr;
-	struct stat 	st;
-	char 		*path, *name2, *name = NULL;
-	int 		ret;
+	struct stat	st;
+	char		*path, *name2, *name = NULL;
+	int		ret;
 
 	if (!xstrlen(tname)) {
 		print("script_need_name");
@@ -367,7 +367,7 @@ int script_load(scriptlang_t *s, char *tname)
 
 	if (s && !xrindex(tname, '.'))
 		name = saprintf("%s%s", tname, s->ext);
-	else    name = xstrdup(tname);
+	else	name = xstrdup(tname);
 	
 	if ((path = script_find_path(name))) {
 		if (stat(path, &st) || S_ISDIR(st.st_mode)) {
@@ -380,13 +380,13 @@ int script_load(scriptlang_t *s, char *tname)
 		slang = (s) ? s : scriptlang_from_ext(path);
 
 		if (!slang || xstrcmp(xrindex(path, '.'), slang->ext)) {
-                        if (slang) { /* internal error shouldn't happen */
-                                debug("[script_ierror] slang = 0x%x path = %s slang = %s slangext = %s\n", slang, path, slang->name, slang->ext);
-                                print("generic_error", _("internal script handling ERROR, script not loaded."));
-                        } else {
-                                debug("[script] extension = %s\n", xrindex(path, '.'));
-                                print("generic_error", _("Can't recognize script type"));
-                        }
+			if (slang) { /* internal error shouldn't happen */
+				debug("[script_ierror] slang = 0x%x path = %s slang = %s slangext = %s\n", slang, path, slang->name, slang->ext);
+				print("generic_error", _("internal script handling ERROR, script not loaded."));
+			} else {
+				debug("[script] extension = %s\n", xrindex(path, '.'));
+				print("generic_error", _("Can't recognize script type"));
+			}
 			xfree(path);
 			xfree(name);
 			return -1;
@@ -434,17 +434,17 @@ int script_load(scriptlang_t *s, char *tname)
 
 int script_variables_read() {
 	FILE *f;
-        char *line;
+	char *line;
 
 	if (!(f = fopen(prepare_path("scripts-var", 0), "r"))) {
 		debug("Error opening script variable file..\n");
 		return -1;
 	}
 	
-        while ((line = read_file(f, 0)))
+	while ((line = read_file(f, 0)))
 		script_var_add(NULL, NULL, line, NULL, NULL);
 
-        fclose(f);
+	fclose(f);
 	return 0;
 }
 
@@ -455,7 +455,7 @@ int script_variables_free(int free) {
 	if (!f && !free) 
 		return -1;
 	
-        for (l = script_vars; l; l = l->next) {
+	for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
 		
 		if (f)
@@ -466,7 +466,7 @@ int script_variables_free(int free) {
 			xfree(v->name);
 			xfree(v);
 		}
-        }
+	}
 	if (f)
 		fclose(f);
 	
@@ -499,13 +499,13 @@ script_var_t *script_var_find(const char *name)
 	if (!variable_find(name))
 		return NULL;
 #endif	
-        for (l = script_vars; l; l = l->next) {
+	for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
-                if (!xstrcasecmp(v->name, name)) {
+		if (!xstrcasecmp(v->name, name)) {
 			return v;
 		}
-        }
-        return NULL;
+	}
+	return NULL;
 }
 
 /**********************************************************************************************************************/
@@ -531,9 +531,9 @@ int script_plugin_destroy(/* plugin_t *p */ )
 /* and what i can do here ? */
 {
 /* ok somethink i can */
-        script_plugin_t *temp = NULL;
-        list_t l;
-        for (l = script_plugins; l; l = l->next) {
+	script_plugin_t *temp = NULL;
+	list_t l;
+	for (l = script_plugins; l; l = l->next) {
 		if (temp) {
 			debug("Err @ script_plugin_destroy more that 1 script as plugin, plugin_destroying must be rewritten!\n");
 			return -1;
@@ -684,7 +684,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 /*****************************************************************************************************************/
 
 static void script_var_changed(const char *var) {
-	script_var_t     *temp = script_var_find(var);
+	script_var_t	 *temp = script_var_find(var);
 /*	if (in_autoexec) ... */
 	SCRIPT_HANDLER_HEADER(script_handler_var_t);
 /*	debug("[script_variable_changed] varname = %s newvalue = %s\n", var, temp->value); */
@@ -740,7 +740,7 @@ static TIMER(script_timer_handlers) {
 static QUERY(script_query_handlers)
 {
 	script_query_t	*temp = data;
-	void 		*args[MAX_ARGS];
+	void		*args[MAX_ARGS];
 	void		*args2[MAX_ARGS];
 	int		i;
 	script_query_t saved;
@@ -875,10 +875,10 @@ static int scripts_loaddir(scriptlang_t *s, const char *path)
 COMMAND(cmd_script)
 {
 	scriptlang_t *s = NULL;
-	char 	     *tmp = NULL;
+	char	     *tmp = NULL;
 	char	     *param0 = NULL;
 
-	if (xstrcmp(name, ("script"))) { /* script:*    */
+	if (xstrcmp(name, ("script"))) { /* script:*	*/
 		tmp = (char *) name; 
 		param0 = (char *) params[0];
 	} else if (params[0]) {        /* script --*  */
@@ -887,9 +887,9 @@ COMMAND(cmd_script)
 	}
 /*	s = param0 ? */
 
-        if (xstrlen(tmp) < 1)
-                return script_list(NULL); 
-        else {
+	if (xstrlen(tmp) < 1)
+		return script_list(NULL); 
+	else {
 		if (xstrlen(params[0]) > 0) { /* somethink like we have in /plugin ;> e.g /script +dns /script -irc */
 			if (params[0][0] == '+')
 				return script_load(NULL, (char *) params[0]+1);
@@ -914,8 +914,8 @@ COMMAND(cmd_script)
 }
 
 /*
- * load scripts from $CONFIGDIR/scripts/autorun ($CONFIGDIR - ~/.ekg2/        || ~/.ekg2/perl || ... )
- * load scripts from $DATADIR/scripts/autorun   ($DATADIR   - /usr/share/ekg2 || /usr/local/share/ekg2 || ...) (Turned off ;>)
+ * load scripts from $CONFIGDIR/scripts/autorun ($CONFIGDIR - ~/.ekg2/	      || ~/.ekg2/perl || ... )
+ * load scripts from $DATADIR/scripts/autorun	($DATADIR   - /usr/share/ekg2 || /usr/local/share/ekg2 || ...) (Turned off ;>)
  */
 
 static int scripts_autoload(scriptlang_t *scr)
@@ -936,7 +936,7 @@ int scripts_init()
 {
 	script_variables_read();
 #if 0
-	query_connect(NULL, "config-postinit",     script_postinit, NULL);
+	query_connect(NULL, "config-postinit",	   script_postinit, NULL);
 #else
 	scripts_autoload(NULL);
 #endif

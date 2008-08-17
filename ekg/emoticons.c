@@ -2,10 +2,10 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@o2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@o2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -34,8 +34,8 @@
 typedef struct emoticon {
 	struct emoticon *next;
 
-        char *name;
-        char *value;
+	char *name;
+	char *value;
 } emoticon_t;
 
 emoticon_t *emoticons = NULL;

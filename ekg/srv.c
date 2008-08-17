@@ -1,6 +1,6 @@
 /*
  *  (C) Copyright 2004-2005 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
- *      parts of this code are losely based on cifs/smb dns utility stuff
+ *	parts of this code are losely based on cifs/smb dns utility stuff
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -303,8 +303,8 @@ int srv_resolver(gim_host **hostlist, const char *hostname, const int proto_port
 		/*
 		fprintf (stderr, "> question_cnt: %d\n", cnt[0]);
 		fprintf (stderr, ">   answer_cnt: %d\n", cnt[1]);
-		fprintf (stderr, ">       ns_cnt: %d\n", cnt[2]);
-		fprintf (stderr, ">       ar_cnt: %d\n", cnt[3]);
+		fprintf (stderr, ">	  ns_cnt: %d\n", cnt[2]);
+		fprintf (stderr, ">	  ar_cnt: %d\n", cnt[3]);
 		*/
 
 
@@ -439,7 +439,7 @@ int resolve_missing_entries(gim_host **hostlist)
     {
 	if (iter->ip)
 	{
-	    /*debug ("  >%s already done\n", iter->name);*/
+	    /*debug ("	>%s already done\n", iter->name);*/
 	    continue;
 	}
 	/*debug ("  >%s resolving\n", iter->name);*/

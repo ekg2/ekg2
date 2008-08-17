@@ -47,7 +47,7 @@ static LIST_FREE_ITEM(list_event_free, struct event *) { xfree(data->name); xfre
 
 DYNSTUFF_LIST_DECLARE_SORTED(events, event_t, event_add_compare, list_event_free, 
 	static __DYNSTUFF_LIST_ADD_SORTED,	/* events_add() */
-	static __DYNSTUFF_LIST_REMOVE_SAFE, 	/* events_remove() */
+	static __DYNSTUFF_LIST_REMOVE_SAFE,	/* events_remove() */
 	static __DYNSTUFF_LIST_DESTROY)		/* events_destroy() */
 
 char **events_all = NULL;
@@ -80,10 +80,10 @@ COMMAND(cmd_on) {
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		int prio;
 
-                if (!params[1] || !params[2] || !params[3] || !params[4]) {
-                        printq("not_enough_params", name);
-                        return -1;
-                }
+		if (!params[1] || !params[2] || !params[3] || !params[4]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
 
 		if (!(prio = atoi(params[2]))) {
 			printq("invalid_params", name);
@@ -164,22 +164,22 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	}
 	
 	while (!done) {
-                done = 1;
+		done = 1;
 
-                for (ev = events; ev; ev = ev->next) {
-                        if (ev->id == id) {
-                                done = 0;
-                                id++;
-                                break;
-                        }
-                }
-        }
+		for (ev = events; ev; ev = ev->next) {
+			if (ev->id == id) {
+				done = 0;
+				id++;
+				break;
+			}
+		}
+	}
 	ev		= xmalloc(sizeof(event_t));
 	ev->id		= id;
-	ev->name 	= xstrdup(name);
-	ev->prio 	= prio;
-	ev->target 	= xstrdup(target);
-	ev->action 	= xstrdup(action);
+	ev->name	= xstrdup(name);
+	ev->prio	= prio;
+	ev->target	= xstrdup(target);
+	ev->action	= xstrdup(action);
 	events_add(ev);
 
 	tmp = xstrdup(name);
@@ -201,7 +201,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
  * 0/-1 
  */
 static int event_remove(unsigned int id, int quiet) {
-        event_t *ev;
+	event_t *ev;
 	
 	if (id == 0) {
 		event_free();
@@ -219,7 +219,7 @@ static int event_remove(unsigned int id, int quiet) {
 	printq("events_del", itoa(id));
 
 cleanup:	
-/*        query_emit_id(NULL, EVENT_REMOVED, itoa(id)); */	/* XXX, incorrect. */
+/*	  query_emit_id(NULL, EVENT_REMOVED, itoa(id)); */	/* XXX, incorrect. */
 
 	return 0;
 }
@@ -242,10 +242,10 @@ void event_free() {
  * it shows the list of events 
  */
 static int events_list(int id, int quiet) {
-        event_t *ev;
+	event_t *ev;
 
 	if (!events) {
-        	printq("events_list_empty");
+		printq("events_list_empty");
 		return 0;
 	}
 
@@ -253,8 +253,8 @@ static int events_list(int id, int quiet) {
 
 	for (ev = events; ev; ev = ev->next) {
 		if (!id || id == ev->id)
-	                printq("events_list", ev->name, itoa(ev->prio), ev->target, ev->action, itoa(ev->id));
-        }
+			printq("events_list", ev->name, itoa(ev->prio), ev->target, ev->action, itoa(ev->id));
+	}
 
 	return 0;
 }
@@ -364,19 +364,19 @@ static event_t *event_find_all(const char *name, const char *session, const char
 static event_t *event_find_id(unsigned int id) {
 	event_t *ew;
 
-        for (ew = events; ew; ew = ew->next) {
-                if (ew->id != id)
-                        continue;
-                else
-                        return ew;
-        }
+	for (ew = events; ew; ew = ew->next) {
+		if (ew->id != id)
+			continue;
+		else
+			return ew;
+	}
 
-        return 0;
+	return 0;
 }
 
 static void events_add_handler(char *name, void *function) {
-        query_connect(NULL, name, function, NULL);
-        array_add(&events_all, name);
+	query_connect(NULL, name, function, NULL);
+	array_add(&events_all, name);
 }
 
 /* 
@@ -407,7 +407,7 @@ static TIMER(ekg_day_timer) {
 	}
 	tm = localtime(&now);
 #define dayischanged(x) (oldtm->tm_##x != tm->tm_##x)
-	if (oldtm && (dayischanged(mday) /* day */ || dayischanged(mon) /* month */ || dayischanged(year)) /* year */)  {
+	if (oldtm && (dayischanged(mday) /* day */ || dayischanged(mon) /* month */ || dayischanged(year)) /* year */)	{
 		if (config_display_day_changed) {
 			window_t *w;
 			char *ts = xstrdup(timestamp("%d %b %Y"));
@@ -442,10 +442,10 @@ static TIMER(ekg_day_timer) {
  * handler for protocol-message 
  */
 static QUERY(event_protocol_message) {
-        char *session	= *(va_arg(ap, char**));
-        char *uid	= *(va_arg(ap, char**));
-        	char ***UNUSED(rcpts)	= va_arg(ap, char***);
-        char *text	= *(va_arg(ap, char**));
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+		char ***UNUSED(rcpts)	= va_arg(ap, char***);
+	char *text	= *(va_arg(ap, char**));
 
 	event_check(session, "protocol-message", uid, text);
 	return 0;
@@ -457,8 +457,8 @@ static QUERY(event_protocol_message) {
  * handler for changing status on available
  */
 static QUERY(event_avail) {
-        char *session	= *(va_arg(ap, char**));
-        char *uid	= *(va_arg(ap, char**));
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
 
 	event_check(session, "event_avail", uid, NULL);
 	return 0;
@@ -470,11 +470,11 @@ static QUERY(event_avail) {
  * handler for changing status on away
  */
 static QUERY(event_away) {
-        char *session	= *(va_arg(ap, char**));
-        char *uid	= *(va_arg(ap, char**));
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
 
 	event_check(session, "event_away", uid, NULL);
-        return 0;
+	return 0;
 }
 
 /*
@@ -483,11 +483,11 @@ static QUERY(event_away) {
  * handler for changing status on NA
  */
 static QUERY(event_na) {
-        char *session	= *(va_arg(ap, char**));
-        char *uid	= *(va_arg(ap, char**));
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
 
 	event_check(session, "event_na", uid, NULL);
-        return 0;
+	return 0;
 }
 
 /*
@@ -496,11 +496,11 @@ static QUERY(event_na) {
  * handler for changing status from NA to avail
  */
 static QUERY(event_online) {
-        char *session	= *(va_arg(ap, char**));
-        char *uid	= *(va_arg(ap, char**));
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
 
 	event_check(session, "event_online", uid, NULL);
-        return 0;
+	return 0;
 }
 
 /*
@@ -509,12 +509,12 @@ static QUERY(event_online) {
  * handler for changing description
  */
 static QUERY(event_descr) {
-        char *session	= *(va_arg(ap, char**));
-        char *uid	= *(va_arg(ap, char**));
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
 	char *descr	= *(va_arg(ap, char**));
 	
 	event_check(session, "event_descr", uid, descr);
-        return 0;
+	return 0;
 }
 
 static QUERY(event_misc) {
@@ -535,14 +535,14 @@ static int event_check(const char *session, const char *name, const char *uid, c
 	userlist_t *userlist;
 	event_t *ev;
 	const char *target;
-        char *action, **actions;
+	char *action, **actions;
 	char *edata = NULL;
 	int i;
 
 	if (!events)
 		return 1;
 	
-        if (!(__session = session_find(session)))
+	if (!(__session = session_find(session)))
 		__session = session_current;
 
 	if (uid && ignored_check(__session, uid) & IGNORE_EVENTS) {
@@ -557,46 +557,46 @@ static int event_check(const char *session, const char *name, const char *uid, c
 
 	action = ev->action;
 
-        if (!action)
-                return -1;
+	if (!action)
+		return -1;
 
-        if (data) {
-                int size = 1;
-                const char *p;
-                char *q;
+	if (data) {
+		int size = 1;
+		const char *p;
+		char *q;
 
-                for (p = data; *p; p++) {
-                        if (strchr("`!#$&*?|\\\'\"{}[]<>()\n\r", *p))
-                                size += 2;
-                        else
-                                size++;
-                }
+		for (p = data; *p; p++) {
+			if (strchr("`!#$&*?|\\\'\"{}[]<>()\n\r", *p))
+				size += 2;
+			else
+				size++;
+		}
 
-                edata = xmalloc(size);
+		edata = xmalloc(size);
 
-                for (p = data, q = edata; *p; p++, q++) {
-                        if (strchr("`!#$&*?|\\\'\"{}[]<>()", *p))
-                                *q++ = '\\';
-                        if (*p == '\n') {
-                                *q++ = '\\';
-                                *q = 'n';
-                                continue;
-                        }
-                        if (*p == '\r') {
-                                *q++ = '\\';
-                                *q = 'r';
-                                continue;
-                        }
-                        *q = *p;
-                }
+		for (p = data, q = edata; *p; p++, q++) {
+			if (strchr("`!#$&*?|\\\'\"{}[]<>()", *p))
+				*q++ = '\\';
+			if (*p == '\n') {
+				*q++ = '\\';
+				*q = 'n';
+				continue;
+			}
+			if (*p == '\r') {
+				*q++ = '\\';
+				*q = 'r';
+				continue;
+			}
+			*q = *p;
+		}
 
-                *q = 0;
-        }
+		*q = 0;
+	}
 
 	actions = array_make(action, (";"), 0, 0, 1);
 
 	for (i = 0; actions && actions[i]; i++) {
-	        char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
+		char *tmp = format_string(strip_spaces(actions[i]), (uid) ? uid : target, target, ((data) ? data : ""), ((edata) ? edata : ""), session_uid_get(__session));
 
 		debug("// event_check() calling \"%s\"\n", tmp);
 		command_exec(NULL, NULL, tmp, 0); /* BUG? CHECK: hm, we've got specified session, not current one... target too.. so is it correct ? */
@@ -606,7 +606,7 @@ static int event_check(const char *session, const char *name, const char *uid, c
 	array_free(actions);
 	xfree(edata);
 
-        return 0;
+	return 0;
 }
 
 /*

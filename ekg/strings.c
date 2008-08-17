@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003-2006 Maciej Pietrzak <maciej@hell.org.pl>
- *  		  	    Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *			    Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -76,7 +76,7 @@ inline char *wcs_to_normal(const CHAR_T *str) {
 	if (!str) return NULL;
 	{
 		int len		= wcstombs(NULL, str,0);
-		char *tmp 	= xmalloc(len+1);
+		char *tmp	= xmalloc(len+1);
 		int ret;
 
 		ret = wcstombs(tmp, (wchar_t *) str, len);

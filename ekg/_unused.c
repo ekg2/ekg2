@@ -14,16 +14,16 @@
  */
 command_t *command_find(const char *name)
 {
-        command_t *c;
+	command_t *c;
 
-        if (!name)
-                return NULL;
-        for (c = commands; c; c = c->next) {
-                if (!xstrcasecmp(c->name, name)) {
-                        return c;
+	if (!name)
+		return NULL;
+	for (c = commands; c; c = c->next) {
+		if (!xstrcasecmp(c->name, name)) {
+			return c;
 		}
-        }
-        return NULL;
+	}
+	return NULL;
 }
 
 #endif

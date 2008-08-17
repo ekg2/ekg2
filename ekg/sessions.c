@@ -110,7 +110,7 @@ session_t *session_find(const char *uid)
 		return NULL;
 
 	for (s = sessions; s; s = s->next) {
-                if (!xstrcasecmp(s->uid, uid) || (s->alias && !xstrcasecmp(s->alias, uid)))
+		if (!xstrcasecmp(s->uid, uid) || (s->alias && !xstrcasecmp(s->alias, uid)))
 			return s;
 	}
 
@@ -131,8 +131,8 @@ session_t *session_find(const char *uid)
  *
  * @sa session_remove() - To remove session
  *
- * @return 	NULL if none plugin can handle this session uid<br>
- * 		allocated session_t struct.
+ * @return	NULL if none plugin can handle this session uid<br>
+ *		allocated session_t struct.
  */
 
 session_t *session_add(const char *uid) {
@@ -151,8 +151,8 @@ session_t *session_add(const char *uid) {
 	
 	s = xmalloc(sizeof(session_t));
 	s->uid		= xstrdup(uid);
-	s->status 	= EKG_STATUS_NA;
-	s->plugin 	= pl;
+	s->status	= EKG_STATUS_NA;
+	s->plugin	= pl;
 #ifdef HAVE_FLOCK
 	s->lock_fd	= -1;
 #endif
@@ -178,8 +178,8 @@ session_t *session_add(const char *uid) {
 		int count, i;
 
 		for (count=0; (pl->params[count].key /* && p->params[count].id != -1 */); count++);	/* count how many _global_ params should have this sessioni */
-		s->values 		= (char **) xcalloc(count+1, sizeof(char *));			/* alloc memory for it, +1 just in case. */
-		s->global_vars_count 	= count;							/* save it for future, little helper... */
+		s->values		= (char **) xcalloc(count+1, sizeof(char *));			/* alloc memory for it, +1 just in case. */
+		s->global_vars_count	= count;							/* save it for future, little helper... */
 
 		/* set variables */
 		for (i=0; i < count; i++) {
@@ -198,9 +198,9 @@ session_t *session_add(const char *uid) {
 
 	for (w = windows; w; w = w->next) {
 /* previous version was unacceptable. So we do now this trick:
- * 	userlist (if plugin has one) have been already read by SESSION_ADDED emit. so now, 
- * 	we check throught get_uid() if this plugin can handle it.. [userlist must be read, if we have nosession window 
- * 	with w->target: "Aga". it's not uid. it's nickname.. so we must search for it in userlist.
+ *	userlist (if plugin has one) have been already read by SESSION_ADDED emit. so now, 
+ *	we check throught get_uid() if this plugin can handle it.. [userlist must be read, if we have nosession window 
+ *	with w->target: "Aga". it's not uid. it's nickname.. so we must search for it in userlist.
  *	it's better idea than what was.. however it's slow and I still want to do it other way.
  */
 		if (!w->session && !w->floating && get_uid(s, w->target)) {
@@ -247,13 +247,13 @@ static __DYNSTUFF_LIST_DESTROY(sessions, session_t, session_free_item);	/* sessi
  * It'll do window->session swapping if needed... and changing current session also.
  * 
  * @bug Possible implementation/idea bug in window_session_cycle() I really don't know if we should change session on this windows...
- * 	Maybe swaping is ok... but we really need think about protocol.. Now If we change session from jabber to gg one this window
- * 	won't be very useful..
+ *	Maybe swaping is ok... but we really need think about protocol.. Now If we change session from jabber to gg one this window
+ *	won't be very useful..
  *
  * @note If plugin allocated memory for session example in s->priv you should
- * 	connect to <i>SESSION_REMOVED</i> query event, and free alloced memory
- * 	(remember about checking if this is your session) timers and watches
- * 	will be automagicly removed.
+ *	connect to <i>SESSION_REMOVED</i> query event, and free alloced memory
+ *	(remember about checking if this is your session) timers and watches
+ *	will be automagicly removed.
  *
  * @note Current ekg2 API have got session watches. Use watch_add_session()
  *
@@ -261,8 +261,8 @@ static __DYNSTUFF_LIST_DESTROY(sessions, session_t, session_free_item);	/* sessi
  *
  * @param uid - uid of session to remove
  *
- * @return 	 0 if session was found, and removed.<br>
- * 		-1 if session wasn't founded.
+ * @return	 0 if session was found, and removed.<br>
+ *		-1 if session wasn't founded.
  */
 
 int session_remove(const char *uid)
@@ -317,7 +317,7 @@ int session_remove(const char *uid)
 	}
 
 	tmp = xstrdup(uid);
-        query_emit_id(NULL, SESSION_CHANGED);
+	query_emit_id(NULL, SESSION_CHANGED);
 	query_emit_id(NULL, SESSION_REMOVED, &tmp);
 	xfree(tmp);
 
@@ -462,18 +462,18 @@ int session_password_set(session_t *s, const char *password)
  * @note static buffer is a better idea - i think (del)
  * @sa base64_decode() - function to decode base64 strings.
  * @sa session_get() - session_get() can be used to get password also... but it's just a wrapper with several xstrcmp() to this function
- * 		so it's slower. Instead of using session_get(session, "password") it's better If you use: session_password_get(session) 
+ *		so it's slower. Instead of using session_get(session, "password") it's better If you use: session_password_get(session) 
  *
  * @param s - session of which we want get password from or NULL if we want to erase internal buf with password
  *
- * @return 	,,decrypted'' password if succeed<br>
- * 		otherwise ""<br>
- * 		or even NULL if @a s was NULL
+ * @return	,,decrypted'' password if succeed<br>
+ *		otherwise ""<br>
+ *		or even NULL if @a s was NULL
  */
 
 const char *session_password_get(session_t *s)
 {
-        static char buf[100];
+	static char buf[100];
 	char *tmp;
 
 	if (!s) {
@@ -539,7 +539,7 @@ session_param_t *session_localvar_find(session_t *s, const char *key) {
 		return NULL;
 
 	for (pl = s->local_vars; pl; pl = pl->next) {
-                session_param_t *v = pl;
+		session_param_t *v = pl;
 		if (!xstrcmp(v->key, key)) 
 			return v;
 	}
@@ -575,7 +575,7 @@ const char *session_get(session_t *s, const char *key) {
 		return ekg_status_string(session_status_get(s), 2);
 	
 	if (!xstrcasecmp(key, "password"))
-                return session_password_get(s);
+		return session_password_get(s);
 
 /* _global_ session variables */
 	if ((paid = plugin_var_find(s->plugin, key))) {
@@ -618,17 +618,17 @@ int session_is_var(session_t *s, const char *key)
 	if (!s)
 		return -1;
 
-        if (!xstrcasecmp(key, "alias"))
-                return 1;
+	if (!xstrcasecmp(key, "alias"))
+		return 1;
 
-        if (!xstrcasecmp(key, "descr"))
-                return 1;
+	if (!xstrcasecmp(key, "descr"))
+		return 1;
 
-        if (!xstrcasecmp(key, "status"))
-                return 1;
+	if (!xstrcasecmp(key, "status"))
+		return 1;
 
-        if (!xstrcasecmp(key, "password"))
-                return 1;
+	if (!xstrcasecmp(key, "password"))
+		return 1;
 
 /* so maybe _global_ session variable? */
 	return (plugin_var_find(s->plugin, key) != 0);
@@ -678,7 +678,7 @@ int session_set(session_t *s, const char *key, const char *value) {
 	if (!xstrcasecmp(key, "password")) {
 		if (s->connected && !session_get(s, "__new_password"))
 			print("session_password_changed", session_name(s));
-                ret = session_password_set(s, value);
+		ret = session_password_set(s, value);
 		goto notify;
 	}
 
@@ -820,11 +820,11 @@ int session_write()
 			continue;
 		}
 		
-                if (!(f = fopen(tmp, "w"))) {
-                        debug("Error opening file %s\n", tmp);
+		if (!(f = fopen(tmp, "w"))) {
+			debug("Error opening file %s\n", tmp);
 			ret = -1;
 			continue;
-                }
+		}
 
 		for (s = sessions; s; s = s->next) {
 			int i;
@@ -844,12 +844,12 @@ int session_write()
 				fprintf(f, "descr=%s\n", myvar);
 				xstrtr(myvar, '\002', '\n');
 			}
-        	        if (s->password && config_save_password)
-	                        fprintf(f, "password=\001%s\n", s->password);
+			if (s->password && config_save_password)
+				fprintf(f, "password=\001%s\n", s->password);
 
 			if (!p->params) 
 				continue;
-                
+		
 			for (i = 0; (p->params[i].key /* && p->params[i].id != -1 */); i++) {
 				if (!s->values[i]) 
 					continue;
@@ -1018,11 +1018,11 @@ COMMAND(session_command)
 
 			/* _local_ vars: */
 			for (pl = s->local_vars; pl; pl = pl->next) {
-		                session_param_t *v = pl;
+				session_param_t *v = pl;
 
 				if (v->value)
 					debug("%s=%s\n", v->key, v->value);
-                	}
+			}
 		}
 		return 0;
 	}
@@ -1112,8 +1112,8 @@ COMMAND(session_command)
 		}
 
 		/* emulate session_get() */
-		if (!xstrcasecmp(key, "uid")) 		var = session_uid_get(s);
-		else if (!xstrcasecmp(key, "alias"))    var = session_alias_get(s);
+		if (!xstrcasecmp(key, "uid"))		var = session_uid_get(s);
+		else if (!xstrcasecmp(key, "alias"))	var = session_alias_get(s);
 		else if (!xstrcasecmp(key, "descr"))	var = session_descr_get(s);
 		else if (!xstrcasecmp(key, "status"))	var = ekg_status_string(session_status_get(s), 2);
 		else if (!xstrcasecmp(key, "password")) { var = s->password ? "(...)" : NULL; }
@@ -1125,7 +1125,7 @@ COMMAND(session_command)
 				var = var ? "(...)" : NULL;
 		} else {
 		/* XXX, idea, here we can do: session_localvar_find() to check if this is _local_ variable, and eventually print other info.. 
-		 * 	The same at --set ? 
+		 *	The same at --set ? 
 		 */
 			printq("session_variable_doesnt_exist", session_name(s), key);
 			return -1;
@@ -1163,8 +1163,8 @@ COMMAND(session_command)
 			if(params[2] && !params[3]) {
 				if (session) {
 					if (!session_is_var(session, params[1])) {
-                                                printq("session_variable_doesnt_exist", session_name(session), params[1]);
-                                                return -1;
+						printq("session_variable_doesnt_exist", session_name(session), params[1]);
+						return -1;
 					}
 					session_set(session, params[1], params[2]);
 					config_changed = 1;
@@ -1196,15 +1196,15 @@ COMMAND(session_command)
 				return 0;
 			}
 			
-    		    	printq("invalid_params", name);
+			printq("invalid_params", name);
 			return -1;
 		}
 		
 		if (params[2] && params[2][0] == '-') {
 			if (!session_is_var(s, params[2] + 1)) {
-                        	printq("session_variable_doesnt_exist", session_name(session), params[2] + 1);
-                        	return -1;
-                        }
+				printq("session_variable_doesnt_exist", session_name(session), params[2] + 1);
+				return -1;
+			}
 
 			session_set(s, params[2] + 1, NULL);
 			config_changed = 1;
@@ -1213,10 +1213,10 @@ COMMAND(session_command)
 		}
 		
 		if(params[2] && params[3]) {
-                        if (!session_is_var(s, params[2])) {
-                                printq("session_variable_doesnt_exist", session_name(session), params[2]);
-                                return -1;
-                        }
+			if (!session_is_var(s, params[2])) {
+				printq("session_variable_doesnt_exist", session_name(session), params[2]);
+				return -1;
+			}
 
 			session_set(s, params[2], params[3]);
 			config_changed = 1;
@@ -1412,7 +1412,7 @@ COMMAND(session_command)
 	if (params[0] && params[0][0] != '-' && params[1] && session && session->uid) {
 		command_exec_format(NULL, s, 0, ("%s --set %s %s %s"), name, session_alias_uid(session), params[0], params[1]);
 		return 0;
-        }
+	}
 	
 	if (params[0] && params[0][0] != '-' && session && session->uid) {
 		command_exec_format(NULL, s, 0, ("%s --%cet %s %s"), name,
@@ -1441,8 +1441,8 @@ void sessions_free() {
 	window_t *wl;
 	list_t l;
 
-        if (!sessions)
-                return;
+	if (!sessions)
+		return;
 
 /* remove _ALL_ session watches */
 	for (l = watches; l; l = l->next) {
@@ -1462,7 +1462,7 @@ void sessions_free() {
  */
 /* mg: I modified it so it'll first emit all the events, and then start to free everything
  * That shouldn't be a problem, should it? */
-        for (s = sessions; s; s = s->next) {
+	for (s = sessions; s; s = s->next) {
 		query_emit_id(s->plugin, SESSION_REMOVED, &(s->uid));	/* it notify only that plugin here, to free internal data. 
 									 * ui-plugin already removed.. other plugins @ quit.
 									 * shouldn't be aware about it. too...

@@ -43,7 +43,7 @@
 #include <netdb.h>	/* OK */
 #endif
 
-#ifdef __sun      /* Solaris, thanks to Beeth */
+#ifdef __sun	  /* Solaris, thanks to Beeth */
 #include <sys/filio.h>
 #endif
 
@@ -58,9 +58,9 @@
  */
 
 /* NOTE:
- * 	Includes were copied from jabber.c, where there's ? in comment, it's possibly not needed.
- * 	It was done this way, to avoid regression.
- * 	THX.
+ *	Includes were copied from jabber.c, where there's ? in comment, it's possibly not needed.
+ *	It was done this way, to avoid regression.
+ *	THX.
  */
 
 #include "debug.h"
@@ -88,7 +88,7 @@ struct ekg_connect_data {
 
 		/* data provided by user */
 	int	prefer_family;		/* preferred address family */
-	int     proto_port;		/* default port of a protocol */
+	int	proto_port;		/* default port of a protocol */
 	int	port;
 	char	*session;
 	watcher_handler_func_t *async;
@@ -303,7 +303,7 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 		ipv4 = xmalloc(len);
 
 		ipv4->sin_family = AF_INET;
-		ipv4->sin_port   = htons(port);
+		ipv4->sin_port	 = htons(port);
 #ifdef HAVE_INET_PTON
 		inet_pton(AF_INET, addr, &(ipv4->sin_addr));
 #else
@@ -392,8 +392,8 @@ static int ekg_connect_loop(struct ekg_connect_data *c) {
 
 	/* 1) if anything is in connect_queue, try to connect */
 	/* 1b) if connect_queue is empty, try unpreferred families too
-	 * 	if anyone would like ekg_connect() to try other servers with pref family too,
-	 * 	please let me know */
+	 *	if anyone would like ekg_connect() to try other servers with pref family too,
+	 *	please let me know */
 	if ((host = array_shift(&(c->connect_queue))) || (host = array_shift(&(c->connect_queue2)))) {
 		struct sockaddr *addr;
 		int len, fd, family, connret;
@@ -533,8 +533,8 @@ watch_t *ekg_connect(session_t *session, const char *server, const int proto_por
  *	you should return -1 (temporary watch) and in type == 1 close fd.
  *
  *  NOTE, EKG2-RESOLVER-API IS NOT STABLE.
- *  	IT'S JUST COPY-PASTE OF SOME FUNCTION FROM OTHER PLUGINS, TO AVOID DUPLICATION OF CODE (ALSO CLEANUP CODE A LITTLE)
- *  	AND TO AVOID REGRESSION. 
+ *	IT'S JUST COPY-PASTE OF SOME FUNCTION FROM OTHER PLUGINS, TO AVOID DUPLICATION OF CODE (ALSO CLEANUP CODE A LITTLE)
+ *	AND TO AVOID REGRESSION. 
  *  THX.
  */
 
@@ -652,17 +652,17 @@ static int irc_resolver2(char ***arr, const char *hostname, const int port, cons
  *  - proto	- proto (used with SRV), if 0 then defaults to TCP
  *
  *  in @a async watch you'll recv lines:
- *  	HOSTNAME IPv4 PF_INET port
- *  	HOSTNAME IPv4 PF_INET port
- *  	HOSTNAME IPv6 PF_INET6 port
- *  	....
- *  	EOR means end of resolving, you should return -1 (temporary watch) and in type == 1 close fd.
+ *	HOSTNAME IPv4 PF_INET port
+ *	HOSTNAME IPv4 PF_INET port
+ *	HOSTNAME IPv6 PF_INET6 port
+ *	....
+ *	EOR means end of resolving, you should return -1 (temporary watch) and in type == 1 close fd.
  *
- *  	port may be 0 if no port specified
+ *	port may be 0 if no port specified
  *
  *  NOTE, EKG2-RESOLVER-API IS NOT STABLE.
- *  	IT'S JUST COPY-PASTE OF SOME FUNCTION FROM OTHER PLUGINS, TO AVOID DUPLICATION OF CODE (ALSO CLEANUP CODE A LITTLE)
- *  	AND TO AVOID REGRESSION. 
+ *	IT'S JUST COPY-PASTE OF SOME FUNCTION FROM OTHER PLUGINS, TO AVOID DUPLICATION OF CODE (ALSO CLEANUP CODE A LITTLE)
+ *	AND TO AVOID REGRESSION. 
  *  THX.
  */
 

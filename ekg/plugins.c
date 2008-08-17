@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
- * 		  2004 Piotr Kupisiewicz (deli@rzepaknet.us>
+ *		  2004 Piotr Kupisiewicz (deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -60,7 +60,7 @@ DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
 	__DYNSTUFF_LIST_UNLINK)				/* plugins_unlink() */
 
 list_t watches = NULL;
-idle_t *idles   = NULL;
+idle_t *idles	= NULL;
 
 query_t *queries[QUERY_EXTERNAL+1];
 
@@ -97,7 +97,7 @@ int ekg2_dlinit() {
  *
  * @param plugin - Handler to loaded library.
  *
- * @return 	0 on success, else fail.
+ * @return	0 on success, else fail.
  */
 
 /* it only support posix dlclose() but maybe in future... */
@@ -129,7 +129,7 @@ static void *ekg2_dlopen(char *name) {
 	void *tmp = LoadLibraryA(name);
 #else
 	/* RTLD_LAZY is bad flag, because code can SEGV on executing undefined symbols...
-	 * 	it's better to fail earlier than later with SIGSEGV
+	 *	it's better to fail earlier than later with SIGSEGV
 	 *
 	 * RTLD_GLOBAL is bad flag also, because we have no need to export symbols to another plugns
 	 *	we should do it by queries... Yeah, I know it was used for example in perl && irc plugin.
@@ -138,7 +138,7 @@ static void *ekg2_dlopen(char *name) {
 	 */
 	/*
 	 * RTLD_GLOBAL is required by perl and python plugins...
-	 * 	need investigation. [XXX]
+	 *	need investigation. [XXX]
 	 */
 	void *tmp = dlopen(name, RTLD_NOW | RTLD_GLOBAL);
 #endif
@@ -158,7 +158,7 @@ static void *ekg2_dlopen(char *name) {
  *
  * @todo For support of more dynamic interfaces see lt_dlsym() [libltdl]
  *
- * @param plugin 	- Pointer to the loaded library.
+ * @param plugin	- Pointer to the loaded library.
  * @param name		- Name of symbol to lookup.
  *
  * @return Address of symbol or NULL if error occur.
@@ -218,27 +218,27 @@ int plugin_load(const char *name, int prio, int quiet)
 #else
 #	define DOTLIBS ".libs/"
 #endif
-        if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-                lib = saprintf("%s/%s.so", env_ekg_plugins_path, name);
-                plugin = ekg2_dlopen(lib);
-                if (!plugin) {
-                        xfree(lib);
-                        lib = saprintf("%s/%s/" DOTLIBS "%s.so", env_ekg_plugins_path, name, name);
-                        plugin = ekg2_dlopen(lib);
-                }
-        }
+	if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
+		lib = saprintf("%s/%s.so", env_ekg_plugins_path, name);
+		plugin = ekg2_dlopen(lib);
+		if (!plugin) {
+			xfree(lib);
+			lib = saprintf("%s/%s/" DOTLIBS "%s.so", env_ekg_plugins_path, name, name);
+			plugin = ekg2_dlopen(lib);
+		}
+	}
 
-        if (!plugin) {
-                xfree(lib);
-                lib = saprintf("plugins/%s/" DOTLIBS "%s.so", name, name);
-                plugin = ekg2_dlopen(lib);
-        }
+	if (!plugin) {
+		xfree(lib);
+		lib = saprintf("plugins/%s/" DOTLIBS "%s.so", name, name);
+		plugin = ekg2_dlopen(lib);
+	}
 
-        if (!plugin) {
-                xfree(lib);
-                lib = saprintf("../plugins/%s/" DOTLIBS "%s.so", name, name);
-                plugin = ekg2_dlopen(lib);
-        }
+	if (!plugin) {
+		xfree(lib);
+		lib = saprintf("../plugins/%s/" DOTLIBS "%s.so", name, name);
+		plugin = ekg2_dlopen(lib);
+	}
 
 	if (!plugin) {
 		xfree(lib);
@@ -376,14 +376,14 @@ plugin_t *plugin_find(const char *name)
  */
 
 plugin_t *plugin_find_uid(const char *uid) {
-        plugin_t *p;
+	plugin_t *p;
 
-        for (p = plugins; p; p = p->next) {
-                if (p && p->pclass == PLUGIN_PROTOCOL && p->name && valid_plugin_uid(p, uid))
-                	return p;
-        }
+	for (p = plugins; p; p = p->next) {
+		if (p && p->pclass == PLUGIN_PROTOCOL && p->name && valid_plugin_uid(p, uid))
+			return p;
+	}
 
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -438,8 +438,8 @@ int plugin_unload(plugin_t *p)
 
 	xfree(name);
 
-        if (!in_autoexec)
-                config_changed = 1;
+	if (!in_autoexec)
+		config_changed = 1;
 
 	return 0;
 }
@@ -604,8 +604,8 @@ static LIST_FREE_ITEM(query_external_free_data, list_t) {
  *
  * Free memory allocated by query_id() for not-known-in-core-query-names
  *
- * @todo 	We don't destroy here queries which uses these ids >= QUERY_EXTERNAL.<br>
- * 		It's quite correct in current api. But if you change it, you must clean after yourself.
+ * @todo	We don't destroy here queries which uses these ids >= QUERY_EXTERNAL.<br>
+ *		It's quite correct in current api. But if you change it, you must clean after yourself.
  */
 
 void query_external_free() {
@@ -614,7 +614,7 @@ void query_external_free() {
 
 	LIST_DESTROY2(queries_external, query_external_free_data);
 
-	queries_external 	= NULL;
+	queries_external	= NULL;
 	queries_count		= QUERY_EXTERNAL;
 }
 
@@ -626,9 +626,9 @@ void query_external_free() {
  * @param name
  *
  * @return 
- * 	- If it's query known for core than return id of it.<br>
- * 	- If it's ,,seen'' by query_id() from previous call, than return assigned id also [from @a queries_external list_t]<br>
- * 	- else it allocate struct query in @a queries_external, and return next available id.
+ *	- If it's query known for core than return id of it.<br>
+ *	- If it's ,,seen'' by query_id() from previous call, than return assigned id also [from @a queries_external list_t]<br>
+ *	- else it allocate struct query in @a queries_external, and return next available id.
  */
 
 static int query_id(const char *name) {
@@ -653,8 +653,8 @@ static int query_id(const char *name) {
 	}
 	debug_error("query_id() NOT FOUND[%d]: %s\n", queries_count - QUERY_EXTERNAL, __(name));
 
-	a 	= xmalloc(sizeof(struct query_def));
-	a->id 	= queries_count++;
+	a	= xmalloc(sizeof(struct query_def));
+	a->id	= queries_count++;
 	a->name	= xstrdup(name);
 
 	list_add(&queries_external, a);
@@ -693,9 +693,9 @@ const struct query_def *query_struct(const int id) {
  * Get name of query, by passed id
  *
  * @return 
- * 	- If id is known for core (@a id < QUERY_EXTERNAL) than return it's name<br>
- * 	- If it was ,,seen'' by query_id() than return name registered.<br>
- * 	- else return NULL, and display info that smth really nasty happen.
+ *	- If id is known for core (@a id < QUERY_EXTERNAL) than return it's name<br>
+ *	- If it was ,,seen'' by query_id() than return name registered.<br>
+ *	- else return NULL, and display info that smth really nasty happen.
  */
 
 const char *query_name(const int id) {
@@ -803,11 +803,11 @@ int query_emit_id_ro(plugin_t *plugin, const int id, ...) {
 	}
 
 	/* XXX:
-	 * 	- for each param at query_list[id])
-	 * 		- if it's string, strdup() it. otherwise xmemdup() is enough (like /window clear does)
-	 * 		- if integer, just pass it to another variable
-	 * 	- call everything.
-	 * 	- free stuff
+	 *	- for each param at query_list[id])
+	 *		- if it's string, strdup() it. otherwise xmemdup() is enough (like /window clear does)
+	 *		- if integer, just pass it to another variable
+	 *	- call everything.
+	 *	- free stuff
 	 *
 	 * for now it's useless.
 	 */
@@ -941,7 +941,7 @@ void watch_free(watch_t *w) {
 		return;
 	}
 
-	if (w->type == WATCH_WRITE && w->buf && !w->handler && w->plugin) { 	/* XXX */
+	if (w->type == WATCH_WRITE && w->buf && !w->handler && w->plugin) {	/* XXX */
 		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
 		return;
 	}
@@ -1172,7 +1172,7 @@ void watch_handle(watch_t *w) {
  *
  * Create new watch_t and add it on the beginning of watches list.
  *
- * @param plugin 	- plugin
+ * @param plugin	- plugin
  * @param fd		- fd to watch data for.
  * @param type		- type of watch.
  * @param handler	- handler of watch.
@@ -1213,8 +1213,8 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
  * @param type		- type of watch.
  * @param handler	- handler of watch.
  *
- * @return 	If @a session is NULL, or @a session->plugin is NULL, it return NULL.<br>
- * 		else created watch_t
+ * @return	If @a session is NULL, or @a session->plugin is NULL, it return NULL.<br>
+ *		else created watch_t
  */
 
 watch_t *watch_add_session(session_t *session, int fd, watch_type_t type, watcher_session_handler_func_t *handler) {
@@ -1275,7 +1275,7 @@ idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data) {
  * @param pclass 
  *
  * @return	1 - If such plugin was founded<br>
- * 		else 0
+ *		else 0
  */
 
 int have_plugin_of_class(plugin_class_t pclass) {

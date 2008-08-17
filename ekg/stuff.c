@@ -2,11 +2,11 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@o2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
- *                          Adam Mikuta <adammikuta@poczta.onet.pl>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@o2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
+ *			    Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -263,7 +263,7 @@ void windows_save() {
 static LIST_FREE_ITEM(list_alias_free, alias_t *) { xfree(data->name); list_destroy(data->commands, 1); }
 
 DYNSTUFF_LIST_DECLARE(aliases, alias_t, list_alias_free,
-	static __DYNSTUFF_LIST_ADD, 		/* aliases_add() */
+	static __DYNSTUFF_LIST_ADD,		/* aliases_add() */
 	static __DYNSTUFF_LIST_REMOVE_ITER,	/* aliases_removei() */
 	__DYNSTUFF_LIST_DESTROY)		/* aliases_destroy() */
 
@@ -481,9 +481,9 @@ bac_countupd:
 			b->next		= NULL;			/* unlink elements to be removed */
 			type->count -= n;
 	/* XXX,
-	 * 	b->next == NULL
-	 * 	so buffers_destroy(&b) will free only b,
-	 * 	shouldn't be saved type->data value?
+	 *	b->next == NULL
+	 *	so buffers_destroy(&b) will free only b,
+	 *	shouldn't be saved type->data value?
 	 */
 			buffers_destroy(&b);			/* and remove them */
 		}
@@ -492,7 +492,7 @@ bac_countupd:
 	b		= xmalloc(sizeof(struct buffer));
 	b->ts		= time(NULL);
 	b->target	= xstrdup(target);
-	b->line 	= xstrdup(line);
+	b->line		= xstrdup(line);
 
 	buffers_add(addpoint, b);
 
@@ -505,11 +505,11 @@ bac_countupd:
  *
  * Add new line to given buffer_t, if max_lines > 0 than it maintain list that we can have max: @a max_lines items on it.
  *
- * @param type 		- pointer to buffer beginning ptr
+ * @param type		- pointer to buffer beginning ptr
  * @param target	- name of target.. or just name of smth we want to keep in b->target
  * @param line		- line which we want to save.
  *
- * @return 	0 - when line was successfully added to buffer, else -1	(when @a type was NULL)
+ * @return	0 - when line was successfully added to buffer, else -1	(when @a type was NULL)
  */
 
 int buffer_add(struct buffer_info *type, const char *target, const char *line) {
@@ -653,7 +653,7 @@ void changed_display_blinking(const char *var)
 	session_t *s;
 
 	/* wy³±czamy wszystkie blinkaj±ce uid'y */
-        for (s = sessions; s; s = s->next) {
+	for (s = sessions; s; s = s->next) {
 		userlist_t *ul;
 
 		for (ul = s->userlist; ul; ul = ul->next) {
@@ -691,8 +691,8 @@ void changed_theme(const char *var)
  * Return compilation date, and time..<br>
  * Used by <i>/version command</i> and <i>ekg2 --version</i>
  *
- * @return 	__DATE__" "__TIME__<br> 
- * 		For example: <b>"Jun 21 1987" " " "22:06:47"</b>
+ * @return	__DATE__" "__TIME__<br> 
+ *		For example: <b>"Jun 21 1987" " " "22:06:47"</b>
  */
 
 const char *compile_time() {
@@ -821,7 +821,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		
 			for (s = sessions; s; s = s->next) {
 				userlist_t *ul;
-			        for (ul = s->userlist; ul; ul = ul->next) {
+				for (ul = s->userlist; ul; ul = ul->next) {
 					userlist_t *u = ul;
 					struct ekg_group *gl;
 
@@ -876,7 +876,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		char *uid;
 
 		if (!xstrcmp(*p, ""))
-		        continue;
+			continue;
 			/* XXX, check if bad uid */
 		uid = get_uid(session, *p);
 
@@ -1145,8 +1145,8 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
  */
 FILE *help_path(char *name, char *plugin) {
 	char lang[3];
-        char *tmp;
-        FILE *fp;
+	char *tmp;
+	FILE *fp;
 
 	char *base = plugin ? 
 		saprintf(DATADIR "/plugins/%s/%s", plugin, name) :
@@ -1167,7 +1167,7 @@ FILE *help_path(char *name, char *plugin) {
 	
 help_again:
 	if (config_use_unicode) {
-	        tmp = saprintf("%s-%s-utf.txt", base, lang);
+		tmp = saprintf("%s-%s-utf.txt", base, lang);
 
 		if ((fp = fopen(tmp, "r"))) {
 			xfree(base);
@@ -1177,7 +1177,7 @@ help_again:
 		xfree(tmp);
 		tmp = saprintf("%s-%s.txt", base, lang);
 	} else {
-        	tmp = saprintf("%s-%s.txt", base, lang);
+		tmp = saprintf("%s-%s.txt", base, lang);
 	}
 
 	if ((fp = fopen(tmp, "r"))) {
@@ -1186,7 +1186,7 @@ help_again:
 		return fp;
 	}
 
-        /* Temporary fallback - untill we don't have full en translation */
+	/* Temporary fallback - untill we don't have full en translation */
 	xfree(tmp);
 	if (xstrcasecmp(lang, "pl")) {
 		lang[0] = 'p';
@@ -1199,8 +1199,8 @@ help_again:
 	fp = fopen(tmp, "r");
 
 	xfree(tmp);
-        xfree(base);
-        return fp;
+	xfree(base);
+	return fp;
 }
 
 
@@ -1308,7 +1308,7 @@ void iso_to_ascii(unsigned char *buf) {
  * @param line - given string
  *
  * @note If you pass here smth which was strdup'ed() malloc'ed() or smth which was allocated.<br>
- * 		You <b>must</b> xfree() string passed, not result of this function.
+ *		You <b>must</b> xfree() string passed, not result of this function.
  *
  * @return buffer without spaces.
  */
@@ -1392,7 +1392,7 @@ child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_
  *
  * @param pathname	- path to directory or file (see @a isdir comment)
  * @param isdir		- if @a isdir is set, than we should also create dir specified by full @a pathname path,
- * 			  else we shouldn't do it, because it's filename and we want to create directory only to last '/' char
+ *			  else we shouldn't do it, because it's filename and we want to create directory only to last '/' char
  *
  * @return Like mkdir() do we return -1 on fail with errno set.
  */
@@ -1416,7 +1416,7 @@ int mkdir_recursive(const char *pathname, int isdir) {
 		}
 
 		if (pathname[i] == '/' || (isdir && pathname[i] == '\0')) {	/* if it's / or it's last char.. */
-			if (!isdir && !xstrchr(&pathname[i], '/')) 			/* if it's not dir (e.g filename) we don't want to create the dir.. */
+			if (!isdir && !xstrchr(&pathname[i], '/'))			/* if it's not dir (e.g filename) we don't want to create the dir.. */
 				return 0;
 
 			fullname[i+1] = '\0';
@@ -1433,7 +1433,7 @@ int mkdir_recursive(const char *pathname, int isdir) {
 #else
 				(mkdir(fullname) == -1)
 #endif
-				   	return -1;
+					return -1;
 			}
 		}
 	} while (pathname[i++]);	/* while not NUL */
@@ -1639,8 +1639,8 @@ const char *prepare_path_user(const char *path) {
  *
  * @sa read_file() - if you want read next line from file.
  *
- * @return 	NULL - if file was not found or file has no line inside. <br>
- * 		else random line founded at file,
+ * @return	NULL - if file was not found or file has no line inside. <br>
+ *		else random line founded at file,
  */
 
 static char *random_line(const char *path) {
@@ -1680,13 +1680,13 @@ static char *random_line(const char *path) {
  * Read next line from file @a f, if needed alloc memory for it.<br>
  * Remove \\r and \\n chars from end of line if needed.
  *
- * @param f 	- opened FILE *
+ * @param f	- opened FILE *
  * @param alloc 
- * 		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
- * 			which you <b>MUST NOT</b> xfree()<br>
- * 		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
- * 		- If -1 than it return <i>internal</i> pointer which were used by xrealloc() and it <b>MUST BE</b> xfree()
- * 			cause we set it to NULL afterwards.
+ *		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
+ *			which you <b>MUST NOT</b> xfree()<br>
+ *		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
+ *		- If -1 than it return <i>internal</i> pointer which were used by xrealloc() and it <b>MUST BE</b> xfree()
+ *			cause we set it to NULL afterwards.
  *
  * @return Line without \\r and \\n which must or mustn't be xfree()'d. It depends on @a alloc param
  */
@@ -1750,8 +1750,8 @@ char *read_file(FILE *f, int alloc) {
  *
  * @param format - format to pass to strftime() [man 3 strftime]
  *
- * @return 	if format is NULL or format == '\\0' than it return ""<br>
- *  		else it returns strftime()'d value, or "TOOLONG" if @a buf (sizeof(@a buf) == 100) was too small..
+ * @return	if format is NULL or format == '\\0' than it return ""<br>
+ *		else it returns strftime()'d value, or "TOOLONG" if @a buf (sizeof(@a buf) == 100) was too small..
  */
 
 const char *timestamp(const char *format) {
@@ -1788,8 +1788,8 @@ const char *timestamp_time(const char *format, time_t t) {
  *
  * @todo	It's only used in vars.c by variable_set() move it?
  *
- * @return 	 1 - If @a value is one of: <i>on</i>, <i>true</i>, <i>yes</i>, <i>tak</i>, <i>1</i> 	[case-insensitive]<br>
- * 		 0 - If @a value is one of: <i>off</i>, <i>false</i>, <i>no</i>, <i>nie</i>, <i>0</i>	[case-insensitive]<br>
+ * @return	 1 - If @a value is one of: <i>on</i>, <i>true</i>, <i>yes</i>, <i>tak</i>, <i>1</i>	[case-insensitive]<br>
+ *		 0 - If @a value is one of: <i>off</i>, <i>false</i>, <i>no</i>, <i>nie</i>, <i>0</i>	[case-insensitive]<br>
  *		else -1
  */
 
@@ -1814,7 +1814,7 @@ int on_off(const char *value)
  *
  *  - plugin - plugin obs³uguj±cy timer,
  *  - name - nazwa timera w celach identyfikacji. je¶li jest równa NULL,
- *           zostanie przyznany pierwszy numerek z brzegu.
+ *	     zostanie przyznany pierwszy numerek z brzegu.
  *  - period - za jaki czas w sekundach ma byæ uruchomiony,
  *  - persist - czy sta³y timer,
  *  - function - funkcja do wywo³ania po up³yniêciu czasu,
@@ -2079,13 +2079,13 @@ int isalpha_pl(unsigned char c)
 {
 /*  gg_debug(GG_DEBUG_MISC, "c: %d\n", c); */
     if(isalpha(c)) /* normalne znaki */
-        return 1;
+	return 1;
     else if(c == 177 || c == 230 || c == 234 || c == 179 || c == 241 || c == 243 || c == 182 || c == 191 || c == 188) /* polskie literki */
-        return 1;
+	return 1;
     else if(c == 161 || c == 198 || c == 202 || c == 209 || c == 163 || c == 211 || c == 166 || c == 175 || c == 172) /* wielka litery polskie */
-        return 1;
+	return 1;
     else
-        return 0;
+	return 0;
 }
 
 /*
@@ -2341,15 +2341,15 @@ char *base64_decode(const char *buf)
  */
 char *split_line(char **ptr)
 {
-        char *foo, *res;
+	char *foo, *res;
 
-        if (!ptr || !*ptr || !xstrcmp(*ptr, ""))
-                return NULL;
+	if (!ptr || !*ptr || !xstrcmp(*ptr, ""))
+		return NULL;
 
-        res = *ptr;
+	res = *ptr;
 
-        if (!(foo = xstrchr(*ptr, '\n')))
-                *ptr += xstrlen(*ptr);
+	if (!(foo = xstrchr(*ptr, '\n')))
+		*ptr += xstrlen(*ptr);
 	else {
 		size_t reslen;
 		*ptr = foo + 1;
@@ -2360,7 +2360,7 @@ char *split_line(char **ptr)
 			res[reslen - 1] = 0;
 	}
 
-        return res;
+	return res;
 }
 
 /*
@@ -2427,17 +2427,17 @@ void ekg_update_status(session_t *session)
 {
 	userlist_t *u;
 
-        if ((u = userlist_find(session, session->uid))) {
-                xfree(u->descr);
-                u->descr = xstrdup(session->descr);
+	if ((u = userlist_find(session, session->uid))) {
+		xfree(u->descr);
+		u->descr = xstrdup(session->descr);
 
-                if (!session_connected_get(session))
-                        u->status = EKG_STATUS_NA;
-                else
-                        u->status = session->status;
+		if (!session_connected_get(session))
+			u->status = EKG_STATUS_NA;
+		else
+			u->status = session->status;
 
 		u->blink = 0;
-        }
+	}
 
 }
 
@@ -2644,27 +2644,27 @@ static int tolower_pl(const unsigned char c);
 
 int strncasecmp_pl(const char *cs, const char *ct , size_t count)
 {
-        register signed char __res = 0;
+	register signed char __res = 0;
 
-        while (count) {
-                if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
-                        break;
-                count--;
-        }
+	while (count) {
+		if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
+			break;
+		count--;
+	}
 
-        return __res;
+	return __res;
 }
 
 int strcasecmp_pl(const char *cs, const char *ct)
 {
-        register signed char __res = 0;
+	register signed char __res = 0;
 
-        while ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) == 0 && !*cs++) {
+	while ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) == 0 && !*cs++) {
 		if (!*cs++)
 			return(0);
-        }
+	}
 
-        return __res;
+	return __res;
 }
 
 /*
@@ -2674,28 +2674,28 @@ int strcasecmp_pl(const char *cs, const char *ct)
  * obs³uguje polskie znaki
  */
 static int tolower_pl(const unsigned char c) {
-        switch(c) {
-                case 161: /* ¡ */
-                        return 177;
-                case 198: /* Æ */
-                        return 230;
-                case 202: /* Ê */
-                        return 234;
-                case 163: /* £ */
-                        return 179;
-                case 209: /* Ñ */
-                        return 241;
-                case 211: /* Ó */
-                        return 243;
-                case 166: /* ¦ */
-                        return 182;
-                case 175: /* ¯ */
-                        return 191;
-                case 172: /* ¬ */
-                        return 188;
-                default: /* reszta */
-                        return tolower(c);
-        }
+	switch(c) {
+		case 161: /* ¡ */
+			return 177;
+		case 198: /* Æ */
+			return 230;
+		case 202: /* Ê */
+			return 234;
+		case 163: /* £ */
+			return 179;
+		case 209: /* Ñ */
+			return 241;
+		case 211: /* Ó */
+			return 243;
+		case 166: /* ¦ */
+			return 182;
+		case 175: /* ¯ */
+			return 191;
+		case 172: /* ¬ */
+			return 188;
+		default: /* reszta */
+			return tolower(c);
+	}
 }
 
 /*
@@ -2706,14 +2706,14 @@ static int tolower_pl(const unsigned char c) {
  */
 char *saprintf(const char *format, ...)
 {
-        va_list ap;
-        char *res;
+	va_list ap;
+	char *res;
 
-        va_start(ap, format);
-        res = vsaprintf(format, ap);
-        va_end(ap);
+	va_start(ap, format);
+	res = vsaprintf(format, ap);
+	va_end(ap);
 
-        return res;
+	return res;
 }
 
 /*
@@ -2994,7 +2994,7 @@ void *ekg_convert_string_init(const char *from, const char *to, void **rev) {
  * Frees internal data associated with given pointer, and uninitalizes iconv, if it's not needed anymore.
  *
  * @note If 'rev' param was used with ekg_convert_string_init(), this functions must be called two times
- * 	- with returned value, and with rev-associated one.
+ *	- with returned value, and with rev-associated one.
  *
  * @param ptr		- pointer returned by ekg_convert_string_init().
  *
@@ -3053,7 +3053,7 @@ void ekg_convert_string_destroy(void *ptr) {
  * @param ptr		- pointer returned by ekg_convert_string_init().
  *
  * @return	Pointer to allocated result or NULL, if some failure has occured or no conversion
- * 			is needed (i.e. resulting string would be same as input).
+ *			is needed (i.e. resulting string would be same as input).
  *
  * @sa ekg_convert_string_init()	- init charset conversion.
  * @sa ekg_convert_string_destroy()	- deinits charset conversion.
@@ -3091,14 +3091,14 @@ char *ekg_convert_string_p(const char *ps, void *ptr) {
  * Converts string to specified encoding, replacing invalid chars with question marks.
  *
  * @note Deprecated, in favour of ekg_convert_string_p(). Should be used only on single
- * 	conversions, where charset pair won't be used again.
+ *	conversions, where charset pair won't be used again.
  *
  * @param ps		- string to be converted (it won't be freed).
  * @param from		- input encoding (if NULL, console_charset will be assumed).
  * @param to		- output encoding (if NULL, console_charset will be assumed).
  *
  * @return	Pointer to allocated result on success, NULL on failure
- * 			or when both encodings are equal.
+ *			or when both encodings are equal.
  *
  * @sa ekg_convert_string_p()	- more optimized version.
  */
@@ -3143,7 +3143,7 @@ int ekg_converters_display(int quiet)
  * (You can be notified about state of buffer when you call ekg_write(fd, NULL, -1))
  *
  * @note
- * 	This _should_ be used as replacement for write() 
+ *	This _should_ be used as replacement for write() 
  */
 
 int ekg_write(int fd, const char *buf, int len) {
@@ -3182,7 +3182,7 @@ int ekg_write(int fd, const char *buf, int len) {
  * close fd and all watches associated with that fd
  *
  * @note
- * 	This _should_ be used as replacement for close() (especially in protocol plugins)
+ *	This _should_ be used as replacement for close() (especially in protocol plugins)
  */
 
 int ekg_close(int fd) {
@@ -3212,7 +3212,7 @@ int ekg_close(int fd) {
  * Try to get password through UI_PASSWORD_INPUT, printing error messages if needed.
  *
  * @return	Pointer to new password (which needs to be freed) or NULL, if not
- * 		succeeded (wrong input / no support).
+ *		succeeded (wrong input / no support).
  */
 
 char *password_input(const char *prompt, const char *rprompt, const bool norepeat) {

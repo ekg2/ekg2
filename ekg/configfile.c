@@ -2,10 +2,10 @@
 
 /*
  *  (C) Copyright 2001-2005 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@o2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@o2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *			    Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -56,16 +56,16 @@
 void config_upgrade();
 
 #define check_file() if (!(f = fopen(filename, "r")))\
-                return -1;\
+		return -1;\
 \
-        if (stat(filename, &st) || !S_ISREG(st.st_mode)) {\
-                if (S_ISDIR(st.st_mode))\
-                        errno = EISDIR;\
-                else\
-                        errno = EINVAL;\
-                fclose(f);\
-                return -1;\
-        }
+	if (stat(filename, &st) || !S_ISREG(st.st_mode)) {\
+		if (S_ISDIR(st.st_mode))\
+			errno = EISDIR;\
+		else\
+			errno = EINVAL;\
+		fclose(f);\
+		return -1;\
+	}
 
 
 static char *strip_quotes(char *line) {
@@ -91,39 +91,39 @@ static char *strip_quotes(char *line) {
  */
 void config_postread()
 {
-        if (config_windows_save && config_windows_layout) {
-                char **targets = array_make(config_windows_layout, "|", 0, 0, 0);
-                int i;
+	if (config_windows_save && config_windows_layout) {
+		char **targets = array_make(config_windows_layout, "|", 0, 0, 0);
+		int i;
 
-                for (i = 1; targets[i]; i++) {
+		for (i = 1; targets[i]; i++) {
 			char *tmp;
 
-                        if (!xstrcmp(targets[i], "\"-\""))
-                                continue;
+			if (!xstrcmp(targets[i], "\"-\""))
+				continue;
 
-		        if (xstrcmp(targets[i], "") && (tmp = xstrrchr(targets[i], '/'))) {
-		                char *session_name = xstrndup(targets[i], xstrlen(targets[i]) - xstrlen(tmp));
+			if (xstrcmp(targets[i], "") && (tmp = xstrrchr(targets[i], '/'))) {
+				char *session_name = xstrndup(targets[i], xstrlen(targets[i]) - xstrlen(tmp));
 				session_t *s;
 
-		                if (!(s = session_find(session_name))) {
+				if (!(s = session_find(session_name))) {
 					xfree(session_name);
 					continue;
 				}
 
-		                tmp++;
+				tmp++;
 				tmp = strip_spaces(tmp);
 				tmp = strip_quotes(tmp);
 
 				window_new(tmp, s, i + 1);	
 	
-		                xfree(session_name);
-		        } else {
-	                        window_new(NULL, NULL, i + 1);
+				xfree(session_name);
+			} else {
+				window_new(NULL, NULL, i + 1);
 			}
-                }
+		}
 
-                array_free(targets);
-        }
+		array_free(targets);
+	}
 
 	if (config_session_default) {
 		session_t *s = session_find(config_session_default);
@@ -143,31 +143,31 @@ void config_postread()
 
 int config_read_plugins()
 {
-        char*buf, *foo;
+	char*buf, *foo;
 	const char *filename;
 	FILE *f;
-        struct stat st;
+	struct stat st;
 
 
-        if (!(filename = prepare_path("plugins", 0)))
-                        return -1;
+	if (!(filename = prepare_path("plugins", 0)))
+			return -1;
 	
 	check_file();
 
 	while ((buf = read_file(f, 0))) {
-                if (!(foo = xstrchr(buf, (' '))))
-                        continue;
+		if (!(foo = xstrchr(buf, (' '))))
+			continue;
 
-                *foo++ = 0;
+		*foo++ = 0;
 
 		if (!xstrcasecmp(buf, ("plugin"))) {
-                        char **p = array_make(foo, (" \t"), 3, 1, 0);
+			char **p = array_make(foo, (" \t"), 3, 1, 0);
 
 			if (array_count(p) == 2)
 				plugin_load(p[0], atoi(p[1]), 1);
 
 			array_free(p);
-                }
+		}
 	}
 	fclose(f);
 
@@ -201,10 +201,10 @@ int config_read(const char *filename)
 	} 
 
 	/* then global and plugins variables */
-        if (!filename && !(filename = prepare_path("config", 0)))
-                return -1;
+	if (!filename && !(filename = prepare_path("config", 0)))
+		return -1;
 
-        check_file();
+	check_file();
 
 	while ((buf = read_file(f, 0))) {
 		ret = 0;
@@ -217,49 +217,49 @@ int config_read(const char *filename)
 			continue;
 
 		*foo++ = 0;
-                if (!xstrcasecmp(buf, ("set"))) {
-                        char *bar;
+		if (!xstrcasecmp(buf, ("set"))) {
+			char *bar;
 
-                        if (!(bar = xstrchr(foo, ' ')))
-                                ret = variable_set(foo, NULL, 0);
-                        else {
-                                *bar++ = 0;
-                                ret = variable_set(foo, bar, 0);
-                        }
+			if (!(bar = xstrchr(foo, ' ')))
+				ret = variable_set(foo, NULL, 0);
+			else {
+				*bar++ = 0;
+				ret = variable_set(foo, bar, 0);
+			}
 
-                        if (ret)
-                                debug("  unknown variable %s\n", foo);
+			if (ret)
+				debug("  unknown variable %s\n", foo);
 
-                } else if (!xstrcasecmp(buf, ("plugin"))) {
-                        char **p = array_make(foo, (" \t"), 3, 1, 0);
+		} else if (!xstrcasecmp(buf, ("plugin"))) {
+			char **p = array_make(foo, (" \t"), 3, 1, 0);
 			if (array_count(p) == 2) 
 				plugin_load(p[0], atoi(p[1]), 1);
 			array_free(p);
 		} else if (!xstrcasecmp(buf, ("bind"))) {
-                        char **pms = array_make(foo, (" \t"), 2, 1, 0);
+			char **pms = array_make(foo, (" \t"), 2, 1, 0);
 
-                        if (array_count(pms) == 2) {
-                                ret = command_exec_format(NULL, NULL, 1, ("/bind --add %s %s"),  pms[0], pms[1]);
-                        }
+			if (array_count(pms) == 2) {
+				ret = command_exec_format(NULL, NULL, 1, ("/bind --add %s %s"),  pms[0], pms[1]);
+			}
 
-                        array_free(pms);
-                } else if (!xstrcasecmp(buf, ("bind-set"))) {
-                        char **pms = array_make(foo, (" \t"), 2, 1, 0);
+			array_free(pms);
+		} else if (!xstrcasecmp(buf, ("bind-set"))) {
+			char **pms = array_make(foo, (" \t"), 2, 1, 0);
 
-                        if (array_count(pms) == 2) {
-                                query_emit_id(NULL, BINDING_SET, pms[0], pms[1], 1);
-                        }
+			if (array_count(pms) == 2) {
+				query_emit_id(NULL, BINDING_SET, pms[0], pms[1], 1);
+			}
 
-                        array_free(pms);
-                } else if (!xstrcasecmp(buf, ("alias"))) {
+			array_free(pms);
+		} else if (!xstrcasecmp(buf, ("alias"))) {
 			debug("  alias %s\n", foo);
 			ret = alias_add(foo, 1, 1);
 		} else if (!xstrcasecmp(buf, ("on"))) {
-                        char **pms = array_make(foo, (" \t"), 4, 1, 0);
+			char **pms = array_make(foo, (" \t"), 4, 1, 0);
 
-                        if (array_count(pms) == 4) {
+			if (array_count(pms) == 4) {
 				debug("  on %s %s %s\n", pms[0], pms[1], pms[2]);
-                                ret = event_add(pms[0], atoi(pms[1]), pms[2], pms[3], 1);
+				ret = event_add(pms[0], atoi(pms[1]), pms[2], pms[3], 1);
 			}
 
 			array_free(pms);
@@ -310,11 +310,11 @@ int config_read(const char *filename)
 			}
 			array_free(p);
 		} else {
-                        ret = variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL, 0);
+			ret = variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL, 0);
 
-                        if (ret)
-                                debug("  unknown variable %s\n", buf);
-                }
+			if (ret)
+				debug("  unknown variable %s\n", buf);
+		}
 
 
 		if (!ret)
@@ -383,9 +383,9 @@ static void config_write_plugins(FILE *f)
 	if (!f)
 		return;
 
-        for (p = plugins; p; p = p->next) {
-                if (p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
-        }
+	for (p = plugins; p; p = p->next) {
+		if (p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
+	}
 }
 
 /*
@@ -423,9 +423,9 @@ static void config_write_main(FILE *f)
 	{
 		event_t *e;
 
-	        for (e = events; e; e = e->next) {
-        	        fprintf(f, "on %s %d %s %s\n", e->name, e->prio, e->target, e->action);
-	        }
+		for (e = events; e; e = e->next) {
+			fprintf(f, "on %s %d %s %s\n", e->name, e->prio, e->target, e->action);
+		}
 	}
 
 	{
@@ -515,18 +515,18 @@ int config_write()
 	fchmod(fileno(f), 0600);
 
 	config_write_plugins(f);
-        fclose(f);
+	fclose(f);
 
-        /* now we are saving global variables and settings
+	/* now we are saving global variables and settings
 	 * timers, bindings etc. */
 
-        if (!(f = fopen(prepare_path("config", 0), "w")))
-                return -1;
+	if (!(f = fopen(prepare_path("config", 0), "w")))
+		return -1;
 
-        fchmod(fileno(f), 0600);
+	fchmod(fileno(f), 0600);
 
 	config_write_main(f);
-        fclose(f);
+	fclose(f);
 
 	/* now plugins variables */
 	for (p = plugins; p; p = p->next) {
@@ -564,14 +564,14 @@ int config_write()
  * 0/-1
  */
 /* BIG BUGNOTE:
- * 	Ta funkcja jest zle zportowana z ekg1, zle napisana, wolna, etc..
- * 	Powinnismy robic tak:
- * 		- dla kazdej zmiennej w vars[] znalezc variable_t * jej odpowiadajace i do tablicy vars_ptr[]
- * 		- dla kazdej zmiennej w vars[] policzyc dlugosc i do vars_len[]
- * 	- nastepnie otworzyc "config-%s", vars_ptr[0]->plugin->name (lub "config" gdy nie plugin)
- * 		- zrobic to co tutaj robimy, czyli poszukac tej zmiennej.. oraz nastepnie wszystkie inne ktore maja taki
- * 			sam vars_ptr[]->plugin jak vars_ptr[0]->plugin, powtarzac dopoki sie skoncza takie.
- * 	- nastepnie wziasc zmienna ktora ma inny plugin.. i j/w
+ *	Ta funkcja jest zle zportowana z ekg1, zle napisana, wolna, etc..
+ *	Powinnismy robic tak:
+ *		- dla kazdej zmiennej w vars[] znalezc variable_t * jej odpowiadajace i do tablicy vars_ptr[]
+ *		- dla kazdej zmiennej w vars[] policzyc dlugosc i do vars_len[]
+ *	- nastepnie otworzyc "config-%s", vars_ptr[0]->plugin->name (lub "config" gdy nie plugin)
+ *		- zrobic to co tutaj robimy, czyli poszukac tej zmiennej.. oraz nastepnie wszystkie inne ktore maja taki
+ *			sam vars_ptr[]->plugin jak vars_ptr[0]->plugin, powtarzac dopoki sie skoncza takie.
+ *	- nastepnie wziasc zmienna ktora ma inny plugin.. i j/w
  */
 int config_write_partly(plugin_t *plugin, const char **vars)
 {
@@ -688,18 +688,18 @@ void config_write_crash()
 
 	chdir(config_dir);
 
-        /* first of all we are saving plugins */
+	/* first of all we are saving plugins */
 	snprintf(name, sizeof(name), "plugins.%d", (int) getpid());
 
-        if (!(f = fopen(name, "w")))
-                return;
+	if (!(f = fopen(name, "w")))
+		return;
 
-        fchmod(fileno(f), 0400);
+	fchmod(fileno(f), 0400);
 
-        config_write_plugins(f);
+	config_write_plugins(f);
 
 	fflush(f);
-        fclose(f);
+	fclose(f);
 
 	/* then main part of config */
 	snprintf(name, sizeof(name), "config.%d", (int) getpid());
@@ -713,26 +713,26 @@ void config_write_crash()
 	fflush(f);
 	fclose(f);
 
-        /* now plugins variables */
-        for (p = plugins; p; p = p->next) {
+	/* now plugins variables */
+	for (p = plugins; p; p = p->next) {
 		variable_t *v;
 
 		snprintf(name, sizeof(name), "config-%s.%d", p->name, (int) getpid());
 
-                if (!(f = fopen(name, "w")))
+		if (!(f = fopen(name, "w")))
 			continue;	
 	
 		chmod(name, 0400);
 
-                for (v = variables; v; v = v->next) {
-                        if (p == v->plugin) {
-                                config_write_variable(f, v);
-                        }
-                }
+		for (v = variables; v; v = v->next) {
+			if (p == v->plugin) {
+				config_write_variable(f, v);
+			}
+		}
 
 		fflush(f);
-                fclose(f);
-        }
+		fclose(f);
+	}
 }
 
 /*

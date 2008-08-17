@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Pawe³ Maziarz <drg@infomex.pl>
- * 		       2004 Piotr Kupisiewicz <deli@rzepaknet.us>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
+ *		       2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -60,7 +60,7 @@ int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
 
 window_t *window_current = NULL;	/* okno aktualne, zawsze na co¶ musi wskazywaæ! */
 window_t *window_status  = NULL;	/* okno statusowe, zawsze musi miec dobry adres w pamieci [NULL jest ok] */
-window_t *window_debug   = NULL;	/* okno debugowe, zawsze musi miec dobry adres w pamieci [NULL jest ok] */
+window_t *window_debug	 = NULL;	/* okno debugowe, zawsze musi miec dobry adres w pamieci [NULL jest ok] */
 
 window_lastlog_t *lastlog_current = NULL;
 
@@ -99,12 +99,12 @@ window_t *window_find_ptr(window_t *w) {
  * @param session				- window session to search [See also @@ @a session_null_means_no_session]
  * @param target				- window target to search
  * @param session_null_means_no_session		- if you know that this window must belong to given session [NULL, or whatever] so this should be 1.
- * 						  else NULL @@ @a session will mean that you don't know which session should it be. And it'll search/check
- * 						  <b>all</b> sessions
+ *						  else NULL @@ @a session will mean that you don't know which session should it be. And it'll search/check
+ *						  <b>all</b> sessions
  *
- * @sa window_find_ptr()        - If you want to search for given window ptr.
- * @sa window_find_s()          - macro to <code>window_find_sa(session, target, 1)</code>
- * @sa window_find()            - wrapper to <code>window_find_sa(NULL, target, 0)</code>
+ * @sa window_find_ptr()	- If you want to search for given window ptr.
+ * @sa window_find_s()		- macro to <code>window_find_sa(session, target, 1)</code>
+ * @sa window_find()		- wrapper to <code>window_find_sa(NULL, target, 0)</code>
  *
  * @return pointer to window_t struct if window was founded, else NULL
  */
@@ -150,9 +150,9 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 						return w;
 
 					/* XXX, userlist_find() search only for u->nickname or u->uid.. so code below is useless? we can always return w; ?
-					 * 	However userlist_find() also strip resources if preset.. here we don't have it. 
-					 * 	maybe it's better, maybe not. Must think about it.
-					 * 	For now leave this code.
+					 *	However userlist_find() also strip resources if preset.. here we don't have it. 
+					 *	maybe it's better, maybe not. Must think about it.
+					 *	For now leave this code.
 					 */
 					if (!xstrcasecmp(u->uid, w->target))
 						return w;
@@ -216,17 +216,17 @@ void window_switch(int id) {
 
 		if (!(config_make_window & 3) && w->id == 1 && session_current) {
 			userlist_t *ul;
-	                session_t *s = session_current;
+			session_t *s = session_current;
 
 			for (ul = s->userlist; ul; ul = ul->next) {
-                        	userlist_t *u = ul;
+				userlist_t *u = ul;
 
 				if (u->blink && !window_find_s(s, u->uid)) {
-		                        u->blink	= 0;
+					u->blink	= 0;
 					ul_refresh	= 1;
 				}
 			}
-                }
+		}
 
 		break;
 	}
@@ -240,17 +240,17 @@ void window_switch(int id) {
  *
  * Create new window_t, with given @a new_id (if @a new_id != 0)
  *
- * @note 	If target == "$" than it return current window. [POSSIBLE BUG]
- * 		If window with such target [it can also be u->uid/u->nickname combination] exists.
- * 		than it'll return it.
+ * @note	If target == "$" than it return current window. [POSSIBLE BUG]
+ *		If window with such target [it can also be u->uid/u->nickname combination] exists.
+ *		than it'll return it.
  * 
- * @note 	You shouldn't pass @a new_id here. Because it can broke UI stuff. don't ask. it's wrong. Just don't use it.
- * 		It'll be possible removed... Really eventually you can talk with devs, and ask for id from class: 1000 to 1999
+ * @note	You shouldn't pass @a new_id here. Because it can broke UI stuff. don't ask. it's wrong. Just don't use it.
+ *		It'll be possible removed... Really eventually you can talk with devs, and ask for id from class: 1000 to 1999
  *
  * @todo	See XXX's
  *
- * @param target 	- name of window
- * @param session 	- session of this window
+ * @param target	- name of window
+ * @param session	- session of this window
  * @param new_id	- if different than 0, than window will take this id.
  *
  * @return window_t struct
@@ -290,14 +290,14 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 			window_t *w = v;
 			v = v->next;		/* goto next window */
 
-			if (w->id < 2)					/* [RESERVED CLASS: 0-1] 	0 for __debug, 1 for __status */
+			if (w->id < 2)					/* [RESERVED CLASS: 0-1]	0 for __debug, 1 for __status */
 				continue;
 
 			/* if current window is larger than current id... than we found good id! */
 			if (w->id > id)
 				break;
 
-			if (w->id >= 1000-1 && w->id < 2000 /* -1 */) {	/* [REVERVED CLASS: 1000-1999] 	1k-1.999k windows reverved for special use. [1000 - __contacts, 1001 - __lastlog] */
+			if (w->id >= 1000-1 && w->id < 2000 /* -1 */) {	/* [REVERVED CLASS: 1000-1999]	1k-1.999k windows reverved for special use. [1000 - __contacts, 1001 - __lastlog] */
 				id = 2000;
 				continue;
 			}
@@ -418,10 +418,10 @@ void window_prev() {
  * Remove given window.<br>
  * If it's __status window, and w->target than display nice message about closing talk, else display message about no possibility to close status window<br>
  *
- * @note 	You cannot remove here __status and __debug windows.<br>
- * 		You must do it by hand like in ekg_exit() but if you want do it.<br>
- * 		Set @a window_debug and window_status for proper values.<br>
- * 		ekg2 core need them.
+ * @note	You cannot remove here __status and __debug windows.<br>
+ *		You must do it by hand like in ekg_exit() but if you want do it.<br>
+ *		Set @a window_debug and window_status for proper values.<br>
+ *		ekg2 core need them.
  *
  * @bug		Possible bug with sort_windows. Can anyone who wrote it look at it?
  *
@@ -492,10 +492,10 @@ void window_kill(window_t *w) {
 window_t *window_exist(int id) {
 	window_t *w;
 
-        for (w = windows; w; w = w->next) {
-                if (w->id == id) 
+	for (w = windows; w; w = w->next) {
+		if (w->id == id) 
 			return w;
-        }
+	}
 
 	return NULL;
 }
@@ -506,7 +506,7 @@ window_t *window_exist(int id) {
  * swap windows (swap windows @a id -> change sequence of them in UI)
  *
  * @param first		- 1st window id.
- * @param second 	- 2nd window id.
+ * @param second	- 2nd window id.
  *
  * @todo XXX: Rename to _swap, and make some real move.
  */
@@ -565,22 +565,22 @@ static void window_real_move(int source, int dest) {
  * @param window - window
  * @todo Make it const?
  *
- * @return 	Never NULL pointer [to don't care about it] look below for more details:
- * 		if @a window->target is not NULL return it<br>
- * 		else: <br>
- * 		- __current	if @a window is NULL<br>
- * 		- __status	if @a window->id == 1<br>
- * 		- __debug	if @a window->id == 0<br>
- * 		else return ""
+ * @return	Never NULL pointer [to don't care about it] look below for more details:
+ *		if @a window->target is not NULL return it<br>
+ *		else: <br>
+ *		- __current	if @a window is NULL<br>
+ *		- __status	if @a window->id == 1<br>
+ *		- __debug	if @a window->id == 0<br>
+ *		else return ""
  */
 
 char *window_target(window_t *window) {
 	if (!window)			return "__current";
 
-	if (window->target)       	return window->target;
+	if (window->target)		return window->target;
 	else if (window->id == 1)	return "__status";
 	else if (window->id == 0)	return "__debug";
-        else                            return "";
+	else				return "";
 }
 
 /*
@@ -758,13 +758,13 @@ COMMAND(cmd_window) {
 #endif
 		}
 
-		lastlog->w 		= w;
-		lastlog->casense 	= iscase;
+		lastlog->w		= w;
+		lastlog->casense	= iscase;
 		lastlog->lock		= islock;
 		lastlog->isregex	= isregex;
 		lastlog->expression	= xstrdup(str);
 
-		if (w)  window_current->lastlog	= lastlog;
+		if (w)	window_current->lastlog	= lastlog;
 		else	lastlog_current		= lastlog;
 			
 		return query_emit_id(NULL, UI_WINDOW_UPDATE_LASTLOG);
@@ -805,7 +805,7 @@ COMMAND(cmd_window) {
 		return 0;
 	}
 
-        if (!xstrncasecmp(params[0], "move", par0_matchlen) || !xstrncasecmp(params[0], "swap", par0_matchlen)) {
+	if (!xstrncasecmp(params[0], "move", par0_matchlen) || !xstrncasecmp(params[0], "swap", par0_matchlen)) {
 		int source, dest;
 
 		if (!window_current)
@@ -819,7 +819,7 @@ COMMAND(cmd_window) {
 		source = (params[2]) ? atoi(params[2]) : window_current->id;
 
 		if (!source) {
-                        printq("window_invalid_move", itoa(source));
+			printq("window_invalid_move", itoa(source));
 			return -1;
 		}
 
@@ -848,16 +848,16 @@ COMMAND(cmd_window) {
 			return -1;
 		}
 
-                if (dest == 1) {
-                        printq("window_cannot_move_status");
+		if (dest == 1) {
+			printq("window_cannot_move_status");
 			return -1;
-                }
+		}
 
 		if (dest == source)
 			return 0;
 
 		if (!xstrncasecmp(params[0], "swap", par0_matchlen)) {
-	                if (!window_exist(dest)) 
+			if (!window_exist(dest)) 
 				window_new(NULL, NULL, dest);
 
 			window_move(source, dest);
@@ -865,7 +865,7 @@ COMMAND(cmd_window) {
 			window_real_move(source, dest);
 		window_switch(dest);
 		return 0;
-        }
+	}
 
 	
 	if (!xstrncasecmp(params[0], "refresh", par0_matchlen)) {
@@ -885,23 +885,23 @@ COMMAND(cmd_window) {
  * Change session of given window to next good one (based on @a config_window_session_allow value) 
  *
  * @note	behaviour of window_session_cycle() based on values of config_window_session_allow:
- * 		 0 - change session only if w->target == NULL
- * 		 1 - like 0 + if w->target is set than new session must accept that uid	[default && other values]
- * 		 2 - change to any next session
- * 		 4 - jump to status window before cycling.
+ *		 0 - change session only if w->target == NULL
+ *		 1 - like 0 + if w->target is set than new session must accept that uid	[default && other values]
+ *		 2 - change to any next session
+ *		 4 - jump to status window before cycling.
  *
  * @note	If w->session was changed than UI_WINDOW_TARGET_CHANGED will be emited.
- * 		If w == window_current than SESSION_CHANGED will be emited also.
+ *		If w == window_current than SESSION_CHANGED will be emited also.
  *
  * @todo	Gdy config_window_session_allow == 2, to najpierw sprobowac znalezc dobra sesje a potem jesli nie to 
- * 		nastepna?
+ *		nastepna?
  * 
  * @todo	Create window_session_set() for some stuff here.
  *
  * @param	w - window
  *
  * @return	 0 - if session of window was changed
- * 		-1 - if not
+ *		-1 - if not
  */
 
 int window_session_cycle(window_t *w) {
@@ -916,7 +916,7 @@ int window_session_cycle(window_t *w) {
 	}
 
 	/* @ab config_window_session_allow == 4: don't change session when we have open talk in __status window */
-	/* 	XXX, change to __status? */
+	/*	XXX, change to __status? */
 	if ((config_window_session_allow == 0 && w->target) || (config_window_session_allow == 4 && window_status->target)) {
 		print("session_cannot_change");
 		return -1;
@@ -987,7 +987,7 @@ again:
 
 	if (w == window_current) {
 		session_current = new_session;
-        	query_emit_id(NULL, SESSION_CHANGED);
+		query_emit_id(NULL, SESSION_CHANGED);
 	}
 	query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
 
