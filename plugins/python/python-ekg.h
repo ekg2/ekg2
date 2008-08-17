@@ -51,25 +51,25 @@ PyObject * ekg_cmd_windows(PyObject *self, PyObject *args);
  */
 
 staticforward PyMethodDef ekg_methods[] = {
-        { "command_bind",    ekg_cmd_command_bind,    METH_VARARGS, "Bind function with command" },
-        { "command",         ekg_cmd_command,         METH_VARARGS, "Execute command" },
-        { "debug",           ekg_cmd_debug,           METH_VARARGS, "Log debug data" },
-        { "echo",            ekg_cmd_echo,            METH_VARARGS, "Print string to current window" },
-        { "handler_bind",    ekg_cmd_handler_bind,    METH_VARARGS, "Bind handler function" },
-        { "plugin_get",      ekg_cmd_plugin_get,      METH_VARARGS, "Return plugin object" },
-        { "plugins",         ekg_cmd_plugins,         METH_VARARGS, "Return list of plugins" },
-        { "printf",          ekg_cmd_printf,          METH_VARARGS, "Print formatted string" },
-        { "session_current", ekg_cmd_session_current, METH_VARARGS, "Return current session object" },
-        { "session_get",     ekg_cmd_session_get,     METH_VARARGS, "Return session object" },
-        { "sessions",        ekg_cmd_sessions,        METH_VARARGS, "Return list of sessions" },
-        { "timer_bind",      ekg_cmd_timer_bind,      METH_VARARGS, "Add timer function" },
-        { "variable_add",    ekg_cmd_variable_add,    METH_VARARGS, "Add variable with optional handler" },
-        { "watch_add",       ekg_cmd_watch_add,       METH_VARARGS, "Create descriptor watch" },
-        { "window_current",  ekg_cmd_window_current,  METH_VARARGS, "Return current window object" },
-        { "window_get",      ekg_cmd_window_get,      METH_VARARGS, "Return window with given name" },
-        { "window_new",      ekg_cmd_window_new,      METH_VARARGS, "Create window" },
-        { "windows",         ekg_cmd_windows,         METH_VARARGS, "Return list of windows" },
-        { NULL, NULL, 0, NULL }
+	{ "command_bind",    ekg_cmd_command_bind,    METH_VARARGS, "Bind function with command" },
+	{ "command",	     ekg_cmd_command,	      METH_VARARGS, "Execute command" },
+	{ "debug",	     ekg_cmd_debug,	      METH_VARARGS, "Log debug data" },
+	{ "echo",	     ekg_cmd_echo,	      METH_VARARGS, "Print string to current window" },
+	{ "handler_bind",    ekg_cmd_handler_bind,    METH_VARARGS, "Bind handler function" },
+	{ "plugin_get",      ekg_cmd_plugin_get,      METH_VARARGS, "Return plugin object" },
+	{ "plugins",	     ekg_cmd_plugins,	      METH_VARARGS, "Return list of plugins" },
+	{ "printf",	     ekg_cmd_printf,	      METH_VARARGS, "Print formatted string" },
+	{ "session_current", ekg_cmd_session_current, METH_VARARGS, "Return current session object" },
+	{ "session_get",     ekg_cmd_session_get,     METH_VARARGS, "Return session object" },
+	{ "sessions",	     ekg_cmd_sessions,	      METH_VARARGS, "Return list of sessions" },
+	{ "timer_bind",      ekg_cmd_timer_bind,      METH_VARARGS, "Add timer function" },
+	{ "variable_add",    ekg_cmd_variable_add,    METH_VARARGS, "Add variable with optional handler" },
+	{ "watch_add",	     ekg_cmd_watch_add,       METH_VARARGS, "Create descriptor watch" },
+	{ "window_current",  ekg_cmd_window_current,  METH_VARARGS, "Return current window object" },
+	{ "window_get",      ekg_cmd_window_get,      METH_VARARGS, "Return window with given name" },
+	{ "window_new",      ekg_cmd_window_new,      METH_VARARGS, "Create window" },
+	{ "windows",	     ekg_cmd_windows,	      METH_VARARGS, "Return list of windows" },
+	{ NULL, NULL, 0, NULL }
 };
 
 

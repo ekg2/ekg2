@@ -18,10 +18,10 @@
 #define new_pv(a) newSVpv(fix(a), xstrlen(a))
 
 #define is_hvref(o) \
-        ((o) && SvROK(o) && SvRV(o) && (SvTYPE(SvRV(o)) == SVt_PVHV))
+	((o) && SvROK(o) && SvRV(o) && (SvTYPE(SvRV(o)) == SVt_PVHV))
 
 #define hvref(o) \
-        (is_hvref(o) ? (HV *)SvRV(o) : NULL)
+	(is_hvref(o) ? (HV *)SvRV(o) : NULL)
 
 /* syfffff ekg2 */
 
@@ -30,7 +30,7 @@
 	int perl_retcount, ret = 0;\
 	SV *perl_ret;\
 	if (!x) return -1;\
-	fullproc = saprintf("Ekg2::Script::%s::%s", scr->name,  x);\
+	fullproc = saprintf("Ekg2::Script::%s::%s", scr->name,	x);\
 	{	/* tag will be closed in PERL_HANDLER_FOOTER macro */ \
 		dSP;\
 		ENTER;\
@@ -51,21 +51,21 @@ SV *create_sv_ptr(void *object);
 #ifdef PERL_RESTORE_ARGS
 #define RESTORE_ARGS(x)\
     if (change) {\
-        for (i=0; i < scr_que->argc; i++) {\
-                switch ( scr_que->argv_type[i] ) {\
-                        case (QUERY_ARG_INT):\
+	for (i=0; i < scr_que->argc; i++) {\
+		switch ( scr_que->argv_type[i] ) {\
+			case (QUERY_ARG_INT):\
 				*( (int *) args[i]) = SvIV(SvRV(perlargs[i]));\
 				break;\
 \
-                        case (QUERY_ARG_CHARP):\
+			case (QUERY_ARG_CHARP):\
 /*				xfree(*(char **) args[i]);  */\
 				*( (char **) args[i]) = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ) ;\
 				break;\
 			case (QUERY_ARG_CHARPP): /* wazne, zrobic. */\
 				break;\
 \
-                }\
-        }\
+		}\
+	}\
     }
     
 #else 
@@ -95,7 +95,7 @@ SV *create_sv_ptr(void *object);
 		LEAVE;\
 		\
 		if (ret < 0) return -1;\
-		else         return ret; \
+		else	     return ret; \
 	} /* closing tag defined in PERL_HANDLER_HEADER() macro */ \
 	xfree(fullproc);
 

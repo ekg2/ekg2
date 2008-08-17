@@ -94,11 +94,11 @@ int perl_plugin_init(int prio)
 	plugin_register(&perl_plugin, prio);
 	scriptlang_register(&perl_lang);
 /* TODO
- *	command_add(&perl_plugin, "perl:eval",   "!",  perl_command_eval,   COMMAND_ENABLEREQPARAMS, NULL);
- *	command_add(&perl_plugin, "perl:test",   "!",  perl_command_test,   COMMAND_ENABLEREQPARAMS, NULL);
- *	command_add(&perl_plugin, "perl:run",    "?",  perl_command_run,    0, NULL);
+ *	command_add(&perl_plugin, "perl:eval",	 "!",  perl_command_eval,   COMMAND_ENABLEREQPARAMS, NULL);
+ *	command_add(&perl_plugin, "perl:test",	 "!",  perl_command_test,   COMMAND_ENABLEREQPARAMS, NULL);
+ *	command_add(&perl_plugin, "perl:run",	 "?",  perl_command_run,    0, NULL);
  */
-	command_add(&perl_plugin, ("perl:load"),   ("!"),  perl_command_load,   COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&perl_plugin, ("perl:load"),   ("!"),  perl_command_load,	COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&perl_plugin, ("perl:unload"), ("!"),  perl_command_unload, COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&perl_plugin, ("perl:list"),  NULL,  perl_command_list,   0, NULL);
 

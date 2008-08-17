@@ -236,8 +236,8 @@ static watch_t *polchat_sendmsg(session_t *s, const char *message, ...) {
 }
 
 static QUERY(polchat_validate_uid) {
-	char	*uid 	= *(va_arg(ap, char **));
-	int	*valid 	= va_arg(ap, int *);
+	char	*uid	= *(va_arg(ap, char **));
+	int	*valid	= va_arg(ap, int *);
 
 	if (!uid)
 		return 0;
@@ -252,7 +252,7 @@ static QUERY(polchat_validate_uid) {
 
 static QUERY(polchat_print_version) {
 	 print("generic", 
-	 	"polchat plugin, proto code based on AmiX v0.2 (http://213.199.197.135/~kowalskijan/amix/) (c ABUKAJ) "
+		"polchat plugin, proto code based on AmiX v0.2 (http://213.199.197.135/~kowalskijan/amix/) (c ABUKAJ) "
 		"and on http://eter.sytes.net/polchatproto/ v0.3");
 	 return 0;
 } 
@@ -388,7 +388,7 @@ static WATCHER_SESSION(polchat_handle_connect) {
 	polchat_private_t *j;
 	const char *tmp;
 
-        int res = 0;
+	int res = 0;
 	socklen_t res_size = sizeof(res);
 
 	if (type)
@@ -433,10 +433,10 @@ static WATCHER(polchat_handle_resolver) {
 	int port;
 	int res;
 
-        if (type) {
+	if (type) {
 		xfree(data);
 		close(fd);
-                return 0;
+		return 0;
 	}
 
 	if (!s || !(j = s->priv))
@@ -460,7 +460,7 @@ static WATCHER(polchat_handle_resolver) {
 		return -1;
 	}
 
-        debug_function("[polchat] resolved to %s\n", inet_ntoa(a));
+	debug_function("[polchat] resolved to %s\n", inet_ntoa(a));
 
 	port = session_int_get(s, "port");
 	if (port < 0 || port > 65535) 
@@ -474,11 +474,11 @@ static WATCHER(polchat_handle_resolver) {
 
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(port);
-        sin.sin_addr.s_addr = a.s_addr;
+	sin.sin_addr.s_addr = a.s_addr;
 
-        if (ioctl(fd, FIONBIO, &one) == -1) 
+	if (ioctl(fd, FIONBIO, &one) == -1) 
 		debug_error("[polchat] ioctl() FIONBIO failed: %s\n", strerror(errno));
-        if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) == -1) 
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) == -1) 
 		debug_error("[polchat] setsockopt() SO_KEEPALIVE failed: %s\n", strerror(errno));
 
 	res = connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in)); 
@@ -487,7 +487,7 @@ static WATCHER(polchat_handle_resolver) {
 		int err = errno;
 
 		close(fd);
-                debug_error("[polchat] connect() failed: %s (errno=%d)\n", strerror(err), err);
+		debug_error("[polchat] connect() failed: %s (errno=%d)\n", strerror(err), err);
 		polchat_handle_disconnect(s, strerror(err), EKG_DISCONNECT_FAILURE);
 		return -1;
 	}
@@ -577,7 +577,7 @@ static COMMAND(polchat_command_disconnect) {
 
 	if (session->connecting)
 		polchat_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
-	else    
+	else	
 		polchat_handle_disconnect(session, reason, EKG_DISCONNECT_USER);
 
 	return 0;
@@ -687,14 +687,14 @@ static int polchat_theme_init() {
 }
 
 static plugins_params_t polchat_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		VAR_STR, NULL, 0, NULL), 
-	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "irssi", 0, NULL),
-	PLUGIN_VAR_ADD("nickname", 		VAR_STR, NULL, 0, NULL), 
-	PLUGIN_VAR_ADD("password", 		VAR_STR, NULL, 1, NULL),
-	PLUGIN_VAR_ADD("port", 			VAR_INT, POLCHAT_DEFAULT_PORT, 0, NULL),
+	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL), 
+	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "irssi", 0, NULL),
+	PLUGIN_VAR_ADD("nickname",		VAR_STR, NULL, 0, NULL), 
+	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
+	PLUGIN_VAR_ADD("port",			VAR_INT, POLCHAT_DEFAULT_PORT, 0, NULL),
 	PLUGIN_VAR_ADD("room",			VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("server", 		VAR_STR, POLCHAT_DEFAULT_HOST, 0, NULL),
+	PLUGIN_VAR_ADD("server",		VAR_STR, POLCHAT_DEFAULT_HOST, 0, NULL),
 	PLUGIN_VAR_END()
 };
 
@@ -717,13 +717,13 @@ EXPORT int polchat_plugin_init(int prio) {
 	query_connect(&irc_plugin, ("status-show"),	irc_status_show_handle, NULL);
 #endif
 
-#define POLCHAT_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
-#define POLCHAT_FLAGS 		POLCHAT_ONLY | SESSION_MUSTBECONNECTED
+#define POLCHAT_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define POLCHAT_FLAGS		POLCHAT_ONLY | SESSION_MUSTBECONNECTED
 #define POLCHAT_FLAGS_TARGET	POLCHAT_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 	
 	command_add(&polchat_plugin, "polchat:", "?",		polchat_command_inline_msg, POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:msg", "!uUw !",	polchat_command_msg,	    POLCHAT_FLAGS_TARGET, NULL);
-	command_add(&polchat_plugin, "polchat:connect", NULL,   polchat_command_connect,    POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:connect", NULL,	polchat_command_connect,    POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:disconnect", "r ?",polchat_command_disconnect,POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:reconnect", "r ?", polchat_command_reconnect, POLCHAT_ONLY, NULL);
 

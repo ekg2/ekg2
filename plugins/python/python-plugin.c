@@ -65,8 +65,8 @@ int ekg_plugin_init(ekg_pluginObj *self, PyObject *args, PyObject *kwds)
     static char *kwlist[] = {"name", "prio", NULL};
 
     if (! PyArg_ParseTupleAndKeywords(args, kwds, "si", kwlist,
-                                      &name, &prio))
-        return -1;
+				      &name, &prio))
+	return -1;
 
     self->name = PyString_AsString(name);
     self->prio = (int)PyInt_AsLong(prio);
@@ -95,7 +95,7 @@ PyObject *ekg_plugin_get_attr(ekg_pluginObj * self, char * attr)
 
 void ekg_plugin_dealloc(ekg_pluginObj * o)
 {
-        xfree(o->name);
+	xfree(o->name);
 
 }
 
@@ -108,26 +108,26 @@ void ekg_plugin_dealloc(ekg_pluginObj * o)
 
 PyObject *ekg_plugin_load(ekg_pluginObj * self, PyObject *args)
 {
-        int prio;
+	int prio;
 
-        if (!PyArg_ParseTuple(args, "i", &prio))
-                return NULL;
+	if (!PyArg_ParseTuple(args, "i", &prio))
+		return NULL;
 
-        debug("[python] Loading plugin '%s' with prio %i\n", self->name, prio);
+	debug("[python] Loading plugin '%s' with prio %i\n", self->name, prio);
 
-        if (plugin_find(self->name)) {
-                PyErr_SetString(PyExc_RuntimeError, "Plugin already loaded");
-                return NULL;
-        }
-        if (plugin_load(self->name, prio, 0) == -1) {
-                Py_RETURN_FALSE;
-        } else {
-                self->loaded = 1;
-                Py_RETURN_TRUE;
-        }
+	if (plugin_find(self->name)) {
+		PyErr_SetString(PyExc_RuntimeError, "Plugin already loaded");
+		return NULL;
+	}
+	if (plugin_load(self->name, prio, 0) == -1) {
+		Py_RETURN_FALSE;
+	} else {
+		self->loaded = 1;
+		Py_RETURN_TRUE;
+	}
 
-        Py_INCREF(Py_None);
-        return Py_None;
+	Py_INCREF(Py_None);
+	return Py_None;
 }
 
 /**
@@ -140,13 +140,13 @@ PyObject *ekg_plugin_load(ekg_pluginObj * self, PyObject *args)
 PyObject *ekg_plugin_is_loaded(ekg_pluginObj * self, PyObject *args)
 {
 
-        debug("[python] Checking if '%s' plugin is loaded\n", self->name);
+	debug("[python] Checking if '%s' plugin is loaded\n", self->name);
 
-        if (plugin_find(self->name)) {
-                Py_RETURN_TRUE;
-        } else {
-                Py_RETURN_FALSE;
-        }
+	if (plugin_find(self->name)) {
+		Py_RETURN_TRUE;
+	} else {
+		Py_RETURN_FALSE;
+	}
 }
 
 /**
@@ -158,14 +158,14 @@ PyObject *ekg_plugin_is_loaded(ekg_pluginObj * self, PyObject *args)
 
 PyObject *ekg_plugin_unload(ekg_pluginObj * self, PyObject *args)
 {
-        debug("[python] Unloading plugin '%s'\n", self->name);
+	debug("[python] Unloading plugin '%s'\n", self->name);
 
-        if (plugin_unload(plugin_find(self->name)) == -1) {
-                Py_RETURN_FALSE;
-        } else {
-                self->loaded = 0;
-                Py_RETURN_TRUE;
-        }
+	if (plugin_unload(plugin_find(self->name)) == -1) {
+		Py_RETURN_FALSE;
+	} else {
+		self->loaded = 0;
+		Py_RETURN_TRUE;
+	}
 }
 
 /*

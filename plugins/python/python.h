@@ -27,14 +27,14 @@
 
 #if !defined(Py_RETURN_NONE) // New in Python 2.4
 static inline PyObject* doPy_RETURN_NONE()
-{       Py_INCREF(Py_None); return Py_None; }
+{	Py_INCREF(Py_None); return Py_None; }
 #define Py_RETURN_NONE return doPy_RETURN_NONE()
 #endif
 
 #if !defined(Py_RETURN_TRUE) // New in Python 2.4
 static inline PyObject* doPy_RETURN_TRUE()
 {Py_INCREF(Py_True); return Py_True;}
-#       define Py_RETURN_TRUE return doPy_RETURN_TRUE()
+#	define Py_RETURN_TRUE return doPy_RETURN_TRUE()
 #endif
 
 #if !defined(Py_RETURN_FALSE) // New in Python 2.4

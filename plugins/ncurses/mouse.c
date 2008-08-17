@@ -213,12 +213,12 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
  */
 static WATCHER(ncurses_gpm_watch_handler)
 {
-        Gpm_Event event;
+	Gpm_Event event;
 
-        if (type)
-                return 0;
+	if (type)
+		return 0;
 
-        Gpm_GetEvent(&event);
+	Gpm_GetEvent(&event);
 
 	/* przy double click nie powinno byæ wywo³ywane single click */
 
@@ -245,26 +245,26 @@ static WATCHER(ncurses_gpm_watch_handler)
 				ncurses_mouse_clicked_handler(event.x, event.y, mouse_state);
 				break;
 			}
-                case GPM_SINGLE + GPM_UP:
-                        {
-                                int mouse_state = EKG_UNKNOWN_CLICKED;
-                                switch (event.buttons) {
-                                        case GPM_B_LEFT:
-                                                mouse_state = EKG_BUTTON1_CLICKED;
-                                                break;
-                                        case GPM_B_RIGHT:
-                                                mouse_state = EKG_BUTTON3_CLICKED;
-                                                break;
-                                        case GPM_B_MIDDLE:
-                                                mouse_state = EKG_BUTTON2_CLICKED;
-                                                break;
-                                }
-                                ncurses_mouse_clicked_handler(event.x, event.y, mouse_state);
-                                break;
-                        }
-                        break;
+		case GPM_SINGLE + GPM_UP:
+			{
+				int mouse_state = EKG_UNKNOWN_CLICKED;
+				switch (event.buttons) {
+					case GPM_B_LEFT:
+						mouse_state = EKG_BUTTON1_CLICKED;
+						break;
+					case GPM_B_RIGHT:
+						mouse_state = EKG_BUTTON3_CLICKED;
+						break;
+					case GPM_B_MIDDLE:
+						mouse_state = EKG_BUTTON2_CLICKED;
+						break;
+				}
+				ncurses_mouse_clicked_handler(event.x, event.y, mouse_state);
+				break;
+			}
+			break;
 		default:
-         debug("Event Type : %d at x=%d y=%d buttons=%d\n", event.type, event.x, event.y, event.buttons); 
+	 debug("Event Type : %d at x=%d y=%d buttons=%d\n", event.type, event.x, event.y, event.buttons); 
 			break;
 	}
 	return 0;
@@ -316,13 +316,13 @@ void ncurses_enable_mouse(const char *env) {
 		mouse_initialized = 1;
 	} else {
 		if (gpm_fd == -1)
-	                debug_error("[ncurses] Cannot connect to gpm mouse server\n");
+			debug_error("[ncurses] Cannot connect to gpm mouse server\n");
 	}
 #endif
 
 	if (!mouse_initialized) {
 		if ((mouse_initialized = ncurses_has_mouse_support(env))) {
-		        printf("\033[?1001s\033[?1000h");
+			printf("\033[?1001s\033[?1000h");
 			fflush(stdout);
 		} else
 			debug_error("[ncurses] Mouse in %s terminal is not supported\n", env);

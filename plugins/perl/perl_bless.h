@@ -39,13 +39,13 @@ SV *ekg2_bless(perl_bless_t flag, int flag2, void *object);
 	(SV *) ekg2_bless(BLESS_SCRIPT, 0, var)
 
 #define bless_variable(var)\
-        (SV *) ekg2_bless(BLESS_VARIABLE, 0, var)
+	(SV *) ekg2_bless(BLESS_VARIABLE, 0, var)
 
 #define bless_session(session)\
-        (SV *) ekg2_bless(BLESS_SESSION, 0, session)
+	(SV *) ekg2_bless(BLESS_SESSION, 0, session)
 
 #define bless_plugin(plugin)\
-        (SV *) ekg2_bless(BLESS_PLUGIN, 0, plugin)
+	(SV *) ekg2_bless(BLESS_PLUGIN, 0, plugin)
 
 #define bless_window(window)\
 	(SV *) ekg2_bless(BLESS_WINDOW, 0, window)

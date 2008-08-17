@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2002-2004 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Wojtek Bojdo³ <wojboj@htcon.pl>
- *                          Pawe³ Maziarz <drg@infomex.pl>
+ *			    Wojtek Bojdo³ <wojboj@htcon.pl>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
  *			    Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -116,14 +116,14 @@ static BINDING_FUNCTION(binding_toggle_input)
 
 		tmp = string_free(s, 0);
 
-                if (history[0] != line)
-                        xfree(history[0]);
-                history[0] = wcs_array_join(lines, TEXT("\015"));
-                xfree(history[HISTORY_MAX - 1]);
-                memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
+		if (history[0] != line)
+			xfree(history[0]);
+		history[0] = wcs_array_join(lines, TEXT("\015"));
+		xfree(history[HISTORY_MAX - 1]);
+		memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
 
 		history[0] = line;
-	        history_index = 0;
+		history_index = 0;
 
 		input_size = 1;
 		ncurses_input_update();
@@ -179,13 +179,13 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 
 static BINDING_FUNCTION(binding_window_kill)
 {
-        char * ptr;
-        ptr = xstrstr(window_current->target, "irc:");
-        if (ptr && ptr == window_current->target && (ptr[4] == '!' || ptr[4] == '#') && !config_kill_irc_window ) {
-                print("cant_kill_irc_window");
-                return;
-        }
-        command_exec(window_current->target, window_current->session, ("/window kill"), 0);
+	char * ptr;
+	ptr = xstrstr(window_current->target, "irc:");
+	if (ptr && ptr == window_current->target && (ptr[4] == '!' || ptr[4] == '#') && !config_kill_irc_window ) {
+		print("cant_kill_irc_window");
+		return;
+	}
+	command_exec(window_current->target, window_current->session, ("/window kill"), 0);
 }
 
 static BINDING_FUNCTION(binding_kill_line)
@@ -339,11 +339,11 @@ static BINDING_FUNCTION(binding_word_rubout)
 			eaten++;
 		}
 	} else {
-                while (p > line && ! xisalpha(*(p - 1)) && ! xisspace(*(p - 1))) {
+		while (p > line && ! xisalpha(*(p - 1)) && ! xisspace(*(p - 1))) {
 			p--;
-                        eaten++;
-                }
-        }
+			eaten++;
+		}
+	}
 
 	if (p > line) {
 		while (p > line && ! xisspace(*(p - 1)) && xisalpha(*(p - 1))) {
@@ -470,20 +470,20 @@ static BINDING_FUNCTION(binding_beginning_of_line)
 
 BINDING_FUNCTION(binding_previous_only_history)
 {
-        if (history[history_index + 1]) {
-                if (history_index == 0)
-                        history[0] = xwcsdup(line);
-                history_index++;
+	if (history[history_index + 1]) {
+		if (history_index == 0)
+			history[0] = xwcsdup(line);
+		history_index++;
 		if (xwcschr(history[history_index], ('\015'))) {
 			CHAR_T **tmp;
 			int i;
 			
-                        if (input_size == 1) {
-                                input_size = 5;
-                                ncurses_input_update();
-                        }
+			if (input_size == 1) {
+				input_size = 5;
+				ncurses_input_update();
+			}
 
-                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
+			tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
 			array_free((char **) lines);
 			lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
@@ -497,49 +497,49 @@ BINDING_FUNCTION(binding_previous_only_history)
 			lines_adjust();
 		} else {
 			if (input_size != 1) {
-		                input_size = 1;
-		                ncurses_input_update();
-		        }
+				input_size = 1;
+				ncurses_input_update();
+			}
 			xwcscpy(line, history[history_index]);
-	                line_adjust();
+			line_adjust();
 		}
-        }
+	}
 }
 
 BINDING_FUNCTION(binding_next_only_history)
 {
-        if (history_index > 0) {
-                history_index--;
-                if (xwcschr(history[history_index], ('\015'))) {
-                        CHAR_T **tmp;
-                        int i;
+	if (history_index > 0) {
+		history_index--;
+		if (xwcschr(history[history_index], ('\015'))) {
+			CHAR_T **tmp;
+			int i;
 
-                        if (input_size == 1) {
-                                input_size = 5;
-                                ncurses_input_update();
+			if (input_size == 1) {
+				input_size = 5;
+				ncurses_input_update();
 			}
 
-                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
+			tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
-                        array_free((char **) lines);
-                        lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
+			array_free((char **) lines);
+			lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
 
-                        for (i = 0; i < array_count((char **) tmp); i++) {
-                                lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
-                                xwcscpy(lines[i], tmp[i]);
-                        }
+			for (i = 0; i < array_count((char **) tmp); i++) {
+				lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+				xwcscpy(lines[i], tmp[i]);
+			}
 
-                        array_free((char **) tmp);
-                        lines_adjust();
-                } else {
-                        if (input_size != 1) {
-                                input_size = 1;
-                                ncurses_input_update();
-                        }
-                        xwcscpy(line, history[history_index]);
-                        line_adjust();
-                }
-        } else /* history_index == 0 */
+			array_free((char **) tmp);
+			lines_adjust();
+		} else {
+			if (input_size != 1) {
+				input_size = 1;
+				ncurses_input_update();
+			}
+			xwcscpy(line, history[history_index]);
+			line_adjust();
+		}
+	} else /* history_index == 0 */
 		binding_accept_line(BINDING_HISTORY_NOEXEC);
 }
 
@@ -737,7 +737,7 @@ static void binding_parse(struct binding *b, const char *action)
 	if (!xstrcmp(args[0], (x))) { \
 		b->function = y; \
 		b->arg = xstrdup(args[1]); \
-	} else  
+	} else	
 
 	__action("backward-word", binding_backward_word)
 	__action("forward-word", binding_forward_word)
@@ -835,23 +835,23 @@ static int binding_key(struct binding *b, const char *key, int add)
 //		if (xstrlen(key) != 6)
 //			return -1;
 #define __key(x, y, z) \
-        if (!xstrcasecmp(key + 5, (x))) { \
-                b->key = xstrdup(key); \
-                if (add) { \
-                        ncurses_binding_map[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
-                        if (z) \
-                                ncurses_binding_map[z] = ncurses_binding_map[y]; \
-                } \
-                return 0; \
-        }
+	if (!xstrcasecmp(key + 5, (x))) { \
+		b->key = xstrdup(key); \
+		if (add) { \
+			ncurses_binding_map[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
+			if (z) \
+				ncurses_binding_map[z] = ncurses_binding_map[y]; \
+		} \
+		return 0; \
+	}
 
-        __key("Enter", KEY_CTRL_ENTER, 0);
-        __key("Escape", KEY_CTRL_ESCAPE, 0);
-        __key("Home", KEY_CTRL_HOME, 0);
-        __key("End", KEY_CTRL_END, 0);
-        __key("Delete", KEY_CTRL_DC, 0);
-        __key("Backspace", KEY_CTRL_BACKSPACE, 0);
-        __key("Tab", KEY_CTRL_TAB, 0);
+	__key("Enter", KEY_CTRL_ENTER, 0);
+	__key("Escape", KEY_CTRL_ESCAPE, 0);
+	__key("Home", KEY_CTRL_HOME, 0);
+	__key("End", KEY_CTRL_END, 0);
+	__key("Delete", KEY_CTRL_DC, 0);
+	__key("Backspace", KEY_CTRL_BACKSPACE, 0);
+	__key("Tab", KEY_CTRL_TAB, 0);
 
 #undef __key
 	
@@ -859,7 +859,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("Ctrl-%c"), ch);
 
 		if (add) {
-                        if (xisalpha(ch))
+			if (xisalpha(ch))
 				ncurses_binding_map[ch - 64] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 			else
 				return -1;
@@ -925,17 +925,17 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 	char *joined = NULL;
 	int count = 0;
 
-        for (d = bindings; d; d = d->next) {
-                if (!xstrcasecmp(key, d->key)) {
-                        binding_orginal = d;
-                        break;
-                }
-        }
+	for (d = bindings; d; d = d->next) {
+		if (!xstrcasecmp(key, d->key)) {
+			binding_orginal = d;
+			break;
+		}
+	}
 
-        if (!binding_orginal) {
-                printq("bind_doesnt_exist", key);
+	if (!binding_orginal) {
+		printq("bind_doesnt_exist", key);
 		return;
-        }
+	}
 
 	if (!sequence) {
 		char **chars = NULL;
@@ -1008,8 +1008,8 @@ void ncurses_binding_add(const char *key, const char *action, int internal, int 
 
 	if (internal) {
 		b.default_action	= xstrdup(b.action);
-		b.default_function 	= b.function;
-		b.default_arg 		= xstrdup(b.arg);
+		b.default_function	= b.function;
+		b.default_arg		= xstrdup(b.arg);
 	}
 
 	if (binding_key(&b, key, (c) ? 0 : 1)) {
@@ -1068,8 +1068,8 @@ void ncurses_binding_delete(const char *key, int quiet)
 		if (b->default_action) {
 			b->action	= xstrdup(b->default_action);
 			b->arg		= xstrdup(b->default_arg);
-			b->function 	= b->default_function;
-			b->internal 	= 1;
+			b->function	= b->default_function;
+			b->internal	= 1;
 		} else {
 			xfree(b->key);
 			for (i = 0; i < KEY_MAX + 1; i++) {

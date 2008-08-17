@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2002-2005 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Wojtek Bojdo³ <wojboj@htcon.pl>
- *                          Pawe³ Maziarz <drg@infomex.pl>
+ *			    Wojtek Bojdo³ <wojboj@htcon.pl>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
  *			    Piotr Kupisiewicz <deli@rzepaknet.us>
  *			    Leszek Krupiñski <leafnode@pld-linux.org>
  *
@@ -85,7 +85,7 @@ static inline char *get_short_status(int status) {
 
 	buf[0] = status_t[0];
 	buf[1] = status_t[1];
-	buf[2] = 0; 		/* ? */
+	buf[2] = 0;		/* ? */
 	return &buf[0];
 }
 

@@ -3,7 +3,7 @@ static const char *ekg_core_code =
 	"# so no extra percent characters.\n"
 	"\n"
 	"# %%d : must be first - 1 if perl libraries are to be linked \n"
-	"#       statically with irssi binary, 0 if not\n"
+	"#	 statically with irssi binary, 0 if not\n"
 	"# %%s : must be second - use Irssi; use Irssi::Irc; etc..\n"
 	"package Ekg2::Core;\n"
 	"\n"
@@ -119,7 +119,7 @@ int perl_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, long 
 	XPUSHs(sv_2mortal(newSViv(fd)));
 	if (scr_wat->self->buf) /* WATCH_READ_LINE */
 		XPUSHs(sv_2mortal(new_pv((char *) watch)));
-	else 			/* WATCH_READ */
+	else			/* WATCH_READ */
 		XPUSHs(sv_2mortal(newSViv(watch)));
 	XPUSHs(scr_wat->data);
 	PERL_HANDLER_FOOTER();
@@ -138,7 +138,7 @@ int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 
 		perlarg = NULL;
 		switch ( scr_que->argv_type[i] ) {
-			case (QUERY_ARG_INT):   /* int */
+			case (QUERY_ARG_INT):	/* int */
 				perlarg = newSViv( *(int  *) args[i] );
 				break;
 			case (QUERY_ARG_CHARP):  /* char * */
@@ -201,7 +201,7 @@ int perl_load(script_t *scr)
 	retcount = perl_call_pv("Ekg2::Core::eval_file",
 				G_EVAL|G_SCALAR);
 	SPAGAIN;
-        error = NULL;
+	error = NULL;
 	if (SvTRUE(ERRSV)) {
 		error = SvPV(ERRSV, PL_na);
 		print("script_error", error);
@@ -243,10 +243,10 @@ int perl_initialize()
 	PL_perl_destruct_level = 1;
 	perl_construct(my_perl);
 	perl_parse(my_perl, xs_init, 3, args, NULL);
-/* 	PL_exit_flags |= PERL_EXIT_DESTRUCT_END; */
+/*	PL_exit_flags |= PERL_EXIT_DESTRUCT_END; */
 /*
 	sub_code = saprintf("use lib qw(%s %s/autorun %s);\n"
-			    "use Ekg2;",                 prepare_path("scripts", 0), prepare_path("scripts", 0), "/usr/local/share/ekg2/scripts");
+			    "use Ekg2;",		 prepare_path("scripts", 0), prepare_path("scripts", 0), "/usr/local/share/ekg2/scripts");
 */
 	code = saprintf(ekg_core_code, 0, "use Ekg2;");
 	
@@ -270,8 +270,8 @@ void ekg2_callXS(void (*subaddr)(pTHX_ CV* cv), CV *cv, SV **mark)
 
 static int magic_free_object(pTHX_ SV *sv, MAGIC *mg)
 {
-        sv_setiv(sv, 0);
-        return 0;
+	sv_setiv(sv, 0);
+	return 0;
 }
 
 
@@ -280,37 +280,37 @@ static MGVTBL vtbl_free_object = { NULL, NULL, NULL, NULL, magic_free_object };
 
 /*static */ SV *create_sv_ptr(void *object)
 {
-        SV *sv;
+	SV *sv;
 
 //	if (!object) return &PL_sv_undef;
 
-        sv = newSViv((IV)object);
+	sv = newSViv((IV)object);
 
-        sv_magic(sv, NULL, '~', NULL, 0);
+	sv_magic(sv, NULL, '~', NULL, 0);
 
-        SvMAGIC(sv)->mg_private = 0x1551; /* HF */
-        SvMAGIC(sv)->mg_virtual = &vtbl_free_object;
+	SvMAGIC(sv)->mg_private = 0x1551; /* HF */
+	SvMAGIC(sv)->mg_virtual = &vtbl_free_object;
 
-        return sv;
+	return sv;
 }
 
 
 void *Ekg2_ref_object(SV *o)
 {
-        SV **sv;
-        HV *hv;
-        void *p;
+	SV **sv;
+	HV *hv;
+	void *p;
 
-        hv = hvref(o);
+	hv = hvref(o);
 //	hv =  (HV *)SvRV(o);
-        if (!hv)
-                return NULL;
+	if (!hv)
+		return NULL;
 
-        sv = hv_fetch(hv, "_ekg2", 4, 0);
-        if (!sv)
-                debug("variable is damaged\n");
-        p = (void *) (SvIV(*sv));
-        return p;
+	sv = hv_fetch(hv, "_ekg2", 4, 0);
+	if (!sv)
+		debug("variable is damaged\n");
+	p = (void *) (SvIV(*sv));
+	return p;
 }
 /* <syf irssi */
 
@@ -320,20 +320,20 @@ int perl_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bed
 	SV *watchdata = NULL;
 	va_start(ap, private);
 
-        switch (type) {
+	switch (type) {
 		case(SCRIPT_WATCHTYPE): 
 		    debug("[perl_bind_free] watch = %x\n", watchdata = va_arg(ap, void *));
-                case(SCRIPT_VARTYPE):
-                case(SCRIPT_COMMANDTYPE):
-                case(SCRIPT_QUERYTYPE):
-                case(SCRIPT_TIMERTYPE):
+		case(SCRIPT_VARTYPE):
+		case(SCRIPT_COMMANDTYPE):
+		case(SCRIPT_QUERYTYPE):
+		case(SCRIPT_TIMERTYPE):
 		case(SCRIPT_PLUGINTYPE):
 //		    debug("[perl_bind_free] type %d funcname %s\n", type, private);
 		    xfree(private);
-                    break;
-        }
+		    break;
+	}
 	va_end(ap);
-        return 0;
+	return 0;
 }
 
 script_t *perl_caller() {

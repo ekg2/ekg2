@@ -53,7 +53,7 @@ CODEC_CONTROL(pcm_codec_control) {
 		int valid = 1;
 
 		va_start(ap, aco);
-		inp     = va_arg(ap, audio_io_t *);
+		inp	= va_arg(ap, audio_io_t *);
 		out	= va_arg(ap, audio_io_t *);
 		va_end(ap);
 	/* ;) */
@@ -91,11 +91,11 @@ CODEC_CONTROL(pcm_codec_control) {
 		if (xstrcmp(priv->from, "pcm") && xstrcmp(priv->from, "raw"))		valid = 0;	/* CHECK INPUT FORMAT */
 		if (xstrcmp(priv->to, "pcm") && xstrcmp(priv->to, "raw"))		valid = 0;	/* CHECK OUTPUT FORMAT */
 
-		if (!priv->ifreq || !priv->ofreq) 							valid = 0;	/* CHECK FREQ */
+		if (!priv->ifreq || !priv->ofreq)							valid = 0;	/* CHECK FREQ */
 		if ((priv->ibps != 8 && priv->ibps != 16) || (priv->obps != 8 && priv->obps != 16))	valid = 0;	/* CHECK BPS */
 		if (priv->ich < 1 || priv->ich > 2 || priv->och < 1 || priv->och > 2)			valid = 0;	/* CHECK CHANNELS */
 
-	/* return valid 	1 - succ ; 0 - failed*/
+	/* return valid		1 - succ ; 0 - failed*/
 			/* XXX: yeah, that's awesome, but gcc is stupid like trunk,
 			 * and prints warning (on amd64, where sizeof(int) != sizeof(void*))
 			 * for both !!valid and even (valid ? 1 : 0) */
@@ -120,15 +120,15 @@ CODEC_CONTROL(pcm_codec_control) {
 				if (!xstrcmp(attr, "from"))		from	= val;
 				else if (!xstrcmp(attr, "to"))		to	= val;
 
-				else if (!xstrcmp(attr, "freq"))	{ v = atoi(val); 	priv->ifreq = v;	priv->ofreq = v;	}
+				else if (!xstrcmp(attr, "freq"))	{ v = atoi(val);	priv->ifreq = v;	priv->ofreq = v;	}
 				else if (!xstrcmp(attr, "sample"))	{ v = atoi(val);	priv->ibps = v;		priv->obps = v;		}
 				else if (!xstrcmp(attr, "channels"))	{ v = atoi(val);	priv->ich = v;		priv->och = v;		}
 
-				else if (!xstrcmp(attr, "ifreq"))	{ v = atoi(val); 	priv->ifreq = v; 				}
+				else if (!xstrcmp(attr, "ifreq"))	{ v = atoi(val);	priv->ifreq = v;				}
 				else if (!xstrcmp(attr, "ibps"))	{ v = atoi(val);	priv->ibps = v;					} 
 				else if (!xstrcmp(attr, "ichannels"))	{ v = atoi(val);	priv->ich = v;					} 
 
-				else if (!xstrcmp(attr, "ofreq"))	{ v = atoi(val);  				priv->ofreq = v;	}
+				else if (!xstrcmp(attr, "ofreq"))	{ v = atoi(val);				priv->ofreq = v;	}
 				else if (!xstrcmp(attr, "obps"))	{ v = atoi(val);				priv->obps = v;		}
 				else if (!xstrcmp(attr, "ochannels"))	{ v = atoi(val);				priv->och = v;		}
 			} else if (type == AUDIO_CONTROL_GET) {
@@ -159,7 +159,7 @@ CODEC_CONTROL(pcm_codec_control) {
 		aco		= xmalloc(sizeof(audio_codec_t));
 		aco->c		= &pcm_codec;
 		aco->way	= 0;
-		aco->private 	= priv;
+		aco->private	= priv;
 	} else if (type == AUDIO_CONTROL_DEINIT) {	/* pcm_codec_destroy() */
 		if (aco) 
 			xfree(aco->private);
@@ -171,7 +171,7 @@ CODEC_CONTROL(pcm_codec_control) {
 
 			"-pcm:freq",		"",
 			"-pcm:sample",		"8 16",
-			"-pcm:channels", 	"1 2",
+			"-pcm:channels",	"1 2",
 			
 			">pcm:ifreq",		"",
 			">pcm:ibps",		"8 16",

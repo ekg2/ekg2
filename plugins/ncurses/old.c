@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Wojtek Bojdo³ <wojboj@htcon.pl>
- *                          Pawe³ Maziarz <drg@infomex.pl>
+ *			    Wojtek Bojdo³ <wojboj@htcon.pl>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -32,7 +32,7 @@
 #include <termios.h>
 #include <unistd.h>
 #ifdef WITH_ASPELL
-#       include <aspell.h>
+#	include <aspell.h>
 #endif
 #ifdef HAVE_REGEX_H
 #	include <sys/types.h>
@@ -122,7 +122,7 @@ QUERY(ncurses_password_input) {
 	oldline				= ncurses_line;
 	oldlines			= ncurses_lines;
 	ncurses_current->prompt		= (char*) (prompt ? prompt : format_find("password_input"));
-	ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
+	ncurses_current->prompt_len	= xstrlen(ncurses_current->prompt);
 	ncurses_update_real_prompt(ncurses_current);
 	ncurses_lines			= NULL;
 	ncurses_line			= xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
@@ -136,7 +136,7 @@ QUERY(ncurses_password_input) {
 	if (xwcslen(passa)) {
 		if (rprompt) {
 			ncurses_current->prompt		= (char*) (*rprompt ? *rprompt : format_find("password_repeat"));
-			ncurses_current->prompt_len 	= xstrlen(ncurses_current->prompt);
+			ncurses_current->prompt_len	= xstrlen(ncurses_current->prompt);
 			ncurses_noecho			= 1;
 			ncurses_update_real_prompt(ncurses_current);
 			ncurses_redraw_input(0);
@@ -350,9 +350,9 @@ void ncurses_update_real_prompt(ncurses_window_t *n) {
  */
 #ifdef WITH_ASPELL
 void ncurses_spellcheck_init(void) {
-        AspellCanHaveError *possible_err;
+	AspellCanHaveError *possible_err;
 
-        if (!config_aspell || !config_console_charset || !config_aspell_lang) {
+	if (!config_aspell || !config_console_charset || !config_aspell_lang) {
 	/* jesli nie chcemy aspella to wywalamy go z pamieci */
 		if (spell_checker)	delete_aspell_speller(spell_checker);
 		if (spell_config)	delete_aspell_config(spell_config);
@@ -364,8 +364,8 @@ void ncurses_spellcheck_init(void) {
 
 	print("aspell_init");
 	
-        if (spell_checker)	{ delete_aspell_speller(spell_checker);	spell_checker = NULL; }
-	if (!spell_config) 	spell_config = new_aspell_config();
+	if (spell_checker)	{ delete_aspell_speller(spell_checker);	spell_checker = NULL; }
+	if (!spell_config)	spell_config = new_aspell_config();
 	aspell_config_replace(spell_config, "encoding", config_console_charset);
 	aspell_config_replace(spell_config, "lang", config_aspell_lang);
 	possible_err = new_aspell_speller(spell_config);
@@ -441,29 +441,29 @@ void ncurses_commit()
  */
 void ncurses_main_window_mouse_handler(int x, int y, int mouse_state)
 {
-        if (mouse_state == EKG_SCROLLED_UP) {
-	        ncurses_current->start -= 5;
-	        if (ncurses_current->start < 0)
-	                ncurses_current->start = 0;
-        } else if (mouse_state == EKG_SCROLLED_DOWN) {
-	        ncurses_current->start += 5;
+	if (mouse_state == EKG_SCROLLED_UP) {
+		ncurses_current->start -= 5;
+		if (ncurses_current->start < 0)
+			ncurses_current->start = 0;
+	} else if (mouse_state == EKG_SCROLLED_DOWN) {
+		ncurses_current->start += 5;
 	
-	        if (ncurses_current->start > ncurses_current->lines_count - window_current->height + ncurses_current->overflow)
-	                ncurses_current->start = ncurses_current->lines_count - window_current->height + ncurses_current->overflow;
+		if (ncurses_current->start > ncurses_current->lines_count - window_current->height + ncurses_current->overflow)
+			ncurses_current->start = ncurses_current->lines_count - window_current->height + ncurses_current->overflow;
 
-	        if (ncurses_current->start < 0)
-	                ncurses_current->start = 0;
+		if (ncurses_current->start < 0)
+			ncurses_current->start = 0;
 
-	        if (ncurses_current->start == ncurses_current->lines_count - window_current->height + ncurses_current->overflow) {
-	                window_current->more = 0;
-	                update_statusbar(0);
-        	}
-        } else {
+		if (ncurses_current->start == ncurses_current->lines_count - window_current->height + ncurses_current->overflow) {
+			window_current->more = 0;
+			update_statusbar(0);
+		}
+	} else {
 		return;
 	}
 
-        ncurses_redraw(window_current);
-        ncurses_commit();
+	ncurses_redraw(window_current);
+	ncurses_commit();
 }
 
 /*
@@ -516,8 +516,8 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 			int len	= mbtowc(&znak, &(str->str.b[cur]), rlen-cur);
 
 			if (!len) {	/* NUL, just in case */
-/*				temp[i]         = '\0'; */
-				str->attr[i]    = str->attr[cur]; 
+/*				temp[i]		= '\0'; */
+				str->attr[i]	= str->attr[cur]; 
 				i++;		/* just in case x 2 */
 				
 				/* It always hit here. So while (cur <= rlen) can be replaced with while (1) */
@@ -551,7 +551,7 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 	/* resize str->attr && str->str to match newlen. [I think we could use `i` instead of `i+1` but just in case] */
 		xfree(str->str.b); 
 
-		str->str.w 	= xrealloc(temp, (i+1) * sizeof(CHAR_T));
+		str->str.w	= xrealloc(temp, (i+1) * sizeof(CHAR_T));
 		str->attr	= xrealloc(str->attr, (i+1) * sizeof(short));
 	}
 #endif
@@ -620,7 +620,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		int j, margin_left, wrapping = 0;
 
 		time_t ts;			/* current ts */
-		time_t lastts = 0; 		/* last cached ts */
+		time_t lastts = 0;		/* last cached ts */
 		char lasttsbuf[100];		/* last cached strftime() result */
 
 		str = n->backlog[i]->str.w + n->backlog[i]->prompt_len;
@@ -1345,7 +1345,7 @@ static void update_header(int commit)
  * zwraca ilo¶æ dopisanych znaków.
  */
 
-/* 13 wrz 06 	removed status cause it was always 1 (dj)  */
+/* 13 wrz 06	removed status cause it was always 1 (dj)  */
 		
 static int window_printat(WINDOW *w, int x, int y, const char *format, struct format_data *data, int fgcolor, int bold, int bgcolor) {
 	int backup_display_color = config_display_color;
@@ -1384,7 +1384,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 			continue;
 		}
 
- 		if (*p != '%') {
+		if (*p != '%') {
 			waddch(w, (unsigned char) *p);
 			p++;
 			x++;
@@ -1452,11 +1452,11 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 				int percent_ok = (!xstrcmp(data[i].name, "activity") || !xstrcmp(data[i].name, "time") || !xstrcmp(data[i].name, "irctopic"));	/* XXX */
 				char *text = data[i].text;
 				char *ftext = NULL;
-                             	
+				
 				if (!config_display_pl_chars) {
-                                	ftext = text = xstrdup(text);
-                                	iso_to_ascii((unsigned char*) text);
-                              	}
+					ftext = text = xstrdup(text);
+					iso_to_ascii((unsigned char*) text);
+				}
 
 				while (*text) {
 					if (config_use_unicode && *text >> 7) {
@@ -1655,7 +1655,7 @@ void update_statusbar(int commit)
 	} 
 
 #define __add_format_emp(x, y)		__add_format(x, y ? (char *) empty_format : NULL)
-#define __add_format_dup(x, y, z) 	__add_format(x, y ? xstrdup(z) : NULL)
+#define __add_format_dup(x, y, z)	__add_format(x, y ? xstrdup(z) : NULL)
 
 	__add_format_dup("time", 1, timestamp(format_find("statusbar_timestamp")));
 
@@ -2004,7 +2004,7 @@ void ncurses_deinit()
 	}
 
 #ifdef WITH_ASPELL
-        delete_aspell_speller(spell_checker);
+	delete_aspell_speller(spell_checker);
 #endif
 
 	xfree(ncurses_line);
@@ -2096,7 +2096,7 @@ void ncurses_input_update()
  * print_char()
  *
  * wy¶wietla w danym okienku znak, bior±c pod uwagê znaki ,,niewy¶wietlalne''.
- * 	gdy attr A_UNDERLINE wtedy podkreslony
+ *	gdy attr A_UNDERLINE wtedy podkreslony
  */
 static void print_char(WINDOW *w, int y, int x, CHAR_T ch, int attr) {
 	ch = ncurses_fixchar(ch, &attr);
@@ -2150,9 +2150,9 @@ static int ekg_getch(int meta, unsigned int *ch) {
 	 * conception is borrowed from Midnight Commander project 
 	 *    (www.ibiblio.org/mc/) 
 	 */	
-#define GET_TIME(tv)    (gettimeofday(&tv, (struct timezone *)NULL))
+#define GET_TIME(tv)	(gettimeofday(&tv, (struct timezone *)NULL))
 #define DIF_TIME(t1,t2) ((t2.tv_sec -t1.tv_sec) *1000+ \
-                         (t2.tv_usec-t1.tv_usec)/1000)
+			 (t2.tv_usec-t1.tv_usec)/1000)
 	if (*ch == KEY_MOUSE) {
 		int btn, mouse_state = 0, x, y;
 		static struct timeval tv1 = { 0, 0 }; 
@@ -2166,30 +2166,30 @@ static int ekg_getch(int meta, unsigned int *ch) {
 			last_btn -= 32;
 
 			switch (last_btn) {
-                                case 0: mouse_state = (clicks) ? EKG_BUTTON1_DOUBLE_CLICKED : EKG_BUTTON1_CLICKED;	break;
-                                case 1: mouse_state = (clicks) ? EKG_BUTTON2_DOUBLE_CLICKED : EKG_BUTTON2_CLICKED;	break;
-                                case 2: mouse_state = (clicks) ? EKG_BUTTON3_DOUBLE_CLICKED : EKG_BUTTON3_CLICKED;	break;
+				case 0: mouse_state = (clicks) ? EKG_BUTTON1_DOUBLE_CLICKED : EKG_BUTTON1_CLICKED;	break;
+				case 1: mouse_state = (clicks) ? EKG_BUTTON2_DOUBLE_CLICKED : EKG_BUTTON2_CLICKED;	break;
+				case 2: mouse_state = (clicks) ? EKG_BUTTON3_DOUBLE_CLICKED : EKG_BUTTON3_CLICKED;	break;
 				default:										break;
 			}
 
-	 		last_btn = 0;
+			last_btn = 0;
 			GET_TIME (tv1);
 			clicks = 0;
 
-    		} else if (!last_btn) {
+		} else if (!last_btn) {
 			GET_TIME (tv2);
 			if (tv1.tv_sec && (DIF_TIME (tv1,tv2) < 250)){
 				clicks++;
-	    			clicks %= 3;
+				clicks %= 3;
 			} else
-	    			clicks = 0;
+				clicks = 0;
 	
 			switch (btn) {
 				case 0:
 				case 1:
 				case 2:
-                                case 64:
-                                case 65:
+				case 64:
+				case 65:
 					btn += 32;
 					break;
 				default:
@@ -2210,7 +2210,7 @@ static int ekg_getch(int meta, unsigned int *ch) {
 		}
 		
 		/* 33 based */
-                x = wgetch(input) - 32; 
+		x = wgetch(input) - 32; 
 		y = wgetch(input) - 32;
 
 		if (mouse_state)
@@ -2273,8 +2273,8 @@ static inline int isalpha_locale(int x) {
  * it checks if the given word is correct
  */
 static void spellcheck(CHAR_T *what, char *where) {
-	register int i = 0;     /* licznik */
-	register int j = 0;     /* licznik */
+	register int i = 0;	/* licznik */
+	register int j = 0;	/* licznik */
 
 	/* Sprawdzamy czy nie mamy doczynienia z / (wtedy nie sprawdzamy reszty ) */
 	if (!what || *what == '/')
@@ -2357,7 +2357,7 @@ static int ncurses_redraw_input_already_exec = 0;
 
 /* 
  * wyswietla ponownie linie wprowadzenia tekstu		(prompt + aktualnie wpisany tekst) 
- * 	przy okazji jesli jest aspell to sprawdza czy tekst jest poprawny.
+ *	przy okazji jesli jest aspell to sprawdza czy tekst jest poprawny.
  */
 void ncurses_redraw_input(unsigned int ch) {
 	const int promptlen = ncurses_lines ? 0 : ncurses_current->prompt_real_len;
@@ -2393,7 +2393,7 @@ void ncurses_redraw_input(unsigned int ch) {
 			if (spell_checker) {
 				aspell_line = xmalloc(plen);
 				spellcheck(p, aspell_line);
-	                }
+			}
 #endif
 			for (j = 0; j + line_start < plen && j < input->_maxx + 1; j++) { 
 #ifdef WITH_ASPELL
@@ -2445,8 +2445,8 @@ void ncurses_redraw_input(unsigned int ch) {
 		}
 #endif
 		/* XXX,
-		 * 	line_start can be negative, 
-		 * 	line_start can be larger than line_len
+		 *	line_start can be negative, 
+		 *	line_start can be larger than line_len
 		 *
 		 * Research.
 		 */
@@ -2455,7 +2455,7 @@ void ncurses_redraw_input(unsigned int ch) {
 #ifdef WITH_ASPELL
 			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start + i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 				print_char(input, 0, i + promptlen, ncurses_line[line_start + i], A_UNDERLINE);
-			else 	/* jesli jest wszystko okey to wyswietlamy normalny */
+			else	/* jesli jest wszystko okey to wyswietlamy normalny */
 #endif				/* lub gdy nie mamy aspella */
 				print_char(input, 0, i + promptlen, ncurses_line[line_start + i], A_NORMAL);
 		}
@@ -2507,12 +2507,12 @@ WATCHER(ncurses_watch_stdin)
 		int c;
 		array_add(&chars, xstrdup(itoa(ch)));
 
-        	while (count <= bindings_added_max && 
+		while (count <= bindings_added_max && 
 				(c = wgetch(input)) != ERR
 				) {
-	                array_add(&chars, xstrdup(itoa(c)));
+			array_add(&chars, xstrdup(itoa(c)));
 			count++;
-	        }
+		}
 
 		joined = array_join(chars, (" "));
 
@@ -2520,21 +2520,21 @@ WATCHER(ncurses_watch_stdin)
 			if (!xstrcasecmp(d->sequence, joined)) {
 				struct binding *b = d->binding;
 
-	                        if (b->function)
-	                                b->function(b->arg);
-	                        else {
-	                                command_exec_format(window_current->target, window_current->session, 0, ("%s%s"), 
+				if (b->function)
+					b->function(b->arg);
+				else {
+					command_exec_format(window_current->target, window_current->session, 0, ("%s%s"), 
 							((b->action[0] == '/') ? "" : "/"), b->action);
-	                        }
+				}
 
 				success = 1;
 				goto end;
 			}
 		}
 
-                for (i = count; i > 0; i--) {
-                        ungetch(atoi(chars[i]));
-                }
+		for (i = count; i > 0; i--) {
+			ungetch(atoi(chars[i]));
+		}
 
 end:
 		xfree(joined);
@@ -2785,8 +2785,8 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 			else if (rs != REG_NOMATCH) {
 				char errbuf[512];
 				/* blad wyrazenia? */
-        		        regerror(rs, &(lastlog->reg), errbuf, sizeof(errbuf));	/* NUL-char-ok */
-		                print("regex_error", errbuf);
+				regerror(rs, &(lastlog->reg), errbuf, sizeof(errbuf));	/* NUL-char-ok */
+				print("regex_error", errbuf);
 
 				/* XXX mh, dodac to do backloga? */
 				/* XXX, przerwac wykonywanie? */
@@ -2956,7 +2956,7 @@ int ncurses_window_new(window_t *w)
 		}
 	}
 
- 	n->window = newwin(w->height, w->width, w->top, w->left);
+	n->window = newwin(w->height, w->width, w->top, w->left);
 
 	ncurses_resize();
 

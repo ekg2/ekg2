@@ -62,28 +62,28 @@
 
 PyObject *python_build_user(char * session, char * name)
 {
-        ekg_userObj *pyuser;
-        char buf[100];
-        session_t *s;
-        userlist_t *u;
+	ekg_userObj *pyuser;
+	char buf[100];
+	session_t *s;
+	userlist_t *u;
 
-        debug("[python] checking for user '%s' in session '%s'\n", name, session);
+	debug("[python] checking for user '%s' in session '%s'\n", name, session);
 
-        s = session_find(session);
-        u = userlist_find(s, name);
+	s = session_find(session);
+	u = userlist_find(s, name);
 
-        if (!u) {
-                snprintf(buf, 99, "Can't find user '%s'", name);
-                PyErr_SetString(PyExc_KeyError, buf);
-                return NULL;
-        }
+	if (!u) {
+		snprintf(buf, 99, "Can't find user '%s'", name);
+		PyErr_SetString(PyExc_KeyError, buf);
+		return NULL;
+	}
 
-        debug("[python] Building object for user '%s'\n", name);
-        pyuser = PyObject_New(ekg_userObj, &ekg_user_type);
-        pyuser->name = xstrdup(name);
-        pyuser->session = xstrdup(session);
-        Py_INCREF(pyuser);
-        return (PyObject *)pyuser;
+	debug("[python] Building object for user '%s'\n", name);
+	pyuser = PyObject_New(ekg_userObj, &ekg_user_type);
+	pyuser->name = xstrdup(name);
+	pyuser->session = xstrdup(session);
+	Py_INCREF(pyuser);
+	return (PyObject *)pyuser;
 }
 
 
@@ -102,18 +102,18 @@ PyObject *python_build_user(char * session, char * name)
 
 int ekg_user_init(ekg_userObj *self, PyObject *args, PyObject *kwds)
 {
-        PyObject * name;
-        PyObject * session;
-        static char *kwlist[] = {"name", "session", NULL};
+	PyObject * name;
+	PyObject * session;
+	static char *kwlist[] = {"name", "session", NULL};
 
-        if (! PyArg_ParseTupleAndKeywords(args, kwds, "ss", kwlist,
-                                &name, &session))
-                return -1;
+	if (! PyArg_ParseTupleAndKeywords(args, kwds, "ss", kwlist,
+				&name, &session))
+		return -1;
 
-        self->name = PyString_AsString(name);
-        self->session = PyString_AsString(session);
+	self->name = PyString_AsString(name);
+	self->session = PyString_AsString(session);
 
-        return 0;
+	return 0;
 }
 
 /**
@@ -125,108 +125,108 @@ int ekg_user_init(ekg_userObj *self, PyObject *args, PyObject *kwds)
 
 PyObject *ekg_user_get_attr(ekg_userObj * self, char * attr)
 {
-        session_t * s = session_find((const char *) self->session);
-        userlist_t * u = userlist_find(s, self->name);
-        if (!u) {
-                PyErr_SetString(PyExc_RuntimeError, _("Can't find user (?)"));
-                return NULL;
-        }
-        if (!xstrcmp(attr, "uid")) {
-                if (u->uid) {
-                        return PyString_FromString(u->uid);
-                } else {
-                        Py_RETURN_NONE;
-                }
-        } else if (!xstrcmp(attr, "nickname")) {
-                if (u->nickname) {
-                        return PyString_FromString(u->nickname);
-                } else {
-                        Py_RETURN_NONE;
-                }
+	session_t * s = session_find((const char *) self->session);
+	userlist_t * u = userlist_find(s, self->name);
+	if (!u) {
+		PyErr_SetString(PyExc_RuntimeError, _("Can't find user (?)"));
+		return NULL;
+	}
+	if (!xstrcmp(attr, "uid")) {
+		if (u->uid) {
+			return PyString_FromString(u->uid);
+		} else {
+			Py_RETURN_NONE;
+		}
+	} else if (!xstrcmp(attr, "nickname")) {
+		if (u->nickname) {
+			return PyString_FromString(u->nickname);
+		} else {
+			Py_RETURN_NONE;
+		}
 #if 0 /* using PRIVHANDLER below */
-        } else if (!xstrcmp(attr, "first_name")) {
-                if (u->first_name) {
-                        return PyString_FromString(u->first_name);
-                } else {
-                        Py_RETURN_NONE;
-                }
-        } else if (!xstrcmp(attr, "last_name")) {
-                if (u->last_name) {
-                        return PyString_FromString(u->last_name);
-                } else {
-                        Py_RETURN_NONE;
-                }
-        } else if (!xstrcmp(attr, "mobile")) {
-                if (u->mobile) {
-                        return PyString_FromString(u->mobile);
-                } else {
-                        Py_RETURN_NONE;
-                }
+	} else if (!xstrcmp(attr, "first_name")) {
+		if (u->first_name) {
+			return PyString_FromString(u->first_name);
+		} else {
+			Py_RETURN_NONE;
+		}
+	} else if (!xstrcmp(attr, "last_name")) {
+		if (u->last_name) {
+			return PyString_FromString(u->last_name);
+		} else {
+			Py_RETURN_NONE;
+		}
+	} else if (!xstrcmp(attr, "mobile")) {
+		if (u->mobile) {
+			return PyString_FromString(u->mobile);
+		} else {
+			Py_RETURN_NONE;
+		}
 #endif
-        } else if (!xstrcmp(attr, "status")) {
-                if (u->status) {
-                        if (u->descr) {
-                                return Py_BuildValue("(ss)", ekg_status_string(u->status, 0), u->descr);
-                        } else {
-                                return Py_BuildValue("(so)", ekg_status_string(u->status, 0), Py_None);
-                        }
-                } else {
-                        Py_RETURN_NONE;
-                }
+	} else if (!xstrcmp(attr, "status")) {
+		if (u->status) {
+			if (u->descr) {
+				return Py_BuildValue("(ss)", ekg_status_string(u->status, 0), u->descr);
+			} else {
+				return Py_BuildValue("(so)", ekg_status_string(u->status, 0), Py_None);
+			}
+		} else {
+			Py_RETURN_NONE;
+		}
 #if 0 /* XXX */
-        } else if (!xstrcmp(attr, "resource")) {
-                if (u->resource) {
-                        return PyString_FromString(u->resource);
-                } else {
-                        Py_RETURN_NONE;
-                }
+	} else if (!xstrcmp(attr, "resource")) {
+		if (u->resource) {
+			return PyString_FromString(u->resource);
+		} else {
+			Py_RETURN_NONE;
+		}
 #endif
-        } else if (!xstrcmp(attr, "last_seen")) {
-                if (u->last_seen) {
-                        return Py_BuildValue("i", u->last_seen);
-                } else {
-                        Py_RETURN_NONE;
-                }
+	} else if (!xstrcmp(attr, "last_seen")) {
+		if (u->last_seen) {
+			return Py_BuildValue("i", u->last_seen);
+		} else {
+			Py_RETURN_NONE;
+		}
 #if 0 /* using PRIVHANDLER below */
-        } else if (!xstrcmp(attr, "ip")) {
-                if (u->ip) {
-                        struct sockaddr_in sin;
-                        sin.sin_addr.s_addr = u->ip;
-                        return PyString_FromString(inet_ntoa(sin.sin_addr));
-                } else {
-                        Py_RETURN_NONE;
-                }
-        } else if (!xstrcmp(attr, "last_ip")) {
-                if (u->last_ip) {
-                        struct sockaddr_in sin;
-                        sin.sin_addr.s_addr = u->last_ip;
-                        return PyString_FromString(inet_ntoa(sin.sin_addr));
-                } else {
-                        Py_RETURN_NONE;
-                }
+	} else if (!xstrcmp(attr, "ip")) {
+		if (u->ip) {
+			struct sockaddr_in sin;
+			sin.sin_addr.s_addr = u->ip;
+			return PyString_FromString(inet_ntoa(sin.sin_addr));
+		} else {
+			Py_RETURN_NONE;
+		}
+	} else if (!xstrcmp(attr, "last_ip")) {
+		if (u->last_ip) {
+			struct sockaddr_in sin;
+			sin.sin_addr.s_addr = u->last_ip;
+			return PyString_FromString(inet_ntoa(sin.sin_addr));
+		} else {
+			Py_RETURN_NONE;
+		}
 #endif
-        } else if (!xstrcmp(attr, "status_time")) {
-                if (u->status_time) {
-                        return Py_BuildValue("i", u->status_time);
-                } else {
-                        Py_RETURN_NONE;
-                }
-        } else if (!xstrcmp(attr, "last_status")) {
-                if(u->last_status) {
-                        return Py_BuildValue("(ss)", ekg_status_string(u->last_status, 0), u->last_descr);
-                } else {
-                        Py_RETURN_NONE;
-                }
-        } else { /* XXX, take a look at this */
+	} else if (!xstrcmp(attr, "status_time")) {
+		if (u->status_time) {
+			return Py_BuildValue("i", u->status_time);
+		} else {
+			Py_RETURN_NONE;
+		}
+	} else if (!xstrcmp(attr, "last_status")) {
+		if(u->last_status) {
+			return Py_BuildValue("(ss)", ekg_status_string(u->last_status, 0), u->last_descr);
+		} else {
+			Py_RETURN_NONE;
+		}
+	} else { /* XXX, take a look at this */
 		char *val;
 
 		if (user_private_item_get_safe(u, attr, &val)) 
-                        return PyString_FromString(val);
+			return PyString_FromString(val);
 		else {
-/*	                return Py_FindMethod(ekg_user_methods, (PyObject *) self, attr); */
+/*			return Py_FindMethod(ekg_user_methods, (PyObject *) self, attr); */
 			Py_RETURN_NONE;
 		}
-        }
+	}
 }
 
 /**
@@ -255,9 +255,9 @@ void ekg_user_dealloc(ekg_userObj * o)
 
 PyObject *ekg_user_repr(ekg_userObj *self)
 {
-        char buf[100];
-        snprintf(buf, 99, "<user %s session %s>", self->name, self->session);
-        return PyString_FromString(buf);
+	char buf[100];
+	snprintf(buf, 99, "<user %s session %s>", self->name, self->session);
+	return PyString_FromString(buf);
 }
 
 /**
@@ -269,7 +269,7 @@ PyObject *ekg_user_repr(ekg_userObj *self)
 
 PyObject *ekg_user_str(ekg_userObj *self)
 {
-        return PyString_FromString(self->name);
+	return PyString_FromString(self->name);
 }
 
 
@@ -282,22 +282,22 @@ PyObject *ekg_user_str(ekg_userObj *self)
 
 PyObject *ekg_user_groups(ekg_userObj * self)
 {
-        session_t * s = session_find((const char *) self->session);
-        userlist_t * u = userlist_find(s, self->name);
-        struct ekg_group *gl;
-        PyObject *list;
-        int len = LIST_COUNT2(u->groups);
+	session_t * s = session_find((const char *) self->session);
+	userlist_t * u = userlist_find(s, self->name);
+	struct ekg_group *gl;
+	PyObject *list;
+	int len = LIST_COUNT2(u->groups);
 
-        list = PyList_New(len);
-        len = 0;
+	list = PyList_New(len);
+	len = 0;
 
-        for (gl = u->groups; gl; gl = gl->next) {
-                struct ekg_group *g = gl;
-                PyList_SetItem(list, len, PyString_FromString(g->name));
-                len++;
-        }
-        Py_INCREF(list);
-        return list;
+	for (gl = u->groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
+		PyList_SetItem(list, len, PyString_FromString(g->name));
+		len++;
+	}
+	Py_INCREF(list);
+	return list;
 }
 
 
