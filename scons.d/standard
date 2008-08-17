@@ -108,6 +108,13 @@ else:
 	have_resolv = False
 
 defines['HAVE_RESOLV_H'] = have_resolv
+if not have_resolv:
+	warnings.append("""libresolv not found, SRV resolving won't work. If you're going to use GTalk
+account, you'll have to manually set 'server' to 'talk.google.com'.""")
+if not 'HAVE_GETADDRINFO' in defines:
+	warnings.append("You don't have getaddrinfo(), IPv6 won't work.")
+if not 'HAVE_INET_PTON' in defines:
+	warnings.append("You don't have inet_pton(), IPv6 probably won't work.")
 
 out = True
 Return('out')
