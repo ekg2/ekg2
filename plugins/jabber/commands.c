@@ -125,10 +125,13 @@ static COMMAND(jabber_command_connect)
 #ifdef JABBER_HAVE_SSL
 		int ssl_port = session_int_get(session, "ssl_port");
 		int use_ssl = session_int_get(session, "use_ssl");
+		j->using_ssl = 0;
 #endif
 
+		if (j->istlen && realserver == TLEN_HUB)
+			j->port = 80;
+		else
 #ifdef JABBER_HAVE_SSL
-		j->using_ssl = 0;
 		if (use_ssl)
 			j->port = ssl_port < 1 ? 5223 : ssl_port;
 		else
