@@ -137,7 +137,7 @@ typedef struct {
  */
 typedef struct {
 	int fd;				/**< connection's fd */
-	unsigned int istlen	: 1;	/**< whether this is a tlen session */
+	unsigned int istlen	: 2;	/**< whether this is a tlen session, 2 if connecting to tlen hub (XXX: ugly hack) */
 
 	enum jabber_compression_method using_compress;	/**< whether we're using compressed connection, and what method */
 #ifdef JABBER_HAVE_SSL
