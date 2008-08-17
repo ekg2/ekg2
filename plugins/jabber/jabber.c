@@ -2,9 +2,9 @@
 
 /*
  *  (C) Copyright 2003-2005 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Tomasz Torcz <zdzichu@irc.pl>
- *                          Leszek Krupiñski <leafnode@pld-linux.org>
- *                          Piotr Paw³ow and other libtlen developers (http://libtlen.sourceforge.net/index.php?theme=teary&page=authors)
+ *			    Tomasz Torcz <zdzichu@irc.pl>
+ *			    Leszek Krupiñski <leafnode@pld-linux.org>
+ *			    Piotr Paw³ow and other libtlen developers (http://libtlen.sourceforge.net/index.php?theme=teary&page=authors)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -43,7 +43,7 @@
 #include <netdb.h>
 #endif
 
-#ifdef __sun      /* Solaris, thanks to Beeth */
+#ifdef __sun	  /* Solaris, thanks to Beeth */
 #include <sys/filio.h>
 #endif
 
@@ -98,7 +98,7 @@ PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
  * @param data NULL
  *
  * @return	0 if @a session is jabber one, and we init memory<br>
- * 		1 if we don't found such session, or it wasn't jabber session <b>[most probable]</b>, or we already init memory.
+ *		1 if we don't found such session, or it wasn't jabber session <b>[most probable]</b>, or we already init memory.
  */
 
 static QUERY(jabber_session_init) {
@@ -138,8 +138,8 @@ static QUERY(jabber_session_init) {
  * @param ap 1st param: <i>(char *) </i><b>session</b> - uid of session
  * @param data NULL
  *
- * @return 	0 if @a session is jabber one, and memory allocated where xfree()'d.<br>
- * 		1 if not such session, or it wasn't jabber session <b>[most probable]</b>, or we already free memory.
+ * @return	0 if @a session is jabber one, and memory allocated where xfree()'d.<br>
+ *		1 if not such session, or it wasn't jabber session <b>[most probable]</b>, or we already free memory.
  */
 
 static QUERY(jabber_session_deinit) {
@@ -262,8 +262,8 @@ int jabber_bookmarks_free(jabber_private_t *j) {
  */
 
 static QUERY(jabber_print_version) {
-        print("generic", XML_ExpatVersion());
-        return 0;
+	print("generic", XML_ExpatVersion());
+	return 0;
 }
 
 /**
@@ -273,15 +273,15 @@ static QUERY(jabber_print_version) {
  * checks, if @a uid is <i>proper for jabber plugin</i>.
  *
  * @note <i>Proper for jabber plugin</i> means either:
- * 	- If @a uid starts with xmpp: have got '@' (but xmpp:@ is wrong) and after '@' there is at least one char	[<b>xmpp protocol</b>]<br>
- * 	- If @a uid starts with tlen: (and len > 5)								[<b>tlen protocol</b>]
+ *	- If @a uid starts with xmpp: have got '@' (but xmpp:@ is wrong) and after '@' there is at least one char	[<b>xmpp protocol</b>]<br>
+ *	- If @a uid starts with tlen: (and len > 5)								[<b>tlen protocol</b>]
  *
  * @param ap 1st param: <i>(char *) </i><b>uid</b>  - of user/session/command/whatever
  * @param ap 2nd param: <i>(int) </i><b>valid</b> - place to put 1 if uid is valid for jabber plugin.
  * @param data NULL
  *
- * @return 	-1 if it's valid uid for jabber plugin<br>
- * 		 0 if not
+ * @return	-1 if it's valid uid for jabber plugin<br>
+ *		 0 if not
  */
 
 static QUERY(jabber_validate_uid) {
@@ -324,7 +324,7 @@ static QUERY(jabber_protocols) {
 }
 
 static QUERY(jabber_window_kill) {
-	window_t        *w = *va_arg(ap, window_t **);
+	window_t	*w = *va_arg(ap, window_t **);
 	jabber_private_t *j;
 	newconference_t  *c;
 
@@ -413,7 +413,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 	jabber_private_t *j;
 
 	if (!s || !(j = s->priv))
-                return;
+		return;
 
 	if (!s->connected && !s->connecting)
 		return;
@@ -435,7 +435,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 
 	j->using_compress = JABBER_COMPRESSION_NONE;
 #ifdef JABBER_HAVE_SSL
-        if (j->using_ssl && j->ssl_session)
+	if (j->using_ssl && j->ssl_session)
 		SSL_BYE(j->ssl_session);
 #endif
 	if (j->fd != -1) {
@@ -444,17 +444,17 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 	}
 
 #ifdef JABBER_HAVE_SSL
-        if (j->using_ssl && j->ssl_session)
-                SSL_DEINIT(j->ssl_session);
+	if (j->using_ssl && j->ssl_session)
+		SSL_DEINIT(j->ssl_session);
 	j->using_ssl	= 0;
 	j->ssl_session	= NULL;
 #endif
 
 	jabber_iq_stanza_free(j);
 
-        if (j->parser)
-                XML_ParserFree(j->parser);
-        j->parser = NULL;
+	if (j->parser)
+		XML_ParserFree(j->parser);
+	j->parser = NULL;
 
 	{
 		window_t *wl;
@@ -487,17 +487,17 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 	}
 
 	/* XXX, czy tego nie mozna parsowac tak jak wszystko inne w jabber_handle() ? 
-	 * 	A tutaj tylko tworzyc drzewo xmlowe? 
-	 * 	XXX, rtfm expat
+	 *	A tutaj tylko tworzyc drzewo xmlowe? 
+	 *	XXX, rtfm expat
 	 */
 
 	/* (WO) Nie mo¿na, bo przetwarzanie rozpoczêoby siê dopiero po skompletowaniu, czyli po otrzymaniu </stream:stream>
 	 * W±tpiê, by kto¶ chcia³ czekaæ a¿ to nast±pi, ale ³adniej by³oby gdyby ca³a ta czê¶æ po if wyl±dowa³a
 	 * w jakiej¶ jabber_just_like_starting_over()
-	 * 					-- Wies³aw Ochmiñski
+	 *					-- Wies³aw Ochmiñski
 	 */
 
-        if (!(s->connected) && (j->istlen ? !xstrcmp(name, "s") : !xstrcmp(name, "http://etherx.jabber.org/streams\033stream"))) {
+	if (!(s->connected) && (j->istlen ? !xstrcmp(name, "s") : !xstrcmp(name, "http://etherx.jabber.org/streams\033stream"))) {
 		const char *passwd	= session_get(s, "password");
 
 		char *username, *tmp;
@@ -507,8 +507,8 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 		else	username = xstrdup(s->uid + 5);
 
 			/* XXX,
-			 * 	Here if we've got SASL-connection we should do jabber:iq:register only when
-			 * 	j->connecting == 1, 
+			 *	Here if we've got SASL-connection we should do jabber:iq:register only when
+			 *	j->connecting == 1, 
 			 *
 			 *	but i'm not quite sure if s->connected, and j->connecting can be 0	[yeap, i know it would be stupid]
 			 *	So, to avoid regression, we use here j->connecting != 2 
@@ -591,8 +591,8 @@ static WATCHER_SESSION(jabber_handle_stream) {
 
 	XML_Parser parser;				/* j->parser */
 	char *uncompressed	= NULL;
-        char *buf;
-        int len;
+	char *buf;
+	int len;
 	int rlen;
 
 	/* session dissapear, shouldn't happen */
@@ -604,11 +604,11 @@ static WATCHER_SESSION(jabber_handle_stream) {
 /*	s->activity = time(NULL); */
 
 	/* we got disconnected? */
-        if (type == 1) {
+	if (type == 1) {
 		debug("[jabber] jabber_handle_stream() type == 1, exitting\n");
 		jabber_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
 		return 0;
-        }
+	}
 
 	debug_function("[jabber] jabber_handle_stream()\n");
 	parser = j->parser;
@@ -616,9 +616,9 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	if (!(buf = XML_GetBuffer(parser, BUFFER_LEN))) {
 		jabber_handle_disconnect(s, "XML_GetBuffer failed", EKG_DISCONNECT_NETWORK);
 		return -1;
-        }
+	}
 #ifdef JABBER_HAVE_SSL
-        if (j->using_ssl && j->ssl_session) {
+	if (j->using_ssl && j->ssl_session) {
 
 		len = SSL_RECV(j->ssl_session, buf, BUFFER_LEN-1);
 #ifdef JABBER_HAVE_OPENSSL
@@ -634,19 +634,19 @@ static WATCHER_SESSION(jabber_handle_stream) {
 			return 0;
 		}
 
-                if (len < 0) {
+		if (len < 0) {
 			jabber_handle_disconnect(s, SSL_ERROR(len), EKG_DISCONNECT_NETWORK);
 			return -1;
-                }
-        } else
+		}
+	} else
 #endif
-                if ((len = read(fd, buf, BUFFER_LEN-1)) < 1) {
+		if ((len = read(fd, buf, BUFFER_LEN-1)) < 1) {
 			if (len == -1 && (errno == EINPROGRESS || errno == EAGAIN)) return 0;
 			jabber_handle_disconnect(s, len == -1 ? strerror(errno) : "got disconnected", EKG_DISCONNECT_NETWORK);
 			return -1;
-                }
+		}
 
-        buf[len] = 0;
+	buf[len] = 0;
 	rlen = len;
 
 	switch (j->using_compress) {
@@ -734,10 +734,10 @@ WATCHER(jabber_handle_connect)
 	if (type)
 		return -1;
 	
-        debug_function("[jabber] socket() = %d\n", fd);
+	debug_function("[jabber] socket() = %d\n", fd);
 
 	tlenishub = (j->istlen > 1);
-        j->fd = fd;
+	j->fd = fd;
 
 	if (tlenishub) {
 		char *req, *esc; 
@@ -810,7 +810,7 @@ WATCHER(jabber_handle_connect2) {
 	if (session_int_get(s, "use_ssl")) {
 		jabber_handle_connect_ssl(-1, fd, 0, s);
 		return -1;
-        }
+	}
 #endif
 	
 	return jabber_handle_connect(type, fd, watch, data);
@@ -879,7 +879,7 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
 /*	debug_function("jabber_parser_recreate() 0x%x 0x%x\n", parser, data); */
 
-	if (!parser) 	parser = XML_ParserCreateNS("UTF-8", '\033');		/*   new parser */
+	if (!parser)	parser = XML_ParserCreateNS("UTF-8", '\033');		/*   new parser */
 	else		XML_ParserReset(parser, "UTF-8");			/* reset parser */
 
 	XML_SetUserData(parser, (void*) data);
@@ -898,15 +898,15 @@ XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
  * If not, return error why isn't ok.
  *
  * @note	Code to handle SSL_get_verify_result() result copied from qssl.cpp<br>
- * 		qssl.cpp - Qt OpenSSL plugin Copyright (C) 2001, 2002  Justin Karneges under LGPL 2.1
+ *		qssl.cpp - Qt OpenSSL plugin Copyright (C) 2001, 2002  Justin Karneges under LGPL 2.1
  *
- * @todo 	It's testing function, so it don't catch all not 100% valid certificates.
- * 		If you can and you know smth/ a lot about either OpenSSL or GnuTLS. Could you look at it?
+ * @todo	It's testing function, so it don't catch all not 100% valid certificates.
+ *		If you can and you know smth/ a lot about either OpenSSL or GnuTLS. Could you look at it?
  *
  * @param ssl - SSL_SESSION
  *
- * @return 	NULL if certificate is correct.<br>
- * 		else NUL terminated string with error description.
+ * @return	NULL if certificate is correct.<br>
+ *		else NUL terminated string with error description.
  */
 
 static const char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
@@ -918,8 +918,8 @@ static const char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
 
 	switch ((ret = SSL_get_verify_result(ssl))) {
 		/* copied from qssl.cpp - Qt OpenSSL plugin Copyright (C) 2001, 2002  Justin Karneges under LGPL 2.1  */
-		case X509_V_OK: 					return NULL;
-		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT: 		return _("Unable to get issuer certificate");
+		case X509_V_OK:						return NULL;
+		case X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT:		return _("Unable to get issuer certificate");
 		case X509_V_ERR_UNABLE_TO_GET_CRL:			return _("Unable to get certificate CRL");
 		case X509_V_ERR_UNABLE_TO_DECRYPT_CERT_SIGNATURE:	return _("Unable to decrypt certificate's signature");
 		case X509_V_ERR_UNABLE_TO_DECRYPT_CRL_SIGNATURE:	return _("Unable to decrypt CRL's signature");
@@ -964,8 +964,8 @@ static const char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
 
 	buf[0] = '\0';
 		/* ret is bitmask of gnutls_certificate_status_t */
-	if (ret & GNUTLS_CERT_INVALID) 		xstrcat(buf, "Certificate is invalid:");	/* 23b */
-	if (ret & GNUTLS_CERT_REVOKED) 		xstrcat(buf, " revoked");			/* 08b */
+	if (ret & GNUTLS_CERT_INVALID)		xstrcat(buf, "Certificate is invalid:");	/* 23b */
+	if (ret & GNUTLS_CERT_REVOKED)		xstrcat(buf, " revoked");			/* 08b */
 	if (ret & GNUTLS_CERT_SIGNER_NOT_FOUND)	xstrcat(buf, " signer not found");		/* 17b */
 	if (ret & GNUTLS_CERT_SIGNER_NOT_CA)	xstrcat(buf, " signer not a CA");		/* 16b */
 /*	if (ret & GNUTLS_CERT_INSECURE_ALGORITHM) xstrcat(buf, " INSECURE ALGO?"); */
@@ -988,7 +988,7 @@ static const char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
  */
 
 WATCHER_SESSION(jabber_handle_connect_ssl) {
-        jabber_private_t *j;
+	jabber_private_t *j;
 	int ret;
 	const char *certret;
 
@@ -1102,18 +1102,18 @@ handshake_ok:
 
 static QUERY(jabber_protocol_ignore) {
 	char *sesion	= *(va_arg(ap, char **));
-	char *uid 	= *(va_arg(ap, char **));
+	char *uid	= *(va_arg(ap, char **));
 /*
-	int oldlvl 	= *(va_arg(ap, int *));
-	int newlvl 	= *(va_arg(ap, int *));
+	int oldlvl	= *(va_arg(ap, int *));
+	int newlvl	= *(va_arg(ap, int *));
 */ 
 	session_t *s	= session_find(sesion);
 
 	/* check this just to be sure... */
 	if (session_check(s, 1, "xmpp"))
 		/* SPOT rule, first of all here was code to check sesion, valid user, etc... 
-		 * 	then send jabber:iq:roster request... with all new & old group...
-		 * 	but it was code copied from modify command handler... so here it is.
+		 *	then send jabber:iq:roster request... with all new & old group...
+		 *	but it was code copied from modify command handler... so here it is.
 		 */
 		command_exec_format(NULL, s, 0, ("/xmpp:modify %s -x"), uid);
 
@@ -1121,19 +1121,19 @@ static QUERY(jabber_protocol_ignore) {
 }
 
 static QUERY(jabber_status_show_handle) {
-        char *uid	= *(va_arg(ap, char**));
-        session_t *s	= session_find(uid);
-        jabber_private_t *j = session_private_get(s);
-        userlist_t *u;
-        char *fulluid;
-        char *tmp;
+	char *uid	= *(va_arg(ap, char**));
+	session_t *s	= session_find(uid);
+	jabber_private_t *j = session_private_get(s);
+	userlist_t *u;
+	char *fulluid;
+	char *tmp;
 
-        if (!s || !j)
-                return -1;
+	if (!s || !j)
+		return -1;
 
-        fulluid = saprintf("%s/%s", uid, j->resource);
+	fulluid = saprintf("%s/%s", uid, j->resource);
 
-        // nasz stan
+	// nasz stan
 	if ((u = userlist_find(s, uid)) && u->nickname)
 		print("show_status_uid_nick", fulluid, u->nickname);
 	else
@@ -1141,7 +1141,7 @@ static QUERY(jabber_status_show_handle) {
 
 	xfree(fulluid);
 
-        // nasz status
+	// nasz status
 	tmp = (s->connected) ? 
 		format_string(format_find(ekg_status_label(s->status, s->descr, "show_status_")),s->descr, "") :
 		format_string(format_find("show_status_notavail"));
@@ -1149,7 +1149,7 @@ static QUERY(jabber_status_show_handle) {
 	print("show_status_status_simple", tmp);
 	xfree(tmp);
 
-        // serwer
+	// serwer
 #ifdef JABBER_HAVE_SSL
 	print(j->using_ssl ? "show_status_server_tls" : "show_status_server", j->server, itoa(j->port));
 #else
@@ -1159,8 +1159,8 @@ static QUERY(jabber_status_show_handle) {
 	if (session_int_get(s, "__gpg_enabled") == 1)
 		print("jabber_gpg_sok", session_name(s), session_get(s, "gpg_key"));
 			
-        if (s->connecting)
-                print("show_status_connecting");
+	if (s->connecting)
+		print("show_status_connecting");
 	
 	return 0;
 }
@@ -1185,21 +1185,21 @@ static int jabber_theme_init() {
 	format_add("jabber_remotecontrols_commited_command",_("%> (%1) RC %W%2%n: requested command: %W%3%n @ session: %4 window: %5 quiet: %6"), 1);	
 
 	format_add("jabber_form_title",		  "%g,+=%G----- %3 %n(%T%2%n)", 1);
-	format_add("jabber_form_item",		  "%g|| %n%(21)3 (%6) %K|%n --%4 %(20)5", 1); 	/* %3 - label %4 - keyname %5 - value %6 - req; optional */
+	format_add("jabber_form_item",		  "%g|| %n%(21)3 (%6) %K|%n --%4 %(20)5", 1);	/* %3 - label %4 - keyname %5 - value %6 - req; optional */
 
 	format_add("jabber_form_item_beg",	  "%g|| ,+=%G-----%n", 1);
 	format_add("jabber_form_item_plain",	  "%g|| | %n %3: %5", 1);			/* %3 - label %4 - keyname %5 - value */
 	format_add("jabber_form_item_end",	  "%g|| `+=%G-----%n", 1);
 
 	format_add("jabber_form_item_val",	  "%K[%b%3%n %g%4%K]%n", 1);			/* %3 - value %4 - label */
-	format_add("jabber_form_item_sub",        "%g|| %|%n\t%3", 1);			/* %3 formated jabber_form_item_val */
+	format_add("jabber_form_item_sub",	  "%g|| %|%n\t%3", 1);			/* %3 formated jabber_form_item_val */
 
 	format_add("jabber_form_command",	_("%g|| %nType %W/%3 %g%2 %W%4%n"), 1); 
-	format_add("jabber_form_instructions", 	  "%g|| %n%|%3", 1);
-	format_add("jabber_form_description", 	  "%g|| %n%|%3", 1);
+	format_add("jabber_form_instructions",	  "%g|| %n%|%3", 1);
+	format_add("jabber_form_description",	  "%g|| %n%|%3", 1);
 	format_add("jabber_form_end",		_("%g`+=%G----- End of this %3 form ;)%n"), 1);
 
-	format_add("jabber_registration_item", 	  "%g|| %n            --%3 %4%n", 1); /* %3 - keyname %4 - value */ /* XXX, merge */
+	format_add("jabber_registration_item",	  "%g|| %n	      --%3 %4%n", 1); /* %3 - keyname %4 - value */ /* XXX, merge */
 	
 	/* simple XEP-0071 - XML parsing error */
 	format_add("jabber_msg_xmlsyntaxerr",	_("%! Expat syntax-checking failed on your message: %T%1%n. Please correct your code or use double ^R to disable syntax-checking."), 1);
@@ -1207,10 +1207,10 @@ static int jabber_theme_init() {
 	format_add("jabber_vacation", _("%> You'd set up your vacation status: %g%2%n (since: %3 expires@%4)"), 1);
 
 	/* %1 - sessionname %2 - mucjid %3 - nickname %4 - text %5 - atr */
-	format_add("jabber_muc_recv", 	"%B<%w%X%5%3%B>%n %4", 1);
+	format_add("jabber_muc_recv",	"%B<%w%X%5%3%B>%n %4", 1);
 	format_add("jabber_muc_send",	"%B<%n%X%5%W%3%B>%n %4", 1);
-	format_add("jabber_muc_me", 	"%y*%X%5%3%B%n  %4", 1);
-	format_add("jabber_muc_me_sent","%Y*%X%5%3%B%n  %4", 1);
+	format_add("jabber_muc_me",	"%y*%X%5%3%B%n	%4", 1);
+	format_add("jabber_muc_me_sent","%Y*%X%5%3%B%n	%4", 1);
 
 	/* %1 - sessionname, %2 - mucjid %3 - text */
 	format_add("jabber_muc_notice", "%n-%P%2%n- %3", 1);
@@ -1226,16 +1226,16 @@ static int jabber_theme_init() {
 	format_add("jabber_recv_chan_n", _("%b<%w%2%b>%n %5"), 1);
 #endif
 		/* %1 sesja %2 nick %3 - jid %4 - kanal %6 - role %7 affiliation*/
-	format_add("muc_joined", 	_("%> %C%2%n %B[%c%3%B]%n has joined %W%4%n as a %g%6%n and a %g%7%n"), 1);
+	format_add("muc_joined",	_("%> %C%2%n %B[%c%3%B]%n has joined %W%4%n as a %g%6%n and a %g%7%n"), 1);
 		/* %1 sesja %2 nick %3 - jid %4 - kanal %5 - reason */
 	format_add("muc_left",		_("%> %c%2%n [%c%3%n] has left %W%4 %n[%5]\n"), 1);
 
-	format_add("gmail_new_mail", 	  _("%> (%1) Content of your mailbox have changed or new mail arrived."), 1);	/* sesja */
-	format_add("gmail_count", 	  _("%> (%1) You have %T%2%n new thread(s) on your gmail account."), 1);	/* sesja, mail count */
-	format_add("gmail_mail", 	  "%>    %|%T%2%n - %g%3%n\n", 1);						/* sesja, from, topic, [UNUSED messages count in thread (?1)] */
-	format_add("gmail_thread",	  "%>    %|%T%2 [%4]%n - %g%3%n\n", 1);						/* sesja, from, topic, messages count in thread */
-	format_add("tlen_mail",		_("%> (%1) New mail from %T%2%n, with subject: %G%3%n"), 1); 			/* sesja, from, topic */
-	format_add("tlen_alert", 	_("%> (%1) %T%2%n sent us an alert ...%n"), 1); 				/* sesja, from */
+	format_add("gmail_new_mail",	  _("%> (%1) Content of your mailbox have changed or new mail arrived."), 1);	/* sesja */
+	format_add("gmail_count",	  _("%> (%1) You have %T%2%n new thread(s) on your gmail account."), 1);	/* sesja, mail count */
+	format_add("gmail_mail",	  "%>	 %|%T%2%n - %g%3%n\n", 1);						/* sesja, from, topic, [UNUSED messages count in thread (?1)] */
+	format_add("gmail_thread",	  "%>	 %|%T%2 [%4]%n - %g%3%n\n", 1);						/* sesja, from, topic, messages count in thread */
+	format_add("tlen_mail",		_("%> (%1) New mail from %T%2%n, with subject: %G%3%n"), 1);			/* sesja, from, topic */
+	format_add("tlen_alert",	_("%> (%1) %T%2%n sent us an alert ...%n"), 1);					/* sesja, from */
 	format_add("tlen_alert_send",	_("%> (%1) We send alert to %T%2%n"), 1);					/* sesja, to */
 
 	format_add("jabber_remotecontrols_executing",	_("%> (%1) Executing command: %W%3%n @ %W%2%n (%4)"), 1);
@@ -1274,31 +1274,31 @@ static int jabber_theme_init() {
 	format_add("jabber_gpg_config",	_("%> (%1) First set gpg_key and gpg_password before turning on gpg_active!"), 1); /* sesja */
 	format_add("jabber_gpg_ok",	_("%) (%1) GPG support: %gENABLED%n using key: %W%2%n"), 1);			/* sesja, klucz */
 	format_add("jabber_gpg_sok",	_("%) GPG key: %W%2%n"), 1);							/* sesja, klucz for /status */
-	format_add("jabber_gpg_fail", 	_("%> (%1) We didn't manage to sign testdata using key: %W%2%n (%R%3%n)\n"	/* sesja, klucz, error */
+	format_add("jabber_gpg_fail",	_("%> (%1) We didn't manage to sign testdata using key: %W%2%n (%R%3%n)\n"	/* sesja, klucz, error */
 					"OpenGPG support for this session disabled."), 1);
 
 /* stream:features */
 	/* %1 - sesja, %2 - serwer, %3 - nazwa, %4 - XMLNS, %5 - z czym sie je */
-	format_add("xmpp_feature_header", 	_("%g,+=%G----- XMPP features %n(%T%2%n%3%n)"), 1);	/* %3 - todo */
-	format_add("xmpp_feature",	  	_("%g|| %n %W%2%n can: %5 [%G%3%g,%4%n]"), 1);
-	format_add("xmpp_feature_sub",	  	_("%g|| %n     %W%3%n: %5 [%G%4%n]"), 1);
+	format_add("xmpp_feature_header",	_("%g,+=%G----- XMPP features %n(%T%2%n%3%n)"), 1);	/* %3 - todo */
+	format_add("xmpp_feature",		_("%g|| %n %W%2%n can: %5 [%G%3%g,%4%n]"), 1);
+	format_add("xmpp_feature_sub",		_("%g|| %n     %W%3%n: %5 [%G%4%n]"), 1);
 	format_add("xmpp_feature_sub_unknown",	_("%g|| %n     %W%3%n: Unknown, report to devs [%G%4%n]"), 1);
 	format_add("xmpp_feature_unknown",	_("%g|| %n %W%2%n feature: %r%3 %n[%G%3%g,%4%n]"), 1);
-	format_add("xmpp_feature_footer", 	_("%g`+=%G----- %n Turn it off using: /session display_server_features 0\n"), 1);
+	format_add("xmpp_feature_footer",	_("%g`+=%G----- %n Turn it off using: /session display_server_features 0\n"), 1);
 
 /* http://jabber.org/protocol/disco#items */
 	/* %1 - session_name, %2 - uid (*_item: %3 - agent uid %4 - description %5 - seq id) */
-	format_add("jabber_transport_list_begin", 	_("%g,+=%G----- Available agents on: %T%2%n"), 1);
-	format_add("jabber_transport_list_item",  		("%g|| %n %6 - %W%3%n (%5)"), 1);
+	format_add("jabber_transport_list_begin",	_("%g,+=%G----- Available agents on: %T%2%n"), 1);
+	format_add("jabber_transport_list_item",		("%g|| %n %6 - %W%3%n (%5)"), 1);
 	format_add("jabber_transport_list_item_node",		_("%g|| %n %6 - %W%3%n node: %g%4%n (%5)"), 1);
-	format_add("jabber_transport_list_end",   	_("%g`+=%G----- End of the agents list%n\n"), 1);
-	format_add("jabber_transport_list_nolist", 	_("%! No agents @ %T%2%n"), 1);
+	format_add("jabber_transport_list_end",		_("%g`+=%G----- End of the agents list%n\n"), 1);
+	format_add("jabber_transport_list_nolist",	_("%! No agents @ %T%2%n"), 1);
 	format_add("jabber_transport_error",		_("%! (%1) Error in getting %gavailable agents%n from %W%2%n: %r%3"), 1);
 
 /* http://jabber.org/protocol/disco#items ## remotecontrol */
 	format_add("jabber_remotecontrols_list_begin", _("%g,+=%G----- Available remote controls on: %T%2%n"), 1);
-	format_add("jabber_remotecontrols_list_item",  		("%g|| %n %6 - %W%4%n (%5)"), 1);		/* %3 - jid %4 - node %5 - descr %6 - seqid */
-	format_add("jabber_remotecontrols_list_end",   	_("%g`+=%G----- End of the remote controls list%n\n"), 1);
+	format_add("jabber_remotecontrols_list_item",		("%g|| %n %6 - %W%4%n (%5)"), 1);		/* %3 - jid %4 - node %5 - descr %6 - seqid */
+	format_add("jabber_remotecontrols_list_end",	_("%g`+=%G----- End of the remote controls list%n\n"), 1);
 	format_add("jabber_remotecontrols_list_nolist", _("%! No remote controls @ %T%2%n"), 1);
 	format_add("jabber_remotecontrols_error",	_("%! (%1) Error in getting %gavailable commands%n from %W%2%n: %r%3"), 1);
 
@@ -1321,18 +1321,18 @@ static int jabber_theme_init() {
 	format_add("jabber_userinfo_fullname",		_("%g|| %n   Full Name: %T%2"), 1);
 	format_add("jabber_userinfo_nickname",		_("%g|| %n     Nickame: %T%2"), 1);
 	format_add("jabber_userinfo_birthday",		_("%g|| %n    Birthday: %T%2"), 1);
-	format_add("jabber_userinfo_email",		_("%g|| %n       Email: %T%2"), 1);
+	format_add("jabber_userinfo_email",		_("%g|| %n	 Email: %T%2"), 1);
 	format_add("jabber_userinfo_url",		_("%g|| %n     Webpage: %T%2"), 1);
 	format_add("jabber_userinfo_desc",		_("%g|| %n Description: %T%2"), 1);
 	format_add("jabber_userinfo_telephone",		_("%g|| %n   Telephone: %T%2"), 1);
-	format_add("jabber_userinfo_title",		_("%g|| %n       Title: %T%2"), 1);
+	format_add("jabber_userinfo_title",		_("%g|| %n	 Title: %T%2"), 1);
 	format_add("jabber_userinfo_organization",	_("%g|| %nOrganization: %T%2"), 1);
 	
 	format_add("jabber_userinfo_adr",		_("%g|| ,+=%G----- (Next) %2 address"), 1);
-	format_add("jabber_userinfo_adr_street",	_("%g|| || %n     Street: %T%2"), 1);
+	format_add("jabber_userinfo_adr_street",	_("%g|| || %n	  Street: %T%2"), 1);
 	format_add("jabber_userinfo_adr_postalcode",	_("%g|| || %nPostal code: %T%2"), 1);
-	format_add("jabber_userinfo_adr_city",		_("%g|| || %n       City: %T%2"), 1);
-	format_add("jabber_userinfo_adr_country",	_("%g|| || %n    Country: %T%2"), 1);
+	format_add("jabber_userinfo_adr_city",		_("%g|| || %n	    City: %T%2"), 1);
+	format_add("jabber_userinfo_adr_country",	_("%g|| || %n	 Country: %T%2"), 1);
 	format_add("jabber_userinfo_adr_end",		_("%g|| %g`+=%G-----"), 1);
 
 //	format_add("jabber_userinfo_photourl",		_("%g||\n%g|| %nYou can view attached photo at: %Thttp://vcard.ekg2.org/%1"), 1);
@@ -1348,7 +1348,7 @@ static int jabber_theme_init() {
 	format_add("jabber_privacy_list_item_act",		_("%g|| %r  Active:%n %W%4%n"), 1); 
 	format_add("jabber_privacy_list_end",		_("%g`+=%G----- End of the privacy list%n"), 1);
 	format_add("jabber_privacy_list_noitem",	_("%! No privacy lists in %T%2%n"), 1);
-	format_add("jabber_privacy_item_header",	_("%g,+=%G----- Details for: %T%3%n\n%g||%n JID\t\t\t\t\t  MSG  PIN POUT IQ%n"), 1);
+	format_add("jabber_privacy_item_header",	_("%g,+=%G----- Details for: %T%3%n\n%g||%n JID\t\t\t\t\t  MSG	PIN POUT IQ%n"), 1);
 	format_add("jabber_privacy_item",			("%g||%n %[-44]4 \t%K|%n %[2]5 %K|%n %[2]6 %K|%n %[2]7 %K|%n %[2]8\n"), 1);
 	format_add("jabber_privacy_item_footer",	_("%g`+=%G----- Legend: %n[%3] [%4]%n"), 1);
 	/* %1 - item [group, jid, subscri*] */
@@ -1366,7 +1366,7 @@ static int jabber_theme_init() {
 	format_add("jabber_private_list_item",			"%g|| %n %4: %W%5%n",  1);			/* %4 - item %5 - value */
 	format_add("jabber_private_list_session",		"%g|| + %n Session: %W%4%n",  1);		/* %4 - uid */
 	format_add("jabber_private_list_plugin",		"%g|| + %n Plugin: %W%4 (%5)%n",  1);	/* %4 - name %5 - prio*/
-	format_add("jabber_private_list_subitem",		"%g||  - %n %4: %W%5%n",  1);               /* %4 - item %5 - value */
+	format_add("jabber_private_list_subitem",		"%g||  - %n %4: %W%5%n",  1);		    /* %4 - item %5 - value */
 	format_add("jabber_private_list_footer",	_("%g`+=%G----- End of the private list%n"), 1);
 	format_add("jabber_private_list_empty",		_("%! No list: %T%2/%3%n"), 1);
 	format_add("jabber_private_list_error",		_("%! (%1) Error in request %gjabber:iq:private%n from %W%2%n: %r%3"), 1);
@@ -1375,7 +1375,7 @@ static int jabber_theme_init() {
 	format_add("jabber_search_item",	_("%) JID: %T%3%n\n%) Nickname:  %T%4%n\n%) Name: %T%5 %6%n\n%) Email: %T%7%n\n"), 1);	/* like gg-search_results_single */
 		/* %3 - jid %4 - nickname %5 - firstname %6 - surname %7 - email */
 	format_add("jabber_search_begin",	_("%g,+=%G----- Search on %T%2%n"), 1);
-//	format_add("jabber_search_items", 		("%g||%n %[-24]3 %K|%n %[10]5 %K|%n %[10]6 %K|%n %[12]4 %K|%n %[16]7"), 1);		/* like gg-search_results_multi. TODO */
+//	format_add("jabber_search_items",		("%g||%n %[-24]3 %K|%n %[10]5 %K|%n %[10]6 %K|%n %[12]4 %K|%n %[16]7"), 1);		/* like gg-search_results_multi. TODO */
 	format_add("jabber_search_items",		("%g||%n %3 - %5 '%4' %6 <%7>"), 1);
 	format_add("jabber_search_end",		_("%g`+=%G-----"), 1);
 	format_add("jabber_search_error",	_("%! (%1) Error in %gjabber:iq:search%n from %W%2%n: %r%3"), 1);
@@ -1383,15 +1383,15 @@ static int jabber_theme_init() {
 /* jabber:iq:last */
 	format_add("jabber_lastseen_response",		_("%> Jabber ID:  %T%1%n\n%> Logged out: %T%2 ago%n\n"), 1);
 	format_add("jabber_lastseen_uptime",		_("%> Jabber ID: %T%1%n\n%> Server up: %T%2 ago%n\n"), 1);
-	format_add("jabber_lastseen_idle",     		_("%> Jabber ID: %T%1%n\n%> Idle for:  %T%2%n\n"), 1);
+	format_add("jabber_lastseen_idle",		_("%> Jabber ID: %T%1%n\n%> Idle for:  %T%2%n\n"), 1);
 	format_add("jabber_lastseen_error",		_("%! (%1) Error in getting %gjabber:iq:last%n from %W%2%n: %r%3"), 1);
 
 /* jabber:iq:version */
-	format_add("jabber_version_response", 		_("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
+	format_add("jabber_version_response",		_("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
 	format_add("jabber_version_error",		_("%! (%1) Error in getting %gjabber:iq:version%n from %W%2%n: %r%3"), 1);
 
 #endif	/* !NO_DEFAULT_THEME */
-        return 0;
+	return 0;
 }
 
 void jabber_gpg_changed(session_t *s, const char *name) {
@@ -1562,47 +1562,47 @@ static QUERY(jabber_typing_out) {
 
 	/* KEEP IT SORTED, MEN! */
 static plugins_params_t jabber_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("alias",			VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("allow_add_reply_id",	VAR_INT, "1", 0, NULL),
 	/* '666' enabled for everyone (DON'T TRY IT!); '0' - disabled; '1' - enabled for the same id (allow from diffrent resources); '2' - enabled for allow_remote_control_jids (XXX) */
 	PLUGIN_VAR_ADD("allow_remote_control",	VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_auth",		VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_away", 		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_away",		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_away_descr",	VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("auto_back", 		VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_bookmark_sync", 	VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_connect", 		VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_find", 		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_back",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_bookmark_sync",	VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_find",		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_privacylist_sync", VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_reconnect", 	VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_xa", 		VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_xa_descr", 	VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_xa",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_xa_descr",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("connect_timeout",	VAR_INT, "30", 0, NULL),
 	PLUGIN_VAR_ADD("disable_sasl",		VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("display_notify", 	VAR_INT, "-1", 0, NULL),
+	PLUGIN_VAR_ADD("display_notify",	VAR_INT, "-1", 0, NULL),
 	PLUGIN_VAR_ADD("display_server_features", VAR_INT, "1", 0, NULL),
-	PLUGIN_VAR_ADD("gpg_active", 		VAR_BOOL, "0", 0, jabber_gpg_changed),
-	PLUGIN_VAR_ADD("gpg_key", 		VAR_STR, NULL, 0, jabber_gpg_changed),
-	PLUGIN_VAR_ADD("gpg_password", 		VAR_STR, NULL, 1, jabber_gpg_changed),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "xml,simple,sqlite", 0, NULL),
+	PLUGIN_VAR_ADD("gpg_active",		VAR_BOOL, "0", 0, jabber_gpg_changed),
+	PLUGIN_VAR_ADD("gpg_key",		VAR_STR, NULL, 0, jabber_gpg_changed),
+	PLUGIN_VAR_ADD("gpg_password",		VAR_STR, NULL, 1, jabber_gpg_changed),
+	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "xml,simple,sqlite", 0, NULL),
 	PLUGIN_VAR_ADD("msg_gen_thread",	VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("password", 		VAR_STR, NULL, 1, NULL),
+	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("photo_hash",		VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("plaintext_passwd", 	VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("ping_server", 		VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("port", 			VAR_INT, "5222", 0, NULL),
+	PLUGIN_VAR_ADD("plaintext_passwd",	VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("ping_server",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("port",			VAR_INT, "5222", 0, NULL),
 	PLUGIN_VAR_ADD("prefer_family",		VAR_INT, "0", 0, NULL),
-	PLUGIN_VAR_ADD("priority", 		VAR_INT, "5", 0, NULL),
-	PLUGIN_VAR_ADD("privacy_list", 		VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("resource", 		VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("server", 		VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("ssl_port", 		VAR_INT, "5223", 0, NULL),
-	PLUGIN_VAR_ADD("use_compression", 	VAR_STR, 0, 0, NULL),		/* for instance: zlib,lzw */
-	PLUGIN_VAR_ADD("use_ssl", 		VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("use_tls", 		VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("ver_client_name", 	VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("ver_client_version", 	VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("ver_os", 		VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("priority",		VAR_INT, "5", 0, NULL),
+	PLUGIN_VAR_ADD("privacy_list",		VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("resource",		VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("server",		VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("ssl_port",		VAR_INT, "5223", 0, NULL),
+	PLUGIN_VAR_ADD("use_compression",	VAR_STR, 0, 0, NULL),		/* for instance: zlib,lzw */
+	PLUGIN_VAR_ADD("use_ssl",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("use_tls",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("ver_client_name",	VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("ver_client_version",	VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("ver_os",		VAR_STR, 0, 0, NULL),
 
 	PLUGIN_VAR_END()
 };
@@ -1627,7 +1627,7 @@ EXPORT int jabber_plugin_init(int prio) {
 
 	jabber_plugin.params = jabber_plugin_vars;
 
-        plugin_register(&jabber_plugin, prio);
+	plugin_register(&jabber_plugin, prio);
 
 	session_postinit = 0;
 
@@ -1654,11 +1654,11 @@ EXPORT int jabber_plugin_init(int prio) {
 	variable_add(&jabber_plugin, ("disable_chatstates"), VAR_MAP, 1, &config_jabber_disable_chatstates, NULL,
 			variable_map(4, 0, 0, "none", 1, 0, "composing", 2, 0, "active", 4, 0, "gone"), NULL); 
 
-        jabber_register_commands();
+	jabber_register_commands();
 #ifdef JABBER_HAVE_SSL
 	SSL_GLOBAL_INIT();
 #endif
-        return 0;
+	return 0;
 }
 
 /**
@@ -1677,9 +1677,9 @@ static int jabber_plugin_destroy() {
 	SSL_GLOBAL_DEINIT();
 #endif
 	jabber_convert_string_destroy();
-        plugin_unregister(&jabber_plugin);
+	plugin_unregister(&jabber_plugin);
 
-        return 0;
+	return 0;
 }
 
 /*

@@ -41,19 +41,19 @@ enum { CTCP_ACTION=1, CTCP_DCC, CTCP_SED, CTCP_FINGER, CTCP_VERSION, CTCP_SOURCE
 	CTCP_USERINFO, CTCP_CLIENTINFO, CTCP_PING, CTCP_TIME, CTCP_ERRMSG };
 
 const static ctcp_t ctcps[] = {
-        { "ACTION",     1 },
-        { "DCC",        0 },
-        { "SED",        0 },
+	{ "ACTION",	1 },
+	{ "DCC",	0 },
+	{ "SED",	0 },
 
-        { "FINGER",     1 },
-        { "VERSION",    1 },
-        { "SOURCE",     1 },
-        { "USERINFO",   1 },
-        { "CLIENTINFO", 1 },
-        { "PING",       1 },
-        { "TIME",       1 },
-        { "ERRMSG",     1 },
-        { NULL,         0 }
+	{ "FINGER",	1 },
+	{ "VERSION",	1 },
+	{ "SOURCE",	1 },
+	{ "USERINFO",	1 },
+	{ "CLIENTINFO", 1 },
+	{ "PING",	1 },
+	{ "TIME",	1 },
+	{ "ERRMSG",	1 },
+	{ NULL,		0 }
 };
 
 #endif

@@ -353,8 +353,8 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j, people_t *
  * @param chan - channel structure, where part/kick occured
  *
  * @return	-1 - no such channel, no such user <br />
- * 		0 - user removed from given channel <br />
- * 		1 - user removed from given channel and that was the last channel shared with that user
+ *		0 - user removed from given channel <br />
+ *		1 - user removed from given channel and that was the last channel shared with that user
  */
 int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *channame)
 {
@@ -387,8 +387,8 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
  *   prefix, can contain '@%+' prefix
  * @param chan - channel structure, where part/kick occured
  *
- * @return 	-1 - no such nickname
- * 		1 - user entry deleted from internal structures
+ * @return	-1 - no such nickname
+ *		1 - user entry deleted from internal structures
  */
 int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		char *wholenick, char *reason, int doprint)
@@ -414,7 +414,7 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 	}
 	/* 
 	 * GiM: removing from private->people is in
-	 * 	irc_del_person_channel_int
+	 *	irc_del_person_channel_int
 	 *
 	 * tmp is set, we can run the loop
 	 */

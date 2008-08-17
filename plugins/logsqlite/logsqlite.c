@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2005 Leszek Krupiñski <leafnode@wafel.com>
- *                     Marcin Jurkowski <marcin@vilo.eu.org>
+ *		       Marcin Jurkowski <marcin@vilo.eu.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -355,7 +355,7 @@ char *logsqlite_prepare_path(session_t *session, time_t sent)
 				case 'M':	snprintf(datetime, 3, "%02d", tm->tm_mon+1);
 						string_append_n(buf, datetime, 2);
 						break;
-				case 'D':       snprintf(datetime, 3, "%02d", tm->tm_mday);
+				case 'D':	snprintf(datetime, 3, "%02d", tm->tm_mday);
 						string_append_n(buf, datetime, 2);
 						break;
 				default:	string_append_c(buf, *(tmp+1));
@@ -394,7 +394,7 @@ sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent, int mode)
 	if (!logsqlite_current_db_path || !logsqlite_current_db) {
 		if (! (db = logsqlite_open_db(session, sent, path)))
 			return 0;
-                xfree(logsqlite_current_db_path);
+		xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = xstrdup(path);
 		logsqlite_current_db = db;
 
@@ -436,7 +436,7 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 	sqlite_t * db = NULL;
 #ifdef HAVE_SQLITE3	
 	const 
-#endif 	
+#endif	
 		char * errormsg = NULL;
 	int makedir = 1, slash_pos = 0;
 
@@ -546,13 +546,13 @@ void logsqlite_close_db(sqlite_t * db)
 
 QUERY(logsqlite_msg_handler)
 {
-	char    **__session = va_arg(ap, char**),    *session = *__session;
-	char        **__uid = va_arg(ap, char**),        *uid = *__uid;
-	char     ***__rcpts = va_arg(ap, char***),    **rcpts = *__rcpts;
-	char       **__text = va_arg(ap, char**),       *text = *__text;
+	char	**__session = va_arg(ap, char**),    *session = *__session;
+	char	    **__uid = va_arg(ap, char**),	 *uid = *__uid;
+	char	 ***__rcpts = va_arg(ap, char***),    **rcpts = *__rcpts;
+	char	   **__text = va_arg(ap, char**),	*text = *__text;
 	uint32_t **__format = va_arg(ap, uint32_t**), *format = *__format;
-	time_t      *__sent = va_arg(ap, time_t*),       sent = *__sent;
-	int        *__class = va_arg(ap, int*),         class = *__class;
+	time_t	    *__sent = va_arg(ap, time_t*),	 sent = *__sent;
+	int	   *__class = va_arg(ap, int*),		class = *__class;
 	session_t *s = session_find((const char*)session);
 	char * gotten_uid = get_uid(s, uid);
 	char * gotten_nickname = get_nickname(s, uid);
@@ -607,7 +607,7 @@ QUERY(logsqlite_msg_handler)
 	if (is_sent) {
 		gotten_uid = (rcpts) ? rcpts[0] : NULL;
 		if (rcpts) {
-			gotten_uid      = get_uid(s, rcpts[0]);
+			gotten_uid	= get_uid(s, rcpts[0]);
 			gotten_nickname = get_nickname(s, rcpts[0]);
 		}
 

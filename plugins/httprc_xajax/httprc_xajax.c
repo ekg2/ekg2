@@ -1,7 +1,7 @@
 /*
  *  (C) Copyright 2006+ Jakub 'darkjames' Zawadzki <darkjames@darkjames.ath.cx>
- *  			Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
- *                      Michal 'peres' Gorny
+ *			Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
+ *			Michal 'peres' Gorny
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -151,10 +151,10 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 #define ISREVERSE	(att & FSTR_REVERSE)
 #define ISNORMAL	(att & FSTR_NORMAL)
 #define ISONLYNORMAL	((att & FSTR_NORMAL) && !(att & (FSTR_BOLD|FSTR_BLINK|FSTR_REVERSE|FSTR_UNDERLINE)))
-#define FORE 		(att & FSTR_FOREMASK)
-#define BACK 		((att & FSTR_BACKMASK)>>3)
-#define ADDJS(x) 	string_append(asc, x)
-#define ADDJSf(x...) 	string_append_format(asc, x)
+#define FORE		(att & FSTR_FOREMASK)
+#define BACK		((att & FSTR_BACKMASK)>>3)
+#define ADDJS(x)	string_append(asc, x)
+#define ADDJSf(x...)	string_append_format(asc, x)
 
 	lastbeg = 0;
 	last = attr[0];
@@ -187,9 +187,9 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 			if (ISBOLD || ISUNDERLINE || ISBLINK)
 				ADDJS("em = document.createElement('em'); em.setAttribute('class', '");
 			/* DO NOT REMOVE THOSE SPACES AT THE END!!! */
-			if (ISBOLD) 		ADDJS("bold ");
-			if (ISUNDERLINE) 	ADDJS("underline ");
-			if (ISBLINK) 		ADDJS("blink ");
+			if (ISBOLD)		ADDJS("bold ");
+			if (ISUNDERLINE)	ADDJS("underline ");
+			if (ISBLINK)		ADDJS("blink ");
 			if (ISBOLD || ISUNDERLINE || ISBLINK)
 				ADDJS("');");
 			ADDJS("sp = document.createElement('span');");
@@ -221,7 +221,7 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 	return string_free(asc, 0);
 }
 
-#define httprc_write(watch, args...) 	string_append_format(watch->buf, args)
+#define httprc_write(watch, args...)	string_append_format(watch->buf, args)
 #define httprc_write2(watch, str)	string_append_n(watch->buf, str, -1)
 #define httprc_write3(watch, str, len)	string_append_raw(watch->buf, str, len)
 
@@ -231,7 +231,7 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 		"Server: ekg2-CVS-httprc_xajax plugin\r\n"		/* server info */	\
 		"%s\r\n",							/* headers */		\
 		ver == 0 ? "HTTP/1.0" : ver == 1 ? "HTTP/1.1" : "",	/* PROTOCOL */		\
-		scode, 							/* Status code */	\
+		scode,							/* Status code */	\
 			/* some typical responses */		\
 			scode == 100 ? "Continue" :		\
 			scode == 101 ? "Switching Protocols" :	\
@@ -618,7 +618,7 @@ WATCHER(http_watch_read) {
 
 			if (!xstrcmp(req, "/xajax.js"))		{ f = fopen(DATADIR"/plugins/httprc_xajax/xajax_0.2.4.js", "r");	mime = "text/javascript"; }
 			else if (!xstrcmp(req, "/ekg2.js"))	{ f = fopen(DATADIR"/plugins/httprc_xajax/ekg2.js", "r");		mime = "text/javascript"; }
-			else 					{ f = fopen(DATADIR"/plugins/httprc_xajax/ekg2.css", "r");		mime = "text/css"; }
+			else					{ f = fopen(DATADIR"/plugins/httprc_xajax/ekg2.css", "r");		mime = "text/css"; }
 
 			string_append(htheader, "Connection: Keep-Alive\r\n"
 					"Keep-Alive: timeout=5, max=100\r\n"

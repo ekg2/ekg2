@@ -110,7 +110,7 @@ char *irc_ircoldcolstr_juststrip(session_t *sess, char *inp)
 char *irc_ircoldcolstr_to_ekgcolstr_nf(session_t *sess, char *str, int strip)
 {
 	int		col, oldstrip = strip;
-	char		mirc_sux_so_much[16] =  "WkbgrypRYGcCBPKw";
+	char		mirc_sux_so_much[16] =	"WkbgrypRYGcCBPKw";
 	char		mirc_sux_even_more[16] = "xlehszqszhddeqlx";
 	string_t	s;
 
@@ -127,7 +127,7 @@ char *irc_ircoldcolstr_to_ekgcolstr_nf(session_t *sess, char *str, int strip)
 		{
 			/* str++; */
 			col = irc_getircoldcol(str+1);
-		    	if (strip)
+			if (strip)
 				goto coloring_finito;
 			if (!col) {
 				string_append(s, "%n");
@@ -448,8 +448,8 @@ CTCP_COMMAND(ctcp_main_noti)
 
 	t = irc_ircoldcolstr_to_ekgcolstr(s, space,1);
 	/* if number == CTCP_PING, we could display 
-	 * 	differences between current gettimeofday() && recv
-	 * 	like most irc clients do.
+	 *	differences between current gettimeofday() && recv
+	 *	like most irc clients do.
 	 */
 
 	print_window(win, s, EKG_WINACT_MSG, ischn?(mw&1):!!(mw&8),

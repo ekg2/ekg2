@@ -224,9 +224,9 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 
 			if (xstrncmp(D->uid, "xmpp:", 5)) continue; /* we skip not jabber dccs */
 
-			if (!p) 		{ debug_error("[%s:%d] D->priv == NULL ?\n", __FILE__, __LINE__); continue; }			/* we skip invalid dccs */
-			if (p->sfd != -1) 	{ debug_error("[%s:%d] p->sfd  != -1, already associated ?\n", __FILE__, __LINE__); continue; }	/* we skip associated dccs */
-			if (p->protocol != JABBER_DCC_PROTOCOL_BYTESTREAMS) continue; 								/* we skip not BYTESTREAMS dccs */
+			if (!p)			{ debug_error("[%s:%d] D->priv == NULL ?\n", __FILE__, __LINE__); continue; }			/* we skip invalid dccs */
+			if (p->sfd != -1)	{ debug_error("[%s:%d] p->sfd  != -1, already associated ?\n", __FILE__, __LINE__); continue; }	/* we skip associated dccs */
+			if (p->protocol != JABBER_DCC_PROTOCOL_BYTESTREAMS) continue;								/* we skip not BYTESTREAMS dccs */
 
 			for (s = sessions; s; s = s->next) {
 				jabber_private_t *j = s->priv;
@@ -238,8 +238,8 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 				fulluid = saprintf("%s/%s", s->uid+5, j->resource);
 
 				/* XXX, take care about initiator && we		*/
-				/* D->type == DCC_SEND initiator -- we 		*/
-				/*            DCC_GET  initiator -- D->uid+5	*/
+				/* D->type == DCC_SEND initiator -- we		*/
+				/*	      DCC_GET  initiator -- D->uid+5	*/
 				this_sha1 = jabber_dcc_digest(p->sid, fulluid, D->uid+5);
 
 				debug_function("[JABBER_DCC_ACCEPTED] SHA1: %s THIS: %s (session: %s)\n", sha1, this_sha1, fulluid);

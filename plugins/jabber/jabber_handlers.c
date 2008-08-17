@@ -1,8 +1,8 @@
 /*
  *  (C) Copyright 2003-2006 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Tomasz Torcz <zdzichu@irc.pl>
- *                          Leszek Krupi雟ki <leafnode@pld-linux.org>
- *                          Piotr Paw這w and other libtlen developers (http://libtlen.sourceforge.net/index.php?theme=teary&page=authors)
+ *			    Tomasz Torcz <zdzichu@irc.pl>
+ *			    Leszek Krupi雟ki <leafnode@pld-linux.org>
+ *			    Piotr Paw這w and other libtlen developers (http://libtlen.sourceforge.net/index.php?theme=teary&page=authors)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -47,7 +47,7 @@
 #  include <expat.h>
 #endif
 
-#ifdef __sun      /* Solaris, thanks to Beeth */
+#ifdef __sun	  /* Solaris, thanks to Beeth */
 #include <sys/filio.h>
 #endif
 #include <time.h>
@@ -73,7 +73,7 @@ WATCHER_SESSION(jabber_handle_connect_ssl); /* jabber.c */
 
 #define jabberfix(x,a) ((x) ? x : a)
 
-#define JABBER_HANDLER(x) 		static void x(session_t *s, xmlnode_t *n)
+#define JABBER_HANDLER(x)		static void x(session_t *s, xmlnode_t *n)
 
 JABBER_HANDLER(jabber_handle_message);
 JABBER_HANDLER(jabber_handle_iq);
@@ -136,14 +136,14 @@ static xmlnode_t *xmlnode_find_child_xmlns(xmlnode_t *n, const char *name, const
  * @note	<b>XEP-0078:</b> Non-SASL Authentication: http://www.xmpp.org/extensions/xep-0078.html
  *
  * @todo	It's not really XEP-0078 cause ekg2 don't support it. But it this done that way.. I don't know any server with XEP-0078 functonality..<br>
- * 		I still rcv 'service-unavailable' or 'bad-request' ;(<br>
- * 		But it <b>MUST</b> be implemented for <i>/session disable_sasl 1</i><br>
- * 		So it's just <i>jabber:iq:auth</i> for <i>disable_sasl</i> 2.
+ *		I still rcv 'service-unavailable' or 'bad-request' ;(<br>
+ *		But it <b>MUST</b> be implemented for <i>/session disable_sasl 1</i><br>
+ *		So it's just <i>jabber:iq:auth</i> for <i>disable_sasl</i> 2.
  *
- * @note 	Tlen Authentication was stolen from libtlen calc_passcode() with magic stuff (C) libtlen's developer and Piotr Paw這w<br>
- * 		see: http://libtlen.sourceforge.net/
+ * @note	Tlen Authentication was stolen from libtlen calc_passcode() with magic stuff (C) libtlen's developer and Piotr Paw這w<br>
+ *		see: http://libtlen.sourceforge.net/
  *
- * @param	s 		- session to authenticate <b>CANNOT BE NULL</b>
+ * @param	s		- session to authenticate <b>CANNOT BE NULL</b>
  * @param	username	- username
  * @param	passwd		- password to hash or to escape
  * @param	stream_id	- id of stream.
@@ -164,8 +164,8 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 
 	/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw這w */
 	if (j->istlen) {
-		int     magic1 = 0x50305735, magic2 = 0x12345671, sum = 7;
-		char    z;
+		int	magic1 = 0x50305735, magic2 = 0x12345671, sum = 7;
+		char	z;
 		while ((z = *passwd++) != 0) {
 			if (z == ' ' || z == '\t') continue;
 			magic1 ^= (((magic1 & 0x3f) + sum) * z) + (magic1 << 8);
@@ -178,7 +178,7 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 		passwd2 = epasswd = saprintf("%08x%08x", magic1, magic2);
 	} else if (session_int_get(s, "plaintext_passwd")) {
 		epasswd = jabber_escape(passwd);
-	} else 	passwd2 = passwd;
+	} else	passwd2 = passwd;
 
 
 	authpass = (passwd2) ?
@@ -455,8 +455,8 @@ JABBER_HANDLER(jabber_handle_compressed) {
 	/* REINITIALIZE STREAM WITH COMPRESSION TURNED ON */
 
 	switch (j->using_compress) {
-		case JABBER_COMPRESSION_NONE: 		break;
-		case JABBER_COMPRESSION_ZLIB_INIT: 	j->using_compress = JABBER_COMPRESSION_ZLIB;	break;
+		case JABBER_COMPRESSION_NONE:		break;
+		case JABBER_COMPRESSION_ZLIB_INIT:	j->using_compress = JABBER_COMPRESSION_ZLIB;	break;
 		case JABBER_COMPRESSION_LZW_INIT:	j->using_compress = JABBER_COMPRESSION_LZW;	break;
 
 		default:
@@ -683,13 +683,13 @@ static const struct jabber_generic_handler jabber_handlers[] =
 
 void jabber_handle(void *data, xmlnode_t *n) {
 	session_t *s = (session_t *) data;
-        jabber_private_t *j;
+	jabber_private_t *j;
 	const struct jabber_generic_handler *tmp;
 
-        if (!s || !(j = s->priv) || !n) {
-                debug_error("jabber_handle() invalid parameters\n");
-                return;
-        }
+	if (!s || !(j = s->priv) || !n) {
+		debug_error("jabber_handle() invalid parameters\n");
+		return;
+	}
 
 /* jabber handlers */
 	for (tmp = jabber_handlers; tmp->name; tmp++) {
@@ -719,7 +719,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	jabber_private_t *j = s->priv;
 
 	xmlnode_t *nerr		= xmlnode_find_child(n, "error");
-	xmlnode_t *nbody   	= xmlnode_find_child(n, "body");
+	xmlnode_t *nbody	= xmlnode_find_child(n, "body");
 	xmlnode_t *nsubject	= NULL;
 	xmlnode_t *nthread	= NULL;
 	xmlnode_t *nhtml	= NULL;
@@ -728,7 +728,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	const char *from = jabber_attr(n->atts, "from");
 	char *x_encrypted = NULL;
 
-	char *juid 	= tlenjabber_unescape(from); /* was tmp */
+	char *juid	= tlenjabber_unescape(from); /* was tmp */
 	char *uid;
 	time_t bsent = 0;
 	string_t body;
@@ -950,7 +950,7 @@ JABBER_HANDLER(jabber_handle_message) {
 		new_line = 1;
 	}
 
-	if (new_line) string_append(body, "\n"); 	/* let's seperate headlines from message */
+	if (new_line) string_append(body, "\n");	/* let's seperate headlines from message */
 
 	if (x_encrypted) 
 		string_append(body, x_encrypted);	/* encrypted message */
@@ -1002,7 +1002,7 @@ JABBER_HANDLER(jabber_handle_message) {
 
 					/* glupie, trzeba doszlifowac */
 
-					if (!xstrcmp(up->aff, "owner")) 		attr[0] = '@';
+					if (!xstrcmp(up->aff, "owner"))			attr[0] = '@';
 					else if (!xstrcmp(up->aff, "admin"))		attr[0] = '@';
 
 					else if (!xstrcmp(up->role, "moderator"))	attr[0] = '%';
@@ -1149,11 +1149,11 @@ static int jabber_handle_xmldata_submit(session_t *s, xmlnode_t *form, const cha
 			if (FORM_TYPE && (!xstrcmp(varname, "FORM_TYPE") && !xstrcmp(vartype, "hidden") && !xstrcmp(value, FORM_TYPE))) { valid = 1; quiet = 1;	}
 			if ((tmp = (char **) jabber_attr(atts, varname))) {
 				if (!alloc)	{ xfree(*tmp);		*tmp = value; }			/* here is char ** */
-				else 		{ xfree((char *) tmp);	 tmp = (char **) value; }	/* here is char * */
+				else		{ xfree((char *) tmp);	 tmp = (char **) value; }	/* here is char * */
 				value	= NULL;
 			} else if (alloc) {
-				atts            = (char **) xrealloc(atts, sizeof(char *) * (count + 3));
-				atts[count]     = xstrdup(varname);					
+				atts		= (char **) xrealloc(atts, sizeof(char *) * (count + 3));
+				atts[count]	= xstrdup(varname);					
 				atts[count+1]	= value;						/* here is char * */
 				atts[count+2]	= NULL;
 				count += 2;
@@ -1253,7 +1253,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 	jabber_private_t *j = s->priv;
 
 	const char *atype= jabber_attr(n->atts, "type");
-	const char *id   = jabber_attr(n->atts, "id");
+	const char *id	 = jabber_attr(n->atts, "id");
 	const char *from = jabber_attr(n->atts, "from");
 
 	jabber_iq_type_t type = JABBER_IQ_TYPE_NONE;
@@ -1275,7 +1275,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 		char *uid = tlenjabber_unescape(from);	/* XXX: really worth unescaping? */
 
 		/* XXX, do sprawdzenia w RFC/ napisania maila do gosci od XMPP.
-		 * 	czy jesli nie mamy nic w from, to mamy zakladac ze w from jest 'nasz.jabber.server' (j->server)
+		 *	czy jesli nie mamy nic w from, to mamy zakladac ze w from jest 'nasz.jabber.server' (j->server)
 		 */
 
 		/* XXX, note: we temporary pass here: 'from' instead of unescaped 'uid'.
@@ -1288,7 +1288,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 				/* SECURITY NOTE: for instance, mcabber in version 0.9.5 doesn't check from and id of iq is always increment by one ^^ */
 
 				if (	(!xstrcmp(st->to, uid) /* || jakas_iwil_zmienna [np: bypass_FROM_checkin_from_iq] */)
-					|| !xstrcmp(st->xmlns, "jabber:iq:private") 	/* makeing security HOLE for jabber:iq:private */
+					|| !xstrcmp(st->xmlns, "jabber:iq:private")	/* makeing security HOLE for jabber:iq:private */
 					|| !xstrcmp(st->xmlns, "jabber:iq:privacy")	/* makeing security HOLE for jabber:iq:privacy */
 				   )
 				{
@@ -1337,7 +1337,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 			/* never here */
 
 			/* protect from gcc warning: 
-			 * 	jabber_handlers.c:1271: warning: 'callbacks' may be used uninitialized in this function */
+			 *	jabber_handlers.c:1271: warning: 'callbacks' may be used uninitialized in this function */
 			return;
 	}
 
@@ -1503,7 +1503,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 						if (tmp) nickjid = xmpp_uid(tmp + 1);
 						else	 nickjid = xstrdup(uid);
 
-						if (na) 	print_info(mucuid, s, "muc_left", session_name(s), nickjid + 5, jid, mucuid+5, "");
+						if (na)		print_info(mucuid, s, "muc_left", session_name(s), nickjid + 5, jid, mucuid+5, "");
 
 						ulist = newconference_member_find(c, nickjid);
 						if (ulist && na) { 
@@ -1668,8 +1668,8 @@ static void jabber_session_connected(session_t *s) {
 		const char *list = session_get(s, "privacy_list");
 
 		if (!list) list = "ekg2";
-		command_exec_format(NULL, s, 1, ("/xmpp:privacy --get %s"), 	list);	/* synchronize list */
-		command_exec_format(NULL, s, 1, ("/xmpp:privacy --session %s"), 	list); 	/* set as active */
+		command_exec_format(NULL, s, 1, ("/xmpp:privacy --get %s"),	list);	/* synchronize list */
+		command_exec_format(NULL, s, 1, ("/xmpp:privacy --session %s"),		list);	/* set as active */
 	}
 	/* talk.google.com should work also for Google Apps for your domain */
 	if (!xstrcmp(session_get(s, "server"), "talk.google.com")) {
@@ -1715,7 +1715,7 @@ static time_t jabber_try_xdelay(const char *stamp) {
 		xfree(tmp);
 
 		return out;
-        }
+	}
 	return time(NULL);
 
 }
@@ -1775,7 +1775,7 @@ const char *jabber_iq_send(session_t *s, const char *prefix, jabber_iq_type_t iq
 	char *tmp;
 	char *aiqtype;
 
-	if (iqtype == JABBER_IQ_TYPE_GET) 	aiqtype = "get";
+	if (iqtype == JABBER_IQ_TYPE_GET)	aiqtype = "get";
 	else if (iqtype == JABBER_IQ_TYPE_SET)	aiqtype = "set";
 	else {
 		debug_error("jabber_iq_send() wrong iqtype passed\n");

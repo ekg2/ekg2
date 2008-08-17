@@ -2,9 +2,9 @@
 
 /*
  *  (C) Copyright 2003-2005 Tomasz Torcz <zdzichu@irc.pl>
- *                          Leszek Krupiñski <leafnode@wafel.com>
- *                          Adam Kuczyñski <dredzik@ekg2.org>
- *                          Adam Mikuta <adamm@ekg2.org>
+ *			    Leszek Krupiñski <leafnode@wafel.com>
+ *			    Adam Kuczyñski <dredzik@ekg2.org>
+ *			    Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -208,7 +208,7 @@ static char *fstring_reverse(fstring_t *fstr) {
 					case (2): string_append_c(asc, (cur & FSTR_BOLD) ? 'G' : 'g'); break;
 					case (3): string_append_c(asc, (cur & FSTR_BOLD) ? 'Y' : 'y'); break;
 					case (4): string_append_c(asc, (cur & FSTR_BOLD) ? 'B' : 'b'); break;
-					case (5): string_append_c(asc, (cur & FSTR_BOLD) ? 'M' : 'm'); break; /* | fioletowy     | %m/%p  | %M/%P | %q  | */
+					case (5): string_append_c(asc, (cur & FSTR_BOLD) ? 'M' : 'm'); break; /* | fioletowy	 | %m/%p  | %M/%P | %q	| */
 					case (6): string_append_c(asc, (cur & FSTR_BOLD) ? 'C' : 'c'); break;
 					case (7): string_append_c(asc, (cur & FSTR_BOLD) ? 'W' : 'w'); break;
 				}
@@ -258,8 +258,8 @@ static int logs_log_format(session_t *s) {
 }
 
 /* zwraca 1 lub  2 lub 3 jesli cos sie zmienilo. (log_format, sciezka, t) i zmienia path w log_window_t i jak cos zamyka plik / otwiera na nowo.
- *        0 jesli nie.
- *        -1 jesli cos sie zjebalo.
+ *	  0 jesli nie.
+ *	  -1 jesli cos sie zjebalo.
  */
 
 static int logs_window_check(logs_log_t *ll, time_t t) {
@@ -485,7 +485,7 @@ static int logs_buffer_raw_display(const char *file, int items) {
 	if (!file) return -1;
 	if (!items) return 0;
 
-	/* i'm weird, let's search for logs/__internal__ than check if there are smth after it... & check if there are two '/'  */
+	/* i'm weird, let's search for logs/__internal__ than check if there are smth after it... & check if there are two '/'	*/
 	if ((beg = xstrstr(file, "logs/__internal__")) && xstrlen(beg) > 19 && xstrchr(beg+18, '/') && xstrchr(beg+18, '/') != xstrrchr(beg+18, '/')) {
 		profile = beg + 18;
 		/* XXX, if profile || sesion hasgot '/' we are in trouble */
@@ -496,7 +496,7 @@ static int logs_buffer_raw_display(const char *file, int items) {
 
 	if (!profile || !sesja || !target) return -1;
 
-	profile = (xstrcmp(target, "_default_")) 	? xstrndup(profile, sesja-profile-1) : NULL;
+	profile = (xstrcmp(target, "_default_"))	? xstrndup(profile, sesja-profile-1) : NULL;
 	sesja	= (xstrcmp(target, "_null_"))		? xstrndup(sesja, target-sesja-1) : NULL;
 	target	= xstrdup(target);
 	debug("[logs_buffer_raw_display()] profile: %s sesja: %s target: %s\n", __(profile), __(sesja), __(target));
@@ -587,7 +587,7 @@ attach:
 							snprintf(datetime, 3, "%02d", tm->tm_mon+1);
 						string_append_n(buf, datetime, 2);
 						break;
-				case 'D':       if (!tm) tm = localtime(&sent);
+				case 'D':	if (!tm) tm = localtime(&sent);
 							snprintf(datetime, 3, "%02d", tm->tm_mday);
 						string_append_n(buf, datetime, 2);
 						break;
@@ -807,8 +807,8 @@ static void logs_xml(FILE *file, const char *session, const char *uid, const cha
 	textcopy	= xml_escape( text);
 
 	s = session_find((const char*)session);
-	gotten_uid 	= xml_escape( (tmp = get_uid(s, uid)) 		? tmp : uid);
-	gotten_nickname = xml_escape( (tmp = get_nickname(s, uid)) 	? tmp : uid);
+	gotten_uid	= xml_escape( (tmp = get_uid(s, uid))		? tmp : uid);
+	gotten_nickname = xml_escape( (tmp = get_nickname(s, uid))	? tmp : uid);
 
 	fseek(file, -11, SEEK_END); /* wracamy przed </ekg2log> */
 
@@ -849,7 +849,7 @@ static void logs_xml(FILE *file, const char *session, const char *uid, const cha
 	fputs("\t</time>\n", file);
 
 	fputs("\t<sender>\n", file);
-	fputs("\t\t<uid>", file);   fputs(gotten_uid, file);       fputs("</uid>\n", file);
+	fputs("\t\t<uid>", file);   fputs(gotten_uid, file);	   fputs("</uid>\n", file);
 	fputs("\t\t<nick>", file);  fputs(gotten_nickname, file);  fputs("</nick>\n", file);
 	fputs("\t</sender>\n", file);
 
@@ -951,7 +951,7 @@ static QUERY(logs_handler) {
 	char **rcpts	= *(va_arg(ap, char***));
 	char *text	= *(va_arg(ap, char**));
 		uint32_t **UNUSED(format)	= va_arg(ap, uint32_t**);
-	time_t   sent	= *(va_arg(ap, time_t*));
+	time_t	 sent	= *(va_arg(ap, time_t*));
 	int  class	= *(va_arg(ap, int*));
 		char **UNUSED(seq)		= va_arg(ap, char**);
 
@@ -1073,7 +1073,7 @@ static QUERY(logs_handler_irc) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
 	char *text	= *(va_arg(ap, char**));
-		int  *UNUSED(isour) 	= va_arg(ap, int*);
+		int  *UNUSED(isour)	= va_arg(ap, int*);
 		int  *UNUSED(foryou)	= va_arg(ap, int*);
 		int  *UNUSED(private)	= va_arg(ap, int*);
 	char *channame	= *(va_arg(ap, char**));
@@ -1255,7 +1255,7 @@ static int logs_plugin_destroy() {
 		 *   ts: b->ts
 		 *  str: b->line
 		 */
-		if (f && !xstrcmp(b->target, oldtarget)); 		/* if file is already opened and current target match old one, use it */
+		if (f && !xstrcmp(b->target, oldtarget));		/* if file is already opened and current target match old one, use it */
 		else {
 			if (f) fclose(f);				/* close file */
 			f = logs_open_file(b->target, LOG_FORMAT_RAW);	/* otherwise try to open new file/reopen */

@@ -63,7 +63,7 @@ void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, uint16
 	{
 	const char *tmp = icq_snac_name(fam, cmd);
 	if (tmp)
-		debug_white("icq_makesnac() //  SNAC(0x%x, 0x%x) -- %s\n", fam, cmd, tmp);
+		debug_white("icq_makesnac() //	SNAC(0x%x, 0x%x) -- %s\n", fam, cmd, tmp);
 	}
 #endif
 	icq_makeflap(s, pkt, 0x02);

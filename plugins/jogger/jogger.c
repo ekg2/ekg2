@@ -262,7 +262,7 @@ static plugins_params_t jogger_plugin_vars[] = {
 	PLUGIN_VAR_ADD("entry_file",		VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("entry_hash",		VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("ignore_outgoing_entries",VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "simple,sqlite", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "simple,sqlite", 0, NULL),
 	PLUGIN_VAR_ADD("newentry_open_query",	VAR_BOOL, "1", 0, NULL),
 	PLUGIN_VAR_ADD("own_commentformat",	VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("own_commentformat_autodetect",	VAR_BOOL, "0", 0, NULL),

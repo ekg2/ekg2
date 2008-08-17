@@ -1,6 +1,6 @@
 /*
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
- *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
+ *		       2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -75,7 +75,7 @@ void icq_makeflap(session_t *s, string_t pkt, uint8_t cmd) {
 }
 
 #define ICQ_FLAP_HANDLER(x) int x(session_t *s, unsigned char *buf, int len)
-typedef int (*flap_handler_t)     (session_t * , unsigned char *    , int    );
+typedef int (*flap_handler_t)	  (session_t * , unsigned char *    , int    );
 
 #define ICQ_FLAP_LOGIN	0x01
 static ICQ_FLAP_HANDLER(icq_flap_login) {
@@ -320,7 +320,7 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 		}
 
 		sin.sin_family		= AF_INET;
-		sin.sin_addr.s_addr 	= inet_addr(login_str);
+		sin.sin_addr.s_addr	= inet_addr(login_str);
 		sin.sin_port		= ntohs(port);
 
 		if (connect(fd, (struct sockaddr *) &sin, sizeof(sin))) {

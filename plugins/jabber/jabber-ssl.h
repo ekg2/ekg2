@@ -52,7 +52,7 @@ extern SSL_CTX *jabberSslCtx;	/* jabber.c */
 # define SSL_INIT(session)		!(session = SSL_new(jabberSslCtx))
 
 # define SSL_HELLO(session)		SSL_connect(session)
-# define SSL_BYE(session) 		SSL_shutdown(session)
+# define SSL_BYE(session)		SSL_shutdown(session)
 # define SSL_DEINIT(session)		SSL_free(session)
 # define SSL_GLOBAL_INIT()		SSL_library_init(); jabberSslCtx = SSL_CTX_new(SSLv23_client_method())
 # define SSL_GLOBAL_DEINIT()		SSL_CTX_free(jabberSslCtx)

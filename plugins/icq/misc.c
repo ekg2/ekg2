@@ -1,6 +1,6 @@
 /*
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
- *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
+ *		       2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -34,7 +34,7 @@
 void icq_hexdump(int level, unsigned char *p, size_t len) {
 	#define MAX_BYTES_PER_LINE 16
 	unsigned char *payload = (unsigned char *) p;
-        int offset = 0;
+	int offset = 0;
 
 	while (len) {
 		int display_len;
@@ -45,7 +45,7 @@ void icq_hexdump(int level, unsigned char *p, size_t len) {
 		else	display_len = len;
 	
 	/* offset */
-        	debug_ext(level, "\t0x%.4x  ", offset);
+		debug_ext(level, "\t0x%.4x  ", offset);
 	/* hexdump */
 		for(i = 0; i < MAX_BYTES_PER_LINE; i++) {
 			if (i < display_len)
@@ -62,7 +62,7 @@ void icq_hexdump(int level, unsigned char *p, size_t len) {
 
 		payload	+= display_len;
 		offset	+= display_len;
-		len 	-= display_len;
+		len	-= display_len;
 	}
 }
 
@@ -139,8 +139,8 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 			case 'T':	/* TLV */		/* uint32_t type, uint32_t len, uint8_t *buf (buflen = len) */
 			{
 				uint32_t t_type = va_arg(ap, uint32_t);
-				uint32_t t_len  = va_arg(ap, uint32_t);
-				uint8_t *t_buf  = va_arg(ap, uint8_t *);
+				uint32_t t_len	= va_arg(ap, uint32_t);
+				uint8_t *t_buf	= va_arg(ap, uint8_t *);
 
 				icq_pack_append(str, "WW", t_type, t_len);
 				string_append_raw(str, (char *) t_buf, t_len);
@@ -151,7 +151,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 			case 't':	/* tlv */		/* uint32_t type, uint32_t len */
 			{
 				uint32_t t_type = va_arg(ap, uint32_t);
-				uint32_t t_len  = va_arg(ap, uint32_t);
+				uint32_t t_len	= va_arg(ap, uint32_t);
 
 				icq_pack_append(str, "WW", t_type, t_len);
 				break;

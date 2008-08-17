@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003-2004 Leszek Krupiñski <leafnode@wafel.com>
- *                     2005 Adam Mikuta <adamm@ekg2.org>
+ *		       2005 Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -33,7 +33,7 @@ struct {
 			 * callback zmiennych sesyjnych w ekg2 niet. jest cos takiego.
 			 */
 	char *path;	/* path don't free it ! .... */
-	FILE *file; 	/* file don't close it! it will be closed at unloading plugin. */
+	FILE *file;	/* file don't close it! it will be closed at unloading plugin. */
 } typedef log_window_t;
 
 struct {
@@ -53,7 +53,7 @@ typedef enum {
 } log_format_t;
 
 	/* irssi style info messages */
-#define IRSSI_LOG_EKG2_OPENED	"--- Log opened %a %b %d %H:%M:%S %Y" 	/* defaultowy log_open_string irssi , jak cos to dodac zmienna... */
+#define IRSSI_LOG_EKG2_OPENED	"--- Log opened %a %b %d %H:%M:%S %Y"	/* defaultowy log_open_string irssi , jak cos to dodac zmienna... */
 #define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
 #define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */
 

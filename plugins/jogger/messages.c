@@ -271,7 +271,7 @@ au_retry:
 
 COMMAND(jogger_msg) {
 	const int is_inline	= (*name == '\0');
-	const char *uid 	= get_uid(session, target);
+	const char *uid		= get_uid(session, target);
 	session_t *js		= session_find(session_get(session, "used_session"));
 	const char *juid	= session_get(session, "used_uid");
 	const char *msg		= (is_inline ? params[0] : params[1]);

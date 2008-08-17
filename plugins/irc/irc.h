@@ -91,8 +91,8 @@ typedef struct {
 typedef struct _irc_awaylog_t {
 	char *channame;	/* channel name, (null if priv) */
 	char *uid;	/* nickname who wrote to us	*/
-	char *msg;	/* msg 				*/
-	time_t t;	/* time_t when we recv message 	*/
+	char *msg;	/* msg				*/
+	time_t t;	/* time_t when we recv message	*/
 } irc_awaylog_t;
 
 #define SOP(x) (j->sopt[x])
@@ -114,14 +114,14 @@ typedef struct {
 	char		*topic, *topicby, *mode_str;
 	window_t	*window;
 	list_t		onchan;
-	char            *nickpad_str;
+	char		*nickpad_str;
 	int		nickpad_len, nickpad_pos;
 	int		longest_nick;
 	list_t		banlist;
 	/* needed ?
 	list_t exclist;
 	list_t invlist; */
-	list_t          acclist;
+	list_t		acclist;
 } channel_t;
 
 /* data for private->people->channels */
@@ -158,8 +158,8 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type);
 
 /* checks if name is in format irc:something
  * checkcon is one of:
- *   name is               channel   |  nick 
- *   IRC_GC_CHAN 	-  channame  |  NULL
+ *   name is		   channel   |	nick 
+ *   IRC_GC_CHAN	-  channame  |	NULL
  *   IRC_GC_NOT_CHAN	-  NULL      | nickname
  *   IRC_GC_ANY		-  name if it's in proper format [irc:something]
  */

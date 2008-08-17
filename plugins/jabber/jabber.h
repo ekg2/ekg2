@@ -21,13 +21,13 @@
 #define JABBER_DEFAULT_RESOURCE "ekg2"
 
 /* some tlen constants */
-#define TLEN_HUB "idi.tlen.pl"			/* hub 			*/
-#define TLEN_FALLBACK_SERVER "s1.tlen.pl"	/* fallback server 	*/
-#define TLEN_FALLBACK_PORT 443			/* fallback port 	*/
+#define TLEN_HUB "idi.tlen.pl"			/* hub			*/
+#define TLEN_FALLBACK_SERVER "s1.tlen.pl"	/* fallback server	*/
+#define TLEN_FALLBACK_PORT 443			/* fallback port	*/
 
-#define tlenjabber_escape(str)   (j->istlen ? tlen_encode(str) : jabber_escape(str))
+#define tlenjabber_escape(str)	 (j->istlen ? tlen_encode(str) : jabber_escape(str))
 #define tlenjabber_unescape(str) (j->istlen ? tlen_decode(str) : jabber_unescape(str))
-#define tlenjabber_uid(target)   protocol_uid(j->istlen ? "tlen" : "xmpp", target)
+#define tlenjabber_uid(target)	 protocol_uid(j->istlen ? "tlen" : "xmpp", target)
 
 #define tlen_uid(target) protocol_uid("tlen", target)
 #define xmpp_uid(target) protocol_uid("xmpp", target)
@@ -101,10 +101,10 @@ enum jabber_compression_method {
 
 	/* name				bit			allow/block:	*/
 typedef enum {
-	PRIVACY_LIST_MESSAGE		= 1,		/* 	incoming messages */
-	PRIVACY_LIST_IQ			= 2,		/*      incoming iq packets */
-	PRIVACY_LIST_PRESENCE_IN	= 4,		/*      incoming presence packets */
-	PRIVACY_LIST_PRESENCE_OUT	= 8,		/*      outgoint presence packets */
+	PRIVACY_LIST_MESSAGE		= 1,		/*	incoming messages */
+	PRIVACY_LIST_IQ			= 2,		/*	incoming iq packets */
+	PRIVACY_LIST_PRESENCE_IN	= 4,		/*	incoming presence packets */
+	PRIVACY_LIST_PRESENCE_OUT	= 8,		/*	outgoint presence packets */
 	PRIVACY_LIST_ALL		= (PRIVACY_LIST_MESSAGE | PRIVACY_LIST_IQ | PRIVACY_LIST_PRESENCE_IN | PRIVACY_LIST_PRESENCE_OUT)
 } jabber_iq_privacy_flags_t;
 
@@ -153,7 +153,7 @@ typedef struct {
 	uint16_t port;			/**< server's port number */
 	unsigned int sasl_connecting :1;/**< whether we're connecting over SASL */
 	char *resource;			/**< resource used when connecting to daemon */
-	char *last_gmail_result_time; 	/**< last time we're checking mail (this seems not to work correctly ;/) */
+	char *last_gmail_result_time;	/**< last time we're checking mail (this seems not to work correctly ;/) */
 	char *last_gmail_tid;		/**< lastseen mail thread-id */
 	list_t privacy;			/**< for jabber:iq:privacy */
 	list_t bookmarks;		/**< for jabber:iq:private <storage xmlns='storage:bookmarks'> */
@@ -189,7 +189,7 @@ extern char *jabber_default_search_server;
 extern int config_jabber_beep_mail;
 extern const char *jabber_authtypes[];
 
-#define jabber_private(s) 		((jabber_private_t*) session_private_get(s))
+#define jabber_private(s)		((jabber_private_t*) session_private_get(s))
 #define jabber_userlist_priv_get(u)	((jabber_userlist_private_t *) userlist_private_get(&jabber_plugin, u))
 
 void jabber_register_commands(void);

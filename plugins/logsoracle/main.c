@@ -59,7 +59,7 @@ PLUGIN_DEFINE(logsoracle, PLUGIN_LOG, logsoracle_theme_init);
 /*
  * Plugin constructor
  *  returns 0 on success
- *         -1 on failure
+ *	   -1 on failure
  */
 int logsoracle_plugin_init(int prio)
 {
@@ -117,7 +117,7 @@ static int logsoracle_theme_init()
 	format_add("logsoracle_error", _("%! oracle error message:\n\n%W%1%n\n\n%! end of message\n"), 1);
 	format_add("logsoracle_connected", _("%> connected to Oracle\n"), 1);
 	format_add("logsoracle_disconnected", _("%> disconnected from Oracle\n"), 1);
-        format_add("logsoracle_disconn_not_needed", _("%> not connected to database\n"), 1);
+	format_add("logsoracle_disconn_not_needed", _("%> not connected to database\n"), 1);
 	format_add("logsoracle_already_connected", _("%> already connected to Oracle. use 'disconnect' first\n"), 1); 
 
 	return 0;
@@ -131,12 +131,12 @@ QUERY(logsoracle_handler_setvarsdef)
 {
 	memset((void *)&logsoracle_config, 0, sizeof(logsoracle_config));
 
-	logsoracle_config.auto_connect   = 0;		    
+	logsoracle_config.auto_connect	 = 0;		    
 	logsoracle_config.logging_active = 1;
-	logsoracle_config.log_messages   = 1;
-	logsoracle_config.log_status     = 1;					    
-	logsoracle_config.db_login       = NULL;
-	logsoracle_config.db_password    = NULL;
+	logsoracle_config.log_messages	 = 1;
+	logsoracle_config.log_status	 = 1;					    
+	logsoracle_config.db_login	 = NULL;
+	logsoracle_config.db_password	 = NULL;
     
 	return 0;
 }
@@ -188,7 +188,7 @@ QUERY(logsoracle_handler_sestatus)
 	debug("[logsoracle] session status (session %s :: status %s :: descr '%s')\n", session_uid, ekg_status_string(status, 0), session->descr);
 	*/
     
-        if(!oralog_db_new_status(session_uid, session_uid, (status) ? ekg_status_string(status, 2) : EMPTY_STATUS, (session->descr) ? session->descr : EMPTY_DESCR, time(NULL), 0))
+	if(!oralog_db_new_status(session_uid, session_uid, (status) ? ekg_status_string(status, 2) : EMPTY_STATUS, (session->descr) ? session->descr : EMPTY_DESCR, time(NULL), 0))
 		logsoracle_stat_inc_status();
 
     
@@ -202,15 +202,15 @@ QUERY(logsoracle_handler_sestatus)
  */
 QUERY(logsoracle_handler_prstatus)
 {
-        char *session_uid  = *(va_arg(ap, char**));	/* eg. jid:romeo@verona.net */
-	char *uid          = *(va_arg(ap, char**));	/* eg. jid:julia@verona.net */
-	int status_n       = *(va_arg(ap, int*));	/* eg. "away" (as enum) */
-	char *descr        = *(va_arg(ap, char**));	/* eg. "i'm not here" */
-	char *status       = 0;				/* status as string; written into db */
+	char *session_uid  = *(va_arg(ap, char**));	/* eg. jid:romeo@verona.net */
+	char *uid	   = *(va_arg(ap, char**));	/* eg. jid:julia@verona.net */
+	int status_n	   = *(va_arg(ap, int*));	/* eg. "away" (as enum) */
+	char *descr	   = *(va_arg(ap, char**));	/* eg. "i'm not here" */
+	char *status	   = 0;				/* status as string; written into db */
 	
 	int  descr_alloc  = 0;
 
-        if(!logsoracle_config.log_status)
+	if(!logsoracle_config.log_status)
 	    return 0;
 		
 
@@ -236,7 +236,7 @@ QUERY(logsoracle_handler_prstatus)
 	}
 	
 		
-        debug("[logsoracle] protocol status (session %s :: uid %s :: status %s :: descr '%s'\n", session_uid, uid, status, descr);
+	debug("[logsoracle] protocol status (session %s :: uid %s :: status %s :: descr '%s'\n", session_uid, uid, status, descr);
 
 	if(!oralog_db_new_status(session_uid, uid, status, descr, time(NULL), 0))
 		logsoracle_stat_inc_status();
@@ -249,7 +249,7 @@ QUERY(logsoracle_handler_prstatus)
 	}
 
 	
-        return 0;
+	return 0;
 }
 
 
@@ -260,18 +260,18 @@ QUERY(logsoracle_handler_prstatus)
 QUERY(logsoracle_handler_prmsg)
 {
 	char *session_uid = *(va_arg(ap, char**));	/* session uid */
-	char *uid         = *(va_arg(ap, char**));	/* sender uid */
-	char **rcpts      = *(va_arg(ap, char***));	/* list of reciepients (uids)*/
-	char *text        = *(va_arg(ap, char**));	/* message content */
+	char *uid	  = *(va_arg(ap, char**));	/* sender uid */
+	char **rcpts	  = *(va_arg(ap, char***));	/* list of reciepients (uids)*/
+	char *text	  = *(va_arg(ap, char**));	/* message content */
 	uint32_t *format  = *(va_arg(ap, uint32_t**));	/* ? */
-	time_t   sent     = *(va_arg(ap, time_t*));	/* timestamp */
-	int  class        = *(va_arg(ap, int*));	/* check msgclass_t in protocol.h */
-	char *seq         = *(va_arg(ap, char**));	/* sequence number */
+	time_t	 sent	  = *(va_arg(ap, time_t*));	/* timestamp */
+	int  class	  = *(va_arg(ap, int*));	/* check msgclass_t in protocol.h */
+	char *seq	  = *(va_arg(ap, char**));	/* sequence number */
 
 	int i;
 	int rcpts_alloc=0;
 				
-        debug("[logsoracle] protocol message :\n");
+	debug("[logsoracle] protocol message :\n");
 	debug("[logsoracle] session: %s uid: %s\n", session_uid, uid);
 	debug("[logsoracle] recipietns:\n");
 	if(rcpts != NULL) {
@@ -288,8 +288,8 @@ QUERY(logsoracle_handler_prmsg)
 	 * When someone sends us a message rcpts is NULL
 	 */
 	if(rcpts == NULL) {
-	        array_add(&rcpts, xstrdup(session_uid));
-	        rcpts_alloc=1;
+		array_add(&rcpts, xstrdup(session_uid));
+		rcpts_alloc=1;
 	}
 	/* BUG */
 	
@@ -304,7 +304,7 @@ QUERY(logsoracle_handler_prmsg)
 	}
 	/* BUG */
 	
-        return 0;
+	return 0;
 }
 
 /*

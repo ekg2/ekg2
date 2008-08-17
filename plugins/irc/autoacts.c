@@ -40,15 +40,15 @@ static TIMER(irc_autorejoin_timer);
  *
  * @todo	We don't check if @a nick and @a chan is full uid.. It's I think correct.. However can be faulty.
  *
- * @param ap 1st param: <i>(char *) </i><b>session</b> 	- session uid
- * 	  ap 2nd param: <i>(char *) </i><b>nick</b>	- full uid of kicked person (irc:nickname)
- * 	  ap 3rd param: <i>(char *) </i><b>chan</b>	- full uid of channel where kick event happen.
- * 	  ap 4th param: <i>(char *) </i><b>kickedby</b>	- full uid who kicked.
+ * @param ap 1st param: <i>(char *) </i><b>session</b>	- session uid
+ *	  ap 2nd param: <i>(char *) </i><b>nick</b>	- full uid of kicked person (irc:nickname)
+ *	  ap 3rd param: <i>(char *) </i><b>chan</b>	- full uid of channel where kick event happen.
+ *	  ap 4th param: <i>(char *) </i><b>kickedby</b>	- full uid who kicked.
  * @param data NULL
  *
- * @return 	1 - If no session, no irc session, or no private struct.<br>
- * 		2 - If we are not interested in autorejoining	[either smb else was kicked (not us) or <i>REJOIN</i> was not set]<br>
- * 		3 - If we'll try to autorejoin
+ * @return	1 - If no session, no irc session, or no private struct.<br>
+ *		2 - If we are not interested in autorejoining	[either smb else was kicked (not us) or <i>REJOIN</i> was not set]<br>
+ *		3 - If we'll try to autorejoin
  */
 
 QUERY(irc_onkick_handler) {
@@ -85,9 +85,9 @@ QUERY(irc_onkick_handler) {
 			irc_onkick_handler_t *data = xmalloc(sizeof(irc_onkick_handler_t));
 
 			data->s		= s;
-			data->nick 	= xstrdup(nick);
-			data->kickedby 	= xstrdup(kickedby);
-			data->chan 	= xstrdup(chan);
+			data->nick	= xstrdup(nick);
+			data->kickedby	= xstrdup(kickedby);
+			data->chan	= xstrdup(chan);
 
 			timer_add(&irc_plugin, NULL, rejoin_time, 0, irc_autorejoin_timer, data);
 			return 3;
@@ -136,12 +136,12 @@ static TIMER(irc_autorejoin_timer) {
  *
  * @param s	- session
  * @param when	- type of rejoining:<br>
- * 			- <i>IRC_REJOIN_CONNECT</i> 	When we want to rejoin to all channels we had opened for example after <i>/reconnect</i>
- * 			- <i>IRC_REJOIN_KICK</i>	When we want to rejoin to given channel (@a chan)
+ *			- <i>IRC_REJOIN_CONNECT</i>	When we want to rejoin to all channels we had opened for example after <i>/reconnect</i>
+ *			- <i>IRC_REJOIN_KICK</i>	When we want to rejoin to given channel (@a chan)
  * @param chan	- if @a when == IRC_REJOIN_KICK than it specify to which channel we want to rejoin after kick.
  *
- * @return 	 0 - if we send JOIN commands to ircd...<br>
- * 		-1 - If smth went wrong.
+ * @return	 0 - if we send JOIN commands to ircd...<br>
+ *		-1 - If smth went wrong.
  */
 
 int irc_autorejoin(session_t *s, int when, char *chan) {
@@ -153,7 +153,7 @@ int irc_autorejoin(session_t *s, int when, char *chan) {
 
 #if 1	/* there's no need of doing it, already checked by irc_onkick_handler() or if it goes through irc_c_init() it's even better. */
 	if (!s || !(j = s->priv) || (s->plugin != &irc_plugin))
-    		return -1;
+		return -1;
 #endif
 	chanprefix = SOP(_005_CHANTYPES);
 	rejoin = session_int_get(s, "REJOIN");

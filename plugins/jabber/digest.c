@@ -286,12 +286,12 @@ unsigned int i, j;
     if ((context->count[0] += len << 3) < (len << 3)) context->count[1]++;
     context->count[1] += (len >> 29);
     if ((j + len) > 63) {
-        memcpy(&context->buffer[j], data, (i = 64-j));
-        Transform(context->state, context->buffer, usesha);
-        for ( ; i + 63 < len; i += 64) {
-            Transform(context->state, &data[i], usesha);
-        }
-        j = 0;
+	memcpy(&context->buffer[j], data, (i = 64-j));
+	Transform(context->state, context->buffer, usesha);
+	for ( ; i + 63 < len; i += 64) {
+	    Transform(context->state, &data[i], usesha);
+	}
+	j = 0;
     }
     else i = 0;
     memcpy(&context->buffer[j], &data[i], len - i);
@@ -309,7 +309,7 @@ static void Encode (unsigned char *output, uint32_t *input, unsigned int len, in
 
 	} else {
 		for (i = 0, j = 0; j < len; i++, j += 4) {
-			output[j]   = (unsigned char)	((input[i] 	) & 0xff);
+			output[j]   = (unsigned char)	((input[i]	) & 0xff);
 			output[j+1] = (unsigned char)	((input[i] >>  8) & 0xff);
 			output[j+2] = (unsigned char)	((input[i] >> 16) & 0xff);
 			output[j+3] = (unsigned char)	((input[i] >> 24) & 0xff);
@@ -343,7 +343,7 @@ static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 #endif
 
     while ((context->count[0] & 504) != 448) {
-        Update(context, (unsigned char *)"\0", 1, usesha);
+	Update(context, (unsigned char *)"\0", 1, usesha);
     }
     Update(context, finalcount, 8, usesha);  /* Should cause a SHA1Transform() */
 
@@ -458,7 +458,7 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 }
 
 /** [XXX] SOME TIME AGO, I had idea to connect jabber_dcc_digest() and jabber_digest()
- * 	with one function, and use va_list for it... i don't know.
+ *	with one function, and use va_list for it... i don't know.
  */
 
 /**

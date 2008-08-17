@@ -1,6 +1,6 @@
 /*
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
- *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
+ *		       2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -148,7 +148,7 @@ int icq_write_info(session_t *s) {
 	tlv_5 = string_init(NULL);
 
 #ifdef DBG_CAPMTN
-	icq_pack_append(tlv_5, "IIII",  (uint32_t) 0x563FC809,		/* CAP_TYPING */
+	icq_pack_append(tlv_5, "IIII",	(uint32_t) 0x563FC809,		/* CAP_TYPING */
 					(uint32_t) 0x0B6F41BD,
 					(uint32_t) 0x9F794226,
 					(uint32_t) 0x09DFA2F3);
@@ -175,7 +175,7 @@ int icq_write_info(session_t *s) {
 
 #ifdef DBG_OSCARFT
 	/* Broadcasts the capability to receive Oscar File Transfers */
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x1343); 		/* CAP_AIM_FILE - Client supports file transfer (can send files). */
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x1343);			/* CAP_AIM_FILE - Client supports file transfer (can send files). */
 #endif
 
 	if (j->aim)
@@ -302,10 +302,10 @@ void icq_session_connected(session_t *s) {
 #if MIRANDA
 		if (cbMoodId)
 		{ // Pack mood data
-			packWord(&packet, 0x1D);              // TLV 1D
+			packWord(&packet, 0x1D);	      // TLV 1D
 			packWord(&packet, (WORD)(cbMoodId + 4)); // TLV length
-			packWord(&packet, 0x0E);              // Item Type
-			packWord(&packet, cbMoodId);          // Flags + Item Length
+			packWord(&packet, 0x0E);	      // Item Type
+			packWord(&packet, cbMoodId);	      // Flags + Item Length
 			packBuffer(&packet, (LPBYTE)szMoodId, cbMoodId); // Mood
 		}
 #endif
@@ -444,8 +444,8 @@ static QUERY(icq_session_deinit) {
 }
 
 static QUERY(icq_validate_uid) {
-	char	*uid 	= *(va_arg(ap, char **));
-	int	*valid 	= va_arg(ap, int *);
+	char	*uid	= *(va_arg(ap, char **));
+	int	*valid	= va_arg(ap, int *);
 
 	if (!uid)
 		return 0;
@@ -553,8 +553,8 @@ static WATCHER_SESSION(icq_handle_stream) {
 	icq_hexdump(DEBUG_IORECV, (unsigned char *) buf, len);
 
 	/* XXX,
-	 * 	- add buf to string_t
-	 * 	- icq_flap_handler(s, buffer);
+	 *	- add buf to string_t
+	 *	- icq_flap_handler(s, buffer);
 	 */
 
 	ret = icq_flap_handler(s, fd, buf, &len);
@@ -631,7 +631,7 @@ static WATCHER(icq_handle_hubresolver) {
 		return -1;
 	}
 
-        debug_function("[icq] resolved to %s\n", inet_ntoa(a));
+	debug_function("[icq] resolved to %s\n", inet_ntoa(a));
 
 /* port */
 	hubport = session_int_get(s, "hubport");
@@ -646,11 +646,11 @@ static WATCHER(icq_handle_hubresolver) {
 
 	sin.sin_family = AF_INET;
 	sin.sin_port = ntohs(hubport);
-        sin.sin_addr.s_addr = a.s_addr;
+	sin.sin_addr.s_addr = a.s_addr;
 
-        if (ioctl(fd, FIONBIO, &one) == -1) 
+	if (ioctl(fd, FIONBIO, &one) == -1) 
 		debug_error("[icq] ioctl() FIONBIO failed: %s\n", strerror(errno));
-        if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) == -1) 
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) == -1) 
 		debug_error("[icq] setsockopt() SO_KEEPALIVE failed: %s\n", strerror(errno));
 
 	res = connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in)); 
@@ -658,7 +658,7 @@ static WATCHER(icq_handle_hubresolver) {
 	if (res == -1 && errno != EINPROGRESS) {
 		int err = errno;
 
-                debug_error("[icq] connect() failed: %s (errno=%d)\n", strerror(err), err);
+		debug_error("[icq] connect() failed: %s (errno=%d)\n", strerror(err), err);
 		icq_handle_disconnect(s, strerror(err), EKG_DISCONNECT_FAILURE);
 		return -1;
 	}
@@ -783,11 +783,11 @@ static COMMAND(icq_command_msg) {
 
 msgdisplay:
 	if (!quiet) { /* if (1) ? */ 
-		char **rcpts 	= xcalloc(2, sizeof(char *));
-		int class 	= EKG_MSGCLASS_SENT_CHAT;	/* XXX? */
+		char **rcpts	= xcalloc(2, sizeof(char *));
+		int class	= EKG_MSGCLASS_SENT_CHAT;	/* XXX? */
 
-		rcpts[0] 	= xstrdup(uid);
-		rcpts[1] 	= NULL;
+		rcpts[0]	= xstrdup(uid);
+		rcpts[1]	= NULL;
 
 		/* XXX, encrypt */
 		
@@ -844,11 +844,11 @@ static COMMAND(icq_command_away) {
 		session_unidle(session);
 		allow_descr = 1;
 	} else if (!xstrcmp(name, ("ffc"))) {
-	        format = "ffc";
-	        session_status_set(session, EKG_STATUS_FFC);
-                session_unidle(session);
+		format = "ffc";
+		session_status_set(session, EKG_STATUS_FFC);
+		session_unidle(session);
 		allow_descr = 1;
-        } else if (!xstrcmp(name, ("xa"))) {
+	} else if (!xstrcmp(name, ("xa"))) {
 		format = "xa";
 		session_status_set(session, EKG_STATUS_XA);
 		session_unidle(session);
@@ -952,7 +952,7 @@ static COMMAND(icq_command_disconnect) {
 
 	if (session->connecting)
 		icq_handle_disconnect(session, NULL, EKG_DISCONNECT_STOPPED);
-	else    
+	else	
 		icq_handle_disconnect(session, NULL, EKG_DISCONNECT_USER);
 
 	return 0;
@@ -1092,16 +1092,16 @@ static COMMAND(icq_command_search) {
 	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_POSITION, TLV_POSITION);
 	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_KEYWORDS, TLV_KEYWORDS);
 
-	ppackTLVDWord(&buf, &buflen, (DWORD)getCurItemData(hwndDlg, IDC_AGERANGE),      TLV_AGERANGE,  0);
+	ppackTLVDWord(&buf, &buflen, (DWORD)getCurItemData(hwndDlg, IDC_AGERANGE),	TLV_AGERANGE,  0);
 */
 
 	if (gender) icq_pack_append(pkt, "wwc", icq_pack_tlv_char(0x017C, gender));
 
 /*
 	ppackTLVByte(&buf,  &buflen, (BYTE)getCurItemData(hwndDlg,  IDC_MARITALSTATUS), TLV_MARITAL,   0);
-	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_LANGUAGE),      TLV_LANGUAGE,  0);
-	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_COUNTRY),       TLV_COUNTRY,   0);
-	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_WORKFIELD),     TLV_OCUPATION, 0);
+	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_LANGUAGE),	TLV_LANGUAGE,  0);
+	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_COUNTRY),	TLV_COUNTRY,   0);
+	ppackTLVWord(&buf,  &buflen, (WORD)getCurItemData(hwndDlg,  IDC_WORKFIELD),	TLV_OCUPATION, 0);
 
 	searchPackTLVWordLNTS(&buf, &buflen, hwndDlg, IDC_PASTKEY, (WORD)getCurItemData(hwndDlg, IDC_PASTCAT), TLV_PASTINFO);
 	searchPackTLVWordLNTS(&buf, &buflen, hwndDlg, IDC_INTERESTSKEY, (WORD)getCurItemData(hwndDlg, IDC_INTERESTSCAT), TLV_INTERESTS);
@@ -1202,18 +1202,18 @@ static int icq_theme_init() {
 }
 
 static plugins_params_t icq_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		VAR_STR, NULL, 0, NULL), 
-	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("auto_reconnect", 	VAR_INT,  "0", 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "xml,simple,sqlite", 0, NULL),
-	PLUGIN_VAR_ADD("password", 		VAR_STR, NULL, 1, NULL),
+	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL), 
+	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT,  "0", 0, NULL),
+	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "xml,simple,sqlite", 0, NULL),
+	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("plaintext_passwd",	VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_END()
 };
 
 EXPORT int icq_plugin_init(int prio) {
-#define ICQ_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE 
-#define ICQ_FLAGS 		ICQ_ONLY | SESSION_MUSTBECONNECTED
+#define ICQ_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE 
+#define ICQ_FLAGS		ICQ_ONLY | SESSION_MUSTBECONNECTED
 #define ICQ_FLAGS_TARGET	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 #define ICQ_FLAGS_MSG		ICQ_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 
@@ -1249,7 +1249,7 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:searchuin", "!u",	icq_command_searchuin,	ICQ_FLAGS_TARGET, NULL);
 	command_add(&icq_plugin, "icq:search", "!p",	icq_command_search,	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 
-	command_add(&icq_plugin, "icq:connect", NULL,	icq_command_connect, 	ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:connect", NULL,	icq_command_connect,	ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:disconnect", NULL,icq_command_disconnect,	ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:reconnect", NULL,	icq_command_reconnect,	ICQ_ONLY, NULL);
 

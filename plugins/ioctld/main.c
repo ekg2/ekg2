@@ -2,12 +2,12 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@infomex.pl>
- *                          Wojciech Bojdo³ <wojboj@htc.net.pl>
- *                          Piotr Wysocki <wysek@linux.bydg.org>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
+ *			    Wojciech Bojdo³ <wojboj@htc.net.pl>
+ *			    Piotr Wysocki <wysek@linux.bydg.org>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -74,8 +74,8 @@ static int ioctld_parse_seq(const char *seq, struct action_data *data)
 	char **entries;
 	int i;
 
-        if (!data || !seq)
-                return -1;
+	if (!data || !seq)
+		return -1;
 
 	memset(data, 0, sizeof(struct action_data));
 
@@ -134,7 +134,7 @@ static int ioctld_socket(const char *path)
 	close(ioctld_sock);
 	ioctld_sock = -1;
 
-        return -1;
+	return -1;
 }
 
 /*

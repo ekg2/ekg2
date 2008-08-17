@@ -247,7 +247,7 @@ next2:
 
 			if (u->status != EKG_STATUS_AVAIL) {
 				xfree(u->descr);
-				u->status 	= EKG_STATUS_AVAIL;
+				u->status	= EKG_STATUS_AVAIL;
 				u->descr	= xstrdup("description... ?");
 				query_emit_id(NULL, USERLIST_CHANGED, &s, &(u->uid));
 			}
@@ -284,13 +284,13 @@ next3:
  *		1 - conversion failed, memory content of *number is unknown
  */
 static int gatoi(char *buf, int *a) {
-        char	*x;
-        long	t;
+	char	*x;
+	long	t;
 	if(!buf) return (1);
-        t=strtol(buf, &x, 10);
-        if (x == buf) return (1);
-        *a=t;
-        return (0);
+	t=strtol(buf, &x, 10);
+	if (x == buf) return (1);
+	*a=t;
+	return (0);
 }
 
 /**
@@ -371,12 +371,12 @@ and the prefix.
 	/* dj: maybe instead of :_empty_ we give here sesesion_get(.., server) ?
 	 * i don't remember rfc now ;( 
 	 * G->dj: truly we shouldn't change this to anything...
-	 *        this _empty_ is for our convenience
+	 *	  this _empty_ is for our convenience
 	 */
 
 	q[c]=p;
 	i=0; c++;
-        /* GiM: split message into q table */
+	/* GiM: split message into q table */
 	while (i<len) {
 		/* GiM: find first space */
 		while (' ' != *p && i<len) { p++; i++; }
@@ -473,7 +473,7 @@ IRC_COMMAND(irc_c_init)
 			protocol_connected_emit(s);
 			t = xstrchr(param[3], '!');
 			xfree(j->host_ident);
-			if (t)  j->host_ident=xstrdup(++t); 
+			if (t)	j->host_ident=xstrdup(++t); 
 			else j->host_ident=NULL;
 			debug("\nspoko miejscówka ziom!...[%s:%s] given: %s\n", j->nick, j->host_ident, param[2]);
 
@@ -568,7 +568,7 @@ IRC_COMMAND(irc_c_error)
 /*		print_info(NULL, s, "IRC_ERR_FIRSTSECOND", session_name(s), irccommands[ecode].comm, IOK2(2)); */
 		if (s->connecting)
 			irc_handle_disconnect(s, IOK2(2), EKG_DISCONNECT_FAILURE); 
-		else    debug("!s->connecting\n");
+		else	debug("!s->connecting\n");
 		return -1;
 	}
 	i = irccommands[ecode].future&0x100;
@@ -645,7 +645,7 @@ IRC_COMMAND(irc_c_error)
 			IRC_TO_LOWER(param[3]);
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
-				char *__topic   = OMITCOLON(param[4]);
+				char *__topic	= OMITCOLON(param[4]);
 				char *tmpchn	= clean_channel_names(s, param[3]);
 
 				xfree(chanp->topic);
@@ -684,14 +684,14 @@ IRC_COMMAND(irc_c_error)
 				/* temporary */
 				watch_write(j->send_watch, "PRIVMSG nickserv :IDENTIFY %s\n", session_get(s, "identify"));
 				/* XXX, bedzie:
-				 * 	session_get(s, "identify") 
-				 * 		<nick_ns> <host_ns *weryfikacja zeby nikt nie spoofowac*> "<NICK1 HASLO>" "<NICK2 HASLO>" "[GLOWNE HASLO]"
+				 *	session_get(s, "identify") 
+				 *		<nick_ns> <host_ns *weryfikacja zeby nikt nie spoofowac*> "<NICK1 HASLO>" "<NICK2 HASLO>" "[GLOWNE HASLO]"
 				 *
-				 * 	array_make() splitowane po spacjach. " " traktuj jako jeden parametr
-				 * 		p[2...x] jesli ma spacje sprawdz czy nicki do spacji sie zgadzaja... jesli tak uzyj haslo.
-				 * 				jesli nie, uzywaj haslo.
+				 *	array_make() splitowane po spacjach. " " traktuj jako jeden parametr
+				 *		p[2...x] jesli ma spacje sprawdz czy nicki do spacji sie zgadzaja... jesli tak uzyj haslo.
+				 *				jesli nie, uzywaj haslo.
 				 *
-				 * 	i dopiero robmy IDENTIFY jesli dostaniem request od serwisow !!!
+				 *	i dopiero robmy IDENTIFY jesli dostaniem request od serwisow !!!
 				 */
 			}
 
@@ -791,10 +791,10 @@ IRC_COMMAND(irc_c_whois)
 	int		secs, mins, hours, days, which, i;
 	time_t		timek;
 	int		timek_int = (int) timek;
-        window_t	*w = window_find_s(s, t);
+	window_t	*w = window_find_s(s, t);
 
 	if (session_int_get(s, "DISPLAY_IN_CURRENT")&2)
-        	dest = w?t:NULL;
+		dest = w?t:NULL;
 
 	if (irccommands[ecode].num != 317) { /* idle */
 		char *chlist = NULL;
@@ -880,10 +880,10 @@ IRC_COMMAND(irc_c_list)
 	char		*realname;
 	char		*coloured = NULL;
 
-	window_t	*w        = NULL;
-	people_t	*osoba    = NULL;
-	channel_t	*chan     = NULL;
-	list_t		*tlist    = NULL;
+	window_t	*w	  = NULL;
+	people_t	*osoba	  = NULL;
+	channel_t	*chan	  = NULL;
+	list_t		*tlist	  = NULL;
 
 	if (endlist) ltype -= IRC_LISTEND;
 
@@ -899,7 +899,7 @@ IRC_COMMAND(irc_c_list)
 
 	if (ltype == IRC_LISTWHO || ltype == IRC_LISTBAN) {
 		IRC_TO_LOWER(IOK(3));
- 		chan = irc_find_channel(j->channels, IOK(3));
+		chan = irc_find_channel(j->channels, IOK(3));
 		/* debug("!!!> %s %08X %d %d\n", IOK(3), chan, chan?chan->syncmode:-1, ltype); */
 	}
 
@@ -945,7 +945,7 @@ IRC_COMMAND(irc_c_list)
 				break;
 			case (IRC_LISTWHO): 
 				/* ok new irc-find-person checked */
-				osoba    = irc_find_person(j->people, IOK(7));
+				osoba	 = irc_find_person(j->people, IOK(7));
 				realname = xstrchr(IOK2(9), ' ');
 				PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), realname);
 				if (osoba) {
@@ -963,7 +963,7 @@ IRC_COMMAND(irc_c_list)
 			/*
 			case (IRC_LISTCHA):
 				// TODO: /join #number (?)
- 				tlist = ...
+				tlist = ...
 			case (IRC_LISTINV):
 				tlist = ...
 			case (IRC_LISTEXC):
@@ -1116,9 +1116,9 @@ IRC_COMMAND(irc_c_msg)
 		/* WTF ? WHY this -1 ? insane ?
 		 * dj->G: because of it: (param[0]+1) 
 		 * G->dj: this is really shitty hack/workaround
-		 *        never do things like that, better change those
-		 *        param[0]+1 to OMITCOLON, and btw: I think in 
-		 *        IRC_COMMANDs we shouldn't change param-s table
+		 *	  never do things like that, better change those
+		 *	  param[0]+1 to OMITCOLON, and btw: I think in 
+		 *	  IRC_COMMANDs we shouldn't change param-s table
 		 *
 		param[0] = (char *) session_get(s, "server")-1; */
 		xosd_to_us = 1;
@@ -1153,7 +1153,7 @@ IRC_COMMAND(irc_c_msg)
 		if ((person = irc_find_person(j->people, param[0]+1)))
 		{
 			/* G->dj: I'm not sure if this what I've added
-			 *        will still do the same you wanted */
+			 *	  will still do the same you wanted */
 			if (t && !(person->ident) && !(person->host))
 				irc_parse_identhost(t+1, &(person->ident), &(person->host));
 
@@ -1166,7 +1166,7 @@ IRC_COMMAND(irc_c_msg)
 	if (ctcpstripped) {
 		char *clear_string, *padding = NULL;
 		int isour = 0;
-  		if (xosd_is_priv) /* @ wrong place */
+		if (xosd_is_priv) /* @ wrong place */
 			query_emit_id(NULL, MESSAGE_DECRYPT, &(s->uid), &dest, &ctcpstripped, &secure , NULL);
 		else
 			query_emit_id(NULL, MESSAGE_DECRYPT, &dest, &(s->uid), &ctcpstripped, &secure , NULL);
@@ -1186,11 +1186,11 @@ IRC_COMMAND(irc_c_msg)
 			padding = nickpad_string_apply (perchn->chanp, param[0]+1);
 
 		/* privmsg on channel */
-                if (NULL == format)
+		if (NULL == format)
 		{
 			if ((pubtous = xstrcasestr(clear_string, j->nick))) {
 				/* pubtus - points to beginning of a nickname
-				 * tous   - points after end    of a nickname
+				 * tous   - points after end	of a nickname
 				 */
 				tous = pubtous[xstrlen(j->nick)];
 				if (!isalnum(tous) && !isalpha_pl(tous))
@@ -1213,7 +1213,7 @@ IRC_COMMAND(irc_c_msg)
 
 			if (!xosd_to_us)
 				class |= EKG_MSGCLASS_NOT2US;
-                }
+		}
 		xfree (clear_string);
 
 		head = format_string(format_find(format), session_name(s),
@@ -1246,7 +1246,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 			irc_awaylog_t *e = xmalloc(sizeof(irc_awaylog_t));
 
 			if (xosd_is_priv) {
-				e->channame 	= NULL;
+				e->channame	= NULL;
 				e->uid		= xstrdup(dest);
 			} else {
 				e->uid		= irc_uid(xosd_nick);
@@ -1254,7 +1254,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 			}
 				
 			e->msg		= xstrdup(coloured);
-			e->t 		= time(NULL);
+			e->t		= time(NULL);
 
 			list_add(&(j->awaylog), e);
 
@@ -1332,13 +1332,13 @@ IRC_COMMAND(irc_c_join)
 				session_name(s), param[0]+1, tmp?tmp+1:"", chname);
 		if (me)	{
 			int __secure = 0;
-    			char *__sid      = xstrdup(session_uid_get(s));
-    			char *__uid_full = xstrdup(ekg2_channel);
+			char *__sid	 = xstrdup(session_uid_get(s));
+			char *__uid_full = xstrdup(ekg2_channel);
 			char *__msg	 = xstrdup("test");
 
 			if (query_emit_id(NULL, MESSAGE_ENCRYPT, &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
 				print_info(ekg2_channel, s, "irc_channel_secure", session_name(s), chname);
-			else 	print_info(ekg2_channel, s, "irc_channel_unsecure", session_name(s), chname);
+			else	print_info(ekg2_channel, s, "irc_channel_unsecure", session_name(s), chname);
 			xfree(__msg);
 			xfree(__uid_full);
 			xfree(__sid);
@@ -1708,7 +1708,7 @@ notreallyok:
 	xfree(add);
 	xfree(cchn);
 	xfree(ekg2_channame);
-        xfree(mode_abc);
+	xfree(mode_abc);
 	return 0;
 }
 

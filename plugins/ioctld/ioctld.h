@@ -1,7 +1,7 @@
 /* $Id$ */
 
 /*
- *  (C) Copyright 2002  Pawel Maziarz <drg@go2.pl>
+ *  (C) Copyright 2002	Pawel Maziarz <drg@go2.pl>
  *			Wojtek Kaniewski <wojtekka@irc.pl>
  *			Robert J. Wozny <speedy@ziew.org>
  *
@@ -22,9 +22,9 @@
 #ifndef __EKG_IOCTLD_IOCTLD_H
 #define __EKG_IOCTLD_IOCTLD_H
 
-#define IOCTLD_MAX_ITEMS 	50
-#define IOCTLD_MAX_DELAY 	2000000
-#define IOCTLD_DEFAULT_DELAY 	100000
+#define IOCTLD_MAX_ITEMS	50
+#define IOCTLD_MAX_DELAY	2000000
+#define IOCTLD_DEFAULT_DELAY	100000
 
 struct action_data {
 	int act;

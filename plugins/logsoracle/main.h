@@ -40,7 +40,7 @@ struct logsoracle_conf_struct {
  */
 struct logsoracle_stat_struct {
     int session_message_insert;	/* How many messages were added during this logsoracle session (since connect) */
-    int session_status_insert;  /* Same thing for status changes */
+    int session_status_insert;	/* Same thing for status changes */
 };
 
 /*

@@ -59,17 +59,17 @@ char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_
 	char *oldkey = key;
 
 	if (!message)	return NULL;
-	if (!s) 	return NULL;
+	if (!s)		return NULL;
 
 	switch (way) {
 		case JABBER_OPENGPG_ENCRYPT:
-			ret = query_emit_id(NULL, GPG_MESSAGE_ENCRYPT, &fromto, &message, &err); 	break;
+			ret = query_emit_id(NULL, GPG_MESSAGE_ENCRYPT, &fromto, &message, &err);	break;
 		case JABBER_OPENGPG_DECRYPT:
 			ret = query_emit_id(NULL, GPG_MESSAGE_DECRYPT, &s->uid, &message, &err);	break; 
 		case JABBER_OPENGPG_SIGN:
 			ret = query_emit_id(NULL, GPG_SIGN, &s->uid, &message, &err);			break;
 		case JABBER_OPENGPG_VERIFY:
-			ret = query_emit_id(NULL, GPG_VERIFY, &fromto, &message, &key, &err); 		break;	/* @ KEY retval key-id */
+			ret = query_emit_id(NULL, GPG_VERIFY, &fromto, &message, &key, &err);		break;	/* @ KEY retval key-id */
 	}
 
 	if (ret == -2)
@@ -133,7 +133,7 @@ char *jabber_zlib_decompress(const char *buf, int *len) {
 
 	unsigned char *uncompressed = NULL;
 
-	zlib_stream.zalloc 	= Z_NULL;
+	zlib_stream.zalloc	= Z_NULL;
 	zlib_stream.zfree	= Z_NULL;
 	zlib_stream.opaque	= Z_NULL;
 
@@ -217,7 +217,7 @@ char *jabber_escape(const char *text) {
 
 	utftext = ekg_convert_string_p(text, jconv_out);
 	res = xml_escape(utftext ? utftext : text);
-        xfree(utftext);
+	xfree(utftext);
 	return res;
 }
 
@@ -471,35 +471,35 @@ QUERY(jabber_convert_string_reinit) {
 int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *subject, const char *thread, jabber_conversation_t **result, const int can_add) {
 	jabber_conversation_t *thr, *prev;
 	const char *resubject = NULL;
-        int i, l = 0;
+	int i, l = 0;
 	
 	if (!thread && subject && !xstrncmp(subject, config_subject_reply_prefix, (l = xstrlen(config_subject_reply_prefix))))
 		resubject = subject + l;
 	
-        for (thr = j->conversations, prev = NULL, i = 1;
-                thr && ((thread ? xstrcmp(thr->thread, thread) /* try to match the thread, if avail */
+	for (thr = j->conversations, prev = NULL, i = 1;
+		thr && ((thread ? xstrcmp(thr->thread, thread) /* try to match the thread, if avail */
 			: (subject ? xstrcmp(thr->subject, subject) /* else try to match the subject... */
 				&& xstrcmp(thr->subject, resubject) /* ...also with Re: prefix... */
 				&& (xstrncmp(thr->subject, config_subject_reply_prefix, l)
 					|| xstrcmp(thr->subject+l, subject)) /* ...on both sides... */
 				: !!thr->subject)) || !uid || xstrcmp(thr->uid, uid)); /* ...and UID */
-	                prev = thr, thr = thr->next, i++); /* <- that's third param for 'for' */
+			prev = thr, thr = thr->next, i++); /* <- that's third param for 'for' */
 
 	if (!thr && can_add) { /* haven't found anything, but can create something */
-                thr		= xmalloc(sizeof(jabber_conversation_t));
-                thr->thread	= xstrdup(thread);
+		thr		= xmalloc(sizeof(jabber_conversation_t));
+		thr->thread	= xstrdup(thread);
 		thr->uid	= xstrdup(uid);
 			/* IMPORTANT: thr->subject is maintained by message handler
 			 * Now I know why I haven't added it earlier here */
-                if (prev)
-                        prev->next		= thr;
-                else
-                        j->conversations	= thr;
-        }
+		if (prev)
+			prev->next		= thr;
+		else
+			j->conversations	= thr;
+	}
 	
 	if (result)
-	        *result = thr;
-        return i;
+		*result = thr;
+	return i;
 }
 
 /**
@@ -556,7 +556,7 @@ static inline uint32_t jabber_formatchar(const char c) {
  * when beginning == NULL, check following chars,
  * else check preceding chars
  * mode:	0 - check for spaces
- * 		1 - check for previous/following occurence */
+ *		1 - check for previous/following occurence */
 static inline int jabber_fc_check(const char *curr, const char *beginning, const int mode) {
 	const char c = *curr;
 
