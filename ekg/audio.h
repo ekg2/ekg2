@@ -52,7 +52,7 @@ typedef WATCHER_AUDIO(audio_handler_func_t);
 		.name = #x, \
 		.control_handler= (void*) x##_audio_control, \
 		.read_handler	= x##_audio_read, \
-		.write_handler  = x##_audio_write, \
+		.write_handler	= x##_audio_write, \
 	}
 
 #define CODEC_DEFINE(x)\
@@ -91,7 +91,7 @@ typedef struct codec {
 
 	char *name;	/* nazwa codeca */
 
-	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);    /* initing / checking if audio_codec_t is correct / deiniting */
+	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);	/* initing / checking if audio_codec_t is correct / deiniting */
 
 		/* IN: int type, string_t input, string_t output, void *private 
 		 * OUT: how many bytes he code/decode */
@@ -101,7 +101,7 @@ typedef struct codec {
 } codec_t;
 
 typedef struct {
-	codec_t *c;		/* codec_t * */
+	codec_t *c;			/* codec_t * */
 	codec_way_t way;		/* CODEC_CODE CODEC_DECODE */
 	
 	void *private;

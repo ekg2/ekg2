@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
- * 		  2004 Piotr Kupisiewicz <deli@rzepaknet.us>
+ *		  2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -99,7 +99,7 @@ extern window_lastlog_t *lastlog_current;
 window_t *window_find(const char *target);
 window_t *window_find_sa(session_t *session, const char *target, int session_null_means_no_session);
 
-#define window_find_s(s, target) window_find_sa(s, target, 1) 	/* XXX, need checking */
+#define window_find_s(s, target) window_find_sa(s, target, 1)	/* XXX, need checking */
 window_t *window_find_ptr(window_t *w);
 window_t *window_new(const char *target, session_t *session, int new_id);
 void window_kill(window_t *w);

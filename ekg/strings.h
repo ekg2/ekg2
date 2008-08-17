@@ -5,7 +5,7 @@
 
 /*
  *  (C) Copyright 2003-2006 Maciej Pietrzak <maciej@hell.org.pl>
- *  		  	    Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *			    Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -26,11 +26,11 @@
 
 #if USE_UNICODE
 
-#include <wchar.h>	/* wchar_t stuff */
+#include <wchar.h>		/* wchar_t stuff */
 
 extern int config_use_unicode;	/* not everyone want to include stuff.h */
 
-#define CHAR_T wchar_t 	
+#define CHAR_T wchar_t	
 #define TEXT(x) (wchar_t *) L##x
 #define CHAR(x) (wchar_t)   L##x
 #define STRING_FORMAT "%ls"

@@ -6,13 +6,13 @@
 enum query_arg_type {
 	QUERY_ARG_END = 0,	/* MUSTBE LAST ELEMENT OF `query_arg_type` */
 
-	QUERY_ARG_CHARP,	/* char * 	*/
-	QUERY_ARG_CHARPP,	/* char ** 	*/
-	QUERY_ARG_INT, 		/* int */
+	QUERY_ARG_CHARP,	/* char *	*/
+	QUERY_ARG_CHARPP,	/* char **	*/
+	QUERY_ARG_INT,		/* int */
 	QUERY_ARG_UINT,		/* unsgined int */		/* -> time_t, uint32_t */
 
 	QUERY_ARG_WINDOW = 100, /* window_t	*/
-	QUERY_ARG_FSTRING, 	/* fstring_t	*/
+	QUERY_ARG_FSTRING,	/* fstring_t	*/
 	QUERY_ARG_USERLIST,	/* userlist_t	*/
 	QUERY_ARG_SESSION	/* session_t	*/
 };
@@ -28,7 +28,7 @@ enum queries_id {
 	MAIL_COUNT = 0, DAY_CHANGED, STATUS_SHOW, PLUGIN_PRINT_VERSION,
 	SET_VARS_DEFAULT, VARIABLE_CHANGED,
 
-	BINDING_COMMAND, BINDING_DEFAULT, BINDING_SET, 						/* bindings */
+	BINDING_COMMAND, BINDING_DEFAULT, BINDING_SET,						/* bindings */
 	EVENT_ADDED, EVENT_REMOVED,								/* event events */
 	MESSAGE_ENCRYPT, MESSAGE_DECRYPT,							/* encryption */
 	METACONTACT_ADDED, METACONTACT_ITEM_ADDED, METACONTACT_ITEM_REMOVED, METACONTACT_REMOVED,/* metacontact */
@@ -145,7 +145,7 @@ const struct query_def query_list[] = {
 	{ PROTOCOL_MESSAGE_SENT, "protocol-message-sent", {
 		QUERY_ARG_CHARP,	/* session */
 		QUERY_ARG_CHARP,	/* uid */
-		QUERY_ARG_CHARP,  	/* text */
+		QUERY_ARG_CHARP,	/* text */
 		QUERY_ARG_END } },
 
 	{ PROTOCOL_MESSAGE_RECEIVED, "protocol-message-received", {
@@ -265,7 +265,7 @@ const struct query_def query_list[] = {
 		QUERY_ARG_END } },
 
 	{ IRC_TOPIC, "irc-topic", {
-		QUERY_ARG_CHARP,		/* if CHANNEL -> topic; 	if USER -> ident@host */
+		QUERY_ARG_CHARP,		/* if CHANNEL -> topic;		if USER -> ident@host */
 		QUERY_ARG_CHARP,		/* if CHANNEL -> topicby;	if USER -> realname */
 		QUERY_ARG_CHARP,		/* if CHANNEL -> chanmodes;	if USER -> undefined */
 		QUERY_ARG_END } },
@@ -337,8 +337,8 @@ const struct query_def query_list[] = {
 	{ PROTOCOL_XSTATE, "protocol-xstate", {
 		QUERY_ARG_CHARP,		/* session */
 		QUERY_ARG_CHARP,		/* uid */
-		QUERY_ARG_INT,			/* state 	- bits on */
-		QUERY_ARG_INT,			/* offstate 	- bits off */
+		QUERY_ARG_INT,			/* state	- bits on */
+		QUERY_ARG_INT,			/* offstate	- bits off */
 		QUERY_ARG_END } },
 
 	{ ADD_NOTIFY, "add-notify", {
@@ -365,7 +365,7 @@ const struct query_def query_list[] = {
 		QUERY_ARG_END } },
 
 	{ UI_BEEP, "ui-beep", {
-		QUERY_ARG_END } }, 		/* no params */
+		QUERY_ARG_END } },		/* no params */
 
 	{ UI_IS_INITIALIZED, "ui-is-initialized", {
 		QUERY_ARG_INT,			/* is_ui */
@@ -376,7 +376,7 @@ const struct query_def query_list[] = {
 		QUERY_ARG_END } },
 
 	{ UI_LOOP, "ui-loop", {
-		QUERY_ARG_END } }, 		/* no params */
+		QUERY_ARG_END } },		/* no params */
 
 	{ UI_WINDOW_ACT_CHANGED, "ui-window-act-changed", {
 		QUERY_ARG_END } },		/* no params */

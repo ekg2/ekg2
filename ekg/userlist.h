@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -53,7 +53,7 @@ typedef struct userlist {
 	char		*uid;		/**< uin in form protocol:id */
 	char		*nickname;	/**< nickname */
 	struct ekg_group *groups;	/**< list_t with ekg_group<br>
-					 * 	Groups to which this user belongs like: work, friends, family..<br>
+					 *	Groups to which this user belongs like: work, friends, family..<br>
 					 *	It's also used internally by ekg2, for example when user is ignore he has group with name: __ignore */
 	
 	status_t	status;		/**< current status */
@@ -72,7 +72,7 @@ typedef struct userlist {
 	status_t	last_status;	/**< Lastseen status */
 	char		*last_descr;	/**< Lastseen description */
 	time_t		status_time;	/**< From when we have this status, description */
-	void		*private;          /**< Alternate private data, used by ncurses plugin */
+	void		*private;	   /**< Alternate private data, used by ncurses plugin */
 	private_data_t	*priv_list;	/* New user private data */
 } userlist_t;
 
@@ -110,10 +110,10 @@ typedef struct ekg_resource {
 	struct ekg_resource *next;
 
 	char		*name;		/**< name of resource */
-	status_t	status;		/**< status, like u->status 	[status of resource]		*/
+	status_t	status;		/**< status, like u->status	[status of resource]		*/
 	char		*descr;		/**< descr, like u->descr	[description of resource]	*/
-	int		prio;		/**< prio of resource 		[priority of this resource] 	*/
-	void		*private;	/**< priv, like u->private 	[private data info/struct]	*/
+	int		prio;		/**< prio of resource		[priority of this resource]	*/
+	void		*private;	/**< priv, like u->private	[private data info/struct]	*/
 } ekg_resource_t;
 
 /**

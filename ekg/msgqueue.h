@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2001-2003 Piotr Domagalski <szalik@szalik.net>
- *                          Wojtek Kaniewski <wojtekka@irc.pl>
+ *			    Wojtek Kaniewski <wojtekka@irc.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as

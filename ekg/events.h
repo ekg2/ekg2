@@ -27,10 +27,10 @@
 typedef struct event {
 	struct event *next;
 
-	unsigned int id; /* identyficator */
-	char *name;     /* name of the event */
-	char *target;   /* uid(s), alias(es), group(s) */
-	char *action;   /* action to do */
+	unsigned int id;/* identyficator */
+	char *name;	/* name of the event */
+	char *target;	/* uid(s), alias(es), group(s) */
+	char *action;	/* action to do */
 	int prio;	/* priority of this event */
 } event_t;
 

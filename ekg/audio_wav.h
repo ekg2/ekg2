@@ -22,7 +22,7 @@ typedef uint32_t  FOURCC;	/* a four character code */
 
 typedef struct CHUNKHDR {
     FOURCC ckid;		/* chunk ID */
-    DWORD dwSize; 	        /* chunk size */
+    DWORD dwSize;		/* chunk size */
 } CHUNKHDR;
 
 /* simplified Header for standard WAV files */
@@ -63,11 +63,11 @@ static void *audio_wav_set_header(const char *freq, const char *sample, const ch
 	unsigned long temp = /* data length */ 0 + sizeof(WAVEHDR) - sizeof(CHUNKHDR);
 
 	fileheader->chkRiff.ckid    = cpu_to_le32(FOURCC_RIFF);
-	fileheader->fccWave         = cpu_to_le32(FOURCC_WAVE);
+	fileheader->fccWave	    = cpu_to_le32(FOURCC_WAVE);
 	fileheader->chkFmt.ckid     = cpu_to_le32(FOURCC_FMT);
 	fileheader->chkFmt.dwSize   = cpu_to_le32(16);
-	fileheader->wFormatTag      = cpu_to_le16(WAVE_FORMAT_PCM);
-	fileheader->nChannels       = cpu_to_le16(nchannels);
+	fileheader->wFormatTag	    = cpu_to_le16(WAVE_FORMAT_PCM);
+	fileheader->nChannels	    = cpu_to_le16(nchannels);
 	fileheader->nSamplesPerSec  = cpu_to_le32(rate);
 	fileheader->nAvgBytesPerSec = cpu_to_le32(nAvgBytesPerSec);
 	fileheader->nBlockAlign     = cpu_to_le16(nBlockAlign);

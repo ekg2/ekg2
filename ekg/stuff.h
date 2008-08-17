@@ -2,11 +2,11 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@go2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
- *                          Adam Mikuta <adammikuta@poczta.onet.pl>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@go2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
+ *			    Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -100,8 +100,8 @@ struct binding {
 typedef struct binding_added {
 	struct binding_added	*next;
 
-        char		*sequence;
-        struct binding	*binding;
+	char		*sequence;
+	struct binding	*binding;
 } binding_added_t;
 
 enum mesg_t {
@@ -111,7 +111,7 @@ enum mesg_t {
 	MESG_DEFAULT
 };
 
-#define TIMER(x) 		int x(int type, void *data)
+#define TIMER(x)		int x(int type, void *data)
 #define TIMER_SESSION(x)	int x(int type, session_t *s)
 
 struct timer {
@@ -249,7 +249,7 @@ extern char *config_theme;
 extern int config_time_deviation;
 extern char *config_timestamp;
 extern int config_timestamp_show;
-extern int config_use_unicode; 	/* for instance in jabber plugin if this is on, than we don't need to make iconv from / to unicode.. */
+extern int config_use_unicode;	/* for instance in jabber plugin if this is on, than we don't need to make iconv from / to unicode.. */
 extern int config_use_iso;  /* this for ncurses */
 extern char *config_console_charset;	/* */
 extern int config_window_session_allow;

@@ -9,15 +9,15 @@
 #include "vars.h"
 #include "queries.h"
 
-#define SCRIPT_HANDLE_UNBIND    -666
+#define SCRIPT_HANDLE_UNBIND	-666
 #define MAX_ARGS QUERY_ARGS_MAX+1
 
 typedef enum {
 	SCRIPT_UNKNOWNTYPE,
-        SCRIPT_VARTYPE,
-        SCRIPT_COMMANDTYPE,
-        SCRIPT_QUERYTYPE,
-        SCRIPT_TIMERTYPE,
+	SCRIPT_VARTYPE,
+	SCRIPT_COMMANDTYPE,
+	SCRIPT_QUERYTYPE,
+	SCRIPT_TIMERTYPE,
 	SCRIPT_WATCHTYPE,
 	SCRIPT_PLUGINTYPE, 
 } script_type_t;
@@ -25,57 +25,57 @@ typedef enum {
 typedef struct script {
 	struct script	*next;
 
-	void 		*lang;
-	char 		*name;
-	char 		*path;
-	void 		*private;
+	void		*lang;
+	char		*name;
+	char		*path;
+	void		*private;
 	int		inited;
 } script_t;
-extern script_t 	*scripts;
+extern script_t		*scripts;
 
 typedef struct {
-	script_t 	*scr;
-	struct timer 	*self;
-	int 		removed;
-	void 		*private;
+	script_t	*scr;
+	struct timer	*self;
+	int		removed;
+	void		*private;
 } script_timer_t; 
 
 typedef struct {
-	script_t        *scr;
-	plugin_t        *self;
-	void            *private;
+	script_t	*scr;
+	plugin_t	*self;
+	void		*private;
 } script_plugin_t;
 
 typedef struct {
-	script_t 	*scr;
-	variable_t 	*self;
+	script_t	*scr;
+	variable_t	*self;
 
 	char		*name;
-	char 		*value;
-	void 		*private;
+	char		*value;
+	void		*private;
 } script_var_t; 
 
 typedef struct {
-	script_t 	*scr;
+	script_t	*scr;
 	query_t		*self;
-	int 		argc;
-	int             argv_type[MAX_ARGS];
-	void 		*private;
+	int		argc;
+	int		argv_type[MAX_ARGS];
+	void		*private;
 	int		hack;
 } script_query_t; 
 
 typedef struct {
-	script_t 	*scr;
+	script_t	*scr;
 	command_t	*self;
-	void 		*private; 
+	void		*private; 
 } script_command_t;
 
 typedef struct {
-	script_t 	*scr;
-	watch_t 	*self; 
-	int 		removed;
-	void 		*data;
-	void 		*private;
+	script_t	*scr;
+	watch_t		*self; 
+	int		removed;
+	void		*data;
+	void		*private;
 } script_watch_t;
 
 typedef int (scriptlang_initialize_t)();
@@ -93,20 +93,20 @@ typedef int (script_free_bind_t)      (script_t *, void *, int, void *, ...);
 typedef struct scriptlang {
 	struct scriptlang	*next;
 
-	char  	 *name;		/* perl, python, php *g* and so on. */
-	char 	 *ext;		/*  .pl,    .py, .php ... */
+	char	 *name;		/* perl, python, php *g* and so on. */
+	char	 *ext;		/*  .pl,    .py, .php ... */
 	plugin_t *plugin;
 
 	scriptlang_initialize_t *init;
-	scriptlang_finalize_t   *deinit;
+	scriptlang_finalize_t	*deinit;
 
-	script_load_t 		*script_load;
-	script_unload_t 	*script_unload;
-	script_free_bind_t      *script_free_bind;
+	script_load_t		*script_load;
+	script_unload_t		*script_unload;
+	script_free_bind_t	*script_free_bind;
 
 	script_handler_query_t	*script_handler_query;
 	script_handler_command_t*script_handler_command;
-	script_handler_timer_t 	*script_handler_timer;
+	script_handler_timer_t	*script_handler_timer;
 	script_handler_var_t	*script_handler_var;
 	script_handler_watch_t	*script_handler_watch;
 	
@@ -126,7 +126,7 @@ extern scriptlang_t *scriptlang;
 	return NULL;
 
 /* XXX: split *_watches() into normal and line-ones,
- * 	else we can have epic fails if void* > long int */
+ *	else we can have epic fails if void* > long int */
 #warning "POSSIBLE EPIC FAIL: when void* > long int, WATCH_LINE pointer may be shortened"
 
 #define SCRIPT_DEFINE(x, y)\
@@ -141,15 +141,15 @@ extern scriptlang_t *scriptlang;
 	\
 	extern int x##_bind_free(script_t *, void *, int type, void *, ...);\
 	\
-        scriptlang_t x##_lang = { \
-                name: #x, \
+	scriptlang_t x##_lang = { \
+		name: #x, \
 		plugin: &x##_plugin, \
-                ext: y, \
+		ext: y, \
 \
 		init: x##_initialize,\
 		deinit: x##_finalize, \
 \
-                script_load: x##_load, \
+		script_load: x##_load, \
 		script_unload: x##_unload, \
 		script_free_bind: x##_bind_free,\
 \
@@ -158,7 +158,7 @@ extern scriptlang_t *scriptlang;
 		script_handler_timer  : x##_timers,\
 		script_handler_var    : x##_variable_changed,\
 		script_handler_watch  : x##_watches,\
-        }
+	}
 
 #define script_private_get(s) (s->private)
 #define script_private_set(s, p) (s->private = p)
@@ -196,21 +196,21 @@ int script_variables_write();
 
 #define SCRIPT_UNBIND_HANDLER(type, args...) \
 {\
-    	SCRIPT_HANDLER_HEADER(script_free_bind_t);\
-    	SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args);\
+	SCRIPT_HANDLER_HEADER(script_free_bind_t);\
+	SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args);\
 }
 #endif
 
 /* BINDING && UNBINDING */
 
 #define SCRIPT_BIND_HEADER(x) \
-        x *temp; \
+	x *temp; \
 	if (scr && scr->inited != 1) {\
 		debug_error("[script_bind_error] script not inited!\n");	\
 		return NULL;	\
 	}	\
 	temp = xmalloc(sizeof(x)); \
-        temp->scr  = scr;\
+	temp->scr  = scr;\
 	temp->private = handler;
 
 #define SCRIPT_BIND_FOOTER(y) \
@@ -224,21 +224,21 @@ int script_variables_write();
 
 /* HANDLERS */
 #define SCRIPT_HANDLER_HEADER(x) \
-	script_t        *_scr;\
-	scriptlang_t    *_slang;\
+	script_t	*_scr;\
+	scriptlang_t	*_slang;\
 	x		*_handler;\
-	int 		ret = SCRIPT_HANDLE_UNBIND;
+	int		ret = SCRIPT_HANDLE_UNBIND;
 
 /* TODO: quietmode */
 #define SCRIPT_HANDLER_FOOTER(y, _args...) \
 	if ((_scr = temp->scr) && ((_slang = _scr->lang)))  _handler = _slang->y;\
-        else                                                _handler = temp->private;\
-        if (_handler)\
-                ret = _handler(_scr, temp, _args); \
-        else {\
-                debug("[%s] (_handler == NULL)\n", #y);\
-                ret = SCRIPT_HANDLE_UNBIND;\
-        }\
+	else						    _handler = temp->private;\
+	if (_handler)\
+		ret = _handler(_scr, temp, _args); \
+	else {\
+		debug("[%s] (_handler == NULL)\n", #y);\
+		ret = SCRIPT_HANDLE_UNBIND;\
+	}\
 	\
 	if (ret == SCRIPT_HANDLE_UNBIND) { debug("[%s] script or scriptlang want to delete this handler\n", #y); }\
 	if (ret == SCRIPT_HANDLE_UNBIND)

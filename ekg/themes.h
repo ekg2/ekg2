@@ -49,7 +49,7 @@ typedef struct {
 } fstring_t;
 
 #define print(x...)		print_window_w(NULL, EKG_WINACT_JUNK, x) 
-#define print_status(x...) 	print_window_w(window_status, EKG_WINACT_JUNK, x)
+#define print_status(x...)	print_window_w(window_status, EKG_WINACT_JUNK, x)
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
@@ -60,7 +60,7 @@ void print_warning(const char *target, session_t *session, const char *theme, ..
 
 void format_add(const char *name, const char *value, int replace);
 const char *format_find(const char *name);
-#define format_ok(format_find_result) 	(format_find_result[0])
+#define format_ok(format_find_result)	(format_find_result[0])
 #define format_exists(format)		(format_ok(format_find(format)))
 char *format_string(const char *format, ...);
 
@@ -84,18 +84,18 @@ void fstring_free(fstring_t *str);
 
 typedef enum {
 	FSTR_FOREA		= 1,
-	FSTR_FOREB 		= 2,
-	FSTR_FOREC 		= 4,
-	FSTR_FOREMASK 		= (FSTR_FOREA|FSTR_FOREB|FSTR_FOREC),
-	FSTR_BACKA 		= 8,
-	FSTR_BACKB 		= 16,
-	FSTR_BACKC 		= 32,
-	FSTR_BACKMASK 		= (FSTR_BACKA|FSTR_BACKB|FSTR_BACKC),
-	FSTR_BOLD 		= 64,
-	FSTR_NORMAL 		= 128,
-	FSTR_BLINK 		= 256,
-	FSTR_UNDERLINE 		= 512,
-	FSTR_REVERSE 		= 1024,
+	FSTR_FOREB		= 2,
+	FSTR_FOREC		= 4,
+	FSTR_FOREMASK		= (FSTR_FOREA|FSTR_FOREB|FSTR_FOREC),
+	FSTR_BACKA		= 8,
+	FSTR_BACKB		= 16,
+	FSTR_BACKC		= 32,
+	FSTR_BACKMASK		= (FSTR_BACKA|FSTR_BACKB|FSTR_BACKC),
+	FSTR_BOLD		= 64,
+	FSTR_NORMAL		= 128,
+	FSTR_BLINK		= 256,
+	FSTR_UNDERLINE		= 512,
+	FSTR_REVERSE		= 1024,
 	FSTR_ALTCHARSET		= 2048
 } fstr_t;
 

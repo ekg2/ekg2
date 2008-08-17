@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2001-2002 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -41,7 +41,7 @@ typedef enum {
 	COMMAND_ENABLEREQPARAMS		= 0x10,		/* '!' in params means that arg must exist in par[..] (?) */
 	COMMAND_PARAMASTARGET		= 0x20,		/* when par[0] != NULL, than target = par[0] and than par list moves up
 							   (par++ ; par[0] == par[1] and so on */
-	SESSION_MUSTBECONNECTED 	= 0x40,		/* session must be connected to execute that command */
+	SESSION_MUSTBECONNECTED		= 0x40,		/* session must be connected to execute that command */
 	SESSION_MUSTBELONG		= 0x80,		/* command must come from the same plugin as session (?) */
 	SESSION_MUSTHAS			= 0x100,	/* if session == NULL, we try session_current, if still NULL. we return -1...
 							   mh, i really don't know if this flag is obsolete... but we do simillar thing
