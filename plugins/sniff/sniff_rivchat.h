@@ -2,14 +2,14 @@
  * copyright by Arkadiusz Kolacz
  */
 
-typedef struct  {
+typedef struct	{
 	char header[11];
 	int size;
 	int fromid;
 	int toid; 
 	char nick[30];	
 	int type;	
-	char data[256]; 		/* or RCINFO */
+	char data[256];			/* or RCINFO */
 	unsigned char format[10];
 } rivchat_packet;
 
@@ -29,7 +29,7 @@ typedef struct {
 	char pisze;
 } rivchat_packet_rcinfo;
 
-#define RIVCHAT_MESSAGE 	0x00
+#define RIVCHAT_MESSAGE		0x00
 #define RIVCHAT_INIT		0x01
 #define RIVCHAT_QUIT		0x03
 #define RIVCHAT_ME		0x04

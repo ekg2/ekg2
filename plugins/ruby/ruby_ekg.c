@@ -149,7 +149,7 @@ static VALUE ruby_watch_add(int argc, VALUE *argv, VALUE self) {
 	type = FIX2INT(argv[1]);
 	/* XXX, test type */
 
-        script_watch_add(&ruby_lang, scr, fd, type, xstrdup(RSTRING(argv[2])->ptr), NULL);	/* XXX, memleak */
+	script_watch_add(&ruby_lang, scr, fd, type, xstrdup(RSTRING(argv[2])->ptr), NULL);	/* XXX, memleak */
 
 	return Qnil;
 }
@@ -173,7 +173,7 @@ static VALUE ruby_variable_add(int argc, VALUE *argv, VALUE self) {
 		callback = xstrdup(RSTRING(argv[2])->ptr);	/* XXX, memleak */
 	}
 
-        script_var_add(&ruby_lang, scr, RSTRING(argv[0])->ptr, RSTRING(argv[1])->ptr, callback);
+	script_var_add(&ruby_lang, scr, RSTRING(argv[0])->ptr, RSTRING(argv[1])->ptr, callback);
 
 	return Qnil;
 }
@@ -389,7 +389,7 @@ static int ruby_query(script_t *scr, script_query_t *scr_que, void *args[]) {
 
 		for (i=0; i < scr_que->argc; i++) {
 			switch ( scr_que->argv_type[i] ) {
-				case (QUERY_ARG_INT):   /* int */
+				case (QUERY_ARG_INT):	/* int */
 					argv[i] = INT2FIX( *(int  *) args[i] );	/* XXX ? */
 					break;
 				case (QUERY_ARG_CHARP):  /* char * */

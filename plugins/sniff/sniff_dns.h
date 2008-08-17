@@ -4,7 +4,7 @@ void *mempcpy(void *dest, const void *src, size_t n);	/* forward */
 /* Copyrights notes: */
 
 /* symbols: digits[], special(), printable(), ns_name_unpack(), ns_name_ntop(), ns_name_uncompress()
- * 	copied from glibc resolv/res_data.c
+ *	copied from glibc resolv/res_data.c
  * under licence: */
 
 /*
@@ -25,7 +25,7 @@ void *mempcpy(void *dest, const void *src, size_t n);	/* forward */
  */
 
 /* symbol: dn_expand() 
- * 	copied from glibc resolv/res_comp.c 
+ *	copied from glibc resolv/res_comp.c 
  * under licences: */
 
 /*
@@ -95,7 +95,7 @@ void *mempcpy(void *dest, const void *src, size_t n);	/* forward */
  */
 
 /* all struct and magic values
- * 	copied from: glibc resolv/arpa/nameser.h && resolv/arpa/nameser_compat.h
+ *	copied from: glibc resolv/arpa/nameser.h && resolv/arpa/nameser_compat.h
  * under licences: */
 
 /*
@@ -145,24 +145,24 @@ void *mempcpy(void *dest, const void *src, size_t n);	/* forward */
  */
 
 typedef struct {
-	unsigned        id :16;         /* query identification number */
+	unsigned	id :16;		/* query identification number */
 	/* fields in third byte */
-	unsigned        rd :1;          /* recursion desired */
-	unsigned        tc :1;          /* truncated message */
-	unsigned        aa :1;          /* authoritive answer */
-	unsigned        opcode :4;      /* purpose of message */
-	unsigned        qr :1;          /* response flag */
+	unsigned	rd :1;		/* recursion desired */
+	unsigned	tc :1;		/* truncated message */
+	unsigned	aa :1;		/* authoritive answer */
+	unsigned	opcode :4;	/* purpose of message */
+	unsigned	qr :1;		/* response flag */
 	/* fields in fourth byte */
-	unsigned        rcode :4;       /* response code */
-	unsigned        cd: 1;          /* checking disabled by resolver */
-	unsigned        ad: 1;          /* authentic data from named */
-	unsigned        unused :1;      /* unused bits (MBZ as of 4.9.3a3) */
-	unsigned        ra :1;          /* recursion available */
+	unsigned	rcode :4;	/* response code */
+	unsigned	cd: 1;		/* checking disabled by resolver */
+	unsigned	ad: 1;		/* authentic data from named */
+	unsigned	unused :1;	/* unused bits (MBZ as of 4.9.3a3) */
+	unsigned	ra :1;		/* recursion available */
 	/* remaining bytes */
-	unsigned        qdcount :16;    /* number of question entries */
-	unsigned        ancount :16;    /* number of answer entries */
-	unsigned        nscount :16;    /* number of authority entries */
-	unsigned        arcount :16;    /* number of resource entries */
+	unsigned	qdcount :16;	/* number of question entries */
+	unsigned	ancount :16;	/* number of answer entries */
+	unsigned	nscount :16;	/* number of authority entries */
+	unsigned	arcount :16;	/* number of resource entries */
 } DNS_HEADER;
 
 
@@ -232,7 +232,7 @@ int ns_name_unpack(const u_char *msg, const u_char *eom, const u_char *src, u_ch
 				if (dstp + 1 >= dstlim) {
 					errno = EMSGSIZE;
 					return (-1);
-			  	}
+				}
 				*dstp++ = 0x41;
 				n = *srcp++ / 8;
 				++checked;

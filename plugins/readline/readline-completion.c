@@ -230,7 +230,7 @@ GENERATOR(command) {
 		session_t *session = session_current;
 
 		if (session && session->uid)
-			plen =  (int)(xstrchr(session->uid, ':') - session->uid) + 1;
+			plen =	(int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
 		if (session && !xstrncasecmp(c->name, session->uid, plen))
 			without_sess_id = xstrchr(c->name, ':');

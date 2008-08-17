@@ -254,7 +254,7 @@ static QUERY(rivchat_topic_header) {
 
 static void rivchat_print_payload(unsigned char *payload, size_t len) {
 	#define MAX_BYTES_PER_LINE 16
-        int offset = 0;
+	int offset = 0;
 
 	while (len) {
 		int display_len;
@@ -265,15 +265,15 @@ static void rivchat_print_payload(unsigned char *payload, size_t len) {
 		else	display_len = len;
 	
 	/* offset */
-        	debug_iorecv("\t0x%.4x  ", offset);
+		debug_iorecv("\t0x%.4x	", offset);
 	/* hexdump */
 		for(i = 0; i < MAX_BYTES_PER_LINE; i++) {
 			if (i < display_len)
 				debug_iorecv("%.2x ", payload[i]);
-			else	debug_iorecv("   ");
+			else	debug_iorecv("	 ");
 		}
 	/* seperate */
-		debug_iorecv("   ");
+		debug_iorecv("	 ");
 
 	/* asciidump if printable, else '.' */
 		for(i = 0; i < display_len; i++)
@@ -282,7 +282,7 @@ static void rivchat_print_payload(unsigned char *payload, size_t len) {
 
 		payload	+= display_len;
 		offset	+= display_len;
-		len 	-= display_len;
+		len	-= display_len;
 	}
 }
 
@@ -446,12 +446,12 @@ static char *rivchat_generate_data(session_t *s) {
 
 /*
  * NOTE: previous version of ekg2-rivchat uses another approach:
- * 	- we send text
+ *	- we send text
  *	- we display it [no matter what happened with it after sendto()]
  *
  * now:
- * 	- we send text
- * 	- if we recv it, we check fromid of packet, if it's ok. than ok :) if not, than sorry...
+ *	- we send text
+ *	- if we recv it, we check fromid of packet, if it's ok. than ok :) if not, than sorry...
  *
  * It's like orginal rivchat client do.
  */
@@ -504,8 +504,8 @@ static int rivchat_send_packet(session_t *s, uint32_t type, userlist_t *user, co
 	uint8_t gender;				/* 1 - man, 2 - woman */
 	uint8_t bold;				/* ? */
 #endif
-        sin.sin_family = AF_INET;
-        sin.sin_port = htons(j->port);
+	sin.sin_family = AF_INET;
+	sin.sin_port = htons(j->port);
 	sin.sin_addr.s_addr = INADDR_BROADCAST;	/* XXX */
 	sin.sin_addr.s_addr = inet_addr((user == NULL) ? "10.1.0.255" : (p->ip));
 
@@ -759,11 +759,11 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 			}
 
 			/* XXX
-			 * 	rivchat dziala tak:
-			 * 	 - piszemy do kogos na privie (nie jest rozsylane RC_PING.. wiec nie dowiemy sie ze do nas pisze
-			 * 	 - pisze na kanale, jest rozsylany RC_PING.. ale my mamy otwarte z nim okienko wiec wyswietla sie jakby pisal do nas.
+			 *	rivchat dziala tak:
+			 *	 - piszemy do kogos na privie (nie jest rozsylane RC_PING.. wiec nie dowiemy sie ze do nas pisze
+			 *	 - pisze na kanale, jest rozsylany RC_PING.. ale my mamy otwarte z nim okienko wiec wyswietla sie jakby pisal do nas.
 			 *
-			 * 	XXX, naprawic
+			 *	XXX, naprawic
 			 */
 
 			if ((u->typing && !hdr2->pisze) || (!u->typing && hdr2->pisze)) {
@@ -911,8 +911,8 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 static WATCHER_SESSION(rivchat_handle_stream) {
 	rivchat_private_t *j;
 
-        struct sockaddr_in oth;
-        int oth_size;
+	struct sockaddr_in oth;
+	int oth_size;
 	
 	unsigned char buf[400];
 	rivchat_header_t *hdr = (rivchat_header_t *) buf;
@@ -1263,9 +1263,9 @@ static COMMAND(rivchat_command_dcc) {
 		path = xstrdup("test.txt");
 #if 0
 		if (config_dcc_dir) 
-		    	path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(d));
+			path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(d));
 		else
-		    	path = xstrdup(dcc_filename_get(d));
+			path = xstrdup(dcc_filename_get(d));
 #endif
 		fd = open(path, O_WRONLY | O_CREAT, 0600);
 
@@ -1368,9 +1368,9 @@ static int rivchat_theme_init() {
 /* format of formats ;] 
  *
  * rivchat_pkttype_type_priv 
- *      pkttype  - msg, quit, me, init, ...
- *      type     - recv, send
- *      priv     - ch, priv
+ *	pkttype  - msg, quit, me, init, ...
+ *	type	 - recv, send
+ *	priv	 - ch, priv
  *
  * jak nie znajdzie pelnej formatki to wtedy szuka:
  *   rivchat_pkttype_type
@@ -1388,13 +1388,13 @@ static int rivchat_theme_init() {
 	format_add("rivchat_msg_recv",		"<%2> %3", 1);
 	
 	/* ok */
-	format_add("rivchat_init", 		"%> %C%2%n %B[%c%3@%4%B]%n has joined", 1);
-	format_add("rivchat_quit", 		"%> %c%2%n %B[%c%2@%4%B]%n has quit %B[%n%3%B]", 1);
+	format_add("rivchat_init",		"%> %C%2%n %B[%c%3@%4%B]%n has joined", 1);
+	format_add("rivchat_quit",		"%> %c%2%n %B[%c%2@%4%B]%n has quit %B[%n%3%B]", 1);
 
 	format_add("rivchat_me",		"%W%e* %2%n %3", 1);
 
-	format_add("rivchat_newnick_send", 	"%> You're now known as %T%3", 1);
-	format_add("rivchat_newnick_recv", 	"%> %c%2%n is now known as %C%3", 1);
+	format_add("rivchat_newnick_send",	"%> You're now known as %T%3", 1);
+	format_add("rivchat_newnick_recv",	"%> %c%2%n is now known as %C%3", 1);
 
 	format_add("rivchat_newtopic",		"%> %T%2%n changed topic to: %3", 1);
 	format_add("rivchat_topic",		"%> Topic: %3", 1);
@@ -1441,20 +1441,20 @@ static int rivchat_theme_init() {
 }
 
 static plugins_params_t rivchat_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		VAR_STR, NULL, 0, NULL), 				//  0
-	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),				//  1
-	PLUGIN_VAR_ADD("auto_reconnect", 	VAR_INT, "0", 0, NULL),					//  2
+	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),				//  0
+	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),				//  1
+	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT, "0", 0, NULL),					//  2
 #define RIVCHAT_VAR_HOSTNAME 3
 	PLUGIN_VAR_ADD("hostname",		VAR_STR, NULL, 0, rivchat_resend_ping),			//  3
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "irssi", 0, NULL),				//  4
+	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "irssi", 0, NULL),				//  4
 #define RIVCHAT_VAR_NICKNAME 5
 	PLUGIN_VAR_ADD("nickname",		VAR_STR, NULL, 0, rivchat_changed_nick),		//  5
 	PLUGIN_VAR_ADD("port",			VAR_STR, "16127", 0, rivchat_notify_reconnect),		//  6
 #define RIVCHAT_VAR_USERNAME 7
 	PLUGIN_VAR_ADD("username",		VAR_STR, NULL, 0, rivchat_resend_ping),			//  7
-	PLUGIN_VAR_ADD("VERSION_NAME", 		VAR_STR, 0, 0, rivchat_resend_ping),			//  8
-	PLUGIN_VAR_ADD("VERSION_NO", 		VAR_STR, 0, 0, rivchat_resend_ping),			//  9
-	PLUGIN_VAR_ADD("VERSION_SYS", 		VAR_STR, 0, 0, rivchat_resend_ping),			// 10
+	PLUGIN_VAR_ADD("VERSION_NAME",		VAR_STR, 0, 0, rivchat_resend_ping),			//  8
+	PLUGIN_VAR_ADD("VERSION_NO",		VAR_STR, 0, 0, rivchat_resend_ping),			//  9
+	PLUGIN_VAR_ADD("VERSION_SYS",		VAR_STR, 0, 0, rivchat_resend_ping),			// 10
 	PLUGIN_VAR_END()
 };
 
@@ -1505,18 +1505,18 @@ EXPORT int rivchat_plugin_init(int prio) {
 	query_connect(&irc_plugin, ("status-show"),	irc_status_show_handle, NULL);
 #endif
 
-#define RIVCHAT_ONLY 		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define RIVCHAT_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define RIVCHAT_FLAGS		RIVCHAT_ONLY | SESSION_MUSTBECONNECTED
 
 	command_add(&rivchat_plugin, "rivchat:", "?",		rivchat_command_inline_msg, RIVCHAT_ONLY, NULL);
 
-	command_add(&rivchat_plugin, "rivchat:connect", NULL,   rivchat_command_connect,    RIVCHAT_ONLY, NULL);
-	command_add(&rivchat_plugin, "rivchat:dcc", "p uU f ?", rivchat_command_dcc,        RIVCHAT_ONLY, "send get close list");
+	command_add(&rivchat_plugin, "rivchat:connect", NULL,	rivchat_command_connect,    RIVCHAT_ONLY, NULL);
+	command_add(&rivchat_plugin, "rivchat:dcc", "p uU f ?", rivchat_command_dcc,	    RIVCHAT_ONLY, "send get close list");
 	command_add(&rivchat_plugin, "rivchat:disconnect", "r",	rivchat_command_disconnect, RIVCHAT_ONLY, NULL);
-	command_add(&rivchat_plugin, "rivchat:me", "?",		rivchat_command_me,         RIVCHAT_FLAGS, NULL);
-	command_add(&rivchat_plugin, "rivchat:nick", "!",	rivchat_command_nick,       RIVCHAT_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&rivchat_plugin, "rivchat:me", "?",		rivchat_command_me,	    RIVCHAT_FLAGS, NULL);
+	command_add(&rivchat_plugin, "rivchat:nick", "!",	rivchat_command_nick,	    RIVCHAT_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&rivchat_plugin, "rivchat:places", NULL,	rivchat_command_places,     RIVCHAT_FLAGS, NULL);
-	command_add(&rivchat_plugin, "rivchat:topic", "?",	rivchat_command_topic,      RIVCHAT_FLAGS, NULL);
+	command_add(&rivchat_plugin, "rivchat:topic", "?",	rivchat_command_topic,	    RIVCHAT_FLAGS, NULL);
 	command_add(&rivchat_plugin, "rivchat:reconnect", "r",	rivchat_command_reconnect,  RIVCHAT_ONLY, NULL);
 	return 0;
 }

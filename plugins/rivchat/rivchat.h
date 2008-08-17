@@ -10,10 +10,10 @@
 #define RC_DATASIZE	256
 #define RC_INFOSIZE	140
 
-#define RC_MESSAGE 	 0
-#define RC_INIT 	 1
+#define RC_MESSAGE	 0
+#define RC_INIT		 1
 #define RC_NICKCHANGE	 2
-#define RC_QUIT 	 3
+#define RC_QUIT		 3
 #define RC_ME		 4
 #define RC_PING		 5
 #define RC_NICKPROTEST	 6
@@ -54,7 +54,7 @@ typedef struct {
 	uint32_t online;
 	uint8_t filetransfer;
 	uint8_t pisze;
-        uint8_t __pad2[2];
+	uint8_t __pad2[2];
 } RC_PACKED rivchat_info_t;
 
 typedef struct {
@@ -66,7 +66,7 @@ typedef struct {
 	char nick[30];
 	uint8_t __pad2[2];
 	uint32_t type;
-	char data[RC_DATASIZE]; 		/* or RCINFO */
+	char data[RC_DATASIZE];			/* or RCINFO */
 	uint8_t colors[3];			/* colors RGB values */
 	uint8_t seq;				/* sequence */
 /* these 8bytes, can be uint64_t -> filesize */

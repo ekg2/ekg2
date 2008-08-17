@@ -39,7 +39,7 @@
 
 #ifndef IN_ONLYDIR
 /* stolen from sys/inotify.h */
-#define IN_ONLYDIR       0x01000000
+#define IN_ONLYDIR	 0x01000000
 #endif
 #endif /*HAVE_INOTIFY*/
 
@@ -684,12 +684,12 @@ static plugins_params_t xmsg_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "1", 0, NULL),
 	PLUGIN_VAR_ADD("charset",		VAR_STR, "", 0, NULL),
 	PLUGIN_VAR_ADD("dotfile_suffix",	VAR_STR, "", 0, NULL),
-	PLUGIN_VAR_ADD("log_formats", 		VAR_STR, "simple", 0, NULL),
-	PLUGIN_VAR_ADD("max_filesize", 		VAR_INT, XMSG_MAXFS_DEF, 0, NULL),
+	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "simple", 0, NULL),
+	PLUGIN_VAR_ADD("max_filesize",		VAR_INT, XMSG_MAXFS_DEF, 0, NULL),
 	PLUGIN_VAR_ADD("max_oneshot_files",	VAR_INT, XMSG_MAXFC_DEF, 0, NULL),
-	PLUGIN_VAR_ADD("name_separator", 	VAR_STR, XMSG_NAMESEP_DEF, 0, NULL),
+	PLUGIN_VAR_ADD("name_separator",	VAR_STR, XMSG_NAMESEP_DEF, 0, NULL),
 	PLUGIN_VAR_ADD("oneshot_resume_timer",	VAR_INT, XMSG_MAXFC_TIMER, 0, NULL),
-	PLUGIN_VAR_ADD("send_cmd", 		VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("send_cmd",		VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("rescan_timer",		VAR_INT, XMSG_TIMER_DEF, 0, xmsg_timer_change),
 	PLUGIN_VAR_ADD("unlink_sent",		VAR_BOOL, "1", 0, xmsg_unlink_dotfiles),
 	PLUGIN_VAR_ADD("unlink_toobig",		VAR_BOOL, "0", 0, xmsg_unlink_dotfiles),

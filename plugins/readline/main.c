@@ -269,10 +269,10 @@ EXPORT int readline_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("readline");
 
-        query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
-        if (is_UI)
-                return -1;
+	if (is_UI)
+		return -1;
 
 	plugin_register(&readline_plugin, prio);
 

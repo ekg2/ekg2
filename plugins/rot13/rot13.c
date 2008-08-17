@@ -41,9 +41,9 @@ static void do_foo(char *p, int rot, int deltarot) {	/* some code/idea gathered 
 
 		if (!(tolower(*p) < 'a' || tolower(*p) > 'z')) {
 			for (i = 0; i < rot; i++) {
-				if (*p == 'z') 		*p = 'a';
-				else if (*p == 'Z') 	*p = 'A';
-				else 			(*p)++;
+				if (*p == 'z')		*p = 'a';
+				else if (*p == 'Z')	*p = 'A';
+				else			(*p)++;
 
 			}
 			for (i = 0; i > rot; i--) {
@@ -119,7 +119,7 @@ static QUERY(message_parse) {
 
 	if (!(key = rot13_find_key(session, recipient, &rev)))	return 0;
 	
-	if (!rev) 	do_foo(message, key->rot ? atoi(key->rot) : config_default_rot, key->drot ? atoi(key->drot) : config_default_drot);
+	if (!rev)	do_foo(message, key->rot ? atoi(key->rot) : config_default_rot, key->drot ? atoi(key->drot) : config_default_drot);
 	else		do_foo(message, key->rot ? -atoi(key->rot): config_default_rot, key->drot ? -atoi(key->drot): config_default_drot);
 
 	*encrypted = 1; 
@@ -221,7 +221,7 @@ static COMMAND(command_key) {
 }
 
 static QUERY(rot13_setvar_default) {
-	char *path 	= saprintf("%s/rot13.keys", prepare_path("keys", 0));
+	char *path	= saprintf("%s/rot13.keys", prepare_path("keys", 0));
 	FILE *f;
 	
 	if ((f = fopen(path, "r"))) {
@@ -277,7 +277,7 @@ EXPORT int rot13_plugin_init(int prio) {
 
 static int rot13_plugin_destroy() {
 	list_t l;
-	char *path 	= saprintf("%s/rot13.keys", prepare_path("keys", 0));
+	char *path	= saprintf("%s/rot13.keys", prepare_path("keys", 0));
 	FILE *f		= fopen(path, "w");
 
 	xfree(path);

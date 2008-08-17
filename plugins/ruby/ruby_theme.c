@@ -69,11 +69,11 @@ static VALUE ruby_print_window(int argc, VALUE *argv, VALUE self) {
 
 	tmp = str = xstrdup(RSTRING(argv[0])->ptr);
 
-        while ((line = split_line(&str))) {
+	while ((line = split_line(&str))) {
 		char *tmp = format_string(line);
 		window_print(window_exist(dest), fstring_new(tmp));
 		xfree(tmp);
-        }
+	}
 	xfree(tmp);
 #endif
 	return Qnil;

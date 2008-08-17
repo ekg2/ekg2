@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                     Piotr Domagalski <szalik@szalik.net>
+ *		       Piotr Domagalski <szalik@szalik.net>
  *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  Idea and concept from SIM by Michal J. Kubski available at
@@ -484,15 +484,15 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	memcpy(res, data + sizeof(head), len);
 	res[len] = 0;
 
-        for(cx = 0; cx < len; cx++)
-            switch(res[cx]) {
-                case 156: res[cx] = '¶'; break;
-                case 185: res[cx] = '±'; break;
-                case 159: res[cx] = '¼'; break;
-                case 140: res[cx] = '¦'; break;
-                case 165: res[cx] = '¡'; break;
-                case 143: res[cx] = '¬'; break;
-            }
+	for(cx = 0; cx < len; cx++)
+	    switch(res[cx]) {
+		case 156: res[cx] = '¶'; break;
+		case 185: res[cx] = '±'; break;
+		case 159: res[cx] = '¼'; break;
+		case 140: res[cx] = '¦'; break;
+		case 165: res[cx] = '¡'; break;
+		case 143: res[cx] = '¬'; break;
+	    }
 cleanup:
 	if (cbio)
 		BIO_free(cbio);

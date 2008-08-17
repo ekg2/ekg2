@@ -49,7 +49,7 @@ typedef struct {
 
 
 WATCHER(oss_read) {
-	oss_device_t *dev       = data;
+	oss_device_t *dev	= data;
 	char *buf;
 	int len;
 
@@ -69,7 +69,7 @@ WATCHER(oss_read) {
 
 #if 0
 WATCHER(oss_write) {
-	oss_device_t *dev       = data;
+	oss_device_t *dev	= data;
 	/* mix */
 	return -1;
 }
@@ -126,7 +126,7 @@ int oss_device_free(oss_device_t *dev, int way) {
 	if (way == AUDIO_READ)	dev->read_usage--;
 	if (way == AUDIO_WRITE) dev->write_usage--;
 
-	if (!dev->read_usage) 	{ watch_free(dev->read_watch); dev->read_watch = NULL; }
+	if (!dev->read_usage)	{ watch_free(dev->read_watch); dev->read_watch = NULL; }
 	if (!dev->write_usage)	{ watch_free(dev->write_watch); dev->write_watch = NULL; } 
 
 	if (!dev->read_watch && !dev->write_watch) {
@@ -252,20 +252,20 @@ AUDIO_CONTROL(oss_audio_control) {
 		if (!channels)	channels = 1;
 
 				dev = oss_device_find(pathname, way, freq, sample, channels);
-		if (!dev) 	dev = oss_device_new(pathname, way, freq, sample, channels);
+		if (!dev)	dev = oss_device_new(pathname, way, freq, sample, channels);
 		if (!dev)	return NULL;
 
 		voice_fd = dev->fd;
 
-		if (way == AUDIO_READ && !dev->read_watch) 	{ dev->read_usage++;	dev->read_watch		= watch_add(&oss_plugin, voice_fd, WATCH_READ, oss_read, dev);		} 
+		if (way == AUDIO_READ && !dev->read_watch)	{ dev->read_usage++;	dev->read_watch		= watch_add(&oss_plugin, voice_fd, WATCH_READ, oss_read, dev);		} 
 //		if (way == AUDIO_WRITE && !dev->write_watch)	{ dev->write_usage++;	dev->write_watch	= watch_add(&oss_plugin, voice_fd, WATCH_WRITE_LINE, oss_write, dev);	}
 
-		priv->dev 	= dev;
+		priv->dev	= dev;
 
 		aio		= xmalloc(sizeof(audio_io_t));
-		aio->a  	= &oss_audio;
-		aio->fd 	= voice_fd;
-		aio->private 	= priv;
+		aio->a		= &oss_audio;
+		aio->fd		= voice_fd;
+		aio->private	= priv;
 
 	} else if (type == AUDIO_CONTROL_DEINIT && aio) {
 		oss_private_t *priv = aio->private;
@@ -293,10 +293,10 @@ static QUERY(oss_setvar_default) {
 }
 
 static COMMAND(oss_cmd_record) {
-	const char *device 	= config_audio_device;
+	const char *device	= config_audio_device;
 	const char *freq	= "";
-	const char *sample 	= "";
-	const char *channels 	= "";
+	const char *sample	= "";
+	const char *channels	= "";
 	const char *filename	= "";
 
 	char **array;

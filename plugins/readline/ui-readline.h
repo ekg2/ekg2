@@ -8,7 +8,7 @@
 extern int config_ctrld_quits;
 
 typedef struct {
-        char *line[MAX_LINES_PER_SCREEN];
+	char *line[MAX_LINES_PER_SCREEN];
 } readline_window_t;
 
 /* deklaracje funkcji interfejsu */

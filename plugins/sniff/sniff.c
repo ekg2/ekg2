@@ -16,7 +16,7 @@
  */
 
 /* some functions are copied from ekg2's gg plugin/other ekg2's plugins/libgadu 
- * 	there're copyrighted under GPL-2 */
+ *	there're copyrighted under GPL-2 */
 
 #include "ekg2-config.h"
 
@@ -212,7 +212,7 @@ static char *gg_cp_to_iso(char *b) {
 
 static void tcp_print_payload(u_char *payload, size_t len) {
 	#define MAX_BYTES_PER_LINE 16
-        int offset = 0;
+	int offset = 0;
 
 	while (len) {
 		int display_len;
@@ -223,15 +223,15 @@ static void tcp_print_payload(u_char *payload, size_t len) {
 		else	display_len = len;
 	
 	/* offset */
-        	debug_iorecv("\t0x%.4x  ", offset);
+		debug_iorecv("\t0x%.4x	", offset);
 	/* hexdump */
 		for(i = 0; i < MAX_BYTES_PER_LINE; i++) {
 			if (i < display_len)
 				debug_iorecv("%.2x ", payload[i]);
-			else	debug_iorecv("   ");
+			else	debug_iorecv("	 ");
 		}
 	/* seperate */
-		debug_iorecv("   ");
+		debug_iorecv("	 ");
 
 	/* asciidump if printable, else '.' */
 		for(i = 0; i < display_len; i++)
@@ -240,7 +240,7 @@ static void tcp_print_payload(u_char *payload, size_t len) {
 
 		payload	+= display_len;
 		offset	+= display_len;
-		len 	-= display_len;
+		len	-= display_len;
 	}
 }
 
@@ -292,10 +292,10 @@ typedef enum {
 
 
 /* XXX, some notes about tcp fragment*
- * 		@ sniff_loop_tcp() we'll do: sniff_find_tcp_connection(connection_t *hdr);
- * 		it'll find (or create) struct with inited string_t buf...
- * 		than we append to that string_t recv data from packet, and than pass this to sniff_gg() [or anyother sniff handler]
- * 		than in sniff_loop() we'll remove already data.. [of length len, len returned from sniff_gg()]
+ *		@ sniff_loop_tcp() we'll do: sniff_find_tcp_connection(connection_t *hdr);
+ *		it'll find (or create) struct with inited string_t buf...
+ *		than we append to that string_t recv data from packet, and than pass this to sniff_gg() [or anyother sniff handler]
+ *		than in sniff_loop() we'll remove already data.. [of length len, len returned from sniff_gg()]
  */
 
 static inline void sniff_loop_tcp(session_t *s, int len, const u_char *packet, const struct iphdr *ip, int size_ip) {
@@ -311,7 +311,7 @@ static inline void sniff_loop_tcp(session_t *s, int len, const u_char *packet, c
 	size_tcp = TH_OFF(tcp)*4;
 
 	if (size_tcp < 20) {
-		debug_error("sniff_loop_tcp()   * Invalid TCP header length: %u bytes\n", size_tcp);
+		debug_error("sniff_loop_tcp()	* Invalid TCP header length: %u bytes\n", size_tcp);
 		return;
 	}
 
@@ -327,10 +327,10 @@ static inline void sniff_loop_tcp(session_t *s, int len, const u_char *packet, c
 			_inet_ntoa(hdr->srcip),		/* src ip */
 			hdr->srcport,			/* src port */
 			_inet_ntoa(hdr->dstip),		/* dest ip */
-			hdr->dstport, 			/* dest port */
+			hdr->dstport,			/* dest port */
 			tcp_print_flags(tcp->th_flags), /* tcp flags */
-			htonl(tcp->th_seq), 		/* seq */
-			htonl(tcp->th_ack), 		/* ack */
+			htonl(tcp->th_seq),		/* seq */
+			htonl(tcp->th_ack),		/* ack */
 			size_payload);			/* payload len */
 
 	/* XXX check tcp flags */
@@ -399,7 +399,7 @@ static inline void sniff_loop_udp(session_t *s, int len, const u_char *packet, c
 			_inet_ntoa(hdr->srcip),		/* src ip */
 			hdr->srcport,			/* src port */
 			_inet_ntoa(hdr->dstip),		/* dest ip */
-			hdr->dstport); 			/* dest port */
+			hdr->dstport);			/* dest port */
 
 	if (size_payload == RIVCHAT_PACKET_LEN && !memcmp(payload, rivchat_magic, sizeof(rivchat_magic))) {		/* RIVCHAT	[check based on header (11b), ~100% hit] */
 		sniff_rivchat(s, hdr, (rivchat_packet *) payload, size_payload);
@@ -638,8 +638,8 @@ static QUERY(sniff_session_deinit) {
 }
 
 static QUERY(sniff_validate_uid) {
-	char    *uid    = *(va_arg(ap, char **));
-	int     *valid  = va_arg(ap, int *);
+	char	*uid	= *(va_arg(ap, char **));
+	int	*valid	= va_arg(ap, int *);
 
 	if (!uid)
 		return 0;
@@ -701,10 +701,10 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_userlist_req",	 ("%) %b[GG_USERLIST_REQUEST] %gTYPE: %W%1 (%2)"), 1);
 	format_add("sniff_gg_userlist_reply",	 ("%) %b[GG_USERLIST_REPLY] %gTYPE: %W%1 (%2)"), 1);
 
-	format_add("sniff_gg_userlist_data",	 ("%)   %b[%1] %gENTRY: %W%2"), 1);
+	format_add("sniff_gg_userlist_data",	 ("%)	%b[%1] %gENTRY: %W%2"), 1);
 
 	format_add("sniff_gg_list",		 ("%) %b[%1] %gLEN: %W%2"), 1);
-	format_add("sniff_gg_list_data",	 ("%)   %b[%1] %gENTRY: %W%2 %gTYPE: %W%3"), 1);
+	format_add("sniff_gg_list_data",	 ("%)	%b[%1] %gENTRY: %W%2 %gTYPE: %W%3"), 1);
 
 	format_add("sniff_gg_pubdir50_req",	 ("%) %b[GG_PUBDIR50_REQUEST] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
 	format_add("sniff_gg_pubdir50_reply",	 ("%) %b[GG_PUBDIR50_REPLY] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
@@ -728,13 +728,13 @@ static int sniff_theme_init() {
 	
 /* sniff dns */
 	format_add("sniff_dns_reply",		("%) %b[SNIFF_DNS, %r%1%b] %gDOMAIN: %W%2"), 1);
-	format_add("sniff_dns_entry_a",		("%)         %b[IN_A] %gDOMAIN: %W%1 %gIP: %W%2"), 1);
-	format_add("sniff_dns_entry_aaaa",	("%)      %b[IN_AAAA] %gDOMAIN: %W%1 %gIP6: %W%2"), 1);
-	format_add("sniff_dns_entry_cname",	("%)     %b[IN_CNAME] %gDOMAIN: %W%1 %gCNAME: %W%2"), 1);
-	format_add("sniff_dns_entry_ptr",	("%)       %b[IN_PTR] %gIP_PTR: %W%1 %gDOMAIN: %W%2"), 1);
-	format_add("sniff_dns_entry_mx",	("%)        %b[IN_MX] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPREF: %W%3"), 1);
-	format_add("sniff_dns_entry_srv",	("%)       %b[IN_SRV] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPORT: %W%3 %gPRIO: %W%4 %gWEIGHT: %W%5"), 1);
-	format_add("sniff_dns_entry_?",		("%)         %b[IN_?] %gDOMAIN: %W%1 %gTYPE: %W%2 %gLEN: %W%3"), 1);
+	format_add("sniff_dns_entry_a",		("%)	     %b[IN_A] %gDOMAIN: %W%1 %gIP: %W%2"), 1);
+	format_add("sniff_dns_entry_aaaa",	("%)	  %b[IN_AAAA] %gDOMAIN: %W%1 %gIP6: %W%2"), 1);
+	format_add("sniff_dns_entry_cname",	("%)	 %b[IN_CNAME] %gDOMAIN: %W%1 %gCNAME: %W%2"), 1);
+	format_add("sniff_dns_entry_ptr",	("%)	   %b[IN_PTR] %gIP_PTR: %W%1 %gDOMAIN: %W%2"), 1);
+	format_add("sniff_dns_entry_mx",	("%)	    %b[IN_MX] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPREF: %W%3"), 1);
+	format_add("sniff_dns_entry_srv",	("%)	   %b[IN_SRV] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPORT: %W%3 %gPRIO: %W%4 %gWEIGHT: %W%5"), 1);
+	format_add("sniff_dns_entry_?",		("%)	     %b[IN_?] %gDOMAIN: %W%1 %gTYPE: %W%2 %gLEN: %W%3"), 1);
 	format_add("sniff_dns_entry_ndisplay",	("%)   %rZADEN REKORD NIE WYSWIETLONY DLA ZAPYTANIE POWYZEJ ;), OBEJRZYJ DEBUG"), 1);
 
 /* sniff rivchat */
@@ -747,19 +747,19 @@ static int sniff_theme_init() {
 	format_add("sniff_rivchat_rcinfo",	("%) %b[RIVCHAT_INFO, %r%1%b] %gFINGER: %W%2@%3 %gOS: %W%4 %gPROGRAM: %W%5 %6"), 1);
 
 /* stats */
-	format_add("sniff_pkt_rcv", 		("%) %2 packets captured"), 1);
+	format_add("sniff_pkt_rcv",		("%) %2 packets captured"), 1);
 	format_add("sniff_pkt_drop",		("%) %2 packets dropped"), 1);
 
-	format_add("sniff_conn_db", 		("%) %2 connections founded"), 1);
+	format_add("sniff_conn_db",		("%) %2 connections founded"), 1);
 	format_add("sniff_tcp_connection",	"TCP %1:%2 <==> %3:%4", 1);
 
 	return 0;
 }
 
 static plugins_params_t sniff_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias", 		VAR_STR, 0, 0, NULL),
-	PLUGIN_VAR_ADD("auto_connect", 		VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("filter", 		VAR_STR, DEFAULT_FILTER, 0, NULL),
+	PLUGIN_VAR_ADD("alias",			VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("filter",		VAR_STR, DEFAULT_FILTER, 0, NULL),
 
 	PLUGIN_VAR_END()
 };
@@ -771,7 +771,7 @@ EXPORT int sniff_plugin_init(int prio) {
 	plugin_register(&sniff_plugin, prio);
 
 	query_connect_id(&sniff_plugin, PROTOCOL_VALIDATE_UID,	sniff_validate_uid, NULL);
-	query_connect_id(&sniff_plugin, STATUS_SHOW, 		sniff_status_show, NULL);
+	query_connect_id(&sniff_plugin, STATUS_SHOW,		sniff_status_show, NULL);
 	query_connect_id(&sniff_plugin, PLUGIN_PRINT_VERSION,	sniff_print_version, NULL);
 	query_connect_id(&sniff_plugin, SESSION_REMOVED,	sniff_session_deinit, NULL);
 

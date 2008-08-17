@@ -1,10 +1,10 @@
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Woźny <speedy@ziew.org>
- *                          Arkadiusz Miśkiewicz <arekm@pld-linux.org>
- *                          Tomasz Chiliński <chilek@chilan.com>
- *                          Piotr Wysocki <wysek@linux.bydg.org>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Robert J. Woźny <speedy@ziew.org>
+ *			    Arkadiusz Miśkiewicz <arekm@pld-linux.org>
+ *			    Tomasz Chiliński <chilek@chilan.com>
+ *			    Piotr Wysocki <wysek@linux.bydg.org>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
  *
  *			& many others look at: http://ekg.chmurka.net/docs/protocol.html
  *
@@ -24,8 +24,8 @@
  */
 
 /* struct data && magic constants copied from libgadu (http://toxygen.net/libgadu) && 
- * 	gg protocol documentation (http://ekg.chmurka.net/docs/protocol.html)
- * 	great job guys! thx.
+ *	gg protocol documentation (http://ekg.chmurka.net/docs/protocol.html)
+ *	great job guys! thx.
  */
 
 #include <sys/types.h>

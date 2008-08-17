@@ -28,7 +28,7 @@ static const char digit[] = "\0abcdefghijklmnoprstuwxyz";	/* bo kto tak naprawde
 
 #define MAX_PASS_LEN 15	/* dlugosc hasla, tak naprawde to jest+1, nie przejmowac sie. */
 
-#define ULTRA_DEBUG 	0	/* sprawdza czy dobrze generujemy hasla (w/g digit, b. niepotrzebne i b. wolne) */
+#define ULTRA_DEBUG	0	/* sprawdza czy dobrze generujemy hasla (w/g digit, b. niepotrzebne i b. wolne) */
 #define ULTRA_VERBOSE	1	/* rysuje kropki */
 #define ULTRA_SAFE	0	/* sprawdza czy nie bedziemy rysowac po pamieci jesli haslo zacznie miec wiecej niz MAX_PASS_LEN znakow */
 
@@ -58,7 +58,7 @@ static const char digit[] = "\0abcdefghijklmnoprstuwxyz";	/* bo kto tak naprawde
 #endif
 
 #if 0		/* 5.154s */
-#define TEXT "alamaka" 		/* algo test */
+#define TEXT "alamaka"		/* algo test */
 #endif
 
 #define DIGIT_SIZE (sizeof(digit)-2)	/* glupie gcc, i konczenie stringow \0 :( */ 
@@ -67,7 +67,7 @@ static unsigned char pass[MAX_PASS_LEN];
 static unsigned char realpass[MAX_PASS_LEN+1];
 static size_t pass_pos = 0;
 
-#ifdef HASH_SHA1 	/* SHA-1 STUFF */
+#ifdef HASH_SHA1	/* SHA-1 STUFF */
 
 #define rol(value, bits) (((value) << (bits)) | ((value) >> (32 - (bits))))
 

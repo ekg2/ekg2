@@ -1,7 +1,7 @@
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
- *                2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -94,7 +94,7 @@ static unsigned char *rivchat_iso_to_cp(unsigned char *buf) {
 
 #if (USE_UNICODE || HAVE_GTK)
 static const uint16_t table_cp1250[] = {
-	0x20ac, '?',    0x201a,    '?', 0x201e, 0x2026, 0x2020, 0x2021, 
+	0x20ac, '?',	0x201a,    '?', 0x201e, 0x2026, 0x2020, 0x2021, 
 	   '?', 0x2030, 0x0160, 0x2039, 0x015a, 0x0164, 0x017d, 0x0179, 
 	   '?', 0x2018, 0x2019, 0x201c, 0x201d, 0x2022, 0x2013, 0x2014, 
 	   '?', 0x2122, 0x0161, 0x203a, 0x015b, 0x0165, 0x017e, 0x017a, 
