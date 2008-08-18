@@ -1,0 +1,43 @@
+#!/bin/bash
+
+EKG_BIN=""
+
+	# First try to find ekg2 in current directory
+[ -x 'ekg2' ]								&& EKG_BIN="./ekg2"
+[[ -z "${EKG_BIN}" && -x 'ekg/ekg2' ]]		&& EKG_BIN="ekg/ekg2"
+[[ -z "${EKG_BIN}" && -x '../ekg/ekg2' ]]	&& EKG_BIN="../ekg/ekg2"
+
+	# Then try script directory
+SCDIR="$(dirname "$0")"
+if [[ -z "${EKG_BIN}" && -n "${SCDIR}" && "${SCDIR}" != '.' ]]; then
+	cd "$(dirname $0)"
+	[[ -z "${EKG_BIN}" && -x 'ekg2' ]]			&& EKG_BIN="ekg2"
+	[[ -z "${EKG_BIN}" && -x 'ekg/ekg2' ]]		&& EKG_BIN="ekg/ekg2"
+	[[ -z "${EKG_BIN}" && -x '../ekg/ekg2' ]]	&& EKG_BIN="../ekg/ekg2"
+fi
+
+	# Finally, try ${PATH}
+[ -z "${EKG_BIN}" ] && EKG_BIN="$(which ekg2 2>/dev/null)"
+
+if [ -z "${EKG_BIN}" ]; then
+	echo 'Unable to find any usable ekg2 binary.'
+	exit 127
+fi
+
+#    --trace-malloc=yes \
+
+valgrind \
+   -v \
+   --tool=memcheck \
+   --log-file="$HOME"/ekg2.valgrind."$(date +%Y%m%d-%H%M)" \
+    --leak-check=yes \
+	--leak-resolution=high \
+    --error-limit=no \
+    --demangle=yes \
+    --num-callers=20 \
+	--track-fds=yes \
+	--trace-children=yes \
+	--show-reachable=yes \
+   ../ekg/ekg2 "$@"
+
+exit $?
