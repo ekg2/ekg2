@@ -389,6 +389,8 @@ void *ekg_convert_string_init(const char *from, const char *to, void **rev);
 void ekg_convert_string_destroy(void *ptr);
 char *ekg_convert_string_p(const char *ps, void *ptr);
 char *ekg_convert_string(const char *ps, const char *from, const char *to);
+string_t ekg_convert_string_t_p(string_t s, void *ptr);
+string_t ekg_convert_string_t(string_t s, const char *from, const char *to);
 int ekg_converters_display(int quiet);
 char *password_input(const char *prompt, const char *rprompt, const bool norepeat);
 

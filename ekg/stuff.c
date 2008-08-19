@@ -2823,14 +2823,13 @@ static inline size_t mutt_iconv (iconv_t cd, char **inbuf, size_t *inbytesleft,
  * Broken for use within EKG2 (passing iconv_t instead of from/to)
  */
 
-static inline char *mutt_convert_string (const char *ps, iconv_t cd, int is_utf)
+static inline string_t mutt_convert_string (string_t s, iconv_t cd, int is_utf)
 {
+	string_t ret;
 	char *repls[] = { "\357\277\275", "?", 0 };
-	char *s = (char *) ps;
 		/* we can assume that both from and to aren't NULL in EKG2,
 		 * and cd is NULL in case of error, not -1 */
 	if (cd) {
-		int len;
 		char *ib;
 		char *buf, *ob;
 		size_t ibl, obl;
@@ -2844,17 +2843,17 @@ static inline char *mutt_convert_string (const char *ps, iconv_t cd, int is_utf)
 		else
 			outrepl = "?";
 
-		len = xstrlen (s);
-		ib = s, ibl = len + 1;
+		ib = s->str;
+		ibl = s->len + 1;
 		obl = 16 * ibl;
 		ob = buf = xmalloc (obl + 1);
 
 		mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
 
-		*ob = '\0';
+		ret = string_init(xstrndup(buf, ob - buf - 1));
+		xfree(buf);
 
-		buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
-		return buf;
+		return ret;
 	}
 	return NULL;
 }
@@ -3060,29 +3059,15 @@ void ekg_convert_string_destroy(void *ptr) {
  */
 
 char *ekg_convert_string_p(const char *ps, void *ptr) {
-#ifdef HAVE_ICONV
-	struct ekg_converter *c;
-	int is_utf = 0;
+	string_t recod, s = string_init(ps);
+	char *r = NULL;
 
-	if (!ps || !*ps || !ptr)
-		return NULL;
-
-		/* XXX, maybe some faster way? any ideas? */
-	for (c = ekg_converters; c; c = c->next) {
-		if (c->cd == ptr)
-			is_utf = c->is_utf;
-		else if (c->rev == ptr)
-			is_utf = (c->is_utf == 2 ? 1 : (c->is_utf == 1 ? 2 : 0));
-		else
-			continue;
-
-		break;
+	if ((recod = ekg_convert_string_t_p(s, ptr))) {
+		r = xstrndup(recod->str, recod->len);
+		string_free(recod, 1);
 	}
 
-	return mutt_convert_string(ps, ptr, is_utf);
-#else
-	return NULL;
-#endif
+	return r;
 }
 
 /**
@@ -3113,6 +3098,45 @@ char *ekg_convert_string(const char *ps, const char *from, const char *to) {
 	r = ekg_convert_string_p(ps, p);
 	ekg_convert_string_destroy(p);
 
+	return r;
+}
+
+string_t ekg_convert_string_t_p(string_t s, void *ptr) {
+#ifdef HAVE_ICONV
+	struct ekg_converter *c;
+	int is_utf = 0;
+
+	if (!s || !s->len || !ptr)
+		return NULL;
+
+		/* XXX, maybe some faster way? any ideas? */
+	for (c = ekg_converters; c; c = c->next) {
+		if (c->cd == ptr)
+			is_utf = c->is_utf;
+		else if (c->rev == ptr)
+			is_utf = (c->is_utf == 2 ? 1 : (c->is_utf == 1 ? 2 : 0));
+		else
+			continue;
+
+		break;
+	}
+
+	return mutt_convert_string(s, ptr, is_utf);
+#else
+	return NULL;
+#endif
+}
+
+string_t ekg_convert_string_t(string_t s, const char *from, const char *to) {
+	string_t r;
+	void *p;
+
+	if (!s || !s->len) /* don't even init iconv if we've got NULL string */
+		return NULL;
+
+	p = ekg_convert_string_init(from, to, NULL);
+	r = ekg_convert_string_t_p(s, p);
+	ekg_convert_string_destroy(p);
 	return r;
 }
 
