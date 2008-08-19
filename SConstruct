@@ -304,13 +304,20 @@ for var,val in consts.items():
 for var,val in mapped.items():
 	defines[val[0]] = env[var]
 
+# We get CCFLAGS and some of LINKFLAGS into flags, to pass them to env.MergeFlags(),
+# but we keep rest of LINKFLAGS alone, because Gentoo by default uses -O1 to linker, and -O2 to compiler.
+flags = [env['CCFLAGS']]
 linkflags = []
 for arg in env['LINKFLAGS'].split():
-	if arg[0:2] == '-l':
-		env.Append(LIBS = [arg[2:]])
+	if arg[0:2] in ['-l', '-L']:
+		flags.append(arg)
 	else:
 		linkflags.append(arg)
-env['LINKFLAGS'] = ' '.join(linkflags)
+
+env['CCFLAGS']		= []
+env['LINKFLAGS']	= []
+env.MergeFlags(flags)
+env.Append(LINKFLAGS = linkflags)
 
 conf = env.Configure(custom_tests = {
 		'CheckStructMember':	CheckStructMember,
@@ -486,9 +493,12 @@ print 'Paths:'
 for k in dirs:
 	print '- %s: %s' % (k, env[k])
 print
-print 'Build environment:'
-for k in ['CC', 'CCFLAGS', 'LIBS', 'LINK', 'LINKFLAGS']:
-	print '- %s: %s' % (k, env[k])
+print 'User-specified build environment:'
+for k in ['CC', 'CCFLAGS', 'CPPPATH', 'LIBS', 'LINK', 'LINKFLAGS', 'LIBPATH']:
+	try:
+		print '- %s: %s' % (k, env[k])
+	except KeyError:
+		pass
 print
 
 if warnings:
@@ -511,8 +521,8 @@ docglobs = ['commands*', 'vars*', 'session*']
 env.Alias('install', [env['PREFIX'], env['EPREFIX']])
 cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)
-cenv.Append(LIBPATH = 'compat')
-cenv.Append(LINKFLAGS = ' -Wl,--export-dynamic')
+cenv.Append(LIBPATH = ['compat'])
+cenv.Append(LINKFLAGS = ['-Wl,--export-dynamic'])
 cenv.Program('ekg/ekg2', glob.glob('ekg/*.c'))
 
 docfiles = []
