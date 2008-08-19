@@ -136,6 +136,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 	status = EKG_STATUS_AVAIL;	/* assume avail */
 	uid = icq_uid(pkt.uid);
+	u =userlist_find(s, uid);
 
 	debug_white("icq_snac_buddy_online() %s\n", uid);
 
@@ -179,9 +180,12 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 			}
 
 			case 0x0a: /* IP address */
-				/* XXX (?wo?) add to private */
-				debug_white("icq_snac_buddy_online() IP=%d.%d.%d.%d\n", t->buf[0], t->buf[1], t->buf[2], t->buf[3]);
+			{
+				uint32_t ip;
+				if (icq_unpack_nc(t->buf, t->len, "i", &ip))
+					user_private_item_set_int(u, "ip", ip);
 				break;
+			}
 
 			case 0x01: /* User class */
 				debug_white("icq_snac_buddy_online() class 0x%02x\n", t->nr);
@@ -294,7 +298,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	}
 
 	/* We change only status, not description */
-	if ( (u = userlist_find(s, uid)) )
+	if (u)
 		descr = xstrdup(u->descr);
 
 	protocol_status_emit(s, uid, status, descr, time(NULL));

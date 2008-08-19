@@ -134,9 +134,9 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 		debug_white("Rate info class #%d (%d, %d, %d, %d, %d, %d, %d, %d)\n", id, x0, x1, x2, x3, x4, x5, x6, x7);
 	}
 	// XXX ?wo? handle rate groups
-wrong:
-	icq_hexdump(DEBUG_ERROR, buf, len);
+//	icq_hexdump(DEBUG_ERROR, buf, len);
 }
+wrong:
 #endif
 
 #if MIRANDA
