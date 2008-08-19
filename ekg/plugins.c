@@ -195,7 +195,7 @@ static void *ekg2_dlsym(void *plugin, char *name) {
 int plugin_load(const char *name, int prio, int quiet)
 {
 #ifdef SHARED_LIBS
-	char *lib = NULL;
+	char lib[PATH_MAX];
 	char *env_ekg_plugins_path = NULL;
 	char *init = NULL;
 #endif
@@ -219,46 +219,36 @@ int plugin_load(const char *name, int prio, int quiet)
 #	define DOTLIBS ".libs/"
 #endif
 	if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-		lib = saprintf("%s/%s.so", env_ekg_plugins_path, name);
-		plugin = ekg2_dlopen(lib);
-		if (!plugin) {
-			xfree(lib);
-			lib = saprintf("%s/%s/" DOTLIBS "%s.so", env_ekg_plugins_path, name, name);
+		if (snprintf(lib, sizeof(lib), "%s/%s.so", env_ekg_plugins_path, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
-		}
+		if (!plugin && (snprintf(lib, sizeof(lib), "%s/%s/" DOTLIBS "%s.so", env_ekg_plugins_path, name, name) < sizeof(lib)))
+				plugin = ekg2_dlopen(lib);
 	}
 
 	if (!plugin) {
-		xfree(lib);
-		lib = saprintf("plugins/%s/" DOTLIBS "%s.so", name, name);
-		plugin = ekg2_dlopen(lib);
+		if (snprintf(lib, sizeof(lib), "plugins/%s/" DOTLIBS "%s.so", name, name) < sizeof(lib))
+			plugin = ekg2_dlopen(lib);
 	}
 
 	if (!plugin) {
-		xfree(lib);
-		lib = saprintf("../plugins/%s/" DOTLIBS "%s.so", name, name);
-		plugin = ekg2_dlopen(lib);
+		if (snprintf(lib, sizeof(lib), "../plugins/%s/" DOTLIBS "%s.so", name, name) < sizeof(lib))
+			plugin = ekg2_dlopen(lib);
 	}
 
 	if (!plugin) {
-		xfree(lib);
-		lib = saprintf("%s/%s.so", PLUGINDIR, name);
-		plugin = ekg2_dlopen(lib);
+		if (snprintf(lib, sizeof(lib), "%s/%s.so", PLUGINDIR, name) < sizeof(lib))
+			plugin = ekg2_dlopen(lib);
 	}
 #else	/* NO_POSIX_SYSTEM */
 	if (!plugin) {
-		xfree(lib);
-		lib = saprintf("c:\\ekg2\\plugins\\%s.dll", name);
-		plugin = ekg2_dlopen(lib);
+		if (snprintf(lib, sizeof(lib), "c:\\ekg2\\plugins\\%s.dll", name) < sizeof(lib))
+			plugin = ekg2_dlopen(lib);
 	}
 #endif /* SHARED_LIBS */
 	if (!plugin) {
 		printq("plugin_doesnt_exist", name);
-		xfree(lib);
 		return -1;
 	}
-
-	xfree(lib);
 #endif
 
 #ifdef STATIC_LIBS
