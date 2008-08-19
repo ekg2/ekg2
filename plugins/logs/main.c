@@ -884,7 +884,7 @@ static void logs_irssi(FILE *file, const char *session, const char *uid, const c
 		case EKG_MSGCLASS_PRIV_STATUS:
 		{
 			userlist_t *u = userlist_find(session_find(session), uid);
-			int __ip = user_private_item_get_int(u, "ip");
+			int __ip = u ? user_private_item_get_int(u, "ip") : INADDR_NONE;
 
 			fprintf(file, "%s * %s reports status: %s [~notirc@%s:%s] /* {status} */\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), inet_ntoa(*((struct in_addr*) &__ip)), itoa(user_private_item_get_int(u, "port")));
 			break;
