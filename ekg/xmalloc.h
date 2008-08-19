@@ -25,6 +25,9 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+#ifndef __USE_POSIX
+    #define __USE_POSIX 1	/* glibc 2.8 */
+#endif
 #define _XOPEN_SOURCE 600
 #include <limits.h>
 
