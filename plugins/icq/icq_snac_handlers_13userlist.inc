@@ -40,7 +40,29 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 	/*
 	 * Handle SNAC(0x13,0x03)
 	 */
-	debug_error("icq_snac_userlist_reply() XXX\n");
+	struct icq_tlv_list *tlvs;
+	icq_tlv_t *t;
+
+	debug_function("icq_snac_userlist_reply()\n");
+
+	tlvs = icq_unpack_tlvs(buf, len, 0);
+
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
+	if ((t = icq_tlv_get(tlvs, 0x06)) && (t->len == 2)) {
+		debug_white("icq_snac_userlist_reply() length limit for server-list item's name = %d\n", t->nr);
+	}
+	if ((t = icq_tlv_get(tlvs, 0x0C)) && (t->len == 2)) {
+		debug_white("icq_snac_userlist_reply() max number of contacts in a group = %d\n", t->nr);
+	}
+	if ((t = icq_tlv_get(tlvs, 0x04))) {
+		uint16_t a, b, c, d;
+		if (icq_unpack_nc(t->buf, t->len, "WWWW", &a, &b, &c, &d)) {
+			debug_white("icq_snac_userlist_reply() max %d contacts; max %d groups; max %d visible contacts; max %d invisible contacts\n", a, b, c, d);
+		}
+	}
+#endif
+
+
 
 #if 0
 	oscar_tlv_chain* chain;
@@ -77,7 +99,9 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 	disposeChain(&chain);
 #endif
 
-	return -3;
+	icq_tlvs_destroy(&tlvs);
+
+	return 0;
 }
 
 static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, const char *name, uint16_t type, uint16_t item_id, uint16_t group) {
@@ -94,9 +118,15 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 
 			userlist_t *u;
 
-			if (!(u = userlist_find(s, uid))) 
+			if (!(u = userlist_find(s, uid)))
 				u = userlist_add(s, uid, nick);
+			else if (! u->nickname);
+				u->nickname = xstrdup(nick);
 
+			if (u && group) {
+				user_private_item_set_int(u, "iid", item_id);
+				user_private_item_set_int(u, "gid", group);
+			}
 			debug("[group] %u\n", group);
 			
 			if (comment)
@@ -241,7 +271,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 	 * Handle SNAC(0x13, 0x6) -- Server contact list reply
 	 *
 	 * This is the server reply to client roster requests: SNAC(13,04), SNAC(13,05).
-	 * 
+	 *
 	 * Server can split up the roster in several parts. This is indicated with
 	 * SNAC flags bit 1 as usual, however the "SSI list last change time" only
 	 * exists in the last packet. And the "Number of items" field indicates the
@@ -326,14 +356,48 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 	return 0;
 }
 
-SNAC_SUBHANDLER(SNAC_USR_0E) {
-	debug_error("SNAC_USR_0E XXX()\n");
-	return -3;
+SNAC_SUBHANDLER(icq_snac_userlist_edit_ack) {
+	uint16_t err;
+
+	debug_function("icq_snac_userlist_edit_ack()\n");
+	while (len>=2) {
+		char *msg;
+		if (!ICQ_UNPACK(&buf, "W", &err))
+			break;
+		switch (err) {
+			case 0x0000:
+				msg = "No errors (success)";
+				break;
+			case 0x0002:
+				msg = "Item you want to modify not found in list";
+				break;
+			case 0x0003:
+				msg = "Item you want to add allready exists";
+				break;
+			case 0x000A:
+				msg = "Error adding item (invalid id, allready in list, invalid data)";
+				break;
+			case 0x000C:
+				msg = "Can't add item. Limit for this type of items exceeded";
+				break;
+			case 0x000D:
+				msg = "Trying to add ICQ contact to an AIM list";
+				break;
+			case 0x000E:
+				msg = "Can't add this contact because it requires authorization";
+				break;
+			default:
+				msg = "Unknown error";
+		}
+		debug_error("icq_snac_userlist_edit_ack() Error code:0x%x // %s\n", err, msg);
+	}
+	return 0;
 }
 
-SNAC_SUBHANDLER(SNAC_USR_0F) {
-	debug_error("SNAC_USR_0F XXX()\n");
-	return -3;
+SNAC_SUBHANDLER(icq_snac_userlist_up_to_date) {
+	/* XXX "I" - modification date/time of client local SSI copy, "W" - number of items in client local SSI copy */
+	debug_function("icq_snac_userlist_up_to_date()\n");
+	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_userlist_modifystart) {
@@ -341,8 +405,8 @@ SNAC_SUBHANDLER(icq_snac_userlist_modifystart) {
 	return 0;
 }
 
-SNAC_SUBHANDLER(snac_userlist_modifyentry) {
-	debug_function("snac_userlist_modifyentry() Server updated our contact on list\n");
+SNAC_SUBHANDLER(icq_snac_userlist_modifyentry) {
+	debug_function("icq_snac_userlist_modifyentry() Server updated our contact on list\n");
 
 	return 0;
 }
@@ -372,6 +436,41 @@ SNAC_SUBHANDLER(icq_snac_userlist_auth_req) {
 	return 0;
 }
 
+SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
+	struct {
+		char *uid;
+		uint8_t flag;
+		char *reason;
+	} pkt;
+	char *uid;
+
+	if (!ICQ_UNPACK(&buf, "ucU", &pkt.uid, &pkt.flag, &pkt.reason))
+		return -1;
+
+	// XXX ?wo? add format & display in status window
+	uid = icq_uid(pkt.uid);
+	debug_error("%s - %s %s your authorization: %s \n", session_name(s), uid, pkt.flag ? "grant" : "decline", pkt.reason);
+	xfree(uid);
+	return 0;
+}
+
+SNAC_SUBHANDLER(icq_snac_userlist_you_were_added) {
+	struct {
+		char *uid;
+	} pkt;
+	char *uid;
+
+	if (!ICQ_UNPACK(&buf, "u", &pkt.uid))
+		return -1;
+	
+	// XXX ?wo? add format & display in status window
+	uid = icq_uid(pkt.uid);
+	debug_white("You were added %s %s\n", session_name(s), uid);
+	xfree(uid);
+
+	return 0;
+}
+
 SNAC_HANDLER(icq_snac_userlist_handler) {
 	snac_subhandler_t handler;
 
@@ -379,12 +478,14 @@ SNAC_HANDLER(icq_snac_userlist_handler) {
 		case 0x01: handler = icq_snac_userlist_error; break;
 		case 0x03: handler = icq_snac_userlist_reply; break;		/* Miranda: OK */
 		case 0x06: handler = icq_snac_userlist_roster; break;		/* Miranda: 1/3 OK */	/* XXX, handleServerCList() */
-		case 0x09: handler = snac_userlist_modifyentry; break;
-		case 0x0E: handler = SNAC_USR_0E; break;
-		case 0x0F: handler = SNAC_USR_0F; break;
+		case 0x09: handler = icq_snac_userlist_modifyentry; break;
+		case 0x0E: handler = icq_snac_userlist_edit_ack; break;
+		case 0x0F: handler = icq_snac_userlist_up_to_date; break;
 		case 0x11: handler = icq_snac_userlist_modifystart; break;	/* Miranda: OK */
 		case 0x12: handler = icq_snac_userlist_modifyend; break;	/* Miranda: OK */
 		case 0x19: handler = icq_snac_userlist_auth_req; break;
+		case 0x1B: handler = icq_snac_userlist_auth_reply; break;
+		case 0x1C: handler = icq_snac_userlist_you_were_added; break;
 		default:   handler = NULL; break;
 	}
 
