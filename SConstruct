@@ -471,7 +471,7 @@ else:
 
 print 'Options:'
 print '- unicode: %s' % (env['UNICODE'])
-print '- nls: %s' % (env['NLS'])
+print '- nls: %s' % (defines['ENABLE_NLS'])
 print
 print 'Paths:'
 for k in dirs:
@@ -515,7 +515,7 @@ if env['UNICODE']:
 	for doc in docglobs:
 		docfiles.extend(glob.glob('docs/%s.txt' % doc))
 
-if env['NLS']:
+if defines['ENABLE_NLS']:
 	cenv.CompileMsg('po/', glob.glob('po/*.po'))
 	for f in glob.glob('po/*.mo'):
 		lang = str(f)[str(f).rindex('/') + 1:-3]
