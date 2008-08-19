@@ -452,7 +452,7 @@ for plugin in pllist:
 
 	pl[type].append('%s%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin, optdeps))
 
-env.Append(CCFLAGS = ' -I.')
+env.Append(CPPPATH = ['.'])
 # some fancy output
 
 print
@@ -503,7 +503,6 @@ cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)
 cenv.Append(LIBPATH = 'compat')
 cenv.Append(LINKFLAGS = ' -Wl,--export-dynamic')
-cenv.Depends(glob.glob('ekg/*.o'), ['ekg2-config.h']) # this should force rebuilding on config change
 cenv.Program('ekg/ekg2', glob.glob('ekg/*.c'))
 
 docfiles = []
