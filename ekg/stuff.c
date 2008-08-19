@@ -2437,8 +2437,8 @@ void ekg_update_status(session_t *session)
 			u->status = session->status;
 
 		u->blink = 0;
+		query_emit_id(NULL, USERLIST_CHANGED, session_uid_get(session), u->uid);
 	}
-
 }
 
 /* status string tables */
