@@ -3,12 +3,14 @@
 
 Import('*')
 
-out = conf.PkgConfig('libgadu', libs, ccflags, linkflags)
+out = conf.PkgConfig('libgadu', flags)
 defines['HAVE_LIBGADU'] = out
 
 if out:
+	old = SetFlags(env, flags)
 	for f in ['gg_remind_passwd3', 'gg_change_passwd4']:
 		defines['HAVE_%s' % (f.upper())] = conf.CheckLib('gadu', f, None, None, 0)
+	RestoreFlags(env, old)
 
 Return('out')
 

@@ -3,7 +3,7 @@
 
 Import('*')
 
-out = conf.PkgConfig('sqlite3', libs, ccflags, linkflags)
+out = conf.PkgConfig('sqlite3', flags)
 defines['HAVE_SQLITE3'] = out
 
 Return('out')

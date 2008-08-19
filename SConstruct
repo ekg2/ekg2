@@ -103,9 +103,9 @@ def StupidPythonExec(context, cmds, result):
 
 	return not fret
 
-def PkgConfig(context, pkg, libs, ccflags, linkflags, version = None, pkgconf = 'pkg-config',
-			versionquery = '--version', ccflagquery = '--cflags', ldflagquery = '--libs'):
-	""" Ask pkg-config (or *-config) about given package, and put results in [libs, ccflags, linkflags].
+def PkgConfig(context, pkg, flags, version = None, pkgconf = 'pkg-config',
+			versionquery = '--version', flagquery = '--cflags --libs'):
+	""" Ask pkg-config (or *-config) about given package, and put results in flags.
 		If specific -config (pkg-config, for example) needs package name, then give it as pkg. If not,
 		just set pkgconf correctly. When using something incompatible with *-config, give correct
 		[versionquery, ccflagquery, ldflagquery] """
@@ -116,7 +116,7 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, version = None, pkgconf = 
 		context.Message('Asking %s about %s... ' % (pkgconf, pkg))
 		pkg = ' "%s"' % (pkg)
 
-	queries = [ldflagquery, ccflagquery]
+	queries = [flagquery]
 	if version is not None:
 		if pkgconf == 'pkg-config' and versionquery == '--version': # defaults
 			versionquery = '--mod%s' % versionquery[2:]
@@ -125,15 +125,9 @@ def PkgConfig(context, pkg, libs, ccflags, linkflags, version = None, pkgconf = 
 	res = []
 	ret = StupidPythonExec(None, ['"%s" %s%s' % (pkgconf, q, pkg) for q in queries], res)
 	if ret:
-		for arg in res[1].split():
-			if arg[0:2] == '-l':
-				libs.append(arg[2:])
-			else:
-				linkflags.append(arg)
-
-		ccflags.append(res[4])
+		flags.append(res[1])
 		if version is not None:
-			version.append(res[7])
+			version.append(res[4])
 
 	context.Result(ret)
 	if int(res[0]) == 127 and pkgconf == 'pkg-config':
@@ -156,9 +150,31 @@ int main(void) {
 	context.Result(ret)
 	return not not ret
 
+def SetFlags(env, new):
+	""" Set new (temporary) flags and return dict with old flag values """
+	if not isinstance(new, dict):
+		new	= env.ParseFlags(new)
+
+	old		= {}
+	for k in new.keys():
+		try:
+			old[k] = env[k]
+		except KeyError:
+			old[k] = []
+
+	env.MergeFlags(new)
+	return old
+
+def RestoreFlags(env, old):
+	""" Restore flags saved by BackupFlags() """
+		# We don't use env.MergeFlags(), 'cause we want to remove new ones
+	for k, v in old.items():
+		env[k] = v
+	return
+
 def ExtTest(name, addexports = []):
 	""" Execute external test from scons.d/. """
-	exports = ['conf', 'defines', 'env', 'warnings']
+	exports = ['conf', 'defines', 'env', 'warnings', 'SetFlags', 'RestoreFlags']
 	exports.extend(addexports)
 	ret = SConscript('scons.d/%s' % (name), exports)
 	return ret
@@ -356,8 +372,7 @@ for plugin in pllist:
 
 	optdeps = []
 	libs = []
-	ccflags = []
-	linkflags = []
+	flags = []
 
 	for dep in info['depends'] + info['optdepends']:
 		isopt = dep in info['optdepends']
@@ -397,8 +412,8 @@ for plugin in pllist:
 				if not xdep in sdep and not '-%s' % xdep in prefs: # and rest of possibilities
 					sdep.append(xdep)
 
-		for xdep in sdep:
-			have_it = ExtTest(xdep, ['libs', 'ccflags', 'linkflags'])
+		for xdep in sdep:	# 'flags' will be nicely split by SCons, but 'libs' are nicer to write
+			have_it = ExtTest(xdep, ['libs', 'flags'])
 			if have_it:
 				if isopt or len(dep) > 1: # pretty-print optional and selected required (if more than one possibility)
 					optdeps.append('%s' % (xdep))
@@ -430,15 +445,10 @@ for plugin in pllist:
 		continue
 
 	SConscript('%s/SConscript' % (plugpath), ['defines', 'optdeps'])
-	if not ccflags:
-		ccflags = ['']
-	if not linkflags:
-		linkflags = ['']
 	plugins[plugin] = {
 		'info':			info,
 		'libs':			libs,
-		'ccflags':		' '.join(ccflags),
-		'linkflags':	' '.join(linkflags)
+		'flags':		flags
 		}
 
 	type = info['type']
@@ -452,7 +462,6 @@ for plugin in pllist:
 
 	pl[type].append('%s%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin, optdeps))
 
-env.Append(CPPPATH = ['.'])
 # some fancy output
 
 print
@@ -491,6 +500,7 @@ if warnings:
 conf.Finish()
 
 writedefines()
+env.Append(CPPPATH = ['.'])
 
 for k in dirs:
 	if k != 'DESTDIR':
@@ -566,8 +576,7 @@ for plugin, data in plugins.items():
 
 	penv = env.Clone()
 	penv.Append(LIBS = data['libs'])
-	penv.Append(CCFLAGS = ' ' + data['ccflags'])
-	penv.Append(LINKFLAGS = ' ' + data['linkflags'])
+	penv.MergeFlags(data['flags'])
 
 	SConscript('%s/SConscript' % plugpath, ['penv'])
 

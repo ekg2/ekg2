@@ -3,8 +3,10 @@
 
 Import('*')
 
-out = conf.PkgConfig(None, libs, ccflags, linkflags, None, 'perl', None,
-	'-MExtUtils::Embed -e ccopts', '-MExtUtils::Embed -e ldopts')
+out = conf.PkgConfig(None, flags, None, 'perl', None,
+	'-MExtUtils::Embed -e "ccopts; ldopts"')
+
+# XXX: do we need to test if we can build&link against perl?
 
 Return('out')
 

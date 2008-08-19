@@ -3,7 +3,7 @@
 
 Import('*')
 
-out = conf.PkgConfig('dbus-1', libs, ccflags, linkflags)
+out = conf.PkgConfig('dbus-1', flags)
 
 Return('out')
 

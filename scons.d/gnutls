@@ -3,7 +3,7 @@
 
 Import('*')
 
-out = conf.PkgConfig('gnutls > 1.0.0', libs, ccflags, linkflags)
+out = conf.PkgConfig('gnutls > 1.0.0', flags)
 defines['HAVE_GNUTLS'] = out
 
 Return('out')

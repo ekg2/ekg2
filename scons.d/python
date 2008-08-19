@@ -11,10 +11,13 @@ pyxprefix	= sys.exec_prefix
 
 includedir	= '%s/include/python%s' % (pyprefix, pyver)
 
-old_ccflags	= env['CCFLAGS']
-env.Append(CCFLAGS = ' -I%s' % includedir)
+try:
+	old_cpppath		= env['CPPPATH']
+except KeyError:
+	old_cpppath		= []
+env.Append(CPPPATH = [includedir])
 out = conf.CheckHeader(['Python.h'])
-env['CCFLAGS']	= old_ccflags
+env['CPPPATH']	= old_cpppath
 
 if out:
 	try:
@@ -25,15 +28,12 @@ if out:
 			if var in ['LOCALMODLIBS', 'BASEMODLIBS', 'OTHER_LIBS', 'OTHER_LIBC', 'OTHER_LIBM']:
 				val = distutils.sysconfig.expand_makefile_vars(val, makefile)
 				for arg in val.split():
-					if arg[0:2] == '-l':
-						libs.append(arg[2:])
-					else:
-						linkflags.append(arg)
+					flags.append(arg)
 
 		libs.append('python%s' % pyver)
-		linkflags.append('-L%s/lib' % pyxprefix)
-		linkflags.append('-L%s' % libdir)
-		ccflags.append('-I%s/include/python%s' % (pyxprefix, pyver))
+		flags.append('-L%s/lib' % pyxprefix)
+		flags.append('-L%s' % libdir)
+		flags.append('-I%s' % includedir)
 	except:
 		out = False
 

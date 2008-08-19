@@ -4,7 +4,7 @@
 Import('*')
 
 ver = []
-out = conf.PkgConfig('gtk+-2.0', libs, ccflags, linkflags)
+out = conf.PkgConfig('gtk+-2.0', flags)
 defines['HAVE_GTK'] = out
 
 Return('out')

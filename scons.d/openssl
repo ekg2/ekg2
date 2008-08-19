@@ -3,7 +3,7 @@
 
 Import('*')
 
-out = conf.PkgConfig('openssl', libs, ccflags, linkflags)
+out = conf.PkgConfig('openssl', flags)
 defines['HAVE_OPENSSL'] = out
 
 Return('out')

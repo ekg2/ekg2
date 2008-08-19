@@ -3,7 +3,7 @@
 
 Import('*')
 
-out = conf.PkgConfig('sqlite', libs, ccflags, linkflags)
+out = conf.PkgConfig('sqlite', flags)
 
 Return('out')
 

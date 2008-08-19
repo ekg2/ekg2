@@ -6,14 +6,17 @@ import os
 Import('*')
 
 if 'ORACLEHOME' in os.environ:
-	orhome = os.environ['ORACLEHOME']
-	linkflags.append('-L%s/lib' % orhome)
-	ccflags.append('-I%s/rdbms/public' % orhome)
+	orhome	= os.environ['ORACLEHOME']
+	flags.append('-L%s/lib' % orhome)
+	flags.append('-I%s/rdbms/public' % orhome)
+
+	old		= SetFlags(env, flags)
 
 	out = conf.CheckLib('clntsh', 'sqlcxt', ['oci.h'], None, 0)
 	if (out):
 		libs.append('clntsh')
 
+	RestoreFlags(env, old)
 else:
 	print '[oracle] ${ORACLEHOME} not defined.'
 	out = False

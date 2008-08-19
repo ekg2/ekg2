@@ -3,21 +3,14 @@
 
 Import('*')
 
-out = conf.PkgConfig(None, libs, ccflags, linkflags, None, 'ruby', None,
-	'-r mkmf -e "print \\"-I\\" + Config::CONFIG[\\"archdir\\"]"',
-	'-r mkmf -e "c=Config::CONFIG; libs=\\"-l\\" + c[\\"RUBY_SO_NAME\\"] + \\" \\" + c[\\"LIBS\\"]; print libs"')
+out = conf.PkgConfig(None, flags, None, 'ruby', None,
+	'-r mkmf -e "c=Config::CONFIG; print \\"-I\\" + c[\\"archdir\\"]; libs=\\" -l\\" + c[\\"RUBY_SO_NAME\\"] + \\" \\" + c[\\"LIBS\\"]; print libs"')
 
 if out:
-	old_ccflags		= env['CCFLAGS']
-	old_linkflags	= env['LINKFLAGS']
-
-	env.Append(CCFLAGS = ccflags)
-	env.Append(LINKFLAGS = linkflags)
-
-	out = conf.CheckLibWithHeader(libs, [], 'C', 'ruby_init();', 0)
-
-	env['CCFLAGS']	= old_ccflags
-	env['LINKFLAGS']= old_linkflags
+	old		= SetFlags(env, flags)
+		# Well, passing env['LIBS'][0] doesn't make much sense, but it makes SCons pretty-print it
+	out = conf.CheckLibWithHeader(env['LIBS'][0], [], 'C', 'ruby_init();', 0)
+	RestoreFlags(env, old)
 
 Return('out')
 

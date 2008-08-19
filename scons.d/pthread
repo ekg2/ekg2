@@ -15,30 +15,24 @@ if env['PLATFORM'] == 'sunos':
 	possible.reverse()
 
 for p in possible:
-#	keep_ccflags	= env['CCFLAGS']
-	keep_libs		= env['LIBS']
-	keep_linkflags	= env['LINKFLAGS']
-
 	if p == '':
-		p = 'no flags'
+		p	= 'no flags'
+		new	= {}
 	elif p[0] == '-':
-#		env.Append(CCFLAGS = p)
-		env.Append(LINKFLAGS = p)
+		new	= env.ParseFlags(p)
 	else:
-		p = '-l%s' % p
-		env.Append(LIBS = [p])
+		new	= {'LIBS': [p]}
+		p	= '-l%s' % p
 
+	old	= SetFlags(env, new)
 	out = conf.CheckThreads(p)
-#	env['CCFLAGS']		= keep_ccflags
-	env['LIBS']			= keep_libs
-	env['LINKFLAGS']	= keep_linkflags
+	RestoreFlags(env, old)
 
 	if out:
 		if p == '':
 			pass
 		elif p[0] == '-':
-#			ccflags.append(p)
-			linkflags.append(p)
+			flags.append(p)
 		else:
 			libs.append(p)
 		break
