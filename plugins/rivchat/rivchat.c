@@ -80,8 +80,6 @@ typedef struct {
 	time_t ping_packet_time;
 	rivchat_info_t ping_packet;
 
-	char *ip;
-	unsigned int port;
 } rivchat_userlist_private_t;
 
 /* XXX:
@@ -156,6 +154,7 @@ static QUERY(rivchat_userlist_info_handle) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
 	rivchat_userlist_private_t *user;
+	int __ip;
 
 	if (!u || !(user = u->priv))
 		return 1;
@@ -163,7 +162,8 @@ static QUERY(rivchat_userlist_info_handle) {
 	if (valid_plugin_uid(&rivchat_plugin, u->uid) != 1) 
 		return 1;
 
-	printq("rivchat_info_ip", user->ip, itoa(user->port));
+	__ip = user_private_item_get_int(u, "ip");
+	printq("rivchat_info_ip", inet_ntoa(*((struct in_addr*) &__ip)), itoa(user_private_item_get_int(u, "port")));
 
 	if (user->ping_packet_time) {
 		rivchat_info_t *ping = &(user->ping_packet);
@@ -216,7 +216,6 @@ static QUERY(rivchat_userlist_priv_handler) {
 		
 	switch (function) {
 		case EKG_USERLIST_PRIVHANDLER_FREE:
-			xfree(p->ip);
 			xfree(u->priv);
 			u->priv = NULL;
 			break;
@@ -507,7 +506,7 @@ static int rivchat_send_packet(session_t *s, uint32_t type, userlist_t *user, co
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(j->port);
 	sin.sin_addr.s_addr = INADDR_BROADCAST;	/* XXX */
-	sin.sin_addr.s_addr = inet_addr((user == NULL) ? "10.1.0.255" : (p->ip));
+	sin.sin_addr.s_addr = (user == NULL) ? inet_addr("10.1.0.255") : user_private_item_get_int(user, "ip");
 
 	len = sendto(j->fd, &hdr, RC_SIZE, 0, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
 	errno2 = errno;
@@ -566,9 +565,10 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 
 	if (p && p->user_locked) {
 		int wrong = 0;
+		int __ip1 = user_private_item_get_int(u, "ip");
 
-		if (xstrcmp(p->ip, ip)) {
-			debug_error("[RIVCHAT, IP CHANGED? (%s) != %s\n", p->ip, ip);
+		if (__ip1 != inet_addr(ip)) {
+			debug_error("[RIVCHAT, IP CHANGED? (%s) != %s\n", inet_ntoa(*((struct in_addr*) &__ip1)), ip);
 			wrong = 1;
 		}
 
@@ -581,8 +581,8 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 
 	if (p && !p->user_locked) {
 		p->user_locked = 1;
-		xfree(p->ip); p->ip = xstrdup(ip);
-		p->port = j->port;
+		user_private_item_set_int(u, "ip", inet_addr(ip));
+		user_private_item_set_int(u, "port", j->port);
 		p->id = from_id;
 	}
 
@@ -1177,7 +1177,7 @@ static COMMAND(rivchat_command_dcc) {
 
 		up = rivchat_userlist_priv_get(user);
 
-		if (!up || !up->ip || !up->ping_packet_time) {
+		if (!up || !user_private_item_get_int(user, "ip") || !up->ping_packet_time) {
 			printq("dcc_user_aint_dcc", format_user(session, user->uid));
 			return -1;
 		}

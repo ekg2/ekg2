@@ -758,17 +758,11 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	fputs(gotten_nickname, file); fputc(',', file);
 	if (class == EKG_MSGCLASS_PRIV_STATUS) {
 		userlist_t *u = userlist_find(s, gotten_uid);
-		const char *ip, *port;
 		int __ip = user_private_item_get_int(u, "ip");
 
-		ip = __ip ? inet_ntoa(*((struct in_addr*) &__ip)) : "0.0.0.0";
-
-		if (!(port = user_private_item_get(u, "port")))
-			port = "0";
-
-		fputs(ip, file);
+		fputs(inet_ntoa(*((struct in_addr*) &__ip)), file);
 		fputc(':', file);
-		fputs(port, file); 
+		fputs(itoa(user_private_item_get_int(u, "port")), file); 
 		fputc(',', file);
 	}
 
@@ -890,15 +884,9 @@ static void logs_irssi(FILE *file, const char *session, const char *uid, const c
 		case EKG_MSGCLASS_PRIV_STATUS:
 		{
 			userlist_t *u = userlist_find(session_find(session), uid);
-			const char *ip, *port;
 			int __ip = user_private_item_get_int(u, "ip");
 
-			ip = __ip ? inet_ntoa(*((struct in_addr*) &__ip)) : "0.0.0.0";
-
-			if (!(port = user_private_item_get(u, "port")))
-				port = "0";
-
-			fprintf(file, "%s * %s reports status: %s [~notirc@%s:%s] /* {status} */\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), ip, port);
+			fprintf(file, "%s * %s reports status: %s [~notirc@%s:%s] /* {status} */\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), inet_ntoa(*((struct in_addr*) &__ip)), itoa(user_private_item_get_int(u, "port")));
 			break;
 		}
 

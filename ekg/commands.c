@@ -1578,11 +1578,9 @@ list_user:
 			show = 1;
 
 		if (show) {
-			const char *port = user_private_item_get(u, "port");
 			int __ip = user_private_item_get_int(u, "ip");
-			char *ip = __ip ? inet_ntoa(*((struct in_addr*) &__ip)) : NULL;
 
-			printq(tmp, format_user(session, u->uid), u->nickname, (ip ? ip : "0.0.0.0"), port, u->descr);
+			printq(tmp, format_user(session, u->uid), u->nickname, inet_ntoa(*((struct in_addr*) &__ip)), itoa(user_private_item_get_int(u, "port")), u->descr);
 			count++;
 		}
 	}

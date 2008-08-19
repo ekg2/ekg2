@@ -816,9 +816,11 @@ static void gg_session_handler_status(session_t *s, uin_t uin, int status, const
 
 	{
 		userlist_t *u;
+		gg_userlist_private_t *up;
 
 		if ( (u = userlist_find(s, __uid)) ) {
-			user_private_item_set_int(u, "protocol", protocol);
+			if ((up = gg_userlist_priv_get(u)))
+				up->protocol = protocol;
 			/* zapisz adres IP i port */
 			user_private_item_set_int(u, "ip", ip);
 			user_private_item_set_int(u, "port", port);
