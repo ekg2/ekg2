@@ -885,5 +885,5 @@ int logsqlite_plugin_init(int prio)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8 noexpandtab
+ * vim: noet
  */

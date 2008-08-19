@@ -1188,5 +1188,5 @@ void ncurses_binding_init()
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8
+ * vim: noet
  */

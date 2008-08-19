@@ -153,5 +153,5 @@ PyObject *ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8
+ * vim: noet
  */

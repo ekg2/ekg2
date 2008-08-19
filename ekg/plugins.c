@@ -124,7 +124,7 @@ int ekg2_dlclose(void *plugin) {
  * @return Pointer to the loaded library, or NULL if fail.
  */
 
-static void *ekg2_dlopen(char *name) {
+static void *ekg2_dlopen(const char *name) {
 #ifdef NO_POSIX_SYSTEM
 	void *tmp = LoadLibraryA(name);
 #else
@@ -1314,5 +1314,5 @@ int plugin_abi_version(int plugin_abi_ver, const char * plugin_name) {
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8
+ * vim: noet
  */

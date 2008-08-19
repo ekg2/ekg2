@@ -3233,5 +3233,5 @@ char *password_input(const char *prompt, const char *rprompt, const bool norepea
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8
+ * vim: noet
  */

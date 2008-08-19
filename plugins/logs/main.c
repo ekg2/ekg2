@@ -1290,5 +1290,5 @@ static int logs_plugin_destroy() {
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8 noexpandtab
+ * vim: noet
  */

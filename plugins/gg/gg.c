@@ -1783,5 +1783,5 @@ static int gg_plugin_destroy() {
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=0 noexpandtab sw=8
+ * vim: noet
  */
