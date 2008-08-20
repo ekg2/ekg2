@@ -129,11 +129,11 @@ def PkgConfig(context, pkg, flags, version = None, pkgconf = 'pkg-config',
 	if ret:
 		if flags is not None:
 			flags.append(res[1])
-			res.pop(0)
-			res.pop(0)
-			res.pop(0)
-		if version is not None:
-			version.append(res[1])
+			if version is not None:
+				version.append(res[4])
+		else:
+			if version is not None:
+				version.append(res[1])
 
 	context.Result(ret)
 	if int(res[0]) == 127 and pkgconf == 'pkg-config':
