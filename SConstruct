@@ -138,6 +138,8 @@ def PkgConfig(context, pkg, flags, version = None, pkgconf = 'pkg-config',
 	context.Result(ret)
 	if int(res[0]) == 127 and pkgconf == 'pkg-config':
 		warnings.append('%s not found!' % pkgconf)
+	if int(res[0]) != 0:
+		print res[2]
 	return ret
 
 def CheckThreads(context, variant):
