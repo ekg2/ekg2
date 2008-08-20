@@ -62,4 +62,11 @@ FEW NOTES ABOUT USING SCONS AS EKG2 BUILD SYSTEM
 	install' does nothing — that probably means all installed files are up to
 	date.
 
+11)	SCons, unlike autotools, doesn't compile perl module itself. That task is
+	left for more appriopriate software. If your distribution doesn't provide
+	nice tools for building perl modules, in plugins/perl/* do:
+	$ perl Makefile.PL
+	$ make
+	$ make install
+
 ~~: vim:set tw=80 ts=4 sts=4 sw=4 :~~
