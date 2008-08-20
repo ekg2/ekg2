@@ -88,6 +88,10 @@ if env['NLS']:
 		have_gettext = conf.CheckLibWithHeader('intl', ['libintl.h'], 'C', gettext_p, 0)
 		if have_gettext:
 			ekg_libs.append('intl')
+	
+	if have_gettext:
+		gettext_ver = []
+		have_gettext = conf.PkgConfig(None, None, gettext_ver, 'msgfmt')
 else:
 	have_gettext = False
 defines['ENABLE_NLS'] = have_gettext

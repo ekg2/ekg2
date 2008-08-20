@@ -116,7 +116,9 @@ def PkgConfig(context, pkg, flags, version = None, pkgconf = 'pkg-config',
 		context.Message('Asking %s about %s... ' % (pkgconf, pkg))
 		pkg = ' "%s"' % (pkg)
 
-	queries = [flagquery]
+	queries = []
+	if flags is not None:
+		queries.append(flagquery)
 	if version is not None:
 		if pkgconf == 'pkg-config' and versionquery == '--version': # defaults
 			versionquery = '--mod%s' % versionquery[2:]
@@ -125,9 +127,13 @@ def PkgConfig(context, pkg, flags, version = None, pkgconf = 'pkg-config',
 	res = []
 	ret = StupidPythonExec(None, ['"%s" %s%s' % (pkgconf, q, pkg) for q in queries], res)
 	if ret:
-		flags.append(res[1])
+		if flags is not None:
+			flags.append(res[1])
+			res.pop(0)
+			res.pop(0)
+			res.pop(0)
 		if version is not None:
-			version.append(res[4])
+			version.append(res[1])
 
 	context.Result(ret)
 	if int(res[0]) == 127 and pkgconf == 'pkg-config':
