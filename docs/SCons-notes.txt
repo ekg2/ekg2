@@ -1,10 +1,10 @@
 FEW NOTES ABOUT USING SCONS AS EKG2 BUILD SYSTEM
 
 
-1)	SCons is _alternative_ build system, it is still under development and
+ 1)	SCons is _alternative_ build system, it is still under development and
 	at least currently isn't meant to replace autotools.
 
-2)	SCons uses globs instead of hardcoded lists to determine files to compile,
+ 2)	SCons uses globs instead of hardcoded lists to determine files to compile,
 	so if you're going to place some junk.c in one of source directories (either
 	ekg/ or plugins/*/), then please take note SCons will try to compile it
 	as standalone object and then link it with resulting binary.
@@ -13,29 +13,29 @@ FEW NOTES ABOUT USING SCONS AS EKG2 BUILD SYSTEM
 	include, then please surround it with #if 0/#endif. If you're going to
 	include it, then please name it *.inc instead.
 
-3)	'Configure' part in SCons is meant to be faster and simpler than autotools
+ 3)	'Configure' part in SCons is meant to be faster and simpler than autotools
 	one — and thus uses less tests. It ain't going to warn you that have
 	no/broken compiler or you miss critical dependencies — that's package manager
 	work. It is meant to check for things that'd result in enabling or disabling
 	some code, plugin or determining C-/LDFLAGS.
 
-4)	SCons doesn't accept some configure-like args. Instead of --with-*=, you
+ 4)	SCons doesn't accept some configure-like args. Instead of --with-*=, you
 	should specify alternate include/lib paths by using C-/LDFLAGS (-I/-L) or
 	specifying C_INCLUDE_PATH & LD_LIBRARY_PATH.
 
-5)	SCons doesn't use many fallbacks like autotools did. If some package
+ 5)	SCons doesn't use many fallbacks like autotools did. If some package
 	(e.g. libgadu) is available through pkg-config, then SCons asks pkg-config
 	for it. If it couldn't find it, SCons _does not_ search for library with some
 	default params. If you install your .pc files in another directory, then
 	please set PKG_CONFIG_PATH accordingly.
 
-6)	You really should take a look at scons --help (in main EKG2 sources
+ 6)	You really should take a look at scons --help (in main EKG2 sources
 	directory) as it lists package-defined options. Among them, there are few you
 	might like to twek (PLUGINS especially). If you're going to build EKG2
 	package, then you probably would like to set HARDDEPS=1 (and PREFIX=/usr
 	probably).
 
-7)	If EKG2 with SCons fails to compile on some OS and it's not your fault
+ 7)	If EKG2 with SCons fails to compile on some OS and it's not your fault
 	then please let us know. If SCons does compile some plugin while deps are
 	not met (i.e. configure thinks that some dependency is met while it isn't),
 	please let us know. If configure says some dep is unmet, while it is met,
@@ -43,18 +43,23 @@ FEW NOTES ABOUT USING SCONS AS EKG2 BUILD SYSTEM
 	Best place to report bugs is http://bugs.ekg2.org/. If it's down, then you
 	can find us on !ekg2, ircnet (or me on #jogger.pl, freenode).
 
-8)	SCons does everything what autotools + configure + make was meant to do. You
+ 8)	SCons does everything what autotools + configure + make was meant to do. You
 	don't want to run 'make' after it or './autogen.sh' before it. You just run
 	'scons' with correct args, and it does all the hard work. To install compiled
 	files in system directories, use 'scons install'. You may also like to supply
 	DESTDIR= option to it. To clean up, use 'scons -c'. To uninstall, use
 	'scons -c install'.
 
-9)	We require SCons 0.97 and Python 2.4. Sorry, Debian users, but <0.97 has too
+ 9)	We require SCons 0.97 and Python 2.4. Sorry, Debian users, but <0.97 has too
 	many differences, and even maintaining compatibility with bugged 0.97 is
 	hard. And as it's pure python, so you won't have much trouble installing
 	newer version. If someone needs compatibility with older Python (and scons
 	works with it), then please let us know.
 
+10)	As you probably know, make has a feature that it rebuilds files only when
+	they change or one of included files change. SCons goes few steps ahead
+	and even installs files only when they differ. So, you may note that 'scons
+	install' does nothing — that probably means all installed files are up to
+	date.
 
-~~: vim:set tw=80 ts=3 sts=3 sw=3 :~~
+~~: vim:set tw=80 ts=4 sts=4 sw=4 :~~
