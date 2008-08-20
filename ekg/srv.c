@@ -423,7 +423,7 @@ static int basic_resolver_item (gim_host *srv)
 		freeaddrinfo(ai);
 	}
 #else 
-	if ((he4 = gethostbyname(hostname))) {
+	if ((he4 = gethostbyname(srv->name))) {
 		int ip_cnt = array_add (&(srv->ip), xstrdup(inet_ntoa(*(struct in_addr *) he4->h_addr)));
 		srv->ai_family = xrealloc (srv->ai_family, ip_cnt*sizeof(srv->ai_family));
 		srv->ai_family[ip_cnt-1] = AF_INET;
