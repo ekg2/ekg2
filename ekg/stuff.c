@@ -2437,7 +2437,13 @@ void ekg_update_status(session_t *session)
 			u->status = session->status;
 
 		u->blink = 0;
-		query_emit_id(NULL, USERLIST_CHANGED, session_uid_get(session), u->uid);
+
+		{
+			const char *__session	= session_uid_get(session);
+			const char *__uid		= u->uid;
+
+			query_emit_id(NULL, USERLIST_CHANGED, &__session, &__uid);
+		}
 	}
 }
 
