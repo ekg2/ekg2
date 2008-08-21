@@ -5,38 +5,26 @@ Import('*')
 
 import sys, distutils.sysconfig
 
-pyver		= sys.version[0:3]
-pyprefix	= sys.prefix
-pyxprefix	= sys.exec_prefix
-
-includedir	= '%s/include/python%s' % (pyprefix, pyver)
 
 try:
-	old_cpppath		= env['CPPPATH']
-except KeyError:
-	old_cpppath		= []
-env.Append(CPPPATH = [includedir])
-out = conf.CheckHeader(['Python.h'])
-env['CPPPATH']	= old_cpppath
+	pyver		= sys.version[:3]
+	makefile	= distutils.sysconfig.parse_makefile(distutils.sysconfig.get_makefile_filename())
+	libdir		= distutils.sysconfig.get_python_lib(1)
+	incdir		= distutils.sysconfig.get_python_inc(1)
+	
+	for var, val in makefile.items():
+		if var in ['LOCALMODLIBS', 'BASEMODLIBS', 'OTHER_LIBS', 'OTHER_LIBC', 'OTHER_LIBM']:
+			val = distutils.sysconfig.expand_makefile_vars(val, makefile)
+			for arg in val.split():
+				flags.append(arg)
 
-if out:
-	libdir		= '%s/lib/python%s/config' % (pyxprefix, pyver)
-	try:
-		makefile	= distutils.sysconfig.parse_makefile('%s/Makefile' % libdir)
-		
-		for var, val in makefile.items():
-			if var in ['LOCALMODLIBS', 'BASEMODLIBS', 'OTHER_LIBS', 'OTHER_LIBC', 'OTHER_LIBM']:
-				val = distutils.sysconfig.expand_makefile_vars(val, makefile)
-				for arg in val.split():
-					flags.append(arg)
-
-		libs.append('python%s' % pyver)
-		flags.append('-L%s/lib' % pyxprefix)
-		flags.append('-L%s' % libdir)
-		flags.append('-I%s' % includedir)
-	except:
-		warnings.append("Unable to read Python's Makefile (%s/Makefile)" % libdir)
-		out = False
+	libs.append('python%s' % pyver)
+	flags.append('-L%s' % libdir) # XXX: do we need it?
+	flags.append('-I%s' % incdir)
+	out = True
+except:
+	warnings.append("Unable to read Python's Makefile")
+	out = False
 
 Return('out')
 
