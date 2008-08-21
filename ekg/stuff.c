@@ -2856,7 +2856,9 @@ static inline string_t mutt_convert_string (string_t s, iconv_t cd, int is_utf)
 
 		mutt_iconv (cd, &ib, &ibl, &ob, &obl, inrepls, outrepl);
 
-		ret = string_init(xstrndup(buf, ob - buf - 1));
+		ret = string_init(NULL);
+		string_append_raw(ret, buf, ob - buf);
+
 		xfree(buf);
 
 		return ret;

@@ -117,32 +117,35 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 			} t_msg;
 
 			int t_len = t->len;
+			char *recode = NULL;
 
 			if (t->type != 0x0101)
 				continue;
 
-			if (!icq_unpack(t->buf, &t_msg.message, &t_len, "ww", &t_msg.encoding, &t_msg.codepage))
+			if (!icq_unpack(t->buf, &t_msg.message, &t_len, "WW", &t_msg.encoding, &t_msg.codepage))
 				continue;
 
 			debug_function("icq_snac_message_recv_simple() enc: %.4x cp: %.4x\n", t_msg.encoding, t_msg.codepage);
 
+			recode = xstrndup((char *) t_msg.message, t_len);
 			switch (t_msg.encoding) {
-				case 0x02:
+				case 0x02:	/* UCS-2BE */
 				{
-					/* XXX, UCS-2 */
-					debug_error("icq_snac_message_recv_simple() message in UCS-2 !!! not supported, yet, sorry :(\n");
-					icq_hexdump(DEBUG_ERROR, t_msg.message, t_len);
+					string_t str = string_init(NULL);
+					xfree(recode);
+					string_append_raw(str, (char *) t_msg.message, t_len);
+					recode = icq_convert_from_ucs2be(str);
+					string_free(str, 1);
 					break;
 				}
 				case 0x00:	/* US-ASCII */
 				case 0x03:	/* ANSI */
+					break;
 				default:
-				{
-					string_append_n(msg, (char *) t_msg.message, t_len);
-				}
-
-				/* XXX, recode */
+					debug_error("icq_snac_message_recv_simple() Unsupported encoding 0x%x\n", t_msg.encoding);
 			}
+			string_append_n(msg, recode, xstrlen(recode));
+			xfree(recode);
 		}
 
 		/* XXX, check if message was recv when we was offline */

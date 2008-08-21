@@ -68,4 +68,9 @@ const char *icq_lookuptable(struct fieldnames_t *table, int code);
 
 void icq_pack_append_client_identification(string_t pkt);
 
+void icq_convert_string_init();
+void icq_convert_string_destroy();
+
+char *icq_convert_from_ucs2be(string_t text);
+
 #endif

@@ -25,11 +25,16 @@
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/dynstuff_inline.h>
+#include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
 
 #include <ekg/userlist.h>
 
 #include "misc.h"
+
+void *ucs2be_conv_in = (void*) -1;
+void *ucs2be_conv_out = (void*) -1;
+
 
 void icq_hexdump(int level, unsigned char *p, size_t len) {
 	#define MAX_BYTES_PER_LINE 16
@@ -597,4 +602,32 @@ void icq_pack_append_client_identification(string_t pkt) {
 	icq_pack_append(pkt, "tI", icq_pack_tlv_dword(0x14, CLIENT_DISTRIBUTION));	// TLV(0x14) - distribution number
 	icq_pack_append(pkt, "T",  icq_pack_tlv_str(0x0f, CLIENT_LANGUAGE));		// TLV(0x0F) - client language (2 symbols)
 	icq_pack_append(pkt, "T",  icq_pack_tlv_str(0x0e, CLIENT_COUNTRY));		// TLV(0x0E) - client country (2 symbols)
+}
+
+void icq_convert_string_init() {
+	ucs2be_conv_in = ekg_convert_string_init("UCS-2BE", NULL, &ucs2be_conv_out);
+}
+
+void icq_convert_string_destroy() {
+	if (ucs2be_conv_in != (void*) -1) {
+		ekg_convert_string_destroy(ucs2be_conv_in);
+		ekg_convert_string_destroy(ucs2be_conv_out);
+	}
+}
+
+char *icq_convert_from_ucs2be(string_t text) {
+	string_t s;
+	char *ret = NULL;
+
+	if (!text || !text->len)
+		return NULL;
+
+	s = ekg_convert_string_t_p(text, ucs2be_conv_in);
+
+	if (s->len)
+		ret = xstrndup(s->str, s->len);
+
+	string_free(s, 1);
+
+	return ret;
 }
