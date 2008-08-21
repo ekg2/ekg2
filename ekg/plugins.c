@@ -257,7 +257,8 @@ int plugin_load(const char *name, int prio, int quiet)
 	extern int irc_plugin_init(int prio);
 	extern int gtk_plugin_init(int prio);
 
-	debug("searching for name: %s in STATICLIBS: %s\n", name, STATIC_LIBS);
+		/* mg: removed the STATIC_LIBS #define - what's the point? */
+	debug("searching for name: %s in STATICLIBS\n", name);
 
 	if (!xstrcmp(name, "jabber")) plugin_init = &jabber_plugin_init;
 	if (!xstrcmp(name, "irc")) plugin_init = &irc_plugin_init;

@@ -8,7 +8,6 @@ EnsurePythonVersion(2,4)
 
 consts = {
 	'VERSION':		'SVN',
-	'SHARED_LIBS':	True,
 	'SCONS':		True
 	}
 indirs = [ # pseudo-hash, 'coz we want to keep order
@@ -262,6 +261,7 @@ for k,v in mapped.items():
 opts.Add(BoolOption('RESOLV', 'Use libresolv-based domain resolver with SRV support', True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
+opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared', 0))
 opts.Add(EnumOption('DEBUG', 'Internal debug level', 'std', ['none', 'std', 'stderr']))
 
 for p in avplugins:
@@ -304,6 +304,11 @@ env.Help(opts.GenerateHelpText(env))
 
 defines = {}
 
+if env['STATIC']:
+	defines['STATIC_LIBS'] = True
+else:
+	defines['SHARED_LIBS'] = True
+
 for var in dirs:
 	env[var] = env.subst(env[var])
 	defines[var] = env[var]
@@ -334,9 +339,10 @@ conf = env.Configure(custom_tests = {
 		'External':				StupidPythonExec
 	})
 ekg_libs = []
+ekg_staticlibs = []
 
 ExtTest('standard', ['ekg_libs'])
-ExtTest('compat', ['ekg_libs'])
+ExtTest('compat', ['ekg_staticlibs'])
 
 plugin_def = {
 	'type':			'misc',
@@ -527,31 +533,26 @@ for k in dirs:
 docglobs = ['commands*', 'vars*', 'session*']
 
 env.Alias('install', [env['PREFIX'], env['EPREFIX']])
-cenv = env.Clone()
-cenv.Append(LIBS = ekg_libs)
-cenv.Append(LIBPATH = ['compat'])
-cenv.Append(LINKFLAGS = ['-Wl,--export-dynamic'])
-cenv.Program('ekg/ekg2', glob.glob('ekg/*.c'))
 
 docfiles = []
 for doc in docglobs:
 	docfiles.extend(glob.glob('docs/%s.txt' % doc))
 if env['UNICODE']:
-	cenv.RecodeHelp('docs/', docfiles)
+	env.RecodeHelp('docs/', docfiles)
 	docfiles = []
 	for doc in docglobs:
 		docfiles.extend(glob.glob('docs/%s.txt' % doc))
 
 if defines['ENABLE_NLS']:
-	cenv.CompileMsg('po/', glob.glob('po/*.po'))
+	env.CompileMsg('po/', glob.glob('po/*.po'))
 	for f in glob.glob('po/*.mo'):
 		lang = str(f)[str(f).rindex('/') + 1:-3]
-		cenv.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = f)
+		env.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = f)
 
-cenv.Install(env['BINDIR'], 'ekg/ekg2')
-#cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
-cenv.Install(env['DATADIR'], docfiles)
-cenv.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
+env.Install(env['BINDIR'], 'ekg/ekg2')
+#env.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
+env.Install(env['DATADIR'], docfiles)
+env.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
 
 adddocs = [elem for elem in glob.glob('docs/*.txt') if not elem in docfiles]
 for a in glob.glob('*') + glob.glob('docs/*'):
@@ -571,7 +572,7 @@ for a in glob.glob('*') + glob.glob('docs/*'):
 		i = b.rfind('.')
 		if b[i:] == '.txt' and not b in docfiles:
 			adddocs.append(a)
-cenv.Install(env['DOCDIR'], adddocs)
+env.Install(env['DOCDIR'], adddocs)
 
 for f in glob.glob('docs/*.[12345678]'):
 	i = f.rindex('.')
@@ -587,7 +588,9 @@ for f in glob.glob('docs/*.[12345678]'):
 		lng = '%s/' % lng
 
 	fn = '%s/%sman%s/%s' % (env['MANDIR'], lng, cat, fn)
-	cenv.InstallAs(target = fn, source = f)
+	env.InstallAs(target = fn, source = f)
+
+ekg_libpath = []
 
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
@@ -599,7 +602,16 @@ for plugin, data in plugins.items():
 	SConscript('%s/SConscript' % plugpath, ['penv'])
 
 	libfile = '%s/%s' % (plugpath, plugin)
-	penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
+	if env['STATIC']:
+		penv.StaticLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
+		ekg_libs.extend(penv['LIBS'])
+		try:
+			ekg_libpath.extend(penv['LIBPATH'])
+		except KeyError:
+			pass
+		ekg_staticlibs.append('%s/%s%s' % (plugpath, plugin, env['LIBSUFFIX']))
+	else:
+		penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
 
 	docfiles = []
 	for doc in docglobs:
@@ -615,5 +627,11 @@ for plugin, data in plugins.items():
 
 	penv.Install(env['PLUGINDIR'], libfile + env['SHLIBSUFFIX']) 
 	penv.Install('%s/plugins/%s' % (env['DATADIR'], plugin), docfiles)
+
+cenv = env.Clone()
+cenv.Append(LIBS = ekg_libs)
+cenv.Append(LIBPATH = ekg_libpath)
+cenv.Append(LINKFLAGS = ['-Wl,--export-dynamic'])
+cenv.Program('ekg/ekg2', glob.glob('ekg/*.c') + ekg_staticlibs)
 
 # vim:ts=4:sts=4:sw=4:syntax=python

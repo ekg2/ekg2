@@ -25,7 +25,7 @@ for func, files in compat_spec.items():
 			compat.append('../compat/%s.c' % (file))
 
 if compat:
-	ekg_libs.append('compat')
+	ekg_staticlibs.append('compat/%scompat%s' % (env['LIBPREFIX'], env['LIBSUFFIX']))
 	env.StaticLibrary('../compat/compat', compat)
 
 ret = True
