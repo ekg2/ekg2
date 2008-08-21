@@ -593,7 +593,8 @@ for f in glob.glob('docs/*.[12345678]'):
 ekg_libpath = []
 
 if env['STATIC']:
-	static_inc = open('ekg2-static.inc', 'w')
+	static_inc = open('ekg2-static.c', 'w')
+	static_inc.write('void *plugin_load_static(const char *name) {')
 
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
@@ -614,7 +615,7 @@ for plugin, data in plugins.items():
 			pass
 		ekg_staticlibs.append('%s/%s%s' % (plugpath, plugin, env['LIBSUFFIX']))
 
-		static_inc.write('extern int %s_plugin_init(int prio); if (!xstrcmp(name, "%s")) plugin_init = &%s_plugin_init;'
+		static_inc.write('extern int %s_plugin_init(int prio); if (!xstrcmp(name, "%s")) return &%s_plugin_init;'
 				% (plugin, plugin, plugin))
 	else:
 		penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
@@ -635,7 +636,9 @@ for plugin, data in plugins.items():
 	penv.Install('%s/plugins/%s' % (env['DATADIR'], plugin), docfiles)
 
 if env['STATIC']:
+	static_inc.write('}')
 	static_inc.close()
+	ekg_staticlibs.insert(0, 'ekg2-static.c') # well, it ain't exactly static lib, but no need to panic
 
 cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)
