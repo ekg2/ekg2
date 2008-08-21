@@ -592,6 +592,9 @@ for f in glob.glob('docs/*.[12345678]'):
 
 ekg_libpath = []
 
+if env['STATIC']:
+	static_inc = open('ekg2-static.inc', 'w')
+
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
 
@@ -610,6 +613,9 @@ for plugin, data in plugins.items():
 		except KeyError:
 			pass
 		ekg_staticlibs.append('%s/%s%s' % (plugpath, plugin, env['LIBSUFFIX']))
+
+		static_inc.write('extern int %s_plugin_init(int prio); if (!xstrcmp(name, "%s")) plugin_init = &%s_plugin_init;'
+				% (plugin, plugin, plugin))
 	else:
 		penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
 
@@ -627,6 +633,9 @@ for plugin, data in plugins.items():
 
 	penv.Install(env['PLUGINDIR'], libfile + env['SHLIBSUFFIX']) 
 	penv.Install('%s/plugins/%s' % (env['DATADIR'], plugin), docfiles)
+
+if env['STATIC']:
+	static_inc.close()
 
 cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)

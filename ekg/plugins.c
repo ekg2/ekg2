@@ -252,18 +252,22 @@ int plugin_load(const char *name, int prio, int quiet)
 #endif
 
 #ifdef STATIC_LIBS
+#ifndef SCONS
 /* first let's try to load static plugin... */
 	extern int jabber_plugin_init(int prio);
 	extern int irc_plugin_init(int prio);
 	extern int gtk_plugin_init(int prio);
 
-		/* mg: removed the STATIC_LIBS #define - what's the point? */
-	debug("searching for name: %s in STATICLIBS\n", name);
+	debug("searching for name: %s in STATICLIBS: %s\n", name, STATIC_LIBS);
 
 	if (!xstrcmp(name, "jabber")) plugin_init = &jabber_plugin_init;
 	if (!xstrcmp(name, "irc")) plugin_init = &irc_plugin_init;
 	if (!xstrcmp(name, "gtk")) plugin_init = &gtk_plugin_init;
 //	if (!xstrcmp(name, "miranda")) plugin_init = &miranda_plugin_init;
+#else
+	debug_function("plugin_load(), trying to find static plugin '%s'\n", name);
+#include "ekg2-static.inc"
+#endif
 #endif
 
 #ifdef SHARED_LIBS
