@@ -57,13 +57,26 @@ def writedef(definefile, var, val):
 	elif isinstance(val, int):
 		definefile.write(('#define %s %d\n' % (var, val)))
 
-def writedefines():
+def WriteDefines(target, source, env):
 	""" Write list 'defines' to definefile. """
-	definefile = open('ekg2-config.h', 'w')
+	defines = env['EKG_DEFINES']
+	definefile = open(str(target[0]), 'w')
 	for k, v in defines.items():
 		writedef(definefile, k, v)
 	definefile.close()
+	return None
 
+def WriteStatic(target, source, env):
+	""" Write static plugin loader """
+	static_inc = open('ekg2-static.c', 'w')
+	for p in plugins:
+		static_inc.write('extern int %s_plugin_init(int prio);\n' % p)
+	static_inc.write('\nvoid *plugin_load_static(const char *name) {\n')
+	for p in plugins:
+		static_inc.write('\tif (!xstrcmp(name, "%s")) return &%s_plugin_init;\n' % (p, p))
+	static_inc.write('}\n')
+	static_inc.close()
+	return None
 
 warnings = []
 
@@ -244,11 +257,12 @@ def CompileMsgGen(source, target, env, for_signature):
 		ret.append('msgfmt -o "%s" "%s"' % (d,s))
 	return ret
 
-
 recoder = Builder(action = RecodeHelp, emitter = RecodeHelpEmitter, suffix = '-utf.txt', src_suffix = '.txt')
 msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix = '.mo', src_suffix = '.po')
+defgen = Builder(action = WriteDefines, suffix = '.h')
+stagen = Builder(action = WriteStatic, suffix = '.c')
 
-env = Environment(BUILDERS = {'RecodeHelp': recoder, 'CompileMsg': msgfmt})
+env = Environment(BUILDERS = {'RecodeHelp': recoder, 'CompileMsg': msgfmt, 'Defines': defgen, 'StaticLoader': stagen})
 opts = Options('options.cache')
 
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
@@ -523,7 +537,9 @@ if warnings:
 
 conf.Finish()
 
-writedefines()
+env['EKG_DEFINES'] = defines
+env.Defines('ekg2-config.h', [])
+env.AlwaysBuild('ekg2-config.h', 'ekg2-static.c')
 env.Append(CPPPATH = ['.'])
 
 for k in dirs:
@@ -592,10 +608,6 @@ for f in glob.glob('docs/*.[12345678]'):
 
 ekg_libpath = []
 
-if env['STATIC']:
-	static_inc = open('ekg2-static.c', 'w')
-	static_inc.write('void *plugin_load_static(const char *name) {')
-
 for plugin, data in plugins.items():
 	plugpath = 'plugins/%s' % (plugin)
 
@@ -614,9 +626,6 @@ for plugin, data in plugins.items():
 		except KeyError:
 			pass
 		ekg_staticlibs.append('%s/%s%s' % (plugpath, plugin, env['LIBSUFFIX']))
-
-		static_inc.write('extern int %s_plugin_init(int prio); if (!xstrcmp(name, "%s")) return &%s_plugin_init;'
-				% (plugin, plugin, plugin))
 	else:
 		penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
 
@@ -636,8 +645,7 @@ for plugin, data in plugins.items():
 	penv.Install('%s/plugins/%s' % (env['DATADIR'], plugin), docfiles)
 
 if env['STATIC']:
-	static_inc.write('}')
-	static_inc.close()
+	env.StaticLoader('ekg2-static.c', [])
 	ekg_staticlibs.insert(0, 'ekg2-static.c') # well, it ain't exactly static lib, but no need to panic
 
 cenv = env.Clone()
