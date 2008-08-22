@@ -2375,6 +2375,7 @@ void jabber_register_commands()
 			"-n --nickname -g --group");
 	command_add(&jabber_plugin, "tlen:msg", "!uU !",	jabber_command_msg,		JABBER_FLAGS_MSG, NULL);
 	command_add(&jabber_plugin, "tlen:reconnect", NULL,	jabber_command_reconnect,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:xa", "r", jabber_command_away,	JABBER_ONLY, NULL);
 };
 
 /*
