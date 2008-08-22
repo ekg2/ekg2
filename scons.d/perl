@@ -3,8 +3,17 @@
 
 Import('*')
 
+import os.path
+
 out = conf.PkgConfig(None, flags, None, 'perl', None,
 	'-MExtUtils::Embed -e "ccopts; ldopts"')
+
+if not out: # maybe we are using Fedora?
+	tmp = []
+	conf.PkgConfig(None, tmp, None, 'perl', None,
+		'-MConfig -e \'print "$Config{archlibexp}/CORE/perl.h"\'')
+	if tmp and os.path.exists(tmp[0]):
+		warnings.append('Perl headers found, but no working ExtUtils::Embed (Fedora? install perl-ExtUtils-Embed)')
 
 # XXX: do we need to test if we can build&link against perl?
 
