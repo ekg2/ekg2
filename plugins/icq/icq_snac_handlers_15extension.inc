@@ -181,16 +181,22 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 	expand_display_wordT("icq_userinfo_basic", countryField, "Country");
 	{
 		int8_t tz;
-		if (!ICQ_UNPACK(&buf, "c", &tz)) return -1;
+		uint8_t auth_f, web_f, dc_perm, email_f;
+		if (!ICQ_UNPACK(&buf, "ccccc", &tz, &auth_f, &web_f, &dc_perm, &email_f)) return -1;
 		char *p = saprintf("GMT%+d", tz/2);
 
-		printq_userinfo("icq_userinfo_basic", "Timezone", p); __displayed = 1;
+		printq_userinfo("icq_userinfo_basic", "Timezone", p);
 		xfree(p);
+		printq_userinfo("icq_userinfo_basic", "Authorization flag", itoa(auth_f));
+		printq_userinfo("icq_userinfo_basic", "Webaware flag", itoa(web_f));
+		printq_userinfo("icq_userinfo_basic", "Direct connection permissions", itoa(dc_perm));
+		printq_userinfo("icq_userinfo_basic", "Publish primary email flag (?)", itoa(email_f));
+		__displayed = 1;
 	}
-
-	debug_error("icq_snac_extensions_basicinfo() more data follow: %u\n", len);
-#warning "icq_snac_extensions_basicinfo()"
-	/* XXX */
+	// ??? Is here 'zip code' again?
+	expand_display_str("icq_userinfo_basic", "Another zip code (?)");
+	if (len)
+		debug_error("icq_snac_extensions_basicinfo() more data follow: %u\n", len);
 #undef printq_userinfo_basic
 	return 0;
 }
@@ -290,23 +296,37 @@ METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
 	{
 		uint16_t year;
 		uint8_t month, day;
-		if (!ICQ_UNPACK(&buf, "w", &year)) return -1;
-		if (year) debug_white("icq_snac_extensions_moreinfo() Year: %u\n", year);
-
-		if (!ICQ_UNPACK(&buf, "c", &month)) return -1;
-		if (month) debug_white("icq_snac_extensions_moreinfo() Month: %u\n", month);
-
-		if (!ICQ_UNPACK(&buf, "c", &day)) return -1;
-		if (day) debug_white("icq_snac_extensions_moreinfo() Day: %u\n", day);
+		if (!ICQ_UNPACK(&buf, "wcc", &year, &month, &day))
+			return -1;
+		if (year && month && day) {
+			char *bdate = saprintf("%04d-%02d-%02d", year, month,day);
+			printq_userinfo("icq_userinfo_more", "Birth date", bdate);
+			xfree(bdate);
+		}
 	}
 	expand_display_byteT("icq_userinfo_more", languageField, "Language1");
 	expand_display_byteT("icq_userinfo_more", languageField, "Language2");
 	expand_display_byteT("icq_userinfo_more", languageField, "Language3");
 
-	debug_error("icq_snac_extensions_moreinfo() more data follow: %u\n", len);
-#warning "icq_snac_extensions_moreinfo()"
-	/* XXX */
-
+	if (!ICQ_UNPACK(&buf, "2")) return -1;	// skip 2 unknown bytes
+	if (len >= 3+3+2+5+3+8+3+5+3) {
+		expand_display_str("icq_userinfo_more", "Original from City");
+		expand_display_str("icq_userinfo_more", "Original from State");
+		expand_display_wordT("icq_userinfo_more", countryField, "Original from Country");
+		{	// TimeZone + 4 unknown bytes
+			int8_t tz;
+			if (!ICQ_UNPACK(&buf, "c4", &tz)) return -1;
+		}
+		expand_display_str("icq_userinfo_more", "fixme 1");
+		if (!ICQ_UNPACK(&buf, "8")) return -1;	// another 8 unknown bytes
+		expand_display_str("icq_userinfo_more", "fixme 2");
+		if (!ICQ_UNPACK(&buf, "5")) return -1;	// and yet another 5
+		expand_display_str("icq_userinfo_more", "fixme 3");
+	}
+	if (len) {
+		debug_error("icq_snac_extensions_moreinfo() more data follow: %u\n", len);
+		icq_hexdump(DEBUG_ERROR, buf, len);
+	}
 #undef printq_userinfo_more
 	return 0;
 }
