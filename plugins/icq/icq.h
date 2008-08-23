@@ -16,6 +16,7 @@ typedef struct {
 	int ssi;		/* server-side-userlist? */
 	int aim;		/* aim-ok? */
 	string_t cookie;	/* connection login cookie */
+	string_t stream_buf;
 } icq_private_t;
 
 int icq_send_pkt(session_t *s, string_t buf);

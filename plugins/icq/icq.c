@@ -420,6 +420,7 @@ static QUERY(icq_session_init) {
 	j = xmalloc(sizeof(icq_private_t));
 	j->fd = -1;
 	j->fd2= -1;
+	j->stream_buf = string_init(NULL);
 
 	s->priv = j;
 	return 0;
@@ -438,6 +439,7 @@ static QUERY(icq_session_deinit) {
 	s->priv = NULL;
 
 	string_free(j->cookie, 1);
+	string_free(j->stream_buf, 1);
 
 	xfree(j);
 	return 0;
@@ -526,10 +528,9 @@ static WATCHER_SESSION(icq_handle_connect) {
 
 static WATCHER_SESSION(icq_handle_stream) {
 	icq_private_t *j = NULL;
-
-	static char buf[8192];
-	static int len = 0;
-	int ret, read_len, buf_len;
+	char buf[8192];
+	int len, ret, start_len;
+	string_t rest = string_init(NULL);;
 
 	if (!s || !(j = s->priv)) { 
 		debug_error("icq_handle_stream() s: 0x%x j: 0x%x\n", s, j);
@@ -539,25 +540,28 @@ static WATCHER_SESSION(icq_handle_stream) {
 	if (type)
 		return 0;
 
-	read_len = read(fd, buf+len, sizeof(buf)-len);
-	len += read_len;
-	buf_len = len;
+	len = read(fd, buf, sizeof(buf));
 
-	debug("icq_handle_stream(%d) rcv: %d, %d in buffer.\n", s->connecting, read_len, len);
+	string_append_raw(j->stream_buf, buf, len);
+
+	debug("icq_handle_stream(%d) rcv: %d, %d in buffer.\n", s->connecting, len, j->stream_buf->len);
 
 	if (len < 1) {
 		icq_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_NETWORK);
 		return -1;
 	}
 
-	icq_hexdump(DEBUG_IORECV, (unsigned char *) buf, len);
+	icq_hexdump(DEBUG_IORECV, (unsigned char *) j->stream_buf->str, j->stream_buf->len);
 
-	/* XXX,
-	 *	- add buf to string_t
-	 *	- icq_flap_handler(s, buffer);
-	 */
+	start_len = j->stream_buf->len;
 
-	ret = icq_flap_handler(s, fd, buf, &len);
+	ret = icq_flap_handler(s, fd, j->stream_buf);
+
+	if (j->stream_buf->len)
+		string_append_raw(rest, j->stream_buf->str + start_len - j->stream_buf->len, j->stream_buf->len);
+
+	string_free(j->stream_buf, 1);
+	j->stream_buf = rest;
 
 	switch (ret) {		/* XXX, magic values */
 		case 0:
@@ -565,8 +569,7 @@ static WATCHER_SESSION(icq_handle_stream) {
 			break;
 
 		case -1:
-			memmove(buf, buf+buf_len-len, len);
-			debug_white("icq_flap_loop() NEED MORE DATA\n");
+			debug_error("icq_flap_loop() NEED MORE DATA\n");
 			break;
 
 		case -2:
