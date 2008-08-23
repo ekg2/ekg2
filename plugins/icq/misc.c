@@ -484,7 +484,7 @@ struct icq_tlv_list *icq_unpack_tlvs(unsigned char **str, int *maxlen, unsigned 
 }
 
 struct icq_tlv_list *icq_unpack_tlvs_nc(unsigned char *str, int maxlen, unsigned int maxcount) {
-	return icq_unpack_tlvs_nc(&str, &maxlen, maxcount);
+	return icq_unpack_tlvs(&str, &maxlen, maxcount);
 }
 
 #include "miscicq.h"
