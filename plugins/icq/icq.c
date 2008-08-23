@@ -530,7 +530,6 @@ static WATCHER_SESSION(icq_handle_stream) {
 	icq_private_t *j = NULL;
 	char buf[8192];
 	int len, ret, start_len;
-	string_t rest = string_init(NULL);;
 
 	if (!s || !(j = s->priv)) { 
 		debug_error("icq_handle_stream() s: 0x%x j: 0x%x\n", s, j);
@@ -544,7 +543,7 @@ static WATCHER_SESSION(icq_handle_stream) {
 
 	string_append_raw(j->stream_buf, buf, len);
 
-	debug("icq_handle_stream(%d) rcv: %d, %d in buffer.\n", s->connecting, len, j->stream_buf->len);
+	debug_iorecv("icq_handle_stream(%d) fd: %d; rcv: %d, %d in buffer.\n", s->connecting, fd, len, j->stream_buf->len);
 
 	if (len < 1) {
 		icq_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_NETWORK);
@@ -555,13 +554,9 @@ static WATCHER_SESSION(icq_handle_stream) {
 
 	start_len = j->stream_buf->len;
 
-	ret = icq_flap_handler(s, fd, j->stream_buf);
+	ret = icq_flap_handler(s, j->stream_buf);
 
-	if (j->stream_buf->len)
-		string_append_raw(rest, j->stream_buf->str + start_len - j->stream_buf->len, j->stream_buf->len);
-
-	string_free(j->stream_buf, 1);
-	j->stream_buf = rest;
+	string_remove(j->stream_buf, start_len - j->stream_buf->len);
 
 	switch (ret) {		/* XXX, magic values */
 		case 0:
@@ -569,7 +564,7 @@ static WATCHER_SESSION(icq_handle_stream) {
 			break;
 
 		case -1:
-			debug_error("icq_flap_loop() NEED MORE DATA\n");
+			debug_white("icq_flap_loop() NEED MORE DATA\n");
 			break;
 
 		case -2:

@@ -7,7 +7,7 @@
 #include <ekg/dynstuff.h>
 
 void icq_makeflap(session_t *s, string_t pkt, uint8_t cmd);
-int icq_flap_handler(session_t *s, int fd, string_t buffer);
+int icq_flap_handler(session_t *s, string_t buffer);
 int icq_flap_close_helper(session_t *s, unsigned char *buf, int len);
 
 typedef struct {
