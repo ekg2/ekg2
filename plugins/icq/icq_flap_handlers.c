@@ -266,7 +266,7 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 
 	/* XXX, icq_handle_disconnect() */
 
-	if (!(tlvs = icq_unpack_tlvs(buf, len, 0)))
+	if (!(tlvs = icq_unpack_tlvs(&buf, &len, 0)))
 		return -1;
 
 	if ((login_tlv = icq_tlv_get(tlvs, 5)) && login_tlv->len) {

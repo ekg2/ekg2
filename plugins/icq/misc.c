@@ -445,21 +445,21 @@ icq_tlv_t *icq_tlv_get(struct icq_tlv_list *l, uint16_t type) {
 	return NULL;
 }
 
-struct icq_tlv_list *icq_unpack_tlvs(unsigned char *str, int maxlen, unsigned int maxcount) {
+struct icq_tlv_list *icq_unpack_tlvs(unsigned char **str, int *maxlen, unsigned int maxcount) {
 	struct icq_tlv_list *ret = NULL;
 	int count = 0;
 
-	while (maxlen >= 4) {
+	while (*maxlen >= 4) {
 		uint16_t type, len;
 		icq_tlv_t *ptlv;
 
-		if (!icq_unpack(str, &str, &maxlen, "WW", &type, &len))
+		if (!icq_unpack(*str, str, maxlen, "WW", &type, &len))
 			return ret;
 		
-		debug("str_readtlvs(%d) NEXTTLV type: 0x%x len: %d (maxlen: %d maxcount: %d)\n", count, type, len, maxlen, maxcount ? maxcount-count : 0);
+		debug("str_readtlvs(%d) NEXTTLV type: 0x%x len: %d (maxlen: %d maxcount: %d)\n", count, type, len, *maxlen, maxcount ? maxcount-count : 0);
 
-		if (maxlen < len) {
-			debug("str_readtlvs() 1897 Incomplete TLV %d, len %ld of %ld - ignoring.\n", type, len, maxlen);
+		if (*maxlen < len) {
+			debug("str_readtlvs() 1897 Incomplete TLV %d, len %ld of %ld - ignoring.\n", type, len, *maxlen);
 			return ret;
 		}
 
@@ -468,11 +468,11 @@ struct icq_tlv_list *icq_unpack_tlvs(unsigned char *str, int maxlen, unsigned in
 		ptlv->type = type;
 		ptlv->len = len;
 
-		ptlv->buf = str;
+		ptlv->buf = *str;
 		ptlv->nr = icq_string_to_BE(ptlv->buf, ptlv->len);
 
-		maxlen -= len;
-		str += (len);			/* go to next TLV */
+		*maxlen -= len;
+		*str += (len);			/* go to next TLV */
 
 		icq_tlvs_add(&ret, ptlv);
 		count++;
@@ -481,6 +481,10 @@ struct icq_tlv_list *icq_unpack_tlvs(unsigned char *str, int maxlen, unsigned in
 			break;
 	}
 	return ret;
+}
+
+struct icq_tlv_list *icq_unpack_tlvs_nc(unsigned char *str, int maxlen, unsigned int maxcount) {
+	return icq_unpack_tlvs_nc(&str, &maxlen, maxcount);
 }
 
 #include "miscicq.h"

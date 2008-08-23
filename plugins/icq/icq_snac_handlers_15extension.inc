@@ -531,7 +531,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 
 	debug_function("icq_snac_extension_replyreq()\n");
 
-	tlvs = icq_unpack_tlvs(buf, len, 0);
+	tlvs = icq_unpack_tlvs(&buf, &len, 0);
 
 	if (!(t = icq_tlv_get(tlvs, 1)) || t->len < 10) {
 		debug_error("icq_snac_extension_replyreq() broken(1)\n");
@@ -539,7 +539,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 		return -1;
 	}
 
-	if (t->len + 4 != len) {
+	if (len) {
 		debug_error("icq_snac_extension_replyreq() broken(1,5)\n");
 		icq_tlvs_destroy(&tlvs);
 		return -2;

@@ -49,7 +49,7 @@ SNAC_SUBHANDLER(icq_snac_location_replyreq) {
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
 
-	tlvs = icq_unpack_tlvs(buf, len, 0);
+	tlvs = icq_unpack_tlvs(&buf, &len, 0);
 	for (t = tlvs; t; t = t->next) {
 		if (tlv_length_check("icq_snac_location_replyreq()", t, 2))
 			continue;

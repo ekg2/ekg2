@@ -41,7 +41,8 @@ string_t icq_pack_append(string_t str, char *format, ...);
 #define icq_pack_tlv_dword(type, data)		(uint32_t) type, (uint32_t) 4, (uint32_t) data
 #define icq_pack_tlv_str(type, str)		icq_pack_tlv(type, str, xstrlen(str))
 
-struct icq_tlv_list *icq_unpack_tlvs(unsigned char *str, int maxlen, unsigned int maxcount);
+struct icq_tlv_list *icq_unpack_tlvs(unsigned char **str, int *maxlen, unsigned int maxcount);
+struct icq_tlv_list *icq_unpack_tlvs_nc(unsigned char *str, int maxlen, unsigned int maxcount);
 icq_tlv_t *icq_tlv_get(struct icq_tlv_list *l, uint16_t type);
 void icq_tlvs_destroy(struct icq_tlv_list **list);
 

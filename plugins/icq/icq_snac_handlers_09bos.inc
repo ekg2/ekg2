@@ -47,7 +47,7 @@ SNAC_SUBHANDLER(icq_snac_bos_replyreq) {	/* [reply to CLI_REQBOS] */
 		return 0;
 	}
 
-	if (!(tlvs = icq_unpack_tlvs(buf, len, 0)))
+	if (!(tlvs = icq_unpack_tlvs(&buf, &len, 0)))
 		return 0;
 
 	t_max_visible_contacts = icq_tlv_get(tlvs, 1);

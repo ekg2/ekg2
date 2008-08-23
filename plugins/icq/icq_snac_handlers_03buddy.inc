@@ -41,7 +41,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_error) {
 SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 	struct icq_tlv_list *tlvs;
 
-	if ((tlvs = icq_unpack_tlvs(buf, len, 0))) {
+	if ((tlvs = icq_unpack_tlvs(&buf, &len, 0))) {
 		icq_tlv_t *t_max_uins = icq_tlv_get(tlvs, 1);		// Max number of contact list entries
 		icq_tlv_t *t_max_watchers = icq_tlv_get(tlvs, 2);	// Max number of watcher list entries
 		uint16_t max_uins = 0, max_watchers = 0;
@@ -132,7 +132,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	if (!ICQ_UNPACK(&buf, "uWW", &pkt.uid, &pkt.warning, &pkt.count))
 		return -1;
 
-	tlvs = icq_unpack_tlvs(buf, len, pkt.count);
+	tlvs = icq_unpack_tlvs(&buf, &len, pkt.count);
 
 	status = EKG_STATUS_AVAIL;	/* assume avail */
 	uid = icq_uid(pkt.uid);

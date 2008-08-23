@@ -79,7 +79,7 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 	
 	debug_function("icq_snac_message_recv_simple() from: %s leftlen: %d\n", sender, len);
 
-	if (!(tlvs = icq_unpack_tlvs(buf, len, 0))) {
+	if (!(tlvs = icq_unpack_tlvs(&buf, &len, 0))) {
 		debug("icq_snac_message_recv_simple() ignoring empty message..\n");
 		return 0;
 	}
@@ -90,7 +90,7 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 		return 1;
 	}
 
-	if (!(tlvs_msg = icq_unpack_tlvs(t->buf, t->len, 0))) {
+	if (!(tlvs_msg = icq_unpack_tlvs_nc(t->buf, t->len, 0))) {
 		debug_error("icq_snac_message_recv_simple() failed to read tlv chain in message\n");
 		icq_tlvs_destroy(&tlvs);
 		return 1;
@@ -179,6 +179,7 @@ SNAC_SUBHANDLER(icq_snac_message_recv) {
 		uint16_t warning_level;	/* not used */
 		uint16_t tlv_count;
 	} pkt;
+	struct icq_tlv_list *tlvs;
 
 	if (!ICQ_UNPACK(&buf, "iiWuWW", &pkt.id1, &pkt.id2, &pkt.format, &pkt.sender, &pkt.warning_level, &pkt.tlv_count)) {
 		debug_error("icq_snac_message_recv() Malformed message thru server\n");
@@ -189,20 +190,10 @@ SNAC_SUBHANDLER(icq_snac_message_recv) {
 				pkt.sender, pkt.id1, pkt.id2, pkt.format, pkt.warning_level, pkt.tlv_count);
 
 	/* XXX, spamer? */
-	while (pkt.tlv_count) {
-		uint16_t t_type, t_len;
 
-		/* XXX, przerobic icq_unpack_tlvs() zeby uaktualnialo buf i len!!! */
-
-		if (!ICQ_UNPACK(&buf, "WW", &t_type, &t_len))
-			return -1;
-		if (len < t_len)
-			return -1;
-
-		buf += t_len; len -= t_len;
-
-		pkt.tlv_count--;
-	}
+	tlvs = icq_unpack_tlvs(&buf, &len, pkt.tlv_count);
+	/* XXX ?wo? Handle tvls? */
+	icq_tlvs_destroy(&tlvs);
 
 	switch (pkt.format) {
 		case 0x01:

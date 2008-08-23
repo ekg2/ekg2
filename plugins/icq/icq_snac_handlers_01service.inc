@@ -304,7 +304,7 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 	 * TLV(x05) Member of ICQ since.
 	 * TLV(x14) Unknown
 	 */
-	tlvs = icq_unpack_tlvs(databuf, len, count);
+	tlvs = icq_unpack_tlvs(&databuf, &len, count);
 
 	/* XXX, miranda check dwRef. */
 	/* XXX, miranda saves */

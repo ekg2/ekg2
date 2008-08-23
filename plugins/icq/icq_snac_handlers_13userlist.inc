@@ -45,7 +45,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 
 	debug_function("icq_snac_userlist_reply()\n");
 
-	tlvs = icq_unpack_tlvs(buf, len, 0);
+	tlvs = icq_unpack_tlvs(&buf, &len, 0);
 
 #if ICQ_DEBUG_UNUSED_INFORMATIONS
 	if ((t = icq_tlv_get(tlvs, 0x06)) && (t->len == 2)) {
@@ -308,7 +308,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 			return -1;
 		}
 
-		tlvs = icq_unpack_tlvs(buf, tlv_len, 0);
+		tlvs = icq_unpack_tlvs_nc(buf, tlv_len, 0);
 
 		name = xstrdup(orgname);		/* XXX, recode (?) */
 		icq_userlist_parse_entry(s, tlvs, name, item_type, item_id, group_id);
