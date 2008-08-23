@@ -345,27 +345,24 @@ SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
 		char *uid;
 		uint16_t typing;
 	} pkt;
-	char *tmp;
+	char *icquid;
 
 	if (!ICQ_UNPACK(&buf, "iiWuW", &pkt.msg_id1, &pkt.msg_id2, &pkt.format, &pkt.uid, &pkt.typing))
 		return -1;
 
+	icquid = icq_uid(pkt.uid);
 	switch (pkt.typing) {
 		case 0x0000:
-			tmp = "typing finished";
+			protocol_xstate_emit(s, icquid, 0, EKG_XSTATE_TYPING);
 			break;
 		case 0x0001:
-			tmp = "text typed";
-			break;
 		case 0x0002:
-			tmp = "typing begin";
+			protocol_xstate_emit(s, icquid, EKG_XSTATE_TYPING, 0);
 			break;
 		default:
-			tmp = "UNKNOWN typing!!!";
+			debug_function("icq_snac_message_mini_typing_notification() uid: %s, UNKNOWN typing!!! (0x%x)\n", pkt.uid, pkt.typing);
 	}
-
-	debug_function("icq_snac_message_mini_typing_notification() uid: %s %s (%d)\n", pkt.uid, tmp, pkt.typing);
-	// XXX ?wo? 2do: change u->xstate
+	xfree(icquid);
 
 	return 0;
 }
