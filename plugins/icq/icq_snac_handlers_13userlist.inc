@@ -123,25 +123,21 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			else if (! u->nickname);
 				u->nickname = xstrdup(nick);
 
+			/* XXX, other groups ??? */
 			if (u && group) {
 				user_private_item_set_int(u, "iid", item_id);
 				user_private_item_set_int(u, "gid", group);
 			}
-			debug("[group] %u\n", group);
 			
 			if (comment)
-				debug("[Notes] %s\n", comment);
+				user_private_item_set(u, "comment", comment);
 
 			if (t_auth)
-				debug("[auth] %d\n", 1);
-
-
-			/* XXX, t_auth */
+				user_private_item_set_int(u, "auth", 1);
 /*
 			if (t_auth) 
 				print("icq_auth_subscribe", uid, session_name(s));
  */
-			/* XXX, grupy */
 
 			xfree(uid);
 			xfree(nick);

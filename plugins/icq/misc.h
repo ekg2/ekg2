@@ -72,5 +72,6 @@ void icq_convert_string_init();
 void icq_convert_string_destroy();
 
 char *icq_convert_from_ucs2be(string_t text);
+char *int2time_str(const char *format, int time);
 
 #endif

@@ -317,7 +317,7 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 
 			case 0x05:
 				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
-				debug_white("icq_snac_service_reqinfo() ICQ Member since: %u\n", t->nr);
+				debug_white("icq_snac_service_reqinfo() ICQ Member since: %s\n", int2time_str("%Y-%m-%d %H:%M", t->nr));
 				break;
 
 			case 0x0A:

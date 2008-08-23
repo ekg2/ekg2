@@ -1184,6 +1184,33 @@ static COMMAND(icq_command_register) {
 	return 0;
 }
 
+static QUERY(icq_userlist_info_handle) {
+	userlist_t *u	= *va_arg(ap, userlist_t **);
+	int quiet	= *va_arg(ap, int *);
+	const char *tmp;
+	int i;
+
+	if (!u || valid_plugin_uid(&icq_plugin, u->uid) != 1)
+		return 1;
+
+	if ( (i = user_private_item_get_int(u, "ip")) ) {
+		char *ip_str = saprintf("%s", inet_ntoa(*((struct in_addr*) &i)));
+		printq("icq_user_info_generic", _("IP"), ip_str);
+		xfree(ip_str);
+	};
+
+	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "online"))) )
+		printq("icq_user_info_generic", _("Online since"), tmp);
+
+	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "member"))) )
+		printq("icq_user_info_generic", _("ICQ Member since"), tmp);
+
+	if ( (tmp = user_private_item_get(u, "comment")) )
+		printq("icq_user_info_generic", _("Comment"), tmp);
+
+	return 0;
+}
+
 static int icq_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	format_add("icq_auth_subscribe", _("%> (%1) %T%2%n asks for authorisation. Use \"/auth -a %2\" to accept, \"/auth -d %2 [reason]\" to refuse. Reason: %T%3%n"), 1);
@@ -1200,6 +1227,8 @@ static int icq_theme_init() {
 	format_add("icq_userinfo_notes",	"%g|| %n  %T%3:%n %4", 1);
 
 	format_add("icq_userinfo_end",		"%g`+=%G----- End%n", 1);
+
+	format_add("icq_user_info_generic", "%K| %n%1: %T%2%n\n", 1);
 
 #endif
 	return 0;
@@ -1233,6 +1262,7 @@ EXPORT int icq_plugin_init(int prio) {
 	query_connect_id(&icq_plugin, PLUGIN_PRINT_VERSION, icq_print_version, NULL);
 	query_connect_id(&icq_plugin, SESSION_ADDED, icq_session_init, NULL);
 	query_connect_id(&icq_plugin, SESSION_REMOVED, icq_session_deinit, NULL);
+	query_connect_id(&icq_plugin, USERLIST_INFO, icq_userlist_info_handle, NULL);
 
 	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);

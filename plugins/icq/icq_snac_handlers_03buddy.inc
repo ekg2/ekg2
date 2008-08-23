@@ -191,10 +191,11 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 				debug_white("icq_snac_buddy_online() class 0x%02x\n", t->nr);
 				break;
 			case 0x03: /* Time when client gone online (unix time_t) */
-				debug_white("icq_snac_buddy_online() online since %d\n", t->nr);
+				user_private_item_set_int(u, "online", t->nr);
 				break;
 			case 0x05: /* Time when this account was registered (unix time_t) */
-				debug_white("icq_snac_buddy_online() ICQ Member since %d\n", t->nr);
+				if (t->nr)
+					user_private_item_set_int(u, "member", t->nr);
 				break;
 			case 0x0f: /* Online time in seconds */
 				debug_white("icq_snac_buddy_online() %d seconds online\n", t->nr);
@@ -215,6 +216,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 					uint32_t ts1;
 					uint32_t ts2;
 					uint32_t ts3;
+					uint16_t junk;
 				} tlv_c;
 
 				if (!icq_unpack_nc(t->buf, t->len, "IICWI",
@@ -312,6 +314,8 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 }
 
 SNAC_SUBHANDLER(icq_snac_buddy_offline) {
+	userlist_t *u;
+
 	debug_function("icq_snac_buddy_offline()\n");
 
 	do {
@@ -337,6 +341,11 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 		}
 
 		uid = icq_uid(cont);
+		if ((u = userlist_find(s, uid))) {
+			user_private_item_set_int(u, "online", 0);
+			user_private_item_set_int(u, "last_ip", user_private_item_get_int(u, "ip"));
+			user_private_item_set_int(u, "ip", 0);
+		}
 		debug_white("icq_snac_buddy_offline() uid: %s\n", uid);
 		protocol_status_emit(s, uid, EKG_STATUS_NA, NULL, time(NULL));
 		xfree(uid);

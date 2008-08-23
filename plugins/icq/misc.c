@@ -631,3 +631,13 @@ char *icq_convert_from_ucs2be(string_t text) {
 
 	return ret;
 }
+
+char *int2time_str(const char *format, int time) {
+	static char buf[100];
+	time_t t = time;
+
+	if (t && strftime(buf, sizeof(buf),  "%Y-%m-%d %H:%M", localtime(&t)))
+		return buf;
+	else
+		return NULL;
+}
