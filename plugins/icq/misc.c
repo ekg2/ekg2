@@ -638,6 +638,20 @@ char *icq_convert_from_ucs2be(string_t text) {
 	return ret;
 }
 
+string_t icq_convert_to_ucs2be(char *text) {
+	string_t ret, s;
+
+	if (!text || !*text)
+		return NULL;
+
+	s = string_init(text);
+	ret = ekg_convert_string_t_p(s, ucs2be_conv_out);
+	string_free(s, 1);
+
+	return ret;
+
+}
+
 char *int2time_str(const char *format, int time) {
 	static char buf[100];
 	time_t t = time;

@@ -775,10 +775,19 @@ static COMMAND(icq_command_msg) {
 		 * sorry */
 		string_t pkt;
 		string_t tlv_2, tlv_101;
+		string_t recode;
 
 	/* TLV(101) */
-		tlv_101 = icq_pack("WW", 0x03, 0x00);		/* codepage, encoding, copied from ICQ lite */
+		/* XXX ?wo? check if we can send utf message */
+		recode = icq_convert_to_ucs2be((char *) params[1]);
+		tlv_101 = icq_pack("WW", 0x02, 0x00);		// Unicode
+		string_append_raw(tlv_101, recode->str, recode->len);
+		string_free(recode, 1);
+
+		/* send ASCII message
+		tlv_101 = icq_pack("WW", 0x03, 0x00);		// codepage, encoding, copied from ICQ lite
 		string_append(tlv_101, params[1]);
+		*/
 
 	/* TLV(2) */
 		tlv_2 = icq_pack("tcT",
