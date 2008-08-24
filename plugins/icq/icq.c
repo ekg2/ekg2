@@ -89,7 +89,6 @@ static TIMER_SESSION(icq_ping) {
 
 int icq_write_status_msg(session_t *s) {
 	icq_private_t *j;
-	string_t pkt;
 	char *msg;
 
 	if (!s || !(j = s->priv))
@@ -106,12 +105,10 @@ int icq_write_status_msg(session_t *s) {
 
 	/* XXX, cookie */
 
-	pkt = icq_pack("TT", 
+	icq_send_snac(s, 0x02, 0x04, 0, 0,
+			"TT",
 			icq_pack_tlv_str(0x03, "text/x-aolrtf; charset=\"utf-8\""),
 			icq_pack_tlv_str(0x04, msg));
-
-	icq_makesnac(s, pkt, 0x02, 0x04, 0, 0);
-	icq_send_pkt(s, pkt);
 
 	xfree(msg);
 	return 0;
@@ -223,11 +220,10 @@ void icq_session_connected(session_t *s) {
 	icq_write_info(s);
 
 	/* SNAC 3,4: Tell server who's on our list */
+	/* XXX ?wo? SNAC 3,4 is: "Add buddy(s) to contact list" */
 	if (s->userlist) {
-		pkt = string_init(NULL);
 		/* XXX, dla kazdego kontaktu... */
-		icq_makesnac(s, pkt, 0x03, 0x04, 0, 0);
-		icq_send_pkt(s, pkt); pkt = NULL;
+		icq_send_empty_snac(s, 0x03, 0x04, 0, 0);
 	}
 
 	if (s->status == EKG_STATUS_INVISIBLE) {
@@ -349,9 +345,7 @@ void icq_session_connected(session_t *s) {
 	if (!s->connected) {
 		/* Get Offline Messages Reqeust */
 		/* XXX, cookie */
-		pkt = string_init(NULL);
-		icq_makesnac(s, pkt, 0x4, 0x10, 0, 0);
-		icq_send_pkt(s, pkt);
+		icq_send_empty_snac(s, 0x4, 0x10, 0, 0);
 
 		/* Update our information from the server */
 		pkt = icq_pack("i", atoi(s->uid+4));
@@ -476,7 +470,6 @@ static QUERY(icq_typing_out) {
 	int first		= *va_arg(ap, const int *);
 	uint32_t q1 = rand(), q2 = rand();
 	uint16_t typing = 0;
-	string_t pkt;
 
 	session_t *s = session_find(session);
 
@@ -486,10 +479,8 @@ static QUERY(icq_typing_out) {
 	if (len>0)
 		typing = (first == 1) ? 2 : 1;
 
-	pkt = string_init(NULL);
-	icq_pack_append(pkt, "iiWuW", q1, q2, (uint16_t) 1, atoi(uid + 4), typing);
-	icq_makesnac(s, pkt, 0x04, 0x14, 0, 0);
-	icq_send_pkt(s, pkt);
+	icq_send_snac(s, 0x04, 0x14, 0, 0,
+			"iiWuW", q1, q2, (uint16_t) 1, atoi(uid + 4), typing);
 
 	return 0;
 }

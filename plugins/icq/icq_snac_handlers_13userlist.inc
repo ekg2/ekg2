@@ -327,7 +327,6 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 
 		if (len >= 4) {
 			uint32_t last_update;
-			string_t str;
 
 			if (!ICQ_UNPACK(&buf, "I", &last_update))
 				return -1;
@@ -337,9 +336,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 					last_update, timestamp_time("%d/%m/%y %H:%M:%S", last_update));
 
 			/* sendRosterAck() */
-			str = string_init(NULL);
-			icq_makesnac(s, str, 0x13, 0x07, 0, 0);
-			icq_send_pkt(s, str);
+			icq_send_empty_snac(s, 0x13, 0x07, 0, 0);
 
 			icq_session_connected(s);
 

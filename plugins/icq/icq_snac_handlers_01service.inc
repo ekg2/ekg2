@@ -150,9 +150,7 @@ wrong:
 	icq_send_pkt(s, str);
 
 	/* CLI_REQINFO - This command requests from the server certain information about the client that is stored on the server. */
-	str = string_init(NULL);
-	icq_makesnac(s, str, 0x01, 0x0e, 0, 0);
-	icq_send_pkt(s, str);
+	icq_send_empty_snac(s, 0x01, 0x0e, 0, 0);
 
 	if (j->ssi) {
 #if 0
@@ -163,9 +161,7 @@ wrong:
 		DWORD dwCookie;
 #endif
 		/* CLI_REQLISTS - we want to use SSI */
-		str = string_init(NULL);
-		icq_makesnac(s, str, 0x13, 0x02, 0, 0);
-		icq_send_pkt(s, str);
+		icq_send_empty_snac(s, 0x13, 0x02, 0, 0);
 #if 0
 		if (!wRecordCount) { /* CLI_REQROSTER */
 			/* we do not have any data - request full list */
@@ -220,23 +216,15 @@ wrong:
 	}
 
 	/* CLI_REQLOCATION */
-	str = string_init(NULL);
-	icq_makesnac(s, str, 0x02, 0x02, 0, 0);
-	icq_send_pkt(s, str);
+	icq_send_empty_snac(s, 0x02, 0x02, 0, 0);
 
-	str = string_init(NULL);
-	icq_makesnac(s, str, 0x03, 0x02, 0, 0);
-	icq_send_pkt(s, str);
+	icq_send_empty_snac(s, 0x03, 0x02, 0, 0);
 
 	/* CLI_REQICBM */
-	str = string_init(NULL);
-	icq_makesnac(s, str, 0x04, 0x04, 0, 0);
-	icq_send_pkt(s, str);
+	icq_send_empty_snac(s, 0x04, 0x04, 0, 0);
 
 	/* CLI_REQBOS */
-	str = string_init(NULL);
-	icq_makesnac(s, str, 0x09, 0x02, 0, 0);
-	icq_send_pkt(s, str);
+	icq_send_empty_snac(s, 0x09, 0x02, 0, 0);
 
 	return 0;
 }
@@ -354,8 +342,6 @@ SNAC_SUBHANDLER(icq_snac_service_motd) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_families2) {
-	string_t pkt = string_init(NULL);
-
 	/* This is a reply to CLI_FAMILIES and it tells the client which families and their versions that this server understands.
 	 * We send a rate request packet */
 	debug_function("icq_snac_service_families2()\n");
@@ -368,10 +354,8 @@ SNAC_SUBHANDLER(icq_snac_service_families2) {
 	}
 #endif
 
-	pkt = string_init(NULL);
+	icq_send_empty_snac(s, 0x01, 0x06, 0, 0);
 
-	icq_makesnac(s, pkt, 0x01, 0x06, 0, 0);
-	icq_send_pkt(s, pkt);
 	return 0;
 }
 
