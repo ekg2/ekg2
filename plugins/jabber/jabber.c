@@ -611,6 +611,11 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	}
 
 #ifdef JABBER_HAVE_SSL
+			/* we need to loop ssl-reading, 'cause gnutls may be using quite large buffer
+			 * and if it reads all data from fd, our handler won't be called again until
+			 * more data arrives, and some current data will be left in gnutls buffer.
+			 *
+			 * This feature really needs testing, it might cause real problems.*/
 	do {
 #endif
 
