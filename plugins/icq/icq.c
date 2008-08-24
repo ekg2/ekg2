@@ -1154,6 +1154,16 @@ static COMMAND(icq_command_auth) {
 	uint32_t number;
 	const char *reason;
 
+	if (match_arg(params[0], 'l', "list", 2)) {
+		userlist_t *u;
+		for (u = session->userlist; u; u = u->next) {
+			if (user_private_item_get_int(u, "auth") == 1) {
+				printq("icq_user_info_generic", _("Waiting for authorization"), u->uid);
+			}
+		}
+		return 0;
+	}
+
 	if (params[1]) {
 		target = params[1];
 	} else if (!target) {
@@ -1237,6 +1247,8 @@ static QUERY(icq_userlist_info_handle) {
 
 	if ( (tmp = user_private_item_get(u, "comment")) )
 		printq("icq_user_info_generic", _("Comment"), tmp);
+	if ( user_private_item_get_int(u, "auth"))
+		printq("icq_user_info_generic", _("Waiting for authorization"), "yes");
 
 	return 0;
 }
@@ -1300,7 +1312,7 @@ EXPORT int icq_plugin_init(int prio) {
 
 	command_add(&icq_plugin, "icq:addssi", "U ?", icq_command_addssi, ICQ_FLAGS, NULL);
 
-	command_add(&icq_plugin, "icq:auth", "!p uU ?", icq_command_auth, ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, "-a --accept -d --deny -r --request -c --cancel");
+	command_add(&icq_plugin, "icq:auth", "!p uU ?", icq_command_auth, ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, "-a --accept -d --deny -l --list -r --request -c --cancel");
 
 	command_add(&icq_plugin, "icq:away", "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:back", NULL, icq_command_away, ICQ_ONLY, NULL);
