@@ -610,6 +610,10 @@ static WATCHER_SESSION(jabber_handle_stream) {
 		return 0;
 	}
 
+#ifdef JABBER_HAVE_SSL
+	do {
+#endif
+
 	debug_function("[jabber] jabber_handle_stream()\n");
 	parser = j->parser;
 
@@ -617,6 +621,7 @@ static WATCHER_SESSION(jabber_handle_stream) {
 		jabber_handle_disconnect(s, "XML_GetBuffer failed", EKG_DISCONNECT_NETWORK);
 		return -1;
 	}
+
 #ifdef JABBER_HAVE_SSL
 	if (j->using_ssl && j->ssl_session) {
 
@@ -695,6 +700,9 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	}
 	if ((!j->parser && parser) || (parser != j->parser)) XML_ParserFree(parser);
 	xfree(uncompressed);
+#ifdef JABBER_HAVE_SSL
+	} while (j->using_ssl && j->ssl_session);
+#endif
 
 	return 0;
 }
