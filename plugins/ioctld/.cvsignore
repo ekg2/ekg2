@@ -1,7 +1,0 @@
-ioctld
-.deps
-.libs
-Makefile
-Makefile.in
-*.lo
-*.la
