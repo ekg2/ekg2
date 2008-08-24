@@ -1671,16 +1671,6 @@ static void jabber_session_connected(session_t *s) {
 		command_exec_format(NULL, s, 1, ("/xmpp:privacy --get %s"),	list);	/* synchronize list */
 		command_exec_format(NULL, s, 1, ("/xmpp:privacy --session %s"),		list);	/* set as active */
 	}
-	/* talk.google.com should work also for Google Apps for your domain */
-	if (!xstrcmp(session_get(s, "server"), "talk.google.com")) {
-		watch_write(j->send_watch,
-			"<iq type=\"set\" to=\"%s\" id=\"gmail%d\"><usersetting xmlns=\"google:setting\"><mailnotifications value=\"true\"/></usersetting></iq>",
-			s->uid+5, j->id++);
-
-		watch_write(j->send_watch,
-			"<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>",
-			j->id++);
-	}
 }
 
 static void newmail_common(session_t *s) { /* maybe inline? */

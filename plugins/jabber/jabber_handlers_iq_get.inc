@@ -54,6 +54,7 @@ JABBER_HANDLER_GET_REPLY(jabber_handle_iq_get_disco_info) {
 				"<feature var=\"jabber:iq:version\"/>"						/* jabber_handle_iq_get_version() */
 				"<feature var=\"urn:xmpp:ping\"/>"						/* jabber_handle_iq_ping() */
 				"<feature var=\"http://jabber.org/protocol/chatstates\"/>"
+				"<feature var=\"google:mail:notify\"/>"
 			"</query></iq>", from, id);
 #if 0
 				"<feature var=\"http://jabber.org/protocol/commands\"/>"
