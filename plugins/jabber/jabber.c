@@ -1612,7 +1612,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("ssl_port",		VAR_INT, "5223", 0, NULL),
 	PLUGIN_VAR_ADD("use_compression",	VAR_STR, 0, 0, NULL),		/* for instance: zlib,lzw */
 	PLUGIN_VAR_ADD("use_ssl",		VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("use_tls",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("use_tls",		VAR_BOOL, "1", 0, NULL),
 	PLUGIN_VAR_ADD("ver_client_name",	VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("ver_client_version",	VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("ver_os",		VAR_STR, 0, 0, NULL),
