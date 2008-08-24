@@ -469,6 +469,31 @@ static QUERY(icq_print_version) {
 	return 0;
 }
 
+static QUERY(icq_typing_out) {
+	const char *session	= *va_arg(ap, const char **);
+	const char *uid		= *va_arg(ap, const char **);
+	const int len		= *va_arg(ap, const int *);
+	int first		= *va_arg(ap, const int *);
+	uint32_t q1 = rand(), q2 = rand();
+	uint16_t typing = 0;
+	string_t pkt;
+
+	session_t *s = session_find(session);
+
+	if (!s || s->plugin != &icq_plugin)
+		return 0;
+
+	if (len>0)
+		typing = (first == 1) ? 2 : 1;
+
+	pkt = string_init(NULL);
+	icq_pack_append(pkt, "iiWuW", q1, q2, (uint16_t) 1, atoi(uid + 4), typing);
+	icq_makesnac(s, pkt, 0x04, 0x14, 0, 0);
+	icq_send_pkt(s, pkt);
+
+	return 0;
+}
+
 void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 	icq_private_t *j;
 
@@ -744,6 +769,13 @@ static COMMAND(icq_command_msg) {
 
 	if (config_last & 4)
 		last_add(1, uid, time(NULL), 0, params[1]);
+
+	{
+		// send "typing finished" snack
+		const char *sid	= session_uid_get(session);
+		int first = 0, len = 0;
+		query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
+	}
 
 	/* XXX, recode, and do other magic stuff :( */
 	/* sent message */
@@ -1261,6 +1293,7 @@ EXPORT int icq_plugin_init(int prio) {
 	query_connect_id(&icq_plugin, SESSION_ADDED, icq_session_init, NULL);
 	query_connect_id(&icq_plugin, SESSION_REMOVED, icq_session_deinit, NULL);
 	query_connect_id(&icq_plugin, USERLIST_INFO, icq_userlist_info_handle, NULL);
+	query_connect_id(&icq_plugin, PROTOCOL_TYPING_OUT, icq_typing_out, NULL);
 
 	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
