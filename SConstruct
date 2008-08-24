@@ -29,9 +29,6 @@ indirs = [ # pseudo-hash, 'coz we want to keep order
 	['PLUGINDIR',	'$LIBDIR/ekg2/plugins',		'EKG2 plugins'],
 	['IOCTLD_PATH',	'$LIBEXECDIR/ekg2',			'EKG2 ioctld']
 	]
-mapped = {
-	'UNICODE':		['USE_UNICODE', 'Enable unicode support'],
-	}
 envs = {
 	'CCFLAGS':		['CFLAGS', 'Compiler flags'],
 	'LINKFLAGS':	['LDFLAGS', 'LIBS', 'Linker flags']
@@ -41,7 +38,7 @@ envs = {
 plugin_states = ['all', 'nocompile', 'deprecated', 'unknown', 'experimental', 'def', 'unstable', 'stable', 'none']
 plugin_symbols = ['', '!', '!', '?', '*', '', '~', '', '']
 
-import glob, subprocess, codecs, os, os.path, sys
+import glob, subprocess, codecs, os, os.path, sys, SCons
 
 def writedef(definefile, var, val):
 	""" Write define to definefile, choosing correct format. """
@@ -270,13 +267,13 @@ xplugins = ['-%s' % elem for elem in avplugins]
 xplugins.extend(['@%s' % elem for elem in plugin_states])
 opts.Add(ListOption('PLUGINS', 'List of plugins or @sets to build', '@def', avplugins + xplugins))
 opts.Add(BoolOption('HARDDEPS', 'Fail if specified plugin could not be built due to unfulfilled depends', False))
-for k,v in mapped.items():
-	opts.Add(BoolOption(k, v[1], True))
+opts.Add(BoolOption('UNICODE', 'Enable unicode support', True))
 opts.Add(BoolOption('RESOLV', 'Use libresolv-based domain resolver with SRV support', True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
 opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared', 0))
 opts.Add(EnumOption('DEBUG', 'Internal debug level', 'std', ['none', 'std', 'stderr']))
+opts.Add('DISTNOTES', 'Additional info to /version for use with distributed packages')
 
 for p in avplugins:
 	info = SConscript('plugins/%s/SConscript' % p, ['env', 'opts'])
@@ -322,14 +319,18 @@ if env['STATIC']:
 	defines['STATIC_LIBS'] = True
 else:
 	defines['SHARED_LIBS'] = True
+defines['USE_UNICODE'] = env['UNICODE']
+try:
+	defines['VER_DISTNOTES'] = env['DISTNOTES']
+except KeyError:
+	defines['VER_DISTNOTES'] = False
+defines['SCONS_NOTES'] = 'built using SCons %s' % SCons.__version__
 
 for var in dirs:
 	env[var] = env.subst(env[var])
 	defines[var] = env[var]
 for var,val in consts.items():
 	defines[var] = val
-for var,val in mapped.items():
-	defines[val[0]] = env[var]
 
 # We get CCFLAGS and some of LINKFLAGS into flags, to pass them to env.MergeFlags(),
 # but we keep rest of LINKFLAGS alone, because Gentoo by default uses -O1 to linker, and -O2 to compiler.
@@ -492,6 +493,7 @@ for plugin in pllist:
 
 	if optdeps:
 		optdeps = ' [%s]' % (' '.join(optdeps))
+		defines['SCONS_NOTES'] += '; %s%s' % (plugin, optdeps)
 	else:
 		optdeps = ''
 
