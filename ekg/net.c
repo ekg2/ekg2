@@ -107,6 +107,13 @@ static int ekg_resolver_split(char *hostname, const int defport) {
 		return i;
 	}
 
+		/* remove braces from (IPv6) address,
+		 * XXX: do we really need to check if it's IPv6? IPv4 doesn't use braces, domains neither. */
+	if (*hostname == '[' && hostname[xstrlen(hostname) - 1] == ']') {
+		hostname[xstrlen(hostname) - 1] = 0; /* shorten, i.e. remove ']' */
+		memmove(hostname, hostname + 1, xstrlen(hostname)); /* xstrlen(hostname) gets trailing \0 too */
+	}
+
 	return defport;
 }
 
