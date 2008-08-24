@@ -77,7 +77,6 @@ string_t icq_convert_to_ucs2be(char *text);
 
 char *int2time_str(const char *format, int time);
 
-void icq_send_empty_snac(session_t *s, uint16_t family, uint16_t cmd, uint16_t flags, uint32_t ref);
 void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, uint16_t flags, uint32_t ref, char *format, ...);
 
 #endif

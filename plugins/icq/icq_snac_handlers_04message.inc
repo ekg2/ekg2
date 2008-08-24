@@ -37,15 +37,13 @@ SNAC_SUBHANDLER(icq_snac_message_error) {
 }
 
 static void icq_snac_message_set_msg_channel(session_t *s, uint16_t chan, uint32_t flags) {
-	string_t pkt;
 
-	pkt = icq_pack("WIWWWWW",
-		(uint32_t) chan, (uint32_t) flags,		/* channel, flags */
-		(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
-		(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
-		(uint32_t) 0);					/* unknown */
-	icq_makesnac(s, pkt, 0x04, 0x02, 0, 0);
-	icq_send_pkt(s, pkt);
+	icq_send_snac(s, 0x04, 0x02, 0, 0,
+			"WIWWWWW",
+			(uint32_t) chan, (uint32_t) flags,		/* channel, flags */
+			(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
+			(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
+			(uint32_t) 0);					/* unknown */
 }
 
 SNAC_SUBHANDLER(icq_snac_message_replyicbm) {

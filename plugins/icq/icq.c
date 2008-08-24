@@ -116,16 +116,15 @@ int icq_write_status_msg(session_t *s) {
 
 int icq_write_status(session_t *s) {
 	uint16_t status;
-	string_t pkt;
 
 	if (!s)
 		return 0;
 
 	status = icq_status(s->status);
 
-	pkt = icq_pack("tI", icq_pack_tlv_dword(0x06, (0x00 << 8 | status)));	/* TLV 6: Status mode and security flags */
-	icq_makesnac(s, pkt, 0x01, 0x001e, 0, 0);
-	icq_send_pkt(s, pkt);
+	icq_send_snac(s, 0x01, 0x001e, 0, 0,
+			"tI",
+			icq_pack_tlv_dword(0x06, (0x00 << 8 | status)));	/* TLV 6: Status mode and security flags */
 	return 1;
 }
 
@@ -223,7 +222,7 @@ void icq_session_connected(session_t *s) {
 	/* XXX ?wo? SNAC 3,4 is: "Add buddy(s) to contact list" */
 	if (s->userlist) {
 		/* XXX, dla kazdego kontaktu... */
-		icq_send_empty_snac(s, 0x03, 0x04, 0, 0);
+		icq_send_snac(s, 0x03, 0x04, 0, 0, NULL);
 	}
 
 	if (s->status == EKG_STATUS_INVISIBLE) {
@@ -310,9 +309,7 @@ void icq_session_connected(session_t *s) {
 	}
 
 	/* SNAC 1,11 */
-	pkt = icq_pack("I", (uint32_t) 0x00000000);
-	icq_makesnac(s, pkt, 0x01, 0x11, 0, 0);
-	icq_send_pkt(s, pkt);
+	icq_send_snac(s, 0x01, 0x11, 0, 0, "I", (uint32_t) 0x00000000);
 
 	/* j->idleAllow = 0; */
 
@@ -345,7 +342,7 @@ void icq_session_connected(session_t *s) {
 	if (!s->connected) {
 		/* Get Offline Messages Reqeust */
 		/* XXX, cookie */
-		icq_send_empty_snac(s, 0x4, 0x10, 0, 0);
+		icq_send_snac(s, 0x4, 0x10, 0, 0, NULL);
 
 		/* Update our information from the server */
 		pkt = icq_pack("i", atoi(s->uid+4));
@@ -1183,34 +1180,28 @@ static COMMAND(icq_command_auth) {
 	reason = params[2];
 
 	if (match_arg(params[0], 'r', "request", 2)) {
-		string_t pkt;
 
 		if (!reason)
 			reason = "Please add me.";
 
-		pkt = icq_pack("uUW", number, reason, (uint32_t) 0x00);
-		icq_makesnac(session, pkt, 0x13, 0x18, 0, 0);
-		icq_send_pkt(session, pkt);
+		icq_send_snac(session, 0x13, 0x18, 0, 0,
+				"uUW", number, reason, (uint32_t) 0x00);
+
 		return 0;
 	}
 
 	if (match_arg(params[0], 'c', "cancel", 2)) {
-		string_t pkt;
 
-		pkt = icq_pack("u", number);
-		icq_makesnac(session, pkt, 0x13, 0x16, 0, 0);
-		icq_send_pkt(session, pkt);
+		icq_send_snac(session, 0x13, 0x16, 0, 0, "u", number);
 
 		return 0;
 	}
 
 	if (match_arg(params[0], 'a', "accept", 2) || match_arg(params[0], 'd', "deny", 2)) {	/* accept / deny */
-		string_t pkt;
 		int auth = (match_arg(params[0], 'a', "accept", 2) != 0);
 
-		pkt = icq_pack("ucUW", number, (uint32_t) auth, reason ? reason : "", (uint32_t) 0x00);
-		icq_makesnac(session, pkt, 0x13, 0x1a, 0, 0);
-		icq_send_pkt(session, pkt);
+		icq_send_snac(session, 0x13, 0x1a, 0, 0,
+				"ucUW", number, (uint32_t) auth, reason ? reason : "", (uint32_t) 0x00);
 		return 0;
 	}
 

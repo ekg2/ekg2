@@ -164,10 +164,9 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 			 * This is the first snac in md5 crypted login sequence. Client use this
 			 * snac to request login random key from server. Server could return SNAC(17,07)
 			 */
-			str = string_init(NULL);
-			icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));	/* uid */
-			icq_makesnac(s, str, 0x17, 6, 0, 0);		// Send CLI_AUTH_REQUEST
-			icq_send_pkt(s, str); str = NULL;
+			// Send CLI_AUTH_REQUEST
+			icq_send_snac(s, 0x17, 6, 0, 0,
+				    "T", icq_pack_tlv_str(1, s->uid + 4));	/* uid */
 		}
 
 	}
@@ -271,7 +270,7 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 
 	if ((login_tlv = icq_tlv_get(tlvs, 5)) && login_tlv->len) {
 		icq_tlv_t *cookie_tlv = icq_tlv_get(tlvs, 0x06);
-		char *login_str = xstrndup(login_tlv->buf, login_tlv->len);
+		char *login_str = xstrndup((char *) login_tlv->buf, login_tlv->len);
 		struct sockaddr_in sin;
 		string_t pkt;
 		char *tmp;
@@ -343,14 +342,14 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 		char *reason = NULL;
 
 		if (t_uid && t_uid->len) {
-			char *uid = xstrndup(t_uid->buf, t_uid->len);
+			char *uid = xstrndup((char *) t_uid->buf, t_uid->len);
 			if (xstrcmp(uid, s->uid+4))
 				debug("icq_ UID: %s\n", uid);
 			xfree(uid);
 		}
 
 		if (t_url && t_url->len) {
-			char *url = xstrndup(t_url->buf, t_url->len);
+			char *url = xstrndup((char *) t_url->buf, t_url->len);
 			debug("icq_ URL: %s\n", url);
 			xfree(url);
 		}

@@ -662,19 +662,15 @@ char *int2time_str(const char *format, int time) {
 		return NULL;
 }
 
-void icq_send_empty_snac(session_t *s, uint16_t family, uint16_t cmd, uint16_t flags, uint32_t ref) {
-	string_t pkt = string_init(NULL);
-	icq_makesnac(s, pkt, family, cmd, flags, ref);
-	icq_send_pkt(s, pkt);
-}
-
 void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, uint16_t flags, uint32_t ref, char *format, ...) {
 	va_list ap;
 	string_t pkt = string_init(NULL);
 
-	va_start(ap, format);
-	icq_pack_common(pkt, format, ap);
-	va_end(ap);
+	if (format && *format) {
+		va_start(ap, format);
+		icq_pack_common(pkt, format, ap);
+		va_end(ap);
+	}
 
 	icq_makesnac(s, pkt, family, cmd, flags, ref);
 	icq_send_pkt(s, pkt);

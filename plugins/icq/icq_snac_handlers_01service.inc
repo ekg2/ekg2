@@ -103,7 +103,6 @@ SNAC_SUBHANDLER(icq_snac_service_redirect) {
 
 SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 	icq_private_t *j = s->priv;
-	string_t str;
 
 #if ICQ_DEBUG_UNUSED_INFORMATIONS
 {
@@ -145,12 +144,12 @@ wrong:
 #endif
 
 	/* ack rate levels */
-	str = icq_pack("WWWWW", (uint32_t) 0x01, (uint32_t) 0x02, (uint32_t) 0x03, (uint32_t) 0x04, (uint32_t) 0x05);
-	icq_makesnac(s, str, 0x01, 0x08, 0, 0);
-	icq_send_pkt(s, str);
+	icq_send_snac(s, 0x01, 0x08, 0, 0,
+			"WWWWW",
+			(uint32_t) 0x01, (uint32_t) 0x02, (uint32_t) 0x03, (uint32_t) 0x04, (uint32_t) 0x05);
 
 	/* CLI_REQINFO - This command requests from the server certain information about the client that is stored on the server. */
-	icq_send_empty_snac(s, 0x01, 0x0e, 0, 0);
+	icq_send_snac(s, 0x01, 0x0e, 0, 0, NULL);
 
 	if (j->ssi) {
 #if 0
@@ -161,7 +160,7 @@ wrong:
 		DWORD dwCookie;
 #endif
 		/* CLI_REQLISTS - we want to use SSI */
-		icq_send_empty_snac(s, 0x13, 0x02, 0, 0);
+		icq_send_snac(s, 0x13, 0x02, 0, 0, NULL);
 #if 0
 		if (!wRecordCount) { /* CLI_REQROSTER */
 			/* we do not have any data - request full list */
@@ -206,25 +205,24 @@ wrong:
 			sendServPacket(&packet);
 		}
 #else
-		str = string_init(NULL);
-		icq_pack_append(str, "I", (uint32_t) 0x0000);		// modification date/time of client local SSI copy
 		// XXX ?wo? number of items should be "W" ?
-		icq_pack_append(str, "I", (uint32_t) 0x0000);		// number of items in client local SSI copy
-		icq_makesnac(s, str, 0x13, 0x05, 0, 0);
-		icq_send_pkt(s, str);
+		icq_send_snac(s, 0x13, 0x05, 0, 0,
+				"II",
+				(uint32_t) 0x0000,		// modification date/time of client local SSI copy
+				(uint32_t) 0x0000);		// number of items in client local SSI copy
 #endif
 	}
 
 	/* CLI_REQLOCATION */
-	icq_send_empty_snac(s, 0x02, 0x02, 0, 0);
+	icq_send_snac(s, 0x02, 0x02, 0, 0, NULL);
 
-	icq_send_empty_snac(s, 0x03, 0x02, 0, 0);
+	icq_send_snac(s, 0x03, 0x02, 0, 0, ""); // example for empty snack: "" or NULL works
 
 	/* CLI_REQICBM */
-	icq_send_empty_snac(s, 0x04, 0x04, 0, 0);
+	icq_send_snac(s, 0x04, 0x04, 0, 0, "");
 
 	/* CLI_REQBOS */
-	icq_send_empty_snac(s, 0x09, 0x02, 0, 0);
+	icq_send_snac(s, 0x09, 0x02, 0, 0, "");
 
 	return 0;
 }
@@ -248,20 +246,19 @@ SNAC_SUBHANDLER(icq_snac_service_ratechange) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_pause) {
-	string_t pkt;
 
 	debug("icq_snac_service_pause() Server is going down in a few seconds...\n");
 
 	/* This is the list of groups that we want to have on the next server */
-	pkt = icq_pack("WWWWWWWWWW", 
+
+	icq_send_snac(s, 0x01, 0x0c, 0, 0,
+			"WWWWWWWWWW",
 			(uint32_t) 0x01, (uint32_t) 0x13,
 			(uint32_t) 0x02, (uint32_t) 0x03,
 			(uint32_t) 0x17, (uint32_t) 0x04,
 			(uint32_t) 0x06, (uint32_t) 0x09,
 			(uint32_t) 0x0a, (uint32_t) 0x0b);
 
-	icq_makesnac(s, pkt, 0x01, 0x0c, 0, 0);
-	icq_send_pkt(s, pkt);
 	return 0;
 }
 
@@ -354,7 +351,7 @@ SNAC_SUBHANDLER(icq_snac_service_families2) {
 	}
 #endif
 
-	icq_send_empty_snac(s, 0x01, 0x06, 0, 0);
+	icq_send_snac(s, 0x01, 0x06, 0, 0, "");
 
 	return 0;
 }

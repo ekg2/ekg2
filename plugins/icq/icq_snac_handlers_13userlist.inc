@@ -336,7 +336,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 					last_update, timestamp_time("%d/%m/%y %H:%M:%S", last_update));
 
 			/* sendRosterAck() */
-			icq_send_empty_snac(s, 0x13, 0x07, 0, 0);
+			icq_send_snac(s, 0x13, 0x07, 0, 0, "");
 
 			icq_session_connected(s);
 
