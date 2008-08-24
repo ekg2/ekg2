@@ -620,3 +620,5 @@ static chan *cv_tabs_get_parent(chan * ch)
 {
 	return NULL;
 }
+
+// vim:syn=c

@@ -318,3 +318,5 @@ static gboolean cv_tree_is_collapsed(chan * ch)
 
 	return ret;
 }
+
+// vim:syn=c

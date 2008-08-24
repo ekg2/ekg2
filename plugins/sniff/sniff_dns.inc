@@ -228,3 +228,4 @@ end:
 	return 0;
 }
 
+// vim:syn=c

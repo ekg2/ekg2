@@ -1112,3 +1112,4 @@ static const struct jabber_iq_generic_handler jabber_iq_set_handlers[] = {
 	{ "",		NULL,						NULL }
 };
 
+// vim:syn=c

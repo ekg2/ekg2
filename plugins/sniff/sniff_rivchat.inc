@@ -110,3 +110,4 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 	return 0;
 }
 
+// vim:syn=c

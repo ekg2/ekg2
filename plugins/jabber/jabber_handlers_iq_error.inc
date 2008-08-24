@@ -132,3 +132,4 @@ JABBER_HANDLER_ERROR(jabber_handle_iq_error_generic_old) {
 	xfree(reason);
 }
 
+// vim:syn=c

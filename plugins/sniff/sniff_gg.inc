@@ -1276,3 +1276,5 @@ SNIFF_HANDLER(sniff_gg, gg_header) {
 }
 
 #undef CHECK_PRINT
+
+// vim:syn=c

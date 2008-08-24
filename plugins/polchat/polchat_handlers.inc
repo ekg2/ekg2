@@ -590,3 +590,4 @@ invalid_packet:
 	array_free(strings);
 }
 
+// vim:syn=c

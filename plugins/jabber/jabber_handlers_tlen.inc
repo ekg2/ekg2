@@ -103,3 +103,4 @@ static const struct jabber_generic_handler tlen_handlers[] = {
 	{ NULL,	NULL }
 };
 
+// vim:syn=c
