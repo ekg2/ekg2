@@ -28,10 +28,28 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_disco) {
 	xfree(uid);
 }
 
+JABBER_HANDLER_RESULT(jabber_handle_iq_result_new_mail) {
+	jabber_private_t *j = s->priv;
+
+	watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
+}
+
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_disco_info) {
 	const char *wezel = jabber_attr(n->atts, "node");
 	char *uid = jabber_unescape(from);
 	xmlnode_t *node;
+
+	if (!session_int_get(s, "__roster_retrieved")) {
+		for (node = n->children; node; node = node->next) {
+			if (!xstrcmp(node->name, "feature") && !xstrcmp(jabber_attr(node->atts, "var"),
+					"http://jabber.org/protocol/disco#info")) {
+				/* it's not nice to send such NULLs, but as long as that func doesn't use any other args... */
+				jabber_handle_iq_result_new_mail(s, NULL, NULL, NULL);
+			}
+		}
+
+		return;
+	}
 
 	print((wezel) ? "jabber_transinfo_begin_node" : "jabber_transinfo_begin", session_name(s), uid, wezel);
 
@@ -919,12 +937,6 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_muc_admin) {
 			xfree(rsn);
 		}
 	}
-}
-
-JABBER_HANDLER_RESULT(jabber_handle_iq_result_new_mail) {
-	jabber_private_t *j = s->priv;
-
-	watch_write(j->send_watch, "<iq type=\"get\" id=\"gmail%d\"><query xmlns=\"google:mail:notify\"/></iq>", j->id++);
 }
 
 JABBER_HANDLER_SET(jabber_handle_iq_set_new_mail) {
