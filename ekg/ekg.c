@@ -48,9 +48,7 @@
 #include <sys/resource.h>	/* rlimit */
 #endif
 
-#ifdef __FreeBSD__
-#  include <sys/select.h>
-#endif
+#include <sys/select.h>
 
 #include <dirent.h>
 #include <errno.h>
