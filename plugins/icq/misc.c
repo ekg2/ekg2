@@ -36,6 +36,8 @@
 
 void *ucs2be_conv_in = (void*) -1;
 void *ucs2be_conv_out = (void*) -1;
+void *utf8_conv_in = (void*) -1;
+void *utf8_conv_out = (void*) -1;
 
 
 void icq_hexdump(int level, unsigned char *p, size_t len) {
@@ -612,12 +614,17 @@ void icq_pack_append_client_identification(string_t pkt) {
 
 void icq_convert_string_init() {
 	ucs2be_conv_in = ekg_convert_string_init("UCS-2BE", NULL, &ucs2be_conv_out);
+	utf8_conv_in = ekg_convert_string_init("UTF-8", NULL, &utf8_conv_out);
 }
 
 void icq_convert_string_destroy() {
 	if (ucs2be_conv_in != (void*) -1) {
 		ekg_convert_string_destroy(ucs2be_conv_in);
 		ekg_convert_string_destroy(ucs2be_conv_out);
+	}
+	if (utf8_conv_in != (void*) -1) {
+		ekg_convert_string_destroy(utf8_conv_in);
+		ekg_convert_string_destroy(utf8_conv_out);
 	}
 }
 
@@ -650,6 +657,14 @@ string_t icq_convert_to_ucs2be(char *text) {
 
 	return ret;
 
+}
+
+char *icq_convert_from_utf8(char * text) {
+
+	if (!text || !*text)
+		return NULL;
+
+	return ekg_convert_string_p(text, utf8_conv_in);
 }
 
 char *int2time_str(const char *format, int time) {
