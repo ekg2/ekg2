@@ -84,11 +84,11 @@ static char *try_convert_string_p(const char *ps, iconv_t cd) {
 		}
 		xfree(buf);
 	}
-#else
-static char *try_convert_string_p(const char *ps, void *cd) {
-#endif
 	return NULL;
 }
+#else
+static char *try_convert_string_p(const char *ps, void *cd) { return NULL; }
+#endif
 
 static char *irc_convert_in(irc_private_t *j, const char *line) {
 	char *recoded;
