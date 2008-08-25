@@ -444,12 +444,35 @@ SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
 	} pkt;
 	char *uid;
 
-	if (!ICQ_UNPACK(&buf, "ucU", &pkt.uid, &pkt.flag, &pkt.reason))
+	if (!ICQ_UNPACK(&buf, "u", &pkt.uid))
 		return -1;
 
-	// XXX ?wo? add format & display in status window
 	uid = icq_uid(pkt.uid);
-	debug_error("%s - %s %s your authorization: %s \n", session_name(s), uid, pkt.flag ? "grant" : "decline", pkt.reason);
+
+	if (ICQ_UNPACK(&buf, "c", &pkt.flag)) {
+		if (!ICQ_UNPACK(&buf, "U", &pkt.reason))
+			pkt.reason = "";
+		/* XXX, spammer */
+		// XXX ?wo? add format & display in status window
+		switch (pkt.flag) {
+			case 0:
+				debug_error("%s - %s decline your authorization: %s", session_name(s), uid, pkt.reason);
+				break;
+			case 1:
+			{
+				userlist_t *u = userlist_find(s, uid);
+				if (u)
+					user_private_item_set_int(u, "auth", 0);
+				debug_error("%s - %s grant your authorization: %s", session_name(s), uid, pkt.reason);
+				break;
+			}
+			default:
+				debug_error("icq_snac_userlist_auth_reply() unknown response: %u from %s. (Reason: %s)\n", pkt.flag, uid, pkt.reason);
+				break;
+		}
+	} else
+		debug_error("icq_snac_userlist_auth_reply() (%s) Corrupt answer from %s\n", session_name(s), uid);
+
 	xfree(uid);
 	return 0;
 }
