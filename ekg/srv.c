@@ -126,6 +126,7 @@ char *ekg_inet_ntostr(int family,  void *buf)
 }
 
 
+#ifdef HAVE_RESOLV_H
 /**
  * extract_rr()
  * 
@@ -142,7 +143,6 @@ char *ekg_inet_ntostr(int family,  void *buf)
  */
 int extract_rr(unsigned char *start, unsigned char *end, unsigned char **ptr, ns_rr *rr)
 {
-#ifdef HAVE_RESOLV_H
 	unsigned char *rrs;
 	char exp_dn[2048];
 	int exp_len;
@@ -178,14 +178,12 @@ int extract_rr(unsigned char *start, unsigned char *end, unsigned char **ptr, ns
 	rrs += rr->rdlength;
 
 	*ptr = rrs;
-#endif
 	return 0;
 }
 
 
 int extract_rr_srv(unsigned char *start, unsigned char *end, unsigned char **ptr, gim_host *srv)
 {
-#ifdef HAVE_RESOLV_H
 	char exp_dn[2048];
 	int exp_len;
 	/* arpa/nameser.h */
@@ -213,7 +211,6 @@ int extract_rr_srv(unsigned char *start, unsigned char *end, unsigned char **ptr
 	if ((exp_len = dn_expand(start, end, rr.rdata+6, exp_dn , sizeof(exp_dn))) == -1)
 		return 1;
 	strncpy((char*)srv->name, (char*)exp_dn, DNS_NS_MAXDNAME);
-#endif
 	return 0;
 }
 
@@ -238,9 +235,9 @@ int skip_rr_ns(unsigned char *start, unsigned char *end, unsigned char **ptr)
 }
 
 typedef enum _gim_sects { SQUERY=ns_s_qd, SANSWER=ns_s_an, SAUTH=ns_s_ns, SEXTRA=ns_s_ar, SMAX=ns_s_max } gim_sects;
+#endif
 
 int srv_resolver(gim_host **hostlist, const char *hostname, const int proto_port, const int port, const int proto) {
-#ifndef NO_POSIX_SYSTEM
 #ifdef HAVE_RESOLV_H
 	struct protoent *pro;
 	struct servent *srv;
@@ -382,7 +379,6 @@ int srv_resolver(gim_host **hostlist, const char *hostname, const int proto_port
 		}
 	}
 
-#endif
 #endif
 	return 0;
 }
