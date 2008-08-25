@@ -1,5 +1,7 @@
 /* $Id$ */
 
+#include "ekg2-config.h"
+
 #include <string.h>
 
 #include <ekg/debug.h>
