@@ -57,3 +57,5 @@ SNAC_HANDLER(icq_snac_lookup_handler) {
 
 	return 0;
 }
+
+// vim:syn=c

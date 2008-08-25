@@ -361,3 +361,5 @@ const char *icq_snac_name(int family, int cmd) {
 	return NULL;
 }
 #endif
+
+// vim:syn=c

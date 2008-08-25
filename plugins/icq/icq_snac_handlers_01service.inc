@@ -389,3 +389,4 @@ SNAC_HANDLER(icq_snac_service_handler) {
 	return 0;
 }
 
+// vim:syn=c

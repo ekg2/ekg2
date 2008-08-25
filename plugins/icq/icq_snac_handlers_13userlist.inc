@@ -498,3 +498,4 @@ SNAC_HANDLER(icq_snac_userlist_handler) {
 	return 0;
 }
 
+// vim:syn=c

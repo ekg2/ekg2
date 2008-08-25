@@ -67,3 +67,4 @@ SNAC_HANDLER(icq_snac_status_handler) {
 	return 0;
 }
 
+// vim:syn=c

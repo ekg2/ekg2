@@ -451,3 +451,4 @@ SNAC_HANDLER(icq_snac_message_handler) {
 	return 0;
 }
 
+// vim:syn=c

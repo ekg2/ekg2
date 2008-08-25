@@ -129,3 +129,4 @@ SNAC_HANDLER(icq_snac_location_handler) {
 	return 0;
 }
 
+// vim:syn=c

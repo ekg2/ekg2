@@ -437,3 +437,4 @@ struct fieldnames_t maritalField[]={
 	{40, LPGEN("Widowed")},
 	{-1, NULL}};
 
+// vim:syn=c

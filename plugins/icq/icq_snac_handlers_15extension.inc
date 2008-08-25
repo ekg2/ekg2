@@ -600,3 +600,4 @@ SNAC_HANDLER(icq_snac_extension_handler) {
 	return 0;
 }
 
+// vim:syn=c
