@@ -336,6 +336,9 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 }
 
 SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
+#ifndef DBG_CAPMTN
+	debug_error("icq_snac_message_mini_typing_notification() Ignoring unexpected typing notification");
+#else
 	struct {
 		uint32_t msg_id1;
 		uint32_t msg_id2;
@@ -345,23 +348,44 @@ SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
 	} pkt;
 	char *icquid;
 
+
 	if (!ICQ_UNPACK(&buf, "iiWuW", &pkt.msg_id1, &pkt.msg_id2, &pkt.format, &pkt.uid, &pkt.typing))
 		return -1;
 
+	/* SetContactCapabilities(hContact, CAPF_TYPING); */
+
 	icquid = icq_uid(pkt.uid);
 	switch (pkt.typing) {
-		case 0x0000:
+		case 0x0000:	/* MTN_FINISHED */
 			protocol_xstate_emit(s, icquid, 0, EKG_XSTATE_TYPING);
 			break;
-		case 0x0001:
-		case 0x0002:
+
+		case 0x0001:	/* MTN_TYPED */		/* XXX, accroding to Miranda code:  user stopped typing... (like MTN_FINISHED) */
+		case 0x0002:	/* MTN_BEGUN */
 			protocol_xstate_emit(s, icquid, EKG_XSTATE_TYPING, 0);
 			break;
+
+		case 0x000F:	/* MTN_WINDOW_CLOSED */
+		{	/* XXX ?wo? print_info(...) ??? */
+		#if 0
+			char szFormat[MAX_PATH];
+			char szMsg[MAX_PATH];
+			char *nick = NickFromHandleUtf(hContact);
+
+			null_snprintf(szMsg, MAX_PATH, ICQTranslateUtfStatic(LPGEN("Contact \"%s\" has closed the message window."), szFormat, MAX_PATH), nick);
+			ShowPopUpMsg(hContact, ICQTranslateUtfStatic(LPGEN("ICQ Note"), szFormat, MAX_PATH), szMsg, LOG_NOTE);
+			SAFE_FREE((void**)&nick);
+
+			NetLog_Server("%s has closed the message window.", strUID(dwUin, szUID));
+			break;
+		#endif
+		}
+
 		default:
 			debug_function("icq_snac_message_mini_typing_notification() uid: %s, UNKNOWN typing!!! (0x%x)\n", pkt.uid, pkt.typing);
 	}
 	xfree(icquid);
-
+#endif
 	return 0;
 }
 
