@@ -567,7 +567,7 @@ if defines['ENABLE_NLS']:
 		lang = str(f)[str(f).rindex('/') + 1:-3]
 		env.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = f)
 
-env.Install(env['BINDIR'], 'ekg/ekg2')
+env.Install(env['BINDIR'], 'ekg/%sekg2%s' % (env['PROGPREFIX'], env['PROGSUFFIX']))
 #env.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
 env.Install(env['DATADIR'], docfiles)
 env.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
@@ -630,6 +630,7 @@ for plugin, data in plugins.items():
 		ekg_staticlibs.append('%s/%s%s' % (plugpath, plugin, env['LIBSUFFIX']))
 	else:
 		penv.SharedLibrary(libfile, glob.glob('%s/*.c' % (plugpath)), LIBPREFIX = '')
+		penv.Install(env['PLUGINDIR'], libfile + env['SHLIBSUFFIX']) 
 
 	docfiles = []
 	for doc in docglobs:
@@ -643,7 +644,6 @@ for plugin, data in plugins.items():
 	for f in data['info']['extradist']:
 		docfiles.extend(glob.glob('%s/%s' % (plugpath, f)))
 
-	penv.Install(env['PLUGINDIR'], libfile + env['SHLIBSUFFIX']) 
 	penv.Install('%s/plugins/%s' % (env['DATADIR'], plugin), docfiles)
 
 if env['STATIC']:
