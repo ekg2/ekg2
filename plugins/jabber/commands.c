@@ -577,9 +577,9 @@ static COMMAND(jabber_command_passwd)
 static COMMAND(jabber_command_auth) {
 	jabber_private_t *j = session->priv;
 
-	const char *action;
-	const char *uid;
-	userlist_t *ul, *u;
+	const char *action, *__uid;
+	char *uid;
+	userlist_t *ul, *u, *next;
 	jabber_userlist_private_t *up;
 	int multi = 0, reject, result = 0;
 
@@ -619,16 +619,17 @@ static COMMAND(jabber_command_auth) {
 		j->send_watch->transfer_limit = -1;
 		u   = ul;
 		multi = 1;
-	} else if ((uid = jid_target2uid(session, target, quiet))) {
-		tabnick_add(uid);	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
-		if (!(u = userlist_find(session, uid)))
-			u = userlist_add(session, uid, NULL);
+	} else if ((__uid = jid_target2uid(session, target, quiet))) {
+		tabnick_add(__uid);	/* user jest OK, wiêc lepiej mieæ go pod rêk± */
+		if (!(u = userlist_find(session, __uid)))
+			u = userlist_add(session, __uid, NULL);
 	} else
 		return -1;
 
 	do {
-		uid = u->uid;		/* XXX: shall we check uid ? */
-		up  = jabber_userlist_priv_get(u);
+		uid		= xstrdup(u->uid);		/* XXX: shall we check uid ? */
+		up		= jabber_userlist_priv_get(u);
+		next	= u->next;				/* u may be removed */
 
 		if (match_arg(params[0], 'r', ("request"), 2)) {
 			if (multi && (up->authtype & EKG_JABBER_AUTH_TO)) /* already authorized */
@@ -660,6 +661,7 @@ static COMMAND(jabber_command_auth) {
 			} else if (reject && !(up->authtype & (EKG_JABBER_AUTH_REQ | EKG_JABBER_AUTH_UNREQ))) {
 				printq("jabber_auth_noreq", uid+5, session_name(session));
 				result = -1;
+				xfree(uid);
 				break;
 			}
 
@@ -678,14 +680,16 @@ static COMMAND(jabber_command_auth) {
 
 			printq("invalid_params", name);
 			result = -1;
+			xfree(uid);
 			break;
 
 		}
 
 		/* NOTE: libtlen send this without id */
 		watch_write(j->send_watch, "<presence to=\"%s\" type=\"%s\" id=\"roster\"/>", uid+5, action);
+		xfree(uid);
 
-	} while ( multi && (u = u->next) );
+	} while ( multi && (u = next) );
 
 	if (multi)
 		JABBER_COMMIT_DATA(j->send_watch);
