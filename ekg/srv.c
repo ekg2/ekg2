@@ -69,6 +69,10 @@ static inline uint32_t cli_readint32(const unsigned char *buff)
 }
 #endif
 
+#ifndef MAXDNAME
+#define MAXDNAME NS_MAXDNAME
+#endif
+
 /* idea:
  *   get srv (+ A's and AAAA's)
  *   resolve missing
@@ -81,7 +85,7 @@ struct _gim_host
 {
 	struct _gim_host *next;
 
-	unsigned char name[NS_MAXDNAME];
+	unsigned char name[MAXDNAME];
 	uint16_t prio;
 	uint16_t weight;
 	uint16_t port;
@@ -90,7 +94,7 @@ struct _gim_host
 	char **ip;
 };
 
-const int DNS_NS_MAXDNAME = NS_MAXDNAME;
+const int DNS_NS_MAXDNAME = MAXDNAME;
 
 LIST_ADD_COMPARE(gim_host_cmp, gim_host* ) { return data1->prio - data2->prio; }
 
