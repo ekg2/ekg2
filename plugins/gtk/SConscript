@@ -32,16 +32,20 @@ else:
 
 	Import('*')
 
-	pngs	= []
-	gg_pngs	= []
+	pngs	= {}
 	for f in glob.glob('iconssets/*.png'):
-		if f[10:13] == 'gg-':
-			gg_pngs.append(f)
+		dash = f.find('-')
+		if dash > 0:
+			key = '_%s' % f[10:dash]
 		else:
-			pngs.append(f)
+			key = ''
+
+		if not key in pngs:
+			pngs[key] = []
+		pngs[key].append(f)
 
 	penv['BUILDERS']['InlinePNGGen'] = pnggen
-	penv.InlinePNGGen('inline_pngs.h', pngs)
-	penv.InlinePNGGen('inline_pngs_gg.h', gg_pngs)
+	for key, vals in pngs.items():
+		penv.InlinePNGGen('inline_pngs%s.h' % key, vals)
 
 # vim:ts=4:sts=4:sw=4:syntax=python:sw=4:syntax=python
