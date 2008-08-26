@@ -29,6 +29,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <arpa/nameser.h>
+#include <unistd.h>
 #ifdef HAVE_RESOLV_H
 #include <resolv.h> /* res_init, res_query */
 #endif
@@ -409,11 +410,16 @@ static int basic_resolver_item (gim_host *srv)
 
 		for (aitmp = ai; aitmp; aitmp = aitmp->ai_next) {
 			int ip_cnt;
+			void *tm;
 
-			if (aitmp->ai_family != AF_INET && aitmp->ai_family != AF_INET6)
+			if (aitmp->ai_family == AF_INET6)
+				tm = &(((struct sockaddr_in6 *) aitmp->ai_addr)->sin6_addr);
+			else if (aitmp->ai_family == AF_INET) 
+				tm = &(((struct sockaddr_in *) aitmp->ai_addr)->sin_addr);
+			else
 				continue;
 
-			ip_cnt = array_add_check (&(srv->ip), ekg_inet_ntostr(aitmp->ai_family, &((struct sockaddr_in *)aitmp->ai_addr)->sin_addr), 0);
+			ip_cnt = array_add_check(&(srv->ip), ekg_inet_ntostr(aitmp->ai_family, tm), 0);
 			if (ip_cnt)
 			{
 			    srv->ai_family = xrealloc(srv->ai_family, ip_cnt*sizeof(srv->ai_family));
