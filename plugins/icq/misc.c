@@ -193,6 +193,15 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
+			case 'A':	/* append string_t */
+			{
+				string_t buf = va_arg(ap, string_t);
+
+				string_append_raw(str, buf->str, buf->len);
+
+				break;
+			}
+
 			case ' ':	/* skip whitespaces */
 			case 0x09:
 			case 0x0A:

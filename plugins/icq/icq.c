@@ -709,6 +709,9 @@ static COMMAND(icq_command_addssi) {
 	uint32_t uin;
 
 	char *nickname = NULL;
+	char *phone = NULL;
+	char *email = NULL;
+	char *comment = NULL;
 
 		/* instead of PARAMASTARGET, 'cause that one fails with /add username in query */
 	if (get_uid(session, params[0])) {
@@ -727,6 +730,9 @@ static COMMAND(icq_command_addssi) {
 		return -1;
 	}
 
+	if ( !session || !(j = session->priv) ) /* WTF? */
+		return -1;
+
 	if (params[0]) {
 		char **argv = array_make(params[0], " \t", 0, 1, 1);
 		int i;
@@ -734,6 +740,21 @@ static COMMAND(icq_command_addssi) {
 		for (i = 0; argv[i]; i++) {
 			if (match_arg(argv[i], 'g', "group", 2)) {
 				/* XXX */
+				continue;
+			}
+
+			if (match_arg(argv[i], 'p', "phone", 2) && argv[i + 1] && i++) {
+				phone = xstrdup(argv[i]);
+				continue;
+			}
+
+			if (match_arg(argv[i], 'c', "comment", 2) && argv[i + 1] && i++) {
+				comment = xstrdup(argv[i]);
+				continue;
+			}
+
+			if (match_arg(argv[i], 'e', "email", 2) && argv[i + 1] && i++) {
+				email = xstrdup(argv[i]);
 				continue;
 			}
 
@@ -756,12 +777,8 @@ static COMMAND(icq_command_addssi) {
 	/* sent packet */
 	if (nickname) { 
 		uint16_t min = 0xffff, max = 0, count = 0, iid;
-		string_t buddies = string_init(NULL);
+		string_t buddies = string_init(NULL), data = string_init(NULL);
 
-		if ( !session || !(j = session->priv) ) {
-			xfree(nickname);
-			return -1;
-		}
 
 		for (u = session->userlist; u; u = u->next) {
 			iid = user_private_item_get_int(u, "iid");
@@ -786,20 +803,28 @@ static COMMAND(icq_command_addssi) {
 
 		icq_pack_append(buddies, "W", iid);
 
+
 		icq_send_snac(session, 0x13, 0x11, 0, 0, "");		// Contacts edit start (begin transaction)
 
+		icq_pack_append(data, "T", icq_pack_tlv_str(0x131, nickname));
+		icq_pack_append(data, "T", icq_pack_tlv(0x66, NULL, 0)); //  XXX we are awaiting authorization for this buddy
+		if (email)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x137, email));	// locally assigned mail address
+		if (phone)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x13a, phone));	// locally assigned SMS number
+		if (comment)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x13c, comment));	// buddy comment
+
 		icq_send_snac(session, 0x13, 0x08, 0, 0,		// SSI edit: add item(s)
-				"U WWWW WW T",
+				"U WWW WA",
 				target+4,				// item name (uin)
 
 				(uint16_t) j->user_default_group,	// Group#
 				(uint16_t) iid,				// Item#
 				(uint16_t) 0,				// Buddy record
-				(uint16_t) 4 + 4 + xstrlen(nickname),	// Length of the additional data
 
-				(uint16_t) 0x0066, (uint16_t) 0,	// XXX we are awaiting authorization for this buddy.
-
-				icq_pack_tlv(0x131, nickname, xstrlen(nickname))
+				(uint16_t) data->len,			// Length of the additional data
+				data
 				);
 		
 		icq_send_snac(session, 0x13, 0x09, 0, 0,		// SSI edit: update group header
@@ -823,9 +848,14 @@ static COMMAND(icq_command_addssi) {
 			/* XXX ?wo? ask for authorizarion flag */
 		}
 
+		string_free(data, 1);
 		string_free(buddies, 1);
-		xfree(nickname);
 	}
+
+	xfree(comment);
+	xfree(email);
+	xfree(nickname);
+	xfree(phone);
 
 	return 0;
 }
@@ -1331,8 +1361,12 @@ static QUERY(icq_userlist_info_handle) {
 	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "member"))) )
 		printq("icq_user_info_generic", _("ICQ Member since"), tmp);
 
+	if ( (tmp = user_private_item_get(u, "mobile")) )
+		printq("icq_user_info_generic", _("Mobile"), tmp);
 	if ( (tmp = user_private_item_get(u, "comment")) )
 		printq("icq_user_info_generic", _("Comment"), tmp);
+	if ( (tmp = user_private_item_get(u, "email")) )
+		printq("icq_user_info_generic", _("e-mail"), tmp);
 	if ( user_private_item_get_int(u, "auth"))
 		printq("icq_user_info_generic", _("Waiting for authorization"), "yes");
 
@@ -1396,7 +1430,7 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 
-	command_add(&icq_plugin, "icq:addssi", "U ?", icq_command_addssi, ICQ_FLAGS, NULL);
+	command_add(&icq_plugin, "icq:addssi", "!p ?", icq_command_addssi, ICQ_FLAGS, "-p --phone -c --comment -e --email");
 
 	command_add(&icq_plugin, "icq:auth", "!p uU ?", icq_command_auth, ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, "-a --accept -d --deny -l --list -r --request -c --cancel");
 

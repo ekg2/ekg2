@@ -111,12 +111,23 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			icq_tlv_t *t_nick = icq_tlv_get(tlvs, 0x131);
 			icq_tlv_t *t_auth = icq_tlv_get(tlvs, 0x66);
 			icq_tlv_t *t_comment = icq_tlv_get(tlvs, 0x013C);
+			icq_tlv_t *t_phone = icq_tlv_get(tlvs, 0x013A);
+			icq_tlv_t *t_email = icq_tlv_get(tlvs, 0x0137);
 
-			char *comment, *nick, *tmp;
+			char *comment, *email, *phone, *nick, *tmp;
 			char *uid = icq_uid(name);
 
+			/* XXX make macro ? */
 			tmp = (t_comment && t_comment->len) ? xstrndup((char *) t_comment->buf, t_comment->len) : NULL;
 			comment = icq_convert_from_utf8(tmp);
+			xfree(tmp);
+
+			tmp = (t_phone && t_phone->len) ? xstrndup((char *) t_phone->buf, t_phone->len) : NULL;
+			phone = icq_convert_from_utf8(tmp);
+			xfree(tmp);
+
+			tmp = (t_email && t_email->len) ? xstrndup((char *) t_email->buf, t_email->len) : NULL;
+			email = icq_convert_from_utf8(tmp);
 			xfree(tmp);
 
 			tmp = (t_nick && t_nick->len) ? xstrndup((char *) t_nick->buf, t_nick->len) : xstrdup(uid);
@@ -139,6 +150,12 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			if (comment)
 				user_private_item_set(u, "comment", comment);
 
+			if (email)
+				user_private_item_set(u, "email", email);
+
+			if (phone)
+				user_private_item_set(u, "mobile", phone);
+
 			if (t_auth)
 				user_private_item_set_int(u, "auth", 1);
 /*
@@ -148,6 +165,8 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 
 			xfree(uid);
 			xfree(nick);
+			xfree(email);
+			xfree(phone);
 			xfree(comment);
 			break;
 		}
