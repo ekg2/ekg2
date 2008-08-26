@@ -30,6 +30,7 @@
 #else 
 #  include <winbase.h>
 #endif
+#include <limits.h>
 
 #include "configfile.h"
 #include "commands.h"
