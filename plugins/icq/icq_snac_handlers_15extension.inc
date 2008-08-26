@@ -340,7 +340,7 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	char *temp;
 	const char *__age = NULL;
 	const char *__gender = "";
-	const char *__active = "";
+	char *__active;
 
 	uint32_t uin;
 	uint16_t len2;
@@ -387,9 +387,6 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 			__age = itoa(age);		// XXX calculate birthyear?
 		if (gender)
 			__gender = (gender==2) ? "m" : "f";
-		/* XXX
-		 * status (0 - offline, 1 - online, 2 - non_webaware)
-		 */
 	} else {
 		debug_error("icq_snac_extension_userfound_common() broken\n");
 		auth = status = gender = age = 0;
@@ -416,9 +413,31 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	 * 					       Zawadzki
 	 */
 
+	{
+		const char *fvalue;
+		/* XXX ?wo? new formats for icq status
+		 * status (0 - offline, 1 - online, 2 - non_webaware)
+		 */
+		switch (status) {
+			case 0:
+				fvalue = format_find("search_results_multi_notavail");
+				break;
+			case 1:
+				fvalue = format_find("search_results_multi_avail");
+				break;
+			default:
+				fvalue = format_find("search_results_multi_unknown");
+				break;
+		}
+		temp = format_string(fvalue);
+		/* XXX ?wo? add format for "auth" */
+		__active = saprintf("%s %s", temp, auth ? " " : "A");
+		xfree(temp);
+	}
 	print_info(NULL, s, "search_results_multi", itoa(uin), full_name, nickname, email,
 			__age ? __age : ("-"), __gender, __active);
 
+	xfree(__active);
 	xfree(full_name);
 
 	icq_hexdump(DEBUG_WHITE, buf, len);
