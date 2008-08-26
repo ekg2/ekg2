@@ -663,7 +663,6 @@ int main(int argc, char **argv)
 	int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0, new_status = 0;
 	char *tmp = NULL, *new_descr = NULL;
 	char *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
-	struct passwd *pw;
 #ifndef NO_POSIX_SYSTEM
 	struct rlimit rlim;
 #else
@@ -696,17 +695,23 @@ int main(int argc, char **argv)
 
 	strlcpy(argv0, argv[0], sizeof(argv0));
 
-	if (!(home_dir = xstrdup(getenv("HOME")))) {
+	home_dir = xstrdup(getenv("HOME"));
+
+#ifndef NO_POSIX_SYSTEM
+	if (!home_dir) {
+		struct passwd *pw;
+
 		if ((pw = getpwuid(getuid())))
 			home_dir = xstrdup(pw->pw_dir);
 	}
-#ifdef NO_POSIX_SYSTEM
+#else
 	if (!home_dir)
 		home_dir = xstrdup(getenv("USERPROFILE"));
 
 	if (!home_dir)
 		home_dir = xstrdup("c:\\");
 #endif
+
 	if (!home_dir) {
 		fprintf(stderr, _("Can't find user's home directory. Ask administration to fix it.\n"));
 		return 1;
