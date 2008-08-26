@@ -16,6 +16,7 @@ void pixmaps_init(void);
 extern GdkPixbuf *pix_ekg2;
 extern GdkPixbuf *pixs[];
 extern GdkPixbuf *gg_pixs[];
+extern GdkPixbuf *icq_pixs[];
 
 #define PIXBUF_FFC 0
 #define PIXBUF_AVAIL 1

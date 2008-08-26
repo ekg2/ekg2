@@ -606,8 +606,12 @@ static idle_t *ul_tag = NULL;
 		userlist_t *ul;
 		
 	/* check what network, and select pixs */
-		if (sess->session->plugin == plugin_find("gg"))	pxs = gg_pixs;
-		else						pxs = pixs;
+		if (sess->session->plugin == plugin_find("gg"))
+			pxs = gg_pixs;
+		else if (sess->session->plugin == plugin_find("icq"))
+			pxs = icq_pixs;
+		else
+			pxs = pixs;
 
 		for (ul = sess->session->userlist; ul; ul = ul->next) {
 			userlist_t *u = ul;

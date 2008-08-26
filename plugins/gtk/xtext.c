@@ -2410,17 +2410,17 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 
 			gtk_xtext_reset(xtext, mark, !xtext->in_hilight);
 
-			isbold = ((last_attr & 64) != 0);
+			isbold = ((last_attr & FSTR_BOLD) != 0);
 
 /*			xtext->bold = (isbold); */
 			/* more follow */
 
-			if (!(last_attr & 128)) {
+			if (!(last_attr & FSTR_NORMAL)) {
 				if (!mark) {
-					xtext_set_fg(xtext, gc, ((last_attr & 7) + 8*isbold));
+					xtext_set_fg(xtext, gc, ((last_attr & FSTR_FOREMASK) + 8*(isbold)));
 /*					xtext_set_bg(xtext, gc, ((last_attr >> 3) & 7)); */
 				}
-				xtext->col_fore = ((last_attr & 7) + 8*isbold);
+				xtext->col_fore = ((last_attr & FSTR_FOREMASK) + 8*(isbold));
 /*				xtext->col_back = ((last_attr >> 3) & 7); */
 			} else {
 				if (isbold) {
