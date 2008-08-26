@@ -191,7 +191,7 @@ int config_lastlog_display_all = 0;
 int config_version = 0;
 char *config_exit_exec = NULL;
 int config_session_locks = 0;
-char *config_me_nick = NULL;
+char *config_nickname = NULL;
 
 char *last_search_first_name = NULL;
 char *last_search_last_name = NULL;

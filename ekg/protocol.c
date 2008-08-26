@@ -719,7 +719,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		(is_me ? text+4 : text),
 					/* XXX, get_uid() get_nickname() */
 		(class >= EKG_MSGCLASS_SENT ?
-			(is_me && config_me_nick ? config_me_nick : session_alias_uid(s))
+			(is_me && config_nickname ? config_nickname : session_alias_uid(s))
 			: get_nickname(s, sender)),
 		(class >= EKG_MSGCLASS_SENT ? s->uid : get_uid(s, sender)),
 		(secure ? securestr : ""));

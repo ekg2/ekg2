@@ -259,7 +259,7 @@ extern char *config_dcc_dir;
 extern int config_version;
 extern char *config_exit_exec;
 extern int config_session_locks;
-extern char *config_me_nick;
+extern char *config_nickname;
 
 extern char *home_dir;
 extern char *config_dir;
