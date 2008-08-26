@@ -157,7 +157,7 @@ static void menu_about(GtkWidget *wid, gpointer sess) {
 		"<span size=\"x-large\"><b>ekg2-%s</b></span>\n\n"
 			"<b>Compiled on</b>: %s\n\n"
 			"<small>gtk frontend based on xchat: \302\251 1998-2007 Peter \305\275elezn\303\275 &lt;zed@xchat.org></small>\n"
-			"<small>iconsets in userlist copied from psi-0.10 (crystal-gadu.jisp and crystal-roster.jisp)</small>",
+			"<small>iconsets in userlist copied from psi (crystal-gadu.jisp and crystal-roster.jisp and crystal-icq.jisp) (c) Remko Tronçon</small>",
 			VERSION, compile_time());
 
 	gtk_label_set_markup(GTK_LABEL(label), buf);
