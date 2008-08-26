@@ -491,11 +491,6 @@ int basic_resolver(gim_host **hostlist, const char *hostname, int port)
 			else
 				continue;
 
-
-			/* We assume that sin_addr in sockaddr_in has exactly
-			 * the same offset from beginning of a struct as
-			 * sin_addr6 in sockaddr_in6 struct
-			 */
 			ip_cnt = array_add_check (&(srv->ip), ekg_inet_ntostr(aitmp->ai_family, tm), 0);
 			if (ip_cnt)
 			{
