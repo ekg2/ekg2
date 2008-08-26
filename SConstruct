@@ -259,7 +259,9 @@ msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix 
 defgen = Builder(action = WriteDefines, suffix = '.h')
 stagen = Builder(action = WriteStatic, suffix = '.c')
 
-env = Environment(BUILDERS = {'RecodeHelp': recoder, 'CompileMsg': msgfmt, 'Defines': defgen, 'StaticLoader': stagen})
+env = Environment(
+	BUILDERS = {'RecodeHelp': recoder, 'CompileMsg': msgfmt, 'Defines': defgen, 'StaticLoader': stagen}
+)
 opts = Options('options.cache')
 
 avplugins = [elem.split('/')[1] for elem in glob.glob('plugins/*/')]
@@ -552,25 +554,27 @@ docglobs = ['commands*', 'vars*', 'session*']
 
 env.Alias('install', [env['PREFIX'], env['EPREFIX']])
 
+cenv = env.Clone()
+
 docfiles = []
 for doc in docglobs:
 	docfiles.extend(glob.glob('docs/%s.txt' % doc))
 if env['UNICODE']:
-	env.RecodeHelp('docs/', docfiles)
+	cenv.RecodeHelp('docs/', docfiles)
 	docfiles = []
 	for doc in docglobs:
 		docfiles.extend(glob.glob('docs/%s.txt' % doc))
 
 if defines['ENABLE_NLS']:
-	env.CompileMsg('po/', glob.glob('po/*.po'))
+	cenv.CompileMsg('po/', glob.glob('po/*.po'))
 	for f in glob.glob('po/*.mo'):
 		lang = str(f)[str(f).rindex('/') + 1:-3]
-		env.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = f)
+		cenv.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = f)
 
-env.Install(env['BINDIR'], 'ekg/%sekg2%s' % (env['PROGPREFIX'], env['PROGSUFFIX']))
-#env.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
-env.Install(env['DATADIR'], docfiles)
-env.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
+cenv.Install(env['BINDIR'], 'ekg/%sekg2%s' % (env['PROGPREFIX'], env['PROGSUFFIX']))
+#cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
+cenv.Install(env['DATADIR'], docfiles)
+cenv.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
 
 adddocs = [elem for elem in glob.glob('docs/*.txt') if not elem in docfiles]
 for a in glob.glob('*') + glob.glob('docs/*'):
@@ -590,7 +594,7 @@ for a in glob.glob('*') + glob.glob('docs/*'):
 		i = b.rfind('.')
 		if b[i:] == '.txt' and not b in docfiles:
 			adddocs.append(a)
-env.Install(env['DOCDIR'], adddocs)
+cenv.Install(env['DOCDIR'], adddocs)
 
 for f in glob.glob('docs/*.[12345678]'):
 	i = f.rindex('.')
@@ -606,7 +610,7 @@ for f in glob.glob('docs/*.[12345678]'):
 		lng = '%s/' % lng
 
 	fn = '%s/%sman%s/%s' % (env['MANDIR'], lng, cat, fn)
-	env.InstallAs(target = fn, source = f)
+	cenv.InstallAs(target = fn, source = f)
 
 ekg_libpath = []
 
@@ -650,7 +654,6 @@ if env['STATIC']:
 	env.StaticLoader('ekg2-static.c', [])
 	ekg_staticlibs.insert(0, 'ekg2-static.c') # well, it ain't exactly static lib, but no need to panic
 
-cenv = env.Clone()
 cenv.Append(LIBS = ekg_libs)
 cenv.Append(LIBPATH = ekg_libpath)
 cenv.Append(LINKFLAGS = ['-Wl,--export-dynamic'])
