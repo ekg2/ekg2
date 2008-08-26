@@ -705,6 +705,7 @@ static WATCHER(icq_handle_hubresolver) {
 
 static COMMAND(icq_command_addssi) {
 	userlist_t *u;
+	icq_private_t *j;
 	uint32_t uin;
 
 	char *nickname = NULL;
@@ -751,9 +752,80 @@ static COMMAND(icq_command_addssi) {
 		}
 		array_free(argv);
 	}
-	/* XXX, sent packet */
 
-	xfree(nickname);
+	/* sent packet */
+	if (nickname) { 
+		uint16_t min = 0xffff, max = 0, count = 0, iid;
+		string_t buddies = string_init(NULL);
+
+		if ( !session || !(j = session->priv) ) {
+			xfree(nickname);
+			return -1;
+		}
+
+		for (u = session->userlist; u; u = u->next) {
+			iid = user_private_item_get_int(u, "iid");
+			icq_pack_append(buddies, "W", iid);
+			if (iid>max) max = iid;
+			if (iid<min) min = iid;
+			count++;
+		}
+		
+		if (count) {
+			if (min>1)
+				iid = 1;
+/*	XXX ?wo? find iid (for new user) between min, max
+			else if (max != count) {
+				
+			}
+*/
+			else
+				iid = max + 1;
+		} else
+			iid = 1;
+
+		icq_pack_append(buddies, "W", iid);
+
+		icq_send_snac(session, 0x13, 0x11, 0, 0, "");		// Contacts edit start (begin transaction)
+
+		icq_send_snac(session, 0x13, 0x08, 0, 0,		// SSI edit: add item(s)
+				"U WWWW WW T",
+				target+4,				// item name (uin)
+
+				(uint16_t) j->user_default_group,	// Group#
+				(uint16_t) iid,				// Item#
+				(uint16_t) 0,				// Buddy record
+				(uint16_t) 4 + 4 + xstrlen(nickname),	// Length of the additional data
+
+				(uint16_t) 0x0066, (uint16_t) 0,	// XXX we are awaiting authorization for this buddy.
+
+				icq_pack_tlv(0x131, nickname, xstrlen(nickname))
+				);
+		
+		icq_send_snac(session, 0x13, 0x09, 0, 0,		// SSI edit: update group header
+				"U WWWW T",
+				"ekg2",					// default group name
+				(uint16_t) j->user_default_group,	// Group#
+				(uint16_t) 0,				// Item#
+				(uint16_t) 1,				// Group record
+				(uint16_t) buddies->len + 4,		// Length of the additional data
+				icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
+				);
+
+		icq_send_snac(session, 0x13, 0x12, 0, 0, "");	// Contacts edit end (finish transaction)
+
+		/* XXX ?wo? add user to contact list after serwer response (OK) */
+		if ( (u = userlist_add(session, target, nickname)) ) {
+			query_emit_id(NULL, USERLIST_ADDED, &u->uid, &u->nickname, &quiet);
+			query_emit_id(NULL, ADD_NOTIFY, &session->uid, &u->uid);
+			user_private_item_set_int(u, "iid", iid);
+			user_private_item_set_int(u, "gid", j->user_default_group);
+			/* XXX ?wo? ask for authorizarion flag */
+		}
+
+		string_free(buddies, 1);
+		xfree(nickname);
+	}
 
 	return 0;
 }

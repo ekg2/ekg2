@@ -369,8 +369,8 @@ SNAC_SUBHANDLER(icq_snac_userlist_edit_ack) {
 			break;
 		switch (err) {
 			case 0x0000:
-				msg = "No errors (success)";
-				break;
+				debug_white("icq_snac_userlist_edit_ack() err:0 // OK!\n");
+				return 0;
 			case 0x0002:
 				msg = "Item you want to modify not found in list";
 				break;
