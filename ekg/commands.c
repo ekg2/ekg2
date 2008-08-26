@@ -575,6 +575,7 @@ typedef struct {
 	char *session;		/**< Session UID */
 	int quiet;		/**< Whether to be quiet (i.e. don't print info on exit) */
 	string_t buf;		/**< Buffer */
+	char *cmdexec;		/**< Command to execute with result */
 } cmd_exec_info_t;
 
 static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
@@ -590,24 +591,24 @@ static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 			command_exec_format(i->target, session_find(i->session), quiet, ("/ %s"), i->buf->str);
 			string_free(i->buf, 1);
 		}
+		xfree(i->cmdexec);
 		xfree(i->target);
 		xfree(i->session);
 		xfree(i);
 		return 0;
 	}
 
-	if (!i->target) {
-		if (*watch)
-			printq("exec", watch);
-		return 0;
-	}
-
-	if (i->buf) {
+	if (i->cmdexec) {
+		if (*watch) /* XXX: maybe strip only last \n ? */
+			command_exec_format(i->target, session_find(i->session), quiet, ("/%s %s"), i->cmdexec, watch);
+	} else if (i->buf) {
 		string_append(i->buf, watch);
 		string_append(i->buf, ("\r\n"));
-	} else {
+	} else if (i->target)
 		command_exec_format(i->target, session_find(i->session), quiet, ("/ %s"), watch);
-	}
+	else if (*watch)
+		printq("exec", watch);
+
 	return 0;
 }
 
@@ -623,8 +624,8 @@ COMMAND(cmd_exec)
 	pid_t pid;
 
 	if (params[0]) {
-		int fd[2] = { 0, 0 }, buf = 0, add_commandline = 0;
-		const char *command = params[0], *target = NULL;
+		int fd[2] = { 0, 0 }, buf = 0, cmdx = 0, add_commandline = 0;
+		const char *command = params[0], *__target = NULL, *cmdexec = NULL;
 		char **args = NULL;
 		cmd_exec_info_t *i;
 		watch_t *w;
@@ -633,10 +634,12 @@ COMMAND(cmd_exec)
 			int big_match = 0;
 			args = (char **) params;
 
-			if (match_arg(args[0], 'M', ("MSG"), 2) || (buf = match_arg(args[0], 'B', ("BMSG"), 2)))
+			if (match_arg(args[0], 'M', ("MSG"), 2) || (buf = match_arg(args[0], 'B', ("BMSG"), 2)
+						|| (cmdx = match_arg(args[0], 'C', ("CMD"), 2))))
 				big_match = add_commandline = 1;
 
-			if (big_match || match_arg(args[0], 'm', ("msg"), 2) || (buf = match_arg(args[0], 'b', ("bmsg"), 2))) {
+			if (big_match || match_arg(args[0], 'm', ("msg"), 2) || (buf = match_arg(args[0], 'b', ("bmsg"), 2))
+						|| (cmdx = match_arg(args[0], 'c', ("cmd"), 2))) {
 				const char *uid;
 
 				if (!args[1] || !args[2]) {
@@ -644,12 +647,14 @@ COMMAND(cmd_exec)
 					return -1;
 				}
 
-				if (!(uid = get_uid(session, args[1]))) {
+				if (cmdx) {
+					cmdexec	= args[1];
+					__target = target;
+				} else if (!(uid = get_uid(session, args[1]))) {
 					printq("user_not_found", args[1]);
 					return -1;
-				}
-
-				target = uid;
+				} else
+					__target = uid;
 				command = args[2];
 			} else {
 				printq("invalid_params", name);
@@ -693,7 +698,8 @@ COMMAND(cmd_exec)
 		i = xmalloc(sizeof(cmd_exec_info_t));
 		
 		i->quiet = quiet;
-		i->target = xstrdup(target);
+		i->target = xstrdup(__target);
+		i->cmdexec = xstrdup(cmdexec);
 		i->session = xstrdup(session_uid_get(session));
 
 		if (buf)
