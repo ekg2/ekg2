@@ -77,8 +77,6 @@ extern list_t gg_currently_checked;
  * Here we keep all userlist things, which are private to GG protocol, and because of this were removed from core userlist_t.
  */
 typedef struct {
-	char *first_name;	/**< first name */
-	char *last_name;	/**< surname */
 
 	int protocol;		/**< Protocol version */
 

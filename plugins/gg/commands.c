@@ -1511,22 +1511,14 @@ static COMMAND(gg_command_modify) {
 	for (i = 0; argv && argv[i]; i++) {
 		
 		if (match_arg(argv[i], 'f', ("first"), 2) && argv[i + 1]) {
-			if (up) {
-				xfree(up->first_name);
-				up->first_name = xstrdup(argv[++i]);
-				modified = 1;
-			} else /* skip arg */
-				i++;
+			user_private_item_set(u, "first_name", xstrdup(argv[++i]));
+			modified = 1;
 			continue;
 		}
 		
 		if (match_arg(argv[i], 'l', ("last"), 2) && argv[i + 1]) {
-			if (up) {
-				xfree(up->last_name);
-				up->last_name = xstrdup(argv[++i]);
-				modified = 1;
-			} else /* skip arg */
-				i++;
+			user_private_item_set(u, "last_name", xstrdup(argv[++i]));
+			modified = 1;
 			continue;
 		}
 		

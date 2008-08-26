@@ -1733,6 +1733,10 @@ void theme_init()
 	format_add("user_info_status_time", _("%K| %nCurrent status since: %T%1%n\n"), 1);
 	format_add("user_info_block", _("%K| %nBlocked\n"), 1);
 	format_add("user_info_offline", _("%K| %nCan't see our status\n"), 1);
+	format_add("user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
+	format_add("user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
+	format_add("user_info_ip", _("%K| %nAddress: %T%1%n\n"), 1);
+	format_add("user_info_last_ip", _("%K| %nLast address: %T%1%n\n"), 1);
 	format_add("user_info_groups", _("%K| %nGroups: %T%1%n\n"), 1);
 	format_add("user_info_never_seen", _("%K| %nNever seen\n"), 1);
 	format_add("user_info_last_seen", _("%K| %nLast seen: %T%1%n\n"), 1);

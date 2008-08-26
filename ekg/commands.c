@@ -1326,6 +1326,8 @@ COMMAND(cmd_list)
 	const char *tmp;
 	metacontact_t *m = NULL;
 	const char *params0 = params[0];
+	const char *__first_name, *__last_name;
+	int __ip, __port, __last_ip, __last_port;
 
 	if (!params0 && window_current->target) { 
 		params0 = window_current->target;
@@ -1466,7 +1468,46 @@ list_user:
 		if (ekg_group_member(u, "__offline"))
 			printq("user_info_offline", u->nickname);
 
+		/*
+		 * (frequently) common private data
+		 */
+		__first_name = user_private_item_get(u, "first_name");
+		__last_name = user_private_item_get(u, "last_name");
+		if (xstrcmp(__first_name, "") && xstrcmp(__last_name, ""))
+			printq("user_info_name", __first_name, __last_name);
+		else if (xstrcmp(__first_name, ""))
+			printq("user_info_name", __first_name, "");
+		else if (xstrcmp(__last_name, ""))
+			printq("user_info_name", __last_name, "");
+
+		if ( (tmp = user_private_item_get(u, "mobile")) )
+			printq("user_info_mobile", tmp);
+
+		__ip = user_private_item_get_int(u, "ip");
+		__port = user_private_item_get_int(u, "port");
+		__last_ip = user_private_item_get_int(u, "last_ip");
+		__last_port = user_private_item_get_int(u, "last_port");
+		if (__ip) {
+			char *ip_str;
+			if (__port)
+				ip_str = saprintf("%s:%d", inet_ntoa(*((struct in_addr*) &__ip)), __port);
+			else
+				ip_str = saprintf("%s", inet_ntoa(*((struct in_addr*) &__ip)));
+			printq("user_info_ip", ip_str);
+			xfree(ip_str);
+		} else if (__last_ip) {
+			char *last_ip_str;
+				if (__last_port)
+					last_ip_str = saprintf("%s:%d", inet_ntoa(*((struct in_addr*) &__last_ip)), __last_port);
+				else
+					last_ip_str = saprintf("%s", inet_ntoa(*((struct in_addr*) &__last_ip)));
+			printq("user_info_last_ip", last_ip_str);
+			xfree(last_ip_str);
+		}
+
+
 		query_emit_id(NULL, USERLIST_INFO, &u, &quiet);
+
 
 		if (u->groups) {
 			char *groups = group_to_string(u->groups, 0, 1);

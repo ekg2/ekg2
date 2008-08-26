@@ -162,37 +162,12 @@ static QUERY(gg_userlist_info_handle) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
 	gg_userlist_private_t *up;
-	const char *tmp;
-	int __ip, __port, __last_ip;
+	int __port;
 
 	if (!u || valid_plugin_uid(&gg_plugin, u->uid) != 1 || !(up = gg_userlist_priv_get(u)))
 		return 1;
 
-	__ip = user_private_item_get_int(u, "ip");
 	__port = user_private_item_get_int(u, "port");
-	__last_ip = user_private_item_get_int(u, "last_ip");
-
-	if (up->first_name && xstrcmp(up->first_name, "") && up->last_name && xstrcmp(up->last_name, ""))
-		printq("gg_user_info_name", up->first_name, up->last_name);
-	else if (up->first_name && xstrcmp(up->first_name, ""))
-		printq("gg_user_info_name", up->first_name, "");
-	else if (up->last_name && xstrcmp(up->last_name, ""))
-		printq("gg_user_info_name", up->last_name, "");
-
-	if ( (tmp = user_private_item_get(u, "mobile")) )
-		printq("gg_user_info_mobile", tmp);
-
-	if (__ip) {
-		char *ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &__ip)), itoa(__port));
-		printq("gg_user_info_ip", ip_str);
-		xfree(ip_str);
-	} else if (__last_ip) {
-		char *last_ip_str = saprintf("%s:%s", inet_ntoa(*((struct in_addr*) &__last_ip)),
-							user_private_item_get(u, "last_port"));
-		printq("gg_user_info_last_ip", last_ip_str);
-		xfree(last_ip_str);
-	}
-
 	if (__port == 2)
 		printq("gg_user_info_not_in_contacts");
 	if (__port == 1)
@@ -570,8 +545,6 @@ static QUERY(gg_userlist_priv_handler) {
 		
 	switch (function) {
 		case EKG_USERLIST_PRIVHANDLER_FREE:
-			xfree(p->first_name);
-			xfree(p->last_name);
 			xfree(u->priv);
 			u->priv = NULL;
 			user_private_items_destroy(u);
@@ -592,8 +565,8 @@ static QUERY(gg_userlist_priv_handler) {
 				xfree(tmp);
 			} 
 
-			p->first_name	= entry[0];	entry[0] = NULL;
-			p->last_name	= entry[1];	entry[1] = NULL;
+			user_private_item_set(u, "first_name", entry[0]);	entry[0] = NULL;
+			user_private_item_set(u, "last_name",  entry[1]);	entry[1] = NULL;
 			user_private_item_set(u, "mobile",     entry[4]);	entry[4] = NULL;
 			break;
 		}
@@ -602,13 +575,13 @@ static QUERY(gg_userlist_priv_handler) {
 		{
 			char **entry	= *va_arg(ap, char ***);
 
-			if (p->first_name) {
+			if ( (tmp = user_private_item_get(u, "first_name")) ) {
 				xfree(entry[0]);
-				entry[0] = xstrdup(p->first_name);
+				entry[0] = xstrdup(tmp);
 			}
-			if (p->last_name) {
+			if ( (tmp = user_private_item_get(u, "last_name")) ) {
 				xfree(entry[1]);
-				entry[1] = xstrdup(p->last_name);
+				entry[1] = xstrdup(tmp);
 			}
 			if ( (tmp = user_private_item_get(u, "mobile")) ) {
 				xfree(entry[4]);
@@ -622,13 +595,6 @@ static QUERY(gg_userlist_priv_handler) {
 			const char *name	= *va_arg(ap, const char **);
 			const char *val		= *va_arg(ap, const char **);
 
-			if (!xstrcmp(name, "first_name")) {
-				xfree(p->first_name);
-				p->first_name = xstrdup(val);
-			} else if (!xstrcmp(name, "last_name")) {
-				xfree(p->last_name);
-				p->last_name = xstrdup(val);
-			}
 			user_private_item_set(u, name, val);		// XXX ?wo? ???
 			break;
 		}
@@ -1565,12 +1531,8 @@ static int gg_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	format_add("gg_version", _("%> %TGadu-Gadu%n: libgadu %g%1%n (headers %c%2%n), protocol %g%3%n (%c0x%4%n)"), 1);
 	/* /list */
-	format_add("gg_user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
-	format_add("gg_user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
 	format_add("gg_user_info_not_in_contacts", _("%K| %nDoesn't have us in roster\n"), 1);
 	format_add("gg_user_info_firewalled", _("%K| %nFirewalled/NATed\n"), 1);
-	format_add("gg_user_info_ip", _("%K| %nAddress: %T%1%n\n"), 1);
-	format_add("gg_user_info_last_ip", _("%K| %nLast address: %T%1%n\n"), 1);
 	format_add("gg_user_info_voip", _("%K| %nVoIP-capable\n"), 1);
 	format_add("gg_user_info_version", _("%K| %nVersion: %T%1%n\n"),1);
 	/* token things */

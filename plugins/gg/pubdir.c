@@ -550,16 +550,17 @@ static char *gg_userlist_dump(session_t *session)
 
 	for (ul = session->userlist; ul; ul = ul->next) {
 		userlist_t *u = ul;
-		gg_userlist_private_t *p = u->priv;
 		char *groups;
+		const char *__first_name = user_private_item_get(u, "first_name");
+		const char *__last_name = user_private_item_get(u, "last_name");
 		const char *__mobile = user_private_item_get(u, "mobile");
 
 		groups = group_to_string(u->groups, 1, 0);
 		
 		string_append_format(s, 
 			"%s;%s;%s;%s;%s;%s;%s%s\r\n",
-			(p && p->first_name) ? p->first_name : "",
-			(p && p->last_name) ? p->last_name : "",
+			__first_name ? __first_name : "",
+			__last_name ? __last_name : "",
 			(u->nickname) ? u->nickname : "",
 			(u->nickname) ? u->nickname : "",
 			__mobile ? __mobile : "",

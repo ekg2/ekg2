@@ -1344,16 +1344,9 @@ static QUERY(icq_userlist_info_handle) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
 	const char *tmp;
-	int i;
 
 	if (!u || valid_plugin_uid(&icq_plugin, u->uid) != 1)
 		return 1;
-
-	if ( (i = user_private_item_get_int(u, "ip")) ) {
-		char *ip_str = saprintf("%s", inet_ntoa(*((struct in_addr*) &i)));
-		printq("icq_user_info_generic", _("IP"), ip_str);
-		xfree(ip_str);
-	};
 
 	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "online"))) )
 		printq("icq_user_info_generic", _("Online since"), tmp);
@@ -1361,8 +1354,6 @@ static QUERY(icq_userlist_info_handle) {
 	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "member"))) )
 		printq("icq_user_info_generic", _("ICQ Member since"), tmp);
 
-	if ( (tmp = user_private_item_get(u, "mobile")) )
-		printq("icq_user_info_generic", _("Mobile"), tmp);
 	if ( (tmp = user_private_item_get(u, "comment")) )
 		printq("icq_user_info_generic", _("Comment"), tmp);
 	if ( (tmp = user_private_item_get(u, "email")) )
