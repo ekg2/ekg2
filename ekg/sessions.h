@@ -24,6 +24,10 @@
 #include <time.h>
 #include "dynstuff.h"
 
+/* --NOTE--
+ * When modifying status_t, remember to update status tables in stuff.c!
+ */
+
 /**
  * status_t - user's current status, as prioritized enum
  */

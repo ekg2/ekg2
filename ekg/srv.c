@@ -16,6 +16,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+/* --NOTE--
+ *
+ * All this code is called by child process, so debug*() won't work.
+ * Don't waste time trying it.
+ */
+
 /* this is srv resolver as used by ekg2 */
 
 #include "ekg2-config.h"
