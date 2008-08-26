@@ -167,9 +167,12 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			if (group != 0)
 			{
 				/* wGroupId != 0: a group record */
-				if (item_id == 0)
-				{ /* no item ID: this is a group */
-					/* XXX */
+				if (item_id == 0) {
+					/* no item ID: this is a group */
+					/* XXX ?wo? more groups ??? */
+					icq_private_t *j;
+					if (s && (j = s->priv) && (!j->user_default_group))
+						j->user_default_group = group;
 				} else {
 					debug_error("icq_userlist_parse_entry() Unhandled ROSTER_TYPE_GROUP wItemID != 0\n");
 				}

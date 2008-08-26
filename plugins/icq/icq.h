@@ -15,6 +15,7 @@ typedef struct {
 
 	int ssi;		/* server-side-userlist? */
 	int aim;		/* aim-ok? */
+	int user_default_group; /* XXX ?wo? TEMP! We should support list of groups */
 	string_t cookie;	/* connection login cookie */
 	string_t stream_buf;
 } icq_private_t;

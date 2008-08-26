@@ -214,6 +214,7 @@ int icq_write_info(session_t *s) {
 }
 
 void icq_session_connected(session_t *s) {
+	icq_private_t *j;
 	string_t pkt;
 
 	icq_write_info(s);
@@ -334,6 +335,7 @@ void icq_session_connected(session_t *s) {
 
 	debug_white(" *** Yeehah, login sequence complete\n");
 
+
 #if 0
 	info->bLoggedIn = 1;
 #endif
@@ -366,6 +368,27 @@ void icq_session_connected(session_t *s) {
 	protocol_connected_emit(s);
 
 	icq_write_status_msg(s);
+
+	{ /* XXX ?wo? find better place for it */
+		if (s && (j = s->priv) && (!j->user_default_group)) {
+			/* No groups on server!!! */
+			/* Once executed ugly code: */
+			icq_send_snac(s, 0x13, 0x11, 0, 0, "");	// Contacts edit start (begin transaction)
+
+			j->user_default_group = 69;
+
+			icq_send_snac(s, 0x13, 0x08, 0, 0,		// SSI edit: add item(s)
+					"U WW W W WWW",
+					"ekg2",				// default group name
+					(uint16_t) j->user_default_group, // Group#
+					(uint16_t) 0,			// Item#
+					(uint16_t) 1,			// Group record
+					(uint16_t) 6,			// Length of the additional data
+					(uint16_t) 0xc8, (uint16_t) 2, (uint16_t) 0	// tlv(0xc8) (len=2, val=0)
+					);
+			icq_send_snac(s, 0x13, 0x12, 0, 0, "");	// Contacts edit end (finish transaction)
+		}
+	}
 }
 
 static uint32_t icq_get_uid(session_t *s, const char *target) {
