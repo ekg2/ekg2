@@ -1,5 +1,5 @@
 GG_PNGS = iconssets/gg-avail.png iconssets/gg-away.png iconssets/gg-invisible.png iconssets/gg-notavail.png
-ICQ_PNGS = 
+ICQ_PNGS = iconssets/icq-avail.png iconssets/icq-away.png iconssets/icq-dnd.png iconssets/icq-ffc.png iconssets/icq-invisible.png iconssets/icq-notavail.png iconssets/icq-unknown.png iconssets/icq-xa.png
 PNGS = iconssets/ffc.png iconssets/avail.png iconssets/away.png iconssets/dnd.png iconssets/xa.png iconssets/invisible.png iconssets/notavail.png iconssets/icon_error.png iconssets/icon_unknown.png
 EXTRA_DIST = chanview-tabs.inc chanview-tree.inc iconssets/COPYING $(GG_PNGS) $(ICQ_PNGS) $(PNGS)
 
