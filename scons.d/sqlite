@@ -4,6 +4,12 @@
 Import('*')
 
 out = conf.PkgConfig('sqlite', flags)
+if not out:
+	flags.append('-lsqlite')
+
+old	= SetFlags(env, flags)
+out = conf.CheckLibWithHeader(env['LIBS'][0], ['sqlite.h'], 'C', 'sqlite *db = sqlite_open("", 0, 0);', 0)
+RestoreFlags(env, old)
 
 Return('out')
 
