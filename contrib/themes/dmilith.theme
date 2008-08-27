@@ -112,10 +112,10 @@ system %m%Alqqq%a %TSystem message %m%Aqqq qq q%a\n%m%Ax%a%n %|%3%n\n%|%m%Amqqqq
 
 gg_user_info_version %c%Ax%x %nVersion: %T%1%n\n
 gg_user_info_firewalled %c%Ax%a %nFirewalled/NATed\n
-gg_user_info_ip %c%Ax%a %nAddress: %T%1%n\n
-gg_user_info_last_ip %c%Ax%a %nLast address: %T%1%n\n
-gg_user_info_mobile %c%Ax%a %nTelephone: %T%1%n\n
-gg_user_info_name %c%Ax%a %nName: %T%1 %2%n\n
+user_info_ip %c%Ax%a %nAddress: %T%1%n\n
+user_info_last_ip %c%Ax%a %nLast address: %T%1%n\n
+user_info_mobile %c%Ax%a %nTelephone: %T%1%n\n
+user_info_name %c%Ax%a %nName: %T%1 %2%n\n
 gg_user_info_not_in_contacts %c%Ax%a %nDoesn't have us in roster\n
 gg_user_info_voip %c%Ax%a %nVoIP-capable\n
 
