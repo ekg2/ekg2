@@ -625,9 +625,7 @@ struct option ekg_options[] = {
 	{ "free-for-chat", optional_argument, 0, 'f' },
 	{ "xa", optional_argument, 0, 'x' },
 
-#ifdef USE_UNICODE
 	{ "unicode", no_argument, 0, 'U' }, 
-#endif
 
 	{ "help", no_argument, 0, 'h' },
 	{ "version", no_argument, 0, 'v' },
@@ -727,11 +725,7 @@ int main(int argc, char **argv)
 	signal(SIGALRM, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 #endif
-#ifdef USE_UNICODE
 	while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmNhvU", ekg_options, NULL)) != -1) 
-#else
-	while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmNhv", ekg_options, NULL)) != -1) 
-#endif
 	{
 		switch (c) {
 			case 'a':
@@ -816,11 +810,14 @@ int main(int argc, char **argv)
 				printf(_(EKG_USAGE), argv[0]);
 				return 0;
 
-#ifdef USE_UNICODE
 			case 'U':
+#ifdef USE_UNICODE
 				config_use_unicode = 1;
-				break;
+#else
+				fprintf(stderr, _("EKG2 compiled without unicode support. This just can't work!\n"));
+				return 1;
 #endif
+				break;
 
 			case 'v':
 				printf("ekg2-%s (compiled on %s)\n", VERSION, compile_time());
