@@ -2449,51 +2449,45 @@ void ekg_update_status(session_t *session)
 
 /* status string tables */
 
-/* ekg_statuses[] map status enums to 'old' status values, which are used e.g. in formats.
- * ekg_status_commands[] map status enums to names of commands setting that status,
- *	whenever that command differs from 'basic' status name in ekg_statuses[].
- * ekg_status_specials*[] maps alternative status names, and is used in ekg_status_int().
- *
- * XXX: struct *[]?
- */
+#define EKG_STATUS_OTHER_MAX 2
 
-const char *ekg_statuses[] = {
-/* 0x00 */	0, "error", "blocking", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x10 */	"unknown", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x20 */	"notavail", "invisible", "dnd", "xa", "away", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x30 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x40 */	"avail", "chat", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x50 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x60 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x70 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x80 */	"autoaway", "autoxa", "autoback", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x90 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xA0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xB0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xC0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xD0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xE0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0xF0 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+struct ekg_status_info {
+	status_t		status;		/* enumed status */
+	const char*		label;		/* name used in formats */
+	const char*		command;	/* command used to set status, if ==format, NULL */
+	const char*		other[EKG_STATUS_OTHER_MAX];	/* other possible names of status (used in revmap), XXX: to be removed */
+};
+
+const struct ekg_status_info ekg_statuses[] = {
+		{ EKG_STATUS_ERROR,			"error"								},
+		{ EKG_STATUS_BLOCKED,		"blocking"							},
+		{ EKG_STATUS_UNKNOWN,		"unknown"							},
+		{ EKG_STATUS_NA,			"notavail"							},
+		{ EKG_STATUS_INVISIBLE,		"invisible"							},
+		{ EKG_STATUS_DND,			"dnd"								},
+		{ EKG_STATUS_XA,			"xa"								},
+		{ EKG_STATUS_AWAY,			"away"								},
+		{ EKG_STATUS_AVAIL,			"avail",	"back",
+				"online" /* jabber */,	"available" /* tlen */			},
+		{ EKG_STATUS_FFC,			"chat",		"ffc"					},
+
+				/* here go the special statuses */
+		{ EKG_STATUS_AUTOAWAY,		"autoaway"							},
+		{ EKG_STATUS_AUTOXA,		"autoxa"							},
+		{ EKG_STATUS_AUTOBACK,		"autoback"							},
+		{ EKG_STATUS_NULL												}
 	};
 
-const char *ekg_status_commands[] = {
-/* 0x00 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x10 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x20 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x30 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x40 */	"back", "ffc", 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x50 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x60 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-/* 0x70 */	0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-	};
+static inline const struct ekg_status_info *status_find(const int status) {
+	const struct ekg_status_info *s;
 
-const char *ekg_status_specials[] = {
-		"available" /* tlen */, "online" /* jabber */, NULL
-	};
+	for (s = ekg_statuses; s->status != EKG_STATUS_NULL; s++) {
+		if (s->status == status)
+			return s;
+	}
 
-const int ekg_status_specials_i[] = {
-		EKG_STATUS_AVAIL, EKG_STATUS_AVAIL
-	};
+	return NULL;
+}
 
 /*
  * ekg_status_string()
@@ -2507,17 +2501,27 @@ const char *ekg_status_string(const int status, const int cmd)
 	const char *r = NULL;
 
 	if ((status > 0) && (status < (cmd == 2 ? 0x100 : 0x80))) {
-		if (cmd == 1)
-			r = ekg_status_commands[status]; /* if command differs from status */
-		if (!r)
-			r = ekg_statuses[status]; /* else fetch status */
+		const struct ekg_status_info *s = status_find(status);
+
+		if (s) {
+			if (cmd == 1)
+				r = s->command;		/* if command differs from status */
+			if (!r)
+				r = s->label;		/* else fetch status */
+		}
 	}
 
 	if (!r) {
+		const struct ekg_status_info *s = status_find(cmd == 1 ? EKG_STATUS_AVAIL : EKG_STATUS_UNKNOWN);
+
 		/* we only allow 00..7F, or 00..FF with cmd==2
 		 * else we return either UNKNOWN or AVAIL if cmd==1 */
 		debug_error("ekg_status_string(): called with unexpected status: 0x%02x\n", status);
-		return (cmd == 1 ? ekg_status_commands[EKG_STATUS_AVAIL] : ekg_statuses[EKG_STATUS_UNKNOWN]);
+		if (!s) {
+			debug_error("ekg_status_string(): critical error, status_find with predef value failed!\n");
+			return NULL;
+		}
+		return (cmd == 1 ? s->command : s->label);
 	}
 	
 	return r;
@@ -2534,25 +2538,21 @@ int ekg_status_int(const char *text)
 	const char **p;
 	int i;
 	const int *j;
+	const struct ekg_status_info *s;
 
-	/* At first, check statuses */
-	for (p = &ekg_statuses[0], i = 0; i < 0x80; p++, i++) {
-		if (!xstrcasecmp(text, *p))
-			return i;
-	}
-	/* then check commands */
-	for (p = &ekg_status_commands[0], i = 0; i < 0x80; p++, i++) {
-		if (!xstrcasecmp(text, *p))
-			return i;
-	}
-	/* and specials */
-	for (p = &ekg_status_specials[0], j = &ekg_status_specials_i[0]; *p; p++, j++) {
-		if (!xstrcasecmp(text, *p))
-			return *j;
+	for (s = ekg_statuses; s->status != EKG_STATUS_NULL; s++) {
+		if (!xstrcasecmp(text, s->label) || !xstrcasecmp(text, s->command))
+			return s->status;
+
+			/* XXX: to be removed */
+		for (i = 0; i < EKG_STATUS_OTHER_MAX; i++) {
+			if (!xstrcasecmp(text, s->other[i]))
+				return s->status;
+		}
 	}
 
 	debug_error("ekg_status_int(): Got unexpected status: %s\n", text);
-	return EKG_STATUS_UNKNOWN;
+	return EKG_STATUS_NULL;
 }
 
 /*
