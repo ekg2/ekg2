@@ -6,6 +6,11 @@ Import('*')
 out = conf.PkgConfig('openssl', flags)
 defines['HAVE_OPENSSL'] = out
 
+if out:
+	old	= SetFlags(env, flags)
+	out = conf.CheckLibWithHeader(env['LIBS'][0], [], 'C', 'SSL_new(0);', 0)
+	RestoreFlags(env, old)
+
 Return('out')
 
 # vim:ts=4:sts=4:sw=4:syntax=python
