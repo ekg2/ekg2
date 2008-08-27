@@ -744,16 +744,19 @@ static COMMAND(icq_command_addssi) {
 			}
 
 			if (match_arg(argv[i], 'p', "phone", 2) && argv[i + 1] && i++) {
+				xfree(phone);
 				phone = xstrdup(argv[i]);
 				continue;
 			}
 
 			if (match_arg(argv[i], 'c', "comment", 2) && argv[i + 1] && i++) {
+				xfree(comment);
 				comment = xstrdup(argv[i]);
 				continue;
 			}
 
 			if (match_arg(argv[i], 'e', "email", 2) && argv[i + 1] && i++) {
+				xfree(email);
 				email = xstrdup(argv[i]);
 				continue;
 			}
