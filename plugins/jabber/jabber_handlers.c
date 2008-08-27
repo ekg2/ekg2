@@ -1386,6 +1386,16 @@ JABBER_HANDLER(jabber_handle_iq) {
 	}
 }
 
+static inline int jabber_status_int(int tlen, const char *text) {
+	if (!tlen && !xstrcasecmp(text, "online"))
+		return EKG_STATUS_AVAIL;
+
+	if (tlen && !xstrcasecmp(text, "available"))
+		return EKG_STATUS_AVAIL;
+
+	return ekg_status_int(text);
+}
+
 JABBER_HANDLER(jabber_handle_presence) {
 	jabber_private_t *j = s->priv;
 
@@ -1574,7 +1584,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 			
 			if (!xstrcmp(jstatus, "na"))
 				na = 1;
-			else if ((status = ekg_status_int(jstatus)) == EKG_STATUS_UNKNOWN)
+			else if ((status = jabber_status_int(j->istlen, jstatus)) == EKG_STATUS_UNKNOWN)
 				debug_error("[jabber] Unknown presence: %s from %s. Please report!\n", jstatus, uid);
 
 			xfree(jstatus);

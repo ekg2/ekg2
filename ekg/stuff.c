@@ -2449,34 +2449,30 @@ void ekg_update_status(session_t *session)
 
 /* status string tables */
 
-#define EKG_STATUS_OTHER_MAX 2
-
 struct ekg_status_info {
 	status_t		status;		/* enumed status */
 	const char*		label;		/* name used in formats */
 	const char*		command;	/* command used to set status, if ==format, NULL */
-	const char*		other[EKG_STATUS_OTHER_MAX];	/* other possible names of status (used in revmap), XXX: to be removed */
 };
 
 const struct ekg_status_info ekg_statuses[] = {
-		{ EKG_STATUS_ERROR,			"error"								},
-		{ EKG_STATUS_BLOCKED,		"blocking"							},
-		{ EKG_STATUS_UNKNOWN,		"unknown"							},
-		{ EKG_STATUS_NA,			"notavail"							},
-		{ EKG_STATUS_INVISIBLE,		"invisible"							},
-		{ EKG_STATUS_DND,			"dnd"								},
-		{ EKG_STATUS_XA,			"xa"								},
-		{ EKG_STATUS_AWAY,			"away"								},
-		{ EKG_STATUS_AVAIL,			"avail",	"back",
-				"online" /* jabber */,	"available" /* tlen */			},
-		{ EKG_STATUS_FFC,			"chat",		"ffc"					},
+		{ EKG_STATUS_ERROR,    "error"		},
+		{ EKG_STATUS_BLOCKED,  "blocking"	},
+		{ EKG_STATUS_UNKNOWN,  "unknown"	},
+		{ EKG_STATUS_NA,       "notavail"	},
+		{ EKG_STATUS_INVISIBLE,"invisible"	},
+		{ EKG_STATUS_DND,      "dnd"		},
+		{ EKG_STATUS_XA,       "xa"		},
+		{ EKG_STATUS_AWAY,     "away"		},
+		{ EKG_STATUS_AVAIL,    "avail", "back", },
+		{ EKG_STATUS_FFC,      "chat",  "ffc"	},
 
 				/* here go the special statuses */
-		{ EKG_STATUS_AUTOAWAY,		"autoaway"							},
-		{ EKG_STATUS_AUTOXA,		"autoxa"							},
-		{ EKG_STATUS_AUTOBACK,		"autoback"							},
-		{ EKG_STATUS_NULL												}
-	};
+		{ EKG_STATUS_AUTOAWAY,  "autoaway"	},
+		{ EKG_STATUS_AUTOXA,    "autoxa"	},
+		{ EKG_STATUS_AUTOBACK,  "autoback"	},
+		{ EKG_STATUS_NULL			}
+};
 
 static inline const struct ekg_status_info *status_find(const int status) {
 	const struct ekg_status_info *s;
@@ -2535,20 +2531,11 @@ const char *ekg_status_string(const int status, const int cmd)
 
 int ekg_status_int(const char *text)
 {
-	const char **p;
-	int i;
-	const int *j;
 	const struct ekg_status_info *s;
 
 	for (s = ekg_statuses; s->status != EKG_STATUS_NULL; s++) {
 		if (!xstrcasecmp(text, s->label) || !xstrcasecmp(text, s->command))
 			return s->status;
-
-			/* XXX: to be removed */
-		for (i = 0; i < EKG_STATUS_OTHER_MAX; i++) {
-			if (!xstrcasecmp(text, s->other[i]))
-				return s->status;
-		}
 	}
 
 	debug_error("ekg_status_int(): Got unexpected status: %s\n", text);
