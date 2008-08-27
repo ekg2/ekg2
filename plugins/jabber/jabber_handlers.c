@@ -1662,8 +1662,9 @@ static void jabber_session_connected(session_t *s) {
 
 	userlist_free(s);
 		/* Send it before roster query, so that we can use __roster_retrieved */
-	watch_write(j->send_watch, "<iq type=\"get\" to=\"%s\"><query xmlns=\"http://jabber.org/protocol/disco#info\"/></iq>",
-			j->server);
+	if (!j->istlen)
+		watch_write(j->send_watch, "<iq type=\"get\" to=\"%s\"><query xmlns=\"http://jabber.org/protocol/disco#info\"/></iq>",
+				j->server);
 	watch_write(j->send_watch, "<iq type=\"get\"><query xmlns=\"jabber:iq:roster\"/></iq>");
 
 	if (session_int_get(s, "auto_bookmark_sync") != 0) command_exec(NULL, s, ("/xmpp:bookmark --get"), 1);
