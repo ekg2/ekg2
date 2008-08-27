@@ -138,7 +138,7 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 
 			if (!(u = userlist_find(s, uid)))
 				u = userlist_add(s, uid, nick);
-			else if (! u->nickname);
+			else if (! u->nickname)
 				u->nickname = xstrdup(nick);
 
 			/* XXX, other groups ??? */
