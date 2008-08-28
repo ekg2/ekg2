@@ -1008,6 +1008,11 @@ static COMMAND(icq_command_away) {
 		session_status_set(session, EKG_STATUS_XA);
 		session_unidle(session);
 		allow_descr = 1;
+	} else if (!xstrcmp(name, ("gone"))) {
+		format = "gone";
+		session_status_set(session, EKG_STATUS_GONE);
+		session_unidle(session);
+		allow_descr = 1;
 	} else if (!xstrcmp(name, ("invisible"))) {
 		format = "invisible";
 		session_status_set(session, EKG_STATUS_INVISIBLE);
@@ -1432,6 +1437,7 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:back", NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:dnd",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:ffc",  "r", icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:gone",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:invisible", NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:xa",  "r", icq_command_away, ICQ_ONLY, NULL);
 

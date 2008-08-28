@@ -2462,6 +2462,7 @@ const struct ekg_status_info ekg_statuses[] = {
 		{ EKG_STATUS_NA,       "notavail"	},
 		{ EKG_STATUS_INVISIBLE,"invisible"	},
 		{ EKG_STATUS_DND,      "dnd"		},
+		{ EKG_STATUS_GONE,     "gone"		},
 		{ EKG_STATUS_XA,       "xa"		},
 		{ EKG_STATUS_AWAY,     "away"		},
 		{ EKG_STATUS_AVAIL,    "avail", "back", },

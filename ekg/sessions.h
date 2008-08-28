@@ -46,6 +46,7 @@ typedef enum {
 	/* These should be considered as 'probably available' */
 	EKG_STATUS_INVISIBLE,		/* GG; hard to prioritize... */
 	EKG_STATUS_DND,			/* Jabber */
+	EKG_STATUS_GONE,		/* ICQ */
 	EKG_STATUS_XA,			/* Jabber */
 	EKG_STATUS_AWAY,		/* universal */
 
