@@ -97,9 +97,8 @@ int icq_write_status_msg(session_t *s) {
 	if (j->aim == 0)
 		return -1;
 
-	if (s->status != EKG_STATUS_AWAY && s->status != EKG_STATUS_XA && s->status != EKG_STATUS_FFC && s->status != EKG_STATUS_DND)
+	if (s->status != EKG_STATUS_AWAY && s->status != EKG_STATUS_GONE && s->status != EKG_STATUS_XA && s->status != EKG_STATUS_FFC && s->status != EKG_STATUS_DND)
 		return -1;
-	/* XXX, NA also supported */
 
 	msg = xstrndup(s->descr, 0x1000);	/* XXX, recode */
 
