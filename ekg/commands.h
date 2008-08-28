@@ -80,6 +80,7 @@ void commands_remove(command_t *c);
 command_t *commands_removei(command_t *c);
 void commands_destroy();
 int command_exec(const char *target, session_t *session, const char *line, int quiet);
+int command_exec_params(const char *target, session_t *session, int quiet, const char *command, ...);
 int command_exec_format(const char *target, session_t *session, int quiet, const char *format, ...);
 
 COMMAND(cmd_add);

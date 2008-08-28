@@ -2822,6 +2822,45 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	return -1;
 }
 
+int command_exec_params(const char *target, session_t *session, int quiet, const char *command, ...) {
+	string_t command_with_params;
+	va_list ap;
+	char *tmp;
+	int res;
+
+	if (!command) 
+		return 0;
+
+	/* XXX, it will work like command_exec_format(). we need to:
+	 *	- command_exec() -> command_exec_params() */
+
+	command_with_params = string_init(command);
+
+/* XXX, later: array_add() */
+	
+	va_start(ap, command);
+	while ((tmp = va_arg(ap, char *))) {
+		char ch = '"';
+
+		string_append_c(command_with_params, ' ');	/* separate from command or from previous param */
+
+/*
+		if (tmp[0] == '"' && tmp[xstrlen(tmp)-1] == '"')
+			ch = '\'';
+ */
+
+		string_append_c(command_with_params, ch);
+		string_append(command_with_params, tmp);
+		string_append_c(command_with_params, ch);
+	}
+
+	va_end(ap);
+	
+	res = command_exec(target, session, command_with_params->str, quiet);
+	string_free(command_with_params, 1);
+	return res;
+}
+
 /**
  * command_exec_format()
  *
