@@ -563,11 +563,11 @@ static QUERY(gg_userlist_priv_handler) {
 				char *tmp = u->uid;
 				u->uid = saprintf("gg:%s", tmp);
 				xfree(tmp);
-			} 
+			}
 
-			user_private_item_set(u, "first_name", entry[0]);	entry[0] = NULL;
-			user_private_item_set(u, "last_name",  entry[1]);	entry[1] = NULL;
-			user_private_item_set(u, "mobile",     entry[4]);	entry[4] = NULL;
+			user_private_item_set(u, "first_name", entry[0]);
+			user_private_item_set(u, "last_name",  entry[1]);
+			user_private_item_set(u, "mobile",     entry[4]);
 			break;
 		}
 
