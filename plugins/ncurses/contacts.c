@@ -79,14 +79,13 @@ int config_contacts_metacontacts_swallow;
  * funkcja zwraca pierwsze literki status avail -> av away -> aw itd... 
  * funkcja nie sprawdza czy status jest NULL, ani czy strlen(status) > 2 
  */
-static inline char *get_short_status(int status) {
+static inline char *get_short_status(const char *status_t) {
 	static char buf[3];
-	const char *status_t = ekg_status_string(status, 0);
 
 	buf[0] = status_t[0];
 	buf[1] = status_t[1];
 	buf[2] = 0;		/* ? */
-	return &buf[0];
+	return buf;
 }
 
 /*
@@ -327,11 +326,10 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 
 			status_t = ekg_status_string(u->status, 0);
 
-			if (config_contacts_orderbystate && xstrncmp(status_t, contacts_order + j, 2))
-				continue;
-
-			if (!config_contacts_orderbystate && !xstrstr(contacts_order, get_short_status(u->status)))
-				continue;
+			if (config_contacts_orderbystate ?
+				xstrncmp(contacts_order + j, status_t, 2) :		/* when config_contacts_orderbystate, we need to have got this status in contacts_order now. */
+				!xstrstr(contacts_order, get_short_status(status_t)))	/* when !config_contacts_orderbystate, we need to have got this status in contacts_order anywhere. */
+					continue;
 
 			if (group && (!u->private || (void *) 2 != u->private)) {
 				userlist_t *tmp = userlist_find(u->private ? u->private : session_current, u->uid);
