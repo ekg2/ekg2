@@ -134,7 +134,13 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 
 			if (!(u = userlist_find(s, uid)))
 				u = userlist_add(s, uid, nick);
-			else if (! u->nickname)
+
+			if (!u) {
+				debug_error("icq_userlist_parse_entry() userlist_add(%s, %s) failed!\n", uid, nick);
+				goto cleanup_user;
+			}
+
+			if (!u->nickname)
 				u->nickname = xstrdup(nick);
 
 			/* XXX, other groups ??? */
@@ -158,7 +164,7 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			if (t_auth) 
 				print("icq_auth_subscribe", uid, session_name(s));
  */
-
+cleanup_user:
 			xfree(uid);
 			xfree(nick);
 			xfree(email);
