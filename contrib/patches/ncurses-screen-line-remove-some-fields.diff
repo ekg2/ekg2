@@ -1,0 +1,163 @@
+Index: plugins/ncurses/old.c
+===================================================================
+--- plugins/ncurses/old.c	(wersja 4158)
++++ plugins/ncurses/old.c	(kopia robocza)
+@@ -631,6 +631,7 @@
+ 		for (;;) {
+ 			int word, width;
+ 			int ts_len = 0;	/* xstrlen(l->ts) */
++			size_t len;	/* wcslen(str) */
+ 
+ 			if (!i)
+ 				res++;
+@@ -641,21 +642,12 @@
+ 
+ 			l->str = str;
+ 			l->attr = attr;
+-			l->len = xwcslen(str);
++			len = xwcslen(str);
+ 			l->ts = NULL;
+ 			l->ts_attr = NULL;
+ 			l->backlog = i;
+ 			l->margin_left = (!wrapping || margin_left == -1) ? margin_left : 0;
+ 
+-			l->prompt_len = n->backlog[i]->prompt_len;
+-			if (!n->backlog[i]->prompt_empty) {
+-				l->prompt_str = n->backlog[i]->str.w;
+-				l->prompt_attr = n->backlog[i]->attr;
+-			} else {
+-				l->prompt_str = NULL;
+-				l->prompt_attr = NULL;
+-			}
+-
+ 			if (!w->floating && render_timestamp) {
+ 				fstring_t *s = NULL;
+ 
+@@ -681,35 +673,35 @@
+ 				xfree(s);
+ 			}
+ 
+-			width = w->width - ts_len - l->prompt_len - n->margin_left - n->margin_right; 
++			width = w->width - ts_len - n->backlog[i]->prompt_len - n->margin_left - n->margin_right; 
+ 
+ 			if ((w->frames & WF_LEFT))
+ 				width -= 1;
+ 			if ((w->frames & WF_RIGHT))
+ 				width -= 1;
+ 
+-			if (l->len < width)
++			if (len < width)
+ 				break;
+ 
+ 			if (w->nowrap) {
+-				l->len = width;		/* XXX, what for? for not drawing outside screen-area? ncurses can handle with it */
++				len = width;		/* XXX, what for? for not drawing outside screen-area? ncurses can handle with it */
+ 
+ 				if (str[width] == CHAR(' ')) {
+-					l->len--;
++					len--;
+ 					/* str++; attr++; */
+ 				}
+ 				/* while (*str) { str++; attr++; } */
+ 				break;
+ 			}
+ 		
+-			for (j = 0, word = 0; j < l->len; j++) {
++			for (j = 0, word = 0; j < len; j++) {
+ 				if (str[j] == CHAR(' '))
+ 					word = j + 1;
+ 
+ 				if (j == width) {
+-					l->len = (word) ? word : width;
++					len = (word) ? word : width;
+ 					if (str[j] == CHAR(' ')) {
+-						l->len--;
++						len--;
+ 						str++;
+ 						attr++;
+ 					}
+@@ -717,8 +709,8 @@
+ 				}
+ 			}
+ 
+-			str += l->len;
+-			attr += l->len;
++			str += len;
++			attr += len;
+ 
+ 			if (! *str)
+ 				break;
+@@ -1115,6 +1107,8 @@
+ 	fix_trl=0;
+ 	for (y = 0; y < height && n->start + y < n->lines_count; y++) {
+ 		struct screen_line *l = &n->lines[n->start + y];
++		CHAR_T *str2 = (n->start + y + 1 < n->lines_count) ? n->lines[n->start + y + 1].str : NULL;
++		fstring_t *backlog = n->backlog[l->backlog];
+ 
+ 		int cur_y = (top + y + fix_trl);
+ 		int cur_x;
+@@ -1124,7 +1118,7 @@
+ 		if (( y == 0 ) && n->last_red_line && (n->backlog[l->backlog]->ts < n->last_red_line))
+ 			dtrl = 1;	/* First line timestamp is less then mark. Mayby marker is on this page? */
+ 
+-		if (dtrl && (n->backlog[l->backlog]->ts >= n->last_red_line)) {
++		if (dtrl && (backlog->ts >= n->last_red_line)) {
+ 			draw_thin_red_line(w, cur_y);
+ 			if ((n->lines_count-n->start == height - (top - n->margin_top)) ) {
+ 				/* we have stolen line for marker, so we scroll up */
+@@ -1155,11 +1149,15 @@
+ 			mvwaddch(n->window, cur_y, cur_x, ' ');
+ 		}
+ 
+-		if (l->prompt_str) {
+-			for (x = 0; x < l->prompt_len; x++, cur_x++) {
+-				int attr = fstring_attr2ncurses_attr(l->prompt_attr[x]);
+-				CHAR_T ch = ncurses_fixchar(l->prompt_str[x], &attr);
++		if (!backlog->prompt_empty && backlog->str.w) {
++			CHAR_T *prompt_str = backlog->str.w;
++			short *prompt_attr = backlog->attr;
++			int prompt_len = backlog->prompt_len;
+ 
++			for (x = 0; x < prompt_len; x++, cur_x++) {
++				int attr = fstring_attr2ncurses_attr(prompt_attr[x]);
++				CHAR_T ch = ncurses_fixchar(prompt_str[x], &attr);
++
+ 				wattrset(n->window, attr);
+ 
+ 				if (!fixup && (l->margin_left != -1 && x >= l->margin_left))
+@@ -1173,13 +1171,13 @@
+ 			}
+ 		}
+ 
+-		for (x = 0; x < l->len; x++, cur_x++) {
++		for (x = 0; l->str[x] && (&l->str[x] != str2); x++, cur_x++) {
+ 			int attr = fstring_attr2ncurses_attr(l->attr[x]);
+ 			CHAR_T ch = ncurses_fixchar(l->str[x], &attr);
+ 
+ 			wattrset(n->window, attr);
+ 
+-			if (!fixup && (l->margin_left != -1 && (x + l->prompt_len) >= l->margin_left))
++			if (!fixup && (l->margin_left != -1 && (x + backlog->prompt_len) >= l->margin_left))
+ 				fixup = l->margin_left + config_margin_size;
+ #if USE_UNICODE
+ 			if (config_use_unicode) {
+Index: plugins/ncurses/old.h
+===================================================================
+--- plugins/ncurses/old.h	(wersja 4144)
++++ plugins/ncurses/old.h	(kopia robocza)
+@@ -26,15 +26,9 @@
+ void update_statusbar(int commit);
+ 
+ struct screen_line {
+-	int len;		/* d³ugo¶æ linii */
+-	
+ 	CHAR_T *str;		/* tre¶æ */
+ 	short *attr;		/* atrybuty */
+ 	
+-	CHAR_T *prompt_str;	/* tre¶æ promptu */
+-	short *prompt_attr;	/* atrybuty promptu */
+-	int prompt_len;		/* d³ugo¶æ promptu */
+-	
+ 	char *ts;		/* timestamp */
+ 	short *ts_attr;		/* attributes of the timestamp */
+ 
