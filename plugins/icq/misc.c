@@ -646,6 +646,7 @@ char *icq_convert_from_ucs2be(string_t text) {
 		return NULL;
 
 	s = ekg_convert_string_t_p(text, ucs2be_conv_in);
+	/* XXX, s == NULL */
 
 	if (s->len)
 		ret = xstrndup(s->str, s->len);
@@ -663,18 +664,26 @@ string_t icq_convert_to_ucs2be(char *text) {
 
 	s = string_init(text);
 	ret = ekg_convert_string_t_p(s, ucs2be_conv_out);
+	/* XXX, ret == NULL */
 	string_free(s, 1);
 
 	return ret;
-
 }
 
-char *icq_convert_from_utf8(char * text) {
+char *icq_convert_from_utf8(char *text) {
+	char *tmp;
 
 	if (!text || !*text)
 		return NULL;
 
-	return ekg_convert_string_p(text, utf8_conv_in);
+	if (!(tmp = ekg_convert_string_p(text, utf8_conv_in))) {
+		tmp = text;
+		text = NULL;
+		/* XXX, warn user? */
+	}
+
+	xfree(text);
+	return tmp;
 }
 
 char *int2time_str(const char *format, int time) {
