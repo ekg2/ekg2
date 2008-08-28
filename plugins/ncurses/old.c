@@ -1689,11 +1689,13 @@ void update_statusbar(int commit)
 	if (sess && (sess->connected || (sess->connecting && connecting_counter))) {
 #define __add_format_emp_st(x, y) case y: __add_format(x, (char *) empty_format) break
 		switch (sess->status) {
+				/* XXX: rewrite? */
 			__add_format_emp_st("away", EKG_STATUS_AWAY);
 			__add_format_emp_st("avail", EKG_STATUS_AVAIL);
 			__add_format_emp_st("dnd", EKG_STATUS_DND);
 			__add_format_emp_st("chat", EKG_STATUS_FFC);
 			__add_format_emp_st("xa", EKG_STATUS_XA);
+			__add_format_emp_st("gone", EKG_STATUS_GONE);
 			__add_format_emp_st("invisible", EKG_STATUS_INVISIBLE);
 
 			__add_format_emp_st("notavail", EKG_STATUS_NA);		/* XXX, session shouldn't be connected here */
@@ -1711,6 +1713,7 @@ void update_statusbar(int commit)
 		char *ip = __ip ? inet_ntoa(*((struct in_addr*) &__ip)) : NULL;;
 #define __add_format_emp_st(x, y) case y: __add_format("query_" x, (char *) empty_format); break
 		switch (q->status) {
+				/* XXX: rewrite? */
 			__add_format_emp_st("away", EKG_STATUS_AWAY);
 			__add_format_emp_st("avail", EKG_STATUS_AVAIL);
 			__add_format_emp_st("invisible", EKG_STATUS_INVISIBLE);
@@ -1718,8 +1721,11 @@ void update_statusbar(int commit)
 			__add_format_emp_st("dnd", EKG_STATUS_DND);
 			__add_format_emp_st("chat", EKG_STATUS_FFC);
 			__add_format_emp_st("xa", EKG_STATUS_XA);
+			__add_format_emp_st("gone", EKG_STATUS_GONE);
+			__add_format_emp_st("blocking", EKG_STATUS_BLOCKED);
+			__add_format_emp_st("error", EKG_STATUS_ERROR);
+			__add_format_emp_st("unknown", EKG_STATUS_UNKNOWN);
 			default: ;
-			/* XXX add unknown and likes!; maybe we could use ekg_status_string()? */
 		}
 #undef __add_format_emp_st
 
