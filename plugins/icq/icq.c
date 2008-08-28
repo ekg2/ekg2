@@ -1076,13 +1076,8 @@ static COMMAND(icq_command_connect) {
 		return -1;
 	}
 
-/* XXX, jak user podal adres serwera, to lacz sie z serwerem */
-	if ((session_get(session, "server"))) {
-		/* XXX */
-	}
-
 /* hubserver */
-	if (!(hubserver = session_get(session, "hubserver"))) 
+	if (!(hubserver = session_get(session, "server"))) 
 		hubserver = ICQ_HUB_SERVER;
 
 	session->connecting = 1;
@@ -1401,6 +1396,7 @@ static plugins_params_t icq_plugin_vars[] = {
 	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "xml,simple,sqlite", 0, NULL),
 	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("plaintext_passwd",	VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("server",		VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_END()
 };
 
