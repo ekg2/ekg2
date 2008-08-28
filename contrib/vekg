@@ -38,6 +38,6 @@ valgrind \
 	--track-fds=yes \
 	--trace-children=yes \
 	--show-reachable=yes \
-   ../ekg/ekg2 "$@"
+   "${EKG_BIN}" "$@"
 
 exit $?
