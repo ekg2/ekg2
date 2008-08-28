@@ -1377,6 +1377,8 @@ void theme_init()
 	format_add("list_error", _("%> %1 %m(error%n: %5%m)%n %b%3:%4%n\n"), 1);
 	format_add("list_xa", _("%> %1 %g(extended away)%n %b%3:%4%n\n"), 1);
 	format_add("list_xa_descr", _("%> %1 %g(extended away: %n%5%g)%n %b%3:%4%n\n"), 1);
+	format_add("list_gone", _("%> %1 %R(gone)%n %b%3:%4%n\n"), 1);
+	format_add("list_gone_descr", _("%> %1 %R(gone: %n%5%g)%n %b%3:%4%n\n"), 1);
 	format_add("list_notavail", _("%> %1 %r(offline)%n\n"), 1);
 	format_add("list_notavail_descr", _("%> %1 %r(offline: %n%5%r)%n\n"), 1);
 	format_add("list_invisible", _("%> %1 %c(invisible)%n %b%3:%4%n\n"), 1);
@@ -1439,6 +1441,14 @@ void theme_init()
 	format_add("contacts_xa_descr_blink", "%K%ii%g%i%1%n", 1);
 	format_add("contacts_xa_descr_full_blink", "%K%ii%g%i%1%n %2", 1);
 	format_add("contacts_xa_footer", "", 1);
+	format_add("contacts_gone_header", "", 1);
+	format_add("contacts_gone", " %R%1%n", 1);
+	format_add("contacts_gone_descr", "%Ki%R%1%n", 1);
+	format_add("contacts_gone_descr_full", "%Ki%R%1%n %2", 1);
+	format_add("contacts_gone_blink", " %R%i%1%n", 1);
+	format_add("contacts_gone_descr_blink", "%K%ii%R%i%1%n", 1);
+	format_add("contacts_gone_descr_full_blink", "%K%ii%R%i%1%n %2", 1);
+	format_add("contacts_gone_footer", "", 1);
 	format_add("contacts_notavail_header", "", 1);
 	format_add("contacts_notavail", " %r%1%n", 1);
 	format_add("contacts_notavail_descr", "%Ki%r%1%n", 1);
@@ -1491,6 +1501,9 @@ void theme_init()
 	format_add("contacts_xa_blink_typing", "%W%i*%g%i%1%n", 1);
 	format_add("contacts_xa_descr_blink_typing", "%W%i*%g%i%1%n", 1);
 	format_add("contacts_xa_descr_full_blink_typing", "%W%i*%g%i%1%n %2", 1);
+	format_add("contacts_gone_blink_typing", "%W%i*%R%i%1%n", 1);
+	format_add("contacts_gone_descr_blink_typing", "%W%i*%R%i%1%n", 1);
+	format_add("contacts_gone_descr_full_blink_typing", "%W%i*%R%i%1%n %2", 1);
 	format_add("contacts_notavail_blink_typing", "%W%i*%r%i%1%n", 1);
 	format_add("contacts_notavail_descr_blink_typing", "%W%i*%r%i%1%n", 1);
 	format_add("contacts_notavail_descr_full_blink_typing", "%W%i*%r%i%1%n %2", 1);
@@ -1515,6 +1528,9 @@ void theme_init()
 	format_add("contacts_xa_typing", "%W*%g%1%n", 1);
 	format_add("contacts_xa_descr_typing", "%W*%g%1%n", 1);
 	format_add("contacts_xa_descr_full_typing", "%W*%g%1%n %2", 1);
+	format_add("contacts_gone_typing", "%W*%R%1%n", 1);
+	format_add("contacts_gone_descr_typing", "%W*%R%1%n", 1);
+	format_add("contacts_gone_descr_full_typing", "%W*%R%1%n %2", 1);
 	format_add("contacts_notavail_typing", "%W*%r%1%n", 1);
 	format_add("contacts_notavail_descr_typing", "%W*%r%1%n", 1);
 	format_add("contacts_notavail_descr_full_typing", "%W*%r%1%n %2", 1);
@@ -1600,6 +1616,8 @@ void theme_init()
 	format_add("status_invisible_descr", _("%> (%3) %1 is %cinvisible%n: %T%4%n\n"), 1);
 	format_add("status_xa", _("%> (%3) %1 is %gextended away%n\n"), 1);
 	format_add("status_xa_descr", _("%> (%3) %1 is %gextended away%n: %T%4%n\n"), 1);
+	format_add("status_gone", _("%> (%3) %1 is %Rgone%n\n"), 1);
+	format_add("status_gone_descr", _("%> (%3) %1 is %Rgone%n: %T%4%n\n"), 1);
 	format_add("status_dnd", _("%> (%3) %1 %Bdo not disturb%n\n"), 1);
 	format_add("status_dnd_descr", _("%> (%3) %1 %Bdo not disturb%n: %T%4%n\n"), 1);
 	format_add("status_error", _("%> (%3) %1 %merror fetching status%n\n"), 1);
@@ -1760,6 +1778,8 @@ void theme_init()
 	format_add("user_info_error_descr", _("%merror%n %K(%n%2%K)%n"), 1);
 	format_add("user_info_xa", _("%gextended away%n"), 1);
 	format_add("user_info_xa_descr", _("%gextended away%n %K(%n%2%K)%n"), 1);
+	format_add("user_info_gone", _("%Rgone%n"), 1);
+	format_add("user_info_gone_descr", _("%Rgone%n %K(%n%2%K)%n"), 1);
 	format_add("user_info_blocking", _("%mblocking%n"), 1);
 	format_add("user_info_blocking_descr", _("%mblocking%n %K(%n%2%K)%n"), 1);
 	format_add("user_info_unknown", _("%Munknown%n"), 1);
@@ -1789,6 +1809,8 @@ void theme_init()
 	format_add("show_status_invisible_descr", _("%cinvisible%n (%T%1%n%2)"), 1);
 	format_add("show_status_xa", _("%gextended away%n"), 1);
 	format_add("show_status_xa_descr", _("%gextended away%n (%T%1%n%2)"), 1);
+	format_add("show_status_gone", _("%Rgone%n"), 1);
+	format_add("show_status_gone_descr", _("%Rgone%n (%T%1%n%2)"), 1);
 	format_add("show_status_dnd", _("%cdo not disturb%n"), 1);
 	format_add("show_status_dnd_descr", _("%cdo not disturb%n (%T%1%n%2)"), 1);
 	format_add("show_status_chat", _("%Wfree for chat%n"), 1);
@@ -1892,6 +1914,8 @@ void theme_init()
 	format_add("quick_list_chat,speech", _("%1 is free for chat"), 1);
 	format_add("quick_list_xa", " %g%1%n", 1);
 	format_add("quick_list_xa,speech", _("%1 is extended away"), 1);
+	format_add("quick_list_gone", " %R%1%n", 1);
+	format_add("quick_list_gone,speech", _("%1 is gone"), 1);
 	format_add("quick_list_dnd", " %B%1%n", 1);
 	format_add("quick_list_dnd,speech", _("%1 has 'do not disturb' status"), 1);
 
@@ -2061,6 +2085,8 @@ void theme_init()
 	format_add("metacontact_info_error_descr", _("%merror%n %K(%n%2%K)%n"), 1);
 	format_add("metacontact_info_xa", _("%gextended away%n"), 1);
 	format_add("metacontact_info_xa_descr", _("%gextended away%n %K(%n%2%K)%n"), 1);
+	format_add("metacontact_info_gone", _("%Rgone%n"), 1);
+	format_add("metacontact_info_gone_descr", _("%Rgone%n %K(%n%2%K)%n"), 1);
 	format_add("metacontact_info_blocking", _("%mblocking%n"), 1);
 	format_add("metacontact_info_blocking_descr", _("%mblocking%n %K(%n%2%K)%n"), 1);
 	format_add("metacontact_info_unknown", _("%Munknown%n"), 1);
