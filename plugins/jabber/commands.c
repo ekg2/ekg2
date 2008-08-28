@@ -138,7 +138,7 @@ static COMMAND(jabber_command_connect)
 #endif
 			j->port = port < 1 ? 5222 : port;
 
-		if (!(( j->connect_watch = ekg_connect(session, realserver, 5222, j->port, NULL, jabber_handle_connect2)))) {
+		if (!(( j->connect_watch = ekg_connect(session, realserver, 5222, j->port, jabber_handle_connect2)))) {
 			printq("generic_error", strerror(errno));
 			return -1;
 		}

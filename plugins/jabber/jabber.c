@@ -876,7 +876,7 @@ static WATCHER(jabber_handle_connect_tlen_hub) {	/* tymczasowy */
 
 		debug_function("[TLEN, HUB]: host = %s, port = %d\n", body, j->port);
 
-		if (!ekg_connect(s, body, 5222, j->port, NULL, jabber_handle_connect2)) {
+		if (!ekg_connect(s, body, 5222, j->port, jabber_handle_connect2)) {
 			/* XXX, we should have disconnect here.. */
 			print("generic_error", strerror(errno));
 			return -1;

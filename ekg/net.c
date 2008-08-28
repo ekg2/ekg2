@@ -92,7 +92,6 @@ struct ekg_connect_data {
 	int	port;
 	char	*session;
 	watcher_handler_func_t *async;
-	int	(*prefer_comparison)(const char *, const char *);
 };
 
 
@@ -240,12 +239,8 @@ static WATCHER_LINE(ekg_connect_resolver_handler) {
 		return -1;
 
 	if (type) {
-		if (session_find(c->session)) {
+		if (session_find(c->session))
 			debug_function("ekg_connect_resolver_handler(), resolving done.\n");
-			if (c->prefer_comparison)
-				qsort(c->connect_queue, array_count(c->connect_queue), sizeof(char*),
-						(void*) c->prefer_comparison);
-		}
 		ekg_connect_loop(c);
 		close(fd);
 		return -1;
@@ -489,7 +484,7 @@ static WATCHER(ekg_connect_abort) {
 }
 
 /* default comparison function, based on 'prefer_family' sessionvar */
-watch_t *ekg_connect(session_t *session, const char *server, const int proto_port, const int port, int (*prefer_comparison)(const char **, const char **), watcher_handler_func_t async) {
+watch_t *ekg_connect(session_t *session, const char *server, const int proto_port, const int port, watcher_handler_func_t async) {
 	const int pref	= session_int_get(session, "prefer_family");
 	struct ekg_connect_data	*c;
 
@@ -501,7 +496,6 @@ watch_t *ekg_connect(session_t *session, const char *server, const int proto_por
 	c->resolver_queue	= array_make(server, ",", 0, 1, 1);
 	c->session		= xstrdup(session_uid_get(session));
 	c->async		= async;
-	c->prefer_comparison	= prefer_comparison;
 	c->port			= port;
 	c->proto_port		= proto_port;
 
