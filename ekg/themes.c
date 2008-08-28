@@ -1205,6 +1205,46 @@ void theme_plugins_init() {
 	}
 }
 
+static const char *theme_init_contact_helper(const char *theme, char color) {
+	static char tmp[30];
+	int i;
+
+	for (i = 0; theme[i]; i++)
+		tmp[i] = (theme[i] == '$') ? color : theme[i];
+
+	tmp[i] = '\0';
+	return tmp;
+}
+
+static void theme_init_contact_status(const char *status, char color) {
+	char tmp[100];
+
+#define FORMAT_ADD(format, value, replace) sprintf(tmp, format, status); format_add(tmp, value, replace)
+#define FORMAT_ADDF(format, fvalue, replace) FORMAT_ADD(format, theme_init_contact_helper(fvalue, color), replace);
+	FORMAT_ADD("contacts_%s_header", "", 1);
+/* standard */
+	FORMAT_ADDF("contacts_%s", 			" %$%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr",		"%Ki%$%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_full",		"%Ki%$%1%n %2", 1);
+/* blink */
+	FORMAT_ADDF("contacts_%s_blink",        	" %$%i%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_blink",		"%K%ii%$%i%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_full_blink",	"%K%ii%$%i%1%n %2", 1);
+/* typing */
+	FORMAT_ADDF("contacts_%s_typing", 		"%W*%$%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_typing",		"%W*%$%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_full_typing",	"%W*%$%1%n %2", 1);
+/* typing+blink */
+	FORMAT_ADDF("contacts_%s_blink_typing", 	"%W%i*%$%i%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_blink_typing", 	"%W%i*%$%i%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_full_blink_typing", "%W%i*%$%i%1%n %2", 1);
+
+	FORMAT_ADD("contacts_%s_footer", "", 1);
+
+#undef FORMAT_ADD
+#undef FORMAT_ADDF
+}
+
 /*
  * theme_init()
  *
@@ -1393,153 +1433,28 @@ void theme_init()
 	format_add("contacts_header", "", 1);
 	format_add("contacts_header_group", "%K %1%n", 1);
 	format_add("contacts_metacontacts_header", "", 1);
-	format_add("contacts_avail_header", "", 1);
-	format_add("contacts_avail", " %Y%1%n", 1);
-	format_add("contacts_avail_descr", "%Ki%Y%1%n", 1);
-	format_add("contacts_avail_descr_full", "%Ki%Y%1%n %2", 1);
-	format_add("contacts_avail_blink", " %Y%i%1%n", 1);
-	format_add("contacts_avail_descr_blink", "%K%ii%Y%i%1%n", 1);
-	format_add("contacts_avail_descr_full_blink", "%K%ii%Y%i%1%n %2", 1);
-	format_add("contacts_avail_footer", "", 1);
-	format_add("contacts_away_header", "", 1);
-	format_add("contacts_away", " %G%1%n", 1);
-	format_add("contacts_away_descr", "%Ki%G%1%n", 1);
-	format_add("contacts_away_descr_full", "%Ki%G%1%n %2", 1);
-	format_add("contacts_away_blink", " %G%i%1%n", 1);
-	format_add("contacts_away_descr_blink", "%K%ii%G%i%1%n", 1);
-	format_add("contacts_away_descr_full_blink", "%K%ii%G%i%1%n %2", 1);
-	format_add("contacts_away_footer", "", 1);
-	format_add("contacts_dnd_header", "", 1);
-	format_add("contacts_dnd", " %B%1%n", 1);
-	format_add("contacts_dnd_descr", "%Ki%B%1%n", 1);
-	format_add("contacts_dnd_descr_full", "%Ki%B%1%n %2", 1);
-	format_add("contacts_dnd_blink", " %B%i%1%n", 1);
-	format_add("contacts_dnd_descr_blink", "%K%ii%B%i%1%n", 1);
-	format_add("contacts_dnd_descr_full_blink", "%K%ii%B%i%1%n %2", 1);
-	format_add("contacts_dnd_footer", "", 1);
-	format_add("contacts_chat_header", "", 1);
-	format_add("contacts_chat", " %W%1%n", 1);
-	format_add("contacts_chat_descr", "%Ki%W%1%n", 1);
-	format_add("contacts_chat_descr_full", "%Ki%W%1%n %2", 1);
-	format_add("contacts_chat_blink", " %W%i%1%n", 1);
-	format_add("contacts_chat_descr_blink", "%K%ii%W%i%1%n", 1);
-	format_add("contacts_chat_descr_full_blink", "%K%ii%W%i%1%n %2", 1);
-	format_add("contacts_chat_footer", "", 1);
-	format_add("contacts_error_header", "", 1);
-	format_add("contacts_error", " %m%1%n", 1);
-	format_add("contacts_error_descr", "%Ki%m%1%n", 1);
-	format_add("contacts_error_descr_full", "%Ki%m%1%n %2", 1);
-	format_add("contacts_error_blink", " %m%i%1%n", 1);
-	format_add("contacts_error_descr_blink", "%K%ii%m%i%1%n", 1);
-	format_add("contacts_error_descr_full_blink", "%K%ii%m%i%1%n %2", 1);
-	format_add("contacts_error_footer", "", 1);
-	format_add("contacts_xa_header", "", 1);
-	format_add("contacts_xa", " %g%1%n", 1);
-	format_add("contacts_xa_descr", "%Ki%g%1%n", 1);
-	format_add("contacts_xa_descr_full", "%Ki%g%1%n %2", 1);
-	format_add("contacts_xa_blink", " %g%i%1%n", 1);
-	format_add("contacts_xa_descr_blink", "%K%ii%g%i%1%n", 1);
-	format_add("contacts_xa_descr_full_blink", "%K%ii%g%i%1%n %2", 1);
-	format_add("contacts_xa_footer", "", 1);
-	format_add("contacts_gone_header", "", 1);
-	format_add("contacts_gone", " %R%1%n", 1);
-	format_add("contacts_gone_descr", "%Ki%R%1%n", 1);
-	format_add("contacts_gone_descr_full", "%Ki%R%1%n %2", 1);
-	format_add("contacts_gone_blink", " %R%i%1%n", 1);
-	format_add("contacts_gone_descr_blink", "%K%ii%R%i%1%n", 1);
-	format_add("contacts_gone_descr_full_blink", "%K%ii%R%i%1%n %2", 1);
-	format_add("contacts_gone_footer", "", 1);
-	format_add("contacts_notavail_header", "", 1);
-	format_add("contacts_notavail", " %r%1%n", 1);
-	format_add("contacts_notavail_descr", "%Ki%r%1%n", 1);
-	format_add("contacts_notavail_descr_full", "%Ki%r%1%n %2", 1);
-	format_add("contacts_notavail_blink", " %r%i%1%n", 1);
-	format_add("contacts_notavail_descr_blink", "%K%ii%r%i%1%n", 1);
-	format_add("contacts_notavail_descr_full_blink", "%K%ii%r%i%1%n %2", 1);
-	format_add("contacts_notavail_footer", "", 1);
-	format_add("contacts_invisible_header", "", 1);
-	format_add("contacts_invisible", " %c%1%n", 1);
-	format_add("contacts_invisible_descr", "%Ki%c%1%n", 1);
-	format_add("contacts_invisible_descr_full", "%Ki%c%1%n %2", 1);
-	format_add("contacts_invisible_blink", " %c%i%1%n", 1);
-	format_add("contacts_invisible_descr_blink", "%K%ii%c%i%1%n", 1);
-	format_add("contacts_invisible_descr_full_blink", "%K%ii%c%i%1%n %2", 1);
-	format_add("contacts_invisible_footer", "", 1);
+
+	theme_init_contact_status("avail", 'Y');
+	theme_init_contact_status("away", 'G');
+	theme_init_contact_status("dnd", 'B');
+	theme_init_contact_status("chat", 'W');
+	theme_init_contact_status("error", 'm');
+	theme_init_contact_status("xa", 'g');
+	theme_init_contact_status("gone", 'R');
+	theme_init_contact_status("notavail", 'r');
+	theme_init_contact_status("invisible", 'c');
+
 	format_add("contacts_blocking_header", "", 1);
 	format_add("contacts_blocking", " %m%1%n", 1);
 	format_add("contacts_blocking_footer", "", 1);
-	format_add("contacts_unknown_header", "", 1);
-	format_add("contacts_unknown", " %M%1%n", 1);
-	format_add("contacts_unknown_descr", "%Ki%M%1%n", 1);
-	format_add("contacts_unknown_descr_full", "%Ki%M%1%n %2", 1);
-	format_add("contacts_unknown_blink", " %M%i%1%n", 1);
-	format_add("contacts_unknown_descr_blink", "%K%ii%M%i%1%n", 1);
-	format_add("contacts_unknown_descr_full_blink", "%K%ii%M%i%1%n %2", 1);
-	format_add("contacts_unknown_footer", "", 1);
+
+	theme_init_contact_status("unknown", 'M');
+
 	format_add("contacts_footer", "", 1);
 	format_add("contacts_footer_group", "", 1);
 	format_add("contacts_metacontacts_footer", "", 1);
 	format_add("contacts_vertical_line_char", "|", 1);
 	format_add("contacts_horizontal_line_char", "-", 1);
-
-	/* typing */
-	format_add("contacts_avail_blink_typing", "%W%i*%Y%i%1%n", 1);
-	format_add("contacts_avail_descr_blink_typing", "%W%i*%Y%i%1%n", 1);
-	format_add("contacts_avail_descr_full_blink_typing", "%W%i*%Y%i%1%n %2", 1);
-	format_add("contacts_away_blink_typing", "%W%i*%G%i%1%n", 1);
-	format_add("contacts_away_descr_blink_typing", "%W%i*%G%i%1%n", 1);
-	format_add("contacts_away_descr_full_blink_typing", "%W%i*%G%i%1%n %2", 1);
-	format_add("contacts_dnd_blink_typing", "%W%i*%B%i%1%n", 1);
-	format_add("contacts_dnd_descr_blink_typing", "%W%i*%B%i%1%n", 1);
-	format_add("contacts_dnd_descr_full_blink_typing", "%W%i*%B%i%1%n %2", 1);
-	format_add("contacts_chat_blink_typing", "%W%i*%W%i%1%n", 1);
-	format_add("contacts_chat_descr_blink_typing", "%W%i*%W%i%1%n", 1);
-	format_add("contacts_chat_descr_full_blink_typing", "%W%i*%W%i%1%n %2", 1);
-	format_add("contacts_error_blink_typing", "%W%i*%m%i%1%n", 1);
-	format_add("contacts_error_descr_blink_typing", "%W%i*%m%i%1%n", 1);
-	format_add("contacts_error_descr_full_blink_typing", "%W%i*%m%i%1%n %2", 1);
-	format_add("contacts_xa_blink_typing", "%W%i*%g%i%1%n", 1);
-	format_add("contacts_xa_descr_blink_typing", "%W%i*%g%i%1%n", 1);
-	format_add("contacts_xa_descr_full_blink_typing", "%W%i*%g%i%1%n %2", 1);
-	format_add("contacts_gone_blink_typing", "%W%i*%R%i%1%n", 1);
-	format_add("contacts_gone_descr_blink_typing", "%W%i*%R%i%1%n", 1);
-	format_add("contacts_gone_descr_full_blink_typing", "%W%i*%R%i%1%n %2", 1);
-	format_add("contacts_notavail_blink_typing", "%W%i*%r%i%1%n", 1);
-	format_add("contacts_notavail_descr_blink_typing", "%W%i*%r%i%1%n", 1);
-	format_add("contacts_notavail_descr_full_blink_typing", "%W%i*%r%i%1%n %2", 1);
-	format_add("contacts_invisible_blink_typing", "%W%i*%c%i%1%n", 1);
-	format_add("contacts_invisible_descr_blink_typing", "%W%i*%c%i%1%n", 1);
-	format_add("contacts_invisible_descr_full_blink_typing", "%W%i*%c%i%1%n %2", 1);
-	format_add("contacts_avail_typing", "%W*%Y%1%n", 1);
-	format_add("contacts_avail_descr_typing", "%W*%Y%1%n", 1);
-	format_add("contacts_avail_descr_full_typing", "%W*%Y%1%n %2", 1);
-	format_add("contacts_away_typing", "%W*%G%1%n", 1);
-	format_add("contacts_away_descr_typing", "%W*%G%1%n", 1);
-	format_add("contacts_away_descr_full_typing", "%W*%G%1%n %2", 1);
-	format_add("contacts_dnd_typing", "%W*%B%1%n", 1);
-	format_add("contacts_dnd_descr_typing", "%W*%B%1%n", 1);
-	format_add("contacts_dnd_descr_full_typing", "%W*%B%1%n %2", 1);
-	format_add("contacts_chat_typing", "%W*%W%1%n", 1);
-	format_add("contacts_chat_descr_typing", "%W*%W%1%n", 1);
-	format_add("contacts_chat_descr_full_typing", "%W*%W%1%n %2", 1);
-	format_add("contacts_error_typing", "%W*%m%1%n", 1);
-	format_add("contacts_error_descr_typing", "%W*%m%1%n", 1);
-	format_add("contacts_error_descr_full_typing", "%W*%m%1%n %2", 1);
-	format_add("contacts_xa_typing", "%W*%g%1%n", 1);
-	format_add("contacts_xa_descr_typing", "%W*%g%1%n", 1);
-	format_add("contacts_xa_descr_full_typing", "%W*%g%1%n %2", 1);
-	format_add("contacts_gone_typing", "%W*%R%1%n", 1);
-	format_add("contacts_gone_descr_typing", "%W*%R%1%n", 1);
-	format_add("contacts_gone_descr_full_typing", "%W*%R%1%n %2", 1);
-	format_add("contacts_notavail_typing", "%W*%r%1%n", 1);
-	format_add("contacts_notavail_descr_typing", "%W*%r%1%n", 1);
-	format_add("contacts_notavail_descr_full_typing", "%W*%r%1%n %2", 1);
-	format_add("contacts_invisible_typing", "%W*%c%1%n", 1);
-	format_add("contacts_invisible_descr_typing", "%W*%c%1%n", 1);
-	format_add("contacts_invisible_descr_full_typing", "%W*%c%1%n %2", 1);
-	format_add("contacts_unknown_typing", "%W*%M%1%n", 1);
-	format_add("contacts_unknown_descr_typing", "%W*%M%1%n", 1);
-	format_add("contacts_unknown_descr_full_typing", "%W*%M%1%n %2", 1);
 
 	/* we are saying goodbye and we are saving configuration */
 	format_add("quit", _("%> Bye\n"), 1);
