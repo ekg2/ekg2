@@ -1180,6 +1180,32 @@ int theme_read(const char *filename, int replace) {
 	return 0;
 }
 
+int theme_write(const char *filename) {
+	FILE *f;
+	int i;
+
+	if (!filename)
+		return -1;
+
+	if (!(f = fopen(filename, "w")))
+		return -1;
+
+	for (i = 0; i < 0x100; i++) {
+		struct format *ff;
+
+		for (ff = formats[i]; ff; ff = ff->next) {
+			char *escaped;
+			
+			escaped = escape(ff->value);
+			fprintf(f, "%s %s\n", ff->name, escaped);
+			xfree(escaped);
+		}
+	}
+	fclose(f);
+
+	return 0;
+}
+
 /*
  * theme_free()
  *

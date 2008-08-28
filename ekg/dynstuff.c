@@ -3,6 +3,7 @@
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *                          Adam Wysocki <gophi@ekg.chmurka.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -1265,6 +1266,128 @@ const char *cssfind(const char *haystack, const char *needle, const char sep, in
 #endif
 }
 
+/*
+ * eskejpuje:
+ *
+ * - \ -> \\
+ *
+ * oraz wyst±pienia znaków ze stringa esc:
+ *
+ * - 0x07 (\a) -> \a
+ * - 0x08 (\b) -> \b
+ * - 0x09 (\t) -> \t
+ * - 0x0A (\n) -> \n
+ * - 0x0B (\v) -> \v
+ * - 0x0C (\f) -> \f
+ * - 0x0D (\r) -> \r
+ * - pozosta³e -> \xXX (szesnastkowa reprezentacja)
+ *
+ * je¿eli który¶ z wymienionych wy¿ej znaków (np. \a) nie wystêpuje 
+ * w stringu to zostanie przepisany tak jak jest, bez eskejpowania.
+ *
+ * zwraca nowego, zaalokowanego stringa.
+ */
+char *escape(const char *src) {
+	static const char esc[] = "\r\n";
+	string_t dst;
+
+	if (!src)
+		return NULL;
+
+	dst = string_init(NULL);
+
+	for (; *src; src++) {
+		char ch = *src;
+		static const char esctab[] = "abtnvfr";
+
+		if (!(ch == '\\' || strchr(esc, ch))) {
+			string_append_c(dst, ch);
+			continue;
+		}
+
+		string_append_c(dst, '\\');
+
+		if (ch >= 0x07 && ch <= 0x0D)
+			string_append_c(dst, esctab[ch - 0x07]);
+		else if (ch == '\\')
+			string_append_c(dst, '\\');
+		else {
+			char s[5];
+			snprintf(s, sizeof(s), "x%02X", (unsigned char) ch);
+			string_append(dst, s);
+		}
+	}
+
+	return string_free(dst, 0);
+}
+
+/*
+ * dekoduje stringa wyeskejpowanego przy pomocy escape.
+ *
+ * - \\ -> \
+ * - \xXX -> szesnastkowo zdekodowany znak
+ * - \cokolwiekinnego -> \cokolwiekinnego
+ *
+ * zwraca nowego, zaalokowanego stringa.
+ */
+char *unescape(const char *src) {
+	int state = 0;
+	string_t buf;
+	unsigned char hex_msb = 0;
+
+	if (!src)
+		return NULL;
+
+	buf = string_init(NULL);
+
+	for (; *src; src++) {
+		char ch = *src;
+
+		if (state == 0) {		/* normalny tekst */
+			/* sprawdzamy czy mamy cos po '\\', bo jezeli to ostatni 
+			 * znak w stringu, to nie zostanie nigdy dodany. */
+			if (ch == '\\' && *(src + 1)) {
+				state = 1;
+				continue;
+			}
+			string_append_c(buf, ch);
+		} else if (state == 1) {	/* kod ucieczki */
+			if (ch == 'a')
+				ch = '\a';
+			else if (ch == 'b')
+				ch = '\b';
+			else if (ch == 't')
+				ch = '\t';
+			else if (ch == 'n')
+				ch = '\n';
+			else if (ch == 'v')
+				ch = '\v';
+			else if (ch == 'f')
+				ch = '\f';
+			else if (ch == 'r')
+				ch = '\r';
+			else if (ch == 'x' && *(src + 1) && *(src + 2)) {
+				state = 2;
+				continue;
+			} else if (ch != '\\')
+				string_append_c(buf, '\\');	/* fallback - nieznany kod */
+			string_append_c(buf, ch);
+			state = 0;
+		} else if (state == 2) {	/* pierwsza cyfra kodu szesnastkowego */
+			hex_msb = ch;
+			state = 3;
+		} else if (state == 3) {	/* druga cyfra kodu szesnastkowego */
+#define unhex(x) (unsigned char) ((x >= '0' && x <= '9') ? (x - '0') : \
+	(x >= 'A' && x <= 'F') ? (x - 'A' + 10) : \
+	(x >= 'a' && x <= 'f') ? (x - 'a' + 10) : 0)
+			string_append_c(buf, unhex(ch) | (unhex(hex_msb) << 4));
+#undef unhex
+			state = 0;
+		}
+	}
+
+	return string_free(buf, 0);
+}
 
 /*
  * handle private data

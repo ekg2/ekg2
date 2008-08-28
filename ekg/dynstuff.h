@@ -3,6 +3,7 @@
 /*
  *  (C) Copyright 2001-2002 Wojtek Kaniewski <wojtekka@irc.pl>
  *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *                          Adam Wysocki <gophi@ekg.chmurka.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -177,6 +178,9 @@ const char *itoa(long int i);
 const char *cssfind(const char *haystack, const char *needle, const char sep, int caseinsensitive);
 
 #endif
+
+char *escape(const char *src);
+char *unescape(const char *src);
 
 /*
  * handle private data

@@ -1934,6 +1934,18 @@ static COMMAND(cmd_test_debug_dump)
 	return 0;
 }
 
+static COMMAND(cmd_test_debug_theme)
+{
+	const char *fname = params[0];
+
+	if (!fname)
+		fname = "ekg2-dump.theme";
+
+	/* XXX, wyswietlic komunikat */
+
+	return theme_write(fname);
+}
+
 static char *timer_next_call(struct timer *t) {
 	long usec, sec, minutes = 0, hours = 0, days = 0;
 	struct timeval tv;
@@ -4307,6 +4319,8 @@ void command_init()
 	command_add(NULL, ("_segv"), NULL, cmd_test_segv, 0, NULL);
 
 	command_add(NULL, ("_streams"), "p ? ? ? ?", cmd_streams, 0, "-c --create -l --list");
+
+	command_add(NULL, ("_theme_dump"), "?", cmd_test_debug_theme, 0, NULL);
 
 	command_add(NULL, ("_timers"), NULL, cmd_debug_timers, 0, NULL);
 
