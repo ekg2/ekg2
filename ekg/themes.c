@@ -1132,11 +1132,12 @@ int theme_read(const char *filename, int replace) {
 		errno = ENOENT;
 		f = NULL;
 
-		if (!xstrchr(filename, '/')) {
+		if (!xstrchr(fn, '/')) {
 			if (!f) f = theme_open(prepare_path("", 0), fn);
 			if (!f) f = theme_open(prepare_path("themes", 0), fn);
 			if (!f) f = theme_open(DATADIR "/themes", fn);
-		}
+		} else
+			f = theme_open(NULL, fn);
 
 		xfree(fn);
 
