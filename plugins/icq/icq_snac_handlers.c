@@ -38,10 +38,10 @@ static LIST_FREE_ITEM(icq_snac_references_list_free, icq_snac_reference_list_t *
 		private_items_destroy(&data->list);
 }
 
-static __DYNSTUFF_ADD(icq_snac_references_list, icq_snac_reference_list_t, __not_used)
+static         __DYNSTUFF_ADD(icq_snac_references_list, icq_snac_reference_list_t, __not_used)
 static __DYNSTUFF_REMOVE_SAFE(icq_snac_references_list, icq_snac_reference_list_t, icq_snac_references_list_free)
 static __DYNSTUFF_REMOVE_ITER(icq_snac_references_list, icq_snac_reference_list_t, icq_snac_references_list_free)
-      __DYNSTUFF_DESTROY(icq_snac_references_list, icq_snac_reference_list_t, icq_snac_references_list_free)
+           __DYNSTUFF_DESTROY(icq_snac_references_list, icq_snac_reference_list_t, icq_snac_references_list_free)
 
 static void icq_snac_ref_add(session_t *s, icq_snac_reference_list_t *elem) {
 	icq_private_t *j;
@@ -73,20 +73,22 @@ static void icq_snac_ref_remove(session_t *s, icq_snac_reference_list_t *elem) {
 	icq_snac_references_list_remove(&(j->snac_ref_list), elem);
 }
 
-void icq_snac_ref_list_cleanup(session_t *s) {
+TIMER_SESSION(icq_snac_ref_list_cleanup) {
 	icq_private_t *j;
 	icq_snac_reference_list_t *l;
 	time_t t = time(NULL) - 100; /* XXX add to session configuration? */
 
 	if (!s || !(j = (icq_private_t *) s->priv))
-		return;
+		return 0;
 
 	/* XXX ?wo? inform about removed refs??? */
 	for (l = j->snac_ref_list; l ; l = l->next) {
 		if (t > l->timestamp)
 			l = icq_snac_references_list_removei(&j->snac_ref_list, l);
 	}
+	return 0;
 }
+
 
 static inline char *_icq_makesnac(uint8_t family, uint16_t cmd, uint16_t flags, uint32_t ref) {
 	static char buf[SNAC_PACKET_LEN];

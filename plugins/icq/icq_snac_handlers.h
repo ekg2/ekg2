@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include <ekg/sessions.h>
+#include <ekg/stuff.h>
 
 #include "icq.h"
 
@@ -23,8 +24,7 @@ int icq_snac_handler(session_t *s, uint16_t family, uint16_t cmd, unsigned char 
 void icq_snac_error_handler(session_t *s, const char *from, uint16_t error);
 
 void icq_snac_references_list_destroy(icq_snac_reference_list_t **lista);
-
-void icq_snac_ref_list_cleanup(session_t *s);
+TIMER_SESSION(icq_snac_ref_list_cleanup);
 
 SNAC_SUBHANDLER(icq_my_meta_information_response);
 

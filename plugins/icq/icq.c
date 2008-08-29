@@ -359,6 +359,7 @@ void icq_session_connected(session_t *s) {
 		/* Start sending Keep-Alive packets */
 		timer_remove_session(s, "ping");
 		timer_add_session(s, "ping", 60, 1, icq_ping);
+		timer_remove_session(s, "snac_timeout");
 		timer_add_session(s, "snac_timeout", 10, 1, icq_snac_ref_list_cleanup);
 #if 0
 		if (m_bAvatarsEnabled)
