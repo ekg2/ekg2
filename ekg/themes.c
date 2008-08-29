@@ -1242,7 +1242,7 @@ static const char *theme_init_contact_helper(const char *theme, char color) {
 	return tmp;
 }
 
-static void theme_init_contact_status(const char *status, char color) {
+static void theme_init_contact_status(const char *status, char color, int want_quick_list) {
 	char tmp[100];
 
 #define FORMAT_ADD(format, value, replace) sprintf(tmp, format, status); format_add(tmp, value, replace)
@@ -1266,6 +1266,10 @@ static void theme_init_contact_status(const char *status, char color) {
 	FORMAT_ADDF("contacts_%s_descr_full_blink_typing", "%W%i*%$%i%1%n %2", 1);
 
 	FORMAT_ADD("contacts_%s_footer", "", 1);
+
+	if (want_quick_list) {		/* my macros are evil, so don't remove brackets! */
+		FORMAT_ADDF("quick_list_%s",		" %$%1%n", 1);
+	}
 
 #undef FORMAT_ADD
 #undef FORMAT_ADDF
@@ -1463,21 +1467,21 @@ void theme_init()
 	format_add("contacts_header_group", "%K %1%n", 1);
 	format_add("contacts_metacontacts_header", "", 1);
 
-	theme_init_contact_status("avail", 'Y');
-	theme_init_contact_status("away", 'G');
-	theme_init_contact_status("dnd", 'B');
-	theme_init_contact_status("chat", 'W');
-	theme_init_contact_status("error", 'm');
-	theme_init_contact_status("xa", 'g');
-	theme_init_contact_status("gone", 'R');
-	theme_init_contact_status("notavail", 'r');
-	theme_init_contact_status("invisible", 'c');
+	theme_init_contact_status("avail", 'Y', 1);
+	theme_init_contact_status("away", 'G', 1);
+	theme_init_contact_status("dnd", 'B', 1);
+	theme_init_contact_status("chat", 'W', 1);
+	theme_init_contact_status("error", 'm', 0);
+	theme_init_contact_status("xa", 'g', 1);
+	theme_init_contact_status("gone", 'R', 1);
+	theme_init_contact_status("notavail", 'r', 0);
+	theme_init_contact_status("invisible", 'c', 1);
 
 	format_add("contacts_blocking_header", "", 1);
 	format_add("contacts_blocking", " %m%1%n", 1);
 	format_add("contacts_blocking_footer", "", 1);
 
-	theme_init_contact_status("unknown", 'M');
+	theme_init_contact_status("unknown", 'M', 0);
 
 	format_add("contacts_footer", "", 1);
 	format_add("contacts_footer_group", "", 1);
@@ -1849,18 +1853,11 @@ void theme_init()
 	/* szybka lista kontaktów pod F2 */
 	format_add("quick_list", "%)%1\n", 1);
 	format_add("quick_list,speech", _("roster:"), 1);
-	format_add("quick_list_avail", " %Y%1%n", 1);
 	format_add("quick_list_avail,speech", _("%1 is available"), 1);
-	format_add("quick_list_away", " %G%1%n", 1);
 	format_add("quick_list_away,speech", _("%1 is away"), 1);
-	format_add("quick_list_invisible", " %c%1%n", 1);
-	format_add("quick_list_chat", " %W%1%n", 1);
 	format_add("quick_list_chat,speech", _("%1 is free for chat"), 1);
-	format_add("quick_list_xa", " %g%1%n", 1);
 	format_add("quick_list_xa,speech", _("%1 is extended away"), 1);
-	format_add("quick_list_gone", " %R%1%n", 1);
 	format_add("quick_list_gone,speech", _("%1 is gone"), 1);
-	format_add("quick_list_dnd", " %B%1%n", 1);
 	format_add("quick_list_dnd,speech", _("%1 has 'do not disturb' status"), 1);
 
 	/* window */
