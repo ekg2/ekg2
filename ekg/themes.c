@@ -1371,6 +1371,8 @@ void theme_init()
 	format_add("invisible_descr", _("%> (%3) Status changed to %cinvisible%n: %T%1%n%2\n"), 1);
 	format_add("dnd", _("%> (%1) Status changed to %Bdo not disturb%n\n"), 1);
 	format_add("dnd_descr", _("%> (%3) Status changed to %Bdo not disturb%n: %T%1%n%2\n"), 1);
+	format_add("gone", _("%> (%1) Status changed to %Rgone%n\n"), 1);
+	format_add("gone_descr", _("%> (%3) Status changed to %Rgone%n: %T%1%n%2%n%n\n"), 1);
 	format_add("ffc", _("%> (%1) Status changed to %Wfree for chat%n\n"), 1);
 	format_add("ffc_descr", _("%> (%3) Status changed to %Wfree for chat%n: %T%1%n%2%n\n"), 1);
 	format_add("xa", _("%> (%1) Status changed to %gextended away%n\n"), 1);
