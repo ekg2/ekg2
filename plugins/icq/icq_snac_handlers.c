@@ -104,20 +104,21 @@ static inline char *_icq_makesnac(uint8_t family, uint16_t cmd, uint16_t flags, 
 	return buf;
 }
 
-void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, icq_snac_reference_list_t *data, snac_subhandler_t subhandler) {
+void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, private_data_t *data, snac_subhandler_t subhandler) {
 	icq_private_t *j;
+	icq_snac_reference_list_t *snac_data = NULL;
 
 	if (!s || !(j = s->priv) || !pkt)
 		return;
 
 	if (data || subhandler) {
-		if (!data)
-			data = xmalloc(sizeof(icq_snac_reference_list_t));
-		data->ref = j->snac_seq;
-		data->timestamp = time(NULL);
-		data->subhandler = subhandler;
+		snac_data = xmalloc(sizeof(icq_snac_reference_list_t));
+		snac_data->ref = j->snac_seq;
+		snac_data->timestamp = time(NULL);
+		snac_data->subhandler = subhandler;
+		snac_data->list = data;
 
-		icq_snac_ref_add(s, data);
+		icq_snac_ref_add(s, snac_data);
 	}
 
 	string_insert_n(pkt, 0, _icq_makesnac(fam, cmd, 0x0000, j->snac_seq), SNAC_PACKET_LEN);
@@ -135,7 +136,7 @@ void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, icq_sn
 	j->snac_seq++;
 }
 
-void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, icq_snac_reference_list_t *data, snac_subhandler_t subhandler) {
+void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, private_data_t *data, snac_subhandler_t subhandler) {
 	icq_private_t *j;
 	string_t newbuf;
 

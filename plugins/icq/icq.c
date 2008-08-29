@@ -347,8 +347,8 @@ void icq_session_connected(session_t *s) {
 
 		{
 			/* Update our information from the server */
-			icq_snac_reference_list_t *data = xmalloc(sizeof(icq_snac_reference_list_t));
-			private_item_set_int(&data->list, "uid", atoi(s->uid+4));
+			private_data_t *data = NULL;
+			private_item_set_int(&data, "uid", atoi(s->uid+4));
 
 			pkt = icq_pack("i", atoi(s->uid+4));
 			/* XXX, cookie, in-quiet-mode */
@@ -1132,7 +1132,7 @@ static COMMAND(icq_command_userinfo) {
 	string_t pkt;
 	uint32_t number;
 	int minimal_req = 0;	/* XXX */
-	icq_snac_reference_list_t *ref_data;
+	private_data_t *ref_data = NULL;
 
 	if (!(number = icq_get_uid(session, target))) {
 		printq("invalid_uid", target);
@@ -1140,8 +1140,7 @@ static COMMAND(icq_command_userinfo) {
 	}
 
 	/* XXX xookie */
-	ref_data = xmalloc(sizeof(icq_snac_reference_list_t));
-	private_item_set_int(&ref_data->list, "uid", number);
+	private_item_set_int(&ref_data, "uid", number);
 
 	pkt = icq_pack("i", number);
 	icq_makemetasnac(session, pkt, 2000, (minimal_req == 0) ? 1202 : 1210, ref_data, NULL);

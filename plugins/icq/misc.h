@@ -78,6 +78,6 @@ char *icq_convert_from_utf8(char *text);
 
 char *int2time_str(const char *format, int time);
 
-void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, icq_snac_reference_list_t *data, snac_subhandler_t subhandler, char *format, ...);
+void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...);
 
 #endif
