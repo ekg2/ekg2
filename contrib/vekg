@@ -29,7 +29,7 @@ fi
 valgrind \
    -v \
    --tool=memcheck \
-   --log-file="$HOME"/ekg2.valgrind."$(date +%Y%m%d-%H%M)" \
+   --log-file="$HOME"/.ekg2/valgrind."$(date +%Y%m%d-%H%M)" \
     --leak-check=yes \
 	--leak-resolution=high \
     --error-limit=no \
