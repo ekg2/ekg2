@@ -124,7 +124,7 @@ SNAC_HANDLER(icq_snac_location_handler) {
 		debug_error("icq_snac_location_handler() SNAC with unknown cmd: %.4x received\n", cmd);
 		icq_hexdump(DEBUG_ERROR, buf, len);
 	} else
-		handler(s, buf, len);
+		handler(s, buf, len, data);
 
 	return 0;
 }

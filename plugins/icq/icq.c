@@ -205,7 +205,7 @@ int icq_write_info(session_t *s) {
 
 	pkt = icq_pack("T", icq_pack_tlv(0x05, tlv_5->str, tlv_5->len));
 
-	icq_makesnac(s, pkt, 0x02, 0x04, 0, 0);
+	icq_makesnac(s, pkt, 0x02, 0x04, NULL, 0);
 	icq_send_pkt(s, pkt);
 
 	string_free(tlv_5, 1);
@@ -345,15 +345,21 @@ void icq_session_connected(session_t *s) {
 		/* XXX, cookie */
 		icq_send_snac(s, 0x4, 0x10, 0, 0, NULL);
 
-		/* Update our information from the server */
-		pkt = icq_pack("i", atoi(s->uid+4));
-		/* XXX, cookie, in-quiet-mode */
-		icq_makemetasnac(s, pkt, 2000, 0x04D0, 0);
-		icq_send_pkt(s, pkt);
+		{
+			/* Update our information from the server */
+			icq_snac_reference_list_t *data = xmalloc(sizeof(icq_snac_reference_list_t));
+			private_item_set_int(&data->list, "uid", atoi(s->uid+4));
+
+			pkt = icq_pack("i", atoi(s->uid+4));
+			/* XXX, cookie, in-quiet-mode */
+			icq_makemetasnac(s, pkt, 2000, 0x04D0, data, icq_my_meta_information_response);
+			icq_send_pkt(s, pkt);
+		}
 
 		/* Start sending Keep-Alive packets */
 		timer_remove_session(s, "ping");
 		timer_add_session(s, "ping", 60, 1, icq_ping);
+		timer_add_session(s, "snac_timeout", 10, 1, icq_snac_ref_list_cleanup);
 #if 0
 		if (m_bAvatarsEnabled)
 		{ // Send SNAC 1,4 - request avatar family 0x10 connection
@@ -453,6 +459,7 @@ static QUERY(icq_session_deinit) {
 
 	string_free(j->cookie, 1);
 	string_free(j->stream_buf, 1);
+	icq_snac_references_list_destroy(&j->snac_ref_list);
 
 	xfree(j);
 	return 0;
@@ -514,6 +521,7 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 		return;
 
 	timer_remove_session(s, "ping");
+	timer_remove_session(s, "snac_timeout");
 	protocol_disconnected_emit(s, reason, type);
 
 	if (j->fd != -1) {
@@ -1123,6 +1131,7 @@ static COMMAND(icq_command_userinfo) {
 	string_t pkt;
 	uint32_t number;
 	int minimal_req = 0;	/* XXX */
+	icq_snac_reference_list_t *ref_data;
 
 	if (!(number = icq_get_uid(session, target))) {
 		printq("invalid_uid", target);
@@ -1130,9 +1139,11 @@ static COMMAND(icq_command_userinfo) {
 	}
 
 	/* XXX xookie */
+	ref_data = xmalloc(sizeof(icq_snac_reference_list_t));
+	private_item_set_int(&ref_data->list, "uid", number);
 
 	pkt = icq_pack("i", number);
-	icq_makemetasnac(session, pkt, 2000, (minimal_req == 0) ? 1202 : 1210, 0);
+	icq_makemetasnac(session, pkt, 2000, (minimal_req == 0) ? 1202 : 1210, ref_data, NULL);
 
 	icq_send_pkt(session, pkt);
 	return 0;
@@ -1152,7 +1163,7 @@ static COMMAND(icq_command_searchuin) {
 	/* XXX, cookie */
 	pkt = icq_pack("wwi", icq_pack_tlv_dword(0x0136, uin));		/* TLV_UID */
 
-	icq_makemetasnac(session, pkt, 2000, 0x0569, 0);	/* META_SEARCH_UIN */
+	icq_makemetasnac(session, pkt, 2000, 0x0569, NULL, 0);	/* META_SEARCH_UIN */
 	icq_send_pkt(session, pkt);
 	return 0;
 }
@@ -1265,7 +1276,7 @@ static COMMAND(icq_command_search) {
 
 	icq_pack_append(pkt, "wwc", icq_pack_tlv_char(0x0230, only_online));
 
-	icq_makemetasnac(session, pkt, 2000, 0x055F, 0);	/* META_SEARCH_GENERIC */
+	icq_makemetasnac(session, pkt, 2000, 0x055F, NULL, 0);	/* META_SEARCH_GENERIC */
 	icq_send_pkt(session, pkt);
 
 	array_free(argv);

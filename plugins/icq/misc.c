@@ -696,7 +696,7 @@ char *int2time_str(const char *format, int time) {
 		return NULL;
 }
 
-void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, uint16_t flags, uint32_t ref, char *format, ...) {
+void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, icq_snac_reference_list_t *data, snac_subhandler_t subhandler, char *format, ...) {
 	va_list ap;
 	string_t pkt = string_init(NULL);
 
@@ -706,6 +706,6 @@ void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, uint16_t flags, 
 		va_end(ap);
 	}
 
-	icq_makesnac(s, pkt, family, cmd, flags, ref);
+	icq_makesnac(s, pkt, family, cmd, data, subhandler);
 	icq_send_pkt(s, pkt);
 }

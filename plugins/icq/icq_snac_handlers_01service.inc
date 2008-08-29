@@ -6,7 +6,7 @@
  *
  * ekg2 port:
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
- *                     2008 Wies≥aw OchmiÒski <wiechu@wiechu.com>
+ *                     2008 Wies≈Çaw Ochmi≈Ñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -384,7 +384,7 @@ SNAC_HANDLER(icq_snac_service_handler) {
 		debug_error("icq_snac_service_handler() SNAC with unknown cmd: %.4x received\n", cmd);
 		icq_hexdump(DEBUG_ERROR, buf, len);
 	} else
-		handler(s, buf, len);
+		handler(s, buf, len, data);
 
 	return 0;
 }

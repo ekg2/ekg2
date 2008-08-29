@@ -238,7 +238,7 @@ static ICQ_FLAP_HANDLER(icq_flap_data) {
 		debug_white("icq_flap_data() len left: %d\n", len);
 	}
 
-	icq_snac_handler(s, snac.family, snac.cmd, data, len);
+	icq_snac_handler(s, snac.family, snac.cmd, data, len, snac.flags, snac.ref);
 
 	return 0;
 }

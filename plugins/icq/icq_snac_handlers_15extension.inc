@@ -484,6 +484,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_0x7da) {
 		uint8_t result;
 		unsigned char *data;
 	} pkt;
+	int uid = data ? private_item_get_int(&data, "uid") : -1;
 
 	metasnac_subhandler_t handler;
 
@@ -520,12 +521,11 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_0x7da) {
 	} else {
 		__displayed = 0;
 
-		handler(s, pkt.data, len, -1, pkt.result);
+		handler(s, pkt.data, len, uid, pkt.result);
 
 		if (__displayed)
-			print("icq_userinfo_end", session_name(s), itoa(-1));
+			print("icq_userinfo_end", session_name(s), itoa(uid));
 	}
-		#warning "XXX, -1 uid!"
 
 	return 0;
 }
@@ -589,7 +589,7 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 
 	switch (pkt.type) {
 		case 0x7da:
-			icq_snac_extension_replyreq_0x7da(s, tlv_data, tlv_len);		/* Miranda: STARTED */
+			icq_snac_extension_replyreq_0x7da(s, tlv_data, tlv_len, data);		/* Miranda: STARTED */
 			break;
 		default:
 			debug_error("icq_snac_extension_replyreq() METASNAC with unknown code: %x received.\n", pkt.type);
@@ -597,6 +597,13 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 	}
 
 	icq_tlvs_destroy(&tlvs);
+	return 0;
+}
+
+SNAC_SUBHANDLER(icq_my_meta_information_response) {
+	/* XXX it's only example */
+	print("icq_user_info_generic", _("It's me"), "");
+	icq_snac_extension_replyreq(s, buf, len, data);
 	return 0;
 }
 
@@ -614,7 +621,7 @@ SNAC_HANDLER(icq_snac_extension_handler) {
 		icq_hexdump(DEBUG_ERROR, buf, len);
 		return 0;
 	} else
-		handler(s, buf, len);
+		handler(s, buf, len, data);
 
 	return 0;
 }
