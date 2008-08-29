@@ -143,9 +143,9 @@ static void *ekg2_dlopen(const char *name) {
 	void *tmp = dlopen(name, RTLD_NOW | RTLD_GLOBAL);
 #endif
 	if (!tmp) {
-		debug_error("[plugin] could not be loaded: %s %s\n", name, dlerror());
+		debug_warn("[plugin] could not be loaded: %s %s\n", name, dlerror());
 	} else {
-		debug_function("[plugin] loaded: %s\n", name);
+		debug_ok("[plugin] loaded: %s\n", name);
 	}
 	return tmp;
 }

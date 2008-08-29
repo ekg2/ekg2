@@ -593,6 +593,8 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 		case DEBUG_FUNCTION:		theme_format = "fdebug";	break;
 		case DEBUG_ERROR:		theme_format = "edebug";	break;
 		case DEBUG_WHITE:		theme_format = "wdebug";	break;
+		case DEBUG_WARN:		theme_format = "warndebug";	break;
+		case DEBUG_OK:			theme_format = "okdebug";	break;
 		default:			theme_format = "debug";		break;
 	}
 
