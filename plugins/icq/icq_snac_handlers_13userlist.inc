@@ -433,6 +433,23 @@ SNAC_SUBHANDLER(icq_snac_userlist_modifyentry) {
 	return 0;
 }
 
+SNAC_SUBHANDLER(icq_snac_userlist_removeentry) {
+	debug_function("icq_snac_userlist_removeentry() Server updated our contact on list\n");
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
+{
+	struct {
+		char *uid;
+		uint16_t group, item;
+		uint16_t type;
+	} pkt;
+	if (ICQ_UNPACK(&buf, "uWWW", &pkt.uid, &pkt.group, &pkt.item, &pkt.type)) {
+		debug("icq_snac_userlist_removeentry() Details: delete '%s' (item id:%d, type:0x%x) from group %d\n", pkt.uid, pkt.item, pkt.type, pkt.group);
+	}
+}
+#endif
+	return 0;
+}
+
 SNAC_SUBHANDLER(icq_snac_userlist_modifyend) {
 	debug_white("icq_snac_userlist_modifyend() End of server modification\n");
 	return 0;
@@ -524,6 +541,7 @@ SNAC_HANDLER(icq_snac_userlist_handler) {
 		case 0x03: handler = icq_snac_userlist_reply; break;		/* Miranda: OK */
 		case 0x06: handler = icq_snac_userlist_roster; break;		/* Miranda: 1/3 OK */	/* XXX, handleServerCList() */
 		case 0x09: handler = icq_snac_userlist_modifyentry; break;
+		case 0x0a: handler = icq_snac_userlist_removeentry; break;
 		case 0x0E: handler = icq_snac_userlist_edit_ack; break;
 		case 0x0F: handler = icq_snac_userlist_up_to_date; break;
 		case 0x11: handler = icq_snac_userlist_modifystart; break;	/* Miranda: OK */

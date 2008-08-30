@@ -852,7 +852,7 @@ static COMMAND(icq_command_addssi) {
 				(uint16_t) data->len,			// Length of the additional data
 				data
 				);
-		
+
 		icq_send_snac(session, 0x13, 0x09, NULL, NULL,		// SSI edit: update group header
 				"U WWWW T",
 				j->default_group_name,			// default group name
