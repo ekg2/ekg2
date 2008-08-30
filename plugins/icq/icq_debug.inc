@@ -91,7 +91,9 @@ struct cmdnames_t snac_names_04[] = {
 	{0x0a, "Missed call (msg not delivered)"},
 	{0x0b, "Client/server message error or data"},
 	{0x0c, "Server message ack"},
+	{0x10, "Get offline messages request"},
 	{0x14, "Mini typing notifications (MTN)"},
+	{0x17, "Get offline messages reply"},
 	{ -1, NULL}};
 
 // Family 0x0005 (depricated) Advertisements service

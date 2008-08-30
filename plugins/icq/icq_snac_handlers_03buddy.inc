@@ -249,12 +249,16 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 						debug_error("icq_snac_buddy_online() TLV(1D) corrupted?\n");
 						break;
 					}
-					
+
 					/* just some validity check */
 					if (item_len > t_len)
 						item_len = t_len;
-
-					if (memcmp(t_data, empty_item, (item_len < 0x10) ? item_len : 0x10)) {
+					if ((item_type == 2) && (item_flags == 4)) {
+						 /* iChat online message */
+						 char *tmp;
+						 icq_unpack_nc(t_data, item_len, "U", &tmp);
+						 descr = xstrdup(tmp);
+					} else if (memcmp(t_data, empty_item, (item_len < 0x10) ? item_len : 0x10)) {
 						/* Item types
 						 * 	0000: AIM mini avatar
 						 * 	0001: AIM/ICQ avatar ID/hash (len 5 or 16 bytes)
@@ -299,12 +303,13 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 		}
 	}
 
-	/* We change only status, not description */
-	if (u)
-		descr = xstrdup(u->descr);
+	if (!descr) {
+		if (u)
+			descr = xstrdup(u->descr);
+		icq_get_description(s, pkt.uid);
+	}
 
 	protocol_status_emit(s, uid, status, descr, time(NULL));
-	icq_get_description(s, pkt.uid);
 
 	icq_tlvs_destroy(&tlvs);
 	xfree(uid);
@@ -315,6 +320,9 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 	userlist_t *u;
+	struct icq_tlv_list *tlvs;
+	icq_tlv_t *t;
+	char *descr = NULL;
 
 	debug_function("icq_snac_buddy_offline()\n");
 
@@ -326,19 +334,16 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 		if (!ICQ_UNPACK(&buf, "uWW", &cont, &discard, &t_count))
 			return -1;
 
-		while (t_count) {
-			uint16_t t_type, t_len;
-
-			if (!ICQ_UNPACK(&buf, "WW", &t_type, &t_len))
-				return -1;
-
-			if (len < t_len)
-				return -1;
-
-			buf += t_len;
-			len -= t_len;
-			t_count--;
+		tlvs = icq_unpack_tlvs(&buf, &len, t_count);
+		if ((t = icq_tlv_get(tlvs, 0x1d))) {
+			uint16_t a_type;
+			uint8_t a_flags, a_len;
+			if (icq_unpack_nc(t->buf, t->len, "WCC", &a_type, &a_flags, &a_len)) {
+				if ((a_type == 2) || (a_flags == 4))
+					icq_unpack_nc(t->buf+4, t->len-4, "U", &descr);
+			}
 		}
+		icq_tlvs_destroy(&tlvs);
 
 		uid = icq_uid(cont);
 		if ((u = userlist_find(s, uid))) {
@@ -347,7 +352,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 			user_private_item_set_int(u, "ip", 0);
 		}
 		debug_white("icq_snac_buddy_offline() uid: %s\n", uid);
-		protocol_status_emit(s, uid, EKG_STATUS_NA, NULL, time(NULL));
+		protocol_status_emit(s, uid, EKG_STATUS_NA, descr, time(NULL));
 		xfree(uid);
 	} while (len >= 1);
 
