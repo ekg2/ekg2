@@ -63,6 +63,9 @@ static void icq_get_description(session_t *s, char *uin) {
 
 	debug_function("icq_get_description() for: %s\n", uin);
 
+	if (status != EKG_STATUS_AWAY && status != EKG_STATUS_GONE && status != EKG_STATUS_XA && status != EKG_STATUS_DND && status != EKG_STATUS_FFC)
+		return;
+
 	pkt = string_init(NULL);
 	icq_pack_append(pkt, "II", cookie1, cookie2);		// cookie
 	icq_pack_append(pkt, "W", (uint32_t) 2);		// message type
