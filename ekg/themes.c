@@ -1304,7 +1304,7 @@ void theme_init()
 			"%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}"
 			"%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
 	format_add("header", " %{?query %c(%{?query_away %w}%{?query_avail %W}%{?query_invisible %K}%{?query_notavail %k}"
-			"%{?query_chat %W}%{?query_dnd %K}%{query_xa %g}%{?query_gone %R}%{?query_unknown %M}%{?query_error %m}${?query_blocking %m}"
+			"%{?query_chat %W}%{?query_dnd %K}%{query_xa %g}%{?query_gone %R}%{?query_unknown %M}%{?query_error %m}%{?query_blocking %m}"
 			"%{query}%{?query_descr %c/%w%{query_descr}}%c) %{?query_ip (%wip%c/%w%{query_ip}%c)} %{irctopic}}"
 			"%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}", 1);
 	format_add("statusbar_act_important", "%Y", 1);
