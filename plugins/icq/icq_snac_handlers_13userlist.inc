@@ -193,8 +193,10 @@ cleanup_user:
 					/* no item ID: this is a group */
 					/* XXX ?wo? more groups ??? */
 					icq_private_t *j;
-					if (s && (j = s->priv) && (!j->user_default_group))
-						j->user_default_group = group;
+					if (s && (j = s->priv) && (!j->default_group_id)) {
+						j->default_group_id = group;
+						j->default_group_name = xstrdup(name);
+					}
 				} else {
 					debug_error("icq_userlist_parse_entry() Unhandled ROSTER_TYPE_GROUP wItemID != 0\n");
 				}
@@ -381,41 +383,36 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 	return 0;
 }
 
+char *icq_snac_userlist_edit_ack_msg(int error) {
+	char *msg;
+
+	switch (error) {
+		case 0x0000: msg = "OK!"; break;
+		case 0x0002: msg = "Item you want to modify not found in list"; break;
+		case 0x0003: msg = "Item you want to add allready exists"; break;
+		case 0x000A: msg = "Error adding item (invalid id, allready in list, invalid data)"; break;
+		case 0x000C: msg = "Can't add item. Limit for this type of items exceeded"; break;
+		case 0x000D: msg = "Trying to add ICQ contact to an AIM list"; break;
+		case 0x000E: msg = "Can't add this contact because it requires authorization"; 	break;
+		default:     msg = "Unknown error";
+	}
+
+	return msg;
+}
+
 SNAC_SUBHANDLER(icq_snac_userlist_edit_ack) {
 	uint16_t err;
 
 	debug_function("icq_snac_userlist_edit_ack()\n");
 	while (len>=2) {
-		char *msg;
 		if (!ICQ_UNPACK(&buf, "W", &err))
 			break;
-		switch (err) {
-			case 0x0000:
-				debug_white("icq_snac_userlist_edit_ack() err:0 // OK!\n");
-				return 0;
-			case 0x0002:
-				msg = "Item you want to modify not found in list";
-				break;
-			case 0x0003:
-				msg = "Item you want to add allready exists";
-				break;
-			case 0x000A:
-				msg = "Error adding item (invalid id, allready in list, invalid data)";
-				break;
-			case 0x000C:
-				msg = "Can't add item. Limit for this type of items exceeded";
-				break;
-			case 0x000D:
-				msg = "Trying to add ICQ contact to an AIM list";
-				break;
-			case 0x000E:
-				msg = "Can't add this contact because it requires authorization";
-				break;
-			default:
-				msg = "Unknown error";
-		}
-		debug_error("icq_snac_userlist_edit_ack() Error code:0x%x // %s\n", err, msg);
+		if (!err)
+			debug_white("icq_snac_userlist_edit_ack() err:0 // OK!\n");
+		else
+			debug_error("icq_snac_userlist_edit_ack() Error code:0x%x // %s\n", err, icq_snac_userlist_edit_ack_msg(err));
 	}
+
 	return 0;
 }
 
@@ -542,6 +539,38 @@ SNAC_HANDLER(icq_snac_userlist_handler) {
 		icq_hexdump(DEBUG_ERROR, buf, len);
 	} else
 		handler(s, buf, len, data);
+
+	return 0;
+}
+
+SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
+	userlist_t *u;
+	const char *nick = private_item_get(&data, "nick");
+	int quiet = private_item_get_int(&data, "quiet");
+	uint16_t error;
+	char *uid;
+
+	if (!ICQ_UNPACK(&buf, "W", &error))
+		return -1;
+
+	uid = icq_uid(itoa(private_item_get_int(&data, "uin")));
+
+	if (!error) {
+		if ( (u = userlist_add(s, uid, nick)) ) {
+			query_emit_id(NULL, USERLIST_ADDED, &u->uid, &u->nickname, &quiet);
+			query_emit_id(NULL, ADD_NOTIFY, &s->uid, &u->uid);
+			user_private_item_set_int(u, "iid", private_item_get_int(&data, "iid"));
+			user_private_item_set_int(u, "gid", private_item_get_int(&data, "gid"));
+			/* XXX ?wo? ask for authorizarion flag */
+		}
+	} else {
+		/* XXX ?wo? format for it */
+		char *tmp = saprintf("Can't add %s/%s", nick, uid);
+		printq("icq_user_info_generic", tmp, icq_snac_userlist_edit_ack_msg(error));
+		xfree(tmp);
+	}
+
+	xfree(uid);
 
 	return 0;
 }

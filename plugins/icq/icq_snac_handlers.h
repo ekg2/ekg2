@@ -27,5 +27,6 @@ void icq_snac_references_list_destroy(icq_snac_reference_list_t **lista);
 TIMER_SESSION(icq_snac_ref_list_cleanup);
 
 SNAC_SUBHANDLER(icq_my_meta_information_response);
+SNAC_SUBHANDLER(icq_cmd_addssi_ack);
 
 #endif

@@ -220,10 +220,13 @@ void icq_session_connected(session_t *s) {
 
 	/* SNAC 3,4: Tell server who's on our list */
 	/* XXX ?wo? SNAC 3,4 is: "Add buddy(s) to contact list" */
+	/* XXX ?wo? check & fix */
+#if 0
 	if (s->userlist) {
 		/* XXX, dla kazdego kontaktu... */
 		icq_send_snac(s, 0x03, 0x04, 0, 0, NULL);
 	}
+#endif
 
 	if (s->status == EKG_STATUS_INVISIBLE) {
 		/* Tell server who's on our visible list */
@@ -332,7 +335,7 @@ void icq_session_connected(session_t *s) {
 	icq_makesnac(s, pkt, 0x01, 0x02, 0, 0);
 	icq_send_pkt(s, pkt); pkt = NULL;
 
-	debug_white(" *** Yeehah, login sequence complete\n");
+	debug_ok(" *** Yeehah, login sequence complete\n");
 
 
 #if 0
@@ -376,17 +379,18 @@ void icq_session_connected(session_t *s) {
 	icq_write_status_msg(s);
 
 	{ /* XXX ?wo? find better place for it */
-		if (s && (j = s->priv) && (!j->user_default_group)) {
+		if (s && (j = s->priv) && (!j->default_group_id)) {
 			/* No groups on server!!! */
 			/* Once executed ugly code: */
 			icq_send_snac(s, 0x13, 0x11, 0, 0, "");	// Contacts edit start (begin transaction)
 
-			j->user_default_group = 69;
+			j->default_group_id = 69;
+			j->default_group_name = xstrdup("ekg2");
 
 			icq_send_snac(s, 0x13, 0x08, 0, 0,		// SSI edit: add item(s)
 					"U WW W W WWW",
-					"ekg2",				// default group name
-					(uint16_t) j->user_default_group, // Group#
+					j->default_group_name,		// default group name
+					(uint16_t) j->default_group_id, // Group#
 					(uint16_t) 0,			// Item#
 					(uint16_t) 1,			// Group record
 					(uint16_t) 6,			// Length of the additional data
@@ -458,6 +462,7 @@ static QUERY(icq_session_deinit) {
 #endif
 	s->priv = NULL;
 
+	xfree(j->default_group_name);
 	string_free(j->cookie, 1);
 	string_free(j->stream_buf, 1);
 	icq_snac_references_list_destroy(&j->snac_ref_list);
@@ -714,7 +719,9 @@ static WATCHER(icq_handle_hubresolver) {
 static COMMAND(icq_command_addssi) {
 	userlist_t *u;
 	icq_private_t *j;
+	private_data_t *refdata = NULL;
 	uint32_t uin;
+	uint16_t group;
 
 	char *nickname = NULL;
 	char *phone = NULL;
@@ -814,11 +821,13 @@ static COMMAND(icq_command_addssi) {
 
 		icq_pack_append(buddies, "W", iid);
 
+		group = j->default_group_id;
 
-		icq_send_snac(session, 0x13, 0x11, 0, 0, "");		// Contacts edit start (begin transaction)
+
+		icq_send_snac(session, 0x13, 0x11, NULL, NULL, "");	// Contacts edit start (begin transaction)
 
 		icq_pack_append(data, "T", icq_pack_tlv_str(0x131, nickname));
-		icq_pack_append(data, "T", icq_pack_tlv(0x66, NULL, 0)); //  XXX we are awaiting authorization for this buddy
+		icq_pack_append(data, "T", icq_pack_tlv(0x66, NULL, 0));	//  XXX we are awaiting authorization for this buddy
 		if (email)
 			icq_pack_append(data, "T", icq_pack_tlv_str(0x137, email));	// locally assigned mail address
 		if (phone)
@@ -826,11 +835,17 @@ static COMMAND(icq_command_addssi) {
 		if (comment)
 			icq_pack_append(data, "T", icq_pack_tlv_str(0x13c, comment));	// buddy comment
 
-		icq_send_snac(session, 0x13, 0x08, 0, 0,		// SSI edit: add item(s)
+		private_item_set_int(&refdata, "uin", uin);
+		private_item_set(&refdata, "nick", nickname);
+		private_item_set_int(&refdata, "iid", iid);
+		private_item_set_int(&refdata, "gid", group);
+		private_item_set_int(&refdata, "quiet", quiet);
+
+		icq_send_snac(session, 0x13, 0x08, refdata, icq_cmd_addssi_ack,		// SSI edit: add item(s)
 				"U WWW WA",
 				target+4,				// item name (uin)
 
-				(uint16_t) j->user_default_group,	// Group#
+				group,					// Group#
 				(uint16_t) iid,				// Item#
 				(uint16_t) 0,				// Buddy record
 
@@ -838,26 +853,18 @@ static COMMAND(icq_command_addssi) {
 				data
 				);
 		
-		icq_send_snac(session, 0x13, 0x09, 0, 0,		// SSI edit: update group header
+		icq_send_snac(session, 0x13, 0x09, NULL, NULL,		// SSI edit: update group header
 				"U WWWW T",
-				"ekg2",					// default group name
-				(uint16_t) j->user_default_group,	// Group#
+				j->default_group_name,			// default group name
+				group,					// Group#
 				(uint16_t) 0,				// Item#
 				(uint16_t) 1,				// Group record
 				(uint16_t) buddies->len + 4,		// Length of the additional data
 				icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
 				);
 
-		icq_send_snac(session, 0x13, 0x12, 0, 0, "");	// Contacts edit end (finish transaction)
+		icq_send_snac(session, 0x13, 0x12, NULL, NULL, "");	// Contacts edit end (finish transaction)
 
-		/* XXX ?wo? add user to contact list after serwer response (OK) */
-		if ( (u = userlist_add(session, target, nickname)) ) {
-			query_emit_id(NULL, USERLIST_ADDED, &u->uid, &u->nickname, &quiet);
-			query_emit_id(NULL, ADD_NOTIFY, &session->uid, &u->uid);
-			user_private_item_set_int(u, "iid", iid);
-			user_private_item_set_int(u, "gid", j->user_default_group);
-			/* XXX ?wo? ask for authorizarion flag */
-		}
 
 		string_free(data, 1);
 		string_free(buddies, 1);

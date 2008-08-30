@@ -30,7 +30,8 @@ typedef struct {
 
 	int ssi;		/* server-side-userlist? */
 	int aim;		/* aim-ok? */
-	int user_default_group; /* XXX ?wo? TEMP! We should support list of groups */
+	int default_group_id;	/* XXX ?wo? TEMP! We should support list of groups */
+	char *default_group_name;
 	string_t cookie;	/* connection login cookie */
 	string_t stream_buf;
 	icq_snac_reference_list_t *snac_ref_list;
