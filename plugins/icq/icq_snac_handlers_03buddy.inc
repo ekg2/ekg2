@@ -57,7 +57,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 	return 0;
 }
 
-static void icq_get_description(session_t *s, char *uin) {
+static void icq_get_description(session_t *s, char *uin, int status) {
 	string_t pkt, tlv5, rdv;
 	uint32_t cookie1=rand(), cookie2=rand();
 
@@ -309,7 +309,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	if (!descr) {
 		if (u)
 			descr = xstrdup(u->descr);
-		icq_get_description(s, pkt.uid);
+		icq_get_description(s, pkt.uid, status);
 	}
 
 	protocol_status_emit(s, uid, status, descr, time(NULL));
