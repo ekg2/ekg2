@@ -12,7 +12,7 @@ typedef enum {
 	DEBUG_WHITE,
 	DEBUG_WARN,
 	DEBUG_OK,
-	DEBUG_FAIL			/* serious fail */
+	DEBUG_WTF			/* serious fail */
 } debug_level_t;
 
 #ifndef DISABLE_DEBUG
@@ -30,7 +30,7 @@ void debug_ext(debug_level_t level, const char *format, ...);
 #define debug_white(args...)	debug_ext(DEBUG_WHITE, args)
 #define debug_warn(args...)	debug_ext(DEBUG_WARN, args)
 #define debug_ok(args...)	debug_ext(DEBUG_OK, args)
-#define debug_fail(args...)	debug_ext(DEBUG_FAIL, args)
+#define debug_wtf(args...)	debug_ext(DEBUG_WTF, args)
 
 #endif
 

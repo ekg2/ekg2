@@ -595,7 +595,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 		case DEBUG_WHITE:		theme_format = "wdebug";	break;
 		case DEBUG_WARN:		theme_format = "warndebug";	break;
 		case DEBUG_OK:			theme_format = "okdebug";	break;
-		case DEBUG_FAIL:		theme_format = "faildebug";	break;
+		case DEBUG_WTF:		theme_format = "wtfdebug";	break;
 		default:			theme_format = "debug";		break;
 	}
 
@@ -606,7 +606,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 	if (is_UI && window_debug) {
 		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
 
-		if (level == DEBUG_FAIL) /* if real failure, warn also in current window (XXX: maybe always __status?) */
+		if (level == DEBUG_WTF) /* if real failure, warn also in current window (XXX: maybe always __status?) */
 			print("ekg_failure", tmp);
 	}
 #ifdef STDERR_DEBUG	/* STDERR debug */
