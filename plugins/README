@@ -31,3 +31,5 @@ sms		wojtekka	wysy³anie smsów i takie tam	/usr/bin/sms
 sniff		darkjames	sniffer GG			pcap
 xmsg 		peres 		komunikacja via FS 		[inotify]
 xosd		dredzik		xosd ;]				xosd
+
+--: vim:set ts=8 sts=8 sw=8 :--
