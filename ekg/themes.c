@@ -1345,6 +1345,9 @@ void theme_init()
 	format_add("wdebug",	"%W%1\n", 1);
 	format_add("warndebug",	"%r%1\n", 1);
 	format_add("okdebug",	"%G%1\n", 1);
+	format_add("faildebug",	"%W!!!%n %M%1\n", 1);
+
+	format_add("ekg_failure", _("%! %|Something really unexpected happened, you should %Treally%n contact authors!\nEKG2 may now behave fine, or more failures could occur.\nDetails follow (see also __debug):\n%R%1%n"), 1);
 
 	format_add("value_none", _("(none)"), 1);
 	format_add("not_enough_params", _("%! Too few parameters. Try %Thelp %1%n\n"), 1);
