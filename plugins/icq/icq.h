@@ -11,6 +11,17 @@ typedef int (*snac_handler_t) (session_t *, uint16_t cmd, unsigned char *, int, 
 #define SNAC_SUBHANDLER(x) int x(session_t *s, unsigned char *buf, int len, private_data_t *data)
 typedef int (*snac_subhandler_t) (session_t *s, unsigned char *, int, private_data_t * );
 
+typedef struct {
+	int win_size;		// Window size
+	int clear_lvl;		// Clear level
+	int alert_lvl;		// Alert level
+	int limit_lvl;		// Limit level
+	int discn_lvl;		// Disconnect level
+	int curr_lvl;		// Current level
+	int max_lvl;		// Max level
+	int n_groups;
+	int *groups;
+} icq_rate_t;
 
 typedef struct icq_snac_reference_list_s {
 	struct icq_snac_reference_list_s *next;
@@ -35,6 +46,8 @@ typedef struct {
 	string_t cookie;	/* connection login cookie */
 	string_t stream_buf;
 	icq_snac_reference_list_t *snac_ref_list;
+	int n_rates;
+	icq_rate_t **rates;
 } icq_private_t;
 
 int icq_send_pkt(session_t *s, string_t buf);

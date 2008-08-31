@@ -134,9 +134,7 @@ int icq_write_info(session_t *s) {
 		return -1;
 
 #define m_bAvatarsEnabled 0
-#define m_bUtfEnabled 0
-#define DBG_CAPMTN 1
-#define DBG_AIMCONTACTSEND 1
+#define m_bUtfEnabled 1
 
 	string_t pkt, tlv_5;
 
@@ -156,7 +154,11 @@ int icq_write_info(session_t *s) {
 		icq_pack_append(tlv_5, "P", (uint32_t) 0x134E);		/* CAP_UTF8MSGS - Client supports UTF-8 messages.*/
 #ifdef DBG_NEWCAPS
 	/* Tells server we understand to new format of caps */
+    #if 0
+    /* XXX -- it breaks CAPS */
 	icq_pack_append(tlv_5, "I", (uint32_t) 0x0000);			/* CAP_NEWCAPS */
+    #endif
+
 #endif
 
 #ifdef DBG_CAPXTRAZ
@@ -174,7 +176,7 @@ int icq_write_info(session_t *s) {
 #endif
 
 	if (j->aim)
-		icq_pack_append(tlv_5, "I", (uint32_t) 0x134D);	/* Tells the server we can speak to AIM */
+		icq_pack_append(tlv_5, "P", (uint32_t) 0x134D);	/* Tells the server we can speak to AIM */
 #ifdef DBG_AIMCONTACTSEND
 	icq_pack_append(tlv_5, "P", (uint32_t) 0x134B);		/* CAP_AIM_SENDBUDDYLIST - Client supports buddy lists transfer. */
 #endif
@@ -466,6 +468,7 @@ static QUERY(icq_session_deinit) {
 	string_free(j->cookie, 1);
 	string_free(j->stream_buf, 1);
 	icq_snac_references_list_destroy(&j->snac_ref_list);
+	icq_rates_destroy(s);
 
 	xfree(j);
 	return 0;
@@ -1354,6 +1357,26 @@ static COMMAND(icq_command_auth) {
 	return -1;
 }
 
+static COMMAND(icq_command_rates) {
+	icq_private_t *j = session->priv;
+	int i;
+
+	for (i=0; i < j->n_rates; i++) {
+		if (!i)
+			print("icq_rates_header");
+		printq("icq_rates",
+			itoa(i+1),
+			itoa(j->rates[i]->win_size),
+			itoa(j->rates[i]->clear_lvl),
+			itoa(j->rates[i]->alert_lvl),
+			itoa(j->rates[i]->limit_lvl),
+			itoa(j->rates[i]->discn_lvl),
+			itoa(j->rates[i]->curr_lvl),
+			itoa(j->rates[i]->max_lvl));
+	}
+
+	return 0;
+}
 
 static COMMAND(icq_command_register) {
 	printq("generic_error", "Create a new ICQ account on http://lite.icq.com/register");
@@ -1402,6 +1425,10 @@ static int icq_theme_init() {
 	format_add("icq_userinfo_end",		"%g`+=%G----- End%n", 1);
 
 	format_add("icq_user_info_generic", "%K| %n%1: %T%2%n\n", 1);
+
+	format_add("icq_rates_header", "%>%n # %K|%n Curr %K|%n Alrt %K|%n Limt %K|%n Clear %K|%n Dscn %K|%n  Max %K|%nwin %K|%n\n", 1);
+	format_add("icq_rates", "%>%n%[-2]1 %K|%n%[-5]7 %K|%n%[-5]4 %K|%n%[-5]5 %K|%n%[-6]3 %K|%n%[-5]6 %K|%n%[-5]8 %K|%n%[-3]2 %K|%n\n", 1);
+	format_add("icq_you_were_added",	"%> %R%1 add you to contact list", 1);
 
 #endif
 	return 0;
@@ -1473,6 +1500,8 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:connect", NULL,	icq_command_connect,	ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:disconnect", NULL,icq_command_disconnect,	ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:reconnect", NULL,	icq_command_reconnect,	ICQ_ONLY, NULL);
+
+	command_add(&icq_plugin, "icq:_rates", NULL,	icq_command_rates,	ICQ_ONLY, NULL);
 
 	return 0;
 }

@@ -80,4 +80,7 @@ char *int2time_str(const char *format, int time);
 
 void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...);
 
+void icq_rates_destroy(session_t *s);
+void icq_rates_init(session_t *s, int n_rates);
+
 #endif

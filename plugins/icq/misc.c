@@ -709,3 +709,42 @@ void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, private_data_t *
 	icq_makesnac(s, pkt, family, cmd, data, subhandler);
 	icq_send_pkt(s, pkt);
 }
+
+/*
+ * rate limit handle
+ */
+void icq_rates_destroy(session_t *s) {
+	icq_private_t *j;
+	int i;
+
+	if (!s || !(j = s->priv))
+		return;
+
+	for (i=0; i<j->n_rates; i++) {
+		xfree(j->rates[i]->groups);
+		xfree(j->rates[i]);
+	}
+	xfree(j->rates);
+	j->rates = NULL;
+	j->n_rates = 0;
+}
+
+void icq_rates_init(session_t *s, int n_rates) {
+	icq_private_t *j;
+	int i;
+
+	if (!s || !(j = s->priv))
+		return;
+
+	if (j->rates)
+		icq_rates_destroy(s);
+
+	if (n_rates<=0)
+		return;
+
+	j->n_rates = n_rates;
+	j->rates = xmalloc(sizeof(icq_rate_t *) * n_rates);
+
+	for (i=0; i<j->n_rates; i++)
+		j->rates[i] = xmalloc(sizeof(icq_rate_t));
+}

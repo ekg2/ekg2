@@ -104,8 +104,6 @@ SNAC_SUBHANDLER(icq_snac_service_redirect) {
 SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 	icq_private_t *j = s->priv;
 
-#if ICQ_DEBUG_UNUSED_INFORMATIONS
-{
 	struct {
 		uint16_t no;	// Number of rate classes
 	} pkt;
@@ -115,33 +113,29 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 		goto wrong;
 	if (pkt.no*(2+8*4+1) > len)
 		goto wrong;
+
+	/* init rates management */
+	icq_rates_init(s, pkt.no);
 	for (i=0; i<pkt.no; i++) {
 		uint16_t id;
 		uint32_t x0, x1, x2, x3, x4, x5, x6, x7;
-		uint8_t b;
-		(void) ICQ_UNPACK(&buf, "W IIII IIII x", &id,	// Rate class ID
-					&x0,			// Window size
-					&x1,			// Clear level
-					&x2,			// Alert level
-					&x3,			// Limit level
-					&x4,			// Disconnect level
-					&x5,			// Current level
-					&x6,			// Max level
-					&x7,			// Last time; not present in protocol version 2
-					&b			// Current state; not present in protocol version 2
-				);
-		debug_white("Rate info class #%d (%d, %d, %d, %d, %d, %d, %d, %d)\n", id, x0, x1, x2, x3, x4, x5, x6, x7);
+		(void) ICQ_UNPACK(&buf, "W", &id);	// Rate class ID
+		(void) ICQ_UNPACK(&buf, "IIII IIII x", &x0, &x1, &x2, &x3, &x4, &x5, &x6, &x7);
+		if (id && (id <= j->n_rates)) {
+			id--;
+			j->rates[id]->win_size	= x0;		// Window size
+			j->rates[id]->clear_lvl	= x1;		// Clear level
+			j->rates[id]->alert_lvl	= x2;		// Alert level
+			j->rates[id]->limit_lvl	= x3;		// Limit level
+			j->rates[id]->discn_lvl	= x4;		// Disconnect level
+			j->rates[id]->curr_lvl	= x5;		// Current level
+			j->rates[id]->max_lvl	= x6;		// Max level
+		}
 	}
 	// XXX ?wo? handle rate groups
 //	icq_hexdump(DEBUG_ERROR, buf, len);
-}
-wrong:
-#endif
 
-#if MIRANDA
-	/* init rates management */
-	m_rates = ratesCreate(pBuffer, wBufferLength);
-#endif
+wrong:
 
 	/* ack rate levels */
 	icq_send_snac(s, 0x01, 0x08, 0, 0,
@@ -230,17 +224,40 @@ wrong:
 SNAC_SUBHANDLER(icq_snac_service_ratechange) {
 	struct {
 		uint16_t status;
-		uint16_t class;
-		/* 20B */
-		uint32_t level;
 	} pkt;
+	icq_private_t *j = s->priv;
+	int i;
 
-	if (!ICQ_UNPACK(&buf, "WW20I", &pkt.status, &pkt.class, &pkt.level))
+	if (!ICQ_UNPACK(&buf, "W", &pkt.status))
 		return -1;
+	/*
+	 * 0x0001	Rate limits parameters changed
+	 * 0x0002	Rate limits warning (current level < alert level)
+	 * 0x0003	Rate limit hit (current level < limit level)
+	 * 0x0004	Rate limit clear (current level become > clear level)
+	 */
+	/* TODO ?wo? -- print warning here ? */
 
-	/* XXX, Miranda do smth here :> */
+	i = 0;
+	while (len >= (2 + 8*4 +1)) {
+		uint16_t id;
+		uint32_t x0, x1, x2, x3, x4, x5, x6, x7;
+		(void) ICQ_UNPACK(&buf, "W", &id);	// Rate class ID
+		(void) ICQ_UNPACK(&buf, "IIII IIII x", &x0, &x1, &x2, &x3, &x4, &x5, &x6, &x7);
+		if (id && (id <= j->n_rates)) {
+			id--;
+			j->rates[id]->win_size	= x0;		// Window size
+			j->rates[id]->clear_lvl	= x1;		// Clear level
+			j->rates[id]->alert_lvl	= x2;		// Alert level
+			j->rates[id]->limit_lvl	= x3;		// Limit level
+			j->rates[id]->discn_lvl	= x4;		// Disconnect level
+			j->rates[id]->curr_lvl	= x5;		// Current level
+			j->rates[id]->max_lvl	= x6;		// Max level
+		}
+		i++;
+	}
 
-	debug_error("XXX icq_snac_service_ratechange() %u %u %u\n", pkt.status, pkt.class, pkt.level);
+	debug_function("icq_snac_service_ratechange() status:%u\n", pkt.status);
 
 	return 0;
 }

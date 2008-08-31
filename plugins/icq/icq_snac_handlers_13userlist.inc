@@ -517,6 +517,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
 }
 
 SNAC_SUBHANDLER(icq_snac_userlist_you_were_added) {
+int quiet=0;
 	struct {
 		char *uid;
 	} pkt;
@@ -528,6 +529,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_you_were_added) {
 	// XXX ?wo? add format & display in status window
 	uid = icq_uid(pkt.uid);
 	debug_white("You were added %s %s\n", session_name(s), uid);
+	printq("icq_you_were_added", uid);
 	xfree(uid);
 
 	return 0;
