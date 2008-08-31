@@ -1418,6 +1418,13 @@ static plugins_params_t icq_plugin_vars[] = {
 	PLUGIN_VAR_END()
 };
 
+static const char *icq_protocols[] = { "icq:", NULL };
+static const status_t icq_statuses[] = {
+	EKG_STATUS_NA, EKG_STATUS_GONE, EKG_STATUS_DND, EKG_STATUS_XA,
+	EKG_STATUS_AWAY, EKG_STATUS_AVAIL, EKG_STATUS_FFC,
+	EKG_STATUS_INVISIBLE, EKG_STATUS_NULL
+};
+
 EXPORT int icq_plugin_init(int prio) {
 #define ICQ_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE 
 #define ICQ_FLAGS		ICQ_ONLY | SESSION_MUSTBECONNECTED
@@ -1429,6 +1436,8 @@ EXPORT int icq_plugin_init(int prio) {
 	icq_convert_string_init();
 
 	icq_plugin.params = icq_plugin_vars;
+	icq_plugin.protocol.protocols = icq_protocols;
+	icq_plugin.protocol.statuses = icq_statuses;
 
 	plugin_register(&icq_plugin, prio);
 
