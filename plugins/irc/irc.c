@@ -394,27 +394,6 @@ static QUERY(irc_validate_uid) {
 	return 0;
 }
 
-/**
- * irc_protocols()
- *
- * handler for <i>GET_PLUGIN_PROTOCOLS</i><br>
- * It just add "irc:" to @a arr
- *
- * @note I know it's nowhere used. It'll be used by d-bus plugin.
- *
- * @param ap 1st param: <i>(char **) </i><b>arr</b> - array with available protocols
- * @param data NULL
- *
- * @return 0
- */
-
-static QUERY(irc_protocols) {
-	char ***arr	= va_arg(ap, char ***);
-
-	array_add(arr, "irc:");
-	return 0;
-}
-
 static void irc_changed_resolve(session_t *s, const char *var) {
 	irc_private_t *j;
 	list_t *rlist;
@@ -2367,6 +2346,11 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_END()
 };
 
+static const char *irc_protocols[] = { "irc:", NULL };
+static const status_t irc_statuses[] = {
+	EKG_STATUS_NA, EKG_STATUS_AWAY, EKG_STATUS_AVAIL /* XXX */, EKG_STATUS_NULL
+};
+
 EXPORT int irc_plugin_init(int prio)
 {
 #ifndef NO_POSIX_SYSTEM
@@ -2397,6 +2381,8 @@ EXPORT int irc_plugin_init(int prio)
 	irc_plugin_vars[23].value = pwd_realname;
 
 	irc_plugin.params = irc_plugin_vars;
+	irc_plugin.protocol.protocols = irc_protocols;
+	irc_plugin.protocol.statuses = irc_statuses;
 
 	plugin_register(&irc_plugin, prio);
 
@@ -2404,7 +2390,6 @@ EXPORT int irc_plugin_init(int prio)
 	fillchars_len = (config_use_unicode ? 2 : 1);
 
 	query_connect_id(&irc_plugin, PROTOCOL_VALIDATE_UID,	irc_validate_uid, NULL);
-	query_connect_id(&irc_plugin, GET_PLUGIN_PROTOCOLS,	irc_protocols, NULL);
 	query_connect_id(&irc_plugin, PLUGIN_PRINT_VERSION,	irc_print_version, NULL);
 	query_connect_id(&irc_plugin, UI_WINDOW_KILL,		irc_window_kill, NULL);
 	query_connect_id(&irc_plugin, SESSION_ADDED,		irc_session_init, NULL);

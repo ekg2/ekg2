@@ -504,27 +504,6 @@ static QUERY(gg_validate_uid) {
 	return 0;
 }
 
-/**
- * gg_protocols()
- *
- * handler for <i>GET_PLUGIN_PROTOCOLS</i><br>
- * It just add "gg:" to @a arr
- *
- * @note I know it's nowhere used. It'll be used by d-bus plugin.
- *
- * @param ap 1st param: <i>(char **) </i><b>arr</b> - array with available protocols
- * @param data NULL
- *
- * @return 0
- */
-
-static QUERY(gg_protocols) {
-	char ***arr	= va_arg(ap, char ***);
-
-	array_add(arr, "gg:");
-	return 0;
-}
-
 static QUERY(gg_userlist_priv_handler) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int function	= *va_arg(ap, int *);
@@ -1653,19 +1632,26 @@ static plugins_params_t gg_plugin_vars[] = {
 	PLUGIN_VAR_END()
 };
 
+static const char *gg_protocols[] = { "gg:", NULL };
+static const status_t gg_statuses[] = {
+	EKG_STATUS_NA, EKG_STATUS_AWAY, EKG_STATUS_AVAIL,
+	EKG_STATUS_BLOCKED, EKG_STATUS_INVISIBLE, EKG_STATUS_NULL
+};
+
 int EXPORT gg_plugin_init(int prio) {
 	va_list dummy;
 
 	PLUGIN_CHECK_VER("gg");
 
 	gg_plugin.params = gg_plugin_vars;
+	gg_plugin.protocol.protocols = gg_protocols;
+	gg_plugin.protocol.statuses = gg_statuses;
 
 	plugin_register(&gg_plugin, prio);
 	gg_setvar_default(NULL, dummy);
 
 	query_connect_id(&gg_plugin, SET_VARS_DEFAULT, gg_setvar_default, NULL);
 	query_connect_id(&gg_plugin, PROTOCOL_VALIDATE_UID, gg_validate_uid, NULL);
-	query_connect_id(&gg_plugin, GET_PLUGIN_PROTOCOLS, gg_protocols, NULL);
 	query_connect_id(&gg_plugin, PLUGIN_PRINT_VERSION, gg_print_version, NULL);
 	query_connect_id(&gg_plugin, SESSION_ADDED, gg_session_init, NULL);
 	query_connect_id(&gg_plugin, SESSION_REMOVED, gg_session_deinit, NULL);

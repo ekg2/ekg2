@@ -301,28 +301,6 @@ static QUERY(jabber_validate_uid) {
 	return 0;
 }
 
-/**
- * jabber_protocols()
- *
- * Handler for: <i>GET_PLUGIN_PROTOCOLS</i><br>
- * It just adds "tlen:" and "xmpp:" to @a arr
- *
- * @note I know it's nowhere used. It'll be used by d-bus plugin.
- *
- * @param ap 1st param: <i>(char **) </i><b>arr</b> - array with available protocols
- * @param data NULL
- *
- * @return 0
- */
-
-static QUERY(jabber_protocols) {
-	char ***arr = va_arg(ap, char ***);
-
-	array_add(arr, "tlen:");
-	array_add(arr, "xmpp:");
-	return 0;
-}
-
 static QUERY(jabber_window_kill) {
 	window_t	*w = *va_arg(ap, window_t **);
 	jabber_private_t *j;
@@ -1634,11 +1612,19 @@ static plugins_params_t jabber_plugin_vars[] = {
  * @return 0 [successfully loaded plugin]
  */
 
+static const char *jabber_protocols[]	= { "xmpp:", "tlen:", NULL };
+static const int jabber_statuses[]		= {
+	EKG_STATUS_NA, EKG_STATUS_DND, EKG_STATUS_XA, EKG_STATUS_AWAY, EKG_STATUS_AVAIL, EKG_STATUS_FFC,
+	EKG_STATUS_INVISIBLE, EKG_STATUS_ERROR, EKG_STATUS_UNKNOWN, EKG_STATUS_NULL
+};
+
 EXPORT int jabber_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("jabber");
 
 	jabber_plugin.params = jabber_plugin_vars;
+	jabber_plugin.protocol.protocols = jabber_protocols;
+	jabber_plugin.protocol.statuses = jabber_statuses;
 
 	plugin_register(&jabber_plugin, prio);
 
@@ -1646,7 +1632,6 @@ EXPORT int jabber_plugin_init(int prio) {
 
 	query_connect_id(&jabber_plugin, PROTOCOL_VALIDATE_UID,	jabber_validate_uid, NULL);
 	query_connect_id(&jabber_plugin, PLUGIN_PRINT_VERSION,	jabber_print_version, NULL);
-	query_connect_id(&jabber_plugin, GET_PLUGIN_PROTOCOLS,	jabber_protocols, NULL);
 	query_connect_id(&jabber_plugin, SESSION_ADDED,		jabber_session_init, NULL);
 	query_connect_id(&jabber_plugin, SESSION_REMOVED,	jabber_session_deinit, NULL);
 	query_connect_id(&jabber_plugin, STATUS_SHOW,		jabber_status_show_handle, NULL);

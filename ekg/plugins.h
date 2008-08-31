@@ -26,7 +26,7 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-#define EKG_ABI_VER 4551
+#define EKG_ABI_VER 4561
 
 #define EXPORT __attribute__ ((visibility("default")))
 
@@ -69,7 +69,20 @@ typedef struct plugin {
 	/* lt_dlhandle */ void *dl;
 	plugins_params_t *params;
 	plugin_theme_init_func_t theme_init;
+	
+	union { /* based on pclass */
+		struct {
+			const char **protocols;		/* NULL-terminated list of supported protocols, replacing GET_PLUGIN_PROTOCOLS */
+			const status_t *statuses;	/* EKG_STATUS_NULL-terminated list of supported statuses */
+		} protocol;
+	};
 } plugin_t;
+
+/* Note about plugin_t.statuses:
+ *	we currently put every supported status there, including unsettable by user,
+ *	we assume that user cannot set states <= EKG_STATUS_NA
+ * [XXX]
+ */
 
 #ifndef EKG2_WIN32_NOFUNCTION
 

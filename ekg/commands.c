@@ -1987,6 +1987,50 @@ static char *timer_next_call(struct timer *t) {
 	return saprintf("%ld.%.3ld", sec, usec);
 }
 
+static COMMAND(cmd_debug_plugins) {
+	char buf[256];
+	const plugin_t *p;
+
+	for (p = plugins; p; p = p->next) {
+		const char *class;
+
+		switch (p->pclass) {
+			case PLUGIN_GENERIC:	class = "generic";		break;
+			case PLUGIN_PROTOCOL:	class = "protocol";		break;
+			case PLUGIN_UI:			class = "ui";			break;
+			case PLUGIN_LOG:		class = "log";			break;
+			case PLUGIN_SCRIPTING:	class = "scripting";	break;
+			case PLUGIN_AUDIO:		class = "audio";		break;
+			case PLUGIN_CODEC:		class = "codec";		break;
+			case PLUGIN_CRYPT:		class = "crypt";		break;
+			default:				class = "-";
+		}
+
+		snprintf(buf, sizeof(buf), "%-15s %-10s %-3d", p->name, class, p->prio);
+		printq("generic", buf);
+
+		if (p->pclass == PLUGIN_PROTOCOL) {
+			char *pr = array_join((char**) p->protocol.protocols, ", ");
+			char *st;
+			char **_sts = NULL;
+			const status_t *_st;
+
+			for (_st = p->protocol.statuses; *_st != EKG_STATUS_NULL; _st++) {
+				array_add(&_sts, (char*) ekg_status_string(*_st, 2));
+			}
+			st = array_join(_sts, ", ");
+
+			snprintf(buf, sizeof(buf), "    protocols:  %s", pr);
+			printq("generic2", buf);
+			snprintf(buf, sizeof(buf), "    statuses:   %s", st);
+			printq("generic2", buf);
+
+			xfree(pr);
+			xfree(_sts);
+		}
+	}
+}
+
 static COMMAND(cmd_debug_timers) {
 /* XXX, */
 	char buf[256];
@@ -4311,6 +4355,8 @@ void command_init()
 	command_add(NULL, ("_mem"), NULL, cmd_test_mem, 0, NULL);
 
 	command_add(NULL, ("_msg"), "uUC ?", cmd_test_send, 0, NULL);
+
+	command_add(NULL, ("_plugins"), NULL, cmd_debug_plugins, 0, NULL);
 
 	command_add(NULL, ("_queries"), NULL, cmd_debug_queries, 0, NULL);
 

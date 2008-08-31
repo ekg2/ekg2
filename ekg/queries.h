@@ -56,7 +56,6 @@ enum queries_id {
 	UI_WINDOW_SWITCH, UI_WINDOW_TARGET_CHANGED,
 
 	GPG_MESSAGE_ENCRYPT, GPG_MESSAGE_DECRYPT, GPG_SIGN, GPG_VERIFY,
-	GET_PLUGIN_PROTOCOLS,
 
 	UI_WINDOW_UPDATE_LASTLOG,
 	SESSION_EVENT,
@@ -420,10 +419,6 @@ const struct query_def query_list[] = {
 		QUERY_ARG_END } },
 
 	{ GPG_VERIFY, "gpg-verify", {
-		QUERY_ARG_END } },
-
-	{ GET_PLUGIN_PROTOCOLS, "get-plugin-protocols", {
-		QUERY_ARG_CHARPP,		/* array with protos */
 		QUERY_ARG_END } },
 
 	{ UI_WINDOW_UPDATE_LASTLOG, "ui-window-update-lastlog", {

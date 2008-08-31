@@ -23,18 +23,17 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getProtocols)
 #define __FUNCTION__ "ekg2_dbus_iface_im_getProtocols"
 
 	EKG2_DBUS_CALL_HANDLER_VARIABLES;
-	char **protos = NULL;
-	int i;
-
-	query_emit_id (NULL, GET_PLUGIN_PROTOCOLS, &protos);
+	const plugin_t *p;
 
 	EKG2_DBUS_INIT_REPLY;
-	i = 0;
-	while (protos[i])
-	{
-		EKG2_DBUS_ADD_STRING(&(protos[i++]));
+	for (p = plugins; p; p = p->next) {
+		if (p->pclass == PLUGIN_PROTOCOL) {
+			const char **a;
+
+			for (a = p->protocol.protocols; *a; a++)
+				EKG2_DBUS_ADD_STRING(a);
+		}
 	}
-	xfree(protos);
 
 	EKG2_DBUS_SEND_REPLY;
 
@@ -102,21 +101,22 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getPresence)
 	DBusMessageIter args;
 	char **protos = NULL;
 	dbus_uint32_t serial = 0;
-	int i;
-	
-	query_emit_id (NULL, GET_PLUGIN_PROTOCOLS, &protos);
+	const plugin_t *p;
 	
 	reply = dbus_message_new_method_return(msg);
 	dbus_message_iter_init_append(reply, &args);
-	i = 0;
-	while (protos[i])
-	{
-		if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, &(protos[i++]) )) {
-			debug("ekg2_dbus_iface_im_getProtocols cannot allocate memory?\n");
-			ekg_oom_handler();
+	for (p = plugins; p; p = p->next) {
+		if (p->pclass == PLUGIN_PROTOCOL) {
+			const char **a;
+
+			for (a = p->protocol.protocols; *a; a++) {
+				if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, a)) {
+					debug("ekg2_dbus_iface_im_getProtocols cannot allocate memory?\n");
+					ekg_oom_handler();
+				}
+			}
 		}
 	}
-	xfree(protos);
 
 	if (!dbus_connection_send(conn, reply, &serial)) {
 		debug("Cannot send reply!\n");
