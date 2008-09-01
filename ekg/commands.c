@@ -2029,6 +2029,7 @@ static COMMAND(cmd_debug_plugins) {
 			xfree(_sts);
 		}
 	}
+	return 0;
 }
 
 static COMMAND(cmd_debug_timers) {
