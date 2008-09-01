@@ -615,20 +615,16 @@ int session_int_get(session_t *s, const char *key)
  */
 int session_is_var(session_t *s, const char *key)
 {
+	const char *intvars[] = { "alias", "descr", "status", "password", NULL };
+	const char **intvar;
+
 	if (!s)
 		return -1;
 
-	if (!xstrcasecmp(key, "alias"))
-		return 1;
-
-	if (!xstrcasecmp(key, "descr"))
-		return 1;
-
-	if (!xstrcasecmp(key, "status"))
-		return 1;
-
-	if (!xstrcasecmp(key, "password"))
-		return 1;
+		/* XXX: maybe move this above !s? */
+	for (intvar = intvars; *intvar; intvar++)
+		if (!xstrcasecmp(key, *intvar))
+			return 1;
 
 /* so maybe _global_ session variable? */
 	return (plugin_var_find(s->plugin, key) != 0);
