@@ -20,6 +20,7 @@
 
 #include "ekg2-config.h"
 
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <string.h>
 
