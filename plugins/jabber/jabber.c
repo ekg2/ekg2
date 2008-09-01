@@ -1425,6 +1425,19 @@ void jabber_gpg_changed(session_t *s, const char *name) {
 	xfree(msg);
 }
 
+static void jabber_statusdescr_handler(session_t *s, const char *name) {
+	const char		*descr	= session_descr_get(s);
+	const status_t	status	= session_status_get(s);
+	const char		*format	= ekg_status_string(status, 0);
+
+		/* well, it should be equal to one in session_statusdescr_set()
+		 * this is why we print it */
+	debug_function("jabber_statusdescr_handler(), status = %s [%d], descr = %s\n", ekg_status_string(status, 2), status, descr);
+
+	if (session_connected_get(s))
+		jabber_write_status(s);
+}
+
 /**
  * jabber_pgp_postinit()
  *
@@ -1588,6 +1601,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("resource",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("server",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("ssl_port",		VAR_INT, "5223", 0, NULL),
+	PLUGIN_VAR_ADD("statusdescr",		VAR_STR, 0, 0, jabber_statusdescr_handler),
 	PLUGIN_VAR_ADD("use_compression",	VAR_STR, 0, 0, NULL),		/* for instance: zlib,lzw */
 	PLUGIN_VAR_ADD("use_ssl",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("use_tls",		VAR_BOOL, "1", 0, NULL),

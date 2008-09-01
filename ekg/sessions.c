@@ -552,15 +552,26 @@ const status_t session_statusdescr_split(const char **statusdescr) {
 /* Just simple setter for both status&descr
  * The real magic should be done in plugin-defined notify handler */
 static const int session_statusdescr_set(session_t *s, const char *statusdescr) {
-	const char *descr	= statusdescr;
-	status_t status		= session_statusdescr_split(&descr);
+	const char	*descr	= statusdescr;
+	status_t	status	= session_statusdescr_split(&descr);
+	const char	*label	= ekg_status_label(status, descr, NULL);
 
-	debug_function("session_statusdescr_set(), status = %s [%d], descr = %s\n", ekg_status_string(status, 2), status, descr);
+	debug_function("session_statusdescr_set(), status = %s [%d], descr = %s, label = %s\n",
+			ekg_status_string(status, 2), status, descr, label);
 
 	if (status == EKG_STATUS_NULL) return 1; /* if incorrect status, don't do anything! */
 
 	session_status_set(s, status);
 	session_descr_set(s, descr);
+	session_unidle(s);
+	ekg_update_status(s);
+
+		/* XXX: maybe change _descr formats to carry session name as %1?
+		 * currently this sucks more than ever. */
+	if (descr)
+		print(label, descr, "", session_name(s));
+	else
+		print(label, session_name(s));
 
 	return 0;
 }
