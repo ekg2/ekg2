@@ -265,7 +265,7 @@ static plugins_params_t jogger_plugin_vars[] = {
 	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "simple,sqlite", 0, NULL),
 	PLUGIN_VAR_ADD("newentry_open_query",	VAR_BOOL, "1", 0, NULL),
 	PLUGIN_VAR_ADD("own_commentformat",	VAR_STR, NULL, 0, NULL),
-	PLUGIN_VAR_ADD("own_commentformat_autodetect",	VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("own_commentformat_autodetect",	VAR_BOOL, "1", 0, NULL),
 	PLUGIN_VAR_ADD("used_session",		VAR_STR, NULL, 0, jogger_usedchanged),
 	PLUGIN_VAR_ADD("used_uid",		VAR_STR, NULL, 0, jogger_usedchanged),
 	PLUGIN_VAR_ADD("userlist_keep",		VAR_BOOL, "0", 0, NULL),
