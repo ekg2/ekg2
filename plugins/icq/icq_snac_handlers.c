@@ -26,6 +26,7 @@
 #include <ekg/queries.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
+#include <ekg/xmalloc.h>
 
 #include "icq.h"
 #include "misc.h"

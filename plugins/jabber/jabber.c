@@ -1613,7 +1613,7 @@ static plugins_params_t jabber_plugin_vars[] = {
  */
 
 static const char *jabber_protocols[]	= { "xmpp:", "tlen:", NULL };
-static const int jabber_statuses[]		= {
+static const status_t jabber_statuses[]	= {
 	EKG_STATUS_NA, EKG_STATUS_DND, EKG_STATUS_XA, EKG_STATUS_AWAY, EKG_STATUS_AVAIL, EKG_STATUS_FFC,
 	EKG_STATUS_INVISIBLE, EKG_STATUS_ERROR, EKG_STATUS_UNKNOWN, EKG_STATUS_NULL
 };

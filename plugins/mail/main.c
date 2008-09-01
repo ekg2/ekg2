@@ -141,7 +141,7 @@ static WATCHER(mail_inotify) {
 		else
 			if (config_check_mail & 2)
 				check_mail_maildir();
-		return; /* we already checked all of them, so just ignore rest */
+		return 0; /* we already checked all of them, so just ignore rest */
 	}
 }
 

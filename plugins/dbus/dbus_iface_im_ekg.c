@@ -17,24 +17,25 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_ekg2_getSessions)
 {
 #define __FUNCTION__ "ekg2_dbus_iface_im_ekg2_getSessions"
 	EKG2_DBUS_CALL_HANDLER_VARIABLES;
-	list_t l;
+	session_t *sl;
 	char x[1] = "", *tmp_descr, *tmp;
 
 	EKG2_DBUS_INIT_REPLY;
 
-	for (l = sessions; l; l = l->next)
+	for (sl = sessions; sl; sl = sl->next)
 	{
-		session_t *s = l->data;
+		session_t *s = sl;
 
 		EKG2_DBUS_ADD_STRING(&(s->uid));
 #warning "XXX: Old API here, need updating."
+		/* mg: updated? */
 #if 0
 		EKG2_DBUS_ADD(DBUS_TYPE_BOOLEAN, &(s->connected));
 #endif
 		tmp = (char *)session_get(s, "status");
 		EKG2_DBUS_ADD_STRING(&tmp);
 		/* XXX convert to utf before sending, d-bus sux? XXX */
-		tmp = session_descr_get(s);
+		tmp = (char *)session_descr_get(s);
 		tmp = xstrdup(tmp?tmp:"");
 		tmp_descr = ekg_convert_string (tmp, NULL, "utf-8");
 		EKG2_DBUS_ADD_STRING(tmp_descr ? &tmp_descr : &tmp);
