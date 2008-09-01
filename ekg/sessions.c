@@ -534,7 +534,7 @@ PROPERTY_STRING_GET(session, uid)
 /* Splits statusdescr into status and descr.
  * Returns status as status_t, and sets *statusdescr to descr.
  * Doesn't modify original *statusdescr */
-const status_t session_statusdescr_split(const char **statusdescr) {
+static inline const status_t session_statusdescr_split(const char **statusdescr) {
 	const char	*descr	= xstrchr(*statusdescr, ' ');
 	char		*status	= NULL;
 	status_t	nstatus;
