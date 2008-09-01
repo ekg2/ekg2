@@ -554,18 +554,22 @@ static inline const status_t session_statusdescr_split(const char **statusdescr)
 }
 
 static inline status_t session_status_nearest(session_t *s, status_t status) {
-	plugin_t		*p		= s->plugin;
-	const status_t	*ast;
+	plugin_t						*p		= s->plugin;
+	struct protocol_plugin_priv		*pp		= p->priv;
+	const status_t					*ast;
 
 	if (p->pclass != PLUGIN_PROTOCOL) {
 		debug_wtf("session_status_nearest(), session '%s' on non-protocol plugin '%s'!\n", session_uid_get(s), p->name);
 		return EKG_STATUS_NULL;
+	} else if (!p->priv) {
+		debug_warn("session_status_nearest(), plugin '%s' doesn't declared supported statuses.\n", p->name);
+		return status;
 	}
 
 	for (; status < EKG_STATUS_LAST; status++) {
 		if (status <= EKG_STATUS_NA) continue;
 
-		for (ast = p->priv.protocol.statuses; ast && (*ast != EKG_STATUS_NULL); ast++) {
+		for (ast = pp->statuses; ast && (*ast != EKG_STATUS_NULL); ast++) {
 			if (*ast == status)	/* is supported? */
 				return status;
 		}

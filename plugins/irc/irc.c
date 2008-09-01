@@ -2375,6 +2375,11 @@ static const status_t irc_statuses[] = {
 	EKG_STATUS_NA, EKG_STATUS_AWAY, EKG_STATUS_AVAIL /* XXX */, EKG_STATUS_NULL
 };
 
+static const struct protocol_plugin_priv irc_priv = {
+	.protocols	= irc_protocols,
+	.statuses	= irc_statuses
+};
+
 EXPORT int irc_plugin_init(int prio)
 {
 #ifndef NO_POSIX_SYSTEM
@@ -2404,9 +2409,8 @@ EXPORT int irc_plugin_init(int prio)
 	irc_plugin_vars[20].value = pwd_name;
 	irc_plugin_vars[23].value = pwd_realname;
 
-	irc_plugin.params = irc_plugin_vars;
-	irc_plugin.priv.protocol.protocols = irc_protocols;
-	irc_plugin.priv.protocol.statuses = irc_statuses;
+	irc_plugin.params	= irc_plugin_vars;
+	irc_plugin.priv		= &irc_priv;
 
 	plugin_register(&irc_plugin, prio);
 

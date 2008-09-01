@@ -1623,13 +1623,17 @@ static const status_t jabber_statuses[]	= {
 	EKG_STATUS_INVISIBLE, EKG_STATUS_ERROR, EKG_STATUS_UNKNOWN, EKG_STATUS_NULL
 };
 
+static const struct protocol_plugin_priv jabber_priv = {
+	.protocols	= jabber_protocols,
+	.statuses	= jabber_statuses
+};
+
 EXPORT int jabber_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("jabber");
 
-	jabber_plugin.params = jabber_plugin_vars;
-	jabber_plugin.priv.protocol.protocols = jabber_protocols;
-	jabber_plugin.priv.protocol.statuses = jabber_statuses;
+	jabber_plugin.params	= jabber_plugin_vars;
+	jabber_plugin.priv		= &jabber_priv;
 
 	plugin_register(&jabber_plugin, prio);
 

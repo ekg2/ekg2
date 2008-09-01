@@ -1454,6 +1454,11 @@ static const status_t icq_statuses[] = {
 	EKG_STATUS_INVISIBLE, EKG_STATUS_NULL
 };
 
+static const struct protocol_plugin_priv icq_priv = {
+	.protocols	= icq_protocols,
+	.statuses	= icq_statuses
+};
+
 EXPORT int icq_plugin_init(int prio) {
 #define ICQ_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE 
 #define ICQ_FLAGS		ICQ_ONLY | SESSION_MUSTBECONNECTED
@@ -1464,9 +1469,8 @@ EXPORT int icq_plugin_init(int prio) {
 
 	icq_convert_string_init();
 
-	icq_plugin.params = icq_plugin_vars;
-	icq_plugin.priv.protocol.protocols = icq_protocols;
-	icq_plugin.priv.protocol.statuses = icq_statuses;
+	icq_plugin.params	= icq_plugin_vars;
+	icq_plugin.priv		= &icq_priv;
 
 	plugin_register(&icq_plugin, prio);
 

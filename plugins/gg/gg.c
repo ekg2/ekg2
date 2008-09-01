@@ -1653,14 +1653,18 @@ static const status_t gg_statuses[] = {
 	EKG_STATUS_BLOCKED, EKG_STATUS_INVISIBLE, EKG_STATUS_NULL
 };
 
+static const struct protocol_plugin_priv gg_priv = {
+	.protocols	= gg_protocols,
+	.statuses	= gg_statuses
+};
+
 int EXPORT gg_plugin_init(int prio) {
 	va_list dummy;
 
 	PLUGIN_CHECK_VER("gg");
 
-	gg_plugin.params = gg_plugin_vars;
-	gg_plugin.priv.protocol.protocols = gg_protocols;
-	gg_plugin.priv.protocol.statuses = gg_statuses;
+	gg_plugin.params	= gg_plugin_vars;
+	gg_plugin.priv		= &gg_priv;
 
 	plugin_register(&gg_plugin, prio);
 	gg_setvar_default(NULL, dummy);

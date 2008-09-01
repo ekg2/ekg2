@@ -263,13 +263,16 @@ static plugins_params_t jogger_plugin_vars[] = {
 
 static const char *jogger_protocols[] = { "jogger:", NULL };
 
+static const struct protocol_plugin_priv jogger_priv = {
+	.protocols	= jogger_protocols
+};
+
 int jogger_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("jogger");
 
-	jogger_plugin.params = jogger_plugin_vars;
-	jogger_plugin.priv.protocol.protocols = jogger_protocols;
-	/* statuses are not supported, we're just copying jabber session status */
+	jogger_plugin.params	= jogger_plugin_vars;
+	jogger_plugin.priv		= &jogger_priv;
 
 	query_connect_id(&jogger_plugin, PLUGIN_PRINT_VERSION, jogger_print_version, NULL);
 	query_connect_id(&jogger_plugin, PROTOCOL_VALIDATE_UID, jogger_validate_uid, NULL);

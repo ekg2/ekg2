@@ -26,7 +26,7 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-#define EKG_ABI_VER 4582
+#define EKG_ABI_VER 4592
 
 #define EXPORT __attribute__ ((visibility("default")))
 
@@ -59,6 +59,11 @@ typedef struct {
 	plugin_notify_func_t *notify;	/* notify */
 } plugins_params_t;
 
+struct protocol_plugin_priv {
+	const char **protocols;		/* NULL-terminated list of supported protocols, replacing GET_PLUGIN_PROTOCOLS */
+	const status_t *statuses;	/* EKG_STATUS_NULL-terminated list of supported statuses */
+};
+
 typedef struct plugin {
 	struct plugin *next;
 
@@ -69,13 +74,8 @@ typedef struct plugin {
 	/* lt_dlhandle */ void *dl;
 	plugins_params_t *params;
 	plugin_theme_init_func_t theme_init;
-	
-	union { /* based on pclass */
-		struct {
-			const char **protocols;		/* NULL-terminated list of supported protocols, replacing GET_PLUGIN_PROTOCOLS */
-			const status_t *statuses;	/* EKG_STATUS_NULL-terminated list of supported statuses */
-		} protocol;
-	} priv;
+
+	const void *priv;
 } plugin_t;
 
 /* Note about plugin_t.statuses:

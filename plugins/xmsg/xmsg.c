@@ -699,6 +699,10 @@ static plugins_params_t xmsg_plugin_vars[] = {
 
 static const char *xmsg_protocols[] = { "xmsg:", NULL };
 
+static const struct protocol_plugin_priv xmsg_priv = {
+	.protocols	= xmsg_protocols
+};
+
 int xmsg_plugin_init(int prio)
 {
 	PLUGIN_CHECK_VER("xmsg");
@@ -709,9 +713,8 @@ int xmsg_plugin_init(int prio)
 	
 	xdebug("inotify fd = %d", in_fd);
 	
-	xmsg_plugin.params = xmsg_plugin_vars;
-	xmsg_plugin.priv.protocol.protocols = xmsg_protocols;
-	/* statuses not supported */
+	xmsg_plugin.params	= xmsg_plugin_vars;
+	xmsg_plugin.priv	= &xmsg_priv;
 	plugin_register(&xmsg_plugin, prio);
 
 	query_connect_id(&xmsg_plugin, PROTOCOL_VALIDATE_UID, xmsg_validate_uid, NULL);

@@ -2009,13 +2009,15 @@ static COMMAND(cmd_debug_plugins) {
 		snprintf(buf, sizeof(buf), "%-15s %-10s %-3d", p->name, class, p->prio);
 		printq("generic", buf);
 
-		if (p->pclass == PLUGIN_PROTOCOL) {
-			char *pr = array_join((char**) p->priv.protocol.protocols, ", ");
+		if (p->pclass == PLUGIN_PROTOCOL && p->priv) {
+			struct protocol_plugin_priv *pp = p->priv;
+
+			char *pr = array_join((char**) pp->protocols, ", ");
 			char *st;
 			char **_sts = NULL;
 			const status_t *_st;
 
-			for (_st = p->priv.protocol.statuses; *_st != EKG_STATUS_NULL; _st++) {
+			for (_st = pp->statuses; *_st != EKG_STATUS_NULL; _st++) {
 				array_add(&_sts, (char*) ekg_status_string(*_st, 2));
 			}
 			st = array_join(_sts, ", ");

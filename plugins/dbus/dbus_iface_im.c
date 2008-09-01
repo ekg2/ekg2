@@ -27,10 +27,11 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getProtocols)
 
 	EKG2_DBUS_INIT_REPLY;
 	for (p = plugins; p; p = p->next) {
-		if (p->pclass == PLUGIN_PROTOCOL) {
+		if (p->pclass == PLUGIN_PROTOCOL && p->priv) {
+			struct protocol_plugin_priv *pp = p->priv;
 			const char **a;
 
-			for (a = p->priv.protocol.protocols; *a; a++)
+			for (a = pp->protocols; *a; a++)
 				EKG2_DBUS_ADD_STRING(a);
 		}
 	}
@@ -106,10 +107,11 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getPresence)
 	reply = dbus_message_new_method_return(msg);
 	dbus_message_iter_init_append(reply, &args);
 	for (p = plugins; p; p = p->next) {
-		if (p->pclass == PLUGIN_PROTOCOL) {
+		if (p->pclass == PLUGIN_PROTOCOL && p->priv) {
+			struct protocol_plugin_priv *pp = p->priv;
 			const char **a;
 
-			for (a = p->priv.protocol.protocols; *a; a++) {
+			for (a = pp->protocols; *a; a++) {
 				if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, a)) {
 					debug("ekg2_dbus_iface_im_getProtocols cannot allocate memory?\n");
 					ekg_oom_handler();
