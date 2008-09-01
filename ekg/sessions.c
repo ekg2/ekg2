@@ -527,6 +527,23 @@ int session_connected_set(session_t *s, int connected)
 
 PROPERTY_STRING_GET(session, uid)
 
+const int session_statusdescr_set(session_t *s, const char *statusdescr) {
+	const char *descr = xstrchr(statusdescr, ' ');
+	const char *status;
+
+	if (descr) {
+		status = xstrndup(statusdescr, (descr - statusdescr));
+		descr++;
+	} else
+		status = statusdescr;
+
+	debug_function("session_statusdescr_set(), status = %s, descr = %s\n", status, descr);
+
+	if (descr)
+		xfree(status); /* was duplicated */
+	return 1;
+}
+
 /* 
  * session_localvar_find()
  * 
@@ -573,6 +590,9 @@ const char *session_get(session_t *s, const char *key) {
 
 	if (!xstrcasecmp(key, "status"))
 		return ekg_status_string(session_status_get(s), 2);
+
+	if (!xstrcasecmp(key, "statusdescr"))
+		return NULL; /* XXX? */
 	
 	if (!xstrcasecmp(key, "password"))
 		return session_password_get(s);
@@ -615,7 +635,7 @@ int session_int_get(session_t *s, const char *key)
  */
 int session_is_var(session_t *s, const char *key)
 {
-	const char *intvars[] = { "alias", "descr", "status", "password", NULL };
+	const char *intvars[] = { "alias", "descr", "status", "password", "statusdescr", NULL };
 	const char **intvar;
 
 	if (!s)
@@ -668,6 +688,11 @@ int session_set(session_t *s, const char *key, const char *value) {
 
 	if (!xstrcasecmp(key, "status")) {
 		ret = session_status_set(s, ekg_status_int(value));
+		goto notify;
+	}
+
+	if (!xstrcasecmp(key, "statusdescr")) {
+		ret = session_statusdescr_set(s, value);
 		goto notify;
 	}
 
@@ -1112,6 +1137,7 @@ COMMAND(session_command)
 		else if (!xstrcasecmp(key, "alias"))	var = session_alias_get(s);
 		else if (!xstrcasecmp(key, "descr"))	var = session_descr_get(s);
 		else if (!xstrcasecmp(key, "status"))	var = ekg_status_string(session_status_get(s), 2);
+		else if (!xstrcasecmp(key, "statusdescr"))	var = NULL; /* XXX? */
 		else if (!xstrcasecmp(key, "password")) { var = s->password ? "(...)" : NULL; }
 		else if ((paid = plugin_var_find(s->plugin, key))) {
 			plugins_params_t *pa = PLUGIN_VAR_FIND_BYID(s->plugin, paid);
