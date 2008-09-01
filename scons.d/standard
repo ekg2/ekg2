@@ -103,11 +103,13 @@ elif env['DEBUG'] == 'stderr':
 	defines['STDERR_DEBUG'] = True
 
 if env['RESOLV']:
+	old	= SetFlags(env, ['-D_GNU_SOURCE'])
 	have_resolv = conf.CheckLibWithHeader(None, ['netinet/in.h', 'resolv.h'], 'C', 'dn_expand(NULL, NULL, NULL, NULL, 0);', 0)
 	if not have_resolv:
 		have_resolv = conf.CheckLibWithHeader('resolv', ['netinet/in.h', 'resolv.h'], 'C', 'dn_expand(NULL, NULL, NULL, NULL, 0);', 0)
 		if have_resolv:
 			ekg_libs.append('resolv')
+	RestoreFlags(env, old)
 else:
 	have_resolv = False
 
