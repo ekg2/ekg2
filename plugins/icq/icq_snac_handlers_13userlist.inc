@@ -492,17 +492,16 @@ SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
 		if (!ICQ_UNPACK(&buf, "U", &pkt.reason))
 			pkt.reason = "";
 		/* XXX, spammer */
-		// XXX ?wo? add format & display in status window
 		switch (pkt.flag) {
 			case 0:
-				debug_error("%s - %s decline your authorization: %s", session_name(s), uid, pkt.reason);
-				break;
 			case 1:
 			{
 				userlist_t *u = userlist_find(s, uid);
-				if (u)
+				if (u && pkt.flag)
 					user_private_item_set_int(u, "auth", 0);
-				debug_error("%s - %s grant your authorization: %s", session_name(s), uid, pkt.reason);
+
+				print_info(uid, s, pkt.flag ? "icq_auth_grant" : "icq_auth_decline", session_name(s), format_user(s, uid), pkt.reason);
+
 				break;
 			}
 			default:
@@ -517,19 +516,22 @@ SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
 }
 
 SNAC_SUBHANDLER(icq_snac_userlist_you_were_added) {
-int quiet=0;
 	struct {
 		char *uid;
 	} pkt;
 	char *uid;
+	userlist_t *u;
 
 	if (!ICQ_UNPACK(&buf, "u", &pkt.uid))
 		return -1;
-	
-	// XXX ?wo? add format & display in status window
+
 	uid = icq_uid(pkt.uid);
-	debug_white("You were added %s %s\n", session_name(s), uid);
-	printq("icq_you_were_added", uid);
+
+	print_info(uid, s, "icq_you_were_added", session_name(s), format_user(s, uid));
+
+	if ( config_auto_user_add && !(u = userlist_find(s, uid)) )
+		u = userlist_add(s, uid, uid);
+
 	xfree(uid);
 
 	return 0;

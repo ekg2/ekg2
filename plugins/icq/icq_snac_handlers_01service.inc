@@ -107,6 +107,10 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 	struct {
 		uint16_t no;	// Number of rate classes
 	} pkt;
+	struct {
+		uint16_t cl;	// Class
+		uint16_t no;	// Number of rate groups
+	} pkt2;
 	int i;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.no))
@@ -132,8 +136,19 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 			j->rates[id]->max_lvl	= x6;		// Max level
 		}
 	}
-	// XXX ?wo? handle rate groups
-//	icq_hexdump(DEBUG_ERROR, buf, len);
+	// store rate groups
+	while (len >= 4) {
+		(void) ICQ_UNPACK(&buf, "WW", &pkt2.cl, &pkt2.no);
+		if (pkt2.cl > j->n_rates) goto wrong;
+		if (len < pkt2.no*4) goto wrong;
+
+		pkt2.cl--;
+		j->rates[pkt2.cl]->groups = xcalloc(pkt2.no, sizeof(uint32_t));
+		j->rates[pkt2.cl]->n_groups = pkt2.no;
+		for (i=0; i<pkt2.no; i++) {
+			ICQ_UNPACK(&buf, "I", &j->rates[pkt2.cl]->groups[i]);
+		}
+	}
 
 wrong:
 

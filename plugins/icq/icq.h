@@ -20,7 +20,7 @@ typedef struct {
 	int curr_lvl;		// Current level
 	int max_lvl;		// Max level
 	int n_groups;
-	int *groups;
+	uint32_t *groups;
 } icq_rate_t;
 
 typedef struct icq_snac_reference_list_s {

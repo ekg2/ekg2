@@ -1410,6 +1410,8 @@ static QUERY(icq_userlist_info_handle) {
 static int icq_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	format_add("icq_auth_subscribe", _("%> (%1) %T%2%n asks for authorisation. Use \"/auth -a %2\" to accept, \"/auth -d %2 [reason]\" to refuse. Reason: %T%3%n"), 1);
+	format_add("icq_auth_decline", _("%> (%1) %2 decline your authorization: %3\n"), 1);
+	format_add("icq_auth_grant", _("%> (%1) %2 grant your authorization: %3\n"), 1);
 
 	format_add("icq_userinfo_start",	"%g,+=%G----- %g%3%G info for: %Ticq:%2%n", 1);
 
@@ -1428,7 +1430,7 @@ static int icq_theme_init() {
 
 	format_add("icq_rates_header", "%>%n # %K|%n Curr %K|%n Alrt %K|%n Limt %K|%n Clear %K|%n Dscn %K|%n  Max %K|%nwin %K|%n\n", 1);
 	format_add("icq_rates", "%>%n%[-2]1 %K|%n%[-5]7 %K|%n%[-5]4 %K|%n%[-5]5 %K|%n%[-6]3 %K|%n%[-5]6 %K|%n%[-5]8 %K|%n%[-3]2 %K|%n\n", 1);
-	format_add("icq_you_were_added",	"%> %R%1 add you to contact list", 1);
+	format_add("icq_you_were_added",	"%> (%1) %2 adds you to contact list\n", 1);
 
 #endif
 	return 0;
