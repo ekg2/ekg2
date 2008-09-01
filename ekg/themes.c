@@ -1625,6 +1625,7 @@ void theme_init()
 	format_add("error_reading_config", _("%! Error reading configuration file: %1\n"), 1);
 	format_add("config_read_success", _("%> Configuratin read correctly.%n\n"), 1);
 	format_add("config_line_incorrect", _("%! Invalid line '%T%1%n', skipping\n"), 1);
+	format_add("config_error", _("%! %R%|%R%1\n"), 1);
 	format_add("autosaved", _("%> Automatically saved settings\n"), 1);
 
 	/* config_upgrade() */
