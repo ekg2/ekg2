@@ -1506,6 +1506,20 @@ static void gg_changed_proxy(session_t *s, const char *var) {
 	array_free(auth);
 }
 
+static void gg_statusdescr_handler(session_t *s, const char *varname) {
+	gg_private_t	*g			= session_private_get(s);
+	char			*cpdescr	= gg_locale_to_cp(xstrdup(session_descr_get(s)));
+	int				_status		= GG_S(gg_text_to_status(session_status_get(s), cpdescr));
+
+	if (session_int_get(s, "private"))
+		_status |= GG_STATUS_FRIENDS_MASK;
+
+	if (cpdescr)	gg_change_status_descr(g->sess, _status, cpdescr);
+	else			gg_change_status(g->sess, _status);
+
+	xfree(cpdescr);
+}
+
 static int gg_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	format_add("gg_version", _("%> %TGadu-Gadu%n: libgadu %g%1%n (headers %c%2%n), protocol %g%3%n (%c0x%4%n)"), 1);
@@ -1628,6 +1642,7 @@ static plugins_params_t gg_plugin_vars[] = {
 	PLUGIN_VAR_ADD("scroll_long_desc",	VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("scroll_mode",		VAR_STR, "bounce", 0, NULL),
 	PLUGIN_VAR_ADD("server",		VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("statusdescr",	VAR_STR, NULL, 0, gg_statusdescr_handler),
 
 	PLUGIN_VAR_END()
 };
