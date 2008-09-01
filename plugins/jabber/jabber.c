@@ -1426,16 +1426,7 @@ void jabber_gpg_changed(session_t *s, const char *name) {
 }
 
 static void jabber_statusdescr_handler(session_t *s, const char *name) {
-	const char		*descr	= session_descr_get(s);
-	const status_t	status	= session_status_get(s);
-	const char		*format	= ekg_status_string(status, 0);
-
-		/* well, it should be equal to one in session_statusdescr_set()
-		 * this is why we print it */
-	debug_function("jabber_statusdescr_handler(), status = %s [%d], descr = %s\n", ekg_status_string(status, 2), status, descr);
-
-	if (session_connected_get(s))
-		jabber_write_status(s);
+	jabber_write_status(s);
 }
 
 /**

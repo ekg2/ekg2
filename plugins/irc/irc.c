@@ -1365,6 +1365,35 @@ static COMMAND(irc_command_add) {
 	return -1;
 }
 
+static void irc_display_awaylog(session_t *session) {
+	irc_private_t	*j = irc_private(session);
+
+	if (j->awaylog) {
+		list_t l;
+		const char *awaylog_timestampf = format_find("irc_awaylog_timestamp");
+
+		print_status("irc_awaylog_begin", session_name(session));
+		for (l = j->awaylog; l; l = l->next) {
+			irc_awaylog_t *e = l->data;
+
+			if (e->channame)
+				print_status("irc_awaylog_msg_chan", session_name(session),
+					timestamp_time(awaylog_timestampf, e->t), (e->channame)+4, (e->uid)+4, e->msg);
+			else
+				print_status("irc_awaylog_msg", session_name(session),
+					timestamp_time(awaylog_timestampf, e->t), "", (e->uid)+4, e->msg);
+
+			xfree(e->channame);
+			xfree(e->uid);
+			xfree(e->msg);
+		}
+		print_status("irc_awaylog_end", session_name(session));
+
+		list_destroy(j->awaylog, 1);
+		j->awaylog = NULL;
+	}
+}
+
 static COMMAND(irc_command_away) {
 	irc_private_t	*j = irc_private(session);
 	int		isaway = 0;
@@ -1399,33 +1428,27 @@ static COMMAND(irc_command_away) {
 		watch_write(j->send_watch, "AWAY :\r\n");
 
 		/* @ back, display awaylog. */
-
-		if (j->awaylog) {
-			list_t l;
-			const char *awaylog_timestampf = format_find("irc_awaylog_timestamp");
-
-			print_status("irc_awaylog_begin", session_name(session));
-			for (l = j->awaylog; l; l = l->next) {
-				irc_awaylog_t *e = l->data;
-
-				if (e->channame)
-					print_status("irc_awaylog_msg_chan", session_name(session),
-						timestamp_time(awaylog_timestampf, e->t), (e->channame)+4, (e->uid)+4, e->msg);
-				else
-					print_status("irc_awaylog_msg", session_name(session),
-						timestamp_time(awaylog_timestampf, e->t), "", (e->uid)+4, e->msg);
-
-				xfree(e->channame);
-				xfree(e->uid);
-				xfree(e->msg);
-			}
-			print_status("irc_awaylog_end", session_name(session));
-
-			list_destroy(j->awaylog, 1);
-			j->awaylog = NULL;
-		}
+		irc_display_awaylog(session);
 	}
 	return 0;
+}
+
+static void irc_statusdescr_handler(session_t *s, const char *varname) {
+	irc_private_t	*j		= irc_private(s);
+	const status_t	status	= session_status_get(s);
+
+	if (status == EKG_STATUS_AWAY) {
+		const char *descr  = session_descr_get(s);
+		if (descr)
+			watch_write(j->send_watch, "AWAY :%s\r\n", descr);
+		else
+			watch_write(j->send_watch, "AWAY :%s\r\n", ekg_status_string(status, 0));
+	} else {
+		watch_write(j->send_watch, "AWAY :\r\n");
+
+		/* @ back, display awaylog. */
+		irc_display_awaylog(s);
+	}
 }
 
 /*****************************************************************************/
@@ -2320,6 +2343,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("recode_list", VAR_STR, NULL, 0, irc_changed_recode_list),
 	PLUGIN_VAR_ADD("recode_out_default_charset", VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
 	PLUGIN_VAR_ADD("server",		VAR_STR, 0, 0, irc_changed_resolve),
+	PLUGIN_VAR_ADD("statusdescr",	VAR_STR, 0, 0, irc_statusdescr_handler),
 
 	/* upper case: names of variables, that reffer to protocol stuff */
 	PLUGIN_VAR_ADD("AUTO_JOIN",			VAR_STR, 0, 0, NULL),

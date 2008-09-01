@@ -188,6 +188,10 @@ session_t *session_add(const char *uid) {
 
 			s->values[i] = xstrdup(value);
 
+				/* sorry, but to simplify plugin writing we've to assure handler
+				 * is never called with nonconnected session */
+			if (!xstrcasecmp(key, "statusdescr"))
+				continue;
 			/* notify plugin, like session_set() do */
 			if (pl->params[i].notify) 
 				pl->params[i].notify(s, key);
@@ -580,11 +584,11 @@ static const int session_statusdescr_set(session_t *s, const char *statusdescr) 
 	debug_function("session_statusdescr_set(), status = %s [%d], descr = %s\n",
 			ekg_status_string(status, 2), status, descr);
 
-	if (status == EKG_STATUS_NULL) return 1;	/* if incorrect status, don't do anything! */
+	if (status == EKG_STATUS_NULL) return -1;	/* if incorrect status, don't do anything! */
 	status = session_status_nearest(s, status);	/* check whether plugin supports this status, if not find nearest */
 	if (status == EKG_STATUS_NULL) {
 		debug_function("session_statusdescr_set(), status setting on session '%s' not supported\n", session_uid_get(s));
-		return 1;
+		return -1;
 	}
 
 	session_status_set(s, status);
@@ -757,7 +761,7 @@ int session_set(session_t *s, const char *key, const char *value) {
 	if (!xstrcasecmp(key, "statusdescr")) {
 		ret = session_statusdescr_set(s, value);
 
-		if (ret != 0)		/* temporary workaround, see XXX @ notify: */
+		if (ret != 0 || !session_connected_get(s))		/* temporary workaround, see XXX @ notify: + don't notify when not connected */
 			return ret;
 		goto notify;
 	}
