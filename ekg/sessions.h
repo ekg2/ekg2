@@ -176,6 +176,8 @@ int session_private_set(session_t *s, void *priv);
 int session_connected_get(session_t *s);
 int session_connected_set(session_t *s, int connected);
 
+const status_t session_statusdescr_split(const char **statusdescr);
+
 const char *session_get(session_t *s, const char *key);
 int session_int_get(session_t *s, const char *key);
 int session_set(session_t *s, const char *key, const char *value);

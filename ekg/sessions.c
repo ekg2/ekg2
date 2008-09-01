@@ -527,21 +527,35 @@ int session_connected_set(session_t *s, int connected)
 
 PROPERTY_STRING_GET(session, uid)
 
-const int session_statusdescr_set(session_t *s, const char *statusdescr) {
-	const char *descr = xstrchr(statusdescr, ' ');
-	const char *status;
+/* Splits statusdescr into status and descr.
+ * Returns status as status_t, and sets *statusdescr to descr.
+ * Doesn't modify original *statusdescr */
+const status_t session_statusdescr_split(const char **statusdescr) {
+	const char	*descr	= xstrchr(*statusdescr, ' ');
+	char		*status	= NULL;
+	status_t	nstatus;
 
 	if (descr) {
-		status = xstrndup(statusdescr, (descr - statusdescr));
+		status	= xstrndup(*statusdescr, (descr - *statusdescr));
 		descr++;
-	} else
-		status = statusdescr;
+	}
 
-	debug_function("session_statusdescr_set(), status = %s, descr = %s\n", status, descr);
+	nstatus			= ekg_status_int(status ? status : *statusdescr);
+	*statusdescr	= descr;
 
 	if (descr)
 		xfree(status); /* was duplicated */
-	return 1;
+
+	return nstatus;
+}
+
+static const int session_statusdescr_set(session_t *s, const char *statusdescr) {
+	const char *descr = statusdescr;
+	status_t status = session_statusdescr_split(&descr);
+
+	debug_function("session_statusdescr_set(), status = %s [%d], descr = %s\n", ekg_status_string(status, 2), status, descr);
+
+	return (status == EKG_STATUS_NULL);
 }
 
 /* 
