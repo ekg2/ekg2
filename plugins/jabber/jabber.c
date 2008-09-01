@@ -1623,8 +1623,8 @@ EXPORT int jabber_plugin_init(int prio) {
 	PLUGIN_CHECK_VER("jabber");
 
 	jabber_plugin.params = jabber_plugin_vars;
-	jabber_plugin.protocol.protocols = jabber_protocols;
-	jabber_plugin.protocol.statuses = jabber_statuses;
+	jabber_plugin.priv.protocol.protocols = jabber_protocols;
+	jabber_plugin.priv.protocol.statuses = jabber_statuses;
 
 	plugin_register(&jabber_plugin, prio);
 

@@ -1463,8 +1463,8 @@ EXPORT int icq_plugin_init(int prio) {
 	icq_convert_string_init();
 
 	icq_plugin.params = icq_plugin_vars;
-	icq_plugin.protocol.protocols = icq_protocols;
-	icq_plugin.protocol.statuses = icq_statuses;
+	icq_plugin.priv.protocol.protocols = icq_protocols;
+	icq_plugin.priv.protocol.statuses = icq_statuses;
 
 	plugin_register(&icq_plugin, prio);
 

@@ -2381,8 +2381,8 @@ EXPORT int irc_plugin_init(int prio)
 	irc_plugin_vars[23].value = pwd_realname;
 
 	irc_plugin.params = irc_plugin_vars;
-	irc_plugin.protocol.protocols = irc_protocols;
-	irc_plugin.protocol.statuses = irc_statuses;
+	irc_plugin.priv.protocol.protocols = irc_protocols;
+	irc_plugin.priv.protocol.statuses = irc_statuses;
 
 	plugin_register(&irc_plugin, prio);
 

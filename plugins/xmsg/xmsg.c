@@ -710,7 +710,7 @@ int xmsg_plugin_init(int prio)
 	xdebug("inotify fd = %d", in_fd);
 	
 	xmsg_plugin.params = xmsg_plugin_vars;
-	xmsg_plugin.protocol.protocols = xmsg_protocols;
+	xmsg_plugin.priv.protocol.protocols = xmsg_protocols;
 	/* statuses not supported */
 	plugin_register(&xmsg_plugin, prio);
 

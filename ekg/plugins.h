@@ -75,7 +75,7 @@ typedef struct plugin {
 			const char **protocols;		/* NULL-terminated list of supported protocols, replacing GET_PLUGIN_PROTOCOLS */
 			const status_t *statuses;	/* EKG_STATUS_NULL-terminated list of supported statuses */
 		} protocol;
-	};
+	} priv;
 } plugin_t;
 
 /* Note about plugin_t.statuses:

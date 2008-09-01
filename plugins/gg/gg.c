@@ -1644,8 +1644,8 @@ int EXPORT gg_plugin_init(int prio) {
 	PLUGIN_CHECK_VER("gg");
 
 	gg_plugin.params = gg_plugin_vars;
-	gg_plugin.protocol.protocols = gg_protocols;
-	gg_plugin.protocol.statuses = gg_statuses;
+	gg_plugin.priv.protocol.protocols = gg_protocols;
+	gg_plugin.priv.protocol.statuses = gg_statuses;
 
 	plugin_register(&gg_plugin, prio);
 	gg_setvar_default(NULL, dummy);

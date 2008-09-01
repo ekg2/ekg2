@@ -2010,12 +2010,12 @@ static COMMAND(cmd_debug_plugins) {
 		printq("generic", buf);
 
 		if (p->pclass == PLUGIN_PROTOCOL) {
-			char *pr = array_join((char**) p->protocol.protocols, ", ");
+			char *pr = array_join((char**) p->priv.protocol.protocols, ", ");
 			char *st;
 			char **_sts = NULL;
 			const status_t *_st;
 
-			for (_st = p->protocol.statuses; *_st != EKG_STATUS_NULL; _st++) {
+			for (_st = p->priv.protocol.statuses; *_st != EKG_STATUS_NULL; _st++) {
 				array_add(&_sts, (char*) ekg_status_string(*_st, 2));
 			}
 			st = array_join(_sts, ", ");

@@ -280,7 +280,7 @@ int jogger_plugin_init(int prio) {
 	PLUGIN_CHECK_VER("jogger");
 
 	jogger_plugin.params = jogger_plugin_vars;
-	jogger_plugin.protocol.protocols = jogger_protocols;
+	jogger_plugin.priv.protocol.protocols = jogger_protocols;
 	/* statuses are not supported, we're just copying jabber session status */
 
 	query_connect_id(&jogger_plugin, PLUGIN_PRINT_VERSION, jogger_print_version, NULL);
