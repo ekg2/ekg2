@@ -2455,6 +2455,7 @@ struct ekg_status_info {
 	const char*		command;	/* command used to set status, if ==format, NULL */
 };
 
+/* please, keep it sorted with status_t */
 const struct ekg_status_info ekg_statuses[] = {
 		{ EKG_STATUS_ERROR,    "error"		},
 		{ EKG_STATUS_BLOCKED,  "blocking"	},
@@ -2478,6 +2479,19 @@ const struct ekg_status_info ekg_statuses[] = {
 static inline const struct ekg_status_info *status_find(const int status) {
 	const struct ekg_status_info *s;
 
+		/* as long as ekg_statuses[] are sorted, this should be fast */
+	if (status < EKG_STATUS_LAST) {
+		for (s = &(ekg_statuses[status-1]); s->status != EKG_STATUS_NULL; s++) {
+			if (s->status == status)
+				return s;
+		}
+	}
+
+	debug_function("status_find(), going into fallback loop (statuses ain't sorted?)\n");
+
+		/* fallback if statuses aren't sorted, we've got unknown or special status,
+		 * in second case we'll iterate part of list twice, but that's rather
+		 * rare case, so I think optimization isn't needed here. */
 	for (s = ekg_statuses; s->status != EKG_STATUS_NULL; s++) {
 		if (s->status == status)
 			return s;
