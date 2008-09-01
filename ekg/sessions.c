@@ -577,8 +577,8 @@ static const int session_statusdescr_set(session_t *s, const char *statusdescr) 
 	status_t	status	= session_statusdescr_split(&descr);
 	const char	*label;
 
-	debug_function("session_statusdescr_set(), status = %s [%d], descr = %s, label = %s\n",
-			ekg_status_string(status, 2), status, descr, label);
+	debug_function("session_statusdescr_set(), status = %s [%d], descr = %s\n",
+			ekg_status_string(status, 2), status, descr);
 
 	if (status == EKG_STATUS_NULL) return 1;	/* if incorrect status, don't do anything! */
 	status = session_status_nearest(s, status);	/* check whether plugin supports this status, if not find nearest */
@@ -594,6 +594,9 @@ static const int session_statusdescr_set(session_t *s, const char *statusdescr) 
 
 		/* ok, we suck even more. formats for statuschanges are command-based. */
 	label = ekg_status_string(status, 1);
+	debug_function("session_statusdescr_set(), -> status = %s [%d], label = %s\n",
+			ekg_status_string(status, 2), status, label);
+
 	if (descr) {
 		char l[xstrlen(label)+7];
 		sprintf(l, "%s_descr", label);
