@@ -554,7 +554,7 @@ const status_t session_statusdescr_split(const char **statusdescr) {
 static const int session_statusdescr_set(session_t *s, const char *statusdescr) {
 	const char	*descr	= statusdescr;
 	status_t	status	= session_statusdescr_split(&descr);
-	const char	*label	= ekg_status_label(status, descr, NULL);
+	const char	*label	= ekg_status_string(status, 1);
 
 	debug_function("session_statusdescr_set(), status = %s [%d], descr = %s, label = %s\n",
 			ekg_status_string(status, 2), status, descr, label);
@@ -566,11 +566,12 @@ static const int session_statusdescr_set(session_t *s, const char *statusdescr) 
 	session_unidle(s);
 	ekg_update_status(s);
 
-		/* XXX: maybe change _descr formats to carry session name as %1?
-		 * currently this sucks more than ever. */
-	if (descr)
-		print(label, descr, "", session_name(s));
-	else
+		/* ok, we suck even more. formats for statuschanges are command-based. */
+	if (descr) {
+		char l[xstrlen(label)+7];
+		sprintf(l, "%s_descr", label);
+		print(l, descr, "", session_name(s));
+	} else
 		print(label, session_name(s));
 
 	return 0;
@@ -1172,7 +1173,7 @@ COMMAND(session_command)
 		else if (!xstrcasecmp(key, "alias"))	var = session_alias_get(s);
 		else if (!xstrcasecmp(key, "descr"))	var = session_descr_get(s);
 		else if (!xstrcasecmp(key, "status"))	var = ekg_status_string(session_status_get(s), 2);
-		else if (!xstrcasecmp(key, "statusdescr"))	var = NULL; /* XXX? */
+		else if (!xstrcasecmp(key, "statusdescr"))	return 0; /* workaround to disable display, XXX? */
 		else if (!xstrcasecmp(key, "password")) { var = s->password ? "(...)" : NULL; }
 		else if ((paid = plugin_var_find(s->plugin, key))) {
 			plugins_params_t *pa = PLUGIN_VAR_FIND_BYID(s->plugin, paid);
