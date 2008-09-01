@@ -549,13 +549,20 @@ const status_t session_statusdescr_split(const char **statusdescr) {
 	return nstatus;
 }
 
+/* Just simple setter for both status&descr
+ * The real magic should be done in plugin-defined notify handler */
 static const int session_statusdescr_set(session_t *s, const char *statusdescr) {
-	const char *descr = statusdescr;
-	status_t status = session_statusdescr_split(&descr);
+	const char *descr	= statusdescr;
+	status_t status		= session_statusdescr_split(&descr);
 
 	debug_function("session_statusdescr_set(), status = %s [%d], descr = %s\n", ekg_status_string(status, 2), status, descr);
 
-	return (status == EKG_STATUS_NULL);
+	if (status == EKG_STATUS_NULL) return 1; /* if incorrect status, don't do anything! */
+
+	session_status_set(s, status);
+	session_descr_set(s, descr);
+
+	return 0;
 }
 
 /* 
@@ -707,6 +714,9 @@ int session_set(session_t *s, const char *key, const char *value) {
 
 	if (!xstrcasecmp(key, "statusdescr")) {
 		ret = session_statusdescr_set(s, value);
+
+		if (ret != 0)		/* temporary workaround, see XXX @ notify: */
+			return ret;
 		goto notify;
 	}
 
@@ -738,7 +748,7 @@ int session_set(session_t *s, const char *key, const char *value) {
 	return 0;
 
 notify:
-	if (pa && pa->notify)
+	if (pa && pa->notify)		/* XXX: notify only when ret == 0 ? */
 		pa->notify(s, key);
 
 	return ret;
