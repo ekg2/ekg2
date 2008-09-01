@@ -40,8 +40,8 @@ typedef enum {
 	EKG_STATUS_BLOCKED,		/* used in GG */
 
 	/* These statuses should be considered as 'not sure' */
-	EKG_STATUS_UNKNOWN	= 0x10,	/* used in Jabber */
-	EKG_STATUS_NA		= 0x20,	/* universal */
+	EKG_STATUS_UNKNOWN,			/* used in Jabber */
+	EKG_STATUS_NA,				/* universal */
 
 	/* These should be considered as 'probably available' */
 	EKG_STATUS_INVISIBLE,		/* GG; hard to prioritize... */
@@ -51,9 +51,11 @@ typedef enum {
 	EKG_STATUS_AWAY,		/* universal */
 
 	/* These should be considered as 'sure available' */
-	EKG_STATUS_AVAIL	= 0x40,	/* universal */
+	EKG_STATUS_AVAIL,		/* universal */
 	EKG_STATUS_FFC,			/* Jabber */
 
+	EKG_STATUS_LAST,
+		/* XXX: autostatuses are going to be rewritten and then below will be removed */
 	/* These are special statuses, which are to be used only with dedicated functions */
 	EKG_STATUS_AUTOAWAY	= 0x80,	/* putting in auto-away */
 	EKG_STATUS_AUTOXA,		/* putting in auto-xa */
