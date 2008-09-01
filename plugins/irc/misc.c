@@ -393,9 +393,10 @@ and the prefix.
 
 	/* debug only nasty hack ;> */
 #ifdef GDEBUG
+	/* mg: well, it's not the exact data sent, but color is needed indeed */
 	i=0;
-	while (q[i] != NULL) debug("[%s]",q[i++]);
-	debug("\n");
+	while (q[i] != NULL) debug_iorecv("[%s]",q[i++]);
+	debug_iorecv("\n");
 #endif
 
 	if (xstrlen(q[1]) > 1) {
