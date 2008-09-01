@@ -557,6 +557,7 @@ static inline status_t session_status_nearest(session_t *s, status_t status) {
 	plugin_t						*p		= s->plugin;
 	struct protocol_plugin_priv		*pp		= p->priv;
 	const status_t					*ast;
+	const int						dir		= (status < EKG_STATUS_AVAIL);
 
 	if (p->pclass != PLUGIN_PROTOCOL) {
 		debug_wtf("session_status_nearest(), session '%s' on non-protocol plugin '%s'!\n", session_uid_get(s), p->name);
@@ -566,8 +567,13 @@ static inline status_t session_status_nearest(session_t *s, status_t status) {
 		return status;
 	}
 
-	for (; status < EKG_STATUS_LAST; status++) {
-		if (status <= EKG_STATUS_NA) continue;
+	/* It's really hard to guess intentions
+	 * so we currently are going 'towards' EKG_STATUS_AVAIL
+	 * i.e. if status < EKG_STATUS_AVAIL, we're increasing it,
+	 * else we're decreasing it */
+
+	for (; dir ? (status <= EKG_STATUS_AVAIL) : (status >= EKG_STATUS_AVAIL); dir ? status++ : status--) {
+		if (status <= EKG_STATUS_NA || status >= EKG_STATUS_LAST) continue;
 
 		for (ast = pp->statuses; ast && (*ast != EKG_STATUS_NULL); ast++) {
 			if (*ast == status)	/* is supported? */
