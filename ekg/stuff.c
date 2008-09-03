@@ -3077,15 +3077,13 @@ void ekg_convert_string_destroy(void *ptr) {
  */
 
 char *ekg_convert_string_p(const char *ps, void *ptr) {
-	string_t recod, s = string_init(ps);
-	char *r = NULL;
+	string_t s = string_init(ps);
+	string_t recod;
 
-	if ((recod = ekg_convert_string_t_p(s, ptr))) {
-		r = xstrndup(recod->str, recod->len);
-		string_free(recod, 1);
-	}
+	if ((recod = ekg_convert_string_t_p(s, ptr)))
+		return string_free(recod, 0);
 
-	return r;
+	return NULL;
 }
 
 /**
