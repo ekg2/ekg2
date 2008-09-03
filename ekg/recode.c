@@ -44,7 +44,7 @@
 #include "commands.h"
 #include "dynstuff.h"
 #include "dynstuff_inline.h"
-#include "recode.h"
+// #include "recode.h"
 #include "stuff.h"
 #include "windows.h"
 #include "xmalloc.h"
@@ -770,5 +770,34 @@ char *ekg_any_to_locale(char *buf, char *inp) {
 char *ekg_locale_to_any(char *buf, char *inp) {
 
 
+}
+
+
+void ekg_recode_destroy() {
+	if (cp_conv_in != EKG_ICONV_BAD) {
+		ekg_convert_string_destroy(cp_conv_in);
+		ekg_convert_string_destroy(cp_conv_out);
+	}
+
+	if (utf8_conv_in != EKG_ICONV_BAD) {
+		ekg_convert_string_destroy(utf8_conv_in);
+		ekg_convert_string_destroy(utf8_conv_out);
+	}
+}
+
+
+void ekg_recode_reinit() {
+	ekg_recode_destroy();
+
+	if (
+#if (USE_UNICODE || HAVE_GTK)
+			config_use_unicode ||
+#endif
+			!xstrcasecmp(config_console_charset, "ISO-8859-2"))
+		cp_conv_in = cp_conv_out = (void*) EKG_ICONV_BAD;
+	else
+		cp_conv_in = ekg_convert_string_init("CP1250", NULL, &cp_conv_out);
+
+	utf8_conv_in = ekg_convert_string_init("UTF-8", NULL, &utf8_conv_out);
 }
 

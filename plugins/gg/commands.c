@@ -110,11 +110,11 @@ static COMMAND(gg_command_connect) {
 			if (__reason) {
 				if (!xstrcmp(__reason, "-"))	myreason = NULL;
 				else				myreason = xstrdup(__reason);
-				tmp = gg_locale_to_cp(xstrdup(myreason));
+				tmp = ekg_locale_to_cp(xstrdup(myreason));
 				session_descr_set(session, tmp ? myreason : NULL);
 			} else {
 				myreason = xstrdup(session_descr_get(session));
-				tmp = gg_locale_to_cp(xstrdup(myreason));
+				tmp = ekg_locale_to_cp(xstrdup(myreason));
 			}
 			if (tmp)
 				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
@@ -317,9 +317,9 @@ noproxy:
 			xfree(fwd);
 		}
 		
-		/* moved this further, because of gg_locale_to_cp() allocation */
+		/* moved this further, because of ekg_locale_to_cp() allocation */
 		p.status = _status;
-		p.status_descr = gg_locale_to_cp(xstrdup(session_descr_get(session)));
+		p.status_descr = ekg_locale_to_cp(xstrdup(session_descr_get(session)));
 		p.async = 1;
 
 		g->sess = gg_login(&p);
@@ -494,7 +494,7 @@ static COMMAND(gg_command_away) {
 
 	ekg_update_status(session);
 
-	cpdescr = gg_locale_to_cp(descr);
+	cpdescr = ekg_locale_to_cp(descr);
 	_status = GG_S(gg_text_to_status(status, cpdescr)); /* descr can be NULL it doesn't matter... */
 
 	if (session_int_get(session, "private"))
@@ -723,7 +723,7 @@ static COMMAND(gg_command_msg) {
 	}
 
 	raw_msg = xstrdup((char *) msg);
-	cpmsg = gg_locale_to_cp((char *) msg);
+	cpmsg = ekg_locale_to_cp((char *) msg);
 
 	count = array_count(nicks);
 

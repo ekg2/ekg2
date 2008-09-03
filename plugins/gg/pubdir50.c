@@ -95,7 +95,7 @@ COMMAND(gg_command_find)
 	uargv = xcalloc(array_count(argv)+1, sizeof(char **));
 
 	for (i = 0; argv[i]; i++)
-		uargv[i] = gg_locale_to_cp(argv[i]);
+		uargv[i] = ekg_locale_to_cp(argv[i]);
 
 	for (i = 0; argv[i]; i++) {
 		char *arg = argv[i];
@@ -213,7 +213,7 @@ COMMAND(gg_command_change)
 		char **argv = array_make(params[0], (" \t"), 0, 1, 1);
 		
 		for (i = 0; argv[i]; i++)
-			argv[i] = gg_locale_to_cp(argv[i]);
+			argv[i] = ekg_locale_to_cp(argv[i]);
 
 		for (i = 0; argv[i]; i++) {
 			if (match_arg(argv[i], 'f', ("first"), 2) && argv[i + 1]) {
@@ -326,10 +326,10 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		const char *__birthyear = gg_pubdir50_get(res, i, "birthyear");
 		const char *__city	= gg_pubdir50_get(res, i, "city");
 
-		char *firstname		= gg_cp_to_locale(xstrdup(__firstname));
-		char *lastname		= gg_cp_to_locale(xstrdup(__lastname));
-		char *nickname		= gg_cp_to_locale(xstrdup(__nickname));
-		char *city		= gg_cp_to_locale(xstrdup(__city));
+		char *firstname		= ekg_cp_to_locale(xstrdup(__firstname));
+		char *lastname		= ekg_cp_to_locale(xstrdup(__lastname));
+		char *nickname		= ekg_cp_to_locale(xstrdup(__nickname));
+		char *city		= ekg_cp_to_locale(xstrdup(__city));
 		int status		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
 		const char *birthyear	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
 

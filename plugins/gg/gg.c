@@ -667,7 +667,7 @@ static void gg_session_handler_success(session_t *s) {
 	descr = xstrdup(session_descr_get(s));
 	status = session_status_get(s);
 
-	cpdescr = gg_locale_to_cp(descr);
+	cpdescr = ekg_locale_to_cp(descr);
 
 	/* ustawiamy swój status */
 	_status = GG_S(gg_text_to_status(status, s->descr ? cpdescr : NULL));
@@ -756,7 +756,7 @@ static void gg_session_handler_disconnect(session_t *s) {
  */
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol) {
 	char *__uid	= saprintf(("gg:%d"), uin);
-	char *__descr	= gg_cp_to_locale(xstrdup(descr));
+	char *__descr	= ekg_cp_to_locale(xstrdup(descr));
 	int i, j, dlen, state = 0, m = 0;
 
 	{
@@ -864,7 +864,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	for (i = 0; i < e->event.msg.recipients_count; i++)
 		array_add(&__rcpts, saprintf("gg:%d", e->event.msg.recipients[i]));
 
-	__text = gg_cp_to_locale(xstrdup((const char *) e->event.msg.message));
+	__text = ekg_cp_to_locale(xstrdup((const char *) e->event.msg.message));
 
 	if (e->event.msg.formats && e->event.msg.formats_length) {
 		unsigned char *p = e->event.msg.formats;
@@ -1149,7 +1149,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 
 					gg_remove_notify_ex(g->sess, str_to_uin(parsed + 1), gg_userlist_type(u));
 				}
-				reply = gg_cp_to_locale(xstrdup(e->event.userlist.reply));
+				reply = ekg_cp_to_locale(xstrdup(e->event.userlist.reply));
 				gg_userlist_set(s, reply);
 				xfree(reply);
 				gg_userlist_send(g->sess, s->userlist);
@@ -1438,7 +1438,7 @@ static void gg_changed_private(session_t *s, const char *var) {
 	if (!s || !s->connected || !(g = s->priv))
 		return;
 
-	cpdescr = gg_locale_to_cp(xstrdup(s->descr));
+	cpdescr = ekg_locale_to_cp(xstrdup(s->descr));
 	status	= gg_text_to_status(s->status, cpdescr);	/* XXX, check if gg_text_to_status() return smth correct */
 
 	if (session_int_get(s, "private") > 0)
@@ -1508,7 +1508,7 @@ static void gg_changed_proxy(session_t *s, const char *var) {
 
 static void gg_statusdescr_handler(session_t *s, const char *varname) {
 	gg_private_t	*g			= session_private_get(s);
-	char			*cpdescr	= gg_locale_to_cp(xstrdup(session_descr_get(s)));
+	char			*cpdescr	= ekg_locale_to_cp(xstrdup(session_descr_get(s)));
 	int				_status		= GG_S(gg_text_to_status(session_status_get(s), cpdescr));
 
 	if (session_int_get(s, "private"))
@@ -1682,7 +1682,6 @@ int EXPORT gg_plugin_init(int prio) {
 	query_connect_id(&gg_plugin, PROTOCOL_UNIGNORE, gg_user_online_handle, (void *)1);
 	query_connect_id(&gg_plugin, USERLIST_INFO, gg_userlist_info_handle, NULL);
 	query_connect_id(&gg_plugin, USERLIST_PRIVHANDLE, gg_userlist_priv_handler, NULL);
-	query_connect_id(&gg_plugin, CONFIG_POSTINIT, gg_convert_string_init, NULL);
 
 	gg_register_commands();
 
@@ -1738,7 +1737,6 @@ static int gg_plugin_destroy() {
 	gg_register_email = NULL;
 
 	image_flush_queue();
-	gg_convert_string_destroy();
 
 	plugin_unregister(&gg_plugin);
 

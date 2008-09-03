@@ -964,6 +964,7 @@ int main(int argc, char **argv)
 		no_config = 1;
 
 	config_postread();
+	ekg_recode_reinit();
 
 	/* status window takes first session if not set before*/
 	if (!session_current && sessions)
@@ -1160,6 +1161,7 @@ void ekg_exit()
 	newconferences_destroy();
 	metacontacts_destroy();
 	sessions_free();
+	ekg_recode_destroy();
 
 	{
 		plugin_t *p;

@@ -120,16 +120,16 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 
 			/* XXX make macro ? */
 			tmp = (t_comment && t_comment->len) ? xstrndup((char *) t_comment->buf, t_comment->len) : NULL;
-			comment = icq_convert_from_utf8(tmp);
+			comment = ekg_utf8_to_locale(tmp);
 
 			tmp = (t_phone && t_phone->len) ? xstrndup((char *) t_phone->buf, t_phone->len) : NULL;
-			phone = icq_convert_from_utf8(tmp);
+			phone = ekg_utf8_to_locale(tmp);
 
 			tmp = (t_email && t_email->len) ? xstrndup((char *) t_email->buf, t_email->len) : NULL;
-			email = icq_convert_from_utf8(tmp);
+			email = ekg_utf8_to_locale(tmp);
 
 			tmp = (t_nick && t_nick->len) ? xstrndup((char *) t_nick->buf, t_nick->len) : xstrdup(uid);
-			nick = icq_convert_from_utf8(tmp);
+			nick = ekg_utf8_to_locale(tmp);
 
 			userlist_t *u;
 
@@ -344,7 +344,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 
 		tlvs = icq_unpack_tlvs_nc(buf, tlv_len, 0);
 
-		name = icq_convert_from_utf8(xstrdup(orgname));
+		name = ekg_utf8_to_locale(xstrdup(orgname));
 		icq_userlist_parse_entry(s, tlvs, name, item_type, item_id, group_id);
 		xfree(name);
 

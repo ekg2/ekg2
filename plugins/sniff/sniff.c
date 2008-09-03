@@ -184,33 +184,6 @@ static connection_t *sniff_tcp_find_connection(const struct iphdr *ip, const str
 	return &d;
 }
 
-static const unsigned char cp_to_iso_table[] = {
-	 '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',
-	 '?',  '?', 0xa9,  '?', 0xa6, 0xab, 0xae, 0xac,
-	 '?',  '?',  '?',  '?',  '?',  '?',  '?',  '?',
-	 '?',  '?', 0xb9,  '?', 0xb6, 0xbb, 0xbe, 0xbc,
-	0xa0, 0xb7, 0xa2, 0xa3, 0xa4, 0xa1,  '?', 0xa7,
-	0xa8,  '?', 0xaa,  '?',  '?', 0xad,  '?', 0xaf,
-	0xb0,  '?', 0xb2, 0xb3, 0xb4,  '?',  '?',  '?',
-	0xb8, 0xb1, 0xba,  '?', 0xa5, 0xbd, 0xb5, 0xbf,
-};
-
-static char *gg_cp_to_iso(char *b) {
-	char *tmp = b;
-	unsigned char *buf = (unsigned char *) b;
-
-	if (!buf)
-		return NULL;
-
-	while (*buf) {
-		if (*buf >= 0x80 && *buf < 0xC0)
-			*buf = cp_to_iso_table[*buf - 0x80];
-
-		buf++;
-	}
-	return tmp;
-}
-
 static void tcp_print_payload(u_char *payload, size_t len) {
 	#define MAX_BYTES_PER_LINE 16
 	int offset = 0;
