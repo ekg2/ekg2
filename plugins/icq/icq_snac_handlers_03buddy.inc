@@ -139,11 +139,11 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 	status = EKG_STATUS_AVAIL;	/* assume avail */
 	uid = icq_uid(pkt.uid);
-	u =userlist_find(s, uid);
+	u = userlist_find(s, uid);
 
 	debug_white("icq_snac_buddy_online() %s\n", uid);
 
-	for (t = tlvs; t; t = t->next) {
+	if (u) for (t = tlvs; t; t = t->next) {
 
 		/* darkjames said: "I don't trust anything. Wiechu, check t->len" */
 		switch (t->type) {
