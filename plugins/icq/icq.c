@@ -912,35 +912,44 @@ static COMMAND(icq_command_msg) {
 		query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
 	}
 
-	/* XXX, recode, and do other magic stuff :( */
 	/* sent message */
 	{
-		/* for now params[1] should be US-ASCII encoded message.
-		 * sorry */
 		string_t pkt;
 		string_t tlv_2, tlv_101;
-		string_t recode;
+		userlist_t *u = userlist_find(session, uid);
+		uint16_t enc = 0;	/* ASCII */
+		const char *tmp = params[1];
 
-	/* TLV(101) */
-		/* XXX ?wo? check if we can send utf message */
-		recode = icq_convert_to_ucs2be((char *) params[1]);
-		tlv_101 = icq_pack("WW", 0x02, 0x00);		// Unicode
-		string_append_raw(tlv_101, recode->str, recode->len);
-		string_free(recode, 1);
+		while (*tmp) {
+			if ((*tmp++ & ~0x7f)) {
+				enc = 2;	/* not ascii char */
+				break;
+			}
+		}
+		if ( enc && !(u || user_private_item_get_int(u, "utf")) )
+			enc = 3;		/* ANSI -- XXX ?wo? what should we do now? */
 
-		/* send ASCII message
-		tlv_101 = icq_pack("WW", 0x03, 0x00);		// codepage, encoding, copied from ICQ lite
-		string_append(tlv_101, params[1]);
-		*/
+		/* TLV(101) */
+		if (enc == 2) {
+			/* send unicode message */
+			string_t recode = icq_convert_to_ucs2be((char *) params[1]);
+			tlv_101 = icq_pack("WW", 0x02, 0x00);
+			string_append_raw(tlv_101, recode->str, recode->len);
+			string_free(recode, 1);
+		} else {
+			/* send ASCII/ANSII message */
+			tlv_101 = icq_pack("WW", enc, 0x00);		// encoding, codepage, copied from ICQ lite
+			string_append(tlv_101, params[1]);
+		}
 
-	/* TLV(2) */
+		/* TLV(2) */
 		tlv_2 = icq_pack("tcT",
 					icq_pack_tlv_char(0x501, 0x1),			/* TLV(501) features, meaning unknown, duplicated from ICQ Lite */
 					icq_pack_tlv(0x0101, tlv_101->str, tlv_101->len)/* TLV(101) text TLV. */
 				);
 		string_free(tlv_101, 1);
 
-	/* main packet */
+		/* main packet */
 		pkt = icq_pack("iiWu", (uint32_t) rand(), (uint32_t) rand(), 0x01, (uint32_t) uin);
 		icq_pack_append(pkt, "TTT", 
 					icq_pack_tlv(0x02, tlv_2->str, tlv_2->len),	/* TLV(2) message-block */
@@ -948,8 +957,8 @@ static COMMAND(icq_command_msg) {
 					icq_pack_tlv(0x06, NULL, 0)			/* TLV(6) received-offline */
 					);
 
-	/* message-header */
-		icq_makesnac(session, pkt, 0x04, 0x06, 0, 0);
+		/* message-header */
+		icq_makesnac(session, pkt, 0x04, 0x06, NULL, NULL);
 		icq_send_pkt(session, pkt);
 
 		string_free(tlv_2, 1);
@@ -1485,6 +1494,7 @@ EXPORT int icq_plugin_init(int prio) {
 
 	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
+	command_add(&icq_plugin, "icq:chat", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 
 	command_add(&icq_plugin, "icq:addssi", "!p ?", icq_command_addssi, ICQ_FLAGS, "-p --phone -c --comment -e --email");
 
