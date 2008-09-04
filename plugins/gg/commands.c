@@ -399,14 +399,16 @@ static COMMAND(gg_command_away) {
 	}
 
 	if (params0) {
-		if (xstrlen(params0) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
+		char *tmp = ekg_locale_to_cp(params0);
+		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
 			if (!timeout) {
 				char *descr_poss = xstrndup(params0, GG_STATUS_DESCR_MAXSIZE);
 				char *descr_not_poss = xstrdup(params0 + GG_STATUS_DESCR_MAXSIZE);
 
-				printq("descr_too_long", itoa(xstrlen(params0) - GG_STATUS_DESCR_MAXSIZE), descr_poss, descr_not_poss);
+				printq("descr_too_long", itoa(xstrlen(tmp) - GG_STATUS_DESCR_MAXSIZE), descr_poss, descr_not_poss);
 				g->scroll_op = 0;
 
+				xfree(tmp);
 				xfree(descr_poss);
 				xfree(descr_not_poss);
 
@@ -414,6 +416,7 @@ static COMMAND(gg_command_away) {
 				return -1;
 			}
 		}
+		xfree(tmp);
 
 		session_descr_set(session, (!xstrcmp(params0, "-")) ? NULL : params0);
 	} else {
