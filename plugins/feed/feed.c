@@ -148,10 +148,14 @@ static QUERY(rss_message) {
 			if (!(target = get_nickname(s, uid)))
 				target = uid;
 			break;
-	}
+	} 
+
+	debug_white("[feed] window_new(%s, %s [%x]) == ", target, session, s);
 
 	if (mw)
 		targetwnd = window_new(target, s, 0);
+
+	debug_white("%x\n", targetwnd);
 
 	switch (dmode) {
 		case 0:	 print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_new", title, url);	/* only notify */
