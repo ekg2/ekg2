@@ -286,18 +286,29 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 			case 0x0d: /* Client capabilities list */
 			{
-				debug_white("icq_snac_buddy_online() Capability list.\n");
-				if (tlv_length_check("icq_snac_buddy_online()", t, t->len & ~0xF))
-					break;
-#if ICQ_DEBUG_UNUSED_INFORMATIONS
 				unsigned char *data = t->buf;
 				int d_len = t->len;
+				int caps = 0;
+
+				if (tlv_length_check("icq_snac_buddy_online()", t, t->len & ~0xF))
+					break;
+				if (!u)
+					break;
+				user_private_item_set_int(u, "caps", 0);
+				user_private_item_set_int(u, "utf", 0);
 				while (d_len > 0) {
-					debug_white("icq_snac_buddy_online() %s\n", icq_capability_name(data));
+					int cid = icq_cap_id(data);
+					if (cid != CAP_UNKNOWN) {
+						caps |= 1 << cid;
+						if (cid == CAP_UTF)
+							user_private_item_set_int(u, "utf", 1);
+					} else {
+						/* client id???*/
+					}
 					data  += 0x10;		// capability length
 					d_len -= 0x10;
 				}
-#endif
+				user_private_item_set_int(u, "caps", caps);
 				break;
 			}
 

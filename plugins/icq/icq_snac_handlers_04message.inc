@@ -125,12 +125,10 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 
 			debug_function("icq_snac_message_recv_simple() enc: %.4x cp: %.4x\n", t_msg.encoding, t_msg.codepage);
 
-			recode = xstrndup((char *) t_msg.message, t_len);
 			switch (t_msg.encoding) {
 				case 0x02:	/* UCS-2BE */
 				{
 					string_t str = string_init(NULL);
-					xfree(recode);
 					string_append_raw(str, (char *) t_msg.message, t_len);
 					recode = icq_convert_from_ucs2be(str);
 					string_free(str, 1);
@@ -138,6 +136,7 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 				}
 				case 0x00:	/* US-ASCII */
 				case 0x03:	/* ANSI */
+					recode = xstrndup((char *) t_msg.message, t_len);
 					break;
 				default:
 					debug_error("icq_snac_message_recv_simple() Unsupported encoding 0x%x\n", t_msg.encoding);
