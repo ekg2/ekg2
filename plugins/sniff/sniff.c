@@ -743,6 +743,7 @@ EXPORT int sniff_plugin_init(int prio) {
 
 	sniff_plugin.params = sniff_plugin_vars;
 	plugin_register(&sniff_plugin, prio);
+	ekg_recode_cp_inc();
 
 	query_connect_id(&sniff_plugin, PROTOCOL_VALIDATE_UID,	sniff_validate_uid, NULL);
 	query_connect_id(&sniff_plugin, STATUS_SHOW,		sniff_status_show, NULL);
@@ -758,6 +759,7 @@ EXPORT int sniff_plugin_init(int prio) {
 
 static int sniff_plugin_destroy() {
 	plugin_unregister(&sniff_plugin);
+	ekg_recode_cp_dec();
 	return 0;
 }
 

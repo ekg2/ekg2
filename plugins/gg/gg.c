@@ -50,6 +50,7 @@
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
+#include <ekg/recode.h>
 
 #include <ekg/queries.h>
 
@@ -1667,6 +1668,7 @@ int EXPORT gg_plugin_init(int prio) {
 	gg_plugin.priv		= &gg_priv;
 
 	plugin_register(&gg_plugin, prio);
+	ekg_recode_cp_inc();
 	gg_setvar_default(NULL, dummy);
 
 	query_connect_id(&gg_plugin, SET_VARS_DEFAULT, gg_setvar_default, NULL);
@@ -1738,6 +1740,7 @@ static int gg_plugin_destroy() {
 
 	image_flush_queue();
 
+	ekg_recode_cp_dec();
 	plugin_unregister(&gg_plugin);
 
 	return 0;

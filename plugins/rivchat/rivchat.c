@@ -38,6 +38,7 @@
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
+#include <ekg/recode.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
@@ -1488,6 +1489,7 @@ EXPORT int rivchat_plugin_init(int prio) {
 	rivchat_plugin.params = rivchat_plugin_vars;
 
 	plugin_register(&rivchat_plugin, prio);
+	ekg_recode_cp_inc();
 
 	query_connect_id(&rivchat_plugin, PROTOCOL_VALIDATE_UID, rivchat_validate_uid, NULL);
 	query_connect_id(&rivchat_plugin, SESSION_ADDED, rivchat_session_init, NULL);
@@ -1522,6 +1524,7 @@ EXPORT int rivchat_plugin_init(int prio) {
 
 static int rivchat_plugin_destroy() {
 	plugin_unregister(&rivchat_plugin);
+	ekg_recode_cp_dec();
 	return 0;
 }
 
