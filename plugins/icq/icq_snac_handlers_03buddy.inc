@@ -306,7 +306,9 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 					d_len -= 2;
 				}
 				user_private_item_set_int(u, "caps", caps);
+				break;
 			}
+
 			case 0x1d: /* user icon id & hash */
 			{
 				unsigned char *t_data = t->buf;
