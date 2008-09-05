@@ -155,10 +155,7 @@ int icq_write_info(session_t *s) {
 		icq_pack_append(tlv_5, "P", (uint32_t) 0x134E);		/* CAP_UTF8MSGS - Client supports UTF-8 messages.*/
 #ifdef DBG_NEWCAPS
 	/* Tells server we understand to new format of caps */
-    #if 0
-    /* XXX -- it breaks CAPS */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x0000);			/* CAP_NEWCAPS */
-    #endif
+	icq_pack_append(tlv_5, "P", (uint32_t) 0x0000);			/* CAP_NEWCAPS */
 
 #endif
 

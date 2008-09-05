@@ -31,6 +31,7 @@
 #include "icq.h"
 #include "misc.h"
 
+#include "icq_caps.h"
 #include "icq_flap_handlers.h"
 #include "icq_snac_handlers.h"
 

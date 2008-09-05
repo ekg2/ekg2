@@ -63,9 +63,6 @@ int tlv_length_check(char *name, icq_tlv_t *t, int length);
 #if ICQ_SNAC_NAMES_DEBUG
 const char *icq_snac_name(int family, int cmd);
 #endif
-const char *icq_capability_name(int id);
-int icq_cap_id(unsigned char *buf);
-const unsigned char *icq_cap_str(int id);
 
 const char *icq_lookuptable(struct fieldnames_t *table, int code);
 
