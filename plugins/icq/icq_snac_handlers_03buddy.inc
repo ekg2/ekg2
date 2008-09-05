@@ -139,11 +139,17 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 	status = EKG_STATUS_AVAIL;	/* assume avail */
 	uid = icq_uid(pkt.uid);
-	u = userlist_find(s, uid);
+	if (!(u = userlist_find(s, uid)) && config_auto_user_add)
+		u = userlist_add(s, uid, uid);
 
 	debug_white("icq_snac_buddy_online() %s\n", uid);
 
-	if (u) for (t = tlvs; t; t = t->next) {
+	if (u) {
+		user_private_item_set_int(u, "caps", 0);
+		user_private_item_set_int(u, "utf", 0);
+	}
+
+	for (t = tlvs; t; t = t->next) {
 
 		/* darkjames said: "I don't trust anything. Wiechu, check t->len" */
 		switch (t->type) {
@@ -162,6 +168,22 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 		/* now we've got trusted length */
 
 		switch (t->type) {
+			case 0x01: /* User class */
+				if (u)
+					user_private_item_set_int(u, "class", t->nr);
+				debug_white("icq_snac_buddy_online() class 0x%02x\n", t->nr);
+				break;
+
+			case 0x03: /* Time when client gone online (unix time_t) */
+				if (u)
+					user_private_item_set_int(u, "online", t->nr);
+				break;
+
+			case 0x05: /* Time when this account was registered (unix time_t) */
+				if (u && t->nr)
+					user_private_item_set_int(u, "member", t->nr);
+				break;
+
 			case 0x06:
 			{
 				/* User status
@@ -177,6 +199,8 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 					continue;
 				}
 
+				if (u)
+					user_private_item_set_int(u, "status_f", icq_status_flags);
 				debug_white("icq_snac_buddy_online() status2=0x%04x status=0x%04x\n", icq_status_flags, icq_status);
 				status = icq2ekg_status(icq_status);
 				break;
@@ -185,24 +209,10 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 			case 0x0a: /* IP address */
 			{
 				uint32_t ip;
-				if (icq_unpack_nc(t->buf, t->len, "i", &ip))
+				if (u && icq_unpack_nc(t->buf, t->len, "i", &ip))
 					user_private_item_set_int(u, "ip", ip);
 				break;
 			}
-
-			case 0x01: /* User class */
-				debug_white("icq_snac_buddy_online() class 0x%02x\n", t->nr);
-				break;
-			case 0x03: /* Time when client gone online (unix time_t) */
-				user_private_item_set_int(u, "online", t->nr);
-				break;
-			case 0x05: /* Time when this account was registered (unix time_t) */
-				if (t->nr)
-					user_private_item_set_int(u, "member", t->nr);
-				break;
-			case 0x0f: /* Online time in seconds */
-				debug_white("icq_snac_buddy_online() %d seconds online\n", t->nr);
-				break;
 
 			case 0x0c: /* DC info */
 			{
@@ -212,7 +222,6 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 					uint8_t tcp_flag;
 					uint16_t version;
 					uint32_t conn_cookie;
-
 					uint32_t web_port;
 					uint32_t client_features;
 					/* faked time signatures, used to identify clients */
@@ -222,20 +231,82 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 					uint16_t junk;
 				} tlv_c;
 
-				if (!icq_unpack_nc(t->buf, t->len, "IICWI",
+				if (!icq_unpack_nc(t->buf, t->len, "IICWIII",
 						&tlv_c.ip, &tlv_c.port,
 						&tlv_c.tcp_flag, &tlv_c.version,
-						&tlv_c.conn_cookie))
+						&tlv_c.conn_cookie, &tlv_c.web_port,
+						&tlv_c.client_features))
 				{
 					debug_error("icq_snac_buddy_online() TLV(C) corrupted?\n");
 					continue;
+				} else {
+					if (u) {
+						user_private_item_set_int(u, "dcc.ip", tlv_c.ip);
+						user_private_item_set_int(u, "dcc.port", tlv_c.port);
+						user_private_item_set_int(u, "dcc.flag", tlv_c.tcp_flag);
+						user_private_item_set_int(u, "dcc.ver", tlv_c.version);
+						user_private_item_set_int(u, "dcc.cookie", tlv_c.conn_cookie);
+						user_private_item_set_int(u, "dcc.web_port", tlv_c.web_port);
+					}
+					if (t->len >= 12 && icq_unpack_nc(t->buf, t->len, "23 III", &tlv_c.ts1, &tlv_c.ts3, &tlv_c.ts3))
+						;
 				}
-
-				/* XXX, this info should be saved for /dcc ! */
 
 				break;
 			}
 
+			case 0x0d: /* Client capabilities list */
+			{
+				unsigned char *data = t->buf;
+				int d_len = t->len;
+				int caps = user_private_item_get_int(u, "caps");
+
+				if (tlv_length_check("icq_snac_buddy_online()", t, t->len & ~0xF))
+					break;
+				if (!u)
+					break;
+				while (d_len > 0) {
+					int cid = icq_cap_id(data);
+					if (cid != CAP_UNKNOWN) {
+						caps |= 1 << cid;
+						if (cid == CAP_UTF)
+							user_private_item_set_int(u, "utf", 1);
+					} else {
+						/* client id???*/
+					}
+					data  += 0x10;		// capability length
+					d_len -= 0x10;
+				}
+				user_private_item_set_int(u, "caps", caps);
+				break;
+			}
+
+			case 0x0f: /* Online time in seconds */
+				debug_white("icq_snac_buddy_online() %d seconds online\n", t->nr);
+				break;
+
+			case 0x19: /* */
+			{
+				unsigned char *data = t->buf;
+				int d_len = t->len;
+				int caps = user_private_item_get_int(u, "caps");
+
+				if (!u)
+					break;
+				while (d_len > 0) {
+					int cid = icq_short_cap_id(data);
+					if (cid != CAP_UNKNOWN) {
+						caps |= 1 << cid;
+						if (cid == CAP_UTF)
+							user_private_item_set_int(u, "utf", 1);
+					} else {
+						/* WTF? */
+					}
+					data  += 2;		// short capability length
+					d_len -= 2;
+				}
+				user_private_item_set_int(u, "caps", caps);
+			}
 			case 0x1d: /* user icon id & hash */
 			{
 				unsigned char *t_data = t->buf;
@@ -281,34 +352,6 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 					t_data += item_len;
 					t_len -= item_len;
 				}
-				break;
-			}
-
-			case 0x0d: /* Client capabilities list */
-			{
-				unsigned char *data = t->buf;
-				int d_len = t->len;
-				int caps = 0;
-
-				if (tlv_length_check("icq_snac_buddy_online()", t, t->len & ~0xF))
-					break;
-				if (!u)
-					break;
-				user_private_item_set_int(u, "caps", 0);
-				user_private_item_set_int(u, "utf", 0);
-				while (d_len > 0) {
-					int cid = icq_cap_id(data);
-					if (cid != CAP_UNKNOWN) {
-						caps |= 1 << cid;
-						if (cid == CAP_UTF)
-							user_private_item_set_int(u, "utf", 1);
-					} else {
-						/* client id???*/
-					}
-					data  += 0x10;		// capability length
-					d_len -= 0x10;
-				}
-				user_private_item_set_int(u, "caps", caps);
 				break;
 			}
 

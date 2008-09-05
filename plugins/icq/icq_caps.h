@@ -29,6 +29,7 @@ typedef enum {
 const char *icq_capability_name(int id);
 
 int icq_cap_id(unsigned char *buf);
+int icq_short_cap_id(unsigned char *buf);
 
 const unsigned char *icq_cap_str(int id);
 
