@@ -309,44 +309,54 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 	if (xstrcmp(s->uid+4, uin))
 		debug_error("icq_snac_service_reqinfo() Warning: Server thinks our UIN is %s, when it is %s\n", uin, s->uid+4);
 
-	/*
-	 * TLV(x01) User type?
-	 * TLV(x0C) Empty CLI2CLI Direct connection info
-	 * TLV(x0A) External IP
-	 * TLV(x0F) Number of seconds that user has been online
-	 * TLV(x03) The online since time.
-	 * TLV(x0A) External IP again
-	 * TLV(x22) Unknown
-	 * TLV(x1E) Unknown: empty.
-	 * TLV(x05) Member of ICQ since.
-	 * TLV(x14) Unknown
-	 */
 	tlvs = icq_unpack_tlvs(&databuf, &len, count);
 
 	/* XXX, miranda check dwRef. */
 	/* XXX, miranda saves */
 	for (t = tlvs; t; t = t->next) {
 		switch (t->type) {
-			case 0x03:
-				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
-				debug_white("icq_snac_service_reqinfo() Logon TS: %u\n", t->nr);
+			case 0x01:	/* User type */
+				if (tlv_length_check("icq_snac_service_reqinfo()", t, 2)) goto def;
+				debug_white("icq_snac_service_reqinfo() User type: 0x%x\n", t->nr);
 				break;
 
-			case 0x05:
+			case 0x03:	/* The online since time */
+				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
+				debug_white("icq_snac_service_reqinfo() Logon time: %s\n", int2time_str("%Y-%m-%d %H:%M", t->nr));
+				break;
+
+			case 0x05:	/* Member of ICQ since */
 				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
 				debug_white("icq_snac_service_reqinfo() ICQ Member since: %s\n", int2time_str("%Y-%m-%d %H:%M", t->nr));
 				break;
 
-			case 0x0A:
+			case 0x0a:	/* External IP */
 				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
 				debug_white("icq_snac_service_reqinfo() External IP: %u.%u.%u.%u\n", t->buf[0], t->buf[1], t->buf[2], t->buf[3]);
+				break;
+
+			case 0x0c: /* Empty CLI2CLI Direct connection info */
+				break;
+
+			case 0x0d: /* Our capabilities */
+				debug_white("icq_snac_service_reqinfo() Server knows %d our caps\n", t->len >> 4);
+				break;
+
+			case 0x0f:	/* Number of seconds that user has been online */
+				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
+				debug_white("icq_snac_service_reqinfo() Online: %u seconds.\n", t->nr);
+				break;
+
+			case 0x14:
+			case 0x1e:	/* We know that we don't know them */
+			case 0x22:
 				break;
 
 			/* XXX */
 
 			default:
 			    def:
-				debug_error("icq_snac_service_reqinfo() TLV[%u] datalen: %u\n", t->type, t->len);
+				debug_error("icq_snac_service_reqinfo() TLV[0x%x] datalen: %u\n", t->type, t->len);
 				icq_hexdump(DEBUG_WHITE, t->buf, t->len);
 		}
 	}

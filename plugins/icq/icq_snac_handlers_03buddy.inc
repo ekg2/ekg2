@@ -285,7 +285,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 				debug_white("icq_snac_buddy_online() %d seconds online\n", t->nr);
 				break;
 
-			case 0x19: /* */
+			case 0x19: /* short caps */
 			{
 				unsigned char *data = t->buf;
 				int d_len = t->len;
