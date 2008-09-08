@@ -1,6 +1,8 @@
 #ifndef __EKG_RECODE_H
 #define __EKG_RECODE_H
 
+#include "dynstuff.h"
+
 enum ekg_recode_name {
 	EKG_RECODE_CP = 0,
 	EKG_RECODE_LATIN2,

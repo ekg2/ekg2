@@ -17,9 +17,9 @@
 #include <ekg/sessions.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/recode.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
-
 #include <ekg/queries.h>
 
 #include "simlite.h"
@@ -353,6 +353,7 @@ EXPORT int sim_plugin_init(int prio)
 	PLUGIN_CHECK_VER("sim");
 
 	plugin_register(&sim_plugin, prio);
+	ekg_recode_cp_inc();
 
 	query_connect_id(&sim_plugin, MESSAGE_ENCRYPT, message_encrypt, NULL);
 	query_connect_id(&sim_plugin, MESSAGE_DECRYPT, message_decrypt, NULL);
@@ -375,6 +376,7 @@ EXPORT int sim_plugin_init(int prio)
 static int sim_plugin_destroy()
 {
 	plugin_unregister(&sim_plugin);
+	ekg_recode_cp_dec();
 
 	xfree(sim_key_path);
 

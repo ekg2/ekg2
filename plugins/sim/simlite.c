@@ -39,6 +39,7 @@
 
 #include "simlite.h"
 #include <ekg/debug.h>
+#include <ekg/recode.h>
 #include <ekg/xmalloc.h>
 
 char *sim_key_path = NULL;
@@ -397,8 +398,9 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	unsigned char bf_key_rsa[128];	/* symetryczny szyfrowany RSA */
 	BIO *mbio = NULL, *cbio = NULL, *bbio = NULL;
 	RSA *private = NULL;
-	unsigned char *buf = NULL, *res = NULL, *data;
-	int len, cx;
+	unsigned char *buf = NULL, *data;
+	char *res = NULL;
+	int len;
 
 	/* je¶li wiadomo¶æ jest krótsza ni¿ najkrótsza zaszyfrowana,
 	 * nie ma sensu siê bawiæ w próby odszyfrowania. */
@@ -484,15 +486,6 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	memcpy(res, data + sizeof(head), len);
 	res[len] = 0;
 
-	for(cx = 0; cx < len; cx++)
-	    switch(res[cx]) {
-		case 156: res[cx] = '¶'; break;
-		case 185: res[cx] = '±'; break;
-		case 159: res[cx] = '¼'; break;
-		case 140: res[cx] = '¦'; break;
-		case 165: res[cx] = '¡'; break;
-		case 143: res[cx] = '¬'; break;
-	    }
 cleanup:
 	if (cbio)
 		BIO_free(cbio);
@@ -504,7 +497,7 @@ cleanup:
 		RSA_free(private);
 	if (buf)
 		free(buf);
-	return (char*) res;
+	return ekg_cp_to_locale(res);	/* XXX, what if message isn't encoded in cp-1250? */
 }
 
 /*
