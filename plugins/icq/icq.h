@@ -42,6 +42,7 @@ typedef struct {
 	int ssi;		/* server-side-userlist? */
 	int aim;		/* aim-ok? */
 	int default_group_id;	/* XXX ?wo? TEMP! We should support list of groups */
+	int xstatus;
 	char *default_group_name;
 	string_t cookie;	/* connection login cookie */
 	string_t stream_buf;

@@ -173,13 +173,10 @@ int icq_write_info(session_t *s) {
 #ifdef DBG_AIMCONTACTSEND
 	icq_pack_append_cap(tlv_5, CAP_CONTACTS);		/* Client supports buddy lists transfer. */
 #endif
-#if 0
-	BYTE bXStatus = getContactXStatus(NULL);
-	if (bXStatus)
-	{
-		packBuffer(tlv_5, capXStatus[bXStatus-1], 0x10);
-	}
-#endif
+
+	if (j->xstatus)
+		icq_pack_append_xstatus(tlv_5, j->xstatus);
+
 	icq_pack_append_cap(tlv_5, CAP_ICQDIRECT);		/* Something called "route finder". */
 
 	/*packDWord(&packet, 0x178c2d9b); // Unknown cap
@@ -1386,9 +1383,13 @@ static QUERY(icq_userlist_info_handle) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
 	const char *tmp;
+	int i;
 
 	if (!u || valid_plugin_uid(&icq_plugin, u->uid) != 1)
 		return 1;
+
+	if ( (i = user_private_item_get_int(u, "xstatus")) )
+		printq("icq_user_info_generic", _("xStatus"), icq_xstatus_name(i));
 
 	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "online"))) )
 		printq("icq_user_info_generic", _("Online since"), tmp);

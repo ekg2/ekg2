@@ -179,6 +179,10 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 					user_private_item_set_int(u, "online", t->nr);
 				break;
 
+			case 0x04: /* ?wo? AIM idle timer? XXX */
+				debug_white("icq_snac_buddy_online() idle %d\n", t->nr);
+				break;
+
 			case 0x05: /* Time when this account was registered (unix time_t) */
 				if (u && t->nr)
 					user_private_item_set_int(u, "member", t->nr);
@@ -246,7 +250,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 						user_private_item_set_int(u, "dcc.flag", tlv_c.tcp_flag);
 						user_private_item_set_int(u, "dcc.ver", tlv_c.version);
 						user_private_item_set_int(u, "dcc.cookie", tlv_c.conn_cookie);
-						user_private_item_set_int(u, "dcc.web_port", tlv_c.web_port);
+						user_private_item_set_int(u, "dcc.web_port", tlv_c.web_port);	// ?wo? do we need it?
 					}
 					if (t->len >= 12 && icq_unpack_nc(t->buf, t->len, "23 III", &tlv_c.ts1, &tlv_c.ts3, &tlv_c.ts3))
 						;
@@ -271,8 +275,12 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 						caps |= 1 << cid;
 						if (cid == CAP_UTF)
 							user_private_item_set_int(u, "utf", 1);
+					} else if ((cid = icq_xstatus_id(data))) {
+						user_private_item_set_int(u, "xstatus", cid);
 					} else {
-						/* client id???*/
+						/* ?wo? client id???*/
+						debug_error("Unknown cap\n");
+						icq_hexdump(DEBUG_ERROR, data, 0x10);
 					}
 					data  += 0x10;		// capability length
 					d_len -= 0x10;
