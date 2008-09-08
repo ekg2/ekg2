@@ -47,6 +47,7 @@
 #include "icq.h"
 #include "misc.h"
 
+#include "icq_caps.h"
 #include "icq_flap_handlers.h"
 #include "icq_snac_handlers.h"
 
@@ -142,41 +143,35 @@ int icq_write_info(session_t *s) {
 	tlv_5 = string_init(NULL);
 
 #ifdef DBG_CAPMTN
-	icq_pack_append(tlv_5, "IIII",	(uint32_t) 0x563FC809,		/* CAP_TYPING */
-					(uint32_t) 0x0B6F41BD,
-					(uint32_t) 0x9F794226,
-					(uint32_t) 0x09DFA2F3);
+	icq_pack_append_cap(tlv_5, CAP_TYPING);
 #endif
 
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x1349);			/* AIM_CAPS_ICQSERVERRELAY - Client supports channel 2 extended, TLV(0x2711) based messages. */
+	icq_pack_append_cap(tlv_5, CAP_SRV_RELAY);	/* Client supports channel 2 extended, TLV(0x2711) based messages. */
 
-	/* Broadcasts the capability to receive UTF8 encoded messages */
-	if (m_bUtfEnabled) 
-		icq_pack_append(tlv_5, "P", (uint32_t) 0x134E);		/* CAP_UTF8MSGS - Client supports UTF-8 messages.*/
+	
+	if (m_bUtfEnabled)
+		icq_pack_append_cap(tlv_5, CAP_UTF);	/* Broadcasts the capability to receive UTF8 encoded messages */
 #ifdef DBG_NEWCAPS
 	/* Tells server we understand to new format of caps */
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x0000);			/* CAP_NEWCAPS */
+	icq_pack_append_cap(tlv_5, CAP_NEWCAPS);
 
 #endif
 
 #ifdef DBG_CAPXTRAZ
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x1a093c6c);		/* CAP_XTRAZ */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0xd7fd4ec5);		/* Broadcasts the capability to handle */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x9d51a647);		/* Xtraz */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x4e34f5a0);
+	icq_pack_append_cap(tlv_5, CAP_XTRAZ);		/* Broadcasts the capability to handle Xtraz */
 #endif
 	if (m_bAvatarsEnabled)
-		icq_pack_append(tlv_5, "P", (uint32_t) 0x134C);		/* CAP_DEVILS */
+		icq_pack_append_cap(tlv_5, CAP_DEVILS);
 
 #ifdef DBG_OSCARFT
 	/* Broadcasts the capability to receive Oscar File Transfers */
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x1343);			/* CAP_AIM_FILE - Client supports file transfer (can send files). */
+	icq_pack_append_cap(tlv_5, CAP_SENDFILE);
 #endif
 
 	if (j->aim)
-		icq_pack_append(tlv_5, "P", (uint32_t) 0x134D);	/* Tells the server we can speak to AIM */
+		icq_pack_append_cap(tlv_5, CAP_INTEROPERATE);	/* Tells the server we can speak to AIM */
 #ifdef DBG_AIMCONTACTSEND
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x134B);		/* CAP_AIM_SENDBUDDYLIST - Client supports buddy lists transfer. */
+	icq_pack_append_cap(tlv_5, CAP_CONTACTS);		/* Client supports buddy lists transfer. */
 #endif
 #if 0
 	BYTE bXStatus = getContactXStatus(NULL);
@@ -185,7 +180,7 @@ int icq_write_info(session_t *s) {
 		packBuffer(tlv_5, capXStatus[bXStatus-1], 0x10);
 	}
 #endif
-	icq_pack_append(tlv_5, "P", (uint32_t) 0x1344);		/* AIM_CAPS_ICQDIRECT - Something called "route finder". */
+	icq_pack_append_cap(tlv_5, CAP_ICQDIRECT);		/* Something called "route finder". */
 
 	/*packDWord(&packet, 0x178c2d9b); // Unknown cap
 	  packDWord(&packet, 0xdaa545bb);
@@ -193,10 +188,7 @@ int icq_write_info(session_t *s) {
 	  packDWord(&packet, 0xbd53a10a);*/
 
 #ifdef DBG_CAPHTML
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x0138ca7b);	/* CAP_HTMLMSGS */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x769a4915);	/* Broadcasts the capability to receive */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x88f213fc);	/* HTML messages */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x00979ea8);
+	icq_pack_append_cap(tlv_5, CAP_HTML);		/* Broadcasts the capability to receive HTML messages */
 #endif
 	icq_pack_append(tlv_5, "I", (uint32_t) 0x4D697261);	/* Miranda Signature */
 	icq_pack_append(tlv_5, "I", (uint32_t) 0x6E64614D);

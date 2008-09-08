@@ -107,3 +107,12 @@ const char *icq_capability_name(int id) {
 	return "Unknown";
 }
 
+void icq_pack_append_cap(string_t pkt, int cap_id) {
+	if ((cap_id >=CAP_UNKNOWN) || (cap_id < 0)) {
+		debug_error("icq_pack_append_cap() - unknown cap id: 0x%x\n", cap_id);
+		return;
+	}
+
+	string_append_raw(pkt, _caps[cap_id], 0x10);
+
+}

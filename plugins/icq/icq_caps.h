@@ -1,8 +1,11 @@
 #ifndef __ICQ_CAPS_H
 #define __ICQ_CAPS_H
 
+#include <ekg/dynstuff.h>
+
 typedef enum {
 	CAP_HTML = 0,
+	CAP_NEWCAPS,		/* Client understands new format of caps */
 	CAP_VOICE,		/* Client supports voice chat */
 	CAP_AIMDIRPLAY,		/* Client supports direct play service */
 	CAP_SENDFILE,		/* Client supports file transfer (can send files) */
@@ -22,7 +25,6 @@ typedef enum {
 	CAP_TYPING,		/* Client supports mini typing notifications */
 	CAP_CHAT,		/* Client supports chat service */
 	CAP_RTF,		/* Client supports RTF messages */
-	CAP_NEWCAPS,		/* Client understands new format of caps */
 	CAP_UNKNOWN
 } capabilities_t;
 
@@ -33,6 +35,6 @@ int icq_short_cap_id(unsigned char *buf);
 
 const unsigned char *icq_cap_str(int id);
 
-
+void icq_pack_append_cap(string_t pkt, int cap_id);
 
 #endif
