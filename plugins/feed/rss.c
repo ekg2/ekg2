@@ -1098,6 +1098,38 @@ void rss_deinit() {
 	feeds_destroy();
 }
 
+static QUERY(rss_userlist_info) {
+	userlist_t *u	= *va_arg(ap, userlist_t **);
+	int quiet	= *va_arg(ap, int *);
+
+	rss_feed_t *feed;
+
+	if (!u || valid_plugin_uid(&feed_plugin, u->uid) != 1 || u->uid[0] != 'r') 
+		return 1;
+
+	for (feed = feeds; feed; feed = feed->next) {
+		if (!xstrcmp(feed->uid, u->uid)) {
+			rss_channel_t *chan;
+
+			for (chan = feed->rss_channels; chan; chan = chan->next) {
+				rss_item_t *item;
+
+				printq(chan->new ? "rss_user_info_channel_unread" : "rss_user_info_channel_read", 
+					chan->url, chan->title, chan->descr, chan->lang);
+
+				for (item = chan->rss_items; item; item = item->next) {
+					printq(item->new ? "rss_user_info_item_unread" : "rss_user_info_item_read", 
+						item->url, item->title, item->descr);
+					
+				}
+			}
+			return 0;
+		}
+	}
+
+	return 1;
+}
+
 void rss_init() {
 	command_add(&feed_plugin, ("rss:connect"), "?", rss_command_connect, RSS_ONLY, NULL);
 	command_add(&feed_plugin, ("rss:check"), "u", rss_command_check, RSS_FLAGS, NULL);
@@ -1105,6 +1137,8 @@ void rss_init() {
 
 	command_add(&feed_plugin, ("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL); 
 	command_add(&feed_plugin, ("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
+
+	query_connect_id(&feed_plugin, USERLIST_INFO, rss_userlist_info, NULL);
 }
 #endif
 

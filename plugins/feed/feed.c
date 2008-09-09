@@ -354,6 +354,14 @@ static int feed_plugin_destroy() {
 
 static int feed_theme_init() {
 #ifndef NO_DEFAULT_THEME
+	/* url - %1; title - %2; descr - %3; lang: %4 */
+	format_add("rss_user_info_channel_unread",	_("%K| %g[unread]%n %2 (%1)"), 1);
+	format_add("rss_user_info_channel_read",	_("%K| %R[read]%n %2 (%1)"), 1);
+
+	/* same, but without lang (%4) */
+	format_add("rss_user_info_item_unread",		_("%K|   %g[unread]%n %2 (%1)"), 1);
+	format_add("rss_user_info_item_read",		_("%K|   %R[read]%n %2 (%1)"), 1);
+
 	format_add("feed_status",		_("%> Newstatus: %1 (%2) %3"), 1);	/* XXX */
 
 	format_add("feed_added",		_("%> (%2) Added %T%1%n to subscription\n"), 1);
