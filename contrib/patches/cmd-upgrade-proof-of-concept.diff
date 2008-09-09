@@ -1,0 +1,965 @@
+Index: ekg/commands.c
+===================================================================
+--- ekg/commands.c	(wersja 4609)
++++ ekg/commands.c	(kopia robocza)
+@@ -108,6 +108,7 @@
+ char *send_nicks[SEND_NICKS_MAX] = { NULL };
+ int send_nicks_count = 0, send_nicks_index = 0;
+ static int quit_command = 0;
++static int upgrade_command = 0;
+ 
+ command_t *commands = NULL;
+ 
+@@ -1821,6 +1822,14 @@
+ 	return res;
+ }
+ 
++static COMMAND(cmd_upgrade)
++{
++	query_emit_id(NULL, EKG_UPGRADE);
++	upgrade_command = 1;
++
++	return 0;
++}
++
+ static COMMAND(cmd_quit)
+ {
+ 	char *reason;
+@@ -2429,7 +2438,7 @@
+ {
+ 	int res;
+ 
+-	if ((res = config_read_plugins())) printq("error_reading_config", strerror(errno));
++	if ((res = config_read_plugins(NULL))) printq("error_reading_config", strerror(errno));
+ 	if (res == -1) return -1;
+ 
+ 	if ((res = config_read(NULL))) printq("error_reading_config", strerror(errno));
+@@ -2863,6 +2872,9 @@
+ 		if (quit_command)
+ 			ekg_exit();
+ 
++		if (upgrade_command)
++			ekg_upgrade();
++
+ 		return res;
+ 	}
+ 
+@@ -4475,6 +4487,8 @@
+ 	  "-a --add -d --del -l --list");
+ 
+ 	command_add(NULL, ("unignore"), "i ?", cmd_ignore, 0, NULL);
++
++	command_add(NULL, ("upgrade"), NULL, cmd_upgrade, 0, NULL);
+ 	  
+ 	command_add(NULL, ("version"), NULL, cmd_version, 0, NULL);
+ 	  
+Index: ekg/queries.h
+===================================================================
+--- ekg/queries.h	(wersja 4609)
++++ ekg/queries.h	(kopia robocza)
+@@ -65,8 +65,9 @@
+ 	PROTOCOL_DISCONNECTING,
+ 
+ 	USERLIST_REFRESH,
++	EKG_UPGRADE, EKG_RESTORE,
+ 
+-	QUERY_EXTERNAL,
++	QUERY_EXTERNAL
+ };
+ 
+ #ifdef __DECLARE_QUERIES_STUFF
+@@ -453,6 +454,12 @@
+ 
+ 	{ USERLIST_REFRESH, "userlist-refresh", {
+ 		QUERY_ARG_END } },
++
++	{ EKG_UPGRADE, "ekg-upgrade", {
++		QUERY_ARG_END } },
++
++	{ EKG_RESTORE, "ekg-restore", {
++		QUERY_ARG_END } }
+ };
+ 
+ /* other, not listed above here queries, for example plugin which use internally his own query, 
+Index: ekg/themes.c
+===================================================================
+--- ekg/themes.c	(wersja 4609)
++++ ekg/themes.c	(kopia robocza)
+@@ -1361,6 +1361,7 @@
+ 	format_add("unknown_command", _("%! Unknown command: %T%1%n\n"), 1);
+ 	format_add("welcome", _("%> %Tekg2-%1%n (%ge%Gk%gg %Gr%ge%Gl%go%Ga%gd%Ge%gd%n)\n%> Software licensed on GPL v2 terms\n\n"), 1);
+ 	format_add("welcome,speech", _("welcome in e k g 2."), 1);
++	format_add("welcome_again", _("%> %Tekg2-%1%n (%ge%Gk%gg %Gr%ge%Gl%go%Ga%gd%Ge%gd%n) (compiled %2)"), 1);
+ 	format_add("ekg_version", _("%) %Tekg2-%1%n (compiled %2)\n"), 1);
+ 	format_add("secure", _("%Y(encrypted)%n"), 1);
+ 	format_add("day_changed", _("%) Day changed to: %W%1"), 1);
+Index: ekg/configfile.c
+===================================================================
+--- ekg/configfile.c	(wersja 4609)
++++ ekg/configfile.c	(kopia robocza)
+@@ -48,6 +48,7 @@
+ #include "vars.h"
+ #include "xmalloc.h"
+ #include "plugins.h"
++#include "sessions.h"
+ #include "windows.h"
+ 
+ #include "queries.h"
+@@ -89,9 +90,9 @@
+  *
+  * initialized after config is read 
+  */
+-void config_postread()
++void config_postread(int restoring)
+ {
+-	if (config_windows_save && config_windows_layout) {
++	if ((config_windows_save || restoring) && config_windows_layout) {
+ 		char **targets = array_make(config_windows_layout, "|", 0, 0, 0);
+ 		int i;
+ 
+@@ -141,17 +142,18 @@
+ 	query_emit_id(NULL, CONFIG_POSTINIT);
+ }
+ 
+-int config_read_plugins()
++int config_read_plugins(const char *filename)
+ {
+ 	char*buf, *foo;
+-	const char *filename;
+ 	FILE *f;
+ 	struct stat st;
+ 
++	if (!filename)
++		filename = prepare_path("plugins", 0);
+ 
+-	if (!(filename = prepare_path("plugins", 0)))
+-			return -1;
+-	
++	if (!filename)
++		return -1;
++
+ 	check_file();
+ 
+ 	while ((buf = read_file(f, 0))) {
+@@ -735,6 +737,90 @@
+ 	}
+ }
+ 
++	/* XXX:
++	 * 	- save children list
++	        - metacontact_write()
++		- script_variables_write())
++
++	 */
++int config_write_upgrade() {
++	FILE *f;
++	plugin_t *p;
++	const char *path;
++	session_t *s;
++
++	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
++		return -1;
++
++	/* first of all we are saving plugins */
++	if (!(path = prepare_pathf("upgrade-plugins.%d", getpid())))
++		return -1;
++	if (!(f = fopen(path, "w")))
++		return -1;
++	fchmod(fileno(f), 0600);
++	config_write_plugins(f);
++	fclose(f);
++
++	/* now we are saving global variables and settings
++	 * timers, bindings etc. */
++	if (!(path = prepare_pathf("upgrade-config.%d", getpid())))
++		return -1;
++	if (!(f = fopen(path, "w")))
++		return -1;
++	fchmod(fileno(f), 0600);
++	config_write_main(f);
++	/* now plugins variables (unline config_write() it saves all variables to the same file) */
++	for (p = plugins; p; p = p->next) {
++		variable_t *v;
++
++		for (v = variables; v; v = v->next) {
++			if (p == v->plugin)
++				config_write_variable(f, v);
++		}	
++	}
++	fclose(f);
++
++	/* XXX, sessions_write() */
++	if (!(path = prepare_pathf("upgrade-sessions.%d", getpid())))
++		return -1;
++	if (!(f = fopen(path, "w")))
++		return -1;
++
++	for (s = sessions; s; s = s->next) {
++		int i;
++
++		p = s->plugin;
++
++		// userlist_write(s);	// XXX
++		fprintf(f, "[%s]\n", s->uid);
++		if (s->alias)
++			fprintf(f, "alias=%s\n", s->alias);
++		if (s->status)
++			fprintf(f, "status=%s\n", ekg_status_string(s->autoaway ? s->last_status : s->status, 0));	/* XXX? */
++		if (s->descr) {
++			char *myvar = (s->autoaway ? s->last_descr : s->descr);						/* XXX? */
++			xstrtr(myvar, '\n', '\002');
++			fprintf(f, "descr=%s\n", myvar);
++			xstrtr(myvar, '\002', '\n');
++		}
++		if (s->password)
++			fprintf(f, "password=\001%s\n", s->password);
++
++		if (!p->params) 
++			continue;
++		
++		for (i = 0; (p->params[i].key /* && p->params[i].id != -1 */); i++) {
++			if (!s->values[i]) 
++				continue;
++			fprintf(f, "%s=%s\n", p->params[i].key, s->values[i]);
++		}
++		/* XXX, save _locale_ variables */
++	}
++	fclose(f);
++
++	return 0;
++}
++
+ /*
+  * debug_write_crash()
+  *
+Index: ekg/ekg.c
+===================================================================
+--- ekg/ekg.c	(wersja 4612)
++++ ekg/ekg.c	(kopia robocza)
+@@ -668,6 +668,7 @@
+ 	int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0, new_status = 0;
+ 	char *tmp = NULL, *new_descr = NULL;
+ 	char *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
++	int is_restore = 0;
+ #ifndef NO_POSIX_SYSTEM
+ 	struct rlimit rlim;
+ #else
+@@ -732,7 +733,7 @@
+ 	signal(SIGALRM, SIG_IGN);
+ 	signal(SIGPIPE, SIG_IGN);
+ #endif
+-	while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmNhvU", ekg_options, NULL)) != -1) 
++	while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmrNhvU", ekg_options, NULL)) != -1) 
+ 	{
+ 		switch (c) {
+ 			case 'a':
+@@ -812,6 +813,9 @@
+ 				no_global_config = 1;
+ 				break;
+ 
++			case 'r':
++				is_restore = 1;
++				break;
+ 
+ 			case 'h':
+ 				printf(_(EKG_USAGE), argv[0]);
+@@ -863,7 +867,7 @@
+ 	variable_init();
+ 	variable_set_default();
+ 
+-	mesg_startup = mesg_set(MESG_CHECK);
++	mesg_startup = mesg_set(MESG_CHECK);				/* is_restore OK */
+ #ifdef DEFAULT_THEME 
+ 	if (theme_read(DEFAULT_THEME, 1) == -1) 
+ #endif
+@@ -873,7 +877,7 @@
+ 	window_status	= window_new(NULL, NULL, 1);			/* okno stanu */
+ 	window_current	= window_status;
+ 
+-	if (!no_global_config)
++	if (!is_restore && !no_global_config)
+ 		config_read(SYSCONFDIR "/ekg2.conf");
+ 
+ 	if (frontend) {
+@@ -881,43 +885,57 @@
+ 		config_changed = 1;
+ 	}
+ 
+-	config_read_plugins();
+-	if (!no_global_config)
++	config_read_plugins(is_restore ? prepare_pathf("upgrade-plugins.%d", ekg_pid) : NULL);
++
++	if (!is_restore && !no_global_config)
+ 		config_read(SYSCONFDIR "/ekg2-override.conf");
+ 
+ /*	  userlist_read(); */
+-	emoticon_read();
+-	msg_queue_read();
++	emoticon_read();		/* is_restore OK */
++	msg_queue_read();		/* is_restore OK */
+ 
++	if (is_restore)
++		query_emit_id(NULL, EKG_RESTORE);
++
++	if (is_restore == 0) {
+ #ifdef HAVE_NCURSES
+-	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("ncurses"), -254, 1);
++		if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("ncurses"), -254, 1);
+ #endif
+ #ifdef HAVE_GTK
+-	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("gtk"), -254, 1);
++		if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("gtk"), -254, 1);
+ #endif
+ #ifdef HAVE_READLINE
+-	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
++		if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
+ #endif
+-	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
+-	else {
++	}
++
++	if (!have_plugin_of_class(PLUGIN_UI)) 
++		fprintf(stderr, "No UI-PLUGIN!\n");	/* also display when restore, it means ABI changed! / you deleted this plugin */
++							/* XXX, try /upgrade in next 30s? 10m? 30m? 1h? :> */
++							/*    , or when keypressed? */
++
++	if (have_plugin_of_class(PLUGIN_UI)) {
+ 		struct buffer *b;
+ 		for (b = buffer_debug.data; b; b = b->next)
+ 			print_window_w(window_debug, EKG_WINACT_NONE, b->target, b->line);
+ 	}
+ 
+-	if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
++	if (is_restore == 0) {
++		if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
+ #ifdef HAVE_EXPAT
+-		plugin_load(("jabber"), -254, 1);
++			plugin_load(("jabber"), -254, 1);
+ #endif
+ #ifdef HAVE_LIBGADU
+-		plugin_load(("gg"), -254, 1);
++			plugin_load(("gg"), -254, 1);
+ #endif
+-		plugin_load(("irc"), -254, 1);
++			plugin_load(("irc"), -254, 1);
++		}
+ 	}
++
+ 	theme_plugins_init();
+ 
+ 	scripts_init();
+-	config_read(NULL);
++	config_read(is_restore ? prepare_pathf("upgrade-config.%d", ekg_pid) : NULL);
+ 
+ 	/* je¶li ma byæ theme, niech bêdzie theme */
+ 	if (load_theme)		theme_read(load_theme, 1);
+@@ -943,7 +961,7 @@
+ 	}
+ 
+ 	if (!batch_mode && config_display_welcome)
+-		print("welcome", VERSION);
++		print(is_restore ? "welcome_again" : "welcome", VERSION, compile_time());
+ 
+ 	protocol_init();
+ 	events_init();
+@@ -953,10 +971,10 @@
+ 
+ 	/* it has to be done after plugins are loaded, either we wouldn't know if we are
+ 	 * supporting some protocol in current build */
+-	if (session_read(NULL) == -1)
++	if (session_read(is_restore ? prepare_pathf("upgrade-sessions.%d", ekg_pid) : NULL) == -1)
+ 		no_config = 1;
+ 
+-	config_postread();
++	config_postread(is_restore);
+ 
+ 	/* status window takes first session if not set before*/
+ 	if (!session_current && sessions)
+@@ -965,13 +983,19 @@
+ 	if (session_current != window_current->session)
+ 		window_current->session = session_current;
+ 	window_debug->session = window_current->session;
++
+ /*
++	if (is_restore)
++		query_emit_id(NULL, EKG_RESTORE);
++ */
++
++/*
+ 	query_emit_id(NULL, SESSION_CHANGED);
+ 	query_emit_id(NULL, UI_REFRESH);
+  */
+-	metacontact_read(); /* read the metacontacts info */
++	metacontact_read(); /* read the metacontacts info */		/* XXX, is_restore */
+ 
+-	{
++	if (is_restore == 0) {
+ 		session_t *s;
+ 
+ 		/* wylosuj opisy i zmieñ stany klientów */
+@@ -997,10 +1021,10 @@
+ 		}
+ 	}
+ 
+-	if (config_auto_save)
++	if (config_auto_save)			/* XXX, is_restore */
+ 		last_save = time(NULL);
+ 
+-	if (no_config) {
++	if (!is_restore && no_config) {
+ #ifdef HAVE_LIBGADU
+ 		if (plugin_find("gg"))
+ 			print("no_config");
+@@ -1012,7 +1036,7 @@
+ 	}
+ 
+ 	idle_add(NULL, ekg_less_important_handler, &ekg_tv);
+-	reason_changed = 0;
++	reason_changed = 0;			/* XXX, is_restore */
+ 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
+ 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
+ 	if (query_emit_id(NULL, UI_LOOP) != -1) {
+@@ -1027,6 +1051,148 @@
+ 	return 0;
+ }
+ 
++static void send_nicks_destroy() {
++	int i;
++
++	for (i = 0; i < SEND_NICKS_MAX; i++) {
++		xfree(send_nicks[i]);
++		send_nicks[i] = NULL;
++	}
++	send_nicks_count = 0;
++}
++
++static void watches_destroy() {
++	list_t l;
++
++	for (l = watches; l; l = l->next) {
++		watch_t *w = l->data;
++
++		watch_free(w);
++	}
++	list_destroy(watches, 0); watches = NULL;
++}
++
++static void plugins_destroy(plugin_class_t pclass) {
++	extern int ekg2_dlclose(void *plugin);
++	plugin_t *p;
++
++	for (p = plugins; p; ) {
++		plugin_t *next = p->next;
++
++		if (p->pclass == pclass || pclass == PLUGIN_ANY) {
++			p->destroy();
++
++			if (p->dl)
++				ekg2_dlclose(p->dl);
++		}
++		p = next;
++	}
++}
++
++static void queries_destroy() {
++	query_t **ll;
++
++	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
++		query_t *q;
++
++		for (q = *ll; q; ) {	/* free other queries... connected by protocol_init() for example */
++			query_t *next = q->next;
++
++			query_free(q);
++
++			q = next;
++		}
++		LIST_DESTROY2(*ll, NULL); /* XXX: really needed? */
++	}
++}
++
++static void lastsearch_destroy() {
++	xfree(last_search_first_name);
++	xfree(last_search_last_name);
++	xfree(last_search_nickname);
++	xfree(last_search_uid);
++}
++
++static void ekg_destroy_common() {
++/* XXX, think about sequence of unloading. */
++	msgs_queue_destroy();
++	conferences_destroy();
++	newconferences_destroy();
++	metacontacts_destroy();
++	sessions_free();
++	plugins_destroy(PLUGIN_ANY);
++	audio_deinitialize();
++	aliases_destroy();
++	theme_free();
++	variables_destroy();
++	script_variables_free(1);
++	emoticons_destroy();
++	commands_destroy();
++	timers_destroy();
++	binding_free();
++	lasts_destroy();
++	buffer_free(&buffer_debug);	buffer_free(&buffer_speech);
++	event_free();
++	xfree(read_file(NULL, -1));	/* free internal read_file() buffer */
++
++/* windows: */
++	windows_destroy();
++	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
++
++	queries_destroy();
++	query_external_free();
++
++	xfree(home_dir);
++	xfree(config_dir);
++	xfree(console_charset);
++#ifdef NO_POSIX_SYSTEM
++	WSACleanup();
++#endif
++	close(stderr_backup);
++}
++
++void ekg_upgrade()
++{
++	int tmp;
++
++	msg_queue_write();
++	lastsearch_destroy();
++	
++	/* save window configuration */
++	tmp = config_windows_save;
++	config_windows_save = 1;
++	windows_save();
++	config_windows_save = tmp;
++
++	/* XXX, save current session (XXX, use session_default variable?)*/
++	if (config_sessions_save && session_current) {
++		const char *vars[] = { "session_default", NULL };
++		xfree(config_session_default); config_session_default = xstrdup(session_current->uid);
++
++		config_write_partly(NULL, vars);
++	}
++
++	send_nicks_destroy();
++	config_write_upgrade();
++	children_destroy();
++	watches_destroy();
++
++	ekg_destroy_common();
++
++	mesg_set(mesg_startup);
++
++	/* XXX, execl() with /bin/sh ? */
++	if (config_profile)
++		execlp(argv0, argv0, "-r", "-u", config_profile, NULL);
++	else
++		execlp(argv0, argv0, "-r", NULL);
++
++	/* XXX, call main() ? */
++
++	printf("ekg_upgrade() failed!\n");
++	exit(1);
++}
++
+ /*
+  * ekg_exit()
+  *
+@@ -1036,16 +1202,10 @@
+ void ekg_exit()
+ {
+ 	char *exit_exec = config_exit_exec;
+-	extern int ekg2_dlclose(void *plugin);
+-	int i;
+ 
+ 	msg_queue_write();
++	lastsearch_destroy();
+ 
+-	xfree(last_search_first_name);
+-	xfree(last_search_last_name);
+-	xfree(last_search_nickname);
+-	xfree(last_search_uid);
+-
+ 	windows_save();
+ 
+ 	/* setting windows layout */
+@@ -1062,51 +1222,19 @@
+ 		config_write_partly(NULL, vars);
+ 	}
+ 
+-	for (i = 0; i < SEND_NICKS_MAX; i++) {
+-		xfree(send_nicks[i]);
+-		send_nicks[i] = NULL;
+-	}
+-	send_nicks_count = 0;
++	send_nicks_destroy();
+ 
+ 	{
+ 		child_t *c;
+ 
+-		for (c = children; c; c = c->next) {
+-#ifndef NO_POSIX_SYSTEM
++		for (c = children; c; c = c->next)
+ 			kill(c->pid, SIGTERM);
+-#else
+-			/* TerminateProcess / TerminateThread */
+-#endif
+-		}
+ 		children_destroy();
+ 	}
+ 
+-	{
+-		list_t l;
++	watches_destroy();
++	plugins_destroy(PLUGIN_UI);
+ 
+-		for (l = watches; l; l = l->next) {
+-			watch_t *w = l->data;
+-
+-			watch_free(w);
+-		}
+-	}
+-
+-	{
+-		plugin_t *p, *next;
+-
+-		for (p = plugins; p; p = next) {
+-			next = p->next;
+-
+-			if (p->pclass != PLUGIN_UI)
+-				continue;
+-
+-			p->destroy();
+-
+-//			if (p->dl) ekg2_dlclose(p->dl);
+-		}
+-	}
+-	list_destroy(watches, 0); watches = NULL;
+-
+ 	if (config_changed && !config_speech_app && config_save_quit == 1) {
+ 		char line[80];
+ 
+@@ -1146,78 +1274,9 @@
+ 	}
+ 	config_exit_exec = NULL; /* avoid freeing it */
+ 
+-/* XXX, think about sequence of unloading. */
++	ekg_destroy_common();
+ 
+-	msgs_queue_destroy();
+-	conferences_destroy();
+-	newconferences_destroy();
+-	metacontacts_destroy();
+-	sessions_free();
+-
+-	{
+-		plugin_t *p;
+-
+-		for (p = plugins; p; ) {
+-			plugin_t *next = p->next;
+-
+-			p->destroy();
+-
+-//			if (p->dl) ekg2_dlclose(p->dl);
+-
+-			p = next;
+-		}
+-	}
+-
+-	audio_deinitialize();
+-	aliases_destroy();
+-	theme_free();
+-	variables_destroy();
+-	script_variables_free(1);
+-	emoticons_destroy();
+-	commands_destroy();
+-	timers_destroy();
+-	binding_free();
+-	lasts_destroy();
+-
+-	buffer_free(&buffer_debug);	buffer_free(&buffer_speech);
+-	event_free();
+-
+-	xfree(read_file(NULL, -1));	/* free internal read_file() buffer */
+-
+-/* windows: */
+-	windows_destroy();
+-	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
+-
+-/* queries: */
+-	{
+-		query_t **ll;
+-
+-		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
+-			query_t *q;
+-
+-			for (q = *ll; q; ) {	/* free other queries... connected by protocol_init() for example */
+-				query_t *next = q->next;
+-
+-				query_free(q);
+-
+-				q = next;
+-			}
+-
+-			LIST_DESTROY2(*ll, NULL); /* XXX: really needed? */
+-		}
+-	}
+-	query_external_free();
+-
+-	xfree(home_dir);
+-
+-	xfree(config_dir);
+-	xfree(console_charset);
+-
+ 	mesg_set(mesg_startup);
+-#ifdef NO_POSIX_SYSTEM
+-	WSACleanup();
+-#endif
+-	close(stderr_backup);
+ 
+ 	if (exit_exec) {
+ #ifndef NO_POSIX_SYSTEM
+Index: ekg/configfile.h
+===================================================================
+--- ekg/configfile.h	(wersja 4609)
++++ ekg/configfile.h	(kopia robocza)
+@@ -28,13 +28,14 @@
+ 
+ #include "plugins.h"
+ 
+-void config_postread();
++void config_postread(int restoring);
+ int config_read(const char *filename);
+-int config_read_plugins();
++int config_read_plugins(const char *filename);
+ int config_read_later(const char *filename);
+ int config_write();
+ int config_write_partly(plugin_t *plugin, const char **vars);
+ void config_write_crash();
++int config_write_upgrade();
+ void debug_write_crash();
+ 
+ #endif
+Index: ekg/stuff.h
+===================================================================
+--- ekg/stuff.h	(wersja 4609)
++++ ekg/stuff.h	(kopia robocza)
+@@ -408,6 +408,7 @@
+ 
+ /* funkcje poza stuff.c */
+ void ekg_exit();
++void ekg_upgrade();
+ void ekg_debug_handler(int level, const char *format, va_list ap);
+ 
+ int ekg_close(int fd);
+Index: plugins/ncurses/main.c
+===================================================================
+--- plugins/ncurses/main.c	(wersja 4608)
++++ plugins/ncurses/main.c	(kopia robocza)
+@@ -20,9 +20,11 @@
+ 
+ #include "ekg2-config.h"
+ 
++#include <stdio.h>	/* sscanf() */
+ #include <stdlib.h>
+ #include <string.h>
+ #include <signal.h>
++#include <sys/types.h>	/* getpid() */
+ #include <unistd.h>
+ 
+ #include <ekg/debug.h>
+@@ -494,6 +496,182 @@
+ 	return retval;
+ }
+ 
++/* XXX, unicode-not-ok. XXX: SPOT logs also, copy to core */
++static char *fstring_reverse(fstring_t *fstr) {
++	const char *str;
++	const short *attr;
++	string_t asc;
++	int i;
++
++	if (!fstr)
++		return NULL;
++
++	attr = fstr->attr;
++	str = fstr->str.b;
++
++	if (!attr || !str)
++		return NULL;
++
++	asc = string_init(NULL);
++
++	for (i = 0; str[i]; i++) {
++#define prev	attr[i-1]
++#define cur	attr[i] 
++		int reset = 0;
++
++		if (i) {
++			if (!(cur & FSTR_BOLD) && (prev & FSTR_BOLD))		reset = 1;
++			if (!(cur & FSTR_BLINK) && (prev & FSTR_BLINK))		reset = 1;
++			if (!(cur & FSTR_UNDERLINE) && (prev & FSTR_UNDERLINE))	reset = 1;
++			if (!(cur & FSTR_REVERSE) && (prev & FSTR_REVERSE))	reset = 1;
++			if ((cur & FSTR_NORMAL) && !(prev & FSTR_NORMAL))	reset = 1;	/* colors disappear */
++
++			if (reset) 
++				string_append(asc, "%n");
++		} else
++			reset = 1;
++
++	/* attr */
++		if ((cur & FSTR_BLINK) &&	(reset || !(prev & FSTR_BLINK)))	string_append(asc, "%i");
++//		if ((cur & FSTR_UNDERLINE) &&	(reset || !(prev & FSTR_UNDERLINE)))	string_append(asc, "%");
++//		if ((cur & FSTR_REVERSE) &&	(reset || !(prev & FSTR_REVERSE)))	string_append(asc, "%");
++
++		if (!(cur & FSTR_NORMAL)) {
++		/* background color XXX */
++#define BGCOLOR(x)	-1
++			if (0 && ((reset || BGCOLOR(cur) != BGCOLOR(prev)))) {
++				string_append_c(asc, '%');
++				switch (BGCOLOR(cur)) {
++					case (0): string_append_c(asc, 'l'); break;
++					case (1): string_append_c(asc, 's'); break;
++					case (2): string_append_c(asc, 'h'); break;
++					case (3): string_append_c(asc, 'z'); break;
++					case (4): string_append_c(asc, 'e'); break;
++					case (5): string_append_c(asc, 'q'); break;
++					case (6): string_append_c(asc, 'd'); break;
++					case (7): string_append_c(asc, 'x'); break;
++				}
++			}
++#undef BGCOLOR
++
++		/* foreground color */
++#define FGCOLOR(x)	((!(x & FSTR_NORMAL)) ? (x & FSTR_FOREMASK) : -1)
++			if (((reset || FGCOLOR(cur) != FGCOLOR(prev)) || (i && (prev & FSTR_BOLD) != (cur & FSTR_BOLD)))) {
++				string_append_c(asc, '%');
++				switch ((cur & FSTR_FOREMASK)) {
++					case (0): string_append_c(asc, (cur & FSTR_BOLD) ? 'K' : 'k'); break;
++					case (1): string_append_c(asc, (cur & FSTR_BOLD) ? 'R' : 'r'); break;
++					case (2): string_append_c(asc, (cur & FSTR_BOLD) ? 'G' : 'g'); break;
++					case (3): string_append_c(asc, (cur & FSTR_BOLD) ? 'Y' : 'y'); break;
++					case (4): string_append_c(asc, (cur & FSTR_BOLD) ? 'B' : 'b'); break;
++					case (5): string_append_c(asc, (cur & FSTR_BOLD) ? 'M' : 'm'); break; /* | fioletowy	 | %m/%p  | %M/%P | %q	| */
++					case (6): string_append_c(asc, (cur & FSTR_BOLD) ? 'C' : 'c'); break;
++					case (7): string_append_c(asc, (cur & FSTR_BOLD) ? 'W' : 'w'); break;
++				}
++			}
++#undef FGCOLOR
++		} else {	/* no color */
++			if ((cur & FSTR_BOLD) && (reset || !(prev & FSTR_BOLD)))
++				string_append(asc, "%T");
++		}
++
++	/* str */
++		if (str[i] == '%' || str[i] == '\\') 
++			string_append_c(asc, '\\');
++		string_append_c(asc, str[i]);
++	}
++
++/* reset, and return. */
++	string_append(asc, "%n");
++	return string_free(asc, 0);
++
++#undef prev
++#undef cur
++}
++
++static QUERY(ncurses_upgrade) {
++	const char *path;
++	FILE *f;
++
++	window_t *wl;
++
++#ifdef USE_UNICODE
++	return 1;
++#endif
++	
++	if (!(path = prepare_pathf("upgrade-ncurses.%d", getpid())))
++		return 1;
++
++	if (!(f = fopen(path, "w")))
++		return 1;
++
++	for (wl = windows; wl; wl = wl->next) {
++		ncurses_window_t *n = wl->private;
++		int i;
++
++		if (!n)
++			continue;
++
++		fprintf(f, "[window-dump-%d]\n", wl->id);
++
++		for (i = n->backlog_size; i; i--) {
++			fstring_t *backlog = n->backlog[i-1];
++			char *tmp;
++
++			tmp = fstring_reverse(n->backlog[i-1]);
++			fprintf(f, "%ld %s\n", backlog->ts, tmp);
++			xfree(tmp);
++		}
++	}
++
++	fclose(f);
++	return 0;
++}
++
++static QUERY(ncurses_restore) {
++
++	const char *path;
++	char *buf;
++	FILE *f;
++
++	window_t *wl = NULL;
++	
++	if (!(path = prepare_pathf("upgrade-ncurses.%d", getpid())))
++		return 1;
++
++	if (!(f = fopen(path, "r")))
++		return 1;
++
++	while ((buf = read_file(f, 0))) {
++		fstring_t *fstr;
++		time_t ts;
++		int id;
++
++		if (sscanf(buf, "[window-dump-%d]", &id) == 1) {
++			wl = window_exist(id);
++			continue;
++		}
++
++		if (!wl)
++			continue;
++
++		wl->lock++;
++	/* assuming file is correct! */
++
++		ts = strtol(buf, &buf, 10);
++		buf++;
++		fstr = fstring_new_format(buf);
++		fstr->ts = ts;
++		query_emit_id(&ncurses_plugin, UI_WINDOW_PRINT, &wl, &fstr);
++
++		wl->lock--;
++	}
++	query_emit_id(NULL, UI_WINDOW_REFRESH);
++
++	fclose(f);
++	return 0;
++}
++
+ static QUERY(ncurses_setvar_default)
+ {
+ 	config_contacts_size = 9;	  /* szeroko¶æ okna kontaktów */
+@@ -689,6 +867,8 @@
+ 
+ 	query_connect_id(&ncurses_plugin, CONFIG_POSTINIT, ncurses_postinit, NULL);
+ 	query_connect_id(&ncurses_plugin, PROTOCOL_DISCONNECTING, ncurses_session_disconnect_handler, NULL);
++	query_connect_id(&ncurses_plugin, EKG_UPGRADE, ncurses_upgrade, NULL);
++	query_connect_id(&ncurses_plugin, EKG_RESTORE, ncurses_restore, NULL);
+ 
+ /* redraw userlisty: */
+ 	/* podanie czegokolwiek jako data do ncurses_all_contacts_changed() powoduje wyzerowanie n->start */
