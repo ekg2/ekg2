@@ -48,6 +48,7 @@
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/dynstuff_inline.h>
 #include <ekg/queries.h>
 
 #ifdef HAVE_EXPAT_H
@@ -70,7 +71,9 @@ typedef enum {
 	RSS_PROTO_EXEC, 
 } rss_proto_t;
 
-typedef struct {
+typedef struct rss_item_list {
+	struct rss_item_list *next;
+
 	char *session;
 	int new;		/* is new? */
 
@@ -88,7 +91,9 @@ typedef struct {
 				 */
 } rss_item_t;
 
-typedef struct {
+typedef struct rss_channel_list {
+	struct rss_channel_list *next;
+	
 	char *session;
 	int new;		/* is new? */
 
@@ -101,10 +106,12 @@ typedef struct {
 	char *lang;		/* lang */
 	int hash_lang;		/* ekg_hash of lang */
 
-	list_t rss_items;	/* list of channel items, rss_item_t struct */
+	struct rss_item_list *rss_items;	/* list of channel items */
 } rss_channel_t;
 
-typedef struct {
+typedef struct rss_feed_list {
+	struct rss_feed_list *next;
+
 	char *session;
 
 	char *url;		/* url */
@@ -115,7 +122,7 @@ typedef struct {
 	int getting;		/* we wait for read()	 ? */
 
 	int headers_done;
-	list_t rss_channels;
+	struct rss_channel_list *rss_channels;
 /* XXX headers_* */
 
 	string_t headers;	/* headers */
@@ -128,7 +135,53 @@ typedef struct {
 	char *file;	/* protos:	j/w RSS_PROTO_FILE						file		*/
 } rss_feed_t;
 
-static list_t feeds;			/* list of feeds, rss_feed_t struct */
+static LIST_FREE_ITEM(rss_item_free_item, rss_item_t *) {
+	xfree(data->session);
+	xfree(data->url);
+	xfree(data->title);
+	xfree(data->descr);
+}
+
+DYNSTUFF_LIST_DECLARE_WC(rss_items, rss_item_t, rss_item_free_item,
+	static __DYNSTUFF_ADD,			/* rss_items_add() */
+	__DYNSTUFF_NOREMOVE,
+	static __DYNSTUFF_DESTROY,		/* rss_items_destroy() */
+	static __DYNSTUFF_COUNT)		/* rss_items_count() */
+
+static LIST_FREE_ITEM(rss_channel_free_item, rss_channel_t *) {
+	xfree(data->session);
+	xfree(data->url);
+	xfree(data->title);
+	xfree(data->descr);
+	xfree(data->lang);
+	rss_items_destroy(&data->rss_items);
+}
+
+DYNSTUFF_LIST_DECLARE_WC(rss_channels, rss_channel_t, rss_channel_free_item,
+	static __DYNSTUFF_ADD,			/* rss_channels_add() */
+	__DYNSTUFF_NOREMOVE,
+	static __DYNSTUFF_DESTROY,		/* rss_channels_destroy() */
+	static __DYNSTUFF_COUNT)		/* rss_channels_count() */
+
+static rss_feed_t *feeds;
+
+static LIST_FREE_ITEM(feeds_free_item, rss_feed_t *) {
+	xfree(data->session);
+	xfree(data->url);
+	xfree(data->uid);
+	rss_channels_destroy(&data->rss_channels);
+	string_free(data->buf, 1);
+	string_free(data->headers, 1);
+	xfree(data->host);
+	xfree(data->ip);
+	xfree(data->file);
+}
+
+DYNSTUFF_LIST_DECLARE(feeds, rss_feed_t, feeds_free_item,
+	static __DYNSTUFF_LIST_ADD,			/* feeds_add() */
+	__DYNSTUFF_NOREMOVE,
+	static __DYNSTUFF_LIST_DESTROY)			/* feeds_destroy() */
+	
 
 static void rss_string_append(rss_feed_t *f, const char *str) {
 	string_t buf		= f->buf;
@@ -172,11 +225,11 @@ static rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *
 	int hash_title	= title ? ekg_hash(title) : 0;
 	int hash_descr	= descr ? ekg_hash(descr) : 0;
 
-	list_t l;
+	struct rss_item_list *l;
 	rss_item_t *item;
 
 	for (l = c->rss_items; l; l = l->next) {
-		item = l->data;
+		item = l;
 		
 		if (item->hash_url != hash_url || xstrcmp(url, item->url)) continue;
 		if (session_int_get(s, "item_enable_title_checking") == 1 && (item->hash_title != hash_title || xstrcmp(title, item->title))) continue;
@@ -196,7 +249,7 @@ static rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *
 	item->other_tags= string_init(NULL);
 	item->new	= 1;
 	
-	list_add(&(c->rss_items), item);
+	rss_items_add(&(c->rss_items), item);
 	return item;
 }
 
@@ -208,11 +261,11 @@ static rss_channel_t *rss_channel_find(rss_feed_t *f, const char *url, const cha
 	int hash_descr	= descr ? ekg_hash(descr) : 0;
 	int hash_lang	= lang	? ekg_hash(lang)  : 0;
 
-	list_t l;
+	struct rss_channel_list *l;
 	rss_channel_t *channel;
 
 	for (l = f->rss_channels; l; l = l->next) {
-		channel = l->data;
+		channel = l;
 
 		if (channel->hash_url != hash_url || xstrcmp(url, channel->url)) continue;
 		if (session_int_get(s, "channel_enable_title_checking") == 1 && (channel->hash_title != hash_title || xstrcmp(title, channel->title))) continue;
@@ -235,19 +288,18 @@ static rss_channel_t *rss_channel_find(rss_feed_t *f, const char *url, const cha
 
 	channel->new	= 1;
 
-	list_add(&(f->rss_channels), channel);
+	rss_channels_add(&(f->rss_channels), channel);
 	return channel;
 }
 
 static rss_feed_t *rss_feed_find(session_t *s, const char *url) {
-	list_t newsgroups = feeds;
-	list_t l;
+	struct rss_feed_list *l;
 	rss_feed_t *feed;
 
 	if (!xstrncmp(url, "rss:", 4)) url += 4;
 
-	for (l = newsgroups; l; l = l->next) {
-		feed = l->data;
+	for (l = feeds; l; l = l->next) {
+		feed = l;
 
 		if (!xstrcmp(feed->url, url)) 
 			return feed;
@@ -299,7 +351,7 @@ static rss_feed_t *rss_feed_find(session_t *s, const char *url) {
 
 	debug_white("[rss] proto: %d url: %s port: %d url: %s file: %s\n", feed->proto, feed->url, feed->port, feed->url, feed->file);
 
-	list_add(&(feeds), feed);
+	feeds_add(feed);
 	return feed;
 }
 
@@ -520,7 +572,7 @@ static void rss_parsexml_atom(rss_feed_t *f, xmlnode_t *node) {
 static void rss_parsexml_rdf(rss_feed_t *f, xmlnode_t *node) {
 	rss_channel_t *chan;
 
-	debug("rss_parsexml_rdf (channels oldcount: %d)\n", list_count(f->rss_channels));
+	debug("rss_parsexml_rdf (channels oldcount: %d)\n", rss_channels_count(f->rss_channels));
 	debug_error("XXX http://web.resource.org/rss/1.0/");
 
 	chan = rss_channel_find(f, /* chanlink, chantitle, chandescr, chanlang */ "", "", "", "");
@@ -565,7 +617,7 @@ static void rss_parsexml_rdf(rss_feed_t *f, xmlnode_t *node) {
 }
 
 static void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
-	debug("rss_parsexml_rss (channels oldcount: %d)\n", list_count(f->rss_channels));
+	debug("rss_parsexml_rss (channels oldcount: %d)\n", rss_channels_count(f->rss_channels));
 
 	for (; node; node = node->next) {
 		if (!xstrcmp(node->name, "channel")) {
@@ -587,7 +639,7 @@ static void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
 			}
 
 			chan = rss_channel_find(f, chanlink, chantitle, chandescr, chanlang);
-			debug("rss_parsexml_rss (items oldcount: %d)\n", list_count(chan->rss_items));
+			debug("rss_parsexml_rss (items oldcount: %d)\n", rss_items_count(chan->rss_items));
 
 			for (subnode = node->children; subnode; subnode = subnode->next) {
 				if (!xstrcmp(subnode->name, "item")) {
@@ -639,7 +691,7 @@ static void xmlnode_free(xmlnode_t *n) {
 
 static void rss_fetch_process(rss_feed_t *f, const char *str) {
 	int new_items = 0;
-	list_t l;
+	struct rss_channel_list *l;
 
 	rss_fetch_process_t *priv = xmalloc(sizeof(rss_fetch_process_t));
 	xmlnode_t *node;
@@ -673,11 +725,11 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 	}
 
 	for (l = f->rss_channels; l; l = l->next) {
-		rss_channel_t *channel = l->data;
-		list_t k;
+		rss_channel_t *channel = l;
+		struct rss_item_list *k;
 
 		for (k = channel->rss_items; k; k = k->next) {
-			rss_item_t *item	= k->data;
+			rss_item_t *item	= k;
 			char *proto_headers	= f->headers->len	? f->headers->str	: NULL;
 			char *headers		= item->other_tags->len	? item->other_tags->str : NULL;
 			int modify		= 0;			/* XXX */
@@ -1043,52 +1095,7 @@ void *rss_protocol_init() {
 }
 
 void rss_deinit() {
-	list_t l;
-	for (l = feeds; l; l = l->next) {
-		list_t k;
-		rss_feed_t *f = l->data;
-		
-		xfree(f->session);
-		xfree(f->url);
-		xfree(f->uid);
-
-		for (k = f->rss_channels; k; k = k->next) {
-			rss_channel_t *channel = k->data;
-			list_t j;
-
-			xfree(channel->session);
-			xfree(channel->url);
-			xfree(channel->title);
-			xfree(channel->descr);
-			xfree(channel->lang);
-
-			for (j = channel->rss_items; j; j = j->next) {
-				rss_item_t *item = j->data;
-
-				xfree(item->session);
-				xfree(item->url);
-				xfree(item->title);
-				xfree(item->descr);
-				
-				xfree(item);
-				j->data = NULL;
-			}
-			list_destroy(channel->rss_items, 0);
-			xfree(channel);
-			k->data = NULL;
-		}
-		list_destroy(f->rss_channels, 0);
-
-		string_free(f->buf, 1);
-		string_free(f->headers, 1);
-		xfree(f->host);
-		xfree(f->ip);
-		xfree(f->file);
-		xfree(f);
-
-		l->data = NULL;
-	}
-	list_destroy(feeds, 0);
+	feeds_destroy();
 }
 
 void rss_init() {
