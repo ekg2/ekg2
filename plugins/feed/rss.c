@@ -1023,6 +1023,36 @@ static COMMAND(rss_command_get) {
 	return rss_url_fetch(rss_feed_find(session, target), quiet);
 }
 
+static COMMAND(rss_command_show) {
+	rss_feed_t *feed;
+
+	for (feed = feeds; feed; feed = feed->next) {
+		/* if (!xstrcmp(feed->uid, XXX)); */
+		rss_channel_t *chan;
+
+		for (chan = feed->rss_channels; chan; chan = chan->next) {
+			rss_item_t *item;
+			/* if (!xstrcmp(chan->url, XXX)); */
+
+			for (item = chan->rss_items; item; item = item->next) {
+
+				if (!xstrcmp(item->url, params[0])) {
+					char *proto_headers	= feed->headers->len	? feed->headers->str	: NULL;
+					char *headers		= item->other_tags->len	? item->other_tags->str : NULL;
+					int modify		= 0x04;			/* XXX */
+
+					query_emit_id(NULL, RSS_MESSAGE, 
+							&(feed->session), &(feed->uid), &proto_headers, &headers, &(item->title), 
+							&(item->url),  &(item->descr), &(item->new), &modify);
+				}
+
+			}
+		}
+	}
+
+	return 0;
+}
+
 static COMMAND(rss_command_connect) {
 	if (session_connected_get(session)) {
 		printq("already_connected", session_name(session));
@@ -1134,6 +1164,8 @@ void rss_init() {
 	command_add(&feed_plugin, ("rss:connect"), "?", rss_command_connect, RSS_ONLY, NULL);
 	command_add(&feed_plugin, ("rss:check"), "u", rss_command_check, RSS_FLAGS, NULL);
 	command_add(&feed_plugin, ("rss:get"), "!u", rss_command_get, RSS_FLAGS_TARGET, NULL);
+
+	command_add(&feed_plugin, ("rss:show"), "!", rss_command_show, RSS_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(&feed_plugin, ("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL); 
 	command_add(&feed_plugin, ("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);

@@ -99,6 +99,9 @@ static QUERY(feed_session_deinit) {
 	return 0;
 }
 
+// #define EKG_WINACT_RSS EKG_WINACT_MSG // till 4616
+#define EKG_WINACT_RSS EKG_WINACT_IMPORTANT
+
 	/* new: 
 	 *	0x0 - old
 	 *	0x1 - new
@@ -120,7 +123,7 @@ static QUERY(rss_message) {
 	char *body	= *(va_arg(ap, char **));
 
 	int *new	= va_arg(ap, int *);		/* 0 - old; 1 - new; 2 - modified */
-		int UNUSED(mtags)	= *(va_arg(ap, int *));
+	int mtags	= *(va_arg(ap, int *));
 
 	session_t *s	= session_find(session);
 	char *tmp;
@@ -133,7 +136,10 @@ static QUERY(rss_message) {
 	char *target		= NULL;
 	window_t *targetwnd	= NULL;
 
-	if (*new == 0) return 0;
+	if (*new == 0 && !mtags) return 0;
+
+	if (mtags)	/* XXX */
+		dmode = mtags;
 
 	switch (mw) {			/* XXX, __current ? */
 		case 0: 
@@ -158,7 +164,7 @@ static QUERY(rss_message) {
 	debug_white("%x\n", targetwnd);
 
 	switch (dmode) {
-		case 0:	 print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_new", title, url);	/* only notify */
+		case 0:	 print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_new", title, url);	/* only notify */
 		case -1: return 0;							/* do nothing */
 
 		case 2:	body		= NULL;					/* only headers */
@@ -168,7 +174,7 @@ static QUERY(rss_message) {
 		case 4:	break;							/* shreaders+headers+body */
 	}
 
-	print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_header", title, url);
+	print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_header", title, url);
 
 	if (sheaders) {
 		char *str = xstrdup(sheaders);
@@ -187,11 +193,11 @@ static QUERY(rss_message) {
 			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_server_header_generic"), tmp, value ? value+1 : "");
-			print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", formated ? formated : tmp);
+			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
 
 			xfree(formatka);
 		}
-		if (headers || body) print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", "");	/* rozdziel */
+		if (headers || body) print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", "");	/* rozdziel */
 	}
 	if (headers) {
 		char *str, *org;
@@ -213,12 +219,12 @@ static QUERY(rss_message) {
 			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_message_header_generic"), tmp, value ? value+1 : "");
-			print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", formated ? formated : tmp);
+			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
 			
 			xfree(formated);
 			xfree(formatka);
 		}
-		if (body) print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", "");	/* rozdziel */
+		if (body) print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", "");	/* rozdziel */
 		xfree(org);
 	}
 	if (body) {
@@ -255,16 +261,16 @@ static QUERY(rss_message) {
 						formated = format_string(f, tmp);
 				}
 
-				print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", formated ? formated : tmp);
+				print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
 				xfree(formated);
 			}
 			xfree(org);
 		} else {
-			print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_body", body);
+			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", body);
 		}
 	}
 
-	print_window_w(targetwnd, EKG_WINACT_MSG, "feed_message_footer");
+	print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_footer");
 
 	*new = 0;
 	return 0;
