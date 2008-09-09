@@ -399,7 +399,7 @@ static COMMAND(gg_command_away) {
 	}
 
 	if (params0) {
-		char *tmp = ekg_locale_to_cp(params0);
+		char *tmp = ekg_locale_to_cp(xstrdup(params0));
 		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
 			if (!timeout) {
 				char *descr_poss = xstrndup(params0, GG_STATUS_DESCR_MAXSIZE);
