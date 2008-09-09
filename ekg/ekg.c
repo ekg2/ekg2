@@ -860,13 +860,6 @@ int main(int argc, char **argv)
 	xfree(tmp);
 	tmp = NULL;
 
-	{
-		query_t **ll;
-
-		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++)
-			*ll = NULL;
-	}
-
 	variable_init();
 	variable_set_default();
 
