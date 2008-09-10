@@ -156,12 +156,8 @@ static QUERY(rss_message) {
 			break;
 	} 
 
-	debug_white("[feed] window_new(%s, %s [%x]) == ", target, session, s);
-
 	if (mw)
 		targetwnd = window_new(target, s, 0);
-
-	debug_white("%x\n", targetwnd);
 
 	switch (dmode) {
 		case 0:	 print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_new", title, url);	/* only notify */
