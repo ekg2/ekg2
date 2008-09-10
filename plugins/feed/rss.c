@@ -456,12 +456,13 @@ static void rss_handle_end(void *data, const char *name) {
 			static const char quot[] = { 'q', 'u', 'o', 't', ';' };
 			static const char nbsp[] = { 'n', 'b', 's', 'p', ';' };
 
-			if (!xstrncmp(&(text[i+1]), lt, sizeof(lt)))	{ i += sizeof(lt);	string_append_c(recode, '<'); continue; }
-			if (!xstrncmp(&(text[i+1]), gt, sizeof(gt)))	{ i += sizeof(gt);	string_append_c(recode, '>'); continue; }
-			if (!xstrncmp(&(text[i+1]), amp, sizeof(amp)))	{ i += sizeof(amp);	string_append_c(recode, '&'); continue; }
-			if (!xstrncmp(&(text[i+1]), quot, sizeof(quot))){ i += sizeof(quot);	string_append_c(recode, '"'); continue; }
-			if (!xstrncmp(&(text[i+1]), nbsp, sizeof(nbsp))){ i += sizeof(nbsp);	string_append_c(recode, 0xA0); continue; }
-
+			i++;
+			if (!xstrncmp(&(text[i]), lt, sizeof(lt)))	{ i += sizeof(lt);	string_append_c(recode, '<'); continue; }
+			if (!xstrncmp(&(text[i]), gt, sizeof(gt)))	{ i += sizeof(gt);	string_append_c(recode, '>'); continue; }
+			if (!xstrncmp(&(text[i]), amp, sizeof(amp)))	{ i += sizeof(amp);	string_append_c(recode, '&'); continue; }
+			if (!xstrncmp(&(text[i]), quot, sizeof(quot)))	{ i += sizeof(quot);	string_append_c(recode, '"'); continue; }
+			if (!xstrncmp(&(text[i]), nbsp, sizeof(nbsp)))	{ i += sizeof(nbsp);	string_append_c(recode, 0xA0); continue; }
+			i--;
 
 #if 0
 			if (text[i+1] == '#') {	/* khem? */
