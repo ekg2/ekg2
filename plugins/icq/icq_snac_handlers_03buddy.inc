@@ -337,11 +337,20 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 					/* just some validity check */
 					if (item_len > t_len)
 						item_len = t_len;
-					if ((item_type == 2) && (item_flags == 4)) {
-						 /* iChat online message */
-						 char *tmp;
-						 icq_unpack_nc(t_data, item_len, "U", &tmp);
-						 descr = xstrdup(tmp);
+					if ((item_type == 0x02) && (item_flags == 4)) {
+						/* iChat online message */
+						char *tmp;
+						icq_unpack_nc(t_data, item_len, "U", &tmp);
+						descr = xstrdup(tmp);
+					} else if ((item_type == 0x0e) && (item_len>7)) {
+						/* 000E: Custom Status (ICQ6) */
+						char *tmp = xstrndup((char *)t_data, item_len);
+						if ( !xstrncmp(tmp, "icqmood", 7) && xisdigit(*tmp+7) ) {
+							int xstatus = atoi(tmp+7) + 1;
+							if (xstatus<=XSTATUS_COUNT)
+								user_private_item_set_int(u, "xstatus", xstatus);
+						}
+						xfree(tmp);
 					} else if (memcmp(t_data, empty_item, (item_len < 0x10) ? item_len : 0x10)) {
 						/* Item types
 						 * 	0000: AIM mini avatar
@@ -351,7 +360,6 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 						 * 	0009: iTunes music store link
 						 *	000C: ICQ contact photo (16 bytes)
 						 *	000D: ?
-						 *	000E: Custom Status (ICQ6)
 						 */
 
 						debug_white("icq_snac_buddy_online() user has got avatar: type: %d flags: %d\n", item_type, item_flags);
@@ -417,6 +425,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 			user_private_item_set_int(u, "online", 0);
 			user_private_item_set_int(u, "last_ip", user_private_item_get_int(u, "ip"));
 			user_private_item_set_int(u, "ip", 0);
+			user_private_item_set_int(u, "xstatus", 0);
 		}
 		debug_white("icq_snac_buddy_offline() uid: %s\n", uid);
 		protocol_status_emit(s, uid, EKG_STATUS_NA, descr, time(NULL));
