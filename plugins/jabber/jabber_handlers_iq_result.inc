@@ -860,7 +860,7 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 	}
 
 	if (hadphoto && from_str && !ismuc) /* XXX: maybe we could get JID of conference user and use it instead? */
-		print("jabber_userinfo_photourl", from_str);
+		print("jabber_userinfo_photourl", from_str, "http://vcard.ekg2.org/");
 	print("jabber_userinfo_end", session_name(s), jabberfix(from_str, _("unknown")));
 	xfree(from_str);
 }
