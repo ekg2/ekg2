@@ -2120,9 +2120,9 @@ static void gtk_xtext_class_init(GtkXTextClass * class)
 	xtext_class->word_click = NULL;
 }
 
-GtkType gtk_xtext_get_type(void)
+GType gtk_xtext_get_type(void)
 {
-	static GtkType xtext_type = 0;
+	static GType xtext_type = 0;
 
 	if (!xtext_type) {
 		static const GTypeInfo xtext_info = {
