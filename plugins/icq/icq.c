@@ -1375,6 +1375,11 @@ static COMMAND(icq_command_rates) {
 	return 0;
 }
 
+static COMMAND(icq_command_whoami) {
+	display_whoami(session);
+	return 0;
+}
+
 static COMMAND(icq_command_register) {
 	printq("generic_error", "Create a new ICQ account on http://lite.icq.com/register");
 	return 0;
@@ -1510,6 +1515,8 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:connect", NULL,	icq_command_connect,	ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:disconnect", NULL,icq_command_disconnect,	ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:reconnect", NULL,	icq_command_reconnect,	ICQ_ONLY, NULL);
+
+	command_add(&icq_plugin, "icq:whoami", NULL,	icq_command_whoami,	ICQ_ONLY, NULL);
 
 	command_add(&icq_plugin, "icq:_rates", NULL,	icq_command_rates,	ICQ_ONLY, NULL);
 

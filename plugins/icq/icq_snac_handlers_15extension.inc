@@ -97,7 +97,7 @@ const static _userinfo_t userinfo[] = {
 	{META_WORK_USERINFO,		'S', "CompanyPosition",		"c_pos",	NULL},
 	{META_WORK_USERINFO,		'w', "CompanyOccupation",	"c_occup",	workField},
 	{META_WORK_USERINFO,		'S', "CompanyHomepage",		"c_www",	NULL},
-	{META_WORK_USERINFO,		'S', NULL,			"",		NULL},	// Is here 'zip code' again?
+	{META_WORK_USERINFO,		'S', NULL,			NULL,		NULL},	// Is here 'zip code' again?
 	/* User more info reply */
 	{META_MORE_USERINFO,		'w', "Age",			"age",		NULL},
 	{META_MORE_USERINFO,		'c', "Gender",			"gender",	genderField},
@@ -160,10 +160,10 @@ const static _userinfo_t userinfo[] = {
 	{META_SHORT_USERINFO,		'S', "Lastname",		"last_name",	NULL},	// as above
 	{META_SHORT_USERINFO,		'S', "Email",			"email",	NULL},	// as above
 	/* User homepage category information reply */
-	{META_HPAGECAT_USERINFO,	'b', NULL,			"",		NULL},	// 1-enabled, 0-disabled
+	{META_HPAGECAT_USERINFO,	'c', NULL,			NULL,		NULL},	// 1-enabled, 0-disabled
 	{META_HPAGECAT_USERINFO,	'w', "Homepage category",	"wwwcat",	NULL},	// ?WO? lookup???
 	{META_HPAGECAT_USERINFO,	'S', "Homepage keywords",	"wwwkeys",	NULL},
-	{META_HPAGECAT_USERINFO,	'b', NULL,			NULL,		NULL},	// unknown
+	{META_HPAGECAT_USERINFO,	'c', NULL,			NULL,		NULL},	// unknown
 
 	{0, 		0, NULL, NULL, NULL}
 };
@@ -210,6 +210,7 @@ static int __get_userinfo_data(unsigned char *buf, int len, int type, private_da
 					private_item_set_int(info, userinfo[i].name, w);
 				break;
 			}
+			case 'b':
 			case 'c':
 			case 'L':
 			{
@@ -229,9 +230,9 @@ static int __get_userinfo_data(unsigned char *buf, int len, int type, private_da
 			private_item_set(info, userinfo[i].name, "");
 	}
 	if (len)
-		debug_error("icq_snac_extensions_basicinfo() more data follow: %u\n", len);
+		debug_error("__get_userinfo_data() more data follow: %u\n", len);
 	if (ret)
-		debug_error("icq_snac_extensions_basicinfo() error: %u\n", len);	/* XXX ?WO? */
+		debug_error("__get_userinfo_data() type:0x%x error: %u\n", type, len);
 	return ret;
 }
 
@@ -243,7 +244,7 @@ static void __display_info(session_t *s, int type, private_data_t *data) {
 	char *theme = saprintf("icq_userinfo_%s", icq_lookuptable(meta_name, type));
 
 	for (i=0; userinfo[i].type; i++) {
-		if (userinfo[i].type != type)
+		if ( (userinfo[i].type != type) || (!userinfo[i].name) )
 			continue;
 		if (userinfo[i].ltab)
 			str = icq_lookuptable(userinfo[i].ltab, private_item_get_int(&data, userinfo[i].name));
@@ -426,7 +427,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_hpagecat) {
-	__get_userinfo_data(buf, len, META_MORE_USERINFO, info);
+	__get_userinfo_data(buf, len, META_HPAGECAT_USERINFO, info);
 	return 0;
 }
 
@@ -662,7 +663,7 @@ static int check_replyreq(session_t *s, unsigned char **buf, int *len, int *type
 	} pkt;
 
 	if (!icq_unpack(*buf, buf, len, "WW", &tlv.type, &tlv.len) || (tlv.type != 0x0001) || (tlv.len < 10)) {
-		debug_error("icq_snac_extension_replyreq() broken(1)\n");
+		debug_error("check_replyreq() broken(1)\n");
 		return 0;
 	}
 
@@ -676,7 +677,7 @@ static int check_replyreq(session_t *s, unsigned char **buf, int *len, int *type
 		return 0;
 	}
 
-	debug_white("icq_snac_extension_replyreq() uid=%d type=%.4x (len=%d, len2=%d)\n", pkt.uid, pkt.type, len, pkt.len);
+	debug_white("icq_snac_extension_replyreq() uid=%d type=%.4x (len=%d, len2=%d)\n", pkt.uid, pkt.type, *len, pkt.len);
 
 	if (xstrcmp(s->uid+4, itoa(pkt.uid))) {
 		debug_error("icq_snac_extension_replyreq() 1919 UIN mismatch: %s vs %ld.\n", s->uid+4, pkt.uid);
@@ -738,11 +739,36 @@ SNAC_SUBHANDLER(icq_my_meta_information_response) {
 			icq_snac_extension_replyreq_0x7da(s, buf, len, &j->whoami, 0);
 			break;
 		default:
-			debug_error("icq_snac_extension_replyreq() METASNAC with unknown code: %x received.\n", type);
+			debug_error("icq_my_meta_information_response() METASNAC with unknown code: %x received.\n", type);
 			break;
 	}
 	return 0;
 }
+
+void display_whoami(session_t *s) {
+	icq_private_t *j = s->priv;
+	int uid = private_item_get_int(&j->whoami, "uid");
+	int end = 0;
+	__displayed = 0;
+	__display_info(s, META_BASIC_USERINFO,		j->whoami);
+	end |= __displayed; __displayed = 0;
+	__display_info(s, META_MORE_USERINFO,		j->whoami);
+	end |= __displayed; __displayed = 0;
+	__display_info(s, META_EMAIL_USERINFO,		j->whoami);
+	end |= __displayed; __displayed = 0;
+	__display_info(s, META_NOTES_USERINFO,		j->whoami);
+	end |= __displayed; __displayed = 0;
+	__display_info(s, META_HPAGECAT_USERINFO,	j->whoami);
+	end |= __displayed; __displayed = 0;
+	__display_info(s, META_WORK_USERINFO,		j->whoami);
+	end |= __displayed; __displayed = 0;
+	__display_info(s, META_INTERESTS_USERINFO,	j->whoami);
+	end |= __displayed; __displayed = 0;
+	__display_info(s, META_AFFILATIONS_USERINFO,	j->whoami);
+	if (end)
+		print("icq_userinfo_end", session_name(s), itoa(uid));
+}
+
 
 SNAC_HANDLER(icq_snac_extension_handler) {
 	snac_subhandler_t handler;

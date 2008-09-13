@@ -28,5 +28,6 @@ TIMER_SESSION(icq_snac_ref_list_cleanup);
 
 SNAC_SUBHANDLER(icq_my_meta_information_response);
 SNAC_SUBHANDLER(icq_cmd_addssi_ack);
+void display_whoami(session_t *s);
 
 #endif
