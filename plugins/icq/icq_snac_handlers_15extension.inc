@@ -37,8 +37,8 @@ SNAC_SUBHANDLER(icq_snac_extension_error) {
 	return 0;
 }
 
-#define METASNAC_SUBHANDLER(x) static int x(session_t *s, unsigned char *buf, int len, uint32_t uid, uint8_t retcode, private_data_t **info)
-typedef int (*metasnac_subhandler_t) (session_t *s, unsigned char *, int, uint32_t, uint8_t, private_data_t **info);
+#define METASNAC_SUBHANDLER(x) static int x(session_t *s, unsigned char *buf, int len, private_data_t **info)
+typedef int (*metasnac_subhandler_t) (session_t *s, unsigned char *, int, private_data_t **info);
 
 #include "icq_fieldnames.inc"
 
@@ -52,12 +52,16 @@ typedef int (*metasnac_subhandler_t) (session_t *s, unsigned char *, int, uint32
 #define META_SHORT_USERINFO		0x0104
 #define META_HPAGECAT_USERINFO		0x010e
 
+#define SRV_USER_FOUND			0x01a4
+#define SRV_LAST_USER_FOUND		0x01ae
+#define SRV_RANDOM_FOUND		0x0366
+
 typedef struct {
-	int type;	// 1 - basic;
-	int item;	// 'S' - str; 'w' - word; 'c' - byte; 'L' bool
-	const char *display;
-	const char *name;
-	void *tablica;
+	int type;
+	int item;		// 'S' - str; 'w' - word; 'c' - byte; 'L' bool
+	const char *display;	// display name
+	const char *name;	// private item name
+	void *ltab;
 } _userinfo_t;
 
 const static _userinfo_t userinfo[] = {
@@ -164,6 +168,23 @@ const static _userinfo_t userinfo[] = {
 	{0, 		0, NULL, NULL, NULL}
 };
 
+struct fieldnames_t meta_name[]={
+	{META_BASIC_USERINFO,		"basic"},
+	{META_WORK_USERINFO,		"work"},
+	{META_MORE_USERINFO,		"more"},
+	{META_NOTES_USERINFO,		"notes"},
+	{META_EMAIL_USERINFO,		"email"},
+	{META_INTERESTS_USERINFO,	"interests"},
+	{META_AFFILATIONS_USERINFO,	"affilations"},
+	{META_SHORT_USERINFO,		"short"},
+	{META_HPAGECAT_USERINFO,	"hpagecat"},
+
+	{SRV_USER_FOUND,		"userfound"},
+	{SRV_LAST_USER_FOUND,		"userfound_last"},
+	{SRV_RANDOM_FOUND,		""},
+	{-1,  NULL}};
+
+
 static int __get_userinfo_data(unsigned char *buf, int len, int type, private_data_t **info) {
 	int i, ret = 0;
 
@@ -216,27 +237,16 @@ static int __get_userinfo_data(unsigned char *buf, int len, int type, private_da
 
 static int __displayed = 0;	/* Luckily we're not multithreaded */
 
-static void __display_info(session_t *s, int type, private_data_t *data, int uid) {
-	struct fieldnames_t themes[]={
-		{META_BASIC_USERINFO,		"icq_userinfo_basic"},
-		{META_WORK_USERINFO,		"icq_userinfo_work"},
-		{META_MORE_USERINFO,		"icq_userinfo_more"},
-		{META_NOTES_USERINFO,		"icq_userinfo_notes"},
-		{META_EMAIL_USERINFO,		"icq_userinfo_email"},
-		{META_INTERESTS_USERINFO,	"icq_userinfo_interests"},
-		{META_AFFILATIONS_USERINFO,	"icq_userinfo_affilations"},
-		{META_SHORT_USERINFO,		"icq_userinfo_short"},
-		{META_HPAGECAT_USERINFO,	"icq_userinfo_hpagecat"},
-		{-1,  NULL}};
-
-	int i;
-	const char *str, *theme = icq_lookuptable(themes, type);
+static void __display_info(session_t *s, int type, private_data_t *data) {
+	int i, uid = private_item_get_int(&data, "uid");
+	const char *str;
+	char *theme = saprintf("icq_userinfo_%s", icq_lookuptable(meta_name, type));
 
 	for (i=0; userinfo[i].type; i++) {
 		if (userinfo[i].type != type)
 			continue;
-		if (userinfo[i].tablica)
-			str = icq_lookuptable(userinfo[i].tablica, private_item_get_int(&data, userinfo[i].name));
+		if (userinfo[i].ltab)
+			str = icq_lookuptable(userinfo[i].ltab, private_item_get_int(&data, userinfo[i].name));
 		else if (userinfo[i].item == 'L')
 			str = private_item_get_int(&data, userinfo[i].name) ? _("Yes") : _("No");
 		else
@@ -252,18 +262,19 @@ static void __display_info(session_t *s, int type, private_data_t *data, int uid
 			xfree(___str);
 		}
 	}
+	xfree(theme);
 }
 
+
+/*
+ * Userinfo handlers
+ *
+ */
 
 
 METASNAC_SUBHANDLER(icq_snac_extensions_interests) {
 	uint8_t count;
 	int i;
-
-	debug_function("icq_snac_extensions_interests() uid: %u\n", uid);
-
-	if (retcode != 0x0A)
-		return 0;
 
 	if (!ICQ_UNPACK(&buf, "C", &count))
 		return -1;
@@ -296,11 +307,6 @@ METASNAC_SUBHANDLER(icq_snac_extensions_affilations) {
 	uint8_t count;
 	int i, k;
 
-	debug_function("icq_snac_extensions_affilations() %u\n", uid);
-
-	if (retcode != 0x0A)
-		return 0;
-
 	for (k=0; k<2; k++) {
 		if (!ICQ_UNPACK(&buf, "C", &count))
 			return -1;
@@ -330,13 +336,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_affilations) {
 	return 0;
 }
 
-
 METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
-	debug_function("icq_snac_extensions_basicinfo() %u\n", uid);
-//#define printq_userinfo_basic(param, paramval)	printq_userinfo("icq_userinfo_basic", param, paramval)
-
-	if (retcode != 0x0A)
-		return 0;
 
 	__get_userinfo_data(buf, len, META_BASIC_USERINFO, info);
 
@@ -354,48 +354,24 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_notes) {
-	debug_function("icq_snac_extensions_notes() %u\n", uid);
-
-	if (retcode != 0x0A)
-		return 0;
-
 	__get_userinfo_data(buf, len, META_NOTES_USERINFO, info);
-
 	return 0;
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_workinfo) {
-	debug_function("icq_snac_extensions_workinfo() %u\n", uid);
-
-	if (retcode != 0x0A)
-		return 0;
-
 	__get_userinfo_data(buf, len, META_WORK_USERINFO, info);
-
 	return 0;
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_shortinfo) {
-	debug_function("icq_snac_extensions_shortinfo() %u\n", uid);
-
-	if (retcode != 0x0A)
-		return 0;
-	
 	/* XXX miranda-Broken */
-
 	__get_userinfo_data(buf, len, META_SHORT_USERINFO, info);
-
 	return 0;
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_email) {
 	uint8_t count_discard;
 	int i;
-
-	debug_function("icq_snac_extensions_email() %u\n", uid);
-
-	if (retcode != 0x0A)
-		return 0;
 
 	/* This value used to be a e-mail counter. Either that was wrong or
 	 * Mirabilis changed the behaviour again. It usually says NULL now so
@@ -404,7 +380,6 @@ METASNAC_SUBHANDLER(icq_snac_extensions_email) {
 	
 	if (!ICQ_UNPACK(&buf, "C", &count_discard))
 		return -1;
-
 
 	for (i = 0; (len > 4); i++) {
 		char *tmp;
@@ -426,11 +401,6 @@ METASNAC_SUBHANDLER(icq_snac_extensions_email) {
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
-	debug_function("icq_snac_extensions_moreinfo() uid: %u\n", uid);
-#define printq_userinfo_more(param, paramval)	printq_userinfo("icq_userinfo_more", param, paramval)
-
-	if (retcode != 0x0A)
-		return 0;
 
 	__get_userinfo_data(buf, len, META_MORE_USERINFO, info);
 
@@ -452,23 +422,21 @@ METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
 		if (!private_item_get_int(info, "age"))
 			private_item_set(info, "age", "");
 	}
-#undef printq_userinfo_more
 	return 0;
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_hpagecat) {
-	debug_function("icq_snac_extensions_hpagecat() uid: %u\n", uid);
-
-	if (retcode != 0x0A)
-		return 0;
-
 	__get_userinfo_data(buf, len, META_MORE_USERINFO, info);
-
 	return 0;
 }
 
 
-static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf, int len, uint32_t uid, uint8_t retcode, int islast) {
+/*
+ * search handlers
+ *
+ */
+
+static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf, int len, int islast) {
 	char *nickname = NULL;
 	char *first_name = NULL;
 	char *last_name = NULL;
@@ -483,15 +451,7 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	uint16_t len2;
 	uint8_t auth, status, gender, age;
 
-	debug_function("icq_snac_extension_userfound()\n");
-
 	/* XXX, sprawdzic czy mamy cookie. */
-
-	if (retcode != 0xA) {
-		/* Failed search */
-		debug_error("icq_snac_extension_userfound() search error: %u\n", retcode);
-		return 0;
-	}
 
 	if (!ICQ_UNPACK(&buf, "w", &len2))
 		return -1;
@@ -612,8 +572,8 @@ cleanup:
 	return -1;
 }
 
-METASNAC_SUBHANDLER(icq_snac_extension_userfound) { return icq_snac_extension_userfound_common(s, buf, len, uid, retcode, 0); }
-METASNAC_SUBHANDLER(icq_snac_extension_userfound_last) { return icq_snac_extension_userfound_common(s, buf, len, uid, retcode, 1); }
+METASNAC_SUBHANDLER(icq_snac_extension_userfound) { return icq_snac_extension_userfound_common(s, buf, len, 0); }
+METASNAC_SUBHANDLER(icq_snac_extension_userfound_last) { return icq_snac_extension_userfound_common(s, buf, len, 1); }
 
 static metasnac_subhandler_t get_userinfo_extension_handler(uint16_t subtype) {
 	switch (subtype) {
@@ -631,15 +591,13 @@ static metasnac_subhandler_t get_userinfo_extension_handler(uint16_t subtype) {
 	return NULL;
 }
 
-SNAC_SUBHANDLER(icq_snac_extension_replyreq_0x7da) {
+static int icq_snac_extension_replyreq_0x7da(session_t *s, unsigned char *buf, int len, private_data_t **info, int show) {
 	struct {
 		uint16_t subtype;
 		uint8_t result;
 		unsigned char *data;
 	} pkt;
-	int uid = data ? private_item_get_int(&data, "uid") : -1;
 	int userinfo = 0;
-	private_data_t *info = NULL;
 
 	metasnac_subhandler_t handler;
 
@@ -655,11 +613,11 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_0x7da) {
 	} else {
 		switch (pkt.subtype) {
 			/* search */
-			case 0x01AE: handler = icq_snac_extension_userfound_last; break;/* Miranda: OK, SRV_LAST_USER_FOUND */
-			case 0x01A4: handler = icq_snac_extension_userfound; break;	/* Miranda: OK, SRV_USER_FOUND */
+			case SRV_LAST_USER_FOUND:	handler = icq_snac_extension_userfound_last; break;/* Miranda: OK, SRV_LAST_USER_FOUND */
+			case SRV_USER_FOUND:		handler = icq_snac_extension_userfound; break;	/* Miranda: OK, SRV_USER_FOUND */
 
-			case 0x0366: handler = NULL; break;				/* XXX, SRV_RANDOM_FOUND */
-			default:     handler = NULL;
+			case SRV_RANDOM_FOUND:		handler = NULL; break;				/* XXX, SRV_RANDOM_FOUND */
+			default:			handler = NULL;
 		}
 	}
 
@@ -669,19 +627,70 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_0x7da) {
 		icq_hexdump(DEBUG_ERROR, pkt.data, len);
 		return 0;
 	} else {
+		int uid = info ? private_item_get_int(info, "uid") : -1;
+		debug_function("icq_snac_extensions_%s()", icq_lookuptable(meta_name, pkt.subtype));
+		if (userinfo)
+			debug_function(" uid: %u\n", uid);
 
-		handler(s, pkt.data, len, uid, pkt.result, &info);
+		if (pkt.result == 0x0A) {
+			handler(s, pkt.data, len, info);
+		} else if (!userinfo){
+			/* Failed search */
+			debug_error("icq_snac_extension_userfound() search error: %u\n", pkt.result);
+		}
 
-		if (userinfo) {
-			__display_info(s, pkt.subtype, info, uid);
+		if (show) {
+			__display_info(s, pkt.subtype, *info);
 			if (__displayed)
 				print("icq_userinfo_end", session_name(s), itoa(uid));
 		}
 	}
 
-	private_items_destroy(&info);
-
 	return 0;
+}
+
+static int check_replyreq(session_t *s, unsigned char **buf, int *len, int *type) {
+	struct {
+		uint16_t type;
+		uint16_t len;
+	} tlv;
+	struct {
+		uint16_t len;
+		uint32_t uid;
+		uint16_t type;
+		uint16_t id;
+	} pkt;
+
+	if (!icq_unpack(*buf, buf, len, "WW", &tlv.type, &tlv.len) || (tlv.type != 0x0001) || (tlv.len < 10)) {
+		debug_error("icq_snac_extension_replyreq() broken(1)\n");
+		return 0;
+	}
+
+	if (*len!=tlv.len) {
+		debug_error("icq_snac_extension_replyreq() broken(1,5)\n");
+		return 0;
+	}
+
+	if (!icq_unpack(*buf, buf, len, "wiwW", &pkt.len, &pkt.uid, &pkt.type, &pkt.id)) {
+		debug_error("icq_snac_extension_replyreq() broken(2)\n");
+		return 0;
+	}
+
+	debug_white("icq_snac_extension_replyreq() uid=%d type=%.4x (len=%d, len2=%d)\n", pkt.uid, pkt.type, len, pkt.len);
+
+	if (xstrcmp(s->uid+4, itoa(pkt.uid))) {
+		debug_error("icq_snac_extension_replyreq() 1919 UIN mismatch: %s vs %ld.\n", s->uid+4, pkt.uid);
+		return 0;
+	}
+
+	if (tlv.len - 2 != pkt.len) {
+		debug("icq_snac_extension_replyreq() 1743 Size mismatch in packet lengths.\n");
+		return 0;
+	}
+
+	*type = pkt.type;
+
+	return 1;
 }
 
 SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
@@ -689,75 +698,49 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 	 * Handle SNAC(0x15, 0x3) -- Meta information response
 	 *
 	 */
-
-	struct {
-		uint16_t len;
-		uint32_t uid;
-		uint16_t type;
-		uint16_t id;
-	} pkt;
-	struct icq_tlv_list *tlvs;
-	icq_tlv_t *t;
-
-	unsigned char *tlv_data;
-	int tlv_len;
+	int type = 0;
+	private_data_t *info = NULL;
 
 	debug_function("icq_snac_extension_replyreq()\n");
 
-	tlvs = icq_unpack_tlvs(&buf, &len, 0);
-
-	if (!(t = icq_tlv_get(tlvs, 1)) || t->len < 10) {
-		debug_error("icq_snac_extension_replyreq() broken(1)\n");
-		icq_tlvs_destroy(&tlvs);
+	if (!check_replyreq(s, &buf, &len, &type))
 		return -1;
-	}
 
-	if (len) {
-		debug_error("icq_snac_extension_replyreq() broken(1,5)\n");
-		icq_tlvs_destroy(&tlvs);
-		return -2;
-	}
+	private_item_set_int(&info, "uid", private_item_get_int(&data, "uid"));
 
-	tlv_data = t->buf;
-	tlv_len = t->len;
-
-	if (!icq_unpack(tlv_data, &tlv_data, &tlv_len, "wiwW", &pkt.len, &pkt.uid, &pkt.type, &pkt.id)) {
-		debug_error("icq_snac_extension_replyreq() broken(2)\n");
-		icq_tlvs_destroy(&tlvs);
-		return -1;
-	}
-
-	debug_white("icq_snac_extension_replyreq() uid=%d type=%.4x (len=%d, len2=%d)\n", pkt.uid, pkt.type, len, pkt.len);
-
-	if (xstrcmp(s->uid+4, itoa(pkt.uid))) {
-		debug_error("icq_snac_extension_replyreq() 1919 UIN mismatch: %s vs %ld.\n", s->uid+4, pkt.uid);
-		icq_tlvs_destroy(&tlvs);
-		return -2;
-	}
-
-	if (t->len - 2 != pkt.len) {
-		debug("icq_snac_extension_replyreq() 1743 Size mismatch in packet lengths.\n");
-		icq_tlvs_destroy(&tlvs);
-		return -2;
-	}
-
-	switch (pkt.type) {
+	switch (type) {
 		case 0x7da:
-			icq_snac_extension_replyreq_0x7da(s, tlv_data, tlv_len, data);		/* Miranda: STARTED */
+			icq_snac_extension_replyreq_0x7da(s, buf, len, &info, 1);		/* Miranda: STARTED */
 			break;
 		default:
-			debug_error("icq_snac_extension_replyreq() METASNAC with unknown code: %x received.\n", pkt.type);
+			debug_error("icq_snac_extension_replyreq() METASNAC with unknown code: %x received.\n", type);
 			break;
 	}
 
-	icq_tlvs_destroy(&tlvs);
+	private_items_destroy(&info);
+
 	return 0;
 }
 
 SNAC_SUBHANDLER(icq_my_meta_information_response) {
-	/* XXX it's only example */
-	print("icq_user_info_generic", _("It's me"), "");
-	icq_snac_extension_replyreq(s, buf, len, data);
+	int type;
+	icq_private_t *j = s->priv;
+
+	debug_function("icq_my_meta_information_response()\n");
+
+	if (!check_replyreq(s, &buf, &len, &type))
+		return -1;
+
+	private_item_set(&j->whoami, "uid", s->uid+4);
+
+	switch (type) {
+		case 0x7da:
+			icq_snac_extension_replyreq_0x7da(s, buf, len, &j->whoami, 0);
+			break;
+		default:
+			debug_error("icq_snac_extension_replyreq() METASNAC with unknown code: %x received.\n", type);
+			break;
+	}
 	return 0;
 }
 

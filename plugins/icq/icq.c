@@ -451,6 +451,7 @@ static QUERY(icq_session_deinit) {
 #endif
 	s->priv = NULL;
 
+	private_items_destroy(&j->whoami);
 	xfree(j->default_group_name);
 	string_free(j->cookie, 1);
 	string_free(j->stream_buf, 1);
