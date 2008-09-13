@@ -1423,6 +1423,7 @@ static int icq_theme_init() {
 	format_add("icq_userinfo_work",		"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_interests",	"%g|| %n  %T%3:%n %4", 1);
 	format_add("icq_userinfo_notes",	"%g|| %n  %T%3:%n %4", 1);
+	format_add("icq_userinfo_hpagecat",	"%g|| %n  %T%3:%n %4", 1);
 
 	format_add("icq_userinfo_end",		"%g`+=%G----- End%n", 1);
 

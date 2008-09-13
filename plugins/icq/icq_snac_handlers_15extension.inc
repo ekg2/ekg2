@@ -37,63 +37,223 @@ SNAC_SUBHANDLER(icq_snac_extension_error) {
 	return 0;
 }
 
-#define METASNAC_SUBHANDLER(x) static int x(session_t *s, unsigned char *buf, int len, uint32_t uid, uint8_t retcode)
-typedef int (*metasnac_subhandler_t) (session_t *s, unsigned char *, int, uint32_t, uint8_t ); 
+#define METASNAC_SUBHANDLER(x) static int x(session_t *s, unsigned char *buf, int len, uint32_t uid, uint8_t retcode, private_data_t **info)
+typedef int (*metasnac_subhandler_t) (session_t *s, unsigned char *, int, uint32_t, uint8_t, private_data_t **info);
 
 #include "icq_fieldnames.inc"
 
-METASNAC_SUBHANDLER(icq_snac_extensions_hpagecat) {
-	debug_function("icq_snac_extensions_hpagecat() uid: %u\n", uid);
-	return 0;
+#define META_BASIC_USERINFO		0x00c8
+#define META_WORK_USERINFO		0x00d2
+#define META_MORE_USERINFO		0x00dc
+#define META_NOTES_USERINFO		0x00e6
+#define META_EMAIL_USERINFO		0x00eb
+#define META_INTERESTS_USERINFO		0x00f0
+#define META_AFFILATIONS_USERINFO	0x00fa
+#define META_SHORT_USERINFO		0x0104
+#define META_HPAGECAT_USERINFO		0x010e
+
+typedef struct {
+	int type;	// 1 - basic;
+	int item;	// 'S' - str; 'w' - word; 'c' - byte; 'L' bool
+	const char *display;
+	const char *name;
+	void *tablica;
+} _userinfo_t;
+
+const static _userinfo_t userinfo[] = {
+	/* User basic info reply */
+	{META_BASIC_USERINFO,		'S', "Nickname",		"nick",		NULL},
+	{META_BASIC_USERINFO,		'S', "Firstname",		"first_name",	NULL},
+	{META_BASIC_USERINFO,		'S', "Lastname",		"last_name",	NULL},
+	{META_BASIC_USERINFO,		'S', "Email",			"email",	NULL},
+	{META_BASIC_USERINFO,		'S', "City",			"city",		NULL},
+	{META_BASIC_USERINFO,		'S', "State",			"state",	NULL},
+	{META_BASIC_USERINFO,		'S', "Phone",			"phone",	NULL},
+	{META_BASIC_USERINFO,		'S', "Fax",			"fax",		NULL},
+	{META_BASIC_USERINFO,		'S', "Street",			"street",	NULL},
+	{META_BASIC_USERINFO,		'S', "Cellular",		"mobile",	NULL},
+	{META_BASIC_USERINFO,		'S', "Zip",			"zip", 		NULL},
+	{META_BASIC_USERINFO,		'w', "Country",			"country", 	countryField},
+	{META_BASIC_USERINFO,		'c', "Timezone",		"tzone", 	NULL},
+	{META_BASIC_USERINFO,		'c', "Authorization",		"auth",		NULL},	// lookup XXX ?wo?
+	{META_BASIC_USERINFO,		'c', "Webaware",		"webaware",	NULL},	// lookup XXX ?wo?
+	{META_BASIC_USERINFO,		'L', "Direct connection",	"dc_perm",	NULL},
+	{META_BASIC_USERINFO,		'L', "Publish primary email",	"pub_email",	NULL},
+	{META_BASIC_USERINFO,		'S', NULL,			NULL,		NULL},	// Is here 'zip code' again?
+	/* User work info reply */
+	{META_WORK_USERINFO,		'S', "CompanyCity",		"c_city",	NULL},
+	{META_WORK_USERINFO,		'S', "CompanyState",		"c_state",	NULL},
+	{META_WORK_USERINFO,		'S', "CompanyPhone",		"c_phone",	NULL},
+	{META_WORK_USERINFO,		'S', "CompanyFax",		"c_fax",	NULL},
+	{META_WORK_USERINFO,		'S', "CompanyStreet",		"c_street",	NULL},
+	{META_WORK_USERINFO,		'S', "CompanyZIP",		"c_zip",	NULL},
+	{META_WORK_USERINFO,		'w', "CompanyCountry",		"c_country",	countryField},
+	{META_WORK_USERINFO,		'S', "Company",			"c_name",	NULL},
+	{META_WORK_USERINFO,		'S', "CompanyDepartment",	"c_depart",	NULL},
+	{META_WORK_USERINFO,		'S', "CompanyPosition",		"c_pos",	NULL},
+	{META_WORK_USERINFO,		'w', "CompanyOccupation",	"c_occup",	workField},
+	{META_WORK_USERINFO,		'S', "CompanyHomepage",		"c_www",	NULL},
+	{META_WORK_USERINFO,		'S', NULL,			"",		NULL},	// Is here 'zip code' again?
+	/* User more info reply */
+	{META_MORE_USERINFO,		'w', "Age",			"age",		NULL},
+	{META_MORE_USERINFO,		'c', "Gender",			"gender",	genderField},
+	{META_MORE_USERINFO,		'S', "Homepage",		"www",		NULL},
+	{META_MORE_USERINFO,		'w', "Birth date",		"birth", 	NULL},
+	{META_MORE_USERINFO,		'c', NULL,			".month", 	NULL},
+	{META_MORE_USERINFO,		'c', NULL,			".day", 	NULL},
+	{META_MORE_USERINFO,		'c', "Language1",		"lang1",	languageField},
+	{META_MORE_USERINFO,		'c', "Language2",		"lang2",	languageField},
+	{META_MORE_USERINFO,		'c', "Language3",		"lang3",	languageField},
+	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'S', "Original from City"	"o_city",	NULL},
+	{META_MORE_USERINFO,		'S', "Original from State"	"o_state",	NULL},
+	{META_MORE_USERINFO,		'w', "Original from Country",	"o_country",	countryField},
+	{META_MORE_USERINFO,		'c', NULL,			NULL,		NULL}, // Timezone
+	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'S', NULL,			NULL, 		NULL},	// skip unknown string
+	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'S', NULL,			NULL, 		NULL},	// skip unknown string
+	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'c', NULL,			NULL, 		NULL},	// skip 1 unknown byte
+	{META_MORE_USERINFO,		'S', NULL,			NULL, 		NULL},	// skip unknown string
+	/* User notes (about) info reply */
+	{META_NOTES_USERINFO,		'S', "About",			"about",	NULL},
+	/* User extended email info reply */
+	{META_EMAIL_USERINFO,		'S', "Email",			"email1",	NULL},
+	{META_EMAIL_USERINFO,		'S', "Email",			"email2",	NULL},
+	{META_EMAIL_USERINFO,		'S', "Email",			"email3",	NULL},
+	{META_EMAIL_USERINFO,		'S', "Email",			"email4",	NULL},	// more emails? ?wo?
+	/* User interests info reply */
+	{META_INTERESTS_USERINFO,	'w', "Interests",		"interests1",		interestsField},
+	{META_INTERESTS_USERINFO,	'S', "InterestsStr",		"interestsStr1",	NULL},
+	{META_INTERESTS_USERINFO,	'w', "Interests",		"interests2",		interestsField},
+	{META_INTERESTS_USERINFO,	'S', "InterestsStr",		"interestsStr2",	NULL},
+	{META_INTERESTS_USERINFO,	'w', "Interests",		"interests3",		interestsField},
+	{META_INTERESTS_USERINFO,	'S', "InterestsStr",		"interestsStr3",	NULL},
+	{META_INTERESTS_USERINFO,	'w', "Interests",		"interests4",		interestsField},
+	{META_INTERESTS_USERINFO,	'S', "InterestsStr",		"interestsStr4",	NULL},
+	/* User past/affilations info reply */
+	{META_AFFILATIONS_USERINFO,	'w', "PastAff",			"pastaff1",		pastField},
+	{META_AFFILATIONS_USERINFO,	'S', "PastAffStr",		"pastaffStr1",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', "PastAff",			"pastaff2",		pastField},
+	{META_AFFILATIONS_USERINFO,	'S', "PastAffStr",		"pastaffStr2",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', "PastAff",			"pastaff3",		pastField},
+	{META_AFFILATIONS_USERINFO,	'S', "PastAffStr",		"pastaffStr3",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', "Aff",			"aff1",			pastField},
+	{META_AFFILATIONS_USERINFO,	'S', "AffStr",			"affStr1",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', "Aff",			"aff2",			pastField},
+	{META_AFFILATIONS_USERINFO,	'S', "AffStr",			"affStr2",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', "Aff",			"aff3",			pastField},
+	{META_AFFILATIONS_USERINFO,	'S', "AffStr",			"affStr3",		NULL},
+	/* Short user information reply */
+	{META_SHORT_USERINFO,		'S', "Nickname",		"nick",		NULL},	// ?WO? "nick" or "s_nick" ???
+	{META_SHORT_USERINFO,		'S', "Firstname",		"first_name",	NULL},	// as above
+	{META_SHORT_USERINFO,		'S', "Lastname",		"last_name",	NULL},	// as above
+	{META_SHORT_USERINFO,		'S', "Email",			"email",	NULL},	// as above
+	/* User homepage category information reply */
+	{META_HPAGECAT_USERINFO,	'b', NULL,			"",		NULL},	// 1-enabled, 0-disabled
+	{META_HPAGECAT_USERINFO,	'w', "Homepage category",	"wwwcat",	NULL},	// ?WO? lookup???
+	{META_HPAGECAT_USERINFO,	'S', "Homepage keywords",	"wwwkeys",	NULL},
+	{META_HPAGECAT_USERINFO,	'b', NULL,			NULL,		NULL},	// unknown
+
+	{0, 		0, NULL, NULL, NULL}
+};
+
+static int __get_userinfo_data(unsigned char *buf, int len, int type, private_data_t **info) {
+	int i, ret = 0;
+
+	for (i=0; userinfo[i].type; i++) {
+		if (userinfo[i].type != type)
+			continue;
+		switch (userinfo[i].item) {
+			case 'S':
+			{
+				char *str;
+				if (!ICQ_UNPACK(&buf, "S", &str))
+					ret = 1;
+				else
+					private_item_set(info, userinfo[i].name, str);
+				break;
+			}
+			case 'w':
+			{
+				uint16_t w = 0;
+				if (!ICQ_UNPACK(&buf, "w", &w))
+					ret = 1;
+				else
+					private_item_set_int(info, userinfo[i].name, w);
+				break;
+			}
+			case 'c':
+			case 'L':
+			{
+				uint8_t b = 0;
+				if (!ICQ_UNPACK(&buf, "c", &b))
+					ret = 1;
+				else
+					private_item_set_int(info, userinfo[i].name, b);
+				break;
+			}
+			default:
+				debug_error("__get_userinfo_data() unknown item type %d\n", userinfo[i].item);
+				ret = 1;
+				break;
+		}
+		if (ret)
+			private_item_set(info, userinfo[i].name, "");
+	}
+	if (len)
+		debug_error("icq_snac_extensions_basicinfo() more data follow: %u\n", len);
+	if (ret)
+		debug_error("icq_snac_extensions_basicinfo() error: %u\n", len);	/* XXX ?WO? */
+	return ret;
 }
 
 static int __displayed = 0;	/* Luckily we're not multithreaded */
 
-#define printq_userinfo(theme, param, paramval)	{					\
-		if (!__displayed)							\
-			print("icq_userinfo_start", session_name(s), itoa(uid), theme);	\
-		print(theme, session_name(s), itoa(uid), param, paramval);		\
-		__displayed = 1;							\
-	}
+static void __display_info(session_t *s, int type, private_data_t *data, int uid) {
+	struct fieldnames_t themes[]={
+		{META_BASIC_USERINFO,		"icq_userinfo_basic"},
+		{META_WORK_USERINFO,		"icq_userinfo_work"},
+		{META_MORE_USERINFO,		"icq_userinfo_more"},
+		{META_NOTES_USERINFO,		"icq_userinfo_notes"},
+		{META_EMAIL_USERINFO,		"icq_userinfo_email"},
+		{META_INTERESTS_USERINFO,	"icq_userinfo_interests"},
+		{META_AFFILATIONS_USERINFO,	"icq_userinfo_affilations"},
+		{META_SHORT_USERINFO,		"icq_userinfo_short"},
+		{META_HPAGECAT_USERINFO,	"icq_userinfo_hpagecat"},
+		{-1,  NULL}};
 
-#define expand_display_byte(formatka, param)		\
-	{									\
-		uint8_t __value;						\
-		if (!ICQ_UNPACK(&buf, "c", &__value)) return -1;		\
-		if (__value) printq_userinfo(formatka, param, itoa(__value));	\
-	}
+	int i;
+	const char *str, *theme = icq_lookuptable(themes, type);
 
-#define expand_display_byteT(formatka, table, param)		\
-	{									\
-		uint8_t __value;						\
-		if (!ICQ_UNPACK(&buf, "c", &__value)) return -1;		\
-		if (__value) printq_userinfo(formatka, param, icq_lookuptable(table, __value));	\
-	}
+	for (i=0; userinfo[i].type; i++) {
+		if (userinfo[i].type != type)
+			continue;
+		if (userinfo[i].tablica)
+			str = icq_lookuptable(userinfo[i].tablica, private_item_get_int(&data, userinfo[i].name));
+		else if (userinfo[i].item == 'L')
+			str = private_item_get_int(&data, userinfo[i].name) ? _("Yes") : _("No");
+		else
+			str = private_item_get(&data, userinfo[i].name);
+		if ( str && *str) {
+			char *___str = xstrdup(str); /* XXX, recode */
 
-#define expand_display_word(formatka, param)		\
-	{									\
-		uint16_t __value;						\
-		if (!ICQ_UNPACK(&buf, "w", &__value)) return -1;		\
-		if (__value) printq_userinfo(formatka, param, itoa(__value));	\
-	}
+			if (!__displayed)
+				print("icq_userinfo_start", session_name(s), itoa(uid), theme);
+			print(theme, session_name(s), itoa(uid), userinfo[i].display, ___str);
+			__displayed = 1;
 
-#define expand_display_wordT(formatka, table, param)		\
-	{									\
-		uint16_t __value;						\
-		if (!ICQ_UNPACK(&buf, "w", &__value)) return -1;		\
-		if (__value) printq_userinfo(formatka, param, icq_lookuptable(table, __value));	\
+			xfree(___str);
+		}
 	}
+}
 
-#define expand_display_str(formatka, param) 		\
-	{							\
-		char *__str;					\
-		if (!ICQ_UNPACK(&buf, "S", &__str)) return -1;	\
-		if (__str[0]) {					\
-			char *___str = xstrdup(__str); /* XXX, recode */ \
-			printq_userinfo(formatka, param, ___str);\
-			xfree(___str);				\
-		}						\
-	}
 
 
 METASNAC_SUBHANDLER(icq_snac_extensions_interests) {
@@ -115,89 +275,81 @@ METASNAC_SUBHANDLER(icq_snac_extensions_interests) {
 		count = 4;
 
 	for (i = 0; i < count; i++) {
-		expand_display_wordT("icq_userinfo_interests", interestsField, "Interests");
-		expand_display_str("icq_userinfo_interests", "InterestsStr");
+		char *tmp;
+		const char *str;
+		uint16_t w;
+
+		if (ICQ_UNPACK(&buf, "wS", &w, &str)) {
+			tmp = saprintf("interests%d", i+1);
+			private_item_set_int(info, tmp, w);
+			xfree(tmp);
+			tmp = saprintf("interestsStr%d", i+1);
+			private_item_set(info, tmp, str);
+			xfree(tmp);
+		}
 	}
 	return 0;
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_affilations) {
+	const static char *names[] = {"pastaff", "aff"};
 	uint8_t count;
-	int i;
+	int i, k;
 
 	debug_function("icq_snac_extensions_affilations() %u\n", uid);
 
 	if (retcode != 0x0A)
 		return 0;
 
-	if (!ICQ_UNPACK(&buf, "C", &count))
-		return -1;
+	for (k=0; k<2; k++) {
+		if (!ICQ_UNPACK(&buf, "C", &count))
+			return -1;
 
-	/* 3 is the maximum allowed backgrounds, if count is
-	   higher it's likely a parsing error */
+		/* 3 is the maximum allowed backgrounds, if count is
+		   higher it's likely a parsing error */
 
-	if (count > 3)
-		count = 3;
+		if (count > 3)
+			count = 3;
 
-	for (i = 0; i < count; i++) {
-		expand_display_wordT("icq_userinfo_affilations", pastField, "PastAff");
-		expand_display_str("icq_userinfo_affilations", "PastAffStr");
+		for (i = 0; i < count; i++) {
+			char *tmp;
+			const char *str;
+			uint16_t w;
+
+			if (ICQ_UNPACK(&buf, "wS", &w, &str)) {
+				tmp = saprintf("%s%d", names[k], i+1);
+				private_item_set_int(info, tmp, w);
+				xfree(tmp);
+				tmp = saprintf("%sStr%d", names[k], i+1);
+				private_item_set(info, tmp, str);
+				xfree(tmp);
+			}
+		}
 	}
 
-	if (!ICQ_UNPACK(&buf, "C", &count))
-		return -1;
-
-	/* 3 is the maximum allowed affiliations, if count is
-	   higher it's likely a parsing error */
-
-	if (count > 3)
-		count = 3;
-
-	for (i = 0; i < count; i++) {
-		expand_display_wordT("icq_userinfo_affilations", pastField, "Aff");
-		expand_display_str("icq_userinfo_affilations", "AffStr");
-	}
 	return 0;
 }
 
+
 METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 	debug_function("icq_snac_extensions_basicinfo() %u\n", uid);
-#define printq_userinfo_basic(param, paramval)	printq_userinfo("icq_userinfo_basic", param, paramval)
+//#define printq_userinfo_basic(param, paramval)	printq_userinfo("icq_userinfo_basic", param, paramval)
 
 	if (retcode != 0x0A)
 		return 0;
 
-	expand_display_str("icq_userinfo_basic", "Nickname");
-	expand_display_str("icq_userinfo_basic", "Firstname");
-	expand_display_str("icq_userinfo_basic", "Lastname");
-	expand_display_str("icq_userinfo_basic", "Email");
-	expand_display_str("icq_userinfo_basic", "City");
-	expand_display_str("icq_userinfo_basic", "State");
-	expand_display_str("icq_userinfo_basic", "Phone");
-	expand_display_str("icq_userinfo_basic", "Fax");
-	expand_display_str("icq_userinfo_basic", "Street");
-	expand_display_str("icq_userinfo_basic", "Cellular");
-	expand_display_str("icq_userinfo_basic", "Zip");
-	expand_display_wordT("icq_userinfo_basic", countryField, "Country");
-	{
-		int8_t tz;
-		uint8_t auth_f, web_f, dc_perm, email_f;
-		if (!ICQ_UNPACK(&buf, "ccccc", &tz, &auth_f, &web_f, &dc_perm, &email_f)) return -1;
-		char *p = saprintf("GMT%+d", tz/2);
+	__get_userinfo_data(buf, len, META_BASIC_USERINFO, info);
 
-		printq_userinfo("icq_userinfo_basic", "Timezone", p);
-		xfree(p);
-		printq_userinfo("icq_userinfo_basic", "Authorization flag", itoa(auth_f));
-		printq_userinfo("icq_userinfo_basic", "Webaware flag", itoa(web_f));
-		printq_userinfo("icq_userinfo_basic", "Direct connection permissions", itoa(dc_perm));
-		printq_userinfo("icq_userinfo_basic", "Publish primary email flag (?)", itoa(email_f));
-		__displayed = 1;
+	{
+		char *tmp;
+		int tz = private_item_get_int(info, "tzone");
+		if (tz & 0x80)
+			tz -= 256;
+		tmp = saprintf("GMT%+d", tz/2);
+		private_item_set(info, "tzone", tmp);
+		xfree(tmp);
 	}
-	// ??? Is here 'zip code' again?
-	expand_display_str("icq_userinfo_basic", "Another zip code (?)");
-	if (len)
-		debug_error("icq_snac_extensions_basicinfo() more data follow: %u\n", len);
-#undef printq_userinfo_basic
+
 	return 0;
 }
 
@@ -207,7 +359,8 @@ METASNAC_SUBHANDLER(icq_snac_extensions_notes) {
 	if (retcode != 0x0A)
 		return 0;
 
-	expand_display_str("icq_userinfo_notes", "About");
+	__get_userinfo_data(buf, len, META_NOTES_USERINFO, info);
+
 	return 0;
 }
 
@@ -217,19 +370,8 @@ METASNAC_SUBHANDLER(icq_snac_extensions_workinfo) {
 	if (retcode != 0x0A)
 		return 0;
 
-	expand_display_str("icq_userinfo_work", "CompanyCity");
-	expand_display_str("icq_userinfo_work", "CompanyStany");
-	expand_display_str("icq_userinfo_work", "CompanyPhone");
-	expand_display_str("icq_userinfo_work", "CompanyFax");
-	expand_display_str("icq_userinfo_work", "CompanyStreet");
-	expand_display_str("icq_userinfo_work", "CompanyZIP");
-	expand_display_word("icq_userinfo_work", "CompanyCountry");
-	expand_display_str("icq_userinfo_work", "Company");
-	expand_display_str("icq_userinfo_work", "CompanyDepartment");
-	expand_display_str("icq_userinfo_work", "CompanyPosition");
-	expand_display_word("icq_userinfo_work", "CompanyOccupation");
-	expand_display_str("icq_userinfo_work", "CompanyHomepage");
-	expand_display_str("icq_userinfo_work", "CompanyZIP");
+	__get_userinfo_data(buf, len, META_WORK_USERINFO, info);
+
 	return 0;
 }
 
@@ -241,10 +383,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_shortinfo) {
 	
 	/* XXX miranda-Broken */
 
-	expand_display_str("icq_userinfo_short", "Nickname");
-	expand_display_str("icq_userinfo_short", "Firstname");
-	expand_display_str("icq_userinfo_short", "Lastname");
-	expand_display_str("icq_userinfo_short", "Email");
+	__get_userinfo_data(buf, len, META_SHORT_USERINFO, info);
 
 	return 0;
 }
@@ -268,12 +407,19 @@ METASNAC_SUBHANDLER(icq_snac_extensions_email) {
 
 
 	for (i = 0; (len > 4); i++) {
+		char *tmp;
+		const char *str;
+
 		uint8_t publish_flag;	/* Don't publish flag */
 
 		if (!ICQ_UNPACK(&buf, "C", &publish_flag))
 			return -1;
 
-		expand_display_str("icq_userinfo_email", "Email");
+		if (!ICQ_UNPACK(&buf, "S", &str)) {
+			tmp = saprintf("email%d", i+1);
+			private_item_set(info, tmp, str);
+			xfree(tmp);
+		}
 	}
 
 	return 0;
@@ -286,50 +432,41 @@ METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
 	if (retcode != 0x0A)
 		return 0;
 
-	expand_display_word("icq_userinfo_more", "Age");
-	{
-		uint8_t gender;
-		if (!ICQ_UNPACK(&buf, "c", &gender)) return -1;
-		if (gender) printq_userinfo_more("Gender", gender == 1 ? "Female" : "Male");
-	}
-	expand_display_str("icq_userinfo_more", "Homepage");
-	{
-		uint16_t year;
-		uint8_t month, day;
-		if (!ICQ_UNPACK(&buf, "wcc", &year, &month, &day))
-			return -1;
-		if (year && month && day) {
-			char *bdate = saprintf("%04d-%02d-%02d", year, month,day);
-			printq_userinfo("icq_userinfo_more", "Birth date", bdate);
-			xfree(bdate);
-		}
-	}
-	expand_display_byteT("icq_userinfo_more", languageField, "Language1");
-	expand_display_byteT("icq_userinfo_more", languageField, "Language2");
-	expand_display_byteT("icq_userinfo_more", languageField, "Language3");
+	__get_userinfo_data(buf, len, META_MORE_USERINFO, info);
 
-	if (!ICQ_UNPACK(&buf, "2")) return -1;	// skip 2 unknown bytes
-	if (len >= 3+3+2+5+3+8+3+5+3) {
-		expand_display_str("icq_userinfo_more", "Original from City");
-		expand_display_str("icq_userinfo_more", "Original from State");
-		expand_display_wordT("icq_userinfo_more", countryField, "Original from Country");
-		{	// TimeZone + 4 unknown bytes
-			int8_t tz;
-			if (!ICQ_UNPACK(&buf, "c4", &tz)) return -1;
-		}
-		expand_display_str("icq_userinfo_more", "fixme 1");
-		if (!ICQ_UNPACK(&buf, "8")) return -1;	// another 8 unknown bytes
-		expand_display_str("icq_userinfo_more", "fixme 2");
-		if (!ICQ_UNPACK(&buf, "5")) return -1;	// and yet another 5
-		expand_display_str("icq_userinfo_more", "fixme 3");
-	}
-	if (len) {
-		debug_error("icq_snac_extensions_moreinfo() more data follow: %u\n", len);
-		icq_hexdump(DEBUG_ERROR, buf, len);
+	{
+		int year  = private_item_get_int(info, "birth");
+		int month = private_item_get_int(info, ".month");
+		int day   = private_item_get_int(info, ".day");
+
+		if (year && month && day) {
+			char *bdate = saprintf("%04d-%02d-%02d", year, month, day);
+			private_item_set(info, "birth", bdate);
+			xfree(bdate);
+		} else
+			private_item_set(info, "birth", "");
+
+		private_item_set(info, ".month", "");
+		private_item_set(info, ".day", "");
+
+		if (!private_item_get_int(info, "age"))
+			private_item_set(info, "age", "");
 	}
 #undef printq_userinfo_more
 	return 0;
 }
+
+METASNAC_SUBHANDLER(icq_snac_extensions_hpagecat) {
+	debug_function("icq_snac_extensions_hpagecat() uid: %u\n", uid);
+
+	if (retcode != 0x0A)
+		return 0;
+
+	__get_userinfo_data(buf, len, META_MORE_USERINFO, info);
+
+	return 0;
+}
+
 
 static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf, int len, uint32_t uid, uint8_t retcode, int islast) {
 	char *nickname = NULL;
@@ -478,6 +615,22 @@ cleanup:
 METASNAC_SUBHANDLER(icq_snac_extension_userfound) { return icq_snac_extension_userfound_common(s, buf, len, uid, retcode, 0); }
 METASNAC_SUBHANDLER(icq_snac_extension_userfound_last) { return icq_snac_extension_userfound_common(s, buf, len, uid, retcode, 1); }
 
+static metasnac_subhandler_t get_userinfo_extension_handler(uint16_t subtype) {
+	switch (subtype) {
+	/* userinfo */
+		case META_BASIC_USERINFO:	return icq_snac_extensions_basicinfo;
+		case META_INTERESTS_USERINFO:	return icq_snac_extensions_interests;
+		case META_NOTES_USERINFO:	return icq_snac_extensions_notes;
+		case META_HPAGECAT_USERINFO:	return icq_snac_extensions_hpagecat;
+		case META_WORK_USERINFO:	return icq_snac_extensions_workinfo;
+		case META_MORE_USERINFO:	return icq_snac_extensions_moreinfo;
+		case META_AFFILATIONS_USERINFO:	return icq_snac_extensions_affilations;
+		case META_EMAIL_USERINFO:	return icq_snac_extensions_email;
+		case META_SHORT_USERINFO:	return icq_snac_extensions_shortinfo;
+	}
+	return NULL;
+}
+
 SNAC_SUBHANDLER(icq_snac_extension_replyreq_0x7da) {
 	struct {
 		uint16_t subtype;
@@ -485,6 +638,8 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_0x7da) {
 		unsigned char *data;
 	} pkt;
 	int uid = data ? private_item_get_int(&data, "uid") : -1;
+	int userinfo = 0;
+	private_data_t *info = NULL;
 
 	metasnac_subhandler_t handler;
 
@@ -495,37 +650,36 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq_0x7da) {
 
 	debug_white("icq_snac_extension_replyreq_0x7da() subtype=%.4x result=%.2x (len=%d)\n", pkt.subtype, pkt.result, len);
 
-	switch (pkt.subtype) {
-	/* userinfo */
-		case 0x00C8: handler = icq_snac_extensions_basicinfo; break;	/* Miranda: OK, META_BASIC_USERINFO */
-		case 0x00F0: handler = icq_snac_extensions_interests; break;	/* Miranda: OK, META_INTERESTS_USERINFO */
-		case 0x00E6: handler = icq_snac_extensions_notes; break;	/* Miranda: OK, META_NOTES_USERINFO */
-		case 0x010E: handler = icq_snac_extensions_hpagecat; break;	/* Miranda: OK, META_HPAGECAT_USERINFO */
-		case 0x00d2: handler = icq_snac_extensions_workinfo; break;	/* Miranda: OK, META_WORK_USERINFO */
-		case 0x00DC: handler = icq_snac_extensions_moreinfo; break;	/* Miranda: OK, META_MORE_USERINFO */
-		case 0x00FA: handler = icq_snac_extensions_affilations;	break;	/* Miranda: OK, META_AFFILATIONS_USERINFO */
-		case 0x00EB: handler = icq_snac_extensions_email; break;	/* Miranda: OK, META_EMAIL_USERINFO */
-		case 0x0104: handler = icq_snac_extensions_shortinfo; break;	/* Miranda: OK, META_SHORT_USERINFO */
-	/* search */
-		case 0x01AE: handler = icq_snac_extension_userfound_last; break;/* Miranda: OK, SRV_LAST_USER_FOUND */
-		case 0x01A4: handler = icq_snac_extension_userfound; break;	/* Miranda: OK, SRV_USER_FOUND */
+	if ( (handler = get_userinfo_extension_handler(pkt.subtype)) ) {
+		userinfo = 1;
+	} else {
+		switch (pkt.subtype) {
+			/* search */
+			case 0x01AE: handler = icq_snac_extension_userfound_last; break;/* Miranda: OK, SRV_LAST_USER_FOUND */
+			case 0x01A4: handler = icq_snac_extension_userfound; break;	/* Miranda: OK, SRV_USER_FOUND */
 
-		case 0x0366: handler = NULL; break;				/* XXX, SRV_RANDOM_FOUND */
-		default:     handler = NULL;
+			case 0x0366: handler = NULL; break;				/* XXX, SRV_RANDOM_FOUND */
+			default:     handler = NULL;
+		}
 	}
 
+	__displayed = 0;
 	if (!handler) {
 		debug_error("icq_snac_extension_replyreq_0x7da() ignored: %.4x\n", pkt.subtype);
 		icq_hexdump(DEBUG_ERROR, pkt.data, len);
 		return 0;
 	} else {
-		__displayed = 0;
 
-		handler(s, pkt.data, len, uid, pkt.result);
+		handler(s, pkt.data, len, uid, pkt.result, &info);
 
-		if (__displayed)
-			print("icq_userinfo_end", session_name(s), itoa(uid));
+		if (userinfo) {
+			__display_info(s, pkt.subtype, info, uid);
+			if (__displayed)
+				print("icq_userinfo_end", session_name(s), itoa(uid));
+		}
 	}
+
+	private_items_destroy(&info);
 
 	return 0;
 }

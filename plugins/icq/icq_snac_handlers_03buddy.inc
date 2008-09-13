@@ -345,7 +345,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 					} else if ((item_type == 0x0e) && (item_len>7)) {
 						/* 000E: Custom Status (ICQ6) */
 						char *tmp = xstrndup((char *)t_data, item_len);
-						if ( !xstrncmp(tmp, "icqmood", 7) && xisdigit(*tmp+7) ) {
+						if ( !xstrncmp(tmp, "icqmood", 7) && xisdigit(*(tmp+7)) ) {
 							int xstatus = atoi(tmp+7) + 1;
 							if (xstatus<=XSTATUS_COUNT)
 								user_private_item_set_int(u, "xstatus", xstatus);
