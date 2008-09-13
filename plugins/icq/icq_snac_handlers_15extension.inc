@@ -160,10 +160,8 @@ const static _userinfo_t userinfo[] = {
 	{META_SHORT_USERINFO,		'S', "Lastname",		"last_name",	NULL},	// as above
 	{META_SHORT_USERINFO,		'S', "Email",			"email",	NULL},	// as above
 	/* User homepage category information reply */
-	{META_HPAGECAT_USERINFO,	'c', NULL,			NULL,		NULL},	// 1-enabled, 0-disabled
 	{META_HPAGECAT_USERINFO,	'w', "Homepage category",	"wwwcat",	NULL},	// ?WO? lookup???
 	{META_HPAGECAT_USERINFO,	'S', "Homepage keywords",	"wwwkeys",	NULL},
-	{META_HPAGECAT_USERINFO,	'c', NULL,			NULL,		NULL},	// unknown
 
 	{0, 		0, NULL, NULL, NULL}
 };
@@ -427,7 +425,27 @@ METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_hpagecat) {
-	__get_userinfo_data(buf, len, META_HPAGECAT_USERINFO, info);
+	struct {
+	    uint8_t enabled;
+	    uint16_t cat;
+	    char *str;
+	} pkt;
+
+	private_item_set(info, "wwwcat", NULL);
+	private_item_set(info, "wwwkeys", NULL);
+
+	if (!ICQ_UNPACK(&buf, "c", &pkt.enabled))
+		return -1;
+
+	if (!pkt.enabled)
+		return 0;
+
+	if (!ICQ_UNPACK(&buf, "wS", &pkt.cat, &pkt.str))
+		return -1;
+
+	private_item_set_int(info, "wwwcat", pkt.cat);
+	private_item_set(info, "wwwkeys", pkt.str);
+	
 	return 0;
 }
 
@@ -631,7 +649,8 @@ static int icq_snac_extension_replyreq_0x7da(session_t *s, unsigned char *buf, i
 		int uid = info ? private_item_get_int(info, "uid") : -1;
 		debug_function("icq_snac_extensions_%s()", icq_lookuptable(meta_name, pkt.subtype));
 		if (userinfo)
-			debug_function(" uid: %u\n", uid);
+			debug_function(" uid: %u", uid);
+		debug_function("\n");
 
 		if (pkt.result == 0x0A) {
 			handler(s, pkt.data, len, info);
