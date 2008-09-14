@@ -151,22 +151,6 @@ def PkgConfig(context, pkg, flags, version = None, pkgconf = 'pkg-config',
 		print res[2]
 	return ret
 
-def CheckThreads(context, variant):
-	""" Check whether threads can be used with given flags and libs. """
-	context.Message('Trying to get threading with %s... ' % variant)
-	testprog = '''#include <pthread.h>
-int main(void) {
-	pthread_t th;
-	pthread_join(th, 0);
-	pthread_attr_init(0);
-	pthread_cleanup_push(0, 0);
-	pthread_create(0,0,0,0);
-	pthread_cleanup_pop(0);
-}'''
-	ret = context.TryLink(testprog, '.c')
-	context.Result(ret)
-	return not not ret
-
 def SetFlags(env, new):
 	""" Set new (temporary) flags and return dict with old flag values """
 	if not isinstance(new, dict):
@@ -352,7 +336,6 @@ env.Append(LINKFLAGS = linkflags)
 conf = env.Configure(custom_tests = {
 		'CheckStructMember':	CheckStructMember,
 		'PkgConfig':			PkgConfig,
-		'CheckThreads':			CheckThreads,
 		'External':				StupidPythonExec
 	})
 ekg_libs = []
