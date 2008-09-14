@@ -392,8 +392,8 @@ for plugin in pllist:
 		continue
 
 	optdeps = []
-	libs = []
-	flags = []
+	xlibs = []
+	xflags = []
 
 	for dep in info['depends'] + info['optdepends']:
 		isopt = dep in info['optdepends']
@@ -434,17 +434,17 @@ for plugin in pllist:
 					sdep.append(xdep)
 
 		for xdep in sdep:	# 'flags' will be nicely split by SCons, but 'libs' are nicer to write
-			old_libs = libs
-			old_flags = flags
+			libs = []
+			flags = []
 
 			have_it = ExtTest(xdep, ['libs', 'flags'])
 			if have_it:
 				if isopt or len(dep) > 1: # pretty-print optional and selected required (if more than one possibility)
 					optdeps.append('%s' % (xdep))
+
+				xflags.extend(flags)
+				xlibs.extend(libs)
 				break
-			else:
-				libs = old_libs
-				flags = old_flags
 
 		if not have_it:
 			if isopt:
@@ -474,8 +474,8 @@ for plugin in pllist:
 	SConscript('%s/SConscript' % (plugpath), ['defines', 'optdeps'])
 	plugins[plugin] = {
 		'info':			info,
-		'libs':			libs,
-		'flags':		flags
+		'libs':			xlibs,
+		'flags':		xflags
 		}
 
 	type = info['type']
