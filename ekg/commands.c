@@ -1792,7 +1792,7 @@ static COMMAND(cmd_set)
 			}
 		} 
 
-		switch (variable_set(arg, (unset) ? NULL : value, 0)) {
+		switch (variable_set(arg, (unset) ? NULL : value)) {
 			case 0:
 			{
 				if (be_quiet)

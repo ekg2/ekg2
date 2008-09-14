@@ -343,9 +343,6 @@ GENERATOR(variable) {
 	}
 
 	while (v) {
-		if (v->type == VAR_FOREIGN)
-			continue;
-
 		if (*text == '-') {
 			if (!xstrncasecmp(text + 1, v->name, len - 1))
 				return saprintf("-%s", v->name);

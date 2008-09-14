@@ -268,7 +268,6 @@ variable_map_t *variable_map(int count, ...) {
  */
 variable_t *variable_add(plugin_t *plugin, const char *name, int type, int display, void *ptr, variable_notify_func_t *notify, variable_map_t *map, variable_display_func_t *dyndisplay) {
 	variable_t *v;
-	int hash;
 	char *__name;
 
 	if (!name)
@@ -279,35 +278,9 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 	else
 		__name = xstrdup(name);
 
-	hash = variable_hash(__name);
-
-	for (v = variables; v; v = v->next) {
-		if (v->name_hash != hash || xstrcasecmp(v->name, __name) || v->type != VAR_FOREIGN)
-			continue;
-
-		if (type == VAR_INT || type == VAR_BOOL || type == VAR_MAP) {
-			*(int*)(ptr) = atoi((char*)(v->ptr));
-			xfree((char*)(v->ptr));
-		} else 
-			*(char**)(ptr) = (char*)(v->ptr);
-
-		xfree(v->name);
-		v->name		= __name;
-		v->name_hash	= hash;
-		v->type		= type;
-		v->plugin	= plugin;
-		v->display	= display;
-		v->map		= map;
-		v->notify	= notify;
-		v->dyndisplay	= dyndisplay;
-		v->ptr		= ptr;
-
-		return v;
-	}
-
-	v	= xmalloc(sizeof(variable_t));
+	v = xmalloc(sizeof(variable_t));
 	v->name		= __name;
-	v->name_hash	= hash;
+	v->name_hash	= variable_hash(__name);
 	v->type		= type;
 	v->display	= display;
 	v->ptr		= ptr;
@@ -319,6 +292,8 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 	variables_add(v);
 	return v;
 }
+
+static variable_t *variables_removei(variable_t *v);
 
 /*
  * variable_remove()
@@ -339,24 +314,10 @@ int variable_remove(plugin_t *plugin, const char *name) {
 			continue;
 		
 		if (hash == v->name_hash && plugin == v->plugin && !xstrcasecmp(name, v->name)) {
-			char *tmp;
-
-			if (v->type == VAR_INT || v->type == VAR_BOOL || v->type == VAR_MAP) {
-				tmp = saprintf("%d", *(int*)(v->ptr));
-				v->ptr = (void*)tmp;
-			} else {
-				char **pointer = (char **) (v->ptr);
-				tmp = xstrdup(*pointer);
-				xfree(*pointer);
-				v->ptr = tmp;
-			}
-
-			v->type = VAR_FOREIGN;
-
+			(void) variables_removei(v);
 			return 0;
 		}
 	}
-
 	return -1;
 }
 
@@ -370,18 +331,14 @@ int variable_remove(plugin_t *plugin, const char *name) {
  *
  *  - name - nazwa zmiennej,
  *  - value - nowa warto¶æ,
- *  - allow_foreign - czy ma pozwalaæ dopisywaæ obce zmienne.
  */
-int variable_set(const char *name, const char *value, int allow_foreign) {
+int variable_set(const char *name, const char *value) {
 	variable_t *v = variable_find(name);
 	char *tmpname;
 
-	if (!v) {
-		if (allow_foreign) {
-			variable_add(NULL, name, VAR_FOREIGN, 2, xstrdup(value), NULL, NULL, NULL);
-		}
+	if (!v)
 		return -1;
-	}
+
 	switch (v->type) {
 		case VAR_INT:
 		case VAR_MAP:
@@ -535,10 +492,6 @@ LIST_FREE_ITEM(variable_list_freeone, variable_t *) {
 			*((char**) data->ptr) = NULL;
 			break;
 
-		case VAR_FOREIGN:
-			xfree((char*) data->ptr);
-			break;
-
 		default:
 			break;
 	}
@@ -553,6 +506,7 @@ LIST_FREE_ITEM(variable_list_freeone, variable_t *) {
 	}
 }
 
+static __DYNSTUFF_LIST_REMOVE_ITER(variables, variable_t, variable_list_freeone);	/* variables_removei() */
 __DYNSTUFF_LIST_DESTROY(variables, variable_t, variable_list_freeone);	/* variables_destroy() */
 
 /*

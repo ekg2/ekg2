@@ -134,13 +134,13 @@ PyObject *ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
 			PyErr_SetString(PyExc_TypeError, "invalid type");
 			return NULL;
 		}
-		variable_set(name, itoa(PyInt_AsLong(value)), 0);
+		variable_set(name, itoa(PyInt_AsLong(value)));
 	} else {
 		if (!PyString_Check(value)) {
 			PyErr_SetString(PyExc_TypeError, "invalid type");
 			return NULL;
 		}
-		variable_set(name, PyString_AsString(value), 0);
+		variable_set(name, PyString_AsString(value));
     }
     Py_INCREF(Py_None);
     return Py_None;

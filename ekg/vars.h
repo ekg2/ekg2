@@ -27,7 +27,6 @@ typedef enum {
 	VAR_STR,		/* ci±g znaków */
 	VAR_INT,		/* liczba ca³kowita */
 	VAR_BOOL,		/* 0/1, tak/nie, yes/no, on/off */
-	VAR_FOREIGN,		/* nieznana zmienna */
 	VAR_MAP,		/* bitmapa */
 	VAR_FILE,		/* plik */
 	VAR_DIR,		/* katalog */
@@ -86,7 +85,7 @@ variable_t *variable_add(
 
 int variable_remove(plugin_t *plugin, const char *name);
 
-int variable_set(const char *name, const char *value, int allow_foreign);
+int variable_set(const char *name, const char *value);
 void variable_help(const char *name);
 void variables_destroy();
 

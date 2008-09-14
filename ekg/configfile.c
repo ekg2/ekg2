@@ -221,10 +221,10 @@ int config_read(const char *filename)
 			char *bar;
 
 			if (!(bar = xstrchr(foo, ' ')))
-				ret = variable_set(foo, NULL, 0);
+				ret = variable_set(foo, NULL);
 			else {
 				*bar++ = 0;
-				ret = variable_set(foo, bar, 0);
+				ret = variable_set(foo, bar);
 			}
 
 			if (ret)
@@ -310,7 +310,7 @@ int config_read(const char *filename)
 			}
 			array_free(p);
 		} else {
-			ret = variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL, 0);
+			ret = variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL);
 
 			if (ret)
 				debug("  unknown variable %s\n", buf);
@@ -360,10 +360,6 @@ static void config_write_variable(FILE *f, variable_t *v)
 		case VAR_STR:
 			fprintf(f, "%s %s\n", v->name, (*(char**)(v->ptr)) ? *(char**)(v->ptr) : "");
 			break;
-		case VAR_FOREIGN:
-			fprintf(f, "%s %s\n", v->name, (v->ptr) ? (char *) v->ptr : "");
-			break;
-			
 		default:
 			fprintf(f, "%s %d\n", v->name, *(int*)(v->ptr));
 	}

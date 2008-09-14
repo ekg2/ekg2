@@ -1623,7 +1623,6 @@ back:
 				
 					switch (v->type) {
 						case(VAR_STR):
-						case(VAR_FOREIGN):
 						case(VAR_FILE):
 						case(VAR_DIR):
 						case(VAR_THEME):

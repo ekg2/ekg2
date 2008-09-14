@@ -680,7 +680,7 @@ void changed_theme(const char *var)
 			print("theme_loaded", config_theme);
 		} else {
 			print("error_loading_theme", strerror(errno));
-			variable_set(("theme"), NULL, 0);
+			variable_set(("theme"), NULL);
 		}
 	}
 }
@@ -2804,7 +2804,31 @@ int ekg_write(int fd, const char *buf, int len) {
 	return watch_write_data(wl, buf, len);
 }
 
-/* XXX, int ekg_writef(int fd, const char *format, ...); */
+int ekg_writef(int fd, const char *format, ...) {
+	char		*text;
+	int		textlen;
+	va_list		ap;
+	int		res;
+
+	if (fd == -1 || !format)
+		return -1;
+
+	va_start(ap, format);
+	text = vsaprintf(format, ap);
+	va_end(ap);
+	
+	textlen = xstrlen(text); 
+
+	debug_io("ekg_writef: %s\n", text ? textlen ? text: "[0LENGTH]":"[FAILED]");
+
+	if (!text) 
+		return -1;
+
+	res = ekg_write(fd, text, textlen);
+
+	xfree(text);
+	return res;
+}
 
 /**
  * ekg_close()

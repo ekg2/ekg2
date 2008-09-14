@@ -44,5 +44,5 @@ CODE:
 
 int variable_set(Ekg2::Variable var, const char *value)
 CODE:
-	variable_set(var->name, value, 0);
+	variable_set(var->name, value);
 

@@ -586,7 +586,7 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 		tmp->scr = scr;
 		tmp->private = handler;
 		if (in_autoexec) /* i think it is enough, not tested. */
-			variable_set(name, value, 0);
+			variable_set(name, value);
 	} else if (!tmp) {
 		SCRIPT_BIND_HEADER(script_var_t);
 		temp->name  = xstrdup(name);

@@ -412,6 +412,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap);
 
 int ekg_close(int fd);
 int ekg_write(int fd, const char *buf, int len);
+int ekg_writef(int fd, const char *format, ...);
 
 #endif
 	

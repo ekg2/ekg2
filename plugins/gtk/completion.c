@@ -235,9 +235,6 @@ static void variable_generator(const char *text, int len)
 {
 	variable_t *v;
 	for (v = variables; v; v = v->next) {
-		if (v->type == VAR_FOREIGN)
-			continue;
-
 		if (*text == '-') {
 			if (!xstrncasecmp(text + 1, v->name, len - 1))
 				array_add_check(&completions, 
