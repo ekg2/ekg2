@@ -41,7 +41,8 @@
 #include "contacts.h"
 #include "mouse.h"
 
-PLUGIN_DEFINE(ncurses, PLUGIN_UI, NULL);
+static int ncurses_theme_init();
+PLUGIN_DEFINE(ncurses, PLUGIN_UI, ncurses_theme_init);
 /* vars */
 int config_aspell;
 char *config_aspell_lang;
@@ -643,6 +644,37 @@ static COMMAND(ncurses_cmd_dump) {
 
 	fclose(f);
 	// XXX add print_info() about dump success???
+	return 0;
+}
+
+static int ncurses_theme_init() {
+#ifndef NO_DEFAULT_THEME
+	/* prompty i statusy dla ui-ncurses */
+	format_add("ncurses_prompt_none", "", 1);
+	format_add("ncurses_prompt_query", "[%1] ", 1);
+	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %G}%{?avail %Y}%{?chat %W}%{?dnd %K}%{?xa %g}%{?gone %R}"
+			"%{?invisible %C}%{?notavail %r}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{?typing %C}%{window}}"
+			"%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}"
+			"%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
+	format_add("header", " %{?query %c(%{?query_away %w}%{?query_avail %W}%{?query_invisible %K}%{?query_notavail %k}"
+			"%{?query_chat %W}%{?query_dnd %K}%{query_xa %g}%{?query_gone %R}%{?query_unknown %M}%{?query_error %m}%{?query_blocking %m}"
+			"%{query}%{?query_descr %c/%w%{query_descr}}%c) %{?query_ip (%wip%c/%w%{query_ip}%c)} %{irctopic}}"
+			"%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}", 1);
+	format_add("statusbar_act_important", "%Y", 1);
+	format_add("statusbar_act_important2us", "%W", 1);
+	format_add("statusbar_act", "%K", 1);
+	format_add("statusbar_act_typing", "%c", 1);
+	format_add("statusbar_act_important_typing", "%C", 1);
+	format_add("statusbar_act_important2us_typing", "%C", 1);
+	format_add("statusbar_timestamp", "%H:%M", 1);
+
+#ifdef WITH_ASPELL
+	/* aspell */
+	format_add("aspell_init", "%> Please wait while initiating spellcheck...", 1);
+	format_add("aspell_init_success", "%> Spellcheck initiated.", 1);
+	format_add("aspell_init_error", "%! Spellcheck error: %T%1%", 1);
+#endif 
+#endif
 	return 0;
 }
 
