@@ -2138,6 +2138,7 @@ static int ekg_getch(int meta, unsigned int *ch) {
 #endif
 		*ch = wgetch(input);
 
+#ifndef HAVE_USABLE_TERMINFO
 	/* Debian screen incomplete terminfo workaround */
 
 	if (mouse_initialized == 2 && *ch == 27) { /* escape */
@@ -2151,6 +2152,7 @@ static int ekg_getch(int meta, unsigned int *ch) {
 		} else
 			*ch = KEY_MOUSE;
 	}
+#endif
 
 	/* 
 	 * conception is borrowed from Midnight Commander project 

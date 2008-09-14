@@ -1,5 +1,5 @@
 
-# expat (used by jabber and feed)
+# ncurses
 
 Import('*')
 
@@ -28,6 +28,17 @@ if out:
 	libs.append(nc_lib)
 	defines['HAVE_NCURSES_ULC'] = conf.CheckLib(nc_lib, 'use_legacy_coding', None, None, 0)
 	defines['HAVE_NCURSES_TERMINFO'] = conf.CheckLib(nc_lib, 'tigetstr', None, None, 0)
+
+		# XXX: crosscompiling?
+	out2 = True
+	for term in ['xterm', 'screen']:
+		termcaps = []
+		if not conf.PkgConfig('-T%s' % term, None, termcaps, 'tput', 'kmous') or termcaps[0] == '':
+			out2 = False
+	defines['HAVE_USABLE_TERMINFO'] = out2
+
+	if not out2:
+		warnings.append('Your terminfo database is unusable. Please update it.')
 
 defines['HAVE_NCURSES'] = out # used by core, I think the use is stupid
 Return('out')

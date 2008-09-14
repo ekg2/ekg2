@@ -285,8 +285,10 @@ static int ncurses_has_mouse_support(const char *term) {
 	if (gpm_fd == -2)
 		return 2;
 #endif
+#ifndef HAVE_USABLE_TERMINFO
 	if (!xstrncmp(term, "xterm", 5) || !xstrcmp(term, "screen"))
 		return 2;
+#endif
 
 	return 0;
 }
