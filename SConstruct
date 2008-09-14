@@ -434,11 +434,17 @@ for plugin in pllist:
 					sdep.append(xdep)
 
 		for xdep in sdep:	# 'flags' will be nicely split by SCons, but 'libs' are nicer to write
+			old_libs = libs
+			old_flags = flags
+
 			have_it = ExtTest(xdep, ['libs', 'flags'])
 			if have_it:
 				if isopt or len(dep) > 1: # pretty-print optional and selected required (if more than one possibility)
 					optdeps.append('%s' % (xdep))
 				break
+			else:
+				libs = old_libs
+				flags = old_flags
 
 		if not have_it:
 			if isopt:
