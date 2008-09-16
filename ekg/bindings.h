@@ -33,8 +33,6 @@ void binding_list(int quiet, const char *name, int all);
 int binding_help(int a, int b);
 int binding_quick_list(int a, int b);
 
-void bindings_init();
-void bindings_default();
 void binding_free();
 
 #endif
