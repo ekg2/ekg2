@@ -930,7 +930,7 @@ static QUERY(protocol_xstate)
 		else
 			goto xs_userlist;
 
-		query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
+		query_emit_id(NULL, UI_WINDOW_ACT_CHANGED, &w);		/* XXX, UI_WINDOW_TYPING_CHANGED? :> */
 	}
 
 xs_userlist:

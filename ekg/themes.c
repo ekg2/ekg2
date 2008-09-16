@@ -739,7 +739,7 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 		if (activity > w->act) {
 			w->act = activity;
 				/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
-			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
+			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED, &w);
 		}
 	}
 
@@ -1205,6 +1205,22 @@ int theme_write(const char *filename) {
 	fclose(f);
 
 	return 0;
+}
+
+void theme_enumerate(int *(enumerator)(const char *theme, const char *value)) {
+	int i;
+
+	if (!enumerator)
+		return;
+
+	for (i = 0; i < 0x100; i++) {
+		struct format *ff;
+
+		for (ff = formats[i]; ff; ff = ff->next) {
+			if (!enumerator(ff->name, ff->value))
+				return;
+		}
+	}
 }
 
 /*
