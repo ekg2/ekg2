@@ -1316,6 +1316,8 @@ IRC_COMMAND(irc_c_join)
 		if (xstrcmp(irc_channel, chname))
 			newwin->alias = xstrdup(chname);	/* ?WO? format for alias here??? */
 
+		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &newwin);	/* let's emit UI_WINDOW_TARGET_CHANGED XXX, another/new query? */
+
 		window_switch(newwin->id);
 		debug("[irc] c_join() %08X\n", newwin);
 		ischan = irc_add_channel(s, j , irc_channel, newwin);
