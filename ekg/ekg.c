@@ -82,6 +82,7 @@
 #include <unistd.h>
 
 #include "audio.h"
+#include "bindings.h"
 #include "commands.h"
 #include "debug.h"
 #include "events.h"

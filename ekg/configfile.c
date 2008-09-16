@@ -39,6 +39,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "bindings.h"
 #include "commands.h"
 #include "debug.h"
 #include "dynstuff.h"

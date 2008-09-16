@@ -27,6 +27,7 @@
 
 #include "ecurses.h"
 
+#include <ekg/bindings.h>
 #include <ekg/debug.h>
 #include <ekg/stuff.h>
 #include <ekg/windows.h>

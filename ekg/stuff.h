@@ -80,30 +80,6 @@ typedef struct alias {
 } alias_t;
 #endif
 
-#define BINDING_FUNCTION(x) void x(const char *arg) 
-
-struct binding {
-	struct binding	*next;
-
-	char		*key;
-
-	char		*action;			/* akcja */
-	unsigned int	internal		: 1;	/* czy domy¶lna kombinacja? */
-	void	(*function)(const char *arg);		/* funkcja obs³uguj±ca */
-	char		*arg;				/* argument funkcji */
-
-	char		*default_action;		/* domy¶lna akcja */
-	void	(*default_function)(const char *arg);	/* domy¶lna funkcja */
-	char		*default_arg;			/* domy¶lny argument */
-};
-
-typedef struct binding_added {
-	struct binding_added	*next;
-
-	char		*sequence;
-	struct binding	*binding;
-} binding_added_t;
-
 enum mesg_t {
 	MESG_CHECK = -1,
 	MESG_OFF,
@@ -171,13 +147,11 @@ struct color_map {
 extern child_t *children;
 extern alias_t *aliases;
 extern list_t autofinds; /* char* data */
-extern struct binding *bindings;
 extern struct timer *timers;
 extern struct conference *conferences;
 extern newconference_t *newconferences;
 extern struct buffer_info buffer_debug;
 extern struct buffer_info buffer_speech;
-extern binding_added_t *bindings_added;
 
 extern time_t last_save;
 extern char *config_profile;
@@ -281,9 +255,6 @@ void aliases_destroy();
 
 char *base64_encode(const char *buf, size_t len);
 char *base64_decode(const char *buf);
-
-void binding_list(int quiet, const char *name, int all);
-void binding_free();
 
 int buffer_add(struct buffer_info *type, const char *target, const char *line);
 int buffer_add_str(struct buffer_info *type, const char *target, const char *str);

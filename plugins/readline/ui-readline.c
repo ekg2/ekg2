@@ -46,6 +46,7 @@
 #	include <readline.h>
 #endif
 
+#include <ekg/bindings.h>
 #include <ekg/commands.h>
 #ifndef HAVE_STRLCPY
 #  include <compat/strlcpy.h>

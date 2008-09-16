@@ -43,6 +43,7 @@
 #  include "compat/strlcpy.h"
 #endif
 
+#include <ekg/bindings.h>
 #include <ekg/debug.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>

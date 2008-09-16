@@ -98,7 +98,6 @@ DYNSTUFF_LIST_DECLARE(children, child_t, child_free_item,
 
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
-struct binding *bindings = NULL;
 
 struct timer *timers = NULL;
 static LIST_FREE_ITEM(timer_free_item, struct timer *) { data->function(1, data->data); xfree(data->name); }
@@ -116,7 +115,6 @@ newconference_t *newconferences = NULL;
 struct buffer_info buffer_debug = { NULL, 0, DEBUG_MAX_LINES };		/**< debug buffer */
 struct buffer_info buffer_speech = { NULL, 0, 50 };		/**< speech buffer */
 
-binding_added_t *bindings_added;
 int old_stderr;
 char *config_subject_prefix;
 char *config_subject_reply_prefix;
@@ -380,66 +378,6 @@ int alias_remove(const char *name, int quiet)
 		printq("aliases_del_all");
 
 	return 0;
-}
-
-/*
- * binding_list()
- *
- * wy¶wietla listê przypisanych komend.
- */
-void binding_list(int quiet, const char *name, int all) 
-{
-	struct binding *b;
-	int found = 0;
-
-	if (!bindings)
-		printq("bind_seq_list_empty");
-
-	for (b = bindings; b; b = b->next) {
-		if (name) {
-			if (xstrcasestr(b->key, name)) {
-				printq("bind_seq_list", b->key, b->action);
-				found = 1;
-			}
-			continue;
-		}
-
-		if (!b->internal || (all && b->internal)) 
-			printq("bind_seq_list", b->key, b->action);
-	}
-
-	if (name && !found) {
-		for (b = bindings; b; b = b->next) {
-			if (xstrcasestr(b->action, name))
-				printq("bind_seq_list", b->key, b->action);
-		}
-	}
-}
-
-static LIST_FREE_ITEM(binding_free_item, struct binding *) {
-	xfree(data->key);
-	xfree(data->action);
-	xfree(data->arg);
-	xfree(data->default_action);
-	xfree(data->default_arg);
-}
-
-static LIST_FREE_ITEM(binding_added_free_item, binding_added_t *) {
-	xfree(data->sequence);
-}
-
-static __DYNSTUFF_LIST_DESTROY(bindings, struct binding, binding_free_item);				/* bindings_destroy() */
-static __DYNSTUFF_LIST_DESTROY(bindings_added, binding_added_t, binding_added_free_item);		/* bindings_added_destroy() */
-
-/**
- * binding_free()
- *
- * Free memory allocated for key bindings.
- */
-
-void binding_free() {
-	bindings_destroy();
-	bindings_added_destroy();
 }
 
 static LIST_FREE_ITEM(list_buffer_free, struct buffer *) { xfree(data->line); xfree(data->target); }

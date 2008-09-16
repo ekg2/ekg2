@@ -88,6 +88,7 @@ COMMAND(cmd_alias_exec);
 COMMAND(cmd_exec);
 COMMAND(cmd_list);
 COMMAND(cmd_dcc);
+COMMAND(cmd_bind);		/* bindings.c */
 COMMAND(session_command);	/* sessions.c */
 COMMAND(cmd_on);		/* events.c */
 COMMAND(cmd_metacontact);	/* metacontacts.c */
@@ -106,8 +107,6 @@ extern int send_nicks_count, send_nicks_index;
 void tabnick_add(const char *nick);
 void tabnick_remove(const char *nick);
 
-int binding_help(int a, int b);
-int binding_quick_list(int a, int b);
 
 int match_arg(const char *arg, char shortopt, const char *longopt, int longoptlen);
 

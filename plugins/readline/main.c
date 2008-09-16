@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include <ekg/bindings.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <ekg/bindings.h>
 #include <ekg/stuff.h>
 #include <ekg/metacontacts.h>
 #include <ekg/xmalloc.h>
