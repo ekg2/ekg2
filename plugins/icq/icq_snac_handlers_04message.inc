@@ -78,7 +78,7 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 	debug_function("icq_snac_message_recv_simple() from: %s leftlen: %d\n", sender, len);
 
 	if (!(tlvs = icq_unpack_tlvs(&buf, &len, 0))) {
-		debug("icq_snac_message_recv_simple() ignoring empty message..\n");
+		debug("icq_snac_message_recv_simple() ignoring empty message.\n");
 		return 0;
 	}
 	
@@ -164,13 +164,140 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 	return 0;
 }
 
+
+static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int len, const char *sender) {
+	struct {
+		uint16_t len;		/* length of following data (LE) */
+		uint16_t ver;		/* protocol version (LE) */
+		unsigned char *plug;	/* plugin or zero bytes (len=0x16) */
+		uint16_t unkn1;		/* unknown */
+		uint32_t capflg;	/* client capabilities flags */
+		uint8_t unkn2;		/* unknown */
+		uint16_t dcnt;		/* seems to be a downcounter (LE) */
+	} pkt1;
+	struct {
+		uint16_t len;		/* length of following data (LE) */
+		uint16_t dcnt;		/* seems to be a downcounter as in first chunk above */
+		char *unkn;		/* unknown, usually zeros */
+	} pkt2;
+	/* if plugin field in first chunk above is zero, here is message, overwise here is plugin-specific data. */
+	struct {
+		uint8_t type;		/* message type */
+		uint8_t flags;		/* message flags */
+		uint16_t status;	/* status code (LE) */
+		uint16_t prio;		/* priority code (LE) */
+		uint16_t len;		/* message string length (LE) */
+		char *str;		/* message string (null-terminated) */
+	} msg;
+
+	debug_function("icq_snac_message_recv_rtf2711()\n");
+	if ( len<27 ) {
+		debug_error("icq_snac_message_recv_rtf2711() packet too short\n");
+		return 1;
+	}
+	icq_unpack_nc(buf, len, "ww", &pkt1.len, &pkt1.ver);
+	pkt1.plug = buf + 4;
+
+	/* next chunk */
+	buf += pkt1.len + 2;
+	len -= pkt1.len + 2;
+
+	icq_unpack_nc(buf, len, "w", &pkt2.len);
+
+	/* next chunk */
+	buf += pkt2.len + 2;
+	len -= pkt2.len + 2;
+
+	if (icq_plugin_id(pkt1.plug) != PLUGIN_NONE) {
+		debug_error("icq_snac_message_recv_rtf2711() we've got data for unknown plugin\n");
+		icq_hexdump(DEBUG_ERROR, buf, len);
+		return 1;
+	}
+
+	ICQ_UNPACK(&buf, "ccwww", &msg.type, &msg.flags, &msg.status, &msg.prio, &msg.len);
+	msg.str = (char *)buf;
+
+	/* XXX XXX XXX ...and now we... ??? */
+	debug_error(" 2711 string is '%s'\n", msg.str);
+
+	return 0;
+}
+
+static int icq_snac_message_recv_rtf(session_t *s, unsigned char *buf, int len, const char *sender) {
+	struct {
+		uint16_t type;		// message type (0 - request, 1 - cancel, 2 - accept)
+		uint32_t id1, id2;	// msg-id cookie
+		unsigned char *cap;	// capability (determines format of message data)
+		
+	} pkt;
+	struct icq_tlv_list *tlvs, *tlvs5;
+	icq_tlv_t *t5, *t_msg;
+
+	debug_function("icq_snac_message_recv_rtf() from: %s leftlen: %d\n", sender, len);
+
+	if (!(tlvs = icq_unpack_tlvs(&buf, &len, 0))) {
+		debug("icq_snac_message_recv_rtf() ignoring empty message.\n");
+		return 0;
+	}
+
+	if (!(t5 = icq_tlv_get(tlvs, 0x05))) {
+		debug_error("icq_snac_message_recv_rtf() TLV(0x05) not found?\n");
+		icq_tlvs_destroy(&tlvs);
+		return 1;
+	}
+
+	if (t5->len < 2 + 8 + 0x10) {
+		debug_error("icq_snac_message_recv_rtf() TLV(0x05) too short\n");
+		icq_tlvs_destroy(&tlvs);
+		return 1;
+	}
+
+	icq_unpack_nc(t5->buf, t5->len, "WII", &pkt.type, &pkt.id1, &pkt.id2);
+
+	pkt.cap = t5->buf + (2 + 4 + 4);
+	t5->buf += (2 + 4 + 4 + 0x10);
+	t5->len -= (2 + 4 + 4 + 0x10);
+
+	if ( !(tlvs5 = icq_unpack_tlvs_nc(t5->buf, t5->len, 0)) ) {
+		debug("icq_snac_message_recv_rtf() ignoring empty TLV(0x05).\n");
+		icq_tlvs_destroy(&tlvs);
+		return 0;
+	}
+
+	if (!(t_msg = icq_tlv_get(tlvs5, 0x2711))) {
+		debug_error("icq_snac_message_recv_rtf() TLV(0x2711) not found?\n");
+		icq_tlvs_destroy(&tlvs5);
+		icq_tlvs_destroy(&tlvs);
+		return 1;
+	}
+
+	/* contents of TLV(0x2711) is capability-specific */
+	switch (icq_cap_id(pkt.cap)) {
+		case CAP_SRV_RELAY:
+		{
+			icq_snac_message_recv_rtf2711(s, t_msg->buf, t_msg->len, sender);
+			break;
+		}
+
+		default:
+			debug_error("icq_snac_message_recv_rtf() Unknow 0x2711 message for capability id=%d\n", icq_cap_id(pkt.cap));
+			icq_hexdump(DEBUG_ERROR, t_msg->buf, t_msg->len);
+			break;
+	}
+
+	icq_tlvs_destroy(&tlvs5);
+	icq_tlvs_destroy(&tlvs);
+	return 0;
+}
+
+
 SNAC_SUBHANDLER(icq_snac_message_recv) {
 	struct {
 		uint32_t id1;
 		uint32_t id2;
-		uint16_t format;	/* 0x01 - simple message format
-					   0x02 - advanced message format
-					   0x04 - 'new' message format
+		uint16_t channel;	/* Channel 1 message format (plain-text messages)
+					   Channel 2 message format (rtf messages, rendezvous)
+					   Channel 4 message format (typed old-style messages)
 					 */
 		char *sender;
 		uint16_t warning_level;	/* not used */
@@ -178,27 +305,36 @@ SNAC_SUBHANDLER(icq_snac_message_recv) {
 	} pkt;
 	struct icq_tlv_list *tlvs;
 
-	if (!ICQ_UNPACK(&buf, "iiWuWW", &pkt.id1, &pkt.id2, &pkt.format, &pkt.sender, &pkt.warning_level, &pkt.tlv_count)) {
+	if (!ICQ_UNPACK(&buf, "iiWuWW", &pkt.id1, &pkt.id2, &pkt.channel, &pkt.sender, &pkt.warning_level, &pkt.tlv_count)) {
 		debug_error("icq_snac_message_recv() Malformed message thru server\n");
 		return -1;
 	}
 
-	debug_function("icq_snac_message_recv() from: %s id1: %.8x id2: %.8x format: %.4x warning: %.4x tlvs: %.4x\n",
-				pkt.sender, pkt.id1, pkt.id2, pkt.format, pkt.warning_level, pkt.tlv_count);
+	debug_function("icq_snac_message_recv() from: %s id1: %.8x id2: %.8x channel: %.4x warning: %.4x tlvs: %.4x\n",
+				pkt.sender, pkt.id1, pkt.id2, pkt.channel, pkt.warning_level, pkt.tlv_count);
 
 	/* XXX, spamer? */
 
 	tlvs = icq_unpack_tlvs(&buf, &len, pkt.tlv_count);
 	/* XXX ?wo? Handle tvls? */
+	/*
+	 * TLV.Type(0x01) - user class
+	 * TLV.Type(0x03) - account creation time
+	 * TLV.Type(0x06) - user status
+	 * TLV.Type(0x0F) - online time
+	 */
 	icq_tlvs_destroy(&tlvs);
 
-	switch (pkt.format) {
-		case 0x01:
+	switch (pkt.channel) {
+		case 0x01:	/* plain-text messages */
 			icq_snac_message_recv_simple(s, buf, len, pkt.sender);
 			break;
 
-		case 0x02:
-		case 0x04:
+		case 0x02:	/* rtf messages, rendezvous */
+			icq_snac_message_recv_rtf(s, buf, len, pkt.sender);
+			break;
+
+		case 0x04:	/* yped old-style messages */
 		default:
 			debug_error("icq_snac_message_recv() unknown format message from server sender: %s\n", pkt.sender);
 			/* dump message */

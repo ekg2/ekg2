@@ -51,4 +51,36 @@ int icq_xstatus_id(unsigned char *buf);
 
 void icq_pack_append_xstatus(string_t pkt, int x_id);
 
+/*
+ * Plugins
+ *
+ */
+typedef enum {
+	PLUGIN_NONE=0,	// None plugin (zeros)
+	PLUGIN_01,	// Status manager plugin
+	PLUGIN_02,	// Info manager plugin
+	PLUGIN_03,	// User info plugin
+	PLUGIN_04,	// Message plugin
+	PLUGIN_05,	// File transfer plugin
+	PLUGIN_06,	// Phone info plugin
+	PLUGIN_07,	// White search plugin
+	PLUGIN_08,	// Search plugin
+	PLUGIN_09,	// URL plugin
+	PLUGIN_10,	// Chat plugin
+	PLUGIN_11,	// Send contact list plugin
+	PLUGIN_12,	// SMS plugin
+	PLUGIN_13,	// Features list plugin
+	PLUGIN_14,	// Ext contacts plugin
+	PLUGIN_15,	// Random users service
+	PLUGIN_16,	// Random plugin
+	PLUGIN_17,	// Wireless pager plugin
+	PLUGIN_18,	// External plugin
+	PLUGIN_19,	// Add user wizard plugin
+	PLUGIN_20,	// Voice message plugin
+	PLUGIN_21,	// IRCQ plugin
+	PLUGIN_UNKNOWN
+} plugins_t;
+
+int icq_plugin_id(unsigned char *buf);
+
 #endif
