@@ -165,20 +165,20 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 }
 
 
-static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int len, const char *sender) {
+static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int len, const char *sender, int ack) {
 	struct {
 		uint16_t len;		/* length of following data (LE) */
 		uint16_t ver;		/* protocol version (LE) */
 		unsigned char *plug;	/* plugin or zero bytes (len=0x16) */
-		uint16_t unkn1;		/* unknown */
-		uint32_t capflg;	/* client capabilities flags */
-		uint8_t unkn2;		/* unknown */
-		uint16_t dcnt;		/* seems to be a downcounter (LE) */
+		uint16_t _unkn1;	/* unknown */
+		uint32_t _capflg;	/* client capabilities flags */
+		uint8_t _unkn2;		/* unknown */
+		uint16_t _dcnt;		/* seems to be a downcounter (LE) */
 	} pkt1;
 	struct {
 		uint16_t len;		/* length of following data (LE) */
-		uint16_t dcnt;		/* seems to be a downcounter as in first chunk above */
-		char *unkn;		/* unknown, usually zeros */
+		uint16_t _dcnt;		/* seems to be a downcounter as in first chunk above */
+		char *_unkn;		/* unknown, usually zeros */
 	} pkt2;
 	/* if plugin field in first chunk above is zero, here is message, overwise here is plugin-specific data. */
 	struct {
@@ -208,17 +208,41 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 	buf += pkt2.len + 2;
 	len -= pkt2.len + 2;
 
-	if (icq_plugin_id(pkt1.plug) != PLUGIN_NONE) {
-		debug_error("icq_snac_message_recv_rtf2711() we've got data for unknown plugin\n");
-		icq_hexdump(DEBUG_ERROR, buf, len);
-		return 1;
+	switch (icq_plugin_id(pkt1.plug)) {
+		case PLUGIN_NONE:
+		{
+			/* message */
+			ICQ_UNPACK(&buf, "ccwww", &msg.type, &msg.flags, &msg.status, &msg.prio, &msg.len);
+			msg.str = (char *)buf;
+
+			switch (msg.type) {
+				/* strange types - XXX ?wo? handle? */
+				case MTYPE_FILEREQ:
+				case MTYPE_CHAT:
+				case MTYPE_PLUGIN:
+					debug_warn("icq_snac_message_recv_rtf2711() message type 0x%x not handled yet\n", msg.type);
+					break;
+				default:
+					/* normal message */
+					if (msg.len) {
+						time_t sent = time(NULL);
+						char *uid = icq_uid(sender);
+						char *tmp = ekg_utf8_to_locale(xstrdup(msg.str));
+
+						protocol_message_emit(s, uid, NULL, tmp, NULL, sent, EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
+
+						xfree(tmp);
+						xfree(uid);
+					}
+					break;
+			}
+			break;
+		}
+		default:
+			debug_error("icq_snac_message_recv_rtf2711() we've got data for unknown plugin\n");
+			icq_hexdump(DEBUG_ERROR, buf, len);
 	}
 
-	ICQ_UNPACK(&buf, "ccwww", &msg.type, &msg.flags, &msg.status, &msg.prio, &msg.len);
-	msg.str = (char *)buf;
-
-	/* XXX XXX XXX ...and now we... ??? */
-	debug_error(" 2711 string is '%s'\n", msg.str);
 
 	return 0;
 }
@@ -230,8 +254,9 @@ static int icq_snac_message_recv_rtf(session_t *s, unsigned char *buf, int len, 
 		unsigned char *cap;	// capability (determines format of message data)
 		
 	} pkt;
+	int ack = -1;
 	struct icq_tlv_list *tlvs, *tlvs5;
-	icq_tlv_t *t5, *t_msg;
+	icq_tlv_t *t, *t5, *t_msg;
 
 	debug_function("icq_snac_message_recv_rtf() from: %s leftlen: %d\n", sender, len);
 
@@ -254,7 +279,7 @@ static int icq_snac_message_recv_rtf(session_t *s, unsigned char *buf, int len, 
 
 	icq_unpack_nc(t5->buf, t5->len, "WII", &pkt.type, &pkt.id1, &pkt.id2);
 
-	pkt.cap = t5->buf + (2 + 4 + 4);
+	pkt.cap = t5->buf + (2 + 4 + 4);	/* msg capability */
 	t5->buf += (2 + 4 + 4 + 0x10);
 	t5->len -= (2 + 4 + 4 + 0x10);
 
@@ -263,6 +288,21 @@ static int icq_snac_message_recv_rtf(session_t *s, unsigned char *buf, int len, 
 		icq_tlvs_destroy(&tlvs);
 		return 0;
 	}
+        /*
+         * TLV.Type(0x0A) - Acktype:
+         *	0x0000 - normal message
+         *	0x0001 - file request / abort request
+         *	0x0002 - file ack
+	 * 
+	 * TLV.Type(0x03) - external ip
+	 * TLV.Type(0x04) - internal ip
+         * TLV.Type(0x05) - listening port
+         * TLV.Type(0x0F) - unknown (empty)
+         * TLV.Type(0x2711) - extention data
+         */
+
+	if ( (t = icq_tlv_get(tlvs5, 0x0a) ) )
+		ack = t->nr;
 
 	if (!(t_msg = icq_tlv_get(tlvs5, 0x2711))) {
 		debug_error("icq_snac_message_recv_rtf() TLV(0x2711) not found?\n");
@@ -275,9 +315,13 @@ static int icq_snac_message_recv_rtf(session_t *s, unsigned char *buf, int len, 
 	switch (icq_cap_id(pkt.cap)) {
 		case CAP_SRV_RELAY:
 		{
-			icq_snac_message_recv_rtf2711(s, t_msg->buf, t_msg->len, sender);
+			icq_snac_message_recv_rtf2711(s, t_msg->buf, t_msg->len, sender, ack);
 			break;
 		}
+		/* TO DO! ?wo? XXX */
+		case CAP_ICQDIRECT:
+		case CAP_SENDFILE:
+		case CAP_CONTACTS:
 
 		default:
 			debug_error("icq_snac_message_recv_rtf() Unknow 0x2711 message for capability id=%d\n", icq_cap_id(pkt.cap));
