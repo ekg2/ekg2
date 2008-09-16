@@ -879,6 +879,36 @@ COMMAND(cmd_window) {
 	return 0;
 }
 
+/* NOTE: XXX, if you talk with someone on window_status/ window_debug we fail */
+void window_session_set(window_t *w, session_t *new_session) {
+	static int lock;
+
+	if (!w || !new_session)		/* XXX, new_session == NULL? */
+		return;
+
+	if (w->session == new_session)
+		return;
+
+	w->session = new_session;
+
+	if (w == window_current) {
+		session_current = new_session;
+		query_emit_id(NULL, SESSION_CHANGED);
+	}
+
+	query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+
+	/* let's sync window_status->session with window_debug->session */
+	if (lock == 0) {
+		lock = 1;
+		if (w == window_debug)
+			window_session_set(window_status, new_session);
+		if (w == window_status)
+			window_session_set(window_debug, new_session);
+		lock = 0;
+	}
+}
+
 /**
  * window_session_cycle()
  *
@@ -896,8 +926,6 @@ COMMAND(cmd_window) {
  * @todo	Gdy config_window_session_allow == 2, to najpierw sprobowac znalezc dobra sesje a potem jesli nie to 
  *		nastepna?
  * 
- * @todo	Create window_session_set() for some stuff here.
- *
  * @param	w - window
  *
  * @return	 0 - if session of window was changed
@@ -973,8 +1001,6 @@ again:
 		return -1;
 	}
 
-	w->session = new_session;
-
 	if ((nickname = get_nickname(new_session, uid))) {		/* if we've got nickname for old uid, than use it as w->target */
 		char *tmp = w->target;
 		w->target = xstrdup(nickname);
@@ -985,36 +1011,7 @@ again:
 		xfree(tmp);
 	}
 
-	if (w == window_current) {
-		session_current = new_session;
-		query_emit_id(NULL, SESSION_CHANGED);
-	}
-	query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
-
-	{	/* here sync window_status->session with window_debug->session */
-		if (w == window_status) {
-			if (window_debug->session != new_session) {
-				window_debug->session = new_session;
-				if (window_current == window_debug) {
-					session_current = new_session;
-					query_emit_id(NULL, SESSION_CHANGED);
-				}
-				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &window_debug);
-			}
-		}
-
-		if (w == window_debug) {
-			if (window_status->session != new_session) {
-				window_status->session = new_session;
-				if (window_current == window_status) {
-					session_current = new_session;
-					query_emit_id(NULL, SESSION_CHANGED);
-				}
-				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &window_status);
-			}
-		}
-	}
-
+	window_session_set(w, new_session);
 	return 0;
 }
 

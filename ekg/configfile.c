@@ -131,9 +131,7 @@ void config_postread()
 
 		if (s) {
 			debug("setted default session to %s\n", s->uid);
-			session_current = s;
-			window_current->session = s;
-			query_emit_id(NULL, SESSION_CHANGED);
+			window_session_set(window_status, s);
 		} else {
 			debug("default session not found\n");
 		}

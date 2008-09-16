@@ -160,14 +160,8 @@ session_t *session_add(const char *uid) {
 	sessions_add(s);
 
 	/* XXX, wywalic sprawdzanie czy juz jest sesja? w koncu jak dodajemy sesje.. to moze chcemy sie od razu na nia przelaczyc? */
-	if (!window_current->session && (window_current->id == 0 || window_current->id == 1)) {
-		window_current->session = s;
-		session_current = s;
-
-		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &window_current);
-		query_emit_id(NULL, SESSION_CHANGED);
-	}
-
+	if (!window_current->session && (window_current == window_debug || window_current == window_status))
+		window_session_set(window_current, s);
 
 	/* XXX, i still don't understand why session_current isn't macro to window_current->session... */
 	if (!session_current)
@@ -207,14 +201,8 @@ session_t *session_add(const char *uid) {
  *	with w->target: "Aga". it's not uid. it's nickname.. so we must search for it in userlist.
  *	it's better idea than what was.. however it's slow and I still want to do it other way.
  */
-		if (!w->session && !w->floating && get_uid(s, w->target)) {
-			w->session = s;
-
-			query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
-
-			if (w == window_current)
-				query_emit_id(NULL, SESSION_CHANGED);
-		}
+		if (!w->session && !w->floating && get_uid(s, w->target))
+			window_session_set(w, s);
 	}
 
 	return s;

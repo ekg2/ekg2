@@ -109,6 +109,7 @@ void window_print(window_t *w, fstring_t *line);
 void print_window_w(window_t *w, int activity, const char *theme, ...);	/* themes.c */
 char *window_target(window_t *window);
 
+void window_session_set(window_t *w, session_t *newsession);
 int window_session_cycle(window_t *w);
 
 int window_lock_inc(window_t *w);
