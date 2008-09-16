@@ -379,7 +379,7 @@ const struct query_def query_list[] = {
 
 	{ UI_WINDOW_ACT_CHANGED, "ui-window-act-changed", {
 		QUERY_ARG_WINDOW,		/* window */
-		QUERY_ARG_END } },		/* no params */
+		QUERY_ARG_END } },
 
 	{ UI_WINDOW_CLEAR, "ui-window-clear", {
 		QUERY_ARG_WINDOW,		/* window */
