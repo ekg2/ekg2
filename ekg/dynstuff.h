@@ -201,7 +201,6 @@ int private_item_get_int(private_data_t **data, const char *item_name);
 void private_item_set(private_data_t **data, const char *item_name, const char *value);
 void private_item_set_int(private_data_t **data, const char *item_name, int value);
 
-void private_data_free(private_data_t *item);
 void private_items_destroy(private_data_t **data);
 
 

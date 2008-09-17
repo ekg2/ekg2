@@ -1396,16 +1396,15 @@ static int private_data_cmp(private_data_t *item1, private_data_t *item2) {
 	return xstrcmp(item1->name, item2->name);
 }
 
-void private_data_free(private_data_t *item) {
-	xfree(item->name);
-	xfree(item->value);
+static LIST_FREE_ITEM(private_data_free, private_data_t *) {
+	xfree(data->name);
+	xfree(data->value);
 }
 
-static __DYNSTUFF_ADD_SORTED(private_items, private_data_t, private_data_cmp)
-
-static __DYNSTUFF_REMOVE_SAFE(private_items, private_data_t, private_data_free)
-
-__DYNSTUFF_DESTROY(private_items, private_data_t, private_data_free)
+DYNSTUFF_LIST_DECLARE_SORTED(private_items, private_data_t, private_data_cmp, private_data_free,
+	static __DYNSTUFF_ADD_SORTED,			/* private_items_add() */
+	static __DYNSTUFF_REMOVE_SAFE,			/* private_items_remove() */
+	__DYNSTUFF_DESTROY)				/* private_items_destroy() */
 
 static private_data_t *private_item_find(private_data_t **data, const char *item_name) {
 	private_data_t *item;
