@@ -963,7 +963,8 @@ void watch_handle_line(watch_t *w)
 	int ret, res = 0;
 	int (*handler)(int, int, const char *, void *) = w->handler;
 
-	if (w || w->removed == -1);	/* watch is running in another thread / context */
+	if (!w || w->removed == -1)
+		return;	/* watch is running in another thread / context */
 
 	w->removed = -1;
 #ifndef NO_POSIX_SYSTEM
