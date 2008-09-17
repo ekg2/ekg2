@@ -26,6 +26,7 @@
 #include <ekg/debug.h>
 #include <ekg/themes.h>
 #include <ekg/stuff.h>
+#include <ekg/queries.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
@@ -530,6 +531,8 @@ int gg_userlist_set(session_t *session, const char *contacts)
 		userlist_add_entry(session, entries[i]);
 
 	array_free(entries);
+
+	query_emit_id(NULL, USERLIST_REFRESH);
 
 	return 0;
 }

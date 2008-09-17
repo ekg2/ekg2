@@ -199,6 +199,8 @@ int userlist_read(session_t *session) {
 		userlist_add_entry(session, buf);
 	}
 
+	query_emit_id(NULL, USERLIST_REFRESH);	/* XXX, wywolywac tylko kiedy dodalismy przynajmniej 1 */
+
 	fclose(f);
 		
 	return 0;
