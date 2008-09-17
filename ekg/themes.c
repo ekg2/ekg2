@@ -1207,11 +1207,17 @@ int theme_write(const char *filename) {
 	return 0;
 }
 
-void theme_enumerate(int *(enumerator)(const char *theme, const char *value)) {
+void theme_enumerate(int (*enumerator)(const char *theme, const char *value)) {
 	int i;
 
 	if (!enumerator)
 		return;
+
+	if (no_prompt_cache) {
+		if (!enumerator("no_prompt_cache", ""))
+			return;
+	}
+
 
 	for (i = 0; i < 0x100; i++) {
 		struct format *ff;

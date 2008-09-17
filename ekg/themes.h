@@ -66,7 +66,7 @@ char *format_string(const char *format, ...);
 
 void theme_init();
 void theme_plugins_init();
-void theme_enumerate(int *(enumerator)(const char *theme, const char *value));
+void theme_enumerate(int (*enumerator)(const char *theme, const char *value));
 int theme_read(const char *filename, int replace);
 int theme_write(const char *filename);
 void theme_cache_reset();
