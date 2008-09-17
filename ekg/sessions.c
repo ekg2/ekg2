@@ -737,9 +737,20 @@ int session_set(session_t *s, const char *key, const char *value) {
 		return -1;
 
 	if (!xstrcasecmp(key, "alias")) {
-		char *tmp = xstrdup(value);
+		char *tmp;
+		
 		ret = session_alias_set(s, value);
 
+		/* note:
+		 * 	if we unset session alias, than value is NULL
+		 * 	some code in metacontacts and remote plugin
+		 * 	rely on if they can find session, session_find(NULL) will always return NULL :(
+		 *
+		 * 	I think it'll be better if we always pass s->uid
+		 * 	but for now this is enough for me
+		 */
+
+		tmp = xstrdup((value) ? value : s->uid);
 		query_emit_id(NULL, SESSION_RENAMED, &tmp);
 		xfree(tmp);
 
