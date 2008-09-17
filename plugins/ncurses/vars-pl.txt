@@ -166,7 +166,7 @@ kill_irc_window
 	domy¶lna warto¶æ: 1
 	
 	je¶li ustawiona na 0, nie mo¿na zamkn±æ okna kana³u ircowego przy
-        pomocy bindingu klawiaturowego.
+	pomocy bindingu klawiaturowego.
 
 margin_size
 	typ: liczba
