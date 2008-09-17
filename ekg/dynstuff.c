@@ -1409,14 +1409,16 @@ __DYNSTUFF_DESTROY(private_items, private_data_t, private_data_free)
 
 static private_data_t *private_item_find(private_data_t **data, const char *item_name) {
 	private_data_t *item;
+	int cmp;
 
 	if (!item_name)
 		return NULL;
 
 	for (item = *data; item; item = item->next) {
-		int cmp = xstrcmp(item->name, item_name);
-		if (!cmp)
+		if ( !(cmp = xstrcmp(item->name, item_name)) )
 			return item;
+		if (cmp>0)
+			return NULL;
 	}
 
 	return NULL;
