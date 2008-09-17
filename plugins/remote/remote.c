@@ -372,6 +372,8 @@ static WATCHER_LINE(rc_input_handler_line) {
 				remote_writefd(fd, "SESSIONINFO", s->uid, "STATUS", itoa(s->status), NULL);
 				remote_writefd(fd, "SESSIONINFO", s->uid, "CONNECTED", itoa(s->connected), NULL);
 
+				if (s->alias)
+					remote_writefd(fd, "SESSIONINFO", s->uid, "ALIAS", s->alias, NULL);
 			}
 			remote_writefd(fd, "+SESSION", NULL);
 
@@ -389,6 +391,36 @@ static WATCHER_LINE(rc_input_handler_line) {
 			}
 			remote_writefd(fd, "WINDOW_SWITCH", itoa(window_current->id), NULL);
 			remote_writefd(fd, "+WINDOW", NULL);
+
+		} else if (!xstrcmp(cmd, "REQUSERLISTS")) {
+
+#define fix(x) ((x) ? x : "")
+			session_t *s;
+			window_t *w;
+			userlist_t *u;
+
+			/* najpierw sesyjna userlista */
+			for (s = sessions; s; s = s->next) {
+				for (u = s->userlist; u; u = u->next) {
+					char *groups = (u->groups) ? group_to_string(u->groups, 1, 0) : NULL;
+					remote_writefd(fd, "SESSIONITEM", s->uid, fix(u->uid), itoa(u->status), fix(u->nickname), fix(groups), NULL);
+					xfree(groups);
+				}
+			}
+
+			/* potem okienkowe userlisty */
+			for (w = windows; w; w = w->next) {
+				for (u = w->userlist; u; u = u->next) {
+					char *groups = (u->groups) ? group_to_string(u->groups, 1, 0) : NULL;
+					remote_writefd(fd, "WINDOWITEM", itoa(w->id), fix(u->uid), itoa(u->status), fix(u->nickname), fix(groups), NULL);
+					xfree(groups);
+				}
+
+			}
+			/* XXX, konferencyjne userlisty? */
+#undef fix
+			remote_writefd(fd, "+USERLIST", NULL);
+
 /* rozniaste */
 		} else if (!xstrcmp(cmd, "REQSESSION_CYCLE")) {
 			if (arrcnt == 2) {
@@ -417,7 +449,6 @@ static WATCHER_LINE(rc_input_handler_line) {
 		}
 
 	}
-cleanup:
 	array_free(arr);
 	return 0;
 }
@@ -1006,6 +1037,34 @@ static QUERY(remote_session_changed) {
 	return 0;
 }
 
+static QUERY(remote_session_renamed) {
+	char *alias = *(va_arg(ap, char **));
+	session_t *s;
+
+	if (!(s = session_find(alias))) {
+		debug_error("remote_session_renamed(%s) damn!\n", alias);
+		return 0;
+	}
+
+	remote_broadcast("SESSIONINFO", s->uid, "ALIAS", s->alias, NULL);
+
+	return 0;
+}
+
+static QUERY(remote_userlist_refresh) {
+	/* ze wstepnej analizy wynika ze ulubionym query po userlist_add() jest emitowanie USERLIST_REFRESH...
+	 * bez parametrow, najwygodniejsze, 
+	 *
+	 * w zwiazku z tym mozemy wyslac (ponownie) userliste ze wszystkich (sesji,okien) poprzedzajac jakims CLEARSMTH (b. niefajne)
+	 * albo przynajmniej dodac do USERLIST_REFRESH parametr na ktorej sesji/oknie robimy te operacje...
+	 *
+	 * Tutaj przelecimy wszystkie znane listy, i sprawdzimy czy jakis pointer sie zgadza, jak tak to wyslemy tylko ja.
+	 */
+
+	return 0;
+}
+
+
 static QUERY(remote_all_contacts_changed) {
 //	remote_broadcast((data) ? "REFRESH_USERLIST_FULL\n" : "REFRESH_USERLIST\n");	/* XXX, nie przetwarzane */
 	/* XXX, inaczej, to tak nie bedzie dzialac. trzeba zrobic wsparcie dla wszystkich */
@@ -1045,6 +1104,9 @@ EXPORT int remote_plugin_init(int prio) {
 	query_connect_id(&remote_plugin, PROTOCOL_DISCONNECTED, remote_protocol_disconnected, NULL);
 
 	query_connect_id(&remote_plugin, SESSION_CHANGED, remote_session_changed, NULL);
+	query_connect_id(&remote_plugin, SESSION_RENAMED, remote_session_renamed, NULL);
+
+	query_connect_id(&remote_plugin, USERLIST_REFRESH, remote_userlist_refresh, NULL);
 
 #if 0
 
@@ -1055,7 +1117,6 @@ EXPORT int remote_plugin_init(int prio) {
 	query_connect_id(&remote_plugin, UI_REFRESH, ncurses_ui_refresh, NULL);
 	query_connect_id(&remote_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&remote_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
-	query_connect_id(&remote_plugin, SESSION_RENAMED, ncurses_statusbar_query, NULL);
 	query_connect_id(&remote_plugin, BINDING_SET, ncurses_binding_set_query, NULL);
 	query_connect_id(&remote_plugin, BINDING_COMMAND, ncurses_binding_adddelete_query, NULL);
 	query_connect_id(&remote_plugin, BINDING_DEFAULT, ncurses_binding_default, NULL);
