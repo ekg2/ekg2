@@ -263,6 +263,8 @@ opts.Add('DISTNOTES', 'Additional info to /version for use with distributed pack
 
 for p in avplugins:
 	info = SConscript('plugins/%s/SConscript' % p, ['env', 'opts'])
+	if not info:
+		continue
 	values = []
 	if 'depends' in info:
 		for a in info['depends']:
