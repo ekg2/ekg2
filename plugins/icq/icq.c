@@ -555,7 +555,7 @@ static WATCHER_SESSION(icq_handle_connect) {
 
 	debug("[icq] handle_connect(%d)\n", s->connecting);
 
-	string_clear(j->stream_buf, 0);
+	string_clear(j->stream_buf);
 
 	if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		if (type) 
