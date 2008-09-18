@@ -530,6 +530,7 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 		ekg_close(j->fd2);
 		j->fd2 = -1;
 	}
+	string_free(j->stream_buf, 0);
 }
 
 static WATCHER_SESSION(icq_handle_stream);
@@ -553,6 +554,8 @@ static WATCHER_SESSION(icq_handle_connect) {
 	}
 
 	debug("[icq] handle_connect(%d)\n", s->connecting);
+
+	string_free(j->stream_buf, 0);
 
 	if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		if (type) 
