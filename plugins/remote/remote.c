@@ -350,18 +350,68 @@ static WATCHER_LINE(rc_input_handler_line) {
 
 		} else if (!xstrcmp(cmd, "REQBACKLOGS")) {
 			window_t *w;
+			int req_ok = 0;
 
-			for (w = windows; w; w = w->next) {
-				remote_window_t *n = w->private;
-				int i;
+			/* XXX, uniknac duplikowania kodu... */
 
-				if (!n)
-					continue;
+			if (arrcnt == 3) {
+				if (!xstrcmp(arr[1], "LAST")) {
+					int only = atoi(arr[2]);	/* note: to jest limit dla kazdego okienka */
 
-				for (i = n->backlog_size; i; i--) {
-					remote_writefd(fd, "BACKLOG", itoa(w->id), itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
+					req_ok = 1;
+
+					for (w = windows; w; w = w->next) {
+						remote_window_t *n = w->private;
+						int from;
+						int i;
+
+						if (!n)
+							continue;
+
+						if (n->backlog_size > only)
+							from = only;
+						else
+							from = n->backlog_size;
+
+						/* XXX, zakladamy ze backlog jest posortowany w/g czasu */
+
+						for (i = from; i; i--) {
+							remote_writefd(fd, "BACKLOG", itoa(w->id), itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
+						}
+					}
+				} else if (!xstrcmp(arr[1], "FROMTIME")) {
+					time_t ts = atoi(arr[2]);
+
+					req_ok = 1;
+
+					for (w = windows; w; w = w->next) {
+						remote_window_t *n = w->private;
+						int i;
+
+						if (!n)
+							continue;
+
+						for (i = n->backlog_size; i; i--) {
+							if (n->backlog[i-1]->ts >= ts)
+								remote_writefd(fd, "BACKLOG", itoa(w->id), itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
+						}
+					}
 				}
 			}
+			if (req_ok == 0) {	/* jesli requet nie byl przetwarzany, to wysylamy caly backlog */
+				for (w = windows; w; w = w->next) {
+					remote_window_t *n = w->private;
+					int i;
+
+					if (!n)
+						continue;
+
+					for (i = n->backlog_size; i; i--) {
+						remote_writefd(fd, "BACKLOG", itoa(w->id), itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
+					}
+				}
+			}
+
 			remote_writefd(fd, "+BACKLOG", NULL);
 
 		} else if (!xstrcmp(cmd, "REQSESSIONS")) {
