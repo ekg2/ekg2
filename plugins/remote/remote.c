@@ -484,6 +484,15 @@ static WATCHER_LINE(rc_input_handler_line) {
 				else
 					remote_writefd(fd, "-SESSION_CYCLE", NULL);
 			}
+
+		} else if (!xstrcmp(cmd, "REQWINDOW_SWITCH")) {
+			if (arrcnt == 2) {
+				int id = atoi(arr[1]);
+
+				window_switch(id);
+				remote_writefd(fd, "+WINDOW_SWITCH", NULL);
+
+			}
 		} else if (!xstrcmp(cmd, "REQEXECUTE")) {
 			if (arrcnt == 2) {
 				int ret;
