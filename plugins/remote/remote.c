@@ -385,9 +385,10 @@ static WATCHER_LINE(rc_input_handler_line) {
 
 				if (w->alias)
 					remote_writefd(fd, "WINDOWINFO", itoa(w->id), "ALIAS", w->alias, NULL);
-
 				if (w->session)
 					remote_writefd(fd, "WINDOWINFO", itoa(w->id), "SESSION", w->session->uid, NULL);
+				if (w->act)
+					remote_writefd(fd, "WINDOWINFO", itoa(w->id), "ACTIVITY", itoa(w->act), NULL);
 			}
 			remote_writefd(fd, "WINDOW_SWITCH", itoa(window_current->id), NULL);
 			remote_writefd(fd, "+WINDOW", NULL);
@@ -447,7 +448,6 @@ static WATCHER_LINE(rc_input_handler_line) {
 		} else {
 			debug_error("unknown command: %s\n", cmd);
 		}
-
 	}
 	array_free(arr);
 	return 0;
@@ -1021,6 +1021,14 @@ static QUERY(remote_ui_window_target_changed) {
 	return 0;
 }
 
+static QUERY(remote_ui_window_act_changed) {
+	window_t *w = *(va_arg(ap, window_t **));		/* note: since r4642 */
+	/* XXX, in_typing */
+
+	remote_broadcast("WINDOWINFO", itoa(w->id), "ACTIVITY", itoa(w->act), NULL);
+	return 0;
+}
+
 static QUERY(remote_session_changed) {
 #if 0	/* fajne, ale dla nas fajniejsze jest UI_WINDOW_TARGET_CHANGED */
 
@@ -1097,6 +1105,7 @@ EXPORT int remote_plugin_init(int prio) {
 	query_connect_id(&remote_plugin, UI_WINDOW_CLEAR, remote_ui_window_clear, NULL);
 	query_connect_id(&remote_plugin, UI_WINDOW_NEW, remote_ui_window_new, NULL);
 	query_connect_id(&remote_plugin, UI_WINDOW_TARGET_CHANGED, remote_ui_window_target_changed, NULL);
+	query_connect_id(&remote_plugin, UI_WINDOW_ACT_CHANGED, remote_ui_window_act_changed, NULL);
 	query_connect_id(&remote_plugin, VARIABLE_CHANGED, remote_variable_changed, NULL);
 
 	/* SESSION_EVENT */
@@ -1111,7 +1120,6 @@ EXPORT int remote_plugin_init(int prio) {
 #if 0
 
 	query_connect_id(&remote_plugin, UI_WINDOW_TARGET_CHANGED, ncurses_ui_window_target_changed, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_ACT_CHANGED, ncurses_ui_window_act_changed, NULL);
 	query_connect_id(&remote_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
 	query_connect_id(&remote_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
 	query_connect_id(&remote_plugin, UI_REFRESH, ncurses_ui_refresh, NULL);
