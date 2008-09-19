@@ -1,0 +1,36 @@
+#!/bin/bash
+
+EKG_BIN=""
+
+	# First try to find ekg2 in current directory
+[ -x 'ekg2' ]								&& EKG_BIN="./ekg2"
+[[ -z "${EKG_BIN}" && -x 'ekg/ekg2' ]]		&& EKG_BIN="ekg/ekg2"
+[[ -z "${EKG_BIN}" && -x '../ekg/ekg2' ]]	&& EKG_BIN="../ekg/ekg2"
+
+	# Then try script directory
+SCDIR="$(dirname "$0")"
+if [[ -z "${EKG_BIN}" && -n "${SCDIR}" && "${SCDIR}" != '.' ]]; then
+	cd "$(dirname $0)"
+	[[ -z "${EKG_BIN}" && -x 'ekg2' ]]			&& EKG_BIN="ekg2"
+	[[ -z "${EKG_BIN}" && -x 'ekg/ekg2' ]]		&& EKG_BIN="ekg/ekg2"
+	[[ -z "${EKG_BIN}" && -x '../ekg/ekg2' ]]	&& EKG_BIN="../ekg/ekg2"
+fi
+
+	# Finally, try ${PATH}
+[ -z "${EKG_BIN}" ] && EKG_BIN="$(which ekg2 2>/dev/null)"
+
+if [ -z "${EKG_BIN}" ]; then
+	echo 'Unable to find any usable ekg2 binary.'
+	exit 127
+fi
+
+valgrind \
+   -v \
+   --tool=callgrind \
+   --log-file="$HOME"/.ekg2/valgrind."$(date +%Y%m%d-%H%M)" \
+   --callgrind-out-file="$HOME"/.ekg2/callgrind.out."$(date +%Y%m%d-%H%M)" \
+   --demangle=no \
+   --num-callers=20 \
+   "${EKG_BIN}" "$@"
+
+exit $?
