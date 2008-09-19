@@ -293,8 +293,6 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 	return v;
 }
 
-static variable_t *variables_removei(variable_t *v);
-
 /*
  * variable_remove()
  *
@@ -506,7 +504,7 @@ LIST_FREE_ITEM(variable_list_freeone, variable_t *) {
 	}
 }
 
-static __DYNSTUFF_LIST_REMOVE_ITER(variables, variable_t, variable_list_freeone);	/* variables_removei() */
+__DYNSTUFF_LIST_REMOVE_ITER(variables, variable_t, variable_list_freeone);	/* variables_removei() */
 __DYNSTUFF_LIST_DESTROY(variables, variable_t, variable_list_freeone);	/* variables_destroy() */
 
 /*

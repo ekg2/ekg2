@@ -83,10 +83,11 @@ variable_t *variable_add(
 	variable_map_t *map,
 	variable_display_func_t *dyndisplay);
 
-int variable_remove(plugin_t *plugin, const char *name);
-
 int variable_set(const char *name, const char *value);
 void variable_help(const char *name);
+int variable_remove(plugin_t *plugin, const char *name);
+
+variable_t *variables_removei(variable_t *v);
 void variables_destroy();
 
 #endif
