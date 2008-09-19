@@ -328,7 +328,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 
 	__get_userinfo_data(buf, len, META_BASIC_USERINFO, info);
 
-	{
+	{	/* correct results */
 		char *tmp;
 		int tz = private_item_get_int(info, "tzone");
 		if (tz & 0x80)
@@ -341,6 +341,16 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 		private_item_set_int(info, "webaware", private_item_get_int(info, "webaware") + 1);
 	}
 
+	{
+		userlist_t *u;
+		char *uid = icq_uid(private_item_get(info, "uid"));
+		if ( (u = userlist_find(s, uid)) ) {
+			user_private_item_set(u, "first_name", private_item_get(info, "first_name"));
+			user_private_item_set(u, "last_name",  private_item_get(info, "last_name"));
+		}
+		xfree(uid);
+	}
+	
 	return 0;
 }
 
@@ -551,7 +561,7 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 
 	if (islast && len>=4) {
 		uint32_t omit;
-		ICQ_UNPACK(&buf, "I", omit);
+		ICQ_UNPACK(&buf, "I", &omit);
 		debug_warn("icq_snac_extension_userfound_last() Bulshit warning!\n");
 		debug_white("icq_snac_extension_userfound_last() %d search results omitted\n", omit);
 	}

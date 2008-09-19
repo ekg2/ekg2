@@ -575,7 +575,7 @@ SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 	if (!ICQ_UNPACK(&buf, "W", &error))
 		return -1;
 
-	uid = icq_uid(itoa(private_item_get_int(&data, "uin")));
+	uid = icq_uid(private_item_get(&data, "uid"));
 
 	if (!error) {
 		if ( (u = userlist_add(s, uid, nick)) ) {

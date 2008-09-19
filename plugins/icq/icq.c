@@ -714,7 +714,7 @@ static COMMAND(icq_command_addssi) {
 	userlist_t *u;
 	icq_private_t *j;
 	private_data_t *refdata = NULL;
-	uint32_t uin;
+	uint32_t u_id;
 	uint16_t group;
 
 	char *nickname = NULL;
@@ -734,7 +734,7 @@ static COMMAND(icq_command_addssi) {
 		return -1;
 	}
 
-	if (!(uin = icq_get_uid(session, target))) {
+	if (!(u_id = icq_get_uid(session, target))) {
 		printq("invalid_uid", target);
 		return -1;
 	}
@@ -829,7 +829,7 @@ static COMMAND(icq_command_addssi) {
 		if (comment)
 			icq_pack_append(data, "T", icq_pack_tlv_str(0x13c, comment));	// buddy comment
 
-		private_item_set_int(&refdata, "uin", uin);
+		private_item_set_int(&refdata, "uid", u_id);
 		private_item_set(&refdata, "nick", nickname);
 		private_item_set_int(&refdata, "iid", iid);
 		private_item_set_int(&refdata, "gid", group);
