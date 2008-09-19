@@ -53,8 +53,8 @@ typedef struct {
 } remote_backlog_t;
 
 typedef struct {
-	remote_backlog_t **backlog;	/* bufor z liniami */		/* XXX, przerobic na liste? */
-	int backlog_size;	/* rozmiar backloga */
+	remote_backlog_t **backlog;	/* bufor z liniami */		/* XXX, przerobic na liste */
+	int backlog_size;		/* rozmiar backloga */
 } remote_window_t;
 
 PLUGIN_DEFINE(remote, PLUGIN_UI, NULL);
@@ -255,6 +255,35 @@ int rc_theme_enumerate(const char *name, const char *value) {
 	return 1;
 }
 
+static char **array_make_count(const char *string, char sep, int *arrcnt) {
+	const char *p;
+	char **result = NULL;
+	int items = 0;
+
+	for (p = string; *p; p++) {
+		const char *q;
+		char *token;
+		int len;
+
+		for (q = p, len = 0; (*q && *q != sep); q++, len++);
+
+		/* XXX, odsanityzowac, gdy trzeba */
+		/* XXX, albo mhmh, nie korzystac z xstrndup() ? */
+		token = xstrndup(p, len);
+		p = q;
+		
+		result = xrealloc(result, (items + 2) * sizeof(char*));
+		result[items] = token;
+		result[++items] = NULL;
+
+		if (!*p)
+			break;
+	}
+	*arrcnt = items;
+
+	return result;
+}
+
 /*
  * rc_input_handler_line()
  *
@@ -270,11 +299,11 @@ static WATCHER_LINE(rc_input_handler_line) {
 		return 0;
 	}
 
-	if (!data) 
+	if (!data || !watch)
 		return -1;
 
-	arr = array_make(watch, "\001", 0, 0, 0);
-	arrcnt = array_count(arr);
+	if (!(arr = array_make_count(watch, '\001', &arrcnt)))
+		return 0;
 
 	if (!r->login_ok) {
 		if (!xstrcmp(arr[0], "REQLOGIN")) {
