@@ -437,4 +437,10 @@ struct fieldnames_t maritalField[]={
 	{40, LPGEN("Widowed")},
 	{-1, NULL}};
 
+struct fieldnames_t webawareField[]={
+	{1, LPGEN("Offline")},
+	{2, LPGEN("Online")},
+	{3, LPGEN("Non webaware")},
+	{-1, NULL}};
+
 // vim:syn=c

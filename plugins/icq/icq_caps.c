@@ -167,7 +167,7 @@ static const _capability_t _capXStatus[XSTATUS_COUNT] = {
 };
 
 const char* _nameXStatus[XSTATUS_COUNT] = {
-	"Shopping",
+	("Shopping"),
 	"Taking a bath",
 	"Tired",
 	"Party",

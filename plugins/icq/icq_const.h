@@ -27,4 +27,48 @@
 #define MTYPE_AUTOFFC	0xEC	/* Auto free for chat message */
 
 
+/*
+ * Server response types to client meta request.
+ */
+#define SRV_OFFLINE_MESSAGE		0x0041
+#define SRV_END_OF_OFFLINE_MSGS		0x0042
+#define SRV_META_INFO_REPLY		0x07da
+
+/*
+ *  Server response subtypes to client meta info request
+ * 	SNAC(15,03)/07da
+ */
+#define META_SET_HOMEINFO_ACK		0x0064
+#define META_SET_WORKINFO_ACK		0x006e
+#define META_SET_MOREINFO_ACK		0x0078
+#define META_SET_NOTES_ACK		0x0082
+#define META_SET_EMAILINFO_ACK		0x0087
+#define META_SET_INTINFO_ACK		0x008c
+#define META_SET_AFFINFO_ACK		0x0096
+#define META_SMS_DELIVERY_RECEIPT	0x0096
+#define META_SET_PERMS_ACK		0x00a0
+#define META_SET_PASSWORD_ACK		0x00aa
+#define META_UNREGISTER_ACK		0x00b4
+#define META_SET_HPAGECAT_ACK		0x00be
+
+#define META_BASIC_USERINFO		0x00c8
+#define META_WORK_USERINFO		0x00d2
+#define META_MORE_USERINFO		0x00dc
+#define META_NOTES_USERINFO		0x00e6
+#define META_EMAIL_USERINFO		0x00eb
+#define META_INTERESTS_USERINFO		0x00f0
+#define META_AFFILATIONS_USERINFO	0x00fa
+#define META_SHORT_USERINFO		0x0104
+#define META_HPAGECAT_USERINFO		0x010e
+
+#define SRV_USER_FOUND			0x01a4
+#define SRV_LAST_USER_FOUND		0x01ae
+
+#define META_REGISTRATION_STATS_ACK	0x0302
+#define SRV_RANDOM_FOUND		0x0366
+#define META_XML_INFO			0x08a2
+#define META_SET_FULLINFO_ACK		0x0c3f
+#define META_SPAM_REPORT_ACK		0x2012
+
+
 #endif

@@ -42,20 +42,6 @@ typedef int (*metasnac_subhandler_t) (session_t *s, unsigned char *, int, privat
 
 #include "icq_fieldnames.inc"
 
-#define META_BASIC_USERINFO		0x00c8
-#define META_WORK_USERINFO		0x00d2
-#define META_MORE_USERINFO		0x00dc
-#define META_NOTES_USERINFO		0x00e6
-#define META_EMAIL_USERINFO		0x00eb
-#define META_INTERESTS_USERINFO		0x00f0
-#define META_AFFILATIONS_USERINFO	0x00fa
-#define META_SHORT_USERINFO		0x0104
-#define META_HPAGECAT_USERINFO		0x010e
-
-#define SRV_USER_FOUND			0x01a4
-#define SRV_LAST_USER_FOUND		0x01ae
-#define SRV_RANDOM_FOUND		0x0366
-
 typedef struct {
 	int type;
 	int item;		// 'S' - str; 'w' - word; 'c' - byte; 'L' bool
@@ -66,55 +52,56 @@ typedef struct {
 
 const static _userinfo_t userinfo[] = {
 	/* User basic info reply */
-	{META_BASIC_USERINFO,		'S', "Nickname",		"nick",		NULL},
-	{META_BASIC_USERINFO,		'S', "Firstname",		"first_name",	NULL},
-	{META_BASIC_USERINFO,		'S', "Lastname",		"last_name",	NULL},
-	{META_BASIC_USERINFO,		'S', "Email",			"email",	NULL},
-	{META_BASIC_USERINFO,		'S', "City",			"city",		NULL},
-	{META_BASIC_USERINFO,		'S', "State",			"state",	NULL},
-	{META_BASIC_USERINFO,		'S', "Phone",			"phone",	NULL},
-	{META_BASIC_USERINFO,		'S', "Fax",			"fax",		NULL},
-	{META_BASIC_USERINFO,		'S', "Street",			"street",	NULL},
-	{META_BASIC_USERINFO,		'S', "Cellular",		"mobile",	NULL},
-	{META_BASIC_USERINFO,		'S', "Zip",			"zip", 		NULL},
-	{META_BASIC_USERINFO,		'w', "Country",			"country", 	countryField},
-	{META_BASIC_USERINFO,		'c', "Timezone",		"tzone", 	NULL},
-	{META_BASIC_USERINFO,		'c', "Authorization",		"auth",		NULL},	// lookup XXX ?wo?
-	{META_BASIC_USERINFO,		'c', "Webaware",		"webaware",	NULL},	// lookup XXX ?wo?
-	{META_BASIC_USERINFO,		'L', "Direct connection",	"dc_perm",	NULL},
-	{META_BASIC_USERINFO,		'L', "Publish primary email",	"pub_email",	NULL},
+	{META_BASIC_USERINFO,		'S', N_("Nickname"),		"nick",		NULL},
+	{META_BASIC_USERINFO,		'S', N_("Firstname"),		"first_name",	NULL},
+	{META_BASIC_USERINFO,		'S', N_("Lastname"),		"last_name",	NULL},
+	{META_BASIC_USERINFO,		'S', N_("Email"),		"email",	NULL},
+	{META_BASIC_USERINFO,		'S', N_("City"),		"city",		NULL},
+	{META_BASIC_USERINFO,		'S', N_("State"),		"state",	NULL},
+	{META_BASIC_USERINFO,		'S', N_("Phone"),		"phone",	NULL},
+	{META_BASIC_USERINFO,		'S', N_("Fax"),			"fax",		NULL},
+	{META_BASIC_USERINFO,		'S', N_("Street"),		"street",	NULL},
+	{META_BASIC_USERINFO,		'S', N_("Cellular"),		"mobile",	NULL},
+	{META_BASIC_USERINFO,		'S', N_("Zip"),			"zip", 		NULL},
+	{META_BASIC_USERINFO,		'w', N_("Country"),		"country", 	countryField},
+	{META_BASIC_USERINFO,		'c', N_("Timezone"),		"tzone", 	NULL},
+	{META_BASIC_USERINFO,		'L', N_("Authorization"),	"auth",		NULL},
+	{META_BASIC_USERINFO,		'c', N_("Webaware"),		"webaware",	webawareField},
+	{META_BASIC_USERINFO,		'L', N_("Publish primary email"),"pub_email",	NULL},
+	{META_BASIC_USERINFO,		'L', N_("Direct connection"),	"dc_perm",	NULL},
 	{META_BASIC_USERINFO,		'S', NULL,			NULL,		NULL},	// Is here 'zip code' again?
 	/* User work info reply */
-	{META_WORK_USERINFO,		'S', "CompanyCity",		"c_city",	NULL},
-	{META_WORK_USERINFO,		'S', "CompanyState",		"c_state",	NULL},
-	{META_WORK_USERINFO,		'S', "CompanyPhone",		"c_phone",	NULL},
-	{META_WORK_USERINFO,		'S', "CompanyFax",		"c_fax",	NULL},
-	{META_WORK_USERINFO,		'S', "CompanyStreet",		"c_street",	NULL},
-	{META_WORK_USERINFO,		'S', "CompanyZIP",		"c_zip",	NULL},
-	{META_WORK_USERINFO,		'w', "CompanyCountry",		"c_country",	countryField},
-	{META_WORK_USERINFO,		'S', "Company",			"c_name",	NULL},
-	{META_WORK_USERINFO,		'S', "CompanyDepartment",	"c_depart",	NULL},
-	{META_WORK_USERINFO,		'S', "CompanyPosition",		"c_pos",	NULL},
-	{META_WORK_USERINFO,		'w', "CompanyOccupation",	"c_occup",	workField},
-	{META_WORK_USERINFO,		'S', "CompanyHomepage",		"c_www",	NULL},
+	{META_WORK_USERINFO,		'S', N_("CompanyCity"),		"c_city",	NULL},
+	{META_WORK_USERINFO,		'S', N_("CompanyState"),	"c_state",	NULL},
+	{META_WORK_USERINFO,		'S', N_("CompanyPhone"),	"c_phone",	NULL},
+	{META_WORK_USERINFO,		'S', N_("CompanyFax"),		"c_fax",	NULL},
+	{META_WORK_USERINFO,		'S', N_("CompanyStreet"),	"c_street",	NULL},
+	{META_WORK_USERINFO,		'S', N_("CompanyZIP"),		"c_zip",	NULL},
+	{META_WORK_USERINFO,		'w', N_("CompanyCountry"),	"c_country",	countryField},
+	{META_WORK_USERINFO,		'S', N_("Company"),		"c_name",	NULL},
+	{META_WORK_USERINFO,		'S', N_("CompanyDepartment"),	"c_depart",	NULL},
+	{META_WORK_USERINFO,		'S', N_("CompanyPosition"),	"c_pos",	NULL},
+	{META_WORK_USERINFO,		'w', N_("CompanyOccupation"),	"c_occup",	workField},
+	{META_WORK_USERINFO,		'S', N_("CompanyHomepage"),	"c_www",	NULL},
 	{META_WORK_USERINFO,		'S', NULL,			NULL,		NULL},	// Is here 'zip code' again?
 	/* User more info reply */
-	{META_MORE_USERINFO,		'w', "Age",			"age",		NULL},
-	{META_MORE_USERINFO,		'c', "Gender",			"gender",	genderField},
-	{META_MORE_USERINFO,		'S', "Homepage",		"www",		NULL},
-	{META_MORE_USERINFO,		'w', "Birth date",		"birth", 	NULL},
+	{META_MORE_USERINFO,		'w', N_("Age"),			"age",		NULL},
+	{META_MORE_USERINFO,		'c', N_("Gender"),		"gender",	genderField},
+	{META_MORE_USERINFO,		'S', N_("Homepage"),		"www",		NULL},
+	{META_MORE_USERINFO,		'w', N_("Birth date"),		"birth", 	NULL},
 	{META_MORE_USERINFO,		'c', NULL,			".month", 	NULL},
 	{META_MORE_USERINFO,		'c', NULL,			".day", 	NULL},
-	{META_MORE_USERINFO,		'c', "Language1",		"lang1",	languageField},
-	{META_MORE_USERINFO,		'c', "Language2",		"lang2",	languageField},
-	{META_MORE_USERINFO,		'c', "Language3",		"lang3",	languageField},
+	{META_MORE_USERINFO,		'c', N_("Language1"),		"lang1",	languageField},
+	{META_MORE_USERINFO,		'c', N_("Language2"),		"lang2",	languageField},
+	{META_MORE_USERINFO,		'c', N_("Language3"),		"lang3",	languageField},
 	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
-	{META_MORE_USERINFO,		'S', "Original from City"	"o_city",	NULL},
-	{META_MORE_USERINFO,		'S', "Original from State"	"o_state",	NULL},
-	{META_MORE_USERINFO,		'w', "Original from Country",	"o_country",	countryField},
-	{META_MORE_USERINFO,		'c', NULL,			NULL,		NULL}, // Timezone
-	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
-	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
+	{META_MORE_USERINFO,		'S', N_("Original from City"),	"o_city",	NULL},
+	{META_MORE_USERINFO,		'S', N_("Original from State"),	"o_state",	NULL},
+	{META_MORE_USERINFO,		'w', N_("Original from Country"),"o_country",	countryField},
+	{META_MORE_USERINFO,		'c', N_("Marital status"),	"marital",	maritalField},
+	{META_MORE_USERINFO,		'L', N_("AllowSpam"),		"AllowSpam", 	NULL},
+	{META_MORE_USERINFO,		'w', N_("InfoCP"),		"InfoCP", 	NULL},
+	{META_MORE_USERINFO,		'c', NULL,			NULL, 		NULL},	// skip 1 unknown byte
 	{META_MORE_USERINFO,		'S', NULL,			NULL, 		NULL},	// skip unknown string
 	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
 	{META_MORE_USERINFO,		'w', NULL,			NULL, 		NULL},	// skip 2 unknown bytes
@@ -126,42 +113,42 @@ const static _userinfo_t userinfo[] = {
 	{META_MORE_USERINFO,		'c', NULL,			NULL, 		NULL},	// skip 1 unknown byte
 	{META_MORE_USERINFO,		'S', NULL,			NULL, 		NULL},	// skip unknown string
 	/* User notes (about) info reply */
-	{META_NOTES_USERINFO,		'S', "About",			"about",	NULL},
+	{META_NOTES_USERINFO,		'S', N_("About"),		"about",	NULL},
 	/* User extended email info reply */
-	{META_EMAIL_USERINFO,		'S', "Email",			"email1",	NULL},
-	{META_EMAIL_USERINFO,		'S', "Email",			"email2",	NULL},
-	{META_EMAIL_USERINFO,		'S', "Email",			"email3",	NULL},
-	{META_EMAIL_USERINFO,		'S', "Email",			"email4",	NULL},	// more emails? ?wo?
+	{META_EMAIL_USERINFO,		'S', N_("Email"),		"email1",	NULL},
+	{META_EMAIL_USERINFO,		'S', N_("Email"),		"email2",	NULL},
+	{META_EMAIL_USERINFO,		'S', N_("Email"),		"email3",	NULL},
+	{META_EMAIL_USERINFO,		'S', N_("Email"),		"email4",	NULL},	// more emails? ?wo?
 	/* User interests info reply */
-	{META_INTERESTS_USERINFO,	'w', "Interests",		"interests1",		interestsField},
-	{META_INTERESTS_USERINFO,	'S', "InterestsStr",		"interestsStr1",	NULL},
-	{META_INTERESTS_USERINFO,	'w', "Interests",		"interests2",		interestsField},
-	{META_INTERESTS_USERINFO,	'S', "InterestsStr",		"interestsStr2",	NULL},
-	{META_INTERESTS_USERINFO,	'w', "Interests",		"interests3",		interestsField},
-	{META_INTERESTS_USERINFO,	'S', "InterestsStr",		"interestsStr3",	NULL},
-	{META_INTERESTS_USERINFO,	'w', "Interests",		"interests4",		interestsField},
-	{META_INTERESTS_USERINFO,	'S', "InterestsStr",		"interestsStr4",	NULL},
+	{META_INTERESTS_USERINFO,	'w', N_("Interests"),		"interests1",		interestsField},
+	{META_INTERESTS_USERINFO,	'S', N_("InterestsStr"),	"interestsStr1",	NULL},
+	{META_INTERESTS_USERINFO,	'w', N_("Interests"),		"interests2",		interestsField},
+	{META_INTERESTS_USERINFO,	'S', N_("InterestsStr"),	"interestsStr2",	NULL},
+	{META_INTERESTS_USERINFO,	'w', N_("Interests"),		"interests3",		interestsField},
+	{META_INTERESTS_USERINFO,	'S', N_("InterestsStr"),	"interestsStr3",	NULL},
+	{META_INTERESTS_USERINFO,	'w', N_("Interests"),		"interests4",		interestsField},
+	{META_INTERESTS_USERINFO,	'S', N_("InterestsStr"),	"interestsStr4",	NULL},
 	/* User past/affilations info reply */
-	{META_AFFILATIONS_USERINFO,	'w', "PastAff",			"pastaff1",		pastField},
-	{META_AFFILATIONS_USERINFO,	'S', "PastAffStr",		"pastaffStr1",		NULL},
-	{META_AFFILATIONS_USERINFO,	'w', "PastAff",			"pastaff2",		pastField},
-	{META_AFFILATIONS_USERINFO,	'S', "PastAffStr",		"pastaffStr2",		NULL},
-	{META_AFFILATIONS_USERINFO,	'w', "PastAff",			"pastaff3",		pastField},
-	{META_AFFILATIONS_USERINFO,	'S', "PastAffStr",		"pastaffStr3",		NULL},
-	{META_AFFILATIONS_USERINFO,	'w', "Aff",			"aff1",			pastField},
-	{META_AFFILATIONS_USERINFO,	'S', "AffStr",			"affStr1",		NULL},
-	{META_AFFILATIONS_USERINFO,	'w', "Aff",			"aff2",			pastField},
-	{META_AFFILATIONS_USERINFO,	'S', "AffStr",			"affStr2",		NULL},
-	{META_AFFILATIONS_USERINFO,	'w', "Aff",			"aff3",			pastField},
-	{META_AFFILATIONS_USERINFO,	'S', "AffStr",			"affStr3",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', N_("PastAff"),		"pastaff1",		pastField},
+	{META_AFFILATIONS_USERINFO,	'S', N_("PastAffStr"),		"pastaffStr1",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', N_("PastAff"),		"pastaff2",		pastField},
+	{META_AFFILATIONS_USERINFO,	'S', N_("PastAffStr"),		"pastaffStr2",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', N_("PastAff"),		"pastaff3",		pastField},
+	{META_AFFILATIONS_USERINFO,	'S', N_("PastAffStr"),		"pastaffStr3",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', N_("Aff"),			"aff1",			pastField},
+	{META_AFFILATIONS_USERINFO,	'S', N_("AffStr"),		"affStr1",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', N_("Aff"),			"aff2",			pastField},
+	{META_AFFILATIONS_USERINFO,	'S', N_("AffStr"),		"affStr2",		NULL},
+	{META_AFFILATIONS_USERINFO,	'w', N_("Aff"),			"aff3",			pastField},
+	{META_AFFILATIONS_USERINFO,	'S', N_("AffStr"),		"affStr3",		NULL},
 	/* Short user information reply */
-	{META_SHORT_USERINFO,		'S', "Nickname",		"nick",		NULL},	// ?WO? "nick" or "s_nick" ???
-	{META_SHORT_USERINFO,		'S', "Firstname",		"first_name",	NULL},	// as above
-	{META_SHORT_USERINFO,		'S', "Lastname",		"last_name",	NULL},	// as above
-	{META_SHORT_USERINFO,		'S', "Email",			"email",	NULL},	// as above
+	{META_SHORT_USERINFO,		'S', N_("Nickname"),		"nick",		NULL},
+	{META_SHORT_USERINFO,		'S', N_("Firstname"),		"first_name",	NULL},
+	{META_SHORT_USERINFO,		'S', N_("Lastname"),		"last_name",	NULL},
+	{META_SHORT_USERINFO,		'S', N_("Email"),		"email",	NULL},
 	/* User homepage category information reply */
-	{META_HPAGECAT_USERINFO,	'w', "Homepage category",	"wwwcat",	NULL},	// ?WO? lookup???
-	{META_HPAGECAT_USERINFO,	'S', "Homepage keywords",	"wwwkeys",	NULL},
+	{META_HPAGECAT_USERINFO,	'w', N_("Homepage category"),	"wwwcat",	NULL},	// ?WO? lookup???
+	{META_HPAGECAT_USERINFO,	'S', N_("Homepage keywords"),	"wwwkeys",	NULL},
 
 	{0, 		0, NULL, NULL, NULL}
 };
@@ -251,7 +238,7 @@ static void __display_info(session_t *s, int type, private_data_t *data) {
 		else
 			str = private_item_get(&data, userinfo[i].name);
 		if ( str && *str) {
-			char *___str = xstrdup(str); /* XXX, recode */
+			char *___str = xstrdup(str); /* XXX, guess recode */
 
 			if (!__displayed)
 				print("icq_userinfo_start", session_name(s), itoa(uid), theme);
@@ -317,18 +304,20 @@ METASNAC_SUBHANDLER(icq_snac_extensions_affilations) {
 			count = 3;
 
 		for (i = 0; i < count; i++) {
-			char *tmp;
+			char *name1, *name2;
 			const char *str;
 			uint16_t w;
 
-			if (ICQ_UNPACK(&buf, "wS", &w, &str)) {
-				tmp = saprintf("%s%d", names[k], i+1);
-				private_item_set_int(info, tmp, w);
-				xfree(tmp);
-				tmp = saprintf("%sStr%d", names[k], i+1);
-				private_item_set(info, tmp, str);
-				xfree(tmp);
+			name1 = saprintf("%s%d", names[k], i+1);
+			name2 = saprintf("%sStr%d", names[k], i+1);
+			if (!ICQ_UNPACK(&buf, "wS", &w, &str)) {
+				w = 0;
+				str = "";
 			}
+			private_item_set_int(info, name1, w);
+			private_item_set(info, name2, str);
+			xfree(name1);
+			xfree(name2);
 		}
 	}
 
@@ -347,6 +336,9 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 		tmp = saprintf("GMT%+d", tz/2);
 		private_item_set(info, "tzone", tmp);
 		xfree(tmp);
+		
+		private_item_set_int(info, "auth", !private_item_get_int(info, "auth"));
+		private_item_set_int(info, "webaware", private_item_get_int(info, "webaware") + 1);
 	}
 
 	return 0;
@@ -363,7 +355,6 @@ METASNAC_SUBHANDLER(icq_snac_extensions_workinfo) {
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_shortinfo) {
-	/* XXX miranda-Broken */
 	__get_userinfo_data(buf, len, META_SHORT_USERINFO, info);
 	return 0;
 }
@@ -468,7 +459,8 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 
 	uint32_t uin;
 	uint16_t len2;
-	uint8_t auth, status, gender, age;
+	uint16_t status, age;
+	uint8_t auth, gender;
 
 	/* XXX, sprawdzic czy mamy cookie. */
 
@@ -498,7 +490,7 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	else
 		full_name = xstrdup(first_name[0] ? first_name : last_name);
 
-	if (ICQ_UNPACK(&buf, "cc x cc", &auth, &status, &gender, &age)) {
+	if (ICQ_UNPACK(&buf, "cwcw", &auth, &status, &gender, &age)) {
 		if (age)
 			__age = itoa(age);		// XXX calculate birthyear?
 		if (gender)
@@ -507,6 +499,7 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 		debug_error("icq_snac_extension_userfound_common() broken\n");
 		auth = status = gender = age = 0;
 	}
+
 	/* XXX, "search_results_multi", "search_results_single" */
 	/* XXX, instead of email we had city */
 	/* XXX, some time ago i was thinking to of function which
@@ -556,32 +549,14 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	xfree(__active);
 	xfree(full_name);
 
-	icq_hexdump(DEBUG_WHITE, buf, len);
-#if 0
-	// Authentication needed flag
-	if (wPacketLen < 1)
-		break;
-	unpackByte(&databuf, &sr.auth);
-
-	sr.uid = NULL; // icq contact
-	// Finally, broadcast the result
-	BroadcastAck(NULL, ACKTYPE_SEARCH, ACKRESULT_DATA, (HANDLE)wCookie, (LPARAM)&sr);
-
-	// Broadcast "Last result" ack if this was the last user found
-	if (wReplySubtype == SRV_LAST_USER_FOUND)
-	{
-		if (wPacketLen>=10)
-		{
-			DWORD dwLeft;
-
-			databuf += 5;
-			unpackLEDWord(&databuf, &dwLeft);
-			if (dwLeft)
-				NetLog_Server("Warning: %d search results omitted", dwLeft);
-		}
-		ReleaseSearchCookie(wCookie, pCookie);
+	if (islast && len>=4) {
+		uint32_t omit;
+		ICQ_UNPACK(&buf, "I", omit);
+		debug_warn("icq_snac_extension_userfound_last() Bulshit warning!\n");
+		debug_white("icq_snac_extension_userfound_last() %d search results omitted\n", omit);
 	}
-#endif
+
+	icq_hexdump(DEBUG_WHITE, buf, len);
 
 	xfree(nickname); xfree(first_name); xfree(last_name); xfree(email);
 	return 0;
@@ -610,7 +585,7 @@ static metasnac_subhandler_t get_userinfo_extension_handler(uint16_t subtype) {
 	return NULL;
 }
 
-static int icq_snac_extension_replyreq_0x7da(session_t *s, unsigned char *buf, int len, private_data_t **info, int show) {
+static int icq_meta_info_reply(session_t *s, unsigned char *buf, int len, private_data_t **info, int show) {
 	struct {
 		uint16_t subtype;
 		uint8_t result;
@@ -621,28 +596,28 @@ static int icq_snac_extension_replyreq_0x7da(session_t *s, unsigned char *buf, i
 	metasnac_subhandler_t handler;
 
 	if (!ICQ_UNPACK(&pkt.data, "wc", &pkt.subtype, &pkt.result)) {
-		debug_error("icq_snac_extension_replyreq_0x7da() broken\n");
+		debug_error("icq_meta_info_reply() broken\n");
 		return -1;
 	}
 
-	debug_white("icq_snac_extension_replyreq_0x7da() subtype=%.4x result=%.2x (len=%d)\n", pkt.subtype, pkt.result, len);
+	debug_white("icq_meta_info_reply() subtype=%.4x result=%.2x (len=%d)\n", pkt.subtype, pkt.result, len);
 
 	if ( (handler = get_userinfo_extension_handler(pkt.subtype)) ) {
 		userinfo = 1;
 	} else {
 		switch (pkt.subtype) {
 			/* search */
-			case SRV_LAST_USER_FOUND:	handler = icq_snac_extension_userfound_last; break;/* Miranda: OK, SRV_LAST_USER_FOUND */
-			case SRV_USER_FOUND:		handler = icq_snac_extension_userfound; break;	/* Miranda: OK, SRV_USER_FOUND */
+			case SRV_LAST_USER_FOUND:	handler = icq_snac_extension_userfound_last; break;
+			case SRV_USER_FOUND:		handler = icq_snac_extension_userfound; break;
 
-			case SRV_RANDOM_FOUND:		handler = NULL; break;				/* XXX, SRV_RANDOM_FOUND */
+			case SRV_RANDOM_FOUND:		handler = NULL; break;	/* XXX, SRV_RANDOM_FOUND */
 			default:			handler = NULL;
 		}
 	}
 
 	__displayed = 0;
 	if (!handler) {
-		debug_error("icq_snac_extension_replyreq_0x7da() ignored: %.4x\n", pkt.subtype);
+		debug_error("icq_meta_info_reply() ignored: %.4x\n", pkt.subtype);
 		icq_hexdump(DEBUG_ERROR, pkt.data, len);
 		return 0;
 	} else {
@@ -729,8 +704,12 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 	private_item_set_int(&info, "uid", private_item_get_int(&data, "uid"));
 
 	switch (type) {
-		case 0x7da:
-			icq_snac_extension_replyreq_0x7da(s, buf, len, &info, 1);		/* Miranda: STARTED */
+		case SRV_OFFLINE_MESSAGE:
+		case SRV_END_OF_OFFLINE_MSGS:
+			debug_error("icq_snac_extension_replyreq() METASNAC type: 0x%x not supported yet.\n", type);
+			break;
+		case SRV_META_INFO_REPLY:
+			icq_meta_info_reply(s, buf, len, &info, 1);
 			break;
 		default:
 			debug_error("icq_snac_extension_replyreq() METASNAC with unknown code: %x received.\n", type);
@@ -755,7 +734,7 @@ SNAC_SUBHANDLER(icq_my_meta_information_response) {
 
 	switch (type) {
 		case 0x7da:
-			icq_snac_extension_replyreq_0x7da(s, buf, len, &j->whoami, 0);
+			icq_meta_info_reply(s, buf, len, &j->whoami, 0);
 			break;
 		default:
 			debug_error("icq_my_meta_information_response() METASNAC with unknown code: %x received.\n", type);
@@ -794,7 +773,7 @@ SNAC_HANDLER(icq_snac_extension_handler) {
 
 	switch (cmd) {
 		case 0x01: handler = icq_snac_extension_error; break;
-		case 0x03: handler = icq_snac_extension_replyreq; break;	/* Miranda: OK */
+		case 0x03: handler = icq_snac_extension_replyreq; break;
 		default:   handler = NULL; break;
 	}
 
