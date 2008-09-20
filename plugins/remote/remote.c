@@ -187,10 +187,10 @@ static string_t remote_what_to_write(char *what, va_list ap) {
 
 	while ((_str = va_arg(ap, char *))) {
 		string_append_c(str, '\002');
-		/* XXX, kazde cos co wymaga sanityzacji, sanityzowac :) */
-		/*      przy okazji mozna tez i rekodowac :) */
 		string_append(str, _str);
 	}
+	/* zamieniamy \n na '\8' */		/* XXX, nie powinno wystapic, albo przynajmniej rzadziej... */
+	xstrtr(str->str, '\n', '\x8');
 	string_append_c(str, '\n');
 
 	debug_io("remote_what_to_write: %s\n", str->str);
@@ -238,20 +238,11 @@ static int remote_writefd(int fd, char *what, ...) {
 static int rc_theme_enumerate_fd = -1;
 
 int rc_theme_enumerate(const char *name, const char *value) {
-	char *esc_name;
-	char *esc_value;
-	
 	if (rc_theme_enumerate_fd == -1)
 		return 0;
 
-	esc_name = escape(name);
-	esc_value = escape(value);
-
-	remote_writefd(rc_theme_enumerate_fd, "FORMAT", esc_name, esc_value, NULL);
+	remote_writefd(rc_theme_enumerate_fd, "FORMAT", name, value, NULL);
 	/* XXX, if remote_writefd() fails, we should set rc_theme_enumerate_fd to -1, and return 0 */
-
-	xfree(esc_name);
-	xfree(esc_value);
 	return 1;
 }
 
@@ -267,9 +258,10 @@ static char **array_make_count(const char *string, char sep, int *arrcnt) {
 
 		for (q = p, len = 0; (*q && *q != sep); q++, len++);
 
-		/* XXX, odsanityzowac, gdy trzeba */
 		/* XXX, albo mhmh, nie korzystac z xstrndup() ? */
 		token = xstrndup(p, len);
+		/* odsanityzujemy '\8' na '\n' */
+		xstrtr(token, '\x8', '\n');
 		p = q;
 		
 		result = xrealloc(result, (items + 2) * sizeof(char*));
@@ -1062,6 +1054,23 @@ cleanup:
 	return -1;		/* XXX, sry, jak ktos potrzebuje tego stringa oprocz nas, to go nie dostanie. (memleaki sa gorsze) */
 }
 
+static QUERY(remote_session_added) {
+	char *session = *(va_arg(ap, char **));
+
+	session_t *s;
+	
+	if (!(s = session_find(session))) {
+		debug_error("remote_session_added(%s) damn!\n", session);
+		return 0;
+	}
+
+	remote_broadcast("SESSION", s->uid, (s->plugin) ? ((plugin_t *) s->plugin)->name : "-", NULL);
+	remote_broadcast("SESSIONINFO", s->uid, "STATUS", itoa(s->status), NULL);
+
+	/* NOTE; assuming: connected = 0, alias = NULL */
+	return 0;
+}
+
 static QUERY(remote_ui_beep) {
 	remote_broadcast("BEEP", NULL);
 	return 0;
@@ -1196,6 +1205,8 @@ EXPORT int remote_plugin_init(int prio) {
 	query_connect_id(&remote_plugin, UI_WINDOW_ACT_CHANGED, remote_ui_window_act_changed, NULL);
 	query_connect_id(&remote_plugin, VARIABLE_CHANGED, remote_variable_changed, NULL);
 
+	query_connect_id(&remote_plugin, SESSION_ADDED, remote_session_added, NULL);
+
 	/* SESSION_EVENT */
 	query_connect_id(&remote_plugin, PROTOCOL_CONNECTED, remote_protocol_connected, NULL);
 	query_connect_id(&remote_plugin, PROTOCOL_DISCONNECTED, remote_protocol_disconnected, NULL);
@@ -1204,14 +1215,12 @@ EXPORT int remote_plugin_init(int prio) {
 	query_connect_id(&remote_plugin, SESSION_RENAMED, remote_session_renamed, NULL);
 
 	query_connect_id(&remote_plugin, USERLIST_REFRESH, remote_userlist_refresh, NULL);
-
 #if 0
 
 	query_connect_id(&remote_plugin, UI_WINDOW_TARGET_CHANGED, ncurses_ui_window_target_changed, NULL);
 	query_connect_id(&remote_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
 	query_connect_id(&remote_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
 	query_connect_id(&remote_plugin, UI_REFRESH, ncurses_ui_refresh, NULL);
-	query_connect_id(&remote_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&remote_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
 	query_connect_id(&remote_plugin, BINDING_SET, ncurses_binding_set_query, NULL);
 	query_connect_id(&remote_plugin, BINDING_COMMAND, ncurses_binding_adddelete_query, NULL);
