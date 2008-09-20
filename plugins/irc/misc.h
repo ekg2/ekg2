@@ -177,6 +177,7 @@ const static IrcCommand irccommands[] =
 	{ 1,	317,	NULL,	"RPL_WHOISIDLE",	&irc_c_whois,IRC_WHOIS},
 	{ 1,	318,	NULL,	"RPL_ENDOFWHOIS",	&irc_c_whois,IRC_WHOIS},
 	{ 1,	319,	NULL,	"RPL_WHOISCHANNELS",	&irc_c_whois,IRC_WHOIS},
+	{ 1,	320,	NULL,	"RPL_WHOISMISC",	&irc_c_whois,IRC_WHOIS},
 	{ 1,	314,	NULL,	"RPL_WHOWASUSER",	&irc_c_whois,IRC_WHOWAS},
 	{ 1,	369,	NULL,	"RPL_ENDOFWHOWAS",	&irc_c_whois,IRC_WHOWAS},
 

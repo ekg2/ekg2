@@ -4143,6 +4143,9 @@ msgstr "Wtyczka XOnScreenDisplay dla ekg2"
 msgid "Author: Adam 'dredzik' Kuczynski"
 msgstr "Autor: Adam 'dredzik' Kuczyñski"
 
+msgid "%G||%n %|         * %3\n"
+msgstr "%G||%n %|                * %3\n"
+
 #~ msgid "%! Error initialising charset conversion (%1->%2): %3"
 #~ msgstr "%! B³ad przy inicjalizacji kodowania(%1->%2): %3"
 

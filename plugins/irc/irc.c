@@ -2615,6 +2615,7 @@ static int irc_theme_init()
 	format_add("RPL_WHOISSERVER",	_("%G||%n %|server   : %3 (%4)\n"), 1);
 	format_add("RPL_WHOISOPERATOR",	_("%G||%n %|ircOp    : %3\n"), 1);
 	format_add("RPL_WHOISIDLE",	_("%G||%n %|idle     : %3 (signon: %4)\n"), 1);
+	format_add("RPL_WHOISMISC", _("%G||%n %|         * %3\n"), 1);
 	format_add("RPL_ENDOFWHOIS",	_("%G`+===%g-----\n"), 1);
 	format_add("RPL_ENDOFWHOWAS",	_("%G`+===%g-----\n"), 1);
 
