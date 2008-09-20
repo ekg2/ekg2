@@ -26,6 +26,12 @@
 #define MTYPE_AUTODND	0xEB	/* Auto do not disturb message */
 #define MTYPE_AUTOFFC	0xEC	/* Auto free for chat message */
 
+/*
+ * Message flag used to indicate additional message  properties. like auto message, multiple recipients message, etc.
+ */
+#define MFLAG_NORMAL	0x01	/* Normal message */
+#define MFLAG_AUTO	0x03	/* Auto-message flag */
+#define MFLAG_MULTI	0x80	/* This is multiple recipients message */
 
 /*
  * Server response types to client meta request.

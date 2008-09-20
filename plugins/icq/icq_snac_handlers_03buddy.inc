@@ -58,9 +58,10 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 }
 
 static void icq_get_description(session_t *s, char *uin, int status) {
+	icq_private_t *j = s->priv;
 	string_t pkt, tlv5, rdv;
 	uint32_t cookie1=rand(), cookie2=rand();
-	uint32_t mtype;
+	uint32_t mtype, cookie = (j->cookie_seq-- && 0x7fff);
 
 	debug_function("icq_get_description() for: %s\n", uin);
 
@@ -89,18 +90,18 @@ static void icq_get_description(session_t *s, char *uin, int status) {
 	rdv = string_init(NULL);
 	icq_pack_append(rdv, "wwiiiiwicw wwiiiccwwwc",
 				(uint32_t) 27,		// length of this data segment, always 27
-				(uint32_t) 8,		// protocol version
+				(uint32_t) 9,		// protocol version (we want utf-8 description)
 				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // pluginID
 				(uint32_t) 0,		// unknown
-				(uint32_t) 3,		// unknown
+				(uint32_t) 3,		// client capabilities flag
 				(uint32_t) 0, 		// unknown byte
-				(uint32_t) 0x7fff,	// channel 2 counter XXX
+				cookie,			// cookie
 
 				(uint32_t) 14,		// length of this data segment, always 14
-				(uint32_t) 0x7fff,	// channel 2 counter XXX
+				cookie,			// cookie
 				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // unknown, usually all zeros
 				mtype,			// msg type
-				(uint32_t) 3,		// msg flags  XXX ???
+				(uint32_t) MFLAG_AUTO,	// msg flags
 				(uint32_t) 1,		// status code ??? XXX
 				(uint32_t) 1,		// priority ??? XXX
 				(uint32_t) 1,		// msg length
@@ -385,18 +386,17 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 		}
 	}
 
-	if (status == EKG_STATUS_AVAIL) {
-		if (u) {
-			xfree(u->descr);
-			u->descr = NULL;
-		}
-	} else
-		icq_get_description(s, pkt.uid, status);
+	if ( (status == EKG_STATUS_AVAIL) && u ) {
+		xfree(u->descr);
+		u->descr = NULL;
+	}
 
 	if (!descr && u)
 		descr = xstrdup(u->descr);
 
 	protocol_status_emit(s, uid, status, descr, time(NULL));
+
+	icq_get_description(s, pkt.uid, status);
 
 	icq_tlvs_destroy(&tlvs);
 	xfree(uid);

@@ -38,6 +38,7 @@ typedef struct {
 	int flap_seq;		/* FLAP seq id */
 	uint16_t snac_seq;	/* SNAC seq id */
 	int snacmeta_seq;	/* META SNAC seq id */
+	int cookie_seq;		/* Cookie seq id */
 
 	int ssi;		/* server-side-userlist? */
 	int aim;		/* aim-ok? */

@@ -411,39 +411,20 @@ SNAC_SUBHANDLER(icq_snac_message_server_ack) {
 void icq_snac_message_status_reply(session_t *s, const char *from, char *uin, uint16_t version, char *msg) {
 	status_t status;
 	userlist_t *u;
-	char *uid;
+	char *uid, *descr;
 	
-#if 0
-	CCSDATA ccs;
-	PROTORECVEVENT pre = {0};
-	int status;
-	char* pszMsg;
-#endif
-
-#if 0
-	pszMsg = null_strdup((char*)msg);
-
-	// it is probably UTF-8 status reply
-	if (wVersion == 9)
-		pszMsg = detect_decode_utf8(pszMsg);
-
-	ccs.szProtoService = PSR_AWAYMSG;
-	ccs.hContact = hContact;
-	ccs.wParam = status;
-	ccs.lParam = (LPARAM)&pre;
-	pre.szMessage = pszMsg;
-	pre.timestamp = time(NULL);
-
-	CallService(MS_PROTO_CHAINRECV,0,(LPARAM)&ccs);
-
-	SAFE_FREE((void**)&pszMsg);
-#endif
 	debug_function("icq_snac_message_status_reply() status from: %s msg: %s\n", uin, msg);
+
+	if (version == 9) /* utf-8 message */
+		descr = ekg_utf8_to_locale(xstrdup(msg));
+	else
+		descr = xstrdup(msg);
 
 	uid = icq_uid(uin);
 	/* We change only description, not status */
 	status = (u = userlist_find(s, uid)) ? u->status : EKG_STATUS_UNKNOWN;
-	protocol_status_emit(s, uid, status, msg, time(NULL));
+	protocol_status_emit(s, uid, status, descr, time(NULL));
+	xfree(descr);
 	xfree(uid);
 }
 
@@ -492,7 +473,7 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 
 		/* XXX, more cookies... */
 
-		if (flags == 3) {     /* A status message reply */
+		if (flags == MFLAG_AUTO) {     /* A status message reply */
 			char *reason;
 
 			if (len < 2)
