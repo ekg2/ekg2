@@ -572,7 +572,7 @@ static WATCHER_SESSION(icq_handle_connect) {
 static WATCHER_SESSION(icq_handle_stream) {
 	icq_private_t *j = NULL;
 	char buf[8192];
-	int len, ret, start_len;
+	int len, ret, start_len, left;
 
 	if (!s || !(j = s->priv)) { 
 		debug_error("icq_handle_stream() s: 0x%x j: 0x%x\n", s, j);
@@ -599,7 +599,10 @@ static WATCHER_SESSION(icq_handle_stream) {
 
 	ret = icq_flap_handler(s, j->stream_buf);
 
-	string_remove(j->stream_buf, start_len - j->stream_buf->len);
+	if ( (left = j->stream_buf->len) > 0 ) {
+		j->stream_buf->len = start_len;
+		string_remove(j->stream_buf, start_len - left);
+	}
 
 	switch (ret) {		/* XXX, magic values */
 		case 0:
@@ -607,15 +610,16 @@ static WATCHER_SESSION(icq_handle_stream) {
 			break;
 
 		case -1:
-			debug_white("icq_flap_loop() NEED MORE DATA\n");
+		{
+			debug_white("icq_handle_stream() NEED MORE DATA\n");
 			break;
-
+		}
 		case -2:
-			debug_error("icq_flap_loop() DISCONNECT\n");
+			debug_error("icq_handle_stream() DISCONNECT\n");
 			return -1;
 
 		default:
-			debug_error("icq_flap_loop() == %d ???\n", ret);
+			debug_error("icq_handle_stream() icq_flap_loop() returns %d ???\n", ret);
 			break;
 	}
 

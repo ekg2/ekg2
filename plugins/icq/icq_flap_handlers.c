@@ -472,7 +472,7 @@ int icq_flap_handler(session_t *s, string_t buffer) {
 
 		if (buf[0] != 0x2A) {
 			debug_error("icq_flap_loop() Incoming packet is not a FLAP: id is %d.\n", buf[0]);
-			icq_hexdump(DEBUG_ERROR, (unsigned char *) buf, len);
+			icq_hexdump(DEBUG_ERROR, buf, len);
 			return -2;
 		}
 
@@ -504,12 +504,12 @@ int icq_flap_handler(session_t *s, string_t buffer) {
 
 		handler(s, flap.data, flap.len);
 
-	/* next flap? */
+		/* next flap? */
 		buf += (flap.len);
 		len -= (flap.len);
 		buffer->len = len;
 		next_flap = 1;
 	}
 
-	return next_flap ? 0 : -1;	/* ??? XXX */
+	return len ? -1 : 0;
 }
