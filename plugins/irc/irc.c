@@ -2649,7 +2649,7 @@ static int irc_theme_init()
 
 
 	/* away log */
-	format_add("irc_awaylog_begin",		_("%G.+===%g----- Awaylog for: (%1)\n"), 1);
+	format_add("irc_awaylog_begin",		_("%G.+===%g----- Awaylog for: (%n%1%g)%n\n"), 1);
 	format_add("irc_awaylog_msg",		_("%G|| %n[%Y%2%n] <%W%4%n> %5\n"), 1);
 	format_add("irc_awaylog_msg_chan",	_("%G|| %n[%Y%2%n] [%G%3%n] <%W%4%n> %5\n"), 1);
 	format_add("irc_awaylog_end",		_("%G`+===%g-----\n"), 1);
