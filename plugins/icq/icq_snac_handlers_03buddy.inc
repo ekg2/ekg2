@@ -60,11 +60,18 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 static void icq_get_description(session_t *s, char *uin, int status) {
 	string_t pkt, tlv5, rdv;
 	uint32_t cookie1=rand(), cookie2=rand();
+	uint32_t mtype;
 
 	debug_function("icq_get_description() for: %s\n", uin);
 
-	if (status != EKG_STATUS_AWAY && status != EKG_STATUS_GONE && status != EKG_STATUS_XA && status != EKG_STATUS_DND && status != EKG_STATUS_FFC)
-		return;
+	switch (status) {
+	    case EKG_STATUS_AWAY:	mtype = MTYPE_AUTOAWAY;	break;
+	    case EKG_STATUS_GONE:	mtype = MTYPE_AUTONA;	break;
+	    case EKG_STATUS_XA:		mtype = MTYPE_AUTOBUSY;	break;
+	    case EKG_STATUS_DND:	mtype = MTYPE_AUTODND;	break;
+	    case EKG_STATUS_FFC:	mtype = MTYPE_AUTOFFC;	break;
+	    default: return;
+	}
 
 	pkt = string_init(NULL);
 	icq_pack_append(pkt, "II", cookie1, cookie2);		// cookie
@@ -74,31 +81,30 @@ static void icq_get_description(session_t *s, char *uin, int status) {
 	tlv5 = string_init(NULL);
 	icq_pack_append(tlv5, "W", (uint32_t) 0);
 	icq_pack_append(tlv5, "II", cookie1, cookie2);		// cookie
-	icq_pack_append(tlv5, "P", (uint32_t) 0x1349);		// AIM_CAPS_ICQSERVERRELAY - Client supports channel 2 extended, TLV(0x2711) based messages.
+	icq_pack_append_cap(tlv5, CAP_SRV_RELAY);		// AIM_CAPS_ICQSERVERRELAY - Client supports channel 2 extended, TLV(0x2711) based messages.
 	icq_pack_append(tlv5, "tW", icq_pack_tlv_word(0xA, 1));	// TLV 0x0A: acktype (1 = normal message)
 	icq_pack_append(tlv5, "T", icq_pack_tlv(0x0F, NULL, 0));	// TLV 0x0F: unknown
 
 	// RendezvousMessageData
 	rdv = string_init(NULL);
-	icq_pack_append(rdv, "wwiiiiwicwwwiiiccwwwcii",
+	icq_pack_append(rdv, "wwiiiiwicw wwiiiccwwwc",
 				(uint32_t) 27,		// length of this data segment, always 27
 				(uint32_t) 8,		// protocol version
 				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // pluginID
 				(uint32_t) 0,		// unknown
 				(uint32_t) 3,		// unknown
-				(uint32_t) 0, 		// unknown
+				(uint32_t) 0, 		// unknown byte
 				(uint32_t) 0x7fff,	// channel 2 counter XXX
+
 				(uint32_t) 14,		// length of this data segment, always 14
 				(uint32_t) 0x7fff,	// channel 2 counter XXX
 				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // unknown, usually all zeros
-				(uint32_t) 0xe8,	// msg type   XXX ???
+				mtype,			// msg type
 				(uint32_t) 3,		// msg flags  XXX ???
 				(uint32_t) 1,		// status code ??? XXX
 				(uint32_t) 1,		// priority ??? XXX
-				(uint32_t) 1,		// 
-				(uint32_t) 0,		//
-				(uint32_t) 0,		// foreground
-				(uint32_t) 0x00ffffff); // foreground
+				(uint32_t) 1,		// msg length
+				(uint32_t) 0);		// msg
 
 	icq_pack_append(tlv5, "T", icq_pack_tlv(0x2711, rdv->str, rdv->len));
 	string_free(rdv, 1);
@@ -147,6 +153,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	if (u) {
 		user_private_item_set_int(u, "caps", 0);
 		user_private_item_set_int(u, "utf", 0);
+		user_private_item_set_int(u, "xstatus", 0);
 	}
 
 	for (t = tlvs; t; t = t->next) {
@@ -378,11 +385,16 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 		}
 	}
 
-	if (!descr) {
-		if (u)
-			descr = xstrdup(u->descr);
+	if (status == EKG_STATUS_AVAIL) {
+		if (u) {
+			xfree(u->descr);
+			u->descr = NULL;
+		}
+	} else
 		icq_get_description(s, pkt.uid, status);
-	}
+
+	if (!descr && u)
+		descr = xstrdup(u->descr);
 
 	protocol_status_emit(s, uid, status, descr, time(NULL));
 

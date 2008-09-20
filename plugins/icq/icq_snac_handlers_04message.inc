@@ -492,8 +492,6 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 
 		/* XXX, more cookies... */
 
-		icq_hexdump(DEBUG_ERROR, buf, len);
-
 		if (flags == 3) {     /* A status message reply */
 			char *reason;
 
@@ -504,7 +502,8 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 			icq_snac_message_status_reply(s, "SNAC(4,B)", pkt.uid, version, reason);
 			xfree(reason);
 			return 0;
-		}
+		} else
+			icq_hexdump(DEBUG_ERROR, buf, len);
 	} else {
 		/* XXX */
 		icq_hexdump(DEBUG_ERROR, buf, len);
