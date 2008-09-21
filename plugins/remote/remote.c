@@ -1272,7 +1272,6 @@ static QUERY(remote_all_contacts_changed) {
 
 static void rc_variable_set(const char *var, const char *val) {
 	variable_t *v;
-	const char *tmp;
 	void *ptr;
 	int i;
 
@@ -1294,14 +1293,7 @@ static void rc_variable_set(const char *var, const char *val) {
 		return;
 	}
 
-	if ((tmp = xstrchr(var, ':'))) {
-		plugin_t pl;
-
-		pl.name = xstrndup(var, tmp - var);
-		v = variable_add(&pl, tmp + 1, VAR_STR, 1, ptr, NULL, NULL, NULL);
-		xfree(pl.name);
-	} else
-		v = variable_add(NULL, var, VAR_STR, 1, ptr, NULL, NULL, NULL);
+	v = variable_add(NULL, var, VAR_STR, 1, ptr, NULL, NULL, NULL);
 
 	variable_set(var, val);		/* mozna zoptymalizowac */
 
