@@ -402,13 +402,36 @@ static WATCHER_LINE(rc_input_handler_line) {
 		} else if (!xstrcmp(cmd, "REQCONFIG")) {
 			variable_t *v;
 
+			/* xxx, maybe send all variable which got (->display > 0) */
+
 			for (v = variables; v; v = v->next) {
 				const char *_val;
+
+				if (v->plugin == &remote_plugin)
+					continue;
 
 				_val = rc_var_get_value(v);
 				remote_writefd(fd, "CONFIG", v->name, _val, NULL);	/* _val can be NULL */
 			}
+
+			/* BIGNOTE: 
+			 * 	here send all remote-vars, which we want to show outside
+			 */
+			remote_writefd(fd, "CONFIG", "remote:remote_control", rc_paths, NULL);
 			remote_writefd(fd, "+CONFIG", NULL);
+
+		} else if (!xstrcmp(cmd, "REQUICONFIG")) {
+			int arrlen = (arrcnt == 2) ? xstrlen(arr[1]) : 0;
+			int i;
+
+			for (i = 0; ui_vars[i].name; i++) {
+				if (arrlen > 0 && xstrncmp(ui_vars[i].name, arr[1], arrlen))
+					continue;
+
+				remote_writefd(fd, "UICONFIG", ui_vars[i].name, ui_vars[i].value_ptr, NULL);
+			}
+
+			remote_writefd(fd, "+UICONFIG", NULL);
 
 		} else if (!xstrcmp(cmd, "REQCOMMANDS")) {
 			command_t *c;
