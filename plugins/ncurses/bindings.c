@@ -380,10 +380,10 @@ static BINDING_FUNCTION(binding_complete)
 			len = xstrlen(nline);		i = 0;		cnt = 0;
 			lns_start = 0; lns_index = 0;
 
-			debug("line_start: %d line_index: %d len: %d\n", line_start, line_index, len);
+/*			debug("line_start: %d line_index: %d len: %d\n", line_start, line_index, len);*/
 			while (1) {
 				int tmp = mblen(&nline[i], len-i);
-				debug("[%d] cur: %d nextlen: %d\n", cnt, i, tmp);
+/*				debug("[%d] cur: %d nextlen: %d\n", cnt, i, tmp);*/
 				if (!lns_start && line_start == i) { lns_start = 1; line_start = cnt; }
 				if (!lns_index && line_index == i) { lns_index = 1; line_index = cnt; } 
 				cnt++;
@@ -391,7 +391,7 @@ static BINDING_FUNCTION(binding_complete)
 				if (lns_start && lns_index) break;
 				if (tmp <= 0) break;
 			}
-			debug("lns_start: %d lns_index: %d (%d,%d)\n", lns_start, lns_index, line_start, line_index);
+/*			debug("lns_start: %d lns_index: %d (%d,%d)\n", lns_start, lns_index, line_start, line_index);*/
 
 			if (!lns_start) line_start = 0;
 			if (!lns_index) line_index = 0;
