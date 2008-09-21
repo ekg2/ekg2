@@ -22,6 +22,19 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+typedef struct {
+	uint32_t id1;
+	uint32_t id2;
+	uint16_t channel;	/* Channel 1 message format (plain-text messages)
+				   Channel 2 message format (rtf messages, rendezvous)
+				   Channel 4 message format (typed old-style messages)
+				 */
+	char *sender;
+	int ack_type;
+	int version;
+	int cookie;
+} msg_params_t;
+
 SNAC_SUBHANDLER(icq_snac_message_error) {
 	struct {
 		uint16_t error;
@@ -70,39 +83,39 @@ SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
 	return 0;
 }
 
-int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, const char *sender) {
+static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int len, msg_params_t *msg_param) {
 	struct icq_tlv_list *tlvs;
 	struct icq_tlv_list *tlvs_msg;
 	icq_tlv_t *t;
-	
-	debug_function("icq_snac_message_recv_simple() from: %s leftlen: %d\n", sender, len);
+
+	debug_function("icq_snac_message_recv_icbm_ch1() from: %s leftlen: %d\n", msg_param->sender, len);
 
 	if (!(tlvs = icq_unpack_tlvs(&buf, &len, 0))) {
-		debug("icq_snac_message_recv_simple() ignoring empty message.\n");
+		debug("icq_snac_message_recv_icbm_ch1() ignoring empty message.\n");
 		return 0;
 	}
-	
+
 	if (!(t = icq_tlv_get(tlvs, 0x02)) || t->type != 0x02) {
-		debug_error("icq_snac_message_recv_simple() TLV(0x02) not found?\n");
+		debug_error("icq_snac_message_recv_icbm_ch1() TLV(0x02) not found?\n");
 		icq_tlvs_destroy(&tlvs);
 		return 1;
 	}
 
 	if (!(tlvs_msg = icq_unpack_tlvs_nc(t->buf, t->len, 0))) {
-		debug_error("icq_snac_message_recv_simple() failed to read tlv chain in message\n");
+		debug_error("icq_snac_message_recv_icbm_ch1() failed to read tlv chain in message\n");
 		icq_tlvs_destroy(&tlvs);
 		return 1;
 	}
 
 	if ((t = icq_tlv_get(tlvs_msg, 0x501))) {
-		debug("icq_snac_message_recv_simple() message has: %d caps\n", t->len);
+		debug("icq_snac_message_recv_icbm_ch1() message has: %d caps\n", t->len);
 	} else
-		debug("icq_snac_message_recv_simple() no message cap\n");
+		debug("icq_snac_message_recv_icbm_ch1() no message cap\n");
 
 	{
 		/* Parse the message parts, usually only one 0x0101 TLV containing the message,
 		 * but in some cases there can be more 0x0101 TLVs containing message parts in
-		 * different encoding (just like the new format of Offline Messages) */ 
+		 * different encoding (just like the new format of Offline Messages) */
 		struct icq_tlv_list *t;
 		string_t msg = string_init(NULL);
 		time_t sent;
@@ -123,7 +136,7 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 			if (!icq_unpack(t->buf, &t_msg.message, &t_len, "WW", &t_msg.encoding, &t_msg.codepage))
 				continue;
 
-			debug_function("icq_snac_message_recv_simple() enc: %.4x cp: %.4x\n", t_msg.encoding, t_msg.codepage);
+			debug_function("icq_snac_message_recv_icbm_ch1() enc: %.4x cp: %.4x\n", t_msg.encoding, t_msg.codepage);
 
 			switch (t_msg.encoding) {
 				case 0x02:	/* UCS-2BE */
@@ -139,7 +152,7 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 					recode = xstrndup((char *) t_msg.message, t_len);
 					break;
 				default:
-					debug_error("icq_snac_message_recv_simple() Unsupported encoding 0x%x\n", t_msg.encoding);
+					debug_error("icq_snac_message_recv_icbm_ch1() Unsupported encoding 0x%x\n", t_msg.encoding);
 			}
 			string_append_n(msg, recode, xstrlen(recode));
 			xfree(recode);
@@ -150,8 +163,8 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 		sent = time(NULL);
 
 		if (msg->len) {
-			int msgclass = xisdigit(*sender) ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_SYSTEM;
-			char *uid = icq_uid(sender);
+			int msgclass = xisdigit(*(msg_param->sender)) ? EKG_MSGCLASS_CHAT : EKG_MSGCLASS_SYSTEM;
+			char *uid = icq_uid(msg_param->sender);
 			protocol_message_emit(s, uid, NULL, msg->str, NULL, sent, msgclass, NULL, EKG_TRY_BEEP, 0);
 			xfree(uid);
 		}
@@ -165,7 +178,7 @@ int icq_snac_message_recv_simple(session_t *s, unsigned char *buf, int len, cons
 }
 
 
-static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int len, const char *sender, int ack) {
+static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int len, msg_params_t *msg_param) {
 	struct {
 		uint16_t len;		/* length of following data (LE) */
 		uint16_t ver;		/* protocol version (LE) */
@@ -173,11 +186,11 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 		uint16_t _unkn1;	/* unknown */
 		uint32_t _capflg;	/* client capabilities flags */
 		uint8_t _unkn2;		/* unknown */
-		uint16_t _dcnt;		/* seems to be a downcounter (LE) */
+		uint16_t _cookie;	/* cookie (LE) */
 	} pkt1;
 	struct {
 		uint16_t len;		/* length of following data (LE) */
-		uint16_t _dcnt;		/* seems to be a downcounter as in first chunk above */
+		uint16_t cookie;	/* cookie as in first chunk above (LE) */
 		char *_unkn;		/* unknown, usually zeros */
 	} pkt2;
 	/* if plugin field in first chunk above is zero, here is message, overwise here is plugin-specific data. */
@@ -190,7 +203,13 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 		char *str;		/* message string (null-terminated) */
 	} msg;
 
+	char *uid = icq_uid(msg_param->sender);
+	userlist_t *u = userlist_find(s, uid);
+
+	xfree(uid);
+
 	debug_function("icq_snac_message_recv_rtf2711()\n");
+
 	if ( len<27 ) {
 		debug_error("icq_snac_message_recv_rtf2711() packet too short\n");
 		return 1;
@@ -198,11 +217,17 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 	icq_unpack_nc(buf, len, "ww", &pkt1.len, &pkt1.ver);
 	pkt1.plug = buf + 4;
 
+	msg_param->version = pkt1.ver;
+
+	if (u)
+		user_private_item_set_int(u, "version", pkt1.ver);
+
 	/* next chunk */
 	buf += pkt1.len + 2;
 	len -= pkt1.len + 2;
 
-	icq_unpack_nc(buf, len, "w", &pkt2.len);
+	icq_unpack_nc(buf, len, "ww", &pkt2.len, &pkt2.cookie);
+	msg_param->cookie = pkt2.cookie;
 
 	/* next chunk */
 	buf += pkt2.len + 2;
@@ -222,11 +247,19 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 				case MTYPE_PLUGIN:
 					debug_warn("icq_snac_message_recv_rtf2711() message type 0x%x not handled yet\n", msg.type);
 					break;
+				case MTYPE_AUTOAWAY:
+				case MTYPE_AUTOBUSY:
+				case MTYPE_AUTONA:
+				case MTYPE_AUTODND:
+				case MTYPE_AUTOFFC:
+					/* Somebody ask for our status */
+					debug_error("XXX icq_snac_message_recv_rtf2711() %s asks for our status description\n", msg_param->sender);
+					break;
 				default:
 					/* normal message */
 					if (msg.len) {
 						time_t sent = time(NULL);
-						char *uid = icq_uid(sender);
+						char *uid = icq_uid(msg_param->sender);
 						char *tmp = ekg_utf8_to_locale(xstrdup(msg.str));
 
 						protocol_message_emit(s, uid, NULL, tmp, NULL, sent, EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
@@ -247,85 +280,106 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 	return 0;
 }
 
-static int icq_snac_message_recv_rtf(session_t *s, unsigned char *buf, int len, const char *sender) {
+static int icq_snac_message_recv_icbm_ch2(session_t *s, unsigned char *buf, int len, msg_params_t *msg_param) {
 	struct {
-		uint16_t type;		// message type (0 - request, 1 - cancel, 2 - accept)
-		uint32_t id1, id2;	// msg-id cookie
+		uint16_t type;		// message type (0 - normal, 1 - cancel, 2 - ack)
+		uint32_t _id1, _id2;	// msg-id cookie (unused here)
 		unsigned char *cap;	// capability (determines format of message data)
-		
-	} pkt;
-	int ack = -1;
-	struct icq_tlv_list *tlvs, *tlvs5;
-	icq_tlv_t *t, *t5, *t_msg;
 
-	debug_function("icq_snac_message_recv_rtf() from: %s leftlen: %d\n", sender, len);
+	} pkt;
+	struct icq_tlv_list *tlvs, *tlvs5;
+	icq_tlv_t *t, *t5, *t2711;
+
+	debug_function("icq_snac_message_recv_icbm_ch2() from: %s leftlen: %d\n", msg_param->sender, len);
 
 	if (!(tlvs = icq_unpack_tlvs(&buf, &len, 0))) {
-		debug("icq_snac_message_recv_rtf() ignoring empty message.\n");
+		debug("icq_snac_message_recv_icbm_ch2() ignoring empty message.\n");
 		return 0;
 	}
 
 	if (!(t5 = icq_tlv_get(tlvs, 0x05))) {
-		debug_error("icq_snac_message_recv_rtf() TLV(0x05) not found?\n");
+		debug_error("icq_snac_message_recv_icbm_ch2() TLV(0x05) not found?\n");
 		icq_tlvs_destroy(&tlvs);
 		return 1;
 	}
 
 	if (t5->len < 2 + 8 + 0x10) {
-		debug_error("icq_snac_message_recv_rtf() TLV(0x05) too short\n");
+		debug_error("icq_snac_message_recv_icbm_ch2() TLV(0x05) too short\n");
 		icq_tlvs_destroy(&tlvs);
 		return 1;
 	}
 
-	icq_unpack_nc(t5->buf, t5->len, "WII", &pkt.type, &pkt.id1, &pkt.id2);
+	icq_unpack_nc(t5->buf, t5->len, "WII", &pkt.type, &pkt._id1, &pkt._id2);
 
 	pkt.cap = t5->buf + (2 + 4 + 4);	/* msg capability */
 	t5->buf += (2 + 4 + 4 + 0x10);
 	t5->len -= (2 + 4 + 4 + 0x10);
 
-	if ( !(tlvs5 = icq_unpack_tlvs_nc(t5->buf, t5->len, 0)) ) {
-		debug("icq_snac_message_recv_rtf() ignoring empty TLV(0x05).\n");
-		icq_tlvs_destroy(&tlvs);
-		return 0;
-	}
-        /*
-         * TLV.Type(0x0A) - Acktype:
-         *	0x0000 - normal message
-         *	0x0001 - file request / abort request
-         *	0x0002 - file ack
-	 * 
-	 * TLV.Type(0x03) - external ip
-	 * TLV.Type(0x04) - internal ip
-         * TLV.Type(0x05) - listening port
-         * TLV.Type(0x0F) - unknown (empty)
-         * TLV.Type(0x2711) - extention data
-         */
-
-	if ( (t = icq_tlv_get(tlvs5, 0x0a) ) )
-		ack = t->nr;
-
-	if (!(t_msg = icq_tlv_get(tlvs5, 0x2711))) {
-		debug_error("icq_snac_message_recv_rtf() TLV(0x2711) not found?\n");
-		icq_tlvs_destroy(&tlvs5);
-		icq_tlvs_destroy(&tlvs);
-		return 1;
-	}
-
-	/* contents of TLV(0x2711) is capability-specific */
+	/* contents of TLV(0x05) is capability-specific */
 	switch (icq_cap_id(pkt.cap)) {
 		case CAP_SRV_RELAY:
 		{
-			icq_snac_message_recv_rtf2711(s, t_msg->buf, t_msg->len, sender, ack);
+			userlist_t *u;
+			char *uid;
+
+			if (pkt.type == 1) {
+				debug_warn("icq_snac_message_recv_icbm_ch2() Can't handle abort message yet\n");
+				icq_tlvs_destroy(&tlvs);
+				return 0;
+			}
+
+			if ( !(tlvs5 = icq_unpack_tlvs_nc(t5->buf, t5->len, 0)) ) {
+				debug("icq_snac_message_recv_icbm_ch2() ignoring empty TLV(0x05).\n");
+				icq_tlvs_destroy(&tlvs);
+				return 0;
+			}
+
+			/* tlvs5 may contain the following TVLs:
+			 *
+			 * TLV.Type(0x0A) - Acktype:
+			 *	0x0000 - normal message
+			 *	0x0001 - file request / abort request
+			 *	0x0002 - file ack
+			 *
+			 * TLV.Type(0x03) - external ip
+			 * TLV.Type(0x04) - internal ip
+			 * TLV.Type(0x05) - listening port
+			 * TLV.Type(0x0F) - unknown (empty)
+			 * TLV.Type(0x2711) - extention data
+			 */
+
+			if ( (t = icq_tlv_get(tlvs5, 0x0a) ) )
+				msg_param->ack_type = t->nr;
+			else
+				msg_param->ack_type = 1;
+
+			uid = icq_uid(msg_param->sender);
+			if ( (u = userlist_find(s, uid)) ) {
+				if ( (t = icq_tlv_get(tlvs5, 0x0a) ) )	// External IP
+					user_private_item_set_int(u, "IP", t->nr);
+			}
+			xfree(uid);
+
+			if (!(t2711 = icq_tlv_get(tlvs5, 0x2711))) {
+				debug_error("icq_snac_message_recv_icbm_ch2() TLV(0x2711) not found?\n");
+				icq_tlvs_destroy(&tlvs5);
+				icq_tlvs_destroy(&tlvs);
+				return 1;
+			}
+
+			icq_snac_message_recv_rtf2711(s, t2711->buf, t2711->len, msg_param);
 			break;
 		}
 		/* TO DO! ?wo? XXX */
-		case CAP_ICQDIRECT:
-		case CAP_SENDFILE:
-		case CAP_CONTACTS:
-
+		case CAP_ICQDIRECT:	// handle reverse DC request
+		case CAP_SENDFILE:	// handle OFT packet
+		case CAP_CONTACTS:	// handle contacts transfer
+			debug_error("XXX icq_snac_message_recv_icbm_ch2() don't handle this yet\n");
+			icq_hexdump(DEBUG_ERROR, t5->buf, t5->len);
+			break;
 		default:
-			debug_error("icq_snac_message_recv_rtf() Unknow 0x2711 message for capability id=%d\n", icq_cap_id(pkt.cap));
-			icq_hexdump(DEBUG_ERROR, t_msg->buf, t_msg->len);
+			debug_error("icq_snac_message_recv_icbm_ch2() Unknow 0x2711 message for capability id=%d\n", icq_cap_id(pkt.cap));
+			icq_hexdump(DEBUG_ERROR, t5->buf, t5->len);
 			break;
 	}
 
@@ -334,28 +388,28 @@ static int icq_snac_message_recv_rtf(session_t *s, unsigned char *buf, int len, 
 	return 0;
 }
 
+static int icq_snac_message_recv_icbm_ch4(session_t *s, unsigned char *buf, int len, msg_params_t *msg_param) {
+	debug_error("XXX icq_snac_message_recv_icbm_ch4()\n");
+	icq_hexdump(DEBUG_ERROR, buf, len);
+	return 0;
+}
 
 SNAC_SUBHANDLER(icq_snac_message_recv) {
+	msg_params_t *msg_param = xmalloc(sizeof(msg_params_t));
 	struct {
-		uint32_t id1;
-		uint32_t id2;
-		uint16_t channel;	/* Channel 1 message format (plain-text messages)
-					   Channel 2 message format (rtf messages, rendezvous)
-					   Channel 4 message format (typed old-style messages)
-					 */
-		char *sender;
 		uint16_t warning_level;	/* not used */
 		uint16_t tlv_count;
 	} pkt;
 	struct icq_tlv_list *tlvs;
 
-	if (!ICQ_UNPACK(&buf, "iiWuWW", &pkt.id1, &pkt.id2, &pkt.channel, &pkt.sender, &pkt.warning_level, &pkt.tlv_count)) {
+	if (!ICQ_UNPACK(&buf, "iiWuWW", &msg_param->id1, &msg_param->id2, &msg_param->channel, &msg_param->sender, &pkt.warning_level, &pkt.tlv_count)) {
 		debug_error("icq_snac_message_recv() Malformed message thru server\n");
+		xfree(msg_param);
 		return -1;
 	}
 
 	debug_function("icq_snac_message_recv() from: %s id1: %.8x id2: %.8x channel: %.4x warning: %.4x tlvs: %.4x\n",
-				pkt.sender, pkt.id1, pkt.id2, pkt.channel, pkt.warning_level, pkt.tlv_count);
+				msg_param->sender, msg_param->id1, msg_param->id2, msg_param->channel, pkt.warning_level, pkt.tlv_count);
 
 	/* XXX, spamer? */
 
@@ -369,22 +423,26 @@ SNAC_SUBHANDLER(icq_snac_message_recv) {
 	 */
 	icq_tlvs_destroy(&tlvs);
 
-	switch (pkt.channel) {
+	switch (msg_param->channel) {
 		case 0x01:	/* plain-text messages */
-			icq_snac_message_recv_simple(s, buf, len, pkt.sender);
+			icq_snac_message_recv_icbm_ch1(s, buf, len, msg_param);
 			break;
 
 		case 0x02:	/* rtf messages, rendezvous */
-			icq_snac_message_recv_rtf(s, buf, len, pkt.sender);
+			icq_snac_message_recv_icbm_ch2(s, buf, len, msg_param);
 			break;
 
 		case 0x04:	/* yped old-style messages */
+			icq_snac_message_recv_icbm_ch4(s, buf, len, msg_param);
+			break;
+
 		default:
-			debug_error("icq_snac_message_recv() unknown format message from server sender: %s\n", pkt.sender);
+			debug_error("icq_snac_message_recv() unknown format message from server. Channel:%d Sender: %s\n", msg_param->channel, msg_param->sender);
 			/* dump message */
 			icq_hexdump(DEBUG_ERROR, buf, len);
 			break;
 	}
+	xfree(msg_param);
 	return 0;
 }
 
@@ -408,22 +466,27 @@ SNAC_SUBHANDLER(icq_snac_message_server_ack) {
 	return 0;
 }
 
-void icq_snac_message_status_reply(session_t *s, const char *from, char *uin, uint16_t version, char *msg) {
-	status_t status;
-	userlist_t *u;
-	char *uid, *descr;
-	
-	debug_function("icq_snac_message_status_reply() status from: %s msg: %s\n", uin, msg);
+static void icq_snac_message_status_reply(session_t *s, char *uin, uint16_t version, char *msg) {
+
+	char *uid = icq_uid(uin), *descr;
+	userlist_t *u = u = userlist_find(s, uid);
+
+	if (u)
+		debug_function("icq_snac_message_status_reply() status from %s msg: %s\n", uid, msg);
+	else {
+		debug_warn("icq_snac_message_status_reply() Ignoring status from unknown %s msg: %s\n", uid, msg);
+		xfree(uid);
+		return;
+	}
 
 	if (version == 9) /* utf-8 message */
 		descr = ekg_utf8_to_locale(xstrdup(msg));
 	else
 		descr = xstrdup(msg);
 
-	uid = icq_uid(uin);
 	/* We change only description, not status */
-	status = (u = userlist_find(s, uid)) ? u->status : EKG_STATUS_UNKNOWN;
-	protocol_status_emit(s, uid, status, descr, time(NULL));
+	protocol_status_emit(s, uid, u->status, descr, time(NULL));
+
 	xfree(descr);
 	xfree(uid);
 }
@@ -480,7 +543,7 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 				return -1;
 
 			reason = xstrndup((char *) buf + 2, len);
-			icq_snac_message_status_reply(s, "SNAC(4,B)", pkt.uid, version, reason);
+			icq_snac_message_status_reply(s, pkt.uid, version, reason);
 			xfree(reason);
 			return 0;
 		} else
@@ -501,14 +564,14 @@ SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
 	struct {
 		uint32_t msg_id1;
 		uint32_t msg_id2;
-		uint16_t format;
+		uint16_t channel;
 		char *uid;
 		uint16_t typing;
 	} pkt;
 	char *icquid;
 
 
-	if (!ICQ_UNPACK(&buf, "iiWuW", &pkt.msg_id1, &pkt.msg_id2, &pkt.format, &pkt.uid, &pkt.typing))
+	if (!ICQ_UNPACK(&buf, "iiWuW", &pkt.msg_id1, &pkt.msg_id2, &pkt.channel, &pkt.uid, &pkt.typing))
 		return -1;
 
 	/* SetContactCapabilities(hContact, CAPF_TYPING); */
@@ -559,7 +622,7 @@ SNAC_SUBHANDLER(icq_snac_message_queue) {	/* SNAC(4, 0x17) Offline Messages resp
 		NetLog_Server("End of offline msgs, %u received", cookie->nMessages);
 		if (cookie->nMissed)
 		{ // NASTY WORKAROUND!!
-			// The ICQ server has a bug that causes offline messages to be received again and again when some 
+			// The ICQ server has a bug that causes offline messages to be received again and again when some
 			// missed message notification is present (most probably it is not processed correctly and causes
 			// the server to fail the purging process); try to purge them using the old offline messages
 			// protocol.  2008/05/21
