@@ -1,3 +1,21 @@
+/*
+ *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *                2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -65,6 +83,59 @@ static list_t rc_inputs = NULL;
 static char *rc_paths = NULL;
 static char *rc_password = NULL;
 static int rc_first = 1;
+
+/* note:
+ * 	zmienne gtk: ncurses: readline: dla -F remote
+ * 	sa zapisywane w config-remote
+ */
+
+static struct {
+	const char *name;
+	char *value_def;
+	char *value_ptr;
+	int used;
+
+} ui_vars[] = {
+	/* gtk: */
+	{ "gtk:backlog_size", "1000", NULL, 0 },
+	{ "gtk:tab_layout", "2", NULL, 0 },
+
+	/* ncurses: */
+	{ "ncurses:aspell", "0", NULL, 0 },
+	{ "ncurses:aspell_lang", "pl", NULL, 0 },
+	{ "ncurses:backlog_size", "1000", NULL, 0 },
+	{ "ncurses:contacts", "2", NULL, 0 },
+	{ "ncurses:contacts_descr", "0", NULL, 0 },
+	{ "ncurses:contacts_edge", "2", NULL, 0 },
+	{ "ncurses:contacts_frame", "1", NULL, 0 },
+	{ "ncurses:contacts_groups", NULL, NULL, 0 },
+	{ "ncurses:contacts_groups_all_sessons", NULL, NULL, 0 },
+	{ "ncurses:contacts_margin", "1", NULL, 0 },
+	{ "ncurses:contacts_metacontacts_swallow", "1", NULL, 0 },
+	{ "ncurses:contacts_order", NULL, NULL, 0 },
+	{ "ncurses:contacts_orderbystate", "1", NULL, 0 },
+	{ "ncurses:contacts_size", "9", NULL, 0 },
+	{ "ncurses:contacts_wrap", "0", NULL, 0 },
+	{ "ncurses:display_transparent", "1", NULL, 0 },
+	{ "ncurses:enter_scrolls", "0", NULL, 0 },
+	{ "ncurses:header_size", "0", NULL, 0 },
+	{ "ncurses:kill_irc_window", "1", NULL, 0 },
+	{ "ncurses:lastlog_lock", "1", NULL, 0 },
+	{ "ncurses:lastlog_size", "10", NULL, 0 },
+	{ "ncurses:margin_size", "15", NULL, 0 },
+	{ "ncurses:mark_on_window_change", "0", NULL, 0 },
+	{ "ncurses:statusbar_size", "1", NULL, 0 },
+	{ "ncurses:text_bottomalign", "0", NULL, 0 },
+	{ "ncurses:traditional_clear", "1", NULL, 0 },
+	{ "ncurses:typing_interval", "1", NULL, 0 },
+	{ "ncurses:typing_timeout", "10", NULL, 0 },
+	{ "ncurses:typing_timeout_empty", "5", NULL, 0 },
+
+	/* readline: */
+	{ "readline:ctrld_quits", "1", NULL, 0 },
+
+	{ NULL, NULL, NULL, 0 }
+};
 
 static const char *rc_var_get_value(variable_t *v) {
 	if (!v)
@@ -1176,6 +1247,99 @@ static QUERY(remote_all_contacts_changed) {
 	return 0;
 }
 
+static void rc_variable_set(const char *var, const char *val) {
+	variable_t *v;
+	const char *tmp;
+	void *ptr;
+	int i;
+
+	if ((v = variable_find(var)))		/* jesli taka zmienna juz istnieje, to olewamy */
+		return;
+
+	ptr = NULL;
+
+	for (i = 0; ui_vars[i].name; i++) {
+		if (ui_vars[i].used == 0 && !xstrcasecmp(var, ui_vars[i].name)) {
+			ptr = &(ui_vars[i].value_ptr);
+			ui_vars[i].used = 1;
+			break;
+		}
+	}
+
+	if (ptr == NULL) {
+		debug_error("rc_variable_set(%s) ptr == NULL\n", var);
+		return;
+	}
+
+	if ((tmp = xstrchr(var, ':'))) {
+		plugin_t pl;
+
+		pl.name = xstrndup(var, tmp - var);
+		v = variable_add(&pl, tmp + 1, VAR_STR, 1, ptr, NULL, NULL, NULL);
+		xfree(pl.name);
+	} else
+		v = variable_add(NULL, var, VAR_STR, 1, ptr, NULL, NULL, NULL);
+
+	variable_set(var, val);		/* mozna zoptymalizowac */
+
+	v->plugin = &remote_plugin;	/* XXX, sprawdzic czy faktycznie mozemy tak oszukiwac */
+}
+
+static int rc_config_read(const char *plugin) {		/* alike config_read() */
+	FILE *f;
+	char *buf, *foo;
+	struct stat st;
+	const char *filename;
+
+	if (!(filename = prepare_pathf("config-%s", plugin)))
+		return -1;
+
+	if (!(f = fopen(filename, "r")))
+		return -1;
+
+	if (stat(filename, &st) || !S_ISREG(st.st_mode)) {
+		if (S_ISDIR(st.st_mode))
+			errno = EISDIR;
+		else
+			errno = EINVAL;
+		fclose(f);
+		return -1;
+	}
+
+	/* note:
+	 * 	zakladamy ze w pliku konfiguracyjnym plugina,
+	 * 	sa tylko zmienne, i tylko potrzebne, jesli nie. to zle	(aktualnie: nic sie nie stanie)
+	 *
+	 * xxx:
+	 * 	mozemy sprawdzac czy zmienna ma prefix plugina, jesli tak -> OK
+	 */
+
+	while ((buf = read_file(f, 0))) {
+		if (buf[0] == '#' || buf[0] == ';' || (buf[0] == '/' && buf[1] == '/'))
+			continue;
+
+		if (!(foo = xstrchr(buf, ' ')))
+			continue;
+
+		*foo++ = 0;
+		if (!xstrcasecmp(buf, ("set"))) {
+			char *bar;
+
+			if (!(bar = xstrchr(foo, ' ')))
+				rc_variable_set(foo, NULL);
+			else {
+				*bar++ = 0;
+				rc_variable_set(foo, bar);
+			}
+		} else {
+			rc_variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL);
+		}
+	}
+	
+	fclose(f);
+	return 0;
+}
+
 EXPORT int remote_plugin_init(int prio) {
 	int is_UI = 0;
 
@@ -1247,7 +1411,20 @@ EXPORT int remote_plugin_init(int prio) {
 	query_connect_id(&remote_plugin, USERLIST_REMOVED, remote_all_contacts_changed, NULL);
 	query_connect_id(&remote_plugin, USERLIST_RENAMED, remote_all_contacts_changed, NULL);
 
+	{
+		int i;
 
+	/* sprobujmy wczytac konfiguracje... */
+		rc_config_read("ncurses");
+		rc_config_read("readline");
+		rc_config_read("gtk");
+
+	/* jako fallback, dodajemy wszystkie znane nam zmienne pluginowe */
+		for (i = 0; ui_vars[i].name; i++) {
+			if (ui_vars[i].used == 0)
+				rc_variable_set(ui_vars[i].name, ui_vars[i].value_def);
+		}
+	}
 
 /* XXX, signal()? on ^C, do ekg_exit() etc..? */
 
