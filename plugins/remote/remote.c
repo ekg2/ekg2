@@ -1251,6 +1251,23 @@ static QUERY(remote_session_renamed) {
 	return 0;
 }
 
+static QUERY(remote_userlist_changed) {
+	char *session = *(va_arg(ap, char **));
+	char *uid = *(va_arg(ap, char **));
+
+	session_t *s;
+	userlist_t *u;
+
+	if (!(u = userlist_find((s = session_find(session)), uid))) {
+		debug_error("remote_userlist_changed(%s, %s) damn!\n", session, uid);
+		return 0;
+	}
+
+	remote_broadcast("USERINFO", s->uid, u->uid, itoa(u->status), u->descr, NULL);
+
+	return 0;
+}
+
 static QUERY(remote_userlist_refresh) {
 	/* ze wstepnej analizy wynika ze ulubionym query po userlist_add() jest emitowanie USERLIST_REFRESH...
 	 * bez parametrow, najwygodniejsze, 
@@ -1394,6 +1411,7 @@ EXPORT int remote_plugin_init(int prio) {
 	query_connect_id(&remote_plugin, SESSION_CHANGED, remote_session_changed, NULL);
 	query_connect_id(&remote_plugin, SESSION_RENAMED, remote_session_renamed, NULL);
 
+	query_connect_id(&remote_plugin, USERLIST_CHANGED, remote_userlist_changed, NULL);
 	query_connect_id(&remote_plugin, USERLIST_REFRESH, remote_userlist_refresh, NULL);
 #if 0
 
