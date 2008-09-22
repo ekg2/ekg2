@@ -6,7 +6,7 @@ Import('*')
 for l in ['gif', 'ungif']:
 	out = conf.CheckLibWithHeader(l, ['gif_lib.h'], 'C', 'DGifSlurp(NULL);', 0)
 	defines['HAVE_LIB%s' % l.upper()] = out
-	if (out):
+	if out:
 		defines['HAVE_GIF_LIB_H'] = out
 		libs.append(l)
 		break

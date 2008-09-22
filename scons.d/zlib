@@ -5,7 +5,7 @@ Import('*')
 
 out = conf.CheckLibWithHeader('z', ['zlib.h'], 'C', 'gzopen(NULL, NULL);', 0)
 defines['HAVE_ZLIB'] = out
-if (out):
+if out:
 	libs.append('z')
 
 Return('out')

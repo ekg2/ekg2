@@ -9,7 +9,7 @@ possible = [
 
 for h in possible:
 	out = conf.CheckHeader([h])
-	if (out):
+	if out:
 		break;
 
 Return('out')

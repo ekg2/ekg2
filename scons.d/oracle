@@ -13,7 +13,7 @@ if 'ORACLEHOME' in os.environ:
 	old		= SetFlags(env, flags)
 
 	out = conf.CheckLib('clntsh', 'sqlcxt', ['oci.h'], None, 0)
-	if (out):
+	if out:
 		libs.append('clntsh')
 
 	RestoreFlags(env, old)

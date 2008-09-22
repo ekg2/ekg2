@@ -570,12 +570,12 @@ cenv.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
 adddocs = [elem for elem in glob.glob('docs/*.txt') if not elem in docfiles]
 for a in glob.glob('*') + glob.glob('docs/*'):
 	i = a.find('.')
-	if (i != -1):
+	if i != -1:
 		b = a[:i]
 	else:
 		b = a
 	i = b.find('/')
-	if (b != -1):
+	if b != -1:
 		b = b[i + 1:]
 
 	if b.upper() == b: # all uppercase

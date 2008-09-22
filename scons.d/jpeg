@@ -6,7 +6,7 @@ Import('*')
 out = conf.CheckLibWithHeader('jpeg', ['stdlib.h', 'stdio.h', 'jpeglib.h'], 'C', 'jpeg_start_decompress(NULL);', 0)
 defines['HAVE_LIBJPEG'] = out
 defines['HAVE_JPEGLIB_H'] = out
-if (out):
+if out:
 	libs.append('jpeg')
 
 Return('out')

@@ -5,7 +5,7 @@ Import('*')
 
 old	= SetFlags(env, ['-D_GNU_SOURCE'])
 out = conf.CheckLibWithHeader('pcap', ['pcap.h'], 'C', 'pcap_open_live(NULL, 0, 0, 0, NULL);', 0)
-if (out):
+if out:
 	libs.append('pcap')
 RestoreFlags(env, old)
 

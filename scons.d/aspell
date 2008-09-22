@@ -5,7 +5,7 @@ Import('*')
 
 out = conf.CheckLibWithHeader('aspell', ['aspell.h'], 'C', 'new_aspell_config();', 0)
 defines['WITH_ASPELL'] = out
-if (out):
+if out:
 	libs.append('aspell')
 
 Return('out')

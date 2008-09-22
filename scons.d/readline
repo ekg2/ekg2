@@ -7,7 +7,7 @@ for p in ['', 'readline/']:
 	out = conf.CheckLibWithHeader('readline', ['stdio.h', 'stdlib.h', '%sreadline.h' % p], 'C', 'rl_initialize();', 0)
 	defines['HAVE_%sREADLINE_H' % p.upper().replace('/', '_')] = out
 	defines['HAVE_READLINE'] = out
-	if (out):
+	if out:
 		libs.append('readline')
 		break
 

@@ -6,7 +6,7 @@ Import('*')
 out = conf.CheckLibWithHeader('expat', ['expat.h'], 'C', 'XML_ParserCreate(NULL);', 0)
 defines['HAVE_EXPAT'] = out
 defines['HAVE_EXPAT_H'] = out
-if (out):
+if out:
 	libs.append('expat')
 
 Return('out')
