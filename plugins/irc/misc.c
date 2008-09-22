@@ -249,7 +249,7 @@ next2:
 				xfree(u->descr);
 				u->status	= EKG_STATUS_AVAIL;
 				u->descr	= xstrdup("description... ?");
-				query_emit_id(NULL, USERLIST_CHANGED, &s, &(u->uid));
+				query_emit_id(NULL, USERLIST_CHANGED, &(s->uid), &(u->uid));
 			}
 		} else {
 			string_t str = string_init(r->descr);
