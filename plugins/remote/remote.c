@@ -144,6 +144,7 @@ static const char *rc_var_get_value(variable_t *v) {
 	switch (v->type) {
 		case VAR_INT:
 		case VAR_BOOL:
+		case VAR_MAP:
 			return itoa(*((int *) v->ptr));
 
 		case VAR_THEME:
@@ -152,9 +153,9 @@ static const char *rc_var_get_value(variable_t *v) {
 		case VAR_STR:
 			return *((const char **) v->ptr);
 
-		case VAR_MAP:
 		default:
-			return "notimplemented";
+			debug_error("rc_var_get_value() unknown type: %d\n", v->type);
+			return NULL;
 	}
 }
 
