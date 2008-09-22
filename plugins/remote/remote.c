@@ -570,7 +570,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 			for (s = sessions; s; s = s->next) {
 				for (u = s->userlist; u; u = u->next) {
 					char *groups = (u->groups) ? group_to_string(u->groups, 1, 0) : NULL;
-					remote_writefd(fd, "SESSIONITEM", s->uid, fix(u->uid), itoa(u->status), fix(u->nickname), fix(groups), NULL);
+					remote_writefd(fd, "SESSIONITEM", s->uid, fix(u->uid), itoa(u->status), fix(u->nickname), fix(groups), fix(u->descr), NULL);
 					xfree(groups);
 				}
 			}
@@ -579,7 +579,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 			for (w = windows; w; w = w->next) {
 				for (u = w->userlist; u; u = u->next) {
 					char *groups = (u->groups) ? group_to_string(u->groups, 1, 0) : NULL;
-					remote_writefd(fd, "WINDOWITEM", itoa(w->id), fix(u->uid), itoa(u->status), fix(u->nickname), fix(groups), NULL);
+					remote_writefd(fd, "WINDOWITEM", itoa(w->id), fix(u->uid), itoa(u->status), fix(u->nickname), fix(groups), fix(u->descr), NULL);
 					xfree(groups);
 				}
 
