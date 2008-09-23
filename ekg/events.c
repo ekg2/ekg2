@@ -90,21 +90,8 @@ COMMAND(cmd_on) {
 			return -1;
 		}
 
-/* first we add event, because event_add() can fail. */
-		
 		if (event_add(params[1], prio, params[3], params[4], quiet)) 
 			return -1;
-
-/* after it we do query_connect() if we don't know it in events_all */
-
-		if (!array_contains(events_all, params[1], 0)) {
-			query_t *q;
-
-			debug("cmd_on, array_contains(events_all, \"%s\", 0) failed. Binding new query: %s\n", params[1], params[1]);
-
-			q = query_connect(NULL, params[1], event_misc, NULL);
-			q->data = (char *) query_name(q->id);		/* hack */
-		}
 
 		config_changed = 1;
 		return 0;
@@ -187,6 +174,20 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	xfree(tmp);
 
 	printq("events_add", name);
+
+	if (!array_contains(events_all, name, 0)) {
+		query_t *q;
+
+		debug("event_add, array_contains(events_all, \"%s\", 0) failed. Binding new query: %s\n", name, name);
+
+		q = query_connect(NULL, name, event_misc, NULL);
+		q->data = (char *) query_name(q->id);		/* hack */	/* maybe: q->data = ev->name ? */
+
+#if 0
+		array_add(&events_all, (char *) q->data);	/* note: after query_external_free() this won't be accessible */
+								/* 	luckily, we call event_free() before query_external_free() */
+#endif
+	}
 
 	return 0;
 }
