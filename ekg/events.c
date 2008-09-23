@@ -183,10 +183,8 @@ int event_add(const char *name, int prio, const char *target, const char *action
 		q = query_connect(NULL, name, event_misc, NULL);
 		q->data = (char *) query_name(q->id);		/* hack */	/* maybe: q->data = ev->name ? */
 
-#if 0
 		array_add(&events_all, (char *) q->data);	/* note: after query_external_free() this won't be accessible */
 								/* 	luckily, we call event_free() before query_external_free() */
-#endif
 	}
 
 	return 0;
