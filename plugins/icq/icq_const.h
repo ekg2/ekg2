@@ -25,6 +25,21 @@
 #define MTYPE_AUTONA	0xEA	/* Auto not available message */
 #define MTYPE_AUTODND	0xEB	/* Auto do not disturb message */
 #define MTYPE_AUTOFFC	0xEC	/* Auto free for chat message */
+/*
+ *Internal Message types
+ */
+#define MTYPE_UNKNOWN               0x00 // Unknown message
+
+#define MTYPE_GREETINGCARD          0x101 // Greeting Card
+#define MTYPE_REQUESTCONTACTS       0x102 // Request for Contacts
+#define MTYPE_MESSAGE               0x103 // Message+
+#define MTYPE_STATUSMSGEXT          0x104 // StatusMsgExt (2003b)
+#define MTYPE_SMS_MESSAGE           0x110 // SMS message from Mobile
+#define MTYPE_SCRIPT_INVITATION     0x201 // Xtraz Invitation
+#define MTYPE_SCRIPT_DATA           0x202 // Xtraz Message
+#define MTYPE_SCRIPT_NOTIFY         0x208 // Xtraz Response
+#define MTYPE_REVERSE_REQUEST       0x401 // Reverse DC request
+
 
 /*
  * Message flag used to indicate additional message  properties. like auto message, multiple recipients message, etc.
@@ -32,6 +47,27 @@
 #define MFLAG_NORMAL	0x01	/* Normal message */
 #define MFLAG_AUTO	0x03	/* Auto-message flag */
 #define MFLAG_MULTI	0x80	/* This is multiple recipients message */
+
+/*
+ *
+ */
+#define ACKTYPE_MESSAGE    0
+#define ACKTYPE_URL        1
+#define ACKTYPE_FILE       2
+#define ACKTYPE_CHAT       3
+#define ACKTYPE_AWAYMSG    4
+#define ACKTYPE_AUTHREQ    5
+#define ACKTYPE_ADDED      6
+#define ACKTYPE_GETINFO    7
+#define ACKTYPE_SETINFO    8
+#define ACKTYPE_LOGIN      9
+#define ACKTYPE_SEARCH     10
+#define ACKTYPE_NEWUSER    11
+#define ACKTYPE_STATUS     12
+#define ACKTYPE_CONTACTS   13	//send/recv of contacts
+#define ACKTYPE_AVATAR	   14 //send/recv of avatars from a protocol
+#define ACKTYPE_EMAIL      15	//notify if the unread emails changed
+
 
 /*
  * Server response types to client meta request.
@@ -76,5 +112,22 @@
 #define META_SET_FULLINFO_ACK		0x0c3f
 #define META_SPAM_REPORT_ACK		0x2012
 
+
+#define ACKTYPE_MESSAGE    0
+#define ACKTYPE_URL        1
+#define ACKTYPE_FILE       2
+#define ACKTYPE_CHAT       3
+#define ACKTYPE_AWAYMSG    4
+#define ACKTYPE_AUTHREQ    5
+#define ACKTYPE_ADDED      6
+#define ACKTYPE_GETINFO    7
+#define ACKTYPE_SETINFO    8
+#define ACKTYPE_LOGIN      9
+#define ACKTYPE_SEARCH     10
+#define ACKTYPE_NEWUSER    11
+#define ACKTYPE_STATUS     12
+#define ACKTYPE_CONTACTS   13	//send/recv of contacts
+#define ACKTYPE_AVATAR	   14 //send/recv of avatars from a protocol
+#define ACKTYPE_EMAIL      15	//notify if the unread emails changed
 
 #endif

@@ -56,19 +56,20 @@ void icq_pack_append_xstatus(string_t pkt, int x_id);
  *
  */
 typedef enum {
-	PLUGIN_NONE=0,	// None plugin (zeros)
-	PLUGIN_01,	// Status manager plugin
-	PLUGIN_02,	// Info manager plugin
+	PSIG_MESSAGE=0,		// None plugin (zeros)
+	PSIG_STATUS_PLUGIN,	// Status manager plugin
+	PSIG_INFO_PLUGIN,	// Info manager plugin
+	MGTYPE_MESSAGE,		// Message plugin
+	MGTYPE_FILE,		// File transfer plugin
+	MGTYPE_WEBURL,		// URL plugin
+	MGTYPE_CHAT,		// Chat plugin
+	MGTYPE_CONTACTS,	// Send contact list plugin
+	MGTYPE_SMS_MESSAGE,	// SMS plugin
+	MGTYPE_GREETING_CARD,
 	PLUGIN_03,	// User info plugin
-	PLUGIN_04,	// Message plugin
-	PLUGIN_05,	// File transfer plugin
 	PLUGIN_06,	// Phone info plugin
 	PLUGIN_07,	// White search plugin
 	PLUGIN_08,	// Search plugin
-	PLUGIN_09,	// URL plugin
-	PLUGIN_10,	// Chat plugin
-	PLUGIN_11,	// Send contact list plugin
-	PLUGIN_12,	// SMS plugin
 	PLUGIN_13,	// Features list plugin
 	PLUGIN_14,	// Ext contacts plugin
 	PLUGIN_15,	// Random users service

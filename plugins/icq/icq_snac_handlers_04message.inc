@@ -181,6 +181,58 @@ static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int 
 	return 0;
 }
 
+static void icq_send_status_descr(session_t *s, int msg_type, msg_params_t *msg_param) {
+	string_t pkt;
+
+	if (!msg_param->u) {
+		debug_warn("icq_send_status_descr(). Ignore request from %s\n", msg_param->uid);
+		return;
+	}
+	debug_function("icq_send_status_descr() to %s\n", msg_param->uid);
+
+	pkt = string_init(NULL);
+	icq_pack_append(pkt, "IIWuW",
+			msg_param->id1,		// message id part 1
+			msg_param->id2,		// message id part 2
+			(uint32_t) 2,		// channel
+			atoi(msg_param->sender),
+			(uint32_t) 3		// message formating
+			);
+
+	icq_pack_append(pkt, "wwiiiiwicw wwiiiccww",
+				(uint32_t) 27,		// length of this data segment, always 27
+				(uint32_t) msg_param->version,	// protocol version (we want utf-8 description)
+				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // PSIG_MESSAGE
+				(uint32_t) 0,		// unknown
+				(uint32_t) 3,		// client capabilities flag
+				(uint32_t) 0, 		// unknown byte (dc type?)
+				msg_param->cookie,			// cookie
+
+				(uint32_t) 14,		// length of this data segment, always 14
+				msg_param->cookie,			// cookie
+				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // unknown, usually all zeros
+				msg_type,		// msg type
+				(uint32_t) MFLAG_AUTO,	// msg flags
+				(uint32_t) 0,		// status code: 0 - accepted
+				(uint32_t) 0);		// priority
+
+	char *desc = xstrdup(s->descr);
+
+	if (msg_param->version == 9) /* unicode */
+		desc = ekg_locale_to_utf8(desc);
+	else {
+		/* XXX recode? */
+	}
+
+	icq_pack_append(pkt, "w", xstrlen(desc)+1);
+	string_append(pkt, desc);
+	icq_pack_append(pkt, "c", 0);
+
+	xfree(desc);
+
+	icq_makesnac(s, pkt, 0x04, 0x0b, NULL, NULL);
+	icq_send_pkt(s, pkt);
+}
 
 static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int len, msg_params_t *msg_param) {
 	struct {
@@ -233,7 +285,7 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 	len -= pkt2.len + 2;
 
 	switch (icq_plugin_id(pkt1.plug)) {
-		case PLUGIN_NONE:
+		case PSIG_MESSAGE:
 		{
 			/* message */
 			ICQ_UNPACK(&buf, "ccwww", &msg.type, &msg.flags, &msg.status, &msg.prio, &msg.len);
@@ -252,7 +304,7 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 				case MTYPE_AUTODND:
 				case MTYPE_AUTOFFC:
 					/* Somebody ask for our status */
-					debug_error("XXX icq_snac_message_recv_rtf2711() %s asks for our status description\n", msg_param->sender);
+					icq_send_status_descr(s, msg.type, msg_param);
 					break;
 				default:
 					/* normal message */
@@ -284,7 +336,7 @@ static int icq_snac_message_recv_icbm_ch2(session_t *s, unsigned char *buf, int 
 		unsigned char *cap;	// capability (determines format of message data)
 
 	} pkt;
-	struct icq_tlv_list *tlvs, *tlvs5;
+	struct icq_tlv_list *tlvs, *tlvs5 = NULL;
 	icq_tlv_t *t, *t5, *t2711;
 
 	debug_function("icq_snac_message_recv_icbm_ch2() from: %s leftlen: %d\n", msg_param->sender, len);
@@ -388,7 +440,7 @@ static int icq_snac_unpack_message_params(session_t *s, unsigned char **buf, int
 	/* init msg_params */
 	memset(msg_param, 0, sizeof(msg_params_t));
 
-	if (!icq_unpack(*buf, buf, len, "iiWu", &msg_param->id1, &msg_param->id2, &msg_param->channel, &msg_param->sender))
+	if (!icq_unpack(*buf, buf, len, "IIWu", &msg_param->id1, &msg_param->id2, &msg_param->channel, &msg_param->sender))
 		return 0;
 
 	char *uid = icq_uid(msg_param->sender);
