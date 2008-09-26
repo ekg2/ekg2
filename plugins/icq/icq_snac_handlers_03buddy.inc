@@ -420,42 +420,53 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 }
 
 SNAC_SUBHANDLER(icq_snac_buddy_offline) {
+	struct {
+		char *uid;
+		uint16_t warning;
+		uint16_t count;
+	} pkt;
+
 	userlist_t *u;
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
-	char *descr = NULL;
 
 	debug_function("icq_snac_buddy_offline()\n");
 
 	do {
-		char *cont = NULL;
-		char *uid;
-		uint16_t discard, t_count;
+		char *descr = NULL, *uid;
 
-		if (!ICQ_UNPACK(&buf, "uWW", &cont, &discard, &t_count))
+		if (!ICQ_UNPACK(&buf, "uWW", &pkt.uid, &pkt.warning, &pkt.count))
 			return -1;
 
-		tlvs = icq_unpack_tlvs(&buf, &len, t_count);
+		tlvs = icq_unpack_tlvs(&buf, &len, pkt.count);
 		if ((t = icq_tlv_get(tlvs, 0x1d))) {
 			uint16_t a_type;
 			uint8_t a_flags, a_len;
-			if (icq_unpack_nc(t->buf, t->len, "WCC", &a_type, &a_flags, &a_len)) {
-				if ((a_type == 2) || (a_flags == 4))
-					icq_unpack_nc(t->buf+4, t->len-4, "U", &descr);
+			unsigned char *t_data = t->buf;
+			int t_len = t->len;
+			while (t_len > 0) {
+				if (icq_unpack(t_data, &t_data, &t_len, "WCC", &a_type, &a_flags, &a_len)) {
+					if ((a_type == 2) || (a_flags == 4))
+						icq_unpack_nc(t_data, a_len, "U", &descr);
+				}
+				t_data += a_len;
+				t_len  -= a_len;
 			}
 		}
 		icq_tlvs_destroy(&tlvs);
 
-		uid = icq_uid(cont);
+		uid = icq_uid(pkt.uid);
+		protocol_status_emit(s, uid, EKG_STATUS_NA, descr, time(NULL));
+
 		if ((u = userlist_find(s, uid))) {
 			user_private_item_set_int(u, "online", 0);
 			user_private_item_set_int(u, "last_ip", user_private_item_get_int(u, "ip"));
 			user_private_item_set_int(u, "ip", 0);
 			user_private_item_set_int(u, "xstatus", 0);
 			user_private_item_set_int(u, "idle", 0);
-		}
-		debug_white("icq_snac_buddy_offline() uid: %s\n", uid);
-		protocol_status_emit(s, uid, EKG_STATUS_NA, descr, time(NULL));
+			debug_white("icq_snac_buddy_offline() uid: %s\n", uid);
+		} else
+			debug_warn("icq_snac_buddy_offline() Ignoring onffine notification from %s\n", uid);
 		xfree(uid);
 	} while (len >= 1);
 
