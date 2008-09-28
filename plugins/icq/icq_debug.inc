@@ -10,7 +10,7 @@ typedef struct cmdnames_t {
 	char *text;
 } cmdnames_t;
 
-// Family 0x0001 Generic service controls 
+// Family 0x0001 Generic service controls
 struct cmdnames_t snac_names_01[] = {
 	{0x01, "Client / server error"},
 	{0x02, "Client is now online and ready for normal function"},
@@ -129,7 +129,7 @@ struct cmdnames_t snac_names_08[] = {
 	{0x02, "Display popup message server command"},
 	{ -1, NULL}};
 
-// Family 0x0009 Privacy management service 
+// Family 0x0009 Privacy management service
 struct cmdnames_t snac_names_09[] = {
 	{0x01, "Client / server error"},
 	{0x02, "Request service parameters"},

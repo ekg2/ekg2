@@ -131,7 +131,7 @@ int icq_write_status(session_t *s) {
 
 int icq_write_info(session_t *s) {
 	icq_private_t *j;
-	
+
 	if (!s || !(j = s->priv))
 		return -1;
 
@@ -148,7 +148,7 @@ int icq_write_info(session_t *s) {
 
 	icq_pack_append_cap(tlv_5, CAP_SRV_RELAY);	/* Client supports channel 2 extended, TLV(0x2711) based messages. */
 
-	
+
 	if (m_bUtfEnabled)
 		icq_pack_append_cap(tlv_5, CAP_UTF);	/* Broadcasts the capability to receive UTF8 encoded messages */
 #ifdef DBG_NEWCAPS
@@ -551,10 +551,10 @@ static WATCHER_SESSION(icq_handle_stream);
 
 static WATCHER_SESSION(icq_handle_connect) {
 	icq_private_t *j = NULL;
-	int res = 0; 
+	int res = 0;
 	socklen_t res_size = sizeof(res);
 
-	if (type) 
+	if (type)
 		return 0;
 
 	if (type == 1) {
@@ -562,7 +562,7 @@ static WATCHER_SESSION(icq_handle_connect) {
 		return 0;
 	}
 
-	if (!s || !(j = s->priv)) { 
+	if (!s || !(j = s->priv)) {
 		debug_error("icq_handle_connect() s: 0x%x j: 0x%x\n", s, j);
 		return -1;
 	}
@@ -572,7 +572,7 @@ static WATCHER_SESSION(icq_handle_connect) {
 	string_clear(j->stream_buf);
 
 	if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-		if (type) 
+		if (type)
 			debug_error("[icq] handle_connect(): SO_ERROR %s\n", strerror(res));
 
 		icq_handle_disconnect(s, (type == 2) ? "Connection timed out" : strerror(res), EKG_DISCONNECT_FAILURE);
@@ -588,7 +588,7 @@ static WATCHER_SESSION(icq_handle_stream) {
 	char buf[8192];
 	int len, ret, start_len, left;
 
-	if (!s || !(j = s->priv)) { 
+	if (!s || !(j = s->priv)) {
 		debug_error("icq_handle_stream() s: 0x%x j: 0x%x\n", s, j);
 		return -1;
 	}
@@ -699,7 +699,7 @@ static WATCHER(icq_handle_hubresolver) {
 
 	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
 		debug("[icq] socket() failed: %s\n", strerror(errno));
-		icq_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE); 
+		icq_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
 		return -1;
 	}
 
@@ -707,12 +707,12 @@ static WATCHER(icq_handle_hubresolver) {
 	sin.sin_port = ntohs(hubport);
 	sin.sin_addr.s_addr = a.s_addr;
 
-	if (ioctl(fd, FIONBIO, &one) == -1) 
+	if (ioctl(fd, FIONBIO, &one) == -1)
 		debug_error("[icq] ioctl() FIONBIO failed: %s\n", strerror(errno));
-	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) == -1) 
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) == -1)
 		debug_error("[icq] setsockopt() SO_KEEPALIVE failed: %s\n", strerror(errno));
 
-	res = connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in)); 
+	res = connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
 
 	if (res == -1 && errno != EINPROGRESS) {
 		int err = errno;
@@ -746,7 +746,7 @@ static COMMAND(icq_command_addssi) {
 		target = params[0];
 		params++;
 	}
-	
+
 	if ((u = userlist_find(session, target))) {		/* don't allow to add user again */
 		printq("user_exists_other", (params[0] ? params[0] : target), format_user(session, u->uid), session_name(session));
 		return -1;
@@ -805,7 +805,7 @@ static COMMAND(icq_command_addssi) {
 	}
 
 	/* sent packet */
-	if (nickname) { 
+	if (nickname) {
 		uint16_t min = 0xffff, max = 0, count = 0, iid;
 		string_t buddies = string_init(NULL), data = string_init(NULL);
 
@@ -817,13 +817,13 @@ static COMMAND(icq_command_addssi) {
 			if (iid<min) min = iid;
 			count++;
 		}
-		
+
 		if (count) {
 			if (min>1)
 				iid = 1;
 /*	XXX ?wo? find iid (for new user) between min, max
 			else if (max != count) {
-				
+
 			}
 */
 			else
@@ -959,7 +959,7 @@ static COMMAND(icq_command_msg) {
 
 		/* main packet */
 		pkt = icq_pack("iiWu", (uint32_t) rand(), (uint32_t) rand(), 0x01, (uint32_t) uin);
-		icq_pack_append(pkt, "TTT", 
+		icq_pack_append(pkt, "TTT",
 					icq_pack_tlv(0x02, tlv_2->str, tlv_2->len),	/* TLV(2) message-block */
 					icq_pack_tlv(0x03, NULL, 0),			/* TLV(3) server-ack */
 					icq_pack_tlv(0x06, NULL, 0)			/* TLV(6) received-offline */
@@ -973,7 +973,7 @@ static COMMAND(icq_command_msg) {
 	}
 
 msgdisplay:
-	if (!quiet) { /* if (1) ? */ 
+	if (!quiet) { /* if (1) ? */
 		char **rcpts	= xcalloc(2, sizeof(char *));
 		int class	= EKG_MSGCLASS_SENT_CHAT;	/* XXX? */
 
@@ -981,7 +981,7 @@ msgdisplay:
 		rcpts[1]	= NULL;
 
 		/* XXX, encrypt */
-		
+
 		protocol_message_emit(session, session->uid, rcpts, params[1], NULL, time(NULL), class, NULL, EKG_NO_BEEP, 0);
 
 		array_free(rcpts);
@@ -1025,7 +1025,7 @@ static COMMAND(icq_command_away) {
 		session_status_set(session, EKG_STATUS_AUTOXA);
 		allow_descr = 1;
 	} else if (!xstrcmp(name, ("away"))) {
-		format = "away"; 
+		format = "away";
 		session_status_set(session, EKG_STATUS_AWAY);
 		session_unidle(session);
 		allow_descr = 1;
@@ -1060,7 +1060,7 @@ static COMMAND(icq_command_away) {
 		if (params[0]) {
 			session_descr_set(session, (!xstrcmp(params[0], "-")) ? NULL : params[0]);
 			reason_changed = 1;
-		} else { 
+		} else {
 			char *tmp;
 
 			if (!config_keep_reason) {
@@ -1083,7 +1083,7 @@ static COMMAND(icq_command_away) {
 		printq(format, session_name(session));
 
 	ekg_update_status(session);
-	
+
 	if (session->connected) {
 		/* icq_write_info(session); */
 		icq_write_status(session);
@@ -1114,7 +1114,7 @@ static COMMAND(icq_command_connect) {
 	}
 
 /* hubserver */
-	if (!(hubserver = session_get(session, "server"))) 
+	if (!(hubserver = session_get(session, "server")))
 		hubserver = ICQ_HUB_SERVER;
 
 	session->connecting = 1;
@@ -1143,7 +1143,7 @@ static COMMAND(icq_command_disconnect) {
 
 	if (session->connecting)
 		icq_handle_disconnect(session, NULL, EKG_DISCONNECT_STOPPED);
-	else	
+	else
 		icq_handle_disconnect(session, params[0], EKG_DISCONNECT_USER);
 
 	return 0;
@@ -1180,7 +1180,7 @@ static COMMAND(icq_command_userinfo) {
 static COMMAND(icq_command_searchuin) {
 	string_t pkt;
 	uint32_t uin;
-	
+
 	debug_function("icq_command_searchuin() %s\n", params[0]);
 
 	if (!(uin = icq_get_uid(session, target))) {
@@ -1465,7 +1465,7 @@ static int icq_theme_init() {
 }
 
 static plugins_params_t icq_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL), 
+	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT,  "0", 0, NULL),
 	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "xml,simple,sqlite", 0, NULL),
@@ -1488,7 +1488,7 @@ static const struct protocol_plugin_priv icq_priv = {
 };
 
 EXPORT int icq_plugin_init(int prio) {
-#define ICQ_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE 
+#define ICQ_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define ICQ_FLAGS		ICQ_ONLY | SESSION_MUSTBECONNECTED
 #define ICQ_FLAGS_TARGET	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 #define ICQ_FLAGS_MSG		ICQ_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET

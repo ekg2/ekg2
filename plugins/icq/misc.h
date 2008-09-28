@@ -10,7 +10,7 @@ typedef struct icq_tlv_list {
 
 	uint16_t type;
 	uint16_t len;
-	
+
 	uint32_t nr;
 	unsigned char *buf;
 } icq_tlv_t;

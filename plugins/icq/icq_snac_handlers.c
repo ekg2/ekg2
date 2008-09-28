@@ -144,7 +144,7 @@ void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, p
 	icq_private_t *j;
 	string_t newbuf;
 
-	if (!s || !(j = s->priv) || !pkt) 
+	if (!s || !(j = s->priv) || !pkt)
 		return;
 
 /* XXX */
@@ -162,7 +162,7 @@ void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, p
 				(uint32_t) j->snacmeta_seq);
 	if (type)
 		icq_pack_append(newbuf, "w", (uint32_t) type);
-	
+
 	string_insert_n(pkt, 0, newbuf->str, newbuf->len);
 	string_free(newbuf, 1);
 

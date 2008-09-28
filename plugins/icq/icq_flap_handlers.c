@@ -61,7 +61,7 @@ static inline char *_icq_makeflap(uint8_t cmd, uint16_t id, uint16_t len) {
 void icq_makeflap(session_t *s, string_t pkt, uint8_t cmd) {
 	icq_private_t *j;
 
-	if (!s || !(j = s->priv) || !pkt) 
+	if (!s || !(j = s->priv) || !pkt)
 		return;
 
 	if (!j->flap_seq)
@@ -390,7 +390,7 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 		handleSignonError(wError);
 
 		// we return only if the server did not gave us cookie (possible to connect with soft error)
-		if (!getLenFromChain(chain, 0x06, 1)) 
+		if (!getLenFromChain(chain, 0x06, 1))
 		{
 			disposeChain(&chain);
 			SetCurrentStatus(ID_STATUS_OFFLINE);
@@ -486,7 +486,7 @@ int icq_flap_handler(session_t *s, string_t buffer) {
 		if (flap.len > len)
 			return -1;
 
-/* micq: conn->stat_pak_rcvd++; conn->stat_real_pak_rcvd++; */ 
+/* micq: conn->stat_pak_rcvd++; conn->stat_real_pak_rcvd++; */
 
 		switch (flap.cmd) {
 			case ICQ_FLAP_LOGIN:	handler = icq_flap_login;	break;

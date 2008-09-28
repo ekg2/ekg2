@@ -49,7 +49,7 @@ void icq_hexdump(int level, unsigned char *p, size_t len) {
 		if (len > MAX_BYTES_PER_LINE)
 			display_len = MAX_BYTES_PER_LINE;
 		else	display_len = len;
-	
+
 	/* offset */
 		debug_ext(level, "\t0x%.4x  ", offset);
 	/* hexdump */
@@ -338,7 +338,7 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 					debug_error("icq_unpack() ubuf used!\n");
 					goto err2;
 				}
-				
+
 				if (len < 1)
 					goto err;
 
@@ -366,7 +366,7 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 					debug_error("icq_unpack() Ubuf used!\n");
 					goto err2;
 				}
-				
+
 				if (len < 2)
 					goto err;
 
@@ -449,7 +449,7 @@ DYNSTUFF_LIST_DECLARE(icq_tlvs, icq_tlv_t, tlv_free_do_nothing,
 
 icq_tlv_t *icq_tlv_get(struct icq_tlv_list *l, uint16_t type) {
 	for (; l; l = l->next) {
-		if (l->type == type) 
+		if (l->type == type)
 			return l;
 	}
 	return NULL;
@@ -465,7 +465,7 @@ struct icq_tlv_list *icq_unpack_tlvs(unsigned char **str, int *maxlen, unsigned 
 
 		if (!icq_unpack(*str, str, maxlen, "WW", &type, &len))
 			return ret;
-		
+
 		debug("str_readtlvs(%d) NEXTTLV type: 0x%x len: %d (maxlen: %d maxcount: %d)\n", count, type, len, *maxlen, maxcount ? maxcount-count : 0);
 
 		if (*maxlen < len) {
@@ -487,7 +487,7 @@ struct icq_tlv_list *icq_unpack_tlvs(unsigned char **str, int *maxlen, unsigned 
 		icq_tlvs_add(&ret, ptlv);
 		count++;
 
-		if (maxcount && maxcount == count) 
+		if (maxcount && maxcount == count)
 			break;
 	}
 	return ret;

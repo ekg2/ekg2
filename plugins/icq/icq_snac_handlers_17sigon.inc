@@ -70,7 +70,7 @@ SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
 	}
 
 	/* XXX, miranda limit key to 64B */
-	
+
 	digest = icq_md5_digest(session_password_get(s), buf, pkt.key_len);
 
 	str = string_init(NULL);

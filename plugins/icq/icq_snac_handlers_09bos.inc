@@ -59,7 +59,7 @@ SNAC_SUBHANDLER(icq_snac_bos_replyreq) {	/* [reply to CLI_REQBOS] */
 	icq_unpack_tlv_word(t_max_invisible_contacts, max_invisible_contacts);
 	icq_unpack_tlv_word(t_max_temp_visible_contacts, max_temp_visible_contacts);
 
-	debug_white("icq_snac_bos_replyreq() Max visible %u, max invisible %u, max temporary visible %u items.\n", 
+	debug_white("icq_snac_bos_replyreq() Max visible %u, max invisible %u, max temporary visible %u items.\n",
 			max_visible_contacts, max_invisible_contacts, max_temp_visible_contacts);
 
 	icq_tlvs_destroy(&tlvs);

@@ -336,7 +336,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 		tmp = saprintf("GMT%+d", tz/2);
 		private_item_set(info, "tzone", tmp);
 		xfree(tmp);
-		
+
 		private_item_set_int(info, "auth", !private_item_get_int(info, "auth"));
 		private_item_set_int(info, "webaware", private_item_get_int(info, "webaware") + 1);
 	}
@@ -350,7 +350,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_basicinfo) {
 		}
 		xfree(uid);
 	}
-	
+
 	return 0;
 }
 
@@ -377,7 +377,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_email) {
 	 * Mirabilis changed the behaviour again. It usually says NULL now so
 	 * I use the packet byte count to extract the e-mails instead.
 	 */
-	
+
 	if (!ICQ_UNPACK(&buf, "C", &count_discard))
 		return -1;
 
@@ -446,7 +446,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_hpagecat) {
 
 	private_item_set_int(info, "wwwcat", pkt.cat);
 	private_item_set(info, "wwwkeys", pkt.str);
-	
+
 	return 0;
 }
 

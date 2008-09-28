@@ -149,7 +149,7 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 				user_private_item_set_int(u, "iid", item_id);
 				user_private_item_set_int(u, "gid", group);
 			}
-			
+
 			if (comment)
 				user_private_item_set(u, "comment", comment);
 
@@ -162,7 +162,7 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			if (t_auth)
 				user_private_item_set_int(u, "auth", 1);
 /*
-			if (t_auth) 
+			if (t_auth)
 				print("icq_auth_subscribe", uid, session_name(s));
  */
 cleanup_user:
