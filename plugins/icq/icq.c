@@ -510,12 +510,26 @@ static QUERY(icq_typing_out) {
 
 void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 	icq_private_t *j;
+	string_t str;
+	const char *__reason = reason ? reason : "";
 
 	if (!s || !(j = s->priv))
 		return;
 
 	if (!s->connected && !s->connecting)
 		return;
+
+	if (s->connected) {
+		/* XXX ?wo? recode & length check */
+		str = icq_pack("WC C U",
+			    (uint32_t) 2, (uint32_t) 4,		/* avatar type & flags -- offline message */
+			    (uint32_t) xstrlen(__reason) + 2,	/* length of message part */
+			    __reason				/* message */
+			    );
+		icq_send_snac(s, 0x01, 0x1e, 0, 0,		/* Set status (set location info) */
+			"T", icq_pack_tlv(0x1d, str->str, str->len));
+		string_free(str, 1);
+	}
 
 	timer_remove_session(s, "ping");
 	timer_remove_session(s, "snac_timeout");
@@ -1130,7 +1144,7 @@ static COMMAND(icq_command_disconnect) {
 	if (session->connecting)
 		icq_handle_disconnect(session, NULL, EKG_DISCONNECT_STOPPED);
 	else	
-		icq_handle_disconnect(session, NULL, EKG_DISCONNECT_USER);
+		icq_handle_disconnect(session, params[0], EKG_DISCONNECT_USER);
 
 	return 0;
 }
@@ -1520,7 +1534,7 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:search", "!p",	icq_command_search,	ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(&icq_plugin, "icq:connect", NULL,	icq_command_connect,	ICQ_ONLY, NULL);
-	command_add(&icq_plugin, "icq:disconnect", NULL,icq_command_disconnect,	ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:disconnect", "r", icq_command_disconnect,	ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:reconnect", NULL,	icq_command_reconnect,	ICQ_ONLY, NULL);
 
 	command_add(&icq_plugin, "icq:whoami", NULL,	icq_command_whoami,	ICQ_ONLY, NULL);

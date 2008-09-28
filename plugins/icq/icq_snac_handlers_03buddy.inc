@@ -458,6 +458,12 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 		uid = icq_uid(pkt.uid);
 		protocol_status_emit(s, uid, EKG_STATUS_NA, descr, time(NULL));
 
+		if (!descr)
+			icq_send_snac(s, 0x02, 0x05, NULL, NULL,	/* Request user info */
+					"Wu",
+					(uint32_t) 1,			/* request type (1 - general info, 2 - short user info, 3 - away message, 4 - client capabilities) */
+					atoi(uid+4));
+
 		if ((u = userlist_find(s, uid))) {
 			user_private_item_set_int(u, "online", 0);
 			user_private_item_set_int(u, "last_ip", user_private_item_get_int(u, "ip"));

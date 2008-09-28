@@ -83,9 +83,58 @@ SNAC_SUBHANDLER(icq_user_online_info) {
 	 * Handle SNAC(0x2,0x6) -- User information response
 	 *
 	 */
-	debug_error("icq_user_online_info() XXX\n");
+	 struct {
+		char *uid;
+		uint16_t warning;		/* warning level (unused here) */
+		uint16_t tlv_count;		/* Number of TLV in fixed part (user online info) */
+	} pkt;
+	char *uid, *descr = NULL;
+	userlist_t *u;
+	struct icq_tlv_list *tlvs;
+	icq_tlv_t *t;
 
-	return -3;
+	if (!ICQ_UNPACK(&buf, "uWW", &pkt.uid, &pkt.warning, &pkt.tlv_count)) {
+		debug_error("icq_user_online_info() Malformed SNAC(2,6)\n");
+		return -1;
+	}
+
+	uid = icq_uid(pkt.uid);
+	u = userlist_find(s, uid);
+
+	if (!u) {
+		debug_warn("icq_user_online_info() Ignore unknown user: %s\n", uid);
+		xfree(uid);
+		return 0;
+	}
+
+	debug_function("icq_user_online_info() %s\n", uid);
+
+	tlvs = icq_unpack_tlvs(&buf, &len, pkt.tlv_count);
+
+	if ( !(t = icq_tlv_get(tlvs, 0x06)) ) {
+		// we need only offline message
+		if ( (t = icq_tlv_get(tlvs, 0x1d)) ) {
+			uint16_t a_type;
+			uint8_t a_flags, a_len;
+			unsigned char *t_data = t->buf;
+			int t_len = t->len;
+			while (t_len > 0) {
+				if (icq_unpack(t_data, &t_data, &t_len, "WCC", &a_type, &a_flags, &a_len)) {
+					if ((a_type == 2) || (a_flags == 4))
+						icq_unpack_nc(t_data, a_len, "U", &descr);
+				}
+				t_data += a_len;
+				t_len  -= a_len;
+			}
+			if (descr)
+				protocol_status_emit(s, uid, EKG_STATUS_NA, descr, time(NULL));
+		}
+	}
+
+	icq_tlvs_destroy(&tlvs);
+	xfree(uid);
+
+	return 0;
 }
 
 SNAC_SUBHANDLER(icq_watcher_notification) {
