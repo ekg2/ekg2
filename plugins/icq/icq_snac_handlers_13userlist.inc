@@ -49,55 +49,15 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 	tlvs = icq_unpack_tlvs(&buf, &len, 0);
 
 #if ICQ_DEBUG_UNUSED_INFORMATIONS
-	if ((t = icq_tlv_get(tlvs, 0x06)) && (t->len == 2)) {
+	if ((t = icq_tlv_get(tlvs, 0x06)) && (t->len == 2))
 		debug_white("icq_snac_userlist_reply() length limit for server-list item's name = %d\n", t->nr);
-	}
-	if ((t = icq_tlv_get(tlvs, 0x0C)) && (t->len == 2)) {
+	if ((t = icq_tlv_get(tlvs, 0x0C)) && (t->len == 2))
 		debug_white("icq_snac_userlist_reply() max number of contacts in a group = %d\n", t->nr);
-	}
 	if ((t = icq_tlv_get(tlvs, 0x04))) {
-		uint16_t a, b, c, d;
-		if (icq_unpack_nc(t->buf, t->len, "WWWW", &a, &b, &c, &d)) {
-			debug_white("icq_snac_userlist_reply() max %d contacts; max %d groups; max %d visible contacts; max %d invisible contacts\n", a, b, c, d);
-		}
+		uint16_t a, b, c, d, e;
+		if (icq_unpack_nc(t->buf, t->len, "WWWW 20 W", &a, &b, &c, &d, &e))
+			debug_white("icq_snac_userlist_reply() Max %d contacts, %d groups; %d visible contacts, %d invisible contacts, %d ignore items.\n", a, b, c, d, e);
 	}
-#endif
-
-
-
-#if 0
-	oscar_tlv_chain* chain;
-
-	memset(m_wServerListLimits, -1, sizeof(m_wServerListLimits));
-	m_wServerListGroupMaxContacts = 0;
-	m_wServerListRecordNameMaxLength = 0xFFFF;
-
-	if (!(chain = readIntoTLVChain(&pBuffer, wBufferLength, 0)))
-		return;
-
-	oscar_tlv* pTLV;
-
-	// determine max number of contacts in a group
-	m_wServerListGroupMaxContacts = getWordFromChain(chain, 0x0C, 1);
-	// determine length limit for server-list item's name
-	m_wServerListRecordNameMaxLength = getWordFromChain(chain, 0x06, 1);
-
-	if (pTLV = getTLV(chain, 0x04, 1))
-	{ // limits for item types
-		int i;
-		WORD *pLimits = (WORD*)pTLV->pData;
-
-		for (i = 0; i < pTLV->wLen / 2; i++)
-		{
-			m_wServerListLimits[i] = (pLimits[i] & 0xFF) << 8 | (pLimits[i] >> 8);
-
-			if (i + 1 >= SIZEOF(m_wServerListLimits)) break;
-		}
-
-		NetLog_Server("SSI: Max %d contacts (%d per group), %d groups, %d permit, %d deny, %d ignore items.", m_wServerListLimits[SSI_ITEM_BUDDY], m_wServerListGroupMaxContacts, m_wServerListLimits[SSI_ITEM_GROUP], m_wServerListLimits[SSI_ITEM_PERMIT], m_wServerListLimits[SSI_ITEM_DENY], m_wServerListLimits[SSI_ITEM_IGNORE]);
-	}
-
-	disposeChain(&chain);
 #endif
 
 	icq_tlvs_destroy(&tlvs);
