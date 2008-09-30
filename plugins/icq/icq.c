@@ -48,6 +48,7 @@
 #include "misc.h"
 
 #include "icq_caps.h"
+#include "icq_const.h"
 #include "icq_flap_handlers.h"
 #include "icq_snac_handlers.h"
 
@@ -116,18 +117,20 @@ int icq_write_status_msg(session_t *s) {
 }
 
 int icq_write_status(session_t *s) {
-	uint16_t status;
+	icq_private_t *j = s->priv;
+	uint32_t status;
 
 	if (!s)
 		return 0;
 
-	status = icq_status(s->status);
+	status = (j->status_flags << 16) | icq_status(s->status);
 
 	icq_send_snac(s, 0x01, 0x001e, 0, 0,
 			"tI",
-			icq_pack_tlv_dword(0x06, (0x00 << 8 | status)));	/* TLV 6: Status mode and security flags */
+			icq_pack_tlv_dword(0x06, status));	/* TLV 6: Status mode and security flags */
 	return 1;
 }
+
 
 int icq_write_info(session_t *s) {
 	icq_private_t *j;
@@ -201,8 +204,41 @@ int icq_write_info(session_t *s) {
 	return 0;
 }
 
-void icq_session_connected(session_t *s) {
+void icq_set_sequrity(session_t *s) {
 	icq_private_t *j;
+	string_t pkt;
+	uint8_t auth, webaware;
+
+	if (!s || !(j = s->priv))
+		return;
+
+	webaware = atoi(session_get(s, "webaware"));
+	if (webaware)
+		j->status_flags |= STATUS_WEBAWARE;
+	else
+		j->status_flags &= ~STATUS_WEBAWARE;
+
+	if (!(s->connected))
+		return;
+
+	auth = atoi(session_get(s, "require_auth"));
+	pkt = icq_pack("w iwww wwc wwc",
+				(uint32_t) 4+2+2+2 + 5 + 5,	/* data chunk size */
+
+				(uint32_t) atoi(s->uid+4),	/* request owner uin */
+				(uint32_t) 0x7d0,		/* data type: META_DATA_REQ */
+				(uint32_t) j->snac_seq++,	/* request sequence number */
+				(uint32_t) 0x0c3a,		/* data subtype: CLI_SET_FULLINFO */
+
+				(uint32_t) 0x30c, (uint32_t) 1, (uint32_t) webaware,	/* TLV(0x30c) (LE!) */
+				(uint32_t) 0x2f8, (uint32_t) 1, (uint32_t) !auth	/* TLV(0x2f8) (LE!) */
+				);
+	icq_send_snac(s, 0x15, 0x02, NULL, NULL, "T", icq_pack_tlv(0x1, pkt->str, pkt->len));
+	string_free(pkt, 1);
+}
+
+void icq_session_connected(session_t *s) {
+	icq_private_t *j = s->priv;
 	string_t pkt;
 
 	icq_write_info(s);
@@ -225,10 +261,7 @@ void icq_session_connected(session_t *s) {
 		else
 			updateServVisibilityCode(3);
 #endif
-	}
-
-	if (s->status != EKG_STATUS_INVISIBLE)
-	{
+	} else {
 		/* Tell server who's on our invisible list */
 #if MIRANDA
 		if (!j->ssi)
@@ -236,93 +269,87 @@ void icq_session_connected(session_t *s) {
 		else
 			updateServVisibilityCode(4);
 #endif
-		;
 	}
 
 	/* SNAC 1,1E: Set status */
 	{
-#if MIRANDA
-		DWORD dwDirectCookie = rand() ^ (rand() << 16);
-		BYTE bXStatus = getContactXStatus(NULL);
-		char szMoodId[32];
-		WORD cbMoodId = 0;
-		WORD cbMoodData = 0;
-
-		if (bXStatus && moodXStatus[bXStatus-1] != -1)
-		{ // prepare mood id
-			null_snprintf(szMoodId, SIZEOF(szMoodId), "icqmood%d", moodXStatus[bXStatus-1]);
-			cbMoodId = strlennull(szMoodId);
-			cbMoodData = 8;
-		}
-#endif
 		string_t pkt;
 		string_t tlv_c;
-		uint16_t status;
+		uint32_t cookie, status;
 
-		status = icq_status(s->status);
+		cookie = rand() <<16 | rand();
+		status = (j->status_flags << 16) | icq_status(s->status);
 
 		pkt = string_init(NULL);
 
-		icq_pack_append(pkt, "tI", icq_pack_tlv_dword(0x06, (0x00 << 8 | status)));	/* TLV 6: Status mode and security flags */
-		icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x08, 0x00));			/* TLV 8: Error code */
+		icq_pack_append(pkt, "tI", icq_pack_tlv_dword(0x06, status));	/* TLV 6: Status mode and security flags */
+		icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x08, 0x00));	/* TLV 8: Error code */
 
-	/* TLV C: Direct connection info */
+		/* TLV C: Direct connection info */
 		tlv_c = string_init(NULL);
 		icq_pack_append(tlv_c, "I", (uint32_t) 0x00000000);	/* XXX, getSettingDword(NULL, "RealIP", 0) */
 		icq_pack_append(tlv_c, "I", (uint32_t) 0x00000000);	/* XXX, nPort */
-		icq_pack_append(tlv_c, "C", (uint32_t) 0x04);		/* Normal direct connection (without proxy/firewall) */
-		icq_pack_append(tlv_c, "W", (uint32_t) 0x08);		/* Protocol version */
-		icq_pack_append(tlv_c, "I", (uint32_t) 0x00);		/* XXX, DC Cookie */
-		icq_pack_append(tlv_c, "I", (uint32_t) 0x50);		/* WEBFRONTPORT */
-		icq_pack_append(tlv_c, "I", (uint32_t) 0x03);		/* CLIENTFEATURES */
+		icq_pack_append(tlv_c, "C", DC_NORMAL);			/* Normal direct connection (without proxy/firewall) */
+		icq_pack_append(tlv_c, "W", ICQ_VERSION);		/* Protocol version */
+		icq_pack_append(tlv_c, "I", cookie);			/* DC Cookie */
+		icq_pack_append(tlv_c, "I", WEBFRONTPORT);		/* Web front port */
+		icq_pack_append(tlv_c, "I", CLIENTFEATURES);		/* Client features*/
 		icq_pack_append(tlv_c, "I", (uint32_t) 0xffffffff);	/* gbUnicodeCore ? 0x7fffffff : 0xffffffff */ /* Abused timestamp */
 		icq_pack_append(tlv_c, "I", (uint32_t) 0x80050003);	/* Abused timestamp */
 		icq_pack_append(tlv_c, "I", (uint32_t) 0x00000000);	/* XXX, Timestamp */
 		icq_pack_append(tlv_c, "W", (uint32_t) 0x0000);		/* Unknown */
 
 		icq_pack_append(pkt, "T", icq_pack_tlv(0x0C, tlv_c->str, tlv_c->len));
-		/* XXX, assert(tlv_c->len == 0x25) */
+
 		string_free(tlv_c, 1);
 
+		/* TLV(0x1F) - unknown? */
 		icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x1F, 0x00));
 
-#if MIRANDA
-		if (cbMoodId)
-		{ // Pack mood data
-			packWord(&packet, 0x1D);	      // TLV 1D
-			packWord(&packet, (WORD)(cbMoodId + 4)); // TLV length
-			packWord(&packet, 0x0E);	      // Item Type
-			packWord(&packet, cbMoodId);	      // Flags + Item Length
-			packBuffer(&packet, (LPBYTE)szMoodId, cbMoodId); // Mood
+		/* TLV(0x1D) -- xstatus (icqmood) */
+		if (j->xstatus && (j->xstatus - 1 <= MAX_ICQMOOD)) {
+			char *mood = saprintf("icqmood%d", j->xstatus - 1);
+
+			string_t tlv_1d = icq_pack("WCC",
+						(uint32_t) 0x0e,	// item type
+						(uint32_t) 0,		// item flags
+						xstrlen(mood));
+			string_append(tlv_1d, mood);
+
+			icq_pack_append(pkt, "T", icq_pack_tlv(0x1d, tlv_1d->str, tlv_1d->len));
+
+			string_free(tlv_1d, 1);
+			xfree(mood);
 		}
-#endif
-		icq_makesnac(s, pkt, 0x01, 0x1E, 0, 0);
-		icq_send_pkt(s, pkt); pkt = NULL;
+
+		icq_makesnac(s, pkt, 0x01, 0x1e, NULL, NULL);	/* Set status (set location info) */
+		icq_send_pkt(s, pkt);
 	}
 
-	/* SNAC 1,11 */
-	icq_send_snac(s, 0x01, 0x11, 0, 0, "I", (uint32_t) 0x00000000);
+	/* SNAC(1,0x11) - Set idle time */
+	icq_send_snac(s, 0x01, 0x11, NULL, NULL, "I", (uint32_t) 0);
 
 	/* j->idleAllow = 0; */
 
 	/* Finish Login sequence */
 
-	pkt = string_init(NULL);
-
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x22, (uint32_t) 0x01, (uint32_t) 0x0110161b);	/* imitate ICQ 6 behaviour */
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x01, (uint32_t) 0x04, (uint32_t) 0x0110161b);
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x13, (uint32_t) 0x04, (uint32_t) 0x0110161b);
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x02, (uint32_t) 0x01, (uint32_t) 0x0110161b);
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x03, (uint32_t) 0x01, (uint32_t) 0x0110161b);
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x15, (uint32_t) 0x01, (uint32_t) 0x0110161b);
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x04, (uint32_t) 0x01, (uint32_t) 0x0110161b);
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x06, (uint32_t) 0x01, (uint32_t) 0x0110161b);
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x09, (uint32_t) 0x01, (uint32_t) 0x0110161b);
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x0a, (uint32_t) 0x01, (uint32_t) 0x0110161b);
-	icq_pack_append(pkt, "WWI", (uint32_t) 0x0b, (uint32_t) 0x01, (uint32_t) 0x0110161b);
-
-	icq_makesnac(s, pkt, 0x01, 0x02, 0, 0);
-	icq_send_pkt(s, pkt); pkt = NULL;
+	/* SNAC(1,2) - Client is now online and ready for normal function */
+	/* imitate ICQ 6 behaviour */
+	icq_send_snac(s, 0x01, 0x02, NULL, NULL,
+			"WWWW WWWW WWWW WWWW WWWW WWWW WWWW WWWW WWWW WWWW WWWW",
+			/* family number, family version, family tool id, family tool version */
+			(uint32_t) 0x01, (uint32_t) 0x04, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x02, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x03, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x04, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x06, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x09, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x0a, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x0b, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x13, (uint32_t) 0x04, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x15, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
+			(uint32_t) 0x22, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b
+			);
 
 	debug_ok(" *** Yeehah, login sequence complete\n");
 
@@ -365,10 +392,11 @@ void icq_session_connected(session_t *s) {
 	}
 	protocol_connected_emit(s);
 
+	icq_set_sequrity(s);
 	icq_write_status_msg(s);
 
 	{ /* XXX ?wo? find better place for it */
-		if (s && (j = s->priv) && (!j->default_group_id)) {
+		if (!j->default_group_id) {
 			/* No groups on server!!! */
 			/* Once executed ugly code: */
 			icq_send_snac(s, 0x13, 0x11, 0, 0, "");	// Contacts edit start (begin transaction)
@@ -1464,6 +1492,34 @@ static int icq_theme_init() {
 	return 0;
 }
 
+
+static void icq_changed_our_sequrity(session_t *s, const char *var) {
+	const char *val;
+	icq_private_t *j;
+	int webaware;
+
+	if (!s || !(j = s->priv))
+		return;
+
+	if (!(val = session_get(s, var)) || !*val)
+		return;
+
+	if ((webaware = !xstrcasecmp(var, "webaware")) || !xstrcasecmp(var, "require_auth")) {
+		icq_set_sequrity(s);
+		if (webaware)
+			icq_write_status(s);
+	} else if (!xstrcasecmp(var, "hide_ip")) {
+		if (*val & 1) {
+			j->status_flags |= STATUS_DCAUTH;
+			j->status_flags &= ~STATUS_SHOWIP;
+		} else {
+			j->status_flags |= STATUS_SHOWIP;
+			j->status_flags &= ~STATUS_DCAUTH;
+		}
+		icq_write_status(s);
+	}
+}
+
 static plugins_params_t icq_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
@@ -1472,6 +1528,11 @@ static plugins_params_t icq_plugin_vars[] = {
 	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("plaintext_passwd",	VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("server",		VAR_STR, NULL, 0, NULL),
+
+	PLUGIN_VAR_ADD("hide_ip",		VAR_BOOL,  "1", 0, icq_changed_our_sequrity),
+	PLUGIN_VAR_ADD("require_auth",		VAR_BOOL,  "1", 0, icq_changed_our_sequrity),
+	PLUGIN_VAR_ADD("webaware",		VAR_BOOL,  "0", 0, icq_changed_our_sequrity),
+
 	PLUGIN_VAR_END()
 };
 

@@ -130,4 +130,33 @@
 #define ACKTYPE_AVATAR	   14 //send/recv of avatars from a protocol
 #define ACKTYPE_EMAIL      15	//notify if the unread emails changed
 
+/*
+ * Status flags
+ */
+#define STATUS_WEBAWARE             0x0001 // Status webaware flag
+#define STATUS_SHOWIP               0x0002 // Status show ip flag
+#define STATUS_BIRTHDAY             0x0008 // User birthday flag
+#define STATUS_WEBFRONT             0x0020 // User active webfront flag
+#define STATUS_DCDISABLED           0x0100 // Direct connection not supported
+#define STATUS_DCAUTH               0x1000 // Direct connection upon authorization
+#define STATUS_DCCONT               0x2000 // DC only with contact users
+
+/*
+ * DC types
+ */
+#define DC_DISABLED                 0x0000 // Direct connection disabled / auth required
+#define DC_HTTPS                    0x0001 // Direct connection thru firewall or https proxy
+#define DC_SOCKS                    0x0002 // Direct connection thru socks4/5 proxy server
+#define DC_NORMAL                   0x0004 // Normal direct connection (without proxy/firewall)
+#define DC_WEB                      0x0006 // Web client - no direct connection
+
+
+/*
+ * Internal constants
+ */
+#define ICQ_VERSION		8         /* Protocol version */
+#define CLIENTFEATURES		0x3
+#define WEBFRONTPORT		0x50
+
+
 #endif

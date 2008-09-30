@@ -44,6 +44,7 @@ void icq_pack_append_cap(string_t pkt, int cap_id);
  */
 
 #define XSTATUS_COUNT 32
+#define MAX_ICQMOOD 23
 
 const char *icq_xstatus_name(int id);
 
