@@ -991,13 +991,13 @@ static void remote_backlog_add(window_t *w, remote_backlog_t *str) {
 	n->backlog_size++;
 }
 
-static int remote_window_kill(window_t *w) {
-	remote_window_t *n = w->private;
+static void remote_window_kill(window_t *w) {
+	remote_window_t *n;
 
-	if (!n) 
-		return -1;
+	if (!(n = w->private)) 
+		return;
 
-	w->private = 0;
+	w->private = NULL;
 
 	if (n->backlog) {
 		int i;
@@ -1012,7 +1012,6 @@ static int remote_window_kill(window_t *w) {
 	}
 
 	xfree(n);
-	return 0;
 }
 
 /* XXX, nicer? */
@@ -1466,6 +1465,7 @@ EXPORT int remote_plugin_init(int prio) {
 }
 
 static int remote_plugin_destroy() {
+	window_t *w;
 	list_t l;
 
 	for (l = rc_inputs; l;) {
@@ -1476,8 +1476,10 @@ static int remote_plugin_destroy() {
 		rc_input_close(r);
 	}
 
-	plugin_unregister(&remote_plugin);
+	for (w = windows; w; w = w->next)
+		remote_window_kill(w);
 
+	plugin_unregister(&remote_plugin);
 	return 0;
 }
 
