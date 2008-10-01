@@ -104,6 +104,7 @@ void plugins_unlink(plugin_t *pl);
 	static int x##_plugin_destroy(); \
 	\
 	plugin_t x##_plugin = { \
+		NULL,		\
 		#x, \
 		0, \
 		y, \
