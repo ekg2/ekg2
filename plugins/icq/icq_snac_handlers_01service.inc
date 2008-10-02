@@ -65,7 +65,7 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 
 	pkt = string_init(NULL);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x22, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x01, (uint32_t) 0x03);	// Generic service controls
+	icq_pack_append(pkt, "WW", (uint32_t) 0x01, (uint32_t) 0x04);	// Generic service controls
 	icq_pack_append(pkt, "WW", (uint32_t) 0x13, (uint32_t) 0x04);	// Server Side Information (SSI) service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x02, (uint32_t) 0x01);	// Location services
 	icq_pack_append(pkt, "WW", (uint32_t) 0x03, (uint32_t) 0x01);	// Buddy List management service
@@ -97,6 +97,12 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_redirect) {
+	/*
+	 * SNAC(01,05) SRV_REDIRECTxSERVICE -- Redirect (for 0x0004 subtype)
+	 *
+	 * Server replies with this to SNAC(01,04) CLI_SERVICE_REQ -- Client service request.
+	 * After receiving this snac client should connect to specified server to use requested service.
+	 */
 	debug_error("icq_snac_service_redirect() XXX\n");
 	return 0;
 }
@@ -122,18 +128,23 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 	icq_rates_init(s, pkt.no);
 	for (i=0; i<pkt.no; i++) {
 		uint16_t id;
-		uint32_t x0, x1, x2, x3, x4, x5, x6, x7;
+		icq_rate_t *r;
 		(void) ICQ_UNPACK(&buf, "W", &id);	// Rate class ID
-		(void) ICQ_UNPACK(&buf, "IIII IIII x", &x0, &x1, &x2, &x3, &x4, &x5, &x6, &x7);
 		if (id && (id <= j->n_rates)) {
-			id--;
-			j->rates[id]->win_size	= x0;		// Window size
-			j->rates[id]->clear_lvl	= x1;		// Clear level
-			j->rates[id]->alert_lvl	= x2;		// Alert level
-			j->rates[id]->limit_lvl	= x3;		// Limit level
-			j->rates[id]->discn_lvl	= x4;		// Disconnect level
-			j->rates[id]->curr_lvl	= x5;		// Current level
-			j->rates[id]->max_lvl	= x6;		// Max level
+			r = j->rates[id - 1];
+			r->last_time = time(NULL);
+			ICQ_UNPACK(&buf, "IIII III 5",
+				&r->win_size,		// Window size
+				&r->clear_lvl,		// Clear level
+				&r->alert_lvl,		// Alert level
+				&r->limit_lvl,		// Limit level
+				&r->discn_lvl,		// Disconnect level
+				&r->curr_lvl,		// Current level
+				&r->max_lvl		// Max level
+				);
+		} else {
+			buf += 7*4 + 5;
+			len -= 7*4 + 5;
 		}
 	}
 	// store rate groups
@@ -278,19 +289,46 @@ SNAC_SUBHANDLER(icq_snac_service_ratechange) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_pause) {
+	/*
+	 * SNAC(01,0B) SRV_PAUSE -- Server pause command
+	 *
+	 * This is the first SNAC in client migration sequence.
+	 *
+	 * Client should ack pause command with SNAC(01,0C) and stop send packets until it receive server
+	 * resume SNAC(01,0D), or migration notice SNAC(01,12).
+	 *
+	 * Migration sequence used to redirect client to new BOS server during current BOS shutdown.
+	 */
 
 	debug("icq_snac_service_pause() Server is going down in a few seconds...\n");
 
-	/* This is the list of groups that we want to have on the next server */
+	icq_send_snac(s, 0x01, 0x0c, NULL, NULL,	/* CLI_PAUSE_ACK -- Client pause ack */
+			"WWWW WWWW WW",
+			/* This is the list of families that we want to have on the next server */
+			(uint32_t) 0x01,	/* Generic service controls */
+			(uint32_t) 0x02,	/* Location services */
+			(uint32_t) 0x03,	/* Buddy List management service */
+			(uint32_t) 0x04,	/* ICBM (messages) service */
 
-	icq_send_snac(s, 0x01, 0x0c, 0, 0,
-			"WWWWWWWWWW",
-			(uint32_t) 0x01, (uint32_t) 0x13,
-			(uint32_t) 0x02, (uint32_t) 0x03,
-			(uint32_t) 0x17, (uint32_t) 0x04,
-			(uint32_t) 0x06, (uint32_t) 0x09,
-			(uint32_t) 0x0a, (uint32_t) 0x0b);
+			(uint32_t) 0x09,	/* Privacy management service */
+			(uint32_t) 0x0a,	/* User lookup service (not used any more) (XXX ??? - This service used by old AIM clients to search users by email) */
+			(uint32_t) 0x0b,	/* Usage stats service */
+			(uint32_t) 0x13,	/* Server Side Information (SSI) service */
 
+			(uint32_t) 0x15,	/* ICQ specific extensions service */
+			(uint32_t) 0x17		/* Authorization/registration service */
+			);
+
+	return 0;
+}
+
+SNAC_SUBHANDLER(icq_snac_service_resume) {
+	/*
+	 * SNAC(01,0D) SRV_RESUME -- Server resume command
+	 *
+	 * After this SNAC client, paused by SNAC(01,0B) may continue send packets to BOS.
+	 * Migration sequence used to redirect client to new BOS server during current BOS shutdown.
+	 */
 	return 0;
 }
 
@@ -372,11 +410,27 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_migrate) {
+	/*
+	 * SNAC(01,12) SRV_MIGRATION -- Migration notice and info
+	 *
+	 * This is the last SNAC in client migration sequence.
+	 * Client should open new connection to specified server and use this connection for specified families.
+	 * If there is no family list (empty) or it contain all connection families - client should close current
+	 * connection and use new one.
+	 */
 	debug_error("!!! icq_snac_service_migrate() XXX\n");
 	return -3;
 }
 
 SNAC_SUBHANDLER(icq_snac_service_motd) {
+	/* SNAC(01,0x13) SRV_MOTD -- Message of the day (MOTD) */
+	struct icq_tlv_list *tlvs;
+	icq_tlv_t *t;
+
+	tlvs = icq_unpack_tlvs(&buf, &len, 0);
+	if ( (t = icq_tlv_get(tlvs, 0x0b)) )
+		debug_white("icq_snac_service_motd() MOTD: %s\n", t->buf);
+	icq_tlvs_destroy(&tlvs);
 	return 0;
 }
 
@@ -393,7 +447,7 @@ SNAC_SUBHANDLER(icq_snac_service_families2) {
 	}
 #endif
 
-	icq_send_snac(s, 0x01, 0x06, 0, 0, "");
+	icq_send_snac(s, 0x01, 0x06, NULL, NULL, "");	// Request rate limits information
 
 	return 0;
 }
@@ -414,6 +468,7 @@ SNAC_HANDLER(icq_snac_service_handler) {
 		case 0x07: handler = icq_snac_service_rateinfo; break;	/* Miranda: OK */
 		case 0x0A: handler = icq_snac_service_ratechange;break;	/* Miranda: 2/3 OK */
 		case 0x0B: handler = icq_snac_service_pause;	break;	/* Miranda: OK */
+		case 0x0D: handler = icq_snac_service_resume;	break;
 		case 0x0F: handler = icq_snac_service_reqinfo;	break;	/* Miranda: OK */
 		case 0x12: handler = icq_snac_service_migrate;	break;
 		case 0x13: handler = icq_snac_service_motd;	break;	/* Miranda: OK */

@@ -19,6 +19,7 @@ typedef struct {
 	int discn_lvl;		// Disconnect level
 	int curr_lvl;		// Current level
 	int max_lvl;		// Max level
+	time_t last_time;	// Last time
 	int n_groups;
 	uint32_t *groups;
 } icq_rate_t;
@@ -43,7 +44,7 @@ typedef struct {
 	int ssi;		/* server-side-userlist? */
 	int aim;		/* aim-ok? */
 	int default_group_id;	/* XXX ?wo? TEMP! We should support list of groups */
-	int status_flags;	/* XXX ?wo? set it! */
+	int status_flags;
 	int xstatus;		/* XXX ?wo? set it! */
 	private_data_t *whoami;
 	char *default_group_name;

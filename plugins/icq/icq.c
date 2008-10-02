@@ -62,14 +62,17 @@ int icq_send_pkt(session_t *s, string_t buf) {
 	icq_private_t *j;
 	int fd;
 
-	if (!s || !(j = s->priv) || !buf)
+	if (!s || !(j = s->priv) || !buf) {
+		string_free(buf, 1);
 		return -1;
+	}
 
 	fd = j->fd;
 
 	debug_io("icq_send_pkt(%s) fd: %d len: %d\n", s->uid, fd, buf->len);
 	icq_hexdump(DEBUG_IO, (unsigned char *) buf->str, buf->len);
 	ekg_write(fd, buf->str, buf->len);
+	string_free(buf, 1);
 	return 0;
 }
 
