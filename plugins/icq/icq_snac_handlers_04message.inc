@@ -191,11 +191,11 @@ static void icq_send_status_descr(session_t *s, int msg_type, msg_params_t *msg_
 	debug_function("icq_send_status_descr() to %s\n", msg_param->uid);
 
 	pkt = string_init(NULL);
-	icq_pack_append(pkt, "IIWuW",
+	icq_pack_append(pkt, "IIWsW",
 			msg_param->id1,		// message id part 1
 			msg_param->id2,		// message id part 2
 			(uint32_t) 2,		// channel
-			atoi(msg_param->sender),
+			msg_param->sender,
 			(uint32_t) 3		// message formating
 			);
 

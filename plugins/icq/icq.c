@@ -533,8 +533,8 @@ static QUERY(icq_typing_out) {
 	if (len>0)
 		typing = (first == 1) ? 2 : 1;
 
-	icq_send_snac(s, 0x04, 0x14, 0, 0,
-			"iiWuW", q1, q2, (uint16_t) 1, atoi(uid + 4), typing);
+	icq_send_snac(s, 0x04, 0x14, NULL, NULL,
+			"iiWsW", q1, q2, (uint16_t) 1, uid + 4, typing);
 
 	return 0;
 }

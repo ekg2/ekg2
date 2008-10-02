@@ -77,7 +77,7 @@ static void icq_get_description(session_t *s, char *uin, int status) {
 	pkt = string_init(NULL);
 	icq_pack_append(pkt, "II", cookie1, cookie2);		// cookie
 	icq_pack_append(pkt, "W", (uint32_t) 2);		// message type
-	icq_pack_append(pkt, "u", atoi(uin));
+	icq_pack_append(pkt, "s", uin);
 
 	tlv5 = string_init(NULL);
 	icq_pack_append(tlv5, "W", (uint32_t) 0);
@@ -460,9 +460,9 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 
 		if (!descr)
 			icq_send_snac(s, 0x02, 0x05, NULL, NULL,	/* Request user info */
-					"Wu",
+					"Ws",
 					(uint32_t) 1,			/* request type (1 - general info, 2 - short user info, 3 - away message, 4 - client capabilities) */
-					atoi(uid+4));
+					uid+4);
 
 		if ((u = userlist_find(s, uid))) {
 			user_private_item_set_int(u, "online", 0);
