@@ -31,6 +31,8 @@ typedef struct {
 				 */
 	char *sender;
 	int ack_type;
+	int msg_type;		/* message type */
+	int msg_flags;		/* message flags */
 	int version;
 	int cookie;
 	char uid[50];
@@ -84,6 +86,27 @@ SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
 #endif
 
 	return 0;
+}
+
+static void icq_pack_append_msg_header(string_t pkt, msg_params_t *msg_param) {
+	icq_pack_append(pkt, "IIWsW",
+			msg_param->id1,		// message id part 1
+			msg_param->id2,		// message id part 2
+			(uint32_t) 2,		// channel
+			msg_param->sender,
+			(uint32_t) 3		// message formating
+			);
+}
+
+static void icq_send_adv_msg_ack(session_t *s, msg_params_t *msg_param) {
+	string_t pkt = string_init(NULL);
+
+	icq_pack_append_msg_header(pkt, msg_param);
+	icq_pack_append_rendezvous(pkt, ICQ_VERSION, msg_param->cookie, msg_param->msg_type, msg_param->msg_flags, 0, 0);
+	icq_pack_append_nullterm_msg(pkt, "");
+
+	icq_makesnac(s, pkt, 0x04, 0x0b, NULL, NULL);	/*  */
+	icq_send_pkt(s, pkt);
 }
 
 static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int len, msg_params_t *msg_param) {
@@ -183,6 +206,7 @@ static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int 
 
 static void icq_send_status_descr(session_t *s, int msg_type, msg_params_t *msg_param) {
 	string_t pkt;
+	char *desc;
 
 	if (!msg_param->u) {
 		debug_warn("icq_send_status_descr(). Ignore request from %s\n", msg_param->uid);
@@ -191,43 +215,16 @@ static void icq_send_status_descr(session_t *s, int msg_type, msg_params_t *msg_
 	debug_function("icq_send_status_descr() to %s\n", msg_param->uid);
 
 	pkt = string_init(NULL);
-	icq_pack_append(pkt, "IIWsW",
-			msg_param->id1,		// message id part 1
-			msg_param->id2,		// message id part 2
-			(uint32_t) 2,		// channel
-			msg_param->sender,
-			(uint32_t) 3		// message formating
-			);
 
-	icq_pack_append(pkt, "wwiiiiwicw wwiiiccww",
-				(uint32_t) 27,		// length of this data segment, always 27
-				(uint32_t) msg_param->version,	// protocol version (we want utf-8 description)
-				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // PSIG_MESSAGE
-				(uint32_t) 0,		// unknown
-				(uint32_t) 3,		// client capabilities flag
-				(uint32_t) 0, 		// unknown byte (dc type?)
-				msg_param->cookie,			// cookie
-
-				(uint32_t) 14,		// length of this data segment, always 14
-				msg_param->cookie,			// cookie
-				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // unknown, usually all zeros
-				msg_type,		// msg type
-				(uint32_t) MFLAG_AUTO,	// msg flags
-				(uint32_t) 0,		// status code: 0 - accepted
-				(uint32_t) 0);		// priority
-
-	char *desc = xstrdup(s->descr);
-
+	desc = xstrdup(s->descr);
+	icq_pack_append_msg_header(pkt, msg_param);
+	icq_pack_append_rendezvous(pkt, msg_param->version, msg_param->cookie, msg_type, MFLAG_AUTO, 0, 0);
 	if (msg_param->version == 9) /* unicode */
 		desc = ekg_locale_to_utf8(desc);
 	else {
 		/* XXX recode? */
 	}
-
-	icq_pack_append(pkt, "w", xstrlen(desc)+1);
-	string_append(pkt, desc);
-	icq_pack_append(pkt, "c", 0);
-
+	icq_pack_append_nullterm_msg(pkt, desc);
 	xfree(desc);
 
 	icq_makesnac(s, pkt, 0x04, 0x0b, NULL, NULL);
@@ -291,6 +288,11 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 			ICQ_UNPACK(&buf, "ccwww", &msg.type, &msg.flags, &msg.status, &msg.prio, &msg.len);
 			msg.str = (char *)buf;
 
+			debug_white("icq_snac_message_recv_rtf2711() PSIG_MESSAGE, msg type:0x%x, flags:0x%x, ack:0x%x\n", msg.type, msg.flags, msg_param->ack_type);
+
+			msg_param->msg_type = msg.type;
+			msg_param->msg_flags = msg.flags;
+
 			switch (msg.type) {
 				/* strange types - XXX ?wo? handle? */
 				case MTYPE_FILEREQ:
@@ -306,9 +308,11 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 					/* Somebody ask for our status */
 					icq_send_status_descr(s, msg.type, msg_param);
 					break;
-				default:
-					/* normal message */
-					if (msg.len) {
+				case MTYPE_PLAIN:    /* plain message */
+				{
+					buf += msg.len;
+					len -= msg.len;
+					if (msg.len > 0) {
 						time_t sent = time(NULL);
 						char *tmp = ekg_utf8_to_locale(xstrdup(msg.str));
 
@@ -316,6 +320,12 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 
 						xfree(tmp);
 					}
+					icq_send_adv_msg_ack(s, msg_param);
+					break;
+				}
+
+				default:
+					debug_error("icq_snac_message_recv_rtf2711() PSIG_MESSAGE, Not supported message type:0x%x\n", msg.type);
 					break;
 			}
 			break;
@@ -399,7 +409,7 @@ static int icq_snac_message_recv_icbm_ch2(session_t *s, unsigned char *buf, int 
 			else
 				msg_param->ack_type = 1;
 
-			if ( msg_param->u &&  (t = icq_tlv_get(tlvs5, 0x0a)) )	// External IP
+			if ( msg_param->u &&  (t = icq_tlv_get(tlvs5, 0x03)) )	// External IP
 				user_private_item_set_int(msg_param->u, "IP", t->nr);
 
 			if (!(t2711 = icq_tlv_get(tlvs5, 0x2711))) {
@@ -470,7 +480,6 @@ SNAC_SUBHANDLER(icq_snac_message_recv) {
 	/* XXX, spamer? */
 
 	tlvs = icq_unpack_tlvs(&buf, &len, pkt.tlv_count);
-	/* XXX ?wo? Handle tvls? */
 	/*
 	 * TLV.Type(0x01) - user class
 	 * TLV.Type(0x03) - account creation time

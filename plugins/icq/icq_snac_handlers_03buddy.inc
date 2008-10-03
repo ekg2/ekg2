@@ -57,6 +57,34 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 	return 0;
 }
 
+
+static void icq_pack_append_nullterm_msg(string_t pkt, char *msg) {
+	    icq_pack_append(pkt, "w", (uint32_t) xstrlen(msg)+1);	// null-terminated msg length
+	    if (xstrlen(msg))
+		    string_append(pkt, msg);
+	    icq_pack_append(pkt, "c", (uint32_t) 0);			// msg terminate
+}
+
+static void icq_pack_append_rendezvous(string_t pkt, int version, int cookie, int mtype, int mflags, int accept, int priority) {
+	icq_pack_append(pkt, "wwiiiiwicw wwiiiccww",
+				(uint32_t) 27,		// length of this data segment, always 27
+				(uint32_t) version,	// protocol version
+				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // PSIG_MESSAGE
+				(uint32_t) 0,		// unknown
+				(uint32_t) 3,		// client capabilities flag
+				(uint32_t) 0, 		// unknown byte
+				cookie,			// cookie
+
+				(uint32_t) 14,		// length of this data segment, always 14
+				cookie,			// cookie
+				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // unknown, usually all zeros
+				mtype,			// msg type
+				mflags,			// msg flags
+				(uint32_t) accept,	// status code - accepted
+				(uint32_t) priority	// priority ??? XXX
+				);
+}
+
 static void icq_get_description(session_t *s, char *uin, int status) {
 	icq_private_t *j = s->priv;
 	string_t pkt, tlv5, rdv;
@@ -88,25 +116,8 @@ static void icq_get_description(session_t *s, char *uin, int status) {
 
 	// RendezvousMessageData
 	rdv = string_init(NULL);
-	icq_pack_append(rdv, "wwiiiiwicw wwiiiccwwwc",
-				(uint32_t) 27,		// length of this data segment, always 27
-				(uint32_t) 9,		// protocol version (we want utf-8 description)
-				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // pluginID
-				(uint32_t) 0,		// unknown
-				(uint32_t) 3,		// client capabilities flag
-				(uint32_t) 0, 		// unknown byte
-				cookie,			// cookie
-
-				(uint32_t) 14,		// length of this data segment, always 14
-				cookie,			// cookie
-				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // unknown, usually all zeros
-				mtype,			// msg type
-				(uint32_t) MFLAG_AUTO,	// msg flags
-				(uint32_t) 1,		// status code ??? XXX
-				(uint32_t) 1,		// priority ??? XXX
-				(uint32_t) 1,		// msg length
-				(uint32_t) 0);		// msg
-
+	icq_pack_append_rendezvous(rdv, 9, cookie, mtype, MFLAG_AUTO, 1, 1);
+	icq_pack_append_nullterm_msg(rdv, "");
 	icq_pack_append(tlv5, "T", icq_pack_tlv(0x2711, rdv->str, rdv->len));
 	string_free(rdv, 1);
 
