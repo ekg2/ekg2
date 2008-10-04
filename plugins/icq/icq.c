@@ -835,7 +835,7 @@ static COMMAND(icq_command_addssi) {
 		array_free(argv);
 	}
 
-	/* sent packet */
+	/* send packet */
 	if (nickname) {
 		uint16_t min = 0xffff, max = 0, count = 0, iid;
 		string_t buddies = string_init(NULL), data = string_init(NULL);
@@ -921,9 +921,96 @@ static COMMAND(icq_command_addssi) {
 	return 0;
 }
 
+static void icq_send_msg_ch1(session_t *session, const char *uid, const char *message) {
+	string_t pkt;
+	string_t tlv_2, tlv_101;
+	userlist_t *u = userlist_find(session, uid);
+	uint16_t enc = 0;	/* ASCII */
+	const char *tmp = message;
+
+	while (*tmp) {
+		if ((*tmp++ & 0x80)) {
+			enc = 2;	/* not ascii char */
+			break;
+		}
+	}
+	if ( enc && !(u || user_private_item_get_int(u, "utf")) )
+		enc = 3;		/* ANSI -- XXX ?wo? what should we do now? */
+
+	/* TLV(101) */
+	tlv_101 = icq_pack("WW", enc, 0x00);		// encoding, codepage
+	if (enc == 2) {
+		/* send unicode message */
+		string_t recode = icq_convert_to_ucs2be((char *) message);
+		string_append_raw(tlv_101, recode->str, recode->len);
+		string_free(recode, 1);
+	} else {
+		/* send ASCII/ANSII message */
+		string_append(tlv_101, message);
+	}
+
+	/* TLV(2) */
+	tlv_2 = icq_pack("tcT",
+				icq_pack_tlv_char(0x501, 0x1),			/* TLV(501) features, meaning unknown, duplicated from ICQ Lite */
+				icq_pack_tlv(0x0101, tlv_101->str, tlv_101->len)/* TLV(101) text TLV. */
+			);
+	string_free(tlv_101, 1);
+
+	/* main packet */
+	pkt = icq_pack("iiWs", (uint32_t) rand(), (uint32_t) rand(), 1, uid+4);	// msgid1, msgid2, channel, recipient
+	icq_pack_append(pkt, "TTT",
+				icq_pack_tlv(0x02, tlv_2->str, tlv_2->len),	/* TLV(2) message-block */
+				icq_pack_tlv(0x03, NULL, 0),			/* TLV(3) server-ack */
+				icq_pack_tlv(0x06, NULL, 0)			/* TLV(6) received-offline */
+				);
+
+	string_free(tlv_2, 1);
+
+	/* message-header */
+	icq_makesnac(session, pkt, 0x04, 0x06, NULL, NULL);	// CLI_SEND_ICBM -- Send message thru server
+	icq_send_pkt(session, pkt);
+}
+
+static void icq_send_msg_ch2(session_t *session, const char *uid, const char *message) {
+	string_t pkt, t5, t2711;
+	uint32_t msgid1 = rand(), msgid2 = rand();
+	int prio = 1;
+	icq_private_t *j = session->priv;
+	int cookie = j->snac_seq++;
+
+	t5 = string_init(NULL);
+	icq_pack_append(t5, "WII", 0, msgid1, msgid2);	//
+	icq_pack_append_cap(t5, CAP_SRV_RELAY);
+	icq_pack_append(t5, "tW", icq_pack_tlv_word(0x0a, 1));
+	icq_pack_append(t5, "T", icq_pack_tlv(0x0f, NULL, 0));		// empty TLV(0x0f)
+
+	t2711 = string_init(NULL);
+{
+		icq_pack_append_rendezvous(t2711, ICQ_VERSION, cookie, MTYPE_PLAIN, 0, 1, prio);
+		char *recode = ekg_locale_to_utf8(xstrdup(message));
+		icq_pack_append_nullterm_msg(t2711, recode);
+		xfree(recode);
+		icq_pack_append(t2711, "II", 0, 0xffffffff);	// XXX text & background colors
+		icq_pack_append(t2711, "i", xstrlen(CAP_UTF8_str));
+		string_append(t2711, CAP_UTF8_str);
+}
+	icq_pack_append(t5, "T", icq_pack_tlv(0x2711, t2711->str, t2711->len));
+	string_free(t2711, 1);
+
+
+	/* main packet */
+	pkt = icq_pack("iiWs", msgid1, msgid2, 2, uid+4);	// msgid1, msgid2, channel, recipient
+	icq_pack_append(pkt, "T", icq_pack_tlv(0x05, t5->str, t5->len));
+
+	/* message-header */
+	icq_makesnac(session, pkt, 0x04, 0x06, NULL, NULL);	// CLI_SEND_ICBM -- Send message thru server
+	icq_send_pkt(session, pkt);
+}
+
 static COMMAND(icq_command_msg) {
 	uint32_t uin;
 	char *uid;
+	userlist_t *u;
 
 	if (!xstrcmp(target, "*")) {
 		if (msg_all(session, name, params[1]) == -1)
@@ -951,56 +1038,11 @@ static COMMAND(icq_command_msg) {
 		query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
 	}
 
-	/* sent message */
-	{
-		string_t pkt;
-		string_t tlv_2, tlv_101;
-		userlist_t *u = userlist_find(session, uid);
-		uint16_t enc = 0;	/* ASCII */
-		const char *tmp = params[1];
-
-		while (*tmp) {
-			if ((*tmp++ & ~0x7f)) {
-				enc = 2;	/* not ascii char */
-				break;
-			}
-		}
-		if ( enc && !(u || user_private_item_get_int(u, "utf")) )
-			enc = 3;		/* ANSI -- XXX ?wo? what should we do now? */
-
-		/* TLV(101) */
-		if (enc == 2) {
-			/* send unicode message */
-			string_t recode = icq_convert_to_ucs2be((char *) params[1]);
-			tlv_101 = icq_pack("WW", 0x02, 0x00);
-			string_append_raw(tlv_101, recode->str, recode->len);
-			string_free(recode, 1);
-		} else {
-			/* send ASCII/ANSII message */
-			tlv_101 = icq_pack("WW", enc, 0x00);		// encoding, codepage, copied from ICQ lite
-			string_append(tlv_101, params[1]);
-		}
-
-		/* TLV(2) */
-		tlv_2 = icq_pack("tcT",
-					icq_pack_tlv_char(0x501, 0x1),			/* TLV(501) features, meaning unknown, duplicated from ICQ Lite */
-					icq_pack_tlv(0x0101, tlv_101->str, tlv_101->len)/* TLV(101) text TLV. */
-				);
-		string_free(tlv_101, 1);
-
-		/* main packet */
-		pkt = icq_pack("iiWu", (uint32_t) rand(), (uint32_t) rand(), 0x01, (uint32_t) uin);
-		icq_pack_append(pkt, "TTT",
-					icq_pack_tlv(0x02, tlv_2->str, tlv_2->len),	/* TLV(2) message-block */
-					icq_pack_tlv(0x03, NULL, 0),			/* TLV(3) server-ack */
-					icq_pack_tlv(0x06, NULL, 0)			/* TLV(6) received-offline */
-					);
-
-		/* message-header */
-		icq_makesnac(session, pkt, 0x04, 0x06, NULL, NULL);
-		icq_send_pkt(session, pkt);
-
-		string_free(tlv_2, 1);
+	u = userlist_find(session, uid);
+	if (u && (u->status != EKG_STATUS_NA) && (user_private_item_get_int(u, "caps") & 1<<CAP_SRV_RELAY) ) {
+		icq_send_msg_ch2(session, uid, params[1]);
+	} else {
+		icq_send_msg_ch1(session, uid, params[1]);
 	}
 
 msgdisplay:

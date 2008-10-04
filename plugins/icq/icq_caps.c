@@ -47,16 +47,6 @@ static const _capability_t _caps[CAP_UNKNOWN+1] =
 	{0x74, 0x8f, 0x24, 0x20, 0x62, 0x87, 0x11, 0xd1, 0x82, 0x22, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00},	// CAP_CHAT
 	{0x97, 0xb1, 0x27, 0x51, 0x24, 0x3c, 0x43, 0x34, 0xad, 0x22, 0xd6, 0xab, 0xf7, 0x3f, 0x14, 0x92},	// CAP_RTF
 	{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}	// CAP_UNKNOWN
-/*
-	{10CF40D1-4C7F-11D1-8222-444553540000} Unknown capability This capability currently used only by ICQ2002 client.
-	{2E7A6475-FADF-4DC8-886F-EA3595FDB6DF} Unknown capability This capability currently used only by ICQ2001 client.
-	{97B12751-243C-4334-AD22-D6ABF73F14xx} This is not cpability at all. This GUID used by SIM/Kopete clients to detect same clients version.
-	{A0E93F37-4C7F-11D1-8222-444553540000} Unknown capability This capability currently used only by ICQ2001/ICQ2002 clients.
-	{F2E7C7F4-FEAD-4DFB-B235-36798BDF0000} Client supports trillian SecureIM channel-2 messages. This capability currently used by Trillian clients.
-	67 36 15 15 61 2d 4c 07 8f 3d bd e6 40 8e a0 41 ???
-	b2 ec 8f 16 7c 6f 45 1b bd 79 dc 58 49 78 88 b9 ???
-	17 8c 2d 9b da a5 45 bb 8d db f3 bd bd 53 a1 0a ???
-*/
 };
 
 int icq_cap_id(unsigned char *buf) {

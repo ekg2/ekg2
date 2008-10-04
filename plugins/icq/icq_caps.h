@@ -28,6 +28,8 @@ typedef enum {
 	CAP_UNKNOWN
 } capabilities_t;
 
+#define CAP_UTF8_str                "{0946134E-4C7F-11D1-8222-444553540000}"
+
 const char *icq_capability_name(int id);
 
 int icq_cap_id(unsigned char *buf);

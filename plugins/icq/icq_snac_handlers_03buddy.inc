@@ -58,14 +58,14 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 }
 
 
-static void icq_pack_append_nullterm_msg(string_t pkt, char *msg) {
+void icq_pack_append_nullterm_msg(string_t pkt, const char *msg) {
 	    icq_pack_append(pkt, "w", (uint32_t) xstrlen(msg)+1);	// null-terminated msg length
 	    if (xstrlen(msg))
 		    string_append(pkt, msg);
 	    icq_pack_append(pkt, "c", (uint32_t) 0);			// msg terminate
 }
 
-static void icq_pack_append_rendezvous(string_t pkt, int version, int cookie, int mtype, int mflags, int accept, int priority) {
+void icq_pack_append_rendezvous(string_t pkt, int version, int cookie, int mtype, int mflags, int accept, int priority) {
 	icq_pack_append(pkt, "wwiiiiwicw wwiiiccww",
 				(uint32_t) 27,		// length of this data segment, always 27
 				(uint32_t) version,	// protocol version

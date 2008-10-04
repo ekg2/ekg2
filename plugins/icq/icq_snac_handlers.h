@@ -30,4 +30,7 @@ SNAC_SUBHANDLER(icq_my_meta_information_response);
 SNAC_SUBHANDLER(icq_cmd_addssi_ack);
 void display_whoami(session_t *s);
 
+void icq_pack_append_nullterm_msg(string_t pkt, const char *msg);
+void icq_pack_append_rendezvous(string_t pkt, int version, int cookie, int mtype, int mflags, int accept, int priority);
+
 #endif
