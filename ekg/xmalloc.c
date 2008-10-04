@@ -222,6 +222,14 @@ void *xmemdup(void *ptr, size_t size)
  */
 char *vsaprintf(const char *format, va_list ap)
 {
+	char *res;
+#ifdef HAVE_VASPRINTF
+
+	if (vasprintf(&res, format, ap) == -1 || res == NULL)
+		ekg_oom_handler();
+
+#else /* HAVE_VASPRINTF */
+
 #ifdef NO_POSIX_SYSTEM
 	char tmp[10000];
 #else
@@ -230,7 +238,6 @@ char *vsaprintf(const char *format, va_list ap)
 #if defined(va_copy) || defined(__va_copy)
 	va_list aq;
 #endif
-	char *res;
 	int size;
 
 #if defined(va_copy)
@@ -245,6 +252,8 @@ char *vsaprintf(const char *format, va_list ap)
 	va_end(aq);
 #else
 	vsnprintf(res, size + 1, format, ap);
+#endif
+
 #endif
 	return res;
 }
