@@ -29,6 +29,10 @@
 
 #include "dynstuff.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct last {
 	struct last *next;
 	unsigned int type	: 1;	/* 0 - przychodz±ca, 1 - wychodz±ca */
@@ -48,6 +52,10 @@ void lasts_destroy();
 
 char *xml_escape(const char *text);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_LOG_H */

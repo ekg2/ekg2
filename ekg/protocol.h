@@ -30,6 +30,10 @@
 #include <stdlib.h> /* size_t */
 #include <sys/types.h> /* off_t */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define EKG_FORMAT_RGB_MASK 0x00ffffffL	/* 0x00BBGGRR */
 #define EKG_FORMAT_R_MASK 0x00ff0000L
 #define EKG_FORMAT_G_MASK 0x0000ff00L
@@ -147,6 +151,10 @@ dcc_type_t dcc_type_get(dcc_t *);
 
 extern dcc_t *dccs;
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_PROTOCOL_H */

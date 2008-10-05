@@ -33,6 +33,10 @@
 #include <regex.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	void *w;			/* window, if NULL it means current */
 	int casense		: 2;	/* 0 - ignore case; 1 - don't ignore case, -1 - use global variable */
@@ -119,6 +123,10 @@ void windows_destroy(void);
 #endif
 
 COMMAND(cmd_window);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_WINDOW_H */
 

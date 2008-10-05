@@ -27,6 +27,10 @@
 #include "dynstuff.h"
 #include "protocol.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct msg_queue {
 	struct msg_queue	*next;
 
@@ -49,6 +53,10 @@ int msg_queue_remove_seq(const char *seq);
 int msg_queue_flush(const char *session);
 int msg_queue_read();
 int msg_queue_write();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_MSGQUEUE_H */
 

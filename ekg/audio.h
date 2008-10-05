@@ -23,6 +23,10 @@
 #include "dynstuff.h"
 #include "plugins.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum { AUDIO_CONTROL_INIT = 0, AUDIO_CONTROL_SET, AUDIO_CONTROL_GET, AUDIO_CONTROL_DEINIT, AUDIO_CONTROL_HELP }
 			audio_control_t;
 typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, } 
@@ -131,6 +135,9 @@ void codec_unregister(codec_t *codec);
 int audio_initialize();
 int audio_deinitialize();
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_AUDIO_H */
 

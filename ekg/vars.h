@@ -23,6 +23,10 @@
 #include "dynstuff.h"
 #include "plugins.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
 	VAR_STR,		/* ci±g znaków */
 	VAR_INT,		/* liczba ca³kowita */
@@ -90,6 +94,10 @@ int variable_remove(plugin_t *plugin, const char *name);
 variable_t *variables_removei(variable_t *v);
 void variables_destroy();
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_VARS_H */

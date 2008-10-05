@@ -26,6 +26,10 @@
 #include "themes.h"
 #include "sessions.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define printq(x...) do { if (!quiet) { print(x); } } while(0)
 
 #define COMMAND(x) int x(const char *name, const char **params, session_t *session, const char *target, int quiet)
@@ -115,6 +119,10 @@ extern char *last_search_first_name;
 extern char *last_search_last_name;
 extern char *last_search_nickname;
 extern char *last_search_uid;
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_COMMANDS_H */

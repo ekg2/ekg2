@@ -9,6 +9,10 @@
 #include "vars.h"
 #include "queries.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SCRIPT_HANDLE_UNBIND	-666
 #define MAX_ARGS QUERY_ARGS_MAX+1
 
@@ -199,7 +203,6 @@ int script_variables_write();
 	SCRIPT_HANDLER_HEADER(script_free_bind_t);\
 	SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args);\
 }
-#endif
 
 /* BINDING && UNBINDING */
 
@@ -247,3 +250,8 @@ int script_variables_write();
 /* foreach y->list->next do SCRIPT_HANDLER_FOOTER(y->list->data, _args); */\
 	SCRIPT_HANDLER_FOOTER(y, _args)
 
+#ifdef __cplusplus
+}
+#endif
+
+#endif

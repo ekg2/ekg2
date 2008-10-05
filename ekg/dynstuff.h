@@ -22,6 +22,10 @@
 #ifndef __EKG_DYNSTUFF_H
 #define __EKG_DYNSTUFF_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * typedef list_t
  *
@@ -203,6 +207,9 @@ void private_item_set_int(private_data_t **data, const char *item_name, int valu
 
 void private_items_destroy(private_data_t **data);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_DYNSTUFF_H */
 

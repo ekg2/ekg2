@@ -21,6 +21,10 @@
 #define __EKG_METACONTACTS_H
 #include "dynstuff.h" 
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct metacontact_item {
 	struct metacontact_item	*next;
 
@@ -49,6 +53,10 @@ void metacontacts_destroy();
 int metacontact_write();
 int metacontact_read();
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_METACONTACTS_H */

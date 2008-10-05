@@ -22,6 +22,10 @@
 
 #include "xmalloc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PROPERTY_INT_GET(object,property,type) \
 	\
 	type object##_##property##_get(object##_t *o) \
@@ -124,7 +128,9 @@ PROPERTY_STRING_GET(object, property)
 	PROPERTY_MISC_GET(object,property,type,null) \
 	PROPERTY_MISC_SET(object,property,type)
 
-
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_OOP_H */
 

@@ -1,6 +1,10 @@
 #ifndef __EKG_BINDINGS_H
 #define __EKG_BINDINGS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BINDING_FUNCTION(x) void x(const char *arg) 
 
 struct binding {
@@ -34,5 +38,9 @@ int binding_help(int a, int b);
 int binding_quick_list(int a, int b);
 
 void binding_free();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

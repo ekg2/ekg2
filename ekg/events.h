@@ -24,6 +24,10 @@
 #include "plugins.h"
 #include "stuff.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct event {
 	struct event *next;
 
@@ -41,6 +45,10 @@ int event_add(const char *name, int prio, const char *target, const char *action
 
 void event_free();
 int events_init();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_EVENTS_H */
 

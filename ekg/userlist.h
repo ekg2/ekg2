@@ -40,6 +40,10 @@
 #include "plugins.h"
 #include "windows.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** 
  * userlist_t is used to manage all info about user.<br>
  * It's used not only to manage contacts in roster, but also to manage people in chat or conference
@@ -207,6 +211,10 @@ char *get_nickname(session_t *session, const char *text);
 
 #define user_private_items_destroy(user) \
 	private_items_destroy(&(user)->priv_list);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_USERLIST_H */
 

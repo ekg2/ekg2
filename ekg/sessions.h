@@ -24,6 +24,10 @@
 #include <time.h>
 #include "dynstuff.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* --NOTE--
  * When modifying status_t, remember to update status tables in stuff.c!
  */
@@ -206,6 +210,10 @@ int session_write();
 void sessions_free();
 
 void session_help(session_t *s, const char *name);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_SESSIONS_H */

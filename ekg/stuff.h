@@ -46,6 +46,10 @@
 #include "sessions.h"
 #include "userlist.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DEBUG_MAX_LINES	50	/* ile linii z debug zrzucaæ do pliku */
 
 /* obs³uga procesów potomnych */
@@ -387,6 +391,10 @@ int ekg_writef(int fd, const char *format, ...);
 
 #endif
 	
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __EKG_STUFF_H */
 
 /*

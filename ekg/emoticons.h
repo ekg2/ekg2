@@ -24,9 +24,17 @@
 #ifndef __EKG_EMOTICONS_H
 #define __EKG_EMOTICONS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int emoticon_read();
 char *emoticon_expand(const char *s);
 void emoticons_destroy();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_EMOTICONS_H */
 

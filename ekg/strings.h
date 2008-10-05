@@ -28,6 +28,10 @@
 
 #include <wchar.h>		/* wchar_t stuff */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern int config_use_unicode;	/* not everyone want to include stuff.h */
 
 #define CHAR_T wchar_t	
@@ -55,6 +59,10 @@ extern size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 
 #include <ekg/xmalloc.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CHAR_T unsigned char
 #define TEXT(x) x
 #define CHAR(x) x
@@ -76,5 +84,8 @@ extern size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 
 #endif	/* USE_UNICODE */
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_STRINGS_H */

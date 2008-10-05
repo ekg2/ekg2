@@ -9,6 +9,10 @@
 # include <ekg/dynstuff.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if DYNSTUFF_USE_LIST3
 
 #define __DYNSTUFF_LIST_ADD(lista, typ, __notused)		\
@@ -415,5 +419,8 @@
 #define DYNSTUFF_LIST_DECLARE_SORTED_NF(lista, type, compare_func, list_add, list_unlink) \
 		DYNSTUFF_LIST_DECLARE_FULL(lista, type, compare_func, NULL, list_add, __DYNSTUFF_NOREMOVE, __DYNSTUFF_NOREMOVE, list_unlink, __DYNSTUFF_NODESTROY, __DYNSTUFF_NOCOUNT)
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

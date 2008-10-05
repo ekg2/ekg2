@@ -3,6 +3,10 @@
 #ifndef __EKG_DEBUG_H
 #define __EKG_DEBUG_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
 	DEBUG_IO = 1,
 	DEBUG_IORECV,
@@ -31,6 +35,10 @@ void debug_ext(debug_level_t level, const char *format, ...);
 #define debug_warn(args...)	debug_ext(DEBUG_WARN, args)
 #define debug_ok(args...)	debug_ext(DEBUG_OK, args)
 #define debug_wtf(args...)	debug_ext(DEBUG_WTF, args)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

@@ -3,6 +3,10 @@
 
 #include "dynstuff.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum ekg_recode_name {
 	EKG_RECODE_CP = 0,
 	EKG_RECODE_LATIN2,
@@ -38,5 +42,8 @@ void ekg_recode_utf8_dec();
 
 char *ekg_any_to_locale(char *buf, char *inp);	char *ekg_locale_to_any(char *buf, char *inp);
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif

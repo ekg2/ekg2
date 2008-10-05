@@ -29,6 +29,10 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct {
 	union {
 		char	*b;			/* possibly multibyte string */
@@ -100,6 +104,10 @@ typedef enum {
 	FSTR_REVERSE		= 1024,
 	FSTR_ALTCHARSET		= 2048
 } fstr_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_THEMES_H */
 

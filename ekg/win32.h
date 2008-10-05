@@ -31,6 +31,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #undef pipe
 typedef unsigned __int64 u_int64_t;
 
@@ -80,6 +84,10 @@ int uname(struct utsname *buf);					/* emulated ? */
 
 #define fileno(__F) ((__F)->_file)
 #define sleep(x) Sleep(x * 1000)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

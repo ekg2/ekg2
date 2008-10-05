@@ -18,6 +18,10 @@
 #ifndef __EKG_SRV_H
 #define __EKG_SRV_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct _gim_host gim_host;
 
 char *ekg_inet_ntostr(int family,  void *buf);
@@ -32,6 +36,10 @@ void write_out_and_destroy_list(int fd, gim_host *hostlist);
 
 #define DNS_SRV_MAX_PRIO 0xffff
 extern const int DNS_NS_MAXDNAME;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_SRV_H */
 

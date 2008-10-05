@@ -26,6 +26,10 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define EKG_ABI_VER 4633
 
 #define EXPORT __attribute__ ((visibility("default")))
@@ -250,6 +254,10 @@ extern plugin_t *plugins;
 extern list_t watches;
 extern idle_t *idles;
 extern query_t *queries[];
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_PLUGINS_H */

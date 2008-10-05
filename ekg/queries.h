@@ -1,6 +1,10 @@
 #ifndef __EKG_QUERIES
 #define __EKG_QUERIES
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define QUERY_ARGS_MAX 12
 
 enum query_arg_type {
@@ -467,6 +471,10 @@ static int queries_count = QUERY_EXTERNAL;	/* list_count(queries_other)+QUERY_EX
 
 extern struct query_def query_list[];		/* for: events.h scripts.h */
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif
