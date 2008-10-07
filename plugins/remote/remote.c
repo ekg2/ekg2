@@ -450,8 +450,18 @@ static WATCHER_LINE(rc_input_handler_line) {
 		} else if (!xstrcmp(cmd, "REQPLUGINS")) {
 			plugin_t *p;
 
-			for (p = plugins; p; p = p->next)
+			for (p = plugins; p; p = p->next) {
 				remote_writefd(fd, "PLUGIN", p->name, itoa(p->prio), NULL);
+
+				if (p->params) {
+					int i;
+
+					for (i = 0; p->params[i].key; i++) {
+						remote_writefd(fd, "PLUGINPARAM", p->name, p->params[i].key, NULL);
+					}
+				}
+			}
+
 			remote_writefd(fd, "+PLUGIN", NULL);
 
 		} else if (!xstrcmp(cmd, "REQFORMATS")) {
@@ -1439,7 +1449,6 @@ EXPORT int remote_plugin_init(int prio) {
 	query_connect_id(&remote_plugin, METACONTACT_ITEM_ADDED, remote_all_contacts_changed, NULL);
 	query_connect_id(&remote_plugin, METACONTACT_ITEM_REMOVED, remote_all_contacts_changed, NULL);
 
-	query_connect_id(&remote_plugin, USERLIST_CHANGED, remote_all_contacts_changed, NULL);
 	query_connect_id(&remote_plugin, USERLIST_ADDED, remote_all_contacts_changed, NULL);
 	query_connect_id(&remote_plugin, USERLIST_REMOVED, remote_all_contacts_changed, NULL);
 	query_connect_id(&remote_plugin, USERLIST_RENAMED, remote_all_contacts_changed, NULL);
