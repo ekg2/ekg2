@@ -42,7 +42,7 @@ void config_upgrade() {
 	else if (config_version == 0)
 		print("console_charset_using", config_console_charset);
 
-	if (config_version >= current_config_version)
+	if (config_version == 0 || config_version >= current_config_version)
 		return;
 
 	print("config_upgrade_begin");
