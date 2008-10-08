@@ -111,7 +111,6 @@ char *config_dir;
 int mesg_startup;
 int ekg_watches_removed;
 struct timeval ekg_tv;
-static pid_t ekg_pid = 0;
 static char argv0[PATH_MAX];
 
 pid_t speech_pid = 0;
@@ -688,7 +687,6 @@ int main(int argc, char **argv)
 #endif
 
 	ekg_started = time(NULL);
-	ekg_pid = getpid();
 
 	ekg2_dlinit();
 	setlocale(LC_ALL, "");
