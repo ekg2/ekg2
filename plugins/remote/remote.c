@@ -83,6 +83,7 @@ static list_t rc_inputs = NULL;
 static char *rc_paths = NULL;
 static char *rc_password = NULL;
 static int rc_first = 1;
+static int rc_detach = 0;
 
 /* note:
  * 	zmienne gtk: ncurses: readline: dla -F remote
@@ -418,6 +419,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 			/* BIGNOTE: 
 			 * 	here send all remote-vars, which we want to show outside
 			 */
+			remote_writefd(fd, "CONFIG", "remote:detach", itoa(rc_detach), NULL);
 			remote_writefd(fd, "CONFIG", "remote:remote_control", rc_paths, NULL);
 			remote_writefd(fd, "+CONFIG", NULL);
 
@@ -863,14 +865,51 @@ static int rc_input_new_unix(const char *path)
 	return fd;
 }
 
+static void rc_detach_changed(const char *name) {
+	static int detached = 0;
+
+	debug("rc_detach_changed() detached: %d rc_detach: %d\n");
+
+	if (detached)
+		return;
+
+	if (rc_detach) {
+		int pid;
+		int fd_null;
+
+		printf("[detached]\n");
+
+		if ((pid = fork()) < 0) {
+			printf("\tCouldn't detach\n");
+			return;
+		}
+
+		if (pid > 0) {
+			/* parent */
+			exit(0);
+		}
+
+		setsid();
+
+		/* XXX: in ekg2 we redirect stderr to another file */
+		fd_null = open("/dev/null", O_RDWR);
+
+		dup2(fd_null, 0);
+		dup2(fd_null, 1);
+		dup2(fd_null, 2);
+
+		close(fd_null);
+	} else
+		printf("Not detaching, if you like to, set remote:detach to true\n");
+}
+
 /*
  * rc_paths_changed()
  *
  * zmieniono zmienn± remote_control. dodaj nowe kana³y wej¶ciowe, usuñ te,
  * których ju¿ nie ma.
  */
-static void rc_paths_changed(const char *name)
-{
+static void rc_paths_changed(const char *name) {
 	char **paths = array_make(rc_paths, ",; ", 0, 1, 1);
 	list_t l;
 	int i;
@@ -1070,6 +1109,7 @@ static QUERY(remote_postinit) {
 	printf("ekg2-remote-plugin: configured!\n");
 	printf("remember to change password (/set remote:password yournewpassword) and to save configuration after connect!\n");
 
+	rc_detach_changed(NULL);
 	return 0;
 }
 
@@ -1394,8 +1434,9 @@ EXPORT int remote_plugin_init(int prio) {
 
 	plugin_register(&remote_plugin, prio);
 
-	variable_add(&remote_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);
+	variable_add(&remote_plugin, ("detach"), VAR_BOOL, 1, &rc_detach, rc_detach_changed, NULL, NULL);
 	variable_add(&remote_plugin, ("first_run"), VAR_INT, 2, &rc_first, NULL, NULL, NULL);
+	variable_add(&remote_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);
 	variable_add(&remote_plugin, ("password"), VAR_STR, 0, &rc_password, NULL, NULL, NULL);
 
 	query_connect_id(&remote_plugin, UI_IS_INITIALIZED, remote_ui_is_initialized, NULL);
