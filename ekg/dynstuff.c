@@ -855,7 +855,7 @@ void string_clear(string_t s)
 /**
  * string_free()
  *
- * Cleanup memory after string_t @a s, and eventually (if @a free_string set) cleanup memory after char buffer.
+ * Cleanup memory after string_t @a s, and perhaps (if @a free_string set) cleanup memory after char buffer.
  *
  * @param s		- string_t which we want to free.
  * @param free_string	- do we want to free memory after char buffer?

@@ -940,10 +940,10 @@ void print_warning(const char *target, session_t *session, const char *theme, ..
  *
  * Like print_window() but it takes window_t struct instead of target+session.
  *
- * @note	The same in print_window_c() we don't check if @a w is valid window ptr.
- *		Just be carefull. If you are not sure call:<br>
+ * @note	The same as in print_window_c(): we don't check if @a w is valid window ptr.
+ *		Just be careful. If you are not sure call:<br>
  *		<code>print_window_c(window_find_ptr(w), separate, theme, ...)</code>
- *		And eventually it will be displayed in (__status / or __current) window instead of good one.. But ekg2 won't crash.
+ *		And in worst case text will be displayed in (__status / or __current) window instead of a usual one.. But ekg2 won't crash.
  * 
  *		@param	w - window to display,<br>
  *			if NULL than __status or __current will be used. it depends on: config_default_status_window and config_display_crap variables.
@@ -1632,7 +1632,7 @@ void theme_init()
 	format_add("autosaved", _("%> Automatically saved settings\n"), 1);
 
 	/* config_upgrade() */
-	format_add("config_upgrade_begin", _("%) EKG2 upgrade detected. In the meantime, following changes were made:\n"), 1);
+	format_add("config_upgrade_begin", _("%) EKG2 upgrade detected. The following changes were made since your previous version:\n"), 1);
 	format_add("config_upgrade_important",	"%) %W%2) %y*%n %1\n", 1);
 	format_add("config_upgrade_major",	"%) %W%2) %Y*%n %1\n", 1);
 	format_add("config_upgrade_minor",	"%) %W%2) %c*%n %1\n", 1);
@@ -2076,7 +2076,7 @@ void theme_init()
 	format_add("directory_cant_create",	_("%! Can't create directory: %1 (%2)"), 1);
 
 	/* charset stuff */
-	format_add("console_charset_using",	_("%) EKG2 detected that your console works under: %W%1%n Please verify and eventually change %Gconsole_charset%n variable"), 1);
+	format_add("console_charset_using",	_("%) EKG2 detected that your console works under: %W%1%n Please verify and change %Gconsole_charset%n variable if needed"), 1);
 	format_add("console_charset_bad",	_("%! EKG2 detected that your console works under: %W%1%n, but in %Gconsole_charset%n variable you've got: %W%2%n Please verify."), 1);
 	format_add("iconv_fail",		_("%! iconv_open() fail to initialize charset conversion between %W%1%n and %W%2%n. Check %Gconsole_charset%n variable, if it won't help inform ekg2 dev team and/or upgrade iconv"), 1);
 	format_add("iconv_list",		_("%) %g%[-10]1%n %c<==> %g%[-10]2%n %b(%nIn use: %W%3, %4%b)"), 1);

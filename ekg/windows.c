@@ -244,8 +244,10 @@ void window_switch(int id) {
  *		If window with such target [it can also be u->uid/u->nickname combination] exists.
  *		than it'll return it.
  * 
- * @note	You shouldn't pass @a new_id here. Because it can broke UI stuff. don't ask. it's wrong. Just don't use it.
- *		It'll be possible removed... Really eventually you can talk with devs, and ask for id from class: 1000 to 1999
+ * @note	You shouldn't pass @a new_id here. Because it can break UI stuff. don't ask. it's wrong. Just don't use it.
+ *		It'll be possible removed... In case you really need it, you
+ *		can talk to the devs, and ask for an id from class: 1000 to
+ *		1999
  *
  * @todo	See XXX's
  *

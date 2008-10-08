@@ -1225,7 +1225,7 @@ COMMAND(session_command)
 			if (pa->secret)
 				var = var ? "(...)" : NULL;
 		} else {
-		/* XXX, idea, here we can do: session_localvar_find() to check if this is _local_ variable, and eventually print other info.. 
+		/* XXX, idea, here we can do: session_localvar_find() to check if this is _local_ variable, and perhaps print other info.. 
 		 *	The same at --set ? 
 		 */
 			printq("session_variable_doesnt_exist", session_name(s), key);

@@ -4166,7 +4166,7 @@ static COMMAND(cmd_me)
  * @param params	- space seperated paramlist (read note for more details!)
  * @param function	- function handler
  * @param flags		- bitmask from commands.h (read note for more details!)
- * @param possibilities	- eventually space separated list of possible params.. completion useful
+ * @param possibilities	- optional space separated list of possible params.. completion useful
  *
  * @return Pointer to added command_t *, or NULL if name was NULL.
  *

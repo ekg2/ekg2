@@ -1096,7 +1096,7 @@ FILE *help_path(char *name, char *plugin) {
 		/* fallback on locale enviroments.. (man 5 locale) */
 		if ((tmp = getenv("LC_ALL"))) break;
 		if ((tmp = getenv("LANG"))) break;
-		/* eventually fallback, fallback on en language */
+		/* fallback to en language */
 		tmp = "en";
 	} while (0);
 
