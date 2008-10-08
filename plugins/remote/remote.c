@@ -868,9 +868,9 @@ static int rc_input_new_unix(const char *path)
 static void rc_detach_changed(const char *name) {
 	static int detached = 0;
 
-	debug("rc_detach_changed() detached: %d rc_detach: %d\n");
+	debug("rc_detach_changed() detached: %d rc_detach: %d rc_inputs: %x\n", detached, rc_detach, rc_inputs);
 
-	if (detached)
+	if (detached || (rc_inputs == NULL))
 		return;
 
 	if (rc_detach) {
@@ -1067,8 +1067,10 @@ static void remote_window_kill(window_t *w) {
 /* XXX, pipe: && udp: sucks */
 /* XXX, ssl: zlib: ? */
 static QUERY(remote_postinit) {
-	if (rc_inputs)
+	if (rc_inputs) {
+		rc_detach_changed(NULL);
 		return 1;
+	}
 
 	if (!rc_first)
 		printf("!!! rc_inputs == NULL, need reconfiguration of remote plugin!\n");
