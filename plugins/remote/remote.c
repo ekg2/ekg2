@@ -90,6 +90,7 @@ static int rc_detach = 0;
  * 	sa zapisywane w config-remote
  */
 
+#define UI_VAR(name, defval) { name, defval, NULL, 0 }
 static struct {
 	const char *name;
 	char *value_def;
@@ -98,45 +99,45 @@ static struct {
 
 } ui_vars[] = {
 	/* gtk: */
-	{ "gtk:backlog_size", "1000", NULL, 0 },
-	{ "gtk:tab_layout", "2", NULL, 0 },
+	UI_VAR("gtk:backlog_size", 		"1000"),
+	UI_VAR("gtk:tab_layout",		"2"),
 
 	/* ncurses: */
-	{ "ncurses:aspell", "0", NULL, 0 },
-	{ "ncurses:aspell_lang", "pl", NULL, 0 },
-	{ "ncurses:backlog_size", "1000", NULL, 0 },
-	{ "ncurses:contacts", "2", NULL, 0 },
-	{ "ncurses:contacts_descr", "0", NULL, 0 },
-	{ "ncurses:contacts_edge", "2", NULL, 0 },
-	{ "ncurses:contacts_frame", "1", NULL, 0 },
-	{ "ncurses:contacts_groups", NULL, NULL, 0 },
-	{ "ncurses:contacts_groups_all_sessons", NULL, NULL, 0 },
-	{ "ncurses:contacts_margin", "1", NULL, 0 },
-	{ "ncurses:contacts_metacontacts_swallow", "1", NULL, 0 },
-	{ "ncurses:contacts_order", NULL, NULL, 0 },
-	{ "ncurses:contacts_orderbystate", "1", NULL, 0 },
-	{ "ncurses:contacts_size", "9", NULL, 0 },
-	{ "ncurses:contacts_wrap", "0", NULL, 0 },
-	{ "ncurses:display_transparent", "1", NULL, 0 },
-	{ "ncurses:enter_scrolls", "0", NULL, 0 },
-	{ "ncurses:header_size", "0", NULL, 0 },
-	{ "ncurses:kill_irc_window", "1", NULL, 0 },
-	{ "ncurses:lastlog_lock", "1", NULL, 0 },
-	{ "ncurses:lastlog_size", "10", NULL, 0 },
-	{ "ncurses:margin_size", "15", NULL, 0 },
-	{ "ncurses:mark_on_window_change", "0", NULL, 0 },
-	{ "ncurses:statusbar_size", "1", NULL, 0 },
-	{ "ncurses:text_bottomalign", "0", NULL, 0 },
-	{ "ncurses:traditional_clear", "1", NULL, 0 },
-	{ "ncurses:typing_interval", "1", NULL, 0 },
-	{ "ncurses:typing_timeout", "10", NULL, 0 },
-	{ "ncurses:typing_timeout_empty", "5", NULL, 0 },
+	UI_VAR("ncurses:aspell", 		"0"),
+	UI_VAR("ncurses:aspell_lang",	 	"pl"),
+	UI_VAR("ncurses:backlog_size", 		"1000"),
+	UI_VAR("ncurses:contacts", 		"2"),
+	UI_VAR("ncurses:contacts_descr", 	"0"),
+	UI_VAR("ncurses:contacts_edge", 	"2"),
+	UI_VAR("ncurses:contacts_frame", 	"1"),
+	UI_VAR("ncurses:contacts_groups", 	NULL),
+	UI_VAR("ncurses:contacts_groups_all_sessons", "0"),
+	UI_VAR("ncurses:contacts_margin", 	"1"),
+	UI_VAR("ncurses:contacts_metacontacts_swallow", "1"),
+	UI_VAR("ncurses:contacts_order", 	NULL),
+	UI_VAR("ncurses:contacts_orderbystate", "1"),
+	UI_VAR("ncurses:contacts_size", 	"9"),
+	UI_VAR("ncurses:contacts_wrap", 	"0"),
+	UI_VAR("ncurses:display_transparent",	"1"),
+	UI_VAR("ncurses:enter_scrolls", 	"0"),
+	UI_VAR("ncurses:header_size", 		"0"),
+	UI_VAR("ncurses:kill_irc_window", 	"1"),
+	UI_VAR("ncurses:lastlog_lock", 		"1"),
+	UI_VAR("ncurses:lastlog_size", 		"10"),
+	UI_VAR("ncurses:margin_size", 		"15"),
+	UI_VAR("ncurses:mark_on_window_change", "0"),
+	UI_VAR("ncurses:statusbar_size",	"1"),
+	UI_VAR("ncurses:text_bottomalign", 	"0"),
+	UI_VAR("ncurses:traditional_clear", 	"1"),
+	UI_VAR("ncurses:typing_interval", 	"1"),
+	UI_VAR("ncurses:typing_timeout", 	"10"),
+	UI_VAR("ncurses:typing_timeout_empty", 	"5"),
 
 	/* readline: */
-	{ "readline:ctrld_quits", "1", NULL, 0 },
-
+	UI_VAR("readline:ctrld_quits", 		"1"),
 	{ NULL, NULL, NULL, 0 }
 };
+#undef UI_VAR
 
 static const char *rc_var_get_value(variable_t *v) {
 	if (!v)
