@@ -947,7 +947,7 @@ static inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 
 	if (ch > 127 && ch < 160 &&
 #if USE_UNICODE
-		!config_use_unicode &&
+		0 &&
 #endif
 		config_use_iso)
 	{
@@ -1166,11 +1166,10 @@ void ncurses_redraw(window_t *w)
 				if (!fixup && (l->margin_left != -1 && x >= l->margin_left))
 					fixup = l->margin_left + config_margin_size;
 #if USE_UNICODE
-				if (config_use_unicode) {
-					mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
-				} else
+				mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
+#else
+				mvwaddch(n->window, cur_y, cur_x - fixup, ch);
 #endif
-					mvwaddch(n->window, cur_y, cur_x - fixup, ch);
 			}
 		}
 
@@ -1183,11 +1182,10 @@ void ncurses_redraw(window_t *w)
 			if (!fixup && (l->margin_left != -1 && (x + l->prompt_len) >= l->margin_left))
 				fixup = l->margin_left + config_margin_size;
 #if USE_UNICODE
-			if (config_use_unicode) {
-				mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
-			} else
+			mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
+#else
+			mvwaddch(n->window, cur_y, cur_x - fixup, ch);
 #endif
-				mvwaddch(n->window, cur_y, cur_x - fixup, ch);
 		}
 	}
 
@@ -1867,7 +1865,7 @@ void ncurses_init()
 #ifdef HAVE_NCURSES_ULC
 	if (!config_use_iso
 #if USE_UNICODE
-			&& !config_use_unicode
+			&& 0
 #endif
 			)
 		use_legacy_coding(2);
@@ -2111,11 +2109,10 @@ static void print_char(WINDOW *w, int y, int x, CHAR_T ch, int attr) {
 	wattrset(w, attr);
 
 #if USE_UNICODE
-	if (config_use_unicode)
-		mvwaddnwstr(w, y, x, &ch, 1);
-	else
+	mvwaddnwstr(w, y, x, &ch, 1);
+#else
+	mvwaddch(w, y, x, ch);
 #endif
-		mvwaddch(w, y, x, ch);
 	wattrset(w, A_NORMAL);
 }
 
@@ -2131,13 +2128,11 @@ static void print_char(WINDOW *w, int y, int x, CHAR_T ch, int attr) {
  */
 static int ekg_getch(int meta, unsigned int *ch) {
 #if USE_UNICODE
-	int retcode;
-	if (config_use_unicode) {
-		retcode = wget_wch(input, ch);
-		if (retcode == ERR) *ch = ERR;
-	} else retcode = 
+	int retcode = wget_wch(input, ch);
+	if (retcode == ERR) *ch = ERR;
+#else
+	*ch = wgetch(input);
 #endif
-		*ch = wgetch(input);
 
 #ifndef HAVE_USABLE_TERMINFO
 	/* Debian screen incomplete terminfo workaround */
@@ -2269,11 +2264,10 @@ WATCHER(ncurses_watch_winch)
 
 static inline int isalpha_locale(int x) {
 #ifdef USE_UNICODE
-	if (config_use_unicode)
-		return (isalpha(x) || (x > 0x7f));	/* moze i nie najlepsze wyjscie... */
-	else
+	return (isalpha(x) || (x > 0x7f));	/* moze i nie najlepsze wyjscie... */
+#else
+	return isalpha_pl(x);
 #endif
-		return isalpha_pl(x);
 }
 
 /* 
@@ -2430,7 +2424,7 @@ void ncurses_redraw_input(unsigned int ch) {
 		/* const */size_t linelen	= xwcslen(ncurses_line);
 
 		if (ncurses_current->prompt)
-#ifdef USE_UNICODE /* XXX: should we check config_use_unicode here? */
+#ifdef USE_UNICODE
 			mvwaddwstr(input, 0, 0, ncurses_current->prompt_real);
 #else
 			mvwaddstr(input, 0, 0, (char *) ncurses_current->prompt_real);
@@ -2605,7 +2599,7 @@ end:
 	} else {
 		if (
 #if USE_UNICODE
-			!config_use_unicode && 
+			0 && 
 #endif
 			ch > KEY_MAX) {
 			
@@ -2615,7 +2609,7 @@ end:
 
 		if (
 #if USE_UNICODE
-			( (config_use_unicode && (tmp == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */)) || !config_use_unicode) &&
+			(((tmp == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */))) &&
 #endif
 			(b = ncurses_binding_map[ch]) && b->action) {
 
@@ -2628,7 +2622,7 @@ end:
 			}
 		} else if (
 #if USE_UNICODE
-				((config_use_unicode && ch != KEY_MOUSE) || (!config_use_unicode && ch < 255)) &&
+				((ch != KEY_MOUSE) || (0 && ch < 255)) &&
 #else
 				ch < 255 && 
 #endif
