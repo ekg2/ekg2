@@ -127,9 +127,9 @@ AC_CHECK_LIBIDN
 dnl core 
 AC_CONFIG_FILES([Makefile ekg/Makefile contrib/Makefile compat/Makefile docs/Makefile plugins/Makefile po/Makefile.in])
 dnl protocol-plugins
-AC_CONFIG_FILES([plugins/feed/Makefile plugins/gg/Makefile plugins/icq/Makefile plugins/irc/Makefile plugins/jabber/Makefile plugins/polchat/Makefile])
+AC_CONFIG_FILES([plugins/feed/Makefile plugins/gg/Makefile plugins/icq/Makefile plugins/irc/Makefile plugins/jabber/Makefile plugins/polchat/Makefile plugins/rivchat/Makefile])
 dnl ui-plugins
-AC_CONFIG_FILES([plugins/gtk/Makefile plugins/httprc_xajax/Makefile plugins/ncurses/Makefile plugins/rc/Makefile plugins/readline/Makefile])
+AC_CONFIG_FILES([plugins/gtk/Makefile plugins/httprc_xajax/Makefile plugins/ncurses/Makefile plugins/rc/Makefile plugins/readline/Makefile plugins/remote/Makefile])
 dnl log-plugins
 AC_CONFIG_FILES([plugins/logs/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile])
 dnl scripting-plugins and samples-scripts
@@ -140,7 +140,7 @@ AC_CONFIG_FILES([plugins/gpg/Makefile plugins/rot13/Makefile plugins/sim/Makefil
 dnl misc-plugins
 AC_CONFIG_FILES([plugins/mail/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/autoresponder/Makefile plugins/jogger/Makefile])
 
-PLUGINS="logs mail rc sms pcm icq irc polchat rot13 httprc_xajax xmsg autoresponder jogger"
+PLUGINS="logs mail rc sms pcm icq irc polchat rot13 httprc_xajax xmsg autoresponder jogger rivchat remote"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
