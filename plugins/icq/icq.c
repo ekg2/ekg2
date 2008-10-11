@@ -1200,6 +1200,10 @@ static COMMAND(icq_command_connect) {
 		return -1;
 	}
 
+	printq("connecting", session_name(session));
+	if ((session_status_get(session) == EKG_STATUS_NA))
+		session_status_set(session, EKG_STATUS_AVAIL);
+
 	return 0;
 }
 

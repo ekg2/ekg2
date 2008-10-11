@@ -151,7 +151,7 @@ session_t *session_add(const char *uid) {
 	
 	s = xmalloc(sizeof(session_t));
 	s->uid		= xstrdup(uid);
-	s->status	= EKG_STATUS_NA;
+	s->status	= EKG_STATUS_AVAIL;	/* note: here we had EKG_STATUS_NA, but some protocol plugins doesn't like EKG_STATUS_NA at connect */
 	s->plugin	= pl;
 #ifdef HAVE_FLOCK
 	s->lock_fd	= -1;

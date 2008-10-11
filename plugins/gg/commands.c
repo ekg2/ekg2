@@ -138,7 +138,7 @@ static COMMAND(gg_command_connect) {
 		struct gg_login_params p;
 		const char *tmp, *local_ip = session_get(session, "local_ip");
 		int tmpi;
-		int _status = gg_text_to_status(session_status_get(session), session_descr_get(session));
+		int _status;
 		const char *realserver = session_get(session, "server");
 		int port = session_int_get(session, "port");
 		char *password = (char *) session_get(session, "password");
@@ -180,6 +180,8 @@ static COMMAND(gg_command_connect) {
 
 		if ((session_status_get(session) == EKG_STATUS_NA))
 			session_status_set(session, EKG_STATUS_AVAIL);
+
+		_status = gg_text_to_status(session_status_get(session), session_descr_get(session));
 		
 		/* dcc */
 		if (gg_config_dcc) {
