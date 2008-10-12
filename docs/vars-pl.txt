@@ -151,10 +151,8 @@ display_notify
 	
 	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
 	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
-	tylko zmiany z niedostêpnego na dostêpny i na odwrót. wiêkszy 
-	priorytet ma zmienna ,,contacts'', która przy warto¶ci 2 
-	ukrywa zmiany stanu. wiêkszy priorytet ma równie¿ zmienna 
-	sesyjna (je¿eli nie równa -1)
+	tylko zmiany z niedostêpnego na dostêpny i na odwrót. Wiêkszy priorytet
+	ma zmienna sesyjna o tej samej nazwie (je¿eli nie równa -1)
 
 display_pl_chars
 	typ: bool

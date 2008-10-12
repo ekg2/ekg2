@@ -11,6 +11,16 @@ display_crap
 	defines if information which weren't connected with interlocutor will be displayed in chat window. 
 	If it's 0, in chat window information only about interlocutor status are displayed.
 
+display_notify
+	type: integer
+	default value: 1
+	
+	a value of 0 causes state changes of your contacts to be ignored, a
+	value of 1 causes all state changes to be displayed, and a value of 2
+	causes only state changes from unavailable to available and back to be
+	displayed. A session variable with the same name has a higher priority
+	and overrides this global one (unless it is set to -1).
+
 exit_exec
 	type: text
 	default value: none
