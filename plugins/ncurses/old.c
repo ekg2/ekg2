@@ -2605,8 +2605,6 @@ end:
 			goto then;
 		}
 
-		/* XXX, when we got KEY_RESIZE, should we do something like in ncurses_watch_winch() ? */
-
 		if (
 #if USE_UNICODE
 			(getch_ret == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */) &&
@@ -2622,7 +2620,7 @@ end:
 			}
 		} else if (
 #if USE_UNICODE
-				(ch != KEY_MOUSE && ch != KEY_RESIZE) &&
+				(ch != KEY_MOUSE) &&
 #else
 				(ch < 255) && 
 #endif
