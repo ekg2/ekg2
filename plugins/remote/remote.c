@@ -73,6 +73,10 @@ typedef struct {
 typedef struct {
 	remote_backlog_t **backlog;	/* bufor z liniami */		/* XXX, przerobic na liste */
 	int backlog_size;		/* rozmiar backloga */
+
+	char *last_irctopic;
+	char *last_irctopicby;
+	char *last_ircmode;
 } remote_window_t;
 
 PLUGIN_DEFINE(remote, PLUGIN_UI, NULL);
@@ -84,6 +88,8 @@ static char *rc_paths = NULL;
 static char *rc_password = NULL;
 static int rc_first = 1;
 static int rc_detach = 0;
+
+static int rc_last_mail_count = -1;
 
 /* note:
  * 	zmienne gtk: ncurses: readline: dla -F remote
@@ -140,9 +146,6 @@ static struct {
 #undef UI_VAR
 
 static const char *rc_var_get_value(variable_t *v) {
-	if (!v)
-		return NULL;
-
 	switch (v->type) {
 		case VAR_INT:
 		case VAR_BOOL:
@@ -385,6 +388,8 @@ static WATCHER_LINE(rc_input_handler_line) {
 			}
 
 			remote_writefd(fd, "+LOGIN", NULL);
+			if (rc_last_mail_count > 0)
+				remote_writefd(fd, "MAILCOUNT", itoa(rc_last_mail_count), NULL);		/* nie najszczesliwsze miejsce, ale nie mam pomyslu gdzie indziej */
 
 		} else {
 			debug_error("unknown command: %s\n", arr[0]);
@@ -560,6 +565,8 @@ static WATCHER_LINE(rc_input_handler_line) {
 			window_t *w;
 
 			for (w = windows; w; w = w->next) {
+				remote_window_t *n;
+
 				remote_writefd(fd, "WINDOW", itoa(w->id), w->target, NULL);	/* NOTE: w->target can be NULL */
 
 				if (w->alias)
@@ -568,6 +575,15 @@ static WATCHER_LINE(rc_input_handler_line) {
 					remote_writefd(fd, "WINDOWINFO", itoa(w->id), "SESSION", w->session->uid, NULL);
 				if (w->act)
 					remote_writefd(fd, "WINDOWINFO", itoa(w->id), "ACTIVITY", itoa(w->act), NULL);
+
+				if ((n = w->private)) {
+					if (n->last_irctopic)
+						remote_writefd(fd, "WINDOWINFO", itoa(w->id), "IRCTOPIC", n->last_irctopic, NULL);
+					if (n->last_irctopicby)
+						remote_writefd(fd, "WINDOWINFO", itoa(w->id), "IRCTOPICBY", n->last_irctopicby, NULL);
+					if (n->last_ircmode)
+						remote_writefd(fd, "WINDOWINFO", itoa(w->id), "IRCTOPICMODE", n->last_ircmode, NULL);
+				}
 			}
 			remote_writefd(fd, "WINDOW_SWITCH", itoa(window_current->id), NULL);
 			remote_writefd(fd, "+WINDOW", NULL);
@@ -871,6 +887,8 @@ static void rc_detach_changed(const char *name) {
 
 	debug("rc_detach_changed() detached: %d rc_detach: %d rc_inputs: %x\n", detached, rc_detach, rc_inputs);
 
+	/* XXX, zamiast static detached, sprawdzaj czy wejscie/wyjscie jest terminalem */
+
 	if (detached || (rc_inputs == NULL))
 		return;
 
@@ -1061,6 +1079,10 @@ static void remote_window_kill(window_t *w) {
 		n->backlog_size = 0;
 	}
 
+	xfree(n->last_irctopic);
+	xfree(n->last_irctopicby);
+	xfree(n->last_ircmode);
+
 	xfree(n);
 }
 
@@ -1171,17 +1193,11 @@ static QUERY(remote_ui_window_print) {
 	if (w == window_debug)		/* XXX! */
 		goto cleanup;
 
-	/* XXX, sanityzowac (? na pewno?)*/
-
 	if (!(n = w->private)) { 
 		/* BUGFIX, cause @ ui-window-print handler (not ncurses plugin one, ncurses plugin one is called last cause of 0 prio)
 		 *	plugin may call print_window() 
 		 */
 		remote_window_new(w);	
-		if (!(n = w->private)) {
-			debug("remote_ui_window_print() IInd CC still not w->private, quitting...\n");
-			return -1;
-		}
 	}
 
 	fstr = rc_fstring_reverse(line);
@@ -1333,10 +1349,79 @@ static QUERY(remote_userlist_refresh) {
 	return 0;
 }
 
-
 static QUERY(remote_all_contacts_changed) {
 //	remote_broadcast((data) ? "REFRESH_USERLIST_FULL\n" : "REFRESH_USERLIST\n");	/* XXX, nie przetwarzane */
 	/* XXX, inaczej, to tak nie bedzie dzialac. trzeba zrobic wsparcie dla wszystkich */
+	return 0;
+}
+
+/* 
+ * remote_statusbar_timer()
+ *
+ * podobnie jak w ncurses, wykonywane co 1s
+ * sprawdzamy czy nie zmienila sie liczba odebranych maili / topic aktualnego okienka
+ * 
+ * NOTE:
+ * 	mozna by sprawdzac topici wszystkich okien przez:
+ * 		for (w = windows; w; w = w->next) {
+ * 			window_current = w;
+ * 			IRC_TOPIC()
+ *		}
+ *	ale imho to jest srednio potrzebne.
+ *	user i tak zeby widziec topic musi sie na to okienko przelaczyc,
+ *	jak sie przelaczy to remote-plugin bedzie o tym wiedziec.
+ *
+ *	remote_statusbar_timer() sie wykona, pobierze nowy topic, wysle informacje przez broadcasta.
+ *	no moze user bedzie troche confused jak mu sie topic zmieni w ciagu 1s, ale na to tez sa sposoby.
+ *
+ *	np. podczas UI_WINDOW_SWITCH() wywolywac remote_statusbar_timer(), etc, etc..
+ *
+ *	anyway, lepsze to niz nic.
+ */
+
+static TIMER(remote_statusbar_timer) {
+	int mail_count = -1;
+	char *irctopic, *irctopicby, *ircmode;
+
+	remote_window_t *r;
+
+	if (type)
+		return 0;
+
+	if (query_emit_id(NULL, MAIL_COUNT, &mail_count) != -2) {
+		if (mail_count != rc_last_mail_count) {
+			rc_last_mail_count = mail_count;
+			remote_broadcast("MAILCOUNT", itoa(mail_count), NULL);
+		}
+	}
+
+	/* just in case */
+	if (!(window_current->private))
+		remote_window_new(window_current);
+
+	r = window_current->private;
+
+	irctopic = irctopicby = ircmode = NULL;
+	query_emit_id(NULL, IRC_TOPIC, &irctopic, &irctopicby, &ircmode);
+
+	if (xstrcmp(irctopic, r->last_irctopic)) {
+		xfree(r->last_irctopic);
+		r->last_irctopic = irctopic;
+		remote_broadcast("WINDOWINFO", itoa(window_current->id), "IRCTOPIC", irctopic, NULL);
+	}
+
+	if (xstrcmp(irctopicby, r->last_irctopicby)) {
+		xfree(r->last_irctopicby);
+		r->last_irctopicby = irctopicby;
+		remote_broadcast("WINDOWINFO", itoa(window_current->id), "IRCTOPICBY", irctopicby, NULL);
+	}
+
+	if (xstrcmp(ircmode, r->last_ircmode)) {
+		xfree(r->last_ircmode);
+		r->last_ircmode = ircmode;
+		remote_broadcast("WINDOWINFO", itoa(window_current->id), "IRCTOPICMODE", ircmode, NULL);
+	}
+
 	return 0;
 }
 
@@ -1511,6 +1596,8 @@ EXPORT int remote_plugin_init(int prio) {
 				rc_variable_set(ui_vars[i].name, ui_vars[i].value_def);
 		}
 	}
+
+	timer_add(&remote_plugin, "remote:clock", 1, 1, remote_statusbar_timer, NULL);
 
 /* XXX, signal()? on ^C, do ekg_exit() etc..? */
 
