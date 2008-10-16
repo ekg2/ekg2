@@ -1638,8 +1638,10 @@ void update_statusbar(int commit)
 	int formats_count = 0, i = 0, y;
 	session_t *sess = window_current->session;
 	userlist_t *q = userlist_find(sess, window_current->target);
-	plugin_t *plug;
-	char *tmp;
+
+	char *query_tmp;
+	char *irctopic, *irctopicby, *ircmode;
+	int mail_count;
 
 	wattrset(ncurses_status, color_pair(COLOR_WHITE, COLOR_BLUE));
 	if (ncurses_header)
@@ -1662,25 +1664,21 @@ void update_statusbar(int commit)
 	__add_format_dup("session", (sess), (sess->alias) ? sess->alias : sess->uid);
 	__add_format_dup("descr", (sess && sess->descr && sess->connected), sess->descr);
 
-	tmp = (sess && q && q->nickname) ? saprintf("%s/%s", q->nickname, q->uid) : xstrdup(window_current->alias ? window_current->alias : window_current->target);
-	__add_format("query", tmp);
+	query_tmp = (sess && q && q->nickname) ? saprintf("%s/%s", q->nickname, q->uid) : xstrdup(window_current->alias ? window_current->alias : window_current->target);
+	__add_format("query", query_tmp);
 
 	__add_format_emp("debug", (!window_current->id));
 	__add_format_emp("more", (window_current->more));
 
-	if ((plug = plugin_find(("mail")))) {
-		int mail_count = -1;
-		query_emit_id(plug, MAIL_COUNT, &mail_count);
+	mail_count = -1;
+	if (query_emit_id(NULL, MAIL_COUNT, &mail_count) != -2)
 		__add_format_dup("mail", (mail_count > 0), itoa(mail_count));
-	}
-	if (session_check(window_current->session, 1, "irc") && (plug = plugin_find(("irc")))) {
-		char *t1 = NULL;
-		char *t2 = NULL;
-		char *t3 = NULL; 
-		query_emit_id(plug, IRC_TOPIC, &t1, &t2, &t3);
-		__add_format("irctopic", t1);
-		__add_format("irctopicby", t2);
-		__add_format("ircmode", t3);
+
+	irctopic = irctopicby = ircmode = NULL;
+	if (query_emit_id(NULL, IRC_TOPIC, &irctopic, &irctopicby, &ircmode) != -2) {
+		__add_format("irctopic", irctopic);
+		__add_format("irctopicby", irctopicby);
+		__add_format("ircmode", ircmode);
 	}
 
 	__add_format("activity", ncurses_window_activity());
