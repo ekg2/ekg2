@@ -2484,14 +2484,14 @@ WATCHER(ncurses_watch_stdin)
 {
 	static int lock = 0;
 	struct binding *b = NULL;
-	int tmp;
 	unsigned int ch;
+	int getch_ret;
 
 	ncurses_redraw_input_already_exec = 0;
 	if (type)
 		return 0;
 
-	switch ((tmp = ekg_getch(0, &ch))) {
+	switch ((getch_ret = ekg_getch(0, &ch))) {
 		case(-1):	/* dziwna kombinacja, która by blokowa³a */
 		case(-2):	/* przeszlo przez query_emit i mamy zignorowac (pytthon, perl) */
 		case(0):	/* Ctrl-Space, g³upie to */
@@ -2599,18 +2599,20 @@ end:
 #if USE_UNICODE
 			0 && 
 #endif
-			ch > KEY_MAX) {
-			
+			ch > KEY_MAX) 
+		{
 			debug_error("%s:%d INTERNAL NCURSES/EKG2 FAULT. KEY-PRESSED: %d>%d TO PROTECT FROM SIGSEGV\n", __FILE__, __LINE__, ch, KEY_MAX);
 			goto then;
 		}
 
+		/* XXX, when we got KEY_RESIZE, should we do something like in ncurses_watch_winch() ? */
+
 		if (
 #if USE_UNICODE
-			(((tmp == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */))) &&
+			(getch_ret == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */) &&
 #endif
-			(b = ncurses_binding_map[ch]) && b->action) {
-
+			(b = ncurses_binding_map[ch]) && b->action)
+		{
 			if (b->function)
 				b->function(b->arg);
 			else {
@@ -2620,12 +2622,12 @@ end:
 			}
 		} else if (
 #if USE_UNICODE
-				((ch != KEY_MOUSE) || (0 && ch < 255)) &&
+				(ch != KEY_MOUSE && ch != KEY_RESIZE) &&
 #else
-				ch < 255 && 
+				(ch < 255) && 
 #endif
-				xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
-
+				xwcslen(ncurses_line) < LINE_MAXLEN - 1)
+		{
 					/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
 			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, sizeof(CHAR_T) * (LINE_MAXLEN - line_index - 1));
 					/* put in ncurses_line[lindex_index] current char */
