@@ -68,34 +68,22 @@ static const char *format_ansi(char ch) {
 	return ("");
 }
 
-static const char *format_line(const char *str) {
-	while (*str) {
-		if (*str == '%') {
-			str++;
-			printf("%s", format_ansi(*str));
-			str++;
-		} else {
-			putchar(*str);
-			str++;
-		}
-	}
-}
-
 int main() {
 	char buf[4096];
-	int len;
 	int eaten = 0;
+	int len;
 
-	char *rbuf = buf;
+	while ((len = read(0, buf, sizeof(buf))) > 0) {
+		int begpos = 0;
+		int pos;
 
-	while ((len = read(0, buf, sizeof(buf)-1)) > 0) {
 		if (eaten) {
 			printf("%s", format_ansi(buf[0]));
-			rbuf++;
+			begpos = 1;
 			eaten = 0;
 		}
 
-		while (&(buf[len-1]) >= rbuf && buf[len-1] == '%') {
+		while (len > begpos && buf[len-1] == '%') {
 			eaten++;
 			len--;
 		}
@@ -108,14 +96,23 @@ int main() {
 			eaten = 1;
 		}
 
-		buf[len] = 0;
-		printf("%s", format_line(rbuf));
-		rbuf = buf;
+		pos = begpos;
+		while (pos < len) {
+			if (buf[pos] == '%') {
+				pos++;
+				printf("%s", format_ansi(buf[pos]));
+				pos++;
+			} else {
+				putchar(buf[pos]);
+				pos++;
+			}
+		}
+
 	}
 	printf("\n");
 
 	if (eaten) 
-		fprintf(stderr, "BAD LOG-FILE? ended with: '%'\n");
+		fprintf(stderr, "BAD LOG-FILE? ended with: '%%'\n");
 	return eaten;
 }
 
