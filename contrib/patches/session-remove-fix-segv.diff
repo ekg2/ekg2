@@ -1,0 +1,54 @@
+Index: sessions.c
+===================================================================
+--- sessions.c	(wersja 4713)
++++ sessions.c	(kopia robocza)
+@@ -267,18 +267,21 @@
+ 
+ 	if (!(s = session_find(uid)))
+ 		return -1;
+-	if (s == session_current)
+-		session_current = NULL;
+ 
+ 	count = sessions_count();
+ 
+ 	for (w = windows; w; w = w->next) {
+-		if (w->session == s) {
+-			w->session = NULL;
+-			if (count > 1)
+-				window_session_cycle(w);
+-		} 
++		if (w->session == s && count > 1)
++			window_session_cycle(w);
++
++		if (w->session == s)
++			window_session_set(w, NULL);
+ 	}
++
++	if (s == session_current) {		/* shouldn't happen */
++		session_current = NULL;
++		query_emit_id(NULL, SESSION_CHANGED);
++	}
+ 	
+ 	if (s->connected)
+ 		command_exec_format(NULL, s, 1, ("/disconnect %s"), s->uid);
+@@ -309,7 +312,6 @@
+ 	}
+ 
+ 	tmp = xstrdup(uid);
+-	query_emit_id(NULL, SESSION_CHANGED);
+ 	query_emit_id(NULL, SESSION_REMOVED, &tmp);
+ 	xfree(tmp);
+ 
+Index: windows.c
+===================================================================
+--- windows.c	(wersja 4654)
++++ windows.c	(kopia robocza)
+@@ -883,7 +885,7 @@
+ void window_session_set(window_t *w, session_t *new_session) {
+ 	static int lock;
+ 
+-	if (!w || !new_session)		/* XXX, new_session == NULL? */
++	if (!w)
+ 		return;
+ 
+ 	if (w->session == new_session)
