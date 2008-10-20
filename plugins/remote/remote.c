@@ -247,13 +247,10 @@ static char *rc_fstring_reverse(fstring_t *fstr) {
 			string_append_c(asc, '\\');
 		string_append_c(asc, str[i]);
 	}
-
-/* reset, and return. */
-	string_append(asc, "%n");
-	return string_free(asc, 0);
-
 #undef prev
 #undef cur
+
+	return string_free(asc, 0);
 }
 
 static string_t remote_what_to_write(char *what, va_list ap) {
@@ -554,8 +551,9 @@ static WATCHER_LINE(rc_input_handler_line) {
 			for (s = sessions; s; s = s->next) {
 				remote_writefd(fd, "SESSION", s->uid, (s->plugin) ? ((plugin_t *) s->plugin)->name : "-", NULL);
 				remote_writefd(fd, "SESSIONINFO", s->uid, "STATUS", itoa(s->status), NULL);
-				remote_writefd(fd, "SESSIONINFO", s->uid, "CONNECTED", itoa(s->connected), NULL);
 
+				if (s->connected)
+					remote_writefd(fd, "SESSIONINFO", s->uid, "CONNECTED", itoa(s->connected), NULL);
 				if (s->alias)
 					remote_writefd(fd, "SESSIONINFO", s->uid, "ALIAS", s->alias, NULL);
 			}
