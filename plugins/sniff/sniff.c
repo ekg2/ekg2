@@ -197,15 +197,15 @@ static void tcp_print_payload(u_char *payload, size_t len) {
 		else	display_len = len;
 	
 	/* offset */
-		debug_iorecv("\t0x%.4x	", offset);
+        	debug_iorecv("\t0x%.4x  ", offset);
 	/* hexdump */
 		for(i = 0; i < MAX_BYTES_PER_LINE; i++) {
 			if (i < display_len)
 				debug_iorecv("%.2x ", payload[i]);
-			else	debug_iorecv("	 ");
+			else	debug_iorecv("   ");
 		}
 	/* seperate */
-		debug_iorecv("	 ");
+		debug_iorecv("   ");
 
 	/* asciidump if printable, else '.' */
 		for(i = 0; i < display_len; i++)
