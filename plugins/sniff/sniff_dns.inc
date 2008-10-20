@@ -117,6 +117,18 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 						displayed = 1;
 						break;
 
+					case T_NS:
+						if ((len = dn_expand(beg, eom, cur, tmp_addr, sizeof(tmp_addr))) < 0) {
+							debug_error("dn_expand() on T_NS failed\n");
+							break;
+						}
+
+						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_ns", 
+							host, tmp_addr);
+
+						displayed = 1;
+						break;
+
 					case T_AAAA:
 						if (payload != 16) {
 							debug_error("T_AAAA record but size != 16 [%d]\n", payload);

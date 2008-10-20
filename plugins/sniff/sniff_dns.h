@@ -177,6 +177,7 @@ typedef struct {
 #define REFUSED		5		/* Operation refused */
 
 #define T_A		1		/* (IN) A */
+#define T_NS		2		/* (IN) NS */
 #define T_CNAME		5		/* (IN) CNAME */
 #define T_PTR		12		/* (IN) PTR */
 #define T_MX		15		/* (IN) MX */

@@ -707,6 +707,7 @@ static int sniff_theme_init() {
 	format_add("sniff_dns_entry_cname",	("%)	 %b[IN_CNAME] %gDOMAIN: %W%1 %gCNAME: %W%2"), 1);
 	format_add("sniff_dns_entry_ptr",	("%)	   %b[IN_PTR] %gIP_PTR: %W%1 %gDOMAIN: %W%2"), 1);
 	format_add("sniff_dns_entry_mx",	("%)	    %b[IN_MX] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPREF: %W%3"), 1);
+	format_add("sniff_dns_entry_ns",	("%)	    %b[IN_NS] %gDOMAIN: %W%1 %gIP: %W%2"), 1);
 	format_add("sniff_dns_entry_srv",	("%)	   %b[IN_SRV] %gDOMAIN: %W%1 %gENTRY: %W%2 %gPORT: %W%3 %gPRIO: %W%4 %gWEIGHT: %W%5"), 1);
 	format_add("sniff_dns_entry_?",		("%)	     %b[IN_?] %gDOMAIN: %W%1 %gTYPE: %W%2 %gLEN: %W%3"), 1);
 	format_add("sniff_dns_entry_ndisplay",	("%)   %rZADEN REKORD NIE WYSWIETLONY DLA ZAPYTANIE POWYZEJ ;), OBEJRZYJ DEBUG"), 1);
