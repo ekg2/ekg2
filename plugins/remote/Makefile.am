@@ -1,5 +1,3 @@
-EXTRA_DIST = vars-pl.txt
-
 lib_LTLIBRARIES = remote.la
 remote_la_SOURCES = remote.c
 remote_la_CPPFLAGS = $(C_FVISIBILITY)
