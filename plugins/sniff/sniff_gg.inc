@@ -7,18 +7,6 @@ static char *build_gg_uid(uint32_t sender) {
 
 /* stolen from libgadu+gg plugin */
 static int gg_status_to_text(uint32_t status, int *descr) {
-#define GG_STATUS_NOT_AVAIL 0x0001		/* niedostępny */
-#define GG_STATUS_NOT_AVAIL_DESCR 0x0015	/* niedostępny z opisem (4.8) */
-#define GG_STATUS_AVAIL 0x0002			/* dostępny */
-#define GG_STATUS_AVAIL_DESCR 0x0004		/* dostępny z opisem (4.9) */
-#define GG_STATUS_BUSY 0x0003			/* zajęty */
-#define GG_STATUS_BUSY_DESCR 0x0005		/* zajęty z opisem (4.8) */
-#define GG_STATUS_INVISIBLE 0x0014		/* niewidoczny (4.6) */
-#define GG_STATUS_INVISIBLE_DESCR 0x0016	/* niewidoczny z opisem (4.9) */
-#define GG_STATUS_BLOCKED 0x0006		/* zablokowany */
-
-#define GG_STATUS_FRIENDS_MASK 0x8000		/* tylko dla znajomych (4.6) */
-#define GG_STATUS_VOICE_MASK 0x20000		/* czy ma wlaczone audio (7.7) */
 	if (status & GG_STATUS_FRIENDS_MASK) status -= GG_STATUS_FRIENDS_MASK;
 	if (status & GG_STATUS_VOICE_MASK) {
 		status -= GG_STATUS_VOICE_MASK;
@@ -157,11 +145,6 @@ SNIFF_HANDLER(sniff_gg_send_msg, gg_send_msg) {
 }
 
 SNIFF_HANDLER(sniff_gg_send_msg_ack, gg_send_msg_ack) {
-#define GG_ACK_BLOCKED 0x0001
-#define GG_ACK_DELIVERED 0x0002
-#define GG_ACK_QUEUED 0x0003
-#define GG_ACK_MBOXFULL 0x0004
-#define GG_ACK_NOT_DELIVERED 0x0006
 	const char *format;
 
 	CHECK_LEN(sizeof(gg_send_msg_ack))	len -= sizeof(gg_send_msg_ack);
@@ -352,10 +335,6 @@ SNIFF_HANDLER(sniff_gg_notify_reply60, gg_notify_reply60) {
 }
 
 static const char *sniff_gg_userlist_reply_str(uint8_t type) {
-#define GG_USERLIST_PUT_REPLY 0x00
-#define GG_USERLIST_PUT_MORE_REPLY 0x02
-#define GG_USERLIST_GET_REPLY 0x06
-#define GG_USERLIST_GET_MORE_REPLY 0x04
 	if (type == GG_USERLIST_PUT_REPLY) 	return "GG_USERLIST_PUT_REPLY";
 	if (type == GG_USERLIST_PUT_MORE_REPLY)	return "GG_USERLIST_PUT_MORE_REPLY";
 	if (type == GG_USERLIST_GET_REPLY)	return "GG_USERLIST_GET_REPLY";
@@ -392,12 +371,7 @@ SNIFF_HANDLER(sniff_gg_userlist_reply, gg_userlist_reply) {
 	return 0;
 }
 
-
-
 static const char *sniff_gg_userlist_req_str(uint8_t type) {
-#define GG_USERLIST_PUT 0x00
-#define GG_USERLIST_PUT_MORE 0x01
-#define GG_USERLIST_GET 0x02
 	if (type == GG_USERLIST_PUT) return "GG_USERLIST_PUT";
 	if (type == GG_USERLIST_PUT_MORE) return "GG_USERLIST_PUT_MORE";
 	if (type == GG_USERLIST_GET) return "GG_USERLIST_GET";
@@ -433,11 +407,26 @@ SNIFF_HANDLER(sniff_gg_userlist_req, gg_userlist_request) {
 	return 0;
 }
 
+static const char *sniff_gg_pubdir50_data_str(const char *name) {
+	if (!xstrcmp(name, GG_PUBDIR50_UIN)) 		return "GG_PUBDIR50_UIN";
+	if (!xstrcmp(name, GG_PUBDIR50_STATUS))		return "GG_PUBDIR50_STATUS";
+	if (!xstrcmp(name, GG_PUBDIR50_FIRSTNAME))	return "GG_PUBDIR50_FIRSTNAME";
+	if (!xstrcmp(name, GG_PUBDIR50_LASTNAME))	return "GG_PUBDIR50_LASTNAME";
+	if (!xstrcmp(name, GG_PUBDIR50_NICKNAME))	return "GG_PUBDIR50_NICKNAME";
+	if (!xstrcmp(name, GG_PUBDIR50_BIRTHYEAR))	return "GG_PUBDIR50_BIRTHYEAR";
+	if (!xstrcmp(name, GG_PUBDIR50_CITY))		return "GG_PUBDIR50_CITY";
+	if (!xstrcmp(name, GG_PUBDIR50_GENDER))		return "GG_PUBDIR50_GENDER";
+	if (!xstrcmp(name, GG_PUBDIR50_ACTIVE))		return "GG_PUBDIR50_ACTIVE";
+	if (!xstrcmp(name, GG_PUBDIR50_START))		return "GG_PUBDIR50_START";
+	if (!xstrcmp(name, GG_PUBDIR50_FAMILYNAME))	return "GG_PUBDIR50_FAMILYNAME";
+	if (!xstrcmp(name, GG_PUBDIR50_FAMILYCITY))	return "GG_PUBDIR50_FAMILYCITY";
+
+	debug_error("sniff_gg_pubdir50_data_str() unk name: %s\n", name);
+
+	return name;
+}
+
 static const char *sniff_gg_pubdir50_str(uint8_t type) {
-#define GG_PUBDIR50_WRITE 0x01
-#define GG_PUBDIR50_READ 0x02
-#define GG_PUBDIR50_SEARCH_REQUEST 0x03
-#define GG_PUBDIR50_SEARCH_REPLY 0x05
 	if (type == GG_PUBDIR50_WRITE) return "GG_PUBDIR50_WRITE";
 	if (type == GG_PUBDIR50_READ) return "GG_PUBDIR50_READ";
 	if (type == GG_PUBDIR50_SEARCH_REQUEST) return "GG_PUBDIR50_SEARCH_REQUEST";
@@ -465,18 +454,56 @@ SNIFF_HANDLER(sniff_gg_pubdir50_reply, gg_pubdir50_reply) {
 }
 
 SNIFF_HANDLER(sniff_gg_pubdir50_req, gg_pubdir50_request) {
-	CHECK_LEN(sizeof(gg_pubdir50_request));	len -= sizeof(gg_pubdir50_request);
+	char *attr = NULL;
+	char *val  = NULL;
+	char *data;
 
-	if (len) {
-		debug_error("sniff_gg_pubdir50_req() stublen: %d\n", len);
-		tcp_print_payload((u_char *) pkt->data, len);
-	}
+	CHECK_LEN(sizeof(gg_pubdir50_request));	len -= sizeof(gg_pubdir50_request);
 
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_pubdir50_req",
 		sniff_gg_pubdir50_str(pkt->type),
 		build_hex(pkt->type),
 		itoa(pkt->seq));
+
+	data = pkt->data;
+
+	while (len > 0) {
+		char *thisdata;
+		int thislen;
+
+		thisdata = xstrndup(data, len);
+		thislen = xstrlen(thisdata);
+
+		if (!attr)
+			attr = thisdata;
+		else if (!val)
+			val = thisdata;
+
+		if (val && attr) {
+			print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
+				"sniff_gg_pubdir50_req_data",
+				sniff_gg_pubdir50_data_str(attr), val);
+
+			xfree(attr);
+			xfree(val);
+			val = attr = NULL;
+		}
+
+		data += thislen;
+		len -= thislen;
+
+		if (len > 0) {		/* skip NUL */
+			data++;
+			len--;
+		}
+	}
+
+	if (attr)
+		debug_error("sniff_gg_pubdir50_req() attr alone: %s\n", attr);
+
+	xfree(attr);
+	xfree(val);
 
 	return 0;
 }
@@ -901,7 +928,6 @@ SNIFF_HANDLER(sniff_gg_status77, gg_status77) {
 	return 0;
 }
 
-
 #define GG_LOGIN80 0x29
 
 typedef struct {
@@ -1105,44 +1131,9 @@ SNIFF_HANDLER(sniff_gg_status80, gg_status80) {
 	return 0;
 }
 
-#define GG_RECV_MSG80 0x2e
-
-typedef struct {
-	uint32_t sender;
-	uint32_t seq;
-	uint32_t time;
-	uint32_t msgclass;
-	uint32_t offset_plaintext;
-	uint32_t offset_attr;
-	char msg_data[];
-	/* '\0' */
-	/* plaintext msg */
-	/* '\0' */
-	/* uint32_t dunno3; */						/* { 02 06 00 00 } */
-	/* uint8_t dunno4; */						/* { 00 } */
-	/* uint32_t dunno5; */		/* like msgclass? */		/* { 08 00 00 00 } */
-} GG_PACKED gg_recv_msg80;
-
 SNIFF_HANDLER(sniff_gg_recv_msg80, gg_recv_msg80) {
 	/* XXX, like sniff_gg_send_msg80() */
 }
-
-#define GG_SEND_MSG80 0x2d
-
-typedef struct {
-	uint32_t recipient;
-	uint32_t seq;			/* time(0) */
-	uint32_t msgclass;						/* GG_CLASS_CHAT  { 08 00 00 00 } */
-	uint32_t offset_plaintext;
-	uint32_t offset_attr;
-	char html_data[];
-	/* '\0' */
-	/* plaintext msg */
-	/* '\0' */
-	/* uint32_t dunno3; */						/* { 02 06 00 00 } */
-	/* uint8_t dunno4; */						/* { 00 } */
-	/* uint32_t dunno5; */		/* like msgclass? */		/* { 08 00 00 00 } */
-} GG_PACKED gg_send_msg80;
 
 SNIFF_HANDLER(sniff_gg_send_msg80, gg_send_msg80) {
 	int orglen = len;
@@ -1152,20 +1143,19 @@ SNIFF_HANDLER(sniff_gg_send_msg80, gg_send_msg80) {
 
 	tcp_print_payload((unsigned char *) pkt->html_data, len);
 
-	if (pkt->offset_plaintext < orglen) 
-		tcp_print_payload(((unsigned char *) pkt) + pkt->offset_plaintext, orglen - pkt->offset_plaintext);
+	if (pkt->offset_plain < orglen) 
+		tcp_print_payload(((unsigned char *) pkt) + pkt->offset_plain, orglen - pkt->offset_plain);
 	if (pkt->offset_attr < orglen) 
 		tcp_print_payload(((unsigned char *) pkt) + pkt->offset_attr, orglen - pkt->offset_attr);
 
-	if (pkt->offset_plaintext < orglen) {
-		msg = ekg_cp_to_locale(xstrndup(((char *) pkt) + pkt->offset_plaintext, orglen - pkt->offset_plaintext));
+	if (pkt->offset_plain < orglen) {
+		msg = ekg_cp_to_locale(xstrndup(((char *) pkt) + pkt->offset_plain, orglen - pkt->offset_plain));
 			sniff_gg_print_message(s, hdr, pkt->recipient, EKG_MSGCLASS_SENT_CHAT, msg, time(NULL));
 		xfree(msg);
 	}
 
 	return 0;
 }
-
 
 static const struct {
 	uint32_t 	type;

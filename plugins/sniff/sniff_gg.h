@@ -273,3 +273,85 @@ typedef struct {
 #define GG_DCC7_TYPE_VOICE 0x00000001
 #define GG_DCC7_TYPE_FILE 0x00000004
 
+#define GG_SEND_MSG80 0x002d
+
+typedef struct {
+	uint32_t recipient;
+	uint32_t seq;
+	uint32_t msgclass;
+	uint32_t offset_plain;
+	uint32_t offset_attr;
+	char html_data[];
+
+	/* '\0' */
+	/* plaintext msg */
+	/* '\0' */
+	/* uint32_t dunno3; */						/* { 02 06 00 00 } */
+	/* uint8_t dunno4; */						/* { 00 } */
+	/* uint32_t dunno5; */		/* like msgclass? */		/* { 08 00 00 00 } */
+} GG_PACKED gg_send_msg80;
+
+#define GG_RECV_MSG80 0x002e
+
+typedef struct gg_recv_msg80 {
+	uint32_t sender;
+	uint32_t seq;
+	uint32_t time;
+	uint32_t msgclass;
+	uint32_t offset_plain;
+	uint32_t offset_attr;
+	char html_data[];
+
+	/* '\0' */
+	/* plaintext msg */
+	/* '\0' */
+	/* uint32_t dunno3; */						/* { 02 06 00 00 } */
+	/* uint8_t dunno4; */						/* { 00 } */
+	/* uint32_t dunno5; */		/* like msgclass? */		/* { 08 00 00 00 } */
+} GG_PACKED gg_recv_msg80;
+
+#define GG_STATUS_NOT_AVAIL 0x0001		/* niedostępny */
+#define GG_STATUS_NOT_AVAIL_DESCR 0x0015	/* niedostępny z opisem (4.8) */
+#define GG_STATUS_AVAIL 0x0002			/* dostępny */
+#define GG_STATUS_AVAIL_DESCR 0x0004		/* dostępny z opisem (4.9) */
+#define GG_STATUS_BUSY 0x0003			/* zajęty */
+#define GG_STATUS_BUSY_DESCR 0x0005		/* zajęty z opisem (4.8) */
+#define GG_STATUS_INVISIBLE 0x0014		/* niewidoczny (4.6) */
+#define GG_STATUS_INVISIBLE_DESCR 0x0016	/* niewidoczny z opisem (4.9) */
+#define GG_STATUS_BLOCKED 0x0006		/* zablokowany */
+
+#define GG_STATUS_FRIENDS_MASK 0x8000		/* tylko dla znajomych (4.6) */
+#define GG_STATUS_VOICE_MASK 0x20000		/* czy ma wlaczone audio (7.7) */
+
+#define GG_USERLIST_PUT 0x00
+#define GG_USERLIST_PUT_MORE 0x01
+#define GG_USERLIST_GET 0x02
+
+#define GG_USERLIST_PUT_REPLY 0x00
+#define GG_USERLIST_PUT_MORE_REPLY 0x02
+#define GG_USERLIST_GET_REPLY 0x06
+#define GG_USERLIST_GET_MORE_REPLY 0x04
+
+#define GG_PUBDIR50_WRITE 0x01
+#define GG_PUBDIR50_READ 0x02
+#define GG_PUBDIR50_SEARCH_REQUEST 0x03
+#define GG_PUBDIR50_SEARCH_REPLY 0x05
+
+#define GG_PUBDIR50_UIN "FmNumber"
+#define GG_PUBDIR50_STATUS "FmStatus"
+#define GG_PUBDIR50_FIRSTNAME "firstname"
+#define GG_PUBDIR50_LASTNAME "lastname"
+#define GG_PUBDIR50_NICKNAME "nickname"
+#define GG_PUBDIR50_BIRTHYEAR "birthyear"
+#define GG_PUBDIR50_CITY "city"
+#define GG_PUBDIR50_GENDER "gender"
+#define GG_PUBDIR50_ACTIVE "ActiveOnly"
+#define GG_PUBDIR50_START "fmstart"
+#define GG_PUBDIR50_FAMILYNAME "familyname"
+#define GG_PUBDIR50_FAMILYCITY "familycity"
+
+#define GG_ACK_BLOCKED 0x0001
+#define GG_ACK_DELIVERED 0x0002
+#define GG_ACK_QUEUED 0x0003
+#define GG_ACK_MBOXFULL 0x0004
+#define GG_ACK_NOT_DELIVERED 0x0006

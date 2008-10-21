@@ -681,6 +681,8 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_list_data",	 ("%)	%b[%1] %gENTRY: %W%2 %gTYPE: %W%3"), 1);
 
 	format_add("sniff_gg_pubdir50_req",	 ("%) %b[GG_PUBDIR50_REQUEST] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
+	format_add("sniff_gg_pubdir50_req_data", ("%)     %gTYPE: %W%1 %gENTRY: %W%2"), 1);
+
 	format_add("sniff_gg_pubdir50_reply",	 ("%) %b[GG_PUBDIR50_REPLY] %gTYPE: %W%1 (%2) %gSEQ: %W%3"), 1);
 	format_add("sniff_gg_disconnecting",	 ("%) %b[GG_DISCONNECTING]"), 1);
 
