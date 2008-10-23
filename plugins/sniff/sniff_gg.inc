@@ -438,17 +438,69 @@ static const char *sniff_gg_pubdir50_str(uint8_t type) {
 
 SNIFF_HANDLER(sniff_gg_pubdir50_reply, gg_pubdir50_reply) {
 	CHECK_LEN(sizeof(gg_pubdir50_reply));	len -= sizeof(gg_pubdir50_reply);
+	char *data;
 
-	if (len) {
-		debug_error("sniff_gg_pubdir50_reply() stublen: %d\n", len);
-		tcp_print_payload((u_char *) pkt->data, len);
-	}
-	
+	char *attr = NULL;
+	char *val  = NULL;
+
 	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 		"sniff_gg_pubdir50_reply",
 		sniff_gg_pubdir50_str(pkt->type),
 		build_hex(pkt->type),
 		itoa(pkt->seq));
+
+	data = pkt->data;
+
+	while (len > 0) {
+	#if 0
+		if (!strcasecmp(field, "nextstart")) {
+			res->next = atoi(value);
+			num--;
+		}
+	#endif
+		char *thisdata;
+		int thislen;
+
+		thisdata = xstrndup(data, len);
+		thislen = xstrlen(thisdata);
+
+		if (!attr)
+			attr = thisdata;
+		else if (!val)
+			val = thisdata;
+
+		if (val && attr) {
+			print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
+				"sniff_gg_pubdir50_reply_data",
+				sniff_gg_pubdir50_data_str(attr), val);
+
+			xfree(attr);
+			xfree(val);
+			val = attr = NULL;
+		}
+
+		data += thislen;
+		len -= thislen;
+
+		if (len > 0) {		/* skip NUL */
+			data++;
+			len--;
+		}
+
+		if (len > 0 && *data == '\0') {
+			print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
+				"sniff_gg_pubdir50_reply_data_sep");
+			/* XXX, komunikat: nastepna osoba */
+			data++;
+			len--;
+		}
+	}
+
+	if (attr)
+		debug_error("sniff_gg_pubdir50_reply() attr alone: %s\n", attr);
+
+	xfree(attr);
+	xfree(val);
 
 	return 0;
 }
