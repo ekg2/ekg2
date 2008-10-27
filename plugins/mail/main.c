@@ -585,12 +585,7 @@ static void changed_check_mail(const char *var)
 		/* konieczne, je¶li by³a zmiana typu skrzynek */
 		changed_check_mail_folders(("check_mail_folders"));
 
-		for (t = timers; t; t = t->next) {
-			if (!xstrcmp(t->name, "mail-check")) {
-				t->period = config_check_mail_frequency;
-				return;
-			}
-		}
+		timer_remove(&mail_plugin, "mail-check");
 
 		if (config_check_mail_frequency)
 			timer_add(&mail_plugin, "mail-check", config_check_mail_frequency, 1, check_mail, NULL);
