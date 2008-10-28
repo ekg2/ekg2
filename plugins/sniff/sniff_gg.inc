@@ -248,7 +248,8 @@ SNIFF_HANDLER(sniff_gg_login60, gg_login60) {
 			"sniff_gg_login60",
 
 			build_gg_uid(pkt->uin),
-			build_hex(pkt->hash));
+			build_hex(pkt->hash),
+			build_hex2(pkt->version));
 	
 	status = gg_status_to_text(pkt->status, &has_descr);
 	descr = has_descr ? ekg_cp_to_locale(xstrndup(pkt->status_data, len)) : NULL;
@@ -452,12 +453,6 @@ SNIFF_HANDLER(sniff_gg_pubdir50_reply, gg_pubdir50_reply) {
 	data = pkt->data;
 
 	while (len > 0) {
-	#if 0
-		if (!strcasecmp(field, "nextstart")) {
-			res->next = atoi(value);
-			num--;
-		}
-	#endif
 		char *thisdata;
 		int thislen;
 
@@ -837,7 +832,8 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 			"sniff_gg_login70_hash",
 
 			build_gg_uid(pkt->uin),
-			build_hex(pkt->hash_type));
+			build_hex(pkt->hash_type),
+			build_hex2(pkt->version));
 
 	} else if (pkt->hash_type == GG_LOGIN_HASH_SHA1) {
 		sughash_len = 20;
@@ -846,14 +842,16 @@ SNIFF_HANDLER(sniff_gg_login70, gg_login70) {
 			"sniff_gg_login70_sha1",
 
 			build_gg_uid(pkt->uin),
-			build_sha1(pkt->hash));
+			build_sha1(pkt->hash),
+			build_hex2(pkt->version));
 	} else {
 		sughash_len = 0;
 
 		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_login70_unknown",
 
-			build_gg_uid(pkt->uin), build_hex(pkt->hash_type));
+			build_gg_uid(pkt->uin), build_hex(pkt->hash_type),
+			build_hex2(pkt->version));
 	}
 
 
@@ -1018,7 +1016,8 @@ SNIFF_HANDLER(sniff_gg_login80, gg_login80) {
 			"sniff_gg_login80_hash",
 
 			build_gg_uid(pkt->uin),
-			build_hex(pkt->hash_type));
+			build_hex(pkt->hash_type),
+			build_hex2(pkt->version));
 
 	} else if (pkt->hash_type == GG_LOGIN_HASH_SHA1) {
 		sughash_len = 20;
@@ -1027,14 +1026,16 @@ SNIFF_HANDLER(sniff_gg_login80, gg_login80) {
 			"sniff_gg_login80_sha1",
 
 			build_gg_uid(pkt->uin),
-			build_sha1(pkt->hash));
+			build_sha1(pkt->hash),
+			build_hex2(pkt->version));
 	} else {
 		sughash_len = 0;
 
 		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
 			"sniff_gg_login80_unknown",
 
-			build_gg_uid(pkt->uin), build_hex(pkt->hash_type));
+			build_gg_uid(pkt->uin), build_hex(pkt->hash_type),
+			build_hex2(pkt->version));
 	}
 
 

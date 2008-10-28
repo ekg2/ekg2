@@ -95,6 +95,13 @@ static char *build_hex(uint32_t hex) {
 	return buf;
 }
 
+static char *build_hex2(uint32_t hex) {
+	static char buf[20];
+
+	sprintf(buf, "0x%x", hex);
+	return buf;
+}
+
 static char *_inet_ntoa(struct in_addr ip) {
 	static char bufs[10][16];
 	static int index = 0;
@@ -666,11 +673,11 @@ static QUERY(sniff_print_version) {
 static int sniff_theme_init() {
 /* sniff gg */
 	format_add("sniff_gg_welcome",	 ("%) %b[GG_WELCOME] %gSEED: %W%1"), 1);
-	format_add("sniff_gg_login60",	 ("%) %b[GG_LOGIN60] %gUIN: %W%1 %gHASH: %W%2"), 1);
+	format_add("sniff_gg_login60",	 ("%) %b[GG_LOGIN60] %gUIN: %W%1 %gPROTOCOL: %W%3 %gHASH: %W%2"), 1);
 
-	format_add("sniff_gg_login70_sha1",	 ("%) %b[GG_LOGIN70] %gUIN: %W%1 %gSHA1: %W%2"), 1);
-	format_add("sniff_gg_login70_hash",	 ("%) %b[GG_LOGIN70] %gUIN: %W%1 %gHASH: %W%2"), 1);
-	format_add("sniff_gg_login70_unknown",	 ("%) %b[GG_LOGIN70] %gUIN: %W%1 %gTYPE: %W%2"), 1);
+	format_add("sniff_gg_login70_sha1",	 ("%) %b[GG_LOGIN70] %gUIN: %W%1 %gPROTOCOL: %W%3 %gSHA1: %W%2"), 1);
+	format_add("sniff_gg_login70_hash",	 ("%) %b[GG_LOGIN70] %gUIN: %W%1 %gPROTOCOL: %W%3 %gHASH: %W%2"), 1);
+	format_add("sniff_gg_login70_unknown",	 ("%) %b[GG_LOGIN70] %gUIN: %W%1 %gPROTOCOL: %W%3 %gTYPE: %W%2"), 1);
 
 	format_add("sniff_gg_userlist_req",	 ("%) %b[GG_USERLIST_REQUEST] %gTYPE: %W%1 (%2)"), 1);
 	format_add("sniff_gg_userlist_reply",	 ("%) %b[GG_USERLIST_REPLY] %gTYPE: %W%1 (%2)"), 1);
@@ -695,9 +702,9 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_status77",  ("%) %b[GG_STATUS77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 	format_add("sniff_gg_notify77",  ("%) %b[GG_NOTIFY77] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 
-	format_add("sniff_gg_login80_sha1",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gSHA1: %W%2"), 1);
-	format_add("sniff_gg_login80_hash",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gHASH: %W%2"), 1);	/* untested */
-	format_add("sniff_gg_login80_unknown",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gTYPE: %W%2"), 1);
+	format_add("sniff_gg_login80_sha1",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gPROTOCOL: %W%3 %gSHA1: %W%2"), 1);
+	format_add("sniff_gg_login80_hash",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gPROTOCOL: %W%3 %gHASH: %W%2"), 1);	/* untested */
+	format_add("sniff_gg_login80_unknown",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gPROTOCOL: %W%3 %gTYPE: %W%2"), 1);
 
 	format_add("sniff_gg_status80",  ("%) %b[GG_STATUS80] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 	format_add("sniff_gg_notify80",  ("%) %b[GG_NOTIFY80] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
