@@ -236,10 +236,6 @@ typedef struct idle {
 	void *data;
 } idle_t;
 
-	/* to be used with mainloop-based idlers as 'data'
-	 * then handler could use its' value as current loop time */
-extern struct timeval ekg_tv;
-
 #ifndef EKG2_WIN32_NOFUNCTION
 idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data);
 void idle_handle(idle_t *i);

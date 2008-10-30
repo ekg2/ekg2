@@ -35,6 +35,7 @@
 #include <stdarg.h>
 #include <limits.h>
 #include <unistd.h>
+#include <time.h>
 
 #include <libgadu.h>
 
@@ -1594,10 +1595,14 @@ static void libgadu_debug_handler(int level, const char *format, va_list ap) {
 	ekg_debug_handler(newlevel, format, ap);
 }
 
-	/* XXX: move whole scrolling into timer? */
-int gg_idle_handler(void *data) {
-	struct timeval *tv = data;
+static TIMER(gg_scroll_timer) {
 	session_t *sl;
+	time_t t;
+
+	if (type)
+		return 0;
+
+	t = time(NULL);
 
 	/* sprawd¼ scroll timeouty */
 	/* XXX: nie tworzyæ variabla globalnego! */
@@ -1612,7 +1617,7 @@ int gg_idle_handler(void *data) {
 		if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
 			continue;
 
-		if (tv->tv_sec - g->scroll_last > tmp)
+		if (t - g->scroll_last > tmp)
 			command_exec(NULL, s, ("/_autoscroll"), 0);
 	}
 
@@ -1699,7 +1704,7 @@ int EXPORT gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("skip_default_format"), VAR_BOOL, 1, &gg_config_skip_default_format, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
 
-	idle_add(&gg_plugin, gg_idle_handler, &ekg_tv);
+	timer_add(&gg_plugin, "gg-scroller", 1, 1, gg_scroll_timer, NULL);
 
 	gg_debug_handler	= libgadu_debug_handler;
 	gg_debug_level		= 255;

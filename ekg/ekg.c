@@ -110,7 +110,6 @@
 char *config_dir;
 int mesg_startup;
 int ekg_watches_removed;
-struct timeval ekg_tv;
 static char argv0[PATH_MAX];
 
 pid_t speech_pid = 0;
@@ -119,11 +118,23 @@ static int stderr_backup = -1;
 
 int no_mouse = 0;
 
-	/* less important things which don't need to be checked every main loop iteration
-	 * e.g. autoaways */
-int ekg_less_important_handler(void *data) {
-	struct timeval *tv = data;
+/**
+ * ekg_autoaway_timer()
+ *
+ *
+ * less important things which don't need to be checked every main loop iteration
+ * e.g. autoaways 
+ *
+ * executed each second.
+ */
+static TIMER(ekg_autoaway_timer) {
 	session_t *sl;
+	time_t t;
+
+	if (type)
+		return 0;
+
+	t = time(NULL);
 
 	/* sprawd¼ autoawaye ró¿nych sesji */
 	for (sl = sessions; sl; sl = sl->next) {
@@ -138,7 +149,7 @@ int ekg_less_important_handler(void *data) {
 			if ((s->status == EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
 				break;
 
-			if (tv->tv_sec - s->activity > tmp)
+			if (t - s->activity > tmp)
 				command_exec(NULL, s, ("/_autoaway"), 0);
 		} while (0);
 
@@ -146,7 +157,7 @@ int ekg_less_important_handler(void *data) {
 			if ((tmp = session_int_get(s, "auto_xa")) < 1 || !s->activity)
 				break;
 
-			if (tv->tv_sec - s->activity > tmp)
+			if (t - s->activity > tmp)
 				command_exec(NULL, s, ("/_autoxa"), 0);
 		} while (0);
 	}
@@ -162,14 +173,14 @@ int ekg_less_important_handler(void *data) {
  */
 
 void ekg_loop() {
+	struct timeval tv;
 	struct timeval stv;
 	fd_set rd, wd;
 	int ret, maxfd, status;
 	pid_t pid;
 
-	gettimeofday(&ekg_tv, NULL);
+	gettimeofday(&tv, NULL);
 
-#define tv ekg_tv
 	{
 		{		/* przejrzyj timery u¿ytkownika, ui, skryptów */
 			struct timer *t;
@@ -1003,7 +1014,8 @@ int main(int argc, char **argv)
 #endif
 	}
 
-	idle_add(NULL, ekg_less_important_handler, &ekg_tv);
+	timer_add(NULL, "autoaway", 1, 1, ekg_autoaway_timer, NULL);
+
 	reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
