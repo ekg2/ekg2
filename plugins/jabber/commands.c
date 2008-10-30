@@ -327,7 +327,7 @@ static COMMAND(jabber_command_msg)
 				msg = s;
 		}
 
-		if ((htmlmsg = strchr(msg, 18))) { /* ^R */
+		if ((htmlmsg = xstrchr(msg, 18))) { /* ^R */
 			int omitsyntaxcheck;
 
 			*(htmlmsg++) = 0;
