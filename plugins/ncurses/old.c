@@ -1964,6 +1964,7 @@ void ncurses_deinit()
 	window_t *w;
 	int i;
 
+	signal(SIGINT, SIG_DFL);
 #ifdef SIGWINCH
 	signal(SIGWINCH, SIG_DFL);
 #endif
