@@ -1760,7 +1760,7 @@ int on_off(const char *value)
  *
  * zwraca zaalokowan± struct timer lub NULL w przypadku b³êdu.
  */
-struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persist, int (*function)(int, void *), void *data)
+struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data)
 {
 	struct timer *t;
 	struct timeval tv;
@@ -1783,6 +1783,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 				name = itoa(i);
 		}
 	}
+
 	t = xmalloc(sizeof(struct timer));
 	gettimeofday(&tv, NULL);
 	tv.tv_sec += period;
@@ -1798,7 +1799,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	return t;
 }
 
-struct timer *timer_add_session(session_t *session, const char *name, time_t period, int persist, int (*function)(int, session_t *)) {
+struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, int (*function)(int, session_t *)) {
 	struct timer *t;
 
 	if (!session || !session->plugin) {

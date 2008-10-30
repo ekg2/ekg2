@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-#define EKG_ABI_VER 4633
+#define EKG_ABI_VER 4729
 
 #define EXPORT __attribute__ ((visibility("default")))
 
