@@ -191,7 +191,12 @@ void ekg_loop() {
 					
 					if (ispersist) {
 						memcpy(&t->ends, &tv, sizeof(tv));
-						t->ends.tv_sec += t->period;
+						t->ends.tv_sec += (t->period / 1000);
+						t->ends.tv_usec += ((t->period % 1000) * 1000);
+						if (t->ends.tv_usec >= 1000000) {
+							t->ends.tv_usec -= 1000000;
+							t->ends.tv_sec++;
+						}
 					}
 
 					if ((t->function(0, t->data) == -1) || !ispersist)
@@ -308,14 +313,6 @@ void ekg_loop() {
 			}
 		}
 
-		if (idles) {
-			/* XXX execute idles only when stv.tv_usec > 20000? */
-			if (stv.tv_usec > 20000 || stv.tv_sec)
-				stv.tv_usec = 20000;
-			/* max 50 times per second for idler.. i think it's ok */
-			stv.tv_sec = 0;
-		}
-
 		/* na wszelki wypadek sprawd¼ warto¶ci */
 		if (stv.tv_sec != 1)
 			stv.tv_sec = 0;
@@ -345,25 +342,6 @@ void ekg_loop() {
 			} else if (errno != EINTR)
 				debug("select() failed: %s\n", strerror(errno));
 			return;
-		}
-
-		/* execute idle tasks only when select() return no new data */
-		if (idles && ret == 0) {
-			/* idles works this way:
-			 *  - if handler want to keep idler alive, in idle_handle() we add again to list.. [here we remove old item]
-			 *  - else private data is freed in idle_handle() and here we remove only list_t internal struct.
-			 *
-			 *  yeah, i know it can be do better. note: it's just for gtk.. maybe later we have prios and so (and ekg2 become operation system with scheduler)
-			 */
-			idle_t *idler = idles;
-
-			LIST_UNLINK2(&idles, idles);
-			idle_handle(idler);
-
-			/* Here I think we can do return; coz select() return 0 when nothing happen on given fds */
-			/* but to avoid regression on broken systems */
-
-			/* return; */
 		}
 
 		{		/* przejrzyj deskryptory */

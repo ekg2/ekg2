@@ -1745,23 +1745,7 @@ int on_off(const char *value)
 	return -1;
 }
 
-/*
- * timer_add()
- *
- * dodaje timera.
- *
- *  - plugin - plugin obs³uguj±cy timer,
- *  - name - nazwa timera w celach identyfikacji. je¶li jest równa NULL,
- *	     zostanie przyznany pierwszy numerek z brzegu.
- *  - period - za jaki czas w sekundach ma byæ uruchomiony,
- *  - persist - czy sta³y timer,
- *  - function - funkcja do wywo³ania po up³yniêciu czasu,
- *  - data - dane przekazywane do funkcji.
- *
- * zwraca zaalokowan± struct timer lub NULL w przypadku b³êdu.
- */
-struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data)
-{
+struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
 	struct timer *t;
 	struct timeval tv;
 
@@ -1786,7 +1770,12 @@ struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period,
 
 	t = xmalloc(sizeof(struct timer));
 	gettimeofday(&tv, NULL);
-	tv.tv_sec += period;
+	tv.tv_sec += (period / 1000);
+	tv.tv_usec += ((period % 1000) * 1000);
+	if (tv.tv_usec >= 1000000) {
+		tv.tv_usec -= 1000000;
+		tv.tv_sec++;
+	}
 	memcpy(&(t->ends), &tv, sizeof(tv));
 	t->name = xstrdup(name);
 	t->period = period;
@@ -1797,6 +1786,26 @@ struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period,
 
 	timers_add(t);
 	return t;
+}
+
+/*
+ * timer_add()
+ *
+ * dodaje timera.
+ *
+ *  - plugin - plugin obs³uguj±cy timer,
+ *  - name - nazwa timera w celach identyfikacji. je¶li jest równa NULL,
+ *	     zostanie przyznany pierwszy numerek z brzegu.
+ *  - period - za jaki czas w sekundach ma byæ uruchomiony,
+ *  - persist - czy sta³y timer,
+ *  - function - funkcja do wywo³ania po up³yniêciu czasu,
+ *  - data - dane przekazywane do funkcji.
+ *
+ * zwraca zaalokowan± struct timer lub NULL w przypadku b³êdu.
+ */
+struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data)
+{
+	return timer_add_ms(plugin, name, period * 1000, persist, function, data);
 }
 
 struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, int (*function)(int, session_t *)) {

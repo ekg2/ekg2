@@ -142,11 +142,12 @@ static QUERY(ekg2_gtk_loop) {
 	extern void ekg_loop();
 
 	do {
+		int i = 10;
+
 		ekg_loop();
 
-		while (gtk_events_pending()) {
+		while (gtk_events_pending() && --i)	// stupid hack to give ekg_loop() some love.
 			gtk_main_iteration();
-		}
 	} while (ui_quit == 0);
 
 	return -1;
@@ -160,10 +161,16 @@ static WATCHER(ekg2_xorg_watcher) {
 	return 0;
 }
 
-static IDLER(ekg2_xorg_idle) {
-	while (gtk_events_pending()) {
-		gtk_main_iteration();
-	}
+static TIMER(ekg2_xorg_idle) {
+	if (type)
+		return -1;
+	// it's enough if we just run it.
+	// no harm done.
+
+//	while (gtk_events_pending()) {
+//	if (gtk_events_pending())
+//		gtk_main_iteration();
+//	}
 	return 0;
 }
 
@@ -443,7 +450,7 @@ EXPORT int gtk_plugin_init(int prio) {
 	if (xfd != -1)
 		watch_add(&gtk_plugin, xfd, WATCH_READ, ekg2_xorg_watcher, NULL);
 
-	idle_add(&gtk_plugin, ekg2_xorg_idle, NULL);
+	timer_add_ms(&gtk_plugin, "gtk-updater", 50, 1, ekg2_xorg_idle, NULL);
 
 	for (w = windows; w; w = w->next)
 		ekg_gtk_window_new(w);

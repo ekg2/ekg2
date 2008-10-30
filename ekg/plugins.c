@@ -60,7 +60,6 @@ DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
 	__DYNSTUFF_LIST_UNLINK)				/* plugins_unlink() */
 
 list_t watches = NULL;
-idle_t *idles	= NULL;
 
 query_t *queries[QUERY_EXTERNAL+1];
 
@@ -496,7 +495,6 @@ int plugin_unregister(plugin_t *p)
 	 */
 
 	struct timer *t;
-	idle_t *i;
 	session_t *s;
 	query_t **ll;
 	variable_t *v;
@@ -518,13 +516,6 @@ int plugin_unregister(plugin_t *p)
 	for (t = timers; t; t = t->next) {
 		if (t->plugin == p)
 			t = timers_removei(t);
-	}
-
-	for (i = idles; i; ) {
-		if (i->plugin == p)
-			i = LIST_REMOVE2(&idles, i, NULL);
-		else
-			i = i->next;
 	}
 
 	for (s = sessions; s; ) {
@@ -1237,31 +1228,6 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
 	}
 
 	return res;
-}
-
-void idle_handle(idle_t *i) {
-/*	debug_function("idle_handle() %p(%p)\n", i->handler, i->data); */
-
-	if (i->handler(i->data) == -1) {
-		/* remove idler */
-		xfree(i);
-			
-	} else {
-		/* add idler again [at end] */
-		LIST_ADD2(&idles, i);
-	}
-}
-
-idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data) {
-	idle_t *i	= xmalloc(sizeof(idle_t));
-	i->plugin	= plugin;
-	i->handler	= handler;
-	i->data		= data;
-
-	/* XXX, prios? */
-	LIST_ADD_BEGINNING2(&idles, i);		/* first item */
-
-	return i;
 }
 
 /**

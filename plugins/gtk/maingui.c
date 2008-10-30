@@ -574,7 +574,7 @@ static void mg_userlist_toggle_cb(GtkWidget *button, gpointer userdata) {
 	gtk_widget_grab_focus(gtk_private_ui(window_current)->input_box);
 }
 
-static idle_t *ul_tag = NULL;
+static int ul_tag = 0;
 
 /* static */ gboolean mg_populate_userlist(window_t *sess) {
 	gtk_window_ui_t *gui;
@@ -641,10 +641,10 @@ static idle_t *ul_tag = NULL;
 	return 0;
 }
 
-static IDLER(mg_populate_userlist_idle) {
-	mg_populate_userlist((window_t *) data);
-	ul_tag = NULL;
-	return -1;
+static gboolean mg_populate_userlist_idle(window_t *wnd) { 
+	mg_populate_userlist(wnd);
+	ul_tag = 0;
+	return 0;
 }
 
 /* fill the irc tab with a new channel */
@@ -715,8 +715,8 @@ static IDLER(mg_populate_userlist_idle) {
 	if (!gui->is_tab) {
 		mg_populate_userlist(sess);
 	} else {
-		if (ul_tag == NULL)
-			ul_tag = idle_add(&gtk_plugin, mg_populate_userlist_idle, NULL);
+		if (ul_tag == 0)
+			ul_tag = g_idle_add((GSourceFunc) mg_populate_userlist_idle, NULL);
 	}
 	fe_userlist_numbers(sess);
 
@@ -1563,8 +1563,7 @@ mg_rightpane_cb(GtkPaned * pane, GParamSpec * param, gtk_window_ui_t* gui)
 		GTK_WIDGET(pane)->allocation.width - gtk_paned_get_position(pane) - handle_size;
 }
 
-static IDLER(mg_add_pane_signals) {
-	gtk_window_ui_t *gui = data;
+static gboolean mg_add_pane_signals(gtk_window_ui_t *gui) {
 	g_signal_connect(G_OBJECT(gui->hpane_right), "notify::position",
 			 G_CALLBACK(mg_rightpane_cb), gui);
 	g_signal_connect(G_OBJECT(gui->hpane_left), "notify::position",
@@ -1619,7 +1618,7 @@ mg_create_center(window_t *sess, gtk_window_ui_t *gui, GtkWidget *box)
 	mg_create_textarea(sess, vbox);
 	mg_create_entry(sess, vbox);
 
-	idle_add(&gtk_plugin, mg_add_pane_signals, gui);
+	g_idle_add((GSourceFunc) mg_add_pane_signals, gui);
 }
 
 static void mg_sessionclick_cb(GtkWidget *button, gpointer userdata) {

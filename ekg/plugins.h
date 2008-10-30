@@ -223,24 +223,6 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 void watch_handle(watch_t *w);
 void watch_handle_line(watch_t *w);
 int watch_handle_write(watch_t *w);
-
-#define IDLER(x) int x(void *data)
-
-typedef IDLER(idle_handler_func_t);
-
-typedef struct idle {
-	struct idle *next;
-
-	plugin_t *plugin;
-	idle_handler_func_t *handler;
-	void *data;
-} idle_t;
-
-#ifndef EKG2_WIN32_NOFUNCTION
-idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data);
-void idle_handle(idle_t *i);
-#endif
-
 int ekg2_dlinit();
 
 #endif
@@ -248,7 +230,6 @@ int ekg2_dlinit();
 #ifndef EKG2_WIN32_NOFUNCTION
 extern plugin_t *plugins;
 extern list_t watches;
-extern idle_t *idles;
 extern query_t *queries[];
 #endif
 
