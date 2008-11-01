@@ -238,7 +238,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 							if (!xstrcmp(another->data, "DIGEST-MD5"))
 								print("xmpp_feature_sub", session_name(s), j->server, "SASL", another->data, "Default");
 							else if (!xstrcmp(another->data, "PLAIN"))
-								print("xmpp_feature_sub", session_name(s), j->server, "SASL", another->data, "/sesion plaintext_passwd");
+								print("xmpp_feature_sub", session_name(s), j->server, "SASL", another->data, "/session plaintext_passwd");
 							else	print("xmpp_feature_sub_unknown", session_name(s), j->server, "SASL", __(another->data), "");
 						}
 					}
