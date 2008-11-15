@@ -1303,12 +1303,9 @@ void ncurses_refresh()
 /*
  * update_header()
  *
- * uaktualnia nag³ówek okna i wy¶wietla go ponownie.
- *
- *  - commit - czy wy¶wietliæ od razu?
+ * uaktualnia nag³ówek okna
  */
-static void update_header(int commit)
-{
+static void update_header() {
 	int y;
 
 	if (!ncurses_header)
@@ -1324,9 +1321,6 @@ static void update_header(int commit)
 		for (x = 0; x <= ncurses_status->_maxx; x++)
 			waddch(ncurses_header, ' ');
 	}
-
-	if (commit)
-		ncurses_commit();
 }
 		
 /*
@@ -2684,7 +2678,7 @@ void header_statusbar_resize(const char *dummy)
 		else
 			wresize(header, config_header_size, stdscr->_maxx + 1);
 
-		update_header(0);
+		update_header();		/* note: do wywalenia, nie robi nic wiecej niz update_statusbar() zrobi kilka linijek nizej */
 	}
 
 	if (!config_header_size && header) {
