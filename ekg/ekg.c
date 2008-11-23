@@ -905,7 +905,9 @@ int main(int argc, char **argv)
 	theme_plugins_init();
 
 	scripts_init();
-	config_read(NULL);
+	/* If user does not have a config, don't bug her about config upgrades. */
+	if (config_read(NULL) == -1)
+		config_version = -1;
 
 	/* je¶li ma byæ theme, niech bêdzie theme */
 	if (load_theme)		theme_read(load_theme, 1);
