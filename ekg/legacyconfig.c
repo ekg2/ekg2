@@ -39,14 +39,17 @@ void config_upgrade() {
 
 	if (xstrcasecmp(console_charset, config_console_charset)) 
 		print("console_charset_bad", console_charset, config_console_charset);
-	else if (config_version == 0)
+	else if (config_version == 0 || config_version == -1)
 		print("console_charset_using", config_console_charset);
 
-	if (config_version == -1 || config_version >= current_config_version)
+	if (config_version == -1)
+		config_version = current_config_version;
+
+	if (config_version >= current_config_version)
 		return;
 
 	print("config_upgrade_begin");
-	
+
 	switch (config_version) { /* versions MUST be sorted, break MUST NOT be used */
 		case 0: /* jabber SASL behavior change */
 			print("config_upgrade_major", 

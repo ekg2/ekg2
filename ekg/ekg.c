@@ -905,7 +905,7 @@ int main(int argc, char **argv)
 	theme_plugins_init();
 
 	scripts_init();
-	/* If user does not have a config, don't bug her about config upgrades. */
+	/* If user does not have a config, don't bug about config upgrades. */
 	if (config_read(NULL) == -1)
 		config_version = -1;
 
