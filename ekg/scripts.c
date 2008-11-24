@@ -783,9 +783,9 @@ static QUERY(script_query_handlers)
 		case 3:
 		case 4:
 		case 5:				/* scripts protocol-message, protocol-message-post, protocol-message-received (v 1.0) 
-							- ts (session, uid, class, text, sent_time, ignore_level)
-							- vs (session, uid, rcpts, text, format, sent, class, seq, secure) [protocol-message-post, protocol-message-recv]
-							- vs (session, uid, rcpts, text, format, sent, class, seq, dobeep, secure) [protocol-message]
+							- ts (session, uid, klass, text, sent_time, ignore_level)
+							- vs (session, uid, rcpts, text, format, sent, klass, seq, secure) [protocol-message-post, protocol-message-recv]
+							- vs (session, uid, rcpts, text, format, sent, klass, seq, dobeep, secure) [protocol-message]
 						 */
 			{
 				temp->argc = 6;
@@ -793,7 +793,7 @@ static QUERY(script_query_handlers)
 				temp->argv_type[0] = QUERY_ARG_CHARP;	/* session, OK */
 				temp->argv_type[1] = QUERY_ARG_CHARP;	/* uid, OK */
 
-				temp->argv_type[2] = QUERY_ARG_INT;	/* class, N_OK, BAD POS */
+				temp->argv_type[2] = QUERY_ARG_INT;	/* klass, N_OK, BAD POS */
 				args[2] = args2[6];
 
 				temp->argv_type[3] = QUERY_ARG_CHARP;	/* text, OK */

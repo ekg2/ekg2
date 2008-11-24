@@ -63,7 +63,7 @@ DYNSTUFF_LIST_DECLARE(msgs_queue, msg_queue_t, list_msg_queue_free,
  *
  * 0/-1
  */
-int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq, msgclass_t class)
+int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq, msgclass_t klass)
 {
 	msg_queue_t *m = xmalloc(sizeof(msg_queue_t));
 
@@ -72,7 +72,7 @@ int msg_queue_add(const char *session, const char *rcpts, const char *message, c
 	m->message	= xstrdup(message);
 	m->seq		= xstrdup(seq);
 	m->time		= time(NULL);
-	m->class	= class;
+	m->klass	= klass;
 
 	msgs_queue_add(m);
 	return 0;
@@ -166,14 +166,14 @@ int msg_queue_flush(const char *session)
 			continue;
 		}
 
-		switch (m->class) {
+		switch (m->klass) {
 			case EKG_MSGCLASS_SENT_CHAT:
 				cmd = "/chat \"%s\" %s";
 				break;
 			case EKG_MSGCLASS_SENT:
 				break;
 			default:
-				debug_error("msg_queue_flush(), unsupported message class in query: %d\n", m->class);
+				debug_error("msg_queue_flush(), unsupported message klass in query: %d\n", m->klass);
 		}
 		command_exec_format(NULL, s, 1, cmd, m->rcpts, m->message);
 
@@ -233,7 +233,7 @@ int msg_queue_write()
 			continue;
 
 		chmod(fn, 0600);
-		fprintf(f, "v2\n%s\n%s\n%ld\n%s\n%d\n%s", m->session, m->rcpts, m->time, m->seq, m->class, m->message);
+		fprintf(f, "v2\n%s\n%s\n%ld\n%s\n%d\n%s", m->session, m->rcpts, m->time, m->seq, m->klass, m->message);
 		fclose(f);
 	}
 
@@ -326,9 +326,9 @@ int msg_queue_read() {
 				continue;
 			}
 
-			m.class = atoi(buf);
+			m.klass = atoi(buf);
 		} else
-			m.class = EKG_MSGCLASS_SENT;
+			m.klass = EKG_MSGCLASS_SENT;
 
 		msg = string_init(NULL);
 
