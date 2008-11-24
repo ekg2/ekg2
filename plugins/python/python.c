@@ -143,9 +143,9 @@ QUERY(python_print_version)
 	return 0;
 }
 
-int python_bind_free(script_t *scr, void *data /* niby to jest ale kiedys nie bedzie.. nie uzywac */, int type, void *private, ...)
+int python_bind_free(script_t *scr, void *data /* niby to jest ale kiedys nie bedzie.. nie uzywac */, int type, void *priv_data, ...)
 {
-	PyObject *handler = private;
+	PyObject *handler = priv_data;
 	switch (type) {
 		case(SCRIPT_QUERYTYPE):
 		case(SCRIPT_COMMANDTYPE):
@@ -164,7 +164,7 @@ int python_bind_free(script_t *scr, void *data /* niby to jest ale kiedys nie be
 int python_variable_changed(script_t *scr, script_var_t *scr_var, char *newval)
 {
 	int python_handle_result;
-	PyObject *obj = (PyObject *)scr_var->private;
+	PyObject *obj = (PyObject *)scr_var->priv_data;
 	PYTHON_HANDLE_HEADER(obj, Py_BuildValue("(ss)", scr_var->name, newval))
 	PYTHON_HANDLE_FOOTER()
 	return python_handle_result;
@@ -175,7 +175,7 @@ int python_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, lon
 	int python_handle_result;
 	PyObject * args;
 
-	PyObject *obj = (PyObject *)scr_wat->private;
+	PyObject *obj = (PyObject *)scr_wat->priv_data;
 	if (scr_wat->self->buf) {
 		args = Py_BuildValue("(Ois)", (PyObject *)scr_wat->data, type, (char *)watch);
 	} else {
@@ -189,7 +189,7 @@ int python_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, lon
 int python_timers(script_t *scr, script_timer_t *time, int type)
 {
 	int python_handle_result;
-	PyObject *obj = (PyObject *)time->private;
+	PyObject *obj = (PyObject *)time->priv_data;
 	PYTHON_HANDLE_HEADER(obj, Py_BuildValue("()"))
 	PYTHON_HANDLE_FOOTER()
 	return python_handle_result;
@@ -198,7 +198,7 @@ int python_timers(script_t *scr, script_timer_t *time, int type)
 int python_commands(script_t *scr, script_command_t *comm, char **params)
 {
 	int python_handle_result;
-	PyObject *obj = (PyObject *)comm->private;
+	PyObject *obj = (PyObject *)comm->priv_data;
 	PYTHON_HANDLE_HEADER(obj, Py_BuildValue("(ss)", comm->self->name, params[0] ? params[0] : "")) 
 	PYTHON_HANDLE_FOOTER()
 	return python_handle_result;
@@ -245,7 +245,7 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 		}
 		PyTuple_SetItem(argz, i, w);
 	}
-	PYTHON_HANDLE_HEADER(scr_que->private, argz)
+	PYTHON_HANDLE_HEADER(scr_que->priv_data, argz)
 	if (__py_r && PyTuple_Check(__py_r)) { /* __py_r - return value */
 		for (i=0; i < scr_que->argc; i++) {
 			PyObject *w = PyTuple_GetItem(__py_r, i);

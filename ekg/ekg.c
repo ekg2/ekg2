@@ -255,7 +255,7 @@ void ekg_loop() {
 				}
 
 				if (c->handler)
-					c->handler(c, c->pid, c->name, WEXITSTATUS(status), c->private);
+					c->handler(c, c->pid, c->name, WEXITSTATUS(status), c->priv_data);
 
 				c = children_removei(c);
 			}

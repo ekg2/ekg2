@@ -49,7 +49,7 @@ typedef struct {
 						   przej¶ciu do kolejnej linii. */
 	unsigned int	prompt_empty	: 1;	/* prompt przy przenoszeniu bêdzie pusty */
 	int		margin_left;		/* where the margin is set (on what char) */
-	void		*private;		/* can be helpfull */
+	void		*priv_data;		/* can be helpfull */
 } fstring_t;
 
 #define print(x...)		print_window_w(NULL, EKG_WINACT_JUNK, x) 

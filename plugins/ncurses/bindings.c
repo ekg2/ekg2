@@ -583,7 +583,7 @@ static BINDING_FUNCTION(binding_next_history)
 void binding_helper_scroll(window_t *w, int offset) {
 	ncurses_window_t *n;
 
-	if (!w || !(n = w->private))
+	if (!w || !(n = w->priv_data))
 		return;
 
 	if (offset < 0) {

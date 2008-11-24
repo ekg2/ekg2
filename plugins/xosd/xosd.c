@@ -252,7 +252,7 @@ static QUERY(xosd_irc_protocol_message)
 	char *text	= *(va_arg(ap, char**));
 	int isour	= *(va_arg(ap, int*));
 	int foryou	= *(va_arg(ap, int*));
-	int private	= *(va_arg(ap, int*));
+	int priv_data	= *(va_arg(ap, int*));
 	char *channame	= *(va_arg(ap, char**));
 	
 	session_t *s;
@@ -267,7 +267,7 @@ static QUERY(xosd_irc_protocol_message)
 	if (!foryou || isour)
 		return 0;
 	
-	if (private)
+	if (priv_data)
 		msgLine1 = format_string(format_find("xosd_new_message_line_1"), uid);
 	else
 		msgLine1 = format_string(format_find("xosd_new_message_irc"), uid, channame);

@@ -2203,7 +2203,7 @@ void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus) {
 		gui->is_tab = FALSE;
 
 		gtk_window->gui = gui;
-		sess->private = gtk_window;
+		sess->priv_data = gtk_window;
 		mg_create_topwindow(sess);
 		fe_set_title(sess);
 #if DARK
@@ -2219,14 +2219,14 @@ void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus) {
 		memset(gui, 0, sizeof(gtk_window_ui_t));
 		gui->is_tab = TRUE;
 		gtk_window->gui = gui;
-		sess->private = gtk_window;
+		sess->priv_data = gtk_window;
 		mg_create_tabwindow(sess);
 		mg_gui = gui;
 		parent_window = gui->window;
 	} else {
 		gtk_window->gui = gui = mg_gui;
 		
-		sess->private = gtk_window;
+		sess->priv_data = gtk_window;
 		gui->is_tab = TRUE;
 	}
 #if 0
@@ -2323,9 +2323,9 @@ void fe_close_window(window_t *sess) {
 	if (gtk_private_ui(sess) != &static_mg_gui)
 		xfree(gtk_private_ui(sess));		/* free gui, if not static */
 
-	xfree(sess->private);				/* free window strukt */
+	xfree(sess->priv_data);				/* free window strukt */
 
-	sess->private = NULL;
+	sess->priv_data = NULL;
 }
 
 /* NOT COPIED:

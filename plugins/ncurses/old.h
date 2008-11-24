@@ -21,7 +21,7 @@ extern int ncurses_plugin_destroyed;
 
 #define LINE_MAXLEN 1000		/* rozmiar linii */
 
-#define ncurses_current ((ncurses_window_t *) window_current->private)
+#define ncurses_current ((ncurses_window_t *) window_current->priv_data)
 
 void update_statusbar(int commit);
 

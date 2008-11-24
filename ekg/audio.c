@@ -392,7 +392,7 @@ AUDIO_CONTROL(stream_audio_control) {
 		va_end(ap);
 
 		if (!aio || !out) return NULL;
-		if (!(priv = aio->private)) return NULL;
+		if (!(priv = aio->priv_data)) return NULL;
 
 		if (way == AUDIO_READ)	directory = "__input";
 		if (way == AUDIO_WRITE) directory = "__output";
@@ -472,7 +472,7 @@ AUDIO_CONTROL(stream_audio_control) {
 		int fd = -1;
 		int suc = 1;
 
-		if (type == AUDIO_CONTROL_GET && !(priv = aio->private)) return NULL;
+		if (type == AUDIO_CONTROL_GET && !(priv = aio->priv_data)) return NULL;
 
 		va_start(ap, aio);
 		while ((attr = va_arg(ap, char *))) {
@@ -538,13 +538,13 @@ AUDIO_CONTROL(stream_audio_control) {
 		aio		= xmalloc(sizeof(audio_io_t));
 		aio->a		= &stream_audio;
 		aio->fd		= fd;
-		aio->private	= priv;
+		aio->priv_data	= priv;
 
 		priv->parent	= aio;
 
 	} else if (type == AUDIO_CONTROL_DEINIT && aio) {
-		if (aio->private) {
-			stream_private_t *priv = aio->private;
+		if (aio->priv_data) {
+			stream_private_t *priv = aio->priv_data;
 			xfree(priv->file);
 			xfree(priv->format);
 
@@ -586,7 +586,7 @@ WATCHER_LINE(stream_handle_write) {
 	if (!w) debug("stream_handle() watch_t: 0x%x\n", w);
 	if (!w) return -1;
 
-	len = w(type, fd, audio->buffer, audio->private);
+	len = w(type, fd, audio->buffer, audio->priv_data);
 
 	if (type) {
 		close(fd);
@@ -622,7 +622,7 @@ WATCHER(stream_handle) {
 	if (!w) debug("stream_handle() watch_t: 0x%x\n", w);
 	if (!w) return -1;
 
-	len = w(type, fd, audio->buffer, audio->private);
+	len = w(type, fd, audio->buffer, audio->priv_data);
 
 	if (len > 0 && s->output) {	/* if watch write do nothing */
 		if (!codec) {
@@ -633,9 +633,9 @@ WATCHER(stream_handle) {
 		} else {
 			int res = -1;
 			if (codec->way == CODEC_CODE) {
-				res = codec->c->code_handler(type, audio->buffer, s->output->buffer, codec->private);
+				res = codec->c->code_handler(type, audio->buffer, s->output->buffer, codec->priv_data);
 			} else if (s->codec->way == CODEC_DECODE) {
-				res = codec->c->decode_handler(type, audio->buffer, s->output->buffer, codec->private);
+				res = codec->c->decode_handler(type, audio->buffer, s->output->buffer, codec->priv_data);
 			}
 /*			debug("[AUDIO, CODEC, RECODE]: %d\n", res); */
 			if (res > 0) {
@@ -647,7 +647,7 @@ WATCHER(stream_handle) {
 		if (s->output->fd == -1) {
 			int res;
 			debug("[audio_handle_write] in queue: %d bytes.... ", s->output->buffer->len);
-			res = s->output->a->write_handler(type, -1, s->output->buffer, s->output->private);
+			res = s->output->a->write_handler(type, -1, s->output->buffer, s->output->priv_data);
 			debug(" ... wrote:%d bytes (handler: 0x%x) ", res, s->output->a->write_handler);
 			if (res > 0) {
 				string_remove(s->output->buffer, res);

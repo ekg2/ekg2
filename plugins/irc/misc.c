@@ -147,7 +147,7 @@ static void irc_access_parse(session_t *s, channel_t *chan, people_t *p, int fla
 		for (rl = u->resources; rl; rl = rl->next) {
 			r = rl;
 
-			if (r->private == p) {
+			if (r->priv_data == p) {
 				char *tmp = &(u->uid[4]);
 				
 				/* fast forward move.. */
@@ -243,7 +243,7 @@ next2:
 			
 			r->status	= EKG_STATUS_AVAIL;
 			r->descr	= xstrdup(chan->name+4);
-			r->private	= p;
+			r->priv_data	= p;
 
 			if (u->status != EKG_STATUS_AVAIL) {
 				xfree(u->descr);
@@ -1124,7 +1124,7 @@ IRC_COMMAND(irc_c_msg)
 		param[0] = (char *) session_get(s, "server")-1; */
 		xosd_to_us = 1;
 		/*param[0] = saprintf(":%s",session_get(s, "server"));*/
-	/* private message ... */
+	/* priv_data message ... */
 	} else if (!xstrcmp(j->nick, param[2])) {
 		/* dj: if he's not on the list we should add him */
 		/* G->dj: okey, but must be done in other way imho

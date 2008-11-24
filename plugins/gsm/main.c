@@ -55,7 +55,7 @@ CODEC_CONTROL(gsm_codec_control) {
 	va_list ap;
 
 	if (type == AUDIO_CONTROL_INIT && aco) {
-		gsm_private_t *priv = aco->private;
+		gsm_private_t *priv = aco->priv_data;
 		char **inpque = NULL, **outque = NULL, **tmp;	/* we create array with vals... (XXX, to query only once.) */
 		audio_io_t *inp, *out;
 		codec_way_t cway = -1;
@@ -138,9 +138,9 @@ CODEC_CONTROL(gsm_codec_control) {
 
 		aco		= xmalloc(sizeof(audio_codec_t));
 		aco->c		= &gsm_codec;
-		aco->private	= priv;
+		aco->priv_data	= priv;
 	} else if (type == AUDIO_CONTROL_DEINIT && aco) {		/* gsm_codec_destroy() */
-		gsm_private_t *priv = priv = aco->private;
+		gsm_private_t *priv = priv = aco->priv_data;
 
 		if (priv && priv->codec) gsm_destroy(priv->codec);
 		xfree(priv);

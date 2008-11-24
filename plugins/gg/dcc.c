@@ -63,7 +63,7 @@ AUDIO_CONTROL(gg_dcc_audio_control) {
 		int dccfd = -1;
 		int len = GG_DCC_VOICE_FRAME_LENGTH_505;
 
-		if (type == AUDIO_CONTROL_GET)	priv = aio->private;
+		if (type == AUDIO_CONTROL_GET)	priv = aio->priv_data;
 		else				priv= xmalloc(sizeof(gg_audio_private_t));
 
 		va_start(ap, aio);
@@ -99,7 +99,7 @@ AUDIO_CONTROL(gg_dcc_audio_control) {
 
 		aio		= xmalloc(sizeof(audio_io_t));
 		aio->a		= &gg_dcc_audio;
-		aio->private	= priv;
+		aio->priv_data	= priv;
 		aio->fd		= dccfd;
 	} else if (type == AUDIO_CONTROL_HELP) {
 		return NULL;

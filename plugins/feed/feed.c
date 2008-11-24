@@ -67,10 +67,10 @@ static QUERY(feed_session_init) {
 	j = xmalloc(sizeof(feed_private_t));
 #ifdef HAVE_EXPAT
 	j->isrss = (tolower(s->uid[0]) == 'r');
-	if (j->isrss)		j->private = rss_protocol_init();
+	if (j->isrss)		j->priv_data = rss_protocol_init();
 	else
 #endif
-				j->private = nntp_protocol_init();
+				j->priv_data = nntp_protocol_init();
 
 	s->priv = j;
 	userlist_read(s);
@@ -89,10 +89,10 @@ static QUERY(feed_session_deinit) {
 	userlist_write(s);
 	s->priv			= NULL;
 #ifdef HAVE_EXPAT
-	if (j->isrss)		rss_protocol_deinit(j->private);
+	if (j->isrss)		rss_protocol_deinit(j->priv_data);
 	else
 #endif
-				nntp_protocol_deinit(j->private);
+				nntp_protocol_deinit(j->priv_data);
 
 	xfree(j);
 

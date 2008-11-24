@@ -64,8 +64,8 @@ int irc_xstrcasecmp_default(char *str1, char *str2)
  * nick can contain mode prefix (one of): '@%+'
  *
  * list should be one of:
- *     private->channels 
- *     private->people->channels->onchan
+ *     priv_data->channels 
+ *     priv_data->people->channels->onchan
  */
 people_t *irc_find_person(list_t p, char *nick)
 {
@@ -91,7 +91,7 @@ people_t *irc_find_person(list_t p, char *nick)
 	return NULL;
 }
 
-/* p = private->channel || */
+/* p = priv_data->channel || */
 channel_t *irc_find_channel(list_t p, char *channame)
 {
 	channel_t *chan;
@@ -107,7 +107,7 @@ channel_t *irc_find_channel(list_t p, char *channame)
 	return NULL;
 }
 
-/* p = private->people->channels */
+/* p = priv_data->people->channels */
 people_chan_t *irc_find_person_chan(list_t p, char *channame)
 {
 	people_chan_t *ret;
@@ -129,7 +129,7 @@ people_chan_t *irc_find_person_chan(list_t p, char *channame)
  *
  * this helper function iterates over people present on a channel,
  * finds the one with longest.. nickname and changes value of
- * longest_nick private variable
+ * longest_nick priv_data variable
  *
  * this function is used by irc_del_person_channel (e.g person /parts
  * or is kicked from channel) and by irc_nick_change.
@@ -157,7 +157,7 @@ static void update_longest_nick(channel_t *chan)
  * irc plugin
  *
  * @param s - current session structure
- * @param j - irc private structure of current session
+ * @param j - irc priv_data structure of current session
  * @param nick - nickname of user without <em>'irc:'</em>
  *   prefix, and possibly with '@%+' prefix
  * @param chan - channel structure, on which nick appeared,
@@ -195,7 +195,7 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		irccol = irc_color_in_contacts(modes, mode, ulist);
 	}
 
-	/* add entry in private->people if nick's not yet there */
+	/* add entry in priv_data->people if nick's not yet there */
 	/* ok new irc-find-person checked */
 	if (!(person = irc_find_person(j->people, nick))) {
 	/*	debug("+%s lista ludzi, ", nick); */
@@ -204,7 +204,7 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		/* K&Rv2 5.4 */
 		list_add(&(j->people), person);
 	}
-	/* add entry in private->channels->onchan if nick's not yet there */
+	/* add entry in priv_data->channels->onchan if nick's not yet there */
 	if (!(peronchan = irc_find_person(chan->onchan, nick)))  {
 	/*	debug("+do kana³u, "); */
 		list_add(&(chan->onchan), person);
@@ -323,12 +323,12 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j, people_t *
 	}
 	
 	if ((tmp = irc_find_person_chan(nick->channels, chan->name))) {
-	/* delete entry in private->people->channels 
+	/* delete entry in priv_data->people->channels 
 		debug("-lista kana³ów usera, "); */
 		list_remove(&(nick->channels), tmp, 1);
 	}
 	if (!(nick->channels)) {
-	/* delete entry in private->people 
+	/* delete entry in priv_data->people 
 		debug("-%s lista ludzi, ", nick->nick); */
 		LIST_REMOVE(&(j->people), nick, list_irc_people_free);
 		
@@ -336,7 +336,7 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j, people_t *
 		return 1;
 	}
 	
-	/* delete entry in private->channels->onchan
+	/* delete entry in priv_data->channels->onchan
 	debug("-z kana³u\n"); */
 	list_remove(&(chan->onchan), nick, 0);
 	return 0;
@@ -347,7 +347,7 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j, people_t *
  * deletes data from internal structures, when user has been kicked of or parts from a given channel
  *
  * @param s - current session structure
- * @param j - irc private structure of current session
+ * @param j - irc priv_data structure of current session
  * @param nick - nickname of user without <em>'irc:'</em>
  *   prefix, can contain '@%+' prefix
  * @param chan - channel structure, where part/kick occured
@@ -382,7 +382,7 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
  * /quits from IRC
  *
  * @param s - current session structure
- * @param j - irc private structure of current session
+ * @param j - irc priv_data structure of current session
  * @param nick - nickname of user without <em>'irc:'</em>
  *   prefix, can contain '@%+' prefix
  * @param chan - channel structure, where part/kick occured
@@ -413,7 +413,7 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		return -1;
 	}
 	/* 
-	 * GiM: removing from private->people is in
+	 * GiM: removing from priv_data->people is in
 	 *	irc_del_person_channel_int
 	 *
 	 * tmp is set, we can run the loop
@@ -565,7 +565,7 @@ int irc_nick_prefix(irc_private_t *j, people_chan_t *ch, int irc_color)
  * this is internal function called when give person changes nick
  *
  * @param s - current session structure
- * @param j - irc private structure of current session
+ * @param j - irc priv_data structure of current session
  * @param old - old nickname of user without <em>'irc:'</em>
  *   prefix, and WITHOUT '@%+' prefix
  * @param new - new nickname of user without <em>'irc:'</em>
@@ -596,7 +596,7 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 		for (rl = u->resources; rl; rl = rl->next) {
 			ekg_resource_t *r = rl;
 
-			if (r->private != per) continue;
+			if (r->priv_data != per) continue;
 
 			xfree(r->name);
 			r->name = xstrdup(t2);

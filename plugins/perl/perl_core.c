@@ -79,7 +79,7 @@ PerlInterpreter *my_perl;
 
 int perl_variable_changed(script_t *scr, script_var_t *scr_var)
 {
-	PERL_HANDLER_HEADER((char *) scr_var->private);
+	PERL_HANDLER_HEADER((char *) scr_var->priv_data);
 
 	XPUSHs(sv_2mortal(new_pv(scr_var->name)) );
 	XPUSHs(sv_2mortal(new_pv(scr_var->value)) );
@@ -90,7 +90,7 @@ int perl_variable_changed(script_t *scr, script_var_t *scr_var)
 int perl_timers(script_t *scr, script_timer_t *time, int type)
 {
 //	if (type) return;
-	PERL_HANDLER_HEADER((char *) time->private);
+	PERL_HANDLER_HEADER((char *) time->priv_data);
 
 	XPUSHs(sv_2mortal(newSViv(type)));
 	XPUSHs(sv_2mortal(ekg2_bless(BLESS_TIMER, 0, time->self)) );
@@ -101,7 +101,7 @@ int perl_timers(script_t *scr, script_timer_t *time, int type)
 int perl_commands(script_t *scr, script_command_t *comm, char **params)
 {
 	char *tmp;
-	PERL_HANDLER_HEADER((char *) comm->private);
+	PERL_HANDLER_HEADER((char *) comm->priv_data);
 	XPUSHs(sv_2mortal(new_pv(comm->self->name)));
 	tmp = array_join(params, " ");
 	XPUSHs(sv_2mortal(new_pv(tmp)));
@@ -114,7 +114,7 @@ int perl_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, long 
 {
 //	if (type) return -1;
 	
-	PERL_HANDLER_HEADER((char *) scr_wat->private);
+	PERL_HANDLER_HEADER((char *) scr_wat->priv_data);
 	XPUSHs(sv_2mortal(newSViv(type)));
 	XPUSHs(sv_2mortal(newSViv(fd)));
 	if (scr_wat->self->buf) /* WATCH_READ_LINE */
@@ -133,7 +133,7 @@ int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 
 	int change = 1;
 	
-	PERL_HANDLER_HEADER((char *) scr_que->private);
+	PERL_HANDLER_HEADER((char *) scr_que->priv_data);
 	for (i=0; i < scr_que->argc; i++) {
 
 		perlarg = NULL;
@@ -314,11 +314,11 @@ void *Ekg2_ref_object(SV *o)
 }
 /* <syf irssi */
 
-int perl_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bedzie.. nie uzywac */ int type, void *private, ...)
+int perl_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bedzie.. nie uzywac */ int type, void *priv_data, ...)
 {
 	va_list ap;
 	SV *watchdata = NULL;
-	va_start(ap, private);
+	va_start(ap, priv_data);
 
 	switch (type) {
 		case(SCRIPT_WATCHTYPE): 
@@ -328,8 +328,8 @@ int perl_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bed
 		case(SCRIPT_QUERYTYPE):
 		case(SCRIPT_TIMERTYPE):
 		case(SCRIPT_PLUGINTYPE):
-//		    debug("[perl_bind_free] type %d funcname %s\n", type, private);
-		    xfree(private);
+//		    debug("[perl_bind_free] type %d funcname %s\n", type, priv_data);
+		    xfree(priv_data);
 		    break;
 	}
 	va_end(ap);

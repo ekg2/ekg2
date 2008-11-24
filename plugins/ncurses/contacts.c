@@ -103,7 +103,7 @@ static int contacts_compare(void *data1, void *data2)
 /*
  * userlist_dup()
  *
- * Duplicate entry, with private set to priv.
+ * Duplicate entry, with priv_data set to priv.
  */
 
 static inline userlist_t *userlist_dup(userlist_t *up, char *uid, char *nickname, void *priv) {
@@ -117,7 +117,7 @@ static inline userlist_t *userlist_dup(userlist_t *up, char *uid, char *nickname
 		 * then change invidual fields? */
 	u->blink	= up->blink;
 	u->typing	= up->typing;
-	u->private	= priv;
+	u->priv_data	= priv;
 	return u;
 }
 
@@ -152,7 +152,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 	if (!w)
 		return -1;
 
-	n = w->private;
+	n = w->priv_data;
 	
 	if (save_pos) 
 		old_start = n->start;
@@ -331,8 +331,8 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 				!xstrstr(contacts_order, get_short_status(status_t)))	/* when !config_contacts_orderbystate, we need to have got this status in contacts_order anywhere. */
 					continue;
 
-			if (group && (!u->private || (void *) 2 != u->private)) {
-				userlist_t *tmp = userlist_find(u->private ? u->private : session_current, u->uid);
+			if (group && (!u->priv_data || (void *) 2 != u->priv_data)) {
+				userlist_t *tmp = userlist_find(u->priv_data ? u->priv_data : session_current, u->uid);
 				if ((group[0]=='!' && ekg_group_member(tmp, group+1)) ||
 						(group[0]!='!' && !ekg_group_member(tmp, group)))
 					continue;
@@ -360,10 +360,10 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 
 			string = fstring_new_format(format_find(tmp), u->nickname, u->descr);
 
-			if (u->private == (void *) 2)
-				string->private = (void *) xstrdup(u->nickname);
+			if (u->priv_data == (void *) 2)
+				string->priv_data = (void *) xstrdup(u->nickname);
 			else 
-				string->private = (void *) saprintf("%s/%s", (u->private) ? ((session_t *) u->private)->uid : session_current->uid, u->nickname);
+				string->priv_data = (void *) saprintf("%s/%s", (u->priv_data) ? ((session_t *) u->priv_data)->uid : session_current->uid, u->nickname);
 
 			ncurses_backlog_add(w, string);
 
@@ -488,7 +488,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 	if (!w || mouse_state != EKG_BUTTON1_DOUBLE_CLICKED)
 		return;
 
-	n = w->private;
+	n = w->priv_data;
 
 	if (!w->nowrap) {
 		/* here new code, should work also with w->nowrap == 1 */
@@ -512,7 +512,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 		return;
 	}
 
-	command_exec_format(NULL, NULL, 0, ("/query \"%s\""), n->backlog[y]->private);
+	command_exec_format(NULL, NULL, 0, ("/query \"%s\""), n->backlog[y]->priv_data);
 	return;
 }
 
@@ -526,7 +526,7 @@ static int ncurses_contacts_update_redraw(window_t *w) { return 0; }
 void ncurses_contacts_new(window_t *w)
 {
 	int size = config_contacts_size + config_contacts_margin + ((contacts_frame) ? 1 : 0);
-	ncurses_window_t *n = w->private;
+	ncurses_window_t *n = w->priv_data;
 
 	switch (contacts_edge) {
 		case WF_LEFT:

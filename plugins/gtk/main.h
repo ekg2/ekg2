@@ -84,8 +84,8 @@ extern int new_window_in_tab_config;
 #define mainwindow_top_config 0
 #define newtabstofront_config 2
 
-#define gtk_private_ui(w) (((gtk_window_t*) w->private)->gui)
-#define gtk_private(w) ((gtk_window_t*) w->private)
+#define gtk_private_ui(w) (((gtk_window_t*) w->priv_data)->gui)
+#define gtk_private(w) ((gtk_window_t*) w->priv_data)
 
 #define gui_win_state_config 0
 

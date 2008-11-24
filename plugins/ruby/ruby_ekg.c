@@ -25,7 +25,7 @@ static int ruby_initialize();
 static int ruby_finalize_wrapper();
 static int ruby_load(script_t *scr);
 static int ruby_unload(script_t *scr);
-static int ruby_bind_free(script_t *scr, void *data, int type, void *private, ...);
+static int ruby_bind_free(script_t *scr, void *data, int type, void *priv_data, ...);
 static int ruby_query(script_t *scr, script_query_t *scr_que, void *args[]);
 static int ruby_commands(script_t *scr, script_command_t *comm, char **params);
 static int ruby_timers(script_t *scr, script_timer_t *time, int type);
@@ -81,7 +81,7 @@ static VALUE ekg2_scripts_initialize(VALUE self) {
 
 	scr = last_scr; last_scr = NULL;
 
-	scr->private = (void *) self;
+	scr->priv_data = (void *) self;
 
 	ruby_script_theme_init(scr);
 
@@ -307,7 +307,7 @@ static int ruby_load(script_t *scr) {
 		char *err = ruby_geterror("ruby_load() ");
 		print("script_error", err);
 		xfree(err);
-		last_scr = scr->private = NULL;
+		last_scr = scr->priv_data = NULL;
 		return -1;
 	}
 
@@ -317,7 +317,7 @@ static int ruby_load(script_t *scr) {
 		char *err = ruby_geterror("ruby_init() ");
 		print("script_error", err);
 		xfree(err);
-		last_scr = scr->private = NULL;
+		last_scr = scr->priv_data = NULL;
 		return -1;
 	}
 
@@ -331,9 +331,9 @@ static VALUE ruby_deinit_wrapper(VALUE arg) {
 static int ruby_unload(script_t *scr) {
 	int error = 0;
 
-	if (!scr->private) return 0;
+	if (!scr->priv_data) return 0;
 
-	rb_protect(ruby_deinit_wrapper, (VALUE) scr->private, &error);
+	rb_protect(ruby_deinit_wrapper, (VALUE) scr->priv_data, &error);
 
 	if (error) {
 		char *err = ruby_geterror("ruby_deinit() ");
@@ -344,7 +344,7 @@ static int ruby_unload(script_t *scr) {
 	return 0;
 }
 
-static int ruby_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bedzie.. nie uzywac */ int type, void *private, ...) {
+static int ruby_bind_free(script_t *scr, void *data, /* niby to jest ale kiedys nie bedzie.. nie uzywac */ int type, void *priv_data, ...) {
 
 	return 0;
 }
@@ -422,8 +422,8 @@ static int ruby_query(script_t *scr, script_query_t *scr_que, void *args[]) {
 		}
 	}
 
-	ruby_query.class = (VALUE) scr->private;
-	ruby_query.func = scr_que->private;
+	ruby_query.class = (VALUE) scr->priv_data;
+	ruby_query.func = scr_que->priv_data;
 	ruby_query.argc = scr_que->argc;
 	ruby_query.argv = argv;
 
@@ -443,8 +443,8 @@ static int ruby_commands(script_t *scr, script_command_t *comm, char **params) {
 	for (i=0; i < argc; i++)
 		argv[i] = rb_str_new2(params[0]);
 
-	ruby_command.class = (VALUE) scr->private;
-	ruby_command.func = comm->private;
+	ruby_command.class = (VALUE) scr->priv_data;
+	ruby_command.func = comm->priv_data;
 	ruby_command.argc = argc;
 	ruby_command.argv = argv;
 
@@ -463,8 +463,8 @@ static int ruby_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd
 	argv[1] = INT2FIX(fd);	/* XXX, temporary we pass fd instad of T_FILE */
 	argv[2] = INT2FIX(watch);
 
-	ruby_watch.class = (VALUE) scr->private;
-	ruby_watch.func = scr_wat->private;
+	ruby_watch.class = (VALUE) scr->priv_data;
+	ruby_watch.func = scr_wat->priv_data;
 	ruby_watch.argc = 3;
 	ruby_watch.argv = argv;
 
@@ -479,8 +479,8 @@ static int ruby_variable_changed(script_t *scr, script_var_t *scr_var, char *wha
 	argv[0] = rb_str_new2(scr_var->name);
 	argv[1] = rb_str_new2(what);
 
-	ruby_variable.class = (VALUE) scr->private;
-	ruby_variable.func = scr_var->private;
+	ruby_variable.class = (VALUE) scr->priv_data;
+	ruby_variable.func = scr_var->priv_data;
 	ruby_variable.argc = 2;
 	ruby_variable.argv = argv;
 
@@ -491,8 +491,8 @@ static int ruby_variable_changed(script_t *scr, script_var_t *scr_var, char *wha
 static int ruby_timers(script_t *scr, script_timer_t *time, int type) {
 	ruby_helper_t ruby_timer;
 
-	ruby_timer.class = (VALUE) scr->private;
-	ruby_timer.func = time->private;
+	ruby_timer.class = (VALUE) scr->priv_data;
+	ruby_timer.func = time->priv_data;
 	ruby_timer.argc = 0;
 	ruby_timer.argv = NULL;
 
@@ -503,7 +503,7 @@ static int ruby_timers(script_t *scr, script_timer_t *time, int type) {
 static int ruby_script_theme_init(script_t *scr) {
 	ruby_helper_t ruby_theme;
 
-	ruby_theme.class = (VALUE) scr->private;
+	ruby_theme.class = (VALUE) scr->priv_data;
 	ruby_theme.func = "theme_init";
 	ruby_theme.argc = 0;
 	ruby_theme.argv = NULL;

@@ -65,11 +65,11 @@ typedef struct child_s {
 	plugin_t	*plugin;	/* obs³uguj±cy plugin */
 	char		*name;		/* nazwa, wy¶wietlana przy /exec */
 	child_handler_t	handler;	/* zak³ad pogrzebowy */
-	void		*private;	/* dane procesu */
+	void		*priv_data;	/* dane procesu */
 } child_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
-child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *private);
+child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data);
 child_t *children_removei(child_t *c);
 void children_destroy(void);
 #endif
@@ -124,7 +124,7 @@ typedef struct newconference {
 	char		*session;
 	char		*name;
 	struct userlist	*participants;
-	void		*private;
+	void		*priv_data;
 } newconference_t;
 
 struct buffer {

@@ -124,7 +124,7 @@ static QUERY(ncurses_statusbar_query)
  * Set @a tmp to ncurses_initialized [0/1]<br>
  *
  * @note <i>UI_IS_INITIALIZED</i> is used to check if we can display debug info by emiting <i>UI_PRINT_WINDOW</i> or not.
- *		It also used by other UI-PLUGINS to check if another UI-plugin is in use. [Becasuse we have only one private struct in window_t]
+ *		It also used by other UI-PLUGINS to check if another UI-plugin is in use. [Becasuse we have only one priv_data struct in window_t]
  *
  * @param ap 1st param: <i>(int) </i><b>tmp</b> - place to put ncurses_initialized variable.
  * @param data NULL
@@ -152,7 +152,7 @@ static QUERY(ncurses_ui_window_switch) {
 	window_t *w	= *(va_arg(ap, window_t **));
 	window_t *wc;
 
-	ncurses_window_t *n = w->private;
+	ncurses_window_t *n = w->priv_data;
 
 	if (config_mark_on_window_change)
 		command_exec(NULL, NULL, "/mark -1", 1);
@@ -191,13 +191,13 @@ static QUERY(ncurses_ui_window_print)
 	ncurses_window_t *n;
 	int bottom = 0, prev_count, count = 0;
 
-	if (!(n = w->private)) { 
+	if (!(n = w->priv_data)) { 
 		/* BUGFIX, cause @ ui-window-print handler (not ncurses plugin one, ncurses plugin one is called last cause of 0 prio)
 		 *	plugin may call print_window() 
 		 */
 		ncurses_window_new(w);	
-		if (!(n = w->private)) {
-			debug("ncurses_ui_window_print() IInd CC still not w->private, quitting...\n");
+		if (!(n = w->priv_data)) {
+			debug("ncurses_ui_window_print() IInd CC still not w->priv_data, quitting...\n");
 			return -1;
 		}
 	}
@@ -268,7 +268,7 @@ static QUERY(ncurses_ui_window_act_changed)
 static QUERY(ncurses_ui_window_target_changed)
 {
 	window_t *w = *(va_arg(ap, window_t **));
-	ncurses_window_t *n = w->private;
+	ncurses_window_t *n = w->priv_data;
 	char *tmp;
 
 	xfree(n->prompt);
@@ -375,7 +375,7 @@ static QUERY(ncurses_conference_renamed)
 	window_t *w;
 
 	for (w = windows; w; w = w->next) {
-		ncurses_window_t *n = w->private;
+		ncurses_window_t *n = w->priv_data;
 
 		if (w->target && !xstrcasecmp(w->target, oldname)) {
 			xfree(w->target);
@@ -470,7 +470,7 @@ static QUERY(ncurses_ui_window_lastlog) {
 	if (!(w = window_find_sa(NULL, "__lastlog", 1)))
 		w = window_new("__lastlog", NULL, 1001);
 
-	n = w->private;
+	n = w->priv_data;
 
 	if (!n || !n->handle_redraw) {
 		debug_error("ncurses_ui_window_lastlog() BAD __lastlog wnd?\n");
@@ -629,7 +629,7 @@ static COMMAND(ncurses_cmd_dump) {
 
 	fprintf(f, "---------- Window %s (id:%d) dump. ----------\n", window_target(w), w->id);
 
-	n = w->private;
+	n = w->priv_data;
 
 	for (i = n->backlog_size; i; i--) {
 		fstring_t *backlog = n->backlog[i-1];

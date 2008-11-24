@@ -83,11 +83,11 @@ typedef struct {
 
 typedef struct {
 	enum jabber_bookmark_type_t type;
-	union {	/* private data based on bookmark type */
+	union {	/* priv_data data based on bookmark type */
 		jabber_bookmark_url_t *url;		/* for JABBER_BOOKMARK_URL */
 		jabber_bookmark_conference_t *conf;	/* for JABBER_BOOKMARK_CONFERENCE */
 		void *other; /* ? ;p */
-	} private;
+	} priv_data;
 } jabber_bookmark_t;
 
 enum jabber_compression_method {
@@ -133,7 +133,7 @@ typedef struct {
 } jabber_stanza_t;
 
 /**
- * jabber_private_t contains private data of jabber/tlen session.
+ * jabber_private_t contains priv_data data of jabber/tlen session.
  */
 typedef struct {
 	int fd;				/**< connection's fd */

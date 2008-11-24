@@ -81,7 +81,7 @@ typedef struct window {
 	struct userlist *userlist;	/* sometimes window may require separate userlist */
 
 	window_lastlog_t *lastlog;	/* prywatne informacje lastloga */
-	void *private;			/* prywatne informacje ui */
+	void *priv_data;			/* prywatne informacje ui */
 } window_t;
 
 typedef enum {

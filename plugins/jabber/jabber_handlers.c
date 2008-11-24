@@ -985,7 +985,7 @@ JABBER_HANDLER(jabber_handle_message) {
 			char *uid2 = (tuid) ? xstrndup(uid, tuid-uid) : xstrdup(uid);		/* muc room */
 			char *nick = (tuid) ? xstrdup(tuid+1) : NULL;				/* nickname */
 			newconference_t *c = newconference_find(s, uid2);
-			int isour = (c && !xstrcmp(c->private, nick)) ? 1 : 0;			/* is our message? */
+			int isour = (c && !xstrcmp(c->priv_data, nick)) ? 1 : 0;			/* is our message? */
 			char *formatted;
 			userlist_t *u;
 

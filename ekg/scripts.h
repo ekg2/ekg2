@@ -32,7 +32,7 @@ typedef struct script {
 	void		*lang;
 	char		*name;
 	char		*path;
-	void		*private;
+	void		*priv_data;
 	int		inited;
 } script_t;
 extern script_t		*scripts;
@@ -41,13 +41,13 @@ typedef struct {
 	script_t	*scr;
 	struct timer	*self;
 	int		removed;
-	void		*private;
+	void		*priv_data;
 } script_timer_t; 
 
 typedef struct {
 	script_t	*scr;
 	plugin_t	*self;
-	void		*private;
+	void		*priv_data;
 } script_plugin_t;
 
 typedef struct {
@@ -56,7 +56,7 @@ typedef struct {
 
 	char		*name;
 	char		*value;
-	void		*private;
+	void		*priv_data;
 } script_var_t; 
 
 typedef struct {
@@ -64,14 +64,14 @@ typedef struct {
 	query_t		*self;
 	int		argc;
 	int		argv_type[MAX_ARGS];
-	void		*private;
+	void		*priv_data;
 	int		hack;
 } script_query_t; 
 
 typedef struct {
 	script_t	*scr;
 	command_t	*self;
-	void		*private; 
+	void		*priv_data; 
 } script_command_t;
 
 typedef struct {
@@ -79,7 +79,7 @@ typedef struct {
 	watch_t		*self; 
 	int		removed;
 	void		*data;
-	void		*private;
+	void		*priv_data;
 } script_watch_t;
 
 typedef int (scriptlang_initialize_t)();
@@ -114,7 +114,7 @@ typedef struct scriptlang {
 	script_handler_var_t	*script_handler_var;
 	script_handler_watch_t	*script_handler_watch;
 	
-	void *private;
+	void *priv_data;
 } scriptlang_t;
 extern scriptlang_t *scriptlang;
 
@@ -164,8 +164,8 @@ extern scriptlang_t *scriptlang;
 		script_handler_watch  : x##_watches,\
 	}
 
-#define script_private_get(s) (s->private)
-#define script_private_set(s, p) (s->private = p)
+#define script_private_get(s) (s->priv_data)
+#define script_private_set(s, p) (s->priv_data = p)
 
 #ifndef EKG2_WIN32_NOFUNCTION
 int script_unload_lang(scriptlang_t *s);
@@ -201,7 +201,7 @@ int script_variables_write();
 #define SCRIPT_UNBIND_HANDLER(type, args...) \
 {\
 	SCRIPT_HANDLER_HEADER(script_free_bind_t);\
-	SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->private, args);\
+	SCRIPT_HANDLER_FOOTER(script_free_bind, type, temp->priv_data, args);\
 }
 
 /* BINDING && UNBINDING */
@@ -214,7 +214,7 @@ int script_variables_write();
 	}	\
 	temp = xmalloc(sizeof(x)); \
 	temp->scr  = scr;\
-	temp->private = handler;
+	temp->priv_data = handler;
 
 #define SCRIPT_BIND_FOOTER(y) \
 	if (!temp->self) {\
@@ -235,7 +235,7 @@ int script_variables_write();
 /* TODO: quietmode */
 #define SCRIPT_HANDLER_FOOTER(y, _args...) \
 	if ((_scr = temp->scr) && ((_slang = _scr->lang)))  _handler = _slang->y;\
-	else						    _handler = temp->private;\
+	else						    _handler = temp->priv_data;\
 	if (_handler)\
 		ret = _handler(_scr, temp, _args); \
 	else {\

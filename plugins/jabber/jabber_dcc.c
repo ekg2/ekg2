@@ -43,7 +43,7 @@ WATCHER(jabber_dcc_handle_recv) {
 
 	switch (p->protocol) {
 		case (JABBER_DCC_PROTOCOL_BYTESTREAMS): {
-			jabber_dcc_bytestream_t *b = p->private.bytestream;
+			jabber_dcc_bytestream_t *b = p->priv_data.bytestream;
 			char buf[16384];	/* dla data transfer */
 			int len;
 

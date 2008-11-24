@@ -50,10 +50,10 @@ typedef struct {
 	char *req;
 	char *sid;
 	enum jabber_dcc_protocol_type_t protocol;
-	union { /* private data based on protocol */
+	union { /* priv_data data based on protocol */
 		jabber_dcc_bytestream_t *bytestream;		/* for JABBER_DCC_PROTOCOL_BYTESTREAMS */
 		void *other;			/* XXX */
-	} private;
+	} priv_data;
 } jabber_dcc_t; 
 
 
