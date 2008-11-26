@@ -504,7 +504,7 @@ int protocol_status_emit(const session_t *s, const char *uid, int status, char *
  *
  * zwraca target
  */
-char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int klass, const char *seq, int dobeep, int secure)
+char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int mclass, const char *seq, int dobeep, int secure)
 {
 	char *class_str, timestamp[100], *text = xstrdup(__text);
 	char *securestr = NULL;
@@ -514,17 +514,17 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	struct conference *c = NULL;
 	int empty_theme = 0, is_me = 0, to_me = 1, activity = 0, separate = 0;
 
-	if (klass & EKG_MSGCLASS_NOT2US) {
+	if (mclass & EKG_MSGCLASS_NOT2US) {
 		to_me = 0;
-		klass &= ~EKG_MSGCLASS_NOT2US;
+		mclass &= ~EKG_MSGCLASS_NOT2US;
 	}
 
-	if (klass & EKG_NO_THEMEBIT) {
+	if (mclass & EKG_NO_THEMEBIT) {
 		empty_theme = 1;
-		klass &= ~EKG_NO_THEMEBIT;
+		mclass &= ~EKG_NO_THEMEBIT;
 	}
 
-	switch (klass) {
+	switch (mclass) {
 		case EKG_MSGCLASS_SENT:
 		case EKG_MSGCLASS_SENT_CHAT:
 			if (/*config_display_me && */ !xstrncmp(text, "/me ", 4)) {
@@ -553,8 +553,8 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			target = (rcpts) ? rcpts[0] : NULL;
 			break;
 		default:
-			if (klass != EKG_MSGCLASS_MESSAGE)
-				debug("[message_print] got unexpected klass = %d\n", klass);
+			if (mclass != EKG_MSGCLASS_MESSAGE)
+				debug("[message_print] got unexpected mclass = %d\n", mclass);
 			class_str = "message";
 	}
 
@@ -636,7 +636,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	{
 		int recipients_count = array_count((char **) rcpts);
 
-		if ((klass < EKG_MSGCLASS_SENT) && recipients_count > 0) {
+		if ((mclass < EKG_MSGCLASS_SENT) && recipients_count > 0) {
 			c = conference_find_by_uids(s, sender, rcpts, recipients_count, 0);
 
 			if (!c) {
@@ -671,7 +671,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		/* XXX: I personally think this should be moved outta here
 		 * I don't think that beeping should be considered as 'printing' */
 	/* daj znaæ d¼wiêkiem i muzyczk± */
-	if (klass == EKG_MSGCLASS_CHAT) {
+	if (mclass == EKG_MSGCLASS_CHAT) {
 
 		if (config_beep && config_beep_chat && dobeep)
 			query_emit_id(NULL, UI_BEEP);
@@ -679,20 +679,20 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 		if (config_sound_chat_file && dobeep)
 			play_sound(config_sound_chat_file);
 
-	} else if (klass == EKG_MSGCLASS_MESSAGE) {
+	} else if (mclass == EKG_MSGCLASS_MESSAGE) {
 
 		if (config_beep && config_beep_msg && dobeep)
 			query_emit_id(NULL, UI_BEEP);
 		if (config_sound_msg_file && dobeep)
 			play_sound(config_sound_msg_file);
 
-	} else if (klass == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
+	} else if (mclass == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
 			play_sound(config_sound_sysmsg_file);
 	
-	if (config_last & 3 && (klass < EKG_MSGCLASS_SENT))
+	if (config_last & 3 && (mclass < EKG_MSGCLASS_SENT))
 		last_add(0, sender, now, sent, text);
 	
-	user = (klass < EKG_MSGCLASS_SENT) ? format_user(s, sender) : session_format_n(sender);
+	user = (mclass < EKG_MSGCLASS_SENT) ? format_user(s, sender) : session_format_n(sender);
 
 	if (config_emoticons && text) {
 		char *tmp = emoticon_expand(text);
@@ -706,11 +706,11 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (secure) 
 		securestr = format_string(format_find("secure"));
 
-	if (klass == EKG_MSGCLASS_LOG || klass == EKG_MSGCLASS_SENT_LOG)
+	if (mclass == EKG_MSGCLASS_LOG || mclass == EKG_MSGCLASS_SENT_LOG)
 		separate = 1;
 
-	if ( (klass == EKG_MSGCLASS_CHAT || klass == EKG_MSGCLASS_SENT_CHAT) || 
-		  (!(config_make_window & 4) && (klass == EKG_MSGCLASS_MESSAGE || klass == EKG_MSGCLASS_SENT)) ) {
+	if ( (mclass == EKG_MSGCLASS_CHAT || mclass == EKG_MSGCLASS_SENT_CHAT) || 
+		  (!(config_make_window & 4) && (mclass == EKG_MSGCLASS_MESSAGE || mclass == EKG_MSGCLASS_SENT)) ) {
 		activity = to_me ? EKG_WINACT_IMPORTANT : EKG_WINACT_MSG;
 		separate = 1;
 	}
@@ -718,10 +718,10 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	print_window(target, s, activity, separate, class_str, user, timestamp,
 		(is_me ? text+4 : text),
 					/* XXX, get_uid() get_nickname() */
-		(klass >= EKG_MSGCLASS_SENT ?
+		(mclass >= EKG_MSGCLASS_SENT ?
 			(is_me && config_nickname ? config_nickname : session_alias_uid(s))
 			: get_nickname(s, sender)),
-		(klass >= EKG_MSGCLASS_SENT ? s->uid : get_uid(s, sender)),
+		(mclass >= EKG_MSGCLASS_SENT ? s->uid : get_uid(s, sender)),
 		(secure ? securestr : ""));
 
 	xfree(text);
@@ -740,7 +740,7 @@ static QUERY(protocol_message)
 	char *text	= *(va_arg(ap, char**));
 	uint32_t *format= *(va_arg(ap, uint32_t**));
 	time_t sent	= *(va_arg(ap, time_t*));
-	int klass	= *(va_arg(ap, int*));
+	int mclass	= *(va_arg(ap, int*));
 	char *seq	= *(va_arg(ap, char**));
 	int dobeep	= *(va_arg(ap, int*));
 	int secure	= *(va_arg(ap, int*));
@@ -755,7 +755,7 @@ static QUERY(protocol_message)
 		return -1;
 
 	/* display blinking */
-	if (config_display_blinking && userlist && (klass < EKG_MSGCLASS_SENT) && (!rcpts || !rcpts[0])) {
+	if (config_display_blinking && userlist && (mclass < EKG_MSGCLASS_SENT) && (!rcpts || !rcpts[0])) {
 		int oldstate = userlist->blink;
 
 		if (config_make_window && xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid))) 
@@ -777,11 +777,11 @@ static QUERY(protocol_message)
 			query_emit_id(NULL, USERLIST_CHANGED, &session, &uid);
 	}
 	
-	if (klass & EKG_NO_THEMEBIT) {
-		klass &= ~EKG_NO_THEMEBIT;
+	if (mclass & EKG_NO_THEMEBIT) {
+		mclass &= ~EKG_NO_THEMEBIT;
 		empty_theme = 1;
 	}
-	our_msg = (klass >= EKG_MSGCLASS_SENT);
+	our_msg = (mclass >= EKG_MSGCLASS_SENT);
 
 	/* there is no need to decode our messages */
 	if (!our_msg && !empty_theme) {	/* empty_theme + decrpyt? i don't think so... */
@@ -804,15 +804,15 @@ static QUERY(protocol_message)
 	}
 
 	if (our_msg)	query_emit_id(NULL, PROTOCOL_MESSAGE_SENT, &session, &(rcpts[0]), &text);
-	else		query_emit_id(NULL, PROTOCOL_MESSAGE_RECEIVED, &session, &uid, &rcpts, &text, &format, &sent, &klass, &seq, &secure);
+	else		query_emit_id(NULL, PROTOCOL_MESSAGE_RECEIVED, &session, &uid, &rcpts, &text, &format, &sent, &mclass, &seq, &secure);
 
-	query_emit_id(NULL, PROTOCOL_MESSAGE_POST, &session, &uid, &rcpts, &text, &format, &sent, &klass, &seq, &secure);
+	query_emit_id(NULL, PROTOCOL_MESSAGE_POST, &session, &uid, &rcpts, &text, &format, &sent, &mclass, &seq, &secure);
 
 	/* show it ! */
 	if (!(our_msg && !config_display_sent)) {
 		if (empty_theme)
-			klass |= EKG_NO_THEMEBIT;
-		if (!(target = message_print(session, uid, (const char**) rcpts, text, format, sent, klass, seq, dobeep, secure)))
+			mclass |= EKG_NO_THEMEBIT;
+		if (!(target = message_print(session, uid, (const char**) rcpts, text, format, sent, mclass, seq, dobeep, secure)))
 			return -1;
 	}
 
@@ -849,8 +849,8 @@ static QUERY(protocol_message)
 	return 0;
 }
 
-int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, const char *text, const uint32_t *format, time_t sent, int klass, const char *seq, int dobeep, int secure) {
-       return query_emit_id_ro(NULL, PROTOCOL_MESSAGE, &(s->uid), &uid, &rcpts, &text, &format, &sent, &klass, &seq, &dobeep, &secure);
+int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, const char *text, const uint32_t *format, time_t sent, int mclass, const char *seq, int dobeep, int secure) {
+       return query_emit_id_ro(NULL, PROTOCOL_MESSAGE, &(s->uid), &uid, &rcpts, &text, &format, &sent, &mclass, &seq, &dobeep, &secure);
 }
 
 /**
