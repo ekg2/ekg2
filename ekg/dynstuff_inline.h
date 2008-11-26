@@ -16,13 +16,13 @@ extern "C" {
 #if DYNSTUFF_USE_LIST3
 
 #define __DYNSTUFF_LIST_ADD(lista, typ, __notused)		\
-	void lista##_add(typ *new) { list_add3((list_t *) (void *) &lista, (list_t) new); }
+	void lista##_add(typ *new_) { list_add3((list_t *) (void *) &lista, (list_t) new_); }
 
 #define __DYNSTUFF_LIST_ADD_BEGINNING(lista, typ, __notused)	\
-	void lista##_add(typ *new) { list_add_beginning3((list_t *) (void *) &lista, (list_t) new); }
+	void lista##_add(typ *new_) { list_add_beginning3((list_t *) (void *) &lista, (list_t) new_); }
 
 #define __DYNSTUFF_LIST_ADD_SORTED(lista, typ, comparision)	\
-	void lista##_add(typ *new) { list_add_sorted3((list_t *) (void *) &lista, (list_t) new, (void *) comparision); }
+	void lista##_add(typ *new_) { list_add_sorted3((list_t *) (void *) &lista, (list_t) new_, (void *) comparision); }
 
 #define __DYNSTUFF_LIST_REMOVE_SAFE(lista, typ, free_func)	\
 	void lista##_remove(typ *elem) { list_remove3((list_t *) (void *) &lista, (list_t) elem, (void *) free_func); }
@@ -42,35 +42,35 @@ extern "C" {
 #else
 
 #define __DYNSTUFF_LIST_ADD(lista, typ, __notused)		\
-	void lista##_add(typ *new) {				\
-		new->next = NULL;				\
+	void lista##_add(typ *new_) {				\
+		new_->next = NULL;				\
 		if (!lista) {					\
-			lista = new;				\
+			lista = new_;				\
 		} else {					\
 			typ *tmp = lista;			\
 								\
 			while (tmp->next)			\
 				tmp = tmp->next;		\
-			tmp->next = new;			\
+			tmp->next = new_;			\
 		}						\
 }
 
 #define __DYNSTUFF_LIST_ADD_BEGINNING(lista, typ, __notused)	\
-	void lista##_add(typ *new) {				\
-		new->next = lista;				\
-		lista  = new;					\
+	void lista##_add(typ *new_) {				\
+		new_->next = lista;				\
+		lista  = new_;					\
 	}
 
 #define __DYNSTUFF_LIST_ADD_SORTED(lista, typ, comparision)	\
-	void lista##_add(typ *new) {				\
-		new->next = NULL;				\
+	void lista##_add(typ *new_) {				\
+		new_->next = NULL;				\
 		if (!lista) {					\
-			lista = new;				\
+			lista = new_;				\
 		} else {					\
 			typ *tmp = lista;			\
 			typ *prev = NULL;			\
 								\
-			while (comparision(new, tmp) > 0) {	\
+			while (comparision(new_, tmp) > 0) {	\
 				prev = tmp;			\
 				tmp = tmp->next;		\
 				if (!tmp)			\
@@ -78,11 +78,11 @@ extern "C" {
 			}					\
 								\
 			if (!prev) {				\
-				new->next = lista;		\
-				lista = new;			\
+				new_->next = lista;		\
+				lista = new_;			\
 			} else {				\
-				prev->next = new;		\
-				new->next = tmp;		\
+				prev->next = new_;		\
+				new_->next = tmp;		\
 			}					\
 		}						\
 	}
@@ -191,13 +191,13 @@ extern "C" {
 #if DYNSTUFF_USE_LIST3
 
 #define __DYNSTUFF_ADD(prefix, typ, __notused)		\
-	void prefix##_add(typ **lista, typ *new) { list_add3((list_t *) lista, (list_t) new); }
+	void prefix##_add(typ **lista, typ *new_) { list_add3((list_t *) lista, (list_t) new_); }
 
 #define __DYNSTUFF_ADD_BEGINNING(prefix, typ, __notused) \
-	void prefix##_add(typ **lista, typ *new) { list_add_beginning3((list_t *) lista, (list_t) new); }
+	void prefix##_add(typ **lista, typ *new_) { list_add_beginning3((list_t *) lista, (list_t) new_); }
 
 #define __DYNSTUFF_ADD_SORTED(prefix, typ, comparision) \
-	void prefix##_add(typ **lista, typ *new) { list_add_sorted3((list_t *) lista, (list_t) new, (void *) comparision); }
+	void prefix##_add(typ **lista, typ *new_) { list_add_sorted3((list_t *) lista, (list_t) new_, (void *) comparision); }
 
 #define __DYNSTUFF_REMOVE_SAFE(prefix, typ, free_func)					\
 	void prefix##_remove(typ **lista, typ *elem) {					\
@@ -229,36 +229,36 @@ extern "C" {
 	/* XXX, checkit */
 
 #define __DYNSTUFF_ADD(prefix, typ, __notused)			\
-	void prefix##_add(typ **lista, typ *new) {		\
+	void prefix##_add(typ **lista, typ *new_) {		\
 		typ *tmp = *lista;				\
 								\
-		new->next = NULL;				\
+		new_->next = NULL;				\
 		if (!(tmp = *lista)) {				\
-			*lista = new;				\
+			*lista = new_;				\
 		} else {					\
 			while (tmp->next)			\
 				tmp = tmp->next;		\
-			tmp->next = new;			\
+			tmp->next = new_;			\
 		}						\
 }
 
 #define __DYNSTUFF_ADD_BEGINNING(prefix, typ, __notused)	\
-	void prefix##_add(typ **lista, typ *new) {		\
-		new->next = *lista;				\
-		*lista	= new;					\
+	void prefix##_add(typ **lista, typ *new_) {		\
+		new_->next = *lista;				\
+		*lista	= new_;					\
 	}
 
 #define __DYNSTUFF_ADD_SORTED(prefix, typ, comparision)		\
-	void prefix##_add(typ **lista, typ *new) {		\
+	void prefix##_add(typ **lista, typ *new_) {		\
 		typ *tmp;					\
 								\
-		new->next = NULL;				\
+		new_->next = NULL;				\
 		if (!(tmp = *lista)) {				\
-			*lista = new;				\
+			*lista = new_;				\
 		} else {					\
 			typ *prev = NULL;			\
 								\
-			while (comparision(new, tmp) > 0) {	\
+			while (comparision(new_, tmp) > 0) {	\
 				prev = tmp;			\
 				tmp = tmp->next;		\
 				if (!tmp)			\
@@ -266,11 +266,11 @@ extern "C" {
 			}					\
 								\
 			if (!prev) {				\
-				new->next = *lista;		\
-				*lista = new;			\
+				new_->next = *lista;		\
+				*lista = new_;			\
 			} else {				\
-				prev->next = new;		\
-				new->next = tmp;		\
+				prev->next = new_;		\
+				new_->next = tmp;		\
 			}					\
 		}						\
 	}

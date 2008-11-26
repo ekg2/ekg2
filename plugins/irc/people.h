@@ -42,7 +42,7 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name);
 channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name,
 		window_t *win);
 
-int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new);
+int irc_nick_change(session_t *s, irc_private_t *j, char *old_nick, char *new_nick);
 int irc_nick_prefix(irc_private_t *j, people_chan_t *ch, int irc_color);
 int irc_color_in_contacts(char *modes, int mode, userlist_t *ul);
 

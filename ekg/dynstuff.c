@@ -44,30 +44,30 @@
  */
 void *list_add_sorted(list_t *list, void *data, int (*comparision)(void *, void *))
 {
-	list_t new, tmp;
+	list_t new_, tmp;
 
 	if (!list) {
 		errno = EFAULT;
 		return NULL;
 	}
 
-	new = xmalloc(sizeof(struct list));
+	new_ = xmalloc(sizeof(struct list));
 
-	new->data = data;
-	new->next = NULL;
-	/*new->prev = NULL;*/
+	new_->data = data;
+	new_->next = NULL;
+	/*new_->prev = NULL;*/
 
 	if (!(tmp = *list)) {
-		*list = new;
+		*list = new_;
 	} else {
 		if (!comparision) {
 			while (tmp->next)
 				tmp = tmp->next;
-			tmp->next = new;
+			tmp->next = new_;
 		} else {
 			list_t prev = NULL;
 			
-			while (comparision(new->data, tmp->data) > 0) {
+			while (comparision(new_->data, tmp->data) > 0) {
 				prev = tmp;
 				tmp = tmp->next;
 				if (!tmp)
@@ -75,16 +75,16 @@ void *list_add_sorted(list_t *list, void *data, int (*comparision)(void *, void 
 			}
 			
 			if (!prev) {
-				new->next = *list;
-				*list = new;
+				new_->next = *list;
+				*list = new_;
 			} else {
-				prev->next = new;
-				new->next = tmp;
+				prev->next = new_;
+				new_->next = tmp;
 			}
 		}
 	}
 
-	return new->data;
+	return new_->data;
 }
 
 /**
@@ -99,20 +99,20 @@ void *list_add_sorted(list_t *list, void *data, int (*comparision)(void *, void 
 
 void *list_add_beginning(list_t *list, void *data) {
 
-	list_t new;
+	list_t new_;
 
 	if (!list) {
 		errno = EFAULT;
 		return NULL;
 	}
 
-	new = xmalloc(sizeof(struct list));
-	new->next = *list;
-	*list	  = new;
+	new_ = xmalloc(sizeof(struct list));
+	new_->next = *list;
+	*list	  = new_;
 
-	new->data = data;
+	new_->data = data;
 
-	return new->data;
+	return new_->data;
 
 }
 
@@ -133,7 +133,7 @@ void *list_add(list_t *list, void *data)
 	return list_add_sorted(list, data, NULL);
 }
 
-void *list_add_sorted3(list_t *list, list_t new, int (*comparision)(void *, void *))
+void *list_add_sorted3(list_t *list, list_t new_, int (*comparision)(void *, void *))
 {
 	list_t tmp;
 
@@ -142,18 +142,18 @@ void *list_add_sorted3(list_t *list, list_t new, int (*comparision)(void *, void
 		return NULL;
 	}
 
-	new->next = NULL;
+	new_->next = NULL;
 	if (!(tmp = *list)) {
-		*list = new;
+		*list = new_;
 	} else {
 		if (!comparision) {
 			while (tmp->next)
 				tmp = tmp->next;
-			tmp->next = new;
+			tmp->next = new_;
 		} else {
 			list_t prev = NULL;
 			
-			while (comparision(new, tmp) > 0) {
+			while (comparision(new_, tmp) > 0) {
 				prev = tmp;
 				tmp = tmp->next;
 				if (!tmp)
@@ -161,35 +161,35 @@ void *list_add_sorted3(list_t *list, list_t new, int (*comparision)(void *, void
 			}
 			
 			if (!prev) {
-				new->next = *list;
-				*list = new;
+				new_->next = *list;
+				*list = new_;
 			} else {
-				prev->next = new;
-				new->next = tmp;
+				prev->next = new_;
+				new_->next = tmp;
 			}
 		}
 	}
 
-	return new;
+	return new_;
 }
 
-void *list_add_beginning3(list_t *list, list_t new)
+void *list_add_beginning3(list_t *list, list_t new_)
 {
 	if (!list) {
 		errno = EFAULT;
 		return NULL;
 	}
 
-	new->next = *list;
-	*list	  = new;
+	new_->next = *list;
+	*list	  = new_;
 
-	return new;
+	return new_;
 
 }
 
-void *list_add3(list_t *list, list_t new)
+void *list_add3(list_t *list, list_t new_)
 {
-	return list_add_sorted3(list, new, NULL);
+	return list_add_sorted3(list, new_, NULL);
 }
 
 /**

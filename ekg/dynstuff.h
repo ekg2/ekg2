@@ -100,9 +100,9 @@ void *list_add(list_t *list, void *data);
 void *list_add_beginning(list_t *list, void *data);
 void *list_add_sorted(list_t *list, void *data, int (*comparision)(void *, void *));
 
-void *list_add3(list_t *list, list_t new);
-void *list_add_beginning3(list_t *list, list_t new);
-void *list_add_sorted3(list_t *list, list_t new, int (*comparision)(void *, void *));
+void *list_add3(list_t *list, list_t new_);
+void *list_add_beginning3(list_t *list, list_t new_);
+void *list_add_sorted3(list_t *list, list_t new_, int (*comparision)(void *, void *));
 
 
 int list_count(list_t list);
