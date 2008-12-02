@@ -8,6 +8,7 @@ gpg		darkjames	szyfrowanie wiadomo¶ci GPG	gpgme
 gsm		wojtekka	kodek GSM do rozmów g³osowych 	libgsm
 gtk		darkjames	interfejs graficzny na GTK+	gtk+2
 httprc_ajax	*		interfejs WWW (z AJAX)		-
+icq		dj/wiechu	obs³uga protoko³u icq		-
 ioctld		drg		obs³uga diod klawiatury		-
 irc		gim		obs³uga protoko³u irc		-
 jabber		wojtekka	obs³uga protoko³u XMPP/Jabber	expat
