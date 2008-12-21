@@ -16,6 +16,7 @@ void pixmaps_init(void);
 extern GdkPixbuf *pix_ekg2;
 extern GdkPixbuf *pixs[];
 extern GdkPixbuf *gg_pixs[];
+extern GdkPixbuf *icq_pixs[];
 
 #define PIXBUF_FFC 0
 #define PIXBUF_AVAIL 1
@@ -24,6 +25,8 @@ extern GdkPixbuf *gg_pixs[];
 #define PIXBUF_XA 4
 #define PIXBUF_INVISIBLE 5
 #define PIXBUF_NOTAVAIL 6
+#define PIXBUF_ERROR 7
+#define PIXBUF_UNKNOWN 8
 
-#define STATUS_PIXBUFS 7 /* FFC, AVAIL, AWAY, DND, XA, INVISIBLE, NOTAVAIL */
+#define STATUS_PIXBUFS 9 /* FFC, AVAIL, AWAY, DND, XA, INVISIBLE, NOTAVAIL, ERROR, UNKNOWN */
 

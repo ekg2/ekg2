@@ -75,7 +75,7 @@ int gtk_history_index;
 #define GTK_BINDING_FUNCTION(x) int x(GtkWidget *wid, GdkEventKey *evt, char *d1, window_t *sess)
 
 /* These are cp'ed from history.c --AGL */
-#define STATE_SHIFT     GDK_SHIFT_MASK
+#define STATE_SHIFT	GDK_SHIFT_MASK
 #define	STATE_ALT	GDK_MOD1_MASK
 #define STATE_CTRL	GDK_CONTROL_MASK
 
@@ -195,15 +195,13 @@ gboolean key_handle_key_press(GtkWidget *wid, GdkEventKey * evt, window_t *sess)
 	int keyval = evt->keyval;
 	int mod, n;
 	int was_complete = 0;
-	list_t l;
+	window_t *w;
 
 	{
 		sess = NULL;
 
 		/* where did this event come from? */
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (gtk_private_ui(w)->input_box == wid) {
 				sess = w;
 				if (gtk_private_ui(w)->is_tab)
@@ -226,7 +224,7 @@ gboolean key_handle_key_press(GtkWidget *wid, GdkEventKey * evt, window_t *sess)
 	n = -1;
 
 /* yeah, i know it's awful. */
-	if (keyval == GDK_Page_Up)		 	n = key_action_scroll_page(wid, evt, "up", sess);
+	if (keyval == GDK_Page_Up)			n = key_action_scroll_page(wid, evt, "up", sess);
 	else if (keyval == GDK_Page_Down)		n = key_action_scroll_page(wid, evt, "down", sess);
 
 	else if (keyval == GDK_Up)			n = key_action_history_up(wid, evt, NULL, sess);
@@ -337,9 +335,5 @@ gboolean key_handle_key_press(GtkWidget *wid, GdkEventKey * evt, window_t *sess)
 }
 
 void gtk_binding_init() {
-
-}
-
-static void gtk_binding_destroy() {
 
 }

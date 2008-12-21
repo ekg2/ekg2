@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2001-2006 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Leszek Krupiñski <leafnode@wafel.com>
- *                          Adam Mikuta <adamm@ekg2.org>
+ *			    Leszek Krupiñski <leafnode@wafel.com>
+ *			    Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -38,28 +38,51 @@
 #include "userlist.h"
 
 #include "debug.h"
+#include "dynstuff_inline.h"
 #include "queries.h"
-
-#ifndef PATH_MAX
-# ifdef MAX_PATH
-#  define PATH_MAX MAX_PATH
-# else
-#  define PATH_MAX _POSIX_PATH_MAX
-# endif
-#endif
 
 static char *prompt_cache = NULL, *prompt2_cache = NULL, *error_cache = NULL;
 static const char *timestamp_cache = NULL;
 
 static int no_prompt_cache = 0;
-static int no_prompt_cache_hash = 2261954;	/* hash value of "no_prompt_cache" 2261954 it's default one. i hope good one.. for 32 bit x86 sure. */
+static int no_prompt_cache_hash = 0x139dcbd6;	/* hash value of "no_prompt_cache" */
 
 struct format {
+	struct format *next;
 	char *name;
 	int name_hash;
 	char *value;
 };
-static list_t formats = NULL;
+
+static struct format* formats[0x100];
+
+static LIST_FREE_ITEM(list_format_free, struct format *) {
+	xfree(data->value);
+	xfree(data->name);
+}
+
+DYNSTUFF_LIST_DECLARE(formats, struct format, list_format_free,
+	static __DYNSTUFF_ADD_BEGINNING,	/* formats_add() */
+	static __DYNSTUFF_REMOVE_ITER,		/* formats_removei() */
+	static __DYNSTUFF_DESTROY)		/* formats_destroy() */
+
+/**
+ * gim_hash()
+ *
+ */
+
+static int gim_hash(const char *name) {
+#define ROL(x) (((x>>25)&0x7f)|((x<<7)&0xffffff80))
+	int hash = 0;
+
+	for (; *name; name++) {
+		hash ^= *name;
+		hash = ROL(hash);
+	}
+
+	return hash;
+#undef ROL
+}
 
 /*
  * format_find()
@@ -71,20 +94,20 @@ static list_t formats = NULL;
  */
 const char *format_find(const char *name)
 {
+	struct format *fl;
 	const char *tmp;
 	int hash;
-	list_t l;
 
 	if (!name)
 		return "";
 
 	if (config_speech_app && !xstrchr(name, ',')) {
-		char *name2 	= saprintf("%s,speech", name);
+		char *name2	= saprintf("%s,speech", name);
 		const char *tmp = format_find(name2);
 
 		xfree(name2);
 
-		if (tmp[0] != '\0')
+		if (format_ok(tmp))
 			return tmp;
 	}
 
@@ -94,14 +117,14 @@ const char *format_find(const char *name)
 
 		xfree(name2);
 
-		if (tmp[0] != '\0')
+		if (format_ok(tmp))
 			return tmp;
 	}
 
-	hash = ekg_hash(name);
+	hash = gim_hash(name);
 
-	for (l = formats; l; l = l->next) {
-		struct format *f = l->data;
+	for (fl = formats[hash & 0xff]; fl; fl = fl->next) {
+		struct format *f = fl;
 
 		if (hash == f->name_hash && !xstrcmp(f->name, name))
 			return f->value;
@@ -163,18 +186,22 @@ static const char *format_ansi(char ch) {
 		return ("\033[1;37m");
 	if (ch == 'x')
 		return ("\033[47m");
-	if (ch == 'n')                  /* clear all attributes */
+	if (ch == 'n')			/* clear all attributes */
 		return ("\033[0m");
-	if (ch == 'T')                  /* bold */
+	if (ch == 'T')			/* bold */
 		return ("\033[1m");
-	if (ch == 'N')                  /* clears all attr exc for bkgd */
+	if (ch == 'N')			/* clears all attr exc for bkgd */
 		return ("\033[2m");
-	if (ch == 'U')                  /* underline */
+	if (ch == 'U')			/* underline */
 		return ("\033[4m");
-	if (ch == 'i')                  /* blink */
+	if (ch == 'i')			/* blink */
 		return ("\033[5m");
-	if (ch == 'V')                  /* reverse */
+	if (ch == 'V')			/* reverse */
 		return ("\033[7m");
+	if (ch == 'A')
+		return ("\033(0");
+	if (ch == 'a')
+		return ("\033(B");
 
 	return ("");
 }
@@ -194,7 +221,7 @@ static char *va_format_string(const char *format, va_list ap) {
 	char *args[9] = { NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL };
 	int i, argc = 0;
 
-        /* liczymy ilo¶æ argumentów */
+	/* liczymy ilo¶æ argumentów */
 	for (p = format; *p; p++) {
 		if (*p == '\\' && p[1] == '%') {
 			p++;
@@ -251,7 +278,7 @@ static char *va_format_string(const char *format, va_list ap) {
 			timestamp_cache	= format_find("timestamp");
 			prompt_cache	= format_string(format_find("prompt"));
 			prompt2_cache	= format_string(format_find("prompt2"));
-			error_cache 	= format_string(format_find("error"));
+			error_cache	= format_string(format_find("error"));
 		} else {
 			/* tylko je¶li nie s± keszowanie */
 			if (!timestamp_cache)	timestamp_cache = format_find("timestamp");
@@ -275,24 +302,39 @@ static char *va_format_string(const char *format, va_list ap) {
 			int fill_soft	= 1;
 			int fill_length = 0;
 			char fill_char	= ' ';
+			int center	= 0;
 
 			p++;
 			if (!*p)
 				break;
+			/* This is conditional formatee, it looks like:
+			 * %{NcdefSTUV}X
+			 * N - is a parameter number, first letter of this parameter will be checked against 'cdef' letters
+			 *   if N[0] == 'c', %S formatee is used
+			 *   if N[0] == 'd', %T formatee is used
+			 *   if N[0] == 'e', %U formatee is used
+			 *   if N[0] == 'f', %V formatee is used
+			 */
 			if (*p == '{') {		/* how does it works ? i czemu tego nie ma w docs/themes.txt ? */
+							/* bo to pisa³ GiM, a on jak wiadomo super komentuje kod :> */
 				int hm		= 0;
 				char *str;
 				char *cnt;
 
 				p++;
 
-				if (*p == '}') 				{  p++; p++; continue; }	/* why p++; p++; ? who wrote it? */
-				else if (!(*p >= '0' && *p <= '9'))	{	p++; continue; }	/* not number, skip it */
-				else 					str = args[*p - '1'];		/* if number, get str from args table */
+				if (*p == '}')				{  p++; p++; continue; }	/* dj: why p++; p++; ? who wrote it? */
+													/* G->dj: It's on purpose, format looks like:
+													 * ${...}X
+													 */
+				else if (!(*p >= '0' && *p <= '9'))	{	p++; continue; }	/* not number, skip it this formatee */
+				else					str = args[*p - '1'];		/* if number, get str from args table */
 
 				p++;
+				/* there must be even, point cnt to the half of string
+				 * [according to example above p points to "cdef.." cnt points to "STUV", hm=4]
+				 */
 				cnt = (char *)p;
-
 				while (*cnt && *cnt!='}') { cnt++; hm++; }
 				hm>>=1; cnt=(char *)(p+hm);
 				/* debug(">>> [HM:%d]", hm); */
@@ -301,12 +343,21 @@ static char *va_format_string(const char *format, va_list ap) {
 					p++; cnt++;
 				}
 				/* debug(" [%c%c][%d] [%s] ", *p, *cnt, hm, p); */
+				/* hm == 0, means N-th parameter doesn't fit to any of letter specified,
+				 * so we skip this formatee, but first we must fix 'p' to point to proper place
+				 */
 				if (!hm) { 
-					p = *cnt ? *(cnt+1) ? (cnt+2) : (cnt+1) : cnt;		/* (*p points to \0) ? or p = cnt+2 ? */
+					p = *cnt ? *(cnt+1) ? (cnt+2) : (cnt+1) : cnt;		/* + point 'p' = cnt+2 if it exist
+												 *   ((cnt+2) is after end of formatee
+												 *    (there's X after enclosing '}')
+												 * + or point to '\0' */
 					continue; 
 				}
+				/* N-th param matched a letter, so point 'p' to that free X at the end,
+				 * and correct it with proper formatee letter, and go-on with theme code :)
+				 * Now you should understand why there's that 'X' at the end :>
+				 */
 				p=(cnt+hm+1);
-				/* debug(" [%s]\n"); */
 				*((char *)p)=*cnt;
 			}
 			if (*p == '%')
@@ -320,7 +371,7 @@ static char *va_format_string(const char *format, va_list ap) {
 			else if (*p == '|')
 				string_append(buf, "\033[00m"); /* g³upie, wiem */
 			else if (*p == ']')
-				string_append(buf, "\033[000m");        /* jeszcze g³upsze */
+				string_append(buf, "\033[000m");	/* jeszcze g³upsze */
 			else if (*p == '#')
 				string_append(buf, timestamp(timestamp_cache));
 			else if (config_display_color) {
@@ -334,7 +385,7 @@ static char *va_format_string(const char *format, va_list ap) {
 				if (str) {
 					char *q = str + xstrlen(str) - 1;
 
-					while (q >= str && !isalpha_pl_PL(*q))
+					while (q >= str && (isspace(*q) || ispunct(*q)))
 						q--;
 
 					if (*q == 'a')
@@ -353,6 +404,10 @@ static char *va_format_string(const char *format, va_list ap) {
 				fill_soft = (*p == '(');
 				p++;
 
+				if (*p == '^') {
+					center = 1;
+					p++;
+				}
 				/* fill_char = ' '; */		/* zadeklarowane wczesniej */
 
 				if (*p == '.') {
@@ -394,8 +449,14 @@ static char *va_format_string(const char *format, va_list ap) {
 						fill_length -= len;
 				}
 
+				if (center) {
+					fill_before = fill_after = 1;
+					center = fill_length & 1;
+					fill_length /= 2;
+				}
+
 				if (fill_before)
-					for (i = 0; i < fill_length; i++)
+					for (i = 0; i < fill_length+center; i++)
 						string_append_c(buf, fill_char);
 
 				string_append_n(buf, str, len);
@@ -403,19 +464,19 @@ static char *va_format_string(const char *format, va_list ap) {
 				if (fill_after)
 					for (i = 0; i < fill_length; i++)
 						string_append_c(buf, fill_char);
-                        }
-                } else
-                        string_append_c(buf, *p);
-                p++;
-        }
+			}
+		} else
+			string_append_c(buf, *p);
+		p++;
+	}
 
-        if (!dont_resolve && no_prompt_cache)
+	if (!dont_resolve && no_prompt_cache)
 		theme_cache_reset();
 
-        if (!config_display_pl_chars)
-                iso_to_ascii((unsigned char *) buf->str);
+	if (!config_display_pl_chars)
+		iso_to_ascii((unsigned char *) buf->str);
 
-        return string_free(buf, 0);
+	return string_free(buf, 0);
 }
 
 /**
@@ -425,18 +486,18 @@ static char *va_format_string(const char *format, va_list ap) {
  *
  * @param str - string
  *
- * @sa format_string() 	- Function to format strings.
+ * @sa format_string()	- Function to format strings.
  * @sa fstring_free()	- Function to free fstring_t.
  *
  * @return Allocated fstring_t.
  */
 
 fstring_t *fstring_new(const char *str) {
-#define NPAR 16 		/* ECMA-48 CSI have got max 16 params (NPAR) defined in <linux/console_struct.h> */
-        fstring_t *res;
+#define NPAR 16			/* ECMA-48 CSI have got max 16 params (NPAR) defined in <linux/console_struct.h> */
+	fstring_t *res;
 	char *tmpstr;
-        short attr = FSTR_NORMAL;
-        int i, j, len = 0, isbold = 0;
+	short attr = FSTR_NORMAL;
+	int i, j, len = 0, isbold = 0;
 
 	for (i = 0; str[i]; i++) {
 		if (str[i] == 27) {
@@ -464,25 +525,34 @@ fstring_t *fstring_new(const char *str) {
 	}
 
 	res			= xmalloc(sizeof(fstring_t));
-	res->str = tmpstr	= xmalloc((len + 1) * sizeof(char));
-        res->attr		= xmalloc((len + 1) * sizeof(short));
+	res->str.b = tmpstr	= xmalloc((len + 1) * sizeof(char));
+	res->attr		= xmalloc((len + 1) * sizeof(short));
 
-        res->margin_left = -1;
+	res->margin_left = -1;
 /*
-        res->prompt_len = 0;
-        res->prompt_empty = 0;
+	res->prompt_len = 0;
+	res->prompt_empty = 0;
  */
 
-        for (i = 0, j = 0; str[i]; i++) {
-                if (str[i] == 27) {		/* ESC- */
+	for (i = 0, j = 0; str[i]; i++) {
+		if ((str[i] == 27) && (str[i+1] == '(')) {
+			i += 2;
+			if (str[i] == '0') {
+				attr |= FSTR_ALTCHARSET;
+				continue;
+			} else if (str[i] == 'B') {
+				attr &= ~FSTR_ALTCHARSET;
+				continue;
+			}
+		} else if (str[i] == 27) {		/* ESC- */
 			unsigned short par[NPAR]	= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
 			unsigned short parlen[NPAR]	= { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}; 
 
 			int npar	= 0; 
 
-                        if (str[i + 1] != ('['))
-                                continue;
-                        i += 2;
+			if (str[i + 1] != ('['))
+				continue;
+			i += 2;
 
 			/* parse ECMA-48 CSI here & build data */
 			while (1) {	/* idea based from kernel sources */
@@ -516,7 +586,7 @@ fstring_t *fstring_new(const char *str) {
 							if (parlen[k] == 3)
 								res->prompt_empty = 1;
 							break;
-						case 1: 			/* BOLD */
+						case 1:				/* BOLD */
 							if (k == npar && !isbold)		/* if (*p == ('m') && !isbold) */
 								attr ^= FSTR_BOLD;
 							else {					/* if (*p == (';')) */
@@ -545,42 +615,64 @@ fstring_t *fstring_new(const char *str) {
 				}
 			}
 //			else debug("Invalid/unsupported by ekg2 ECMA-48 CSI seq? (npar: %d)\n", npar);	/* sequence not ended with m */
-                        continue;
-                }
+			continue;
+		}
 
-                if (str[i] == 13)
-                        continue;
+		if (str[i] == 13)
+			continue;
 
-                if (str[i] == ('/') && str[i + 1] == ('|')) {
-                        if (i == 0 || str[i - 1] != ('/')) {
-                                res->margin_left = j;
-                                i++;
-                                continue;
-                        }
-                        continue;
-                }
+		if (str[i] == ('/') && str[i + 1] == ('|')) {
+			if (i == 0 || str[i - 1] != ('/')) {
+				res->margin_left = j;
+				i++;
+				continue;
+			}
+			continue;
+		}
 
-                if (str[i] == 9) {
-                        int k = 0, l = 8 - (j % 8);
+		if (str[i] == 9) {
+			int k = 0, l = 8 - (j % 8);
 
-                        for (k = 0; k < l; j++, k++) {
-                                tmpstr[j] = (' ');
-                                res->attr[j] = attr;
-                        }
+			for (k = 0; k < l; j++, k++) {
+				tmpstr[j] = (' ');
+				res->attr[j] = attr;
+			}
 
-                        continue;
-                }
+			continue;
+		}
 
-                tmpstr[j] = str[i];
-                res->attr[j] = attr;
-                j++;
-        }
+		tmpstr[j] = str[i];
+		res->attr[j] = attr;
+		j++;
+	}
 /* 
-        tmpstr[j] = (char) 0;
-        res->attr[j] = 0;
+	tmpstr[j] = (char) 0;
+	res->attr[j] = 0;
  */
 
-        return res;
+	return res;
+}
+
+/**
+ * fstring_new_format()
+ *
+ *	char *tmp = format_string("format", .....);
+ *	fstr = fstring_new(tmp);
+ *	xfree(tmp);
+ */
+
+fstring_t *fstring_new_format(const char *format, ...) {
+	fstring_t *fstr;
+	va_list ap;
+	char *tmp;
+
+	va_start(ap, format);
+	tmp = va_format_string(format, ap);
+
+	fstr = fstring_new(tmp);
+
+	xfree(tmp);
+	return fstr;
 }
 
 /**
@@ -594,13 +686,13 @@ fstring_t *fstring_new(const char *str) {
  */
 void fstring_free(fstring_t *str)
 {
-        if (!str)
-                return;
+	if (!str)
+		return;
 
-        xfree(str->str);
-        xfree(str->attr);
-        xfree(str->private);
-        xfree(str);
+	xfree(str->str.b);
+	xfree(str->attr);
+	xfree(str->private);
+	xfree(str);
 }
 
 /*
@@ -612,14 +704,14 @@ void fstring_free(fstring_t *str)
  */
 char *format_string(const char *format, ...)
 {
-        va_list ap;
-        char *tmp;
+	va_list ap;
+	char *tmp;
 
-        va_start(ap, format);
-        tmp = va_format_string(format, ap);
-        va_end(ap);
+	va_start(ap, format);
+	tmp = va_format_string(format, ap);
+	va_end(ap);
 
-        return tmp;
+	return tmp;
 }
 
 /**
@@ -629,12 +721,12 @@ char *format_string(const char *format, ...)
  * Common stuff for: print_window() and print_window_w()<br>
  * Change w->act if needed, format theme, make fstring() and send everything to window_print()
  *
- * @note 	We only check if @a w == NULL, if you send here wrong window_t ptr, everything can happen. don't do it.
- * 		Yeah, we can do here window_find_ptr() but it'll slow down code a lot.
+ * @note	We only check if @a w == NULL, if you send here wrong window_t ptr, everything can happen. don't do it.
+ *		Yeah, we can do here window_find_ptr() but it'll slow down code a lot.
  */
 
-static void print_window_c(window_t *w, int separate, const char *theme, va_list ap) {
-        char *stmp;
+static void print_window_c(window_t *w, int activity, const char *theme, va_list ap) {
+	char *stmp;
 
 	/* w here shouldn't here be NULL. In case. */
 	if (!w) {
@@ -644,14 +736,11 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 
 	/* Change w->act */
 	if (w != window_current && !w->floating) {
-		int oldact = w->act;
-		if (separate)
-			w->act = 2 | (w->act & 4);
-		else if ((w->act & 3) != 2)
-			w->act = 1 | (w->act & 4);
-
-		if (oldact != w->act)					/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
-			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
+		if (activity > w->act) {
+			w->act = activity;
+				/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
+			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED, &w);
+		}
 	}
 
 	stmp = va_format_string(format_find(theme), ap);
@@ -666,7 +755,7 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 			if ((p = xstrstr(line, "\033[00m"))) {
 				xfree(prompt);
 				if (p != line)
-					prompt = xstrndup(line, (int) (p - line) + 5);
+					prompt = xstrndup(line, (int) (p - line));
 				else
 					prompt = NULL;
 				line = p;
@@ -685,118 +774,164 @@ static void print_window_c(window_t *w, int separate, const char *theme, va_list
 }
 
 /**
- * print_window()
+ * print_window_find()
+ *
+ * Find given window [based on @a target and @a session]
+ * if not found, and separate set, create new one.
  *
  * Print given text in given window [@a target+ @a session]
  *
- * @todo 	We have no policy for displaying messages by e.g. jabber resources.<br>
- * 		For now we do: [only jabber]<br>
- * 			- If @a target has '/' inside. We put there NUL char.<br>
- * 			- After it we search for window with stripped '/'<br>
- * 			- If founded, than done.<br>
- * 		If not, we look for user in userlist.. And if not found, than we'll create new window with stripped '/' [only jabber]
- * 		
+ * @todo	We have no policy for displaying messages by e.g. jabber resources.<br>
+ *		For now we do: [only jabber]<br>
+ *			- If @a target has '/' inside. We put there NUL char.<br>
+ *			- After it we search for window with stripped '/'<br>
+ *			- If founded, than done.<br>
+ *		If not, we look for user in userlist.. And if not found, than we'll create new window with stripped '/' [only jabber]
+ *		
  *
  * @param target	- target to look for.
  * @param session	- session to look for.
- * @param separate	- if essence of text if important...
- * @param theme		- Name of format to format_string() with @a ... Text will be be built.
- * @param ...
+ * @param separate	- if essence of text is important to create new window
  */
 
-void print_window(const char *target, session_t *session, int separate, const char *theme, ...) {
-        va_list ap;
+static window_t *print_window_find(const char *target, session_t *session, int separate) {
+	char *newtarget = NULL;
+	const char *tmp;
+	userlist_t *u;
 
-	window_t *w = NULL;
+	window_t *w;
 
 	/* first of all, let's check if config_display_crap is unset and target is current window */
 	if (!config_display_crap) {	/* it was with && (config_make_window & 3) */
 		if (!target || !xstrcmp(target, "__current"))
-			w = window_status;
+			return window_status;
 	}
-
-	while (w == NULL) {
-		const char *tmp;
-		char *newtarget = NULL;
-
-		userlist_t *u;
 
 	/* 1) let's check if we have such window as target... */
 
-		/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
-		if (!xstrncmp(target, "jid:", 4) && (tmp = xstrchr(target, '/'))) {
-			newtarget = xstrndup(target, tmp - target);
-			w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
-			/* even if w == NULL here, we use newtarget to create window without resource */
-			/* Yeah, we search for target on userlist, but u can be NULL also... */
-			/* XXX, optimize and think about it */
+	/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
+	if ((!xstrncmp(target, "xmpp:", 5)) && (tmp = xstrchr(target, '/'))) {
+		newtarget = xstrndup(target, tmp - target);
+		w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
+		/* even if w == NULL here, we use newtarget to create window without resource */
+		/* Yeah, we search for target on userlist, but u can be NULL also... */
+		/* XXX, optimize and think about it */
+	} else
+		w = window_find_s(session, target);
 
-		} else	w = window_find_s(session, target);
-
-		if (w) {
-			xfree(newtarget);
-			break;
-		}
-
-	/* 2) if message is not important (not @a seperate) or we don't want create new windows at all [config_make_window & 3 == 0] 
-	 *    than get __status window  */
-
-		if (!separate || (config_make_window & 3) == 0) {
-			w = window_status;
-			xfree(newtarget);
-			break;
-		}
-
-		/* if we have no window, let's find for it in userlist */
-		u = userlist_find(session, target);
-
-		/* if found, and we have nickname, than great! */
-		if (u && u->nickname)
-			target = u->nickname;			/* use nickname instead of target */
-		else if (u && u->uid)
-			target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
-		else if (newtarget)
-			target = newtarget;			/* use target with stripped '/' */
-								/* XXX, window resources */
-
-	/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
-		if ((config_make_window & 3) == 1) {
-			list_t l;
-		
-			for (l = windows; l; l = l->next) {
-				window_t *wa = l->data;
-
-				if (!wa->target && wa->id > 1) {
-					w = wa;
-
-					xfree(w->target);
-					w->target = xstrdup(target);
-					w->session = session;
-
-					query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* XXX */
-					break;
-				}
-				if (w)
-					break;
-			}
-		}
-
-	/* 4) if not found unused window, or ((config_make_window & 3) == 2) [always] than just create it */
-		if (!w)
-			w = window_new(target, session, 0);
-
-		/* [FOR 3) and 4)] If we create window or we change target. notify user */
-
-		print("window_id_query_started", itoa(w->id), target, session_name(session));
-		print_window_w(w, 1, "query_started", target, session_name(session));
-		print_window_w(w, 1, "query_started_window", target);
-
+	if (w) {
 		xfree(newtarget);
-		break;
+		return w;
 	}
 
+	/* 2) if message is not important (not @a seperate) or we don't want create new windows at all [config_make_window & 3 == 0] 
+	 *    than get __status window	*/
+
+	if (!separate || (config_make_window & 3) == 0) {
+		xfree(newtarget);
+		return window_status;
+	}
+
+	/* if we have no window, let's find for it in userlist */
+	u = userlist_find(session, target);
+
+	/* if found, and we have nickname, than great! */
+	if (u && u->nickname)
+		target = u->nickname;			/* use nickname instead of target */
+	else if (u && u->uid && ( /* don't use u->uid, if it has resource attached */
+			xstrncmp(u->uid, "xmpp:", 5) || !xstrchr(u->uid, '/')))
+		target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
+	else if (newtarget)
+		target = newtarget;			/* use target with stripped '/' */
+							/* XXX, window resources */
+
+	/* 3) if we don't have window here, and if ((config_make_window & 3) == 1) [unused], than we should find empty window. */
+	if ((config_make_window & 3) == 1) {
+		window_t *wa;
+
+		for (wa = windows; wa; wa = wa->next) {
+			if (!wa->target && wa->id > 1) {
+				w = wa;
+
+				w->target = xstrdup(target);
+				w->session = session;
+
+				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* XXX */
+				break;
+			}
+			if (w)		/* wtf? */
+				break;
+		}
+	}
+
+	/* 4) if not found unused window, or ((config_make_window & 3) == 2) [always] than just create it */
+	if (!w)
+		w = window_new(target, session, 0);
+
+	/* [FOR 3) and 4)] If we create window or we change target. notify user */
+
+	print("window_id_query_started", itoa(w->id), target, session_name(session));
+	print_window_w(w, EKG_WINACT_JUNK, "query_started", target, session_name(session));
+	print_window_w(w, EKG_WINACT_JUNK, "query_started_window", target);
+
+	xfree(newtarget);
+
+	return w;
+}
+
+/**
+ * print_window()
+ *
+ * Print given text in given window [@a target+ @a session]
+ *
+ * @todo	We have no policy for displaying messages by e.g. jabber resources.<br>
+ *		For now we do: [only jabber]<br>
+ *			- If @a target has '/' inside. We put there NUL char.<br>
+ *			- After it we search for window with stripped '/'<br>
+ *			- If founded, than done.<br>
+ *		If not, we look for user in userlist.. And if not found, than we'll create new window with stripped '/' [only jabber]
+ *		
+ *
+ * @param target	- target to look for.
+ * @param session	- session to look for.
+ * @param activity	- how important is text?
+ * @param separate	- if essence of text is important to create new window
+ * @param theme		- Name of format to format_string() with @a ... Text will be be built.
+ * @param ...
+ */
+
+void print_window(const char *target, session_t *session, int activity, int separate, const char *theme, ...) {
+	window_t *w;
+	va_list ap;
+
+	w = print_window_find(target, session, separate);
+
 	va_start(ap, theme);
-	print_window_c(w, separate, theme, ap);
+	print_window_c(w, activity, theme, ap);
+	va_end(ap);
+}
+
+void print_info(const char *target, session_t *session, const char *theme, ...) {
+	window_t *w;
+	va_list ap;
+
+	/* info configuration goes here... */
+	w = print_window_find(target, session, 0);
+
+	va_start(ap, theme);
+	print_window_c(w, EKG_WINACT_JUNK, theme, ap);
+	va_end(ap);
+}
+
+void print_warning(const char *target, session_t *session, const char *theme, ...) {
+	window_t *w;
+	va_list ap;
+
+	/* warning configuration goes here... */
+	w = print_window_find(target, session, 0);
+
+	va_start(ap, theme);
+	print_window_c(w, EKG_WINACT_JUNK, theme, ap);
 	va_end(ap);
 }
 
@@ -805,17 +940,17 @@ void print_window(const char *target, session_t *session, int separate, const ch
  *
  * Like print_window() but it takes window_t struct instead of target+session.
  *
- * @note 	The same in print_window_c() we don't check if @a w is valid window ptr.
- * 		Just be carefull. If you are not sure call:<br>
- * 		<code>print_window_c(window_find_ptr(w), separate, theme, ...)</code>
- * 		And eventually it will be displayed in (__status / or __current) window instead of good one.. But ekg2 won't crash.
+ * @note	The same as in print_window_c(): we don't check if @a w is valid window ptr.
+ *		Just be careful. If you are not sure call:<br>
+ *		<code>print_window_c(window_find_ptr(w), separate, theme, ...)</code>
+ *		And in worst case text will be displayed in (__status / or __current) window instead of a usual one.. But ekg2 won't crash.
  * 
- * 		@param	w - window to display,<br>
- * 			if NULL than __status or __current will be used. it depends on: config_default_status_window and config_display_crap variables.
+ *		@param	w - window to display,<br>
+ *			if NULL than __status or __current will be used. it depends on: config_default_status_window and config_display_crap variables.
  */
 
-void print_window_w(window_t *w, int separate, const char *theme, ...) {
-        va_list ap;
+void print_window_w(window_t *w, int activity, const char *theme, ...) {
+	va_list ap;
 
 	if (!w) {	/* if no window passed, then get window based of */
 		if (config_default_status_window || !config_display_crap)
@@ -824,7 +959,7 @@ void print_window_w(window_t *w, int separate, const char *theme, ...) {
 	}
 
 	va_start(ap, theme);
-	print_window_c(w, separate, theme, ap);
+	print_window_c(w, activity, theme, ap);
 	va_end(ap);
 }
 
@@ -834,7 +969,7 @@ void print_window_w(window_t *w, int separate, const char *theme, ...) {
  *
  * Remove cached: @a prompt_cache, @a prompt2_cache, @a error_cache and @a timestamp_cache<br>
  * These values are used by va_format_string() to don't call format_find() on:<br>
- * 	["prompt" "%>", "prompt2" "%)", "errror" "%!", "timestamp" "%#"]
+ *	["prompt" "%>", "prompt2" "%)", "errror" "%!", "timestamp" "%#"]
  *
  */
 
@@ -861,22 +996,22 @@ void theme_cache_reset() {
  */
 
 void format_add(const char *name, const char *value, int replace) {
+	struct format *fl;
 	struct format *f;
-	list_t l;
 	int hash;
 
 	if (!name || !value)
 		return;
 
-	hash = ekg_hash(name);
+	hash = gim_hash(name);
 
 	if (hash == no_prompt_cache_hash && !xstrcmp(name, "no_prompt_cache")) {
 		no_prompt_cache = 1;
 		return;
 	}
 
-	for (l = formats; l; l = l->next) {
-		struct format *f = l->data;
+	for (fl = formats[hash & 0xff]; fl; fl = fl->next) {
+		struct format *f = fl;
 
 		if (hash == f->name_hash && !xstrcmp(name, f->name)) {
 			if (replace) {
@@ -892,7 +1027,7 @@ void format_add(const char *name, const char *value, int replace) {
 	f->name_hash	= hash;
 	f->value	= xstrdup(value);
 
-	list_add_beginning(&formats, f, 0);
+	formats_add(&(formats[hash & 0xff]), f);
 	return;
 }
 
@@ -906,26 +1041,23 @@ void format_add(const char *name, const char *value, int replace) {
  * @param name
  *
  * @return	 0 if format was founded and removed from list<br>
- * 		-1 else
+ *		-1 else
  */
 
 static int format_remove(const char *name) {
-	list_t l;
+	struct format *fl;
 	int hash;
 
 	if (!name)
 		return -1;
 
-	hash = ekg_hash(name);
+	hash = gim_hash(name);
 
-	for (l = formats; l; l = l->next) {
-		struct format *f = l->data;
+	for (fl = formats[hash & 0xff]; fl; fl = fl->next) {
+		struct format *f = fl;
 
 		if (hash == f->name_hash && !xstrcmp(f->name, name)) {
-			xfree(f->value);
-			xfree(f->name);
-			list_remove(&formats, f, 1);
-
+			(void) formats_removei(&(formats[hash & 0xff]), f);
 			return 0;
 		}
 	}
@@ -944,32 +1076,32 @@ static int format_remove(const char *name) {
  */
 static FILE *theme_open(const char *prefix, const char *filename)
 {
-        char buf[PATH_MAX];
-        int save_errno;
-        FILE *f;
+	char buf[PATH_MAX];
+	int save_errno;
+	FILE *f;
 
-        if (prefix)
-                snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
-        else
-                snprintf(buf, sizeof(buf), "%s", filename);
+	if (prefix)
+		snprintf(buf, sizeof(buf), "%s/%s", prefix, filename);
+	else
+		snprintf(buf, sizeof(buf), "%s", filename);
 
-        if ((f = fopen(buf, "r")))
-                return f;
+	if ((f = fopen(buf, "r")))
+		return f;
 
-        if (prefix)
-                snprintf(buf, sizeof(buf), "%s/%s.theme", prefix, filename);
-        else
-                snprintf(buf, sizeof(buf), "%s.theme", filename);
+	if (prefix)
+		snprintf(buf, sizeof(buf), "%s/%s.theme", prefix, filename);
+	else
+		snprintf(buf, sizeof(buf), "%s.theme", filename);
 
-        save_errno = errno;
+	save_errno = errno;
 
-        if ((f = fopen(buf, "r")))
-                return f;
+	if ((f = fopen(buf, "r")))
+		return f;
 
-        if (errno == ENOENT)
-                errno = save_errno;
+	if (errno == ENOENT)
+		errno = save_errno;
 
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -1000,11 +1132,12 @@ int theme_read(const char *filename, int replace) {
 		errno = ENOENT;
 		f = NULL;
 
-		if (!xstrchr(filename, '/')) {
+		if (!xstrchr(fn, '/')) {
 			if (!f) f = theme_open(prepare_path("", 0), fn);
 			if (!f) f = theme_open(prepare_path("themes", 0), fn);
 			if (!f) f = theme_open(DATADIR "/themes", fn);
-		}
+		} else
+			f = theme_open(NULL, fn);
 
 		xfree(fn);
 
@@ -1015,12 +1148,12 @@ int theme_read(const char *filename, int replace) {
 		theme_free();
 		theme_init();
 	}
-	/*      ui_event("theme_init"); */
+	/*	ui_event("theme_init"); */
 
 	while ((buf = read_file(f, 0))) {
 		char *value;
 
-		if (buf[0] == '-') 			format_remove(buf + 1);
+		if (buf[0] == '-')			format_remove(buf + 1);
 		else if (buf[0] == '#')			;
 		else if (!(value = xstrchr(buf, ' ')))	;
 		else {
@@ -1048,40 +1181,121 @@ int theme_read(const char *filename, int replace) {
 	return 0;
 }
 
+int theme_write(const char *filename) {
+	FILE *f;
+	int i;
+
+	if (!filename)
+		return -1;
+
+	if (!(f = fopen(filename, "w")))
+		return -1;
+
+	for (i = 0; i < 0x100; i++) {
+		struct format *ff;
+
+		for (ff = formats[i]; ff; ff = ff->next) {
+			char *escaped;
+			
+			escaped = escape(ff->value);
+			fprintf(f, "%s %s\n", ff->name, escaped);
+			xfree(escaped);
+		}
+	}
+	fclose(f);
+
+	return 0;
+}
+
+void theme_enumerate(int (*enumerator)(const char *theme, const char *value)) {
+	int i;
+
+	if (!enumerator)
+		return;
+
+	if (no_prompt_cache) {
+		if (!enumerator("no_prompt_cache", ""))
+			return;
+	}
+
+
+	for (i = 0; i < 0x100; i++) {
+		struct format *ff;
+
+		for (ff = formats[i]; ff; ff = ff->next) {
+			if (!enumerator(ff->name, ff->value))
+				return;
+		}
+	}
+}
+
 /*
  * theme_free()
  *
  * usuwa formatki z pamiêci.
  */
-void theme_free()
-{
-        list_t l;
+void theme_free() {
+	int i;
 
-        for (l = formats; l; l = l->next) {
-                struct format *f = l->data;
+	for (i = 0; i < 0x100; i++)
+		formats_destroy(&(formats[i]));
 
-                xfree(f->name);
-                xfree(f->value);
-        }
-
-        list_destroy(formats, 1);
-        formats = NULL;
 	no_prompt_cache = 0;
 
-        theme_cache_reset();
+	theme_cache_reset();
 }
 
 void theme_plugins_init() {
-        list_t l;
+	plugin_t *p;
 
-        for (l = plugins; l; l = l->next) {
-                plugin_t *p = l->data;
+	for (p = plugins; p; p = p->next) {
+		if (p->theme_init)
+			p->theme_init();
+	}
+}
 
-                if (!p || !p->theme_init)
-                        continue;
+static const char *theme_init_contact_helper(const char *theme, char color) {
+	static char tmp[30];
+	int i;
 
-		p->theme_init();
-        }
+	for (i = 0; theme[i]; i++)
+		tmp[i] = (theme[i] == '$') ? color : theme[i];
+
+	tmp[i] = '\0';
+	return tmp;
+}
+
+static void theme_init_contact_status(const char *status, char color, int want_quick_list) {
+	char tmp[100];
+
+#define FORMAT_ADD(format, value, replace) sprintf(tmp, format, status); format_add(tmp, value, replace)
+#define FORMAT_ADDF(format, fvalue, replace) FORMAT_ADD(format, theme_init_contact_helper(fvalue, color), replace);
+	FORMAT_ADD("contacts_%s_header", "", 1);
+/* standard */
+	FORMAT_ADDF("contacts_%s", 			" %$%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr",		"%Ki%$%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_full",		"%Ki%$%1%n %2", 1);
+/* blink */
+	FORMAT_ADDF("contacts_%s_blink",        	" %$%i%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_blink",		"%K%ii%$%i%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_full_blink",	"%K%ii%$%i%1%n %2", 1);
+/* typing */
+	FORMAT_ADDF("contacts_%s_typing", 		"%W*%$%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_typing",		"%W*%$%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_full_typing",	"%W*%$%1%n %2", 1);
+/* typing+blink */
+	FORMAT_ADDF("contacts_%s_blink_typing", 	"%W%i*%$%i%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_blink_typing", 	"%W%i*%$%i%1%n", 1);
+	FORMAT_ADDF("contacts_%s_descr_full_blink_typing", "%W%i*%$%i%1%n %2", 1);
+
+	FORMAT_ADD("contacts_%s_footer", "", 1);
+
+	if (want_quick_list) {		/* my macros are evil, so don't remove brackets! */
+		FORMAT_ADDF("quick_list_%s",		" %$%1%n", 1);
+	}
+
+#undef FORMAT_ADD
+#undef FORMAT_ADDF
 }
 
 /*
@@ -1092,7 +1306,7 @@ void theme_plugins_init() {
 void theme_init()
 {
 	theme_cache_reset();
-	no_prompt_cache_hash = ekg_hash("no_prompt_cache");
+	no_prompt_cache_hash = gim_hash("no_prompt_cache");
 #ifndef NO_DEFAULT_THEME
 	/* wykorzystywane w innych formatach */
 	format_add("prompt", "%K:%g:%G:%n", 1);
@@ -1104,16 +1318,14 @@ void theme_init()
 	format_add("timestamp", "%T", 1);
 	format_add("timestamp,speech", " ", 1);
 
-	/* prompty i statusy dla ui-ncurses */
-	format_add("ncurses_prompt_none", "", 1);
-	format_add("ncurses_prompt_query", "[%1] ", 1);
-	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %G}%{?avail %Y}%{?chat %W}%{?dnd %K}%{?xa %g}%{?invisible %C}%{?notavail %r}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{?typing %C}%{window}}%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
-	format_add("header", " %{?query %c(%{?query_away %w}%{?query_avail %W}%{?query_invisible %K}%{?query_notavail %k}%{query}%{?query_descr %c/%w%{query_descr}}%c) %{?query_ip (%wip%c/%w%{query_ip}%c)} %{irctopic}}%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}", 1);
-	format_add("statusbar_act_important", "%W", 1);
-	format_add("statusbar_act", "%K", 1);
-	format_add("statusbar_act_typing", "%c", 1);
-	format_add("statusbar_act_important_typing", "%C", 1);
-	format_add("statusbar_timestamp", "%H:%M", 1);
+	/* ui-password-input */
+	format_add("password_input", _("Please input password:"), 1);
+	format_add("password_repeat", _("Please repeat password:"), 1);
+	format_add("password_empty", _("%! No password entered"), 1);
+	format_add("password_nomatch", _("%! Entered passwords do not match"), 1);
+	format_add("password_nosupport", _("%! %|UI-plugin doesn't seem to support password input, please use command-line input."), 1);
+
+	format_add("session_password_input", _("Password for %1:"), 1);
 
 	/* dla funkcji format_user() */
 	format_add("known_user", "%T%1%n/%2", 1);
@@ -1128,11 +1340,17 @@ void theme_init()
 	format_add("generic2_bold", "%) %T%1%n\n", 1);
 	format_add("generic_error", "%! %1\n", 1);
 	/* debug */
-	format_add("debug", 	"%n%1\n", 1);
-	format_add("fdebug",	"%b%1\n", 1);
+	format_add("debug",	"%n%1\n", 1);
+	format_add("fdebug",	"%B%1\n", 1);
 	format_add("iodebug",	"%y%1\n", 1);
 	format_add("iorecvdebug", "%Y%1\n", 1);
 	format_add("edebug",	"%R%1\n", 1);
+	format_add("wdebug",	"%W%1\n", 1);
+	format_add("warndebug",	"%r%1\n", 1);
+	format_add("okdebug",	"%G%1\n", 1);
+	format_add("wtfdebug",	"%W?!%n %M%1\n", 1);
+
+	format_add("ekg_failure", _("%! %|Something really unexpected happened, you should %Treally%n contact authors!\nEKG2 may now behave fine, or more failures could occur.\nDetails follow (see also __debug):\n%R%1%n"), 1);
 
 	format_add("value_none", _("(none)"), 1);
 	format_add("not_enough_params", _("%! Too few parameters. Try %Thelp %1%n\n"), 1);
@@ -1166,6 +1384,8 @@ void theme_init()
 	format_add("invisible_descr", _("%> (%3) Status changed to %cinvisible%n: %T%1%n%2\n"), 1);
 	format_add("dnd", _("%> (%1) Status changed to %Bdo not disturb%n\n"), 1);
 	format_add("dnd_descr", _("%> (%3) Status changed to %Bdo not disturb%n: %T%1%n%2\n"), 1);
+	format_add("gone", _("%> (%1) Status changed to %Rgone%n\n"), 1);
+	format_add("gone_descr", _("%> (%3) Status changed to %Rgone%n: %T%1%n%2%n%n\n"), 1);
 	format_add("ffc", _("%> (%1) Status changed to %Wfree for chat%n\n"), 1);
 	format_add("ffc_descr", _("%> (%3) Status changed to %Wfree for chat%n: %T%1%n%2%n\n"), 1);
 	format_add("xa", _("%> (%1) Status changed to %gextended away%n\n"), 1);
@@ -1232,18 +1452,20 @@ void theme_init()
 	format_add("list_away", _("%> %1 %G(away)%n %b%3:%4%n\n"), 1);
 	format_add("list_away_descr", _("%> %1 %G(away: %n%5%G)%n %b%3:%4%n\n"), 1);
 	format_add("list_dnd", _("%> %1 %B(do not disturb)%n %b%3:%4%n\n"), 1);
-	format_add("list_dnd_descr", _("%> %1 %G(do not disturb:%n %5%G)%n %b%3:%4%n\n"), 1);
+	format_add("list_dnd_descr", _("%> %1 %B(do not disturb:%n %5%G)%n %b%3:%4%n\n"), 1);
 	format_add("list_chat", _("%> %1 %W(free for chat)%n %b%3:%4%n\n"), 1);
 	format_add("list_chat_descr", _("%> %1 %W(free for chat%n: %5%W)%n %b%3:%4%n\n"), 1);
 	format_add("list_error", _("%> %1 %m(error) %b%3:%4%n\n"), 1);
 	format_add("list_error", _("%> %1 %m(error%n: %5%m)%n %b%3:%4%n\n"), 1);
 	format_add("list_xa", _("%> %1 %g(extended away)%n %b%3:%4%n\n"), 1);
 	format_add("list_xa_descr", _("%> %1 %g(extended away: %n%5%g)%n %b%3:%4%n\n"), 1);
+	format_add("list_gone", _("%> %1 %R(gone)%n %b%3:%4%n\n"), 1);
+	format_add("list_gone_descr", _("%> %1 %R(gone: %n%5%g)%n %b%3:%4%n\n"), 1);
 	format_add("list_notavail", _("%> %1 %r(offline)%n\n"), 1);
 	format_add("list_notavail_descr", _("%> %1 %r(offline: %n%5%r)%n\n"), 1);
 	format_add("list_invisible", _("%> %1 %c(invisible)%n %b%3:%4%n\n"), 1);
 	format_add("list_invisible_descr", _("%> %1 %c(invisible: %n%5%c)%n %b%3:%4%n\n"), 1);
-	format_add("list_blocked", _("%> %1 %m(blocking)%n\n"), 1);
+	format_add("list_blocking", _("%> %1 %m(blocking)%n\n"), 1);
 	format_add("list_unknown", "%> %1\n", 1);
 	format_add("modify_offline", _("%> %1 will not see your status\n"), 1);
 	format_add("modify_online", _("%> %1 will see your status\n"), 1);
@@ -1253,130 +1475,28 @@ void theme_init()
 	format_add("contacts_header", "", 1);
 	format_add("contacts_header_group", "%K %1%n", 1);
 	format_add("contacts_metacontacts_header", "", 1);
-	format_add("contacts_avail_header", "", 1);
-	format_add("contacts_avail", " %Y%1%n", 1);
-	format_add("contacts_avail_descr", "%Ki%Y%1%n", 1);
-	format_add("contacts_avail_descr_full", "%Ki%Y%1%n %2", 1);
-	format_add("contacts_avail_blink", " %Y%i%1%n", 1);
-	format_add("contacts_avail_descr_blink", "%K%ii%Y%i%1%n", 1);
-	format_add("contacts_avail_descr_full_blink", "%K%ii%Y%i%1%n %2", 1);
-	format_add("contacts_avail_footer", "", 1);
-	format_add("contacts_away_header", "", 1);
-	format_add("contacts_away", " %G%1%n", 1);
-	format_add("contacts_away_descr", "%Ki%G%1%n", 1);
-	format_add("contacts_away_descr_full", "%Ki%G%1%n %2", 1);
-	format_add("contacts_away_blink", " %G%i%1%n", 1);
-	format_add("contacts_away_descr_blink", "%K%ii%G%i%1%n", 1);
-	format_add("contacts_away_descr_full_blink", "%K%ii%G%i%1%n %2", 1);
-	format_add("contacts_away_footer", "", 1);
-	format_add("contacts_dnd_header", "", 1);
-	format_add("contacts_dnd", " %B%1%n", 1);
-	format_add("contacts_dnd_descr", "%Ki%B%1%n", 1);
-	format_add("contacts_dnd_descr_full", "%Ki%B%1%n %2", 1);
-	format_add("contacts_dnd_blink", " %B%i%1%n", 1);
-	format_add("contacts_dnd_descr_blink", "%K%ii%B%i%1%n", 1);
-	format_add("contacts_dnd_descr_full_blink", "%K%ii%B%i%1%n %2", 1);
-	format_add("contacts_dnd_footer", "", 1);
-	format_add("contacts_chat_header", "", 1);
-	format_add("contacts_chat", " %W%1%n", 1);
-	format_add("contacts_chat_descr", "%Ki%W%1%n", 1);
-	format_add("contacts_chat_descr_full", "%Ki%W%1%n %2", 1);
-	format_add("contacts_chat_blink", " %W%i%1%n", 1);
-	format_add("contacts_chat_descr_blink", "%K%ii%W%i%1%n", 1);
-	format_add("contacts_chat_descr_full_blink", "%K%ii%W%i%1%n %2", 1);
-	format_add("contacts_chat_footer", "", 1);
-	format_add("contacts_error_header", "", 1);
-	format_add("contacts_error", " %m%1%n", 1);
-	format_add("contacts_error_descr", "%Ki%m%1%n", 1);
-	format_add("contacts_error_descr_full", "%Ki%m%1%n %2", 1);
-	format_add("contacts_error_blink", " %m%i%1%n", 1);
-	format_add("contacts_error_descr_blink", "%K%ii%m%i%1%n", 1);
-	format_add("contacts_error_descr_full_blink", "%K%ii%m%i%1%n %2", 1);
-	format_add("contacts_error_footer", "", 1);
-	format_add("contacts_xa_header", "", 1);
-	format_add("contacts_xa", " %g%1%n", 1);
-	format_add("contacts_xa_descr", "%Ki%g%1%n", 1);
-	format_add("contacts_xa_descr_full", "%Ki%g%1%n %2", 1);
-	format_add("contacts_xa_blink", " %g%i%1%n", 1);
-	format_add("contacts_xa_descr_blink", "%K%ii%g%i%1%n", 1);
-	format_add("contacts_xa_descr_full_blink", "%K%ii%g%i%1%n %2", 1);
-	format_add("contacts_xa_footer", "", 1);
-	format_add("contacts_notavail_header", "", 1);
-	format_add("contacts_notavail", " %r%1%n", 1);
-	format_add("contacts_notavail_descr", "%Ki%r%1%n", 1);
-	format_add("contacts_notavail_descr_full", "%Ki%r%1%n %2", 1);
-	format_add("contacts_notavail_blink", " %r%i%1%n", 1);
-	format_add("contacts_notavail_descr_blink", "%K%ii%r%i%1%n", 1);
-	format_add("contacts_notavail_descr_full_blink", "%K%ii%r%i%1%n %2", 1);
-	format_add("contacts_notavail_footer", "", 1);
-	format_add("contacts_invisible_header", "", 1);
-	format_add("contacts_invisible", " %c%1%n", 1);
-	format_add("contacts_invisible_descr", "%Ki%c%1%n", 1);
-	format_add("contacts_invisible_descr_full", "%Ki%c%1%n %2", 1);
-	format_add("contacts_invisible_blink", " %c%i%1%n", 1);
-	format_add("contacts_invisible_descr_blink", "%K%ii%c%i%1%n", 1);
-	format_add("contacts_invisible_descr_full_blink", "%K%ii%c%i%1%n %2", 1);
-	format_add("contacts_invisible_footer", "", 1);
+
+	theme_init_contact_status("avail", 'Y', 1);
+	theme_init_contact_status("away", 'G', 1);
+	theme_init_contact_status("dnd", 'B', 1);
+	theme_init_contact_status("chat", 'W', 1);
+	theme_init_contact_status("error", 'm', 0);
+	theme_init_contact_status("xa", 'g', 1);
+	theme_init_contact_status("gone", 'R', 1);
+	theme_init_contact_status("notavail", 'r', 0);
+	theme_init_contact_status("invisible", 'c', 1);
+
 	format_add("contacts_blocking_header", "", 1);
 	format_add("contacts_blocking", " %m%1%n", 1);
 	format_add("contacts_blocking_footer", "", 1);
+
+	theme_init_contact_status("unknown", 'M', 0);
+
 	format_add("contacts_footer", "", 1);
 	format_add("contacts_footer_group", "", 1);
 	format_add("contacts_metacontacts_footer", "", 1);
 	format_add("contacts_vertical_line_char", "|", 1);
 	format_add("contacts_horizontal_line_char", "-", 1);
-
-	/* typing */
-	format_add("contacts_avail_blink_typing", "%W%i*%Y%i%1%n", 1);
-	format_add("contacts_avail_descr_blink_typing", "%W%i*%Y%i%1%n", 1);
-	format_add("contacts_avail_descr_full_blink_typing", "%W%i*%Y%i%1%n %2", 1);
-	format_add("contacts_away_blink_typing", "%W%i*%G%i%1%n", 1);
-	format_add("contacts_away_descr_blink_typing", "%W%i*%G%i%1%n", 1);
-	format_add("contacts_away_descr_full_blink_typing", "%W%i*%G%i%1%n %2", 1);
-	format_add("contacts_dnd_blink_typing", "%W%i*%B%i%1%n", 1);
-	format_add("contacts_dnd_descr_blink_typing", "%W%i*%B%i%1%n", 1);
-	format_add("contacts_dnd_descr_full_blink_typing", "%W%i*%B%i%1%n %2", 1);
-	format_add("contacts_chat_blink_typing", "%W%i*%W%i%1%n", 1);
-	format_add("contacts_chat_descr_blink_typing", "%W%i*%W%i%1%n", 1);
-	format_add("contacts_chat_descr_full_blink_typing", "%W%i*%W%i%1%n %2", 1);
-	format_add("contacts_error_blink_typing", "%W%i*%m%i%1%n", 1);
-	format_add("contacts_error_descr_blink_typing", "%W%i*%m%i%1%n", 1);
-	format_add("contacts_error_descr_full_blink_typing", "%W%i*%m%i%1%n %2", 1);
-	format_add("contacts_xa_blink_typing", "%W%i*%g%i%1%n", 1);
-	format_add("contacts_xa_descr_blink_typing", "%W%i*%g%i%1%n", 1);
-	format_add("contacts_xa_descr_full_blink_typing", "%W%i*%g%i%1%n %2", 1);
-	format_add("contacts_notavail_blink_typing", "%W%i*%r%i%1%n", 1);
-	format_add("contacts_notavail_descr_blink_typing", "%W%i*%r%i%1%n", 1);
-	format_add("contacts_notavail_descr_full_blink_typing", "%W%i*%r%i%1%n %2", 1);
-	format_add("contacts_invisible_blink_typing", "%W%i*%c%i%1%n", 1);
-	format_add("contacts_invisible_descr_blink_typing", "%W%i*%c%i%1%n", 1);
-	format_add("contacts_invisible_descr_full_blink_typing", "%W%i*%c%i%1%n %2", 1);
-	format_add("contacts_avail_typing", "%W*%Y%1%n", 1);
-	format_add("contacts_avail_descr_typing", "%W*%Y%1%n", 1);
-	format_add("contacts_avail_descr_full_typing", "%W*%Y%1%n %2", 1);
-	format_add("contacts_away_typing", "%W*%G%1%n", 1);
-	format_add("contacts_away_descr_typing", "%W*%G%1%n", 1);
-	format_add("contacts_away_descr_full_typing", "%W*%G%1%n %2", 1);
-	format_add("contacts_dnd_typing", "%W*%B%1%n", 1);
-	format_add("contacts_dnd_descr_typing", "%W*%B%1%n", 1);
-	format_add("contacts_dnd_descr_full_typing", "%W*%B%1%n %2", 1);
-	format_add("contacts_chat_typing", "%W*%W%1%n", 1);
-	format_add("contacts_chat_descr_typing", "%W*%W%1%n", 1);
-	format_add("contacts_chat_descr_full_typing", "%W*%W%1%n %2", 1);
-	format_add("contacts_error_typing", "%W*%m%1%n", 1);
-	format_add("contacts_error_descr_typing", "%W*%m%1%n", 1);
-	format_add("contacts_error_descr_full_typing", "%W*%m%1%n %2", 1);
-	format_add("contacts_xa_typing", "%W*%g%1%n", 1);
-	format_add("contacts_xa_descr_typing", "%W*%g%1%n", 1);
-	format_add("contacts_xa_descr_full_typing", "%W*%g%1%n %2", 1);
-	format_add("contacts_notavail_typing", "%W*%r%1%n", 1);
-	format_add("contacts_notavail_descr_typing", "%W*%r%1%n", 1);
-	format_add("contacts_notavail_descr_full_typing", "%W*%r%1%n %2", 1);
-	format_add("contacts_invisible_typing", "%W*%c%1%n", 1);
-	format_add("contacts_invisible_descr_typing", "%W*%c%1%n", 1);
-	format_add("contacts_invisible_descr_full_typing", "%W*%c%1%n %2", 1);
-	format_add("contacts_unknown_typing", "%W*%M%1%n", 1);
-	format_add("contacts_unknown_blink_typing", "%W%i*%M%i%1%n", 1);
 
 	/* we are saying goodbye and we are saving configuration */
 	format_add("quit", _("%> Bye\n"), 1);
@@ -1403,16 +1523,33 @@ void theme_init()
 	format_add("confrence,speech", _("message from %1: %3."), 1);
 
 	format_add("chat", "%c.-- %n%1 %c%2%n%6%n%c--- -- -%n\n%c|%n %|%3%n\n%|%c`----- ---- --- -- -%n\n", 1);
+	format_add("chat_me", "%) %|%C%4%n %3\n", 1);
 	format_add("chat_timestamp", "(%Y-%m-%d %H:%M) ", 1);
 	format_add("chat_timestamp_today", "(%H:%M) ", 1);
 	format_add("chat_timestamp_now", "", 1);
 	format_add("chat,speech", _("message from %1: %3."), 1);
 
 	format_add("sent", "%b.-- %n%1 %c%2%n%6%n%b--- -- -%n\n%b|%n %|%3%n\n%|%b`----- ---- --- -- -%n\n", 1);
+	format_add("sent_me", "%> %|%G%4%n %3\n", 1);
 	format_add("sent_timestamp", "(%Y-%m-%d %H:%M) ", 1);
 	format_add("sent_timestamp_today", "(%H:%M) ", 1);
 	format_add("sent_timestamp_now", "", 1);
 	format_add("sent,speech", "", 1);
+
+		/* XXX: change default colors for these two, but dunno to what
+		 * they should be darker than standard ones to emphasize that
+		 * these are jest old messages loaded from the db, not received */
+	format_add("log", "%c.-- %n%1 %c%2%n%6%n%c--- -- -%n\n%c|%n %|%3%n\n%|%c`----- ---- --- -- -%n\n", 1);
+	format_add("log_timestamp", "(%Y-%m-%d %H:%M) ", 1);
+	format_add("log_timestamp_today", "(%H:%M) ", 1);
+	format_add("log_timestamp_now", "", 1);
+	format_add("log,speech", _("message from %1: %3."), 1);
+
+	format_add("sent_log", "%b.-- %n%1 %c%2%n%6%n%b--- -- -%n\n%b|%n %|%3%n\n%|%b`----- ---- --- -- -%n\n", 1);
+	format_add("sent_log_timestamp", "(%Y-%m-%d %H:%M) ", 1);
+	format_add("sent_log_timestamp_today", "(%H:%M) ", 1);
+	format_add("sent_log_timestamp_now", "", 1);
+	format_add("sent_log,speech", "", 1);
 
 	format_add("system", _("%m.-- %TSystem message%m --- -- -%n\n%m|%n %|%3%n\n%|%m`----- ---- --- -- -%n\n"), 1);
 	format_add("system,speech", _("system message: %3."), 1);
@@ -1421,7 +1558,8 @@ void theme_init()
 	format_add("ack_queued", _("%> Message to %1 will be delivered later\n"), 1);
 	format_add("ack_delivered", _("%> Message to %1 delivered\n"), 1);
 	format_add("ack_unknown", _("%> Not clear what happened to message to %1\n"), 1);
-	format_add("ack_filtered", _("%! %|Message to %1 probably was not delivered. The person is unavailable, but server claims message is delivered. Message could been filtered out (e.g. because of web address in it)\n"), 1);
+	format_add("ack_tempfail", _("%! %|Message to %1 encountered temporary delivery failure (e.g. message queue full). Please try again later.\n"), 1);
+	format_add("ack_filtered", _("%! %|Message to %1 encountered permament delivery failure (e.g. forbidden content). Before retrying, try to fix the problem yourself (e.g. ask second side to add us to userlist).\n"), 1);
 	format_add("message_too_long", _("%! Message was too long and got shortened\n"), 1);
 
 	/* people are changing their statuses */
@@ -1435,12 +1573,16 @@ void theme_init()
 	format_add("status_invisible_descr", _("%> (%3) %1 is %cinvisible%n: %T%4%n\n"), 1);
 	format_add("status_xa", _("%> (%3) %1 is %gextended away%n\n"), 1);
 	format_add("status_xa_descr", _("%> (%3) %1 is %gextended away%n: %T%4%n\n"), 1);
+	format_add("status_gone", _("%> (%3) %1 is %Rgone%n\n"), 1);
+	format_add("status_gone_descr", _("%> (%3) %1 is %Rgone%n: %T%4%n\n"), 1);
 	format_add("status_dnd", _("%> (%3) %1 %Bdo not disturb%n\n"), 1);
 	format_add("status_dnd_descr", _("%> (%3) %1 %Bdo not disturb%n: %T%4%n\n"), 1);
 	format_add("status_error", _("%> (%3) %1 %merror fetching status%n\n"), 1);
 	format_add("status_error_descr", _("%> (%3) %1 %merror fetching status%n: %T%4%n\n"), 1);
 	format_add("status_chat", _("%> (%3) %1 is %Wfree for chat%n\n"), 1);
 	format_add("status_chat_descr", _("%> (%3) %1 is %Wfree for chat%n: %T%4%n\n"), 1);
+	format_add("status_unknown", _("%> (%3) %1 is %Munknown%n\n"), 1);
+	format_add("status_unknown_descr", _("%> (%3) %1 is %Munknown%n: %T%4%n\n"), 1);
 
 	/* connection with server */
 	format_add("connecting", _("%> (%1) Connecting to server %n\n"), 1);
@@ -1479,15 +1621,26 @@ void theme_init()
 	format_add("variable", "%> %1 = %2\n", 1);
 	format_add("variable_not_found", _("%! Unknown variable: %T%1%n\n"), 1);
 	format_add("variable_invalid", _("%! Invalid session variable value\n"), 1);
-	format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/jid:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
-	format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or jid: jabber id, then session password and your password. enter save to save. enter connect to connect. if you dont have UID enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then number. To start conversation use query command. To add someone to roster use add command. All key shortcuts are described in README file. There is also help command."), 1);
+	format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!	 %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
+	format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or xmpp: jabber id, then session password and your password. enter save to save. enter connect to connect. if you dont have UID enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then number. To start conversation use query command. To add someone to roster use add command. All key shortcuts are described in README file. There is also help command."), 1);
+	format_add("no_config_gg_not_loaded", _("%! Incomplete configuration. Use:\n%!	 %T/plugin +gg%n - to load gg plugin\n%!   %Tsession -a <gg:gg-number/xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!	 %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
+	format_add("no_config_no_libgadu", _("%! Incomplete configuration. %TBIG FAT WARNING:%n\n%!    %Tgg plugin has not been compiled, probably there is no libgadu library in the system\n%! Use:\n%!   %Tsession -a <xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!	%Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Txmpp:<jid>%n. \n\n"), 2);
 	format_add("error_reading_config", _("%! Error reading configuration file: %1\n"), 1);
 	format_add("config_read_success", _("%> Configuratin read correctly.%n\n"), 1);
 	format_add("config_line_incorrect", _("%! Invalid line '%T%1%n', skipping\n"), 1);
+	format_add("config_error", _("%! %R%|%R%1\n"), 1);
 	format_add("autosaved", _("%> Automatically saved settings\n"), 1);
+
+	/* config_upgrade() */
+	format_add("config_upgrade_begin", _("%) EKG2 upgrade detected. The following changes were made since your previous version:\n"), 1);
+	format_add("config_upgrade_important",	"%) %W%2) %y*%n %1\n", 1);
+	format_add("config_upgrade_major",	"%) %W%2) %Y*%n %1\n", 1);
+	format_add("config_upgrade_minor",	"%) %W%2) %c*%n %1\n", 1);
+	format_add("config_upgrade_end", _("%) To make configuration upgrade permament, please save your configuration: %c/save%n\n"), 1);
 
 	/* rejestracja nowego numeru */
 	format_add("register", _("%> Registration successful. Your number: %T%1%n\n"), 1);
+	format_add("register_change_passwd", _("%> Your password for account %T%1%n is '%T%2%n'. Change it as soon as possible, using command /passwd <newpassword>"), 1);
 	format_add("register_failed", _("%! Error during registration: %1\n"), 1);
 	format_add("register_pending", _("%! Registration in progress\n"), 1);
 	format_add("register_timeout", _("%! Registration timed out\n"), 1);
@@ -1528,9 +1681,9 @@ void theme_init()
 	format_add("search_results_multi_away", "%G<>%n", 1);
 	format_add("search_results_multi_invisible", "%c<>%n", 1);
 	format_add("search_results_multi_notavail", "  ", 1);
-	format_add("search_results_multi_unknown", "-", 1);
-	/*      format_add("search_results_multi_female", "k", 1); */
-	/*      format_add("search_results_multi_male", "m", 1); */
+	format_add("search_results_multi_unknown", " -", 1);
+	/*	format_add("search_results_multi_female", "k", 1); */
+	/*	format_add("search_results_multi_male", "m", 1); */
 	format_add("search_results_multi", "%7 %[-8]1 %K|%n %[12]3 %K|%n %[12]2 %K|%n %[4]5 %K|%n %[12]4\n", 1);
 
 	format_add("search_results_single_avail", _("%Y(available)%N"), 1);
@@ -1544,32 +1697,27 @@ void theme_init()
 	format_add("process", "%> %(-5)1 %2\n", 1);
 	format_add("no_processes", _("%! There are no running procesees\n"), 1);
 	format_add("process_exit", _("%> Proces %1 (%2) exited with %3 status\n"), 1);
-	format_add("exec", "%1\n",1);   /* lines are ended by \n */
+	format_add("exec", "%1\n",1);	/* lines are ended by \n */
 	format_add("exec_error", _("%! Error running process : %1\n"), 1);
 	format_add("exec_prompt", "$ %1\n", 1);
 
 	/* detailed info about user */
 	format_add("user_info_header", "%K.--%n %T%1%n/%2 %K--- -- -%n\n", 1);
 	format_add("user_info_nickname", _("%K| %nNickname: %T%1%n\n"), 1);
-	format_add("user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
 	format_add("user_info_status", _("%K| %nStatus: %T%1%n\n"), 1);
 	format_add("user_info_status_time_format", "%Y-%m-%d %H:%M", 1);
 	format_add("user_info_status_time", _("%K| %nCurrent status since: %T%1%n\n"), 1);
-	format_add("user_info_auth_type", _("%K| %nSubscription type: %T%1%n\n"), 1);
 	format_add("user_info_block", _("%K| %nBlocked\n"), 1);
 	format_add("user_info_offline", _("%K| %nCan't see our status\n"), 1);
-	format_add("user_info_not_in_contacts", _("%K| %nDoesn't have us in roster\n"), 1);
-	format_add("user_info_firewalled", _("%K| %nFirewalled/NATed\n"), 1);
-	format_add("user_info_ip", _("%K| %nAddress: %T%1%n\n"), 1);
+	format_add("user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
 	format_add("user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
+	format_add("user_info_ip", _("%K| %nAddress: %T%1%n\n"), 1);
+	format_add("user_info_last_ip", _("%K| %nLast address: %T%1%n\n"), 1);
 	format_add("user_info_groups", _("%K| %nGroups: %T%1%n\n"), 1);
 	format_add("user_info_never_seen", _("%K| %nNever seen\n"), 1);
 	format_add("user_info_last_seen", _("%K| %nLast seen: %T%1%n\n"), 1);
 	format_add("user_info_last_seen_time", "%Y-%m-%d %H:%M", 1);
-	format_add("user_info_last_ip", _("%K| %nLast address: %T%1%n\n"), 1);
 	format_add("user_info_last_status", _("%K| %nLast status: %T%1%n\n"), 1);
-	format_add("user_info_version", _("%K| %nVersion: %T%1%n\n"),1);
-	format_add("user_info_voip", _("%K| %nHas voice talk\n"), 1);
 	format_add("user_info_footer", "%K`----- ---- --- -- -%n\n", 1);
 
 	format_add("user_info_avail", _("%Yavailable%n"), 1);
@@ -1588,8 +1736,10 @@ void theme_init()
 	format_add("user_info_error_descr", _("%merror%n %K(%n%2%K)%n"), 1);
 	format_add("user_info_xa", _("%gextended away%n"), 1);
 	format_add("user_info_xa_descr", _("%gextended away%n %K(%n%2%K)%n"), 1);
-	format_add("user_info_blocked", _("%mblocking%n"), 1);
-	format_add("user_info_blocked_descr", _("%mblocking%n %K(%n%2%K)%n"), 1);
+	format_add("user_info_gone", _("%Rgone%n"), 1);
+	format_add("user_info_gone_descr", _("%Rgone%n %K(%n%2%K)%n"), 1);
+	format_add("user_info_blocking", _("%mblocking%n"), 1);
+	format_add("user_info_blocking_descr", _("%mblocking%n %K(%n%2%K)%n"), 1);
 	format_add("user_info_unknown", _("%Munknown%n"), 1);
 
 	format_add("resource_info_status", _("%K| %nResource: %W%1%n Status: %T%2 Prio: %g%3%n"), 1);
@@ -1617,6 +1767,8 @@ void theme_init()
 	format_add("show_status_invisible_descr", _("%cinvisible%n (%T%1%n%2)"), 1);
 	format_add("show_status_xa", _("%gextended away%n"), 1);
 	format_add("show_status_xa_descr", _("%gextended away%n (%T%1%n%2)"), 1);
+	format_add("show_status_gone", _("%Rgone%n"), 1);
+	format_add("show_status_gone_descr", _("%Rgone%n (%T%1%n%2)"), 1);
 	format_add("show_status_dnd", _("%cdo not disturb%n"), 1);
 	format_add("show_status_dnd_descr", _("%cdo not disturb%n (%T%1%n%2)"), 1);
 	format_add("show_status_chat", _("%Wfree for chat%n"), 1);
@@ -1636,7 +1788,7 @@ void theme_init()
 	/* aliasy */
 	format_add("aliases_list_empty", _("%! No aliases\n"), 1);
 	format_add("aliases_list", "%> %T%1%n: %2\n", 1);
-	format_add("aliases_list_next", "%> %3  %2\n", 1);
+	format_add("aliases_list_next", "%> %3	%2\n", 1);
 	format_add("aliases_add", _("%> Created alias %T%1%n\n"), 1);
 	format_add("aliases_append", _("%> Added to alias %T%1%n\n"), 1);
 	format_add("aliases_del", _("%) Removed alias %T%1%n\n"), 1);
@@ -1711,11 +1863,12 @@ void theme_init()
 	/* szybka lista kontaktów pod F2 */
 	format_add("quick_list", "%)%1\n", 1);
 	format_add("quick_list,speech", _("roster:"), 1);
-	format_add("quick_list_avail", " %Y%1%n", 1);
 	format_add("quick_list_avail,speech", _("%1 is available"), 1);
-	format_add("quick_list_away", " %G%1%n", 1);
 	format_add("quick_list_away,speech", _("%1 is away"), 1);
-	format_add("quick_list_invisible", " %c%1%n", 1);
+	format_add("quick_list_chat,speech", _("%1 is free for chat"), 1);
+	format_add("quick_list_xa,speech", _("%1 is extended away"), 1);
+	format_add("quick_list_gone,speech", _("%1 is gone"), 1);
+	format_add("quick_list_dnd,speech", _("%1 has 'do not disturb' status"), 1);
 
 	/* window */
 	format_add("window_add", _("%) New window created\n"), 1);
@@ -1770,18 +1923,28 @@ void theme_init()
 	/* last */
 	format_add("last_list_in", "%) %Y <<%n [%1] %2 %3\n", 1);
 	format_add("last_list_out", "%) %G >>%n [%1] %2 %3\n", 1);
+	format_add("last_list_status", "%) %G *%n [%1] %2 is %3\n", 1);
+	format_add("last_list_status_descr", "%) %G *%n [%1] %2 is %3: %4\n", 1);
 	format_add("last_list_empty", _("%! No messages logged\n"), 1);
+	format_add("last_list_empty_status", _("%! No change status logged\n"), 1);
 	format_add("last_list_empty_nick", _("%! No messages from %T%1%n logged\n"), 1);
+	format_add("last_list_empty_nick_status", _("%! No change status by %T%1%n logged\n"), 1);
 	format_add("last_list_timestamp", "%d-%m-%Y %H:%M", 1);
 	format_add("last_list_timestamp_today", "%H:%M", 1);
 	format_add("last_clear_uin", _("%) Messages from %T%1%n cleared\n"), 1);
+	format_add("last_clear_uin_status", _("%) Statuses from %T%1%n cleared\n"), 1);
 	format_add("last_clear", _("%) All messages cleared\n"), 1);
+	format_add("last_clear_status", _("%) All statuses cleared\n"), 1);
 	format_add("last_begin_uin", _("%) Lastlog from %T%1%n begins\n"), 1);
+	format_add("last_begin_uin_status", _("%) Lastlog status from %T%1%n begins\n"), 1);
 	format_add("last_begin", _("%) Lastlog begin\n"), 1);
+	format_add("last_begin_status", _("%) Lastlog status begin\n"), 1);
 	format_add("last_end", _("%) Lastlog end\n"), 1);
+	format_add("last_end_status", _("%) Lastlog status end\n"), 1);
+
 
 	/* lastlog */
-	format_add("lastlog_title", 	_("%) %gLastlog [%B%2%n%g] from window: %W%T%1%n"), 1);
+	format_add("lastlog_title",	_("%) %gLastlog [%B%2%n%g] from window: %W%T%1%n"), 1);
 	format_add("lastlog_title_cur", _("%) %gLastlog [%B%2%n%g] from window: %W%T%1 (*)%n"), 1);
 
 	/* queue */
@@ -1827,7 +1990,7 @@ void theme_init()
 	format_add("session_list_empty", _("%! Session list is empty\n"), 1);
 	format_add("session_info_header", "%) %T%1%n %3\n", 1); /* uid, uid, %{user_info_*} */
 	format_add("session_info_header_alias", "%) %T%2%n/%1 %3\n", 1); /* uid, alias, %{user_info_*} */
-	format_add("session_info_param", "%)    %1 = %T%2%n\n", 1); /* key, value */
+	format_add("session_info_param", "%)	%1 = %T%2%n\n", 1); /* key, value */
 	format_add("session_info_footer", "", 1); /* uid */
 	format_add("session_exists", _("%! Session %T%1%n already exists\n"), 1); /* uid */
 	format_add("session_doesnt_exist", _("%! Sesion %T%1%n does not exist\n"), 1); /* uid */
@@ -1836,6 +1999,9 @@ void theme_init()
 	format_add("session_format", "%T%1%n", 1);
 	format_add("session_format_alias", "%T%1%n/%2", 1);
 	format_add("session_cannot_change", _("%! Can't change session in query window%n\n"), 1);
+	format_add("session_password_changed", _("%> %|(%1) Looks like you're changing password in connected session. This does only set password on the client-side. If you want you change your account password, please use dedicated function (e.g. /passwd)."), 1);
+	format_add("session_locked", _("%! %|Session %T%1%n is currently locked. If there aren't any other copy of EKG2 using it, please call: %c/session --unlock%n to unlock it.\n"), 1);
+	format_add("session_not_locked", _("%! Session %T%1%n is not locked"), 1);
 
 	format_add("metacontact_list", "%> %T%1%n", 1);
 	format_add("metacontact_list_empty", "%! Metacontact list is empty\n", 1);
@@ -1870,8 +2036,10 @@ void theme_init()
 	format_add("metacontact_info_error_descr", _("%merror%n %K(%n%2%K)%n"), 1);
 	format_add("metacontact_info_xa", _("%gextended away%n"), 1);
 	format_add("metacontact_info_xa_descr", _("%gextended away%n %K(%n%2%K)%n"), 1);
-	format_add("metacontact_info_blocked", _("%mblocking%n"), 1);
-	format_add("metacontact_info_blocked_descr", _("%mblocking%n %K(%n%2%K)%n"), 1);
+	format_add("metacontact_info_gone", _("%Rgone%n"), 1);
+	format_add("metacontact_info_gone_descr", _("%Rgone%n %K(%n%2%K)%n"), 1);
+	format_add("metacontact_info_blocking", _("%mblocking%n"), 1);
+	format_add("metacontact_info_blocking_descr", _("%mblocking%n %K(%n%2%K)%n"), 1);
 	format_add("metacontact_info_unknown", _("%Munknown%n"), 1);
 
 	format_add("plugin_already_loaded", _("%! Plugin %T%1%n already loaded%n.\n"), 1);
@@ -1886,8 +2054,8 @@ void theme_init()
 	format_add("plugin_default", _("%> Plugins prio setted to default\n"), 1);
 
 	format_add("script_autorun_succ",	_("%> Script %W%1%n successful %G%2%n autorun dir"), 1);		/* XXX sciezka by sie przydala */
-	format_add("script_autorun_fail", 	_("%! Script %W%1%n failed %R%2%n autorun dir %r(%3)"), 1);
-	format_add("script_autorun_unkn", 	_("%! Error adding/removing script %W%1%n from autorundir %r(%3)"), 1);
+	format_add("script_autorun_fail",	_("%! Script %W%1%n failed %R%2%n autorun dir %r(%3)"), 1);
+	format_add("script_autorun_unkn",	_("%! Error adding/removing script %W%1%n from autorundir %r(%3)"), 1);
 	format_add("script_loaded",		_("%) Script %W%1%n %g(%2)%n %Gloaded %b(%3)"), 1);
 	format_add("script_incorrect",		_("%! Script %W%1%n %g(%2)%n %rNOT LOADED%n %R[incorrect %3 script or you've got syntax errors]"), 1);
 	format_add("script_incorrect2",		_("%! Script %W%1%n %g(%2)%n %rNOT LOADED%n %R[script has no handler or error in getting handlers]"), 1);
@@ -1895,7 +2063,7 @@ void theme_init()
 	format_add("script_need_name",		_("%! No filename given\n"), 1);
 	format_add("script_not_found",		_("%! Can't find script %W%1"), 1);
 	format_add("script_wrong_location",	_("%! Script have to be in %g%1%n (don't add path)"), 1);
-	format_add("script_error", 		_("%! %rScript error: %|%1"), 1);
+	format_add("script_error",		_("%! %rScript error: %|%1"), 1);
 
 	format_add("script_autorun_list", "%) Script %1 -> %2\n", 1);
 	format_add("script_eval_error", _("%! Error running code\n"), 1);
@@ -1905,14 +2073,24 @@ void theme_init()
 	format_add("script_varlist", _("%> %1 = %2 (%3)\n"), 1);
 	format_add("script_varlist_empty", _("%! No script vars!\n"), 1);
 
-	format_add("directory_cant_create", 	_("%! Can't create directory: %1 (%2)"), 1);
+	format_add("directory_cant_create",	_("%! Can't create directory: %1 (%2)"), 1);
 
-#ifdef WITH_ASPELL
-	/* aspell */
-	format_add("aspell_init", "%> Czekaj, inicjujê modu³ sprawdzania pisowni...\n", 1);
-	format_add("aspell_init_success", "%> Zainicjowano modu³ sprawdzania pisowni\n", 1);
-	format_add("aspell_init_error", "%! B³±d modu³u sprawdzania pisowni: %T%1%n\n", 1);
-#endif 
+	/* charset stuff */
+	format_add("console_charset_using",	_("%) EKG2 detected that your console works under: %W%1%n Please verify and change %Gconsole_charset%n variable if needed"), 1);
+	format_add("console_charset_bad",	_("%! EKG2 detected that your console works under: %W%1%n, but in %Gconsole_charset%n variable you've got: %W%2%n Please verify."), 1);
+	format_add("iconv_fail",		_("%! iconv_open() fail to initialize charset conversion between %W%1%n and %W%2%n. Check %Gconsole_charset%n variable, if it won't help inform ekg2 dev team and/or upgrade iconv"), 1);
+	format_add("iconv_list",		_("%) %g%[-10]1%n %c<==> %g%[-10]2%n %b(%nIn use: %W%3, %4%b)"), 1);
+	format_add("iconv_list_bad",		_("%! %R%[-10]1%n %r<==> %R%[-10]2%n %b[%rINIT ERROR: %5%b] %b(%nIn use: %W%3, %4%b) "), 1);
+
+	/* jogger-like I/O */
+	format_add("io_cantopen", _("%! %|Unable to open file: %T%1%n (%c%2%n)!"), 1);
+	format_add("io_nonfile", _("%! %|Given path doesn't appear to be regular file: %T%1%n!"), 1);
+	format_add("io_cantread", _("%! %|Unable to read file: %T%1%n (%c%2%n)!"), 1);
+	format_add("io_truncated", _("%! %|WARNING: EOF before reaching filesize (%c%2%n vs. %c%3%n). File %T%1%n probably truncated (somehow)!"), 1);
+	format_add("io_expanded", _("%! %|WARNING: EOF after reaching filesize (%c%2%n vs. %c%3%n). File %T%1%n probably got expanded!"), 1);
+	format_add("io_emptyfile", _("%! File %T%1%n is empty!"), 1);
+	format_add("io_toobig", _("%! Size of file %T%1%n exceeds maximum allowed length (at least %c%2%n vs. %c%3%n)!"), 1);
+	format_add("io_binaryfile", _("%! %|WARNING: The file %T%1%n probably contains NULs (is binary), so it can't be properly handled. It will be read until first encountered NUL, i.e. to offset %c%2%n (vs. filesize of %c%3%n)!"), 1);
 
 	/* dns stuff */
 	format_add("dns2_resolved",	_("%) DNS2 RESOLVED %G%1: %W%2%n"), 1);

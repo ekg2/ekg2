@@ -82,14 +82,8 @@
 #include "bindings.h"
 #include "userlistgui.h"
 
-/* extern */
-
-void fe_userlist_numbers(window_t *sess);
-void fe_userlist_clear(window_t *sess);
-void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf *pixmaps);
-
-/* forward */
-void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus);
+#include "maingui.h"
+#include "userlistgui.h"
 
 #if 0
 
@@ -162,7 +156,7 @@ const char *gtk_window_target(window_t *window) {
 	if (window->target)		return window->target;
 	else if (window->id == 1)	return "__status";
 	else if (window->id == 0)	return "__debug";
-        else                            return "";
+	else				return "";
 }
 
 
@@ -240,7 +234,7 @@ int fe_gui_info(window_t *sess, int info_type) {	/* code from fe-gtk.c */
 	/* 2.4.0 -> gtk_window_is_active(GTK_WINDOW(gtk_private_ui(sess)->window))
 	 * 2.2.0 -> GTK_WINDOW(gtk_private_ui(sess)->window)->is_active)
 	 *
-	 * 		return 1
+	 *		return 1
 	 */
 		return 0;		/* normal (no keyboard focus or behind a window) */
 	}
@@ -262,17 +256,19 @@ void fe_flash_window(window_t *sess) {
 void fe_set_tab_color(window_t *sess, int col) {
 	if (!gtk_private_ui(sess)->is_tab)
 		return;
+
+	if (sess == window_current || sess->id == 0)
+		col = 0;	/* XXX */
 	
-//    col value, what todo                                            values                                                  comment.
-//      0: chan_set_color(sess->tab, plain_list);           [new_data = NULL, msg_said = NULL, nick_said = NULL]    /* no particular color (theme default) */
-//      1: chan_set_color(sess->tab, newdata_list);         [new_data = TRUE, msg_said = NULL, nick_said = NULL]    /* new data has been displayed (dark red) */
-//      2: chan_set_color(sess->tab, newmsg_list);          [new_data = NULL, msg_said = TRUE, nick_said = NULL]    /* new message arrived in channel (light red) */
-//      3: chan_set_color(sess->tab, nickseen_list) ;       [new_data = NULL, msg_said = NULL, nick_said = TRUE]    /* your nick has been seen (blue) */    
+//    col value, what todo					      values						      comment.
+//	0: chan_set_color(sess->tab, plain_list);	    [new_data = NULL, msg_said = NULL, nick_said = NULL]    /* no particular color (theme default) */
+//	1: chan_set_color(sess->tab, newdata_list);	    [new_data = TRUE, msg_said = NULL, nick_said = NULL]    /* new data has been displayed (dark red) */
+//	2: chan_set_color(sess->tab, newmsg_list);	    [new_data = NULL, msg_said = TRUE, nick_said = NULL]    /* new message arrived in channel (light red) */
+//	3: chan_set_color(sess->tab, nickseen_list) ;	    [new_data = NULL, msg_said = NULL, nick_said = TRUE]    /* your nick has been seen (blue) */    
 
 	if (col == 0) chan_set_color(gtk_private(sess)->tab, plain_list);
 	if (col == 1) chan_set_color(gtk_private(sess)->tab, newdata_list);
 	if (col == 2) chan_set_color(gtk_private(sess)->tab, newmsg_list);
-
 }
 
 #if 0
@@ -302,14 +298,12 @@ void mg_set_access_icon(gtk_window_ui_t *gui, GdkPixbuf *pix, gboolean away) {
 #endif
 
 static gboolean mg_inputbox_focus(GtkWidget *widget, GdkEventFocus *event, gtk_window_ui_t *gui) {
-	list_t l;
+	window_t *w;
 
 	if (gui->is_tab)
 		return FALSE;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		if (gtk_private(w)->gui == gui) {
 #warning "window_switch() XXX"
 			window_switch(w->id);
@@ -346,11 +340,9 @@ void mg_inputbox_cb(GtkWidget *igad, gtk_window_ui_t *gui) {
 	if (gui->is_tab) {
 		sess = window_current;
 	} else {
-		list_t l;
+		window_t *w;
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (gtk_private_ui(w) == gui) {
 				sess = w;
 				break;
@@ -364,13 +356,16 @@ void mg_inputbox_cb(GtkWidget *igad, gtk_window_ui_t *gui) {
 	if (sess) {
 		command_exec(sess->target, sess->session, cmd, 0);
 
-		gtk_history[0] = cmd;
-		xfree(gtk_history[HISTORY_MAX - 1]);
+		if (config_history_savedups || xstrcmp(cmd, gtk_history[1])) {
+			gtk_history[0] = cmd;
+			xfree(gtk_history[HISTORY_MAX - 1]);
 
-		memmove(&gtk_history[1], &gtk_history[0], sizeof(gtk_history) - sizeof(gtk_history[0]));
+			memmove(&gtk_history[1], &gtk_history[0], sizeof(gtk_history) - sizeof(gtk_history[0]));
 
-		gtk_history_index = 0;
-		gtk_history[0] = NULL;
+			gtk_history_index = 0;
+			gtk_history[0] = NULL;
+		} else
+			xfree(cmd);
 
 		return;
 	}
@@ -579,11 +574,11 @@ static void mg_userlist_toggle_cb(GtkWidget *button, gpointer userdata) {
 	gtk_widget_grab_focus(gtk_private_ui(window_current)->input_box);
 }
 
-static idle_t *ul_tag = NULL;
+static int ul_tag = 0;
 
 /* static */ gboolean mg_populate_userlist(window_t *sess) {
 	gtk_window_ui_t *gui;
-	GdkPixmap *pxs;
+	GdkPixbuf **pxs;
 
 	if (!sess)
 		sess = window_current;
@@ -593,15 +588,33 @@ static idle_t *ul_tag = NULL;
 
 #warning "xchat->ekg2, mg_populate_userlist() xchat here check if param is valid window_t, XXX"
 
-	if (sess->session) {
-		list_t l;
+	if (sess->userlist) {
+		userlist_t *ul;
+		
+		/* XXX, irc_pixs! */
+		pxs = pixs;
+
+		for (ul = sess->userlist; ul; ul = ul->next) {
+			userlist_t *u = ul;
+
+			if (!u || !u->nickname || !u->status)
+				continue;
+
+			fe_userlist_insert(sess, u, pxs);
+		}
+	} else if (sess->session) {
+		userlist_t *ul;
 		
 	/* check what network, and select pixs */
-		if (sess->session->plugin == plugin_find("gg"))	pxs = gg_pixs;
-		else						pxs = pixs;
+		if (sess->session->plugin == plugin_find("gg"))
+			pxs = gg_pixs;
+		else if (sess->session->plugin == plugin_find("icq"))
+			pxs = icq_pixs;
+		else
+			pxs = pixs;
 
-		for (l = sess->session->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
+		for (ul = sess->session->userlist; ul; ul = ul->next) {
+			userlist_t *u = ul;
 
 			if (!u || !u->nickname || !u->status)
 				continue;
@@ -611,7 +624,7 @@ static idle_t *ul_tag = NULL;
 	}
 
 
-//	if (is_session(sess)) 	-> if (window_find_ptr(sess)
+//	if (is_session(sess))	-> if (window_find_ptr(sess)
 	if (1)
 	{
 		gui = gtk_private_ui(sess);
@@ -628,10 +641,10 @@ static idle_t *ul_tag = NULL;
 	return 0;
 }
 
-static IDLER(mg_populate_userlist_idle) {
-	mg_populate_userlist((window_t *) data);
-	ul_tag = NULL;
-	return -1;
+static gboolean mg_populate_userlist_idle(window_t *wnd) { 
+	mg_populate_userlist(wnd);
+	ul_tag = 0;
+	return 0;
 }
 
 /* fill the irc tab with a new channel */
@@ -640,7 +653,7 @@ static IDLER(mg_populate_userlist_idle) {
 	gtk_window_t *res = gtk_private(sess);
 	gtk_window_ui_t *gui = res->gui;
 
-	int i, render = TRUE;
+	int render = TRUE;
 	guint16 vis = gui->ul_hidden;
 
 #if 0
@@ -682,12 +695,10 @@ static IDLER(mg_populate_userlist_idle) {
 	if (gui->is_tab)
 		gtk_notebook_set_current_page(GTK_NOTEBOOK(gui->note_book), 0);
 
-#if 0
 	/* xtext size change? Then don't render, wait for the expose caused
 	   by showing/hidding the userlist */
 	if (vis != gui->ul_hidden && gui->user_box->allocation.width > 1)
 		render = FALSE;
-#endif
 
 	gtk_xtext_buffer_show(GTK_XTEXT(gui->xtext), res->buffer, render);
 	if (gui->is_tab)
@@ -704,8 +715,8 @@ static IDLER(mg_populate_userlist_idle) {
 	if (!gui->is_tab) {
 		mg_populate_userlist(sess);
 	} else {
-		if (ul_tag == NULL)
-			ul_tag = idle_add(&gtk_plugin, mg_populate_userlist_idle, NULL);
+		if (ul_tag == 0)
+			ul_tag = g_idle_add((GSourceFunc) mg_populate_userlist_idle, NULL);
 	}
 	fe_userlist_numbers(sess);
 
@@ -874,18 +885,18 @@ void mg_open_quit_dialog(gboolean minimize_button) {
 	if (config_save_quit == 1) {
 #warning "Display question if user want to /save config"
 /*
-		if (config_changed) 				format_find("config_changed")
+		if (config_changed)				format_find("config_changed")
 		else if (config_keep_reason && reason_changed)	format_find("quit_keep_reason");
 */
 		config_save_quit = 0;
 	}
 
 #warning "xchat->ekg2 XXX"
-	/* 	xchat count dcc's + connected network, and display warning about it.
+	/*	xchat count dcc's + connected network, and display warning about it.
 	 *
-	 * 		"<span weight=\"bold\" size=\"larger\">Are you sure you want to quit?</span>\n
-	 * 			"You are connected to %i IRC networks."
-	 * 			"Some file transfers are still active."
+	 *		"<span weight=\"bold\" size=\"larger\">Are you sure you want to quit?</span>\n
+	 *			"You are connected to %i IRC networks."
+	 *			"Some file transfers are still active."
 	 */
 
 
@@ -1189,7 +1200,7 @@ static gboolean mg_tab_contextmenu_cb(chanview * cv, chan * ch, int tag, gpointe
 static void mg_add_chan(window_t *sess) {
 	GdkPixbuf *icon = NULL;	/* pix_channel || pix_server || pix_dialog */
 
-	gtk_private(sess)->tab = chanview_add(gtk_private_ui(sess)->chanview, gtk_window_target(sess),	/* sess->session, */
+	gtk_private(sess)->tab = chanview_add(gtk_private_ui(sess)->chanview, (char *) gtk_window_target(sess),	/* sess->session, */
 						  sess, FALSE, TAG_IRC, icon);
 	if (plain_list == NULL)
 		mg_create_tab_colors();
@@ -1274,7 +1285,7 @@ static GtkWidget *mg_changui_destroy(window_t *sess) {
 		/*gtk_widget_destroy (sess->gui->window); */
 		/* don't destroy until the new one is created. Not sure why, but */
 		/* it fixes: Gdk-CRITICAL **: gdk_colormap_get_screen: */
-		/*           assertion `GDK_IS_COLORMAP (cmap)' failed */
+		/*	     assertion `GDK_IS_COLORMAP (cmap)' failed */
 		ret = gtk_private_ui(sess)->window;
 		free(gtk_private_ui(sess));
 		gtk_private(sess)->gui = NULL;
@@ -1296,29 +1307,25 @@ static void mg_link_irctab(window_t *sess, int focus) {
 			gtk_widget_destroy(win);
 		return;
 	}
-#if 0
-	mg_unpopulate(sess);
+
 	win = mg_changui_destroy(sess);
-	mg_changui_new(sess, sess->res, 1, focus);
+	mg_changui_new(sess, gtk_private(sess), 1, focus);
 	/* the buffer is now attached to a different widget */
-	((xtext_buffer *) sess->res->buffer)->xtext = (GtkXText *) sess->gui->xtext;
+	((xtext_buffer *) gtk_private(sess)->buffer)->xtext = (GtkXText *) gtk_private_ui(sess)->xtext;
 	if (win)
 		gtk_widget_destroy(win);
-#endif
 }
 
-#if 0
-
-void mg_detach(session *sess, int mode) {
+void mg_detach(window_t *sess, int mode) {
 	switch (mode) {
 		/* detach only */
 	case 1:
-		if (sess->gui->is_tab)
+		if (gtk_private_ui(sess)->is_tab)
 			mg_link_irctab(sess, 1);
 		break;
 		/* attach only */
 	case 2:
-		if (!sess->gui->is_tab)
+		if (!gtk_private_ui(sess)->is_tab)
 			mg_link_irctab(sess, 1);
 		break;
 		/* toggle */
@@ -1326,8 +1333,6 @@ void mg_detach(session *sess, int mode) {
 		mg_link_irctab(sess, 1);
 	}
 }
-
-#endif
 
 static void mg_apply_entry_style(GtkWidget *entry) {
 	gtk_widget_modify_base(entry, GTK_STATE_NORMAL, &colors[COL_BG]);
@@ -1448,7 +1453,7 @@ mg_update_xtext(GtkWidget *wid)
 	gtk_xtext_set_palette(xtext, colors);
 	gtk_xtext_set_max_lines(xtext, backlog_size_config);
 	gtk_xtext_set_tint(xtext, tint_red_config, tint_green_config, tint_blue_config);
-//      gtk_xtext_set_background (xtext, channelwin_pix, transparent_config);
+//	gtk_xtext_set_background (xtext, channelwin_pix, transparent_config);
 	gtk_xtext_set_wordwrap(xtext, wordwrap_config);
 	gtk_xtext_set_show_marker(xtext, show_marker_config);
 	gtk_xtext_set_show_separator(xtext, indent_nicks_config ? show_separator_config : 0);
@@ -1470,10 +1475,10 @@ mg_xtext_error(int type)
 	printf("mg_xtext_error() %d\n", type);
 
 	/* @ type == 0 "Unable to set transparent background!\n\n"
-	 *              "You may be using a non-compliant window\n"
-	 *              "manager that is not currently supported.\n"), FE_MSG_WARN);
+	 *		"You may be using a non-compliant window\n"
+	 *		"manager that is not currently supported.\n"), FE_MSG_WARN);
 	 *
-	 *              config_transparent = 0; 
+	 *		config_transparent = 0; 
 	 */
 }
 
@@ -1558,8 +1563,7 @@ mg_rightpane_cb(GtkPaned * pane, GParamSpec * param, gtk_window_ui_t* gui)
 		GTK_WIDGET(pane)->allocation.width - gtk_paned_get_position(pane) - handle_size;
 }
 
-static IDLER(mg_add_pane_signals) {
-	gtk_window_ui_t *gui = data;
+static gboolean mg_add_pane_signals(gtk_window_ui_t *gui) {
 	g_signal_connect(G_OBJECT(gui->hpane_right), "notify::position",
 			 G_CALLBACK(mg_rightpane_cb), gui);
 	g_signal_connect(G_OBJECT(gui->hpane_left), "notify::position",
@@ -1614,13 +1618,13 @@ mg_create_center(window_t *sess, gtk_window_ui_t *gui, GtkWidget *box)
 	mg_create_textarea(sess, vbox);
 	mg_create_entry(sess, vbox);
 
-	idle_add(&gtk_plugin, mg_add_pane_signals, gui);
+	g_idle_add((GSourceFunc) mg_add_pane_signals, gui);
 }
 
 static void mg_sessionclick_cb(GtkWidget *button, gpointer userdata) {
 #warning "xchat->ekg2: mg_sessionclick_cb() XXX, change session using this [like ^X] implement"
 	/* xchat: 
-	 *      fe_get_str (_("Enter new nickname:"), current_sess->server->nick, mg_change_nick, NULL);
+	 *	fe_get_str (_("Enter new nickname:"), current_sess->server->nick, mg_change_nick, NULL);
 	 */
 }
 
@@ -1667,6 +1671,9 @@ mg_place_userlist_and_chanview_real(gtk_window_ui_t *gui, GtkWidget *userlist, G
 	}
 
 	if (chanview) {
+		/* incase the previous pos was POS_HIDDEN */
+		gtk_widget_show(chanview);
+
 		gtk_table_set_row_spacing(GTK_TABLE(gui->main_table), 1, 0);
 		gtk_table_set_row_spacing(GTK_TABLE(gui->main_table), 2, 2);
 
@@ -1690,6 +1697,12 @@ mg_place_userlist_and_chanview_real(gtk_window_ui_t *gui, GtkWidget *userlist, G
 					 1, 2, 1, 2, GTK_FILL, GTK_FILL, 0, 0);
 			break;
 		case POS_HIDDEN:
+			gtk_widget_hide(chanview);
+			/* always attach it to something to avoid ref_count=0 */
+			if (gui_ulist_pos_config == POS_TOP)
+				gtk_table_attach(GTK_TABLE(gui->main_table), chanview, 1, 2, 3, 4, GTK_FILL, GTK_FILL, 0, 0);
+			else
+				gtk_table_attach(GTK_TABLE(gui->main_table), chanview, 1, 2, 1, 2, GTK_FILL, GTK_FILL, 0, 0);
 			break;
 		default:	/* POS_BOTTOM */
 			gtk_table_set_row_spacing(GTK_TABLE(gui->main_table), 2, 3);
@@ -1709,8 +1722,8 @@ mg_place_userlist_and_chanview_real(gtk_window_ui_t *gui, GtkWidget *userlist, G
 		case POS_BOTTOMRIGHT:
 			gtk_paned_pack2(GTK_PANED(gui->vpane_right), userlist, FALSE, TRUE);
 			break;
-		case POS_HIDDEN:
-			break;
+		/* case POS_HIDDEN:
+			break; */	/* Hide using the VIEW menu instead */
 		default:	/* POS_TOPRIGHT */
 			gtk_paned_pack1(GTK_PANED(gui->vpane_right), userlist, FALSE, TRUE);
 		}
@@ -2048,13 +2061,11 @@ static void mg_create_tabwindow(window_t *sess) {
 
 void mg_apply_setup(void) {
 	int done_main = FALSE;
-	list_t l;
+	window_t *w;
 
 	mg_create_tab_colors();
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		gtk_xtext_set_time_stamp(gtk_private(w)->buffer, config_timestamp_show);
 		((xtext_buffer *) gtk_private(w)->buffer)->needs_recalc = TRUE;
 
@@ -2148,11 +2159,9 @@ fe_dlgbuttons_update(window_t *sess)
 #endif
 
 void fe_set_away(session_t * serv) {
-	list_t l;
+	window_t *w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		if (w->session == serv) {
 #if DARK
 			if (!sess->gui->is_tab || sess == current_tab) {
@@ -2168,7 +2177,7 @@ void fe_set_away(session_t * serv) {
 
 void fe_set_channel(window_t *sess) {
 	if (gtk_private(sess)->tab != NULL)
-		chan_rename(gtk_private(sess)->tab, gtk_window_target(sess), truncchans_config);
+		chan_rename(gtk_private(sess)->tab, (char *) gtk_window_target(sess), truncchans_config);
 }
 
 void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus) {

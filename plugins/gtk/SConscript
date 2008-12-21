@@ -1,0 +1,51 @@
+
+import glob
+
+Import('*')
+
+try:
+	env
+except NameError:
+	pass
+else:
+	plugin	= {
+		'type':			'ui',
+		'state':		'unstable',
+		'depends':		['gtk+']
+		}
+
+	Return('plugin')
+
+try:
+	penv
+except NameError:
+	pass
+else:
+	def InlinePNGGen(target, source, env, for_signature):
+		src = []
+		for f in source:
+			src.append(str(f)[str(f).rindex('/') + 1:-4].replace('-', '_'))
+			src.append(str(f))
+		return 'gdk-pixbuf-csource --raw --build-list %s > "%s"' % (' '.join(src), target[0])
+
+	pnggen = Builder(generator = InlinePNGGen, suffix = '.h', src_suffix = '.png')
+
+	Import('*')
+
+	pngs	= {}
+	for f in glob.glob('iconssets/*.png'):
+		dash = f.find('-')
+		if dash > 0:
+			key = '_%s' % f[10:dash]
+		else:
+			key = ''
+
+		if not key in pngs:
+			pngs[key] = []
+		pngs[key].append(f)
+
+	penv['BUILDERS']['InlinePNGGen'] = pnggen
+	for key, vals in pngs.items():
+		penv.InlinePNGGen('inline_pngs%s.h' % key, vals)
+
+# vim:ts=4:sts=4:sw=4:syntax=python:sw=4:syntax=python

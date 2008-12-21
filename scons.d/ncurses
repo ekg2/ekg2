@@ -1,0 +1,46 @@
+
+# ncurses
+
+Import('*')
+
+out = False
+if env['UNICODE']:
+	nc_lib = 'ncursesw'
+	out = conf.CheckLibWithHeader(nc_lib, ['ncursesw/ncurses.h'], 'C', 'initscr();', 0)
+
+if not out:
+	nc_lib = 'ncurses'
+	out = conf.CheckLibWithHeader(nc_lib, ['ncurses/ncurses.h'], 'C', 'initscr();', 0)
+	defines['HAVE_NCURSES_NCURSES_H'] = out
+	if not out:
+		out = conf.CheckLibWithHeader('ncurses', ['ncurses.h'], 'C', 'initscr();', 0)
+		defines['HAVE_NCURSES_H'] = out
+	
+	if out and env['UNICODE']:
+		warnings.append('''Compiling with UNICODE=1, but ncurses without unicode support. You can either:
+a) install *ncursesw* using your favourite package manager,
+b) compile ncurses with --enable-widec,
+c) set UNICODE=0 to compile non-unicode ekg2,
+d) leave it as is and have ekg2 without ncurses plugin.''')
+		out = False
+
+if out:
+	libs.append(nc_lib)
+	defines['HAVE_NCURSES_ULC'] = conf.CheckLib(nc_lib, 'use_legacy_coding', None, None, 0)
+	defines['HAVE_NCURSES_TERMINFO'] = conf.CheckLib(nc_lib, 'tigetstr', None, None, 0)
+
+		# XXX: crosscompiling?
+	out2 = True
+	for term in ['xterm', 'screen']:
+		termcaps = []
+		if not conf.PkgConfig('-T%s' % term, None, termcaps, 'tput', 'kmous') or termcaps[0] == '':
+			out2 = False
+	defines['HAVE_USABLE_TERMINFO'] = out2
+
+	if not out2:
+		warnings.append('Your terminfo database is unusable. Please update it.')
+
+defines['HAVE_NCURSES'] = out # used by core, I think the use is stupid
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python

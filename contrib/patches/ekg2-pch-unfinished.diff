@@ -1,0 +1,1538 @@
+Index: ekg/xmalloc.c
+===================================================================
+--- ekg/xmalloc.c	(wersja 4521)
++++ ekg/xmalloc.c	(kopia robocza)
+@@ -28,47 +28,8 @@
+  * Makro fix(s) zosta³o w³a¶nie stworzone w tym celu 
+  */
+ 
+-#define _GNU_SOURCE
++#include "ekg.h"
+ 
+-#include "ekg2-config.h"
+-#include "win32.h"
+-
+-#define __EXTENSIONS__
+-#include <sys/types.h>
+-#include <stddef.h>
+-
+-#include <stdarg.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-
+-
+-#include <string.h>
+-#include <strings.h>
+-#include <unistd.h>
+-
+-#include "configfile.h"
+-#include "stuff.h"
+-#include "userlist.h"
+-#include "xmalloc.h"
+-
+-#ifdef NO_POSIX_SYSTEM
+-#include <winbase.h>
+-
+-#define strcasecmp(s1, s2) lstrcmpiA(s1, s2)
+-#endif
+-
+-#ifndef HAVE_STRNDUP
+-#  include "compat/strndup.h"
+-#endif
+-
+-#ifndef HAVE_STRNLEN
+-#  include "compat/strnlen.h"
+-#endif
+-
+-#ifndef HAVE_STRFRY
+-#  include "compat/strfry.h"
+-#endif
+-
+ #define fix(s) ((s) ? (s) : "")
+ 
+ void ekg_oom_handler()
+Index: ekg/msgqueue.h
+===================================================================
+--- ekg/msgqueue.h	(wersja 4521)
++++ ekg/msgqueue.h	(kopia robocza)
+@@ -21,12 +21,6 @@
+ #ifndef __EKG_MSGQUEUE_H
+ #define __EKG_MSGQUEUE_H
+ 
+-#include <sys/types.h>
+-#include <time.h>
+-
+-#include "dynstuff.h"
+-#include "protocol.h"
+-
+ typedef struct msg_queue {
+ 	struct msg_queue	*next;
+ 
+Index: ekg/commands.c
+===================================================================
+--- ekg/commands.c	(wersja 4521)
++++ ekg/commands.c	(kopia robocza)
+@@ -27,84 +27,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
+-#include "win32.h"
++#include "ekg.h"
+ 
+-#ifndef __FreeBSD__
+-#define _XOPEN_SOURCE 600
+-#define __EXTENSIONS__
+-#endif
+-
+-#define _BSD_SOURCE
+-
+-#include <sys/types.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/ioctl.h>
+-#include <sys/socket.h>
+-#endif
+-
+-#include <sys/stat.h>
+-#include <sys/time.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/un.h>
+-#include <netinet/in.h>
+-#include <arpa/inet.h>
+-#endif
+-
+-#include <dirent.h>
+-#include <errno.h>
+-#include <fcntl.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <time.h>
+-#include <unistd.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/utsname.h>
+-#endif
+-
+-#ifdef __sun
+-#include <procfs.h>
+-#endif
+-
+-#ifdef __FreeBSD__
+-# include <kvm.h>		/* kvm_ funcs */
+-# include <limits.h>		/* _POSIX2_LINE_MAX */
+-# include <sys/param.h>
+-# include <sys/sysctl.h>	/* KERN_PROC_PID */
+-# include <sys/user.h>
+-#endif
+-
+-#include "commands.h"
+-#include "debug.h"
+-#include "events.h"
+-#include "configfile.h"
+-#include "dynstuff.h"
+-#include "log.h"
+-#include "metacontacts.h"
+-#include "msgqueue.h"
+-#include "protocol.h"
+-#include "sessions.h"
+-#ifndef HAVE_STRLCAT
+-#  include "compat/strlcat.h"
+-#endif
+-#ifndef HAVE_STRLCPY
+-#  include "compat/strlcpy.h"
+-#endif
+-#include "stuff.h"
+-#include "themes.h"
+-#include "vars.h"
+-#include "userlist.h"
+-#include "scripts.h"
+-#include "windows.h"
+-#include "xmalloc.h"
+-#include "net.h"
+-#include "queries.h"
+-#include "dynstuff_inline.h"
+-
+ char *send_nicks[SEND_NICKS_MAX] = { NULL };
+ int send_nicks_count = 0, send_nicks_index = 0;
+ static int quit_command = 0;
+Index: ekg/dynstuff.c
+===================================================================
+--- ekg/dynstuff.c	(wersja 4521)
++++ ekg/dynstuff.c	(kopia robocza)
+@@ -18,16 +18,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include <errno.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <stdarg.h>
+-#include <string.h>
++#include "ekg.h"
+ 
+-#include "dynstuff.h"
+-#include "dynstuff_inline.h"
+-#include "xmalloc.h"
+-
+ /*
+  * list_add_sorted()
+  *
+Index: ekg/win32.c
+===================================================================
+--- ekg/win32.c	(wersja 4521)
++++ ekg/win32.c	(kopia robocza)
+@@ -1,17 +1,7 @@
+-#include "win32.h"
++#include "ekg.h"
+ 
+ #ifdef NO_POSIX_SYSTEM
+ 
+-#include <stdio.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <unistd.h>
+-#include <errno.h>
+-
+-#include <winbase.h>
+-
+-#include "debug.h"
+-
+ #define ERRNO_NOT 0	/* not implemented */
+ 
+ HANDLE win32_fork(thread_func_t addr, void *data) {
+Index: ekg/xmalloc.h
+===================================================================
+--- ekg/xmalloc.h	(wersja 4521)
++++ ekg/xmalloc.h	(kopia robocza)
+@@ -21,16 +21,6 @@
+ #ifndef __EKG_XMALLOC_H
+ #define __EKG_XMALLOC_H
+ 
+-#include <sys/types.h>
+-#include <stddef.h>
+-#include <stdarg.h>
+-
+-#ifndef __USE_POSIX
+-    #define __USE_POSIX 1	/* glibc 2.8 */
+-#endif
+-#define _XOPEN_SOURCE 600
+-#include <limits.h>
+-
+ #define __(x) (x ? x : "(null)")
+ 
+ /* stolen from: http://sourcefrog.net/weblog/software/languages/C/unused.html */
+Index: ekg/commands.h
+===================================================================
+--- ekg/commands.h	(wersja 4521)
++++ ekg/commands.h	(kopia robocza)
+@@ -21,11 +21,6 @@
+ #ifndef __EKG_COMMANDS_H
+ #define __EKG_COMMANDS_H
+ 
+-#include "dynstuff.h"
+-#include "plugins.h"
+-#include "themes.h"
+-#include "sessions.h"
+-
+ #define printq(x...) do { if (!quiet) { print(x); } } while(0)
+ 
+ #define COMMAND(x) int x(const char *name, const char **params, session_t *session, const char *target, int quiet)
+Index: ekg/win32.h
+===================================================================
+--- ekg/win32.h	(wersja 4521)
++++ ekg/win32.h	(kopia robocza)
+@@ -1,15 +1,6 @@
+-#ifdef __MINGW32__
+-# define NO_POSIX_SYSTEM "mingw"
+-#else
+-# define EKG2_WIN32_H
+-# undef NO_POSIX_SYSTEM
+-#endif
+-
+ #ifndef EKG2_WIN32_H
+ #define EKG2_WIN32_H
+ 
+-#include "ekg2-config.h"
+-
+ #ifdef PLUGIN_SHARED_LIBS
+ # define EKG2_WIN32_SHARED_LIB "da! we want shared libs...... DLL's HELL! :> yeah, let's rock."
+ # define EKG2_WIN32_HELPERS
+@@ -21,16 +12,6 @@
+ 	typedef unsigned char uint8_t;
+ #endif
+ 
+-#include <windef.h>
+-#include <stdint.h>
+-#include <stdlib.h>
+-#include <winsock2.h>
+-#include <ws2tcpip.h>
+-
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <unistd.h>
+-
+ #undef pipe
+ typedef unsigned __int64 u_int64_t;
+ 
+@@ -51,7 +32,6 @@
+ #ifdef EKG2_WIN32_SHARED_LIB
+ # define EKG2_WIN32_NOFUNCTION 1
+ # error "Currently --enable-shared don't work automagicly pass --enable-static to ./configure if you really want. contact with me. (jid:darkjames@chrome.pl)"
+-# include "win32_helper.h"
+ #endif
+ 
+ #define THREAD(x) DWORD x(void *data)
+Index: ekg/vars.c
+===================================================================
+--- ekg/vars.c	(wersja 4521)
++++ ekg/vars.c	(kopia robocza)
+@@ -20,30 +20,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
+-#include "win32.h"
++#include "ekg.h"
+ 
+-#include <stdarg.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <unistd.h>
+-
+-#if HAVE_LANGINFO_CODESET
+-#include <langinfo.h>
+-#endif
+-
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "stuff.h"
+-#include "themes.h"
+-#include "vars.h"
+-#include "xmalloc.h"
+-#include "plugins.h"
+-
+-#include "dynstuff_inline.h"
+-#include "queries.h"
+-
+ void changed_session_locks(const char *varname); /* sessions.c */
+ char *console_charset;
+ 
+Index: ekg/vars.h
+===================================================================
+--- ekg/vars.h	(wersja 4521)
++++ ekg/vars.h	(kopia robocza)
+@@ -20,9 +20,6 @@
+ #ifndef __EKG_VARS_H
+ #define __EKG_VARS_H
+ 
+-#include "dynstuff.h"
+-#include "plugins.h"
+-
+ typedef enum {
+ 	VAR_STR,		/* ci±g znaków */
+ 	VAR_INT,		/* liczba ca³kowita */
+Index: ekg/queries.h
+===================================================================
+--- ekg/queries.h	(wersja 4521)
++++ ekg/queries.h	(kopia robocza)
+@@ -70,7 +70,7 @@
+ 	QUERY_EXTERNAL,
+ };
+ 
+-#ifdef __DECLARE_QUERIES_STUFF
++#ifdef __DECLARE_QUERIES_STUFF /* XXX: move it to .c */
+ #undef __DECLARE_QUERIES_STUFF
+ 
+ /* list of known queries. keep it sorted with enum. */
+Index: ekg/themes.c
+===================================================================
+--- ekg/themes.c	(wersja 4521)
++++ ekg/themes.c	(kopia robocza)
+@@ -19,28 +19,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#define _XOPEN_SOURCE 600
+-#include <limits.h>
+-#include <stdarg.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <unistd.h>
+-#include <errno.h>
+-
+-#include "dynstuff.h"
+-#include "stuff.h"
+-#include "themes.h"
+-#include "xmalloc.h"
+-#include "windows.h"
+-#include "userlist.h"
+-
+-#include "debug.h"
+-#include "dynstuff_inline.h"
+-#include "queries.h"
+-
+ static char *prompt_cache = NULL, *prompt2_cache = NULL, *error_cache = NULL;
+ static const char *timestamp_cache = NULL;
+ 
+Index: ekg/scripts.c
+===================================================================
+--- ekg/scripts.c	(wersja 4521)
++++ ekg/scripts.c	(kopia robocza)
+@@ -1,33 +1,6 @@
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#ifndef __FreeBSD__
+-#define _XOPEN_SOURCE 600
+-#define __EXTENSIONS__
+-#endif
+-
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-
+-#include <stdio.h>
+-#include <dirent.h>
+-#include <errno.h>
+-#include <string.h>
+-#include <unistd.h>
+-
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "dynstuff_inline.h"
+-#include "scripts.h"
+-#include "xmalloc.h"
+-
+-#include "commands.h"	/* commands */
+-#include "protocol.h"	/* queries */
+-#include "stuff.h"	/* timer */
+-#include "vars.h"	/* vars */
+-
+-#include "queries.h"
+-
+ /* TODO && BUGS 
+  * - cleanup.
+  * - multiple handler for commands && var_changed. 
+Index: ekg/strings.c
+===================================================================
+--- ekg/strings.c	(wersja 4521)
++++ ekg/strings.c	(kopia robocza)
+@@ -22,24 +22,10 @@
+  * Ekg2 char and string utilities with wide character strings support.
+  */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+ #if USE_UNICODE
+ 
+-#include "strings.h"
+-
+-/* some unicode/ascii stuff */
+-#include <string.h>	/* ascii stuff */
+-#include <stdlib.h>	/* ascii <==> wchar_t stuff */
+-#include <errno.h>
+-
+-#ifndef HAVE_STRLCPY
+-#  include "compat/strlcpy.h"
+-#endif
+-
+-#include <ekg/dynstuff.h>
+-#include <ekg/xmalloc.h>
+-
+ /* stringo-naprawiacz, taki jak ufix() w xmalloc */
+ #define ufix(x)	((wchar_t *) x ? (wchar_t *) x : (wchar_t *) L"")
+ 
+Index: ekg/themes.h
+===================================================================
+--- ekg/themes.h	(wersja 4521)
++++ ekg/themes.h	(kopia robocza)
+@@ -20,15 +20,9 @@
+ #ifndef __EKG_THEMES_H
+ #define __EKG_THEMES_H
+ 
+-#include "strings.h"
+-
+-#include "gettext.h" 
+ #define _(a) gettext(a)
+ #define N_(a) gettext_noop(a)
+ 
+-#include "dynstuff.h"
+-#include "sessions.h"
+-
+ typedef struct {
+ 	union {
+ 		char	*b;			/* possibly multibyte string */
+Index: ekg/windows.c
+===================================================================
+--- ekg/windows.c	(wersja 4521)
++++ ekg/windows.c	(kopia robocza)
+@@ -19,31 +19,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#include <sys/types.h>
+-
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <unistd.h>
+-
+-#ifdef HAVE_REGEX_H
+-#	include <regex.h>
+-#endif
+-
+-#include "commands.h"
+-#include "dynstuff.h"
+-#include "windows.h"
+-#include "userlist.h"
+-#include "sessions.h"
+-#include "themes.h"
+-#include "stuff.h"
+-#include "xmalloc.h"
+-
+-#include "dynstuff_inline.h"
+-#include "queries.h"
+-
+ int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
+ 
+ window_t *windows = NULL;		/* lista okien */
+Index: ekg/scripts.h
+===================================================================
+--- ekg/scripts.h	(wersja 4521)
++++ ekg/scripts.h	(kopia robocza)
+@@ -1,14 +1,6 @@
+ #ifndef EKG_SCRIPTS_H
+ #define EKG_SCRIPTS_H
+-#include <sys/types.h>
+ 
+-#include "commands.h"
+-#include "plugins.h"
+-#include "protocol.h"
+-#include "stuff.h"
+-#include "vars.h"
+-#include "queries.h"
+-
+ #define SCRIPT_HANDLE_UNBIND	-666
+ #define MAX_ARGS QUERY_ARGS_MAX+1
+ 
+Index: ekg/objects.h
+===================================================================
+--- ekg/objects.h	(wersja 4521)
++++ ekg/objects.h	(kopia robocza)
+@@ -20,8 +20,6 @@
+ #ifndef __EKG_OBJECTS_H
+ #define __EKG_OBJECTS_H
+ 
+-#include "xmalloc.h"
+-
+ #define PROPERTY_INT_GET(object,property,type) \
+ 	\
+ 	type object##_##property##_get(object##_t *o) \
+Index: ekg/strings.h
+===================================================================
+--- ekg/strings.h	(wersja 4521)
++++ ekg/strings.h	(kopia robocza)
+@@ -21,15 +21,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
+-
+-
+ #if USE_UNICODE
+ 
+-#include <wchar.h>		/* wchar_t stuff */
+-
+-extern int config_use_unicode;	/* not everyone want to include stuff.h */
+-
+ #define CHAR_T wchar_t	
+ #define TEXT(x) (wchar_t *) L##x
+ #define CHAR(x) (wchar_t)   L##x
+@@ -53,8 +46,6 @@
+ 
+ #else	/* USE_UNICODE */
+ 
+-#include <ekg/xmalloc.h>
+-
+ #define CHAR_T unsigned char
+ #define TEXT(x) x
+ #define CHAR(x) x
+Index: ekg/windows.h
+===================================================================
+--- ekg/windows.h	(wersja 4521)
++++ ekg/windows.h	(kopia robocza)
+@@ -21,18 +21,6 @@
+ #ifndef __EKG_WINDOWS_H
+ #define __EKG_WINDOWS_H
+ 
+-#include "ekg2-config.h"
+-
+-#include "commands.h"
+-#include "dynstuff.h"
+-#include "sessions.h"
+-#include "themes.h"
+-
+-#ifdef HAVE_REGEX_H
+-#include <sys/types.h>
+-#include <regex.h>
+-#endif
+-
+ typedef struct {
+ 	void *w;			/* window, if NULL it means current */
+ 	int casense		: 2;	/* 0 - ignore case; 1 - don't ignore case, -1 - use global variable */
+Index: ekg/emoticons.c
+===================================================================
+--- ekg/emoticons.c	(wersja 4521)
++++ ekg/emoticons.c	(kopia robocza)
+@@ -21,16 +21,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#include <sys/types.h>
+-#include <stdio.h>
+-
+-#include "dynstuff.h"
+-#include "dynstuff_inline.h"
+-#include "stuff.h"
+-#include "xmalloc.h"
+-
+ typedef struct emoticon {
+ 	struct emoticon *next;
+ 
+Index: ekg/audio.c
+===================================================================
+--- ekg/audio.c	(wersja 4521)
++++ ekg/audio.c	(kopia robocza)
+@@ -17,27 +17,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include <stdarg.h>
+-#include <stdlib.h>
+-#include <unistd.h>
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#include <fcntl.h>
+-#include <string.h>
+-#include <errno.h>
++#include "ekg.h"
+ 
+-#include "audio.h"
+-#include "commands.h"
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "dynstuff_inline.h"
+-#include "plugins.h"
+-#include "themes.h"
+-#include "stuff.h"
+-#include "xmalloc.h"
+-
+-#include "audio_wav.h"
+-
+ codec_t *audio_codecs;
+ audio_t *audio_inputs;
+ stream_t *streams;
+Index: ekg/protocol.c
+===================================================================
+--- ekg/protocol.c	(wersja 4521)
++++ ekg/protocol.c	(kopia robocza)
+@@ -20,39 +20,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
+-#include "win32.h"
++#include "ekg.h"
+ 
+-#include <stdio.h>
+-#include <sys/types.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/socket.h>
+-#include <netinet/in.h>
+-#include <arpa/inet.h>
+-#endif
+-
+-#include <string.h>
+-
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "dynstuff_inline.h"
+-#include "xmalloc.h"
+-
+-#include "commands.h"
+-#include "emoticons.h"
+-#include "objects.h"
+-#include "userlist.h"
+-#include "windows.h"
+-
+-#include "log.h"
+-#include "msgqueue.h"
+-#include "protocol.h"
+-#include "stuff.h"
+-#include "themes.h"
+-
+-#include "queries.h"
+-
+ static int auto_find_limit = 100; /* counter of persons who we were looking for when autofind */
+ dcc_t *dccs = NULL;
+ 
+Index: ekg/events.c
+===================================================================
+--- ekg/events.c	(wersja 4521)
++++ ekg/events.c	(kopia robocza)
+@@ -17,29 +17,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <unistd.h>
+-#include <time.h>
+-
+-#include "commands.h"
+-#include "debug.h"
+-#include "events.h"
+-#include "plugins.h"
+-#include "sessions.h"
+-#include "userlist.h"
+-#include "stuff.h"
+-#include "xmalloc.h"
+-
+-#include "themes.h"
+-#include "windows.h"
+-
+-#include "queries.h"
+-#include "dynstuff_inline.h"
+-
+ event_t *events = NULL;
+ 
+ static LIST_ADD_COMPARE(event_add_compare, event_t *) { return data1->id - data2->id; }
+Index: ekg/dynstuff_inline.h
+===================================================================
+--- ekg/dynstuff_inline.h	(wersja 4521)
++++ ekg/dynstuff_inline.h	(kopia robocza)
+@@ -6,11 +6,7 @@
+ #define DYNSTUFF_USE_LIST3 1
+ 
+ #if DYNSTUFF_USE_LIST3
+-# include <ekg/dynstuff.h>
+-#endif
+ 
+-#if DYNSTUFF_USE_LIST3
+-
+ #define __DYNSTUFF_LIST_ADD(lista, typ, __notused)		\
+ 	void lista##_add(typ *new) { list_add3((list_t *) (void *) &lista, (list_t) new); }
+ 
+Index: ekg/configfile.c
+===================================================================
+--- ekg/configfile.c	(wersja 4521)
++++ ekg/configfile.c	(kopia robocza)
+@@ -22,36 +22,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
+-#include "win32.h"
++#include "ekg.h"
+ 
+-#ifndef __FreeBSD__
+-#define _XOPEN_SOURCE 600
+-#define __EXTENSIONS__
+-#endif
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-
+-#include <limits.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <unistd.h>
+-#include <string.h>
+-#include <errno.h>
+-
+-#include "commands.h"
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "events.h"
+-#include "metacontacts.h"
+-#include "stuff.h"
+-#include "vars.h"
+-#include "xmalloc.h"
+-#include "plugins.h"
+-#include "windows.h"
+-
+-#include "queries.h"
+-
+ /* function inside legacyconfig.c */
+ void config_upgrade();
+ 
+Index: ekg/audio.h
+===================================================================
+--- ekg/audio.h	(wersja 4521)
++++ ekg/audio.h	(kopia robocza)
+@@ -20,9 +20,6 @@
+ #ifndef __EKG_AUDIO_H
+ #define __EKG_AUDIO_H
+ 
+-#include "dynstuff.h"
+-#include "plugins.h"
+-
+ typedef enum { AUDIO_CONTROL_INIT = 0, AUDIO_CONTROL_SET, AUDIO_CONTROL_GET, AUDIO_CONTROL_DEINIT, AUDIO_CONTROL_HELP }
+ 			audio_control_t;
+ typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, } 
+Index: ekg/ekg.c
+===================================================================
+--- ekg/ekg.c	(wersja 4522)
++++ ekg/ekg.c	(kopia robocza)
+@@ -23,89 +23,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
+-#include "win32.h"
++#include "ekg.h"
+ 
+-#ifndef __FreeBSD__
+-#define _XOPEN_SOURCE 600
+-#define __EXTENSIONS__
+-#endif
+-#include <sys/types.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/ioctl.h>
+-#endif
+-
+-#include <sys/stat.h>
+-#define __USE_BSD
+-#include <sys/time.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/wait.h>
+-#include <sys/socket.h>
+-#include <netinet/in.h>
+-#include <arpa/inet.h>
+-#include <sys/resource.h>	/* rlimit */
+-#endif
+-
+-#include <sys/select.h>
+-
+-#include <dirent.h>
+-#include <errno.h>
+-#include <fcntl.h>
+-#ifdef HAVE_GETOPT_LONG
+-#  include <getopt.h>
+-#else
+-#  include "compat/getopt.h"
+-#endif
+-#include <limits.h>
+-#include <locale.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <pwd.h>
+-#else
+-#include <lm.h>
+-#endif
+-
+-#ifdef NO_POSIX_SYSTEM
+-#include <winbase.h>
+-#include <wingdi.h>
+-#include <winuser.h>
+-#endif
+-
+-#include <signal.h>
+-#include <stdarg.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <time.h>
+-#include <unistd.h>
+-
+-#include "audio.h"
+-#include "commands.h"
+-#include "debug.h"
+-#include "events.h"
+-#include "configfile.h"
+-#include "emoticons.h"
+-#include "log.h"
+-#include "metacontacts.h"
+-#include "msgqueue.h"
+-#include "plugins.h"
+-#include "protocol.h"
+-#ifndef HAVE_STRLCPY
+-#  include "compat/strlcpy.h"
+-#endif
+-#include "sessions.h"
+-#include "stuff.h"
+-#include "themes.h"
+-#include "userlist.h"
+-#include "scripts.h"
+-#include "vars.h"
+-#include "windows.h"
+-#include "xmalloc.h"
+-
+-#include "queries.h"
+-
+ char *config_dir;
+ int mesg_startup;
+ int ekg_watches_removed;
+Index: ekg/protocol.h
+===================================================================
+--- ekg/protocol.h	(wersja 4521)
++++ ekg/protocol.h	(kopia robocza)
+@@ -20,16 +20,6 @@
+ #ifndef __EKG_PROTOCOL_H
+ #define __EKG_PROTOCOL_H
+ 
+-#include "ekg2-config.h"
+-
+-#include "dynstuff.h"
+-#include "sessions.h"
+-#include <stdarg.h>
+-#include <stdint.h>
+-#include <time.h>
+-#include <stdlib.h> /* size_t */
+-#include <sys/types.h> /* off_t */
+-
+ #define EKG_FORMAT_RGB_MASK 0x00ffffffL	/* 0x00BBGGRR */
+ #define EKG_FORMAT_R_MASK 0x00ff0000L
+ #define EKG_FORMAT_G_MASK 0x0000ff00L
+Index: ekg/sessions.c
+===================================================================
+--- ekg/sessions.c	(wersja 4521)
++++ ekg/sessions.c	(kopia robocza)
+@@ -18,38 +18,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <unistd.h>
+-
+-#include <errno.h>
+-#include <fcntl.h>
+-#include <sys/file.h>
+-#include <sys/stat.h>
+-#include <sys/types.h>
+-
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "sessions.h"
+-#include "stuff.h"
+-#include "themes.h"
+-#include "userlist.h"
+-#include "vars.h"
+-#include "windows.h"
+-#include "xmalloc.h"
+-
+-#include "dynstuff_inline.h"
+-#include "objects.h"
+-
+-#ifndef HAVE_STRLCPY
+-#  include "compat/strlcpy.h"
+-#endif
+-
+-#include "queries.h"
+-
+ session_t *sessions = NULL;
+ 
+ static LIST_ADD_COMPARE(session_compare, session_t *) { return xstrcasecmp(data1->uid, data2->uid); }
+Index: ekg/events.h
+===================================================================
+--- ekg/events.h	(wersja 4521)
++++ ekg/events.h	(kopia robocza)
+@@ -20,10 +20,6 @@
+ #ifndef __EKG_EVENTS_H
+ #define __EKG_EVENTS_H
+ 
+-#include "dynstuff.h"
+-#include "plugins.h"
+-#include "stuff.h"
+-
+ typedef struct event {
+ 	struct event *next;
+ 
+Index: ekg/configfile.h
+===================================================================
+--- ekg/configfile.h	(wersja 4521)
++++ ekg/configfile.h	(kopia robocza)
+@@ -26,8 +26,6 @@
+ 
+ #ifndef EKG2_WIN32_NOFUNCTION
+ 
+-#include "plugins.h"
+-
+ void config_postread();
+ int config_read(const char *filename);
+ int config_read_plugins();
+Index: ekg/srv.c
+===================================================================
+--- ekg/srv.c	(wersja 4521)
++++ ekg/srv.c	(kopia robocza)
+@@ -24,26 +24,8 @@
+ 
+ /* this is srv resolver as used by ekg2 */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#define __USE_BSD
+-#define _GNU_SOURCE
+-#include <string.h>
+-#include <sys/types.h>
+-#include <sys/socket.h>
+-#include <netdb.h> /* getprotobynumber, getservbyport */
+-#include <arpa/inet.h>
+-#include <netinet/in.h>
+-#include <arpa/nameser.h>
+-#include <unistd.h>
+-#ifdef HAVE_RESOLV_H
+-#include <resolv.h> /* res_init, res_query */
+-#endif
+-
+-#include "dynstuff.h"
+-#include "xmalloc.h"
+-#include "srv.h"
+-
+ #ifndef T_SRV
+ #define T_SRV 33 /* rfc 2782 */
+ #endif
+Index: ekg/userlist.c
+===================================================================
+--- ekg/userlist.c	(wersja 4521)
++++ ekg/userlist.c	(kopia robocza)
+@@ -19,51 +19,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
+-#include "win32.h"
++#include "ekg.h"
+ 
+-#ifndef __FreeBSD__
+-#define _XOPEN_SOURCE 600
+-#define __EXTENSIONS__
+-#endif
+-
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/socket.h>
+-#include <netinet/in.h>
+-#include <arpa/inet.h>
+-#endif
+-
+-#include <errno.h>
+-#include <limits.h>
+-#include <stdarg.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <unistd.h>
+-
+-#include "commands.h"
+-#include "dynstuff.h"
+-#ifndef HAVE_STRLCAT
+-#  include "compat/strlcat.h"
+-#endif
+-#ifndef HAVE_STRLCPY
+-#  include "compat/strlcpy.h"
+-#endif
+-#include "plugins.h"
+-#include "stuff.h"
+-#include "themes.h"
+-#include "userlist.h"
+-#include "vars.h"
+-#include "windows.h"
+-#include "xmalloc.h"
+-#include "log.h"
+-
+-#include "debug.h"
+-#include "dynstuff_inline.h"
+-#include "queries.h"
+-
+ static void userlist_private_free(userlist_t *u);
+ 
+ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
+Index: ekg/sessions.h
+===================================================================
+--- ekg/sessions.h	(wersja 4521)
++++ ekg/sessions.h	(kopia robocza)
+@@ -21,9 +21,6 @@
+ #ifndef __EKG_SESSIONS_H
+ #define __EKG_SESSIONS_H
+ 
+-#include <time.h>
+-#include "dynstuff.h"
+-
+ /* --NOTE--
+  * When modifying status_t, remember to update status tables in stuff.c!
+  */
+Index: ekg/userlist.h
+===================================================================
+--- ekg/userlist.h	(wersja 4521)
++++ ekg/userlist.h	(kopia robocza)
+@@ -21,25 +21,6 @@
+ #ifndef __EKG_USERLIST_H
+ #define __EKG_USERLIST_H
+ 
+-#include "ekg2-config.h"
+-#include "win32.h"
+-
+-#include <sys/types.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/socket.h>
+-#include <netinet/in.h>
+-#endif
+-
+-#include <stdio.h>
+-#include <stdarg.h>
+-#include <time.h>
+-
+-#include "dynstuff.h"
+-#include "sessions.h"
+-#include "plugins.h"
+-#include "windows.h"
+-
+ /** 
+  * userlist_t is used to manage all info about user.<br>
+  * It's used not only to manage contacts in roster, but also to manage people in chat or conference
+Index: ekg/plugins.c
+===================================================================
+--- ekg/plugins.c	(wersja 4521)
++++ ekg/plugins.c	(kopia robocza)
+@@ -17,36 +17,9 @@
+  *  along with this program; if not, write to the Free Software
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+-#include "win32.h"
+ 
+-#include <stdlib.h>
+-#include <stdarg.h>
+-#include <string.h>
+-#include <unistd.h>
+-#include <errno.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#  include <dlfcn.h>
+-#else 
+-#  include <winbase.h>
+-#endif
+-
+-#include "configfile.h"
+-#include "commands.h"
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "events.h"
+-#include "objects.h"
+-#include "plugins.h"
+-#include "userlist.h"
+-#include "stuff.h"
+-#include "vars.h"
+-#include "themes.h"
+-#include "xmalloc.h"
+-#include "dynstuff_inline.h"
+-
+ #define __DECLARE_QUERIES_STUFF
+-#include "queries.h"
++#include "ekg.h"
+ 
+ #if !defined(va_copy) && defined(__va_copy)
+ #define va_copy(DST,SRC) __va_copy(DST,SRC)
+@@ -64,11 +37,6 @@
+ 
+ query_t *queries[QUERY_EXTERNAL+1];
+ 
+-#ifdef EKG2_WIN32_HELPERS
+-# define WIN32_REQUEST_HELPER
+-# include "win32_helper.h"
+-#endif
+-
+ int ekg2_dlinit() {
+ #ifdef EKG2_WIN32_HELPERS
+ 	INIT_HELPER_FUNC(&win32_helper);
+Index: ekg/log.c
+===================================================================
+--- ekg/log.c	(wersja 4521)
++++ ekg/log.c	(kopia robocza)
+@@ -21,16 +21,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#include <sys/types.h>
+-#include <time.h>
+-
+-#include "dynstuff.h"
+-#include "dynstuff_inline.h"
+-#include "log.h"
+-#include "xmalloc.h"
+-
+ struct last *lasts = NULL;
+ 
+ int config_last_size = 10;
+Index: ekg/metacontacts.c
+===================================================================
+--- ekg/metacontacts.c	(wersja 4521)
++++ ekg/metacontacts.c	(kopia robocza)
+@@ -17,25 +17,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <unistd.h>
+-
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "sessions.h"
+-#include "themes.h"
+-#include "stuff.h"
+-#include "userlist.h"
+-#include "xmalloc.h"
+-
+-#include "dynstuff_inline.h"
+-#include "metacontacts.h"
+-#include "queries.h"
+-
+ metacontact_t *metacontacts = NULL;
+ 
+ /* metacontacts_items: */
+Index: ekg/plugins.h
+===================================================================
+--- ekg/plugins.h	(wersja 4521)
++++ ekg/plugins.h	(kopia robocza)
+@@ -20,12 +20,6 @@
+ #ifndef __EKG_PLUGINS_H
+ #define __EKG_PLUGINS_H
+ 
+-#include <sys/types.h>
+-#include <stdarg.h>
+-
+-#include "dynstuff.h"
+-#include "sessions.h"
+-
+ #define EKG_ABI_VER 4419
+ 
+ #define EXPORT __attribute__ ((visibility("default")))
+Index: ekg/net.c
+===================================================================
+--- ekg/net.c	(wersja 4521)
++++ ekg/net.c	(kopia robocza)
+@@ -18,59 +18,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
+-#include <ekg/win32.h>
++#include "ekg.h"
+ 
+-#include <sys/types.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/socket.h>
+-#include <netinet/in.h>
+-#include <arpa/inet.h>
+-#include <sys/ioctl.h>	/* ? */
+-#endif
+-
+-#include <errno.h>
+-#include <stdio.h>	/* ? */
+-#include <stdlib.h>	/* ? */
+-#include <string.h>
+-#include <stdarg.h>	/* ? */
+-#include <unistd.h>
+-
+-#define __USE_POSIX
+-#define __USE_GNU	/* glibc-2.8, needed for (struct hostent->h_addr) */
+-#ifndef NO_POSIX_SYSTEM
+-#include <netdb.h>	/* OK */
+-#endif
+-
+-#ifdef __sun	  /* Solaris, thanks to Beeth */
+-#include <sys/filio.h>
+-#endif
+-
+-#ifdef LIBIDN
+-# include <idna.h>
+-#endif
+-
+-/*
+-#include <time.h>
+-#include <sys/stat.h>
+-#include <sys/time.h>
+- */
+-
+-/* NOTE:
+- *	Includes were copied from jabber.c, where there's ? in comment, it's possibly not needed.
+- *	It was done this way, to avoid regression.
+- *	THX.
+- */
+-
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "net.h"
+-#include "plugins.h"
+-#include "sessions.h"
+-#include "xmalloc.h"
+-#include "srv.h"
+-
+ #ifdef LIBIDN /* stolen from squid->url.c (C) Duane Wessels */
+ static const char valid_hostname_chars_u[] =
+ 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+Index: ekg/log.h
+===================================================================
+--- ekg/log.h	(wersja 4521)
++++ ekg/log.h	(kopia robocza)
+@@ -24,11 +24,6 @@
+ #ifndef __EKG_LOG_H
+ #define __EKG_LOG_H
+ 
+-#include <sys/types.h>
+-#include <time.h>
+-
+-#include "dynstuff.h"
+-
+ struct last {
+ 	struct last *next;
+ 	unsigned int type	: 1;	/* 0 - przychodz±ca, 1 - wychodz±ca */
+Index: ekg/stuff.c
+===================================================================
+--- ekg/stuff.c	(wersja 4521)
++++ ekg/stuff.c	(kopia robocza)
+@@ -22,71 +22,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
+-#include "win32.h"
++#include "ekg.h"
+ 
+-#define _XOPEN_SOURCE 600
+-#define __EXTENSIONS__
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/socket.h>
+-#endif
+-
+-#define __USE_BSD
+-#include <sys/time.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <netinet/in.h>
+-#include <arpa/inet.h>
+-#endif
+-
+-#include <ctype.h>
+-#include <errno.h>
+-#include <fcntl.h>
+-#include <limits.h>
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sched.h>
+-#include <pwd.h>
+-#endif
+-
+-#include <signal.h>
+-#include <stdio.h>
+-#include <stdarg.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <time.h>
+-#include <unistd.h>
+-
+-#ifdef HAVE_ICONV
+-#	include <iconv.h>
+-#endif
+-
+-#ifndef HAVE_STRLCPY
+-#  include "compat/strlcpy.h"
+-#endif
+-#ifndef HAVE_STRLCAT
+-#  include "compat/strlcat.h"
+-#endif
+-
+-#include "debug.h"
+-#include "commands.h"
+-#include "dynstuff.h"
+-#include "protocol.h"
+-#include "stuff.h"
+-#include "themes.h"
+-#include "userlist.h"
+-#include "vars.h"
+-#include "windows.h"
+-#include "xmalloc.h"
+-#include "plugins.h"
+-#include "sessions.h"
+-
+-#include "dynstuff_inline.h"
+-#include "queries.h"
+-
+ child_t *children = NULL;
+ 
+ static LIST_FREE_ITEM(child_free_item, child_t *) { xfree(data->name); }
+Index: ekg/metacontacts.h
+===================================================================
+--- ekg/metacontacts.h	(wersja 4521)
++++ ekg/metacontacts.h	(kopia robocza)
+@@ -19,7 +19,6 @@
+ 
+ #ifndef __EKG_METACONTACTS_H
+ #define __EKG_METACONTACTS_H
+-#include "dynstuff.h" 
+ 
+ typedef struct metacontact_item {
+ 	struct metacontact_item	*next;
+Index: ekg/legacyconfig.c
+===================================================================
+--- ekg/legacyconfig.c	(wersja 4521)
++++ ekg/legacyconfig.c	(kopia robocza)
+@@ -15,9 +15,7 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "stuff.h" /* config_version here */
+-#include "themes.h" /* print() & _() */
+-#include "xmalloc.h" /* x*() */
++#include "ekg.h"
+ 
+ /**
+  * config_upgrade()
+Index: ekg/net.h
+===================================================================
+--- ekg/net.h	(wersja 4521)
++++ ekg/net.h	(kopia robocza)
+@@ -21,10 +21,6 @@
+ #define __EKG_NET_H
+ #ifndef EKG2_WIN32_NOFUNCTION
+ 
+-#include "plugins.h"
+-#include "sessions.h"
+-#include "srv.h"
+-
+ #ifndef INADDR_NONE
+ #  define INADDR_NONE (unsigned long) 0xffffffff
+ #endif
+Index: ekg/msgqueue.c
+===================================================================
+--- ekg/msgqueue.c	(wersja 4521)
++++ ekg/msgqueue.c	(kopia robocza)
+@@ -18,30 +18,8 @@
+  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+  */
+ 
+-#include "ekg2-config.h"
++#include "ekg.h"
+ 
+-#include <sys/types.h>
+-#include <sys/stat.h>
+-
+-#include <dirent.h>
+-#include <errno.h>
+-#include <fcntl.h>
+-#include <stdio.h>
+-#include <stdlib.h>
+-#include <string.h>
+-#include <unistd.h>
+-
+-#include "debug.h"
+-#include "dynstuff.h"
+-#include "commands.h"
+-#include "msgqueue.h"
+-#include "protocol.h"
+-#include "sessions.h"
+-#include "stuff.h"
+-#include "xmalloc.h"
+-
+-#include "dynstuff_inline.h"
+-
+ msg_queue_t *msgs_queue = NULL;
+ 
+ static LIST_FREE_ITEM(list_msg_queue_free, msg_queue_t *) { xfree(data->session); xfree(data->rcpts); xfree(data->message); xfree(data->seq); }
+Index: ekg/stuff.h
+===================================================================
+--- ekg/stuff.h	(wersja 4521)
++++ ekg/stuff.h	(kopia robocza)
+@@ -25,27 +25,6 @@
+ #ifndef __EKG_STUFF_H
+ #define __EKG_STUFF_H
+ 
+-#include <sys/types.h>
+-#include <sys/time.h>
+-
+-#include "win32.h"
+-
+-#ifndef NO_POSIX_SYSTEM
+-#include <sys/socket.h>
+-#include <netinet/in.h>
+-#endif
+-
+-#include <ctype.h>
+-#include <stdarg.h>
+-#include <stdio.h>
+-#include <stdbool.h>
+-#include <time.h>
+-
+-#include "dynstuff.h"
+-#include "plugins.h"
+-#include "sessions.h"
+-#include "userlist.h"
+-
+ #define DEBUG_MAX_LINES	50	/* ile linii z debug zrzucaæ do pliku */
+ 
+ /* obs³uga procesów potomnych */
+Index: SConstruct
+===================================================================
+--- SConstruct	(wersja 4521)
++++ SConstruct	(kopia robocza)
+@@ -260,7 +260,9 @@
+ stagen = Builder(action = WriteStatic, suffix = '.c')
+ 
+ env = Environment(
+-	BUILDERS = {'RecodeHelp': recoder, 'CompileMsg': msgfmt, 'Defines': defgen, 'StaticLoader': stagen}
++	BUILDERS	= {'RecodeHelp': recoder, 'CompileMsg': msgfmt, 'Defines': defgen, 'StaticLoader': stagen},
++	tools		= ['default', 'gch'],
++	toolpath	= '.'
+ )
+ opts = Options('options.cache')
+ 
+@@ -654,6 +656,8 @@
+ 	env.StaticLoader('ekg2-static.c', [])
+ 	ekg_staticlibs.insert(0, 'ekg2-static.c') # well, it ain't exactly static lib, but no need to panic
+ 
++cenv['PCH'] = env.Gch('ekg/ekg.h')[0]
++cenv.Depends(glob.glob('ekg/*.c'), cenv['PCH'])
+ cenv.Append(LIBS = ekg_libs)
+ cenv.Append(LIBPATH = ekg_libpath)
+ cenv.Append(LINKFLAGS = ['-Wl,--export-dynamic'])

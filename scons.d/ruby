@@ -1,0 +1,17 @@
+
+# ruby
+
+Import('*')
+
+out = conf.PkgConfig(None, flags, None, 'ruby', None,
+	'-r mkmf -e "c=Config::CONFIG; print \\"-I\\" + c[\\"archdir\\"]; libs=\\" -l\\" + c[\\"RUBY_SO_NAME\\"] + \\" \\" + c[\\"LIBS\\"]; print libs"')
+
+if out:
+	old	= SetFlags(env, flags)
+		# Well, passing env['LIBS'][0] doesn't make much sense, but it makes SCons pretty-print it
+	out = conf.CheckLibWithHeader(env['LIBS'][0], [], 'C', 'ruby_init();', 0)
+	RestoreFlags(env, old)
+
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python

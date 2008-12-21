@@ -21,10 +21,10 @@
 
 # define SSL_SESSION		gnutls_session
 
-static int SSL_SET_FD(SSL_SESSION session, int fd) {
+static int __attribute__((unused)) SSL_SET_FD(SSL_SESSION session, long int fd) {
 	gnutls_transport_set_ptr(session, (gnutls_transport_ptr)(fd));
 	return 1;	/* always success */
-}
+} 
 
 # define SSL_INIT(session)		gnutls_init((&session), GNUTLS_CLIENT)
 # define SSL_DEINIT(session)		gnutls_deinit(session)
@@ -38,7 +38,7 @@ static int SSL_SET_FD(SSL_SESSION session, int fd) {
 # define SSL_SEND(session, str, len)	gnutls_record_send(session, str, len)
 # define SSL_RECV(session, buf, size)	gnutls_record_recv(session, buf, size)
 
-# define SSL_GET_FD(session, fd)		(int) gnutls_transport_get_ptr(session)
+# define SSL_GET_FD(session, fd)		(long int) gnutls_transport_get_ptr(session)
 # define SSL_WRITE_DIRECTION(session, ret)	gnutls_record_get_direction(session)
 
 #else				/* HAVE_OPENSSL */
@@ -52,7 +52,7 @@ extern SSL_CTX *jabberSslCtx;	/* jabber.c */
 # define SSL_INIT(session)		!(session = SSL_new(jabberSslCtx))
 
 # define SSL_HELLO(session)		SSL_connect(session)
-# define SSL_BYE(session) 		SSL_shutdown(session)
+# define SSL_BYE(session)		SSL_shutdown(session)
 # define SSL_DEINIT(session)		SSL_free(session)
 # define SSL_GLOBAL_INIT()		SSL_library_init(); jabberSslCtx = SSL_CTX_new(SSLv23_client_method())
 # define SSL_GLOBAL_DEINIT()		SSL_CTX_free(jabberSslCtx)

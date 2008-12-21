@@ -1,0 +1,14 @@
+
+# expat (used by jabber and feed)
+
+Import('*')
+
+out = conf.CheckLibWithHeader('expat', ['expat.h'], 'C', 'XML_ParserCreate(NULL);', 0)
+defines['HAVE_EXPAT'] = out
+defines['HAVE_EXPAT_H'] = out
+if out:
+	libs.append('expat')
+
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python

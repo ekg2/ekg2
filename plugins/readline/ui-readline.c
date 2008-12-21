@@ -2,11 +2,11 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@infomex.pl>
-                           Adam Osuchowski <adwol@polsl.gliwice.pl>
- *                          Wojtek Bojdo³ <wojboj@htcon.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
+			   Adam Osuchowski <adwol@polsl.gliwice.pl>
+ *			    Wojtek Bojdo³ <wojboj@htcon.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -38,9 +38,15 @@
 #include <string.h>
 #include <unistd.h>
 
-#include <history.h>
-#include <readline.h>
+#ifdef HAVE_READLINE_READLINE_H
+#	include <readline/history.h>
+#	include <readline/readline.h>
+#else
+#	include <history.h>
+#	include <readline.h>
+#endif
 
+#include <ekg/bindings.h>
 #include <ekg/commands.h>
 #ifndef HAVE_STRLCPY
 #  include <compat/strlcpy.h>
@@ -140,7 +146,7 @@ int my_getc(FILE *f)
  */
 void ui_readline_print(window_t *w, int separate, const char *xline)
 {
-        int old_end = rl_end, id = w->id;
+	int old_end = rl_end, id = w->id;
 	char *old_prompt = NULL, *line_buf = NULL;
 	const char *line = NULL;
 	char *target = window_target(w);
@@ -171,12 +177,12 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 		line = xline;
 
 	/* je¶li nie piszemy do aktualnego, to zapisz do bufora i wyjd¼ */
-        if (id && id != window_current->id) {
-                window_write(id, line);
+	if (id && id != window_current->id) {
+		window_write(id, line);
 
-                /* XXX trzeba jeszcze waln±æ od¶wie¿enie prompta */
-                goto done;
-        }
+		/* XXX trzeba jeszcze waln±æ od¶wie¿enie prompta */
+		goto done;
+	}
 
 	/* je¶li mamy ukrywaæ wszystko, wychodzimy */
 	if (pager_lines == -2)
@@ -185,11 +191,11 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 	window_write(window_current->id, line);
 
 	/* ukryj prompt, je¶li jeste¶my w trakcie readline */
-        if (in_readline) {
+	if (in_readline) {
 		int i;
 
 		old_prompt = xstrdup(rl_prompt);
-                rl_end = 0;
+		rl_end = 0;
 #ifdef HAVE_RL_SET_PROMPT
 /*		rl_set_prompt(NULL); */
 #else
@@ -200,7 +206,7 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 		for (i = 0; i < xstrlen(old_prompt); i++)
 			printf(" ");
 		printf("\r");
-        }
+	}
 
 	printf("%s", line);
 
@@ -214,9 +220,9 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 			in_readline++;
 /*		rl_set_prompt(NULL); */
 #ifdef HAVE_RL_SET_PROMPT
-		        rl_set_prompt((char *) prompt);
+			rl_set_prompt((char *) prompt);
 #else
-		        rl_expand_prompt((char *) prompt);
+			rl_expand_prompt((char *) prompt);
 #endif
 			pager_lines = -1;
 			tmp = readline((char *) prompt);
@@ -257,10 +263,10 @@ const char *current_prompt()
 {
 	static char buf[80];
 	const char *prompt = buf;
-	int count = list_count(windows);
+	int count = LIST_COUNT2(windows);
 	char *tmp, *act = window_activity();
 
-        if (window_current->target) {
+	if (window_current->target) {
 		if (count > 1 || window_current->id != 1) {
 			if (act) {
 				tmp = format_string(format_find("readline_prompt_query_win_act"), window_current->target, itoa(window_current->id), act);
@@ -271,7 +277,7 @@ const char *current_prompt()
 			tmp = format_string(format_find("readline_prompt_query"), window_current->target, NULL);
 		strlcpy(buf, tmp, sizeof(buf));
 		xfree(tmp);
-        } else {
+	} else {
 		char *format_win = "readline_prompt_win", *format_nowin = "readline_prompt", *format_win_act = "readline_prompt_win_act";
 		if (/* GG_S_B(config_status) */ 1) {
 			format_win = "readline_prompt_away_win";
@@ -295,12 +301,12 @@ const char *current_prompt()
 			xfree(tmp);
 		} else
 			strlcpy(buf, format_find(format_nowin), sizeof(buf));
-        }
+	}
 
-        if (no_prompt)
-                prompt = "";
+	if (no_prompt)
+		prompt = "";
 
-        return prompt;
+	return prompt;
 }
 
 int my_loop() {
@@ -320,22 +326,22 @@ int my_loop() {
 char *my_readline()
 {
 	const char *prompt = current_prompt();
-        char *res, *tmp;
+	char *res, *tmp;
 
-        in_readline = 1;
+	in_readline = 1;
 #ifdef HAVE_RL_SET_PROMPT
 	rl_set_prompt(prompt);
 #else
 	rl_expand_prompt(prompt);
 #endif
-        res = readline((char *) prompt);
-        in_readline = 0;
+	res = readline((char *) prompt);
+	in_readline = 0;
 
 	tmp = saprintf("%s%s\n", prompt, (res) ? res : "");
-        window_write(window_current->id, tmp);
+	window_write(window_current->id, tmp);
 	xfree(tmp);
 
-        return res;
+	return res;
 }
 
 /*
@@ -402,8 +408,8 @@ int ui_readline_loop()
 		line = string_free(s, 0);
 	}
 		
-	/* je¶li linia nie jest pusta, dopisz do historii */
-	if (line && *line)
+	/* if no empty line and we save duplicate lines, add it to history */
+	if (line && *line && (config_history_savedups || !history_length || xstrcmp(line, history_get(history_length)->line)))
 		add_history(line);
 	
 	pager_lines = 0;
@@ -423,15 +429,15 @@ int ui_readline_loop()
  */
 int window_refresh()
 {
-        int i;
+	int i;
 
-        printf("\033[H\033[J"); /* XXX */
+	printf("\033[H\033[J"); /* XXX */
 
 	for (i = 0; i < MAX_LINES_PER_SCREEN; i++)
 		if (readline_current->line[i])
 			printf("%s", readline_current->line[i]);
 
-        return 0;
+	return 0;
 }
 
 /*
@@ -441,12 +447,12 @@ int window_refresh()
  */
 int window_write(int id, const char *line)
 {
-        window_t *w = window_exist(id);
+	window_t *w = window_exist(id);
 	readline_window_t *r = readline_window(w);
-        int i = 1;
+	int i = 1;
 
-        if (!line || !w)
-                return -1;
+	if (!line || !w)
+		return -1;
 
 	/* je¶li ca³y bufor zajêty, zwolnij pierwsz± liniê i przesuñ do góry */
 	if (r->line[MAX_LINES_PER_SCREEN - 1]) {
@@ -472,7 +478,7 @@ int window_write(int id, const char *line)
 		rl_redisplay();
 	}
 	
-        return 0;
+	return 0;
 }
 
 #if 0 /* TODO */
@@ -494,10 +500,9 @@ char *window_activity()
 {
 	string_t s = string_init("");
 	int first = 1;
-	list_t l;
+	window_t *w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next) {
 /* we cannot make it colorful with default formats because grey on black doesn't look so good... */
 		if (!w->act || !w->id) 
 			continue;
@@ -524,14 +529,12 @@ char *window_activity()
  */
 char *bind_find_command(const char *seq)
 {
-	list_t l;
+	struct binding *s;
 
 	if (!seq)
 		return NULL;
 	
-	for (l = bindings; l; l = l->next) {
-		struct binding *s = l->data;
-
+	for (s = bindings; s; s = s->next) {
 		if (s->key && !xstrcasecmp(s->key, seq))
 			return s->action;
 	}
@@ -639,27 +642,26 @@ int bind_sequence(const char *seq, const char *command, int quiet)
 	}
 
 	if (command) {
-		struct binding s;
-		
-		s.key = nice_seq;
-		s.action = xstrdup(command);
-		s.internal = 0;
-		s.arg = s.default_action = s.default_arg = NULL;
+		struct binding *s;
 
-		list_add(&bindings, &s, sizeof(s));
+		s = xmalloc(sizeof(struct binding));
+		
+		s->key = nice_seq;
+		s->action = xstrdup(command);
+		s->internal = 0;
+
+		LIST_ADD2(&bindings, s);
 
 		if (!quiet) {
-			print("bind_seq_add", s.key);
+			print("bind_seq_add", s->key);
 			config_changed = 1;
 		}
 	} else {
-		list_t l;
+		struct binding *s;
 
-		for (l = bindings; l; l = l->next) {
-			struct binding *s = l->data;
-
+		for (s = bindings; s; s = s->next) {
 			if (s->key && !xstrcasecmp(s->key, seq)) {
-				list_remove(&bindings, s, 1);
+				LIST_REMOVE2(&bindings, s, NULL);
 				if (!quiet) {
 					print("bind_seq_remove", seq);
 					config_changed = 1;

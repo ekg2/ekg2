@@ -16,6 +16,8 @@ void menu_bar_toggle (void);
 void menu_add_plugin_items (GtkWidget *menu, char *root, char *target);
 void menu_change_layout (void);
 
+#endif
+
 /* menu items we keep a GtkWidget* for (to change their state) */
 #define MENU_ID_AWAY 1
 #define MENU_ID_MENUBAR 2
@@ -34,5 +36,3 @@ void menu_change_layout (void);
 #error MENU_ID_NUM is set wrong
 #endif
 
-
-#endif

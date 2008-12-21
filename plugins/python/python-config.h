@@ -33,26 +33,26 @@ PyObject* ekg_config_get(ekg_configObj * self, PyObject * key);
 PyObject* ekg_config_set(ekg_configObj * self, PyObject* key, PyObject* value);
 
 static PyMappingMethods _config_mapping = {
-        (inquiry)       ekg_config_len,
-        (binaryfunc)    ekg_config_get,
-        (objobjargproc) ekg_config_set
+	(inquiry)	ekg_config_len,
+	(binaryfunc)	ekg_config_get,
+	(objobjargproc) ekg_config_set
 };
 
 static PyTypeObject ekg_config_type = {
-        PyObject_HEAD_INIT(NULL)
-        0,
-        "config",
-        sizeof(PyObject),
-        0,
-        ekg_config_dealloc,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        &_config_mapping
+	PyObject_HEAD_INIT(NULL)
+	0,
+	"config",
+	sizeof(PyObject),
+	0,
+	ekg_config_dealloc,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	&_config_mapping
 };
 
 #endif

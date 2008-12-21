@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003-2004 Leszek Krupiñski <leafnode@wafel.com>
- *                     2005 Adam Mikuta <adamm@ekg2.org>
+ *		       2005 Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -25,6 +25,7 @@
 #include <stdio.h>
 #include <ekg/sessions.h>
 #include <ekg/plugins.h>
+#include <ekg/protocol.h>
 
 struct {
 	int   logformat; 
@@ -32,7 +33,7 @@ struct {
 			 * callback zmiennych sesyjnych w ekg2 niet. jest cos takiego.
 			 */
 	char *path;	/* path don't free it ! .... */
-	FILE *file; 	/* file don't close it! it will be closed at unloading plugin. */
+	FILE *file;	/* file don't close it! it will be closed at unloading plugin. */
 } typedef log_window_t;
 
 struct {
@@ -42,7 +43,20 @@ struct {
 	log_window_t *lw;
 } typedef logs_log_t;
 
-static char *log_escape(const char *str);
+/* log ff types... */
+typedef enum {
+	LOG_FORMAT_NONE = 0,
+	LOG_FORMAT_SIMPLE,
+	LOG_FORMAT_XML,
+	LOG_FORMAT_IRSSI,
+	LOG_FORMAT_RAW, 
+} log_format_t;
+
+	/* irssi style info messages */
+#define IRSSI_LOG_EKG2_OPENED	"--- Log opened %a %b %d %H:%M:%S %Y"	/* defaultowy log_open_string irssi , jak cos to dodac zmienna... */
+#define IRSSI_LOG_EKG2_CLOSED	"--- Log closed %a %b %d %H:%M:%S %Y"	/* defaultowy log_close_string irssi, jak cos to dodac zmienna... */
+#define IRSSI_LOG_DAY_CHANGED	"--- Day changed %a %b %d %Y"		/* defaultowy log_day_changed irssi , jak cos to dodac zmienna... */
+
 static char *logs_prepare_path(session_t *session, const char *logs_path, const char *uid, time_t sent);
 static const char *prepare_timestamp_format(const char *format, time_t t);
 
@@ -50,15 +64,10 @@ static logs_log_t *logs_log_find(const char *session, const char *uid, int creat
 static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *uid);
 
 static FILE *logs_open_file(char *path, int ff);
-static QUERY(logs_handler);
-static QUERY(logs_handler_newwin);
-static QUERY(logs_status_handler);
-static QUERY(logs_handler_irc);
-static QUERY(logs_handler_raw);
 
-static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class, uint32_t ip, uint16_t port, const char *status);
-static void logs_xml	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int class);
-static void logs_irssi	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, int type, const char *ip);
+static void logs_simple(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class, const char *status);
+static void logs_xml	(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class);
+static void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class);
 #if 0 /* never started? */
 static void logs_gaim();
 #endif

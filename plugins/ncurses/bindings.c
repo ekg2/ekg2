@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2002-2004 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Wojtek Bojdo³ <wojboj@htcon.pl>
- *                          Pawe³ Maziarz <drg@infomex.pl>
+ *			    Wojtek Bojdo³ <wojboj@htcon.pl>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
  *			    Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 
+#include <ekg/bindings.h>
 #include <ekg/stuff.h>
 #include <ekg/metacontacts.h>
 #include <ekg/xmalloc.h>
@@ -42,6 +43,9 @@
 #include "old.h"
 #include "contacts.h"
 
+extern int ncurses_typing_mod;
+extern window_t *ncurses_typing_win;
+
 struct binding *ncurses_binding_map[KEY_MAX + 1];	/* mapa klawiszy */
 struct binding *ncurses_binding_map_meta[KEY_MAX + 1];	/* j.w. z altem */
 
@@ -53,38 +57,43 @@ int bindings_added_max = 0;
 #define line ncurses_line
 #define lines ncurses_lines
 
+static const void *BINDING_HISTORY_NOEXEC = (void*) -1;
+
+extern int ncurses_noecho;	/* in old.c */
+extern CHAR_T *ncurses_passbuf;	/* in old.c */
+
 static BINDING_FUNCTION(binding_backward_word)
 {
-	while (line_index > 0 && __S(line, line_index - 1) == ' ')
+	while (line_index > 0 && line[line_index - 1] == ' ')
 		line_index--;
-	while (line_index > 0 && __S(line, line_index - 1) != ' ')
+	while (line_index > 0 && line[line_index - 1] != ' ')
 		line_index--;
 }
 
 static BINDING_FUNCTION(binding_forward_word) {
 	size_t linelen = xwcslen(line);
-	while (line_index < linelen && __S(line, line_index) == ' ')
+	while (line_index < linelen && line[line_index] == ' ')
 		line_index++;
-	while (line_index < linelen && __S(line, line_index) != ' ')
+	while (line_index < linelen && line[line_index] != ' ')
 		line_index++;
 }
 
 static BINDING_FUNCTION(binding_kill_word)
 {
-	CHAR_T *p = __SPTR(line, line_index);
+	CHAR_T *p = line + line_index;
 	int eaten = 0;
 
 	while (*p && *p == ' ') {
-		__SN(&p, 1);	/* p++ */
+		p++;
 		eaten++;
 	}
 
 	while (*p && *p != ' ') {
-		__SN(&p, 1);	/* p++ */
+		p++;
 		eaten++;
 	}
 
-	memmove(__SPTR(line, line_index), __SPTR(line, line_index + eaten), sizeofchart*xwcslen(line) - sizeofchart*line_index - sizeofchart*eaten + sizeofchart);
+	memmove(line + line_index, line + line_index + eaten, sizeof(CHAR_T) * (xwcslen(line) - line_index - eaten + 1));
 }
 
 static BINDING_FUNCTION(binding_toggle_input)
@@ -108,19 +117,28 @@ static BINDING_FUNCTION(binding_toggle_input)
 
 		tmp = string_free(s, 0);
 
-                if (history[0] != line)
-                        xfree(history[0]);
-                history[0] = wcs_array_join(lines, TEXT("\015"));
-                xfree(history[HISTORY_MAX - 1]);
-                memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
+		if (history[0] != line)
+			xfree(history[0]);
+		history[0] = wcs_array_join(lines, TEXT("\015"));
+		xfree(history[HISTORY_MAX - 1]);
+		memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
 
 		history[0] = line;
-	        history_index = 0;
+		history_index = 0;
 
 		input_size = 1;
 		ncurses_input_update();
 
 		command_exec(window_current->target, window_current->session, tmp, 0);
+
+		if (!tmp[0] || tmp[0] == '/' || !window_current->target)
+			ncurses_typing_mod		= 1;
+		else {
+			ncurses_typing_win		= NULL;
+			window_current->out_active	= 1;
+		}
+
+		curs_set(1);
 		xfree(tmp);
 	}
 }
@@ -130,6 +148,7 @@ static BINDING_FUNCTION(binding_cancel_input)
 	if (input_size == 5) {
 		input_size = 1;
 		ncurses_input_update();
+		ncurses_typing_mod = 1;
 	}
 }
 
@@ -150,38 +169,36 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 
 		lines_index--;
 		lines_adjust();
-
-		return;
-	}
-
-	if (xwcslen(line) > 0 && line_index > 0) {
-		memmove(__SPTR(line, line_index - 1), __SPTR(line, line_index), LINE_MAXLEN*sizeofchart - line_index*sizeofchart);
-		__SREP(line, LINE_MAXLEN - 1, 0);		/* line[LINE_MAXLEN - 1] = 0; */
+		ncurses_typing_mod = 1;
+	} else if (xwcslen(line) > 0 && line_index > 0) {
+		memmove(line + line_index - 1, line + line_index, (LINE_MAXLEN - line_index) * sizeof(CHAR_T));
+		line[LINE_MAXLEN - 1] = 0;
 		line_index--;
+		ncurses_typing_mod = 1;
 	}
 }
 
 static BINDING_FUNCTION(binding_window_kill)
 {
-        char * ptr;
-        ptr = xstrstr(window_current->target, "irc:");
-        if (ptr && ptr == window_current->target && (ptr[4] == '!' || ptr[4] == '#') && !config_kill_irc_window ) {
-                print("cant_kill_irc_window");
-                return;
-        }
-        command_exec(window_current->target, window_current->session, ("/window kill"), 0);
+	char * ptr;
+	ptr = xstrstr(window_current->target, "irc:");
+	if (ptr && ptr == window_current->target && (ptr[4] == '!' || ptr[4] == '#') && !config_kill_irc_window ) {
+		print("cant_kill_irc_window");
+		return;
+	}
+	command_exec(window_current->target, window_current->session, ("/window kill"), 0);
 }
 
 static BINDING_FUNCTION(binding_kill_line)
 {
-	__SREP(line, line_index, 0);			/* line[line_index] = 0; */
+	line[line_index] = 0;
 }
 
 static BINDING_FUNCTION(binding_yank)
 {
 	if (yanked && xwcslen(yanked) + xwcslen(line) + 1 < LINE_MAXLEN) {
-		memmove(__SPTR(line,  line_index + xwcslen(yanked)), __SPTR(line, line_index), LINE_MAXLEN*sizeofchart - line_index*sizeofchart - sizeofchart*xwcslen(yanked));
-		memcpy(__SPTR(line, line_index), yanked, sizeofchart*xwcslen(yanked));
+		memmove(line + line_index + xwcslen(yanked), line + line_index, (LINE_MAXLEN - line_index - xwcslen(yanked)) * sizeof(CHAR_T));
+		memcpy(line + line_index, yanked, sizeof(CHAR_T) * xwcslen(yanked));
 		line_index += xwcslen(yanked);
 	}
 }
@@ -201,19 +218,26 @@ static BINDING_FUNCTION(binding_delete_char)
 		lines = xrealloc(lines, (array_count((char **) lines) + 1) * sizeof(CHAR_T *));
 
 		lines_adjust();
-	
-		return;
-	}
-				
-	if (line_index < xwcslen(line)) {
-		memmove(__SPTR(line, line_index), __SPTR(line, line_index + 1), LINE_MAXLEN*sizeofchart - line_index*sizeofchart - sizeofchart);
-		__SREP(line, LINE_MAXLEN - 1, 0);	/* line[LINE_MAXLEN - 1] = 0; */
+		ncurses_typing_mod = 1;
+	} else if (line_index < xwcslen(line)) {
+		memmove(line + line_index, line + line_index + 1, (LINE_MAXLEN - line_index - 1) * sizeof(CHAR_T));
+		line[LINE_MAXLEN - 1] =  0;
+		ncurses_typing_mod = 1;
 	}
 }
 				
 static BINDING_FUNCTION(binding_accept_line)
 {
 	char *txt;
+
+	if (ncurses_noecho) { /* we are running ui-password-input */
+		ncurses_noecho = 0;
+		ncurses_passbuf = xwcsdup(line);
+		line[0] = 0;
+		line_adjust();
+		return;
+	}
+
 	if (lines) {
 		int i;
 
@@ -223,8 +247,8 @@ static BINDING_FUNCTION(binding_accept_line)
 			lines[i + 1] = lines[i];
 
 		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
-		xwcscpy(lines[lines_index + 1], __SPTR(line, line_index));
-		__SREP(line, line_index, 0);		/* line[line_index] = 0; */
+		xwcscpy(lines[lines_index + 1], line + line_index);
+		line[line_index] = 0;
 		
 		line_index = 0;
 		line_start = 0;
@@ -234,17 +258,28 @@ static BINDING_FUNCTION(binding_accept_line)
 	
 		return;
 	}
-	command_exec(window_current->target, window_current->session, (txt = wcs_to_normal(line)), 0);	free_utf(txt);
+	if (arg != BINDING_HISTORY_NOEXEC) {
+		command_exec(window_current->target, window_current->session, (txt = wcs_to_normal(line)), 0);
+		free_utf(txt);
+	}
 
 	if (ncurses_plugin_destroyed)
 		return;
+	if (!line[0] || line[0] == '/' || !window_current->target) /* if empty or command, just mark as modified */
+		ncurses_typing_mod		= 1;
+	else { /* if message, assume that its' handler has already disabled <composing/> */
+		ncurses_typing_win		= NULL;
+		window_current->out_active	= 1; /* but also remember that it should have set <active/> chatstate */
+	}
 
 	if (xwcscmp(line, TEXT(""))) {
+	    if (config_history_savedups || xwcscmp(line, history[1])) {
 		if (history[0] != line)
 			xfree(history[0]);
 		history[0] = xwcsdup(line);
 		xfree(history[HISTORY_MAX - 1]);
 		memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
+	    }
 	} else {
 		if (config_enter_scrolls)
 			print("none", "");
@@ -252,15 +287,17 @@ static BINDING_FUNCTION(binding_accept_line)
 
 	history[0] = line;
 	history_index = 0;
-	__SREP(line, 0, 0);	/* line[0] = 0; */
+	*line = 0;
 	line_adjust();
 }
 
 static BINDING_FUNCTION(binding_line_discard)
 {
-	xfree(yanked);
-	yanked = xwcsdup(line);
-	__SREP(line, 0, 0);	/* line[0] = 0; */
+	if (ncurses_noecho) { /* we don't want to yank passwords */
+		xfree(yanked);
+		yanked = xwcsdup(line);
+	}
+	*line = 0;
 	line_adjust();
 
 	if (lines && lines_index < array_count((char **) lines) - 1) {
@@ -275,6 +312,7 @@ static BINDING_FUNCTION(binding_line_discard)
 
 		lines_adjust();
 	}
+
 }
 
 static BINDING_FUNCTION(binding_quoted_insert)
@@ -294,23 +332,23 @@ static BINDING_FUNCTION(binding_word_rubout)
 	
 	xfree(yanked);
 
-	p = __SPTR(line, line_index);
+	p = line + line_index;
 	
-	if (xisspace(__S(p, -1))) {
-		while (p > line && xisspace(__S(p, -1))) {
-			__SN(&p, -1);	/* p-- */
+	if (xisspace(*(p - 1))) {
+		while (p > line && xisspace(*(p - 1))) {
+			p--;
 			eaten++;
 		}
 	} else {
-                while (p > line && !xisalpha(__S(p, -1)) && !xisspace(__S(p, -1))) {
-			__SN(&p, -1);	/* p-- */
-                        eaten++;
-                }
-        }
+		while (p > line && ! xisalpha(*(p - 1)) && ! xisspace(*(p - 1))) {
+			p--;
+			eaten++;
+		}
+	}
 
 	if (p > line) {
-		while (p > line && !xisspace(__S(p, -1)) && xisalpha(__S(p, -1))) {
-			__SN(&p, -1);	/* p-- */
+		while (p > line && ! xisspace(*(p - 1)) && xisalpha(*(p - 1))) {
+			p--;
 			eaten++;
 		}
 	}
@@ -318,7 +356,7 @@ static BINDING_FUNCTION(binding_word_rubout)
 	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
 	xwcslcpy(yanked, p, eaten + 1);
 
-	memmove(p, __SPTR(line, line_index), xwcslen(line)*sizeofchart - line_index*sizeofchart + sizeofchart);
+	memmove(p, line + line_index, (xwcslen(line) - line_index + 1) * sizeof(CHAR_T));
 	line_index -= eaten;
 }
 
@@ -326,7 +364,6 @@ static BINDING_FUNCTION(binding_complete)
 {
 	if (!lines) {
 #if USE_UNICODE
-		if (config_use_unicode) {
 		/* PLEASE REPORT ALL BUGS CONNECTED WITH THIS CODE TO <darkjames@darkjames.ath.cx> THX. */
 			char *nline = xmalloc((LINE_MAXLEN+1) /* * MB_CUR_MAX */);
 			size_t len, i, cnt;
@@ -343,10 +380,10 @@ static BINDING_FUNCTION(binding_complete)
 			len = xstrlen(nline);		i = 0;		cnt = 0;
 			lns_start = 0; lns_index = 0;
 
-			debug("line_start: %d line_index: %d len: %d\n", line_start, line_index, len);
+/*			debug("line_start: %d line_index: %d len: %d\n", line_start, line_index, len);*/
 			while (1) {
 				int tmp = mblen(&nline[i], len-i);
-				debug("[%d] cur: %d nextlen: %d\n", cnt, i, tmp);
+/*				debug("[%d] cur: %d nextlen: %d\n", cnt, i, tmp);*/
 				if (!lns_start && line_start == i) { lns_start = 1; line_start = cnt; }
 				if (!lns_index && line_index == i) { lns_index = 1; line_index = cnt; } 
 				cnt++;
@@ -354,7 +391,7 @@ static BINDING_FUNCTION(binding_complete)
 				if (lns_start && lns_index) break;
 				if (tmp <= 0) break;
 			}
-			debug("lns_start: %d lns_index: %d (%d,%d)\n", lns_start, lns_index, line_start, line_index);
+/*			debug("lns_start: %d lns_index: %d (%d,%d)\n", lns_start, lns_index, line_start, line_index);*/
 
 			if (!lns_start) line_start = 0;
 			if (!lns_index) line_index = 0;
@@ -362,19 +399,19 @@ static BINDING_FUNCTION(binding_complete)
 			if ((mbstowcs(line, nline, LINE_MAXLEN) == -1)) /* if it's failed the result will be unpredictable \o/ */
 				debug("[%s:%d] mbstowcs() failed.\n");
 			xfree(nline);
-		} else 
-#endif
+#else
 			ncurses_complete(&line_start, &line_index, (char *) line);
+#endif
 	} else {
 		int i, count = 8 - (line_index % 8);
 
 		if (xwcslen(line) + count >= LINE_MAXLEN - 1)
 			return;
 
-		memmove(__SPTR(line, line_index + count), __SPTR(line, line_index), sizeofchart*LINE_MAXLEN - sizeofchart*line_index - sizeofchart*count);
+		memmove(line + line_index + count, line + line_index, sizeof(CHAR_T) * (LINE_MAXLEN - line_index - count));
 
 		for (i = line_index; i < line_index + count; i++)
-			__SREP(line, i, ' ');	/* line[i] = ' '; */
+			line[i] = CHAR(' ');
 
 		line_index += count;
 	}
@@ -432,22 +469,22 @@ static BINDING_FUNCTION(binding_beginning_of_line)
 	line_start = 0;
 }
 
-static BINDING_FUNCTION(binding_previous_only_history)
+BINDING_FUNCTION(binding_previous_only_history)
 {
-        if (history[history_index + 1]) {
-                if (history_index == 0)
-                        history[0] = xwcsdup(line);
-                history_index++;
+	if (history[history_index + 1]) {
+		if (history_index == 0)
+			history[0] = xwcsdup(line);
+		history_index++;
 		if (xwcschr(history[history_index], ('\015'))) {
 			CHAR_T **tmp;
 			int i;
 			
-                        if (input_size == 1) {
-                                input_size = 5;
-                                ncurses_input_update();
-                        }
+			if (input_size == 1) {
+				input_size = 5;
+				ncurses_input_update();
+			}
 
-                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
+			tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
 			array_free((char **) lines);
 			lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
@@ -461,60 +498,58 @@ static BINDING_FUNCTION(binding_previous_only_history)
 			lines_adjust();
 		} else {
 			if (input_size != 1) {
-		                input_size = 1;
-		                ncurses_input_update();
-		        }
+				input_size = 1;
+				ncurses_input_update();
+			}
 			xwcscpy(line, history[history_index]);
-	                line_adjust();
+			line_adjust();
 		}
-        }
+	}
 }
 
-static BINDING_FUNCTION(binding_next_only_history)
+BINDING_FUNCTION(binding_next_only_history)
 {
-        if (history_index > 0) {
-                if (history_index == 0)
-                        history[0] = xwcsdup(line);
-                history_index--;
-                if (xwcschr(history[history_index], ('\015'))) {
-                        CHAR_T **tmp;
-                        int i;
+	if (history_index > 0) {
+		history_index--;
+		if (xwcschr(history[history_index], ('\015'))) {
+			CHAR_T **tmp;
+			int i;
 
-                        if (input_size == 1) {
-                                input_size = 5;
-                                ncurses_input_update();
+			if (input_size == 1) {
+				input_size = 5;
+				ncurses_input_update();
 			}
 
-                        tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
+			tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
 
-                        array_free((char **) lines);
-                        lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
+			array_free((char **) lines);
+			lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
 
-                        for (i = 0; i < array_count((char **) tmp); i++) {
-                                lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
-                                xwcscpy(lines[i], tmp[i]);
-                        }
+			for (i = 0; i < array_count((char **) tmp); i++) {
+				lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+				xwcscpy(lines[i], tmp[i]);
+			}
 
-                        array_free((char **) tmp);
-                        lines_adjust();
-                } else {
-                        if (input_size != 1) {
-                                input_size = 1;
-                                ncurses_input_update();
-                        }
-                        xwcscpy(line, history[history_index]);
-                        line_adjust();
-                }
-        }
+			array_free((char **) tmp);
+			lines_adjust();
+		} else {
+			if (input_size != 1) {
+				input_size = 1;
+				ncurses_input_update();
+			}
+			xwcscpy(line, history[history_index]);
+			line_adjust();
+		}
+	} else /* history_index == 0 */
+		binding_accept_line(BINDING_HISTORY_NOEXEC);
 }
 
 
 static BINDING_FUNCTION(binding_previous_history)
 {
 	if (lines) {
-		if (lines_index - lines_start == 0)
-			if (lines_start)
-				lines_start--;
+		if (lines_index - lines_start == 0 && lines_start)
+			lines_start--;
 
 		if (lines_index)
 			lines_index--;
@@ -545,88 +580,79 @@ static BINDING_FUNCTION(binding_next_history)
 	binding_next_only_history(NULL);
 }
 
-static BINDING_FUNCTION(binding_backward_page)
-{
-	ncurses_current->start -= window_current->height / 2;
-	if (ncurses_current->start < 0)
-		ncurses_current->start = 0;
-	ncurses_redraw(window_current);
-	ncurses_commit();
-}
-
-static BINDING_FUNCTION(binding_forward_page)
-{
-	ncurses_current->start += window_current->height / 2;
-
-	if (ncurses_current->start > ncurses_current->lines_count - window_current->height + ncurses_current->overflow)
-		ncurses_current->start = ncurses_current->lines_count - window_current->height + ncurses_current->overflow;
-
-	if (ncurses_current->start < 0)
-		ncurses_current->start = 0;
-
-	if (ncurses_current->start == ncurses_current->lines_count - window_current->height + ncurses_current->overflow) {
-		window_current->more = 0;
-		update_statusbar(0);
-	}
-
-	ncurses_redraw(window_current);
-	ncurses_commit();
-}
-
-static BINDING_FUNCTION(binding_forward_lastlog_page) {
-	window_t *w = window_find_sa(NULL, "__lastlog", 1);
-	ncurses_window_t *n;
-
-	if (!w || !(n = w->private)) 
-		return;
-	
-	n->start += w->height / 2;
-
-	if (n->start > n->lines_count - w->height + n->overflow)
-		n->start = n->lines_count - w->height + n->overflow;
-
-	if (n->start < 0)
-		n->start = 0;
-
-	ncurses_redraw(w);
-	ncurses_commit();
-}
-
-static BINDING_FUNCTION(binding_backward_lastlog_page) {
-	window_t *w = window_find_sa(NULL, "__lastlog", 1);
+void binding_helper_scroll(window_t *w, int offset) {
 	ncurses_window_t *n;
 
 	if (!w || !(n = w->private))
 		return;
-	
-	n->start -= w->height / 2;
-	if (n->start < 0)
-		n->start = 0;
+
+	if (offset < 0) {
+		n->start += offset;
+		if (n->start < 0)
+			n->start = 0;
+
+	} else {
+		n->start += offset;
+
+		if (n->start > n->lines_count - w->height + n->overflow)
+			n->start = n->lines_count - w->height + n->overflow;
+
+		if (n->start < 0)
+			n->start = 0;
+
+	/* old code from: binding_forward_page() need it */
+		if (w == window_current) {
+			if (ncurses_current->start == ncurses_current->lines_count - window_current->height + ncurses_current->overflow) {
+				window_current->more = 0;
+				update_statusbar(0);
+			}
+		}
+	}
 
 	ncurses_redraw(w);
 	ncurses_commit();
 }
 
+static void binding_helper_scroll_page(window_t *w, int backward) {
+	if (!w)
+		return;
 
-static BINDING_FUNCTION(binding_backward_contacts_line)
-{
-	ncurses_backward_contacts_line(1);
+	if (backward)
+		binding_helper_scroll(w, -(w->height / 2));
+	else
+		binding_helper_scroll(w, +(w->height / 2));
 }
 
-static BINDING_FUNCTION(binding_forward_contacts_line)
-{
-	ncurses_forward_contacts_line(1);
+static BINDING_FUNCTION(binding_backward_page) {
+	binding_helper_scroll_page(window_current, 1);
 }
 
-
-static BINDING_FUNCTION(binding_backward_contacts_page)
-{
-	ncurses_backward_contacts_page(0);
+static BINDING_FUNCTION(binding_forward_page) {
+	binding_helper_scroll_page(window_current, 0);
 }
 
-static BINDING_FUNCTION(binding_forward_contacts_page)
-{
-	ncurses_forward_contacts_page(0);
+static BINDING_FUNCTION(binding_backward_lastlog_page) {
+	binding_helper_scroll_page(window_find_sa(NULL, "__lastlog", 1), 1);
+}
+
+static BINDING_FUNCTION(binding_forward_lastlog_page) {
+	binding_helper_scroll_page(window_find_sa(NULL, "__lastlog", 1), 0);
+}
+
+static BINDING_FUNCTION(binding_backward_contacts_page) {
+	binding_helper_scroll_page(window_find_sa(NULL, "__contacts", 1), 1);
+}
+
+static BINDING_FUNCTION(binding_forward_contacts_page) {
+	binding_helper_scroll_page(window_find_sa(NULL, "__contacts", 1), 0);
+}
+
+static BINDING_FUNCTION(binding_backward_contacts_line) {
+	binding_helper_scroll(window_find_sa(NULL, "__contacts", 1), -1);
+}
+
+static BINDING_FUNCTION(binding_forward_contacts_line) {
+	binding_helper_scroll(window_find_sa(NULL, "__contacts", 1), 1);
 }
 
 static BINDING_FUNCTION(binding_ignore_query)
@@ -634,7 +660,7 @@ static BINDING_FUNCTION(binding_ignore_query)
 	if (!window_current->target)
 		return;
 	
-	command_exec_format(window_current->target, window_current->session, 0, ("/ignore %s"), window_current->target);
+	command_exec_format(window_current->target, window_current->session, 0, ("/ignore \"%s\""), window_current->target);
 }
 
 static BINDING_FUNCTION(binding_quick_list_wrapper)
@@ -654,16 +680,19 @@ static BINDING_FUNCTION(binding_toggle_contacts_wrapper)
 		config_contacts = 0;
 	}
 
-	ncurses_contacts_changed("contacts", NULL);
+	ncurses_contacts_changed("contacts");
 }
 
-static BINDING_FUNCTION(binding_next_contacts_group)
-{
+static BINDING_FUNCTION(binding_next_contacts_group) {
+	window_t *w;
+
 	contacts_group_index++;
-	contacts_index = 0;
-	ncurses_contacts_update(NULL);
-	ncurses_resize();
-	ncurses_commit();
+	
+	if ((w = window_find_sa(NULL, "__contacts", 1))) {
+		ncurses_contacts_update(w, 0);
+/*		ncurses_resize(); */ 
+		ncurses_commit();
+	}
 }
 
 static BINDING_FUNCTION(binding_ui_ncurses_debug_toggle)
@@ -676,10 +705,8 @@ static BINDING_FUNCTION(binding_ui_ncurses_debug_toggle)
 
 static BINDING_FUNCTION(binding_cycle_sessions)
 {
-	if (window_session_cycle(window_current) == 0) {
-		ncurses_contacts_update(NULL);
+	if (window_session_cycle(window_current) == 0)
 		update_statusbar(1);
-	}
 }
 
 /*
@@ -711,7 +738,7 @@ static void binding_parse(struct binding *b, const char *action)
 	if (!xstrcmp(args[0], (x))) { \
 		b->function = y; \
 		b->arg = xstrdup(args[1]); \
-	} else  
+	} else	
 
 	__action("backward-word", binding_backward_word)
 	__action("forward-word", binding_forward_word)
@@ -774,14 +801,14 @@ static int binding_key(struct binding *b, const char *key, int add)
 		if (!xstrcasecmp(key + 4, ("Enter"))) {
 			b->key = xstrdup(("Alt-Enter"));
 			if (add)
-				ncurses_binding_map_meta[13] = list_add(&bindings, b, sizeof(struct binding));
+				ncurses_binding_map_meta[13] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 			return 0;
 		}
 
 		if (!xstrcasecmp(key + 4, ("Backspace"))) {
 			b->key = xstrdup(("Alt-Backspace"));
 			if (add) {
-				ncurses_binding_map_meta[KEY_BACKSPACE] = list_add(&bindings, b, sizeof(struct binding));
+				ncurses_binding_map_meta[KEY_BACKSPACE] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 				ncurses_binding_map_meta[127] = ncurses_binding_map_meta[KEY_BACKSPACE];
 			}
 			return 0;
@@ -795,7 +822,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("Alt-%c"), ch);
 
 		if (add) {
-			ncurses_binding_map_meta[ch] = list_add(&bindings, b, sizeof(struct binding));
+			ncurses_binding_map_meta[ch] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 			if (xisalpha(ch))
 				ncurses_binding_map_meta[xtolower(ch)] = ncurses_binding_map_meta[ch];
 		}
@@ -809,23 +836,23 @@ static int binding_key(struct binding *b, const char *key, int add)
 //		if (xstrlen(key) != 6)
 //			return -1;
 #define __key(x, y, z) \
-        if (!xstrcasecmp(key + 5, (x))) { \
-                b->key = xstrdup(key); \
-                if (add) { \
-                        ncurses_binding_map[y] = list_add(&bindings, b, sizeof(struct binding)); \
-                        if (z) \
-                                ncurses_binding_map[z] = ncurses_binding_map[y]; \
-                } \
-                return 0; \
-        }
+	if (!xstrcasecmp(key + 5, (x))) { \
+		b->key = xstrdup(key); \
+		if (add) { \
+			ncurses_binding_map[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
+			if (z) \
+				ncurses_binding_map[z] = ncurses_binding_map[y]; \
+		} \
+		return 0; \
+	}
 
-        __key("Enter", KEY_CTRL_ENTER, 0);
-        __key("Escape", KEY_CTRL_ESCAPE, 0);
-        __key("Home", KEY_CTRL_HOME, 0);
-        __key("End", KEY_CTRL_END, 0);
-        __key("Delete", KEY_CTRL_DC, 0);
-        __key("Backspace", KEY_CTRL_BACKSPACE, 0);
-        __key("Tab", KEY_CTRL_TAB, 0);
+	__key("Enter", KEY_CTRL_ENTER, 0);
+	__key("Escape", KEY_CTRL_ESCAPE, 0);
+	__key("Home", KEY_CTRL_HOME, 0);
+	__key("End", KEY_CTRL_END, 0);
+	__key("Delete", KEY_CTRL_DC, 0);
+	__key("Backspace", KEY_CTRL_BACKSPACE, 0);
+	__key("Tab", KEY_CTRL_TAB, 0);
 
 #undef __key
 	
@@ -833,8 +860,8 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("Ctrl-%c"), ch);
 
 		if (add) {
-                        if (xisalpha(ch))
-				ncurses_binding_map[ch - 64] = list_add(&bindings, b, sizeof(struct binding));
+			if (xisalpha(ch))
+				ncurses_binding_map[ch - 64] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 			else
 				return -1;
 		}
@@ -851,7 +878,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("F%d"), f);
 		
 		if (add)
-			ncurses_binding_map[KEY_F(f)] = list_add(&bindings, b, sizeof(struct binding));
+			ncurses_binding_map[KEY_F(f)] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
 		
 		return 0;
 	}
@@ -860,7 +887,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 	if (!xstrcasecmp(key, (x))) { \
 		b->key = xstrdup((x)); \
 		if (add) { \
-			ncurses_binding_map[y] = list_add(&bindings, b, sizeof(struct binding)); \
+			ncurses_binding_map[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
 			if (z) \
 				ncurses_binding_map[z] = ncurses_binding_map[y]; \
 		} \
@@ -893,25 +920,23 @@ static int binding_key(struct binding *b, const char *key, int add)
  */
 void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 {
-	list_t l;
+	struct binding *d;
 	binding_added_t *b;
 	struct binding *binding_orginal = NULL;
 	char *joined = NULL;
 	int count = 0;
 
-        for (l = bindings; l; l = l->next) {
-                struct binding *d = l->data;
+	for (d = bindings; d; d = d->next) {
+		if (!xstrcasecmp(key, d->key)) {
+			binding_orginal = d;
+			break;
+		}
+	}
 
-                if (!xstrcasecmp(key, d->key)) {
-                        binding_orginal = d;
-                        break;
-                }
-        }
-
-        if (!binding_orginal) {
-                printq("bind_doesnt_exist", key);
+	if (!binding_orginal) {
+		printq("bind_doesnt_exist", key);
 		return;
-        }
+	}
 
 	if (!sequence) {
 		char **chars = NULL;
@@ -928,20 +953,18 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 	} else
 		joined = xstrdup(sequence);
 
-	for (l = bindings_added; l; l = l->next) {
-		binding_added_t *d = l->data;
-
-		if (!xstrcasecmp(d->sequence, joined)) {
-			d->binding = binding_orginal;
+	for (b = bindings_added; b; b = b->next) {
+		if (!xstrcasecmp(b->sequence, joined)) {
+			b->binding = binding_orginal;
 			xfree(joined);
 			goto end;
 		}
 	}
-	b = xmalloc(sizeof(binding_added_t));
 
+	b = xmalloc(sizeof(binding_added_t));
 	b->sequence = joined;
 	b->binding = binding_orginal;
-	list_add(&bindings_added, b, 0);
+	LIST_ADD2(&bindings_added, b);
 end:
 	if (!in_autoexec)
 		config_changed = 1;
@@ -962,8 +985,7 @@ end:
  */
 void ncurses_binding_add(const char *key, const char *action, int internal, int quiet)
 {
-	struct binding b, *c = NULL;
-	list_t l;
+	struct binding b, *c = NULL, *d;
 	
 	if (!key || !action)
 		return;
@@ -972,9 +994,7 @@ void ncurses_binding_add(const char *key, const char *action, int internal, int 
 
 	b.internal = internal;
 	
-	for (l = bindings; l; l = l->next) {
-		struct binding *d = l->data;
-
+	for (d = bindings; d; d = d->next) {
 		if (!xstrcasecmp(key, d->key)) {
 			if (d->internal) {
 				c = d;
@@ -989,8 +1009,8 @@ void ncurses_binding_add(const char *key, const char *action, int internal, int 
 
 	if (internal) {
 		b.default_action	= xstrdup(b.action);
-		b.default_function 	= b.function;
-		b.default_arg 		= xstrdup(b.arg);
+		b.default_function	= b.function;
+		b.default_arg		= xstrdup(b.arg);
 	}
 
 	if (binding_key(&b, key, (c) ? 0 : 1)) {
@@ -1027,13 +1047,12 @@ void ncurses_binding_add(const char *key, const char *action, int internal, int 
  */
 void ncurses_binding_delete(const char *key, int quiet)
 {
-	list_t l;
+	struct binding *b;
 
 	if (!key)
 		return;
 
-	for (l = bindings; l; l = l->next) {
-		struct binding *b = l->data;
+	for (b = bindings; b; b = b->next) {
 		int i;
 
 		if (!b->key || xstrcasecmp(key, b->key))
@@ -1050,8 +1069,8 @@ void ncurses_binding_delete(const char *key, int quiet)
 		if (b->default_action) {
 			b->action	= xstrdup(b->default_action);
 			b->arg		= xstrdup(b->default_arg);
-			b->function 	= b->default_function;
-			b->internal 	= 1;
+			b->function	= b->default_function;
+			b->internal	= 1;
 		} else {
 			xfree(b->key);
 			for (i = 0; i < KEY_MAX + 1; i++) {
@@ -1062,7 +1081,7 @@ void ncurses_binding_delete(const char *key, int quiet)
 
 			}
 
-			list_remove(&bindings, b, 1);
+			LIST_REMOVE2(&bindings, b, NULL);
 		}
 
 		config_changed = 1;
@@ -1154,20 +1173,14 @@ QUERY(ncurses_binding_default)
 
 void ncurses_binding_init()
 {
+	va_list dummy;
 	memset(ncurses_binding_map, 0, sizeof(ncurses_binding_map));
 	memset(ncurses_binding_map_meta, 0, sizeof(ncurses_binding_map_meta));
 
-	ncurses_binding_default(NULL, NULL);
+	ncurses_binding_default(NULL, dummy);
 	ncurses_binding_complete	= binding_complete;
 	ncurses_binding_accept_line	= binding_accept_line;
 }
-#if 0
-static void ncurses_binding_destroy()
-{
-
-}
-#endif
-
 
 /*
  * Local Variables:
@@ -1176,5 +1189,5 @@ static void ncurses_binding_destroy()
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8
+ * vim: noet
  */

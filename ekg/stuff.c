@@ -2,11 +2,11 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@o2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
- *                          Adam Mikuta <adammikuta@poczta.onet.pl>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@o2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
+ *			    Adam Mikuta <adammikuta@poczta.onet.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -49,6 +49,7 @@
 
 #ifndef NO_POSIX_SYSTEM
 #include <sched.h>
+#include <pwd.h>
 #endif
 
 #include <signal.h>
@@ -59,8 +60,15 @@
 #include <time.h>
 #include <unistd.h>
 
+#ifdef HAVE_ICONV
+#	include <iconv.h>
+#endif
+
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
+#endif
+#ifndef HAVE_STRLCAT
+#  include "compat/strlcat.h"
 #endif
 
 #include "debug.h"
@@ -73,31 +81,43 @@
 #include "vars.h"
 #include "windows.h"
 #include "xmalloc.h"
+#include "plugins.h"
+#include "sessions.h"
 
+#include "dynstuff_inline.h"
 #include "queries.h"
 
-#ifndef PATH_MAX
-# ifdef MAX_PATH
-#  define PATH_MAX MAX_PATH
-# else
-#  define PATH_MAX _POSIX_PATH_MAX
-# endif
-#endif
+child_t *children = NULL;
 
-list_t children = NULL;
-list_t aliases = NULL;
+static LIST_FREE_ITEM(child_free_item, child_t *) { xfree(data->name); }
+
+DYNSTUFF_LIST_DECLARE(children, child_t, child_free_item,
+	static __DYNSTUFF_LIST_ADD,		/* children_add() */
+	__DYNSTUFF_LIST_REMOVE_ITER,		/* children_removei() */
+	__DYNSTUFF_LIST_DESTROY)		/* children_destroy() */
+
+alias_t *aliases = NULL;
 list_t autofinds = NULL;
-list_t bindings = NULL;
-list_t timers = NULL;		/**< list_t with <b>all</b> ekg2 timers */
-list_t conferences = NULL;
-list_t newconferences = NULL;
 
-list_t buffer_debug;		/**< debug list_t struct buffer */
-list_t buffer_speech;		/**< speech list_t struct buffer */
+struct timer *timers = NULL;
+static LIST_FREE_ITEM(timer_free_item, struct timer *) { data->function(1, data->data); xfree(data->name); }
 
-list_t bindings_added;
+
+DYNSTUFF_LIST_DECLARE2(timers, struct timer, timer_free_item,
+	static __DYNSTUFF_LIST_ADD,		/* timers_add() */
+	__DYNSTUFF_LIST_REMOVE_SAFE,		/* timers_remove() */
+	__DYNSTUFF_LIST_REMOVE_ITER,		/* timers_removei() */
+	__DYNSTUFF_LIST_DESTROY)		/* timers_destroy() */
+
+struct conference *conferences = NULL;
+newconference_t *newconferences = NULL;
+
+struct buffer_info buffer_debug = { NULL, 0, DEBUG_MAX_LINES };		/**< debug buffer */
+struct buffer_info buffer_speech = { NULL, 0, 50 };		/**< speech buffer */
+
 int old_stderr;
 char *config_subject_prefix;
+char *config_subject_reply_prefix;
 
 int in_autoexec = 0;
 int config_auto_save = 0;
@@ -114,6 +134,7 @@ int config_display_blinking = 1;
 int config_display_pl_chars = 1;
 int config_events_delay = 3;
 int config_expert_mode = 0;
+int config_history_savedups = 1;
 char *config_sound_msg_file = NULL;
 char *config_sound_chat_file = NULL;
 char *config_sound_notify_file = NULL;
@@ -121,8 +142,9 @@ char *config_sound_sysmsg_file = NULL;
 char *config_sound_mail_file = NULL;
 char *config_sound_app = NULL;
 int config_use_unicode;
+int config_use_iso;
 int config_changed = 0;
-int config_display_ack = 3;
+int config_display_ack = 12;
 int config_completion_notify = 1;
 char *config_completion_char = NULL;
 time_t ekg_started = 0;
@@ -138,14 +160,14 @@ int config_slash_messages = 0;
 int quit_message_send = 0;
 int batch_mode = 0;
 char *batch_line = NULL;
-int config_make_window = 2;
+int config_make_window = 6;
 char *config_tab_command = NULL;
 int config_save_password = 1;
 int config_save_quit = 1;
 char *config_timestamp = NULL;
 int config_timestamp_show = 1;
 int config_display_sent = 1;
-int config_sort_windows = 0;
+int config_sort_windows = 1;
 int config_keep_reason = 1;
 char *config_audio_device = NULL;
 char *config_speech_app = NULL;
@@ -164,6 +186,10 @@ int config_debug = 1;
 int config_lastlog_noitems = 0;
 int config_lastlog_case = 0;
 int config_lastlog_display_all = 0;
+int config_version = 0;
+char *config_exit_exec = NULL;
+int config_session_locks = 0;
+char *config_nickname = NULL;
 
 char *last_search_first_name = NULL;
 char *last_search_last_name = NULL;
@@ -181,15 +207,13 @@ int reason_changed = 0;
  */
 
 void windows_save() {
-	list_t l;
+	window_t *w;
 
 	if (config_windows_save) {
 		string_t s = string_init(NULL);
 		int maxid = 0, i;
 		
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (!w->floating && w->id > maxid)
 				maxid = w->id;
 		}
@@ -198,9 +222,7 @@ void windows_save() {
 			const char *target = "-";
 			const char *session_name = NULL;
 			
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
-
+			for (w = windows; w; w = w->next) {
 				if (w->id == i) {
 					target = w->target;
 					if (w->session)
@@ -224,9 +246,7 @@ void windows_save() {
 				string_append_c(s, '|');
 		}
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (w->floating && (!w->target || xstrncmp(w->target, "__", 2))) {
 				char *tmp = saprintf("|*%d,%d,%d,%d,%d,%s", w->left, w->top, w->width, w->height, w->frames, w->target);
 				string_append(s, tmp);
@@ -237,6 +257,13 @@ void windows_save() {
 		config_windows_layout = string_free(s, 0);
 	}
 }
+
+static LIST_FREE_ITEM(list_alias_free, alias_t *) { xfree(data->name); list_destroy(data->commands, 1); }
+
+DYNSTUFF_LIST_DECLARE(aliases, alias_t, list_alias_free,
+	static __DYNSTUFF_LIST_ADD,		/* aliases_add() */
+	static __DYNSTUFF_LIST_REMOVE_ITER,	/* aliases_removei() */
+	__DYNSTUFF_LIST_DESTROY)		/* aliases_destroy() */
 
 /*
  * alias_add()
@@ -252,8 +279,8 @@ void windows_save() {
 int alias_add(const char *string, int quiet, int append)
 {
 	char *cmd;
-	list_t l;
-	struct alias *a;
+	command_t *c;
+	alias_t *a;
 	char **params = NULL;
 	char *array;
 
@@ -262,23 +289,17 @@ int alias_add(const char *string, int quiet, int append)
 
 	*cmd++ = 0;
 
-	for (l = aliases; l; l = l->next) {
-		struct alias *j = l->data;
-
-		if (!xstrcasecmp(string, j->name)) {
+	for (a = aliases; a; a = a->next) {
+		if (!xstrcasecmp(string, a->name)) {
 			if (!append) {
 				printq("aliases_exist", string);
 				return -1;
 			} else {
-				list_t l;
-
-				list_add(&j->commands, cmd, xstrlen(cmd) + 1);
+				list_add(&a->commands, xstrdup(cmd));
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
-				for (l = commands; l; l = l->next) {
-					command_t *c = l->data;
-
-					if (!xstrcasecmp(c->name, j->name)) {
+				for (c = commands; c; c = c->next) {
+					if (!xstrcasecmp(c->name, a->name)) {
 						xfree(c->params);
 						c->params = array_make(("?"), (" "), 0, 1, 1);
 						break;
@@ -292,8 +313,7 @@ int alias_add(const char *string, int quiet, int append)
 		}
 	}
 
-	for (l = commands; l; l = l->next) {
-		command_t *c = l->data;
+	for (c = commands; c; c = c->next) {
 		char *tmp = ((*cmd == '/') ? cmd + 1 : cmd);
 
 		if (!xstrcasecmp(string, c->name) && !(c->flags & COMMAND_ISALIAS)) {
@@ -307,8 +327,8 @@ int alias_add(const char *string, int quiet, int append)
 	a = xmalloc(sizeof(struct alias));
 	a->name = xstrdup(string);
 	a->commands = NULL;
-	list_add(&(a->commands), cmd, (xstrlen(cmd) + 1) * sizeof(char));
-	list_add(&aliases, a, 0);
+	list_add(&(a->commands), xstrdup(cmd));
+	aliases_add(a);
 
 	array = (params) ? array_join(params, (" ")) : xstrdup(("?"));
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
@@ -331,21 +351,16 @@ int alias_add(const char *string, int quiet, int append)
  */
 int alias_remove(const char *name, int quiet)
 {
-	list_t l;
+	alias_t *a;
 	int removed = 0;
 
-	for (l = aliases; l; ) {
-		struct alias *a = l->data;
-
-		l = l->next;
-
+	for (a = aliases; a; a = a->next) {
 		if (!name || !xstrcasecmp(a->name, name)) {
 			if (name)
 				printq("aliases_del", name);
 			command_remove(NULL, a->name);
-			xfree(a->name);
-			list_destroy(a->commands, 1);
-			list_remove(&aliases, a, 1);
+			
+			a = aliases_removei(a);
 			removed = 1;
 		}
 	}
@@ -365,98 +380,62 @@ int alias_remove(const char *name, int quiet)
 	return 0;
 }
 
-/**
- * alias_free()
- *
- * Free memory allocated by aliases
- */
+static LIST_FREE_ITEM(list_buffer_free, struct buffer *) { xfree(data->line); xfree(data->target); }
 
-void alias_free() {
-	list_t l;
+static __DYNSTUFF_ADD(buffers, struct buffer, NULL)			/* buffers_add() */
+static __DYNSTUFF_REMOVE_ITER(buffers, struct buffer, list_buffer_free)	/* buffers_removei() */
+static __DYNSTUFF_DESTROY(buffers, struct buffer, list_buffer_free)	/* buffers_destroy() */
+static __DYNSTUFF_COUNT(buffers, struct buffer)				/* buffers_count() */
+static __DYNSTUFF_GET_NTH(buffers, struct buffer)			/* buffers_get_nth() */
 
-	if (!aliases)
-		return;
+static void buffer_add_common(struct buffer_info *type, const char *target, const char *line, time_t ts) {
+	struct buffer *b;
+	struct buffer **addpoint = (type->last ? &(type->last) : &(type->data));
 
-	for (l = aliases; l; l = l->next) {
-		struct alias *a = l->data;
+	/* What the heck with addpoint thing?
+	 * - if type->last ain't NULL, it points to last element of the list;
+	 *   we can pass it directly to LIST_ADD2() to avoid iterating through all items,
+	 *   it just sets its' 'next' field and everything is fine,
+	 * - but if it's NULL, then data is NULL too. That means LIST_ADD2() would need
+	 *   to modify the list pointer, so we need to pass it &(type->data) instead.
+	 *   Else type->last would point to the list, but type->data would be still NULL,
+	 * - if last is NULL, but data ain't, that means something broke. But that's
+	 *   no problem, as we're still passing &(type->data), so adding works fine
+	 *   and then type->last is fixed.
+	 */
+
+	if (type->max_lines) { /* XXX: move to idles? */
+		int n;
+bac_countupd:
+		n = type->count - type->max_lines + 1;
 		
-		xfree(a->name);
-		list_destroy(a->commands, 1);
-	}
-	list_destroy(aliases, 1);
-	aliases = NULL;
-}
-
-/*
- * binding_list()
- *
- * wy¶wietla listê przypisanych komend.
- */
-void binding_list(int quiet, const char *name, int all) 
-{
-	list_t l;
-	int found = 0;
-
-	if (!bindings)
-		printq("bind_seq_list_empty");
-
-	for (l = bindings; l; l = l->next) {
-		struct binding *b = l->data;
-
-		if (name) {
-			if (xstrcasestr(b->key, name)) {
-				printq("bind_seq_list", b->key, b->action);
-				found = 1;
+		if (n > 0) { /* list slice removal */
+			b = buffers_get_nth(type->data, n);		/* last element to remove */
+			if (!b) { /* count has been broken */
+				type->count = buffers_count(type->data);
+				goto bac_countupd;
 			}
-			continue;
-		}
-
-		if (!b->internal || (all && b->internal)) 
-			printq("bind_seq_list", b->key, b->action);
-	}
-
-	if (name && !found) {
-		for (l = bindings; l; l = l->next) {
-			struct binding *b = l->data;
-
-			if (xstrcasestr(b->action, name))
-				printq("bind_seq_list", b->key, b->action);
+			type->data	= b->next;
+			b->next		= NULL;			/* unlink elements to be removed */
+			type->count -= n;
+	/* XXX,
+	 *	b->next == NULL
+	 *	so buffers_destroy(&b) will free only b,
+	 *	shouldn't be saved type->data value?
+	 */
+			buffers_destroy(&b);			/* and remove them */
 		}
 	}
-}
 
-/**
- * binding_free()
- *
- * Free memory allocated for key bindings.
- */
+	b		= xmalloc(sizeof(struct buffer));
+	b->ts		= time(NULL);
+	b->target	= xstrdup(target);
+	b->line		= xstrdup(line);
 
-void binding_free() {
-	list_t l;
+	buffers_add(addpoint, b);
 
-	if (bindings) {
-		for (l = bindings; l; l = l->next) {
-			struct binding *b = l->data;
-
-			xfree(b->key);
-			xfree(b->action);
-			xfree(b->arg);
-			xfree(b->default_action);
-			xfree(b->default_arg);
-		}
-		list_destroy(bindings, 1);
-		bindings = NULL;
-	}
-
-	if (bindings_added) {
-		for (l = bindings_added; l; l = l->next) {
-			binding_added_t *b = l->data;
-
-			xfree(b->sequence);
-		}
-		list_destroy(bindings_added, 1);
-		bindings_added = NULL;
-	}
+	type->last	= b;
+	type->count++;
 }
 
 /**
@@ -464,40 +443,19 @@ void binding_free() {
  *
  * Add new line to given buffer_t, if max_lines > 0 than it maintain list that we can have max: @a max_lines items on it.
  *
- * @param type 		- pointer to buffer list_t 
+ * @param type		- pointer to buffer beginning ptr
  * @param target	- name of target.. or just name of smth we want to keep in b->target
  * @param line		- line which we want to save.
- * @param max_lines	- max number of items in buffer
  *
- * @return 	0 - when line was successfully added to buffer, else -1	(when @a type was NULL)
+ * @return	0 - when line was successfully added to buffer, else -1	(when @a type was NULL)
  */
 
-int buffer_add(list_t *type, const char *target, const char *line, int max_lines) {
-	struct buffer *b;
-
+int buffer_add(struct buffer_info *type, const char *target, const char *line) {
 	if (!type)
 		return -1;
 
-	if (max_lines) {
-		list_t l = *type;
-		int bcount = list_count(*type);
-		
-		while (bcount >= max_lines && l) {
-			b = l->data;
-			l = l->next;
+	buffer_add_common(type, target, line, time(NULL));
 
-			xfree(b->line);
-			xfree(b->target);
-			list_remove(type, b, 1);
-			bcount--;
-		}
-	}
-	b = xmalloc(sizeof(struct buffer));
-	b->ts	= time(NULL);
-	b->target = xstrdup(target);
-	b->line = xstrdup(line);
-
-	list_add(type, b, 0);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
 	return 0;			/* so always return success here */
 }
 
@@ -506,23 +464,21 @@ int buffer_add(list_t *type, const char *target, const char *line, int max_lines
  *
  * Add new line to given buffer_t, if max_lines > 0 than it maintain list that we can have max: @a max_lines items on it.
  *
- * @param type		- pointer to buffer list_t
+ * @param type		- pointer to buffer beginning ptr
  * @param target	- name of target, or just name of smth we want to keep in b->target
  * @param str		- string in format: [time_when_it_happen proper line... blah, blah] <i>time_when_it_happen</i> should be in digits.
- * @param max_lines	- max number of items in buffer
  *
  * @return	0 - when line was successfully added to buffer, else -1 (when @a type was NULL, or @a line was in wrong format)
  */
 
-int buffer_add_str(list_t *type, const char *target, const char *str, int max_lines) {
-	struct buffer *b;
+int buffer_add_str(struct buffer_info *type, const char *target, const char *str) {
 	char *sep;
 	time_t ts = 0;
 
 	if (!type || !str)
 		return -1;
 
-	for (sep = str; xisdigit(*sep); sep++) {
+	for (sep = (char *) str; xisdigit(*sep); sep++) {
 		/* XXX check if there's no time_t overflow? */
 		ts *= 10;
 		ts += (*sep - '0');
@@ -533,27 +489,7 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
 		return -1;
 	}
 
-	if (max_lines) {
-		list_t l = *type;
-		int bcount = list_count(*type);
-		
-		while (bcount >= max_lines && l) {
-			b = l->data;
-			l = l->next;
-
-			xfree(b->line);
-			xfree(b->target);
-			list_remove(type, b, 1);
-			bcount--;
-		}
-	}
-
-	b	= xmalloc(sizeof(struct buffer));
-	b->ts		= ts;
-	b->target	= xstrdup(target);
-	b->line		= xstrdup(sep+1);
-
-	list_add(type, b, 0);		/* return x ? 0 : -1 -> list_add() can't fail if type is ok */
+	buffer_add_common(type, target, sep+1, ts);
 	return 0;			/* so always return success here */
 }
 
@@ -562,24 +498,28 @@ int buffer_add_str(list_t *type, const char *target, const char *str, int max_li
  *
  * Return oldest b->line, free b->target and remove whole buffer_t from list
  * 
- * @param type	- pointer to buffer list_t 
+ * @param type	- pointer to buffer beginning ptr
  *
  * @return First b->line on the list, or NULL, if no items on list.
  */
 
-char *buffer_tail(list_t *type) {
+char *buffer_tail(struct buffer_info *type) {
 	struct buffer *b;
 	char *str;
 
-	if (!type || !(*type))
+	if (!type || !type->data)
 		return NULL;
 
-	b = (*type)->data;
-
+	b = type->data;
 	str = b->line;			/* save b->line */
+	b->line = NULL;
 
-	xfree(b->target);		/* free b->target */
-	list_remove(type, b, 1);	/* remove struct */
+	(void) buffers_removei(&(type->data), b);
+
+	if (type->last == b) 
+		type->last = NULL;
+
+	type->count--;
 
 	return str;			/* return saved b->line */
 }
@@ -590,25 +530,30 @@ char *buffer_tail(list_t *type) {
  * Free memory after given buffer.<br>
  * After it set *type to NULL
  *
- * @param type - pointer to list_t
+ * @param type - pointer to buffer beginning ptr
  * 
  */
 
-void buffer_free(list_t *type) {
-	list_t l;
-
-	if (!type || !(*type))
+void buffer_free(struct buffer_info *type) {
+	if (!type || !type->data)
 		return;
 
-	for (l = *type; l; l = l->next) {
-		struct buffer *b = l->data;
+	buffers_destroy(&(type->data));
 
-		xfree(b->line);
-		xfree(b->target);
+	type->last	= NULL;
+	type->count	= 0;
+}
+
+void changed_make_window(const char *var)
+{
+	static int old_value = 6;
+
+	if (config_make_window == 4) {
+		config_make_window = old_value;
+		print("variable_invalid", var);
 	}
 
-	list_destroy(*type, 1);
-	*type = NULL;
+	old_value = config_make_window;
 }
 
 /*
@@ -643,15 +588,15 @@ void changed_auto_save(const char *var)
  */
 void changed_display_blinking(const char *var)
 {
-	list_t sl;
+	session_t *s;
 
-	/* wy³anczamy wszystkie blinkaj±ce uid'y */
-        for (sl = sessions; sl; sl = sl->next) {
-		list_t l;
-        	session_t *s = sl->data;
-		for (l = s->userlist; l; l = l->next) {
-			userlist_t *u = l->data;
-			u->xstate &= ~EKG_XSTATE_BLINK;			
+	/* wy³±czamy wszystkie blinkaj±ce uid'y */
+	for (s = sessions; s; s = s->next) {
+		userlist_t *ul;
+
+		for (ul = s->userlist; ul; ul = ul->next) {
+			userlist_t *u	= ul;
+			u->blink	= 0;
 		}
 	}
 }
@@ -673,7 +618,7 @@ void changed_theme(const char *var)
 			print("theme_loaded", config_theme);
 		} else {
 			print("error_loading_theme", strerror(errno));
-			variable_set(("theme"), NULL, 0);
+			variable_set(("theme"), NULL);
 		}
 	}
 }
@@ -684,8 +629,8 @@ void changed_theme(const char *var)
  * Return compilation date, and time..<br>
  * Used by <i>/version command</i> and <i>ekg2 --version</i>
  *
- * @return 	__DATE__" "__TIME__<br> 
- * 		For example: <b>"Jun 21 1987" " " "22:06:47"</b>
+ * @return	__DATE__" "__TIME__<br> 
+ *		For example: <b>"Jun 21 1987" " " "22:06:47"</b>
  */
 
 const char *compile_time() {
@@ -694,13 +639,20 @@ const char *compile_time() {
 
 /* NEW CONFERENCE API HERE, WHEN OLD CONFERENCE API BECOME OBSOLETE CHANGE FUNCTION NAME, ETC.... */
 
+static LIST_FREE_ITEM(newconference_free_item, newconference_t *) { xfree(data->name); xfree(data->session); userlists_destroy(&(data->participants)); }
+
+DYNSTUFF_LIST_DECLARE(newconferences, newconference_t, newconference_free_item,
+	static __DYNSTUFF_LIST_ADD,		/* newconferences_add() */
+	static __DYNSTUFF_LIST_REMOVE_SAFE,	/* newconferences_remove() */
+	__DYNSTUFF_LIST_DESTROY)		/* newconferences_destroy() */
+
 userlist_t *newconference_member_find(newconference_t *conf, const char *uid) {
-	list_t l;
+	userlist_t *ul;
 
 	if (!conf || !uid) return NULL;
 
-	for (l = conf->participants; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = conf->participants; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		if (!xstrcasecmp(u->uid, uid))
 			return u;
@@ -723,10 +675,9 @@ int newconference_member_remove(newconference_t *conf, userlist_t *u) {
 }
 
 newconference_t *newconference_find(session_t *s, const char *name) {
-	list_t l;
-	for (l = newconferences; l; l = l->next) {
-		newconference_t *c = l->data;
-
+	newconference_t *c;
+	
+	for (c = newconferences; c; c = c->next) {
 		if ((!s || !xstrcmp(s->uid, c->session)) && !xstrcmp(name, c->name)) return c;
 	}
 	return NULL;
@@ -748,7 +699,8 @@ newconference_t *newconference_create(session_t *s, const char *name, int create
 	c->session	= xstrdup(s->uid);
 	c->name		= xstrdup(name);
 	
-	return list_add(&newconferences, c, 0);
+	newconferences_add(c);
+	return c;
 }
 
 void newconference_destroy(newconference_t *conf, int kill_wnd) {
@@ -756,29 +708,18 @@ void newconference_destroy(newconference_t *conf, int kill_wnd) {
 	if (!conf) return;
 	if (kill_wnd) w = window_find_s(session_find(conf->session), conf->name);
 
-	xfree(conf->name);
-	xfree(conf->session);
-	userlist_free_u(&conf->participants);
-	list_remove(&newconferences, conf, 1);
-
+	newconferences_remove(conf);
 	window_kill(w);
 }
 
-void newconference_free() {
-	list_t l;
-	for (l = newconferences; l; l = l->next) {
-		newconference_t *c = l->data;
-
-		xfree(c->session);
-		xfree(c->name);
-		userlist_free_u(&c->participants);
-	}
-
-	list_destroy(newconferences, 1);
-	newconferences = NULL;
-}
-
 /* OLD CONFERENCE API HERE, REQUEST REWRITING/USING NEW-ONE */
+
+static LIST_FREE_ITEM(conference_free_item, struct conference *) { xfree(data->name); list_destroy(data->recipients, 1); }
+
+DYNSTUFF_LIST_DECLARE(conferences, struct conference, conference_free_item,
+	static __DYNSTUFF_LIST_ADD,		/* conferences_add() */
+	static __DYNSTUFF_LIST_REMOVE_ITER,	/* conferences_removei() */
+	__DYNSTUFF_LIST_DESTROY)		/* conferences_destroy() */
 
 /*
  * conference_add()
@@ -793,9 +734,8 @@ void newconference_free() {
  */
 struct conference *conference_add(session_t *session, const char *name, const char *nicklist, int quiet)
 {
-	struct conference c;
+	struct conference c, *cf;
 	char **nicks;
-	list_t l, sl;
 	int i, count;
 	char **p;
 
@@ -812,21 +752,22 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 	/* grupy zamieniamy na niki */
 	for (i = 0; nicks[i]; i++) {
 		if (nicks[i][0] == '@') {
+			session_t *s;
 			char *gname = xstrdup(nicks[i] + 1);
 			int first = 0;
 			int nig = 0; /* nicks in group */
 		
-			for (sl = sessions; sl; sl = sl->next) {
-				session_t *s = sl->data;
-			        for (l = s->userlist; l; l = l->next) {
-					userlist_t *u = l->data;
-					list_t m;
+			for (s = sessions; s; s = s->next) {
+				userlist_t *ul;
+				for (ul = s->userlist; ul; ul = ul->next) {
+					userlist_t *u = ul;
+					struct ekg_group *gl;
 
 					if (!u->nickname)
 						continue;
 
-					for (m = u->groups; m; m = m->next) {
-						struct ekg_group *g = m->data;
+					for (gl = u->groups; gl; gl = gl->next) {
+						struct ekg_group *g = gl;
 
 						if (!xstrcasecmp(gname, g->name)) {
 							if (first++)
@@ -857,9 +798,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	count = array_count(nicks);
 
-	for (l = conferences; l; l = l->next) {
-		struct conference *cf = l->data;
-		
+	for (cf = conferences; cf; cf = cf->next) {
 		if (!xstrcasecmp(name, cf->name)) {
 			printq("conferences_exist", name);
 
@@ -875,12 +814,12 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		char *uid;
 
 		if (!xstrcmp(*p, ""))
-		        continue;
+			continue;
 			/* XXX, check if bad uid */
 		uid = get_uid(session, *p);
 
 		if (uid)
-			list_add(&(c.recipients), xstrdup(uid), 0);
+			list_add(&(c.recipients), xstrdup(uid));
 		i++;
 	}
 
@@ -899,7 +838,9 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	tabnick_add(name);
 
-	return list_add(&conferences, &c, sizeof(c));
+	cf = xmemdup(&c, sizeof(c));
+	conferences_add(cf);
+	return cf;
 }
 
 /*
@@ -914,21 +855,16 @@ struct conference *conference_add(session_t *session, const char *name, const ch
  */
 int conference_remove(const char *name, int quiet)
 {
-	list_t l;
+	struct conference *c;
 	int removed = 0;
 
-	for (l = conferences; l; ) {
-		struct conference *c = l->data;
-
-		l = l->next;
-
+	for (c = conferences; c; c = c->next) {
 		if (!name || !xstrcasecmp(c->name, name)) {
 			if (name)
 				printq("conferences_del", name);
 			tabnick_remove(c->name);
-			xfree(c->name);
-			list_destroy(c->recipients, 1);
-			list_remove(&conferences, c, 1);
+
+			c = conferences_removei(c);
 			removed = 1;
 		}
 	}
@@ -978,11 +914,9 @@ struct conference *conference_create(session_t *session, const char *nicks)
  */
 struct conference *conference_find(const char *name) 
 {
-	list_t l;
+	struct conference *c;
 
-	for (l = conferences; l; l = l->next) {
-		struct conference *c = l->data;
-
+	for (c = conferences; c; c = c->next) {
 		if (!xstrcmp(c->name, name))
 			return c;
 	}
@@ -1030,10 +964,9 @@ int conference_participant(struct conference *c, const char *uid)
 struct conference *conference_find_by_uids(session_t *s, const char *from, const char **recipients, int count, int quiet) 
 {
 	int i;
-	list_t l;
+	struct conference *c;
 
-	for (l = conferences; l; l = l->next) {
-		struct conference *c = l->data;
+	for (c = conferences; c; c = c->next) {
 		int matched = 0;
 
 		for (i = 0; i < count; i++)
@@ -1043,14 +976,14 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 		if (conference_participant(c, from))
 			matched++;
 
-		debug_function("// conference_find_by_uids(): from=%s, rcpt count=%d, matched=%d, list_count(c->recipients)=%d\n", from, count, matched, list_count(c->recipients));
+		debug_function("// conference_find_by_uids(): from=%s, rcpt count=%d, matched=%d, list_count(c->recipients)=%d\n", from, count, matched, LIST_COUNT2(c->recipients));
 
-		if (matched == list_count(c->recipients) && matched <= (!xstrcasecmp(from, s->uid) ? count : count + 1)) {
+		if (matched == LIST_COUNT2(c->recipients) && matched <= (!xstrcasecmp(from, s->uid) ? count : count + 1)) {
 			string_t new = string_init(NULL);
 			int comma = 0;
 
 			if (xstrcasecmp(from, s->uid) && !conference_participant(c, from)) {
-				list_add(&c->recipients, &from, sizeof(from));
+				list_add(&c->recipients, xmemdup(&from, sizeof(from)));
 
 				comma++;
 				string_append(new, format_user(s, from));
@@ -1058,7 +991,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 
 			for (i = 0; i < count; i++) {
 				if (xstrcasecmp(recipients[i], s->uid) && !conference_participant(c, recipients[i])) {
-					list_add(&c->recipients, &recipients[i], sizeof(recipients[0]));
+					list_add(&c->recipients, xmemdup(&recipients[i], sizeof(recipients[0])));
 			
 					if (comma++)
 						string_append(new, ", ");
@@ -1142,29 +1075,6 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	return 0;
 }
 
-/**
- * conference_free()
- *
- * Free memory allocated by conferences.
- */
-
-void conference_free() {
-	list_t l;
-
-	if (!conferences)
-		return;
-
-	for (l = conferences; l; l = l->next) {
-		struct conference *c = l->data;
-		
-		xfree(c->name);
-		list_destroy(c->recipients, 1);
-	}
-
-	list_destroy(conferences, 1);
-	conferences = NULL;
-}
-
 /*
  * help_path()
  *
@@ -1173,8 +1083,8 @@ void conference_free() {
  */
 FILE *help_path(char *name, char *plugin) {
 	char lang[3];
-        char *tmp;
-        FILE *fp;
+	char *tmp;
+	FILE *fp;
 
 	char *base = plugin ? 
 		saprintf(DATADIR "/plugins/%s/%s", plugin, name) :
@@ -1186,7 +1096,7 @@ FILE *help_path(char *name, char *plugin) {
 		/* fallback on locale enviroments.. (man 5 locale) */
 		if ((tmp = getenv("LC_ALL"))) break;
 		if ((tmp = getenv("LANG"))) break;
-		/* eventually fallback, fallback on en language */
+		/* fallback to en language */
 		tmp = "en";
 	} while (0);
 
@@ -1195,7 +1105,7 @@ FILE *help_path(char *name, char *plugin) {
 	
 help_again:
 	if (config_use_unicode) {
-	        tmp = saprintf("%s-%s-utf.txt", base, lang);
+		tmp = saprintf("%s-%s-utf.txt", base, lang);
 
 		if ((fp = fopen(tmp, "r"))) {
 			xfree(base);
@@ -1205,7 +1115,7 @@ help_again:
 		xfree(tmp);
 		tmp = saprintf("%s-%s.txt", base, lang);
 	} else {
-        	tmp = saprintf("%s-%s.txt", base, lang);
+		tmp = saprintf("%s-%s.txt", base, lang);
 	}
 
 	if ((fp = fopen(tmp, "r"))) {
@@ -1214,7 +1124,7 @@ help_again:
 		return fp;
 	}
 
-        /* Temporary fallback - untill we don't have full en translation */
+	/* Temporary fallback - untill we don't have full en translation */
 	xfree(tmp);
 	if (xstrcasecmp(lang, "pl")) {
 		lang[0] = 'p';
@@ -1227,8 +1137,8 @@ help_again:
 	fp = fopen(tmp, "r");
 
 	xfree(tmp);
-        xfree(base);
-        return fp;
+	xfree(base);
+	return fp;
 }
 
 
@@ -1329,45 +1239,14 @@ void iso_to_ascii(unsigned char *buf) {
 }
 
 /**
- * strip_quotes()
- *
- * strips quotes from the begining and the end of string @a line
- *
- * @param line - given string ;-)
- * @sa strip_spaces - for spaces striping function
- *
- * @note If you pass here smth which was strdup'ed() malloc'ed() or smth which was allocated.<br>
- * 		You <b>must</b> xfree() string passed, not result of this function.
- *
- * @return buffer without quotes.
- */
-
-char *strip_quotes(char *line) {
-	size_t linelen;
-	char *buf;
-
-	if (!(linelen = xstrlen(line))) return line;
-
-	for (buf = line; *buf == '\"'; buf++);
-
-	while (linelen > 0 && line[linelen - 1] == '\"') {
-		line[linelen - 1] = 0;
-		linelen--;
-	}
-
-	return buf;
-}
-
-/**
  * strip_spaces()
  *
  * strips spaces from the begining and the end of string @a line
  *
  * @param line - given string
- * @sa strip_quotes - for quotes striping function
  *
  * @note If you pass here smth which was strdup'ed() malloc'ed() or smth which was allocated.<br>
- * 		You <b>must</b> xfree() string passed, not result of this function.
+ *		You <b>must</b> xfree() string passed, not result of this function.
  *
  * @return buffer without spaces.
  */
@@ -1428,7 +1307,7 @@ int play_sound(const char *sound_path)
  *
  * 0/-1
  */
-child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t handler, void *private)
+child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *private)
 {
 	child_t *c = xmalloc(sizeof(child_t));
 
@@ -1438,7 +1317,7 @@ child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t 
 	c->handler	= handler;
 	c->private	= private;
 	
-	list_add(&children, c, 0);
+	children_add(c);
 	return c;
 }
 
@@ -1451,7 +1330,7 @@ child_t *child_add(plugin_t *plugin, int pid, const char *name, child_handler_t 
  *
  * @param pathname	- path to directory or file (see @a isdir comment)
  * @param isdir		- if @a isdir is set, than we should also create dir specified by full @a pathname path,
- * 			  else we shouldn't do it, because it's filename and we want to create directory only to last '/' char
+ *			  else we shouldn't do it, because it's filename and we want to create directory only to last '/' char
  *
  * @return Like mkdir() do we return -1 on fail with errno set.
  */
@@ -1475,7 +1354,7 @@ int mkdir_recursive(const char *pathname, int isdir) {
 		}
 
 		if (pathname[i] == '/' || (isdir && pathname[i] == '\0')) {	/* if it's / or it's last char.. */
-			if (!isdir && !xstrchr(&pathname[i], '/')) 			/* if it's not dir (e.g filename) we don't want to create the dir.. */
+			if (!isdir && !xstrchr(&pathname[i], '/'))			/* if it's not dir (e.g filename) we don't want to create the dir.. */
 				return 0;
 
 			fullname[i+1] = '\0';
@@ -1492,7 +1371,7 @@ int mkdir_recursive(const char *pathname, int isdir) {
 #else
 				(mkdir(fullname) == -1)
 #endif
-				   	return -1;
+					return -1;
 			}
 		}
 	} while (pathname[i++]);	/* while not NUL */
@@ -1513,7 +1392,7 @@ const char *prepare_pathf(const char *filename, ...) {
 
 	len = strlcpy(path, config_dir ? config_dir : "", sizeof(path));
 
-	if (len >= (sizeof(path)-fpassed)) {
+	if (len + fpassed >= sizeof(path)) {
 		debug_error("prepare_pathf() LEVEL0 %d + %d >= %d\n", len, fpassed, sizeof(path));
 		return NULL;
 	}
@@ -1528,7 +1407,7 @@ const char *prepare_pathf(const char *filename, ...) {
 		len2 = vsnprintf(&path[len], sizeof(path)-len, filename, ap);
 		va_end(ap);
 
-		if (len2 == -1 || (len2 >= (sizeof(path)-len))) {	/* (len + len2 == sizeof(path)) ? */
+		if (len2 == -1 || (len + len2) >= sizeof(path)) {	/* (len + len2 == sizeof(path)) ? */
 			debug_error("prepare_pathf() LEVEL1 %d | %d + %d >= %d\n", len2, len, len2, sizeof(path));
 			return NULL;
 		}
@@ -1583,6 +1462,113 @@ const char *prepare_path(const char *filename, int do_mkdir)
 }
 
 /**
+ * prepare_path_user()
+ *
+ * Converts path given by user to absolute path.
+ *
+ * @bug		Behaves correctly only with POSIX slashes, need to be modified for NO_POSIX_SYSTEM.
+ *
+ * @param	path	- input path.
+ *
+ * @return	Pointer to output path or NULL, if longer than PATH_MAX.
+ */
+
+const char *prepare_path_user(const char *path) {
+	static char out[PATH_MAX];
+	const char *in = path;
+	const char *homedir = NULL;
+
+	if (!in || (xstrlen(in)+1 > sizeof(out))) /* sorry, but I don't want to additionally play with '..' here */
+		return NULL;
+
+#ifndef NO_POSIX_SYSTEM
+	if (*in == '/') /* absolute path */
+#endif
+		xstrcpy(out, in);
+#ifndef NO_POSIX_SYSTEM
+	else {
+		if (*in == '~') { /* magical home directory handler */
+			++in;
+			if (*in == '/') { /* own homedir */
+				if (!home_dir)
+					return NULL;
+				homedir = home_dir;
+			} else {
+				struct passwd *p;
+				const char *slash = xstrchr(in, '/');
+				
+				if (slash) {
+					char *user = xstrndup(in, slash-in);
+					if ((p = getpwnam(user))) {
+						homedir = p->pw_dir;
+						in = slash+1;
+					} else
+						homedir = "";
+					xfree(user);
+				}
+				--in;
+			}
+		}
+
+		if (!homedir || *homedir != '/') {
+			if (!(getcwd(out, sizeof(out)-xstrlen(homedir)-xstrlen(in)-2)))
+				return NULL;
+			if (*out != '/') {
+				debug_error("prepare_path_user(): what the holy shmoly? getcwd() didn't return absolute path! (windows?)\n");
+				return NULL;
+			}
+			xstrcat(out, "/");
+		} else
+			*out = 0;
+		if (homedir && strlcat(out, homedir, sizeof(out)-xstrlen(out)-1) >= sizeof(out)-xstrlen(out)-1)
+			return NULL; /* we don't add slash here, 'cause in already has it */
+		if (strlcat(out, in, sizeof(out)-xstrlen(out)) >= sizeof(out)-xstrlen(out))
+			return NULL;
+	}
+
+	{
+		char *p;
+
+		while ((p = xstrstr(out, "//"))) /* remove double slashes */
+			memmove(p, p+1, xstrlen(p+1)+1);
+		while ((p = xstrstr(out, "/./"))) /* single dots suck too */
+			memmove(p, p+2, xstrlen(p+2)+1);
+		while ((p = xstrstr(out, "/../"))) { /* and finally, '..' */
+			char *prev;
+
+			*p = 0;
+			if (!(prev = xstrrchr(out, '/')))
+				prev = p;
+			memmove(prev, p+3, xstrlen(p+3)+1);
+		}
+
+				/* clean out end of path */
+		p = out+xstrlen(out)-1;
+		if (*p == '.') {
+			if (*(p-1) == '/') /* '.' */
+				*(p--) = 0;
+			else if (*(p-1) == '.' && *(p-2) == '/') { /* '..' */
+				char *q;
+
+				p -= 2;
+				*p = 0;
+				if ((q = xstrrchr(out, '/')))
+					*(q+1) = 0;
+				else {
+					*p = '/';
+					*(p+1) = 0;
+				}
+			}
+		}
+		if (*p == '/' && out != p)
+			*p = 0;
+	}
+#endif
+
+	return out;
+}
+
+/**
  * random_line()
  *
  * Open file specified by @a path and select by random one line from file specified by @a path
@@ -1591,8 +1577,8 @@ const char *prepare_path(const char *filename, int do_mkdir)
  *
  * @sa read_file() - if you want read next line from file.
  *
- * @return 	NULL - if file was not found or file has no line inside. <br>
- * 		else random line founded at file,
+ * @return	NULL - if file was not found or file has no line inside. <br>
+ *		else random line founded at file,
  */
 
 static char *random_line(const char *path) {
@@ -1632,13 +1618,13 @@ static char *random_line(const char *path) {
  * Read next line from file @a f, if needed alloc memory for it.<br>
  * Remove \\r and \\n chars from end of line if needed.
  *
- * @param f 	- opened FILE *
+ * @param f	- opened FILE *
  * @param alloc 
- * 		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
- * 			which you <b>MUST NOT</b> xfree()<br>
- * 		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
- * 		- If -1 than it return <i>internal</i> pointer which were used by xrealloc() and it <b>MUST BE</b> xfree()
- * 			cause we set it to NULL afterwards.
+ *		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
+ *			which you <b>MUST NOT</b> xfree()<br>
+ *		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
+ *		- If -1 than it return <i>internal</i> pointer which were used by xrealloc() and it <b>MUST BE</b> xfree()
+ *			cause we set it to NULL afterwards.
  *
  * @return Line without \\r and \\n which must or mustn't be xfree()'d. It depends on @a alloc param
  */
@@ -1702,8 +1688,8 @@ char *read_file(FILE *f, int alloc) {
  *
  * @param format - format to pass to strftime() [man 3 strftime]
  *
- * @return 	if format is NULL or format == '\\0' than it return ""<br>
- *  		else it returns strftime()'d value, or "TOOLONG" if @a buf (sizeof(@a buf) == 100) was too small..
+ * @return	if format is NULL or format == '\\0' than it return ""<br>
+ *		else it returns strftime()'d value, or "TOOLONG" if @a buf (sizeof(@a buf) == 100) was too small..
  */
 
 const char *timestamp(const char *format) {
@@ -1714,7 +1700,7 @@ const char *timestamp(const char *format) {
 	if (!format || format[0] == '\0')
 		return "";
 
-	time(&t);
+	t = time(NULL);
 	tm = localtime(&t);
 	if (!strftime(buf, sizeof(buf), format, tm))
 		return "TOOLONG";
@@ -1740,8 +1726,8 @@ const char *timestamp_time(const char *format, time_t t) {
  *
  * @todo	It's only used in vars.c by variable_set() move it?
  *
- * @return 	 1 - If @a value is one of: <i>on</i>, <i>true</i>, <i>yes</i>, <i>tak</i>, <i>1</i> 	[case-insensitive]<br>
- * 		 0 - If @a value is one of: <i>off</i>, <i>false</i>, <i>no</i>, <i>nie</i>, <i>0</i>	[case-insensitive]<br>
+ * @return	 1 - If @a value is one of: <i>on</i>, <i>true</i>, <i>yes</i>, <i>tak</i>, <i>1</i>	[case-insensitive]<br>
+ *		 0 - If @a value is one of: <i>off</i>, <i>false</i>, <i>no</i>, <i>nie</i>, <i>0</i>	[case-insensitive]<br>
  *		else -1
  */
 
@@ -1759,23 +1745,7 @@ int on_off(const char *value)
 	return -1;
 }
 
-/*
- * timer_add()
- *
- * dodaje timera.
- *
- *  - plugin - plugin obs³uguj±cy timer,
- *  - name - nazwa timera w celach identyfikacji. je¶li jest równa NULL,
- *           zostanie przyznany pierwszy numerek z brzegu.
- *  - period - za jaki czas w sekundach ma byæ uruchomiony,
- *  - persist - czy sta³y timer,
- *  - function - funkcja do wywo³ania po up³yniêciu czasu,
- *  - data - dane przekazywane do funkcji.
- *
- * zwraca zaalokowan± struct timer lub NULL w przypadku b³êdu.
- */
-struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persist, int (*function)(int, void *), void *data)
-{
+struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
 	struct timer *t;
 	struct timeval tv;
 
@@ -1784,13 +1754,10 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 		int i;
 
 		for (i = 1; !name; i++) {
-			list_t l;
 			int gotit = 0;
 
-			for (l = timers; l; l = l->next) {
-				struct timer *tt = l->data;
-
-				if (!xstrcmp(tt->name, itoa(i))) {
+			for (t = timers; t; t = t->next) {
+				if (!xstrcmp(t->name, itoa(i))) {
 					gotit = 1;
 					break;
 				}
@@ -1800,9 +1767,15 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 				name = itoa(i);
 		}
 	}
+
 	t = xmalloc(sizeof(struct timer));
 	gettimeofday(&tv, NULL);
-	tv.tv_sec += period;
+	tv.tv_sec += (period / 1000);
+	tv.tv_usec += ((period % 1000) * 1000);
+	if (tv.tv_usec >= 1000000) {
+		tv.tv_usec -= 1000000;
+		tv.tv_sec++;
+	}
 	memcpy(&(t->ends), &tv, sizeof(tv));
 	t->name = xstrdup(name);
 	t->period = period;
@@ -1811,11 +1784,31 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	t->data = data;
 	t->plugin = plugin;
 
-	list_add(&timers, t, 0);
+	timers_add(t);
 	return t;
 }
 
-struct timer *timer_add_session(session_t *session, const char *name, time_t period, int persist, int (*function)(int, session_t *)) {
+/*
+ * timer_add()
+ *
+ * dodaje timera.
+ *
+ *  - plugin - plugin obs³uguj±cy timer,
+ *  - name - nazwa timera w celach identyfikacji. je¶li jest równa NULL,
+ *	     zostanie przyznany pierwszy numerek z brzegu.
+ *  - period - za jaki czas w sekundach ma byæ uruchomiony,
+ *  - persist - czy sta³y timer,
+ *  - function - funkcja do wywo³ania po up³yniêciu czasu,
+ *  - data - dane przekazywane do funkcji.
+ *
+ * zwraca zaalokowan± struct timer lub NULL w przypadku b³êdu.
+ */
+struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data)
+{
+	return timer_add_ms(plugin, name, period * 1000, persist, function, data);
+}
+
+struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, int (*function)(int, session_t *)) {
 	struct timer *t;
 
 	if (!session || !session->plugin) {
@@ -1826,16 +1819,6 @@ struct timer *timer_add_session(session_t *session, const char *name, time_t per
 	t = timer_add(session->plugin, name, period, persist, (void *) function, session);
 	t->is_session = 1;
 	return t;
-}
-
-int timer_free(struct timer *t) {
-	if (!t) 
-		return -1;
-
-	t->function(1, t->data); 
-	xfree(t->name);
-	list_remove(&timers, t, 1);
-	return 0;
 }
 
 /*
@@ -1850,16 +1833,12 @@ int timer_free(struct timer *t) {
  */
 int timer_remove(plugin_t *plugin, const char *name)
 {
-	list_t l;
+	struct timer *t;
 	int removed = 0;
 
-	for (l = timers; l; ) {
-		struct timer *t = l->data;
-
-		l = l->next;
-
+	for (t = timers; t; t = t->next) {
 		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
-			timer_free(t);
+			t = timers_removei(t);
 			removed++;
 		}
 	}
@@ -1868,14 +1847,12 @@ int timer_remove(plugin_t *plugin, const char *name)
 }
 
 struct timer *timer_find_session(session_t *session, const char *name) {
-	list_t l;
+	struct timer *t;
 
 	if (!session)
 		return NULL;
 	
-	for (l = timers; l; l = l->next) {
-		struct timer *t = l->data;
-
+	for (t = timers; t; t = t->next) {
 		if (t->is_session && t->data == session && !xstrcmp(name, t->name))
 			return t;
 	}
@@ -1885,20 +1862,16 @@ struct timer *timer_find_session(session_t *session, const char *name) {
 
 int timer_remove_session(session_t *session, const char *name)
 {
-	list_t l;
+	struct timer *t;
 	plugin_t *p;
 	int removed = 0;
 
 	if (!session || (!(p = session->plugin)))
 		return -1;
 
-	for (l = timers; l; ) {
-		struct timer *t = l->data;
-
-		l = l->next;
-
+	for (t = timers; t; t = t->next) {
 		if (t->is_session && t->data == session && !xstrcmp(name, t->name)) {
-			timer_free(t);
+			t = timers_removei(t);
 			removed++;
 		}
 	}
@@ -1931,16 +1904,12 @@ TIMER(timer_handle_command)
  */
 int timer_remove_user(int at)
 {
-	list_t l;
+	struct timer *t;
 	int removed = 0;
 
-	for (l = timers; l; ) {
-		struct timer *t = l->data;
-
-		l = l->next;
-
+	for (t = timers; t; t = t->next) {
 		if (t->at == at && t->function == timer_handle_command) { 
-			timer_free(t);
+			t = timers_removei(t);
 			removed = 1;
 		}
 	}
@@ -2058,13 +2027,13 @@ int isalpha_pl(unsigned char c)
 {
 /*  gg_debug(GG_DEBUG_MISC, "c: %d\n", c); */
     if(isalpha(c)) /* normalne znaki */
-        return 1;
+	return 1;
     else if(c == 177 || c == 230 || c == 234 || c == 179 || c == 241 || c == 243 || c == 182 || c == 191 || c == 188) /* polskie literki */
-        return 1;
+	return 1;
     else if(c == 161 || c == 198 || c == 202 || c == 209 || c == 163 || c == 211 || c == 166 || c == 175 || c == 172) /* wielka litery polskie */
-        return 1;
+	return 1;
     else
-        return 0;
+	return 0;
 }
 
 /*
@@ -2093,7 +2062,7 @@ char *strcasestr(const char *haystack, const char *needle)
  */
 int msg_all(session_t *s, const char *function, const char *what)
 {
-	list_t l;
+	userlist_t *ul;
 
 	if (!s->userlist)
 		return -1;
@@ -2101,11 +2070,13 @@ int msg_all(session_t *s, const char *function, const char *what)
 	if (!function)
 		return -2;
 
-	for (l = s->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = s->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		if (!u || !u->uid)
 			continue;
+		/* XXX, when adding to userlist if we check if uid is good, this code will be ok. */
+
 		command_exec_format(NULL, s, 0, "%s \"%s\" %s", function, get_nickname(s, u->uid), what);
 	}
 
@@ -2128,7 +2099,7 @@ int say_it(const char *str)
 		return -1;
 
 	if (speech_pid) {
-		buffer_add(&buffer_speech, NULL, str, 50);
+		buffer_add(&buffer_speech, NULL, str);
 		return -2;
 	}
 
@@ -2159,7 +2130,8 @@ int say_it(const char *str)
 #endif
 }
 
-void debug_ext(int level, const char *format, ...) {
+#ifndef DISABLE_DEBUG
+void debug_ext(debug_level_t level, const char *format, ...) {
 	va_list ap;
 	if (!config_debug) return;
 
@@ -2184,6 +2156,7 @@ void debug(const char *format, ...)
 	ekg_debug_handler(0, format, ap);
 	va_end(ap);
 }
+#endif
 
 static char base64_charset[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
@@ -2207,13 +2180,13 @@ char *base64_encode(const char *buf, size_t len)
 	
 	res = out = xmalloc((len / 3 + 1) * 4 + 2);
 
-	while (j <= len) {
+	while (j < len) {
 		switch (i % 4) {
 			case 0:
 				k = (buf[j] & 252) >> 2;
 				break;
 			case 1:
-				if (j < len)
+				if (j+1 < len)
 					k = ((buf[j] & 3) << 4) | ((buf[j + 1] & 240) >> 4);
 				else
 					k = (buf[j] & 3) << 4;
@@ -2221,7 +2194,7 @@ char *base64_encode(const char *buf, size_t len)
 				j++;
 				break;
 			case 2:
-				if (j < len)
+				if (j+1 < len)
 					k = ((buf[j] & 15) << 2) | ((buf[j + 1] & 192) >> 6);
 				else
 					k = (buf[j] & 15) << 2;
@@ -2316,15 +2289,15 @@ char *base64_decode(const char *buf)
  */
 char *split_line(char **ptr)
 {
-        char *foo, *res;
+	char *foo, *res;
 
-        if (!ptr || !*ptr || !xstrcmp(*ptr, ""))
-                return NULL;
+	if (!ptr || !*ptr || !xstrcmp(*ptr, ""))
+		return NULL;
 
-        res = *ptr;
+	res = *ptr;
 
-        if (!(foo = xstrchr(*ptr, '\n')))
-                *ptr += xstrlen(*ptr);
+	if (!(foo = xstrchr(*ptr, '\n')))
+		*ptr += xstrlen(*ptr);
 	else {
 		size_t reslen;
 		*ptr = foo + 1;
@@ -2335,7 +2308,7 @@ char *split_line(char **ptr)
 			res[reslen - 1] = 0;
 	}
 
-        return res;
+	return res;
 }
 
 /*
@@ -2343,11 +2316,12 @@ char *split_line(char **ptr)
  *
  * tworzy etykietê formatki opisuj±cej stan.
  */
-const char *ekg_status_label(const char *status, const char *descr, const char *prefix)
+const char *ekg_status_label(const int status, const char *descr, const char *prefix)
 {
-	static char buf[100];
-
-	snprintf(buf, sizeof(buf), "%s%s%s", (prefix) ? prefix : "", __(status), (descr) ? "_descr" : "");
+	static char buf[100]; /* maybe dynamic buffer would be better? */
+	const char *status_string = ekg_status_string(status, 0);
+	
+	snprintf(buf, sizeof(buf), "%s%s%s", (prefix) ? prefix : "", status_string, (descr) ? "_descr" : "");
 
 	return buf;
 }
@@ -2358,22 +2332,23 @@ const char *ekg_status_label(const char *status, const char *descr, const char *
  * losuje opis dla danego stanu lub pobiera ze zmiennej, lub cokolwiek
  * innego.
  */
-char *ekg_draw_descr(const char *status)
+char *ekg_draw_descr(const int status)
 {
 	const char *value;
 	char file[100];
 	char var[100];
 	variable_t *v;	
 
-	if (!xstrcmp(status, EKG_STATUS_NA) || !xstrcmp(status, EKG_STATUS_INVISIBLE)) {
+	if (EKG_STATUS_IS_NA(status)) { /* or maybe == NA ? */
 		xstrcpy(var, ("quit_reason"));
 		xstrcpy(file, "quit.reasons");
-	} else if (!xstrcmp(status, EKG_STATUS_AVAIL)) {
+	} else if (status == EKG_STATUS_AVAIL) {
 		xstrcpy(var, ("back_reason"));
 		xstrcpy(file, "back.reasons");
 	} else {
-		snprintf(var, sizeof(var), "%s_reason", status);
-		snprintf(file, sizeof(file), "%s.reasons", status);
+		/* Wouldn't it be better to use command-names? */
+		snprintf(var, sizeof(var), "%s_reason", ekg_status_string(status, 0));
+		snprintf(file, sizeof(file), "%s.reasons", ekg_status_string(status, 0));
 	}
 
 	if (!(v = variable_find(var)) || v->type != VAR_STR)
@@ -2400,18 +2375,134 @@ void ekg_update_status(session_t *session)
 {
 	userlist_t *u;
 
-        if ((u = userlist_find(session, session->uid))) {
-                xfree(u->descr);
-                u->descr = xstrdup(session->descr);
+	if ((u = userlist_find(session, session->uid))) {
+		xfree(u->descr);
+		u->descr = xstrdup(session->descr);
 
-                xfree(u->status);
-                if (!session_connected_get(session))
-                        u->status = xstrdup(EKG_STATUS_NA);
-                else
-                        u->status = xstrdup(session->status);
-		u->xstate &= ~EKG_XSTATE_BLINK;
-        }
+		if (!session_connected_get(session))
+			u->status = EKG_STATUS_NA;
+		else
+			u->status = session->status;
 
+		u->blink = 0;
+
+		{
+			const char *__session	= session_uid_get(session);
+			const char *__uid		= u->uid;
+
+			query_emit_id(NULL, USERLIST_CHANGED, &__session, &__uid);
+		}
+	}
+}
+
+/* status string tables */
+
+struct ekg_status_info {
+	status_t		status;		/* enumed status */
+	const char*		label;		/* name used in formats */
+	const char*		command;	/* command used to set status, if ==format, NULL */
+};
+
+/* please, keep it sorted with status_t */
+const struct ekg_status_info ekg_statuses[] = {
+		{ EKG_STATUS_ERROR,    "error"		},
+		{ EKG_STATUS_BLOCKED,  "blocking"	},
+		{ EKG_STATUS_UNKNOWN,  "unknown"	},
+		{ EKG_STATUS_NA,       "notavail"	},
+		{ EKG_STATUS_INVISIBLE,"invisible"	},
+		{ EKG_STATUS_DND,      "dnd"		},
+		{ EKG_STATUS_GONE,     "gone"		},
+		{ EKG_STATUS_XA,       "xa"		},
+		{ EKG_STATUS_AWAY,     "away"		},
+		{ EKG_STATUS_AVAIL,    "avail", "back", },
+		{ EKG_STATUS_FFC,      "chat",  "ffc"	},
+
+				/* here go the special statuses */
+		{ EKG_STATUS_AUTOAWAY,  "autoaway"	},
+		{ EKG_STATUS_AUTOXA,    "autoxa"	},
+		{ EKG_STATUS_AUTOBACK,  "autoback"	},
+		{ EKG_STATUS_NULL			}
+};
+
+static inline const struct ekg_status_info *status_find(const int status) {
+	const struct ekg_status_info *s;
+
+		/* as long as ekg_statuses[] are sorted, this should be fast */
+	if (status < EKG_STATUS_LAST) {
+		for (s = &(ekg_statuses[status-1]); s->status != EKG_STATUS_NULL; s++) {
+			if (s->status == status)
+				return s;
+		}
+	}
+
+	debug_function("status_find(), going into fallback loop (statuses ain't sorted?)\n");
+
+		/* fallback if statuses aren't sorted, we've got unknown or special status,
+		 * in second case we'll iterate part of list twice, but that's rather
+		 * rare case, so I think optimization isn't needed here. */
+	for (s = ekg_statuses; s->status != EKG_STATUS_NULL; s++) {
+		if (s->status == status)
+			return s;
+	}
+
+	return NULL;
+}
+
+/*
+ * ekg_status_string()
+ *
+ * converts enum status to string
+ * cmd = 0 for normal labels, 1 for command names, 2 for labels+special (esp. for debug, use wisely)
+ */
+
+const char *ekg_status_string(const int status, const int cmd)
+{
+	const char *r = NULL;
+
+	if ((status > 0) && (status < (cmd == 2 ? 0x100 : 0x80))) {
+		const struct ekg_status_info *s = status_find(status);
+
+		if (s) {
+			if (cmd == 1)
+				r = s->command;		/* if command differs from status */
+			if (!r)
+				r = s->label;		/* else fetch status */
+		}
+	}
+
+	if (!r) {
+		const struct ekg_status_info *s = status_find(cmd == 1 ? EKG_STATUS_AVAIL : EKG_STATUS_UNKNOWN);
+
+		/* we only allow 00..7F, or 00..FF with cmd==2
+		 * else we return either UNKNOWN or AVAIL if cmd==1 */
+		debug_error("ekg_status_string(): called with unexpected status: 0x%02x\n", status);
+		if (!s) {
+			debug_error("ekg_status_string(): critical error, status_find with predef value failed!\n");
+			return NULL;
+		}
+		return (cmd == 1 ? s->command : s->label);
+	}
+	
+	return r;
+}
+
+/*
+ * ekg_status_int()
+ *
+ * converts string to enum status
+ */
+
+int ekg_status_int(const char *text)
+{
+	const struct ekg_status_info *s;
+
+	for (s = ekg_statuses; s->status != EKG_STATUS_NULL; s++) {
+		if (!xstrcasecmp(text, s->label) || !xstrcasecmp(text, s->command))
+			return s->status;
+	}
+
+	debug_error("ekg_status_int(): Got unexpected status: %s\n", text);
+	return EKG_STATUS_NULL;
 }
 
 /*
@@ -2517,27 +2608,27 @@ static int tolower_pl(const unsigned char c);
 
 int strncasecmp_pl(const char *cs, const char *ct , size_t count)
 {
-        register signed char __res = 0;
+	register signed char __res = 0;
 
-        while (count) {
-                if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
-                        break;
-                count--;
-        }
+	while (count) {
+		if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
+			break;
+		count--;
+	}
 
-        return __res;
+	return __res;
 }
 
 int strcasecmp_pl(const char *cs, const char *ct)
 {
-        register signed char __res = 0;
+	register signed char __res = 0;
 
-        while ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) == 0 && !*cs++) {
+	while ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) == 0 && !*cs++) {
 		if (!*cs++)
 			return(0);
-        }
+	}
 
-        return __res;
+	return __res;
 }
 
 /*
@@ -2547,28 +2638,28 @@ int strcasecmp_pl(const char *cs, const char *ct)
  * obs³uguje polskie znaki
  */
 static int tolower_pl(const unsigned char c) {
-        switch(c) {
-                case 161: /* ¡ */
-                        return 177;
-                case 198: /* Æ */
-                        return 230;
-                case 202: /* Ê */
-                        return 234;
-                case 163: /* £ */
-                        return 179;
-                case 209: /* Ñ */
-                        return 241;
-                case 211: /* Ó */
-                        return 243;
-                case 166: /* ¦ */
-                        return 182;
-                case 175: /* ¯ */
-                        return 191;
-                case 172: /* ¬ */
-                        return 188;
-                default: /* reszta */
-                        return tolower(c);
-        }
+	switch(c) {
+		case 161: /* ¡ */
+			return 177;
+		case 198: /* Æ */
+			return 230;
+		case 202: /* Ê */
+			return 234;
+		case 163: /* £ */
+			return 179;
+		case 209: /* Ñ */
+			return 241;
+		case 211: /* Ó */
+			return 243;
+		case 166: /* ¦ */
+			return 182;
+		case 175: /* ¯ */
+			return 191;
+		case 172: /* ¬ */
+			return 188;
+		default: /* reszta */
+			return tolower(c);
+	}
 }
 
 /*
@@ -2579,14 +2670,14 @@ static int tolower_pl(const unsigned char c) {
  */
 char *saprintf(const char *format, ...)
 {
-        va_list ap;
-        char *res;
+	va_list ap;
+	char *res;
 
-        va_start(ap, format);
-        res = vsaprintf(format, ap);
-        va_end(ap);
+	va_start(ap, format);
+	res = vsaprintf(format, ap);
+	va_end(ap);
 
-        return res;
+	return res;
 }
 
 /*
@@ -2595,13 +2686,16 @@ char *saprintf(const char *format, ...)
  * zamienia wszystko znaki a na b w podanym ci±gu
  * nie robie jego kopi!
  */
-void xstrtr(char *text, char from, char to) {
+void xstrtr(char *text, char from, char to)
+{
+	
 	if (!text || !from)
 		return;
 
 	while (*text++) {
-		if (*text == from)
+		if (*text == from) {
 			*text = to;
+		}
 	}
 }
 
@@ -2619,6 +2713,121 @@ void inline ekg_yield_cpu()
 #endif
 }
 
+/**
+ * ekg_write()
+ *
+ * write data to given fd, if it cannot be done [because system buffer is too small. it'll create watch, and write as soon as possible]
+ * XXX, for now it'll always create watch.
+ * (You can be notified about state of buffer when you call ekg_write(fd, NULL, -1))
+ *
+ * @note
+ *	This _should_ be used as replacement for write() 
+ */
+
+int ekg_write(int fd, const char *buf, int len) {
+	watch_t *wl = NULL;
+	list_t l;
+
+	if (fd == -1)
+		return -1;
+
+	/* first check if we have watch for this fd */
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
+
+		if (w && w->fd == fd && w->type == WATCH_WRITE && w->buf) {
+			wl = w;
+			break;
+		}
+	}
+
+	if (wl) {
+		if (!buf && len == -1) /* smells stupid, but do it */
+			return wl->buf->len;
+	} else {
+		/* if we have no watch, let's create it. */	/* XXX, first try write() ? */
+		wl = watch_add(NULL, fd, WATCH_WRITE_LINE, NULL, NULL);
+	}
+
+	return watch_write_data(wl, buf, len);
+}
+
+int ekg_writef(int fd, const char *format, ...) {
+	char		*text;
+	int		textlen;
+	va_list		ap;
+	int		res;
+
+	if (fd == -1 || !format)
+		return -1;
+
+	va_start(ap, format);
+	text = vsaprintf(format, ap);
+	va_end(ap);
+	
+	textlen = xstrlen(text); 
+
+	debug_io("ekg_writef: %s\n", text ? textlen ? text: "[0LENGTH]":"[FAILED]");
+
+	if (!text) 
+		return -1;
+
+	res = ekg_write(fd, text, textlen);
+
+	xfree(text);
+	return res;
+}
+
+/**
+ * ekg_close()
+ *
+ * close fd and all watches associated with that fd
+ *
+ * @note
+ *	This _should_ be used as replacement for close() (especially in protocol plugins)
+ */
+
+int ekg_close(int fd) {
+	list_t l;
+
+	if (fd == -1)
+		return -1;
+
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
+
+		if (w && w->fd == fd) {
+			debug("ekg_close(%d) w->plugin: %s w->session: %s w->type: %d w->buf: %d\n", 
+				fd, w->plugin ? w->plugin->name : "-",
+				w->is_session ? ((session_t *) w->data)->uid : "-",
+				w->type, !!w->buf);
+
+			watch_free(w);
+		}
+	}
+	return close(fd);
+}
+
+/**
+ * password_input()
+ *
+ * Try to get password through UI_PASSWORD_INPUT, printing error messages if needed.
+ *
+ * @return	Pointer to new password (which needs to be freed) or NULL, if not
+ *		succeeded (wrong input / no support).
+ */
+
+char *password_input(const char *prompt, const char *rprompt, const bool norepeat) {
+	char *pass = NULL;
+
+	if (query_emit_id(NULL, UI_PASSWORD_INPUT, &pass, &prompt, norepeat ? NULL : &rprompt) == -2) {
+		print("password_nosupport");
+		return NULL;
+	}
+
+	return pass;
+}
+
 /*
  * Local Variables:
  * mode: c
@@ -2626,5 +2835,5 @@ void inline ekg_yield_cpu()
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8
+ * vim: noet
  */

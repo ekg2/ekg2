@@ -46,7 +46,7 @@ if test "$gettext_ver" -lt 01038; then
 fi
 
 rm -rf intl
-if test "$gettext_ver" -ge 01100; then
+if test "$gettext_ver" -ge 01100 && (cvs -v) >/dev/null 2>&1; then
 	if test "$gettext_ver" -lt 01105; then
 		echo "Upgrade gettext to at least 0.11.5 or downgrade to 0.10.40" 2>&1
 		exit 1
@@ -85,8 +85,9 @@ if test "$xgettext_ver" -gt 01200; then
 fi
 
 $XGETTEXT --keyword=_ --keyword=N_ --output=- $XGETTEXT_OPTIONS `find . -name '*.[ch]'` | \
-	sed -ne '/^#:/{s/#://; s/:[0-9]*/\n/g; s/ //g; p;}' | \
-	grep -v '^$' | sort | uniq | grep -v 'regex.c' >po/POTFILES.in
+	sed -ne '/^#:/{s/#://; s/:[0-9]*/\
+/g; s/ //g; p;}' | \
+	grep -v '^$' | sort | uniq | grep -v 'regex.c' | grep -v '^contrib' >po/POTFILES.in
 
 
 if test ! -r m4/gettext.m4; then

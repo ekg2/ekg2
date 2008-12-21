@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                     Piotr Domagalski <szalik@szalik.net>
+ *		       Piotr Domagalski <szalik@szalik.net>
  *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  Idea and concept from SIM by Michal J. Kubski available at
@@ -39,16 +39,8 @@
 
 #include "simlite.h"
 #include <ekg/debug.h>
+#include <ekg/recode.h>
 #include <ekg/xmalloc.h>
-
-#ifndef PATH_MAX
-#  ifdef MAX_PATH
-#    define PATH_MAX MAX_PATH
-#  else
-#    define PATH_MAX _POSIX_PATH_MAX
-#  endif
-#endif
-
 
 char *sim_key_path = NULL;
 int sim_errno = 0;
@@ -360,7 +352,7 @@ char *sim_message_encrypt(const unsigned char *message, const char *uid)
 
 	BIO_write(cbio, &head, sizeof(head));
 	BIO_write(cbio, message, xstrlen((char*) message));
-	{	int UNUSED(ret) = BIO_flush(cbio);	}
+		(void) BIO_flush(cbio);
 
 	/* zachowaj wynik */
 	res_len = BIO_get_mem_data(mbio, (unsigned char*) &tmp);
@@ -406,8 +398,9 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	unsigned char bf_key_rsa[128];	/* symetryczny szyfrowany RSA */
 	BIO *mbio = NULL, *cbio = NULL, *bbio = NULL;
 	RSA *private = NULL;
-	unsigned char *buf = NULL, *res = NULL, *data;
-	int len, cx;
+	unsigned char *buf = NULL, *data;
+	char *res = NULL;
+	int len;
 
 	/* je¶li wiadomo¶æ jest krótsza ni¿ najkrótsza zaszyfrowana,
 	 * nie ma sensu siê bawiæ w próby odszyfrowania. */
@@ -427,7 +420,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	BIO_set_flags(bbio, BIO_FLAGS_BASE64_NO_NL);
 	BIO_push(bbio, mbio);
 	BIO_write(mbio, message, xstrlen((char*) message));
-	{	int UNUSED(ret) = BIO_flush(mbio);	}
+		(void) BIO_flush(mbio);
 
 	if (BIO_read(bbio, bf_key_rsa, sizeof(bf_key_rsa)) < sizeof(bf_key_rsa)) {
 		sim_errno = SIM_ERROR_INVALID;
@@ -468,7 +461,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	BIO_push(cbio, mbio);
 
 	BIO_write(cbio, buf, len);
-	{	int UNUSED(ret) = BIO_flush(cbio);	}
+		(void) BIO_flush(cbio);
 
 	free(buf);
 	buf = NULL;
@@ -493,15 +486,6 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	memcpy(res, data + sizeof(head), len);
 	res[len] = 0;
 
-        for(cx = 0; cx < len; cx++)
-            switch(res[cx]) {
-                case 156: res[cx] = '¶'; break;
-                case 185: res[cx] = '±'; break;
-                case 159: res[cx] = '¼'; break;
-                case 140: res[cx] = '¦'; break;
-                case 165: res[cx] = '¡'; break;
-                case 143: res[cx] = '¬'; break;
-            }
 cleanup:
 	if (cbio)
 		BIO_free(cbio);
@@ -513,7 +497,7 @@ cleanup:
 		RSA_free(private);
 	if (buf)
 		free(buf);
-	return (char*) res;
+	return ekg_cp_to_locale(res);	/* XXX, what if message isn't encoded in cp-1250? */
 }
 
 /*

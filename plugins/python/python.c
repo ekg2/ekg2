@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2004-2005 Leszek Krupiñski <leafnode@pld-linux.org>
- *                          Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *			    Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -153,9 +153,9 @@ int python_bind_free(script_t *scr, void *data /* niby to jest ale kiedys nie be
 		    Py_XDECREF(handler);
 		    break;
 		case(SCRIPT_WATCHTYPE):
-                    Py_XDECREF(handler);
+		    Py_XDECREF(handler);
 		case(SCRIPT_VARTYPE):
-                    Py_XDECREF(handler);
+		    Py_XDECREF(handler);
 		    break;
 	}
 	return 0;
@@ -170,17 +170,17 @@ int python_variable_changed(script_t *scr, script_var_t *scr_var, char *newval)
 	return python_handle_result;
 }
 
-int python_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, int watch)
+int python_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, long int watch)
 {
 	int python_handle_result;
-        PyObject * args;
+	PyObject * args;
 
 	PyObject *obj = (PyObject *)scr_wat->private;
-        if (scr_wat->self->buf) {
-                args = Py_BuildValue("(Ois)", (PyObject *)scr_wat->data, type, (char *)watch);
-        } else {
-                args = Py_BuildValue("(Oii)", (PyObject *)scr_wat->data, type, watch);
-        }
+	if (scr_wat->self->buf) {
+		args = Py_BuildValue("(Ois)", (PyObject *)scr_wat->data, type, (char *)watch);
+	} else {
+		args = Py_BuildValue("(Oii)", (PyObject *)scr_wat->data, type, watch);
+	}
 	PYTHON_HANDLE_HEADER(obj, args)
 	PYTHON_HANDLE_FOOTER()
 	return python_handle_result;
@@ -213,38 +213,38 @@ int python_commands(script_t *scr, script_command_t *comm, char **params)
 
 int python_query(script_t *scr, script_query_t *scr_que, void **args)
 {
-        int python_handle_result;
-        PyObject *argz;
-        int i;
-        if (!(argz = PyTuple_New(scr_que->argc)))
-                return 1;
-        for (i=0; i < scr_que->argc; i++) {
-                PyObject *w = NULL;
-                switch ( scr_que->argv_type[i] ) {
-                        case (QUERY_ARG_INT):
-                                w = PyInt_FromLong((long) *(int *) args[i] );
-                                break;
-                        case (QUERY_ARG_CHARP): {
-                                char *tmp = *(char **) args[i];
+	int python_handle_result;
+	PyObject *argz;
+	int i;
+	if (!(argz = PyTuple_New(scr_que->argc)))
+		return 1;
+	for (i=0; i < scr_que->argc; i++) {
+		PyObject *w = NULL;
+		switch ( scr_que->argv_type[i] ) {
+			case (QUERY_ARG_INT):
+				w = PyInt_FromLong((long) *(int *) args[i] );
+				break;
+			case (QUERY_ARG_CHARP): {
+				char *tmp = *(char **) args[i];
 				if (tmp)
-                                        w = PyString_FromString(tmp);
-                                break;
-                        }
-                        case (QUERY_ARG_CHARPP): {
-                                char *tmp = array_join((char **) args[i], " ");
-                                w = PyString_FromString(tmp); /* CHECK: xstrdup ? */
-                                xfree(tmp);
-                                break;
-                        }
-                        default:
-                               debug("[NIMP] %s %d %d\n", __(query_name(scr_que->self->id)), i, scr_que->argv_type[i]);
-                }
-                if (!w) {
-                        Py_INCREF(Py_None);
-                        w = Py_None;
-                }
-                PyTuple_SetItem(argz, i, w);
-        }
+					w = PyString_FromString(tmp);
+				break;
+			}
+			case (QUERY_ARG_CHARPP): {
+				char *tmp = array_join((* (char ***) args[i]), " ");
+				w = PyString_FromString(tmp); /* CHECK: xstrdup ? */
+				xfree(tmp);
+				break;
+			}
+			default:
+			       debug("[NIMP] %s %d %d\n", __(query_name(scr_que->self->id)), i, scr_que->argv_type[i]);
+		}
+		if (!w) {
+			Py_INCREF(Py_None);
+			w = Py_None;
+		}
+		PyTuple_SetItem(argz, i, w);
+	}
 	PYTHON_HANDLE_HEADER(scr_que->private, argz)
 	if (__py_r && PyTuple_Check(__py_r)) { /* __py_r - return value */
 		for (i=0; i < scr_que->argc; i++) {
@@ -267,9 +267,9 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 		}
 		python_handle_result = 1;
 	}
-        PYTHON_HANDLE_FOOTER()
-        if (!python_handle_result) return -1;
-        else return 0;
+	PYTHON_HANDLE_FOOTER()
+	if (!python_handle_result) return -1;
+	else return 0;
 }
 
 // ********************************************************************************
@@ -362,17 +362,17 @@ script_t *python_find_script(PyObject *module)
  and/or:
    14:25:57 ::: B³±d integer division or modulo by zero (exceptions.ZeroDivisionError) @ /home/darkjames/.ekg2/python/scripts/autorun/sample.py
    14:39:31   File "/home/darkjames/.ekg2/python/scripts/autorun/sample.py", line 95, in aaa
-   14:39:31     0 / 0;
+   14:39:31	0 / 0;
  or:
    23:13:54 ::: B³±d invalid syntax (sample.py, line 84) (exceptions.SyntaxError) @ /home/darkjames/.ekg2/python/scripts/autorun/sample.py:84
  */
 char *python_geterror(script_t *s) {
 	PyObject *exception, *v, *tb, *hook;
 	PyObject *pName;
-        PyObject *pModule;
+	PyObject *pModule;
 	string_t str;
 
-        PyErr_Fetch(&exception, &v, &tb);
+	PyErr_Fetch(&exception, &v, &tb);
 	if (!v)
 		return xstrdup("noexception after PyErr_Fetch");
 	PyErr_NormalizeException(&exception, &v, &tb);
@@ -404,41 +404,41 @@ char *python_geterror(script_t *s) {
 
 /* traceback */
 	pName = PyString_FromString("traceback");
-        if (tb && exception && (pModule = PyImport_Import(pName))) {
-                PyObject *pDict = PyModule_GetDict(pModule);
-                PyObject *pFunc = PyDict_GetItemString(pDict, "format_tb");
-                if (pFunc && PyCallable_Check(pFunc)) {
-                        PyObject *pArgs = PyTuple_New(1);
+	if (tb && exception && (pModule = PyImport_Import(pName))) {
+		PyObject *pDict = PyModule_GetDict(pModule);
+		PyObject *pFunc = PyDict_GetItemString(pDict, "format_tb");
+		if (pFunc && PyCallable_Check(pFunc)) {
+			PyObject *pArgs = PyTuple_New(1);
 			PyObject *pValue;
 
-                        PyTuple_SetItem(pArgs, 0, tb);
-                        pValue = PyObject_CallObject(pFunc, pArgs);
-                        if (pValue) {
-                                int len = PyList_Size(pValue);
-                                if (len > 0) {
-                                        PyObject *t,*tt;
-                                        char *buffer;
-                                        int i;
-                                        for (i = 0; i < len; i++) {
-                                                tt = PyList_GetItem(pValue,i);
-                                                t = Py_BuildValue("(O)",tt);
-                                                PyArg_ParseTuple(t,"s",&buffer);
+			PyTuple_SetItem(pArgs, 0, tb);
+			pValue = PyObject_CallObject(pFunc, pArgs);
+			if (pValue) {
+				int len = PyList_Size(pValue);
+				if (len > 0) {
+					PyObject *t,*tt;
+					char *buffer;
+					int i;
+					for (i = 0; i < len; i++) {
+						tt = PyList_GetItem(pValue,i);
+						t = Py_BuildValue("(O)",tt);
+						PyArg_ParseTuple(t,"s",&buffer);
 						string_append(str, buffer);
 						if (i+1 != len)
 							string_append_c(str, '\n');
-                                        }
-                                }
-                        }
-                        Py_DECREF(pValue);
-                        Py_DECREF(pArgs);
-                }
+					}
+				}
+			}
+			Py_DECREF(pValue);
+			Py_DECREF(pArgs);
+		}
 		Py_DECREF(pModule);
-        }
+	}
 	Py_DECREF(pName);
 	Py_DECREF(v);
 
 	PyErr_Clear();
-/* 	PyErr_Restore(exception, v, tb);  */
+/*	PyErr_Restore(exception, v, tb);  */
 	return string_free(str, 0);
 }
 
@@ -454,12 +454,14 @@ int python_load(script_t *s)
 {
 	PyObject *init, *module = NULL;
 	FILE *fp = fopen(s->path, "rb"); 
-        node *n;
-        if (fp && (n = PyParser_SimpleParseFile(fp, s->path, Py_file_input))) {
+	node *n;
+	if (fp && (n = PyParser_SimpleParseFile(fp, s->path, Py_file_input))) {
 		PyCodeObject *co;
-		if ((co = PyNode_CompileFlags(n, s->path, /* &flags */ NULL)))
+
+	/* Python 2.5 doesn't have PyNode_CompileFlags() */
+		if ((co = PyNode_Compile(n, s->path)))
 			module = PyImport_ExecCodeModuleEx(s->name, (PyObject *)co, s->path);
-	        PyNode_Free(n);
+		PyNode_Free(n);
 		fclose(fp);
 	}
 	if (!module) {
@@ -494,10 +496,11 @@ int python_load(script_t *s)
  */
 int python_unload(script_t *s)
 {
-	PyObject         *module = python_module(s);
+	PyObject	 *module = python_module(s);
 	PyObject	 *obj;
-        if (!module)
-                return -1;
+
+	if (!module)
+		return 0;
 #if 0
 	if ((obj = python_get_func(module, "deinit"))) {
 		PyObject *res = PyObject_CallFunction(obj, "()");
@@ -505,7 +508,7 @@ int python_unload(script_t *s)
 		Py_XDECREF(obj);
 	}
 Breakpoint 2, python_finalize () at python.c:632
-632             Py_Finalize();
+632		Py_Finalize();
 (gdb) step
 
 Program received signal SIGABRT, Aborted.
@@ -542,7 +545,7 @@ int python_initialize()
 	if (!(ekg = Py_InitModule("ekg", ekg_methods)))
 		return -1;
 
-        ekg_config = PyObject_NEW(PyObject, &ekg_config_type);
+	ekg_config = PyObject_NEW(PyObject, &ekg_config_type);
 	PyModule_AddObject(ekg, "config", ekg_config);
 
 	// Const - general
@@ -556,17 +559,18 @@ int python_initialize()
 	PyModule_AddIntConstant(ekg, "MSGCLASS_SYSTEM",		EKG_MSGCLASS_SYSTEM);
 
 	// Const - status types
-	PyModule_AddStringConstant(ekg, "STATUS_NA",		EKG_STATUS_NA);
-	PyModule_AddStringConstant(ekg, "STATUS_AVAIL",		EKG_STATUS_AVAIL);
-	PyModule_AddStringConstant(ekg, "STATUS_AWAY",		EKG_STATUS_AWAY);
-	PyModule_AddStringConstant(ekg, "STATUS_AUTOAWAY",	EKG_STATUS_AUTOAWAY);
-	PyModule_AddStringConstant(ekg, "STATUS_INVISIBLE",	EKG_STATUS_INVISIBLE);
-	PyModule_AddStringConstant(ekg, "STATUS_XA",		EKG_STATUS_XA);
-	PyModule_AddStringConstant(ekg, "STATUS_DND",		EKG_STATUS_DND);
-	PyModule_AddStringConstant(ekg, "STATUS_FREE_FOR_CHAT",	EKG_STATUS_FREE_FOR_CHAT);
-	PyModule_AddStringConstant(ekg, "STATUS_BLOCKED",	EKG_STATUS_BLOCKED);
-	PyModule_AddStringConstant(ekg, "STATUS_UNKNOWN",	EKG_STATUS_UNKNOWN);
-	PyModule_AddStringConstant(ekg, "STATUS_ERROR",		EKG_STATUS_ERROR);
+	/* XXX, someone take a look at it? */
+	PyModule_AddStringConstant(ekg, "STATUS_NA",		(char *) ekg_status_string(EKG_STATUS_NA, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_AVAIL",		(char *) ekg_status_string(EKG_STATUS_AVAIL, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_AWAY",		(char *) ekg_status_string(EKG_STATUS_AWAY, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_AUTOAWAY",	(char *) ekg_status_string(EKG_STATUS_AUTOAWAY, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_INVISIBLE",	(char *) ekg_status_string(EKG_STATUS_INVISIBLE, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_XA",		(char *) ekg_status_string(EKG_STATUS_XA, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_DND",		(char *) ekg_status_string(EKG_STATUS_DND, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_FREE_FOR_CHAT",	(char *) ekg_status_string(EKG_STATUS_FFC, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_BLOCKED",	(char *) ekg_status_string(EKG_STATUS_BLOCKED, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_UNKNOWN",	(char *) ekg_status_string(EKG_STATUS_UNKNOWN, 0));
+	PyModule_AddStringConstant(ekg, "STATUS_ERROR",		(char *) ekg_status_string(EKG_STATUS_ERROR, 0));
 
 	// Const - ignore levels
 	PyModule_AddIntConstant(ekg, "IGNORE_STATUS",		IGNORE_STATUS);
@@ -578,7 +582,7 @@ int python_initialize()
 	PyModule_AddIntConstant(ekg, "IGNORE_XOSD",		IGNORE_XOSD);
 	PyModule_AddIntConstant(ekg, "IGNORE_ALL",		IGNORE_ALL);
 
-        // Const - watch types
+	// Const - watch types
 	PyModule_AddIntConstant(ekg, "WATCH_READ",		WATCH_READ);
 	PyModule_AddIntConstant(ekg, "WATCH_READ_LINE",		WATCH_READ_LINE);
 	PyModule_AddIntConstant(ekg, "WATCH_WRITE",		WATCH_WRITE);
@@ -597,7 +601,7 @@ int python_initialize()
 int python_finalize()
 {
 	Py_Finalize();
-        return 0;
+	return 0;
 }
 
 // ********************************************************************************
@@ -629,6 +633,8 @@ static int python_plugin_destroy()
 
 int python_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("python");
+
 	plugin_register(&python_plugin, prio);
 
 	scriptlang_register(&python_lang);
@@ -649,5 +655,5 @@ int python_plugin_init(int prio)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8
+ * vim: noet
  */

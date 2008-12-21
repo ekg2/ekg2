@@ -28,10 +28,10 @@ OUTPUT:
 
 void windows()
 PREINIT:
-        list_t l;
+        window_t *w;
 PPCODE:
-        for (l = windows; l; l = l->next) {
-                XPUSHs(sv_2mortal(bless_window( (window_t *) l->data)));
+        for (w = windows; w; w = w->next) {
+                XPUSHs(sv_2mortal(bless_window( w )));
         }
 
 #####################
@@ -60,11 +60,11 @@ OUTPUT:
 
 void window_print_format(Ekg2::Window wind, char *format, char *line)
 CODE:
-	print_window(window_target(wind), wind->session, 0, format, line);
+	print_info(window_target(wind), wind->session, format, line);
 
 void window_print(Ekg2::Window wind, char *line)
 CODE:
-	print_window(window_target(wind), wind->session, 0, "generic", line);
+	print_info(window_target(wind), wind->session, "generic", line);
 
 void window_switch(Ekg2::Window wind)
 CODE:

@@ -36,6 +36,32 @@ contacts
 	strony ekranu. je¶li jest równe 2, informacje o zmianie stanu nie
 	s± wy¶wietlane, ignoruj±c warto¶æ zmiennej ,,display_notify''.
 
+contacts_descr
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	czy wy¶wietlaæ opisy stanu kontaktów?
+
+contacts_edge
+	typ: liczba
+	domy¶lna warto¶æ: 2
+	
+	po³o¿enie listy kontaktów na ekranie (krawêd¼):
+	
+	  0 - lewa
+	
+	  1 - górna
+	
+	  2 - prawa
+	
+	  3 - dolna
+
+contacts_frame
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	czy wy¶wietlaæ ramkê oddzielaj±c± listê od g³ównego okna?
+
 contacts_groups
 	typ: tekst
 	domy¶lna warto¶æ: brak
@@ -51,6 +77,12 @@ contacts_groups_all_sessions
 	Je¶li jest w³±czona, przy wy¶wietlaniu kontaktów z grupy brane s± pod
 	uwagê wszystkie sesje.
 
+contacts_margin
+	typ: liczba
+	domy¶lna warto¶æ: 1
+	
+	margines miêdzy list± kontaktów, a g³ównym oknem.
+
 contacts_metacontacts_swallow
 	typ: bool
 	domy¶lna warto¶æ: 1
@@ -59,12 +91,11 @@ contacts_metacontacts_swallow
 	w li¶cie kontaktów wy¶wietlany jest metakontakt, ukrywane s± poszczególne
 	kontakty do niego nale¿±ce.
 
-contacts_options
+contacts_order
 	typ: tekst
 	domy¶lna warto¶æ: brak
 	
-	opcje listy kontaktów oddzielone przecinkiem lub spacj±. domy¶lne
-	ustawienia to ,,right, frame, margin=1, nowrap, nodescr, order=chavawxadninnoer''
+	kolejno¶æ wy¶wietlania stanów na li¶cie kontaktów
 	
 	mo¿liwe stany to: 
 	
@@ -82,26 +113,33 @@ contacts_options
 	
 	  no - niedostêpny
 	
-	  er - niepoprawny kontakt
+	  er - b³±d przy pobieraniu stanu
+	
+	  un - nieznany stan
+	
+	  bl - blokuj±cy
 	
 	mo¿na pomin±æ niektóre stany -- nie bêd± po prostu wy¶wietlane na li¶cie.
+
+contacts_orderbystate
+	typ: bool
+	domy¶lna warto¶æ: 0
 	
-	
-	lista dostêpnych opcji:
-	- left, right, top, bottom - po³o¿enie listy kontaktów na ekranie,
-	- frame, noframe - lista oddzielona ramk± od g³ównego okna lub nie,
-	- margin=n, nomargin - margines miêdzy list± a g³ównym oknem lub brak,
-	- wrap, nowrap - tre¶æ listy bêdzie zawijana lub ucinana,
-	- descr, nodescr - opisy stanu bêd± lub nie bêd± wy¶wietlane,
-	- order=n - kolejno¶æ wy¶wietlanych stanów.
-	- nosort - kolejno¶æ listy jest alfabetyczna, wy¶wietlane s± jednak
-	tylko statusy pojawiaj±ce siê w opcji order
+	czy grupowaæ opisy wg. statusu? je¶li nie, kontakty bêd± sortowane
+	alfabetyczne, ale wy¶wietlane bêd± tylko statusy, wymienione w opcji
+	contacts_order.
 
 contacts_size
 	typ: liczba
 	domy¶lna warto¶æ: 8
 	
 	okre¶la szeroko¶æ okienka z list± kontaktów.
+
+contacts_wrap
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	czy zawijaæ zbyt d³ugie kontakty?
 
 display_transparent
 	typ: bool
@@ -128,13 +166,19 @@ kill_irc_window
 	domy¶lna warto¶æ: 1
 	
 	je¶li ustawiona na 0, nie mo¿na zamkn±æ okna kana³u ircowego przy
-        pomocy bindingu klawiaturowego.
+	pomocy bindingu klawiaturowego.
 
 margin_size
 	typ: liczba
 	domy¶lna warto¶æ: 15
 	
 	okre¶la rozmiar marginesu wykorzystywanego przy /| w themach
+
+mark_on_window_change
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	okre¶la czy wstawiaæ marker do okna przy przej¶ciu z niego do innego okna
 
 statusbar_size
 	typ: liczba

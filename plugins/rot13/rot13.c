@@ -41,9 +41,9 @@ static void do_foo(char *p, int rot, int deltarot) {	/* some code/idea gathered 
 
 		if (!(tolower(*p) < 'a' || tolower(*p) > 'z')) {
 			for (i = 0; i < rot; i++) {
-				if (*p == 'z') 		*p = 'a';
-				else if (*p == 'Z') 	*p = 'A';
-				else 			(*p)++;
+				if (*p == 'z')		*p = 'a';
+				else if (*p == 'Z')	*p = 'A';
+				else			(*p)++;
 
 			}
 			for (i = 0; i > rot; i--) {
@@ -75,7 +75,7 @@ static rot13_key_t *rot13_find_key(char *session, char *target, int *reverted) {
 		}
 
 	/* XXX, resource strip, only jabber if no resource passed */
-		if (!((tmp = xstrchr(target, '/')) || xstrncmp(target, "jid:", 4) || xstrchr(k->target, '/'))) continue;
+		if (!((tmp = xstrchr(target, '/')) || xstrncmp(target, "xmpp:", 5) || xstrchr(k->target, '/'))) continue;
 
 		len = (int)(tmp - k->target);
 
@@ -119,7 +119,7 @@ static QUERY(message_parse) {
 
 	if (!(key = rot13_find_key(session, recipient, &rev)))	return 0;
 	
-	if (!rev) 	do_foo(message, key->rot ? atoi(key->rot) : config_default_rot, key->drot ? atoi(key->drot) : config_default_drot);
+	if (!rev)	do_foo(message, key->rot ? atoi(key->rot) : config_default_rot, key->drot ? atoi(key->drot) : config_default_drot);
 	else		do_foo(message, key->rot ? -atoi(key->rot): config_default_rot, key->drot ? -atoi(key->drot): config_default_drot);
 
 	*encrypted = 1; 
@@ -129,7 +129,9 @@ static QUERY(message_parse) {
 static rot13_key_t *rot13_key_parse(char *target, char *sesja, char *offset, char *offset2) {
 	rot13_key_t *k = xmalloc(sizeof(rot13_key_t));
 
-	if (!xstrcmp(target, "$")) {		k->target = xstrdup(get_uid(window_current->session, window_current->target));	xfree(target); }
+	if (!xstrcmp(target, "$")) {		k->target = xstrdup(get_uid_any(window_current->session, window_current->target));
+						if (!k->target) k->target = xstrdup(window_current->target);
+						xfree(target); }
 	else if (!xstrcmp(target, "*")) {	k->target = NULL;								xfree(target); }
 	else					k->target = target;
 
@@ -194,7 +196,7 @@ static COMMAND(command_key) {
 			return -1;
 		}
 
-		list_add_sorted(&keys, rot13_key_parse(target, sesja, offset, offset2), 0, rot13_key_compare);
+		list_add_sorted(&keys, rot13_key_parse(target, sesja, offset, offset2), rot13_key_compare);
 
 		xfree(arr);
 		return 0;
@@ -219,7 +221,7 @@ static COMMAND(command_key) {
 }
 
 static QUERY(rot13_setvar_default) {
-	char *path 	= saprintf("%s/rot13.keys", prepare_path("keys", 0));
+	char *path	= saprintf("%s/rot13.keys", prepare_path("keys", 0));
 	FILE *f;
 	
 	if ((f = fopen(path, "r"))) {
@@ -228,7 +230,7 @@ static QUERY(rot13_setvar_default) {
 			char **arr = array_make(tmp, " ", 0, 1, 1);
 			
 			if (arr[0] && arr[1] && arr[2] && arr[3] && !arr[4]) {
-				list_add(&keys, rot13_key_parse(arr[0], arr[1], arr[2], arr[3]), 0);
+				list_add(&keys, rot13_key_parse(arr[0], arr[1], arr[2], arr[3]));
 
 				xfree(arr);
 			} else {
@@ -255,9 +257,10 @@ static int rot13_theme_init() {
 }
 
 EXPORT int rot13_plugin_init(int prio) {
-	plugin_register(&rot13_plugin, prio);
 
-	rot13_setvar_default(NULL, NULL);
+	PLUGIN_CHECK_VER("rot13");
+
+	plugin_register(&rot13_plugin, prio);
 
 	query_connect_id(&rot13_plugin, SET_VARS_DEFAULT, rot13_setvar_default, NULL);
 	query_connect_id(&rot13_plugin, MESSAGE_ENCRYPT, message_parse, (void *) 1);
@@ -274,7 +277,7 @@ EXPORT int rot13_plugin_init(int prio) {
 
 static int rot13_plugin_destroy() {
 	list_t l;
-	char *path 	= saprintf("%s/rot13.keys", prepare_path("keys", 0));
+	char *path	= saprintf("%s/rot13.keys", prepare_path("keys", 0));
 	FILE *f		= fopen(path, "w");
 
 	xfree(path);

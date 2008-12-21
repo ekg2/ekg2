@@ -13,8 +13,13 @@ int gg_dcc_socket_open(int port);
 void gg_dcc_socket_close();
 void gg_dcc_audio_init();
 void gg_dcc_audio_close();
-WATCHER(gg_dcc_handler);
+dcc_t *gg_dcc_find(void *D);
 
+
+WATCHER(gg_dcc_handler);
+#ifdef HAVE_GG_DCC7
+WATCHER(gg_dcc7_handler);
+#endif
 #endif
 
 

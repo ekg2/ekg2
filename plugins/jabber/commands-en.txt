@@ -23,11 +23,17 @@ auth
 	
 	  -a, --accept <JID>    authorize JID
 	
-	  -d, --deny <JID>      deny JID authorization
+	  -d, --deny <JID>      deny JID authorization or revokes it
 	
 	  -r, --request <JID>   send autorization request
 	
 	  -c, --cancel <JID>    cancel authorization
+	
+	  -j, --reject <JID>	reject authorization request
+	
+	  -l, --list		display pending requests
+	
+	  -p, --probe		request presence information
 
 away
 	parameters: [description/-]
@@ -51,13 +57,15 @@ change
 	
 	  -n, --nick <nickname>
 	
-	  -b, --born <birth year>
+	  -b, --born <birth date>	(ISO 8601-formatted, e.g. yyyy-mm-dd)
 	
 	  -c, --city <city>
 	
 	  -d, --description <description>
 	
 	  -C, --country <country>
+	
+	  -p, --photo <photo path>
 	
 	If any of these parameteres is not given, it's value will be cleared on
 	vCard. Giving ,,%T-%n'' will clear %Tall%n fields.
@@ -130,9 +138,44 @@ reconnect
 	parameters: 
 	short description: disconnects and connects again
 
+reply
+	parameters: #id ...
+	short description: replies on given conversation
+	
+	Replies with given message to conversation connected with given
+	Reply-ID. Message can contain subject like in msg, but if not
+	specified, old one (prefixed by subject_reply_prefix) will be used.
+
+tmsg
+	parameters: uid/nickname thread-id ...
+	short description: sends message with thread
+	
+	Like msg, but additional, second arg specifies thread-ID to use.
+
+topic
+	parameters: [uid] <new topic>
+	short description: set MUC topic
+
 userinfo
 	parameters: 
 	short description: retrieves Jabber Directory info about given jid
+
+userlist
+	parameters: <arg>
+	short description: userlist import/export (JRU-like)
+	
+	Depending on arg:
+	
+	-c, --clear			clears current userlist (equal to 'del *')
+	
+	-g, --get [filename]		imports userlist from file
+	
+	-p, --put [filename]		exports userlist to file
+	
+	-G, --replace [filename]	clear userlist & import new from file
+	
+	Userlist export file format is same as with JRU
+	(http://jru.jabberstudio.org).
 
 ver
 	parameters: 

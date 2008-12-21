@@ -166,8 +166,6 @@ modify
 	
 	  -n, --nick <nickname>     nickname
 	
-	  -d, --display <name>      displayed neme
-	
 	  -u, --uin <uin>
 	
 	  -g, --group [+/-]<@group>  add or remove from group

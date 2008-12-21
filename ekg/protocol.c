@@ -36,6 +36,7 @@
 
 #include "debug.h"
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "xmalloc.h"
 
 #include "commands.h"
@@ -53,7 +54,7 @@
 #include "queries.h"
 
 static int auto_find_limit = 100; /* counter of persons who we were looking for when autofind */
-list_t dccs = NULL;
+dcc_t *dccs = NULL;
 
 static QUERY(protocol_disconnected);
 static QUERY(protocol_connected);
@@ -61,6 +62,7 @@ static QUERY(protocol_message_ack);
 static QUERY(protocol_status);
 static QUERY(protocol_message);
 static QUERY(protocol_xstate);
+static QUERY(protocol_userlist_changed);
 
 /**
  * protocol_init()
@@ -68,11 +70,12 @@ static QUERY(protocol_xstate);
  * Init communication between core and PROTOCOL plugins<br>
  * <br>
  * Here, we register <b>main</b> <i>communication channels</i> like:<br>
- * 	- status changes: 			<i>PROTOCOL_STATUS</i><br>
- * 	- message I/O:				<i>PROTOCOL_MESSAGE</i><br>
- * 	- acknowledge of messages: 		<i>PROTOCOL_MESSAGE_ACK</i><br>
- * 	- misc user events like typing notifies:<i>PROTOCOL_XSTATE</i><br>
- * 	- session connection/disconnection: 	<i>PROTOCOL_CONNECTED</i> and <i>PROTOCOL_DISCONNECTED</i>
+ *	- status changes:			<i>PROTOCOL_STATUS</i><br>
+ *	- message I/O:				<i>PROTOCOL_MESSAGE</i><br>
+ *	- acknowledge of messages:		<i>PROTOCOL_MESSAGE_ACK</i><br>
+ *	- misc user events like typing notifies:<i>PROTOCOL_XSTATE</i><br>
+ *	- session connection/disconnection:	<i>PROTOCOL_CONNECTED</i> and <i>PROTOCOL_DISCONNECTED</i>
+ *	- roster changes:			<i>USERLIST_CHANGED</i> and <i>USERLIST_ADDED</i> and <i>USERLIST_REMOVED</i> and <i>USERLIST_RENAMED</i>
  *
  * @sa query_connect()	- Function to add listener on specified events.
  * @sa query_emit()	- Function to emit specified events.
@@ -86,6 +89,40 @@ void protocol_init() {
 
 	query_connect_id(NULL, PROTOCOL_CONNECTED, protocol_connected, NULL);
 	query_connect_id(NULL, PROTOCOL_DISCONNECTED, protocol_disconnected, NULL);
+
+	query_connect_id(NULL, USERLIST_CHANGED,	protocol_userlist_changed, NULL);
+	query_connect_id(NULL, USERLIST_ADDED,		protocol_userlist_changed, NULL);
+	query_connect_id(NULL, USERLIST_REMOVED,	protocol_userlist_changed, NULL);
+	query_connect_id(NULL, USERLIST_RENAMED,	protocol_userlist_changed, NULL);
+}
+
+/*
+ * XXX,
+ *	This code is from ncurses ncurses_userlist_changed()
+ *
+ *	It's now proper ekg2-way (and also for gtk/readline)
+ *
+ *	However in USERLIST_* event we don't pass session...
+ *	Yep, it's buggy.
+ */
+
+static QUERY(protocol_userlist_changed) {
+	char **p1 = va_arg(ap, char**);
+	char **p2 = va_arg(ap, char**);
+	
+	window_t *w;
+
+	for (w = windows; w; w = w->next) {
+		if (!w->target || xstrcasecmp(w->target, *p1))
+			continue;
+
+		xfree(w->target);
+		w->target = xstrdup(*p2);
+
+		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+	}
+
+	return 0;
 }
 
 
@@ -94,8 +131,8 @@ void protocol_init() {
  *
  * Handler of reconnect timer created by protocol_disconnected()<br>
  *
- * @param type - 	0 - If timer should do his job<br>
- * 			1 - If timer'll be destroy, and handler should free his data
+ * @param type -	0 - If timer should do his job<br>
+ *			1 - If timer'll be destroy, and handler should free his data
  * @param s - session to reconnect
  *
  * @return -1 [TEMPORARY TIMER]
@@ -105,8 +142,8 @@ static TIMER_SESSION(protocol_reconnect_handler) {
 	if (type == 1)
 		return 0;
 
-        if (!s || s->connected == 1)
-                return -1;
+	if (!s || s->connected)
+		return -1;
 
 	debug("protocol_reconnect_handler() reconnecting session %s\n", s->uid);
 
@@ -119,15 +156,15 @@ static TIMER_SESSION(protocol_reconnect_handler) {
  *
  * Handler for <i>PROTOCOL_DISCONNECTED</i><br>
  * When session notify core about disconnection we do here:<br>
- * 	- clear <b>all</b> user status, presence, resources details. @sa userlist_clear_status()<br>
- * 	- update s->last_conn state, and set s->connected to 0<br>
- * 	- check if disconnect @a type was either <i>EKG_DISCONNECT_NETWORK:</i> or <i>EKG_DISCONNECT_FAILURE:</i> and
- * 		if yes, create reconnect timer (if user set auto_reconnect variable)<br>
- * 	- display notify through UI-plugin
+ *	- clear <b>all</b> user status, presence, resources details. @sa userlist_clear_status()<br>
+ *	- update s->last_conn state, and set s->connected to 0<br>
+ *	- check if disconnect @a type was either <i>EKG_DISCONNECT_NETWORK:</i> or <i>EKG_DISCONNECT_FAILURE:</i> and
+ *		if yes, create reconnect timer (if user set auto_reconnect variable)<br>
+ *	- display notify through UI-plugin
  *
  * @note About different types [@a type] of disconnections:<br>
- * 		- <i>EKG_DISCONNECT_USER</i> 	- when user do /disconnect [<b>with reason</b>, in @a reason we should have param of /disconnect command][<b>without reconnection</b>]<br>
- * 		- <i>EKG_DISCONNECT_NETWORK</i>	- when smth is wrong with network... (read: when recv() fail, or send() or SSL wrappers for rcving/sending data fail with -1 and with bad errno)
+ *		- <i>EKG_DISCONNECT_USER</i>	- when user do /disconnect [<b>with reason</b>, in @a reason we should have param of /disconnect command][<b>without reconnection</b>]<br>
+ *		- <i>EKG_DISCONNECT_NETWORK</i>	- when smth is wrong with network... (read: when recv() fail, or send() or SSL wrappers for rcving/sending data fail with -1 and with bad errno)
  *						[<b>with reason</b> describiny why we fail (strerror() is good here)][<b>with reconnection</b>]<br>
  *		- <i>EKG_DISCONNECT_FORCED</i>	- when server force us to disconnection. [<b>without reason</b>][<b>without reconnection</b>]<br>
  *		- <i>EKG_DISCONNECT_FAILURE</i> - when we fail to connect to server (read: when we fail connect session, after /connect) 
@@ -136,9 +173,9 @@ static TIMER_SESSION(protocol_reconnect_handler) {
  *
  * @param ap 1st param: <i>(char *) </i><b>session</b> - session uid which goes disconnect
  * @param ap 2nd param: <i>(char *) </i><b>reason</b>  - reason why session goes disconnect.. It's reason specifed by user if EKG_DISCONNECT_USER, else 
- * 								string with error description like from: strerror().. [if EKG_DISCONNECT_FAILURE]
+ *								string with error description like from: strerror().. [if EKG_DISCONNECT_FAILURE]
  * @param ap 3rd param: <i>(int) </i><b>type</b> - type of disconnection one of: 
- * 					[EKG_DISCONNECT_USER, EKG_DISCONNECT_NETWORK, EKG_DISCONNECT_FORCED, EKG_DISCONNECT_FAILURE, EKG_DISCONNECT_STOPPED]
+ *					[EKG_DISCONNECT_USER, EKG_DISCONNECT_NETWORK, EKG_DISCONNECT_FORCED, EKG_DISCONNECT_FAILURE, EKG_DISCONNECT_STOPPED]
  *
  * @param data NULL
  *
@@ -162,7 +199,9 @@ static QUERY(protocol_disconnected) {
 			s->last_conn = time(NULL);
 			s->connected = 0;
 			query_emit_id(NULL, SESSION_EVENT, &s, &one);	/* notify UI */
-		}
+		} else
+			s->connecting = 0;
+		command_exec(NULL, s, "/session --unlock", 1);
 	}
 
 	switch (type) {
@@ -192,7 +231,8 @@ static QUERY(protocol_disconnected) {
 			 * 2) we don't want to risk if some _autoback could make magic at this state of connection */
 			if (s && s->autoaway)
 				session_status_set(s, EKG_STATUS_AUTOBACK);
-			s->activity = 0; /* mark we'd like PROTOCOL_CONNECTED to set activity */
+			if (s)
+				s->activity = 0; /* mark we'd like PROTOCOL_CONNECTED to set activity */
 			break;
 
 		case EKG_DISCONNECT_FORCED:
@@ -211,16 +251,20 @@ static QUERY(protocol_disconnected) {
 	return 0;
 }
 
+int protocol_disconnected_emit(const session_t *s, const char *reason, int type) {
+       return query_emit_id_ro(NULL, PROTOCOL_DISCONNECTED, &(s->uid), &reason, &type);
+}
+
 /**
  * protocol_connected()
  *
  * Handler for <i>PROTOCOL_CONNECTED</i><br>
  * When session notify core about connection we do here:<br>
- * 	- If we have ourselves on the userlist. It update status and description<br>
- * 	- Display notify through UI-plugin<br>
- * 	- If we have messages in session queue, than send it and display info.<br>
- * 	- Update last_conn state and set connected state to 1.<br>
- * 	- Remove "reconnect" timer.
+ *	- If we have ourselves on the userlist. It update status and description<br>
+ *	- Display notify through UI-plugin<br>
+ *	- If we have messages in session queue, than send it and display info.<br>
+ *	- Update last_conn state and set connected state to 1.<br>
+ *	- Remove "reconnect" timer.
  *
  * @param ap 1st param: <i>(char *) </i><b>session</b> - session uid which goes connected.
  * @param data NULL
@@ -234,15 +278,12 @@ static QUERY(protocol_connected) {
 	session_t *s = session_find(session);
 	const char *descr = session_descr_get(s);
 	
-        ekg_update_status(s);
+	ekg_update_status(s);
 
 	if (descr)
 		print("connected_descr", descr, session_name(s));
 	else
 		print("connected", session_name(s));
-
-	if (!msg_queue_flush(session))
-		print("queue_flush", session_name(s));
 
 	if (s) {
 		int two = 2;
@@ -250,13 +291,21 @@ static QUERY(protocol_connected) {
 		s->last_conn = time(NULL);
 		if (!s->activity) /* someone asks us to set activity */
 			s->activity  = s->last_conn;
+		s->connecting = 0;
 		s->connected = 1;
 		timer_remove_session(s, "reconnect");
 
 		query_emit_id(NULL, SESSION_EVENT, &s, &two);	/* Notify UI */
 	}
 
+	if (!msg_queue_flush(session))
+		print("queue_flush", session_name(s));
+
 	return 0;
+}
+
+int protocol_connected_emit(const session_t *s) {
+       return query_emit_id_ro(NULL, PROTOCOL_CONNECTED, &(s->uid));
 }
 
 /*
@@ -268,20 +317,18 @@ static QUERY(protocol_status)
 {
 	char **__session	= va_arg(ap, char**), *session = *__session;
 	char **__uid		= va_arg(ap, char**), *uid = *__uid;
-	char *status		= *(va_arg(ap, char**));
+	int status		= *(va_arg(ap, int*));
 	char **__descr		= va_arg(ap, char**), *descr = *__descr;
-	char *host		= *(va_arg(ap, char**));
-	int port		= *(va_arg(ap, int*));
 	time_t when		= *(va_arg(ap, time_t*));
 	ekg_resource_t *r	= NULL;
 	userlist_t *u;
 	session_t *s;
 
-	char *st;			/* status	u->status || r->status */
-	char *de;			/* descr 	u->descr  || r->descr  */
+	int st;				/* status	u->status || r->status */
+	char *de;			/* descr	u->descr  || r->descr  */
 
 	int ignore_level;
-        int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
+	int ignore_status, ignore_status_descr, ignore_events, ignore_notify;
 	int sess_notify;
 
 	if (!(s = session_find(session)))
@@ -290,11 +337,19 @@ static QUERY(protocol_status)
 	sess_notify = session_int_get(s, "display_notify");
 	/* we are checking who user we know */
 	if (!(u = userlist_find(s, uid))) {
-		if (config_auto_user_add) u = userlist_add(s, uid, uid);
+		if (config_auto_user_add && xstrncmp(uid, session, xstrlen(session)) ) {
+			char *tmp = xstrdup(uid);
+			char *p = xstrchr(tmp, '/');
+			if (p) *p = 0;
+
+			u = userlist_add(s, tmp, tmp);
+
+			xfree(tmp);
+		}
 		if (!u) {
 			if ((sess_notify == -1 ? config_display_notify : sess_notify) & 4) {
 				const char *format = ekg_status_label(status, descr, "status_");
-				print_window(uid, s, 0, format, format_user(s, uid), NULL, session_name(s), descr);
+				print_info(uid, s, format, format_user(s, uid), NULL, session_name(s), descr);
 			}
 			return 0;
 		}
@@ -321,51 +376,42 @@ static QUERY(protocol_status)
 		de = u->descr;
 	}
 
-	/* zapisz adres IP i port */
-	u->ip = (host) ? inet_addr(host) : 0;
-	u->port = port;
-
-	if (host)
-		u->last_ip = inet_addr(host);
-	if (port)
-		u->last_port = port;
-
 	/* je¶li te same stany...  i te same opisy (lub brak opisu), ignoruj */
-	if (!xstrcasecmp(status, st) && !xstrcmp(descr, de)) 
+	if ((status == st) && !xstrcmp(descr, de)) 
 		return 0;
 
 	/* je¶li kto¶ nam znika, zapamiêtajmy kiedy go widziano */
-	if (!u->resources && xstrcasecmp(u->status, EKG_STATUS_NA) && !xstrcasecmp(status, EKG_STATUS_NA))
+	if (!u->resources && !EKG_STATUS_IS_NA(u->status) && EKG_STATUS_IS_NA(status))
 		u->last_seen = when ? when : time(NULL);
 
 	/* XXX dodaæ events_delay */
 	
 	/* je¶li dostêpny lub zajêty, dopisz to taba. je¶li niedostêpny, usuñ */
-	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && config_completion_notify && u->nickname)
+	if (EKG_STATUS_IS_AVAIL(status) && config_completion_notify && u->nickname)
 		tabnick_add(u->nickname);
-	if (!xstrcasecmp(status, EKG_STATUS_AWAY) && (config_completion_notify & 4) && u->nickname)
+	if (!EKG_STATUS_IS_AWAY(status) && (config_completion_notify & 4) && u->nickname)
 		tabnick_add(u->nickname);
-	if (!xstrcasecmp(status, EKG_STATUS_NA) && (config_completion_notify & 2) && u->nickname)
+	if (EKG_STATUS_IS_NA(status) && (config_completion_notify & 2) && u->nickname)
 		tabnick_remove(u->nickname);
 
 
-	/* je¶li ma³o wa¿na zmiana stanu... */
-	if ((sess_notify == -1 ? config_display_notify : sess_notify) & 2) {
-		/* je¶li na zajêty, ignorujemy */
-		if (!xstrcasecmp(st, EKG_STATUS_AWAY))
-			goto notify_plugins;
+	/* je¶li ma³o wa¿na zmiana stanu...
+	 * XXX someone can tell me what this should do, 'cos I can't understand the way it's written? */
+	
+	/* z dokumentacji, co powinno robic:
+	 *	warto¶æ 2 wy¶wietla tylko zmiany z niedostêpnego na dostêpny i na odwrót. 
+	 */
 
-		/* je¶li na dostêpny, ignorujemy */
-		if (!xstrcasecmp(st, EKG_STATUS_AVAIL))
-			goto notify_plugins;
-	}
+	if (((sess_notify == -1 ? config_display_notify : sess_notify) & 2)
+			&& !(EKG_STATUS_IS_NA(st) ^ EKG_STATUS_IS_NA(status)))
+		goto notify_plugins;
 
 	/* ignorowanie statusu - nie wy¶wietlamy, ale pluginy niech robi± co chc± */
-        if (ignore_status)
+	if (ignore_status || ignore_notify)
 		goto notify_plugins;
 
 	/* nie zmieni³ siê status, zmieni³ siê opis */
-	if (ignore_status_descr && !xstrcmp(status, st) && xstrcmp(descr, de))
+	if (ignore_status_descr && (status == st) && xstrcmp(descr, de))
 		goto notify_plugins;
 
 	/* daj znaæ d¼wiêkiem... */
@@ -376,39 +422,35 @@ static QUERY(protocol_status)
 	if (config_sound_notify_file)
 		play_sound(config_sound_notify_file);
 
-        /* wy¶wietlaæ na ekranie? */
+	/* wy¶wietlaæ na ekranie? */
 	if (!((sess_notify == -1 ? config_display_notify : sess_notify) & 3))
-                goto notify_plugins;
+		goto notify_plugins;
 
 	/* poka¿ */
 	if (u->nickname) {
 		const char *format = ekg_status_label(status, ignore_status_descr ? NULL : descr, "status_");
-		print_window(u->nickname, s, 0, format, format_user(s, uid), (u->first_name) ? u->first_name : u->nickname, session_name(s), descr);
+		print_info(u->nickname, s, format, format_user(s, uid), u->nickname, session_name(s), descr);
 	}
 
 notify_plugins:
-	if (xstrcasecmp(st, EKG_STATUS_NA)) {
-	        xfree(u->last_status);
-	        u->last_status = xstrdup(st);
-	        xfree(u->last_descr);
-	        u->last_descr = xstrdup(de);
+	if (!EKG_STATUS_IS_NA(st)) {
+		u->last_status = st;
+		xfree(u->last_descr);
+		u->last_descr = xstrdup(de);
 	}
 
-	if (!xstrcasecmp(st, EKG_STATUS_NA) && xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
+	if (EKG_STATUS_IS_NA(st) && !EKG_STATUS_IS_NA(status) && !ignore_events)
 		query_emit_id(NULL, EVENT_ONLINE, __session, __uid);
 
 	if (!ignore_status) {
 		if (r) {
-			xfree(r->status);
-			r->status = xstrdup(status);
+			r->status = status;
 		}
 
-		if (u->resources) { 		/* get higest prio status */
-			xfree(u->status);
-			u->status = xstrdup( ((ekg_resource_t *) (u->resources->data))->status);
+		if (u->resources) {		/* get higest prio status */
+			u->status = u->resources->status;
 		} else {
-			xfree(u->status);
-			u->status = xstrdup(status);
+			u->status = status;
 		}
 	}
 
@@ -421,28 +463,38 @@ notify_plugins:
 			r->descr = xstrdup(descr);
 		}
 
-		if (u->resources) { 	/* get highest prio descr */
+		if (u->resources) {	/* get highest prio descr */
 			xfree(u->descr);
-			u->descr = xstrdup( ((ekg_resource_t *) (u->resources->data))->descr);
+			u->descr = xstrdup(u->resources->descr);
 		} else {
 			xfree(u->descr);
 			u->descr = xstrdup(descr);
 		}
 
-		if (!u->resources || u->resources->data == r) 
+		if (!u->resources || u->resources == r) 
 			u->status_time = when ? when : time(NULL);
 	}
 	
 	query_emit_id(NULL, USERLIST_CHANGED, __session, __uid);
 
-	if (!xstrcasecmp(status, EKG_STATUS_AVAIL) && !ignore_events)
-		query_emit_id(NULL, EVENT_AVAIL, __session, __uid);
-	if (!xstrcasecmp(status, EKG_STATUS_AWAY) && !ignore_events)
-                query_emit_id(NULL, EVENT_AWAY, __session, __uid);
-        if (!xstrcasecmp(status, EKG_STATUS_NA) && !ignore_events)
-                query_emit_id(NULL, EVENT_NA, __session, __uid);
+	/* Currently it behaves like event means grouped statuses,
+	 * i.e. EVENT_AVAIL is for avail&ffc
+	 *	EVENT_AWAY for away&xa&dnd
+	 *	... */
+	if (!ignore_events) {
+		if (EKG_STATUS_IS_AVAIL(status))
+			query_emit_id(NULL, EVENT_AVAIL, __session, __uid);
+		else if (EKG_STATUS_IS_AWAY(status))
+			query_emit_id(NULL, EVENT_AWAY, __session, __uid);
+		else if (EKG_STATUS_IS_NA(status))
+			query_emit_id(NULL, EVENT_NA, __session, __uid);
+	}
 
 	return 0;
+}
+
+int protocol_status_emit(const session_t *s, const char *uid, int status, char *descr, time_t when) {
+       return query_emit_id_ro(NULL, PROTOCOL_STATUS, &(s->uid), &uid, &status, &descr, &when);
 }
 
 /*
@@ -454,13 +506,18 @@ notify_plugins:
  */
 char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure)
 {
-	char *class_str, timestamp[100], *text = xstrdup(__text), *emotted = NULL;
+	char *class_str, timestamp[100], *text = xstrdup(__text);
 	char *securestr = NULL;
 	const char *target = sender, *user;
-        time_t now;
+	time_t now;
 	session_t *s = session_find(session);
-        struct conference *c = NULL;
-	int empty_theme = 0;
+	struct conference *c = NULL;
+	int empty_theme = 0, is_me = 0, to_me = 1, activity = 0, separate = 0;
+
+	if (class & EKG_MSGCLASS_NOT2US) {
+		to_me = 0;
+		class &= ~EKG_MSGCLASS_NOT2US;
+	}
 
 	if (class & EKG_NO_THEMEBIT) {
 		empty_theme = 1;
@@ -470,17 +527,34 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	switch (class) {
 		case EKG_MSGCLASS_SENT:
 		case EKG_MSGCLASS_SENT_CHAT:
-			class_str = "sent";
+			if (/*config_display_me && */ !xstrncmp(text, "/me ", 4)) {
+				class_str = "sent_me";
+				is_me = 1;
+			} else
+				class_str = "sent";
 			target = (rcpts) ? rcpts[0] : NULL;
 			break;
 		case EKG_MSGCLASS_CHAT:
-			class_str = "chat";
+			if (/*config_display_me && */ !xstrncmp(text, "/me ", 4)) {
+				class_str = "chat_me";
+				is_me = 1;
+			} else
+				class_str = "chat";
 			break;
 		case EKG_MSGCLASS_SYSTEM:
 			class_str = "system";
 			target = "__status";
 			break;
+		case EKG_MSGCLASS_LOG:
+			class_str = "log";
+			break;
+		case EKG_MSGCLASS_SENT_LOG:
+			class_str = "sent_log";
+			target = (rcpts) ? rcpts[0] : NULL;
+			break;
 		default:
+			if (class != EKG_MSGCLASS_MESSAGE)
+				debug("[message_print] got unexpected class = %d\n", class);
 			class_str = "message";
 	}
 
@@ -496,23 +570,28 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 			attrmap = "nTgGbBrR";
 
 		for (i = 0; text[i]; i++) {
-			if (i == 0 || format[i] != format[i - 1]) {
+
+			uint32_t f = format[i];
+
+			if (i == 0 || f != format[i - 1]) {
 				char attr = 'n';
 
-				if ((format[i] & EKG_FORMAT_COLOR)) {
-					attr = color_map(format[i] & 0x0000ff, (format[i] & 0x0000ff00) >> 8, (format[i] & 0x00ff0000) >> 16);
+				if ((f & EKG_FORMAT_COLOR)) {
+					attr = color_map(f & EKG_FORMAT_B_MASK, (f & EKG_FORMAT_G_MASK) >> 8, (f & EKG_FORMAT_B_MASK) >> 16);
 					if (attr == 'k')
 						attr = 'n';
 				}
 
-				if ((format[i] & 0xfe000000)) {
-					uint32_t f = (format[i] & 0xff000000);
+				if ((f & ~(EKG_FORMAT_COLOR | EKG_FORMAT_RGB_MASK))) {
 
-					if ((format[i] & EKG_FORMAT_COLOR))
+					if ((f & EKG_FORMAT_COLOR))
 						attr = toupper(attr);
 					else
 						attr = attrmap[(f >> 25) & 7];
 				}
+
+				if (attr=='N')
+					attr='T';
 
 				string_append_c(s, '%');
 				string_append_c(s, attr);
@@ -533,7 +612,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	 * obecn±, ¿eby wybraæ odpowiedni format timestampu. */
 	{
 		char tmp[100], *timestamp_type;
-	        struct tm *tm_msg;
+		struct tm *tm_msg;
 		int tm_now_day;			/* it's localtime(&now)->tm_yday */
 
 		now = time(NULL);
@@ -557,35 +636,40 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	{
 		int recipients_count = array_count((char **) rcpts);
 
-		if (xstrcmp(class_str, "sent") && recipients_count > 0) {
+		if ((class < EKG_MSGCLASS_SENT) && recipients_count > 0) {
 			c = conference_find_by_uids(s, sender, rcpts, recipients_count, 0);
 
-	                if (!c) {
-	                        string_t tmp = string_init(NULL);
-	                        int first = 0, i;
+			if (!c) {
+				string_t tmp = string_init(NULL);
+				int first = 0, i;
 	
-	                        for (i = 0; i < recipients_count; i++) {
-	                                if (first++)
-	                                        string_append_c(tmp, ',');
+				for (i = 0; i < recipients_count; i++) {
+					if (first++)
+						string_append_c(tmp, ',');
 	
-	                                string_append(tmp, rcpts[i]);
-	                        }
+					string_append(tmp, rcpts[i]);
+				}
 	
-	                        string_append_c(tmp, ' ');
-	                        string_append(tmp, sender);
+				string_append_c(tmp, ' ');
+				string_append(tmp, sender);
 	
-	                        c = conference_create(s, tmp->str);
+				c = conference_create(s, tmp->str);
 	
-	                        string_free(tmp, 1);
-	                }
+				string_free(tmp, 1);
+			} else if (c->ignore) {
+				xfree(text);
+				return NULL;
+			}
 
-	                if (c) {
-	                        target = c->name;
+			if (c) {
+				target = c->name;
 				class_str = "conference";
 			}
 		}
 	}
 
+		/* XXX: I personally think this should be moved outta here
+		 * I don't think that beeping should be considered as 'printing' */
 	/* daj znaæ d¼wiêkiem i muzyczk± */
 	if (class == EKG_MSGCLASS_CHAT) {
 
@@ -605,13 +689,16 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (class == EKG_MSGCLASS_SYSTEM && config_sound_sysmsg_file)
 			play_sound(config_sound_sysmsg_file);
 	
-        if (config_last & 3 && xstrcmp(class_str, "sent")) 
-	        last_add(0, sender, now, sent, text);
+	if (config_last & 3 && (class < EKG_MSGCLASS_SENT))
+		last_add(0, sender, now, sent, text);
 	
-	user = xstrcmp(class_str, "sent") ? format_user(s, sender) : session_format_n(sender);
+	user = (class < EKG_MSGCLASS_SENT) ? format_user(s, sender) : session_format_n(sender);
 
-	if (config_emoticons && text)
-		emotted = emoticon_expand(text);
+	if (config_emoticons && text) {
+		char *tmp = emoticon_expand(text);
+		xfree(text);
+		text = tmp;
+	}
 
 	if (empty_theme)
 		class_str = "empty";
@@ -619,21 +706,26 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (secure) 
 		securestr = format_string(format_find("secure"));
 
-	print_window(target, s, 
-		(class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT
-			|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))),
-		class_str, 
-		user, 
-		timestamp, 
-		(emotted) ? emotted : text, 
+	if (class == EKG_MSGCLASS_LOG || class == EKG_MSGCLASS_SENT_LOG)
+		separate = 1;
+
+	if ( (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT) || 
+		  (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT)) ) {
+		activity = to_me ? EKG_WINACT_IMPORTANT : EKG_WINACT_MSG;
+		separate = 1;
+	}
+
+	print_window(target, s, activity, separate, class_str, user, timestamp,
+		(is_me ? text+4 : text),
 					/* XXX, get_uid() get_nickname() */
-		(!xstrcmp(class_str, "sent")) ? session_alias_uid(s) : get_nickname(s, sender), 
-		(!xstrcmp(class_str, "sent")) ? s->uid : get_uid(s, sender), 
-		(secure) ? securestr : "");
+		(class >= EKG_MSGCLASS_SENT ?
+			(is_me && config_nickname ? config_nickname : session_alias_uid(s))
+			: get_nickname(s, sender)),
+		(class >= EKG_MSGCLASS_SENT ? s->uid : get_uid(s, sender)),
+		(secure ? securestr : ""));
 
 	xfree(text);
 	xfree(securestr);
-	xfree(emotted);
 	return xstrdup(target);
 }
 
@@ -664,8 +756,10 @@ static QUERY(protocol_message)
 
 	/* display blinking */
 	if (config_display_blinking && userlist && (class < EKG_MSGCLASS_SENT) && (!rcpts || !rcpts[0])) {
+		int oldstate = userlist->blink;
+
 		if (config_make_window && xstrcmp(get_uid(session_class, window_current->target), get_uid(session_class, uid))) 
-			userlist->xstate |= EKG_XSTATE_BLINK;
+			userlist->blink = 1;
 		else if (!config_make_window) {
 			window_t *w;
 
@@ -675,11 +769,12 @@ static QUERY(protocol_message)
 			 */
 			w = window_find_s(session_class, uid);
 
-			if (!w && window_current->id != 1)
-				userlist->xstate |= EKG_XSTATE_BLINK; 
-			if (w && window_current->id != w->id)
-				userlist->xstate |= EKG_XSTATE_BLINK;
+			if (w ? (window_current->id != w->id) : (window_current->id != 1))
+				userlist->blink = 1;
 		}
+
+		if (oldstate != userlist->blink)
+			query_emit_id(NULL, USERLIST_CHANGED, &session, &uid);
 	}
 	
 	if (class & EKG_NO_THEMEBIT) {
@@ -690,22 +785,22 @@ static QUERY(protocol_message)
 
 	/* there is no need to decode our messages */
 	if (!our_msg && !empty_theme) {	/* empty_theme + decrpyt? i don't think so... */
-                char *___session = xstrdup(session);
-                char *___sender = xstrdup(uid);
-                char *___message = xstrdup(text);
-                int ___decrypted = 0;
+		char *___session = xstrdup(session);
+		char *___sender = xstrdup(uid);
+		char *___message = xstrdup(text);
+		int ___decrypted = 0;
 
-                query_emit_id(NULL, MESSAGE_DECRYPT, &___session, &___sender, &___message, &___decrypted, NULL);
+		query_emit_id(NULL, MESSAGE_DECRYPT, &___session, &___sender, &___message, &___decrypted, NULL);
 
-                if (___decrypted) {
-                        text = ___message;
-                        ___message = NULL;
-                        secure = 1;
-                }
+		if (___decrypted) {
+			text = ___message;
+			___message = NULL;
+			secure = 1;
+		}
 
-                xfree(___session);
-                xfree(___sender);
-                xfree(___message);
+		xfree(___session);
+		xfree(___sender);
+		xfree(___message);
 	}
 
 	if (our_msg)	query_emit_id(NULL, PROTOCOL_MESSAGE_SENT, &session, &(rcpts[0]), &text);
@@ -717,100 +812,99 @@ static QUERY(protocol_message)
 	if (!(our_msg && !config_display_sent)) {
 		if (empty_theme)
 			class |= EKG_NO_THEMEBIT;
-	        target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, dobeep, secure);
+		if (!(target = message_print(session, uid, (const char**) rcpts, text, format, sent, class, seq, dobeep, secure)))
+			return -1;
 	}
 
-        /* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
-	if (!userlist) 
+	/* je¿eli nie mamy podanego uid'u w li¶cie kontaktów to trzeba go dopisaæ do listy dope³nianych */
+	if (!userlist && !our_msg)	/* don't add us to tabnick */ 
 		tabnick_add(uid);
 
-        if (!userlist && xstrcasecmp(session_class->uid, uid) && session_int_get(session_class, "auto_find") >= 1) {
-                list_t l;
-                int do_find = 1, i;
+	if (!userlist && xstrcasecmp(session_class->uid, uid) && session_int_get(session_class, "auto_find") >= 1) {
+		list_t l;
+		int do_find = 1, i;
 
-                for (l = autofinds, i = 0; l; l = l->next, i++) {
-                        char *d = l->data;
+		for (l = autofinds, i = 0; l; l = l->next, i++) {
+			char *d = l->data;
 
-                        if (!xstrcmp(d, uid)) {
-                                do_find = 0;
-                                break;
-                        }
-                }
+			if (!xstrcmp(d, uid)) {
+				do_find = 0;
+				break;
+			}
+		}
 
-                if (do_find) {
-                        if (i == auto_find_limit) {
-                                debug("// autofind reached %d limit, removing the oldest uin: %d\n", auto_find_limit, *((char *)autofinds->data));
-                                list_remove(&autofinds, autofinds->data, 1);
-                        }
+		if (do_find) {
+			if (i == auto_find_limit) {
+				debug("// autofind reached %d limit, removing the oldest uin: %d\n", auto_find_limit, *((char *)autofinds->data));
+				list_remove(&autofinds, autofinds->data, 1);
+			}
 
-                        list_add(&autofinds, (void *) xstrdup(uid), 0);
+			list_add(&autofinds, xstrdup(uid));
 
-                        command_exec_format(target, session_class, 0, ("/find %s"), uid);
-                }
-        }
+			command_exec_format(target, session_class, 0, ("/find %s"), uid);
+		}
+	}
 
 	xfree(target);
 	return 0;
+}
+
+int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, const char *text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure) {
+       return query_emit_id_ro(NULL, PROTOCOL_MESSAGE, &(s->uid), &uid, &rcpts, &text, &format, &sent, &class, &seq, &dobeep, &secure);
 }
 
 /**
  * protocol_message_ack()
  *
  * Handler for <i>PROTOCOL_MESSAGE_ACK</i>
- * When session notify core about receiving acknowledge of message we do here:<br>
- *      - Remove message with given sequence id (@a seq) from msgqueue @sa msg_queue_remove_seq()<br>
- *      - If @a config_display_ack variable was set to 1, or @a config_display_ack value match
- *                type of @a __status. Than display notify through UI-plugin
+ * When session notifies core about receiving acknowledgement for our message, we:<br>
+ *	- Remove message with given sequence id (@a seq) from msgqueue @sa msg_queue_remove_seq()<br>
+ *	- If corresponding @a config_display_ack variable bit is set, then display notification through UI-plugin
  *
- * @note        About different types of confirmations (@a __status):<br>
- *                      - <i>EKG_ACK_DELIVERED</i>         - when message was delivered to user<br>
- *                      - <i>EKG_ACK_QUEUED</i>                - when user is unavailable and server confirm accepting message to later delivery<br>
- *                      - <i>EKG_ACK_DROPPED</i>        - when user or server don't want our message [we don't know why] and message was dropped<br>
- *                      - <i>EKG_ACK_UNKNOWN</i>        - when it's not clear what happene to that message<br>
+ * @note	About different types of confirmations (@a __status):<br>
+ *			- <i>EKG_ACK_DELIVERED</i>	- when message was successfully delivered to user<br>
+ *			- <i>EKG_ACK_QUEUED</i>		- when user is somewhat unavailable and server confirmed to accept the message for later delivery<br>
+ *			- <i>EKG_ACK_DROPPED</i>	- when user or server rejected to deliver our message (forbidden content?) and it was dropped; further retries will probably fail, if second side doesn't perform some kind of action (e.g. add us to roster in GG)<br>
+ *			- <i>EKG_ACK_TEMPFAIL</i>	- when server failed temporarily to deliver our message, but encourages us to try again later (e.g. message queue full)<br>
+ *			- <i>EKG_ACK_UNKNOWN</i>	- when it's not clear what happened with our message<br>
  *
- * @todo        Should we remove msg from msgqueue only when sequenceid and session and rcpt matches?
- *              I think it's buggy cause user at jabber can send us acknowledge of message
- *              which we never send, but if seq match with other message, which wasn't send (because session was for example disconnected)
- *              we remove that messageid, and than we'll never send it, and we'll never know that we don't send it.
+ * @todo	Should we remove msg from msgqueue only when sequenceid and session and rcpt matches?
+ *		I think it's buggy cause user at jabber can send us acknowledge of message
+ *		which we never send, but if seq match with other message, which wasn't send (because session was for example disconnected)
+ *		we remove that messageid, and than we'll never send it, and we'll never know that we don't send it.
  *
- * @param ap 1st param: <i>(char *) </i><b>session</b>  - session which send this notify
- * @param ap 2nd param: <i>(char *) </i><b>rcpt</b>     - user uid who confirm receiving messages
- * @param ap 3rd param: <i>(char *) </i><b>seq</b>      - sequence id of message
- * @param ap 4th param: <i>(char *) </i><b>__status</b> - type of confirmation one of: [EKG_ACK_DELIVERED, EKG_ACK_QUEUED, EKG_ACK_DROPPED, EKG_ACK_UNKNOWN]
+ * @param ap 1st param: <i>(char *) </i><b>session</b>	- session which send this notify
+ * @param ap 2nd param: <i>(char *) </i><b>rcpt</b>	- user uid who confirm receiving messages
+ * @param ap 3rd param: <i>(char *) </i><b>seq</b>	- sequence id of message
+ * @param ap 4th param: <i>int </i><b>__status</b> - type of confirmation; one of: [EKG_ACK_DELIVERED, EKG_ACK_QUEUED, EKG_ACK_DROPPED, EKG_ACK_TEMPFAIL, EKG_ACK_UNKNOWN]
  *
  * @param data NULL
  *
  * @return 0
  */
-static QUERY(protocol_message_ack)
-{
+
+static QUERY(protocol_message_ack) {
+	const char *ackformats[] = {"ack_delivered", "ack_queued", "ack_filtered", "ack_tempfail", "ack_unknown"};
+
 	char *session		= *(va_arg(ap, char **));
 	char *rcpt		= *(va_arg(ap, char **));
 	char *seq		= *(va_arg(ap, char **));
-	char *__status		= *(va_arg(ap, char **));
+	int __status		= *(va_arg(ap, int *));
 
-	userlist_t *u = userlist_find(session_find(session), rcpt);
+	session_t *s	= session_find(session);
+	userlist_t *u	= userlist_find(s, rcpt);
 	const char *target = (u && u->nickname) ? u->nickname : rcpt;
-	int display = 0;
-	char format[100];
-
-	snprintf(format, sizeof(format), "ack_%s", __status);
 
 	msg_queue_remove_seq(seq);
 	
-	if (config_display_ack == 1)
-		display = 1;
-
-	if (!xstrcmp(__status, EKG_ACK_DELIVERED) && config_display_ack == 2)
-		display = 1;
-
-	if (!xstrcmp(__status, EKG_ACK_QUEUED) && config_display_ack == 3)
-		display = 1;
-
-	if (display)
-		print_window(target, session_find(session), 0, format, format_user(session_find(session), rcpt));
+	if ((__status >= 0) && (__status < EKG_ACK_MAX) && (config_display_ack & (1 << __status)))
+		print_info(target, s, ackformats[__status], format_user(s, rcpt));
 
 	return 0;
+}
+
+int protocol_message_ack_emit(const session_t *s, const char *rcpt, const char *seq, int status) {
+	return query_emit_id_ro(NULL, PROTOCOL_MESSAGE_ACK, &(s->uid), &rcpt, &seq, &status);
 }
 
 static QUERY(protocol_xstate)
@@ -827,25 +921,61 @@ static QUERY(protocol_xstate)
 
 	if (!(s = session_find(session)))
 		return 0;
-	
+
 	if ((w = window_find_s(s, uid))) {
 		if (offstate & EKG_XSTATE_TYPING)
-			w->act &= ~4;
+			w->in_typing	= 0;
 		else if (state & EKG_XSTATE_TYPING)
-			w->act |= 4;
-		query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
+			w->in_typing	= 1;
+		else
+			goto xs_userlist;
+
+		query_emit_id(NULL, UI_WINDOW_ACT_CHANGED, &w);		/* XXX, UI_WINDOW_TYPING_CHANGED? :> */
 	}
 
+xs_userlist:
 	if ((u = userlist_find(s, uid)) || (config_auto_user_add && (u = userlist_add(s, uid, uid)))) {
 		if (offstate & EKG_XSTATE_TYPING)
-			u->xstate &= ~EKG_XSTATE_TYPING;
+			u->typing	= 0;
 		else if (state & EKG_XSTATE_TYPING)
-			u->xstate |= EKG_XSTATE_TYPING;
+			u->typing	= 1;
+		else
+			return 0;
+
 		query_emit_id(NULL, USERLIST_CHANGED, __session, __uid);
 	}
 
 	return 0;
 }
+
+int protocol_xstate_emit(const session_t *s, const char *uid, int state, int offstate) {
+	return query_emit_id_ro(NULL, PROTOCOL_XSTATE, &(s->uid), &uid, &state, &offstate);
+}
+
+/*
+ * protocol_uid()
+ *
+ * return saprintf("%s:%s", proto, target);
+ */
+char *protocol_uid(const char *proto, const char *target) {
+/* XXX, simplify some code inside plugins?
+ *
+ *	if (!xstrncmp(target, proto, xstrlen(proto)))
+ *		return xstrdup(target);
+ */
+	return saprintf("%s:%s", proto, target);
+}
+
+static LIST_FREE_ITEM(dcc_free_item, dcc_t *) {
+	if (data->close_handler)
+		data->close_handler(data);
+	xfree(data->uid); xfree(data->filename);
+}
+
+DYNSTUFF_LIST_DECLARE(dccs, dcc_t, dcc_free_item, 
+	static __DYNSTUFF_LIST_ADD,			/* dccs_add() */
+	static __DYNSTUFF_LIST_REMOVE_SAFE,		/* dccs_remove() */
+	__DYNSTUFF_NODESTROY)				/* XXX dccs_destroy() XXX, we don't care? */
 
 /**
  * dcc_add()
@@ -855,14 +985,11 @@ static QUERY(protocol_xstate)
 dcc_t *dcc_add(session_t *session, const char *uid, dcc_type_t type, void *priv) {
 	dcc_t *d;
 	int id = 1, id_ok;
-	list_t l;
 
 	do {
 		id_ok = 1;
 
-		for (l = dccs; l; l = l->next) {
-			dcc_t *d = l->data;
-	
+		for (d = dccs; d; d = d->next) {
 			if (d->id == id) {
 				id++;
 				id_ok = 0;
@@ -883,7 +1010,7 @@ dcc_t *dcc_add(session_t *session, const char *uid, dcc_type_t type, void *priv)
 	d->started = time(NULL);
 	d->id = id;
 
-	list_add(&dccs, d, 0);
+	dccs_add(d);
 
 	return d;
 }
@@ -893,14 +1020,7 @@ int dcc_close(dcc_t *d)
 	if (!d)
 		return -1;
 
-	if (d->close_handler)
-		d->close_handler(d);
-
-	xfree(d->uid);
-	xfree(d->filename);
-
-	list_remove(&dccs, d, 1);
-
+	dccs_remove(d);
 	return 0;
 }
 
@@ -923,5 +1043,5 @@ PROPERTY_INT(dcc, type, dcc_type_t)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=0 noexpandtab sw=8
+ * vim: noet
  */

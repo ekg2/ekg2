@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Pawe³ Maziarz <drg@infomex.pl>
- * 		       2004 Piotr Kupisiewicz <deli@rzepaknet.us>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
+ *		       2004 Piotr Kupisiewicz <deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -41,16 +41,26 @@
 #include "stuff.h"
 #include "xmalloc.h"
 
+#include "dynstuff_inline.h"
 #include "queries.h"
 
-static int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
+int window_last_id = -1;		/* ostatnio wy¶wietlone okno */
 
-list_t windows = NULL;			/* lista okien */
+window_t *windows = NULL;		/* lista okien */
+
+static LIST_ADD_COMPARE(window_new_compare, window_t *) { return data1->id - data2->id; }
+static LIST_FREE_ITEM(list_window_free, window_t *) { xfree(data->target); xfree(data->alias); userlists_destroy(&(data->userlist)); }
+
+static __DYNSTUFF_LIST_ADD_SORTED(windows, window_t, window_new_compare);			/* windows_add() */
+static __DYNSTUFF_LIST_UNLINK(windows, window_t);						/* windows_unlink() */
+static __DYNSTUFF_LIST_REMOVE_SAFE(windows, window_t, list_window_free);			/* windows_remove() */
+__DYNSTUFF_LIST_DESTROY(windows, window_t, list_window_free);					/* windows_destroy() */
+
 int config_display_crap = 1;		/* czy wy¶wietlaæ ¶mieci? */
 
 window_t *window_current = NULL;	/* okno aktualne, zawsze na co¶ musi wskazywaæ! */
 window_t *window_status  = NULL;	/* okno statusowe, zawsze musi miec dobry adres w pamieci [NULL jest ok] */
-window_t *window_debug   = NULL;	/* okno debugowe, zawsze musi miec dobry adres w pamieci [NULL jest ok] */
+window_t *window_debug	 = NULL;	/* okno debugowe, zawsze musi miec dobry adres w pamieci [NULL jest ok] */
 
 window_lastlog_t *lastlog_current = NULL;
 
@@ -72,9 +82,10 @@ window_lastlog_t *lastlog_current = NULL;
  */
 
 window_t *window_find_ptr(window_t *w) {
-	list_t l;
-	for (l = windows; l; l = l->next) {
-		if (w == l->data)
+	window_t *v;
+
+	for (v = windows; v; v = v->next) {
+		if (w == v)
 			return w;
 	}
 	return NULL;
@@ -88,19 +99,19 @@ window_t *window_find_ptr(window_t *w) {
  * @param session				- window session to search [See also @@ @a session_null_means_no_session]
  * @param target				- window target to search
  * @param session_null_means_no_session		- if you know that this window must belong to given session [NULL, or whatever] so this should be 1.
- * 						  else NULL @@ @a session will mean that you don't know which session should it be. And it'll search/check
- * 						  <b>all</b> sessions
+ *						  else NULL @@ @a session will mean that you don't know which session should it be. And it'll search/check
+ *						  <b>all</b> sessions
  *
- * @sa window_find_ptr()        - If you want to search for given window ptr.
- * @sa window_find_s()          - macro to <code>window_find_sa(session, target, 1)</code>
- * @sa window_find()            - wrapper to <code>window_find_sa(NULL, target, 0)</code>
+ * @sa window_find_ptr()	- If you want to search for given window ptr.
+ * @sa window_find_s()		- macro to <code>window_find_sa(session, target, 1)</code>
+ * @sa window_find()		- wrapper to <code>window_find_sa(NULL, target, 0)</code>
  *
  * @return pointer to window_t struct if window was founded, else NULL
  */
 
 window_t *window_find_sa(session_t *session, const char *target, int session_null_means_no_session) {
 	userlist_t *u;
-	list_t l;
+	window_t *w;
 
 	if (!target || !xstrcasecmp(target, "__current"))
 		return window_current->id ? window_current : window_status;
@@ -111,9 +122,7 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 	if (!xstrcasecmp(target, "__debug"))
 		return window_debug;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		/* if targets match, and (sessions match or [no session was specified, and it doesn't matter to which session window belongs to]) */
 		if (w->target && ((session == w->session) || (!session && !session_null_means_no_session)) && !xstrcasecmp(target, w->target))
 			return w;
@@ -124,10 +133,8 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 		return NULL;
 
 	if (xstrncmp(target, "__", 2)) {
-		list_t sl;
-		for (sl = sessions; sl; sl = sl->next) {
-			session_t *s = sl->data;
-
+		session_t *s;
+		for (s = sessions; s; s = s->next) {
 		/* if sessions mishmash, and it wasn't NULL session, skip this session */
 			if (session != s && session)
 				continue;
@@ -136,18 +143,16 @@ window_t *window_find_sa(session_t *session, const char *target, int session_nul
 			if (!(u = userlist_find(s, target))) 
 				continue;
 
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
-
+			for (w = windows; w; w = w->next) {
 				/* if there's target, and sessions match [no session specified, or sessions equal, check if entry (from userlist) match */
 				if ((!session || session == w->session) && w->target) {
 					if (u->nickname && !xstrcasecmp(u->nickname, w->target))
 						return w;
 
 					/* XXX, userlist_find() search only for u->nickname or u->uid.. so code below is useless? we can always return w; ?
-					 * 	However userlist_find() also strip resources if preset.. here we don't have it. 
-					 * 	maybe it's better, maybe not. Must think about it.
-					 * 	For now leave this code.
+					 *	However userlist_find() also strip resources if preset.. here we don't have it. 
+					 *	maybe it's better, maybe not. Must think about it.
+					 *	For now leave this code.
 					 */
 					if (!xstrcasecmp(u->uid, w->target))
 						return w;
@@ -185,20 +190,12 @@ window_t *window_find(const char *target) {
  *  
  *  - id - numer okna
  */
-void window_switch(int id)
-{
-	list_t l;
+void window_switch(int id) {
+	window_t *w;
 	userlist_t *u;
+	int ul_refresh = 0;
 
-#if 0
-	/* XXX, need testing */
-	if (window_current && window_current->id == id)
-		return;
-#endif
-
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		if (id != w->id || w->floating)
 			continue;
 
@@ -209,53 +206,33 @@ void window_switch(int id)
 			session_current = w->session;
 	
 		window_current = w;
-
-		w->act &= 4;
-		if (w->target && w->session && (u=userlist_find(w->session, w->target)) && (u->xstate & EKG_XSTATE_BLINK)) 
-			u->xstate &= ~EKG_XSTATE_BLINK;
-
-		if (!(config_make_window & 3) && w->id == 1 && session_current) {
-			list_t l;
-	                session_t *s = session_current;
-
-			for (l = s->userlist; l; l = l->next) {
-                        	userlist_t *u = l->data;
-				if (!window_find_s(s, u->uid))
-		                        u->xstate &= ~EKG_XSTATE_BLINK;
-			}
-                }
-
 		query_emit_id(NULL, UI_WINDOW_SWITCH, &w);	/* XXX */
 
-		if (!w->id)
-			w->session = session_current;
+		w->act = 0;
+		if (w->target && w->session && (u = userlist_find(w->session, w->target)) && u->blink) {
+			u->blink	= 0;
+			ul_refresh	= 1;
+		}
+
+		if (!(config_make_window & 3) && w->id == 1 && session_current) {
+			userlist_t *ul;
+			session_t *s = session_current;
+
+			for (ul = s->userlist; ul; ul = ul->next) {
+				userlist_t *u = ul;
+
+				if (u->blink && !window_find_s(s, u->uid)) {
+					u->blink	= 0;
+					ul_refresh	= 1;
+				}
+			}
+		}
 
 		break;
 	}
-}
 
-/**
- * window_new_compare()
- *
- * internal function to sort windows by id
- * used by list_add_sorted()
- *
- * @param data1 - first window_t to compare
- * @param data2 - second window_t to compare
- *
- * @sa list_add_sorted() 
- *
- * @return It returns result of window id subtractions.
- */
-
-static int window_new_compare(void *data1, void *data2)
-{
-	window_t *a = data1, *b = data2;
-
-	if (!a || !b)
-		return 0;
-
-	return a->id - b->id;
+	if (ul_refresh)
+		query_emit_id(NULL, USERLIST_REFRESH);
 }
 
 /**
@@ -263,17 +240,19 @@ static int window_new_compare(void *data1, void *data2)
  *
  * Create new window_t, with given @a new_id (if @a new_id != 0)
  *
- * @note 	If target == "$" than it return current window. [POSSIBLE BUG]
- * 		If window with such target [it can also be u->uid/u->nickname combination] exists.
- * 		than it'll return it.
+ * @note	If target == "$" than it return current window. [POSSIBLE BUG]
+ *		If window with such target [it can also be u->uid/u->nickname combination] exists.
+ *		than it'll return it.
  * 
- * @note 	You shouldn't pass @a new_id here. Because it can broke UI stuff. don't ask. it's wrong. Just don't use it.
- * 		It'll be possible removed... Really eventually you can talk with devs, and ask for id from class: 1000 to 1999
+ * @note	You shouldn't pass @a new_id here. Because it can break UI stuff. don't ask. it's wrong. Just don't use it.
+ *		It'll be possible removed... In case you really need it, you
+ *		can talk to the devs, and ask for an id from class: 1000 to
+ *		1999
  *
  * @todo	See XXX's
  *
- * @param target 	- name of window
- * @param session 	- session of this window
+ * @param target	- name of window
+ * @param session	- session of this window
  * @param new_id	- if different than 0, than window will take this id.
  *
  * @return window_t struct
@@ -302,26 +281,25 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 
 	/* if no new_id given, than let's search for window id.. */
 	if (new_id == 0) {
-		list_t l	= windows;	/* set to the beginning of the window list */
+		window_t *v	= windows;	/* set to the beginning of the window list */
 		int id		= 2;		/* [XXX] set to first valid id? */
 		
 		/* XXX, after it, we exactly know where to put new window to list, without list_add_sorted() we can do list_add_beggining() 
 		 * but it'll ugly code. So not doing it :) */
 
 		/* we can do this stuff. because windows are sorted by id */
-		while (l) {
-			window_t *w = l->data;
+		while (v) {
+			window_t *w = v;
+			v = v->next;		/* goto next window */
 
-			l = l->next;		/* goto next window */
-
-			if (w->id < 2)					/* [RESERVED CLASS: 0-1] 	0 for __debug, 1 for __status */
+			if (w->id < 2)					/* [RESERVED CLASS: 0-1]	0 for __debug, 1 for __status */
 				continue;
 
 			/* if current window is larger than current id... than we found good id! */
 			if (w->id > id)
 				break;
 
-			if (w->id >= 1000-1 && w->id < 2000 /* -1 */) {	/* [REVERVED CLASS: 1000-1999] 	1k-1.999k windows reverved for special use. [1000 - __contacts, 1001 - __lastlog] */
+			if (w->id >= 1000-1 && w->id < 2000 /* -1 */) {	/* [REVERVED CLASS: 1000-1999]	1k-1.999k windows reverved for special use. [1000 - __contacts, 1001 - __lastlog] */
 				id = 2000;
 				continue;
 			}
@@ -349,8 +327,7 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 	w->session = session;
 /*	w->userlist = NULL; */		/* xmalloc memset() to 0 memory */
 
-	list_add_sorted(&windows, w, 0, window_new_compare);
-
+	windows_add(w);
 	query_emit_id(NULL, UI_WINDOW_NEW, &w);	/* XXX */
 
 	return w;
@@ -384,24 +361,18 @@ void window_print(window_t *w, fstring_t *line) {
  *
  * przechodzi do kolejnego okna.
  */
-void window_next()
-{
-	window_t *next = NULL;
+void window_next() {
+	window_t *next = NULL, *w;
 	int passed = 0;
-	list_t l;
 
-	for (l = windows; l; l = l->next) {
-		if (l->data == window_current)
-			passed = 1;
-
-		if (passed && l->next) {
-			window_t *w = l->next->data;
-
-			if (!w->floating) {
-				next = w;
-				break;
-			}
+	for (w = windows; w; w = w->next) {
+		if (passed && !w->floating) {
+			next = w;
+			break;
 		}
+
+		if (w == window_current)
+			passed = 1;
 	}
 
 	if (!next)
@@ -417,29 +388,26 @@ void window_next()
  */
 
 /* XXX, need check */
-void window_prev()
-{
-	window_t *prev = NULL;
-	list_t l;
+void window_prev() {
+	window_t *prev = NULL, *w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-
+	for (w = windows; w; w = w->next) {
 		if (w->floating)
 			continue;
 
-		if (w == window_current && l != windows)
+		if (w == window_current && w != windows)
 			break;
 
-		prev = l->data;
+		prev = w;
 	}
 
-	if (!prev->id) {
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
+	if (!prev)
+		return;
 
+	if (!prev->id) {
+		for (w = windows; w; w = w->next) {
 			if (!w->floating)
-				prev = l->data;
+				prev = w;
 		}
 	}
 
@@ -452,10 +420,10 @@ void window_prev()
  * Remove given window.<br>
  * If it's __status window, and w->target than display nice message about closing talk, else display message about no possibility to close status window<br>
  *
- * @note 	You cannot remove here __status and __debug windows.<br>
- * 		You must do it by hand like in ekg_exit() but if you want do it.<br>
- * 		Set @a window_debug and window_status for proper values.<br>
- * 		ekg2 core need them.
+ * @note	You cannot remove here __status and __debug windows.<br>
+ *		You must do it by hand like in ekg_exit() but if you want do it.<br>
+ *		Set @a window_debug and window_status for proper values.<br>
+ *		ekg2 core need them.
  *
  * @bug		Possible bug with sort_windows. Can anyone who wrote it look at it?
  *
@@ -472,10 +440,10 @@ void window_kill(window_t *w) {
 
 	if (id == 1 && w->target) {
 		print("query_finished", w->target, session_name(w->session));
-		xfree(window_current->target);
+		list_window_free(w);
+
 		w->target	= NULL;
 /*		w->session	= NULL; */
-		userlist_free_u(&(w->userlist));	/* wtf? */
 
 		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
 		return;
@@ -494,11 +462,9 @@ void window_kill(window_t *w) {
 
 	/* if config_sort_windows set, and it was not floating window... than resort stuff. */
 	if (config_sort_windows && !w->floating) {
-		list_t l;
+		window_t *w;
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (w->floating)
 				continue;
 			/* XXX, i'm leaving it. however if we set sort_windows for example when we have: windows: 1, 3, 5, 7 and we will remove 3.. We'll still have: 1, 4, 6 not: 1, 2, 3 bug? */
@@ -508,10 +474,7 @@ void window_kill(window_t *w) {
 	}
 
 	query_emit_id(NULL, UI_WINDOW_KILL, &w);
-
-	xfree(w->target);
-	userlist_free_u(&(w->userlist));
-	list_remove(&windows, w, 1);
+	windows_remove(w);
 }
 
 /**
@@ -529,14 +492,12 @@ void window_kill(window_t *w) {
  */
 
 window_t *window_exist(int id) {
-	list_t l;
+	window_t *w;
 
-        for (l = windows; l; l = l->next) {
-	        window_t *w = l->data;
-
-                if (w->id == id) 
+	for (w = windows; w; w = w->next) {
+		if (w->id == id) 
 			return w;
-        }
+	}
 
 	return NULL;
 }
@@ -547,7 +508,9 @@ window_t *window_exist(int id) {
  * swap windows (swap windows @a id -> change sequence of them in UI)
  *
  * @param first		- 1st window id.
- * @param second 	- 2nd window id.
+ * @param second	- 2nd window id.
+ *
+ * @todo XXX: Rename to _swap, and make some real move.
  */
 
 static void window_move(int first, int second) {
@@ -556,14 +519,46 @@ static void window_move(int first, int second) {
 	if (!(w1 = window_exist(first)) || !(w2 = window_exist(second)))
 		return;
 
-        list_remove(&windows, w1, 0);
-	w1->id = second;
+	windows_unlink(w1);
+	windows_unlink(w2);
 
-        list_remove(&windows, w2, 0);
+	w1->id = second;
 	w2->id = first;
 
-	list_add_sorted(&windows, w1, 0, window_new_compare);
-	list_add_sorted(&windows, w2, 0, window_new_compare);
+	windows_add(w1);
+	windows_add(w2);
+}
+
+/* really move window, i.e. insert it at given id and move right all other windows */
+static void window_real_move(int source, int dest) {
+	window_t *ws, *wd;
+
+	if (!(ws = window_exist(source)))
+		return;
+
+	if ((wd = window_exist(dest))) { /* need to move ids */
+		window_t *wl;
+
+		if (dest < source) {
+			for (wl = windows; wl; wl = wl->next) {
+				window_t *w = wl;
+
+				if (w->id >= dest && w->id < source)
+					(w->id)++;	/* XXX: move only when ids overlap? */
+			}
+		} else {
+			for (wl = windows; wl; wl = wl->next) {
+				window_t *w = wl;
+
+				if (w->id <= dest && w->id > source)
+					(w->id)--;	/* XXX: move only when ids overlap? */
+			}
+		}
+	}
+	ws->id = dest;
+
+	windows_unlink(ws);
+	windows_add(ws);
 }
 
 /**
@@ -572,46 +567,44 @@ static void window_move(int first, int second) {
  * @param window - window
  * @todo Make it const?
  *
- * @return 	Never NULL pointer [to don't care about it] look below for more details:
- * 		if @a window->target is not NULL return it<br>
- * 		else: <br>
- * 		- __current	if @a window is NULL<br>
- * 		- __status	if @a window->id == 1<br>
- * 		- __debug	if @a window->id == 0<br>
- * 		else return ""
+ * @return	Never NULL pointer [to don't care about it] look below for more details:
+ *		if @a window->target is not NULL return it<br>
+ *		else: <br>
+ *		- __current	if @a window is NULL<br>
+ *		- __status	if @a window->id == 1<br>
+ *		- __debug	if @a window->id == 0<br>
+ *		else return ""
  */
 
 char *window_target(window_t *window) {
 	if (!window)			return "__current";
 
-	if (window->target)       	return window->target;
+	if (window->target)		return window->target;
 	else if (window->id == 1)	return "__status";
 	else if (window->id == 0)	return "__debug";
-        else                            return "";
+	else				return "";
 }
 
 /*
  *
  * komenda ekg obs³uguj±ca okna
  */
-COMMAND(cmd_window)
-{
-	if (!xstrcmp(name, ("clear")) || (params[0] && !xstrcasecmp(params[0], ("clear")))) {
-		window_t *w = xmemdup(window_current, sizeof(window_t));
-		query_emit_id(NULL, UI_WINDOW_CLEAR, &w);
-		xfree(w);
+COMMAND(cmd_window) {
+	const int par0_len	= xstrlen(params[0]);
+	const int par0_matchlen	= par0_len > 2 ? par0_len : 2;
+
+	if (!xstrcmp(name, "clear") || (params[0] && !xstrncasecmp(params[0], "clear", par0_matchlen))) {
+		query_emit_id_ro(NULL, UI_WINDOW_CLEAR, &window_current);
 		return 0;
 	}
 
-	if (!params[0] || !xstrcasecmp(params[0], ("list"))) {
-		list_t l;
+	if (!params[0] || !xstrncasecmp(params[0], "list", par0_matchlen)) {
+		window_t *w;
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
+		for (w = windows; w; w = w->next) {
 			if (w->id) {
 				if (w->target) {
-					if (!w->floating)	
+					if (!w->floating)
 						printq("window_list_query", itoa(w->id), w->target);
 					else
 						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);
@@ -622,31 +615,30 @@ COMMAND(cmd_window)
 		return 0;
 	}
 
-	if (!xstrcasecmp(params[0], ("active"))) {
-		list_t l;
-		int id = 0;
+	if (!xstrncasecmp(params[0], "active", par0_matchlen)) {
+		window_t *w;
+		int a, id = 0;
 
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
-
-			if (w->act && !w->floating && w->id) {
-				id = w->id;
-				break;
+		for (a=3; !id && a>0; a--)
+			for (w = windows; w; w = w->next) {
+				if ((w->act==a) && !w->floating && w->id) {
+					id = w->id;
+					break;
+				}
 			}
-		}
 
 		if (id)
 			window_switch(id);
 		return 0;
 	}
 
-	if (!xstrcasecmp(params[0], ("new"))) {
+	if (!xstrncasecmp(params[0], "new", par0_matchlen)) {
 		window_t *w = window_new(params[1], session, 0);
 
 		w->session = window_current->session;
 
 		if (!w->session && sessions)
-			w->session = (session_t*) sessions->data;
+			w->session = sessions;
 
 		if (!w->floating)
 			window_switch(w->id);
@@ -659,7 +651,7 @@ COMMAND(cmd_window)
 		return 0;
 	}
 
-	if (!xstrcasecmp(params[0], ("switch"))) {
+	if (!xstrncasecmp(params[0], "switch", par0_matchlen)) {
 		if (!params[1] || (!atoi(params[1]) && xstrcmp(params[1], ("0"))))
 			printq("not_enough_params", name);
 		else
@@ -667,12 +659,13 @@ COMMAND(cmd_window)
 		return 0;
 	}			
 
-	if (!xstrcasecmp(params[0], ("last"))) {
+	if (!xstrncasecmp(params[0], "last", par0_matchlen)) {
 		window_switch(window_last_id);
 		return 0;
 	}
 
-	if (!xstrcmp(params[0], "lastlog")) {
+		/* at least 'lastl' */
+	if (!xstrncasecmp(params[0], "lastlog", par0_matchlen)) {
 		static window_lastlog_t lastlog_current_static;
 
 		window_lastlog_t *lastlog;
@@ -767,27 +760,25 @@ COMMAND(cmd_window)
 #endif
 		}
 
-		lastlog->w 		= w;
-		lastlog->casense 	= iscase;
+		lastlog->w		= w;
+		lastlog->casense	= iscase;
 		lastlog->lock		= islock;
 		lastlog->isregex	= isregex;
 		lastlog->expression	= xstrdup(str);
 
-		if (w)  window_current->lastlog	= lastlog;
+		if (w)	window_current->lastlog	= lastlog;
 		else	lastlog_current		= lastlog;
 			
 		return query_emit_id(NULL, UI_WINDOW_UPDATE_LASTLOG);
 	}
 	
-	if (!xstrcasecmp(params[0], ("kill"))) {
+	if (!xstrncasecmp(params[0], "kill", par0_matchlen)) {
 		window_t *w = window_current;
 
 		if (params[1]) {
-			list_t l;
+			window_t *ww;
 
-			for (w = NULL, l = windows; l; l = l->next) {
-				window_t *ww = l->data;
-
+			for (w = NULL, ww = windows; ww; ww = ww->next) {
 				if (ww->id == atoi(params[1])) {
 					w = ww;
 					break;
@@ -805,17 +796,18 @@ COMMAND(cmd_window)
 		return 0;
 	}
 
-	if (!xstrcasecmp(params[0], ("next"))) {
+		/* two first chars are same as with new, so it's like par0_matchlen was at least 3 */
+	if (!xstrncasecmp(params[0], "next", par0_matchlen)) {
 		window_next();
 		return 0;
 	}
 	
-	if (!xstrcasecmp(params[0], ("prev"))) {
+	if (!xstrncasecmp(params[0], "prev", par0_matchlen)) {
 		window_prev();
 		return 0;
 	}
 
-        if (!xstrcasecmp(params[0], ("move"))) {
+	if (!xstrncasecmp(params[0], "move", par0_matchlen) || !xstrncasecmp(params[0], "swap", par0_matchlen)) {
 		int source, dest;
 
 		if (!window_current)
@@ -829,7 +821,7 @@ COMMAND(cmd_window)
 		source = (params[2]) ? atoi(params[2]) : window_current->id;
 
 		if (!source) {
-                        printq("window_invalid_move", itoa(source));
+			printq("window_invalid_move", itoa(source));
 			return -1;
 		}
 
@@ -858,25 +850,27 @@ COMMAND(cmd_window)
 			return -1;
 		}
 
-                if (dest == 1) {
-                        printq("window_cannot_move_status");
+		if (dest == 1) {
+			printq("window_cannot_move_status");
 			return -1;
-                }
-
-                if (!window_exist(dest)) {
-			window_new(NULL, NULL, dest);
-                }
+		}
 
 		if (dest == source)
 			return 0;
 
-		window_move(source, dest);
+		if (!xstrncasecmp(params[0], "swap", par0_matchlen)) {
+			if (!window_exist(dest)) 
+				window_new(NULL, NULL, dest);
+
+			window_move(source, dest);
+		} else
+			window_real_move(source, dest);
 		window_switch(dest);
 		return 0;
-        }
+	}
 
 	
-	if (!xstrcasecmp(params[0], ("refresh"))) {
+	if (!xstrncasecmp(params[0], "refresh", par0_matchlen)) {
 		query_emit_id(NULL, UI_REFRESH);
 		return 0;
 	}
@@ -887,34 +881,61 @@ COMMAND(cmd_window)
 	return 0;
 }
 
+/* NOTE: XXX, if you talk with someone on window_status/ window_debug we fail */
+void window_session_set(window_t *w, session_t *new_session) {
+	static int lock;
+
+	if (!w || !new_session)		/* XXX, new_session == NULL? */
+		return;
+
+	if (w->session == new_session)
+		return;
+
+	w->session = new_session;
+
+	if (w == window_current) {
+		session_current = new_session;
+		query_emit_id(NULL, SESSION_CHANGED);
+	}
+
+	query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+
+	/* let's sync window_status->session with window_debug->session */
+	if (lock == 0) {
+		lock = 1;
+		if (w == window_debug)
+			window_session_set(window_status, new_session);
+		if (w == window_status)
+			window_session_set(window_debug, new_session);
+		lock = 0;
+	}
+}
+
 /**
  * window_session_cycle()
  *
  * Change session of given window to next good one (based on @a config_window_session_allow value) 
  *
  * @note	behaviour of window_session_cycle() based on values of config_window_session_allow:
- * 		 0 - change session only if w->target == NULL
- * 		 1 - like 0 + if w->target is set than new session must accept that uid	[default && other values]
- * 		 2 - change to any next session
- * 		 4 - jump to status window before cycling.
+ *		 0 - change session only if w->target == NULL
+ *		 1 - like 0 + if w->target is set than new session must accept that uid	[default && other values]
+ *		 2 - change to any next session
+ *		 4 - jump to status window before cycling.
  *
  * @note	If w->session was changed than UI_WINDOW_TARGET_CHANGED will be emited.
- * 		If w == window_current than SESSION_CHANGED will be emited also.
+ *		If w == window_current than SESSION_CHANGED will be emited also.
  *
  * @todo	Gdy config_window_session_allow == 2, to najpierw sprobowac znalezc dobra sesje a potem jesli nie to 
- * 		nastepna?
+ *		nastepna?
  * 
- * @todo	Create window_session_set() for some stuff here.
- *
  * @param	w - window
  *
  * @return	 0 - if session of window was changed
- * 		-1 - if not
+ *		-1 - if not
  */
 
-int window_session_cycle(window_t *w)
-{
-	list_t l;
+int window_session_cycle(window_t *w) {
+	session_t *s;
 	session_t *new_session = NULL;
 	int once = 0;
 	char *uid;
@@ -925,7 +946,7 @@ int window_session_cycle(window_t *w)
 	}
 
 	/* @ab config_window_session_allow == 4: don't change session when we have open talk in __status window */
-	/* 	XXX, change to __status? */
+	/*	XXX, change to __status? */
 	if ((config_window_session_allow == 0 && w->target) || (config_window_session_allow == 4 && window_status->target)) {
 		print("session_cannot_change");
 		return -1;
@@ -942,12 +963,10 @@ int window_session_cycle(window_t *w)
 	}
 
 
-	/* find sessions->(...next..)->data == w->session */
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
-
+	/* find sessions->(...next..) == w->session */
+	for (s = sessions; s; s = s->next) {
 		if (w->session == s) {
-			l = l->next;
+			s = s->next;
 			break;
 		}
 	}
@@ -956,26 +975,24 @@ int window_session_cycle(window_t *w)
 		uid = w->target;
 
 again:
-	if (l) {
-		list_t k;
+	if (s) {
+		session_t *k;
 
-		for (k = l; k; k = k->next) {
-			session_t *s = k->data;
-
-			if (s == w->session)
+		for (k = s; k; k = k->next) {
+			if (k == w->session)
 				break;
 
 			once = 1;
 
-			if (config_window_session_allow == 2 || !w->target || (config_window_session_allow != 0 && get_uid(s, uid))) {
-				new_session = s;
+			if (config_window_session_allow == 2 || !w->target || (config_window_session_allow != 0 && get_uid(k, uid))) {
+				new_session = k;
 				break;
 			}
 		}
 	} 
 		
-	if (!new_session && l != sessions) {
-		l = sessions;
+	if (!new_session && s != sessions) {
+		s = sessions;
 		goto again;
 	}
 
@@ -985,8 +1002,6 @@ again:
 		}
 		return -1;
 	}
-
-	w->session = new_session;
 
 	if ((nickname = get_nickname(new_session, uid))) {		/* if we've got nickname for old uid, than use it as w->target */
 		char *tmp = w->target;
@@ -998,41 +1013,11 @@ again:
 		xfree(tmp);
 	}
 
-	if (w == window_current) {
-		session_current = new_session;
-        	query_emit_id(NULL, SESSION_CHANGED);
-	}
-	query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
-
-	{	/* here sync window_status->session with window_debug->session */
-		if (w == window_status) {
-			if (window_debug->session != new_session) {
-				window_debug->session = new_session;
-				if (window_current == window_debug) {
-					session_current = new_session;
-					query_emit_id(NULL, SESSION_CHANGED);
-				}
-				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &window_debug);
-			}
-		}
-
-		if (w == window_debug) {
-			if (window_status->session != new_session) {
-				window_status->session = new_session;
-				if (window_current == window_status) {
-					session_current = new_session;
-					query_emit_id(NULL, SESSION_CHANGED);
-				}
-				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &window_status);
-			}
-		}
-	}
-
+	window_session_set(w, new_session);
 	return 0;
 }
 
-int window_lock_inc(window_t *w)
-{
+int window_lock_inc(window_t *w) {
 	if (!w)
 		return -1;
 
@@ -1041,8 +1026,7 @@ int window_lock_inc(window_t *w)
 	return 0;
 }
 
-int window_lock_dec(window_t *w)
-{
+int window_lock_dec(window_t *w) {
 	if (!w || w->lock < 1)
 		return -1;
 

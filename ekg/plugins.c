@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
- * 		  2004 Piotr Kupisiewicz (deli@rzepaknet.us>
+ *		  2004 Piotr Kupisiewicz (deli@rzepaknet.us>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -35,6 +35,7 @@
 #include "commands.h"
 #include "debug.h"
 #include "dynstuff.h"
+#include "events.h"
 #include "objects.h"
 #include "plugins.h"
 #include "userlist.h"
@@ -42,7 +43,7 @@
 #include "vars.h"
 #include "themes.h"
 #include "xmalloc.h"
-
+#include "dynstuff_inline.h"
 
 #define __DECLARE_QUERIES_STUFF
 #include "queries.h"
@@ -51,10 +52,16 @@
 #define va_copy(DST,SRC) __va_copy(DST,SRC)
 #endif
 
-list_t plugins = NULL;
-list_t queries = NULL;
+plugin_t *plugins = NULL;
+static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) { return data2->prio - data1->prio; }
+
+DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
+	static __DYNSTUFF_LIST_ADD_SORTED,		/* plugins_add() */
+	__DYNSTUFF_LIST_UNLINK)				/* plugins_unlink() */
+
 list_t watches = NULL;
-list_t idles   = NULL;
+
+query_t *queries[QUERY_EXTERNAL+1];
 
 #ifdef EKG2_WIN32_HELPERS
 # define WIN32_REQUEST_HELPER
@@ -89,7 +96,7 @@ int ekg2_dlinit() {
  *
  * @param plugin - Handler to loaded library.
  *
- * @return 	0 on success, else fail.
+ * @return	0 on success, else fail.
  */
 
 /* it only support posix dlclose() but maybe in future... */
@@ -116,12 +123,12 @@ int ekg2_dlclose(void *plugin) {
  * @return Pointer to the loaded library, or NULL if fail.
  */
 
-static void *ekg2_dlopen(char *name) {
+static void *ekg2_dlopen(const char *name) {
 #ifdef NO_POSIX_SYSTEM
 	void *tmp = LoadLibraryA(name);
 #else
 	/* RTLD_LAZY is bad flag, because code can SEGV on executing undefined symbols...
-	 * 	it's better to fail earlier than later with SIGSEGV
+	 *	it's better to fail earlier than later with SIGSEGV
 	 *
 	 * RTLD_GLOBAL is bad flag also, because we have no need to export symbols to another plugns
 	 *	we should do it by queries... Yeah, I know it was used for example in perl && irc plugin.
@@ -130,14 +137,14 @@ static void *ekg2_dlopen(char *name) {
 	 */
 	/*
 	 * RTLD_GLOBAL is required by perl and python plugins...
-	 * 	need investigation. [XXX]
+	 *	need investigation. [XXX]
 	 */
 	void *tmp = dlopen(name, RTLD_NOW | RTLD_GLOBAL);
 #endif
 	if (!tmp) {
-		debug_error("[plugin] could not be loaded: %s %s\n", name, dlerror());
+		debug_warn("[plugin] could not be loaded: %s %s\n", name, dlerror());
 	} else {
-		debug_function("[plugin] loaded: %s\n", name);
+		debug_ok("[plugin] loaded: %s\n", name);
 	}
 	return tmp;
 }
@@ -150,7 +157,7 @@ static void *ekg2_dlopen(char *name) {
  *
  * @todo For support of more dynamic interfaces see lt_dlsym() [libltdl]
  *
- * @param plugin 	- Pointer to the loaded library.
+ * @param plugin	- Pointer to the loaded library.
  * @param name		- Name of symbol to lookup.
  *
  * @return Address of symbol or NULL if error occur.
@@ -187,7 +194,7 @@ static void *ekg2_dlsym(void *plugin, char *name) {
 int plugin_load(const char *name, int prio, int quiet)
 {
 #ifdef SHARED_LIBS
-	char *lib = NULL;
+	char lib[PATH_MAX];
 	char *env_ekg_plugins_path = NULL;
 	char *init = NULL;
 #endif
@@ -205,50 +212,46 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 #ifdef SHARED_LIBS
 #ifndef NO_POSIX_SYSTEM
-        if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-                lib = saprintf("%s/%s.so", env_ekg_plugins_path, name);
-                plugin = ekg2_dlopen(lib);
-                if (!plugin) {
-                        xfree(lib);
-                        lib = saprintf("%s/%s/.libs/%s.so", env_ekg_plugins_path, name, name);
-                        plugin = ekg2_dlopen(lib);
-                }
-        }
-
-        if (!plugin) {
-                xfree(lib);
-                lib = saprintf("plugins/%s/.libs/%s.so", name, name);
-                plugin = ekg2_dlopen(lib);
-        }
-
-        if (!plugin) {
-                xfree(lib);
-                lib = saprintf("../plugins/%s/.libs/%s.so", name, name);
-                plugin = ekg2_dlopen(lib);
-        }
+#ifdef SCONS
+#	define DOTLIBS "" 
+#else
+#	define DOTLIBS ".libs/"
+#endif
+	if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
+		if (snprintf(lib, sizeof(lib), "%s/%s.so", env_ekg_plugins_path, name) < sizeof(lib))
+			plugin = ekg2_dlopen(lib);
+		if (!plugin && (snprintf(lib, sizeof(lib), "%s/%s/" DOTLIBS "%s.so", env_ekg_plugins_path, name, name) < sizeof(lib)))
+				plugin = ekg2_dlopen(lib);
+	}
 
 	if (!plugin) {
-		xfree(lib);
-		lib = saprintf("%s/%s.so", PLUGINDIR, name);
-		plugin = ekg2_dlopen(lib);
+		if (snprintf(lib, sizeof(lib), "plugins/%s/" DOTLIBS "%s.so", name, name) < sizeof(lib))
+			plugin = ekg2_dlopen(lib);
+	}
+
+	if (!plugin) {
+		if (snprintf(lib, sizeof(lib), "../plugins/%s/" DOTLIBS "%s.so", name, name) < sizeof(lib))
+			plugin = ekg2_dlopen(lib);
+	}
+
+	if (!plugin) {
+		if (snprintf(lib, sizeof(lib), "%s/%s.so", PLUGINDIR, name) < sizeof(lib))
+			plugin = ekg2_dlopen(lib);
 	}
 #else	/* NO_POSIX_SYSTEM */
 	if (!plugin) {
-		xfree(lib);
-		lib = saprintf("c:\\ekg2\\plugins\\%s.dll", name);
-		plugin = ekg2_dlopen(lib);
+		if (snprintf(lib, sizeof(lib), "c:\\ekg2\\plugins\\%s.dll", name) < sizeof(lib))
+			plugin = ekg2_dlopen(lib);
 	}
 #endif /* SHARED_LIBS */
 	if (!plugin) {
 		printq("plugin_doesnt_exist", name);
-		xfree(lib);
 		return -1;
 	}
-
-	xfree(lib);
 #endif
 
 #ifdef STATIC_LIBS
+#ifndef SCONS
 /* first let's try to load static plugin... */
 	extern int jabber_plugin_init(int prio);
 	extern int irc_plugin_init(int prio);
@@ -260,6 +263,11 @@ int plugin_load(const char *name, int prio, int quiet)
 	if (!xstrcmp(name, "irc")) plugin_init = &irc_plugin_init;
 	if (!xstrcmp(name, "gtk")) plugin_init = &gtk_plugin_init;
 //	if (!xstrcmp(name, "miranda")) plugin_init = &miranda_plugin_init;
+#else
+	debug_function("plugin_load(), trying to find static plugin '%s'\n", name);
+	void *plugin_load_static(const char *name); /* autogenerated by scons */
+	plugin_init = plugin_load_static(name);
+#endif
 #endif
 
 #ifdef SHARED_LIBS
@@ -303,8 +311,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		pl->dl = plugin;
 	} else {
 		debug_error("plugin_load() plugin_find(%s) not found.\n", name);
-		/* XXX, It's FATAL !!!! */
-#warning "XXX"
+		/* It's FATAL */
 	}
 
 	query_emit_id(pl, SET_VARS_DEFAULT);
@@ -317,10 +324,11 @@ int plugin_load(const char *name, int prio, int quiet)
 		in_autoexec = 1;
 		if ((tmp = prepare_pathf("config-%s", name)))
 			config_read(tmp);
-		if ((tmp = prepare_pathf("sessions-%s", name)))
+		if ((pl->pclass == PLUGIN_PROTOCOL) && (tmp = prepare_pathf("sessions-%s", name)))
 			session_read(tmp);
 
-		query_emit_id(pl, CONFIG_POSTINIT);
+		if (pl)
+			query_emit_id(pl, CONFIG_POSTINIT);
 
 		in_autoexec = 0;
 		config_changed = 1;
@@ -340,12 +348,10 @@ int plugin_load(const char *name, int prio, int quiet)
 
 plugin_t *plugin_find(const char *name)
 {
-	list_t l;
+	plugin_t *p;
 
-	for (l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
-
-		if (p && !xstrcmp(p->name, name))
+	for (p = plugins; p; p = p->next) {
+		if (!xstrcmp(p->name, name))
 			return p;
 	}
 
@@ -365,16 +371,14 @@ plugin_t *plugin_find(const char *name)
  */
 
 plugin_t *plugin_find_uid(const char *uid) {
-        list_t l;
+	plugin_t *p;
 
-        for (l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
+	for (p = plugins; p; p = p->next) {
+		if (p && p->pclass == PLUGIN_PROTOCOL && p->name && valid_plugin_uid(p, uid))
+			return p;
+	}
 
-                if (p && p->pclass == PLUGIN_PROTOCOL && p->name && valid_plugin_uid(p, uid))
-                	return p;
-        }
-
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -393,12 +397,11 @@ int plugin_unload(plugin_t *p)
 	if (!p)
 		return -1;
 
-
 	if (config_expert_mode == 0 && p->pclass == PLUGIN_UI) {
-		list_t l;
+		plugin_t *plug;
+
 		int unloadable = 0;
-		for (l=plugins; l; l = l->next) {
-			plugin_t *plug = l->data;
+		for (plug = plugins; plug; plug = plug->next) {
 			if (plug->pclass == PLUGIN_UI && plug != p) 
 				unloadable = 1;
 		}
@@ -410,6 +413,7 @@ int plugin_unload(plugin_t *p)
 
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
+
 		if (w && w->plugin == p && (w->removed == 1 || w->removed == -1)) {
 			print("generic_error", "XXX cannot remove this plugin when there some watches active");
 			return -1;
@@ -429,30 +433,11 @@ int plugin_unload(plugin_t *p)
 
 	xfree(name);
 
-        if (!in_autoexec)
-                config_changed = 1;
+	if (!in_autoexec)
+		config_changed = 1;
 
 	return 0;
 }
-
-/**
- * plugin_register_compare()
- *
- * internal function used to sort plugins by prio
- * used by list_add_sorted() 
- *
- * @param data1 - First plugin_t to compare
- * @param data2 - Second plugin_t to compare
- *
- * @sa plugin_register()
- *
- * @return Result of prio subtraction
- */
-
-static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) {
-        return data2->prio - data1->prio;
-}
-
 
 /*
  * plugin_register()
@@ -461,8 +446,7 @@ static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) {
  *
  * 0/-1
  */
-int plugin_register(plugin_t *p, int prio)
-{
+int plugin_register(plugin_t *p, int prio) {
 	if (prio == -254) {
 		switch (p->pclass) {
 			case PLUGIN_UI:
@@ -485,7 +469,7 @@ int plugin_register(plugin_t *p, int prio)
 		p->prio = prio;
 	}
 
-	LIST_ADD_SORTED(&plugins, p, 0, plugin_register_compare);
+	plugins_add(p);
 
 	return 0;
 }
@@ -499,8 +483,6 @@ int plugin_register(plugin_t *p, int prio)
  */
 int plugin_unregister(plugin_t *p)
 {
-	plugins_params_t **par;
-
 	/* XXX eXtreme HACK warning
 	 * (mp) na razie jest tak.  docelowo: wyladowywac pluginy tylko z
 	 * glownego programu (queriesami?)
@@ -512,6 +494,11 @@ int plugin_unregister(plugin_t *p)
 	 * ekg2 do SEGV.
 	 */
 
+	struct timer *t;
+	session_t *s;
+	query_t **ll;
+	variable_t *v;
+	command_t *c;
 	list_t l;
 
 	if (!p)
@@ -526,140 +513,77 @@ int plugin_unregister(plugin_t *p)
 			watch_free(w);
 	}
 
-	for (l = timers; l; ) {
-		struct timer *t = l->data;
-
-		l = l->next;
-
+	for (t = timers; t; t = t->next) {
 		if (t->plugin == p)
-			timer_free(t);
+			t = timers_removei(t);
 	}
 
-	for (l = idles; l; ) {
-		idle_t *i = l->data;
-
-		l = l->next;
-
-		if (i->plugin == p)
-			list_remove(&idles, i, 1);
-	}
-
-	for (l = sessions; l; ) {
-		session_t *s = l->data;
-
-		l = l->next;
+	for (s = sessions; s; ) {
+		session_t *next = s->next;
 
 		if (s->plugin == p)
 			session_remove(s->uid);
+		s = next;
 	}
 
-	for (l = queries; l; ) {
-		query_t *q = l->data;
+	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
+		query_t *q;
 
-		l = l->next;
+		for (q = *ll; q; ) {
+			query_t *next = q->next;
 
-		if (q->plugin == p)
-			query_free(q);
-	}
+			if (q->plugin == p)
+				query_free(q);
 
-
-	for (l = variables; l; ) {
-		variable_t *v = l->data;
-
-		l = l->next;
-
-		if (v && v->plugin == p) 
-			variable_remove(v->plugin, v->name);
-	}
-
-	for (l = commands; l; ) {
-		command_t *c = l->data;
-
-		l = l->next;
-
-		if (c->plugin == p)
-			command_freeone(c);
-	}
-
-	if ((par = p->params)) {
-		while (*par) {
-			xfree((*par)->key);
-			xfree((*par)->value);
-			xfree((*par));
-			par++;
+			q = next;
 		}
-		xfree(p->params);
-		p->params = NULL;
 	}
 
-	list_remove(&plugins, p, 0);
+	for (v = variables; v; v = v->next) {
+		if (v->plugin == p) 
+			v = variables_removei(v);
+	}
+
+	for (c = commands; c; c = c->next) {
+		if (c->plugin == p)
+			c = commands_removei(c);
+	}
+
+	plugins_unlink(p);
 
 	return 0;
 }
 
-/* 
+/**
  * plugin_var_find()
  *
- * it looks for given var in given plugin
+ * it looks for given variable name in given plugin
  *
- * returns pointer to this var or NULL if not found or error
+ * @param	pl - plugin
+ * @param	name - variable name
+ *
+ * returns sequence number+1 of variable if found, else 0
  */
-plugins_params_t *plugin_var_find(plugin_t *pl, const char *name)
-{
+
+int plugin_var_find(plugin_t *pl, const char *name) {
 	int i;
-	
-	if (!pl)
-		return NULL;
 
-	if (!pl->params)
-		return NULL;
+	if (!pl || !pl->params)
+		return 0;
 
-	for (i = 0; pl->params[i]; i++) {
-		if (!xstrcasecmp(pl->params[i]->key, name))
-			return pl->params[i];
+	for (i = 0; (pl->params[i].key /* && pl->params[i].id != -1 */); i++) {
+		if (!xstrcasecmp(pl->params[i].key, name))
+			return i+1;
 	}
-
-	return NULL;
+	return 0;
 }
 
-/*
- * plugin_var_add()
- *
- * adds given var to the given plugin
- *
- * name - name
- * type - VAR_INT | VAR_STR
- * value - default_value
- * secret - hide when showing?
- */
-int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify)
-{
-	plugins_params_t *p;
-	int i, count;
+int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify) { return -1; }
 
-        p = xmalloc(sizeof(plugins_params_t));
-        p->key = xstrdup(name);
-	p->type = type;
-	p->value = xstrdup(value);
-	p->secret = secret;
-        p->notify = notify;
-
-	if (!pl->params) {
-                pl->params = xmalloc(sizeof(plugins_params_t *) * 2);
-                pl->params[0] = p;
-                pl->params[1] = NULL;
-                return 0;
-        }
-
-        for (i = 0, count = 0; pl->params[i]; i++)
-                count++;
-
-        pl->params = xrealloc(pl->params, (count + 2) * sizeof(plugins_params_t *));
-
-        pl->params[count] = p;
-        pl->params[count + 1] = NULL;
-
-        return 0;
+static LIST_FREE_ITEM(query_external_free_data, list_t) {
+	struct query_def *def = data->data;
+	xfree(def->name);
+	xfree(def);
 }
 
 /**
@@ -667,24 +591,17 @@ int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, 
  *
  * Free memory allocated by query_id() for not-known-in-core-query-names
  *
- * @todo 	We don't destroy here queries which uses these ids >= QUERY_EXTERNAL.<br>
- * 		It's quite correct in current api. But if you change it, you must clean after yourself.
+ * @todo	We don't destroy here queries which uses these ids >= QUERY_EXTERNAL.<br>
+ *		It's quite correct in current api. But if you change it, you must clean after yourself.
  */
 
 void query_external_free() {
-	list_t l;
-
 	if (!queries_external)
 		return;
 
-	for (l = queries_external; l; l = l->next) {
-		struct query *a = l->data;
+	LIST_DESTROY2(queries_external, query_external_free_data);
 
-		xfree(a->name);
-	}
-	list_destroy(queries_external, 1);
-
-	queries_external 	= NULL;
+	queries_external	= NULL;
 	queries_count		= QUERY_EXTERNAL;
 }
 
@@ -696,13 +613,13 @@ void query_external_free() {
  * @param name
  *
  * @return 
- * 	- If it's query known for core than return id of it.<br>
- * 	- If it's ,,seen'' by query_id() from previous call, than return assigned id also [from @a queries_external list_t]<br>
- * 	- else it allocate struct query in @a queries_external, and return next available id.
+ *	- If it's query known for core than return id of it.<br>
+ *	- If it's ,,seen'' by query_id() from previous call, than return assigned id also [from @a queries_external list_t]<br>
+ *	- else it allocate struct query in @a queries_external, and return next available id.
  */
 
 static int query_id(const char *name) {
-	struct query *a = NULL;
+	struct query_def *a = NULL;
 	list_t l;
 	int i;
 
@@ -723,11 +640,11 @@ static int query_id(const char *name) {
 	}
 	debug_error("query_id() NOT FOUND[%d]: %s\n", queries_count - QUERY_EXTERNAL, __(name));
 
-	a 	= xmalloc(sizeof(struct query));
-	a->id 	= queries_count++;
+	a	= xmalloc(sizeof(struct query_def));
+	a->id	= queries_count++;
 	a->name	= xstrdup(name);
 
-	list_add(&queries_external, a, 0);
+	list_add(&queries_external, a);
 
 	return a->id;
 }
@@ -739,14 +656,14 @@ static int query_id(const char *name) {
  *
  */
 
-const struct query *query_struct(const int id) {
+const struct query_def *query_struct(const int id) {
 	list_t l;
 
 	if (id < QUERY_EXTERNAL) 
 		return &(query_list[id]);
 
 	for (l = queries_external; l; l = l->next) {
-		struct query* a = l->data;
+		struct query_def *a = l->data;
 
 		if (a->id == id) 
 			return a;
@@ -763,9 +680,9 @@ const struct query *query_struct(const int id) {
  * Get name of query, by passed id
  *
  * @return 
- * 	- If id is known for core (@a id < QUERY_EXTERNAL) than return it's name<br>
- * 	- If it was ,,seen'' by query_id() than return name registered.<br>
- * 	- else return NULL, and display info that smth really nasty happen.
+ *	- If id is known for core (@a id < QUERY_EXTERNAL) than return it's name<br>
+ *	- If it was ,,seen'' by query_id() than return name registered.<br>
+ *	- else return NULL, and display info that smth really nasty happen.
  */
 
 const char *query_name(const int id) {
@@ -775,7 +692,7 @@ const char *query_name(const int id) {
 		return query_list[id].name;
 
 	for (l = queries_external; l; l = l->next) {
-		struct query* a = l->data;
+		struct query_def *a = l->data;
 
 		if (a->id == id) 
 			return a->name;
@@ -794,7 +711,7 @@ static query_t *query_connect_common(plugin_t *plugin, const int id, query_handl
 	q->handler	= handler;
 	q->data		= data;
 
-	return list_add(&queries, q, 0);
+	return LIST_ADD2(&queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id], q);
 }
 
 #define ID_AND_QUERY_EXTERNAL	\
@@ -820,7 +737,7 @@ query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t 
 int query_free(query_t *q) {
 	if (!q) return -1;
 
-	list_remove(&queries, q, 1);
+	LIST_REMOVE2(&queries[q->id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : q->id], q, NULL);
 	return 0;
 }
 
@@ -830,9 +747,7 @@ static int query_emit_common(query_t *q, va_list ap) {
 	int result;
 	va_list ap_plugin;
 
-	nested++;
-
-	if (nested > 32) {
+	if (nested >= 32) {
 /*
 		if (nested == 33)
 			debug("too many nested queries. exiting to avoid deadlock\n");
@@ -840,6 +755,7 @@ static int query_emit_common(query_t *q, va_list ap) {
 		return -1;
 	}
 
+	nested++;
 	q->count++;
 
 	/*
@@ -855,43 +771,78 @@ static int query_emit_common(query_t *q, va_list ap) {
 	return result != -1 ? 0 : -1;
 }
 
-int query_emit_id(plugin_t *plugin, const int id, ...) {
+/**
+ * query_emit_id_ro()
+ *
+ * Like query_emit_id() 
+ * It was created to avoid manual strdup()'s && xmemdup()'s in code.
+ * where stuff is read-only (we don't want query handlers to replace params)	[scripts for instance, but cause scripts don't work, this function is not finished :>]
+ */
+
+int query_emit_id_ro(plugin_t *plugin, const int id, ...) {
 	int result = -2;
 	va_list ap;
-	list_t l;
+	query_t *q;
 
 	if (id >= QUERY_EXTERNAL) {
 		debug_error("%s", ID_AND_QUERY_EXTERNAL);
 		return -2;
 	}
-		
-	va_start(ap, id);
-	for (l = queries; l; l = l->next) {
-		query_t *q = l->data;
 
-		if ((!plugin || (plugin == q->plugin)) && q->id == id) {
+	/* XXX:
+	 *	- for each param at query_list[id])
+	 *		- if it's string, strdup() it. otherwise xmemdup() is enough (like /window clear does)
+	 *		- if integer, just pass it to another variable
+	 *	- call everything.
+	 *	- free stuff
+	 *
+	 * for now it's useless.
+	 */
+
+	va_start(ap, id);
+	for (q = queries[id]; q; q = q->next) {
+		if ((!plugin || (plugin == q->plugin))) {
 			result = query_emit_common(q, ap);
 
 			if (result == -1) break;
 		}
 	}
 	va_end(ap);
+	return result;
+}
 
+int query_emit_id(plugin_t *plugin, const int id, ...) {
+	int result = -2;
+	va_list ap;
+	query_t *q;
+
+	if (id >= QUERY_EXTERNAL) {
+		debug_error("%s", ID_AND_QUERY_EXTERNAL);
+		return -2;
+	}
+
+	va_start(ap, id);
+	for (q = queries[id]; q; q = q->next) {
+		if ((!plugin || (plugin == q->plugin))) {
+			result = query_emit_common(q, ap);
+
+			if (result == -1) break;
+		}
+	}
+	va_end(ap);
 	return result;
 }
 
 int query_emit(plugin_t *plugin, const char *name, ...) {
 	int result = -2;
 	va_list ap;
-	list_t l;
+	query_t *q;
 	int id;
 
 	id = query_id(name);
 
 	va_start(ap, name);
-	for (l = queries; l; l = l->next) {
-		query_t *q = l->data;
-
+	for (q = queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id]; q; q = q->next) {
 		if ((!plugin || (plugin == q->plugin)) && q->id == id) {
 			result = query_emit_common(q, ap);
 
@@ -899,8 +850,28 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 		}
 	}
 	va_end(ap);
-
 	return result;
+}
+
+static LIST_ADD_COMPARE(query_compare, query_t *) {
+	/*				any other suggestions: vvv ? */
+	const int ap = (data1->plugin ? data1->plugin->prio : -666);
+	const int bp = (data2->plugin ? data2->plugin->prio : -666);
+
+	return (bp-ap);
+}
+
+/**
+ * queries_reconnect()
+ *
+ * Reconnect (resort) all queries, e.g. after plugin prio change.
+ */
+
+void queries_reconnect() {
+	int i;
+
+	for (i = 0; i <= QUERY_EXTERNAL; i++)
+		LIST_RESORT2(&(queries[i]), query_compare);
 }
 
 /*
@@ -908,23 +879,42 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
  *
  * zwraca obiekt watch_t o podanych parametrach.
  */
-watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type)
-{
+watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type) {
 	list_t l;
 	
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
-		if (w && w->plugin == plugin && w->fd == fd && w->type == type && !(w->removed > 0))
+
+			/* XXX: added simple plugin ignoring, make something nicer? */
+		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && (w->type & type) && !(w->removed > 0))
 			return w;
 	}
 
 	return NULL;
 }
 
+static LIST_FREE_ITEM(watch_free_data, watch_t *) {
+	data->removed = 2;	/* to avoid situation: when handler of watch, execute watch_free() on this watch... stupid */
+
+	if (data->buf) {
+		int (*handler)(int, int, const char *, void *) = data->handler;
+		string_free(data->buf, 1);
+		/* DO WE WANT TO SEND ALL  IN BUFOR TO FD ? IF IT'S WATCH_WRITE_LINE? or parse all data if it's WATCH_READ_LINE? mmh. XXX */
+		if (handler)
+			handler(1, data->fd, NULL, data->data);
+	} else {
+		int (*handler)(int, int, int, void *) = data->handler;
+		if (handler)
+			handler(1, data->fd, data->type, data->data);
+	}
+}
+
 /*
  * watch_free()
  *
  * zwalnia pamiêæ po obiekcie watch_t.
+ * zwraca wska¼nik do nastêpnego obiektu do iterowania
+ * albo NULL, jak nie mo¿na skasowaæ.
  */
 void watch_free(watch_t *w) {
 	if (!w)
@@ -938,25 +928,14 @@ void watch_free(watch_t *w) {
 		return;
 	}
 
-	if (w->type == WATCH_WRITE && w->buf && !w->handler) { 
+	if (w->type == WATCH_WRITE && w->buf && !w->handler && w->plugin) {	/* XXX */
 		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
 		return;
 	}
 
-	w->removed = 2;	/* to avoid situation: when handler of watch, execute watch_free() on this watch... stupid */
-
-	if (w->buf) {
-		int (*handler)(int, int, const char *, void *) = w->handler;
-		string_free(w->buf, 1);
-		/* DO WE WANT TO SEND ALL  IN BUFOR TO FD ? IF IT'S WATCH_WRITE_LINE? or parse all data if it's WATCH_READ_LINE? mmh. XXX */
-		if (handler)
-			handler(1, w->fd, NULL, w->data);
-	} else {
-		int (*handler)(int, int, int, void *) = w->handler;
-		if (handler)
-			handler(1, w->fd, w->type, w->data);
-	}
+	watch_free_data(w);
 	list_remove_safe(&watches, w, 1);
+
 	ekg_watches_removed++;
 	debug("watch_free() REMOVED WATCH, watches removed this loop: %d oldwatch: 0x%x\n", ekg_watches_removed, w);
 }
@@ -972,7 +951,8 @@ void watch_handle_line(watch_t *w)
 	int ret, res = 0;
 	int (*handler)(int, int, const char *, void *) = w->handler;
 
-	if (w || w->removed == -1);	/* watch is running in another thread / context */
+	if (!w || w->removed == -1)
+		return;	/* watch is running in another thread / context */
 
 	w->removed = -1;
 #ifndef NO_POSIX_SYSTEM
@@ -1096,11 +1076,25 @@ int watch_handle_write(watch_t *w) {
 	return res;
 }
 
-int watch_write(watch_t *w, const char *format, ...) {
+int watch_write_data(watch_t *w, const char *buf, int len) {		/* XXX, refactory: watch_write() */
+	int was_empty;
+
+	if (!w || !buf || len <= 0)
+		return -1;
+
+	was_empty = !w->buf->len;
+	string_append_raw(w->buf, buf, len);
+
+	if (was_empty) 
+		return watch_handle_write(w); /* let's try to write somethink ? */
+	return 0;
+}
+
+int watch_write(watch_t *w, const char *format, ...) {			/* XXX, refactory: watch_writef() */
 	char		*text;
-	int		was_empty;
 	int		textlen;
 	va_list		ap;
+	int		res;
 
 	if (!w || !format)
 		return -1;
@@ -1112,16 +1106,16 @@ int watch_write(watch_t *w, const char *format, ...) {
 	textlen = xstrlen(text); 
 
 	debug_io("[watch]_send: %s\n", text ? textlen ? text: "[0LENGTH]":"[FAILED]");
-	if (!text) return -1;
 
-	was_empty = !w->buf->len;
-	string_append_n(w->buf, text, textlen);
+	if (!text) 
+		return -1;
+
+	res = watch_write_data(w, text, textlen);
 
 	xfree(text);
-
-	if (was_empty) return watch_handle_write(w); /* let's try to write somethink ? */
-	return 0;
+	return res;
 }
+
 
 /**
  * watch_handle()
@@ -1166,7 +1160,7 @@ void watch_handle(watch_t *w) {
  *
  * Create new watch_t and add it on the beginning of watches list.
  *
- * @param plugin 	- plugin
+ * @param plugin	- plugin
  * @param fd		- fd to watch data for.
  * @param type		- type of watch.
  * @param handler	- handler of watch.
@@ -1193,8 +1187,7 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	w->handler = handler;
 	w->data    = data;
 
-	list_add_beginning(&watches, w, 0);
-
+	list_add_beginning(&watches, w);
 	return w;
 }
 
@@ -1208,8 +1201,8 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
  * @param type		- type of watch.
  * @param handler	- handler of watch.
  *
- * @return 	If @a session is NULL, or @a session->plugin is NULL, it return NULL.<br>
- * 		else created watch_t
+ * @return	If @a session is NULL, or @a session->plugin is NULL, it return NULL.<br>
+ *		else created watch_t
  */
 
 watch_t *watch_add_session(session_t *session, int fd, watch_type_t type, watcher_session_handler_func_t *handler) {
@@ -1237,31 +1230,6 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
 	return res;
 }
 
-void idle_handle(idle_t *i) {
-/*	debug_function("idle_handle() %p(%p)\n", i->handler, i->data); */
-
-	if (i->handler(i->data) == -1) {
-		/* remove idler */
-		xfree(i);
-			
-	} else {
-		/* add idler again [at end] */
-		list_add(&idles, i, 0);
-	}
-}
-
-idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data) {
-	idle_t *i	= xmalloc(sizeof(idle_t));
-	i->plugin	= plugin;
-	i->handler	= handler;
-	i->data		= data;
-
-	/* XXX, prios? */
-	list_add_beginning(&idles, i, 0);		/* first item */
-
-	return i;
-}
-
 /**
  * have_plugin_of_class()
  *
@@ -1270,20 +1238,38 @@ idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data) {
  * @param pclass 
  *
  * @return	1 - If such plugin was founded<br>
- * 		else 0
+ *		else 0
  */
 
 int have_plugin_of_class(plugin_class_t pclass) {
-	list_t l;
-	for(l = plugins; l; l = l->next) {
-		plugin_t *p = l->data;
+	plugin_t *p;
+
+	for (p = plugins; p; p = p->next) {
 		if (p->pclass == pclass) return 1;
 	}
+
 	return 0;
 }
 
 PROPERTY_INT_SET(watch, timeout, time_t)
 
+/*
+ *  plugin_abi_version()
+ *
+ * @param plugin_abi_ver, plugin_name
+ *
+ * @return	1 - if core ABI version is the sama as plugin ABI version
+ *		else 0
+ */
+int plugin_abi_version(int plugin_abi_ver, const char * plugin_name) {
+
+	if (EKG_ABI_VER == plugin_abi_ver)
+		return 1;
+
+	debug_error("ABI versions mismatch.  %s_plugin ABI ver. %d,  core ABI ver. %d\n", plugin_name, plugin_abi_ver, EKG_ABI_VER);
+	return 0;
+
+}
 /*
  * Local Variables:
  * mode: c
@@ -1291,5 +1277,5 @@ PROPERTY_INT_SET(watch, timeout, time_t)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8
+ * vim: noet
  */

@@ -20,6 +20,8 @@
 #ifndef __EKG_THEMES_H
 #define __EKG_THEMES_H
 
+#include "strings.h"
+
 #include "gettext.h" 
 #define _(a) gettext(a)
 #define N_(a) gettext_noop(a)
@@ -27,37 +29,55 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-typedef struct {
-	char *str;	/* znaki, ci±g zakoñczony \0 */
-	short *attr;	/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
-	int ts;		/* timestamp */
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-	int prompt_len;	/* d³ugo¶æ promptu, który bêdzie powtarzany przy i
-			   przej¶ciu do kolejnej linii. */
-	int prompt_empty;	/* prompt przy przenoszeniu bêdzie pusty */
-	int margin_left; 	/* where the margin is set (on what char) */
-	void *private;          /* can be helpfull */
+typedef struct {
+	union {
+		char	*b;			/* possibly multibyte string */
+		CHAR_T	*w;			/* wide char string */
+	} str;		/* A \0-terminated string of characters. Before the
+	fstring_t is added to history, should be referred to using 'str->b'.
+	Adding to history recodes it to CHAR_T, so afterwards it should be
+	referred to by 'str->w'. */
+
+	short		*attr;			/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
+	time_t		ts;			/* timestamp */
+
+	int		prompt_len;		/* d³ugo¶æ promptu, który bêdzie powtarzany przy
+						   przej¶ciu do kolejnej linii. */
+	unsigned int	prompt_empty	: 1;	/* prompt przy przenoszeniu bêdzie pusty */
+	int		margin_left;		/* where the margin is set (on what char) */
+	void		*private;		/* can be helpfull */
 } fstring_t;
 
-#define print(x...)		print_window_w(NULL, 0, x) 
-#define wcs_print(x...) 	print_window_w(NULL, 0, x)
-#define print_status(x...) 	print_window_w(window_status, 0, x)
+#define print(x...)		print_window_w(NULL, EKG_WINACT_JUNK, x) 
+#define print_status(x...)	print_window_w(window_status, EKG_WINACT_JUNK, x)
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-void print_window(const char *target, session_t *session, int separate, const char *theme, ...);
+void print_window(const char *target, session_t *session, int activity, int separate, const char *theme, ...);
+
+void print_info(const char *target, session_t *session, const char *theme, ...);
+void print_warning(const char *target, session_t *session, const char *theme, ...);
 
 void format_add(const char *name, const char *value, int replace);
 const char *format_find(const char *name);
+#define format_ok(format_find_result)	(format_find_result[0])
+#define format_exists(format)		(format_ok(format_find(format)))
 char *format_string(const char *format, ...);
 
 void theme_init();
 void theme_plugins_init();
+void theme_enumerate(int (*enumerator)(const char *theme, const char *value));
 int theme_read(const char *filename, int replace);
+int theme_write(const char *filename);
 void theme_cache_reset();
 void theme_free();
 
 fstring_t *fstring_new(const char *str);
+fstring_t *fstring_new_format(const char *format, ...);
 void fstring_free(fstring_t *str);
 
 #endif
@@ -68,19 +88,26 @@ void fstring_free(fstring_t *str);
  */
 #define isalpha_pl_PL(x) ((x >= 'a' && x <= 'z') || (x >= 'A' && x <= 'Z') || x == '±' || x == 'æ' || x == 'ê' || x == '³' || x == 'ñ' || x == 'ó' || x == '¶' || x == '¿' || x == '¼' || x == '¡' || x == 'Æ' || x == 'Ê' || x == '£' || x == 'Ñ' || x == 'Ó' || x == '¦' || x == '¯' || x == '¬')
 
-#define FSTR_FOREA 		1
-#define FSTR_FOREB 		2
-#define FSTR_FOREC 		4
-#define FSTR_FOREMASK 		(FSTR_FOREA|FSTR_FOREB|FSTR_FOREC)
-#define FSTR_BACKA 		8
-#define FSTR_BACKB 		16
-#define FSTR_BACKC 		32
-#define FSTR_BACKMASK 		(FSTR_BACKA|FSTR_BACKB|FSTR_BACKC)
-#define FSTR_BOLD 		64
-#define FSTR_NORMAL 		128
-#define FSTR_BLINK 		256
-#define FSTR_UNDERLINE 		512
-#define FSTR_REVERSE 		1024
+typedef enum {
+	FSTR_FOREA		= 1,
+	FSTR_FOREB		= 2,
+	FSTR_FOREC		= 4,
+	FSTR_FOREMASK		= (FSTR_FOREA|FSTR_FOREB|FSTR_FOREC),
+	FSTR_BACKA		= 8,
+	FSTR_BACKB		= 16,
+	FSTR_BACKC		= 32,
+	FSTR_BACKMASK		= (FSTR_BACKA|FSTR_BACKB|FSTR_BACKC),
+	FSTR_BOLD		= 64,
+	FSTR_NORMAL		= 128,
+	FSTR_BLINK		= 256,
+	FSTR_UNDERLINE		= 512,
+	FSTR_REVERSE		= 1024,
+	FSTR_ALTCHARSET		= 2048
+} fstr_t;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_THEMES_H */
 

@@ -73,8 +73,8 @@ WATCHER(jabber_dcc_handle_recv) {
 						req[4] = 40;	/* length of hash. */
 
 						/* generate SHA1 hash */
-						ouruid = saprintf("%s/%s", s->uid+4, j->resource);
-						digest = jabber_dcc_digest(p->sid, d->uid+4, ouruid);
+						ouruid = saprintf("%s/%s", s->uid+5, j->resource);
+						digest = jabber_dcc_digest(p->sid, d->uid+5, ouruid);
 						for (i=0; i < 40; i++) req[5+i] = digest[i];
 						xfree(ouruid);
 
@@ -89,7 +89,7 @@ WATCHER(jabber_dcc_handle_recv) {
 							"<iq type=\"result\" to=\"%s\" id=\"%s\">"
 							"<query xmlns=\"http://jabber.org/protocol/bytestreams\">"
 							"<streamhost-used jid=\"%s\"/>"
-							"</query></iq>", d->uid+4, p->req, b->streamhost->jid);
+							"</query></iq>", d->uid+5, p->req, b->streamhost->jid);
 						b->step = SOCKS5_DATA;
 						d->active = 1;
 						return 0;
@@ -213,36 +213,34 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 		char req[47];
 
 		dcc_t *d = NULL;
-		list_t l;
+		dcc_t *D;
 		int i;
 
-		for (l=dccs; l; l = l->next) {
-			dcc_t *D	= l->data;
+		for (D=dccs; D; D = D->next) {
 			jabber_dcc_t *p = D->priv;
 
 			char *this_sha1;
-			list_t k;
+			session_t *s;
 
-			if (xstrncmp(D->uid, "jid:", 4)) continue; /* we skip not jabber dccs */
+			if (xstrncmp(D->uid, "xmpp:", 5)) continue; /* we skip not jabber dccs */
 
-			if (!p) 		{ debug_error("[%s:%d] D->priv == NULL ?\n", __FILE__, __LINE__); continue; }			/* we skip invalid dccs */
-			if (p->sfd != -1) 	{ debug_error("[%s:%d] p->sfd  != -1, already associated ?\n", __FILE__, __LINE__); continue; }	/* we skip associated dccs */
-			if (p->protocol != JABBER_DCC_PROTOCOL_BYTESTREAMS) continue; 								/* we skip not BYTESTREAMS dccs */
+			if (!p)			{ debug_error("[%s:%d] D->priv == NULL ?\n", __FILE__, __LINE__); continue; }			/* we skip invalid dccs */
+			if (p->sfd != -1)	{ debug_error("[%s:%d] p->sfd  != -1, already associated ?\n", __FILE__, __LINE__); continue; }	/* we skip associated dccs */
+			if (p->protocol != JABBER_DCC_PROTOCOL_BYTESTREAMS) continue;								/* we skip not BYTESTREAMS dccs */
 
-			for (k = sessions; k; k = k->next) {
-				session_t *s = k->data;
+			for (s = sessions; s; s = s->next) {
 				jabber_private_t *j = s->priv;
 				char *fulluid;
 
 				if (!s->connected) continue;
 				if (!(session_check(s, 1, "jid"))) continue;
 
-				fulluid = saprintf("%s/%s", s->uid+4, j->resource);
+				fulluid = saprintf("%s/%s", s->uid+5, j->resource);
 
 				/* XXX, take care about initiator && we		*/
-				/* D->type == DCC_SEND initiator -- we 		*/
-				/*            DCC_GET  initiator -- D->uid+4	*/
-				this_sha1 = jabber_dcc_digest(p->sid, fulluid, D->uid+4);
+				/* D->type == DCC_SEND initiator -- we		*/
+				/*	      DCC_GET  initiator -- D->uid+5	*/
+				this_sha1 = jabber_dcc_digest(p->sid, fulluid, D->uid+5);
 
 				debug_function("[JABBER_DCC_ACCEPTED] SHA1: %s THIS: %s (session: %s)\n", sha1, this_sha1, fulluid);
 				if (!xstrcmp(sha1, this_sha1)) {
@@ -282,7 +280,8 @@ WATCHER(jabber_dcc_handle_accepted) { /* XXX, try merge with jabber_dcc_handle_r
 
 WATCHER(jabber_dcc_handle_accept) {
 	struct sockaddr_in sin;
-	int newfd, sin_len = sizeof(sin);
+	int newfd;
+	socklen_t sin_len = sizeof(sin);
 
 	if (type) {
 		close(fd);
@@ -352,14 +351,12 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 		if (!s || !(j= session_private_get(s))) return;
 
 		watch_write(j->send_watch, "<iq type=\"error\" to=\"%s\" id=\"%s\"><error code=\"403\">Declined</error></iq>", 
-			d->uid+4, p->req);
+			d->uid+5, p->req);
 	}
 
 	d->priv = NULL;
 
 	if (p) {
-		list_t l;
-
 		if (p->protocol == JABBER_DCC_PROTOCOL_BYTESTREAMS) {
 			/* XXX, free protocol-specified data */
 
@@ -376,13 +373,12 @@ void jabber_dcc_close_handler(struct dcc_s *d) {
 	}
 }
 
-dcc_t *jabber_dcc_find(const char *uin, /* without jid: */ const char *id, const char *sid) {
-#define DCC_RULE(x) (!xstrncmp(x->uid, "jid:", 4) && !xstrcmp(x->uid+4, uin))
-	list_t l;
+dcc_t *jabber_dcc_find(const char *uin, /* without xmpp: */ const char *id, const char *sid) {
+#define DCC_RULE(x) (!xstrncmp(x->uid, "xmpp:", 5) && !xstrcmp(x->uid+5, uin))
+	dcc_t *d;
 	if (!id && !sid) { debug_error("jabber_dcc_find() neither id nor sid passed.. Returning NULL\n"); return NULL; }
 
-	for (l = dccs; l; l = l->next) {
-		dcc_t *d = l->data;
+	for (d = dccs; d; d = d->next) {
 		jabber_dcc_t *p = d->priv;
 
 		if (DCC_RULE(d) && (!sid || !xstrcmp(p->sid, sid)) && (!id || !xstrcmp(p->req, id))) {
@@ -401,9 +397,9 @@ QUERY(jabber_dcc_postinit) {
 
 	if (jabber_dcc_fd == -1) dcc_watch = NULL;
 
-	if (jabber_dcc && !dcc_watch) {
+	if (jabber_dcc && !dcc_watch)
 		dcc_watch = jabber_dcc_init(JABBER_DEFAULT_DCC_PORT); 
-	} else if (!jabber_dcc) {
+	else if (!jabber_dcc) {
 		watch_free(dcc_watch);
 		dcc_watch = NULL;
 	}

@@ -2,12 +2,12 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@infomex.pl>
- *                          Adam Osuchowski <adwol@polsl.gliwice.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Wojciech Bojdo³ <wojboj@htcon.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
+ *			    Adam Osuchowski <adwol@polsl.gliwice.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Wojciech Bojdo³ <wojboj@htcon.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -48,9 +48,7 @@
 #include <sys/resource.h>	/* rlimit */
 #endif
 
-#ifdef __FreeBSD__
-#  include <sys/select.h>
-#endif
+#include <sys/select.h>
 
 #include <dirent.h>
 #include <errno.h>
@@ -84,6 +82,7 @@
 #include <unistd.h>
 
 #include "audio.h"
+#include "bindings.h"
 #include "commands.h"
 #include "debug.h"
 #include "events.h"
@@ -92,6 +91,7 @@
 #include "log.h"
 #include "metacontacts.h"
 #include "msgqueue.h"
+#include "plugins.h"
 #include "protocol.h"
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
@@ -107,18 +107,9 @@
 
 #include "queries.h"
 
-#ifndef PATH_MAX
-# ifdef MAX_PATH
-#  define PATH_MAX MAX_PATH
-# else
-#  define PATH_MAX _POSIX_PATH_MAX
-# endif
-#endif
-
 char *config_dir;
 int mesg_startup;
 int ekg_watches_removed;
-static pid_t ekg_pid = 0;
 static char argv0[PATH_MAX];
 
 pid_t speech_pid = 0;
@@ -126,6 +117,53 @@ pid_t speech_pid = 0;
 static int stderr_backup = -1;
 
 int no_mouse = 0;
+
+/**
+ * ekg_autoaway_timer()
+ *
+ *
+ * less important things which don't need to be checked every main loop iteration
+ * e.g. autoaways 
+ *
+ * executed each second.
+ */
+static TIMER(ekg_autoaway_timer) {
+	session_t *sl;
+	time_t t;
+
+	if (type)
+		return 0;
+
+	t = time(NULL);
+
+	/* sprawd¼ autoawaye ró¿nych sesji */
+	for (sl = sessions; sl; sl = sl->next) {
+		session_t *s = sl;
+		int tmp;
+
+		if (!s->connected || (s->status < EKG_STATUS_AWAY)) /* lowest autostatus is autoxa, so from xa and lower ones
+								       we can't go further */
+			continue;
+
+		do {
+			if ((s->status == EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
+				break;
+
+			if (t - s->activity > tmp)
+				command_exec(NULL, s, ("/_autoaway"), 0);
+		} while (0);
+
+		do {
+			if ((tmp = session_int_get(s, "auto_xa")) < 1 || !s->activity)
+				break;
+
+			if (t - s->activity > tmp)
+				command_exec(NULL, s, ("/_autoxa"), 0);
+		} while (0);
+	}
+
+	return 0;
+}
 
 /*
  * ekg_loop()
@@ -136,290 +174,230 @@ int no_mouse = 0;
 
 void ekg_loop() {
 	struct timeval tv;
-        struct timeval stv;
-        list_t l;
-        fd_set rd, wd;
-        int ret, maxfd, pid, status;
+	struct timeval stv;
+	fd_set rd, wd;
+	int ret, maxfd, status;
+	pid_t pid;
 
 	gettimeofday(&tv, NULL);
 
 	{
-                /* przejrzyj timery u¿ytkownika, ui, skryptów */
-                for (l = timers; l; ) {
-                        struct timer *t = l->data;
-                        l = l->next;
+		{		/* przejrzyj timery u¿ytkownika, ui, skryptów */
+			struct timer *t;
+			
+			for (t = timers; t; t = t->next) {
+				if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
+					int ispersist = t->persist;
+					
+					if (ispersist) {
+						memcpy(&t->ends, &tv, sizeof(tv));
+						t->ends.tv_sec += (t->period / 1000);
+						t->ends.tv_usec += ((t->period % 1000) * 1000);
+						if (t->ends.tv_usec >= 1000000) {
+							t->ends.tv_usec -= 1000000;
+							t->ends.tv_sec++;
+						}
+					}
 
-                        if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
-				int ispersist = t->persist;
-				
-                                if (ispersist) {
-                                        memcpy(&t->ends, &tv, sizeof(tv));
-                                        t->ends.tv_sec += t->period;
-                                }
-
-				if ((t->function(0, t->data) == -1) || !ispersist)
-					timer_free(t);
-                        }
-                }
-
-                /* sprawd¼ timeouty ró¿nych deskryptorów, oraz przy okazji w->removed jesli rowne 1, to timer powinien zostac usuniety. */
-                for (l = watches; l; l = l->next) {
-                        watch_t *w = l->data;
-
-			if (!w)
-				continue;
-
-			if (w->removed == 1) {
-				w->removed = 0;
-				watch_free(w);
-				continue;
+					if ((t->function(0, t->data) == -1) || !ispersist)
+						t = timers_removei(t);
+				}
 			}
-
-                        if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
-                                continue;
-			w->removed = -1;
-                        if (w->buf) {
-                                int (*handler)(int, int, char*, void*) = w->handler;
-                                if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
-					w->removed = 0;
-					watch_free(w);
-					continue;
-				}
-                        } else {
-                                int (*handler)(int, int, int, void*) = w->handler;
-				if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
-					w->removed = 0;
-					watch_free(w);
-					continue;
-				}
-                        }
-			w->removed = 0;
-                }
-
-                /* sprawd¼ autoawaye ró¿nych sesji */
-                for (l = sessions; l; l = l->next) {
-                        session_t *s = l->data;
-                        int tmp;
-
-                        if (!s->connected || (xstrcmp(s->status, EKG_STATUS_AVAIL) && xstrcmp(s->status, EKG_STATUS_FREE_FOR_CHAT) && xstrcmp(s->status, EKG_STATUS_AWAY)))
-                                continue;
-
-			do {
-				if (!xstrcmp(s->status, EKG_STATUS_AWAY) || (tmp = session_int_get(s, "auto_away")) < 1 || !s->activity)
-        	                        break;
-
-                	        if (tv.tv_sec - s->activity > tmp)
-                        	        command_exec(NULL, s, ("/_autoaway"), 0);
-			} while (0);
-
-			do {
-	                        if ((tmp = session_int_get(s, "auto_xa")) < 1 || !s->activity)
-        	                        break;
-
-                	        if (tv.tv_sec - s->activity > tmp)
-                        	        command_exec(NULL, s, ("/_autoxa"), 0);
-			} while (0);
-                }
-
-		/* sprawd¼ scroll timeouty */
-		/* XXX: nie tworzyæ variabla globalnego! */
-		for (l = sessions; l; l = l->next) {
-			session_t *s = l->data;
-			int tmp;
-
-			if (!s->connected)
-				continue;
-
-			if (!(tmp = session_int_get(s, "scroll_long_desc")) || tmp == -1)
-				continue;
-
-			if (tv.tv_sec - s->scroll_last > tmp)
-				command_exec(NULL, s, ("/_autoscroll"), 0);
 		}
 
-                /* auto save */
-                if (config_auto_save && config_changed && (tv.tv_sec - last_save) > config_auto_save) {
-                        debug("autosaving userlist and config after %d seconds\n", tv.tv_sec - last_save);
-                        last_save = tv.tv_sec;
+		{		/* removed 'w->removed' watches, timeout checking moved below select() */
+			list_t l;
 
-                        if (!config_write(NULL) && !session_write()) {
-                                config_changed = 0;
-                                reason_changed = 0;
-                                print("autosaved");
-                        } else
-                                print("error_saving");
-                }
+			for (l = watches; l; l = l->next) {
+				watch_t *w = l->data;
 
-                /* przegl±danie zdech³ych dzieciaków */
-#ifndef NO_POSIX_SYSTEM
-                while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-                        debug("child process %d exited with status %d\n", pid, WEXITSTATUS(status));
-
-                        for (l = children; l;) {
-                                child_t *c = l->data;
-
-                                l = l->next;
-
-                                if (pid != c->pid)
-                                        continue;
-
-                                if (pid == speech_pid) {
-                                        speech_pid = 0;
-
-                                        if (!config_speech_app)
-                                                buffer_free(&buffer_speech);
-
-                                        if (buffer_speech && !WEXITSTATUS(status)) {
-                                                char *str = buffer_tail(&buffer_speech);
-                                                say_it(str);
-                                                xfree(str);
-                                        }
-                                }
-
-                                if (c->handler)
-                                        c->handler(c, c->pid, c->name, WEXITSTATUS(status), c->private);
-
-                                xfree(c->name);
-                                list_remove(&children, c, 1);
-                        }
-                }
-#endif
-                /* zerknij na wszystkie niezbêdne deskryptory */
-
-                FD_ZERO(&rd);
-                FD_ZERO(&wd);
-
-                for (maxfd = 0, l = watches; l; l = l->next) {
-                        watch_t *w = l->data;
-
-			if (!w)
-				continue;
-
-                        if (w->fd > maxfd)
-                                maxfd = w->fd;
-                        if ((w->type & WATCH_READ))
-                                FD_SET(w->fd, &rd);
-                        if ((w->type & WATCH_WRITE)) {
-				if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
-				FD_SET(w->fd, &wd); 
+				if (w && w->removed == 1) {
+					w->removed = 0;
+					watch_free(w);
+				}
 			}
-                }
+		}
+
+		/* auto save */
+		if (config_auto_save && config_changed && (tv.tv_sec - last_save) > config_auto_save) {
+			debug("autosaving userlist and config after %d seconds\n", tv.tv_sec - last_save);
+			last_save = tv.tv_sec;
+
+			if (!config_write(NULL) && !session_write()) {
+				config_changed = 0;
+				reason_changed = 0;
+				print("autosaved");
+			} else
+				print("error_saving");
+		}
+
+		/* przegl±danie zdech³ych dzieciaków */
+#ifndef NO_POSIX_SYSTEM
+		while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+			child_t *c;
+			debug("child process %d exited with status %d\n", pid, WEXITSTATUS(status));
+
+			for (c = children; c; c = c->next) {
+				if (pid != c->pid)
+					continue;
+
+				if (pid == speech_pid) {
+					speech_pid = 0;
+
+					if (!config_speech_app)
+						buffer_free(&buffer_speech);
+
+					if (buffer_speech.count && !WEXITSTATUS(status)) {
+						char *str = buffer_tail(&buffer_speech);
+						say_it(str);
+						xfree(str);
+					}
+				}
+
+				if (c->handler)
+					c->handler(c, c->pid, c->name, WEXITSTATUS(status), c->private);
+
+				c = children_removei(c);
+			}
+		}
+#endif
+		/* zerknij na wszystkie niezbêdne deskryptory */
+
+		FD_ZERO(&rd);
+		FD_ZERO(&wd);
+
+		{
+			list_t l;
+
+			for (maxfd = 0, l = watches; l; l = l->next) {
+				watch_t *w = l->data;
+				if (!w)
+					continue;
+
+				if (w->fd > maxfd)
+					maxfd = w->fd;
+				if ((w->type & WATCH_READ))
+					FD_SET(w->fd, &rd);
+				if ((w->type & WATCH_WRITE)) {
+					if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
+					FD_SET(w->fd, &wd); 
+				}
+			}
+		}
 
 		stv.tv_sec = 1;
 		stv.tv_usec = 0;
-		for (l = timers; l; l = l->next) {
-			struct timer *t = l->data;
-			int usec = 0;
+		{
+			struct timer *t;
 
-			/* zeby uniknac przekrecenia licznika mikrosekund przy
-			 * wiekszych czasach, pomijamy dlugie timery */
-			if (t->ends.tv_sec - tv.tv_sec > 1)
-				continue;
+			for (t = timers; t; t = t->next) {
+				int usec = 0;
 
-			/* zobacz, ile zostalo do wywolania timera */
-			usec = (t->ends.tv_sec - tv.tv_sec) * 1000000 + (t->ends.tv_usec - tv.tv_usec);
+				/* zeby uniknac przekrecenia licznika mikrosekund przy
+				 * wiekszych czasach, pomijamy dlugie timery */
+				if (t->ends.tv_sec - tv.tv_sec > 1)
+					continue;
 
-			/* jesli wiecej niz sekunda, to nie ma znacznia */
-			if (usec >= 1000000)
-				continue;
-			
-			/* jesli mniej niz aktualny timeout, zmniejsz */
-			if (stv.tv_sec * 1000000 + stv.tv_usec > usec) {
-				stv.tv_sec = 0;
-				stv.tv_usec = usec;
+				/* zobacz, ile zostalo do wywolania timera */
+				usec = (t->ends.tv_sec - tv.tv_sec) * 1000000 + (t->ends.tv_usec - tv.tv_usec);
+
+				/* jesli wiecej niz sekunda, to nie ma znacznia */
+				if (usec >= 1000000)
+					continue;
+				
+				/* jesli mniej niz aktualny timeout, zmniejsz */
+				if (stv.tv_sec * 1000000 + stv.tv_usec > usec) {
+					stv.tv_sec = 0;
+					stv.tv_usec = usec;
+				}
 			}
 		}
-	
-                /* na wszelki wypadek sprawd¼ warto¶ci */
 
-		if (idles) {
+		/* na wszelki wypadek sprawd¼ warto¶ci */
+		if (stv.tv_sec != 1)
 			stv.tv_sec = 0;
-			if (stv.tv_usec > 20000)
-				stv.tv_usec = 20000;
-			/* max 50 times per second for idler.. i think it's ok */
+		if (stv.tv_usec < 0)
+			stv.tv_usec = 1;
 
-			/* execute idles only when stv.tv_usec > 20000? */
-		} else {
-
-			if (stv.tv_sec != 1) 
-				stv.tv_sec = 0;
-			if (stv.tv_usec < 0)
-				stv.tv_usec = 1;
-		}
-                /* sprawd¼, co siê dzieje */
+		/* sprawd¼, co siê dzieje */
 		ret = select(maxfd + 1, &rd, &wd, NULL, &stv);
 
-                /* je¶li wyst±pi³ b³±d, daj znaæ */
+		/* je¶li wyst±pi³ b³±d, daj znaæ */
 		if (ret == -1) {
-                        /* jaki¶ plugin doda³ do watchów z³y deskryptor. ¿eby
-                         * ekg mog³o dzia³aæ dalej, sprawd¼my który to i go
-                         * usuñmy z listy. */
+			/* jaki¶ plugin doda³ do watchów z³y deskryptor. ¿eby
+			 * ekg mog³o dzia³aæ dalej, sprawd¼my który to i go
+			 * usuñmy z listy. */
 			if (errno == EBADF) {
+				list_t l;
+
 				for (l = watches; l; l = l->next) {
 					watch_t *w = l->data;
 					struct stat st;
 
-					if (!w || !fstat(w->fd, &st))
-						continue;
-
-					debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
-					watch_free(w);
+					if (w && fstat(w->fd, &st)) {
+						debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
+						watch_free(w);
+					}
 				}
 			} else if (errno != EINTR)
 				debug("select() failed: %s\n", strerror(errno));
 			return;
 		}
 
-		/* execute idle tasks only when select() return no new data */
-		if (idles && ret == 0) {
-			/* idles works this way:
-			 *  - if handler want to keep idler alive, in idle_handle() we add again to list.. [here we remove old item]
-			 *  - else private data is freed in idle_handle() and here we remove only list_t internal struct.
-			 *
-			 *  yeah, i know it can be do better. note: it's just for gtk.. maybe later we have prios and so (and ekg2 become operation system with scheduler)
-			 */
+		{		/* przejrzyj deskryptory */
+			list_t l;
 
-			idle_handle((idle_t *) idles->data);
-			list_remove(&idles, idles->data, 0);
+			for (l = watches; l; l = l->next) {
+				watch_t *w = l->data;
 
-			/* Here I think we can do return; coz select() return 0 when nothing happen on given fds */
-			/* but to avoid regression on broken systems */
+				if (!w)
+					continue;
 
-			/* return; */
-		}
-
-                /* przejrzyj deskryptory */
-		for (l = watches; l; l = l->next) {
-			watch_t *w = l->data;
-
-			if (!w || (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)))
-				continue;
-
-			if (w->fd == 0) {
-				list_t session_list;
-				for (
-					session_list = sessions;
-					session_list;
-					session_list = session_list->next) 
-				{
-					session_t *s = session_list->data;
-
-					if (!s->connected || !s->autoaway)
+				if (!FD_ISSET(w->fd, &rd) && !FD_ISSET(w->fd, &wd)) { /* timeout checking */
+					if (w->timeout < 1 || (tv.tv_sec - w->started) < w->timeout)
 						continue;
+					w->removed = -1;
+					if (w->buf) {
+						int (*handler)(int, int, char*, void*) = w->handler;
+						if (handler(2, w->fd, NULL, w->data) == -1 || w->removed == 1) {
+							w->removed = 0;
+							watch_free(w);
+							continue;
+						}
+					} else {
+						int (*handler)(int, int, int, void*) = w->handler;
+						if (handler(2, w->fd, w->type, w->data) == -1 || w->removed == 1) {
+							w->removed = 0;
+							watch_free(w);
+							continue;
+						}
+					}
+					w->removed = 0;
 
-					if (session_int_get(s, "auto_back") != 2)
-						continue;
-
-					command_exec(NULL, s, ("/_autoback"), 2);
+					continue;
 				}
-			}
-			if (!w->buf) {
-				if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) ||
-						((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
-					watch_handle(w);
-			} else {
-				if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ) 		watch_handle_line(w);
-				else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
+
+				if (w->fd == 0) {
+					session_t *s;
+					for (s = sessions; s; s = s->next) 
+					{
+						if (!s->connected || !s->autoaway)
+							continue;
+
+						if (session_int_get(s, "auto_back") != 2)
+							continue;
+
+						command_exec(NULL, s, ("/_autoback"), 2);
+					}
+				}
+				if (!w->buf) {
+					if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) ||
+							((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
+						watch_handle(w);
+				} else {
+					if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ)		watch_handle_line(w);
+					else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
+				}
 			}
 		}
 
@@ -429,49 +407,49 @@ void ekg_loop() {
 			ekg_watches_removed = 0;
 		}
 	}
+#undef tv
 
-        return;
+	return;
 }
 #ifndef NO_POSIX_SYSTEM
 static void handle_sigusr1()
 {
-        debug("sigusr1 received\n");
-        query_emit_id(NULL, EKG_SIGUSR1);
-        signal(SIGUSR1, handle_sigusr1);
+	debug("sigusr1 received\n");
+	query_emit_id(NULL, EKG_SIGUSR1);
+	signal(SIGUSR1, handle_sigusr1);
 }
 
 static void handle_sigusr2()
 {
-        debug("sigusr2 received\n");
-        query_emit_id(NULL, EKG_SIGUSR2);
-        signal(SIGUSR2, handle_sigusr2);
+	debug("sigusr2 received\n");
+	query_emit_id(NULL, EKG_SIGUSR2);
+	signal(SIGUSR2, handle_sigusr2);
 }
 
 static void handle_sighup()
 {
-        ekg_exit();
+	ekg_exit();
 }
 
 static void handle_sigsegv()
 {
-        list_t l;
+	plugin_t *p;
 
-        signal(SIGSEGV, SIG_DFL);
+	signal(SIGSEGV, SIG_DFL);
 
-        if (stderr_backup && stderr_backup != -1)
-                dup2(stderr_backup, 2);
+	if (stderr_backup && stderr_backup != -1)
+		dup2(stderr_backup, 2);
 
-        /* wy³±cz pluginy ui, ¿eby odda³y terminal */
-        for (l = plugins; l; l = l->next) {
-                plugin_t *p = l->data;
+	/* wy³±cz pluginy ui, ¿eby odda³y terminal
+	 * destroy also log plugins to make sure that latest changes are written */
+	for (p = plugins; p; p = p->next) {
+		if (p->pclass != PLUGIN_UI && p->pclass != PLUGIN_LOG)
+			continue;
 
-                if (p->pclass != PLUGIN_UI)
-                        continue;
+		p->destroy();
+	}
 
-                p->destroy();
-        }
-
-        fprintf(stderr,
+	fprintf(stderr,
 "\r\n"
 "\r\n"
 "*** Naruszenie ochrony pamiêci ***\r\n"
@@ -495,11 +473,11 @@ static void handle_sigsegv()
 "\r\n",
 config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir,(int) getpid(), argv0, config_dir, (int) getpid());
 
-        config_write_crash();
-        userlist_write_crash();
-        debug_write_crash();
+	config_write_crash();
+	userlist_write_crash();
+	debug_write_crash();
 
-        raise(SIGSEGV);                 /* niech zrzuci core */
+	raise(SIGSEGV);			/* niech zrzuci core */
 }
 #endif
 
@@ -517,22 +495,22 @@ config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid
  */
 static char *prepare_batch_line(int argc, char *argv[], int n)
 {
-        size_t len = 0;
-        char *buf;
-        int i;
+	size_t len = 0;
+	char *buf;
+	int i;
 
-        for (i = n; i < argc; i++)
-                len += xstrlen(argv[i]) + 1;
+	for (i = n; i < argc; i++)
+		len += xstrlen(argv[i]) + 1;
 
-        buf = xmalloc(len);
+	buf = xmalloc(len);
 
-        for (i = n; i < argc; i++) {
-                xstrcat(buf, argv[i]);
-                if (i < argc - 1)
-                        xstrcat(buf, " ");
-        }
+	for (i = n; i < argc; i++) {
+		xstrcat(buf, argv[i]);
+		if (i < argc - 1)
+			xstrcat(buf, " ");
+	}
 
-        return buf;
+	return buf;
 }
 
 /*
@@ -603,54 +581,61 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 		case DEBUG_IORECV:		theme_format = "iorecvdebug";	break;
 		case DEBUG_FUNCTION:		theme_format = "fdebug";	break;
 		case DEBUG_ERROR:		theme_format = "edebug";	break;
+		case DEBUG_WHITE:		theme_format = "wdebug";	break;
+		case DEBUG_WARN:		theme_format = "warndebug";	break;
+		case DEBUG_OK:			theme_format = "okdebug";	break;
+		case DEBUG_WTF:		theme_format = "wtfdebug";	break;
 		default:			theme_format = "debug";		break;
 	}
 
-	buffer_add(&buffer_debug, theme_format, tmp, DEBUG_MAX_LINES);
+	buffer_add(&buffer_debug, theme_format, tmp);
 
 	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
-	if (is_UI && window_debug)
-		print_window_w(window_debug, 0, theme_format, tmp);
-/*
+	if (is_UI && window_debug) {
+		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
+
+		if (level == DEBUG_WTF) /* if real failure, warn also in current window (XXX: maybe always __status?) */
+			print("ekg_failure", tmp);
+	}
+#ifdef STDERR_DEBUG	/* STDERR debug */
 	else
-		fprintf(stderr, "%s\n", tmp); */	/* uncomment for debuging */
+		fprintf(stderr, "%s\n", tmp);
+#endif
 
 	xfree(tmp);
 }
 
 struct option ekg_options[] = {
-        { "user", required_argument, 0, 'u' },
-        { "theme", required_argument, 0, 't' },
-        { "no-auto", no_argument, 0, 'n' },
-        { "no-mouse", no_argument, 0, 'm' },
-        { "no-global-config", no_argument, 0, 'N' },
+	{ "user", required_argument, 0, 'u' },
+	{ "theme", required_argument, 0, 't' },
+	{ "no-auto", no_argument, 0, 'n' },
+	{ "no-mouse", no_argument, 0, 'm' },
+	{ "no-global-config", no_argument, 0, 'N' },
 	{ "frontend", required_argument, 0, 'F' },
 
-        { "away", optional_argument, 0, 'a' },
-        { "back", optional_argument, 0, 'b' },
-        { "invisible", optional_argument, 0, 'i' },
-        { "dnd", optional_argument, 0, 'd' },
-        { "free-for-chat", optional_argument, 0, 'f' },
-        { "xa", optional_argument, 0, 'x' },
+	{ "away", optional_argument, 0, 'a' },
+	{ "back", optional_argument, 0, 'b' },
+	{ "invisible", optional_argument, 0, 'i' },
+	{ "dnd", optional_argument, 0, 'd' },
+	{ "free-for-chat", optional_argument, 0, 'f' },
+	{ "xa", optional_argument, 0, 'x' },
 
-#ifdef USE_UNICODE
 	{ "unicode", no_argument, 0, 'U' }, 
-#endif
 
-        { "help", no_argument, 0, 'h' },
-        { "version", no_argument, 0, 'v' },
-        { 0, 0, 0, 0 }
+	{ "help", no_argument, 0, 'h' },
+	{ "version", no_argument, 0, 'v' },
+	{ 0, 0, 0, 0 }
 };
 
 #define EKG_USAGE N_( \
 "Usage: %s [OPTIONS] [COMMANDS]\n" \
-"  -u, --user=NAME             uses profile NAME\n" \
-"  -t, --theme=FILE            loads theme from FILE\n"\
-"  -n, --no-auto               does not connect to server automatically\n" \
-"  -m, --no-mouse              does not load mouse support\n" \
+"  -u, --user=NAME	       uses profile NAME\n" \
+"  -t, --theme=FILE	       loads theme from FILE\n"\
+"  -n, --no-auto	       does not connect to server automatically\n" \
+"  -m, --no-mouse	       does not load mouse support\n" \
 "  -N, --no-global-config      ignores global configuration file\n" \
-"  -F, --frontend=NAME         uses NAME frontend (default is ncurses)\n" \
+"  -F, --frontend=NAME	       uses NAME frontend (default is ncurses)\n" \
 \
 "  -a, --away[=DESCRIPTION]    changes status to ``away''\n" \
 "  -b, --back[=DESCRIPTION]    changes status to ``available''\n" \
@@ -659,8 +644,8 @@ struct option ekg_options[] = {
 "  -f, --free-for-chat[=DESCR] changes status to ``free for chat''\n" \
 "  -x, --xa[=DESCRIPTION]      changes status to ``very busy''\n" \
 \
-"  -h, --help                  displays this help message\n" \
-"  -v, --version               displays program version and exits\n" \
+"  -h, --help		       displays this help message\n" \
+"  -v, --version	       displays program version and exits\n" \
 "\n" \
 "Options concerned with status depend on the protocol of particular session --\n" \
 "some sessions may not support ``do not disturb'' status, etc.\n" \
@@ -669,22 +654,20 @@ struct option ekg_options[] = {
 
 int main(int argc, char **argv)
 {
-        int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0;
-        char *tmp = NULL, *new_status = NULL, *new_descr = NULL;
-        char *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
-        struct passwd *pw;
+	int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0, new_status = 0;
+	char *tmp = NULL, *new_descr = NULL;
+	char *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
 #ifndef NO_POSIX_SYSTEM
-        struct rlimit rlim;
+	struct rlimit rlim;
 #else
 	WSADATA wsaData;
 #endif
-        list_t l;
 
 #ifndef NO_POSIX_SYSTEM
-        /* zostaw po sobie core */
-        rlim.rlim_cur = RLIM_INFINITY;
-        rlim.rlim_max = RLIM_INFINITY;
-        setrlimit(RLIMIT_CORE, &rlim);
+	/* zostaw po sobie core */
+	rlim.rlim_cur = RLIM_INFINITY;
+	rlim.rlim_max = RLIM_INFINITY;
+	setrlimit(RLIMIT_CORE, &rlim);
 #endif
 #ifdef NO_POSIX_SYSTEM
 	if (WSAStartup(MAKEWORD(1, 1), &wsaData) != 0) {
@@ -692,205 +675,210 @@ int main(int argc, char **argv)
 	}
 #endif
 
-        ekg_started = time(NULL);
-        ekg_pid = getpid();
+	ekg_started = time(NULL);
 
-        ekg2_dlinit();
-        setlocale(LC_ALL, "");
+	ekg2_dlinit();
+	setlocale(LC_ALL, "");
+	tzset();
 #ifdef ENABLE_NLS
-        bindtextdomain("ekg2",LOCALEDIR);
+	bindtextdomain("ekg2",LOCALEDIR);
 	textdomain("ekg2");
 #endif
-        srand(time(NULL));
+	srand(time(NULL));
 
-        strlcpy(argv0, argv[0], sizeof(argv0));
+	strlcpy(argv0, argv[0], sizeof(argv0));
 
-#ifdef NO_POSIX_SYSTEM
+	home_dir = xstrdup(getenv("HOME"));
+
+#ifndef NO_POSIX_SYSTEM
+	if (!home_dir) {
+		struct passwd *pw;
+
+		if ((pw = getpwuid(getuid())))
+			home_dir = xstrdup(pw->pw_dir);
+	}
+#else
 	if (!home_dir)
 		home_dir = xstrdup(getenv("USERPROFILE"));
 
 	if (!home_dir)
 		home_dir = xstrdup("c:\\");
 #endif
-        if (!(home_dir = xstrdup(getenv("HOME")))) {
-                if ((pw = getpwuid(getuid())))
-                        home_dir = xstrdup(pw->pw_dir);
-	}
 
 	if (!home_dir) {
 		fprintf(stderr, _("Can't find user's home directory. Ask administration to fix it.\n"));
 		return 1;
 	}
 
-        command_init();
+	command_init();
 #ifndef NO_POSIX_SYSTEM
-        signal(SIGSEGV, handle_sigsegv);
-        signal(SIGHUP, handle_sighup);
-        signal(SIGUSR1, handle_sigusr1);
-        signal(SIGUSR2, handle_sigusr2);
-        signal(SIGALRM, SIG_IGN);
-        signal(SIGPIPE, SIG_IGN);
+	signal(SIGSEGV, handle_sigsegv);
+	signal(SIGHUP, handle_sighup);
+	signal(SIGTERM, handle_sighup);
+	signal(SIGUSR1, handle_sigusr1);
+	signal(SIGUSR2, handle_sigusr2);
+	signal(SIGALRM, SIG_IGN);
+	signal(SIGPIPE, SIG_IGN);
 #endif
-#ifdef USE_UNICODE
-        while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmNhvU", ekg_options, NULL)) != -1) 
-#else
-        while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmNhv", ekg_options, NULL)) != -1) 
-#endif
+	while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmNhvU", ekg_options, NULL)) != -1) 
 	{
-                switch (c) {
-                        case 'a':
-                                if (!optarg && argv[optind] && argv[optind][0] != '-')
-                                        optarg = argv[optind++];
+		switch (c) {
+			case 'a':
+				if (!optarg && argv[optind] && argv[optind][0] != '-')
+					optarg = argv[optind++];
 
-                                new_status = EKG_STATUS_AWAY;
-                                xfree(new_descr);
-                                new_descr = xstrdup(optarg);
-                                break;
+				new_status = EKG_STATUS_AWAY;
+				xfree(new_descr);
+				new_descr = xstrdup(optarg);
+				break;
 
-                        case 'b':
-                                if (!optarg && argv[optind] && argv[optind][0] != '-')
-                                        optarg = argv[optind++];
+			case 'b':
+				if (!optarg && argv[optind] && argv[optind][0] != '-')
+					optarg = argv[optind++];
 
-                                new_status = EKG_STATUS_AVAIL;
-                                xfree(new_descr);
-                                new_descr = xstrdup(optarg);
-                                break;
+				new_status = EKG_STATUS_AVAIL;
+				xfree(new_descr);
+				new_descr = xstrdup(optarg);
+				break;
 
-                        case 'i':
-                                if (!optarg && argv[optind] && argv[optind][0] != '-')
-                                        optarg = argv[optind++];
+			case 'i':
+				if (!optarg && argv[optind] && argv[optind][0] != '-')
+					optarg = argv[optind++];
 
-                                new_status = EKG_STATUS_INVISIBLE;
-                                xfree(new_descr);
-                                new_descr = xstrdup(optarg);
-                                break;
+				new_status = EKG_STATUS_INVISIBLE;
+				xfree(new_descr);
+				new_descr = xstrdup(optarg);
+				break;
 
-                        case 'd':
-                                if (!optarg && argv[optind] && argv[optind][0] != '-')
-                                        optarg = argv[optind++];
+			case 'd':
+				if (!optarg && argv[optind] && argv[optind][0] != '-')
+					optarg = argv[optind++];
 
-                                new_status = EKG_STATUS_DND;
-                                xfree(new_descr);
-                                new_descr = xstrdup(optarg);
-                                break;
+				new_status = EKG_STATUS_DND;
+				xfree(new_descr);
+				new_descr = xstrdup(optarg);
+				break;
 
-                        case 'f':
-                                if (!optarg && argv[optind] && argv[optind][0] != '-')
-                                        optarg = argv[optind++];
+			case 'f':
+				if (!optarg && argv[optind] && argv[optind][0] != '-')
+					optarg = argv[optind++];
 
-                                new_status = EKG_STATUS_FREE_FOR_CHAT;
-                                xfree(new_descr);
-                                new_descr = xstrdup(optarg);
-                                break;
+				new_status = EKG_STATUS_FFC;
+				xfree(new_descr);
+				new_descr = xstrdup(optarg);
+				break;
 
-                        case 'x':
-                                if (!optarg && argv[optind] && argv[optind][0] != '-')
-                                        optarg = argv[optind++];
+			case 'x':
+				if (!optarg && argv[optind] && argv[optind][0] != '-')
+					optarg = argv[optind++];
 
-                                new_status = EKG_STATUS_XA;
-                                xfree(new_descr);
-                                new_descr = xstrdup(optarg);
-                                break;
+				new_status = EKG_STATUS_XA;
+				xfree(new_descr);
+				new_descr = xstrdup(optarg);
+				break;
 
 
-                        case 'u':
-                                new_profile = optarg;
-                                break;
+			case 'u':
+				new_profile = optarg;
+				break;
 			case 'F':
 				frontend = optarg;
 				break;
-                        case 't':
-                                load_theme = optarg;
-                                break;
-
-                        case 'n':
-                                auto_connect = 0;
-                                break;
-
-                        case 'm':
-                                no_mouse = 1;
-                                break;
-
-                        case 'N':
-                                no_global_config = 1;
-                                break;
-
-
-                        case 'h':
-                                printf(_(EKG_USAGE), argv[0]);
-                                return 0;
-
-#ifdef USE_UNICODE
-			case 'U':
-				config_use_unicode = 1;
+			case 't':
+				load_theme = optarg;
 				break;
+
+			case 'n':
+				auto_connect = 0;
+				break;
+
+			case 'm':
+				no_mouse = 1;
+				break;
+
+			case 'N':
+				no_global_config = 1;
+				break;
+
+
+			case 'h':
+				printf(_(EKG_USAGE), argv[0]);
+				return 0;
+
+			case 'U':
+#ifdef USE_UNICODE
+				config_use_unicode = 1;
+#else
+				fprintf(stderr, _("EKG2 compiled without unicode support. This just can't work!\n"));
+				return 1;
 #endif
+				break;
 
-                        case 'v':
-                                printf("ekg2-%s (compiled on %s)\n", VERSION, compile_time());
-                                return 0;
+			case 'v':
+				printf("ekg2-%s (compiled on %s)\n", VERSION, compile_time());
+				return 0;
 
-                        case '?':
-                                /* supported by getopt */
-                                fprintf(stdout, _("To get more information, start program with --help.\n"));
-                                return 1;
+			case '?':
+				/* supported by getopt */
+				fprintf(stdout, _("To get more information, start program with --help.\n"));
+				return 1;
 
-                        default:
-                                break;
-                }
-        }
+			default:
+				break;
+		}
+	}
 
-        in_autoexec = 1;
+	in_autoexec = 1;
 
-        if (optind < argc) {
-                batch_line = prepare_batch_line(argc, argv, optind);
-                batch_mode = 1;
-        }
+	if (optind < argc) {
+		batch_line = prepare_batch_line(argc, argv, optind);
+		batch_mode = 1;
+	}
 
-        if ((config_profile = new_profile))
-                tmp = saprintf("/%s", config_profile);
-        else
-                tmp = xstrdup("");
+	if ((config_profile = new_profile))
+		tmp = saprintf("/%s", config_profile);
+	else
+		tmp = xstrdup("");
 
-        if (getenv("HOME_ETC"))
-                config_dir = saprintf("%s/ekg2%s", getenv("HOME_ETC"), tmp);
-        else
-                config_dir = saprintf("%s/.ekg2%s", home_dir, tmp);
+	if (getenv("HOME_ETC"))
+		config_dir = saprintf("%s/ekg2%s", getenv("HOME_ETC"), tmp);
+	else
+		config_dir = saprintf("%s/.ekg2%s", home_dir, tmp);
 
-        xfree(tmp);
-        tmp = NULL;
+	xfree(tmp);
+	tmp = NULL;
 
-        variable_init();
-        variable_set_default();
+	variable_init();
+	variable_set_default();
 
-        mesg_startup = mesg_set(MESG_CHECK);
+	mesg_startup = mesg_set(MESG_CHECK);
 #ifdef DEFAULT_THEME 
 	if (theme_read(DEFAULT_THEME, 1) == -1) 
 #endif
 		theme_init();
 
-	window_debug	= window_new(NULL, NULL, -1);                   /* debugowanie */
-	window_status	= window_new(NULL, NULL, 1);     		/* okno stanu */
+	window_debug	= window_new(NULL, NULL, -1);			/* debugowanie */
+	window_status	= window_new(NULL, NULL, 1);			/* okno stanu */
 	window_current	= window_status;
 
-        if (!no_global_config)
-                config_read(SYSCONFDIR "/ekg2.conf");
+	if (!no_global_config)
+		config_read(SYSCONFDIR "/ekg2.conf");
 
-        if (frontend) {
-                plugin_load(frontend, -254, 1);
+	if (frontend) {
+		plugin_load(frontend, -254, 1);
 		config_changed = 1;
 	}
 
 	config_read_plugins();
-        if (!no_global_config)
-                config_read(SYSCONFDIR "/ekg2-override.conf");
+	if (!no_global_config)
+		config_read(SYSCONFDIR "/ekg2-override.conf");
 
-/*        userlist_read(); */
-        emoticon_read();
-        msg_queue_read();
+/*	  userlist_read(); */
+	emoticon_read();
+	msg_queue_read();
 
 #ifdef HAVE_NCURSES
-        if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("ncurses"), -254, 1);
+	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("ncurses"), -254, 1);
 #endif
 #ifdef HAVE_GTK
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("gtk"), -254, 1);
@@ -899,121 +887,128 @@ int main(int argc, char **argv)
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
 #endif
 	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
-	else for (l = buffer_debug; l; l = l->next) {
-		struct buffer *b = l->data;
-		print_window_w(window_debug, 0, b->target, b->line);
+	else {
+		struct buffer *b;
+		for (b = buffer_debug.data; b; b = b->next)
+			print_window_w(window_debug, EKG_WINACT_NONE, b->target, b->line);
 	}
 
-        if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
+	if (!have_plugin_of_class(PLUGIN_PROTOCOL)) {
 #ifdef HAVE_EXPAT
-                plugin_load(("jabber"), -254, 1);
+		plugin_load(("jabber"), -254, 1);
 #endif
 #ifdef HAVE_LIBGADU
-                plugin_load(("gg"), -254, 1);
+		plugin_load(("gg"), -254, 1);
 #endif
-                plugin_load(("irc"), -254, 1);
-        }
+		plugin_load(("irc"), -254, 1);
+	}
 	theme_plugins_init();
 
 	scripts_init();
-	config_read(NULL);
+	/* If user does not have a config, don't bug about config upgrades. */
+	if (config_read(NULL) == -1)
+		config_version = -1;
 
-        /* je¶li ma byæ theme, niech bêdzie theme */
+	/* je¶li ma byæ theme, niech bêdzie theme */
 	if (load_theme)		theme_read(load_theme, 1);
 	else if (config_theme)	theme_read(config_theme, 1);
 
-        in_autoexec = 0;
+	in_autoexec = 0;
 
 	/* XXX, unidle() was here */
 
-        /* wypada³oby obserwowaæ stderr */
-        if (!batch_mode) {
+	/* wypada³oby obserwowaæ stderr */
+	if (!batch_mode) {
 #ifndef NO_POSIX_SYSTEM
-                int fd[2];
+		int fd[2];
 
-                if (!pipe(fd)) {
-                        fcntl(fd[0], F_SETFL, O_NONBLOCK);
-                        fcntl(fd[1], F_SETFL, O_NONBLOCK);
-                        watch_add_line(NULL, fd[0], WATCH_READ_LINE, handle_stderr, NULL);
-                        stderr_backup = fcntl(2, F_DUPFD, 0);
-                        dup2(fd[1], 2);
-                }
+		if (!pipe(fd)) {
+			fcntl(fd[0], F_SETFL, O_NONBLOCK);
+			fcntl(fd[1], F_SETFL, O_NONBLOCK);
+			watch_add_line(NULL, fd[0], WATCH_READ_LINE, handle_stderr, NULL);
+			stderr_backup = fcntl(2, F_DUPFD, 0);
+			dup2(fd[1], 2);
+		}
 #endif
-        }
+	}
 
-        if (!batch_mode && config_display_welcome)
-                print("welcome", VERSION);
+	if (!batch_mode && config_display_welcome)
+		print("welcome", VERSION);
 
-        protocol_init();
-        events_init();
-        metacontact_init();
+	protocol_init();
+	events_init();
+	metacontact_init();
 	audio_initialize();
 /*	scripts_init();		*/
 
-        /* it has to be done after plugins are loaded, either we wouldn't know if we are
-         * supporting some protocol in current build */
-        if (session_read(NULL) == -1)
-                no_config = 1;
+	/* it has to be done after plugins are loaded, either we wouldn't know if we are
+	 * supporting some protocol in current build */
+	if (session_read(NULL) == -1)
+		no_config = 1;
 
-        config_postread();
+	config_postread();
 
-        /* status window takes first session if not setted before*/
-	if (!session_current && sessions)
-			session_current = (session_t*) sessions->data;
+	/* status window takes first session if not set before*/
+	if (!window_status->session && sessions)
+		window_session_set(window_status, sessions);
 
-	if (session_current != window_current->session)
-		window_current->session = session_current;
+	metacontact_read(); /* read the metacontacts info */
 
-        metacontact_read(); /* read the metacontacts info */
+	{
+		session_t *s;
 
-        /* wylosuj opisy i zmieñ stany klientów */
-        for (l = sessions; l; l = l->next) {
-                session_t *s = l->data;
-                const char *cmd = NULL;
+		/* wylosuj opisy i zmieñ stany klientów */
+		for (s = sessions; s; s = s->next) {
+			const char *cmd = NULL;
 
-                if (new_status)
-                        session_status_set(s, new_status);
+			if (new_status)
+				session_status_set(s, new_status);
 
-                if (new_descr)
-                        session_descr_set(s, new_descr);
+			if (new_descr)
+				session_descr_set(s, new_descr);
 
-                if (!xstrcmp(s->status, EKG_STATUS_AVAIL) || !xstrcmp(s->status, EKG_STATUS_NA))
-                        cmd = "back";
+			cmd = ekg_status_string(s->status, 1);
 
-                if (!cmd)
-                        cmd = s->status;
+			command_exec_format(NULL, s, 2, ("/%s %s"), cmd, (new_descr) ? new_descr : "");
+		}
 
-                command_exec_format(NULL, s, 2, ("/%s %s"), cmd, (new_descr) ? new_descr : "");
-        }
+		/* po zainicjowaniu protoko³ów, po³±cz siê automagicznie ze
+		 * wszystkim, co chce siê automagicznie ³±czyæ. */
+		for (s = sessions; s; s = s->next) {
+			if (auto_connect && session_int_get(s, "auto_connect") == 1)
+				command_exec(NULL, s, ("/connect"), 0);
+		}
+	}
 
-        /* po zainicjowaniu protoko³ów, po³±cz siê automagicznie ze
-         * wszystkim, co chce siê automagicznie ³±czyæ. */
-        for (l = sessions; l; l = l->next) {
-                session_t *s = l->data;
+	if (config_auto_save)
+		last_save = time(NULL);
 
-                if (auto_connect && session_int_get(s, "auto_connect") == 1)
-                        command_exec(NULL, s, ("/connect"), 0);
-        }
+	if (no_config) {
+#ifdef HAVE_LIBGADU
+		if (plugin_find("gg"))
+			print("no_config");
+		else
+			print("no_config_gg_not_loaded");
+#else
+		print("no_config_no_libgadu");
+#endif
+	}
 
-        if (config_auto_save)
-                last_save = time(NULL);
+	timer_add(NULL, "autoaway", 1, 1, ekg_autoaway_timer, NULL);
 
-        if (no_config)
-                wcs_print("no_config");
-
-        reason_changed = 0;
+	reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
 	if (query_emit_id(NULL, UI_LOOP) != -1) {
-        	/* krêæ imprezê */
+		/* krêæ imprezê */
 		while (1) {
 			ekg_loop();
 		}
 	}
 
-        ekg_exit();
+	ekg_exit();
 
-        return 0;
+	return 0;
 }
 
 /*
@@ -1024,9 +1019,8 @@ int main(int argc, char **argv)
  */
 void ekg_exit()
 {
+	char *exit_exec = config_exit_exec;
 	extern int ekg2_dlclose(void *plugin);
-
-	list_t l;
 	int i;
 
 	msg_queue_write();
@@ -1058,37 +1052,44 @@ void ekg_exit()
 	}
 	send_nicks_count = 0;
 
-	for (l = children; l; l = l->next) {
-		child_t *c = l->data;
+	{
+		child_t *c;
 
+		for (c = children; c; c = c->next) {
 #ifndef NO_POSIX_SYSTEM
-		kill(c->pid, SIGTERM);
+			kill(c->pid, SIGTERM);
 #else
-		/* TerminateProcess / TerminateThread */
+			/* TerminateProcess / TerminateThread */
 #endif
-		xfree(c->name);
-	}
-	list_destroy(children, 1);	children = NULL;
-
-	for (l = watches; l; l = l->next) {
-		watch_t *w = l->data;
-
-		watch_free(w);
+		}
+		children_destroy();
 	}
 
-	for (l = plugins; l; ) {
-		plugin_t *p = l->data;
+	{
+		list_t l;
 
-		l = l->next;
+		for (l = watches; l; l = l->next) {
+			watch_t *w = l->data;
 
-		if (p->pclass != PLUGIN_UI)
-			continue;
-
-		p->destroy();
-
-		if (p->dl) ekg2_dlclose(p->dl);
+			watch_free(w);
+		}
 	}
-	list_destroy(watches, 0);	 watches = NULL;
+
+	{
+		plugin_t *p, *next;
+
+		for (p = plugins; p; p = next) {
+			next = p->next;
+
+			if (p->pclass != PLUGIN_UI)
+				continue;
+
+			p->destroy();
+
+//			if (p->dl) ekg2_dlclose(p->dl);
+		}
+	}
+	list_destroy(watches, 0); watches = NULL;
 
 	if (config_changed && !config_speech_app && config_save_quit == 1) {
 		char line[80];
@@ -1127,65 +1128,67 @@ void ekg_exit()
 		if (session_write())
 			printf(_("Error while saving.\n"));
 	}
+	config_exit_exec = NULL; /* avoid freeing it */
 
 /* XXX, think about sequence of unloading. */
 
-	msg_queue_free();
-	conference_free();
-	newconference_free();
-	metacontact_free();
+	msgs_queue_destroy();
+	conferences_destroy();
+	newconferences_destroy();
+	metacontacts_destroy();
 	sessions_free();
 
-	for (l = plugins; l; ) {
-		plugin_t *p = l->data;
+	{
+		plugin_t *p;
 
-		l = l->next;
+		for (p = plugins; p; ) {
+			plugin_t *next = p->next;
 
-		p->destroy();
+			p->destroy();
 
-		if (p->dl) ekg2_dlclose(p->dl);
+//			if (p->dl) ekg2_dlclose(p->dl);
+
+			p = next;
+		}
 	}
 
 	audio_deinitialize();
-	alias_free();
+	aliases_destroy();
 	theme_free();
-	variable_free();
+	variables_destroy();
 	script_variables_free(1);
-	emoticon_free();
-	command_free();
-
-	for (l = timers; l;) {
-		struct timer *t = l->data;
-		
-		l = l->next;
-
-		timer_free(t);
-	}
-
+	emoticons_destroy();
+	commands_destroy();
+	timers_destroy();
 	binding_free();
-	last_free();
+	lasts_destroy();
 
 	buffer_free(&buffer_debug);	buffer_free(&buffer_speech);
 	event_free();
 
 	xfree(read_file(NULL, -1));	/* free internal read_file() buffer */
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+/* windows: */
+	windows_destroy();
+	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
 
-		if (!w)
-			continue;
+/* queries: */
+	{
+		query_t **ll;
 
-		xfree(w->target);
-	}
-	list_destroy(windows, 1);	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
+		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
+			query_t *q;
 
-	for (l = queries; l; ) {	/* free other queries... connected by protocol_init() for example */
-		query_t *q = l->data;
+			for (q = *ll; q; ) {	/* free other queries... connected by protocol_init() for example */
+				query_t *next = q->next;
 
-		l = l->next;
+				query_free(q);
 
-		query_free(q);
+				q = next;
+			}
+
+			LIST_DESTROY2(*ll, NULL); /* XXX: really needed? */
+		}
 	}
 	query_external_free();
 
@@ -1199,7 +1202,18 @@ void ekg_exit()
 	WSACleanup();
 #endif
 	close(stderr_backup);
-        exit(0);
+
+	if (exit_exec) {
+#ifndef NO_POSIX_SYSTEM
+		execl("/bin/sh", "sh", "-c", exit_exec, NULL);
+#else
+		/* XXX, like in cmd_exec() */
+#endif
+		/* should we return some error code if exec() failed?
+		 * AKA this line shouldn't be ever reached */
+	}
+
+	exit(0);
 }
 
 /*

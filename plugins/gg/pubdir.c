@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -26,6 +26,7 @@
 #include <ekg/debug.h>
 #include <ekg/themes.h>
 #include <ekg/stuff.h>
+#include <ekg/queries.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
@@ -105,7 +106,7 @@ fail:
 COMMAND(gg_command_register)
 {
 	struct gg_http *h;
-	char *passwd;
+	char *passwd, *passwd_b;
 	watch_t *w;
 
 	if (gg_register_done) {
@@ -113,7 +114,7 @@ COMMAND(gg_command_register)
 		return -1;
 	}
 	
-	if (!params[0] || !params[1] || !params[2]) {
+	if (!params[0] || !params[1]) {
 		printq("not_enough_params", name);
 		return -1;
 	}
@@ -123,30 +124,37 @@ COMMAND(gg_command_register)
 		return -1;
 	}
 
-        if (!last_tokenid) {
-	        printq("gg_token_missing");
-                return -1;
-        }
+	if (!last_tokenid) {
+		printq("gg_token_missing");
+		return -1;
+	}
 
-	passwd = gg_locale_to_cp(xstrdup(params[1]));
+	if (params[2]) {
+		passwd_b = xstrdup(params[1]);
+		params[1] = params[2];
+		params[2] = NULL;
+	} else if (!(passwd_b = password_input(NULL, NULL, 0)))
+			return -1;
+
+	passwd = ekg_locale_to_cp(xstrdup(passwd_b));
 	
-	if (!(h = gg_register3(params[0], passwd, last_tokenid, params[2], 1))) {
+	if (!(h = gg_register3(params[0], passwd, last_tokenid, params[1], 1))) {
 		xfree(passwd);
+		xfree(passwd_b);
 		printq("register_failed", strerror(errno));
 		return -1;
 	}
 
 	xfree(last_tokenid);	last_tokenid = NULL;
-
 	xfree(passwd);
 
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_register, h); 
 	watch_timeout_set(w, h->timeout);
 
-	list_add(&gg_registers, h, 0);
+	list_add(&gg_registers, h);
 
 	gg_register_email = xstrdup(params[0]);
-	gg_register_password = xstrdup(params[1]);
+	gg_register_password = passwd_b;
 
 	return 0;
 }
@@ -202,10 +210,10 @@ COMMAND(gg_command_unregister)
 	uin_t uin;
 	char *passwd;
 
-        if (!last_tokenid) {
-                printq("token_missing");
-                return -1;
-        }
+	if (!last_tokenid) {
+		printq("token_missing");
+		return -1;
+	}
 
 	if (!xstrncasecmp(params[0], "gg:", 3))
 		uin = atoi(params[0] + 3);
@@ -216,7 +224,7 @@ COMMAND(gg_command_unregister)
 		printq("unregister_bad_uin", params[0]);
 		return -1;
 	}
-	passwd = gg_locale_to_cp(xstrdup(params[1]));
+	passwd = ekg_locale_to_cp(xstrdup(params[1]));
 
 	if (!(h = gg_unregister3(uin, passwd, last_tokenid, params[2], 1))) {
 		printq("unregister_failed", strerror(errno));
@@ -230,7 +238,7 @@ COMMAND(gg_command_unregister)
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_unregister, h); 
 	watch_timeout_set(w, h->timeout);
 
-	list_add(&gg_unregisters, h, 0);
+	list_add(&gg_unregisters, h);
 
 	return 0;
 }
@@ -243,7 +251,7 @@ COMMAND(gg_command_unregister)
  * Here we wait for server reply, and if it success we set new password in session variable.<br>
  *
  * @todo Need rewriting, it's buggy. We don't free memory @ type == 1, when watch wasn't executed...
- * 		We always create watch @@ not GG_STATE_DONE, even if there's no need, and maybe more. XXX
+ *		We always create watch @@ not GG_STATE_DONE, even if there's no need, and maybe more. XXX
  *
  * @return -1 [TEMPORARY WATCH]
  */
@@ -251,7 +259,7 @@ COMMAND(gg_command_unregister)
 static WATCHER(gg_handle_passwd) {
 	struct gg_http *h = data;
 	struct gg_pubdir *p = NULL;
-	list_t l;
+	session_t *s;
 
 	if (type == 2) {
 		debug("[gg] gg_handle_passwd() timeout\n");
@@ -289,8 +297,7 @@ static WATCHER(gg_handle_passwd) {
 	print("passwd");
 
 fail:
-	for (l = sessions; l; l = l->next) {
-		session_t *s = l->data;
+	for (s = sessions; s; s = s->next) {
 		gg_private_t *g;
 		list_t m;
 
@@ -350,15 +357,24 @@ COMMAND(gg_command_passwd) {
 		printq("gg_token_missing");
 		return -1;
 	}
-	if (!params[1]) {
+	if (!params[0]) {
 		printq("not_enough_params", name);
 		return -1;
 	}
+	if (!params[1]) {
+#else
+	if (!params[0]) {
 #endif
-	oldpasswd = gg_locale_to_cp(xstrdup(session_get(session, "password")));
-	newpasswd = gg_locale_to_cp(xstrdup(params[0]));
+		newpasswd = ekg_locale_to_cp(password_input(NULL, NULL, 0));
+		if (!newpasswd)
+			return -1;
+	} else
+		newpasswd = ekg_locale_to_cp(xstrdup(params[0]));
+
+	oldpasswd = ekg_locale_to_cp(xstrdup(session_get(session, "password")));
+
 #ifdef HAVE_GG_CHANGE_PASSWD4 
-	if (!(h = gg_change_passwd4(atoi(session->uid + 3), config_email, (oldpasswd) ? oldpasswd : "", newpasswd, last_tokenid, params[1], 1)))
+	if (!(h = gg_change_passwd4(atoi(session->uid + 3), config_email, (oldpasswd) ? oldpasswd : "", newpasswd, last_tokenid, params[1] ? params[1] : params[0], 1)))
 #else 
 	if (!(h = gg_change_passwd3(atoi(session->uid + 3), (oldpasswd) ? oldpasswd : "", newpasswd, "", 1)))
 #endif 
@@ -378,7 +394,7 @@ COMMAND(gg_command_passwd) {
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_passwd, h); 
 	watch_timeout_set(w, h->timeout);
 
-	list_add(&g->passwds, h, 0);
+	list_add(&g->passwds, h);
 
 	xfree(newpasswd);
 	xfree(oldpasswd);
@@ -494,7 +510,7 @@ COMMAND(gg_command_remind)
 	w = watch_add(&gg_plugin, h->fd, h->check, gg_handle_remind, h); 
 	watch_timeout_set(w, h->timeout);
 
-	list_add(&gg_reminds, h, 0);
+	list_add(&gg_reminds, h);
 
 	return 0;
 }
@@ -516,46 +532,45 @@ int gg_userlist_set(session_t *session, const char *contacts)
 
 	array_free(entries);
 
+	query_emit_id(NULL, USERLIST_REFRESH);
+
 	return 0;
 }
 
 /*
  * gg_userlist_dump()
  *
- * zapisuje listê kontaktów w postaci tekstowej.
+ * zapisuje listÄ™ kontaktÃ³w w postaci tekstowej.
  *
- * zwraca zaalokowany bufor, który nale¿y zwolniæ.
+ * zwraca zaalokowany bufor, ktÃ³ry naleÅ¼y zwolniÄ‡.
  */
 static char *gg_userlist_dump(session_t *session)
 {
 	string_t s;
-	list_t l;
+	userlist_t *ul;
 
 	s = string_init(NULL);
 
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-		char *line;
-		const char *uid;
+	for (ul = session->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 		char *groups;
-
-		uid = (!strncmp(u->uid, "gg:", 3)) ? u->uid + 3 : u->uid;
+		const char *__first_name = user_private_item_get(u, "first_name");
+		const char *__last_name = user_private_item_get(u, "last_name");
+		const char *__mobile = user_private_item_get(u, "mobile");
 
 		groups = group_to_string(u->groups, 1, 0);
 		
-		line = saprintf(("%s;%s;%s;%s;%s;%s;%s%s\r\n"),
-			(u->first_name) ? u->first_name : "",
-			(u->last_name) ? u->last_name : "",
+		string_append_format(s, 
+			"%s;%s;%s;%s;%s;%s;%s%s\r\n",
+			__first_name ? __first_name : "",
+			__last_name ? __last_name : "",
 			(u->nickname) ? u->nickname : "",
 			(u->nickname) ? u->nickname : "",
-			(u->mobile) ? u->mobile : "",
+			__mobile ? __mobile : "",
 			groups,
-			uid,
+			u->uid + 3 /* skip gg: */,
 			(u->foreign) ? u->foreign : "");
-		
-		string_append(s, line);
 
-		xfree(line);
 		xfree(groups);
 	}	
 
@@ -575,10 +590,10 @@ COMMAND(gg_command_list)
 		}
 #endif
 
-                if (gg_userlist_request(g->sess, GG_USERLIST_GET, NULL) == -1) {
-                        printq("userlist_get_error", strerror(errno));
+		if (gg_userlist_request(g->sess, GG_USERLIST_GET, NULL) == -1) {
+			printq("userlist_get_error", strerror(errno));
 			return -1;
-	        }
+		}
 
 		session_int_set(session, "__userlist_get_config", 0);
 		return 0;
@@ -593,10 +608,10 @@ COMMAND(gg_command_list)
 		}
 #endif
 
-                if (gg_userlist_request(g->sess, GG_USERLIST_PUT, NULL) == -1) {
-                        printq("userlist_clear_error", strerror(errno));
-                        return -1;
-                }
+		if (gg_userlist_request(g->sess, GG_USERLIST_PUT, NULL) == -1) {
+			printq("userlist_clear_error", strerror(errno));
+			return -1;
+		}
 		session_int_set(session, "__userlist_put_config", 2);
 		return 0;
 	}
@@ -612,13 +627,13 @@ COMMAND(gg_command_list)
 		}
 #endif
 		contacts	= gg_userlist_dump(session);
-		cpcontacts	= gg_locale_to_cp(contacts);
+		cpcontacts	= ekg_locale_to_cp(contacts);
 
-                if (gg_userlist_request(g->sess, GG_USERLIST_PUT, cpcontacts) == -1) {
-                        printq("userlist_put_error", strerror(errno));
-                        xfree(cpcontacts);
-                        return -1;
-                }
+		if (gg_userlist_request(g->sess, GG_USERLIST_PUT, cpcontacts) == -1) {
+			printq("userlist_put_error", strerror(errno));
+			xfree(cpcontacts);
+			return -1;
+		}
 
 		session_int_set(session, "__userlist_put_config", 0);
 		xfree(cpcontacts);

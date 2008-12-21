@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2005 Leszek Krupiñski <leafnode@wafel.com>
- *                     Marcin Jurkowski <marcin@vilo.eu.org>
+ *		       Marcin Jurkowski <marcin@vilo.eu.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU Lesser General Public License Version
@@ -28,6 +28,7 @@
 #include <ekg/log.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
+#include <ekg/queries.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
@@ -62,20 +63,22 @@ PLUGIN_DEFINE(logsqlite, PLUGIN_LOG, logsqlite_theme_init);
 char *config_logsqlite_path = NULL;
 int config_logsqlite_last_in_window = 0;
 int config_logsqlite_last_open_window = 0;
-int config_logsqlite_last_limit = 10;
+int config_logsqlite_last_limit_msg = 10;
+int config_logsqlite_last_limit_status = 10;
+int config_logsqlite_last_print_on_open = 0;
 int config_logsqlite_log = 0;
 int config_logsqlite_log_ignored = 0;
 int config_logsqlite_log_status = 0;
-int config_logsqlite_remind_number = 0;
 
 static sqlite_t * logsqlite_current_db = NULL;
 static char * logsqlite_current_db_path = NULL;
+static int logsqlite_in_transaction = 0;
 
 
 /*
  * last log
  */
-COMMAND(logsqlite_cmd_last)
+int last(const char **params, session_t *session, int quiet, int status)
 {
 	sqlite_t * db;
 	char buf[100];
@@ -98,7 +101,8 @@ COMMAND(logsqlite_cmd_last)
 	char * gotten_uid = NULL;
 	char * nick = NULL;
 	char * keep_nick = NULL;
-	int limit = config_logsqlite_last_limit;
+	int limit_msg = config_logsqlite_last_limit_msg;
+	int limit_status = config_logsqlite_last_limit_status;
 	int i = 0;
 	char * target_window = "__current";
 	char *sql_search = NULL;
@@ -111,17 +115,26 @@ COMMAND(logsqlite_cmd_last)
 		}
 	}
 	
-	
 	for (i = 0; params[i]; i++) {
 		
 		if (match_arg(params[i], 'n', "number", 2) && params[i + 1]) {
-			limit = atoi(params[++i]);
+			if(!status) {
+				limit_msg = atoi(params[++i]);
 
-			if (limit <= 0) {
-				printq("invalid_params", "logsqlite:last");
-				return 0;
+				if (limit_msg <= 0) {
+					printq("invalid_params", "logsqlite:last");
+					return 0;
+				}
+				continue;
+			} else {
+				limit_status = atoi(params[++i]);
+
+				if (limit_status <= 0) {
+					printq("invalid_params", "logsqlite:laststatus");
+					return 0;
+				}
+				continue;
 			}
-			continue;
 		}
 
 		if (match_arg(params[i], 's', "search", 2) && params[i + 1]) {
@@ -132,10 +145,9 @@ COMMAND(logsqlite_cmd_last)
 		keep_nick = (char *) params[i];
 	}
 
-	if (! (db = logsqlite_prepare_db(session, time(0))))
+	if (! (db = logsqlite_prepare_db(session, time(0), 0)))
 		return -1;
 
-	keep_nick = xstrdup(keep_nick);
 	sql_search = sql_search ? sql_search : "";	/* XXX: use fix() */
 #ifdef HAVE_SQLITE3
 	sql_search = sqlite3_mprintf("%%%s%%", sql_search);
@@ -143,7 +155,7 @@ COMMAND(logsqlite_cmd_last)
 
 
 	if (keep_nick) {
-		nick = strip_quotes(keep_nick);
+		nick = keep_nick;
 		gotten_uid = get_uid(session, nick);
 		if (! gotten_uid) 
 			gotten_uid = nick;
@@ -151,26 +163,46 @@ COMMAND(logsqlite_cmd_last)
 			target_window = gotten_uid;
 
 #ifdef HAVE_SQLITE3
-		sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = ?1 AND body LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+		if (!status)
+			sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = ?1 AND body LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+		else
+			sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, status, desc FROM log_status WHERE uid = ?1 AND desc LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+
 		sqlite3_bind_text(stmt, 1, gotten_uid, -1, SQLITE_STATIC);
 		sqlite3_bind_text(stmt, 3, sql_search, -1, SQLITE_STATIC);
 #else
-		sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = '%q' AND body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", gotten_uid, sql_search, limit);
+		if(!status)
+			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE uid = '%q' AND body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", gotten_uid, sql_search, limit_msg);
+		else
+			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, status, desc FROM log_status WHERE uid = '%q' AND desc LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", gotten_uid, sql_search, limit_status);
+
 #endif
 	} else {
 		if (config_logsqlite_last_in_window)
 			target_window = "__status";
 
 #ifdef HAVE_SQLITE3
-		sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE body LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+		if(!status)
+			sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE body LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+		else
+			sqlite3_prepare(db, "SELECT * FROM (SELECT uid, nick, ts, status, desc FROM log_status WHERE desc LIKE ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+
 		sqlite3_bind_text(stmt, 3, sql_search, -1, SQLITE_STATIC);
 #else
-		sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", sql_search, limit);
+		if(!status)
+			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, body, sent FROM log_msg WHERE body LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", sql_search, limit_msg);
+		else
+			sql = sqlite_mprintf("SELECT * FROM (SELECT uid, nick, ts, status, desc FROM log_status WHERE desc LIKE '%%%q%%' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", sql_search, limit_status);
+
 #endif
 	}
 
 #ifdef HAVE_SQLITE3
-	sqlite3_bind_int(stmt, 2, limit);
+	if(status)
+		sqlite3_bind_int(stmt, 2, limit_status);
+	else
+		sqlite3_bind_int(stmt, 2, limit_msg);
+
 	while (sqlite3_step(stmt) == SQLITE_ROW) {
 		ts = (time_t) sqlite3_column_int(stmt, 2);
 #else
@@ -180,49 +212,111 @@ COMMAND(logsqlite_cmd_last)
 #endif
 		if (count2 == 0) {
 			if (gotten_uid)
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_begin_uin", gotten_uid);
+				if (!status)
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_begin_uin", gotten_uid);
+				else
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_begin_uin_status", gotten_uid);
+
 			else
-				print_window(target_window, session, config_logsqlite_last_open_window, "last_begin");
+				if (!status)
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_begin");
+				else
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_begin_status");
+
 		}
 		count2++;
 		tm = localtime(&ts);
 		strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm);
-#ifdef HAVE_SQLITE3
-		if (sqlite3_column_int(stmt, 4) == 0)
-#else
-		if (!xstrcmp(results[4], "0"))
-#endif
-			last_direction = "last_list_in";
-		else
-			last_direction = "last_list_out";
 
-		print_window(target_window, session, config_logsqlite_last_open_window, last_direction, buf,
+		if(!status) {
+#ifdef HAVE_SQLITE3
+			if (sqlite3_column_int(stmt, 4) == 0)
+#else
+			if (!xstrcmp(results[4], "0"))
+#endif
+				last_direction = "last_list_in";
+			else
+				last_direction = "last_list_out";
+
+		print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, last_direction, buf,
 #ifdef HAVE_SQLITE3
 			sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3));
 #else
 			results[1], results[3]);
 #endif
+
+		} else {
+			last_direction = "last_list_status";
+#ifdef HAVE_SQLITE3
+			if(xstrlen(sqlite3_column_text(stmt, 4))) {
+#else
+			if(xstrlen(results[4])) {
+#endif
+				last_direction = "last_list_status_descr";
+
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, last_direction, buf,
+#ifdef HAVE_SQLITE3
+				sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3), sqlite3_column_text(stmt, 4));
+#else
+				results[1], results[3], results[4]);
+#endif
+			} else {
+				last_direction = "last_list_status";
+
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, last_direction, buf,
+#ifdef HAVE_SQLITE3
+				sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3));
+#else
+				results[1], results[3]);
+#endif
+
+			}
+		}	
 	}
 	if (count2 == 0) {
 		if (nick) {
-			print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty_nick", nick);
+			if (!status)
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_list_empty_nick", nick);
+			else
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_list_empty_nick_status", nick);
 		} else {
-			print_window(target_window, session, config_logsqlite_last_open_window, "last_list_empty");
+			if (!status) 
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_list_empty");
+			else
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_list_empty_status");
 		}
 	} else {
-		print_window(target_window, session, config_logsqlite_last_open_window, "last_end");
+		if (!status) 
+			print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_end");
+		else
+			print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, "last_end_status");
 	}
 
-	xfree(keep_nick);
-
 #ifdef HAVE_SQLITE3
-	xfree(sql_search);
+	sqlite3_free(sql_search);
 	sqlite3_finalize(stmt);
 #else
-	xfree(sql);
+	sqlite_freemem(sql);
 	sqlite_finalize(vm, &errors);
 #endif
-	logsqlite_close_db(db);
+	return 0;
+}
+
+COMMAND(logsqlite_cmd_last)
+{
+	return last(params, session, quiet, 0);	
+}
+
+COMMAND(logsqlite_cmd_laststatus)
+{
+	return last(params, session, quiet, 1);	
+}
+
+COMMAND(logsqlite_cmd_sync)
+{
+	if (logsqlite_current_db && logsqlite_in_transaction)
+		sqlite_n_exec(logsqlite_current_db, "COMMIT", NULL, NULL, NULL);
+	
 	return 0;
 }
 
@@ -261,7 +355,7 @@ char *logsqlite_prepare_path(session_t *session, time_t sent)
 				case 'M':	snprintf(datetime, 3, "%02d", tm->tm_mon+1);
 						string_append_n(buf, datetime, 2);
 						break;
-				case 'D':       snprintf(datetime, 3, "%02d", tm->tm_mday);
+				case 'D':	snprintf(datetime, 3, "%02d", tm->tm_mday);
 						string_append_n(buf, datetime, 2);
 						break;
 				default:	string_append_c(buf, *(tmp+1));
@@ -287,8 +381,10 @@ char *logsqlite_prepare_path(session_t *session, time_t sent)
 
 /*
  * prepare db handler
+ *
+ * 'mode': 0 = read, 1 = write (determines whether transaction should be used)
  */
-sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent)
+sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent, int mode)
 {
 	char * path;
 	sqlite_t * db;
@@ -298,18 +394,32 @@ sqlite_t * logsqlite_prepare_db(session_t * session, time_t sent)
 	if (!logsqlite_current_db_path || !logsqlite_current_db) {
 		if (! (db = logsqlite_open_db(session, sent, path)))
 			return 0;
-                xfree(logsqlite_current_db_path);
+		xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = xstrdup(path);
 		logsqlite_current_db = db;
+
+		if (mode)
+			sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+		logsqlite_in_transaction = mode;
 	} else if (!xstrcmp(path, logsqlite_current_db_path) && logsqlite_current_db) {
 		db = logsqlite_current_db;
 		debug("[logsqlite] keeping old db\n");
+
+		if (mode && !logsqlite_in_transaction)
+			sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+		else if (!mode && logsqlite_in_transaction)
+			sqlite_n_exec(db, "COMMIT", NULL, NULL, NULL);
+		logsqlite_in_transaction = mode;
 	} else {
 		logsqlite_close_db(logsqlite_current_db);
 		db = logsqlite_open_db(session, sent, path);
 		logsqlite_current_db = db;
 		xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = xstrdup(path);
+
+		if (mode)
+			sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
+		logsqlite_in_transaction = mode;
 	}
 	xfree(path);
 	return db;
@@ -326,7 +436,7 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 	sqlite_t * db = NULL;
 #ifdef HAVE_SQLITE3	
 	const 
-#endif 	
+#endif	
 		char * errormsg = NULL;
 	int makedir = 1, slash_pos = 0;
 
@@ -363,8 +473,8 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 #endif
 
 		sqlite_n_exec(db, "BEGIN TRANSACTION", NULL, NULL, NULL);
-		sqlite_n_exec(db, "CREATE TABLE log_msg (session , uid , nick , type , sent INT, ts INT, sentts INT, body )", NULL, NULL, NULL);
-		sqlite_n_exec(db, "CREATE TABLE log_status (session , uid , nick , ts INT, status , desc )", NULL, NULL, NULL);
+		sqlite_n_exec(db, "CREATE TABLE log_msg (session TEXT, uid TEXT, nick TEXT, type TEXT, sent INT, ts INT, sentts INT, body TEXT)", NULL, NULL, NULL);
+		sqlite_n_exec(db, "CREATE TABLE log_status (session TEXT, uid TEXT, nick TEXT, ts INT, status TEXT, desc TEXT)", NULL, NULL, NULL);
 
 #ifdef HAVE_SQLITE3
 		sqlite3_exec(db, "CREATE INDEX ts ON log_msg(ts)", NULL, NULL, NULL); 
@@ -399,7 +509,7 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 #ifdef HAVE_SQLITE3
 		sqlite3_close(db);		// czy to konieczne?
 #else
-		xfree(errormsg);
+		if (errormsg) sqlite_freemem(errormsg);
 #endif
 		return 0;
 	}
@@ -408,6 +518,10 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 
 /*
  * close db
+ *
+ * 'force' determines whether database should really be closed
+ * if we have 'persistent open' set, so that it should be used
+ * for example on filename change
  */
 void logsqlite_close_db(sqlite_t * db)
 {
@@ -419,6 +533,9 @@ void logsqlite_close_db(sqlite_t * db)
 		logsqlite_current_db = NULL;
 		xfree(logsqlite_current_db_path);
 		logsqlite_current_db_path = NULL;
+
+		if (logsqlite_in_transaction)
+			sqlite_n_exec(db, "COMMIT", NULL, NULL, NULL);
 	}
 	sqlite_n_close(db);
 }
@@ -429,17 +546,18 @@ void logsqlite_close_db(sqlite_t * db)
 
 QUERY(logsqlite_msg_handler)
 {
-	char    **__session = va_arg(ap, char**),    *session = *__session;
-	char        **__uid = va_arg(ap, char**),        *uid = *__uid;
-	char     ***__rcpts = va_arg(ap, char***),    **rcpts = *__rcpts;
-	char       **__text = va_arg(ap, char**),       *text = *__text;
+	char	**__session = va_arg(ap, char**),    *session = *__session;
+	char	    **__uid = va_arg(ap, char**),	 *uid = *__uid;
+	char	 ***__rcpts = va_arg(ap, char***),    **rcpts = *__rcpts;
+	char	   **__text = va_arg(ap, char**),	*text = *__text;
 	uint32_t **__format = va_arg(ap, uint32_t**), *format = *__format;
-	time_t      *__sent = va_arg(ap, time_t*),       sent = *__sent;
-	int        *__class = va_arg(ap, int*),         class = *__class;
+	time_t	    *__sent = va_arg(ap, time_t*),	 sent = *__sent;
+	int	   *__class = va_arg(ap, int*),		class = *__class;
 	session_t *s = session_find((const char*)session);
 	char * gotten_uid = get_uid(s, uid);
 	char * gotten_nickname = get_nickname(s, uid);
 	char * type = NULL;
+	char * myuid = NULL;
 	sqlite_t * db;
 #ifdef HAVE_SQLITE3	
 	sqlite3_stmt * stmt;
@@ -454,34 +572,34 @@ QUERY(logsqlite_msg_handler)
 	if (!session)
 		return 0;
 
-	db = logsqlite_prepare_db(s, sent);
-	if (!db) {
+	if (!xstrstr(session_get(s, "log_formats"), "sqlite"))
 		return 0;
-	}
 
-	switch ((enum msgclass_t)class) {
+	switch ((msgclass_t) class) {
 		case EKG_MSGCLASS_MESSAGE:
-			type = xstrdup("msg");
+			type = ("msg");
 			is_sent = 0;
 			break;
+#if 0	/* equals to 'default' */
 		case EKG_MSGCLASS_CHAT:
 			type = xstrdup("chat");
 			is_sent = 0;
 			break;
+#endif
 		case EKG_MSGCLASS_SENT:
-			type = xstrdup("msg");
+			type = ("msg");
 			is_sent = 1;
 			break;
 		case EKG_MSGCLASS_SENT_CHAT:
-			type = xstrdup("chat");
+			type = ("chat");
 			is_sent = 1;
 			break;
 		case EKG_MSGCLASS_SYSTEM:
-			type = xstrdup("system");
+			type = ("system");
 			is_sent = 0;
 			break;
 		default:
-			type = xstrdup("chat");
+			type = ("chat");
 			is_sent = 0;
 			break;
 	};
@@ -489,7 +607,7 @@ QUERY(logsqlite_msg_handler)
 	if (is_sent) {
 		gotten_uid = (rcpts) ? rcpts[0] : NULL;
 		if (rcpts) {
-			gotten_uid      = get_uid(s, rcpts[0]);
+			gotten_uid	= get_uid(s, rcpts[0]);
 			gotten_nickname = get_nickname(s, rcpts[0]);
 		}
 
@@ -507,13 +625,36 @@ QUERY(logsqlite_msg_handler)
 
 	}
 
+		/* very, very, very, very, very, ..., and very dirty hack
+		 * this should prevent double-printing of newly-received message
+		 * with 'last_print_on_open' set and window not open yet */
+	if (config_logsqlite_last_print_on_open
+			&& (class == EKG_MSGCLASS_CHAT || class == EKG_MSGCLASS_SENT_CHAT
+			|| (!(config_make_window & 4) && (class == EKG_MSGCLASS_MESSAGE || class == EKG_MSGCLASS_SENT))))
+		print_window(gotten_uid, s, EKG_WINACT_NONE, 1, NULL); /* this isn't meant to print anything, just open the window */
+
+		/* moved to not break transaction due to above hack, sorry */
+	db = logsqlite_prepare_db(s, sent, 1);
+	if (!db)
+		return 0;
 
 	debug("[logsqlite] running msg query\n");
+
+	if ((!xstrncmp(gotten_uid, "xmpp:", 5) || !xstrncmp(gotten_uid, "jid:", 4))
+			&& xstrchr(gotten_uid, '/')) {
+		char *tmp;
+
+		myuid	= xstrdup(gotten_uid);
+		if ((tmp = xstrchr(myuid, '/')))
+			*tmp = 0;
+		else
+			debug_error("[logsqlite] WTF? Slash disappeared during xstrdup()!\n");
+	}
 
 #ifdef HAVE_SQLITE3
 	sqlite3_prepare(db, "INSERT INTO log_msg VALUES (?, ?, ?, ?, ?, ?, ?, ?)", -1, &stmt, NULL);
 	sqlite3_bind_text(stmt, 1, session, -1, SQLITE_STATIC);
-	sqlite3_bind_text(stmt, 2, gotten_uid, -1, SQLITE_STATIC);
+	sqlite3_bind_text(stmt, 2, myuid ? myuid : gotten_uid, -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 3, gotten_nickname, -1, SQLITE_STATIC);
 	sqlite3_bind_text(stmt, 4, type, -1, SQLITE_STATIC);
 	sqlite3_bind_int(stmt, 5, is_sent);
@@ -527,7 +668,7 @@ QUERY(logsqlite_msg_handler)
 #else
 	sqlite_exec_printf(db, "INSERT INTO log_msg VALUES(%Q, %Q, %Q, %Q, %i, %i, %i, %Q)", 0, 0, 0,
 		session,
-		gotten_uid,
+		myuid ? myuid : gotten_uid,
 		gotten_nickname,
 		type,
 		is_sent,
@@ -535,10 +676,7 @@ QUERY(logsqlite_msg_handler)
 		sent,
 		text);
 #endif 
-
-
-	xfree(type);
-	logsqlite_close_db(db);
+	xfree(myuid);
 
 	return 0;
 };
@@ -546,13 +684,14 @@ QUERY(logsqlite_msg_handler)
 /**
  * handler statusów
  */
-QUERY(logsqlite_status_handler)
-{
-        char **__session = va_arg(ap, char**), *session = *__session;
-        char **__uid = va_arg(ap, char**), *uid = *__uid;
-        char **__status = va_arg(ap, char**), *status = *__status;
-        char **__descr = va_arg(ap, char**), *descr = *__descr;
-	session_t *s = session_find((const char*)session);
+QUERY(logsqlite_status_handler) {
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+	int nstatus	= *(va_arg(ap, int*));
+	char *descr	= *(va_arg(ap, char**));
+	const char *status;
+
+	session_t *s	= session_find(session);
 	char * gotten_uid = get_uid(s, uid);
 	char * gotten_nickname = get_nickname(s, uid);
 	sqlite_t * db;
@@ -560,14 +699,16 @@ QUERY(logsqlite_status_handler)
 	sqlite3_stmt *stmt;
 #endif 
 
-
 	if (!config_logsqlite_log_status)
 		return 0;
 
 	if (!session)
 		return 0;
 
-	db = logsqlite_prepare_db(s, time(0));
+	if (!xstrstr(session_get(s, "log_formats"), "sqlite"))
+		return 0;
+
+	db = logsqlite_prepare_db(s, time(0), 1);
 	if (!db) {
 		return 0;
 	}
@@ -578,9 +719,10 @@ QUERY(logsqlite_status_handler)
 	if ( gotten_nickname == NULL )
 		gotten_nickname = uid;
 
+	status = ekg_status_string(nstatus, 0);
+
 	if ( descr == NULL )
 		descr = "";
-
 
 	debug("[logsqlite] running status query\n");
 
@@ -606,9 +748,82 @@ QUERY(logsqlite_status_handler)
 		descr);
 #endif 
 
+	return 0;
+}
 
-	logsqlite_close_db(db);
+/* here we print last few messages, like raw_log feature of logs plugin does,
+ * but more Konnekt-like (i.e. message-oriented, not console dump) */
 
+static QUERY(logsqlite_newwin_handler) {
+	window_t	*w	= *(va_arg(ap, window_t **));
+	const char	*sess	= session_uid_get(w->session);
+	const char	*uid;
+	int		class;
+	time_t		ts;
+	const char	*rcpts[2] = { NULL, NULL };
+
+	sqlite_t	*db;
+#ifdef HAVE_SQLITE3
+	sqlite3_stmt	*stmt;
+#else
+	char		*sql;
+	const char	**results;
+	const char	**fields;
+	sqlite_vm	*vm;
+
+	char		*errors;
+	int		count;
+#endif
+
+	if (!config_logsqlite_last_print_on_open || !w || !w->target || !w->session || w->id == 1000
+			|| !(uid = get_uid_any(w->session, w->target))
+			|| !(db = logsqlite_prepare_db(w->session, time(0), 0)))
+		return 0;
+
+		/* as we don't log raw messages, we can normally print the old ones
+		 * and we can simply the thing one step more by using message_print(),
+		 * which is hopefully exported by core */
+
+			/* these ones stolen from /last cmd */
+#ifdef HAVE_SQLITE3
+	sqlite3_prepare(db, "SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = ?1 AND session = ?3 ORDER BY ts DESC LIMIT ?2) ORDER BY ts ASC", -1, &stmt, NULL);
+	sqlite3_bind_text(stmt, 1, uid, -1, SQLITE_STATIC);
+	sqlite3_bind_text(stmt, 3, sess, -1, SQLITE_STATIC);
+	sqlite3_bind_int(stmt, 2, config_logsqlite_last_limit_msg);
+	while (sqlite3_step(stmt) == SQLITE_ROW) {
+		ts = (time_t) sqlite3_column_int(stmt, 0);
+
+		if (sqlite3_column_int(stmt, 2) == 0) {
+#else
+	sql = sqlite_mprintf("SELECT * FROM (SELECT ts, body, sent FROM log_msg WHERE uid = '%q' AND session = '%q' ORDER BY ts DESC LIMIT %i) ORDER BY ts ASC", uid, config_logsqlite_last_limit_msg, sess);
+	sqlite_compile(db, sql, NULL, &vm, &errors);
+	while (sqlite_step(vm, &count, &results, &fields) == SQLITE_ROW) {
+		ts = (time_t) atoi(results[0]);
+
+		if (!xstrcmp(results[2], "0")) {
+#endif
+			class = EKG_MSGCLASS_LOG;
+			rcpts[0] = NULL;
+		} else {
+			class = EKG_MSGCLASS_SENT_LOG;
+			rcpts[0] = uid;
+		}
+
+		message_print(session_uid_get(w->session), (class < EKG_MSGCLASS_SENT ? uid : session_uid_get(w->session)), rcpts, 
+#ifdef HAVE_SQLITE3
+			sqlite3_column_text(stmt, 1),
+#else
+			results[1],
+#endif
+			NULL, ts, class, NULL, 0, 0);
+	};
+
+#ifdef HAVE_SQLITE3
+	sqlite3_finalize(stmt);
+#else
+	sqlite_freemem(sql);
+	sqlite_finalize(vm, &errors);
+#endif
 	return 0;
 }
 
@@ -622,9 +837,8 @@ int logsqlite_theme_init() {
 static int logsqlite_plugin_destroy()
 {
 
-	if (logsqlite_current_db) {
+	if (logsqlite_current_db)
 		logsqlite_close_db(logsqlite_current_db);
-	}
 
 	plugin_unregister(&logsqlite_plugin);
 
@@ -635,17 +849,25 @@ static int logsqlite_plugin_destroy()
 
 int logsqlite_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("logsqlite");
+
 	plugin_register(&logsqlite_plugin, prio);
 
 	logsqlite_setvar_default();
 
 	command_add(&logsqlite_plugin, "logsqlite:last", "puU puU puU puU puU", logsqlite_cmd_last, 0, "-n --number -s --search");
+	command_add(&logsqlite_plugin, "logsqlite:laststatus", "puU puU puU puU puU", logsqlite_cmd_laststatus, 0, "-n --number -s --search");
+	command_add(&logsqlite_plugin, "logsqlite:sync", NULL, logsqlite_cmd_sync, 0, 0);
 
-	query_connect(&logsqlite_plugin, ("protocol-message-post"), logsqlite_msg_handler, NULL);
-	query_connect(&logsqlite_plugin, ("protocol-status"), logsqlite_status_handler, NULL);
+	query_connect_id(&logsqlite_plugin, PROTOCOL_MESSAGE_POST, logsqlite_msg_handler, NULL);
+	query_connect_id(&logsqlite_plugin, PROTOCOL_STATUS, logsqlite_status_handler, NULL);
+	query_connect_id(&logsqlite_plugin, UI_WINDOW_NEW,	logsqlite_newwin_handler, NULL);
+
 	variable_add(&logsqlite_plugin, ("last_open_window"), VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("last_in_window"), VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);
-	variable_add(&logsqlite_plugin, ("last_limit"), VAR_INT, 1, &config_logsqlite_last_limit, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, ("last_limit_msg"), VAR_INT, 1, &config_logsqlite_last_limit_msg, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, ("last_limit_status"), VAR_INT, 1, &config_logsqlite_last_limit_status, NULL, NULL, NULL);
+	variable_add(&logsqlite_plugin, ("last_print_on_open"), VAR_BOOL, 1, &config_logsqlite_last_print_on_open, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log_ignored"), VAR_BOOL, 1, &config_logsqlite_log_ignored, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log_status"), VAR_BOOL, 1, &config_logsqlite_log_status, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("log"), VAR_BOOL, 1, &config_logsqlite_log, NULL, NULL, NULL);
@@ -663,5 +885,5 @@ int logsqlite_plugin_init(int prio)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8 noexpandtab
+ * vim: noet
  */

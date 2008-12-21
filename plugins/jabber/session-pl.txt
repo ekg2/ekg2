@@ -3,6 +3,19 @@
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004 tomasz torcz <zdzichu@irc.pl>
 
+allow_add_reply_id
+	typ: liczba
+	domy¶lna warto¶æ: 1
+	
+	Okre¶la, czy ekg2 powinno dodawaæ tzw. Reply-ID dla wiadomo¶ci
+	przychodz±cych:
+	
+		0 - wy³±czone
+	
+		1 - tylko dla wiadomo¶ci w±tkowanych (thread)
+	
+		2 - dla wszystkich wiadomo¶ci (wy³±czaj±c chat, itp.)
+
 auto_auth
 	typ: liczba
 	domy¶lna warto¶æ: 0
@@ -21,6 +34,8 @@ auto_auth
 		5 - (1+4) ignoruje ¿±dania autoryzacji
 	
 		10 - (8+2) ignoruje ¿±dania cofniêcia autoryzacji
+	
+		16 - przy dodawaniu kontaktów, nie wysy³a pro¶by o autoryzacjê
 
 display_notify
 	typ: liczba
@@ -49,6 +64,13 @@ log_formats
 	Okre¶la formaty, w jakich zapisywane s± logi z rozmów.
 	
 	Patrz tez: zmienna "log_path"
+
+msg_gen_thread
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	Okre¶la, czy ekg2 bêdzie automagicznie generowaæ identyfikatory w±tku
+	dla wiadomo¶ci bez podanego owego.
 
 password
 	typ: tekst

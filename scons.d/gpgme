@@ -1,0 +1,22 @@
+
+# gpgme (encryption used in jabber)
+
+Import('*')
+
+version = []
+out = conf.PkgConfig(None, flags, version, 'gpgme-config')
+
+# check version >= 1.0.0
+if out and version:
+	if int(version.pop().split('.')[0]) < 1:
+		print '[gpg] gpgme-1.0.0 or newer required, disabling.'
+		out = False
+
+if out:
+	old	= SetFlags(env, flags)
+	out = conf.CheckLibWithHeader(env['LIBS'][0], ['gpgme.h'], 'C', 'gpgme_new(0);', 0)
+	RestoreFlags(env, old)
+
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python

@@ -13,10 +13,10 @@
 #include <X11/extensions/XShm.h>
 #endif
 
-#define GTK_TYPE_XTEXT              (gtk_xtext_get_type ())
-#define GTK_XTEXT(object)           (G_TYPE_CHECK_INSTANCE_CAST ((object), GTK_TYPE_XTEXT, GtkXText))
-#define GTK_XTEXT_CLASS(klass)      (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_XTEXT, GtkXTextClass))
-#define GTK_IS_XTEXT(object)        (G_TYPE_CHECK_INSTANCE_TYPE ((object), GTK_TYPE_XTEXT))
+#define GTK_TYPE_XTEXT		    (gtk_xtext_get_type ())
+#define GTK_XTEXT(object)	    (G_TYPE_CHECK_INSTANCE_CAST ((object), GTK_TYPE_XTEXT, GtkXText))
+#define GTK_XTEXT_CLASS(klass)	    (G_TYPE_CHECK_CLASS_CAST ((klass), GTK_TYPE_XTEXT, GtkXTextClass))
+#define GTK_IS_XTEXT(object)	    (G_TYPE_CHECK_INSTANCE_TYPE ((object), GTK_TYPE_XTEXT))
 #define GTK_IS_XTEXT_CLASS(klass)   (G_TYPE_CHECK_CLASS_TYPE ((klass), GTK_TYPE_XTEXT))
 #define GTK_XTEXT_GET_CLASS(obj)    (G_TYPE_INSTANCE_GET_CLASS ((obj), GTK_TYPE_XTEXT, GtkXTextClass))
 
@@ -240,6 +240,6 @@ void gtk_xtext_set_wordwrap(GtkXText * xtext, gboolean word_wrap);
 xtext_buffer *gtk_xtext_buffer_new(GtkXText * xtext);
 void gtk_xtext_buffer_free(xtext_buffer * buf);
 void gtk_xtext_buffer_show(GtkXText * xtext, xtext_buffer * buf, int render);
-GtkType gtk_xtext_get_type(void);
+GType gtk_xtext_get_type(void);
 
 #endif

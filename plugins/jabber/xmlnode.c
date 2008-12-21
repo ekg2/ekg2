@@ -1,5 +1,7 @@
 /* $Id$ */
 
+#include "ekg2-config.h"
+
 #include <string.h>
 
 #include <ekg/debug.h>
@@ -22,10 +24,11 @@ static void xmlnode_free(xmlnode_t *n)
 
 	xfree(n->name);
 	xfree(n->data);
+	xfree(n->xmlns);
 	array_free(n->atts);
 	xfree(n);
 }
-
+ 
 void xmlnode_handle_end(void *data, const char *name)
 {
 	session_t *s = (session_t *) data;
@@ -38,6 +41,9 @@ void xmlnode_handle_end(void *data, const char *name)
 	}
 
 	if (!(n = j->node)) {
+			/* XXX: dj, maybe we set some sessionvar here,
+			 * and then take a look at it before submitting PROTOCOL_DISCONNECTED
+			 * with some weird error? */
 		debug("[jabber] end tag within <stream>, ignoring\n");
 		return;
 	}

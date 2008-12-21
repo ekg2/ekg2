@@ -4,7 +4,7 @@ lib_LTLIBRARIES = ioctld.la
 ioctld_la_SOURCES = main.c ioctld.h
 ioctld_la_LDFLAGS = -module -avoid-version
 ioctld_la_CPPFLAGS = $(C_FVISIBILITY)
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 libexec_PROGRAMS = ioctld
 ioctld_SOURCES = ioctld.c ioctld.h

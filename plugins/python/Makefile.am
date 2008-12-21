@@ -12,4 +12,4 @@ python_la_LDFLAGS = -module -avoid-version
 python_la_LIBADD = $(PYTHON_LIBS)
 python_la_CPPFLAGS = $(PYTHON_CFLAGS) 
 
-libdir = $(plugindir)
+override libdir = $(plugindir)

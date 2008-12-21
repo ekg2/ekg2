@@ -36,14 +36,14 @@ PLUGIN_DEFINE(feed, PLUGIN_PROTOCOL, feed_theme_init);
 
 static QUERY(feed_validate_uid)
 {
-        char *uid = *(va_arg(ap, char **));
-        int *valid = va_arg(ap, int *);
+	char *uid = *(va_arg(ap, char **));
+	int *valid = va_arg(ap, int *);
 
-        if (!uid)
-                return 0;
+	if (!uid)
+		return 0;
 #ifdef HAVE_EXPAT
-        if (!xstrncasecmp(uid, "rss:", 4)) {
-                (*valid)++;
+	if (!xstrncasecmp(uid, "rss:", 4)) {
+		(*valid)++;
 		return -1;
 	}
 #endif
@@ -52,7 +52,7 @@ static QUERY(feed_validate_uid)
 		return -1;
 	}
 
-        return 0;
+	return 0;
 }
 
 static QUERY(feed_session_init) {
@@ -89,7 +89,7 @@ static QUERY(feed_session_deinit) {
 	userlist_write(s);
 	s->priv			= NULL;
 #ifdef HAVE_EXPAT
-	if (j->isrss) 		rss_protocol_deinit(j->private);
+	if (j->isrss)		rss_protocol_deinit(j->private);
 	else
 #endif
 				nntp_protocol_deinit(j->private);
@@ -99,15 +99,18 @@ static QUERY(feed_session_deinit) {
 	return 0;
 }
 
+// #define EKG_WINACT_RSS EKG_WINACT_MSG // till 4616
+#define EKG_WINACT_RSS EKG_WINACT_IMPORTANT
+
 	/* new: 
-	 * 	0x0 - old
-	 * 	0x1 - new
-	 * 	0x2 - modified 
+	 *	0x0 - old
+	 *	0x1 - new
+	 *	0x2 - modified 
 	 */
 
 	/* mtags: (by default rss_message() won't display any messages if new == 0, but if user want to display again (?) news, we must allow him)
-	 * 	0x0 - none
-	 * 	0x8 - display all headers / sheaders
+	 *	0x0 - none
+	 *	0x8 - display all headers / sheaders
 	 */
 
 static QUERY(rss_message) {
@@ -119,8 +122,8 @@ static QUERY(rss_message) {
 	char *url	= *(va_arg(ap, char **));
 	char *body	= *(va_arg(ap, char **));
 
-	int *new	= va_arg(ap, int *); 		/* 0 - old; 1 - new; 2 - modified */
-	int mtags	= *(va_arg(ap, int *));		
+	int *new	= va_arg(ap, int *);		/* 0 - old; 1 - new; 2 - modified */
+	int mtags	= *(va_arg(ap, int *));
 
 	session_t *s	= session_find(session);
 	char *tmp;
@@ -133,7 +136,10 @@ static QUERY(rss_message) {
 	char *target		= NULL;
 	window_t *targetwnd	= NULL;
 
-	if (*new == 0) return 0;
+	if (*new == 0 && !mtags) return 0;
+
+	if (mtags)	/* XXX */
+		dmode = mtags;
 
 	switch (mw) {			/* XXX, __current ? */
 		case 0: 
@@ -148,13 +154,13 @@ static QUERY(rss_message) {
 			if (!(target = get_nickname(s, uid)))
 				target = uid;
 			break;
-	}
+	} 
 
 	if (mw)
 		targetwnd = window_new(target, s, 0);
 
 	switch (dmode) {
-		case 0:	 print_window_w(targetwnd, 1, "feed_message_new", title, url);	/* only notify */
+		case 0:	 print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_new", title, url);	/* only notify */
 		case -1: return 0;							/* do nothing */
 
 		case 2:	body		= NULL;					/* only headers */
@@ -164,7 +170,7 @@ static QUERY(rss_message) {
 		case 4:	break;							/* shreaders+headers+body */
 	}
 
-	print_window_w(targetwnd, 1, "feed_message_header", title, url);
+	print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_header", title, url);
 
 	if (sheaders) {
 		char *str = xstrdup(sheaders);
@@ -180,14 +186,14 @@ static QUERY(rss_message) {
 			}
 
 			formatka = saprintf("feed_server_header_%s", tmp);
-			if ((!xstrcmp(format_find(formatka), ""))) { xfree(formatka); formatka = NULL; }
+			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_server_header_generic"), tmp, value ? value+1 : "");
-			print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
+			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
 
 			xfree(formatka);
 		}
-		if (headers || body) print_window_w(targetwnd, 1, "feed_message_body", "");	/* rozdziel */
+		if (headers || body) print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", "");	/* rozdziel */
 	}
 	if (headers) {
 		char *str, *org;
@@ -206,15 +212,15 @@ static QUERY(rss_message) {
 			}
 
 			formatka = saprintf("feed_message_header_%s", tmp);
-			if ((!xstrcmp(format_find(formatka), ""))) { xfree(formatka); formatka = NULL; }
+			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
 	
 			formated = format_string(format_find(formatka ? formatka : "feed_message_header_generic"), tmp, value ? value+1 : "");
-			print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
+			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
 			
 			xfree(formated);
 			xfree(formatka);
 		}
-		if (body) print_window_w(targetwnd, 1, "feed_message_body", "");	/* rozdziel */
+		if (body) print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", "");	/* rozdziel */
 		xfree(org);
 	}
 	if (body) {
@@ -235,11 +241,13 @@ static QUERY(rss_message) {
 					const char *f = NULL;
 					for (i = 0; i < xstrlen(tmp) && tmp[i] == '>'; i++);
 
-//					if (i > 0 && tmp[i] == ' ') 	/* normal clients quote:  >>>> aaaa */
-					if (i > 0) 			/* buggy clients quote:   >>>>>aaaa */
+//					if (i > 0 && tmp[i] == ' ')	/* normal clients quote:  >>>> aaaa */
+					if (i > 0)			/* buggy clients quote:   >>>>>aaaa */
 					{
 						quote_name = saprintf("nntp_message_quote_level%d", i+1);
-						if (!xstrcmp(f = format_find(quote_name), "")) {
+
+						f = format_find(quote_name);
+						if (!format_ok(f)) {
 							debug("[NNTP, QUOTE] format: %s not found, using global one...\n", quote_name);
 							f = format_find("nntp_message_quote_level");
 						}
@@ -249,29 +257,26 @@ static QUERY(rss_message) {
 						formated = format_string(f, tmp);
 				}
 
-				print_window_w(targetwnd, 1, "feed_message_body", formated ? formated : tmp);
+				print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
 				xfree(formated);
 			}
 			xfree(org);
 		} else {
-			print_window_w(targetwnd, 1, "feed_message_body", body);
+			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", body);
 		}
 	}
 
-	print_window_w(targetwnd, 1, "feed_message_footer");
+	print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_footer");
 
 	*new = 0;
 	return 0;
 }
 
-void feed_set_status(userlist_t *u, char *status) {
-	char *tmp;
+void feed_set_status(userlist_t *u, int status) {
 	if (!u || !status) return;
 
 /*	if (xstrcmp(u->status, status)) print("feed_status", u->uid, status, u->descr); */
-	tmp 		= u->status;
 	u->status	= status;
-	xfree(tmp);
 }
 
 void feed_set_descr(userlist_t *u, char *descr) {
@@ -279,17 +284,53 @@ void feed_set_descr(userlist_t *u, char *descr) {
 	if (!u || !descr) return;
 
 /*	if (xstrcmp(u->descr, descr)) print("feed_status", u->uid, u->status, descr); */
-	tmp 		= u->descr;
+	tmp		= u->descr;
 	u->descr	= descr;
 	xfree(tmp);
 }
 
-void feed_set_statusdescr(userlist_t *u, char *status, char *descr) {
+void feed_set_statusdescr(userlist_t *u, int status, char *descr) {
 	feed_set_status(u, status);
 	feed_set_descr(u, descr);
 }
 
+static plugins_params_t feed_plugin_vars[] = {
+/* common vars. */
+	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "1", 0, NULL),
+	/* (-1 - nothing; 0 - only notify; 1 - only body; 2 - only headers; 3 - headers+body 4 - sheaders+headers+ body)  default+else: 3 */
+	PLUGIN_VAR_ADD("display_mode",		VAR_INT, "3", 0, NULL),	
+
+	PLUGIN_VAR_ADD("display_headers",	VAR_STR, 
+			/* RSS: */ 
+				"pubDate: author: dc:creator: dc:date:" 
+			/* NNTP: */ 
+				"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:", 
+			0, NULL),
+/* rss vars. */
+#ifdef HAVE_EXPAT
+	PLUGIN_VAR_ADD("display_server_headers", VAR_STR, 
+	/* display some basic server headers */
+		"HTTP/1.1 "	/* rcode? */
+		"Server: "
+		"Date: ",
+		0, NULL),
+#endif
+	/* [common var again] 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per feed / group. default+else: 2 */
+	PLUGIN_VAR_ADD("make_window",		VAR_INT, "2", 0, NULL),
+/* nntp vars. */
+	PLUGIN_VAR_ADD("username",		VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
+	PLUGIN_VAR_ADD("port",			VAR_INT, "119", 0, NULL),
+	PLUGIN_VAR_ADD("server",		VAR_STR, NULL, 0, NULL),
+
+	PLUGIN_VAR_END()
+};
+
 EXPORT int feed_plugin_init(int prio) {
+	PLUGIN_CHECK_VER("feed");
+
+	feed_plugin.params = feed_plugin_vars;
 	plugin_register(&feed_plugin, prio);
 			/* common */
 	query_connect_id(&feed_plugin, SESSION_ADDED, feed_session_init, NULL);
@@ -297,20 +338,7 @@ EXPORT int feed_plugin_init(int prio) {
 	query_connect_id(&feed_plugin, PROTOCOL_VALIDATE_UID, feed_validate_uid, NULL);
 			/* common - rss, nntp */
 	query_connect_id(&feed_plugin, RSS_MESSAGE, rss_message, NULL);
-			/* common - vars */
-	plugin_var_add(&feed_plugin, "auto_connect", VAR_BOOL, "0", 0, NULL);
-	plugin_var_add(&feed_plugin, "alias", VAR_STR, NULL, 0, NULL);
 
-			/* (-1 - nothing; 0 - only notify; 1 - only body; 2 - only headers; 3 - headers+body 4 - sheaders+headers+ body)  default+else: 3 */
-	plugin_var_add(&feed_plugin, "display_mode", VAR_INT, "3", 0, NULL);	
-	plugin_var_add(&feed_plugin, "display_headers", VAR_STR, 
-		/* RSS: */ 
-			"pubDate: author: dc:creator: dc:date:" 
-		/* NNTP: */ 
-			"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:", 
-		0, NULL);
-			/* 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per feed / group. default+else: 2 */
-	plugin_var_add(&feed_plugin, "make_window", VAR_INT, "2", 0, NULL);
 #ifdef HAVE_EXPAT
 	rss_init();	/* rss */
 #endif
@@ -328,12 +356,20 @@ static int feed_plugin_destroy() {
 
 static int feed_theme_init() {
 #ifndef NO_DEFAULT_THEME
+	/* url - %1; title - %2; descr - %3; lang: %4 */
+	format_add("rss_user_info_channel_unread",	_("%K| %g[unread]%n %2 (%1)"), 1);
+	format_add("rss_user_info_channel_read",	_("%K| %R[read]%n %2 (%1)"), 1);
+
+	/* same, but without lang (%4) */
+	format_add("rss_user_info_item_unread",		_("%K|   %g[unread]%n %2 (%1)"), 1);
+	format_add("rss_user_info_item_read",		_("%K|   %R[read]%n %2 (%1)"), 1);
+
 	format_add("feed_status",		_("%> Newstatus: %1 (%2) %3"), 1);	/* XXX */
 
-	format_add("feed_added", 		_("%> (%2) Added %T%1%n to subscription\n"), 1);
-	format_add("feed_exists_other", 	_("%! (%3) %T%1%n already subscribed as %2\n"), 1);
+	format_add("feed_added",		_("%> (%2) Added %T%1%n to subscription\n"), 1);
+	format_add("feed_exists_other",		_("%! (%3) %T%1%n already subscribed as %2\n"), 1);
 	format_add("feed_not_found",		_("%) Subscription %1 not found, cannot unsubscribe"), 1);
-	format_add("feed_deleted", 		_("%) (%2) Removed from subscription %T%1%n\n"), 1);
+	format_add("feed_deleted",		_("%) (%2) Removed from subscription %T%1%n\n"), 1);
 
 	format_add("feed_message_new",		_("%) New message: %Y%1%n (%W%2%n)"), 1);
 

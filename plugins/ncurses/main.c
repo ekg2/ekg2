@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
- * 	 	  2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -41,7 +41,8 @@
 #include "contacts.h"
 #include "mouse.h"
 
-PLUGIN_DEFINE(ncurses, PLUGIN_UI, NULL);
+static int ncurses_theme_init();
+PLUGIN_DEFINE(ncurses, PLUGIN_UI, ncurses_theme_init);
 /* vars */
 int config_aspell;
 char *config_aspell_lang;
@@ -50,13 +51,26 @@ int config_display_transparent;
 int config_enter_scrolls;
 int config_header_size;
 int config_margin_size;
+int config_mark_on_window_change = 0;
 int config_kill_irc_window = 1;
 int config_statusbar_size;
 int config_lastlog_size;
 int config_lastlog_lock;
+int config_text_bottomalign	= 0;
+int config_typing_interval	= 1;
+int config_typing_timeout	= 10;
+int config_typing_timeout_empty = 5;
+
+static int config_traditional_clear	= 1;
 
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
+
+const char *ncurses_settitle_formats[3] = { NULL, "\e]0;%s%s%s\a", "\e_%s%s%s\e\\" };
+static int ncurses_settitle = 0;
+
+QUERY(ncurses_password_input); /* old.c */
+void ncurses_window_gone(window_t *w);
 
 /**
  * ncurses_beep()
@@ -110,7 +124,7 @@ static QUERY(ncurses_statusbar_query)
  * Set @a tmp to ncurses_initialized [0/1]<br>
  *
  * @note <i>UI_IS_INITIALIZED</i> is used to check if we can display debug info by emiting <i>UI_PRINT_WINDOW</i> or not.
- * 		It also used by other UI-PLUGINS to check if another UI-plugin is in use. [Becasuse we have only one private struct in window_t]
+ *		It also used by other UI-PLUGINS to check if another UI-plugin is in use. [Becasuse we have only one private struct in window_t]
  *
  * @param ap 1st param: <i>(int) </i><b>tmp</b> - place to put ncurses_initialized variable.
  * @param data NULL
@@ -119,7 +133,7 @@ static QUERY(ncurses_statusbar_query)
  */
 
 static QUERY(ncurses_ui_is_initialized) {
-        int *tmp = va_arg(ap, int *);
+	int *tmp = va_arg(ap, int *);
 
 	if ((*tmp = ncurses_initialized))	return -1;
 	else					return 0;
@@ -135,13 +149,18 @@ static QUERY(ncurses_ui_is_initialized) {
  */
 
 static QUERY(ncurses_ui_window_switch) {
-	window_t *w 	= *(va_arg(ap, window_t **));
+	window_t *w	= *(va_arg(ap, window_t **));
+	window_t *wc;
 
 	ncurses_window_t *n = w->private;
 
-        list_destroy(sorted_all_cache, 1);
-        sorted_all_cache = NULL;
-	contacts_index = 0;
+	if (config_mark_on_window_change)
+		command_exec(NULL, NULL, "/mark -1", 1);
+
+	if ((wc = window_find_sa(NULL, "__contacts", 1))) {
+		/* XXX, na pewno nie chcemy zapisywac polozenia userlisty podczas zmiany okna? */
+		ncurses_contacts_update(wc, 0);
+	}
 
 	if (n->redraw)
 		ncurses_redraw(w);
@@ -151,6 +170,15 @@ static QUERY(ncurses_ui_window_switch) {
 	update_statusbar(0);
 	ncurses_redraw_input(0);	/* redraw prompt... */
 	ncurses_commit();
+
+	if (w->act & 2) { /* enable <composing/> on incoming chat message receival */
+		w->in_active = 1;
+		if (!w->out_active) /* send <active/>, as we showed interest in chat */
+			ncurses_window_gone(w);
+	}
+
+	if (ncurses_settitle)
+		printf(ncurses_settitle_formats[ncurses_settitle], w->target ? w->target : "", w->target ? " - " : "", "EKG2");
 
 	return 0;
 }
@@ -165,7 +193,7 @@ static QUERY(ncurses_ui_window_print)
 
 	if (!(n = w->private)) { 
 		/* BUGFIX, cause @ ui-window-print handler (not ncurses plugin one, ncurses plugin one is called last cause of 0 prio)
-		 * 	plugin may call print_window() 
+		 *	plugin may call print_window() 
 		 */
 		ncurses_window_new(w);	
 		if (!(n = w->private)) {
@@ -249,6 +277,8 @@ static QUERY(ncurses_ui_window_target_changed)
 	n->prompt = tmp; 
 	n->prompt_len = xstrlen(tmp);
 
+	ncurses_update_real_prompt(n);
+
 	update_statusbar(1);
 
 	return 0;
@@ -279,76 +309,61 @@ static QUERY(ncurses_ui_window_clear)
 {
 	window_t **w = va_arg(ap, window_t **);
 
-	ncurses_clear(*w, 0);
+	ncurses_clear(*w, !config_traditional_clear);
 	ncurses_commit();
 
 	return 0;
 }
 
-static QUERY(ncurses_userlist_changed)
+/*
+ * ncurses_all_contacts_changed()
+ *
+ * wywo³ywane przy zmianach userlisty powoduj±cych konieczno¶æ
+ * podkasowania sorted_all_cache (zmiany w metakontaktach 
+ * i ncurses:contacts_metacontacts_swallow)
+ */
+
+/* podanie NULL jako data do ncurses_all_contacts_changed() nie spowoduje zmiany polozenia userlisty (co wcale nie znaczy ze bedzie pokazywac na stary element) */
+static QUERY(ncurses_all_contacts_changed)
 {
-	char **p1 = va_arg(ap, char**);
-	char **p2 = va_arg(ap, char**);
-        window_t *w = NULL;
-	list_t l;
+	window_t *w;
 
-        for (l = windows; l; l = l->next) {
-       		window_t *w = l->data;
-                ncurses_window_t *n = w->private;
-
-                if (!w->target || xstrcasecmp(w->target, *p1))
-                	continue;
-
-                xfree(w->target);
-                w->target = xstrdup(*p2);
-                
-		xfree(n->prompt);
-                n->prompt = format_string(format_find("ncurses_prompt_query"), w->target);
-                n->prompt_len = xstrlen(n->prompt);
-        }
-
-	list_destroy(sorted_all_cache, 1);
-	sorted_all_cache = NULL;
+/*	ncurses_contacts_changed(data); */
 
 	if ((w = window_find_sa(NULL, "__contacts", 1))) {
-		ncurses_contacts_update(w);
-		ncurses_redraw(w);
+		ncurses_contacts_update(w, !data);
+		ncurses_commit();
 	}
-	ncurses_commit();
 	return 0;
 }
+
 
 static QUERY(ncurses_variable_changed)
 {
 	char *name = *(va_arg(ap, char**));
 
-        if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
-	        list_t l;
-                int id = 2;
+	if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
+		window_t *w;
+		int id = 2;
 
-                for (l = windows; l; l = l->next) {
-	                window_t *w = l->data;
-                               
+		for (w = windows; w; w = w->next) {
 			if (w->floating)
-                        	continue;
+				continue;
 
-                        if (w->id > 1)
-	                        w->id = id++;
-                }
-        } else if (!xstrcasecmp(name, "timestamp") || !xstrcasecmp(name, "ncurses:margin_size")) {
-       		list_t l;
+			if (w->id > 1)
+				w->id = id++;
+		}
+	} else if (!xstrcasecmp(name, "timestamp") || !xstrcasecmp(name, "timestamp_show") || !xstrcasecmp(name, "ncurses:margin_size")) {
+		window_t *w;
 
-                for (l = windows; l; l = l->next) {
-	                window_t *w = l->data;
+		for (w = windows; w; w = w->next)
+			ncurses_backlog_split(w, 1, 0);
 
-	                ncurses_backlog_split(w, 1, 0);
-                }
+		ncurses_resize();
+	}
 
-                ncurses_resize();
-        }
-
-        ncurses_contacts_update(NULL);
-        update_statusbar(1);
+/*	ncurses_contacts_update(NULL); */
+	update_statusbar(1);
 
 	return 0;
 }
@@ -357,25 +372,25 @@ static QUERY(ncurses_conference_renamed)
 {
 	char *oldname = *(va_arg(ap, char**));
 	char *newname = *(va_arg(ap, char**));
-        list_t l;
+	window_t *w;
 
-        for (l = windows; l; l = l->next) {
-	        window_t *w = l->data;
-                ncurses_window_t *n = w->private;
+	for (w = windows; w; w = w->next) {
+		ncurses_window_t *n = w->private;
 
-	        if (w->target && !xstrcasecmp(w->target, oldname)) {
-        	        xfree(w->target);
-                        xfree(n->prompt);
-                        w->target = xstrdup(newname);
-                        n->prompt = format_string(format_find("ncurses_prompt_query"), newname);
-                        n->prompt_len = xstrlen(n->prompt);
-                }
+		if (w->target && !xstrcasecmp(w->target, oldname)) {
+			xfree(w->target);
+			xfree(n->prompt);
+			w->target = xstrdup(newname);
+			n->prompt = format_string(format_find("ncurses_prompt_query"), newname);
+			n->prompt_len = xstrlen(n->prompt);
+			ncurses_update_real_prompt(n);
+		}
 	}
 
-        ncurses_contacts_update(NULL);
-        update_statusbar(1);
+/*	ncurses_contacts_update(NULL); */
+	update_statusbar(1);
 
-        return 0;
+	return 0;
 }
 
 /*
@@ -386,7 +401,7 @@ static QUERY(ncurses_conference_renamed)
 static void ncurses_changed_aspell(const char *var)
 {
 #ifdef WITH_ASPELL
-        /* probujemy zainicjowac jeszcze raz aspell'a */
+	/* probujemy zainicjowac jeszcze raz aspell'a */
 	if (!in_autoexec)
 		ncurses_spellcheck_init();
 #endif
@@ -397,15 +412,15 @@ static QUERY(ncurses_postinit)
 #ifdef WITH_ASPELL
 	ncurses_spellcheck_init();
 #endif
-	ncurses_contacts_changed(NULL, NULL);
+	ncurses_contacts_changed(NULL);
 	return 0;
 }
 
 static QUERY(ncurses_binding_set_query)
 {
-        char *p1 = va_arg(ap, char *);
+	char *p1 = va_arg(ap, char *);
 	char *p2 = va_arg(ap, char *);
-        int quiet = va_arg(ap, int);
+	int quiet = va_arg(ap, int);
 
 	ncurses_binding_set(quiet, p1, p2);
 	
@@ -422,7 +437,7 @@ static QUERY(ncurses_binding_adddelete_query)
 	if (add)	ncurses_binding_add(p2, p3, 0, quiet);
 	else		ncurses_binding_delete(p2, quiet);
 
-	ncurses_contacts_update(NULL);
+/*	ncurses_contacts_update(NULL); */
 	update_statusbar(1);
 
 	return 0;
@@ -482,31 +497,38 @@ static QUERY(ncurses_ui_window_lastlog) {
 
 static QUERY(ncurses_setvar_default)
 {
-	config_contacts_size = 9;         /* szeroko¶æ okna kontaktów */
-	config_contacts = 2;              /* czy ma byæ okno kontaktów */
+	config_contacts_size = 9;	  /* szeroko¶æ okna kontaktów */
+	config_contacts = 2;		  /* czy ma byæ okno kontaktów */
+	config_contacts_edge = 2;
+	config_contacts_frame = 1;
+	config_contacts_margin = 1;
+	config_contacts_wrap = 0;
+	config_contacts_descr = 0;
+	config_contacts_orderbystate = 1;
 
-	config_lastlog_size = 10;         /* szerokosc/dlugosc okna kontaktow */
-	config_lastlog_lock = 1;          /* czy blokujemy lastloga.. zeby nam nie zmienialo sie w czasie zmiany okna, *wolne* */
+	config_lastlog_size = 10;	  /* szerokosc/dlugosc okna kontaktow */
+	config_lastlog_lock = 1;	  /* czy blokujemy lastloga.. zeby nam nie zmienialo sie w czasie zmiany okna, *wolne* */
 
-	xfree(config_contacts_options);
+	xfree(config_contacts_order);
 	xfree(config_contacts_groups);
 
-	config_contacts_options = NULL;   /* opcje listy kontaktów */
-	config_contacts_groups = NULL;    /* grupy listy kontaktów */
+	config_contacts_order = NULL;
+	config_contacts_groups = NULL;	  /* grupy listy kontaktów */
 	config_contacts_groups_all_sessions = 0;    /* all sessions ? */
 	config_contacts_metacontacts_swallow = 1;
 
-	config_backlog_size = 1000;         /* maksymalny rozmiar backloga */
+	config_backlog_size = 1000;	    /* maksymalny rozmiar backloga */
 	config_display_transparent = 1;     /* czy chcemy przezroczyste t³o? */
-        config_kill_irc_window = 1;         /* czy zamykaæ kana³y ircowe przez alt-k? */
+	config_kill_irc_window = 1;	    /* czy zamykaæ kana³y ircowe przez alt-k? */
 	config_statusbar_size = 1;
 	config_header_size = 0;
 	config_enter_scrolls = 0;
 	config_margin_size = 15;
+	config_mark_on_window_change = 0;
 #ifdef WITH_ASPELL
-        xfree(config_aspell_lang);
+	xfree(config_aspell_lang);
 
-        config_aspell_lang = xstrdup("pl");
+	config_aspell_lang = xstrdup("pl");
 #endif
 	return 0;
 }
@@ -521,25 +543,25 @@ static void ncurses_display_transparent_changed(const char *var)
 	int background;
 	if (in_autoexec) return;	/* stuff already inited @ ncurses_init() */
 
-        if (config_display_transparent) {
-                background = COLOR_DEFAULT;
-                use_default_colors();
-        } else {
-                background = COLOR_BLACK;
+	if (config_display_transparent) {
+		background = COLOR_DEFAULT;
+		use_default_colors();
+	} else {
+		background = COLOR_BLACK;
 		assume_default_colors(COLOR_WHITE, COLOR_BLACK);
 	}
-        init_pair(7, COLOR_BLACK, background); 
-        init_pair(1, COLOR_RED, background);
-        init_pair(2, COLOR_GREEN, background);
-        init_pair(3, COLOR_YELLOW, background);
-        init_pair(4, COLOR_BLUE, background);
-        init_pair(5, COLOR_MAGENTA, background);
-        init_pair(6, COLOR_CYAN, background);
+	init_pair(7, COLOR_BLACK, background); 
+	init_pair(1, COLOR_RED, background);
+	init_pair(2, COLOR_GREEN, background);
+	init_pair(3, COLOR_YELLOW, background);
+	init_pair(4, COLOR_BLUE, background);
+	init_pair(5, COLOR_MAGENTA, background);
+	init_pair(6, COLOR_CYAN, background);
 
-        endwin();
-        refresh();
-        /* it will call what's needed */
-	header_statusbar_resize();
+	endwin();
+	refresh();
+	/* it will call what's needed */
+	header_statusbar_resize(NULL);
 
 	changed_backlog_size("backlog_size");
 }
@@ -559,22 +581,119 @@ static void ncurses_sigint_handler(int s)
 	}
 }
 
+static void ncurses_typing_retimer(const char *dummy) {
+	timer_remove(&ncurses_plugin, "ncurses:typing");
+	if (config_typing_interval > 0)
+		timer_add(&ncurses_plugin, "ncurses:typing", config_typing_interval, 1, ncurses_typing, NULL);
+}
+
+static COMMAND(ncurses_cmd_dump) {
+	window_t *w = NULL;
+	ncurses_window_t *n;
+	FILE *f;
+	const char *fname = NULL, *fmode = "w";
+	int i, id;
+
+	for (i=0; params[i]; i++) {
+		if (match_arg(params[i], 'a', ("append"), 2))
+			fmode = "a";
+		else if (match_arg(params[i], 'w', ("window"), 2)) {
+			if (!params[i+1]) {
+				printq("not_enough_params", name);
+				return -1;
+			}
+			i++;
+			w = window_find(params[i]);	// window target?
+			if (!w && ((id = atoi(params[i])) || !xstrcmp(params[i], "0")))	// window id?
+				w = window_exist(id);
+			if (!w) {
+				printq("window_doesnt_exist", params[i]);
+				return -1;
+			}
+		} else if (!fname)
+			fname = params[i];
+		else {	// fname again?
+			printq("invalid_params", name);
+			return -1;
+		}
+	}
+
+	if (!w)
+		w = window_current;
+
+	if (!fname)
+		fname = "ekg2-dump.txt";
+
+	if (!(f = fopen(fname, fmode)))
+		return -1;
+
+	fprintf(f, "---------- Window %s (id:%d) dump. ----------\n", window_target(w), w->id);
+
+	n = w->private;
+
+	for (i = n->backlog_size; i; i--) {
+		fstring_t *backlog = n->backlog[i-1];
+		/* XXX, kolorki gdy user chce */
+
+#ifdef USE_UNICODE
+		fprintf(f, "%ld %ls\n", backlog->ts, backlog->str.w);
+#else
+		fprintf(f, "%ld %s\n", backlog->ts, backlog->str.b);
+#endif
+	}
+
+	fclose(f);
+	// XXX add print_info() about dump success???
+	return 0;
+}
+
+static int ncurses_theme_init() {
+#ifndef NO_DEFAULT_THEME
+	/* prompty i statusy dla ui-ncurses */
+	format_add("ncurses_prompt_none", "", 1);
+	format_add("ncurses_prompt_query", "[%1] ", 1);
+	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %G}%{?avail %Y}%{?chat %W}%{?dnd %K}%{?xa %g}%{?gone %R}"
+			"%{?invisible %C}%{?notavail %r}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{?typing %C}%{window}}"
+			"%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}"
+			"%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
+	format_add("header", " %{?query %c(%{?query_away %w}%{?query_avail %W}%{?query_invisible %K}%{?query_notavail %k}"
+			"%{?query_chat %W}%{?query_dnd %K}%{query_xa %g}%{?query_gone %R}%{?query_unknown %M}%{?query_error %m}%{?query_blocking %m}"
+			"%{query}%{?query_descr %c/%w%{query_descr}}%c) %{?query_ip (%wip%c/%w%{query_ip}%c)} %{irctopic}}"
+			"%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}", 1);
+	format_add("statusbar_act_important", "%Y", 1);
+	format_add("statusbar_act_important2us", "%W", 1);
+	format_add("statusbar_act", "%K", 1);
+	format_add("statusbar_act_typing", "%c", 1);
+	format_add("statusbar_act_important_typing", "%C", 1);
+	format_add("statusbar_act_important2us_typing", "%C", 1);
+	format_add("statusbar_timestamp", "%H:%M", 1);
+
+#ifdef WITH_ASPELL
+	/* aspell */
+	format_add("aspell_init", "%> Please wait while initiating spellcheck...", 1);
+	format_add("aspell_init_success", "%> Spellcheck initiated.", 1);
+	format_add("aspell_init_error", "%! Spellcheck error: %T%1%", 1);
+#endif 
+#endif
+	return 0;
+}
+
 EXPORT int ncurses_plugin_init(int prio)
 {
-	list_t l;
+	window_t *w;
 	int is_UI = 0;
+	va_list dummy;
+	char *termtype = getenv("TERM");
 
-        query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	PLUGIN_CHECK_VER("ncurses");
 
-        if (is_UI) 
-                return -1;
-#if USE_UNICODE
-	if (config_use_unicode)		sizeofchart = sizeof(wchar_t);
-	else				sizeofchart = sizeof(char);
-#endif
+	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+
+	if (is_UI) 
+		return -1;
 	plugin_register(&ncurses_plugin, prio);
 
-	ncurses_setvar_default(NULL, NULL);
+	ncurses_setvar_default(NULL, dummy);
 
 	query_connect_id(&ncurses_plugin, SET_VARS_DEFAULT, ncurses_setvar_default, NULL);
 	query_connect_id(&ncurses_plugin, UI_BEEP, ncurses_beep, NULL);
@@ -589,48 +708,79 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect_id(&ncurses_plugin, UI_WINDOW_CLEAR, ncurses_ui_window_clear, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
 	query_connect_id(&ncurses_plugin, UI_REFRESH, ncurses_ui_refresh, NULL);
+	query_connect_id(&ncurses_plugin, UI_PASSWORD_INPUT, ncurses_password_input, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
-	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_EVENT, ncurses_statusbar_query, NULL);
 	query_connect_id(&ncurses_plugin, SESSION_RENAMED, ncurses_statusbar_query, NULL);
-	query_connect_id(&ncurses_plugin, USERLIST_CHANGED, ncurses_userlist_changed, NULL);
-	query_connect_id(&ncurses_plugin, USERLIST_ADDED, ncurses_userlist_changed, NULL);
-	query_connect_id(&ncurses_plugin, USERLIST_REMOVED, ncurses_userlist_changed, NULL);
-	query_connect_id(&ncurses_plugin, USERLIST_RENAMED, ncurses_userlist_changed, NULL);
 	query_connect_id(&ncurses_plugin, BINDING_SET, ncurses_binding_set_query, NULL);
 	query_connect_id(&ncurses_plugin, BINDING_COMMAND, ncurses_binding_adddelete_query, NULL);
 	query_connect_id(&ncurses_plugin, BINDING_DEFAULT, ncurses_binding_default, NULL);
 	query_connect_id(&ncurses_plugin, VARIABLE_CHANGED, ncurses_variable_changed, NULL);
 	query_connect_id(&ncurses_plugin, CONFERENCE_RENAMED, ncurses_conference_renamed, NULL);
 
+	query_connect_id(&ncurses_plugin, CONFIG_POSTINIT, ncurses_postinit, NULL);
+	query_connect_id(&ncurses_plugin, PROTOCOL_DISCONNECTING, ncurses_session_disconnect_handler, NULL);
+
+/* redraw userlisty: */
+	/* podanie czegokolwiek jako data do ncurses_all_contacts_changed() powoduje wyzerowanie n->start */
+
+	query_connect_id(&ncurses_plugin, UI_REFRESH, ncurses_all_contacts_changed, (void *) 1);
+	query_connect_id(&ncurses_plugin, USERLIST_REFRESH, ncurses_all_contacts_changed, NULL /* ? */);
+
+	query_connect_id(&ncurses_plugin, SESSION_CHANGED, ncurses_all_contacts_changed, (void *) 1);
+	query_connect_id(&ncurses_plugin, SESSION_EVENT, ncurses_all_contacts_changed, NULL);
+
 	query_connect_id(&ncurses_plugin, METACONTACT_ADDED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, METACONTACT_REMOVED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_ADDED, ncurses_all_contacts_changed, NULL);
 	query_connect_id(&ncurses_plugin, METACONTACT_ITEM_REMOVED, ncurses_all_contacts_changed, NULL);
-	query_connect_id(&ncurses_plugin, CONFIG_POSTINIT, ncurses_postinit, NULL);
+
+	query_connect_id(&ncurses_plugin, USERLIST_CHANGED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_ADDED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_REMOVED, ncurses_all_contacts_changed, NULL);
+	query_connect_id(&ncurses_plugin, USERLIST_RENAMED, ncurses_all_contacts_changed, NULL);
+
+	command_add(&ncurses_plugin, ("mark"), NULL, cmd_mark, 0, "-a --all");
+	command_add(&ncurses_plugin, ("dump"), NULL, ncurses_cmd_dump, 0, "-a --append -w --window");
+
 #ifdef WITH_ASPELL
 	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
-        variable_add(&ncurses_plugin, ("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
+	variable_add(&ncurses_plugin, ("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
 #endif
 	variable_add(&ncurses_plugin, ("backlog_size"), VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
 	/* this isn't very nice solution, but other solutions would require _more_
 	 * changes...
 	 */
-	variable_add(&ncurses_plugin, ("contacts"), VAR_INT, 1, &config_contacts, (void (*)(const char *))ncurses_contacts_changed, NULL, NULL);
-	variable_add(&ncurses_plugin, ("contacts_groups"), VAR_STR, 1, &config_contacts_groups, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_groups_all_sessons"), VAR_BOOL, 1, &config_contacts_groups_all_sessions, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_options"), VAR_STR, 1, &config_contacts_options, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("contacts_size"), VAR_INT, 1, &config_contacts_size, (void (*)(const char *))ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts"), VAR_INT, 1, &config_contacts, ncurses_contacts_changed, NULL, NULL);
+	variable_add(&ncurses_plugin, ("contacts_descr"), VAR_BOOL, 1, &config_contacts_descr, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_edge"), VAR_INT, 1, &config_contacts_edge, ncurses_contacts_changed, variable_map(4, 0, 0, "left", 1, 0, "top", 2, 0, "right", 3, 0, "bottom"), dd_contacts);
+
+	variable_add(&ncurses_plugin, ("contacts_frame"), VAR_BOOL, 1, &config_contacts_frame, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_groups"), VAR_STR, 1, &config_contacts_groups, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_groups_all_sessons"), VAR_BOOL, 1, &config_contacts_groups_all_sessions, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_margin"), VAR_INT, 1, &config_contacts_margin, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("contacts_metacontacts_swallow"), VAR_BOOL, 1, &config_contacts_metacontacts_swallow, (void (*)(const char *))ncurses_all_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_order"), VAR_STR, 1, &config_contacts_order, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_orderbystate"), VAR_BOOL, 1, &config_contacts_orderbystate, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_size"), VAR_INT, 1, &config_contacts_size, ncurses_contacts_changed, NULL, dd_contacts);
+	variable_add(&ncurses_plugin, ("contacts_wrap"), VAR_BOOL, 1, &config_contacts_wrap, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("lastlog_size"), VAR_INT, 1, &config_lastlog_size, (void (*)(const char *))ncurses_lastlog_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, ("lastlog_lock"), VAR_BOOL, 1, &config_lastlog_lock, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, ("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("header_size"), VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
 	variable_add(&ncurses_plugin, ("kill_irc_window"),  VAR_BOOL, 1, &config_kill_irc_window, NULL, NULL, NULL);
-        variable_add(&ncurses_plugin, ("margin_size"), VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("margin_size"), VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("mark_on_window_change"), VAR_BOOL, 1, &config_mark_on_window_change, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("statusbar_size"), VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
+	variable_add(&ncurses_plugin, ("text_bottomalign"), VAR_INT, 1, &config_text_bottomalign, NULL,
+			variable_map(3, 0, 0, "off", 1, 2, "except-floating", 2, 1, "all"), NULL);
+	variable_add(&ncurses_plugin, ("traditional_clear"), VAR_BOOL, 1, &config_traditional_clear, NULL, NULL, NULL);
+
+	variable_add(&ncurses_plugin, ("typing_interval"), VAR_INT, 1, &config_typing_interval, ncurses_typing_retimer, NULL, NULL);
+	variable_add(&ncurses_plugin, ("typing_timeout"), VAR_INT, 1, &config_typing_timeout, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("typing_timeout_empty"), VAR_INT, 1, &config_typing_timeout_empty, NULL, NULL, NULL);
 	
 	have_winch_pipe = 0;
 #ifdef SIGWINCH
@@ -649,15 +799,29 @@ EXPORT int ncurses_plugin_init(int prio)
 
 	ncurses_init();
 	
-	header_statusbar_resize("foo");
+	header_statusbar_resize(NULL);
+	ncurses_typing_retimer(NULL);
 
-	for (l = windows; l; l = l->next)
-		ncurses_window_new(l->data);
+	for (w = windows; w; w = w->next)
+		ncurses_window_new(w);
 
 	ncurses_initialized = 1;
 
 	if (!no_mouse)
-		ncurses_enable_mouse(); 
+		ncurses_enable_mouse(termtype);
+
+	if (termtype) {
+		/* determine window title setting support */
+		if (!xstrcasecmp(termtype, "screen"))
+			ncurses_settitle = 2;
+		else if (!xstrncasecmp(termtype, "xterm", 5) || !xstrncasecmp(termtype, "rxvt", 4) || !xstrncasecmp(termtype, "gnome", 5)
+				|| ((*termtype == 'E' || *termtype == 'a' || *termtype == 'k') && !xstrcasecmp(termtype+1, "term")))
+			ncurses_settitle = 1;
+	}
+
+	if (ncurses_settitle)
+		printf(ncurses_settitle_formats[ncurses_settitle], "", "", "EKG2");
+
 	return 0;
 }
 
@@ -673,11 +837,6 @@ static int ncurses_plugin_destroy()
 		watch_remove(&ncurses_plugin, winch_pipe[0], WATCH_READ);
 
 	timer_remove(&ncurses_plugin, "ncurses:clock");
-
-	if (sorted_all_cache) {
-		list_destroy(sorted_all_cache, 1);
-		sorted_all_cache = NULL;
-	}
 
 	ncurses_deinit();
 

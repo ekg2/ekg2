@@ -2,10 +2,10 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@o2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@o2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -29,24 +29,33 @@
 
 #include "dynstuff.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct last {
-	int type;		/* 0 - przychodz±ca, 1 - wychodz±ca */
-	char *uid;		/* od kogo, lub do kogo przy wysy³anych */
-	time_t time;		/* czas */
-	time_t sent_time;	/* czas wys³ania wiadomo¶ci przychodz±cej */
-	char *message;		/* wiadomo¶æ */
+	struct last *next;
+	unsigned int type	: 1;	/* 0 - przychodz±ca, 1 - wychodz±ca */
+	char *uid;			/* od kogo, lub do kogo przy wysy³anych */
+	time_t time;			/* czas */
+	time_t sent_time;		/* czas wys³ania wiadomo¶ci przychodz±cej */
+	char *message;			/* wiadomo¶æ */
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern list_t lasts;
+extern struct last *lasts;
 
 void last_add(int type, const char *uid, time_t t, time_t st, const char *msg);
 void last_del(const char *uid);
 int last_count(const char *uid);
-void last_free();
+void lasts_destroy();
 
 char *xml_escape(const char *text);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_LOG_H */

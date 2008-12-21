@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2001-2002 Piotr Domagalski <szalik@szalik.net>
- *                          Wojtek Kaniewski <wojtekka@irc.pl>
+ *			    Wojtek Kaniewski <wojtekka@irc.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -31,14 +31,25 @@
 #include <string.h>
 #include <unistd.h>
 
+#include "debug.h"
 #include "dynstuff.h"
 #include "commands.h"
 #include "msgqueue.h"
+#include "protocol.h"
 #include "sessions.h"
 #include "stuff.h"
 #include "xmalloc.h"
 
-list_t msg_queue = NULL;
+#include "dynstuff_inline.h"
+
+msg_queue_t *msgs_queue = NULL;
+
+static LIST_FREE_ITEM(list_msg_queue_free, msg_queue_t *) { xfree(data->session); xfree(data->rcpts); xfree(data->message); xfree(data->seq); }
+
+DYNSTUFF_LIST_DECLARE(msgs_queue, msg_queue_t, list_msg_queue_free,
+		__DYNSTUFF_LIST_ADD,		/* msgs_queue_add() */
+		__DYNSTUFF_LIST_REMOVE_ITER,	/* msgs_queue_removei() */
+		__DYNSTUFF_LIST_DESTROY)	/* msgs_queue_destroy() */
 
 /*
  * msg_queue_add()
@@ -52,37 +63,21 @@ list_t msg_queue = NULL;
  *
  * 0/-1
  */
-int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq)
+int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq, msgclass_t class)
 {
 	msg_queue_t *m = xmalloc(sizeof(msg_queue_t));
 
 	m->session	= xstrdup(session);
 	m->rcpts	= xstrdup(rcpts);
-	m->message 	= xstrdup(message);
-	m->seq 		= xstrdup(seq);
-	m->time 	= time(NULL);
+	m->message	= xstrdup(message);
+	m->seq		= xstrdup(seq);
+	m->time		= time(NULL);
+	m->class	= class;
 
-	return (list_add(&msg_queue, m, 0) ? 0 : -1);
+	msgs_queue_add(m);
+	return 0;
 }
 
-/*
- * msg_queue_remove()
- *
- * usuwa wiadomo¶æ o podanym numerze sekwencyjnym z kolejki wiadomo¶ci.
- *
- *  - msg - struktura opisuj±ca wiadomo¶æ.
- *
- * 0 je¶li usuniêto, -1 je¶li nie ma takiej wiadomo¶ci.
- */
-static void msg_queue_remove(msg_queue_t *m)
-{
-	xfree(m->session);
-	xfree(m->rcpts);
-	xfree(m->message);
-	xfree(m->seq);
-
-	list_remove(&msg_queue, m, 1);
-}
 
 /*
  * msg_queue_remove_uid()
@@ -96,16 +91,12 @@ static void msg_queue_remove(msg_queue_t *m)
  */
 int msg_queue_remove_uid(const char *uid)
 {
-	list_t l;
+	msg_queue_t *m;
 	int res = -1;
 
-	for (l = msg_queue; l; ) {
-		msg_queue_t *m = l->data;
-
-		l = l->next;
-
+	for (m = msgs_queue; m; m = m->next) {
 		if (!xstrcasecmp(m->rcpts, uid)) {
-			msg_queue_remove(m);
+			m = msgs_queue_removei(m);
 			res = 0;
 		}
 	}
@@ -125,44 +116,19 @@ int msg_queue_remove_uid(const char *uid)
 int msg_queue_remove_seq(const char *seq)
 {
 	int res = -1;
-	list_t l;
+	msg_queue_t *m;
 
 	if (!seq) 
 		return -1;
 
-	for (l = msg_queue; l; ) {
-		msg_queue_t *m = l->data;
-
-		l = l->next;
-
+	for (m = msgs_queue; m; m = m->next) {
 		if (!xstrcasecmp(m->seq, seq)) {
-			msg_queue_remove(m);
+			m = msgs_queue_removei(m);
 			res = 0;
 		}
 	}
 
 	return res;
-}
-
-/*
- * msg_queue_free()
- *
- * zwalnia pamiêæ po kolejce wiadomo¶ci.
- */
-void msg_queue_free()
-{
-	list_t l;
-
-	for (l = msg_queue; l; ) {
-		msg_queue_t *m = l->data;
-
-		l = l->next;
-
-		msg_queue_remove(m);
-	}
-
-	list_destroy(msg_queue, 1);
-	msg_queue = NULL;
 }
 
 /*
@@ -175,45 +141,47 @@ void msg_queue_free()
  */
 int msg_queue_flush(const char *session)
 {
-	list_t l;
-	int sent = 0;
+	msg_queue_t *m;
+	int ret = -1;
 
-	if (!msg_queue)
+	if (!msgs_queue)
 		return -2;
 
-	for (l = msg_queue; l; l = l->next) {
-		msg_queue_t *m = l->data;
-
+	for (m = msgs_queue; m; m = m->next)
 		m->mark = 1;
-	}
 
-	for (l = msg_queue; l;) {
-		msg_queue_t *m = l->data;
+	for (m = msgs_queue; m; m = m->next) {
 		session_t *s;
-
-		l = l->next;
+		char *cmd = "/msg \"%s\" %s";
 
 		/* czy wiadomo¶æ dodano w trakcie opró¿niania kolejki? */
 		if (!m->mark)
 			continue;
 
-		/* wiadomo¶æ wysy³ana z nieistniej±cej ju¿ sesji? usuwamy. */
-		if (!(s = session_find(m->session))) {
-			msg_queue_remove(m);
+		if (session && xstrcmp(m->session, session)) 
+			continue;
+				/* wiadomo¶æ wysy³ana z nieistniej±cej ju¿ sesji? usuwamy. */
+		else if (!(s = session_find(m->session))) {
+			m = msgs_queue_removei(m);
 			continue;
 		}
 
-		if (session && xstrcmp(m->session, session)) 
-			continue;
+		switch (m->class) {
+			case EKG_MSGCLASS_SENT_CHAT:
+				cmd = "/chat \"%s\" %s";
+				break;
+			case EKG_MSGCLASS_SENT:
+				break;
+			default:
+				debug_error("msg_queue_flush(), unsupported message class in query: %d\n", m->class);
+		}
+		command_exec_format(NULL, s, 1, cmd, m->rcpts, m->message);
 
-		command_exec_format(NULL, s, 1, ("/msg \"%s\" %s"), m->rcpts, m->message);
-
-		msg_queue_remove(m);
-
-		sent = 1;
+		m = msgs_queue_removei(m);
+		ret = 0;
 	}
 
-	return (sent) ? 0 : -1;
+	return ret;
 }
 
 /*
@@ -225,12 +193,10 @@ int msg_queue_flush(const char *session)
  */
 int msg_queue_count_session(const char *uid)
 {
-	list_t l;
+	msg_queue_t *m;
 	int count = 0;
 
-	for (l = msg_queue; l; l = l->next) {
-		msg_queue_t *m = l->data;
-
+	for (m = msgs_queue; m; m = m->next) {
 		if (!xstrcasecmp(m->session, uid))
 			count++;
 	}
@@ -247,17 +213,16 @@ int msg_queue_count_session(const char *uid)
  */
 int msg_queue_write()
 {
-	list_t l;
+	msg_queue_t *m;
 	int num = 0;
 
-	if (!msg_queue)
+	if (!msgs_queue)
 		return -1;
 
 	if (mkdir_recursive(prepare_pathf("queue"), 1))		/* create ~/.ekg2/[PROFILE/]queue/ */
 		return -1;
 
-	for (l = msg_queue; l; l = l->next) {
-		msg_queue_t *m = l->data;
+	for (m = msgs_queue; m; m = m->next) {
 		const char *fn;
 		FILE *f;
 
@@ -268,7 +233,7 @@ int msg_queue_write()
 			continue;
 
 		chmod(fn, 0600);
-		fprintf(f, "v1\n%s\n%s\n%ld\n%s\n%s", m->session, m->rcpts, m->time, m->seq, m->message);
+		fprintf(f, "v2\n%s\n%s\n%ld\n%s\n%d\n%s", m->session, m->rcpts, m->time, m->seq, m->class, m->message);
 		fclose(f);
 	}
 
@@ -286,15 +251,14 @@ int msg_queue_write()
  * @todo	code which handle errors is awful and it need rewriting.
  *
  * @return	-1 if fail to open msgqueue directory<br>
- * 		 0 on success.
+ *		 0 on success.
  */
 
 int msg_queue_read() {
-	const char *dirn;
 	struct dirent *d;
 	DIR *dir;
 
-	if (!(dirn = prepare_pathf("queue")) || !(dir = opendir(dirn)))		/* opendir() ~/.ekg2/[PROFILE/]/queue */
+	if (!(dir = opendir(prepare_pathf("queue"))))		/* opendir() ~/.ekg2/[PROFILE/]/queue */
 		return -1;
 
 	while ((d = readdir(dir))) {
@@ -305,6 +269,7 @@ int msg_queue_read() {
 		string_t msg;
 		char *buf;
 		FILE *f;
+		int filever = 0;
 
 		if (!(fn = prepare_pathf("queue/%s", d->d_name)))
 			continue;
@@ -318,8 +283,10 @@ int msg_queue_read() {
 		memset(&m, 0, sizeof(m));
 
 		buf = read_file(f, 0);
-
-		if (!buf || xstrcmp(buf, "v1")) {
+		
+		if (buf && *buf == 'v')
+			filever = atoi(buf+1);
+		if (!filever || filever > 2) {
 			fclose(f);
 			continue;
 		}
@@ -350,7 +317,19 @@ int msg_queue_read() {
 			fclose(f);
 			continue;
 		}
-		
+	
+		if (filever == 2) {
+			if (!(buf = read_file(f, 0))) {
+				xfree(m.session);
+				xfree(m.rcpts);
+				fclose(f);
+				continue;
+			}
+
+			m.class = atoi(buf);
+		} else
+			m.class = EKG_MSGCLASS_SENT;
+
 		msg = string_init(NULL);
 
 		buf = read_file(f, 0);
@@ -364,7 +343,7 @@ int msg_queue_read() {
 
 		m.message = string_free(msg, 0);
 
-		list_add(&msg_queue, &m, sizeof(m));
+		msgs_queue_add(xmemdup(&m, sizeof(m)));
 
 		fclose(f);
 		unlink(fn);

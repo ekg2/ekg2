@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -61,11 +61,10 @@
 #include "log.h"
 
 #include "debug.h"
+#include "dynstuff_inline.h"
 #include "queries.h"
 
-#ifndef PATH_MAX
-#  define PATH_MAX _POSIX_PATH_MAX
-#endif
+static void userlist_private_free(userlist_t *u);
 
 struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
 	{ IGNORE_STATUS, "status" },
@@ -78,55 +77,47 @@ struct ignore_label ignore_labels[IGNORE_LABELS_MAX] = {
 	{ 0, NULL }
 };
 
-/**
- * userlist_compare()
- *
- * wewnetrzna funkcja pomocna przy list_add_sorted().
- *
- * @param data1 - pierwszy wpis userlisty do porównania.
- * @param data2 - drugi wpis userlisty do porówniania.
- * @sa list_add_sorted
- *
- * @return zwraca wynik xstrcasecmp() na nazwach userów.
- */
-static LIST_ADD_COMPARE(userlist_compare, userlist_t *) {
-	if (!data1 || !data1->nickname || !data2 || !data2->nickname)
-		return 0;
+/* groups: */
+static LIST_ADD_COMPARE(group_compare, struct ekg_group *) { return xstrcasecmp(data1->name, data2->name); }
+static LIST_FREE_ITEM(group_item_free, struct ekg_group *) { xfree(data->name); }
+DYNSTUFF_LIST_DECLARE_SORTED(ekg_groups, struct ekg_group, group_compare, group_item_free,
+	static __DYNSTUFF_ADD_SORTED,		/* ekg_groups_add() */
+	static __DYNSTUFF_REMOVE_ITER,		/* ekg_groups_removei() */
+	static __DYNSTUFF_DESTROY)		/* ekg_groups_destroy() */
 
-	return xstrcasecmp(data1->nickname, data2->nickname);
-}
-
-/**
- * userlist_resource_compare()
- *
- * internal function used to sort resources by prio and by name
- * used by list_add_sorted() 
- *
- * @param data1 - first ekg_resource_t to compare.
- * @param data2 - second ekg_resource_t to compare.
- * @sa userlist_resource_add
- * @sa list_add_sorted
- *
- * @return It returns result of prio subtraction if resource prio is diffrent.
- * 	Otherwise result of xstrcasecmp() by resources name
- */
-
+/* resources: */
 static LIST_ADD_COMPARE(userlist_resource_compare, ekg_resource_t *) {
-	if (!data1 || !data2)
-		return 0;
+	if (data1->prio != data2->prio)			
+		return (data2->prio - data1->prio);	/* sort by prio */
 
-	if (data1->prio != data2->prio) return (data2->prio - data1->prio);	/* first sort by prio,	first users with larger prio! */
-
-	return xstrcmp(data1->name, data2->name);				/* than sort by name */
+	return xstrcasecmp(data1->name, data2->name);	/* sort by name */
 }
+static LIST_FREE_ITEM(list_userlist_resource_free, ekg_resource_t *) { xfree(data->name); xfree(data->descr); }
+DYNSTUFF_LIST_DECLARE_SORTED(ekg_resources, ekg_resource_t, userlist_resource_compare, list_userlist_resource_free,
+	static __DYNSTUFF_ADD_SORTED,		/* ekg_resources_add() */
+	static __DYNSTUFF_REMOVE_SAFE,		/* ekg_resources_remove() */
+	static __DYNSTUFF_DESTROY)		/* ekg_resources_destroy() */
+
+/* userlist: */
+static LIST_ADD_COMPARE(userlist_compare, userlist_t *) { return xstrcasecmp(data1->nickname, data2->nickname); }
+static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
+	userlist_private_free(data);
+	private_items_destroy(&data->priv_list);
+	xfree(data->uid); xfree(data->nickname); xfree(data->descr); xfree(data->foreign); xfree(data->last_descr);
+	ekg_groups_destroy(&(data->groups));
+	ekg_resources_destroy(&(data->resources));
+}
+DYNSTUFF_LIST_DECLARE_SORTED(userlists, userlist_t, userlist_compare, userlist_free_item,
+	static __DYNSTUFF_ADD_SORTED,					/* userlists_add() */
+	__DYNSTUFF_REMOVE_SAFE,						/* userlists_remove() */
+	__DYNSTUFF_DESTROY)						/* userlists_destroy() */
 
 /*
  * userlist_add_entry()
  *
  * dodaje do listy kontaktów pojedyncz± liniê z pliku lub z serwera.
  */
-void userlist_add_entry(session_t *session, const char *line)
-{
+void userlist_add_entry(session_t *session, const char *line) {
 	char **entry = array_make(line, ";", 8, 0, 0);
 	userlist_t *u;
 	int count, i;
@@ -135,20 +126,25 @@ void userlist_add_entry(session_t *session, const char *line)
 		array_free(entry);
 		return;
 	}
-	
-	u = xmalloc(sizeof(userlist_t));
-	if (atoi(entry[6])) 
-		u->uid = saprintf("gg:%s", entry[6]);
-	else
-		u->uid = xstrdup(entry[6]);
+
+	u = xmalloc(sizeof(userlist_t)); /* we'd need this here */
+	u->uid = entry[6];	entry[6] = NULL;
+
+	{
+		int function = EKG_USERLIST_PRIVHANDLER_READING;
+
+		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry, &count);
+	}
 
 	if (valid_plugin_uid(session->plugin, u->uid) != 1) {
 		debug_error("userlist_add_entry() wrong uid: %s for session: %s [plugin: 0x%x]\n", u->uid, session->uid, session->plugin);
-		array_free(entry);
+		array_free_count(entry, count);
 		xfree(u->uid);
 		xfree(u);
 		return;
 	}
+
+	u->status = EKG_STATUS_NA;
 
 	for (i = 0; i < 6; i++) {
 		if (!xstrcmp(entry[i], "(null)") || !xstrcmp(entry[i], "")) {
@@ -157,29 +153,20 @@ void userlist_add_entry(session_t *session, const char *line)
 		}
 	}
 			
-	u->first_name = xstrdup(entry[0]);
-	u->last_name = xstrdup(entry[1]);
+	u->groups	= group_init(entry[5]);
 
-	if (entry[3] && !valid_nick(entry[3]))
-		u->nickname = saprintf("_%s", entry[3]);
-	else
-		u->nickname = xstrdup(entry[3]);
+	if (entry[3]) {
+		u->nickname	= !valid_nick(entry[3]) ? 
+			saprintf("_%s", entry[3]) :
+			xstrdup(entry[3]);
+	}
 
-	u->mobile = xstrdup(entry[4]);
-	u->groups = group_init(entry[5]);
-	u->status = xstrdup(EKG_STATUS_NA);
+	u->foreign	= entry[7] ? 
+		saprintf(";%s", entry[7]) :
+		NULL;
 	
-	if (entry[7])
-		u->foreign = saprintf(";%s", entry[7]);
-	else
-		u->foreign = xstrdup("");
-
-	for (i = 0; i < count; i++)
-		xfree(entry[i]);
-
-	xfree(entry);
-
-	LIST_ADD_SORTED(&(session->userlist), u, 0, userlist_compare);
+	array_free_count(entry, count);
+	userlists_add(&(session->userlist), u);
 }
 
 /**
@@ -191,28 +178,29 @@ void userlist_add_entry(session_t *session, const char *line)
  * @param session
  * @return 0 on success, -1 file not found
  */
-int userlist_read(session_t *session)
-{
-        const char *filename;
-        char *buf;
-        FILE *f;
+int userlist_read(session_t *session) {
+	const char *filename;
+	char *buf;
+	FILE *f;
 
 	if (!(filename = prepare_pathf("%s-userlist", session->uid)))
 		return -1;
-        
-        if (!(f = fopen(filename, "r")))
-                return -1;
-                        
-        while ((buf = read_file(f, 0))) {
-                if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/'))
-                        continue;
-                
-                userlist_add_entry(session, buf);
-        }
+	
+	if (!(f = fopen(filename, "r")))
+		return -1;
+			
+	while ((buf = read_file(f, 0))) {
+		if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/'))
+			continue;
+		
+		userlist_add_entry(session, buf);
+	}
 
-        fclose(f);
-                
-        return 0;
+	query_emit_id(NULL, USERLIST_REFRESH);	/* XXX, wywolywac tylko kiedy dodalismy przynajmniej 1 */
+
+	fclose(f);
+		
+	return 0;
 } 
 
 /**
@@ -221,20 +209,19 @@ int userlist_read(session_t *session)
  * It writes @a session userlist to file: <i>session->uid</i>-userlist in ekg2 config directory
  *
  * @todo	Each plugin should've own userlist_write()/ userlist_read()
- * 		This format is obsolete.
+ *		This format is obsolete.
  *
  * @param session
  *
- * @return 	 0 on succees<br>
- * 		-1 if smth went wrong<br>
- * 		-2 if we fail to create/open userlist file in rw mode
+ * @return	 0 on succees<br>
+ *		-1 if smth went wrong<br>
+ *		-2 if we fail to create/open userlist file in rw mode
  */
 
-int userlist_write(session_t *session)
-{
+int userlist_write(session_t *session) {
 	const char *filename;
 	FILE *f;
-	list_t l;
+	userlist_t *ul;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
@@ -248,27 +235,34 @@ int userlist_write(session_t *session)
 	fchmod(fileno(f), 0600);
 
 	/* userlist_dump() */
-	for (l = session->userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-		const char *uid;
-		char *groups;
+	for (ul = session->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
+		char **entry = xcalloc(7, sizeof(char *));
+		char *line;
 
-		uid = (!strncmp(u->uid, "gg:", 3)) ? u->uid + 3 : u->uid;
+		entry[0] = NULL;				/* first name [gg] */
+		entry[1] = NULL;				/* last name [gg] */
+		entry[2] = xstrdup(u->nickname);		/* display? backwards compatibility? */
+		entry[3] = xstrdup(u->nickname);		/* nickname */
+		entry[4] = NULL;				/* mobile [gg] */
+		entry[5] = group_to_string(u->groups, 1, 0);	/* groups (alloced itself) */
+		entry[6] = strdup(u->uid);			/* uid */
 
-		groups = group_to_string(u->groups, 1, 0);
+		{
+			int function = EKG_USERLIST_PRIVHANDLER_WRITING;
 
-		fprintf(f, "%s;%s;%s;%s;%s;%s;%s%s\r\n",
-			(u->first_name) ? u->first_name : "",
-			(u->last_name) ? u->last_name : "",
-			(u->nickname) ? u->nickname : "",
-			(u->nickname) ? u->nickname : "",
-			(u->mobile) ? u->mobile : "",
-			groups,
-			uid,
-			(u->foreign) ? u->foreign : "");
-		
-		xfree(groups);
-	}	
+			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry);
+		}
+
+		line = array_join_count(entry, ";", 7);
+
+		fprintf(f, "%s%s\n", 
+			line,					/* look upper */
+			u->foreign ? u->foreign : "");		/* backwards compatibility */
+
+		xfree(line);
+		array_free_count(entry, 7);
+	}
 
 	fclose(f);
 	return 0;
@@ -282,7 +276,7 @@ int userlist_write(session_t *session)
  *
  * @sa userlist_write
  * @bug It was copied from ekg1 and it doesn't match ekg2 abi.
- * 	It's bad so i comment it out... Reimplement it or delete
+ *	It's bad so i comment it out... Reimplement it or delete
  */
 void userlist_write_crash() {
 /*
@@ -325,6 +319,23 @@ void userlist_write_crash() {
  */
 }
 
+static void userlist_private_free(userlist_t *u) {
+	if (u->priv) {
+		int func = EKG_USERLIST_PRIVHANDLER_FREE;
+
+		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func);
+	}
+}
+
+void *userlist_private_get(plugin_t *plugin, userlist_t *u) {
+	int func = EKG_USERLIST_PRIVHANDLER_GET;
+	void *up = NULL;
+
+	query_emit_id(plugin, USERLIST_PRIVHANDLE, &u, &func, &up);
+
+	return up;
+}
+
 /**
  * userlist_clear_status()
  *
@@ -334,37 +345,33 @@ void userlist_write_crash() {
  * However if that happen you shouldn't use this function but emit query <i>PROTOCOL_STATUS</i> or <i>PROTOCOL_DISCONNECTED</i>
  *
  * @note By <i>presence informations</i> I mean:<br>
- * 	-> status 	- user's status [avail, away, ffc, dnd], it'll be: @a EKG_STATUS_NA ("notavail")<br>
- * 	-> descr 	- user's description, it'll be: NULL<br>
- * 	-> ip		- user's ip, il'll be: 0.0.0.0<br>
- * 	-> port		- user's port, it'll be: 0<br>
- * 	-> resources	- user's resource, list will be destroyed.
+ *	-> status	- user's status [avail, away, ffc, dnd], it'll be: @a EKG_STATUS_NA ("notavail")<br>
+ *	-> descr	- user's description, it'll be: NULL<br>
+ *	-> ip		- user's ip, il'll be: 0.0.0.0<br>
+ *	-> port		- user's port, it'll be: 0<br>
+ *	-> resources	- user's resource, list will be destroyed.
  *
  * @param session
  * @param uid
  */
 
-void userlist_clear_status(session_t *session, const char *uid)
-{
-        list_t l;
+void userlist_clear_status(session_t *session, const char *uid) {
+	userlist_t *ul;
 
 	if (!session)
 		return;
 
-        for (l = session->userlist; l; l = l->next) {
-                userlist_t *u = l->data;
+	for (ul = session->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 
 		if (!uid || !xstrcasecmp(uid, u->uid)) {
-			xfree(u->status);
-			u->status = xstrdup(EKG_STATUS_NA);
-			memset(&u->ip, 0, sizeof(struct in_addr));
-			u->port = 0;
+			u->status = EKG_STATUS_NA;
 			xfree(u->descr);
 			u->descr = NULL;
 
-			userlist_resource_free(u);
+			ekg_resources_destroy(&(u->resources));
 		}
-        }
+	}
 }
 
 /*
@@ -372,53 +379,11 @@ void userlist_clear_status(session_t *session, const char *uid)
  *
  * czy¶ci listê u¿ytkowników i zwalnia pamiêæ.
  */
-void userlist_free(session_t *session)
-{
+void userlist_free(session_t *session) {
 	if (!session)
 		return;
 
-	userlist_free_u(&(session->userlist));
-}
-
-/* 
- * userlist_free_u()
- *
- * clear and remove from memory given userlist
- */
-void userlist_free_u (list_t *userlist)
-{
-        list_t l;
-
-        if (!*userlist)
-                return;
-
-        for (l = *userlist; l; l = l->next) {
-                userlist_t *u = l->data;
-                list_t lp;
-
-                xfree(u->first_name);
-                xfree(u->last_name);
-                xfree(u->nickname);
-                xfree(u->uid);
-                xfree(u->mobile);
-                xfree(u->status);
-                xfree(u->descr);
-                xfree(u->authtype);
-                xfree(u->foreign);
-                xfree(u->last_status);
-                xfree(u->last_descr);
-
-                for (lp = u->groups; lp; lp = lp->next) {
-                        struct ekg_group *g = lp->data;
-
-                        xfree(g->name);
-                }
-                list_destroy(u->groups, 1);
-		userlist_resource_free(u);
-        }
-
-        list_destroy(*userlist, 1);
-        *userlist = NULL;
+	userlists_destroy(&(session->userlist));
 }
 
 /**
@@ -427,7 +392,7 @@ void userlist_free_u (list_t *userlist)
  * It adds <b>new</b> user resource to resources list, with given data.
  *
  * @note It <b>doesn't</b> check if prio already exists.. So you must remember about
- * 	calling userlist_resource_find() if you don't want two (or more) same resources...
+ *	calling userlist_resource_find() if you don't want two (or more) same resources...
  *
  * @param u - user
  * @param name - name of resource
@@ -438,14 +403,15 @@ void userlist_free_u (list_t *userlist)
 ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio) {
 	ekg_resource_t *r;
 
-	if (!u) return NULL;
+	if (!u) 
+		return NULL;
 
 	r	= xmalloc(sizeof(ekg_resource_t));
-	r->name		= xstrdup(name);		/* resource name */
-	r->prio		= prio;				/* resource prio */
-	r->status	= xstrdup(EKG_STATUS_NA);	/* this is quite stupid but we must be legal with ekg2 ABI */
+	r->name		= xstrdup(name);
+	r->prio		= prio;
+	r->status	= EKG_STATUS_NA;
 
-	LIST_ADD_SORTED(&(u->resources), r, 0, userlist_resource_compare);	/* add to list sorted by prio && than by name */
+	ekg_resources_add(&(u->resources), r);
 	return r;
 }
 
@@ -460,11 +426,11 @@ ekg_resource_t *userlist_resource_add(userlist_t *u, const char *name, int prio)
  * @return It returns resource with given name if founded, otherwise NULL
  */
 ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name) {
-	list_t l;
+	ekg_resource_t *rl;
 	if (!u) return NULL;
 
-	for (l = u->resources; l; l = l->next) {
-		ekg_resource_t *r = l->data;
+	for (rl = u->resources; rl; rl = rl->next) {
+		ekg_resource_t *r = rl;
 
 		if (!xstrcmp(r->name, name))
 			return r;
@@ -481,38 +447,9 @@ ekg_resource_t *userlist_resource_find(userlist_t *u, const char *name) {
  * @param u - user
  * @param r - resource
  */
-void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {
+void userlist_resource_remove(userlist_t *u, ekg_resource_t *r) {		/* XXX, remove */
 	if (!u || !r) return;
-	
-	xfree(r->name);
-	xfree(r->descr);
-	xfree(r->status);
-
-	list_remove(&(u->resources), r, 1);
-}
-
-/**
- * userlist_resource_free()
- *
- * Remove all user @a u resources.<br>
- * Free allocated memory.
- *
- * @param u - user
- * @sa userlist_resource_remove - to remove given resource
- */
-void userlist_resource_free(userlist_t *u) {
-	list_t l;
-	if (!u || !(u->resources)) return;
-
-	for (l = u->resources; l; l = l->next) {
-		ekg_resource_t *r = l->data;
-
-		xfree(r->name);
-		xfree(r->status);
-		xfree(r->descr);
-	}
-	list_destroy(u->resources, 1);
-	u->resources = NULL;
+	ekg_resources_remove(&(u->resources), r);
 }
 
 /*
@@ -523,8 +460,7 @@ void userlist_resource_free(userlist_t *u) {
  *  - uin,
  *  - display.
  */
-userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname)
-{
+userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname) {
 	if (!session)
 		return NULL;
 
@@ -543,25 +479,15 @@ userlist_t *userlist_add(session_t *session, const char *uid, const char *nickna
  * uid - uid,
  * nickname - display.
  */
-userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickname)
-{
-        userlist_t *u = xmalloc(sizeof(userlist_t));
+userlist_t *userlist_add_u(userlist_t **userlist, const char *uid, const char *nickname) {
+	userlist_t *u = xmalloc(sizeof(userlist_t));
 
-        u->uid = xstrdup(uid);
-        u->nickname = xstrdup(nickname);
-        u->status = xstrdup(EKG_STATUS_NA);
-#if 0 /* if 0 != NULL */
-        u->first_name = NULL;
-        u->last_name = NULL;
-        u->mobile = NULL;
-        u->descr = NULL;
-        u->authtype = NULL;
-        u->foreign = NULL;
-        u->last_status = NULL;
-        u->last_descr = NULL;
-        u->resources = NULL;
-#endif
-	return LIST_ADD_SORTED(userlist, u, 0, userlist_compare);
+	u->uid = xstrdup(uid);
+	u->nickname = xstrdup(nickname);
+	u->status = EKG_STATUS_NA;
+
+	userlists_add(userlist, u);
+	return u;
 }
 
 /*
@@ -571,8 +497,7 @@ userlist_t *userlist_add_u(list_t *userlist, const char *uid, const char *nickna
  *
  *  - u.
  */
-int userlist_remove(session_t *session, userlist_t *u)
-{
+int userlist_remove(session_t *session, userlist_t *u) {
 	return userlist_remove_u(&(session->userlist), u);
 }
 
@@ -583,38 +508,13 @@ int userlist_remove(session_t *session, userlist_t *u)
  *
  *  - u.
  */
-int userlist_remove_u(list_t *userlist, userlist_t *u)
-{
-        list_t l;
+int userlist_remove_u(userlist_t **userlist, userlist_t *u) {
+	if (!u)
+		return -1;
 
-        if (!u)
-                return -1;
+	userlists_remove(userlist, u);
 
-        xfree(u->first_name);
-        xfree(u->last_name);
-        xfree(u->nickname);
-        xfree(u->uid);
-        xfree(u->mobile);
-        xfree(u->status);
-        xfree(u->descr);
-        xfree(u->authtype);
-        xfree(u->foreign);
-        xfree(u->last_status);
-        xfree(u->last_descr);
-	
-	if (u->groups) {
-		for (l = u->groups; l; l = l->next) {
-			struct ekg_group *g = l->data;
-
-			xfree(g->name);
-		}
-		list_destroy(u->groups, 1);
-	}
-	userlist_resource_free(u);
-
-        list_remove(userlist, u, 1);
-
-        return 0;
+	return 0;
 }
 
 /*
@@ -629,14 +529,12 @@ int userlist_remove_u(list_t *userlist, userlist_t *u)
  *
  * 0/-1
  */
-int userlist_replace(session_t *session, userlist_t *u)
-{
+int userlist_replace(session_t *session, userlist_t *u) {
 	if (!u)
 		return -1;
-	if (list_remove(&(session->userlist), u, 0))
+	if (!LIST_UNLINK2(&(session->userlist), u) && (errno == ENOENT))
 		return -1;
-	if (!LIST_ADD_SORTED(&(session->userlist), u, 0, userlist_compare))
-		return -1;
+	userlists_add(&(session->userlist), u);
 
 	return 0;
 }
@@ -649,12 +547,11 @@ int userlist_replace(session_t *session, userlist_t *u)
  *
  *  - uid,
  */
-userlist_t *userlist_find(session_t *session, const char *uid)
-{
+userlist_t *userlist_find(session_t *session, const char *uid) {
 	if (!uid || !session)
 		return NULL;
 
-        return userlist_find_u(&(session->userlist), uid);
+	return userlist_find_u(&(session->userlist), uid);
 }
 
 /* 
@@ -663,15 +560,14 @@ userlist_t *userlist_find(session_t *session, const char *uid)
  * finds and returns pointer to userlist_t which includes given
  * uid
  */
-userlist_t *userlist_find_u(list_t *userlist, const char *uid)
-{
-	list_t l;
+userlist_t *userlist_find_u(userlist_t **userlist, const char *uid) {
+	userlist_t *ul;
 
 	if (!uid || !userlist)
 		return NULL;
 
-	for (l = *userlist; l; l = l->next) {
-		userlist_t *u = l->data;
+	for (ul = *userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
 		const char *tmp;
 		int len;
 
@@ -683,14 +579,13 @@ userlist_t *userlist_find_u(list_t *userlist, const char *uid)
 
 		/* porównujemy resource; if (len > 0) */
 
-		if (!(tmp = xstrchr(uid, '/')) || xstrncmp(uid, "jid:", 4))
+		if (!(tmp = xstrchr(uid, '/')) || (xstrncmp(uid, "xmpp:", 5)))
 			continue;
 
 		len = (int)(tmp - uid);
 
 		if (len > 0 && !xstrncasecmp(uid, u->uid, len))
 			return u;
-
 	}
 
 	return NULL;
@@ -704,11 +599,10 @@ userlist_t *userlist_find_u(list_t *userlist, const char *uid)
  *
  * zwraca 1 je¶li nick jest w porz±dku, w przeciwnym razie 0.
  */
-int valid_nick(const char *nick)
-{
-	int i;
+int valid_nick(const char *nick) {
 	const char *wrong[] = { "(null)", "__debug", "__status",
 				 "__current", "__contacts", "*", "$", NULL };
+	int i;
 
 	if (!nick)
 		return 0;
@@ -734,7 +628,7 @@ int valid_nick(const char *nick)
  * @sa valid_plugin_uid()	- You can specify plugin
  *
  * @return	1 - if uid can be handled by ekg2<br>
- * 		0 - if not
+ *		0 - if not
  */
 
 int valid_uid(const char *uid) {
@@ -753,32 +647,31 @@ int valid_uid(const char *uid) {
  *
  * Check if @a uid can be handled by given @a plugin
  * 
- * @param plugin 	- plugin to check for
+ * @param plugin	- plugin to check for
  * @param uid		- uid to check for
  *
  * @sa valid_uid()	- if we want to know if this @a uid can be handled by ekg2 [when it doesn't matter which plugin]
  *
- * @return 	 1 - if @a uid can be handled by @a plugin<br>
- * 		 0 - if not<br>
+ * @return	 1 - if @a uid can be handled by @a plugin<br>
+ *		 0 - if not<br>
  *		-1 - if @a plugin == NULL
  */
 
 int valid_plugin_uid(plugin_t *plugin, const char *uid) {
-        int valid = 0;
-        char *tmp;
+	int valid = 0;
+	char *tmp;
 
 	if (!plugin) {
 		debug_error("valid_plugin_uid() no plugin passed. In current api, it means than something really bad happen.\n");
 		return -1;
 	}
 
-        tmp = xstrdup(uid);
+	tmp = xstrdup(uid);
 
-        query_emit_id(plugin, PROTOCOL_VALIDATE_UID, &tmp, &valid);
-        xfree(tmp);
+	query_emit_id(plugin, PROTOCOL_VALIDATE_UID, &tmp, &valid);
+	xfree(tmp);
 
-        return (valid > 0);
-
+	return (valid > 0);
 }
 
 /**
@@ -786,7 +679,7 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid) {
  *
  * Return and checks if uid passed @a text is proper for at least one session, or it's nickname of smb on @a session userlist
  *
- * @param session 	- session to search for item on userlist
+ * @param session	- session to search for item on userlist
  * @param text		- uid to check for, if '$' then check current window.
  *
  * @sa get_uid()	- to search only specified session.
@@ -812,7 +705,7 @@ char *get_uid_any(session_t *session, const char *text) {
  * Return and checks if uid passed @a text is proper for @a session or it's nickname of smb on @a session userlist.
  *
  * @note It also work with userlist_find() and if @a text is nickname of smb in session userlist.. 
- * 	 Than it return uid of this user. 
+ *	 Than it return uid of this user. 
  *	 So you shouldn't call userlist_find() with get_uid() as param, cause it's senseless
  *	 userlist_find() don't check for "$" target, so you must do it by hand. Rest is the same.
  *	 If there are such user:
@@ -823,16 +716,15 @@ char *get_uid_any(session_t *session, const char *text) {
  * @param text - uid to check for, if '$' than check current window.
  *
  * @sa userlist_find()
- * @sa get_nickname() 	- to look for nickname..
+ * @sa get_nickname()	- to look for nickname..
  * @sa get_uid_any()	- to do all session searching+specified session userlist search..
- * 				This function does only all session searching if @a session is NULL... and than
- * 				it doesn't look at userlist. Do you feel difference?
+ *				This function does only all session searching if @a session is NULL... and than
+ *				it doesn't look at userlist. Do you feel difference?
  *
  * @return If we found proper uid for @a text, than return it. Otherwise NULL
  */
 
-char *get_uid(session_t *session, const char *text)
-{
+char *get_uid(session_t *session, const char *text) {
 	userlist_t *u;
 
 	if (text && !xstrcmp(text, "$"))
@@ -860,9 +752,8 @@ char *get_uid(session_t *session, const char *text)
  * no nickname it returns uid, else if contacts doesnt exist
  * it returns text if it is a correct uid, else NULL
  */
-char *get_nickname(session_t *session, const char *text)
-{
-        userlist_t *u;
+char *get_nickname(session_t *session, const char *text) {
+	userlist_t *u;
 
 	if (text && !xstrcmp(text, "$"))
 		text = window_current->target;
@@ -870,18 +761,18 @@ char *get_nickname(session_t *session, const char *text)
 	if (!session)
 		return valid_uid(text) ? (char *) text : NULL;
 
-        u = userlist_find(session, text);
+	u = userlist_find(session, text);
 
-        if (u && u->nickname)
-                return u->nickname;
+	if (u && u->nickname)
+		return u->nickname;
 
 	if (u && u->uid)
 		return u->uid;
 
 	if (valid_plugin_uid(session->plugin, text) == 1)
-	        return (char *)text;
+		return (char *)text;
 
-        return NULL;
+	return NULL;
 }
 
 /*
@@ -893,14 +784,9 @@ char *get_nickname(session_t *session, const char *text)
  *
  *  - uin - numerek danej osoby.
  */
-const char *format_user(session_t *session, const char *uid)
-{
+const char *format_user(session_t *session, const char *uid) {
 	userlist_t *u = userlist_find(session, uid);
 	static char buf[256], *tmp;
-/* 	
-	if (uid && xstrchr(uid, ':'))
-		uid = xstrchr(uid, ':') + 1;
- */
 
 	if (!u || !u->nickname)
 		tmp = format_string(format_find("unknown_user"), uid, uid);
@@ -921,11 +807,10 @@ const char *format_user(session_t *session, const char *uid)
  *
  *  - uin.
  */
-int ignored_remove(session_t *session, const char *uid)
-{
+int ignored_remove(session_t *session, const char *uid) {
 	userlist_t *u = userlist_find(session, uid);
 	char *tmps, *tmp;
-	list_t l;
+	struct ekg_group *gl;
 	int level, tmp2 = 0;
 
 	if (!u)
@@ -934,16 +819,13 @@ int ignored_remove(session_t *session, const char *uid)
 	if (!(level = ignored_check(session,uid)))
 		return -1;
 
-	for (l = u->groups; l; ) {
-		struct ekg_group *g = l->data;
-
-		l = l->next;
+	for (gl = u->groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 
 		if (xstrncasecmp(g->name, "__ignored", 9))
 			continue;
 
-		xfree(g->name);
-		list_remove(&u->groups, g, 1);
+		gl = ekg_groups_removei(&u->groups, g);
 	}
 
 	if (!u->nickname && !u->groups) {
@@ -972,8 +854,7 @@ int ignored_remove(session_t *session, const char *uid)
  *  - uin.
  *  - level.
  */
-int ignored_add(session_t *session, const char *uid, int level)
-{
+int ignored_add(session_t *session, const char *uid, ignore_t level) {
 	userlist_t *u;
 	char *tmps, *tmp;
 	int oldlevel = 0;
@@ -988,10 +869,8 @@ int ignored_add(session_t *session, const char *uid, int level)
 	ekg_group_add(u, tmp);
 	xfree(tmp);
 
-	if (level & IGNORE_STATUS) {
-		xfree(u->status);
-		u->status = xstrdup(EKG_STATUS_NA);
-	}
+	if (level & IGNORE_STATUS)
+		u->status = EKG_STATUS_NA; /* maybe EKG_STATUS_UNKNOWN would be better? */
 
 	if (level & IGNORE_STATUS_DESCR) {
 		xfree(u->descr);
@@ -1016,16 +895,15 @@ int ignored_add(session_t *session, const char *uid, int level)
  * @param uid - uid uzytkownika
  *
  */
-int ignored_check(session_t *session, const char *uid)
-{
+int ignored_check(session_t *session, const char *uid) {
 	userlist_t *u = userlist_find(session, uid);
-	list_t l;
+	struct ekg_group *gl;
 
 	if (!u)
 		return 0;
 
-	for (l = u->groups; l; l = l->next) {
-		struct ekg_group *g = l->data;
+	for (gl = u->groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 
 		if (!xstrcasecmp(g->name, "__ignored"))
 			return IGNORE_ALL;
@@ -1050,8 +928,7 @@ int ignored_check(session_t *session, const char *uid)
  *
  * @return zwraca bitmaske opisana przez str
  */
-int ignore_flags(const char *str)
-{
+int ignore_flags(const char *str) {
 	int x, y, ret = 0;
 	char **arr;
 
@@ -1089,8 +966,7 @@ int ignore_flags(const char *str)
  *
  * @return zwraca <b>statyczny</b> bufor opisujacy bitmaske za pomoca `ignore_labels`
  */
-const char *ignore_format(int level)
-{
+const char *ignore_format(int level) {
 	static char buf[200];
 	int i, comma = 0;
 
@@ -1112,27 +988,6 @@ const char *ignore_format(int level)
 }
 
 /**
- * group_compare()
- *
- * wewnetrzna funkcja pomocna przy list_add_sorted().
- *
- * @param data1 - pierwszy wpis do porownania
- * @param data2 - drugi wpis do porownania
- * @sa list_add_sorted
- *
- * @return zwraca wynik xstrcasecmp() na nazwach grup.
- */
-static int group_compare(void *data1, void *data2)
-{
-	struct ekg_group *a = data1, *b = data2;
-	
-	if (!a || !a->name || !b || !b->name)
-		return 0;
-
-	return xstrcasecmp(a->name, b->name);
-}
-
-/**
  * ekg_group_add()
  *
  * dodaje u¿ytkownika do podanej grupy.
@@ -1142,16 +997,14 @@ static int group_compare(void *data1, void *data2)
  *
  * @return -1 jesli juz user jest w tej grupie, lub zle parametry. 0 gdy dodano.
  */
-int ekg_group_add(userlist_t *u, const char *group)
-{
-	struct ekg_group *g;
-	list_t l;
+int ekg_group_add(userlist_t *u, const char *group) {
+	struct ekg_group *g, *gl;
 
 	if (!u || !group)
 		return -1;
 
-	for (l = u->groups; l; l = l->next) {
-		g = l->data;
+	for (gl = u->groups; gl; gl = gl->next) {
+		g = gl;
 
 		if (!xstrcasecmp(g->name, group))
 			return -1;
@@ -1159,7 +1012,7 @@ int ekg_group_add(userlist_t *u, const char *group)
 	g = xmalloc(sizeof(struct ekg_group));
 	g->name = xstrdup(group);
 
-	list_add_sorted(&u->groups, g, 0, group_compare);
+	ekg_groups_add(&u->groups, g);
 
 	return 0;
 }
@@ -1174,19 +1027,17 @@ int ekg_group_add(userlist_t *u, const char *group)
  *
  * @return 0 je¶li siê uda³o, inaczej -1.
  */
-int ekg_group_remove(userlist_t *u, const char *group)
-{
-	list_t l;
+int ekg_group_remove(userlist_t *u, const char *group) {
+	struct ekg_group *gl;
 
 	if (!u || !group)
 		return -1;
 	
-	for (l = u->groups; l; l = l->next) {
-		struct ekg_group *g = l->data;
+	for (gl = u->groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 
 		if (!xstrcasecmp(g->name, group)) {
-			xfree(g->name);
-			list_remove(&u->groups, g, 1);
+			(void) ekg_groups_removei(&u->groups, g);
 			
 			return 0;
 		}
@@ -1205,15 +1056,14 @@ int ekg_group_remove(userlist_t *u, const char *group)
  *
  * @return 1 je¶li tak, 0 je¶li nie.
  */
-int ekg_group_member(userlist_t *u, const char *group)
-{
-	list_t l;
+int ekg_group_member(userlist_t *u, const char *group) {
+	struct ekg_group *gl;
 
 	if (!u || !group)
 		return 0;
 
-	for (l = u->groups; l; l = l->next) {
-		struct ekg_group *g = l->data;
+	for (gl = u->groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 
 		if (!xstrcasecmp(g->name, group))
 			return 1;
@@ -1232,9 +1082,8 @@ int ekg_group_member(userlist_t *u, const char *group)
  *
  *  @return zwraca listê `struct group' je¶li siê uda³o, inaczej NULL.
  */
-list_t group_init(const char *names)
-{
-	list_t l = NULL;
+struct ekg_group *group_init(const char *names) {
+	struct ekg_group *gl = NULL;
 	char **groups;
 	int i;
 
@@ -1247,14 +1096,14 @@ list_t group_init(const char *names)
 		struct ekg_group *g = xmalloc(sizeof(struct ekg_group));
 
 		g->name = groups[i];
-		list_add_sorted(&l, g, 0, group_compare);
+		ekg_groups_add(&gl, g);
 	}
 	/* NOTE: we don't call here array_free() cause we use items of this
-	 * 	array @ initing groups. We don't use strdup()
+	 *	array @ initing groups. We don't use strdup()
 	 */
 	xfree(groups);
 	
-	return l;
+	return gl;
 }
 
 /**
@@ -1268,17 +1117,16 @@ list_t group_init(const char *names)
  *
  *  @return zwraca zaalokowany ci±g znaków lub NULL w przypadku b³êdu.
  */
-char *group_to_string(list_t groups, int meta, int sep)
-{
+char *group_to_string(struct ekg_group *groups, int meta, int sep) {
 	string_t foo = string_init(NULL);
-	list_t l;
+	struct ekg_group *gl;
 	int comma = 0;
 
-	for (l = groups; l; l = l->next) {
-		struct ekg_group *g = l->data;
+	for (gl = groups; gl; gl = gl->next) {
+		struct ekg_group *g = gl;
 
 		if (!meta && !xstrncmp(g->name, "__", 2)) {
-			comma = 0;
+			comma = 0; /* mg: why? */
 			continue;
 		}
 

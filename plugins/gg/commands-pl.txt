@@ -177,8 +177,6 @@ modify
 	
 	  -n, --nick <pseudonim>     pseudonim (nie jest u¿ywany)
 	
-	  -d, --display <nazwa>      wy¶wietlana nazwa
-	
 	  -u, --uin <numerek>
 	
 	  -g, --group [+/-]<@grupa>  dodaje lub usuwa z grupy

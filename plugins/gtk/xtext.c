@@ -70,7 +70,7 @@
 #define charlen(str) g_utf8_skip[*(guchar *)(str)]
 
 /* is delimiter */
-#define is_del(c) 	(c == ' ' || c == '\n' || c == ')' || c == '(' || c == '>' || c == '<' || c == 0)
+#define is_del(c)	(c == ' ' || c == '\n' || c == ')' || c == '(' || c == '>' || c == '<' || c == 0)
 #warning "XXX, ATTR_* stuff"
 /* is_del includes ATTR_RESET, ATTR_BOLD */
 
@@ -742,7 +742,7 @@ static void gtk_xtext_destroy(GtkObject * object)
 	if (xtext->adj) {
 		g_signal_handlers_disconnect_matched(G_OBJECT(xtext->adj),
 						     G_SIGNAL_MATCH_DATA, 0, 0, NULL, NULL, xtext);
-		/*      gtk_signal_disconnect_by_data (GTK_OBJECT (xtext->adj), xtext); */
+		/*	gtk_signal_disconnect_by_data (GTK_OBJECT (xtext->adj), xtext); */
 		g_object_unref(G_OBJECT(xtext->adj));
 		xtext->adj = NULL;
 	}
@@ -2049,6 +2049,7 @@ gtk_xtext_selection_get(GtkWidget *widget,
 			gdk_free_compound_text(new_text);
 		}
 		break;
+	/* case TARGET_STRING */
 	default:
 		new_text = g_locale_from_utf8(stripped, len, NULL, &glen, NULL);
 		gtk_selection_data_set(selection_data_ptr, GDK_SELECTION_TYPE_STRING,
@@ -2119,9 +2120,9 @@ static void gtk_xtext_class_init(GtkXTextClass * class)
 	xtext_class->word_click = NULL;
 }
 
-GtkType gtk_xtext_get_type(void)
+GType gtk_xtext_get_type(void)
 {
-	static GtkType xtext_type = 0;
+	static GType xtext_type = 0;
 
 	if (!xtext_type) {
 		static const GTypeInfo xtext_info = {
@@ -2320,11 +2321,6 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 		     unsigned char *str, short *attr, int len, int win_width, int indent,
 		     int line, int left_only, int *x_size_ret)
 {
-// #define DEBUG_RENDER(args...) printf(args)
-#define DEBUG_RENDER(args...) 
-
-	static int kolorek = 0;
-
 	GdkGC *gc;
 	int i = 0, x = indent, j = 0;
 	unsigned char *pstr = str;
@@ -2337,8 +2333,6 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 	xtext->in_hilight = FALSE;
 
 	offset = str - ent->str;
-
-	DEBUG_RENDER("fcall() data: ");
 
 	if (line < 255 && line >= 0)
 		xtext->buffer->grid_offset[line] = offset;
@@ -2408,49 +2402,33 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 			int isbold;
 			last_attr = attr[i];
 
-			DEBUG_RENDER("\n");
-
 			if (i) {
-				DEBUG_RENDER("flushing render: %i\n", kolorek);
 				x += gtk_xtext_render_flush(xtext, x, y, pstr, j, gc, ent->mb);
 				pstr += j;
 				j = 0;
-
-				kolorek++;
 			}
 
 			gtk_xtext_reset(xtext, mark, !xtext->in_hilight);
 
-			isbold = ((last_attr & 64) != 0);
+			isbold = ((last_attr & FSTR_BOLD) != 0);
 
 /*			xtext->bold = (isbold); */
 			/* more follow */
 
-			DEBUG_RENDER("[B: %d] ", isbold);
-			DEBUG_RENDER("[Bl: %d] ", last_attr & 256);
-			DEBUG_RENDER("[U: %d] ", last_attr & 512);
-			DEBUG_RENDER("[R: %d] ", last_attr & 1024);
-
-                        if (!(last_attr & 128)) {
+			if (!(last_attr & FSTR_NORMAL)) {
 				if (!mark) {
-					xtext_set_fg(xtext, gc, ((last_attr & 7) + 8*isbold));
+					xtext_set_fg(xtext, gc, ((last_attr & FSTR_FOREMASK) + 8*(isbold)));
 /*					xtext_set_bg(xtext, gc, ((last_attr >> 3) & 7)); */
 				}
-				xtext->col_fore = ((last_attr & 7) + 8*isbold);
+				xtext->col_fore = ((last_attr & FSTR_FOREMASK) + 8*(isbold));
 /*				xtext->col_back = ((last_attr >> 3) & 7); */
-
-				DEBUG_RENDER("[C:%.2d] ", xtext->col_fore);
 			} else {
 				if (isbold) {
 					if (!mark)
 						xtext_set_fg(xtext, gc, 7+8);
 					xtext->col_fore = 7+8;
-
-					DEBUG_RENDER("[C:%.2d] ", xtext->col_fore);
 				}
 			}
-
-			DEBUG_RENDER("[%.3d] data :", last_attr);
 		}
 
 
@@ -2460,8 +2438,6 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 			if (tmp + i > len)
 				tmp = len - i;
 			j += tmp;	/* move to the next utf8 char */
-
-			DEBUG_RENDER("%c", str[i]);
 		}
 
 		i += charlen(str + i);	/* move to the next utf8 char */
@@ -2584,9 +2560,6 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 	/* return how much we drew in the x direction */
 	if (x_size_ret)
 		*x_size_ret = x - indent;
-
-	DEBUG_RENDER("\n");
-
 	return ret;
 }
 
@@ -3474,7 +3447,7 @@ static int gtk_xtext_lines_taken(xtext_buffer * buf, textentry * ent)
 }
 
 /* Calculate number of actual lines (with wraps), to set adj->lower. *
- * This should only be called when the window resizes.               */
+ * This should only be called when the window resizes.		     */
 
 static void gtk_xtext_calc_lines(xtext_buffer * buf, int fire_signal)
 {
@@ -3879,7 +3852,7 @@ static void gtk_xtext_append_entry(xtext_buffer * buf, textentry * ent)
 	unsigned int mb;
 
 /* xchat->ekg2, note: i removed here strtr(ent->str, '\t', ' ') 
- * 		coz we should pass here only fstring_t, where fstring_t can't have \t */
+ *		coz we should pass here only fstring_t, where fstring_t can't have \t */
 
 	ent->str_width = gtk_xtext_text_width(buf->xtext, ent->str, ent->str_len, &mb);
 	ent->mb = FALSE;
@@ -3959,7 +3932,7 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 	int space;
 	int tempindent;
 
-	size_t len = xstrlen(fstr->str);
+	size_t len = xstrlen(fstr->str.b);
 
 	if (len >= sizeof(buf->xtext->scratch_buffer))
 		len = sizeof(buf->xtext->scratch_buffer) - 1;
@@ -3968,21 +3941,21 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 	ent->fstr = fstr;
 
 	/* NOTE, xchat create new string with str[0] = ' ' str[1...] = str[0...] 
-	 * 	i don't know why, but without it, ui looks ugly.
+	 *	i don't know why, but without it, ui looks ugly.
 	 *
-	 * 	slowdown, hack.
+	 *	slowdown, hack.
 	 */
 
-	ent->fstr->str = xrealloc(ent->fstr->str, sizeof(char) * (len+2));
-		memmove(ent->fstr->str+1, ent->fstr->str, len);
-		ent->fstr->str[0] = ' ';
-		ent->fstr->str[len+1] = '\0';
+	ent->fstr->str.b = xrealloc(ent->fstr->str.b, sizeof(char) * (len+2));
+		memmove(ent->fstr->str.b+1, ent->fstr->str.b, len);
+		ent->fstr->str.b[0] = ' ';
+		ent->fstr->str.b[len+1] = '\0';
 	ent->fstr->attr  = xrealloc(ent->fstr->attr, sizeof(short) * (len+1));
 		memmove(ent->fstr->attr+1, ent->fstr->attr, len*sizeof(short));
 		ent->fstr->attr[0] = FSTR_NORMAL;
 
 	ent->left_len = 0;
-	ent->str = fstr->str;
+	ent->str = fstr->str.b;
 	ent->str_len = len+1;
 	ent->indent = (buf->indent) - buf->xtext->space_width;
 
@@ -4153,8 +4126,8 @@ void gtk_xtext_buffer_show(GtkXText * xtext, xtext_buffer * buf, int render)
 
 xtext_buffer *gtk_xtext_buffer_new(GtkXText * xtext) {
 	xtext_buffer *buf = xmalloc(sizeof(xtext_buffer));
-	buf->old_value 		= -1;
-	buf->xtext 		= xtext;
+	buf->old_value		= -1;
+	buf->xtext		= xtext;
 	buf->scrollbar_down	= TRUE;
 	buf->indent		= xtext->space_width * 2;
 	dontscroll(buf);

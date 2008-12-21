@@ -72,11 +72,12 @@ void ekg_config_dealloc(PyObject * o)
 int ekg_config_len(ekg_configObj * self)
 {
 	int cnt = 0;
-	list_t l;
-    for (l = variables; l; l = l->next) {
+	variable_t *v;
+
+	for (v = variables; v; v = v->next) {
 		cnt++;
-    }
-    return cnt;
+	}
+	return cnt;
 }
 
 /**
@@ -89,13 +90,10 @@ int ekg_config_len(ekg_configObj * self)
 PyObject *ekg_config_get(ekg_configObj * self, PyObject * key)
 {
     char *name = PyString_AsString(key);
-    list_t l;
     variable_t *v;
     debug("[python] Getting value for '%s' config option\n", name);
 
-    for (l = variables; l; l = l->next) {
-		v = l->data;
-		
+    for (v = variables; v; v = v->next) {
 		if (!strcmp(v->name, name)) {
 			if (v->type == VAR_BOOL || v->type == VAR_INT
 					|| v->type == VAR_MAP) {
@@ -136,13 +134,13 @@ PyObject *ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
 			PyErr_SetString(PyExc_TypeError, "invalid type");
 			return NULL;
 		}
-		variable_set(name, itoa(PyInt_AsLong(value)), 0);
+		variable_set(name, itoa(PyInt_AsLong(value)));
 	} else {
 		if (!PyString_Check(value)) {
 			PyErr_SetString(PyExc_TypeError, "invalid type");
 			return NULL;
 		}
-		variable_set(name, PyString_AsString(value), 0);
+		variable_set(name, PyString_AsString(value));
     }
     Py_INCREF(Py_None);
     return Py_None;
@@ -155,5 +153,5 @@ PyObject *ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
  * c-basic-offset: 8
  * indent-tabs-mode: t
  * End:
- * vim: sts=8 sw=8
+ * vim: noet
  */

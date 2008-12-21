@@ -5,7 +5,7 @@ autoresponder_la_SOURCES = autoresponder.c
 autoresponder_la_LDFLAGS = -module -avoid-version
 autoresponder_la_CPPFLAGS = $(C_FVISIBILITY)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/autoresponder/

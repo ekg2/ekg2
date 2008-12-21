@@ -23,11 +23,14 @@
 #include "dynstuff.h"
 #include "plugins.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum {
 	VAR_STR,		/* ci±g znaków */
 	VAR_INT,		/* liczba ca³kowita */
 	VAR_BOOL,		/* 0/1, tak/nie, yes/no, on/off */
-	VAR_FOREIGN,		/* nieznana zmienna */
 	VAR_MAP,		/* bitmapa */
 	VAR_FILE,		/* plik */
 	VAR_DIR,		/* katalog */
@@ -44,7 +47,9 @@ typedef void (variable_notify_func_t)(const char *);
 typedef void (variable_check_func_t)(const char *, const char *);
 typedef int (variable_display_func_t)(const char *);
 
-typedef struct {
+typedef struct variable {
+	struct variable *next;
+
 	char *name;		/* nazwa zmiennej */
 	plugin_t *plugin;	/* wstyczka obs³uguj±ca zmienn± */
 	int name_hash;		/* hash nazwy zmiennej */
@@ -64,7 +69,7 @@ typedef struct {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-extern list_t variables;
+extern variable_t *variables;
 
 void variable_init();
 void variable_set_default();
@@ -82,12 +87,17 @@ variable_t *variable_add(
 	variable_map_t *map,
 	variable_display_func_t *dyndisplay);
 
+int variable_set(const char *name, const char *value);
+void variable_help(const char *name);
 int variable_remove(plugin_t *plugin, const char *name);
 
-int variable_set(const char *name, const char *value, int allow_foreign);
-void variable_help(const char *name);
-void variable_free();
+variable_t *variables_removei(variable_t *v);
+void variables_destroy();
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_VARS_H */

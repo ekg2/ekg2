@@ -13,7 +13,7 @@
 enum jabber_dcc_protocol_type_t {
 	JABBER_DCC_PROTOCOL_UNKNOWN	= 0,
 	JABBER_DCC_PROTOCOL_BYTESTREAMS,	/* http://www.jabber.org/jeps/jep-0065.html */
-	JABBER_DCC_PROTOCOL_IBB, 		/* http://www.jabber.org/jeps/jep-0047.html */
+	JABBER_DCC_PROTOCOL_IBB,		/* http://www.jabber.org/jeps/jep-0047.html */
 	JABBER_DCC_PROTOCOL_WEBDAV,		/* http://www.jabber.org/jeps/jep-0129.html */ /* DON'T IMPLEMENT IT UNTILL IT WILL BE STARNDARD DRAFT */
 };
 

@@ -178,6 +178,7 @@ BOOT:
 	ekg2_boot(Session);
 	ekg2_boot(Variable);
 	ekg2_boot(Plugin);
+	ekg2_boot(Watch);
 	ekg2_boot(Window);
 	ekg2_boot(Command);
 	ekg2_boot(Timer);

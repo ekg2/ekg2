@@ -1,3 +1,5 @@
+#include "ekg2-config.h"
+
 #include <stdio.h>
 #include <strings.h>
 
@@ -5,7 +7,11 @@
 #  include <compat/strlcpy.h>
 #endif
 
-#include <readline.h>
+#ifdef HAVE_READLINE_READLINE_H
+#	include <readline/readline.h>
+#else
+#	include <readline.h>
+#endif
 
 #include <ekg/dynstuff.h>
 #include <ekg/events.h>
@@ -36,23 +42,21 @@ GENERATOR(possibilities) {
 
 GENERATOR(plugin) {
 	static int len;
-	static list_t el;
+	static plugin_t *p;
 
 	if (!state) {
 		len = xstrlen(text);
-		el = plugins;
+		p = plugins;
 	}
 
-	while (el) {
-		plugin_t *p = el->data;
-
-		el = el->next;
-
+	while (p) {
 		if (!xstrncasecmp(text, p->name, len)) 
 			return xstrdup(p->name);
 
 		if ((text[0] == '+' || text[0] == '-') && !xstrncasecmp(text + 1, p->name, len - 1))
 			return saprintf("%c%s", text[0], p->name);
+
+		p = p->next;
 	}
 	return NULL;
 }
@@ -78,7 +82,7 @@ GENERATOR(events) {
 
 GENERATOR(sessions_var) {
 	static int len;
-	static list_t el;
+	static session_t *el;
 #warning "GENERATOR: sessions_var TODO"
 	return NULL;
 
@@ -132,20 +136,18 @@ GENERATOR(dir) {
 
 GENERATOR(metacontacts) {
 	static int len;
-	static list_t el;
+	static metacontact_t *m;
 
 	if (!state) {
 		len = xstrlen(text);
-		el = metacontacts;
+		m = metacontacts;
 	}
 
-	while (el) {
-		metacontact_t *m = el->data;
-
-		el = el->next;
-
+	while (m) {
 		if (!xstrncasecmp(text, m->name, len)) 
 			return xstrdup(m->name);
+
+		m = m->next;
 	}
 	return NULL;
 }
@@ -157,7 +159,7 @@ GENERATOR(theme) {
 
 GENERATOR(command) {
 	static int len;
-	static list_t el;
+	static command_t *c;
 	int slash = 0;
 	int dash = 0;
 
@@ -204,7 +206,7 @@ GENERATOR(command) {
 #endif
 
 	if (!state) {
-		el = commands;
+		c = commands;
 		len = xstrlen(text);
 	}
 
@@ -222,16 +224,13 @@ GENERATOR(command) {
 
 	if (window_current->target) slash = 1;
 
-	while (el) {
-		command_t *c = el->data;
+	while (c) {
 		char *without_sess_id = NULL;
 		int plen = 0;
 		session_t *session = session_current;
 
-		el = el->next;
-
 		if (session && session->uid)
-			plen =  (int)(xstrchr(session->uid, ':') - session->uid) + 1;
+			plen =	(int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
 		if (session && !xstrncasecmp(c->name, session->uid, plen))
 			without_sess_id = xstrchr(c->name, ':');
@@ -246,23 +245,24 @@ GENERATOR(command) {
 					slash ? "/" : "",
 					dash ? "^" : "",
 					without_sess_id + 1);
+
+		c = c->next;
 	}
 
 	return NULL;
 }
 
 GENERATOR(conference) {
-	static list_t el;
+	static struct conference *c;
 	static int len;
 
 	if (!state) {
 		len = xstrlen(text);
-		el = conferences;
+		c = conferences;
 	}
 
-	while (el) {
-		struct conference *c = el->data;
-		el = el->next;
+	while (c) {
+		c = c->next;
 		
 		if (!xstrncasecmp(text, c->name, len))
 			return xstrdup(c->name);
@@ -272,7 +272,7 @@ GENERATOR(conference) {
 }
 
 GENERATOR(known_uin) {
-	static list_t el;
+	static userlist_t *el;
 	static int len;
 	static session_t *s;
 
@@ -296,7 +296,7 @@ GENERATOR(known_uin) {
 /* XXX, search window_current->userlist && conference */
 
 	while (el) {
-		userlist_t *u = el->data;
+		userlist_t *u = el;
 
 		el = el->next;
 
@@ -334,22 +334,15 @@ GENERATOR(unknown_uin) {
 }
 
 GENERATOR(variable) {
-	static list_t el;
+	static variable_t *v;
 	static int len;
 
 	if (!state) {
-		el = variables;
+		v = variables;
 		len = xstrlen(text);
 	}
 
-	while (el) {
-		variable_t *v = el->data;
-		
-		el = el->next;
-		
-		if (v->type == VAR_FOREIGN)
-			continue;
-
+	while (v) {
 		if (*text == '-') {
 			if (!xstrncasecmp(text + 1, v->name, len - 1))
 				return saprintf("-%s", v->name);
@@ -357,6 +350,8 @@ GENERATOR(variable) {
 			if (!xstrncasecmp(text, v->name, len))
 				return xstrdup(v->name);
 		}
+
+		v = v->next;
 	}
 
 	return NULL;
@@ -397,7 +392,7 @@ GENERATOR(ignored_uin) {
 }
 
 GENERATOR(blocked_uin) {
-	static list_t el;
+	static userlist_t *el;
 	static int len;
 	session_t *s = session_current;
 
@@ -410,7 +405,7 @@ GENERATOR(blocked_uin) {
 	}
 
 	while (el) {
-		userlist_t *u = el->data;
+		userlist_t *u = el;
 
 		el = el->next;
 
@@ -430,17 +425,16 @@ GENERATOR(blocked_uin) {
 }
 
 GENERATOR(window) {
-	static list_t el;
+	static window_t *w;
 	static int len;
 
 	if (!state) {
-		el = windows;
+		w = windows;
 		len = xstrlen(text);
 	}
 
-	while (el) {
-		window_t *w = el->data;
-		el = el->next;
+	while (w) {
+		w = w->next;
 
 		if (!xstrncmp(text, w->target, len))
 			return xstrdup(w->target);
@@ -460,16 +454,15 @@ GENERATOR(reason) {
 }
 
 GENERATOR(session) {
-	static list_t l;
+	static session_t *s;
 	static int len;
 
 	if (!state) {
-		l = sessions;
+		s = sessions;
 		len = xstrlen(text);
 	}
 
-	while (l) {
-		session_t *s = l->data;
+	while (s) {
 		if (*text == '-') {
 			if (!xstrncasecmp(text+1, s->uid, len-1))
 				return saprintf("-%s", s->uid);
@@ -481,7 +474,7 @@ GENERATOR(session) {
 			if (!xstrncasecmp(text, s->alias, len)) 
 				return xstrdup(s->alias);
 		}
-	}
+	} /* XXX: shouldn't we iterate or do sth here? I think can get into deadlock */
 	return NULL;
 }
 
@@ -493,7 +486,7 @@ char **my_completion(char *text, int start, int end) {
 	char **params = NULL;
 	int word = 0, i, abbrs = 0;
 	CPFunction *func = known_uin_generator;
-	list_t l;
+	command_t *c;
 	static int my_send_nicks_count = 0;
 
 	if (start) {
@@ -556,8 +549,7 @@ char **my_completion(char *text, int start, int end) {
 		}
 		word--;
 
-		for (l = commands; l; l = l->next) {
-			command_t *c = l->data;
+		for (c = commands; c; c = c->next) {
 			int len = xstrlen(c->name);
 			char *cmd = (*rl_line_buffer == '/') ? rl_line_buffer + 1 : rl_line_buffer;
 

@@ -4,14 +4,6 @@ alias
 	
 	krótka nazwa sesji
 
-allow_autoresponder
-	typ: bool
-	domy¶lna warto¶æ: 0
-	
-	Warto¶æ okre¶laj±ca, czy autoresponder mo¿e ,,przechwytywaæ'' wiadomo¶ci
-	przychodz±ce w danej sesji. Dzia³a tylko, je¶li wtyczka 'autoresponder'
-	jest za³adowana.
-
 auto_away
 	typ: liczba
 	domy¶lna warto¶æ: 600
@@ -85,4 +77,10 @@ auto_reconnect
 	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
 	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
 
+connect_timeout
+	typ: liczba
+	domy¶lna warto¶æ: 30
+	
+	liczba sekund, po których up³ywie próba ³±czenia z danym serwerem
+	zostanie przerwana. ustawienie na 0 wy³±cza timeouty (niezalecane).
 

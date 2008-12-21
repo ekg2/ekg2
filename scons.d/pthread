@@ -1,0 +1,60 @@
+
+# pthread
+
+import os
+
+def CheckThreads(context, variant):
+	""" Check whether threads can be used with given flags and libs. """
+	context.Message('Trying to get threading with %s... ' % variant)
+	testprog = '''#include <pthread.h>
+int main(void) {
+	pthread_t th;
+	pthread_join(th, 0);
+	pthread_attr_init(0);
+	pthread_cleanup_push(0, 0);
+	pthread_create(0,0,0,0);
+	pthread_cleanup_pop(0);
+}'''
+	ret = context.TryLink(testprog, '.c')
+	context.Result(ret)
+	return not not ret
+
+Import('*')
+
+conf.AddTest('CheckThreads', CheckThreads)
+
+possible = ['pthreads', '', '-Kthread', '-kthread', 'lthread', '-pthread', '-pthreads', '-mthreads', 'pthread', '--thread-safe', '-mt']
+
+# pthread-config: use pthread-config program (for GNU Pth library)
+
+if env['PLATFORM'] == 'sunos':
+	possible.reverse()
+	possible.extend(['-mt', 'pthread', '-pthreads', '-pthread'])
+	possible.reverse()
+
+for p in possible:
+	if p == '':
+		p	= 'no flags'
+		new	= {}
+	elif p[0] == '-':
+		new	= env.ParseFlags(p)
+	else:
+		new	= {'LIBS': [p]}
+		p	= '-l%s' % p
+
+	old	= SetFlags(env, new)
+	out = conf.CheckThreads(p)
+	RestoreFlags(env, old)
+
+	if out:
+		if p == '':
+			pass
+		elif p[0] == '-':
+			flags.append(p)
+		else:
+			libs.append(p)
+		break
+
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python

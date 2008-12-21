@@ -27,10 +27,30 @@
 #include <ekg/userlist.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/queries.h>
+
 #include "people.h"
 #include "irc.h"
 
 enum { OTHER_NETWORK };
+
+static LIST_FREE_ITEM(list_irc_people_free, people_t *) {
+	xfree(data->nick);
+	xfree(data->realname);
+	xfree(data->host);
+	xfree(data->ident);
+	xfree(data);
+}
+
+static LIST_FREE_ITEM(list_irc_channel_free, channel_t *) {
+	xfree(data->nickpad_str);
+	xfree(data->name);
+	xfree(data->topic);
+	xfree(data->topicby);
+	xfree(data->mode_str);
+	list_destroy(data->banlist, 1);
+	xfree(data);
+}
 
 /* add others
  */
@@ -105,6 +125,30 @@ people_chan_t *irc_find_person_chan(list_t p, char *channame)
 	return NULL;
 }
 
+/* update_longest_nick()
+ *
+ * this helper function iterates over people present on a channel,
+ * finds the one with longest.. nickname and changes value of
+ * longest_nick private variable
+ *
+ * this function is used by irc_del_person_channel (e.g person /parts
+ * or is kicked from channel) and by irc_nick_change.
+ *
+ * @param chan - channel_t structure
+ */
+static void update_longest_nick(channel_t *chan)
+{
+	list_t p;
+	chan->longest_nick = 0;
+	for (p=chan->onchan; p; p=p->next)
+	{
+		people_t *person = (people_t *)p->data;
+		if (person->nick && xstrlen(person->nick+4) > chan->longest_nick)
+			chan->longest_nick = xstrlen(person->nick+4);
+	}
+	nickpad_string_create(chan);
+}
+
 /* irc_add_person_int()
  *
  * this is internal function
@@ -141,7 +185,8 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	/* debug("irc_add_person_int: %s %d %d\n", modes, mode, k); */
 	if (mode) nick++;
 
-	ircnick = saprintf("%s%s", IRC4, nick);
+	ircnick = irc_uid(nick);
+	
 	w = window_find_s(s, chan->name);
 	/* add user to userlist of window (of a given channel) if not yet there */
 	if (w && !(ulist = userlist_find_u(&(w->userlist), ircnick))) {
@@ -157,12 +202,12 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		person = xmalloc(sizeof(people_t));
 		person->nick = xstrdup(ircnick);
 		/* K&Rv2 5.4 */
-		list_add(&(j->people), person, 0);
+		list_add(&(j->people), person);
 	}
 	/* add entry in private->channels->onchan if nick's not yet there */
 	if (!(peronchan = irc_find_person(chan->onchan, nick)))  {
 	/*	debug("+do kana³u, "); */
-		list_add(&(chan->onchan), person, 0);
+		list_add(&(chan->onchan), person);
 	}
 	xfree(ircnick);
 
@@ -175,7 +220,7 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 		pch_tmp->mode = mode;
 		pch_tmp->chanp = chan;
 		irc_nick_prefix(j, pch_tmp, irccol);
-		list_add(&(person->channels), pch_tmp, 0);
+		list_add(&(person->channels), pch_tmp);
 	/*	debug(" %08X\n", person->channels); */
 	} //else { pch_tmp->mode = mode; }
 
@@ -187,6 +232,7 @@ people_t *irc_add_person(session_t *s, irc_private_t *j,
 		char *nick, char *channame)
 {
 	channel_t *chan;
+	people_t *ret;
 	if (!nick)
 		return NULL;
 
@@ -195,8 +241,18 @@ people_t *irc_add_person(session_t *s, irc_private_t *j,
 		 * and he's not on that channel... */
 		return NULL;
 
-	//query_emit(NULL, "userlist-changed", __session, __uid);
-	return irc_add_person_int(s, j, nick, chan);
+	ret = irc_add_person_int(s, j, nick, chan);
+	/* instead of putting this code to irc_add_person_int,
+	 * I'm placing it here and in irc_add_people,
+	 * to lower number of allocations (made by nickpad_string_create)
+	 */
+	if (xstrlen(nick) > chan->longest_nick)
+	{
+		chan->longest_nick = xstrlen(nick);
+		nickpad_string_create(chan);
+	}
+	query_emit_id(NULL, USERLIST_REFRESH);
+	return ret;
 }
 
 int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
@@ -207,15 +263,20 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 	if (!(channame && names))
 		return -1;
 
+	/* I'm not sure if this is working on IRCNet, but on freenode
+	 * you can do: /quote NAMES #channelname
+	 * (if you're not on given channel, irc plugin doesn't allow
+	 * you to do /names #channel if you're not on that channel)
+	 *
+	 * this if-case is responsible for handling the response
+	 */
 	if (!(chan = irc_find_channel(j->channels, channame)))
 	{
 		tmp = saprintf("People on %s: %s", channame, names);
 		if (session_int_get(s, "DISPLAY_IN_CURRENT")&1)
-			print_window(window_current->target, s, 0, "generic",
-					tmp);
+			print_info(window_current->target, s, "generic", tmp);
 		else
-			print_window("__status", s, 0, "generic",
-					tmp);
+			print_info("__status", s, "generic", tmp);
 
 		return 0;
 	}
@@ -223,22 +284,30 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 	save = nick = array_make(names, " ", 0, 1, 0);
 	while (*nick) {
 		irc_add_person_int(s, j, *nick, chan);
+		/* instead of putting this code to irc_add_person_int,
+		 * I'm placing it here and in irc_add_people,
+		 * to lower number of allocations (made by nickpad_string_create)
+		 */
+		if (xstrlen(*nick) > chan->longest_nick)
+			chan->longest_nick = xstrlen(*nick);
+
 		nick++;
 	}
+	nickpad_string_create(chan);
+
+	query_emit_id(NULL, USERLIST_REFRESH);
 
 	array_free(save);
 	return 0;	
 }
 
-static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
-		people_t *nick, channel_t *chan)
-{
+static int irc_del_person_channel_int(session_t *s, irc_private_t *j, people_t *nick, channel_t *chan) {
 	userlist_t *ulist = NULL;
 	people_chan_t *tmp;
 	window_t *w;
-	if (!(nick && chan))
-	{
-		debug_error("programmer's mistake in call to irc_del_channel_int: nick %s chan %s\n", nick?nick:":NULL:", chan?chan:":NULL:");
+
+	if (!nick || !chan) {
+		debug_error("programmer's mistake in call to irc_del_channel_int: nick: %s chan: %s\n", nick ? "OK" : "NULL", chan ? "OK" : "NULL");
 		return -1;
 	}
 	
@@ -261,13 +330,7 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
 	if (!(nick->channels)) {
 	/* delete entry in private->people 
 		debug("-%s lista ludzi, ", nick->nick); */
-					/* mh, zerowanie tego tak raczej niepotrzebne... ale jest */
-		xfree(nick->nick);	nick->nick = NULL;
-		xfree(nick->ident);	nick->ident = NULL;
-		xfree(nick->host);	nick->host = NULL;
-		xfree(nick->realname);	nick->realname = NULL;
-
-		list_remove(&(j->people), nick, 1);
+		LIST_REMOVE(&(j->people), nick, list_irc_people_free);
 		
 		list_remove(&(chan->onchan), nick, 0);
 		return 1;
@@ -278,6 +341,7 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
 	list_remove(&(chan->onchan), nick, 0);
 	return 0;
 }
+
 /* irc_del_person_channel()
  * 
  * deletes data from internal structures, when user has been kicked of or parts from a given channel
@@ -289,26 +353,33 @@ static int irc_del_person_channel_int(session_t *s, irc_private_t *j,
  * @param chan - channel structure, where part/kick occured
  *
  * @return	-1 - no such channel, no such user <br />
- * 		0 - user removed from given channel <br />
- * 		1 - user removed from given channel and that was the last channel shared with that user
+ *		0 - user removed from given channel <br />
+ *		1 - user removed from given channel and that was the last channel shared with that user
  */
 int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *channame)
 {
+	int ret;
 	people_t *person;
 	channel_t *chan;
+
 	if (!(chan = irc_find_channel(j->channels, channame)))
 		return -1;
 	if (!(person = irc_find_person(j->people, nick)))
 		return -1;
 
-	return irc_del_person_channel_int(s, j, person, chan);
+	ret = irc_del_person_channel_int(s, j, person, chan);
+
+	if (xstrlen(nick) == chan->longest_nick)
+		update_longest_nick(chan);
+
+	query_emit_id(NULL, USERLIST_REFRESH);
+	return ret;
 }
 
 /* irc_del_person()
  *
- * this is quite silly way of deleting structures of given user e/g when he
- * /quits from IRC, this function is poorly written, and
- * porbably should be changed ;/
+ * delete structures associated with given user, e.g. when he
+ * /quits from IRC
  *
  * @param s - current session structure
  * @param j - irc private structure of current session
@@ -316,50 +387,76 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
  *   prefix, can contain '@%+' prefix
  * @param chan - channel structure, where part/kick occured
  *
- * @return 	-1 - no such nickname
- * 		1 - user entry deleted from internal structures
+ * @return	-1 - no such nickname
+ *		1 - user entry deleted from internal structures
  */
 int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 		char *wholenick, char *reason, int doprint)
 {
 	people_t *person;
+	channel_t *chan;
 	people_chan_t *pech;
 	window_t *w;
 	list_t tmp;
-	char *temp;
+	int ret;
+	char *longnick;
 
 	if (!(person = irc_find_person(j->people, nick))) 
 		return -1;
 
-	while ((tmp = (person->channels))) {
+	/* if person doesn't have any channels, we shouldn't get here
+	 */
+	if (! (tmp = person->channels) ) {
+		debug_error("logic error in call to irc_del_person!, %s doesn't have any channels\n", nick);
+		/* I'm not adding memory freeing here, since we shouldn't get here by any chance,
+		 */
+		return -1;
+	}
+	/* 
+	 * GiM: removing from private->people is in
+	 *	irc_del_person_channel_int
+	 *
+	 * tmp is set, we can run the loop
+	 */
+	while (1) {
 		if (!(tmp && (pech = tmp->data))) break;
 
 		if (doprint)
-			print_window(pech->chanp->name,
-				s, 0, "irc_quit", session_name(s), 
+			print_info(pech->chanp->name,
+				s, "irc_quit", session_name(s), 
 				nick, wholenick, reason);
 
-		temp = saprintf("%s%s", IRC4, nick);
-		w = window_find_s(s, temp);
-		if (w) {
-			if (session_int_get(s, "close_windows") > 0) {
-				debug("[irc] del_person() window_kill(w); %s\n", w->target);
-				window_kill(w);
-		    		window_switch(window_current->id);
-			}
-			if (doprint)
-				print_window(temp,s, 0, "irc_quit",
-						session_name(s), nick,
-						wholenick, reason);
-		}
-		xfree(temp);
+		/* if this call returns !0 it means
+		 * person has been deleted, so let's break
+		 * the loop
+		 */
+		chan = pech->chanp;
+		ret = irc_del_person_channel_int(s, j, person, pech->chanp);
 
-		if (irc_del_person_channel_int(s, j, person, pech->chanp))
+		if (xstrlen(nick) == chan->longest_nick)
+			update_longest_nick(chan);
+
+		if (ret)
 			break;
+
+		tmp = person->channels;
 	}
-	/* GiM: removing from private->people is in
-	 * irc_del_person_channel_int
-	 */
+
+	longnick = irc_uid(nick);
+	w = window_find_s(s, longnick);
+	if (w) {
+		if (session_int_get(s, "close_windows") > 0) {
+			debug("[irc] del_person() window_kill(w, 1); %s\n", w->target);
+			window_kill(w);
+		}
+		if (doprint)
+			print_info(longnick,s, "irc_quit",
+					session_name(s), nick,
+					wholenick, reason);
+	}
+	xfree(longnick);
+
+	query_emit_id(NULL, USERLIST_REFRESH);
 	return 0;
 }
 
@@ -392,10 +489,10 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	if (w && (session_int_get(s, "close_windows") > 0)) {
 		debug("[irc]_del_channel() window_kill(w); %s\n", w->target);
 		window_kill(w);
-		window_switch(window_current->id);
 	}
 	xfree(tmp);
 
+	query_emit_id(NULL, USERLIST_REFRESH);
 	return 0;
 }
 
@@ -418,12 +515,12 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 	p = irc_find_channel(j->channels, name);
 	if (!p) {
 		p		= xmalloc(sizeof(channel_t));
-		p->name		= saprintf("%s%s", IRC4, name);
+		p->name		= irc_uid(name);
 		p->window	= win;
 		debug("[irc] add_channel() WINDOW %08X\n", win);
 		if (session_int_get(s, "auto_channel_sync") != 0)
 			irc_sync_channel(s, j, p);
-		list_add(&(j->channels), p, 0);
+		list_add(&(j->channels), p);
 		return p;
 	}
 	return NULL;
@@ -432,7 +529,6 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 int irc_color_in_contacts(char *modes, int mode, userlist_t *ul)
 {
 	int  i, len;
-	char *tmp;
 	len = xstrlen(modes);
 
 	/* GiM: this could be done much easier on intel ;/ */
@@ -440,15 +536,13 @@ int irc_color_in_contacts(char *modes, int mode, userlist_t *ul)
 		if (mode & (1<<(len-1-i))) break;
 	
 
-	tmp=ul->status;
 	switch (i) {
-		case 0:	ul->status = xstrdup(EKG_STATUS_AVAIL);		break;
-		case 1:	ul->status = xstrdup(EKG_STATUS_AWAY);		break;
-		case 2:	ul->status = xstrdup(EKG_STATUS_XA);		break;
-		case 3:	ul->status = xstrdup(EKG_STATUS_INVISIBLE);	break;
-		default:ul->status = xstrdup(EKG_STATUS_ERROR);		break;
+		case 0:	ul->status = EKG_STATUS_AVAIL;		break;
+		case 1:	ul->status = EKG_STATUS_AWAY;		break;
+		case 2:	ul->status = EKG_STATUS_XA;		break;
+		case 3:	ul->status = EKG_STATUS_INVISIBLE;	break;
+		default:ul->status = EKG_STATUS_ERROR;		break;
 	}
-	xfree(tmp);
 	return i;
 }
 
@@ -483,10 +577,11 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 {
 	userlist_t *ulist, *newul;
 	list_t i;
+	userlist_t *ul;
 	people_t *per;
 	people_chan_t *pch;
 	window_t *w;
-	char *t1, *t2 = saprintf("%s%s", IRC4, new);
+	char *t1, *t2 = irc_uid(new);
 
 	if (!(per = irc_find_person(j->people, old))) {
 		debug_error("irc_nick_change() person not found?\n");
@@ -494,12 +589,12 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 		return 0;
 	}
 
-	for (i=s->userlist; i; i = i->next) {
-		userlist_t *u = i->data;
-		list_t m;
+	for (ul=s->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
+		ekg_resource_t *rl;
 
-		for (m = u->resources; m; m = m->next) {
-			ekg_resource_t *r = m->data;
+		for (rl = u->resources; rl; rl = rl->next) {
+			ekg_resource_t *r = rl;
 
 			if (r->private != per) continue;
 
@@ -510,14 +605,15 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 		}
 	}
 
-	debug("[irc] nick_change():\n");
+	/* update userlists of proper windows */
 	for (i=per->channels; i; i=i->next)
 	{
 		pch = (people_chan_t *)i->data;
+
 		w = window_find_s(s, pch->chanp->name);
 		if (w && (ulist = userlist_find_u(&(w->userlist), old))) {
 			newul = userlist_add_u(&(w->userlist), t2, new);
-			xfree(newul->status); newul->status = xstrdup(ulist->status);
+			newul->status = ulist->status;
 			userlist_remove_u(&(w->userlist), ulist);
 			/* XXX dj, userlist_replace() */
 			/* GiM: Yes, I thought about doin' this 'in place'
@@ -526,9 +622,26 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old, char *new)
 			 * this way */
 		}
 	}
+	query_emit_id(NULL, USERLIST_REFRESH);
 
+	/* update nickname in internal structures */
 	t1 = per->nick;
 	per->nick = t2;
+
+	for (i=per->channels; i; i=i->next)
+	{
+		pch = (people_chan_t *)i->data;
+		/* if person who changed nick had longest nick,
+		 * update longest_nick variable
+		 */
+		if (xstrlen(new) > pch->chanp->longest_nick)
+		{
+			pch->chanp->longest_nick = xstrlen(new);
+			nickpad_string_create(pch->chanp);
+		} else if (xstrlen(old) == pch->chanp->longest_nick)
+			update_longest_nick (pch->chanp);
+	}
+
 	xfree(t1);
 	return 0;
 }
@@ -556,31 +669,16 @@ int irc_free_people(session_t *s, irc_private_t *j)
 		/* GiM: check if window isn't allready destroyed */
 		w = window_find_s(s, chan->name);
 		if (w && w->userlist)
-			userlist_free_u(&(w->userlist));
+			userlists_destroy(&(w->userlist));
 		/* 
 		 * window_kill(chan->window, 1);
 		 */
 	}
 
-	for (t1=j->people; t1; t1=t1->next) {
-		per = (people_t *) t1->data;
-		xfree(per->nick);
-		xfree(per->realname);
-		xfree(per->host);
-		xfree(per->ident);
-	}
-	list_destroy(j->people, 1);
+	LIST_DESTROY(j->people, list_irc_people_free);
 	j->people = NULL;
 
-	for (t1=j->channels; t1; t1=t1->next) {
-		chan = t1->data;
-		xfree(chan->name);
-		xfree(chan->topic);
-		xfree(chan->topicby);
-		xfree(chan->mode_str);
-		list_destroy(chan->banlist, 1);
-	}
-	list_destroy(j->channels, 1);
+	LIST_DESTROY(j->channels, list_irc_channel_free);
 	j->channels = NULL;
 
 	return 0;

@@ -27,7 +27,11 @@
 #else
 #  ifdef HAVE_LIBGSM_GSM_H
 #    include <libgsm/gsm.h>
+#  else
+#  ifdef HAVE_GSM_GSM_H
+#    include <gsm/gsm.h>
 #  endif
+# endif
 #endif
 
 #include <ekg/audio.h>
@@ -60,7 +64,7 @@ CODEC_CONTROL(gsm_codec_control) {
 		gsm codec;
 
 		va_start(ap, aco);
-		inp     = va_arg(ap, audio_io_t *);
+		inp	= va_arg(ap, audio_io_t *);
 		out	= va_arg(ap, audio_io_t *);
 		va_end(ap);
 	/* ;) */
@@ -122,7 +126,7 @@ CODEC_CONTROL(gsm_codec_control) {
 			debug("[gsm_codec_control] attr: %s value: %s\n", attr, val);
 			if (!xstrcmp(attr, "from"))				from	= val;
 			else if (!xstrcmp(attr, "to"))				to	= val;
-			else if (!xstrcmp(attr, "with-ms") && atoi(val)) 	with_ms = 1;
+			else if (!xstrcmp(attr, "with-ms") && atoi(val))	with_ms = 1;
 			/* XXX birate, channels */
 		}
 		va_end(ap); 
@@ -167,7 +171,7 @@ int gsm_codec_process(int type, codec_way_t way, string_t input, string_t output
 	int inpos = 0;
 
 	if (type)			return 0;
-	if (!c || !input || !output) 	return -1;
+	if (!c || !input || !output)	return -1;
 	if (!input->str || !input->len)	return 0;	 /* we have nothing to code? */
 
 	for (;;) {
@@ -187,8 +191,8 @@ int gsm_codec_process(int type, codec_way_t way, string_t input, string_t output
 
 		out = xmalloc(outchunklen);
 
-		if (way == CODEC_CODE)		gsm_encode(c->codec, (gsm_signal *) (input->str + inpos), out);
-		else if (way == CODEC_DECODE) 	gsm_decode(c->codec, input->str + inpos, (gsm_signal *) out);
+		if (way == CODEC_CODE)		gsm_encode(c->codec, (gsm_signal *) (input->str + inpos), (unsigned char *) out);
+		else if (way == CODEC_DECODE)	gsm_decode(c->codec, (unsigned char *) input->str + inpos, (gsm_signal *) out);
 
 		string_append_raw(output, out, outchunklen);
 		xfree(out);
@@ -211,6 +215,8 @@ CODEC_RECODE(gsm_codec_decode) {
 
 EXPORT int gsm_plugin_init(int prio)
 {
+	PLUGIN_CHECK_VER("gsm");
+
 	plugin_register(&gsm_plugin, prio);
 	codec_register(&gsm_codec);
 

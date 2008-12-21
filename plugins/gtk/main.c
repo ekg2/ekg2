@@ -36,8 +36,10 @@
 
 #include <ekg2-config.h>
 
+#include <X11/Xlib.h>
 #include <gtk/gtk.h>
 #include <gdk/gdkkeysyms.h>
+#include <gdk/gdkx.h>
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -56,14 +58,7 @@
 #include "xtext.h"
 #include "bindings.h"
 
-/* extern */
-void fe_set_channel(session_t *sess);
-void mg_changui_new(window_t *sess, gtk_window_t *res, int tab, int focus);
-void fe_set_tab_color(window_t *sess, int col);
-void fe_close_window(window_t *sess);
-void mg_apply_setup(void);
-void mg_change_layout(int type);
-void mg_switch_page(int relative, int num);
+#include "maingui.h"
 
 
 PLUGIN_DEFINE(gtk, PLUGIN_UI, NULL);
@@ -100,6 +95,8 @@ int ui_quit = 0;
 int gui_pane_left_size_config;
 int gui_pane_right_size_config;
 
+int new_window_in_tab_config = 1;
+
 
 /* TODO:
  *    - wrzucic zmienne do variable_add() przynajmniej te wazne..
@@ -107,14 +104,14 @@ int gui_pane_right_size_config;
  *    - zrobic traya
  *    - zrobic userliste
  *    - zaimplementowac w xtext kolorki ekg2			[done, nie wszystkie atrybuty zrobione, ale xtext.c juz wie co to jest fstring_t
- *    									i ze ma tam atrybuty, see gtk_xtext_render_str()]
+ *									i ze ma tam atrybuty, see gtk_xtext_render_str()]
  *    - timestamp powinien byc renderowany z config_timestamp, i zamieniany na fstring_t !!!
  *    - implementowac wiecej waznych dla UI QUERY()
  *    - brakuje funkcjonalnosci detach-okienka z XChata, trzeba przejrzec ten kod i dokonczyc.
  *    - w XChacie byl jeszcze drag-drop np. plikow... jak ktos potrzebuje to wie co zrobic.
  *
  *    - zaimplementowac do konca ten dialog zamykania ekg2-gtk i dodac do niego opcje zapisu...
- *       zeby ekg2 sie na konsoli nie pytalo czy zapisac.
+ *	 zeby ekg2 sie na konsoli nie pytalo czy zapisac.
  */
 
 /* BUGS:
@@ -122,13 +119,17 @@ int gui_pane_right_size_config;
  *    - zabijanie okienek zle zrobione [czyt. w ogole nic nie dziala]
  *
  *    - sa lagi, nie wszystko w gtk sie dzieje jak user rusza myszka, klika klawiszami...
- *      niektore operacje sa robione zeby byly ,,animacja'' a select() 1s powoduje calkiem duze latencje.
- *      watch wykonywany co 0.03s bylby calkiem dobrym pomyslem... 
+ *	niektore operacje sa robione zeby byly ,,animacja'' a select() 1s powoduje calkiem duze latencje.
+ *	watch wykonywany co 0.03s bylby calkiem dobrym pomyslem... 
  *
  *    - duzo innych, roznych bledow..
  *    - jak zrobimy detach okienek, to prawdopodobnie operacje beda robione na zlych oknach, 
- *    	xchat mial current_tab, ja myslalem ze to jest to samo co window_current, wiec do pupy.
+ *	xchat mial current_tab, ja myslalem ze to jest to samo co window_current, wiec do pupy.
  */
+
+/* XXX, here, we update whole window, it's enough to update only statusbar && headerbar */
+	#define _ncurses_update_statusbar(commit) mg_populate(window_current);
+
 
 static QUERY(gtk_ui_is_initialized) {
 	int *tmp = va_arg(ap, int *);
@@ -141,11 +142,12 @@ static QUERY(ekg2_gtk_loop) {
 	extern void ekg_loop();
 
 	do {
+		int i = 10;
+
 		ekg_loop();
 
-		while (gtk_events_pending()) {
+		while (gtk_events_pending() && --i)	// stupid hack to give ekg_loop() some love.
 			gtk_main_iteration();
-		}
 	} while (ui_quit == 0);
 
 	return -1;
@@ -159,19 +161,21 @@ static WATCHER(ekg2_xorg_watcher) {
 	return 0;
 }
 
-static IDLER(ekg2_xorg_idle) {
-	while (gtk_events_pending()) {
-		gtk_main_iteration();
-	}
+static TIMER(ekg2_xorg_idle) {
+	if (type)
+		return -1;
+	// it's enough if we just run it.
+	// no harm done.
+
+//	while (gtk_events_pending()) {
+//	if (gtk_events_pending())
+//		gtk_main_iteration();
+//	}
 	return 0;
 }
 
 void ekg_gtk_window_new(window_t *w) {			/* fe_new_window() */
-	int tab = TRUE;
-
-	/* tab == new_window_in_tab */
-
-	mg_changui_new(w, NULL, tab, 0);
+	mg_changui_new(w, NULL, new_window_in_tab_config, 0);
 }
 
 static QUERY(gtk_ui_window_new) {			/* fe_new_window() */
@@ -186,7 +190,7 @@ int gtk_ui_window_switch_lock = 0;
 
 static QUERY(gtk_ui_window_switch) {
 #warning "XXX, fast implementation"
-	window_t *w 	= *(va_arg(ap, window_t **));
+	window_t *w	= *(va_arg(ap, window_t **));
 
 	if (gtk_ui_window_switch_lock)
 		return 0;
@@ -195,7 +199,7 @@ static QUERY(gtk_ui_window_switch) {
 		mg_switch_page(FALSE, w->id);
 	gtk_ui_window_switch_lock = 0;
 
-	fe_set_tab_color(w, w->act & 3);
+	fe_set_tab_color(w, w->act);
 	return 0;
 }
 
@@ -206,36 +210,9 @@ static QUERY(gtk_ui_window_kill) {			/* fe_session_callback() || fe_close_window
 	return 0;
 }
 
-
 static QUERY(gtk_ui_window_print) {			/* fe_print_text() */
 	window_t *w = *(va_arg(ap, window_t **));
 	fstring_t *line = *(va_arg(ap, fstring_t **));
-
-/*	PrintTextRaw (sess->res->buffer, (unsigned char *)text, prefs.indent_nicks, stamp); */
-
-#if 0
-	size_t len = xstrlen(line->str.b);
-
-	if (!indent_nicks_config) {
-		if (config_timestamp_show) {
-#warning "XXX, use config_timestamp instead"
-			const char *ts = timestamp_time("%H:%M:%S", line->ts);	
-			char *text;
-			
-			text = saprintf("%s %s", ts, line->str.b);
-
-			gtk_xtext_append(gtk_private(w)->buffer, text, xstrlen(ts) + 1 + len);
-
-			xfree(text);
-
-		} else	gtk_xtext_append(gtk_private(w)->buffer, line->str.b, len);
-
-
-	} else {
-		#warning "XXX"
-		gtk_xtext_append_indent(gtk_private(w)->buffer, 0, 0, line->str.b, len, line->ts);
-	}
-#endif
 
 	gtk_xtext_append_fstring(gtk_private(w)->buffer, line);
 
@@ -245,19 +222,7 @@ static QUERY(gtk_ui_window_print) {			/* fe_print_text() */
 static QUERY(gtk_ui_window_target_changed) {
 	window_t *w = *(va_arg(ap, window_t **));
 
-#warning "ncurses do much more here"
-#if 0
-	ncurses_window_t *n = w->private;
-	char *tmp;
-
-	xfree(n->prompt);
-
-	tmp = format_string(format_find((w->target) ? "ncurses_prompt_query" : "ncurses_prompt_none"), w->target);
-	n->prompt = tmp; 
-	n->prompt_len = xstrlen(tmp);
-
-	update_statusbar(1);
-#endif
+	_ncurses_update_statusbar(1);
 	fe_set_channel(w);
 	return 0;
 }
@@ -267,13 +232,11 @@ static QUERY(gtk_beep) {				/* fe_beep() */
 	return -1;
 }
 
-static QUERY(gtk_ui_window_act_changed) { 		/* fe_set_tab_color() */
-	list_t l;
+static QUERY(gtk_ui_window_act_changed) {		/* fe_set_tab_color() */
+	window_t *w;
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
-		fe_set_tab_color(w, w->act & 3);
-	}
+	for (w = windows; w; w = w->next)
+		fe_set_tab_color(w, w->act);
 
 	return 0;
 }
@@ -281,7 +244,7 @@ static QUERY(gtk_ui_window_act_changed) { 		/* fe_set_tab_color() */
 static QUERY(gtk_print_version) {
 	char *ver = saprintf("GTK2 plugin for ekg2 ported from XChat gtk frontend ((C) Peter Zelezny) using gtk: %d.%d.%d.%d",
 				gtk_major_version, gtk_minor_version, gtk_micro_version, gtk_binary_age);
-/* 				GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION GTK_BINARY_AGE );*/
+/*				GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION GTK_BINARY_AGE );*/
 	print("generic", ver);
 	xfree(ver);
 	return 0;
@@ -348,9 +311,10 @@ static void gtk_tab_layout_change(const char *var) {
 static QUERY(gtk_variable_changed) {
 	char *name = *(va_arg(ap, char**));
 
-        if (!xstrcasecmp(name, "timestamp_show")) {
+	if (!xstrcasecmp(name, "timestamp_show")) {
 		mg_apply_setup();
 	}
+	return 0;
 }
 
 static QUERY(gtk_userlist_changed) {
@@ -366,9 +330,7 @@ static QUERY(gtk_session_changed) {
 }
 
 static QUERY(gtk_statusbar_query) {
-#warning "gtk_statusbar_query() workaround"
-	/* XXX, here, we update whole window, it's enough to update only statusbar && headerbar */
-	mg_populate(window_current);
+	_ncurses_update_statusbar(1);
 
 	return 0;
 }
@@ -383,25 +345,18 @@ static QUERY(gtk_ui_window_clear) {
 
 EXPORT int gtk_plugin_init(int prio) {
 	const char ekg2_another_ui[] = "Masz uruchomione inne ui, aktualnie nie mozesz miec uruchomionych obu na raz... Jesli chcesz zmienic ui uzyj ekg2 -F gtk\n";
-	const char ekg2_no_display[] = "Zmienna $DISPLAY nie jest ustawiona\nInicjalizacja gtk napewno niemozliwa...\n";
 
-        int is_UI = 0;
+	int is_UI = 0;
 	int xfd;
-	list_t l;
+	window_t *w;
 
-        query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	PLUGIN_CHECK_VER("gtk");
 
-	if (!getenv("DISPLAY")) {
-/* po czyms takim for sure bedzie initowane ncurses... no ale moze to jest wlasciwe zachowanie? jatam nie wiem.
- * gorsze to ze ten komunikat nigdzie sie nie pojawi... */
-		if (is_UI) debug(ekg2_no_display);
-		else	   fprintf(stderr, ekg2_no_display);
-		return -1;
-	}
+	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
-        if (is_UI) {
+	if (is_UI) {
 		debug(ekg2_another_ui);
-                return -1;
+		return -1;
 	}
 
 	/* fe_args() */
@@ -463,6 +418,11 @@ EXPORT int gtk_plugin_init(int prio) {
 	query_connect_id(&gtk_plugin, USERLIST_ADDED,	gtk_userlist_changed, NULL);
 	query_connect_id(&gtk_plugin, USERLIST_REMOVED,	gtk_userlist_changed, NULL);
 	query_connect_id(&gtk_plugin, USERLIST_RENAMED,	gtk_userlist_changed, NULL);
+
+	query_connect_id(&gtk_plugin, SESSION_EVENT,	gtk_userlist_changed, NULL);
+	query_connect_id(&gtk_plugin, UI_WINDOW_REFRESH, gtk_userlist_changed, NULL);
+	query_connect_id(&gtk_plugin, USERLIST_REFRESH,	gtk_userlist_changed, NULL);
+
 /*
 	query_connect_id(&ncurses_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
 	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
@@ -490,10 +450,10 @@ EXPORT int gtk_plugin_init(int prio) {
 	if (xfd != -1)
 		watch_add(&gtk_plugin, xfd, WATCH_READ, ekg2_xorg_watcher, NULL);
 
-	idle_add(&gtk_plugin, ekg2_xorg_idle, NULL);
+	timer_add_ms(&gtk_plugin, "gtk-updater", 50, 1, ekg2_xorg_idle, NULL);
 
-	for (l = windows; l; l = l->next)
-		ekg_gtk_window_new(l->data);	
+	for (w = windows; w; w = w->next)
+		ekg_gtk_window_new(w);
 
 	memset(gtk_history, 0, sizeof(gtk_history));
 

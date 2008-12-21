@@ -1,4 +1,19 @@
-/* $Id */
+/*
+ *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 
 #include <ekg/win32.h>
 
@@ -6,8 +21,12 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <sys/un.h>
+// #include <sys/socket.h>	/* <sys/socket.h> included twice, wtf? */	/* introduced in http://lists.ziew.org/mailman/pipermail/ekg2-commit/2007-May/003692.html */
 #endif
 
+#include <sys/types.h>
+#include <sys/socket.h>		/* this <sys/socket.h> introduced in: 
+					http://lists.ziew.org/mailman/pipermail/ekg2-commit/2007-April/003464.html and afair it fix freebsd compilation */
 #include <sys/stat.h>
 
 #include <stdlib.h>

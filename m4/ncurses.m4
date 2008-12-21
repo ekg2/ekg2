@@ -23,15 +23,22 @@ AC_DEFUN([AC_CHECK_NCURSES],
 		NLIBRARY=""
 		have_ncurses_h=""
 		opt=ncurses.h
-		AC_CHECK_HEADERS([ncurses.h],
-		[
-			have_ncurses_h="yes"
-		], [
-			AC_CHECK_HEADERS([ncurses/ncurses.h],
+		if test "x$enable_unicode" != "xyes"; then
+			AC_CHECK_HEADERS([ncurses.h],
+			[
+				have_ncurses_h="yes"
+			], [
+				AC_CHECK_HEADERS([ncurses/ncurses.h],
+				[
+					have_ncurses_h="yes"
+				])
+			])
+		else
+			AC_CHECK_HEADERS([ncursesw/ncurses.h],
 			[
 				have_ncurses_h="yes"
 			])
-		])
+		fi
 		if test "x$have_ncurses_h" = "xyes"; then
 			if test "x$enable_unicode" != "xyes"; then
 				NLIBRARY="ncurses"
@@ -43,6 +50,11 @@ AC_DEFUN([AC_CHECK_NCURSES],
 				AC_DEFINE([HAVE_NCURSES], 1, [define if you have ncurses])
 				NCURSES_LIBS="$NCURSES_LIBS -l$NLIBRARY"
 				have_ncurses="yes"
+
+				AC_CHECK_LIB([$NLIBRARY], [use_legacy_coding],
+				[
+					AC_DEFINE([HAVE_NCURSES_ULC], 1, [define if your ncurses has use_legacy_coding()])
+				])
 			])
 		fi
 

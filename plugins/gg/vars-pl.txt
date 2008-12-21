@@ -68,6 +68,14 @@ images_size
 	zmienna okre¶la górn± granicê wielko¶ci rozmiaru przyjmowanych obrazków
 	w kB
 
+skip_default_format
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	je¶li ma warto¶æ 1, to nie przetwarza informacji o formatowaniu tekstu
+	wysy³anej przez windowsowe komunikatory od drugiej (a mo¿e losowej?)
+	wiadomo¶ci (informacja: czarne na bia³ym)
+
 split_messages
 	typ: bool
 	domy¶lna warto¶æ: 0

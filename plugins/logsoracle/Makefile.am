@@ -6,7 +6,7 @@ logsoracle_la_LDFLAGS = -module -avoid-version
 logsoracle_la_LIBADD  = $(LOGS_ORACLE_LIBS) -lclntsh -lpthread 
 logsoracle_la_CPPFLAGS =  $(LOGS_ORACLE_CFLAGS)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/logsoracle/

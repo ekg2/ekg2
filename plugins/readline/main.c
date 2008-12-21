@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include <ekg/bindings.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
 #include <ekg/stuff.h>
@@ -20,7 +21,11 @@
 
 #include <ekg/queries.h>
 
-#include <readline.h>
+#ifdef HAVE_READLINE_READLINE_H
+#	include <readline/readline.h>
+#else
+#	include <readline.h>
+#endif
 #include "ui-readline.h"
 
 static int readline_theme_init();
@@ -205,7 +210,7 @@ static char *readline_ui_window_print_helper(char *str, short *attr) {
 static QUERY(readline_ui_window_print) {
 	window_t *w = *(va_arg(ap, window_t **));
 	fstring_t *l = *(va_arg(ap, fstring_t **));
-	char *str = readline_ui_window_print_helper(l->str, l->attr);
+	char *str = readline_ui_window_print_helper(l->str.b, l->attr);
 
 	ui_readline_print(w, 1, str);
 	xfree(str);
@@ -215,12 +220,10 @@ static QUERY(readline_ui_window_print) {
 static QUERY(readline_variable_changed) {
 	char *name = *(va_arg(ap, char**));
 	if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
-		list_t l;
+		window_t *w;
 		int id = 1;
-		for (l = windows; l; l = l->next) {
-			window_t *w = l->data;
+		for (w = windows; w; w = w->next)
 			w->id = id++;
-		}
 	}
 	return 0;
 }
@@ -262,13 +265,15 @@ static WATCHER(readline_watch_stdin) {
 EXPORT int readline_plugin_init(int prio) {
 	char c;
 	struct sigaction sa;
-	list_t l;
+	window_t *w;
 	int is_UI = 0;
 
-        query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	PLUGIN_CHECK_VER("readline");
 
-        if (is_UI)
-                return -1;
+	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+
+	if (is_UI)
+		return -1;
 
 	plugin_register(&readline_plugin, prio);
 
@@ -287,10 +292,8 @@ EXPORT int readline_plugin_init(int prio) {
 
 	watch_add(&readline_plugin, 0, WATCH_READ, readline_watch_stdin, NULL);
 
-	for (l = windows; l; l = l->next) {
-		window_t *w = l->data;
+	for (w = windows; w; w = w->next)
 		w->private = xmalloc(sizeof(readline_window_t));
-	}
 	
 	window_refresh();
 	rl_initialize();

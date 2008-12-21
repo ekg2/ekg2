@@ -55,6 +55,7 @@
 
 #include "inline_pngs.h"
 #include "inline_pngs_gg.h"
+#include "inline_pngs_icq.h"
 
 /* XXX, todo: colors[0..15] are ok, than colors[16..31] are not ok [duplication of above], invistigate xchat sources if they needed, fix and remove. */
 #warning "XXX, colors[16..31] remove!"
@@ -108,6 +109,53 @@ GdkColor colors[] = {
 	{0, 0x0000, 0x0000, 0xffff},	/* 38 tab Nick Mentioned (blue) */
 	{0, 0xffff, 0x0000, 0x0000},	/* 39 tab New Message (red) */
 	{0, 0x9595, 0x9595, 0x9595},	/* 40 away user (grey) */
+#elif ETERM_COLORS
+	/* colors for xtext */
+	{0, 0x0000, 0x0000, 0x0000},	/* 17 black [30 V] */
+	{0, 0xcccc, 0x0000, 0x0000},	/* 20 red [31 V] */
+	{0, 0x0000, 0xcccc, 0x0000},	/* 19 green [32 V] */
+	{0, 0xcccc, 0xcccc, 0x0000},	/* 24 yellow [33 V] */
+	{0, 0x0000, 0x0000, 0xcccc},	/* 18 blue [34 V] */
+	{0, 0xcccc, 0x0000, 0xcccc},	/* 22 purple [35] V */
+	{0, 0x0000, 0xcccc, 0xcccc},	/* 26 aqua [36] V */
+	{0, 0xaaaa, 0xaaaa, 0xaaaa},	/* 16 white [37 V] */
+	{0, 0x3333, 0x3333, 0x3333},	/* 30 grey [30b V] */
+	{0, 0xffff, 0x0000, 0x0000},	/* 21 light red [31b V] */
+	{0, 0x0000, 0xffff, 0x0000},	/* 25 green [32b V] */
+	{0, 0xffff, 0xffff, 0x0000},	/* 23 orange [33b V] */
+	{0, 0x0000, 0x0000, 0xffff},	/* 28 blue [34b V] */
+	{0, 0xffff, 0x0000, 0xffff},	/* 29 light purple [35b V] */
+	{0, 0x0000, 0xffff, 0xffff},	/* 27 light aqua [36b V] */
+	{0, 0xffff, 0xffff, 0xffff},	/* 31 light grey [37b V] */
+/* ... */
+	{0, 0xaaaa, 0xaaaa, 0xaaaa},    /* 16 white [37 V] */
+	{0, 0x0000, 0x0000, 0x0000},    /* 17 black [30 V] */
+	{0, 0x0000, 0x0000, 0xcccc},    /* 18 blue [34 V] */
+	{0, 0x0000, 0xcccc, 0x0000},    /* 19 green [32 V] */
+	{0, 0xcccc, 0x0000, 0x0000},    /* 20 red [31 V] */
+	{0, 0xffff, 0x0000, 0x0000},    /* 21 light red [31b V] */
+	{0, 0xcccc, 0x0000, 0xcccc},    /* 22 purple [35] V */
+	{0, 0xffff, 0xffff, 0x0000},    /* 23 orange [33b V] */
+	{0, 0xcccc, 0xcccc, 0x0000},    /* 24 yellow [33 V] */
+	{0, 0x0000, 0xffff, 0x0000},    /* 25 green [32b V] */
+	{0, 0x0000, 0xcccc, 0xcccc},    /* 26 aqua [36] V */
+	{0, 0x0000, 0xffff, 0xffff},    /* 27 light aqua [36b V] */
+	{0, 0x0000, 0x0000, 0xffff},    /* 28 blue [34b V] */
+	{0, 0xffff, 0x0000, 0xffff},    /* 29 light purple [35b V] */
+	{0, 0x3333, 0x3333, 0x3333},    /* 30 grey [30b V] */
+	{0, 0xffff, 0xffff, 0xffff},    /* 31 light grey [37b V] */
+
+	{0, 0x0000, 0x0000, 0x0000},
+	{0, 0xa4a4, 0xdfdf, 0xffff},
+	{0, 0xaaaa, 0xaaaa, 0xaaaa},    /* fore XXX */
+	{0, 0x0000, 0x0000, 0x0000},	/* background */
+	{0, 0xcccc, 0x1010, 0x1010},
+
+	{0, 0x8c8c, 0x1010, 0x1010},
+	{0, 0x0000, 0x0000, 0xffff},
+	{0, 0xf5f5, 0x0000, 0x0000},
+	{0, 0x9999, 0x9999, 0x9999},
+
 #else
 /* these are from http://xchat.org/files/themes/blacktheme.zip ;) */
 
@@ -148,7 +196,7 @@ GdkColor colors[] = {
 
 	{0, 0x0000, 0x0000, 0x0000},
 	{0, 0xa4a4, 0xdfdf, 0xffff},
-	{0, 0xdf3c, 0xdf3c, 0xdf3c},
+	{0, 0xcf3c, 0xcf3c, 0xcf3c},
 	{0, 0x0000, 0x0000, 0x0000},
 	{0, 0xcccc, 0x1010, 0x1010},
 
@@ -179,6 +227,7 @@ void palette_alloc(GtkWidget *widget)
 GdkPixbuf *pix_ekg2;
 GdkPixbuf *pixs[STATUS_PIXBUFS];
 GdkPixbuf *gg_pixs[STATUS_PIXBUFS];
+GdkPixbuf *icq_pixs[STATUS_PIXBUFS];
 
 void pixmaps_init(void)
 {
@@ -188,11 +237,20 @@ void pixmaps_init(void)
 	pix_ekg2 = NULL;
 
 	memset(gg_pixs, 0, sizeof(gg_pixs));
-
 	gg_pixs[PIXBUF_AVAIL] = gdk_pixbuf_new_from_inline(-1, gg_avail, FALSE, 0);
 	gg_pixs[PIXBUF_AWAY] = gdk_pixbuf_new_from_inline(-1, gg_away, FALSE, 0);
 	gg_pixs[PIXBUF_INVISIBLE] = gdk_pixbuf_new_from_inline(-1, gg_invisible, FALSE, 0);
 	gg_pixs[PIXBUF_NOTAVAIL] = gdk_pixbuf_new_from_inline(-1, gg_notavail, FALSE, 0);
+
+	memset(icq_pixs, 0, sizeof(icq_pixs));
+	icq_pixs[PIXBUF_FFC] = gdk_pixbuf_new_from_inline(-1, icq_ffc, FALSE, 0);
+	icq_pixs[PIXBUF_AVAIL] = gdk_pixbuf_new_from_inline(-1, icq_avail, FALSE, 0);
+	icq_pixs[PIXBUF_AWAY] = gdk_pixbuf_new_from_inline(-1, icq_away, FALSE, 0);
+	icq_pixs[PIXBUF_DND] = gdk_pixbuf_new_from_inline(-1, icq_dnd, FALSE, 0);
+	icq_pixs[PIXBUF_XA] = gdk_pixbuf_new_from_inline(-1, icq_xa, FALSE, 0);
+	icq_pixs[PIXBUF_INVISIBLE] = gdk_pixbuf_new_from_inline(-1, icq_invisible, FALSE, 0);
+	icq_pixs[PIXBUF_NOTAVAIL] = gdk_pixbuf_new_from_inline(-1, icq_notavail, FALSE, 0);
+	icq_pixs[PIXBUF_UNKNOWN] = gdk_pixbuf_new_from_inline(-1, icq_unknown, FALSE, 0);
 	
 	pixs[PIXBUF_FFC] = gdk_pixbuf_new_from_inline(-1, ffc, FALSE, 0);
 	pixs[PIXBUF_AVAIL] = gdk_pixbuf_new_from_inline(-1, avail, FALSE, 0);
@@ -201,5 +259,7 @@ void pixmaps_init(void)
 	pixs[PIXBUF_XA] = gdk_pixbuf_new_from_inline(-1, xa, FALSE, 0);
 	pixs[PIXBUF_INVISIBLE] = gdk_pixbuf_new_from_inline(-1, invisible, FALSE, 0);
 	pixs[PIXBUF_NOTAVAIL] = gdk_pixbuf_new_from_inline(-1, notavail, FALSE, 0);
+	pixs[PIXBUF_ERROR] = gdk_pixbuf_new_from_inline(-1, icon_error, FALSE, 0);
+	pixs[PIXBUF_UNKNOWN] = gdk_pixbuf_new_from_inline(-1, icon_unknown, FALSE, 0);
 }
 

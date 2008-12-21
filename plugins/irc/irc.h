@@ -19,23 +19,26 @@
 #define __EKG_PLUGINS_IRC_IRC_H
 
 #define DOT(a,x,y,z,error) \
-	print_window("__status", z, 0, a, session_name(z), x, y->hostname, y->address, \
+	print_info("__status", z, a, session_name(z), x, y->hostname, y->address, \
 			itoa(y->port < 0 ? \
 				session_int_get(z, "port") < 0 ? DEFPORT : session_int_get(z, "port") : y->port), \
 			itoa(y->family), error ? strerror(error) : "")
 
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
+#include <ekg/protocol.h>	/* XXX, protocol_uid() */
 #include <ekg/sessions.h>
 #include <ekg/windows.h>
 
+/* irc_private->sopt */
 enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
-	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, SERVOPTS };
-extern char *sopt_keys[];
+	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, _005_IDCHAN, SERVOPTS };
 
-typedef struct {
+/* irc_private_t->casemapping values */
+enum { IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT, IRC_CASEMAPPING_COUNT };
+
+typedef struct _irc_private_t {
 	int fd;				/* connection's fd */
-	int connecting;			/* are we connecting _now_ ? */
 	int autoreconnecting;		/* are we in reconnecting mode now? */
 	int resolving;			/* count of resolver threads. */
 	list_t bindlist, bindtmplist;
@@ -54,15 +57,42 @@ typedef struct {
 	char *sopt[SERVOPTS];		/* just a few options from
 					 * www.irc.org/tech_docs/005.html
 					 * server's response */
+	int casemapping;
 
 	list_t awaylog;
+
+	list_t auto_guess_encoding;
+	list_t out_recodes;
+	list_t recoded_channels;
+
+	void *conv_in;
+	void *conv_out;
 } irc_private_t;
 
+/* data for private->auto_guess_encoding */
 typedef struct {
+	void *conv_in;
+	void *conv_out;
+} conv_in_out_t;
+
+/* data for private->out_recodes */
+typedef struct {
+	char *name;	/* encoding name */
+	void *conv_in;
+	void *conv_out;
+} out_recodes_t;
+
+/* data for private->recoded_channels */
+typedef struct {
+	char *name;	/* channel or nick */
+	out_recodes_t *recode;
+} recoded_channels_t;
+
+typedef struct _irc_awaylog_t {
 	char *channame;	/* channel name, (null if priv) */
 	char *uid;	/* nickname who wrote to us	*/
-	char *msg;	/* msg 				*/
-	time_t t;	/* time_t when we recv message 	*/
+	char *msg;	/* msg				*/
+	time_t t;	/* time_t when we recv message	*/
 } irc_awaylog_t;
 
 #define SOP(x) (j->sopt[x])
@@ -84,11 +114,14 @@ typedef struct {
 	char		*topic, *topicby, *mode_str;
 	window_t	*window;
 	list_t		onchan;
+	char		*nickpad_str;
+	int		nickpad_len, nickpad_pos;
+	int		longest_nick;
 	list_t		banlist;
 	/* needed ?
 	list_t exclist;
 	list_t invlist; */
-	list_t          acclist;
+	list_t		acclist;
 } channel_t;
 
 /* data for private->people->channels */
@@ -110,13 +143,14 @@ typedef struct {
 typedef struct {
 	char *session;
 	list_t *plist;
+	int isbind;
 } irc_resolver_t;
 
 #define irc_private(s) ((irc_private_t*) session_private_get(s))
 
 /* DO NOT TOUCH THIS! */
 #define IRC4 "irc:"
-#define IRC3 "irc"
+#define irc_uid(target) protocol_uid("irc", target)
 
 extern plugin_t irc_plugin;
 
@@ -124,8 +158,8 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type);
 
 /* checks if name is in format irc:something
  * checkcon is one of:
- *   name is               channel   |  nick 
- *   IRC_GC_CHAN 	-  channame  |  NULL
+ *   name is		   channel   |	nick 
+ *   IRC_GC_CHAN	-  channame  |	NULL
  *   IRC_GC_NOT_CHAN	-  NULL      | nickname
  *   IRC_GC_ANY		-  name if it's in proper format [irc:something]
  */
@@ -134,6 +168,12 @@ enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 #define irc_write(s, args...) watch_write((s && s->priv) ? irc_private(s)->send_watch : NULL, args);
 
 int irc_parse_line(session_t *s, char *buf, int fd);	/* misc.c */
+
+extern int irc_config_experimental_chan_name_clean;
+
+char *nickpad_string_create(channel_t *chan);
+char *nickpad_string_apply(channel_t *chan, char *str);
+char *nickpad_string_restore(channel_t *chan);
 
 #endif /* __EKG_PLUGINS_IRC_IRC_H */
 

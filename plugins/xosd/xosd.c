@@ -24,6 +24,7 @@
 #include <ekg/plugins.h>
 #include <ekg/userlist.h>
 #include <ekg/protocol.h>
+#include <ekg/queries.h>
 #include <ekg/themes.h>
 #include <ekg/stuff.h>
 #include <ekg/vars.h>
@@ -39,22 +40,22 @@ PLUGIN_DEFINE(xosd, PLUGIN_GENERIC, xosd_theme_init);
 
 /* variables from xosd.h */
 static char	*xosd_colour;
-static char 	*xosd_font;
-static char 	*xosd_outline_colour;
-static char 	*xosd_shadow_colour;
+static char	*xosd_font;
+static char	*xosd_outline_colour;
+static char	*xosd_shadow_colour;
 
-static int 	xosd_display_filter;
-static int 	xosd_display_notify;
-static int 	xosd_display_timeout;
-static int 	xosd_display_welcome;
-static int 	xosd_horizontal_offset;
+static int	xosd_display_filter;
+static int	xosd_display_notify;
+static int	xosd_display_timeout;
+static int	xosd_display_welcome;
+static int	xosd_horizontal_offset;
 static int	xosd_horizontal_position;
-static int 	xosd_outline_offset;
-static int 	xosd_shadow_offset;
-static int 	xosd_short_messages;
-static int 	xosd_text_limit;
-static int 	xosd_vertical_offset;
-static int 	xosd_vertical_position;
+static int	xosd_outline_offset;
+static int	xosd_shadow_offset;
+static int	xosd_short_messages;
+static int	xosd_text_limit;
+static int	xosd_vertical_offset;
+static int	xosd_vertical_position;
 
 static xosd *osd;
 
@@ -129,8 +130,10 @@ static QUERY(xosd_protocol_status)
 {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
-	char *status	= *(va_arg(ap, char**));
+	int nstatus	= *(va_arg(ap, int*));
 	char *descr	= *(va_arg(ap, char**));
+
+	const char *status	= ekg_status_string(nstatus, 0);
 
 	userlist_t *u;
 	session_t *s;
@@ -142,10 +145,10 @@ static QUERY(xosd_protocol_status)
 	int level;
 	
 	if (!(s = session_find(session)))
-                return 0;
+		return 0;
 
-        if (!(u = userlist_find(s, uid)))
-                return 0;
+	if (!(u = userlist_find(s, uid)))
+		return 0;
 	
 	level = ignored_check(s, uid);
 	
@@ -186,18 +189,18 @@ static QUERY(xosd_protocol_message)
 {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
-        char **rcpts	= *(va_arg(ap, char***));
+		char **UNUSED(rcpts)	= *(va_arg(ap, char***));
 	char *text	= *(va_arg(ap, char**));
-	uint32_t *format= *(va_arg(ap, uint32_t**));
-	time_t sent	= *(va_arg(ap, time_t*));
+		uint32_t *UNUSED(format) = *(va_arg(ap, uint32_t**));
+		time_t UNUSED(sent)	 = *(va_arg(ap, time_t*));
 	int class	= *(va_arg(ap, int*));
 	
-        userlist_t *u;
+	userlist_t *u;
 	session_t *s;
 	int level;
 	
 	if (!(s = session_find(session)))
-                return 0;
+		return 0;
 
 	if (session_check(s, 0, "irc"))
 		return 0;
@@ -259,7 +262,7 @@ static QUERY(xosd_irc_protocol_message)
 	debug("[xosd_irc_protocol_message] %s %d %d\n", session, foryou, isour);
 	
 	if (!(s = session_find(session)))
-                return 0;
+		return 0;
 	
 	if (!foryou || isour)
 		return 0;
@@ -337,6 +340,10 @@ static void xosd_killed() {
 
 int xosd_plugin_init(int prio)
 {
+	va_list dummy;
+
+	PLUGIN_CHECK_VER("xosd");
+
 	osd = xosd_create(2);
 	if (!osd) {
 		debug("xosd: error creating osd: %s\n", xosd_error);
@@ -344,7 +351,7 @@ int xosd_plugin_init(int prio)
 	}
 	plugin_register(&xosd_plugin, prio);
 
-	xosd_setvar_default(NULL, NULL);
+	xosd_setvar_default(NULL, dummy);
 
 	variable_add(&xosd_plugin, ("colour"), VAR_STR, 1, &xosd_colour, NULL, NULL, NULL);
 	variable_add(&xosd_plugin, ("font"), VAR_STR, 1, &xosd_font, NULL, NULL, NULL);
@@ -368,9 +375,9 @@ int xosd_plugin_init(int prio)
 	variable_add(&xosd_plugin, ("vertical_position"), VAR_MAP, 1, &xosd_vertical_position, NULL,
 			variable_map(3, 0, 2, "top", 1, 0, "center", 2, 1, "bottom"), NULL);
 	
-	query_connect(&xosd_plugin, ("protocol-message"), xosd_protocol_message, NULL);
-	query_connect(&xosd_plugin, ("irc-protocol-message"), xosd_irc_protocol_message, NULL);
-	query_connect(&xosd_plugin, ("protocol-status"), xosd_protocol_status, NULL);
+	query_connect_id(&xosd_plugin, PROTOCOL_MESSAGE, xosd_protocol_message, NULL);
+	query_connect_id(&xosd_plugin, IRC_PROTOCOL_MESSAGE, xosd_irc_protocol_message, NULL);
+	query_connect_id(&xosd_plugin, PROTOCOL_STATUS, xosd_protocol_status, NULL);
 	
 	timer_add(&xosd_plugin, "xosd:display_welcome_timer", 1, 0, xosd_display_welcome_message, NULL);
 
@@ -409,6 +416,11 @@ static int xosd_plugin_destroy()
 	plugin_unregister(&xosd_plugin);
 	return 0;
 }
+
+#if USE_UNICODE
+#	warning "NOTE: xosd uses deprecated X11 interface and thus doesn't support unicode!"
+#	warning "It's problem with the library itself, not ekg2 plugin."
+#endif
 
 /*
  * Local Variables:

@@ -24,24 +24,31 @@
 #include "plugins.h"
 #include "stuff.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct event {
-	unsigned int id; /* identyficator */
-	char *name;     /* name of the event */
-	char *target;   /* uid(s), alias(es), group(s) */
-	char *action;   /* action to do */
+	struct event *next;
+
+	unsigned int id;/* identyficator */
+	char *name;	/* name of the event */
+	char *target;	/* uid(s), alias(es), group(s) */
+	char *action;	/* action to do */
 	int prio;	/* priority of this event */
 } event_t;
 
-extern list_t events;
+extern event_t *events;
 extern char **events_all; /* it may be help for tab complete */
 
 int event_add(const char *name, int prio, const char *target, const char *action, int quiet);
 
-int event_check(const char *session, const char *name, const char *uid, const char *data);
 void event_free();
 int events_init();
 
-int event_target_check(char *buf);
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_EVENTS_H */
 

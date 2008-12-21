@@ -27,6 +27,12 @@ AC_DEFUN([AC_CHECK_LIBGSM],
 			AC_CHECK_HEADERS([libgsm/gsm.h],
 			[
 				have_libgsm_h="yes"
+			], [
+
+				AC_CHECK_HEADERS(gsm/gsm.h,
+				[
+					have_libgsm_h="yes"
+				])
 			])
 		])
 

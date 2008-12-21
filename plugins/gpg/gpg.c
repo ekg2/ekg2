@@ -1,10 +1,10 @@
 /*
  *  Code ported from mcabber 0.9.0 to ekg2
- *  	Copyright (C) 2006 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *	Copyright (C) 2006 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  Orginal code:
- *  	Copyright (C) 2006 Mikael Berthe <bmikael@lists.lilotux.net>
- *  	Some parts inspired by centericq (impgp.cc)
+ *	Copyright (C) 2006 Mikael Berthe <bmikael@lists.lilotux.net>
+ *	Some parts inspired by centericq (impgp.cc)
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -69,10 +69,10 @@ static egpg_key_t *gpg_keydb_add(const char *uid, const char *keyid, const char 
 	egpg_key_t *a = xmalloc(sizeof(egpg_key_t));
 
 	a->uid		= xstrdup(uid);
-	a->keyid 	= xstrdup(keyid);
+	a->keyid	= xstrdup(keyid);
 	a->keynotok	= -1;
 	
-	list_add(&gpg_keydb, a, 0);
+	list_add(&gpg_keydb, a);
 
 	return a;
 }
@@ -100,7 +100,7 @@ static gpgme_error_t gpg_passphrase_cb(void *data, const char *uid_hint, const c
 	len = xstrlen((char *) data);
 
 	if (write(fd, (char *) data, len) != len)	return gpg_error(GPG_ERR_CANCELED);
-	if (write(fd, "\n", 1) != 1) 			return gpg_error(GPG_ERR_CANCELED);
+	if (write(fd, "\n", 1) != 1)			return gpg_error(GPG_ERR_CANCELED);
 
 	return 0;	/* success */
 }
@@ -131,7 +131,7 @@ static const char *gpg_find_keyid(const char *uid, const char **password, char *
 	}
 
 /* XXX here, we need to search gpg key db for search of key = 'key' coz we can have here everything... uid, name, etc, etc...
- * 	and if we have multiiple choices we should allow user to select proper one. 
+ *	and if we have multiiple choices we should allow user to select proper one. 
  */
 
 	return key;
@@ -142,7 +142,7 @@ static const char *gpg_find_keyid(const char *uid, const char **password, char *
 static QUERY(gpg_message_encrypt) {
 	char *uid	= *(va_arg(ap, char **));		/* uid */
 	char **message	= va_arg(ap, char **);			/* message to encrypt */
-	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
+	char **error	= va_arg(ap, char **);			/* place to put errormsg */
 
 	char *gpg_data	= *message;
 
@@ -219,7 +219,7 @@ static QUERY(gpg_message_encrypt) {
 static QUERY(gpg_message_decrypt) {
 	char *uid	= *(va_arg(ap, char **));		/* uid */
 	char **message	= va_arg(ap, char **);			/* message to decrypt */
-	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
+	char **error	= va_arg(ap, char **);			/* place to put errormsg */
 
 	char *gpg_data	= saprintf(data, *message);
 	const char *key  = NULL;
@@ -283,7 +283,7 @@ static QUERY(gpg_message_decrypt) {
 static QUERY(gpg_sign) {
 	char *uid	= *(va_arg(ap, char **));		/* uid */
 	char **message	= va_arg(ap, char **);			/* message to sign */
-	char **error 	= va_arg(ap, char **);			/* place to put errormsg */
+	char **error	= va_arg(ap, char **);			/* place to put errormsg */
 
 	const char *key  = NULL;
 	const char *pass = NULL;
@@ -483,7 +483,7 @@ static char *gpg_key_status(egpg_key_t *k) {
 
 static QUERY(gpg_user_keyinfo) {
 /* HERE, we display info about gpg support for user 'u' 
- * 	query emited by /list 
+ *	query emited by /list 
  */
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
@@ -493,7 +493,7 @@ static QUERY(gpg_user_keyinfo) {
 	if (!u)
 		return 0;
 
-	if (xstrncmp(u->uid, "jid:", 4)) return 0; /* only jabber for now... */
+	if (xstrncmp(u->uid, "xmpp:", 5)) return 0; /* only jabber for now... */
 
 	if ((k = gpg_keydb_find_uid(u->uid))) {
 		printq("user_info_gpg_key", k->keyid, gpg_key_status(k));
@@ -615,7 +615,7 @@ static int gpg_theme_init() {
 
 	format_add("gpg_keys_list",		"%> %W%1%n/%W%2%n %3", 1);		/* uid, keyid, key status */
 
-	format_add("user_info_gpg_key", 	_("%K| %nGPGKEY: %T%1%n (%2)%n"), 1);	/* keyid, key status */
+	format_add("user_info_gpg_key",		_("%K| %nGPGKEY: %T%1%n (%2)%n"), 1);	/* keyid, key status */
 #endif
 	return 0;
 }
@@ -623,9 +623,13 @@ static int gpg_theme_init() {
 #define MIN_GPGME_VERSION "1.0.0"
 
 EXPORT int gpg_plugin_init(int prio) {
+	FILE *f;
 	gpgme_error_t err;
+	const char *dbfile = prepare_pathf("keys/gpgkeydb.txt");
 
-	if (mkdir(prepare_path("keys", 1), 0700) && errno != EEXIST) {
+	PLUGIN_CHECK_VER("gpg");
+
+	if (mkdir_recursive(dbfile, 0)) {
 		debug_error("Creating of directory keys failed, gpg plugin needs it!\n");	/* it's not 100% true.. but... */
 		return -1;
 	}
@@ -640,25 +644,21 @@ EXPORT int gpg_plugin_init(int prio) {
 		return -1;
 	}
 
-	{
-		FILE *f;
-		const char *dbfile = prepare_path("keys/gpgkeydb.txt", 1);
-		if ((f = fopen(dbfile, "r"))) {
-			char *line;
-			while ((line = read_file(f, 0))) {
-				char **p = array_make(line, "\t", 3, 0, 0);
-				
-				if (p && p[0] && p[1] && p[2]) {
-					egpg_key_t *k = gpg_keydb_add(p[0], p[1], NULL);
+	if ((f = fopen(dbfile, "r"))) {
+		char *line;
+		while ((line = read_file(f, 0))) {
+			char **p = array_make(line, "\t", 3, 0, 0);
 
-					k->keysetup = atoi(p[2]);
-				} else debug_error("[GPG] INVALID LINE: %s\n", line);
+			if (p && p[0] && p[1] && p[2]) {
+				egpg_key_t *k = gpg_keydb_add(p[0], p[1], NULL);
 
-				array_free(p);
-			}
-			fclose(f);
-		} else debug_error("[GPG] Opening of %s failed: %d %s.\n", dbfile, errno, strerror(errno));
-	}
+				k->keysetup = atoi(p[2]);
+			} else debug_error("[GPG] INVALID LINE: %s\n", line);
+
+			array_free(p);
+		}
+		fclose(f);
+	} else debug_error("[GPG] Opening of %s failed: %d %s.\n", dbfile, errno, strerror(errno));
 
 #if 0
 /* XXX Set the locale information. ? */
@@ -671,8 +671,8 @@ EXPORT int gpg_plugin_init(int prio) {
 	command_add(&gpg_plugin, "gpg:key", "p u ?", gpg_command_key, 0, 
 		"-d --delkey -f --forcekey -i --infokey -l --listkeys -s --setkey");
 
-	query_connect_id(&gpg_plugin, GPG_MESSAGE_ENCRYPT, 	gpg_message_encrypt, NULL);
-	query_connect_id(&gpg_plugin, GPG_MESSAGE_DECRYPT, 	gpg_message_decrypt, 
+	query_connect_id(&gpg_plugin, GPG_MESSAGE_ENCRYPT,	gpg_message_encrypt, NULL);
+	query_connect_id(&gpg_plugin, GPG_MESSAGE_DECRYPT,	gpg_message_decrypt, 
 						"-----BEGIN PGP MESSAGE-----\n\n"
 						"%s\n"
 						"-----END PGP MESSAGE-----\n");
@@ -690,16 +690,11 @@ EXPORT int gpg_plugin_init(int prio) {
 
 static int gpg_plugin_destroy() {
 	FILE *f = NULL;
-	
 	list_t l;
+	const char *dbfile = prepare_pathf("keys/gpgkeydb.txt");
 
-	if (mkdir(prepare_path("keys", 1), 0700) && errno != EEXIST) {
-		debug_error("[GPG] Creating of directory keys failed: %d %s. gpg db failed to save\n", errno, strerror(errno));
-	} else {
-		const char *dbfile = prepare_path("keys/gpgkeydb.txt", 1);
-
-		if (!(f = fopen(dbfile, "w")))
-			debug_error("[GPG] Opening of %s failed: %d %s. gpg db failed to save\n", dbfile, errno, strerror(errno));
+	if (mkdir_recursive(dbfile, 0) || !(f = fopen(dbfile, "w"))) {
+		debug_error("[GPG] gpg db failed to save (%s)\n", strerror(errno));
 	}
 
 /* save our db to file, and cleanup memory... */

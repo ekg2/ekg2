@@ -17,9 +17,9 @@
 #include <ekg/sessions.h>
 #include <ekg/xmalloc.h>
 
+#include <ekg/recode.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
-
 #include <ekg/queries.h>
 
 #include "simlite.h"
@@ -228,7 +228,7 @@ static COMMAND(command_key)
 			return -1;
 		}
 
-		if (!(uid = get_uid(session_current, params[1]))) {
+		if (!(uid = get_uid_any(session_current, params[1]))) {
 			printq("user_not_found", params[1]);
 			return -1;
 		}
@@ -269,7 +269,7 @@ static COMMAND(command_key)
 		else if (params[0] && match_arg(params[0], 'l', ("list"), 2))
 			x = params[1];
 
-		if (x && !(list_uid = get_uid(session, x))) {
+		if (x && !(list_uid = get_uid_any(session, x))) {
 			printq("user_not_found", x);
 			closedir(dir);
 			return -1;
@@ -349,7 +349,11 @@ static int sim_theme_init() {
  */
 EXPORT int sim_plugin_init(int prio)
 {
+
+	PLUGIN_CHECK_VER("sim");
+
 	plugin_register(&sim_plugin, prio);
+	ekg_recode_cp_inc();
 
 	query_connect_id(&sim_plugin, MESSAGE_ENCRYPT, message_encrypt, NULL);
 	query_connect_id(&sim_plugin, MESSAGE_DECRYPT, message_decrypt, NULL);
@@ -372,6 +376,7 @@ EXPORT int sim_plugin_init(int prio)
 static int sim_plugin_destroy()
 {
 	plugin_unregister(&sim_plugin);
+	ekg_recode_cp_dec();
 
 	xfree(sim_key_path);
 

@@ -30,6 +30,7 @@
 #include "commands.h"
 #include "debug.h"
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "plugins.h"
 #include "themes.h"
 #include "stuff.h"
@@ -37,11 +38,21 @@
 
 #include "audio_wav.h"
 
-list_t audio_codecs;
-list_t audio_inputs;
-list_t streams;
+codec_t *audio_codecs;
+audio_t *audio_inputs;
+stream_t *streams;
 
 AUDIO_DEFINE(stream);
+
+DYNSTUFF_LIST_DECLARE_NF(audio_inputs, audio_t, 
+	static __DYNSTUFF_LIST_ADD,		/* audio_inputs_add() */
+	static __DYNSTUFF_LIST_UNLINK)		/* audio_inputs_unlink() */
+
+DYNSTUFF_LIST_DECLARE_NF(audio_codecs, codec_t, 
+	static __DYNSTUFF_LIST_ADD,		/* audio_codecs_add() */
+	static __DYNSTUFF_LIST_UNLINK)		/* audio_codecs_unlink() */
+
+static __DYNSTUFF_LIST_ADD(streams, stream_t, NULL);	/* streams_add() */
 
 /*********************************************************************************/
 
@@ -56,18 +67,20 @@ COMMAND(cmd_streams) {
 
 /* /_stream --create "INPUT inputparams"    "CODEC codecparams"			"OUTPUT outputparams" */
 
-/* /_stream --create "STREAM file:dupa.raw" 					"STREAM file:dupa_backup.raw"	*/ /* <--- ekg2 can copy files! :) */
-/* /_stream --create "STREAM file:dupa.raw" "CODEC rawcodec fortune-telling:ON" "LAME file:dupa.mp3" 		*/
+/* /_stream --create "STREAM file:dupa.raw"					"STREAM file:dupa_backup.raw"	*/ /* <--- ekg2 can copy files! :) */
+/* /_stream --create "STREAM file:dupa.raw" "CODEC rawcodec fortune-telling:ON" "LAME file:dupa.mp3"		*/
 /* /_stream --create "STREAM file:/dev/tcp host:jakishost port:port http:radio" "STREAM file:radio.raw"		*/ /* and download files too? :) */
 
 /* i think that api if i (we?) write it... will be nice, but code can be obscure... sorry */
 
 	if (!params[0] || match_arg(params[0], 'l', "list", 2) || !params[0]) {	/* list if --list. default action is --list (if we don't have params)  */
-		list_t l;
+		stream_t *sl;
+		audio_t *al;
+		codec_t *cl;
 
 		/* XXX, add more debug info, get info using  */
-		for (l = streams; l; l = l->next) {
-			stream_t *s = l->data;
+		for (sl = streams; sl; sl = sl->next) {
+			stream_t *s = sl;
 
 			/* co->c->control_handler(AUDIO_CONTROL_GET, AUDIO_WRITE, co, "freq", &freq, "sample", &sample, "channels", &channels, NULL); */
 			
@@ -85,8 +98,8 @@ COMMAND(cmd_streams) {
 			if (s->output)	debug("	OUT, AUDIO: %s fd: %d bufferlen: %d\n", s->output->a->name, s->output->fd, s->output->buffer->len);
 		}
 
-		for (l = audio_inputs; l; l = l->next) {
-			audio_t *a = l->data;
+		for (al = audio_inputs; al; al = al->next) {
+			audio_t *a = al;
 			char **arr;
 
 			printq("audio_device", a->name);
@@ -100,8 +113,8 @@ COMMAND(cmd_streams) {
 			}
 		}
 
-		for (l = audio_codecs; l; l = l->next) {
-			codec_t *c = l->data;
+		for (cl = audio_codecs; cl; cl = cl->next) {
+			codec_t *c = cl;
 			char **arr;
 
 			printq("audio_codec", c->name);
@@ -192,11 +205,12 @@ COMMAND(cmd_streams) {
  */
 
 codec_t *codec_find(const char *name) {
-	list_t l;
+	codec_t *cl;
+
 	if (!name) 
 		return NULL;
-	for (l = audio_codecs; l; l = l->next) {
-		codec_t *c = l->data;
+	for (cl = audio_codecs; cl; cl = cl->next) {
+		codec_t *c = cl;
 		if (!xstrcmp(c->name, name)) 
 			return c;
 
@@ -210,23 +224,24 @@ codec_t *codec_find(const char *name) {
  * Register new codec_t (@a codec)
  *
  * @note	This should be done @@ *_plugin_init() and just before
- * 		plugin_register() If codec_register() fails (return not 0)
- * 		than you <b>should NOT</b> call plugin_register() only display some info...
- * 		and return -1
+ *		plugin_register() If codec_register() fails (return not 0)
+ *		than you <b>should NOT</b> call plugin_register() only display some info...
+ *		and return -1
  *
  * @param codec - codec_t to register
  *
  * @sa codec_unregister() - to unregister codec_t
  *
- * @return 	-1 if invalid params (@a codec NULL)<br>
- * 		-2 if codec with such name already exists<br>
- * 		 0 on success
+ * @return	-1 if invalid params (@a codec NULL)<br>
+ *		-2 if codec with such name already exists<br>
+ *		 0 on success
  */
 
 int codec_register(codec_t *codec) {
 	if (!codec)			return -1;
 	if (codec_find(codec->name))	return -2;
-	list_add(&audio_codecs, codec, 0);
+
+	audio_codecs_add(codec);
 	return 0;
 }
 
@@ -235,8 +250,8 @@ int codec_register(codec_t *codec) {
  *
  * Unregister codec_t
  *
- * @note 	This should be done @@ *_plugin_destroy() just before
- * 		plugin_unregister()
+ * @note	This should be done @@ *_plugin_destroy() just before
+ *		plugin_unregister()
  *
  * @param codec - codec_t to unregister
  */
@@ -245,8 +260,7 @@ void codec_unregister(codec_t *codec) {
 	if (!codec) return;
 
 	/* XXX here, we should search for <b>all</b> streams using this codec, and unload them */
-
-	list_remove(&audio_codecs, codec, 0);
+	audio_codecs_unlink(codec);
 }
 
 /**
@@ -260,13 +274,13 @@ void codec_unregister(codec_t *codec) {
  */
 
 audio_t *audio_find(const char *name) {
-	list_t l;
+	audio_t *al;
 
 	if (!name) 
 		return NULL;
 
-	for (l = audio_inputs; l; l = l->next) {
-		audio_t *a = l->data;
+	for (al = audio_inputs; al; al = al->next) {
+		audio_t *a = al;
 		if (!xstrcmp(a->name, name)) 
 			return a;
 
@@ -279,25 +293,25 @@ audio_t *audio_find(const char *name) {
  *
  * Register new audio I/O (@a audio)
  *
- * @note 	This should be done @@ *_plugin_init() and just before 
- * 		plugin_register() If audio_register() fails (return not 0)
- * 		than you <b>should NOT</b> call plugin_register() only display some info...
- * 		and return -1
+ * @note	This should be done @@ *_plugin_init() and just before 
+ *		plugin_register() If audio_register() fails (return not 0)
+ *		than you <b>should NOT</b> call plugin_register() only display some info...
+ *		and return -1
  *
  * @param audio - audio_t to register
  *
  * @sa audio_unregister() - to unregister audio_t
  *
- * @return 	-1 if invalid params (@a audio NULL)<br>
- * 		-2 if audio with such name already exists<br>
- * 		 0 on success
+ * @return	-1 if invalid params (@a audio NULL)<br>
+ *		-2 if audio with such name already exists<br>
+ *		 0 on success
  */
 
 int audio_register(audio_t *audio) {
 	if (!audio)			return -1;
 	if (audio_find(audio->name))	return -2;
 
-	list_add(&audio_inputs, audio, 0);
+	audio_inputs_add(audio);
 	return 0;
 }
 
@@ -306,8 +320,8 @@ int audio_register(audio_t *audio) {
  *
  * Unregister audio_t
  *
- * @note 	This should be done @@ *_plugin_destroy() just before
- * 		plugin_unregister()
+ * @note	This should be done @@ *_plugin_destroy() just before
+ *		plugin_unregister()
  *
  * @param audio - audio_t to unregister
  */
@@ -316,8 +330,7 @@ void audio_unregister(audio_t *audio) {
 	if (!audio) return;
 
 	/* XXX here, we should search for <b>all</b> streams using this audio, and unload them */
-	
-	list_remove(&audio_inputs, audio, 0);
+	audio_inputs_unlink(audio);
 }
 		/* READING / WRITING FROM FILEs */
 WATCHER_AUDIO(stream_audio_read) {
@@ -395,7 +408,7 @@ AUDIO_CONTROL(stream_audio_control) {
 				WAVEHDR *fileheader	= xmalloc(sizeof(WAVEHDR));
 
 				if ((read(aio->fd, fileheader, sizeof(WAVEHDR)) == sizeof(WAVEHDR))) {
-#define __SET(args...) 	  (co) ? co->c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, co, args) : \
+#define __SET(args...)	  (co) ? co->c->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, co, args) : \
 				out->a->control_handler(AUDIO_CONTROL_SET, AUDIO_RDWR, co, args)
 					int freq	= le32_to_cpu(fileheader->nSamplesPerSec);
 					int channels	= le16_to_cpu(fileheader->nChannels);
@@ -505,13 +518,13 @@ AUDIO_CONTROL(stream_audio_control) {
 
 		if (suc && file) {
 			fd = open(file, (
-				way == AUDIO_READ 	? O_RDONLY : 
-				way == AUDIO_WRITE 	? O_CREAT | O_TRUNC | O_WRONLY : O_CREAT | O_TRUNC | O_RDWR), S_IRUSR | S_IWUSR);
+				way == AUDIO_READ	? O_RDONLY : 
+				way == AUDIO_WRITE	? O_CREAT | O_TRUNC | O_WRONLY : O_CREAT | O_TRUNC | O_RDWR), S_IRUSR | S_IWUSR);
 
 			if (fd == -1 && way == AUDIO_WRITE) 
 				fd = open(file, (
-					way == AUDIO_READ       ? O_RDONLY :
-					way == AUDIO_WRITE      ? O_CREAT | O_WRONLY : O_CREAT | O_RDWR), S_IRUSR | S_IWUSR);
+					way == AUDIO_READ	? O_RDONLY :
+					way == AUDIO_WRITE	? O_CREAT | O_WRONLY : O_CREAT | O_RDWR), S_IRUSR | S_IWUSR);
 
 			if (fd == -1) { 
 				debug("[stream_audio_control] OPENING FILE: %s FAILED %d %s!\n", file, errno, strerror(errno));
@@ -523,7 +536,7 @@ AUDIO_CONTROL(stream_audio_control) {
 		priv->format	= xstrdup(format);
 
 		aio		= xmalloc(sizeof(audio_io_t));
-		aio->a 		= &stream_audio;
+		aio->a		= &stream_audio;
 		aio->fd		= fd;
 		aio->private	= priv;
 
@@ -540,11 +553,11 @@ AUDIO_CONTROL(stream_audio_control) {
 		aio = NULL;
 	} else if (type == AUDIO_CONTROL_HELP) {
 		static char *arr[] = { 
-			"-stream",			"", 			/* bidirectional, no required params */
-			"-stream:file", 		"*",			/* bidirectional, file, everythink can be passed as param */
-			"-stream:format", 		"guess raw pcm wave",	/* bidirectional, format, possible vars: 'guess' 'raw' 'pcm' 'wave' */
+			"-stream",			"",			/* bidirectional, no required params */
+			"-stream:file",			"*",			/* bidirectional, file, everythink can be passed as param */
+			"-stream:format",		"guess raw pcm wave",	/* bidirectional, format, possible vars: 'guess' 'raw' 'pcm' 'wave' */
 			NULL, };
-		return (audio_io_t*) arr;
+		return (void *) arr;
 	}
 	return aio;
 }
@@ -659,8 +672,8 @@ WATCHER(stream_handle) {
  *
  * @note	@a in->fd must != -1, @a out->fd can be -1
  *
- * @todo 	Implement errors. make param , char **error<br>
- * 			Pass it to AUDIO_CONTROL_INIT and if smth fail, there should be allocated description of error.
+ * @todo	Implement errors. make param , char **error<br>
+ *			Pass it to AUDIO_CONTROL_INIT and if smth fail, there should be allocated description of error.
  *
  * @todo	Implement stream_close()
  *
@@ -688,12 +701,12 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 	s->codec	= co;
 	s->output	= out;
 
-	list_add(&streams, s, 0);
+	streams_add(s);
 
 	watch_add(NULL, in->fd, WATCH_READ, stream_handle, s);
 /* allocate buffers */
 	in->buffer	= string_init(NULL);
-	out->buffer 	= string_init(NULL);
+	out->buffer	= string_init(NULL);
 
 	if (out->fd != -1) {
 		watch_t *tmp	= watch_add_line(NULL, out->fd, WATCH_WRITE, stream_handle_write, s);
@@ -704,7 +717,7 @@ int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out
 fail:
 	/* deinit */
 	if (in)		{ in->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_READ, in);		if (in->fd != -1) close(in->fd);	xfree(in); }
-	if (co)		{ co->c->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_RDWR, co); 	;					xfree(co); }
+	if (co)		{ co->c->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_RDWR, co);		;					xfree(co); }
 	if (out)	{ out->a->control_handler(AUDIO_CONTROL_DEINIT, AUDIO_WRITE, out);	if (out->fd != -1) close(out->fd);	xfree(out); }
 	return 0;
 }
@@ -715,8 +728,8 @@ fail:
  * @todo	Ever not begin.
  *
  * @note	This is not implemented, that was only idea howto do multiple encoding/decoding for example we want to decode MPEG 1 Layer 3 stream
- * 		and reencode it to OGG
- * 		so we could do:<br>
+ *		and reencode it to OGG
+ *		so we could do:<br>
  *		<code>
 		stream_create("Reencoding from MPEG to OGG",<br>
 				__AINIT_F("stream", AUDIO_READ, "file", "plik.mp3", "format", "mp3"),		READING FROM FILE: plik.mp3 WITH FORMAT mp3<br>
@@ -746,10 +759,10 @@ int audio_initialize() {
 	audio_register(&stream_audio);
 
 	/* move it to formats.c */
-	format_add("audio_device", 	_("%> Audio device: %1"), 1);
+	format_add("audio_device",	_("%> Audio device: %1"), 1);
 	format_add("audio_codec",	_("%> Audio codec: %1"), 1);
 
-	format_add("audio_not_found",	_("%! Audio not found: %1"), 1);
+	format_add("audio_not_found",	_("%! Audio device not found: %1"), 1);
 	format_add("codec_not_found",	_("%! Codec not found: %1"), 1);
 
 	format_add("stream_info",	_("%> Stream name: %1"), 1);

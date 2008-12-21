@@ -1,21 +1,36 @@
 plugin		autor		przeznaczenie			zale¿no¶ci
 -----------------------------------------------------------------------------
 autoreponder	peres		prosty autoresponder		-
+dbus		gim		IPC per dbus			dbus
+feed		darkjames	obs³uga feedów RSS i NNTP	expat
 gg		wojtekka	obs³uga protoko³u Gadu-Gadu	libgadu
+gpg		darkjames	szyfrowanie wiadomo¶ci GPG	gpgme
 gsm		wojtekka	kodek GSM do rozmów g³osowych 	libgsm
+gtk		darkjames	interfejs graficzny na GTK+	gtk+2
+httprc_ajax	*		interfejs WWW (z AJAX)		-
+icq		dj/wiechu	obs³uga protoko³u icq		-
 ioctld		drg		obs³uga diod klawiatury		-
-irc		gim		obsuga protokou irc		-
+irc		gim		obs³uga protoko³u irc		-
 jabber		wojtekka	obs³uga protoko³u XMPP/Jabber	expat
+jogger		peres		komunikacja z botem Jogger.pl	-
 logs		zdzichu		logowanie wiadomo¶ci		-
-logsqlite	leafnode	logowanie wiadomo¶ci do sqlite	sqlite < 3
+logsoracle	ecimon		logowanie wiadomo¶ci do oracle	oracle
+logsqlite	leafnode	logowanie wiadomo¶ci do sqlite	sqlite
 mail		szalik		sprawdzanie poczty		-
 ncurses		*		interfejs tekstowy		ncurses
+oss		*		kodek OSS			-
 pcm		wojtekka	kodek PCM			-
-perl		darkjames	obsluga perla			perl
-python		leafnode	obsuga pythona			python
+perl		darkjames	obs³uga perla			perl
+polchat		darkjames	obs³uga chatów polchat		-
+python		leafnode	obs³uga pythona			python
 rc		wojtekka	zdalne sterowanie ekg		-
 readline	*		interfejs tekstowy		readline
+rivchat         darkjames	rozmowy w sieci lan		-
+rot13		darkjames	proste szyfrowaie wiadomo¶ci	-
 sim		*		szyfrowanie wiadomo¶ci		openssl
 sms		wojtekka	wysy³anie smsów i takie tam	/usr/bin/sms
+sniff		darkjames	sniffer GG			pcap
 xmsg 		peres 		komunikacja via FS 		[inotify]
 xosd		dredzik		xosd ;]				xosd
+
+--: vim:set ts=8 sts=8 sw=8 :--

@@ -20,19 +20,21 @@
 #ifndef __PYTHON_H_
 #define __PYTHON_H_
 
+#include <sys/types.h>		/* on Solaris we need to include it before Python,
+				   but I think this shouldn't make problems on others */
 #include <Python.h>
 #include <ekg/scripts.h>
 
 #if !defined(Py_RETURN_NONE) // New in Python 2.4
 static inline PyObject* doPy_RETURN_NONE()
-{       Py_INCREF(Py_None); return Py_None; }
+{	Py_INCREF(Py_None); return Py_None; }
 #define Py_RETURN_NONE return doPy_RETURN_NONE()
 #endif
 
 #if !defined(Py_RETURN_TRUE) // New in Python 2.4
 static inline PyObject* doPy_RETURN_TRUE()
 {Py_INCREF(Py_True); return Py_True;}
-#       define Py_RETURN_TRUE return doPy_RETURN_TRUE()
+#	define Py_RETURN_TRUE return doPy_RETURN_TRUE()
 #endif
 
 #if !defined(Py_RETURN_FALSE) // New in Python 2.4

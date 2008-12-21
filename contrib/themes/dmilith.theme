@@ -1,0 +1,187 @@
+#
+# 2oo8 on MIT license
+# ekg2 theme by dmilith & wiechu
+# dmilith [at] gmail.com
+# wiechu at wiechu dot com
+# theme version 0.9
+#
+
+-query_started_window
+irc_channel_unsecure 
+statusbar %k%s[%W%s%{time}%k]    %G%{?session %{session}%k(%W%{?avail dostępny}%{?away zajęty}%{?invisible ukryty}%{?notavail niedostępny}%{?xa bardzo zajęty}%{?dnd nie przeszkadzać}%{?chat chętny do rozmowy}%k)}%{?!session brak sesji}%k    [%s%Y%{?window %{window}}%{?query : %{query}}%{?debug debug}%{?activity %k]    [%Waktywność: }%{activity}%{?mail %k] [%n%B%s mail:}%{mail}%{?more %s%k]    [%Gwięcej}%k]%s
+statusbar_timestamp %H:%M.%S
+statusbar_act_important %G
+statusbar_act %K
+contacts_vertical_line_char 
+curses_prompt_none [puste]                                                     
+
+message %K%r#-%R%4%r-# %n%2%n%3
+chat %K%r#-%R%4%r-# %n%2%n%3
+sent %K%g#-%G%4%g-# %n%3
+conference %c<%C%1%c>%T %|%T%3
+irc_msg_sent_chan %b<%n%2%T%3%g%T%b>%n %6
+irc_msg_sent_n %b<%n%2%T%3%g%T%b>%n %6
+
+irc_msg_f_chan_n %b<%C%2%g%3%b>%n %6
+irc_msg_f_chan_nh %b<%C%2%Y%3%b>%W %6
+irc_msg_f_some %b<%g%3%b>%n %T%6
+irc_not_f_chan %B<%C%2%B%3%b/%g%5%b>%n %T%6
+irc_not_f_chanh %B<%C%2%W%3%b/%W%5%b>%W %T%6
+irc_not_f_chan_n %B<%C%2%g%3%b>%n %T%6
+irc_not_f_chan_nh %l%y * %3%n  %6
+irc_not_f_some %b<%B%3%b>%n %T%6
+irc_f_some %b<%3%b>%n
+
+irc_joined   %> %Kjoin: %k(%K%2%k)%B %k(%K%3%k)%n
+irc_left   %> %Kpart: %k(%K%2%k)%B %k(%K%3%k)%B %k(%K%5%k)%n
+irc_kicked   %> %Kkick: %k(%K%2%k)%K wykopany przez %k(%K%3%k)%K %k(%K%6%k)%n
+irc_kicked_you   %> %Kkick: zoskałeś wykopany przez %k(%K%3%k)%K %k(%K%6%k)%n
+irc_quit   %> %Kquit: %k(%K%2%k)%K %k(%K%3%k)%K %k(%K%4%k)%n
+
+irc_unknown_ctcp %> %y%2%n przesłano nierozpoznane CTCP %3: (%4)
+irc_ctcp_action_y_pub %> %l%y* %2%n %4
+irc_ctcp_action_y %> %l%y* %2%n %4
+irc_ctcp_action_pub %> %l%y* %2%n %5
+irc_ctcp_action %> %l%y* %2%n %5
+irc_ctcp_request_pub %> %l%y%2%n zażądano CTCP %4 od %3
+irc_ctcp_request %> %l%y%2%n zażądał CTCP %4
+irc_ctcp_reply %> %l%y%2%n odpowiedź CTCP od %3: %4
+IRC_ERR_CANNOTSENDTOCHAN %! %2: %1
+IRC_RPL_FIRSTSECOND %> (%1) %2 %3
+IRC_RPL_SECONDFIRST %> (%1) %3 %2
+IRC_RPL_JUSTONE %> (%1) %2
+IRC_RPL_NEWONE %> (%1) 1:%2 2:%3 3:%4 4:%5
+IRC_ERR_FIRSTSECOND %! (%1) %2 %3
+IRC_ERR_SECONDFIRST %! (%1) %3 %2
+IRC_ERR_JUSTONE %! (%1) %2
+IRC_ERR_NEWONE %! (%1) 1:%2 2:%3 3:%4 4:%5
+IRC_RPL_CANTSEND %> Brak praw do wysyłania na kanał %T%2%n
+RPL_WHOISOPERATOR %G||%n %|ircOp    : %3
+IRC_RPL_TOPICBY %> ustawiony przez %2 na %3
+IRC_TOPIC_CHANGE %> %T%2%n zmienił temat kanału %T%4%n na: %5
+IRC_TOPIC_UNSET %> %T%3%n wyłączył temat kanału %T%4
+IRC_MODE_CHAN %> %2/%3
+IRC_MODE %> %2 ustawił tryb %3 na Tobie
+IRC_PINGPONG %) pi/po %K%2%n
+IRC_YOUNEWNICK %> %l%y* Zmieniłeś nicka na %l%y%3%n
+IRC_NEWNICK %> %l%y* %2%n zmienił nicka na %l%y%4%n
+
+# (C) Copyright 2008 Wieslaw Ochminski <wiechu at wiechu dot com> 
+#
+# IRC
+RPL_MOTDSTART %c%Alwqqqqqq%a Message Of The Day %c%Aqqqqq%a\n
+RPL_MOTD %c%Axx %a%n%2\n
+RPL_ENDOFMOTD %c%Amvqqqqqq%a\n
+
+RPL_WHOISUSER %G%Alwqqqqqqqq%a\n%G%Axx%a%n (%T%2%n) (%3@%4)\n%G%Axx%a%n realname : %6\n
+RPL_WHOISCHANNELS %G%Axx%a%n %|channels : %3\n
+RPL_WHOISOPERATOR %G%Axx%a%n %|ircOp    : %3\n
+RPL_WHOREPLY %G%Axx%a %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n
+RPL_WHOISSERVER %G%Axx%a%n %|server   : %3 (%4)\n
+RPL_WHOISIDLE %G%Axx%a%n %|idle     : %3 (signon: %4)\n
+RPL_ENDOFWHOIS %G%Amvqqqqqqqq%a\n
+
+RPL_WHOWASUSER %G%Alwqqqqqqqq%a\n%G%Axx%a%n (%T%2%n) (%3@%4)\n%G%Axx%a%n realname : %6\n
+RPL_ENDOFWHOWAS %G%Amvqqqqqqqq%a\n
+
+RPL_AWAY %G%Axx%a%n away     : %2 - %3\n
+RPL_BANLIST %G%Axx%a %n %5 - %W%2%n: ban %c%3\n
+RPL_CHLIST %G%Axx%a %n %5 %2\t%3\t%4\n
+RPL_LISTSTART %G%Alwqqqqqqqq%a\n
+RPL_EMPTYLIST %G%Axx%a %n Empty list \n
+RPL_ENDOFLIST %G%Amvqqqqqqqq%a %2%n\n
+
+RPL_EXCEPTLIST %G%Axx%a %n %5 - %W%2%n: except %c%3\n
+RPL_INVITELIST %G%Axx%a %n %5 - %W%2%n: invite %c%3\n
+RPL_LINKS %G%Axx%a %n %5 - %2  %3  %4\n
+RPL_LIST %G%Axx%a %n %5 %2\t%3\t%4\n
+
+RPL_STATS %G%Axx%a %3 %n %4 %5 %6 %7 %8\n
+RPL_STATSEND %G%Amvqqq%a%g%3%G%Aqqq%a %2\n
+RPL_STATS_EXT %G%Axx%a %3 %n %2 %4 %5 %6 %7 %8\n
+
+IRC_WHOERROR %G%Alwqqqqqqqq%a\n%G||%n %3 (%2)\n
+
+irc_awaylog_begin %G%Alwqqqqqqqq%a Awaylog for: (%1)\n
+irc_awaylog_end %G%Amvqqqqqqqq%a\n
+irc_awaylog_msg %G%Axx%a %n[%Y%2%n] <%W%4%n> %5\n
+irc_awaylog_msg_chan %G%Axx%a %n[%Y%2%n] [%G%3%n] <%W%4%n> %5\n
+
+# GG
+system %m%Alqqq%a %TSystem message %m%Aqqq qq q%a\n%m%Ax%a%n %|%3%n\n%|%m%Amqqqqq qqqq qqq qq q%a%n\n
+
+gg_user_info_version %c%Ax%x %nVersion: %T%1%n\n
+gg_user_info_firewalled %c%Ax%a %nFirewalled/NATed\n
+user_info_ip %c%Ax%a %nAddress: %T%1%n\n
+user_info_last_ip %c%Ax%a %nLast address: %T%1%n\n
+user_info_mobile %c%Ax%a %nTelephone: %T%1%n\n
+user_info_name %c%Ax%a %nName: %T%1 %2%n\n
+gg_user_info_not_in_contacts %c%Ax%a %nDoesn't have us in roster\n
+gg_user_info_voip %c%Ax%a %nVoIP-capable\n
+
+user_info_header %c%Alqq%a%n %T%1%n/%2 %c%Aqqq qq q%a%n\n
+user_info_status %c%Ax%a %nStatus: %T%1%n\n
+user_info_status_time %c%Ax%a %nCurrent status since: %T%1%n\n
+user_info_last_status %c%Ax%a %nLast status: %T%1%n\n
+user_info_last_seen %c%Ax%a %nLast seen: %T%1%n\n
+user_info_never_seen %c%Ax%a %nNever seen\n
+user_info_block %c%Ax%a %nBlocked\n
+user_info_auth_type %c%Ax%a %nSubscription type: %T%1%n\n
+user_info_footer %c%Amqqqqq qqqq qqq qq q%a%n\n
+user_info_gpg_key %c%Ax%a %nGPGKEY: %T%1%n (%2)%n
+user_info_groups %c%Ax%a %nGroups: %T%1%n\n
+user_info_name %c%Ax%a %nName: %T%1 %2%n\n
+user_info_nickname %c%Ax%a %nNickname: %T%1%n\n
+user_info_offline %c%Ax%a %nCan't see our status\n
+
+search_results_multi %7 %c%Ax%a%n %[-8]1 %c%Ax%a%n %[12]3 %c%Ax%a%n %[12]2 %c%Ax%a%n %[4]5 %c%Ax%a%n %[12]4\n
+
+metacontact_info_header %c%Alqq%a%n Metacontact %T%1%n %c%Aqqq qq q%a%n\n
+metacontact_info_status %c%Ax%a %nStatus: %T%1%n\n
+metacontact_info_footer %c%Amqqqqq qqqq qqq qq q%a%n\n
+
+# Jabber
+xmpp_feature_header %g%Alwqqqqqq%a%G XMPP features %n(%T%2%n%3%n)
+xmpp_feature %g%Axx%a %n %W%2%n can: %5 [%G%3%g,%4%n]
+xmpp_feature_sub %g%Axx%a %n     %W%3%n: %5 [%G%4%n]
+xmpp_feature_sub_unknown %g%Axx%a %n     %W%3%n: Unknown, report to devs [%G%4%n]
+xmpp_feature_unknown %g%Axx%a %n %W%2%n feature: %r%3 %n[%G%3%g,%4%n]
+xmpp_feature_footer %g%Amvqqqqqq%a %n Turn it off using: /session display_server_features 0\n
+
+jabber_transinfo_begin %g%Alwqqqqqq%a%G Information about: %T%2%n
+jabber_transinfo_begin_node %g%Alwqqqqqq%a%G Information about: %T%2%n (%3)
+jabber_transinfo_identify %g%Axx%a %G --== %g%3 %G==--%n
+jabber_transinfo_comm_not %g%Axx%a %n %W%2%n can: %n%3 (%4)
+jabber_transinfo_comm_ser %g%Axx%a %n %W%2%n can: %n%3 %2 (%4)
+jabber_transinfo_comm_use %g%Axx%a %n %W%2%n can: %n%3 $uid (%4)
+#
+jabber_transinfo_feature %g%Axx%a %n %W%2%n feature: %n%3
+jabber_transinfo_end %g%Amvqqqqqq%a%G End of the infomations%n\n
+
+jabber_transport_list_begin %g%Alwqqqqqq%a%G Available agents on: %T%2%n
+jabber_transport_list_item %g%Axx%a %n %6 - %W%3%n (%5)
+jabber_transport_list_item_node %g%Axx%a %n %6 - %W%3%n node: %g%4%n (%5)
+jabber_transport_list_end %g%Amvqqqqqq%a%G End of the agents list%n\n
+
+jabber_userinfo_response2 %g%Alwqqqqqq%a%G vCard for:%n %T%2
+jabber_userinfo_fullname %g%Axx%a %n   Full Name: %T%2
+jabber_userinfo_nickname %g%Axx%a %n     Nickame: %T%2
+jabber_userinfo_birthday %g%Axx%a %n    Birthday: %T%2
+jabber_userinfo_desc %g%Axx%a %n Description: %T%2
+jabber_userinfo_email %g%Axx%a %n       Email: %T%2
+jabber_userinfo_organization %g%Axx%a %nOrganization: %T%2
+jabber_userinfo_telephone %g%Axx%a %n   Telephone: %T%2
+jabber_userinfo_title %g%Axx%a %n       Title: %T%2
+jabber_userinfo_url %g%Axx%a %n     Webpage: %T%2
+jabber_userinfo_end %g%Amvqqqqqq\n
+
+jabber_form_command %g%Axx%a %nType %W/%3 %g%2 %W%4%n; 
+
+resource_info_status %c%Ax%a %nResource: %W%1%n Status: %T%2 Prio: %g%3%n
+
+feed_message_header %g%Alwqqqqqq%a%W  %1 %n(ID: %W%2%n)
+feed_message_body %g%Axx%a%n %|%1
+feed_message_footer %g%Amvqqqqqq%a%G End of message...%n\n
+
+header %s%{?query_descr %{query_descr}}%{?query_ip (%wip%c/%w%{query_ip}%c)} %{irctopic}%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}
+

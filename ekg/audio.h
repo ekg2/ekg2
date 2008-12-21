@@ -23,6 +23,10 @@
 #include "dynstuff.h"
 #include "plugins.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef enum { AUDIO_CONTROL_INIT = 0, AUDIO_CONTROL_SET, AUDIO_CONTROL_GET, AUDIO_CONTROL_DEINIT, AUDIO_CONTROL_HELP }
 			audio_control_t;
 typedef enum { AUDIO_READ = 0, AUDIO_WRITE, AUDIO_RDWR, } 
@@ -52,7 +56,7 @@ typedef WATCHER_AUDIO(audio_handler_func_t);
 		.name = #x, \
 		.control_handler= (void*) x##_audio_control, \
 		.read_handler	= x##_audio_read, \
-		.write_handler  = x##_audio_write, \
+		.write_handler	= x##_audio_write, \
 	}
 
 #define CODEC_DEFINE(x)\
@@ -66,7 +70,9 @@ typedef WATCHER_AUDIO(audio_handler_func_t);
 		.decode_handler = x##_codec_decode,	\
 	}
 
-typedef struct {
+typedef struct audio {
+	struct audio *next;
+
 	char *name;	/* nazwa urzadzenia */
 	
 	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);	/* initing / checking if audio_io_t is correct / deiniting */
@@ -84,10 +90,12 @@ typedef struct {
 	void *private;
 } audio_io_t;
 
-typedef struct {
+typedef struct codec {
+	struct codec *next;
+
 	char *name;	/* nazwa codeca */
 
-	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);    /* initing / checking if audio_codec_t is correct / deiniting */
+	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);	/* initing / checking if audio_codec_t is correct / deiniting */
 
 		/* IN: int type, string_t input, string_t output, void *private 
 		 * OUT: how many bytes he code/decode */
@@ -97,13 +105,15 @@ typedef struct {
 } codec_t;
 
 typedef struct {
-	codec_t *c;		/* codec_t * */
+	codec_t *c;			/* codec_t * */
 	codec_way_t way;		/* CODEC_CODE CODEC_DECODE */
 	
 	void *private;
 } audio_codec_t;
 
-typedef struct {
+typedef struct stream {
+	struct stream *next;
+
 	char *stream_name;
 	audio_io_t	*input;
 	audio_codec_t	*codec;
@@ -125,6 +135,9 @@ void codec_unregister(codec_t *codec);
 int audio_initialize();
 int audio_deinitialize();
 
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_AUDIO_H */
 

@@ -30,10 +30,6 @@ _desc
 	parametry: [-/opis]
 	krotki opis: zmienia opis nie zmieniaj±c stanu
 
-_event_test
-	parametry: 
-	krotki opis: iha
-
 _fds
 	parametry: 
 	krotki opis: wy¶wietla otwarte pliki
@@ -515,6 +511,9 @@ set
 	
 	Poprzedzenie opcji parametrem %T-a%n lub %T--all%n spowoduje wy¶wietlenie wszystkich, 
 	nawet aktualnie nieaktywnych zmiennych.
+	
+	Parametr %T-q%n lub %T--quiet%n spowoduje, ¿e informacja o nowej warto¶ci zmiennej nie zostanie
+	wy¶wietlona i nie zaznaczy zmiany konfiguracji.
 
 status
 	parametry:  [opcje]

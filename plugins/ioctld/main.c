@@ -2,12 +2,12 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@infomex.pl>
- *                          Wojciech Bojdo³ <wojboj@htc.net.pl>
- *                          Piotr Wysocki <wysek@linux.bydg.org>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@infomex.pl>
+ *			    Wojciech Bojdo³ <wojboj@htc.net.pl>
+ *			    Piotr Wysocki <wysek@linux.bydg.org>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -74,8 +74,8 @@ static int ioctld_parse_seq(const char *seq, struct action_data *data)
 	char **entries;
 	int i;
 
-        if (!data || !seq)
-                return -1;
+	if (!data || !seq)
+		return -1;
 
 	memset(data, 0, sizeof(struct action_data));
 
@@ -134,7 +134,7 @@ static int ioctld_socket(const char *path)
 	close(ioctld_sock);
 	ioctld_sock = -1;
 
-        return -1;
+	return -1;
 }
 
 /*
@@ -157,7 +157,7 @@ static int ioctld_send(const char *seq, int act, int quiet)
 	if (!xisdigit(*seq)) {
 		const char *tmp = format_find(seq);
 
-		if (tmp[0] == '\0') {
+		if (!format_ok(tmp)) {
 			printq("events_seq_not_found", seq);
 			return -1;
 		}
@@ -203,6 +203,9 @@ static COMMAND(command_blink_leds)
 EXPORT int ioctld_plugin_init(int prio)
 {
 	const char *ioctld_sock_path;
+
+	PLUGIN_CHECK_VER("ioctld");
+
 	plugin_register(&ioctld_plugin, prio);
 
 	ioctld_sock_path = prepare_path(".socket", 1);

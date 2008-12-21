@@ -40,7 +40,20 @@
 #include <ekg/xmalloc.h>
 
 #include "main.h"
+#include "menu.h"
 #include "palette.h"
+#include "userlistgui.h"
+
+enum {
+	USERLIST_PIXMAP = 0,
+	USERLIST_NICKNAME,
+	USERLIST_DESCRIPTION,
+	USERLIST_USER,
+	USERLIST_COLOR,
+
+	USERLIST_COLS
+};
+
 
 #define show_descr_in_userlist_config 1
 
@@ -228,61 +241,29 @@ gfloat userlist_get_value(GtkWidget *treeview)
 	return gtk_tree_view_get_vadjustment(GTK_TREE_VIEW(treeview))->value;
 }
 
-#if 0
+static gint gtk_userlist_sort_func(GtkTreeModel *model, GtkTreeIter *a, GtkTreeIter *b, gpointer userdata) {
+	GdkPixbuf *a1, *b1;
 
-int fe_userlist_remove(session *sess, struct User *user)
-{
-	GtkTreeIter *iter;
-/*	GtkAdjustment *adj;
-	gfloat val, end;*/
-	int sel;
+	gint sortcol = GPOINTER_TO_INT(userdata);
 
-	iter = find_row(GTK_TREE_VIEW(sess->gui->user_tree), sess->res->user_model, user, &sel);
-	if (!iter)
+	if (sortcol != USERLIST_PIXMAP) {
+		printf("gtk_userlist_sort_func() IE\n");
 		return 0;
+	}
 
-/*	adj = gtk_tree_view_get_vadjustment (GTK_TREE_VIEW (sess->gui->user_tree));
-	val = adj->value;*/
+/* XXX, sequence should match sequence in contacts_options */
+	gtk_tree_model_get(model, a, USERLIST_PIXMAP, &a1, -1);
+	gtk_tree_model_get(model, b, USERLIST_PIXMAP, &b1, -1);
 
-	gtk_list_store_remove(sess->res->user_model, iter);
-
-	/* is it the front-most tab? */
-/*	if (gtk_tree_view_get_model (GTK_TREE_VIEW (sess->gui->user_tree))
-		 == sess->res->user_model)
-	{
-		end = adj->upper - adj->lower - adj->page_size;
-		if (val > end)
-			val = end;
-		gtk_adjustment_set_value (adj, val);
-	}*/
-
-	return sel;
+/* yeah, i know, i'm lazy */
+	if (a1 < b1)
+		return -1;
+	else if (a1 > b1)
+		return 1;
+	else	return 0;
 }
 
-void fe_userlist_rehash(session *sess, struct User *user)
-{
-	GtkTreeIter *iter;
-	int sel;
-	int do_away = TRUE;
 
-	iter = find_row(GTK_TREE_VIEW(sess->gui->user_tree), sess->res->user_model, user, &sel);
-	if (!iter)
-		return;
-
-	if (prefs.away_size_max < 1 || !prefs.away_track)
-		do_away = FALSE;
-
-	gtk_list_store_set(GTK_LIST_STORE(sess->res->user_model), iter,
-			   2, user->hostname, 4, (do_away)
-			   ? (user->away ? &colors[COL_AWAY] : NULL)
-			   : (NULL), -1);
-}
-
-#endif
-
-#warning "fe_userlist_rehash() dobre do zmian stanow"
-
-/* void fe_userlist_insert(window_t *sess, struct User *newuser, int row, int sel)  */
 void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 {
 	GtkTreeModel *model = gtk_private(sess)->user_model;
@@ -293,16 +274,34 @@ void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 	int sel = 0;
 
 	if (pixmaps) {
-		const char *str = u->status;
-		
-	/* blah, awful */
-		if (!xstrcmp(str, "notavail")) 		pix = pixmaps[PIXBUF_NOTAVAIL];
-		else if (!xstrcmp(str, "invisible"))	pix = pixmaps[PIXBUF_INVISIBLE];
-		else if (!xstrcmp(str, "xa"))		pix = pixmaps[PIXBUF_XA];
-		else if (!xstrcmp(str, "dnd"))		pix = pixmaps[PIXBUF_DND];
-		else if (!xstrcmp(str, "away"))		pix = pixmaps[PIXBUF_AWAY];
-		else if (!xstrcmp(str, "avail"))	pix = pixmaps[PIXBUF_AVAIL];
-		else if (!xstrcmp(str, "ffc"))		pix = pixmaps[PIXBUF_FFC];
+		switch (u->status) {
+			case EKG_STATUS_NA:
+				pix = pixmaps[PIXBUF_NOTAVAIL];
+				break;
+			case EKG_STATUS_INVISIBLE:
+				pix = pixmaps[PIXBUF_INVISIBLE];
+				break;
+			case EKG_STATUS_XA:
+				pix = pixmaps[PIXBUF_XA];
+				break;
+			case EKG_STATUS_DND:
+				pix = pixmaps[PIXBUF_DND];
+				break;
+			case EKG_STATUS_AWAY:
+				pix = pixmaps[PIXBUF_AWAY];
+				break;
+			case EKG_STATUS_AVAIL:
+				pix = pixmaps[PIXBUF_AVAIL];
+				break;
+			case EKG_STATUS_FFC:
+				pix = pixmaps[PIXBUF_FFC];
+				break;
+			case EKG_STATUS_ERROR:
+				pix = pixmaps[PIXBUF_ERROR];
+				break;
+			default: /* + EKG_STATUS_UNKNOWN */
+				pix = pixmaps[PIXBUF_UNKNOWN];
+		}
 	}
 
 #if 0
@@ -310,14 +309,13 @@ void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 		do_away = FALSE;
 
 #endif
-	gtk_list_store_insert_with_values(GTK_LIST_STORE(model), &iter, 0, /* row, */
-					  0, pix,
-					  1, u->nickname,
+	gtk_list_store_insert_with_values(GTK_LIST_STORE(model), &iter, -1,
+					  USERLIST_PIXMAP, pix,
+					  USERLIST_NICKNAME, u->nickname,
 					  /* XXX, u->uid */
-					  2, u->descr,
-//					  3, /* newuser, */ NULL,
-//					  4, /* (do_away) */ FALSE,
-//					  /* ? (newuser->away ? &colors[COL_AWAY] : NULL) : */ (NULL),
+					  USERLIST_DESCRIPTION, u->descr,
+					  USERLIST_USER, u,
+//					  USERLIST_COLOR, /* (do_away) */ FALSE,  ? (newuser->away ? &colors[COL_AWAY] : NULL) : */ (NULL),
 					  -1);
 
 #if DARK
@@ -340,14 +338,6 @@ void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 	}
 }
 
-#if 0
-
-void fe_userlist_move(session *sess, struct User *user, int new_row)
-{
-	fe_userlist_insert(sess, user, new_row, fe_userlist_remove(sess, user));
-}
-#endif
-
 void fe_userlist_clear(window_t *sess)
 {
 	gtk_list_store_clear(gtk_private(sess)->user_model);
@@ -355,8 +345,20 @@ void fe_userlist_clear(window_t *sess)
 
 void *userlist_create_model(void)
 {
-	return gtk_list_store_new(5, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_STRING,
-				  G_TYPE_POINTER, GDK_TYPE_COLOR);
+	GtkTreeSortable *sortable;
+
+	void *liststore;
+
+	liststore = gtk_list_store_new(USERLIST_COLS, GDK_TYPE_PIXBUF, G_TYPE_STRING, G_TYPE_STRING, G_TYPE_POINTER, GDK_TYPE_COLOR);
+
+	sortable = GTK_TREE_SORTABLE(liststore);
+	
+	gtk_tree_sortable_set_sort_func(sortable, USERLIST_PIXMAP, gtk_userlist_sort_func, GINT_TO_POINTER(USERLIST_PIXMAP), NULL);
+
+/* initial sort */
+	gtk_tree_sortable_set_sort_column_id(sortable, USERLIST_PIXMAP, GTK_SORT_ASCENDING);
+
+	return liststore;
 }
 
 static void userlist_add_columns(GtkTreeView * treeview)
@@ -365,22 +367,18 @@ static void userlist_add_columns(GtkTreeView * treeview)
 
 	/* icon column */
 	renderer = gtk_cell_renderer_pixbuf_new();
-	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview),
-						    -1, NULL, renderer, "pixbuf", 0, NULL);
+	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview), -1, NULL, renderer, "pixbuf", USERLIST_PIXMAP, NULL);
 
 	/* nick column */
 	renderer = gtk_cell_renderer_text_new();
 	gtk_cell_renderer_text_set_fixed_height_from_font(GTK_CELL_RENDERER_TEXT(renderer), 1);
-	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview),
-						    -1, NULL, renderer,
-						    "text", 1, "foreground-gdk", 4, NULL);
+	gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview), -1, NULL, renderer, "text", USERLIST_NICKNAME, "foreground-gdk", USERLIST_COLOR, NULL);
+
+	/* description column (?) */
 	if (show_descr_in_userlist_config) {
-		/* hostname column */
 		renderer = gtk_cell_renderer_text_new();
-		gtk_cell_renderer_text_set_fixed_height_from_font(GTK_CELL_RENDERER_TEXT(renderer),
-								  1);
-		gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview), -1, NULL,
-							    renderer, "text", 2, NULL);
+		gtk_cell_renderer_text_set_fixed_height_from_font(GTK_CELL_RENDERER_TEXT(renderer), 1);
+		gtk_tree_view_insert_column_with_attributes(GTK_TREE_VIEW(treeview), -1, NULL, renderer, "text", 2, NULL);
 	}
 }
 

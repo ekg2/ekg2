@@ -23,11 +23,17 @@ auth
 	
 	  -a, --accept <JID>    autoryzuje JID
 	
-	  -d, --deny <JID>      odmawia udzielenia autoryzacji
+	  -d, --deny <JID>      odmawia udzielenia autoryzacji lub j± odbiera
 	
 	  -r, --request <JID>   wysy³a ¿±danie autoryzacji
 	
 	  -c, --cancel <JID>    wysy³a ¿±danie cofniêcia autoryzacji
+	
+	  -j, --reject <JID>	odrzuca ¿±danie autoryzacji
+	
+	  -l, --list		wy¶wietla oczekuj±ce ¿±dania
+	
+	  -p, --probe		wysy³a pytanie o obecno¶æ u¿ytkownika
 
 away
 	parametry: [opis/-]
@@ -43,6 +49,37 @@ back
 	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
+bookmark
+	parametry: <opcje>
+	krotki opis: zarzadzanie zakladkami serwer-side (jabber:iq:private)
+	
+	Zarzadza zakladkami (dodaje/modyfikuje/usuwa/wyswietla).
+	Ustawienie zmiennej sesyjnej auto_bookmark_sync zalecane.
+	
+	 -d, --display                       wyswietla.
+	
+	 -g, --get                           pobiera, bez wyswietlania
+	
+	 -c, --clear                         czysci
+	
+	 -p, --put                           wysyla liste lokalna na serwer (automatycznie robione po dodaniu/modyfikacji/usunieciu)
+	
+	 -a, --add  --url <url> [-- nazwa]   dodaje nowy wpis do zakladek ze stronami WWW
+	
+	 -a, --add  --conf <jid>             dodaje nowy wpis do zakladek z konferencjami
+	
+	            [--autojoin 1]           czy automatycznie sie dolaczac po polaczeniu do serwera [niezaimplentowane w ekg2, ale wiele klientow umie :)]
+	
+	            [--nick nasznick]
+	
+	            [--pass haslo] 
+	
+	            [-- nazwa]
+	
+	 -m, --modify                       NIE ZAIMPLEMENTOWANE, modyfikuje :)
+	
+	 -r, --remove                       NIE ZAIMPLEMENTOWANE, usuwa :)
+
 change
 	parametry:  <opcje>
 	krotki opis: zmienia informacje w katalogu publicznym
@@ -51,7 +88,7 @@ change
 	
 	  -n, --nick <pseudonim>
 	
-	  -b, --born <rok urodzenia>
+	  -b, --born <data urodzenia>	(zapisana wg. ISO 8601, tj. rrrr-mm-dd)
 	
 	  -c, --city <miasto>
 	
@@ -59,6 +96,7 @@ change
 	
 	  -C, --country <kraj>
 	
+	  -p, --photo <¶cie¿ka do zdjecia>
 	
 	Je¶li który¶ z parametrów nie zostanie podany, jego warto¶æ zostanie 
 	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n'' 
@@ -128,9 +166,70 @@ passwd
 	parametry: 
 	krotki opis: zmienia has³o
 
+privacy
+	parametry: <opcje>
+	
+	Zarzadza lista ignorowanych serwer-side (%gjabber:iq:privacy%n).
+	Ustawienie zmiennej sesyjnej %Tauto_privacylist_sync%n wymagane.
+	Ustawienie zmiennej sesyjnej %Tprivacy_list%n zalecane (jesli nie, zakladamy ze korzystasz z listy %Tekg2%n).
+	Jesli w parametrach nie ma podanej listy, to operujemy na liscie
+	zdefiniowanej w %Tprivacy_list%n.
+	
+	%RKOMENDA EKSPERYMENTALNA, PROSZE INFORMOWAC O WSZYSTKICH BUGACH, Z DOKLADNYM OPISEM.%n
+	
+	
+	  [--lists]                                         wyswietla listy dostepne na serwerze
+	
+	  [--get] lista                                     wyswietla liste.
+	
+	  --session lista                                   ustawia lista jako aktywna, jesli podano %T-%n deaktywuje aktualna liste.
+	
+	  --default lista                                   ustawia liste jako domyslna, jesli podano %T-%n kasuje ustawienia.
+	
+	  --unset lista                                     kasuje liste %r(NIEODWRACALNE!!)%n
+	
+	  --sync                                            %g[WEWNETRZNA KOMENDA]%n Wysyla liste lokalna do serwera (automatycznie robione po dodaniu/zmianie/usunieciu)
+	
+	  --set <co> [--order numerek] [-zabron] [+dozwol]  dodaje wpis do listy
+	
+	  	<co>              albo xmpp:osoba albo @grupa albo %Tnone%n, %Tfrom%n, %Tto%n, %Tboth%n gdy definiujemy poziom autoryzacji
+	
+		[--order numerek] ustawia ktory to ma byc element na liscie.
+	
+		[-zabron]         Parametr moze byc powtorzony wielokrotnie, znak minusa, a nastepnie jedna z opcji: iq, msg, pin, pout lub gwiazdka jesli wszystkie.
+	
+		[+pozwol]         Parametr moze byc powtorzony wielokrotnie, znak plusa, a nastepnie jedna z opcji: iq, msg, pin, pout lub gwiazdka dla okreslenia ze wszystkie.
+	
+		%r!!! UWAGA !!! Po dodaniu pierwszego elementu do listy, jest wymagane aktywowanie listy przez %g/privacy --session lista%n
+	
+	 --remove #id                                       usuwa wpis z numerem id z listy.
+	
+	 --modify                                           zmienia wpis, NIEZAIMPLEMENTOWANE.
+	 
+
 reconnect
 	parametry: 
 	krotki opis: roz³±cza i ³±czy siê ponownie
+
+reply
+	parametry: <#reply-id> ...
+	krotki opis: odpisuje na w±tek
+	
+	Wysy³a wiadomo¶æ jako kontynuacjê wskazanego przez reply-id w±tku.
+	Mo¿liwe jest podanie tematu jak w msg, w przeciwnym razie temat
+	zostanie utworzone w oparciu o temat w±tku (poprzedzony
+	subject_reply_prefix).
+
+tmsg
+	parametry: <uid/nick> <id-watku> ...
+	krotki opis: wysy³a wiadomo¶æ w±tkowan±
+	
+	Dzia³a podobnie jak msg, z tym, ¿e dodatkowy, drugi parametr zawiera
+	identyfikator w±tku dla wiadomo¶ci.
+
+topic
+	parametry:  [konferencja] <nowy temat>
+	krotki opis: ustawia topic MUC
 
 userinfo
 	parametry: 

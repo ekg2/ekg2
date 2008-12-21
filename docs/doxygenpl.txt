@@ -1,0 +1,409 @@
+/* ================================== PLUGINY =================================== */
+/**
+@defgroup plugins		Pluginy w ekg2
+
+Wiec chcesz zbudowac plugin dla ekg2?
+
+W tej czesci dokumentacji sa (jesli czegos brakuje daj nam znac na ekg2-devel)
+informacje nt. jak zbudowac nowy modul do ekg2, jesli jest on szczegolnego
+typu (innego niz PLUGIN_GENERIC) znajdziesz informacje jak on powinien sie
+zachowywac w podgrupach.
+
+Zaczynamy tworzenie plugina od stworzenia nowego katalogu w ekg2/plugins
+<pre>
+  ekg2/plugins $ mkdir foo
+  ekg2/plugins $ cd foo
+  ekg2/plugins/foo $
+</pre>
+Nasz przykladowy plugin bedzie sie nazywac foo :)
+Nastepnie tworzymy plik foo.c (moglby sie nazywac main.c, ale jednak unikajmy potocznych nazw)<br>
+I edytujemy go naszym ulubionym edytorem
+<pre>
+  ekg2/plugins/foo $ $EDITOR foo.c 
+</pre>
+  I wklepujemy:
+<pre>
+  \#include <ekg/plugins.h>
+
+  PLUGIN_DEFINE(foo, PLUGIN_GENERIC, NULL);		/* (1) */
+
+  EXPORT int foo_plugin_init(int prio) {		/* (2) */
+	plugin_register(&foo_plugin, prio);		/* (3) */
+	return 0;					/* (4) */
+  }
+
+  static int foo_plugin_destroy() {			/* (5) */
+	plugin_unregister(&foo_plugin);			/* (6) */
+	return 0;					/* (7) */
+  }
+
+</pre>
+Komentarz:
+<pre>
+ (1) - definiuje plugin o nazwie 'foo' w foo_plugin, o typie PLUGIN_GENERIC.
+       Trzeci parametr bede wyjasniac w dalszej czesci dokumentacji, na razie
+       nie potrzebujemy :)
+
+ (2) - podczas ladowania plugina, ekg2 szuka symbolu o nazwie PLUGIN_plugin_init() 
+       atrybut EXPORT jest zdefiniowany w plugins.h, dzieki temu i
+       -fvisibility=hidden zmniejszamy czas potrzebny na szukanie symbolu
+       (oraz rozmiar binarki)
+       W prio mamy priorytet. Wypada go nie zmieniac, tylko go przekazac do
+       plugin_register()
+ 
+ (3) - Rejestrujemy plugin.
+
+ (3,4) - Zwracamy 0 - udalo sie ladowanie.
+ 	Pluginy moga zwracac -1 jak sie nie udalo zainicjowac plugina 
+	(np z powodu tego ze nie udalo sie utworzyc/odczytac jakiegos pliku,
+	or smth), Tylko wazne zeby ten powrot byl robiony _przed_
+	plugin_register()
+
+ (5) - definiujemy funkcje niszczaca plugin, deklaracja jest robiona przy PLUGIN_DEFINE()
+       wiec jak chcemy zeby sie ona inaczej nazywala, albo byla w innym pliku
+       niz foo.c, to nie mozemy korzystac z PLUGIN_DEFINE() [co jest niezalecane]
+
+ (6, 7) - odrejestrujemy plugin, i zwracamy 0.
+</pre>
+
+Teraz wypadaloby go skompilowac i sprawdzic czy dziala :)
+
+ekg2 korzysta z GNU autotoolsow i GNU libtoola, wiec pisanie Makefile'a
+sprowadza sie tylko do wklepania w $EDITOR Makefile.am
+
+<pre>
+	lib_LTLIBRARIES = foo.la
+	foo_la_SOURCES = foo.c
+	foo_la_LDFLAGS = -module -avoid-version
+	foo_la_CPPFLAGS = \$(C_FVISIBILITY)
+	libdir = \$(plugindir)
+</pre>
+oraz w ekg2/configure.ac
+	dodania do AC_CONFIG_FILES() plugins/foo/Makefile
+	albo mniejszego babrania sie i zrobienia osobno wpisu:
+
+	AC_CONFIG_FILES([plugins/foo/Makefile])
+
+[XXX, ta czesc dokumentacji do sprawdzenia. Wystarczy samo make teraz?]
+
+Nastepnie robimy ./autogen.sh co wygeneruje nam nowe ./configure oraz je uruchomi.
+
+Teraz jesli nie wyswietlilo nam sie:<br>
+ config.status: creating plugins/foo/Makefile<br>
+<br>
+bo ./autogen.sh uruchomilo ./configure z --no-create to uruchamiamy chociazby
+gmake, co powinno wygenerowac Makefile'a<br>
+
+Kiedy juz mamy ekg2/plugins/foo/Makefile to uruchamiamy:
+<pre>
+	ekg2/plugins/foo $ gmake
+	ekg2/plugins/foo $ sudo gmake install
+	ekg2/plugins/foo $ ekg2 -u testfoo42135627
+</pre>
+Sprobujmy zaladowac plugin w ekg2..
+<pre>
+	/plugin +foo
+	xx:yy:zz ::: Plugin foo zostal zaladowany
+
+	Hurray :)
+</pre>
+
+[XXX, na razie tyle, dokonczyc]
+
+*/
+
+/**
+@defgroup plugins_proto		Pluginy protokolow (PLUGIN_PROTOCOL)
+@ingroup plugins
+
+@note	ekg2 aktualnie obsluguje 4 protokoly: gg, irc, jabber, tlen
+	Wiec jesli nie znajdziesz tutaj informacji nt. jak zrobic dana rzecz,
+	mozesz poszukac jej w zrodlach innego plugina, albo zapytac na
+	ekg2-devel
+
+@note	Opieramy sie na pluginie foo, ktory zaczelismy pisac wczesniej.
+
+Dodajmy naszemu pluginow mozliwosci zalozenia sesji.
+Do tego sluzy event: <i>PROTOCOL_VALIDATE_UID</i>
+Zmienimy przy okazji typ plugina na PLUGIN_PROTOCOL
+
+Ponizej caly kod:
+
+<pre>
+  \#include <ekg/plugins.h>
+  \#include <ekg/queries.h>			/* (1) */
+  \#include <ekg/xmalloc.h>
+
+  \#include <stdarg.h>
+
+  PLUGIN_DEFINE(foo, PLUGIN_PROTOCOL, NULL);
+
+  static QUERY(foo_validate_uid) {		/* (2) */
+  	char *uid       = *(va_arg(ap, char **));
+	int *valid      = va_arg(ap, int *);
+
+	if (!xstrncmp(uid, "foo:", 3) && uid[4]) {	/* (3) */
+		(*valid)++;
+		return -1;
+	}
+
+	return 0;
+  }
+
+  EXPORT int foo_plugin_init(int prio) {
+	plugin_register(&foo_plugin, prio);
+
+	query_connect_id(&foo_plugin, PROTOCOL_VALIDATE_UID, foo_validate_uid, NULL); /* (4) */
+
+	return 0;
+  }
+
+  static int foo_plugin_destroy() {
+	plugin_unregister(&foo_plugin);
+	return 0;
+  }
+
+</pre>
+Komentarz:
+<pre>
+	(1) - plik naglowkowy, zawierajacy numeryczne wartosci dla query_connect_id() i query_emit_id()
+	(2) - w ekg2 lubimy korzystac z makr deklarujace funkcje.
+	      QUERY\alamakota(baz) jest rozwijane na int baz(void *data, va_list ap);
+	      Jesli nie wierzysz mozesz sprawdzic w plugins.h
+
+	(3) - Sprawdzamy czy sesja zaczyna sie od foo: i czy wystepuje jakis znak po protokole
+	      (konwencja nazywania sesji w ekg2 to protokol:smth...)
+	
+	(4) - chcemy dostawac PROTOCOL_VALIDATE_UID, odbieramy w funkcji foo_validate_uid()
+	      4 parametr query_connect_id() oznacza co nalezy przekazac w polu data.
+	      W tym przypadku nie potrzebujemy wiec wpisujemy NULL.
+
+	Zdarzenie PROTOCOL_VALIDATE_UID, sluzy m. in do sprawdzenia czy dany ciag znakow moze byc sesja.
+		.- Jesli tak, to nalezy zinkrementowac wartosc wskaznika przekazanego w II zmiennej (w tym przypadku zmienna valid) na 1, a nastepnie zwrocic -1.
+		.- Jesli nie, to nalezy zwrocic 0.
+</pre>
+
+
+<pre>
+Kompilujemy plugin, instalujemy. 
+Uruchamiamy nasze ekg2 z profilem testfoo42135627 (to z zaladowanym pluginem foo)
+I sprobujmy utworzyc sesje:
+
+	/session -a foo:bar
+	00:00:00 ::: Utworzono sesje foo:test
+
+Ok, no to teraz sprobujmy sie polaczyc :)
+
+	/connect
+	00:00:02 ::: Nieznane polecenie: connect
+</pre>
+<pre>
+Bylo do przewidzenia, mamy swoj wlasny plugin, mamy swoja wlasna sesje,
+(ktora jak zrobimy /save a potem uruchomimy jeszcze raz ekg2, nam sie pojawi)
+ale nic z nia nie mozemy zrobic.
+
+
+
+</pre>
+
+*/
+
+/**
+@defgroup plugins_ui 		Pluginy interfejsow (PLUGIN_UI)
+@ingroup plugins
+
+*/
+
+/**
+@defgroup plugins_log		Pluginy logowania (PLUGIN_LOG)
+@ingroup plugins
+
+*/
+
+/**
+@defgroup plugins_scripting	Pluginy do oskryptowywania ekg2 (PLUGIN_SCRIPTING)
+@ingroup plugins
+
+ekg2 obsluguje calkiem przyjemne API do stworzenia plugina pozwalajacego na
+pisanie w innych jezykach niz C.
+
+[XXX]
+
+*/
+
+/**
+@defgroup plugins_audio		Pluginy do obslugi dzwiekow (odtwarzanie/nagrywanie) (PLUGIN_AUDIO)
+@ingroup plugins
+
+*/
+
+
+/**
+@defgroup plugins_codec		Pluginy do obslugi kodekow audio (PLUGIN_CODEC)
+@ingroup plugins
+
+
+*/
+
+/**
+@defgroup plugins_crypt 	Pluginy szyfrujace w ekg2 (PLUGIN_CRYPT)
+@ingroup plugins
+
+*/
+
+/* ===================================== SKRYPTY ====================================== */
+
+/**
+@defgroup scripts		Jezyki skryptowe w ekg2
+
+Tutaj sa tylko informacje nt. tworzenia skryptow w poszczegolnych jezykach,
+jak chcesz sie dowiedziec jak zbudowac taki plugin zobacz w dziale: plugins_scripting [XXX]
+
+Jak chcesz wiedziec jak wyglada uzytkowanie skryptow, to powinienes zobaczyc
+ekg2book, ale w zwiazku z tym ze tam nic nie ma to tutaj masz wskazowki:
+
+[XXX, przeniesc informacje stad do ekg2booka]
+
+<pre>
+	Najpierw ladujesz plugin obslugujacy ten jezyk:
+		/plugin +perl
+		/plugin +python
+		/plugin +ruby
+		.....
+	Powinien sie zaladowac, jak nie, to albo brakuje Ci jakiegos symbolu
+	uzytego przez plugin, albo brakuje Ci pliku.. Wszystko jest w oknie
+	debug.
+
+	Potem ladujesz skrypt przez:
+		/script:load skrypt
+		/script +skrypt
+		[
+		Nie musisz podawac rozszerzenia, ekg2 potrafi sobie je wykryc
+		samemu bazujac na podstawie zaladowanych wtyczek.
+			python - *.py
+			perl   - *.pl
+			ruby   - *.rb
+
+		Sciezki tez nie musisz podawac jesli bedzie w:
+			w $DATADIR/scripts/
+			albo w .ekg2/profil/scripts
+			[lub .ekg2/scripts gdy nie korzystasz z profilu]
+		]
+
+	Mozesz tez zaladowac przez odpowiednie komende dostarczona przez
+	plugin:
+
+	/python:load skrypt 
+		Tym sposobem nie zaladujesz skryptu perla :)
+		Jesli bedzie istnialo skrypt.pl	
+
+	Duzo tych sposobow, wiec wybierz jaki chcesz.
+
+	Jak sie zaladuje to sie wyswietli komunikat.
+	Jesli nie, to tez. Jak skrypt bedzie bledny to tez.
+
+	Jak skrypt o podanej nazwie jest zaladowany, to go wyladuje, a potem
+	zaladuje jeszcze raz.
+
+	Jeszcze istnieje trik ze mozna dodac skrypt do autoruna, i bedzie sie
+	uruchamial przy starcie:
+		/script:autorun skrypt		<-- dodaje/usuwa skrypt o nazwie skrypt do autostartu
+
+	To tak na szybko napisane, tekst tutaj ma byc bardziej techniczny niz
+	user-friendly, wiec jak jakies pytania to pisac na ekg2-users.
+</pre>
+
+*/
+
+/**
+@defgroup scripts_python	Pisanie skryptow w pythonie.
+@ingroup scripts
+
+*/
+
+/**
+@defgroup scripts_perl		Pisanie skryptow w perlu.
+@ingroup scripts
+
+*/
+
+/**
+@defgroup scripts_ruby		Pisanie skryptow w ruby.
+@ingroup scripts
+
+@note	Plugin ruby byl pisany przez osobe ktora z rubym ma b. malo wspolnego.
+	Dokumentacja tez. Ksztalt skryptow byl konsultowany z uzytkownikami ruby'ego;
+	Jednakze jesli myslisz ze aktualne API nie jest ruby-like, i uwazasz
+	ze powinno byc zrobione inaczej, pisz na ekg2-devel.
+
+@note	Plugin ruby jest under development, co znaczy ze calkiem mozliwe ze API 
+	jutro bedzie inaczej wygladac, niz wyglada dzis.
+
+Najpierw sprawdzmy czy plugin ruby sie skompilowal - bez niego nic nie zrobimy!
+
+<pre>
+$ ls `ekg2-config --plugin-dir`/ruby.so
+/usr/local/lib/ekg2/plugins/ruby.so
+</pre>
+
+Wiec jest ok :)
+
+Ponizej najprostszy skrypt w ruby dla ekg2.
+
+<pre>
+if \$0 != "ekg2"
+	print <<MSG
+	warning: you are executing an embedded ruby file!
+	this file is suppose to be run only from ekg2.
+MSG
+	exit
+end
+
+include Ekg2
+
+class Ekg2::Script::HelloWorld < Ekg2::Script
+	def initialize
+		super
+
+		print "Hello World!"
+	end
+
+	def finalize
+		print "Zegnaj swiecie!"
+	end
+end
+</pre>
+<pre>
+Nie, ogolnie to nie bedzie dokumentacja: "Jak programuje sie w ruby dla ekg2 - dla topornych"
+Tylko chcialbym zakreslic pewne niuanse, jakich wymaga ekg2, do poprawnej obslugi skryptow.
+
+Na poczatku jest kod, ktory uniemozliwia uruchamianie skryptu poza ekg2.
+Potem mamy definicje klasy o nazwie Ekg2::Script::HelloWorld, dziedziczacej po Ekg2::Script
+ - nazwa klasy musi sie zaczynac z duzej litery.
+ - musi miec taka sama nazwe jak skrypt. (Czyli ten skrypt nalezy zapisac jako HelloWorld.rb)
+ - musi dziedziczyc po Ekg2::Script
+ - funkcja initialize musi miec na samym poczatku 'super'
+
+Zapisujemy skrypt w ~/.ekg2/truby/scripts/HelloWorld.rb
+\$ ~/.ekg2/truby/scripts $ ruby HelloWorld.rb 
+	warning: you are executing an embedded ruby file!
+	this file is suppose to be run only from ekg2.
+
+\$ ekg2 -u truby
+/plugin +ruby
+/script +HelloWorld
+
+xx:yy:aa ::: [script,HelloWorld] (ruby) Hello World!
+xx:yy:aa ::: Skrypt HelloWorld (/home/darkjames/.ekg2/truby/scripts/HelloWorld.rb) zostal zaladowany (ruby)
+
+/script -HelloWorld
+xx:yy:zz ::: [script,HelloWorld] (ruby) Zegnaj swiecie!
+xx:yy:zz ::: Skrypt HelloWorld (/home/darkjames/.ekg2/truby/scripts/HelloWorld.rb) zostal usuniety (ruby)
+
+Hurray.
+</pre>
+
+[XXX, tutaj juz konkretnie pisac o API]
+
+*/
+

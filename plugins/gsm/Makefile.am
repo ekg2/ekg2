@@ -4,5 +4,5 @@ gsm_la_LDFLAGS = -module -avoid-version
 gsm_la_LIBADD = $(LIBGSM_LIBS)
 gsm_la_CPPFLAGS = $(C_FVISIBILITY) $(LIBGSM_CFLAGS)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 

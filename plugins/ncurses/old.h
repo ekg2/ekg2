@@ -1,8 +1,11 @@
 #ifndef __EKG_NCURSES_OLD_H
 #define __EKG_NCURSES_OLD_H
 
+#include "ekg2-config.h"
+
 #include "ecurses.h"
 
+#include <ekg/commands.h>
 #include <ekg/plugins.h>
 #include <ekg/themes.h>
 #include <ekg/windows.h>
@@ -33,7 +36,6 @@ struct screen_line {
 	int prompt_len;		/* d³ugo¶æ promptu */
 	
 	char *ts;		/* timestamp */
-	int ts_len;		/* d³ugo¶æ timestampu */
 	short *ts_attr;		/* attributes of the timestamp */
 
 	int backlog;		/* z której linii backlogu pochodzi? */
@@ -48,18 +50,6 @@ enum window_frame_t {
 	WF_ALL = 15
 };
 
-/* aka fstring_t but with CHAR_T */
-typedef struct {
-	CHAR_T *str;
-	short *attr;
-	int ts;
-
-	int prompt_len;	
-	int prompt_empty;
-	int margin_left; 
-	void *private;
-} ncurses_fstring_t;
-
 typedef struct {
 	WINDOW *window;		/* okno okna */
 
@@ -69,14 +59,14 @@ typedef struct {
 	int margin_left, margin_right, margin_top, margin_bottom;
 				/* marginesy */
 
-	ncurses_fstring_t **backlog;	/* bufor z liniami */
+	fstring_t **backlog;	/* bufor z liniami */
 	int backlog_size;	/* rozmiar backloga */
 
 	int redraw;		/* trzeba przerysowaæ przed wy¶wietleniem */
 
 	int start;		/* od której linii zaczyna siê wy¶wietlanie */
 	int lines_count;	/* ilo¶æ linii ekranowych w backlogu */
-	struct screen_line *lines;	
+	struct screen_line *lines;
 				/* linie ekranowe */
 
 	int overflow;		/* ilo¶æ nadmiarowych linii w okienku */
@@ -85,6 +75,10 @@ typedef struct {
 				/* obs³uga przerysowania zawarto¶ci okna */
 
 	void (*handle_mouse)(int x, int y, int state);
+
+	CHAR_T *prompt_real;	/* prompt shortened to 2/3 of window width & converted to real chartype */
+	int prompt_real_len;	/* real prompt length, including cutting, in chars instead of bytes */
+	time_t last_red_line;	/* timestamp for red line marker */
 } ncurses_window_t;
 
 struct format_data {
@@ -95,8 +89,11 @@ struct format_data {
 extern WINDOW *ncurses_contacts;
 extern WINDOW *ncurses_input;
 
+TIMER(ncurses_typing);
+QUERY(ncurses_session_disconnect_handler);
 void ncurses_main_window_mouse_handler(int x, int y, int mouse_state);
 
+void ncurses_update_real_prompt(ncurses_window_t *n);
 void ncurses_resize();
 int ncurses_backlog_add(window_t *w, fstring_t *str);
 int ncurses_backlog_split(window_t *w, int full, int removed);
@@ -138,7 +135,7 @@ extern int ncurses_lines_index;
 extern int ncurses_input_size;
 extern int ncurses_debug;
 
-void header_statusbar_resize();
+void header_statusbar_resize(const char *dummy);
 #ifdef WITH_ASPELL
 void ncurses_spellcheck_init();
 
@@ -155,6 +152,10 @@ extern int config_margin_size;
 extern int config_statusbar_size;
 extern int config_kill_irc_window;
 
+extern int config_text_bottomalign;
+extern int config_typing_timeout;
+extern int config_typing_timeout_empty;
+
 int ncurses_lastlog_update(window_t *w);
 void ncurses_lastlog_new(window_t *w);
 extern int config_lastlog_size;
@@ -163,6 +164,7 @@ extern int config_lastlog_lock;
 WATCHER(ncurses_watch_stdin);
 WATCHER(ncurses_watch_winch);
 int ncurses_command_window(void *data, va_list ap);
+COMMAND(cmd_mark);
 
 extern int have_winch_pipe;
 extern int winch_pipe[2];

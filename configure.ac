@@ -4,7 +4,7 @@ AC_INIT(ekg/ekg.c)
 AC_PREREQ(2.50)
 AC_CONFIG_HEADERS(ekg2-config.h)
 
-AM_INIT_AUTOMAKE(ekg2, 0.2)
+AM_INIT_AUTOMAKE(ekg2, CVS)
 
 dnl we don't use neither fortran neither cxx ... set it to no for disable checking for it..
 F77="no"
@@ -50,6 +50,18 @@ AC_CHECK_FUNC(inet_addr, [], [AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind
 dnl windows
 AC_CHECK_LIB(wsock32, main, LIBS="$LIBS -lwsock32")
 
+dnl linux, sunos
+AC_CHECK_FUNC(dn_expand, [], [
+    AC_CHECK_LIB(resolv, dn_expand, 
+    [
+	AC_CHECK_HEADERS(resolv.h,
+	[
+	    AC_DEFINE(HAVE_LIBRESOLV, 1, [define if you have libresolv])
+	    LIBS="$LIBS -lresolv"
+	])
+    ])
+])
+
 dnl  sprawdzamy, czy system ma getopt_long
 AC_CHECK_FUNC(getopt_long, , [COMPAT="$COMPAT getopt.o getopt1.o"])
 
@@ -65,12 +77,14 @@ dnl  strlcat,strlcpy itp wiele systemów nie posiada
 AC_CHECK_FUNCS(strlcat, , [COMPAT="$COMPAT strlcat.o"])
 AC_CHECK_FUNCS(strlcpy, , [COMPAT="$COMPAT strlcpy.o"])
 AC_CHECK_FUNCS(strndup, , [COMPAT="$COMPAT strndup.o"])
-AC_CHECK_FUNCS(strlen, , [COMPAT="$COMPAT strlen.o"])
+dnl AC_CHECK_FUNCS(strlen, , [COMPAT="$COMPAT strlen.o"])
 AC_CHECK_FUNCS(strnlen, , [COMPAT="$COMPAT strnlen.o"])
 AC_CHECK_FUNCS(strfry, , [COMPAT="$COMPAT strfry.o"])
 
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
+
+AC_CHECK_FUNCS(flock)
 
 dnl locale / encoding... etc
 AM_LANGINFO_CODESET
@@ -97,13 +111,36 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 #include <sys/user.h>
 ])
 
+dnl Maybe we should rather check both includes alone, and then define which one we should use
+dnl and blah blah blah, but I think we'll always include both files
+AC_CHECK_TYPE(socklen_t,[AC_DEFINE(HAVE_SOCKLEN_T, 1, [define if you've got socklen_t])],,[
+#include <sys/types.h>
+#include <sys/socket.h>
+])
+
 AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
-AC_CONFIG_FILES([Makefile ekg/Makefile ekg/ekg2-config compat/Makefile docs/Makefile po/Makefile.in])
-AC_CONFIG_FILES([contrib/Makefile contrib/python/Makefile contrib/perl/Makefile])
-AC_CONFIG_FILES([plugins/Makefile plugins/mail/Makefile plugins/logs/Makefile plugins/rc/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/rot13/Makefile plugins/irc/Makefile plugins/httprc_xajax/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gg/Makefile plugins/sim/Makefile plugins/jabber/Makefile plugins/ncurses/Makefile plugins/gtk/Makefile plugins/readline/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/perl/Makefile plugins/python/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile plugins/gpg/Makefile plugins/autoresponder/Makefile])
+AM_ICONV
 
-PLUGINS="logs mail rc sms pcm irc rot13 httprc_xajax xmsg autoresponder"
+AC_CHECK_LIBIDN
+
+dnl core 
+AC_CONFIG_FILES([Makefile ekg/Makefile contrib/Makefile compat/Makefile docs/Makefile plugins/Makefile po/Makefile.in])
+dnl protocol-plugins
+AC_CONFIG_FILES([plugins/feed/Makefile plugins/gg/Makefile plugins/icq/Makefile plugins/irc/Makefile plugins/jabber/Makefile plugins/polchat/Makefile plugins/rivchat/Makefile])
+dnl ui-plugins
+AC_CONFIG_FILES([plugins/gtk/Makefile plugins/httprc_xajax/Makefile plugins/ncurses/Makefile plugins/rc/Makefile plugins/readline/Makefile plugins/remote/Makefile])
+dnl log-plugins
+AC_CONFIG_FILES([plugins/logs/Makefile plugins/logsoracle/Makefile plugins/logsqlite/Makefile])
+dnl scripting-plugins and samples-scripts
+AC_CONFIG_FILES([plugins/perl/Makefile plugins/python/Makefile])
+AC_CONFIG_FILES([contrib/python/Makefile contrib/perl/Makefile])
+dnl crypt-plugins
+AC_CONFIG_FILES([plugins/gpg/Makefile plugins/rot13/Makefile plugins/sim/Makefile])
+dnl misc-plugins
+AC_CONFIG_FILES([plugins/mail/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/autoresponder/Makefile plugins/jogger/Makefile])
+
+PLUGINS="logs mail rc sms pcm icq irc polchat rot13 httprc_xajax xmsg autoresponder jogger rivchat remote"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
@@ -321,7 +358,7 @@ if test "x$with_openssl" != "xno"; then
 	fi
 fi
 
-AC_ARG_WITH(expat,		AC_HELP_STRING([--without-expat],		[Compile without expat (jabber plugin)]))
+AC_ARG_WITH(expat,		AC_HELP_STRING([--without-expat],		[Compile without expat (jabber&feed plugins)]))
 
 if test "x$with_expat" != "xno"; then
 	AC_CHECK_EXPAT
@@ -344,7 +381,7 @@ if test "x$with_expat" != "xno"; then
 				AC_DEFINE([JABBER_HAVE_OPENSSL], 1, [define if you want use openssl for ssl connections])
 			fi
 		fi
-		PLUGINS="$PLUGINS jabber"
+		PLUGINS="$PLUGINS jabber feed"
 	fi
 fi
 
@@ -432,6 +469,16 @@ if test "x$with_python" != "xno"; then
 		PLUGINS="$PLUGINS python"
 	fi
 fi
+
+dnl AC_ARG_WITH(ruby,		AC_HELP_STRING([--without-ruby],		[Compile without ruby support (ruby plugin)]))
+dnl 
+dnl if test "x$with_ruby" != "xno"; then
+dnl	AM_CHECK_RUBY
+dnl
+dnl 	if test "x$have_ruby" = "xyes"; then
+dnl		PLUGINS="$PLUGINS ruby"
+dnl 	fi
+dnl fi
 
 AC_ARG_WITH(sqlite3,		AC_HELP_STRING([--without-sqlite3],		[Compile without sqlite3 support (sqlite plugin)]))
 
@@ -537,9 +584,9 @@ echo -en " - Interface:\t "
 echo ""
 
 # - PROTOCOL PLUGINS
-echo -en " - Protocols:\t irc xmsg "
+echo -en " - Protocols:\t icq irc polchat xmsg "
 	if test "x$have_expat" = "xyes"; then
-		echo -n "jabber "
+		echo -n "feed jabber "
 
 		if test "x$jabber_have_gnutls" = "xyes"; then
 			echo -n "(with ssl support in -lgnutls) "
@@ -604,10 +651,14 @@ echo -en " - Scripting:\t "
 	if test "x$have_perl" = "xyes"; then
 		echo -n "perl "
 	fi
+
+dnl	if test "x$have_ruby" = "xyes"; then
+dnl		echo -n "ruby "
+dnl	fi
 echo ""
 
 # - MISC PLUGINS
-echo -en " - Misc:\t autoresponder mail rc sms "
+echo -en " - Misc:\t autoresponder jogger mail rc sms "
 	if test "x$have_ioctld_includes" = "xyes"; then
 	 	echo -n "ioctld "
 	fi
@@ -644,26 +695,11 @@ if test "x$have_ncurses" = "xyes"; then
 	echo -e " - Mouse support:in $mouse_lib"
 fi
 
-echo -en " - Charset:\t "
+echo -en " - Charset support:\t "
 	if test "x$enable_unicode" = "xyes"; then
 	        echo "utf-8&ansi (EXPERIMENTAL)"
-		echo "*****************************************************************************************************"
-		echo "WARNING: USING THE RESULTING EKG2 BINARY IN A NON-UTF-8 (ASCII or LATIN) TERMINAL IS CURRENTLY"
-		echo "NOT SUPPORTED WHEN BUILT WITH GCC 4.x OR LATER."
-		echo "This is due to a known bug in the ncurses UI module - a symptom is ekg2 going into AN INFINITE LOOP."
-		echo "Workarounds:"
-		echo " - specify --disable-unicode if you do not need UTF-8 support"
-		echo " - pass -U to ekg2 to force UTF-8 output to terminal."
-		echo " - use a UTF-8 terminal (e.g. uxterm)"
-		echo " - disable strict aliasing rules (-fno-strict-aliasing in CFLAGS)"
-		echo " - disable optimization (-O1 in CFLAGS is enough)"
-		echo " - build with older GCC (3.4 seems to be OK)"
-		echo "IT'S A KNOWN BUG, PLEASE DON'T REPORT IT. FEEL FREE TO SEND IN A PATCH."
-		echo "IT'LL EVENTUALLY BE FIXED. SOMEDAY."
-		echo "******************************************************************************************************"
-		echo "AND ENJOY USING EKG2-UNICODE"
 	else
-	        echo "ansi"
+	        echo "iso-8859-2"
 	fi
 
 echo -en " - Plugins:\t "
@@ -674,4 +710,12 @@ echo -en " - Plugins:\t "
 	fi
  
 echo 
- 
+if test "x$am_cv_func_iconv" != "xyes"; then
+	echo "******************"
+	echo "* BIG FAT WARNING"
+	echo "* EKG2 will be compiled without iconv support. This means most charset"
+	echo "* conversion magic won't work. Jabber would work only on UTF-8 systems, and GG"
+	echo "* only on UTF-8, ISO-8859-2 or CP1250 ones. If you want something more, get"
+	echo "* yourself some iconv. Else, have fun."
+	echo "******************"
+fi

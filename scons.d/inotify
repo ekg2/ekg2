@@ -1,0 +1,11 @@
+
+# inotify (xmsg)
+
+Import('*')
+
+out = conf.CheckLibWithHeader(None, ['sys/inotify.h'], 'C', 'inotify_init();', 0)
+defines['HAVE_INOTIFY'] = out
+
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python

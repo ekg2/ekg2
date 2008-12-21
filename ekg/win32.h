@@ -31,6 +31,10 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #undef pipe
 typedef unsigned __int64 u_int64_t;
 
@@ -44,8 +48,8 @@ struct utsname {
 };
 
 struct timezone { /* XXX */
-	int tz_minuteswest;     /* minutes west of Greenwich */
-	int tz_dsttime;         /* type of DST correction */
+	int tz_minuteswest;	/* minutes west of Greenwich */
+	int tz_dsttime;		/* type of DST correction */
 };
 /* shared */
 #ifdef EKG2_WIN32_SHARED_LIB
@@ -63,7 +67,7 @@ HANDLE win32_fork(thread_func_t *addr, void *data);
 
 /* fcntl.h */
 #define F_SETFL		4
-#define O_NONBLOCK      04000
+#define O_NONBLOCK	04000
 int fcntl(int fd, int cmd, long arg);
 /* ... */
 
@@ -80,6 +84,10 @@ int uname(struct utsname *buf);					/* emulated ? */
 
 #define fileno(__F) ((__F)->_file)
 #define sleep(x) Sleep(x * 1000)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

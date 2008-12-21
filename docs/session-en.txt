@@ -4,13 +4,6 @@ alias
 	
 	short session name
 
-allow_autoresponder
-	type: bool
-	default value: 0
-	
-	Whether autoresponder should handle incoming messages in this session.
-	Works only when 'autoresponder' plugin is loaded.
-
 auto_away
 	type: integer
 	default value: 600
@@ -82,4 +75,10 @@ auto_reconnect
 	after disconnect or invalid connection.
 	If 0, program won't try.
 
+connect_timeout
+	type: integer
+	default value: 30
+	
+	Number of seconds after which connecting will timeout. Set to 0
+	to disable timeouting (not recommended).
 

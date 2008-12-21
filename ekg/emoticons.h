@@ -2,10 +2,10 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@o2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@o2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -24,9 +24,17 @@
 #ifndef __EKG_EMOTICONS_H
 #define __EKG_EMOTICONS_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 int emoticon_read();
 char *emoticon_expand(const char *s);
-void emoticon_free();
+void emoticons_destroy();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_EMOTICONS_H */
 

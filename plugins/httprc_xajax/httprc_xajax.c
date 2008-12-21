@@ -1,7 +1,7 @@
 /*
  *  (C) Copyright 2006+ Jakub 'darkjames' Zawadzki <darkjames@darkjames.ath.cx>
- *  			Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
- *                      Michal 'peres' Gorny
+ *			Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
+ *			Michal 'peres' Gorny
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -35,13 +35,12 @@
 #include <ekg/dynstuff.h>
 #include <ekg/log.h>
 #include <ekg/plugins.h>
+#include <ekg/strings.h>
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
-
-#include <plugins/ncurses/ecurses.h>
 
 /* string that you're typing in browser's window:
  * e.g: your.server.with.ekg2.com, localhost, 127.0.0.1
@@ -94,28 +93,14 @@ char *generate_cookie(void)
 	return saprintf("%x%d%d", rand()*rand(), (int)time(NULL), rand());
 }
 
-inline char *wcs_to_normal_http(const CHAR_T *str) {
-	if (!str) return NULL;
-#if USE_UNICODE
-	if (config_use_unicode) {
-		int len		= wcstombs(NULL, (wchar_t *) str,0);
-		char *tmp 	= xmalloc(len+1);
-		int ret;
-
-		ret = wcstombs(tmp, (wchar_t *) str, len);
-		return tmp;
-	} else
-#endif
-		return (char *) str;
-}
-
 char *escape_single_quote(char *p, int inuni)
 {
 	string_t s = string_init(NULL);
-	int l=xstrlen(p), r;
+	int l=xstrlen(p);
 #if USE_UNICODE
 	if (inuni)
 	{
+		int r;
 		mbtowc(NULL, NULL, 0);	/* reset */
 		while (l>0)
 		{
@@ -148,10 +133,14 @@ char *escape_single_quote(char *p, int inuni)
 	return string_free(s, 0);
 }
 
-char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
+char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 {
+	short *attr = line->attr;
+	char *str = line->str.b;
+	CHAR_T *str_w = line->str.w;
 	string_t asc = string_init(NULL);
-	int i, last, lastbeg, tempchar, len, att;
+	int i, last, lastbeg, len, att;
+	CHAR_T tempchar;
 	char *normal;
 	char *tmp;
 	char *colortbl[10] = { "grey", "red", "green", "yellow", "blue", "purple", "turquoise", "white" };
@@ -162,10 +151,10 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 #define ISREVERSE	(att & FSTR_REVERSE)
 #define ISNORMAL	(att & FSTR_NORMAL)
 #define ISONLYNORMAL	((att & FSTR_NORMAL) && !(att & (FSTR_BOLD|FSTR_BLINK|FSTR_REVERSE|FSTR_UNDERLINE)))
-#define FORE 		(att & FSTR_FOREMASK)
-#define BACK 		((att & FSTR_BACKMASK)>>3)
-#define ADDJS(x) 	string_append(asc, x)
-#define ADDJSf(x...) 	string_append_format(asc, x)
+#define FORE		(att & FSTR_FOREMASK)
+#define BACK		((att & FSTR_BACKMASK)>>3)
+#define ADDJS(x)	string_append(asc, x)
+#define ADDJSf(x...)	string_append_format(asc, x)
 
 	lastbeg = 0;
 	last = attr[0];
@@ -173,28 +162,24 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 	 * <strong><span>...</span>  ... <span> ... </span> </strong>
 	 * since this would be quite senseless
 	 */
-	len = strlen(str);
 #if USE_UNICODE
-	if (config_use_unicode && inuni)
-		len = wcslen(str);
+	if (inuni)
+		len = wcslen(str_w);
+	else
 #endif
+		len = strlen(str);
 	for (i = 1; i <= len; i++)
 	{
 		if (attr[i] == last)
 			continue;
 	
-		if (inuni) {
-			tempchar = __S(str, i);
-			__SREP(str, i, 0);
-		} else {
-			tempchar = str[i];
-			str[i] = 0;
-		}
+		tempchar = str[i];
+		str[i] = 0;
 		att = attr[lastbeg];
 		if (inuni)
-			normal = wcs_to_normal_http(__SPTR(str, lastbeg));
+			normal = wcs_to_normal(str_w + lastbeg);
 		else
-			normal = str+lastbeg;
+			normal = str + lastbeg;
 		if (ISONLYNORMAL)
 		{
 			ADDJSf("%s.appendChild(document.createTextNode('%s'));\n",parent,(tmp = escape_single_quote(normal,inuni)));
@@ -202,9 +187,9 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 			if (ISBOLD || ISUNDERLINE || ISBLINK)
 				ADDJS("em = document.createElement('em'); em.setAttribute('class', '");
 			/* DO NOT REMOVE THOSE SPACES AT THE END!!! */
-			if (ISBOLD) 		ADDJS("bold ");
-			if (ISUNDERLINE) 	ADDJS("underline ");
-			if (ISBLINK) 		ADDJS("blink ");
+			if (ISBOLD)		ADDJS("bold ");
+			if (ISUNDERLINE)	ADDJS("underline ");
+			if (ISBLINK)		ADDJS("blink ");
 			if (ISBOLD || ISUNDERLINE || ISBLINK)
 				ADDJS("');");
 			ADDJS("sp = document.createElement('span');");
@@ -219,15 +204,12 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 			} else 
 				ADDJSf("%s.appendChild(sp);", parent);
 		}
-		if (normal != str+lastbeg)
+		if (inuni)
 			xfree(normal);
 		xfree(tmp);
 
 		ADDJS("\n");
-		if (inuni)
-			__SREP(str, i, tempchar);
-		else
-			str[i]=tempchar;
+		str[i] = tempchar;
 		lastbeg = i;
 		last = attr[i];
 	}
@@ -239,7 +221,7 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 	return string_free(asc, 0);
 }
 
-#define httprc_write(watch, args...) 	string_append_format(watch->buf, args)
+#define httprc_write(watch, args...)	string_append_format(watch->buf, args)
 #define httprc_write2(watch, str)	string_append_n(watch->buf, str, -1)
 #define httprc_write3(watch, str, len)	string_append_raw(watch->buf, str, len)
 
@@ -249,7 +231,7 @@ char *http_fstring(int winid, char *parent, char *str, short *attr, int inuni)
 		"Server: ekg2-CVS-httprc_xajax plugin\r\n"		/* server info */	\
 		"%s\r\n",							/* headers */		\
 		ver == 0 ? "HTTP/1.0" : ver == 1 ? "HTTP/1.1" : "",	/* PROTOCOL */		\
-		scode, 							/* Status code */	\
+		scode,							/* Status code */	\
 			/* some typical responses */		\
 			scode == 100 ? "Continue" :		\
 			scode == 101 ? "Switching Protocols" :	\
@@ -297,17 +279,17 @@ QUERY(httprc_xajax_def_action)
 			{
 				if (!gline) {
 					char *fstringed;
-					ncurses_window_t *n = w->private;
+/*					ncurses_window_t *n = w->private; */
 					line = *(va_arg(ap, fstring_t **));
 					gline=1;
-					fstringed = http_fstring(w->id, "ch", line->str, line->attr, 0);
+					fstringed = http_fstring(w->id, "ch", line, 0);
 					tmp = saprintf("glst=gwins[%d][2].length;\n"
 							"ch = document.createElement('li');\n"
 							"ch.setAttribute('id', 'lin'+glst);\n"
 							"%s\n"
-							"ch.className='info'+(glst%2);\n"
+							"ch.className='info'+(glst%%2);\n"
 							"gwins[%d][2][glst]=ch;\n"
-							"if (current_window != %d) { xajax.$('wi'+%d).className='act'; }\n"
+							"if (current_window != %d) { xajax.$\('wi'+%d).className='act'; }\n"
 							"else { window_content_add_line(%d); }\n",
 							w->id, fstringed, w->id,
 							w->id, w->id,
@@ -322,7 +304,7 @@ QUERY(httprc_xajax_def_action)
 				string_append(p->collected, " = ");
 				string_append(p->collected, itoa(w->id));
 				string_append(p->collected, " = ");
-				string_append(p->collected, line->str);
+				string_append(p->collected, line->str.b);
 				string_append(p->collected, "]]></cmd>");
 				string_append(p->collected, "<cmd n=\"js\"><![CDATA[");
 				string_append(p->collected, tmp);
@@ -431,7 +413,7 @@ QUERY(httprc_xajax_def_action)
 		if (p->fd != -1 && p->collected->len && p->waiting)
 		{
 			watch_t *send_watch = NULL;
-			int clen;
+			int clen = 0;
 
 			WATCH_FIND(send_watch, p->fd);
 
@@ -605,7 +587,7 @@ WATCHER(http_watch_read) {
 			client->cookie = generate_cookie();
 			client->httpver = ver;
 			client->fd	= fd;		/* XXX -1 ? */
-			list_add(&clients, client, 0);
+			list_add(&clients, client);
 			debug("Adding client %s!\n", client->cookie);
 		}
 		/* reszta, e.g POST */
@@ -636,7 +618,7 @@ WATCHER(http_watch_read) {
 
 			if (!xstrcmp(req, "/xajax.js"))		{ f = fopen(DATADIR"/plugins/httprc_xajax/xajax_0.2.4.js", "r");	mime = "text/javascript"; }
 			else if (!xstrcmp(req, "/ekg2.js"))	{ f = fopen(DATADIR"/plugins/httprc_xajax/ekg2.js", "r");		mime = "text/javascript"; }
-			else 					{ f = fopen(DATADIR"/plugins/httprc_xajax/ekg2.css", "r");		mime = "text/css"; }
+			else					{ f = fopen(DATADIR"/plugins/httprc_xajax/ekg2.css", "r");		mime = "text/css"; }
 
 			string_append(htheader, "Connection: Keep-Alive\r\n"
 					"Keep-Alive: timeout=5, max=100\r\n"
@@ -661,8 +643,6 @@ WATCHER(http_watch_read) {
 		} else {
 			char *temp;
 			int i, j;
-			list_t l;
-
 			window_t *w = window_current; 
 			ncurses_window_t *n;
 
@@ -713,8 +693,7 @@ WATCHER(http_watch_read) {
 			string_append (htheader, itoa(window_current->id));
 			string_append (htheader, ";\n");
 
-			for (l = windows; l; l = l->next) {
-				window_t *w = l->data;
+			for (w = windows; w; w = w->next) {
 				char *tempdata;
 				if (w == window_current)
 					string_append_format(htheader, "gwins[%d] = new Array(2, \"%s\", new Array());\n ", w->id, window_target(w));
@@ -734,7 +713,7 @@ WATCHER(http_watch_read) {
 					/* really, really stupid... */
 					string_append(htheader, "ch = document.createElement('li');\n"
 							"ch.setAttribute('id', 'lin'+i);\n");
-					tempdata = http_fstring(w->id, "ch", n->backlog[i]->str, n->backlog[i]->attr, 1);
+					tempdata = http_fstring(w->id, "ch", n->backlog[i], 1);
 					string_append(htheader, tempdata);
 					if (j^=1)
 						string_append(htheader, "ch.className='info1';");
@@ -775,13 +754,15 @@ WATCHER(http_watch_read) {
 					"\t\t\t<dl>\n");
 			/* USERLISTA */
 			if (session_current) {
+				userlist_t *ul;
+
 				httprc_write(send_watch, "\t\t\t\t<dt>Aktualna sesja: %s</dt>\n",
 						session_current->alias ? session_current->alias : session_current->uid);
 				if (session_current->userlist)
 					httprc_write2(send_watch, "\t\t\t\t<dd><ul>\n");
-				for (l = session_current->userlist; l; l = l->next) {
-					userlist_t *u = l->data;
-					httprc_write(send_watch, "\t\t\t\t\t<li class=\"%s\"><a href=\"#\">%s</a></li>\n", u->status, u->nickname ? u->nickname : u->uid);
+				for (ul = session_current->userlist; ul; ul = ul->next) {
+					userlist_t *u = ul;
+					httprc_write(send_watch, "\t\t\t\t\t<li class=\"%s\"><a href=\"#\">%s</a></li>\n", ekg_status_string(u->status, 0), u->nickname ? u->nickname : u->uid);
 				}
 				if (session_current->userlist)
 					httprc_write2(send_watch, "\t\t\t\t</ul></dd>\n");
@@ -867,6 +848,8 @@ int httprc_xajax_plugin_init(int prio) {
 	int fd;
 	struct sockaddr_in sin;
 
+	PLUGIN_CHECK_VER("httprc_xajax");
+
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(atoi(HTTPRCXAJAX_DEFPORT));
 	sin.sin_addr.s_addr = INADDR_ANY;
@@ -895,13 +878,10 @@ int httprc_xajax_plugin_init(int prio) {
 		return -1;
 	}
 
-	watch_add(&httprc_xajax_plugin, fd, WATCH_READ, http_watch_accept, NULL);
-
-/*	variable_add(&rc_plugin, TEXT("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL); */
-
 	plugin_register(&httprc_xajax_plugin, prio);
 
-	plugin_var_add(&httprc_xajax_plugin, "port", VAR_INT, HTTPRCXAJAX_DEFPORT, 0, NULL);
+/*	variable_add(&rc_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL); */
+	watch_add(&httprc_xajax_plugin, fd, WATCH_READ, http_watch_accept, NULL);
 
 //	query_connect(&httprc_xajax_plugin, ("set-vars-default"), httprc_xajax_def_action, NULL);
 //	query_connect(&httprc_xajax_plugin, ("ui-beep"), httprc_xajax_def_action, NULL);

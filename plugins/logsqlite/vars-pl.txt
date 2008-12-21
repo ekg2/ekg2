@@ -28,7 +28,6 @@ path
 	Rozpoznawane znaki:
 	* %S - sesja nasza
 	* %Y, %M, %D - rok, miesi±c, dzieñ
-	Rozszerzenie pliku zale¿y od typu pliku logowanie (txt, xml, itp.)
 	Przyk³ady:
 	- logowanie do katalogów wg. sesji:
 	    log_path = "~/.ekg2/logsqlite/%S.db"
@@ -40,12 +39,20 @@ path
 	    log_path = "/tmp/%S-%Y.%M.%D.db"
 	  np. /tmp/gg:31337-2004.05.31.db
 
-last_limit
+last_limit_msg
 	typ: liczba
 	domy¶lna warto¶æ: 10
 	
 	maksymalna ilo¶æ wiadomo¶ci wy¶wietlanych przez polecenie
 	logsqlite:last
+
+last_limit_status
+	typ: liczba
+	domy¶lna warto¶æ: 10
+	
+	maksymalna ilo¶æ wiadomo¶ci wy¶wietlanych przez polecenie
+	logsqlite:laststatus
+
 
 last_in_window
 	typ: bool
@@ -62,4 +69,19 @@ last_open_window
 	okre¶la czy w przypadku wy¶wietlania wiadomo¶ci danej osoby przez
 	lastlog w okienku rozmowy z ni±, to okienko bêdzie otwierane je¶li
 	jeszcze nie istnieje (kto¶ zrozumia³ co tu napisa³em?)
+
+last_print_on_open
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	okre¶la, czy po otwarciu nowego okna rozmowy, logsqlite wypisze w nim
+	last_limit ostatnich wiadomo¶ci powi±zanych z rozmówc±
+
+persistent_open
+	typ: bool
+	domy¶lna warto¶æ: 1
+	
+	okre¶la, czy baza ma byæ otwierana jednorazowo po za³adowaniu wtyczki
+	i zamykana przy jej wy³adowaniu (1), czy te¿ otwierana ka¿dorazowo przy
+	wywo³aniu ¿±dania (0)
 

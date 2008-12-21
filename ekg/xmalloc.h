@@ -25,6 +25,12 @@
 #include <stddef.h>
 #include <stdarg.h>
 
+#ifndef __USE_POSIX
+    #define __USE_POSIX 1	/* glibc 2.8 */
+#endif
+#define _XOPEN_SOURCE 600
+#include <limits.h>
+
 #define __(x) (x ? x : "(null)")
 
 /* stolen from: http://sourcefrog.net/weblog/software/languages/C/unused.html */
@@ -37,6 +43,24 @@
 #	define UNUSED(x) x
 #endif
 /* /stolen */
+
+#ifndef HAVE_SOCKLEN_T
+typedef unsigned int socklen_t;
+#endif
+
+/* buffer lengths in stuff.c */
+#ifndef PATH_MAX
+# ifdef MAX_PATH
+#  define PATH_MAX MAX_PATH
+# else
+#  ifdef _POSIX_PATH_MAX
+#   define PATH_MAX _POSIX_PATH_MAX
+#  else
+#   warning "PATH_MAX not found! Defaulting to 4096, please report."
+#   define PATH_MAX 4096
+#  endif
+# endif
+#endif
 
 #ifndef EKG2_WIN32_NOFUNCTION
 

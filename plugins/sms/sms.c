@@ -2,10 +2,10 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@o2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@o2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -43,8 +43,8 @@
 #include <ekg/queries.h>
 
 typedef struct {
-        char *uid;
-        int count;
+	char *uid;
+	int count;
 } sms_away_t;
 
 static list_t sms_away = NULL;
@@ -62,12 +62,12 @@ PLUGIN_DEFINE(sms, PLUGIN_GENERIC, sms_theme_init);
 
 static void sms_child_handler(child_t *c, int pid, const char *name, int status, void *data)
 {
-        char *number = data;
+	char *number = data;
 
-        if (number) {
-                print((!status) ? "sms_sent" : "sms_failed", number);
-                xfree(number);
-        }
+	if (number) {
+		print((!status) ? "sms_sent" : "sms_failed", number);
+		xfree(number);
+	}
 }
 
 /*
@@ -135,25 +135,26 @@ static int sms_send(const char *recipient, const char *message)
  */
 static void sms_away_add(const char *uid)
 {
-        sms_away_t sa;
-        list_t l;
+	sms_away_t *sa;
+	list_t l;
 
-        if (!config_sms_away_limit)
-                return;
+	if (!config_sms_away_limit)
+		return;
 
-        sa.uid = xstrdup(uid);
-        sa.count = 1;
+	for (l = sms_away; l; l = l->next) {
+		sms_away_t *s = l->data;
 
-        for (l = sms_away; l; l = l->next) {
-                sms_away_t *s = l->data;
+		if (!xstrcasecmp(s->uid, uid)) {
+			s->count += 1;
+			return;
+		}
+	}
 
-                if (!xstrcasecmp(s->uid, uid)) {
-                        s->count += 1;
-                        return;
-                }
-        }
+	sa = xmalloc(sizeof(sms_away_t));
+	sa->uid = xstrdup(uid);
+	sa->count = 1;
 
-        list_add(&sms_away, &sa, sizeof(sa));
+	list_add(&sms_away, sa);
 }
 
 /*
@@ -169,39 +170,39 @@ static void sms_away_add(const char *uid)
  */
 static int sms_away_check(const char *uid)
 {
-        int x = 0;
-        list_t l;
+	int x = 0;
+	list_t l;
 
-        if (!config_sms_away_limit || !sms_away)
-                return 1;
+	if (!config_sms_away_limit || !sms_away)
+		return 1;
 
-        /* limit dotyczy ³±cznej liczby sms'ów */
-        if (config_sms_away == 1) {
-                for (l = sms_away; l; l = l->next) {
-                        sms_away_t *s = l->data;
+	/* limit dotyczy ³±cznej liczby sms'ów */
+	if (config_sms_away == 1) {
+		for (l = sms_away; l; l = l->next) {
+			sms_away_t *s = l->data;
 
-                        x += s->count;
-                }
+			x += s->count;
+		}
 
-                if (x > config_sms_away_limit)
-                        return 0;
-                else
-                        return 1;
-        }
+		if (x > config_sms_away_limit)
+			return 0;
+		else
+			return 1;
+	}
 
-        /* limit dotyczy liczby sms'ów od jednej osoby */
-        for (l = sms_away; l; l = l->next) {
-                sms_away_t *s = l->data;
+	/* limit dotyczy liczby sms'ów od jednej osoby */
+	for (l = sms_away; l; l = l->next) {
+		sms_away_t *s = l->data;
 
-                if (!xstrcasecmp(s->uid, uid)) {
-                        if (s->count > config_sms_away_limit)
-                                return 0;
-                        else
-                                return 1;
-                }
-        }
+		if (!xstrcasecmp(s->uid, uid)) {
+			if (s->count > config_sms_away_limit)
+				return 0;
+			else
+				return 1;
+		}
+	}
 
-        return 1;
+	return 1;
 }
 
 /*
@@ -211,51 +212,57 @@ static int sms_away_check(const char *uid)
  */
 static void sms_away_free()
 {
-        list_t l;
+	list_t l;
 
-        if (!sms_away)
-                return;
+	if (!sms_away)
+		return;
 
-        for (l = sms_away; l; l = l->next) {
-                sms_away_t *s = l->data;
+	for (l = sms_away; l; l = l->next) {
+		sms_away_t *s = l->data;
 
-                xfree(s->uid);
-        }
+		xfree(s->uid);
+	}
 
-        list_destroy(sms_away, 1);
-        sms_away = NULL;
+	list_destroy(sms_away, 1);
+	sms_away = NULL;
 }
 
 static COMMAND(sms_command_sms)
 {
-        userlist_t *u;
-        const char *number = NULL;
+	userlist_t *u;
+	const char *number = NULL;
 
-        if (!params[0] || !params[1] || !config_sms_app) {
-                wcs_printq("not_enough_params", name);
-                return -1;
-        }
+	if (!params[0] || !params[1]) {
+		printq("not_enough_params", name);
+		return -1;
+	}
 
-        if ((u = userlist_find(session, params[0]))) {
-                if (!u->mobile || !xstrcmp(u->mobile, "")) {
-                        printq("sms_unknown", format_user(session, u->uid));
-                        return -1;
-                }
-                number = u->mobile;
-        } else
-                number = params[0];
+	if (!config_sms_app) {
+		printq("var_not_set", name, "sms:sms_send_app");
+		return -1;
+	}
 
-        if (sms_send(number, params[1]) == -1) {
-                printq("sms_error", strerror(errno));
-                return -1;
-        }
+	if ((u = userlist_find(session, params[0]))) {
+		number = user_private_item_get(u, "mobile");
 
-        return 0;
+		if (!number || !xstrcmp(number, "")) {
+			printq("sms_unknown", format_user(session, u->uid));
+			return -1;
+		}
+	} else
+		number = params[0];
+
+	if (sms_send(number, params[1]) == -1) {
+		printq("sms_error", strerror(errno));
+		return -1;
+	}
+
+	return 0;
 }
 
 static int dd_sms(const char *name)
 {
-        return (config_sms_app != NULL);
+	return (config_sms_app != NULL);
 }
 
 /*
@@ -265,13 +272,13 @@ static int dd_sms(const char *name)
  */
 static QUERY(sms_session_status)
 {
-        {	char **UNUSED(session)	= va_arg(ap, char**);	}
-        char *status	= *(va_arg(ap, char**));
+		char **UNUSED(session)	= va_arg(ap, char**);
+	int status	= *(va_arg(ap, int*));
 
-        if (xstrcmp(status, EKG_STATUS_AWAY) && xstrcmp(status, EKG_STATUS_XA) && xstrcmp(status, EKG_STATUS_DND))
-                sms_away_free();
+	if ((status <= EKG_STATUS_NA) || (status >= EKG_STATUS_AVAIL))
+		sms_away_free();
 
-        return 0;
+	return 0;
 }
 
 /*
@@ -281,76 +288,78 @@ static QUERY(sms_session_status)
  */
 static QUERY(sms_protocol_message)
 {
-        char *session	= *(va_arg(ap, char**));
-        char *uid	= *(va_arg(ap, char**));
-        {	char ***UNUSED(rcpts)	= va_arg(ap, char***);	}
-        char *text	= *(va_arg(ap, char**));
-        const char *status = session_status_get_n(session);
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+		char ***UNUSED(rcpts)	= va_arg(ap, char***);
+	char *text	= *(va_arg(ap, char**));
+	const int status = session_status_get_n(session);
 
-        if (!status || !config_sms_away || !config_sms_app || !config_sms_number)
-                return 0;
+	if (!status || !config_sms_away || !config_sms_app || !config_sms_number)
+		return 0;
 
-        if (xstrcmp(status, EKG_STATUS_AWAY) && xstrcmp(status, EKG_STATUS_XA) && xstrcmp(status, EKG_STATUS_DND))
-                return 0;
+	if ((status <= EKG_STATUS_NA) || (status >= EKG_STATUS_AVAIL))
+		return 0;
 
-        sms_away_add(uid);
+	sms_away_add(uid);
 
-        if (sms_away_check(uid)) {
-                const char *sender;
-                char *msg;
-                userlist_t *u = userlist_find(session_find(session), uid);
+	if (sms_away_check(uid)) {
+		const char *sender;
+		char *msg;
+		userlist_t *u = userlist_find(session_find(session), uid);
 
-                sender = (u && u->nickname) ? u->nickname : uid;
+		sender = (u && u->nickname) ? u->nickname : uid;
 
-                if (config_sms_max_length && xstrlen(text) > config_sms_max_length) {
-                        char *tmp = xstrmid(text, 0, config_sms_max_length);
-                        msg = format_string(format_find("sms_away"), sender, tmp);
-                        xfree(tmp);
-                } else
-                        msg = format_string(format_find("sms_away"), sender, text);
+		if (config_sms_max_length && xstrlen(text) > config_sms_max_length) {
+			char *tmp = xstrmid(text, 0, config_sms_max_length);
+			msg = format_string(format_find("sms_away"), sender, tmp);
+			xfree(tmp);
+		} else
+			msg = format_string(format_find("sms_away"), sender, text);
 
-                /* niech nie wysy³a smsów, je¶li brakuje formatów */
-                if (xstrcmp(msg, ""))
-                        sms_send(config_sms_number, msg);
+		/* niech nie wysy³a smsów, je¶li brakuje formatów */
+		if (xstrcmp(msg, ""))
+			sms_send(config_sms_number, msg);
 
-                xfree(msg);
-        }
+		xfree(msg);
+	}
 
-        return 0;
+	return 0;
 }
 
 int sms_plugin_init(int prio)
 {
-        plugin_register(&sms_plugin, prio);
+	PLUGIN_CHECK_VER("sms");
 
-        command_add(&sms_plugin, ("sms:sms"), ("u ?"), sms_command_sms, 0, NULL);
+	plugin_register(&sms_plugin, prio);
 
-        variable_add(&sms_plugin, ("sms_send_app"), VAR_STR, 1, &config_sms_app, NULL, NULL, NULL);
-        variable_add(&sms_plugin, ("sms_away"), VAR_MAP, 1, &config_sms_away, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "separate"), dd_sms);
-        variable_add(&sms_plugin, ("sms_away_limit"), VAR_INT, 1, &config_sms_away_limit, NULL, NULL, dd_sms);
-        variable_add(&sms_plugin, ("sms_max_length"), VAR_INT, 1, &config_sms_max_length, NULL, NULL, dd_sms);
-        variable_add(&sms_plugin, ("sms_number"), VAR_STR, 1, &config_sms_number, NULL, NULL, dd_sms);
+	command_add(&sms_plugin, ("sms:sms"), ("u ?"), sms_command_sms, 0, NULL);
+
+	variable_add(&sms_plugin, ("sms_send_app"), VAR_STR, 1, &config_sms_app, NULL, NULL, NULL);
+	variable_add(&sms_plugin, ("sms_away"), VAR_MAP, 1, &config_sms_away, NULL, variable_map(3, 0, 0, "none", 1, 2, "all", 2, 1, "separate"), dd_sms);
+	variable_add(&sms_plugin, ("sms_away_limit"), VAR_INT, 1, &config_sms_away_limit, NULL, NULL, dd_sms);
+	variable_add(&sms_plugin, ("sms_max_length"), VAR_INT, 1, &config_sms_max_length, NULL, NULL, dd_sms);
+	variable_add(&sms_plugin, ("sms_number"), VAR_STR, 1, &config_sms_number, NULL, NULL, dd_sms);
 
 	query_connect_id(&sms_plugin, PROTOCOL_MESSAGE, sms_protocol_message, NULL);
-        query_connect_id(&sms_plugin, SESSION_STATUS, sms_session_status, NULL);
+	query_connect_id(&sms_plugin, SESSION_STATUS, sms_session_status, NULL);
 
-        return 0;
+	return 0;
 }
 
 static int sms_plugin_destroy()
 {
-        plugin_unregister(&sms_plugin);
+	plugin_unregister(&sms_plugin);
 
-        return 0;
+	return 0;
 }
 
 static int sms_theme_init() {
 #ifndef NO_DEFAULT_THEME
-        format_add("sms_error", _("%! Error sending SMS: %1\n"), 1);
-        format_add("sms_unknown", _("%! %1 not a cellphone number\n"), 1);
-        format_add("sms_sent", _("%> SMS to %T%1%n sent\n"), 1);
-        format_add("sms_failed", _("%! SMS to %T%1%n not sent\n"), 1);
-        format_add("sms_away", "<ekg:%1> %2", 1);
+	format_add("sms_error", _("%! Error sending SMS: %1\n"), 1);
+	format_add("sms_unknown", _("%! %1 not a cellphone number\n"), 1);
+	format_add("sms_sent", _("%> SMS to %T%1%n sent\n"), 1);
+	format_add("sms_failed", _("%! SMS to %T%1%n not sent\n"), 1);
+	format_add("sms_away", "<ekg:%1> %2", 1);
 #endif
 	return 0;
 }

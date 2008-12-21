@@ -2,8 +2,8 @@
 #include <ekg/plugins.h>
 #include <ekg/sessions.h>
 
-#define RSS_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
-#define RSS_FLAGS        RSS_ONLY  | SESSION_MUSTBECONNECTED
+#define RSS_ONLY	 SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define RSS_FLAGS	 RSS_ONLY  | SESSION_MUSTBECONNECTED
 #define RSS_FLAGS_TARGET RSS_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 
 #define feed_private(s) ((s && s->priv) ? ((feed_private_t *) s->priv)->private : NULL)
@@ -29,7 +29,7 @@ extern void rss_deinit();			/* rss.c */
 #endif
 
 /* some sad helpers */
-void feed_set_statusdescr(userlist_t *u, char *status, char *descr);
+void feed_set_statusdescr(userlist_t *u, int status, char *descr);
 void feed_set_descr(userlist_t *u, char *descr);
-void feed_set_status(userlist_t *u, char *status);
+void feed_set_status(userlist_t *u, int status);
 

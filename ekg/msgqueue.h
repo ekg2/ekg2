@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2001-2003 Piotr Domagalski <szalik@szalik.net>
- *                          Wojtek Kaniewski <wojtekka@irc.pl>
+ *			    Wojtek Kaniewski <wojtekka@irc.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -25,26 +25,38 @@
 #include <time.h>
 
 #include "dynstuff.h"
+#include "protocol.h"
 
-typedef struct {
-	char *session;		/* do której sesji nale¿y */
-	char *rcpts;		/* uidy odbiorców */
-	char *message;		/* tre¶æ */
-	char *seq;		/* numer sekwencyjny */
-	time_t time;		/* czas wys³ania */
-	int mark;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct msg_queue {
+	struct msg_queue	*next;
+
+	char		*session;		/* do której sesji nale¿y */
+	char		*rcpts;			/* uidy odbiorców */
+	char		*message;		/* tre¶æ */
+	char		*seq;			/* numer sekwencyjny */
+	time_t		time;			/* czas wys³ania */
+	unsigned int	mark		: 1;	/* if added during cleanup */
+	msgclass_t	class;
 } msg_queue_t;
 
-extern list_t msg_queue;
+extern msg_queue_t *msgs_queue;
 
-int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq);
-void msg_queue_free();
+int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq, msgclass_t class);
+void msgs_queue_destroy();
 int msg_queue_count_session(const char *uid);
 int msg_queue_remove_uid(const char *uid);
 int msg_queue_remove_seq(const char *seq);
 int msg_queue_flush(const char *session);
 int msg_queue_read();
 int msg_queue_write();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EKG_MSGQUEUE_H */
 

@@ -1,0 +1,24 @@
+// command description for logsqlite plugin
+// (c) copyright 2005 - 2008 Leszek Krupiñski <leafnode@wafel.com>
+//                           Adam Mikuta <adamm@ekg2.org>
+
+last
+	parameters: [options] [uid]
+	short description: shows last logged messages
+	
+	  -n, --number <number>  Number of messages to show
+	
+	  -s, --search <text>    Show only messages containing text
+          
+	  <uid>                  UID of user whose messages will be shown
+
+laststatus
+	parameters: [options] [uid]
+	short description: shows last logged changes of statuses
+	
+	  -n, --number <number>  Number of statuses to show
+	
+	  -s, --search <text>    Show only statuses containing text
+          
+	  <uid>                  UID of user whose statuses will be shown
+

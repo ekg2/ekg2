@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -24,16 +24,14 @@
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
 
-const char *gg_status_to_text(int status);
-int gg_text_to_status(const char *text, const char *descr);
-unsigned char *gg_locale_to_cp(char *buf);
-char *gg_cp_to_locale(unsigned char *buf);
+int gg_status_to_text(const int status);
+int gg_text_to_status(const int status, const char *descr);
 char gg_userlist_type(userlist_t *u);
 int gg_blocked_add(session_t *s, const char *uid);
 int gg_blocked_remove(session_t *s, const char *uid);
 const char *gg_http_error_string(int h);
-int gg_userlist_send(struct gg_session *s, list_t userlist);
-	
+int gg_userlist_send(struct gg_session *s, userlist_t *userlist);
+
 #endif
 
 /*

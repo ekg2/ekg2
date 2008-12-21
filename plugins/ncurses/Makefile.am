@@ -1,13 +1,13 @@
-EXTRA_DIST = vars-pl.txt vars-en.txt
+EXTRA_DIST = vars-pl.txt vars-en.txt commands-pl.txt
 
 lib_LTLIBRARIES = ncurses.la
-ncurses_la_SOURCES = main.c old.c completion.c bindings.c ecurses.c contacts.c mouse.c\
+ncurses_la_SOURCES = main.c old.c completion.c bindings.c contacts.c mouse.c\
 	bindings.h completion.h contacts.h ecurses.h old.h mouse.h
 ncurses_la_LDFLAGS = -module -avoid-version
 ncurses_la_LIBADD = $(NCURSES_LIBS) $(ASPELL_LIBS) $(LIBGPM_LIBS)
 ncurses_la_CPPFLAGS = $(C_FVISIBILITY) $(NCURSES_CPPFLAGS) 
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 
 
 install-data-am:

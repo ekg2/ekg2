@@ -1,5 +1,6 @@
 // opis komend dla pluginu logsqlite
-// (c) copyright 2005 Leszek Krupiñski <leafnode@wafel.com>
+// (c) copyright 2005 - 2008 Leszek Krupiñski <leafnode@wafel.com>
+//                           Adam Mikuta <adamm@ekg2.org>
 
 last
 	parametry: [opcje] [uid]
@@ -11,5 +12,17 @@ last
 	                         tekst
           
 	  <uid>                  UID u¿ytkownika którego wiadomo¶ci maj± byæ
+	                         wy¶wietlone
+
+laststatus
+	parametry: [opcje] [uid]
+	krotki opis: wy¶wietla ostatnie zalogowane zmiany statusów
+	
+	  -n, --number <liczba>  Ilo¶æ statusów do wy¶wietlenia
+	
+	  -s, --search <tekst>   Wy¶wietl tylko statusy zawieraj±ce podany
+	                         tekst
+          
+	  <uid>                  UID u¿ytkownika którego statusy maj± byæ
 	                         wy¶wietlone
 

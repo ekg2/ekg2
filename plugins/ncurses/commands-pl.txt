@@ -1,0 +1,19 @@
+dump
+	parametry: [opcje|nazwa_pliku]
+	krotki opis: zrzuca zawarto¶æ okna do pliku
+	
+	-a, --append	dopisuje do istniej±cego pliku lub tworzy nowy
+	
+	-w, --window <id|target>	wskazuje okno
+	
+	[nazwa_pliku]	nazwa pliku (domy¶lnie "ekg2-debug.txt")
+
+mark
+	parametry:  [numer|opcje]
+	krotki opis: dodaje znacznik do okna
+	
+	-a, --all   dodaje znacznik do wszystkich nieaktywnych okien
+	
+	Je¶li wywo³anie nast±pi³o bez podania numeru okna, to marker
+	wstawiany jest w bie¿±cym oknie. Je¶li numer jest ujemny, to
+	marker wstawiany jest w poprzednio aktywnym oknie.

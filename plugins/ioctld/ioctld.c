@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2002 Pawe³ Maziarz <drg@infomex.pl>
- *                     Wojtek Kaniewski <wojtekka@irc.pl>
- *                     Robert J. Wo¼ny <speedy@ziew.org>
+ *		       Wojtek Kaniewski <wojtekka@irc.pl>
+ *		       Robert J. Wo¼ny <speedy@ziew.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -65,12 +65,16 @@
 #  endif
 #endif
 
+#include "ekg2-config.h" /* because of socklen_t */
+#ifndef HAVE_SOCKLEN_T
+typedef unsigned int socklen_t;
+#endif
 
 char sock_path[PATH_MAX] = "";
 
 int blink_leds(int *flag, int *delay) 
 {
-    	int s, fd;
+	int s, fd;
 #ifdef __sun 
 	int restore_data;
 
@@ -96,7 +100,7 @@ int blink_leds(int *flag, int *delay)
 
 		ioctl(fd, KIOCSLED, &leds);
 #else
-	    	ioctl(fd, KDSETLED, flag[s]);
+		ioctl(fd, KDSETLED, flag[s]);
 #endif 
 		if (delay[s] && delay[s] <= IOCTLD_MAX_DELAY)
 			usleep(delay[s]);
@@ -116,11 +120,11 @@ int blink_leds(int *flag, int *delay)
 
 int beeps_spk(int *tone, int *delay)
 {
-    	int s;
+	int s;
 #ifndef __sun
 	int fd;
 
-    	if ((fd = open("/dev/console", O_WRONLY)) == -1)
+	if ((fd = open("/dev/console", O_WRONLY)) == -1)
 		fd = STDOUT_FILENO;
 #endif
 		
@@ -131,7 +135,7 @@ int beeps_spk(int *tone, int *delay)
 #endif
 
 #ifndef __sun
-	    	ioctl(fd, KIOCSOUND, tone[s]);
+		ioctl(fd, KIOCSOUND, tone[s]);
 #else
 		/* ¿a³osna namiastka... */
 		putchar('\a');
@@ -153,23 +157,24 @@ int beeps_spk(int *tone, int *delay)
 
 void quit() 
 {
-    	unlink(sock_path);
+	unlink(sock_path);
 	exit(0);
 }
 
 int main(int argc, char **argv) 
 {
-    	int sock, length;
+	int sock;
+	socklen_t length;
 	struct sockaddr_un addr;
 	struct action_data data;
 	
 	if (argc != 2) {
 		printf("program ten nie jest przeznaczony do samodzielnego wykonywania!\n");
-	    	exit(1);
+		exit(1);
 	}
 	
 	if (strlen(argv[1]) >= PATH_MAX)
-	    	exit(2);
+		exit(2);
 	
 	signal(SIGQUIT, quit);
 	signal(SIGTERM, quit);
@@ -191,19 +196,19 @@ int main(int argc, char **argv)
 	length = sizeof(addr);
 
 	if (bind(sock, (struct sockaddr *)&addr, length) == -1) 
-	    	exit(2);
+		exit(2);
 
 	chown(sock_path, getuid(), -1);
 
 	while (1) {
-	    	if (recvfrom(sock, &data, sizeof(data), 0, (struct sockaddr *)&addr,&length) == -1) 
-		    	continue;
+		if (recvfrom(sock, &data, sizeof(data), 0, (struct sockaddr *) &addr, &length) == -1) 
+			continue;
 		
 		if (data.act == ACT_BLINK_LEDS)  
-		    	blink_leds(data.value, data.delay);
+			blink_leds(data.value, data.delay);
 
 		else if (data.act == ACT_BEEPS_SPK) 
-		    	beeps_spk(data.value, data.delay);
+			beeps_spk(data.value, data.delay);
 	}
 	
 	exit(0);

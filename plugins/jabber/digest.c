@@ -1,7 +1,33 @@
 /* $Id$ */
 
-/* XXX, copyrigth note about MD5 */
-/* http://tools.ietf.org/html/rfc1321 MD5 */
+/*
+ * This is work is derived from material Copyright RSA Data Security, Inc.
+ */
+
+/* MD5C.C - RSA Data Security, Inc., MD5 message-digest algorithm
+ */
+
+/* Copyright (C) 1991-2, RSA Data Security, Inc. Created 1991. All
+ * rights reserved.
+ *
+ * License to copy and use this software is granted provided that it
+ * is identified as the "RSA Data Security, Inc. MD5 Message-Digest
+ * Algorithm" in all material mentioning or referencing this software
+ * or this function.
+ *
+ * License is also granted to make and use derivative works provided
+ * that such works are identified as "derived from the RSA Data
+ * Security, Inc. MD5 Message-Digest Algorithm" in all material
+ * mentioning or referencing the derived work.
+ *
+ * RSA Data Security, Inc. makes no representations concerning either
+ * the merchantability of this software or the suitability of this
+ * software for any particular purpose. It is provided "as is"
+ * without express or implied warranty of any kind.
+ *
+ * These notices must be retained in any copies of any part of this
+ * documentation and/or software.
+ */
 
 /*
 SHA-1 in C
@@ -22,6 +48,7 @@ A million repetitions of "a"
 
 #include <stdint.h>
 
+#include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
 
 #include "jabber.h"
@@ -34,6 +61,8 @@ A million repetitions of "a"
 
 #include <stdio.h>
 #include <string.h>
+
+extern void *jconv_out; /* misc.c */
 
 typedef struct {
     uint32_t state[5];
@@ -257,12 +286,12 @@ unsigned int i, j;
     if ((context->count[0] += len << 3) < (len << 3)) context->count[1]++;
     context->count[1] += (len >> 29);
     if ((j + len) > 63) {
-        memcpy(&context->buffer[j], data, (i = 64-j));
-        Transform(context->state, context->buffer, usesha);
-        for ( ; i + 63 < len; i += 64) {
-            Transform(context->state, &data[i], usesha);
-        }
-        j = 0;
+	memcpy(&context->buffer[j], data, (i = 64-j));
+	Transform(context->state, context->buffer, usesha);
+	for ( ; i + 63 < len; i += 64) {
+	    Transform(context->state, &data[i], usesha);
+	}
+	j = 0;
     }
     else i = 0;
     memcpy(&context->buffer[j], &data[i], len - i);
@@ -280,7 +309,7 @@ static void Encode (unsigned char *output, uint32_t *input, unsigned int len, in
 
 	} else {
 		for (i = 0, j = 0; j < len; i++, j += 4) {
-			output[j]   = (unsigned char)	((input[i] 	) & 0xff);
+			output[j]   = (unsigned char)	((input[i]	) & 0xff);
 			output[j+1] = (unsigned char)	((input[i] >>  8) & 0xff);
 			output[j+2] = (unsigned char)	((input[i] >> 16) & 0xff);
 			output[j+3] = (unsigned char)	((input[i] >> 24) & 0xff);
@@ -314,7 +343,7 @@ static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 #endif
 
     while ((context->count[0] & 504) != 448) {
-        Update(context, (unsigned char *)"\0", 1, usesha);
+	Update(context, (unsigned char *)"\0", 1, usesha);
     }
     Update(context, finalcount, 8, usesha);  /* Should cause a SHA1Transform() */
 
@@ -333,8 +362,7 @@ static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 
 /* EKG2 STUFF */
 
-extern char *mutt_convert_string (char *ps, const char *from, const char *to);	/* jabber/misc.c */
-extern char *config_console_charset;						/* ekg/stuff.h */
+extern char *config_console_charset;							/* ekg/stuff.h */
 
 /**
  * base16_encode()
@@ -376,10 +404,10 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 	char *kd;
 
 /* ZERO STEP -> recode */
-	if (!(convnode = mutt_convert_string((char *) sid, config_console_charset, "utf-8")))
+	if (!(convnode = ekg_convert_string_p(sid, jconv_out)))
 		convnode = xstrdup(sid);
 
-	if (!(convpasswd = mutt_convert_string((char *) password, config_console_charset, "utf-8")))
+	if (!(convpasswd = ekg_convert_string_p(password, jconv_out)))
 		convpasswd = xstrdup(password);
 
 /* FIRST STEP */
@@ -430,7 +458,7 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 }
 
 /** [XXX] SOME TIME AGO, I had idea to connect jabber_dcc_digest() and jabber_digest()
- * 	with one function, and use va_list for it... i don't know.
+ *	with one function, and use va_list for it... i don't know.
  */
 
 /**
@@ -475,7 +503,7 @@ char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
  * @return <b>static</b> buffer, with 40 digit SHA1 hash + NUL char
  */
 
-char *jabber_digest(const char *sid, const char *password) {
+char *jabber_digest(const char *sid, const char *password, void *charset_out) {
 	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
 	static char result[41];
@@ -484,12 +512,12 @@ char *jabber_digest(const char *sid, const char *password) {
 
 	SHA1Init(&ctx);
 
-	tmp = mutt_convert_string((char *) sid, config_console_charset, "utf-8");
-	SHA1Update(&ctx, tmp, xstrlen(tmp));
+	tmp = ekg_convert_string_p(sid, charset_out);
+	SHA1Update(&ctx, (tmp ? tmp : sid), xstrlen(tmp ? tmp : sid));
 	xfree(tmp);
 
-	tmp = mutt_convert_string((char *) password, config_console_charset, "utf-8");
-	SHA1Update(&ctx, tmp, xstrlen(tmp));
+	tmp = ekg_convert_string_p(password, charset_out);
+	SHA1Update(&ctx, (tmp ? tmp : password), xstrlen(tmp ? tmp : password));
 	xfree(tmp);
 
 	SHA1Final(digest, &ctx);
@@ -497,6 +525,22 @@ char *jabber_digest(const char *sid, const char *password) {
 	for (i = 0; i < 20; i++)
 		sprintf(result + i * 2, "%.2x", digest[i]);
 
+	return result;
+}
+
+char *jabber_sha1_generic(char *buf, int len) {
+	EKG2_SHA1_CTX ctx;
+	unsigned char digest[20];
+	static char result[41];
+	int i;
+
+	SHA1Init(&ctx);
+	SHA1Update(&ctx, buf, len);
+	SHA1Final(digest, &ctx);
+
+	for (i = 0; i < 20; i++)
+		sprintf(result + i * 2, "%.2x", digest[i]);
+	
 	return result;
 }
 

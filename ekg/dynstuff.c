@@ -2,7 +2,8 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *                          Adam Wysocki <gophi@ekg.chmurka.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -25,6 +26,7 @@
 #include <string.h>
 
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "xmalloc.h"
 
 /*
@@ -40,7 +42,7 @@
  *
  * zwraca wska¼nik zaalokowanego elementu lub NULL w przpadku b³êdu.
  */
-void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparision)(void *, void *))
+void *list_add_sorted(list_t *list, void *data, int (*comparision)(void *, void *))
 {
 	list_t new, tmp;
 
@@ -54,11 +56,6 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
 	new->data = data;
 	new->next = NULL;
 	/*new->prev = NULL;*/
-
-	if (alloc_size) {
-		new->data = xmalloc(alloc_size);
-		memcpy(new->data, data, alloc_size);
-	}
 
 	if (!(tmp = *list)) {
 		*list = new;
@@ -100,7 +97,7 @@ void *list_add_sorted(list_t *list, void *data, int alloc_size, int (*comparisio
  * @sa list_remove()
  */
 
-void *list_add_beginning(list_t *list, void *data, int alloc_size) {
+void *list_add_beginning(list_t *list, void *data) {
 
 	list_t new;
 
@@ -113,10 +110,7 @@ void *list_add_beginning(list_t *list, void *data, int alloc_size) {
 	new->next = *list;
 	*list	  = new;
 
-	if (alloc_size) {	/* xmemdup() ? */
-		new->data = xmalloc(alloc_size);
-		memcpy(new->data, data, alloc_size);
-	} else	new->data = data;
+	new->data = data;
 
 	return new->data;
 
@@ -134,9 +128,68 @@ void *list_add_beginning(list_t *list, void *data, int alloc_size) {
  * @sa list_add_sorted()
  */
 
-void *list_add(list_t *list, void *data, int alloc_size)
+void *list_add(list_t *list, void *data)
 {
-	return list_add_sorted(list, data, alloc_size, NULL);
+	return list_add_sorted(list, data, NULL);
+}
+
+void *list_add_sorted3(list_t *list, list_t new, int (*comparision)(void *, void *))
+{
+	list_t tmp;
+
+	if (!list) {
+		errno = EFAULT;
+		return NULL;
+	}
+
+	new->next = NULL;
+	if (!(tmp = *list)) {
+		*list = new;
+	} else {
+		if (!comparision) {
+			while (tmp->next)
+				tmp = tmp->next;
+			tmp->next = new;
+		} else {
+			list_t prev = NULL;
+			
+			while (comparision(new, tmp) > 0) {
+				prev = tmp;
+				tmp = tmp->next;
+				if (!tmp)
+					break;
+			}
+			
+			if (!prev) {
+				new->next = *list;
+				*list = new;
+			} else {
+				prev->next = new;
+				new->next = tmp;
+			}
+		}
+	}
+
+	return new;
+}
+
+void *list_add_beginning3(list_t *list, list_t new)
+{
+	if (!list) {
+		errno = EFAULT;
+		return NULL;
+	}
+
+	new->next = *list;
+	*list	  = new;
+
+	return new;
+
+}
+
+void *list_add3(list_t *list, list_t new)
+{
+	return list_add_sorted3(list, new, NULL);
 }
 
 /**
@@ -208,23 +261,7 @@ void list_cleanup(list_t *list) {
 	}
 }
 
-/**
- * list_remove()
- *
- * Remove item @a data from list_t pointed by @a list
- *
- * @param list - pointer to list_t
- * @param data - data to remove from @a list
- * @param free_data - if set and item was found it'll call xfree() on it.
- * @sa list_destroy() - to remove whole list
- *
- * @return 	 0 if item was founded, and was removed from list_t pointed by @a list<br>
- * 		-1 and errno set to EFAULT, if @a list was NULL<br>
- * 		-1 and errno set to ENOENT, if item was not found
- */
-
-int list_remove(list_t *list, void *data, int free_data)
-{
+int list_remove2(list_t *list, void *data, void (*func)(void *data)) {
 	list_t tmp, last = NULL;
 
 	if (!list) {
@@ -245,11 +282,184 @@ int list_remove(list_t *list, void *data, int free_data)
 		last->next = tmp->next;
 	}
 
-	if (free_data)
-		xfree(tmp->data);
+	if (func && tmp->data)
+		func(tmp->data);
 	xfree(tmp);
 
 	return 0;
+}
+
+void *list_remove3(list_t *list, list_t elem, void (*func)(list_t data)) {
+	list_t tmp, last = NULL;
+	void *ret = NULL;
+
+	if (!list) {
+		errno = EFAULT;
+		return ret;
+	}
+
+	tmp = *list;
+	if (tmp && tmp == elem) {
+		*list = ret = tmp->next;
+	} else {
+		for (; tmp && tmp != elem; tmp = tmp->next)
+			last = tmp;
+		if (!tmp) {
+			errno = ENOENT;
+			return ret;
+		}
+		last->next = ret = tmp->next;
+	}
+
+	if (func)
+		func(tmp);
+	xfree(tmp);
+
+	return ret;
+}
+
+void *list_remove3i(list_t *list, list_t elem, void (*func)(list_t data)) {
+	list_t tmp, last = NULL;
+	void *ret = NULL;
+
+	if (!list) {
+		errno = EFAULT;
+		return ret;
+	}
+
+	tmp = *list;
+	if (tmp && tmp == elem) {
+		*list = tmp->next;
+		ret = list;
+	} else {
+		for (; tmp && tmp != elem; tmp = tmp->next)
+			last = tmp;
+		if (!tmp) {
+			errno = ENOENT;
+			return ret;
+		}
+		last->next = tmp->next;
+		ret = last;
+	}
+
+	if (func)
+		func(tmp);
+	xfree(tmp);
+
+	return ret;
+}
+
+void *list_unlink3(list_t *list, list_t elem) {
+	list_t tmp, last = NULL;
+	void *ret = NULL;
+
+	if (!list) {
+		errno = EFAULT;
+		return ret;
+	}
+
+	tmp = *list;
+	if (tmp && tmp == elem) {
+		*list = ret = tmp->next;
+	} else {
+		for (; tmp && tmp != elem; tmp = tmp->next)
+			last = tmp;
+		if (!tmp) {
+			errno = ENOENT;
+			return ret;
+		}
+		last->next = ret = tmp->next;
+	}
+
+	return ret;
+}
+
+/**
+ * list_remove()
+ *
+ * Remove item @a data from list_t pointed by @a list
+ *
+ * @param list - pointer to list_t
+ * @param data - data to remove from @a list
+ * @param free_data - if set and item was found it'll call xfree() on it.
+ * @sa list_destroy() - to remove whole list
+ *
+ * @return	 0 if item was founded, and was removed from list_t pointed by @a list<br>
+ *		-1 and errno set to EFAULT, if @a list was NULL<br>
+ *		-1 and errno set to ENOENT, if item was not found
+ */
+
+int list_remove(list_t *list, void *data, int free_data) {
+	return list_remove2(list, data, free_data ? xfree : NULL);
+}
+
+/**
+ * list_get_nth()
+ *
+ * Get n'th item from list_t
+ *
+ * @param list - list_t
+ * @param id - n'th item [list items are numerated from 1]
+ *
+ * @return n'th item (list->data) if found, or NULL with errno set to ENOENT
+ */
+
+void *list_get_nth(list_t list, int id) {
+	while (list) {
+		if ((--id) == 0) {
+			/* errno = !ENOENT; */
+			return list->data;
+		}
+
+		list = list->next;
+	}
+
+	errno = ENOENT;
+	return NULL;
+}
+
+void *list_get_nth3(list_t list, int id) {
+	while (list) {
+		if ((--id) == 0)
+			return list;
+
+		list = list->next;
+	}
+
+	errno = ENOENT;
+	return NULL;
+}
+
+void list_resort(list_t *list, int (*comparision)(void *, void *)) {
+	list_t tmplist = NULL;
+	list_t l = *list;
+
+	while (l) {
+		list_t cur = l;
+
+		l = l->next;
+
+		list_add_sorted(&tmplist, cur->data, comparision);
+
+		xfree(cur);
+	}
+
+	*list = tmplist;
+}
+
+void list_resort3(list_t *list, int (*comparision)(void *, void *)) {
+	list_t tmplist = NULL;
+	list_t l = *list;
+
+	while (l) {
+		list_t cur = l;
+
+		l = l->next;
+
+		list_add_sorted3(&tmplist, cur, comparision);
+	}
+
+	*list = tmplist;
 }
 
 /**
@@ -270,33 +480,12 @@ int list_count(list_t list)
 	return count;
 }
 
-/**
- * list_destroy()
- *
- * Destroy all items from list_t @a list
- *
- * @note It doesn't take pointer to list_t, and it don't cleanup memory with \\0, so after list_destroy() you must remember that
- * 	@a list is <b>unaccessible</b>. So if you have list as global variable, or if you keep pointer to it in some struct.. you must NULL pointer.
- * 	so always do: <br>
- * 	<code>
- * 		list_destroy(my_list, free_data);
- * 		my_list = NULL;
- * 	</code>
- *
- * @param list - list_t
- * @param free_data - if set we will call xfree() on each item data
- * @sa list_remove() - to remove specified item.
- *
- * @return 0
- */
-
-int list_destroy(list_t list, int free_data)
-{
+int list_destroy2(list_t list, void (*func)(void *)) {
 	list_t tmp;
 	
 	while (list) {
-		if (free_data)
-			xfree(list->data);
+		if (func && list->data)
+			func(list->data);
 
 		tmp = list->next;
 
@@ -306,6 +495,47 @@ int list_destroy(list_t list, int free_data)
 	}
 
 	return 0;
+}
+
+int list_destroy3(list_t list, void (*func)(void *)) {
+	list_t tmp;
+	
+	while (list) {
+		if (func)
+			func(list);
+
+		tmp = list->next;
+
+		xfree(list);
+
+		list = tmp;
+	}
+
+	return 0;
+}
+
+/**
+ * list_destroy()
+ *
+ * Destroy all items from list_t @a list
+ *
+ * @note It doesn't take pointer to list_t, and it don't cleanup memory with \\0, so after list_destroy() you must remember that
+ *	@a list is <b>unaccessible</b>. So if you have list as global variable, or if you keep pointer to it in some struct.. you must NULL pointer.
+ *	so always do: <br>
+ *	<code>
+ *		list_destroy(my_list, free_data);
+ *		my_list = NULL;
+ *	</code>
+ *
+ * @param list - list_t
+ * @param free_data - if set we will call xfree() on each item data
+ * @sa list_remove() - to remove specified item.
+ *
+ * @return 0
+ */
+
+int list_destroy(list_t list, int free_data) {
+	return list_destroy2(list, free_data ? xfree : NULL);
 }
 
 /*
@@ -363,13 +593,13 @@ int string_append_c(string_t s, char c)
  *
  * Append to string_t @a s, first @a count chars, from @a str<br>
  *
- * @param s     - string_t
- * @param str   - buffer to append.
+ * @param s	- string_t
+ * @param str	- buffer to append.
  * @param count - how many chars copy copy from @a str, or -1 to copy whole.
  *
- * @todo 	We append here NUL terminated string, so maybe let's <b>always</b> do <code>count = xstrnlen(str, count);</code>?<br>
- * 		Because now programmer can pass negative value, and it'll possible do SIGSEGV<br>
- * 		Also we can allocate less memory for string, when for example str[count-3] was NUL char.<br>
+ * @todo	We append here NUL terminated string, so maybe let's <b>always</b> do <code>count = xstrnlen(str, count);</code>?<br>
+ *		Because now programmer can pass negative value, and it'll possible do SIGSEGV<br>
+ *		Also we can allocate less memory for string, when for example str[count-3] was NUL char.<br>
  *
  * @return	 0 on success<br>
  *		-1 and errno set to EFAULT if input params were wrong (s == NULL || str == NULL)
@@ -400,19 +630,19 @@ int string_append_n(string_t s, const char *str, int count)
  *
  * Append to string_t @a s, formatted output of @a format + params<br>
  * Equivalent to:<br>
- * 	<code>
- * 		char *tmp = saprintf(format, ...);<br>
- * 		string_append(s, tmp);<br>
- * 		xfree(tmp);<br>
- * 	</code>
+ *	<code>
+ *		char *tmp = saprintf(format, ...);<br>
+ *		string_append(s, tmp);<br>
+ *		xfree(tmp);<br>
+ *	</code>
  *
  * @note For more details about string formating functions read man 3 vsnprintf
  *
  * @sa string_append()	- If you want/can use non-formating function..
  * @sa saprintf()	- If you want to format output but to normal char *, not to string_t
  *
- * @return 	 0 on success<br>
- * 		-1 and errno set to EFAULT if input params were wrong (s == NULL || format == NULL)
+ * @return	 0 on success<br>
+ *		-1 and errno set to EFAULT if input params were wrong (s == NULL || format == NULL)
  */
 
 int string_append_format(string_t s, const char *format, ...) {
@@ -512,9 +742,9 @@ void string_insert_n(string_t s, int index, const char *str, int count)
  * Insert given text (@a str) to given string_t (@a s) at given pos (@a index)<br>
  * Wrapper to: <code>string_insert_t(s, index, str, -1)</code>
  *
- * @param s     - string_t
+ * @param s	- string_t
  * @param index - pos
- * @param str   - text 
+ * @param str	- text 
  *
  * @sa string_insert_n()
  */
@@ -546,6 +776,32 @@ string_t string_init(const char *value) {
 	tmp->str = xstrdup(value);
 	tmp->len = valuelen;
 	tmp->size = valuelen + 1;
+
+	return tmp;
+}
+
+/**
+ * string_init_n()
+ *
+ * init string_t struct, allocating memory string of length n
+ *
+ *  @param n - number of bytes to allocate
+ *  @sa string_free() - to free memory used by string_t
+ *
+ *  @return pointer to allocated string_t struct.
+ */
+string_t string_init_n(int n)
+{
+	string_t tmp;
+
+	/* this is an error */
+	if (n <= 0)
+		return NULL;
+
+	tmp = xmalloc(sizeof(struct string));
+	tmp->str = (char *)xmalloc(n);
+	tmp->len = 0;
+	tmp->size = n;
 
 	return tmp;
 }
@@ -599,14 +855,14 @@ void string_clear(string_t s)
 /**
  * string_free()
  *
- * Cleanup memory after string_t @a s, and eventually (if @a free_string set) cleanup memory after char buffer.
+ * Cleanup memory after string_t @a s, and perhaps (if @a free_string set) cleanup memory after char buffer.
  *
  * @param s		- string_t which we want to free.
  * @param free_string	- do we want to free memory after char buffer?
  * @sa string_clear()	- if you just want to clear saved char buffer, and you don't want to free internal string_t struct.
  *
- * @return 	if @a free_string != 0 always NULL<br>
- * 		else returns saved char buffer, which need be free()'d after use by xfree()
+ * @return	if @a free_string != 0 always NULL<br>
+ *		else returns saved char buffer, which need be free()'d after use by xfree()
  */
 
 char *string_free(string_t s, int free_string)
@@ -660,11 +916,11 @@ const char *itoa(long int i)
  *  - string - tekst wej¶ciowy,
  *  - sep - lista elementów oddzielaj±cych,
  *  - max - maksymalna ilo¶æ elementów tablicy. je¶li równe 0, nie ma
- *          ograniczeñ rozmiaru tablicy.
+ *	    ograniczeñ rozmiaru tablicy.
  *  - trim - czy wiêksz± ilo¶æ elementów oddzielaj±cych traktowaæ jako
- *           jeden (na przyk³ad spacje, tabulacja itp.)
+ *	     jeden (na przyk³ad spacje, tabulacja itp.)
  *  - quotes - czy pola mog± byæ zapisywane w cudzys³owiach lub
- *             apostrofach z escapowanymi znakami.
+ *	       apostrofach z escapowanymi znakami.
  *
  * zaalokowan± tablicê z zaalokowanymi ci±gami znaków, któr± nale¿y
  * zwolniæ funkcj± array_free()
@@ -692,8 +948,9 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 				break;
 		}
 
-		if (!last && quotes && (*p == '\'' || *p == '\"')) {
+		if (quotes && (*p == '\'' || *p == '\"')) {
 			char sep = *p;
+			char *r;
 
 			for (q = p + 1, len = 0; *q; q++, len++) {
 				if (*q == '\\') {
@@ -704,47 +961,46 @@ char **array_make(const char *string, const char *sep, int max, int trim, int qu
 					break;
 			}
 
-                        len++;
+			if (last && q[0] && q[1])
+				goto way2;
 
-			if ((token = xcalloc(1, len + 1))) {
-				char *r = token;
-			
-				for (q = p + 1; *q; q++, r++) {
-					if (*q == '\\') {
-						q++;
-						
-						if (!*q)
-							break;
-						
-						switch (*q) {
-							case 'n':
-								*r = '\n';
-								break;
-							case 'r':
-								*r = '\r';
-								break;
-							case 't':
-								*r = '\t';
-								break;
-							default:
-								*r = *q;
-						}
-					} else if (*q == sep) {
+			len++;
+
+			r = token = xmalloc(len + 1);
+			for (q = p + 1; *q; q++, r++) {
+				if (*q == '\\') {
+					q++;
+
+					if (!*q)
 						break;
-					} else 
-						*r = *q;
-				}
-				
-				*r = 0;
+
+					switch (*q) {
+						case 'n':
+							*r = '\n';
+							break;
+						case 'r':
+							*r = '\r';
+							break;
+						case 't':
+							*r = '\t';
+							break;
+						default:
+							*r = *q;
+					}
+				} else if (*q == sep) {
+					break;
+				} else 
+					*r = *q;
 			}
+
+			*r = 0;
 			
 			p = (*q) ? q + 1 : q;
 
 		} else {
+way2:
 			for (q = p, len = 0; *q && (last || !xstrchr(sep, *q)); q++, len++);
-			token = xcalloc(1, len + 1);
-			xstrncpy(token, p, len);
-			token[len] = 0;
+			token = xstrndup(p, len);
 			p = q;
 		}
 		
@@ -790,13 +1046,15 @@ int array_count(char **array)
  *
  * dodaje element do tablicy.
  */
-void array_add(char ***array, char *string)
+int array_add(char ***array, char *string)
 {
 	int count = array_count(*array);
 
 	*array = xrealloc(*array, (count + 2) * sizeof(char*));
 	(*array)[count + 1] = NULL;
 	(*array)[count] = string;
+
+	return count + 1;
 }
 
 /*
@@ -808,13 +1066,17 @@ void array_add(char ***array, char *string)
  *  - array - tablica,
  *  - string - szukany ci±g znaków,
  *  - casesensitive - czy mamy zwracaæ uwagê na wielko¶æ znaków?
+ *
+ * zwraca zero w przypadku, je¶li ci±g ju¿ jest na li¶cie
+ * lub aktualn± liczbê ci±gów na li¶cie, po dodaniu
  */ 
-void array_add_check(char ***array, char *string, int casesensitive)
+int array_add_check(char ***array, char *string, int casesensitive)
 {
 	if (!array_item_contains(*array, string, casesensitive))
-		array_add(array, string);
+		return array_add(array, string);
 	else
 		xfree(string);
+	return 0;
 }
 
 /*
@@ -841,6 +1103,24 @@ char *array_join(char **array, const char *sep)
 			string_append(s, sep);
 
 		string_append(s, array[i]);
+	}
+
+	return string_free(s, 0);
+}
+
+char *array_join_count(char **array, const char *sep, int count) {
+	string_t s = string_init(NULL);
+
+	if (array) {
+		int i;
+
+		for (i = 0; i < count; i++) {
+			if (array[i])
+				string_append(s, array[i]);
+			
+			if (i != count-1)	
+				string_append(s, sep);
+		}
 	}
 
 	return string_free(s, 0);
@@ -887,19 +1167,19 @@ int array_contains(char **array, const char *string, int casesensitive)
  */
 int array_item_contains(char **array, const char *string, int casesensitive)
 {
-        int i;
+	int i;
 
-        if (!array || !string)
-                return 0;
+	if (!array || !string)
+		return 0;
 
-        for (i = 0; array[i]; i++) {
-                if (casesensitive && xstrstr(array[i], string))
-                        return 1;
-                if (!casesensitive && xstrcasestr(array[i], string))
-                        return 1;
-        }
+	for (i = 0; array[i]; i++) {
+		if (casesensitive && xstrstr(array[i], string))
+			return 1;
+		if (!casesensitive && xstrcasestr(array[i], string))
+			return 1;
+	}
 
-        return 0;
+	return 0;
 }
 
 /*
@@ -918,6 +1198,285 @@ void array_free(char **array)
 		xfree(*tmp);
 
 	xfree(array);
+}
+
+void array_free_count(char **array, int count) {
+	char **tmp;
+
+	if (!array)
+		return;
+
+	for (tmp = array; count; tmp++, count--)
+		xfree(*tmp);
+
+	xfree(array);
+}
+
+/**
+ * cssfind()
+ *
+ * Short for comma-separated string find, does check whether given string contains given element.
+ * It's works like array_make()+array_contains(), but it's hell simpler and faster.
+ *
+ * @param haystack		- comma-separated string to search.
+ * @param needle		- element to search for.
+ * @param sep			- separator.
+ * @param caseinsensitive	- take a wild guess.
+ *
+ * @return Pointer to found element on success, or NULL on failure.
+ */
+const char *cssfind(const char *haystack, const char *needle, const char sep, int caseinsensitive) {
+	const char *comma = haystack-1;
+	const int needlelen = xstrlen(needle);
+
+	do {
+		comma += xstrspn(comma+1, " \f\n\r\t\v")+1;
+		if (!(caseinsensitive ? xstrncasecmp(comma, needle, needlelen) : xstrncmp(comma, needle, needlelen))) {
+			const char *p, *q;
+
+			p = comma + needlelen;
+			if (!(q = xstrchr(p, sep)))
+				q = p + xstrlen(p);
+			if (q-p <= xstrspn(p, " \f\n\r\t\v")) /* '<' shouldn't happen */
+				return comma;
+		}
+	} while (sep && (comma = xstrchr(comma, sep)));
+
+	return NULL;
+#if 0 /* old, exact-match code; uncomment when needed */
+{
+	const char *r = haystack-1;
+	const int needlelen = xstrlen(needle);
+
+	if (needlelen == 0) { /* workaround for searching '' */
+		char c[3];
+		c[0] = sep;	c[1] = sep;	c[2] = '\0';
+
+		r = xstrstr(haystack, c);
+		if (r) /* return pointer to 'free space' between seps */
+			r++;
+	} else {
+		while ((r = (caseinsensitive ? xstrcasestr(r+1, needle) : xstrstr(r+1, needle))) &&
+				(((r != haystack) && ((*(r-1) != sep)))
+				|| ((*(r+needlelen) != '\0') && (*(r+needlelen) != sep)))) {};
+	}
+
+	return r;
+}
+#endif
+}
+
+/*
+ * eskejpuje:
+ *
+ * - \ -> \\
+ *
+ * oraz wyst±pienia znaków ze stringa esc:
+ *
+ * - 0x07 (\a) -> \a
+ * - 0x08 (\b) -> \b
+ * - 0x09 (\t) -> \t
+ * - 0x0A (\n) -> \n
+ * - 0x0B (\v) -> \v
+ * - 0x0C (\f) -> \f
+ * - 0x0D (\r) -> \r
+ * - pozosta³e -> \xXX (szesnastkowa reprezentacja)
+ *
+ * je¿eli który¶ z wymienionych wy¿ej znaków (np. \a) nie wystêpuje 
+ * w stringu to zostanie przepisany tak jak jest, bez eskejpowania.
+ *
+ * zwraca nowego, zaalokowanego stringa.
+ */
+char *escape(const char *src) {
+	static const char esc[] = "\r\n";
+	string_t dst;
+
+	if (!src)
+		return NULL;
+
+	dst = string_init(NULL);
+
+	for (; *src; src++) {
+		char ch = *src;
+		static const char esctab[] = "abtnvfr";
+
+		if (!(ch == '\\' || strchr(esc, ch))) {
+			string_append_c(dst, ch);
+			continue;
+		}
+
+		string_append_c(dst, '\\');
+
+		if (ch >= 0x07 && ch <= 0x0D)
+			string_append_c(dst, esctab[ch - 0x07]);
+		else if (ch == '\\')
+			string_append_c(dst, '\\');
+		else {
+			char s[5];
+			snprintf(s, sizeof(s), "x%02X", (unsigned char) ch);
+			string_append(dst, s);
+		}
+	}
+
+	return string_free(dst, 0);
+}
+
+/*
+ * dekoduje stringa wyeskejpowanego przy pomocy escape.
+ *
+ * - \\ -> \
+ * - \xXX -> szesnastkowo zdekodowany znak
+ * - \cokolwiekinnego -> \cokolwiekinnego
+ *
+ * zwraca nowego, zaalokowanego stringa.
+ */
+char *unescape(const char *src) {
+	int state = 0;
+	string_t buf;
+	unsigned char hex_msb = 0;
+
+	if (!src)
+		return NULL;
+
+	buf = string_init(NULL);
+
+	for (; *src; src++) {
+		char ch = *src;
+
+		if (state == 0) {		/* normalny tekst */
+			/* sprawdzamy czy mamy cos po '\\', bo jezeli to ostatni 
+			 * znak w stringu, to nie zostanie nigdy dodany. */
+			if (ch == '\\' && *(src + 1)) {
+				state = 1;
+				continue;
+			}
+			string_append_c(buf, ch);
+		} else if (state == 1) {	/* kod ucieczki */
+			if (ch == 'a')
+				ch = '\a';
+			else if (ch == 'b')
+				ch = '\b';
+			else if (ch == 't')
+				ch = '\t';
+			else if (ch == 'n')
+				ch = '\n';
+			else if (ch == 'v')
+				ch = '\v';
+			else if (ch == 'f')
+				ch = '\f';
+			else if (ch == 'r')
+				ch = '\r';
+			else if (ch == 'x' && *(src + 1) && *(src + 2)) {
+				state = 2;
+				continue;
+			} else if (ch != '\\')
+				string_append_c(buf, '\\');	/* fallback - nieznany kod */
+			string_append_c(buf, ch);
+			state = 0;
+		} else if (state == 2) {	/* pierwsza cyfra kodu szesnastkowego */
+			hex_msb = ch;
+			state = 3;
+		} else if (state == 3) {	/* druga cyfra kodu szesnastkowego */
+#define unhex(x) (unsigned char) ((x >= '0' && x <= '9') ? (x - '0') : \
+	(x >= 'A' && x <= 'F') ? (x - 'A' + 10) : \
+	(x >= 'a' && x <= 'f') ? (x - 'a' + 10) : 0)
+			string_append_c(buf, unhex(ch) | (unhex(hex_msb) << 4));
+#undef unhex
+			state = 0;
+		}
+	}
+
+	return string_free(buf, 0);
+}
+
+/*
+ * handle private data
+ */
+static int private_data_cmp(private_data_t *item1, private_data_t *item2) {
+	return xstrcmp(item1->name, item2->name);
+}
+
+static LIST_FREE_ITEM(private_data_free, private_data_t *) {
+	xfree(data->name);
+	xfree(data->value);
+}
+
+DYNSTUFF_LIST_DECLARE_SORTED(private_items, private_data_t, private_data_cmp, private_data_free,
+	static __DYNSTUFF_ADD_SORTED,			/* private_items_add() */
+	static __DYNSTUFF_REMOVE_SAFE,			/* private_items_remove() */
+	__DYNSTUFF_DESTROY)				/* private_items_destroy() */
+
+static private_data_t *private_item_find(private_data_t **data, const char *item_name) {
+	private_data_t *item;
+	int cmp;
+
+	if (!item_name)
+		return NULL;
+
+	for (item = *data; item; item = item->next) {
+		if ( !(cmp = xstrcmp(item->name, item_name)) )
+			return item;
+		if (cmp>0)
+			return NULL;
+	}
+
+	return NULL;
+}
+
+int private_item_get_safe(private_data_t **data, const char *item_name, char **result) {
+	private_data_t *item = private_item_find(data, item_name);
+
+	if (item) {
+		*result = item->value;
+		return 1;
+	}
+
+	return 0;
+}
+
+const char *private_item_get(private_data_t **data, const char *item_name) {
+	char *result = NULL;
+	(void )private_item_get_safe(data, item_name, &result);
+
+	return result;
+}
+
+int private_item_get_int_safe(private_data_t **data, const char *item_name, int *result) {
+	char *tmp;
+	if (!private_item_get_safe(data, item_name, &tmp))
+		return 0;
+
+	*result = atoi(tmp);
+	return 1;
+}
+
+int private_item_get_int(private_data_t **data, const char *item_name) {
+	int result = 0;
+	(void) private_item_get_int_safe(data, item_name, &result);
+	return result;
+}
+
+void private_item_set(private_data_t **data, const char *item_name, const char *value) {
+	private_data_t *item = private_item_find(data, item_name);
+	int unset = !(value && *value);
+
+	if (item) {
+		if (unset) {
+			private_items_remove(data, item);
+		} else if (xstrcmp(item->value, value)) {
+			xfree(item->value);
+			item->value = xstrdup(value);
+		}
+	} else if (!unset) {
+		item = xmalloc(sizeof(private_data_t));
+		item->name = xstrdup(item_name);
+		item->value = xstrdup(value);
+		private_items_add(data, item);
+	}
+}
+
+void private_item_set_int(private_data_t **data, const char *item_name, int value) {
+	private_item_set(data, item_name, itoa(value));
 }
 
 /*

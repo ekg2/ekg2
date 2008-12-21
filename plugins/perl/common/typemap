@@ -5,12 +5,14 @@ Ekg2::Variable		T_Ekg2Var
 Ekg2::Session		T_Ekg2Ses
 Ekg2::Session::Param	T_Ekg2SesVar
 Ekg2::Script		T_Ekg2Scr
+Ekg2::Watch		T_Ekg2Watch
 Ekg2::Window		T_Ekg2Win
 Ekg2::Plugin		T_Ekg2Plu
 Ekg2::User		T_Ekg2User
 Ekg2::Timer		T_Ekg2Time
 
-Ekg2::Userlist		T_PlainList
+Ekg2::Userlist		T_Ekg2User
+Ekg2::Watch		T_PlainList
 short *			T_PlainList
 
 INPUT
@@ -39,6 +41,9 @@ T_Ekg2Scr
 T_Ekg2Comm
 	$var = (command_t *) Ekg2_ref_object($arg)
 
+T_Ekg2Watch
+	$var = (watch_t *) Ekg2_ref_object($arg)
+
 T_Ekg2Win
 	$var = (window_t *) Ekg2_ref_object($arg)
 
@@ -60,6 +65,9 @@ T_Ekg2Ses
 	
 T_Ekg2Comm
 	$arg = (void *) bless_command( (command_t *) $var);
+
+T_Ekg2Watch
+	$arg = (void *) bless_watch( (watch_t *) $var);
 
 T_Ekg2Win
 	$arg = (void *) bless_window( (window_t *) $var);

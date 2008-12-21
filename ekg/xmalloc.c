@@ -120,8 +120,8 @@ void *xcalloc(size_t nmemb, size_t size)
  * Wrapper to <code>malloc()+memset()</code><br>
  *
  * @bug Possible bug: Some libc may return NULL if size is 0, from man malloc:<br>
- * 	<i>If @a size is 0 (...) a <b>null pointer</b> (...) shall be returned.</i><br>
- * 	XXX, check it in configure.ac if malloc() returns NULL on 0 size, and check here if size is 0.
+ *	<i>If @a size is 0 (...) a <b>null pointer</b> (...) shall be returned.</i><br>
+ *	XXX, check it in configure.ac if malloc() returns NULL on 0 size, and check here if size is 0.
  *
  * @sa xcalloc()
  * @sa xfree()
@@ -192,20 +192,20 @@ char *xstrdup(const char *s)
 
 size_t xstrnlen(const char *s, size_t n) 
 {
-        return strnlen(fix(s), n);
+	return strnlen(fix(s), n);
 }
 
 char *xstrndup(const char *s, size_t n)
 {
-        char *tmp;
+	char *tmp;
 
-        if (!s)
-                return NULL;
+	if (!s)
+		return NULL;
 
 	if (!(tmp = strndup((char *) s, n)))
 		ekg_oom_handler();
 
-        return tmp;
+	return tmp;
 }
 
 void *xmemdup(void *ptr, size_t size)
@@ -222,6 +222,14 @@ void *xmemdup(void *ptr, size_t size)
  */
 char *vsaprintf(const char *format, va_list ap)
 {
+	char *res;
+#ifdef HAVE_VASPRINTF
+
+	if (vasprintf(&res, format, ap) == -1 || res == NULL)
+		ekg_oom_handler();
+
+#else /* HAVE_VASPRINTF */
+
 #ifdef NO_POSIX_SYSTEM
 	char tmp[10000];
 #else
@@ -230,7 +238,6 @@ char *vsaprintf(const char *format, va_list ap)
 #if defined(va_copy) || defined(__va_copy)
 	va_list aq;
 #endif
-	char *res;
 	int size;
 
 #if defined(va_copy)
@@ -246,6 +253,8 @@ char *vsaprintf(const char *format, va_list ap)
 #else
 	vsnprintf(res, size + 1, format, ap);
 #endif
+
+#endif
 	return res;
 }
 
@@ -256,7 +265,7 @@ char *xstrstr(const char *haystack, const char *needle)
 
 char *xstrcasestr(const char *haystack, const char *needle)
 {
-        return strcasestr(fix(haystack), fix(needle));
+	return strcasestr(fix(haystack), fix(needle));
 }
 
 int xstrcasecmp(const char *s1, const char *s2) 
@@ -327,18 +336,7 @@ char *xstrncpy(char *dest, const char *src, size_t n)
 
 int xstrncasecmp(const char *s1, const char *s2, size_t n)
 {
-#ifdef NO_POSIX_SYSTEM
-	if (n == 0) return 0;
-	while (n-- != 0 && tolower(*s1) == tolower(*s2)) {
-		if (n == 0 || *s1 == '\0' || *s2 == '\0')
-			break;
-		s1++;
-		s2++;
-	}
-	return tolower(*(unsigned char *) s1) - tolower(*(unsigned char *) s2);
-#else
 	return strncasecmp(fix(s1), fix(s2), n);
-#endif
 }
 
 char *xstrpbrk(const char *s, const char *accept) 

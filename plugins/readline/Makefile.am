@@ -7,7 +7,7 @@ readline_la_LIBADD = $(READLINE_LIBS)
 readline_la_CPPFLAGS = $(C_FVISIBILITY) $(READLINE_CPPFLAGS)
 readline_la_CFLAGS = $(C_FVISIBILITY) $(READLINE_CFLAGS)
 
-libdir = $(plugindir)
+override libdir = $(plugindir)
 INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 
 
 install-data-am:

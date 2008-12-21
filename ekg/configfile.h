@@ -2,10 +2,10 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@go2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@go2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -28,6 +28,10 @@
 
 #include "plugins.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void config_postread();
 int config_read(const char *filename);
 int config_read_plugins();
@@ -36,6 +40,10 @@ int config_write();
 int config_write_partly(plugin_t *plugin, const char **vars);
 void config_write_crash();
 void debug_write_crash();
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 

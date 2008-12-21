@@ -92,7 +92,7 @@ int ioctl(int fd, int request, void *flags) {
 static u_int64_t filetime_to_unix_epoch (const FILETIME *ft) {
 	u_int64_t res = (u_int64_t) ft->dwHighDateTime << 32;
 	res |= ft->dwLowDateTime;
-	res /= 10;                   /* from 100 nano-sec periods to usec */
+	res /= 10;		     /* from 100 nano-sec periods to usec */
 	res -= DELTA_EPOCH_IN_USEC;  /* from Win epoch to Unix epoch */
 	return res;
 }

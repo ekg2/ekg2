@@ -2,6 +2,12 @@
 // (c) 2004-2005 Michal 'GiM' Spadlinski
 //		Jakub 'darkjames' Zawadzki
 
+auto_guess_encoding
+	typ: tekst
+	domy¶lna warto¶æ: brak
+	
+	lista kodowañ, wed³ug których bêdziemy próbowaæ przekodowaæ przychodz±cy tekst
+
 ban_type
 	typ: liczba
 	domy¶lna warto¶æ: 10
@@ -118,6 +124,13 @@ realname
 	dowolny tekst, który zostanie ustawiony jako nasz realname [m.in. w
 	odpowiedzi na /whois], by zmiany realname odnios³y skutek nale¿y siê
 	ponownie po³±czyæ
+
+recode_list
+	typ: text
+	domy¶lna warto¶æ: brak
+	
+	Lista kodowañ dla poszczególnych nicków lub/i kana³ów
+	Syntax: encoding1:nick1,nick2,#chan1,nick3;encoding2:nick4,#chan5,chan6
 
 server
 	typ: tekst

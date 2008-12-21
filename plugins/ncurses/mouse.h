@@ -20,13 +20,13 @@
 #ifndef __EKG_NCURSES_MOUSE_H
 #define __EKG_NCURSES_MOUSE_H
 
-void ncurses_enable_mouse();
+void ncurses_enable_mouse(const char *env);
 void ncurses_disable_mouse();
 void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag);
 
 // int last_mouse_state;
 
-#define EKG_BUTTON1_CLICKED	0x0001          
+#define EKG_BUTTON1_CLICKED	0x0001		
 #define EKG_BUTTON2_CLICKED	0x0007
 #define EKG_BUTTON3_CLICKED	0x0008
 #define EKG_UNKNOWN_CLICKED	0x0006

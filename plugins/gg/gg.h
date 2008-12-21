@@ -2,8 +2,8 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
- *                2004 - 2006 Adam Mikuta <adamm@ekg2.org>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 - 2006 Adam Mikuta <adamm@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -25,6 +25,7 @@
 #include <libgadu.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
+#include <ekg/userlist.h>
 
 COMMAND(gg_command_image); /* images.c */
 
@@ -48,10 +49,15 @@ typedef enum {
 } gg_quiet_t;
 
 typedef struct {
-	struct gg_session *sess;	/* sesja */
-	list_t searches;		/* operacje szukania */
-	list_t passwds;			/* operacje zmiany has³a */
-	gg_quiet_t quiet;		/* co ma byæ cicho */
+	struct		gg_session *sess;	/* sesja */
+	list_t		searches;		/* operacje szukania */
+	list_t		passwds;		/* operacje zmiany has³a */
+	gg_quiet_t	quiet;			/* co ma byæ cicho */
+
+		/* (annoying) description scrolling */
+	unsigned int	scroll_op	: 1;
+	int		scroll_pos;
+	time_t		scroll_last;
 } gg_private_t;
 
 void gg_register_commands();
@@ -59,11 +65,24 @@ void gg_register_commands();
 WATCHER_SESSION(gg_session_handler);
 
 typedef struct {
-	const char *uid;
+	char *uid;
 	session_t *session;
 } gg_currently_checked_t;
 
 extern list_t gg_currently_checked;
+
+/**
+ * gg_userlist_private_t
+ *
+ * Here we keep all userlist things, which are private to GG protocol, and because of this were removed from core userlist_t.
+ */
+typedef struct {
+
+	int protocol;		/**< Protocol version */
+
+} gg_userlist_private_t;
+
+#define gg_userlist_priv_get(u) ((gg_userlist_private_t *) userlist_private_get(&gg_plugin, u))
 
 #endif /* __EKG_GG_GG_H */
 

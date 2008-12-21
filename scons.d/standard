@@ -1,0 +1,129 @@
+
+# Standard checks for ekg2 core
+
+Import('*')
+
+std_funcs = [
+	'inet_aton', 'inet_ntop', 'inet_pton', 'getaddrinfo',
+	'utimes', 'flock',
+	'mkstemp',
+	'vasprintf'
+	]
+
+std_headers = [
+	'regex.h'
+	]
+
+platform_libs = {
+	'kvm':		'kvm_openfiles', # bsd
+
+	'nsl':		'gethostbyname', # sunos
+	'socket':	'socket',
+	'rt':		'sched_yield',
+
+	'bind':		['inet_addr', '__inet_addr'], # beos
+	'wsock32':	None # win32
+	}
+
+	# XXX: needs testing
+struct_members = {
+	'struct kinfo_proc':	['ki_size', 'sys/param.h', 'sys/user.h']
+	}
+
+sys_types = {
+	'socklen_t':			['sys/types.h', 'sys/socket.h']
+	}
+
+possibly_libbized = {
+	'dlopen':	'dl',
+	'iconv':	'iconv'
+	}
+
+for func in std_funcs:
+	defines['HAVE_%s' % (func.upper())] = conf.CheckFunc(func)
+
+for header in std_headers:
+	defines['HAVE_%s' % (header.upper().replace('.', '_'))] = conf.CheckHeader(header)
+
+for lib, funcs in platform_libs.items():
+	if not isinstance(funcs, list):
+		funcs = [funcs]
+	for func in funcs:
+		if conf.CheckLib(lib, func, None, None, 0):
+			ekg_libs.append(lib)
+			break
+
+
+for struct, headers in struct_members.items():
+	member = headers.pop(0)
+	defines['HAVE_%s_%s' % (struct.upper().replace(' ', '_'), member.upper().replace('.', '_'))] = conf.CheckStructMember(struct, member, headers)
+
+for type, headers in sys_types.items():
+	includes = ''
+	for inc in headers:
+		includes += '#include <%s>\n' % (inc)
+	defines['HAVE_%s' % (type.upper())] = conf.CheckType(type, includes)
+
+for func, lib in possibly_libbized.items():
+	ret = conf.CheckFunc(func)
+	if not ret:
+		ret = conf.CheckLib(lib, func, None, None, 0)
+		if ret:
+			ekg_libs.append(lib)
+	defines['HAVE_%s' % (func.upper())] = ret
+
+defines['HAVE_LANGINFO_CODESET'] = conf.CheckLibWithHeader(None, ['langinfo.h'], 'C', 'nl_langinfo(CODESET);', 0)
+
+if env['IDN']:
+	have_idn = conf.CheckLibWithHeader('idn', ['stringprep.h'], 'C', 'stringprep_check_version(NULL);', 0)
+else:
+	have_idn = False
+defines['LIBIDN'] = have_idn
+if have_idn:
+	ekg_libs.append('idn')
+
+if env['NLS']:
+	gettext_p = 'gettext(""); bindtextdomain("", "");'
+	have_gettext = conf.CheckLibWithHeader(None, ['libintl.h'], 'C', gettext_p, 0)
+	if not have_gettext:
+		have_gettext = conf.CheckLibWithHeader('intl', ['libintl.h'], 'C', gettext_p, 0)
+		if have_gettext:
+			ekg_libs.append('intl')
+	
+	if have_gettext:
+		gettext_ver = []
+		have_gettext = conf.PkgConfig(None, None, gettext_ver, 'msgfmt')
+else:
+	have_gettext = False
+defines['ENABLE_NLS'] = have_gettext
+
+if env['DEBUG'] == 'none':
+	defines['DISABLE_DEBUG'] = True
+	warnings.append("debug() disabled, you're on your own now!")
+elif env['DEBUG'] == 'stderr':
+	defines['STDERR_DEBUG'] = True
+
+if env['RESOLV']:
+	old	= SetFlags(env, ['-D_GNU_SOURCE'])
+	have_resolv = conf.CheckLibWithHeader(None, ['netinet/in.h', 'resolv.h'], 'C', 'dn_expand(NULL, NULL, NULL, NULL, 0);', 0)
+	if not have_resolv:
+		have_resolv = conf.CheckLibWithHeader('resolv', ['netinet/in.h', 'resolv.h'], 'C', 'dn_expand(NULL, NULL, NULL, NULL, 0);', 0)
+		if have_resolv:
+			ekg_libs.append('resolv')
+	RestoreFlags(env, old)
+else:
+	have_resolv = False
+
+defines['HAVE_RESOLV_H'] = have_resolv
+if not have_resolv:
+	warnings.append("""libresolv not found, SRV resolving won't work. If you're going to use GTalk
+account, you'll have to manually set 'server' to 'talk.google.com'.""")
+if not 'HAVE_GETADDRINFO' in defines:
+	warnings.append("You don't have getaddrinfo(), IPv6 won't work.")
+if not 'HAVE_INET_PTON' in defines:
+	warnings.append("You don't have inet_pton(), IPv6 probably won't work.")
+
+out = True
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python

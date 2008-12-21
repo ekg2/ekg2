@@ -20,7 +20,12 @@ my $player = 'mplayer -vo dxr3 -ao alsa -fs -framedrop';
 my $preplayer = 'mpc pause; sleep 2';
 my $postplayer = 'sleep 2; mpc play';
 my $autoplay = 1;
-my $len;
+my $convertera = 'ffmpeg -i';
+my $converterb = '';
+my $converterc = '-sameq -vcodec mpeg2video -acodec copy';
+my $converterext = 'mpg';
+my $avgkibps = 28;
+my ($len, $avgtime);
 
 {
 	my ($f);
@@ -31,41 +36,69 @@ my $len;
 	close($f);
 }
 
-LWP::Simple::get($path) =~ /<title>YouTube - (.*?)<\/title>.*player2.swf\?(video_id=[0-9a-z]+.+?)\"/is or replyxmsg("Can't find download URL!"), exit(0);
+LWP::Simple::get($path) =~ /<title>YouTube - (.*?)<\/title>.*player2.swf\?(video_id=[0-9a-z_]+.+?)\"/is or replyxmsg("Can't find download URL!"), exit(0);
 
 my ($title, $id) = ($1, $2);
 
 {
 	my @res = LWP::Simple::head("http://youtube.com/get_video.php?$id");
 
-	$len = ($res[1] / 1024) if (@res > 1);
-	if ($len > 1024) {
-		$len = sprintf("%.2f MiB", $len / 1024);
-	} else {
-		$len = sprintf("%.2f KiB", $len);
+	if (@res > 1) {
+		$len = ($res[1] / 1024);
+		$avgtime = ($len / $avgkibps);
+		if ($len > 1024) {
+			$len = sprintf("%.2f MiB", $len / 1024);
+		} else {
+			$len = sprintf("%.2f KiB", $len);
+		}
+		if ($avgtime > 60) {
+			$avgtime = sprintf("%d:%02d min", ($avgtime / 60), ($avgtime % 60));
+		} else {
+			$avgtime = sprintf("%d s", $avgtime);
+		}
 	}
 }
 
-replyxmsg("Download of '$title'" . ($len ? " [$len] " : "") . "( http://youtube.com/get_video.php?$id ) started.");
+replyxmsg("Download of '$title'" . ($len ? " [$len] (~$avgtime) " : "") . "( http://youtube.com/get_video.php?$id ) started.");
 
 mkdir($dldir) if (! -d $dldir);
 
-`wget $wgetopts -O "$dldir/$title.flv" "http://youtube.com/get_video.php?$id"`;
+my $fn = $title;
+($fn =~ s/\//_/g);
+
+if (!$convertera || ! -f "$dldir/$fn.$converterext") {
+	`wget $wgetopts -O "$dldir/$fn.flv" "http://youtube.com/get_video.php?$id"`;
+
+	if ($convertera) {
+		replyxmsg('Starting video converter...');
+		`$convertera "$dldir/$fn.flv" $converterb "$dldir/$fn.$converterext" $converterc`;
+		if (($?>>8) == 0) {
+			unlink("$dldir/$fn.flv");
+			$fn .= ".$converterext";
+		} else {
+			replyxmsg('Converter somewhat failed.');
+			$fn .= '.flv';
+		}
+	} else {
+		$fn .= '.flv';
+	}
+} else {
+	$fn .= ".$converterext";
+}
 
 if (($?>>8) == 0) {
 	if ($autoplay) {
-		replyxmsg('Download finished.');
 		`$preplayer`;
 		replyxmsg("Starting playback of '$title'...");
-		`$player "$dldir/$title.flv" &> /dev/null`;
+		`$player "$dldir/$fn" &> /dev/null`;
 		if (($?>>8) == 0) {
 			replyxmsg('Playback finished.');
 		} else {
-			replyxmsg("Playback somewhat failed. Please try by hand:\n\t$player \"$dldir/$title.flv\"");
+			replyxmsg("Playback somewhat failed. Please try by hand:\n\t$player \"$dldir/$fn\"");
 		}
 		`$postplayer`;
 	} else {
-		replyxmsg("Download of '$title' finished. To see it:\n\t$player \"$dldir/$title.flv\"");
+		replyxmsg("Download of '$title' finished. To see it:\n\t$player \"$dldir/$fn\"");
 	}
 } else {
 	replyxmsg("Download of '$title' somewhat failed.");

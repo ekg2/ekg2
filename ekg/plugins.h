@@ -26,14 +26,13 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-#define EXPORT __attribute__ ((visibility("default")))
-
-#ifndef EKG2_WIN32_NOFUNCTION
-extern list_t plugins;
-extern list_t queries;
-extern list_t watches;
-extern list_t idles;
+#ifdef __cplusplus
+extern "C" {
 #endif
+
+#define EKG_ABI_VER 4729
+
+#define EXPORT __attribute__ ((visibility("default")))
 
 typedef enum {
 	PLUGIN_ANY = 0,
@@ -51,23 +50,43 @@ typedef int (*plugin_destroy_func_t)(void);
 typedef int (*plugin_theme_init_func_t)(void);
 typedef void (plugin_notify_func_t)(session_t *, const char *);
 
+#define PLUGIN_VAR_ADD(name, type, value, secret, notify)	{ name, value, secret, type, notify }
+#define PLUGIN_VAR_END()					{ NULL, NULL, 0, -1, NULL } 
+extern int plugin_abi_version(int plugin_abi_ver, const char * plugin_name);
+#define PLUGIN_CHECK_VER(name) { if (!plugin_abi_version(EKG_ABI_VER, name)) return -1; }
+
 typedef struct {
-        char *key;                      /* name */
-        char *value;                    /* value */
-        int secret;                     /* should it be hidden ? */
+	char *key;			/* name */
+	char *value;			/* value */
+	int secret;			/* should it be hidden ? */
 	int type;			/* type */
 	plugin_notify_func_t *notify;	/* notify */
 } plugins_params_t;
 
-typedef struct {
+struct protocol_plugin_priv {
+	const char **protocols;		/* NULL-terminated list of supported protocols, replacing GET_PLUGIN_PROTOCOLS */
+	const status_t *statuses;	/* EKG_STATUS_NULL-terminated list of supported statuses */
+};
+
+typedef struct plugin {
+	struct plugin *next;
+
 	char *name;
 	int prio;
 	plugin_class_t pclass;
 	plugin_destroy_func_t destroy;
 	/* lt_dlhandle */ void *dl;
-	plugins_params_t **params;
+	plugins_params_t *params;
 	plugin_theme_init_func_t theme_init;
+
+	const void *priv;
 } plugin_t;
+
+/* Note about plugin_t.statuses:
+ *	we currently put every supported status there, including unsettable by user,
+ *	we assume that user cannot set states <= EKG_STATUS_NA
+ * [XXX]
+ */
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
@@ -77,11 +96,11 @@ int plugin_register(plugin_t *, int prio);
 int plugin_unregister(plugin_t *);
 plugin_t *plugin_find(const char *name);
 plugin_t *plugin_find_uid(const char *uid);
-#define plugin_find_s(a) plugin_find_uid(a->uid)
 int have_plugin_of_class(plugin_class_t pclass);
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify);
-plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
+int plugin_var_find(plugin_t *pl, const char *name);
 
+void plugins_unlink(plugin_t *pl);
 #endif
 
 #ifdef USINGANANTIQUECOMPILER
@@ -89,6 +108,7 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 	static int x##_plugin_destroy(); \
 	\
 	plugin_t x##_plugin = { \
+		NULL,		\
 		#x, \
 		0, \
 		y, \
@@ -111,7 +131,9 @@ plugins_params_t *plugin_var_find(plugin_t *pl, const char *name);
 #define QUERY(x) int x(void *data, va_list ap)
 typedef QUERY(query_handler_func_t);
 
-typedef struct {
+typedef struct queryx {
+	struct queryx *next;
+
 	int id;
 	plugin_t *plugin;
 	void *data;
@@ -127,10 +149,12 @@ int query_free(query_t *q);
 void query_external_free();
 
 int query_emit_id(plugin_t *, const int, ...);
+int query_emit_id_ro(plugin_t *plugin, const int id, ...);
 int query_emit(plugin_t *, const char *, ...);
+void queries_reconnect();
 
 const char *query_name(const int id);
-const struct query *query_struct(const int id);
+const struct query_def *query_struct(const int id);
 
 #endif
 
@@ -151,7 +175,7 @@ typedef WATCHER(watcher_handler_func_t);
 /* typedef WATCHER_LINE(watcher_handler_line_func_t); */
 typedef WATCHER_SESSION(watcher_session_handler_func_t);
 
-typedef struct {
+typedef struct watch {
 	int fd;			/* obserwowany deskryptor */
 	watch_type_t type;	/* co sprawdzamy */
 	plugin_t *plugin;	/* wtyczka obs³uguj±ca deskryptor */
@@ -180,6 +204,7 @@ int watch_write(watch_t *w, const char *format, ...) __attribute__ ((format (pri
 #else
 int watch_write(watch_t *w, const char *format, ...);
 #endif
+int watch_write_data(watch_t *w, const char *buf, int len);
 
 watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type);
 void watch_free(watch_t *w);
@@ -198,24 +223,18 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 void watch_handle(watch_t *w);
 void watch_handle_line(watch_t *w);
 int watch_handle_write(watch_t *w);
-
-#define IDLER(x) int x(void *data)
-
-typedef IDLER(idle_handler_func_t);
-
-typedef struct {
-	plugin_t *plugin;
-	idle_handler_func_t *handler;
-	void *data;
-} idle_t;
-
-#ifndef EKG2_WIN32_NOFUNCTION
-idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data);
-void idle_handle(idle_t *i);
-#endif
-
 int ekg2_dlinit();
 
+#endif
+
+#ifndef EKG2_WIN32_NOFUNCTION
+extern plugin_t *plugins;
+extern list_t watches;
+extern query_t *queries[];
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __EKG_PLUGINS_H */

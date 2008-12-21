@@ -2,10 +2,10 @@
 
 /*
  *  (C) Copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *                          Robert J. Wo¼ny <speedy@ziew.org>
- *                          Pawe³ Maziarz <drg@o2.pl>
- *                          Dawid Jarosz <dawjar@poczta.onet.pl>
- *                          Piotr Domagalski <szalik@szalik.net>
+ *			    Robert J. Wo¼ny <speedy@ziew.org>
+ *			    Pawe³ Maziarz <drg@o2.pl>
+ *			    Dawid Jarosz <dawjar@poczta.onet.pl>
+ *			    Piotr Domagalski <szalik@szalik.net>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -27,15 +27,26 @@
 #include <stdio.h>
 
 #include "dynstuff.h"
+#include "dynstuff_inline.h"
 #include "stuff.h"
 #include "xmalloc.h"
 
-typedef struct {
-        char *name;
-        char *value;
+typedef struct emoticon {
+	struct emoticon *next;
+
+	char *name;
+	char *value;
 } emoticon_t;
 
-list_t emoticons = NULL;
+emoticon_t *emoticons = NULL;
+
+static LIST_FREE_ITEM(list_emoticon_free, emoticon_t *) { xfree(data->name); xfree(data->value); }
+
+DYNSTUFF_LIST_DECLARE(emoticons, emoticon_t, list_emoticon_free,
+	static __DYNSTUFF_LIST_ADD,		/* emoticons_add() */
+	__DYNSTUFF_NOREMOVE,
+	__DYNSTUFF_LIST_DESTROY)		/* emoticons_destroy() */
+
 int config_emoticons = 1;
 
 /*
@@ -48,16 +59,14 @@ int config_emoticons = 1;
  *
  * 0/-1
  */
-static int emoticon_add(const char *name, const char *value)
-{
-	emoticon_t *e;
-	list_t l;
+static int emoticon_add(const char *name, const char *value) {
+	emoticon_t *e, *el;
 
 	if (!name || !value)
 		return -1;
 
-	for (l = emoticons; l; l = l->next) {
-		e = l->data;
+	for (el = emoticons; el; el = el->next) {
+		e = el;
 		if (!xstrcasecmp(name, e->name)) {
 			xfree(e->value);
 			e->value = xstrdup(value);
@@ -68,37 +77,10 @@ static int emoticon_add(const char *name, const char *value)
 	e->name = xstrdup(name);
 	e->value = xstrdup(value);
 
-	return (list_add_beginning(&emoticons, e, 0) ? 0 : -1);
+	emoticons_add(e);
+
+	return 0;
 }
-
-/*
- * emoticon_remove()
- *
- * usuwa emoticon o danej nazwie.
- *
- *  - name.
- *
- * 0/-1
- */
-#if 0 /* never used, never exported, uncomment when needed */
-static int emoticon_remove(const char *name)
-{
-	list_t l;
-
-	for (l = emoticons; l; l = l->next) {
-		emoticon_t *f = l->data;
-
-		if (!xstrcasecmp(f->name, name)) {
-			xfree(f->value);
-			xfree(f->name);
-			list_remove(&emoticons, f, 1);
-			return 0;
-		}
-	}
-	
-	return -1;
-}
-#endif
 
 /*
  * emoticon_read()
@@ -108,13 +90,12 @@ static int emoticon_remove(const char *name)
  *
  * 0/-1
  */
-int emoticon_read()
-{
+int emoticon_read() {
 	const char *filename;
 	char *buf;
 	FILE *f;
 
-	if (!(filename = prepare_path("emoticons", 0)))
+	if (!(filename = prepare_pathf("emoticons")))
 		return -1;
 	
 	if (!(f = fopen(filename, "r")))
@@ -148,9 +129,8 @@ int emoticon_read()
  *
  * zwraca zaalokowany, rozwiniêty string.
  */
-char *emoticon_expand(const char *s)
-{
-	list_t l = NULL;
+char *emoticon_expand(const char *s) {
+	emoticon_t *el = NULL;
 	const char *ss;
 	char *ms;
 	size_t n = 0;
@@ -163,17 +143,17 @@ char *emoticon_expand(const char *s)
 		size_t ns = xstrlen(ss);
 		int ret = 1;
 
-		for (l = emoticons; l && ret; l = (ret ? l->next : l)) {
+		for (el = emoticons; el && ret; el = (ret ? el->next : el)) {
 			size_t nn;
 
-			e = l->data;
+			e = el;
 			nn = xstrlen(e->name);
 			if (ns >= nn)
 				ret = xstrncmp(ss, e->name, nn);
 		}
 
-		if (l) {
-			e = l->data;
+		if (el) {
+			e = el;
 			n += xstrlen(e->value);
 			ss += xstrlen(e->name) - 1;
 		} else
@@ -187,17 +167,17 @@ char *emoticon_expand(const char *s)
 		size_t ns = xstrlen(ss);
 		int ret = 1;
 
-		for (l = emoticons; l && ret; l = (ret ? l->next : l)) {
+		for (el = emoticons; el && ret; el = (ret ? el->next : el)) {
 			size_t n;
 
-			e = l->data;
+			e = el;
 			n = xstrlen(e->name);
 			if (ns >= n)
 				ret = xstrncmp(ss, e->name, n);
 		}
 
-		if (l) {
-			e = l->data;
+		if (el) {
+			e = el;
 			xstrcat(ms, e->value);
 			ss += xstrlen(e->name) - 1;
 		} else
@@ -208,27 +188,31 @@ char *emoticon_expand(const char *s)
 }
 
 /*
- * emoticon_free()
+ * emoticon_remove()
  *
- * usuwa pamiêæ zajêt± przez emoticony.
+ * usuwa emoticon o danej nazwie.
+ *
+ *  - name.
+ *
+ * 0/-1
  */
-void emoticon_free()
+#if 0 /* never used, never exported, uncomment when needed */
+static int emoticon_remove(const char *name)
 {
 	list_t l;
 
-	if (!emoticons)
-		return;
-
 	for (l = emoticons; l; l = l->next) {
-		emoticon_t *e = l->data;
+		emoticon_t *f = l->data;
 
-		xfree(e->name);
-		xfree(e->value);
+		if (!xstrcasecmp(f->name, name)) {
+			emoticons_remove(f);
+			return 0;
+		}
 	}
-
-	list_destroy(emoticons, 1);
-	emoticons = NULL;
+	
+	return -1;
 }
+#endif
 
 /*
  * Local Variables:

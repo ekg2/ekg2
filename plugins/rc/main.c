@@ -1,8 +1,25 @@
-/* $Id */
+/*
+ *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl>
+ *
+ *  This program is free software; you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License Version 2 as
+ *  published by the Free Software Foundation.
+ *
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program; if not, write to the Free Software
+ *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
+ */
 
 #include <ekg/win32.h>
 
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/socket.h>
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -78,7 +95,7 @@ static WATCHER(rc_input_handler_dgram) {
 static WATCHER(rc_input_handler_accept) {
 	rc_input_t *r = data, *rn;
 	struct sockaddr sa;
-	int salen = sizeof(sa), cfd;
+	socklen_t salen = sizeof(sa), cfd;
 
 	if (type == 1) {
 		rc_input_close(r);
@@ -98,7 +115,7 @@ static WATCHER(rc_input_handler_accept) {
 	rn->fd		= cfd;
 	rn->path	= saprintf("%sc", r->path);	/* maybe ip:port of client or smth? */
 	rn->type	= (r->type == RC_INPUT_TCP) ? RC_INPUT_TCP_CLIENT : RC_INPUT_UNIX_CLIENT;
-	list_add(&rc_inputs, rn, 0);
+	list_add(&rc_inputs, rn);
 	watch_add_line(&rc_plugin, cfd, WATCH_READ_LINE, rc_input_handler_line, rn);
 	return 0;
 }
@@ -128,7 +145,7 @@ static watch_t *rc_watch_find(int fd) {
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
 
-		if (w->plugin == &rc_plugin && w->fd == fd)
+		if (w && w->plugin == &rc_plugin && w->fd == fd)
 			return w;
 	}
 
@@ -245,7 +262,7 @@ static void rc_paths_changed(const char *name)
 			r->path	= xstrdup(paths[i]);
 			r->type	= type;
 			
-			list_add(&rc_inputs, r, 0);
+			list_add(&rc_inputs, r);
 
 			watch_add(&rc_plugin, rfd, 
 				((void *) rc_input_handler != (void *) rc_input_handler_line) ? WATCH_READ : WATCH_READ_LINE, 
@@ -273,6 +290,9 @@ static void rc_paths_changed(const char *name)
 }
 
 EXPORT int rc_plugin_init(int prio) {
+
+	PLUGIN_CHECK_VER("rc");
+
 	plugin_register(&rc_plugin, prio);
 
 	variable_add(&rc_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);

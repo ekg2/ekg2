@@ -5,6 +5,13 @@ auto_connect
 	If set to true, this session will be connected automagically
 	on program startup.
 
+charset
+	type: string
+	default value: none
+	
+	Character set to use when fetching or sending messages. If NULL, no
+	conversion will be made - i.e. current charset will be used.
+
 dotfile_suffix
 	type: string
 	default value: none

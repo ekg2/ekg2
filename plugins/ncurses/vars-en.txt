@@ -128,10 +128,15 @@ margin_size
 	
 	defines margin size used by /| with themes
 
+mark_on_window_change
+	type: bool
+	default value: 1
+	
+	if set to 1, add marker to current window and then switch to another window
+
 statusbar_size
 	type: integer
 	default value: 1
 	
 	defines statusbar size in lines form 1 to 5.
-
 

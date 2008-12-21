@@ -2,7 +2,7 @@
 
 /*
  *  (C) Copyright 2003 Wojtek Kaniewski <wojtekka@irc.pl
- *                2004 Piotr Kupisiewicz <deletek@ekg2.org>
+ *		  2004 Piotr Kupisiewicz <deletek@ekg2.org>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -22,6 +22,7 @@
 #include <string.h>
 
 #include <ekg/commands.h>
+#include <ekg/debug.h>
 #include <ekg/sessions.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
@@ -41,7 +42,7 @@ COMMAND(gg_command_find)
 	int i, res = 0, all = 0;
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
-		wcs_printq("not_connected", session_name(session));
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
@@ -56,7 +57,7 @@ COMMAND(gg_command_find)
 			list_remove(&g->searches, s, 0);
 		}
 		
-		wcs_printq("search_stopped");
+		printq("search_stopped");
 
 		return 0;
 	}
@@ -80,7 +81,7 @@ COMMAND(gg_command_find)
 		}
 
 		if (xstrncasecmp(uid, "gg:", 3)) {
-			wcs_printq("generic_error", ("Tylko GG"));
+			printq("generic_error", ("Tylko GG"));
 			return -1;
 		}
 
@@ -94,7 +95,7 @@ COMMAND(gg_command_find)
 	uargv = xcalloc(array_count(argv)+1, sizeof(char **));
 
 	for (i = 0; argv[i]; i++)
-		uargv[i] = gg_locale_to_cp(argv[i]);
+		uargv[i] = ekg_locale_to_cp(argv[i]);
 
 	for (i = 0; argv[i]; i++) {
 		char *arg = argv[i];
@@ -161,7 +162,7 @@ COMMAND(gg_command_find)
 			continue;
 		}
 
-		wcs_printq("invalid_params", name);
+		printq("invalid_params", name);
 		gg_pubdir50_free(req);
 
 #if (USE_UNICODE || HAVE_GTK)
@@ -177,12 +178,12 @@ COMMAND(gg_command_find)
 
 no_argv:
 	if (!gg_pubdir50(g->sess, req)) {
-		wcs_printq("search_failed", ("Nie wiem o co chodzi"));
+		printq("search_failed", ("Nie wiem o co chodzi"));
 		res = -1;
 	}
 
 	if (all)
-		list_add(&g->searches, req, 0);
+		list_add(&g->searches, req);
 	else
 		gg_pubdir50_free(req);
 
@@ -196,12 +197,12 @@ COMMAND(gg_command_change)
 	gg_pubdir50_t req;
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
-		wcs_printq("not_connected");
+		printq("not_connected");
 		return -1;
 	}
 
 	if (!params[0]) {
-		wcs_printq("not_enough_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -210,45 +211,43 @@ COMMAND(gg_command_change)
 
 	if (xstrcmp(params[0], ("-"))) {
 		char **argv = array_make(params[0], (" \t"), 0, 1, 1);
-		char **uargv = xcalloc(array_count(argv)+1, sizeof(char *));
 		
-		for (i = 0; argv[i]; i++) {
-			uargv[i] = gg_locale_to_cp(argv[i]);
-		}
+		for (i = 0; argv[i]; i++)
+			argv[i] = ekg_locale_to_cp(argv[i]);
 
 		for (i = 0; argv[i]; i++) {
 			if (match_arg(argv[i], 'f', ("first"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_FIRSTNAME, argv[++i]);
 				continue;
 			}
 
 			if (match_arg(argv[i], 'N', ("familyname"), 7) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYNAME, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYNAME, argv[++i]);
 				continue;
 			}
 		
 			if (match_arg(argv[i], 'l', ("last"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_LASTNAME, argv[++i]);
 				continue;
 			}
 		
 			if (match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_NICKNAME, argv[++i]);
 				continue;
 			}
 			
 			if (match_arg(argv[i], 'c', ("city"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_CITY, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_CITY, argv[++i]);
 				continue;
 			}
 			
 			if (match_arg(argv[i], 'C', ("familycity"), 7) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYCITY, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_FAMILYCITY, argv[++i]);
 				continue;
 			}
 			
 			if (match_arg(argv[i], 'b', ("born"), 2) && argv[i + 1]) {
-				gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, uargv[++i]);
+				gg_pubdir50_add(req, GG_PUBDIR50_BIRTHYEAR, argv[++i]);
 				continue;
 			}
 			
@@ -261,37 +260,18 @@ COMMAND(gg_command_change)
 				gg_pubdir50_add(req, GG_PUBDIR50_GENDER, GG_PUBDIR50_GENDER_SET_MALE);
 				continue;
 			}
-			wcs_printq("invalid_params", name);
-#if (USE_UNICODE || HAVE_GTK)
-			if (config_use_unicode) { 
-				for (i = 0; argv[i]; i++) {
-					if (argv[i] != uargv[i]) 	xfree(uargv[i]);
-					else				xfree(argv[i]);
-				} 
-				xfree(argv);
-			} else
-#endif
-				array_free(argv);
-			xfree(uargv);
+
+			printq("invalid_params", name);
+			array_free(argv);
 
 			gg_pubdir50_free(req);
 			return -1;
 		}
-#if (USE_UNICODE || HAVE_GTK)
-		if (config_use_unicode) {
-			for (i = 0; argv[i]; i++) {
-				if (argv[i] != uargv[i]) 	xfree(uargv[i]);
-				else				xfree(argv[i]);
-			}
-			xfree(argv);
-		} else
-#endif
-			array_free(argv);
-		xfree(uargv);
+		array_free(argv);
 	}
 
 	if (!gg_pubdir50(g->sess, req)) {
-		wcs_printq("change_failed", (""));
+		printq("change_failed", (""));
 		gg_pubdir50_free(req);
 		return -1;
 	}
@@ -326,7 +306,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		return;
 	}
 
-	gg_debug(GG_DEBUG_MISC, "handle_search50, count = %d\n", gg_pubdir50_count(res));
+	debug_function("gg_session_handler_search50() handle_search50, count = %d\n", gg_pubdir50_count(res));
 
 	for (l = g->searches; l; l = l->next) {
 		gg_pubdir50_t req = l->data;
@@ -346,12 +326,12 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		const char *__birthyear = gg_pubdir50_get(res, i, "birthyear");
 		const char *__city	= gg_pubdir50_get(res, i, "city");
 
-		char *firstname 	= gg_cp_to_locale(xstrdup(__firstname));
-		char *lastname 		= gg_cp_to_locale(xstrdup(__lastname));
-		char *nickname 		= gg_cp_to_locale(xstrdup(__nickname));
-		char *city		= gg_cp_to_locale(xstrdup(__city));
-		int status 		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
-		const char *birthyear 	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
+		char *firstname		= ekg_cp_to_locale(xstrdup(__firstname));
+		char *lastname		= ekg_cp_to_locale(xstrdup(__lastname));
+		char *nickname		= ekg_cp_to_locale(xstrdup(__nickname));
+		char *city		= ekg_cp_to_locale(xstrdup(__city));
+		int status		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
+		const char *birthyear	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
 
 		char *name, *active, *gender;
 		const char *target = NULL;
@@ -364,7 +344,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 			last_search_first_name	= xstrdup(firstname);
 			last_search_last_name	= xstrdup(lastname);
 			last_search_nickname	= xstrdup(nickname);
-			last_search_uid 	= saprintf("gg:%s", uin);
+			last_search_uid		= saprintf("gg:%s", uin);
 		}
 
 		name = saprintf(
@@ -395,6 +375,8 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		}
 		gender = format_string(format_find(__format("_unknown")), "");
 
+			/* XXX: why do we _exactly_ use it here? can't we just always
+			 *	define target and thus display result in right conversation window? */
 		for (l = autofinds; l; l = l->next) {
 			char *d = (char *) l->data;
 		
@@ -404,9 +386,9 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 			}
 		}
 		
-		print_window(target, s, 0, __format(""), 
-			uin 		? uin : ("?"), name, 
-			nickname 	? nickname : (""), 
+		print_info(target, s, __format(""), 
+			uin		? uin : ("?"), name, 
+			nickname	? nickname : (""), 
 			city		? city : (""), 
 			birthyear	? birthyear : ("-"),
 			gender, active);
@@ -465,7 +447,7 @@ void gg_session_handler_change50(session_t *s, struct gg_event *e)
 		return;
 
 	quiet = (g->quiet & GG_QUIET_CHANGE);
-	wcs_printq("change");
+	printq("change");
 }
 
 

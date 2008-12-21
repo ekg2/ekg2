@@ -18,6 +18,11 @@
 
 * * *
 
+  %A	wybranie mapowania grafiki vt100
+  %a	powrót do mapowania domy¶lnego
+
+* * *
+
 przy %1-%9 mo¿na kazaæ dope³niaæ do konkretnej szeroko¶ci. przydaje siê
 do wszelkiego rodzaju tabelek.
 
@@ -27,6 +32,8 @@ do wszelkiego rodzaju tabelek.
   %[,9]2   dope³nia kropkami
   %[_4]1   dope³nia znakami podkre¶lenia
   %(10)1   je¶li rozmiar parametru przekroczy 10 znaków nie obcina
+  %[^12]1  wstawia pierwszy parametr na ¶rodku pola o szeroko¶ci 12 znaków uzupe³niaj±c spacjami
+  %[^,8]1  wstawia pierwszy parametr na ¶rodku pola o szeroko¶ci 12 znaków uzupe³niaj±c kropkami
 
 UWAGA! kolorkowe sekwencje ansi traktuje jak znaki, wiêc nie powinno
 siê ich u¿ywaæ przy dope³nianiu parametrów.
