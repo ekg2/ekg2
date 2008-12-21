@@ -481,7 +481,7 @@ void ncurses_main_window_mouse_handler(int x, int y, int mouse_state)
 int ncurses_backlog_add(window_t *w, fstring_t *str)
 {
 	int i, removed = 0;
-	ncurses_window_t *n = w->private;
+	ncurses_window_t *n = w->priv_data;
 	
 	if (!w)
 		return 0;
@@ -583,7 +583,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 	int render_timestamp = (config_timestamp && config_timestamp_show && config_timestamp[0]);
 	ncurses_window_t *n;
 
-	if (!w || !(n = w->private))
+	if (!w || !(n = w->priv_data))
 		return 0;
 
 	/* przy pe³nym przebudowaniu ilo¶ci linii nie musz± siê koniecznie
@@ -768,7 +768,7 @@ void ncurses_resize()
 		height = 1;
 
 	for (w = windows; w; w = w->next) {
-		ncurses_window_t *n = w->private;
+		ncurses_window_t *n = w->priv_data;
 		int old_width = w->width;
 
 		if (!n)
@@ -845,7 +845,7 @@ void ncurses_resize()
 	if (top > stdscr->_maxy)	top = stdscr->_maxy;
 
 	for (w = windows; w; w = w->next) {
-		ncurses_window_t *n = w->private;
+		ncurses_window_t *n = w->priv_data;
 		int delta;
 
 		if (!n || w->floating)
@@ -971,7 +971,7 @@ COMMAND(cmd_mark) {
 	if (match_arg(params[0], 'a', ("all"), 2)) {
 		for (w = windows; w; w = w->next) {
 			if (!w->floating && (w->act != 2)) {
-				n = w->private;
+				n = w->priv_data;
 				n->last_red_line = time(0);
 				n->redraw = 1;
 			}
@@ -985,7 +985,7 @@ COMMAND(cmd_mark) {
 		w = window_current;
 
 	if (w && !w->floating && (w->act != 2)) {
-		n = w->private;
+		n = w->priv_data;
 		n->last_red_line = time(0);
 		n->redraw = 1;
 	}
@@ -998,7 +998,7 @@ COMMAND(cmd_mark) {
  */
 static void draw_thin_red_line(window_t *w, int y)
 {
-	ncurses_window_t *n = w->private;
+	ncurses_window_t *n = w->priv_data;
 	int x;
 	int attr = color_pair(COLOR_RED, COLOR_BLACK) | A_BOLD | A_ALTCHARSET;
 	unsigned char ch = (unsigned char) ncurses_fixchar((CHAR_T) ACS_HLINE, &attr);
@@ -1018,7 +1018,7 @@ static void draw_thin_red_line(window_t *w, int y)
 void ncurses_redraw(window_t *w)
 {
 	int x, y, left, top, height, width, fix_trl;
-	ncurses_window_t *n = w->private;
+	ncurses_window_t *n = w->priv_data;
 	int dtrl = 0;	/* dtrl -- draw thin red line
 			 *	0 - not on this page or line already drawn
 			 *	1 - mayby on this page, we'll see later
@@ -1212,7 +1212,7 @@ void ncurses_redraw(window_t *w)
  */
 void ncurses_clear(window_t *w, int full)
 {
-	ncurses_window_t *n = w->private;
+	ncurses_window_t *n = w->priv_data;
 	w->more = 0;
 	
 	if (!full) {
@@ -1261,8 +1261,8 @@ void ncurses_refresh()
 {
 	window_t *w;
 
-	if (window_current && window_current->private /* !window_current->floating */) {
-		ncurses_window_t *n = window_current->private;
+	if (window_current && window_current->priv_data /* !window_current->floating */) {
+		ncurses_window_t *n = window_current->priv_data;
 
 		if (n->redraw)
 			ncurses_redraw(window_current);
@@ -1272,7 +1272,7 @@ void ncurses_refresh()
 	}
 
 	for (w = windows; w; w = w->next) {
-		ncurses_window_t *n = w->private;
+		ncurses_window_t *n = w->priv_data;
 
 		if (!w->floating || w->hide)
 			continue;
@@ -1807,7 +1807,7 @@ void update_statusbar(int commit)
  */
 int ncurses_window_kill(window_t *w)
 {
-	ncurses_window_t *n = w->private;
+	ncurses_window_t *n = w->priv_data;
 
 	if (!n) 
 		return -1;
@@ -1818,7 +1818,7 @@ int ncurses_window_kill(window_t *w)
 	xfree(n->prompt_real);
 	delwin(n->window);
 	xfree(n);
-	w->private = NULL;
+	w->priv_data = NULL;
 
 //	ncurses_resize();
 
@@ -2709,7 +2709,7 @@ void changed_backlog_size(const char *var)
 		config_backlog_size = ncurses_screen_height;
 
 	for (w = windows; w; w = w->next) {
-		ncurses_window_t *n = w->private;
+		ncurses_window_t *n = w->priv_data;
 		int i;
 				
 		if (n->backlog_size <= config_backlog_size)
@@ -2762,7 +2762,7 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	else				header = format_find("lastlog_title");
 
 
-	if (!w || !(n = w->private))
+	if (!w || !(n = w->priv_data))
 		return items;
 
 	if (config_lastlog_noitems) /* always add header */
@@ -2818,7 +2818,7 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 			dup->prompt_empty	= n->backlog[i]->prompt_empty;
 			dup->margin_left	= n->backlog[i]->margin_left;
 		/* org. window for example if we would like user allow move under that line with mouse and double-click.. or whatever */
-/*			dup->private		= (void *) w;	 */
+/*			dup->priv_data		= (void *) w;	 */
 
 			ncurses_backlog_add(lastlog_w, dup);
 			items++;
@@ -2840,7 +2840,7 @@ int ncurses_lastlog_update(window_t *w) {
 	if (!w) w = window_find_sa(NULL, "__lastlog", 1);
 	if (!w) return -1;
 
-	n = w->private;
+	n = w->priv_data;
 	old_start = n->start;
 
 	ncurses_clear(w, 1);
@@ -2882,7 +2882,7 @@ void ncurses_lastlog_new(window_t *w) {
 #define lastlog_frame		WF_TOP
 #define lastlog_wrap		0
 
-	ncurses_window_t *n = w->private;
+	ncurses_window_t *n = w->priv_data;
 	int size = config_lastlog_size + lastlog_margin + ((lastlog_frame) ? 1 : 0);
 
 	switch (lastlog_edge) {
@@ -2923,10 +2923,10 @@ int ncurses_window_new(window_t *w)
 {
 	ncurses_window_t *n;
 
-	if (w->private)
+	if (w->priv_data)
 		return 0;
 
-	w->private = n = xmalloc(sizeof(ncurses_window_t));
+	w->priv_data = n = xmalloc(sizeof(ncurses_window_t));
 
 	if (!xstrcmp(w->target, "__contacts")) {
 		ncurses_contacts_new(w);

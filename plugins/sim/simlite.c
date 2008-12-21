@@ -397,7 +397,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	unsigned char bf_key[16];	/* klucz symetryczny Blowfisha */
 	unsigned char bf_key_rsa[128];	/* symetryczny szyfrowany RSA */
 	BIO *mbio = NULL, *cbio = NULL, *bbio = NULL;
-	RSA *private = NULL;
+	RSA *private_key = NULL;
 	unsigned char *buf = NULL, *data;
 	char *res = NULL;
 	int len;
@@ -410,7 +410,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 	}
 	
 	/* wczytaj klucz prywatny */
-	if (!(private = sim_key_read(0, uid))) {
+	if (!(private_key = sim_key_read(0, uid))) {
 		sim_errno = SIM_ERROR_PRIVATE;
 		goto cleanup;
 	}
@@ -427,7 +427,7 @@ char *sim_message_decrypt(const unsigned char *message, const char *uid)
 		goto cleanup;
 	}
 
-	if (RSA_private_decrypt(sizeof(bf_key_rsa), bf_key_rsa, bf_key, private, RSA_PKCS1_OAEP_PADDING) == -1) {
+	if (RSA_private_decrypt(sizeof(bf_key_rsa), bf_key_rsa, bf_key, private_key, RSA_PKCS1_OAEP_PADDING) == -1) {
 		sim_errno = SIM_ERROR_RSA;
 		goto cleanup;
 	}
@@ -493,8 +493,8 @@ cleanup:
 		BIO_free(mbio);
 	if (bbio)
 		BIO_free(bbio);
-	if (private)
-		RSA_free(private);
+	if (private_key)
+		RSA_free(private_key);
 	if (buf)
 		free(buf);
 	return ekg_cp_to_locale(res);	/* XXX, what if message isn't encoded in cp-1250? */

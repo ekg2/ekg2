@@ -1307,7 +1307,7 @@ int play_sound(const char *sound_path)
  *
  * 0/-1
  */
-child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *private)
+child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data)
 {
 	child_t *c = xmalloc(sizeof(child_t));
 
@@ -1315,7 +1315,7 @@ child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_
 	c->pid		= pid;
 	c->name		= xstrdup(name);
 	c->handler	= handler;
-	c->private	= private;
+	c->priv_data	= priv_data;
 	
 	children_add(c);
 	return c;

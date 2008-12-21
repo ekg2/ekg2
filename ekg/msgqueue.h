@@ -40,12 +40,12 @@ typedef struct msg_queue {
 	char		*seq;			/* numer sekwencyjny */
 	time_t		time;			/* czas wys³ania */
 	unsigned int	mark		: 1;	/* if added during cleanup */
-	msgclass_t	class;
+	msgclass_t	mclass;
 } msg_queue_t;
 
 extern msg_queue_t *msgs_queue;
 
-int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq, msgclass_t class);
+int msg_queue_add(const char *session, const char *rcpts, const char *message, const char *seq, msgclass_t mclass);
 void msgs_queue_destroy();
 int msg_queue_count_session(const char *uid);
 int msg_queue_remove_uid(const char *uid);

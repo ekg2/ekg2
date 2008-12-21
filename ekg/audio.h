@@ -79,7 +79,7 @@ typedef struct audio {
 	audio_handler_func_t *read_handler;
 	audio_handler_func_t *write_handler;
 
-	void *private;
+	void *priv_data;
 } audio_t;
 
 typedef struct {
@@ -87,7 +87,7 @@ typedef struct {
 	int fd;
 	unsigned int outb;		/* how many bytes go through handler */
 	string_t buffer;
-	void *private;
+	void *priv_data;
 } audio_io_t;
 
 typedef struct codec {
@@ -97,18 +97,18 @@ typedef struct codec {
 
 	void *(*control_handler)(audio_control_t, audio_way_t, void *, ...);	/* initing / checking if audio_codec_t is correct / deiniting */
 
-		/* IN: int type, string_t input, string_t output, void *private 
+		/* IN: int type, string_t input, string_t output, void *priv_data 
 		 * OUT: how many bytes he code/decode */
 	int (*code_handler)(int, string_t, string_t, void *);
 	int (*decode_handler)(int, string_t, string_t, void *);
-	void *private;
+	void *priv_data;
 } codec_t;
 
 typedef struct {
 	codec_t *c;			/* codec_t * */
 	codec_way_t way;		/* CODEC_CODE CODEC_DECODE */
 	
-	void *private;
+	void *priv_data;
 } audio_codec_t;
 
 typedef struct stream {
@@ -119,7 +119,7 @@ typedef struct stream {
 	audio_codec_t	*codec;
 	audio_io_t	*output;
 
-	void *private;
+	void *priv_data;
 } stream_t;
 
 int stream_create(char *name, audio_io_t *in, audio_codec_t *co, audio_io_t *out);

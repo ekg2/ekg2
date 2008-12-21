@@ -217,7 +217,7 @@ int script_var_list(script_t *scr)
 	for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
 		if (!scr || v->scr == scr) {
-			print("script_varlist", v->self->name, v->value, v->private);
+			print("script_varlist", v->self->name, v->value, v->priv_data);
 			i++;
 		}
 	}
@@ -462,7 +462,7 @@ int script_variables_free(int free) {
 			fprintf(f, "%s\n", v->name);
 		if (free) {
 /*			xfree(v->value); variables_free() free it. */
-			xfree(v->private); /* should be NULL here. */
+			xfree(v->priv_data); /* should be NULL here. */
 			xfree(v->name);
 			xfree(v);
 		}
@@ -513,7 +513,7 @@ script_var_t *script_var_find(const char *name)
 int script_command_unbind(script_command_t *temp, int free)
 {
 	int notfound = 1; /* TODO */
-	SCRIPT_UNBIND_HANDLER(SCRIPT_COMMANDTYPE, temp->private);
+	SCRIPT_UNBIND_HANDLER(SCRIPT_COMMANDTYPE, temp->priv_data);
 	if (notfound)
 		commands_remove(temp->self);
 	return list_remove(&script_commands, temp, 1);
@@ -522,7 +522,7 @@ int script_command_unbind(script_command_t *temp, int free)
 
 int script_query_unbind(script_query_t *temp, int free)
 {
-	SCRIPT_UNBIND_HANDLER(SCRIPT_QUERYTYPE, temp->private);
+	SCRIPT_UNBIND_HANDLER(SCRIPT_QUERYTYPE, temp->priv_data);
 	query_free(temp->self);	
 	return list_remove(&script_queries, temp, 1);
 }
@@ -540,7 +540,7 @@ int script_plugin_destroy(/* plugin_t *p */ )
 		} else temp = l->data;
 	}
 
-	SCRIPT_UNBIND_HANDLER(SCRIPT_PLUGINTYPE, temp->private);
+	SCRIPT_UNBIND_HANDLER(SCRIPT_PLUGINTYPE, temp->priv_data);
 	plugin_unregister(temp->self);
 	xfree(temp->self->name);
 	xfree(temp->self);
@@ -553,7 +553,7 @@ int script_timer_unbind(script_timer_t *temp, int remove)
 	temp->removed = 1;
 	if (remove) 
 		timers_remove(temp->self);
-	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->private);
+	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->priv_data);
 	return list_remove(&script_timers, temp, 0 /* 0 is ok */);
 }
 
@@ -564,15 +564,15 @@ int script_watch_unbind(script_watch_t *temp, int remove)
 	if (remove)
 		watch_free(temp->self);
 /* TODO: testit */
-	SCRIPT_UNBIND_HANDLER(SCRIPT_WATCHTYPE, temp->private, temp->data);
+	SCRIPT_UNBIND_HANDLER(SCRIPT_WATCHTYPE, temp->priv_data, temp->data);
 	return list_remove(&script_watches, temp, 1);
 }
 
 int script_var_unbind(script_var_t *temp, int free)
 {
-	SCRIPT_UNBIND_HANDLER(SCRIPT_VARTYPE, temp->private);
+	SCRIPT_UNBIND_HANDLER(SCRIPT_VARTYPE, temp->priv_data);
 	temp->scr = NULL; 
-	temp->private = NULL;
+	temp->priv_data = NULL;
 	return 0;
 }
 
@@ -584,7 +584,7 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 	tmp = script_var_find(name);
 	if (tmp) {
 		tmp->scr = scr;
-		tmp->private = handler;
+		tmp->priv_data = handler;
 		if (in_autoexec) /* i think it is enough, not tested. */
 			variable_set(name, value);
 	} else if (!tmp) {
@@ -783,9 +783,9 @@ static QUERY(script_query_handlers)
 		case 3:
 		case 4:
 		case 5:				/* scripts protocol-message, protocol-message-post, protocol-message-received (v 1.0) 
-							- ts (session, uid, class, text, sent_time, ignore_level)
-							- vs (session, uid, rcpts, text, format, sent, class, seq, secure) [protocol-message-post, protocol-message-recv]
-							- vs (session, uid, rcpts, text, format, sent, class, seq, dobeep, secure) [protocol-message]
+							- ts (session, uid, mclass, text, sent_time, ignore_level)
+							- vs (session, uid, rcpts, text, format, sent, mclass, seq, secure) [protocol-message-post, protocol-message-recv]
+							- vs (session, uid, rcpts, text, format, sent, mclass, seq, dobeep, secure) [protocol-message]
 						 */
 			{
 				temp->argc = 6;
@@ -793,7 +793,7 @@ static QUERY(script_query_handlers)
 				temp->argv_type[0] = QUERY_ARG_CHARP;	/* session, OK */
 				temp->argv_type[1] = QUERY_ARG_CHARP;	/* uid, OK */
 
-				temp->argv_type[2] = QUERY_ARG_INT;	/* class, N_OK, BAD POS */
+				temp->argv_type[2] = QUERY_ARG_INT;	/* mclass, N_OK, BAD POS */
 				args[2] = args2[6];
 
 				temp->argv_type[3] = QUERY_ARG_CHARP;	/* text, OK */

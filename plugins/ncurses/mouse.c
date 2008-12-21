@@ -142,7 +142,7 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 				break;
 			}
 			
-			n = w->private;
+			n = w->priv_data;
 			/* debug("window id:%d y %d height %d\n", w->id, w->top, w->height); */
 			if (n->handle_mouse)
 				n->handle_mouse(x - w->left, y - w->top, mouse_flag);

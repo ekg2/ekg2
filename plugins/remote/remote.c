@@ -492,7 +492,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 					req_ok = 1;
 
 					for (w = windows; w; w = w->next) {
-						remote_window_t *n = w->private;
+						remote_window_t *n = w->priv_data;
 						int from;
 						int i;
 
@@ -516,7 +516,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 					req_ok = 1;
 
 					for (w = windows; w; w = w->next) {
-						remote_window_t *n = w->private;
+						remote_window_t *n = w->priv_data;
 						int i;
 
 						if (!n)
@@ -531,7 +531,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 			}
 			if (req_ok == 0) {	/* jesli requet nie byl przetwarzany, to wysylamy caly backlog */
 				for (w = windows; w; w = w->next) {
-					remote_window_t *n = w->private;
+					remote_window_t *n = w->priv_data;
 					int i;
 
 					if (!n)
@@ -574,7 +574,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 				if (w->act)
 					remote_writefd(fd, "WINDOWINFO", itoa(w->id), "ACTIVITY", itoa(w->act), NULL);
 
-				if ((n = w->private)) {
+				if ((n = w->priv_data)) {
 					if (n->last_irctopic)
 						remote_writefd(fd, "WINDOWINFO", itoa(w->id), "IRCTOPIC", n->last_irctopic, NULL);
 					if (n->last_irctopicby)
@@ -1024,17 +1024,17 @@ static void rc_paths_changed(const char *name) {
 static int remote_window_new(window_t *w) {
 	remote_window_t *n;
 
-	if (w->private)
+	if (w->priv_data)
 		return 0;
 
 	n = xmalloc(sizeof(remote_window_t));
 
-	w->private = n;
+	w->priv_data = n;
 	return 0;
 }
 
 static void remote_backlog_add(window_t *w, remote_backlog_t *str) {
-	remote_window_t *n = w->private;
+	remote_window_t *n = w->priv_data;
 	
 	if (!w)
 		return;
@@ -1060,10 +1060,10 @@ static void remote_backlog_add(window_t *w, remote_backlog_t *str) {
 static void remote_window_kill(window_t *w) {
 	remote_window_t *n;
 
-	if (!(n = w->private)) 
+	if (!(n = w->priv_data)) 
 		return;
 
-	w->private = NULL;
+	w->priv_data = NULL;
 
 	if (n->backlog) {
 		int i;
@@ -1191,7 +1191,7 @@ static QUERY(remote_ui_window_print) {
 	if (w == window_debug)		/* XXX! */
 		goto cleanup;
 
-	if (!(n = w->private)) { 
+	if (!(n = w->priv_data)) { 
 		/* BUGFIX, cause @ ui-window-print handler (not ncurses plugin one, ncurses plugin one is called last cause of 0 prio)
 		 *	plugin may call print_window() 
 		 */
@@ -1394,10 +1394,10 @@ static TIMER(remote_statusbar_timer) {
 	}
 
 	/* just in case */
-	if (!(window_current->private))
+	if (!(window_current->priv_data))
 		remote_window_new(window_current);
 
-	r = window_current->private;
+	r = window_current->priv_data;
 
 	irctopic = irctopicby = ircmode = NULL;
 	query_emit_id(NULL, IRC_TOPIC, &irctopic, &irctopicby, &ircmode);

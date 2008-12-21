@@ -48,7 +48,7 @@ extern "C" {
  * userlist_t is used to manage all info about user.<br>
  * It's used not only to manage contacts in roster, but also to manage people in chat or conference
  *
- * @bug There are two private fields [u->private and u->priv] one need to be removed.
+ * @bug There are two private fields [u->priv_data and u->priv] one needs to be removed.
  */
 
 typedef struct userlist {
@@ -76,7 +76,7 @@ typedef struct userlist {
 	status_t	last_status;	/**< Lastseen status */
 	char		*last_descr;	/**< Lastseen description */
 	time_t		status_time;	/**< From when we have this status, description */
-	void		*private;	   /**< Alternate private data, used by ncurses plugin */
+	void		*priv_data;	/**< Alternate private data, used by ncurses plugin */
 	private_data_t	*priv_list;	/* New user private data */
 } userlist_t;
 
@@ -117,7 +117,7 @@ typedef struct ekg_resource {
 	status_t	status;		/**< status, like u->status	[status of resource]		*/
 	char		*descr;		/**< descr, like u->descr	[description of resource]	*/
 	int		prio;		/**< prio of resource		[priority of this resource]	*/
-	void		*private;	/**< priv, like u->private	[private data info/struct]	*/
+	void		*priv_data;	/**< priv, like u->priv_data	[private data info/struct]	*/
 } ekg_resource_t;
 
 /**

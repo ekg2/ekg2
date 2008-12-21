@@ -1539,22 +1539,22 @@ static COMMAND(jabber_command_private) {
 							book		= xmalloc(sizeof(jabber_bookmark_t));
 							book->type	= JABBER_BOOKMARK_URL;
 
-							book->private.url = xmalloc(sizeof(jabber_bookmark_url_t));
-							book->private.url->name = xstrdup(jabber_attr(splitted, ""));
-							book->private.url->url	= xstrdup(splitted[1]);
+							book->priv_data.url = xmalloc(sizeof(jabber_bookmark_url_t));
+							book->priv_data.url->name = xstrdup(jabber_attr(splitted, ""));
+							book->priv_data.url->url	= xstrdup(splitted[1]);
 
 						} else if (!xstrcmp(splitted[0], "conf")) {
 							book		= xmalloc(sizeof(jabber_bookmark_t));
 							book->type	= JABBER_BOOKMARK_CONFERENCE;
 
-							book->private.conf = xmalloc(sizeof(jabber_bookmark_conference_t));
-							book->private.conf->name = xstrdup(jabber_attr(splitted, ""));
-							book->private.conf->jid	= xstrdup(splitted[1]);
-							book->private.conf->nick= xstrdup(jabber_attr(splitted, "nick")); 
-							book->private.conf->pass= xstrdup(jabber_attr(splitted, "pass"));
+							book->priv_data.conf = xmalloc(sizeof(jabber_bookmark_conference_t));
+							book->priv_data.conf->name = xstrdup(jabber_attr(splitted, ""));
+							book->priv_data.conf->jid	= xstrdup(splitted[1]);
+							book->priv_data.conf->nick= xstrdup(jabber_attr(splitted, "nick")); 
+							book->priv_data.conf->pass= xstrdup(jabber_attr(splitted, "pass"));
 
-							if (jabber_attr(splitted, "autojoin") && atoi(jabber_attr(splitted, "autojoin")))	book->private.conf->autojoin = 1;
-/*							else											book->private.conf->autojoin = 0; */
+							if (jabber_attr(splitted, "autojoin") && atoi(jabber_attr(splitted, "autojoin")))	book->priv_data.conf->autojoin = 1;
+/*							else											book->priv_data.conf->autojoin = 0; */
 						} else bookmark_sync = -1;
 						if (book) list_add(&(j->bookmarks), book);
 					}
@@ -1588,7 +1588,7 @@ static COMMAND(jabber_command_private) {
 			return 1;
 		}
 
-		watch_write(j->send_watch, "<iq type=\"get\" id=\"%s\"><query xmlns=\"jabber:iq:private\"><%s/></query></iq>", id, namespace);
+		watch_write(j->send_watch, "<iq type=\"get\" id=\"%s\"><query xmlns=\"jabber:iq:private \"><%s/></query></iq>", id, namespace);
 		return 0;
 	}
 
@@ -1678,13 +1678,13 @@ back:
 
 				switch (book->type) {
 					case (JABBER_BOOKMARK_URL):
-						watch_write(j->send_watch, "<url name=\"%s\" url=\"%s\"/>", book->private.url->name, book->private.url->url);
+						watch_write(j->send_watch, "<url name=\"%s\" url=\"%s\"/>", book->priv_data.url->name, book->priv_data.url->url);
 						break;
 					case (JABBER_BOOKMARK_CONFERENCE):
-						watch_write(j->send_watch, "<conference name=\"%s\" autojoin=\"%s\" jid=\"%s\">", book->private.conf->name, 
-							book->private.conf->autojoin ? "true" : "false", book->private.conf->jid);
-						if (book->private.conf->nick) watch_write(j->send_watch, "<nick>%s</nick>", book->private.conf->nick);
-						if (book->private.conf->pass) watch_write(j->send_watch, "<password>%s</password>", book->private.conf->pass);
+						watch_write(j->send_watch, "<conference name=\"%s\" autojoin=\"%s\" jid=\"%s\">", book->priv_data.conf->name, 
+							book->priv_data.conf->autojoin ? "true" : "false", book->priv_data.conf->jid);
+						if (book->priv_data.conf->nick) watch_write(j->send_watch, "<nick>%s</nick>", book->priv_data.conf->nick);
+						if (book->priv_data.conf->pass) watch_write(j->send_watch, "<password>%s</password>", book->priv_data.conf->pass);
 						watch_write(j->send_watch, "</conference>");
 						break;
 					default:
@@ -1913,7 +1913,7 @@ static COMMAND(jabber_muc_command_join) {
 
 
 	conf = newconference_create(session, mucuid, 1);
-	conf->private = xstrdup(username);
+	conf->priv_data = xstrdup(username);
 
 	xfree(username);
 	xfree(password);
@@ -1933,7 +1933,7 @@ static COMMAND(jabber_muc_command_part) {
 
 	status = (params[0] && params[1]) ? saprintf(" <status>%s</status> ", params[1]) : NULL;
 
-	watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", c->name+5, c->private, status ? status : "");
+	watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", c->name+5, c->priv_data, status ? status : "");
 
 	xfree(status);
 	newconference_destroy(c, 1 /* XXX, dorobic zmienna */);

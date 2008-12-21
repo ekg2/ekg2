@@ -6,7 +6,7 @@
 #define RSS_FLAGS	 RSS_ONLY  | SESSION_MUSTBECONNECTED
 #define RSS_FLAGS_TARGET RSS_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 
-#define feed_private(s) ((s && s->priv) ? ((feed_private_t *) s->priv)->private : NULL)
+#define feed_private(s) ((s && s->priv) ? ((feed_private_t *) s->priv)->priv_data : NULL)
 
 extern plugin_t feed_plugin;
 
@@ -14,7 +14,7 @@ typedef struct {
 #ifdef HAVE_EXPAT
 	int isrss;
 #endif
-	void *private;
+	void *priv_data;
 } feed_private_t;
 
 extern void *nntp_protocol_init();		/* nntp.c */

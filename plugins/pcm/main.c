@@ -47,7 +47,7 @@ CODEC_CONTROL(pcm_codec_control) {
 	va_list ap;
 
 	if (type == AUDIO_CONTROL_INIT && aco) {
-		pcm_private_t *priv = aco->private;
+		pcm_private_t *priv = aco->priv_data;
 		audio_io_t *inp, *out;
 		char **inpque = NULL, **outque = NULL, **tmp;	/* we create array with vals... (XXX, to query only once.) */
 		int valid = 1;
@@ -109,7 +109,7 @@ CODEC_CONTROL(pcm_codec_control) {
 		va_start(ap, aco);
 
 		if (type == AUDIO_CONTROL_SET)	priv = xmalloc(sizeof(pcm_private_t));
-		else				if (!(priv = aco->private)) return NULL;
+		else				if (!(priv = aco->priv_data)) return NULL;
 
 		while ((attr = va_arg(ap, char *))) {
 			if (type == AUDIO_CONTROL_SET) {
@@ -159,10 +159,10 @@ CODEC_CONTROL(pcm_codec_control) {
 		aco		= xmalloc(sizeof(audio_codec_t));
 		aco->c		= &pcm_codec;
 		aco->way	= 0;
-		aco->private	= priv;
+		aco->priv_data	= priv;
 	} else if (type == AUDIO_CONTROL_DEINIT) {	/* pcm_codec_destroy() */
 		if (aco) 
-			xfree(aco->private);
+			xfree(aco->priv_data);
 		aco = NULL;
 	} else if (type == AUDIO_CONTROL_HELP) {		/* pcm_codec_capabilities() */ 
 		static char *arr[] = { 

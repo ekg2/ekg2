@@ -729,7 +729,7 @@
          <term>protocol-message-received</term>
          <listitem>
             <para>
-               Argumenty: session, id, class, text, time, ignore_level
+               Argumenty: session, id, mclass, text, time, ignore_level
             </para>
             <para>
                Wywo³ywana gdy ekg otrzymuje wiadomo¶æ.

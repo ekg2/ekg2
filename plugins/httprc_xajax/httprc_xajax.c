@@ -279,7 +279,7 @@ QUERY(httprc_xajax_def_action)
 			{
 				if (!gline) {
 					char *fstringed;
-/*					ncurses_window_t *n = w->private; */
+/*					ncurses_window_t *n = w->priv_data; */
 					line = *(va_arg(ap, fstring_t **));
 					gline=1;
 					fstringed = http_fstring(w->id, "ch", line, 0);
@@ -706,7 +706,7 @@ WATCHER(http_watch_read) {
 				if (w->id == 0)
 					continue;
 
-				n = w->private;
+				n = w->priv_data;
 				string_append(htheader, "i=0;\n");
 				temp = saprintf("gwins[%d][2][i++] = ch;\n", w->id);
 				for (j=0, i = n->backlog_size-1; i >= 0; i--) {

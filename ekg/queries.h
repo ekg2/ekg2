@@ -157,7 +157,7 @@ const struct query_def query_list[] = {
 		QUERY_ARG_CHARPP,		/* rcpts */
 		QUERY_ARG_UINT,	/* uint32_t */	/* format */
 		QUERY_ARG_UINT, /* time_t */	/* sent */
-		QUERY_ARG_INT,			/* class */
+		QUERY_ARG_INT,			/* mclass */
 		QUERY_ARG_CHARP,		/* seq */
 		QUERY_ARG_INT,			/* secure */
 		QUERY_ARG_END } },
@@ -168,7 +168,7 @@ const struct query_def query_list[] = {
 		QUERY_ARG_CHARPP,		/* rcpts */
 		QUERY_ARG_UINT,	/* uint32_t */	/* format */
 		QUERY_ARG_UINT, /* time_t */	/* sent */
-		QUERY_ARG_INT,			/* class */
+		QUERY_ARG_INT,			/* mclass */
 		QUERY_ARG_CHARP,		/* seq */
 		QUERY_ARG_INT,			/* secure */
 		QUERY_ARG_END } }, 
@@ -311,7 +311,7 @@ const struct query_def query_list[] = {
 		QUERY_ARG_CHARP,		/* text */
 		QUERY_ARG_UINT,	/* uint32 */	/* format */
 		QUERY_ARG_UINT,	/* time_t */	/* sent */
-		QUERY_ARG_INT,			/* class */
+		QUERY_ARG_INT,			/* mclass */
 		QUERY_ARG_CHARP,		/* seq */
 		QUERY_ARG_INT,			/* dobeep */
 		QUERY_ARG_INT,			/* secure */

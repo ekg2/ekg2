@@ -90,13 +90,13 @@ static int readline_theme_init() {
 
 static QUERY(readline_ui_window_new) { /* window_add() */
 	window_t *w = *(va_arg(ap, window_t **));
-	w->private = xmalloc(sizeof(readline_window_t));
+	w->priv_data = xmalloc(sizeof(readline_window_t));
 	return 0;
 }
 
 static QUERY(readline_ui_window_kill) { /* window_free */
 	window_t *w = *(va_arg(ap, window_t **));
-	readline_window_t *r = w->private;
+	readline_window_t *r = w->priv_data;
 	int i;
 
 	for (i = 0; i < MAX_LINES_PER_SCREEN; i++) {
@@ -104,7 +104,7 @@ static QUERY(readline_ui_window_kill) { /* window_free */
 		r->line[i] = NULL;
 	}
 	xfree(r);
-	w->private = NULL;
+	w->priv_data = NULL;
 	return 0;
 }
 
@@ -231,7 +231,7 @@ static QUERY(readline_variable_changed) {
 static QUERY(readline_ui_window_clear) {
 	int i;
 	window_t *w = *(va_arg(ap, window_t **));
-	readline_window_t *r = w->private;
+	readline_window_t *r = w->priv_data;
 
 	for (i = 0; i < MAX_LINES_PER_SCREEN; i++) {
 		xfree(r->line[i]);
@@ -293,7 +293,7 @@ EXPORT int readline_plugin_init(int prio) {
 	watch_add(&readline_plugin, 0, WATCH_READ, readline_watch_stdin, NULL);
 
 	for (w = windows; w; w = w->next)
-		w->private = xmalloc(sizeof(readline_window_t));
+		w->priv_data = xmalloc(sizeof(readline_window_t));
 	
 	window_refresh();
 	rl_initialize();

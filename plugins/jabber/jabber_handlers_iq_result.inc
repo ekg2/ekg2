@@ -299,7 +299,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
 		if (!config_display || !bookmark_display) quiet = 1;
 
 		if (node->children)	printq("jabber_private_list_header", session_name(s), lname, ns);
-		if (!xstrcmp(node->name, "ekg2") && !xstrcmp(ns, "ekg2:prefs")) { 	/* our private struct, containing `full` configuration of ekg2 */
+		if (!xstrcmp(node->name, "ekg2") && !xstrcmp(ns, "ekg2:prefs")) { 	/* our priv_data struct, containing `full` configuration of ekg2 */
 			for (child = node->children; child; child = child->next) {
 				char *cname	= jabber_unescape(child->name);
 				char *cvalue	= jabber_unescape(child->data);
@@ -339,24 +339,24 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_private) {
 					xmlnode_t *temp;
 
 					book->type	= JABBER_BOOKMARK_CONFERENCE;
-					book->private.conf		= xmalloc(sizeof(jabber_bookmark_conference_t));
-					book->private.conf->name	= jabber_unescape(jabber_attr(child->atts, "name"));
-					book->private.conf->jid		= jabber_unescape(jabber_attr(child->atts, "jid"));
-					book->private.conf->autojoin	= !xstrcmp(jabber_attr(child->atts, "autojoin"), "true");
+					book->priv_data.conf		= xmalloc(sizeof(jabber_bookmark_conference_t));
+					book->priv_data.conf->name	= jabber_unescape(jabber_attr(child->atts, "name"));
+					book->priv_data.conf->jid		= jabber_unescape(jabber_attr(child->atts, "jid"));
+					book->priv_data.conf->autojoin	= !xstrcmp(jabber_attr(child->atts, "autojoin"), "true");
 
-					book->private.conf->nick	= jabber_unescape( (temp = xmlnode_find_child(child, "nick")) ? temp->data : NULL);
-					book->private.conf->pass        = jabber_unescape( (temp = xmlnode_find_child(child, "password")) ? temp->data : NULL);
+					book->priv_data.conf->nick	= jabber_unescape( (temp = xmlnode_find_child(child, "nick")) ? temp->data : NULL);
+					book->priv_data.conf->pass        = jabber_unescape( (temp = xmlnode_find_child(child, "password")) ? temp->data : NULL);
 
-					printq("jabber_bookmark_conf", session_name(s), book->private.conf->name, book->private.conf->jid,
-							book->private.conf->autojoin ? "X" : " ", book->private.conf->nick, book->private.conf->pass);
+					printq("jabber_bookmark_conf", session_name(s), book->priv_data.conf->name, book->priv_data.conf->jid,
+							book->priv_data.conf->autojoin ? "X" : " ", book->priv_data.conf->nick, book->priv_data.conf->pass);
 
 				} else if (!xstrcmp(child->name, "url")) {
 					book->type	= JABBER_BOOKMARK_URL;
-					book->private.url	= xmalloc(sizeof(jabber_bookmark_url_t));
-					book->private.url->name	= jabber_unescape(jabber_attr(child->atts, "name"));
-					book->private.url->url	= jabber_unescape(jabber_attr(child->atts, "url"));
+					book->priv_data.url	= xmalloc(sizeof(jabber_bookmark_url_t));
+					book->priv_data.url->name	= jabber_unescape(jabber_attr(child->atts, "name"));
+					book->priv_data.url->url	= jabber_unescape(jabber_attr(child->atts, "url"));
 
-					printq("jabber_bookmark_url", session_name(s), book->private.url->name, book->private.url->url);
+					printq("jabber_bookmark_url", session_name(s), book->priv_data.url->name, book->priv_data.url->url);
 
 				} else { debug_error("[JABBER:IQ:PRIVATE:BOOKMARK UNKNOWNITEM=%s\n", child->name); xfree(book); book = NULL; }
 
@@ -1028,7 +1028,7 @@ JABBER_HANDLER_RESULT(jabber_handle_si_result) {
 			jabber_dcc_bytestream_t *b;
 			list_t l;
 
-			b = p->private.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
+			b = p->priv_data.bytestream = xmalloc(sizeof(jabber_dcc_bytestream_t));
 			b->validate = JABBER_DCC_PROTOCOL_BYTESTREAMS;
 
 			if (jabber_dcc_ip && jabber_dcc) {

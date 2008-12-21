@@ -212,7 +212,7 @@ AUDIO_CONTROL(oss_audio_control) {
 		
 		if (type == AUDIO_CONTROL_GET) {
 			if (!aio) return NULL;
-			priv = aio->private;
+			priv = aio->priv_data;
 			dev = priv->dev;
 
 		} else	{
@@ -265,10 +265,10 @@ AUDIO_CONTROL(oss_audio_control) {
 		aio		= xmalloc(sizeof(audio_io_t));
 		aio->a		= &oss_audio;
 		aio->fd		= voice_fd;
-		aio->private	= priv;
+		aio->priv_data	= priv;
 
 	} else if (type == AUDIO_CONTROL_DEINIT && aio) {
-		oss_private_t *priv = aio->private;
+		oss_private_t *priv = aio->priv_data;
 		oss_device_free(priv->dev, way);
 		xfree(priv);
 		aio = NULL;

@@ -2,8 +2,8 @@
 #include <ekg/windows.h>
 
 #define MAX_LINES_PER_SCREEN 300
-#define readline_current ((readline_window_t *) window_current->private)
-#define readline_window(w) ((readline_window_t *) w->private)
+#define readline_current ((readline_window_t *) window_current->priv_data)
+#define readline_window(w) ((readline_window_t *) w->priv_data)
 
 extern int config_ctrld_quits;
 

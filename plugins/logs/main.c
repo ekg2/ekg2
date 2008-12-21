@@ -1062,7 +1062,7 @@ static QUERY(logs_handler_irc) {
 	char *text	= *(va_arg(ap, char**));
 		int  *UNUSED(isour)	= va_arg(ap, int*);
 		int  *UNUSED(foryou)	= va_arg(ap, int*);
-		int  *UNUSED(private)	= va_arg(ap, int*);
+		int  *UNUSED(priv_data)	= va_arg(ap, int*);
 	char *channame	= *(va_arg(ap, char**));
 	log_window_t *lw;
 
