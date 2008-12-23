@@ -32,6 +32,7 @@
 #include <ekg/debug.h>
 #include <ekg/net.h>
 #include <ekg/plugins.h>
+#include <ekg/recode.h>
 #include <ekg/queries.h>
 #include <ekg/protocol.h>
 #include <ekg/themes.h>
@@ -987,7 +988,7 @@ static void icq_send_msg_ch2(session_t *session, const char *uid, const char *me
 	t2711 = string_init(NULL);
 {
 		icq_pack_append_rendezvous(t2711, ICQ_VERSION, cookie, MTYPE_PLAIN, 0, 1, prio);
-		char *recode = ekg_locale_to_utf8(xstrdup(message));
+		char *recode = ekg_locale_to_utf8_dup(message);
 		icq_pack_append_nullterm_msg(t2711, recode);
 		xfree(recode);
 		icq_pack_append(t2711, "II", 0, 0xffffffff);	// XXX text & background colors

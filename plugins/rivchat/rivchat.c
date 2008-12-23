@@ -381,7 +381,7 @@ static void memncpy(char *dest, const char *src, size_t len) {
 	if (!src)
 		return;
 
-	cpsrc = ekg_locale_to_cp(xstrdup(src));
+	cpsrc = ekg_locale_to_cp_dup(src);
 	srclen = (xstrlen(cpsrc)+1);
 
 	if (len < srclen)
@@ -519,7 +519,7 @@ static int rivchat_send_packet(session_t *s, uint32_t type, userlist_t *user, co
 
 static int rivchat_send_packet_string(session_t *s, uint32_t type, userlist_t *user, const char *str) {
 	int ret;
-	char *recodedstring = ekg_locale_to_cp(xstrdup(str));
+	char *recodedstring = ekg_locale_to_cp_dup(str);
 
 	ret = rivchat_send_packet(s, type, user, recodedstring, xstrlen(recodedstring));
 

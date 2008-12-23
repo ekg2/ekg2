@@ -26,6 +26,7 @@
 #include <ekg/sessions.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
+#include <ekg/recode.h>
 #include <ekg/stuff.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
@@ -326,10 +327,10 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		const char *__birthyear = gg_pubdir50_get(res, i, "birthyear");
 		const char *__city	= gg_pubdir50_get(res, i, "city");
 
-		char *firstname		= ekg_cp_to_locale(xstrdup(__firstname));
-		char *lastname		= ekg_cp_to_locale(xstrdup(__lastname));
-		char *nickname		= ekg_cp_to_locale(xstrdup(__nickname));
-		char *city		= ekg_cp_to_locale(xstrdup(__city));
+		char *firstname		= ekg_cp_to_locale_dup(__firstname);
+		char *lastname		= ekg_cp_to_locale_dup(__lastname);
+		char *nickname		= ekg_cp_to_locale_dup(__nickname);
+		char *city		= ekg_cp_to_locale_dup(__city);
 		int status		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
 		const char *birthyear	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
 

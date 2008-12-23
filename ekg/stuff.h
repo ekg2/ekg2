@@ -370,16 +370,6 @@ string_t ekg_convert_string_t_p(string_t s, void *ptr);
 string_t ekg_convert_string_t(string_t s, const char *from, const char *to);
 int ekg_converters_display(int quiet);
 
-char *ekg_locale_to_cp(char *buf);
-char *ekg_cp_to_locale(char *buf);
-char *ekg_locale_to_latin2(char *buf);
-char *ekg_latin2_to_locale(char *buf);
-char *ekg_locale_to_utf8(char *buf);
-char *ekg_utf8_to_locale(char *buf);
-char *ekg_any_to_locale(char *buf, char *inp);
-char *ekg_locale_to_any(char *buf, char *inp);
-
-
 char *password_input(const char *prompt, const char *rprompt, const bool norepeat);
 
 /* funkcje poza stuff.c */

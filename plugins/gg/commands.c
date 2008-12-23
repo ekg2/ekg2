@@ -56,6 +56,7 @@
 #include <ekg/dynstuff.h>
 #include <ekg/msgqueue.h>
 #include <ekg/protocol.h>
+#include <ekg/recode.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
@@ -110,11 +111,11 @@ static COMMAND(gg_command_connect) {
 			if (__reason) {
 				if (!xstrcmp(__reason, "-"))	myreason = NULL;
 				else				myreason = xstrdup(__reason);
-				tmp = ekg_locale_to_cp(xstrdup(myreason));
+				tmp = ekg_locale_to_cp_dup(myreason);
 				session_descr_set(session, tmp ? myreason : NULL);
 			} else {
 				myreason = xstrdup(session_descr_get(session));
-				tmp = ekg_locale_to_cp(xstrdup(myreason));
+				tmp = ekg_locale_to_cp_dup(myreason);
 			}
 			if (tmp)
 				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
@@ -321,7 +322,7 @@ noproxy:
 		
 		/* moved this further, because of ekg_locale_to_cp() allocation */
 		p.status = _status;
-		p.status_descr = ekg_locale_to_cp(xstrdup(session_descr_get(session)));
+		p.status_descr = ekg_locale_to_cp_dup(session_descr_get(session));
 		p.async = 1;
 
 		g->sess = gg_login(&p);
@@ -401,7 +402,7 @@ static COMMAND(gg_command_away) {
 	}
 
 	if (params0) {
-		char *tmp = ekg_locale_to_cp(xstrdup(params0));
+		char *tmp = ekg_locale_to_cp_dup(params0);
 		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
 			if (!timeout) {
 				char *descr_poss = xstrndup(params0, GG_STATUS_DESCR_MAXSIZE);

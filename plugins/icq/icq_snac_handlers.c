@@ -23,6 +23,7 @@
 #include <ekg/debug.h>
 #include <ekg/dynstuff_inline.h>
 #include <ekg/protocol.h>
+#include <ekg/recode.h>
 #include <ekg/queries.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>

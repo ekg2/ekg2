@@ -304,7 +304,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 
 		tlvs = icq_unpack_tlvs_nc(buf, tlv_len, 0);
 
-		name = ekg_utf8_to_locale(xstrdup(orgname));
+		name = ekg_utf8_to_locale_dup(orgname);
 		icq_userlist_parse_entry(s, tlvs, name, item_type, item_id, group_id);
 		xfree(name);
 
