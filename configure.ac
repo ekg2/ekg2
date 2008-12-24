@@ -556,166 +556,320 @@ fi
  
 AC_OUTPUT
 
-echo
-echo "configured options: "
+#
+# set variables for cEcho
+#
+if which tput >/dev/null 2>&1; then
+	clr_r=$(tput sgr0;tput setaf 1)
+	clr_g=$(tput sgr0;tput setaf 2)
+	clr_y=$(tput sgr0;tput setaf 3)
+	clr_b=$(tput sgr0;tput setaf 4)
+	clr_m=$(tput sgr0;tput setaf 5)
+	clr_c=$(tput sgr0;tput setaf 6)
+	clr_k=$(tput sgr0;tput setaf 7)
+	clr_R=$(tput bold;tput setaf 1)
+	clr_G=$(tput bold;tput setaf 2)
+	clr_Y=$(tput bold;tput setaf 3)
+	clr_B=$(tput bold;tput setaf 4)
+	clr_M=$(tput bold;tput setaf 5)
+	clr_C=$(tput bold;tput setaf 6)
+	clr_K=$(tput bold;tput setaf 7)
+	clr_0=$(tput sgr0)
+fi
 
-echo "CFLAGS: $CFLAGS"
-echo "EXTRA CFLAGS FOR PLUGINS: $C_FVISIBILITY"
-echo "LDFLAGS: $LDFLAGS"
-echo "LIBS: $DLLIB $LIBS"
-echo "PLUGINS: "
+cEcho() {
+	for i in "$@"; do
+		text=eval echo -ne "$i"|sed "
+		s/%r/$clr_r/g;
+		s/%g/$clr_g/g;
+		s/%y/$clr_y/g;
+		s/%b/$clr_b/g;
+		s/%m/$clr_m/g;
+		s/%c/$clr_c/g;
+		s/%k/$clr_k/g;
+		s/%R/$clr_R/g;
+		s/%G/$clr_G/g;
+		s/%Y/$clr_Y/g;
+		s/%B/$clr_B/g;
+		s/%M/$clr_M/g;
+		s/%C/$clr_C/g;
+		s/%K/$clr_K/g;
+		s/%0/$clr_0/g";
+
+		echo -ne "$text"
+	done
+	echo -ne "${clr_0}"; # set default colour
+}
+
+echo_title() {
+	cEcho "%Y$@"
+}
+
+echo_section() {
+	cEcho "%g$@"
+}
+
+echo_with() {
+	cEcho "%c$@"
+}
+
+echo_have() {
+	cEcho "%G$@"
+}
+
+echo_err() {
+	cEcho "%R$@"
+}
+
+echo_disabled() {
+	cEcho "%b$@"
+}
+
+#
+#
+#
+echo_title "\nConfigured options:\n"
+
+echo_section " CFLAGS: "
+echo_have "$CFLAGS\n"
+
+echo_section " EXTRA CFLAGS FOR PLUGINS: "
+echo_have "$C_FVISIBILITY\n"
+
+echo_section " LDFLAGS: "
+echo_have "$LDFLAGS\n"
+
+echo_section " LIBS: "
+echo_have "$DLLIB $LIBS\n"
+
+echo_title "PLUGINS:\n"
 # - UI PLUGINS
-echo -en " - Interface:\t "
+echo_section " - Interface:\t"
+d_plg=""
 	if test "x$have_ncurses" = "xyes"; then
-		echo -n "ncurses "
+		echo_have "ncurses "
 
 		if test "x$have_aspell" = "xyes"; then
-		        echo -n "(with aspell) "
+		        echo_with "(with aspell) "
 		fi
+	else
+		d_plg="ncurses "
 	fi
 
 	if test "x$have_gtk" = "xyes"; then
-	        echo -n "gtk "
+	        echo_have "gtk "
+	else
+		d_plg="${d_plg}gtk "
 	fi
 
 	if test "x$have_readline" = "xyes"; then
-		echo -n "readline "
+		echo_have "readline "
+	else
+		d_plg="${d_plg}readline "
+	fi
+
+	if test "x$d_plg" != "x"; then
+		echo_disabled "(disabled: $d_plg)"
 	fi
 echo ""
 
 # - PROTOCOL PLUGINS
-echo -en " - Protocols:\t icq irc polchat xmsg "
+echo_section " - Protocols:\t"
+echo_have "icq irc polchat xmsg "
+d_plg=""
 	if test "x$have_expat" = "xyes"; then
-		echo -n "feed jabber "
+		echo_have "feed jabber "
 
 		if test "x$jabber_have_gnutls" = "xyes"; then
-			echo -n "(with ssl support in -lgnutls) "
+			echo_with "(with ssl support in -lgnutls) "
 		fi
 
 		if test "x$jabber_have_openssl" = "xyes"; then
-			echo -n "(with ssl support in -lssl) "
+			echo_with "(with ssl support in -lssl) "
 		fi
+	else
+		d_plg="${d_plg}feed jabber "
 	fi
 
 	if test "x$have_libgadu" = "xyes"; then
-		echo -n "gg "
+		echo_have "gg "
 
 		if test "x$have_pthread" = "xyes"; then
-			echo -n "(with pthread resolver) "
+			echo_with "(with pthread resolver) "
 		fi
+	else
+		d_plg="${d_plg}gg "
 	fi 
+
+	if test "x$d_plg" != "x"; then
+		echo_disabled "(disabled: $d_plg)"
+	fi
 echo ""
 
 # - LOGGING PLUGINS
-echo -en " - Logging:\t "
-	echo -n "logs "
+echo_section " - Logging:\t"
+d_plg=""
+	echo_have "logs "
 	if test "x$have_zlib" = "xyes"; then
-		echo -n "(with support for zlib compression) "
+		echo_with "(with support for zlib compression) "
 	fi
 
 	if test "x$have_sqlite" = "xyes"; then
-		echo -n "logsqlite "
+		echo_have "logsqlite "
 	elif test "x$have_sqlite3" = "xyes"; then
-		echo -n "logsqlite (using sqlite3) "
+		echo_have "logsqlite "
+		echo_with "(using sqlite3) "
+	else
+		d_plg="${d_plg}logsqlite "
 	fi
 
 	if test "x$have_logsoracle" = "xyes"; then
-		echo -n "logsoracle "
+		echo_have "logsoracle "
+	else
+		d_plg="${d_plg}logsoracle "
+	fi
+
+	if test "x$d_plg" != "x"; then
+		echo_disabled "(disabled: $d_plg)"
 	fi
 echo ""
 
 # - AUDIO PLUGINS
-echo -en " - Audio:\t pcm "
+echo_section " - Audio:\t"
+echo_have "pcm "
+d_plg=""
 	if test "x$have_libgsm" = "xyes"; then
-		echo -n "libgsm "
+		echo_have "libgsm "
+	else
+		d_plg="${d_plg}libgsm "
+	fi
+
+	if test "x$d_plg" != "x"; then
+		echo_disabled "(disabled: $d_plg)"
 	fi
 echo ""
 
 # - ENCRYPTION PLUGINS
-echo -en " - Encryption:\t rot13 "
+echo_section " - Encryption:\t"
+echo_have "rot13 "
+d_plg=""
 	if test "x$have_openssl" = "xyes"; then
-		echo -n "sim "
+		echo_have "sim "
+	else
+		d_plg="${d_plg}sim "
 	fi
 
 	if test "x$have_gpg" = "xyes"; then
-		echo -n "gpg "
+		echo_have "gpg "
+	else
+		d_plg="${d_plg}gpg "
+	fi
+
+	if test "x$d_plg" != "x"; then
+		echo_disabled "(disabled: $d_plg)"
 	fi
 echo ""
 
 # - SCRIPTING PLUGINS
-echo -en " - Scripting:\t "
+echo_section " - Scripting:\t"
+d_plg=""
 	if test "x$have_python" = "xyes"; then
-		echo -n "python "
+		echo_have "python "
+	else
+		d_plg="${d_plg}python "
 	fi
 
 	if test "x$have_perl" = "xyes"; then
-		echo -n "perl "
+		echo_have "perl "
+	else
+		d_plg="${d_plg}perl "
 	fi
 
 dnl	if test "x$have_ruby" = "xyes"; then
-dnl		echo -n "ruby "
+dnl		echo_have "ruby "
 dnl	fi
+	if test "x$d_plg" != "x"; then
+		echo_disabled "(disabled: $d_plg)"
+	fi
 echo ""
 
 # - MISC PLUGINS
-echo -en " - Misc:\t autoresponder jogger mail rc sms "
+echo_section " - Misc:\t"
+echo_have "autoresponder jogger mail rc sms "
+d_plg=""
 	if test "x$have_ioctld_includes" = "xyes"; then
-	 	echo -n "ioctld "
+	 	echo_have "ioctld "
+	else
+		d_plg="${d_plg}iotld "
 	fi
 
 	if test "x$have_libxosd" = "xyes"; then
-		echo -n "xosd "
+		echo_have "xosd "
+	else
+		d_plg="${d_plg}xosd "
+	fi
+
+	if test "x$d_plg" != "x"; then
+		echo_disabled "(disabled: $d_plg)"
 	fi
 echo ""
 
 #########################
 echo ""
 
-echo -en " - NLS system:\t "
+echo_section " - NLS system:\t"
 if test "$USE_NLS" = "yes"; then
-	echo "en pl"
+	echo_have "en pl"
 else 
-	echo "disabled, only en"
+	echo_err "disabled, only en"
 fi
+echo ""
+
 
 if test "x$have_libgadu" = "xyes"; then
-	echo -en " - GG Tokens:\t saving to file"
+	echo_section " - GG Tokens:\t"
+	echo_have "saving to file"
 
 	if test "x$have_libjpeg" = "xyes"; then
-	        echo -n ", JPEG OCR (using: -ljpeg)"
+	        echo_have ", JPEG OCR "
+	        echo_with "(using: -ljpeg)"
 	fi
 
 	if test "x$have_gif" = "xyes"; then
-		echo -n ", GIF OCR (using: $GG_TOKENGIF_LIBS)"
+		echo_have ", GIF OCR "
+		echo_with "(using: $GG_TOKENGIF_LIBS)"
 	fi
 	echo ""
 fi
 
 if test "x$have_ncurses" = "xyes"; then
-	echo -e " - Mouse support:in $mouse_lib"
+	echo_section " - Mouse support:"
+	echo_have "in $mouse_lib\n"
 fi
 
-echo -en " - Charset support:\t "
+echo_section " - Charset support:\t"
 	if test "x$enable_unicode" = "xyes"; then
-	        echo "utf-8&ansi (EXPERIMENTAL)"
+	        echo_have "utf-8&ansi (EXPERIMENTAL)"
 	else
-	        echo "iso-8859-2"
+	        echo_have "iso-8859-2"
 	fi
+echo ""
 
-echo -en " - Plugins:\t "
+echo_section " - Plugins:\t "
 	if test "x$enable_static" = "xyes"; then
-		echo "as static libs"
+		echo_have "as static libs"
 	else
-	 	echo "as shared libs"
+	 	echo_have "as shared libs"
 	fi
- 
-echo 
+echo "" 
+
+echo
 if test "x$am_cv_func_iconv" != "xyes"; then
-	echo "******************"
-	echo "* BIG FAT WARNING"
-	echo "* EKG2 will be compiled without iconv support. This means most charset"
-	echo "* conversion magic won't work. Jabber would work only on UTF-8 systems, and GG"
-	echo "* only on UTF-8, ISO-8859-2 or CP1250 ones. If you want something more, get"
-	echo "* yourself some iconv. Else, have fun."
-	echo "******************"
+	echo_err "******************\n"
+	echo_err "* BIG FAT WARNING\n"
+	echo_err "* EKG2 will be compiled without iconv support. This means most charset\n"
+	echo_err "* conversion magic won't work. Jabber would work only on UTF-8 systems, and GG\n"
+	echo_err "* only on UTF-8, ISO-8859-2 or CP1250 ones. If you want something more, get\n"
+	echo_err "* yourself some iconv. Else, have fun.\n"
+	echo_err "******************\n"
 fi
