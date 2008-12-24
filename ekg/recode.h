@@ -27,8 +27,8 @@ void ekg_recode_dec_ref(enum ekg_recode_name enc);
 char *ekg_recode_from_locale(enum ekg_recode_name enc, char *buf);
 char *ekg_recode_to_locale(enum ekg_recode_name enc, char *buf);
 
-#define ekg_recode_from_locale_dup(enc, buf) ekg_recode_from_locale(enc, xstrdup(buf))
-#define ekg_recode_to_locale_dup(enc, buf)   ekg_recode_to_locale(enc, xstrdup(buf))
+char *ekg_recode_from_locale_dup(enum ekg_recode_name enc, const char *buf);
+char *ekg_recode_to_locale_dup(enum ekg_recode_name enc, const char *buf);
 
 /* CP-1250 */
 #define ekg_recode_cp_inc()	ekg_recode_inc_ref(EKG_RECODE_CP)
