@@ -623,12 +623,12 @@ static char *recode_ansi_helper_to(struct ekg_recoder *rec, char *buf) {	/* enco
 	return ekg_change_encoding(buf, rec->conv_in);
 }
 
-static char *recode_utf8_helper_from(struct ekg_recoder *rec, char *buf) {	/* locale => utf-8 */
-	return ekg_to_utf8(buf, rec->conv_out);
+static char *recode_utf8_helper_from(struct ekg_recoder *rec, char *buf) {	/* locale /utf-8/ => encoding */
+	return ekg_from_utf8(buf, rec->conv_out);
 }
 
-static char *recode_utf8_helper_to(struct ekg_recoder *rec, char *buf) {	/* utf-8  => locale */
-	return ekg_from_utf8(buf, rec->conv_in);
+static char *recode_utf8_helper_to(struct ekg_recoder *rec, char *buf) {	/* encoding => locale /utf-8/ */
+	return ekg_to_utf8(buf, rec->conv_in);
 }
 
 #ifdef HAVE_ICONV
@@ -812,5 +812,45 @@ char *ekg_recode_to_locale_dup(enum ekg_recode_name enc, const char *buf) {
 	}
 	// warn user.
 	return xstrdup(buf);
+}
+
+const char *ekg_recode_from_locale_use(enum ekg_recode_name enc, const char *buf) {
+	struct ekg_recoder *rec;
+
+	if (!buf)
+		return NULL;
+
+	rec = ekg_recode_get(enc);
+	if (rec->recode_from_locale == recode_ret)
+		return buf;
+
+	/* almost like ekg_recode_from_locale_dup(), but don't strdup() @ error */
+	if (rec->recode_from_locale) {
+		if (!rec->in_new_buffer)
+			buf = xstrdup(buf);
+		return rec->recode_from_locale(rec, (char *) buf);
+	}
+	// warn user.
+	return buf;
+}
+
+const char *ekg_recode_to_locale_use(enum ekg_recode_name enc, const char *buf) {
+	struct ekg_recoder *rec;
+
+	if (!buf)
+		return NULL;
+
+	rec = ekg_recode_get(enc);
+	if (rec->recode_to_locale == recode_ret)
+		return buf;
+
+	/* almost like ekg_recode_to_locale_dup(), but don't strdup() @ error */
+	if (rec->recode_to_locale) {
+		if (!rec->in_new_buffer)
+			buf = xstrdup(buf);
+		return rec->recode_to_locale(rec, (char *) buf);
+	}
+	// warn user.
+	return buf;
 }
 

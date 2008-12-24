@@ -52,6 +52,7 @@
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/net.h>
+#include <ekg/recode.h>
 #include <ekg/userlist.h>
 #include <ekg/sessions.h>
 #include <ekg/xmalloc.h>
@@ -68,8 +69,6 @@
 
 #include "jabber.h"
 #include "jabber_dcc.h"
-
-extern void *jconv_out; /* for msg */
 
 const char *jabber_prefixes[2] = { "xmpp:", "tlen:" };
 extern int config_jabber_disable_chatstates; /* in jabber.c */
@@ -275,7 +274,7 @@ static COMMAND(jabber_command_msg)
 
 	int secure		= 0;
 
-	char *s;		/* used for transcoding */
+	const char *msg2;		/* used for transcoding */
 
 	if (!xstrcmp(target, "*")) {
 		if (msg_all(session, name, params[1]) == -1)
@@ -321,13 +320,9 @@ static COMMAND(jabber_command_msg)
 		ismuc = 1;
 
 	if (!j->istlen) { /* Very, very simple XEP-0071 support + 'modified' jabber_encode() */
-		if (!config_use_unicode) {
-			s = ekg_convert_string_p(msg, jconv_out);
-			if (s)
-				msg = s;
-		}
+		msg2 = ekg_locale_to_utf8_use(msg);
 
-		if ((htmlmsg = xstrchr(msg, 18))) { /* ^R */
+		if ((htmlmsg = xstrchr(msg2, 18))) { /* ^R */
 			int omitsyntaxcheck;
 
 			*(htmlmsg++) = 0;
@@ -360,7 +355,8 @@ static COMMAND(jabber_command_msg)
 					return -1;
 			}
 		}
-	}
+	} else
+		msg2 = msg;
 
 /* writing: */
 	if (j->send_watch) j->send_watch->transfer_limit = -1;
@@ -382,10 +378,10 @@ static COMMAND(jabber_command_msg)
 		xfree(thread);
 	}
 
-	if (!msg) goto nomsg;
+	if (!msg2) goto nomsg;
 
 	if (session_int_get(session, "__gpg_enabled") == 1) {
-		char *e_msg = xstrdup(msg);
+		char *e_msg = xstrdup(msg2);
 
 		if ((e_msg = jabber_openpgp(session, uid, JABBER_OPENGPG_ENCRYPT, e_msg, NULL, NULL))) {
 			watch_write(j->send_watch, 
@@ -396,13 +392,13 @@ static COMMAND(jabber_command_msg)
 		}
 	}
 	if (!secure /* || j->istlen */) {
-		char *tmp = (j->istlen ? tlen_encode(msg) : xml_escape(msg));
+		char *tmp = (j->istlen ? tlen_encode(msg2) : xml_escape(msg2));
 
 		watch_write(j->send_watch, "<body>%s</body>", tmp);
 		xfree(tmp);
 	}
-	if (!j->istlen && !config_use_unicode)
-		xfree(s);			/* recoded string */
+	if (!j->istlen)
+		recode_xfree(msg, msg2);			/* recoded string */
 
 	if (config_last & 4) 
 		last_add(1, uid, time(NULL), 0, params[1]);

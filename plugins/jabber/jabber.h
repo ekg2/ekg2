@@ -205,7 +205,7 @@ const char *jabber_iq_reg(session_t *s, const char *prefix, const char *to, cons
 const char *jabber_iq_send(session_t *s, const char *prefix, jabber_iq_type_t iqtype, const char *to, const char *type, const char *xmlns);
 
 /* digest.c hashowanie.. */
-char *jabber_digest(const char *sid, const char *password, void *charset);
+char *jabber_digest(const char *sid, const char *password, int istlen);
 char *jabber_sha1_generic(char *buf, int len);
 char *jabber_dcc_digest(char *sid, char *initiator, char *target);
 char *jabber_challange_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm);
@@ -217,10 +217,6 @@ char *jabber_unescape(const char *text);
 char *tlen_encode(const char *what);
 char *tlen_decode(const char *what);
 int jabber_write_status(session_t *s);
-
-void jabber_convert_string_init(int is_tlen);
-void jabber_convert_string_destroy();
-QUERY(jabber_convert_string_reinit);
 
 void jabber_reconnect_handler(int type, void *data);
 

@@ -14,6 +14,7 @@
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 #include <ekg/themes.h>
+#include <ekg/recode.h>
 #include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
@@ -22,11 +23,6 @@
 
 #include "jabber.h"
 #include "jabber-ssl.h"
-
-void *jconv_in = (void*) -1;
-void *jconv_out = (void*) -1;
-void *tconv_in = (void*) -1;
-void *tconv_out = (void*) -1;
 
 /* XXX, It's the same function from mcjabber, but uses one buffor. */
 static char *jabber_gpg_strip_header_footer(char *data) {
@@ -209,15 +205,15 @@ char *jabber_attr(char **atts, const char *att)
  */
 
 char *jabber_escape(const char *text) {
-	char *utftext;
+	const char *utftext;
 	char *res;
 
 	if (!text)
 		return NULL;
 
-	utftext = ekg_convert_string_p(text, jconv_out);
-	res = xml_escape(utftext ? utftext : text);
-	xfree(utftext);
+	utftext = ekg_locale_to_utf8_use(text);
+	res = xml_escape(utftext);
+	recode_xfree(text, utftext);
 	return res;
 }
 
@@ -237,13 +233,9 @@ char *jabber_escape(const char *text) {
  */
 
 char *jabber_unescape(const char *text) {
-	char *s;
-
 	if (!text)
 		return NULL;
-	s = ekg_convert_string_p(text, jconv_in);
-
-	return (s ? s : xstrdup(text));
+	return ekg_utf8_to_locale_dup(text);
 }
 
 /**
@@ -266,12 +258,12 @@ char *jabber_unescape(const char *text) {
 char *tlen_encode(const char *what) {
 	unsigned char *s;
 	unsigned char *ptr, *str;
-	char *text = NULL;
+	const char *text = NULL;
 
 	if (!what) return NULL;
 
-	text = ekg_convert_string_p(what, tconv_out);
-	s = (unsigned char *) (text ? text : what);
+	text = ekg_locale_to_iso2_use(what);
+	s = (unsigned char *) text;
 
 	str = ptr = (unsigned char *) xcalloc(3 * xstrlen((char*) s) + 1, 1);
 	while (*s) {
@@ -287,7 +279,7 @@ char *tlen_encode(const char *what) {
 			*ptr++ = *s;
 		s++;
 	}
-	xfree(text);
+	recode_xfree(what, text);
 	return (char*) str;
 }
 
@@ -309,7 +301,6 @@ char *tlen_encode(const char *what) {
 
 char *tlen_decode(const char *what) {
 	unsigned char *dest, *data, *retval;
-	char *text;
 
 	if (!what) return NULL;
 	dest = data = retval = (unsigned char *) xstrdup(what);
@@ -329,10 +320,7 @@ char *tlen_decode(const char *what) {
 	}
 	*dest = '\0';
 
-	if (!(text = ekg_convert_string_p((char*) retval, tconv_in)))
-		return (char*) retval;
-	xfree(retval);
-	return text;
+	return ekg_iso2_to_locale((char *) retval);
 }
 
 /*
@@ -417,41 +405,6 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 	xfree(compressed);
 
 	return res;
-}
-
-/* called within jabber_session_init() */
-void jabber_convert_string_init(int is_tlen) {
-	if (is_tlen && (tconv_in == (void*) -1))
-		tconv_in = ekg_convert_string_init("ISO-8859-2", NULL, &tconv_out);
-	else if (!is_tlen && (jconv_in == (void*) -1))
-		jconv_in = ekg_convert_string_init("UTF-8", NULL, &jconv_out);
-}
-
-void jabber_convert_string_destroy() {
-	if (tconv_in != (void*) -1) {
-		ekg_convert_string_destroy(tconv_in);
-		ekg_convert_string_destroy(tconv_out);
-	}
-	if (jconv_in != (void*) -1) {
-		ekg_convert_string_destroy(jconv_in);
-		ekg_convert_string_destroy(jconv_out);
-	}
-}
-
-/* CONFIG_POSTINIT */
-QUERY(jabber_convert_string_reinit) {
-	jabber_convert_string_destroy();
-
-	if (tconv_in != (void*) -1) {
-		tconv_in = (void*) -1;
-		jabber_convert_string_init(1);
-	}
-	if (jconv_in != (void*) -1) {
-		jconv_in = (void*) -1;
-		jabber_convert_string_init(0);
-	}
-
-	return 0;
 }
 
 /* conversations */

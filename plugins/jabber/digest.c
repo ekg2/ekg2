@@ -45,6 +45,7 @@ A million repetitions of "a"
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 #include <ekg/debug.h>
+#include <ekg/recode.h>
 
 #include <stdint.h>
 
@@ -61,8 +62,6 @@ A million repetitions of "a"
 
 #include <stdio.h>
 #include <string.h>
-
-extern void *jconv_out; /* misc.c */
 
 typedef struct {
     uint32_t state[5];
@@ -399,22 +398,19 @@ char *jabber_challange_digest(const char *sid, const char *password, const char 
 	EKG2_MD5_CTX ctx;
 	unsigned char digest[20];
 
-	char *convnode, *convpasswd;	/* sid && password encoded in UTF-8 */
+	const char *convnode, *convpasswd;	/* sid && password encoded in UTF-8 */
 	char *ha1, *ha2;
 	char *kd;
 
 /* ZERO STEP -> recode */
-	if (!(convnode = ekg_convert_string_p(sid, jconv_out)))
-		convnode = xstrdup(sid);
-
-	if (!(convpasswd = ekg_convert_string_p(password, jconv_out)))
-		convpasswd = xstrdup(password);
+	convnode = ekg_locale_to_utf8_use(sid);
+	convpasswd = ekg_locale_to_utf8_use(password);
 
 /* FIRST STEP */
 	kd = saprintf("%s:%s:%s", convnode, realm, convpasswd);
 
-	xfree(convnode);
-	xfree(convpasswd);
+	recode_xfree(sid, convnode);
+	recode_xfree(password, convpasswd);
 
 	MD5Init(&ctx);
 	MD5Update(&ctx, kd, xstrlen(kd));
@@ -503,22 +499,22 @@ char *jabber_dcc_digest(char *sid, char *initiator, char *target) {
  * @return <b>static</b> buffer, with 40 digit SHA1 hash + NUL char
  */
 
-char *jabber_digest(const char *sid, const char *password, void *charset_out) {
+char *jabber_digest(const char *sid, const char *password, int istlen) {
 	EKG2_SHA1_CTX ctx;
 	unsigned char digest[20];
 	static char result[41];
-	char *tmp;
+	const char *tmp;
 	int i;
 
 	SHA1Init(&ctx);
 
-	tmp = ekg_convert_string_p(sid, charset_out);
-	SHA1Update(&ctx, (tmp ? tmp : sid), xstrlen(tmp ? tmp : sid));
-	xfree(tmp);
+	tmp = (istlen) ? ekg_locale_to_iso2_use(sid) : ekg_locale_to_utf8_use(sid);
+	SHA1Update(&ctx, tmp, xstrlen(tmp));
+	recode_xfree(sid, tmp);
 
-	tmp = ekg_convert_string_p(password, charset_out);
-	SHA1Update(&ctx, (tmp ? tmp : password), xstrlen(tmp ? tmp : password));
-	xfree(tmp);
+	tmp = (istlen) ? ekg_locale_to_iso2_use(password) : ekg_locale_to_utf8_use(password);
+	SHA1Update(&ctx, tmp, xstrlen(tmp));
+	recode_xfree(password, tmp);
 
 	SHA1Final(digest, &ctx);
 
