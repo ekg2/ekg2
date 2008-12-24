@@ -641,6 +641,7 @@ static char *recode_iconv_helper_from(struct ekg_recoder *rec, char *buf) {	/* l
 
 	iconv(rec->conv_out, NULL, NULL, NULL, NULL);	/* reset iconv */
 	res = mutt_convert_string(s, rec->conv_out, (rec->is_utf == 2 ? 1 : (rec->is_utf == 1 ? 2 : 0)));
+	xfree(buf);
 
 	return string_free(res, 0);
 }
@@ -651,6 +652,7 @@ static char *recode_iconv_helper_to(struct ekg_recoder *rec, char *buf) {	/* ico
 
 	iconv(rec->conv_in, NULL, NULL, NULL, NULL);	/* reset iconv */
 	res = mutt_convert_string(s, rec->conv_in, rec->is_utf);
+	xfree(buf);
 
 	return string_free(res, 0);
 }
@@ -737,7 +739,6 @@ void ekg_recode_dec_ref(enum ekg_recode_name enc) {
 		if (rec->recode_from_locale == recode_iconv_helper_from)
 			iconv_close(rec->conv_out);
 #endif
-
 		memset(rec, 0, sizeof(struct ekg_recoder));
 	}
 }
