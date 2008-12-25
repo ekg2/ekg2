@@ -84,10 +84,10 @@ void jogger_localize_headers() {
 
 	jogger_free_headers(1);
 	for (i = 0; i < JOGGER_KEYS_MAX; i++)
-		jogger_header_keys[i] = ekg_utf8_to_locale(utf_jogger_header_keys[i]);
+		jogger_header_keys[i] = ekg_utf8_to_locale_dup(utf_jogger_header_keys[i]);
 
 	for (i = 0; i < JOGGER_VALUES_MAX; i++)
-		jogger_header_values[i] = ekg_utf8_to_locale(utf_jogger_header_values[i]);
+		jogger_header_values[i] = ekg_utf8_to_locale_dup(utf_jogger_header_values[i]);
 }
 
 /**
