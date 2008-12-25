@@ -57,6 +57,7 @@ int config_display_day_changed = 1;
 static QUERY(event_protocol_message);
 static QUERY(event_avail);
 static QUERY(event_online);
+static QUERY(event_offline);
 static QUERY(event_away);
 static QUERY(event_na);
 static QUERY(event_descr);
@@ -391,6 +392,7 @@ int events_init() {
 	events_add_handler(("event_away"), event_away);
 	events_add_handler(("event_na"), event_na);
 	events_add_handler(("event_online"), event_online);
+	events_add_handler(("event_offline"), event_offline);
 	events_add_handler(("event_descr"), event_descr);
 	return 0;
 }
@@ -499,6 +501,19 @@ static QUERY(event_online) {
 	char *uid	= *(va_arg(ap, char**));
 
 	event_check(session, "event_online", uid, NULL);
+	return 0;
+}
+
+/*
+ * event_offline ()
+ *
+ * handler for changing status from avail to NA
+ */
+static QUERY(event_offline) {
+	char *session	= *(va_arg(ap, char**));
+	char *uid	= *(va_arg(ap, char**));
+
+	event_check(session, "event_offline", uid, NULL);
 	return 0;
 }
 
