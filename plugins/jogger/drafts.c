@@ -31,6 +31,7 @@
 
 #include <ekg/commands.h>
 #include <ekg/debug.h>
+#include <ekg/recode.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/windows.h>
@@ -78,24 +79,15 @@ void jogger_free_headers(int real_free) {
 	}
 }
 
-void jogger_localize_headers(void *p) {
+void jogger_localize_headers() {
 	int i;
 
 	jogger_free_headers(1);
-	for (i = 0; i < JOGGER_KEYS_MAX; i++) {
-		char *s = ekg_convert_string_p(utf_jogger_header_keys[i], p);
+	for (i = 0; i < JOGGER_KEYS_MAX; i++)
+		jogger_header_keys[i] = ekg_utf8_to_locale(utf_jogger_header_keys[i]);
 
-		if (!s)
-			s = xstrdup(utf_jogger_header_keys[i]);
-		jogger_header_keys[i] = s;
-	}
-	for (i = 0; i < JOGGER_VALUES_MAX; i++) {
-		char *s = ekg_convert_string_p(utf_jogger_header_values[i], p);
-
-		if (!s)
-			s = xstrdup(utf_jogger_header_values[i]);
-		jogger_header_values[i] = s;
-	}
+	for (i = 0; i < JOGGER_VALUES_MAX; i++)
+		jogger_header_values[i] = ekg_utf8_to_locale(utf_jogger_header_values[i]);
 }
 
 /**

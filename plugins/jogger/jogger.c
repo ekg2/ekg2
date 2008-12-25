@@ -19,6 +19,7 @@
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
+#include <ekg/recode.h>
 #include <ekg/queries.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
@@ -195,11 +196,12 @@ static QUERY(jogger_newsession) {
 
 static QUERY(jogger_postconfig) {
 	session_t *js;
-	void *p = ekg_convert_string_init("UTF-8", NULL, NULL);
 
-	jogger_localize_texts(p);
-	jogger_localize_headers(p);
-	ekg_convert_string_destroy(p);
+	/* note: converters init only one-side converting (utf-8 ==> locale) recoders can't do it ;/ */
+	ekg_recode_utf8_inc();
+	jogger_localize_texts();
+	jogger_localize_headers();
+	ekg_recode_utf8_dec();
 
 	for (js = sessions; js; js = js->next) {
 		if ((js->plugin == &jogger_plugin) && !session_int_get(js, "userlist_keep"))

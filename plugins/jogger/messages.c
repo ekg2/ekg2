@@ -21,6 +21,7 @@
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
+#include <ekg/recode.h>
 #include <ekg/protocol.h>
 #include <ekg/queries.h>
 #include <ekg/sessions.h>
@@ -66,17 +67,12 @@ void jogger_free_texts(int real_free) {
 	}
 }
 
-void jogger_localize_texts(void *p) {
+void jogger_localize_texts() {
 	int i;
 
 	jogger_free_texts(1);
-	for (i = 0; i < JOGGER_TEXT_MAX; i++) {
-		char *s = ekg_convert_string_p(utf_jogger_text[i], p);
-
-		if (!s)
-			s = xstrdup(utf_jogger_text[i]);
-		jogger_text[i] = s;
-	}
+	for (i = 0; i < JOGGER_TEXT_MAX; i++)
+		jogger_text[i] = ekg_utf8_to_locale_dup(utf_jogger_text[i]);
 }
 
 QUERY(jogger_msghandler) {
