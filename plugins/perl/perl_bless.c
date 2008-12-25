@@ -181,7 +181,8 @@ void ekg2_bless_timer(HV *hv, struct timer *timer)
 {
 	debug_bless("blessing timer %s\n", timer->name);
 	(void) hv_store(hv, "name", 4, new_pv(timer->name), 0);
-	(void) hv_store(hv, "freq",  4, newSViv(timer->period), 0);
+	(void) hv_store(hv, "freq",  4, newSViv(timer->period / 1000), 0);
+	(void) hv_store(hv, "freq_ms",  4, newSViv(timer->period), 0);
 }
 
 void ekg2_bless_plugin(HV *hv, plugin_t *plugin)
