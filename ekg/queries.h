@@ -70,6 +70,8 @@ enum queries_id {
 
 	USERLIST_REFRESH,
 
+	EVENT_OFFLINE,
+
 	QUERY_EXTERNAL,
 };
 
@@ -457,6 +459,11 @@ const struct query_def query_list[] = {
 		QUERY_ARG_END } },
 
 	{ USERLIST_REFRESH, "userlist-refresh", {
+		QUERY_ARG_END } },
+
+	{ EVENT_OFFLINE, "event_offline", {
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_END } },
 };
 

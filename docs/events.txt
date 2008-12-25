@@ -17,6 +17,10 @@ event_online:
 	zmiana statusu z niedostêpnego na dostêpny/zaraz wracam. nie 
 	przekazywany jest ¿aden parametr.
 
+event_offline:
+	zmiana statusu z dostêpnego/zaraz wracam na niedostêpny. nie
+	przekazywany jest ¿aden parametr.
+
 event_descr:
 	zmiana opisu. przekazywany jest opis jako parametr.
 

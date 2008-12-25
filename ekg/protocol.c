@@ -437,9 +437,9 @@ notify_plugins:
 		u->last_status = st;
 		xfree(u->last_descr);
 		u->last_descr = xstrdup(de);
-	}
-
-	if (EKG_STATUS_IS_NA(st) && !EKG_STATUS_IS_NA(status) && !ignore_events)
+		if (EKG_STATUS_IS_NA(status) && !ignore_events)
+			query_emit_id(NULL, EVENT_OFFLINE, __session, __uid);
+	} else if (!EKG_STATUS_IS_NA(status) && !ignore_events)
 		query_emit_id(NULL, EVENT_ONLINE, __session, __uid);
 
 	if (!ignore_status) {
