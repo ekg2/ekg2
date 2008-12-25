@@ -35,6 +35,7 @@
 
 #include "debug.h"
 #include "dynstuff.h"
+#include "recode.h"
 #include "stuff.h"
 #include "themes.h"
 #include "vars.h"
@@ -85,7 +86,7 @@ void variable_init() {
 		/* XXX, warn here. user should change only console_charset if it's really nesessary... we should make user know about his terminal
 		 *	encoding... and give some tip how to correct this... it's just temporary
 		 */
-	variable_add(NULL, ("console_charset"), VAR_STR, 1, &config_console_charset, NULL, NULL, NULL);
+	variable_add(NULL, ("console_charset"), VAR_STR, 1, &config_console_charset, changed_console_charset, NULL, NULL);
 	variable_add(NULL, ("dcc_dir"), VAR_STR, 1, &config_dcc_dir, NULL, NULL, NULL); 
 	variable_add(NULL, ("debug"), VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
 /*	variable_add(NULL, ("default_protocol"), VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL); */

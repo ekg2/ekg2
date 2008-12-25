@@ -19,6 +19,8 @@ char *ekg_convert_string_p(const char *ps, void *ptr);
 char *ekg_convert_string(const char *ps, const char *from, const char *to);
 string_t ekg_convert_string_t_p(string_t s, void *ptr);
 string_t ekg_convert_string_t(string_t s, const char *from, const char *to);
+
+void changed_console_charset(const char *name);
 int ekg_converters_display(int quiet);
 
 void ekg_recode_inc_ref(enum ekg_recode_name enc);
