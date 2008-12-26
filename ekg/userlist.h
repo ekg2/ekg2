@@ -148,7 +148,7 @@ struct ignore_label {
 	char		*name;
 };
 
-#define	IGNORE_LABELS_MAX 8
+#define	IGNORE_LABELS_MAX 9
 extern struct ignore_label ignore_labels[IGNORE_LABELS_MAX];
 
 #ifndef EKG2_WIN32_NOFUNCTION
