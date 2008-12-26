@@ -264,6 +264,8 @@ ignore
 	
 	  - events - ignoruje zdarzenia zwi±zane z u¿ytkownikiem
 	
+	  - log - nie zapisuje w archiwum wiadomo¶ci u¿ytkownika
+	
 	  - * - wszystkie poziomy
 	
 	

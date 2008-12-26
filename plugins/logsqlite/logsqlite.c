@@ -566,6 +566,8 @@ QUERY(logsqlite_msg_handler)
 
 	if (config_logsqlite_log == 0)
 		return 0;
+	else if (ignored_check(s, uid) & IGNORE_LOG)
+		return 0;
 
 	format = NULL;
 
@@ -777,6 +779,7 @@ static QUERY(logsqlite_newwin_handler) {
 
 	if (!config_logsqlite_last_print_on_open || !w || !w->target || !w->session || w->id == 1000
 			|| !(uid = get_uid_any(w->session, w->target))
+			|| (ignored_check(w->session, uid) & IGNORE_LOG)
 			|| !(db = logsqlite_prepare_db(w->session, time(0), 0)))
 		return 0;
 
