@@ -68,7 +68,7 @@ struct timer {
 	char		*name;			/* nazwa timera */
 	plugin_t	*plugin;		/* wtyczka obs³uguj±ca deksryptor */
 	struct timeval	ends;			/* kiedy siê koñczy? */
-	time_t		period;			/* ile sekund ma trwaæ czekanie */
+	unsigned int	period;			/* ile milisekund ma trwaæ czekanie */
 	int	(*function)(int, void *);	/* funkcja do wywo³ania */
 	void		*data;			/* dane dla funkcji */
 
@@ -141,7 +141,8 @@ int isalpha_pl(unsigned char c);
 #define xtolower(c) tolower((int) (unsigned char) c)
 #define xtoupper(c) toupper((int) (unsigned char) c)
 
-struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persistent, int (*function)(int, void *), void *data);
+struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data);
+struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data);
 int timer_remove(plugin_t *plugin, const char *name);
 struct timer *timers_removei(struct timer *t);
 void timers_destroy();

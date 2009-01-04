@@ -1,7 +1,7 @@
 #ifndef __EKG_SSL_H
 #define __EKG_SSL_H		/* <__EKG_SSL_H> */
 
-#include <ekg2-remote-config.h>
+#include <ekg2-config.h>
 
 #ifdef WANT_GNUTLS
 # define HAVE_SSL 1

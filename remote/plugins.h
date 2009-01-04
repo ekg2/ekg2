@@ -26,7 +26,7 @@
 #include "dynstuff.h"
 #include "sessions.h"
 
-#define EKG_ABI_VER 4633
+#define EKG_ABI_VER 4762
 
 #define EXPORT     __attribute__ ((visibility("default")))
 
@@ -157,24 +157,8 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 void watch_handle(watch_t *w);
 void watches_destroy();
 
-#define IDLER(x) int x(void *data)
-
-typedef IDLER(idle_handler_func_t);
-
-typedef struct idle {
-	struct idle *next;
-
-	plugin_t *plugin;
-	idle_handler_func_t *handler;
-	void *data;
-} idle_t;
-
-idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data);
-void idle_handle(idle_t *i);
-
 extern plugin_t *plugins;
 extern list_t watches;
-extern idle_t *idles;
 
 extern plugin_t *ui_plugin;
 

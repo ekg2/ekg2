@@ -21,7 +21,7 @@
 #ifndef __EKG_WINDOWS_H
 #define __EKG_WINDOWS_H
 
-#include "ekg2-remote-config.h"
+#include "ekg2-config.h"
 
 #include <time.h>
 

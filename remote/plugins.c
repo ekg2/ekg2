@@ -48,7 +48,6 @@ DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
 	__DYNSTUFF_NOUNLINK)
 
 EXPORTNOT list_t watches = NULL;
-EXPORTNOT idle_t *idles	= NULL;
 static query_t *queries[QUERY_EXTERNAL+1];
 
 EXPORTNOT plugin_t *ui_plugin = NULL;
@@ -252,7 +251,6 @@ int plugin_register(plugin_t *p, int prio) {
 
 EXPORTNOT void plugin_unload(plugin_t *p) {
 	struct timer *t;
-	idle_t *i;
 	query_t **ll;
 	variable_t *v;
 	command_t *c;
@@ -279,13 +277,6 @@ EXPORTNOT void plugin_unload(plugin_t *p) {
 	for (t = timers; t; t = t->next) {
 		if (t->plugin == p)
 			t = timers_removei(t);
-	}
-
-	for (i = idles; i; ) {
-		if (i->plugin == p)
-			i = LIST_REMOVE2(&idles, i, NULL);
-		else
-			i = i->next;
 	}
 
 	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
@@ -600,31 +591,6 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type) {
 	}
 
 	return res;
-}
-
-EXPORTNOT void idle_handle(idle_t *i) {
-/*	debug_function("idle_handle() %p(%p)\n", i->handler, i->data); */
-
-	if (i->handler(i->data) == -1) {
-		/* remove idler */
-		xfree(i);
-			
-	} else {
-		/* add idler again [at end] */
-		LIST_ADD2(&idles, i);
-	}
-}
-
-idle_t *idle_add(plugin_t *plugin, idle_handler_func_t *handler, void *data) {
-	idle_t *i	= xmalloc(sizeof(idle_t));
-	i->plugin	= plugin;
-	i->handler	= handler;
-	i->data		= data;
-
-	/* XXX, prios? */
-	LIST_ADD_BEGINNING2(&idles, i);		/* first item */
-
-	return i;
 }
 
 int plugin_abi_version(int plugin_abi_ver, const char * plugin_name) {

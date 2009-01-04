@@ -74,6 +74,7 @@ typedef enum {
 	IGNORE_EVENTS		= 0x10,
 	IGNORE_NOTIFY		= 0x20,
 	IGNORE_XOSD		= 0x40,
+	IGNORE_LOG		= 0x80,
 	
 	IGNORE_ALL		= 0xFF
 } ignore_t;

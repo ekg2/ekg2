@@ -20,7 +20,7 @@
 
 #define _GNU_SOURCE
 
-#include "ekg2-remote-config.h"
+#include "ekg2-config.h"
 
 #define __EXTENSIONS__
 #include <sys/types.h>

@@ -27,7 +27,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-remote-config.h"
+#include "ekg2-config.h"
 
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600

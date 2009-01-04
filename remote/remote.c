@@ -16,7 +16,7 @@
  */
 
 /* sprawdzac includy od: */
-#include "ekg2-remote-config.h"
+#include "ekg2-config.h"
 
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600

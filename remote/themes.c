@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-remote-config.h"
+#include "ekg2-config.h"
 
 #define _XOPEN_SOURCE 600
 #include <stdarg.h>
@@ -682,7 +682,7 @@ void print_window_w(window_t *w, int activity, const char *theme, ...) {
 		if (activity > w->act) {
 			w->act = activity;
 				/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
-			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED);
+			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED, &w);
 		}
 	}
 

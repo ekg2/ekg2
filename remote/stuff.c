@@ -22,7 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-remote-config.h"
+#include "ekg2-config.h"
 
 #include <ctype.h>
 #include <sys/time.h>
@@ -166,16 +166,22 @@ const char *timestamp_time(const char *format, time_t t) {
 	return buf;
 }
 
-struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int persist, int (*function)(int, void *), void *data) {
+struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
 	struct timer *t;
 	struct timeval tv;
 
+	/* wylosuj now± nazwê, je¶li nie mamy */
 	if (!name)
 		debug_error("timer_add() without name\n");
 
 	t = xmalloc(sizeof(struct timer));
 	gettimeofday(&tv, NULL);
-	tv.tv_sec += period;
+	tv.tv_sec += (period / 1000);
+	tv.tv_usec += ((period % 1000) * 1000);
+	if (tv.tv_usec >= 1000000) {
+		tv.tv_usec -= 1000000;
+		tv.tv_sec++;
+	}
 	memcpy(&(t->ends), &tv, sizeof(tv));
 	t->name = xstrdup(name);
 	t->period = period;
@@ -188,8 +194,8 @@ struct timer *timer_add(plugin_t *plugin, const char *name, time_t period, int p
 	return t;
 }
 
-struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
-	return timer_add(plugin, name, period, persist, function, data);
+struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
+	return timer_add(plugin, name, period * 1000, persist, function, data);
 }
 
 int timer_remove(plugin_t *plugin, const char *name)

@@ -19,7 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-remote-config.h"
+#include "ekg2-config.h"
 
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
@@ -42,6 +42,7 @@ struct ignore_label ignore_labels[] = {
 	{ IGNORE_DCC, "dcc" },
 	{ IGNORE_EVENTS, "events" },
 	{ IGNORE_XOSD, "xosd" },
+	{ IGNORE_LOG, "log" },
 	{ 0, NULL }
 };
 

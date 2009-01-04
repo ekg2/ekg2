@@ -22,7 +22,7 @@
  * Ekg2 char and string utilities with wide character strings support.
  */
 
-#include "ekg2-remote-config.h"
+#include "ekg2-config.h"
 
 #if USE_UNICODE
 

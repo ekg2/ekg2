@@ -44,6 +44,8 @@ enum queries_id {
 
 	USERLIST_REFRESH,
 
+	EVENT_OFFLINE,
+
 	QUERY_EXTERNAL,
 };
 
