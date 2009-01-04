@@ -594,9 +594,6 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type) {
 }
 
 int plugin_abi_version(int plugin_abi_ver, const char * plugin_name) {
-	if (plugin_abi_ver == 4729)
-		return 1;
-
 	if (EKG_ABI_VER == plugin_abi_ver)
 		return 1;
 

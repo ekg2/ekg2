@@ -100,7 +100,7 @@ struct timer {
 	char		*name;			/* nazwa timera */
 	plugin_t	*plugin;		/* wtyczka obs³uguj±ca deksryptor */
 	struct timeval	ends;			/* kiedy siê koñczy? */
-	unsigned int	period;			/* ile sekund ma trwaæ czekanie */
+	unsigned int	period;			/* ile milisekund ma trwaæ czekanie */
 	int	(*function)(int, void *);	/* funkcja do wywo³ania */
 	void		*data;			/* dane dla funkcji */
 
