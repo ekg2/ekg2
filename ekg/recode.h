@@ -55,6 +55,7 @@ const char *ekg_recode_to_locale_use(enum ekg_recode_name enc, const char *buf);
 #define ekg_iso2_to_locale_dup(buf) ekg_recode_to_locale_dup(EKG_RECODE_ISO2, buf)
 #define ekg_locale_to_iso2_use(buf) ekg_recode_from_locale_use(EKG_RECODE_ISO2, buf)
 #define ekg_iso2_to_locale_use(buf) ekg_recode_to_locale_use(EKG_RECODE_ISO2, buf)
+void iso_to_ascii(unsigned char *buf);
 
 /* UTF-8 */
 #define ekg_recode_utf8_inc()	ekg_recode_inc_ref(EKG_RECODE_UTF8)

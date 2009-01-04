@@ -298,7 +298,6 @@ int ekg_hash(const char *name);
 FILE *help_path(char *name, char *plugin);
 
 int mesg_set(int what);
-void iso_to_ascii(unsigned char *buf);
 char *strip_spaces(char *line);
 int strncasecmp_pl(const char * cs,const char * ct,size_t count);
 int strcasecmp_pl(const char *cs, const char *ct);

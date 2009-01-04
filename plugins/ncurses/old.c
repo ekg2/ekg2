@@ -51,6 +51,7 @@
 #include <ekg/commands.h>
 #include <ekg/sessions.h>
 #include <ekg/plugins.h>
+#include <ekg/recode.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
