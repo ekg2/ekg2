@@ -320,12 +320,6 @@ AC_ARG_ENABLE([unicode],	AC_HELP_STRING([--enable-unicode],		[Enable unicode (EX
     ]
 )
 
-AC_ARG_ENABLE([remote],		AC_HELP_STRING([--enable-remote],		[Build ekg2-remote (EXPERIMENTAL)]))
-
-if test "x$enable_remote" = "xyes"; then
-   REMOTE_SUBDIR="remote"
-fi
-
 dnl #######################################################################################################################
 
 AC_ARG_WITH(ioctld,		AC_HELP_STRING([--without-ioctld],		[Compile without ioctld (ioctld plugin)]))
@@ -530,6 +524,29 @@ if test "x$with_logsoracle" == "xyes"; then
 	AC_CHECK_ORACLE
 else
 	AC_MSG_RESULT([skipping logsoracle plugin])
+fi
+
+AC_ARG_ENABLE([remote],		AC_HELP_STRING([--enable-remote],		[Build ekg2-remote (EXPERIMENTAL)]))
+
+if test "x$enable_remote" = "xyes"; then
+   REMOTE_SUBDIR="remote"
+   AC_SUBST(REMOTE_SSL_LIBS)
+   AC_SUBST(REMOTE_SSL_CPPFLAGS)
+
+   if test "x$have_gnutls" = "xyes" -a "x$with_libgnutls" != "xno"; then
+       remote_have_gnutls=yes;
+       REMOTE_SSL_LIBS=$LIBGNUTLS_LIBS
+       REMOTE_SSL_CPPFLAGS=$LIBGNUTLS_CFLAGS
+
+       AC_DEFINE([REMOTE_WANT_GNUTLS], 1, [define if you want use gnutls for ssl connections])
+   else
+      if test "x$have_openssl" = "xyes"; then
+	  remote_have_openssl=yes;
+	  REMOTE_SSL_LIBS=$OPENSSL_LIBS
+	  REMOTE_SSL_CPPFLAGS=$OPENSSL_INCLUDES
+	  AC_DEFINE([REMOTE_WANT_OPENSSL], 1, [define if you want use openssl for ssl connections])
+      fi
+   fi
 fi
 
 PLUGINS_LIBS=""
@@ -825,7 +842,18 @@ echo ""
 echo ""
 
 if test "x$enable_remote" = "xyes"; then
-	echo_have " - REMOTE: tcp,unix"
+	echo_section " - REMOTE:\t"
+	echo_have "tcp,unix"
+
+	if test "x$remote_have_gnutls" = "xyes"; then
+		echo_have ",tcps "
+		echo_with "(with ssl support in -lgnutls) "
+	fi
+
+	if test "x$remote_have_openssl" = "xyes"; then
+		echo_have ",tcps "
+		echo_with "(with ssl support in -lssl) "
+	fi
 	echo ""
 fi
 

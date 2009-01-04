@@ -162,7 +162,6 @@ void ekg_loop() {
 				
 			if (ispersist) {
 				memcpy(&t->ends, &tv, sizeof(tv));
-				t->ends.tv_sec += t->period;
 				t->ends.tv_sec += (t->period / 1000);
 				t->ends.tv_usec += ((t->period % 1000) * 1000);
 				if (t->ends.tv_usec >= 1000000) {

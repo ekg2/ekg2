@@ -3,18 +3,18 @@
 
 #include <ekg2-config.h>
 
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 # define HAVE_SSL 1
 #endif
 
-#ifdef WANT_OPENSSL
+#ifdef REMOTE_WANT_OPENSSL
 # define HAVE_SSL 1
 
 #endif
 
 #ifdef HAVE_SSL				/* <HAVE_SSL> */
 
-#ifdef WANT_GNUTLS				/* <WANT_GNUTLS> */
+#ifdef REMOTE_WANT_GNUTLS				/* <WANT_GNUTLS> */
 # include <gnutls/gnutls.h>
 
 # define SSL_SESSION		gnutls_session_t
@@ -41,7 +41,7 @@ static int __attribute__((unused)) SSL_SET_FD(SSL_SESSION session, long int fd) 
 
 #endif						/* </WANT_GNUTLS> */
 
-#ifdef WANT_OPENSSL				/* <WANT_OPENSSL> */
+#ifdef REMOTE_WANT_OPENSSL				/* <WANT_OPENSSL> */
 
 # include <openssl/ssl.h>
 # include <openssl/err.h>

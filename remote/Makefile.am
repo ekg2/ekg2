@@ -4,9 +4,10 @@ bin_PROGRAMS = ekg2-remote
 
 ekg2_remote_SOURCES = ekg-remote.c commands.c dynstuff.c plugins.c recode.c remote.c sessions.c stuff.c themes.c userlist.c vars.c windows.c xmalloc.c strings.c $(ekg2_headers)
 
-ekg2_remote_LDADD = $(top_builddir)/compat/libcompat.a @DLLIB@
+ekg2_remote_LDADD = $(top_builddir)/compat/libcompat.a @DLLIB@ $(REMOTE_SSL_LIBS)
 ekg2_remote_LDFLAGS = -export-dynamic
 ekg2_remote_DEPENDENCIES = $(top_builddir)/compat/libcompat.a
+ekg2_remote_CPPFLAGS = $(REMOTE_SSL_CPPFLAGS)
 
 INCLUDES = -DPLUGINDIR=\"$(plugindir)\"
 

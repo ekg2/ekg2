@@ -87,7 +87,7 @@ static unsigned int ssl_read_total, ssl_write_total;
 static int ssl_used;
 
 SSL_SESSION ssl_session;
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 gnutls_certificate_credentials ssl_xcred;
 #endif
 
@@ -98,12 +98,12 @@ gnutls_certificate_credentials ssl_xcred;
  *
  * under GPL-2 or later */
 static void ssl_print_info(SSL_SESSION sesja) {
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 	gnutls_kx_algorithm_t kx;
 #endif
 	printf("---====== ssl_print_info() ======---\n");
 
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 	kx = gnutls_kx_get(sesja);
 
 	if (gnutls_auth_get_type(sesja) == GNUTLS_CRD_CERTIFICATE) {
@@ -126,7 +126,7 @@ static void ssl_print_info(SSL_SESSION sesja) {
 	printf("\tKompresja: %s\n", gnutls_compression_get_name(gnutls_compression_get(sesja)));
 #endif
 
-#ifdef WANT_OPENSSL
+#ifdef REMOTE_WANT_OPENSSL
 	printf("\t    Szyfr: %s\n", SSL_CIPHER_get_name(SSL_get_current_cipher(sesja)));
 	printf("\tKompresja: %s\n", SSL_COMP_get_name(SSL_get_current_compression(sesja)));		/* XXX, nie ma tego w man? */
 #endif
@@ -135,7 +135,7 @@ static void ssl_print_info(SSL_SESSION sesja) {
 
 #endif
 
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 static ssize_t ekg_gnutls_read(int fd, void *buf, size_t count) {
 	int ret;
 
@@ -156,7 +156,7 @@ static ssize_t ekg_gnutls_write(int fd, void *buf, size_t count) {
 
 #endif
 
-#ifdef WANT_OPENSSL
+#ifdef REMOTE_WANT_OPENSSL
 long ekg_openssl_bio_dump(BIO *bio, int cmd, const char *argp, int argi, long argl, long ret) {
 	if (cmd == (BIO_CB_READ|BIO_CB_RETURN))
 		ssl_read_total += ret;
@@ -208,7 +208,7 @@ static int rc_input_new_inet(const char *path, int type) {
 
 static int rc_input_new_inet_ssl(const char *path, int type) {
 #ifdef HAVE_SSL
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 	/* Allow connections to servers that have OpenPGP keys as well. */
 	const int cert_type_priority[3] = {GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0};
 	const int comp_type_priority[3] = {GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0};
@@ -223,7 +223,7 @@ static int rc_input_new_inet_ssl(const char *path, int type) {
 
 	ssl_used = 1;
 	SSL_GLOBAL_INIT();		/* inicjuj ssla */
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 	gnutls_certificate_allocate_credentials(&ssl_xcred);
 #endif
 
@@ -232,7 +232,7 @@ static int rc_input_new_inet_ssl(const char *path, int type) {
 		errno = ENOMEM;		/* XXX? */
 		return -1;
 	}
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 	/* gnutls_record_set_max_size(ssl, 1024); */		/* XXX */
 
 	gnutls_set_default_priority(ssl);
@@ -252,7 +252,7 @@ static int rc_input_new_inet_ssl(const char *path, int type) {
 		return -1;
 	}
 
-#ifdef WANT_OPENSSL
+#ifdef REMOTE_WANT_OPENSSL
 	BIO_set_callback(SSL_get_rbio(ssl), ekg_openssl_bio_dump);
 	BIO_set_callback(SSL_get_wbio(ssl), ekg_openssl_bio_dump);
 #endif
@@ -260,7 +260,7 @@ static int rc_input_new_inet_ssl(const char *path, int type) {
 	do {
 		ret = SSL_HELLO(ssl);
 
-#ifdef WANT_OPENSSL
+#ifdef REMOTE_WANT_OPENSSL
 		if (ret != -1)
 			goto handshake_ok;			/* ssl was ok */
 
@@ -269,7 +269,7 @@ static int rc_input_new_inet_ssl(const char *path, int type) {
 	} while (SSL_E_AGAIN(ret));
 
 
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 	if (ret >= 0) 
 		goto handshake_ok;	/* gnutls was ok */
 
@@ -802,7 +802,7 @@ static WATCHER(remote_read_ssl) {
 again:
 	ret = SSL_RECV(ssl_session, buf, sizeof(buf));
 
-#ifdef WANT_OPENSSL
+#ifdef REMOTE_WANT_OPENSSL
 	if ((ret == 0 && SSL_get_error(ssl_session, ret) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
 	else if (ret < 0) 
 		ret = SSL_get_error(ssl_session, ret);
@@ -845,11 +845,11 @@ again:
 	if (res == -1)
 		return res;
 
-#ifdef WANT_GNUTLS
+#ifdef REMOTE_WANT_GNUTLS
 	if (gnutls_record_check_pending(ssl_session))
 		goto again;
 #endif
-#ifdef WANT_OPENSSL
+#ifdef REMOTE_WANT_OPENSSL
 #warning "You're using openssl. This may be faulty!"
 	if (ret == sizeof(buf))
 		goto again;
@@ -868,7 +868,7 @@ static WATCHER_LINE(remote_write_ssl) {
 
 	res = SSL_SEND(ssl_session, watch, str->len);
 
-#ifdef JABBER_HAVE_OPENSSL		/* OpenSSL */
+#ifdef REMOTE_HAVE_OPENSSL		/* OpenSSL */
 	if ((res == 0 && SSL_get_error(j->ssl_session, res) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
 	else if (res < 0) 
 		res = SSL_get_error(j->ssl_session, res);
@@ -1070,7 +1070,7 @@ static char *recalc(unsigned int i) {
 void remote_print_stats() {
 #ifdef HAVE_SSL
 	if (ssl_used) {
-	#ifdef WANT_GNUTLS
+	#ifdef REMOTE_WANT_GNUTLS
 		if (ssl_xcred)
 			gnutls_certificate_free_credentials(ssl_xcred);
 	#endif
