@@ -1,4 +1,4 @@
-ekg2_headers = commands.h debug.h dynstuff.h dynstuff_inline.h plugins.h queries.h recode.h sessions.h strings.h stuff.h themes.h userlist.h vars.h windows.h xmalloc.h ../ekg2-remote-config.h
+ekg2_headers = commands.h debug.h dynstuff.h dynstuff_inline.h plugins.h queries.h recode.h sessions.h strings.h stuff.h themes.h userlist.h vars.h windows.h xmalloc.h ../ekg2-config.h
 
 bin_PROGRAMS = ekg2-remote
 
