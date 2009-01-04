@@ -579,7 +579,7 @@ fi
 
 cEcho() {
 	for i in "$@"; do
-		text=eval echo -ne "$i"|sed "
+		text=eval printf "%b" "$i"|sed "
 		s/%r/$clr_r/g;
 		s/%g/$clr_g/g;
 		s/%y/$clr_y/g;
@@ -596,9 +596,9 @@ cEcho() {
 		s/%K/$clr_K/g;
 		s/%0/$clr_0/g";
 
-		echo -ne "$text"
+		printf "%s" "$text"
 	done
-	echo -ne "${clr_0}"; # set default colour
+	printf "%s" "${clr_0}"; # set default colour
 }
 
 echo_title() {
