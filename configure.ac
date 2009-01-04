@@ -31,6 +31,7 @@ dnl little or big endian ?
 AC_C_BIGENDIAN
 
 AC_SUBST(CONTRIB_SUBDIRS)
+AC_SUBST(REMOTE_SUBDIR)
 AC_SUBST(COMPAT)
 AC_SUBST(DLLIB)
 AC_SUBST(PLUGINS)
@@ -125,7 +126,7 @@ AM_ICONV
 AC_CHECK_LIBIDN
 
 dnl core 
-AC_CONFIG_FILES([Makefile ekg/Makefile contrib/Makefile compat/Makefile docs/Makefile plugins/Makefile po/Makefile.in])
+AC_CONFIG_FILES([Makefile ekg/Makefile remote/Makefile contrib/Makefile compat/Makefile docs/Makefile plugins/Makefile po/Makefile.in])
 dnl protocol-plugins
 AC_CONFIG_FILES([plugins/feed/Makefile plugins/gg/Makefile plugins/icq/Makefile plugins/irc/Makefile plugins/jabber/Makefile plugins/polchat/Makefile plugins/rivchat/Makefile])
 dnl ui-plugins
@@ -318,6 +319,12 @@ AC_ARG_ENABLE([unicode],	AC_HELP_STRING([--enable-unicode],		[Enable unicode (EX
         fi
     ]
 )
+
+AC_ARG_ENABLE([remote],		AC_HELP_STRING([--enable-remote],		[Build ekg2-remote (EXPERIMENTAL)]))
+
+if test "x$enable_remote" = "xyes"; then
+   REMOTE_SUBDIR="remote"
+fi
 
 dnl #######################################################################################################################
 
@@ -816,6 +823,11 @@ echo ""
 
 #########################
 echo ""
+
+if test "x$enable_remote" = "xyes"; then
+	echo_have " - REMOTE: tcp,unix"
+	echo ""
+fi
 
 echo_section " - NLS system:\t"
 if test "$USE_NLS" = "yes"; then
