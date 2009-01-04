@@ -195,7 +195,7 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
 }
 
 struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
-	return timer_add(plugin, name, period * 1000, persist, function, data);
+	return timer_add_ms(plugin, name, period * 1000, persist, function, data);
 }
 
 int timer_remove(plugin_t *plugin, const char *name)
