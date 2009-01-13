@@ -775,6 +775,19 @@ char *get_nickname(session_t *session, const char *text) {
 
 	return NULL;
 }
+/*
+ * get_user_name()
+ *
+ * returns users first name or nick name or NULL
+ *
+ */
+char *get_user_name(userlist_t *u) {
+	char *name;
+	if (!u)
+		return NULL;
+	name = user_private_item_get(u, "first_name");
+	return (name && *name) ? name : u->nickname;
+}
 
 /*
  * format_user()

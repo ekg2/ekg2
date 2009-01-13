@@ -1411,7 +1411,7 @@ next:
 		
 			u = userlist_find_n(i->s_uid, i->name);
 
-			status = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), u->nickname, u->descr);
+			status = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), get_user_name(u), u->descr);
 
 			printq("metacontact_info_header", params0);
 			printq("metacontact_info_status", status);
@@ -1428,7 +1428,7 @@ next:
 
 list_user:
 		status = format_string(format_find(ekg_status_label(u->status, u->descr, "user_info_")), 
-				u->nickname, u->descr);
+				get_user_name(u), u->descr);
 
 		printq("user_info_header", u->nickname, u->uid);
 		if (u->nickname && xstrcmp(u->nickname, u->nickname)) 
@@ -1448,7 +1448,7 @@ list_user:
 
 		if (u->last_status) {
 			char *last_status = format_string(format_find(ekg_status_label(u->last_status, u->last_descr, "user_info_")), 
-							u->nickname, u->last_descr);
+							get_user_name(u), u->last_descr);
 			printq("user_info_last_status", last_status);
 			xfree(last_status);
 		}
@@ -1459,15 +1459,15 @@ list_user:
 
 			resstatus = format_string(format_find(ekg_status_label(r->status, r->descr, /* resource_info? senseless */ "user_info_")), 
 					/* here r->name ? */
-					 u->nickname, r->descr);
+					 get_user_name(u), r->descr);
 			printq("resource_info_status", r->name, resstatus, itoa(r->prio));
 			xfree(resstatus);
 		}
 
 		if (ekg_group_member(u, "__blocked"))
-			printq("user_info_block", u->nickname);
+			printq("user_info_block", get_user_name(u));
 		if (ekg_group_member(u, "__offline"))
-			printq("user_info_offline", u->nickname);
+			printq("user_info_offline", get_user_name(u));
 
 		/*
 		 * (frequently) common private data
@@ -1628,7 +1628,7 @@ list_user:
 		if (show) {
 			int __ip = user_private_item_get_int(u, "ip");
 
-			printq(tmp, format_user(session, u->uid), u->nickname, inet_ntoa(*((struct in_addr*) &__ip)), itoa(user_private_item_get_int(u, "port")), u->descr);
+			printq(tmp, format_user(session, u->uid), get_user_name(u), inet_ntoa(*((struct in_addr*) &__ip)), itoa(user_private_item_get_int(u, "port")), u->descr);
 			count++;
 		}
 	}
@@ -2011,7 +2011,7 @@ static COMMAND(cmd_debug_plugins) {
 		printq("generic", buf);
 
 		if (p->pclass == PLUGIN_PROTOCOL && p->priv) {
-			struct protocol_plugin_priv *pp = p->priv;
+			struct protocol_plugin_priv *pp = (struct protocol_plugin_priv *)p->priv;
 
 			char *pr = array_join((char**) pp->protocols, ", ");
 			char *st;

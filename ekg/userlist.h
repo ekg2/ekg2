@@ -194,6 +194,7 @@ const char *format_user(session_t *session, const char *uid);
 char *get_uid(session_t *session, const char *text);
 char *get_uid_any(session_t *session, const char *text);
 char *get_nickname(session_t *session, const char *text);
+char *get_user_name(userlist_t *u);
 
 #endif
 

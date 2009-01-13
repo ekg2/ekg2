@@ -429,7 +429,7 @@ static QUERY(protocol_status)
 	/* poka¿ */
 	if (u->nickname) {
 		const char *format = ekg_status_label(status, ignore_status_descr ? NULL : descr, "status_");
-		print_info(u->nickname, s, format, format_user(s, uid), u->nickname, session_name(s), descr);
+		print_info(u->nickname, s, format, format_user(s, uid), get_user_name(u), session_name(s), descr);
 	}
 
 notify_plugins:
