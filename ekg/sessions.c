@@ -849,7 +849,7 @@ int session_read(const char *filename) {
 				continue;
 
 			if ((tmp = prepare_pathf("sessions-%s", p->name)))
-				session_read(tmp);
+				ret = session_read(tmp);
 		}
 		return ret;
 	}

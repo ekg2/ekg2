@@ -156,7 +156,7 @@ invisible
 
 modify
 	parameters:  <alias> <options>
-	short description: change informations ni contact list
+	short description: change informations in contact list
 	
 	You can use options like:
 	
