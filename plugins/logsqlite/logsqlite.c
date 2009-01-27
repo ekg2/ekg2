@@ -438,7 +438,7 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 		char * errormsg = NULL;
 
 	if (mkdir_recursive(path, 0) == -1) {
-		char *bo = saprintf("nie mo¿na %s bo %s", path, strerror(errno));
+		char *bo = saprintf("cannot %s: %s", path, strerror(errno));
 		print("generic",bo);
 		return NULL;
 	}
