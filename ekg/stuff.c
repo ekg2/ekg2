@@ -1295,37 +1295,54 @@ child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_
  *
  * @return Like mkdir() do we return -1 on fail with errno set.
  */
-
 int mkdir_recursive(const char *pathname, int isdir) {
 	char fullname[PATH_MAX+1];
+	struct stat st;
 	int i = 0;
+	char *tmp, *check = NULL;
 
 	if (!pathname) {
 		errno = EFAULT;
 		return -1;
 	}
 
-	do {
-		struct stat st;
-		fullname[i] = pathname[i];
+	if (isdir)
+		check = xstrdup(pathname);
+	 else if ((tmp = xstrrchr(pathname, '/')))
+		check = xstrndup(pathname, (tmp-pathname)+1);
 
+	if (check) {
+		if (stat(check, &st) == 0) {			/* if smth exists with such filename */
+			xfree(check);
+			if (!S_ISDIR(st.st_mode)) {		/* and it's not dir, abort. */
+				errno = ENOTDIR;
+				return -1;
+			}
+			return 0;
+		}
+		xfree(check);
+	}
+
+	do {
 		if (i == PATH_MAX) {
 			errno = ENAMETOOLONG;
 			return -1;
 		}
 
+		fullname[i] = pathname[i];
+
 		if (pathname[i] == '/' || (isdir && pathname[i] == '\0')) {	/* if it's / or it's last char.. */
-			if (!isdir && !xstrchr(&pathname[i], '/'))			/* if it's not dir (e.g filename) we don't want to create the dir.. */
+			if (!isdir && !xstrchr(&pathname[i], '/'))		/* if it's not dir (e.g filename) we don't want to create the dir.. */
 				return 0;
 
 			fullname[i+1] = '\0';
 
-			if (stat(fullname, &st) == 0) {	/* if smth exists with such filename */
+			if (stat(fullname, &st) == 0) {		/* if smth exists with such filename */
 				if (!S_ISDIR(st.st_mode)) {	/* and it's not dir, abort. */
 					errno = ENOTDIR;
 					return -1;
 				}
-			} else {			/* if not, try mkdir() and if fail exit. */
+			} else {				/* if not, try mkdir() and if fail exit. */
 				if
 #ifndef NO_POSIX_SYSTEM
 				(mkdir(fullname, 0700) == -1)
