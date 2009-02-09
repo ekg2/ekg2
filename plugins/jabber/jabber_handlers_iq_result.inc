@@ -756,9 +756,11 @@ static void jabber_handle_vcard_helper(session_t *s, const char *formatka, const
  */
 
 JABBER_HANDLER_RESULT(jabber_handle_vcard) {
+	const char *vcardbrowser = "http://vcard.ekg2.org/";
+
 	char *from_str	= jabber_unescape(from);
-	char *tmp;	
-	int hadphoto	= 0;
+	char *tmp;
+	char *photo_url	= NULL;
 	int ismuc	= 0;
 
 		/* Normally vCard is resource-independent, so we can strip it.
@@ -783,7 +785,19 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 		else if (!xstrcmp(n->name, "URL"))	jabber_handle_vcard_helper(s, "jabber_userinfo_url", n->data);
 		else if (!xstrcmp(n->name, "DESC"))	jabber_handle_vcard_helper(s, "jabber_userinfo_desc", n->data);
 		else if (!xstrcmp(n->name, "TITLE"))	jabber_handle_vcard_helper(s, "jabber_userinfo_title", n->data);
-		else if (!xstrcmp(n->name, "PHOTO"))	hadphoto = 1;		/* skipping */
+		else if (!xstrcmp(n->name, "PHOTO")) {
+			xmlnode_t *q;
+
+			for (q = n->children; q; q = q->next) {
+				if (!xstrcmp(q->name, "EXTVAL") && q->data && *(q->data)) {
+					photo_url = xstrdup(q->data);
+					break;
+				} else if (!xstrcmp(q->name, "BINVAL") && q->data && *(q->data) && !ismuc) {
+					photo_url = saprintf("%s%s", vcardbrowser, from_str);
+					break;
+				}
+			}
+		}
 
 		else if (!xstrcmp(n->name, "EMAIL")) {
 			const char *userid = NULL;
@@ -859,8 +873,10 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 
 	}
 
-	if (hadphoto && from_str && !ismuc) /* XXX: maybe we could get JID of conference user and use it instead? */
-		print("jabber_userinfo_photourl", from_str, "http://vcard.ekg2.org/");
+	if (photo_url) {
+		print("jabber_userinfo_photourl", photo_url);
+		xfree(photo_url);
+	}
 	print("jabber_userinfo_end", session_name(s), jabberfix(from_str, _("unknown")));
 	xfree(from_str);
 }
