@@ -74,13 +74,17 @@ int config_beep_mail = 1;
 static list_t mail_folders = NULL;
 
 static int config_check_mail = 0;
+#ifndef HAVE_INOTIFY
 static int config_check_mail_frequency = 15;
+#endif
 static char *config_check_mail_folders = NULL;
 
 static int mail_count = 0;
 static int last_mail_count = 0;
 
+#ifndef HAVE_INOTIFY
 static TIMER(check_mail);
+#endif
 static int check_mail_mbox();
 static int check_mail_maildir();
 static int check_mail_update(const char *, int);
@@ -143,6 +147,7 @@ static WATCHER(mail_inotify) {
 				check_mail_maildir();
 		return 0; /* we already checked all of them, so just ignore rest */
 	}
+	return 0; /* XXX: revise above for */
 }
 
 #else /* HAVE_INOTIFY */

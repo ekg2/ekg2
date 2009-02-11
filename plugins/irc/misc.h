@@ -93,7 +93,7 @@ IRC_COMMAND(irc_c_whois);
  * if you add something that is not currently on the list
  * give somewhere [*] in comment
  */
-const static IrcCommand irccommands[] =
+static const IrcCommand irccommands[] =
 {
 	{ 1,	-1,	NULL,	NULL,			&irc_c_error,	IRC_ERR_NEW },
 	{ 1,	1,	NULL,	"RPL_WELCOME",		&irc_c_init,	0 },

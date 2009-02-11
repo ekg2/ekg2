@@ -27,21 +27,21 @@
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
 
-struct {
+typedef struct {
 	int   logformat; 
 			/* 19:55:24 <@zdzichuBG> wtedy trzeba by jescze jakis callback na zmiane zmiennej logs_format 
 			 * callback zmiennych sesyjnych w ekg2 niet. jest cos takiego.
 			 */
 	char *path;	/* path don't free it ! .... */
 	FILE *file;	/* file don't close it! it will be closed at unloading plugin. */
-} typedef log_window_t;
+} log_window_t;
 
-struct {
+typedef struct {
 	char *session;	/* session name */
 	char *uid;	/* uid of user */
 	time_t t;	/* time when we create (lw->path || just lw) */
 	log_window_t *lw;
-} typedef logs_log_t;
+} logs_log_t;
 
 /* log ff types... */
 typedef enum {

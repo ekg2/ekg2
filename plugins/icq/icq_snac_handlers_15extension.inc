@@ -50,7 +50,7 @@ typedef struct {
 	void *ltab;
 } _userinfo_t;
 
-const static _userinfo_t userinfo[] = {
+static const _userinfo_t userinfo[] = {
 	/* User basic info reply */
 	{META_BASIC_USERINFO,		'S', N_("Nickname"),		"nick",		NULL},
 	{META_BASIC_USERINFO,		'S', N_("Firstname"),		"first_name",	NULL},
@@ -289,7 +289,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_interests) {
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_affilations) {
-	const static char *names[] = {"pastaff", "aff"};
+	static const char *names[] = {"pastaff", "aff"};
 	uint8_t count;
 	int i, k;
 

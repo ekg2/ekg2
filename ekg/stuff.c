@@ -2684,7 +2684,7 @@ void xstrtr(char *text, char from, char to)
  * meant to be called while busy-looping
  */
 
-void inline ekg_yield_cpu()
+inline void ekg_yield_cpu()
 {
 #ifdef _POSIX_PRIORITY_SCHEDULING
 	sched_yield();

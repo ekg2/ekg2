@@ -40,7 +40,7 @@ typedef struct {
 enum { CTCP_ACTION=1, CTCP_DCC, CTCP_SED, CTCP_FINGER, CTCP_VERSION, CTCP_SOURCE,
 	CTCP_USERINFO, CTCP_CLIENTINFO, CTCP_PING, CTCP_TIME, CTCP_ERRMSG };
 
-const static ctcp_t ctcps[] = {
+static const ctcp_t ctcps[] = {
 	{ "ACTION",	1 },
 	{ "DCC",	0 },
 	{ "SED",	0 },
