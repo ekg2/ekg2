@@ -1065,11 +1065,11 @@ SNIFF_HANDLER(sniff_gg_login80, gg_login80) {
 
 typedef struct {
 	uint32_t uin;			/* mój numerek */
-	uint16_t dunno1;		/* 70 6c */
+	char lang[2];			/* pl */
 	uint8_t hash_type;		/* rodzaj hashowania hasła */
 	uint8_t hash[64];		/* hash hasła dopełniony zerami */
 	uint32_t status;		/* status na dzień dobry */
-	uint32_t empty1;		/* 00 00 00 00 */
+	uint32_t dunno1;		/* 00 00 00 00 */
 	uint32_t dunno2;		/* 07 00 00 00 */
 	uint32_t local_ip;		/* 00 00 00 00: mój adres ip (???) */
 	uint16_t local_port;		/*       00 00: port, na którym słucham (???) */
@@ -1129,8 +1129,7 @@ SNIFF_HANDLER(sniff_gg_login80_real, gg_login80_real) {
 			version);
 	}
 
-	CHECK_PRINT(pkt->dunno1, 0x6c70);
-	CHECK_PRINT(pkt->empty1, 0x00);
+	CHECK_PRINT(pkt->dunno1, 0x00);
 	CHECK_PRINT(pkt->dunno2, 0x07);
 	CHECK_PRINT(pkt->local_ip, 0); 		CHECK_PRINT(pkt->local_port, 0);
 	CHECK_PRINT(pkt->external_ip, 0); 	CHECK_PRINT(pkt->external_port, 0);
