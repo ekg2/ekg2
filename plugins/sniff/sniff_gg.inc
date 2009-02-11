@@ -1063,6 +1063,262 @@ SNIFF_HANDLER(sniff_gg_login80, gg_login80) {
 	return 0;
 }
 
+typedef struct {
+	uint32_t uin;			/* mój numerek */
+	uint16_t dunno1;		/* 70 6c */
+	uint8_t hash_type;		/* rodzaj hashowania hasła */
+	uint8_t hash[64];		/* hash hasła dopełniony zerami */
+	uint32_t status;		/* status na dzień dobry */
+	uint32_t empty1;		/* 00 00 00 00 */
+	uint32_t dunno2;		/* 07 00 00 00 */
+	uint32_t local_ip;		/* 00 00 00 00: mój adres ip (???) */
+	uint16_t local_port;		/*       00 00: port, na którym słucham (???) */
+	uint32_t external_ip;		/* 00 00 00 00: zewnętrzny adres ip (???) */
+	uint16_t external_port;		/*       00 00; zewnętrzny port (???) */
+	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno3;			/* 0x64 */
+	uint32_t version_len;
+	/* char version_data[] */
+	/* uint32_t descr_len; */
+	/* char descr_data[] */
+
+	char data[];
+} GG_PACKED gg_login80_real;
+
+SNIFF_HANDLER(sniff_gg_login80_real, gg_login80_real) {
+	int print_payload = 0;
+	int sughash_len;
+	int i;
+
+	char *data = pkt->data;
+
+	char *version;
+
+	CHECK_LEN(sizeof(gg_login80_real));	len -= sizeof(gg_login80_real);
+	CHECK_LEN(pkt->version_len);		len -= pkt->version_len;
+
+	version = xstrndup(data, pkt->version_len); data += pkt->version_len;
+	// XXX, Opis
+
+	if (pkt->hash_type == GG_LOGIN_HASH_GG32) {	/* untested */
+		sughash_len = 4;
+
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
+			"sniff_gg_login80_real_hash",
+
+			build_gg_uid(pkt->uin),
+			build_hex(pkt->hash_type),
+			version);
+
+	} else if (pkt->hash_type == GG_LOGIN_HASH_SHA1) {
+		sughash_len = 20;
+
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
+			"sniff_gg_login80_real_sha1",
+
+			build_gg_uid(pkt->uin),
+			build_sha1(pkt->hash),
+			version);
+	} else {
+		sughash_len = 0;
+
+		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
+			"sniff_gg_login80_real_unknown",
+
+			build_gg_uid(pkt->uin), build_hex(pkt->hash_type),
+			version);
+	}
+
+	CHECK_PRINT(pkt->dunno1, 0x6c70);
+	CHECK_PRINT(pkt->empty1, 0x00);
+	CHECK_PRINT(pkt->dunno2, 0x07);
+	CHECK_PRINT(pkt->local_ip, 0); 		CHECK_PRINT(pkt->local_port, 0);
+	CHECK_PRINT(pkt->external_ip, 0); 	CHECK_PRINT(pkt->external_port, 0);
+	CHECK_PRINT(pkt->dunno3, 0x64);
+	debug_error("status: %x\n", pkt->status);
+	debug_error("img_size: %x\n", pkt->image_size);
+
+	/* XXX, status */
+
+	for (i = sughash_len; i < sizeof(pkt->hash); i++)
+		if (pkt->hash[i] != 0) {
+			print_payload = 1;
+			break;
+		}
+
+	if (print_payload) {
+		tcp_print_payload((u_char *) pkt->hash, sizeof(pkt->hash));
+		print_window(build_windowip_name(hdr->srcip), s, EKG_WINACT_MSG, 1,
+			"generic_error", "gg_login80_real() print_payload flag set, see debug");
+	}
+	tcp_print_payload((u_char *) data, len);
+
+	xfree(version);
+
+	return 0;
+}
+
+typedef struct {
+	uint32_t status;	/* na jaki zmienić? */
+	uint32_t dunno1;	/* 00 00 00 00 */
+	uint32_t len;		/* dlugosc data */
+	char data[];		/* opis */
+} GG_PACKED gg_new_status80_real;
+
+SNIFF_HANDLER(sniff_gg_new_status80_real, gg_new_status80_real) {
+	int has_descr;
+
+	char *descr;
+	int status;
+
+	CHECK_LEN(sizeof(gg_new_status80_real));	len -= sizeof(gg_new_status80_real);
+
+	CHECK_PRINT(pkt->dunno1, 0x00);
+
+	status	= gg_status_to_text(pkt->status, &has_descr);
+
+	if (pkt->len != len) {
+		debug_error("sniff_gg_new_status80_real() corrupted?! %d vs %d\n", pkt->len, len);
+		tcp_print_payload((u_char *) pkt->data, len);
+	}
+
+	if ((has_descr) ^ (len != 0)) {
+		debug_error("sniff_gg_new_status80_real() corrupted?! has_descr: %d pkt->len: %d\n", has_descr, pkt->len);
+		tcp_print_payload((u_char *) pkt->data, len);
+	}
+
+	descr	= has_descr ? ekg_utf8_to_locale(xstrndup(pkt->data, len)) : NULL;
+	sniff_gg_print_new_status(s, hdr, 0, status, descr);
+	xfree(descr);
+	return 0;
+}
+
+typedef struct {
+	uint32_t uin;			/* numerek plus (flagi w MSB???) */
+	uint32_t status;		/* status danej osoby, (uint32_t???) */
+	uint32_t remote_ip;		/* 00 00 00 00: adres ip delikwenta */
+	uint16_t remote_port;		/*       00 00: na którym słucha klient */
+	uint32_t dunno1;		/* 00 00 00 00 */
+	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno2;			/* 0x00 */
+	uint32_t dunno3;		/* 00 00 00 00 */
+	uint32_t descr_len;
+	unsigned char next[];		/* [like gg_notify_reply60] nastepny (gg_notify_reply77), lub DLUGOSC_OPISU+OPIS + nastepny (gg_notify_reply77) */
+} GG_PACKED gg_notify_reply80_real;
+
+SNIFF_HANDLER(sniff_gg_notify_reply80_real, gg_notify_reply80_real) {
+	unsigned char *next;
+
+	uint32_t uin;
+	int has_descr;
+	int status;
+	char *descr;
+
+	CHECK_LEN(sizeof(gg_notify_reply80_real));	len -= sizeof(gg_notify_reply80_real);
+
+	CHECK_PRINT(pkt->remote_ip, 0x00); CHECK_PRINT(pkt->remote_port, 0x00);
+	CHECK_PRINT(pkt->dunno1, 0x00);
+	CHECK_PRINT(pkt->dunno2, 0x00);
+	CHECK_PRINT(pkt->dunno3, 0x00);
+
+	next = pkt->next;
+
+	uin = pkt->uin & 0x00ffffff;		// XXX, dunno czy w MSB cos jest. moze nie.
+
+	status = gg_status_to_text(pkt->status, &has_descr);
+
+	if ((has_descr) ^ (pkt->descr_len != 0)) {
+		debug_error("sniff_gg_notify_reply80_real() corrupted?! has_descr: %d pkt->len: %d\n", has_descr, pkt->descr_len);
+		tcp_print_payload((u_char *) pkt->next, pkt->descr_len);
+	}
+
+	if (pkt->descr_len) {
+		CHECK_LEN(pkt->descr_len)
+		len  -= pkt->descr_len;
+		next += pkt->descr_len;
+	}
+
+	descr = has_descr ? ekg_utf8_to_locale(xstrndup(pkt->next, pkt->descr_len)) : NULL;
+	sniff_gg_print_status(s, hdr, uin, status, descr);
+	xfree(descr);
+
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
+		"sniff_gg_notify80_real",
+
+		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
+		itoa(pkt->remote_port),
+		itoa(-1), build_hex(-1),		// wersja
+		itoa(pkt->image_size));
+
+	if (len > 0) {
+		debug_error("gg_notify_reply80_real: again? leftlen: %d\n", len);
+		sniff_gg_notify_reply80_real(s, hdr, (gg_notify_reply80_real *) next, len);
+	}
+
+	return 0;
+}
+
+typedef struct {
+	uint32_t uin;			/* numerek plus (flagi w MSB???) */
+	uint32_t status;		/* status danej osoby (uint32_t???) */
+	uint32_t remote_ip;		/* 00 00 00 00: adres ip delikwenta */
+	uint16_t remote_port;		/*       00 00: port, na którym słucha klient */
+	uint32_t dunno1;		/* 00 00 00 00 */
+	uint8_t image_size;		/* maksymalny rozmiar grafiki w KiB */
+	uint8_t dunno2;			/* 0xbe */
+	uint32_t dunno3;		/* 00 00 00 00 */
+	uint32_t descr_len;		/* dlugosc opisu */
+	char descr[];			/* opis */
+} GG_PACKED gg_status80_real;
+
+SNIFF_HANDLER(sniff_gg_status80_real, gg_status80_real) {
+	uint32_t uin;
+	int status;
+	int has_descr;
+	char *descr;
+
+	uint32_t dunno2;
+	uint8_t uinflag;
+
+	CHECK_LEN(sizeof(gg_status80_real)); len -= sizeof(gg_status80_real);
+
+	uin	= pkt->uin & 0x00ffffff;
+
+	uinflag = pkt->uin >> 24;
+
+	CHECK_PRINT(uinflag, 0x00);
+	CHECK_PRINT(pkt->remote_ip, 0x00); CHECK_PRINT(pkt->remote_port, 0x00);
+	CHECK_PRINT(pkt->dunno1, 0x00);
+	CHECK_PRINT(pkt->dunno2, 0xbe);
+	CHECK_PRINT(pkt->dunno3, 0x00);
+
+	status	= gg_status_to_text(pkt->status, &has_descr);
+
+	if (pkt->descr_len != len) {
+		debug_error("sniff_gg_status80_real() corrupted?! %d vs %d\n", pkt->descr_len, len);
+		tcp_print_payload((u_char *) pkt->descr, len);
+	}
+
+	if ((has_descr) ^ (len != 0)) {
+		debug_error("sniff_gg_status80_real() corrupted?! has_descr: %d pkt->descr_len: %d\n", has_descr, pkt->descr_len);
+		tcp_print_payload((u_char *) pkt->descr, len);
+	}
+
+	descr 	= has_descr ? ekg_utf8_to_locale(xstrndup(pkt->descr, len)) : NULL;
+	sniff_gg_print_status(s, hdr, uin, status, descr);
+	xfree(descr);
+
+	print_window(build_windowip_name(hdr->dstip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
+		"sniff_gg_status80_real",
+
+		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
+		itoa(pkt->remote_port),
+		itoa(-1), build_hex(-1), // wersja
+		itoa(pkt->image_size));
+
+	return 0;
+}
+
 #define GG_NOTIFY_REPLY80 0x2b
 
 typedef struct {
@@ -1125,7 +1381,7 @@ SNIFF_HANDLER(sniff_gg_notify_reply80, gg_notify_reply80) {
 
 	if (len > 0) {
 		debug_error("gg_notify_reply80: again? leftlen: %d\n", len);
-		sniff_gg_notify_reply77(s, hdr, (gg_notify_reply77 *) next, len);
+		sniff_gg_notify_reply80(s, hdr, (gg_notify_reply80 *) next, len);
 	}
 	return 0;
 }
@@ -1227,9 +1483,10 @@ static const struct {
 	{ GG_NEW_STATUS,"GG_NEW_STATUS",SNIFF_OUTGOING, (void *) sniff_gg_new_status, 0},
 	{ GG_PING,	"GG_PING",	SNIFF_OUTGOING,	(void *) NULL, 0},
 	{ GG_PONG,	"GG_PONG",	SNIFF_INCOMING, (void *) NULL, 0},
-	{ GG_STATUS60,	"GG_STATUS60",	SNIFF_INCOMING, (void *) sniff_gg_status60, 0},
 	{ GG_NEED_EMAIL,"GG_NEED_EMAIL",SNIFF_INCOMING, (void *) NULL, 0},		/* XXX */
+
 	{ GG_LOGIN60,	"GG_LOGIN60",	SNIFF_OUTGOING, (void *) sniff_gg_login60, 0},
+	{ GG_STATUS60,	"GG_STATUS60",	SNIFF_INCOMING, (void *) sniff_gg_status60, 0},
 
 	{ GG_ADD_NOTIFY,	"GG_ADD_NOTIFY",	SNIFF_OUTGOING, (void *) sniff_gg_add_notify, 0},
 	{ GG_REMOVE_NOTIFY,	"GG_REMOVE_NOTIFY", 	SNIFF_OUTGOING, (void *) sniff_gg_del_notify, 0},
@@ -1238,7 +1495,6 @@ static const struct {
 	{ GG_LIST_EMPTY,	"GG_LIST_EMPTY",	SNIFF_OUTGOING, (void *) sniff_gg_list_empty, 0},
 	{ GG_NOTIFY_FIRST,	"GG_NOTIFY_FIRST",	SNIFF_OUTGOING, (void *) sniff_gg_list_first, 0},
 	{ GG_NOTIFY_LAST,	"GG_NOTIFY_LAST",	SNIFF_OUTGOING, (void *) sniff_gg_list_last, 0},
-	{ GG_LOGIN70,		"GG_LOGIN70",		SNIFF_OUTGOING, (void *) sniff_gg_login70, 0},
 
 	{ GG_USERLIST_REQUEST,	"GG_USERLIST_REQUEST",	SNIFF_OUTGOING, (void *) sniff_gg_userlist_req, 0},
 	{ GG_USERLIST_REPLY,	"GG_USERLIST_REPLY",	SNIFF_INCOMING, (void *) sniff_gg_userlist_reply, 0},
@@ -1247,8 +1503,9 @@ static const struct {
 	{ GG_PUBDIR50_REQUEST,	"GG_PUBDIR50_REQUEST",	SNIFF_OUTGOING, (void *) sniff_gg_pubdir50_req, 0},
 	{ GG_DISCONNECTING,	"GG_DISCONNECTING",	SNIFF_INCOMING, (void *) sniff_gg_disconnecting, 0},
 
-	{ GG_NOTIFY_REPLY77,	"GG_NOTIFY_REPLY77",	SNIFF_INCOMING, (void *) sniff_gg_notify_reply77, 0},
+	{ GG_LOGIN70,		"GG_LOGIN70",		SNIFF_OUTGOING, (void *) sniff_gg_login70, 0},
 	{ GG_STATUS77,		"GG_STATUS77",		SNIFF_INCOMING, (void *) sniff_gg_status77, 0},
+	{ GG_NOTIFY_REPLY77,	"GG_NOTIFY_REPLY77",	SNIFF_INCOMING, (void *) sniff_gg_notify_reply77, 0},
 
 #define GG_NEW_STATUS80 0x28
 	{ GG_LOGIN80,		"GG_LOGIN80",		SNIFF_OUTGOING, (void *) sniff_gg_login80, 0},			/* XXX, UTF-8 */
@@ -1257,6 +1514,16 @@ static const struct {
 	{ GG_STATUS80,	   	"GG_STATUS80",		SNIFF_INCOMING, (void *) sniff_gg_status80, 0},			/* XXX, UTF-8 */
 	{ GG_RECV_MSG80,	"GG_RECV_MSG80",	SNIFF_INCOMING, (void *) sniff_gg_recv_msg80, 0},		/* XXX, UTF-8 */
 	{ GG_SEND_MSG80,	"GG_SEND_MSG80",	SNIFF_OUTGOING, (void *) sniff_gg_send_msg80, 0},		/* XXX, UTF-8 */
+
+#define GG_LOGIN80_REAL 0x31
+#define GG_STATUS80_REAL 0x36
+#define GG_NOTIFY_REPLY80_REAL 0x37
+#define GG_NEW_STATUS80_REAL 0x38
+
+	{ GG_LOGIN80_REAL,	"GG_LOGIN80_REAL",	SNIFF_OUTGOING, (void *) sniff_gg_login80_real, 0 }, 		// XXX
+	{ GG_STATUS80_REAL,	"GG_STATUS80_REAL",	SNIFF_INCOMING, (void *) sniff_gg_status80_real, 0 },		/* UTF-8: OK */
+	{ GG_NOTIFY_REPLY80_REAL,"GG_NOTIFY_REPLY80_REAL", SNIFF_INCOMING, (void *) sniff_gg_notify_reply80_real, 0}, 	/* UTF-8: OK */
+	{ GG_NEW_STATUS80_REAL,	"GG_NEW_STATUS80_REAL",	SNIFF_OUTGOING, (void *) sniff_gg_new_status80_real, 0 },	/* UTF-8: OK */
 
 /* pakiety [nie] w libgadu: [czesc mozliwie ze nieaktualna] */
 	{ GG_DCC7_NEW,		"GG_DCC7_NEW",		SNIFF_INCOMING, (void *) sniff_gg_dcc7_new, 0}, 

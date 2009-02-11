@@ -41,6 +41,7 @@
 
 #include <ekg/commands.h>
 #include <ekg/stuff.h>
+#include <ekg/recode.h>
 #include <ekg/themes.h>
 
 #include <ekg/queries.h>
@@ -706,8 +707,15 @@ static int sniff_theme_init() {
 	format_add("sniff_gg_login80_hash",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gPROTOCOL: %W%3 %gHASH: %W%2"), 1);	/* untested */
 	format_add("sniff_gg_login80_unknown",	 ("%) %b[GG_LOGIN80] %gUIN: %W%1 %gPROTOCOL: %W%3 %gTYPE: %W%2"), 1);
 
+	format_add("sniff_gg_login80_real_sha1",	 ("%) %b[GG_LOGIN80_REAL] %gUIN: %W%1 %gPROTOCOL: %W%3 %gSHA1: %W%2"), 1);
+	format_add("sniff_gg_login80_real_hash",	 ("%) %b[GG_LOGIN80_REAL] %gUIN: %W%1 %gPROTOCOL: %W%3 %gHASH: %W%2"), 1);	/* untested */
+	format_add("sniff_gg_login80_real_unknown",	 ("%) %b[GG_LOGIN80_REAL] %gUIN: %W%1 %gPROTOCOL: %W%3 %gTYPE: %W%2"), 1);
+
 	format_add("sniff_gg_status80",  ("%) %b[GG_STATUS80] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 	format_add("sniff_gg_notify80",  ("%) %b[GG_NOTIFY80] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+
+	format_add("sniff_gg_status80_real",  ("%) %b[GG_STATUS80_REAL] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
+	format_add("sniff_gg_notify80_real",  ("%) %b[GG_NOTIFY80_REAL] %gDCC: %W%1:%2 %gVERSION: %W#%3 (%4) %gIMGSIZE: %W%5KiB"), 1);
 
 	format_add("sniff_gg_addnotify", ("%) %b[GG_ADD_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
 	format_add("sniff_gg_delnotify", ("%) %b[GG_REMOVE_NOTIFY] %gUIN: %W%1 %gDATA: %W%2"), 1);
@@ -756,7 +764,9 @@ EXPORT int sniff_plugin_init(int prio) {
 
 	sniff_plugin.params = sniff_plugin_vars;
 	plugin_register(&sniff_plugin, prio);
+
 	ekg_recode_cp_inc();
+	ekg_recode_utf8_inc();
 
 	query_connect_id(&sniff_plugin, PROTOCOL_VALIDATE_UID,	sniff_validate_uid, NULL);
 	query_connect_id(&sniff_plugin, STATUS_SHOW,		sniff_status_show, NULL);
@@ -772,7 +782,9 @@ EXPORT int sniff_plugin_init(int prio) {
 
 static int sniff_plugin_destroy() {
 	plugin_unregister(&sniff_plugin);
+
 	ekg_recode_cp_dec();
+	ekg_recode_utf8_dec();
 	return 0;
 }
 
