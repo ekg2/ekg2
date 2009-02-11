@@ -756,7 +756,7 @@ static void jabber_handle_vcard_helper(session_t *s, const char *formatka, const
  */
 
 JABBER_HANDLER_RESULT(jabber_handle_vcard) {
-	const char *vcardbrowser = "http://vcard.ekg2.org/";
+	static const char vcardbrowser[] = "http://vcard.ekg2.org/";
 
 	char *from_str	= jabber_unescape(from);
 	char *tmp;
@@ -790,9 +790,11 @@ JABBER_HANDLER_RESULT(jabber_handle_vcard) {
 
 			for (q = n->children; q; q = q->next) {
 				if (!xstrcmp(q->name, "EXTVAL") && q->data && *(q->data)) {
+					xfree(photo_url);
 					photo_url = xstrdup(q->data);
 					break;
 				} else if (!xstrcmp(q->name, "BINVAL") && q->data && *(q->data) && !ismuc) {
+					xfree(photo_url);
 					photo_url = saprintf("%s%s", vcardbrowser, from_str);
 					break;
 				}
