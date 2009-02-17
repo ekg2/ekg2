@@ -701,7 +701,7 @@ static COMMAND(jabber_command_modify) {
 	const char *uid = NULL;
 	char *nickname = NULL;
 	struct ekg_group *gl;
-	userlist_t *u;
+	userlist_t *u, *u_tmp;
 
 		/* instead of PARAMASTARGET, 'cause that one fails with /add username in query */
 	if (get_uid(session, params[0])) {
@@ -783,7 +783,7 @@ static COMMAND(jabber_command_modify) {
 						/*    if this is -n smth */
 						/* OR if param doesn't looks like command treat as a nickname */
 			if ((match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1] && i++) || argv[i][0] != '-') {
-				if (userlist_find(session, argv[i])) {
+				if ((u_tmp=userlist_find(session, argv[i])) && (u_tmp!=u) ) {
 					printq("user_exists", argv[i], session_name(session));
 					continue;
 				}
