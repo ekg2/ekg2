@@ -1,4 +1,5 @@
-/* stolen from libgadu, cache created by me. */
+/* gg_login_hash() copied from libgadu copyrighted under LGPL-2.1 (C) libgadu developers */
+/* cache created by me. */
 static unsigned int gg_login_hash() {
 	static unsigned int saved_y;
 	static unsigned char *saved_pos;

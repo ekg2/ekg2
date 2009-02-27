@@ -15,13 +15,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-/* gg_login_hash() copied from libgadu copyrighted under LGPL-2.1 (C) libgadu developers */
-/* orginal version of SHA-1 in C by Steve Reid <steve@edmweb.com> */
-
 #include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 #include <ctype.h>
+
+/* ustaw co chcesz */
 
 static const char digit[] = "\0abcdefghijklmnoprstuwxyz";	/* bo kto tak naprawde korzysta z trudnych hasel? */
 // static const char digit[] = "\0abcdefghijklmnoprstuwxyzABCDEFGHIJKLMOPRSTUWXYZ1234567890";
@@ -29,8 +28,9 @@ static const char digit[] = "\0abcdefghijklmnoprstuwxyz";	/* bo kto tak naprawde
 #define MAX_PASS_LEN 15	/* dlugosc hasla, tak naprawde to jest+1, nie przejmowac sie. */
 
 #define ULTRA_DEBUG	0	/* sprawdza czy dobrze generujemy hasla (w/g digit, b. niepotrzebne i b. wolne) */
-#define ULTRA_VERBOSE	1	/* rysuje kropki */
+#define ULTRA_VERBOSE	0	/* rysuje kropki */
 #define ULTRA_SAFE	0	/* sprawdza czy nie bedziemy rysowac po pamieci jesli haslo zacznie miec wiecej niz MAX_PASS_LEN znakow */
+#define ULTRA_SMP	4	/* ile masz procków? (jak masz 1 wpisz 0 - wyłacza SMP) */
 
 #define NOT_STOP_ON_FIRST 0
 
@@ -61,9 +61,39 @@ static const char digit[] = "\0abcdefghijklmnoprstuwxyz";	/* bo kto tak naprawde
 #define TEXT "alamaka"		/* algo test */
 #endif
 
-#define DIGIT_SIZE (sizeof(digit)-2)	/* glupie gcc, i konczenie stringow \0 :( */ 
+/* nie zmieniać chyba że wiesz co robisz */
 
+#define DIGIT_SIZE (sizeof(digit)-2)	/* -2 bo początkowe \0 i końcowe \0, yeah shitty. */ 
+
+#if ULTRA_SMP	/* dla smp */
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <errno.h>
+
+#if ULTRA_VERBOSE
+#warning "Dots sucks in SMP mode, disabling"
+#undef ULTRA_VERBOSE
+#define ULTRA_VERBOSE 0
+#endif
+
+static pid_t pids[ULTRA_SMP];
+static int   pipes[ULTRA_SMP];
+
+static int digit_start;
+static int digit_end;
+
+#define DIGIT0_START digit_start
+#define DIGIT0_SIZE digit_end
+
+#define DIGIT0_ONE	(DIGIT_SIZE/ULTRA_SMP)
+#else
+#define DIGIT0_START 1
 #define DIGIT0_SIZE DIGIT_SIZE
+
+#endif
 
 static unsigned char pass[MAX_PASS_LEN];
 static unsigned char realpass[MAX_PASS_LEN+1];
@@ -112,7 +142,6 @@ static inline void incr() {
 		fflush(stdout);
 #endif
 		pass[0]++;	realpass[0] = digit[pass[0]];
-
 		bonce(0+1);
 		return;
 	}
@@ -127,10 +156,15 @@ static inline void incr() {
 	pass_pos++;
 	printf("Len: %d\n", pass_pos+1);
 
-	bonce(0);
+	pass[0] = DIGIT0_START;	realpass[0] = digit[DIGIT0_START];
+	bonce(1);
 }
 
 int main() {
+#if ULTRA_SMP
+	int z;
+#endif
+
 #ifdef HASH_SHA1
 	unsigned char digest[20];
 	uint32_t digstate[5];
@@ -176,7 +210,144 @@ int main() {
 	digstate[3] -= SHA_STATE3;
 	digstate[4] -= SHA_STATE4;
 #endif
-	
+
+#if ULTRA_SMP
+	printf("SMP with: %d processors, calc: %d\n", ULTRA_SMP, DIGIT_SIZE);
+	digit_start = 1;
+
+	for (z = 0; z < ULTRA_SMP; z++) {
+		digit_end = digit_start + DIGIT0_ONE;
+
+		if (digit_end > DIGIT_SIZE)
+			digit_end = DIGIT_SIZE;
+
+		if (digit_start < DIGIT_SIZE) {
+			int fd[2] = { -1, -1 };
+			pid_t tmp = -1;
+
+			if (pipe(fd) != -1) {
+				if (!(tmp = fork())) {	/* child */
+					dup2(fd[1], 1);
+					dup2(fd[1], 2);
+					close(fd[0]);
+					close(fd[1]);
+					break;
+				}
+			}
+
+			if (fd[1] != -1)
+				close(fd[1]);
+
+			pids[z] = tmp;
+			pipes[z] = fd[0];
+
+			if (tmp == -1) {
+				fprintf(stderr, "Process%d not started! (not enough mana)\n", z);
+				/* XXX */
+				if (fd[0] != -1) { close(fd[0]); }
+				if (fd[1] != -1) { close(fd[1]); }
+			} else
+				printf("Process%d calculating '%c'..'%c' (%d chars) pid: %d\n", 
+					z, digit[digit_start], digit[digit_end], digit_end-digit_start, tmp);
+
+			digit_start = digit_end+1;
+		} else {
+			pids[z] = -1;
+			fprintf(stderr, "Process%d not started! (not enough data)\n", z);
+		}
+	}
+
+	if (z == ULTRA_SMP) {	/* parent of all */
+		int threads = ULTRA_SMP;
+
+		printf("Calculating...\n");
+		do {
+			int status;
+			pid_t pid;
+
+			struct timeval stv;
+			int maxfd;
+			fd_set rd;
+
+			stv.tv_sec = 10;
+			stv.tv_usec = 0;
+
+			maxfd = 0;
+
+			/* XXX, zoptymalizowac */
+			FD_ZERO(&rd);
+			for (z = 0; z < ULTRA_SMP; z++) {
+				if (pipes[z] != -1) {
+					FD_SET(pipes[z], &rd);
+
+					if (maxfd < pipes[z])
+						maxfd = pipes[z];
+				}
+			}
+
+			status = select(maxfd + 1, &rd, NULL, NULL, &stv);
+			if (status == -1 && errno != EINTR) {
+				printf("select() == -1, run!\n");
+				break;
+			}
+
+			if (status > 0) {
+				for (z = 0; z < ULTRA_SMP; z++) {
+					if (pipes[z] != -1) {
+						if (FD_ISSET(pipes[z], &rd)) {
+							char buf[1024];
+							int ret;
+
+							ret = read(pipes[z], buf, sizeof(buf)-1);
+							if (ret > 0) {
+								buf[ret] = '\0';
+								printf("[ MESSAGE FROM PID: %d]\n", pids[z]);
+								printf("%s", buf);
+								printf("=======================\n");
+							}
+						}
+					}
+				}
+			}
+
+			while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
+				for (z = 0; z < ULTRA_SMP; z++) {
+					if (pids[z] == pid) {
+						pids[z] = -1;
+						close(pipes[z]);
+						pipes[z] = -1;
+						break;
+					}
+				}
+				/* XXX */
+
+				printf("died %d with %d\n", pid, status);
+
+				threads--;
+			}
+			if (!NOT_STOP_ON_FIRST && (threads != ULTRA_SMP))
+				break;
+
+		} while (threads);
+
+		for (z = 0; z < ULTRA_SMP; z++) {
+			if (pids[z] != -1) {
+				kill(pids[z], SIGKILL);
+				close(pipes[z]);
+				/* XXX */
+			}
+		}
+		printf("done!\n");
+		exit(0);
+	}
+
+	printf("Starting from: %c to %c\n", digit[DIGIT0_START], digit[DIGIT0_SIZE]);
+	pass[0] = DIGIT0_START-1; realpass[0] = digit[DIGIT0_START-1];
+
+#else
+	printf("Without SMP\n");
+#endif
+
 	do {
 		do {
 			incr();
