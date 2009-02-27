@@ -212,7 +212,7 @@ int main() {
 #endif
 
 #if ULTRA_SMP
-	printf("SMP with: %d processors, calc: %d\n", ULTRA_SMP, DIGIT_SIZE);
+	printf("SMP with: %d processors, DIGIT_SIZE: %d\n", ULTRA_SMP, DIGIT_SIZE);
 	digit_start = 1;
 
 	for (z = 0; z < ULTRA_SMP; z++) {
@@ -248,7 +248,7 @@ int main() {
 				if (fd[1] != -1) { close(fd[1]); }
 			} else
 				printf("Process%d calculating '%c'..'%c' (%d chars) pid: %d\n", 
-					z, digit[digit_start], digit[digit_end], digit_end-digit_start, tmp);
+					z, digit[digit_start], digit[digit_end], 1+(digit_end-digit_start), tmp);
 
 			digit_start = digit_end+1;
 		} else {
@@ -301,7 +301,7 @@ int main() {
 							ret = read(pipes[z], buf, sizeof(buf)-1);
 							if (ret > 0) {
 								buf[ret] = '\0';
-								printf("[ MESSAGE FROM PID: %d]\n", pids[z]);
+								printf("[ MESSAGE FROM PROCESS #%d]\n", z);
 								printf("%s", buf);
 								printf("=======================\n");
 							}
