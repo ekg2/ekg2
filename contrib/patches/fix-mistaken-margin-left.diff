@@ -1,0 +1,42 @@
+Index: ekg/themes.c
+===================================================================
+--- ekg/themes.c	(wersja 4783)
++++ ekg/themes.c	(kopia robocza)
+@@ -466,6 +466,10 @@
+ 					for (i = 0; i < fill_length; i++)
+ 						string_append_c(buf, fill_char);
+ 			}
++		} else if (*p == '/' && p[1] == '|' && (p == format || p[-1] != '/')) {	/* match /| but don't match //| */
++			/* this sequence is marking res->margin_left */
++			string_append(buf, "\033[666m");
++			p++;
+ 		} else
+ 			string_append_c(buf, *p);
+ 		p++;
+@@ -613,6 +617,10 @@
+ 						attr &= ~(FSTR_NORMAL+FSTR_BACKMASK);
+ 						attr |= (cur - 40) << 3;
+ 					}
++
++					/* internal ekg2 sequence */
++					if (cur == 666)
++						res->margin_left = j; 
+ 				}
+ 			}
+ //			else debug("Invalid/unsupported by ekg2 ECMA-48 CSI seq? (npar: %d)\n", npar);	/* sequence not ended with m */
+@@ -622,15 +630,6 @@
+ 		if (str[i] == 13)
+ 			continue;
+ 
+-		if (str[i] == ('/') && str[i + 1] == ('|')) {
+-			if (i == 0 || str[i - 1] != ('/')) {
+-				res->margin_left = j;
+-				i++;
+-				continue;
+-			}
+-			continue;
+-		}
+-
+ 		if (str[i] == 9) {
+ 			int k = 0, l = 8 - (j % 8);
+ 
