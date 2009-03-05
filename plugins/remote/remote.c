@@ -181,6 +181,9 @@ static char *rc_fstring_reverse(fstring_t *fstr) {
 
 	asc = string_init(NULL);
 
+	if (fstr->prompt_empty)
+		string_append(asc, "%]");
+
 	for (i = 0; str[i]; i++) {
 #define prev	attr[i-1]
 #define cur	attr[i] 
@@ -193,7 +196,11 @@ static char *rc_fstring_reverse(fstring_t *fstr) {
 			if (!(cur & FSTR_REVERSE) && (prev & FSTR_REVERSE))	reset = 1;
 			if ((cur & FSTR_NORMAL) && !(prev & FSTR_NORMAL))	reset = 1;	/* colors disappear */
 
-			if (reset) 
+			/* XXX, fstr->margin_left */
+			if (fstr->prompt_len == i) {
+				string_append(asc, "%|");
+				reset = 1;
+			} else if (reset)
 				string_append(asc, "%n");
 		} else
 			reset = 1;
