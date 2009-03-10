@@ -1412,10 +1412,27 @@ JABBER_HANDLER(jabber_handle_presence) {
 	xfree(jid);
 
 	if (from && !xstrcmp(type, "subscribe")) {
-		int auto_auth = session_int_get(s, "auto_auth");
+		userlist_t *u;
+		jabber_userlist_private_t *up;
 
-		if (auto_auth == -1)
+		int auto_auth;
+
+		if ((auto_auth = session_int_get(s, "auto_auth")) == -1)
 			auto_auth = 0;
+
+		if (!(u = userlist_find(s, uid))) {
+			u = userlist_add(s, uid, NULL);
+			ekg_group_add(u, "__authreq");
+		}
+
+		up = jabber_userlist_priv_get(u);
+		if ((up->authtype & EKG_JABBER_AUTH_FROM)) { /* XXX: maybe just auto-auth? */
+			debug_error("[jabber] subscribe req for already subscribed uid (%s), authtype=%d, wtf?\n",
+					uid, up->authtype);
+			up->authtype &= ~EKG_JABBER_AUTH_FROM;
+		}
+		up->authtype |= EKG_JABBER_AUTH_REQ;
+
 		if ((auto_auth & 1)) {
 			if (!(auto_auth & 4)) /* auto-accept */
 				command_exec_format(NULL, s, 2, "/auth --accept %s", uid);
@@ -1423,20 +1440,6 @@ JABBER_HANDLER(jabber_handle_presence) {
 		} else if ((auto_auth & 4)) /* auto-deny */
 			command_exec_format(NULL, s, 2, "/auth --deny %s", uid);
 		else { /* ask */
-			userlist_t *u = userlist_find(s, uid);
-			if (!u) {
-				u = userlist_add(s, uid, NULL);
-				ekg_group_add(u, "__authreq");
-			}
-
-			jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
-			if ((up->authtype & EKG_JABBER_AUTH_FROM)) { /* XXX: maybe just auto-auth? */
-				debug_error("[jabber] subscribe req for already subscribed uid (%s), authtype=%d, wtf?\n",
-						uid, up->authtype);
-				up->authtype &= ~EKG_JABBER_AUTH_FROM;
-			}
-			up->authtype |= EKG_JABBER_AUTH_REQ;
-
 			print("jabber_auth_subscribe", uid, session_name(s));
 		}
 		xfree(uid);
