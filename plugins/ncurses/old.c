@@ -305,7 +305,8 @@ void ncurses_update_real_prompt(ncurses_window_t *n) {
 	if (!n)
 		return;
 
-	const int maxlen = (n->window && n->window->_maxx ? n->window->_maxx : 80) / 3;
+	const int _maxlen = n->window && n->window->_maxx ? n->window->_maxx : 80;
+	const int maxlen = ncurses_noecho ? _maxlen - 3 : _maxlen / 3;
 	xfree(n->prompt_real);
 
 	if (maxlen <= 6) /* we assume the terminal is too narrow to display any input with prompt */
