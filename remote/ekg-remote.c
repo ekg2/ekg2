@@ -480,6 +480,9 @@ int main(int argc, char **argv)
 		switch (c) {
 			case 'T':
 				testonly = 1;
+				frontend = optarg;
+				break;
+
 			case 'F':
 				frontend = optarg;
 				break;
