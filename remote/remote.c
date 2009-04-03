@@ -112,7 +112,6 @@ static void ssl_print_info(SSL_SESSION sesja) {
 				// break;
 
 			/* XXX, case GNUTLS_CRT_OPENPGP: */
-			case GNUTLS_CRT_UNKNOWN:
 			default:
 				printf("\tNieznany typ certyfikatu!\n");
 				break;
