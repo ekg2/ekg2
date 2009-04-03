@@ -1,0 +1,100 @@
+.\" Autor strony podrêcznika: Marcin Owsiany <porridge@debian.org>
+.TH EKG2-REMOTE "1" 2008-03-09 "Polecenia u¿ytkowników"
+.SH NAZWA
+ekg2-remote \- zdalny interfejs u¿ytkownika dla EKG2
+
+.SH SK£ADNIA
+.B ekg2-remote
+.RI [ OPCJE ]
+CEL
+
+.SH OPIS
+
+.B ekg2-remote
+jest to program udostêpniaj±cy zdalny interfejs u¿ytkownika dla programu EKG2
+u¿ywaj±cego wtyczki "remote".  £±czy siê on z EKG2 przez gniazdo i pozwala
+u¿ywaæ go tak, jakby dzia³a³ na lokalnej maszynie.
+.sp 1
+G³ówn± motywacj± tego programu by³o umo¿liwienie u¿ywania EKG2 na ma³o
+wydajnych maszynach, z ograniczonymi zasobami pamiêci i procesora.
+
+.SH OPCJE
+
+.TP
+.BI \-c \fR,\  \-\-charset =ZESTAW-ZNAKÓW
+wymusza u¿ycie danego ZESTAWU-ZNAKÓW,
+
+.TP
+.BI \-p \fR,\  \-\-password =HAS£O
+ustawia has³o,
+
+.TP
+.BI \-T \fR,\  \-\-test =FRONTEND
+uruchamia tryb testowy, u¿ywaj±c interfejsu u¿ytkownika
+.I FRONTEND
+(domy¶lny to ncurses),
+
+.TP
+.BI \-F \fR,\  \-\-frontend =FRONTEND
+u¿ywa interfejsu u¿ytkownika
+.I FRONTEND
+(domy¶lny to ncurses),
+
+.TP
+.BR \-m ,\  \-\-no-mouse
+wy³±cza obs³ugê myszy,
+
+.TP
+.BR \-U ,\  \-\-unicode
+wymusza obs³ugê unicode,
+
+.TP
+.BR \-h ,\  \-\-help
+wy¶wietla komunikat pomocy,
+
+.TP
+.BR \-v ,\  \-\-version
+wy¶wietla wersjê programu i koñczy pracê
+
+.P
+.I CEL
+okre¶la program EKG2 do którego nale¿y siê pod³±czyæ. Obs³ugiwane s± nastêpuj±ce schematy:
+
+.TP
+.BI tcp: adres : port
+nieszyfrowane po³±czenie TCP/IP do danego
+.I adresu
+i
+.I portu
+
+.TP
+.BI tcps: adres : port
+szyfrowane przy pomocy SSL po³±czenie TCP/IP do danego
+.I adresu
+i
+.I portu
+
+.TP
+.BI udp: adres : port
+po³±czenie UDP/IP do danego
+.I adresu
+i
+.I portu
+
+.TP
+.BI unix: ¶cie¿ka-gniazda
+lokalne (UNIX) po³±czenie do danej
+.I ¶cie¿ki-gniazda
+
+.TP
+.BI pipe: ¶cie¿ka-potoku
+lokalne (FIFO) po³±czenie do danej
+.IR ¶cie¿ki-potoku .
+Obecnie nie obs³ugiwane.
+
+.SH "ZOBACZ TAK¯E"
+.BR ekg2 (1).
+Pe³na dokumentacja dla programu
+.B ekg2
+jest utrzymywana jako podrêcznik Docbook. Jest ona dostêpna pod adresem
+.B http://ekg2.org/ekg2book/

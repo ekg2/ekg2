@@ -1,0 +1,101 @@
+.\" Manpage created by Marcin Owsiany <porridge@debian.org>
+.TH EKG2-REMOTE "1" 2008-03-05 "User Commands"
+.SH NAME
+ekg2-remote \- remote User Interface for EKG2
+
+.SH SYNOPSIS
+.B ekg2-remote
+.RI [ OPTIONS ]
+REMOTE-ENDPOINT
+
+.SH DESCRIPTION
+
+.B ekg2-remote
+is a program which provides a remote user interface to an EKG2 instance that
+uses the "remote" plugin. It connects to EKG2 via a socket, and lets you use
+the program as if it was running locally.
+.sp 1
+The motivation behind this program was to be able to use EKG2 on a low
+performance machine with limited memory and CPU resources.
+
+.SH OPTIONS
+
+.TP
+.BI \-c \fR,\  \-\-charset =CHARSET
+forces the charset name to use,
+
+.TP
+.BI \-p \fR,\  \-\-password =PASSWORD
+sets the password,
+
+.TP
+.BI \-T \fR,\  \-\-test =FRONTEND
+runs in test mode (for debugging), using
+.I FRONTEND
+user interface (default is ncurses),
+
+.TP
+.BI \-F \fR,\  \-\-frontend =FRONTEND
+uses
+.I FRONTEND
+user interface (default is ncurses),
+
+.TP
+.BR \-m ,\  \-\-no-mouse
+does not load mouse support,
+
+.TP
+.BR \-U ,\  \-\-unicode
+forces unicode support,
+
+.TP
+.BR \-h ,\  \-\-help
+displays a help message,
+
+.TP
+.BR \-v ,\  \-\-version
+displays program version and exits
+
+.P
+.I ENDPOINT
+specifies the EKG2 instance to connect to. The following are accepted:
+
+.TP
+.BI tcp: address : port
+cleartext TCP/IP connection to given
+.I address
+and
+.I port
+
+.TP
+.BI tcps: address : port
+SSL-encrypted TCP/IP connection to given
+.I address
+and
+.I port
+
+.TP
+.BI udp: address : port
+UDP/IP connection to given
+.I address
+and
+.I port
+
+.TP
+.BI unix: socket-path
+local (UNIX) connection to given
+.I socket-path
+
+.TP
+.BI pipe: fifo-path
+local (pipe) connection to given
+.IR fifo-path .
+Currently unsupported.
+
+.SH "SEE ALSO"
+.BR ekg2 (1).
+The full documentation for
+.B ekg2
+is maintained as a Docbook manual.  See
+.B http://ekg2.org/ekg2book/
+for an online version.
