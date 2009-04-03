@@ -583,7 +583,7 @@ AC_OUTPUT
 #
 # set variables for cEcho
 #
-if which tput >/dev/null 2>&1; then
+if test "x$EKG2_NO_COLOR_CONFIGURE" = "x" && which tput >/dev/null 2>&1; then
 	clr_r=$(tput sgr0;tput setaf 1)
 	clr_g=$(tput sgr0;tput setaf 2)
 	clr_y=$(tput sgr0;tput setaf 3)
