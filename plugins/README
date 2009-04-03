@@ -2,12 +2,13 @@ plugin		autor		przeznaczenie			zale¿no¶ci
 -----------------------------------------------------------------------------
 autoreponder	peres		prosty autoresponder		-
 dbus		gim		IPC per dbus			dbus
+dummy		*		szkielet edukacyjny		-
 feed		darkjames	obs³uga feedów RSS i NNTP	expat
 gg		wojtekka	obs³uga protoko³u Gadu-Gadu	libgadu
 gpg		darkjames	szyfrowanie wiadomo¶ci GPG	gpgme
 gsm		wojtekka	kodek GSM do rozmów g³osowych 	libgsm
 gtk		darkjames	interfejs graficzny na GTK+	gtk+2
-httprc_ajax	*		interfejs WWW (z AJAX)		-
+httprc_xajax	*		interfejs WWW (z AJAX)		-
 icq		dj/wiechu	obs³uga protoko³u icq		-
 ioctld		drg		obs³uga diod klawiatury		-
 irc		gim		obs³uga protoko³u irc		-
@@ -25,8 +26,10 @@ polchat		darkjames	obs³uga chatów polchat		-
 python		leafnode	obs³uga pythona			python
 rc		wojtekka	zdalne sterowanie ekg		-
 readline	*		interfejs tekstowy		readline
+remote          darkjames       zdalny interfejs u¿ytkownika    -
 rivchat         darkjames	rozmowy w sieci lan		-
 rot13		darkjames	proste szyfrowaie wiadomo¶ci	-
+ruby		*		obs³uga skryptów Ruby		ruby
 sim		*		szyfrowanie wiadomo¶ci		openssl
 sms		wojtekka	wysy³anie smsów i takie tam	/usr/bin/sms
 sniff		darkjames	sniffer GG			pcap
