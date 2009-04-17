@@ -1388,6 +1388,8 @@ static int jabber_theme_init() {
 	format_add("jabber_version_response",		_("%> Jabber ID: %T%1%n\n%> Client name: %T%2%n\n%> Client version: %T%3%n\n%> Operating system: %T%4%n\n"), 1);
 	format_add("jabber_version_error",		_("%! (%1) Error in getting %gjabber:iq:version%n from %W%2%n: %r%3"), 1);
 
+	format_add("jabber_ctcp_request",		_("%> (%1) %T%2%n requested IQ %g%4%n"), 1);
+
 #endif	/* !NO_DEFAULT_THEME */
 	return 0;
 }
@@ -1581,6 +1583,7 @@ static plugins_params_t jabber_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_xa_descr",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("connect_timeout",	VAR_INT, "30", 0, NULL),
 	PLUGIN_VAR_ADD("disable_sasl",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("display_ctcp",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("display_notify",	VAR_INT, "-1", 0, NULL),
 	PLUGIN_VAR_ADD("display_server_features", VAR_INT, "1", 0, NULL),
 	PLUGIN_VAR_ADD("gpg_active",		VAR_BOOL, "0", 0, jabber_gpg_changed),

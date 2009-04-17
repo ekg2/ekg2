@@ -1364,9 +1364,12 @@ JABBER_HANDLER(jabber_handle_iq) {
 
 	for (q = n->children; q; q = q->next) {
 		const char *ns = q->xmlns;
-		const struct jabber_iq_generic_handler *tmp = jabber_iq_find_handler(callbacks, q->name, ns);
+		const struct jabber_iq_generic_handler *tmp;
 
-		if (!tmp) {
+		if (type == JABBER_IQ_TYPE_GET && session_int_get(s, "display_ctcp") == 1)
+			print("jabber_ctcp_request", session_name(s), from, __(q->name), __(ns));
+
+		if (!(tmp = jabber_iq_find_handler(callbacks, q->name, ns))) {
 			debug_error("[jabber] <iq %s> unknown name: <%s xmlns='%s'\n", atype, __(q->name), __(ns));
 			continue;
 		}
