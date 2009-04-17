@@ -373,6 +373,7 @@ char *ekg_convert_string_p(const char *ps, void *ptr) {
 	if ((recod = ekg_convert_string_t_p(s, ptr)))
 		return string_free(recod, 0);
 
+	string_free(recode, 1);
 	return NULL;
 }
 
