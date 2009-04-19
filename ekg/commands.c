@@ -998,9 +998,9 @@ static COMMAND(cmd_help)
 			return 0;
 		}
 
-		if (session && session->uid) {
+		if (session)
 			plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
-		} else
+		else
 			plen = 0;
 	
 		for (c = commands; c; c = c->next) {
@@ -1013,7 +1013,10 @@ static COMMAND(cmd_help)
 				return -1;
 			}
 
-			if ((!xstrcasecmp(c->name, p) || !xstrcasecmp(c->name + plen, p)) && !(c->flags & COMMAND_ISALIAS) ) {
+			if (!(c->flags & COMMAND_ISALIAS) && 
+					(!xstrcasecmp(c->name, p) || 
+					(session && !xstrncmp(c->name, session->uid, plen) && !xstrcasecmp(c->name + plen, p))))
+			{
 				FILE *f; 
 				char *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL;
 				const char *seeking_name;
