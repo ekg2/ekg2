@@ -2583,15 +2583,19 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 
 			if (!res) {
-				window_t *w = window_find(target);
+				char *uid;
+				window_t *w;
+
+				uid = xstrdup(target);
+				w = window_find(uid);
 
 				window_lock_inc(w);
-				res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
-				if (window_find_ptr(w) || (w == window_find(target)))
+				res = (last_command->function)(last_name, (const char **) par, s, uid, (quiet & 1));
+				if (window_find_ptr(w) || (w == window_find(uid)))
 					window_lock_dec(w);
 				else {
 					list_t l;
-					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=%s]\n", __(target), __(last_name));
+					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=%s]\n", __(uid), __(last_name));
 					/* may be faultly */
 					for (l=windows; l; l = l->next) {
 						window_t *w = l->data;
