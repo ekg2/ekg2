@@ -154,14 +154,6 @@ display_notify
 	tylko zmiany z niedostêpnego na dostêpny i na odwrót. Wiêkszy priorytet
 	ma zmienna sesyjna o tej samej nazwie (je¿eli nie równa -1)
 
-display_pl_chars
-	typ: bool
-	domy¶lna warto¶æ: 1
-	
-	je¶li w³±czone, wy¶wietlane s± polskie literki na terminalu.
-	w przeciwnym wypadku, zamieniane s± na odpowiadaj±ce im literki
-	ASCII.
-
 display_sent
 	typ: bool
 	domy¶lna warto¶æ: 1
