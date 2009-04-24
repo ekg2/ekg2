@@ -644,6 +644,42 @@ static char *ekg_to_utf8(char *b, const unsigned short *recode_table) {		/* size
 	return newbuf;
 }
 
+/*
+ * iso_to_ascii()
+ *
+ * usuwa polskie litery z tekstu.
+ *
+ *  - c.
+ */
+static char *iso_to_ascii(struct ekg_recoder *rec, char *b) {
+	unsigned char *buf = (unsigned char *) b;
+
+	while (*buf) {
+		if (*buf == (unsigned char)'±') *buf = 'a';
+		if (*buf == (unsigned char)'ê') *buf = 'e';
+		if (*buf == (unsigned char)'æ') *buf = 'c';
+		if (*buf == (unsigned char)'³') *buf = 'l';
+		if (*buf == (unsigned char)'ñ') *buf = 'n';
+		if (*buf == (unsigned char)'ó') *buf = 'o';
+		if (*buf == (unsigned char)'¶') *buf = 's';
+		if (*buf == (unsigned char)'¿') *buf = 'z';
+		if (*buf == (unsigned char)'¼') *buf = 'z';
+
+		if (*buf == (unsigned char)'¡') *buf = 'A';
+		if (*buf == (unsigned char)'Ê') *buf = 'E';
+		if (*buf == (unsigned char)'Æ') *buf = 'C';
+		if (*buf == (unsigned char)'£') *buf = 'L';
+		if (*buf == (unsigned char)'Ñ') *buf = 'N';
+		if (*buf == (unsigned char)'Ó') *buf = 'O';
+		if (*buf == (unsigned char)'¦') *buf = 'S';
+		if (*buf == (unsigned char)'¯') *buf = 'Z';
+		if (*buf == (unsigned char)'¬') *buf = 'Z';
+
+		buf++;
+	}
+	return b;
+}
+
 static char *ekg_change_encoding(char *b, const unsigned char *recode_table) {	/* sizeof(recode_table) = 0x80 ==> 0x80 items */
 	unsigned char *buf = (unsigned char *) b;
 
@@ -764,6 +800,10 @@ static void ekg_recode_init(struct ekg_recoder *rec) {
 	} else if (rec == &iso2_recoder) {
 		if (!xstrcasecmp("ISO-8859-2", config_console_charset)) {
 			rec->recode_from_locale = rec->recode_to_locale = recode_ret;
+			rec->in_new_buffer	= 0;
+		} else if (!xstrcasecmp("US-ASCII", config_console_charset)) {
+			rec->recode_from_locale	= recode_ret;
+			rec->recode_to_locale	= iso_to_ascii;	/* XXX, recode_ansi_helper_to */
 			rec->in_new_buffer	= 0;
 		} else if (!xstrcasecmp("UTF-8", config_console_charset)) {
 			rec->recode_from_locale = recode_utf8_helper_from;
@@ -926,44 +966,5 @@ const char *ekg_recode_to_locale_use(enum ekg_recode_name enc, const char *buf) 
 	}
 	// warn user.
 	return buf;
-}
-
-/*
- * iso_to_ascii()
- *
- * usuwa polskie litery z tekstu.
- *
- *  - c.
- */
-void iso_to_ascii(unsigned char *buf) {
-#if (USE_UNICODE || HAVE_GTK)
-	if (config_use_unicode) return;
-#endif
-	if (!buf)
-		return;
-
-	while (*buf) {
-		if (*buf == (unsigned char)'±') *buf = 'a';
-		if (*buf == (unsigned char)'ê') *buf = 'e';
-		if (*buf == (unsigned char)'æ') *buf = 'c';
-		if (*buf == (unsigned char)'³') *buf = 'l';
-		if (*buf == (unsigned char)'ñ') *buf = 'n';
-		if (*buf == (unsigned char)'ó') *buf = 'o';
-		if (*buf == (unsigned char)'¶') *buf = 's';
-		if (*buf == (unsigned char)'¿') *buf = 'z';
-		if (*buf == (unsigned char)'¼') *buf = 'z';
-
-		if (*buf == (unsigned char)'¡') *buf = 'A';
-		if (*buf == (unsigned char)'Ê') *buf = 'E';
-		if (*buf == (unsigned char)'Æ') *buf = 'C';
-		if (*buf == (unsigned char)'£') *buf = 'L';
-		if (*buf == (unsigned char)'Ñ') *buf = 'N';
-		if (*buf == (unsigned char)'Ó') *buf = 'O';
-		if (*buf == (unsigned char)'¦') *buf = 'S';
-		if (*buf == (unsigned char)'¯') *buf = 'Z';
-		if (*buf == (unsigned char)'¬') *buf = 'Z';
-
-		buf++;
-	}
 }
 

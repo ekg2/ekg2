@@ -474,9 +474,6 @@ static char *va_format_string(const char *format, va_list ap) {
 	if (!dont_resolve && no_prompt_cache)
 		theme_cache_reset();
 
-	if (!config_display_pl_chars)
-		iso_to_ascii((unsigned char *) buf->str);
-
 	return string_free(buf, 0);
 }
 
