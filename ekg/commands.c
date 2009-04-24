@@ -2800,15 +2800,19 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 
 			if (!res) {
-				window_t *w = window_find_sa(s, target, 0);
+				window_t *w;
+				char *uid;
+				
+				uid = xstrdup(target);
+				w = window_find_sa(s, uid, 0);
 
 				window_lock_inc(w);
-				res = (last_command->function)(last_name, (const char **) par, s, target, (quiet & 1));
-				if (window_find_ptr(w) || (w == window_find_sa(s, target, 0)))
+				res = (last_command->function)(last_name, (const char **) par, s, uid, (quiet & 1));
+				if (window_find_ptr(w) || (w == window_find_sa(s, uid, 0)))
 					window_lock_dec(w);
 				else { 
 					window_t *w;
-					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=%s]\n", __(target), __(last_name));
+					debug("[WINDOW LOCKING] INTERNAL ERROR SETTING ALL WINDOW LOCKS TO 0 [wtarget=%s command=%s]\n", __(uid), __(last_name));
 					/* may be faultly */
 					for (w=windows; w; w = w->next) {
 						if (!(w->lock)) continue;
@@ -2816,6 +2820,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 					}
 				}
 				query_emit_id(NULL, UI_WINDOW_REFRESH);
+				xfree(uid);
 			}
 			if (last_command->flags & COMMAND_ISALIAS) array_free(last_params);
 			array_free(par);
