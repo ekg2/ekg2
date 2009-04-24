@@ -2583,8 +2583,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			}
 
 			if (!res) {
-				char *uid;
 				window_t *w;
+				char *uid;
 
 				uid = xstrdup(target);
 				w = window_find(uid);
@@ -2604,6 +2604,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 					}
 				}
 				query_emit_id(NULL, UI_WINDOW_REFRESH);
+				xfree(uid);
 			}
 			if (last_command->flags & COMMAND_ISALIAS) array_free(last_params);
 			array_free(par);
