@@ -364,41 +364,77 @@ static BINDING_FUNCTION(binding_complete)
 {
 	if (!lines) {
 #if USE_UNICODE
-		/* PLEASE REPORT ALL BUGS CONNECTED WITH THIS CODE TO <darkjames@darkjames.ath.cx> THX. */
-			char *nline = xmalloc((LINE_MAXLEN+1) /* * MB_CUR_MAX */);
-			size_t len, i, cnt;
-			int lns_start, lns_index; 
+			int line_start_tmp, line_index_tmp;
+			char nline[LINE_MAXLEN + 1];	/* (* MB_CUR_MAX)? No, it would be anyway truncated by completion */
+			int i, j;
+			int nlen;
 
-			if ((wcstombs(nline, (wchar_t *) line, LINE_MAXLEN) == -1)) {
-				debug("[%s:%d] wcstombs() failed.\n");
-				xfree(nline);
-				return;
+			line_start_tmp = line_index_tmp = 0;
+			for (i = 0, j = 0; line[i] && i < LINE_MAXLEN; i++) {
+				char buf[MB_CUR_MAX+1];
+				int tmp;
+				int k;
+
+				tmp = wctomb(buf, line[i]);
+
+				if (tmp <= 0 || tmp >= MB_CUR_MAX) {
+					debug_error("binding_complete() wctomb() failed (%d)\n", tmp);
+					return;
+				}
+
+				if (j+tmp >= LINE_MAXLEN) {
+					debug_error("binding_complete() buffer might be truncated, aborting\n");
+					return;
+				}
+
+				if (line_start == i)
+					line_start_tmp = j;
+				if (line_index == i)
+					line_index_tmp = j;
+
+				for (k = 0; k < tmp && buf[k]; k++)
+					nline[j++] = buf[k];
 			}
-			ncurses_complete(&line_start, &line_index, nline);
+			/* XXX, put into loop, wcslen()+1? */
+			if (line_start == i)
+				line_start_tmp = j;
+			if (line_index == i)
+				line_index_tmp = j;
 
-		/* here we need to update line_start && line_index cause of unicode chars.. */
-			len = xstrlen(nline);		i = 0;		cnt = 0;
-			lns_start = 0; lns_index = 0;
+			nline[j] = '\0';
 
-/*			debug("line_start: %d line_index: %d len: %d\n", line_start, line_index, len);*/
-			while (1) {
-				int tmp = mblen(&nline[i], len-i);
-/*				debug("[%d] cur: %d nextlen: %d\n", cnt, i, tmp);*/
-				if (!lns_start && line_start == i) { lns_start = 1; line_start = cnt; }
-				if (!lns_index && line_index == i) { lns_index = 1; line_index = cnt; } 
-				cnt++;
-				i += tmp;
-				if (lns_start && lns_index) break;
-				if (tmp <= 0) break;
+			debug("wcs-completion WC->MB (%d,%d) => (%d,%d) [%d;%d]\n", line_start, line_index, line_start_tmp, line_index_tmp, j, i);
+			ncurses_complete(&line_start_tmp, &line_index_tmp, nline);
+
+			nlen = strlen(nline);
+
+			line_start = line_index = 0;
+			for (i = 0, j = 0; j < nlen; i++) {
+				int tmp;
+
+				tmp = mbtowc(&line[i], &nline[j], nlen-j);
+
+				if (tmp <= 0) {
+					debug_error("binding_complete() mbtowc() failed (%d)\n", tmp);
+					break;	/* return; */
+				}
+
+				if (line_start_tmp == j)
+					line_start = i;
+				if (line_index_tmp == j)
+					line_index = i;
+
+				j += tmp;
 			}
-/*			debug("lns_start: %d lns_index: %d (%d,%d)\n", lns_start, lns_index, line_start, line_index);*/
 
-			if (!lns_start) line_start = 0;
-			if (!lns_index) line_index = 0;
+			/* XXX, put into loop, <= nlen? */
+			if (line_start_tmp == j)
+				line_start = i;
+			if (line_index_tmp == j)
+				line_index = i;
 
-			if ((mbstowcs(line, nline, LINE_MAXLEN) == -1)) /* if it's failed the result will be unpredictable \o/ */
-				debug("[%s:%d] mbstowcs() failed.\n");
-			xfree(nline);
+			debug("wcs-completion MB->WC (%d,%d) => (%d,%d) [%d;%d]\n", line_start_tmp, line_index_tmp, line_start, line_index, j, i);
+			line[i] = '\0';
 #else
 			ncurses_complete(&line_start, &line_index, (char *) line);
 #endif
