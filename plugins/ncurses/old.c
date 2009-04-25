@@ -2579,7 +2579,7 @@ end:
 			}
 		}
 	} else {
-#if USE_UNICODE
+#if !USE_UNICODE
 		if (ch > KEY_MAX) {
 			debug_error("%s:%d INTERNAL NCURSES/EKG2 FAULT. KEY-PRESSED: %d>%d TO PROTECT FROM SIGSEGV\n", __FILE__, __LINE__, ch, KEY_MAX);
 			goto then;
