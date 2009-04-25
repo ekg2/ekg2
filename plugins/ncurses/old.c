@@ -2604,7 +2604,7 @@ end:
 			}
 		} else if (
 #if USE_UNICODE
-				(ch != KEY_MOUSE) &&
+				(ch != KEY_MOUSE && ch != KEY_RESIZE) &&
 #else
 				(ch < 255) && 
 #endif
