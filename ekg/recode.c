@@ -449,12 +449,9 @@ string_t ekg_convert_string_t(string_t s, const char *from, const char *to) {
 
 struct ekg_recoder {
 	int count;
-	char *(*recode_from_locale)(struct ekg_recoder *, char *);
-	char *(*recode_to_locale)(struct ekg_recoder *, char *);
+	char *(*recode_from_locale)(struct ekg_recoder *, int, char *);
+	char *(*recode_to_locale)(struct ekg_recoder *, int, char *);
 	void *conv_in, *conv_out;
-	int in_new_buffer;						/*  set if recode_from_locale() and recode_to_locale() return freshly allocated buffer.
-									  unset if return old buffer
-									 */
 	int is_utf;
 };
 
@@ -651,8 +648,8 @@ static char *ekg_to_utf8(char *b, const unsigned short *recode_table) {		/* size
  *
  *  - c.
  */
-static char *iso_to_ascii(struct ekg_recoder *rec, char *b) {
-	unsigned char *buf = (unsigned char *) b;
+static char *iso_to_ascii(struct ekg_recoder *rec, int alloc_buf, char *b) {
+	unsigned char *buf = (unsigned char *) ((alloc_buf) ? xstrdup(b) : b);
 
 	while (*buf) {
 		if (*buf == (unsigned char)'±') *buf = 'a';
@@ -680,8 +677,8 @@ static char *iso_to_ascii(struct ekg_recoder *rec, char *b) {
 	return b;
 }
 
-static char *ekg_change_encoding(char *b, const unsigned char *recode_table) {	/* sizeof(recode_table) = 0x80 ==> 0x80 items */
-	unsigned char *buf = (unsigned char *) b;
+static char *ekg_change_encoding(char *b, int alloc_buf, const unsigned char *recode_table) {	/* sizeof(recode_table) = 0x80 ==> 0x80 items */
+	unsigned char *buf = (unsigned char *) ((alloc_buf) ? xstrdup(b) : b);
 
 	while (*buf) {
 		if (*buf >= 0x80)
@@ -702,21 +699,23 @@ static struct ekg_recoder *ekg_recode_get(enum ekg_recode_name enc) {
 	return &dummy_recoder;
 }
 
-static char *recode_ret(struct ekg_recoder *rec, char *buf) { return buf; }	/* locale => locale */
-
-static char *recode_ansi_helper_from(struct ekg_recoder *rec, char *buf) {	/* locale => encoding */
-	return ekg_change_encoding(buf, rec->conv_out);
+static char *recode_ret(struct ekg_recoder *rec, int alloc_buf, char *buf) { 			/* locale => locale */
+	return (alloc_buf) ? xstrdup(buf) : buf;
 }
 
-static char *recode_ansi_helper_to(struct ekg_recoder *rec, char *buf) {	/* encoding => locale */
-	return ekg_change_encoding(buf, rec->conv_in);
+static char *recode_ansi_helper_from(struct ekg_recoder *rec, int alloc_buf, char *buf) {	/* locale => encoding */
+	return ekg_change_encoding(buf, alloc_buf, rec->conv_out);
 }
 
-static char *recode_utf8_helper_from(struct ekg_recoder *rec, char *buf) {	/* locale /utf-8/ => encoding */
+static char *recode_ansi_helper_to(struct ekg_recoder *rec, int alloc_buf, char *buf) {		/* encoding => locale */
+	return ekg_change_encoding(buf, alloc_buf, rec->conv_in);
+}
+
+static char *recode_utf8_helper_from(struct ekg_recoder *rec, int alloc_buf, char *buf) {	/* locale /utf-8/ => encoding */
 	return ekg_from_utf8(buf, rec->conv_out);
 }
 
-static char *recode_utf8_helper_to(struct ekg_recoder *rec, char *buf) {	/* encoding => locale /utf-8/ */
+static char *recode_utf8_helper_to(struct ekg_recoder *rec, int alloc_buf, char *buf) {		/* encoding => locale /utf-8/ */
 	return ekg_to_utf8(buf, rec->conv_in);
 }
 
@@ -746,12 +745,12 @@ static inline char *mutt_convert_string2(char *buf, size_t len, iconv_t cd, int 
 	return res;
 }
 
-static char *recode_iconv_helper_from(struct ekg_recoder *rec, char *buf) {	/* locale => iconv */
+static char *recode_iconv_helper_from(struct ekg_recoder *rec, int alloc_buf, char *buf) {	/* locale => iconv */
 	iconv(rec->conv_out, NULL, NULL, NULL, NULL);	/* reset iconv */
 	return mutt_convert_string2(buf, strlen(buf), rec->conv_out, (rec->is_utf == 2 ? 1 : (rec->is_utf == 1 ? 2 : 0)));
 }
 
-static char *recode_iconv_helper_to(struct ekg_recoder *rec, char *buf) {	/* iconv => locale */
+static char *recode_iconv_helper_to(struct ekg_recoder *rec, int alloc_buf, char *buf) {	/* iconv => locale */
 	iconv(rec->conv_in, NULL, NULL, NULL, NULL);	/* reset iconv */
 	return mutt_convert_string2(buf, strlen(buf), rec->conv_in, rec->is_utf);
 }
@@ -771,8 +770,6 @@ static void ekg_recode_init_iconv(struct ekg_recoder *rec, const char *encoding)
 		rec->is_utf = 2;
 	else if (!xstrcasecmp(config_console_charset, "UTF-8"))
 		rec->is_utf = 1;
-
-	rec->in_new_buffer = 1;
 #endif
 }
 
@@ -786,13 +783,11 @@ static void ekg_recode_init(struct ekg_recoder *rec) {
 			rec->recode_to_locale	= recode_ansi_helper_to;
 			rec->conv_in		= (void *) cp_to_iso_table;
 			rec->conv_out 		= (void *) iso_to_cp_table;
-			rec->in_new_buffer	= 0;
 		} else if (!xstrcasecmp("UTF-8", config_console_charset)) {
 			rec->recode_from_locale = recode_utf8_helper_from;
 			rec->recode_to_locale   = recode_utf8_helper_to;
 			rec->conv_in 		= (void *) table_cp1250;
 			rec->conv_out 		= (void *) table_cp1250;
-			rec->in_new_buffer	= 1;
 		} else {
 			ekg_recode_init_iconv(rec, "WINDOWS-1250");
 		}
@@ -800,17 +795,14 @@ static void ekg_recode_init(struct ekg_recoder *rec) {
 	} else if (rec == &iso2_recoder) {
 		if (!xstrcasecmp("ISO-8859-2", config_console_charset)) {
 			rec->recode_from_locale = rec->recode_to_locale = recode_ret;
-			rec->in_new_buffer	= 0;
 		} else if (!xstrcasecmp("US-ASCII", config_console_charset)) {
 			rec->recode_from_locale	= recode_ret;
 			rec->recode_to_locale	= iso_to_ascii;	/* XXX, recode_ansi_helper_to */
-			rec->in_new_buffer	= 0;
 		} else if (!xstrcasecmp("UTF-8", config_console_charset)) {
 			rec->recode_from_locale = recode_utf8_helper_from;
 			rec->recode_to_locale	= recode_utf8_helper_to;
 			rec->conv_in 		= (void *) table_iso_8859_2;
 			rec->conv_out 		= (void *) table_iso_8859_2;
-			rec->in_new_buffer	= 1;
 		} else {
 			ekg_recode_init_iconv(rec, "ISO-8859-2");
 		}
@@ -821,10 +813,8 @@ static void ekg_recode_init(struct ekg_recoder *rec) {
 			rec->recode_to_locale	= recode_utf8_helper_from;
 			rec->conv_in 		= (void *) table_iso_8859_2;
 			rec->conv_out 		= (void *) table_iso_8859_2;
-			rec->in_new_buffer	= 1;
 		} else if (!xstrcasecmp("UTF-8", config_console_charset)) {
 			rec->recode_from_locale = rec->recode_to_locale = recode_ret;
-			rec->in_new_buffer	= 0;
 		} else {
 			ekg_recode_init_iconv(rec, "UTF-8");
 		}
@@ -870,8 +860,8 @@ char *ekg_recode_from_locale(enum ekg_recode_name enc, char *buf) {
 
 	rec = ekg_recode_get(enc);
 	if (rec->recode_from_locale) {
-		char *res = rec->recode_from_locale(rec, buf);
-		if (rec->in_new_buffer)
+		char *res = rec->recode_from_locale(rec, 0, buf);
+		if (res != buf)
 			xfree(buf);
 		return res;
 	}
@@ -887,8 +877,8 @@ char *ekg_recode_to_locale(enum ekg_recode_name enc, char *buf) {
 
 	rec = ekg_recode_get(enc);
 	if (rec->recode_to_locale) {
-		char *res = rec->recode_to_locale(rec, buf);
-		if (rec->in_new_buffer)
+		char *res = rec->recode_to_locale(rec, 0, buf);
+		if (res != buf)
 			xfree(buf);
 		return res;
 	}
@@ -903,11 +893,8 @@ char *ekg_recode_from_locale_dup(enum ekg_recode_name enc, const char *buf) {
 		return NULL;
 
 	rec = ekg_recode_get(enc);
-	if (rec->recode_from_locale) {
-		if (!rec->in_new_buffer)
-			buf = xstrdup(buf);
-		return rec->recode_from_locale(rec, (char *) buf);
-	}
+	if (rec->recode_from_locale)
+		return rec->recode_from_locale(rec, 1, (char *) buf);
 	// warn user.
 	return xstrdup(buf);
 }
@@ -919,11 +906,8 @@ char *ekg_recode_to_locale_dup(enum ekg_recode_name enc, const char *buf) {
 		return NULL;
 
 	rec = ekg_recode_get(enc);
-	if (rec->recode_to_locale) {
-		if (!rec->in_new_buffer)
-			buf = xstrdup(buf);
-		return rec->recode_to_locale(rec, (char *) buf);
-	}
+	if (rec->recode_to_locale)
+		return rec->recode_to_locale(rec, 1, (char *) buf);
 	// warn user.
 	return xstrdup(buf);
 }
@@ -939,11 +923,8 @@ const char *ekg_recode_from_locale_use(enum ekg_recode_name enc, const char *buf
 		return buf;
 
 	/* almost like ekg_recode_from_locale_dup(), but don't strdup() @ error */
-	if (rec->recode_from_locale) {
-		if (!rec->in_new_buffer)
-			buf = xstrdup(buf);
-		return rec->recode_from_locale(rec, (char *) buf);
-	}
+	if (rec->recode_from_locale)
+		return rec->recode_from_locale(rec, 1, (char *) buf);
 	// warn user.
 	return buf;
 }
@@ -959,11 +940,8 @@ const char *ekg_recode_to_locale_use(enum ekg_recode_name enc, const char *buf) 
 		return buf;
 
 	/* almost like ekg_recode_to_locale_dup(), but don't strdup() @ error */
-	if (rec->recode_to_locale) {
-		if (!rec->in_new_buffer)
-			buf = xstrdup(buf);
-		return rec->recode_to_locale(rec, (char *) buf);
-	}
+	if (rec->recode_to_locale)
+		return rec->recode_to_locale(rec, 1, (char *) buf);
 	// warn user.
 	return buf;
 }
