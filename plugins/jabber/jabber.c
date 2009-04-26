@@ -442,8 +442,11 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 
 			if (w->session == s) {
 				const char *tmp = get_uid(s, w->target);
-				xfree(w->target);
-				w->target = xstrdup(tmp);
+
+				if (tmp != w->target) {
+					xfree(w->target);
+					w->target = xstrdup(tmp);
+				}
 			}
 		}
 
