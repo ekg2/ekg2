@@ -649,7 +649,11 @@ static char *ekg_to_utf8(char *b, const unsigned short *recode_table) {		/* size
  *  - c.
  */
 static char *iso_to_ascii(struct ekg_recoder *rec, int alloc_buf, char *b) {
-	unsigned char *buf = (unsigned char *) ((alloc_buf) ? xstrdup(b) : b);
+	unsigned char *buf;
+	
+	if (alloc_buf)
+		b = xstrdup(b);
+	buf = (unsigned char *) b;
 
 	while (*buf) {
 		if (*buf == (unsigned char)'±') *buf = 'a';
@@ -678,7 +682,11 @@ static char *iso_to_ascii(struct ekg_recoder *rec, int alloc_buf, char *b) {
 }
 
 static char *ekg_change_encoding(char *b, int alloc_buf, const unsigned char *recode_table) {	/* sizeof(recode_table) = 0x80 ==> 0x80 items */
-	unsigned char *buf = (unsigned char *) ((alloc_buf) ? xstrdup(b) : b);
+	unsigned char *buf;
+	
+	if (alloc_buf)
+		b = xstrdup(b);
+	buf = (unsigned char *) b;
 
 	while (*buf) {
 		if (*buf >= 0x80)
