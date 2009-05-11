@@ -13,5 +13,4 @@ override libdir = $(plugindir)
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/jabber/
 	$(INSTALL) -m 644 $(EXTRA_DIST_DOC) $(DESTDIR)$(pkgdatadir)/plugins/jabber/
-	which iconv >/dev/null 2>&1 && for FILE in $(EXTRA_DIST_DOC); do if [ "`basename $$FILE .txt`" != "$$FILE" ] ; then iconv -f iso-8859-2 -t utf-8 $$FILE > $(DESTDIR)$(pkgdatadir)/plugins/jabber/`basename $$FILE .txt`-utf.txt; fi ; done || true
 
