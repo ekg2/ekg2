@@ -1166,7 +1166,9 @@ void ekg_exit()
 	buffer_free(&buffer_debug);	buffer_free(&buffer_speech);
 	event_free();
 
-	xfree(read_file(NULL, -1));	/* free internal read_file() buffer */
+	/* free internal read_file() buffer */
+	read_file(NULL, -1);
+	read_file_iso(NULL, -1);
 
 /* windows: */
 	windows_destroy();

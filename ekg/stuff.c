@@ -83,6 +83,7 @@
 #include "xmalloc.h"
 #include "plugins.h"
 #include "sessions.h"
+#include "recode.h"
 
 #include "dynstuff_inline.h"
 #include "queries.h"
@@ -1103,19 +1104,7 @@ FILE *help_path(char *name, char *plugin) {
 	lang[2] = 0;
 	
 help_again:
-	if (config_use_unicode) {
-		tmp = saprintf("%s-%s-utf.txt", base, lang);
-
-		if ((fp = fopen(tmp, "r"))) {
-			xfree(base);
-			xfree(tmp);
-			return fp;
-		}
-		xfree(tmp);
-		tmp = saprintf("%s-%s.txt", base, lang);
-	} else {
-		tmp = saprintf("%s-%s.txt", base, lang);
-	}
+	tmp = saprintf("%s-%s.txt", base, lang);
 
 	if ((fp = fopen(tmp, "r"))) {
 		xfree(base);
@@ -1600,8 +1589,7 @@ static char *random_line(const char *path) {
  *		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
  *			which you <b>MUST NOT</b> xfree()<br>
  *		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
- *		- If -1 than it return <i>internal</i> pointer which were used by xrealloc() and it <b>MUST BE</b> xfree()
- *			cause we set it to NULL afterwards.
+ *		- If -1 than it free <i>internal</i> pointer which were used by xrealloc()
  *
  * @return Line without \\r and \\n which must or mustn't be xfree()'d. It depends on @a alloc param
  */
@@ -1617,9 +1605,9 @@ char *read_file(FILE *f, int alloc) {
 	int isnewline = 0;
 
 	if (alloc == -1) {
-		res = reres;
+		xfree(reres);
 		reres = NULL;
-		return res;
+		return NULL;
 	}
 
 	if (!f)
@@ -1656,6 +1644,25 @@ char *read_file(FILE *f, int alloc) {
 	}
 
 	return (alloc) ? xstrdup(res) : res;
+}
+
+char *read_file_iso(FILE *f, int alloc) {
+	static char *tmp = NULL;
+	char *buf = read_file(f, 0);
+	char *res;
+
+	xfree(tmp);
+	tmp = NULL;
+	if (alloc == -1)
+		return NULL;
+
+	ekg_recode_iso2_inc();
+	res = ekg_iso2_to_locale_dup(buf);
+	if (!alloc)
+		tmp = res;
+
+	ekg_recode_iso2_dec();
+	return res;
 }
 
 /**

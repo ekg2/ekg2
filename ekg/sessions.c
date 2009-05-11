@@ -1616,7 +1616,7 @@ void session_help(session_t *s, const char *name)
 			break;
 		}
 
-		while ((line = read_file(f, 0))) {
+		while ((line = read_file_iso(f, 0))) {
 			if (!xstrcasecmp(line, name)) {
 				found = 1;
 				break;
@@ -1632,8 +1632,8 @@ void session_help(session_t *s, const char *name)
 			
 			if (!(f = help_path("session", NULL)))
 				break;
-			
-			while ((line = read_file(f, 0))) {
+
+			while ((line = read_file_iso(f, 0))) {
 				if (!xstrcasecmp(line, name)) {
 					found = 1;
 					break;
@@ -1653,14 +1653,14 @@ void session_help(session_t *s, const char *name)
 		return;
 	}
 
-	line = read_file(f, 0);
+	line = read_file_iso(f, 0);
 
 	if ((tmp = xstrstr(line, (": "))))
 		type = xstrdup(tmp + 2);
 	else
 		type = xstrdup(("?"));
 
-	line = read_file(f, 0);
+	line = read_file_iso(f, 0);
 	if ((tmp = xstrstr(line, (": "))))
 		def = xstrdup(tmp + 2);
 	else
@@ -1672,10 +1672,10 @@ void session_help(session_t *s, const char *name)
 	xfree(def);
 
 	if (tmp)		/* je¶li nie jest to ukryta zmienna... */
-		read_file(f, 0);	/* ... pomijamy liniê */
+		read_file_iso(f, 0);	/* ... pomijamy liniê */
 
 	str = string_init(NULL);
-	while ((line = read_file(f, 0))) {
+	while ((line = read_file_iso(f, 0))) {
 		if (line[0] != '\t')
 			break;
 

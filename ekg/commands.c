@@ -1044,7 +1044,7 @@ static COMMAND(cmd_help)
 					seeking_name = c->name;
 				}
 
-				while ((line = read_file(f, 0))) {
+				while ((line = read_file_iso(f, 0))) {
 					if (!xstrcasecmp(line, seeking_name)) {
 						found = 1;
 						break;
@@ -1057,7 +1057,7 @@ static COMMAND(cmd_help)
 					return -1;
 				}
 
-				line = read_file(f, 0);
+				line = read_file_iso(f, 0);
 
 				if ((tmp = xstrstr(line, (": "))))
 					params_help = xstrdup(tmp + 2);
@@ -1066,7 +1066,7 @@ static COMMAND(cmd_help)
 
 				params_help_s = strip_spaces(params_help);
 
-				line = read_file(f, 0);
+				line = read_file_iso(f, 0);
 
 				if ((tmp = xstrstr(line, (": "))))
 					brief = xstrdup(tmp + 2);
@@ -1093,7 +1093,7 @@ static COMMAND(cmd_help)
 				xfree(tmp);
 
 				s = string_init(NULL);
-				while ((line = read_file(f, 0))) {
+				while ((line = read_file_iso(f, 0))) {
 					if (line[0] != ('\t'))
 						break;
 					
@@ -1149,7 +1149,7 @@ static COMMAND(cmd_help)
 				seeking_name = c->name;
 			}
 
-			while ((line = read_file(f, 0))) {
+			while ((line = read_file_iso(f, 0))) {
 				if (!xstrcasecmp(line, seeking_name)) {
 					found = 1;
 					break;
@@ -1161,7 +1161,7 @@ static COMMAND(cmd_help)
 				continue;
 			}
 
-			line = read_file(f, 0);
+			line = read_file_iso(f, 0);
 		
 			if ((tmp = xstrstr(line, (": "))))
 			       params_help = xstrdup(tmp + 2);
@@ -1170,7 +1170,7 @@ static COMMAND(cmd_help)
 
 			params_help_s = strip_spaces(params_help);	
 
-			line = read_file(f, 0);
+			line = read_file_iso(f, 0);
 
 			if ((tmp = xstrstr(line, (": "))))
 			       brief = xstrdup(tmp + 2);
