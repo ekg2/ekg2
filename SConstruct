@@ -180,47 +180,6 @@ def ExtTest(name, addexports = []):
 	ret = SConscript('scons.d/%s' % (name), exports)
 	return ret
 
-
-def RecodeHelpEmitter(target, source, env):
-	""" Fill targets to match sources. """
-	src		= []
-	target	= []
-	for f in source:
-#		if str(f)[-4:] != '.txt':
-#			continue
-		s = str(f)[:-4]
-		if s[-4:] == '-utf':
-			continue
-		src.append(str(f))
-		target.append(s + '-utf.txt')
-	
-	return target, src
-
-langmap = {
-	'en':	'iso-8859-1',
-	'pl':	'iso-8859-2'
-	}
-
-def RecodeHelp(target, source, env):
-	""" Recode help file from correct encoding to UTF-8. """
-	map = dict(zip(target, source))
-	for d,s in map.items():
-		lang = str(s)[str(s)[:-4].rindex('-') + 1:-4]
-		if lang in langmap:
-			enc = langmap[lang]
-		else:
-			continue
-
-		sf = codecs.open(str(s), 'r', enc)
-		df = codecs.open(str(d), 'w', 'utf-8')
-
-		data = sf.read()
-		df.write(data)
-
-		sf.close()
-		df.close()
-	return None
-
 def CompileMsgEmitter(target, source, env):
 	""" Fill targets to match source .po. """
 	target	= []
@@ -238,13 +197,12 @@ def CompileMsgGen(source, target, env, for_signature):
 		ret.append('msgfmt -o "%s" "%s"' % (d,s))
 	return ret
 
-recoder = Builder(action = RecodeHelp, emitter = RecodeHelpEmitter, suffix = '-utf.txt', src_suffix = '.txt')
 msgfmt = Builder(generator = CompileMsgGen, emitter = CompileMsgEmitter, suffix = '.mo', src_suffix = '.po')
 defgen = Builder(action = WriteDefines, suffix = '.h')
 stagen = Builder(action = WriteStatic, suffix = '.c')
 
 env = Environment(
-	BUILDERS = {'RecodeHelp': recoder, 'CompileMsg': msgfmt, 'Defines': defgen, 'StaticLoader': stagen}
+	BUILDERS = {'CompileMsg': msgfmt, 'Defines': defgen, 'StaticLoader': stagen}
 )
 opts = Options('options.cache')
 
@@ -550,11 +508,6 @@ cenv = env.Clone()
 docfiles = []
 for doc in docglobs:
 	docfiles.extend(glob.glob('docs/%s.txt' % doc))
-if env['UNICODE']:
-	cenv.RecodeHelp('docs/', docfiles)
-	docfiles = []
-	for doc in docglobs:
-		docfiles.extend(glob.glob('docs/%s.txt' % doc))
 
 if defines['ENABLE_NLS']:
 	cenv.CompileMsg('po/', glob.glob('po/*.po'))
@@ -630,11 +583,6 @@ for plugin, data in plugins.items():
 	docfiles = []
 	for doc in docglobs:
 		docfiles.extend(glob.glob('%s/%s.txt' % (plugpath, doc)))
-	if env['UNICODE']:
-		penv.RecodeHelp(plugpath, docfiles)
-		docfiles = []					# we must glob twice to include *utf*
-		for doc in docglobs:
-			docfiles.extend(glob.glob('%s/%s.txt' % (plugpath, doc)))
 	
 	for f in data['info']['extradist']:
 		docfiles.extend(glob.glob('%s/%s' % (plugpath, f)))
