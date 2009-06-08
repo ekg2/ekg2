@@ -96,7 +96,7 @@ COMMAND(gg_command_find)
 	uargv = xcalloc(array_count(argv)+1, sizeof(char **));
 
 	for (i = 0; argv[i]; i++)
-		uargv[i] = ekg_locale_to_cp(argv[i]);
+		uargv[i] = ekg_locale_to_cp_use(argv[i]);
 
 	for (i = 0; argv[i]; i++) {
 		char *arg = argv[i];
@@ -166,15 +166,13 @@ COMMAND(gg_command_find)
 		printq("invalid_params", name);
 		gg_pubdir50_free(req);
 
-#if (USE_UNICODE || HAVE_GTK)
-		if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);	/* wrong? */
-#endif
+		for (i = 0; argv[i]; i++)
+			recode_xfree(argv[i], uargv[i]);
 		xfree(uargv);
 		return -1;
 	}
-#if (USE_UNICODE || HAVE_GTK)
-	if (config_use_unicode) for (i = 0; argv[i]; i++) if (argv[i] != uargv[i]) xfree(uargv[i]);		/* wrongx2? */
-#endif
+	for (i = 0; argv[i]; i++)
+		recode_xfree(argv[i], uargv[i]);
 	xfree(uargv);
 
 no_argv:
