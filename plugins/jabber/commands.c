@@ -2030,26 +2030,39 @@ static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 			id, c->name+5);
 
 	} else {
-		const char *id;
-
 		const char *jid	= params[1];
+
+		const char *action, *ident;
+		const char *id;
 		char *reason;
+
+		if (!xstrcmp(name, "ban")) {
+			ident	= "jid";
+			action	= "affiliation=\"outcast\"";
+		} else if (!xstrcmp(name, "unban")) {
+			ident	= "jid";
+			action	= "affiliation=\"none\"";
+		} else if (!xstrcmp(name, "kick")) {
+			ident	= "nick";
+			action	= "role=\"none\"";
+		} else {
+			printq("generic_error", "Unimplemented command");
+			return -1;
+		}
 
 		if (!(id = jabber_iq_reg(session, "mucadmin_", c->name+5, "query", "http://jabber.org/protocol/muc#admin"))) {
 			printq("generic_error", "Error in getting id for ban, check debug window. Lucky guy.");
 			return 1;
 		}
 
-		if (!xstrncmp(jid, "xmpp:", 5)) jid += 5;
+		if (!xstrncmp(jid, "xmpp:", 5))
+			jid += 5;
 
 		reason = jabber_escape(params[2]);
-
 		watch_write(j->send_watch,
 			"<iq id=\"%s\" to=\"%s\" type=\"set\">"
-			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"%s\" jid=\"%s\"><reason>%s</reason></item></query>"
-			"</iq>", id, c->name+5, 
-				!xstrcmp(name, "ban") ? /* ban */ "outcast" : /* unban+kick */ "none", 
-			jid, reason ? reason : "");
+			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item %s %s=\"%s\"><reason>%s</reason></item></query>"
+			"</iq>", id, c->name+5, action, ident, jid, reason ? reason : "");
 		xfree(reason);
 	}
 	return 0;
