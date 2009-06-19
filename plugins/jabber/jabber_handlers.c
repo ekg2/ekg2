@@ -1536,6 +1536,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 								up->aff		= xstrdup(affiliation);
 							}
 						}
+						query_emit_id(NULL, USERLIST_REFRESH);
 						debug("[MUC, PRESENCE] NEWITEM: %s (%s) ROLE:%s AFF:%s\n", nickjid, __(jid), role, affiliation);
 						xfree(nickjid);
 						xfree(jid); xfree(role); xfree(affiliation);
