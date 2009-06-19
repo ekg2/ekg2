@@ -49,6 +49,13 @@ back
 	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
+ban
+	parametry: <kana³> [JID]
+	krotki opis: banuje JID z kana³u lub wy¶wietla listê banów
+	
+	Je¿eli nie podano JID wy¶wietla listê zbanowanych uzytkowników.
+	W przeciwnym wypadku banuje dany JID z okre¶lonego kana³u.
+
 bookmark
 	parametry: <opcje>
 	krotki opis: zarzadzanie zakladkami serwer-side (jabber:iq:private)
@@ -114,6 +121,20 @@ del
 	parametry: [nazwa]
 	krotki opis: usuwa z naszego rostera
 
+deop
+	parametry: [kana³] [nick]
+	krotki opis: degraduje nick do roli go¶cia
+	
+	Odbiera u¿ytkownikowi prawa moderatora kana³u oraz prawo wysy³ania
+	wiadomo¶ci je¿eli kana³ jest moderowany.
+
+devoice
+	parametry: [kana³] [nick]
+	krotki opis: degraduje nick do roli go¶cia
+	
+	Odbiera u¿ytkownikowi prawa moderatora kana³u oraz prawo wysy³ania
+	wiadomo¶ci je¿eli kana³ jest moderowany.
+
 disconnect
 	parametry:  [opis/-]
 	krotki opis: roz³±cza siê od serwera
@@ -134,6 +155,10 @@ ffc
 	
 	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+kick
+	parametry: [kana³] [nick]
+	krotki opis: wyrzuca nick z kana³u
 
 invisible
 	parametry: [opis/-]
@@ -161,6 +186,10 @@ modify
 	Opcje mog± byæ nastêpuj±ce:
 	
 	-n, --nickname <pseudonim>     wpis w li¶cie kontaktów
+
+op
+	parametry: [kana³] [nick]
+	krotki opis: nadaje nickowi uprawnienia moderatora
 
 passwd
 	parametry: 
@@ -231,6 +260,13 @@ topic
 	parametry:  [konferencja] <nowy temat>
 	krotki opis: ustawia topic MUC
 
+unban
+	parametry: [kana³] [JID]
+	krotki opis: zdejmuje ban na dany JID z kana³u
+	
+	Je¿eli nie podano JID wy¶wietla listê zbanowanych uzytkowników.
+	W przeciwnym wypadku usuwa ban danego JID z okre¶lonego kana³u.
+
 userinfo
 	parametry: 
 	krotki opis: pobiera informacje z katalogu Jabbera o danym jid
@@ -238,6 +274,16 @@ userinfo
 ver
 	parametry: 
 	krotki opis: pobiera informacjê o sytemie operacyjnym i wersji klienta Jabbera danego jid
+
+voice
+	parametry: [kana³] [nick]
+	krotki opis: daje "g³os" nickowi
+	
+	Nadaje u¿ytkownikowi uprawnienia do mówienia na kanale nawet je¶li
+	kana³ jest moderowany.
+	
+	Uwaga: ustawienie voice na uzytkowniku bêd±cym moderatorem spowoduje
+	odebraniu mu praw administratora.
 
 xa
 	parametry: [opis/-]

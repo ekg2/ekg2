@@ -49,6 +49,13 @@ back
 	If description wasn't given, random description will be looked for.
 	Giving ,,%T-%n'' instead of description will clear description.
 
+ban
+	parameters: [channel] <JID>
+	short description: Bans the specified JID from the given channel
+	
+	If no JID is specified, command lists all jids banned from given
+	channel. Otherwise it bans specified JID from the given channel.
+
 change
 	parameters:  <options>
 	short description: changes data in vcard
@@ -82,6 +89,20 @@ del
 	parameters: [name]
 	short description: removes user from roster
 
+deop
+	parameters: [channel] [nick]
+	short description: take all privileges off from the nick
+	
+	Take voice and moderator privilages off from the gicen nick on the
+	given channel.
+
+devoice
+	parameters: [channel] [nick]
+	short description: take all privileges off from the nick
+	
+	Take voice and moderator privilages off from the gicen nick on the
+	given channel.
+
 disconnect
 	parameters:  [description/-]
 	short description: roz³±cza siê od serwera
@@ -110,6 +131,10 @@ invisible
 	If description wasn't given, random description will be looked for.
 	Giving ,,%T-%n'' instead of description will clear description.
 
+kick
+	parameters: <channel> <nick>
+	short description: kick nick off the channel
+
 lastseen
 	parameters: 
 	short description: retrieves information on last logout time for given jid
@@ -129,6 +154,10 @@ modify
 	Possible options:
 	
 	-n, --nickname <nickname>     contact nickname
+
+op
+	parameters: <channel> <nick>
+	short description: Gives moderator privileges to the specified nick
 
 passwd
 	parameters: 
@@ -156,6 +185,10 @@ topic
 	parameters: [uid] <new topic>
 	short description: set MUC topic
 
+unban
+	parameters: [channel] [JID]
+	short description: unban given JID from the muc channel
+
 userinfo
 	parameters: 
 	short description: retrieves Jabber Directory info about given jid
@@ -180,6 +213,13 @@ userlist
 ver
 	parameters: 
 	short description: retrieves information about OS and client of given jid
+
+voice
+	parameters: <channel> <nick>
+	short description: give the voice to the nick
+	
+	Voice allows to speak on moderated channel. Note that if you give
+	voice to operator, you will take off moderator privileges from him.
 
 xa
 	parameters: [description/-]

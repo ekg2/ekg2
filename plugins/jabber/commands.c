@@ -2008,15 +2008,81 @@ static COMMAND(jabber_muc_command_admin) {
 	return 0;
 }
 
-static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
+/* This function handles commands related to user roles:
+ *   /xmpp:kick    - unset users role (remove him from channel)
+ *   /xmpp:voice   - set Participant role (allow him to spead at moderated channels)
+ *   /xmpp:op      - set Moderator role
+ *   /xmpp:deop    - set Visitor role
+ *   /xmpp:devoice - alias for /xmpp:deop command
+ * 
+ * TODO:
+ *   - allow to specify user by jid, not only by nick
+ *   - check if user is no the muc channel
+ */
+static COMMAND(jabber_muc_command_role) {	/* %0 [target] %1 [jid] %2 [reason] */
+	jabber_private_t *j = session_private_get(session);
+	newconference_t *c;
+	
+	const char *id, *nick;
+	const char *role;
+	char *reason;
+
+	if (!(c = newconference_find(session, target))) {
+		printq("generic_error", "/xmpp:kick && /xmpp:op && /xmpp:deop && /xmpp:voice && /xmpp:devoice only valid in MUC");
+		return -1;
+	}
+
+	nick = params[1];
+
+	if (!xstrcmp(name, "op"))
+		role = "moderator";
+	else if (!xstrcmp(name, "voice"))
+		role = "participant";
+	else if (!xstrcmp(name, "deop"))
+		role = "visitor";
+	else if (!xstrcmp(name, "devoice"))
+		role = "visitor";
+	else if (!xstrcmp(name, "kick"))
+		role = "none";
+	else {
+		printq("generic_error", "Unimplemented command");
+		return -1;
+	}
+
+	if (!(id = jabber_iq_reg(session, "mucadmin_", c->name+5, "query", "http://jabber.org/protocol/muc#admin"))) {
+		printq("generic_error", "Error in getting id for ban, check debug window. Lucky guy.");
+		return 1;
+	}
+
+	reason = jabber_escape(params[2]);
+	watch_write(j->send_watch,
+		"<iq id=\"%s\" to=\"%s\" type=\"set\">"
+		"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item role=\"%s\" nick=\"%s\"><reason>%s</reason></item></query>"
+		"</iq>", id, c->name+5, role, nick, reason ? reason : "");
+	xfree(reason);
+
+	return 0;
+}
+
+/* This function handles commands related to affiliation:
+ *   /xmpp:ban     - set Outcast affiliation
+ *   /xmpp:unban   - unset affiliation
+ *
+ * TODO:
+ *   - What commands should do following:
+ *     + set Owner affiliation
+ *     + set Admin affiliation
+ *     + set Member affiliation
+ *   - Implement these commands
+ */
+static COMMAND(jabber_muc_command_affiliation) {	/* %0 [target] %1 [jid] %2 [reason] */
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
 	
 	if (!(c = newconference_find(session, target))) {
-		printq("generic_error", "/xmpp:ban && /xmpp:kick && /xmpp:unban only valid in MUC");
+		printq("generic_error", "/xmpp:ban && /xmpp:unban only valid in MUC");
 		return -1;
 	}
-/* XXX, make check if command = "kick" than check if user is on the muc channel... cause we can make /unban */
 
 	if (!params[1]) {
 		const char *id;
@@ -2030,22 +2096,17 @@ static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 			id, c->name+5);
 
 	} else {
-		const char *jid	= params[1];
-
-		const char *action, *ident;
-		const char *id;
+		const char *affiliation;
+		const char *id, *jid;
 		char *reason;
 
-		if (!xstrcmp(name, "ban")) {
-			ident	= "jid";
-			action	= "affiliation=\"outcast\"";
-		} else if (!xstrcmp(name, "unban")) {
-			ident	= "jid";
-			action	= "affiliation=\"none\"";
-		} else if (!xstrcmp(name, "kick")) {
-			ident	= "nick";
-			action	= "role=\"none\"";
-		} else {
+		jid = params[1];
+
+		if (!xstrcmp(name, "ban"))
+			affiliation = "outcast";
+		else if (!xstrcmp(name, "unban"))
+			affiliation = "none";
+		else {
 			printq("generic_error", "Unimplemented command");
 			return -1;
 		}
@@ -2061,8 +2122,8 @@ static COMMAND(jabber_muc_command_ban) {	/* %0 [target] %1 [jid] %2 [reason] */
 		reason = jabber_escape(params[2]);
 		watch_write(j->send_watch,
 			"<iq id=\"%s\" to=\"%s\" type=\"set\">"
-			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item %s %s=\"%s\"><reason>%s</reason></item></query>"
-			"</iq>", id, c->name+5, action, ident, jid, reason ? reason : "");
+			"<query xmlns=\"http://jabber.org/protocol/muc#admin\"><item affiliation=\"%s\" jid=\"%s\"><reason>%s</reason></item></query>"
+			"</iq>", id, c->name+5, affiliation, jid, reason ? reason : "");
 		xfree(reason);
 	}
 	return 0;
@@ -2322,7 +2383,7 @@ void jabber_register_commands()
 			"-a --accept -d --deny -r --request -c --cancel");
 	command_add(&jabber_plugin, "xmpp:away", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:back", "r", jabber_command_away,	JABBER_ONLY, NULL);
-	command_add(&jabber_plugin, "xmpp:ban", "! ? ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "xmpp:ban", "! ? ?", jabber_muc_command_affiliation, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:bookmark", "!p ?", jabber_command_private, JABBER_FLAGS_REQ,
 			"-a --add -c --clear -d --display -m --modify -r --remove");
 	command_add(&jabber_plugin, "xmpp:config", "!p", jabber_command_private,	JABBER_FLAGS_REQ,
@@ -2333,17 +2394,20 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:connect", NULL, jabber_command_connect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:conversations", NULL, jabber_command_conversations,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:del", "!u", jabber_command_del,	JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "xmpp:deop", "! !", jabber_muc_command_role, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "xmpp:devoice", "! !", jabber_muc_command_role, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:disconnect", "r", jabber_command_disconnect, JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:dnd", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:ffc", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:find", "?", jabber_command_find, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:invisible", "r", jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:join", "! ? ?", jabber_muc_command_join, JABBER_FLAGS_TARGET, NULL);
-	command_add(&jabber_plugin, "xmpp:kick", "! ! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "xmpp:kick", "! ! ?", jabber_muc_command_role, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:lastseen", "!u", jabber_command_lastseen, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:modify", "!Uu ?", jabber_command_modify,JABBER_FLAGS_REQ, 
 			"-n --nickname -g --group");
 	command_add(&jabber_plugin, "xmpp:msg", "!uU !", jabber_command_msg,	JABBER_FLAGS_MSG, NULL);
+	command_add(&jabber_plugin, "xmpp:op", "! !", jabber_muc_command_role, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:part", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:passwd", "?", jabber_command_passwd,	JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:privacy", "? ? ?", jabber_command_privacy,	JABBER_FLAGS, NULL);
@@ -2357,13 +2421,14 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:topic", "? ?", jabber_muc_command_topic, JABBER_FLAGS_REQ, NULL);
 	command_add(&jabber_plugin, "xmpp:transpinfo", "? ?", jabber_command_transpinfo, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:transports", "? ?", jabber_command_transports, JABBER_FLAGS, NULL);
-	command_add(&jabber_plugin, "xmpp:unban", "! ?", jabber_muc_command_ban, JABBER_FLAGS_TARGET, NULL);
+	command_add(&jabber_plugin, "xmpp:unban", "! ?", jabber_muc_command_affiliation, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:unregister", "?", jabber_command_register, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:userinfo", "!u", jabber_command_userinfo, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:userlist", "! ?", jabber_command_userlist, JABBER_FLAGS_REQ,
 			"-g --get -p --put"); /* BFW: it is unlike GG, -g gets userlist from file, -p writes it into it */
 	command_add(&jabber_plugin, "xmpp:vacation", "?", jabber_command_vacation, JABBER_FLAGS, NULL);
 	command_add(&jabber_plugin, "xmpp:ver", "!u", jabber_command_ver,	JABBER_FLAGS_TARGET, NULL); /* ??? ?? ? ?@?!#??#!@? */
+	command_add(&jabber_plugin, "xmpp:voice", "! !", jabber_muc_command_role, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:xa", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:xml", "!", jabber_command_xml,	JABBER_ONLY, NULL);
 
