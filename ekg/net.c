@@ -38,7 +38,6 @@
 #include <unistd.h>
 
 #define __USE_POSIX
-#define __USE_GNU	/* glibc-2.8, needed for (struct hostent->h_addr) */
 #ifndef NO_POSIX_SYSTEM
 #include <netdb.h>	/* OK */
 #endif
@@ -589,7 +588,7 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 			if (!he)
 				a.s_addr = INADDR_NONE;
 			else
-				memcpy(&a, he->h_addr, sizeof(a));
+				memcpy(&a, he->h_addr_list[0], sizeof(a));
 		}
 		write(fd[1], &a, sizeof(a));
 		xfree(myserver);
