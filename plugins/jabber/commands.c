@@ -1927,7 +1927,7 @@ static COMMAND(jabber_muc_command_part) {
 		return -1;
 	}
 
-	status = (params[0] && params[1]) ? saprintf(" <status>%s</status> ", params[1]) : NULL;
+	status = (params[0] && params[1]) ? saprintf("<status>%s</status>", params[1]) : NULL;
 
 	watch_write(j->send_watch, "<presence to=\"%s/%s\" type=\"unavailable\">%s</presence>", c->name+5, c->priv_data, status ? status : "");
 
