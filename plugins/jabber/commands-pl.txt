@@ -50,7 +50,7 @@ back
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 ban
-	parametry: <kana³> [JID]
+	parametry: <kana³> <JID> [powód]
 	krotki opis: banuje JID z kana³u lub wy¶wietla listê banów
 	
 	Je¿eli nie podano JID wy¶wietla listê zbanowanych uzytkowników.
@@ -167,6 +167,14 @@ invisible
 	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
+join
+	parametry: <konferencja> [nick]
+	krotki opis: przy³±cza do konferencji
+	
+	Przy³±cza do konferencji. Je¿eli podana konferencja nie istnieje,
+	zak³ada now± konferencjê. Opcjonalnie ustawia nick u¿ytkownika w
+	konferencji.
+
 lastseen
 	parametry: 
 	krotki opis: pobiera informacjê o czasie wylogowania siê danego jid
@@ -188,8 +196,12 @@ modify
 	-n, --nickname <pseudonim>     wpis w li¶cie kontaktów
 
 op
-	parametry: [kana³] [nick]
+	parametry: <konferencja> <nick>
 	krotki opis: nadaje nickowi uprawnienia moderatora
+
+part
+	parametry: <konferencja>
+	krotki opis: opuszcza konferencjê
 
 passwd
 	parametry: 
@@ -261,7 +273,7 @@ topic
 	krotki opis: ustawia topic MUC
 
 unban
-	parametry: [kana³] [JID]
+	parametry: <konferencja> <JID>
 	krotki opis: zdejmuje ban na dany JID z kana³u
 	
 	Je¿eli nie podano JID wy¶wietla listê zbanowanych uzytkowników.
@@ -276,11 +288,11 @@ ver
 	krotki opis: pobiera informacjê o sytemie operacyjnym i wersji klienta Jabbera danego jid
 
 voice
-	parametry: [kana³] [nick]
+	parametry: <konferencja> <nick>
 	krotki opis: daje "g³os" nickowi
 	
-	Nadaje u¿ytkownikowi uprawnienia do mówienia na kanale nawet je¶li
-	kana³ jest moderowany.
+	Nadaje u¿ytkownikowi uprawnienia do wysy³ania wiadomo¶ci w
+	konferencji, nawet je¶li konferencja jest moderowana.
 	
 	Uwaga: ustawienie voice na uzytkowniku bêd±cym moderatorem spowoduje
 	odebraniu mu praw administratora.

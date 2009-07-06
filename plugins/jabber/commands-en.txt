@@ -50,11 +50,11 @@ back
 	Giving ,,%T-%n'' instead of description will clear description.
 
 ban
-	parameters: [channel] <JID>
-	short description: Bans the specified JID from the given channel
+	parameters: <conference> <JID> [reason]
+	short description: Bans the specified JID from the given conference
 	
 	If no JID is specified, command lists all jids banned from given
-	channel. Otherwise it bans specified JID from the given channel.
+	conference. Otherwise it bans specified JID from the given conference.
 
 change
 	parameters:  <options>
@@ -90,18 +90,18 @@ del
 	short description: removes user from roster
 
 deop
-	parameters: [channel] [nick]
+	parameters: <conference> <nick>
 	short description: take all privileges off from the nick
 	
-	Take voice and moderator privilages off from the gicen nick on the
-	given channel.
+	Take voice and moderator privilages off from the given nick on the
+	given conference.
 
 devoice
-	parameters: [channel] [nick]
+	parameters: <conference> <nick> [reason]
 	short description: take all privileges off from the nick
 	
-	Take voice and moderator privilages off from the gicen nick on the
-	given channel.
+	Take voice and moderator privilages off from the given nick on the
+	given conference.
 
 disconnect
 	parameters:  [description/-]
@@ -131,9 +131,15 @@ invisible
 	If description wasn't given, random description will be looked for.
 	Giving ,,%T-%n'' instead of description will clear description.
 
+join
+	parameters: <conference> [nick]
+	short description: join conference
+	
+	Joins conference as nick. If conference does not exists, creates it.
+
 kick
-	parameters: <channel> <nick>
-	short description: kick nick off the channel
+	parameters: <conference> <nick> [reason]
+	short description: kick nick off the conference
 
 lastseen
 	parameters: 
@@ -156,12 +162,16 @@ modify
 	-n, --nickname <nickname>     contact nickname
 
 op
-	parameters: <channel> <nick>
+	parameters: <conference> <nick>
 	short description: Gives moderator privileges to the specified nick
 
 passwd
 	parameters: 
 	short description: changes password
+
+part
+	parameters: <conference>
+	short descrition: leaves conference
 
 reconnect
 	parameters: 
@@ -186,8 +196,8 @@ topic
 	short description: set MUC topic
 
 unban
-	parameters: [channel] [JID]
-	short description: unban given JID from the muc channel
+	parameters: <conference> <JID>
+	short description: unban given JID from the muc conference
 
 userinfo
 	parameters: 
@@ -215,10 +225,10 @@ ver
 	short description: retrieves information about OS and client of given jid
 
 voice
-	parameters: <channel> <nick>
+	parameters: <conference> <nick>
 	short description: give the voice to the nick
 	
-	Voice allows to speak on moderated channel. Note that if you give
+	Voice allows to speak on moderated conference. Note that if you give
 	voice to operator, you will take off moderator privileges from him.
 
 xa
