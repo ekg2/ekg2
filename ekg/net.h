@@ -34,7 +34,6 @@ extern "C" {
 #endif
 
 watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data);
-watch_t *ekg_resolver3(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data, const int port, const int proto);
 watch_t *ekg_resolver4(plugin_t *plugin, const char *server, watcher_handler_func_t async, void *data, const int proto_port, const int port, const int proto);
 
 watch_t *ekg_connect(session_t *session, const char *server, const int proto_port, const int port, watcher_handler_func_t async);
