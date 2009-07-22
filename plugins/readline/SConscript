@@ -1,11 +1,7 @@
 
 Import('*')
 
-try:
-	env
-except NameError:
-	pass
-else:
+if 'env' in globals():
 	plugin	= {
 		'type':			'ui',
 		'state':		'deprecated',

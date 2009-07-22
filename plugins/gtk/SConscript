@@ -3,11 +3,7 @@ import glob
 
 Import('*')
 
-try:
-	env
-except NameError:
-	pass
-else:
+if 'env' in globals():
 	plugin	= {
 		'type':			'ui',
 		'state':		'unstable',
@@ -16,11 +12,7 @@ else:
 
 	Return('plugin')
 
-try:
-	penv
-except NameError:
-	pass
-else:
+if 'penv' in globals():
 	def InlinePNGGen(target, source, env, for_signature):
 		src = []
 		for f in source:

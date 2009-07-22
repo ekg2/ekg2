@@ -1,21 +1,13 @@
 
 Import('*')
 
-try:
-	defines
-except NameError:
-	pass
-else:
+if 'defines' in globals():
 	for o in ['gnutls', 'openssl']:
 		if o in optdeps:
 			defines['JABBER_HAVE_%s' % o.upper()] = True
 			break
 
-try:
-	env
-except NameError:
-	pass
-else:
+if 'env' in globals():
 	plugin	= {
 		'type':			'protocol',
 		'state':		'stable',
