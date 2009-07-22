@@ -1,31 +1,14 @@
 
 Import('*')
 
-# All those TLS/SSL things are for the ekg2-remote binary
-
-if 'defines' in globals():
-	for o in ['gnutls', 'openssl']:
-		if o in optdeps:
-			defines['REMOTE_WANT_%s' % o.upper()] = True
-			break
-
 if 'env' in globals():
 	plugin	= {
 		'type':			'ui',
 		'state':		'experimental',
 		'depends':		[],
-		'optdepends':	[['gnutls', 'openssl']]
+		'optdepends':	[]
 		}
 
-	if 'opts' in globals():
-		opts.Add(BoolOption('REMOTE_BIN', 'Whether to build ekg2-remote binary', True))
-
 	Return('plugin')
-
-if 'penv' in globals() and penv['REMOTE_BIN']:
-	benv = penv.Clone()
-	benv.Append(LIBS = ekg_libs)
-	benv.Append(LIBPATH = ekg_libpath)
-	SConscript('../../remote/SConscript', ['benv', 'ekg_compat'])
 
 # vim:ts=4:sts=4:sw=4:syntax=python

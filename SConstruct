@@ -217,6 +217,7 @@ opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
 opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared', False))
 opts.Add(BoolOption('SKIPCONF', 'Restore previous environment and skip configure if possible', False))
 opts.Add(EnumOption('DEBUG', 'Internal debug level', 'std', ['none', 'std', 'stderr']))
+opts.Add(EnumOption('REMOTE', 'Whether to build ekg2-remote', 'no', ['no', 'yes', 'only']))
 opts.Add('DISTNOTES', 'Additional info to /version for use with distributed packages')
 
 for p in avplugins:
@@ -490,6 +491,7 @@ if not env['SKIPCONF']:
 	print 'Options:'
 	print '- unicode: %s' % (env['UNICODE'])
 	print '- nls (gettext): %s' % (defines['ENABLE_NLS'])
+	print '- build ekg2-remote: %s' % (env['REMOTE'])
 	for d, k in addopts:
 		print '- %s: %s' % (d, env[k])
 
@@ -585,21 +587,24 @@ for a in glob.glob('*') + glob.glob('docs/*'):
 			adddocs.append(a)
 cenv.Install(env['DOCDIR'], adddocs)
 
-for f in glob.glob('docs/*.[12345678]'):
-	i = f.rindex('.')
-	cat = f[i+1:]
-	j = f.rindex('.', 0, i)
-	lng = f[j+1:i]
-	i = f.rindex('/')
-	fn = f[i + 1:].replace('%s.' % lng, '')
+def InstallMan(pattern):
+	for f in glob.glob(pattern):
+		i = f.rindex('.')
+		cat = f[i+1:]
+		j = f.rindex('.', 0, i)
+		lng = f[j+1:i]
+		i = f.rindex('/')
+		fn = f[i + 1:].replace('%s.' % lng, '')
 
-	if lng == 'en':
-		lng = ''
-	else:
-		lng = '%s/' % lng
+		if lng == 'en':
+			lng = ''
+		else:
+			lng = '%s/' % lng
 
-	fn = '%s/%sman%s/%s' % (env['MANDIR'], lng, cat, fn)
-	cenv.InstallAs(target = fn, source = f)
+		fn = '%s/%sman%s/%s' % (env['MANDIR'], lng, cat, fn)
+		cenv.InstallAs(target = fn, source = f)
+
+InstallMan('docs/ekg2.*[12345678]')
 
 ekg_libpath = []
 
@@ -610,7 +615,7 @@ for plugin, data in plugins.items():
 	penv.Append(LIBS = data['libs'])
 	penv.MergeFlags(data['flags'])
 
-	SConscript('%s/SConscript' % plugpath, ['penv', 'ekg_compat', 'ekg_libs', 'ekg_libpath'])
+	SConscript('%s/SConscript' % plugpath, ['penv'])
 
 	libfile = '%s/%s' % (plugpath, plugin)
 	if env['STATIC']:
