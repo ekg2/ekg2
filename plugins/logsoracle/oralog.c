@@ -42,6 +42,7 @@
 #include <ekg/xmalloc.h>
 #include <ekg/debug.h>
 #include <ekg/themes.h>
+#include <ekg/windows.h>
 
 #include <oci.h>
 

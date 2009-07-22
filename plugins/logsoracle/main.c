@@ -27,6 +27,7 @@
 #include <ekg/plugins.h>
 #include <ekg/vars.h>
 #include <ekg/protocol.h>
+#include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/xmalloc.h>
 
@@ -225,7 +226,7 @@ QUERY(logsoracle_handler_prstatus)
 	}	
 	
 	if(status_n) {
-		status = xstrdup(ekg_status_string(status, 0));
+		status = xstrdup(ekg_status_string(status_n, 0));
 	} else {
 		status = xstrdup(EMPTY_STATUS);
 	}
