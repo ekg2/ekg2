@@ -1,5 +1,5 @@
 
-# oracle (need testing)
+# oracle
 
 import os
 
@@ -12,7 +12,7 @@ if 'ORACLE_HOME' in os.environ:
 
 	old		= SetFlags(env, flags)
 
-	out = conf.CheckLib('clntsh', 'sqlcxt', ['oci.h'], None, 0)
+	out = conf.CheckLibWithHeader('clntsh', ['oci.h'], 'C', 'sqlcxt();', 0)
 	if out:
 		libs.append('clntsh')
 
