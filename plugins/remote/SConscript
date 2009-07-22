@@ -6,7 +6,8 @@ if 'env' in globals():
 		'type':			'ui',
 		'state':		'experimental',
 		'depends':		[],
-		'optdepends':	[]
+		'optdepends':	[],
+		'noremote':		True
 		}
 
 	Return('plugin')

@@ -360,6 +360,11 @@ if not env['SKIPCONF']:
 				if not k in info:
 					info[k] = plugin_def[k]
 
+		# if we're building remote only, we use only UI plugins
+		if env['REMOTE'] == 'only' and (info['type'] != 'ui' or 'noremote' in info):
+			del plugins[plugin]
+			continue
+
 		if plugin_states.index(info['state']) < plugins_state:
 			if not plugin in specplugins:
 				del plugins[plugin]
@@ -550,44 +555,7 @@ docglobs = ['commands*', 'vars*', 'session*']
 env.Alias('conf', 'ekg2-config.h')
 env.Alias('install', [env['PREFIX'], env['EPREFIX']])
 
-cenv = env.Clone()
-
-docfiles = []
-for doc in docglobs:
-	docfiles.extend(glob.glob('docs/%s.txt' % doc))
-
-if defines['ENABLE_NLS']:
-	cenv.CompileMsg('po/', glob.glob('po/*.po'))
-	for f in glob.glob('po/*.mo'):
-		lang = str(f)[str(f).rindex('/') + 1:-3]
-		cenv.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = f)
-
-cenv.Install(env['BINDIR'], 'ekg/%sekg2%s' % (env['PROGPREFIX'], env['PROGSUFFIX']))
-#cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
-cenv.Install(env['DATADIR'], docfiles)
-cenv.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
-
-adddocs = [elem for elem in glob.glob('docs/*.txt') if not elem in docfiles]
-for a in glob.glob('*') + glob.glob('docs/*'):
-	i = a.find('.')
-	if i != -1:
-		b = a[:i]
-	else:
-		b = a
-	i = b.find('/')
-	if b != -1:
-		b = b[i + 1:]
-
-	if b.upper() == b: # all uppercase
-		if a != 'docs/README': # what ekg1 readme does there? O O
-			adddocs.append(a)
-	else:
-		i = b.rfind('.')
-		if b[i:] == '.txt' and not b in docfiles:
-			adddocs.append(a)
-cenv.Install(env['DOCDIR'], adddocs)
-
-def InstallMan(pattern):
+def InstallMan(env, pattern):
 	for f in glob.glob(pattern):
 		i = f.rindex('.')
 		cat = f[i+1:]
@@ -602,9 +570,7 @@ def InstallMan(pattern):
 			lng = '%s/' % lng
 
 		fn = '%s/%sman%s/%s' % (env['MANDIR'], lng, cat, fn)
-		cenv.InstallAs(target = fn, source = f)
-
-InstallMan('docs/ekg2.*[12345678]')
+		env.InstallAs(target = fn, source = f)
 
 ekg_libpath = []
 
@@ -639,13 +605,70 @@ for plugin, data in plugins.items():
 
 	penv.Install('%s/plugins/%s' % (env['DATADIR'], plugin), docfiles)
 
-if env['STATIC']:
-	env.StaticLoader('ekg2-static.c', [])
-	ekg_staticlibs.insert(0, 'ekg2-static.c') # well, it ain't exactly static lib, but no need to panic
+if env['REMOTE'] != 'no':
+	cenv = env.Clone()
 
-cenv.Append(LIBS = ekg_libs)
-cenv.Append(LIBPATH = ekg_libpath)
-cenv.Append(LINKFLAGS = ['-Wl,--export-dynamic'])
-cenv.Program('ekg/ekg2', glob.glob('ekg/*.c') + ekg_staticlibs)
+	InstallMan(cenv, 'docs/ekg2-remote.*[12345678]')
+
+	if env['STATIC']:
+		env.StaticLoader('ekg2-remote-static.c', [])
+		ekg_staticlibs.insert(0, 'ekg2-remote-static.c') # well, it ain't exactly static lib, but no need to panic
+	else:
+		cenv.Append(LINKFLAGS = ['-Wl,--export-dynamic'])
+
+	cenv.Append(LIBPATH = ekg_libpath)
+	cenv.Append(LIBS = ekg_libs)
+	cenv.Program('remote/ekg2-remote', glob.glob('remote/*.c') + ekg_staticlibs)
+	cenv.Install(env['BINDIR'], 'remote/%sekg2-remote%s' % (env['PROGPREFIX'], env['PROGSUFFIX']))
+
+if env['REMOTE'] != 'only':
+	cenv = env.Clone()
+
+	docfiles = []
+	for doc in docglobs:
+		docfiles.extend(glob.glob('docs/%s.txt' % doc))
+
+	if defines['ENABLE_NLS']:
+		cenv.CompileMsg('po/', glob.glob('po/*.po'))
+		for f in glob.glob('po/*.mo'):
+			lang = str(f)[str(f).rindex('/') + 1:-3]
+			cenv.InstallAs(target = '%s/%s/LC_MESSAGES/ekg2.mo' % (env['LOCALEDIR'], lang), source = f)
+
+	#cenv.Install(env['INCLUDEDIR'], glob.glob('ekg/*.h', 'ekg2-config.h', 'gettext.h'))
+	cenv.Install(env['DATADIR'], docfiles)
+	cenv.Install('%s/themes' % env['DATADIR'], glob.glob('contrib/themes/*.theme'))
+
+	adddocs = [elem for elem in glob.glob('docs/*.txt') if not elem in docfiles]
+	for a in glob.glob('*') + glob.glob('docs/*'):
+		i = a.find('.')
+		if i != -1:
+			b = a[:i]
+		else:
+			b = a
+		i = b.find('/')
+		if b != -1:
+			b = b[i + 1:]
+
+		if b.upper() == b: # all uppercase
+			if a != 'docs/README': # what ekg1 readme does there? O O
+				adddocs.append(a)
+		else:
+			i = b.rfind('.')
+			if b[i:] == '.txt' and not b in docfiles:
+				adddocs.append(a)
+	cenv.Install(env['DOCDIR'], adddocs)
+
+	InstallMan(cenv, 'docs/ekg2.*[12345678]')
+
+	if env['STATIC']:
+		env.StaticLoader('ekg2-static.c', [])
+		ekg_staticlibs.insert(0, 'ekg2-static.c') # well, it ain't exactly static lib, but no need to panic
+	else:
+		cenv.Append(LINKFLAGS = ['-Wl,--export-dynamic'])
+
+	cenv.Append(LIBS = ekg_libs)
+	cenv.Append(LIBPATH = ekg_libpath)
+	cenv.Program('ekg/ekg2', glob.glob('ekg/*.c') + ekg_staticlibs)
+	cenv.Install(env['BINDIR'], 'ekg/%sekg2%s' % (env['PROGPREFIX'], env['PROGSUFFIX']))
 
 # vim:ts=4:sts=4:sw=4:syntax=python

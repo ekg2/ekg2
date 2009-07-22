@@ -6,7 +6,8 @@ if 'env' in globals():
 		'type':			'ui',
 		'state':		'unstable',
 		'depends':		[],
-		'extradist':	['xajax_0.2.4.js', 'ekg2.js', 'ekg2.css']
+		'extradist':	['xajax_0.2.4.js', 'ekg2.js', 'ekg2.css'],
+		'noremote':		True
 		}
 
 	Return('plugin')
