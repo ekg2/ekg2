@@ -19,6 +19,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#ifdef IOCTLD_BUILD /* to avoid miscompiling into plugin */
+
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
@@ -213,6 +215,8 @@ int main(int argc, char **argv)
 	
 	exit(0);
 }
+
+#endif
 
 /*
  * Local Variables:
