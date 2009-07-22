@@ -1,7 +1,7 @@
 #!/usr/bin/scons
 # vim:set fileencoding=utf-8
-#  Alternate build system for EKG2, unstable and unfinished yet
-#  (C) 2008 Michał Górny
+#  Alternate build system for EKG2
+#  (C) 2008/09 Michał Górny
 
 EnsureSConsVersion(0,97)
 EnsurePythonVersion(2,4)
