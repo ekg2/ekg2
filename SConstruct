@@ -38,7 +38,7 @@ envs = {
 plugin_states = ['all', 'nocompile', 'deprecated', 'unknown', 'experimental', 'def', 'unstable', 'stable', 'none']
 plugin_symbols = ['', '!', '!', '?', '*', '', '~', '', '']
 
-import glob, subprocess, codecs, os, os.path, sys, SCons
+import glob, subprocess, codecs, os, os.path, sys, cPickle, SCons
 
 def writedef(definefile, var, val):
 	""" Write define to definefile, choosing correct format. """
@@ -216,6 +216,7 @@ opts.Add(BoolOption('RESOLV', 'Use libresolv-based domain resolver with SRV supp
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
 opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared', 0))
+opts.Add(BoolOption('SKIPCONF', 'Restore previous environment and skip configure if possible', False))
 opts.Add(EnumOption('DEBUG', 'Internal debug level', 'std', ['none', 'std', 'stderr']))
 opts.Add('DISTNOTES', 'Additional info to /version for use with distributed packages')
 
@@ -293,206 +294,246 @@ env['LINKFLAGS']	= []
 env.MergeFlags(flags)
 env.Append(LINKFLAGS = linkflags)
 
-conf = env.Configure(custom_tests = {
-		'CheckStructMember':	CheckStructMember,
-		'PkgConfig':			PkgConfig,
-		'External':				StupidPythonExec
-	})
-ekg_libs = []
-ekg_staticlibs = []
-
-ExtTest('standard', ['ekg_libs'])
-ExtTest('compat', ['ekg_staticlibs'])
-
-plugin_def = {
-	'type':			'misc',
-	'state':		'unknown',
-	'depends':		[],
-	'optdepends':	[],
-	'extradist':	[]
-	}
-
-specplugins = env['PLUGINS']
-
-plugins_state = plugin_states.index('none')
-
-for st in reversed(plugin_states):
-	while '@%s' % st in specplugins:
-		specplugins.remove('@%s' % st)
-		plugins_state = plugin_states.index(st)
-
-avplugins = {}.fromkeys(avplugins)
-
-pl = {}
-
-plugins = avplugins
-pllist = list(plugins.keys())
-pllist.sort()
-for plugin in pllist:
-	plugpath = 'plugins/%s' % (plugin)
-	info = SConscript('%s/SConscript' % (plugpath), ['env'])
-	if not info:
-		info = plugin_def
+if env['SKIPCONF']:
+	try:
+		conff = open('env.cache', 'r')
+		try:
+			confd = cPickle.load(conff)
+		finally:
+			conff.close()
+	except (IOError, EOFError, cPickle.UnpicklingError):
+		print '! SKIPCONF requested but no saved conf found'
+		env['SKIPCONF'] = False
 	else:
-		for k in plugin_def.keys():
-			if not k in info:
-				info[k] = plugin_def[k]
+		# allow defines to be replaced
+		for k, v in defines.items():
+			confd['defines'][k] = v
+		# and load environment
+		for k, v in confd.items():
+			globals()[k] = v
 
-	if plugin_states.index(info['state']) < plugins_state:
-		if not plugin in specplugins:
+if not env['SKIPCONF']:
+	conf = env.Configure(custom_tests = {
+			'CheckStructMember':	CheckStructMember,
+			'PkgConfig':			PkgConfig,
+			'External':				StupidPythonExec
+		})
+	ekg_libs = []
+	ekg_staticlibs = []
+	ekg_compat = []
+
+	ExtTest('standard', ['ekg_libs'])
+	ExtTest('compat', ['ekg_compat'])
+
+	plugin_def = {
+		'type':			'misc',
+		'state':		'unknown',
+		'depends':		[],
+		'optdepends':	[],
+		'extradist':	[]
+		}
+
+	specplugins = env['PLUGINS']
+
+	plugins_state = plugin_states.index('none')
+
+	for st in reversed(plugin_states):
+		while '@%s' % st in specplugins:
+			specplugins.remove('@%s' % st)
+			plugins_state = plugin_states.index(st)
+
+	avplugins = {}.fromkeys(avplugins)
+
+	pl = {}
+
+	plugins = avplugins
+	pllist = list(plugins.keys())
+	pllist.sort()
+	for plugin in pllist:
+		plugpath = 'plugins/%s' % (plugin)
+		info = SConscript('%s/SConscript' % (plugpath), ['env'])
+		if not info:
+			info = plugin_def
+		else:
+			for k in plugin_def.keys():
+				if not k in info:
+					info[k] = plugin_def[k]
+
+		if plugin_states.index(info['state']) < plugins_state:
+			if not plugin in specplugins:
+				del plugins[plugin]
+				continue
+		elif '-%s' % plugin in specplugins and not plugin in specplugins:
 			del plugins[plugin]
 			continue
-	elif '-%s' % plugin in specplugins and not plugin in specplugins:
-		del plugins[plugin]
-		continue
 
-	if 'nocompile' in info:
-		del plugins[plugin]
-		print '[%s] Disabling due to build system incompatibility.' % (plugin)
-		continue
+		if 'nocompile' in info:
+			del plugins[plugin]
+			print '[%s] Disabling due to build system incompatibility.' % (plugin)
+			continue
 
-	optdeps = []
-	xlibs = []
-	xflags = []
+		optdeps = []
+		xlibs = []
+		xflags = []
 
-	for dep in info['depends'] + info['optdepends']:
-		isopt = dep in info['optdepends']
+		for dep in info['depends'] + info['optdepends']:
+			isopt = dep in info['optdepends']
 
-		if not isinstance(dep, list):
-			dep = [dep]
-		try:
-			prefs = env['%s_DEPS' % plugin.upper()]
-		except KeyError:
-			prefs = []
+			if not isinstance(dep, list):
+				dep = [dep]
+			try:
+				prefs = env['%s_DEPS' % plugin.upper()]
+			except KeyError:
+				prefs = []
 
-		for a in prefs:
-			if a[0] == '-':
-				pass
-			elif a[0] == '+':
-				if '-%s' % a[1:] in prefs:
-					raise ValueError('More than one variant of depend %s specified (%s and -%s)' % (a[1:],a,a[1:]))
-			else:
-				if '-%s' % a in prefs or '+%s' % a in prefs:
-					raise ValueError('More than one variant of depend %s specified (%s, +%s and/or -%s)' % (a,a,a,a))
+			for a in prefs:
+				if a[0] == '-':
+					pass
+				elif a[0] == '+':
+					if '-%s' % a[1:] in prefs:
+						raise ValueError('More than one variant of depend %s specified (%s and -%s)' % (a[1:],a,a[1:]))
+				else:
+					if '-%s' % a in prefs or '+%s' % a in prefs:
+						raise ValueError('More than one variant of depend %s specified (%s, +%s and/or -%s)' % (a,a,a,a))
 
-		forced = False
-		have_it = True # if empty set is given, don't complain
-		sdep = []
-		for xdep in dep:
-			if '+%s' % xdep in prefs: # if user forces dep, then forget about the rest
-				for a in dep:
-					if a != xdep and '+%s' % a in prefs:
-						raise ValueError('More than one exclusive dependency forced (%s and %s)' % (xdep, a))
-				forced = True
-				sdep = [xdep]
-				break
-			elif xdep in prefs: # if he prefers it, place it before others
-				sdep.append(xdep)
-		if not forced:
+			forced = False
+			have_it = True # if empty set is given, don't complain
+			sdep = []
 			for xdep in dep:
-				if not xdep in sdep and not '-%s' % xdep in prefs: # and rest of possibilities
+				if '+%s' % xdep in prefs: # if user forces dep, then forget about the rest
+					for a in dep:
+						if a != xdep and '+%s' % a in prefs:
+							raise ValueError('More than one exclusive dependency forced (%s and %s)' % (xdep, a))
+					forced = True
+					sdep = [xdep]
+					break
+				elif xdep in prefs: # if he prefers it, place it before others
 					sdep.append(xdep)
+			if not forced:
+				for xdep in dep:
+					if not xdep in sdep and not '-%s' % xdep in prefs: # and rest of possibilities
+						sdep.append(xdep)
 
-		for xdep in sdep:	# 'flags' will be nicely split by SCons, but 'libs' are nicer to write
-			libs = []
-			flags = []
+			for xdep in sdep:	# 'flags' will be nicely split by SCons, but 'libs' are nicer to write
+				libs = []
+				flags = []
 
-			have_it = ExtTest(xdep, ['libs', 'flags'])
-			if have_it:
-				if isopt or len(dep) > 1: # pretty-print optional and selected required (if more than one possibility)
-					optdeps.append('%s' % (xdep))
+				have_it = ExtTest(xdep, ['libs', 'flags'])
+				if have_it:
+					if isopt or len(dep) > 1: # pretty-print optional and selected required (if more than one possibility)
+						optdeps.append('%s' % (xdep))
 
-				xflags.extend(flags)
-				xlibs.extend(libs)
-				break
+					xflags.extend(flags)
+					xlibs.extend(libs)
+					break
 
-		if not have_it:
-			if isopt:
-				if forced:
-					print '[%s] User-forced optional dependency not satisfied: %s' % (plugin, sdep)
+			if not have_it:
+				if isopt:
+					if forced:
+						print '[%s] User-forced optional dependency not satisfied: %s' % (plugin, sdep)
+						if env['HARDDEPS']:
+							print 'HARDDEPS specified, aborting.'
+							sys.exit(1)
+						info['fail'] = True
+						break
+					else:
+						print '[%s] Optional dependency not satisfied: %s' % (plugin, sdep)
+					optdeps.append('-%s' % (' -'.join(dep)))
+				else:
+					print '[%s] Dependency not satisfied: %s' % (plugin, sdep)
 					if env['HARDDEPS']:
 						print 'HARDDEPS specified, aborting.'
 						sys.exit(1)
 					info['fail'] = True
 					break
-				else:
-					print '[%s] Optional dependency not satisfied: %s' % (plugin, sdep)
-				optdeps.append('-%s' % (' -'.join(dep)))
-			else:
-				print '[%s] Dependency not satisfied: %s' % (plugin, sdep)
-				if env['HARDDEPS']:
-					print 'HARDDEPS specified, aborting.'
-					sys.exit(1)
-				info['fail'] = True
-				break
 
-	if 'fail' in info:
-		warnings.append("Plugin '%s' disabled due to unsatisfied dependency: %s" % (plugin, sdep))
-		del plugins[plugin]
-		continue
+		if 'fail' in info:
+			warnings.append("Plugin '%s' disabled due to unsatisfied dependency: %s" % (plugin, sdep))
+			del plugins[plugin]
+			continue
 
-	SConscript('%s/SConscript' % (plugpath), ['defines', 'optdeps'])
-	plugins[plugin] = {
-		'info':			info,
-		'libs':			xlibs,
-		'flags':		xflags
-		}
+		SConscript('%s/SConscript' % (plugpath), ['defines', 'optdeps'])
+		plugins[plugin] = {
+			'info':			info,
+			'libs':			xlibs,
+			'flags':		xflags
+			}
 
-	type = info['type']
-	if not pl.has_key(type):
-		pl[type] = []
+		type = info['type']
+		if not pl.has_key(type):
+			pl[type] = []
 
-	if optdeps:
-		optdeps = ' [%s]' % (' '.join(optdeps))
-		defines['SCONS_NOTES'] += '; %s%s' % (plugin, optdeps)
+		if optdeps:
+			optdeps = ' [%s]' % (' '.join(optdeps))
+			defines['SCONS_NOTES'] += '; %s%s' % (plugin, optdeps)
+		else:
+			optdeps = ''
+
+		pl[type].append('%s%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin, optdeps))
+
+	# some fancy output
+
+	print
+	if pl:
+		print 'Enabled plugins:'
+		for type, plugs in pl.items():
+			print '- %s: %s' % (type, ', '.join(plugs))
+		print
+
+		if not 'ui' in pl:
+			warnings.append('No UI-plugin selected. EKG2 might be unusable to you.')
+		if not 'protocol' in pl:
+			warnings.append("No protocol plugin selected. EKG2 won't be instant messenger anymore.")
 	else:
-		optdeps = ''
+		warnings.append('You are compiling ekg2 without any plugin. Are you sure this is what you mean to do?')
 
-	pl[type].append('%s%s%s' % (plugin_symbols[plugin_states.index(info['state'])], plugin, optdeps))
-
-# some fancy output
-
-print
-if pl:
-	print 'Enabled plugins:'
-	for type, plugs in pl.items():
-		print '- %s: %s' % (type, ', '.join(plugs))
+	print 'Options:'
+	print '- unicode: %s' % (env['UNICODE'])
+	print '- nls: %s' % (defines['ENABLE_NLS'])
 	print
-
-	if not 'ui' in pl:
-		warnings.append('No UI-plugin selected. EKG2 might be unusable to you.')
-	if not 'protocol' in pl:
-		warnings.append("No protocol plugin selected. EKG2 won't be instant messenger anymore.")
-else:
-	warnings.append('You are compiling ekg2 without any plugin. Are you sure this is what you mean to do?')
-
-print 'Options:'
-print '- unicode: %s' % (env['UNICODE'])
-print '- nls: %s' % (defines['ENABLE_NLS'])
-print
-print 'Paths:'
-for k in dirs:
-	print '- %s: %s' % (k, env[k])
-print
-print 'User-specified build environment:'
-for k in ['CC', 'CCFLAGS', 'CPPPATH', 'LIBS', 'LINK', 'LINKFLAGS', 'LIBPATH']:
-	try:
+	print 'Paths:'
+	for k in dirs:
 		print '- %s: %s' % (k, env[k])
-	except KeyError:
-		pass
-print
-
-if warnings:
-	print 'Warnings:'
-	for w in {}.fromkeys(warnings).keys():
-		print '- %s' % w.replace('\n', '\n  ')
+	print
+	print 'User-specified build environment:'
+	for k in ['CC', 'CCFLAGS', 'CPPPATH', 'LIBS', 'LINK', 'LINKFLAGS', 'LIBPATH']:
+		try:
+			print '- %s: %s' % (k, env[k])
+		except KeyError:
+			pass
 	print
 
-conf.Finish()
+	if warnings:
+		print 'Warnings:'
+		for w in {}.fromkeys(warnings).keys():
+			print '- %s' % w.replace('\n', '\n  ')
+		print
 
-env['EKG_DEFINES'] = defines
-env.Defines('ekg2-config.h', [])
-env.AlwaysBuild('ekg2-config.h', 'ekg2-static.c')
+	conf.Finish()
+
+	try:
+		conff = open('env.cache', 'w')
+		try:
+			cPickle.dump({
+				'ekg_libs': ekg_libs,
+				'ekg_staticlibs': ekg_staticlibs,
+				'ekg_compat': ekg_compat,
+				'plugins': plugins,
+				'defines': defines
+				}, conff, cPickle.HIGHEST_PROTOCOL)
+		finally:
+			conff.close()
+	except IOError:
+		pass
+
+	env['EKG_DEFINES'] = defines
+	env.Defines('ekg2-config.h', [])
+	env.AlwaysBuild('ekg2-config.h', 'ekg2-static.c')
+
+if ekg_compat:
+	ekg_staticlibs.append('compat/%scompat%s' % (env['LIBPREFIX'], env['LIBSUFFIX']))
+	env.StaticLibrary('compat/compat', ekg_compat)
+
 env.Append(CPPPATH = ['.'])
 
 for k in dirs:
@@ -501,6 +542,7 @@ for k in dirs:
 
 docglobs = ['commands*', 'vars*', 'session*']
 
+env.Alias('conf', 'ekg2-config.h')
 env.Alias('install', [env['PREFIX'], env['EPREFIX']])
 
 cenv = env.Clone()
