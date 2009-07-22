@@ -1,17 +1,27 @@
 
 Import('*')
 
-try:
-	env
-except NameError:
-	pass
-else:
+if 'env' in globals():
 	plugin	= {
 		'type':			'misc',
 		'state':		'stable',
 		'depends':		['ioctld'] # includes
 		}
 
+	if 'indirs' in globals():
+		indirs.append(['IOCTLD_PATH', '$LIBEXECDIR/ekg2-ioctld', 'EKG2 ioctld'])
+	if 'opts' in globals():
+		opts.Add(BoolOption('IOCTLD_BIN', 'Whether to build ioctld binary', True))
+
 	Return('plugin')
+
+if 'addopts' in globals():
+	addopts.append(['ioctld binary', 'IOCTLD_BIN'])
+
+if 'penv' in globals() and penv['IOCTLD_BIN']:
+	benv = penv.Clone()
+	benv.Append(CPPPATH = ['../..'])
+	benv.Program('ioctld', 'ioctld.c')
+	benv.InstallAs(benv['IOCTLD_PATH'], '%sioctld%s' % (benv['PROGPREFIX'], benv['PROGSUFFIX']))
 
 # vim:ts=4:sts=4:sw=4:syntax=python

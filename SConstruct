@@ -27,7 +27,6 @@ indirs = [ # pseudo-hash, 'coz we want to keep order
 	['MANDIR',		'$DATAROOTDIR/man',			'EKG2 manfiles'],
 	['DOCDIR',		'$DATAROOTDIR/doc/ekg2',	'EKG2 additional documentation'],
 	['PLUGINDIR',	'$LIBDIR/ekg2/plugins',		'EKG2 plugins'],
-	['IOCTLD_PATH',	'$LIBEXECDIR/ekg2',			'EKG2 ioctld']
 	]
 envs = {
 	'CCFLAGS':		['CFLAGS', 'Compiler flags'],
@@ -215,13 +214,13 @@ opts.Add(BoolOption('UNICODE', 'Enable unicode support', True))
 opts.Add(BoolOption('RESOLV', 'Use libresolv-based domain resolver with SRV support', True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
-opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared', 0))
+opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared', False))
 opts.Add(BoolOption('SKIPCONF', 'Restore previous environment and skip configure if possible', False))
 opts.Add(EnumOption('DEBUG', 'Internal debug level', 'std', ['none', 'std', 'stderr']))
 opts.Add('DISTNOTES', 'Additional info to /version for use with distributed packages')
 
 for p in avplugins:
-	info = SConscript('plugins/%s/SConscript' % p, ['env', 'opts'])
+	info = SConscript('plugins/%s/SConscript' % p, ['env', 'opts', 'indirs'])
 	if not info:
 		continue
 	values = []
@@ -345,6 +344,7 @@ if not env['SKIPCONF']:
 	avplugins = {}.fromkeys(avplugins)
 
 	pl = {}
+	addopts = []
 
 	plugins = avplugins
 	pllist = list(plugins.keys())
@@ -452,7 +452,7 @@ if not env['SKIPCONF']:
 			del plugins[plugin]
 			continue
 
-		SConscript('%s/SConscript' % (plugpath), ['defines', 'optdeps'])
+		SConscript('%s/SConscript' % (plugpath), ['defines', 'optdeps', 'addopts'])
 		plugins[plugin] = {
 			'info':			info,
 			'libs':			xlibs,
@@ -489,7 +489,10 @@ if not env['SKIPCONF']:
 
 	print 'Options:'
 	print '- unicode: %s' % (env['UNICODE'])
-	print '- nls: %s' % (defines['ENABLE_NLS'])
+	print '- nls (gettext): %s' % (defines['ENABLE_NLS'])
+	for d, k in addopts:
+		print '- %s: %s' % (d, env[k])
+
 	print
 	print 'Paths:'
 	for k in dirs:
