@@ -610,7 +610,7 @@ for plugin, data in plugins.items():
 	penv.Append(LIBS = data['libs'])
 	penv.MergeFlags(data['flags'])
 
-	SConscript('%s/SConscript' % plugpath, ['penv'])
+	SConscript('%s/SConscript' % plugpath, ['penv', 'ekg_compat', 'ekg_libs', 'ekg_libpath'])
 
 	libfile = '%s/%s' % (plugpath, plugin)
 	if env['STATIC']:
