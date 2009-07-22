@@ -5,8 +5,8 @@ import os
 
 Import('*')
 
-if 'ORACLEHOME' in os.environ:
-	orhome	= os.environ['ORACLEHOME']
+if 'ORACLE_HOME' in os.environ:
+	orhome	= os.environ['ORACLE_HOME']
 	flags.append('-L%s/lib' % orhome)
 	flags.append('-I%s/rdbms/public' % orhome)
 
@@ -18,7 +18,7 @@ if 'ORACLEHOME' in os.environ:
 
 	RestoreFlags(env, old)
 else:
-	print '[oracle] ${ORACLEHOME} not defined.'
+	print '[oracle] ${ORACLE_HOME} not defined.'
 	out = False
 
 Return('out')
