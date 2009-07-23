@@ -20,6 +20,7 @@ if 'addopts' in globals():
 
 if 'penv' in globals() and penv['IOCTLD_BIN']:
 	benv = penv.Clone()
+	benv['OBJSUFFIX'] += 'b'
 	benv.Append(CPPPATH = ['../..'], CPPFLAGS = ['-DIOCTLD_BUILD=1'])
 	benv.Program('ioctld', 'ioctld.c')
 	benv.InstallAs(benv['IOCTLD_PATH'], '%sioctld%s' % (benv['PROGPREFIX'], benv['PROGSUFFIX']))
