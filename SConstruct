@@ -225,6 +225,7 @@ opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared
 opts.Add(BoolOption('SKIPCONF', 'Restore previous environment and skip configure if possible', False))
 opts.Add(EnumOption('DEBUG', 'Internal debug level', 'std', ['none', 'std', 'stderr']))
 opts.Add(EnumOption('REMOTE', 'Whether to build ekg2-remote', 'no', ['no', 'yes', 'only']))
+opts.Add(EnumOption('REMOTE_SSL', 'What SSL/TLS library to use with ekg2-remote', 'auto', ['none', 'openssl', 'gnutls', 'any', 'auto']))
 opts.Add('DISTNOTES', 'Additional info to /version for use with distributed packages')
 
 for p in avplugins:
@@ -328,9 +329,25 @@ if not env['SKIPCONF']:
 	ekg_libs = []
 	ekg_staticlibs = []
 	ekg_compat = []
+	ekg_remote_flags = []
 
 	ExtTest('standard', ['ekg_libs'])
 	ExtTest('compat', ['ekg_compat'])
+
+	if env['REMOTE'] != 'no' and env['REMOTE_SSL'] != 'none':
+		reqssl = env['REMOTE_SSL']
+		flags = []
+
+		for dep in ['gnutls', 'openssl']:
+			if reqssl in ['auto', 'any', dep]:
+				if ExtTest(dep, ['flags']):
+					ekg_remote_flags.extend(flags)
+					defines['REMOTE_WANT_%s' % dep.upper()] = True
+					break
+
+		if not ekg_remote_flags and reqssl != 'auto' and env['HARDDEPS']:
+			print 'Unable to find %s SSL/TLS library for ekg2-remote and HARDDEPS specified, aborting.' % reqssl
+			sys.exit(1)
 
 	plugin_def = {
 		'type':			'misc',
@@ -498,7 +515,7 @@ if not env['SKIPCONF']:
 
 		if not 'ui' in pl:
 			warnings.append('No UI-plugin selected. EKG2 might be unusable to you.')
-		if not 'protocol' in pl:
+		if not 'protocol' in pl and env['REMOTE'] != 'only':
 			warnings.append("No protocol plugin selected. EKG2 won't be instant messenger anymore.")
 	else:
 		warnings.append('You are compiling ekg2 without any plugin. Are you sure this is what you mean to do?')
@@ -506,7 +523,11 @@ if not env['SKIPCONF']:
 	print 'Options:'
 	print '- unicode: %s' % (env['UNICODE'])
 	print '- nls (gettext): %s' % (defines['ENABLE_NLS'])
-	print '- build ekg2-remote: %s' % (env['REMOTE'])
+	if env['REMOTE'] != 'no':
+		remssl = ' (SSL: %s)' % env['REMOTE_SSL']
+	else:
+		remssl = ''
+	print '- build ekg2-remote: %s%s' % (env['REMOTE'], remssl)
 	for d, k in addopts:
 		print '- %s: %s' % (d, env[k])
 
@@ -538,6 +559,7 @@ if not env['SKIPCONF']:
 				'ekg_libs': ekg_libs,
 				'ekg_staticlibs': ekg_staticlibs,
 				'ekg_compat': ekg_compat,
+				'ekg_remote_flags': ekg_remote_flags,
 				'plugins': plugins,
 				'defines': defines
 				}, conff, cPickle.HIGHEST_PROTOCOL)
@@ -636,6 +658,7 @@ if env['REMOTE'] != 'no':
 	else:
 		cenv.Append(LINKFLAGS = ['-Wl,--export-dynamic'])
 
+	cenv.MergeFlags(cenv.ParseFlags(ekg_remote_flags))
 	cenv.Append(LIBPATH = ekg_libpath)
 	cenv.Append(LIBS = ekg_libs)
 	cenv.Program('remote/ekg2-remote', glob.glob('remote/*.c') + ekg_staticlibs_r)
