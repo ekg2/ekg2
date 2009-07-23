@@ -628,9 +628,9 @@ if env['REMOTE'] != 'no':
 
 	InstallMan(cenv, 'docs/ekg2-remote.*[12345678]')
 
+	if env['REMOTE'] == 'only':
+		ekg_staticlibs_r = ekg_staticlibs
 	if env['STATIC']:
-		if env['REMOTE'] == 'only':
-			ekg_staticlibs_r = ekg_staticlibs
 		env.StaticLoader('ekg2-remote-static.c', ekg_staticlibs_r)
 		ekg_staticlibs_r.insert(0, 'ekg2-remote-static.c') # well, it ain't exactly static lib, but no need to panic
 	else:
