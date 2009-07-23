@@ -331,6 +331,12 @@ if not env['SKIPCONF']:
 	ekg_compat = []
 	ekg_remote_flags = []
 
+	if env['REMOTE'] == 'only':
+		# disable unused libs to avoid useless linking
+		# XXX: we should get separate ekg_libs for ekg2-remote indeed
+		for k in ['NLS', 'IDN', 'RESOLV']:
+			env[k] = False
+
 	ExtTest('standard', ['ekg_libs'])
 	ExtTest('compat', ['ekg_compat'])
 

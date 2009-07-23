@@ -115,7 +115,7 @@ else:
 	have_resolv = False
 
 defines['HAVE_RESOLV_H'] = have_resolv
-if not have_resolv:
+if not have_resolv and env['REMOTE'] != 'only':
 	warnings.append("""libresolv not found, SRV resolving won't work. If you're going to use GTalk
 account, you'll have to manually set 'server' to 'talk.google.com'.""")
 if not 'HAVE_GETADDRINFO' in defines:
