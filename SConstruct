@@ -597,9 +597,11 @@ for plugin, data in plugins.items():
 		penv.Install(env['PLUGINDIR'], libfile + env['SHLIBSUFFIX']) 
 
 	docfiles = []
-	for doc in docglobs:
-		docfiles.extend(glob.glob('%s/%s.txt' % (plugpath, doc)))
-	
+	# ekg2-remote doesn't use docs
+	if env['REMOTE'] != 'only':
+		for doc in docglobs:
+			docfiles.extend(glob.glob('%s/%s.txt' % (plugpath, doc)))
+		
 	for f in data['info']['extradist']:
 		docfiles.extend(glob.glob('%s/%s' % (plugpath, f)))
 
