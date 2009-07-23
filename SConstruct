@@ -64,7 +64,7 @@ def WriteDefines(target, source, env):
 
 def WriteStatic(target, source, env):
 	""" Write static plugin loader """
-	static_inc = open('ekg2-static.c', 'w')
+	static_inc = open(str(target[0]), 'w')
 	for p in plugins:
 		static_inc.write('extern int %s_plugin_init(int prio);\n' % p)
 	static_inc.write('\nvoid *plugin_load_static(const char *name) {\n')
