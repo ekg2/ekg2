@@ -70,7 +70,7 @@ def WriteStatic(target, source, env):
 	static_inc.write('\nvoid *plugin_load_static(const char *name) {\n')
 	for p in plugins:
 		static_inc.write('\tif (!xstrcmp(name, "%s")) return &%s_plugin_init;\n' % (p, p))
-	static_inc.write('}\n')
+	static_inc.write('\treturn NULL;\n}\n')
 	static_inc.close()
 	return None
 
