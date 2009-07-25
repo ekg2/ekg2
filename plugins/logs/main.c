@@ -23,6 +23,11 @@
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
+#ifdef __APPLE__
+#define _DARWIN_C_SOURCE
+#include <netinet/in.h>
+#endif
+
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
