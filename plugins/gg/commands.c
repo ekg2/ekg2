@@ -29,6 +29,10 @@
 # define GIF_OCR
 #endif
 
+#ifdef __APPLE__
+#include <netinet/in.h>
+#endif
+
 #ifndef __FreeBSD__
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
