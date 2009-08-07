@@ -1649,6 +1649,7 @@ void update_statusbar(int commit)
 
 	query_tmp = (sess && q && q->nickname) ? saprintf("%s/%s", q->nickname, q->uid) : xstrdup(window_current->alias ? window_current->alias : window_current->target);
 	__add_format("query", query_tmp);
+	__add_format("query_nickname", (sess && q && q->nickname) ? xstrdup(q->nickname) : xstrdup(window_current->alias ? window_current->alias : window_current->target));  
 
 	__add_format_emp("debug", (!window_current->id));
 	__add_format_emp("more", (window_current->more));

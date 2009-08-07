@@ -26,6 +26,7 @@ rozszerzone informacje:
 	%{uin}		w³asny numer
 	%{window}	numer aktualnego okna
 	%{query}	rozmówca w aktualnym oknie
+	%{query_nickname}	tylko nickname rozmówcy z aktualnego okna
 	%{activity}	lista okien, w których siê co¶ pojawi³o
 	%{nick}		w³asny pseudonim
 	%{descr}	opis stanu
