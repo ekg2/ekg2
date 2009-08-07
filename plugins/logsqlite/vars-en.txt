@@ -75,10 +75,3 @@ last_print_on_open
         define if after opening a new chat window, logsqlite will display there 
         last_limit last messages with this person
 
-persistent_open
-	type: bool
-	default value: 1
-	
-        define if database will be opened only one time when plugin is loading
-        and is unloading (1) or if will be opened every time when is requested
-
