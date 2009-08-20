@@ -7,9 +7,11 @@ out = conf.PkgConfig(None, flags, None, 'xosd-config')
 if not out:
 	flags.append('-lxosd')
 
-old	= SetFlags(env, flags)
-out = conf.CheckLibWithHeader(env['LIBS'][0], ['xosd.h'], 'C', 'xosd_create(0);', 0)
-RestoreFlags(env, old)
+out = env['SKIPCHECKS']
+if not out:
+	old	= SetFlags(env, flags)
+	out = conf.CheckLibWithHeader(env['LIBS'][0], ['xosd.h'], 'C', 'xosd_create(0);', 0)
+	RestoreFlags(env, old)
 
 Return('out')
 

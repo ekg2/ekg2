@@ -7,9 +7,11 @@ out = conf.PkgConfig('gnutls > 1.0.0', flags)
 if not out:
 	flags.append('-lgnutls')
 
-old	= SetFlags(env, flags)
-out = conf.CheckLibWithHeader(env['LIBS'][0], ['gnutls/gnutls.h'], 'C', 'gnutls_init(0, 0);', 0)
-RestoreFlags(env, old)
+out = env['SKIPCHECKS']
+if not out:
+	old	= SetFlags(env, flags)
+	out = conf.CheckLibWithHeader(env['LIBS'][0], ['gnutls/gnutls.h'], 'C', 'gnutls_init(0, 0);', 0)
+	RestoreFlags(env, old)
 
 defines['HAVE_GNUTLS'] = out
 Return('out')

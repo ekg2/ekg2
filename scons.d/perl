@@ -8,18 +8,19 @@ import os.path
 out = conf.PkgConfig(None, flags, None, 'perl', None,
 	'-MExtUtils::Embed -e "ccopts; ldopts"')
 
-if not out: # maybe we are using Fedora?
-	tmp = []
-	conf.PkgConfig(None, tmp, None, 'perl', None,
-		'-MConfig -e \'print "$Config{archlibexp}/CORE/perl.h"\'')
-	if tmp and os.path.exists(tmp[0]):
-		warnings.append('Perl headers found, but no working ExtUtils::Embed (Fedora? install perl-ExtUtils-Embed)')
+if not env['SKIPCHECKS']:
+	if not out: # maybe we are using Fedora?
+		tmp = []
+		conf.PkgConfig(None, tmp, None, 'perl', None,
+			'-MConfig -e \'print "$Config{archlibexp}/CORE/perl.h"\'')
+		if tmp and os.path.exists(tmp[0]):
+			warnings.append('Perl headers found, but no working ExtUtils::Embed (Fedora? install perl-ExtUtils-Embed)')
 
-# or maybe Debian?
-if out:
-	old	= SetFlags(env, flags)
-	out = conf.CheckLibWithHeader('perl', [], 'C', 'perl_alloc();', 0)
-	RestoreFlags(env, old)
+	# or maybe Debian?
+	if out:
+		old	= SetFlags(env, flags)
+		out = conf.CheckLibWithHeader('perl', [], 'C', 'perl_alloc();', 0)
+		RestoreFlags(env, old)
 
 Return('out')
 

@@ -5,7 +5,7 @@ Import('*')
 
 out = conf.PkgConfig('gtk+-2.0', flags)
 
-if out:
+if out and not env['SKIPCHECKS']:
 	old	= SetFlags(env, flags)
 	out = conf.CheckLibWithHeader(env['LIBS'][0], ['gtk/gtk.h'], 'C', 'gtk_init_check(0, 0);', 0)
 	RestoreFlags(env, old)

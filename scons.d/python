@@ -5,7 +5,6 @@ Import('*')
 
 import sys, distutils.sysconfig
 
-
 try:
 	pyver		= sys.version[:3]
 	makefile	= distutils.sysconfig.parse_makefile(distutils.sysconfig.get_makefile_filename())
@@ -26,7 +25,7 @@ except:
 	warnings.append("Unable to read Python's Makefile")
 	out = False
 
-if out:
+if out and not env['SKIPCHECKS']:
 	old	= SetFlags(env, flags)
 	out = conf.CheckLibWithHeader(libs[0], [], 'C', 'Py_Initialize();', 0)
 	RestoreFlags(env, old)

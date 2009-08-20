@@ -3,7 +3,7 @@
 
 Import('*')
 
-out = conf.CheckLibWithHeader('gpm', ['gpm.h'], 'C', 'Gpm_Open(NULL, 0);', 0)
+out = env['SKIPCHECKS'] or conf.CheckLibWithHeader('gpm', ['gpm.h'], 'C', 'Gpm_Open(NULL, 0);', 0)
 defines['HAVE_LIBGPM'] = out
 if out:
 	libs.append('gpm')

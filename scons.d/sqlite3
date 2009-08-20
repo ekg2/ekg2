@@ -7,9 +7,11 @@ out = conf.PkgConfig('sqlite3', flags)
 if not out:
 	flags.append('-lsqlite3')
 
-old	= SetFlags(env, flags)
-out = conf.CheckLibWithHeader(env['LIBS'][0], ['sqlite3.h'], 'C', 'sqlite3 *db; sqlite3_open(":memory:", &db);', 0)
-RestoreFlags(env, old)
+out = env['SKIPCHECKS']
+if not out:
+	old	= SetFlags(env, flags)
+	out = conf.CheckLibWithHeader(env['LIBS'][0], ['sqlite3.h'], 'C', 'sqlite3 *db; sqlite3_open(":memory:", &db);', 0)
+	RestoreFlags(env, old)
 
 defines['HAVE_SQLITE3'] = out
 Return('out')

@@ -90,7 +90,7 @@ if env['NLS']:
 		if have_gettext:
 			ekg_libs.append('intl')
 	
-	if have_gettext:
+	if have_gettext and not env['SKIPCHECKS']:
 		gettext_ver = []
 		have_gettext = conf.PkgConfig(None, None, gettext_ver, 'msgfmt')
 else:

@@ -223,6 +223,7 @@ opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found'
 opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
 opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared', False))
 opts.Add(BoolOption('SKIPCONF', 'Restore previous environment and skip configure if possible', False))
+opts.Add(BoolOption('SKIPCHECKS', 'Skip non-essential checks during configure (assuming they succeed)', False))
 opts.Add(EnumOption('DEBUG', 'Internal debug level', 'std', ['none', 'std', 'stderr']))
 opts.Add(EnumOption('REMOTE', 'Whether to build ekg2-remote', 'no', ['no', 'yes', 'only']))
 opts.Add(EnumOption('REMOTE_SSL', 'What SSL/TLS library to use with ekg2-remote', 'auto', ['none', 'openssl', 'gnutls', 'any', 'auto']))

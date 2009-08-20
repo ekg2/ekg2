@@ -7,7 +7,7 @@ out = conf.PkgConfig('dbus-1', flags)
 
 # Sorry, dbus uses special -I&-L, so no fallback
 
-if out:
+if out and not env['SKIPCHECKS']:
 	old	= SetFlags(env, flags)
 	out = conf.CheckLibWithHeader(env['LIBS'][0], ['dbus/dbus.h'], 'C', 'DBusError err; dbus_bus_get(DBUS_BUS_SESSION, &err);', 0)
 	RestoreFlags(env, old)

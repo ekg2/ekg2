@@ -6,7 +6,7 @@ Import('*')
 out = conf.PkgConfig(None, flags, None, 'ruby', None,
 	'-r mkmf -e "c=Config::CONFIG; print \\"-I\\" + c[\\"archdir\\"]; libs=\\" -l\\" + c[\\"RUBY_SO_NAME\\"] + \\" \\" + c[\\"LIBS\\"]; print libs"')
 
-if out:
+if out and not env['SKIPCHECKS']:
 	old	= SetFlags(env, flags)
 		# Well, passing env['LIBS'][0] doesn't make much sense, but it makes SCons pretty-print it
 	out = conf.CheckLibWithHeader(env['LIBS'][0], [], 'C', 'ruby_init();', 0)

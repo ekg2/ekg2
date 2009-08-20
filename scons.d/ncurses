@@ -6,7 +6,7 @@ Import('*')
 out = False
 if env['UNICODE']:
 	nc_lib = 'ncursesw'
-	out = conf.CheckLibWithHeader(nc_lib, ['ncursesw/ncurses.h'], 'C', 'initscr();', 0)
+	out = env['SKIPCHECKS'] or conf.CheckLibWithHeader(nc_lib, ['ncursesw/ncurses.h'], 'C', 'initscr();', 0)
 
 if not out:
 	nc_lib = 'ncurses'

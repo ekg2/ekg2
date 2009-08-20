@@ -3,7 +3,7 @@
 
 Import('*')
 
-out = conf.CheckLibWithHeader('aspell', ['aspell.h'], 'C', 'new_aspell_config();', 0)
+out = env['SKIPCHECKS'] or conf.CheckLibWithHeader('aspell', ['aspell.h'], 'C', 'new_aspell_config();', 0)
 defines['WITH_ASPELL'] = out
 if out:
 	libs.append('aspell')

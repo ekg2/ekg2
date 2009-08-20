@@ -3,7 +3,7 @@
 
 Import('*')
 
-out = conf.CheckLibWithHeader(None, ['sys/inotify.h'], 'C', 'inotify_init();', 0)
+out = env['SKIPCHECKS'] or conf.CheckLibWithHeader(None, ['sys/inotify.h'], 'C', 'inotify_init();', 0)
 defines['HAVE_INOTIFY'] = out
 
 Return('out')
