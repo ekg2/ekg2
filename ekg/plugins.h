@@ -149,7 +149,6 @@ int query_free(query_t *q);
 void query_external_free();
 
 int query_emit_id(plugin_t *, const int, ...);
-int query_emit_id_ro(plugin_t *plugin, const int id, ...);
 int query_emit(plugin_t *, const char *, ...);
 void queries_reconnect();
 

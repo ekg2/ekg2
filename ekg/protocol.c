@@ -252,7 +252,13 @@ static QUERY(protocol_disconnected) {
 }
 
 int protocol_disconnected_emit(const session_t *s, const char *reason, int type) {
-       return query_emit_id_ro(NULL, PROTOCOL_DISCONNECTED, &(s->uid), &reason, &type);
+	char *session   = xstrdup(s->uid);
+	char *reason_ro = xstrdup(reason);
+	int result      = query_emit_id(NULL, PROTOCOL_DISCONNECTED, &session, &reason_ro, &type);
+
+	xfree(session);
+	xfree(reason_ro);
+	return result;
 }
 
 /**
@@ -305,7 +311,11 @@ static QUERY(protocol_connected) {
 }
 
 int protocol_connected_emit(const session_t *s) {
-       return query_emit_id_ro(NULL, PROTOCOL_CONNECTED, &(s->uid));
+	char *session = xstrdup(s->uid);
+	int result    = query_emit_id(NULL, PROTOCOL_CONNECTED, &session);
+
+	xfree(session);
+	return result;
 }
 
 /*
@@ -494,7 +504,15 @@ notify_plugins:
 }
 
 int protocol_status_emit(const session_t *s, const char *uid, int status, char *descr, time_t when) {
-       return query_emit_id_ro(NULL, PROTOCOL_STATUS, &(s->uid), &uid, &status, &descr, &when);
+	char *session  = xstrdup(s->uid);
+	char *uid_ro   = xstrdup(uid);
+	char *descr_ro = xstrdup(descr);
+	int result     = query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid_ro, &status, &descr_ro, &when);
+
+	xfree(session);
+	xfree(uid_ro);
+	xfree(descr_ro);
+	return result;
 }
 
 /*
@@ -850,7 +868,18 @@ static QUERY(protocol_message)
 }
 
 int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, const char *text, const uint32_t *format, time_t sent, int class, const char *seq, int dobeep, int secure) {
-       return query_emit_id_ro(NULL, PROTOCOL_MESSAGE, &(s->uid), &uid, &rcpts, &text, &format, &sent, &class, &seq, &dobeep, &secure);
+	char *session = xstrdup(s->uid);
+	char *uid_ro  = xstrdup(uid);
+	char *text_ro = xstrdup(text);
+	char *seq_ro  = xstrdup(seq);
+	/* XXX, rcpts_ro, format_ro */
+	int result    = query_emit_id(NULL, PROTOCOL_MESSAGE, &session, &uid_ro, &rcpts, &text_ro, &format, &sent, &class, &seq_ro, &dobeep, &secure);
+
+	xfree(session);
+	xfree(uid_ro);
+	xfree(text_ro);
+	xfree(seq_ro);
+	return result;
 }
 
 /**
@@ -904,7 +933,15 @@ static QUERY(protocol_message_ack) {
 }
 
 int protocol_message_ack_emit(const session_t *s, const char *rcpt, const char *seq, int status) {
-	return query_emit_id_ro(NULL, PROTOCOL_MESSAGE_ACK, &(s->uid), &rcpt, &seq, &status);
+	char *session = xstrdup(s->uid);
+	char *rcpt_ro = xstrdup(rcpt);
+	char *seq_ro  = xstrdup(seq);
+	int result    = query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &session, &rcpt_ro, &seq_ro, &status);
+
+	xfree(session);
+	xfree(rcpt_ro);
+	xfree(seq_ro);
+	return result;
 }
 
 static QUERY(protocol_xstate)
@@ -949,7 +986,13 @@ xs_userlist:
 }
 
 int protocol_xstate_emit(const session_t *s, const char *uid, int state, int offstate) {
-	return query_emit_id_ro(NULL, PROTOCOL_XSTATE, &(s->uid), &uid, &state, &offstate);
+	char *session = xstrdup(s->uid);
+	char *uid_ro  = xstrdup(uid);
+	int result    = query_emit_id(NULL, PROTOCOL_XSTATE, &session, &uid_ro, &state, &offstate);
+
+	xfree(session);
+	xfree(uid_ro);
+	return result;
 }
 
 /*
