@@ -256,8 +256,10 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 					break;
 				case (QUERY_ARG_CHARP):
 					if (PyString_Check(w)) {
-						xfree(*(char **) args[i]);
-						*( (char **) args[i]) = xstrdup(PyString_AsString(w));
+						if (xstrcmp(PyString_AsString(w), *(char **) args[i])) {	/* XXX, hack for broken query_emit's */
+							xfree(*(char **) args[i]);
+							*( (char **) args[i]) = xstrdup(PyString_AsString(w));
+						}
 					} else debug("[recvback,script error] not string?!\n");
 					break;
 				case (QUERY_ARG_CHARPP): /* wazne, zrobic. */

@@ -755,7 +755,7 @@ static QUERY(protocol_message)
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
 	char **rcpts	= *(va_arg(ap, char***));
-	char *text	= *(va_arg(ap, char**));
+	char **ptext	= (va_arg(ap, char**));
 	uint32_t *format= *(va_arg(ap, uint32_t**));
 	time_t sent	= *(va_arg(ap, time_t*));
 	int mclass	= *(va_arg(ap, int*));
@@ -805,13 +805,14 @@ static QUERY(protocol_message)
 	if (!our_msg && !empty_theme) {	/* empty_theme + decrpyt? i don't think so... */
 		char *___session = xstrdup(session);
 		char *___sender = xstrdup(uid);
-		char *___message = xstrdup(text);
+		char *___message = xstrdup(*ptext);
 		int ___decrypted = 0;
 
 		query_emit_id(NULL, MESSAGE_DECRYPT, &___session, &___sender, &___message, &___decrypted, NULL);
 
 		if (___decrypted) {
-			text = ___message;
+			xfree(*ptext);
+			*ptext = ___message;
 			___message = NULL;
 			secure = 1;
 		}
@@ -821,16 +822,16 @@ static QUERY(protocol_message)
 		xfree(___message);
 	}
 
-	if (our_msg)	query_emit_id(NULL, PROTOCOL_MESSAGE_SENT, &session, &(rcpts[0]), &text);
-	else		query_emit_id(NULL, PROTOCOL_MESSAGE_RECEIVED, &session, &uid, &rcpts, &text, &format, &sent, &mclass, &seq, &secure);
+	if (our_msg)	query_emit_id(NULL, PROTOCOL_MESSAGE_SENT, &session, &(rcpts[0]), ptext);
+	else		query_emit_id(NULL, PROTOCOL_MESSAGE_RECEIVED, &session, &uid, &rcpts, ptext, &format, &sent, &mclass, &seq, &secure);
 
-	query_emit_id(NULL, PROTOCOL_MESSAGE_POST, &session, &uid, &rcpts, &text, &format, &sent, &mclass, &seq, &secure);
+	query_emit_id(NULL, PROTOCOL_MESSAGE_POST, &session, &uid, &rcpts, ptext, &format, &sent, &mclass, &seq, &secure);
 
 	/* show it ! */
 	if (!(our_msg && !config_display_sent)) {
 		if (empty_theme)
 			mclass |= EKG_NO_THEMEBIT;
-		if (!(target = message_print(session, uid, (const char**) rcpts, text, format, sent, mclass, seq, dobeep, secure)))
+		if (!(target = message_print(session, uid, (const char**) rcpts, *ptext, format, sent, mclass, seq, dobeep, secure)))
 			return -1;
 	}
 
