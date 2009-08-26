@@ -771,46 +771,6 @@ static int query_emit_common(query_t *q, va_list ap) {
 	return result != -1 ? 0 : -1;
 }
 
-/**
- * query_emit_id_ro()
- *
- * Like query_emit_id() 
- * It was created to avoid manual strdup()'s && xmemdup()'s in code.
- * where stuff is read-only (we don't want query handlers to replace params)	[scripts for instance, but cause scripts don't work, this function is not finished :>]
- */
-
-int query_emit_id_ro(plugin_t *plugin, const int id, ...) {
-	int result = -2;
-	va_list ap;
-	query_t *q;
-
-	if (id >= QUERY_EXTERNAL) {
-		debug_error("%s", ID_AND_QUERY_EXTERNAL);
-		return -2;
-	}
-
-	/* XXX:
-	 *	- for each param at query_list[id])
-	 *		- if it's string, strdup() it. otherwise xmemdup() is enough (like /window clear does)
-	 *		- if integer, just pass it to another variable
-	 *	- call everything.
-	 *	- free stuff
-	 *
-	 * for now it's useless.
-	 */
-
-	va_start(ap, id);
-	for (q = queries[id]; q; q = q->next) {
-		if ((!plugin || (plugin == q->plugin))) {
-			result = query_emit_common(q, ap);
-
-			if (result == -1) break;
-		}
-	}
-	va_end(ap);
-	return result;
-}
-
 int query_emit_id(plugin_t *plugin, const int id, ...) {
 	int result = -2;
 	va_list ap;
