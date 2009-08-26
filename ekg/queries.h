@@ -157,13 +157,14 @@ const struct query_def query_list[] = {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_CHARPP,		/* rcpts */
+		QUERY_ARG_CHARP,		/* text */
 		QUERY_ARG_UINT,	/* uint32_t */	/* format */
 		QUERY_ARG_UINT, /* time_t */	/* sent */
 		QUERY_ARG_INT,			/* mclass */
 		QUERY_ARG_CHARP,		/* seq */
 		QUERY_ARG_INT,			/* secure */
 		QUERY_ARG_END } },
-	
+
 	{ PROTOCOL_MESSAGE_POST, "protocol-message-post", {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
