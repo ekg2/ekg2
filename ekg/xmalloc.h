@@ -56,7 +56,6 @@ typedef unsigned int socklen_t;
 #  ifdef _POSIX_PATH_MAX
 #   define PATH_MAX _POSIX_PATH_MAX
 #  else
-#   warning "PATH_MAX not found! Defaulting to 4096, please report."
 #   define PATH_MAX 4096
 #  endif
 # endif
