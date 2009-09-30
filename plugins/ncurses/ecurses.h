@@ -5,6 +5,10 @@
 
 #include "ekg2-config.h"
 
+#define NCURSES_OPAQUE 0	/* for broken macOSX 10.6.1 header
+                                   XXX detect during configure
+				 */
+
 #if USE_UNICODE
 # ifndef _XOPEN_SOURCE_EXTENDED
 #  define _XOPEN_SOURCE_EXTENDED
