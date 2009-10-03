@@ -204,7 +204,7 @@ history_savedups
 
 keep_reason
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domy¶lna warto¶æ: 1
 	
 	je¶li w³±czona, komendy ,,away'', ,,back'', ,,invisible'', ,,quit''
 	i ,,disconnect'' bez podanego powodu przejm± aktualny opis. zostanie
