@@ -1182,6 +1182,25 @@ int array_item_contains(char **array, const char *string, int casesensitive)
 	return 0;
 }
 
+char *array_shift(char ***array)
+{
+	int count;
+	char *out;
+
+	if (!(count = array_count(*array)))
+		return NULL;
+
+	out = (*array)[0];
+	memmove((*array), &(*array)[1], count * sizeof(char **));
+	count--;
+
+	if (count == 0) {
+		xfree(*array);
+		*array = NULL;
+	}
+	return out;
+}
+
 /*
  * array_free()
  *

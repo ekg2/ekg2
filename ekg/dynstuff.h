@@ -173,6 +173,7 @@ int array_add_check(char ***array, char *string, int casesensitive);
 int array_count(char **array);
 int array_contains(char **array, const char *string, int casesensitive);
 int array_item_contains(char **array, const char *string, int casesensitive);
+char *array_shift(char ***array);
 void array_free(char **array);
 void array_free_count(char **array, int count);
 

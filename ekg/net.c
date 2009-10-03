@@ -205,30 +205,6 @@ static void ekg_connect_data_free(struct ekg_connect_data *c) {
 	xfree(c);
 }
 
-	/* XXX: would we use it anywhere else? if yes, then move to dynstuff */
-static char *array_shift(char ***array) {
-	char *out	= NULL;
-	int i		= 1;
-
-	if (array && *array) {
-		if (**array) {
-			const int count = array_count(*array);
-
-			out = (*array)[0];
-			for (; i < count; i++)
-				(*array)[i-1] = (*array)[i];
-			(*array)[i-1] = NULL;
-		}
-
-		if (i == 1) { /* last element, free array */
-			array_free(*array);
-			*array = NULL;
-		}
-	}
-
-	return out;
-}
-
 static int ekg_connect_loop(struct ekg_connect_data *c); /* predeclared */
 
 static WATCHER_LINE(ekg_connect_resolver_handler) {
