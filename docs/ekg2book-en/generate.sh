@@ -1,5 +1,10 @@
 #!/bin/sh
 
+echo
+echo "WARNING: this script (and neighbouring Makefile) is deprecated. Please use ../generate-ekg2book.sh" >&2
+echo
+sleep 5
+
 PREINPUTS="design/header.xml bookinfo.xml userbook.xml"
 POSTINPUTS="develbook.xml faq.xml design/footer.xml"
 OUTPUT="book.xml"
