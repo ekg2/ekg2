@@ -4,6 +4,11 @@ allowed_sessions
 	
 	Oddzielona przecinkami lista sesji, dla których wtyczka autorespondera
 	bêdzie u¿ywana. Mo¿e zawieraæ zarówno UID-y, jak i aliasy.
+	
+	Uwaga: korzystaj±c z autorespondera w sesjach "gg", nale¿y pamiêtaæ aby
+	dodaæ do listy kontaktów lub ignorowanych u¿ytkownika "gg:0", który
+	wysy³a "wiadomo¶ci systemowe". W przeciwnym wypadku serwer mo¿e zrywaæ
+	po³±czenie zaraz po jego nawi±zaniu.
 
 answer
 	typ: tekst

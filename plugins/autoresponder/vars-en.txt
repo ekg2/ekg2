@@ -2,8 +2,13 @@ allowed_sessions
 	type: string
 	default value: (none)
 	
-	Comma-separated list of sessions, for which autoresponder plugin
-	will be used. Both UIDs, and aliases can be used.
+	A comma-separated list of sessions, for which autoresponder plugin
+	will be used. Both UIDs and aliases can be used.
+	
+	Note that when using this plugin with a "gg" session, you need to
+	ignore or add to your roster the special user "gg:0", who sends "system
+	messages". Otherwise, the server may drop your connection right after
+	establishing it.
 
 answer
 	type: string

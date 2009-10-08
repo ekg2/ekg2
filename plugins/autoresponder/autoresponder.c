@@ -70,6 +70,7 @@ static QUERY(autoresponder_message)
 			|| (userlist_find(s, uid)) /* check if it isn't currently on our roster */
 			|| (window_find_s(s, uid)) /* or maybe we've already opened query? */
 			|| (list_find_str(autoresponder_allowed_uids, uid))) /* search the allowed uids list */
+			/* TODO(porridge): || (gg session && uid == "gg:0") - he won't respond, and it may cause connection drops */
 		return 0;
 	
 	switch (config_autoresponder_match_mode) {
