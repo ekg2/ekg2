@@ -14,5 +14,7 @@ rm -f po/Rules-quot po/boldquot.sed po/quot.sed
 rm -f po/insert-header.sin po/remove-potcdate.sin
 rm -f po/en@boldquot.header po/en@quot.header
 
-find . \( -name Makefile -o -name Makefile.in -o -name \*.la -o -name \*.a -o -name \*.so -o -name \*.o -type f \) -exec rm -f {} \;
+find . \
+ \( -path ./docs/ekg2book/Makefile -o -path ./docs/ekg2book-en/Makefile \) -prune -o \
+ \( -name Makefile -o -name Makefile.in -o -name \*.la -o -name \*.a -o -name \*.so -o -name \*.o -type f \) -exec rm -f {} \;
 find . \( -name \.deps -o -name \.libs -type d \) -exec rm -rf {} \;
