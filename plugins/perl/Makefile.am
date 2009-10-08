@@ -13,7 +13,7 @@ override libdir = $(plugindir)
 perl_dirs = common irc
 
 all-local:
-	for dir in $(perl_dirs); do \
+	set -e; for dir in $(perl_dirs); do \
 	 cd $$dir && \
 	 if [ ! -f Makefile ]; then \
 	   $(PERL) Makefile.PL; \
@@ -23,7 +23,7 @@ all-local:
 	done
 
 clean-generic:
-	for dir in $(perl_dirs); do \
+	set -e; for dir in $(perl_dirs); do \
 	 cd $$dir; \
 	 $(MAKE) clean; \
 	 cd ..; \
@@ -31,6 +31,6 @@ clean-generic:
 
 
 install-exec-local:
-	for dir in $(perl_dirs); do \
+	set -e; for dir in $(perl_dirs); do \
 	 cd $$dir && $(MAKE) install DESTDIR=$(DESTDIR) $(perl_install_args) && cd ..; \
 	done
