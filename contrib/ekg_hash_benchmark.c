@@ -533,7 +533,7 @@ int main() {
 						"change your session password using /session password", 1);
 	format_add("passwd_abuse", "%! (%1) Somebody want to clear our password (%2)", 1);
 	format_add("change", _("%> Informations in public directory chenged\n"), 1);
-	format_add("change_failed", _("%! Error while changing informations in public directory\n"), 1);
+	format_add("change_failed", _("%! Error while changing information in public directory\n"), 1);
 	format_add("search_failed", _("%! Error while search: %1\n"), 1);
 	format_add("search_not_found", _("%! Not found\n"), 1);
 	format_add("search_no_last", _("%! Last search returned no result\n"), 1);

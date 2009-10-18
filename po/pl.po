@@ -1170,7 +1170,7 @@ msgid "%> Informations in public directory chenged\n"
 msgstr "%> Informacje w katalogu publicznym zosta³y zmienione\n"
 
 #: ekg/themes.c:1593
-msgid "%! Error while changing informations in public directory\n"
+msgid "%! Error while changing information in public directory\n"
 msgstr "%! B³±d podczas zmiany informacji w katalogu publicznym\n"
 
 #: ekg/themes.c:1596

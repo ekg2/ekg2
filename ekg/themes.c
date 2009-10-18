@@ -1665,7 +1665,7 @@ void theme_init()
 
 	/* changing information in public catalog */
 	format_add("change", _("%> Informations in public directory chenged\n"), 1);
-	format_add("change_failed", _("%! Error while changing informations in public directory\n"), 1);
+	format_add("change_failed", _("%! Error while changing information in public directory\n"), 1);
 
 	/* users finding */
 	format_add("search_failed", _("%! Error while search: %1\n"), 1);

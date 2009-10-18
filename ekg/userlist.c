@@ -340,12 +340,12 @@ void *userlist_private_get(plugin_t *plugin, userlist_t *u) {
 /**
  * userlist_clear_status()
  *
- * If @a uin == NULL then it clears all users <i>presence informations</i> in the @a session userlist
+ * If @a uin == NULL then it clears all users <i>presence information</i> in the @a session userlist
  * otherwise it clears only specified user
  * It's useful if user goes notavail, or we goes disconnected..<br>
  * However if that happen you shouldn't use this function but emit query <i>PROTOCOL_STATUS</i> or <i>PROTOCOL_DISCONNECTED</i>
  *
- * @note By <i>presence informations</i> I mean:<br>
+ * @note By <i>presence information</i> I mean:<br>
  *	-> status	- user's status [avail, away, ffc, dnd], it'll be: @a EKG_STATUS_NA ("notavail")<br>
  *	-> descr	- user's description, it'll be: NULL<br>
  *	-> ip		- user's ip, il'll be: 0.0.0.0<br>

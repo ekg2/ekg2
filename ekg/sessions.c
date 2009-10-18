@@ -898,7 +898,7 @@ int session_read(const char *filename) {
 /*
  * session_write()
  *
- * writes informations about sessions in files
+ * writes information about sessions in files
  */
 int session_write()
 {

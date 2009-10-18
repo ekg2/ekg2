@@ -37,7 +37,7 @@ block
 
 change
 	parameters:  <options>
-	short description: change informations in public catalogue
+	short description: change information in public catalogue
 	
 	  -f, --first <first name>
 	
@@ -156,7 +156,7 @@ invisible
 
 modify
 	parameters:  <alias> <options>
-	short description: change informations in contact list
+	short description: change information in contact list
 	
 	You can use options like:
 	
