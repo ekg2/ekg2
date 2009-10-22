@@ -66,19 +66,10 @@ U¯YCIE
     Brana pod uwagê jest zwykle pierwsza litera, wiêc je¶li wpiszesz
     ,,list --gone'', ekg potraktuje to jako ,,list --get''.
 
-    Komendy mo¿na wysy³aæ tak¿e przez potok. By go uaktywniæ, nale¿y
-    uruchomiæ ekg z parametrem ,,-c'' i ¶cie¿k± potoku. Ze wzglêdu na
-    specyfikê potoków, wyniki poleceñ wysy³ane bêd± na terminal na którym
-    jest uruchomione ekg (tak jak normalnie). Pisaæ do potoku mo¿na tak
-    jak do normalnego pliku (choæby poleceniem echo).
+    Komendy mo¿na wysy³aæ tak¿e przez potok lub internet. Wymagana jest do tego
+	wtyczka remote control. £adowanie /plugin +rc ustawienie potoku: 
+	/set rc:remote_control pipe:/home/user/named_pipe
 
-    Je¶li w linii poleceñ shella podasz po nazwie programu i parametrach
-    zaczynaj±cych siê od my¶lnika co¶ jeszcze, to zostanie to zinterpretowane
-    jako komenda wsadowa. ekg po³±czy siê z serwerem, wykona tylko tê komendê
-    i od razu wyjdzie. Je¶li na serwerze czekaj± na Ciebie jakie¶ wiadomo¶ci,
-    to serwer je przy¶le zaraz po po³±czeniu i w trybie wsadowym ekg wypisze
-    je na terminal. Je¶li zamierzasz przekierowaæ wyj¶cie do /dev/null i nie
-    masz w³±czonego logowania, wiadomo¶ci zgin± bezpowrotnie.
 
 KLAWIATURA
 
@@ -167,7 +158,7 @@ PLIK KONFIGURACYJNY
     Kolejno¶æ ³adowania plików konfiguracyjnych jest nastêpuj±ca:
     1) /etc/ekg.conf (lub z innego katalogu wskazanego przez opcjê
        --sysconfdir przekazan± skryptowi ./configure),
-    2) ~/.gg/config lub ~/.gg/<profil>/config,
+    2) ~/.ekg/config lub ~/.ekg/<profil>/config,
     3) /etc/ekg-override.conf
 
     Dziêki temu administrator mo¿e wymusiæ pewne opcje na klientach
