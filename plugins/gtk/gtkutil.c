@@ -25,6 +25,7 @@
 #include <unistd.h>
 #include <fcntl.h>
 
+#include <gtk/gtk.h>
 #include <gtk/gtkbutton.h>
 #include <gtk/gtkclist.h>
 #include <gtk/gtkscrolledwindow.h>
