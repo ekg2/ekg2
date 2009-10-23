@@ -394,24 +394,26 @@ EXPORTNOT void ekg_debug_handler(int level, const char *format, va_list ap) {
 }
 
 struct option ekg_options[] = {
-	{ "no-mouse", no_argument, 0, 'm' },
+	{ "charset",  required_argument, 0, 'c' },
+	{ "password", required_argument, 0, 'p' },
+	{ "test",     required_argument, 0, 'T' },
 	{ "frontend", required_argument, 0, 'F' },
-	{ "test", required_argument, 0, 'T' },
+	{ "no-mouse", no_argument, 0, 'm' },
+	{ "unicode",  no_argument, 0, 'U' },
+	{ "help",     no_argument, 0, 'h' },
+	{ "version",  no_argument, 0, 'v' },
 
-	{ "charset", required_argument, 0, 'c' },
-
-	{ "unicode", no_argument, 0, 'U' }, 
-
-	{ "help", no_argument, 0, 'h' },
-	{ "version", no_argument, 0, 'v' },
 	{ 0, 0, 0, 0 }
 };
 
 #define EKG_USAGE N_( \
-"Usage: %s [OPTIONS] [COMMANDS]\n" \
-"  -m, --no-mouse	       does not load mouse support\n" \
+"Usage: %s [OPTIONS] REMOTE-ENDPOINT\n" \
+"  -c, --charset=CHARSET       forces charset to use\n" \
+"  -p, --password=PASSWD       sets password\n" \
+"  -T, --test=NAME             same as -F, but runs in test mode - for debugging\n" \
 "  -F, --frontend=NAME	       uses NAME frontend (default is ncurses)\n" \
-"  -p, --password=haslo        password\n" \
+"  -m, --no-mouse              does not load mouse support\n" \
+"  -U, --unicode               forces unicode support\n" \
 \
 "  -h, --help		       displays this help message\n" \
 "  -v, --version	       displays program version and exits\n" \
@@ -475,9 +477,18 @@ int main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 	signal(SIGCHLD, SIG_IGN);		/* nie interesuja nas dzieci... nie powinnismy miec zadnego :) */
 
-	while ((c = getopt_long(argc, argv, "c:p:T:F:mhvU", ekg_options, NULL)) != -1) 
+	while ((c = getopt_long(argc, argv, "c:p:T:F:mUhv", ekg_options, NULL)) != -1)
 	{
 		switch (c) {
+			case 'c':
+				xfree(config_console_charset);		/* XXX, sensowniej!, /me chce zeby sie wyswietlalo co nl_langinfo() zwrocilo, a co my podalismy. */
+				config_console_charset = xstrdup(optarg);
+				break;
+
+			case 'p':
+				config_password = optarg;
+				break;
+
 			case 'T':
 				testonly = 1;
 				frontend = optarg;
@@ -491,19 +502,6 @@ int main(int argc, char **argv)
 				no_mouse = 1;
 				break;
 
-			case 'h':
-				printf(_(EKG_USAGE), argv[0]);
-				return 0;
-
-			case 'c':
-				xfree(config_console_charset);		/* XXX, sensowniej!, /me chce zeby sie wyswietlalo co nl_langinfo() zwrocilo, a co my podalismy. */
-				config_console_charset = xstrdup(optarg);
-				break;
-
-			case 'p':
-				config_password = optarg;
-				break;
-
 			case 'U':
 #ifdef USE_UNICODE
 				config_use_unicode = 1;
@@ -512,6 +510,10 @@ int main(int argc, char **argv)
 				return 1;
 #endif
 				break;
+
+			case 'h':
+				printf(_(EKG_USAGE), argv[0]);
+				return 0;
 
 			case 'v':
 				printf("ekg2-%s (compiled on %s)\n", VERSION, compile_time());
