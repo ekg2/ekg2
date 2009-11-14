@@ -1145,7 +1145,7 @@ static QUERY(jabber_status_show_handle) {
 	// nasz status
 	tmp = (s->connected) ? 
 		format_string(format_find(ekg_status_label(s->status, s->descr, "show_status_")),s->descr, "") :
-		format_string(format_find("show_status_notavail"));
+		format_string(format_find("show_status_notavail"), "");
 
 	print("show_status_status_simple", tmp);
 	xfree(tmp);
