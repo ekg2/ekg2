@@ -21,6 +21,8 @@ AC_DISABLE_STATIC
 AC_PROG_LIBTOOL
 AC_SUBST(LIBTOOL_DEPS)
 
+AC_SYS_LARGEFILE
+
 dnl It's obsolete in current versions of gettext but it's needed in older
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.14.3])
