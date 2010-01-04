@@ -2372,7 +2372,7 @@ void jabber_register_commands()
 #define JABBER_FLAGS_TARGET		JABBER_FLAGS_REQ | COMMAND_PARAMASTARGET
 #define JABBER_FLAGS_TARGET_VALID	JABBER_FLAGS_TARGET | COMMAND_TARGET_VALID_UID
 #define JABBER_FLAGS_MSG		JABBER_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
-	command_add(&jabber_plugin, "xmpp:", "?", jabber_command_inline_msg,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "xmpp:", "?", jabber_command_inline_msg,	JABBER_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&jabber_plugin, "xmpp:_autoaway", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:_autoxa", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:_autoback", "r", jabber_command_away,	JABBER_ONLY, NULL);

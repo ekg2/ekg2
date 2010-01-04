@@ -1805,7 +1805,7 @@ void gg_register_commands()
 	command_add(&gg_plugin, ("gg:reconnect"), NULL, gg_command_connect,	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:msg"), "!uUC !", gg_command_msg,		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
 	command_add(&gg_plugin, ("gg:chat"), "!uUC !", gg_command_msg,		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
-	command_add(&gg_plugin, ("gg:"), "?", gg_command_inline_msg,		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:"), "?", gg_command_inline_msg,		GG_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&gg_plugin, ("gg:away"), "r", gg_command_away,		GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:_autoaway"), "?", gg_command_away,			GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:back"), "r", gg_command_away,		GG_ONLY, NULL);

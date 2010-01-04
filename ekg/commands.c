@@ -2666,6 +2666,11 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			tmp++;
 		p = (*tmp) ? tmp + 1 : tmp;
 		*tmp = 0;
+
+		/* XXX, this is breaking WYSIWYG mode (COMMAND_PASS_UNCHANGED)
+		 * 		array_make() can handle normal spaces.
+		 * 		(When you paste several lines of code, you want to keep indent on all lines - with this code spaces on first line are trimmed ;/)
+		 */
 		p = strip_spaces(p);
 	}
 	cmdlen = xstrlen(cmd);
@@ -2770,7 +2775,12 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		if (!res) {
 			char **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make(("?"), (" "), 0, 1, 1) : last_command->params;
 			int parcount = array_count(last_params);
-			char **par = array_make(p, (" \t"), parcount, 1, 1);
+			char **par = NULL;
+
+			if (last_command->flags & COMMAND_PASS_UNCHANGED)
+				array_add(&par, xstrdup(p));
+			else
+				par = array_make(p, (" \t"), parcount, 1, 1);
 
 			if ((last_command->flags & COMMAND_PARAMASTARGET) && par[0]) {
 /*				debug("[command_exec] oldtarget = %s newtarget = %s\n", target, par[0]); */

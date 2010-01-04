@@ -717,7 +717,7 @@ EXPORT int polchat_plugin_init(int prio) {
 #define POLCHAT_FLAGS		POLCHAT_ONLY | SESSION_MUSTBECONNECTED
 #define POLCHAT_FLAGS_TARGET	POLCHAT_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
 	
-	command_add(&polchat_plugin, "polchat:", "?",		polchat_command_inline_msg, POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:", "?",		polchat_command_inline_msg, POLCHAT_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&polchat_plugin, "polchat:msg", "!uUw !",	polchat_command_msg,	    POLCHAT_FLAGS_TARGET, NULL);
 	command_add(&polchat_plugin, "polchat:connect", NULL,	polchat_command_connect,    POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:disconnect", "r ?",polchat_command_disconnect,POLCHAT_ONLY, NULL);

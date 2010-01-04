@@ -1621,7 +1621,7 @@ EXPORT int icq_plugin_init(int prio) {
 	query_connect_id(&icq_plugin, USERLIST_INFO, icq_userlist_info_handle, NULL);
 	query_connect_id(&icq_plugin, PROTOCOL_TYPING_OUT, icq_typing_out, NULL);
 
-	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 	command_add(&icq_plugin, "icq:chat", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 
