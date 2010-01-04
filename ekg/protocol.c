@@ -75,7 +75,7 @@ static QUERY(protocol_userlist_changed);
  *	- acknowledge of messages:		<i>PROTOCOL_MESSAGE_ACK</i><br>
  *	- misc user events like typing notifies:<i>PROTOCOL_XSTATE</i><br>
  *	- session connection/disconnection:	<i>PROTOCOL_CONNECTED</i> and <i>PROTOCOL_DISCONNECTED</i>
- *	- roster changes:			<i>USERLIST_CHANGED</i> and <i>USERLIST_ADDED</i> and <i>USERLIST_REMOVED</i> and <i>USERLIST_RENAMED</i>
+ *	- roster changes:			<i>USERLIST_ADDED</i> and <i>USERLIST_REMOVED</i> and <i>USERLIST_RENAMED</i>
  *
  * @sa query_connect()	- Function to add listener on specified events.
  * @sa query_emit()	- Function to emit specified events.
@@ -90,7 +90,6 @@ void protocol_init() {
 	query_connect_id(NULL, PROTOCOL_CONNECTED, protocol_connected, NULL);
 	query_connect_id(NULL, PROTOCOL_DISCONNECTED, protocol_disconnected, NULL);
 
-	query_connect_id(NULL, USERLIST_CHANGED,	protocol_userlist_changed, NULL);
 	query_connect_id(NULL, USERLIST_ADDED,		protocol_userlist_changed, NULL);
 	query_connect_id(NULL, USERLIST_REMOVED,	protocol_userlist_changed, NULL);
 	query_connect_id(NULL, USERLIST_RENAMED,	protocol_userlist_changed, NULL);
