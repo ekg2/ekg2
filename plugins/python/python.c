@@ -222,7 +222,7 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 		PyObject *w = NULL;
 		switch ( scr_que->argv_type[i] ) {
 			case (QUERY_ARG_INT):
-				w = PyInt_FromLong((long) *(int *) args[i] );
+				w = PyLong_FromVoidPtr(args[i]);
 				break;
 			case (QUERY_ARG_CHARP): {
 				char *tmp = *(char **) args[i];
