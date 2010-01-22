@@ -64,6 +64,8 @@ typedef struct {
 	query_t		*self;
 	int		argc;
 	int		argv_type[MAX_ARGS];
+
+	int		real_argc;
 	void		*priv_data;
 	int		hack;
 } script_query_t; 
