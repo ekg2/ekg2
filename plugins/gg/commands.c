@@ -839,7 +839,7 @@ static COMMAND(gg_command_msg) {
 static COMMAND(gg_command_inline_msg) {
 	const char *p[2] = { NULL, params[0] };
 
-	if (!target || !params[0]) 
+	if (!target || !params[0] || !params[0][0]) 
 		return -1;
 	return gg_command_msg(("chat"), p, session, target, quiet);
 }

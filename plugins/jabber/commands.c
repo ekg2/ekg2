@@ -448,7 +448,7 @@ msgdisplay:
 static COMMAND(jabber_command_inline_msg)
 {
 	const char *p[2] = { NULL, params[0] };
-	if (!params[0] || !target)
+	if (!params[0] || !params[0][0] || !target)
 		return -1;
 	return jabber_command_msg(("chat"), p, session, target, quiet);
 }
@@ -2432,7 +2432,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:xa", "r", jabber_command_away,	JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "xmpp:xml", "!", jabber_command_xml,	JABBER_ONLY, NULL);
 
-	command_add(&jabber_plugin, "tlen:", "?",		jabber_command_inline_msg,	JABBER_ONLY, NULL);
+	command_add(&jabber_plugin, "tlen:", "?",		jabber_command_inline_msg,	JABBER_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&jabber_plugin, "tlen:_autoaway", "r",	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "tlen:_autoxa", "r",	jabber_command_away,		JABBER_ONLY, NULL);
 	command_add(&jabber_plugin, "tlen:_autoback", "r",	jabber_command_away,		JABBER_ONLY, NULL);
