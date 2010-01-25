@@ -1741,7 +1741,7 @@ static COMMAND(irc_command_names) {
 	else
 		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2));
 	debug("[IRC_NAMES] levelcounts = %d %d %d %d\n",
-			lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3], lvl_total[4]);
+			lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3]);
 #undef plvl
 
 	array_free(mp);
