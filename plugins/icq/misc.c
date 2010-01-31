@@ -603,8 +603,7 @@ void icq_pack_append_client_identification(string_t pkt) {
 	/*
 	 * Pack client identification details.
 	 */
-	icq_pack_append(pkt, "T", icq_pack_tlv_str(0x03, "ICQ Client"));		// TLV(0x03) - client id string
-
+	icq_pack_append(pkt, "T",  icq_pack_tlv_str(0x03, CLIENT_ID_STRING));		// TLV(0x03) - client id string
 	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x16, CLIENT_ID_CODE));		// TLV(0x16) - client id
 	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x17, CLIENT_VERSION_MAJOR));	// TLV(0x17) - client major version
 	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x18, CLIENT_VERSION_MINOR));	// TLV(0x18) - client minor version

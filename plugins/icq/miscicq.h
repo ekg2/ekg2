@@ -41,10 +41,10 @@
 #define STATUSF_ICQNA	     0x00000004
 
 // Client identification
-#define CLIENT_ID_STRING	    "ICQ Client"  // Mimic ICQ 6
-#define CLIENT_ID_CODE		    0x010a
-#define CLIENT_VERSION_MAJOR	    0x0006
-#define CLIENT_VERSION_MINOR	    0x0000
+#define CLIENT_ID_STRING	    "EKG2"
+#define CLIENT_ID_CODE		    0x0001
+#define CLIENT_VERSION_MAJOR	    0x0000
+#define CLIENT_VERSION_MINOR	    0x0002
 #define CLIENT_VERSION_LESSER	    0x0000
 #define CLIENT_VERSION_BUILD	    0x17AB
 #define CLIENT_DISTRIBUTION	    0x00007535
