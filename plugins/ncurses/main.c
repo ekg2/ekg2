@@ -812,7 +812,7 @@ EXPORT int ncurses_plugin_init(int prio)
 
 	if (termtype) {
 		/* determine window title setting support */
-		if (!xstrcasecmp(termtype, "screen"))
+		if (!xstrncasecmp(termtype, "screen", 6))
 			ncurses_settitle = 2;
 		else if (!xstrncasecmp(termtype, "xterm", 5) || !xstrncasecmp(termtype, "rxvt", 4) || !xstrncasecmp(termtype, "gnome", 5)
 				|| ((*termtype == 'E' || *termtype == 'a' || *termtype == 'k') && !xstrcasecmp(termtype+1, "term")))
