@@ -428,7 +428,7 @@ bac_countupd:
 	}
 
 	b		= xmalloc(sizeof(struct buffer));
-	b->ts		= time(NULL);
+	b->ts		= ts;
 	b->target	= xstrdup(target);
 	b->line		= xstrdup(line);
 
