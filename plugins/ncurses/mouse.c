@@ -287,7 +287,7 @@ static int ncurses_has_mouse_support(const char *term) {
 		return 2;
 #endif
 #ifndef HAVE_USABLE_TERMINFO
-	if (!xstrncmp(term, "xterm", 5) || !xstrncmp(term, "screen", 6))
+	if (!xstrncmp(term, "xterm", 5) || !xstrncmp(term, "rxvt", 4) || !xstrncmp(term, "screen", 6))
 		return 2;
 #endif
 
