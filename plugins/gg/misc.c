@@ -61,6 +61,16 @@ int gg_status_to_text(int status)
 		case GG_STATUS_INVISIBLE_DESCR:
 			return EKG_STATUS_INVISIBLE;
 
+#ifdef GG_FEATURE_DND_FFC
+		case GG_STATUS_DND:
+		case GG_STATUS_DND_DESCR:
+			return EKG_STATUS_DND;
+
+		case GG_STATUS_FFC:
+		case GG_STATUS_FFC_DESCR:
+			return EKG_STATUS_FFC;
+#endif
+
 		case GG_STATUS_BLOCKED:
 			return EKG_STATUS_BLOCKED;
 	}
@@ -83,6 +93,10 @@ int gg_text_to_status(const int status, const char *descr)
 	GG_TTS(AVAIL, AVAIL)
 	GG_TTS(AWAY, BUSY) /* I think we don't need to care about Jabber aways */
 	GG_TTS(INVISIBLE, INVISIBLE)
+#ifdef GG_FEATURE_DND_FFC
+	GG_TTS(DND, DND)
+	GG_TTS(FFC, FFC)
+#endif
 #undef GG_TTS
 	if (status == EKG_STATUS_BLOCKED) return GG_STATUS_BLOCKED;
 

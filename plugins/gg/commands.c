@@ -214,6 +214,9 @@ static COMMAND(gg_command_connect) {
 		p.uin = uin;
 		p.password = (char*) password;
 		p.image_size = gg_config_image_size;
+#ifdef GG_FEATURE_DND_FFC
+		p.protocol_features = GG_FEATURE_STATUS80 | GG_FEATURE_DND_FFC;
+#endif
 
 		_status = GG_S(_status);
 		if (session_int_get(session, "private"))
@@ -400,6 +403,16 @@ static COMMAND(gg_command_away) {
 		session_status_set(session, EKG_STATUS_INVISIBLE);
 		df = EKG_STATUS_NA; f = "invisible"; fd = "invisible_descr";
 		session_unidle(session);
+#ifdef GG_FEATURE_DND_FFC
+	} else if (!xstrcmp(name, ("dnd"))) {
+		session_status_set(session, EKG_STATUS_DND);
+		df = EKG_STATUS_NA; f = "dnd"; fd = "dnd_descr";
+		session_unidle(session);
+	} else if (!xstrcmp(name, ("ffc"))) {
+		session_status_set(session, EKG_STATUS_FFC);
+		df = EKG_STATUS_NA; f = "ffc"; fd = "ffc_descr";
+		session_unidle(session);
+#endif
 	} else {
 		xfree(params0);
 		return -1;
@@ -1809,6 +1822,10 @@ void gg_register_commands()
 	command_add(&gg_plugin, ("gg:away"), "r", gg_command_away,		GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:_autoaway"), "?", gg_command_away,			GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:back"), "r", gg_command_away,		GG_ONLY, NULL);
+#ifdef GG_FEATURE_DND_FFC
+	command_add(&gg_plugin, ("gg:dnd"), "r", gg_command_away,		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:ffc"), "r", gg_command_away,		GG_ONLY, NULL);
+#endif
 	command_add(&gg_plugin, ("gg:_autoback"), "?", gg_command_away,			GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:_autoscroll"), "?", gg_command_away,	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:check_conn"), "!uUC", gg_command_check_conn,	GG_FLAGS_TARGET, NULL);
