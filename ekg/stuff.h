@@ -211,6 +211,7 @@ extern int config_save_password;
 extern int config_save_quit;
 extern char *config_session_default;
 extern int config_sessions_save;
+extern int config_send_white_lines;
 extern int config_sort_windows;
 extern char *config_sound_app;
 extern char *config_sound_chat_file;

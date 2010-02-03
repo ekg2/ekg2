@@ -448,7 +448,7 @@ msgdisplay:
 static COMMAND(jabber_command_inline_msg)
 {
 	const char *p[2] = { NULL, params[0] };
-	if (!params[0] || !params[0][0] || !target)
+	if (!params[0] || !target)
 		return -1;
 	return jabber_command_msg(("chat"), p, session, target, quiet);
 }

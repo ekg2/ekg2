@@ -616,7 +616,7 @@ static COMMAND(polchat_command_inline_msg) {
 	if (!session->connected)
 		return -1;
 
-	if (!target || !params[0] || !params[0][0])
+	if (!target || !params[0])
 		return -1;
 
 	return polchat_command_msg(("msg"), p, session, target, quiet);

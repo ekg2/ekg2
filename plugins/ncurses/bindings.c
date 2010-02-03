@@ -228,7 +228,7 @@ static BINDING_FUNCTION(binding_delete_char)
 				
 static BINDING_FUNCTION(binding_accept_line)
 {
-	char *txt;
+	char *p, *txt;
 
 	if (ncurses_noecho) { /* we are running ui-password-input */
 		ncurses_noecho = 0;
@@ -259,7 +259,10 @@ static BINDING_FUNCTION(binding_accept_line)
 		return;
 	}
 	if (arg != BINDING_HISTORY_NOEXEC) {
-		command_exec(window_current->target, window_current->session, (txt = wcs_to_normal(line)), 0);
+               txt = wcs_to_normal(line);
+               for (p=txt; *p && isspace(*p); p++);
+               if (*p || config_send_white_lines)
+                       command_exec(window_current->target, window_current->session, txt, 0);
 		free_utf(txt);
 	}
 

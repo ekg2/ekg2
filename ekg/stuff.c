@@ -167,6 +167,7 @@ int config_save_quit = 1;
 char *config_timestamp = NULL;
 int config_timestamp_show = 1;
 int config_display_sent = 1;
+int config_send_white_lines = 0;
 int config_sort_windows = 1;
 int config_keep_reason = 1;
 char *config_audio_device = NULL;

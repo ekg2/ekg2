@@ -353,6 +353,7 @@ char *my_readline()
 int ui_readline_loop()
 {
 	char *line = my_readline();
+	char *p;
 
 	/* je¶li wci¶niêto Ctrl-D i jeste¶my w query, wyjd¼my */
 	if (!line && window_current->target) {
@@ -414,7 +415,9 @@ int ui_readline_loop()
 	
 	pager_lines = 0;
 		
-	command_exec(window_current->target, window_current->session, line, 0);
+	for (p=line; *p && isspace(*p); p++);
+	if (*p || config_send_white_lines)
+		command_exec(window_current->target, window_current->session, line, 0);
 
 	pager_lines = -1;
 
