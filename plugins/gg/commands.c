@@ -225,9 +225,6 @@ static COMMAND(gg_command_connect) {
 		if ((tmpi = session_int_get(session, "protocol")) != -1)
 			p.protocol_version = tmpi;
 
-		if ((tmpi = session_int_get(session, "last_sysmsg")) != -1)
-			p.last_sysmsg = tmpi;
-
 		while (realserver) {
 			in_addr_t tmp_in;
 			
