@@ -363,10 +363,6 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 				case GG_STATUS_BUSY_DESCR:
 					fvalue = format_find(__format("_away"));
 					break;
-				case GG_STATUS_INVISIBLE:
-				case GG_STATUS_INVISIBLE_DESCR:
-					fvalue = format_find(__format("_invisible"));
-					break;
 				default:
 					fvalue = format_find(__format("_notavail"));
 			}
