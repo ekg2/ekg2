@@ -96,7 +96,7 @@ COMMAND(gg_command_find)
 	uargv = xcalloc(array_count(argv)+1, sizeof(char **));
 
 	for (i = 0; argv[i]; i++)
-		uargv[i] = ekg_locale_to_cp_use(argv[i]);
+		uargv[i] = LOCALE_TO_GG_USE(argv[i]);
 
 	for (i = 0; argv[i]; i++) {
 		char *arg = argv[i];
@@ -212,7 +212,7 @@ COMMAND(gg_command_change)
 		char **argv = array_make(params[0], (" \t"), 0, 1, 1);
 		
 		for (i = 0; argv[i]; i++)
-			argv[i] = ekg_locale_to_cp(argv[i]);
+			argv[i] = LOCALE_TO_GG(argv[i]);
 
 		for (i = 0; argv[i]; i++) {
 			if (match_arg(argv[i], 'f', ("first"), 2) && argv[i + 1]) {
@@ -325,10 +325,10 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		const char *__birthyear = gg_pubdir50_get(res, i, "birthyear");
 		const char *__city	= gg_pubdir50_get(res, i, "city");
 
-		char *firstname		= ekg_cp_to_locale_dup(__firstname);
-		char *lastname		= ekg_cp_to_locale_dup(__lastname);
-		char *nickname		= ekg_cp_to_locale_dup(__nickname);
-		char *city		= ekg_cp_to_locale_dup(__city);
+		char *firstname		= GG_TO_LOCALE_DUP(__firstname);
+		char *lastname		= GG_TO_LOCALE_DUP(__lastname);
+		char *nickname		= GG_TO_LOCALE_DUP(__nickname);
+		char *city		= GG_TO_LOCALE_DUP(__city);
 		int status		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
 		const char *birthyear	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
 

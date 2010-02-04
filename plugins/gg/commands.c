@@ -115,11 +115,11 @@ static COMMAND(gg_command_connect) {
 			if (__reason) {
 				if (!xstrcmp(__reason, "-"))	myreason = NULL;
 				else				myreason = xstrdup(__reason);
-				tmp = ekg_locale_to_cp_dup(myreason);
+				tmp = LOCALE_TO_GG_DUP(myreason);
 				session_descr_set(session, tmp ? myreason : NULL);
 			} else {
 				myreason = xstrdup(session_descr_get(session));
-				tmp = ekg_locale_to_cp_dup(myreason);
+				tmp = LOCALE_TO_GG_DUP(myreason);
 			}
 			if (tmp)
 				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
@@ -214,6 +214,9 @@ static COMMAND(gg_command_connect) {
 		p.uin = uin;
 		p.password = (char*) password;
 		p.image_size = gg_config_image_size;
+#ifdef GG_ENCODING_UTF8
+		p.encoding = GG_ENCODING_UTF8;
+#endif
 #ifdef GG_FEATURE_DND_FFC
 		p.protocol_features = GG_FEATURE_STATUS80 | GG_FEATURE_DND_FFC;
 #endif
@@ -324,9 +327,9 @@ noproxy:
 			xfree(fwd);
 		}
 		
-		/* moved this further, because of ekg_locale_to_cp() allocation */
+		/* moved this further, because of LOCALE_TO_GG() allocation */
 		p.status = _status;
-		p.status_descr = ekg_locale_to_cp_dup(session_descr_get(session));
+		p.status_descr = LOCALE_TO_GG_DUP(session_descr_get(session));
 		p.async = 1;
 
 		g->sess = gg_login(&p);
@@ -416,7 +419,7 @@ static COMMAND(gg_command_away) {
 	}
 
 	if (params0) {
-		char *tmp = ekg_locale_to_cp_dup(params0);
+		char *tmp = LOCALE_TO_GG_DUP(params0);
 		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
 			if (!timeout) {
 				char *descr_poss = xstrndup(params0, GG_STATUS_DESCR_MAXSIZE);
@@ -514,7 +517,7 @@ static COMMAND(gg_command_away) {
 
 	ekg_update_status(session);
 
-	cpdescr = ekg_locale_to_cp(descr);
+	cpdescr = LOCALE_TO_GG(descr);
 	_status = GG_S(gg_text_to_status(status, cpdescr)); /* descr can be NULL it doesn't matter... */
 
 	if (session_int_get(session, "private"))
@@ -743,7 +746,7 @@ static COMMAND(gg_command_msg) {
 	}
 
 	raw_msg = xstrdup((char *) msg);
-	cpmsg = ekg_locale_to_cp((char *) msg);
+	cpmsg = LOCALE_TO_GG((char *) msg);
 
 	count = array_count(nicks);
 

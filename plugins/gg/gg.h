@@ -84,6 +84,24 @@ typedef struct {
 
 #define gg_userlist_priv_get(u) ((gg_userlist_private_t *) userlist_private_get(&gg_plugin, u))
 
+#ifdef GG_FEATURE_MSG80
+    #define GG_TO_LOCALE ekg_utf8_to_locale
+    #define GG_TO_LOCALE_DUP ekg_utf8_to_locale_dup
+    #define LOCALE_TO_GG ekg_locale_to_utf8
+    #define LOCALE_TO_GG_DUP ekg_locale_to_utf8_dup
+    #define LOCALE_TO_GG_USE ekg_locale_to_utf8_use
+    #define RECODE_GG_DEC ekg_recode_utf8_dec
+    #define RECODE_GG_INC ekg_recode_utf8_inc
+#else
+    #define GG_TO_LOCALE ekg_cp_to_locale
+    #define GG_TO_LOCALE_DUP ekg_cp_to_locale_dup
+    #define LOCALE_TO_GG ekg_locale_to_cp
+    #define LOCALE_TO_GG_DUP ekg_locale_to_cp_dup
+    #define LOCALE_TO_GG_USE ekg_locale_to_cp_use
+    #define RECODE_GG_DEC ekg_recode_cp_dec
+    #define RECODE_GG_INC ekg_recode_cp_inc
+#endif
+
 #endif /* __EKG_GG_GG_H */
 
 /*
