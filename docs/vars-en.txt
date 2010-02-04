@@ -2,20 +2,20 @@ dcc_dir
         type: text
         default value: none
 
-        set catalogue, in which files will be saved.
+        Set catalogue, in which files will be saved.
 
 display_crap
 	type: bool
 	default value: 1
 	
-	defines if information which weren't connected with interlocutor will be displayed in chat window. 
+	Defines if information which weren't connected with interlocutor will be displayed in chat window. 
 	If it's 0, in chat window information only about interlocutor status are displayed.
 
 display_notify
 	type: integer
 	default value: 1
 	
-	a value of 0 causes state changes of your contacts to be ignored, a
+	A value of 0 causes state changes of your contacts to be ignored, a
 	value of 1 causes all state changes to be displayed, and a value of 2
 	causes only state changes from unavailable to available and back to be
 	displayed. A session variable with the same name has a higher priority
@@ -32,13 +32,13 @@ history_savedups
 	type: integer
 	default value: 1
 
-	if set to 0, don't save lines matching the previous history entry
+	If set to 0, don't save lines matching the previous history entry
 
 send_white_lines
 	type: bool
 	default value: 0
 	
-	defines how to handle messages containing whitespaces only. If set
+	Defines how to handle messages containing whitespaces only. If set
 	to 0, ekg2 won't send such messages. If set to 1, ekg2 will send them.
 	Enable it if you are whitespace programmer. Otherwise it is save to
 	set it to 0.
