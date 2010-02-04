@@ -34,6 +34,15 @@ history_savedups
 
 	if set to 0, don't save lines matching the previous history entry
 
+send_white_lines
+	type: bool
+	default value: 0
+	
+	defines how to handle messages containing whitespaces only. If set
+	to 0, ekg2 won't send such messages. If set to 1, ekg2 will send them.
+	Enable it if you are whitespace programmer. Otherwise it is save to
+	set it to 0.
+
 session_locks
 	type: int
 	default value: 1

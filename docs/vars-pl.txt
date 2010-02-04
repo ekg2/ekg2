@@ -286,6 +286,16 @@ save_quit
 	zapisywana, je¿eli 1 to pojawia siê pytanie, je¿eli 2 to konfiguracja
 	zapisana jest bez pytania 
 
+send_white_lines
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	okre¶la czy ekg2 ma wysy³aæ linie sk³adaj±ce siê wy³±cznie z bia³ych
+	znaków. Je¿eli 0, ekg2 zignoruje wiadomo¶ci sk³adaj±ce siê wy³±cznie
+	z bia³ych znaków. Je¿eli 1, ekg2 bêdzie wysy³a³o takie wiadomo¶ci.
+	W³±cz tê opcjê, je¿eli jeste¶ programist± whitespace. W przeciwnym
+	wypadku mo¿esz pozostawiæ j± wy³±czon±.
+
 session_locks
 	typ: liczba
 	domy¶lna warto¶æ: 1
