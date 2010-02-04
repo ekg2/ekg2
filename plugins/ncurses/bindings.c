@@ -103,7 +103,7 @@ static BINDING_FUNCTION(binding_toggle_input)
 		ncurses_input_update();
 	} else {
 		string_t s = string_init((""));
-		char *tmp;
+		char *p, *tmp;
 		int i;
 	
 		for (i = 0; lines[i]; i++) {
@@ -129,7 +129,9 @@ static BINDING_FUNCTION(binding_toggle_input)
 		input_size = 1;
 		ncurses_input_update();
 
-		command_exec(window_current->target, window_current->session, tmp, 0);
+		for (p=tmp; *p && isspace(*p); p++);
+                if (*p || config_send_white_lines)
+			command_exec(window_current->target, window_current->session, tmp, 0);
 
 		if (!tmp[0] || tmp[0] == '/' || !window_current->target)
 			ncurses_typing_mod		= 1;
