@@ -137,7 +137,7 @@ COMMAND(gg_command_register)
 	} else if (!(passwd_b = password_input(NULL, NULL, 0)))
 			return -1;
 
-	passwd = LOCALE_TO_GG_DUP(passwd_b);	/* XXX danger!!! ?WO? */
+	passwd = ekg_locale_to_cp_dup(passwd_b);
 	
 	if (!(h = gg_register3(params[0], passwd, last_tokenid, params[1], 1))) {
 		xfree(passwd);
@@ -225,7 +225,7 @@ COMMAND(gg_command_unregister)
 		printq("unregister_bad_uin", params[0]);
 		return -1;
 	}
-	passwd = LOCALE_TO_GG_DUP(params[1]);	/* XXX danger!!! ?WO? */
+	passwd = ekg_locale_to_cp_dup(params[1]);
 
 	if (!(h = gg_unregister3(uin, passwd, last_tokenid, params[2], 1))) {
 		printq("unregister_failed", strerror(errno));
@@ -366,13 +366,13 @@ COMMAND(gg_command_passwd) {
 #else
 	if (!params[0]) {
 #endif
-		newpasswd = LOCALE_TO_GG(password_input(NULL, NULL, 0));	/* XXX danger!!! ?WO? */
+		newpasswd = ekg_locale_to_cp(password_input(NULL, NULL, 0));
 		if (!newpasswd)
 			return -1;
 	} else
-		newpasswd = LOCALE_TO_GG_DUP(params[0]);			/* XXX danger!!! ?WO? */
+		newpasswd = ekg_locale_to_cp_dup(params[0]);
 
-	oldpasswd = LOCALE_TO_GG_DUP(session_get(session, "password"));		/* XXX danger!!! ?WO? */
+	oldpasswd = ekg_locale_to_cp_dup(session_get(session, "password"));
 
 #ifdef HAVE_GG_CHANGE_PASSWD4 
 	if (!(h = gg_change_passwd4(atoi(session->uid + 3), config_email, (oldpasswd) ? oldpasswd : "", newpasswd, last_tokenid, params[1] ? params[1] : params[0], 1)))
@@ -628,7 +628,7 @@ COMMAND(gg_command_list)
 		}
 #endif
 		contacts	= gg_userlist_dump(session);
-		cpcontacts	= LOCALE_TO_GG(contacts);
+		cpcontacts	= ekg_locale_to_cp(contacts);
 
 		if (gg_userlist_request(g->sess, GG_USERLIST_PUT, cpcontacts) == -1) {
 			printq("userlist_put_error", strerror(errno));

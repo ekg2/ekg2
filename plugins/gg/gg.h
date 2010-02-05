@@ -90,8 +90,8 @@ typedef struct {
     #define LOCALE_TO_GG ekg_locale_to_utf8
     #define LOCALE_TO_GG_DUP ekg_locale_to_utf8_dup
     #define LOCALE_TO_GG_USE ekg_locale_to_utf8_use
-    #define RECODE_GG_DEC ekg_recode_utf8_dec
-    #define RECODE_GG_INC ekg_recode_utf8_inc
+    #define RECODE_GG_DEC() ekg_recode_utf8_dec(); ekg_recode_cp_dec();
+    #define RECODE_GG_INC() ekg_recode_utf8_inc(); ekg_recode_cp_inc();
 #else
     #define GG_TO_LOCALE ekg_cp_to_locale
     #define GG_TO_LOCALE_DUP ekg_cp_to_locale_dup
