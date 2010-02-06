@@ -275,6 +275,7 @@ if env['STATIC']:
 	defines['STATIC_LIBS'] = True
 else:
 	defines['SHARED_LIBS'] = True
+	defines['SKIP_RELATIVE_PLUGINS_DIR'] = False
 defines['USE_UNICODE'] = env['UNICODE']
 try:
 	defines['VER_DISTNOTES'] = env['DISTNOTES']

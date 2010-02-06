@@ -579,6 +579,18 @@ else
  	COMMON_PLUGINS_CFLAGS="-DPLUGIN_SHARED_LIBS"
 dnl 	LIBS="$LIBS -no-undefined"
 fi
+
+AC_ARG_ENABLE([skip_relative_plugins_dir],
+    AC_HELP_STRING([--enable-skip-relative-plugins-dir], [Do not load plugins from directories relative to CWD]),
+    [
+        if test "x$enableval" = "xno"; then
+            : do not define the macro
+        else
+            AC_MSG_NOTICE([plugins will not be loaded from relative directories])
+            AC_DEFINE([SKIP_RELATIVE_PLUGINS_DIR], 1, [Do not load plugins from directories relative to CWD])
+        fi
+    ]
+)
  
 AC_OUTPUT
 
