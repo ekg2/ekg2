@@ -1710,8 +1710,7 @@ static COMMAND(cmd_set)
 
 		for (v = variables; v; v = v->next) {
 			if ((!arg || !xstrcasecmp(arg, v->name)) && (v->display != 2 || xstrcmp(name, ("set")))) {
-				char *string = *(char**)(v->ptr);
-				int value = *(int*)(v->ptr);
+				int value;
 
 				if (!show_all && !arg && v->dyndisplay && !((v->dyndisplay)(v->name)))
 					continue;
@@ -1723,6 +1722,7 @@ static COMMAND(cmd_set)
 				}
 
 				if (v->type == VAR_STR || v->type == VAR_FILE || v->type == VAR_DIR || v->type == VAR_THEME) {
+					char *string = *(char**)(v->ptr);
 					char *tmp = (string) ? saprintf(("\"%s\""), string) : ("(none)");
 
 					printq("variable", v->name, tmp);
@@ -1730,6 +1730,12 @@ static COMMAND(cmd_set)
 					if (string)
 						xfree(tmp);
 				}
+
+				/* We delay variable initialization until the
+				 * type is known to be such that is properly
+				 * aligned for reading an int.
+				 */
+				value = *(int*)(v->ptr);
 
 				if (v->type == VAR_BOOL)
 					printq("variable", v->name, (value) ? ("1 (on)") : ("0 (off)"));
