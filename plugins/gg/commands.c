@@ -214,7 +214,7 @@ static COMMAND(gg_command_connect) {
 		p.uin = uin;
 		p.password = (char*) password;
 		p.image_size = gg_config_image_size;
-#ifdef GG_ENCODING_UTF8
+#ifdef GG_FEATURE_MSG80
 		p.encoding = GG_ENCODING_UTF8;
 #endif
 #ifdef GG_FEATURE_DND_FFC
