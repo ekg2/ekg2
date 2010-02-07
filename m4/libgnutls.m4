@@ -11,37 +11,51 @@ dnl Test for libgnutls, and define LIBGNUTLS_CFLAGS and LIBGNUTLS_LIBS
 dnl
 AC_DEFUN([AM_PATH_LIBGNUTLS],
 [dnl
-dnl Get the cflags and libraries from the libgnutls-config script
+dnl Get the cflags and libraries from pkg-config
 dnl
-	AC_ARG_WITH(libgnutls-prefix, 	AC_HELP_STRING([--with-libgnutls-prefix=[dir]],	[Prefix where libgnutls is installed (optional)]),
-          libgnutls_config_prefix="$withval", libgnutls_config_prefix="")
 
-  if test x$libgnutls_config_prefix != x ; then
-     if test x${LIBGNUTLS_CONFIG+set} != xset ; then
-        LIBGNUTLS_CONFIG=$libgnutls_config_prefix/bin/libgnutls-config
-     fi
+  pkg_config_args=gnutls
+  no_libgnutls=""
+
+  AC_PATH_PROG(PKG_CONFIG, pkg-config, no)
+
+  if test x$PKG_CONFIG != xno ; then
+    if pkg-config --atleast-pkgconfig-version 0.7 ; then
+      :
+    else
+      echo "*** pkg-config too old; version 0.7 or better required."
+      no_libgnutls=yes
+      PKG_CONFIG=no
+    fi
+  else
+    no_libgnutls=yes
   fi
 
-  AC_PATH_PROG(LIBGNUTLS_CONFIG, libgnutls-config, no)
   min_libgnutls_version=ifelse([$1], ,0.1.0,$1)
   AC_MSG_CHECKING(for libgnutls - version >= $min_libgnutls_version)
-  no_libgnutls=""
-  if test "$LIBGNUTLS_CONFIG" = "no" ; then
-    no_libgnutls=yes
-  else
-    LIBGNUTLS_CFLAGS=`$LIBGNUTLS_CONFIG $libgnutls_config_args --cflags`
-    LIBGNUTLS_LIBS=`$LIBGNUTLS_CONFIG $libgnutls_config_args --libs`
-    libgnutls_config_version=`$LIBGNUTLS_CONFIG $libgnutls_config_args --version`
+
+  if test x$PKG_CONFIG != xno ; then
+    if $PKG_CONFIG --exists $pkg_config_args; then
+      :
+    else
+      no_libgnutls=yes
+    fi
+  fi
+
+  if test x"$no_libgnutls" = x ; then
+    LIBGNUTLS_CFLAGS=`$PKG_CONFIG --cflags $pkg_config_args`
+    LIBGNUTLS_LIBS=`$PKG_CONFIG --libs $pkg_config_args`
+    libgnutls_config_version=`$PKG_CONFIG --modversion $pkg_config_args`
+
     AC_DEFINE([HAVE_GNUTLS], 1, [define if you have GnuTLS])
     have_gnutls="yes"
 
-      ac_save_CFLAGS="$CFLAGS"
-      ac_save_LIBS="$LIBS"
-      CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
-      LIBS="$LIBS $LIBGNUTLS_LIBS"
+    ac_save_CFLAGS="$CFLAGS"
+    ac_save_LIBS="$LIBS"
+    CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
+    LIBS="$LIBS $LIBGNUTLS_LIBS"
 dnl
-dnl Now check if the installed libgnutls is sufficiently new. Also sanity
-dnl checks the results of libgnutls-config to some extent
+dnl Now check if the installed libgnutls is sufficiently new.
 dnl
       rm -f conf.libgnutlstest
       AC_TRY_RUN([
@@ -57,16 +71,12 @@ main ()
 
     if( strcmp( gnutls_check_version(NULL), "$libgnutls_config_version" ) )
     {
-      printf("\n*** 'libgnutls-config --version' returned %s, but LIBGNUTLS (%s)\n",
+      printf("\n*** 'pkg-config --modversion' returned %s, but LIBGNUTLS (%s)  was found!\n",
              "$libgnutls_config_version", gnutls_check_version(NULL) );
-      printf("*** was found! If libgnutls-config was correct, then it is best\n");
-      printf("*** to remove the old version of LIBGNUTLS. You may also be able to fix the error\n");
+      printf("*** Remove the old version of LIBGNUTLS. You may also be able to fix the error\n");
       printf("*** by modifying your LD_LIBRARY_PATH enviroment variable, or by editing\n");
       printf("*** /etc/ld.so.conf. Make sure you have run ldconfig if that is\n");
       printf("*** required on your system.\n");
-      printf("*** If libgnutls-config was wrong, set the environment variable LIBGNUTLS_CONFIG\n");
-      printf("*** to point to the correct copy of libgnutls-config, and remove the file config.cache\n");
-      printf("*** before re-running configure\n");
     }
     else if ( strcmp(gnutls_check_version(NULL), LIBGNUTLS_VERSION ) )
     {
@@ -86,14 +96,6 @@ main ()
         printf("*** You need a version of LIBGNUTLS newer than %s. The latest version of\n",
                "$min_libgnutls_version" );
         printf("*** LIBGNUTLS is always available from ftp://gnutls.hellug.gr/pub/gnutls.\n");
-        printf("*** \n");
-        printf("*** If you have already installed a sufficiently new version, this error\n");
-        printf("*** probably means that the wrong copy of the libgnutls-config shell script is\n");
-        printf("*** being found. The easiest way to fix this is to remove the old version\n");
-        printf("*** of LIBGNUTLS, but you can also set the LIBGNUTLS_CONFIG environment to point to the\n");
-        printf("*** correct copy of libgnutls-config. (In this case, you will have to\n");
-        printf("*** modify your LD_LIBRARY_PATH enviroment variable, or edit /etc/ld.so.conf\n");
-        printf("*** so that the correct libraries are found at run-time))\n");
       }
     }
   return 1;
@@ -111,20 +113,10 @@ main ()
         :
      else
         AC_MSG_RESULT(no)
-     fi
-     if test "$LIBGNUTLS_CONFIG" = "no" ; then
-       echo "*** The libgnutls-config script installed by LIBGNUTLS could not be found"
-       echo "*** If LIBGNUTLS was installed in PREFIX, make sure PREFIX/bin is in"
-       echo "*** your path, or set the LIBGNUTLS_CONFIG environment variable to the"
-       echo "*** full path to libgnutls-config."
-     else
-       if test -f conf.libgnutlstest ; then
-        :
-       else
-          echo "*** Could not run libgnutls test program, checking why..."
-          CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
-          LIBS="$LIBS $LIBGNUTLS_LIBS"
-          AC_TRY_LINK([
+        echo "*** Could not run libgnutls test program, checking why..."
+        CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
+        LIBS="$LIBS $LIBGNUTLS_LIBS"
+        AC_TRY_LINK([
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -142,12 +134,11 @@ main ()
           echo "***" ],
         [ echo "*** The test program failed to compile or link. See the file config.log for the"
           echo "*** exact error that occured. This usually means LIBGNUTLS was incorrectly installed"
-          echo "*** or that you have moved LIBGNUTLS since it was installed. In the latter case, you"
-          echo "*** may want to edit the libgnutls-config script: $LIBGNUTLS_CONFIG" ])
+          echo "*** or that you have moved LIBGNUTLS since it was installed." ])
           CFLAGS="$ac_save_CFLAGS"
           LIBS="$ac_save_LIBS"
-       fi
      fi
+
      LIBGNUTLS_CFLAGS=""
      LIBGNUTLS_LIBS=""
      ifelse([$3], , :, [$3])
