@@ -1622,7 +1622,7 @@ void update_statusbar(int commit)
 	session_t *sess = window_current->session;
 	userlist_t *q = userlist_find(sess, window_current->target);
 
-	char *query_tmp;
+	char *query_tmp, *tmp;
 	char *irctopic, *irctopicby, *ircmode;
 	int mail_count;
 
@@ -1711,7 +1711,17 @@ void update_statusbar(int commit)
 #undef __add_format_emp_st
 
 		__add_format_emp("typing", q->typing);
-		__add_format_dup("query_descr", (q->descr), q->descr);
+
+		tmp = NULL;
+		if (q->descr) {
+			char *p;
+			tmp = xstrdup(q->descr);
+			while ((p=xstrstr(tmp, "\015\012"))) xstrcpy(p, p+1);	/* dos2unix */
+			while ((p=xstrchr(tmp,'\n'))) *p = ' ';			/* all in 1 line */
+		}
+		__add_format_dup("query_descr", (tmp), tmp);
+		xfree(tmp);
+
 		__add_format_dup("query_ip", 1, ip);
 	}
 
