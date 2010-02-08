@@ -221,6 +221,7 @@ opts.Add(BoolOption('UNICODE', 'Enable unicode support', True))
 opts.Add(BoolOption('RESOLV', 'Use libresolv-based domain resolver with SRV support', True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
+opts.Add(BoolOption('RELPLUGINS', 'Support loading plugins from paths relative to cwd', True))
 opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared', False))
 opts.Add(BoolOption('SKIPCONF', 'Restore previous environment and skip configure if possible', False))
 opts.Add(BoolOption('SKIPCHECKS', 'Skip non-essential checks during configure (assuming they succeed)', False))
@@ -275,7 +276,7 @@ if env['STATIC']:
 	defines['STATIC_LIBS'] = True
 else:
 	defines['SHARED_LIBS'] = True
-	defines['SKIP_RELATIVE_PLUGINS_DIR'] = False
+	defines['SKIP_RELATIVE_PLUGINS_DIR'] = not env['RELPLUGINS']
 defines['USE_UNICODE'] = env['UNICODE']
 try:
 	defines['VER_DISTNOTES'] = env['DISTNOTES']
