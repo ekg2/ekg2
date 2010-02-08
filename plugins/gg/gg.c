@@ -51,7 +51,6 @@
 #include <ekg/vars.h>
 #include <ekg/xmalloc.h>
 #include <ekg/log.h>
-#include <ekg/recode.h>
 
 #include <ekg/queries.h>
 
@@ -671,7 +670,7 @@ static void gg_session_handler_success(session_t *s) {
 	descr = xstrdup(session_descr_get(s));
 	status = session_status_get(s);
 
-	cpdescr = LOCALE_TO_GG(descr);
+	cpdescr = locale_to_gg(s, descr);
 
 	/* ustawiamy swój status */
 	_status = GG_S(gg_text_to_status(status, s->descr ? cpdescr : NULL));
@@ -760,7 +759,7 @@ static void gg_session_handler_disconnect(session_t *s) {
  */
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol) {
 	char *__uid	= saprintf(("gg:%d"), uin);
-	char *__descr	= GG_TO_LOCALE(xstrdup(descr));
+	char *__descr	= gg_to_locale(s, xstrdup(descr));
 	int i, j, dlen, state = 0, m = 0;
 
 	{
@@ -868,7 +867,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	for (i = 0; i < e->event.msg.recipients_count; i++)
 		array_add(&__rcpts, saprintf("gg:%d", e->event.msg.recipients[i]));
 
-	__text = GG_TO_LOCALE(xstrdup((const char *) e->event.msg.message));
+	__text = gg_to_locale(s, xstrdup((const char *) e->event.msg.message));
 
 	if (e->event.msg.formats && e->event.msg.formats_length) {
 		unsigned char *p = e->event.msg.formats;
@@ -1153,7 +1152,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 
 					gg_remove_notify_ex(g->sess, str_to_uin(parsed + 1), gg_userlist_type(u));
 				}
-				reply = ekg_cp_to_locale(xstrdup(e->event.userlist.reply));
+				reply = gg_to_locale(s, xstrdup(e->event.userlist.reply));
 				gg_userlist_set(s, reply);
 				xfree(reply);
 				gg_userlist_send(g->sess, s->userlist);
@@ -1442,7 +1441,7 @@ static void gg_changed_private(session_t *s, const char *var) {
 	if (!s || !s->connected || !(g = s->priv))
 		return;
 
-	cpdescr = LOCALE_TO_GG(xstrdup(s->descr));
+	cpdescr = locale_to_gg(s, xstrdup(s->descr));
 	status	= gg_text_to_status(s->status, cpdescr);	/* XXX, check if gg_text_to_status() return smth correct */
 
 	if (session_int_get(s, "private") > 0)
@@ -1512,7 +1511,7 @@ static void gg_changed_proxy(session_t *s, const char *var) {
 
 static void gg_statusdescr_handler(session_t *s, const char *varname) {
 	gg_private_t	*g		= session_private_get(s);
-	char		*cpdescr	= LOCALE_TO_GG(xstrdup(session_descr_get(s)));
+	char		*cpdescr	= locale_to_gg(s, xstrdup(session_descr_get(s)));
 	int		_status		= GG_S(gg_text_to_status(session_status_get(s), cpdescr));
 
 	if (session_int_get(s, "private"))
@@ -1675,7 +1674,10 @@ int EXPORT gg_plugin_init(int prio) {
 	gg_plugin.priv		= &gg_priv;
 
 	plugin_register(&gg_plugin, prio);
-	RECODE_GG_INC();
+
+	ekg_recode_utf8_inc();
+	ekg_recode_cp_inc();
+
 	gg_setvar_default(NULL, dummy);
 
 	query_connect_id(&gg_plugin, SET_VARS_DEFAULT, gg_setvar_default, NULL);
@@ -1747,7 +1749,9 @@ static int gg_plugin_destroy() {
 
 	image_flush_queue();
 
-	RECODE_GG_DEC();
+	ekg_recode_utf8_dec();
+	ekg_recode_cp_dec();
+
 	plugin_unregister(&gg_plugin);
 
 	return 0;

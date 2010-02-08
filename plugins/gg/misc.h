@@ -23,6 +23,7 @@
 
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
+#include <ekg/recode.h>
 
 int gg_status_to_text(const int status);
 int gg_text_to_status(const int status, const char *descr);
@@ -31,6 +32,12 @@ int gg_blocked_add(session_t *s, const char *uid);
 int gg_blocked_remove(session_t *s, const char *uid);
 const char *gg_http_error_string(int h);
 int gg_userlist_send(struct gg_session *s, userlist_t *userlist);
+
+char *gg_to_locale(session_t *s, char *txt);
+char *gg_to_locale_dup(session_t *s, const char *txt);
+char *locale_to_gg(session_t *s, char *txt);
+char *locale_to_gg_dup(session_t *s, const char *txt);
+const char *locale_to_gg_use(session_t *s, const char *txt);
 
 #endif
 

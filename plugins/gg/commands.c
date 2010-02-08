@@ -60,7 +60,6 @@
 #include <ekg/dynstuff.h>
 #include <ekg/msgqueue.h>
 #include <ekg/protocol.h>
-#include <ekg/recode.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
@@ -115,11 +114,11 @@ static COMMAND(gg_command_connect) {
 			if (__reason) {
 				if (!xstrcmp(__reason, "-"))	myreason = NULL;
 				else				myreason = xstrdup(__reason);
-				tmp = LOCALE_TO_GG_DUP(myreason);
+				tmp = locale_to_gg_dup(session, myreason);
 				session_descr_set(session, tmp ? myreason : NULL);
 			} else {
 				myreason = xstrdup(session_descr_get(session));
-				tmp = LOCALE_TO_GG_DUP(myreason);
+				tmp = locale_to_gg_dup(session, myreason);
 			}
 			if (tmp)
 				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
@@ -214,19 +213,24 @@ static COMMAND(gg_command_connect) {
 		p.uin = uin;
 		p.password = (char*) password;
 		p.image_size = gg_config_image_size;
-#ifdef GG_FEATURE_MSG80
-		p.encoding = GG_ENCODING_UTF8;
-#endif
-#ifdef GG_FEATURE_DND_FFC
-		p.protocol_features = GG_FEATURE_STATUS80 | GG_FEATURE_DND_FFC;
-#endif
 
 		_status = GG_S(_status);
 		if (session_int_get(session, "private"))
 			_status |= GG_STATUS_FRIENDS_MASK;
 
-		if ((tmpi = session_int_get(session, "protocol")) != -1)
-			p.protocol_version = tmpi;
+		if ((tmpi = session_int_get(session, "protocol")) > 0)
+			g->curr_prtcl_ver = p.protocol_version = tmpi;
+		else
+			g->curr_prtcl_ver = GG_DEFAULT_PROTOCOL_VERSION;
+
+		if (g->curr_prtcl_ver >= 0x2e) {
+#ifdef GG_FEATURE_MSG80
+			p.encoding = GG_ENCODING_UTF8;
+#endif
+#ifdef GG_FEATURE_DND_FFC
+			p.protocol_features = GG_FEATURE_STATUS80 | GG_FEATURE_DND_FFC;
+#endif
+		}
 
 		while (realserver) {
 			in_addr_t tmp_in;
@@ -327,9 +331,9 @@ noproxy:
 			xfree(fwd);
 		}
 		
-		/* moved this further, because of LOCALE_TO_GG() allocation */
+		/* moved this further, because of locale_to_gg() allocation */
 		p.status = _status;
-		p.status_descr = LOCALE_TO_GG_DUP(session_descr_get(session));
+		p.status_descr = locale_to_gg_dup(session, session_descr_get(session));
 		p.async = 1;
 
 		g->sess = gg_login(&p);
@@ -419,7 +423,7 @@ static COMMAND(gg_command_away) {
 	}
 
 	if (params0) {
-		char *tmp = LOCALE_TO_GG_DUP(params0);
+		char *tmp = locale_to_gg_dup(session, params0);
 		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
 			if (!timeout) {
 				char *descr_poss = xstrndup(params0, GG_STATUS_DESCR_MAXSIZE);
@@ -517,7 +521,7 @@ static COMMAND(gg_command_away) {
 
 	ekg_update_status(session);
 
-	cpdescr = LOCALE_TO_GG(descr);
+	cpdescr = locale_to_gg(session, descr);
 	_status = GG_S(gg_text_to_status(status, cpdescr)); /* descr can be NULL it doesn't matter... */
 
 	if (session_int_get(session, "private"))
@@ -746,7 +750,7 @@ static COMMAND(gg_command_msg) {
 	}
 
 	raw_msg = xstrdup((char *) msg);
-	cpmsg = LOCALE_TO_GG((char *) msg);
+	cpmsg = locale_to_gg(session, (char *) msg);
 
 	count = array_count(nicks);
 
