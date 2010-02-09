@@ -28,7 +28,9 @@
 #ifndef __USE_POSIX
     #define __USE_POSIX 1	/* glibc 2.8 */
 #endif
-#define _XOPEN_SOURCE 600
+#ifndef _XOPEN_SOURCE
+	#define _XOPEN_SOURCE 600
+#endif
 #include <limits.h>
 
 #define __(x) (x ? x : "(null)")

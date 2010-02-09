@@ -4,7 +4,6 @@
 #undef VERSION
 
 #ifndef __FreeBSD__
-#define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
 #endif
 
