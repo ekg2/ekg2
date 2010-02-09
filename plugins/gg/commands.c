@@ -1583,7 +1583,8 @@ static COMMAND(gg_command_modify) {
 		if (match_arg(argv[i], 'g', ("group"), 2) && argv[i + 1]) {
 			char **tmp = array_make(argv[++i], ",", 0, 1, 1);
 			int x, off;	/* jeli zaczyna si�od '@', pomijamy pierwszy znak */
-			
+			int chg = 0;
+
 			for (x = 0; tmp[x]; x++)
 				switch (*tmp[x]) {
 					case '-':
@@ -1591,7 +1592,7 @@ static COMMAND(gg_command_modify) {
 
 						if (ekg_group_member(u, tmp[x] + 1 + off)) {
 							ekg_group_remove(u, tmp[x] + 1 + off);
-							modified = 1;
+							chg = modified = 1;
 						} else {
 							printq("group_member_not_yet", format_user(session, u->uid), tmp[x] + 1);
 							if (!modified)
@@ -1603,7 +1604,7 @@ static COMMAND(gg_command_modify) {
 
 						if (!ekg_group_member(u, tmp[x] + 1 + off)) {
 							ekg_group_add(u, tmp[x] + 1 + off);
-							modified = 1;
+							chg = modified = 1;
 						} else {
 							printq("group_member_already", format_user(session, u->uid), tmp[x] + 1);
 							if (!modified)
@@ -1615,7 +1616,7 @@ static COMMAND(gg_command_modify) {
 
 						if (!ekg_group_member(u, tmp[x] + off)) {
 							ekg_group_add(u, tmp[x] + off);
-							modified = 1;
+							chg = modified = 1;
 						} else {
 							printq("group_member_already", format_user(session, u->uid), tmp[x]);
 							if (!modified)
@@ -1623,7 +1624,10 @@ static COMMAND(gg_command_modify) {
 						}
 				}
 
-			array_free(tmp);
+			if (chg)
+				query_emit_id(NULL, USERLIST_REFRESH);
+
+ 			array_free(tmp);
 			continue;
 		}
 		
