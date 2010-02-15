@@ -223,7 +223,7 @@ static COMMAND(gg_command_connect) {
 		else
 			g->curr_prtcl_ver = GG_DEFAULT_PROTOCOL_VERSION;
 
-		if (g->curr_prtcl_ver >= 0x2e) {
+		if (g->curr_prtcl_ver >= 0x2d) {
 #ifdef GG_FEATURE_MSG80
 			p.encoding = GG_ENCODING_UTF8;
 #endif
