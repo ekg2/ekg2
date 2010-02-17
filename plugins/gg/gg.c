@@ -1656,7 +1656,14 @@ static plugins_params_t gg_plugin_vars[] = {
 
 static const char *gg_protocols[] = { "gg:", NULL };
 static const status_t gg_statuses[] = {
-	EKG_STATUS_NA, EKG_STATUS_AWAY, EKG_STATUS_AVAIL,
+	EKG_STATUS_NA,
+#ifdef GG_FEATURE_DND_FFC
+	EKG_STATUS_DND,
+#endif
+	EKG_STATUS_AWAY, EKG_STATUS_AVAIL,
+#ifdef GG_FEATURE_DND_FFC
+	EKG_STATUS_FFC,
+#endif
 	EKG_STATUS_BLOCKED, EKG_STATUS_INVISIBLE, EKG_STATUS_NULL
 };
 
