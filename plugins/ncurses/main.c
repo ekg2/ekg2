@@ -541,7 +541,7 @@ static QUERY(ncurses_setvar_default)
 static void ncurses_display_transparent_changed(const char *var)
 {
 	int background;
-	if (in_autoexec) return;	/* stuff already inited @ ncurses_init() */
+	if (in_autoexec && config_display_transparent) return;	/* stuff already inited @ ncurses_init() */
 
 	if (config_display_transparent) {
 		background = COLOR_DEFAULT;
