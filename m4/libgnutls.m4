@@ -114,6 +114,8 @@ main ()
      else
         AC_MSG_RESULT(no)
         echo "*** Could not run libgnutls test program, checking why..."
+	ac_save_CFLAGS="$CFLAGS"
+	ac_save_LIBS="$LIBS"
         CFLAGS="$CFLAGS $LIBGNUTLS_CFLAGS"
         LIBS="$LIBS $LIBGNUTLS_LIBS"
         AC_TRY_LINK([
