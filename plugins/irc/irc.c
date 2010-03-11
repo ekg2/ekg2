@@ -1,6 +1,7 @@
 /*
  *  (C) Copyright 2004-2005 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *			Jakub 'darkjames' Zawadzki <darkjames@darkjames.ath.cx>
+ *			Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -63,6 +64,7 @@
 #include <ekg/log.h>
 #include <ekg/net.h>
 #include <ekg/protocol.h>
+#include <ekg/recode.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
@@ -178,6 +180,8 @@ static QUERY(irc_session_init) {
 		return 1;
 
 	userlist_read(s);
+
+	ekg_recode_utf8_inc();
 
 	j = xmalloc(sizeof(irc_private_t));
 	j->fd = -1;

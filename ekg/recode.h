@@ -34,6 +34,9 @@ char *ekg_recode_to_locale_dup(enum ekg_recode_name enc, const char *buf);
 
 const char *ekg_recode_from_locale_use(enum ekg_recode_name enc, const char *buf);
 const char *ekg_recode_to_locale_use(enum ekg_recode_name enc, const char *buf);
+
+int is_utf8_string(const char *txt);
+
 #define recode_xfree(org, ret) do { if (org != ret) xfree((char *) ret); } while(0); 
 
 /* CP-1250 */

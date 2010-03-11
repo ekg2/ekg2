@@ -1,5 +1,6 @@
 /*
  *  (C) Copyright 2004-2005 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
+ *			Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -36,6 +37,7 @@
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>
+#include <ekg/recode.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
@@ -94,6 +96,10 @@ static char *irc_convert_in(irc_private_t *j, const char *line) {
 	char *recoded;
 	conv_in_out_t *e;
 	list_t el;
+
+	/* default convert from unicode */
+	if (is_utf8_string(line))
+		return ekg_utf8_to_locale_dup(line);
 
 	/* auto guess encoding */
 	for (el=j->auto_guess_encoding; el; el=el->next) {
