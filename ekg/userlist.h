@@ -62,6 +62,7 @@ typedef struct userlist {
 	
 	status_t	status;		/**< current status */
 	char		*descr;		/**< description of status. */
+	char		*descr1line;	/**< description of status without \r\n. */
 	struct ekg_resource *resources;	/**< list_t with ekg_resource_t<br>It's used to handle Jabber resources, and also by irc friendlist. */
 
 	time_t		last_seen;	/**< Last time when user was available [when u->status was > notavail] */
