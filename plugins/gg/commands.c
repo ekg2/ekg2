@@ -426,10 +426,10 @@ static COMMAND(gg_command_away) {
 		char *tmp = locale_to_gg_dup(session, params0);
 		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
 			if (!timeout) {
-				char *descr_poss = xstrndup(params0, GG_STATUS_DESCR_MAXSIZE);
-				char *descr_not_poss = xstrdup(params0 + GG_STATUS_DESCR_MAXSIZE);
+				char *descr_poss = utf8ndup(params0, GG_STATUS_DESCR_MAXSIZE);
+				char *descr_not_poss = xstrdup(params0 + xstrlen(descr_poss));
 
-				printq("descr_too_long", itoa(xstrlen(tmp) - GG_STATUS_DESCR_MAXSIZE), descr_poss, descr_not_poss);
+				printq("descr_too_long", itoa(xstrlen(descr_not_poss)), descr_poss, descr_not_poss); /* XXX add new function utf8len() */
 				g->scroll_op = 0;
 
 				xfree(tmp);

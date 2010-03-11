@@ -371,6 +371,8 @@ string_t ekg_convert_string_t(string_t s, const char *from, const char *to);
 int ekg_converters_display(int quiet);
 
 char *password_input(const char *prompt, const char *rprompt, const bool norepeat);
+int is_utf8_string(const char *txt);
+
 
 /* funkcje poza stuff.c */
 void ekg_exit();

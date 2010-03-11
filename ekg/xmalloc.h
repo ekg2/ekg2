@@ -74,6 +74,7 @@ void *xrealloc(void *ptr, size_t size);
 char *xstrdup(const char *s);
 size_t xstrnlen(const char *s, size_t n);
 char *xstrndup(const char *s, size_t n);
+char *utf8ndup(const char *s, size_t n);
 void *xmemdup(void *ptr, size_t size);
 
 int xstrcasecmp(const char *s1, const char *s2);

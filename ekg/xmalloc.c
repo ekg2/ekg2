@@ -208,6 +208,22 @@ char *xstrndup(const char *s, size_t n)
 	return tmp;
 }
 
+char *utf8ndup(const char *s, size_t n) {
+	/* XXX any suggestions for function name? IDKHTNI_ndup()? (IDKHTNI - I Don't Know How To Name It) */
+	char *tmp = xstrndup(s, n);
+
+	if (!tmp) return NULL;
+
+	if (!is_utf8_string(s)) return tmp;
+
+	if (n<0) n = xstrlen(tmp);
+
+	while (!is_utf8_string(tmp) && n--)
+		*(tmp + n) = 0;
+
+	return tmp;
+}
+
 void *xmemdup(void *ptr, size_t size)
 {
 	void *tmp = xmalloc(size);

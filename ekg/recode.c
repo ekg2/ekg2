@@ -954,32 +954,3 @@ const char *ekg_recode_to_locale_use(enum ekg_recode_name enc, const char *buf) 
 	// warn user.
 	return buf;
 }
-
-int is_utf8_string(const char *txt) {
-	const char *p;
-	int mask, n;
-
-	if (!txt) return 0;
-
-	for (p = txt; *p; p++) {
-		//	0xxxxxxx	continue
-		//	10xxxxxx 	n=0; return 0
-		//	110xxxxx	n=1
-		//	1110xxxx	n=2
-		//	11110xxx	n=3
-		//	111110xx	n=4
-		//	1111110x	n=5
-		//	1111111x	n>5; return 0
-
-		if (!(*p & 0x80)) continue;
-
-		for (n = 0, mask = 0x40; (*p & mask); n++, mask >>= 1);
-
-		if (!n || (n>5)) return 0;
-
-		for (; n; n--)
-			if ((*++p & 0xc0) != 0x80) return 0;
-	}
-
-	return 1;
-}
