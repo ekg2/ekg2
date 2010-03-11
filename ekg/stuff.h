@@ -206,7 +206,6 @@ extern int config_mesg;
 extern int config_query_commands;
 extern int config_slash_messages;
 extern char *config_quit_reason;
-extern int config_reason_limit;
 extern int config_save_password;
 extern int config_save_quit;
 extern char *config_session_default;

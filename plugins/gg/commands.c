@@ -424,7 +424,7 @@ static COMMAND(gg_command_away) {
 
 	if (params0) {
 		char *tmp = locale_to_gg_dup(session, params0);
-		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
+		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE) {
 			if (!timeout) {
 				char *descr_poss = utf8ndup(params0, GG_STATUS_DESCR_MAXSIZE);
 				char *descr_not_poss = xstrdup(params0 + xstrlen(descr_poss));

@@ -182,7 +182,6 @@ int config_window_session_allow = 0;
 int config_windows_save = 0;
 char *config_windows_layout = NULL;
 char *config_profile = NULL;
-int config_reason_limit = 1;
 int config_debug = 1;
 int config_lastlog_noitems = 0;
 int config_lastlog_case = 0;
