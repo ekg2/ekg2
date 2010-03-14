@@ -2004,7 +2004,7 @@ msgid "%! Session %T%1%n already exists\n"
 msgstr "%! Sesja %T%1%n ju¿ istnieje\n"
 
 #: ekg/themes.c:1906
-msgid "%! Sesion %T%1%n does not exist\n"
+msgid "%! Session %T%1%n does not exist\n"
 msgstr "%! Sesja %T%1%n nie istnieje\n"
 
 #: ekg/themes.c:1907

@@ -331,12 +331,12 @@ metacontact
 	
 	metacontact -a metakontakt
 	
-	metakoctact -i metakontakt sesja nazwa_u¿ytkownika 1
+	metacontact -i metakontakt sesja nazwa_u¿ytkownika 1
 	
 	
 	Metakontakty pozwalaj± na stworzenie kontaktu zawieraj±cego inne kontakty. 
 	query metakontakt otwiera rozmowê z osob±, która jest aktualnie dostêpna 
-	i manajwiêkszy priorytet. W przypadku, w którym ¿aden z kontaktów nie jest 
+	i ma najwiêkszy priorytet. W przypadku, w którym ¿aden z kontaktów nie jest 
 	dostêpny, wiadomo¶æ kierowana jest do osoby o najwiêkszym priorytecie.
 	
 	

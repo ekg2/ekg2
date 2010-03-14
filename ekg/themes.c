@@ -1991,7 +1991,7 @@ void theme_init()
 	format_add("session_info_param", "%)	%1 = %T%2%n\n", 1); /* key, value */
 	format_add("session_info_footer", "", 1); /* uid */
 	format_add("session_exists", _("%! Session %T%1%n already exists\n"), 1); /* uid */
-	format_add("session_doesnt_exist", _("%! Sesion %T%1%n does not exist\n"), 1); /* uid */
+	format_add("session_doesnt_exist", _("%! Session %T%1%n does not exist\n"), 1); /* uid */
 	format_add("session_added", _("%> Created session %T%1%n\n"), 1); /* uid */
 	format_add("session_removed", _("%> Removed session %T%1%n\n"), 1); /* uid */
 	format_add("session_format", "%T%1%n", 1);
