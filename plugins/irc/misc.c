@@ -97,10 +97,6 @@ static char *irc_convert_in(irc_private_t *j, const char *line) {
 	conv_in_out_t *e;
 	list_t el;
 
-	/* default convert from unicode */
-	if (is_utf8_string(line))
-		return ekg_utf8_to_locale_dup(line);
-
 	/* auto guess encoding */
 	for (el=j->auto_guess_encoding; el; el=el->next) {
 		e = el->data;
@@ -110,11 +106,15 @@ static char *irc_convert_in(irc_private_t *j, const char *line) {
 	}
 
 	/* default recode */
-	if (j->conv_in == (void *) -1)
-		return NULL;
+	recoded = NULL;
+	if (j->conv_in != (void *) -1) {
+		if (!(recoded = ekg_convert_string_p(line, j->conv_in)))
+			debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
+	}
 
-	if (!(recoded = ekg_convert_string_p(line, j->conv_in)))
-		debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
+	/* convert from unicode */
+	if ( !recoded && is_utf8_string(line) ) /* XXX add variable here? */
+		recoded = ekg_utf8_to_locale_dup(line);
 
 	return recoded;
 }
