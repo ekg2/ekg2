@@ -108,11 +108,10 @@ static BINDING_FUNCTION(binding_toggle_input)
 	
 		for (i = 0; lines[i]; i++) {
 			char *tmp;
-			if (!xwcscmp(lines[i], TEXT("")) && !lines[i + 1])
-				break;
 
 			string_append(s, (tmp = wcs_to_normal(lines[i])));	free_utf(tmp);
-			string_append(s, ("\r\n"));
+			if (lines[i + 1])
+				string_append(s, ("\r\n"));
 		}
 
 		tmp = string_free(s, 0);
