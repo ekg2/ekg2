@@ -935,7 +935,7 @@ static void icq_send_msg_ch1(session_t *session, const char *uid, const char *me
 			break;
 		}
 	}
-	if ( enc && !(u || user_private_item_get_int(u, "utf")) )
+	if ( enc && !(u && user_private_item_get_int(u, "utf")) )
 		enc = 3;		/* ANSI -- XXX ?wo? what should we do now? */
 
 	/* TLV(101) */
