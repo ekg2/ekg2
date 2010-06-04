@@ -112,6 +112,20 @@ disconnect
 	this command, program will try to connect automatically
 	after some time.
 
+dnd
+	parameters: [description/-]
+	short description: change status to do not disturb.
+	
+	If description won't be defined then ekg2 will use random description.
+	Giving ,,%T-%n'' instead of description will cause status without description.
+
+ffc
+	parameters: [description/-]
+	short description: change status to free for chat.
+	
+	If description won't be defined then ekg2 will use random description.
+	Giving ,,%T-%n'' instead of description will cause status without description.
+
 find
 	parameters:  [uin|options]
 	short description: search users in public catalogue
