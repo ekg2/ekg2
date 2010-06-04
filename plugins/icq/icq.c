@@ -1393,7 +1393,7 @@ static COMMAND(icq_command_search) {
 
 static COMMAND(icq_command_auth) {
 	uint32_t number;
-	const char *reason;
+	const char *reason = NULL;
 
 	if (match_arg(params[0], 'l', "list", 2)) {
 		userlist_t *u;
@@ -1407,6 +1407,7 @@ static COMMAND(icq_command_auth) {
 
 	if (params[1]) {
 		target = params[1];
+		reason = params[2];
 	} else if (!target) {
 		printq("invalid_params", name);
 		return -1;
@@ -1420,8 +1421,6 @@ static COMMAND(icq_command_auth) {
 	/* XXX, pending auth!!! like /auth -l in jabber */
 	/* XXX, reasons!! */
 	/* XXX, messages */
-
-	reason = params[2];
 
 	if (match_arg(params[0], 'r', "request", 2)) {
 
