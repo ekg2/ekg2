@@ -434,6 +434,24 @@ SNAC_SUBHANDLER(icq_snac_service_motd) {
 	return 0;
 }
 
+SNAC_SUBHANDLER(icq_snac_service_urls) {
+	/* SNAC(01,0x15) Well known urls */
+	debug_function("icq_snac_service_urls()\n");
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
+	uint16_t x, ulen;
+	char *url;
+	while (len>0) {
+		ICQ_UNPACK(&buf, "WW", &x, &ulen);
+		url = xstrndup((const char*)buf, ulen);
+		debug_white("ICQ - well known url %d: %s\n", x, url);
+		buf += ulen;
+		len -= ulen;
+		xfree(url);
+	}
+#endif
+	return 0;
+}
+
 SNAC_SUBHANDLER(icq_snac_service_families2) {
 	/* This is a reply to CLI_FAMILIES and it tells the client which families and their versions that this server understands.
 	 * We send a rate request packet */
@@ -472,6 +490,7 @@ SNAC_HANDLER(icq_snac_service_handler) {
 		case 0x0F: handler = icq_snac_service_reqinfo;	break;	/* Miranda: OK */
 		case 0x12: handler = icq_snac_service_migrate;	break;
 		case 0x13: handler = icq_snac_service_motd;	break;	/* Miranda: OK */
+		case 0x15: handler = icq_snac_service_urls;	break;
 		case 0x18: handler = icq_snac_service_families2;break;	/* Miranda: OK */
 		case 0x21: handler = icq_snac_service_extstatus;break;
 		default:   handler = NULL;			break;
