@@ -1518,7 +1518,7 @@ static COMMAND(jabber_command_private) {
 			
 			splitted = jabber_params_split(params[1], 1);
 
-			if (bookmark_sync && (!splitted && params[1])) {
+			if (!splitted) {
 				printq("invalid_params", name);
 				return -1;
 			}
