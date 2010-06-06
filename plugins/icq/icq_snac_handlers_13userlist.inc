@@ -65,9 +65,9 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 	return 0;
 }
 
-static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, const char *name, uint16_t type, uint16_t item_id, uint16_t group) {
+static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, const char *name, uint16_t type, uint16_t item_id, uint16_t group_id) {
 	switch (type) {
-		case 0x0000:	/* normal; SSI_ITEM_BUDDY */
+		case 0x0000:	/* Buddy record (name: uin for ICQ and screenname for AIM) */
 		{
 			icq_tlv_t *t_nick = icq_tlv_get(tlvs, 0x131);
 			icq_tlv_t *t_auth = icq_tlv_get(tlvs, 0x66);
@@ -105,26 +105,16 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 				u->nickname = xstrdup(nick);
 
 			/* XXX, other groups ??? */
-			if (u && group) {
+			if (u && group_id) {
 				user_private_item_set_int(u, "iid", item_id);
-				user_private_item_set_int(u, "gid", group);
+				user_private_item_set_int(u, "gid", group_id);
 			}
 
-			if (comment)
-				user_private_item_set(u, "comment", comment);
+			user_private_item_set(u, "comment", comment);
+			user_private_item_set(u, "email", email);
+			user_private_item_set(u, "mobile", phone);
+			user_private_item_set_int(u, "auth", t_auth?1:0);
 
-			if (email)
-				user_private_item_set(u, "email", email);
-
-			if (phone)
-				user_private_item_set(u, "mobile", phone);
-
-			if (t_auth)
-				user_private_item_set_int(u, "auth", 1);
-/*
-			if (t_auth)
-				print("icq_auth_subscribe", uid, session_name(s));
- */
 cleanup_user:
 			xfree(uid);
 			xfree(nick);
@@ -134,40 +124,35 @@ cleanup_user:
 			break;
 		}
 
-		case 0x0001:	/* ROSTER_TYPE_GROUP; SSI_ITEM_GROUP; */
+		case 0x0001:	/* Group record */
 		{
-			debug_error("ROSTER_TYPE_GROUP: %s %u\n", name, group);
+			debug("ROSTER_TYPE_GROUP  Name:'%s' groupId:%u\n", name, group_id);
 
-			if ((group == 0) && (item_id == 0)) {
-				/* list of groups. wTlvType=1, data is TLV(C8) containing list of WORDs which */
-				/* is the group ids */
-				/* we don't need to use this. Our processing is on-the-fly */
-				/* this record is always sent first in the first packet only, */
-				break;
-			}
-
-			if (group != 0)
-			{
-				/* wGroupId != 0: a group record */
-				if (item_id == 0) {
+			if (item_id == 0) {
+				if ((group_id == 0)) {
+					/* list of groups. wTlvType=1, data is TLV(C8) containing list of WORDs which */
+					/* is the group ids */
+					/* we don't need to use this. Our processing is on-the-fly */
+					/* this record is always sent first in the first packet only, */
+				} else {
+					/* wGroupId != 0: a group record */
 					/* no item ID: this is a group */
 					/* XXX ?wo? more groups ??? */
 					icq_private_t *j;
 					if (s && (j = s->priv) && (!j->default_group_id)) {
-						j->default_group_id = group;
+						j->default_group_id = group_id;
 						j->default_group_name = xstrdup(name);
 					}
-				} else {
-					debug_error("icq_userlist_parse_entry() Unhandled ROSTER_TYPE_GROUP wItemID != 0\n");
-				}
-				break;
+				} 
+			} else {
+				debug_error("icq_userlist_parse_entry() Unhandled ROSTER_TYPE_GROUP wItemID != 0\n");
 			}
 
-			debug_error("icq_userlist_parse_entry() Unhandled ROSTER_TYPE_GROUP\n");
 			break;
 		}
 
-		case 0x0002: /* SSI_ITEM_PERMIT */
+		case 0x0002:	/* Permit record ("Allow" list in AIM, and "Visible" list in ICQ) */
+		case 0x0003:	/* Deny record ("Block" list in AIM, and "Invisible" list in ICQ) */
 		{
 			char *uid = icq_uid(name);
 			userlist_t *u;
@@ -180,25 +165,27 @@ cleanup_user:
 			break;
 		}
 
-		case 0x0003:	/* SSI_ITEM_DENY */
-		{
-			char *uid = icq_uid(name);
-			userlist_t *u;
-
-			if (!(u = userlist_find(s, uid)))
-				u = userlist_add(s, uid, NULL); /* XXX */
-
-			/* XXX */
-			break;
-		}
-
-		case 0x0004: /* SSI_ITEM_VISIBILITY: */ /* My visibility settings */
+		case 0x0004: /* Permit/deny settings or/and bitmask of the AIM classes */
 		{
 			/* XXX */
 			break;
 		}
 
-		case 0x000e: 	/* _IGNORE */
+		case 0x0005: /* Presence info (if others can see your idle status, etc) */
+		{
+			/* XXX */
+			break;
+		}
+
+		case 0x0009: /* ICQ2k shortcut bar items */
+		{
+			if (group_id == 0) {
+				/* data is TLV(CD) text */
+			}
+			break;
+		}
+
+		case 0x000e:	/* Ignore list record */
 		{
 			char *uid = icq_uid(name);
 			userlist_t *u;
@@ -207,24 +194,21 @@ cleanup_user:
 				u = userlist_add(s, uid, NULL);
 
 			/* XXX, dodac do grup? */
-			/* XXX */
 
 			xfree(uid);
 			break;
 		}
 
-		case 0x0009: /* SSI_ITEM_CLIENTDATA */
+		case 0x000F:	/* Last update date (name: "LastUpdateDate") */
+		case 0x0010:	/* Non-ICQ contact (to send SMS). Name: 1#EXT, 2#EXT, etc */
 		{
-			if (group == 0) {
-				/* ICQ2k ShortcutBar Items */
-				/* data is TLV(CD) text */
-			}
+			/* XXX */
 			break;
 		}
 
-		case 0x0013: /* SSI_ITEM_IMPORTTIME */
+		case 0x0013:	/* Item that contain roster import time (name: "Import time") */
 		{
-			if (group == 0)
+			if (group_id == 0)
 			{
 				/* time our list was first imported */
 				/* pszRecordName is "Import Time" */
@@ -235,9 +219,9 @@ cleanup_user:
 			break;
 		}
 
-		case 0x0014: /* SSI_ITEM_BUDDYICON */
+		case 0x0014:	/* Own icon (avatar) info. Name is an avatar id number as text */
 		{
-			if (group == 0)
+			if (group_id == 0)
 			{
 				/* our avatar MD5-hash */
 				/* pszRecordName is "1" */
@@ -250,8 +234,29 @@ cleanup_user:
 			break;
 		}
 
+		case 0x0019: /* deleted */
+		{
+#ifdef ICQ_DEBUG_UNUSED_INFORMATIONS
+			icq_tlv_t *t;
+			if ((t = icq_tlv_get(tlvs, 0x6d)) && (t->len == 8)) {
+				int t1,t2;
+				if (icq_unpack_nc(t->buf, t->len, "II", &t1, &t2)) {
+					debug_white("'%s' was deleted %s\n", name, timestamp_time("%Y-%m-%d %H:%M:%S", t1));
+				}
+			}
+#endif
+			break;
+		}
+
+		case 0x001d:
+		case 0x0020:
+		case 0x0028:
+		{ /* XXX unknown, but friendly types */
+			break;
+		}
+
 		default:
-			 debug_error("icq_userlist_parse_entry() unkown type: %.4x\n", type);
+			 debug_error("icq_userlist_parse_entry() unkown type: 0x%.4x\n", type);
 	}
 	return 0;
 }
@@ -295,7 +300,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 		if (!ICQ_UNPACK(&buf, "UWWWW", &orgname, &group_id, &item_id, &item_type, &tlv_len))
 			return -1;
 
-		debug("%s groupID: %u entryID: %u entryTYPE: %u tlvLEN: %u\n", orgname, group_id, item_id, item_type, tlv_len);
+		debug_white("Name:'%s' groupID: %u entryID: %u entryTYPE: %u tlvLEN: %u\n", orgname, group_id, item_id, item_type, tlv_len);
 
 		if (len < tlv_len) {
 			debug_error("smth bad!\n");
@@ -312,34 +317,28 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 
 		icq_tlvs_destroy(&tlvs);
 	}
-#warning "icq_snac_userlist_roster XXX, koncowka"
 
-	debug("icq_snac_userlist_roster() left: %u bytes\n", len);
+	if (len >= 4) {
+		uint32_t last_update;
 
-	if (1) {
-		/* session_int_set(s, "__roster_retrieved", 1); */
-
-		if (len >= 4) {
-			uint32_t last_update;
-
-			if (!ICQ_UNPACK(&buf, "I", &last_update))
+		if (!ICQ_UNPACK(&buf, "I", &last_update))
 				return -1;
 
-			/* XXX, strftime() format */
-			debug("icq_snac_userlist_roster() Last update of server list was (%u) %s\n",
+		debug("icq_snac_userlist_roster() Last update of server list was (%u) %s\n",
 					last_update, timestamp_time("%d/%m/%y %H:%M:%S", last_update));
 
 			/* sendRosterAck() */
-			icq_send_snac(s, 0x13, 0x07, 0, 0, "");
+		icq_send_snac(s, 0x13, 0x07, 0, 0, "");
 
-			icq_session_connected(s);
+		icq_session_connected(s);
 
-		} else
-			debug_error("icq_snac_userlist_roster() Last packet missed update time...\n");
-		/* XXX */
 	} else {
 		debug("icq_snac_userlist_roster() Waiting for more packets...");
 	}
+
+	if (len>0)
+		debug_error("icq_snac_userlist_roster() left: %u bytes\n", len);
+
 	return 0;
 }
 
@@ -353,7 +352,7 @@ char *icq_snac_userlist_edit_ack_msg(int error) {
 		case 0x000A: msg = "Error adding item (invalid id, allready in list, invalid data)"; break;
 		case 0x000C: msg = "Can't add item. Limit for this type of items exceeded"; break;
 		case 0x000D: msg = "Trying to add ICQ contact to an AIM list"; break;
-		case 0x000E: msg = "Can't add this contact because it requires authorization"; 	break;
+		case 0x000E: msg = "Can't add this contact because it requires authorization";	break;
 		default:     msg = "Unknown error";
 	}
 
@@ -402,7 +401,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_removeentry) {
 		uint16_t group, item;
 		uint16_t type;
 	} pkt;
-	if (ICQ_UNPACK(&buf, "uWWW", &pkt.uid, &pkt.group, &pkt.item, &pkt.type)) {
+	if (ICQ_UNPACK(&buf, "UWWW", &pkt.uid, &pkt.group, &pkt.item, &pkt.type)) {
 		debug("icq_snac_userlist_removeentry() Details: delete '%s' (item id:%d, type:0x%x) from group %d\n", pkt.uid, pkt.item, pkt.type, pkt.group);
 	}
 }

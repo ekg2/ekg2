@@ -1033,7 +1033,7 @@ static COMMAND(icq_command_msg) {
 		last_add(1, uid, time(NULL), 0, params[1]);
 
 	{
-		// send "typing finished" snack
+		// send "typing finished" snac
 		const char *sid	= session_uid_get(session);
 		int first = 0, len = 0;
 		query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
@@ -1495,10 +1495,10 @@ static QUERY(icq_userlist_info_handle) {
 	if ( (i = user_private_item_get_int(u, "xstatus")) )
 		printq("icq_user_info_generic", _("xStatus"), icq_xstatus_name(i));
 
-	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "online"))) )
+	if ( (tmp = timestamp_time("%Y-%m-%d %H:%M", user_private_item_get_int(u, "online"))) )
 		printq("icq_user_info_generic", _("Online since"), tmp);
 
-	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "member"))) )
+	if ( (tmp = timestamp_time("%Y-%m-%d %H:%M", user_private_item_get_int(u, "member"))) )
 		printq("icq_user_info_generic", _("ICQ Member since"), tmp);
 
 	if ( (tmp = user_private_item_get(u, "comment")) )

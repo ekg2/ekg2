@@ -213,16 +213,16 @@ static ICQ_FLAP_HANDLER(icq_flap_data) {
 	if (!ICQ_UNPACK(&(snac.data), "WWWI", &(snac.family), &(snac.cmd), &(snac.flags), &(snac.ref)))
 		return -1;
 
-	data = snac.data;
-
-	debug_white("icq_flap_data() SNAC pkt, fam=0x%x cmd=0x%x flags=0x%x ref=0x%x (len=%d)\n", snac.family, snac.cmd, snac.flags, snac.ref, len);
 #if ICQ_SNAC_NAMES_DEBUG
 	{
-	const char *tmp = icq_snac_name(snac.family, snac.cmd);
-	if (tmp)
-		debug_white("icq_flap_data() //  SNAC(0x%x, 0x%x) -- %s\n", snac.family, snac.cmd, tmp);
+		const char *tmp = icq_snac_name(snac.family, snac.cmd);
+		debug_white("icq_flap_data() SNAC(0x%x,0x%x) (flags=0x%x ref=0x%x len=%d) // %s\n", snac.family, snac.cmd, snac.flags, snac.ref, len, tmp?tmp:"");
 	}
+#else
+	debug_white("icq_flap_data() SNAC(0x%x,0x%x) (flags=0x%x ref=0x%x len=%d)\n", snac.family, snac.cmd, snac.flags, snac.ref, len);
 #endif
+
+	data = snac.data;
 
 	if (snac.flags & 0x8000) {
 		uint16_t skip_len;

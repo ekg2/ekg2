@@ -236,7 +236,7 @@ wrong:
 	/* CLI_REQLOCATION */
 	icq_send_snac(s, 0x02, 0x02, 0, 0, NULL);
 
-	icq_send_snac(s, 0x03, 0x02, 0, 0, ""); // example for empty snack: "" or NULL works
+	icq_send_snac(s, 0x03, 0x02, 0, 0, ""); // example for empty snac: "" or NULL works
 
 	/* CLI_REQICBM */
 	icq_send_snac(s, 0x04, 0x04, 0, 0, "");
@@ -360,12 +360,12 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 
 			case 0x03:	/* The online since time */
 				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
-				debug_white("icq_snac_service_reqinfo() Logon time: %s\n", int2time_str("%Y-%m-%d %H:%M", t->nr));
+				debug_white("icq_snac_service_reqinfo() Logon time: %s\n", timestamp_time("%Y-%m-%d %H:%M:%S", t->nr));
 				break;
 
 			case 0x05:	/* Member of ICQ since */
 				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
-				debug_white("icq_snac_service_reqinfo() ICQ Member since: %s\n", int2time_str("%Y-%m-%d %H:%M", t->nr));
+				debug_white("icq_snac_service_reqinfo() ICQ Member since: %s\n", timestamp_time("%Y-%m-%d %H:%M:%S", t->nr));
 				break;
 
 			case 0x0a:	/* External IP */

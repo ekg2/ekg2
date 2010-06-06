@@ -1495,7 +1495,7 @@ void private_item_set(private_data_t **data, const char *item_name, const char *
 }
 
 void private_item_set_int(private_data_t **data, const char *item_name, int value) {
-	private_item_set(data, item_name, itoa(value));
+	private_item_set(data, item_name, value?itoa(value):NULL);
 }
 
 /*

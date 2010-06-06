@@ -657,16 +657,6 @@ string_t icq_convert_to_ucs2be(char *text) {
 	return ret;
 }
 
-char *int2time_str(const char *format, int time) {
-	static char buf[100];
-	time_t t = time;
-
-	if (t && strftime(buf, sizeof(buf),  "%Y-%m-%d %H:%M", localtime(&t)))
-		return buf;
-	else
-		return NULL;
-}
-
 void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...) {
 	va_list ap;
 	string_t pkt = string_init(NULL);

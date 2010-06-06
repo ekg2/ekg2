@@ -128,13 +128,13 @@ void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, privat
 
 	string_insert_n(pkt, 0, _icq_makesnac(fam, cmd, 0x0000, j->snac_seq), SNAC_PACKET_LEN);
 
-	debug_function("icq_makesnac() 0x%x 0x0%x 0x%x\n", fam, cmd, j->snac_seq);
 #if ICQ_SNAC_NAMES_DEBUG
 	{
 	const char *tmp = icq_snac_name(fam, cmd);
-	if (tmp)
-		debug_white("icq_makesnac() //	SNAC(0x%x, 0x%x) -- %s\n", fam, cmd, tmp);
+	debug_function("icq_makesnac(0x%x) SNAC(0x%x,0x%x) // %s\n", j->snac_seq, fam, cmd, tmp?tmp:"");
 	}
+#else
+	debug_function("icq_makesnac(0x%x) SNAC(0x%x,0x%x)\n", j->snac_seq, fam, cmd);
 #endif
 	icq_makeflap(s, pkt, 0x02);
 
