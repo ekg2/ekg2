@@ -2,6 +2,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *		       2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -111,6 +115,8 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		 * ways server could return error or authorization cookie + BOS address.
 		 */
 
+		string_t str = icq_pack("I", (uint32_t) 1);			/* protocol version number */
+
 		if (session_int_get(s, "plaintext_passwd") == 1) {
 			/*
 			 * Client use this packet in FLAP channel 0x01 based authorization sequence.
@@ -118,22 +124,12 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 			 * srv_cookie packet, containing BOS address/cookie or via auth_failed
 			 * packet, containing error code.
 			 */
-
-			string_t str;
 			char *password;
 
 			debug("icq_flap_login(1) PLAINTEXT\n");
 
 			// Start channel 0x01 authorization
-
-			str = string_init(NULL);
-
-			icq_pack_append(str, "I", (uint32_t) 1);			/* spkt.flap.pkt.login.id CLI_HELLO */
-
-			/* TLVs */
 			icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));			// TLV(0x01) - uin
-
-			/* XXX, miranda assume hash has got max 20 chars? */
 			password = icq_encryptpw(session_get(s, "password"));
 			icq_pack_append(str, "T", icq_pack_tlv_str(2, password));			// TLV(0x02) - roasted password
 			xfree(password);
@@ -144,29 +140,22 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 			icq_send_pkt(s, str);	str = NULL;		// Send CLI_IDENT packet
 
 		} else {
-			// Second way is MD5 based where password is MD5 crypted.
-			/*
-			 * This is the first snac in md5 crypted login sequence. Client use this snac
-			 * to request login random key from server. It contain screenname and some
-			 * unknown stuff. Server should reply with SNAC(17,07), containing auth key string.
-			 */
-
-			string_t str;
+			/* Second way is MD5 based where password is MD5 crypted */
 
 			debug("icq_flap_login(1) MD5\n");
 
-			str = icq_pack("I", (uint32_t) 1);			/* spkt.flap.pkt.login.id CLI_HELLO */
 			icq_pack_append(str, "tI", icq_pack_tlv_dword(0x8003, 0x00100000));		/* unknown */
 			icq_makeflap(s, str, ICQ_FLAP_LOGIN);
 			icq_send_pkt(s, str);	str = NULL;
 
-			/*
+			/* SNAC(17,06) CLI_AUTH_REQUEST	Request md5 authkey
+			 *
 			 * This is the first snac in md5 crypted login sequence. Client use this
 			 * snac to request login random key from server. Server could return SNAC(17,07)
+			 * containing auth key string.
 			 */
-			// Send CLI_AUTH_REQUEST
 			icq_send_snac(s, 0x17, 6, 0, 0,
-				    "T", icq_pack_tlv_str(1, s->uid + 4));	/* uid */
+				    "T", icq_pack_tlv_str(0x01, s->uid + 4));	/* Send CLI_AUTH_REQUEST */
 		}
 
 	}

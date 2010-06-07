@@ -8,6 +8,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *                     2008 Wiesław Ochmiński <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -23,30 +27,48 @@
  */
 
 SNAC_SUBHANDLER(icq_snac_status_error) {
+	/* SNAC(0B,01) SRV_STATS_ERROR	Client / server error
+	 *
+	 * This is an error notification snac.
+	 */
 	struct {
 		uint16_t error;
 	} pkt;
-	uint16_t error;
 
-	if (ICQ_UNPACK(&buf, "W", &pkt.error))
-		error = pkt.error;
-	else
-		error = 0;
+	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
+		pkt.error = 0;
+	/* XXX  	TLV.Type(0x08) - error subcode? */
 
-	icq_snac_error_handler(s, "status", error);
+	icq_snac_error_handler(s, "status", pkt.error);
 	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_status_minreport) {
+	/* SNAC(0B,02) SRV_SET_MINxREPORTxINTERVAL	Set minimum report interval
+	 *
+	 * Server send this to client after login. This snac contain minimum stats report
+	 * interval value. Client should send stats report every 1200 hours (default value).
+	 */
 	struct {
-		uint16_t interval;
-		unsigned char *data;
+		uint16_t interval;	// min interval between stats reports (hours)
 	} pkt;
 
-	if (!ICQ_UNPACK(&pkt.data, "W", &pkt.interval))
+	if (!ICQ_UNPACK(&buf, "W", &pkt.interval))
 		return -1;
 
-	debug_white("icq_snac_status_minreport() minimum report interval of %u [hours]\n", pkt.interval);
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
+	debug_white("icq_snac_status_minreport() minimum interval between stats reports: %u [hours]\n", pkt.interval);
+#endif
+	return 0;
+}
+
+SNAC_SUBHANDLER(icq_snac_status_report_ack) {
+	/* SNAC(0B,04) SRV_REPORT_ACK	Usage stats report ack
+	 *
+	 * Server send this as an ack for client stats report. Currently used only
+	 * by AIM service. ICQ clients never send stat reports.
+	 * Empty snac (no snac data)
+	 */
 	return 0;
 }
 
@@ -54,8 +76,9 @@ SNAC_HANDLER(icq_snac_status_handler) {
 	snac_subhandler_t handler;
 
 	switch (cmd) {
-		case 0x01: handler = icq_snac_status_error; break;	/* Miranda: OK */
-		case 0x02: handler = icq_snac_status_minreport; break;	/* Miranda: OK */
+		case 0x01: handler = icq_snac_status_error; break;
+		case 0x02: handler = icq_snac_status_minreport; break;
+		case 0x04: handler = icq_snac_status_report_ack; break;
 		default:   handler = NULL; break;
 	}
 

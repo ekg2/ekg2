@@ -8,6 +8,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -23,17 +27,20 @@
  */
 
 SNAC_SUBHANDLER(icq_snac_extension_error) {
+	/* SNAC(15,01) SRV_ICQEXT_ERROR	Client/server error
+	 *
+	 * This is an error notification snac
+	 */
 	struct {
 		uint16_t error;
 	} pkt;
-	uint16_t error;
 
-	if (ICQ_UNPACK(&buf, "W", &pkt.error))
-		error = pkt.error;
-	else
-		error = 0;
+	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
+		pkt.error = 0;
+	/* XXX	TLV.Type(0x08) - error subcode */
+	/* XXX	TLV.Type(0x21) - service specific data from request */
 
-	icq_snac_error_handler(s, "extension", error);
+	icq_snac_error_handler(s, "extension", pkt.error);
 	return 0;
 }
 
@@ -596,6 +603,10 @@ static metasnac_subhandler_t get_userinfo_extension_handler(uint16_t subtype) {
 }
 
 static int icq_meta_info_reply(session_t *s, unsigned char *buf, int len, private_data_t **info, int show) {
+	/* SNAC(15,03)/07DA SRV_META_INFO_REPLY	Meta information response
+	 *
+	 * This is the server response to client meta info request SNAC(15,02)/07D0.
+	 */
 	struct {
 		uint16_t subtype;
 		uint8_t result;
@@ -699,9 +710,9 @@ static int check_replyreq(session_t *s, unsigned char **buf, int *len, int *type
 }
 
 SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
-	/*
-	 * Handle SNAC(0x15, 0x3) -- Meta information response
+	/* SNAC(15,03) SRV_META_REPLY	Meta information response
 	 *
+	 * This is the server response to client meta request SNAC(15,02)
 	 */
 	int type = 0;
 	private_data_t *info = NULL;
@@ -714,11 +725,11 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 	private_item_set_int(&info, "uid", private_item_get_int(&data, "uid"));
 
 	switch (type) {
-		case SRV_OFFLINE_MESSAGE:
-		case SRV_END_OF_OFFLINE_MSGS:
+		case SRV_OFFLINE_MESSAGE:		/* Offline message response */
+		case SRV_END_OF_OFFLINE_MSGS:		/* End-of-offline messages reply */
 			debug_error("icq_snac_extension_replyreq() METASNAC type: 0x%x not supported yet.\n", type);
 			break;
-		case SRV_META_INFO_REPLY:
+		case SRV_META_INFO_REPLY:		/* Meta information response */
 			icq_meta_info_reply(s, buf, len, &info, 1);
 			break;
 		default:

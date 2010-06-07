@@ -8,6 +8,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *                     2008 Wiesław Ochmiński <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -23,22 +27,31 @@
  */
 
 SNAC_SUBHANDLER(icq_snac_lookup_error) {
+	/* SNAC(0A,01) SRV_EMAILxSEARCH_ERROR	Client/server error
+	 *
+	 * This is an error notification snac. You'll receive it when search fails.
+	 */
 	struct {
 		uint16_t error;
 	} pkt;
-	uint16_t error;
 
-	if (ICQ_UNPACK(&buf, "W", &pkt.error))
-		error = pkt.error;
-	else
-		error = 0;
+	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
+		pkt.error = 0;
+	/* XXX TLV.Type(0x08) - error subcode */
 
-	icq_snac_error_handler(s, "lookup", error);
+	icq_snac_error_handler(s, "lookup", pkt.error);
 	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_lookup_replyreq) {
-	return -3;
+	/* SNAC(0A,03) SRV_SEARCHxEMAIL_REPLY	Search response
+	 *
+	 * This is the server reply to client search by email request. It contain
+	 * found screennames associated with requested email. Server replies with
+	 * this SNAC to SNAC(0A,02).
+	 */
+	/* XXX list of tlv(1) */
+	return -3;	/* not handled yet */
 }
 
 SNAC_HANDLER(icq_snac_lookup_handler) {

@@ -8,6 +8,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *                     2008 Wiesław Ochmiński <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -38,9 +42,11 @@ SNAC_SUBHANDLER(icq_snac_userlist_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_userlist_reply) {
-	/*
-	 * Handle SNAC(0x13,0x03)
+	/* SNAC(13,03) SRV_SSI_RIGHTS_REPLY	Service parameters reply
+	 *
+	 * Server replies with this SNAC to SNAC(13,02) - client SSI service parameters request.
 	 */
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
 
@@ -48,7 +54,6 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 
 	tlvs = icq_unpack_tlvs(&buf, &len, 0);
 
-#if ICQ_DEBUG_UNUSED_INFORMATIONS
 	if ((t = icq_tlv_get(tlvs, 0x06)) && (t->len == 2))
 		debug_white("icq_snac_userlist_reply() length limit for server-list item's name = %d\n", t->nr);
 	if ((t = icq_tlv_get(tlvs, 0x0C)) && (t->len == 2))
@@ -58,9 +63,9 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 		if (icq_unpack_nc(t->buf, t->len, "WWWW 20 W", &a, &b, &c, &d, &e))
 			debug_white("icq_snac_userlist_reply() Max %d contacts, %d groups; %d visible contacts, %d invisible contacts, %d ignore items.\n", a, b, c, d, e);
 	}
-#endif
 
 	icq_tlvs_destroy(&tlvs);
+#endif
 
 	return 0;
 }
@@ -143,7 +148,7 @@ cleanup_user:
 						j->default_group_id = group_id;
 						j->default_group_name = xstrdup(name);
 					}
-				} 
+				}
 			} else {
 				debug_error("icq_userlist_parse_entry() Unhandled ROSTER_TYPE_GROUP wItemID != 0\n");
 			}

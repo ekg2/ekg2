@@ -572,6 +572,11 @@ int tlv_length_check(char *name, icq_tlv_t *t, int length) {
 
 /* hash password, ripped from micq */
 char *icq_encryptpw(const char *pw) {
+	/* Passwords are roasted when sent to the host. This is done so they aren't
+	 * sent in "clear text" over the wire, although they are still trivial to
+	 * decode. Roasting is performed by first xoring each byte in the password
+	 * with the equivalent modulo byte in the roasting array.
+	 */
 	uint8_t tb[] = { 0xf3, 0x26, 0x81, 0xc4, 0x39, 0x86, 0xdb, 0x92, 0x71, 0xa3, 0xb9, 0xe6, 0x53, 0x7a, 0x95, 0x7c };
 
 	char *cpw = xstrdup(pw), *p;
@@ -603,8 +608,8 @@ void icq_pack_append_client_identification(string_t pkt) {
 	/*
 	 * Pack client identification details.
 	 */
-	icq_pack_append(pkt, "T",  icq_pack_tlv_str(0x03, CLIENT_ID_STRING));		// TLV(0x03) - client id string
-	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x16, CLIENT_ID_CODE));		// TLV(0x16) - client id
+	icq_pack_append(pkt, "T",  icq_pack_tlv_str(0x03, CLIENT_ID_STRING));		// TLV(0x03) - client id string (name, version)
+	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x16, CLIENT_ID_CODE));		// TLV(0x16) - client id number
 	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x17, CLIENT_VERSION_MAJOR));	// TLV(0x17) - client major version
 	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x18, CLIENT_VERSION_MINOR));	// TLV(0x18) - client minor version
 	icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x19, CLIENT_VERSION_LESSER));	// TLV(0x19) - client lesser version
