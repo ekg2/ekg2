@@ -532,6 +532,7 @@ SNAC_HANDLER(icq_snac_userlist_handler) {
 SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 	userlist_t *u;
 	const char *nick = private_item_get(&data, "nick");
+	const char *cmd  = private_item_get(&data, "cmd");
 	int quiet = private_item_get_int(&data, "quiet");
 	uint16_t error;
 	char *uid;
@@ -541,19 +542,62 @@ SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 
 	uid = icq_uid(private_item_get(&data, "uid"));
 
-	if (!error) {
-		if ( (u = userlist_add(s, uid, nick)) ) {
-			query_emit_id(NULL, USERLIST_ADDED, &u->uid, &u->nickname, &quiet);
-			query_emit_id(NULL, ADD_NOTIFY, &s->uid, &u->uid);
-			user_private_item_set_int(u, "iid", private_item_get_int(&data, "iid"));
-			user_private_item_set_int(u, "gid", private_item_get_int(&data, "gid"));
-			/* XXX ?wo? ask for authorizarion flag */
-		}
-	} else {
+	if (error) {
 		/* XXX ?wo? format for it */
 		char *tmp = saprintf("Can't add %s/%s", nick, uid);
 		printq("icq_user_info_generic", tmp, icq_snac_userlist_edit_ack_msg(error));
 		xfree(tmp);
+		xfree(uid);
+		return -1;
+	}
+
+	if (!xstrcmp(cmd, "del")) {
+		if ( (u = userlist_find(s, uid)) ) {
+			char *tmp = xstrdup(u->nickname);
+			printq("user_deleted", u->nickname, session_name(s));
+
+			tabnick_remove(u->uid);
+			tabnick_remove(u->nickname);
+
+			userlist_remove(s, u);
+
+			query_emit_id(NULL, USERLIST_REMOVED, &tmp, &uid);
+			query_emit_id(NULL, REMOVE_NOTIFY, &s->uid, &uid);
+
+			xfree(tmp);
+		}
+	} else {
+		// add or modify
+		if (!xstrcmp(cmd, "add")) {
+			if ( (u = userlist_add(s, uid, nick)) ) {
+				printq("user_added", u->nickname, session_name(s));
+				query_emit_id(NULL, USERLIST_ADDED, &u->uid, &u->nickname, &quiet);
+				query_emit_id(NULL, ADD_NOTIFY, &s->uid, &u->uid);
+			}
+		} else {
+			// modify
+			if ( (u = userlist_find(s, uid)) ) {
+				const char *nick = private_item_get(&data, "nick");
+				if (nick) {
+
+					query_emit_id(NULL, USERLIST_RENAMED, &u->nickname, &nick);
+				
+					xfree(u->nickname);
+					u->nickname = xstrdup(nick);
+
+					userlist_replace(s, u);
+					query_emit_id(NULL, USERLIST_REFRESH);
+				}
+			}
+		}
+		if (u) {
+			user_private_item_set_int(u, "iid", private_item_get_int(&data, "iid"));
+			user_private_item_set_int(u, "gid", private_item_get_int(&data, "gid"));
+			const char *p;
+			p = private_item_get(&data, "mobile"); if (p) user_private_item_set(u, "mobile", p);
+			p = private_item_get(&data, "email"); if (p) user_private_item_set(u, "email", p);
+			p = private_item_get(&data, "comment"); if (p) user_private_item_set(u, "comment", p);
+		}
 	}
 
 	xfree(uid);

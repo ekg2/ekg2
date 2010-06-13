@@ -768,24 +768,231 @@ static COMMAND(icq_command_addssi) {
 	userlist_t *u;
 	icq_private_t *j;
 	private_data_t *refdata = NULL;
-	uint32_t u_id;
-	uint16_t group;
+	uint32_t uid;
+	uint16_t group, iid;
+	int i, ok=0;
+	char *nickname = NULL, *phone = NULL, *email = NULL, *comment = NULL;
 
-	char *nickname = NULL;
-	char *phone = NULL;
-	char *email = NULL;
-	char *comment = NULL;
+	int cmd_add = !xstrcmp(name,"add");
 
-		/* instead of PARAMASTARGET, 'cause that one fails with /add username in query */
-	if (get_uid(session, params[0])) {
-		/* XXX: create&use shift()? */
+	if (cmd_add && get_uid(session, params[0])) {
 		target = params[0];
 		params++;
 	}
 
-	if ((u = userlist_find(session, target))) {		/* don't allow to add user again */
-		printq("user_exists_other", (params[0] ? params[0] : target), format_user(session, u->uid), session_name(session));
+	if (!cmd_add && params[0] && !xstrcmp(params[0], target)) {
+		//  XXX ???
+		params++;
+	}
+
+	if ((u = userlist_find(session, target))) {
+		if (cmd_add) {
+			/* don't allow to add user again */
+			printq("user_exists_other", target, format_user(session, u->uid), session_name(session));
+			return -1;
+		}
+	} else if (!cmd_add) {
+		printq("user_not_found", target);
 		return -1;
+	}
+
+	if (!(uid = icq_get_uid(session, target))) {
+		printq("invalid_uid", target);
+		return -1;
+	}
+
+	if ( !session || !(j = session->priv) ) /* WTF? */
+		return -1;
+
+	char **argv = array_make(params[0], " \t", 0, 1, 1);
+
+	for (i = 0; argv[i]; i++) {
+		if (match_arg(argv[i], 'g', "group", 2) && argv[i + 1] && ++i) {
+			/* XXX */
+			ok = 1;
+			continue;
+		}
+
+		if (match_arg(argv[i], 'p', "phone", 2) && argv[i + 1]) {
+			phone = argv[++i];
+			ok = 1;
+			continue;
+		}
+
+		if (match_arg(argv[i], 'c', "comment", 2) && argv[i + 1]) {
+			comment = argv[++i];
+			ok = 1;
+			continue;
+		}
+
+		if (match_arg(argv[i], 'e', "email", 2) && argv[i + 1]) {
+			email = argv[++i];
+			ok = 1;
+			continue;
+		}
+		/*    if this is -n smth */
+		/* OR (/add only) if param doesn't looks like command treat as a nickname */
+		if ((match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1] && ++i) || (cmd_add && argv[i][0] != '-')) {
+			if (cmd_add && userlist_find(session, argv[i])) {
+				printq("user_exists", argv[i], session_name(session));
+			} else {
+				nickname = argv[i];
+				ok = 1;
+				continue;
+			}
+		}
+		printq("invalid_params", name);
+	}
+
+	if (nickname && (u = userlist_find(session, nickname))) {
+		printq("user_exists_other", nickname, format_user(session, u->uid), session_name(session));
+		ok = 0;
+	}
+
+
+	if ((cmd_add && nickname) || (!cmd_add && ok)) {
+		/* send packets */
+		string_t buddies, data;
+		uint16_t min = 0xffff, max = 0, count = 0;
+
+		buddies = string_init(NULL);
+		for (u = session->userlist; u; u = u->next) {
+			i = user_private_item_get_int(u, "iid");
+			icq_pack_append(buddies, "W", i);
+			if (i>max) max = i;
+			if (i<min) min = i;
+			count++;
+		}
+
+		if (cmd_add) {
+			if (count) {
+				if (min>1)
+					iid = 1;
+				// else if (max-min+1 != count) {
+				// XXX ?wo? find iid (for new user) between min, max
+				// }
+				else
+					iid = max + 1;
+			} else
+				iid = 1;
+
+			icq_pack_append(buddies, "W", iid);
+			group = j->default_group_id;	// XXX
+		} else {
+			u = userlist_find(session, target);
+			iid = user_private_item_get_int(u, "iid");
+			group = user_private_item_get_int(u, "gid");
+		}
+
+		/* SNAC(13,11) CLI_SSI_EDIT_BEGIN	Contacts edit start (begin transaction)
+		 * Use this before server side information (SSI) modification.
+		 */
+		icq_send_snac(session, 0x13, 0x11, NULL, NULL, "");
+
+		data = string_init(NULL);
+
+		/* TLV(0x0066) - Signifies that you are awaiting authorization for this buddy. The client is in
+		 * charge of putting this TLV, but you will not receiving status updates for the contact until
+		 * they authorize you, regardless if this is here or not. Meaning, this is only here to tell
+		 * your client that you are waiting for authorization for the person. This TLV is always empty.
+		 */
+		icq_pack_append(data, "T", icq_pack_tlv(0x66, NULL, 0));
+
+		if (nickname)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x131, nickname));	// contact's nick name
+		if (email)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x137, email));	// locally assigned mail address
+		if (phone)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x13a, phone));	// locally assigned SMS number
+		if (comment)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x13c, comment));	// buddy comment
+
+		// data to server response handler
+		private_item_set(&refdata, "cmd", cmd_add ? "add" : "modify");
+		private_item_set(&refdata, "nick", nickname);
+		private_item_set_int(&refdata, "uid", uid);
+		private_item_set_int(&refdata, "iid", iid);
+		private_item_set_int(&refdata, "gid", group);
+		private_item_set_int(&refdata, "quiet", quiet);
+		if (phone) private_item_set(&refdata, "mobile", phone);
+		if (email) private_item_set(&refdata, "email", email);
+		if (comment) private_item_set(&refdata, "comment", comment);
+
+		if (cmd_add) {
+			/* SNAC(13,08) CLI_SSIxADD	SSI edit: add item(s)
+			 * Client use this to add new items to server-side info. Server should reply via SNAC(13,0E)
+			 */
+			icq_send_snac(session, 0x13, 0x08, refdata, icq_cmd_addssi_ack,
+				"U WWW WA",
+				target+4,				// item name (uin)
+				group,					// Group#
+				(uint16_t) iid,				// Item#
+				(uint16_t) 0,				// Type of item: 0 -- Buddy record
+				(uint16_t) data->len,			// Length of the additional data
+				data
+				);
+		}
+
+		/* SNAC(13,09) CLI_SSIxUPDATE	SSI edit: update group header
+		 *
+		 * This can be used to modify either the name or additional data for any items that are already
+		 * in your server-stored information. It is most commonly used after adding or removing a buddy:
+		 * you should either add or remove the buddy ID# from the type 0x00c8 TLV in the additional data of
+		 * the parent group, and then send this SNAC containing the modified data.
+		 * Server should reply via SNAC(13,0E).
+		 */
+		if (cmd_add) {
+			icq_send_snac(session, 0x13, 0x09, NULL, NULL,
+				"U WWWW T",
+				j->default_group_name,			// default group name
+				group,					// Group#
+				(uint16_t) 0,				// Item#
+				(uint16_t) 1,				// Group record
+				(uint16_t) buddies->len + 4,		// Length of the additional data
+				icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
+				);
+		} else {
+			icq_send_snac(session, 0x13, 0x09, refdata, icq_cmd_addssi_ack,
+				"U WWW WA",
+/*XXX*/				itoa(uid),				// item name (uin)
+				group,					// Group#
+				(uint16_t) iid,				// Item#
+				(uint16_t) 0,				// Type of item: 0 -- Buddy record
+				(uint16_t) data->len,			// Length of the additional data
+				data
+				);
+		}
+
+		icq_send_snac(session, 0x13, 0x12, NULL, NULL, "");	// Contacts edit end (finish transaction)
+
+		string_free(data, 1);
+		string_free(buddies, 1);
+	}
+
+	array_free(argv);
+
+	return 0;
+}
+
+static COMMAND(icq_command_delssi) {
+	userlist_t *u;
+	icq_private_t *j;
+	private_data_t *refdata = NULL;
+	uint32_t u_id;
+	uint16_t iid = 0;
+	uint16_t group;
+	string_t buddies;
+	int i;
+
+	if (params[0])
+		target = params[0];
+
+	if (!(u = userlist_find(session, target))) {
+		printq("user_not_found", target);
+		return -1;
+	} else {
+		iid = user_private_item_get_int(u, "iid");
+		group = user_private_item_get_int(u, "gid");
 	}
 
 	if (!(u_id = icq_get_uid(session, target))) {
@@ -796,135 +1003,52 @@ static COMMAND(icq_command_addssi) {
 	if ( !session || !(j = session->priv) ) /* WTF? */
 		return -1;
 
-	if (params[0]) {
-		char **argv = array_make(params[0], " \t", 0, 1, 1);
-		int i;
+	/* send packets */
+	icq_send_snac(session, 0x13, 0x11, NULL, NULL, "");	// Contacts edit start (begin transaction)
 
-		for (i = 0; argv[i]; i++) {
-			if (match_arg(argv[i], 'g', "group", 2)) {
-				/* XXX */
-				continue;
-			}
+	// data to server response handler
+	private_item_set(&refdata, "cmd", "del");
+	private_item_set_int(&refdata, "uid", u_id);
+	private_item_set_int(&refdata, "quiet", quiet);
 
-			if (match_arg(argv[i], 'p', "phone", 2) && argv[i + 1] && i++) {
-				xfree(phone);
-				phone = xstrdup(argv[i]);
-				continue;
-			}
+	/* SNAC(13,0A) CLI_SSIxDELETE	SSI edit: remove item
+	 * Client use this to delete items from server-side info. Server should reply via SNAC(13,0E)
+	 */
+	icq_send_snac(session, 0x13, 0x0A, refdata, icq_cmd_addssi_ack,
+			"U WWW W",
+/*XXX*/			itoa(u_id),				// item name (uin)
+			group,					// Group#
+			(uint16_t) iid,				// Item#
+			(uint16_t) 0,				// Type of item: 0 -- Buddy record
+			(uint16_t) 0				// Length of the additional data
+			);
 
-			if (match_arg(argv[i], 'c', "comment", 2) && argv[i + 1] && i++) {
-				xfree(comment);
-				comment = xstrdup(argv[i]);
-				continue;
-			}
-
-			if (match_arg(argv[i], 'e', "email", 2) && argv[i + 1] && i++) {
-				xfree(email);
-				email = xstrdup(argv[i]);
-				continue;
-			}
-
-			/*    if this is -n smth */
-			/* OR if param doesn't looks like command treat as a nickname */
-			if ((match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1] && i++) || argv[i][0] != '-') {
-				if (userlist_find(session, argv[i])) {
-					printq("user_exists", argv[i], session_name(session));
-					continue;
-				}
-
-				xfree(nickname);
-				nickname = xstrdup(argv[i]);
-				continue;
-			}
+	buddies = string_init(NULL);
+	for (u = session->userlist; u; u = u->next) {
+		if (group == user_private_item_get_int(u, "gid")) {
+			i = user_private_item_get_int(u, "iid");
+			if (iid != i)
+				icq_pack_append(buddies, "W", i);
 		}
-		array_free(argv);
 	}
 
-	/* send packet */
-	if (nickname) {
-		uint16_t min = 0xffff, max = 0, count = 0, iid;
-		string_t buddies = string_init(NULL), data = string_init(NULL);
+	icq_send_snac(session, 0x13, 0x09, NULL, NULL,		// SSI edit: update group header
+			"U WWWW T",
+			j->default_group_name,			// default group name
+			group,					// Group#
+			(uint16_t) 0,				// Item#
+			(uint16_t) 1,				// Group record
+			(uint16_t) buddies->len + 4,		// Length of the additional data
+			icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
+			);
 
+	string_free(buddies, 1);
 
-		for (u = session->userlist; u; u = u->next) {
-			iid = user_private_item_get_int(u, "iid");
-			icq_pack_append(buddies, "W", iid);
-			if (iid>max) max = iid;
-			if (iid<min) min = iid;
-			count++;
-		}
-
-		if (count) {
-			if (min>1)
-				iid = 1;
-/*	XXX ?wo? find iid (for new user) between min, max
-			else if (max != count) {
-
-			}
-*/
-			else
-				iid = max + 1;
-		} else
-			iid = 1;
-
-		icq_pack_append(buddies, "W", iid);
-
-		group = j->default_group_id;
-
-
-		icq_send_snac(session, 0x13, 0x11, NULL, NULL, "");	// Contacts edit start (begin transaction)
-
-		icq_pack_append(data, "T", icq_pack_tlv_str(0x131, nickname));
-		icq_pack_append(data, "T", icq_pack_tlv(0x66, NULL, 0));	//  XXX we are awaiting authorization for this buddy
-		if (email)
-			icq_pack_append(data, "T", icq_pack_tlv_str(0x137, email));	// locally assigned mail address
-		if (phone)
-			icq_pack_append(data, "T", icq_pack_tlv_str(0x13a, phone));	// locally assigned SMS number
-		if (comment)
-			icq_pack_append(data, "T", icq_pack_tlv_str(0x13c, comment));	// buddy comment
-
-		private_item_set_int(&refdata, "uid", u_id);
-		private_item_set(&refdata, "nick", nickname);
-		private_item_set_int(&refdata, "iid", iid);
-		private_item_set_int(&refdata, "gid", group);
-		private_item_set_int(&refdata, "quiet", quiet);
-
-		icq_send_snac(session, 0x13, 0x08, refdata, icq_cmd_addssi_ack,		// SSI edit: add item(s)
-				"U WWW WA",
-				target+4,				// item name (uin)
-
-				group,					// Group#
-				(uint16_t) iid,				// Item#
-				(uint16_t) 0,				// Buddy record
-
-				(uint16_t) data->len,			// Length of the additional data
-				data
-				);
-
-		icq_send_snac(session, 0x13, 0x09, NULL, NULL,		// SSI edit: update group header
-				"U WWWW T",
-				j->default_group_name,			// default group name
-				group,					// Group#
-				(uint16_t) 0,				// Item#
-				(uint16_t) 1,				// Group record
-				(uint16_t) buddies->len + 4,		// Length of the additional data
-				icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
-				);
-
-		icq_send_snac(session, 0x13, 0x12, NULL, NULL, "");	// Contacts edit end (finish transaction)
-
-
-		string_free(data, 1);
-		string_free(buddies, 1);
-	}
-
-	xfree(comment);
-	xfree(email);
-	xfree(nickname);
-	xfree(phone);
+	icq_send_snac(session, 0x13, 0x12, NULL, NULL, "");	// Contacts edit end (finish transaction)
 
 	return 0;
 }
+
 
 static void icq_send_msg_ch1(session_t *session, const char *uid, const char *message) {
 	string_t pkt;
@@ -1628,7 +1752,9 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 	command_add(&icq_plugin, "icq:chat", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 
-	command_add(&icq_plugin, "icq:addssi", "!p ?", icq_command_addssi, ICQ_FLAGS, "-p --phone -c --comment -e --email");
+	command_add(&icq_plugin, "icq:addssi", "!p ?", icq_command_addssi, ICQ_FLAGS, "-p --phone -c --comment -e --email -n --nick");
+	command_add(&icq_plugin, "icq:delssi", "!u ?", icq_command_delssi, ICQ_FLAGS_TARGET, NULL);
+	command_add(&icq_plugin, "icq:modify", "!u ?", icq_command_addssi, ICQ_FLAGS_TARGET, "-p --phone -c --comment -e --email -n --nick");
 
 	command_add(&icq_plugin, "icq:auth", "!p uU ?", icq_command_auth, ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, "-a --accept -d --deny -l --list -r --request -c --cancel");
 
@@ -1639,6 +1765,7 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:gone",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:invisible", NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:xa",  "r", icq_command_away, ICQ_ONLY, NULL);
+
 
 	command_add(&icq_plugin, "icq:userinfo", "!u",	icq_command_userinfo,	ICQ_FLAGS_TARGET, NULL);
 	command_add(&icq_plugin, "icq:register", NULL,	icq_command_register,	0, NULL);
