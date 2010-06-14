@@ -128,7 +128,7 @@ int icq_write_status(session_t *s) {
 	icq_private_t *j = s->priv;
 	uint32_t status;
 
-	if (!s)
+	if (!s || !s->connected)
 		return 0;
 
 	status = (j->status_flags << 16) | icq_status(s->status);
@@ -198,10 +198,6 @@ int icq_write_info(session_t *s) {
 #ifdef DBG_CAPHTML
 	icq_pack_append_cap(tlv_5, CAP_HTML);		/* Broadcasts the capability to receive HTML messages */
 #endif
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x4D697261);	/* Miranda Signature */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x6E64614D);
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x00070800);	/* MIRANDA_VERSION */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x00030a0e);
 
 	pkt = icq_pack("T", icq_pack_tlv(0x05, tlv_5->str, tlv_5->len));
 
@@ -1699,8 +1695,13 @@ static void icq_changed_our_sequrity(session_t *s, const char *var) {
 
 static plugins_params_t icq_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("auto_away",		VAR_INT, "600", 0, NULL),
+	PLUGIN_VAR_ADD("auto_away_descr",	VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("auto_back",		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT,  "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_xa",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_xa_descr",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "xml,simple,sqlite", 0, NULL),
 	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("plaintext_passwd",	VAR_BOOL, "0", 0, NULL),
@@ -1760,11 +1761,17 @@ EXPORT int icq_plugin_init(int prio) {
 
 	command_add(&icq_plugin, "icq:away", "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:back", NULL, icq_command_away, ICQ_ONLY, NULL);
+#if 0
+	/* not supported? XXX */
 	command_add(&icq_plugin, "icq:dnd",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:ffc",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:gone",  "r", icq_command_away, ICQ_ONLY, NULL);
+#endif
 	command_add(&icq_plugin, "icq:invisible", NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:xa",  "r", icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:_autoaway", "?", icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:_autoback", "?", icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:_autoxa", "?", icq_command_away, ICQ_ONLY, NULL);
 
 
 	command_add(&icq_plugin, "icq:userinfo", "!u",	icq_command_userinfo,	ICQ_FLAGS_TARGET, NULL);
