@@ -769,7 +769,7 @@ static COMMAND(icq_command_addssi) {
 	int i, ok=0;
 	char *nickname = NULL, *phone = NULL, *email = NULL, *comment = NULL;
 
-	int cmd_add = !xstrcmp(name,"add");
+	int cmd_add = !xstrcmp(name,"addssi");
 
 	if (cmd_add && get_uid(session, params[0])) {
 		target = params[0];

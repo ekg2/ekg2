@@ -405,11 +405,12 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 			}
 		}
 
+#if 0
 		if (status == EKG_STATUS_AVAIL) {
 			xfree(u->descr);
 			u->descr = NULL;
 		}
-
+#endif
 		if (u->status == EKG_STATUS_NA) {
 			if (user_private_item_get_int(u, "version") < 8) {
 				caps &= ~(1<<CAP_SRV_RELAY);

@@ -553,6 +553,7 @@ static void icq_snac_message_status_reply(msg_params_t *msg_param, char *msg) {
 SNAC_SUBHANDLER(icq_snac_message_response) {
 	msg_params_t msg_param;
 	struct {
+		uint16_t reason;				/* reason code (1 - unsupported channel, 2 - busted payload, 3 - channel specific) */
 		uint16_t len;
 		uint16_t version;				/* this can be v8 greeting message reply */
 		/* 27b unknowns from the msg we sent */
@@ -562,6 +563,7 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 		uint8_t flags;					/* Message flags: MFLAG_NORMAL, MFLAG_AUTO, etc. */
 		uint16_t status;				/* Status */
 		/* 2b Priority? */
+		uint16_t msg_len;
 	} pkt;
 
 	if (!icq_snac_unpack_message_params(s, &buf, &len, &msg_param))
@@ -576,8 +578,7 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 
 	/* XXX, cookie, check cookie uid */
 
-	// skip 2 unknown bytes & get length
-	if (!ICQ_UNPACK(&buf, "2 w", &pkt.len))
+	if (!ICQ_UNPACK(&buf, "ww", &pkt.reason, &pkt.len))
 		pkt.len = 0;
 
 	if (pkt.len == 0x1b && 1 /* XXX */) {
@@ -596,10 +597,10 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 	if (pkt.flags == MFLAG_AUTO) {     /* A status message reply */
 		char *reason;
 
-		if (len < 2)
+		if (len < 2 || !ICQ_UNPACK(&buf, "w", &pkt.msg_len))
 			return -1;
 
-		reason = xstrndup((char *) buf + 2, len);
+		reason = xstrndup((char *) buf, pkt.msg_len);
 		icq_snac_message_status_reply(&msg_param, reason);
 		xfree(reason);
 	} else {
