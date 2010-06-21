@@ -427,13 +427,29 @@ SNAC_SUBHANDLER(icq_snac_service_migrate) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_motd) {
-	/* SNAC(01,0x13) SRV_MOTD -- Message of the day (MOTD) */
+	/* SNAC(01,0x13) SRV_MOTD -- Message of the day (MOTD)
+	 *
+	 * Server send this during protocol negotiation sequence. Various docs call this SNAC as
+	 * "message of the day" but it looks like that ICQ2K+ ignores this SNAC completely.
+	 */
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
+	uint16_t type;
+
+	ICQ_UNPACK(&buf, "W", &type);
+	/* MOTD types:
+	 *	0x0001	MTD_MDT_UPGRAGE		Mandatory upgrade needed notice
+	 *	0x0002	MTD_ADV_UPGRAGE		Advisable upgrade notice
+	 *	0x0003	MTD_SYS_BULLETIN	AIM/ICQ service system announcements
+	 *	0x0004	MTD_NORMAL		Standart notice
+	 *	0x0006	MTD_NEWS		Some news from AOL service
+	 */
 
 	tlvs = icq_unpack_tlvs(&buf, &len, 0);
 	if ( (t = icq_tlv_get(tlvs, 0x0b)) )
-		debug_white("icq_snac_service_motd() MOTD: %s\n", t->buf);
+		debug_white("icq_snac_service_motd() type:%d, MOTD: %s\n", type, t->buf);
+	else
+		debug_white("icq_snac_service_motd() type:%d\n", type);
 	icq_tlvs_destroy(&tlvs);
 	return 0;
 }
