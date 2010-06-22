@@ -413,6 +413,32 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 	return 0;
 }
 
+SNAC_SUBHANDLER(icq_snac_service_evil) {
+	/*
+	 * SNAC(01,10) SRV_EVIL_NOTICE Evil notification
+	 *
+	 * You'll receive this snac when somebody complain about you to an OSCAR server.
+	 * This snac contain your new warning_level and (optionaly) info about complaining user.
+	 * Anonymous evil notification doesn't contain user info.
+	 */
+	char *uin;
+	uint16_t warning, count;
+	struct icq_tlv_list *tlvs;
+	unsigned char *databuf;
+
+	while (len>4) {
+		if (!icq_unpack(buf, &databuf, &len, "uWW", &uin, &warning, &count))
+			return -1;
+		debug_function("icq_snac_service_evil() %s\n", uin);
+		tlvs = icq_unpack_tlvs(&databuf, &len, count);
+
+		/* XXX - parse tlvs... */
+
+		icq_tlvs_destroy(&tlvs);
+	}
+	return 0;
+}
+
 SNAC_SUBHANDLER(icq_snac_service_migrate) {
 	/*
 	 * SNAC(01,12) SRV_MIGRATION -- Migration notice and info
@@ -472,6 +498,17 @@ SNAC_SUBHANDLER(icq_snac_service_urls) {
 	return 0;
 }
 
+SNAC_SUBHANDLER(icq_snac_service_nop) {
+	/* SNAC(01,16) CLI_KEEPALIVE No operation (NOP) 
+	 *
+	 * WinAIM (AIM service) use this snac to keep connection alive. This is usefull
+	 * when it use proxy server to connect to BOS. Proxy servers can disconnect client
+	 * if there is no activity for some time.
+         */
+	debug_warn("icq_snac_service_nop() is deprecated!\n");
+	return 0;
+}
+
 SNAC_SUBHANDLER(icq_snac_service_families2) {
 	/* This is a reply to CLI_FAMILIES and it tells the client which families and their versions that this server understands.
 	 * We send a rate request packet */
@@ -508,10 +545,13 @@ SNAC_HANDLER(icq_snac_service_handler) {
 		case 0x0B: handler = icq_snac_service_pause;	break;	/* Miranda: OK */
 		case 0x0D: handler = icq_snac_service_resume;	break;
 		case 0x0F: handler = icq_snac_service_reqinfo;	break;	/* Miranda: OK */
+		case 0x10: handler = icq_snac_service_evil;	break;	/* Evil notification */
 		case 0x12: handler = icq_snac_service_migrate;	break;
 		case 0x13: handler = icq_snac_service_motd;	break;	/* Miranda: OK */
 		case 0x15: handler = icq_snac_service_urls;	break;
+		case 0x16: handler = icq_snac_service_nop;	break;	/* No operation (NOP) */
 		case 0x18: handler = icq_snac_service_families2;break;	/* Miranda: OK */
+		case 0x1F: handler = NULL;			break;	/* XXX Client verification request */
 		case 0x21: handler = icq_snac_service_extstatus;break;
 		default:   handler = NULL;			break;
 	}
