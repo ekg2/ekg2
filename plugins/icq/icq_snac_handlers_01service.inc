@@ -112,6 +112,9 @@ SNAC_SUBHANDLER(icq_snac_service_redirect) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
+	/* SNAC(01,07) SRV_RATE_LIMIT_INFO -- Rate limits information response
+	 * This snac contain server information about its snac-rate limitations.
+	 */
 	icq_private_t *j = s->priv;
 
 	struct {
@@ -237,38 +240,54 @@ wrong:
 #endif
 	}
 
-	/* CLI_REQLOCATION */
+	/* SNAC(02,02) CLI_LOCATION_RIGHTS_REQ Request limitations/params
+	 * Client use this SNAC to request location service parameters and limitations.
+	 * Server should reply via SNAC(02,03).
+	 */
 	icq_send_snac(s, 0x02, 0x02, 0, 0, NULL);
 
+	/* SNAC(03,02) CLI_BUDDYLIST_RIGHTS_REQ Request limitations/params
+	 * Client use this SNAC to request buddylist service parameters and
+	 * limitations. Server should reply via SNAC(03,03)
+	 */
 	icq_send_snac(s, 0x03, 0x02, 0, 0, ""); // example for empty snac: "" or NULL works
 
-	/* CLI_REQICBM */
+	/* SNAC(04,04) CLI_ICBM_PARAM_REQ Request parameters info
+	 * Use this snac to request your icbm parameters from server.
+	 * Server should reply via SNAC(04,05). You can change them using SNAC(04,02).
+	 */
 	icq_send_snac(s, 0x04, 0x04, 0, 0, "");
 
-	/* CLI_REQBOS */
+	/* SNAC(09,02) CLI_PRIVACY_RIGHTS_REQ Request service parameters
+	 * Client use this SNAC to request buddylist service parameters and limitations.
+	 * Server should reply via SNAC(09,03).
+	 */
 	icq_send_snac(s, 0x09, 0x02, 0, 0, "");
 
 	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_service_ratechange) {
-	struct {
-		uint16_t status;
-	} pkt;
-	icq_private_t *j = s->priv;
-	int i;
-
-	if (!ICQ_UNPACK(&buf, "W", &pkt.status))
-		return -1;
 	/*
+	 * SNAC(01,0A) SRV_RATE_LIMIT_WARN Rate information changed / rate limit warning
+	 *
+	 * Server send this snac when you goes over rate limit or when rate parameters changing.
+	 * Snac content is described by "message code". Here is the known code list:
 	 * 0x0001	Rate limits parameters changed
 	 * 0x0002	Rate limits warning (current level < alert level)
 	 * 0x0003	Rate limit hit (current level < limit level)
 	 * 0x0004	Rate limit clear (current level become > clear level)
 	 */
+	struct {
+		uint16_t status;
+	} pkt;
+	icq_private_t *j = s->priv;
+
+	if (!ICQ_UNPACK(&buf, "W", &pkt.status))	// Message code (see above)
+		return -1;
+
 	/* TODO ?wo? -- print warning here ? */
 
-	i = 0;
 	while (len >= (2 + 8*4 +1)) {
 		uint16_t id;
 		uint32_t x0, x1, x2, x3, x4, x5, x6, x7;
@@ -284,7 +303,6 @@ SNAC_SUBHANDLER(icq_snac_service_ratechange) {
 			j->rates[id]->curr_lvl	= x5;		// Current level
 			j->rates[id]->max_lvl	= x6;		// Max level
 		}
-		i++;
 	}
 
 	debug_function("icq_snac_service_ratechange() status:%u\n", pkt.status);
@@ -510,18 +528,25 @@ SNAC_SUBHANDLER(icq_snac_service_nop) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_families2) {
-	/* This is a reply to CLI_FAMILIES and it tells the client which families and their versions that this server understands.
-	 * We send a rate request packet */
+	/* SNAC(01,18) SRV_FAMILIES_VERSIONS -- Server services versions
+	 *
+	 * This is a reply to CLI_FAMILIES and it tells the client which families
+	 * and their versions that this server understands.
+	 */
 	debug_function("icq_snac_service_families2()\n");
 	// Handle incoming packet
-#if ICQ_DEBUG_UNUSED_INFORMATIONS
+	#if ICQ_DEBUG_UNUSED_INFORMATIONS
 	while (len>=2) {
 		uint16_t fam, ver;
 		ICQ_UNPACK(&buf, "WW", &fam, &ver);
 		debug_white("icq_snac_service_families2() fam=0x%x ver=0x%x // %s\n",  fam, ver, icq_lookuptable(snac_families, fam));
 	}
-#endif
+	#endif
 
+	/* SNAC(01,06) CLI_RATES_REQUEST  
+	 * Client use this SNAC to request server rate-limits. This happens during
+	 * protocol negotiation sequence. Server should reply via SNAC(01,07)
+	 */
 	icq_send_snac(s, 0x01, 0x06, NULL, NULL, "");	// Request rate limits information
 
 	return 0;
