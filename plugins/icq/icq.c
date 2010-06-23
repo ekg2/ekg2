@@ -108,13 +108,14 @@ int icq_write_status_msg(session_t *s) {
 	if (j->aim == 0)
 		return -1;
 
-	if (s->status != EKG_STATUS_AWAY && s->status != EKG_STATUS_GONE && s->status != EKG_STATUS_XA && s->status != EKG_STATUS_FFC && s->status != EKG_STATUS_DND)
-		return -1;
-
-	msg = xstrndup(s->descr, 0x1000);	/* XXX, recode */
+	msg = ekg_locale_to_utf8(xstrndup(s->descr, 0x1000));
 
 	/* XXX, cookie */
 
+	/* SNAC(02,04) CLI_SET_LOCATION_INFO Set user information
+	 * Client use this snac to set its location information (like client
+	 * profile string, client directory profile string, client capabilities).
+	 */
 	icq_send_snac(s, 0x02, 0x04, 0, 0,
 			"TT",
 			icq_pack_tlv_str(0x03, "text/x-aolrtf; charset=\"utf-8\""),
@@ -1203,90 +1204,77 @@ static COMMAND(icq_command_inline_msg) {
 }
 
 static COMMAND(icq_command_away) {
-	const char *descr, *format;
-	int allow_descr = 0;
+	const char *format;
+	char *new_descr = NULL;
+	int chg = 0, new_status;
 
 	if (!xstrcmp(name, ("_autoback"))) {
 		format = "auto_back";
-		session_status_set(session, EKG_STATUS_AUTOBACK);
-		session_unidle(session);
+		new_status = EKG_STATUS_AUTOBACK;
 	} else if (!xstrcmp(name, ("back"))) {
 		format = "back";
-		session_status_set(session, EKG_STATUS_AVAIL);
-		session_unidle(session);
+		new_status = EKG_STATUS_AVAIL;
 	} else if (!xstrcmp(name, ("_autoaway"))) {
 		format = "auto_away";
-		session_status_set(session, EKG_STATUS_AUTOAWAY);
-		allow_descr = 1;
+		new_status = EKG_STATUS_AUTOAWAY;
 	} else if (!xstrcmp(name, ("_autoxa"))) {
 		format = "auto_xa";
-		session_status_set(session, EKG_STATUS_AUTOXA);
-		allow_descr = 1;
+		new_status = EKG_STATUS_AUTOXA;
 	} else if (!xstrcmp(name, ("away"))) {
 		format = "away";
-		session_status_set(session, EKG_STATUS_AWAY);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_AWAY;
 	} else if (!xstrcmp(name, ("dnd"))) {
 		format = "dnd";
-		session_status_set(session, EKG_STATUS_DND);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_DND;
 	} else if (!xstrcmp(name, ("ffc"))) {
 		format = "ffc";
-		session_status_set(session, EKG_STATUS_FFC);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_FFC;
 	} else if (!xstrcmp(name, ("xa"))) {
 		format = "xa";
-		session_status_set(session, EKG_STATUS_XA);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_XA;
 	} else if (!xstrcmp(name, ("gone"))) {
 		format = "gone";
-		session_status_set(session, EKG_STATUS_GONE);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_GONE;
 	} else if (!xstrcmp(name, ("invisible"))) {
 		format = "invisible";
-		session_status_set(session, EKG_STATUS_INVISIBLE);
-		session_unidle(session);
+		new_status = EKG_STATUS_INVISIBLE;	// XXX invisible is flag, not status
 	} else
 		return -1;
 
-	if (allow_descr) {
-		if (params[0]) {
-			session_descr_set(session, (!xstrcmp(params[0], "-")) ? NULL : params[0]);
-			reason_changed = 1;
-		} else {
-			char *tmp;
+	if (params[0]) {
+		if (xstrcmp(params[0], "-"))
+			new_descr = xstrdup(params[0]);
+	} else if (config_keep_reason)
+		new_descr = xstrdup(session_descr_get(session));
 
-			if (!config_keep_reason) {
-				session_descr_set(session, NULL);
-			} else if ((tmp = ekg_draw_descr(session_status_get(session)))) {
-				session_descr_set(session, tmp);
-				xfree(tmp);
-			}
-		}
-	} else
-		session_descr_set(session, NULL);
+	if (xstrcmp(new_descr, session->descr)) {
+		reason_changed = 1;
+		chg = 1;
+		session_descr_set(session, new_descr);
+	}
 
-	descr = (char *) session_descr_get(session);
-
-	if (descr) {
+	if (new_descr) {
 		char *f = saprintf("%s_descr", format);
-		printq(f, descr, "", session_name(session));
+		printq(f, new_descr, "", session_name(session));
 		xfree(f);
 	} else
 		printq(format, session_name(session));
 
+	xfree(new_descr);
+
+	if (session->connected && chg)
+		icq_write_status_msg(session);
+
+	if (new_status != session_status_get(session)) {
+		session_status_set(session, new_status);
+		if ((new_status != EKG_STATUS_AUTOAWAY) && (new_status != EKG_STATUS_AUTOXA))
+			session_unidle(session);
+		if (session->connected)
+			icq_write_status(session);
+	}
+
 	ekg_update_status(session);
 
-	if (session->connected) {
-		/* icq_write_info(session); */
-		icq_write_status(session);
-		icq_write_status_msg(session);
-	}
 	return 0;
 }
 
@@ -1761,12 +1749,9 @@ EXPORT int icq_plugin_init(int prio) {
 
 	command_add(&icq_plugin, "icq:away", "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:back", NULL, icq_command_away, ICQ_ONLY, NULL);
-#if 0
-	/* not supported? XXX */
 	command_add(&icq_plugin, "icq:dnd",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:ffc",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:gone",  "r", icq_command_away, ICQ_ONLY, NULL);
-#endif
 	command_add(&icq_plugin, "icq:invisible", NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:xa",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:_autoaway", "?", icq_command_away, ICQ_ONLY, NULL);
