@@ -454,7 +454,7 @@ static COMMAND(gg_command_away) {
 		}
 	}
 
-	reason_changed = 1;
+	ekg2_reason_changed = 1;
 	if (!session_descr_get(session))
 		autoscroll = timeout = 0;
 

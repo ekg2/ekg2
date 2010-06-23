@@ -160,7 +160,7 @@ extern struct buffer_info buffer_speech;
 extern time_t last_save;
 extern char *config_profile;
 extern int config_changed;
-extern int reason_changed;
+extern int ekg2_reason_changed;
 
 extern pid_t speech_pid;
 

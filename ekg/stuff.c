@@ -196,7 +196,7 @@ char *last_search_last_name = NULL;
 char *last_search_nickname = NULL;
 char *last_search_uid = 0;
 
-int reason_changed = 0;
+int ekg2_reason_changed = 0;
 
 /*
  * windows_save()

@@ -887,8 +887,8 @@ void mg_open_quit_dialog(gboolean minimize_button) {
 	if (config_save_quit == 1) {
 #warning "Display question if user want to /save config"
 /*
-		if (config_changed)				format_find("config_changed")
-		else if (config_keep_reason && reason_changed)	format_find("quit_keep_reason");
+		if (config_changed)					format_find("config_changed")
+		else if (config_keep_reason && ekg2_reason_changed)	format_find("quit_keep_reason");
 */
 		config_save_quit = 0;
 	}

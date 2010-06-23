@@ -1666,7 +1666,7 @@ static COMMAND(cmd_save) {
 	if (!ret) {
 		printq("saved");
 		config_changed = 0;
-		reason_changed = 0;
+		ekg2_reason_changed = 0;
 	} else {
 		printq("error_saving");
 	}

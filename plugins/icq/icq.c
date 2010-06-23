@@ -1248,7 +1248,7 @@ static COMMAND(icq_command_away) {
 		new_descr = xstrdup(session_descr_get(session));
 
 	if (xstrcmp(new_descr, session->descr)) {
-		reason_changed = 1;
+		ekg2_reason_changed = 1;
 		chg = 1;
 		session_descr_set(session, new_descr);
 	}

@@ -472,7 +472,7 @@ static COMMAND(jabber_command_away)
 	
 	if (params[0]) {
 		session_descr_set(session, (!xstrcmp(params[0], "-")) ? NULL : params[0]);
-		reason_changed = 1;
+		ekg2_reason_changed = 1;
 	} 
 	if (!xstrcmp(name, ("_autoback"))) {
 		format = "auto_back";
