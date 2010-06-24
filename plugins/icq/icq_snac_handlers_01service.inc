@@ -47,6 +47,14 @@ SNAC_SUBHANDLER(icq_snac_service_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_families) {
+	/*
+	 * SNAC(01,03) SRV_FAMILIES -- Server supported snac families list
+	 * 
+	 * This is the first snac in protocol negotiation sequence. Client shouldn't use
+	 * families not listed in this SNAC. So if your client use SNAC(13) family and
+	 * server SNAC(01,03) doesn't contain it - your client should popup "server error"
+	 * message when user want's to change server-stored information (SSI).
+	 */
 	string_t pkt;
 
 	debug_function("icq_snac_service_families()\n");
@@ -65,32 +73,34 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 	 * This tells the server which SNAC families and their corresponding
 	 * versions which the client understands. This also seems to identify
 	 * the client as an ICQ vice AIM client to the server.
-	 * Miranda mimics the behaviour of ICQ 6 */
+	 */
 
 	pkt = string_init(NULL);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x22, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x01, (uint32_t) 0x04);	// Generic service controls
-	icq_pack_append(pkt, "WW", (uint32_t) 0x13, (uint32_t) 0x04);	// Server Side Information (SSI) service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x02, (uint32_t) 0x01);	// Location services
 	icq_pack_append(pkt, "WW", (uint32_t) 0x03, (uint32_t) 0x01);	// Buddy List management service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x04, (uint32_t) 0x01);	// ICBM (messages) service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x06, (uint32_t) 0x01);	// Invitation service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x08, (uint32_t) 0x01);	// Popup notices service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x09, (uint32_t) 0x01);	// Privacy management service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0a, (uint32_t) 0x01);	// User lookup service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0b, (uint32_t) 0x01);	// Usage stats service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0c, (uint32_t) 0x01);	// Translation service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x25, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x13, (uint32_t) 0x05);	// Server Side Information (SSI) service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x02);	// ICQ specific extensions service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x17, (uint32_t) 0x01);	// Authorization/registration service
 #if 0
 	icq_pack_append(pkt, "WW", (uint32_t) 0x05, (uint32_t) 0x01);	//  Advertisements service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x06, (uint32_t) 0x01);	// Invitation service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x08, (uint32_t) 0x01);	// Popup notices service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x07, (uint32_t) 0x01);	//  Administrative service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x0c, (uint32_t) 0x01);	// Translation service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0d, (uint32_t) 0x01);	//  Chat navigation service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0e, (uint32_t) 0x01);	//  Chat service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0f, (uint32_t) 0x01);	//  Directory user search
 	icq_pack_append(pkt, "WW", (uint32_t) 0x10, (uint32_t) 0x01);	//  Server-stored buddy icons (SSBI) service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x01);	//  ICQ specific extensions service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x17, (uint32_t) 0x01);	//  Authorization/registration service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x22, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x24, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x25, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x85, (uint32_t) 0x01);	//  Broadcast service - IServerd extension
 #endif
 
