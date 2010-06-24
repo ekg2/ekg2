@@ -209,16 +209,15 @@ int icq_write_info(session_t *s) {
 	return 0;
 }
 
-void icq_set_sequrity(session_t *s) {
+void icq_set_security(session_t *s) {
 	icq_private_t *j;
 	string_t pkt;
-	uint8_t auth, webaware;
+	uint8_t webaware;
 
 	if (!s || !(j = s->priv))
 		return;
 
-	webaware = atoi(session_get(s, "webaware"));
-	if (webaware)
+	if ((webaware = atoi(session_get(s, "webaware"))))
 		j->status_flags |= STATUS_WEBAWARE;
 	else
 		j->status_flags &= ~STATUS_WEBAWARE;
@@ -226,20 +225,20 @@ void icq_set_sequrity(session_t *s) {
 	if (!(s->connected))
 		return;
 
-	auth = atoi(session_get(s, "require_auth"));
-	pkt = icq_pack("w iwww wwc wwc",
-				(uint32_t) 4+2+2+2 + 5 + 5,	/* data chunk size */
+	/* SNAC(15,02)/07D0/0C3A CLI_SET_FULLINFO Save info tlv-based request
+	 *
+	 * This is client tlv-based set personal info request. This snac contain tlv chain and this 
+	 * chain may contain several TLVs of same type (for example 3 tlv(0x186) - language codes).
+	 * Client can change all its information via single packet.
+	 * Server should respond with SNAC(15,03)/07DA/0C3F - which contain result flag.
+	 */
+	pkt = icq_pack("wwc wwc",
+			icq_pack_tlv_char(0x30c, webaware),				/* TLV(0x30c) (LE!) 'show web status' permissions */
+			icq_pack_tlv_char(0x2f8, !atoi(session_get(s, "require_auth")))	/* TLV(0x2f8) (LE!) authorization permissions */
+			);
+	icq_makemetasnac(s, pkt, CLI_META_INFO_REQ, CLI_SET_FULLINFO, NULL, NULL);
+	icq_send_pkt(s, pkt);
 
-				(uint32_t) atoi(s->uid+4),	/* request owner uin */
-				(uint32_t) 0x7d0,		/* data type: META_DATA_REQ */
-				(uint32_t) j->snac_seq++,	/* request sequence number */
-				(uint32_t) 0x0c3a,		/* data subtype: CLI_SET_FULLINFO */
-
-				(uint32_t) 0x30c, (uint32_t) 1, (uint32_t) webaware,	/* TLV(0x30c) (LE!) */
-				(uint32_t) 0x2f8, (uint32_t) 1, (uint32_t) !auth	/* TLV(0x2f8) (LE!) */
-				);
-	icq_send_snac(s, 0x15, 0x02, NULL, NULL, "T", icq_pack_tlv(0x1, pkt->str, pkt->len));
-	string_free(pkt, 1);
 }
 
 void icq_session_connected(session_t *s) {
@@ -371,12 +370,20 @@ void icq_session_connected(session_t *s) {
 
 		{
 			/* Update our information from the server */
+			/* SNAC(15,02)/07D0/04D0 CLI_FULLINFO_REQUEST2 Request full user info #2
+			 *
+			 * Client full userinfo request. Last reply snac flag bit1=0, other reply
+			 * packets have flags bit1=1 to inform client that more data follows.
+			 * Server should respond with following SNACs:
+			 *	SNAC(15,03)/07DA/00C8, SNAC(15,03)/07DA/00DC, SNAC(15,03)/07DA/00EB, SNAC(15,03)/07DA/010E,
+			 *	SNAC(15,03)/07DA/00D2, SNAC(15,03)/07DA/00E6, SNAC(15,03)/07DA/00F0, SNAC(15,03)/07DA/00FA
+			 */
 			private_data_t *data = NULL;
 			private_item_set_int(&data, "uid", atoi(s->uid+4));
 
 			pkt = icq_pack("i", atoi(s->uid+4));
 			/* XXX, cookie, in-quiet-mode */
-			icq_makemetasnac(s, pkt, 2000, 0x04D0, data, icq_my_meta_information_response);
+			icq_makemetasnac(s, pkt, CLI_META_INFO_REQ, CLI_FULLINFO_REQUEST2, data, icq_my_meta_information_response);
 			icq_send_pkt(s, pkt);
 		}
 
@@ -397,7 +404,7 @@ void icq_session_connected(session_t *s) {
 	}
 	protocol_connected_emit(s);
 
-	icq_set_sequrity(s);
+	icq_set_security(s);
 	icq_write_status_msg(s);
 
 	{ /* XXX ?wo? find better place for it */
@@ -1357,11 +1364,24 @@ static COMMAND(icq_command_userinfo) {
 		return -1;
 	}
 
+	/* SNAC(15,02)/07D0/04B2 CLI_FULLINFO_REQUEST Request full user info
+	* Client full userinfo request. Last reply snac flag bit1=0, other reply
+	* packets have flags bit1=1 to inform client that more data follows.
+	* Server should respond with following SNAC(15,03)/07DA subtype:
+	* 00C8, 00DC, 00EB, 010E, 00D2, 00E6, 00F0, 00FA.
+	*/
+
+	/* SNAC(15,02)/07D0/04BA CLI_SHORTINFO_REQUEST Request short user info
+	 *
+	 * Client short userinfo request. ICQ2k use this request when message from
+	 * unknown user arrived. Server should respond with SNAC(15,03)/07DA/0104
+	 */
+
 	/* XXX xookie */
 	private_item_set_int(&ref_data, "uid", number);
 
 	pkt = icq_pack("i", number);
-	icq_makemetasnac(session, pkt, 2000, (minimal_req == 0) ? 1202 : 1210, ref_data, NULL);
+	icq_makemetasnac(session, pkt, CLI_META_INFO_REQ, (minimal_req == 0) ? CLI_FULLINFO_REQUEST : CLI_SHORTINFO_REQUEST, ref_data, NULL);
 
 	icq_send_pkt(session, pkt);
 	return 0;
@@ -1379,9 +1399,14 @@ static COMMAND(icq_command_searchuin) {
 	}
 
 	/* XXX, cookie */
+	/* SNAC(15,02)/07D0/0569 CLI_FIND_BY_UIN2 Search by uin request (tlv)
+	 *
+	 * This is client search by uin tlv-based request. Server should respond
+	 * with last search found record SNAC(15,03)/07DA/01AE because uin number
+	 * is unique. UIN tlv number is 0x0136.
+	 */
 	pkt = icq_pack("wwi", icq_pack_tlv_dword(0x0136, uin));		/* TLV_UID */
-
-	icq_makemetasnac(session, pkt, 2000, 0x0569, NULL, 0);	/* META_SEARCH_UIN */
+	icq_makemetasnac(session, pkt, CLI_META_INFO_REQ, CLI_FIND_BY_UIN2, NULL, 0);
 	icq_send_pkt(session, pkt);
 	return 0;
 }
@@ -1467,6 +1492,7 @@ static COMMAND(icq_command_search) {
 	if (email) wo_idnhtni(0x015E, email);		/* TLV_EMAIL */
 	if (city) wo_idnhtni(0x0190, city);		/* TLV_CITY */
 
+#undef wo_idnhtni
 /* more options:
 
 	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_STATE, TLV_STATE);
@@ -1494,13 +1520,18 @@ static COMMAND(icq_command_search) {
 
 	icq_pack_append(pkt, "wwc", icq_pack_tlv_char(0x0230, only_online));
 
-	icq_makemetasnac(session, pkt, 2000, 0x055F, NULL, 0);	/* META_SEARCH_GENERIC */
+	/* SNAC(15,02)/07D0/055F CLI_WHITE_PAGES_SEARCH2 Whitepages search request (tlv)
+	 *
+	 * This is client tlv-based white pages search request used by ICQ2001+.
+	 * Server should respond with 1 or more packets. Last reply packet allways
+	 * SNAC(15,03)/07DA/01AE, other reply packets SNAC(15,03)/07DA/01A4.
+	 */
+	icq_makemetasnac(session, pkt, CLI_META_INFO_REQ, CLI_WHITE_PAGES_SEARCH2, NULL, 0);
 	icq_send_pkt(session, pkt);
 
 	array_free(argv);
 
 	return 0;
-#undef wo_idnhtni
 }
 
 static COMMAND(icq_command_auth) {
@@ -1654,7 +1685,7 @@ static int icq_theme_init() {
 }
 
 
-static void icq_changed_our_sequrity(session_t *s, const char *var) {
+static void icq_changed_our_security(session_t *s, const char *var) {
 	const char *val;
 	icq_private_t *j;
 	int webaware;
@@ -1666,7 +1697,7 @@ static void icq_changed_our_sequrity(session_t *s, const char *var) {
 		return;
 
 	if ((webaware = !xstrcasecmp(var, "webaware")) || !xstrcasecmp(var, "require_auth")) {
-		icq_set_sequrity(s);
+		icq_set_security(s);
 		if (webaware)
 			icq_write_status(s);
 	} else if (!xstrcasecmp(var, "hide_ip")) {
@@ -1695,9 +1726,9 @@ static plugins_params_t icq_plugin_vars[] = {
 	PLUGIN_VAR_ADD("plaintext_passwd",	VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("server",		VAR_STR, NULL, 0, NULL),
 
-	PLUGIN_VAR_ADD("hide_ip",		VAR_BOOL,  "1", 0, icq_changed_our_sequrity),
-	PLUGIN_VAR_ADD("require_auth",		VAR_BOOL,  "1", 0, icq_changed_our_sequrity),
-	PLUGIN_VAR_ADD("webaware",		VAR_BOOL,  "0", 0, icq_changed_our_sequrity),
+	PLUGIN_VAR_ADD("hide_ip",		VAR_BOOL,  "1", 0, icq_changed_our_security),
+	PLUGIN_VAR_ADD("require_auth",		VAR_BOOL,  "1", 0, icq_changed_our_security),
+	PLUGIN_VAR_ADD("webaware",		VAR_BOOL,  "0", 0, icq_changed_our_security),
 
 	PLUGIN_VAR_END()
 };

@@ -171,6 +171,8 @@ struct fieldnames_t meta_name[]={
 	{META_SHORT_USERINFO,		"short"},
 	{META_HPAGECAT_USERINFO,	"hpagecat"},
 
+	{META_SET_FULLINFO_ACK,		"fullinfo_ack"},
+
 	{SRV_USER_FOUND,		"userfound"},
 	{SRV_LAST_USER_FOUND,		"userfound_last"},
 	{SRV_RANDOM_FOUND,		""},
@@ -585,6 +587,7 @@ cleanup:
 
 METASNAC_SUBHANDLER(icq_snac_extension_userfound) { return icq_snac_extension_userfound_common(s, buf, len, 0); }
 METASNAC_SUBHANDLER(icq_snac_extension_userfound_last) { return icq_snac_extension_userfound_common(s, buf, len, 1); }
+METASNAC_SUBHANDLER(icq_snac_extension_fullinfo_ack) { return 0; }
 
 static metasnac_subhandler_t get_userinfo_extension_handler(uint16_t subtype) {
 	switch (subtype) {
@@ -630,6 +633,8 @@ static int icq_meta_info_reply(session_t *s, unsigned char *buf, int len, privat
 			/* search */
 			case SRV_LAST_USER_FOUND:	handler = icq_snac_extension_userfound_last; break;
 			case SRV_USER_FOUND:		handler = icq_snac_extension_userfound; break;
+		
+			case META_SET_FULLINFO_ACK:	handler = icq_snac_extension_fullinfo_ack; break;
 
 			case SRV_RANDOM_FOUND:		handler = NULL; break;	/* XXX, SRV_RANDOM_FOUND */
 			default:			handler = NULL;

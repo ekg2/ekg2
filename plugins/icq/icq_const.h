@@ -68,7 +68,21 @@
 #define ACKTYPE_AVATAR	   14 //send/recv of avatars from a protocol
 #define ACKTYPE_EMAIL      15	//notify if the unread emails changed
 
-
+/*
+ * Client request types
+ */
+#define CLI_OFFLINE_MESSAGE_REQ		0x003c
+#define CLI_DELETE_OFFLINE_MSGS_REQ	0x003e
+#define CLI_META_INFO_REQ		0x07d0
+/*
+ * CLI_META_INFO_REQ subtypes
+ */
+#define CLI_FULLINFO_REQUEST		0x04b2
+#define CLI_SHORTINFO_REQUEST		0x04ba
+#define CLI_FULLINFO_REQUEST2		0x04d0
+#define CLI_FIND_BY_UIN2		0x0569
+#define CLI_WHITE_PAGES_SEARCH2		0x055F
+#define CLI_SET_FULLINFO		0x0c3a
 /*
  * Server response types to client meta request.
  */

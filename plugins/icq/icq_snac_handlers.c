@@ -145,34 +145,33 @@ void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, privat
 	j->snac_seq++;
 }
 
-void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, private_data_t *data, snac_subhandler_t subhandler) {
+void icq_makemetasnac(session_t *s, string_t pkt, uint16_t type, uint16_t subtype, private_data_t *data, snac_subhandler_t subhandler) {
 	icq_private_t *j;
 	string_t newbuf;
+	int t_len;
 
 	if (!s || !(j = s->priv) || !pkt)
 		return;
 
-/* XXX */
-	if (j->snacmeta_seq)
-		j->snacmeta_seq = (j->snacmeta_seq + 1) % 0x7fff;
-	else
-		j->snacmeta_seq = 2;
+	j->snacmeta_seq++;
+	if (j->snacmeta_seq & ~0x7fff)
+		j->snacmeta_seq = 1;
 
-
-	newbuf = icq_pack("t", (uint32_t) 0x01, (uint32_t) pkt->len + (type ? 0x0C : 0x0A));
+	t_len = pkt->len + (2+4+2+2) + (subtype ? 2 : 0);
+	newbuf = icq_pack("t", (uint32_t) 0x01, (uint32_t) t_len);
 	icq_pack_append(newbuf, "wiww",
-				(uint32_t) pkt->len + (type ? 0x0A : 0x08),
-				(uint32_t) atoi(s->uid+4),
-				(uint32_t) sub,
-				(uint32_t) j->snacmeta_seq);
-	if (type)
-		icq_pack_append(newbuf, "w", (uint32_t) type);
+				(uint32_t) t_len - 2,			// data chunk size (TLV.Length-2)
+				(uint32_t) atoi(s->uid+4),		// request owner uin
+				(uint32_t) type,			// request cmd type
+				(uint32_t) j->snacmeta_seq);		// request sequence number
+	if (subtype)
+		icq_pack_append(newbuf, "w", (uint32_t) subtype);
 
 	string_insert_n(pkt, 0, newbuf->str, newbuf->len);
 	string_free(newbuf, 1);
 
-	debug_function("icq_makemetasnac() 0x%x 0x0%x\n", sub, type);
-	icq_makesnac(s, pkt, 0x15, 2, data, subhandler);
+	debug_function("icq_makemetasnac() 0x%x 0x0%x\n", type, subtype);
+	icq_makesnac(s, pkt, 0x15, 0x2, data, subhandler);
 }
 
 /* stolen from Miranda ICQ plugin CIcqProto::LogFamilyError() chan_02data.cpp under GPL-2 or later */
