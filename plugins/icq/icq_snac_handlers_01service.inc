@@ -414,6 +414,11 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 				debug_white("icq_snac_service_reqinfo() ICQ Member since: %s\n", timestamp_time("%Y-%m-%d %H:%M:%S", t->nr));
 				break;
 
+			case 0x06:	/* Status */
+				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
+				debug_white("icq_snac_service_reqinfo() Status: 0x%.x\n", t->nr);
+				break;
+
 			case 0x0a:	/* External IP */
 				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
 				debug_white("icq_snac_service_reqinfo() External IP: %u.%u.%u.%u\n", t->buf[0], t->buf[1], t->buf[2], t->buf[3]);
@@ -431,14 +436,26 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 				debug_white("icq_snac_service_reqinfo() Online: %u seconds.\n", t->nr);
 				break;
 
-			case 0x14:
-			case 0x1e:	/* We know that we don't know them */
-			case 0x22:
+			case 0x18:
+			{
+				char *nick = xstrndup((char *)t->buf, t->len);
+				debug_white("icq_snac_service_reqinfo() nick:'%s'\n", nick);
+				xfree(nick);
+				break;
+			}
+
+			case 0x27:
+			case 0x29:
+			case 0x2d:
+			case 0x30:
+				debug("icq_snac_service_reqinfo() unknown tlv(0x%x), time???: %s\n",t->type,timestamp_time("%Y-%m-%d %H:%M:%S", t->nr));
 				break;
 
-			/* XXX */
-
 			default:
+				if (t->len==1 || t->len==2 || t->len==4) {
+					debug_warn("icq_snac_service_reqinfo() unknown tlv(0x%x), datalen=%d, value=0x%x\n", t->type, t->len, t->nr);
+					break;
+				}
 			    def:
 				debug_error("icq_snac_service_reqinfo() TLV[0x%x] datalen: %u\n", t->type, t->len);
 				icq_hexdump(DEBUG_WHITE, t->buf, t->len);
