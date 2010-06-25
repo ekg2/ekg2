@@ -331,12 +331,19 @@ SNAC_SUBHANDLER(icq_snac_service_pause) {
 	 *
 	 * Migration sequence used to redirect client to new BOS server during current BOS shutdown.
 	 */
+	icq_private_t *j = s->priv;
 
 	debug("icq_snac_service_pause() Server is going down in a few seconds...\n");
 
-	icq_send_snac(s, 0x01, 0x0c, NULL, NULL,	/* CLI_PAUSE_ACK -- Client pause ack */
+	/* SNAC(01,0C) CLI_PAUSE_ACK Client pause ack
+	 *
+	 * The server sends a Server Pause message SNAC(01,0B), which the client
+	 * should respond to with a this server_pause_ack snac, which contains the
+	 * families it needs on this connection
+	 */
+	icq_send_snac(s, 0x01, 0x0c, NULL, NULL,
 			"WWWW WWWW WW",
-			/* This is the list of families that we want to have on the next server */
+			/* This is the list of families that we want to have on the next server. Families array is optional. */
 			(uint32_t) 0x01,	/* Generic service controls */
 			(uint32_t) 0x02,	/* Location services */
 			(uint32_t) 0x03,	/* Buddy List management service */
@@ -351,6 +358,8 @@ SNAC_SUBHANDLER(icq_snac_service_pause) {
 			(uint32_t) 0x17		/* Authorization/registration service */
 			);
 
+	j->migrate = 1;
+
 	return 0;
 }
 
@@ -361,6 +370,11 @@ SNAC_SUBHANDLER(icq_snac_service_resume) {
 	 * After this SNAC client, paused by SNAC(01,0B) may continue send packets to BOS.
 	 * Migration sequence used to redirect client to new BOS server during current BOS shutdown.
 	 */
+	icq_private_t *j = s->priv;
+
+	debug_ok("Server resume command\n");
+	j->migrate = 0;
+	
 	return 0;
 }
 
@@ -434,7 +448,7 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 	/* If we are in SSI mode, this is sent after the list is acked instead
 	   to make sure that we don't set status before seing the visibility code
 	 */
-	if (!j->ssi /* || XXX: info->isMigrating */)
+	if (!j->ssi)
 		icq_session_connected(s);
 
 	icq_tlvs_destroy(&tlvs);
@@ -476,8 +490,24 @@ SNAC_SUBHANDLER(icq_snac_service_migrate) {
 	 * If there is no family list (empty) or it contain all connection families - client should close current
 	 * connection and use new one.
 	 */
-	debug_error("!!! icq_snac_service_migrate() XXX\n");
-	return -3;
+	int i;
+	icq_private_t *j =s->priv;
+	uint16_t fam_count, fam;
+	unsigned char *databuf;
+
+	if (!icq_unpack(buf, &databuf, &len, "W", &fam_count))
+		return -1;
+
+	debug_function("icq_snac_service_migrate() Migrate %d families\n", fam_count);
+	for (i=0; i<fam_count; i++)
+		if (!icq_unpack(buf, &databuf, &len, "W", &fam))
+			return -1;
+
+	j->migrate = 1;
+
+	icq_flap_close_helper(s, buf, len);
+	
+	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_service_motd) {

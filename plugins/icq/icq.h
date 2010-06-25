@@ -42,6 +42,7 @@ typedef struct {
 	int cookie_seq;		/* Cookie seq id */
 
 	int ssi;		/* server-side-userlist? */
+	int migrate;		/* client migration sequence */
 	int aim;		/* aim-ok? */
 	int default_group_id;	/* XXX ?wo? TEMP! We should support list of groups */
 	int status_flags;

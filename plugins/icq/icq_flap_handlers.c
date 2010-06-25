@@ -252,8 +252,6 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *login_tlv;
 
-	/* XXX, icq_handle_disconnect() */
-
 	if (!(tlvs = icq_unpack_tlvs(&buf, &len, 0)))
 		return -1;
 
@@ -290,12 +288,15 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 		j->cookie = string_init(NULL);
 		string_append_raw(j->cookie, (char *) cookie_tlv->buf, cookie_tlv->len);
 
-		/* FlapCliGoodbye() */
-		pkt = string_init(NULL);
-		icq_makeflap(s, pkt, ICQ_FLAP_CLOSE);
-		icq_send_pkt(s, pkt); pkt = NULL;
+		if (!j->migrate) {
+			/* FlapCliGoodbye() */
+			pkt = string_init(NULL);
+			icq_makeflap(s, pkt, ICQ_FLAP_CLOSE);
+			icq_send_pkt(s, pkt); pkt = NULL;
+		}
 
 		s->connecting = 2;
+		j->migrate = 0;
 
 		// Client disconnects from authorizer
 		if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
@@ -358,64 +359,6 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 	icq_tlvs_destroy(&tlvs);
 
 	return 0;
-#if 0	/* Miranda code: */
-
-	oscar_tlv_chain* chain = NULL;
-	WORD wError;
-
-	icq_sendCloseConnection(); // imitate icq5 behaviour
-
-	if (!(chain = readIntoTLVChain(&buf, datalen, 0)))
-	{
-		NetLog_Server("Error: Missing chain on close channel");
-		NetLib_CloseConnection(&hServerConn, TRUE);
-		return; // Invalid data
-	}
-
-	// TLV 8 errors (signon errors?)
-	wError = getWordFromChain(chain, 0x08, 1);
-	if (wError)
-	{
-		handleSignonError(wError);
-
-		// we return only if the server did not gave us cookie (possible to connect with soft error)
-		if (!getLenFromChain(chain, 0x06, 1))
-		{
-			disposeChain(&chain);
-			SetCurrentStatus(ID_STATUS_OFFLINE);
-			NetLib_CloseConnection(&hServerConn, TRUE);
-			return; // Failure
-		}
-	}
-
-	// We are in the login phase and no errors were reported.
-	// Extract communication server info.
-	info->newServer = (char*)getStrFromChain(chain, 0x05, 1);
-	info->cookieData = getStrFromChain(chain, 0x06, 1);
-	info->cookieDataLen = getLenFromChain(chain, 0x06, 1);
-
-	// We dont need this anymore
-	disposeChain(&chain);
-
-	if (!info->newServer || !info->cookieData)
-	{
-		icq_LogMessage(LOG_FATAL, LPGEN("You could not sign on because the server returned invalid data. Try again."));
-
-		SAFE_FREE((void**)&info->newServer);
-		SAFE_FREE((void**)&info->cookieData);
-		info->cookieDataLen = 0;
-
-		SetCurrentStatus(ID_STATUS_OFFLINE);
-		NetLib_CloseConnection(&hServerConn, TRUE);
-		return; // Failure
-	}
-
-	NetLog_Server("Authenticated.");
-	info->newServerReady = 1;
-
-	return;
-
-#endif
 }
 
 static ICQ_FLAP_HANDLER(icq_flap_close) {

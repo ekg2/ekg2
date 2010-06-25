@@ -76,7 +76,10 @@ int icq_send_pkt(session_t *s, string_t buf) {
 
 	debug_io("icq_send_pkt(%s) fd: %d len: %d\n", s->uid, fd, buf->len);
 	icq_hexdump(DEBUG_IO, (unsigned char *) buf->str, buf->len);
-	ekg_write(fd, buf->str, buf->len);
+	if (j->migrate)
+		debug_warn("Client migrate! Packet will not be send\n");
+	else	
+		ekg_write(fd, buf->str, buf->len);
 	string_free(buf, 1);
 	return 0;
 }
@@ -357,10 +360,6 @@ void icq_session_connected(session_t *s) {
 
 	debug_ok(" *** Yeehah, login sequence complete\n");
 
-
-#if 0
-	info->bLoggedIn = 1;
-#endif
 	/* login sequence is complete enter logged-in mode */
 
 	if (!s->connected) {
@@ -585,6 +584,7 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 		j->fd2 = -1;
 	}
 	string_clear(j->stream_buf);
+	j->migrate = 0;
 }
 
 static WATCHER_SESSION(icq_handle_stream);
