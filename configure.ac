@@ -128,7 +128,7 @@ AM_ICONV
 AC_CHECK_LIBIDN
 
 dnl core 
-AC_CONFIG_FILES([Makefile ekg/Makefile remote/Makefile contrib/Makefile compat/Makefile docs/Makefile plugins/Makefile])
+AC_CONFIG_FILES([Makefile ekg/Makefile remote/Makefile contrib/Makefile compat/Makefile docs/Makefile plugins/Makefile po/Makefile.in])
 dnl protocol-plugins
 AC_CONFIG_FILES([plugins/feed/Makefile plugins/gg/Makefile plugins/icq/Makefile plugins/irc/Makefile plugins/jabber/Makefile plugins/polchat/Makefile plugins/rivchat/Makefile])
 dnl ui-plugins
