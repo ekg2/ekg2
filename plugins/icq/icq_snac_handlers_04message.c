@@ -26,6 +26,21 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <ekg/debug.h>
+#include <ekg/recode.h>
+
+#include "icq.h"
+#include "misc.h"
+#include "icq_caps.h"
+#include "icq_const.h"
+#include "icq_flap_handlers.h"
+#include "icq_snac_handlers.h"
+
+
 typedef struct {
 	uint32_t id1;
 	uint32_t id2;

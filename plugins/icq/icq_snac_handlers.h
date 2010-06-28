@@ -33,4 +33,15 @@ void display_whoami(session_t *s);
 void icq_pack_append_nullterm_msg(string_t pkt, const char *msg);
 void icq_pack_append_rendezvous(string_t pkt, int version, int cookie, int mtype, int mflags, int accept, int priority);
 
+SNAC_HANDLER(icq_snac_service_handler);
+SNAC_HANDLER(icq_snac_location_handler);
+SNAC_HANDLER(icq_snac_buddy_handler);
+SNAC_HANDLER(icq_snac_message_handler);
+SNAC_HANDLER(icq_snac_bos_handler);
+SNAC_HANDLER(icq_snac_lookup_handler);
+SNAC_HANDLER(icq_snac_status_handler);
+SNAC_HANDLER(icq_snac_userlist_handler);
+SNAC_HANDLER(icq_snac_extension_handler);
+SNAC_HANDLER(icq_snac_sigon_handler);
+
 #endif

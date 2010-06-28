@@ -26,10 +26,20 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-SNAC_SUBHANDLER(icq_snac_status_error) {
-	/* SNAC(0B,01) SRV_STATS_ERROR	Client / server error
+#include <ekg/debug.h>
+
+#include "icq.h"
+#include "misc.h"
+#include "icq_caps.h"
+#include "icq_const.h"
+#include "icq_flap_handlers.h"
+#include "icq_snac_handlers.h"
+
+
+SNAC_SUBHANDLER(icq_snac_lookup_error) {
+	/* SNAC(0A,01) SRV_EMAILxSEARCH_ERROR	Client/server error
 	 *
-	 * This is an error notification snac.
+	 * This is an error notification snac. You'll receive it when search fails.
 	 */
 	struct {
 		uint16_t error;
@@ -37,53 +47,34 @@ SNAC_SUBHANDLER(icq_snac_status_error) {
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
 		pkt.error = 0;
-	/* XXX  	TLV.Type(0x08) - error subcode? */
+	/* XXX TLV.Type(0x08) - error subcode */
 
-	icq_snac_error_handler(s, "status", pkt.error);
+	icq_snac_error_handler(s, "lookup", pkt.error);
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_status_minreport) {
-	/* SNAC(0B,02) SRV_SET_MINxREPORTxINTERVAL	Set minimum report interval
+SNAC_SUBHANDLER(icq_snac_lookup_replyreq) {
+	/* SNAC(0A,03) SRV_SEARCHxEMAIL_REPLY	Search response
 	 *
-	 * Server send this to client after login. This snac contain minimum stats report
-	 * interval value. Client should send stats report every 1200 hours (default value).
+	 * This is the server reply to client search by email request. It contain
+	 * found screennames associated with requested email. Server replies with
+	 * this SNAC to SNAC(0A,02).
 	 */
-	struct {
-		uint16_t interval;	// min interval between stats reports (hours)
-	} pkt;
-
-	if (!ICQ_UNPACK(&buf, "W", &pkt.interval))
-		return -1;
-
-#if ICQ_DEBUG_UNUSED_INFORMATIONS
-	debug_white("icq_snac_status_minreport() minimum interval between stats reports: %u [hours]\n", pkt.interval);
-#endif
-	return 0;
+	/* XXX list of tlv(1) */
+	return -3;	/* not handled yet */
 }
 
-SNAC_SUBHANDLER(icq_snac_status_report_ack) {
-	/* SNAC(0B,04) SRV_REPORT_ACK	Usage stats report ack
-	 *
-	 * Server send this as an ack for client stats report. Currently used only
-	 * by AIM service. ICQ clients never send stat reports.
-	 * Empty snac (no snac data)
-	 */
-	return 0;
-}
-
-SNAC_HANDLER(icq_snac_status_handler) {
+SNAC_HANDLER(icq_snac_lookup_handler) {
 	snac_subhandler_t handler;
 
 	switch (cmd) {
-		case 0x01: handler = icq_snac_status_error; break;
-		case 0x02: handler = icq_snac_status_minreport; break;
-		case 0x04: handler = icq_snac_status_report_ack; break;
+		case 0x01: handler = icq_snac_lookup_error; break;
+		case 0x03: handler = icq_snac_lookup_replyreq; break;
 		default:   handler = NULL; break;
 	}
 
 	if (!handler) {
-		debug_error("icq_snac_status_handler() SNAC with unknown cmd: %.4x received\n", cmd);
+		debug_error("icq_snac_lookup_handler() SNAC with unknown cmd: %.4x received\n", cmd);
 		icq_hexdump(DEBUG_ERROR, buf, len);
 	} else
 		handler(s, buf, len, data);

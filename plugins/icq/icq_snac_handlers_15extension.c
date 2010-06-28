@@ -26,6 +26,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <ekg/debug.h>
+
+#include "icq.h"
+#include "misc.h"
+#include "icq_caps.h"
+#include "icq_const.h"
+#include "icq_flap_handlers.h"
+#include "icq_snac_handlers.h"
+
+
 SNAC_SUBHANDLER(icq_snac_extension_error) {
 	/* SNAC(15,01) SRV_ICQEXT_ERROR	Client/server error
 	 *

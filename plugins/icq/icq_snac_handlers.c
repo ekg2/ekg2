@@ -216,18 +216,6 @@ void icq_snac_error_handler(session_t *s, const char *from, uint16_t error) {
 	debug_error("icq_snac_error_handler(%s) %s: %s (%.4x)\n", s->uid, from, msg, error);
 }
 
-
-#include "icq_snac_handlers_01service.inc"
-#include "icq_snac_handlers_02location.inc"
-#include "icq_snac_handlers_03buddy.inc"
-#include "icq_snac_handlers_04message.inc"
-#include "icq_snac_handlers_09bos.inc"
-#include "icq_snac_handlers_0Alookup.inc"
-#include "icq_snac_handlers_0Bstatus.inc"
-#include "icq_snac_handlers_13userlist.inc"
-#include "icq_snac_handlers_15extension.inc"
-#include "icq_snac_handlers_17sigon.inc"
-
 int icq_snac_handler(session_t *s, uint16_t family, uint16_t cmd, unsigned char *buf, int len, uint16_t flags, uint32_t ref_no) {
 	snac_handler_t handler;
 	icq_snac_reference_list_t *ref_data = icq_snac_ref_find(s, ref_no);;

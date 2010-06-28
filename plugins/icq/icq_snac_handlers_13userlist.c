@@ -26,6 +26,18 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <ekg/debug.h>
+#include <ekg/queries.h>
+#include <ekg/recode.h>
+
+#include "icq.h"
+#include "misc.h"
+#include "icq_caps.h"
+#include "icq_const.h"
+#include "icq_flap_handlers.h"
+#include "icq_snac_handlers.h"
+
+
 SNAC_SUBHANDLER(icq_snac_userlist_error) {
 	struct {
 		uint16_t error;

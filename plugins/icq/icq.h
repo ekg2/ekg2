@@ -5,7 +5,7 @@
 #include <ekg/protocol.h>
 #include <ekg/sessions.h>
 
-#define SNAC_HANDLER(x) static int x(session_t *s, uint16_t cmd, unsigned char *buf, int len, private_data_t *data)
+#define SNAC_HANDLER(x) int x(session_t *s, uint16_t cmd, unsigned char *buf, int len, private_data_t *data)
 typedef int (*snac_handler_t) (session_t *, uint16_t cmd, unsigned char *, int, private_data_t * );
 
 #define SNAC_SUBHANDLER(x) int x(session_t *s, unsigned char *buf, int len, private_data_t *data)
