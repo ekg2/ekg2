@@ -71,7 +71,7 @@ void icq_pack_append_client_identification(string_t pkt);
 void icq_convert_string_init();
 void icq_convert_string_destroy();
 
-char *icq_convert_from_ucs2be(string_t text);
+char *icq_convert_from_ucs2be(char *buf, int len);
 string_t icq_convert_to_ucs2be(char *text);
 char *icq_convert_from_utf8(char *text);
 

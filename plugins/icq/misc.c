@@ -16,11 +16,15 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "ekg2-config.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#ifdef HAVE_ICONV
+#	include <iconv.h>
+#endif
 
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -630,22 +634,34 @@ void icq_convert_string_destroy() {
 	}
 }
 
-char *icq_convert_from_ucs2be(string_t text) {
-	string_t s;
-	char *ret = NULL;
+char *icq_convert_from_ucs2be(char *buf, int len) {
+#ifdef HAVE_ICONV
+	char *ret, *ib, *ob;
+	size_t ibl, obl;
+	string_t text;
 
-	if (!text || !text->len)
+	if (!buf || !len)
 		return NULL;
 
-	s = ekg_convert_string_t_p(text, ucs2be_conv_in);
-	/* XXX, s == NULL */
+	text = string_init(NULL);
+	string_append_raw(text, (char *) buf, len);
 
-	if (s->len)
-		ret = xstrndup(s->str, s->len);
+	ib = text->str, ibl = len + 1;
+	obl = 16 * ibl;
+	ob = ret = xmalloc(obl + 1);
 
-	string_free(s, 1);
+	iconv (ucs2be_conv_in, &ib, &ibl, &ob, &obl);
 
-	return ret;
+	string_free(text, 1);
+
+	if (!ibl) {
+		*ob = '\0';
+		ret = (char*)xrealloc((void*)ret, xstrlen(ret)+1);
+		return ret;
+	}
+	xfree(ret);
+#endif
+	return NULL;
 }
 
 string_t icq_convert_to_ucs2be(char *text) {

@@ -714,6 +714,83 @@ static int check_replyreq(session_t *s, unsigned char **buf, int *len, int *type
 	return 1;
 }
 
+static int icq_offline_message(session_t *s, unsigned char *buf, int len, private_data_t **info) {
+	/*
+	 * SNAC(15,03)/0041 SRV_OFFLINE_MESSAGE Offline message response
+	 *
+	 * This is the server response to CLI_OFFLINE_MSGS_REQ SNAC(15,02)/003C.
+	 * This snac contain single offline message that was sent by another user
+	 * and buffered by server when client was offline.
+	 */
+	struct {
+		uint32_t uin;		/* message sender uin */
+
+		uint16_t y;		/* year when message was sent (LE) */
+		uint8_t M;		/* month when message was sent */
+		uint8_t d;		/* day when message was sent */
+		uint8_t h;		/* hour (GMT) when message was sent */
+		uint8_t m;		/* minute when message was sent */
+
+		uint8_t type;		/* message type */
+		uint8_t flags;		/* message flags */
+
+		uint16_t len;		/* message string length (LE) */
+		char *msg;		/* message string (null-terminated) */
+	} pkt;
+	char *recode = NULL;
+	char *uid;
+
+	debug_function("icq_offline_message()\n");
+
+	if (ICQ_UNPACK(&buf, "i wcccc cc w", &pkt.uin, &pkt.y, &pkt.M, &pkt.d, &pkt.h, &pkt.m, &pkt.type, &pkt.flags, &pkt.len)) {
+		struct tm lt;
+		lt.tm_sec	= 0;
+		lt.tm_min	= pkt.m;
+		lt.tm_hour	= pkt.h;
+		lt.tm_mday	= pkt.d;
+		lt.tm_mon	= pkt.M - 1;
+		lt.tm_year	= pkt.y - 1900;
+		lt.tm_isdst	= -1;
+
+		recode = icq_convert_from_ucs2be((char *) buf, pkt.len);
+		if (!recode)
+			recode = xstrdup((const char*)buf);
+
+		uid = saprintf("icq:%u", pkt.uin);
+
+		if (recode && *recode)
+			protocol_message_emit(s, uid, NULL, recode, NULL, mktime(&lt), EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
+
+		xfree(uid);
+		xfree(recode);
+	}
+
+	return 0;
+}
+
+static int icq_offline_message_end(session_t *s, unsigned char *buf, int len, private_data_t **info) {
+	/*
+	 * SNAC(15,03)/0042 SRV_END_OF_OFFLINE_MSGS End-of-offline messages reply
+	 *
+	 * This is the last SNAC in server response to CLI_OFFLINE_MSGS_REQ SNAC(15,02)/003C.
+	 * It doesn't contain message - it is only end_of_sequence marker.
+	 */
+	debug_function("icq_offline_message_end()\n");
+
+	/* SNAC(15,02)/003E CLI_DELETE_OFFLINE_MSGS_REQ Delete offline messages request
+	 *
+	 * Client sends this SNAC when wants to delete offline messages from
+	 * server. But first you should request them from server using
+	 * SNAC(15,02)/003C. If you doesn't delete messages server will send them
+	 * again after client request.
+	 */
+	string_t pkt = string_init(NULL);
+	icq_makemetasnac(s, pkt, CLI_DELETE_OFFLINE_MSGS_REQ, 0, NULL, NULL);
+	icq_send_pkt(s, pkt);
+
+	return 0;
+}
+
 SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 	/* SNAC(15,03) SRV_META_REPLY	Meta information response
 	 *
@@ -731,8 +808,10 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 
 	switch (type) {
 		case SRV_OFFLINE_MESSAGE:		/* Offline message response */
+			icq_offline_message(s, buf, len, &info);
+			break;
 		case SRV_END_OF_OFFLINE_MSGS:		/* End-of-offline messages reply */
-			debug_error("icq_snac_extension_replyreq() METASNAC type: 0x%x not supported yet.\n", type);
+			icq_offline_message_end(s, buf, len, &info);
 			break;
 		case SRV_META_INFO_REPLY:		/* Meta information response */
 			icq_meta_info_reply(s, buf, len, &info, 1);

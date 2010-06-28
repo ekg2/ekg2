@@ -173,13 +173,8 @@ static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int 
 
 			switch (t_msg.encoding) {
 				case 0x02:	/* UCS-2BE */
-				{
-					string_t str = string_init(NULL);
-					string_append_raw(str, (char *) t_msg.message, t_len);
-					recode = icq_convert_from_ucs2be(str);
-					string_free(str, 1);
+					recode = icq_convert_from_ucs2be((char *)t_msg.message, t_len);
 					break;
-				}
 				case 0x00:	/* US-ASCII */
 				case 0x03:	/* ANSI */
 					recode = xstrndup((char *) t_msg.message, t_len);
@@ -663,39 +658,6 @@ SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
 SNAC_SUBHANDLER(icq_snac_message_queue) {	/* SNAC(4, 0x17) Offline Messages response */
 	debug_error("icq_snac_message_queue() XXX\n");
 
-#if MIRANDA
-	offline_message_cookie *cookie;
-
-	if (FindCookie(dwRef, NULL, (void**)&cookie))
-	{
-		NetLog_Server("End of offline msgs, %u received", cookie->nMessages);
-		if (cookie->nMissed)
-		{ // NASTY WORKAROUND!!
-			// The ICQ server has a bug that causes offline messages to be received again and again when some
-			// missed message notification is present (most probably it is not processed correctly and causes
-			// the server to fail the purging process); try to purge them using the old offline messages
-			// protocol.  2008/05/21
-			NetLog_Server("Warning: Received %u missed message notifications, trying to fix the server.", cookie->nMissed);
-
-			icq_packet packet;
-			// This will delete the messages stored on server
-			serverPacketInit(&packet, 24);
-			packFNACHeader(&packet, ICQ_EXTENSIONS_FAMILY, ICQ_META_CLI_REQ);
-			packWord(&packet, 1);             // TLV Type
-			packWord(&packet, 10);            // TLV Length
-			packLEWord(&packet, 8);           // Data length
-			packLEDWord(&packet, m_dwLocalUIN); // My UIN
-			packLEWord(&packet, CLI_DELETE_OFFLINE_MSGS_REQ); // Ack offline msgs
-			packLEWord(&packet, 0x0000);      // Request sequence number (we dont use this for now)
-
-			sendServPacket(&packet);
-		}
-
-		ReleaseCookie(dwRef);
-	}
-	else
-		NetLog_Server("Error: Received unexpected end of offline msgs.");
-#endif
 	return -3;
 }
 

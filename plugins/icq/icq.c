@@ -363,9 +363,21 @@ void icq_session_connected(session_t *s) {
 	/* login sequence is complete enter logged-in mode */
 
 	if (!s->connected) {
-		/* Get Offline Messages Reqeust */
+
+		/* SNAC(15,02)/003C CLI_OFFLINE_MESSAGE_REQ Offline messages request
+		 *
+		 * Client sends this SNAC when wants to retrieve messages that was sent by
+		 * another user and buffered by server during client was offline. Server
+		 * should respond with 0 or more SNAC(15,03)/0041 packets with SNAC bit1=1
+		 * and after that it should send last SNAC(15,03)/0042.
+		 *
+		 * Warn: Server doesn't delete messages from database and will send them
+		 * again. You should ask it to delete them by SNAC(15,02)/003E
+		 */
 		/* XXX, cookie */
-		icq_send_snac(s, 0x4, 0x10, 0, 0, NULL);
+		pkt = string_init(NULL);
+		icq_makemetasnac(s, pkt, CLI_OFFLINE_MESSAGE_REQ, 0, NULL, NULL);
+		icq_send_pkt(s, pkt);
 
 		{
 			/* Update our information from the server */
