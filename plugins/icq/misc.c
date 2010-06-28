@@ -646,7 +646,7 @@ char *icq_convert_from_ucs2be(char *buf, int len) {
 	text = string_init(NULL);
 	string_append_raw(text, (char *) buf, len);
 
-	ib = text->str, ibl = len + 1;
+	ib = text->str, ibl = len;
 	obl = 16 * ibl;
 	ob = ret = xmalloc(obl + 1);
 

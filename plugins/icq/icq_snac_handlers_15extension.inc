@@ -752,7 +752,7 @@ static int icq_offline_message(session_t *s, unsigned char *buf, int len, privat
 		lt.tm_year	= pkt.y - 1900;
 		lt.tm_isdst	= -1;
 
-		recode = icq_convert_from_ucs2be((char *) buf, pkt.len);
+		recode = icq_convert_from_ucs2be((char *) buf, pkt.len - 1);
 		if (!recode)
 			recode = xstrdup((const char*)buf);
 
