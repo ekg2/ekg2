@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include <ekg/debug.h>
+#include <ekg/recode.h>
 
 #include "icq.h"
 #include "misc.h"
@@ -148,6 +149,279 @@ static void icq_get_description(session_t *s, char *uin, int status) {
 	icq_send_pkt(s, pkt);
 }
 
+static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *tlvs, int newstatus) {
+	int caps = 0, desc_chg = 0;
+	char *descr = NULL;
+	icq_tlv_t *t;
+
+	if (!u)
+		return;
+
+	debug_function("icq_get_user_info() %s\n", u->uid);
+
+	descr = u->descr ? xstrdup(u->descr) : NULL;
+
+	user_private_item_set_int(u, "idle", 0);
+	user_private_item_set_int(u, "status_f", 0);
+	user_private_item_set_int(u, "xstatus", 0);
+
+	for (t = tlvs; t; t = t->next) {
+
+		/* Check t->len */
+		switch (t->type) {
+			case 0x01:
+				if (tlv_length_check("icq_get_user_info()", t, 2))
+					continue;
+				break;
+			case 0x03:
+			case 0x04:
+			case 0x05:
+			case 0x06:
+			case 0x0a:
+			case 0x0f:
+				if (tlv_length_check("icq_get_user_info()", t, 4))
+					continue;
+				break;
+		}
+		/* now we've got trusted length */
+		switch (t->type) {
+			case 0x01: /* User class */
+				user_private_item_set_int(u, "class", t->nr);
+				break;
+
+			case 0x03: /* Time when client gone online (unix time_t) */
+				user_private_item_set_int(u, "online", t->nr);
+				break;
+
+			case 0x04: /* idle timer */
+			{
+				uint16_t idle;
+				if ( (idle = t->nr) )
+					user_private_item_set_int(u, "idle", time(NULL) - 60*idle);
+				break;
+			}
+
+			case 0x05: /* Time when this account was registered (unix time_t) */
+				user_private_item_set_int(u, "member", t->nr);
+				break;
+
+			case 0x06:
+			{
+				/* User status
+				 *
+				 * ICQ service presence notifications use user status field which consist
+				 * of two parts. First is a various flags (birthday flag, webaware flag,
+				 * etc). Second is a user status (online, away, busy, etc) flags.
+				 */
+				uint16_t status	= t->nr & 0xffff;
+				uint16_t flags	= t->nr >> 16;
+
+				user_private_item_set_int(u, "status_f", flags);
+				debug_white(" %s status flags=0x%04x status=0x%04x\n", u->uid, flags, status);
+				newstatus = icq2ekg_status(status);
+				break;
+			}
+
+			case 0x0a: /* IP address */
+			{
+				uint32_t ip;
+				if (icq_unpack_nc(t->buf, t->len, "i", &ip)) {
+					if (ip)
+						user_private_item_set_int(u, "ip", ip);
+				}
+				break;
+			}
+
+			case 0x0c: /* DC info */
+			{
+				struct {
+					uint32_t ip;
+					uint32_t port;
+					uint8_t tcp_flag;
+					uint16_t version;
+					uint32_t conn_cookie;
+					uint32_t web_port;
+					uint32_t client_features;
+					/* faked time signatures, used to identify clients */
+					uint32_t ts1;
+					uint32_t ts2;
+					uint32_t ts3;
+					uint16_t junk;
+				} tlv_c;
+
+				if (!icq_unpack_nc(t->buf, t->len, "IICWIII",
+						&tlv_c.ip, &tlv_c.port,
+						&tlv_c.tcp_flag, &tlv_c.version,
+						&tlv_c.conn_cookie, &tlv_c.web_port,
+						&tlv_c.client_features))
+				{
+					debug_error(" %s TLV(C) corrupted?\n", u->uid);
+					continue;
+				} else {
+					user_private_item_set_int(u, "dcc.ip", tlv_c.ip);
+					user_private_item_set_int(u, "dcc.port", tlv_c.port);
+					user_private_item_set_int(u, "dcc.flag", tlv_c.tcp_flag);
+					user_private_item_set_int(u, "version", tlv_c.version);
+					user_private_item_set_int(u, "dcc.cookie", tlv_c.conn_cookie);
+					user_private_item_set_int(u, "dcc.web_port", tlv_c.web_port);	// ?wo? do we need it?
+					if (t->len >= 12 && icq_unpack_nc(t->buf, t->len, "23 III", &tlv_c.ts1, &tlv_c.ts3, &tlv_c.ts3))
+						;
+				}
+				break;
+			}
+
+			case 0x0d: /* Client capabilities list */
+			{
+				unsigned char *data = t->buf;
+				int d_len = t->len;
+
+				if (tlv_length_check("icq_get_user_info()", t, t->len & ~0xF))
+					break;
+				while (d_len > 0) {
+					int cid = icq_cap_id(data);
+					if (cid != CAP_UNKNOWN) {
+						caps |= 1 << cid;
+					} else if ((cid = icq_xstatus_id(data))) {
+						user_private_item_set_int(u, "xstatus", cid);
+					} else {
+						/* ?wo? client id???*/
+						debug_error("Unknown cap\n");
+						icq_hexdump(DEBUG_ERROR, data, 0x10);
+					}
+					data  += 0x10;		// capability length
+					d_len -= 0x10;
+				}
+				break;
+			}
+
+			case 0x0e: /* AOL users. No values */
+				break;
+
+			case 0x0f:
+			case 0x10: /* Online time in seconds */
+				break;
+
+			case 0x19: /* short caps */
+			{
+				unsigned char *data = t->buf;
+				int d_len = t->len;
+
+				while (d_len > 0) {
+					int cid = icq_short_cap_id(data);
+					if (cid != CAP_UNKNOWN) {
+						caps |= 1 << cid;
+					} else {
+						/* WTF? */
+					}
+					data  += 2;		// short capability length
+					d_len -= 2;
+				}
+				break;
+			}
+
+			case 0x1d: /* user icon id & hash */
+			{
+				static char empty_item[0x10] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+				unsigned char *t_data = t->buf;
+				int t_len = t->len;
+
+				while (t_len > 0) {
+
+					uint16_t item_type;
+					uint8_t item_flags;
+					uint8_t item_len;
+
+					if (!icq_unpack(t_data, &t_data, &t_len, "WCC", &item_type, &item_flags, &item_len)) {
+						debug_error(" %s TLV(1D) corrupted?\n", u->uid);
+						break;
+					}
+
+					/* just some validity check */
+					if (item_len > t_len)
+						item_len = t_len;
+
+					if ((item_type == 0x02) && (item_flags == 4)) {
+						/* iChat online message */
+						if (item_len>4) {
+							char *tmp;
+							uint16_t enc;
+							icq_unpack_nc(t_data, item_len, "Uw", &tmp, &enc);
+							descr = !enc ? ekg_utf8_to_locale_dup(tmp) : xstrdup(tmp);
+						}
+						desc_chg = 1;
+					} else if ((item_type == 0x0e) && (item_len>7)) {
+						/* 000E: Custom Status (ICQ6) */
+						char *tmp = xstrndup((char *)t_data, item_len);
+						if ( !xstrncmp(tmp, "icqmood", 7) && xisdigit(*(tmp+7)) ) {
+							int xstatus = atoi(tmp+7) + 1;
+							if (xstatus<=XSTATUS_COUNT)
+								user_private_item_set_int(u, "xstatus", xstatus);
+						}
+						xfree(tmp);
+					} else if (memcmp(t_data, empty_item, (item_len < 0x10) ? item_len : 0x10)) {
+						/* Item types
+						 * 	0000: AIM mini avatar
+						 * 	0001: AIM/ICQ avatar ID/hash (len 5 or 16 bytes)
+						 * 	0002: iChat online message
+						 *	0008: ICQ Flash avatar hash (16 bytes)
+						 * 	0009: iTunes music store link
+						 *	000C: ICQ contact photo (16 bytes)
+						 *	000D: ?
+						 */
+
+						debug_white(" %s has got avatar: type: %d flags: %d\n", u->uid, item_type, item_flags);
+						icq_hexdump(DEBUG_WHITE, t_data, item_len);
+						/* XXX, display message, get? do something? */
+					}
+
+					t_data += item_len;
+					t_len -= item_len;
+				}
+				break;
+			}
+			default:
+				if (t->len==4)
+					debug_warn(" %s Unknown TLV(0x%x) len=4 v=%d (0x%x) (%s)\n", u->uid, t->type, t->nr, t->nr, t->nr?timestamp_time("%Y-%m-%d %H:%M:%S", t->nr):"");
+				else 
+					debug_error(" %s Unknown TLV(0x%x) len=%d\n", u->uid, t->type, t->len);
+		}
+	}
+
+	if (desc_chg || (newstatus != u->status)) {
+		if (!descr && !desc_chg && u->descr)
+			descr = xstrdup(u->descr);
+
+		protocol_status_emit(s, u->uid, newstatus, descr, time(NULL));
+	}
+
+	if (!desc_chg) {
+		if (u->status == EKG_STATUS_NA) {
+			icq_send_snac(s, 0x02, 0x05, NULL, NULL,	/* Request user info */
+					"Ws",
+					(uint32_t) 1,			/* request type (1 - general info, 2 - short user info, 3 - away message, 4 - client capabilities) */
+					u->uid+4);
+			user_private_item_set_int(u, "online", 0);
+			user_private_item_set_int(u, "last_ip", user_private_item_get_int(u, "ip"));
+			user_private_item_set_int(u, "ip", 0);
+		} else {
+			icq_get_description(s, u->uid+4, u->status);
+#if 0
+			// XXX ???
+			if (u->status == EKG_STATUS_NA) {
+				if (user_private_item_get_int(u, "version") < 8) {
+					caps &= ~(1<<CAP_SRV_RELAY);
+					debug_warn("icq_snac_buddy_online() Forcing simple messages due to compability issues (%s).\n", uid);
+				}
+				user_private_item_set_int(u, "caps", caps);
+				user_private_item_set_int(u, "utf", (caps && (1<<CAP_UTF)) ? 1:0);
+			}
+#endif
+		}
+	}
+
+	xfree(descr);
+}
+
 SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	/*
 	 * Handle SNAC(0x3,0xb) -- User online notification
@@ -163,26 +437,18 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 	} pkt;
 
 	struct icq_tlv_list *tlvs;
-	icq_tlv_t *t;
-	int status;
 	userlist_t *u;
 	char *uid;
 
 	do {
 		// Following user info may be repeated more then once
-		int caps = 0;
-		char *descr = NULL;
 
 		if (!ICQ_UNPACK(&buf, "uWW", &pkt.uid, &pkt.warning, &pkt.count))
 			return -1;
 
-		status = EKG_STATUS_AVAIL;	/* assume avail */
 		uid = icq_uid(pkt.uid);
-		if (!(u = userlist_find(s, uid)) && config_auto_user_add) {
+		if (!(u = userlist_find(s, uid)) && config_auto_user_add)
 			u = userlist_add(s, uid, uid);
-			if (u)
-				u->status = EKG_STATUS_NA;
-		}
 
 		tlvs = icq_unpack_tlvs(&buf, &len, pkt.count);
 
@@ -199,310 +465,45 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 		debug_function("icq_snac_buddy_online() %s\n", uid);
 
-		user_private_item_set_int(u, "xstatus", 0);
-		user_private_item_set_int(u, "status_f", 0);
-		user_private_item_set_int(u, "idle", 0);
-
-		for (t = tlvs; t; t = t->next) {
-
-			/* darkjames said: "I don't trust anything. Wiechu, check t->len" */
-			switch (t->type) {
-				case 0x01:
-					if (tlv_length_check("icq_snac_buddy_online()", t, 2))
-						continue;
-					break;
-				case 0x03:
-				case 0x05:
-				case 0x0a:
-				case 0x0f:
-					if (tlv_length_check("icq_snac_buddy_online()", t, 4))
-						continue;
-					break;
-			}
-			/* now we've got trusted length */
-
-			switch (t->type) {
-				case 0x01: /* User class */
-					user_private_item_set_int(u, "class", t->nr);
-					debug_white("icq_snac_buddy_online() class 0x%02x\n", t->nr);
-					break;
-
-				case 0x03: /* Time when client gone online (unix time_t) */
-					user_private_item_set_int(u, "online", t->nr);
-					break;
-
-				case 0x04: /* idle timer */
-				{
-					uint16_t idle;
-					if ( (idle = t->nr) )
-						user_private_item_set_int(u, "idle", time(NULL) - 60*idle);
-					break;
-				}
-
-				case 0x05: /* Time when this account was registered (unix time_t) */
-					if (t->nr)
-						user_private_item_set_int(u, "member", t->nr);
-					break;
-
-				case 0x06:
-				{
-					/* User status
-					 *
-					 * ICQ service presence notifications use user status field which consist
-					 * of two parts. First is a various flags (birthday flag, webaware flag,
-					 * etc). Second is a user status (online, away, busy, etc) flags.
-					 */
-					uint16_t icq_status, icq_status_flags;
-
-					if (!icq_unpack_nc(t->buf, t->len, "WW", &icq_status_flags, &icq_status)) {
-						debug_error("icq_snac_buddy_online() TLV(6) corrupted?\n");
-						continue;
-					}
-
-					user_private_item_set_int(u, "status_f", icq_status_flags);
-					debug_white("icq_snac_buddy_online() status2=0x%04x status=0x%04x\n", icq_status_flags, icq_status);
-					status = icq2ekg_status(icq_status);
-					break;
-				}
-
-				case 0x0a: /* IP address */
-				{
-					uint32_t ip;
-					if (icq_unpack_nc(t->buf, t->len, "i", &ip) && ip)
-						user_private_item_set_int(u, "ip", ip);
-					break;
-				}
-				case 0x0c: /* DC info */
-				{
-					struct {
-						uint32_t ip;
-						uint32_t port;
-						uint8_t tcp_flag;
-						uint16_t version;
-						uint32_t conn_cookie;
-						uint32_t web_port;
-						uint32_t client_features;
-						/* faked time signatures, used to identify clients */
-						uint32_t ts1;
-						uint32_t ts2;
-						uint32_t ts3;
-						uint16_t junk;
-					} tlv_c;
-
-					if (!icq_unpack_nc(t->buf, t->len, "IICWIII",
-							&tlv_c.ip, &tlv_c.port,
-							&tlv_c.tcp_flag, &tlv_c.version,
-							&tlv_c.conn_cookie, &tlv_c.web_port,
-							&tlv_c.client_features))
-					{
-						debug_error("icq_snac_buddy_online() TLV(C) corrupted?\n");
-						continue;
-					} else {
-						if (u) {
-							user_private_item_set_int(u, "dcc.ip", tlv_c.ip);
-							user_private_item_set_int(u, "dcc.port", tlv_c.port);
-							user_private_item_set_int(u, "dcc.flag", tlv_c.tcp_flag);
-							user_private_item_set_int(u, "version", tlv_c.version);
-							user_private_item_set_int(u, "dcc.cookie", tlv_c.conn_cookie);
-							user_private_item_set_int(u, "dcc.web_port", tlv_c.web_port);	// ?wo? do we need it?
-						}
-						if (t->len >= 12 && icq_unpack_nc(t->buf, t->len, "23 III", &tlv_c.ts1, &tlv_c.ts3, &tlv_c.ts3))
-							;
-					}
-					break;
-				}
-
-				case 0x0d: /* Client capabilities list */
-				{
-					unsigned char *data = t->buf;
-					int d_len = t->len;
-
-					if (tlv_length_check("icq_snac_buddy_online()", t, t->len & ~0xF))
-						break;
-					while (d_len > 0) {
-						int cid = icq_cap_id(data);
-						if (cid != CAP_UNKNOWN) {
-							caps |= 1 << cid;
-						} else if ((cid = icq_xstatus_id(data))) {
-							user_private_item_set_int(u, "xstatus", cid);
-						} else {
-							/* ?wo? client id???*/
-							debug_error("Unknown cap\n");
-							icq_hexdump(DEBUG_ERROR, data, 0x10);
-						}
-						data  += 0x10;		// capability length
-						d_len -= 0x10;
-					}
-					break;
-				}
-
-				case 0x0f: /* Online time in seconds */
-					debug_white("icq_snac_buddy_online() %d seconds online\n", t->nr);
-					break;
-
-				case 0x19: /* short caps */
-				{
-					unsigned char *data = t->buf;
-					int d_len = t->len;
-
-					while (d_len > 0) {
-						int cid = icq_short_cap_id(data);
-						if (cid != CAP_UNKNOWN) {
-							caps |= 1 << cid;
-						} else {
-							/* WTF? */
-						}
-						data  += 2;		// short capability length
-						d_len -= 2;
-					}
-					break;
-				}
-
-				case 0x1d: /* user icon id & hash */
-				{
-					unsigned char *t_data = t->buf;
-					int t_len = t->len;
-
-					while (t_len > 0) {
-						static char empty_item[0x10] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
-
-						uint16_t item_type;
-						uint8_t item_flags;
-						uint8_t item_len;
-
-						if (!icq_unpack(t_data, &t_data, &t_len, "WCC", &item_type, &item_flags, &item_len)) {
-							debug_error("icq_snac_buddy_online() TLV(1D) corrupted?\n");
-							break;
-						}
-
-						/* just some validity check */
-						if (item_len > t_len)
-							item_len = t_len;
-						if ((item_type == 0x02) && (item_flags == 4)) {
-							/* iChat online message */
-							char *tmp;
-							icq_unpack_nc(t_data, item_len, "U", &tmp);
-							descr = xstrdup(tmp);
-						} else if ((item_type == 0x0e) && (item_len>7)) {
-							/* 000E: Custom Status (ICQ6) */
-							char *tmp = xstrndup((char *)t_data, item_len);
-							if ( !xstrncmp(tmp, "icqmood", 7) && xisdigit(*(tmp+7)) ) {
-								int xstatus = atoi(tmp+7) + 1;
-								if (xstatus<=XSTATUS_COUNT)
-									user_private_item_set_int(u, "xstatus", xstatus);
-							}
-							xfree(tmp);
-						} else if (memcmp(t_data, empty_item, (item_len < 0x10) ? item_len : 0x10)) {
-							/* Item types
-							 * 	0000: AIM mini avatar
-							 * 	0001: AIM/ICQ avatar ID/hash (len 5 or 16 bytes)
-							 * 	0002: iChat online message
-							 *	0008: ICQ Flash avatar hash (16 bytes)
-							 * 	0009: iTunes music store link
-							 *	000C: ICQ contact photo (16 bytes)
-							 *	000D: ?
-							 */
-
-							debug_white("icq_snac_buddy_online() user has got avatar: type: %d flags: %d\n", item_type, item_flags);
-							icq_hexdump(DEBUG_WHITE, t_data, item_len);
-							/* XXX, display message, get? do something? */
-						}
-
-						t_data += item_len;
-						t_len -= item_len;
-					}
-					break;
-				}
-
-				default:
-					debug_error("icq_snac_buddy_online() Unknown TLV(0x%x)\n", t->type);
-			}
-		}
-
-#if 0
-		if (status == EKG_STATUS_AVAIL) {
-			xfree(u->descr);
-			u->descr = NULL;
-		}
-#endif
-		if (u->status == EKG_STATUS_NA) {
-			if (user_private_item_get_int(u, "version") < 8) {
-				caps &= ~(1<<CAP_SRV_RELAY);
-				debug_warn("icq_snac_buddy_online() Forcing simple messages due to compability issues (%s).\n", uid);
-			}
-			user_private_item_set_int(u, "caps", caps);
-			user_private_item_set_int(u, "utf", (caps && (1<<CAP_UTF)) ? 1:0);
-		}
-
-		if (!descr)
-			descr = xstrdup(u->descr);
-
-		protocol_status_emit(s, uid, status, descr, time(NULL));
-
-		icq_get_description(s, pkt.uid, status);
+		icq_get_user_info(s, u, tlvs, EKG_STATUS_AVAIL);
 
 		icq_tlvs_destroy(&tlvs);
+
 		xfree(uid);
-		xfree(descr);
+
 	} while (len > 0);
 
 	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_buddy_offline) {
+	/* SNAC(03,0C) SRV_USER_OFFLINE User offline notification
+	 *
+	 * Server send this when user from your contact list goes offline.
+	 */
 	struct {
 		char *uid;
 		uint16_t warning;
 		uint16_t count;
 	} pkt;
 
+	char *uid;
 	userlist_t *u;
 	struct icq_tlv_list *tlvs;
-	icq_tlv_t *t;
 
 	debug_function("icq_snac_buddy_offline()\n");
 
 	do {
-		char *descr = NULL, *uid;
-
 		if (!ICQ_UNPACK(&buf, "uWW", &pkt.uid, &pkt.warning, &pkt.count))
 			return -1;
 
+		uid = icq_uid(pkt.uid);
+		u = userlist_find(s, uid);
+
 		tlvs = icq_unpack_tlvs(&buf, &len, pkt.count);
-		if ((t = icq_tlv_get(tlvs, 0x1d))) {
-			uint16_t a_type;
-			uint8_t a_flags, a_len;
-			unsigned char *t_data = t->buf;
-			int t_len = t->len;
-			while (t_len > 0) {
-				if (icq_unpack(t_data, &t_data, &t_len, "WCC", &a_type, &a_flags, &a_len)) {
-					if ((a_type == 2) || (a_flags == 4))
-						icq_unpack_nc(t_data, a_len, "U", &descr);
-				}
-				t_data += a_len;
-				t_len  -= a_len;
-			}
-		}
+		icq_get_user_info(s, u, tlvs, EKG_STATUS_NA);
 		icq_tlvs_destroy(&tlvs);
 
-		uid = icq_uid(pkt.uid);
-		protocol_status_emit(s, uid, EKG_STATUS_NA, descr, time(NULL));
-
-		if (!descr)
-			icq_send_snac(s, 0x02, 0x05, NULL, NULL,	/* Request user info */
-					"Ws",
-					(uint32_t) 1,			/* request type (1 - general info, 2 - short user info, 3 - away message, 4 - client capabilities) */
-					uid+4);
-
-		if ((u = userlist_find(s, uid))) {
-			user_private_item_set_int(u, "online", 0);
-			user_private_item_set_int(u, "last_ip", user_private_item_get_int(u, "ip"));
-			user_private_item_set_int(u, "ip", 0);
-			user_private_item_set_int(u, "xstatus", 0);
-			user_private_item_set_int(u, "idle", 0);
-			debug_white("icq_snac_buddy_offline() uid: %s\n", uid);
-		} else
-			debug_warn("icq_snac_buddy_offline() Ignoring onffine notification from %s\n", uid);
 		xfree(uid);
 	} while (len >= 1);
 
