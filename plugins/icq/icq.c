@@ -1791,7 +1791,7 @@ EXPORT int icq_plugin_init(int prio) {
 	command_add(&icq_plugin, "icq:auth", "!p uU ?", icq_command_auth, ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, "-a --accept -d --deny -l --list -r --request -c --cancel");
 
 	command_add(&icq_plugin, "icq:away", "r", icq_command_away, ICQ_ONLY, NULL);
-	command_add(&icq_plugin, "icq:back", NULL, icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:back", "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:dnd",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:ffc",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:gone",  "r", icq_command_away, ICQ_ONLY, NULL);
