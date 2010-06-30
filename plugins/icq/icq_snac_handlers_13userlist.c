@@ -82,38 +82,32 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 	return 0;
 }
 
+static void set_userinfo_from_tlv(userlist_t *u, const char *var, icq_tlv_t *t) {
+	char *tmp;
+
+	if (!u)
+		return;
+
+	tmp = (t && t->len) ? ekg_utf8_to_locale(xstrndup((char *) t->buf, t->len)) : NULL;
+
+	user_private_item_set(u, var, tmp);
+}
+
 static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, const char *name, uint16_t type, uint16_t item_id, uint16_t group_id) {
 	switch (type) {
 		case 0x0000:	/* Buddy record (name: uin for ICQ and screenname for AIM) */
 		{
 			icq_tlv_t *t_nick = icq_tlv_get(tlvs, 0x131);
 			icq_tlv_t *t_auth = icq_tlv_get(tlvs, 0x66);
-			icq_tlv_t *t_comment = icq_tlv_get(tlvs, 0x013C);
-			icq_tlv_t *t_phone = icq_tlv_get(tlvs, 0x013A);
-			icq_tlv_t *t_email = icq_tlv_get(tlvs, 0x0137);
 
-			char *comment, *email, *phone, *nick, *tmp;
+			char *nick, *tmp;
 			char *uid = icq_uid(name);
-
-			/* XXX make macro ? */
-			tmp = (t_comment && t_comment->len) ? xstrndup((char *) t_comment->buf, t_comment->len) : NULL;
-			comment = ekg_utf8_to_locale(tmp);
-
-			tmp = (t_phone && t_phone->len) ? xstrndup((char *) t_phone->buf, t_phone->len) : NULL;
-			phone = ekg_utf8_to_locale(tmp);
-
-			tmp = (t_email && t_email->len) ? xstrndup((char *) t_email->buf, t_email->len) : NULL;
-			email = ekg_utf8_to_locale(tmp);
+			userlist_t *u;
 
 			tmp = (t_nick && t_nick->len) ? xstrndup((char *) t_nick->buf, t_nick->len) : xstrdup(uid);
 			nick = ekg_utf8_to_locale(tmp);
 
-			userlist_t *u;
-
-			if (!(u = userlist_find(s, uid)))
-				u = userlist_add(s, uid, nick);
-
-			if (!u) {
+			if (!(u = userlist_find(s, uid)) && !(u = userlist_add(s, uid, nick)) ) {
 				debug_error("icq_userlist_parse_entry() userlist_add(%s, %s) failed!\n", uid, nick);
 				goto cleanup_user;
 			}
@@ -121,30 +115,26 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			if (!u->nickname)
 				u->nickname = xstrdup(nick);
 
-			/* XXX, other groups ??? */
-			if (u && group_id) {
+			set_userinfo_from_tlv(u, "email",	icq_tlv_get(tlvs, 0x0137));
+			set_userinfo_from_tlv(u, "phone",	icq_tlv_get(tlvs, 0x0138));	// phone number
+			set_userinfo_from_tlv(u, "cellphone",	icq_tlv_get(tlvs, 0x0139));	// cellphone number
+			set_userinfo_from_tlv(u, "mobile",	icq_tlv_get(tlvs, 0x013A));	// SMS number
+			set_userinfo_from_tlv(u, "comment",	icq_tlv_get(tlvs, 0x013C));
+
+			if (group_id) {
 				user_private_item_set_int(u, "iid", item_id);
 				user_private_item_set_int(u, "gid", group_id);
 			}
 
-			user_private_item_set(u, "comment", comment);
-			user_private_item_set(u, "email", email);
-			user_private_item_set(u, "mobile", phone);
 			user_private_item_set_int(u, "auth", t_auth?1:0);
-
 cleanup_user:
-			xfree(uid);
 			xfree(nick);
-			xfree(email);
-			xfree(phone);
-			xfree(comment);
+			xfree(uid);
 			break;
 		}
 
 		case 0x0001:	/* Group record */
 		{
-			debug("ROSTER_TYPE_GROUP  Name:'%s' groupId:%u\n", name, group_id);
-
 			if (item_id == 0) {
 				if ((group_id == 0)) {
 					/* list of groups. wTlvType=1, data is TLV(C8) containing list of WORDs which */
@@ -173,12 +163,24 @@ cleanup_user:
 		{
 			char *uid = icq_uid(name);
 			userlist_t *u;
-
 			if (!(u = userlist_find(s, uid)))
-				u = userlist_add(s, uid, NULL);	/* XXX */
-
-			/* XXX */
+				u = userlist_add(s, uid, NULL);
 			xfree(uid);
+
+			if (!u)
+				break;
+
+			if (type == 2) {
+				user_private_item_set_int(u, "visible", item_id);
+				user_private_item_set_int(u, "invisible", 0);
+				ekg_group_add(u, "__online");
+				ekg_group_remove(u, "__offline");
+			} else {
+				user_private_item_set_int(u, "visible", 0);
+				user_private_item_set_int(u, "invisible", item_id);
+				ekg_group_add(u, "__offline");
+				ekg_group_remove(u, "__online");
+			}
 			break;
 		}
 
@@ -210,7 +212,10 @@ cleanup_user:
 			if (!(u = userlist_find(s, uid)))
 				u = userlist_add(s, uid, NULL);
 
-			/* XXX, dodac do grup? */
+			if (u) {
+				user_private_item_set_int(u, "block", item_id);
+				ekg_group_add(u, "__blocked");
+			}
 
 			xfree(uid);
 			break;
@@ -317,22 +322,22 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 		if (!ICQ_UNPACK(&buf, "UWWWW", &orgname, &group_id, &item_id, &item_type, &tlv_len))
 			return -1;
 
-		debug_white("Name:'%s' groupID: %u entryID: %u entryTYPE: %u tlvLEN: %u\n", orgname, group_id, item_id, item_type, tlv_len);
-
 		if (len < tlv_len) {
 			debug_error("smth bad!\n");
 			return -1;
 		}
 
-		tlvs = icq_unpack_tlvs_nc(buf, tlv_len, 0);
-
 		name = ekg_utf8_to_locale_dup(orgname);
+		debug_white("%sName:'%s'\tgroup:%u item:%u type:0x%x tlvLEN:%u\n", item_type==1?"Group ":"", name, group_id, item_id, item_type, tlv_len);
+
+		tlvs = icq_unpack_tlvs_nc(buf, tlv_len, 0);
 		icq_userlist_parse_entry(s, tlvs, name, item_type, item_id, group_id);
+		icq_tlvs_destroy(&tlvs);
+
 		xfree(name);
 
 		buf += tlv_len; len -= tlv_len;
 
-		icq_tlvs_destroy(&tlvs);
 	}
 
 	if (len >= 4) {
