@@ -291,13 +291,16 @@ list
 	parametry:  [alias|@grupa|opcje|metakontakt|sesja/alias]
 	krotki opis: zarz±dzanie list± kontaktów
 	
-	Wy¶wietlanie osób o podanym stanie "list [-a|-A|-i|-B|-d|-m|-o]":
+	Wy¶wietlanie osób o podanym stanie "list [-a|-A|-B|-i|-I|-d|-m|-n|-o|-O]":
 	
 	  -a, --active           dostêpne
 	
 	  -A, --away             zajête
 	
+	  -n, --notavail         niedostêpne
 	  -i, --inactive         niedostêpne
+	
+	  -I, --invisible        niewidoczne
 	
 	  -B, --blocked          blokuj±ce nas
 	
@@ -307,6 +310,7 @@ list
 	
 	  -o, --offline          osoby dla których jeste¶my niedostêpni
 	
+	  -O, --online           osoby dla których zawsze jeste¶my widoczni
 	
 	Wy¶wietlanie cz³onków grupy: "list @grupa". Wy¶wietlanie osób spoza grupy: "list !@grupa".
 

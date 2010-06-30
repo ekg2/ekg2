@@ -1325,8 +1325,8 @@ static COMMAND(cmd_ignore)
 COMMAND(cmd_list)
 {
 	userlist_t *ul;
-	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, j;
-	char **argv = NULL, *show_group = NULL;
+	int count = 0, show_all = 1, show_away = 0, show_active = 0, show_inactive = 0, show_invisible = 0, show_descr = 0, show_blocked = 0, show_offline = 0, show_online = 0, i;
+	char *show_group = NULL;
 	const char *tmp;
 	metacontact_t *m = NULL;
 	const char *params0 = params[0];
@@ -1471,6 +1471,8 @@ list_user:
 			printq("user_info_block", get_user_name(u));
 		if (ekg_group_member(u, "__offline"))
 			printq("user_info_offline", get_user_name(u));
+		if (ekg_group_member(u, "__online"))
+			printq("user_info_online", get_user_name(u));
 
 		/*
 		 * (frequently) common private data
@@ -1539,62 +1541,42 @@ list_user:
 		return 0;
 	}
 	
-	/* list --active | --away | --inactive | --invisible | --description | --member | --blocked | --offline */
-	for (j = 0; params[j]; j++) {
-		int i;
+	/* list --active | --away | --blocked | --description | --inactive | --invisible | --member | --notavail | --offline | --online */
 
-		argv = array_make(params[j], " \t", 0, 1, 1);
-
-		for (i = 0; argv[i]; i++) {
-			if (match_arg(argv[i], 'a', ("active"), 2)) {
-				show_all = 0;
-				show_active = 1;
-			}
-				
-			if (match_arg(argv[i], 'i', ("inactive"), 2) || match_arg(argv[i], 'n', ("notavail"), 2)) {
-				show_all = 0;
-				show_inactive = 1;
-			}
-			
-			if (match_arg(argv[i], 'A', ("away"), 2)) {
-				show_all = 0;
-				show_away = 1;
-			}
-			
-			if (match_arg(argv[i], 'I', ("invisible"), 2)) {
-				show_all = 0;
-				show_invisible = 1;
-			}
-
-			if (match_arg(argv[i], 'B', ("blocked"), 2)) {
-				show_all = 0;
-				show_blocked = 1;
-			}
-
-			if (match_arg(argv[i], 'o', ("offline"), 2)) {
-				show_all = 0;
-				show_offline = 1;
-			}
-
-			if (match_arg(argv[i], 'm', ("member"), 2)) {
-				if (j && argv[i+1]) {
-					int off = (argv[i+1][0] == '@' && xstrlen(argv[i+1]) > 1) ? 1 : 0;
-
-					show_group = xstrdup(argv[i+1] + off);
-				} else
-					if (params[i+1]) {
-						char **tmp = array_make(params[i+1], " \t", 0, 1, 1);
-						int off = (params[i+1][0] == '@' && xstrlen(params[i+1]) > 1) ? 1 : 0;
-
-						show_group = xstrdup(tmp[0] + off);
-						array_free(tmp);
-					}
-			}
-
-			if (match_arg(argv[i], 'd', ("description"), 2))
-				show_descr = 1;
-		}
-		array_free(argv);
+	for (i = 0; params[i]; i++) {
+		if (match_arg(params[i], 'a', ("active"), 2)) {
+			show_all = 0;
+			show_active = 1;
+		} else if (match_arg(params[i], 'i', ("inactive"), 2) || match_arg(params[i], 'n', ("notavail"), 2)) {
+			show_all = 0;
+			show_inactive = 1;
+		} else if (match_arg(params[i], 'A', ("away"), 2)) {
+			show_all = 0;
+			show_away = 1;
+		} else if (match_arg(params[i], 'I', ("invisible"), 2)) {
+			show_all = 0;
+			show_invisible = 1;
+		} else if (match_arg(params[i], 'B', ("blocked"), 2)) {
+			show_all = 0;
+			show_blocked = 1;
+		} else if (match_arg(params[i], 'o', ("offline"), 2)) {
+			show_all = 0;
+			show_offline = 1;
+		} else if (match_arg(params[i], 'O', ("online"), 2)) {
+			show_all = 0;
+			show_online = 1;
+		} else if (match_arg(params[i], 'm', ("member"), 2)) {
+			if (params[i+1]) {
+				i++;
+				int off = (params[i][0] == '@' && xstrlen(params[i]) > 1) ? 1 : 0;
+				xfree(show_group);
+				show_group = xstrdup(params[i] + off);
+			} else
+				printq("invalid_params", name);
+		} else if (match_arg(params[i], 'd', ("description"), 2)) {
+			show_descr = 1;
+		} else
+			printq("invalid_params", name);
 	}
 
 	for (ul = session->userlist; ul; ul = ul->next) {
@@ -1626,6 +1608,9 @@ list_user:
 			show = 0;
 
 		if (show_offline && ekg_group_member(u, "__offline"))
+			show = 1;
+
+		if (show_online && ekg_group_member(u, "__online"))
 			show = 1;
 
 		if (show) {
@@ -4350,8 +4335,8 @@ void command_init()
 	command_add(NULL, ("last"), "CpuU CuU", cmd_last, SESSION_MUSTHAS,
 	  "-c --clear -s --stime -n --number");
 
-	command_add(NULL, ("list"), "CpuUsm", cmd_list, SESSION_MUSTHAS,
-	  "-a --active -A --away -i --inactive -B --blocked -d --description -m --member -o --offline -f --first -l --last -n --nick -d --display -u --uin -g --group -p --phone -o --offline -O --online");
+	command_add(NULL, ("list"), "CpuUsm p p p p p p p p", cmd_list, SESSION_MUSTHAS,
+	  "-a --active -A --away -B --blocked -d --description -i --inactive -I --invisible -m --member -n --notavail -o --offline -O --online");
 
 	command_add(NULL, ("me"), "?", cmd_me, SESSION_MUSTBECONNECTED, NULL);
 

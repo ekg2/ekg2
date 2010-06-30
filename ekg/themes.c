@@ -1706,6 +1706,7 @@ void theme_init()
 	format_add("user_info_status_time_format", "%Y-%m-%d %H:%M", 1);
 	format_add("user_info_status_time", _("%K| %nCurrent status since: %T%1%n\n"), 1);
 	format_add("user_info_block", _("%K| %nBlocked\n"), 1);
+	format_add("user_info_online", _("%K| %nCan always see our status\n"), 1);
 	format_add("user_info_offline", _("%K| %nCan't see our status\n"), 1);
 	format_add("user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
 	format_add("user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
