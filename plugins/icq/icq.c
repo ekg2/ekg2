@@ -1653,7 +1653,7 @@ static QUERY(icq_userlist_info_handle) {
 	if ( (i = user_private_item_get_int(u, "online")) && (tmp = timestamp_time("%Y-%m-%d %H:%M", i)) )
 		printq("icq_user_info_generic", _("Online since"), tmp);
 
-	if ( (i = user_private_item_get_int(u, "online")) && (tmp = timestamp_time("%Y-%m-%d %H:%M", i)) )
+	if ( (i = user_private_item_get_int(u, "member")) && (tmp = timestamp_time("%Y-%m-%d %H:%M", i)) )
 		printq("icq_user_info_generic", _("ICQ Member since"), tmp);
 
 	if ( (tmp = user_private_item_get(u, "comment")) )

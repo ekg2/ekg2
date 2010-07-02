@@ -467,6 +467,9 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 		icq_get_user_info(s, u, tlvs, EKG_STATUS_AVAIL);
 
+		if (user_private_item_get(u, "auth"))
+			user_private_item_set_int(u, "auth", 0);
+
 		icq_tlvs_destroy(&tlvs);
 
 		xfree(uid);

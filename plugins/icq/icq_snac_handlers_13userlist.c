@@ -126,7 +126,11 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 				user_private_item_set_int(u, "gid", group_id);
 			}
 
-			user_private_item_set_int(u, "auth", t_auth?1:0);
+			if (t_auth) {
+				user_private_item_set_int(u, "auth", 1);
+				u->status = EKG_STATUS_UNKNOWN;
+			} else
+				user_private_item_set_int(u, "auth", 0);
 cleanup_user:
 			xfree(nick);
 			xfree(uid);
