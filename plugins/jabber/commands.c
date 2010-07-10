@@ -1584,7 +1584,7 @@ static COMMAND(jabber_command_private) {
 			return 1;
 		}
 
-		watch_write(j->send_watch, "<iq type=\"get\" id=\"%s\"><query xmlns=\"jabber:iq:private \"><%s/></query></iq>", id, namespace);
+		watch_write(j->send_watch, "<iq type=\"get\" id=\"%s\"><query xmlns=\"jabber:iq:private\"><%s/></query></iq>", id, namespace);
 		return 0;
 	}
 
