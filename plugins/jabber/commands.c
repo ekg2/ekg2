@@ -127,7 +127,7 @@ static COMMAND(jabber_command_connect)
 		j->using_ssl = 0;
 #endif
 
-		if (j->istlen && realserver == TLEN_HUB)
+		if (j->istlen && !xstrcmp(realserver, TLEN_HUB))
 			j->port = 80;
 		else
 #ifdef JABBER_HAVE_SSL
@@ -1602,7 +1602,7 @@ static COMMAND(jabber_command_private) {
 
 /* Synchronize config (?) */
 		if (config) {
-			plugin_t *p;
+			plugin_t *p, *last_p = NULL;
 			session_t *s;
 
 			for (p = plugins; p; p = p->next) {
@@ -1638,9 +1638,12 @@ back:
 				if (p) {
 					watch_write(j->send_watch, "</plugin>");
 					if (!p->next) { /* if last plugin, then jump back and write core vars */
+						last_p = p;
 						p = NULL;
 						goto back;
 					}
+				} else {
+					p = last_p;
 				}
 			}
 			for (s = sessions; s; s = s->next) {
@@ -1654,10 +1657,14 @@ back:
 
 				watch_write(j->send_watch, "<session xmlns=\"ekg2:session\" uid=\"%s\" password=\"%s\">", s->uid, s->password);
 
-				/* XXX, escape? */
+				/* XXX, alias, descr, status */
 				for (i = 0; (pl->params[i].key /* && p->params[i].id != -1 */); i++) {
-					if (s->values[i])	watch_write(j->send_watch, "<%s>%s</%s>", pl->params[i].key, s->values[i], pl->params[i].key);
-					else			watch_write(j->send_watch, "<%s/>", pl->params[i].key);
+					if (s->values[i]) {
+						char *esc = jabber_escape(s->values[i]);
+						watch_write(j->send_watch, "<%s>%s</%s>", pl->params[i].key, esc, pl->params[i].key);
+						xfree(esc);
+					} else
+						watch_write(j->send_watch, "<%s/>", pl->params[i].key);
 				}
 
 				watch_write(j->send_watch, "</session>");
