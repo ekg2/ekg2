@@ -1674,15 +1674,25 @@ back:
 
 				switch (book->type) {
 					case (JABBER_BOOKMARK_URL):
-						watch_write(j->send_watch, "<url name=\"%s\" url=\"%s\"/>", book->priv_data.url->name, book->priv_data.url->url);
+					{
+						char *esc_name = jabber_escape(book->priv_data.url->name);
+						watch_write(j->send_watch, "<url name=\"%s\" url=\"%s\"/>", esc_name, book->priv_data.url->url);
+						xfree(esc_name);
 						break;
+					}
 					case (JABBER_BOOKMARK_CONFERENCE):
-						watch_write(j->send_watch, "<conference name=\"%s\" autojoin=\"%s\" jid=\"%s\">", book->priv_data.conf->name, 
+					{
+						char *esc_name = jabber_escape(book->priv_data.conf->name);
+						char *esc_nick = jabber_escape(book->priv_data.conf->nick);
+						watch_write(j->send_watch, "<conference name=\"%s\" autojoin=\"%s\" jid=\"%s\">", esc_name, 
 							book->priv_data.conf->autojoin ? "true" : "false", book->priv_data.conf->jid);
-						if (book->priv_data.conf->nick) watch_write(j->send_watch, "<nick>%s</nick>", book->priv_data.conf->nick);
+						if (book->priv_data.conf->nick) watch_write(j->send_watch, "<nick>%s</nick>", esc_nick);
 						if (book->priv_data.conf->pass) watch_write(j->send_watch, "<password>%s</password>", book->priv_data.conf->pass);
 						watch_write(j->send_watch, "</conference>");
+						xfree(esc_nick);
+						xfree(esc_name);
 						break;
+					}
 					default:
 						debug("[JABBER, BOOKMARK] while syncing j->bookmarks... book->type = %d wtf?\n", book->type);
 				}
