@@ -648,23 +648,11 @@ SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
 			break;
 
 		case 0x000F:	/* MTN_WINDOW_CLOSED */
-		{	/* XXX ?wo? print_info(...) ??? */
-		#if 0
-			char szFormat[MAX_PATH];
-			char szMsg[MAX_PATH];
-			char *nick = NickFromHandleUtf(hContact);
-
-			null_snprintf(szMsg, MAX_PATH, ICQTranslateUtfStatic(LPGEN("Contact \"%s\" has closed the message window."), szFormat, MAX_PATH), nick);
-			ShowPopUpMsg(hContact, ICQTranslateUtfStatic(LPGEN("ICQ Note"), szFormat, MAX_PATH), szMsg, LOG_NOTE);
-			SAFE_FREE((void**)&nick);
-
-			NetLog_Server("%s has closed the message window.", strUID(dwUin, szUID));
+			print_info(msg_param.uid, s, "icq_window_closed", format_user(s, msg_param.uid));
 			break;
-		#endif
-		}
 
 		default:
-			debug_function("icq_snac_message_mini_typing_notification() uid: %s, UNKNOWN typing!!! (0x%x)\n", msg_param.sender, pkt.typing);
+			debug_warn("icq_snac_message_mini_typing_notification() uid: %s, UNKNOWN typing!!! (0x%x)\n", msg_param.sender, pkt.typing);
 	}
 #endif
 	return 0;

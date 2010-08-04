@@ -1554,7 +1554,7 @@ static COMMAND(icq_command_auth) {
 		userlist_t *u;
 		for (u = session->userlist; u; u = u->next) {
 			if (user_private_item_get_int(u, "auth") == 1) {
-				printq("icq_user_info_generic", _("Waiting for authorization"), u->uid);
+				printq("icq_user_info_generic", _("Waiting for authorization"), format_user(session, u->uid));
 			}
 		}
 		return 0;
@@ -1691,7 +1691,7 @@ static int icq_theme_init() {
 	format_add("icq_rates_header", "%>%n # %K|%n Curr %K|%n Alrt %K|%n Limt %K|%n Clear %K|%n Dscn %K|%n  Max %K|%nwin %K|%n\n", 1);
 	format_add("icq_rates", "%>%n%[-2]1 %K|%n%[-5]7 %K|%n%[-5]4 %K|%n%[-5]5 %K|%n%[-6]3 %K|%n%[-5]6 %K|%n%[-5]8 %K|%n%[-3]2 %K|%n\n", 1);
 	format_add("icq_you_were_added",	"%> (%1) %2 adds you to contact list\n", 1);
-
+	format_add("icq_window_closed", "%> %1 has closed the message window.\n", 1);
 #endif
 	return 0;
 }

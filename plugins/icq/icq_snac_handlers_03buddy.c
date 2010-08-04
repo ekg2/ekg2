@@ -400,24 +400,23 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 					"Ws",
 					(uint32_t) 1,			/* request type (1 - general info, 2 - short user info, 3 - away message, 4 - client capabilities) */
 					u->uid+4);
-			user_private_item_set_int(u, "online", 0);
-			user_private_item_set_int(u, "last_ip", user_private_item_get_int(u, "ip"));
-			user_private_item_set_int(u, "ip", 0);
 		} else {
 			icq_get_description(s, u->uid+4, u->status);
-#if 0
-			// XXX ???
-			if (u->status == EKG_STATUS_NA) {
-				if (user_private_item_get_int(u, "version") < 8) {
-					caps &= ~(1<<CAP_SRV_RELAY);
-					debug_warn("icq_snac_buddy_online() Forcing simple messages due to compability issues (%s).\n", uid);
-				}
-				user_private_item_set_int(u, "caps", caps);
-				user_private_item_set_int(u, "utf", (caps && (1<<CAP_UTF)) ? 1:0);
-			}
-#endif
 		}
 	}
+
+	if (u->status == EKG_STATUS_NA) {
+		user_private_item_set_int(u, "online", 0);
+		user_private_item_set_int(u, "last_ip", user_private_item_get_int(u, "ip"));
+		user_private_item_set_int(u, "ip", 0);
+		if (user_private_item_get_int(u, "version") < 8) {
+			caps &= ~(1<<CAP_SRV_RELAY);
+			debug_warn("icq_snac_buddy_online() Forcing simple messages due to compability issues (%s).\n", u->uid);
+		}
+	}
+
+	user_private_item_set_int(u, "caps", caps);
+	user_private_item_set_int(u, "utf", (caps && (1<<CAP_UTF)) ? 1:0);
 
 	xfree(descr);
 }
