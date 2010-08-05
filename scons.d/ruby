@@ -9,7 +9,7 @@ out = conf.PkgConfig(None, flags, None, 'ruby', None,
 if out and not env['SKIPCHECKS']:
 	old	= SetFlags(env, flags)
 		# Well, passing env['LIBS'][0] doesn't make much sense, but it makes SCons pretty-print it
-	out = conf.CheckLibWithHeader(env['LIBS'][0], [], 'C', 'ruby_init();', 0)
+	out = conf.CheckLibWithHeader(env['LIBS'][0], ['ruby.h'], 'C', 'ruby_init();', 0)
 	RestoreFlags(env, old)
 
 Return('out')
