@@ -1,0 +1,40 @@
+
+# largefile support
+
+def CheckLargefile(context, variant):
+	""" Check how to enable largefile support. """
+	context.Message('Trying to get largefile support with %s... ' % variant)
+	testprog = '''
+#include <sys/types.h>
+#define LARGE_OFF_T (((off_t) 1 << 62) - 1 + ((off_t) 1 << 62))
+int off_t_is_large[(LARGE_OFF_T % 2147483629 == 721 && LARGE_OFF_T % 2147483647 == 1) ? 1 : -1];
+int main() { return 0; }
+'''
+	ret = context.TryCompile(testprog, '.c')
+	context.Result(ret)
+	return not not ret
+
+Import('*')
+
+conf.AddTest('CheckLargefile', CheckLargefile)
+
+# We omit the 'no additional flags' case as we're called only when we already
+# know that additional flags are required.
+possible = ['-D_FILE_OFFSET_BITS=64', '-D_LARGE_FILES=1']
+
+for p in possible:
+	new = env.ParseFlags(p)
+
+	old	= SetFlags(env, new)
+	out = conf.CheckLargefile(p)
+
+	if out:
+		break
+
+	# clean up the flags only if failed
+	# we need them enabled globally
+	RestoreFlags(env, old)
+
+Return('out')
+
+# vim:ts=4:sts=4:sw=4:syntax=python
