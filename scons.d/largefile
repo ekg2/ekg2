@@ -29,6 +29,7 @@ for p in possible:
 	out = conf.CheckLargefile(p)
 
 	if out:
+		global_flags.append(p)
 		break
 
 	# clean up the flags only if failed

@@ -181,7 +181,7 @@ def RestoreFlags(env, old):
 
 def ExtTest(name, addexports = []):
 	""" Execute external test from scons.d/. """
-	exports = ['conf', 'defines', 'env', 'warnings', 'SetFlags', 'RestoreFlags']
+	exports = ['conf', 'defines', 'env', 'global_flags', 'warnings', 'SetFlags', 'RestoreFlags']
 	exports.extend(addexports)
 	ret = SConscript('scons.d/%s' % (name), exports)
 	return ret
@@ -271,6 +271,10 @@ opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
 
 defines = {}
+# Global flags are fairly special. They are merged into the environment directly
+# by the configure tests; we need them here only to save them into the cache and
+# restore when using SKIPCONF=1.
+global_flags = []
 
 if env['STATIC']:
 	defines['STATIC_LIBS'] = True
@@ -322,6 +326,7 @@ if env['SKIPCONF']:
 		# and load environment
 		for k, v in confd.items():
 			globals()[k] = v
+		SetFlags(env, env.ParseFlags(global_flags))
 
 if not env['SKIPCONF']:
 	conf = env.Configure(custom_tests = {
@@ -569,6 +574,7 @@ if not env['SKIPCONF']:
 				'ekg_staticlibs': ekg_staticlibs,
 				'ekg_compat': ekg_compat,
 				'ekg_remote_flags': ekg_remote_flags,
+				'global_flags': global_flags,
 				'plugins': plugins,
 				'defines': defines
 				}, conff, cPickle.HIGHEST_PROTOCOL)
