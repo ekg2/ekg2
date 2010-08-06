@@ -458,6 +458,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 		}
 
 		userlist_free(s);
+		query_emit_id(NULL, USERLIST_REFRESH);
 	}
 
 	session_set(s, "__sasl_excepted", NULL);
