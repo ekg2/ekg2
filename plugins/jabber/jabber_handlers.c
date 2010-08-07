@@ -1387,10 +1387,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 }
 
 static inline int jabber_status_int(int tlen, const char *text) {
-	if (!tlen && !xstrcasecmp(text, "online"))
-		return EKG_STATUS_AVAIL;
-
-	if (tlen && !xstrcasecmp(text, "available"))
+	if (!xstrcasecmp(text, "online") || !xstrcasecmp(text, "available"))
 		return EKG_STATUS_AVAIL;
 
 	return ekg_status_int(text);
@@ -1612,7 +1609,6 @@ JABBER_HANDLER(jabber_handle_presence) {
 			else
 				status = EKG_STATUS_ERROR;
 			na = 1;
-
 			if (istlen) { /* we need to get&fix the UID - userlist entry is sent with @tlen.pl, but error with user-given host */
 				char *tmp	= tlenjabber_unescape(jabber_attr(n->atts, "to"));
 				char *atsign	= xstrchr(tmp, '@');

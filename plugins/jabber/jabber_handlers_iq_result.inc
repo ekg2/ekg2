@@ -549,15 +549,8 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 		userlist_t *u;
 		char *uid;
 
-		if (j->istlen) {
-			/* do it like tlen does with roster - always @tlen.pl */
-			char *atsign	= xstrchr(jid, '@');
-
-			if (atsign)
-				*atsign	= 0;
-			uid = saprintf("tlen:%s@tlen.pl", jid);
-		} else
-			uid = xmpp_uid(jid);
+		if (j->istlen)	uid = tlen_uid(jid);
+		else		uid = xmpp_uid(jid);
 
 		/* jeśli element rostera ma subscription = remove to tak naprawde użytkownik jest usuwany;
 		   w przeciwnym wypadku - nalezy go dopisać do userlisty; dodatkowo, jesli uzytkownika
