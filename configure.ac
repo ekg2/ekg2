@@ -54,15 +54,29 @@ dnl windows
 AC_CHECK_LIB(wsock32, main, LIBS="$LIBS -lwsock32")
 
 dnl linux, sunos
-AC_CHECK_FUNC(dn_expand, [], [
-    AC_CHECK_LIB(resolv, dn_expand, 
-    [
-	AC_CHECK_HEADERS(resolv.h,
-	[
-	    AC_DEFINE(HAVE_LIBRESOLV, 1, [define if you have libresolv])
-	    LIBS="$LIBS -lresolv"
+AC_CHECK_FUNC([dn_expand], [], [
+	AC_CHECK_HEADERS([resolv.h], [
+		saved_LIBS="$LIBS"
+		LIBS="$LIBS -lresolv"
+		AC_MSG_CHECKING([[if libresolv is usable]])
+		dnl we cannot just use AC_CHECK_LIB, because dn_expand is
+		dnl implemented as a macro on certain platforms, and will not
+		dnl be resolved by linker without including necessary headers
+		AC_LINK_IFELSE([
+			AC_LANG_PROGRAM([[#include <resolv.h>]],
+					[[dn_expand(0,0,0,0,0);]])
+			],[
+				AC_MSG_RESULT([yes])
+				AC_DEFINE(HAVE_LIBRESOLV, 1, [define if you have libresolv])
+			],[
+				AC_MSG_RESULT([no])
+				AC_MSG_WARN([[resolver library unusable, SRV record resolution - e.g. for jabber plugin - will not work]])
+				LIBS="$saved_LIBS"
+			]
+		)
+	],[
+		AC_MSG_WARN([[resolver library not found, SRV record resolution - e.g. for jabber plugin - will not work]])
 	])
-    ])
 ])
 
 dnl  sprawdzamy, czy system ma getopt_long
