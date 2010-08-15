@@ -978,7 +978,7 @@ JABBER_HANDLER(jabber_handle_message) {
 
 		debug_function("[jabber,message] type = %s\n", __(type));
 		if (!xstrcmp(type, "groupchat")) {
-			char *tuid = xstrrchr(uid, '/');				/* temporary */
+			char *tuid = xstrchr(uid, '/');				/* temporary */
 			char *uid2 = (tuid) ? xstrndup(uid, tuid-uid) : xstrdup(uid);		/* muc room */
 			char *nick = (tuid) ? xstrdup(tuid+1) : NULL;				/* nickname */
 			newconference_t *c = newconference_find(s, uid2);

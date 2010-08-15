@@ -1921,8 +1921,10 @@ static COMMAND(jabber_muc_command_join) {
 	}
 #endif
 		
+	tmp = jabber_escape(username);
 	watch_write(j->send_watch, "<presence to='%s/%s'><x xmlns='http://jabber.org/protocol/muc'>%s</x></presence>", 
-			target, username, password ? password : "");
+			target, tmp, password ? password : "");
+	xfree(tmp);
 
 
 	conf = newconference_create(session, mucuid, 1);
