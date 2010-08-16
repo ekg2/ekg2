@@ -50,7 +50,7 @@ void config_upgrade() {
 
 	print("config_upgrade_begin");
 
-	switch (config_version) { /* versions MUST be sorted, break MUST NOT be used */
+	switch (config_version+1) { /* versions MUST be sorted, break MUST NOT be used */
 		case 0: /* jabber SASL behavior change */
 			print("config_upgrade_major", 
 				_("We've started using XMPP SASL AUTH by default, so if you're unable to connect to your favorite jabber server,"	\
