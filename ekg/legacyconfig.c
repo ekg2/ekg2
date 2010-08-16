@@ -28,7 +28,7 @@
  */
 
 void config_upgrade() {
-	const int current_config_version = 7;
+	const int current_config_version = 8;
 
 #if ! USE_UNICODE
 	if (!xstrcasecmp(config_console_charset, "UTF-8")) {
@@ -96,6 +96,10 @@ void config_upgrade() {
 		case 7:
 			print("config_upgrade_minor",
 				_("display_pl_chars option is no longer maintained, use /set console_charset US-ASCII"), "2009-04-24");
+		case 8:
+			print("config_upgrade_minor",
+				_("Jabber variables has ben changed from 'jabber:' to 'xmpp:'. " \
+				"Your config couldn't be updated automagically, so you must set it by hand."), "2010-08-17");
 	}
 
 	config_version = current_config_version;

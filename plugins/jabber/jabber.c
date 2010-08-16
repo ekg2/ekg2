@@ -1666,12 +1666,12 @@ EXPORT int jabber_plugin_init(int prio) {
 	query_connect_id(&jabber_plugin, USERLIST_PRIVHANDLE,	jabber_userlist_priv_handler, NULL);
 	query_connect_id(&jabber_plugin, PROTOCOL_TYPING_OUT,	jabber_typing_out, NULL);
 
-	variable_add(&jabber_plugin, ("beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
-	variable_add(&jabber_plugin, ("dcc"), VAR_BOOL, 1, &jabber_dcc, (void*) jabber_dcc_postinit, NULL, NULL);
-	variable_add(&jabber_plugin, ("dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
-	variable_add(&jabber_plugin, ("default_pubsub_server"), VAR_STR, 1, &jabber_default_pubsub_server, NULL, NULL, NULL);
-	variable_add(&jabber_plugin, ("default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
-	variable_add(&jabber_plugin, ("disable_chatstates"), VAR_MAP, 1, &config_jabber_disable_chatstates, NULL,
+	variable_add(&jabber_plugin, ("xmpp:beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
+	variable_add(&jabber_plugin, ("xmpp:dcc"), VAR_BOOL, 1, &jabber_dcc, (void*) jabber_dcc_postinit, NULL, NULL);
+	variable_add(&jabber_plugin, ("xmpp:dcc_ip"), VAR_STR, 1, &jabber_dcc_ip, NULL, NULL, NULL);
+	variable_add(&jabber_plugin, ("xmpp:default_pubsub_server"), VAR_STR, 1, &jabber_default_pubsub_server, NULL, NULL, NULL);
+	variable_add(&jabber_plugin, ("xmpp:default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
+	variable_add(&jabber_plugin, ("xmpp:disable_chatstates"), VAR_MAP, 1, &config_jabber_disable_chatstates, NULL,
 			variable_map(4, 0, 0, "none", 1, 0, "composing", 2, 0, "active", 4, 0, "gone"), NULL); 
 
 	jabber_register_commands();

@@ -273,7 +273,7 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
 	if (!name)
 		return NULL;
 
-	if (plugin)
+	if (plugin && !xstrchr(name, ':'))
 		__name = saprintf("%s:%s", plugin->name, name);
 	else
 		__name = xstrdup(name);
