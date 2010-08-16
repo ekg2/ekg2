@@ -133,7 +133,7 @@ void config_postread()
 			debug("setted default session to %s\n", s->uid);
 			window_session_set(window_status, s);
 		} else {
-			debug("default session not found\n");
+			debug_warn("default session not found\n");
 		}
 	}
 	config_upgrade();
@@ -227,7 +227,7 @@ int config_read(const char *filename)
 			}
 
 			if (ret)
-				debug("  unknown variable %s\n", foo);
+				debug_error("  unknown variable %s\n", foo);
 
 		} else if (!xstrcasecmp(buf, ("plugin"))) {
 			char **p = array_make(foo, (" \t"), 3, 1, 0);
@@ -312,7 +312,7 @@ int config_read(const char *filename)
 			ret = variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL);
 
 			if (ret)
-				debug("  unknown variable %s\n", buf);
+				debug_error("  unknown variable %s\n", buf);
 		}
 
 

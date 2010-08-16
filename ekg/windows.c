@@ -607,7 +607,7 @@ COMMAND(cmd_window) {
 			if (w->id) {
 				if (w->target) {
 					if (!w->floating)
-						printq("window_list_query", itoa(w->id), w->target);
+						printq("window_list_query", itoa(w->id), w->alias ? w->alias : w->target);
 					else
 						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);
 				} else
