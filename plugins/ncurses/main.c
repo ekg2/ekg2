@@ -151,6 +151,7 @@ static QUERY(ncurses_ui_is_initialized) {
 static QUERY(ncurses_ui_window_switch) {
 	window_t *w	= *(va_arg(ap, window_t **));
 	window_t *wc;
+	char *p;
 
 	ncurses_window_t *n = w->priv_data;
 
@@ -177,8 +178,9 @@ static QUERY(ncurses_ui_window_switch) {
 			ncurses_window_gone(w);
 	}
 
+	p = w->alias ? w->alias : (w->target ? w->target : NULL);
 	if (ncurses_settitle)
-		printf(ncurses_settitle_formats[ncurses_settitle], w->target ? w->target : "", w->target ? " - " : "", "EKG2");
+		printf(ncurses_settitle_formats[ncurses_settitle], p ? p : "", p ? " - " : "", "EKG2");
 
 	return 0;
 }
