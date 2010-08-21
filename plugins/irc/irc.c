@@ -1678,7 +1678,7 @@ static COMMAND(irc_command_names) {
 	char *sort_modes = xstrchr(SOP(_005_PREFIX), ')')+1;
 
 	int smlen = xstrlen(sort_modes)+1;
-	char **mp, *channame;
+	char **mp, *channame, *cchn;
 
 	channel_t *chan;
 	string_t buf;
@@ -1693,10 +1693,13 @@ static COMMAND(irc_command_names) {
 		return -1;
 	}
 
+	cchn = clean_channel_names(session, channame+4);
+debug_ok("%s %s\n", channame+4, cchn);
+
 	if (chan->longest_nick > atoi(SOP(_005_NICKLEN)))
 		debug_error("[irc, names] funny %d vs %s\n", chan->longest_nick, SOP(_005_NICKLEN));
 
-	print_info(channame, session, "IRC_NAMES_NAME", session_name(session), channame+4);
+	print_info(channame, session, "IRC_NAMES_NAME", session_name(session), cchn);
 	buf = string_init(NULL);
 
 	for (lvl = 0; lvl < smlen; ++lvl, ++sort_modes) {
@@ -1741,9 +1744,10 @@ static COMMAND(irc_command_names) {
 	print_info(channame, session, "none2", "");
 #define plvl(x) lvl_total[x] ? itoa(lvl_total[x]) : "0"
 	if (smlen > 3) /* has halfops */
-		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2), plvl(3), plvl(4));
+		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), cchn, itoa(count), plvl(0), plvl(1), plvl(2), plvl(3), plvl(4));
 	else
-		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2));
+		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), cchn, itoa(count), plvl(0), plvl(1), plvl(2));
+	xfree(cchn);
 	debug("[IRC_NAMES] levelcounts = %d %d %d %d\n",
 			lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3]);
 #undef plvl

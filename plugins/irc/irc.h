@@ -175,6 +175,8 @@ char *nickpad_string_create(channel_t *chan);
 char *nickpad_string_apply(channel_t *chan, char *str);
 char *nickpad_string_restore(channel_t *chan);
 
+char *clean_channel_names(session_t *session, char *channels);
+
 #endif /* __EKG_PLUGINS_IRC_IRC_H */
 
 /*

@@ -62,8 +62,6 @@ char *sopt_casemapping_values[IRC_CASEMAPPING_COUNT] = { "ascii", "rfc1459", "st
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 
-static char *clean_channel_names(session_t *session, char *channels);
-
 #ifdef HAVE_ICONV
 static char *try_convert_string_p(const char *ps, iconv_t cd) {
 	char *s = (char *) ps;
@@ -724,7 +722,7 @@ IRC_COMMAND(irc_c_error)
 	return 0;
 }
 
-static char *clean_channel_names(session_t *session, char *channels) {
+char *clean_channel_names(session_t *session, char *channels) {
 	irc_private_t *j = session->priv;
 	char *chmode;
 
