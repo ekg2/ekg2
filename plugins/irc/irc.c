@@ -1694,7 +1694,6 @@ static COMMAND(irc_command_names) {
 	}
 
 	cchn = clean_channel_names(session, channame+4);
-debug_ok("%s %s\n", channame+4, cchn);
 
 	if (chan->longest_nick > atoi(SOP(_005_NICKLEN)))
 		debug_error("[irc, names] funny %d vs %s\n", chan->longest_nick, SOP(_005_NICKLEN));
