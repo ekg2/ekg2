@@ -269,11 +269,12 @@ static QUERY(ncurses_ui_window_target_changed)
 {
 	window_t *w = *(va_arg(ap, window_t **));
 	ncurses_window_t *n = w->priv_data;
-	char *tmp;
+	char *tmp, *p;
 
 	xfree(n->prompt);
 
-	tmp = format_string(format_find((w->target) ? "ncurses_prompt_query" : "ncurses_prompt_none"), w->target);
+	p = w->alias ? w->alias : (w->target ? w->target : NULL);
+	tmp = format_string(format_find((p) ? "ncurses_prompt_query" : "ncurses_prompt_none"), p);
 	n->prompt = tmp; 
 	n->prompt_len = xstrlen(tmp);
 

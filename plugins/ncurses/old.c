@@ -2918,10 +2918,10 @@ int ncurses_window_new(window_t *w)
 	} else if (!xstrcmp(w->target, "__lastlog")) {
 		ncurses_lastlog_new(w);
 
-	} else if (w->target) {
+	} else if (w->target || w->alias) {
 		const char *f = format_find("ncurses_prompt_query");
 
-		n->prompt = format_string(f, w->target);
+		n->prompt = format_string(f, w->alias ? w->alias : w->target);
 		n->prompt_len = xstrlen(n->prompt);
 
 		ncurses_update_real_prompt(n);
