@@ -562,6 +562,7 @@ IRC_COMMAND(irc_c_error)
 	window_t	*w;
 	char		*altnick;
 	channel_t	*chanp;
+	char 		*tmpchn = NULL;
 
 #define IOK2(x) param[x]?OMITCOLON(param[x]):""
 
@@ -637,7 +638,8 @@ IRC_COMMAND(irc_c_error)
 			}
 			break;
 		case 404:
-			print_info(dest, s, "IRC_RPL_CANTSEND", session_name(s), param[3]);
+			tmpchn = clean_channel_names(s, param[3]);
+			print_info(dest, s, "IRC_RPL_CANTSEND", session_name(s), tmpchn);
 			break;
 		case 301:
 			if (!session_int_get(s, "DISPLAY_AWAY_NOTIFICATION")) 
@@ -651,7 +653,6 @@ IRC_COMMAND(irc_c_error)
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
 				char *__topic	= OMITCOLON(param[4]);
-				char *tmpchn	= clean_channel_names(s, param[3]);
 
 				xfree(chanp->topic);
 
@@ -659,10 +660,10 @@ IRC_COMMAND(irc_c_error)
 				chanp->topic  = recoded ? recoded : xstrdup(__topic);
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
 						chanp->topic, 1);
+				tmpchn	= clean_channel_names(s, param[3]);
 				print_info(dest, s, irccommands[ecode].name,
 						session_name(s), tmpchn, coloured);
 				xfree(coloured);
-				xfree(tmpchn);
 			}
 			break;
 		case 333:
@@ -681,7 +682,8 @@ IRC_COMMAND(irc_c_error)
 			break;
 
 		case 341:
-			print_info(dest, s, irccommands[ecode].name, session_name(s), param[3], param[4]);
+			tmpchn = clean_channel_names(s, param[4]);
+			print_info(dest, s, irccommands[ecode].name, session_name(s), param[3], tmpchn);
 			break;
 		case 376:
 			/* zero, identify with nickserv */
@@ -718,6 +720,7 @@ IRC_COMMAND(irc_c_error)
 			return(-1);
 	}
 
+	xfree(tmpchn);
 	xfree(t);
 	return 0;
 }
@@ -884,6 +887,7 @@ IRC_COMMAND(irc_c_list)
 	int		endlist = ltype & IRC_LISTEND;
 	char		*realname;
 	char		*coloured = NULL;
+	char		*tmpchn = NULL;
 
 	window_t	*w	  = NULL;
 	people_t	*osoba	  = NULL;
@@ -926,7 +930,7 @@ IRC_COMMAND(irc_c_list)
 			if (chan->syncmode > 0)  {
 				chan->syncmode--;
 				if (chan->syncmode == 0) {
-					char *tmpchn = clean_channel_names(s, chan->name+4);
+					tmpchn = clean_channel_names(s, chan->name+4);
 					struct timeval tv;
 					gettimeofday(&tv, NULL);
 					tv.tv_usec+=(1000000-chan->syncstart.tv_usec);
@@ -935,7 +939,6 @@ IRC_COMMAND(irc_c_list)
 					tv.tv_sec-=chan->syncstart.tv_sec;
 
 					print_info(dest, s, "IRC_CHANNEL_SYNCED", session_name(s), tmpchn, itoa(tv.tv_sec), itoa(tv.tv_usec));
-					xfree(tmpchn);
 				}
 			}
 		}
@@ -952,7 +955,8 @@ IRC_COMMAND(irc_c_list)
 				/* ok new irc-find-person checked */
 				osoba	 = irc_find_person(j->people, IOK(7));
 				realname = xstrchr(IOK2(9), ' ');
-				PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), realname);
+				tmpchn = clean_channel_names(s, IOK2(3));
+				PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), itoa(mode_act), tmpchn, IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), realname);
 				if (osoba) {
 					xfree(osoba->host);
 					osoba->host = xstrdup(IOK(5));
@@ -991,13 +995,15 @@ IRC_COMMAND(irc_c_list)
 					coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[5]+1, 1);
 					PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), IOK(3), IOK2(4), coloured, itoa(mode_act));
 				} else {
-					PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), IOK2(3), IOK2(4), IOK2(5), itoa(mode_act));
+					tmpchn = clean_channel_names(s, IOK2(3));
+					PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), tmpchn, IOK2(4), IOK2(5), itoa(mode_act));
 				}
 				xfree(coloured);
 				break;
 		}
 	}
 
+	xfree(tmpchn);
 	xfree(t);
 	return 0;
 #undef PRINT_INFO
