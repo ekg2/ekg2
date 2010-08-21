@@ -5,6 +5,7 @@
  *			    Wojtek Bojdo³ <wojboj@htcon.pl>
  *			    Pawe³ Maziarz <drg@infomex.pl>
  *			    Piotr Kupisiewicz <deli@rzepaknet.us>
+ *		  2008-2010 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -99,7 +100,7 @@ static BINDING_FUNCTION(binding_kill_word)
 static BINDING_FUNCTION(binding_toggle_input)
 {
 	if (input_size == 1) {
-		input_size = 5;
+		input_size = MULTILINE_INPUT_SIZE;
 		ncurses_input_update();
 	} else {
 		string_t s = string_init((""));
@@ -146,7 +147,7 @@ static BINDING_FUNCTION(binding_toggle_input)
 
 static BINDING_FUNCTION(binding_cancel_input)
 {
-	if (input_size == 5) {
+	if (input_size != 1) {
 		input_size = 1;
 		ncurses_input_update();
 		ncurses_typing_mod = 1;
@@ -509,41 +510,49 @@ static BINDING_FUNCTION(binding_beginning_of_line)
 	line_start = 0;
 }
 
+static void get_history_lines() {
+	if (xwcschr(history[history_index], ('\015'))) {
+		CHAR_T **tmp;
+		int i, count;
+
+		if (input_size == 1) {
+			input_size = MULTILINE_INPUT_SIZE;
+			ncurses_input_update();
+		}
+
+		tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
+		count = array_count((char **) tmp);
+
+		array_free((char **) lines);
+		lines = xmalloc((count + 2) * sizeof(CHAR_T *));
+
+		for (i = 0; i < count; i++) {
+			lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
+			xwcscpy(lines[i], tmp[i]);
+		}
+
+		array_free((char **) tmp);
+
+		line_index = 0;
+		lines_index = 0;
+		lines_adjust();
+	} else {
+		if (input_size != 1) {
+			input_size = 1;
+			ncurses_input_update();
+		}
+		xwcscpy(line, history[history_index]);
+		line_adjust();
+	}
+}
+
 BINDING_FUNCTION(binding_previous_only_history)
 {
 	if (history[history_index + 1]) {
 		if (history_index == 0)
 			history[0] = xwcsdup(line);
 		history_index++;
-		if (xwcschr(history[history_index], ('\015'))) {
-			CHAR_T **tmp;
-			int i;
-			
-			if (input_size == 1) {
-				input_size = 5;
-				ncurses_input_update();
-			}
-
-			tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
-
-			array_free((char **) lines);
-			lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
-
-			for (i = 0; i < array_count((char **) tmp); i++) {
-				lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
-				xwcscpy(lines[i], tmp[i]);
-			}
-
-			array_free((char **) tmp);
-			lines_adjust();
-		} else {
-			if (input_size != 1) {
-				input_size = 1;
-				ncurses_input_update();
-			}
-			xwcscpy(line, history[history_index]);
-			line_adjust();
-		}
+		get_history_lines();
 	}
 }
 
@@ -551,35 +560,7 @@ BINDING_FUNCTION(binding_next_only_history)
 {
 	if (history_index > 0) {
 		history_index--;
-		if (xwcschr(history[history_index], ('\015'))) {
-			CHAR_T **tmp;
-			int i;
-
-			if (input_size == 1) {
-				input_size = 5;
-				ncurses_input_update();
-			}
-
-			tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
-
-			array_free((char **) lines);
-			lines = xmalloc((array_count((char **) tmp) + 2) * sizeof(CHAR_T *));
-
-			for (i = 0; i < array_count((char **) tmp); i++) {
-				lines[i] = xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
-				xwcscpy(lines[i], tmp[i]);
-			}
-
-			array_free((char **) tmp);
-			lines_adjust();
-		} else {
-			if (input_size != 1) {
-				input_size = 1;
-				ncurses_input_update();
-			}
-			xwcscpy(line, history[history_index]);
-			line_adjust();
-		}
+		get_history_lines();
 	} else /* history_index == 0 */
 		binding_accept_line(BINDING_HISTORY_NOEXEC);
 }
@@ -587,7 +568,7 @@ BINDING_FUNCTION(binding_next_only_history)
 
 static BINDING_FUNCTION(binding_previous_history)
 {
-	if (lines) {
+	if (lines && (lines_index || lines_start)) {
 		if (lines_index - lines_start == 0 && lines_start)
 			lines_start--;
 
@@ -596,28 +577,28 @@ static BINDING_FUNCTION(binding_previous_history)
 
 		lines_adjust();
 
-		return;
-	}
-	
-	binding_previous_only_history(NULL);				
+	} else
+		binding_previous_only_history(NULL);				
+	ncurses_redraw_input(0);
 }
 
 static BINDING_FUNCTION(binding_next_history)
 {
-	if (lines) {
-		if (lines_index - line_start == 4)
-			if (lines_index < array_count((char **) lines) - 1)
+	int count = array_count((char **) lines);
+
+	if (lines && (lines_index+1<count)) {
+		if (lines_index - line_start == MULTILINE_INPUT_SIZE - 1)
+			if (lines_index < count - 1)
 				lines_start++;
 
-		if (lines_index < array_count((char **) lines) - 1)
+		if (lines_index < count - 1)
 			lines_index++;
 
 		lines_adjust();
 
-		return;
-	}
-
-	binding_next_only_history(NULL);
+	} else 
+		binding_next_only_history(NULL);
+	ncurses_redraw_input(0);
 }
 
 void binding_helper_scroll(window_t *w, int offset) {

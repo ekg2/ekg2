@@ -20,6 +20,7 @@ extern plugin_t ncurses_plugin;
 extern int ncurses_plugin_destroyed;
 
 #define LINE_MAXLEN 1000		/* rozmiar linii */
+#define MULTILINE_INPUT_SIZE 5
 
 #define ncurses_current ((ncurses_window_t *) window_current->priv_data)
 

@@ -4,6 +4,7 @@
  *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *			    Wojtek Bojdo³ <wojboj@htcon.pl>
  *			    Pawe³ Maziarz <drg@infomex.pl>
+ *		  2008-2010 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -2048,20 +2049,12 @@ void ncurses_lines_adjust() {
 void ncurses_input_update()
 {
 	if (ncurses_input_size == 1) {
-		int i;
-		
-		for (i = 0; ncurses_lines[i]; i++)
-			xfree(ncurses_lines[i]);
-		xfree(ncurses_lines);
+		array_free((char **) ncurses_lines);
 		ncurses_lines = NULL;
 		ncurses_line = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
 
 		ncurses_history[0] = ncurses_line;
 
-		line_start = 0;
-		line_index = 0; 
-		lines_start = 0;
-		lines_index = 0;
 	} else {
 		ncurses_lines = xmalloc(2 * sizeof(CHAR_T *));
 		ncurses_lines[0] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
@@ -2070,10 +2063,12 @@ void ncurses_input_update()
 		xfree(ncurses_line);
 		ncurses_line = ncurses_lines[0];
 		ncurses_history[0] = NULL;
-		lines_start = 0;
-		lines_index = 0;
 	}
-	
+	line_start = 0;
+	line_index = 0; 
+	lines_start = 0;
+	lines_index = 0;
+
 	ncurses_resize();
 
 	ncurses_redraw(window_current);
@@ -2367,7 +2362,7 @@ void ncurses_redraw_input(unsigned int ch) {
 	if (ncurses_lines) {
 		int i;
 		
-		for (i = 0; i < 5; i++) {
+		for (i = 0; i < MULTILINE_INPUT_SIZE; i++) {
 			CHAR_T *p;
 			int j;
 			size_t plen;
