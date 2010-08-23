@@ -1177,9 +1177,6 @@ COMMAND(session_command)
 			command_exec(NULL, NULL, "/window switch 1", 2);
 
 		window_session_set(window_current, s);
-		session_current = s;
-
-		query_emit_id(NULL, SESSION_CHANGED);
 
 		return 0;
 	}
