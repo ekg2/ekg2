@@ -1,4 +1,4 @@
-// ma³y opis dostêpnych zmiennych sesyjnych pluginu jabber
+// Little hint of session variables for jabber plugin.
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004 tomasz torcz <zdzichu@irc.pl>
@@ -14,6 +14,20 @@ allow_add_reply_id
 		1 - add Reply-IDs for messages with threads
 	
 		2 - add Reply-IDs for any message (excl. chats and likes)
+
+allow_remote_control
+	type: integer
+	default value: 0
+	
+	Allow remote control. Possible values:
+	
+		0 - disabled
+	
+		1 - enabled for same jid(allow from different resources)
+	
+		2 - enabled for allow_remote_control_jid
+	
+		666 - enabled for all(DO NOT USE IT!!!)	
 
 auto_auth
 	type: integer
@@ -36,6 +50,58 @@ auto_auth
 	
 		16 - when adding contacts, don't request auth
 
+auto_bookmark_sync
+	type: bool
+	default value: 0 
+	
+	Possible values:
+	
+		0 - bookmarks will not sync
+	
+		1 - bookmarks will sync every time, ekg2 connects to server
+
+auto_reconnect
+	type: integer
+	default value: 0
+	
+	Possible values: 
+	
+		0 - no reconnect at all
+	
+	   >0 - amount of seconds, how long ekg2 will wait to reconnect
+
+auto_find
+	type: integer
+	default value: 0
+
+	Possible values:
+	
+		0 - auto_find disables
+	
+	   >0 - finds out every vcard of every person, who sends us a message
+
+display_ctcp
+	type: bool
+	default value: 0
+	
+	Possible values:
+	
+		0 - if anyone sends a request(for example, to determine your version) it won't be displayed
+	
+		1 - any requests will be displayed to you
+
+disable_sasl
+	type: integer
+	default value: 0
+	
+	Possible values:
+	
+		0 - sasl enabled
+	
+		1 - use XEP-0078(Non-SASL Authentication)
+	
+		2 - disable sasl at all 
+	 
 display_notify
 	type: integer
 	default value: -1
@@ -56,9 +122,12 @@ display_server_features
 	default value: 1
 	
 	Set when server's features should be shown:
-	0 - never
-	1 - only when first connected
-	2 - always
+	
+		0 - never
+	
+		1 - only when first connected
+	
+		2 - always
 
 log_formats
 	type: string
@@ -83,6 +152,14 @@ password
 	
 	Necessary while connecting.
 
+photo_hash
+	type: string
+	default value: none
+	
+	base64 encoded picture, that will be your avatar.
+	
+	For example: base64 <somefile>|xclip and then paste it.
+
 plaintext_passwd
 	type: bool
 	default value: 0
@@ -90,11 +167,36 @@ plaintext_passwd
 	Determines whether password can be sent using plaintext (1) or digest (0)
 	method.
 
+ping_server
+	type: integer
+	default value: 0
+
+	Possible values:
+	
+		0  -  ekg2 will not ping server
+	
+	   >0  -  amount of seconds between pings
+		
 port
 	type: integer
 	default value: 5222
 	
 	Server port.
+
+prefer_family
+	type: integer
+	default value: 0
+
+	Prefered address family(ipv4 of ipv6)
+	
+	
+	Possible values:
+	
+		   0     -  default(ipv4)
+	
+		AF_INET  -  ipv4
+	
+		AF_INET6 -  ipv6
 
 priority
 	type: integer
@@ -120,7 +222,23 @@ ssl_port
 	
 	Ciphered connection port.
 
+use_compression
+	type: integer
+	default value: 0
+	
+	Possible values:
+	
+		0 - data compression disabled
+	
+		1 - data compression enabled
+
 use_ssl
+	type: bool
+	default value: 1
+	
+	If set to 1 ekg2 will use ciphered connection.
+
+use_tls
 	type: bool
 	default value: 1
 	
