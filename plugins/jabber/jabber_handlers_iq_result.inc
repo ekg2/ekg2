@@ -710,6 +710,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_register) {
 		for (reg = n->children; reg; reg = reg->next) {
 			char *jname, *jdata;
 			if (!xstrcmp(reg->name, "instructions")) continue;
+			if (!xstrcmp(reg->name, "registered")) continue;	/* XXX the entity is already registered! */
 
 			jname = jabber_unescape(reg->name);
 			if (!xstrcmp(jname, "password"))
