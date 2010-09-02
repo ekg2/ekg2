@@ -161,6 +161,7 @@ int ncurses_lastlog_update(window_t *w);
 void ncurses_lastlog_new(window_t *w);
 extern int config_lastlog_size;
 extern int config_lastlog_lock;
+extern int config_mark_on_window_change;
 
 WATCHER(ncurses_watch_stdin);
 WATCHER(ncurses_watch_winch);

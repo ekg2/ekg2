@@ -2938,6 +2938,12 @@ int ncurses_window_new(window_t *w)
 
 	n->window = newwin(w->height, w->width, w->top, w->left);
 
+	if (config_mark_on_window_change) {
+		char *cmd = saprintf("/mark %d", w->id);
+		command_exec(NULL, NULL, cmd, 1);
+		xfree(cmd);
+	}
+
 	ncurses_resize();
 
 	return 0;
