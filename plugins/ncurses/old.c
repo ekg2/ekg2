@@ -1341,24 +1341,11 @@ static void update_header() {
  * zwraca ilo¶æ dopisanych znaków.
  */
 
-/* 13 wrz 06	removed status cause it was always 1 (dj)  */
-		
 static int window_printat(WINDOW *w, int x, int y, const char *format, struct format_data *data, int fgcolor, int bold, int bgcolor) {
-	int backup_display_color = config_display_color;
 	const char *p;			/* temporary format value */
 	int orig_x = x;
 
-	if (!w)
-		return -1;
-	
 	p = format;
-
-	if (orig_x == 0) {
-		if (config_display_color == 2) 
-			config_display_color = 0;
-
-		wattrset(w, color_pair(fgcolor, bgcolor));
-	}
 
 	wmove(w, y, x);
 			
@@ -1547,19 +1534,6 @@ next:
 		}
 	}
 
-	if (orig_x == 0) {
-		int i;
-
-		wattrset(w, color_pair(fgcolor, bgcolor));
-
-		wmove(w, y, x);
-
-		for (i = x; i <= w->_maxx; i++)
-			waddch(w, ' ');
-
-		config_display_color = backup_display_color;
-	}
-
 	return x - orig_x;
 }
 
@@ -1604,6 +1578,30 @@ static char *ncurses_window_activity(void) {
 		return NULL;
 	} else
 		return string_free(s, 0);
+}
+
+static void reprint_statusbar(WINDOW *w, int y, const char *format, struct format_data *data) {
+	int backup_display_color = config_display_color;
+	int i;
+	int x;
+
+	if (!w)
+		return;
+
+	if (config_display_color == 2) 
+		config_display_color = 0;
+
+	wattrset(w, color_pair(COLOR_WHITE, COLOR_BLUE));
+
+	x = window_printat(w, 0, y, format, data, COLOR_WHITE, 0, COLOR_BLUE);
+
+	wattrset(w, color_pair(COLOR_WHITE, COLOR_BLUE));
+	wmove(w, y, x);
+
+	for (i = x; i <= w->_maxx; i++)
+		waddch(w, ' ');
+
+	config_display_color = backup_display_color;
 }
 
 /*
@@ -1741,7 +1739,7 @@ void update_statusbar(int commit)
 			xfree(tmp);
 		}
 
-		window_printat(ncurses_header, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE);
+		reprint_statusbar(ncurses_header, y, p, formats);
 	}
 
 	for (y = 0; y < config_statusbar_size; y++) {
@@ -1761,24 +1759,24 @@ void update_statusbar(int commit)
 		switch (ncurses_debug) {
 			char *tmp;
 			case 0:
-				window_printat(ncurses_status, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE);
+				reprint_statusbar(ncurses_status, y, p, formats);
 				break;
 
 			case 1:
 				tmp = saprintf(" debug: lines_count=%d start=%d height=%d overflow=%d screen_width=%d", ncurses_current->lines_count, ncurses_current->start, window_current->height, ncurses_current->overflow, ncurses_screen_width);
-				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE);
+				reprint_statusbar(ncurses_status, y, tmp, formats);
 				xfree(tmp);
 				break;
 
 			case 2:
 				tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count((char **) ncurses_lines), lines_start, lines_index, line_start, line_index);
-				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE);
+				reprint_statusbar(ncurses_status, y, tmp, formats);
 				xfree(tmp);
 				break;
 
 			case 3:
 				tmp = saprintf(" debug: session=%p uid=%s alias=%s / target=%s session_current->uid=%s", sess, (sess && sess->uid) ? sess->uid : "", (sess && sess->alias) ? sess->alias : "", (window_current->target) ? window_current->target : "", (session_current && session_current->uid) ? session_current->uid : "");
-				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE);
+				reprint_statusbar(ncurses_status, y, tmp, formats);
 				xfree(tmp);
 				break;
 		}
@@ -2938,11 +2936,8 @@ int ncurses_window_new(window_t *w)
 
 	n->window = newwin(w->height, w->width, w->top, w->left);
 
-	if (config_mark_on_window_change) {
-		char *cmd = saprintf("/mark %d", w->id);
-		command_exec(NULL, NULL, cmd, 1);
-		xfree(cmd);
-	}
+	if (config_mark_on_window_change)
+		command_exec_format(NULL, NULL, 0, "/mark %d", w->id);
 
 	ncurses_resize();
 
