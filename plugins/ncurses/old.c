@@ -2044,7 +2044,7 @@ void ncurses_lines_adjust() {
  * uaktualnia zmianê rozmiaru pola wpisywania tekstu -- przesuwa okienka
  * itd. je¶li zmieniono na pojedyncze, czy¶ci dane wej¶ciowe.
  */
-void ncurses_input_update()
+void ncurses_input_update(int new_line_index)
 {
 	if (ncurses_input_size == 1) {
 		array_free((char **) ncurses_lines);
@@ -2063,7 +2063,7 @@ void ncurses_input_update()
 		ncurses_history[0] = NULL;
 	}
 	line_start = 0;
-	line_index = 0; 
+	line_index = new_line_index; 
 	lines_start = 0;
 	lines_index = 0;
 

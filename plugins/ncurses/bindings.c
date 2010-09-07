@@ -63,6 +63,21 @@ static const void *BINDING_HISTORY_NOEXEC = (void*) -1;
 extern int ncurses_noecho;	/* in old.c */
 extern CHAR_T *ncurses_passbuf;	/* in old.c */
 
+static void add_to_history() {
+	if (history[0] != line)
+		xfree(history[0]);
+
+	history[0] = lines ? wcs_array_join(lines, TEXT("\015")) : xwcsdup(line);
+
+	xfree(history[HISTORY_MAX - 1]);
+	memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
+
+	history[0] = line;
+	history_index = 0;
+}
+
+
+
 static BINDING_FUNCTION(binding_backward_word)
 {
 	while (line_index > 0 && line[line_index - 1] == ' ')
@@ -101,7 +116,7 @@ static BINDING_FUNCTION(binding_toggle_input)
 {
 	if (input_size == 1) {
 		input_size = MULTILINE_INPUT_SIZE;
-		ncurses_input_update();
+		ncurses_input_update(line_index);
 	} else {
 		string_t s = string_init((""));
 		char *p, *tmp;
@@ -117,17 +132,10 @@ static BINDING_FUNCTION(binding_toggle_input)
 
 		tmp = string_free(s, 0);
 
-		if (history[0] != line)
-			xfree(history[0]);
-		history[0] = wcs_array_join(lines, TEXT("\015"));
-		xfree(history[HISTORY_MAX - 1]);
-		memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
-
-		history[0] = line;
-		history_index = 0;
+		add_to_history();
 
 		input_size = 1;
-		ncurses_input_update();
+		ncurses_input_update(0);
 
 		for (p=tmp; *p && isspace(*p); p++);
                 if (*p || config_send_white_lines)
@@ -149,7 +157,7 @@ static BINDING_FUNCTION(binding_cancel_input)
 {
 	if (input_size != 1) {
 		input_size = 1;
-		ncurses_input_update();
+		ncurses_input_update(0);
 		ncurses_typing_mod = 1;
 	}
 }
@@ -278,13 +286,8 @@ static BINDING_FUNCTION(binding_accept_line)
 	}
 
 	if (xwcscmp(line, TEXT(""))) {
-	    if (config_history_savedups || xwcscmp(line, history[1])) {
-		if (history[0] != line)
-			xfree(history[0]);
-		history[0] = xwcsdup(line);
-		xfree(history[HISTORY_MAX - 1]);
-		memmove(&history[1], &history[0], sizeof(history) - sizeof(history[0]));
-	    }
+		if (config_history_savedups || xwcscmp(line, history[1]))
+			add_to_history();
 	} else {
 		if (config_enter_scrolls)
 			print("none", "");
@@ -517,7 +520,7 @@ static void get_history_lines() {
 
 		if (input_size == 1) {
 			input_size = MULTILINE_INPUT_SIZE;
-			ncurses_input_update();
+			ncurses_input_update(0);
 		}
 
 		tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
@@ -539,7 +542,7 @@ static void get_history_lines() {
 	} else {
 		if (input_size != 1) {
 			input_size = 1;
-			ncurses_input_update();
+			ncurses_input_update(0);
 		}
 		xwcscpy(line, history[history_index]);
 		line_adjust();
@@ -548,11 +551,28 @@ static void get_history_lines() {
 
 BINDING_FUNCTION(binding_previous_only_history)
 {
-	if (history[history_index + 1]) {
-		if (history_index == 0)
+	if (!history[history_index + 1])
+		return;
+
+	if (history_index == 0) {
+		if (lines) {
+			add_to_history();
+
+			history_index = 1;
+
+			input_size = 1;
+			ncurses_input_update(0);
+		} else
 			history[0] = xwcsdup(line);
-		history_index++;
-		get_history_lines();
+	}
+
+	history_index++;
+	get_history_lines();
+
+	if (lines) {
+		lines_index = array_count((char **)lines) - 1;
+		line_index = LINE_MAXLEN+1;
+		lines_adjust();
 	}
 }
 

@@ -103,7 +103,7 @@ void ncurses_redraw_input(unsigned int ch);
 void ncurses_clear(window_t *w, int full);
 void ncurses_refresh();
 void ncurses_commit();
-void ncurses_input_update();
+void ncurses_input_update(int new_line_index);
 void ncurses_line_adjust();
 #define line_adjust ncurses_line_adjust
 void ncurses_lines_adjust();
