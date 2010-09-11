@@ -839,28 +839,38 @@ static int binding_key(struct binding *b, const char *key, int add)
 	if (!xstrncasecmp(key, ("Alt-"), 4)) {
 		unsigned char ch;
 
-		if (!xstrcasecmp(key + 4, ("Enter"))) {
-			b->key = xstrdup(("Alt-Enter"));
-			if (add)
-				ncurses_binding_map_meta[13] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
-			return 0;
-		}
+#define __key(x, y, z) \
+	if (!xstrcasecmp(key + 4, (x))) { \
+		b->key = saprintf("Alt-%s", (x)); \
+		if (add) { \
+			ncurses_binding_map_meta[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
+			if (z) \
+				ncurses_binding_map_meta[z] = ncurses_binding_map_meta[y]; \
+		} \
+		return 0; \
+	}
 
-		if (!xstrcasecmp(key + 4, ("Backspace"))) {
-			b->key = xstrdup(("Alt-Backspace"));
-			if (add) {
-				ncurses_binding_map_meta[KEY_BACKSPACE] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
-				ncurses_binding_map_meta[127] = ncurses_binding_map_meta[KEY_BACKSPACE];
-			}
-			return 0;
-		}
+	__key("Enter", 13, 0);
+	__key("Backspace", KEY_BACKSPACE, 127);
+	__key("Home", KEY_HOME, KEY_FIND);
+	__key("End", KEY_END, KEY_SELECT);
+	__key("Delete", KEY_DC, 0);
+	__key("Insert", KEY_IC, 0);
+	__key("Left", KEY_LEFT, 0);
+	__key("Right", KEY_RIGHT, 0);
+	__key("Up", KEY_UP, 0);
+	__key("Down", KEY_DOWN, 0);
+	__key("PageUp", KEY_PPAGE, 0);
+	__key("PageDown", KEY_NPAGE, 0);
+
+#undef __key
 
 		if (xstrlen(key) != 5)
 			return -1;
 	
 		ch = xtoupper(key[4]);
 
-		b->key = saprintf(("Alt-%c"), ch);
+		b->key = saprintf(("Alt-%c"), ch);	/* XXX Alt-Ó ??? */
 
 		if (add) {
 			ncurses_binding_map_meta[ch] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
@@ -878,7 +888,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 //			return -1;
 #define __key(x, y, z) \
 	if (!xstrcasecmp(key + 5, (x))) { \
-		b->key = xstrdup(key); \
+		b->key = saprintf("Ctrl-%s", (x)); \
 		if (add) { \
 			ncurses_binding_map[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
 			if (z) \
@@ -889,8 +899,6 @@ static int binding_key(struct binding *b, const char *key, int add)
 
 	__key("Enter", KEY_CTRL_ENTER, 0);
 	__key("Escape", KEY_CTRL_ESCAPE, 0);
-	__key("Home", KEY_CTRL_HOME, 0);
-	__key("End", KEY_CTRL_END, 0);
 	__key("Delete", KEY_CTRL_DC, 0);
 	__key("Backspace", KEY_CTRL_BACKSPACE, 0);
 	__key("Tab", KEY_CTRL_TAB, 0);
@@ -913,7 +921,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 	if (xtoupper(key[0]) == 'F' && atoi(key + 1)) {
 		int f = atoi(key + 1);
 
-		if (f < 1 || f > 24)
+		if (f < 1 || f > 63)
 			return -1;
 
 		b->key = saprintf(("F%d"), f);
@@ -940,6 +948,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 	__key("Home", KEY_HOME, KEY_FIND);
 	__key("End", KEY_END, KEY_SELECT);
 	__key("Delete", KEY_DC, 0);
+	__key("Insert", KEY_IC, 0);
 	__key("Backspace", KEY_BACKSPACE, 127);
 	__key("Tab", 9, 0);
 	__key("Left", KEY_LEFT, 0);
