@@ -837,7 +837,7 @@ static window_t *print_window_find(const char *target, session_t *session, int s
 	if (u && u->nickname)
 		target = u->nickname;			/* use nickname instead of target */
 	else if (u && u->uid && ( /* don't use u->uid, if it has resource attached */
-			xstrncmp(u->uid, "tlen:", 5) || xstrncmp(u->uid, "xmpp:", 5) || !xstrchr(u->uid, '/')))
+			(xstrncmp(u->uid, "tlen:", 5) && xstrncmp(u->uid, "xmpp:", 5)) || !xstrchr(u->uid, '/')))
 		target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
 	else if (newtarget)
 		target = newtarget;			/* use target with stripped '/' */
