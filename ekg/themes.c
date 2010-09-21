@@ -808,7 +808,7 @@ static window_t *print_window_find(const char *target, session_t *session, int s
 	/* 1) let's check if we have such window as target... */
 
 	/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
-	if ((!xstrncmp(target, "xmpp:", 5)) && (tmp = xstrchr(target, '/'))) {
+	if ( ( (!xstrncmp(target, "tlen:", 5)) || (!xstrncmp(target, "xmpp:", 5)) ) && (tmp = xstrchr(target, '/'))) {
 		newtarget = xstrndup(target, tmp - target);
 		w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
 		/* even if w == NULL here, we use newtarget to create window without resource */
@@ -837,7 +837,7 @@ static window_t *print_window_find(const char *target, session_t *session, int s
 	if (u && u->nickname)
 		target = u->nickname;			/* use nickname instead of target */
 	else if (u && u->uid && ( /* don't use u->uid, if it has resource attached */
-			xstrncmp(u->uid, "xmpp:", 5) || !xstrchr(u->uid, '/')))
+			xstrncmp(u->uid, "tlen:", 5) || xstrncmp(u->uid, "xmpp:", 5) || !xstrchr(u->uid, '/')))
 		target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
 	else if (newtarget)
 		target = newtarget;			/* use target with stripped '/' */

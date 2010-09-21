@@ -581,7 +581,7 @@ userlist_t *userlist_find_u(userlist_t **userlist, const char *uid) {
 
 		/* porównujemy resource; if (len > 0) */
 
-		if (!(tmp = xstrchr(uid, '/')) || (xstrncmp(uid, "xmpp:", 5)))
+		if (!(tmp = xstrchr(uid, '/')) || (xstrncmp(uid, "tlen:", 5)) || (xstrncmp(uid, "xmpp:", 5)))
 			continue;
 
 		len = (int)(tmp - uid);
