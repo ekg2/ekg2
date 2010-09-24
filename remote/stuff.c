@@ -62,6 +62,7 @@ EXPORTNOT int config_default_status_window = 0;
 EXPORTNOT int config_query_commands = 0;
 EXPORTNOT int config_display_welcome = 1;
 char *config_console_charset;
+int config_send_white_lines = 0;
 int config_sort_windows = 1;
 char *config_timestamp = NULL;
 int config_timestamp_show = 1;
