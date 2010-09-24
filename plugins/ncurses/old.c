@@ -471,17 +471,9 @@ void ncurses_main_window_mouse_handler(int x, int y, int mouse_state)
 }
 
 /*
- * ncurses_backlog_add()
  *
- * dodaje do bufora okna. zak³adamy dodawanie linii ju¿ podzielonych.
- * je¶li doda siê do backloga liniê zawieraj±c± '\n', bêdzie ¼le.
- *
- *  - w - wska¼nik na okno ekg
- *  - str - linijka do dodania
- *
- * zwraca rozmiar dodanej linii w liniach ekranowych.
  */
-int ncurses_backlog_add(window_t *w, fstring_t *str)
+static int ncurses_backlog_add_real(window_t *w, fstring_t *str)
 {
 	int i, removed = 0;
 	ncurses_window_t *n = w->priv_data;
@@ -505,6 +497,28 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 		n->backlog = xrealloc(n->backlog, (n->backlog_size + 1) * sizeof(fstring_t *));
 
 	memmove(&n->backlog[1], &n->backlog[0], n->backlog_size * sizeof(fstring_t *));
+	n->backlog[0] = str;
+
+	n->backlog_size++;
+
+	for (i = 0; i < n->lines_count; i++)
+		n->lines[i].backlog++;
+
+	return ncurses_backlog_split(w, 0, removed);
+}
+
+/*
+ * ncurses_backlog_add()
+ *
+ * dodaje do bufora okna. zak³adamy dodawanie linii ju¿ podzielonych.
+ * je¶li doda siê do backloga liniê zawieraj±c± '\n', bêdzie ¼le.
+ *
+ *  - w - wska¼nik na okno ekg
+ *  - str - linijka do dodania
+ *
+ * zwraca rozmiar dodanej linii w liniach ekranowych.
+ */
+int ncurses_backlog_add(window_t *w, fstring_t *str) {
 #if USE_UNICODE
 	{
 		int rlen = xstrlen(str->str.b);
@@ -559,15 +573,9 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 		str->attr	= xrealloc(str->attr, (i+1) * sizeof(short));
 	}
 #endif
-	n->backlog[0] = str;
-
-	n->backlog_size++;
-
-	for (i = 0; i < n->lines_count; i++)
-		n->lines[i].backlog++;
-
-	return ncurses_backlog_split(w, 0, removed);
+	return ncurses_backlog_add_real(w, str);
 }
+
 
 /*
  * ncurses_backlog_split()
@@ -2709,6 +2717,9 @@ void changed_backlog_size(const char *var)
 
 static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	const char *header;
+#if USE_UNICODE
+	CHAR_T *wexpression;
+#endif
 
 	ncurses_window_t *n;
 	window_lastlog_t *lastlog;
@@ -2750,6 +2761,10 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	if (config_lastlog_noitems) /* always add header */
 		ncurses_backlog_add(lastlog_w, fstring_new_format(header, window_target(w), lastlog->expression));
 
+#if USE_UNICODE
+	wexpression = normal_to_wcs(lastlog->expression);
+#endif
+
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
 
 	for (i = n->backlog_size-1; i >= 0; i--) {
@@ -2758,7 +2773,14 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		if (lastlog->isregex) {		/* regexp */
 #ifdef HAVE_REGEX_H
 			int rs;
-			if (!(rs = regexec(&(lastlog->reg), (char *) n->backlog[i]->str.w, 0, NULL, 0))) 
+#if USE_UNICODE
+			char *tmp = wcs_to_normal(n->backlog[i]->str.w);
+			rs = regexec(&(lastlog->reg), tmp, 0, NULL, 0);
+			xfree(tmp);
+#else
+			rs = regexec(&(lastlog->reg), (char *) n->backlog[i]->str.w, 0, NULL, 0);
+#endif
+			if (!rs) 
 				found = 1;
 			else if (rs != REG_NOMATCH) {
 				char errbuf[512];
@@ -2772,9 +2794,19 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 			}
 #endif
 		} else {				/* substring */
+#if USE_UNICODE
+			if (local_config_lastlog_case) 
+				found = !!wcsstr(n->backlog[i]->str.w, wexpression);
+			else {
+				char *tmp = wcs_to_normal(n->backlog[i]->str.w);
+				found = !!xstrcasestr(tmp, lastlog->expression);
+				xfree(tmp);
+			}
+#else
 			if (local_config_lastlog_case) 
 				found = !!xstrstr((char *) n->backlog[i]->str.w, lastlog->expression);
 			else	found = !!xstrcasestr((char *) n->backlog[i]->str.w, lastlog->expression);
+#endif
 		}
 
 		if (!config_lastlog_noitems && found && !items) /* add header only when found */
@@ -2783,11 +2815,6 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		if (found) {
 			fstring_t *dup;
 			size_t len;
-#if 0
-(USE_UNICODE)
-			#warning "ncurses_ui_window_lastlog_find() won't work with USE_UNICODE sorry. no time for it. feel free"
-			continue;
-#endif
 
 			dup = xmalloc(sizeof(fstring_t));
 
@@ -2802,10 +2829,13 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		/* org. window for example if we would like user allow move under that line with mouse and double-click.. or whatever */
 /*			dup->priv_data		= (void *) w;	 */
 
-			ncurses_backlog_add(lastlog_w, dup);
+			ncurses_backlog_add_real(lastlog_w, dup);
 			items++;
 		}
 	}
+#if USE_UNICODE
+	xfree(wexpression);
+#endif
 
 	return items;
 }
