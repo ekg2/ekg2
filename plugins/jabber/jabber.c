@@ -1211,8 +1211,8 @@ static int jabber_theme_init() {
 	/* %1 - sessionname %2 - mucjid %3 - nickname %4 - text %5 - atr */
 	format_add("jabber_muc_recv",	"%B<%w%X%5%3%B>%n %4", 1);
 	format_add("jabber_muc_send",	"%B<%n%X%5%W%3%B>%n %4", 1);
-	format_add("jabber_muc_me",	"%y*%X%5%3%B%n	%4", 1);
-	format_add("jabber_muc_me_sent","%Y*%X%5%3%B%n	%4", 1);
+	format_add("jabber_muc_me",	"%y*%X%5%3%B%n %4", 1);
+	format_add("jabber_muc_me_sent","%Y*%X%5%3%B%n %4", 1);
 
 	/* %1 - sessionname, %2 - mucjid %3 - text */
 	format_add("jabber_muc_notice", "%n-%P%2%n- %3", 1);
@@ -1323,18 +1323,18 @@ static int jabber_theme_init() {
 	format_add("jabber_userinfo_fullname",		_("%g|| %n   Full Name: %T%2"), 1);
 	format_add("jabber_userinfo_nickname",		_("%g|| %n     Nickame: %T%2"), 1);
 	format_add("jabber_userinfo_birthday",		_("%g|| %n    Birthday: %T%2"), 1);
-	format_add("jabber_userinfo_email",		_("%g|| %n	 Email: %T%2"), 1);
+	format_add("jabber_userinfo_email",		_("%g|| %n       Email: %T%2"), 1);
 	format_add("jabber_userinfo_url",		_("%g|| %n     Webpage: %T%2"), 1);
 	format_add("jabber_userinfo_desc",		_("%g|| %n Description: %T%2"), 1);
 	format_add("jabber_userinfo_telephone",		_("%g|| %n   Telephone: %T%2"), 1);
-	format_add("jabber_userinfo_title",		_("%g|| %n	 Title: %T%2"), 1);
+	format_add("jabber_userinfo_title",		_("%g|| %n       Title: %T%2"), 1);
 	format_add("jabber_userinfo_organization",	_("%g|| %nOrganization: %T%2"), 1);
 	
 	format_add("jabber_userinfo_adr",		_("%g|| ,+=%G----- (Next) %2 address"), 1);
-	format_add("jabber_userinfo_adr_street",	_("%g|| || %n	  Street: %T%2"), 1);
+	format_add("jabber_userinfo_adr_street",	_("%g|| || %n     Street: %T%2"), 1);
 	format_add("jabber_userinfo_adr_postalcode",	_("%g|| || %nPostal code: %T%2"), 1);
-	format_add("jabber_userinfo_adr_city",		_("%g|| || %n	    City: %T%2"), 1);
-	format_add("jabber_userinfo_adr_country",	_("%g|| || %n	 Country: %T%2"), 1);
+	format_add("jabber_userinfo_adr_city",		_("%g|| || %n       City: %T%2"), 1);
+	format_add("jabber_userinfo_adr_country",	_("%g|| || %n    Country: %T%2"), 1);
 	format_add("jabber_userinfo_adr_end",		_("%g|| %g`+=%G-----"), 1);
 
 	format_add("jabber_userinfo_photourl",		_("%g||\n%g|| %nYou can view attached photo at: %T%1"), 1);
