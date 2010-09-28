@@ -618,6 +618,10 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 				string_append_c(s, attr);
 			}
 
+			if ((text[i] == '/') && (text[i+1] == '|'))	/* /| set margin */
+				if ((i == 0) || (text[i-1] != '/'))
+					string_append_c(s, '/');
+
 			if (text[i] == '%')
 				string_append_c(s, '%');
 			

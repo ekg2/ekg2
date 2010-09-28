@@ -466,6 +466,12 @@ static char *va_format_string(const char *format, va_list ap) {
 					for (i = 0; i < fill_length; i++)
 						string_append_c(buf, fill_char);
 			}
+		} else if ((*p=='/') && (p[1] == '|')) {	/* /| 'set margin' */
+			if ((p == format) || (p[-1]!='/'))
+				string_append(buf, "\033[0000m");	/* najg³upsze, ale to nie jest moje ostatnie s³owo */
+			else
+				string_append_c(buf, '|');
+			p++;
 		} else
 			string_append_c(buf, *p);
 		p++;
@@ -578,11 +584,16 @@ fstring_t *fstring_new(const char *str) {
 						case 0:				/* RESET */
 							attr = FSTR_NORMAL;
 							isbold = 0;
-							if (parlen[k] >= 2)
-								res->prompt_len = j;
 
-							if (parlen[k] == 3)
-								res->prompt_empty = 1;
+							if (parlen[k] == 4)	/* /| set margin */
+								res->margin_left = j;
+							else {
+								if (parlen[k] >= 2)
+									res->prompt_len = j;
+
+								if (parlen[k] == 3)
+									res->prompt_empty = 1;
+							}
 							break;
 						case 1:				/* BOLD */
 							if (k == npar && !isbold)		/* if (*p == ('m') && !isbold) */
@@ -618,15 +629,6 @@ fstring_t *fstring_new(const char *str) {
 
 		if (str[i] == 13)
 			continue;
-
-		if (str[i] == ('/') && str[i + 1] == ('|')) {
-			if (i == 0 || str[i - 1] != ('/')) {
-				res->margin_left = j;
-				i++;
-				continue;
-			}
-			continue;
-		}
 
 		if (str[i] == 9) {
 			int k = 0, l = 8 - (j % 8);

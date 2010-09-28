@@ -1175,7 +1175,7 @@ void ncurses_redraw(window_t *w)
 				wattrset(n->window, attr);
 
 				if (!fixup && (l->margin_left != -1 && x >= l->margin_left))
-					fixup = l->margin_left + config_margin_size;
+					fixup = l->margin_left - config_margin_size;
 #if USE_UNICODE
 				mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
 #else
@@ -1191,7 +1191,7 @@ void ncurses_redraw(window_t *w)
 			wattrset(n->window, attr);
 
 			if (!fixup && (l->margin_left != -1 && (x + l->prompt_len) >= l->margin_left))
-				fixup = l->margin_left + config_margin_size;
+				fixup = l->margin_left - config_margin_size;
 #if USE_UNICODE
 			mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
 #else
