@@ -30,6 +30,8 @@
 #include <ekg/sessions.h>
 #include <ekg/windows.h>
 
+#include "irc-ssl.h"
+
 /* irc_private->sopt */
 enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
 	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, _005_IDCHAN, SERVOPTS };
@@ -49,6 +51,12 @@ typedef struct _irc_private_t {
 
 	char *nick;			/* guess again ? ;> */
 	char *host_ident;		/* ident+host */
+
+#ifdef IRC_HAVE_SSL
+	unsigned char using_ssl	: 2;	/**< 1 if we're using SSL, else 0 */
+	SSL_SESSION ssl_session;	/**< SSL session */
+	string_t ssl_buf;
+#endif
 
 	list_t people;			/* list of people_t */
 	list_t channels;		/* list of people_chan_t */

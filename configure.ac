@@ -425,6 +425,15 @@ fi
 
 AC_ARG_WITH(readline,		AC_HELP_STRING([--without-readline],		[Compile without readline support (readline plugin)]))
 
+if test "x$have_openssl" = "xyes"; then
+    irc_have_openssl=yes;
+    AC_SUBST(IRC_SSL_LIBS)
+    AC_SUBST(IRC_SSL_CPPFLAGS)
+    IRC_SSL_LIBS=$OPENSSL_LIBS
+    IRC_SSL_CPPFLAGS=$OPENSSL_INCLUDES
+    AC_DEFINE([IRC_HAVE_OPENSSL], 1, [define if you want use openssl for ssl connections])
+fi
+
 if test "x$with_readline" != "no"; then
 	AC_CHECK_READLINE
 
