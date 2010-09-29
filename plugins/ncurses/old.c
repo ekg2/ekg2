@@ -2866,7 +2866,7 @@ int ncurses_lastlog_update(window_t *w) {
 
 	if (config_lastlog_display_all) {
 /* 3rd, other windows? */
-		for (ww = windows; ww; w = ww->next) {
+		for (ww = windows; ww; ww = ww->next) {
 			if (ww == window_current) continue;
 			if (ww == w) continue; /* ;p */
 
