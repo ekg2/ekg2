@@ -71,7 +71,7 @@ char *last_tokenid;
 int gg_config_display_token;
 int gg_config_skip_default_format;
 int gg_config_split_messages;
-
+int gg_config_disable_chatstates = 0;
 /**
  * gg_session_init()
  *
@@ -938,7 +938,9 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 		}
 	}
 	__sender = saprintf("gg:%d", e->event.msg.sender);
-	
+
+	protocol_xstate_emit(s, __sender, 0, EKG_XSTATE_TYPING);	/* stop typing */
+
 	if (image && check_inv) {
 		print("gg_we_are_being_checked", session_name(s), format_user(s, __sender));
 	} else {
@@ -1403,6 +1405,18 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 			break;
 		}
 #endif
+#ifdef GG_FEATURE_TYPING_NOTIFICATION
+		case GG_EVENT_TYPING_NOTIFICATION:
+		{
+			char *uid = saprintf("gg:%d", e->event.typing_notification.uin);
+			if (e->event.typing_notification.length == 0)
+				protocol_xstate_emit(s, uid, 0, EKG_XSTATE_TYPING);
+			else
+				protocol_xstate_emit(s, uid, EKG_XSTATE_TYPING, 0);
+			xfree(uid);
+			break;
+		}
+#endif
 		default:
 			debug("[gg] unhandled event 0x%.4x, consider upgrade\n", e->type);
 	}
@@ -1518,9 +1532,31 @@ static void gg_statusdescr_handler(session_t *s, const char *varname) {
 		_status |= GG_STATUS_FRIENDS_MASK;
 
 	if (cpdescr)	gg_change_status_descr(g->sess, _status, cpdescr);
-	else			gg_change_status(g->sess, _status);
+	else		gg_change_status(g->sess, _status);
 
 	xfree(cpdescr);
+}
+
+static QUERY(gg_typing_out) {
+#ifdef GG_FEATURE_TYPING_NOTIFICATION
+	const char *session	= *va_arg(ap, const char **);
+	const char *uid		= *va_arg(ap, const char **);
+	const int len		= *va_arg(ap, const int *);
+	const int first		= *va_arg(ap, const int *);
+
+	session_t *s		= session_find(session);
+	gg_private_t *g;
+
+	if (gg_config_disable_chatstates)
+		return -1;
+
+	if (!first || !s || s->plugin != &gg_plugin || !(g = s->priv) || !s->connected)
+		return 0;
+
+	gg_typing_notification(g->sess, atoi(uid+3), len ? 1 : 0);
+#endif
+
+	return 0;
 }
 
 static int gg_theme_init() {
@@ -1700,7 +1736,8 @@ int EXPORT gg_plugin_init(int prio) {
 	query_connect_id(&gg_plugin, PROTOCOL_UNIGNORE, gg_user_online_handle, (void *)1);
 	query_connect_id(&gg_plugin, USERLIST_INFO, gg_userlist_info_handle, NULL);
 	query_connect_id(&gg_plugin, USERLIST_PRIVHANDLE, gg_userlist_priv_handler, NULL);
-
+	query_connect_id(&gg_plugin, PROTOCOL_TYPING_OUT, gg_typing_out, NULL);
+	
 	gg_register_commands();
 
 	variable_add(&gg_plugin, ("audio"), VAR_BOOL, 1, &gg_config_audio, gg_changed_dcc, NULL, NULL);
@@ -1714,6 +1751,7 @@ int EXPORT gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
 	variable_add(&gg_plugin, ("skip_default_format"), VAR_BOOL, 1, &gg_config_skip_default_format, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
+	variable_add(&gg_plugin, ("disable_chatstates"), VAR_BOOL, 1, &gg_config_disable_chatstates, NULL, NULL, NULL);
 
 	timer_add(&gg_plugin, "gg-scroller", 1, 1, gg_scroll_timer, NULL);
 

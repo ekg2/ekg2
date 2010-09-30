@@ -230,6 +230,9 @@ static COMMAND(gg_command_connect) {
 #ifdef GG_FEATURE_DND_FFC
 			p.protocol_features = GG_FEATURE_STATUS80 | GG_FEATURE_DND_FFC;
 #endif
+#ifdef GG_FEATURE_TYPING_NOTIFICATION
+			p.protocol_features |= GG_FEATURE_TYPING_NOTIFICATION;
+#endif
 		}
 
 		while (realserver) {

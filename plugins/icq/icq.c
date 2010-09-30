@@ -60,6 +60,8 @@
 #define ICQ_HUB_SERVER "login.icq.com"
 #define ICQ_HUB_PORT	5190
 
+int icq_config_disable_chatstates = 0;
+
 static int icq_theme_init();
 PLUGIN_DEFINE(icq, PLUGIN_PROTOCOL, icq_theme_init);
 
@@ -546,6 +548,9 @@ static QUERY(icq_typing_out) {
 	uint16_t typing = 0;
 
 	session_t *s = session_find(session);
+
+	if (icq_config_disable_chatstates)
+		return -1;
 
 	if (!s || s->plugin != &icq_plugin)
 		return 0;
@@ -1779,6 +1784,8 @@ EXPORT int icq_plugin_init(int prio) {
 	query_connect_id(&icq_plugin, SESSION_REMOVED, icq_session_deinit, NULL);
 	query_connect_id(&icq_plugin, USERLIST_INFO, icq_userlist_info_handle, NULL);
 	query_connect_id(&icq_plugin, PROTOCOL_TYPING_OUT, icq_typing_out, NULL);
+
+	variable_add(&icq_plugin, ("disable_chatstates"), VAR_BOOL, 1, &icq_config_disable_chatstates, NULL, NULL, NULL);
 
 	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
