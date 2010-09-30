@@ -629,22 +629,22 @@ static COMMAND(gg_command_msg) {
 		return 0;
 	}
 
-	if (gg_config_split_messages && xstrlen(params[1]) > 1989) {
+	if (gg_config_split_messages && xstrlen(params[1]) > GG_MSG_MAXSIZE) {
 		int i, len = xstrlen(params[1]);
 		
-		for (i = 1; i * 1989 <= len; i++) {
-			char *tmp = (i != len) ? xstrndup(params[1] + (i - 1) * 1989, 1989) : xstrdup(params[1] + (i - 1) * 1989);
+		for (i = 1; i * GG_MSG_MAXSIZE <= len; i++) {
+			char *tmp = (i != len) ? xstrndup(params[1] + (i - 1) * GG_MSG_MAXSIZE, GG_MSG_MAXSIZE) : xstrdup(params[1] + (i - 1) * GG_MSG_MAXSIZE);
 			command_exec_format(target, session, 0, ("/%s %s %s"), name, target, tmp);
 			xfree(tmp);
 		}
 	
 		return 0;
 
-	} else if (xstrlen(params[1]) > 1989) {
+	} else if (xstrlen(params[1]) > GG_MSG_MAXSIZE) {
 	      printq("message_too_long");
 	}
 
-	msg = (unsigned char *) xstrmid(params[1], 0, 1989);
+	msg = (unsigned char *) xstrmid(params[1], 0, GG_MSG_MAXSIZE);
 	ekg_format = ekg_sent_message_format((char *) msg);
 
 	/* analize tekstu zrobimy w osobnym bloku dla porzdku */
