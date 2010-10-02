@@ -73,7 +73,7 @@ auto_reconnect
 auto_find
 	type: integer
 	default value: 0
-
+	
 	Possible values:
 	
 		0 - auto_find disables
@@ -101,7 +101,7 @@ disable_sasl
 		1 - use XEP-0078(Non-SASL Authentication)
 	
 		2 - disable sasl at all 
-	 
+
 display_notify
 	type: integer
 	default value: -1
@@ -170,13 +170,13 @@ plaintext_passwd
 ping_server
 	type: integer
 	default value: 0
-
+	
 	Possible values:
 	
 		0  -  ekg2 will not ping server
 	
 	   >0  -  amount of seconds between pings
-		
+
 port
 	type: integer
 	default value: 5222
@@ -186,7 +186,7 @@ port
 prefer_family
 	type: integer
 	default value: 0
-
+	
 	Prefered address family(ipv4 of ipv6)
 	
 	

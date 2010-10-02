@@ -254,7 +254,7 @@ topic
 	short description: set MUC topic
 
 transpinfo
-	parametrs: <jid>
+	parameters: <jid>
 	short description: shows you information about given server\transport 
 
 transports
@@ -292,7 +292,7 @@ userlist
 	(http://jru.jabberstudio.org).
 
 vacation
-	parameter:
+	parameters:
 	short description: function is not implemented yet
 
 ver
