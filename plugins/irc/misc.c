@@ -1253,7 +1253,9 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 				&xosd_to_us, &xosd_is_priv, &dest);
 				/*&sender,&text,&to_us,&is_priv,&channame);*/
 
-		if (xosd_to_us && s->status == EKG_STATUS_AWAY && session_int_get(s, "away_log") == 1) {
+		ignore_nick = irc_uid(OMITCOLON(param[0]));
+
+		if (xosd_to_us && s->status == EKG_STATUS_AWAY && session_int_get(s, "away_log") == 1 && !(ignored_check(s, ignore_nick) & IGNORE_MSG)) {
 			irc_awaylog_t *e = xmalloc(sizeof(irc_awaylog_t));
 
 			if (xosd_is_priv) {
@@ -1277,7 +1279,6 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 		me = NULL;
 		class |= EKG_NO_THEMEBIT;
 
-		ignore_nick = irc_uid(OMITCOLON(param[0]));
 		if (xosd_is_priv || !(ignored_check(s, ignore_nick) & IGNORE_MSG))
 			protocol_message_emit(s, dest, rcpts, head, NULL, time(NULL), class, NULL, ekgbeep, secure);
 		xfree(ignore_nick);

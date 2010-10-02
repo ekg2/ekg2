@@ -29,6 +29,7 @@
 #define __EKG_STUFF_H
 #include <ekg/sessions.h>
 #include <ekg/themes.h>
+#include <ekg/userlist.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
@@ -307,6 +308,10 @@ switch (number) {
  * leafnode idea: 07:47:38 <@leafnode> GiM: kolejna rzecz: żeby action (/me) powodował 'pełne' podświetlenie numerku okna
  * now it depends on make_window value 
  */
+
+	if (ignored_check(s, sender) & IGNORE_MSG)
+		break;
+
 	if (space && xstrlen(space)) {
 		print_window(win, s, EKG_WINACT_MSG, ischn?(mw&1):!!(mw&4),
 				ischn?"irc_ctcp_action_pub":"irc_ctcp_action",
