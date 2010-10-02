@@ -1603,7 +1603,6 @@ static void reprint_statusbar(WINDOW *w, int y, const char *format, struct forma
 
 	x = window_printat(w, 0, y, format, data, COLOR_WHITE, 0, COLOR_BLUE);
 
-	wattrset(w, color_pair(COLOR_WHITE, COLOR_BLUE));
 	wmove(w, y, x);
 
 	for (i = x; i <= w->_maxx; i++)
@@ -1819,7 +1818,8 @@ int ncurses_window_kill(window_t *w)
 	xfree(n);
 	w->priv_data = NULL;
 
-//	ncurses_resize();
+	if (w->floating)
+		ncurses_resize();
 
 	ncurses_window_gone(w);
 
