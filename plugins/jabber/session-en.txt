@@ -156,9 +156,7 @@ photo_hash
 	type: string
 	default value: none
 	
-	base64 encoded picture, that will be your avatar.
-	
-	For example: base64 <somefile>|xclip and then paste it.
+	Sha-1 hash of your avatar.
 
 plaintext_passwd
 	type: bool
