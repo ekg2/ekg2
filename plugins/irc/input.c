@@ -288,7 +288,7 @@ CTCP_COMMAND(ctcp_main_priv)
 {
 	char		*ischn = xstrchr(SOP(_005_CHANTYPES), targ[4]);
 	char		*space = xstrchr(ctcp, ' ');
-	int		mw = session_int_get(s, "make_window");
+	int		i, mw = session_int_get(s, "make_window");
 	char		*ta, *tb, *tc;
 	char		*purename = sender+4, *win;
 	char		*cchname = clean_channel_names(s, targ+4);
@@ -394,8 +394,16 @@ switch (number) {
 			ischn?"irc_ctcp_request_pub":"irc_ctcp_request",
 			session_name(s), purename, idhost, cchname, ctcp);
 
-	irc_write(s, "NOTICE %s :\01CLIENTINFO \01\r\n",
-			purename);
+	ta = xmalloc(sizeof(ctcps));
+	for (i=0; ctcps[i].name; i++) {
+		if (ctcps[i].handled) {
+			xstrcat(ta, ctcps[i].name);
+			xstrcat(ta, " ");
+		}
+	}
+	irc_write(s, "NOTICE %s :\01CLIENTINFO %s\01\r\n",
+			purename, ta);
+	xfree(ta);
 	break;
 
 

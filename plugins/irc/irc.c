@@ -2588,6 +2588,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("close_windows",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("dcc_port",		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("display_notify",	VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("dont_ban_user_on_noident", VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("hostname",		VAR_STR, 0, 0, irc_changed_resolve),
 	PLUGIN_VAR_ADD("identify",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "irssi", 0, NULL),
@@ -2609,10 +2610,10 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("AUTO_JOIN",			VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("AUTO_JOIN_CHANS_ON_INVITE",	VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("DEFAULT_COLOR",			VAR_INT, "0", 0, NULL),			/* TODO :> */
-	PLUGIN_VAR_ADD("DISPLAY_PONG",			VAR_BOOL, "1", 0, NULL),		/* GiM, do we really want/need '1' here as default? */
 	PLUGIN_VAR_ADD("DISPLAY_AWAY_NOTIFICATION",	VAR_INT, "1", 0, NULL),
 	PLUGIN_VAR_ADD("DISPLAY_IN_CURRENT",		VAR_INT, "2", 0, NULL),
 	PLUGIN_VAR_ADD("DISPLAY_NICKCHANGE",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("DISPLAY_PONG",			VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("DISPLAY_QUIT",			VAR_INT, "0", 0, NULL),
 	/* plugin_var_add(&irc_plugin, "HIGHLIGHTS", VAR_STR, 0, 0, NULL); */
 	PLUGIN_VAR_ADD("KICK_MSG",			VAR_STR, DEFKICKMSG, 0, NULL),
@@ -2623,6 +2624,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("SHOW_NICKMODE_EMPTY",		VAR_INT, "1", 0, NULL),
 	PLUGIN_VAR_ADD("SHOW_MOTD",			VAR_BOOL, "1", 0, NULL),
 	PLUGIN_VAR_ADD("STRIPMIRCCOL",			VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("USERINFO",			VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("VERSION_NAME",			VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("VERSION_NO",			VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("VERSION_SYS",			VAR_STR, 0, 0, NULL),
