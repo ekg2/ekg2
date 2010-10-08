@@ -265,11 +265,19 @@ for k,v in envs.items():
 		if val in os.environ:
 			var.append(os.environ[val])
 	var = ' '.join(var)
-	opts.Add(k, desc, var)
+	if var:
+		opts.Add(k, desc, var)
+	else:
+		opts.Add(k, desc)
 
 opts.Update(env)
 opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
+
+# Default LINKFLAGS and CCFLAGS can be lists; stringify them.
+for k in envs:
+	if isinstance(env[k], list):
+		env[k] = ' '.join(env[k])
 
 defines = {}
 # Global flags are fairly special. They are merged into the environment directly
