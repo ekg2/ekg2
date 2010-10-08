@@ -1,11 +1,16 @@
 
 Import('*')
 
+if 'defines' in globals():
+	if 'openssl' in optdeps:
+		defines['IRC_HAVE_OPENSSL'] = True
+
 if 'env' in globals():
 	plugin	= {
 		'type':			'protocol',
 		'state':		'stable',
-		'depends':		[]
+		'depends':		[],
+		'optdepends':	['openssl']
 		}
 
 	Return('plugin')
