@@ -29,6 +29,7 @@ indirs = [ # pseudo-hash, 'coz we want to keep order
 	['PLUGINDIR',	'$LIBDIR/ekg2/plugins',		'EKG2 plugins'],
 	]
 envs = {
+	'CC':			['CC', 'Compiler executable'],
 	'CCFLAGS':		['CFLAGS', 'Compiler flags'],
 	'LINKFLAGS':	['LDFLAGS', 'LIBS', 'Linker flags']
 	}
