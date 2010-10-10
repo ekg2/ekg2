@@ -48,6 +48,13 @@ typedef struct {
 	char *expression;		/* expression */
 } window_lastlog_t;
 
+typedef enum {
+	EKG_WINACT_NONE = 0,		/* No activity in window */
+	EKG_WINACT_JUNK,		/* Junks: status change, irc join/part, etc. */
+	EKG_WINACT_MSG,			/* Message, but not to us */
+	EKG_WINACT_IMPORTANT		/* important message */
+} winact_t;
+
 typedef struct window {
 	struct window *next;
 
@@ -59,7 +66,7 @@ typedef struct window {
 	unsigned short left, top;	/* pozycja (x, y) wzglêdem pocz±tku ekranu */
 	unsigned short width, height;	/* wymiary okna */
 
-	unsigned int act	: 2;	/* activity: 1 - status/junk; 2 - msg ; 3 - msg to us */
+	unsigned int act	: EKG_WINACT_MSG;	/* activity: 1 - status/junk; 2 - msg ; 3 - msg to us */
 	unsigned int in_typing	: 1;	/* user is composing a message to us */
 	unsigned int in_active	: 1;	/* user has sent some kind of message,
 					   so we can start sending composing to him/her */
@@ -83,13 +90,6 @@ typedef struct window {
 	window_lastlog_t *lastlog;	/* prywatne informacje lastloga */
 	void *priv_data;			/* prywatne informacje ui */
 } window_t;
-
-typedef enum {
-	EKG_WINACT_NONE = 0,		/* No activity in window */
-	EKG_WINACT_JUNK,		/* Junks: status change, irc join/part, etc. */
-	EKG_WINACT_MSG,			/* Message, but not to us */
-	EKG_WINACT_IMPORTANT		/* important message */
-} winact_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
 

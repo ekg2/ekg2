@@ -981,7 +981,7 @@ COMMAND(cmd_mark) {
 
 	if (match_arg(params[0], 'a', ("all"), 2)) {
 		for (w = windows; w; w = w->next) {
-			if (!w->floating && (w->act != 2)) {
+			if (!w->floating && (w->act <= EKG_WINACT_MSG)) {
 				n = w->priv_data;
 				n->last_red_line = time(0);
 				n->redraw = 1;
@@ -995,7 +995,7 @@ COMMAND(cmd_mark) {
 	} else
 		w = window_current;
 
-	if (w && !w->floating && (w->act != 2)) {
+	if (w && !w->floating && (w->act <= EKG_WINACT_MSG)) {
 		n = w->priv_data;
 		n->last_red_line = time(0);
 		n->redraw = 1;
