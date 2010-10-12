@@ -1127,7 +1127,7 @@ exact_match:
 		 * mo¿e nie za ³adne programowanie, ale skuteczne i w sumie jedyne w 100% spe³niaj±ce	
 		 * wymagania dope³niania (uwzglêdnianie cudzyws³owiów itp...)
 		 */
-		for (i=1; ; i++, common++) {
+		for (i=1; s1[common]; i++, common++) {
 			for (j=1; j < count; j++) {
 				char *s2 = completions[j];
 
