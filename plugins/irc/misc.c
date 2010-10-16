@@ -386,7 +386,7 @@ and the prefix.
 		while (' ' != *p && i<len) { p++; i++; }
 		/* GiM: omit spaces 'by one (or more) ASCII...' */
 		while (' ' == *p && i<len) { p++; i++; }
-		if (c<20 && i<len) { 
+		if (c<19 && i<len) { 
 			q[c]=p; c++;
 			p--; *p++='\0';
 		}
