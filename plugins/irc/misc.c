@@ -1300,7 +1300,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
  */
 IRC_COMMAND(irc_c_join)
 {
-	char		*ekg2_channel, *irc_channel, *tmp, *chname;
+	char		*ekg2_channel, *irc_channel, *tmp, *chname, *__host, *__nick;
 	channel_t	*ischan;
 	window_t	*newwin;
 	people_t	*person;
@@ -1316,9 +1316,20 @@ IRC_COMMAND(irc_c_join)
 
 	chname = clean_channel_names(s, irc_channel);
 
-	if ((tmp = xstrchr(param[0], '!'))) *tmp='\0';
+	if ((tmp = xstrchr(param[0], '!'))) {
+		*tmp='\0';
+		__host = tmp+1;
+	} else {
+		__host = NULL;
+	}
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
 	 * but I have no head to this now... */
+
+	/* for scripts */
+	__nick = param[0] + 1;
+	if (query_emit(NULL, "irc-join", &s->uid, &irc_channel, &__nick, &__host) == -1)
+		return -1;
+
 	me = !xstrcmp(j->nick, param[0]+1); /* We join ? */
 	if (me) {
 

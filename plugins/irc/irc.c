@@ -2757,6 +2757,12 @@ EXPORT int irc_plugin_init(int prio)
 	variable_add(&irc_plugin, "access_groups", VAR_STR, 1, &irc_config_default_access_groups, NULL, NULL, NULL);
 	variable_add(&irc_plugin, "experimental_chan_name_clean", VAR_BOOL, 1, &irc_config_experimental_chan_name_clean, NULL, NULL, NULL);
 
+	query_register_external("irc-join", 	QUERY_ARG_CHARP,	/* session */
+						QUERY_ARG_CHARP,	/* channel */
+						QUERY_ARG_CHARP,	/* nick */
+						QUERY_ARG_CHARP,	/* host */
+						QUERY_ARG_END);
+
 	return 0;
 }
 
