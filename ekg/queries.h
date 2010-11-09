@@ -75,6 +75,8 @@ enum queries_id {
 	QUERY_EXTERNAL,
 };
 
+extern int queries_count;
+
 #ifdef __DECLARE_QUERIES_STUFF
 #undef __DECLARE_QUERIES_STUFF
 
@@ -474,7 +476,6 @@ const struct query_def query_list[] = {
  */
 
 static list_t queries_external;
-static int queries_count = QUERY_EXTERNAL;	/* list_count(queries_other)+QUERY_EXTERNAL */
 #else
 
 extern struct query_def query_list[];		/* for: events.h scripts.h */

@@ -62,6 +62,7 @@ DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
 list_t watches = NULL;
 
 query_t *queries[QUERY_EXTERNAL+1];
+int queries_count = QUERY_EXTERNAL;	/* list_count(queries_other)+QUERY_EXTERNAL */
 
 #ifdef EKG2_WIN32_HELPERS
 # define WIN32_REQUEST_HELPER
@@ -814,7 +815,6 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 	int id;
 
 	id = query_id(name);
-
 	va_start(ap, name);
 	for (q = queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id]; q; q = q->next) {
 		if ((!plugin || (plugin == q->plugin)) && q->id == id) {
@@ -823,8 +823,48 @@ int query_emit(plugin_t *plugin, const char *name, ...) {
 			if (result == -1) break;
 		}
 	}
+
 	va_end(ap);
 	return result;
+}
+
+int query_register_external(const char *name, ...) {
+	va_list va;
+	int i, arg;
+	struct query_def *a, *q = NULL;
+	list_t l;
+	
+	for (i=0; i < QUERY_EXTERNAL; i++) {
+		if (!xstrcmp(query_list[i].name, name)) {
+			return -1;
+		}
+	}
+
+	for (l = queries_external; l; l = l->next) {
+		a = l->data;
+
+		if (!xstrcmp(a->name, name)) {
+			q = a;
+			break;
+		}
+	}
+
+	if (!q) {
+		q	= xmalloc(sizeof(struct query_def));
+		q->id	= queries_count++;
+		q->name	= xstrdup(name);
+		list_add(&queries_external, q);
+	}
+
+	va_start(va, name);
+	for(i=0; i<QUERY_ARGS_MAX; i++) {
+		arg = va_arg(va, int);
+		q->params[i] = arg;
+		if (arg==QUERY_ARG_END)
+			break;
+	}
+	va_end(va);
+	return q->id;
 }
 
 static LIST_ADD_COMPARE(query_compare, query_t *) {

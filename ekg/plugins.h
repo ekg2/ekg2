@@ -154,6 +154,7 @@ void queries_reconnect();
 
 const char *query_name(const int id);
 const struct query_def *query_struct(const int id);
+int query_register_external(const char *name, ...);
 
 #endif
 
