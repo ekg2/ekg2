@@ -234,10 +234,10 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 		*end = '\0';
 		if ((ctcp = is_ctcp(begin))) {
 
-			if ((bang = xstrchr(sender+1, '!'))) 
+			if ((bang = xstrchr(sender, '!'))) 
 				*bang = '\0';
 
-			newsender = irc_uid(sender+1);
+			newsender = irc_uid(sender);
 
 			coloured = irc_ircoldcolstr_to_ekgcolstr(sess, begin,1);
 			if (ispriv) {
@@ -264,7 +264,7 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 			*spc = ' ';
 			*/
 			irc_write(sess, "NOTICE %s :\01ERRMSG %s :unknown ctcp\01\r\n",
-					sender+1, begin);
+					sender, begin);
 			begin--; *begin = 1; *end = 1; 
 		}
 		begin=end+1;
