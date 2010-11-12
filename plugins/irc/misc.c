@@ -1109,7 +1109,7 @@ IRC_COMMAND(irc_c_msg)
 	xosd_nick = OMITCOLON(param[0]);
 
 	recoded = irc_convert_in(j, OMITCOLON(param[3]));
-	__text = recoded ? recoded : xstrdup(OMITCOLON(param[3]));
+	__text = xstrdup(recoded ? recoded : OMITCOLON(param[3]));
 
 	query_emit(NULL, prv ? "irc-privmsg" : "irc-notice", &(s->uid), &xosd_nick, &(param[2]), &__text);	/* XXX if... return here? */
 
