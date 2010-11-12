@@ -2763,6 +2763,17 @@ EXPORT int irc_plugin_init(int prio)
 						QUERY_ARG_CHARP,	/* host */
 						QUERY_ARG_END);
 
+	query_register_external("irc-privmsg", 	QUERY_ARG_CHARP,	/* session */
+						QUERY_ARG_CHARP,	/* from */
+						QUERY_ARG_CHARP,	/* destination (channel|nick) */
+						QUERY_ARG_CHARP,	/* message */
+						QUERY_ARG_END);
+	query_register_external("irc-notice", 	QUERY_ARG_CHARP,	/* session */
+						QUERY_ARG_CHARP,	/* from */
+						QUERY_ARG_CHARP,	/* destination (channel|nick) */
+						QUERY_ARG_CHARP,	/* message */
+						QUERY_ARG_END);
+
 	return 0;
 }
 

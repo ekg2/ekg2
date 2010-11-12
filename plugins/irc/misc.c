@@ -1099,22 +1099,27 @@ IRC_COMMAND(irc_c_msg)
 	int		secure = 0, xosd_to_us = 0, xosd_is_priv = 0;
 	char		*ignore_nick = NULL;
 	char *recoded;
+	char *__text;
 
 	prv = !xstrcasecmp(param[1], "privmsg");
 	if (!prv && xstrcasecmp(param[1], "notice"))
 		return 0;
 
 	mw = session_int_get(s, "make_window");
+	xosd_nick = OMITCOLON(param[0]);
 
 	recoded = irc_convert_in(j, OMITCOLON(param[3]));
+	__text = recoded ? recoded : xstrdup(OMITCOLON(param[3]));
 
-	ctcpstripped = ctcp_parser(s, prv, param[0], param[2], recoded ? recoded : OMITCOLON(param[3]));
+	query_emit(NULL, prv ? "irc-privmsg" : "irc-notice", &(s->uid), &xosd_nick, &(param[2]), &__text);	/* XXX if... return here? */
 
+	ctcpstripped = ctcp_parser(s, prv, param[0], param[2], __text);
+
+	xfree(__text);
 	xfree(recoded);
 
 	if ((t = xstrchr(param[0], '!'))) *t='\0';
 	me = xstrdup(t?t+1:"");
-	xosd_nick = OMITCOLON(param[0]);
 	xosd_chan = param[2];
 	/* remember, below in 'else' clause there is IRC_TO_LOWER, which can affect this,
 	 */
