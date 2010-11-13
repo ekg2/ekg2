@@ -1168,6 +1168,10 @@ IRC_COMMAND(irc_c_msg)
 		format = NULL;
 
 		/* ok new irc-find-person checked */
+		if (irc_config_allow_fake_contacts && !(person = irc_find_person(j->people, sender))) {
+			person = irc_add_person(s, j, sender, dest);
+		}
+
 		if ((person = irc_find_person(j->people, sender)))
 		{
 			/* G->dj: I'm not sure if this what I've added

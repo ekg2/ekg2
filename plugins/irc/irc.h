@@ -177,6 +177,7 @@ enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 
 int irc_parse_line(session_t *s, char *buf, int fd);	/* misc.c */
 
+extern int irc_config_allow_fake_contacts;
 extern int irc_config_experimental_chan_name_clean;
 
 char *nickpad_string_create(channel_t *chan);
