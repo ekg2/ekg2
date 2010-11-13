@@ -790,6 +790,7 @@ static WATCHER_LINE(irc_handle_resolver) {
 
 static WATCHER_SESSION_LINE(irc_handle_stream) {
 	irc_private_t *j = NULL;
+	char *buf;
 
 	if (!s || !(j = s->priv)) {
 		debug_error("irc_handle_stream() s: 0x%x j: 0x%x\n", s, j);
@@ -813,7 +814,10 @@ static WATCHER_SESSION_LINE(irc_handle_stream) {
 	 * const char, so the queries could modify this param,
 	 * I'm not sure if this is good idea, just thinking...
 	 */
-	irc_parse_line(s, (char *)watch, fd);
+	buf = xstrdup((char *)watch);
+	query_emit(NULL, "irc-parse-line", &s->uid, &buf);
+	irc_parse_line(s, buf, fd);
+	xfree(buf);
 
 	return 0;
 }
@@ -2768,10 +2772,16 @@ EXPORT int irc_plugin_init(int prio)
 						QUERY_ARG_CHARP,	/* destination (channel|nick) */
 						QUERY_ARG_CHARP,	/* message */
 						QUERY_ARG_END);
+
 	query_register_external("irc-notice", 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* from */
 						QUERY_ARG_CHARP,	/* destination (channel|nick) */
 						QUERY_ARG_CHARP,	/* message */
+						QUERY_ARG_END);
+
+	query_register_external("irc-parse-line",
+					 	QUERY_ARG_CHARP,	/* session */
+						QUERY_ARG_CHARP,	/* line */
 						QUERY_ARG_END);
 
 	return 0;
