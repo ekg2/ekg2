@@ -893,6 +893,7 @@ static WATCHER_SESSION(irc_handle_stream_ssl_input) {
 		if (strlen > 1 && line[strlen - 1] == '\r')
 			line[strlen - 1] = 0;
 
+		query_emit(NULL, "irc-parse-line", &s->uid, &line);
 
 		irc_parse_line(s, line, fd);
 
