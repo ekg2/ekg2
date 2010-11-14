@@ -57,9 +57,15 @@ SV *create_sv_ptr(void *object);
 				break;\
 \
 			case (QUERY_ARG_CHARP):\
-/*				xfree(*(char **) args[i]);  */\
-				*( (char **) args[i]) = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ) ;\
+			{\
+				char *retarg = xstrdup( SvPV_nolen(SvRV(perlargs[i])) ); \
+				if ( xstrcmp(retarg, *( (char **) args[i])) ) {\
+					xfree(*(char **) args[i]);  \
+					*( (char **) args[i]) =  retarg;\
+				} else\
+					xfree(retarg);\
 				break;\
+			}\
 			case (QUERY_ARG_CHARPP): /* wazne, zrobic. */\
 				break;\
 \
