@@ -1396,6 +1396,17 @@ static inline int jabber_status_int(int tlen, const char *text) {
 	return ekg_status_int(text);
 }
 
+static status_t role_and_affiliation_to_ekg2_status(char *role, char * affiliation) {
+	if(!xstrcmp(role, "moderator"))
+		return xstrcmp(affiliation, "owner") ? EKG_STATUS_AVAIL : EKG_STATUS_FFC;
+	else if (!xstrcmp(role,"participant"))
+		return EKG_STATUS_AWAY;
+	else if (!xstrcmp(role, "visitor"))
+		return EKG_STATUS_XA;
+	else /* none */
+		return EKG_STATUS_NA;
+}
+									    
 JABBER_HANDLER(jabber_handle_presence) {
 	jabber_private_t *j = s->priv;
 
@@ -1529,7 +1540,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 
 						if (ulist) {
 							jabber_userlist_private_t *up = jabber_userlist_priv_get(ulist);
-							ulist->status = EKG_STATUS_AVAIL;
+							ulist->status = role_and_affiliation_to_ekg2_status(role, affiliation);
 							
 							if (up) {
 								up->role	= xstrdup(role);
