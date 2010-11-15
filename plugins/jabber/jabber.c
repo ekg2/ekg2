@@ -1234,7 +1234,7 @@ static int jabber_theme_init() {
 
 	format_add("gmail_new_mail",	  _("%> (%1) Content of your mailbox have changed or new mail arrived."), 1);	/* sesja */
 	format_add("gmail_count",	  _("%> (%1) You have %T%2%n new thread(s) on your gmail account."), 1);	/* sesja, mail count */
-	format_add("gmail_mail",	  "%>	 %|%T%2%n - %g%3%n\n", 1);						/* sesja, from, topic, [UNUSED messages count in thread (?1)] */
+	format_add("gmail_mail",	  "%>	 %|%T%2%n - %g%3%n - %c%5%\n", 1);					/* sesja, from, topic, [UNUSED messages count in thread (?1)], snippet */
 	format_add("gmail_thread",	  "%>	 %|%T%2 [%4]%n - %g%3%n\n", 1);						/* sesja, from, topic, messages count in thread */
 	format_add("tlen_mail",		_("%> (%1) New mail from %T%2%n, with subject: %G%3%n"), 1);			/* sesja, from, topic */
 	format_add("tlen_alert",	_("%> (%1) %T%2%n sent us an alert ...%n"), 1);					/* sesja, from */

@@ -404,6 +404,7 @@ JABBER_HANDLER_RESULT(jabber_handle_gmail_result_mailbox) {
 
 			char *amessages = jabber_attr(child->atts, "messages");		/* messages count in thread */
 			char *subject = NULL;
+			char *snippet = NULL;
 			int firstsender = 1;
 
 			for (subchild = child->children; subchild; subchild = subchild->next) {
@@ -437,16 +438,18 @@ JABBER_HANDLER_RESULT(jabber_handle_gmail_result_mailbox) {
 					}
 				} else if (!xstrcmp(subchild->name, "labels")) {	/* <labels>        | 
 											   A tag that contains a pipe ('|') delimited list of labels applied to this thread. */
-				} else if (!xstrcmp(subchild->name, "snippet")) {	/* <snippet>       | 
-											   A snippet from the body of the email. This must be HTML-encoded. */
+				} else if (!xstrcmp(subchild->name, "snippet")) {
+					/* A snippet from the body of the email. This must be HTML-encoded. */
+					snippet = jabber_unescape(subchild->data);
 				} else debug_error("[jabber] google:mail:notify/mail-thread-info wtf: %s\n", __(subchild->name));
 			}
 
 			print((amessages && atoi(amessages) > 1) ? "gmail_thread" : "gmail_mail", 
-					session_name(s), from->str, jabberfix(subject, "(no subject)"), amessages);
+					session_name(s), from->str, jabberfix(subject, "(no subject)"), amessages, jabberfix(snippet, ""));
 
 			string_free(from, 1);
 			xfree(subject);
+			xfree(snippet);
 		} else debug_error("[jabber, iq] google:mail:notify wtf: %s\n", __(child->name));
 	}
 	if (mailcount && atoi(mailcount)) /* we don't want to beep or send events if no new mail is available */
