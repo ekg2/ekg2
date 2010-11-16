@@ -1434,7 +1434,7 @@ IRC_COMMAND(irc_c_part)
 
 	me = !xstrcmp(j->nick, __nick); /* we part ? */
 
-	if (query_emit(NULL, "irc-part", &s->uid, &__channel, &__nick, &me, &__identhost, __reason) == -1) {
+	if (query_emit(NULL, "irc-part", &s->uid, &__channel, &__nick, &me, &__identhost, &__reason) == -1) {
 		xfree(__channel);
 		xfree(__identhost);
 		xfree(__nick);
