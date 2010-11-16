@@ -62,6 +62,22 @@ char *sopt_casemapping_values[IRC_CASEMAPPING_COUNT] = { "ascii", "rfc1459", "st
 
 #define OMITCOLON(x) ((*x)==':'?(x+1):(x))
 
+static void irc_parse_nick_identhost(char *line, char **nick, char **identhost) {
+	char *p;
+	if (!line || !*line) {
+		*nick = NULL;
+		*identhost = NULL;
+		return;
+	}
+	if ( (p = xstrchr(line, '!')) ) {
+		*nick		= xstrndup(line, p-line);
+		*identhost	= xstrdup(p+1);
+	} else {
+		*nick		= xstrdup(line);
+		*identhost	= xstrdup("");
+	}
+}
+
 #ifdef HAVE_ICONV
 static char *try_convert_string_p(const char *ps, iconv_t cd) {
 	char *s = (char *) ps;
@@ -1314,61 +1330,60 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
  */
 IRC_COMMAND(irc_c_join)
 {
-	char		*ekg2_channel, *irc_channel, *tmp, *chname, *__host, *__nick;
+	char		*ekg2_channel,  *chname, *irc_nick;
+	char		*__channel, *__identhost, *__nick;
 	channel_t	*ischan;
 	window_t	*newwin;
 	people_t	*person;
 	int		me = 0;
-	char		*irc_nick;
+
+	irc_parse_nick_identhost(param[0]+1, &__nick, &__identhost);
 
 	/* irc channels are said to be case insensitive, so I think
 	 * we can do it 'in place', without a copy
 	 */
-	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
-	ekg2_channel = irc_uid(irc_channel);
-	irc_nick = irc_uid(param[0]+1);
+	__channel = xstrdup(IRC_TO_LOWER(OMITCOLON(param[2])));
 
-	chname = clean_channel_names(s, irc_channel);
-
-	if ((tmp = xstrchr(param[0], '!'))) {
-		*tmp='\0';
-		__host = tmp+1;
-	} else {
-		__host = NULL;
-	}
 	/* istnieje jaka¶tam szansa ¿e kto¶ zrobi nick i part i bêdzie
 	 * but I have no head to this now... */
 
-	/* for scripts */
-	__nick = param[0] + 1;
-	if (query_emit(NULL, "irc-join", &s->uid, &irc_channel, &__nick, &__host) == -1)
-		return -1;
+	me = !xstrcmp(j->nick, __nick); /* We join ? */
 
-	me = !xstrcmp(j->nick, param[0]+1); /* We join ? */
+	if (query_emit(NULL, "irc-join", &s->uid, &__channel, &__nick, &me, &__identhost) == -1) {
+		xfree(__channel);
+		xfree(__identhost);
+		xfree(__nick);
+		return -1;
+	}
+
+	irc_nick = irc_uid(__nick);
+	ekg2_channel = irc_uid(__channel);
+	chname = clean_channel_names(s, __channel);
+
 	if (me) {
 
 		newwin = window_new(ekg2_channel, s, 0);
 
-		if (xstrcmp(irc_channel, chname))
-			newwin->alias = xstrdup(chname);	/* ?WO? format for alias here??? */
+		if (xstrcmp(__channel, chname))
+			newwin->alias = xstrdup(chname);
 
 		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &newwin);	/* let's emit UI_WINDOW_TARGET_CHANGED XXX, another/new query? */
 
 		window_switch(newwin->id);
 		debug("[irc] c_join() %08X\n", newwin);
-		ischan = irc_add_channel(s, j , irc_channel, newwin);
+		ischan = irc_add_channel(s, j , __channel, newwin);
 	/* someone joined */
 	} else {
-		person = irc_add_person(s, j, param[0]+1, irc_channel);
-		if (person && tmp && !(person->ident) && !(person->host))
-			irc_parse_identhost(tmp+1, &(person->ident), &(person->host));
+		person = irc_add_person(s, j, __nick, __channel);
+		if (person && __identhost && !(person->ident) && !(person->host))
+			irc_parse_identhost(__identhost, &(person->ident), &(person->host));
 
-		irc_access_parse(s, irc_find_channel(j->channels, irc_channel), person, 0);
+		irc_access_parse(s, irc_find_channel(j->channels, __channel), person, 0);
 	}
 
 	if (!(ignored_check(s, ekg2_channel) & IGNORE_NOTIFY) && !(ignored_check(s, irc_nick) & IGNORE_NOTIFY)) {
 		print_info(ekg2_channel, s, me ? "irc_joined_you" : "irc_joined",
-				session_name(s), param[0]+1, tmp?tmp+1:"", chname);
+				session_name(s), __nick, __identhost, chname);
 		if (me)	{
 			int __secure = 0;
 			char *__sid	 = xstrdup(session_uid_get(s));
@@ -1376,18 +1391,21 @@ IRC_COMMAND(irc_c_join)
 			char *__msg	 = xstrdup("test");
 
 			if (query_emit_id(NULL, MESSAGE_ENCRYPT, &__sid, &__uid_full, &__msg, &__secure) == 0 && __secure) 
-				print_info(ekg2_channel, s, "irc_channel_secure", session_name(s), chname);
-			else	print_info(ekg2_channel, s, "irc_channel_unsecure", session_name(s), chname);
+				print_info(ekg2_channel, s, "channel_secure", session_name(s), chname);
+			else	print_info(ekg2_channel, s, "channel_unsecure", session_name(s), chname);
 			xfree(__msg);
 			xfree(__uid_full);
 			xfree(__sid);
 		}
 	}
-	if (tmp) *tmp='!';
 
 	xfree(chname);
 	xfree(irc_nick);
 	xfree(ekg2_channel);
+
+	xfree(__channel);
+	xfree(__identhost);
+	xfree(__nick);
 	return 0;
 }
 
@@ -1398,18 +1416,29 @@ IRC_COMMAND(irc_c_join)
  */
 IRC_COMMAND(irc_c_part)
 {
-	char	*ekg2_channel, *irc_channel, *tmp, *coloured, *irc_nick;
+	char	*ekg2_channel, *tmp, *coloured, *irc_nick;
+	char	*__channel, *__identhost, *__nick, *__reason;
 	int	me = 0;
-	
-	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
-	me = !xstrcmp(j->nick, param[0]+1); /* we part ? */
-	
-	debug("[irc]_c_part: %s %s\n", j->nick, param[0]+1);
 
-	irc_channel = IRC_TO_LOWER(OMITCOLON(param[2]));
-	ekg2_channel = irc_uid(irc_channel);
-	irc_nick = irc_uid(param[0]+1);
+	irc_parse_nick_identhost(param[0]+1, &__nick, &__identhost);
 
+	debug("[irc]_c_part: %s %s\n", j->nick, __nick);
+
+	__channel = xstrdup(IRC_TO_LOWER(OMITCOLON(param[2])));
+	__reason = param[3] ? xstrdup(OMITCOLON(param[3])) : NULL;
+
+	me = !xstrcmp(j->nick, __nick); /* we part ? */
+
+	if (query_emit(NULL, "irc-part", &s->uid, &__channel, &__nick, &me, &__identhost, __reason) == -1) {
+		xfree(__channel);
+		xfree(__identhost);
+		xfree(__nick);
+		xfree(__reason);
+		return -1;
+	}
+
+	ekg2_channel = irc_uid(__channel);
+	irc_nick = irc_uid(__nick);
 	/* Servers MUST be able to parse arguments in the form of
 	 * a list of target, but SHOULD NOT use lists when sending
 	 * PART messages to clients.
@@ -1418,13 +1447,12 @@ IRC_COMMAND(irc_c_part)
 	 * SHOULD NOT ;/
 	 */
 	if (me) 
-		irc_del_channel(s, j, irc_channel);
+		irc_del_channel(s, j, __channel);
 	else 
-		irc_del_person_channel(s, j, param[0]+1, irc_channel);
+		irc_del_person_channel(s, j, __nick, __channel);
 
-	coloured = param[3]?xstrlen(OMITCOLON(param[3]))?
-		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[3]), 1)
-		:xstrdup("no reason"):xstrdup("no reason");
+	coloured = __reason ? *__reason ? irc_ircoldcolstr_to_ekgcolstr(s, __reason, 1) : xstrdup("no reason")
+			    : xstrdup("no reason");
 	/* TODO: if channel window exists do print_info, else do nothing (?)
 	 * now after alt+k if user was on that channel-window, we recved info
 	 * about parting on __status window, is it right ?
@@ -1432,18 +1460,20 @@ IRC_COMMAND(irc_c_part)
 	 * e.g: on my fave: DISPLAY_IN_CURRENT :)
 	 */
 	if (!(ignored_check(s, ekg2_channel) & IGNORE_NOTIFY) && !(ignored_check(s, irc_nick) & IGNORE_NOTIFY)) {
-		char *cchn = clean_channel_names(s, irc_channel);
+		char *cchn = clean_channel_names(s, __channel);
 		print_info(ekg2_channel, s, (me)?"irc_left_you":"irc_left", session_name(s),
-				param[0]+1, tmp?tmp+1:"", cchn, coloured);
+				__nick, tmp?tmp+1:"", cchn, coloured);
 		xfree(cchn);
 	}
-	
-	if (tmp) *tmp='!';
-	
+
 	xfree(coloured);
 	xfree(ekg2_channel);
 	xfree(irc_nick);
-	
+
+	xfree(__channel);
+	xfree(__identhost);
+	xfree(__nick);
+	xfree(__reason);
 	return 0;
 }
 

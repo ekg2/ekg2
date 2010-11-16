@@ -2767,7 +2767,16 @@ EXPORT int irc_plugin_init(int prio)
 	query_register_external("irc-join", 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* channel */
 						QUERY_ARG_CHARP,	/* nick */
-						QUERY_ARG_CHARP,	/* host */
+						QUERY_ARG_INT,		/* isour */
+						QUERY_ARG_CHARP,	/* ident@host */
+						QUERY_ARG_END);
+
+	query_register_external("irc-part", 	QUERY_ARG_CHARP,	/* session */
+						QUERY_ARG_CHARP,	/* channel */
+						QUERY_ARG_CHARP,	/* nick */
+						QUERY_ARG_INT,		/* isour */
+						QUERY_ARG_CHARP,	/* ident@host */
+						QUERY_ARG_CHARP,	/* reason */
 						QUERY_ARG_END);
 
 	query_register_external("irc-privmsg", 	QUERY_ARG_CHARP,	/* session */
