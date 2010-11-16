@@ -1540,31 +1540,40 @@ IRC_COMMAND(irc_c_kick)
  */
 IRC_COMMAND(irc_c_quit)
 {
-	char	*tmp, *reason;
-	int	display_quit;
+	char	*__identhost, *__nick, *__reason;
+	int	display_quit, me;
 	/* TODO: SPLIT MODE! */
 	int	split = 0;
 
-	if ((tmp = xstrchr(param[0], '!'))) *tmp = '\0';
-	reason = param[2]?xstrlen(OMITCOLON(param[2]))?
+	irc_parse_nick_identhost(param[0]+1, &__nick, &__identhost);
+	__reason = param[2]?xstrlen(OMITCOLON(param[2]))?
 		irc_ircoldcolstr_to_ekgcolstr(s, OMITCOLON(param[2]), 1):
 		xstrdup("no reason"):xstrdup("no reason");
+	me = !xstrcmp(j->nick, __nick); /* we quit? */
+
+	if (query_emit(NULL, "irc-quit", &s->uid, &__nick, &me, &__identhost, &__reason) == -1) {
+		xfree(__identhost);
+		xfree(__nick);
+		xfree(__reason);
+		return -1;
+	}
 
 	if (split) 
 		display_quit = 0; /* (?) */
 	else
 		display_quit = session_int_get(s, "DISPLAY_QUIT");
 
-	irc_del_person(s, j, param[0]+1, tmp?tmp+1:"", reason, !display_quit);
+	irc_del_person(s, j, __nick, __identhost, __reason, !display_quit);
 
 	if (display_quit)
 		print_info(display_quit==2?window_current->target:"__status",
 				s, (split)?"irc_split":"irc_quit",
-				session_name(s), param[0]+1, tmp?tmp+1:"",
-				reason);
+				session_name(s), __nick, __identhost,
+				__reason);
 
-	xfree(reason);
-	if (tmp) *tmp='!';
+	xfree(__identhost);
+	xfree(__nick);
+	xfree(__reason);
 
 	return 0;
 }
