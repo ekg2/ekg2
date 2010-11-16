@@ -424,7 +424,12 @@ and the prefix.
 			/* for scripts */
 			char *emitname = saprintf(("irc-protocol-numeric %s"), q[1]);
 			char **pq = &(q[2]);
-			if (query_emit(NULL, emitname, &s->uid, &pq) == -1) { xfree(emitname); return -1; }
+			if ((query_emit(NULL, "irc-protocol-numeric", &s->uid, &ecode, &pq) == -1) ||
+			    (query_emit(NULL, emitname, &s->uid, &pq) == -1))
+			{
+				xfree(emitname);
+				return -1;
+			}
 			xfree(emitname);
 			
 			c=0;

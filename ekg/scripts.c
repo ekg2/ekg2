@@ -655,7 +655,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 	else if (!xstrcmp(qname, "protocol-message-received-2"))qname = "protocol-message-received";
 
 /* IRC */
-	if (!xstrncmp(qname, "irc-protocol-numeric", sizeof("irc-protocol-numeric")-1)) {
+	if (!xstrncmp(qname, "irc-protocol-numeric ", sizeof("irc-protocol-numeric ")-1)) {
 		/* XXX, obciaz nazwe do irc-protocl-numeric i wrzucic to ponizej do queries.h */
 		NEXT_ARG(QUERY_ARG_CHARP);
 		NEXT_ARG(QUERY_ARG_CHARPP);

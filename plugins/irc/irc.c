@@ -2785,6 +2785,12 @@ EXPORT int irc_plugin_init(int prio)
 						QUERY_ARG_CHARP,	/* message */
 						QUERY_ARG_END);
 
+	query_register_external("irc-protocol-numeric",
+						QUERY_ARG_CHARP,	/* session */
+						QUERY_ARG_INT,		/* number */
+						QUERY_ARG_CHARPP,	/* params */
+						QUERY_ARG_END);
+
 	query_register_external("irc-notice", 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* from */
 						QUERY_ARG_CHARP,	/* destination (channel|nick) */
