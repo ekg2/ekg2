@@ -190,9 +190,11 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 
 static BINDING_FUNCTION(binding_window_kill)
 {
+	/* rfc2811: "Channels names are strings (beginning with a '&', '#', '+' or '!' character)..." */
+	const char *pfx = "&#+!";
 	char * ptr;
 	ptr = xstrstr(window_current->target, "irc:");
-	if (ptr && ptr == window_current->target && (ptr[4] == '!' || ptr[4] == '#') && !config_kill_irc_window ) {
+	if (ptr && ptr == window_current->target && xstrchr(pfx, ptr[4]) && !config_kill_irc_window ) {
 		print("cant_kill_irc_window");
 		return;
 	}
