@@ -726,9 +726,13 @@ static COMMAND(jabber_command_modify) {
 	if (!(uid = jid_target2uid(session, target, quiet)))
 		return -1;
 
-	if (!u)	u = xmalloc(sizeof(userlist_t));		/* alloc temporary memory for /xmpp:add */
+	if (!u) u = xmalloc(sizeof(userlist_t));		/* alloc temporary memory for /xmpp:add */
 
-	if (params[0]) {
+	if (addcom) {
+		nickname = tlenjabber_escape(params[0]);
+		u->uid = uid;
+		u->nickname = nickname;
+	} else if (params[0]) {
 		char **argv = array_make(params[0], " \t", 0, 1, 1);
 		int i;
 
@@ -2331,14 +2335,10 @@ static COMMAND(jabber_command_userlist) {
 
 			if (userlist_find(session, uid)) {
 				if (nickname) {
-					const char *args[] = { uid, "-n", nickname, NULL };
-
-					jabber_command_modify("modify", args, session, NULL, 1);
+					command_exec_format(NULL, session, 1, "/modify %s -n \"%s\"", uid, nickname);
 				}
 			} else {
-				const char *args[] = { uid, nickname, NULL };
-
-				jabber_command_modify("add", args, session, NULL, 1);
+				command_exec_format(NULL, session, 1, "/add %s \"%s\"", uid, nickname);
 			}
 
 			xfree(uid);
