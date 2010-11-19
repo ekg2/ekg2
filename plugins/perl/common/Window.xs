@@ -58,9 +58,19 @@ CODE:
 OUTPUT:
 	RETVAL
 
-void window_print_format(Ekg2::Window wind, char *format, char *line)
+void window_print_format(Ekg2::Window wind, char *format, ...)
+PREINIT:
+	char *p[10];
+	int i;
 CODE:
-	print_info(window_target(wind), wind->session, format, line);
+	for (i=0; i<10; i++) {
+		if (i+2>=items) {
+			p[i] = "(missing arg)";
+		} else {
+			p[i] = (char *)SvPV_nolen(ST(i+2));
+		}
+	}
+	print_info(window_target(wind), wind->session, format, p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]);
 
 void window_print(Ekg2::Window wind, char *line)
 CODE:
