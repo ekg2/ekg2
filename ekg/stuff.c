@@ -170,7 +170,6 @@ int config_display_sent = 1;
 int config_send_white_lines = 0;
 int config_sort_windows = 1;
 int config_keep_reason = 1;
-char *config_audio_device = NULL;
 char *config_speech_app = NULL;
 int config_time_deviation = 300;
 int config_mesg = MESG_DEFAULT;

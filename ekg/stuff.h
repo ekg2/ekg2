@@ -169,7 +169,6 @@ extern int no_mouse;
 extern int old_stderr;
 extern int mesg_startup;
 
-extern char *config_audio_device;
 extern char *config_away_reason;
 extern int config_auto_save;
 extern int config_auto_user_add;
