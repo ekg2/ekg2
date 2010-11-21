@@ -643,7 +643,7 @@ static COMMAND(nntp_command_connect) {
 	struct sockaddr_in sin;
 	/* just proof of concpect... no checking for errors... no resolving etc... it's boring */
 	int fd, res;
-	const char *ip = session_get(session, "server");
+	const char *ip;
 	int one = 1;
 
 	if (j->connecting) {
@@ -652,6 +652,11 @@ static COMMAND(nntp_command_connect) {
 	}
 	if (session_connected_get(session)) {
 		printq("already_connected", session_name(session));
+		return -1;
+	}
+
+	if (!(ip = session_get(session, "server"))) {
+		printq("generic_error", "gdzie lecimy ziom ?! [/session server]");
 		return -1;
 	}
 
