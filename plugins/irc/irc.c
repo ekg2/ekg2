@@ -298,7 +298,7 @@ static char *irc_make_banmask(session_t *session, const char *nick, const char *
 		family = AF_INET;
 #else
 /* TODO */
-	print("generic_error", "It seem you don't have inet_pton() current version of irc_make_banmask won't work without this function. If you want to get work it faster contact with developers ;>");
+	print("generic_error", "It seems you don't have inet_pton(). The current version of irc_make_banmask won't work without this function. If you want to get it work faster, contact developers ;>");
 #endif
 
 	if (host && !family && (temp=xstrchr(host, ind)))
@@ -2649,7 +2649,7 @@ static int irc_theme_init()
 	format_add("IRC_TEST_FAIL",	"%! (%1) Error: %2 to %W%3%n [%4] port %W%5%n (%7)", 1);
 	
 	format_add("irc_channel_secure",	"%) (%1) Echelon can kiss our ass on %2 *g*", 1); 
-	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protect us on %2 :( install sim plugin now or at least rot13..", 1); 
+	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protects us on %2 :( install sim plugin now or at least rot13..", 1); 
 
 	format_add("irc_access_added",	_("%> (%1) %3 [#%2] was added to accesslist chan: %4 (flags: %5)"), 1);
 	format_add("irc_access_known", "a-> %2!%3@%4", 1);	/* %2 is nickname, not uid ! */
