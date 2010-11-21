@@ -407,7 +407,8 @@ and the prefix.
 		if(!gatoi(q[1], &ecode)) {
 			/* for scripts */
 			char *emitname = saprintf(("irc-protocol-numeric %s"), q[1]);
-			if (query_emit(NULL, emitname, &s->uid, &(q[2])) == -1) { xfree(emitname); return -1; }
+			char **pq = &(q[2]);
+			if (query_emit(NULL, emitname, &s->uid, &pq) == -1) { xfree(emitname); return -1; }
 			xfree(emitname);
 			
 			c=0;
