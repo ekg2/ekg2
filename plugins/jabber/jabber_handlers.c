@@ -1607,7 +1607,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 			descr = saprintf("(%s) %s", ecode, __(etext));
 			xfree(etext);
 
-			if (!istlen && (atoi(ecode) == 403 || atoi(ecode) == 401)) /* we lack auth */
+			if (!istlen && ecode && (atoi(ecode) == 403 || atoi(ecode) == 401)) /* we lack auth */
 				status = EKG_STATUS_UNKNOWN; /* shall we remove the error description? */
 			else
 				status = EKG_STATUS_ERROR;
