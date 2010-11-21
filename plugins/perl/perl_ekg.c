@@ -1,5 +1,6 @@
 /*
  *  (C) Copyright 2005 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *                2010 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
