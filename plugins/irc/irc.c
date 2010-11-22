@@ -2546,7 +2546,7 @@ char *nickpad_string_create(channel_t *chan)
 	return chan->nickpad_str;
 }
 
-char *nickpad_string_apply(channel_t *chan, char *str)
+char *nickpad_string_apply(channel_t *chan, const char *str)
 {
 	chan->nickpad_pos = chan->longest_nick - xstrlen(str);
 	if (config_use_unicode)

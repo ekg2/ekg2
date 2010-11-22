@@ -940,8 +940,8 @@ int window_session_cycle(window_t *w) {
 	session_t *s;
 	session_t *new_session = NULL;
 	int once = 0;
-	char *uid;
-	char *nickname;
+	const char *uid;
+	const char *nickname;
 
 	if (!w || !sessions) {
 		return -1;

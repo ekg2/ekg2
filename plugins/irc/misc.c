@@ -168,7 +168,7 @@ static void irc_access_parse(session_t *s, channel_t *chan, people_t *p, int fla
 			r = rl;
 
 			if (r->priv_data == p) {
-				char *tmp = &(u->uid[4]);
+				const char *tmp = &(u->uid[4]);
 				
 				/* fast forward move.. */
 				if (!(tmp = xstrchr(tmp, '!')) || !(tmp = xstrchr(tmp, '@')) || !(tmp = xstrchr(tmp, ':'))) {

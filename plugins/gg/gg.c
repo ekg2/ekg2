@@ -542,7 +542,13 @@ static QUERY(gg_userlist_priv_handler) {
 			char **entry	= *va_arg(ap, char ***);
 
 			if (atoi(u->uid)) {	/* backwards compatibility / userlist -g hack for GG */
-				char *tmp = u->uid;
+				/* 
+				 * TODO: This is a hack, we should not be
+				 * freeing memory which has been passed to us
+				 * as const in the first place. But as things
+				 * are, we have no option but to cast here.
+				 */
+				char *tmp = (char *) u->uid;
 				u->uid = saprintf("gg:%s", tmp);
 				xfree(tmp);
 			}

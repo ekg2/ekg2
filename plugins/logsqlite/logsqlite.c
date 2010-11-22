@@ -98,13 +98,13 @@ int last(const char **params, session_t *session, int quiet, int status)
 	struct tm *tm;
 	time_t ts;
 	int count2 = 0;
-	char * gotten_uid = NULL;
+	const char * gotten_uid = NULL;
 	char * nick = NULL;
 	char * keep_nick = NULL;
 	int limit_msg = config_logsqlite_last_limit_msg;
 	int limit_status = config_logsqlite_last_limit_status;
 	int i = 0;
-	char * target_window = "__current";
+	const char * target_window = "__current";
 	char *sql_search = NULL;
 
 	if (!session) {
@@ -536,8 +536,8 @@ QUERY(logsqlite_msg_handler)
 	time_t	    *__sent = va_arg(ap, time_t*),	 sent = *__sent;
 	int	   *__class = va_arg(ap, int*),		class = *__class;
 	session_t *s = session_find((const char*)session);
-	char * gotten_uid = get_uid(s, uid);
-	char * gotten_nickname = get_nickname(s, uid);
+	const char * gotten_uid = get_uid(s, uid);
+	const char * gotten_nickname = get_nickname(s, uid);
 	char * type = NULL;
 	char * myuid = NULL;
 	sqlite_t * db;
@@ -676,8 +676,8 @@ QUERY(logsqlite_status_handler) {
 	const char *status;
 
 	session_t *s	= session_find(session);
-	char * gotten_uid = get_uid(s, uid);
-	char * gotten_nickname = get_nickname(s, uid);
+	const char * gotten_uid = get_uid(s, uid);
+	const char * gotten_nickname = get_nickname(s, uid);
 	sqlite_t * db;
 #ifdef HAVE_SQLITE3	
 	sqlite3_stmt *stmt;

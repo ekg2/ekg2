@@ -181,7 +181,7 @@ extern int irc_config_allow_fake_contacts;
 extern int irc_config_experimental_chan_name_clean;
 
 char *nickpad_string_create(channel_t *chan);
-char *nickpad_string_apply(channel_t *chan, char *str);
+char *nickpad_string_apply(channel_t *chan, const char *str);
 char *nickpad_string_restore(channel_t *chan);
 
 char *clean_channel_names(session_t *session, char *channels);
