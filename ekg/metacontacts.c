@@ -293,7 +293,7 @@ static int metacontact_add_item(metacontact_t *m, const char *session, const cha
 {
 	metacontact_item_t *i;
 	session_t *s;
-	char *uid;
+	const char *uid;
 
 	if (!m || !name || !session) {
 		debug("! metacontact_add_item: NULL data on input\n");

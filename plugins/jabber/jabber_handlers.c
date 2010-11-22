@@ -740,7 +740,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	if (nerr) {
 		char *ecode = jabber_attr(nerr->atts, "code");
 		char *etext = jabber_unescape(nerr->data);
-		char *recipient = get_nickname(s, uid);
+		const char *recipient = get_nickname(s, uid);
 
 		if (nbody && nbody->data) {
 			char *tmp2 = jabber_unescape(nbody->data);

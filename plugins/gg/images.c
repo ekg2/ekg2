@@ -77,7 +77,8 @@ COMMAND(gg_command_image)
 	uint32_t size, crc32;
 	int i;
 	const char *filename	= params[1];
-	char *data, *uid;
+	char *data;
+	const char *uid;
 
 	struct gg_msg_richtext_format_img {
 		struct gg_msg_richtext rt;

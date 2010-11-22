@@ -937,7 +937,7 @@ static COMMAND(gg_command_block) {
  */
 
 static COMMAND(gg_command_unblock) {
-	char *uid;
+	const char *uid;
 	int ret;
 
 	if (!xstrcmp(params[0], "*")) {
@@ -969,16 +969,19 @@ static COMMAND(gg_command_unblock) {
 		return -1;
 	}
 
-	uid = xstrdup(uid);
+	{
+		/* TODO: Explain why we need a copy. */
+		char *uid_copy = xstrdup(uid);
 
-	if ( ( ret = gg_blocked_remove(session, uid) ) == -1)
-		printq("error_not_blocked", format_user(session, uid));
-	else {		
-		printq("blocked_deleted", format_user(session, uid));
-		config_changed = 1;
+		if ( ( ret = gg_blocked_remove(session, uid_copy) ) == -1)
+			printq("error_not_blocked", format_user(session, uid_copy));
+		else {
+			printq("blocked_deleted", format_user(session, uid_copy));
+			config_changed = 1;
+		}
+
+		xfree(uid_copy);
 	}
-
-	xfree(uid);
 
 	return ret;
 }
@@ -1675,7 +1678,7 @@ static COMMAND(gg_command_modify) {
 			tmp1 = xstrdup(argv[++i]);
 			query_emit_id(NULL, USERLIST_ADDED, &tmp1, &tmp1, &q);
 
-			xfree(u->uid);
+			xfree((void *) u->uid);
 			u->uid = tmp1;
 
 			modified = 1;

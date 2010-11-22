@@ -133,7 +133,7 @@ static QUERY(rss_message) {
 	int dmode		= session_int_get(s, "display_mode");
 	int mw			= session_int_get(s, "make_window");
 
-	char *target		= NULL;
+	const char *target	= NULL;
 	window_t *targetwnd	= NULL;
 
 	if (*new == 0 && !mtags) return 0;

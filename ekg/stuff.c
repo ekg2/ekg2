@@ -829,7 +829,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 	memset(&c, 0, sizeof(c));
 
 	for (p = nicks, i = 0; *p; p++) {
-		char *uid;
+		const char *uid;
 
 		if (!xstrcmp(*p, ""))
 			continue;

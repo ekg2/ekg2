@@ -104,7 +104,7 @@ void icq_pack_append_rendezvous(string_t pkt, int version, int cookie, int mtype
 				);
 }
 
-static void icq_get_description(session_t *s, char *uin, int status) {
+static void icq_get_description(session_t *s, const char *uin, int status) {
 	icq_private_t *j = s->priv;
 	string_t pkt, tlv5, rdv;
 	uint32_t cookie1=rand(), cookie2=rand();

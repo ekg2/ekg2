@@ -1204,7 +1204,7 @@ static COMMAND(cmd_help)
 
 static COMMAND(cmd_ignore)
 {
-	char *uid;
+	const char *uid;
 
 	if (*name == 'i' || *name == 'I') {
 		int flags, modified = 0;
@@ -1262,7 +1262,8 @@ static COMMAND(cmd_ignore)
 		if (!ignored_add(session, uid, flags)) {
 			if (modified) {
 				printq("ignored_modified", format_user(session, uid));
-				xfree(uid);
+				/* We've just got this from xstrdup(), so safe to free here */
+				xfree((void *) uid);
 			} else
 				printq("ignored_added", format_user(session, uid));
 			config_changed = 1;
@@ -2506,7 +2507,7 @@ next:
 	}
 
 	if (!par0) {						/* everything else if it's valid uid/ (nickname if we have user in roster) */
-		char *uid = get_uid(session, params[0]);
+		const char *uid = get_uid(session, params[0]);
 
 		if (!uid) {
 			printq("user_not_found", params[0]);

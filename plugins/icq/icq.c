@@ -442,14 +442,15 @@ void icq_session_connected(session_t *s) {
 }
 
 static uint32_t icq_get_uid(session_t *s, const char *target) {
-	char *uid;
+	const char *uid;
+	char *first_invalid = NULL;
 	long int uin;
 
 	if (!target)
 		return 0;
 
 	if (!(uid = get_uid(s, target)))
-		uid = (char *) target;
+		uid = target;
 
 	if (!xstrncmp(uid, "icq:", 4))
 		uid += 4;
@@ -457,9 +458,9 @@ static uint32_t icq_get_uid(session_t *s, const char *target) {
 	if (!uid[0])
 		return 0;
 
-	uin = strtol(uid, &uid, 10);	/* XXX, strtoll() */
+	uin = strtol(uid, &first_invalid, 10);	/* XXX, strtoll() */
 
-	if (uid[0])
+	if (*first_invalid != '\0')
 		return 0;
 
 	if (uin <= 0)

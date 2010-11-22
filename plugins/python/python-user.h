@@ -29,7 +29,7 @@ typedef struct {
 	char * session;
 } ekg_userObj;
 
-PyObject * python_build_user(char * session, char * name);
+PyObject * python_build_user(char * session, const char * name);
 PyObject * ekg_user_repr(ekg_userObj * self);
 PyObject * ekg_user_str(ekg_userObj * self);
 void ekg_user_dealloc(ekg_userObj * o);

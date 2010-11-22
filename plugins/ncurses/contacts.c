@@ -106,7 +106,7 @@ static int contacts_compare(void *data1, void *data2)
  * Duplicate entry, with priv_data set to priv.
  */
 
-static inline userlist_t *userlist_dup(userlist_t *up, char *uid, char *nickname, void *priv) {
+static inline userlist_t *userlist_dup(userlist_t *up, const char *uid, char *nickname, void *priv) {
 	userlist_t *u = xmalloc(sizeof(userlist_t));
 
 	u->uid		= uid;
