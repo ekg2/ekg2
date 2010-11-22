@@ -458,6 +458,9 @@ static int ruby_commands(script_t *scr, script_command_t *comm, char **params) {
 static int ruby_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, long int watch) {
 	ruby_helper_t ruby_watch;
 	VALUE argv[3];
+	/* This is normally done by SCRIPT_DEFINE macro call, but the ruby
+	 * plugin does not use it. */
+	BUILD_BUG_ON(sizeof(void *) > sizeof(long));
 
 	argv[0] = INT2FIX(type);
 	argv[1] = INT2FIX(fd);	/* XXX, temporary we pass fd instad of T_FILE */
