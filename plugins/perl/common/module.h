@@ -22,6 +22,10 @@
 #undef _
 #include "../perl_ekg.h"
 
+#ifdef bool
+#define HAS_BOOL
+#endif
+
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>

@@ -5,6 +5,10 @@
 #define __EXTENSIONS__
 #endif
 
+#ifdef bool
+#define HAS_BOOL
+#endif
+
 #include <EXTERN.h>
 #include <perl.h>
 #include <XSUB.h>
