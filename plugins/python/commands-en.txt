@@ -1,0 +1,35 @@
+eval
+	parameters: [code]
+	short description: run an arbitrary ptyhon code
+	
+	Execute an arbitrary Python code. Code has an access to ekg module.
+	For example, try:
+	
+	  /python:eval ekg.echo("2 + 2 = %%s" %% (2 + 2))
+
+list
+	parameters:
+	short description: list loaded Python scripts
+
+load
+	parameters: [script]
+	short description: load a Python script into ekg2 and run it
+	
+	Load a Python script into ekg2 and run it. `script` is a filename in
+	.ekg2/scripts or .ekg2/<profile>/scripts directory.
+
+run
+	parameters: [script]
+	short description: run a Python script once
+	
+	Run an arbitrary Python script once. Note that you can not register any
+	handlers in such script. It is removed from ekg2 as soon as it finishes.
+	Se also /python:load. `script` is a file name with path relative to CWD.
+
+unload
+	parameters: [script]
+	short description: remove a Python script from ekg2
+	
+	Unload a script. I.e. remove all handlers and bindings registeres by the
+	given script and remove it from memory. `script` is a script name, i.e.
+	script file name without a '.py' suffix.
