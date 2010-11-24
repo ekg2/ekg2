@@ -23,7 +23,7 @@ enum query_arg_type {
 	QUERY_ARG_CONST = (1<<31),
 
 	QUERY_ARG_FLAGS = (QUERY_ARG_CONST),
-	QUERY_ARG_TYPES = !QUERY_ARG_FLAGS
+	QUERY_ARG_TYPES = ~QUERY_ARG_FLAGS
 };
 
 struct query_def {
