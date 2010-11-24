@@ -110,8 +110,8 @@ CFLAGS="$CFLAGS -Wall"
 
 AC_PROG_C_STD
 
-if test "x$C_STD" = "xyes"; then
-	CFLAGS="$CFLAGS -std=c99"
+if test "x$C_STD" != "x"; then
+	CFLAGS="$CFLAGS -std=$C_STD"
 fi
 
 AC_PROG_C_FVISIBILITY
