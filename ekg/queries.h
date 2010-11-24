@@ -18,7 +18,12 @@ enum query_arg_type {
 	QUERY_ARG_WINDOW = 100, /* window_t	*/
 	QUERY_ARG_FSTRING,	/* fstring_t	*/
 	QUERY_ARG_USERLIST,	/* userlist_t	*/
-	QUERY_ARG_SESSION	/* session_t	*/
+	QUERY_ARG_SESSION,	/* session_t	*/
+
+	QUERY_ARG_CONST = (1<<31),
+
+	QUERY_ARG_FLAGS = (QUERY_ARG_CONST),
+	QUERY_ARG_TYPES = !QUERY_ARG_FLAGS
 };
 
 struct query_def {

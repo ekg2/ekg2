@@ -55,7 +55,11 @@ SV *create_sv_ptr(void *object);
 #define RESTORE_ARGS(x)\
     if (change) {\
 	for (i=0; i < scr_que->argc; i++) {\
-		switch ( scr_que->argv_type[i] ) {\
+		cnst = scr_que->argv_type[i] & QUERY_ARG_CONST;\
+		if (cnst)\
+			continue;\
+		type = scr_que->argv_type[i] & QUERY_ARG_TYPES;\
+		switch ( type ) {\
 			case (QUERY_ARG_INT):\
 				*( (int *) args[i]) = SvIV(SvRV(perlargs[i]));\
 				break;\
