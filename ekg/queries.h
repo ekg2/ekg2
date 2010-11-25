@@ -22,8 +22,9 @@ enum query_arg_type {
 	QUERY_ARG_SESSION,	/* session_t	*/
 
 	/* Flags. Can be OR-ed with type specifiers. */
-	QUERY_ARG_CONST = (1<<31),	/* Means that the argument is to be passed "by value" and not by pointer.
-					 * May only be used with QUERY_ARG_INT or QUERY_ARG_CHARP */
+	QUERY_ARG_CONST = (1<<31),	/* Means that the argument should not be modified by a script.
+					 * In case it _will_ be modified, the new value will be
+					 * ignored and not propagated further. */
 
 	/* Masks. Used for extracting type specifiers and flags. */
 	QUERY_ARG_FLAGS = (QUERY_ARG_CONST),
