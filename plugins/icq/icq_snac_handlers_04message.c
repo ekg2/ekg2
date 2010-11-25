@@ -8,6 +8,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *                     2008 Wiesław Ochmiński <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -21,6 +25,21 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <ekg/debug.h>
+#include <ekg/recode.h>
+
+#include "icq.h"
+#include "misc.h"
+#include "icq_caps.h"
+#include "icq_const.h"
+#include "icq_flap_handlers.h"
+#include "icq_snac_handlers.h"
+
 
 typedef struct {
 	uint32_t id1;
@@ -169,13 +188,8 @@ static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int 
 
 			switch (t_msg.encoding) {
 				case 0x02:	/* UCS-2BE */
-				{
-					string_t str = string_init(NULL);
-					string_append_raw(str, (char *) t_msg.message, t_len);
-					recode = icq_convert_from_ucs2be(str);
-					string_free(str, 1);
+					recode = icq_convert_from_ucs2be((char *)t_msg.message, t_len);
 					break;
-				}
 				case 0x00:	/* US-ASCII */
 				case 0x03:	/* ANSI */
 					recode = xstrndup((char *) t_msg.message, t_len);
@@ -549,6 +563,7 @@ static void icq_snac_message_status_reply(msg_params_t *msg_param, char *msg) {
 SNAC_SUBHANDLER(icq_snac_message_response) {
 	msg_params_t msg_param;
 	struct {
+		uint16_t reason;				/* reason code (1 - unsupported channel, 2 - busted payload, 3 - channel specific) */
 		uint16_t len;
 		uint16_t version;				/* this can be v8 greeting message reply */
 		/* 27b unknowns from the msg we sent */
@@ -558,6 +573,7 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 		uint8_t flags;					/* Message flags: MFLAG_NORMAL, MFLAG_AUTO, etc. */
 		uint16_t status;				/* Status */
 		/* 2b Priority? */
+		uint16_t msg_len;
 	} pkt;
 
 	if (!icq_snac_unpack_message_params(s, &buf, &len, &msg_param))
@@ -572,8 +588,7 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 
 	/* XXX, cookie, check cookie uid */
 
-	// skip 2 unknown bytes & get length
-	if (!ICQ_UNPACK(&buf, "2 w", &pkt.len))
+	if (!ICQ_UNPACK(&buf, "ww", &pkt.reason, &pkt.len))
 		pkt.len = 0;
 
 	if (pkt.len == 0x1b && 1 /* XXX */) {
@@ -592,10 +607,10 @@ SNAC_SUBHANDLER(icq_snac_message_response) {
 	if (pkt.flags == MFLAG_AUTO) {     /* A status message reply */
 		char *reason;
 
-		if (len < 2)
+		if (len < 2 || !ICQ_UNPACK(&buf, "w", &pkt.msg_len))
 			return -1;
 
-		reason = xstrndup((char *) buf + 2, len);
+		reason = xstrndup((char *) buf, pkt.msg_len);
 		icq_snac_message_status_reply(&msg_param, reason);
 		xfree(reason);
 	} else {
@@ -633,23 +648,11 @@ SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
 			break;
 
 		case 0x000F:	/* MTN_WINDOW_CLOSED */
-		{	/* XXX ?wo? print_info(...) ??? */
-		#if 0
-			char szFormat[MAX_PATH];
-			char szMsg[MAX_PATH];
-			char *nick = NickFromHandleUtf(hContact);
-
-			null_snprintf(szMsg, MAX_PATH, ICQTranslateUtfStatic(LPGEN("Contact \"%s\" has closed the message window."), szFormat, MAX_PATH), nick);
-			ShowPopUpMsg(hContact, ICQTranslateUtfStatic(LPGEN("ICQ Note"), szFormat, MAX_PATH), szMsg, LOG_NOTE);
-			SAFE_FREE((void**)&nick);
-
-			NetLog_Server("%s has closed the message window.", strUID(dwUin, szUID));
+			print_info(msg_param.uid, s, "icq_window_closed", format_user(s, msg_param.uid));
 			break;
-		#endif
-		}
 
 		default:
-			debug_function("icq_snac_message_mini_typing_notification() uid: %s, UNKNOWN typing!!! (0x%x)\n", msg_param.sender, pkt.typing);
+			debug_warn("icq_snac_message_mini_typing_notification() uid: %s, UNKNOWN typing!!! (0x%x)\n", msg_param.sender, pkt.typing);
 	}
 #endif
 	return 0;
@@ -658,39 +661,6 @@ SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
 SNAC_SUBHANDLER(icq_snac_message_queue) {	/* SNAC(4, 0x17) Offline Messages response */
 	debug_error("icq_snac_message_queue() XXX\n");
 
-#if MIRANDA
-	offline_message_cookie *cookie;
-
-	if (FindCookie(dwRef, NULL, (void**)&cookie))
-	{
-		NetLog_Server("End of offline msgs, %u received", cookie->nMessages);
-		if (cookie->nMissed)
-		{ // NASTY WORKAROUND!!
-			// The ICQ server has a bug that causes offline messages to be received again and again when some
-			// missed message notification is present (most probably it is not processed correctly and causes
-			// the server to fail the purging process); try to purge them using the old offline messages
-			// protocol.  2008/05/21
-			NetLog_Server("Warning: Received %u missed message notifications, trying to fix the server.", cookie->nMissed);
-
-			icq_packet packet;
-			// This will delete the messages stored on server
-			serverPacketInit(&packet, 24);
-			packFNACHeader(&packet, ICQ_EXTENSIONS_FAMILY, ICQ_META_CLI_REQ);
-			packWord(&packet, 1);             // TLV Type
-			packWord(&packet, 10);            // TLV Length
-			packLEWord(&packet, 8);           // Data length
-			packLEDWord(&packet, m_dwLocalUIN); // My UIN
-			packLEWord(&packet, CLI_DELETE_OFFLINE_MSGS_REQ); // Ack offline msgs
-			packLEWord(&packet, 0x0000);      // Request sequence number (we dont use this for now)
-
-			sendServPacket(&packet);
-		}
-
-		ReleaseCookie(dwRef);
-	}
-	else
-		NetLog_Server("Error: Received unexpected end of offline msgs.");
-#endif
 	return -3;
 }
 

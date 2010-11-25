@@ -24,11 +24,11 @@ OUTPUT:
 	RETVAL
 
 
-int command_bind(char *command, char *handler)
+void command_bind(char *command, char *handler)
 CODE:
         perl_command_bind(command, NULL, NULL, handler);
 	
-int command_bind_ext(char *command, char *params, char *poss, char *handler)
+void command_bind_ext(char *command, char *params, char *poss, char *handler)
 CODE:
         perl_command_bind(command, params, poss, handler);
 		

@@ -1,0 +1,118 @@
+// translation from themes.txt 2009 by Jan J. Roman <poczta@jjroman.net>
+
+.---------------,--------,-------,-----.
+| color         |ordinary| light | bg  |
+,---------------+--------+-------+-----'
+| black/grey    | %k     | %K    | %l  |
+| blue	        | %b     | %B    | %e  |
+| red           | %r     | %R    | %s  |
+| violet        | %m/%p  | %M/%P | %q  |
+| turquoise     | %c     | %C    | %d  |
+| brown/yellow  | %y     | %Y    | %z  |
+| green         | %g     | %G    | %h  |
+| white         | %w     | %W    | %x  |
+| blinking      | %i     | -     | -   |
+| bold       	| %T	 | -	 | -   |
+,---------------'--------'-------'-----|
+| 'white char'  | %n                   |
+`---------------'----------------------'
+
+* * *
+
+  %A	choose the graphic maping: vt100
+  %a	choose default maping.
+
+* * *
+
+You can use %1-%9 to hard define a width, it can be usefull for tables or lists.
+
+  %[10]1   add spaces before text for attaining specific width (in this case 10 - it is the first parameter)
+  %[-10]1  similar but add spaces after text
+  %[.5]1   uses zeroes to achive specific length
+  %[,9]2   the same but uses points
+  %[_4]1   uses '_' character
+  %(10)1   if parameter is longer than 10 it will be NOT cut down.
+  %[^12]1  put first parameter in the middle of space length of 12 (empty fields are filled by spaces). 
+  %[^,8]1  as above but space size is 8 and filling character is point 
+
+WARNING! coloring expresions are treated as regular text, Don't use it for auto completion.
+
+* * *
+
+// It is polish declension cause I have no idea how to translate this ;-)
+je¶li chce siê rozró¿niaæ przymiotniki dla ró¿nych p³ci, mo¿na u¿yæ
+%@n, gdzie ,,n'' to numer formatu, który bierzemy pod uwagê. je¶li
+ostatni± liter± bêdzie ,,a'', %@n zostanie zast±pione przez ,,a'',
+w innym przypadku przez ,,y''. przyk³ad:
+
+  %> %1 jest dostêpn%@1.
+
+nale¿y wzi±æ uwagê, ¿e w wielu wypadkach pseudonimy s± najpierw
+formatowane przez known_user i unknown_user, wiêc trzeba podaæ osobny
+parametr z samym pseudonimem.
+
+* * *
+
+%>  prompt (green by default)
+%!  error (red by default)
+%)  prompt2 (turquoise by default)
+%#  timestamp (GG:MM by default)
+
+%|  the end of prompt. Occur of this format means that prompt should 
+	be repeated in the beginning of each new line
+    
+    example:
+
+        %> Very long line, will be divided for several shorter.
+
+    On the small term:
+
+	.-------------------------.
+	| ::: Very long line,     |
+	| will be divided for     |
+	| several shorter.		  |
+	`-------------------------'
+
+    If in format string is %| it means:
+
+        %> %|Very long line, will be divided for several shorter.
+		
+    output will be:
+
+	.-------------------------.
+	| ::: Very long line,     |
+	| ::: will be divided for |
+	| ::: several shorter.    |
+	`-------------------------'
+
+* * *
+
+There is two special formats:''known_user'' i ''unknown_user''. They define
+how to show users from contact list and out of list.
+First get two parameters:
+%1 - description from contact list
+%2 - user identificator
+second only one:
+%1 - user identificator
+
+* * *
+
+entries readline_*, shouldn't consist of formating codes (with '%'),
+The exception of this rule is readline_prompt_query.
+This rule is also for config_changed.
+
+* * *
+
+(ncurses) There is posibility of setiing margins and definind its size by ncurses:margin_size variable.
+For use margins there is "/|" formating string. 
+
+example:
+	text left/|text right
+causes:
+	text left		text right
+size of gap is defining in ncurses:margin_size value.
+
+* * *
+
+$Id: themes.txt 4009 2008-06-02 09:56:12Z wiechu $
+$Id: themes.txt 4009 2009-03-14 13:35:43Z Pinochet $

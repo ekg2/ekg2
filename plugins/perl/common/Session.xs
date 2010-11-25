@@ -33,7 +33,9 @@ CODE:
 	
 int session_param_set(Ekg2::Session::Param param, Ekg2::Session session, const char *value)
 CODE:
-	session_set(session, param->key, value);
+	RETVAL = session_set(session, param->key, value);
+OUTPUT:
+        RETVAL
 
 ###########  EKG2::Session ##################################################################
 MODULE = Ekg2::Session	PACKAGE = Ekg2::Session  PREFIX = session_
@@ -55,7 +57,9 @@ void session_connected_set(Ekg2::Session session, int val)
 # TODO think about that &perl_plugin...
 int session_param_add(Ekg2::Session session, char *name)
 CODE:
-	plugin_var_add(&perl_plugin, name, VAR_STR, NULL, 0, NULL);
+	RETVAL = plugin_var_add(&perl_plugin, name, VAR_STR, NULL, 0, NULL);
+OUTPUT:
+        RETVAL
 
 
 void session_param_set(Ekg2::Session session, char *name, char *value)

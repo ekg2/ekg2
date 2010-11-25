@@ -15,7 +15,7 @@ PPCODE:
 
 void variables_free()
 CODE:
-	variable_free();
+	variables_destroy();
 	
 Ekg2::Variable variable_add_ext(char *name, char *value, char *handler)
 CODE:
@@ -44,5 +44,7 @@ CODE:
 
 int variable_set(Ekg2::Variable var, const char *value)
 CODE:
-	variable_set(var->name, value);
+	RETVAL = variable_set(var->name, value);
+OUTPUT:
+	RETVAL
 

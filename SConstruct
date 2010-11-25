@@ -29,6 +29,7 @@ indirs = [ # pseudo-hash, 'coz we want to keep order
 	['PLUGINDIR',	'$LIBDIR/ekg2/plugins',		'EKG2 plugins'],
 	]
 envs = {
+	'CC':			['CC', 'Compiler executable'],
 	'CCFLAGS':		['CFLAGS', 'Compiler flags'],
 	'LINKFLAGS':	['LDFLAGS', 'LIBS', 'Linker flags']
 	}
@@ -181,7 +182,7 @@ def RestoreFlags(env, old):
 
 def ExtTest(name, addexports = []):
 	""" Execute external test from scons.d/. """
-	exports = ['conf', 'defines', 'env', 'warnings', 'SetFlags', 'RestoreFlags']
+	exports = ['conf', 'defines', 'env', 'global_flags', 'warnings', 'SetFlags', 'RestoreFlags']
 	exports.extend(addexports)
 	ret = SConscript('scons.d/%s' % (name), exports)
 	return ret
@@ -221,6 +222,7 @@ opts.Add(BoolOption('UNICODE', 'Enable unicode support', True))
 opts.Add(BoolOption('RESOLV', 'Use libresolv-based domain resolver with SRV support', True))
 opts.Add(BoolOption('IDN', 'Support Internation Domain Names if libidn is found', True))
 opts.Add(BoolOption('NLS', 'Enable l10n in core (requires gettext)', True))
+opts.Add(BoolOption('RELPLUGINS', 'Support loading plugins from paths relative to cwd', True))
 opts.Add(BoolOption('STATIC', 'Whether to build static plugins instead of shared', False))
 opts.Add(BoolOption('SKIPCONF', 'Restore previous environment and skip configure if possible', False))
 opts.Add(BoolOption('SKIPCHECKS', 'Skip non-essential checks during configure (assuming they succeed)', False))
@@ -263,18 +265,31 @@ for k,v in envs.items():
 		if val in os.environ:
 			var.append(os.environ[val])
 	var = ' '.join(var)
-	opts.Add(k, desc, var)
+	if var:
+		opts.Add(k, desc, var)
+	else:
+		opts.Add(k, desc)
 
 opts.Update(env)
 opts.Save('options.cache', env)
 env.Help(opts.GenerateHelpText(env))
 
+# Default LINKFLAGS and CCFLAGS can be lists; stringify them.
+for k in envs:
+	if isinstance(env[k], list):
+		env[k] = ' '.join(env[k])
+
 defines = {}
+# Global flags are fairly special. They are merged into the environment directly
+# by the configure tests; we need them here only to save them into the cache and
+# restore when using SKIPCONF=1.
+global_flags = []
 
 if env['STATIC']:
 	defines['STATIC_LIBS'] = True
 else:
 	defines['SHARED_LIBS'] = True
+	defines['SKIP_RELATIVE_PLUGINS_DIR'] = not env['RELPLUGINS']
 defines['USE_UNICODE'] = env['UNICODE']
 try:
 	defines['VER_DISTNOTES'] = env['DISTNOTES']
@@ -320,6 +335,7 @@ if env['SKIPCONF']:
 		# and load environment
 		for k, v in confd.items():
 			globals()[k] = v
+		SetFlags(env, env.ParseFlags(global_flags))
 
 if not env['SKIPCONF']:
 	conf = env.Configure(custom_tests = {
@@ -567,6 +583,7 @@ if not env['SKIPCONF']:
 				'ekg_staticlibs': ekg_staticlibs,
 				'ekg_compat': ekg_compat,
 				'ekg_remote_flags': ekg_remote_flags,
+				'global_flags': global_flags,
 				'plugins': plugins,
 				'defines': defines
 				}, conff, cPickle.HIGHEST_PROTOCOL)

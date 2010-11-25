@@ -221,7 +221,7 @@ static COMMAND(command_key)
 
 	if (match_arg(params[0], 'd', ("delete"), 2)) {
 		char *tmp;
-		char *uid;
+		const char *uid;
 
 		if (!params[1]) {
 			printq("not_enough_params", name);

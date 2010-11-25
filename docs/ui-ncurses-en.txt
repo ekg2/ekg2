@@ -1,0 +1,91 @@
+// ui-ncurses
+// (c) copyright 2002 wojtek kaniewski <wojtekka@irc.pl>
+// (c) copyright 2004 Piotr Kupisiewicz <deli@rzepaknet.us>
+
+Ncurses differs a little from readline with windows. The main difference 
+is that the first window exists _always_ and it's a state window.
+To this window are sent informations about users' staus change.
+Keyboard operation details are in README file.
+
+Recommended settings:
+
+	set display_ack 3
+	set display_sent 1
+	set make_window 2
+
+The status bar contains clock, users own number details 
+ (color determines the status: black -- offline, white 
+-- avail, gray -- busy, sate -- invisible), current window number, 
+information about activity in other windows, new mail ect.
+
+New format has been added - "statusbar". Similarly to the others it supports colors, but doesn't have
+complection, blinking ect. But there are conditional constructions
+and extended information instead:
+
+	%{activity}	list of active windows
+	%{debug}	we are in debug window
+	%{descr}	our description/our status description
+	%{mail}		information on the number of e-mails or empty if no mail
+	%{more}		any added information in window when it's scrolled
+	%{nick}		our nickname {XXX not implemented yet}
+	%{query}	user/interlocutor in the current window
+	%{query_descr}	user description
+	%{query_ip}	user IP
+	%{query_nickname}	users nickname in the current window
+	%{session}	session ID or session alias
+	%{time}		current time, format defined by the bar_timestamp
+	%{typing}	text input by the caller
+	%{uin}		own number {XXX not implemented yet}
+	%{url}		ekg2 webside
+	%{version}	ekg2 version
+	%{window}	current windows number
+
+In IRC window are also available:
+	%{irctopic}	channel topic
+	%{irctopicby}	channel topic author
+	%{ircmode}	flags on a channel
+
+
+Conditional constructions allow to add text to the status
+bar only when the specified condition is met. Structures 
+are as follows:
+
+	%{?condition text}	text will be displayed when the condition is met
+	%{?!condition text}	text will be displayed when the condition is met
+
+The condition may be the availability of any of the above-named texts.
+For example, if there is conversation in the current window, the condition
+%{?query ...} is met. If own number is not configured, the condition
+%{?!uin ...} is met. There are also:
+
+	%{?away ...}		status busy
+	%{?avail ...}		status available
+	%{?notavail ...}	status offline
+	%{?invisible ...}	status invisible
+	%{?more ...}		any added information in window when it's scrolled
+	%{?query_away ...}	interlocutor is away
+	%{?query_avail ...}	interlocutor is avail
+	%{?query_notavail ...}	interlocutor is offline
+	%{?query_invisible ...}	interlocutor is invisible
+
+Conditions can be nested. For example, condition %{?query %{!?query_descr ...}} 
+will be displayed if the conversation is being continued, but the caller doesn't have
+the status with description.
+
+So that incredible status bars can be created, but the default should be
+enough for everyone. The status bar can have up to 5 lines. Additional 
+lines are described by the formats: ,,statusbar2'', ,,statusbar3'' ect.
+If there is a format ,,statusbar1''then it has priority over ,,statusbar''
+
+
+You can also include a header. This is a bar located above the windows, 
+described by the formats: ,header'', ,,header1'', ,,header2'' ect.
+It's analogy to the status bar and the same formats are available.
+
+contact list is (usually) available on the right side after setting the 
+variable ncurses:contacts to 1 (on). Contacts which are writing us currently
+are set to flashing (in fact it's a blink element of the structure 
+userlist_t). Ui-ncurses supports this by reading the appropriate theme
+and by correctly display.
+
+$Id: ui-ncurses.txt 5013 2010-10-04 13:52:16Z wiechu $

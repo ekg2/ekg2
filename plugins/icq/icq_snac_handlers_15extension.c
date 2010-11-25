@@ -8,6 +8,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -22,18 +26,31 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <ekg/debug.h>
+
+#include "icq.h"
+#include "misc.h"
+#include "icq_caps.h"
+#include "icq_const.h"
+#include "icq_flap_handlers.h"
+#include "icq_snac_handlers.h"
+
+
 SNAC_SUBHANDLER(icq_snac_extension_error) {
+	/* SNAC(15,01) SRV_ICQEXT_ERROR	Client/server error
+	 *
+	 * This is an error notification snac
+	 */
 	struct {
 		uint16_t error;
 	} pkt;
-	uint16_t error;
 
-	if (ICQ_UNPACK(&buf, "W", &pkt.error))
-		error = pkt.error;
-	else
-		error = 0;
+	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
+		pkt.error = 0;
+	/* XXX	TLV.Type(0x08) - error subcode */
+	/* XXX	TLV.Type(0x21) - service specific data from request */
 
-	icq_snac_error_handler(s, "extension", error);
+	icq_snac_error_handler(s, "extension", pkt.error);
 	return 0;
 }
 
@@ -163,6 +180,8 @@ struct fieldnames_t meta_name[]={
 	{META_AFFILATIONS_USERINFO,	"affilations"},
 	{META_SHORT_USERINFO,		"short"},
 	{META_HPAGECAT_USERINFO,	"hpagecat"},
+
+	{META_SET_FULLINFO_ACK,		"fullinfo_ack"},
 
 	{SRV_USER_FOUND,		"userfound"},
 	{SRV_LAST_USER_FOUND,		"userfound_last"},
@@ -578,6 +597,7 @@ cleanup:
 
 METASNAC_SUBHANDLER(icq_snac_extension_userfound) { return icq_snac_extension_userfound_common(s, buf, len, 0); }
 METASNAC_SUBHANDLER(icq_snac_extension_userfound_last) { return icq_snac_extension_userfound_common(s, buf, len, 1); }
+METASNAC_SUBHANDLER(icq_snac_extension_fullinfo_ack) { return 0; }
 
 static metasnac_subhandler_t get_userinfo_extension_handler(uint16_t subtype) {
 	switch (subtype) {
@@ -596,6 +616,10 @@ static metasnac_subhandler_t get_userinfo_extension_handler(uint16_t subtype) {
 }
 
 static int icq_meta_info_reply(session_t *s, unsigned char *buf, int len, private_data_t **info, int show) {
+	/* SNAC(15,03)/07DA SRV_META_INFO_REPLY	Meta information response
+	 *
+	 * This is the server response to client meta info request SNAC(15,02)/07D0.
+	 */
 	struct {
 		uint16_t subtype;
 		uint8_t result;
@@ -619,6 +643,8 @@ static int icq_meta_info_reply(session_t *s, unsigned char *buf, int len, privat
 			/* search */
 			case SRV_LAST_USER_FOUND:	handler = icq_snac_extension_userfound_last; break;
 			case SRV_USER_FOUND:		handler = icq_snac_extension_userfound; break;
+		
+			case META_SET_FULLINFO_ACK:	handler = icq_snac_extension_fullinfo_ack; break;
 
 			case SRV_RANDOM_FOUND:		handler = NULL; break;	/* XXX, SRV_RANDOM_FOUND */
 			default:			handler = NULL;
@@ -698,10 +724,87 @@ static int check_replyreq(session_t *s, unsigned char **buf, int *len, int *type
 	return 1;
 }
 
-SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
+static int icq_offline_message(session_t *s, unsigned char *buf, int len, private_data_t **info) {
 	/*
-	 * Handle SNAC(0x15, 0x3) -- Meta information response
+	 * SNAC(15,03)/0041 SRV_OFFLINE_MESSAGE Offline message response
 	 *
+	 * This is the server response to CLI_OFFLINE_MSGS_REQ SNAC(15,02)/003C.
+	 * This snac contain single offline message that was sent by another user
+	 * and buffered by server when client was offline.
+	 */
+	struct {
+		uint32_t uin;		/* message sender uin */
+
+		uint16_t y;		/* year when message was sent (LE) */
+		uint8_t M;		/* month when message was sent */
+		uint8_t d;		/* day when message was sent */
+		uint8_t h;		/* hour (GMT) when message was sent */
+		uint8_t m;		/* minute when message was sent */
+
+		uint8_t type;		/* message type */
+		uint8_t flags;		/* message flags */
+
+		uint16_t len;		/* message string length (LE) */
+		char *msg;		/* message string (null-terminated) */
+	} pkt;
+	char *recode = NULL;
+	char *uid;
+
+	debug_function("icq_offline_message()\n");
+
+	if (ICQ_UNPACK(&buf, "i wcccc cc w", &pkt.uin, &pkt.y, &pkt.M, &pkt.d, &pkt.h, &pkt.m, &pkt.type, &pkt.flags, &pkt.len)) {
+		struct tm lt;
+		lt.tm_sec	= 0;
+		lt.tm_min	= pkt.m;
+		lt.tm_hour	= pkt.h;
+		lt.tm_mday	= pkt.d;
+		lt.tm_mon	= pkt.M - 1;
+		lt.tm_year	= pkt.y - 1900;
+		lt.tm_isdst	= -1;
+
+		recode = icq_convert_from_ucs2be((char *) buf, pkt.len - 1);
+		if (!recode)
+			recode = xstrdup((const char*)buf);
+
+		uid = saprintf("icq:%u", pkt.uin);
+
+		if (recode && *recode)
+			protocol_message_emit(s, uid, NULL, recode, NULL, mktime(&lt), EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
+
+		xfree(uid);
+		xfree(recode);
+	}
+
+	return 0;
+}
+
+static int icq_offline_message_end(session_t *s, unsigned char *buf, int len, private_data_t **info) {
+	/*
+	 * SNAC(15,03)/0042 SRV_END_OF_OFFLINE_MSGS End-of-offline messages reply
+	 *
+	 * This is the last SNAC in server response to CLI_OFFLINE_MSGS_REQ SNAC(15,02)/003C.
+	 * It doesn't contain message - it is only end_of_sequence marker.
+	 */
+	debug_function("icq_offline_message_end()\n");
+
+	/* SNAC(15,02)/003E CLI_DELETE_OFFLINE_MSGS_REQ Delete offline messages request
+	 *
+	 * Client sends this SNAC when wants to delete offline messages from
+	 * server. But first you should request them from server using
+	 * SNAC(15,02)/003C. If you doesn't delete messages server will send them
+	 * again after client request.
+	 */
+	string_t pkt = string_init(NULL);
+	icq_makemetasnac(s, pkt, CLI_DELETE_OFFLINE_MSGS_REQ, 0, NULL, NULL);
+	icq_send_pkt(s, pkt);
+
+	return 0;
+}
+
+SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
+	/* SNAC(15,03) SRV_META_REPLY	Meta information response
+	 *
+	 * This is the server response to client meta request SNAC(15,02)
 	 */
 	int type = 0;
 	private_data_t *info = NULL;
@@ -714,11 +817,13 @@ SNAC_SUBHANDLER(icq_snac_extension_replyreq) {
 	private_item_set_int(&info, "uid", private_item_get_int(&data, "uid"));
 
 	switch (type) {
-		case SRV_OFFLINE_MESSAGE:
-		case SRV_END_OF_OFFLINE_MSGS:
-			debug_error("icq_snac_extension_replyreq() METASNAC type: 0x%x not supported yet.\n", type);
+		case SRV_OFFLINE_MESSAGE:		/* Offline message response */
+			icq_offline_message(s, buf, len, &info);
 			break;
-		case SRV_META_INFO_REPLY:
+		case SRV_END_OF_OFFLINE_MSGS:		/* End-of-offline messages reply */
+			icq_offline_message_end(s, buf, len, &info);
+			break;
+		case SRV_META_INFO_REPLY:		/* Meta information response */
 			icq_meta_info_reply(s, buf, len, &info, 1);
 			break;
 		default:

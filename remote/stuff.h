@@ -98,6 +98,7 @@ extern int config_timestamp_show;
 extern int config_history_savedups;
 extern int config_make_window;
 extern int config_sort_windows;
+extern int config_send_white_lines;
 
 extern char *config_tab_command;
 extern int config_save_quit;

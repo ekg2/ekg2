@@ -224,7 +224,7 @@ static char hextochar(char t) {
 		return 10+(t - 'A');
 	else if (t >= 'a' && t <= 'f') 
 		return 10+(t - 'a');
-	debug("hextochar() invalid char: %d\n", t);
+	debug_error("hextochar() invalid char: %d\n", t);
 	return 0;
 }
 
@@ -367,7 +367,10 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		while (text[i]) {
 			switch (cte) {
 				case ENCODING_QUOTEDPRINTABLE:
-					if (text[i] == '=' && text[i+1] && text[i+2]) {
+					if (text[i] == '=' && text[i+1] == '\n') {
+						i += 1;
+
+					} else if (text[i] == '=' && text[i+1] && text[i+2]) {
 						string_append_c(art->body, hextochar(text[i+1]) * 16 | hextochar(text[i+2]));
 						i += 2;
 					} else	string_append_c(art->body, text[i]);
@@ -643,7 +646,7 @@ static COMMAND(nntp_command_connect) {
 	struct sockaddr_in sin;
 	/* just proof of concpect... no checking for errors... no resolving etc... it's boring */
 	int fd, res;
-	const char *ip = session_get(session, "server");
+	const char *ip;
 	int one = 1;
 
 	if (j->connecting) {
@@ -652,6 +655,11 @@ static COMMAND(nntp_command_connect) {
 	}
 	if (session_connected_get(session)) {
 		printq("already_connected", session_name(session));
+		return -1;
+	}
+
+	if (!(ip = session_get(session, "server"))) {
+		printq("generic_error", "gdzie lecimy ziom ?! [/session server]");
 		return -1;
 	}
 

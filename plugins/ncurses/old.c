@@ -4,6 +4,7 @@
  *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *			    Wojtek Bojdo³ <wojboj@htcon.pl>
  *			    Pawe³ Maziarz <drg@infomex.pl>
+ *		  2008-2010 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -470,17 +471,9 @@ void ncurses_main_window_mouse_handler(int x, int y, int mouse_state)
 }
 
 /*
- * ncurses_backlog_add()
  *
- * dodaje do bufora okna. zak³adamy dodawanie linii ju¿ podzielonych.
- * je¶li doda siê do backloga liniê zawieraj±c± '\n', bêdzie ¼le.
- *
- *  - w - wska¼nik na okno ekg
- *  - str - linijka do dodania
- *
- * zwraca rozmiar dodanej linii w liniach ekranowych.
  */
-int ncurses_backlog_add(window_t *w, fstring_t *str)
+static int ncurses_backlog_add_real(window_t *w, fstring_t *str)
 {
 	int i, removed = 0;
 	ncurses_window_t *n = w->priv_data;
@@ -504,6 +497,28 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 		n->backlog = xrealloc(n->backlog, (n->backlog_size + 1) * sizeof(fstring_t *));
 
 	memmove(&n->backlog[1], &n->backlog[0], n->backlog_size * sizeof(fstring_t *));
+	n->backlog[0] = str;
+
+	n->backlog_size++;
+
+	for (i = 0; i < n->lines_count; i++)
+		n->lines[i].backlog++;
+
+	return ncurses_backlog_split(w, 0, removed);
+}
+
+/*
+ * ncurses_backlog_add()
+ *
+ * dodaje do bufora okna. zak³adamy dodawanie linii ju¿ podzielonych.
+ * je¶li doda siê do backloga liniê zawieraj±c± '\n', bêdzie ¼le.
+ *
+ *  - w - wska¼nik na okno ekg
+ *  - str - linijka do dodania
+ *
+ * zwraca rozmiar dodanej linii w liniach ekranowych.
+ */
+int ncurses_backlog_add(window_t *w, fstring_t *str) {
 #if USE_UNICODE
 	{
 		int rlen = xstrlen(str->str.b);
@@ -558,15 +573,9 @@ int ncurses_backlog_add(window_t *w, fstring_t *str)
 		str->attr	= xrealloc(str->attr, (i+1) * sizeof(short));
 	}
 #endif
-	n->backlog[0] = str;
-
-	n->backlog_size++;
-
-	for (i = 0; i < n->lines_count; i++)
-		n->lines[i].backlog++;
-
-	return ncurses_backlog_split(w, 0, removed);
+	return ncurses_backlog_add_real(w, str);
 }
+
 
 /*
  * ncurses_backlog_split()
@@ -972,7 +981,7 @@ COMMAND(cmd_mark) {
 
 	if (match_arg(params[0], 'a', ("all"), 2)) {
 		for (w = windows; w; w = w->next) {
-			if (!w->floating && (w->act != 2)) {
+			if (!w->floating && (w->act <= EKG_WINACT_MSG)) {
 				n = w->priv_data;
 				n->last_red_line = time(0);
 				n->redraw = 1;
@@ -986,7 +995,7 @@ COMMAND(cmd_mark) {
 	} else
 		w = window_current;
 
-	if (w && !w->floating && (w->act != 2)) {
+	if (w && !w->floating && (w->act <= EKG_WINACT_MSG)) {
 		n = w->priv_data;
 		n->last_red_line = time(0);
 		n->redraw = 1;
@@ -1166,7 +1175,7 @@ void ncurses_redraw(window_t *w)
 				wattrset(n->window, attr);
 
 				if (!fixup && (l->margin_left != -1 && x >= l->margin_left))
-					fixup = l->margin_left + config_margin_size;
+					fixup = l->margin_left - config_margin_size;
 #if USE_UNICODE
 				mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
 #else
@@ -1182,7 +1191,7 @@ void ncurses_redraw(window_t *w)
 			wattrset(n->window, attr);
 
 			if (!fixup && (l->margin_left != -1 && (x + l->prompt_len) >= l->margin_left))
-				fixup = l->margin_left + config_margin_size;
+				fixup = l->margin_left - config_margin_size;
 #if USE_UNICODE
 			mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
 #else
@@ -1340,24 +1349,11 @@ static void update_header() {
  * zwraca ilo¶æ dopisanych znaków.
  */
 
-/* 13 wrz 06	removed status cause it was always 1 (dj)  */
-		
 static int window_printat(WINDOW *w, int x, int y, const char *format, struct format_data *data, int fgcolor, int bold, int bgcolor) {
-	int backup_display_color = config_display_color;
 	const char *p;			/* temporary format value */
 	int orig_x = x;
 
-	if (!w)
-		return -1;
-	
 	p = format;
-
-	if (orig_x == 0) {
-		if (config_display_color == 2) 
-			config_display_color = 0;
-
-		wattrset(w, color_pair(fgcolor, bgcolor));
-	}
 
 	wmove(w, y, x);
 			
@@ -1546,19 +1542,6 @@ next:
 		}
 	}
 
-	if (orig_x == 0) {
-		int i;
-
-		wattrset(w, color_pair(fgcolor, bgcolor));
-
-		wmove(w, y, x);
-
-		for (i = x; i <= w->_maxx; i++)
-			waddch(w, ' ');
-
-		config_display_color = backup_display_color;
-	}
-
 	return x - orig_x;
 }
 
@@ -1603,6 +1586,29 @@ static char *ncurses_window_activity(void) {
 		return NULL;
 	} else
 		return string_free(s, 0);
+}
+
+static void reprint_statusbar(WINDOW *w, int y, const char *format, struct format_data *data) {
+	int backup_display_color = config_display_color;
+	int i;
+	int x;
+
+	if (!w)
+		return;
+
+	if (config_display_color == 2) 
+		config_display_color = 0;
+
+	wattrset(w, color_pair(COLOR_WHITE, COLOR_BLUE));
+
+	x = window_printat(w, 0, y, format, data, COLOR_WHITE, 0, COLOR_BLUE);
+
+	wmove(w, y, x);
+
+	for (i = x; i <= w->_maxx; i++)
+		waddch(w, ' ');
+
+	config_display_color = backup_display_color;
 }
 
 /*
@@ -1711,7 +1717,9 @@ void update_statusbar(int commit)
 #undef __add_format_emp_st
 
 		__add_format_emp("typing", q->typing);
-		__add_format_dup("query_descr", (q->descr), q->descr);
+
+		__add_format_dup("query_descr", (q->descr1line), q->descr1line);
+
 		__add_format_dup("query_ip", 1, ip);
 	}
 
@@ -1738,7 +1746,7 @@ void update_statusbar(int commit)
 			xfree(tmp);
 		}
 
-		window_printat(ncurses_header, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE);
+		reprint_statusbar(ncurses_header, y, p, formats);
 	}
 
 	for (y = 0; y < config_statusbar_size; y++) {
@@ -1758,24 +1766,24 @@ void update_statusbar(int commit)
 		switch (ncurses_debug) {
 			char *tmp;
 			case 0:
-				window_printat(ncurses_status, 0, y, p, formats, COLOR_WHITE, 0, COLOR_BLUE);
+				reprint_statusbar(ncurses_status, y, p, formats);
 				break;
 
 			case 1:
 				tmp = saprintf(" debug: lines_count=%d start=%d height=%d overflow=%d screen_width=%d", ncurses_current->lines_count, ncurses_current->start, window_current->height, ncurses_current->overflow, ncurses_screen_width);
-				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE);
+				reprint_statusbar(ncurses_status, y, tmp, formats);
 				xfree(tmp);
 				break;
 
 			case 2:
 				tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", array_count((char **) ncurses_lines), lines_start, lines_index, line_start, line_index);
-				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE);
+				reprint_statusbar(ncurses_status, y, tmp, formats);
 				xfree(tmp);
 				break;
 
 			case 3:
 				tmp = saprintf(" debug: session=%p uid=%s alias=%s / target=%s session_current->uid=%s", sess, (sess && sess->uid) ? sess->uid : "", (sess && sess->alias) ? sess->alias : "", (window_current->target) ? window_current->target : "", (session_current && session_current->uid) ? session_current->uid : "");
-				window_printat(ncurses_status, 0, y, tmp, formats, COLOR_WHITE, 0, COLOR_BLUE);
+				reprint_statusbar(ncurses_status, y, tmp, formats);
 				xfree(tmp);
 				break;
 		}
@@ -1810,7 +1818,8 @@ int ncurses_window_kill(window_t *w)
 	xfree(n);
 	w->priv_data = NULL;
 
-//	ncurses_resize();
+	if (w->floating)
+		ncurses_resize();
 
 	ncurses_window_gone(w);
 
@@ -2043,23 +2052,15 @@ void ncurses_lines_adjust() {
  * uaktualnia zmianê rozmiaru pola wpisywania tekstu -- przesuwa okienka
  * itd. je¶li zmieniono na pojedyncze, czy¶ci dane wej¶ciowe.
  */
-void ncurses_input_update()
+void ncurses_input_update(int new_line_index)
 {
 	if (ncurses_input_size == 1) {
-		int i;
-		
-		for (i = 0; ncurses_lines[i]; i++)
-			xfree(ncurses_lines[i]);
-		xfree(ncurses_lines);
+		array_free((char **) ncurses_lines);
 		ncurses_lines = NULL;
 		ncurses_line = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
 
 		ncurses_history[0] = ncurses_line;
 
-		line_start = 0;
-		line_index = 0; 
-		lines_start = 0;
-		lines_index = 0;
 	} else {
 		ncurses_lines = xmalloc(2 * sizeof(CHAR_T *));
 		ncurses_lines[0] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
@@ -2068,10 +2069,12 @@ void ncurses_input_update()
 		xfree(ncurses_line);
 		ncurses_line = ncurses_lines[0];
 		ncurses_history[0] = NULL;
-		lines_start = 0;
-		lines_index = 0;
 	}
-	
+	line_start = 0;
+	line_index = new_line_index; 
+	lines_start = 0;
+	lines_index = 0;
+
 	ncurses_resize();
 
 	ncurses_redraw(window_current);
@@ -2365,7 +2368,7 @@ void ncurses_redraw_input(unsigned int ch) {
 	if (ncurses_lines) {
 		int i;
 		
-		for (i = 0; i < 5; i++) {
+		for (i = 0; i < MULTILINE_INPUT_SIZE; i++) {
 			CHAR_T *p;
 			int j;
 			size_t plen;
@@ -2714,6 +2717,9 @@ void changed_backlog_size(const char *var)
 
 static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	const char *header;
+#if USE_UNICODE
+	CHAR_T *wexpression;
+#endif
 
 	ncurses_window_t *n;
 	window_lastlog_t *lastlog;
@@ -2755,6 +2761,10 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	if (config_lastlog_noitems) /* always add header */
 		ncurses_backlog_add(lastlog_w, fstring_new_format(header, window_target(w), lastlog->expression));
 
+#if USE_UNICODE
+	wexpression = normal_to_wcs(lastlog->expression);
+#endif
+
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
 
 	for (i = n->backlog_size-1; i >= 0; i--) {
@@ -2763,7 +2773,14 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		if (lastlog->isregex) {		/* regexp */
 #ifdef HAVE_REGEX_H
 			int rs;
-			if (!(rs = regexec(&(lastlog->reg), (char *) n->backlog[i]->str.w, 0, NULL, 0))) 
+#if USE_UNICODE
+			char *tmp = wcs_to_normal(n->backlog[i]->str.w);
+			rs = regexec(&(lastlog->reg), tmp, 0, NULL, 0);
+			xfree(tmp);
+#else
+			rs = regexec(&(lastlog->reg), (char *) n->backlog[i]->str.w, 0, NULL, 0);
+#endif
+			if (!rs) 
 				found = 1;
 			else if (rs != REG_NOMATCH) {
 				char errbuf[512];
@@ -2777,9 +2794,19 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 			}
 #endif
 		} else {				/* substring */
+#if USE_UNICODE
+			if (local_config_lastlog_case) 
+				found = !!wcsstr(n->backlog[i]->str.w, wexpression);
+			else {
+				char *tmp = wcs_to_normal(n->backlog[i]->str.w);
+				found = !!xstrcasestr(tmp, lastlog->expression);
+				xfree(tmp);
+			}
+#else
 			if (local_config_lastlog_case) 
 				found = !!xstrstr((char *) n->backlog[i]->str.w, lastlog->expression);
 			else	found = !!xstrcasestr((char *) n->backlog[i]->str.w, lastlog->expression);
+#endif
 		}
 
 		if (!config_lastlog_noitems && found && !items) /* add header only when found */
@@ -2788,11 +2815,6 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		if (found) {
 			fstring_t *dup;
 			size_t len;
-#if 0
-(USE_UNICODE)
-			#warning "ncurses_ui_window_lastlog_find() won't work with USE_UNICODE sorry. no time for it. feel free"
-			continue;
-#endif
 
 			dup = xmalloc(sizeof(fstring_t));
 
@@ -2807,10 +2829,13 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		/* org. window for example if we would like user allow move under that line with mouse and double-click.. or whatever */
 /*			dup->priv_data		= (void *) w;	 */
 
-			ncurses_backlog_add(lastlog_w, dup);
+			ncurses_backlog_add_real(lastlog_w, dup);
 			items++;
 		}
 	}
+#if USE_UNICODE
+	xfree(wexpression);
+#endif
 
 	return items;
 }
@@ -2841,7 +2866,7 @@ int ncurses_lastlog_update(window_t *w) {
 
 	if (config_lastlog_display_all) {
 /* 3rd, other windows? */
-		for (ww = windows; ww; w = ww->next) {
+		for (ww = windows; ww; ww = ww->next) {
 			if (ww == window_current) continue;
 			if (ww == w) continue; /* ;p */
 
@@ -2921,10 +2946,10 @@ int ncurses_window_new(window_t *w)
 	} else if (!xstrcmp(w->target, "__lastlog")) {
 		ncurses_lastlog_new(w);
 
-	} else if (w->target) {
+	} else if (w->target || w->alias) {
 		const char *f = format_find("ncurses_prompt_query");
 
-		n->prompt = format_string(f, w->target);
+		n->prompt = format_string(f, w->alias ? w->alias : w->target);
 		n->prompt_len = xstrlen(n->prompt);
 
 		ncurses_update_real_prompt(n);
@@ -2940,6 +2965,9 @@ int ncurses_window_new(window_t *w)
 	}
 
 	n->window = newwin(w->height, w->width, w->top, w->left);
+
+	if (config_mark_on_window_change)
+		command_exec_format(NULL, NULL, 0, "/mark %d", w->id);
 
 	ncurses_resize();
 

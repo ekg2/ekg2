@@ -34,6 +34,7 @@
 #include <ekg/stuff.h>
 
 #include "gg.h"
+#include "misc.h"
 
 /*
  * gg_status_to_text()
@@ -61,6 +62,16 @@ int gg_status_to_text(int status)
 		case GG_STATUS_INVISIBLE_DESCR:
 			return EKG_STATUS_INVISIBLE;
 
+#ifdef GG_FEATURE_DND_FFC
+		case GG_STATUS_DND:
+		case GG_STATUS_DND_DESCR:
+			return EKG_STATUS_DND;
+
+		case GG_STATUS_FFC:
+		case GG_STATUS_FFC_DESCR:
+			return EKG_STATUS_FFC;
+#endif
+
 		case GG_STATUS_BLOCKED:
 			return EKG_STATUS_BLOCKED;
 	}
@@ -83,6 +94,10 @@ int gg_text_to_status(const int status, const char *descr)
 	GG_TTS(AVAIL, AVAIL)
 	GG_TTS(AWAY, BUSY) /* I think we don't need to care about Jabber aways */
 	GG_TTS(INVISIBLE, INVISIBLE)
+#ifdef GG_FEATURE_DND_FFC
+	GG_TTS(DND, DND)
+	GG_TTS(FFC, FFC)
+#endif
 #undef GG_TTS
 	if (status == EKG_STATUS_BLOCKED) return GG_STATUS_BLOCKED;
 
@@ -235,6 +250,38 @@ int gg_userlist_send(struct gg_session *s, userlist_t *userlist) {
 	xfree(uins);
 	xfree(types);
 	return res;
+}
+
+/*
+ *
+ * recode
+ *
+ * starting from protocol version 0x2e, GG handles unicode
+ *
+ */
+char *gg_to_locale(session_t *s, char *txt) {
+	gg_private_t *g = session_private_get(s);
+	return (g->curr_prtcl_ver >= 0x2e) ? ekg_utf8_to_locale(txt) : ekg_cp_to_locale(txt);
+}
+
+char *gg_to_locale_dup(session_t *s, const char *txt) {
+	gg_private_t *g = session_private_get(s);
+	return (g->curr_prtcl_ver >= 0x2e) ? ekg_utf8_to_locale_dup(txt) : ekg_cp_to_locale_dup(txt);
+}
+
+char *locale_to_gg(session_t *s, char *txt) {
+	gg_private_t *g = session_private_get(s);
+	return (g->curr_prtcl_ver >= 0x2e) ? ekg_locale_to_utf8(txt) : ekg_locale_to_cp(txt);
+}
+
+char *locale_to_gg_dup(session_t *s, const char *txt) {
+	gg_private_t *g = session_private_get(s);
+	return (g->curr_prtcl_ver >= 0x2e) ? ekg_locale_to_utf8_dup(txt) : ekg_locale_to_cp_dup(txt);
+}
+
+const char *locale_to_gg_use(session_t *s, const char *txt) {
+	gg_private_t *g = session_private_get(s);
+	return (g->curr_prtcl_ver >= 0x2e) ? ekg_locale_to_utf8_use(txt) : ekg_locale_to_cp_use(txt);
 }
 
 /*

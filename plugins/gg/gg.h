@@ -53,6 +53,7 @@ typedef struct {
 	list_t		searches;		/* operacje szukania */
 	list_t		passwds;		/* operacje zmiany has³a */
 	gg_quiet_t	quiet;			/* co ma byæ cicho */
+	int		curr_prtcl_ver;		/* current protocol version */
 
 		/* (annoying) description scrolling */
 	unsigned int	scroll_op	: 1;

@@ -60,7 +60,7 @@
  *
  */
 
-PyObject *python_build_user(char * session, char * name)
+PyObject *python_build_user(char * session, const char * name)
 {
 	ekg_userObj *pyuser;
 	char buf[100];

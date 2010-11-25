@@ -75,7 +75,7 @@ static QUERY(protocol_userlist_changed);
  *	- acknowledge of messages:		<i>PROTOCOL_MESSAGE_ACK</i><br>
  *	- misc user events like typing notifies:<i>PROTOCOL_XSTATE</i><br>
  *	- session connection/disconnection:	<i>PROTOCOL_CONNECTED</i> and <i>PROTOCOL_DISCONNECTED</i>
- *	- roster changes:			<i>USERLIST_CHANGED</i> and <i>USERLIST_ADDED</i> and <i>USERLIST_REMOVED</i> and <i>USERLIST_RENAMED</i>
+ *	- roster changes:			<i>USERLIST_ADDED</i> and <i>USERLIST_REMOVED</i> and <i>USERLIST_RENAMED</i>
  *
  * @sa query_connect()	- Function to add listener on specified events.
  * @sa query_emit()	- Function to emit specified events.
@@ -90,7 +90,6 @@ void protocol_init() {
 	query_connect_id(NULL, PROTOCOL_CONNECTED, protocol_connected, NULL);
 	query_connect_id(NULL, PROTOCOL_DISCONNECTED, protocol_disconnected, NULL);
 
-	query_connect_id(NULL, USERLIST_CHANGED,	protocol_userlist_changed, NULL);
 	query_connect_id(NULL, USERLIST_ADDED,		protocol_userlist_changed, NULL);
 	query_connect_id(NULL, USERLIST_REMOVED,	protocol_userlist_changed, NULL);
 	query_connect_id(NULL, USERLIST_RENAMED,	protocol_userlist_changed, NULL);
@@ -473,13 +472,17 @@ notify_plugins:
 			r->descr = xstrdup(descr);
 		}
 
-		if (u->resources) {	/* get highest prio descr */
-			xfree(u->descr);
-			u->descr = xstrdup(u->resources->descr);
-		} else {
-			xfree(u->descr);
-			u->descr = xstrdup(descr);
+		xfree(u->descr);
+		u->descr = xstrdup(u->resources ? u->resources->descr : descr);	/* get highest prio descr */
+
+		de = xstrdup(u->descr);
+		if (de) {
+			char *p;
+			while ((p=xstrstr(de, "\r\n"))) memmove(p, p+1, xstrlen(p));	/* dos2unix */
+			while ((p=xstrchr(de,'\n'))) *p = ' ';				/* all in 1 line */
 		}
+		xfree(u->descr1line);
+		u->descr1line = de;
 
 		if (!u->resources || u->resources == r) 
 			u->status_time = when ? when : time(NULL);
@@ -614,6 +617,10 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 				string_append_c(s, '%');
 				string_append_c(s, attr);
 			}
+
+			if ((text[i] == '/') && (text[i+1] == '|'))	/* /| set margin */
+				if ((i == 0) || (text[i-1] != '/'))
+					string_append_c(s, '/');
 
 			if (text[i] == '%')
 				string_append_c(s, '%');

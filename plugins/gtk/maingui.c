@@ -320,7 +320,7 @@ static gboolean mg_inputbox_focus(GtkWidget *widget, GdkEventFocus *event, gtk_w
 void mg_inputbox_cb(GtkWidget *igad, gtk_window_ui_t *gui) {
 	static int ignore = FALSE;
 	window_t *sess = NULL;
-	char *cmd;
+	char *cmd, *p;
 
 	if (ignore)
 		return;
@@ -354,7 +354,9 @@ void mg_inputbox_cb(GtkWidget *igad, gtk_window_ui_t *gui) {
 	}
 
 	if (sess) {
-		command_exec(sess->target, sess->session, cmd, 0);
+		for (p=cmd; *p && isspace(*p); p++);
+		if (*p || config_send_white_lines)
+			command_exec(sess->target, sess->session, cmd, 0);
 
 		if (config_history_savedups || xstrcmp(cmd, gtk_history[1])) {
 			gtk_history[0] = cmd;
@@ -885,8 +887,8 @@ void mg_open_quit_dialog(gboolean minimize_button) {
 	if (config_save_quit == 1) {
 #warning "Display question if user want to /save config"
 /*
-		if (config_changed)				format_find("config_changed")
-		else if (config_keep_reason && reason_changed)	format_find("quit_keep_reason");
+		if (config_changed)					format_find("config_changed")
+		else if (config_keep_reason && ekg2_reason_changed)	format_find("quit_keep_reason");
 */
 		config_save_quit = 0;
 	}

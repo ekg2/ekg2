@@ -466,6 +466,12 @@ static char *va_format_string(const char *format, va_list ap) {
 					for (i = 0; i < fill_length; i++)
 						string_append_c(buf, fill_char);
 			}
+		} else if ((*p=='/') && (p[1] == '|')) {	/* /| 'set margin' */
+			if ((p == format) || (p[-1]!='/'))
+				string_append(buf, "\033[0000m");	/* najg³upsze, ale to nie jest moje ostatnie s³owo */
+			else
+				string_append_c(buf, '|');
+			p++;
 		} else
 			string_append_c(buf, *p);
 		p++;
@@ -578,11 +584,16 @@ fstring_t *fstring_new(const char *str) {
 						case 0:				/* RESET */
 							attr = FSTR_NORMAL;
 							isbold = 0;
-							if (parlen[k] >= 2)
-								res->prompt_len = j;
 
-							if (parlen[k] == 3)
-								res->prompt_empty = 1;
+							if (parlen[k] == 4)	/* /| set margin */
+								res->margin_left = j;
+							else {
+								if (parlen[k] >= 2)
+									res->prompt_len = j;
+
+								if (parlen[k] == 3)
+									res->prompt_empty = 1;
+							}
 							break;
 						case 1:				/* BOLD */
 							if (k == npar && !isbold)		/* if (*p == ('m') && !isbold) */
@@ -618,15 +629,6 @@ fstring_t *fstring_new(const char *str) {
 
 		if (str[i] == 13)
 			continue;
-
-		if (str[i] == ('/') && str[i + 1] == ('|')) {
-			if (i == 0 || str[i - 1] != ('/')) {
-				res->margin_left = j;
-				i++;
-				continue;
-			}
-			continue;
-		}
 
 		if (str[i] == 9) {
 			int k = 0, l = 8 - (j % 8);
@@ -808,7 +810,7 @@ static window_t *print_window_find(const char *target, session_t *session, int s
 	/* 1) let's check if we have such window as target... */
 
 	/* if it's jabber and we've got '/' in target strip it. [XXX, window resources] */
-	if ((!xstrncmp(target, "xmpp:", 5)) && (tmp = xstrchr(target, '/'))) {
+	if ( ( (!xstrncmp(target, "tlen:", 5)) || (!xstrncmp(target, "xmpp:", 5)) ) && (tmp = xstrchr(target, '/'))) {
 		newtarget = xstrndup(target, tmp - target);
 		w = window_find_s(session, newtarget);		/* and search for windows with stripped '/' */
 		/* even if w == NULL here, we use newtarget to create window without resource */
@@ -837,7 +839,7 @@ static window_t *print_window_find(const char *target, session_t *session, int s
 	if (u && u->nickname)
 		target = u->nickname;			/* use nickname instead of target */
 	else if (u && u->uid && ( /* don't use u->uid, if it has resource attached */
-			xstrncmp(u->uid, "xmpp:", 5) || !xstrchr(u->uid, '/')))
+			(xstrncmp(u->uid, "tlen:", 5) && xstrncmp(u->uid, "xmpp:", 5)) || !xstrchr(u->uid, '/')))
 		target = u->uid;			/* use uid instead of target. XXX here. think about jabber resources */
 	else if (newtarget)
 		target = newtarget;			/* use target with stripped '/' */
@@ -1665,7 +1667,7 @@ void theme_init()
 
 	/* changing information in public catalog */
 	format_add("change", _("%> Informations in public directory chenged\n"), 1);
-	format_add("change_failed", _("%! Error while changing informations in public directory\n"), 1);
+	format_add("change_failed", _("%! Error while changing information in public directory\n"), 1);
 
 	/* users finding */
 	format_add("search_failed", _("%! Error while search: %1\n"), 1);
@@ -1706,6 +1708,7 @@ void theme_init()
 	format_add("user_info_status_time_format", "%Y-%m-%d %H:%M", 1);
 	format_add("user_info_status_time", _("%K| %nCurrent status since: %T%1%n\n"), 1);
 	format_add("user_info_block", _("%K| %nBlocked\n"), 1);
+	format_add("user_info_online", _("%K| %nCan always see our status\n"), 1);
 	format_add("user_info_offline", _("%K| %nCan't see our status\n"), 1);
 	format_add("user_info_name", _("%K| %nName: %T%1 %2%n\n"), 1);
 	format_add("user_info_mobile", _("%K| %nTelephone: %T%1%n\n"), 1);
@@ -1991,7 +1994,7 @@ void theme_init()
 	format_add("session_info_param", "%)	%1 = %T%2%n\n", 1); /* key, value */
 	format_add("session_info_footer", "", 1); /* uid */
 	format_add("session_exists", _("%! Session %T%1%n already exists\n"), 1); /* uid */
-	format_add("session_doesnt_exist", _("%! Sesion %T%1%n does not exist\n"), 1); /* uid */
+	format_add("session_doesnt_exist", _("%! Session %T%1%n does not exist\n"), 1); /* uid */
 	format_add("session_added", _("%> Created session %T%1%n\n"), 1); /* uid */
 	format_add("session_removed", _("%> Removed session %T%1%n\n"), 1); /* uid */
 	format_add("session_format", "%T%1%n", 1);

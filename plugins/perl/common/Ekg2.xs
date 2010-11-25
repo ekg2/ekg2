@@ -97,7 +97,7 @@ CODE:
 
 #> WATCHE
 
-int watch_add(int fd, int type, char *handler, void *data);
+void watch_add(int fd, int type, char *handler, void *data);
 CODE:
 	perl_watch_add(fd, type, handler, data);
 
@@ -107,7 +107,7 @@ CODE:
 
 #> QUERIES
 
-int handler_bind(char *query_name, char *handler)
+void handler_bind(char *query_name, char *handler)
 CODE:
 	perl_handler_bind(query_name, handler);
 

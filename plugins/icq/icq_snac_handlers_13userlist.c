@@ -8,6 +8,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *                     2008 Wiesław Ochmiński <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -21,6 +25,18 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
+#include <ekg/debug.h>
+#include <ekg/queries.h>
+#include <ekg/recode.h>
+
+#include "icq.h"
+#include "misc.h"
+#include "icq_caps.h"
+#include "icq_const.h"
+#include "icq_flap_handlers.h"
+#include "icq_snac_handlers.h"
+
 
 SNAC_SUBHANDLER(icq_snac_userlist_error) {
 	struct {
@@ -38,9 +54,11 @@ SNAC_SUBHANDLER(icq_snac_userlist_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_userlist_reply) {
-	/*
-	 * Handle SNAC(0x13,0x03)
+	/* SNAC(13,03) SRV_SSI_RIGHTS_REPLY	Service parameters reply
+	 *
+	 * Server replies with this SNAC to SNAC(13,02) - client SSI service parameters request.
 	 */
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
 
@@ -48,7 +66,6 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 
 	tlvs = icq_unpack_tlvs(&buf, &len, 0);
 
-#if ICQ_DEBUG_UNUSED_INFORMATIONS
 	if ((t = icq_tlv_get(tlvs, 0x06)) && (t->len == 2))
 		debug_white("icq_snac_userlist_reply() length limit for server-list item's name = %d\n", t->nr);
 	if ((t = icq_tlv_get(tlvs, 0x0C)) && (t->len == 2))
@@ -58,45 +75,39 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 		if (icq_unpack_nc(t->buf, t->len, "WWWW 20 W", &a, &b, &c, &d, &e))
 			debug_white("icq_snac_userlist_reply() Max %d contacts, %d groups; %d visible contacts, %d invisible contacts, %d ignore items.\n", a, b, c, d, e);
 	}
-#endif
 
 	icq_tlvs_destroy(&tlvs);
+#endif
 
 	return 0;
 }
 
-static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, const char *name, uint16_t type, uint16_t item_id, uint16_t group) {
+static void set_userinfo_from_tlv(userlist_t *u, const char *var, icq_tlv_t *t) {
+	char *tmp;
+
+	if (!u)
+		return;
+
+	tmp = (t && t->len) ? ekg_utf8_to_locale(xstrndup((char *) t->buf, t->len)) : NULL;
+
+	user_private_item_set(u, var, tmp);
+}
+
+static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, const char *name, uint16_t type, uint16_t item_id, uint16_t group_id) {
 	switch (type) {
-		case 0x0000:	/* normal; SSI_ITEM_BUDDY */
+		case 0x0000:	/* Buddy record (name: uin for ICQ and screenname for AIM) */
 		{
 			icq_tlv_t *t_nick = icq_tlv_get(tlvs, 0x131);
 			icq_tlv_t *t_auth = icq_tlv_get(tlvs, 0x66);
-			icq_tlv_t *t_comment = icq_tlv_get(tlvs, 0x013C);
-			icq_tlv_t *t_phone = icq_tlv_get(tlvs, 0x013A);
-			icq_tlv_t *t_email = icq_tlv_get(tlvs, 0x0137);
 
-			char *comment, *email, *phone, *nick, *tmp;
+			char *nick, *tmp;
 			char *uid = icq_uid(name);
-
-			/* XXX make macro ? */
-			tmp = (t_comment && t_comment->len) ? xstrndup((char *) t_comment->buf, t_comment->len) : NULL;
-			comment = ekg_utf8_to_locale(tmp);
-
-			tmp = (t_phone && t_phone->len) ? xstrndup((char *) t_phone->buf, t_phone->len) : NULL;
-			phone = ekg_utf8_to_locale(tmp);
-
-			tmp = (t_email && t_email->len) ? xstrndup((char *) t_email->buf, t_email->len) : NULL;
-			email = ekg_utf8_to_locale(tmp);
+			userlist_t *u;
 
 			tmp = (t_nick && t_nick->len) ? xstrndup((char *) t_nick->buf, t_nick->len) : xstrdup(uid);
 			nick = ekg_utf8_to_locale(tmp);
 
-			userlist_t *u;
-
-			if (!(u = userlist_find(s, uid)))
-				u = userlist_add(s, uid, nick);
-
-			if (!u) {
+			if (!(u = userlist_find(s, uid)) && !(u = userlist_add(s, uid, nick)) ) {
 				debug_error("icq_userlist_parse_entry() userlist_add(%s, %s) failed!\n", uid, nick);
 				goto cleanup_user;
 			}
@@ -104,101 +115,100 @@ static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, con
 			if (!u->nickname)
 				u->nickname = xstrdup(nick);
 
-			/* XXX, other groups ??? */
-			if (u && group) {
+			set_userinfo_from_tlv(u, "email",	icq_tlv_get(tlvs, 0x0137));
+			set_userinfo_from_tlv(u, "phone",	icq_tlv_get(tlvs, 0x0138));	// phone number
+			set_userinfo_from_tlv(u, "cellphone",	icq_tlv_get(tlvs, 0x0139));	// cellphone number
+			set_userinfo_from_tlv(u, "mobile",	icq_tlv_get(tlvs, 0x013A));	// SMS number
+			set_userinfo_from_tlv(u, "comment",	icq_tlv_get(tlvs, 0x013C));
+
+			if (group_id) {
 				user_private_item_set_int(u, "iid", item_id);
-				user_private_item_set_int(u, "gid", group);
+				user_private_item_set_int(u, "gid", group_id);
 			}
 
-			if (comment)
-				user_private_item_set(u, "comment", comment);
-
-			if (email)
-				user_private_item_set(u, "email", email);
-
-			if (phone)
-				user_private_item_set(u, "mobile", phone);
-
-			if (t_auth)
+			if (t_auth) {
 				user_private_item_set_int(u, "auth", 1);
-/*
-			if (t_auth)
-				print("icq_auth_subscribe", uid, session_name(s));
- */
+				u->status = EKG_STATUS_UNKNOWN;
+			} else
+				user_private_item_set_int(u, "auth", 0);
 cleanup_user:
-			xfree(uid);
 			xfree(nick);
-			xfree(email);
-			xfree(phone);
-			xfree(comment);
+			xfree(uid);
 			break;
 		}
 
-		case 0x0001:	/* ROSTER_TYPE_GROUP; SSI_ITEM_GROUP; */
+		case 0x0001:	/* Group record */
 		{
-			debug_error("ROSTER_TYPE_GROUP: %s %u\n", name, group);
-
-			if ((group == 0) && (item_id == 0)) {
-				/* list of groups. wTlvType=1, data is TLV(C8) containing list of WORDs which */
-				/* is the group ids */
-				/* we don't need to use this. Our processing is on-the-fly */
-				/* this record is always sent first in the first packet only, */
-				break;
-			}
-
-			if (group != 0)
-			{
-				/* wGroupId != 0: a group record */
-				if (item_id == 0) {
+			if (item_id == 0) {
+				if ((group_id == 0)) {
+					/* list of groups. wTlvType=1, data is TLV(C8) containing list of WORDs which */
+					/* is the group ids */
+					/* we don't need to use this. Our processing is on-the-fly */
+					/* this record is always sent first in the first packet only, */
+				} else {
+					/* wGroupId != 0: a group record */
 					/* no item ID: this is a group */
 					/* XXX ?wo? more groups ??? */
 					icq_private_t *j;
 					if (s && (j = s->priv) && (!j->default_group_id)) {
-						j->default_group_id = group;
+						j->default_group_id = group_id;
 						j->default_group_name = xstrdup(name);
 					}
-				} else {
-					debug_error("icq_userlist_parse_entry() Unhandled ROSTER_TYPE_GROUP wItemID != 0\n");
 				}
-				break;
+			} else {
+				debug_error("icq_userlist_parse_entry() Unhandled ROSTER_TYPE_GROUP wItemID != 0\n");
 			}
 
-			debug_error("icq_userlist_parse_entry() Unhandled ROSTER_TYPE_GROUP\n");
 			break;
 		}
 
-		case 0x0002: /* SSI_ITEM_PERMIT */
+		case 0x0002:	/* Permit record ("Allow" list in AIM, and "Visible" list in ICQ) */
+		case 0x0003:	/* Deny record ("Block" list in AIM, and "Invisible" list in ICQ) */
 		{
 			char *uid = icq_uid(name);
 			userlist_t *u;
-
 			if (!(u = userlist_find(s, uid)))
-				u = userlist_add(s, uid, NULL);	/* XXX */
-
-			/* XXX */
+				u = userlist_add(s, uid, NULL);
 			xfree(uid);
+
+			if (!u)
+				break;
+
+			if (type == 2) {
+				user_private_item_set_int(u, "visible", item_id);
+				user_private_item_set_int(u, "invisible", 0);
+				ekg_group_add(u, "__online");
+				ekg_group_remove(u, "__offline");
+			} else {
+				user_private_item_set_int(u, "visible", 0);
+				user_private_item_set_int(u, "invisible", item_id);
+				ekg_group_add(u, "__offline");
+				ekg_group_remove(u, "__online");
+			}
 			break;
 		}
 
-		case 0x0003:	/* SSI_ITEM_DENY */
+		case 0x0004: /* Permit/deny settings or/and bitmask of the AIM classes */
 		{
-			char *uid = icq_uid(name);
-			userlist_t *u;
-
-			if (!(u = userlist_find(s, uid)))
-				u = userlist_add(s, uid, NULL); /* XXX */
-
 			/* XXX */
 			break;
 		}
 
-		case 0x0004: /* SSI_ITEM_VISIBILITY: */ /* My visibility settings */
+		case 0x0005: /* Presence info (if others can see your idle status, etc) */
 		{
 			/* XXX */
 			break;
 		}
 
-		case 0x000e: 	/* _IGNORE */
+		case 0x0009: /* ICQ2k shortcut bar items */
+		{
+			if (group_id == 0) {
+				/* data is TLV(CD) text */
+			}
+			break;
+		}
+
+		case 0x000e:	/* Ignore list record */
 		{
 			char *uid = icq_uid(name);
 			userlist_t *u;
@@ -206,25 +216,25 @@ cleanup_user:
 			if (!(u = userlist_find(s, uid)))
 				u = userlist_add(s, uid, NULL);
 
-			/* XXX, dodac do grup? */
-			/* XXX */
+			if (u) {
+				user_private_item_set_int(u, "block", item_id);
+				ekg_group_add(u, "__blocked");
+			}
 
 			xfree(uid);
 			break;
 		}
 
-		case 0x0009: /* SSI_ITEM_CLIENTDATA */
+		case 0x000F:	/* Last update date (name: "LastUpdateDate") */
+		case 0x0010:	/* Non-ICQ contact (to send SMS). Name: 1#EXT, 2#EXT, etc */
 		{
-			if (group == 0) {
-				/* ICQ2k ShortcutBar Items */
-				/* data is TLV(CD) text */
-			}
+			/* XXX */
 			break;
 		}
 
-		case 0x0013: /* SSI_ITEM_IMPORTTIME */
+		case 0x0013:	/* Item that contain roster import time (name: "Import time") */
 		{
-			if (group == 0)
+			if (group_id == 0)
 			{
 				/* time our list was first imported */
 				/* pszRecordName is "Import Time" */
@@ -235,9 +245,9 @@ cleanup_user:
 			break;
 		}
 
-		case 0x0014: /* SSI_ITEM_BUDDYICON */
+		case 0x0014:	/* Own icon (avatar) info. Name is an avatar id number as text */
 		{
-			if (group == 0)
+			if (group_id == 0)
 			{
 				/* our avatar MD5-hash */
 				/* pszRecordName is "1" */
@@ -250,8 +260,29 @@ cleanup_user:
 			break;
 		}
 
+		case 0x0019: /* deleted */
+		{
+#ifdef ICQ_DEBUG_UNUSED_INFORMATIONS
+			icq_tlv_t *t;
+			if ((t = icq_tlv_get(tlvs, 0x6d)) && (t->len == 8)) {
+				int t1,t2;
+				if (icq_unpack_nc(t->buf, t->len, "II", &t1, &t2)) {
+					debug_white("'%s' was deleted %s\n", name, timestamp_time("%Y-%m-%d %H:%M:%S", t1));
+				}
+			}
+#endif
+			break;
+		}
+
+		case 0x001d:
+		case 0x0020:
+		case 0x0028:
+		{ /* XXX unknown, but friendly types */
+			break;
+		}
+
 		default:
-			 debug_error("icq_userlist_parse_entry() unkown type: %.4x\n", type);
+			 debug_error("icq_userlist_parse_entry() unkown type: 0x%.4x\n", type);
 	}
 	return 0;
 }
@@ -295,51 +326,45 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 		if (!ICQ_UNPACK(&buf, "UWWWW", &orgname, &group_id, &item_id, &item_type, &tlv_len))
 			return -1;
 
-		debug("%s groupID: %u entryID: %u entryTYPE: %u tlvLEN: %u\n", orgname, group_id, item_id, item_type, tlv_len);
-
 		if (len < tlv_len) {
 			debug_error("smth bad!\n");
 			return -1;
 		}
 
-		tlvs = icq_unpack_tlvs_nc(buf, tlv_len, 0);
-
 		name = ekg_utf8_to_locale_dup(orgname);
+		debug_white("%sName:'%s'\tgroup:%u item:%u type:0x%x tlvLEN:%u\n", item_type==1?"Group ":"", name, group_id, item_id, item_type, tlv_len);
+
+		tlvs = icq_unpack_tlvs_nc(buf, tlv_len, 0);
 		icq_userlist_parse_entry(s, tlvs, name, item_type, item_id, group_id);
+		icq_tlvs_destroy(&tlvs);
+
 		xfree(name);
 
 		buf += tlv_len; len -= tlv_len;
 
-		icq_tlvs_destroy(&tlvs);
 	}
-#warning "icq_snac_userlist_roster XXX, koncowka"
 
-	debug("icq_snac_userlist_roster() left: %u bytes\n", len);
+	if (len >= 4) {
+		uint32_t last_update;
 
-	if (1) {
-		/* session_int_set(s, "__roster_retrieved", 1); */
-
-		if (len >= 4) {
-			uint32_t last_update;
-
-			if (!ICQ_UNPACK(&buf, "I", &last_update))
+		if (!ICQ_UNPACK(&buf, "I", &last_update))
 				return -1;
 
-			/* XXX, strftime() format */
-			debug("icq_snac_userlist_roster() Last update of server list was (%u) %s\n",
+		debug("icq_snac_userlist_roster() Last update of server list was (%u) %s\n",
 					last_update, timestamp_time("%d/%m/%y %H:%M:%S", last_update));
 
 			/* sendRosterAck() */
-			icq_send_snac(s, 0x13, 0x07, 0, 0, "");
+		icq_send_snac(s, 0x13, 0x07, 0, 0, "");
 
-			icq_session_connected(s);
+		icq_session_connected(s);
 
-		} else
-			debug_error("icq_snac_userlist_roster() Last packet missed update time...\n");
-		/* XXX */
 	} else {
 		debug("icq_snac_userlist_roster() Waiting for more packets...");
 	}
+
+	if (len>0)
+		debug_error("icq_snac_userlist_roster() left: %u bytes\n", len);
+
 	return 0;
 }
 
@@ -353,7 +378,7 @@ char *icq_snac_userlist_edit_ack_msg(int error) {
 		case 0x000A: msg = "Error adding item (invalid id, allready in list, invalid data)"; break;
 		case 0x000C: msg = "Can't add item. Limit for this type of items exceeded"; break;
 		case 0x000D: msg = "Trying to add ICQ contact to an AIM list"; break;
-		case 0x000E: msg = "Can't add this contact because it requires authorization"; 	break;
+		case 0x000E: msg = "Can't add this contact because it requires authorization";	break;
 		default:     msg = "Unknown error";
 	}
 
@@ -402,7 +427,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_removeentry) {
 		uint16_t group, item;
 		uint16_t type;
 	} pkt;
-	if (ICQ_UNPACK(&buf, "uWWW", &pkt.uid, &pkt.group, &pkt.item, &pkt.type)) {
+	if (ICQ_UNPACK(&buf, "UWWW", &pkt.uid, &pkt.group, &pkt.item, &pkt.type)) {
 		debug("icq_snac_userlist_removeentry() Details: delete '%s' (item id:%d, type:0x%x) from group %d\n", pkt.uid, pkt.item, pkt.type, pkt.group);
 	}
 }
@@ -528,6 +553,7 @@ SNAC_HANDLER(icq_snac_userlist_handler) {
 SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 	userlist_t *u;
 	const char *nick = private_item_get(&data, "nick");
+	const char *cmd  = private_item_get(&data, "cmd");
 	int quiet = private_item_get_int(&data, "quiet");
 	uint16_t error;
 	char *uid;
@@ -537,19 +563,62 @@ SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 
 	uid = icq_uid(private_item_get(&data, "uid"));
 
-	if (!error) {
-		if ( (u = userlist_add(s, uid, nick)) ) {
-			query_emit_id(NULL, USERLIST_ADDED, &u->uid, &u->nickname, &quiet);
-			query_emit_id(NULL, ADD_NOTIFY, &s->uid, &u->uid);
-			user_private_item_set_int(u, "iid", private_item_get_int(&data, "iid"));
-			user_private_item_set_int(u, "gid", private_item_get_int(&data, "gid"));
-			/* XXX ?wo? ask for authorizarion flag */
-		}
-	} else {
+	if (error) {
 		/* XXX ?wo? format for it */
 		char *tmp = saprintf("Can't add %s/%s", nick, uid);
 		printq("icq_user_info_generic", tmp, icq_snac_userlist_edit_ack_msg(error));
 		xfree(tmp);
+		xfree(uid);
+		return -1;
+	}
+
+	if (!xstrcmp(cmd, "del")) {
+		if ( (u = userlist_find(s, uid)) ) {
+			char *tmp = xstrdup(u->nickname);
+			printq("user_deleted", u->nickname, session_name(s));
+
+			tabnick_remove(u->uid);
+			tabnick_remove(u->nickname);
+
+			userlist_remove(s, u);
+
+			query_emit_id(NULL, USERLIST_REMOVED, &tmp, &uid);
+			query_emit_id(NULL, REMOVE_NOTIFY, &s->uid, &uid);
+
+			xfree(tmp);
+		}
+	} else {
+		// add or modify
+		if (!xstrcmp(cmd, "add")) {
+			if ( (u = userlist_add(s, uid, nick)) ) {
+				printq("user_added", u->nickname, session_name(s));
+				query_emit_id(NULL, USERLIST_ADDED, &u->uid, &u->nickname, &quiet);
+				query_emit_id(NULL, ADD_NOTIFY, &s->uid, &u->uid);
+			}
+		} else {
+			// modify
+			if ( (u = userlist_find(s, uid)) ) {
+				const char *nick = private_item_get(&data, "nick");
+				if (nick) {
+
+					query_emit_id(NULL, USERLIST_RENAMED, &u->nickname, &nick);
+				
+					xfree(u->nickname);
+					u->nickname = xstrdup(nick);
+
+					userlist_replace(s, u);
+					query_emit_id(NULL, USERLIST_REFRESH);
+				}
+			}
+		}
+		if (u) {
+			user_private_item_set_int(u, "iid", private_item_get_int(&data, "iid"));
+			user_private_item_set_int(u, "gid", private_item_get_int(&data, "gid"));
+			const char *p;
+			p = private_item_get(&data, "mobile"); if (p) user_private_item_set(u, "mobile", p);
+			p = private_item_get(&data, "email"); if (p) user_private_item_set(u, "email", p);
+			p = private_item_get(&data, "comment"); if (p) user_private_item_set(u, "comment", p);
+		}
 	}
 
 	xfree(uid);

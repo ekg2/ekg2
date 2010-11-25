@@ -1,5 +1,6 @@
 /*
- *  (C) Copyright XXX
+ *  (C) Copyright 2009-2010 Jakub Zawadzki <darkjames@darkjames.ath.cx>
+ *			Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -953,4 +954,3 @@ const char *ekg_recode_to_locale_use(enum ekg_recode_name enc, const char *buf) 
 	// warn user.
 	return buf;
 }
-

@@ -221,9 +221,9 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 	return string_free(asc, 0);
 }
 
-#define httprc_write(watch, args...)	string_append_format(watch->buf, args)
-#define httprc_write2(watch, str)	string_append_n(watch->buf, str, -1)
-#define httprc_write3(watch, str, len)	string_append_raw(watch->buf, str, len)
+#define httprc_write(watch, args...)	do { string_append_format(watch->buf, args); } while (0)
+#define httprc_write2(watch, str)	do { string_append_n(watch->buf, str, -1); } while (0)
+#define httprc_write3(watch, str, len)	do { string_append_raw(watch->buf, str, len); } while (0)
 
 #define HTTP_HEADER(ver, scode, eheaders) \
 	httprc_write(send_watch,				\
@@ -242,9 +242,12 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 		); clen = (send_watch->buf ? send_watch->buf->len : 0) - clen;
 
 
-#define WATCH_FIND(w, fd) \
+#define WATCH_FIND(w, fd) do { \
 	w = watch_find(&httprc_xajax_plugin, fd, WATCH_WRITE);\
-	if (!w) w = watch_add_line(&httprc_xajax_plugin, fd, WATCH_WRITE_LINE, http_watch_send, NULL); \
+	if (!w) { \
+	    w = watch_add_line(&httprc_xajax_plugin, fd, WATCH_WRITE_LINE, http_watch_send, NULL); \
+	} \
+    } while(0)
 
 WATCHER_LINE(http_watch_send)  {
 	if (type) return 0;
@@ -643,7 +646,7 @@ WATCHER(http_watch_read) {
 		} else {
 			char *temp;
 			int i, j;
-			window_t *w = window_current; 
+			window_t *w = window_current, *w2;
 			ncurses_window_t *n;
 
 			/* if user is making a refresh, we must clear collected events
@@ -693,27 +696,27 @@ WATCHER(http_watch_read) {
 			string_append (htheader, itoa(window_current->id));
 			string_append (htheader, ";\n");
 
-			for (w = windows; w; w = w->next) {
+			for (w2 = windows; w2; w2 = w2->next) {
 				char *tempdata;
-				if (w == window_current)
-					string_append_format(htheader, "gwins[%d] = new Array(2, \"%s\", new Array());\n ", w->id, window_target(w));
-				else if (w->act)
-					string_append_format(htheader, "gwins[%d] = new Array(1, \"%s\", new Array());\n ", w->id, window_target(w));
+				if (w2 == window_current)
+					string_append_format(htheader, "gwins[%d] = new Array(2, \"%s\", new Array());\n ", w2->id, window_target(w2));
+				else if (w2->act)
+					string_append_format(htheader, "gwins[%d] = new Array(1, \"%s\", new Array());\n ", w2->id, window_target(w2));
 				else
-					string_append_format(htheader, "gwins[%d] = new Array(0, \"%s\", new Array());\n ", w->id, window_target(w));
+					string_append_format(htheader, "gwins[%d] = new Array(0, \"%s\", new Array());\n ", w2->id, window_target(w2));
 
 				/* we don't want debug window... */
-				if (w->id == 0)
+				if (w2->id == 0)
 					continue;
 
-				n = w->priv_data;
+				n = w2->priv_data;
 				string_append(htheader, "i=0;\n");
-				temp = saprintf("gwins[%d][2][i++] = ch;\n", w->id);
+				temp = saprintf("gwins[%d][2][i++] = ch;\n", w2->id);
 				for (j=0, i = n->backlog_size-1; i >= 0; i--) {
 					/* really, really stupid... */
 					string_append(htheader, "ch = document.createElement('li');\n"
 							"ch.setAttribute('id', 'lin'+i);\n");
-					tempdata = http_fstring(w->id, "ch", n->backlog[i], 1);
+					tempdata = http_fstring(w2->id, "ch", n->backlog[i], 1);
 					string_append(htheader, tempdata);
 					if (j^=1)
 						string_append(htheader, "ch.className='info1';");
@@ -728,7 +731,7 @@ WATCHER(http_watch_read) {
 			httprc_write2(send_watch, htheader->str);
 			string_free(htheader, 1);
 
-			httprc_write(send_watch,	
+			httprc_write2(send_watch,	
 					"\t\t</script>"
 					"\t\t<script type=\"text/javascript\" src=\"ekg2.js\"> </script>\n"
 					"\t\t<script type=\"text/javascript\">\n"

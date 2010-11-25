@@ -603,7 +603,7 @@ static COMMAND(xmsg_msg)
 	char fn[sizeof(XMSG_TMPFILE_PATH)];
 	int fd;
 	char *msg = (char*) params[1];
-	char *uid;
+	const char *uid;
 	int fs;
 	int n;
 	const char *msgcmd = session_get(session, "send_cmd");

@@ -28,7 +28,7 @@
  */
 
 void config_upgrade() {
-	const int current_config_version = 7;
+	const int current_config_version = 8;
 
 #if ! USE_UNICODE
 	if (!xstrcasecmp(config_console_charset, "UTF-8")) {
@@ -50,7 +50,7 @@ void config_upgrade() {
 
 	print("config_upgrade_begin");
 
-	switch (config_version) { /* versions MUST be sorted, break MUST NOT be used */
+	switch (config_version+1) { /* versions MUST be sorted, break MUST NOT be used */
 		case 0: /* jabber SASL behavior change */
 			print("config_upgrade_major", 
 				_("We've started using XMPP SASL AUTH by default, so if you're unable to connect to your favorite jabber server,"	\
@@ -96,6 +96,10 @@ void config_upgrade() {
 		case 7:
 			print("config_upgrade_minor",
 				_("display_pl_chars option is no longer maintained, use /set console_charset US-ASCII"), "2009-04-24");
+		case 8:
+			print("config_upgrade_minor",
+				_("Jabber variables has ben changed from 'jabber:' to 'xmpp:'. " \
+				"Your config couldn't be updated automagically, so you must set it by hand."), "2010-08-17");
 	}
 
 	config_version = current_config_version;

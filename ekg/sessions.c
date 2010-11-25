@@ -898,7 +898,7 @@ int session_read(const char *filename) {
 /*
  * session_write()
  *
- * writes informations about sessions in files
+ * writes information about sessions in files
  */
 int session_write()
 {
@@ -1176,10 +1176,7 @@ COMMAND(session_command)
 		if (window_current->target && (window_current->id != 0))
 			command_exec(NULL, NULL, "/window switch 1", 2);
 
-		window_current->session = s;
-		session_current = s;
-
-		query_emit_id(NULL, SESSION_CHANGED);
+		window_session_set(window_current, s);
 
 		return 0;
 	}

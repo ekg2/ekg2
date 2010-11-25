@@ -20,6 +20,7 @@ extern plugin_t ncurses_plugin;
 extern int ncurses_plugin_destroyed;
 
 #define LINE_MAXLEN 1000		/* rozmiar linii */
+#define MULTILINE_INPUT_SIZE 5
 
 #define ncurses_current ((ncurses_window_t *) window_current->priv_data)
 
@@ -102,7 +103,7 @@ void ncurses_redraw_input(unsigned int ch);
 void ncurses_clear(window_t *w, int full);
 void ncurses_refresh();
 void ncurses_commit();
-void ncurses_input_update();
+void ncurses_input_update(int new_line_index);
 void ncurses_line_adjust();
 #define line_adjust ncurses_line_adjust
 void ncurses_lines_adjust();
@@ -160,6 +161,7 @@ int ncurses_lastlog_update(window_t *w);
 void ncurses_lastlog_new(window_t *w);
 extern int config_lastlog_size;
 extern int config_lastlog_lock;
+extern int config_mark_on_window_change;
 
 WATCHER(ncurses_watch_stdin);
 WATCHER(ncurses_watch_winch);

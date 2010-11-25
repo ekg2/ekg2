@@ -4,7 +4,6 @@
 #undef VERSION
 
 #ifndef __FreeBSD__
-#define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
 #endif
 
@@ -22,6 +21,10 @@
 
 #undef _
 #include "../perl_ekg.h"
+
+#ifdef bool
+#define HAS_BOOL
+#endif
 
 #include <EXTERN.h>
 #include <perl.h>

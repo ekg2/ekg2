@@ -2,8 +2,11 @@
 #define PERL_BLESS_H
 
 #ifndef __FreeBSD__
-#define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
+#endif
+
+#ifdef bool
+#define HAS_BOOL
 #endif
 
 #include <EXTERN.h>

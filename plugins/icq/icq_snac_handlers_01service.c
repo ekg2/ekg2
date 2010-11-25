@@ -8,6 +8,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *                     2008 Wiesław Ochmiński <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -21,6 +25,15 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
+
+#include <ekg/debug.h>
+
+#include "icq.h"
+#include "misc.h"
+#include "icq_caps.h"
+#include "icq_const.h"
+#include "icq_flap_handlers.h"
+#include "icq_snac_handlers.h"
 
 SNAC_SUBHANDLER(icq_snac_service_error) {
 	struct {
@@ -43,6 +56,14 @@ SNAC_SUBHANDLER(icq_snac_service_error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_families) {
+	/*
+	 * SNAC(01,03) SRV_FAMILIES -- Server supported snac families list
+	 * 
+	 * This is the first snac in protocol negotiation sequence. Client shouldn't use
+	 * families not listed in this SNAC. So if your client use SNAC(13) family and
+	 * server SNAC(01,03) doesn't contain it - your client should popup "server error"
+	 * message when user want's to change server-stored information (SSI).
+	 */
 	string_t pkt;
 
 	debug_function("icq_snac_service_families()\n");
@@ -61,32 +82,34 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 	 * This tells the server which SNAC families and their corresponding
 	 * versions which the client understands. This also seems to identify
 	 * the client as an ICQ vice AIM client to the server.
-	 * Miranda mimics the behaviour of ICQ 6 */
+	 */
 
 	pkt = string_init(NULL);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x22, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x01, (uint32_t) 0x04);	// Generic service controls
-	icq_pack_append(pkt, "WW", (uint32_t) 0x13, (uint32_t) 0x04);	// Server Side Information (SSI) service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x02, (uint32_t) 0x01);	// Location services
 	icq_pack_append(pkt, "WW", (uint32_t) 0x03, (uint32_t) 0x01);	// Buddy List management service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x04, (uint32_t) 0x01);	// ICBM (messages) service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x06, (uint32_t) 0x01);	// Invitation service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x08, (uint32_t) 0x01);	// Popup notices service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x09, (uint32_t) 0x01);	// Privacy management service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0a, (uint32_t) 0x01);	// User lookup service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0b, (uint32_t) 0x01);	// Usage stats service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0c, (uint32_t) 0x01);	// Translation service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x25, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x13, (uint32_t) 0x05);	// Server Side Information (SSI) service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x02);	// ICQ specific extensions service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x17, (uint32_t) 0x01);	// Authorization/registration service
 #if 0
 	icq_pack_append(pkt, "WW", (uint32_t) 0x05, (uint32_t) 0x01);	//  Advertisements service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x06, (uint32_t) 0x01);	// Invitation service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x08, (uint32_t) 0x01);	// Popup notices service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x07, (uint32_t) 0x01);	//  Administrative service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x0c, (uint32_t) 0x01);	// Translation service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0d, (uint32_t) 0x01);	//  Chat navigation service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0e, (uint32_t) 0x01);	//  Chat service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x0f, (uint32_t) 0x01);	//  Directory user search
 	icq_pack_append(pkt, "WW", (uint32_t) 0x10, (uint32_t) 0x01);	//  Server-stored buddy icons (SSBI) service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x01);	//  ICQ specific extensions service
 	icq_pack_append(pkt, "WW", (uint32_t) 0x17, (uint32_t) 0x01);	//  Authorization/registration service
+	icq_pack_append(pkt, "WW", (uint32_t) 0x22, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x24, (uint32_t) 0x01);
+	icq_pack_append(pkt, "WW", (uint32_t) 0x25, (uint32_t) 0x01);
 	icq_pack_append(pkt, "WW", (uint32_t) 0x85, (uint32_t) 0x01);	//  Broadcast service - IServerd extension
 #endif
 
@@ -108,6 +131,9 @@ SNAC_SUBHANDLER(icq_snac_service_redirect) {
 }
 
 SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
+	/* SNAC(01,07) SRV_RATE_LIMIT_INFO -- Rate limits information response
+	 * This snac contain server information about its snac-rate limitations.
+	 */
 	icq_private_t *j = s->priv;
 
 	struct {
@@ -233,38 +259,54 @@ wrong:
 #endif
 	}
 
-	/* CLI_REQLOCATION */
+	/* SNAC(02,02) CLI_LOCATION_RIGHTS_REQ Request limitations/params
+	 * Client use this SNAC to request location service parameters and limitations.
+	 * Server should reply via SNAC(02,03).
+	 */
 	icq_send_snac(s, 0x02, 0x02, 0, 0, NULL);
 
-	icq_send_snac(s, 0x03, 0x02, 0, 0, ""); // example for empty snack: "" or NULL works
+	/* SNAC(03,02) CLI_BUDDYLIST_RIGHTS_REQ Request limitations/params
+	 * Client use this SNAC to request buddylist service parameters and
+	 * limitations. Server should reply via SNAC(03,03)
+	 */
+	icq_send_snac(s, 0x03, 0x02, 0, 0, ""); // example for empty snac: "" or NULL works
 
-	/* CLI_REQICBM */
+	/* SNAC(04,04) CLI_ICBM_PARAM_REQ Request parameters info
+	 * Use this snac to request your icbm parameters from server.
+	 * Server should reply via SNAC(04,05). You can change them using SNAC(04,02).
+	 */
 	icq_send_snac(s, 0x04, 0x04, 0, 0, "");
 
-	/* CLI_REQBOS */
+	/* SNAC(09,02) CLI_PRIVACY_RIGHTS_REQ Request service parameters
+	 * Client use this SNAC to request buddylist service parameters and limitations.
+	 * Server should reply via SNAC(09,03).
+	 */
 	icq_send_snac(s, 0x09, 0x02, 0, 0, "");
 
 	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_service_ratechange) {
-	struct {
-		uint16_t status;
-	} pkt;
-	icq_private_t *j = s->priv;
-	int i;
-
-	if (!ICQ_UNPACK(&buf, "W", &pkt.status))
-		return -1;
 	/*
+	 * SNAC(01,0A) SRV_RATE_LIMIT_WARN Rate information changed / rate limit warning
+	 *
+	 * Server send this snac when you goes over rate limit or when rate parameters changing.
+	 * Snac content is described by "message code". Here is the known code list:
 	 * 0x0001	Rate limits parameters changed
 	 * 0x0002	Rate limits warning (current level < alert level)
 	 * 0x0003	Rate limit hit (current level < limit level)
 	 * 0x0004	Rate limit clear (current level become > clear level)
 	 */
+	struct {
+		uint16_t status;
+	} pkt;
+	icq_private_t *j = s->priv;
+
+	if (!ICQ_UNPACK(&buf, "W", &pkt.status))	// Message code (see above)
+		return -1;
+
 	/* TODO ?wo? -- print warning here ? */
 
-	i = 0;
 	while (len >= (2 + 8*4 +1)) {
 		uint16_t id;
 		uint32_t x0, x1, x2, x3, x4, x5, x6, x7;
@@ -280,7 +322,6 @@ SNAC_SUBHANDLER(icq_snac_service_ratechange) {
 			j->rates[id]->curr_lvl	= x5;		// Current level
 			j->rates[id]->max_lvl	= x6;		// Max level
 		}
-		i++;
 	}
 
 	debug_function("icq_snac_service_ratechange() status:%u\n", pkt.status);
@@ -299,12 +340,19 @@ SNAC_SUBHANDLER(icq_snac_service_pause) {
 	 *
 	 * Migration sequence used to redirect client to new BOS server during current BOS shutdown.
 	 */
+	icq_private_t *j = s->priv;
 
 	debug("icq_snac_service_pause() Server is going down in a few seconds...\n");
 
-	icq_send_snac(s, 0x01, 0x0c, NULL, NULL,	/* CLI_PAUSE_ACK -- Client pause ack */
+	/* SNAC(01,0C) CLI_PAUSE_ACK Client pause ack
+	 *
+	 * The server sends a Server Pause message SNAC(01,0B), which the client
+	 * should respond to with a this server_pause_ack snac, which contains the
+	 * families it needs on this connection
+	 */
+	icq_send_snac(s, 0x01, 0x0c, NULL, NULL,
 			"WWWW WWWW WW",
-			/* This is the list of families that we want to have on the next server */
+			/* This is the list of families that we want to have on the next server. Families array is optional. */
 			(uint32_t) 0x01,	/* Generic service controls */
 			(uint32_t) 0x02,	/* Location services */
 			(uint32_t) 0x03,	/* Buddy List management service */
@@ -319,6 +367,8 @@ SNAC_SUBHANDLER(icq_snac_service_pause) {
 			(uint32_t) 0x17		/* Authorization/registration service */
 			);
 
+	j->migrate = 1;
+
 	return 0;
 }
 
@@ -329,6 +379,11 @@ SNAC_SUBHANDLER(icq_snac_service_resume) {
 	 * After this SNAC client, paused by SNAC(01,0B) may continue send packets to BOS.
 	 * Migration sequence used to redirect client to new BOS server during current BOS shutdown.
 	 */
+	icq_private_t *j = s->priv;
+
+	debug_ok("Server resume command\n");
+	j->migrate = 0;
+	
 	return 0;
 }
 
@@ -360,12 +415,17 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 
 			case 0x03:	/* The online since time */
 				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
-				debug_white("icq_snac_service_reqinfo() Logon time: %s\n", int2time_str("%Y-%m-%d %H:%M", t->nr));
+				debug_white("icq_snac_service_reqinfo() Logon time: %s\n", timestamp_time("%Y-%m-%d %H:%M:%S", t->nr));
 				break;
 
 			case 0x05:	/* Member of ICQ since */
 				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
-				debug_white("icq_snac_service_reqinfo() ICQ Member since: %s\n", int2time_str("%Y-%m-%d %H:%M", t->nr));
+				debug_white("icq_snac_service_reqinfo() ICQ Member since: %s\n", timestamp_time("%Y-%m-%d %H:%M:%S", t->nr));
+				break;
+
+			case 0x06:	/* Status */
+				if (tlv_length_check("icq_snac_service_reqinfo()", t, 4)) goto def;
+				debug_white("icq_snac_service_reqinfo() Status: 0x%.x\n", t->nr);
 				break;
 
 			case 0x0a:	/* External IP */
@@ -385,14 +445,26 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 				debug_white("icq_snac_service_reqinfo() Online: %u seconds.\n", t->nr);
 				break;
 
-			case 0x14:
-			case 0x1e:	/* We know that we don't know them */
-			case 0x22:
+			case 0x18:
+			{
+				char *nick = xstrndup((char *)t->buf, t->len);
+				debug_white("icq_snac_service_reqinfo() nick:'%s'\n", nick);
+				xfree(nick);
+				break;
+			}
+
+			case 0x27:
+			case 0x29:
+			case 0x2d:
+			case 0x30:
+				debug("icq_snac_service_reqinfo() unknown tlv(0x%x), time???: %s\n",t->type,timestamp_time("%Y-%m-%d %H:%M:%S", t->nr));
 				break;
 
-			/* XXX */
-
 			default:
+				if (t->len==1 || t->len==2 || t->len==4) {
+					debug_warn("icq_snac_service_reqinfo() unknown tlv(0x%x), datalen=%d, value=0x%x\n", t->type, t->len, t->nr);
+					break;
+				}
 			    def:
 				debug_error("icq_snac_service_reqinfo() TLV[0x%x] datalen: %u\n", t->type, t->len);
 				icq_hexdump(DEBUG_WHITE, t->buf, t->len);
@@ -402,10 +474,36 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 	/* If we are in SSI mode, this is sent after the list is acked instead
 	   to make sure that we don't set status before seing the visibility code
 	 */
-	if (!j->ssi /* || XXX: info->isMigrating */)
+	if (!j->ssi)
 		icq_session_connected(s);
 
 	icq_tlvs_destroy(&tlvs);
+	return 0;
+}
+
+SNAC_SUBHANDLER(icq_snac_service_evil) {
+	/*
+	 * SNAC(01,10) SRV_EVIL_NOTICE Evil notification
+	 *
+	 * You'll receive this snac when somebody complain about you to an OSCAR server.
+	 * This snac contain your new warning_level and (optionaly) info about complaining user.
+	 * Anonymous evil notification doesn't contain user info.
+	 */
+	char *uin;
+	uint16_t warning, count;
+	struct icq_tlv_list *tlvs;
+	unsigned char *databuf;
+
+	while (len>4) {
+		if (!icq_unpack(buf, &databuf, &len, "uWW", &uin, &warning, &count))
+			return -1;
+		debug_function("icq_snac_service_evil() %s\n", uin);
+		tlvs = icq_unpack_tlvs(&databuf, &len, count);
+
+		/* XXX - parse tlvs... */
+
+		icq_tlvs_destroy(&tlvs);
+	}
 	return 0;
 }
 
@@ -418,35 +516,103 @@ SNAC_SUBHANDLER(icq_snac_service_migrate) {
 	 * If there is no family list (empty) or it contain all connection families - client should close current
 	 * connection and use new one.
 	 */
-	debug_error("!!! icq_snac_service_migrate() XXX\n");
-	return -3;
+	int i;
+	icq_private_t *j =s->priv;
+	uint16_t fam_count, fam;
+	unsigned char *databuf;
+
+	if (!icq_unpack(buf, &databuf, &len, "W", &fam_count))
+		return -1;
+
+	debug_function("icq_snac_service_migrate() Migrate %d families\n", fam_count);
+	for (i=0; i<fam_count; i++)
+		if (!icq_unpack(buf, &databuf, &len, "W", &fam))
+			return -1;
+
+	j->migrate = 1;
+
+	icq_flap_close_helper(s, buf, len);
+	
+	return 0;
 }
 
 SNAC_SUBHANDLER(icq_snac_service_motd) {
-	/* SNAC(01,0x13) SRV_MOTD -- Message of the day (MOTD) */
+	/* SNAC(01,0x13) SRV_MOTD -- Message of the day (MOTD)
+	 *
+	 * Server send this during protocol negotiation sequence. Various docs call this SNAC as
+	 * "message of the day" but it looks like that ICQ2K+ ignores this SNAC completely.
+	 */
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
+	uint16_t type;
+
+	ICQ_UNPACK(&buf, "W", &type);
+	/* MOTD types:
+	 *	0x0001	MTD_MDT_UPGRAGE		Mandatory upgrade needed notice
+	 *	0x0002	MTD_ADV_UPGRAGE		Advisable upgrade notice
+	 *	0x0003	MTD_SYS_BULLETIN	AIM/ICQ service system announcements
+	 *	0x0004	MTD_NORMAL		Standart notice
+	 *	0x0006	MTD_NEWS		Some news from AOL service
+	 */
 
 	tlvs = icq_unpack_tlvs(&buf, &len, 0);
 	if ( (t = icq_tlv_get(tlvs, 0x0b)) )
-		debug_white("icq_snac_service_motd() MOTD: %s\n", t->buf);
+		debug_white("icq_snac_service_motd() type:%d, MOTD: %s\n", type, t->buf);
+	else
+		debug_white("icq_snac_service_motd() type:%d\n", type);
 	icq_tlvs_destroy(&tlvs);
 	return 0;
 }
 
+SNAC_SUBHANDLER(icq_snac_service_urls) {
+	/* SNAC(01,0x15) Well known urls */
+	debug_function("icq_snac_service_urls()\n");
+#if ICQ_DEBUG_UNUSED_INFORMATIONS
+	uint16_t x, ulen;
+	char *url;
+	while (len>0) {
+		ICQ_UNPACK(&buf, "WW", &x, &ulen);
+		url = xstrndup((const char*)buf, ulen);
+		debug_white("ICQ - well known url %d: %s\n", x, url);
+		buf += ulen;
+		len -= ulen;
+		xfree(url);
+	}
+#endif
+	return 0;
+}
+
+SNAC_SUBHANDLER(icq_snac_service_nop) {
+	/* SNAC(01,16) CLI_KEEPALIVE No operation (NOP) 
+	 *
+	 * WinAIM (AIM service) use this snac to keep connection alive. This is usefull
+	 * when it use proxy server to connect to BOS. Proxy servers can disconnect client
+	 * if there is no activity for some time.
+         */
+	debug_warn("icq_snac_service_nop() is deprecated!\n");
+	return 0;
+}
+
 SNAC_SUBHANDLER(icq_snac_service_families2) {
-	/* This is a reply to CLI_FAMILIES and it tells the client which families and their versions that this server understands.
-	 * We send a rate request packet */
+	/* SNAC(01,18) SRV_FAMILIES_VERSIONS -- Server services versions
+	 *
+	 * This is a reply to CLI_FAMILIES and it tells the client which families
+	 * and their versions that this server understands.
+	 */
 	debug_function("icq_snac_service_families2()\n");
 	// Handle incoming packet
-#if ICQ_DEBUG_UNUSED_INFORMATIONS
+	#if ICQ_DEBUG_UNUSED_INFORMATIONS
 	while (len>=2) {
 		uint16_t fam, ver;
 		ICQ_UNPACK(&buf, "WW", &fam, &ver);
 		debug_white("icq_snac_service_families2() fam=0x%x ver=0x%x // %s\n",  fam, ver, icq_lookuptable(snac_families, fam));
 	}
-#endif
+	#endif
 
+	/* SNAC(01,06) CLI_RATES_REQUEST  
+	 * Client use this SNAC to request server rate-limits. This happens during
+	 * protocol negotiation sequence. Server should reply via SNAC(01,07)
+	 */
 	icq_send_snac(s, 0x01, 0x06, NULL, NULL, "");	// Request rate limits information
 
 	return 0;
@@ -470,9 +636,13 @@ SNAC_HANDLER(icq_snac_service_handler) {
 		case 0x0B: handler = icq_snac_service_pause;	break;	/* Miranda: OK */
 		case 0x0D: handler = icq_snac_service_resume;	break;
 		case 0x0F: handler = icq_snac_service_reqinfo;	break;	/* Miranda: OK */
+		case 0x10: handler = icq_snac_service_evil;	break;	/* Evil notification */
 		case 0x12: handler = icq_snac_service_migrate;	break;
 		case 0x13: handler = icq_snac_service_motd;	break;	/* Miranda: OK */
+		case 0x15: handler = icq_snac_service_urls;	break;
+		case 0x16: handler = icq_snac_service_nop;	break;	/* No operation (NOP) */
 		case 0x18: handler = icq_snac_service_families2;break;	/* Miranda: OK */
+		case 0x1F: handler = NULL;			break;	/* XXX Client verification request */
 		case 0x21: handler = icq_snac_service_extstatus;break;
 		default:   handler = NULL;			break;
 	}

@@ -225,7 +225,7 @@ void ekg_loop() {
 
 			if (!config_write(NULL) && !session_write()) {
 				config_changed = 0;
-				reason_changed = 0;
+				ekg2_reason_changed = 0;
 				print("autosaved");
 			} else
 				print("error_saving");
@@ -996,7 +996,7 @@ int main(int argc, char **argv)
 
 	timer_add(NULL, "autoaway", 1, 1, ekg_autoaway_timer, NULL);
 
-	reason_changed = 0;
+	ekg2_reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
 	if (query_emit_id(NULL, UI_LOOP) != -1) {
@@ -1109,7 +1109,7 @@ void ekg_exit()
 		if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write())
 			printf(_("Error while saving.\n"));
 
-	} else if (config_keep_reason && reason_changed && config_save_quit == 1) {
+	} else if (config_keep_reason && ekg2_reason_changed && config_save_quit == 1) {
 		char line[80];
 
 		printf("%s", format_find("quit_keep_reason"));
@@ -1124,7 +1124,7 @@ void ekg_exit()
 		} else
 			printf("\n");
 
-	} else if (config_keep_reason && reason_changed && config_save_quit == 2) {
+	} else if (config_keep_reason && ekg2_reason_changed && config_save_quit == 2) {
 		if (session_write())
 			printf(_("Error while saving.\n"));
 	}

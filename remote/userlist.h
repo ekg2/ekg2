@@ -39,6 +39,7 @@ typedef struct userlist {
 	
 	status_t	status;		/**< current status */
 	char		*descr;		/* */
+	char		*descr1line;
 
 	void *__resources;		/* ekg2-remote: OK, NULL */	/* XXX, to w ogole by sie przydalo dorobic w ui-pluginach */
 	time_t		__last_seen;	/* ekg2-remote: OK, 0 */

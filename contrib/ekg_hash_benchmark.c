@@ -533,7 +533,7 @@ int main() {
 						"change your session password using /session password", 1);
 	format_add("passwd_abuse", "%! (%1) Somebody want to clear our password (%2)", 1);
 	format_add("change", _("%> Informations in public directory chenged\n"), 1);
-	format_add("change_failed", _("%! Error while changing informations in public directory\n"), 1);
+	format_add("change_failed", _("%! Error while changing information in public directory\n"), 1);
 	format_add("search_failed", _("%! Error while search: %1\n"), 1);
 	format_add("search_not_found", _("%! Not found\n"), 1);
 	format_add("search_no_last", _("%! Last search returned no result\n"), 1);
@@ -786,7 +786,7 @@ int main() {
 	format_add("session_info_param", "%)    %1 = %T%2%n\n", 1); /* key, value */
 	format_add("session_info_footer", "", 1); /* uid */
 	format_add("session_exists", _("%! Session %T%1%n already exists\n"), 1); /* uid */
-	format_add("session_doesnt_exist", _("%! Sesion %T%1%n does not exist\n"), 1); /* uid */
+	format_add("session_doesnt_exist", _("%! Session %T%1%n does not exist\n"), 1); /* uid */
 	format_add("session_added", _("%> Created session %T%1%n\n"), 1); /* uid */
 	format_add("session_removed", _("%> Removed session %T%1%n\n"), 1); /* uid */
 	format_add("session_format", "%T%1%n", 1);

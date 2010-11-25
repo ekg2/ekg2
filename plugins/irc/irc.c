@@ -1,6 +1,7 @@
 /*
  *  (C) Copyright 2004-2005 Michal 'GiM' Spadlinski <gim at skrzynka dot pl>
  *			Jakub 'darkjames' Zawadzki <darkjames@darkjames.ath.cx>
+ *			Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -63,6 +64,7 @@
 #include <ekg/log.h>
 #include <ekg/net.h>
 #include <ekg/protocol.h>
+#include <ekg/recode.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
@@ -179,6 +181,8 @@ static QUERY(irc_session_init) {
 
 	userlist_read(s);
 
+	ekg_recode_utf8_inc();
+
 	j = xmalloc(sizeof(irc_private_t));
 	j->fd = -1;
 
@@ -294,7 +298,7 @@ static char *irc_make_banmask(session_t *session, const char *nick, const char *
 		family = AF_INET;
 #else
 /* TODO */
-	print("generic_error", "It seem you don't have inet_pton() current version of irc_make_banmask won't work without this function. If you want to get work it faster contact with developers ;>");
+	print("generic_error", "It seems you don't have inet_pton(). The current version of irc_make_banmask won't work without this function. If you want to get it work faster, contact developers ;>");
 #endif
 
 	if (host && !family && (temp=xstrchr(host, ind)))
@@ -1674,7 +1678,7 @@ static COMMAND(irc_command_names) {
 	char *sort_modes = xstrchr(SOP(_005_PREFIX), ')')+1;
 
 	int smlen = xstrlen(sort_modes)+1;
-	char **mp, *channame;
+	char **mp, *channame, *cchn;
 
 	channel_t *chan;
 	string_t buf;
@@ -1689,10 +1693,12 @@ static COMMAND(irc_command_names) {
 		return -1;
 	}
 
+	cchn = clean_channel_names(session, channame+4);
+
 	if (chan->longest_nick > atoi(SOP(_005_NICKLEN)))
 		debug_error("[irc, names] funny %d vs %s\n", chan->longest_nick, SOP(_005_NICKLEN));
 
-	print_info(channame, session, "IRC_NAMES_NAME", session_name(session), channame+4);
+	print_info(channame, session, "IRC_NAMES_NAME", session_name(session), cchn);
 	buf = string_init(NULL);
 
 	for (lvl = 0; lvl < smlen; ++lvl, ++sort_modes) {
@@ -1737,11 +1743,12 @@ static COMMAND(irc_command_names) {
 	print_info(channame, session, "none2", "");
 #define plvl(x) lvl_total[x] ? itoa(lvl_total[x]) : "0"
 	if (smlen > 3) /* has halfops */
-		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2), plvl(3), plvl(4));
+		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), cchn, itoa(count), plvl(0), plvl(1), plvl(2), plvl(3), plvl(4));
 	else
-		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), channame+4, itoa(count), plvl(0), plvl(1), plvl(2));
-	debug("[IRC_NAMES] levelcounts = %d %d %d %d %d\n",
-			lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3], lvl_total[4], lvl_total[5]);
+		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), cchn, itoa(count), plvl(0), plvl(1), plvl(2));
+	xfree(cchn);
+	debug("[IRC_NAMES] levelcounts = %d %d %d %d\n",
+			lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3]);
 #undef plvl
 
 	array_free(mp);
@@ -2283,7 +2290,7 @@ char *nickpad_string_create(channel_t *chan)
 	return chan->nickpad_str;
 }
 
-char *nickpad_string_apply(channel_t *chan, char *str)
+char *nickpad_string_apply(channel_t *chan, const char *str)
 {
 	chan->nickpad_pos = chan->longest_nick - xstrlen(str);
 	if (config_use_unicode)
@@ -2430,7 +2437,7 @@ EXPORT int irc_plugin_init(int prio)
 #define IRC_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS		IRC_ONLY | SESSION_MUSTBECONNECTED
 #define IRC_FLAGS_TARGET	IRC_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
-	command_add(&irc_plugin, ("irc:"), "?",		irc_command_inline_msg, IRC_FLAGS, NULL);
+	command_add(&irc_plugin, ("irc:"), "?",		irc_command_inline_msg, IRC_FLAGS | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&irc_plugin, ("irc:_autoaway"), NULL,	irc_command_away,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:_autoback"), NULL,	irc_command_away,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:_conntest"), "?",	irc_command_test,	IRC_ONLY, NULL);
@@ -2642,7 +2649,7 @@ static int irc_theme_init()
 	format_add("IRC_TEST_FAIL",	"%! (%1) Error: %2 to %W%3%n [%4] port %W%5%n (%7)", 1);
 	
 	format_add("irc_channel_secure",	"%) (%1) Echelon can kiss our ass on %2 *g*", 1); 
-	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protect us on %2 :( install sim plugin now or at least rot13..", 1); 
+	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protects us on %2 :( install sim plugin now or at least rot13..", 1); 
 
 	format_add("irc_access_added",	_("%> (%1) %3 [#%2] was added to accesslist chan: %4 (flags: %5)"), 1);
 	format_add("irc_access_known", "a-> %2!%3@%4", 1);	/* %2 is nickname, not uid ! */

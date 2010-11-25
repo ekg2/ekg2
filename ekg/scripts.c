@@ -677,6 +677,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 		}
 	}
 #undef NEXT_ARG
+	temp->real_argc = temp->argc;
 	temp->self = query_connect(s->plugin, qname, script_query_handlers, temp);
 	SCRIPT_BIND_FOOTER(script_queries);
 }
@@ -749,7 +750,11 @@ static QUERY(script_query_handlers)
 
 	SCRIPT_HANDLER_HEADER(script_handler_query_t);
 
-	for (i=0; i < temp->argc; i++) 
+	/* makes thing easier to debug next time... */
+	memset(args, -1, sizeof(args));
+	memset(args2, -1, sizeof(args2));
+
+	for (i=0; i < temp->real_argc; i++) 
 		args2[i] = args[i] = (void *) va_arg(ap, void *);
 
 	if (temp->hack)

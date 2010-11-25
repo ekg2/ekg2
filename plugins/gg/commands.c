@@ -60,7 +60,6 @@
 #include <ekg/dynstuff.h>
 #include <ekg/msgqueue.h>
 #include <ekg/protocol.h>
-#include <ekg/recode.h>
 #include <ekg/sessions.h>
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
@@ -115,11 +114,11 @@ static COMMAND(gg_command_connect) {
 			if (__reason) {
 				if (!xstrcmp(__reason, "-"))	myreason = NULL;
 				else				myreason = xstrdup(__reason);
-				tmp = ekg_locale_to_cp_dup(myreason);
+				tmp = locale_to_gg_dup(session, myreason);
 				session_descr_set(session, tmp ? myreason : NULL);
 			} else {
 				myreason = xstrdup(session_descr_get(session));
-				tmp = ekg_locale_to_cp_dup(myreason);
+				tmp = locale_to_gg_dup(session, myreason);
 			}
 			if (tmp)
 				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
@@ -219,11 +218,19 @@ static COMMAND(gg_command_connect) {
 		if (session_int_get(session, "private"))
 			_status |= GG_STATUS_FRIENDS_MASK;
 
-		if ((tmpi = session_int_get(session, "protocol")) != -1)
-			p.protocol_version = tmpi;
+		if ((tmpi = session_int_get(session, "protocol")) > 0)
+			g->curr_prtcl_ver = p.protocol_version = tmpi;
+		else
+			g->curr_prtcl_ver = GG_DEFAULT_PROTOCOL_VERSION;
 
-		if ((tmpi = session_int_get(session, "last_sysmsg")) != -1)
-			p.last_sysmsg = tmpi;
+		if (g->curr_prtcl_ver >= 0x2d) {
+#ifdef GG_FEATURE_MSG80
+			p.encoding = GG_ENCODING_UTF8;
+#endif
+#ifdef GG_FEATURE_DND_FFC
+			p.protocol_features = GG_FEATURE_STATUS80 | GG_FEATURE_DND_FFC;
+#endif
+		}
 
 		while (realserver) {
 			in_addr_t tmp_in;
@@ -324,9 +331,9 @@ noproxy:
 			xfree(fwd);
 		}
 		
-		/* moved this further, because of ekg_locale_to_cp() allocation */
+		/* moved this further, because of locale_to_gg() allocation */
 		p.status = _status;
-		p.status_descr = ekg_locale_to_cp_dup(session_descr_get(session));
+		p.status_descr = locale_to_gg_dup(session, session_descr_get(session));
 		p.async = 1;
 
 		g->sess = gg_login(&p);
@@ -400,19 +407,29 @@ static COMMAND(gg_command_away) {
 		session_status_set(session, EKG_STATUS_INVISIBLE);
 		df = EKG_STATUS_NA; f = "invisible"; fd = "invisible_descr";
 		session_unidle(session);
+#ifdef GG_FEATURE_DND_FFC
+	} else if (!xstrcmp(name, ("dnd"))) {
+		session_status_set(session, EKG_STATUS_DND);
+		df = EKG_STATUS_NA; f = "dnd"; fd = "dnd_descr";
+		session_unidle(session);
+	} else if (!xstrcmp(name, ("ffc"))) {
+		session_status_set(session, EKG_STATUS_FFC);
+		df = EKG_STATUS_NA; f = "ffc"; fd = "ffc_descr";
+		session_unidle(session);
+#endif
 	} else {
 		xfree(params0);
 		return -1;
 	}
 
 	if (params0) {
-		char *tmp = ekg_locale_to_cp_dup(params0);
-		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE && config_reason_limit) {
+		char *tmp = locale_to_gg_dup(session, params0);
+		if (xstrlen(tmp) > GG_STATUS_DESCR_MAXSIZE) {
 			if (!timeout) {
-				char *descr_poss = xstrndup(params0, GG_STATUS_DESCR_MAXSIZE);
-				char *descr_not_poss = xstrdup(params0 + GG_STATUS_DESCR_MAXSIZE);
+				char *descr_poss = utf8ndup(params0, GG_STATUS_DESCR_MAXSIZE);
+				char *descr_not_poss = xstrdup(params0 + xstrlen(descr_poss));
 
-				printq("descr_too_long", itoa(xstrlen(tmp) - GG_STATUS_DESCR_MAXSIZE), descr_poss, descr_not_poss);
+				printq("descr_too_long", itoa(xstrlen(descr_not_poss)), descr_poss, descr_not_poss); /* XXX add new function utf8len() */
 				g->scroll_op = 0;
 
 				xfree(tmp);
@@ -437,7 +454,7 @@ static COMMAND(gg_command_away) {
 		}
 	}
 
-	reason_changed = 1;
+	ekg2_reason_changed = 1;
 	if (!session_descr_get(session))
 		autoscroll = timeout = 0;
 
@@ -504,7 +521,7 @@ static COMMAND(gg_command_away) {
 
 	ekg_update_status(session);
 
-	cpdescr = ekg_locale_to_cp(descr);
+	cpdescr = locale_to_gg(session, descr);
 	_status = GG_S(gg_text_to_status(status, cpdescr)); /* descr can be NULL it doesn't matter... */
 
 	if (session_int_get(session, "private"))
@@ -612,22 +629,22 @@ static COMMAND(gg_command_msg) {
 		return 0;
 	}
 
-	if (gg_config_split_messages && xstrlen(params[1]) > 1989) {
+	if (gg_config_split_messages && xstrlen(params[1]) > GG_MSG_MAXSIZE) {
 		int i, len = xstrlen(params[1]);
 		
-		for (i = 1; i * 1989 <= len; i++) {
-			char *tmp = (i != len) ? xstrndup(params[1] + (i - 1) * 1989, 1989) : xstrdup(params[1] + (i - 1) * 1989);
+		for (i = 1; i * GG_MSG_MAXSIZE <= len; i++) {
+			char *tmp = (i != len) ? xstrndup(params[1] + (i - 1) * GG_MSG_MAXSIZE, GG_MSG_MAXSIZE) : xstrdup(params[1] + (i - 1) * GG_MSG_MAXSIZE);
 			command_exec_format(target, session, 0, ("/%s %s %s"), name, target, tmp);
 			xfree(tmp);
 		}
 	
 		return 0;
 
-	} else if (xstrlen(params[1]) > 1989) {
+	} else if (xstrlen(params[1]) > GG_MSG_MAXSIZE) {
 	      printq("message_too_long");
 	}
 
-	msg = (unsigned char *) xstrmid(params[1], 0, 1989);
+	msg = (unsigned char *) xstrmid(params[1], 0, GG_MSG_MAXSIZE);
 	ekg_format = ekg_sent_message_format((char *) msg);
 
 	/* analize tekstu zrobimy w osobnym bloku dla porzdku */
@@ -733,7 +750,7 @@ static COMMAND(gg_command_msg) {
 	}
 
 	raw_msg = xstrdup((char *) msg);
-	cpmsg = ekg_locale_to_cp((char *) msg);
+	cpmsg = locale_to_gg(session, (char *) msg);
 
 	count = array_count(nicks);
 
@@ -920,7 +937,7 @@ static COMMAND(gg_command_block) {
  */
 
 static COMMAND(gg_command_unblock) {
-	char *uid;
+	const char *uid;
 	int ret;
 
 	if (!xstrcmp(params[0], "*")) {
@@ -952,16 +969,19 @@ static COMMAND(gg_command_unblock) {
 		return -1;
 	}
 
-	uid = xstrdup(uid);
+	{
+		/* TODO: Explain why we need a copy. */
+		char *uid_copy = xstrdup(uid);
 
-	if ( ( ret = gg_blocked_remove(session, uid) ) == -1)
-		printq("error_not_blocked", format_user(session, uid));
-	else {		
-		printq("blocked_deleted", format_user(session, uid));
-		config_changed = 1;
+		if ( ( ret = gg_blocked_remove(session, uid_copy) ) == -1)
+			printq("error_not_blocked", format_user(session, uid_copy));
+		else {
+			printq("blocked_deleted", format_user(session, uid_copy));
+			config_changed = 1;
+		}
+
+		xfree(uid_copy);
 	}
-
-	xfree(uid);
 
 	return ret;
 }
@@ -1566,7 +1586,8 @@ static COMMAND(gg_command_modify) {
 		if (match_arg(argv[i], 'g', ("group"), 2) && argv[i + 1]) {
 			char **tmp = array_make(argv[++i], ",", 0, 1, 1);
 			int x, off;	/* jeli zaczyna si�od '@', pomijamy pierwszy znak */
-			
+			int chg = 0;
+
 			for (x = 0; tmp[x]; x++)
 				switch (*tmp[x]) {
 					case '-':
@@ -1574,7 +1595,7 @@ static COMMAND(gg_command_modify) {
 
 						if (ekg_group_member(u, tmp[x] + 1 + off)) {
 							ekg_group_remove(u, tmp[x] + 1 + off);
-							modified = 1;
+							chg = modified = 1;
 						} else {
 							printq("group_member_not_yet", format_user(session, u->uid), tmp[x] + 1);
 							if (!modified)
@@ -1586,7 +1607,7 @@ static COMMAND(gg_command_modify) {
 
 						if (!ekg_group_member(u, tmp[x] + 1 + off)) {
 							ekg_group_add(u, tmp[x] + 1 + off);
-							modified = 1;
+							chg = modified = 1;
 						} else {
 							printq("group_member_already", format_user(session, u->uid), tmp[x] + 1);
 							if (!modified)
@@ -1598,7 +1619,7 @@ static COMMAND(gg_command_modify) {
 
 						if (!ekg_group_member(u, tmp[x] + off)) {
 							ekg_group_add(u, tmp[x] + off);
-							modified = 1;
+							chg = modified = 1;
 						} else {
 							printq("group_member_already", format_user(session, u->uid), tmp[x]);
 							if (!modified)
@@ -1606,7 +1627,10 @@ static COMMAND(gg_command_modify) {
 						}
 				}
 
-			array_free(tmp);
+			if (chg)
+				query_emit_id(NULL, USERLIST_REFRESH);
+
+ 			array_free(tmp);
 			continue;
 		}
 		
@@ -1654,7 +1678,7 @@ static COMMAND(gg_command_modify) {
 			tmp1 = xstrdup(argv[++i]);
 			query_emit_id(NULL, USERLIST_ADDED, &tmp1, &tmp1, &q);
 
-			xfree(u->uid);
+			xfree((void *) u->uid);
 			u->uid = tmp1;
 
 			modified = 1;
@@ -1805,10 +1829,14 @@ void gg_register_commands()
 	command_add(&gg_plugin, ("gg:reconnect"), NULL, gg_command_connect,	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:msg"), "!uUC !", gg_command_msg,		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
 	command_add(&gg_plugin, ("gg:chat"), "!uUC !", gg_command_msg,		GG_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET, NULL);
-	command_add(&gg_plugin, ("gg:"), "?", gg_command_inline_msg,		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:"), "?", gg_command_inline_msg,		GG_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&gg_plugin, ("gg:away"), "r", gg_command_away,		GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:_autoaway"), "?", gg_command_away,			GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:back"), "r", gg_command_away,		GG_ONLY, NULL);
+#ifdef GG_FEATURE_DND_FFC
+	command_add(&gg_plugin, ("gg:dnd"), "r", gg_command_away,		GG_ONLY, NULL);
+	command_add(&gg_plugin, ("gg:ffc"), "r", gg_command_away,		GG_ONLY, NULL);
+#endif
 	command_add(&gg_plugin, ("gg:_autoback"), "?", gg_command_away,			GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:_autoscroll"), "?", gg_command_away,	GG_ONLY, NULL);
 	command_add(&gg_plugin, ("gg:check_conn"), "!uUC", gg_command_check_conn,	GG_FLAGS_TARGET, NULL);

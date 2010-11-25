@@ -39,6 +39,7 @@ typedef enum {
 	COMMAND_ISALIAS			= 0x01,		/* command is binded by alias management */
 	COMMAND_ISSCRIPT		= 0x02,		/* command is binded by script management */
 	COMMAND_WITH_RESOURCE		= 0x04,		/* [XXX] command uses resource, and resource should be passed */
+	COMMAND_PASS_UNCHANGED		= 0x08,		/* WYSIWYG, pass unchanged line, as first argument */
 /* .... */
 
 /* CONDITIONAL FLAGS */

@@ -5,7 +5,11 @@ if 'env' in globals():
 	plugin	= {
 		'type':			'crypt',
 		'state':		'unstable',
-		'depends':		['gpgme']
+		# We use this fairly special syntax because only some versions of gpgme
+		# require us having largefile support enabled. Thus, we first try to
+		# link against it. If it fails, we enable largefile support and try once
+		# again.
+		'depends':		[['gpgme', 'largefile'], 'gpgme']
 		}
 
 	Return('plugin')

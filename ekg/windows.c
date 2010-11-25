@@ -208,7 +208,7 @@ void window_switch(int id) {
 		window_current = w;
 		query_emit_id(NULL, UI_WINDOW_SWITCH, &w);	/* XXX */
 
-		w->act = 0;
+		w->act = EKG_WINACT_NONE;
 		if (w->target && w->session && (u = userlist_find(w->session, w->target)) && u->blink) {
 			u->blink	= 0;
 			ul_refresh	= 1;
@@ -607,7 +607,7 @@ COMMAND(cmd_window) {
 			if (w->id) {
 				if (w->target) {
 					if (!w->floating)
-						printq("window_list_query", itoa(w->id), w->target);
+						printq("window_list_query", itoa(w->id), w->alias ? w->alias : w->target);
 					else
 						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);
 				} else
@@ -621,7 +621,7 @@ COMMAND(cmd_window) {
 		window_t *w;
 		int a, id = 0;
 
-		for (a=3; !id && a>0; a--)
+		for (a=EKG_WINACT_IMPORTANT; !id && a>EKG_WINACT_NONE; a--)
 			for (w = windows; w; w = w->next) {
 				if ((w->act==a) && !w->floating && w->id) {
 					id = w->id;
@@ -940,8 +940,8 @@ int window_session_cycle(window_t *w) {
 	session_t *s;
 	session_t *new_session = NULL;
 	int once = 0;
-	char *uid;
-	char *nickname;
+	const char *uid;
+	const char *nickname;
 
 	if (!w || !sessions) {
 		return -1;

@@ -123,6 +123,20 @@ disconnect
 	tej komendy, program nadal bêdzie próbowa³ siê automatycznie 
 	³±czyæ po okre¶lonym czasie.
 
+dnd
+	parametry: [opis/-]
+	krotki opis: zmienia stan na nie przeszkadzaæ
+	
+	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
+ffc
+	parametry: [opis/-]
+	krotki opis: zmienia stan na chêtny do rozmowy
+	
+	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
+
 find
 	parametry:  [numer|opcje]
 	krotki opis: przeszukiwanie katalogu publicznego

@@ -104,7 +104,8 @@ static LIST_ADD_COMPARE(userlist_compare, userlist_t *) { return xstrcasecmp(dat
 static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
 	userlist_private_free(data);
 	private_items_destroy(&data->priv_list);
-	xfree(data->uid); xfree(data->nickname); xfree(data->descr); xfree(data->foreign); xfree(data->last_descr);
+	xfree((void *) data->uid); xfree(data->nickname); xfree(data->descr); xfree(data->foreign); xfree(data->last_descr);
+	xfree(data->descr1line);
 	ekg_groups_destroy(&(data->groups));
 	ekg_resources_destroy(&(data->resources));
 }
@@ -140,7 +141,7 @@ void userlist_add_entry(session_t *session, const char *line) {
 	if (valid_plugin_uid(session->plugin, u->uid) != 1) {
 		debug_error("userlist_add_entry() wrong uid: %s for session: %s [plugin: 0x%x]\n", u->uid, session->uid, session->plugin);
 		array_free_count(entry, count);
-		xfree(u->uid);
+		xfree((void *) u->uid);
 		xfree(u);
 		return;
 	}
@@ -340,12 +341,12 @@ void *userlist_private_get(plugin_t *plugin, userlist_t *u) {
 /**
  * userlist_clear_status()
  *
- * If @a uin == NULL then it clears all users <i>presence informations</i> in the @a session userlist
+ * If @a uin == NULL then it clears all users <i>presence information</i> in the @a session userlist
  * otherwise it clears only specified user
  * It's useful if user goes notavail, or we goes disconnected..<br>
  * However if that happen you shouldn't use this function but emit query <i>PROTOCOL_STATUS</i> or <i>PROTOCOL_DISCONNECTED</i>
  *
- * @note By <i>presence informations</i> I mean:<br>
+ * @note By <i>presence information</i> I mean:<br>
  *	-> status	- user's status [avail, away, ffc, dnd], it'll be: @a EKG_STATUS_NA ("notavail")<br>
  *	-> descr	- user's description, it'll be: NULL<br>
  *	-> ip		- user's ip, il'll be: 0.0.0.0<br>
@@ -580,7 +581,7 @@ userlist_t *userlist_find_u(userlist_t **userlist, const char *uid) {
 
 		/* porównujemy resource; if (len > 0) */
 
-		if (!(tmp = xstrchr(uid, '/')) || (xstrncmp(uid, "xmpp:", 5)))
+		if (!(tmp = xstrchr(uid, '/')) || (xstrncmp(uid, "tlen:", 5) && xstrncmp(uid, "xmpp:", 5)) )
 			continue;
 
 		len = (int)(tmp - uid);
@@ -688,8 +689,8 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid) {
  * @return If we found proper uid for @a text, than return it. Otherwise NULL
  */
 
-char *get_uid_any(session_t *session, const char *text) {
-	char *uid = get_uid(session, text);
+const char *get_uid_any(session_t *session, const char *text) {
+	const char *uid = get_uid(session, text);
 
 	if (!session) 
 		return uid;
@@ -697,7 +698,7 @@ char *get_uid_any(session_t *session, const char *text) {
 	if (!uid && !xstrcmp(text, "$"))
 		text = window_current->target;
 
-	return uid ? uid : valid_uid(text) ? (char *) text : NULL;
+	return uid ? uid : valid_uid(text) ? text : NULL;
 }
 
 /**
@@ -725,14 +726,14 @@ char *get_uid_any(session_t *session, const char *text) {
  * @return If we found proper uid for @a text, than return it. Otherwise NULL
  */
 
-char *get_uid(session_t *session, const char *text) {
+const char *get_uid(session_t *session, const char *text) {
 	userlist_t *u;
 
 	if (text && !xstrcmp(text, "$"))
 		text = window_current->target;
 
 	if (!session)
-		return valid_uid(text) ? (char *) text : NULL;
+		return valid_uid(text) ? text : NULL;
 
 	u = userlist_find(session, text);
 
@@ -740,7 +741,7 @@ char *get_uid(session_t *session, const char *text) {
 		return u->uid;
 
 	if (valid_plugin_uid(session->plugin, text) == 1)
-		return (char *)text;
+		return text;
 
 	return NULL;
 }
@@ -753,14 +754,14 @@ char *get_uid(session_t *session, const char *text) {
  * no nickname it returns uid, else if contacts doesnt exist
  * it returns text if it is a correct uid, else NULL
  */
-char *get_nickname(session_t *session, const char *text) {
+const char *get_nickname(session_t *session, const char *text) {
 	userlist_t *u;
 
 	if (text && !xstrcmp(text, "$"))
 		text = window_current->target;
 
 	if (!session)
-		return valid_uid(text) ? (char *) text : NULL;
+		return valid_uid(text) ? text : NULL;
 
 	u = userlist_find(session, text);
 
@@ -771,7 +772,7 @@ char *get_nickname(session_t *session, const char *text) {
 		return u->uid;
 
 	if (valid_plugin_uid(session->plugin, text) == 1)
-		return (char *)text;
+		return text;
 
 	return NULL;
 }

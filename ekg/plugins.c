@@ -224,6 +224,19 @@ int plugin_load(const char *name, int prio, int quiet)
 				plugin = ekg2_dlopen(lib);
 	}
 
+#ifndef SKIP_RELATIVE_PLUGINS_DIR
+	/* The following lets ekg2 load plugins when it is run directly from
+	 * the source tree, without installation. This can be beneficial when
+	 * developing the program, or for less knowlegeable users, who don't
+	 * know how to or cannot for some other reason use installation prefix
+	 * to install in their home directory. However this impses a security
+	 * risk if the program installed in the system directory is run in
+	 * untrusted $CWD or when $CWD/../plugins is untrusted.
+	 *
+	 * TODO(porridge,darkjames): This can be fixed by having a wrapper
+	 * script in the source tree to run ekg/.libs/ekg2 with
+	 * EKG_PLUGINS_PATH set appropriately.
+	 */
 	if (!plugin) {
 		if (snprintf(lib, sizeof(lib), "plugins/%s/" DOTLIBS "%s.so", name, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
@@ -233,6 +246,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		if (snprintf(lib, sizeof(lib), "../plugins/%s/" DOTLIBS "%s.so", name, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
 	}
+#endif
 
 	if (!plugin) {
 		if (snprintf(lib, sizeof(lib), "%s/%s.so", PLUGINDIR, name) < sizeof(lib))

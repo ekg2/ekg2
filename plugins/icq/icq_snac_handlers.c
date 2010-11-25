@@ -2,6 +2,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *                     2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -128,47 +132,46 @@ void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, privat
 
 	string_insert_n(pkt, 0, _icq_makesnac(fam, cmd, 0x0000, j->snac_seq), SNAC_PACKET_LEN);
 
-	debug_function("icq_makesnac() 0x%x 0x0%x 0x%x\n", fam, cmd, j->snac_seq);
 #if ICQ_SNAC_NAMES_DEBUG
 	{
 	const char *tmp = icq_snac_name(fam, cmd);
-	if (tmp)
-		debug_white("icq_makesnac() //	SNAC(0x%x, 0x%x) -- %s\n", fam, cmd, tmp);
+	debug_function("icq_makesnac(0x%x) SNAC(0x%x,0x%x) // %s\n", j->snac_seq, fam, cmd, tmp?tmp:"");
 	}
+#else
+	debug_function("icq_makesnac(0x%x) SNAC(0x%x,0x%x)\n", j->snac_seq, fam, cmd);
 #endif
 	icq_makeflap(s, pkt, 0x02);
 
 	j->snac_seq++;
 }
 
-void icq_makemetasnac(session_t *s, string_t pkt, uint16_t sub, uint16_t type, private_data_t *data, snac_subhandler_t subhandler) {
+void icq_makemetasnac(session_t *s, string_t pkt, uint16_t type, uint16_t subtype, private_data_t *data, snac_subhandler_t subhandler) {
 	icq_private_t *j;
 	string_t newbuf;
+	int t_len;
 
 	if (!s || !(j = s->priv) || !pkt)
 		return;
 
-/* XXX */
-	if (j->snacmeta_seq)
-		j->snacmeta_seq = (j->snacmeta_seq + 1) % 0x7fff;
-	else
-		j->snacmeta_seq = 2;
+	j->snacmeta_seq++;
+	if (j->snacmeta_seq & ~0x7fff)
+		j->snacmeta_seq = 1;
 
-
-	newbuf = icq_pack("t", (uint32_t) 0x01, (uint32_t) pkt->len + (type ? 0x0C : 0x0A));
+	t_len = pkt->len + (2+4+2+2) + (subtype ? 2 : 0);
+	newbuf = icq_pack("t", (uint32_t) 0x01, (uint32_t) t_len);
 	icq_pack_append(newbuf, "wiww",
-				(uint32_t) pkt->len + (type ? 0x0A : 0x08),
-				(uint32_t) atoi(s->uid+4),
-				(uint32_t) sub,
-				(uint32_t) j->snacmeta_seq);
-	if (type)
-		icq_pack_append(newbuf, "w", (uint32_t) type);
+				(uint32_t) t_len - 2,			// data chunk size (TLV.Length-2)
+				(uint32_t) atoi(s->uid+4),		// request owner uin
+				(uint32_t) type,			// request cmd type
+				(uint32_t) j->snacmeta_seq);		// request sequence number
+	if (subtype)
+		icq_pack_append(newbuf, "w", (uint32_t) subtype);
 
 	string_insert_n(pkt, 0, newbuf->str, newbuf->len);
 	string_free(newbuf, 1);
 
-	debug_function("icq_makemetasnac() 0x%x 0x0%x\n", sub, type);
-	icq_makesnac(s, pkt, 0x15, 2, data, subhandler);
+	debug_function("icq_makemetasnac() 0x%x 0x0%x\n", type, subtype);
+	icq_makesnac(s, pkt, 0x15, 0x2, data, subhandler);
 }
 
 /* stolen from Miranda ICQ plugin CIcqProto::LogFamilyError() chan_02data.cpp under GPL-2 or later */
@@ -212,18 +215,6 @@ void icq_snac_error_handler(session_t *s, const char *from, uint16_t error) {
 
 	debug_error("icq_snac_error_handler(%s) %s: %s (%.4x)\n", s->uid, from, msg, error);
 }
-
-
-#include "icq_snac_handlers_01service.inc"
-#include "icq_snac_handlers_02location.inc"
-#include "icq_snac_handlers_03buddy.inc"
-#include "icq_snac_handlers_04message.inc"
-#include "icq_snac_handlers_09bos.inc"
-#include "icq_snac_handlers_0Alookup.inc"
-#include "icq_snac_handlers_0Bstatus.inc"
-#include "icq_snac_handlers_13userlist.inc"
-#include "icq_snac_handlers_15extension.inc"
-#include "icq_snac_handlers_17sigon.inc"
 
 int icq_snac_handler(session_t *s, uint16_t family, uint16_t cmd, unsigned char *buf, int len, uint16_t flags, uint32_t ref_no) {
 	snac_handler_t handler;

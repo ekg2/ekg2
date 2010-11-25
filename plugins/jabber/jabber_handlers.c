@@ -158,6 +158,7 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 	char *resource = tlenjabber_escape(j->resource);/* escaped resource name */
 	char *epasswd = NULL;				/* temporary password [escaped, or hash], if needed for xfree() */
 	char *authpass;					/* <digest>digest</digest> or <password>plaintext_password</password> */
+	const char *host = "";
 
 	/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw³ow */
 	if (j->istlen) {
@@ -173,6 +174,8 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 		magic2 &= 0x7fffffff;
 
 		passwd2 = epasswd = saprintf("%08x%08x", magic1, magic2);
+
+		host = "<host>tlen.pl</host>";
 	} else if (session_int_get(s, "plaintext_passwd")) {
 		epasswd = jabber_escape(passwd);
 	} else	passwd2 = passwd;
@@ -183,8 +186,8 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 		saprintf("<password>%s</password>", epasswd);				/* plaintext */
 		
 	watch_write(j->send_watch, 
-			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>%s</resource></query></iq>", 
-			j->server, username, authpass, resource);
+			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\">%s<username>%s</username>%s<resource>%s</resource></query></iq>",
+			host, j->server, username, authpass, resource);
 	xfree(authpass);
 
 	xfree(epasswd);
@@ -740,7 +743,7 @@ JABBER_HANDLER(jabber_handle_message) {
 	if (nerr) {
 		char *ecode = jabber_attr(nerr->atts, "code");
 		char *etext = jabber_unescape(nerr->data);
-		char *recipient = get_nickname(s, uid);
+		const char *recipient = get_nickname(s, uid);
 
 		if (nbody && nbody->data) {
 			char *tmp2 = jabber_unescape(nbody->data);
@@ -978,7 +981,7 @@ JABBER_HANDLER(jabber_handle_message) {
 
 		debug_function("[jabber,message] type = %s\n", __(type));
 		if (!xstrcmp(type, "groupchat")) {
-			char *tuid = xstrrchr(uid, '/');				/* temporary */
+			char *tuid = xstrchr(uid, '/');				/* temporary */
 			char *uid2 = (tuid) ? xstrndup(uid, tuid-uid) : xstrdup(uid);		/* muc room */
 			char *nick = (tuid) ? xstrdup(tuid+1) : NULL;				/* nickname */
 			newconference_t *c = newconference_find(s, uid2);
@@ -1007,7 +1010,10 @@ JABBER_HANDLER(jabber_handle_message) {
 					else						attr[0] = ' ';
 
 
-				} else debug_error("[MUC, MESSAGE] userlist_find_u(%s) failed\n", nick);
+				} else {
+					debug_error("[MUC, MESSAGE] userlist_find_u(%s) failed\n", nick);
+					return;
+				}
 
 				formatted = format_string(format_find(
 							is_me ? ( isour ? "jabber_muc_me_sent" : "jabber_muc_me" )
@@ -1387,10 +1393,7 @@ JABBER_HANDLER(jabber_handle_iq) {
 }
 
 static inline int jabber_status_int(int tlen, const char *text) {
-	if (!tlen && !xstrcasecmp(text, "online"))
-		return EKG_STATUS_AVAIL;
-
-	if (tlen && !xstrcasecmp(text, "available"))
+	if (!xstrcasecmp(text, "online") || !xstrcasecmp(text, "available"))
 		return EKG_STATUS_AVAIL;
 
 	return ekg_status_int(text);
@@ -1607,12 +1610,11 @@ JABBER_HANDLER(jabber_handle_presence) {
 			descr = saprintf("(%s) %s", ecode, __(etext));
 			xfree(etext);
 
-			if (!istlen && (atoi(ecode) == 403 || atoi(ecode) == 401)) /* we lack auth */
+			if (!istlen && ecode && (atoi(ecode) == 403 || atoi(ecode) == 401)) /* we lack auth */
 				status = EKG_STATUS_UNKNOWN; /* shall we remove the error description? */
 			else
 				status = EKG_STATUS_ERROR;
 			na = 1;
-
 			if (istlen) { /* we need to get&fix the UID - userlist entry is sent with @tlen.pl, but error with user-given host */
 				char *tmp	= tlenjabber_unescape(jabber_attr(n->atts, "to"));
 				char *atsign	= xstrchr(tmp, '@');

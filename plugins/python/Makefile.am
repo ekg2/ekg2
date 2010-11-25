@@ -1,4 +1,4 @@
-EXTRA_DIST = 
+EXTRA_DIST = commands-en.txt commands-pl.txt
 
 lib_LTLIBRARIES = python.la
 python_la_SOURCES = python-config.c python-config.h \
@@ -13,3 +13,8 @@ python_la_LIBADD = $(PYTHON_LIBS)
 python_la_CPPFLAGS = $(PYTHON_CFLAGS) 
 
 override libdir = $(plugindir)
+
+install-data-am:
+	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/python/
+	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/python/
+

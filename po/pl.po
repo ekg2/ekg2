@@ -1170,7 +1170,7 @@ msgid "%> Informations in public directory chenged\n"
 msgstr "%> Informacje w katalogu publicznym zosta³y zmienione\n"
 
 #: ekg/themes.c:1593
-msgid "%! Error while changing informations in public directory\n"
+msgid "%! Error while changing information in public directory\n"
 msgstr "%! B³±d podczas zmiany informacji w katalogu publicznym\n"
 
 #: ekg/themes.c:1596
@@ -2004,7 +2004,7 @@ msgid "%! Session %T%1%n already exists\n"
 msgstr "%! Sesja %T%1%n ju¿ istnieje\n"
 
 #: ekg/themes.c:1906
-msgid "%! Sesion %T%1%n does not exist\n"
+msgid "%! Session %T%1%n does not exist\n"
 msgstr "%! Sesja %T%1%n nie istnieje\n"
 
 #: ekg/themes.c:1907

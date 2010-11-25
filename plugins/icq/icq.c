@@ -2,6 +2,10 @@
  *  (C) Copyright 2006-2008 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *		       2008 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
+ * Protocol description with author's permission from: http://iserverd.khstu.ru/oscar/
+ *  (C) Copyright 2000-2005 Alexander V. Shutko <AVShutko@mail.khstu.ru>
+ *
+ *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
  *  published by the Free Software Foundation.
@@ -72,7 +76,10 @@ int icq_send_pkt(session_t *s, string_t buf) {
 
 	debug_io("icq_send_pkt(%s) fd: %d len: %d\n", s->uid, fd, buf->len);
 	icq_hexdump(DEBUG_IO, (unsigned char *) buf->str, buf->len);
-	ekg_write(fd, buf->str, buf->len);
+	if (j->migrate)
+		debug_warn("Client migrate! Packet will not be send\n");
+	else	
+		ekg_write(fd, buf->str, buf->len);
 	string_free(buf, 1);
 	return 0;
 }
@@ -104,13 +111,14 @@ int icq_write_status_msg(session_t *s) {
 	if (j->aim == 0)
 		return -1;
 
-	if (s->status != EKG_STATUS_AWAY && s->status != EKG_STATUS_GONE && s->status != EKG_STATUS_XA && s->status != EKG_STATUS_FFC && s->status != EKG_STATUS_DND)
-		return -1;
-
-	msg = xstrndup(s->descr, 0x1000);	/* XXX, recode */
+	msg = ekg_locale_to_utf8(xstrndup(s->descr, 0x1000));
 
 	/* XXX, cookie */
 
+	/* SNAC(02,04) CLI_SET_LOCATION_INFO Set user information
+	 * Client use this snac to set its location information (like client
+	 * profile string, client directory profile string, client capabilities).
+	 */
 	icq_send_snac(s, 0x02, 0x04, 0, 0,
 			"TT",
 			icq_pack_tlv_str(0x03, "text/x-aolrtf; charset=\"utf-8\""),
@@ -124,7 +132,7 @@ int icq_write_status(session_t *s) {
 	icq_private_t *j = s->priv;
 	uint32_t status;
 
-	if (!s)
+	if (!s || !s->connected)
 		return 0;
 
 	status = (j->status_flags << 16) | icq_status(s->status);
@@ -194,10 +202,6 @@ int icq_write_info(session_t *s) {
 #ifdef DBG_CAPHTML
 	icq_pack_append_cap(tlv_5, CAP_HTML);		/* Broadcasts the capability to receive HTML messages */
 #endif
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x4D697261);	/* Miranda Signature */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x6E64614D);
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x00070800);	/* MIRANDA_VERSION */
-	icq_pack_append(tlv_5, "I", (uint32_t) 0x00030a0e);
 
 	pkt = icq_pack("T", icq_pack_tlv(0x05, tlv_5->str, tlv_5->len));
 
@@ -208,16 +212,15 @@ int icq_write_info(session_t *s) {
 	return 0;
 }
 
-void icq_set_sequrity(session_t *s) {
+void icq_set_security(session_t *s) {
 	icq_private_t *j;
 	string_t pkt;
-	uint8_t auth, webaware;
+	uint8_t webaware;
 
 	if (!s || !(j = s->priv))
 		return;
 
-	webaware = atoi(session_get(s, "webaware"));
-	if (webaware)
+	if ((webaware = atoi(session_get(s, "webaware"))))
 		j->status_flags |= STATUS_WEBAWARE;
 	else
 		j->status_flags &= ~STATUS_WEBAWARE;
@@ -225,20 +228,20 @@ void icq_set_sequrity(session_t *s) {
 	if (!(s->connected))
 		return;
 
-	auth = atoi(session_get(s, "require_auth"));
-	pkt = icq_pack("w iwww wwc wwc",
-				(uint32_t) 4+2+2+2 + 5 + 5,	/* data chunk size */
+	/* SNAC(15,02)/07D0/0C3A CLI_SET_FULLINFO Save info tlv-based request
+	 *
+	 * This is client tlv-based set personal info request. This snac contain tlv chain and this 
+	 * chain may contain several TLVs of same type (for example 3 tlv(0x186) - language codes).
+	 * Client can change all its information via single packet.
+	 * Server should respond with SNAC(15,03)/07DA/0C3F - which contain result flag.
+	 */
+	pkt = icq_pack("wwc wwc",
+			icq_pack_tlv_char(0x30c, webaware),				/* TLV(0x30c) (LE!) 'show web status' permissions */
+			icq_pack_tlv_char(0x2f8, !atoi(session_get(s, "require_auth")))	/* TLV(0x2f8) (LE!) authorization permissions */
+			);
+	icq_makemetasnac(s, pkt, CLI_META_INFO_REQ, CLI_SET_FULLINFO, NULL, NULL);
+	icq_send_pkt(s, pkt);
 
-				(uint32_t) atoi(s->uid+4),	/* request owner uin */
-				(uint32_t) 0x7d0,		/* data type: META_DATA_REQ */
-				(uint32_t) j->snac_seq++,	/* request sequence number */
-				(uint32_t) 0x0c3a,		/* data subtype: CLI_SET_FULLINFO */
-
-				(uint32_t) 0x30c, (uint32_t) 1, (uint32_t) webaware,	/* TLV(0x30c) (LE!) */
-				(uint32_t) 0x2f8, (uint32_t) 1, (uint32_t) !auth	/* TLV(0x2f8) (LE!) */
-				);
-	icq_send_snac(s, 0x15, 0x02, NULL, NULL, "T", icq_pack_tlv(0x1, pkt->str, pkt->len));
-	string_free(pkt, 1);
 }
 
 void icq_session_connected(session_t *s) {
@@ -357,25 +360,41 @@ void icq_session_connected(session_t *s) {
 
 	debug_ok(" *** Yeehah, login sequence complete\n");
 
-
-#if 0
-	info->bLoggedIn = 1;
-#endif
 	/* login sequence is complete enter logged-in mode */
 
 	if (!s->connected) {
-		/* Get Offline Messages Reqeust */
+
+		/* SNAC(15,02)/003C CLI_OFFLINE_MESSAGE_REQ Offline messages request
+		 *
+		 * Client sends this SNAC when wants to retrieve messages that was sent by
+		 * another user and buffered by server during client was offline. Server
+		 * should respond with 0 or more SNAC(15,03)/0041 packets with SNAC bit1=1
+		 * and after that it should send last SNAC(15,03)/0042.
+		 *
+		 * Warn: Server doesn't delete messages from database and will send them
+		 * again. You should ask it to delete them by SNAC(15,02)/003E
+		 */
 		/* XXX, cookie */
-		icq_send_snac(s, 0x4, 0x10, 0, 0, NULL);
+		pkt = string_init(NULL);
+		icq_makemetasnac(s, pkt, CLI_OFFLINE_MESSAGE_REQ, 0, NULL, NULL);
+		icq_send_pkt(s, pkt);
 
 		{
 			/* Update our information from the server */
+			/* SNAC(15,02)/07D0/04D0 CLI_FULLINFO_REQUEST2 Request full user info #2
+			 *
+			 * Client full userinfo request. Last reply snac flag bit1=0, other reply
+			 * packets have flags bit1=1 to inform client that more data follows.
+			 * Server should respond with following SNACs:
+			 *	SNAC(15,03)/07DA/00C8, SNAC(15,03)/07DA/00DC, SNAC(15,03)/07DA/00EB, SNAC(15,03)/07DA/010E,
+			 *	SNAC(15,03)/07DA/00D2, SNAC(15,03)/07DA/00E6, SNAC(15,03)/07DA/00F0, SNAC(15,03)/07DA/00FA
+			 */
 			private_data_t *data = NULL;
 			private_item_set_int(&data, "uid", atoi(s->uid+4));
 
 			pkt = icq_pack("i", atoi(s->uid+4));
 			/* XXX, cookie, in-quiet-mode */
-			icq_makemetasnac(s, pkt, 2000, 0x04D0, data, icq_my_meta_information_response);
+			icq_makemetasnac(s, pkt, CLI_META_INFO_REQ, CLI_FULLINFO_REQUEST2, data, icq_my_meta_information_response);
 			icq_send_pkt(s, pkt);
 		}
 
@@ -396,7 +415,7 @@ void icq_session_connected(session_t *s) {
 	}
 	protocol_connected_emit(s);
 
-	icq_set_sequrity(s);
+	icq_set_security(s);
 	icq_write_status_msg(s);
 
 	{ /* XXX ?wo? find better place for it */
@@ -423,14 +442,15 @@ void icq_session_connected(session_t *s) {
 }
 
 static uint32_t icq_get_uid(session_t *s, const char *target) {
-	char *uid;
+	const char *uid;
+	char *first_invalid = NULL;
 	long int uin;
 
 	if (!target)
 		return 0;
 
 	if (!(uid = get_uid(s, target)))
-		uid = (char *) target;
+		uid = target;
 
 	if (!xstrncmp(uid, "icq:", 4))
 		uid += 4;
@@ -438,9 +458,9 @@ static uint32_t icq_get_uid(session_t *s, const char *target) {
 	if (!uid[0])
 		return 0;
 
-	uin = strtol(uid, &uid, 10);	/* XXX, strtoll() */
+	uin = strtol(uid, &first_invalid, 10);	/* XXX, strtoll() */
 
-	if (uid[0])
+	if (*first_invalid != '\0')
 		return 0;
 
 	if (uin <= 0)
@@ -577,6 +597,7 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 		j->fd2 = -1;
 	}
 	string_clear(j->stream_buf);
+	j->migrate = 0;
 }
 
 static WATCHER_SESSION(icq_handle_stream);
@@ -764,24 +785,231 @@ static COMMAND(icq_command_addssi) {
 	userlist_t *u;
 	icq_private_t *j;
 	private_data_t *refdata = NULL;
-	uint32_t u_id;
-	uint16_t group;
+	uint32_t uid;
+	uint16_t group, iid;
+	int i, ok=0;
+	char *nickname = NULL, *phone = NULL, *email = NULL, *comment = NULL;
 
-	char *nickname = NULL;
-	char *phone = NULL;
-	char *email = NULL;
-	char *comment = NULL;
+	int cmd_add = !xstrcmp(name,"addssi");
 
-		/* instead of PARAMASTARGET, 'cause that one fails with /add username in query */
-	if (get_uid(session, params[0])) {
-		/* XXX: create&use shift()? */
+	if (cmd_add && get_uid(session, params[0])) {
 		target = params[0];
 		params++;
 	}
 
-	if ((u = userlist_find(session, target))) {		/* don't allow to add user again */
-		printq("user_exists_other", (params[0] ? params[0] : target), format_user(session, u->uid), session_name(session));
+	if (!cmd_add && params[0] && !xstrcmp(params[0], target)) {
+		//  XXX ???
+		params++;
+	}
+
+	if ((u = userlist_find(session, target))) {
+		if (cmd_add) {
+			/* don't allow to add user again */
+			printq("user_exists_other", target, format_user(session, u->uid), session_name(session));
+			return -1;
+		}
+	} else if (!cmd_add) {
+		printq("user_not_found", target);
 		return -1;
+	}
+
+	if (!(uid = icq_get_uid(session, target))) {
+		printq("invalid_uid", target);
+		return -1;
+	}
+
+	if ( !session || !(j = session->priv) ) /* WTF? */
+		return -1;
+
+	char **argv = array_make(params[0], " \t", 0, 1, 1);
+
+	for (i = 0; argv[i]; i++) {
+		if (match_arg(argv[i], 'g', "group", 2) && argv[i + 1] && ++i) {
+			/* XXX */
+			ok = 1;
+			continue;
+		}
+
+		if (match_arg(argv[i], 'p', "phone", 2) && argv[i + 1]) {
+			phone = argv[++i];
+			ok = 1;
+			continue;
+		}
+
+		if (match_arg(argv[i], 'c', "comment", 2) && argv[i + 1]) {
+			comment = argv[++i];
+			ok = 1;
+			continue;
+		}
+
+		if (match_arg(argv[i], 'e', "email", 2) && argv[i + 1]) {
+			email = argv[++i];
+			ok = 1;
+			continue;
+		}
+		/*    if this is -n smth */
+		/* OR (/add only) if param doesn't looks like command treat as a nickname */
+		if ((match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1] && ++i) || (cmd_add && argv[i][0] != '-')) {
+			if (cmd_add && userlist_find(session, argv[i])) {
+				printq("user_exists", argv[i], session_name(session));
+			} else {
+				nickname = argv[i];
+				ok = 1;
+				continue;
+			}
+		}
+		printq("invalid_params", name);
+	}
+
+	if (nickname && (u = userlist_find(session, nickname))) {
+		printq("user_exists_other", nickname, format_user(session, u->uid), session_name(session));
+		ok = 0;
+	}
+
+
+	if ((cmd_add && nickname) || (!cmd_add && ok)) {
+		/* send packets */
+		string_t buddies, data;
+		uint16_t min = 0xffff, max = 0, count = 0;
+
+		buddies = string_init(NULL);
+		for (u = session->userlist; u; u = u->next) {
+			i = user_private_item_get_int(u, "iid");
+			icq_pack_append(buddies, "W", i);
+			if (i>max) max = i;
+			if (i<min) min = i;
+			count++;
+		}
+
+		if (cmd_add) {
+			if (count) {
+				if (min>1)
+					iid = 1;
+				// else if (max-min+1 != count) {
+				// XXX ?wo? find iid (for new user) between min, max
+				// }
+				else
+					iid = max + 1;
+			} else
+				iid = 1;
+
+			icq_pack_append(buddies, "W", iid);
+			group = j->default_group_id;	// XXX
+		} else {
+			u = userlist_find(session, target);
+			iid = user_private_item_get_int(u, "iid");
+			group = user_private_item_get_int(u, "gid");
+		}
+
+		/* SNAC(13,11) CLI_SSI_EDIT_BEGIN	Contacts edit start (begin transaction)
+		 * Use this before server side information (SSI) modification.
+		 */
+		icq_send_snac(session, 0x13, 0x11, NULL, NULL, "");
+
+		data = string_init(NULL);
+
+		/* TLV(0x0066) - Signifies that you are awaiting authorization for this buddy. The client is in
+		 * charge of putting this TLV, but you will not receiving status updates for the contact until
+		 * they authorize you, regardless if this is here or not. Meaning, this is only here to tell
+		 * your client that you are waiting for authorization for the person. This TLV is always empty.
+		 */
+		icq_pack_append(data, "T", icq_pack_tlv(0x66, NULL, 0));
+
+		if (nickname)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x131, nickname));	// contact's nick name
+		if (email)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x137, email));	// locally assigned mail address
+		if (phone)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x13a, phone));	// locally assigned SMS number
+		if (comment)
+			icq_pack_append(data, "T", icq_pack_tlv_str(0x13c, comment));	// buddy comment
+
+		// data to server response handler
+		private_item_set(&refdata, "cmd", cmd_add ? "add" : "modify");
+		private_item_set(&refdata, "nick", nickname);
+		private_item_set_int(&refdata, "uid", uid);
+		private_item_set_int(&refdata, "iid", iid);
+		private_item_set_int(&refdata, "gid", group);
+		private_item_set_int(&refdata, "quiet", quiet);
+		if (phone) private_item_set(&refdata, "mobile", phone);
+		if (email) private_item_set(&refdata, "email", email);
+		if (comment) private_item_set(&refdata, "comment", comment);
+
+		if (cmd_add) {
+			/* SNAC(13,08) CLI_SSIxADD	SSI edit: add item(s)
+			 * Client use this to add new items to server-side info. Server should reply via SNAC(13,0E)
+			 */
+			icq_send_snac(session, 0x13, 0x08, refdata, icq_cmd_addssi_ack,
+				"U WWW WA",
+				target+4,				// item name (uin)
+				group,					// Group#
+				(uint16_t) iid,				// Item#
+				(uint16_t) 0,				// Type of item: 0 -- Buddy record
+				(uint16_t) data->len,			// Length of the additional data
+				data
+				);
+		}
+
+		/* SNAC(13,09) CLI_SSIxUPDATE	SSI edit: update group header
+		 *
+		 * This can be used to modify either the name or additional data for any items that are already
+		 * in your server-stored information. It is most commonly used after adding or removing a buddy:
+		 * you should either add or remove the buddy ID# from the type 0x00c8 TLV in the additional data of
+		 * the parent group, and then send this SNAC containing the modified data.
+		 * Server should reply via SNAC(13,0E).
+		 */
+		if (cmd_add) {
+			icq_send_snac(session, 0x13, 0x09, NULL, NULL,
+				"U WWWW T",
+				j->default_group_name,			// default group name
+				group,					// Group#
+				(uint16_t) 0,				// Item#
+				(uint16_t) 1,				// Group record
+				(uint16_t) buddies->len + 4,		// Length of the additional data
+				icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
+				);
+		} else {
+			icq_send_snac(session, 0x13, 0x09, refdata, icq_cmd_addssi_ack,
+				"U WWW WA",
+/*XXX*/				itoa(uid),				// item name (uin)
+				group,					// Group#
+				(uint16_t) iid,				// Item#
+				(uint16_t) 0,				// Type of item: 0 -- Buddy record
+				(uint16_t) data->len,			// Length of the additional data
+				data
+				);
+		}
+
+		icq_send_snac(session, 0x13, 0x12, NULL, NULL, "");	// Contacts edit end (finish transaction)
+
+		string_free(data, 1);
+		string_free(buddies, 1);
+	}
+
+	array_free(argv);
+
+	return 0;
+}
+
+static COMMAND(icq_command_delssi) {
+	userlist_t *u;
+	icq_private_t *j;
+	private_data_t *refdata = NULL;
+	uint32_t u_id;
+	uint16_t iid = 0;
+	uint16_t group;
+	string_t buddies;
+	int i;
+
+	if (params[0])
+		target = params[0];
+
+	if (!(u = userlist_find(session, target))) {
+		printq("user_not_found", target);
+		return -1;
+	} else {
+		iid = user_private_item_get_int(u, "iid");
+		group = user_private_item_get_int(u, "gid");
 	}
 
 	if (!(u_id = icq_get_uid(session, target))) {
@@ -792,135 +1020,52 @@ static COMMAND(icq_command_addssi) {
 	if ( !session || !(j = session->priv) ) /* WTF? */
 		return -1;
 
-	if (params[0]) {
-		char **argv = array_make(params[0], " \t", 0, 1, 1);
-		int i;
+	/* send packets */
+	icq_send_snac(session, 0x13, 0x11, NULL, NULL, "");	// Contacts edit start (begin transaction)
 
-		for (i = 0; argv[i]; i++) {
-			if (match_arg(argv[i], 'g', "group", 2)) {
-				/* XXX */
-				continue;
-			}
+	// data to server response handler
+	private_item_set(&refdata, "cmd", "del");
+	private_item_set_int(&refdata, "uid", u_id);
+	private_item_set_int(&refdata, "quiet", quiet);
 
-			if (match_arg(argv[i], 'p', "phone", 2) && argv[i + 1] && i++) {
-				xfree(phone);
-				phone = xstrdup(argv[i]);
-				continue;
-			}
+	/* SNAC(13,0A) CLI_SSIxDELETE	SSI edit: remove item
+	 * Client use this to delete items from server-side info. Server should reply via SNAC(13,0E)
+	 */
+	icq_send_snac(session, 0x13, 0x0A, refdata, icq_cmd_addssi_ack,
+			"U WWW W",
+/*XXX*/			itoa(u_id),				// item name (uin)
+			group,					// Group#
+			(uint16_t) iid,				// Item#
+			(uint16_t) 0,				// Type of item: 0 -- Buddy record
+			(uint16_t) 0				// Length of the additional data
+			);
 
-			if (match_arg(argv[i], 'c', "comment", 2) && argv[i + 1] && i++) {
-				xfree(comment);
-				comment = xstrdup(argv[i]);
-				continue;
-			}
-
-			if (match_arg(argv[i], 'e', "email", 2) && argv[i + 1] && i++) {
-				xfree(email);
-				email = xstrdup(argv[i]);
-				continue;
-			}
-
-			/*    if this is -n smth */
-			/* OR if param doesn't looks like command treat as a nickname */
-			if ((match_arg(argv[i], 'n', ("nickname"), 2) && argv[i + 1] && i++) || argv[i][0] != '-') {
-				if (userlist_find(session, argv[i])) {
-					printq("user_exists", argv[i], session_name(session));
-					continue;
-				}
-
-				xfree(nickname);
-				nickname = xstrdup(argv[i]);
-				continue;
-			}
+	buddies = string_init(NULL);
+	for (u = session->userlist; u; u = u->next) {
+		if (group == user_private_item_get_int(u, "gid")) {
+			i = user_private_item_get_int(u, "iid");
+			if (iid != i)
+				icq_pack_append(buddies, "W", i);
 		}
-		array_free(argv);
 	}
 
-	/* send packet */
-	if (nickname) {
-		uint16_t min = 0xffff, max = 0, count = 0, iid;
-		string_t buddies = string_init(NULL), data = string_init(NULL);
+	icq_send_snac(session, 0x13, 0x09, NULL, NULL,		// SSI edit: update group header
+			"U WWWW T",
+			j->default_group_name,			// default group name
+			group,					// Group#
+			(uint16_t) 0,				// Item#
+			(uint16_t) 1,				// Group record
+			(uint16_t) buddies->len + 4,		// Length of the additional data
+			icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
+			);
 
+	string_free(buddies, 1);
 
-		for (u = session->userlist; u; u = u->next) {
-			iid = user_private_item_get_int(u, "iid");
-			icq_pack_append(buddies, "W", iid);
-			if (iid>max) max = iid;
-			if (iid<min) min = iid;
-			count++;
-		}
-
-		if (count) {
-			if (min>1)
-				iid = 1;
-/*	XXX ?wo? find iid (for new user) between min, max
-			else if (max != count) {
-
-			}
-*/
-			else
-				iid = max + 1;
-		} else
-			iid = 1;
-
-		icq_pack_append(buddies, "W", iid);
-
-		group = j->default_group_id;
-
-
-		icq_send_snac(session, 0x13, 0x11, NULL, NULL, "");	// Contacts edit start (begin transaction)
-
-		icq_pack_append(data, "T", icq_pack_tlv_str(0x131, nickname));
-		icq_pack_append(data, "T", icq_pack_tlv(0x66, NULL, 0));	//  XXX we are awaiting authorization for this buddy
-		if (email)
-			icq_pack_append(data, "T", icq_pack_tlv_str(0x137, email));	// locally assigned mail address
-		if (phone)
-			icq_pack_append(data, "T", icq_pack_tlv_str(0x13a, phone));	// locally assigned SMS number
-		if (comment)
-			icq_pack_append(data, "T", icq_pack_tlv_str(0x13c, comment));	// buddy comment
-
-		private_item_set_int(&refdata, "uid", u_id);
-		private_item_set(&refdata, "nick", nickname);
-		private_item_set_int(&refdata, "iid", iid);
-		private_item_set_int(&refdata, "gid", group);
-		private_item_set_int(&refdata, "quiet", quiet);
-
-		icq_send_snac(session, 0x13, 0x08, refdata, icq_cmd_addssi_ack,		// SSI edit: add item(s)
-				"U WWW WA",
-				target+4,				// item name (uin)
-
-				group,					// Group#
-				(uint16_t) iid,				// Item#
-				(uint16_t) 0,				// Buddy record
-
-				(uint16_t) data->len,			// Length of the additional data
-				data
-				);
-
-		icq_send_snac(session, 0x13, 0x09, NULL, NULL,		// SSI edit: update group header
-				"U WWWW T",
-				j->default_group_name,			// default group name
-				group,					// Group#
-				(uint16_t) 0,				// Item#
-				(uint16_t) 1,				// Group record
-				(uint16_t) buddies->len + 4,		// Length of the additional data
-				icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
-				);
-
-		icq_send_snac(session, 0x13, 0x12, NULL, NULL, "");	// Contacts edit end (finish transaction)
-
-
-		string_free(data, 1);
-		string_free(buddies, 1);
-	}
-
-	xfree(comment);
-	xfree(email);
-	xfree(nickname);
-	xfree(phone);
+	icq_send_snac(session, 0x13, 0x12, NULL, NULL, "");	// Contacts edit end (finish transaction)
 
 	return 0;
 }
+
 
 static void icq_send_msg_ch1(session_t *session, const char *uid, const char *message) {
 	string_t pkt;
@@ -935,7 +1080,7 @@ static void icq_send_msg_ch1(session_t *session, const char *uid, const char *me
 			break;
 		}
 	}
-	if ( enc && !(u || user_private_item_get_int(u, "utf")) )
+	if ( enc && !(u && user_private_item_get_int(u, "utf")) )
 		enc = 3;		/* ANSI -- XXX ?wo? what should we do now? */
 
 	/* TLV(101) */
@@ -1033,7 +1178,7 @@ static COMMAND(icq_command_msg) {
 		last_add(1, uid, time(NULL), 0, params[1]);
 
 	{
-		// send "typing finished" snack
+		// send "typing finished" snac
 		const char *sid	= session_uid_get(session);
 		int first = 0, len = 0;
 		query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
@@ -1079,90 +1224,77 @@ static COMMAND(icq_command_inline_msg) {
 }
 
 static COMMAND(icq_command_away) {
-	const char *descr, *format;
-	int allow_descr = 0;
+	const char *format;
+	char *new_descr = NULL;
+	int chg = 0, new_status;
 
 	if (!xstrcmp(name, ("_autoback"))) {
 		format = "auto_back";
-		session_status_set(session, EKG_STATUS_AUTOBACK);
-		session_unidle(session);
+		new_status = EKG_STATUS_AUTOBACK;
 	} else if (!xstrcmp(name, ("back"))) {
 		format = "back";
-		session_status_set(session, EKG_STATUS_AVAIL);
-		session_unidle(session);
+		new_status = EKG_STATUS_AVAIL;
 	} else if (!xstrcmp(name, ("_autoaway"))) {
 		format = "auto_away";
-		session_status_set(session, EKG_STATUS_AUTOAWAY);
-		allow_descr = 1;
+		new_status = EKG_STATUS_AUTOAWAY;
 	} else if (!xstrcmp(name, ("_autoxa"))) {
 		format = "auto_xa";
-		session_status_set(session, EKG_STATUS_AUTOXA);
-		allow_descr = 1;
+		new_status = EKG_STATUS_AUTOXA;
 	} else if (!xstrcmp(name, ("away"))) {
 		format = "away";
-		session_status_set(session, EKG_STATUS_AWAY);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_AWAY;
 	} else if (!xstrcmp(name, ("dnd"))) {
 		format = "dnd";
-		session_status_set(session, EKG_STATUS_DND);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_DND;
 	} else if (!xstrcmp(name, ("ffc"))) {
 		format = "ffc";
-		session_status_set(session, EKG_STATUS_FFC);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_FFC;
 	} else if (!xstrcmp(name, ("xa"))) {
 		format = "xa";
-		session_status_set(session, EKG_STATUS_XA);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_XA;
 	} else if (!xstrcmp(name, ("gone"))) {
 		format = "gone";
-		session_status_set(session, EKG_STATUS_GONE);
-		session_unidle(session);
-		allow_descr = 1;
+		new_status = EKG_STATUS_GONE;
 	} else if (!xstrcmp(name, ("invisible"))) {
 		format = "invisible";
-		session_status_set(session, EKG_STATUS_INVISIBLE);
-		session_unidle(session);
+		new_status = EKG_STATUS_INVISIBLE;	// XXX invisible is flag, not status
 	} else
 		return -1;
 
-	if (allow_descr) {
-		if (params[0]) {
-			session_descr_set(session, (!xstrcmp(params[0], "-")) ? NULL : params[0]);
-			reason_changed = 1;
-		} else {
-			char *tmp;
+	if (params[0]) {
+		if (xstrcmp(params[0], "-"))
+			new_descr = xstrdup(params[0]);
+	} else if (config_keep_reason)
+		new_descr = xstrdup(session_descr_get(session));
 
-			if (!config_keep_reason) {
-				session_descr_set(session, NULL);
-			} else if ((tmp = ekg_draw_descr(session_status_get(session)))) {
-				session_descr_set(session, tmp);
-				xfree(tmp);
-			}
-		}
-	} else
-		session_descr_set(session, NULL);
+	if (xstrcmp(new_descr, session->descr)) {
+		ekg2_reason_changed = 1;
+		chg = 1;
+		session_descr_set(session, new_descr);
+	}
 
-	descr = (char *) session_descr_get(session);
-
-	if (descr) {
+	if (new_descr) {
 		char *f = saprintf("%s_descr", format);
-		printq(f, descr, "", session_name(session));
+		printq(f, new_descr, "", session_name(session));
 		xfree(f);
 	} else
 		printq(format, session_name(session));
 
+	xfree(new_descr);
+
+	if (session->connected && chg)
+		icq_write_status_msg(session);
+
+	if (new_status != session_status_get(session)) {
+		session_status_set(session, new_status);
+		if ((new_status != EKG_STATUS_AUTOAWAY) && (new_status != EKG_STATUS_AUTOXA))
+			session_unidle(session);
+		if (session->connected)
+			icq_write_status(session);
+	}
+
 	ekg_update_status(session);
 
-	if (session->connected) {
-		/* icq_write_info(session); */
-		icq_write_status(session);
-		icq_write_status_msg(session);
-	}
 	return 0;
 }
 
@@ -1245,11 +1377,24 @@ static COMMAND(icq_command_userinfo) {
 		return -1;
 	}
 
+	/* SNAC(15,02)/07D0/04B2 CLI_FULLINFO_REQUEST Request full user info
+	* Client full userinfo request. Last reply snac flag bit1=0, other reply
+	* packets have flags bit1=1 to inform client that more data follows.
+	* Server should respond with following SNAC(15,03)/07DA subtype:
+	* 00C8, 00DC, 00EB, 010E, 00D2, 00E6, 00F0, 00FA.
+	*/
+
+	/* SNAC(15,02)/07D0/04BA CLI_SHORTINFO_REQUEST Request short user info
+	 *
+	 * Client short userinfo request. ICQ2k use this request when message from
+	 * unknown user arrived. Server should respond with SNAC(15,03)/07DA/0104
+	 */
+
 	/* XXX xookie */
 	private_item_set_int(&ref_data, "uid", number);
 
 	pkt = icq_pack("i", number);
-	icq_makemetasnac(session, pkt, 2000, (minimal_req == 0) ? 1202 : 1210, ref_data, NULL);
+	icq_makemetasnac(session, pkt, CLI_META_INFO_REQ, (minimal_req == 0) ? CLI_FULLINFO_REQUEST : CLI_SHORTINFO_REQUEST, ref_data, NULL);
 
 	icq_send_pkt(session, pkt);
 	return 0;
@@ -1267,9 +1412,14 @@ static COMMAND(icq_command_searchuin) {
 	}
 
 	/* XXX, cookie */
+	/* SNAC(15,02)/07D0/0569 CLI_FIND_BY_UIN2 Search by uin request (tlv)
+	 *
+	 * This is client search by uin tlv-based request. Server should respond
+	 * with last search found record SNAC(15,03)/07DA/01AE because uin number
+	 * is unique. UIN tlv number is 0x0136.
+	 */
 	pkt = icq_pack("wwi", icq_pack_tlv_dword(0x0136, uin));		/* TLV_UID */
-
-	icq_makemetasnac(session, pkt, 2000, 0x0569, NULL, 0);	/* META_SEARCH_UIN */
+	icq_makemetasnac(session, pkt, CLI_META_INFO_REQ, CLI_FIND_BY_UIN2, NULL, 0);
 	icq_send_pkt(session, pkt);
 	return 0;
 }
@@ -1355,6 +1505,7 @@ static COMMAND(icq_command_search) {
 	if (email) wo_idnhtni(0x015E, email);		/* TLV_EMAIL */
 	if (city) wo_idnhtni(0x0190, city);		/* TLV_CITY */
 
+#undef wo_idnhtni
 /* more options:
 
 	searchPackTLVLNTS(&buf, &buflen, hwndDlg, IDC_STATE, TLV_STATE);
@@ -1382,24 +1533,29 @@ static COMMAND(icq_command_search) {
 
 	icq_pack_append(pkt, "wwc", icq_pack_tlv_char(0x0230, only_online));
 
-	icq_makemetasnac(session, pkt, 2000, 0x055F, NULL, 0);	/* META_SEARCH_GENERIC */
+	/* SNAC(15,02)/07D0/055F CLI_WHITE_PAGES_SEARCH2 Whitepages search request (tlv)
+	 *
+	 * This is client tlv-based white pages search request used by ICQ2001+.
+	 * Server should respond with 1 or more packets. Last reply packet allways
+	 * SNAC(15,03)/07DA/01AE, other reply packets SNAC(15,03)/07DA/01A4.
+	 */
+	icq_makemetasnac(session, pkt, CLI_META_INFO_REQ, CLI_WHITE_PAGES_SEARCH2, NULL, 0);
 	icq_send_pkt(session, pkt);
 
 	array_free(argv);
 
 	return 0;
-#undef wo_idnhtni
 }
 
 static COMMAND(icq_command_auth) {
 	uint32_t number;
-	const char *reason;
+	const char *reason = NULL;
 
 	if (match_arg(params[0], 'l', "list", 2)) {
 		userlist_t *u;
 		for (u = session->userlist; u; u = u->next) {
 			if (user_private_item_get_int(u, "auth") == 1) {
-				printq("icq_user_info_generic", _("Waiting for authorization"), u->uid);
+				printq("icq_user_info_generic", _("Waiting for authorization"), format_user(session, u->uid));
 			}
 		}
 		return 0;
@@ -1407,6 +1563,7 @@ static COMMAND(icq_command_auth) {
 
 	if (params[1]) {
 		target = params[1];
+		reason = params[2];
 	} else if (!target) {
 		printq("invalid_params", name);
 		return -1;
@@ -1420,8 +1577,6 @@ static COMMAND(icq_command_auth) {
 	/* XXX, pending auth!!! like /auth -l in jabber */
 	/* XXX, reasons!! */
 	/* XXX, messages */
-
-	reason = params[2];
 
 	if (match_arg(params[0], 'r', "request", 2)) {
 
@@ -1496,10 +1651,10 @@ static QUERY(icq_userlist_info_handle) {
 	if ( (i = user_private_item_get_int(u, "xstatus")) )
 		printq("icq_user_info_generic", _("xStatus"), icq_xstatus_name(i));
 
-	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "online"))) )
+	if ( (i = user_private_item_get_int(u, "online")) && (tmp = timestamp_time("%Y-%m-%d %H:%M", i)) )
 		printq("icq_user_info_generic", _("Online since"), tmp);
 
-	if ( (tmp = int2time_str("%Y-%m-%d %H:%M", user_private_item_get_int(u, "member"))) )
+	if ( (i = user_private_item_get_int(u, "member")) && (tmp = timestamp_time("%Y-%m-%d %H:%M", i)) )
 		printq("icq_user_info_generic", _("ICQ Member since"), tmp);
 
 	if ( (tmp = user_private_item_get(u, "comment")) )
@@ -1537,13 +1692,13 @@ static int icq_theme_init() {
 	format_add("icq_rates_header", "%>%n # %K|%n Curr %K|%n Alrt %K|%n Limt %K|%n Clear %K|%n Dscn %K|%n  Max %K|%nwin %K|%n\n", 1);
 	format_add("icq_rates", "%>%n%[-2]1 %K|%n%[-5]7 %K|%n%[-5]4 %K|%n%[-5]5 %K|%n%[-6]3 %K|%n%[-5]6 %K|%n%[-5]8 %K|%n%[-3]2 %K|%n\n", 1);
 	format_add("icq_you_were_added",	"%> (%1) %2 adds you to contact list\n", 1);
-
+	format_add("icq_window_closed", "%> %1 has closed the message window.\n", 1);
 #endif
 	return 0;
 }
 
 
-static void icq_changed_our_sequrity(session_t *s, const char *var) {
+static void icq_changed_our_security(session_t *s, const char *var) {
 	const char *val;
 	icq_private_t *j;
 	int webaware;
@@ -1555,7 +1710,7 @@ static void icq_changed_our_sequrity(session_t *s, const char *var) {
 		return;
 
 	if ((webaware = !xstrcasecmp(var, "webaware")) || !xstrcasecmp(var, "require_auth")) {
-		icq_set_sequrity(s);
+		icq_set_security(s);
 		if (webaware)
 			icq_write_status(s);
 	} else if (!xstrcasecmp(var, "hide_ip")) {
@@ -1572,16 +1727,21 @@ static void icq_changed_our_sequrity(session_t *s, const char *var) {
 
 static plugins_params_t icq_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("auto_away",		VAR_INT, "600", 0, NULL),
+	PLUGIN_VAR_ADD("auto_away_descr",	VAR_STR, 0, 0, NULL),
+	PLUGIN_VAR_ADD("auto_back",		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT,  "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_xa",		VAR_INT, "0", 0, NULL),
+	PLUGIN_VAR_ADD("auto_xa_descr",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "xml,simple,sqlite", 0, NULL),
 	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("plaintext_passwd",	VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("server",		VAR_STR, NULL, 0, NULL),
 
-	PLUGIN_VAR_ADD("hide_ip",		VAR_BOOL,  "1", 0, icq_changed_our_sequrity),
-	PLUGIN_VAR_ADD("require_auth",		VAR_BOOL,  "1", 0, icq_changed_our_sequrity),
-	PLUGIN_VAR_ADD("webaware",		VAR_BOOL,  "0", 0, icq_changed_our_sequrity),
+	PLUGIN_VAR_ADD("hide_ip",		VAR_BOOL,  "1", 0, icq_changed_our_security),
+	PLUGIN_VAR_ADD("require_auth",		VAR_BOOL,  "1", 0, icq_changed_our_security),
+	PLUGIN_VAR_ADD("webaware",		VAR_BOOL,  "0", 0, icq_changed_our_security),
 
 	PLUGIN_VAR_END()
 };
@@ -1621,21 +1781,27 @@ EXPORT int icq_plugin_init(int prio) {
 	query_connect_id(&icq_plugin, USERLIST_INFO, icq_userlist_info_handle, NULL);
 	query_connect_id(&icq_plugin, PROTOCOL_TYPING_OUT, icq_typing_out, NULL);
 
-	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:", "?", icq_command_inline_msg, ICQ_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&icq_plugin, "icq:msg", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 	command_add(&icq_plugin, "icq:chat", "!uU !", icq_command_msg, ICQ_FLAGS_MSG, NULL);
 
-	command_add(&icq_plugin, "icq:addssi", "!p ?", icq_command_addssi, ICQ_FLAGS, "-p --phone -c --comment -e --email");
+	command_add(&icq_plugin, "icq:addssi", "!p ?", icq_command_addssi, ICQ_FLAGS, "-p --phone -c --comment -e --email -n --nick");
+	command_add(&icq_plugin, "icq:delssi", "!u ?", icq_command_delssi, ICQ_FLAGS_TARGET, NULL);
+	command_add(&icq_plugin, "icq:modify", "!u ?", icq_command_addssi, ICQ_FLAGS_TARGET, "-p --phone -c --comment -e --email -n --nick");
 
 	command_add(&icq_plugin, "icq:auth", "!p uU ?", icq_command_auth, ICQ_FLAGS | COMMAND_ENABLEREQPARAMS, "-a --accept -d --deny -l --list -r --request -c --cancel");
 
 	command_add(&icq_plugin, "icq:away", "r", icq_command_away, ICQ_ONLY, NULL);
-	command_add(&icq_plugin, "icq:back", NULL, icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:back", "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:dnd",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:ffc",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:gone",  "r", icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:invisible", NULL, icq_command_away, ICQ_ONLY, NULL);
 	command_add(&icq_plugin, "icq:xa",  "r", icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:_autoaway", "?", icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:_autoback", "?", icq_command_away, ICQ_ONLY, NULL);
+	command_add(&icq_plugin, "icq:_autoxa", "?", icq_command_away, ICQ_ONLY, NULL);
+
 
 	command_add(&icq_plugin, "icq:userinfo", "!u",	icq_command_userinfo,	ICQ_FLAGS_TARGET, NULL);
 	command_add(&icq_plugin, "icq:register", NULL,	icq_command_register,	0, NULL);
