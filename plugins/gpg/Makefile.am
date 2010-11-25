@@ -1,4 +1,4 @@
-EXTRA_DIST = commands-pl.txt
+EXTRA_DIST = commands-pl.txt commands-en.txt
 
 lib_LTLIBRARIES = gpg.la
 gpg_la_SOURCES = gpg.c
