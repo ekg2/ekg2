@@ -213,21 +213,19 @@ int python_commands(script_t *scr, script_command_t *comm, char **params)
 
 int python_query(script_t *scr, script_query_t *scr_que, void **args)
 {
-	int python_handle_result, cnst, type;
+	int python_handle_result;
 	PyObject *argz;
 	int i;
 	if (!(argz = PyTuple_New(scr_que->argc)))
 		return 1;
 	for (i=0; i < scr_que->argc; i++) {
-		type = scr_que->argv_type[i] & QUERY_ARG_TYPES;
-		cnst = scr_que->argv_type[i] & QUERY_ARG_CONST;
 		PyObject *w = NULL;
-		switch ( type ) {
+		switch ( scr_que->argv_type[i] & QUERY_ARG_TYPES ) {
 			case (QUERY_ARG_INT):
-				w = PyInt_FromLong( cnst ? (long int) args[i] : (long) *(int *) args[i] );
+				w = PyInt_FromLong( (long) *(int *) args[i] );
 				break;
 			case (QUERY_ARG_CHARP): {
-				char *tmp = cnst ? (char *) args[i] : *(char **) args[i];
+				char *tmp = *(char **) args[i];
 				if (tmp)
 					w = PyString_FromString(tmp);
 				break;
@@ -250,12 +248,10 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 	PYTHON_HANDLE_HEADER(scr_que->priv_data, argz)
 	if (__py_r && PyTuple_Check(__py_r)) { /* __py_r - return value */
 		for (i=0; i < scr_que->argc; i++) {
-			cnst = scr_que->argv_type[i] & QUERY_ARG_CONST;
-			if (cnst)
+			if (scr_que->argv_type[i] & QUERY_ARG_CONST)
 				continue;
-			type = scr_que->argv_type[i] & QUERY_ARG_TYPES;
 			PyObject *w = PyTuple_GetItem(__py_r, i);
-			switch (scr_que->argv_type[i]) {
+			switch ( scr_que->argv_type[i] & QUERY_ARG_TYPES ) {
 				case (QUERY_ARG_INT):
 					if (PyInt_Check(w)) *( (int *) args[i]) = PyInt_AsLong(w);
 					else debug("[recvback,script error] not int ?!\n");

@@ -127,7 +127,7 @@ int perl_watches(script_t *scr, script_watch_t *scr_wat, int type, int fd, long 
 
 int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 {
-	int i, cnst, type;
+	int i;
 	SV *perlargs[MAX_ARGS];
 	SV *perlarg;
 
@@ -136,15 +136,13 @@ int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 	PERL_HANDLER_HEADER((char *) scr_que->priv_data);
 	for (i=0; i < scr_que->argc; i++) {
 
-		type = scr_que->argv_type[i] & QUERY_ARG_TYPES;
-		cnst = scr_que->argv_type[i] & QUERY_ARG_CONST;
 		perlarg = NULL;
-		switch ( type ) {
+		switch ( scr_que->argv_type[i] & QUERY_ARG_TYPES ) {
 			case (QUERY_ARG_INT):	/* int */
-				perlarg = newSViv( cnst ? (int) args[i] : *(int *) args[i] );
+				perlarg = newSViv( *(int *) args[i] );
 				break;
 			case (QUERY_ARG_CHARP):  /* char * */
-				perlarg = new_pv( cnst ? (char *) args[i] : *(char **) args[i] );
+				perlarg = new_pv( *(char **) args[i] );
 				break;
 			case (QUERY_ARG_CHARPP): {/* char ** */
 				char *tmp = array_join((* (char ***) args[i]), " ");

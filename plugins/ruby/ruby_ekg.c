@@ -383,19 +383,17 @@ static int ruby_query(script_t *scr, script_query_t *scr_que, void *args[]) {
 
 	if (!scr_que->argc) argv = NULL;
 	else {
-		int i, cnst, type;
+		int i;
 
 		argv = ALLOCA_N(VALUE, scr_que->argc);
 
 		for (i=0; i < scr_que->argc; i++) {
-			type = scr_que->argv_type[i] & QUERY_ARG_TYPES;
-			cnst = scr_que->argv_type[i] & QUERY_ARG_CONST;
-			switch ( type ) {
+			switch ( scr_que->argv_type[i] & QUERY_ARG_TYPES ) {
 				case (QUERY_ARG_INT):	/* int */
-					argv[i] = INT2FIX( cnst ? (int) args[i] : *(int *) args[i]);	/* XXX ? */
+					argv[i] = INT2FIX( *(int *) args[i]);	/* XXX ? */
 					break;
 				case (QUERY_ARG_CHARP):  /* char * */
-					argv[i] = rb_str_new2( cnst ? (char *) args[i] : *(char **) args[i] );
+					argv[i] = rb_str_new2( *(char **) args[i] );
 					break;
 
 #if 0
