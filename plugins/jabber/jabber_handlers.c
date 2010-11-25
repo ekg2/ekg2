@@ -158,6 +158,7 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 	char *resource = tlenjabber_escape(j->resource);/* escaped resource name */
 	char *epasswd = NULL;				/* temporary password [escaped, or hash], if needed for xfree() */
 	char *authpass;					/* <digest>digest</digest> or <password>plaintext_password</password> */
+	const char *host = "";
 
 	/* stolen from libtlen function calc_passcode() Copyrighted by libtlen's developer and Piotr Paw³ow */
 	if (j->istlen) {
@@ -173,6 +174,8 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 		magic2 &= 0x7fffffff;
 
 		passwd2 = epasswd = saprintf("%08x%08x", magic1, magic2);
+
+		host = "<host>tlen.pl</host>";
 	} else if (session_int_get(s, "plaintext_passwd")) {
 		epasswd = jabber_escape(passwd);
 	} else	passwd2 = passwd;
@@ -183,8 +186,8 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 		saprintf("<password>%s</password>", epasswd);				/* plaintext */
 		
 	watch_write(j->send_watch, 
-			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><username>%s</username>%s<resource>%s</resource></query></iq>", 
-			j->server, username, authpass, resource);
+			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\">%s<username>%s</username>%s<resource>%s</resource></query></iq>",
+			host, j->server, username, authpass, resource);
 	xfree(authpass);
 
 	xfree(epasswd);
