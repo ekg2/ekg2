@@ -1363,7 +1363,7 @@ static COMMAND(irc_command_msg) {
 	int		secure = 0;
 	
 	char **rcpts;
-	char *uid, *sid;
+	char *uid;
 
 	if (!xstrncmp(target, IRC4, 4)) {
 		uid = xstrdup(target);
@@ -1387,7 +1387,6 @@ static COMMAND(irc_command_msg) {
 				ischn?"irc_msg_sent_chan":w?"irc_msg_sent_n":"irc_msg_sent":
 				ischn?"irc_not_sent_chan":w?"irc_not_sent_n":"irc_not_sent");
 
-	sid	 = xstrdup(session_uid_get(session));
 	rcpts	 = xmalloc(sizeof(char *) * 2);
 	rcpts[0] = xstrdup(!!w?w->target:uid);
 	rcpts[1] = NULL;
@@ -1396,56 +1395,60 @@ static COMMAND(irc_command_msg) {
 
 	tmpbuf	 = (mline[0] = xstrdup(params[1]));
 	while ((mline[1] = split_line(&(mline[0])))) {
-		char *__msg = NULL;
+		char *line, *recoded;
 
 		char *__mtmp, *padding = NULL;
-		int isour = 1;
-		int xosd_to_us = 0;
-		int xosd_is_priv = !ischn;
-		
+		int len_limit, msg_len;
+
+		line = xstrdup(mline[1]);
+
+		{	/* one-shot variables */
+			int __isour = 1;
+			int __to_us = 0;
+			int __priv = !ischn;
+
+			query_emit_id(NULL, IRC_PROTOCOL_MESSAGE, &(session->uid), &(j->nick), &line, &__isour,
+					&__to_us, &__priv, &uid);
+		}
+
 		if (perchn)
 			padding = nickpad_string_apply(perchn->chanp, j->nick);
 		head = format_string(frname, session_name(session),
-			prefix,	j->nick, j->nick, uid+4, mline[1], padding);
+			prefix,	j->nick, j->nick, uid+4, line, padding);
 		if (perchn)
 			nickpad_string_restore(perchn->chanp);
 
-/* XXX,
- *	Recoding should be done after emiting IRC_PROTOCOL_MESSAGE (?)
- *
- *	wo: Yes! We should use uncoded message for proper encoding in logs.
- */
-
-		if (!(__msg = irc_convert_out(j, uid, mline[1])))
-			__msg = xstrdup((const char *)mline[1]);
+		if (!(recoded = irc_convert_out(j, uid, line)))
+			recoded = xstrdup(line);
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
-		query_emit_id(NULL, IRC_PROTOCOL_MESSAGE, &(sid), &(j->nick), &mline[1], &isour, &xosd_to_us, &xosd_is_priv, &uid);
-
-		query_emit_id(NULL, MESSAGE_ENCRYPT, &sid, &uid, &__msg, &secure);
+		query_emit_id(NULL, MESSAGE_ENCRYPT, &(session->uid), &uid, &recoded, &secure);
 
 		protocol_message_emit(session, session->uid, rcpts, coloured, NULL, time(NULL), (EKG_MSGCLASS_SENT | EKG_NO_THEMEBIT), NULL, EKG_NO_BEEP, secure);
+
+		debug ("%s ! %s\n", j->nick, j->host_ident);
 
 		/* "Thus, there are 510 characters maximum allowed for the command and its parameters." [rfc2812]
 		 * yes, I know it's a nasty variable reusing ;)
 		 */
-		__mtmp = __msg;
-		debug ("%s ! %s\n", j->nick, j->host_ident);
-		xosd_is_priv = xstrlen(__msg);
-		isour = 510 - (prv?7:6) - 6 - xstrlen(uid+4) - xstrlen(j->host_ident) - xstrlen(j->nick);
+		len_limit = 510 - (prv?7:6) - 6 - xstrlen(uid+4) - xstrlen(j->host_ident) - xstrlen(j->nick);
 		/* 6 = 3xspace + '!' + 2xsemicolon; -> [:nick!ident@hostident PRIVMSG dest :mesg] */
-		while (xstrlen(__mtmp) > isour && __mtmp < __msg + xosd_is_priv)
+		msg_len = xstrlen(recoded);
+		__mtmp = recoded;
+		while ( msg_len > len_limit )
 		{
-			xosd_to_us = __mtmp[isour];
-			__mtmp[isour] = '\0';
+			char saved = __mtmp[len_limit];
+			__mtmp[len_limit] = '\0';	/* XXX danger: cut unicode chars */
 			watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __mtmp);
-			__mtmp[isour] = xosd_to_us;
-			__mtmp += isour;
+			__mtmp[len_limit] = saved;
+			__mtmp += len_limit;
+			msg_len -= len_limit;
 		}
 		watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __mtmp);
 
-		xfree(__msg);
+		xfree(line);
+		xfree(recoded);
 		xfree(coloured);
 		xfree(head);
 	}
@@ -1453,7 +1456,6 @@ static COMMAND(irc_command_msg) {
 	xfree(rcpts[0]);
 	xfree(rcpts);
 	
-	xfree(sid);
 	xfree(uid);
 	xfree(tmpbuf);
 
