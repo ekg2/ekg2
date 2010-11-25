@@ -8,11 +8,12 @@ extern "C" {
 #define QUERY_ARGS_MAX 12
 
 enum query_arg_type {
-	QUERY_ARG_END = 0,	/* MUSTBE LAST ELEMENT OF `query_arg_type` */
+	QUERY_ARG_END = 0,	/* Terminates an array of `query_arg_type' values */
 
+	/* Type specifiers */
 	QUERY_ARG_CHARP,	/* char *	*/
 	QUERY_ARG_CHARPP,	/* char **	*/
-	QUERY_ARG_INT,		/* int */
+	QUERY_ARG_INT,		/* int		*/
 	QUERY_ARG_UINT,		/* unsgined int */		/* -> time_t, uint32_t */
 
 	QUERY_ARG_WINDOW = 100, /* window_t	*/
@@ -20,8 +21,11 @@ enum query_arg_type {
 	QUERY_ARG_USERLIST,	/* userlist_t	*/
 	QUERY_ARG_SESSION,	/* session_t	*/
 
-	QUERY_ARG_CONST = (1<<31),
+	/* Flags. Can be OR-ed with type specifiers. */
+	QUERY_ARG_CONST = (1<<31),	/* Means that the argument is to be passed "by value" and not by pointer.
+					 * May only be used with QUERY_ARG_INT or QUERY_ARG_CHARP */
 
+	/* Masks. Used for extracting type specifiers and flags. */
 	QUERY_ARG_FLAGS = (QUERY_ARG_CONST),
 	QUERY_ARG_TYPES = ~QUERY_ARG_FLAGS
 };
@@ -29,7 +33,8 @@ enum query_arg_type {
 struct query_def {
 	int id;
 	char *name;
-	enum query_arg_type params[QUERY_ARGS_MAX];	/* scripts will use it */
+	enum query_arg_type params[QUERY_ARGS_MAX];	/* Argument types for dynamic discovery by script plugins.
+							 * Note that QUERY_ARG_END _must_ be the last element. */
 };
 
 /* uniq id of known queries..., add new just before QUERY_EXTERNAL */
@@ -475,9 +480,12 @@ const struct query_def query_list[] = {
 		QUERY_ARG_END } },
 };
 
-/* other, not listed above here queries, for example plugin which use internally his own query, 
- * and if devel of that plugin doesn't want share with us info about that plugin..
- * can use query_connect() query_emit() and it will work... however, binding that query from scripts/events (/on) won't work.. untill devel fill query_arg_type...
+/* Plugin developers may use query_connect() and query_emit() for creating and
+ * using other types of queries without defining them in `query_list'. This may
+ * be advisable for queries that are only used internally in a plugin and will
+ * not be processed by other parts of the codebase. However such unregistered
+ * queries cannot be processed by the script plugins or the event framework
+ * ("/on" command).
  */
 
 static list_t queries_external;
