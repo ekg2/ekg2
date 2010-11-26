@@ -7,7 +7,7 @@ ekg2_remote_SOURCES = ekg-remote.c commands.c dynstuff.c plugins.c recode.c remo
 ekg2_remote_LDADD = $(top_builddir)/compat/libcompat.a @DLLIB@ $(REMOTE_SSL_LIBS)
 ekg2_remote_LDFLAGS = -export-dynamic
 ekg2_remote_DEPENDENCIES = $(top_builddir)/compat/libcompat.a
-ekg2_remote_CPPFLAGS = $(REMOTE_SSL_CPPFLAGS)
+ekg2_remote_CPPFLAGS = $(REMOTE_SSL_CPPFLAGS) $(AM_CPPFLAGS)
 
 INCLUDES = -DPLUGINDIR=\"$(plugindir)\"
 

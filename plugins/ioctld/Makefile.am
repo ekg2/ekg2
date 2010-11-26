@@ -3,11 +3,11 @@ EXTRA_DIST = commands-pl.txt
 lib_LTLIBRARIES = ioctld.la
 ioctld_la_SOURCES = main.c ioctld.h
 ioctld_la_LDFLAGS = -module -avoid-version
-ioctld_la_CPPFLAGS = $(C_FVISIBILITY)
+ioctld_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
 override libdir = $(plugindir)
 
 libexec_PROGRAMS = ioctld
-ioctld_CPPFLAGS = -DIOCTLD_BUILD=1
+ioctld_CPPFLAGS = -DIOCTLD_BUILD=1 $(AM_CPPFLAGS)
 ioctld_SOURCES = ioctld.c ioctld.h
 
 INCLUDES = -DIOCTLD_PATH=\"$(libexecdir)/ioctld\" 

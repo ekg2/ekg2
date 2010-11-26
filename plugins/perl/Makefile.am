@@ -6,7 +6,8 @@ lib_LTLIBRARIES = perl.la
 perl_la_SOURCES = perl_ekg.c perl_ekg.h perl_core.c perl_core.h perl_bless.c perl_bless.h
 perl_la_LDFLAGS = -module -avoid-version
 perl_la_LIBADD = $(PERL_LIBS)
-perl_la_CPPFLAGS = $(PERL_CFLAGS)
+perl_la_CFLAGS = $(PERL_CFLAGS) $(AM_CFLAGS)
+# TODO: add $(C_FVISIBILITY) to *_CFLAGS or comment why this plugin should not be using it.
 
 override libdir = $(plugindir)
 
@@ -18,7 +19,7 @@ all-local:
 	 if [ ! -f Makefile ]; then \
 	   $(PERL) Makefile.PL; \
 	 fi && \
-	 $(MAKE) CC="$(CC)" CCFLAGS="$(PERL_CFLAGS) $(CFLAGS)" && \
+	 $(MAKE) CC="$(CC)" CCFLAGS="$(PERL_CFLAGS) $(AM_CFLAGS) $(CFLAGS)" && \
 	 cd ..; \
 	done
 

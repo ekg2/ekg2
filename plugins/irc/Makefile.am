@@ -4,7 +4,8 @@ lib_LTLIBRARIES = irc.la
 irc_la_SOURCES = irc.c misc.c people.c input.c misc.h irc.h people.h \
 		input.h IRCVERSION.h autoacts.c autoacts.h irc-ssl.h
 irc_la_LDFLAGS = -module -avoid-version $(IRC_SSL_LIBS) 
-irc_la_CPPFLAGS = $(IRC_SSL_CPPFLAGS) $(C_FVISIBILITY)
+irc_la_CPPFLAGS = $(IRC_SSL_CPPFLAGS) $(AM_CPPFLAGS)
+irc_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
 
 override libdir = $(plugindir)
 

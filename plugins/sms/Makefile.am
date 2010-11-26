@@ -3,6 +3,7 @@ EXTRA_DIST = vars-pl.txt commands-pl.txt
 lib_LTLIBRARIES = sms.la
 sms_la_SOURCES = sms.c
 sms_la_LDFLAGS = -module -avoid-version
+# TODO: add $(C_FVISIBILITY) to *_CFLAGS or comment why this plugin should not be using it.
 
 override libdir = $(plugindir)
 

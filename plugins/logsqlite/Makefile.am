@@ -4,7 +4,8 @@ lib_LTLIBRARIES = logsqlite.la
 logsqlite_la_SOURCES = logsqlite.c logsqlite.h
 logsqlite_la_LDFLAGS = -module -avoid-version
 logsqlite_la_LIBADD = $(SQLITE_LIBS)
-logsqlite_la_CFLAGS = $(SQLITE_CFLAGS)
+logsqlite_la_CFLAGS = $(SQLITE_CFLAGS) $(AM_CFLAGS)
+# TODO: add $(C_FVISIBILITY) to *_CFLAGS or comment why this plugin should not be using it.
 
 override libdir = $(plugindir)
 
