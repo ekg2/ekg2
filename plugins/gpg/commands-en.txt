@@ -1,10 +1,11 @@
 key
 	parameters:  [options] [uid [key]]
 	short description: manage encryption keys
-	    -l, --listkeys                print all keys and their statuses (default option)
 	
-	    -s, --setkey <uid> <key>      set a gpg key for a given user
+	  -l, --listkeys                print all keys and their statuses (default option)
 	
-	    -f, --forcekey <uid> <key>    set a gpg key for a given user even if the key is not valid
+	  -s, --setkey <uid> <key>      set a gpg key for a given user
 	
-	    -d, --delkey <uid>            remove a gpg key of a given user
+	  -f, --forcekey <uid> <key>    set a gpg key for a given user even if the key is not valid
+	
+	  -d, --delkey <uid>            remove a gpg key of a given user
