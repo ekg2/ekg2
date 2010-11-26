@@ -1109,61 +1109,40 @@ IRC_COMMAND(irc_c_nick)
  */
 IRC_COMMAND(irc_c_msg)
 {
-	char		*t, *dest, *me, *format;
-	char		*head, *sender, *xosd_chan, **rcpts = NULL;
-	char		*ctcpstripped, *coloured, *pubtous, tous, prefix[2];
+	char		*dest, *identhost, *format;
+	char		*head, *sender;
+	char		*ctcpstripped, *coloured, prefix[2];
 	int		class, ekgbeep= EKG_NO_BEEP;
-	int		mw = 666, prv=0;
+	int		mw, prv;
 	window_t	*w = NULL;
 	people_t	*person;
 	people_chan_t	*perchn = NULL;
 	int		secure = 0, xosd_to_us = 0, xosd_is_priv = 0;
 	char		*ignore_nick = NULL;
-	char *recoded;
-	char *__text, *__param2;
+	char		*recoded, *recipient;
 
 	prv = !xstrcasecmp(param[1], "privmsg");
 	if (!prv && xstrcasecmp(param[1], "notice"))
 		return 0;
 
 	mw = session_int_get(s, "make_window");
-	sender = xstrdup(OMITCOLON(param[0]));
 
-	recoded = irc_convert_in(j, OMITCOLON(param[3]));
-	__text = xstrdup(recoded ? recoded : OMITCOLON(param[3]));
-	__param2 = xstrdup(param[2]);
+	irc_parse_nick_identhost(OMITCOLON(param[0]), &sender, &identhost);
 
-	query_emit(NULL, prv ? "irc-privmsg" : "irc-notice", &(s->uid), &sender, &__param2, &__text);	/* XXX if... return here? */
+	recipient = xstrdup(param[2]);	/* destination (channel|nick) */
 
-	ctcpstripped = ctcp_parser(s, prv, sender, __param2, __text);
-
-	xfree(__text);
-	xfree(recoded);
-
-	if ((t = xstrchr(sender, '!'))) *t='\0';
-	me = xstrdup(t?t+1:"");
-	xosd_chan = __param2;
-	/* remember, below in 'else' clause there is IRC_TO_LOWER, which can affect this,
-	 */
+	if ( !(recoded = irc_convert_in(j, OMITCOLON(param[3]))) )
+		recoded = xstrdup(OMITCOLON(param[3]));
 
 	/* probably message from server ... */
 	if (s->connecting && !prv) {
 		/* (!xstrcmp(":_empty_", param[0]) || !xstrcmp("AUTH", param[2])) */
-		class = (mw&16)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
-		dest = xstrdup(__param2);
+		class = (mw&16)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
+		dest = xstrdup(recipient);
 		format = xstrdup("irc_not_f_server");
-		/* WTF ? WHY this -1 ? insane ?
-		 * dj->G: because of it: (param[0]+1) 
-		 * G->dj: this is really shitty hack/workaround
-		 *	  never do things like that, better change those
-		 *	  param[0]+1 to OMITCOLON, and btw: I think in 
-		 *	  IRC_COMMANDs we shouldn't change param-s table
-		 *
-		param[0] = (char *) session_get(s, "server")-1; */
 		xosd_to_us = 1;
-		/*param[0] = saprintf(":%s",session_get(s, "server"));*/
 	/* priv_data message ... */
-	} else if (!xstrcmp(j->nick, __param2)) {
+	} else if (!xstrcmp(j->nick, recipient)) {
 		/* dj: if he's not on the list we should add him */
 		/* G->dj: okey, but must be done in other way imho
 		 * this 'param[0]' as a channel doesn't like nice to me...
@@ -1182,8 +1161,8 @@ IRC_COMMAND(irc_c_msg)
 	} else {
 		class = EKG_MSGCLASS_CHAT;
 		// class = (mw&1)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE;
-		IRC_TO_LOWER(__param2);
-		dest = irc_uid(__param2);
+		dest = irc_uid(recipient);
+		IRC_TO_LOWER(dest+4);
 
 		w = window_find_s(s, dest);
 		format = NULL;
@@ -1197,8 +1176,8 @@ IRC_COMMAND(irc_c_msg)
 		{
 			/* G->dj: I'm not sure if this what I've added
 			 *	  will still do the same you wanted */
-			if (t && !(person->ident) && !(person->host))
-				irc_parse_identhost(t+1, &(person->ident), &(person->host));
+			if (*identhost && !(person->ident) && !(person->host))
+				irc_parse_identhost(identhost, &(person->ident), &(person->host));
 
 			perchn = irc_find_person_chan(person->channels, dest);
 			debug("<person->channels: %08X %s %08X>\n", person->channels, dest, perchn);
@@ -1206,9 +1185,12 @@ IRC_COMMAND(irc_c_msg)
 
 	}
 
-	if (ctcpstripped) {
+	query_emit(NULL, prv ? "irc-privmsg" : "irc-notice", &(s->uid), &sender, &recipient, &recoded, &xosd_to_us);
+
+	if ((ctcpstripped = ctcp_parser(s, prv, sender, recipient, recoded))) {
 		char *clear_string, *padding = NULL;
 		int isour = 0;
+
 		if (xosd_is_priv) /* @ wrong place */
 			query_emit_id(NULL, MESSAGE_DECRYPT, &(s->uid), &dest, &ctcpstripped, &secure , NULL);
 		else
@@ -1218,11 +1200,11 @@ IRC_COMMAND(irc_c_msg)
 		 */
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped, 1);
 		clear_string = irc_ircoldcolstr_juststrip(s, ctcpstripped);
-		debug("<%c%s/%s> %s [%s]\n", perchn?*(perchn->sign):' ', sender, __param2, OMITCOLON(param[3]), clear_string);
+		debug("<%c%s/%s> %s [%s]\n", perchn?*(perchn->sign):' ', sender, recipient, OMITCOLON(param[3]), clear_string);
 
 		prefix[1] = '\0';
 		prefix[0] = perchn?*(perchn->sign):' ';
-		if (!session_int_get(s, "SHOW_NICKMODE_EMPTY") && *prefix==' ')
+		if (*prefix==' ' && !session_int_get(s, "SHOW_NICKMODE_EMPTY"))
 			*prefix='\0';
 
 		if (perchn)
@@ -1231,20 +1213,28 @@ IRC_COMMAND(irc_c_msg)
 		/* privmsg on channel */
 		if (NULL == format)
 		{
-			if ((pubtous = xstrcasestr(clear_string, j->nick))) {
-				/* pubtus - points to beginning of a nickname
-				 * tous   - points after end	of a nickname
-				 */
-				tous = pubtous[xstrlen(j->nick)];
-				if (!isalnum(tous) && !isalpha_pl(tous))
-				{
-					if (pubtous == clear_string || (!isalnum(*(pubtous-1)) && !isalpha_pl(*(pubtous-1))))
-					{
-						ekgbeep = EKG_TRY_BEEP;
-						xosd_to_us = 1;
+			if (xosd_to_us) {
+				ekgbeep = EKG_TRY_BEEP;
+			} else {
+				/* find our nick */
+				char *p, *str = clear_string;
+
+				while (!xosd_to_us && (p = xstrcasestr(str, j->nick))) {
+					/* p - points to beginning of a nickname */
+					char end = p[xstrlen(j->nick)];
+					/* end - char after end of a nickname */
+					if (!isalnum(end) && !isalpha_pl(end)) {
+						/* End of nick is OK */
+						if (p == clear_string || (!isalnum(*(p-1)) && !isalpha_pl(*(p-1)))) {
+							/* nick found */
+							ekgbeep = EKG_TRY_BEEP;
+							xosd_to_us = 1;
+						}
 					}
+					str = p + 1;
 				}
 			}
+
 			/* rest */
 
 			/* privmsg <--> notice
@@ -1260,7 +1250,7 @@ IRC_COMMAND(irc_c_msg)
 		xfree (clear_string);
 
 		head = format_string(format_find(format), session_name(s),
-				prefix, sender, me, __param2, coloured, padding, "Y ");
+				prefix, sender, identhost, recipient, coloured, padding, "Y ");
 
 		if (perchn)
 			nickpad_string_restore (perchn->chanp);
@@ -1297,7 +1287,7 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 				e->uid		= irc_uid(sender);
 				e->channame	= xstrdup(dest);
 			}
-				
+
 			e->msg		= xstrdup(coloured);
 			e->t		= time(NULL);
 
@@ -1307,23 +1297,20 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 
 		xfree(ctcpstripped);
 		xfree(coloured);
-		xfree(me);
-		me = NULL;
 		class |= EKG_NO_THEMEBIT;
 
 		if (xosd_is_priv || !(ignored_check(s, ignore_nick) & IGNORE_MSG))
-			protocol_message_emit(s, dest, rcpts, head, NULL, time(NULL), class, NULL, ekgbeep, secure);
+			protocol_message_emit(s, dest, NULL, head, NULL, time(NULL), class, NULL, ekgbeep, secure);
+
 		xfree(ignore_nick);
-
 		xfree(head);
-	}	
+	}
 
-	if (t) *t='!';
-
+	xfree(recoded);
 	xfree(sender);
-	xfree(__param2);
+	xfree(recipient);
 	xfree(dest);
-	xfree(me);
+	xfree(identhost);
 	xfree(format);
 
 	return 0;

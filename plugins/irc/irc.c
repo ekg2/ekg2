@@ -2773,6 +2773,18 @@ EXPORT int irc_plugin_init(int prio)
 						QUERY_ARG_CHARP,	/* ident@host */
 						QUERY_ARG_END);
 
+	query_register_external("irc-notice", 	QUERY_ARG_CHARP,	/* session */
+						QUERY_ARG_CHARP,	/* from */
+						QUERY_ARG_CHARP,	/* destination (channel|nick) */
+						QUERY_ARG_CHARP,	/* message */
+						QUERY_ARG_INT,		/* is to us */
+						QUERY_ARG_END);
+
+	query_register_external("irc-parse-line",
+					 	QUERY_ARG_CHARP,	/* session */
+						QUERY_ARG_CHARP,	/* line */
+						QUERY_ARG_END);
+
 	query_register_external("irc-part", 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* channel */
 						QUERY_ARG_CHARP,	/* nick */
@@ -2785,6 +2797,7 @@ EXPORT int irc_plugin_init(int prio)
 						QUERY_ARG_CHARP,	/* from */
 						QUERY_ARG_CHARP,	/* destination (channel|nick) */
 						QUERY_ARG_CHARP,	/* message */
+						QUERY_ARG_INT,		/* is to us */
 						QUERY_ARG_END);
 
 	query_register_external("irc-protocol-numeric",
@@ -2798,17 +2811,6 @@ EXPORT int irc_plugin_init(int prio)
 						QUERY_ARG_INT,		/* isour */
 						QUERY_ARG_CHARP,	/* ident@host */
 						QUERY_ARG_CHARP,	/* reason */
-						QUERY_ARG_END);
-
-	query_register_external("irc-notice", 	QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_CHARP,	/* from */
-						QUERY_ARG_CHARP,	/* destination (channel|nick) */
-						QUERY_ARG_CHARP,	/* message */
-						QUERY_ARG_END);
-
-	query_register_external("irc-parse-line",
-					 	QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_CHARP,	/* line */
 						QUERY_ARG_END);
 
 	return 0;
