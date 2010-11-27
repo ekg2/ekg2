@@ -1679,8 +1679,7 @@ IRC_COMMAND(irc_c_mode)
 			ul = userlist_find_u(&(ch->chanp->window->userlist), param[k]);
 			if (!ul) goto notreallyok;
 
-			irc_nick_prefix(j, ch, irc_color_in_contacts(add, 
-						ch->mode, ul));
+			irc_nick_prefix(j, ch, irc_color_in_contacts(j, ch->mode, ul));
 
 			query_emit_id(NULL, USERLIST_REFRESH);
 		} 
