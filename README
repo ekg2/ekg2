@@ -1,55 +1,39 @@
-// lista wa¿niejszych dla u¿ytkowników zmian w 2.0
-// wojtekka 
+EKG2
+====
 
-* konfiguracja znajduje siê w katalogu ~/.ekg, dziêki czemu mo¿na siê bawiæ
-  ekg2 bez obawy o zepsucie konfiguracji i/lub userlisty ekg1. pó¼niej siê
-  pomy¶li, co z tym fantem zrobiæ.
+Multiplatform, multiprotocol, plugin-based instant messanger with (GTK2 GUI || console UI)!
 
-* /clear w koñcu czy¶ci okno, a /cleartab zosta³o zamienione na /tabclear,
+EKG2 is OpenSource IM application for Unix systems (Linux, *BSD, SunOS, Solaris, MacOS, X, BeOS) available under the terms of GPL.
 
-* ekg2 nie zawiera libgadu. by skompilowaæ obs³ugê GG, nale¿y skomplilowaæ
-  libgadu z --enable-shared, zainstalowaæ i mieæ pakiet pkgconfig.
+EKG2 is plugin-based, because of this it can support many different protocols. It can also support different GUIs! Below is a list of available plugins.
 
-* domy¶lnym zachowaniem przy komendach /away, /back itp. jest zostawianie
-  opisu w spokoju. zmienne typu *_reason jeszcze nie dzia³aj±.
+Protocol plugins:
 
-* nie ma zmiennych ,,uin'', ,,password'', ,,server'' itp. do obs³ugi parametrów
-  sesji s³u¿y polecenie ,,/session''. je¶li chcemy dodaæ numer gg, wpisujemy:
+* Jabber - (XMPP, gtalk and Tlen support),
+* GG (gadu-gadu) - (using libgadu, the most popular polish IM protocol),
+* IRC - (mostly IRCnet oriented),
 
-	/session --add gg:12345
-	/session password mojetajnehas³o
-	/session server 217.17.41.84
+GUI plugins:
+* GTK2 - under development,
+* ncurses - primary ekg2 ui, console
+* readline
 
-  oczywi¶cie mo¿na mieæ kilka sesji. prze³±cza siê miêdzy nimi klawiszem
-  Ctrl-X. Je¶li chcesz, aby EKG2 ³±czy³o siê z dan± sesj± (sesjami) przy
-  w³±czeniu programu, ustaw zmienn± auto_connect na 1, np. tak:
+Logging facility:
+* logs - multi plugin, that allows logging in irssi like format, xml, simple and raw,
+* logsqlite - logging in sqlite db file,
+* logsoracle - logging in oracle db
 
-  	/session --set gg:12345 auto_connect 1
+Script languages bindings: Python, Perl, Ruby (under development)
 
-* ¿eby skorzystaæ z jabbera, wpisujemy:
+Other superb plugins:
+* dbus - basic dbus support (allows you creating superb now-playing ;) !),
+* sim (using openssl) & gpg & rot ;) - these plugins allow encrypting supported protocols,
+* xosd - on screen display,
+* rc & httprc_xajax - rc plugins allows remote control over ekg2,
+* xmsg - simple messaging through filesystem (e.g. notifications from other apps),
+* jogger - allows to manipulate JoggerBot via ekg2,
+* mail - checking local maildir/mailbox for new messages,
+* sms - sms sending,
+* sniff - built-in sniffer for analyzing protocols
 
-	/session --add xmpp:jankowalski@jabber.org
-	/session password mojetajnehas³o
-	/connect
-
-  ¿eby dodaæ kogo¶ do listy kontaktów:
-
-   	/xmpp:add xmpp:hamlet@denmark.dk Hamlet
-
-  Dodanie do listy kontaktów powoduje automatyczne wys³anie zapytania o
-  autoryzacjê.
-
-  ¿eby kogo¶ autoryzowaæ:
-
-  	/xmpp:auth --accept xmpp:julia@verona.it
-
-  ¯eby usun±æ z listy kontaków:
-
-	/xmpp:del hamlet@denmark.dk 
-
-* dodano zmienn± debug. mo¿liwo¶æ zg³aszania b³êdów to jedno, przero¶niêta
-  binarka to drugie, ale np. przy ³±czeniu lub przy przesy³aniu plików ekg
-  jest niemi³osiernie wolne, bo ka¿dy przychodz±cy bajt jest mielony przez
-  kod logowania, przed kod okien i kod ui. bez sensu.
-
-
+There are also few others not mentioned here!
