@@ -14,11 +14,13 @@ Protocol plugins:
 * IRC - (mostly IRCnet oriented),
 
 GUI plugins:
+
 * GTK2 - under development,
 * ncurses - primary ekg2 ui, console
 * readline
 
 Logging facility:
+
 * logs - multi plugin, that allows logging in irssi like format, xml, simple and raw,
 * logsqlite - logging in sqlite db file,
 * logsoracle - logging in oracle db
@@ -26,6 +28,7 @@ Logging facility:
 Script languages bindings: Python, Perl, Ruby (under development)
 
 Other superb plugins:
+
 * dbus - basic dbus support (allows you creating superb now-playing ;) !),
 * sim (using openssl) & gpg & rot ;) - these plugins allow encrypting supported protocols,
 * xosd - on screen display,
