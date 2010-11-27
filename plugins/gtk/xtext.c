@@ -2188,7 +2188,7 @@ gtk_xtext_render_flush(GtkXText * xtext, int x, int y, const unsigned char *str,
 {
 	int str_width, dofill;
 	GdkDrawable *pix = NULL;
-	int dest_x, dest_y;
+	int dest_x = 0, dest_y = 0;
 
 	if (xtext->dont_render || len < 1)
 		return 0;

@@ -126,7 +126,7 @@ static WATCHER(mail_inotify) {
 	for (evp = ev; n > 0; n -= (evp->len + sizeof(struct inotify_event)),
 			evp = (void*) evp + (evp->len + sizeof(struct inotify_event))) {
 		list_t l;
-		struct mail_folder *m;
+		struct mail_folder *m = NULL;
 
 		for (l = mail_folders; l; l = l->next) {
 			m = l->data;

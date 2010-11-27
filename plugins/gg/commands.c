@@ -542,7 +542,7 @@ static COMMAND(gg_command_msg) {
 	char *raw_msg = NULL;
 	unsigned char *format = NULL;
 	char *cpmsg = NULL;
-	const char *seq;
+	const char *seq = NULL;
 	uint32_t *ekg_format = NULL;
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
