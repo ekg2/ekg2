@@ -1674,17 +1674,16 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 static COMMAND(irc_command_names) {
 	irc_private_t *j = irc_private(session);
 
-	int sort_status[5] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, 0};
-	int lvl_total[5]   = {0, 0, 0, 0, 0};
+			    /* 0 - op           1 - halfop       2 - voice      3 - owner             4 - admin       5 - rest */
+	int sort_status[6] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, EKG_STATUS_FFC, EKG_STATUS_DND};
+	int sum[6]   = {0, 0, 0, 0, 0, 0};
 
-	char *sort_modes = xstrchr(SOP(_005_PREFIX), ')')+1;
-
-	int smlen = xstrlen(sort_modes)+1;
-	char **mp, *channame, *cchn;
+	int len;
+	char **mp, *channame, *cchn, *pfx0, *pfx1;
 
 	channel_t *chan;
 	string_t buf;
-	int lvl, count = 0;
+	int lvl, count = 0, i;
 	userlist_t *ul;
 
 	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN))) 
@@ -1695,15 +1694,15 @@ static COMMAND(irc_command_names) {
 		return -1;
 	}
 
-	cchn = clean_channel_names(session, channame+4);
-
 	if (chan->longest_nick > atoi(SOP(_005_NICKLEN)))
 		debug_error("[irc, names] funny %d vs %s\n", chan->longest_nick, SOP(_005_NICKLEN));
 
-	print_info(channame, session, "IRC_NAMES_NAME", session_name(session), cchn);
 	buf = string_init(NULL);
 
-	for (lvl = 0; lvl < smlen; ++lvl, ++sort_modes) {
+	len = xstrlen(SOP(_005_PREFIX))>>1;
+	pfx0 = SOP(_005_PREFIX) + 1;		// point to "ov)@+"
+	pfx1 = SOP(_005_PREFIX) + len + 1;	// point to "@+"
+	for (i = 0; i < len; i++) {
 		static char mode_str[2] = { '?', '\0' };
 		const char *mode;
 
@@ -1715,9 +1714,17 @@ static COMMAND(irc_command_names) {
 		 *	]", and whole will be treated as long 'longest_nick+2' long string :)
 		 */
 
-		if (*sort_modes) {
+		switch (pfx0[i]) {
+			case 'o':	lvl = 0; break;
+			case 'h':	lvl = 1; break;
+			case 'v':	lvl = 2; break;
+			case 'q':	lvl = 3; break;
+			case 'a':	lvl = 4; break;
+			default:	lvl = 5; break;
+		}
+		if (pfx1[i]) {
 			mode = mode_str;
-			mode_str[0] = *sort_modes;
+			mode_str[0] = pfx1[i];
 		} else {
 			mode = fillchars;
 		}
@@ -1733,25 +1740,26 @@ static COMMAND(irc_command_names) {
 			string_append(buf, (tmp = format_string(format_find("IRC_NAMES"), mode, (ulist->uid + 4), chan->nickpad_str))); xfree(tmp);
 			nickpad_string_restore(chan);
 
-			++lvl_total[lvl];
+			++sum[lvl];
 			++count;
 		}
-		debug("---separator---\n");
 	}
+
+	cchn = clean_channel_names(session, channame+4);
+	print_info(channame, session, "IRC_NAMES_NAME", session_name(session), cchn);
 
 	if (count)
 		print_info(channame, session, "none", buf->str);
 
 	print_info(channame, session, "none2", "");
-#define plvl(x) lvl_total[x] ? itoa(lvl_total[x]) : "0"
-	if (smlen > 3) /* has halfops */
-		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), cchn, itoa(count), plvl(0), plvl(1), plvl(2), plvl(3), plvl(4));
+#define plvl(x) itoa(sum[x])
+	if (len > 3) /* has halfops */
+		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), cchn, itoa(count), plvl(0), plvl(1), plvl(2), plvl(5), plvl(3), plvl(4));
 	else
-		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), cchn, itoa(count), plvl(0), plvl(1), plvl(2));
-	xfree(cchn);
-	debug("[IRC_NAMES] levelcounts = %d %d %d %d\n",
-			lvl_total[0], lvl_total[1], lvl_total[2], lvl_total[3]);
+		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), cchn, itoa(count), plvl(0), plvl(2), plvl(5));
 #undef plvl
+	xfree(cchn);
+	debug("[IRC_NAMES] levelcounts = %d %d %d %d %d %d\n", sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
 
 	array_free(mp);
 	string_free (buf, 1);
@@ -2538,7 +2546,7 @@ static int irc_theme_init()
 
 	format_add("IRC_NAMES_NAME",	_("[%gUsers %G%2%n]"), 1);
 	format_add("IRC_NAMES",		"%K[%W%1%w%2%3%K]%n ", 1);
-	format_add("IRC_NAMES_TOTAL_H",	_("%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%5%n halfops, %W%6%n voices, %W%7%n normal]\n"), 1);
+	format_add("IRC_NAMES_TOTAL_H",	_("%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%8%n owners, %W%9%n admins, %W%4%n ops, %W%5%n halfops, %W%6%n voices, %W%7%n normal]\n"), 1);
 	format_add("IRC_NAMES_TOTAL",	"%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%4%n ops, %W%5%n voices, %W%6%n normal]\n", 1);
 
 	format_add("irc_joined",	_("%> %Y%2%n has joined %4\n"), 1);
