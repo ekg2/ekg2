@@ -818,7 +818,7 @@ IRC_COMMAND(irc_c_whois)
 {
 	char		*t = irc_uid(param[3]), *dest = NULL;
 	char		*str, *tmp, *col[5];
-	int		secs, mins, hours, days, which, i;
+	int		secs = 0, mins, hours, days, which, i;
 	time_t		timek;
 	int		timek_int = (int) timek;
 	window_t	*w = window_find_s(s, t);
