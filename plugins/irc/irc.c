@@ -2523,24 +2523,24 @@ static int irc_theme_init()
 	/* %2 - prefix, %3 - nick, %4 - nick+ident+host, %5 - chan, %6 - msg*/
 	format_add("irc_msg_sent",	"%P<%n%3/%5%P>%n %6", 1);
 	format_add("irc_msg_sent_n",	"%P<%n%3%P>%n %6", 1);
-	format_add("irc_msg_sent_chan",	"%P%7<%w%{2@%+gcp}X%2%3%P>%n %6", 1);
-	format_add("irc_msg_sent_chanh","%P%7<%W%{2@%+GCP}X%2%3%P>%n %6", 1);
+	format_add("irc_msg_sent_chan",	"%P%7<%w%{2*!@%+yrgcp}X%2%3%P>%n %6", 1);
+	format_add("irc_msg_sent_chanh","%P%7<%W%{2*!@%+YRGCP}X%2%3%P>%n %6", 1);
 	
 	format_add("irc_not_sent",	"%P(%n%3/%5%P)%n %6", 1);
 	format_add("irc_not_sent_n",	"%P(%n%3%P)%n %6", 1);
-	format_add("irc_not_sent_chan",	"%P%7(%w%{2@%+gcp}X%2%3%P)%n %6", 1);
-	format_add("irc_not_sent_chanh","%P%7(%W%{2@%+GCP}X%2%3%P)%n %6", 1);
+	format_add("irc_not_sent_chan",	"%P%7(%w%{2*!@%+yrgcp}X%2%3%P)%n %6", 1);
+	format_add("irc_not_sent_chanh","%P%7(%W%{2*!@%+YRGCP}X%2%3%P)%n %6", 1);
 
 //	format_add("irc_msg_f_chan",	"%B<%w%{2@%+gcp}X%2%3/%5%B>%n %6", 1); /* NOT USED */
 //	format_add("irc_msg_f_chanh",	"%B<%W%{2@%+GCP}X%2%3/%5%B>%n %6", 1); /* NOT USED */
-	format_add("irc_msg_f_chan_n",	"%B%7<%w%{2@%+gcp}X%2%3%B>%n %6", 1);
-	format_add("irc_msg_f_chan_nh",	"%B%7<%W%{2@%+GCP}X%2%3%B>%n %6", 1);
+	format_add("irc_msg_f_chan_n",	"%B%7<%w%{2*!@%+yrgcp}X%2%3%B>%n %6", 1);
+	format_add("irc_msg_f_chan_nh",	"%B%7<%W%{2*!@%+YRGCP}X%2%3%B>%n %6", 1);
 	format_add("irc_msg_f_some",	"%b<%n%3%b>%n %6", 1);
 
 //	format_add("irc_not_f_chan",	"%B(%w%{2@%+gcp}X%2%3/%5%B)%n %6", 1); /* NOT USED */
 //	format_add("irc_not_f_chanh",	"%B(%W%{2@%+GCP}X%2%3/%5%B)%n %6", 1); /* NOT USED */
-	format_add("irc_not_f_chan_n",	"%B(%w%{2@%+gcp}X%2%3%B)%n %6", 1);
-	format_add("irc_not_f_chan_nh",	"%B(%W%{2@%+GCP}X%2%3%B)%n %6", 1);
+	format_add("irc_not_f_chan_n",	"%B(%w%{2*!@%+yrgcp}X%2%3%B)%n %6", 1);
+	format_add("irc_not_f_chan_nh",	"%B(%W%{2*!@%+YRGCP}X%2%3%B)%n %6", 1);
 	format_add("irc_not_f_some",	"%b(%n%3%b)%n %6", 1);
 	format_add("irc_not_f_server",	"%g!%3%n %6", 1);
 

@@ -526,7 +526,7 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 int irc_color_in_contacts(irc_private_t *j, int mode, userlist_t *ul)
 {
 	int  i, len;
-	len = (xstrlen(SOP(_005_PREFIX))>>1);
+	len = (xstrlen(SOP(_005_PREFIX))>>1) - 1;
 
 	/* GiM: this could be done much easier on intel ;/ */
 	for (i=0; i<len; i++)
