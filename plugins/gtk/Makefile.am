@@ -8,7 +8,7 @@ gtk_la_SOURCES = main.c main.h maingui.c maingui.h xtext.c xtext.h gtkutil.c gtk
 
 gtk_la_LDFLAGS = -module -avoid-version
 gtk_la_LIBADD = $(GTK_LIBS)
-gtk_la_CPPFLAGS = $(C_FVISIBILITY) $(GTK_CFLAGS) 
+gtk_la_CFLAGS = $(C_FVISIBILITY) $(GTK_CFLAGS) $(AM_CFLAGS)
 
 BUILT_SOURCES = inline_pngs_gg.h inline_pngs_icq.h inline_pngs.h
 

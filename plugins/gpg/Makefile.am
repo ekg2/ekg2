@@ -4,8 +4,9 @@ lib_LTLIBRARIES = gpg.la
 gpg_la_SOURCES = gpg.c
 gpg_la_LDFLAGS = -module -avoid-version
 
-gpg_la_LIBADD	= $(GPGME_LIBS)
-gpg_la_CPPFLAGS = $(GPGME_CFLAGS)
+gpg_la_LIBADD = $(GPGME_LIBS)
+gpg_la_CFLAGS = $(GPGME_CFLAGS) $(AM_CFLAGS)
+# TODO: add $(C_FVISIBILITY) or comment why this plugin should not be using it.
 
 override libdir = $(plugindir)
 

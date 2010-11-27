@@ -75,7 +75,7 @@ sprowadza sie tylko do wklepania w $EDITOR Makefile.am
 	lib_LTLIBRARIES = foo.la
 	foo_la_SOURCES = foo.c
 	foo_la_LDFLAGS = -module -avoid-version
-	foo_la_CPPFLAGS = \$(C_FVISIBILITY)
+	foo_la_CFLAGS = \$(C_FVISIBILITY) \$(AM_CFLAGS)
 	libdir = \$(plugindir)
 </pre>
 oraz w ekg2/configure.ac

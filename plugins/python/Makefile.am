@@ -10,7 +10,8 @@ python_la_SOURCES = python-config.c python-config.h \
 		    python.c python.h
 python_la_LDFLAGS = -module -avoid-version
 python_la_LIBADD = $(PYTHON_LIBS)
-python_la_CPPFLAGS = $(PYTHON_CFLAGS) 
+python_la_CFLAGS = $(PYTHON_CFLAGS) $(AM_CFLAGS)
+# TODO: add $(C_FVISIBILITY) to *_CFLAGS or comment why this plugin should not be using it.
 
 override libdir = $(plugindir)
 

@@ -4,7 +4,8 @@ lib_LTLIBRARIES = xosd.la
 xosd_la_SOURCES = xosd.c
 xosd_la_LDFLAGS = -module -avoid-version
 xosd_la_LIBADD = $(LIBXOSD_LIBS) -lxosd
-xosd_la_CPPFLAGS = $(LIBXOSD_CFLAGS)
+xosd_la_CFLAGS = $(LIBXOSD_CFLAGS) $(AM_CFLAGS)
+# TODO: add $(C_FVISIBILITY) to *_CFLAGS or comment why this plugin should not be using it.
 
 override libdir = $(plugindir)
 
