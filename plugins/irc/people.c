@@ -172,13 +172,11 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	people_chan_t *pch_tmp;
 	userlist_t *ulist;
 	window_t *w;
-	int i, k, mode = 0, irccol = 0;
+	int k, mode = 0, irccol = 0;
 	char *ircnick, *modes, *t;
 
 	k = (xstrlen(SOP(_005_PREFIX))>>1);
-	modes = xmalloc(k * sizeof(char));
-	for (i=0; i<k; i++) modes[i] = SOP(_005_PREFIX)[i+k+1];
-	modes[i-1] = '\0';
+	modes = SOP(_005_PREFIX) + k + 1;
 	if ((t = xstrchr(modes, *nick)))
 		mode = 1<<(k-(t-modes)-2);
 
@@ -192,7 +190,7 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	if (w && !(ulist = userlist_find_u(&(w->userlist), ircnick))) {
 	/*	debug("+userlisty %d, ", mode); */
 		ulist = userlist_add_u(&(w->userlist), ircnick, nick);
-		irccol = irc_color_in_contacts(modes, mode, ulist);
+		irccol = irc_color_in_contacts(j, mode, ulist);
 	}
 
 	/* add entry in priv_data->people if nick's not yet there */
@@ -224,7 +222,6 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	/*	debug(" %08X\n", person->channels); */
 	} //else { pch_tmp->mode = mode; }
 
-	xfree(modes);
 	return person;
 }
 
@@ -526,22 +523,22 @@ channel_t *irc_add_channel(session_t *s, irc_private_t *j, char *name, window_t 
 	return NULL;
 }
 
-int irc_color_in_contacts(char *modes, int mode, userlist_t *ul)
+int irc_color_in_contacts(irc_private_t *j, int mode, userlist_t *ul)
 {
 	int  i, len;
-	len = xstrlen(modes);
+	len = (xstrlen(SOP(_005_PREFIX))>>1);
 
 	/* GiM: this could be done much easier on intel ;/ */
 	for (i=0; i<len; i++)
 		if (mode & (1<<(len-1-i))) break;
 	
-
-	switch (i) {
-		case 0:	ul->status = EKG_STATUS_AVAIL;		break;
-		case 1:	ul->status = EKG_STATUS_AWAY;		break;
-		case 2:	ul->status = EKG_STATUS_XA;		break;
-		case 3:	ul->status = EKG_STATUS_INVISIBLE;	break;
-		default:ul->status = EKG_STATUS_ERROR;		break;
+	switch (SOP(_005_PREFIX)[i]) {
+		case 'o':	ul->status = EKG_STATUS_AVAIL;		break;	/* op */
+		case 'h':	ul->status = EKG_STATUS_AWAY;		break;	/* half-op */
+		case 'v':	ul->status = EKG_STATUS_XA;		break;	/* voice */
+		case 'q':	ul->status = EKG_STATUS_INVISIBLE;	break;	/* owner */
+		case 'a':	ul->status = EKG_STATUS_FFC;		break;	/* admin */
+		default:	ul->status = EKG_STATUS_DND;		break;	/* rest */
 	}
 	return i;
 }
