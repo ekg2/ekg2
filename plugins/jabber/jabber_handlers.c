@@ -175,7 +175,7 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 
 		passwd2 = epasswd = saprintf("%08x%08x", magic1, magic2);
 
-		host = "<host>tlen.pl</host>";
+		host = "tlen.pl";
 	} else if (session_int_get(s, "plaintext_passwd")) {
 		epasswd = jabber_escape(passwd);
 	} else	passwd2 = passwd;
@@ -184,10 +184,10 @@ void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd,
 	authpass = (passwd2) ?
 		saprintf("<digest>%s</digest>", jabber_digest(stream_id, passwd2, j->istlen)) :	/* hash */
 		saprintf("<password>%s</password>", epasswd);				/* plaintext */
-		
+
 	watch_write(j->send_watch, 
-			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\">%s<username>%s</username>%s<resource>%s</resource></query></iq>",
-			host, j->server, username, authpass, resource);
+			"<iq type=\"set\" id=\"auth\" to=\"%s\"><query xmlns=\"jabber:iq:auth\"><host>%s</host><username>%s</username>%s<resource>%s</resource></query></iq>",
+			j->server, host, username, authpass, resource);
 	xfree(authpass);
 
 	xfree(epasswd);
