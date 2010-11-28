@@ -1112,7 +1112,7 @@ static QUERY(remote_postinit) {
 	printf("\n");
 	printf("remote:remote_control (Current value: %s)\n", rc_paths ? rc_paths : "null");
 	printf("\te.g.: tcp:127.0.0.1:1234;tcp:1234;udp:127.0.0.1:1234;unix:mysocket;pipe:/tmp/mypipe\n");
-	printf("\t      (tcp:* or unix:* is prefered!\n");
+	printf("\t      (tcp:* or unix:* is preferred!\n");
 
 	do {
 		char *tmp;

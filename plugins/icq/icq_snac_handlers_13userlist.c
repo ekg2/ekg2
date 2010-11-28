@@ -282,7 +282,7 @@ cleanup_user:
 		}
 
 		default:
-			 debug_error("icq_userlist_parse_entry() unkown type: 0x%.4x\n", type);
+			 debug_error("icq_userlist_parse_entry() unknown type: 0x%.4x\n", type);
 	}
 	return 0;
 }

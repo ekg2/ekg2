@@ -396,7 +396,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 				else if (!xstrcmp(mech_node->data, "PLAIN")) {
 					if ((session_int_get(s, "plaintext_passwd"))) {
 						auth_type = JABBER_SASL_AUTH_PLAIN;
-						break;	/* jesli plaintext jest prefered wychodzimy */
+						break;	/* jesli plaintext jest preferred - wychodzimy */
 					}
 					/* ustaw tylko wtedy gdy nie ma ustawionego, wolimy MD5 */
 					if (auth_type == JABBER_SASL_AUTH_UNKNOWN) auth_type = JABBER_SASL_AUTH_PLAIN;
