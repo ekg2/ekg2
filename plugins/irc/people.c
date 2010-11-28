@@ -532,7 +532,7 @@ int irc_color_in_contacts(irc_private_t *j, int mode, userlist_t *ul)
 	for (i=0; i<len; i++)
 		if (mode & (1<<(len-1-i))) break;
 	
-	switch (SOP(_005_PREFIX)[i]) {
+	switch (SOP(_005_PREFIX)[i+1]) {
 		case 'o':	ul->status = EKG_STATUS_AVAIL;		break;	/* op */
 		case 'h':	ul->status = EKG_STATUS_AWAY;		break;	/* half-op */
 		case 'v':	ul->status = EKG_STATUS_XA;		break;	/* voice */
