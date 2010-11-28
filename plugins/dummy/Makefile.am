@@ -7,7 +7,6 @@ dummy_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
 dummy_la_LIBADD = 
 
 # tutaj dodajemy opcje kompilatora typu -I
-INCLUDES = 
+INCLUDES = -I$(top_srcdir)
 
 override libdir = $(plugindir)
-

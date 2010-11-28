@@ -14,7 +14,8 @@ ekg2_DEPENDENCIES = $(top_builddir)/compat/libcompat.a
 localedir = $(datadir)/locale
 
 INCLUDES = -DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
-       -DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\"
+       -DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\" \
+	   -I$(top_srcdir)
 
 $(top_builddir)/compat/libcompat.a:
 	make -C $(top_builddir)/compat

@@ -5,5 +5,5 @@ feed_la_LIBADD = $(EXPAT_LIBS)
 feed_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
 feed_la_CPPFLAGS = $(EXPAT_CPPFLAGS) $(AM_CPPFLAGS)
 
+INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)
-

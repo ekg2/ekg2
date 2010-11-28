@@ -8,9 +8,9 @@ gg_la_LIBADD = $(LIBGADU_LIBS) $(LIBJPEG_LIBS) $(GG_TOKENGIF_LIBS)
 gg_la_CPPFLAGS = $(LIBGADU_CPPFLAGS) $(AM_CPPFLAGS)
 gg_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
 
+INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/gg/
 	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/gg/
-

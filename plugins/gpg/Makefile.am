@@ -8,6 +8,7 @@ gpg_la_LIBADD = $(GPGME_LIBS)
 gpg_la_CFLAGS = $(GPGME_CFLAGS) $(AM_CFLAGS)
 # TODO: add $(C_FVISIBILITY) or comment why this plugin should not be using it.
 
+INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)
 
 install-data-am:

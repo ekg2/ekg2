@@ -9,9 +9,9 @@ jabber_la_LIBADD = $(EXPAT_LIBS) $(JABBER_SSL_LIBS) $(ZLIB_LIBS)
 jabber_la_CPPFLAGS = $(EXPAT_CPPFLAGS) $(JABBER_SSL_CPPFLAGS) $(AM_CPPFLAGS)
 jabber_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
 
+INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/jabber/
 	$(INSTALL) -m 644 $(EXTRA_DIST_DOC) $(DESTDIR)$(pkgdatadir)/plugins/jabber/
-

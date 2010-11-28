@@ -5,6 +5,7 @@ mail_la_SOURCES = main.c
 mail_la_LDFLAGS = -module -avoid-version
 mail_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
 
+INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)
 
 install-data-am:

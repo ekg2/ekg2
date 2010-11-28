@@ -7,9 +7,9 @@ sim_la_LIBADD = $(OPENSSL_LIBS)
 sim_la_CPPFLAGS = $(OPENSSL_INCLUDES) $(AM_CPPFLAGS)
 sim_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
 
+INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/sim/
 	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/sim/
-

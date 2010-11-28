@@ -13,7 +13,7 @@ gtk_la_CFLAGS = $(C_FVISIBILITY) $(GTK_CFLAGS) $(AM_CFLAGS)
 BUILT_SOURCES = inline_pngs_gg.h inline_pngs_icq.h inline_pngs.h
 
 override libdir = $(plugindir)
-INCLUDES = -DDATADIR=\"$(datadir)/ekg2\" 
+INCLUDES = -DDATADIR=\"$(datadir)/ekg2\" -I$(top_srcdir)
 
 CLEANFILES = inline_pngs_gg.h inline_pngs_icq.h inline_pngs.h
 
@@ -25,4 +25,3 @@ inline_pngs_icq.h: $(ICQ_PNGS)
 
 inline_pngs.h: $(PNGS)
 	gdk-pixbuf-csource --raw --build-list ffc iconssets/ffc.png avail iconssets/avail.png away iconssets/away.png dnd iconssets/dnd.png xa iconssets/xa.png invisible iconssets/invisible.png notavail iconssets/notavail.png icon_error iconssets/icon_error.png icon_unknown iconssets/icon_unknown.png > inline_pngs.h
-
