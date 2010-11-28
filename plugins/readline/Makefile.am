@@ -7,10 +7,9 @@ readline_la_LIBADD = $(READLINE_LIBS)
 readline_la_CPPFLAGS = $(READLINE_CPPFLAGS) $(AM_CPPFLAGS)
 readline_la_CFLAGS = $(C_FVISIBILITY) $(READLINE_CFLAGS) $(AM_CFLAGS)
 
+INCLUDES = -DDATADIR=\"$(datadir)/ekg\" -I$(top_srcdir)
 override libdir = $(plugindir)
-INCLUDES = -DDATADIR=\"$(datadir)/ekg\" 
 
 install-data-am:
 	mkdir -p $(DESTDIR)$(pkgdatadir)/plugins/readline/
 	$(INSTALL) -m 644 $(EXTRA_DIST) $(DESTDIR)$(pkgdatadir)/plugins/readline/
-
