@@ -60,8 +60,8 @@ int irc_xstrcasecmp_default(char *str1, char *str2)
 }
 
 /* this function searches for a given nickname on a given list
- * nick MUST BE without preceeding 'irc:' string
- * nick can contain mode prefix (one of): '@%+'
+ * nick MUST BE without the 'irc:' prefix
+ * nick can contain a mode prefix (one of): '@%+'
  *
  * list should be one of:
  *     priv_data->channels 

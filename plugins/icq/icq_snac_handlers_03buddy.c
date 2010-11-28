@@ -411,7 +411,7 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 		user_private_item_set_int(u, "ip", 0);
 		if (user_private_item_get_int(u, "version") < 8) {
 			caps &= ~(1<<CAP_SRV_RELAY);
-			debug_warn("icq_snac_buddy_online() Forcing simple messages due to compability issues (%s).\n", u->uid);
+			debug_warn("icq_snac_buddy_online() Forcing simple messages due to compatibility issues (%s).\n", u->uid);
 		}
 	}
 

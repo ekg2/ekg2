@@ -1621,8 +1621,8 @@ void theme_init()
 	format_add("variable", "%> %1 = %2\n", 1);
 	format_add("variable_not_found", _("%! Unknown variable: %T%1%n\n"), 1);
 	format_add("variable_invalid", _("%! Invalid session variable value\n"), 1);
-	format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!	 %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
-	format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or xmpp: jabber id, then session password and your password. enter save to save. enter connect to connect. if you dont have UID enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then number. To start conversation use query command. To add someone to roster use add command. All key shortcuts are described in README file. There is also help command."), 1);
+	format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!	 %Tconnect%n\n%! If you don't have an account yet, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then the number. To start a conversation use %Tquery%n. To add someone to your roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also a %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
+	format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or xmpp: jabber id, then session password and your password. enter save to save. enter connect to connect. if you do not have an account yet, enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then the number. To start a conversation use query command. To add someone to your roster use add command. All key shortcuts are described in README file. There is also a help command."), 1);
 	format_add("no_config_gg_not_loaded", _("%! Incomplete configuration. Use:\n%!	 %T/plugin +gg%n - to load gg plugin\n%!   %Tsession -a <gg:gg-number/xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!	 %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
 	format_add("no_config_no_libgadu", _("%! Incomplete configuration. %TBIG FAT WARNING:%n\n%!    %Tgg plugin has not been compiled, probably there is no libgadu library in the system\n%! Use:\n%!   %Tsession -a <xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!	%Tsave%n\n%! And then:\n%!   %Tconnect%n\n%! If you don't have uid, use:\n%!   %Tregister%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then number. To start conversation use %Tquery%n. To add someone to roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also %Thelp%n command. Remember about prefixes before UID, for example %Txmpp:<jid>%n. \n\n"), 2);
 	format_add("error_reading_config", _("%! Error reading configuration file: %1\n"), 1);
@@ -1666,7 +1666,7 @@ void theme_init()
 	format_add("passwd_abuse", "%! (%1) Somebody want to clear our password (%2)", 1);
 
 	/* changing information in public catalog */
-	format_add("change", _("%> Informations in public directory chenged\n"), 1);
+	format_add("change", _("%> Information in public directory has been changed\n"), 1);
 	format_add("change_failed", _("%! Error while changing information in public directory\n"), 1);
 
 	/* users finding */
@@ -1696,7 +1696,7 @@ void theme_init()
 	/* exec */
 	format_add("process", "%> %(-5)1 %2\n", 1);
 	format_add("no_processes", _("%! There are no running procesees\n"), 1);
-	format_add("process_exit", _("%> Proces %1 (%2) exited with %3 status\n"), 1);
+	format_add("process_exit", _("%> Process %1 (%2) exited with status %3\n"), 1);
 	format_add("exec", "%1\n",1);	/* lines are ended by \n */
 	format_add("exec_error", _("%! Error running process : %1\n"), 1);
 	format_add("exec_prompt", "$ %1\n", 1);
@@ -1873,7 +1873,7 @@ void theme_init()
 
 	/* window */
 	format_add("window_add", _("%) New window created\n"), 1);
-	format_add("window_noexist", _("%! Choosen window do not exist\n"), 1);
+	format_add("window_noexist", _("%! Chosen window does not exist\n"), 1);
 	format_add("window_doesnt_exist", _("%! Window %T%1%n does not exist\n"), 1);
 	format_add("window_no_windows", _("%! Can't close last window\n"), 1);
 	format_add("window_del", _("%) Window closed\n"), 1);
