@@ -43,9 +43,9 @@ typedef enum {
 /* .... */
 
 /* CONDITIONAL FLAGS */
-	COMMAND_ENABLEREQPARAMS		= 0x10,		/* '!' in params means that arg must exist in par[..] (?) */
-	COMMAND_PARAMASTARGET		= 0x20,		/* when par[0] != NULL, than target = par[0] and than par list moves up
-							   (par++ ; par[0] == par[1] and so on */
+	COMMAND_ENABLEREQPARAMS		= 0x10,		/* '!' in params means that arg must exist in params[..] (?) */
+	COMMAND_PARAMASTARGET		= 0x20,		/* when params[0] != NULL, than target = params[0] and then params list moves up
+							   (params++ ; params[0] == params[1] and so on */
 	SESSION_MUSTBECONNECTED		= 0x40,		/* session must be connected to execute that command */
 	SESSION_MUSTBELONG		= 0x80,		/* command must come from the same plugin as session (?) */
 	SESSION_MUSTHAS			= 0x100,	/* if session == NULL, we try session_current, if still NULL. we return -1...

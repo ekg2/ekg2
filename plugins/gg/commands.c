@@ -333,7 +333,7 @@ noproxy:
 
 			xfree(fwd);
 		}
-		
+
 		/* moved this further, because of locale_to_gg() allocation */
 		p.status = _status;
 		p.status_descr = locale_to_gg_dup(session, session_descr_get(session));
