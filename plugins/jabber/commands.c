@@ -1971,6 +1971,7 @@ static COMMAND(jabber_muc_command_nick) {
 	newconference_t *c;
 	const char *nickname;
 	const char *conference;
+	char *conference_uid;
 
 	if (params[1]) {
 		/* there are two parameters, so param[0] is a conference name and
@@ -1982,21 +1983,21 @@ static COMMAND(jabber_muc_command_nick) {
 		nickname = params[0];
 	}
 
-	if (!(c = newconference_find(session, conference))) {
-		printq("generic_error", "/xmpp:nick only valid in MUC");
-		return -1;
-	}
-
 	if (!xstrncmp(conference, "xmpp:", 5)) { /* strip xmpp: prefix */
 		conference += 5;
-	} else {
-		printq("invalid_params", name);
-		return 1;
+	}
+
+	conference_uid = xmpp_uid(conference);
+
+	if (!(c = newconference_find(session, conference_uid))) {
+		printq("generic_error", "/xmpp:nick only valid in MUC");
+		return -1;
 	}
 
 	char *tmp = jabber_escape(nickname);
 	watch_write(j->send_watch, "<presence to=\"%s/%s\"/>", conference, tmp);
 	xfree(tmp);
+	xfree(conference_uid);
 	return 0;
 }
 
