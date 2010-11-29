@@ -1959,6 +1959,47 @@ static COMMAND(jabber_muc_command_part) {
 	return 0;
 }
 
+/**
+ * jabber_muc_command_nick()
+ *
+ * @param params [0] (<b>full channel name or new nickname</b>)
+ * @param params [1] (<b>new nickname</b>)
+ */
+
+static COMMAND(jabber_muc_command_nick) {
+	jabber_private_t *j = session_private_get(session);
+	newconference_t *c;
+	const char *nickname;
+	const char *conference;
+
+	if (params[1]) {
+		/* there are two parameters, so param[0] is a conference name and
+		 * params[1] is a new nickname */
+		conference = params[0];
+		nickname = params[1];
+	} else {
+		conference = window_current->target;
+		nickname = params[0];
+	}
+
+	if (!(c = newconference_find(session, conference))) {
+		printq("generic_error", "/xmpp:nick only valid in MUC");
+		return -1;
+	}
+
+	if (!xstrncmp(conference, "xmpp:", 5)) { /* strip xmpp: prefix */
+		conference += 5;
+	} else {
+		printq("invalid_params", name);
+		return 1;
+	}
+
+	char *tmp = jabber_escape(nickname);
+	watch_write(j->send_watch, "<presence to=\"%s/%s\"/>", conference, tmp);
+	xfree(tmp);
+	return 0;
+}
+
 static COMMAND(jabber_muc_command_admin) {
 	jabber_private_t *j = session_private_get(session);
 	newconference_t *c;
@@ -2426,6 +2467,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:modify", "!Uu ?", jabber_command_modify,JABBER_FLAGS_REQ, 
 			"-n --nickname -g --group");
 	command_add(&jabber_plugin, "xmpp:msg", "!uU !", jabber_command_msg,	JABBER_FLAGS_MSG, NULL);
+	command_add(&jabber_plugin, "xmpp:nick", "! ?", jabber_muc_command_nick,	JABBER_FLAGS_REQ, NULL);
 	command_add(&jabber_plugin, "xmpp:op", "! !", jabber_muc_command_role, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:part", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:passwd", "?", jabber_command_passwd,	JABBER_FLAGS, NULL);
