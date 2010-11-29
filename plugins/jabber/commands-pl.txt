@@ -4,11 +4,11 @@
 // (c) copyright      2004 tomasz torcz <zdzichu@ekg2.org>
 
 _autoaway
-	parametry: 
+	parametry:
 	krotki opis: zmienia stan na zajêty
 
 _autoback
-	parametry: 
+	parametry:
 	krotki opis: zmienia stan na dostêpny
 
 add
@@ -29,10 +29,10 @@ admin
 	  /admin xmpp:test@conference.example.com --muc#roomconfig_persistentroom 1
 
 auth
-	parametry: <opcje> <JID> 
+	parametry: <opcje> <JID>
 	krotki opis: obs³uga autoryzacji
 	
-	<akcja> <JID> 
+	<akcja> <JID>
 	
 	  -a, --accept <JID>    autoryzuje JID
 	
@@ -92,7 +92,7 @@ bookmark
 	
 	            [--nick nasznick]
 	
-	            [--pass haslo] 
+	            [--pass haslo]
 	
 	            [-- nazwa]
 	
@@ -101,7 +101,7 @@ bookmark
 	 -r, --remove                       NIE ZAIMPLEMENTOWANE, usuwa :)
 
 change
-	parametry:  <opcje>
+	parametry: <opcje>
 	krotki opis: zmienia informacje w katalogu publicznym
 	
 	  -f, --fullname <imiê i nazwisko>
@@ -118,16 +118,16 @@ change
 	
 	  -p, --photo <¶cie¿ka do zdjecia>
 	
-	Je¶li który¶ z parametrów nie zostanie podany, jego warto¶æ zostanie 
-	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n'' 
+	Je¶li który¶ z parametrów nie zostanie podany, jego warto¶æ zostanie
+	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n''
 	wyczy¶ci %Twszystkie%n pola.
 
 chat
-	parametry: 
+	parametry:
 	krotki opis: wysy³a wiadomo¶æ w ramach rozmowy
 
 connect
-	parametry: 
+	parametry:
 	krotki opis: ³±czy siê z serwerem
 
 del
@@ -189,19 +189,19 @@ join
 	konferencji.
 
 lastseen
-	parametry: 
+	parametry:
 	krotki opis: pobiera informacjê o czasie wylogowania siê danego jid
 
 msg
-	parametry: 
+	parametry:
 	krotki opis: wysy³a pojedyncz± wiadomo¶æ
 	
-	Wszyscy odbiorcy to * zamiast nadawcy. Poprzedzenie wiadomo¶ci 
-	wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_prefix spowoduje 
+	Wszyscy odbiorcy to * zamiast nadawcy. Poprzedzenie wiadomo¶ci
+	wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_prefix spowoduje
 	potraktowanie pierwszej linijki jako tematu.
 
 modify
-	parametry:  <alias> <opcje>
+	parametry: <alias> <opcje>
 	krotki opis: zmienia wpisy w li¶cie kontaktów
 	
 	Opcje mog± byæ nastêpuj±ce:
@@ -224,7 +224,7 @@ part
 	krotki opis: opuszcza konferencjê
 
 passwd
-	parametry: 
+	parametry:
 	krotki opis: zmienia has³o
 
 privacy
@@ -266,10 +266,10 @@ privacy
 	 --remove #id                                       usuwa wpis z numerem id z listy.
 	
 	 --modify                                           zmienia wpis, NIEZAIMPLEMENTOWANE.
-	 
+	
 
 reconnect
-	parametry: 
+	parametry:
 	krotki opis: roz³±cza i ³±czy siê ponownie
 
 reply
@@ -300,11 +300,11 @@ unban
 	W przeciwnym wypadku usuwa ban danego JID z okre¶lonego kana³u.
 
 userinfo
-	parametry: 
+	parametry:
 	krotki opis: pobiera informacje z katalogu Jabbera o danym jid
 
 ver
-	parametry: 
+	parametry:
 	krotki opis: pobiera informacjê o sytemie operacyjnym i wersji klienta Jabbera danego jid
 
 voice
@@ -325,10 +325,10 @@ xa
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 xml
-	parametry: 
+	parametry:
 	krotki opis: wysy³a polecenie xml
 	
-	Polecenie musi byæ zakodowanie w UTF-8, a wszystkie znaki specjalne u¿ywane w XML 
+	Polecenie musi byæ zakodowanie w UTF-8, a wszystkie znaki specjalne u¿ywane w XML
 	(& < >) musz± byæ zamienione na odpowiadaj±ce im sekwencje.
 
 // $Id$
