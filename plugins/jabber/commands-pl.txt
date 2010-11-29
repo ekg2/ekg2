@@ -15,6 +15,19 @@ add
 	parametry: <JID> [nazwa]
 	krotki opis: dodaje u¿ytkownika do naszego rostera, jednocze¶nie prosz±c o autoryzacjê
 
+admin
+	parametry: [konferencja pole warto¶æ]
+	krotki opis: zmienia konfiguracjê pokoju
+	
+	Zmienia konfiguracjê pokoju MUC: ustawia `pole` na `warto¶æ` dla pokoju
+	`konferencja`.
+	
+	Je¿eli nie podano ¿adnych argumentów, wy¶wietla wszystkie pola oraz ich
+	warto¶ci dla aktualnego pokoju.
+	
+	Przyk³ad (zmieñ typ pokoju na `persistent`):
+	  /admin xmpp:test@conference.example.com --muc#roomconfig_persistentroom 1
+
 auth
 	parametry: <opcje> <JID> 
 	krotki opis: obs³uga autoryzacji

@@ -16,8 +16,17 @@ add
 	short description: adds user to our roster while asking for authorization
 
 admin
-	parameters: 
-	short description: shows you administrator's muc form, if you have enough permissions
+	parameters: [conference field value]
+	short description: alter chatroom configuration
+	
+	Alter MUC chatroom configuration: Set `field` to `value` for `conference`
+	chatroom.
+	
+	Invoke it with no argmunets to see all fields and their values for the
+	current chatroom.
+	
+	Example (make room persistent):
+	  /admin xmpp:test@conference.example.com --muc#roomconfig_persistentroom 1
 
 auth
 	parameters: <options> <JID> 
