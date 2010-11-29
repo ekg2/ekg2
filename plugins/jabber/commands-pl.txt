@@ -208,6 +208,13 @@ modify
 	
 	-n, --nickname <pseudonim>     wpis w li¶cie kontaktów
 
+nick
+	parametry: [konferencja] <nick>
+	krotki opis: zmienia nick u¿ytkownika
+	
+	Zmienia nick u¿ytkownika w danej konferencji. Je¿eli nie podano
+	konferencji, zmienia nick na konferencji w aktualnym oknie.
+
 op
 	parametry: <konferencja> <nick>
 	krotki opis: nadaje nickowi uprawnienia moderatora

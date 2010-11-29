@@ -218,6 +218,13 @@ modify
 	
 	-n, --nickname <nickname>     contact nickname
 
+nick
+	parameters: [conference] <nick>
+	short description: change nick
+	
+	Change nick on a given conference. If no conference provided, use
+	conference in current window.
+
 op
 	parameters: <conference> <nick>
 	short description: Gives moderator privileges to the specified nick
