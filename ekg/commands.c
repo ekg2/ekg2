@@ -2571,12 +2571,12 @@ static COMMAND(cmd_echo) {
 /*
  * command_exec()
  *
- * wykonuje polecenie zawarte w linii tekstu. 
+ * executes a command stored in a string.
  *
- *  - target - w którym oknie nast±pi³o (NULL je¶li to nie query)
- *  - session - sesja, dla której dzia³amy
- *  - xline - linia tekstu
- *  - quiet - =1 ukrywamy wynik, =2 ukrywamy nieistnienie polecenia
+ *  - target - which window was the command invoked in (or NULL if not in one)
+ *  - session - session on behalf of which we're running
+ *  - xline - the string containing the line of text
+ *  - quiet - hide output if == 1, hide inexistence of command if == 2
  *
  * 0/-1.
  */
@@ -2588,9 +2588,10 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	char *cmd = NULL, *tmp;
 	size_t cmdlen;
 
+	/* TODO: what does the "last" prefix stand for? */
 	command_t *last_command = NULL;
-	command_t *last_command_plugin = NULL; /* niepotrzebne, ale ktos to napisal tak ze moze kiedys mialobyc potrzebne.. wiec zostaje. */
-	int abbrs = 0;
+	command_t *last_command_plugin = NULL; /* unneeded, but someone wrote it as if it would be necessary one day, so we leave it here */
+	int abbrs = 0;	/* 1 if the post-prefix part of command was spelled out fully, e.g. user entered "disconnect" while the command is "gg:disconnect" */
 	int abbrs_plugins = 0;
 
 	int exact = 0;
@@ -2600,11 +2601,11 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	if (!xline)
 		return 0;
 
-	/* wysy³amy do kogo¶ i nie ma na pocz±tku slasha */
+	/* in a chat window, and there is no leading slash */
 	if (target && *xline != '/') {
 		int correct_command = 0;
 	
-		/* wykrywanie przypadkowo wpisanych poleceñ */
+		/* detection of commands entered by mistake */
 		if (config_query_commands) {
 			for (c = commands; c; c = c->next) {
 				size_t l = xstrlen(c->name);
@@ -2623,8 +2624,9 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			return command_exec_format(target, session, quiet, ("/ %s"), xline);
 	}
 	if (target && *xline == '/' && config_slash_messages == 1) {
-	/* send message if we have two '/' in 1 word for instance /bin/sh /dev/hda1 other... */
-		/* code stolen from ekg1, idea stolen from irssi. */
+		/* send the message if the first word contains at least two slashes,
+		 * e.g. "/bin/sh" or "/dev/hda1", as it is not likely to be an ekg2 command
+		 * code stolen from ekg1, idea stolen from irssi. */
 		char *p = strchr(xline + 1, '/');
 		char *s = strchr(xline + 1, ' ');
 
@@ -2644,6 +2646,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		line++;
 	}
 
+	/* Check if this is a special one-character command. These are special
+	 * because they do not require whitespace to separate them from their arguments. */
 	for (c = commands; c; c = c->next) {
 		if (!isalpha_pl_PL(c->name[0]) && xstrlen(c->name) == 1 && line[0] == c->name[0]) {
 			short_cmd[0] = c->name[0];
@@ -2651,7 +2655,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 			p = line + 1;
 		}
 	}
-
+	/* Separate command from arguments if not. */
 	if (!cmd) {
 		tmp = cmd = line;
 		while (*tmp && !xisspace(*tmp))
@@ -2659,34 +2663,41 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		p = (*tmp) ? tmp + 1 : tmp;
 		*tmp = 0;
 	}
+	/* Whatever it was, at this point:
+	 * 'cmd' points at a string containing the command verb
+	 * 'p' points at the (possibly empty) string containing parameters
+	 */
 	cmdlen = xstrlen(cmd);
 
-	/* poszukaj najpierw komendy dla danej sesji */
+	/* First, look for a command specific to the given session. */
 	if (!session && session_current)
 		session = session_current;
 	if (session && session->uid) {
-		int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
+		int prefix_len = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 		
 		for (c = commands; c; c = c->next) {
-			if (xstrncasecmp(c->name, session->uid, plen))
+			/* Consider commands prefixed with current session's prefix. */
+			if (xstrncasecmp(c->name, session->uid, prefix_len))
 				continue;
-		
-			if (!xstrcasecmp(c->name + plen, cmd)) {
+			/* Look for fully spelled out command. */
+			if (!xstrcasecmp(c->name + prefix_len, cmd)) {
 				last_command = c;
 				abbrs = 1;
 				exact = 1;
 				break;
 			}
-
-			if (!xstrncasecmp(c->name + plen, cmd, cmdlen)) {
+			/* Fall back to the first matching prefix. */
+			if (!xstrncasecmp(c->name + prefix_len, cmd, cmdlen)) {
 				last_command_plugin = c;
 				abbrs_plugins++;
 			} else {
+				/* TODO: document what this does */
 				if (last_command_plugin && abbrs_plugins == 1)
 					break;
 			} 
 		}
 	}
+	/* If needed, fall back to non-session-specific commands. */
 	if (!exact) {
 		for (c = commands; c; c = c->next) {
 			if (!xstrcasecmp(c->name, cmd)) {
@@ -2709,7 +2720,9 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	}
 /*	debug("%x %x\n", last_command, last_command_plugin);	*/
 
+	/* TODO: what does the following condition ACTUALLY MEAN? */
 	if ((last_command && abbrs == 1 && !abbrs_plugins) || ( (last_command = last_command_plugin) && abbrs_plugins == 1 && !abbrs)) {
+		/* At this point last_command points at the command_t structure we need to invoke. */
 		session_t *s = session ? session : window_current->session;
 		const char *last_name	 = last_command->name;
 		char *tmp;
@@ -2759,26 +2772,30 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 		}
 
 		if (!res) {
-			char **last_params = (last_command->flags & COMMAND_ISALIAS) ? array_make(("?"), (" "), 0, 1, 1) : last_command->params;
-			int parcount = array_count(last_params);
-			char **par = NULL;
+			char **parameter_types = (last_command->flags & COMMAND_ISALIAS) ? array_make(("?"), (" "), 0, 1, 1) : last_command->params;
+			int parameter_types_count = array_count(parameter_types);
+			char **parsed_params = NULL; /* The array of parameter values which is going to be passed to the command handler. */
+
+			/* Perform some parameter verification and mangling.
+			 * See flag definitions in commands.h for the exact
+			 * meaning of each of the following cases. */
 
 			if (last_command->flags & COMMAND_PASS_UNCHANGED)
-				array_add(&par, xstrdup(p));
+				array_add(&parsed_params, xstrdup(p));
 			else
-				par = array_make(strip_spaces(p), (" \t"), parcount, 1, 1);
+				parsed_params = array_make(strip_spaces(p), (" \t"), parameter_types_count, 1, 1);
 
-			if ((last_command->flags & COMMAND_PARAMASTARGET) && par[0]) {
-/*				debug("[command_exec] oldtarget = %s newtarget = %s\n", target, par[0]); */
-				target = par[0];
+			if ((last_command->flags & COMMAND_PARAMASTARGET) && parsed_params[0]) {
+/*				debug("[command_exec] oldtarget = %s newtarget = %s\n", target, parsed_params[0]); */
+				target = parsed_params[0];
 			}
 
 			if (/* !res && */ last_command->flags & COMMAND_ENABLEREQPARAMS) {
 				int i;
-				for (i=0; i < parcount; i++) {
+				for (i=0; i < parameter_types_count; i++) {
 					char *p;
-					if (!(p = last_params[i])) break; /* rather impossible */
-					if (p[0] == '!' && !par[i]) {
+					if (!(p = parameter_types[i])) break; /* rather impossible */
+					if (p[0] == '!' && !parsed_params[i]) {
 						if (i == 0 && (last_command->flags & COMMAND_PARAMASTARGET) && target) /* if params[0] already in target */
 							continue;	/* skip it */
 						debug("[command_exec,%s] res = -1; req params[%d] = NIL\n", last_name, i);
@@ -2806,7 +2823,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				w = window_find_sa(s, uid, 0);
 
 				window_lock_inc(w);
-				res = (last_command->function)(last_name, (const char **) par, s, uid, (quiet & 1));
+				res = (last_command->function)(last_name, (const char **) parsed_params, s, uid, (quiet & 1));
 				if (window_find_ptr(w) || (w == window_find_sa(s, uid, 0)))
 					window_lock_dec(w);
 				else { 
@@ -2821,8 +2838,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				query_emit_id(NULL, UI_WINDOW_REFRESH);
 				xfree(uid);
 			}
-			if (last_command->flags & COMMAND_ISALIAS) array_free(last_params);
-			array_free(par);
+			if (last_command->flags & COMMAND_ISALIAS) array_free(parameter_types);
+			array_free(parsed_params);
 		}
 		xfree(line_save);
 
