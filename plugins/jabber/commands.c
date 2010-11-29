@@ -2040,7 +2040,7 @@ static COMMAND(jabber_muc_command_admin) {
  * 
  * TODO:
  *   - allow to specify user by jid, not only by nick
- *   - check if user is no the muc channel
+ *   - check if user is on the muc channel
  */
 static COMMAND(jabber_muc_command_role) {	/* %0 [target] %1 [jid] %2 [reason] */
 	jabber_private_t *j = session_private_get(session);
