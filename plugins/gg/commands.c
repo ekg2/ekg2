@@ -86,6 +86,32 @@
 #include "pubdir50.h"
 #include "token.h"
 
+/*
+ * session_descr_sync()
+ *
+ * For the given session, set (from new_reason) or delete (if "-" is passed or
+ * NULL is passed while config_keep_reason is off) the description.
+ * Return what is the session description from now on (NULL or newly allocated
+ * string).
+ *
+ *  - session - pointer to a session_t object
+ *  - new_reason - string containing the new description, or NULL, if the user
+ *    has not expressed a will to change the description
+ */
+static char* session_descr_sync(session_t* session, const char* new_reason) {
+	char* myreason;
+	if (new_reason) {
+		if (!xstrcmp(new_reason, "-"))	myreason = NULL;
+		else				myreason = xstrdup(new_reason);
+		session_descr_set(session, myreason);
+	} else {
+		if (!config_keep_reason)
+			session_descr_set(session, NULL);
+		myreason = xstrdup(session_descr_get(session));
+	}
+	return myreason;
+}
+
 static COMMAND(gg_command_connect) {
 	int isreconnect = !xstrcmp(name, "reconnect");
 	gg_private_t *g = session_private_get(session);
@@ -105,21 +131,15 @@ static COMMAND(gg_command_connect) {
 				printq("not_connected", session_name(session));
 
 		} else {
-			const char *__reason = params[0];
 			char *myreason;
 			char *tmp;
 
 			if (session->autoaway)
 				session_status_set(session, EKG_STATUS_AUTOBACK);
-			if (__reason) {
-				if (!xstrcmp(__reason, "-"))	myreason = NULL;
-				else				myreason = xstrdup(__reason);
-				tmp = locale_to_gg_dup(session, myreason);
-				session_descr_set(session, tmp ? myreason : NULL);
-			} else {
-				myreason = xstrdup(session_descr_get(session));
-				tmp = locale_to_gg_dup(session, myreason);
-			}
+
+			myreason = session_descr_sync(session, params[0]);
+			tmp = locale_to_gg_dup(session, myreason);
+
 			if (tmp)
 				gg_change_status_descr(g->sess, GG_STATUS_NOT_AVAIL_DESCR, tmp);
 			else
@@ -185,7 +205,11 @@ static COMMAND(gg_command_connect) {
 		if ((session_status_get(session) == EKG_STATUS_NA))
 			session_status_set(session, EKG_STATUS_AVAIL);
 
-		_status = gg_text_to_status(session_status_get(session), session_descr_get(session));
+		{
+			char *current_descr = session_descr_sync(session, params[0]);
+			_status = gg_text_to_status(session_status_get(session), current_descr);
+			xfree(current_descr);
+		}
 		
 		/* dcc */
 		if (gg_config_dcc) {
