@@ -208,9 +208,9 @@ end:
 
 static void conference_generator(const char *text, int len)
 {
-	struct conference *c;
+	newconference_t *c;
 
-	for (c = conferences; c; c = c->next) {
+	for (c = newconferences; c; c = c->next) {
 		if (!xstrncasecmp(text, c->name, len))
 			array_add_check(&completions, xstrdup(c->name), 1);
 	}
