@@ -173,12 +173,11 @@ static people_t *irc_add_person_int(session_t *s, irc_private_t *j,
 	userlist_t *ulist;
 	window_t *w;
 	int k, mode = 0, irccol = 0;
-	char *ircnick, *modes, *t;
+	char *ircnick, *t;
 
 	k = (xstrlen(SOP(_005_PREFIX))>>1);
-	modes = SOP(_005_PREFIX) + k + 1;
-	if ((t = xstrchr(modes, *nick)))
-		mode = 1<<(k-(t-modes)-2);
+	if ((t = xstrchr(j->nick_signs, *nick)))
+		mode = 1<<(k-(t - j->nick_signs)-2);
 
 	/* debug("irc_add_person_int: %s %d %d\n", modes, mode, k); */
 	if (mode) nick++;
@@ -532,7 +531,7 @@ int irc_color_in_contacts(irc_private_t *j, int mode, userlist_t *ul)
 	for (i=0; i<len; i++)
 		if (mode & (1<<(len-1-i))) break;
 	
-	switch (SOP(_005_PREFIX)[i+1]) {
+	switch (j->nick_modes[i]) {
 		case 'o':	ul->status = EKG_STATUS_AVAIL;		break;	/* op */
 		case 'h':	ul->status = EKG_STATUS_AWAY;		break;	/* half-op */
 		case 'v':	ul->status = EKG_STATUS_XA;		break;	/* voice */
@@ -545,15 +544,11 @@ int irc_color_in_contacts(irc_private_t *j, int mode, userlist_t *ul)
 
 int irc_nick_prefix(irc_private_t *j, people_chan_t *ch, int irc_color)
 {
-	char *t = SOP(_005_PREFIX);
-	char *p = xstrchr(t, ')');
-	*(ch->sign)=' ';
-	(ch->sign)[1] = '\0';
-	if (p) {
-		p++;
-		if (irc_color < xstrlen(p))
-			*(ch->sign) = p[irc_color];
-	} 
+	ch->sign[0] = ' ';
+	ch->sign[1] = '\0';
+	if (irc_color < xstrlen(j->nick_signs))
+		*(ch->sign) = j->nick_signs[irc_color];
+
 	return 0;
 }
 		

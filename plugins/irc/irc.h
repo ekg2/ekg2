@@ -65,6 +65,8 @@ typedef struct _irc_private_t {
 	char *sopt[SERVOPTS];		/* just a few options from
 					 * www.irc.org/tech_docs/005.html
 					 * server's response */
+	char *nick_modes;		/* should be freed */
+	char *nick_signs;
 	int casemapping;
 
 	list_t awaylog;

@@ -510,7 +510,12 @@ IRC_COMMAND(irc_c_init)
 			j->autoreconnecting = 0;
 
 			j->casemapping = IRC_CASEMAPPING_RFC1459;
-			xfree(SOP(_005_PREFIX)); SOP(_005_PREFIX) = xstrdup("(ov)@+");
+			xfree(SOP(_005_PREFIX));
+			SOP(_005_PREFIX) = xstrdup("(ov)@+");
+			j->nick_signs = SOP(_005_PREFIX) + 4;
+			xfree(j->nick_modes);
+			j->nick_modes = xstrdup("ov");
+
 			xfree(SOP(_005_CHANTYPES)); SOP(_005_CHANTYPES) = xstrdup("#!");
 			xfree(SOP(_005_MODES)); SOP(_005_MODES) = xstrdup("3");
 			xfree(SOP(_005_NICKLEN)); SOP(_005_NICKLEN) = xstrdup("9");
@@ -539,11 +544,10 @@ IRC_COMMAND(irc_c_init)
 				{
 					if (sopt_keys[k] == NULL)
 						continue;
-					if (xstrncmp(param[i], sopt_keys[k], xstrlen(sopt_keys[k])))
+					if (xstrncmp(param[i], sopt_keys[k], xstrlen(sopt_keys[k])) || param[i][xstrlen(sopt_keys[k])] != '=' )
 						continue;
 					xfree(SOP(k));
-					SOP(k) = xstrdup(xstrchr(param[i],
-								'=')+1);
+					SOP(k) = xstrdup(xstrchr(param[i], '=')+1);
 					if (xstrlen(SOP(k))==0) {
 						xfree(SOP(k));
 						SOP(k) = NULL;
@@ -566,6 +570,11 @@ IRC_COMMAND(irc_c_init)
 						}
 					}
 			}
+
+			k = (xstrlen(SOP(_005_PREFIX))>>1) - 1;
+			j->nick_signs = SOP(_005_PREFIX) + k + 2;
+			xfree(j->nick_modes);
+			j->nick_modes = xstrndup(SOP(_005_PREFIX)+1, k);
 
 			irc_autorejoin(s, IRC_REJOIN_CONNECT, NULL);
 
@@ -761,10 +770,7 @@ char *clean_channel_names(session_t *session, char *channels) {
 	if (!SOP(_005_IDCHAN))
 		return xstrdup(channels);
 
-	chmode = SOP(_005_PREFIX);
-
-	if ( ( p = strchr(chmode,')') ) )	/* ?WO? Would be nice to have '@%+' not '(ohv)@%+' */
-		chmode = ++p;
+	chmode = j->nick_signs;
 	
 	dest = src = ret = xstrdup(channels);
 	while ( src && *src ) {
@@ -1669,7 +1675,7 @@ IRC_COMMAND(irc_c_invite)
 IRC_COMMAND(irc_c_mode)
 {
 	int		i, k, len, val=0, act=1, is324=irccommands[ecode].num==324;
-	char		*t, *bang, *add, **pars, *ekg2_channame, *irc_channame, *mode_abc, *mode_c, *cchn;
+	char		*t, *bang, **pars, *ekg2_channame, *irc_channame, *mode_abc, *mode_c, *cchn;
 	people_t	*per;
 	people_chan_t	*ch;
 	channel_t	*chan;
@@ -1694,9 +1700,6 @@ IRC_COMMAND(irc_c_mode)
 	}
 
 	len = (xstrlen(SOP(_005_PREFIX))>>1);
-	add = xmalloc(len * sizeof(char));
-	for (i=0; i<len; i++) add[i] = SOP(_005_PREFIX)[i+1];
-	if (len) add[--len] = '\0';
 
 	mode_abc = xstrdup(SOP(_005_CHANMODES));
 	if ( (mode_c = xstrchr(mode_abc, ',')) && ++mode_c) 
@@ -1717,7 +1720,7 @@ IRC_COMMAND(irc_c_mode)
 		}
 
 		/* Modes in PREFIX are not listed but could be considered type B. */
-		if ((bang=xstrchr(add, *t))) {
+		if ((bang=xstrchr(j->nick_modes, *t))) {
 			/* 23:26:o2 CET 2oo5-22-o1 yet another ivil hack */
 			if (xstrchr(param[k], ' '))
 				*xstrchr(param[k], ' ') = '\0';
@@ -1729,7 +1732,7 @@ IRC_COMMAND(irc_c_mode)
 			ch = irc_find_person_chan(per->channels, irc_channame); 
 			if (!ch) goto notreallyok;
 			/* GiM: ivil hack ;) */
-			val = 1<<(len-(bang-add)-1);
+			val = 1<<(len-(bang - j->nick_modes)-1);
 			if (act) ch->mode |= val; else ch->mode&=~val;
 			ul = userlist_find_u(&(ch->chanp->window->userlist), param[k]);
 			if (!ul) goto notreallyok;
@@ -1739,7 +1742,7 @@ IRC_COMMAND(irc_c_mode)
 			query_emit_id(NULL, USERLIST_REFRESH);
 		} 
 notreallyok:
-		if (xstrchr(add, *t)) k++;
+		if (xstrchr(j->nick_modes, *t)) k++;
 		else if (xstrchr(mode_abc, *t) && (act || !xstrchr(mode_c, *t))) k++;
 											
 		if (!param[k]) break;
@@ -1774,7 +1777,6 @@ notreallyok:
 	if (bang) *bang='!';
 	string_free(moderpl, 1);
 
-	xfree(add);
 	xfree(cchn);
 	xfree(ekg2_channame);
 	xfree(mode_abc);

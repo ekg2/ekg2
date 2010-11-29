@@ -191,6 +191,7 @@ static QUERY(irc_session_init) {
 	ekg_recode_utf8_inc();
 
 	j = xmalloc(sizeof(irc_private_t));
+	j->nick_modes = j->nick_signs = NULL;
 	j->fd = -1;
 
 	j->conv_in = (void *) -1;
@@ -266,6 +267,8 @@ static QUERY(irc_session_deinit) {
 
 	for (i = 0; i<SERVOPTS; i++) 
 		xfree(j->sopt[i]);
+
+	xfree(j->nick_modes);
 
 	xfree(j);
 	return 0;
@@ -1936,8 +1939,7 @@ static COMMAND(irc_command_names) {
 	int sort_status[6] = {EKG_STATUS_AVAIL, EKG_STATUS_AWAY, EKG_STATUS_XA, EKG_STATUS_INVISIBLE, EKG_STATUS_FFC, EKG_STATUS_DND};
 	int sum[6]   = {0, 0, 0, 0, 0, 0};
 
-	int len;
-	char **mp, *channame, *cchn, *pfx0, *pfx1;
+	char **mp, *channame, *cchn;
 
 	channel_t *chan;
 	string_t buf;
@@ -1957,10 +1959,7 @@ static COMMAND(irc_command_names) {
 
 	buf = string_init(NULL);
 
-	len = xstrlen(SOP(_005_PREFIX))>>1;
-	pfx0 = SOP(_005_PREFIX) + 1;		// point to "ov)@+"
-	pfx1 = SOP(_005_PREFIX) + len + 1;	// point to "@+"
-	for (i = 0; i < len; i++) {
+	for (i = 0; i <= xstrlen(j->nick_modes); i++) {
 		static char mode_str[2] = { '?', '\0' };
 		const char *mode;
 
@@ -1972,7 +1971,7 @@ static COMMAND(irc_command_names) {
 		 *	]", and whole will be treated as long 'longest_nick+2' long string :)
 		 */
 
-		switch (pfx0[i]) {
+		switch (j->nick_modes[i]) {
 			case 'o':	lvl = 0; break;
 			case 'h':	lvl = 1; break;
 			case 'v':	lvl = 2; break;
@@ -1980,12 +1979,8 @@ static COMMAND(irc_command_names) {
 			case 'a':	lvl = 4; break;
 			default:	lvl = 5; break;
 		}
-		if (pfx1[i]) {
-			mode = mode_str;
-			mode_str[0] = pfx1[i];
-		} else {
-			mode = fillchars;
-		}
+
+		mode = (mode_str[0] = j->nick_signs[i]) ? mode_str : fillchars;
 
 		for (ul = chan->window->userlist; ul; ul = ul->next) {
 			userlist_t *ulist = ul;
@@ -2011,7 +2006,7 @@ static COMMAND(irc_command_names) {
 
 	print_info(channame, session, "none2", "");
 #define plvl(x) itoa(sum[x])
-	if (len > 3) /* has halfops */
+	if (sum[1]+sum[3]+sum[4] != 0) /* has halfops, admins or owners */
 		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), cchn, itoa(count), plvl(0), plvl(1), plvl(2), plvl(5), plvl(3), plvl(4));
 	else
 		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), cchn, itoa(count), plvl(0), plvl(2), plvl(5));
