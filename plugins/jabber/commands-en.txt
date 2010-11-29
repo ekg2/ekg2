@@ -4,11 +4,11 @@
 // (c) copyright      2004 tomasz torcz <zdzichu@ekg2.org>
 
 _autoaway
-	parameters: 
+	parameters:
 	short description: changes status to away
 
 _autoback
-	parameters: 
+	parameters:
 	short description: changes status to available
 
 add
@@ -29,10 +29,10 @@ admin
 	  /admin xmpp:test@conference.example.com --muc#roomconfig_persistentroom 1
 
 auth
-	parameters: <options> <JID> 
+	parameters: <options> <JID>
 	short description: authorization support
 	
-	<action> <JID> 
+	<action> <JID>
 	
 	  -a, --accept <JID>    authorize JID
 	
@@ -77,7 +77,7 @@ bookmark
 	
 	  --add		add bookmark
 	
-	  --remove		remove bookmark 
+	  --remove		remove bookmark
 	
 	  --clear		remove all bookmarks
 	
@@ -96,7 +96,7 @@ bookmark
 	
 	  --nick            <nick>
 	
-	  --pass            <pass> 
+	  --pass            <pass>
 	
 	
 	example:
@@ -104,7 +104,7 @@ bookmark
 	  /bookmark --add --conf my@conference.server.domain --autojoin 1 --nick nick --pass pass -- #conference
 
 change
-	parameters:  <options>
+	parameters: <options>
 	short description: changes data in vcard
 	
 	  -f, --fullname <full name>
@@ -125,17 +125,17 @@ change
 	vCard. Giving ,,%T-%n'' will clear %Tall%n fields.
 
 chat
-	parameters: <name> 
+	parameters: <name>
 	short description: sends chat message
 	
 	using * instead of user's name will create queries with all your contacts
 
 config
 	parameters:
-	short description: 
+	short description:
 
 connect
-	parameters: 
+	parameters:
 	short description: connects with server
 
 del
@@ -199,11 +199,11 @@ kick
 	short description: kick nick off the conference
 
 lastseen
-	parameters: <jid> 
+	parameters: <jid>
 	short description: retrieves information on last logout time for given jid
 
 msg
-	parameters: <alias> 
+	parameters: <alias>
 	short description: sends message
 	
 	All receivers are marked by *. Preceding multiline message with string
@@ -211,19 +211,26 @@ msg
 	message.
 
 modify
-	parameters:  <alias> <options>
+	parameters: <alias> <options>
 	short description: changes roster entries
 	
 	Possible options:
 	
 	-n, --nickname <nickname>     contact nickname
 
+nick
+	parameters: [conference] <nick>
+	short description: change nick
+	
+	Change nick on a given conference. If no conference provided, use
+	conference in current window.
+
 op
 	parameters: <conference> <nick>
 	short description: Gives moderator privileges to the specified nick
 
 passwd
-	parameters: 
+	parameters:
 	short description: changes password
 
 part
@@ -231,7 +238,7 @@ part
 	short description: leaves conference
 
 reconnect
-	parameters: 
+	parameters:
 	short description: disconnects and connects again
 
 register
@@ -264,7 +271,7 @@ topic
 
 transpinfo
 	parameters: <jid>
-	short description: shows you information about given server\transport 
+	short description: shows you information about given server\transport
 
 transports
 	parameters: <jid>
@@ -279,7 +286,7 @@ unregister
 	short description: deletes your account from server
 
 userinfo
-	parameters: 
+	parameters:
 	short description: retrieves Jabber Directory info about given jid
 
 userlist
@@ -305,7 +312,7 @@ vacation
 	short description: function is not implemented yet
 
 ver
-	parameters: 
+	parameters:
 	short description: retrieves information about OS and client of given jid
 
 voice
@@ -323,7 +330,7 @@ xa
 	Giving ,,%T-%n'' instead of description will clear description.
 
 xml
-	parameters: 
+	parameters:
 	short description: sends xml stream
 	
 	Command must be UTF-8 encoded, all XML special characters have to be
