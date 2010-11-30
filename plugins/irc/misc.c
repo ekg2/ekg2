@@ -1058,6 +1058,7 @@ IRC_COMMAND(irc_c_ping)
 IRC_COMMAND(irc_c_nick)
 {
 	char		*t, *temp;
+	char		*nick, *ihost, *newnick;
 	int		nickdisp = session_int_get(s, "DISPLAY_NICKCHANGE");
 	people_t	*per;
 	people_chan_t	*ch;
@@ -1065,41 +1066,45 @@ IRC_COMMAND(irc_c_nick)
 	window_t	*w;
 
 	if ((t = xstrchr(param[0], '!'))) *t ='\0';
+
+	nick = OMITCOLON(param[0]);
+	ihost = t?t+1:"";
+	newnick = OMITCOLON(param[2]);
+
 	/* debug("irc_nick> %s %s\n", j->nick, param[0]+1); */
-	irc_nick_change(s, j, param[0]+1, OMITCOLON(param[2]));
-	if (!xstrcmp(j->nick, param[0]+1)) {
+	irc_nick_change(s, j, nick, newnick);
+	if (!xstrcmp(j->nick, nick)) {
 		print_info(window_current->target, s, "IRC_YOUNEWNICK", 
-				session_name(s), t?t+1:"", OMITCOLON(param[2]));
+				session_name(s), ihost, newnick);
 		
 		xfree(j->nick);
-		j->nick = xstrdup(OMITCOLON(param[2]));	
+		j->nick = xstrdup(newnick);	
 	} else {
 		/* ok new irc-find-person checked */
-		per = irc_find_person(j, j->people, OMITCOLON(param[2]));
-		debug("[irc]_c_nick %08X %s\n", per, param[0]+1);
+		per = irc_find_person(j, j->people, newnick);
+		debug("[irc]_c_nick %08X %s\n", per, nick);
 		if (nickdisp || !per)
 			print_info(nickdisp==2?window_current->target:"__status",
-					s, "IRC_NEWNICK", session_name(s),
-					param[0]+1, t?t+1:"", OMITCOLON(param[2]));
+					s, "IRC_NEWNICK",
+					session_name(s), nick, ihost, newnick);
 		else if (per) {
 			for (l = per->channels; l; l=l->next)
 			{
 				ch = (people_chan_t *)l->data;
-				print_info(ch->chanp->name,
-						s, "IRC_NEWNICK", session_name(s),
-						param[0]+1, t?t+1:"", OMITCOLON(param[2]));
+				print_info(ch->chanp->name, s, "IRC_NEWNICK",
+						session_name(s), nick, ihost, newnick);
 			}
 		}
 
-		temp = irc_uid(param[0]+1);
+		temp = irc_uid(nick);
 		if ((w = window_find_s(s, temp))) {
 			xfree(w->target);
-			w->target = irc_uid(OMITCOLON(param[2]));
+			w->target = irc_uid(newnick);
 
 			query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
 
-			print_window_w(w, EKG_WINACT_JUNK, "IRC_NEWNICK", session_name(s),
-					param[0]+1, t?t+1:"", OMITCOLON(param[2]));
+			print_window_w(w, EKG_WINACT_JUNK, "IRC_NEWNICK",
+					session_name(s), nick, ihost, newnick);
 		}
 		xfree(temp);
 	}
@@ -1193,18 +1198,18 @@ IRC_COMMAND(irc_c_msg)
 
 	query_emit(NULL, prv ? "irc-privmsg" : "irc-notice", &(s->uid), &sender, &recipient, &recoded, &xosd_to_us);
 
-	clear_string = irc_ircoldcolstr_juststrip(s, recoded);
 	if (!xosd_to_us) {
 		/* find our nick */
-		char *p, *str = clear_string;
+		char *p, *str, *str0;
 
+		str0 = str = irc_ircoldcolstr_juststrip(s, recoded);
 		while (!xosd_to_us && (p = xstrcasestr(str, j->nick))) {
 			/* p - points to beginning of a nickname */
 			char end = p[xstrlen(j->nick)];
 			/* end - char after end of a nickname */
 			if (!isalnum(end) && !isalpha_pl(end)) {
 				/* End of nick is OK */
-				if (p == clear_string || (!isalnum(*(p-1)) && !isalpha_pl(*(p-1)) && *(p-1)!=1)) {
+				if (p == str0 || (!isalnum(*(p-1)) && !isalpha_pl(*(p-1)) && *(p-1)!=1)) {
 					/* nick found */
 					ekgbeep = EKG_TRY_BEEP;
 					xosd_to_us = 1;
@@ -1212,8 +1217,8 @@ IRC_COMMAND(irc_c_msg)
 			}
 			str = p + 1;
 		}
+		xfree(str0);
 	}
-	xfree(clear_string);
 
 	if ((ctcpstripped = ctcp_parser(s, prv, sender, recipient, recoded, xosd_to_us))) {
 		char *padding = NULL;
@@ -1283,7 +1288,6 @@ irc-protocol-message uid, nick, isour, istous, ispriv, dest.
 		query_emit_id(NULL, IRC_PROTOCOL_MESSAGE,
 				&(s->uid), &sender, &coloured, &isour,
 				&xosd_to_us, &xosd_is_priv, &dest);
-				/*&sender,&text,&to_us,&is_priv,&channame);*/
 
 		ignore_nick = irc_uid(sender);
 
@@ -1574,8 +1578,16 @@ IRC_COMMAND(irc_c_quit)
 
 	return 0;
 }
-
-
+/*
+ * p[0]	:server
+ * p[1]	353    RPL_NAMREPLY
+ * p[2]	nick
+ * p[3] ( '='/'*'/'@' )		'@' is used for secret channels,
+ * 				'*' for private channels
+ * 				'=' for others (public channels)
+ * p[4]	channel
+ * p[5]	:names
+ */
 IRC_COMMAND(irc_c_namerpl)
 {
 	if (!param[3]) return -1;
@@ -1599,7 +1611,7 @@ IRC_COMMAND(irc_c_topic)
 {
 	window_t	*w;
 	char		*t, *dest=NULL;
-	char		*coloured, *cchn;
+	char		*coloured, *cchn, *ihost;
 	char		*__topic, *__topicby;
 	channel_t	*chanp = NULL;
 
@@ -1609,12 +1621,12 @@ IRC_COMMAND(irc_c_topic)
 	chanp = irc_find_channel(j->channels, param[2]);
 	dest = w?w->target:NULL;
 	xfree(t);
-	if ((t = xstrchr(param[0], '!')))
-		*t = '\0';
 	xfree(chanp->topic);
 	xfree(chanp->topicby);
 
 	__topicby = OMITCOLON(param[0]);
+	if ((t = xstrchr(__topicby, '!'))) *t = '\0';
+	ihost = t ? t+1 : "";
 	__topic   = OMITCOLON(param[3]);
 	cchn = clean_channel_names(s, param[2]);
 	if (xstrlen(__topic)) {
@@ -1622,14 +1634,14 @@ IRC_COMMAND(irc_c_topic)
 		chanp->topic  = recoded ? recoded : xstrdup(__topic);;
 		chanp->topicby = xstrdup(__topicby);
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
-		print_info(dest, s, "IRC_TOPIC_CHANGE", session_name(s),
-				param[0]+1, t?t+1:"", cchn, coloured);
+		print_info(dest, s, "IRC_TOPIC_CHANGE",
+				session_name(s), __topicby, ihost, cchn, coloured);
 		xfree(coloured);
 	} else {
 		chanp->topic   = xstrdup("No topic set!");
 		chanp->topicby = xstrdup(__topicby);
-		print_info(dest, s, "IRC_TOPIC_UNSET", session_name(s),
-				param[0]+1, t?t+1:"", cchn);
+		print_info(dest, s, "IRC_TOPIC_UNSET",
+				session_name(s), __topicby, ihost, cchn);
 	}
 	if (t) *t='!';
 	xfree(cchn);
@@ -1650,26 +1662,22 @@ IRC_COMMAND(irc_c_topic)
 /* TODO: add the person, that invites us, to list ? */
 IRC_COMMAND(irc_c_invite)
 {
-	char	*tmp, *cchn;
-	/*
-	char *nick = NULL;
-	char *dest = NULL; 
-	*/
+	char	*tmp, *cchn, *nick, *ihost, *channel;
 
-	if ((tmp = xstrchr(param[0], '!')))
-		*tmp = '\0';
+	nick = OMITCOLON(param[0]);
+	if ((tmp = xstrchr(nick, '!'))) *tmp = '\0';
+	ihost = tmp?tmp+1:"";
+	channel = OMITCOLON(param[3]);
 
-	IRC_TO_LOWER(param[3]);
-
-	cchn = clean_channel_names(s, OMITCOLON(param[3]));
+	IRC_TO_LOWER(channel);
+	cchn = clean_channel_names(s, channel);
 
 	print_info(window_current->target, s, "IRC_INVITE",
-			session_name(s), param[0]+1, tmp?tmp+1:"",
-			param[2], cchn);
+			session_name(s), nick, ihost, param[2], cchn);
 	xfree(cchn);
 
 	if (session_int_get(s, "AUTO_JOIN_CHANS_ON_INVITE") == 1)
-		watch_write(j->send_watch, "JOIN %s\r\n", OMITCOLON(param[3]));
+		watch_write(j->send_watch, "JOIN %s\r\n", channel);
 
 	if (tmp) *tmp = '!';
 
