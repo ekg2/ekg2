@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: ekg2 CVS\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-11-29 21:12-0800\n"
+"POT-Creation-Date: 2010-11-29 22:05-0800\n"
 "PO-Revision-Date: 2005-01-05 20:19+0100\n"
 "Last-Translator: Piotr Kupisiewicz <deletek@ekg2.org>\n"
 "Language-Team: Polish\n"
@@ -2287,80 +2287,80 @@ msgstr ""
 msgid "(%1) Posting to group: %2 Subject: %3...."
 msgstr ""
 
-#: plugins/gg/gg.c:1570
+#: plugins/gg/gg.c:1534
 msgid ""
 "%> %TGadu-Gadu%n: libgadu %g%1%n (headers %c%2%n), protocol %g%3%n (%c0x%4%n)"
 msgstr ""
 
-#: plugins/gg/gg.c:1572
+#: plugins/gg/gg.c:1536
 msgid "%K| %nDoesn't have us in roster\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1573
+#: plugins/gg/gg.c:1537
 msgid "%K| %nFirewalled/NATed\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1574
+#: plugins/gg/gg.c:1538
 msgid "%K| %nVoIP-capable\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1575
+#: plugins/gg/gg.c:1539
 msgid "%K| %nVersion: %T%1%n\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1577
+#: plugins/gg/gg.c:1541
 msgid "%> Token was written to the file %T%1%n\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1578
+#: plugins/gg/gg.c:1542
 msgid "%> Token: %T%1%n\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1580
+#: plugins/gg/gg.c:1544
 msgid "%! Error getting token: %1\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1581
+#: plugins/gg/gg.c:1545
 msgid "%! Error reading token: %1 (saved@%2)\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1582
+#: plugins/gg/gg.c:1546
 msgid "%! Token getting timeout\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1583
+#: plugins/gg/gg.c:1547
 msgid "%! Your operating system doesn't support tokens\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1584
+#: plugins/gg/gg.c:1548
 msgid "%! First get token by function %Ttoken%n\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1586
+#: plugins/gg/gg.c:1550
 msgid "%> (%1) User %T%2%n is connected\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1587
+#: plugins/gg/gg.c:1551
 msgid "%> (%1) User %T%2%n is not connected\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1588
+#: plugins/gg/gg.c:1552
 msgid "%> (%1) We are being checked by %T%2%n\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1590
+#: plugins/gg/gg.c:1554
 msgid "%! Can't open file for image %1 (%2)\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1591
+#: plugins/gg/gg.c:1555
 msgid "%! Error sending image\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1592
+#: plugins/gg/gg.c:1556
 msgid "%> Image sent properly\n"
 msgstr ""
 
-#: plugins/gg/gg.c:1593
+#: plugins/gg/gg.c:1557
 msgid "%> Image <%3> saved in %1\n"
 msgstr ""
 
@@ -2776,41 +2776,41 @@ msgstr ""
 msgid "%d ops, %d total"
 msgstr ""
 
-#: plugins/icq/icq.c:1563 plugins/icq/icq.c:1670
+#: plugins/icq/icq.c:1558 plugins/icq/icq.c:1665
 msgid "Waiting for authorization"
 msgstr ""
 
-#: plugins/icq/icq.c:1657
+#: plugins/icq/icq.c:1652
 msgid "xStatus"
 msgstr ""
 
-#: plugins/icq/icq.c:1660
+#: plugins/icq/icq.c:1655
 msgid "Online since"
 msgstr ""
 
-#: plugins/icq/icq.c:1663
+#: plugins/icq/icq.c:1658
 msgid "ICQ Member since"
 msgstr ""
 
-#: plugins/icq/icq.c:1666
+#: plugins/icq/icq.c:1661
 msgid "Comment"
 msgstr ""
 
-#: plugins/icq/icq.c:1668
+#: plugins/icq/icq.c:1663
 msgid "e-mail"
 msgstr ""
 
-#: plugins/icq/icq.c:1677
+#: plugins/icq/icq.c:1672
 msgid ""
 "%> (%1) %T%2%n asks for authorisation. Use \"/auth -a %2\" to accept, \"/"
 "auth -d %2 [reason]\" to refuse. Reason: %T%3%n"
 msgstr ""
 
-#: plugins/icq/icq.c:1678
+#: plugins/icq/icq.c:1673
 msgid "%> (%1) %2 decline your authorization: %3\n"
 msgstr ""
 
-#: plugins/icq/icq.c:1679
+#: plugins/icq/icq.c:1674
 msgid "%> (%1) %2 grant your authorization: %3\n"
 msgstr ""
 
@@ -3048,182 +3048,182 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: plugins/irc/irc.c:2867
+#: plugins/irc/irc.c:2547
 msgid "[%gUsers %G%2%n]"
 msgstr ""
 
-#: plugins/irc/irc.c:2869
+#: plugins/irc/irc.c:2549
 msgid ""
 "%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%8%n owners, %W%9%n admins, %W%4%n "
 "ops, %W%5%n halfops, %W%6%n voices, %W%7%n normal]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2872
+#: plugins/irc/irc.c:2552
 msgid "%> %Y%2%n has joined %4\n"
 msgstr "%> %Y%2%n hat sich begeben auf Kanal %4\n"
 
-#: plugins/irc/irc.c:2873
+#: plugins/irc/irc.c:2553
 msgid "%> %RYou%n have joined %4\n"
 msgstr "%> %RDu%n hast dich begeben auf Kanal %4\n"
 
-#: plugins/irc/irc.c:2874
+#: plugins/irc/irc.c:2554
 msgid "%> %g%2%n has left %4 (%5)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2875
+#: plugins/irc/irc.c:2555
 msgid "%> %RYou%n have left %4 (%5)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2876
+#: plugins/irc/irc.c:2556
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2877
+#: plugins/irc/irc.c:2557
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2878
+#: plugins/irc/irc.c:2558
 msgid "%> %Y%2%n has quit irc (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2880
+#: plugins/irc/irc.c:2560
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2885
+#: plugins/irc/irc.c:2565
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2886
+#: plugins/irc/irc.c:2566
 msgid "%> %Y%2%n requested ctcp %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2887
+#: plugins/irc/irc.c:2567
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2902
+#: plugins/irc/irc.c:2582
 msgid "%> Cannot send to channel %T%2%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2908
+#: plugins/irc/irc.c:2588
 msgid "%> Inviting %W%2%n to %W%3%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2913
+#: plugins/irc/irc.c:2593
 msgid "%g|| %n %5 - %W%2%n: except %c%3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2914
+#: plugins/irc/irc.c:2594
 msgid "%g|| %n %5 - %W%2%n: ban %c%3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2915
+#: plugins/irc/irc.c:2595
 msgid "%g|| %n %5 - %W%2%n: invite %c%3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2916
+#: plugins/irc/irc.c:2596
 #, c-format
 msgid "%g|| %n Empty list \n"
 msgstr ""
 
-#: plugins/irc/irc.c:2937
+#: plugins/irc/irc.c:2617
 msgid "%G||%n away\t   : %2 - %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2939 plugins/irc/irc.c:2942
+#: plugins/irc/irc.c:2619 plugins/irc/irc.c:2622
 msgid ""
 "%G.+===%g-----\n"
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n realname : %6\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2951
+#: plugins/irc/irc.c:2631
 msgid "%G||%n %|channels : %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2952
+#: plugins/irc/irc.c:2632
 msgid "%G||%n %|server   : %3 (%4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2953
+#: plugins/irc/irc.c:2633
 msgid "%G||%n %|ircOp    : %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2954
+#: plugins/irc/irc.c:2634
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2955
+#: plugins/irc/irc.c:2635
 msgid "%G||%n %|         * %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2956 plugins/irc/irc.c:2957 plugins/irc/irc.c:2992
+#: plugins/irc/irc.c:2636 plugins/irc/irc.c:2637 plugins/irc/irc.c:2672
 #, c-format
 msgid "%G`+===%g-----\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2959
+#: plugins/irc/irc.c:2639
 msgid "%> Topic %2: %3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2961
+#: plugins/irc/irc.c:2641
 msgid "%> set by %2 on %4"
 msgstr ""
 
-#: plugins/irc/irc.c:2962
+#: plugins/irc/irc.c:2642
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2963
+#: plugins/irc/irc.c:2643
 msgid "%> %T%2%n unset topic on %T%4%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2964
+#: plugins/irc/irc.c:2644
 msgid "%> %2/%4 sets mode [%5]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2965
+#: plugins/irc/irc.c:2645
 msgid "%> %2 mode is [%3]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2966
+#: plugins/irc/irc.c:2646
 msgid "%> (%1) %2 set mode %3 on You\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2968
+#: plugins/irc/irc.c:2648
 msgid "%> %W%2%n invites you to %W%5%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2969
+#: plugins/irc/irc.c:2649
 msgid "%) (%1) ping/pong %c%2%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2970
+#: plugins/irc/irc.c:2650
 msgid "%> You are now known as %G%3%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2971
+#: plugins/irc/irc.c:2651
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2972
+#: plugins/irc/irc.c:2652
 msgid "%> Will try to use %G%2%n instead\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2984
+#: plugins/irc/irc.c:2664
 msgid "%> (%1) %3 [#%2] was added to accesslist chan: %4 (flags: %5)"
 msgstr ""
 
-#: plugins/irc/irc.c:2989
+#: plugins/irc/irc.c:2669
 msgid "%G.+===%g----- Awaylog for: (%n%1%g)%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2990
+#: plugins/irc/irc.c:2670
 msgid "%G|| %n[%Y%2%n] <%W%4%n> %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2991
+#: plugins/irc/irc.c:2671
 msgid "%G|| %n[%Y%2%n] [%G%3%n] <%W%4%n> %5\n"
 msgstr ""
 

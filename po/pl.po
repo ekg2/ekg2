@@ -11,7 +11,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: pl\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-11-29 21:12-0800\n"
+"POT-Creation-Date: 2010-11-29 22:05-0800\n"
 "PO-Revision-Date: 2007-09-03 18:58+0200\n"
 "Last-Translator: Micha³ Górny <peres@peres.int.pl>\n"
 "Language-Team: Polski\n"
@@ -1035,12 +1035,13 @@ msgstr ""
 "%! Je¶li nie masz jeszcze konta, wpisz:\n"
 "%!   %Tregister <e-mail> <has³o>%n\n"
 "\n"
-"%> %|Nowe okna rozmowy bêd± tworzone automatycznie. Aby przej¶æ do okna o podanym numerze nale¿y wcisn±æ %"
-"TAlt-numer%n lub %TEsc%n, a nastêpnie cyfrê. Aby rozpocz±æ rozmowê, nale¿y "
-"u¿yæ polecenia %Tquery%n. Aby dodaæ kogo¶ do listy kontaktów, nale¿y u¿yæ "
-"polecenia %Tadd%n. Wszystkie kombinacje klawiszy s± opisane w pliku %TREADME%"
-"n, a listê komend wy¶wietla polecenie %Thelp%n. Pamiêtaj o prefiksie przed "
-"ka¿dym UID-em, prawid³owy przyk³adowy UID ma postaæ: %Tgg:<nr>%n. \n"
+"%> %|Nowe okna rozmowy bêd± tworzone automatycznie. Aby przej¶æ do okna o "
+"podanym numerze nale¿y wcisn±æ %TAlt-numer%n lub %TEsc%n, a nastêpnie cyfrê. "
+"Aby rozpocz±æ rozmowê, nale¿y u¿yæ polecenia %Tquery%n. Aby dodaæ kogo¶ do "
+"listy kontaktów, nale¿y u¿yæ polecenia %Tadd%n. Wszystkie kombinacje "
+"klawiszy s± opisane w pliku %TREADME%n, a listê komend wy¶wietla polecenie %"
+"Thelp%n. Pamiêtaj o prefiksie przed ka¿dym UID-em, prawid³owy przyk³adowy "
+"UID ma postaæ: %Tgg:<nr>%n. \n"
 "\n"
 
 #: ekg/themes.c:1625
@@ -1093,12 +1094,13 @@ msgstr ""
 "%! Je¶li nie masz swojego numerka, wpisz:\n"
 "%!   %Tregister <e-mail> <has³o>%n\n"
 "\n"
-"%> %|Po po³±czeniu, nowe okna rozmowy bêd± tworzone automatycznie. Aby przej¶æ do okna o podanym numerze nale¿y wcisn±æ %"
-"TAlt-numer%n lub %TEsc%n, a nastêpnie cyfrê. Aby rozpocz±æ rozmowê, nale¿y "
-"u¿yæ polecenia %Tquery%n. Aby dodaæ kogo¶ do listy kontaktów, nale¿y u¿yæ "
-"polecenia %Tadd%n. Wszystkie kombinacje klawiszy s± opisane w pliku %TREADME%"
-"n, a listê komend wy¶wietla polecenie %Thelp%n. Pamiêtaj o prefiksie przed "
-"ka¿dym UID-em, prawid³owy przyk³adowy UID ma postaæ: %Tgg:<nr>%n. \n"
+"%> %|Po po³±czeniu, nowe okna rozmowy bêd± tworzone automatycznie. Aby "
+"przej¶æ do okna o podanym numerze nale¿y wcisn±æ %TAlt-numer%n lub %TEsc%n, "
+"a nastêpnie cyfrê. Aby rozpocz±æ rozmowê, nale¿y u¿yæ polecenia %Tquery%n. "
+"Aby dodaæ kogo¶ do listy kontaktów, nale¿y u¿yæ polecenia %Tadd%n. Wszystkie "
+"kombinacje klawiszy s± opisane w pliku %TREADME%n, a listê komend wy¶wietla "
+"polecenie %Thelp%n. Pamiêtaj o prefiksie przed ka¿dym UID-em, prawid³owy "
+"przyk³adowy UID ma postaæ: %Tgg:<nr>%n. \n"
 "\n"
 
 #: ekg/themes.c:1627
@@ -1134,12 +1136,13 @@ msgstr ""
 "%! Je¶li nie masz swojego numerka, wpisz:\n"
 "%!   %Tregister%n\n"
 "\n"
-"%> %|Po po³±czeniu, nowe okna rozmowy bêd± tworzone automatycznie. Aby przej¶æ do okna o podanym numerze nale¿y wcisn±æ %"
-"TAlt-numer%n lub %TEsc%n, a nastêpnie cyfrê. Aby rozpocz±æ rozmowê, nale¿y "
-"u¿yæ polecenia %Tquery%n. Aby dodaæ kogo¶ do listy kontaktów, nale¿y u¿yæ "
-"polecenia %Tadd%n. Wszystkie kombinacje klawiszy s± opisane w pliku %TREADME%"
-"n, a listê komend wy¶wietla polecenie %Thelp%n. Pamiêtaj o prefiksie przed "
-"ka¿dym UID'em, prawid³owy przyk³adowy UID ma postaæ: %Txmpp:<jid>%n. \n"
+"%> %|Po po³±czeniu, nowe okna rozmowy bêd± tworzone automatycznie. Aby "
+"przej¶æ do okna o podanym numerze nale¿y wcisn±æ %TAlt-numer%n lub %TEsc%n, "
+"a nastêpnie cyfrê. Aby rozpocz±æ rozmowê, nale¿y u¿yæ polecenia %Tquery%n. "
+"Aby dodaæ kogo¶ do listy kontaktów, nale¿y u¿yæ polecenia %Tadd%n. Wszystkie "
+"kombinacje klawiszy s± opisane w pliku %TREADME%n, a listê komend wy¶wietla "
+"polecenie %Thelp%n. Pamiêtaj o prefiksie przed ka¿dym UID'em, prawid³owy "
+"przyk³adowy UID ma postaæ: %Txmpp:<jid>%n. \n"
 "\n"
 
 #: ekg/themes.c:1628
@@ -1167,7 +1170,8 @@ msgid ""
 "%) EKG2 upgrade detected. The following changes were made since your "
 "previous version:\n"
 msgstr ""
-"%) Wykryto aktualizacjê EKG2. Od poprzedniej wersji nast±pi³y nastêpuj±ce zmiany:\n"
+"%) Wykryto aktualizacjê EKG2. Od poprzedniej wersji nast±pi³y nastêpuj±ce "
+"zmiany:\n"
 
 #: ekg/themes.c:1639
 msgid ""
@@ -1277,16 +1281,16 @@ msgid "%Y(available)%N"
 msgstr "%Y(dostêpn%@1)%n"
 
 #: ekg/themes.c:1690
-#, c-format
+#, fuzzy, c-format
 msgid "%G(away)%n"
-msgstr "%G(zajêt%@1)%n"
+msgstr "%G(niedostêpn%@1)%n"
 
 #: ekg/themes.c:1691
 msgid "%r(offline)%n"
 msgstr "%r(niedostêpn%@1)%n"
 
 #: ekg/themes.c:1692
-#, c-format
+#, fuzzy, c-format
 msgid "%c(invisible)%n"
 msgstr "%c(niewidoczn%@1)%n"
 
@@ -1381,6 +1385,7 @@ msgid "%Yavailable%n %K(%n%2%K)%n"
 msgstr "%Ydostêpn%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1726 ekg/themes.c:1765 ekg/themes.c:2026
+#, fuzzy, c-format
 msgid "%Gaway%n"
 msgstr "%Gzajêt%@1%n"
 
@@ -1397,7 +1402,7 @@ msgid "%roffline%n %K(%n%2%K)%n"
 msgstr "%rniedostêpn%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1730 ekg/themes.c:1767 ekg/themes.c:2030
-#, c-format
+#, fuzzy, c-format
 msgid "%cinvisible%n"
 msgstr "%cniewidoczn%@1%n"
 
@@ -1431,7 +1436,7 @@ msgid "%merror%n %K(%n%2%K)%n"
 msgstr "%mb³±d%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1738 ekg/themes.c:1769 ekg/themes.c:2038
-#, c-format
+#, fuzzy, c-format
 msgid "%gextended away%n"
 msgstr "%gbardzo zajêt%@1%n"
 
@@ -1444,9 +1449,8 @@ msgid "%Rgone%n"
 msgstr "%Rniedostêpn%@1%n"
 
 #: ekg/themes.c:1741 ekg/themes.c:2041
-#, fuzzy
 msgid "%Rgone%n %K(%n%2%K)%n"
-msgstr "%rniedostêpn%@1%n %K(%n%2%K)%n"
+msgstr "%Rniedostêpn%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1742 ekg/themes.c:2042
 #, fuzzy, c-format
@@ -1522,9 +1526,8 @@ msgid "%gextended away%n (%T%1%n%2)"
 msgstr "%gbardzo zajêt%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1772
-#, fuzzy
 msgid "%Rgone%n (%T%1%n%2)"
-msgstr "%cniewidoczn%@1%n %K(%n%2%K)%n"
+msgstr "%Rniedostêpn%@1%n (%T%1%n%2)"
 
 #: ekg/themes.c:1773
 #, c-format
@@ -2482,81 +2485,81 @@ msgstr ""
 msgid "(%1) Posting to group: %2 Subject: %3...."
 msgstr ""
 
-#: plugins/gg/gg.c:1570
+#: plugins/gg/gg.c:1534
 msgid ""
 "%> %TGadu-Gadu%n: libgadu %g%1%n (headers %c%2%n), protocol %g%3%n (%c0x%4%n)"
 msgstr ""
 
-#: plugins/gg/gg.c:1572
+#: plugins/gg/gg.c:1536
 msgid "%K| %nDoesn't have us in roster\n"
 msgstr "%K| %nNie ma nas w swoich kontaktach\n"
 
-#: plugins/gg/gg.c:1573
+#: plugins/gg/gg.c:1537
 msgid "%K| %nFirewalled/NATed\n"
 msgstr "%K| %nZnajduje siê za firewall/NAT\n"
 
-#: plugins/gg/gg.c:1574
+#: plugins/gg/gg.c:1538
 msgid "%K| %nVoIP-capable\n"
 msgstr "%K| %nObs³uguje po³±czenia g³osowe\n"
 
-#: plugins/gg/gg.c:1575
+#: plugins/gg/gg.c:1539
 msgid "%K| %nVersion: %T%1%n\n"
 msgstr "%K| %nWersja klienta: %T%1%n\n"
 
-#: plugins/gg/gg.c:1577
+#: plugins/gg/gg.c:1541
 msgid "%> Token was written to the file %T%1%n\n"
 msgstr "%> Token zapisano do pliku %T%1%n\n"
 
-#: plugins/gg/gg.c:1578
+#: plugins/gg/gg.c:1542
 msgid "%> Token: %T%1%n\n"
 msgstr "%> Token: %T%1%n\n"
 
-#: plugins/gg/gg.c:1580
+#: plugins/gg/gg.c:1544
 msgid "%! Error getting token: %1\n"
 msgstr "%! B³±d podczas pobierania tokena\n"
 
-#: plugins/gg/gg.c:1581
+#: plugins/gg/gg.c:1545
 msgid "%! Error reading token: %1 (saved@%2)\n"
 msgstr "%! B³±d podczas pobierania tokena: %1 (zapisano w %2)\n"
 
-#: plugins/gg/gg.c:1582
+#: plugins/gg/gg.c:1546
 msgid "%! Token getting timeout\n"
 msgstr "%! Przekroczono limit czasu pobierania tokenu\n"
 
-#: plugins/gg/gg.c:1583
+#: plugins/gg/gg.c:1547
 msgid "%! Your operating system doesn't support tokens\n"
 msgstr ""
 "%! System operacyjny nie zawiera funkcji potrzebnych do obs³ugi tokenów\n"
 
-#: plugins/gg/gg.c:1584
+#: plugins/gg/gg.c:1548
 msgid "%! First get token by function %Ttoken%n\n"
 msgstr "%! Nale¿y najpierw pobraæ z serwera token komend± %Ttoken%n\n"
 
-#: plugins/gg/gg.c:1586
+#: plugins/gg/gg.c:1550
 msgid "%> (%1) User %T%2%n is connected\n"
 msgstr "%> (%1) U¿ytkownik %T%2%n jest po³±czony\n"
 
-#: plugins/gg/gg.c:1587
+#: plugins/gg/gg.c:1551
 msgid "%> (%1) User %T%2%n is not connected\n"
 msgstr "%> (%1) U¿ytkownik %T%2%n nie jest po³±czony\n"
 
-#: plugins/gg/gg.c:1588
+#: plugins/gg/gg.c:1552
 msgid "%> (%1) We are being checked by %T%2%n\n"
 msgstr "%> (%1) Jeste¶my sprawdzani przez %T%2%n\n"
 
-#: plugins/gg/gg.c:1590
+#: plugins/gg/gg.c:1554
 msgid "%! Can't open file for image %1 (%2)\n"
 msgstr "%! Nie mo¿na utworzyæ pliku graficznego %1 (%2)\n"
 
-#: plugins/gg/gg.c:1591
+#: plugins/gg/gg.c:1555
 msgid "%! Error sending image\n"
 msgstr "%! B³±d podczas wysy³ania obrazka\n"
 
-#: plugins/gg/gg.c:1592
+#: plugins/gg/gg.c:1556
 msgid "%> Image sent properly\n"
 msgstr "%> Obrazek zosta³ wys³any prawid³owo\n"
 
-#: plugins/gg/gg.c:1593
+#: plugins/gg/gg.c:1557
 msgid "%> Image <%3> saved in %1\n"
 msgstr "%> Obrazek <%3> zosta³ zapisany w: %1\n"
 
@@ -2979,43 +2982,43 @@ msgstr ""
 msgid "%d ops, %d total"
 msgstr ""
 
-#: plugins/icq/icq.c:1563 plugins/icq/icq.c:1670
+#: plugins/icq/icq.c:1558 plugins/icq/icq.c:1665
 msgid "Waiting for authorization"
 msgstr ""
 
-#: plugins/icq/icq.c:1657
+#: plugins/icq/icq.c:1652
 msgid "xStatus"
 msgstr ""
 
-#: plugins/icq/icq.c:1660
+#: plugins/icq/icq.c:1655
 msgid "Online since"
 msgstr ""
 
-#: plugins/icq/icq.c:1663
+#: plugins/icq/icq.c:1658
 msgid "ICQ Member since"
 msgstr ""
 
-#: plugins/icq/icq.c:1666
+#: plugins/icq/icq.c:1661
 msgid "Comment"
 msgstr ""
 
-#: plugins/icq/icq.c:1668
+#: plugins/icq/icq.c:1663
 msgid "e-mail"
 msgstr ""
 
-#: plugins/icq/icq.c:1677
+#: plugins/icq/icq.c:1672
 msgid ""
 "%> (%1) %T%2%n asks for authorisation. Use \"/auth -a %2\" to accept, \"/"
 "auth -d %2 [reason]\" to refuse. Reason: %T%3%n"
 msgstr ""
 "%> (%1) %T%2%n prosi o autoryzacjê dodania. U¿yj \"/auth -a %2\" aby "
-"zaakceptowaæ, \"/auth -d %2 [powód]\" aby odrzuciæ. Powód: %T%3%n\n"
+"zaakceptowaæ, \"/auth -d %2 [powód]\" aby odrzuciæ. Powód: %T%3%n"
 
-#: plugins/icq/icq.c:1678
+#: plugins/icq/icq.c:1673
 msgid "%> (%1) %2 decline your authorization: %3\n"
 msgstr ""
 
-#: plugins/icq/icq.c:1679
+#: plugins/icq/icq.c:1674
 #, fuzzy
 msgid "%> (%1) %2 grant your authorization: %3\n"
 msgstr "%> (%2) Wys³ano pro¶bê o cofniêcie autoryzacji do %T%1%n.\n"
@@ -3254,90 +3257,90 @@ msgstr ""
 msgid "No"
 msgstr ""
 
-#: plugins/irc/irc.c:2867
+#: plugins/irc/irc.c:2547
 msgid "[%gUsers %G%2%n]"
 msgstr ""
 
-#: plugins/irc/irc.c:2869
+#: plugins/irc/irc.c:2549
 msgid ""
 "%> %WEKG2: %2%n: Total of %W%3%n nicks [%W%8%n owners, %W%9%n admins, %W%4%n "
 "ops, %W%5%n halfops, %W%6%n voices, %W%7%n normal]\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2872
+#: plugins/irc/irc.c:2552
 msgid "%> %Y%2%n has joined %4\n"
 msgstr "%> %Y%2%n do³±czy³ do %4\n"
 
-#: plugins/irc/irc.c:2873
+#: plugins/irc/irc.c:2553
 msgid "%> %RYou%n have joined %4\n"
 msgstr "%> %YDo³±czy³e¶%n do %4\n"
 
-#: plugins/irc/irc.c:2874
+#: plugins/irc/irc.c:2554
 msgid "%> %g%2%n has left %4 (%5)\n"
 msgstr "%> %g%2%n opu¶ci³ %4 (%5)\n"
 
-#: plugins/irc/irc.c:2875
+#: plugins/irc/irc.c:2555
 msgid "%> %RYou%n have left %4 (%5)\n"
 msgstr "%> %gOpu¶ci³e¶%n %4 (%5)\n"
 
-#: plugins/irc/irc.c:2876
+#: plugins/irc/irc.c:2556
 msgid "%> %Y%2%n has been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> %Y%2%n zosta³ wykopany przez %R%3%n z %5 (%6)\n"
 
-#: plugins/irc/irc.c:2877
+#: plugins/irc/irc.c:2557
 msgid "%> You have been kicked out by %R%3%n from %5 (%6)\n"
 msgstr "%> Zosta³e¶ wykopany z %R%3%n przez %5 (%6)\n"
 
-#: plugins/irc/irc.c:2878
+#: plugins/irc/irc.c:2558
 msgid "%> %Y%2%n has quit irc (%4)\n"
 msgstr "%> %Y%2%n opu¶ci³ irc (%4)\n"
 
-#: plugins/irc/irc.c:2880
+#: plugins/irc/irc.c:2560
 msgid "%> %Y%2%n sent unknown CTCP %3: (%4)\n"
 msgstr "%> %Y%2%n wys³a³ nieznany CTCP %3: (%4)\n"
 
-#: plugins/irc/irc.c:2885
+#: plugins/irc/irc.c:2565
 msgid "%> %Y%2%n requested ctcp %5 from %4\n"
 msgstr "%> %Y%2%n za¿±da³ CTCP %5 od %4\n"
 
-#: plugins/irc/irc.c:2886
+#: plugins/irc/irc.c:2566
 msgid "%> %Y%2%n requested ctcp %5\n"
 msgstr "%> %Y%2%n za¿±da³ CTCP %5\n"
 
-#: plugins/irc/irc.c:2887
+#: plugins/irc/irc.c:2567
 msgid "%> %Y%2%n CTCP reply from %3: %5\n"
 msgstr "%> %Y%2%n odpowied¼ CTCP od %3: %5\n"
 
-#: plugins/irc/irc.c:2902
+#: plugins/irc/irc.c:2582
 msgid "%> Cannot send to channel %T%2%n\n"
 msgstr "%> Nie mo¿na pisaæ na kana³ %T%2%n\n"
 
-#: plugins/irc/irc.c:2908
+#: plugins/irc/irc.c:2588
 msgid "%> Inviting %W%2%n to %W%3%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2913
+#: plugins/irc/irc.c:2593
 msgid "%g|| %n %5 - %W%2%n: except %c%3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2914
+#: plugins/irc/irc.c:2594
 msgid "%g|| %n %5 - %W%2%n: ban %c%3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2915
+#: plugins/irc/irc.c:2595
 msgid "%g|| %n %5 - %W%2%n: invite %c%3\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2916
+#: plugins/irc/irc.c:2596
 #, c-format
 msgid "%g|| %n Empty list \n"
 msgstr ""
 
-#: plugins/irc/irc.c:2937
+#: plugins/irc/irc.c:2617
 msgid "%G||%n away\t   : %2 - %3\n"
 msgstr "%G||%n zajêty\t   : %2 - %3\n"
 
-#: plugins/irc/irc.c:2939 plugins/irc/irc.c:2942
+#: plugins/irc/irc.c:2619 plugins/irc/irc.c:2622
 msgid ""
 "%G.+===%g-----\n"
 "%G||%n (%T%2%n) (%3@%4)\n"
@@ -3347,92 +3350,92 @@ msgstr ""
 "%G||%n (%T%2%n) (%3@%4)\n"
 "%G||%n prawdziwa nazwa : %6\n"
 
-#: plugins/irc/irc.c:2951
+#: plugins/irc/irc.c:2631
 msgid "%G||%n %|channels : %3\n"
 msgstr "%G||%n %|kana³y          : %3\n"
 
-#: plugins/irc/irc.c:2952
+#: plugins/irc/irc.c:2632
 msgid "%G||%n %|server   : %3 (%4)\n"
 msgstr "%G||%n %|serwer          : %3 (%4)\n"
 
-#: plugins/irc/irc.c:2953
+#: plugins/irc/irc.c:2633
 msgid "%G||%n %|ircOp    : %3\n"
 msgstr "%G||%n %|ircOp    : %3\n"
 
-#: plugins/irc/irc.c:2954
+#: plugins/irc/irc.c:2634
 msgid "%G||%n %|idle     : %3 (signon: %4)\n"
 msgstr "%G||%n %|brak aktywno¶ci : %3 (zalogowany: %4)\n"
 
-#: plugins/irc/irc.c:2955
+#: plugins/irc/irc.c:2635
 msgid "%G||%n %|         * %3\n"
 msgstr "%G||%n %|                * %3\n"
 
-#: plugins/irc/irc.c:2956 plugins/irc/irc.c:2957 plugins/irc/irc.c:2992
+#: plugins/irc/irc.c:2636 plugins/irc/irc.c:2637 plugins/irc/irc.c:2672
 #, c-format
 msgid "%G`+===%g-----\n"
 msgstr "%G`+===%g-----\n"
 
-#: plugins/irc/irc.c:2959
+#: plugins/irc/irc.c:2639
 msgid "%> Topic %2: %3\n"
 msgstr "%> Temat %2: %3\n"
 
-#: plugins/irc/irc.c:2961
+#: plugins/irc/irc.c:2641
 msgid "%> set by %2 on %4"
 msgstr "%> ustawiony przez %2 dnia %4"
 
-#: plugins/irc/irc.c:2962
+#: plugins/irc/irc.c:2642
 msgid "%> %T%2%n changed topic on %T%4%n: %5\n"
 msgstr "%> %T%2%n zmieni³ temat na %T%4%n: %5\n"
 
-#: plugins/irc/irc.c:2963
+#: plugins/irc/irc.c:2643
 msgid "%> %T%2%n unset topic on %T%4%n\n"
 msgstr "%> %T%2%n wyczy¶ci³ temat na %T%4%n\n"
 
-#: plugins/irc/irc.c:2964
+#: plugins/irc/irc.c:2644
 msgid "%> %2/%4 sets mode [%5]\n"
 msgstr "%> %2/%4 ustawia tryb [%5]\n"
 
-#: plugins/irc/irc.c:2965
+#: plugins/irc/irc.c:2645
 msgid "%> %2 mode is [%3]\n"
 msgstr "%> %2 tryb jest [%3]\n"
 
-#: plugins/irc/irc.c:2966
+#: plugins/irc/irc.c:2646
 msgid "%> (%1) %2 set mode %3 on You\n"
 msgstr "%> (%1) %2 ustawia tryb %3 na Tobie\n"
 
-#: plugins/irc/irc.c:2968
+#: plugins/irc/irc.c:2648
 msgid "%> %W%2%n invites you to %W%5%n\n"
 msgstr "%> %W%2%n zaprasza Ciê na %W%5%n\n"
 
-#: plugins/irc/irc.c:2969
+#: plugins/irc/irc.c:2649
 msgid "%) (%1) ping/pong %c%2%n\n"
 msgstr "%) (%1) ping/pong %c%2%n\n"
 
-#: plugins/irc/irc.c:2970
+#: plugins/irc/irc.c:2650
 msgid "%> You are now known as %G%3%n\n"
 msgstr "%> Jeste¶ teraz znany jako %G%3%n\n"
 
-#: plugins/irc/irc.c:2971
+#: plugins/irc/irc.c:2651
 msgid "%> %g%2%n is now known as %G%4%n\n"
 msgstr "%> %g%2%n jest znany jako %G%4%n\n"
 
-#: plugins/irc/irc.c:2972
+#: plugins/irc/irc.c:2652
 msgid "%> Will try to use %G%2%n instead\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2984
+#: plugins/irc/irc.c:2664
 msgid "%> (%1) %3 [#%2] was added to accesslist chan: %4 (flags: %5)"
 msgstr ""
 
-#: plugins/irc/irc.c:2989
+#: plugins/irc/irc.c:2669
 msgid "%G.+===%g----- Awaylog for: (%n%1%g)%n\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2990
+#: plugins/irc/irc.c:2670
 msgid "%G|| %n[%Y%2%n] <%W%4%n> %5\n"
 msgstr ""
 
-#: plugins/irc/irc.c:2991
+#: plugins/irc/irc.c:2671
 msgid "%G|| %n[%Y%2%n] [%G%3%n] <%W%4%n> %5\n"
 msgstr ""
 
@@ -3756,8 +3759,8 @@ msgid ""
 "%! (%2) No pending authorization request from %T%1%n. Use \"/auth -d %1\" to "
 "force unauth.\n"
 msgstr ""
-"%! (%2) Brak oczekuj±cych ¿±dañ autoryzacji od %T%1%n. U¿yj \"/auth -d %1\" aby "
-"wymusiæ odrzucenie autoryzacji.\n"
+"%! (%2) Brak oczekuj±cych ¿±dañ autoryzacji od %T%1%n. U¿yj \"/auth -d %1\" "
+"aby wymusiæ odrzucenie autoryzacji.\n"
 
 #: plugins/jabber/jabber.c:1258
 msgid ""
@@ -4613,7 +4616,7 @@ msgstr ""
 #: remote/ekg-remote.c:533
 #, c-format
 msgid "no destination\n"
-msgstr "brak celu"
+msgstr "brak celu\n"
 
 #: remote/themes.c:955
 msgid ""
@@ -4628,5 +4631,5 @@ msgid ""
 "%) %Tekg2-remote%n detected that your console works under: %W%1%n Please "
 "verify and run ekg2-remote -c your-encoding if needed"
 msgstr ""
-"%) %Tekg2-remote%n wykry³o, ¿e Twoja konsola pracuje w kodowaniu: %W%1%n. Proszê "
-"sprawdziæ i ewentualnie uruchomiæ ekg2-remote -c Twoje-kodowanie"
+"%) %Tekg2-remote%n wykry³o, ¿e Twoja konsola pracuje w kodowaniu: %W%1%n. "
+"Proszê sprawdziæ i ewentualnie uruchomiæ ekg2-remote -c Twoje-kodowanie"
