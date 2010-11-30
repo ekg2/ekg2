@@ -1382,7 +1382,7 @@ static COMMAND(irc_command_msg) {
 	ischn = !!xstrchr(SOP(_005_CHANTYPES), uid[4]);
 /* PREFIX */
 	/* ok new irc-find-person checked */
-	if ((ischn && (person = irc_find_person(j->people, j->nick)) && (perchn = irc_find_person_chan(person->channels, (char *)uid))))
+	if ((ischn && (person = irc_find_person(j, j->people, j->nick)) && (perchn = irc_find_person_chan(person->channels, (char *)uid))))
 		prefix[0] = *(perchn->sign);
 
 	if (!ischn || (!session_int_get(session, "SHOW_NICKMODE_EMPTY") && *prefix==' '))
@@ -1800,7 +1800,7 @@ static QUERY(irc_topic_header) {
 		
 		/* person */
 		/* ok new irc-find-person checked */
-		if ((per = irc_find_person((j->people), targ+4))) { 
+		if ((per = irc_find_person(j, j->people, targ+4))) { 
 			*top   = saprintf("%s@%s", per->ident, per->host);
 			*setby = xstrdup(per->realname);
 			*modes = NULL;
@@ -2172,7 +2172,7 @@ static COMMAND(irc_command_ban) {
 		 * what is written above this is normal, DELETE THIS NOTE L8R
 		 */
 		/* ok new irc-find-person checked */
-		person = irc_find_person(j->people, (char *) *mp);
+		person = irc_find_person(j, j->people, (char *) *mp);
 		if (person) 
 			temp = irc_make_banmask(session, person->nick+4, person->ident, person->host);
 		if (temp) {

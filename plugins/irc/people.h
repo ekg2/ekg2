@@ -21,7 +21,7 @@
 #include <ekg/sessions.h>
 #include "irc.h"
 
-people_t *irc_find_person(list_t p, char *nick);
+people_t *irc_find_person(irc_private_t *j, list_t p, char *nick);
 channel_t *irc_find_channel(list_t p, char *channame);
 people_chan_t *irc_find_person_chan(list_t p, char *channame);
 

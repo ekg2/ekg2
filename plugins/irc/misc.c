@@ -981,7 +981,7 @@ IRC_COMMAND(irc_c_list)
 				break;
 			case (IRC_LISTWHO): 
 				/* ok new irc-find-person checked */
-				osoba	 = irc_find_person(j->people, IOK(7));
+				osoba	 = irc_find_person(j, j->people, IOK(7));
 				realname = xstrchr(IOK2(9), ' ');
 				tmpchn = clean_channel_names(s, IOK2(3));
 				PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), itoa(mode_act), tmpchn, IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), realname);
@@ -1075,7 +1075,7 @@ IRC_COMMAND(irc_c_nick)
 		j->nick = xstrdup(OMITCOLON(param[2]));	
 	} else {
 		/* ok new irc-find-person checked */
-		per = irc_find_person(j->people, OMITCOLON(param[2]));
+		per = irc_find_person(j, j->people, OMITCOLON(param[2]));
 		debug("[irc]_c_nick %08X %s\n", per, param[0]+1);
 		if (nickdisp || !per)
 			print_info(nickdisp==2?window_current->target:"__status",
@@ -1174,11 +1174,11 @@ IRC_COMMAND(irc_c_msg)
 		format = NULL;
 
 		/* ok new irc-find-person checked */
-		if (irc_config_allow_fake_contacts && !(person = irc_find_person(j->people, sender))) {
+		if (irc_config_allow_fake_contacts && !(person = irc_find_person(j, j->people, sender))) {
 			person = irc_add_person(s, j, sender, dest);
 		}
 
-		if ((person = irc_find_person(j->people, sender)))
+		if ((person = irc_find_person(j, j->people, sender)))
 		{
 			/* G->dj: I'm not sure if this what I've added
 			 *	  will still do the same you wanted */
@@ -1674,8 +1674,8 @@ IRC_COMMAND(irc_c_invite)
 
 IRC_COMMAND(irc_c_mode)
 {
-	int		i, k, len, val=0, act=1, is324=irccommands[ecode].num==324;
-	char		*t, *bang, **pars, *ekg2_channame, *irc_channame, *mode_abc, *mode_c, *cchn;
+	int		k, act=1, is324=irccommands[ecode].num==324;
+	char		*t, *bang, **pars, *ekg2_channame, *irc_channame, *mode_abcd, *mode_c, *mode_d=NULL, *cchn;
 	people_t	*per;
 	people_chan_t	*ch;
 	channel_t	*chan;
@@ -1696,56 +1696,58 @@ IRC_COMMAND(irc_c_mode)
 				"IRC_MODE", session_name(s), 
 				param[0]+1, IRC_TO_LOWER(OMITCOLON(param[3])) );
 		return 0;
-	/* channel mode */
 	}
-
-	len = (xstrlen(SOP(_005_PREFIX))>>1);
-
-	mode_abc = xstrdup(SOP(_005_CHANMODES));
-	if ( (mode_c = xstrchr(mode_abc, ',')) && ++mode_c) 
-		if ( (mode_c = xstrchr(mode_c, ',')) && ++mode_c)
-			if ((xstrchr(mode_c, ',')))
-				*xstrchr(mode_c, ',')='\0';
-
-	t=param[3];
 
 	irc_channame = IRC_TO_LOWER(param[2]);
 	ekg2_channame = irc_uid(irc_channame);
 	cchn = clean_channel_names(s, irc_channame);
 
-	for (i=0,k=4; i<xstrlen(param[3]) && xstrlen(param[k]); i++, t++) {
+	/* chan modes */
+	mode_abcd = SOP(_005_CHANMODES);
+	mode_c = mode_d = mode_abcd + xstrlen(mode_abcd);
+	if ( (mode_c = xstrchr(mode_abcd, ',')) && ++mode_c) 
+		if ( (mode_c = xstrchr(mode_c, ',')) && ++mode_c)
+			if ((mode_d=xstrchr(mode_c, ',')))
+				mode_d++;
+
+	for (t=param[3], k=4; *t && xstrlen(param[k]); t++) {
 		if (*t=='+' || *t=='-') {
-			act=*t-'-';
+			act = ('+' == *t);
+			continue;
+		}
+
+		if ((bang = xstrchr(mode_abcd, *t))) {
+			if ((bang >= mode_d)) continue;		/* mode D never has a parameter */
+			if ((bang >= mode_c) && !act) continue;	/* mode C only has a parameter when set */
+			k++;					/* modes A & B always has a parameter */
 			continue;
 		}
 
 		/* Modes in PREFIX are not listed but could be considered type B. */
-		if ((bang=xstrchr(j->nick_modes, *t))) {
-			/* 23:26:o2 CET 2oo5-22-o1 yet another ivil hack */
-			if (xstrchr(param[k], ' '))
-				*xstrchr(param[k], ' ') = '\0';
+		if (!(bang=xstrchr(j->nick_modes, *t))) {
+			debug_error("irc_c_mode() - unknown mode '%c'\n", *t);
+			continue;
+		}
 
+		/* 23:26:o2 CET 2oo5-22-o1 yet another ivil hack */
+		if (xstrchr(param[k], ' '))
+			*xstrchr(param[k], ' ') = '\0';
 
-			/* ok new irc-find-person checked */
-			per = irc_find_person(j->people, param[k]);
-			if (!per) goto notreallyok;
-			ch = irc_find_person_chan(per->channels, irc_channame); 
-			if (!ch) goto notreallyok;
-			/* GiM: ivil hack ;) */
-			val = 1<<(len-(bang - j->nick_modes)-1);
-			if (act) ch->mode |= val; else ch->mode&=~val;
-			ul = userlist_find_u(&(ch->chanp->window->userlist), param[k]);
-			if (!ul) goto notreallyok;
+		if ((per = irc_find_person(j, j->people, param[k])) &&
+		    (ch = irc_find_person_chan(per->channels, irc_channame)) )
+		{ 
+			int mask = 1 << (bang - j->nick_modes);
 
-			irc_nick_prefix(j, ch, irc_color_in_contacts(j, ch->mode, ul));
+			if (act)	ch->mode |= mask;
+			else		ch->mode &=~mask;
 
-			query_emit_id(NULL, USERLIST_REFRESH);
-		} 
-notreallyok:
-		if (xstrchr(j->nick_modes, *t)) k++;
-		else if (xstrchr(mode_abc, *t) && (act || !xstrchr(mode_c, *t))) k++;
-											
-		if (!param[k]) break;
+			if ((ul = userlist_find_u(&(ch->chanp->window->userlist), param[k]))) {
+				irc_nick_prefix(j, ch, irc_color_in_contacts(j, ch->mode, ul));
+				query_emit_id(NULL, USERLIST_REFRESH);
+			}
+		}
+
+		k++;
 	}
 
 	w = window_find_s(s, ekg2_channame);
@@ -1779,7 +1781,6 @@ notreallyok:
 
 	xfree(cchn);
 	xfree(ekg2_channame);
-	xfree(mode_abc);
 	return 0;
 }
 
