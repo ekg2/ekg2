@@ -1281,6 +1281,7 @@ msgid "%Y(available)%N"
 msgstr "%Y(dostêpn%@1)%n"
 
 #: ekg/themes.c:1690
+#, fuzzy, c-format
 msgid "%G(away)%n"
 msgstr "%G(niedostêpn%@1)%n"
 
@@ -1289,6 +1290,7 @@ msgid "%r(offline)%n"
 msgstr "%r(niedostêpn%@1)%n"
 
 #: ekg/themes.c:1692
+#, fuzzy, c-format
 msgid "%c(invisible)%n"
 msgstr "%c(niewidoczn%@1)%n"
 
@@ -1383,6 +1385,7 @@ msgid "%Yavailable%n %K(%n%2%K)%n"
 msgstr "%Ydostêpn%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1726 ekg/themes.c:1765 ekg/themes.c:2026
+#, fuzzy, c-format
 msgid "%Gaway%n"
 msgstr "%Gzajêt%@1%n"
 
@@ -1399,6 +1402,7 @@ msgid "%roffline%n %K(%n%2%K)%n"
 msgstr "%rniedostêpn%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1730 ekg/themes.c:1767 ekg/themes.c:2030
+#, fuzzy, c-format
 msgid "%cinvisible%n"
 msgstr "%cniewidoczn%@1%n"
 
@@ -1432,6 +1436,7 @@ msgid "%merror%n %K(%n%2%K)%n"
 msgstr "%mb³±d%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1738 ekg/themes.c:1769 ekg/themes.c:2038
+#, fuzzy, c-format
 msgid "%gextended away%n"
 msgstr "%gbardzo zajêt%@1%n"
 
@@ -1448,6 +1453,7 @@ msgid "%Rgone%n %K(%n%2%K)%n"
 msgstr "%Rniedostêpn%@1%n %K(%n%2%K)%n"
 
 #: ekg/themes.c:1742 ekg/themes.c:2042
+#, fuzzy, c-format
 msgid "%mblocking%n"
 msgstr "%mblokuj±c%@1%n"
 
