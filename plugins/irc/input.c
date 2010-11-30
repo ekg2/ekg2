@@ -210,7 +210,7 @@ static int is_ctcp(char *mesg)
 	return 0;
 }
 
-char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s)
+char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s, int to_us)
 {
 	irc_private_t	*j = session_private_get(sess);
 	char		*begin, *end, *winname, *p, *bang, *newsender, *coloured;
@@ -241,14 +241,16 @@ char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s
 
 			coloured = irc_ircoldcolstr_to_ekgcolstr(sess, begin,1);
 			if (ispriv) {
-				if ((ctcp_main_priv(sess, j, ctcp, coloured, newsender,
-								bang?bang+1:"", winname)))
+				if (!ctcps[ctcp-1].handled) {
+					irc_write(sess, "NOTICE %s :\01ERRMSG %s :not handled\01\r\n", sender, ctcps[ctcp-1].name);
+				} else if ((ctcp_main_priv(sess, j, ctcp, coloured, newsender,
+								bang?bang+1:"", winname, to_us)))
 				{
-					/* blah blah blah */
+				/* blah blah blah */
 				}
 			} else {
 				ctcp_main_noti(sess, j, ctcp, coloured, newsender, 
-						bang?bang+1:"", winname);
+						bang?bang+1:"", winname, to_us);
 			}
 			xfree(newsender);
 			xfree(coloured);
@@ -304,34 +306,36 @@ CTCP_COMMAND(ctcp_main_priv)
 switch (number) {
     case CTCP_ACTION:	/* ===== ===== ===== ===== ===== ACTION */
 	/* skip spaces... */
-/*
- * leafnode idea: 07:47:38 <@leafnode> GiM: kolejna rzecz: żeby action (/me) powodował 'pełne' podświetlenie numerku okna
- * now it depends on make_window value 
- */
 
 	if (ignored_check(s, sender) & IGNORE_MSG)
 		break;
 
 	if (space && xstrlen(space)) {
-		print_window(win, s, EKG_WINACT_MSG, ischn?(mw&1):!!(mw&4),
-				ischn?"irc_ctcp_action_pub":"irc_ctcp_action",
+		char *format;
+		int class = EKG_MSGCLASS_CHAT | EKG_NO_THEMEBIT;
+		int beep  = EKG_NO_BEEP;
+
+		if (to_us) 	beep = EKG_TRY_BEEP;
+		else		class |= EKG_MSGCLASS_NOT2US;
+
+		format = format_string(format_find(ischn?"irc_ctcp_action_pub":"irc_ctcp_action"),
 				session_name(s), purename, idhost, cchname, space);
+
+		protocol_message_emit(s, win, NULL, format, NULL, time(NULL), class, NULL, beep, 1);
+
+		xfree(format);
 	}
 	break;
 
-	
+
     case CTCP_DCC:		/* ===== ===== ===== ===== ===== DCC */
-	irc_write(s, "NOTICE %s :\01ERRMSG %s :not handled\01\r\n", 
-			purename, ctcp);
 	break;
 
-	
+
     case CTCP_SED:		/* ===== ===== ===== ===== ===== SED */
-	irc_write(s, "NOTICE %s :\01ERRMSG %s :not handled\01\r\n", 
-			purename, ctcp);
 	break;
 
-	
+
     case CTCP_FINGER:	/* ===== ===== ===== ===== ===== FINGER */
 	ta = xstrdup(ctime(&(s->last_conn)));
 	if (ta[xstrlen(ta)-1] == '\n') ta[xstrlen(ta)-1]='\0';

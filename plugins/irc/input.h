@@ -24,11 +24,11 @@
 char *irc_ircoldcolstr_juststrip(session_t *sess, char *inp);
 char *irc_ircoldcolstr_to_ekgcolstr(session_t *s, char *str, int strip);
 char *irc_ircoldcolstr_to_ekgcolstr_nf(session_t *sess, char *str, int strip);
-char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s);
+char *ctcp_parser(session_t *sess, int ispriv, char *sender, char *recp, char *s, int to_us);
 
 
 #define CTCP_COMMAND(x) static int x(session_t *s, irc_private_t *j, int number, \
-		char *ctcp, char *sender, char*idhost, char *targ)
+		char *ctcp, char *sender, char*idhost, char *targ, int to_us)
 typedef int (*CTCP_Cmd) (session_t *s, irc_private_t *j, int number,
 		char *ctcp, char *sender, char *idhost, char *targ);
 

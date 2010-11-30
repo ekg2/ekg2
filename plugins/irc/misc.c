@@ -1125,7 +1125,7 @@ IRC_COMMAND(irc_c_msg)
 	people_chan_t	*perchn = NULL;
 	int		secure = 0, xosd_to_us = 0, xosd_is_priv = 0;
 	char		*ignore_nick = NULL;
-	char		*recoded, *recipient;
+	char		*recoded, *recipient, *clear_string;
 
 	prv = !xstrcasecmp(param[1], "privmsg");
 	if (!prv && xstrcasecmp(param[1], "notice"))
@@ -1193,8 +1193,30 @@ IRC_COMMAND(irc_c_msg)
 
 	query_emit(NULL, prv ? "irc-privmsg" : "irc-notice", &(s->uid), &sender, &recipient, &recoded, &xosd_to_us);
 
-	if ((ctcpstripped = ctcp_parser(s, prv, sender, recipient, recoded))) {
-		char *clear_string, *padding = NULL;
+	clear_string = irc_ircoldcolstr_juststrip(s, recoded);
+	if (!xosd_to_us) {
+		/* find our nick */
+		char *p, *str = clear_string;
+
+		while (!xosd_to_us && (p = xstrcasestr(str, j->nick))) {
+			/* p - points to beginning of a nickname */
+			char end = p[xstrlen(j->nick)];
+			/* end - char after end of a nickname */
+			if (!isalnum(end) && !isalpha_pl(end)) {
+				/* End of nick is OK */
+				if (p == clear_string || (!isalnum(*(p-1)) && !isalpha_pl(*(p-1)) && *(p-1)!=1)) {
+					/* nick found */
+					ekgbeep = EKG_TRY_BEEP;
+					xosd_to_us = 1;
+				}
+			}
+			str = p + 1;
+		}
+	}
+	xfree(clear_string);
+
+	if ((ctcpstripped = ctcp_parser(s, prv, sender, recipient, recoded, xosd_to_us))) {
+		char *padding = NULL;
 		int isour = 0;
 
 		if (xosd_is_priv) /* @ wrong place */
@@ -1205,8 +1227,10 @@ IRC_COMMAND(irc_c_msg)
 		/* TODO 'secure' var checking, but still don't know how to react to it (GiM)
 		 */
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, ctcpstripped, 1);
+
 		clear_string = irc_ircoldcolstr_juststrip(s, ctcpstripped);
 		debug("<%c%s/%s> %s [%s]\n", perchn?*(perchn->sign):' ', sender, recipient, OMITCOLON(param[3]), clear_string);
+		xfree(clear_string);
 
 		prefix[1] = '\0';
 		prefix[0] = perchn?*(perchn->sign):' ';
@@ -1219,27 +1243,8 @@ IRC_COMMAND(irc_c_msg)
 		/* privmsg on channel */
 		if (NULL == format)
 		{
-			if (xosd_to_us) {
+			if (xosd_to_us)
 				ekgbeep = EKG_TRY_BEEP;
-			} else {
-				/* find our nick */
-				char *p, *str = clear_string;
-
-				while (!xosd_to_us && (p = xstrcasestr(str, j->nick))) {
-					/* p - points to beginning of a nickname */
-					char end = p[xstrlen(j->nick)];
-					/* end - char after end of a nickname */
-					if (!isalnum(end) && !isalpha_pl(end)) {
-						/* End of nick is OK */
-						if (p == clear_string || (!isalnum(*(p-1)) && !isalpha_pl(*(p-1)))) {
-							/* nick found */
-							ekgbeep = EKG_TRY_BEEP;
-							xosd_to_us = 1;
-						}
-					}
-					str = p + 1;
-				}
-			}
 
 			/* rest */
 
@@ -1253,7 +1258,6 @@ IRC_COMMAND(irc_c_msg)
 			if (!xosd_to_us)
 				class |= EKG_MSGCLASS_NOT2US;
 		}
-		xfree (clear_string);
 
 		head = format_string(format_find(format), session_name(s),
 				prefix, sender, identhost, recipient, coloured, padding, "Y ");
