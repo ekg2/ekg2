@@ -2468,7 +2468,7 @@ void jabber_register_commands()
 	command_add(&jabber_plugin, "xmpp:modify", "!Uu ?", jabber_command_modify,JABBER_FLAGS_REQ, 
 			"-n --nickname -g --group");
 	command_add(&jabber_plugin, "xmpp:msg", "!uU !", jabber_command_msg,	JABBER_FLAGS_MSG, NULL);
-	command_add(&jabber_plugin, "xmpp:nick", "!w ?", jabber_muc_command_nick,	JABBER_FLAGS_REQ, NULL);
+	command_add(&jabber_plugin, "xmpp:nick", "!C ?", jabber_muc_command_nick,	JABBER_FLAGS_REQ, NULL);
 	command_add(&jabber_plugin, "xmpp:op", "! !", jabber_muc_command_role, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:part", "! ?", jabber_muc_command_part, JABBER_FLAGS_TARGET, NULL);
 	command_add(&jabber_plugin, "xmpp:passwd", "?", jabber_command_passwd,	JABBER_FLAGS, NULL);
