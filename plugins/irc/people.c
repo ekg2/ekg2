@@ -275,7 +275,7 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 
 		return 0;
 	}
-	debug("[irc] add_people() %08X\n", j);
+	debug_function("[irc] add_people() %08X\n", j);
 	save = nick = array_make(names, " ", 0, 1, 0);
 	while (*nick) {
 		irc_add_person_int(s, j, *nick, chan);
@@ -465,7 +465,7 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	if (!(chan = irc_find_channel((j->channels), name)))
 		return -1;
 
-	debug("[irc]_del_channel() %s\n", name);
+	debug_function("[irc]_del_channel() %s\n", name);
 	while ((p = (chan->onchan)))
 		if (!(p->data)) break;
 		else irc_del_person_channel_int(s, j, (people_t *)p->data, chan);
@@ -645,7 +645,7 @@ int irc_free_people(session_t *s, irc_private_t *j)
 	channel_t *chan;
 	window_t *w;
 
-	debug("[irc] free_people() %08X %s\n", s, s->uid);
+	debug_function("[irc] free_people() %08X %s\n", s, s->uid);
 	for (t1=j->people; t1; t1=t1->next) {
 		per = (people_t *)t1->data;
 		list_destroy(per->channels, 1);

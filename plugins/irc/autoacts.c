@@ -122,7 +122,7 @@ static TIMER(irc_autorejoin_timer) {
 		return 0;
 	}
 
-	debug("irc_autorejoin_timer() rejoining to: %s\n", d->chan);
+	debug_white("irc_autorejoin_timer() rejoining to: %s\n", d->chan);
 	irc_autorejoin(d->s, IRC_REJOIN_KICK, (d->chan)+4);
 	return -1;
 }

@@ -437,7 +437,7 @@ and the prefix.
 				if (irccommands[c].type == 1 && irccommands[c].num == ecode) {
 					/* I'm sending c not ecode!!!! */
 					if ((*(irccommands[c].handler))(s, j, fd, c, q) == -1 ) {
-						debug("[irc] parse_line() error while executing handler!\n");
+						debug_error("[irc] parse_line() error while executing handler!\n");
 					}
 					/* GiM: XXX I don't expect more,
 					 * then one handler on list... */
@@ -461,7 +461,7 @@ and the prefix.
 						!xstrcmp(irccommands[c].comm, q[1])) {
 					/* dj: instead of  ecode,    c; */
 					if ((*(irccommands[c].handler))(s, j, fd, c, q) == -1 ) {
-						debug("[irc] parse_line() error while executing handler!\n");
+						debug_error("[irc] parse_line() error while executing handler!\n");
 					}
 					break;
 				}
@@ -502,7 +502,7 @@ IRC_COMMAND(irc_c_init)
 			xfree(j->host_ident);
 			if (t)	j->host_ident=xstrdup(++t); 
 			else j->host_ident=NULL;
-			debug("\nspoko miejscówka ziom!...[%s:%s] given: %s\n", j->nick, j->host_ident, param[2]);
+			debug_ok("\nspoko miejscówka ziom!...[%s:%s] given: %s\n", j->nick, j->host_ident, param[2]);
 
 			xfree(j->nick);
 			j->nick = xstrdup(param[2]);
@@ -605,7 +605,7 @@ IRC_COMMAND(irc_c_error)
 /*		print_info(NULL, s, "IRC_ERR_FIRSTSECOND", session_name(s), irccommands[ecode].comm, IOK2(2)); */
 		if (s->connecting)
 			irc_handle_disconnect(s, IOK2(2), EKG_DISCONNECT_FAILURE); 
-		else	debug("!s->connecting\n");
+		else	debug_error("[irc] !s->connecting\n");
 		return -1;
 	}
 	i = irccommands[ecode].future&0x100;
@@ -1082,7 +1082,7 @@ IRC_COMMAND(irc_c_nick)
 	} else {
 		/* ok new irc-find-person checked */
 		per = irc_find_person(j, j->people, newnick);
-		debug("[irc]_c_nick %08X %s\n", per, nick);
+		debug_function("[irc]_c_nick %08X %s\n", per, nick);
 		if (nickdisp || !per)
 			print_info(nickdisp==2?window_current->target:"__status",
 					s, "IRC_NEWNICK",
@@ -1376,7 +1376,7 @@ IRC_COMMAND(irc_c_join)
 		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &newwin);	/* let's emit UI_WINDOW_TARGET_CHANGED XXX, another/new query? */
 
 		window_switch(newwin->id);
-		debug("[irc] c_join() %08X\n", newwin);
+		debug_function("[irc] c_join() %08X\n", newwin);
 		ischan = irc_add_channel(s, j , __channel, newwin);
 	/* someone joined */
 	} else {
@@ -1428,7 +1428,7 @@ IRC_COMMAND(irc_c_part)
 
 	irc_parse_nick_identhost(param[0]+1, &__nick, &__identhost);
 
-	debug("[irc]_c_part: %s %s\n", j->nick, __nick);
+	debug_function("[irc]_c_part: %s %s\n", j->nick, __nick);
 
 	__channel = xstrdup(IRC_TO_LOWER(OMITCOLON(param[2])));
 	__reason = param[3] ? xstrdup(OMITCOLON(param[3])) : NULL;
@@ -1593,11 +1593,11 @@ IRC_COMMAND(irc_c_namerpl)
 	if (!param[3]) return -1;
 	/* rfc2812 */
 	if (*param[3] != '*' && *param[3] != '=' && *param[3] != '@')	{
-		debug("[irc] c_namerpl() kindda shitty ;/\n");
+		debug_error("[irc] c_namerpl() kindda shitty ;/\n");
 		return -1;
 	}
 	if (!param[5]) {
-		debug("[irc] c_namerpl() even more shitty!\n");
+		debug_error("[irc] c_namerpl() even more shitty!\n");
 		return -1;
 	}
 	irc_add_people (s, j, OMITCOLON(param[5]), IRC_TO_LOWER(param[4]));

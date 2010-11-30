@@ -699,7 +699,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	char		*__reason;
 
 	if (!j) {
-		debug("[irc_ierror] @irc_handle_disconnect j == NULL");
+		debug_error("[irc_ierror] @irc_handle_disconnect j == NULL");
 		return;
 	}
 
@@ -787,7 +787,7 @@ static WATCHER_LINE(irc_handle_resolver) {
 		debug("%s (%s %s) %x %x\n", p[0], p[1], p[2], resolv->plist, listelem); 
 		array_free(p);
 	} else { 
-		debug("[irc] received some kind of junk from resolver thread: %s\n", watch);
+		debug_error("[irc] received some kind of junk from resolver thread: %s\n", watch);
 		array_free(p);
 		return -1;
 	}
@@ -845,7 +845,7 @@ static WATCHER_SESSION(irc_handle_stream_ssl_input) {
 		return -1;
 	}
 
-	debug("[irc] handle_stream_ssl_input() type: %d\n", type);
+	debug_function("[irc] handle_stream_ssl_input() type: %d\n", type);
 
 	// ATM we never enter here ;/
 	if (type == 1) {
@@ -863,7 +863,7 @@ static WATCHER_SESSION(irc_handle_stream_ssl_input) {
 
 #ifdef IRC_HAVE_OPENSSL
 		if ((len == 0 && SSL_get_error(j->ssl_session, len) == SSL_ERROR_ZERO_RETURN)) {
-			debug("[irc] handle_stream_ssl_input HOORAY got EOF?\n");
+			debug_ok("[irc] handle_stream_ssl_input HOORAY got EOF?\n");
 			return -1;
 		} else if (len < 0)  {
 			len = SSL_get_error(j->ssl_session, len);
@@ -880,7 +880,7 @@ static WATCHER_SESSION(irc_handle_stream_ssl_input) {
 
 		if (len < 0) {
 			irc_handle_disconnect(s, SSL_ERROR(len), EKG_DISCONNECT_NETWORK);
-			debug("[irc] handle_stream_ssl_input disconnect?!\n");
+			debug_warn("[irc] handle_stream_ssl_input disconnect?!\n");
 			return -1;
 		}
 
@@ -923,7 +923,7 @@ static WATCHER_LINE(irc_handle_write_ssl) {
 	}
 
 	if (type == 1) {
-		debug ("[irc] handle_write_ssl(): type %d (probably disconnect?)\n", type);
+		debug_warn("[irc] handle_write_ssl(): type %d (probably disconnect?)\n", type);
 		return 0;
 	}
 
@@ -974,10 +974,10 @@ static WATCHER(irc_handle_connect_real) {
 		return -1;
 	}
 
-	debug ("[irc] handle_connect_real()\n");
+	debug_function("[irc] handle_connect_real()\n");
 
         if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-                if (type) debug("[irc] handle_connect_real(): SO_ERROR %s\n", strerror(res));
+                if (type) debug_error("[irc] handle_connect_real(): SO_ERROR %s\n", strerror(res));
 
                 /* try next server. */
                 /* 'if' because someone can make: /session server blah and /reconnect
@@ -1041,14 +1041,14 @@ static WATCHER(irc_handle_connect_ssl) {
         if (type == -1) {
                 if ((ret = SSL_INIT(j->ssl_session))) {
                         /* XXX, OpenSSL error value XXX */
-						debug("SSL_INIT failed\n");
+						debug_error("SSL_INIT failed\n");
                         print("conn_failed_tls");
                         irc_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
                         return -1;
                 }
 
                 if (SSL_SET_FD(j->ssl_session, fd) == 0) {	/* gnutls never fail */
-						debug("SSL_SET_FD failed\n");
+						debug_error("SSL_SET_FD failed\n");
                         print("conn_failed_tls");
                         SSL_DEINIT(j->ssl_session);
                         j->ssl_session = NULL;
@@ -1156,14 +1156,14 @@ static int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **addres
 #warning "irc: You don't have inet_pton() connecting to ipv4 hosts may not work"
 #ifdef HAVE_INET_ATON /* XXX */
 		if (!inet_aton(co->address, &(ipv4->sin_addr))) {
-			debug("inet_aton() failed on addr: %s.\n", co->address);
+			debug_warn("inet_aton() failed on addr: %s.\n", co->address);
 		}
 #else
 #warning "irc: You don't have inet_aton() connecting to ipv4 hosts may not work"
 #endif
 #warning "irc: Yeah, You have inet_addr() connecting to ipv4 hosts may work :)"
 		if ((ipv4->sin_addr.s_addr = inet_addr(co->address)) == -1) {
-			debug("inet_addr() failed or returns 255.255.255.255? on %s\n", co->address);
+			debug_warn("inet_addr() failed or returns 255.255.255.255? on %s\n", co->address);
 		}
 #endif
 
@@ -1212,8 +1212,7 @@ static int irc_really_connect(session_t *session) {
 
 	if ((fd = socket(connco->family, SOCK_STREAM, 0)) == -1) {
 		err = errno;
-		debug("[irc] handle_resolver() socket() failed: %s\n",
-				strerror(err));
+		debug_error("[irc] handle_resolver() socket() failed: %s\n", strerror(err));
 		irc_handle_disconnect(session, strerror(err), EKG_DISCONNECT_FAILURE);
 		goto irc_conn_error;
 	}
@@ -1223,8 +1222,7 @@ static int irc_really_connect(session_t *session) {
 	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
 	if (ioctl(fd, FIONBIO, &one) == -1) {
 		err = errno;
-		debug("[irc] handle_resolver() ioctl() failed: %s\n",
-				strerror(err));
+		debug_warn("[irc] handle_resolver() ioctl() failed: %s\n", strerror(err));
 		irc_handle_disconnect(session, strerror(err), EKG_DISCONNECT_FAILURE);
 		goto irc_conn_error;
 	}
@@ -1323,7 +1321,7 @@ static COMMAND(irc_command_connect) {
 static COMMAND(irc_command_disconnect) {
 	irc_private_t	*j = irc_private(session);
 	const char	*reason = params[0]?params[0]:QUITMSG(session);
-	debug("[irc] comm_disconnect() !!!\n");
+	debug_function("[irc] comm_disconnect() !!!\n");
 
 	if (!session->connecting && !session_connected_get(session) && !j->autoreconnecting) {
 		printq("not_connected", session_name(session));
@@ -1487,7 +1485,7 @@ static COMMAND(irc_command_pipl) {
 	people_t	*per;
 	people_chan_t	*chan;
 
-	debug("[irc] this is a secret command ;-)\n");
+	debug_white("[irc] this is a secret command ;-)\n");
 
 	for (t1 = j->people; t1; t1=t1->next) {
 		per = (people_t *)t1->data;
@@ -1955,7 +1953,7 @@ static COMMAND(irc_command_names) {
 	}
 
 	if (chan->longest_nick > atoi(SOP(_005_NICKLEN)))
-		debug_error("[irc, names] funny %d vs %s\n", chan->longest_nick, SOP(_005_NICKLEN));
+		debug_warn("[irc, names] funny %d vs %s\n", chan->longest_nick, SOP(_005_NICKLEN));
 
 	buf = string_init(NULL);
 
@@ -2012,7 +2010,7 @@ static COMMAND(irc_command_names) {
 		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), cchn, itoa(count), plvl(0), plvl(2), plvl(5));
 #undef plvl
 	xfree(cchn);
-	debug("[IRC_NAMES] levelcounts = %d %d %d %d %d %d\n", sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
+	debug_white("[IRC_NAMES] levelcounts = %d %d %d %d %d %d\n", sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
 
 	array_free(mp);
 	string_free (buf, 1);
@@ -2115,8 +2113,7 @@ static COMMAND(irc_command_unban) {
 					&mp, 0, IRC_GC_CHAN))) 
 		return -1;
 
-	debug("[irc]_command_unban(): chan: %s mp[0]:%s mp[1]:%s\n",
-			channame, mp[0], mp[1]);
+	debug_function("[irc]_command_unban(): chan: %s mp[0]:%s mp[1]:%s\n", channame, mp[0], mp[1]);
 
 	if (!(*mp)) {
 		printq("not_enough_params", name);
@@ -2131,10 +2128,10 @@ static COMMAND(irc_command_unban) {
 				if (banlist) /* fit or add  i<=banid) ? */
 					watch_write(j->send_watch, "MODE %s -b %s\r\n", channame+4, banlist->data);
 				else 
-					debug("%d %d out of range or no such ban %08x\n", i, banid, banlist);
+					debug_warn("%d %d out of range or no such ban %08x\n", i, banid, banlist);
 			}
 			else
-				debug("Chanell || chan->banlist not found -> channel not synced ?!Try /mode +b \n");
+				debug_error("Chanell || chan->banlist not found -> channel not synced ?!Try /mode +b \n");
 		}
 		else { 
 			watch_write(j->send_watch, "MODE %s -b %s\r\n", channame+4, *mp);
@@ -2155,8 +2152,7 @@ static COMMAND(irc_command_ban) {
 					&mp, 0, IRC_GC_CHAN))) 
 		return -1;
 
-	debug("[irc]_command_ban(): chan: %s mp[0]:%s mp[1]:%s\n",
-			chan, mp[0], mp[1]);
+	debug_function("[irc]_command_ban(): chan: %s mp[0]:%s mp[1]:%s\n", chan, mp[0], mp[1]);
 
 	if (!(*mp))
 		watch_write(j->send_watch, "MODE %s +b \r\n", chan+4);
@@ -2349,7 +2345,7 @@ static COMMAND(irc_command_mode) {
 		return -1;
 	}
 */
-	debug("%s %s \n", chan, mp[0]);
+	debug_function("irc_command_mode %s %s \n", chan, mp[0]);
 	if (!(*mp))
 		watch_write(irc_private(session)->send_watch, "MODE %s\r\n",
 				chan+4);
@@ -2382,7 +2378,7 @@ static COMMAND(irc_command_whois) {
 					&mp, 0, IRC_GC_NOT_CHAN)))
 		return -1;
 
-	debug("irc_command_whois(): %s\n", name);
+	debug_function("irc_command_whois(): %s\n", name);
 	if (!xstrcmp(name, ("whowas")))
 		watch_write(irc_private(session)->send_watch, "WHOWAS %s\r\n", person+4);
 	else if (!xstrcmp(name, ("wii")))
@@ -2472,7 +2468,7 @@ static COMMAND(irc_command_jopacy) {
 		chan = irc_find_channel(j->channels, tar);
 		if (chan && (pass = xstrchr(chan->mode_str, 'k')))
 			pass+=2;
-		debug("[IRC_CYCLE] %s\n", pass);
+		debug_function("[IRC_CYCLE] %s\n", pass);
 	}
 
 	tmp = saprintf("JOIN %s%s\r\n", tar+4, pass ? pass : "");
@@ -2684,7 +2680,7 @@ EXPORT int irc_plugin_init(int prio)
 	SSL_load_error_strings();
 	SSL_library_init();
 	if (! (ircSslCtx = SSL_CTX_new(SSLv23_method()))) {
-		debug("couldn't init ssl ctx: %s!\n", ERR_error_string(ERR_get_error(), NULL));
+		debug_error("couldn't init ssl ctx: %s!\n", ERR_error_string(ERR_get_error(), NULL));
 		return -1;
 	}
 #endif
@@ -2829,7 +2825,7 @@ static int irc_plugin_destroy() {
 
 static int irc_theme_init()
 {
-	debug("I love you honey bunny\n");
+	debug_white("I love you honey bunny\n");
 
 	/* %1 should be _always_ session name, if it's not so,
 	 * you should report this to me (GiM)
