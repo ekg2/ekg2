@@ -536,9 +536,7 @@ dnl  Libs required:	pthread, clntsh
 dnl  Other:		$ORACLE_HOME must be set
 dnl  Default state:	turned off
 dnl	
-AC_ARG_WITH([logsoracle],     [AC_HELP_STRING([--with-logsoracle], [log messages/status changes into an Oracle database @<:@default=no@:>@])],
-	    [with_logsoracle=yes],
-	    [with_logsoracle=no])
+AC_ARG_WITH([logsoracle],     [AC_HELP_STRING([--with-logsoracle], [log messages/status changes into an Oracle database @<:@default=no@:>@])])
 
 if test "x$with_logsoracle" == "xyes"; then
 	AC_CHECK_ORACLE
