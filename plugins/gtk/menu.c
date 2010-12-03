@@ -34,8 +34,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define GTK_DISABLE_DEPRECATED
-
 #include "ekg2-config.h"
 
 #include <stdio.h>
@@ -125,11 +123,6 @@ struct mymenu {
 	guint key;		/* GDK_x */
 };
 
-#define XCMENU_DOLIST 1
-#define XCMENU_SHADED 1
-#define XCMENU_MARKUP 2
-#define XCMENU_MNEMONIC 4
-
 static void menu_about(GtkWidget *wid, gpointer sess) {
 	GtkWidget *vbox, *label, *hbox;
 	static GtkWidget *about = NULL;
@@ -156,7 +149,7 @@ static void menu_about(GtkWidget *wid, gpointer sess) {
 	snprintf(buf, sizeof(buf), 
 		"<span size=\"x-large\"><b>ekg2-%s</b></span>\n\n"
 			"<b>Compiled on</b>: %s\n\n"
-			"<small>gtk frontend based on xchat: \302\251 1998-2007 Peter \305\275elezn\303\275 &lt;zed@xchat.org></small>\n"
+			"<small>gtk frontend based on xchat: \302\251 1998-2010 Peter \305\275elezn\303\275 &lt;zed@xchat.org></small>\n"
 			"<small>iconsets in userlist copied from psi (crystal-gadu.jisp and crystal-roster.jisp and crystal-icq.jisp) (c) Remko Tronçon</small>",
 			VERSION, compile_time());
 
@@ -313,7 +306,7 @@ static void popup_menu_cb(GtkWidget *item, char *cmd) {
 GtkWidget *menu_toggle_item(char *label, GtkWidget *menu, void *callback, void *userdata, int state) {
 	GtkWidget *item;
 
-	item = gtk_check_menu_item_new_with_label(label);
+	item = gtk_check_menu_item_new_with_mnemonic(label);
 	gtk_check_menu_item_set_active((GtkCheckMenuItem *) item, state);
 	gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
 	g_signal_connect(G_OBJECT(item), "activate", G_CALLBACK(callback), userdata);
@@ -324,8 +317,9 @@ GtkWidget *menu_toggle_item(char *label, GtkWidget *menu, void *callback, void *
 
 #endif
 
-static GtkWidget *menu_quick_item(char *cmd, char *label, GtkWidget *menu, int flags, gpointer userdata, char *icon) {
+GtkWidget *menu_quick_item(char *cmd, char *label, GtkWidget *menu, int flags, gpointer userdata, char *icon) {
 	GtkWidget *img, *item;
+	char *path;
 
 	if (!label)
 		item = gtk_menu_item_new();
@@ -386,7 +380,7 @@ static void menu_quick_item_with_callback(void *callback, char *label, GtkWidget
 
 #endif
 
-static GtkWidget *menu_quick_sub(char *name, GtkWidget *menu, GtkWidget **sub_item_ret, int flags, int pos) {
+GtkWidget *menu_quick_sub(char *name, GtkWidget *menu, GtkWidget **sub_item_ret, int flags, int pos) {
 	GtkWidget *sub_menu;
 	GtkWidget *sub_item;
 
@@ -519,11 +513,15 @@ void menu_create(GtkWidget *menu, GSList * list, char *target, int check_path) {
 }
 #endif
 
+static char *str_copy = NULL;		/* for all pop-up menus */
+static GtkWidget *nick_submenu = NULL;	/* user info submenu */
+
 static void menu_destroy(GtkWidget *menu, gpointer objtounref) {
 	gtk_widget_destroy(menu);
 	g_object_unref(menu);
 	if (objtounref)
 		g_object_unref(G_OBJECT(objtounref));
+	nick_submenu = NULL;
 }
 
 static void menu_popup(GtkWidget *menu, GdkEventButton * event, gpointer objtounref) {
@@ -538,8 +536,6 @@ static void menu_popup(GtkWidget *menu, GdkEventButton * event, gpointer objtoun
 	g_signal_connect(G_OBJECT(menu), "selection-done", G_CALLBACK(menu_destroy), objtounref);
 	gtk_menu_popup(GTK_MENU(menu), NULL, NULL, NULL, NULL, 0, event ? event->time : 0);
 }
-
-static char *str_copy = NULL;	/* for all pop-up menus */
 
 void menu_nickmenu(window_t *sess, GdkEventButton * event, char *nick, int num_sel) {
 	char buf[512];
@@ -1095,8 +1091,8 @@ static struct mymenu mymenu[] = {
 		{N_("Character Chart..."), ascii_open, 0, M_MENUITEM, 0, 0, 1},
 		{N_("Direct Chat..."), menu_dcc_chat_win, 0, M_MENUITEM, 0, 0, 1},
 		{N_("File Transfers..."), menu_dcc_win, 0, M_MENUITEM, 0, 0, 1},
+		{N_("Friends List..."), notify_opengui, 0, M_MENUITEM, 0, 0, 1},
 		{N_("Ignore List..."), ignore_gui_open, 0, M_MENUITEM, 0, 0, 1},
-		{N_("Notify List..."), notify_opengui, 0, M_MENUITEM, 0, 0, 1},
 		{N_("Plugins and Scripts..."), menu_pluginlist, 0, M_MENUITEM, 0, 0, 1},
 #endif
 		{0, 0, 0, M_SEP, 0, 0, 0},
@@ -1134,7 +1130,11 @@ GtkWidget *create_icon_menu(char *labeltext, void *stock_name, int is_stock) {
    bindings not work when the menu-bar is hidden. */
 static gboolean menu_canacaccel(GtkWidget *widget, guint signal_id, gpointer user_data) {
 	/* GTK2.2 behaviour */
+#if GTK_CHECK_VERSION(2,20,0)
+	return gtk_widget_is_sensitive(widget);
+#else
 	return GTK_WIDGET_IS_SENSITIVE(widget);
+#endif
 }
 
 #endif
@@ -1545,11 +1545,11 @@ GtkWidget *menu_create_main(void *accel_group, int bar, int away, int toplevel, 
 	}
 
 	if (!toplevel) {
-		mymenu[DETACH_OFFSET].text = N_("_Detach Tab");
-		mymenu[CLOSE_OFFSET].text = N_("_Close Tab");
+		mymenu[DETACH_OFFSET].text = N_("_Detach");
+		mymenu[CLOSE_OFFSET].text = N_("_Close");
 	} else {
-		mymenu[DETACH_OFFSET].text = N_("_Attach Window");
-		mymenu[CLOSE_OFFSET].text = N_("_Close Window");
+		mymenu[DETACH_OFFSET].text = N_("_Attach");
+		mymenu[CLOSE_OFFSET].text = N_("_Close");
 	}
 
 	while (1) {

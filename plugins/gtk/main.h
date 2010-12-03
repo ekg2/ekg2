@@ -91,7 +91,6 @@ extern int new_window_in_tab_config;
 
 #define truncchans_config 20
 #define tab_sort_config 1
-#define tab_icons_config 0
 #define style_namelistgad_config 0
 
 #define chanmodebuttons_config -1

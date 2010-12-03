@@ -3,7 +3,6 @@
 typedef struct {
 	GtkTreeView *tree;
 	GtkWidget *scrollw;	/* scrolledWindow */
-	int idle_tag;
 } treeview;
 
 #include "main.h"
@@ -14,6 +13,9 @@ typedef struct {
 #include "fe-gtk.h"
 #include "maingui.h"
 #endif
+
+#include <gdk/gdk.h>
+#include <gtk/gtktreeview.h>
 
 static void /* row-activated, when a row is double clicked */ cv_tree_activated_cb(GtkTreeView *
 										   view,
@@ -135,7 +137,6 @@ static void cv_tree_init(chanview * cv)
 
 	((treeview *) cv)->tree = GTK_TREE_VIEW(view);
 	((treeview *) cv)->scrollw = win;
-	((treeview *) cv)->idle_tag = 0;
 	gtk_widget_show(view);
 }
 
@@ -170,17 +171,37 @@ static void cv_tree_focus(chan * ch)
 	GtkTreeModel *model = gtk_tree_view_get_model(tree);
 	GtkTreePath *path;
 	GtkTreeIter parent;
+	GdkRectangle cell_rect;
+	GdkRectangle vis_rect;
+	gint dest_y;
 
 	/* expand the parent node */
 	if (gtk_tree_model_iter_parent(model, &parent, &ch->iter)) {
 		path = gtk_tree_model_get_path(model, &parent);
 		if (path) {
-			/*if (!gtk_tree_view_row_expanded (tree, path))
-			   {
-			   gtk_tree_path_free (path);
-			   return;
-			   } */
-			gtk_tree_view_expand_row(tree, path, FALSE);
+			/* This full section does what
+			 * gtk_tree_view_scroll_to_cell (tree, path, NULL, TRUE, 0.5, 0.5);
+			 * does, except it only scrolls the window if the provided cell is
+			 * not visible. Basic algorithm taken from gtktreeview.c */
+
+			/* obtain information to see if the cell is visible */
+			gtk_tree_view_get_background_area(tree, path, NULL, &cell_rect);
+			gtk_tree_view_get_visible_rect(tree, &vis_rect);
+
+			/* The cordinates aren't offset correctly */
+			gtk_tree_view_widget_to_tree_coords(tree, cell_rect.x, cell_rect.y, NULL, &cell_rect.y );
+
+			/* only need to scroll if out of bounds */
+			if (cell_rect.y < vis_rect.y ||
+					cell_rect.y + cell_rect.height > vis_rect.y + vis_rect.height)
+			{
+				dest_y = cell_rect.y - ((vis_rect.height - cell_rect.height) * 0.5);
+				if (dest_y < 0)
+					dest_y = 0;
+				gtk_tree_view_scroll_to_point(tree, -1, dest_y);
+			}
+			/* theft done, now make it focused like */
+			gtk_tree_view_set_cursor(tree, path, NULL, FALSE);
 			gtk_tree_path_free(path);
 		}
 	}
@@ -210,27 +231,8 @@ static void cv_tree_move_focus(chanview * cv, gboolean relative, int num)
 		cv_tree_focus(ch);
 }
 
-/*static gboolean
-cv_timeout (chanview *cv)
-{
-	int colnum = cv->use_icons ? 1 : 0;
-	GtkTreeViewColumn *col;
-
-	col = gtk_tree_view_get_column (GTK_TREE_VIEW (((treeview *)cv)->tree), colnum);
-	gtk_tree_view_column_set_sizing (col, GTK_TREE_VIEW_COLUMN_GROW_ONLY);
-
-	((treeview *)cv)->idle_tag = 0;
-	return FALSE;
-}*/
-
 static void cv_tree_remove(chan * ch)
 {
-/*	chanview *cv = ch->cv;
-	int colnum = cv->use_icons ? 1 : 0;
-	GtkTreeViewColumn *col = gtk_tree_view_get_column (GTK_TREE_VIEW (((treeview *)cv)->tree), colnum);
-	gtk_tree_view_column_set_sizing (col, GTK_TREE_VIEW_COLUMN_AUTOSIZE);
-	if (((treeview *)cv)->idle_tag == 0)
-		((treeview *)cv)->idle_tag = g_idle_add ((GSourceFunc)cv_timeout, cv);*/
 }
 
 static void move_row(chan * ch, int delta, GtkTreeIter * parent)
@@ -270,11 +272,6 @@ static void cv_tree_move(chan * ch, int delta)
 
 static void cv_tree_cleanup(chanview * cv)
 {
-	if (((treeview *) cv)->idle_tag) {
-		g_source_remove(((treeview *) cv)->idle_tag);
-		((treeview *) cv)->idle_tag = 0;
-	}
-
 	if (cv->box)
 		/* kill the scrolled window */
 		gtk_widget_destroy(((treeview *) cv)->scrollw);

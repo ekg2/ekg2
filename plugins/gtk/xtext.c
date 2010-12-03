@@ -99,7 +99,12 @@ struct textentry {
 	gint16 lines_taken;
 #define RECORD_WRAPS 4
 	guint16 wrap_offset[RECORD_WRAPS];
-	unsigned int mb:1;	/* is multibyte? */
+	guchar mb;		/* boolean: is multibyte? */
+#if 0
+	guchar tag;
+	guchar pad1;
+	guchar pad2;	/* 32-bit align : 44 bytes total */
+#endif
 };
 
 enum {
@@ -1127,6 +1132,21 @@ static void gtk_xtext_draw_marker(GtkXText * xtext, textentry * ent, int y)
 	}
 }
 
+#ifdef USE_SHM
+static int have_shm_pixmaps(Display *dpy) {
+	int major, minor;
+	static int checked = 0;
+	static int have = FALSE;
+
+	if (!checked) {
+		XShmQueryVersion (dpy, &major, &minor, &have);
+		checked = 1;
+	}
+
+	return have;
+}
+#endif
+
 static void gtk_xtext_paint(GtkWidget *widget, GdkRectangle * area)
 {
 	GtkXText *xtext = GTK_XTEXT(widget);
@@ -1140,8 +1160,13 @@ static void gtk_xtext_paint(GtkWidget *widget, GdkRectangle * area)
 		if (xtext->last_win_x != x || xtext->last_win_y != y) {
 			xtext->last_win_x = x;
 			xtext->last_win_y = y;
-#if !defined(USE_SHM) && !defined(WIN32)
-			if (xtext->shaded) {
+#ifndef WIN32
+#ifdef USE_SHM
+			if (xtext->shaded && !have_shm_pixmaps(GDK_WINDOW_XDISPLAY(xtext->draw_buf))) 
+#else
+ 			if (xtext->shaded)
+#endif
+			{
 				xtext->recycle = TRUE;
 				gtk_xtext_load_trans(xtext);
 				xtext->recycle = FALSE;
@@ -1835,6 +1860,8 @@ static gboolean gtk_xtext_button_release(GtkWidget *widget, GdkEventButton * eve
 
 		gtk_grab_remove(widget);
 		/*gdk_pointer_ungrab (0); */
+
+		/* got a new selection? */
 		if (xtext->buffer->last_ent_start)
 			gtk_xtext_set_clip_owner(GTK_WIDGET(xtext), event);
 
@@ -2188,7 +2215,7 @@ gtk_xtext_render_flush(GtkXText * xtext, int x, int y, const unsigned char *str,
 {
 	int str_width, dofill;
 	GdkDrawable *pix = NULL;
-	int dest_x = 0, dest_y = 0;
+	int dest_x, dest_y;
 
 	if (xtext->dont_render || len < 1)
 		return 0;
@@ -2864,6 +2891,10 @@ static GdkPixmap *shade_pixmap(GtkXText * xtext, Pixmap p, int x, int y, int w, 
 	GC tgc;
 	Display *xdisplay = GDK_WINDOW_XDISPLAY(xtext->draw_buf);
 
+#ifdef USE_SHM
+	int shm_pixmaps = have_shm_pixmaps(xdisplay);
+#endif
+
 	XGetGeometry(xdisplay, p, &root, &dummy, &dummy, &width, &height, &dummy, &depth);
 
 	if (width < x + w || height < y + h || x < 0 || y < 0) {
@@ -2878,17 +2909,19 @@ static GdkPixmap *shade_pixmap(GtkXText * xtext, Pixmap p, int x, int y, int w, 
 		XFreeGC(xdisplay, tgc);
 
 #ifdef USE_SHM
-		ximg = get_image(xtext, xdisplay, &xtext->shminfo, 0, 0, w, h, depth, tmp);
-#else
-		ximg = XGetImage(xdisplay, tmp, 0, 0, w, h, -1, ZPixmap);
+		if (shm_pixmaps)
+			ximg = get_image(xtext, xdisplay, &xtext->shminfo, 0, 0, w, h, depth, tmp);
+		else
 #endif
+			ximg = XGetImage(xdisplay, tmp, 0, 0, w, h, -1, ZPixmap);
 		XFreePixmap(xdisplay, tmp);
 	} else {
 #ifdef USE_SHM
-		ximg = get_image(xtext, xdisplay, &xtext->shminfo, x, y, w, h, depth, p);
-#else
-		ximg = XGetImage(xdisplay, p, x, y, w, h, -1, ZPixmap);
+		if (shm_pixmaps)
+			ximg = get_image(xtext, xdisplay, &xtext->shminfo, x, y, w, h, depth, p);
+		else
 #endif
+			ximg = XGetImage(xdisplay, p, x, y, w, h, -1, ZPixmap);
 	}
 
 	if (!ximg)
@@ -2910,7 +2943,7 @@ static GdkPixmap *shade_pixmap(GtkXText * xtext, Pixmap p, int x, int y, int w, 
 		shaded_pix = xtext->pixmap;
 	else {
 #ifdef USE_SHM
-		if (xtext->shm) {
+		if (xtext->shm && shm_pixmaps) {
 #if (GTK_MAJOR_VERSION == 2) && (GTK_MINOR_VERSION == 0)
 			shaded_pix =
 				gdk_pixmap_foreign_new(XShmCreatePixmap
@@ -2934,7 +2967,7 @@ static GdkPixmap *shade_pixmap(GtkXText * xtext, Pixmap p, int x, int y, int w, 
 	}
 
 #ifdef USE_SHM
-	if (!xtext->shm)
+	if (!xtext->shm || !shm_pixmaps)
 #endif
 		XPutImage(xdisplay, GDK_WINDOW_XWINDOW(shaded_pix),
 			  GDK_GC_XGC(xtext->fgc), ximg, 0, 0, 0, 0, w, h);
@@ -2952,7 +2985,7 @@ static void gtk_xtext_free_trans(GtkXText * xtext)
 {
 	if (xtext->pixmap) {
 #ifdef USE_SHM
-		if (xtext->shm) {
+		if (xtext->shm && have_shm_pixmaps(GDK_WINDOW_XDISPLAY(xtext->draw_buf))) {
 			XFreePixmap(GDK_WINDOW_XDISPLAY(xtext->pixmap),
 				    GDK_WINDOW_XWINDOW(xtext->pixmap));
 			XShmDetach(GDK_WINDOW_XDISPLAY(xtext->draw_buf), &xtext->shminfo);
