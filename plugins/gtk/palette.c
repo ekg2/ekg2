@@ -34,8 +34,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define GTK_DISABLE_DEPRECATED
-
 /* fix includes */
 
 #include <stdio.h>
