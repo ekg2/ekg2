@@ -1672,7 +1672,7 @@ static gboolean gtk_xtext_motion_notify(GtkWidget *widget, GdkEventMotion * even
 	GtkXText *xtext = GTK_XTEXT(widget);
 	GdkModifierType mask;
 	int redraw, tmp, x, y, offset, len, line_x;
-	unsigned char *word;
+	char *word;
 	textentry *word_ent;
 
 	gdk_window_get_pointer(widget->window, &x, &y, &mask);
@@ -1831,7 +1831,6 @@ static void gtk_xtext_unselect(GtkXText * xtext)
 static gboolean gtk_xtext_button_release(GtkWidget *widget, GdkEventButton * event)
 {
 	GtkXText *xtext = GTK_XTEXT(widget);
-	unsigned char *word;
 	int old;
 
 	if (xtext->moving_separator) {
@@ -1873,7 +1872,7 @@ static gboolean gtk_xtext_button_release(GtkWidget *widget, GdkEventButton * eve
 		}
 
 		if (!xtext->hilighting) {
-			word = gtk_xtext_get_word(xtext, event->x, event->y, 0, 0, 0);
+			char *word = gtk_xtext_get_word(xtext, event->x, event->y, 0, 0, 0);
 			g_signal_emit(G_OBJECT(xtext), xtext_signals[WORD_CLICK], 0,
 				      word ? word : NULL, event);
 		} else {
@@ -1890,13 +1889,12 @@ static gboolean gtk_xtext_button_press(GtkWidget *widget, GdkEventButton * event
 	GtkXText *xtext = GTK_XTEXT(widget);
 	GdkModifierType mask;
 	textentry *ent;
-	unsigned char *word;
 	int line_x, x, y, offset, len;
 
 	gdk_window_get_pointer(widget->window, &x, &y, &mask);
 
 	if (event->button == 3 || event->button == 2) {	/* right/middle click */
-		word = gtk_xtext_get_word(xtext, x, y, 0, 0, 0);
+		char *word = gtk_xtext_get_word(xtext, x, y, 0, 0, 0);
 		if (word) {
 			g_signal_emit(G_OBJECT(xtext), xtext_signals[WORD_CLICK], 0, word, event);
 		} else
@@ -2065,12 +2063,14 @@ gtk_xtext_selection_get(GtkWidget *widget,
 
 #if (GTK_MAJOR_VERSION == 2) && (GTK_MINOR_VERSION == 0)
 			gdk_string_to_compound_text(
+								stripped, &encoding, &format,
+								&new_text, &new_length);
 #else
 			gdk_string_to_compound_text_for_display(gdk_drawable_get_display
 								(widget->window),
-#endif
 								stripped, &encoding, &format,
 								&new_text, &new_length);
+#endif
 			gtk_selection_data_set(selection_data_ptr, encoding, format, new_text,
 					       new_length);
 			gdk_free_compound_text(new_text);
@@ -2883,6 +2883,7 @@ static XImage *get_image(GtkXText * xtext, Display * xdisplay, XShmSegmentInfo *
 static GdkPixmap *shade_pixmap(GtkXText * xtext, Pixmap p, int x, int y, int w, int h)
 {
 	unsigned int dummy, width, height, depth;
+	int dummy_;
 	GdkPixmap *shaded_pix;
 	Window root;
 	Pixmap tmp;
@@ -2895,7 +2896,7 @@ static GdkPixmap *shade_pixmap(GtkXText * xtext, Pixmap p, int x, int y, int w, 
 	int shm_pixmaps = have_shm_pixmaps(xdisplay);
 #endif
 
-	XGetGeometry(xdisplay, p, &root, &dummy, &dummy, &width, &height, &dummy, &depth);
+	XGetGeometry(xdisplay, p, &root, &dummy_, &dummy_, &width, &height, &dummy, &depth);
 
 	if (width < x + w || height < y + h || x < 0 || y < 0) {
 		gcv.subwindow_mode = IncludeInferiors;
@@ -3156,7 +3157,7 @@ static int gtk_xtext_find_subline(GtkXText * xtext, textentry * ent, int line)
 
 /* horrible hack for drawing time stamps */
 
-static void gtk_xtext_render_stamp(GtkXText * xtext, textentry * ent, const char *text, int len, int line, int win_width)
+static void gtk_xtext_render_stamp(GtkXText * xtext, textentry * ent, const unsigned char *text, int len, int line, int win_width)
 {
 	textentry tmp_ent;
 	int jo, ji, hs;
@@ -3882,7 +3883,7 @@ static int gtk_xtext_render_page_timeout(GtkXText * xtext)
 
 static void gtk_xtext_append_entry(xtext_buffer * buf, textentry * ent)
 {
-	unsigned int mb;
+	int mb;
 
 /* xchat->ekg2, note: i removed here strtr(ent->str, '\t', ' ') 
  *		coz we should pass here only fstring_t, where fstring_t can't have \t */
