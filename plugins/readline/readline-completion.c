@@ -44,7 +44,7 @@ GENERATOR(plugin) {
 	static int len;
 	static plugin_t *p;
 
-	p = state ? p->next : plugins;
+	p = state ? (p?p->next:NULL) : plugins;
 	len = xstrlen(text);
 
 	while (p) {
@@ -66,7 +66,7 @@ GENERATOR(events) {
 	if (!events_all) return NULL;
 
 	if (!state) 	i = 0;
-	else		i++;
+	else if (events_all[i]) i++;
 
 	len = xstrlen(text);
 
@@ -99,7 +99,7 @@ GENERATOR(ignorelevels) {
 	char *ble = NULL;
 
 	if (!state) 	index = 0;
-	else		index++;
+	else if (ignore_labels[index].name) index++;
 
 	len = xstrlen(text);
 
@@ -138,15 +138,16 @@ GENERATOR(metacontacts) {
 	static int len;
 	static metacontact_t *m;
 
-	m = state ? m->next : metacontacts;
+	if (!state)
+		m = metacontacts;
 
 	len = xstrlen(text);
 
 	while (m) {
-		if (!xstrncasecmp(text, m->name, len)) 
-			return xstrdup(m->name);
-
+		char *mname = m->name;
 		m = m->next;
+		if (!xstrncasecmp(text, mname, len)) 
+			return xstrdup(mname);
 	}
 	return NULL;
 }
@@ -162,7 +163,7 @@ GENERATOR(command) {
 	const char *slash = "", *dash = "";
 	session_t *session;
 
-	c = state ? c->next : commands;
+	c = state ? (c?c->next:NULL) : commands;
 
 	if (*text == '/') {
 		slash = "/";
@@ -283,7 +284,7 @@ GENERATOR(variable) {
 	static variable_t *v;
 	static int len;
 
-	v = state ? v->next : variables;
+	v = state ? (v?v->next:NULL) : variables;
 
 	len = xstrlen(text);
 
@@ -372,7 +373,7 @@ GENERATOR(window) {
 	static window_t *w;
 	static int len;
 
-	w = state ? w->next : windows;
+	w = state ? (w?w->next:NULL) : windows;
 
 	len = xstrlen(text);
 
@@ -400,7 +401,7 @@ GENERATOR(session) {
 	static session_t *s;
 	static int len;
 
-	s = state ? s->next : sessions;
+	s = state ? (s?s->next:NULL) : sessions;
 
 	len = xstrlen(text);
 
