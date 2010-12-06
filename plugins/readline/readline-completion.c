@@ -202,7 +202,8 @@ GENERATOR(conference) {
 	static struct conference *c;
 	static int len;
 
-	c = state ? c->next : conferences;
+	if (!state)
+		c = conferences;
 
 	len = xstrlen(text);
 
