@@ -46,6 +46,8 @@
 #include <gtk/gtkversion.h>
 #include <gtk/gtkfilechooserdialog.h>
 
+#include <ekg/xmalloc.h>	/* xstrcmp */
+
 #include "main.h"
 #include "gtkutil.h"
 
@@ -364,7 +366,7 @@ gtkutil_button(GtkWidget *box, char *stock, char *tip, void *callback,
 		gtk_widget_show(bbox);
 
 		img = gtk_image_new_from_stock(stock, GTK_ICON_SIZE_MENU);
-		if (stock == GTK_STOCK_GOTO_LAST)
+		if (!xstrcmp(stock, GTK_STOCK_GOTO_LAST))
 			gtk_widget_set_usize(img, 10, 6);
 		gtk_container_add(GTK_CONTAINER(bbox), img);
 		gtk_widget_show(img);
