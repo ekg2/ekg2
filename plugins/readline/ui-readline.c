@@ -149,10 +149,6 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 	int old_end = rl_end, id = w->id;
 	char *old_prompt = NULL, *line_buf = NULL;
 	const char *line = NULL;
-	char *target = window_target(w);
-
-	if (!xstrcmp(target, "__debug"))
-		return;
 
 	if (config_timestamp) {
 		string_t s = string_init(NULL);
@@ -161,6 +157,7 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 
 		string_append(s, "\033[0m");
 		string_append(s, buf);
+		string_append(s, " ");
 		
 		while (*p) {
 			if (*p == '\n' && *(p + 1)) {
@@ -177,7 +174,7 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 		line = xline;
 
 	/* je¶li nie piszemy do aktualnego, to zapisz do bufora i wyjd¼ */
-	if (id && id != window_current->id) {
+	if (id != window_current->id) {
 		window_write(id, line);
 
 		/* XXX trzeba jeszcze waln±æ od¶wie¿enie prompta */
@@ -599,7 +596,7 @@ int bind_handler_window(int a, int key)
 
 	return 0;
 }
-		
+
 int bind_sequence(const char *seq, const char *command, int quiet)
 {
 	char *nice_seq = NULL;
