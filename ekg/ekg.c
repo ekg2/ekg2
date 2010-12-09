@@ -887,8 +887,13 @@ int main(int argc, char **argv)
 #ifdef HAVE_READLINE
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
 #endif
-	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
-	else {
+	if (!have_plugin_of_class(PLUGIN_UI)) {
+		struct buffer *b;
+		for (b = buffer_debug.data; b; b = b->next)
+			fprintf(stderr, "%s\n", b->line);
+		fprintf(stderr, "\n\nNo UI-PLUGIN!\n");
+		return 1;
+	} else {
 		struct buffer *b;
 		for (b = buffer_debug.data; b; b = b->next)
 			print_window_w(window_debug, EKG_WINACT_NONE, b->target, b->line);
