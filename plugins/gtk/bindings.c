@@ -64,16 +64,17 @@
 #include <ekg/stuff.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
+#include <ekg/completion.h>
 
 #include "main.h"
 #include "bindings.h"
-#include "completion.h"
 
 char *gtk_history[HISTORY_MAX];
 int gtk_history_index;
 
 #define GTK_BINDING_FUNCTION(x) int x(GtkWidget *wid, GdkEventKey *evt, char *d1, window_t *sess)
 
+#define COMPLETION_MAXLEN 2048		/* rozmiar linii */
 /* These are cp'ed from history.c --AGL */
 #define STATE_SHIFT	GDK_SHIFT_MASK
 #define	STATE_ALT	GDK_MOD1_MASK
@@ -171,7 +172,7 @@ static GTK_BINDING_FUNCTION(key_action_tab_comp) {
 	if (strlcpy(buf, text, sizeof(buf)) >= sizeof(buf))
 		printf("key_action_tab_comp(), strlcpy() UUUUUUUCH!\n");
 
-	ncurses_complete(&cursor_pos, buf);
+	ekg2_complete(&cursor_pos, buf, COMPLETION_MAXLEN);
 
 	gtk_entry_set_text(GTK_ENTRY(wid), buf);
 	gtk_editable_set_position(GTK_EDITABLE(wid), cursor_pos);
@@ -321,7 +322,7 @@ gboolean key_handle_key_press(GtkWidget *wid, GdkEventKey * evt, window_t *sess)
 #endif
 	if (!was_complete) {
 		/* jeśli się coś zmieniło, wygeneruj dopełnienia na nowo */
-		ncurses_complete_clear();
+		ekg2_complete_clear();
 
 		/* w xchacie bylo tylko na GDK_space */
 	}
