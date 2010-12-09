@@ -57,11 +57,11 @@
 #include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>
+#include <ekg/completion.h>
 
 #include <ekg/queries.h>
 
 #include "old.h"
-#include "completion.h"
 #include "bindings.h"
 #include "contacts.h"
 #include "mouse.h"
@@ -2625,7 +2625,7 @@ then:
 
 	/* je¶li siê co¶ zmieni³o, wygeneruj dope³nienia na nowo */
 	if (!b || (b && b->function != ncurses_binding_complete))
-		ncurses_complete_clear();
+		ekg2_complete_clear();
 	
 	if (!ncurses_redraw_input_already_exec || (b && b->function == ncurses_binding_accept_line)) 
 		ncurses_redraw_input(ch);

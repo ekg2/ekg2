@@ -30,17 +30,15 @@
 #  include "compat/scandir.h"
 #endif
 
-#include <ekg/commands.h>
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/events.h>
-#include <ekg/metacontacts.h>
-#include <ekg/stuff.h>
-#include <ekg/userlist.h>
-#include <ekg/vars.h>
-#include <ekg/xmalloc.h>
-
-#include "old.h"
+#include "commands.h"
+#include "debug.h"
+#include "dynstuff.h"
+#include "events.h"
+#include "metacontacts.h"
+#include "stuff.h"
+#include "userlist.h"
+#include "vars.h"
+#include "xmalloc.h"
 
 /* nadpisujemy funkcjê xstrncasecmp() odpowiednikiem z obs³ug± polskich znaków */
 #define xstrncasecmp(x...) xstrncasecmp_pl(x)
@@ -667,7 +665,7 @@ static struct {
 };
 
 /*
- * ncurses_complete()
+ * ekg2_complete()
  *
  * funkcja obs³uguj±ca dope³nianie klawiszem tab.
  * Dzia³anie:
@@ -685,7 +683,7 @@ static struct {
  *   podany wyraz ma zostañ "wsadzony", st±d konieczna jest tablica separatorów, tablica wszystkich wyrazów itd ...
  * - przeskakiwanie miêdzy dope³nieniami po drugim TABie
  */
-void ncurses_complete(int *line_start, int *line_index, char *line)
+void ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 {
 	char *start, **words, *separators;
 	char *cmd;
@@ -929,9 +927,9 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 
 		if (send_nicks_count) {
 			char *nick = send_nicks[send_nicks_index++];
-			snprintf(line, LINE_MAXLEN, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
+			snprintf(line, line_maxlen, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
 		} else
-			snprintf(line, LINE_MAXLEN, "%s", cmd);
+			snprintf(line, line_maxlen, "%s", cmd);
 		*line_start = 0;
 		*line_index = xstrlen(line);
 
@@ -1146,7 +1144,7 @@ exact_match:
 	
 		/* debug("common :%d\t\n", common); */
 
-		if (xstrlen(line) + common < LINE_MAXLEN) {
+		if (xstrlen(line) + common < line_maxlen) {
 			line[0] = '\0';
 			for(i = 0; i < words_count; i++) {
 				if (i == word) {
@@ -1184,7 +1182,7 @@ cleanup:
 	return;
 }
 
-void ncurses_complete_clear()
+void ekg2_complete_clear()
 {
 	array_free(completions);
 	completions = NULL;
