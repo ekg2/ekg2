@@ -43,6 +43,7 @@
 /* nadpisujemy funkcjê xstrncasecmp() odpowiednikiem z obs³ug± polskich znaków */
 #define xstrncasecmp(x...) xstrncasecmp_pl(x)
 
+char **ekg2_completions = NULL;
 static char **completions = NULL;	/* lista dope³nieñ */
 static char *last_line = NULL;
 static char *last_line_without_complete = NULL;
@@ -751,6 +752,7 @@ void ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen
 		last_line_without_complete = xstrdup(line);
 		xfree(tmp);
 
+		ekg2_completions = completions;
 		return;
 	}
 
@@ -938,6 +940,7 @@ void ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen
 		xfree(start);
 		xfree(separators);
 		xfree(cmd);
+		ekg2_completions = completions;
 		return;
 	}
 	xfree(cmd);
@@ -1179,6 +1182,7 @@ cleanup:
 	array_free(words);
 	xfree(start);
 	xfree(separators);
+	ekg2_completions = completions;
 	return;
 }
 
@@ -1186,6 +1190,7 @@ void ekg2_complete_clear()
 {
 	array_free(completions);
 	completions = NULL;
+	ekg2_completions = NULL;
 	continue_complete = 0;
 	continue_complete_count = 0;
 	xfree(last_line);
