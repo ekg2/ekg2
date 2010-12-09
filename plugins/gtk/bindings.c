@@ -172,7 +172,8 @@ static GTK_BINDING_FUNCTION(key_action_tab_comp) {
 	if (strlcpy(buf, text, sizeof(buf)) >= sizeof(buf))
 		printf("key_action_tab_comp(), strlcpy() UUUUUUUCH!\n");
 
-	ekg2_complete(&cursor_pos, buf, COMPLETION_MAXLEN);
+	int junk = 0;
+	ekg2_complete(&junk, &cursor_pos, buf, COMPLETION_MAXLEN);
 
 	gtk_entry_set_text(GTK_ENTRY(wid), buf);
 	gtk_editable_set_position(GTK_EDITABLE(wid), cursor_pos);
