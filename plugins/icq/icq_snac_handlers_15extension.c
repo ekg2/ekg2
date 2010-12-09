@@ -27,6 +27,7 @@
  */
 
 #include <ekg/debug.h>
+#include <ekg/xmalloc.h>
 
 #include "icq.h"
 #include "misc.h"
