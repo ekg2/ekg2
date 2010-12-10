@@ -118,7 +118,7 @@ bind
 	
 	  -L, --list-default [sekwencja]  j.w. plus domy¶lne sekwencje
 	
-	  -S, --set <sekwencja>		  binduje klawisze pod sekwencjê
+	  -S, --set <sekwencja>           binduje klawisze pod sekwencjê
 	
 	
 	Dostêpne sekwencje to: Ctrl-<znak>, Alt-<znak>, F<liczba>, Enter, 
@@ -223,7 +223,7 @@ for
 	
 	  -u, --users [nazwa]     wykonuje polecenie dla podanych u¿ytkowników
 	
-	  -w, --windows [id]	     wykonuje polecenie dla podanych okien
+	  -w, --windows [id]      wykonuje polecenie dla podanych okien
 	
 	
 	Mo¿na podaæ ,,%T*%n'' zamiast nazwy/id, tak aby komenda by³a wykonana dla wszystkich elementów.
@@ -318,17 +318,17 @@ metacontact
 	parametry:  [opcje]
 	krotki opis: zarz±dzanie metakontaktami
 	
-	  -a, --add <nazwa>		    dodaje metakontakt o podanej nazwie
+	  -a, --add <nazwa>      dodaje metakontakt o podanej nazwie
 	
-	  -d, --del <nazwa>		    usuwa metakontakt o podanej nazwie
+	  -d, --del <nazwa>      usuwa metakontakt o podanej nazwie
 	
 	  -i, --add-item <nazwa> <nazwa_sesji> <nazwa_kontaktu> <prio>	dodaje do metakontaktu kontakt
 	
 	  -r, --del-item <nazwa> <nazwa_sesji> <nazwa_kontaktu>	usuwa z metakontaktu kontakt
 	
-	  -l, --list 		    wy¶wietla listê wszystkich metakontaktów
+	  -l, --list             wy¶wietla listê wszystkich metakontaktów
 	
-	  <nazwa> 			    wy¶wietla listê kontaktów danego metakontaktu
+	  <nazwa>                wy¶wietla listê kontaktów danego metakontaktu
 	
 	
 	Przyk³adowe dodanie metakontaktu mo¿e wygl±daæ nastêpuj±co:
@@ -346,9 +346,9 @@ metacontact
 	
 	Funkcje korzystaj±ce z metakontaktów to:
 	
-	  query <nazwa>		   rozpoczyna rozmowê
+	  query <nazwa>        rozpoczyna rozmowê
 	
-	  list <nazwa>		   pokazuje aktualny stan metakontaktu.%n
+	  list <nazwa>         pokazuje aktualny stan metakontaktu.%n
 
 on
 	parametry:  [opcje]
@@ -422,7 +422,7 @@ plugin
 	parametry:  [-|+][nazwa][opcje] [prio]
 	krotki opis: ³aduje lub usuwa rozszerzenie ekg2
 	
-	  -d, --default		ustawia domy¶lne priorytety pluginom
+	  -d, --default     ustawia domy¶lne priorytety pluginom
 	
 	Usuwa lub dodaje plugin ekg2. Drugi parametr pozwala ustawiæ priorytet
 	pluginu, co pozwala ustawiæ kolejno¶æ przetwarzania instrukcji przez
@@ -478,7 +478,7 @@ session
 	parametry:  [opcje]
 	krotki opis: zarz±dzanie sesjami
 	
-	 <uid>	  	informacje o sesji
+	 <uid>               informacje o sesji
 	
 	  -a, --add <uid>    tworzy now± sesjê
 	
@@ -498,7 +498,7 @@ session
 	
 	                     usuwa opcjê sesji
 	
-	 [-w, --sw] <uid> zmienia aktualn± sesjê
+	 [-w, --sw] <uid>    zmienia aktualn± sesjê
 	
 	
 	Pamiêtaj o tym, ¿e uid ma postaæ <prefix>:<uid> np. %Tgg:12345%n.
@@ -564,7 +564,7 @@ window
 	
 	  active               prze³±cza do pierwszego okna,
 	
-	       	               w którym co¶ siê dzieje
+	                       w którym co¶ siê dzieje
 	
 	  clear                czy¶ci aktualne okno
 	
