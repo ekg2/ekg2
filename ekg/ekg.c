@@ -452,24 +452,25 @@ static void handle_sigsegv()
 	fprintf(stderr,
 "\r\n"
 "\r\n"
-"*** Naruszenie ochrony pamiêci ***\r\n"
+"*** Segmentation violation detected ***\r\n"
 "\r\n"
-"Spróbujê zapisaæ ustawienia, ale nie obiecujê, ¿e cokolwiek z tego\r\n"
-"wyjdzie. Trafi± one do plików %s/config.%d,\r\n"
-"%s/config-<plugin>.%d oraz %s/userlist.%d\r\n"
+"The program will attempt to write its settings, but it is not\r\n"
+"guaranteed to succeed. They will be saved as\r\n"
+"%s/config.%d,  %s/config-<plugin>.%d\r\n"
+"and %s/userlist.%d\r\n"
 "\r\n"
-"Do pliku %s/debug.%d zapiszê ostatanie komunikaty\r\n"
-"z okna debugowania.\r\n"
+"Last messages from the debugging window will be saved to a file called\r\n"
+"%s/debug.%d.\r\n"
 "\r\n"
-"Je¶li zostanie utworzony plik %s/core.%d, spróbuj uruchomiæ\r\n"
-"polecenie:\r\n"
+"If a file called %s/core.%d will be created, try running the following\r\n"
+"command:\r\n"
 "\r\n"
 "    gdb %s %s/core.%d\r\n"
 "\n"
-"zanotowaæ kilka ostatnich linii, a nastêpnie zanotowaæ wynik polecenia\r\n"
-",,bt''. Dziêki temu autorzy dowiedz± siê, w którym miejscu wyst±pi³ b³±d\r\n"
-"i najprawdopodobniej pozwoli to unikn±æ tego typu sytuacji w przysz³o¶ci.\r\n"
-"Wiêcej szczegó³ów w dokumentacji, w pliku ,,gdb.txt''.\r\n"
+"note the last few lines, and then note the output from the ,,bt'' command.\r\n"
+"This will help the program authors find the location of the problem\r\n"
+"and most likely will help avoid such crashes in the future.\r\n"
+"More details can be found in the documentation, in the file ,,gdb.txt''.\r\n"
 "\r\n",
 config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir,(int) getpid(), argv0, config_dir, (int) getpid());
 
@@ -886,8 +887,13 @@ int main(int argc, char **argv)
 #ifdef HAVE_READLINE
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
 #endif
-	if (!have_plugin_of_class(PLUGIN_UI)) fprintf(stderr, "No UI-PLUGIN!\n");
-	else {
+	if (!have_plugin_of_class(PLUGIN_UI)) {
+		struct buffer *b;
+		for (b = buffer_debug.data; b; b = b->next)
+			fprintf(stderr, "%s\n", b->line);
+		fprintf(stderr, "\n\nNo UI-PLUGIN!\n");
+		return 1;
+	} else {
 		struct buffer *b;
 		for (b = buffer_debug.data; b; b = b->next)
 			print_window_w(window_debug, EKG_WINACT_NONE, b->target, b->line);

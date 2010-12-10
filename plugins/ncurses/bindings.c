@@ -33,6 +33,7 @@
 #include <ekg/metacontacts.h>
 #include <ekg/xmalloc.h>
 #include <ekg/debug.h>
+#include <ekg/completion.h>
 
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
@@ -40,7 +41,6 @@
 
 #include "ecurses.h"
 #include "bindings.h"
-#include "completion.h"
 #include "old.h"
 #include "contacts.h"
 
@@ -414,7 +414,7 @@ static BINDING_FUNCTION(binding_complete)
 			nline[j] = '\0';
 
 			debug("wcs-completion WC->MB (%d,%d) => (%d,%d) [%d;%d]\n", line_start, line_index, line_start_tmp, line_index_tmp, j, i);
-			ncurses_complete(&line_start_tmp, &line_index_tmp, nline);
+			ekg2_complete(&line_start_tmp, &line_index_tmp, nline, LINE_MAXLEN);
 
 			nlen = strlen(nline);
 
@@ -446,7 +446,7 @@ static BINDING_FUNCTION(binding_complete)
 			debug("wcs-completion MB->WC (%d,%d) => (%d,%d) [%d;%d]\n", line_start_tmp, line_index_tmp, line_start, line_index, j, i);
 			line[i] = '\0';
 #else
-			ncurses_complete(&line_start, &line_index, (char *) line);
+			ekg2_complete(&line_start, &line_index, (char *) line, LINE_MAXLEN);
 #endif
 	} else {
 		int i, count = 8 - (line_index % 8);

@@ -306,12 +306,13 @@ EXPORT int readline_plugin_init(int prio) {
 		w->priv_data = xmalloc(sizeof(readline_window_t));
 	
 	window_refresh();
+
+	rl_readline_name = "ekg2";
 	rl_initialize();
-	
+
 	rl_getc_function = my_getc;
 	rl_event_hook	 = my_loop;
-	rl_readline_name = "ekg2";
-	
+
 	rl_attempted_completion_function = (CPPFunction *) my_completion;
 	rl_completion_entry_function = (void*) empty_generator;
 
@@ -354,6 +355,8 @@ EXPORT int readline_plugin_init(int prio) {
 	ui_screen_width = screen_columns;
 	ui_screen_height = screen_lines;
 	ui_need_refresh = 0;
+
+	rl_parse_and_bind(xstrdup("set completion-ignore-case on"));
 
 	return 0;
 }

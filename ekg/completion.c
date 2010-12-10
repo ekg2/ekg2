@@ -30,21 +30,20 @@
 #  include "compat/scandir.h"
 #endif
 
-#include <ekg/commands.h>
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/events.h>
-#include <ekg/metacontacts.h>
-#include <ekg/stuff.h>
-#include <ekg/userlist.h>
-#include <ekg/vars.h>
-#include <ekg/xmalloc.h>
-
-#include "completion.h"
+#include "commands.h"
+#include "debug.h"
+#include "dynstuff.h"
+#include "events.h"
+#include "metacontacts.h"
+#include "stuff.h"
+#include "userlist.h"
+#include "vars.h"
+#include "xmalloc.h"
 
 /* nadpisujemy funkcjê xstrncasecmp() odpowiednikiem z obs³ug± polskich znaków */
 #define xstrncasecmp(x...) xstrncasecmp_pl(x)
 
+char **ekg2_completions = NULL;
 static char **completions = NULL;	/* lista dope³nieñ */
 static char *last_line = NULL;
 static char *last_line_without_complete = NULL;
@@ -234,6 +233,7 @@ static void plugin_generator(const char *text, int len)
 static void variable_generator(const char *text, int len)
 {
 	variable_t *v;
+
 	for (v = variables; v; v = v->next) {
 		if (*text == '-') {
 			if (!xstrncasecmp(text + 1, v->name, len - 1))
@@ -666,7 +666,7 @@ static struct {
 };
 
 /*
- * ncurses_complete()
+ * ekg2_complete()
  *
  * funkcja obs³uguj±ca dope³nianie klawiszem tab.
  * Dzia³anie:
@@ -684,7 +684,7 @@ static struct {
  *   podany wyraz ma zostañ "wsadzony", st±d konieczna jest tablica separatorów, tablica wszystkich wyrazów itd ...
  * - przeskakiwanie miêdzy dope³nieniami po drugim TABie
  */
-void ncurses_complete(int *line_index, char *line)
+void ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 {
 	char *start, **words, *separators;
 	char *cmd;
@@ -715,12 +715,7 @@ void ncurses_complete(int *line_index, char *line)
 				maxlen = compllen + 2;
 		}
 
-// #define WIDTH (window_current->width - 6)
-#define WIDTH 100
-#warning "WIDTH was: (window_current->width - 6), there are difficulties to get $COLUMNS && $LINES it in xchat"
-
-#if 1
-		cols = WIDTH / maxlen;
+		cols = (window_current->width - 6) / maxlen;
 		if (cols == 0)
 			cols = 1;
 
@@ -747,7 +742,6 @@ void ncurses_complete(int *line_index, char *line)
 			if (tmp[0])
 				print("none", tmp);
 		}
-#endif
 		
 		/* w³±czamy nastêpny etap dope³nienia - przeskakiwanie miêdzy dope³nianymi wyrazami */
 		continue_complete = 1;
@@ -758,6 +752,7 @@ void ncurses_complete(int *line_index, char *line)
 		last_line_without_complete = xstrdup(line);
 		xfree(tmp);
 
+		ekg2_completions = completions;
 		return;
 	}
 
@@ -934,9 +929,10 @@ void ncurses_complete(int *line_index, char *line)
 
 		if (send_nicks_count) {
 			char *nick = send_nicks[send_nicks_index++];
-			snprintf(line, COMPLETION_MAXLEN, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
+			snprintf(line, line_maxlen, (xstrchr(nick, ' ')) ? "%s\"%s\" " : "%s%s ", cmd, nick);
 		} else
-			snprintf(line, COMPLETION_MAXLEN, "%s", cmd);
+			snprintf(line, line_maxlen, "%s", cmd);
+		*line_start = 0;
 		*line_index = xstrlen(line);
 
 		array_free(completions);
@@ -944,6 +940,7 @@ void ncurses_complete(int *line_index, char *line)
 		xfree(start);
 		xfree(separators);
 		xfree(cmd);
+		ekg2_completions = completions;
 		return;
 	}
 	xfree(cmd);
@@ -954,16 +951,16 @@ void ncurses_complete(int *line_index, char *line)
 		if (start[0] != '/' && window_current && window_current->target) {
 			known_uin_generator(start, xstrlen(start));
 			if (completions) {
+				char completion_char = (config_completion_char && strlen(config_completion_char)) ? *config_completion_char : ':';
+				int nick_count = array_count(completions);
+
 				for (j = 0; completions[j]; j++) {
 					string_t s;
 	
-					if (!xstrchr(completions[j], ('"')) && !xstrchr(completions[j], ('\\')) && !xstrchr(completions[j], (' '))) {
+					if ((nick_count == 1) || (!xstrchr(completions[j], ('"')) && !xstrchr(completions[j], ('\\')) && !xstrchr(completions[j], (' ')))) {
 						s = string_init((""));
 						string_append(s, completions[j]);
-						if (config_completion_char && strlen(config_completion_char))
-							string_append_c(s, *config_completion_char);
-						else
-							string_append_c(s, (':'));
+						string_append_c(s, completion_char);
 						xfree(completions[j]);
 						completions[j] = string_free(s, 0);
 						continue;
@@ -971,7 +968,7 @@ void ncurses_complete(int *line_index, char *line)
 					s = string_init(("\""));
 					string_append(s, completions[j]);
 					string_append_c(s, ('\"'));
-					string_append_c(s, (':'));
+					string_append_c(s, completion_char);
 					xfree(completions[j]);
 					completions[j] = string_free(s, 0);
 				}
@@ -1131,7 +1128,7 @@ exact_match:
 		 * mo¿e nie za ³adne programowanie, ale skuteczne i w sumie jedyne w 100% spe³niaj±ce	
 		 * wymagania dope³niania (uwzglêdnianie cudzyws³owiów itp...)
 		 */
-		for (i=1; ; i++, common++) {
+		for (i=1; s1[common]; i++, common++) {
 			for (j=1; j < count; j++) {
 				char *s2 = completions[j];
 
@@ -1150,7 +1147,7 @@ exact_match:
 	
 		/* debug("common :%d\t\n", common); */
 
-		if (xstrlen(line) + common < COMPLETION_MAXLEN) {
+		if (xstrlen(line) + common < line_maxlen) {
 			line[0] = '\0';
 			for(i = 0; i < words_count; i++) {
 				if (i == word) {
@@ -1185,13 +1182,15 @@ cleanup:
 	array_free(words);
 	xfree(start);
 	xfree(separators);
+	ekg2_completions = completions;
 	return;
 }
 
-void ncurses_complete_clear()
+void ekg2_complete_clear()
 {
 	array_free(completions);
 	completions = NULL;
+	ekg2_completions = NULL;
 	continue_complete = 0;
 	continue_complete_count = 0;
 	xfree(last_line);
