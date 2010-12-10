@@ -100,7 +100,7 @@ DYNSTUFF_LIST_DECLARE_SORTED(ekg_resources, ekg_resource_t, userlist_resource_co
 	static __DYNSTUFF_DESTROY)		/* ekg_resources_destroy() */
 
 /* userlist: */
-static LIST_ADD_COMPARE(userlist_compare, userlist_t *) { return xstrcasecmp(data1->nickname, data2->nickname); }
+static LIST_ADD_COMPARE(userlist_compare, userlist_t *) { return xstrcoll(data1->nickname, data2->nickname); }
 static LIST_FREE_ITEM(userlist_free_item, userlist_t *) {
 	userlist_private_free(data);
 	private_items_destroy(&data->priv_list);
