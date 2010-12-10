@@ -2213,9 +2213,11 @@ static int
 gtk_xtext_render_flush(GtkXText * xtext, int x, int y, const unsigned char *str,
 		       int len, GdkGC * gc, int is_mb)
 {
-	int str_width, dofill;
-	GdkDrawable *pix = NULL;
-	int dest_x, dest_y;
+	int str_width, dofill = TRUE;
+
+#ifdef USE_DB
+	GdkDrawable *pix;
+#endif
 
 	if (xtext->dont_render || len < 1)
 		return 0;
@@ -2243,6 +2245,10 @@ gtk_xtext_render_flush(GtkXText * xtext, int x, int y, const unsigned char *str,
 #ifdef USE_DB
 	pix = gdk_pixmap_new(xtext->draw_buf, str_width, xtext->fontsize, xtext->depth);
 	if (pix) {
+		GdkRectangle clip;
+		GdkRectangle dest;
+		int dest_x, dest_y;
+
 #ifdef USE_XFT
 		XftDrawChange(xtext->xftdraw, GDK_WINDOW_XWINDOW(pix));
 #endif
@@ -2251,27 +2257,16 @@ gtk_xtext_render_flush(GtkXText * xtext, int x, int y, const unsigned char *str,
 
 		gdk_gc_set_ts_origin(xtext->bgc, xtext->ts_x - x, xtext->ts_y - dest_y);
 
-		x = 0;
-		y = xtext->font->ascent;
 		xtext->draw_buf = pix;
-	}
-#endif
 
-	dofill = TRUE;
+		/* backcolor is always handled by XDrawImageString */
+		if (!xtext->backcolor && xtext->pixmap) {
+			/* draw the background pixmap behind the text - CAUSES FLICKER HERE!! */
+			xtext_draw_bg(xtext, 0, 0, str_width, xtext->fontsize);
+			dofill = FALSE;	/* already drawn the background */
+		}
 
-	/* backcolor is always handled by XDrawImageString */
-	if (!xtext->backcolor && xtext->pixmap) {
-		/* draw the background pixmap behind the text - CAUSES FLICKER HERE!! */
-		xtext_draw_bg(xtext, x, y - xtext->font->ascent, str_width, xtext->fontsize);
-		dofill = FALSE;	/* already drawn the background */
-	}
-
-	backend_draw_text(xtext, dofill, gc, x, y, str, len, str_width, is_mb);
-
-#ifdef USE_DB
-	if (pix) {
-		GdkRectangle clip;
-		GdkRectangle dest;
+		backend_draw_text(xtext, dofill, gc, 0, xtext->font->ascent, str, len, str_width, is_mb);
 
 		gdk_gc_set_ts_origin(xtext->bgc, xtext->ts_x, xtext->ts_y);
 		xtext->draw_buf = GTK_WIDGET(xtext)->window;
@@ -2294,8 +2289,18 @@ gtk_xtext_render_flush(GtkXText * xtext, int x, int y, const unsigned char *str,
 					  dest.x - dest_x, dest.y - dest_y,
 					  dest.x, dest.y, dest.width, dest.height);
 		g_object_unref(pix);
-	}
+	} else
 #endif
+	{
+		/* backcolor is always handled by XDrawImageString */
+		if (!xtext->backcolor && xtext->pixmap) {
+			/* draw the background pixmap behind the text - CAUSES FLICKER HERE!! */
+			xtext_draw_bg(xtext, x, y - xtext->font->ascent, str_width, xtext->fontsize);
+			dofill = FALSE;	/* already drawn the background */
+		}
+
+		backend_draw_text(xtext, dofill, gc, x, y, str, len, str_width, is_mb);
+	}
 
 	if (xtext->underline) {
 #ifdef USE_XFT
@@ -2310,14 +2315,8 @@ dounder:
 		col.pixel = xtext->xft_fg->pixel;
 		gdk_gc_set_foreground(gc, &col);
 #endif
-		if (pix)
-			y = dest_y + xtext->font->ascent + 1;
-		else {
-			y++;
-			dest_x = x;
-		}
 		/* draw directly to window, it's out of the range of our DB */
-		gdk_draw_line(xtext->draw_buf, gc, dest_x, y, dest_x + str_width - 1, y);
+		gdk_draw_line(xtext->draw_buf, gc, x, y + 1, x + str_width - 1, y + 1);
 	}
 
 	return str_width;
