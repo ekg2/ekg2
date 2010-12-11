@@ -1,0 +1,6 @@
+ctrld_quits
+	type: bool
+	default value: 1
+	
+	if set, Ctrl-D in status window terminates ekg2.
+

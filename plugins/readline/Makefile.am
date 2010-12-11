@@ -1,4 +1,4 @@
-EXTRA_DIST = vars-pl.txt
+EXTRA_DIST = vars-pl.txt vars-en.txt
 
 lib_LTLIBRARIES = readline.la
 readline_la_SOURCES = main.c ui-readline.c ui-readline.h completion.c
