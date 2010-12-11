@@ -5,3 +5,9 @@ ctrld_quits
 	okre¶la, czy wci¶niêcie Ctrl-D w oknie statusu ma zakoñczyæ dzia³anie
 	programu.
 
+print_read_lines
+	typ: bool
+	domy¶lna warto¶æ: 0
+	
+	okre¶la, czy w oknie pomiêdzy innymi komunikatami i wypowiedziami maj±
+	pojawiaæ siê komendy i wypowiedzi wprowadzane przez u¿ytkownika.

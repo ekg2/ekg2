@@ -4,3 +4,9 @@ ctrld_quits
 	
 	if set, Ctrl-D in status window terminates ekg2.
 
+print_read_lines
+	type: bool
+	default value: 0
+	
+	if set to 1, all commands entered by user will be displayed in chat window among other messages.
+
