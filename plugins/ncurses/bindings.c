@@ -370,8 +370,50 @@ static BINDING_FUNCTION(binding_word_rubout)
 	line_index -= eaten;
 }
 
+static void show_completions() {
+	int maxlen = 0, cols, rows, i;
+	char *tmp;
+	int complcount = array_count(ekg2_completions);
+
+	for (i = 0; ekg2_completions[i]; i++) {
+		size_t compllen = xstrlen(ekg2_completions[i]);
+		if (compllen + 2 > maxlen)
+			maxlen = compllen + 2;
+	}
+
+	cols = (window_current->width - 6) / maxlen;
+	if (cols == 0)
+			cols = 1;
+
+	rows = complcount / cols + 1;
+
+	tmp = xmalloc((cols * maxlen + 2)*sizeof(char));
+
+	for (i = 0; i < rows; i++) {
+		int j;
+
+		tmp[0] = 0;
+		for (j = 0; j < cols; j++) {
+			int cell = j * rows + i;
+
+			if (cell < complcount) {
+				int k;
+
+				xstrcat(tmp, ekg2_completions[cell]);
+
+				for (k = xstrlen(ekg2_completions[cell]); k < maxlen; k++)
+					xstrcat(tmp, (" "));
+			}
+		}
+		if (tmp[0])
+			print("none", tmp);
+	}
+	xfree(tmp);
+}
+
 static BINDING_FUNCTION(binding_complete)
 {
+	int complete_result = 0;
 	if (!lines) {
 #if USE_UNICODE
 			int line_start_tmp, line_index_tmp;
@@ -414,7 +456,7 @@ static BINDING_FUNCTION(binding_complete)
 			nline[j] = '\0';
 
 			debug("wcs-completion WC->MB (%d,%d) => (%d,%d) [%d;%d]\n", line_start, line_index, line_start_tmp, line_index_tmp, j, i);
-			ekg2_complete(&line_start_tmp, &line_index_tmp, nline, LINE_MAXLEN);
+			complete_result = ekg2_complete(&line_start_tmp, &line_index_tmp, nline, LINE_MAXLEN);
 
 			nlen = strlen(nline);
 
@@ -446,8 +488,10 @@ static BINDING_FUNCTION(binding_complete)
 			debug("wcs-completion MB->WC (%d,%d) => (%d,%d) [%d;%d]\n", line_start_tmp, line_index_tmp, line_start, line_index, j, i);
 			line[i] = '\0';
 #else
-			ekg2_complete(&line_start, &line_index, (char *) line, LINE_MAXLEN);
+			complete_result =  ekg2_complete(&line_start, &line_index, (char *) line, LINE_MAXLEN);
 #endif
+			if (complete_result)
+				show_completions();
 	} else {
 		int i, count = 8 - (line_index % 8);
 

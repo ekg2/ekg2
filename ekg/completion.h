@@ -3,7 +3,7 @@
 
 extern char **ekg2_completions;
 
-void ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen);
+int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen);
 void ekg2_complete_clear();
 
 #endif

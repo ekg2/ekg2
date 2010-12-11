@@ -155,6 +155,47 @@ static GTK_BINDING_FUNCTION(key_action_history_down) {
 	return 2;
 }
 
+static void show_completions() {
+	int maxlen = 0, cols, rows, i;
+	char *tmp;
+	int complcount = array_count(ekg2_completions);
+
+	for (i = 0; ekg2_completions[i]; i++) {
+		size_t compllen = xstrlen(ekg2_completions[i]);
+		if (compllen + 2 > maxlen)
+			maxlen = compllen + 2;
+	}
+
+	cols = (window_current->width - 6) / maxlen;
+	if (cols == 0)
+			cols = 1;
+
+	rows = complcount / cols + 1;
+
+	tmp = xmalloc((cols * maxlen + 2)*sizeof(char));
+
+	for (i = 0; i < rows; i++) {
+		int j;
+
+		tmp[0] = 0;
+		for (j = 0; j < cols; j++) {
+			int cell = j * rows + i;
+
+			if (cell < complcount) {
+				int k;
+
+				xstrcat(tmp, ekg2_completions[cell]);
+
+				for (k = xstrlen(ekg2_completions[cell]); k < maxlen; k++)
+					xstrcat(tmp, (" "));
+			}
+		}
+		if (tmp[0])
+			print("none", tmp);
+	}
+	xfree(tmp);
+}
+
 static GTK_BINDING_FUNCTION(key_action_tab_comp) {
 	char buf[COMPLETION_MAXLEN];
 
@@ -173,7 +214,8 @@ static GTK_BINDING_FUNCTION(key_action_tab_comp) {
 		printf("key_action_tab_comp(), strlcpy() UUUUUUUCH!\n");
 
 	int junk = 0;
-	ekg2_complete(&junk, &cursor_pos, buf, COMPLETION_MAXLEN);
+	if (ekg2_complete(&junk, &cursor_pos, buf, COMPLETION_MAXLEN))
+		show_completions();
 
 	gtk_entry_set_text(GTK_ENTRY(wid), buf);
 	gtk_editable_set_position(GTK_EDITABLE(wid), cursor_pos);

@@ -684,7 +684,7 @@ static struct {
  *   podany wyraz ma zostañ "wsadzony", st±d konieczna jest tablica separatorów, tablica wszystkich wyrazów itd ...
  * - przeskakiwanie miêdzy dope³nieniami po drugim TABie
  */
-void ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
+int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 {
 	char *start, **words, *separators;
 	char *cmd;
@@ -705,44 +705,6 @@ void ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen
 	 * je¶li uzbierano ju¿ co¶ to próbujemy wy¶wietliæ wszystkie mo¿liwo¶ci
 	 */
 	if (completions && !continue_complete) {
-		int maxlen = 0, cols, rows;
-		char *tmp;
-		int complcount = array_count(completions);
-
-		for (i = 0; completions[i]; i++) {
-			size_t compllen = xstrlen(completions[i]);
-			if (compllen + 2 > maxlen)
-				maxlen = compllen + 2;
-		}
-
-		cols = (window_current->width - 6) / maxlen;
-		if (cols == 0)
-			cols = 1;
-
-		rows = complcount / cols + 1;
-
-		tmp = xmalloc((cols * maxlen + 2)*sizeof(char));
-
-		for (i = 0; i < rows; i++) {
-			int j;
-
-			tmp[0] = 0;
-			for (j = 0; j < cols; j++) {
-				int cell = j * rows + i;
-
-				if (cell < complcount) {
-					int k;
-
-					xstrcat(tmp, completions[cell]);
-
-					for (k = xstrlen(completions[cell]); k < maxlen; k++)
-						xstrcat(tmp, (" "));
-				}
-			}
-			if (tmp[0])
-				print("none", tmp);
-		}
-		
 		/* w³±czamy nastêpny etap dope³nienia - przeskakiwanie miêdzy dope³nianymi wyrazami */
 		continue_complete = 1;
 		continue_complete_count = 0;
@@ -750,10 +712,9 @@ void ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen
 		last_pos = *line_index;
 		xfree(last_line_without_complete);
 		last_line_without_complete = xstrdup(line);
-		xfree(tmp);
 
 		ekg2_completions = completions;
-		return;
+		return 1;
 	}
 
 	/* je¿eli przeskakujemy to trzeba wróciæ z lini± do poprzedniego stanu */
@@ -941,7 +902,7 @@ void ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen
 		xfree(separators);
 		xfree(cmd);
 		ekg2_completions = completions;
-		return;
+		return 0;
 	}
 	xfree(cmd);
 
@@ -1186,7 +1147,7 @@ cleanup:
 	xfree(start);
 	xfree(separators);
 	ekg2_completions = completions;
-	return;
+	return 0;
 }
 
 void ekg2_complete_clear()
