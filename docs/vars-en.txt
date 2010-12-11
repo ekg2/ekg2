@@ -1,8 +1,8 @@
 dcc_dir
-        type: text
-        default value: none
-
-        Set catalogue, in which files will be saved.
+	type: text
+	default value: none
+	
+	Set catalogue, in which files will be saved.
 
 display_crap
 	type: bool
