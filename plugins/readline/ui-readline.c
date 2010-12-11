@@ -334,9 +334,13 @@ char *my_readline()
 	res = readline((char *) prompt);
 	in_readline = 0;
 
-	tmp = saprintf("%s%s\n", prompt, (res) ? res : "");
-	window_write(window_current->id, tmp);
-	xfree(tmp);
+	if (config_print_line) {
+		tmp = saprintf("%s%s\n", prompt, (res) ? res : "");
+		window_write(window_current->id, tmp);
+		xfree(tmp);
+	} else {
+		window_refresh();
+	}
 
 	return res;
 }

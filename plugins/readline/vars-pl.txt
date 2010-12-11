@@ -7,7 +7,7 @@ ctrld_quits
 
 print_read_lines
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domy¶lna warto¶æ: 1
 	
 	okre¶la, czy w oknie pomiêdzy innymi komunikatami i wypowiedziami maj±
 	pojawiaæ siê komendy i wypowiedzi wprowadzane przez u¿ytkownika.

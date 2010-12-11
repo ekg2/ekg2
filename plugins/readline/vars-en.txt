@@ -6,7 +6,7 @@ ctrld_quits
 
 print_read_lines
 	type: bool
-	default value: 0
+	default value: 1
 	
 	if set to 1, all commands entered by user will be displayed in chat window among other messages.
 

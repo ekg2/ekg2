@@ -32,6 +32,7 @@ static int readline_theme_init();
 PLUGIN_DEFINE(readline, PLUGIN_UI, readline_theme_init);
 
 int config_ctrld_quits = 1;
+int config_print_line = 1;
 
 /*
  * sigint_handler() //XXX może wywalać 
@@ -299,6 +300,7 @@ EXPORT int readline_plugin_init(int prio) {
 	query_connect_id(&readline_plugin, UI_LOOP, ekg2_readline_loop, NULL);
 
 	variable_add(&readline_plugin, ("ctrld_quits"),  VAR_BOOL, 1, &config_ctrld_quits, NULL, NULL, NULL);
+	variable_add(&readline_plugin, "print_read_lines",  VAR_BOOL, 1, &config_print_line, NULL, NULL, NULL);
 
 	watch_add(&readline_plugin, 0, WATCH_READ, readline_watch_stdin, NULL);
 

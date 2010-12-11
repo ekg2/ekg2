@@ -6,6 +6,7 @@
 #define readline_window(w) ((readline_window_t *) w->priv_data)
 
 extern int config_ctrld_quits;
+extern int config_print_line;
 
 typedef struct {
 	char *line[MAX_LINES_PER_SCREEN];
