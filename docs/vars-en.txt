@@ -2,13 +2,13 @@ dcc_dir
 	type: text
 	default value: none
 	
-	Set catalogue, in which files will be saved.
+	Set directory, in which files will be saved.
 
 display_crap
 	type: bool
 	default value: 1
 	
-	Defines if information which weren't connected with interlocutor will be displayed in chat window. 
+	Defines whether information which weren't connected with interlocutor will be displayed in chat window. 
 	If it's 0, in chat window information only about interlocutor status are displayed.
 
 display_notify
@@ -32,7 +32,7 @@ history_savedups
 	type: integer
 	default value: 1
 
-	If set to 0, don't save lines matching the previous history entry
+	If set to 0, don't save lines matching the previous history entry.
 
 send_white_lines
 	type: bool
