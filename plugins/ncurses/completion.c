@@ -950,24 +950,27 @@ void ncurses_complete(int *line_start, int *line_index, char *line)
 		if (start[0] != '/' && window_current && window_current->target) {
 			known_uin_generator(start, xstrlen(start));
 			if (completions) {
-				char completion_char = (config_completion_char && strlen(config_completion_char)) ? *config_completion_char : ':';
+				char *completion_char = (config_completion_char && *config_completion_char) ? config_completion_char : NULL;
 				int nick_count = array_count(completions);
 
 				for (j = 0; completions[j]; j++) {
 					string_t s;
 	
 					if ((nick_count == 1) || (!xstrchr(completions[j], ('"')) && !xstrchr(completions[j], ('\\')) && !xstrchr(completions[j], (' ')))) {
-						s = string_init((""));
-						string_append(s, completions[j]);
-						string_append_c(s, completion_char);
-						xfree(completions[j]);
-						completions[j] = string_free(s, 0);
+						if (completion_char) {
+							s = string_init((""));
+							string_append(s, completions[j]);
+							string_append(s, completion_char);
+							xfree(completions[j]);
+							completions[j] = string_free(s, 0);
+						}
 						continue;
 					}
 					s = string_init(("\""));
 					string_append(s, completions[j]);
 					string_append_c(s, ('\"'));
-					string_append_c(s, completion_char);
+					if (completion_char)
+						string_append(s, completion_char);
 					xfree(completions[j]);
 					completions[j] = string_free(s, 0);
 				}

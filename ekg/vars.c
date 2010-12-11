@@ -154,6 +154,7 @@ void variable_init() {
  */
 void variable_set_default() {
 	xfree(config_timestamp);
+	xfree(config_completion_char);
 	xfree(config_display_color_map);
 	xfree(config_subject_prefix);
 	xfree(config_subject_reply_prefix);
@@ -168,6 +169,7 @@ void variable_set_default() {
 	config_dcc_dir = NULL;
 
 	config_timestamp = xstrdup("\\%H:\\%M:\\%S");
+	config_completion_char = xstrdup(":");
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
 	config_subject_reply_prefix = xstrdup("Re: ");

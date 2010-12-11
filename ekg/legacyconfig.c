@@ -28,7 +28,7 @@
  */
 
 void config_upgrade() {
-	const int current_config_version = 8;
+	const int current_config_version = 9;
 
 #if ! USE_UNICODE
 	if (!xstrcasecmp(config_console_charset, "UTF-8")) {
@@ -100,6 +100,10 @@ void config_upgrade() {
 			print("config_upgrade_minor",
 				_("Jabber variables has ben changed from 'jabber:' to 'xmpp:'. " \
 				"Your config couldn't be updated automagically, so you must set it by hand."), "2010-08-17");
+		case 9:
+			print("config_upgrade_minor", _("Default config_completion_char is \":\""), "2010-12-11");
+			if (!config_completion_char)
+				config_completion_char = xstrdup(":");
 	}
 
 	config_version = current_config_version;
