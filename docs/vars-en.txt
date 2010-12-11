@@ -1,8 +1,110 @@
+auto_save
+	type: integer
+	default value: 0
+	
+	*not translated yet*
+
+auto_user_add
+	type: bool
+	default value: 0
+	
+	*not translated yet*
+
+away_reason
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+back_reason
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+beep
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+beep_chat
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+beep_msg
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+beep_notify
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+completion_char
+	type: text
+	default value: ":"
+	
+	*not translated yet*
+
+completion_notify
+	type: integer
+	default value: 1
+	
+	*not translated yet*
+
+console_charset
+	type: text
+	default value: none
+	
+	*not translated yet*
+
 dcc_dir
 	type: text
 	default value: none
 	
 	Set directory, in which files will be saved.
+
+debug
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+default_status_window
+	type: bool
+	default value: 0
+	
+	*not translated yet*
+
+display_ack
+	type: integer
+	default value: 12
+	
+	*not translated yet*
+
+display_blinking
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+display_color
+	type: integer
+	default value: 1
+	
+	*not translated yet*
+
+display_color_map
+	type: text
+	default value: "nTgGbBrR"
+	
+	*not translated yet*
 
 display_crap
 	type: bool
@@ -10,6 +112,12 @@ display_crap
 	
 	Defines whether information which weren't connected with interlocutor will be displayed in chat window. 
 	If it's 0, in chat window information only about interlocutor status are displayed.
+
+display_day_changed
+	type: bool
+	default value: 1
+	
+	*not translated yet*
 
 display_notify
 	type: integer
@@ -21,6 +129,30 @@ display_notify
 	displayed. A session variable with the same name has a higher priority
 	and overrides this global one (unless it is set to -1).
 
+display_sent
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+display_welcome
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+emoticons
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+events_delay
+	type: integer
+	default value: 3
+	
+	*not translated yet*
+
 exit_exec
 	type: text
 	default value: none
@@ -28,11 +160,95 @@ exit_exec
 	Command executed on EKG2 exit, just before exit(). It'll replace EKG2
 	in process table, so ekg2 will return its' exit code.
 
+expert_mode
+	type: integer
+	default value: 0
+	
+	*not translated yet*
+
 history_savedups
 	type: integer
 	default value: 1
-
+	
 	If set to 0, don't save lines matching the previous history entry.
+
+keep_reason
+	type: integer
+	default value: 1
+	
+	*not translated yet*
+
+last
+	type: integer
+	default value: 0
+	
+	*not translated yet*
+
+last_size
+	type: integer
+	default value: 0
+	
+	*not translated yet*
+
+lastlog_display_all
+	type: integer
+	default value: 0
+	
+	*not translated yet*
+
+lastlog_matchcase
+	type: bool
+	default value: 0
+	
+	*not translated yet*
+
+lastlog_noitems
+	type: bool
+	default value: 0
+	
+	*not translated yet*
+
+make_window
+	type: integer
+	default value: 2
+	
+	*not translated yet*
+
+mesg
+	type: integer
+	default value: 2
+	
+	*not translated yet*
+
+nickname
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+query_commands
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+quit_reason
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+save_password
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+save_quit
+	type: integer 
+	default value: 1
+	
+	*not translated yet*
 
 send_white_lines
 	type: bool
@@ -42,6 +258,12 @@ send_white_lines
 	to 0, ekg2 won't send such messages. If set to 1, ekg2 will send them.
 	Enable it if you are whitespace programmer. Otherwise it is save to
 	set it to 0.
+
+session_default
+	type: text
+	default value: none
+	
+	*not translated yet*
 
 session_locks
 	type: int
@@ -56,11 +278,107 @@ session_locks
 	
 		2 - file existence-based locks (simple).
 
+sessions_save
+	type: bool
+	default value: 0
+	
+	*not translated yet*
+
+slash_messages
+	type: bool
+	default value: 1
+	
+	*not translated yet*
+
+sort_windows
+	type: bool
+	default value: 0
+	
+	*not translated yet*
+
+sound_app
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+sound_chat_file
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+sound_mail_file
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+sound_msg_file
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+sound_notify_file
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+sound_sysmsg_file
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+speech_app
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+subject_prefix
+	type: text
+	default value: "## "
+	
+	*not translated yet*
+
 subject_reply_prefix
 	type: text
 	default value: 'Re: '
 	
 	Prefix used in subjects of message replies.
+
+tab_command
+	type: text
+	default value: "chat"
+	
+	*not translated yet*
+
+theme
+	type: text
+	default value: none
+	
+	*not translated yet*
+
+time_deviation
+	type: integer
+	default value: 300
+	
+	*not translated yet*
+
+timestamp
+	type: text
+	default value: "\%H:\%M:\%S"
+	
+	*not translated yet*
+
+timestamp_show
+	type: bool
+	default value: 1
+	
+	*not translated yet*
 
 window_session_allow
 	type: text
@@ -76,4 +394,15 @@ window_session_allow
 		2 - status & query windows,
 	
 		4 - status & query windows, but first change to status window.
+
+windows_layout
+	type: text
+	
+	*not translated yet*
+
+windows_save
+	type: bool
+	default value: 0
+	
+	*not translated yet*
 
