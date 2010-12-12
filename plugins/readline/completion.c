@@ -7,6 +7,7 @@
 #	include <readline.h>
 #endif
 
+#include <ekg/debug.h>
 #include <ekg/completion.h>
 #include <ekg/dynstuff.h>
 #include <ekg/strings.h>
@@ -54,6 +55,22 @@ char **my_completion(char *text, int start, int end) {
 	xstrcpy(buffer, rl_line_buffer);
 
 	if ((in_quote = (start && buffer[start-1] == '"'))) start--;
+
+	char *p1, *p2;
+
+	debug("1: buf=%s, start=%i, end=%i\n", buffer, start, end);
+	for (p1 = p2 = buffer; *p1; p1++) {
+		*p1 = *p2;
+		if(*p2) p2++;
+		if (p1 < buffer+end) if (*p1 == ' ') {
+			while (*(p2) == ' ') {
+				if (p1 <= buffer+start) start--;
+				end--;
+				p2++;
+			}
+		}
+	}
+	debug("2: buf=%s, start=%i, end=%i\n", buffer, start, end);
 
 	ekg2_complete(&start, &end, buffer, RL_LINE_MAXLEN);
 
