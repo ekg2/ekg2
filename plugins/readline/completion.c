@@ -62,14 +62,12 @@ char **my_completion(char *text, int start, int end) {
 	 * The following loop performs `s/ +/ /g` on `buffer[0:end]` and adjusts
 	 * `start` and `end` variables accordingly. */
 	for (p1 = p2 = buffer; *p1; p1++) {
-		*p1 = *p2;
-		if(*p2) p2++;
-		if (p1 < buffer+end) if (*p1 == ' ') {
-			while (*(p2) == ' ') {
-				if (p1 <= buffer+start) start--;
-				end--;
-				p2++;
-			}
+		*p1 = *p2++;
+		if ((*p1 != ' ') || (p1 >= buffer+end)) continue;
+		while (*(p2) == ' ') {
+			start--;
+			end--;
+			p2++;
 		}
 	}
 
