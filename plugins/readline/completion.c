@@ -58,7 +58,9 @@ char **my_completion(char *text, int start, int end) {
 
 	char *p1, *p2;
 
-	debug("1: buf=%s, start=%i, end=%i\n", buffer, start, end);
+	/* Multiple spaces confuse `ekg2_complete`. Remove them.
+	 * The following loop performs `s/ +/ /g` on `buffer[0:end]` and adjusts
+	 * `start` and `end` variables accordingly. */
 	for (p1 = p2 = buffer; *p1; p1++) {
 		*p1 = *p2;
 		if(*p2) p2++;
@@ -70,7 +72,6 @@ char **my_completion(char *text, int start, int end) {
 			}
 		}
 	}
-	debug("2: buf=%s, start=%i, end=%i\n", buffer, start, end);
 
 	ekg2_complete(&start, &end, buffer, RL_LINE_MAXLEN);
 
