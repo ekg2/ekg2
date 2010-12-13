@@ -71,19 +71,21 @@ static void sigwinch_handler()
 
 static int readline_theme_init() {
 #ifndef NO_DEFAULT_THEME
-	/* prompty dla ui-readline */
-	format_add("readline_prompt", "% ", 1);
-	format_add("readline_prompt_away", "/ ", 1);
-	format_add("readline_prompt_invisible", ". ", 1);
-	format_add("readline_prompt_query", "%1> ", 1);
-	format_add("readline_prompt_win", "%1%% ", 1);
-	format_add("readline_prompt_away_win", "%1/ ", 1);
-	format_add("readline_prompt_invisible_win", "%1. ", 1);
-	format_add("readline_prompt_query_win", "%2:%1> ", 1);
-	format_add("readline_prompt_win_act", "%1 (act/%2)%% ", 1);
-	format_add("readline_prompt_away_win_act", "%1 (act/%2)/ ", 1);
-	format_add("readline_prompt_invisible_win_act", "%1 (act/%2). ", 1);
-	format_add("readline_prompt_query_win_act", "%2:%1 (act/%3)> ", 1);
+	/* ui-readline prompts*/
+	/* session, window, [act], [query] */
+
+	format_add("rl_prompt",			"(%1)[%2]%% ", 1);
+	format_add("rl_prompt_act",		"(%1)[%2] (act/%3)%% ", 1);
+
+	format_add("rl_prompt_away",		"(%1)[%2]/ ", 1);
+	format_add("rl_prompt_away_act",	"(%1)[%2] (act/%3)/ ", 1);
+
+	format_add("rl_prompt_invisible",	"(%1)[%2]. ", 1);
+	format_add("rl_prompt_invisible_act",	"(%1)[%2] (act/%3). ", 1);
+
+	format_add("rl_prompt_query",		"(%1)[%2]:%3> ", 1);
+	format_add("rl_prompt_query_act", 	"(%1)[%2]:%4 (act/%3)> ", 1);
+
 	format_add("readline_more", _("-- Press Enter to continue or Ctrl-D to break --"), 1);
 #endif
 	return 0;

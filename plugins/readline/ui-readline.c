@@ -260,48 +260,39 @@ const char *current_prompt()
 {
 	static char buf[80];
 	const char *prompt = buf;
-	int count = LIST_COUNT2(windows);
-	char *tmp, *act = window_activity();
-
-	if (window_current->target) {
-		if (count > 1 || window_current->id != 1) {
-			if (act) {
-				tmp = format_string(format_find("readline_prompt_query_win_act"), window_current->target, itoa(window_current->id), act);
-				xfree(act);
-			} else
-				tmp = format_string(format_find("readline_prompt_query_win"), window_current->target, itoa(window_current->id));
-		} else
-			tmp = format_string(format_find("readline_prompt_query"), window_current->target, NULL);
-		strlcpy(buf, tmp, sizeof(buf));
-		xfree(tmp);
-	} else {
-		char *format_win = "readline_prompt_win", *format_nowin = "readline_prompt", *format_win_act = "readline_prompt_win_act";
-		if (/* GG_S_B(config_status) */ 1) {
-			format_win = "readline_prompt_away_win";
-			format_nowin = "readline_prompt_away";
-			format_win_act = "readline_prompt_away_win_act";
-		}
-
-		if (/* GG_S_I(config_status)*/ 0) {
-			format_win = "readline_prompt_invisible_win";
-			format_nowin = "readline_prompt_invisible";
-			format_win_act = "readline_prompt_invisible_win_act";
-		}
-
-		if (count > 1 || window_current->id != 1) {
-			if (act) {
-				tmp = format_string(format_find(format_win_act), itoa(window_current->id), act);
-				xfree(act);
-			} else
-				tmp = format_string(format_find(format_win), itoa(window_current->id));
-			strlcpy(buf, tmp, sizeof(buf));
-			xfree(tmp);
-		} else
-			strlcpy(buf, format_find(format_nowin), sizeof(buf));
-	}
+	session_t *s;
+	char *tmp, *act, *sid;
+	char *format, *format_act;
 
 	if (no_prompt)
-		prompt = "";
+		return "";
+
+	s = session_current;
+	sid = s ? (s->alias?s->alias:s->uid) : "";
+
+	if (window_current->id > 1) {
+		format		= "rl_prompt_query";
+		format_act	= "rl_prompt_query_act";
+	} else if (s && (s && s->status == EKG_STATUS_INVISIBLE)) {
+		format		= "rl_prompt_invisible";
+		format_act	= "rl_prompt_invisible_act";
+	} else if (s && (s->status < EKG_STATUS_AVAIL)) {
+		format		= "rl_prompt_away";
+		format_act	= "rl_prompt_away_act";
+	} else {
+		format		= "rl_prompt";
+		format_act	= "rl_prompt_act";
+	}
+
+	act = window_activity();
+	if (act)
+		tmp = format_string(format_find(format_act), sid, itoa(window_current->id), act, window_current->target);
+	else
+		tmp = format_string(format_find(format), sid, itoa(window_current->id), window_current->target);
+
+	strlcpy(buf, tmp, sizeof(buf));
+	xfree(tmp);
+	xfree(act);
 
 	return prompt;
 }
