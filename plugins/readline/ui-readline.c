@@ -380,22 +380,20 @@ int ui_readline_loop()
 		rl_bind_key(9, rl_insert);
 
 		while ((line = my_readline())) {
-			if (!xstrcmp(line, ".")) {
-				xfree(line);
-				return 1;
-			}
+			if (!xstrcmp(line, "."))
+				break;
 			string_append(s, line);
 			string_append(s, "\r\n");
 			xfree(line);
 		}
 
 		rl_bind_key(9, rl_complete);
-
 		no_prompt = 0;
 
-		if (!line) {
-			printf("\n");
+		if (line) {
 			string_free(s, 1);
+			xfree(line);
+			return 1;
 		}
 
 		line = string_free(s, 0);
