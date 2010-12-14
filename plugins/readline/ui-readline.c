@@ -117,6 +117,13 @@ int rl_set_key(const char *key, void *function, void *keymap)
 }
 #endif
 
+static void set_prompt(const char *prompt) {
+#ifdef HAVE_RL_SET_PROMPT
+	rl_set_prompt((char *)prompt);
+#else
+	rl_expand_prompt((char *)prompt);
+#endif
+}
 
 /*
  * my_getc()
@@ -157,15 +164,14 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 
 		string_append(s, "\033[0m");
 		string_append(s, buf);
-		string_append(s, " ");
+		string_append_c(s, ' ');
 		
 		while (*p) {
+			string_append_c(s, *p);
 			if (*p == '\n' && *(p + 1)) {
-				string_append_c(s, '\n');
 				string_append(s, buf);
-			} else
-				string_append_c(s, *p);
-
+				string_append_c(s, ' ');
+			}
 			p++;
 		}
 
@@ -193,11 +199,7 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 
 		old_prompt = xstrdup(rl_prompt);
 		rl_end = 0;
-#ifdef HAVE_RL_SET_PROMPT
-/*		rl_set_prompt(NULL); */
-#else
-/*		rl_expand_prompt(NULL); */
-#endif
+/*		set_prompt(NULL);*/
 		rl_redisplay();
 		printf("\r");
 		for (i = 0; i < xstrlen(old_prompt); i++)
@@ -215,12 +217,9 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 			char *tmp;
 			
 			in_readline++;
-/*		rl_set_prompt(NULL); */
-#ifdef HAVE_RL_SET_PROMPT
-			rl_set_prompt((char *) prompt);
-#else
-			rl_expand_prompt((char *) prompt);
-#endif
+
+			set_prompt(prompt);
+
 			pager_lines = -1;
 			tmp = readline((char *) prompt);
 			in_readline--;
@@ -238,11 +237,7 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 	/* je¶li jeste¶my w readline, poka¿ z powrotem prompt */
 	if (in_readline) {
 		rl_end = old_end;
-#ifdef HAVE_RL_SET_PROMPT
-		rl_set_prompt(old_prompt);
-#else
-		rl_expand_prompt(old_prompt);
-#endif
+		set_prompt(old_prompt);
 		xfree(old_prompt);
 		rl_forced_update_display();
 	}
@@ -317,11 +312,7 @@ char *my_readline()
 	char *res, *tmp;
 
 	in_readline = 1;
-#ifdef HAVE_RL_SET_PROMPT
-	rl_set_prompt(prompt);
-#else
-	rl_expand_prompt(prompt);
-#endif
+	set_prompt(prompt);
 	res = readline((char *) prompt);
 	in_readline = 0;
 
@@ -347,27 +338,24 @@ int ui_readline_loop()
 	char *line = my_readline();
 	char *p;
 
-	/* je¶li wci¶niêto Ctrl-D i jeste¶my w query, wyjd¼my */
-	if (!line && window_current->target) {
-//		ui_event("command", 0, "query", NULL); /* dark */
-	}
-
-	/* je¶li wci¶niêto Ctrl-D, to zamknij okienko */
-	if (!line && window_current->id != 1) {
-		window_kill(window_current);
-		return 1;
-	}
-
-	if (!line && window_current->id == 1) {
-		if (config_ctrld_quits)	{
-			return 0;
-		} else {
-			printf("\n");
+	if (!line) {
+		/* Ctrl-D handler */
+		if (window_current->id == 0) {			/* debug window */
+			window_switch(1);
+		} else if (window_current->id == 1) {		/* status window */
+			if (config_ctrld_quits)	{
+				return 0;
+			} else {
+				printf("\n");
+			}
+		} else if (window_current->id > 1) {		/* query window */
+			window_kill(window_current);
 		}
 		return 1;
 	}
 
 	if (xstrlen(line) > 0 && line[xstrlen(line) - 1] == '\\') {
+		/* multi line handler */
 		string_t s = string_init(NULL);
 
 		line[xstrlen(line) - 1] = 0;
@@ -420,15 +408,13 @@ int ui_readline_loop()
  *
  * XXX podpi±æ pod Ctrl-L.
  */
-int window_refresh()
-{
-	int i;
+int window_refresh() {
+	char **p;
 
 	printf("\033[H\033[J"); /* XXX */
 
-	for (i = 0; i < MAX_LINES_PER_SCREEN; i++)
-		if (readline_current->line[i])
-			printf("%s", readline_current->line[i]);
+	for (p = readline_current->line; *p; p++)
+		printf("%s", *p);
 
 	return 0;
 }
@@ -450,24 +436,19 @@ int window_write(int id, const char *line)
 	/* je¶li ca³y bufor zajêty, zwolnij pierwsz± liniê i przesuñ do góry */
 	if (r->line[MAX_LINES_PER_SCREEN - 1]) {
 		xfree(r->line[0]);
-		for (i = 1; i < MAX_LINES_PER_SCREEN; i++)
-			r->line[i - 1] = r->line[i];
-		r->line[MAX_LINES_PER_SCREEN - 1] = NULL;
+		memmove(&(r->line[0]), &(r->line[1]), sizeof(char *) * (MAX_LINES_PER_SCREEN - 1));
+		r->line[MAX_LINES_PER_SCREEN - 1] = xstrdup(line);
+	} else {
+		/* znajd¼ pierwsz± woln± liniê i siê wpisz. */
+		for (i = 0; i < MAX_LINES_PER_SCREEN; i++)
+			if (!r->line[i]) {
+				r->line[i] = xstrdup(line);
+				break;
+			}
 	}
 
-	/* znajd¼ pierwsz± woln± liniê i siê wpisz. */
-	for (i = 0; i < MAX_LINES_PER_SCREEN; i++)
-		if (!r->line[i]) {
-			r->line[i] = xstrdup(line);
-			break;
-		}
-
 	if (w != window_current) {
-#ifdef HAVE_RL_SET_PROMPT
-		rl_set_prompt((char *) current_prompt());
-#else
-		rl_expand_prompt((char *) current_prompt());
-#endif
+		set_prompt(current_prompt());
 		rl_redisplay();
 	}
 	
@@ -476,12 +457,7 @@ int window_write(int id, const char *line)
 
 #if 0 /* TODO */
 	/* nowe okno w == window_current ? */ {
-#ifdef HAVE_RL_SET_PROMPT
-		rl_set_prompt((char *) current_prompt());
-#else
-		rl_expand_prompt((char *) current_prompt());
-#endif
-		
+		set_prompt(current_prompt());
 #endif
 
 /*
@@ -666,4 +642,3 @@ int bind_sequence(const char *seq, const char *command, int quiet)
 
 	return 1;
 }
-

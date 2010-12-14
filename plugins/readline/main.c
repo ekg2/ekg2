@@ -104,7 +104,6 @@ static QUERY(readline_ui_window_kill) { /* window_free */
 
 	for (i = 0; i < MAX_LINES_PER_SCREEN; i++) {
 		xfree(r->line[i]);
-		r->line[i] = NULL;
 	}
 	xfree(r);
 	w->priv_data = NULL;
