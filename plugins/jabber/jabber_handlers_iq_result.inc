@@ -571,7 +571,11 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 			const char *authval;
 			xmlnode_t *group;
 
-			u = userlist_add(s, uid, nickname); 
+			u = userlist_find(s, uid);
+			if (u && xstrcmp(u->nickname, nickname))
+				query_emit_id(NULL, USERLIST_RENAMED, &nickname, &(u->nickname));
+			else
+				u = userlist_add(s, uid, nickname); 
 
 			if ((authval = jabber_attr(item->atts, "subscription"))) {
 				jabber_userlist_private_t *up = jabber_userlist_priv_get(u);
