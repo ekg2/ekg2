@@ -109,7 +109,7 @@ static QUERY(readline_ui_window_kill) { /* window_free */
 }
 
 static QUERY(readline_ui_window_refresh) {
-
+	window_refresh();
 	return 0;
 }
 
@@ -294,6 +294,7 @@ EXPORT int readline_plugin_init(int prio) {
 	query_connect_id(&readline_plugin, UI_WINDOW_KILL, readline_ui_window_kill, NULL);
 	query_connect_id(&readline_plugin, UI_WINDOW_PRINT, readline_ui_window_print, NULL);
 	query_connect_id(&readline_plugin, UI_WINDOW_REFRESH, readline_ui_window_refresh, NULL);
+	query_connect_id(&readline_plugin, UI_REFRESH, readline_ui_window_refresh, NULL);
 	query_connect_id(&readline_plugin, UI_WINDOW_CLEAR, readline_ui_window_clear, NULL);
 	query_connect_id(&readline_plugin, VARIABLE_CHANGED, readline_variable_changed, NULL);
 	query_connect_id(&readline_plugin, UI_LOOP, ekg2_readline_loop, NULL);
