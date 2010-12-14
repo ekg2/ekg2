@@ -26,7 +26,7 @@ OUTPUT:
 
 void command_bind(char *command, char *handler)
 CODE:
-        perl_command_bind(command, NULL, NULL, handler);
+        perl_command_bind(command, "?", NULL, handler);
 	
 void command_bind_ext(char *command, char *params, char *poss, char *handler)
 CODE:

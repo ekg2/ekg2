@@ -373,11 +373,7 @@ void *perl_handler_bind(char *query_name, char *handler)
 
 void *perl_command_bind(char *command, char *params, char *poss, char *handler)
 {
-#ifdef SCRIPTS_NEW
 	return script_command_bind(&perl_lang, perl_caller(), command, params, poss, xstrdup(handler));
-#else
-	return script_command_bind(&perl_lang, perl_caller(), command, xstrdup(handler));
-#endif
 }
 
 int perl_finalize()

@@ -107,7 +107,7 @@ static VALUE ruby_command_bind(int argc, VALUE *argv, VALUE self) {
 	Check_Type(argv[0], T_STRING);
 	Check_Type(argv[1], T_STRING);
 
-	script_command_bind(&ruby_lang, scr, RSTRING(argv[0])->ptr, xstrdup(RSTRING(argv[1])->ptr));	/* XXX, memleak */
+	script_command_bind(&ruby_lang, scr, RSTRING(argv[0])->ptr, "?", NULL, xstrdup(RSTRING(argv[1])->ptr));	/* XXX, memleak */
 
 	return Qnil;
 }
