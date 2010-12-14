@@ -598,10 +598,10 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 	return tmp;
 }
 
-script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, void *handler) 
+script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, char *params, char *possibilities, void *handler) 
 {
 	SCRIPT_BIND_HEADER(script_command_t);
-	temp->self = command_add(NULL, command, ("?"), script_command_handlers, COMMAND_ISSCRIPT, NULL);
+	temp->self = command_add(NULL, command, params, script_command_handlers, COMMAND_ISSCRIPT, possibilities);
 	SCRIPT_BIND_FOOTER(script_commands);
 }
 

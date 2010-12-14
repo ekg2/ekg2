@@ -247,11 +247,8 @@ PyObject *ekg_cmd_command_bind(PyObject * self, PyObject * args)
 	scr = python_find_script(module);
 
 	debug("[python] binding command %s to python function\n", bind_command);
-#ifdef SCRIPTS_NEW
-	script_command_bind(&python_lang, scr, bind_command, NULL, NULL, callback);
-#else
-	script_command_bind(&python_lang, scr, bind_command, callback);
-#endif
+
+	script_command_bind(&python_lang, scr, bind_command, "?", NULL, callback);
 
 	Py_INCREF(Py_None);
 	return Py_None;

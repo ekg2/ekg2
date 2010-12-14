@@ -198,7 +198,7 @@ int script_timer_unbind(script_timer_t *stimer, int free);
 int script_var_unbind(script_var_t *data, int free);
 int script_watch_unbind(script_watch_t *temp, int free);
 
-script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, void *handler);
+script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, char *params, char *possibilities, void *handler);
 script_timer_t *script_timer_bind(scriptlang_t *s, script_t *scr, int freq, void *handler);
 script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, void *handler);
 script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *value, void *handler);
