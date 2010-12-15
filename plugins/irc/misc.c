@@ -1723,15 +1723,32 @@ IRC_COMMAND(irc_c_mode)
 				mode_d++;
 
 	for (t=param[3], k=4; *t && xstrlen(param[k]); t++) {
+		char * __mode, *__param, *__p0 = param[0]+1;
+
 		if (*t=='+' || *t=='-') {
 			act = ('+' == *t);
 			continue;
 		}
 
+		/* 23:26:o2 CET 2oo5-22-o1 yet another ivil hack */
+		if (xstrchr(param[k], ' '))
+			*xstrchr(param[k], ' ') = '\0';
+
+		__param = param[k];
+
 		if ((bang = xstrchr(mode_abcd, *t))) {
-			if ((bang >= mode_d)) continue;		/* mode D never has a parameter */
-			if ((bang >= mode_c) && !act) continue;	/* mode C only has a parameter when set */
-			k++;					/* modes A & B always has a parameter */
+			if ( (bang >= mode_d) ||		/* mode D never has a parameter */
+			     ((bang >= mode_c) && !act) )	/* mode C only has a parameter when set */
+			{
+				__param = NULL;
+			} else {				/* modes A & B always has a parameter */
+				k++;
+			}
+
+			__mode = xstrndup(t, 1);
+			query_emit(NULL, "irc-mode", &s->uid, &__p0, &irc_channame, &act, &__mode, &__param);
+			xfree(__mode);
+
 			continue;
 		}
 
@@ -1741,9 +1758,9 @@ IRC_COMMAND(irc_c_mode)
 			continue;
 		}
 
-		/* 23:26:o2 CET 2oo5-22-o1 yet another ivil hack */
-		if (xstrchr(param[k], ' '))
-			*xstrchr(param[k], ' ') = '\0';
+		__mode = xstrndup(t, 1);
+		query_emit(NULL, "irc-mode", &s->uid, &__p0, &irc_channame, &act, &__mode, &__param);
+		xfree(__mode);
 
 		if ((per = irc_find_person(j, j->people, param[k])) &&
 		    (ch = irc_find_person_chan(per->channels, irc_channame)) )
