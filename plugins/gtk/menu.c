@@ -319,7 +319,6 @@ GtkWidget *menu_toggle_item(char *label, GtkWidget *menu, void *callback, void *
 
 GtkWidget *menu_quick_item(char *cmd, char *label, GtkWidget *menu, int flags, gpointer userdata, char *icon) {
 	GtkWidget *img, *item;
-	char *path;
 
 	if (!label)
 		item = gtk_menu_item_new();
@@ -1482,7 +1481,9 @@ GtkWidget *menu_create_main(void *accel_group, int bar, int away, int toplevel, 
 	GtkWidget *menu = 0;
 	GtkWidget *menu_item = 0;
 	GtkWidget *menu_bar;
+#if 0
 	GtkWidget *usermenu = 0;
+#endif
 	GtkWidget *submenu = 0;
 	int close_mask = GDK_CONTROL_MASK;
 	int away_mask = GDK_MOD1_MASK;
