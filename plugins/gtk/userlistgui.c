@@ -270,7 +270,9 @@ void fe_userlist_insert(window_t *sess, userlist_t *u, GdkPixbuf **pixmaps)
 	GtkTreeModel *model = gtk_private(sess)->user_model;
 	GdkPixbuf *pix = NULL;	/* get_user_icon (sess->server, newuser); */
 	GtkTreeIter iter;
+#if 0
 	int do_away = TRUE;
+#endif
 
 	int sel = 0;
 
