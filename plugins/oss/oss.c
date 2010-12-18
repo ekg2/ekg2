@@ -362,11 +362,12 @@ static COMMAND(oss_cmd_record) {
 }
 
 EXPORT int oss_plugin_init(int prio) {
+	va_list dummy;
 
 	PLUGIN_CHECK_VER("oss");
 
 	plugin_register(&oss_plugin, prio);
-	oss_setvar_default(NULL, (va_list)NULL);
+	oss_setvar_default(NULL, dummy);
 	audio_register(&oss_audio);
 
 	variable_add(&oss_plugin, ("audio_device"), VAR_STR, 1, &config_audio_device, NULL, NULL, NULL);

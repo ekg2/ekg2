@@ -1715,6 +1715,7 @@ static const struct protocol_plugin_priv gg_priv = {
 };
 
 int EXPORT gg_plugin_init(int prio) {
+	va_list dummy;
 
 	PLUGIN_CHECK_VER("gg");
 
@@ -1726,7 +1727,7 @@ int EXPORT gg_plugin_init(int prio) {
 	ekg_recode_utf8_inc();
 	ekg_recode_cp_inc();
 
-	gg_setvar_default(NULL, (va_list)NULL);
+	gg_setvar_default(NULL, dummy);
 
 	query_connect_id(&gg_plugin, SET_VARS_DEFAULT, gg_setvar_default, NULL);
 	query_connect_id(&gg_plugin, PROTOCOL_VALIDATE_UID, gg_validate_uid, NULL);
