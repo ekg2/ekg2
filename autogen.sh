@@ -53,14 +53,17 @@ if test "$gettext_ver" -ge 01100; then
 		exit 1
 	fi
 
-	if $AUTOPOINT --version | grep -q git; then
+	autopoint_ver=`$AUTOPOINT --version`
+	if echo "${autopoint_ver}" | grep -q git; then
 		if git --version >/dev/null 2>&1; then
 			can_autopoint=1
 		fi
-	else
+	elif echo "${autopoint_ver}" | grep -q cvs; then
 		if cvs -v >/dev/null 2>&1; then
 			can_autopoint=1
 		fi
+	else # dir format
+		can_autopoint=1
 	fi
 fi
 
