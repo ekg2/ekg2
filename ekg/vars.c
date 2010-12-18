@@ -321,6 +321,28 @@ int variable_remove(plugin_t *plugin, const char *name) {
 	return -1;
 }
 
+/**
+ * on_off()
+ *
+ * @return	 1 - If @a value is one of: <i>on</i>, <i>true</i>, <i>yes</i>, <i>tak</i>, <i>1</i>	[case-insensitive]<br>
+ *		 0 - If @a value is one of: <i>off</i>, <i>false</i>, <i>no</i>, <i>nie</i>, <i>0</i>	[case-insensitive]<br>
+ *		else -1
+ */
+
+static int on_off(const char *value)
+{
+	if (!value)
+		return -1;
+
+	if (!xstrcasecmp(value, "on") || !xstrcasecmp(value, "true") || !xstrcasecmp(value, "yes") || !xstrcasecmp(value, "tak") || !xstrcmp(value, "1"))
+		return 1;
+
+	if (!xstrcasecmp(value, "off") || !xstrcasecmp(value, "false") || !xstrcasecmp(value, "no") || !xstrcasecmp(value, "nie") || !xstrcmp(value, "0"))
+		return 0;
+
+	return -1;
+}
+
 /*
  * variable_set()
  *
@@ -335,6 +357,7 @@ int variable_remove(plugin_t *plugin, const char *name) {
 int variable_set(const char *name, const char *value) {
 	variable_t *v = variable_find(name);
 	char *tmpname;
+	int changed = 0;
 
 	if (!v)
 		return -1;
@@ -427,9 +450,10 @@ int variable_set(const char *name, const char *value) {
 				}
 			}
 
+			changed = (*(int*)(v->ptr) != tmp);
 			*(int*)(v->ptr) = tmp;
 
-			goto notify;
+			break;
 		}
 
 		case VAR_BOOL:
@@ -442,9 +466,10 @@ int variable_set(const char *name, const char *value) {
 			if ((tmp = on_off(value)) == -1)
 				return -2;
 
+			changed = (*(int*)(v->ptr) != tmp);
 			*(int*)(v->ptr) = tmp;
 
-			goto notify;
+			break;
 		}
 		case VAR_THEME:
 		case VAR_FILE:
@@ -452,9 +477,9 @@ int variable_set(const char *name, const char *value) {
 		case VAR_STR:
 		{
 			char **tmp = (char**)(v->ptr);
-			
-			xfree(*tmp);
-			
+
+			char *oldval = *tmp;
+
 			if (value) {
 				if (*value == 1)
 					*tmp = base64_decode(value + 1);
@@ -463,13 +488,17 @@ int variable_set(const char *name, const char *value) {
 			} else
 				*tmp = NULL;
 	
-			goto notify;
+			changed = xstrcmp(oldval, *tmp);
+			xfree(oldval);
+			break;
 		}
+		default:
+			return -1;
 	}
 
-	return -1;
+	if (!changed)
+		return 1;
 
-notify:
 	if (v->notify)
 		(v->notify)(v->name);
 

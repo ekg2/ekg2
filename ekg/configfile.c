@@ -186,7 +186,7 @@ int config_read(const char *filename)
 {
 	char *buf, *foo;
 	FILE *f;
-	int err_count = 0, first = (filename) ? 0 : 1, ret = 1;
+	int err_count = 0, first = (filename) ? 0 : 1, ret;
 	struct stat st;
 
 	if (!in_autoexec && !filename) {
@@ -219,10 +219,10 @@ int config_read(const char *filename)
 			char *bar;
 
 			if (!(bar = xstrchr(foo, ' ')))
-				ret = variable_set(foo, NULL);
+				ret = variable_set(foo, NULL) < 0;
 			else {
 				*bar++ = 0;
-				ret = variable_set(foo, bar);
+				ret = variable_set(foo, bar) < 0;
 			}
 
 			if (ret)
@@ -308,7 +308,7 @@ int config_read(const char *filename)
 			}
 			array_free(p);
 		} else {
-			ret = variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL);
+			ret = variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL) < 0;
 
 			if (ret)
 				debug_error("  unknown variable %s\n", buf);

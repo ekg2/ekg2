@@ -1790,15 +1790,17 @@ static COMMAND(cmd_set)
 
 		switch (variable_set(arg, (unset) ? NULL : value)) {
 			case 0:
+				if (!be_quiet) {
+					config_changed = 1;
+					last_save = time(NULL);
+				}
+			case 1:
 			{
 				if (be_quiet)
 					break;
 
 				const char *my_params[2] = { (!unset) ? params[0] : params[0] + 1, NULL };
-
 				cmd_set(("set-show"), (const char **) my_params, NULL, NULL, quiet);
-				config_changed = 1;
-				last_save = time(NULL);
 				break;
 			}
 			case -1:

@@ -1723,30 +1723,6 @@ const char *timestamp_time(const char *format, time_t t) {
 	return buf;
 }
 
-/**
- * on_off()
- *
- * @todo	It's only used in vars.c by variable_set() move it?
- *
- * @return	 1 - If @a value is one of: <i>on</i>, <i>true</i>, <i>yes</i>, <i>tak</i>, <i>1</i>	[case-insensitive]<br>
- *		 0 - If @a value is one of: <i>off</i>, <i>false</i>, <i>no</i>, <i>nie</i>, <i>0</i>	[case-insensitive]<br>
- *		else -1
- */
-
-int on_off(const char *value)
-{
-	if (!value)
-		return -1;
-
-	if (!xstrcasecmp(value, "on") || !xstrcasecmp(value, "true") || !xstrcasecmp(value, "yes") || !xstrcasecmp(value, "tak") || !xstrcmp(value, "1"))
-		return 1;
-
-	if (!xstrcasecmp(value, "off") || !xstrcasecmp(value, "false") || !xstrcasecmp(value, "no") || !xstrcasecmp(value, "nie") || !xstrcmp(value, "0"))
-		return 0;
-
-	return -1;
-}
-
 struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
 	struct timer *t;
 	struct timeval tv;
