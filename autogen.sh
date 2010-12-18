@@ -46,11 +46,25 @@ if test "$gettext_ver" -lt 01038; then
 fi
 
 rm -rf intl
-if test "$gettext_ver" -ge 01100 && (cvs -v) >/dev/null 2>&1; then
+can_autopoint=0
+if test "$gettext_ver" -ge 01100; then
 	if test "$gettext_ver" -lt 01105; then
 		echo "Upgrade gettext to at least 0.11.5 or downgrade to 0.10.40" 2>&1
 		exit 1
 	fi
+
+	if $AUTOPOINT --version | grep -q git; then
+		if git --version >/dev/null 2>&1; then
+			can_autopoint=1
+		fi
+	else
+		if cvs -v >/dev/null 2>&1; then
+			can_autopoint=1
+		fi
+	fi
+fi
+
+if test $can_autopoint = 1; then
 	$AUTOPOINT --force || exit 1
 else
 	$GETTEXTIZE --copy --force || exit 1
