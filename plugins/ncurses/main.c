@@ -685,7 +685,6 @@ EXPORT int ncurses_plugin_init(int prio)
 {
 	window_t *w;
 	int is_UI = 0;
-	va_list dummy;
 	char *termtype = getenv("TERM");
 
 	PLUGIN_CHECK_VER("ncurses");
@@ -696,7 +695,7 @@ EXPORT int ncurses_plugin_init(int prio)
 		return -1;
 	plugin_register(&ncurses_plugin, prio);
 
-	ncurses_setvar_default(NULL, dummy);
+	ncurses_setvar_default(NULL, (va_list) NULL);
 
 	query_connect_id(&ncurses_plugin, SET_VARS_DEFAULT, ncurses_setvar_default, NULL);
 	query_connect_id(&ncurses_plugin, UI_BEEP, ncurses_beep, NULL);
