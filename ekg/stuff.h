@@ -317,7 +317,6 @@ char *read_file_iso(FILE *f, int alloc);
 
 const char *timestamp(const char *format);
 const char *timestamp_time(const char *format, time_t t);
-int on_off(const char *value);
 char *xstrmid(const char *str, int start, int length);
 void xstrtr(char *text, char from, char to);
 char color_map(unsigned char r, unsigned char g, unsigned char b);

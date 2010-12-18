@@ -43,8 +43,13 @@ CODE:
 	variable_remove(var->plugin, var->name);
 
 int variable_set(Ekg2::Variable var, const char *value)
+PREINIT:
+	int ret;
 CODE:
-	RETVAL = variable_set(var->name, value);
+	ret = variable_set(var->name, value);
+	if (ret == 0)
+		config_changed = 1;
+	RETVAL = ret;
 OUTPUT:
 	RETVAL
 
