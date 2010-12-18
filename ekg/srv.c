@@ -484,7 +484,9 @@ int basic_resolver(gim_host **hostlist, const char *hostname, int port)
 	srv = xmalloc(sizeof(gim_host));
 
 	if (!getaddrinfo(hostname, NULL, &hint, &ai)) {
+#if 0
 		int do_loop = (AF_INET | AF_INET6);
+#endif
 		srv->prio = DNS_SRV_MAX_PRIO;
 		srv->port = port;
 		strncpy(srv->name, hostname, DNS_NS_MAXDNAME);
