@@ -2286,10 +2286,10 @@ static COMMAND(cmd_test_fds)
 
 			xfree(mypath);
 			if (r <= 0)
-				sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);
+				sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", (long)st.st_ino, (long)st.st_size);
 			else {
 				newpath[r] = 0;
-				sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu, path %s", st.st_ino, st.st_size, newpath);
+				sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu, path %s", (long)st.st_ino, (long)st.st_size, newpath);
 			}
 #else
 			sprintf(buf + xstrlen(buf), "file, inode %lu, size %lu", st.st_ino, st.st_size);

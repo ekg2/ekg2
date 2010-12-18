@@ -542,10 +542,10 @@ static inline const status_t session_statusdescr_split(const char **statusdescr)
 }
 
 static inline status_t session_status_nearest(session_t *s, status_t status) {
-	plugin_t						*p		= s->plugin;
-	struct protocol_plugin_priv		*pp		= p->priv;
-	const status_t					*ast;
-	const int						dir		= (status < EKG_STATUS_AVAIL);
+	plugin_t			*p	= s->plugin;
+	struct protocol_plugin_priv	*pp	= (struct protocol_plugin_priv *)p->priv;
+	const status_t			*ast;
+	const int			dir	= (status < EKG_STATUS_AVAIL);
 
 	if (p->pclass != PLUGIN_PROTOCOL) {
 		debug_wtf("session_status_nearest(), session '%s' on non-protocol plugin '%s'!\n", session_uid_get(s), p->name);

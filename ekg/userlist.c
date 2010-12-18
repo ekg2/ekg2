@@ -786,7 +786,7 @@ char *get_user_name(userlist_t *u) {
 	char *name;
 	if (!u)
 		return NULL;
-	name = user_private_item_get(u, "first_name");
+	name = (char *)user_private_item_get(u, "first_name");
 	return (name && *name) ? name : u->nickname;
 }
 
