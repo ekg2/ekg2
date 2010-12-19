@@ -2582,8 +2582,20 @@ end:
 					window_switch(ch - 106);
 			}
 		}
-	} else if (ch <= KEY_MAX) {
-		if ((b = ncurses_binding_map[ch]) && b->action) {
+	} else {
+#if !USE_UNICODE
+		if (ch > KEY_MAX) {
+			debug_error("%s:%d INTERNAL NCURSES/EKG2 FAULT. KEY-PRESSED: %d>%d TO PROTECT FROM SIGSEGV\n", __FILE__, __LINE__, ch, KEY_MAX);
+			goto then;
+		}
+#endif
+
+		if (
+#if USE_UNICODE
+			(getch_ret == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */) &&
+#endif
+			(b = ncurses_binding_map[ch]) && b->action)
+		{
 			if (b->function)
 				b->function(b->arg);
 			else {
@@ -2606,8 +2618,6 @@ end:
 
 			ncurses_typing_mod = 1;
 		}
-	} else {
-		debug_error("%s:%d INTERNAL NCURSES/EKG2 FAULT. KEY-PRESSED: %d>%d TO PROTECT FROM SIGSEGV\n", __FILE__, __LINE__, ch, KEY_MAX);
 	}
 then:
 	if (ncurses_plugin_destroyed)
