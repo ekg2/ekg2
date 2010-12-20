@@ -2110,15 +2110,24 @@ static void print_char(WINDOW *w, int y, int x, CHAR_T ch, int attr) {
  *
  *  - meta - przedrostek klawisza.
  *
- * zwraca kod klawisza lub -2, je¶li nale¿y go pomin±æ.
+ * @returns:
+ *	-2		- ignore that key
+ *	ERR		- error
+ *	OK		- report a (wide) character
+ *	KEY_CODE_YES	- report the pressing of a function key
+ *	
  */
 static int ekg_getch(int meta, unsigned int *ch) {
+	int retcode;
 #if USE_UNICODE
-	int retcode = wget_wch(input, ch);
-	if (retcode == ERR) *ch = ERR;
+	retcode = wget_wch(input, ch);
 #else
 	*ch = wgetch(input);
+	retcode = *ch >= KEY_MIN ? KEY_CODE_YES : OK;
 #endif
+
+	if (retcode == ERR) return ERR;
+	if ((retcode == KEY_CODE_YES) && (*(int *)ch == -1)) return ERR;		/* Esc (delay) no key */
 
 #ifndef HAVE_USABLE_TERMINFO
 	/* Debian screen incomplete terminfo workaround */
@@ -2203,17 +2212,18 @@ static int ekg_getch(int meta, unsigned int *ch) {
 		x = wgetch(input) - 32; 
 		y = wgetch(input) - 32;
 
+		/* XXX query_emit UI_MOUSE ??? */
 		if (mouse_state)
 			ncurses_mouse_clicked_handler(x, y, mouse_state);
+
+		return -2;
 	} 
 #undef GET_TIME
 #undef DIF_TIME
 	if (query_emit_id(NULL, UI_KEYPRESS, ch) == -1)  
 		return -2; /* -2 - ignore that key */
-#if USE_UNICODE
-	if (retcode == KEY_CODE_YES) return KEY_CODE_YES;
-#endif
-	return *ch;
+
+	return retcode;
 }
 
 /* XXX: deklaracja ncurses_watch_stdin nie zgadza sie ze
@@ -2463,6 +2473,16 @@ void ncurses_redraw_input(unsigned int ch) {
 	}
 }
 
+
+static void bind_exec(struct binding *b) {
+	if (b->function)
+		b->function(b->arg);
+	else {
+		command_exec_format(window_current->target, window_current->session, 0,
+				("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action);
+	}
+}
+
 /*
  * ncurses_watch_stdin()
  *
@@ -2480,13 +2500,16 @@ WATCHER(ncurses_watch_stdin)
 		return 0;
 
 	switch ((getch_ret = ekg_getch(0, &ch))) {
-		case(-1):	/* dziwna kombinacja, która by blokowa³a */
+		case ERR:
 		case(-2):	/* przeszlo przez query_emit i mamy zignorowac (pytthon, perl) */
-		case(0):	/* Ctrl-Space, g³upie to */
 			return 0;
-		case(3):
-		default:
+		case OK:
 			if (ch != 3) sigint_count = 0;
+			if (ch == 0) return 0;	/* Ctrl-Space, g³upie to */
+			break;
+		case KEY_CODE_YES:
+		default:
+			break;
 	}
 
 	if (bindings_added && ch != KEY_MOUSE) {
@@ -2496,9 +2519,7 @@ WATCHER(ncurses_watch_stdin)
 		int c;
 		array_add(&chars, xstrdup(itoa(ch)));
 
-		while (count <= bindings_added_max && 
-				(c = wgetch(input)) != ERR
-				) {
+		while (count <= bindings_added_max && (c = wgetch(input)) != ERR) {
 			array_add(&chars, xstrdup(itoa(c)));
 			count++;
 		}
@@ -2507,15 +2528,7 @@ WATCHER(ncurses_watch_stdin)
 
 		for (d = bindings_added; d; d = d->next) {
 			if (!xstrcasecmp(d->sequence, joined)) {
-				struct binding *b = d->binding;
-
-				if (b->function)
-					b->function(b->arg);
-				else {
-					command_exec_format(window_current->target, window_current->session, 0, ("%s%s"), 
-							((b->action[0] == '/') ? "" : "/"), b->action);
-				}
-
+				bind_exec(d->binding);
 				success = 1;
 				goto end;
 			}
@@ -2533,12 +2546,13 @@ end:
 	} 
 
 	if (ch == 27) {
-		if ((ekg_getch(27, &ch)) < 0)
+		if ((ekg_getch(27, &ch)) < OK)
 			goto loop;
-		
+
 		if (ch == 27)
 			b = ncurses_binding_map[27];
 		else if (ch > KEY_MAX) {
+			/* XXX shouldn't happen */
 			debug_error("%s:%d INTERNAL NCURSES/EKG2 FAULT. KEY-PRESSED: %d>%d TO PROTECT FROM SIGSEGV\n", __FILE__, __LINE__, ch, KEY_MAX);
 			goto then;
 		} else	b = ncurses_binding_map_meta[ch];
@@ -2563,13 +2577,7 @@ end:
 			}
 		}
 		if (b && b->action) {
-			if (b->function)
-				b->function(b->arg);
-			else {
-				command_exec_format(window_current->target, window_current->session, 0,
-						("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
-						);
-			}
+			bind_exec(b);
 		} else {
 			/* obs³uga Ctrl-F1 - Ctrl-F12 na FreeBSD */
 			if (ch == '[') {
@@ -2583,34 +2591,12 @@ end:
 			}
 		}
 	} else {
-#if !USE_UNICODE
-		if (ch > KEY_MAX) {
-			debug_error("%s:%d INTERNAL NCURSES/EKG2 FAULT. KEY-PRESSED: %d>%d TO PROTECT FROM SIGSEGV\n", __FILE__, __LINE__, ch, KEY_MAX);
-			goto then;
-		}
-#endif
-
-		if (
-#if USE_UNICODE
-			(getch_ret == KEY_CODE_YES || ch < 0x100 /* TODO CHECK */) &&
-#endif
-			(b = ncurses_binding_map[ch]) && b->action)
+		if ( ((getch_ret == KEY_CODE_YES && ch <= KEY_MAX) || 
+			(getch_ret == OK && ch < 0x100)) &&
+			(b = ncurses_binding_map[ch]) && b->action )
 		{
-			if (b->function)
-				b->function(b->arg);
-			else {
-				command_exec_format(window_current->target, window_current->session, 0,
-						("%s%s"), ((b->action[0] == '/') ? "" : "/"), b->action
-						);
-			}
-		} else if (
-#if USE_UNICODE
-				(ch != KEY_MOUSE && ch != KEY_RESIZE) &&
-#else
-				(ch < 255) && 
-#endif
-				xwcslen(ncurses_line) < LINE_MAXLEN - 1)
-		{
+			bind_exec(b);
+		} else if (getch_ret == OK && xwcslen(ncurses_line) < LINE_MAXLEN - 1) {
 			/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
 			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, sizeof(CHAR_T) * (LINE_MAXLEN - line_index - 1));
 			/* put in ncurses_line[lindex_index] current char */
