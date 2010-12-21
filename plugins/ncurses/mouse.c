@@ -84,6 +84,39 @@ static void ncurses_mouse_move_handler(int x, int y)
 	/* add function that should be done when mouse move is done */
 }
 
+/*
+ * ncurses_lastlog_mouse_handler()
+ *
+ * handler for mouse events in lastlog window
+ */
+void ncurses_lastlog_mouse_handler(int x, int y, int mouse_state) {
+	window_t *w = window_find_sa(NULL, "__lastlog", 1);
+
+	if (mouse_state == EKG_SCROLLED_UP) {
+		binding_helper_scroll(w, -1);
+	} else if (mouse_state == EKG_SCROLLED_DOWN) {
+		binding_helper_scroll(w, +1);
+	} else if (mouse_state == EKG_BUTTON3_DOUBLE_CLICKED) {
+		window_kill(w);
+		ncurses_resize();
+		ncurses_commit();
+	}
+}
+
+/*
+ * ncurses_main_window_mouse_handler()
+ *
+ * handler for mouse events in main window
+ */
+void ncurses_main_window_mouse_handler(int x, int y, int mouse_state)
+{
+	if (mouse_state == EKG_SCROLLED_UP) {
+		binding_helper_scroll(window_current, -5);
+	} else if (mouse_state == EKG_SCROLLED_DOWN) {
+		binding_helper_scroll(window_current, +5);
+	}
+}
+
 /* 
  * ncurses_mouse_clicked_handler()
  * 
