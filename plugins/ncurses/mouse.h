@@ -23,6 +23,7 @@
 void ncurses_enable_mouse(const char *env);
 void ncurses_disable_mouse();
 void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag);
+void ncurses_lastlog_mouse_handler(int x, int y, int mouse_state);
 
 // int last_mouse_state;
 

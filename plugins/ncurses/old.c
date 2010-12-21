@@ -438,20 +438,6 @@ void ncurses_commit()
 	doupdate();
 }
 
-/* 
- * ncurses_main_window_mouse_handler()
- * 
- * handler for mouse events in main window 
- */
-void ncurses_main_window_mouse_handler(int x, int y, int mouse_state)
-{
-	if (mouse_state == EKG_SCROLLED_UP) {
-		binding_helper_scroll(window_current, -5);
-	} else if (mouse_state == EKG_SCROLLED_DOWN) {
-		binding_helper_scroll(window_current, +5);
-	}
-}
-
 /*
  *
  */
@@ -2886,9 +2872,7 @@ void ncurses_lastlog_new(window_t *w) {
 	}
 	w->frames = lastlog_frame;
 	n->handle_redraw = ncurses_lastlog_update;
-/*
 	n->handle_mouse = ncurses_lastlog_mouse_handler;
- */
 	n->start = 0;
 	w->edge = lastlog_edge;
 	w->nowrap = !lastlog_wrap;
