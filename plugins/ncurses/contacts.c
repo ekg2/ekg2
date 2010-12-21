@@ -485,6 +485,9 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 		return;
 	}
 
+	if (mouse_state == EKG_BUTTON3_CLICKED)
+		binding_next_contacts_group(NULL);
+
 	if (!w || mouse_state != EKG_BUTTON1_DOUBLE_CLICKED)
 		return;
 

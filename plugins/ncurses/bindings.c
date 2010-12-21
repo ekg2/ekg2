@@ -726,7 +726,7 @@ static BINDING_FUNCTION(binding_toggle_contacts_wrapper)
 	ncurses_contacts_changed("contacts");
 }
 
-static BINDING_FUNCTION(binding_next_contacts_group) {
+BINDING_FUNCTION(binding_next_contacts_group) {
 	window_t *w;
 
 	contacts_group_index++;
