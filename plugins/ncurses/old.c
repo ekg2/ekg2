@@ -446,28 +446,10 @@ void ncurses_commit()
 void ncurses_main_window_mouse_handler(int x, int y, int mouse_state)
 {
 	if (mouse_state == EKG_SCROLLED_UP) {
-		ncurses_current->start -= 5;
-		if (ncurses_current->start < 0)
-			ncurses_current->start = 0;
+		binding_helper_scroll(window_current, -5);
 	} else if (mouse_state == EKG_SCROLLED_DOWN) {
-		ncurses_current->start += 5;
-	
-		if (ncurses_current->start > ncurses_current->lines_count - window_current->height + ncurses_current->overflow)
-			ncurses_current->start = ncurses_current->lines_count - window_current->height + ncurses_current->overflow;
-
-		if (ncurses_current->start < 0)
-			ncurses_current->start = 0;
-
-		if (ncurses_current->start == ncurses_current->lines_count - window_current->height + ncurses_current->overflow) {
-			window_current->more = 0;
-			update_statusbar(0);
-		}
-	} else {
-		return;
+		binding_helper_scroll(window_current, +5);
 	}
-
-	ncurses_redraw(window_current);
-	ncurses_commit();
 }
 
 /*
@@ -2168,6 +2150,8 @@ static int ekg_getch(int meta, unsigned int *ch) {
 				case 0: mouse_state = (clicks) ? EKG_BUTTON1_DOUBLE_CLICKED : EKG_BUTTON1_CLICKED;	break;
 				case 1: mouse_state = (clicks) ? EKG_BUTTON2_DOUBLE_CLICKED : EKG_BUTTON2_CLICKED;	break;
 				case 2: mouse_state = (clicks) ? EKG_BUTTON3_DOUBLE_CLICKED : EKG_BUTTON3_CLICKED;	break;
+				case 64: mouse_state = EKG_SCROLLED_UP;							break;
+				case 65: mouse_state = EKG_SCROLLED_DOWN;						break;
 				default:										break;
 			}
 
@@ -2216,8 +2200,7 @@ static int ekg_getch(int meta, unsigned int *ch) {
 		if (mouse_state)
 			ncurses_mouse_clicked_handler(x, y, mouse_state);
 
-		return -2;
-	} 
+	}
 #undef GET_TIME
 #undef DIF_TIME
 	if (query_emit_id(NULL, UI_KEYPRESS, ch) == -1)  
