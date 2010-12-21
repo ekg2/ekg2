@@ -48,6 +48,7 @@ int  ncurses_binding_default(void *, va_list);
 void ncurses_binding_set(int quiet, const char *key, const char *sequence);
 
 void binding_helper_scroll(window_t *w, int offset);
+BINDING_FUNCTION(binding_next_contacts_group);
 
 #endif /* __EKG_NCURSES_BINDINGS_H */
 
