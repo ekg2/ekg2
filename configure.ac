@@ -173,7 +173,7 @@ AC_ARG_WITH(gpm-mouse,		AC_HELP_STRING([--without-gpm-mouse],		[Compile without 
 
 case $host_os in
 linux*)
-    if test x$with_gpm_mouse != no; then
+    if test "x$with_gpm_mouse" != "xno"; then
         AC_CHECK_LIB(gpm, Gpm_GetEvent,
             [AC_DEFINE(HAVE_LIBGPM, 1,
                        [Define to enable gpm mouse support on Linux])
@@ -922,7 +922,7 @@ if test "x$have_libgadu" = "xyes"; then
 fi
 
 if test "x$have_ncurses" = "xyes"; then
-	echo_section " - Mouse support:"
+	echo_section " - Mouse support:\t"
 	echo_have "in $mouse_lib\n"
 fi
 
