@@ -1013,7 +1013,7 @@ exact_match:
 					session_in_line = session_current;
 				for (j = 0; params[word_current - 2][j]; j++) {
 					if (generators[i].ch == params[word_current - 2][j]) {
-						generators[i].generate(words[word], xstrlen(words[word]));
+						generators[i].generate(words[word], strlen_pl(words[word]));
 					}
 				}
 			}		
@@ -1124,7 +1124,7 @@ exact_match:
 					if (completions[0][common - 1] == '"')
 						common--;
 
-					xstrncat(line, completions[0], common);
+					xstrncat_pl(line, completions[0], common);
 					*line_index = xstrlen(line);
 				} else {
 					if (xstrchr(words[i], (' '))) {
