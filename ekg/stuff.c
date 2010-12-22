@@ -2574,8 +2574,40 @@ uint32_t *ekg_sent_message_format(const char *text)
 	return format;
 }
 
+size_t strlen_pl(const char *s) {
+#if USE_UNICODE
+	int ok = 1, len=xstrlen(s), count = 0;
+	const char *end = s+len;
+
+	while ((s < end) && (ok > 0)) {
+		if ((ok = mbrtowc(NULL, s, len, NULL)) > 0) {
+			count++;
+			s += ok;
+		}
+	}
+	return count;
+#else
+	return xstrlne(s);
+#endif
+}
 
 static int tolower_pl(const unsigned char c);
+
+char *xstrncat_pl(char *dest, const char *src, size_t n) {
+#if USE_UNICODE
+	int i, v, len=xstrlen(src);
+	char *p = (char *)src;
+	
+	for (i = 0; i < n && *p; i++) {
+		if ((v = mbrtowc(NULL, p, len, NULL)) > 0) {
+			p += v;
+		}
+	}
+	n = p - src;
+#endif
+	return xstrncat(dest, src, n);
+}
+
 /*
  * strncasecmp_pl()
  *
@@ -2583,17 +2615,31 @@ static int tolower_pl(const unsigned char c);
  * dzia³a analogicznie do xstrncasecmp()
  * obs³uguje polskie znaki
  */
-
 int strncasecmp_pl(const char *cs, const char *ct , size_t count)
 {
 	register signed char __res = 0;
+#if USE_UNICODE
+	wchar_t *wc1 = xcalloc(count+1, sizeof(wchar_t));
+	wchar_t *wc2 = xcalloc(count+1, sizeof(wchar_t));
+	wchar_t *p;
 
+	mbsrtowcs(wc1, &cs, count, NULL);
+	mbsrtowcs(wc2, &ct, count, NULL);
+
+	for(p=wc1; *p; p++) *p = towlower(*p);
+	for(p=wc2; *p; p++) *p = towlower(*p);
+
+	__res = wcscoll(wc1, wc2);
+
+	xfree(wc1);
+	xfree(wc2);
+#else
 	while (count) {
 		if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
 			break;
 		count--;
 	}
-
+#endif
 	return __res;
 }
 
