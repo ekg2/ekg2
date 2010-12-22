@@ -34,6 +34,7 @@
 #include <ekg/xmalloc.h>
 
 #include "old.h"
+#include "bindings.h"
 #include "contacts.h"
 #include "mouse.h"
 
