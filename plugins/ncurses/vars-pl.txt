@@ -28,6 +28,14 @@ backlog_size
 	jest przewijany klawiszami Page Up i Page Down). nie mo¿e byæ
 	mniejsza ni¿ ilo¶æ linii na ekranie. 
 
+backlog_scroll_mode
+	typ: liczba
+	domy¶lna warto¶æ: 0
+	
+	okre¶la, w jaki sposób ma byæ przewijane okienko: je¶li jest równe 0
+	(domy¶lnie), przewijane jest o pó³ ekranu, je¶li 1, o ca³y ekran
+	bez jednej linii.
+
 contacts
 	typ: liczba
 	domy¶lna warto¶æ: 2

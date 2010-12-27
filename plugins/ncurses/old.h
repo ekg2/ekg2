@@ -143,8 +143,11 @@ extern int config_aspell;
 extern char *config_aspell_lang;
 #endif
 void changed_backlog_size(const char *var);
+void changed_backlog_scroll_mode(const char *var);
 
 extern int config_backlog_size;
+extern int config_backlog_scroll_mode;
+
 extern int config_display_transparent;
 extern int config_enter_scrolls;
 extern int config_header_size;

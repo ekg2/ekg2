@@ -27,6 +27,14 @@ backlog_size
 	number of lines which will be save in screen buffor (those one which 
 	is scroll by Page Up and Page Down). Cann't be less than lines on screen.
 
+backlog_scroll_mode
+	type: integer
+	default value: 0
+	
+	defines how window is scrolled: if set to 0 (default), window is scrolled
+	for half its size, if set to 1, whole content minus one line is scrolled
+	up or down.
+
 contacts
 	type: integer
 	default value: 2

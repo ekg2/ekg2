@@ -703,11 +703,12 @@ void binding_helper_scroll(window_t *w, int offset) {
 static void binding_helper_scroll_page(window_t *w, int backward) {
 	if (!w)
 		return;
-
+	
+	int offset = config_backlog_scroll_mode == 0 ? (w->height / 2) : (w->height-1);
 	if (backward)
-		binding_helper_scroll(w, -(w->height / 2));
+		binding_helper_scroll(w, -offset);
 	else
-		binding_helper_scroll(w, +(w->height / 2));
+		binding_helper_scroll(w, +offset);
 }
 
 static BINDING_FUNCTION(binding_backward_page) {

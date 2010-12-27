@@ -47,6 +47,7 @@ PLUGIN_DEFINE(ncurses, PLUGIN_UI, ncurses_theme_init);
 int config_aspell;
 char *config_aspell_lang;
 int config_backlog_size;
+int config_backlog_scroll_mode;
 int config_display_transparent;
 int config_enter_scrolls;
 int config_header_size;
@@ -521,6 +522,7 @@ static QUERY(ncurses_setvar_default)
 	config_contacts_metacontacts_swallow = 1;
 
 	config_backlog_size = 1000;	    /* maksymalny rozmiar backloga */
+	config_backlog_scroll_mode = 0;	    /* tryb przewijania: pó³ ekranu lub ekran bez jednej linii */
 	config_display_transparent = 1;     /* czy chcemy przezroczyste t³o? */
 	config_kill_irc_window = 1;	    /* czy zamykaæ kana³y ircowe przez alt-k? */
 	config_statusbar_size = 1;
@@ -752,6 +754,8 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
 #endif
 	variable_add(&ncurses_plugin, ("backlog_size"), VAR_INT, 1, &config_backlog_size, changed_backlog_size, NULL, NULL);
+	/* backlog_scroll_mode - added at 2010 by S³awomir Nizio <poczta-sn@gazeta.pl> */
+	variable_add(&ncurses_plugin, ("backlog_scroll_mode"), VAR_INT, 1, &config_backlog_scroll_mode, changed_backlog_scroll_mode, NULL, NULL);
 	/* this isn't very nice solution, but other solutions would require _more_
 	 * changes...
 	 */
