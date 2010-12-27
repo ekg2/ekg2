@@ -6,6 +6,7 @@
  *			    Pawe³ Maziarz <drg@infomex.pl>
  *			    Piotr Kupisiewicz <deli@rzepaknet.us>
  *		  2008-2010 Wies³aw Ochmiñski <wiechu@wiechu.com>
+ *		       2010 S³awomir Nizio <poczta-sn@gazeta.pl>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -704,7 +705,7 @@ static void binding_helper_scroll_page(window_t *w, int backward) {
 	if (!w)
 		return;
 	
-	int offset = config_backlog_scroll_mode == 0 ? (w->height / 2) : (w->height-1);
+	int offset = config_backlog_scroll_half_page ? (w->height / 2) : (w->height-1);
 	if (backward)
 		binding_helper_scroll(w, -offset);
 	else

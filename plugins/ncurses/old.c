@@ -2670,17 +2670,6 @@ void changed_backlog_size(const char *var)
 	}
 }
 
-/*
- * changed_backlog_scroll_mode()
- *
- * wywo³ywane po zmianie warto¶ci zmiennej ,,backlog_scroll_mode''.
- */
-void changed_backlog_scroll_mode(const char *var)
-{
-	if( !(config_backlog_scroll_mode == 0 || config_backlog_scroll_mode == 1 ) )
-		config_backlog_scroll_mode = 0;
-}
-
 static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	const char *header;
 #if USE_UNICODE
