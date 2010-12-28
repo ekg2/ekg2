@@ -702,10 +702,12 @@ void binding_helper_scroll(window_t *w, int offset) {
 }
 
 static void binding_helper_scroll_page(window_t *w, int backward) {
+	int offset;
+
 	if (!w)
 		return;
 	
-	int offset = config_backlog_scroll_half_page ? (w->height / 2) : (w->height-1);
+	offset = config_backlog_scroll_half_page ? (w->height / 2) : (w->height-1);
 	if (backward)
 		binding_helper_scroll(w, -offset);
 	else
