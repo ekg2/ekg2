@@ -307,7 +307,15 @@ const struct query_def query_list[] = {
 		QUERY_ARG_END } },
 
 	{ RSS_MESSAGE, "rss-message", {
-		/* XXX */
+		QUERY_ARG_CHARP,		/* session uid */
+		QUERY_ARG_CHARP,		/* uid */
+		QUERY_ARG_CHARP,		/* proto headers */
+		QUERY_ARG_CHARP,		/* headers */
+		QUERY_ARG_CHARP,		/* title */
+		QUERY_ARG_CHARP,		/* url */
+		QUERY_ARG_CHARP,		/* descr */
+		QUERY_ARG_INT,			/* new */
+		QUERY_ARG_INT,			/* modify */
 		QUERY_ARG_END } },
 
 	{ PROTOCOL_CONNECTED, "protocol-connected", {
