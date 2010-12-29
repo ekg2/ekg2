@@ -26,4 +26,17 @@ command_t *command_find(const char *name)
 	return NULL;
 }
 
+int strcasecmp_pl(const char *cs, const char *ct)
+{
+	register signed char __res = 0;
+
+	while ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) == 0 && !*cs++) {
+		if (!*cs++)
+			return(0);
+	}
+
+	return __res;
+}
+
+
 #endif
