@@ -21,7 +21,6 @@
 
 #include "ekg2-config.h"
 
-#include <ekg/debug.h>
 #include <ekg/windows.h>
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
@@ -57,7 +56,6 @@ static inline int ncurses_typingsend(const int len, const int first) {
 	const char *sid	= session_uid_get(ncurses_typing_win->session);
 	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
 	
-debug_ok("%s len:%d first:%d in_a:%d [%d]\n", uid, len, first, ncurses_typing_win->in_active,(((first > 1) || (ncurses_typing_win->in_active)) && uid));
 	if (((first > 1) || (ncurses_typing_win->in_active)) && uid)
 		return query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
 	else
