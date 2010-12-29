@@ -826,6 +826,7 @@ static COMMAND(nntp_command_subscribe) {
 	}
 
 	printq("feed_added", target, session_name(session));
+	query_emit_id(NULL, USERLIST_REFRESH);
 	return 0;
 }
 
@@ -838,6 +839,7 @@ static COMMAND(nntp_command_unsubscribe) {
 
 	printq("feed_deleted", target, session_name(session));
 	userlist_remove(session, u);
+	query_emit_id(NULL, USERLIST_REFRESH);
 	return 0;
 }
 
