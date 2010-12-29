@@ -3755,10 +3755,14 @@ void gtk_xtext_refresh(GtkXText * xtext, int do_trans)
 	}
 }
 
-/* remove the topline from the list */
 
+static gboolean gtk_xtext_check_ent_visibility(GtkXText * xtext, textentry * find_ent, int add);
+static int gtk_xtext_render_page_timeout(GtkXText * xtext);
+
+/* remove the topline from the list */
 static void gtk_xtext_remove_top(xtext_buffer * buffer)
 {
+	int visible;
 	textentry *ent;
 
 	ent = buffer->text_first;
@@ -3776,6 +3780,8 @@ static void gtk_xtext_remove_top(xtext_buffer * buffer)
 		buffer->xtext->select_start_adj -= ent->lines_taken;
 	}
 
+	visible = buffer->xtext->buffer == buffer && ent == buffer->pagetop_ent;
+
 	if (ent == buffer->pagetop_ent)
 		buffer->pagetop_ent = NULL;
 
@@ -3791,6 +3797,20 @@ static void gtk_xtext_remove_top(xtext_buffer * buffer)
 		buffer->marker_pos = NULL;
 
 	free(ent);
+
+	if (visible) {
+		if (!buffer->xtext->add_io_tag) {
+			/* remove scrolling events */
+			if (buffer->xtext->io_tag) {
+				g_source_remove(buffer->xtext->io_tag);
+				buffer->xtext->io_tag = 0;
+			}
+			buffer->xtext->force_render = TRUE;
+			buffer->xtext->add_io_tag = g_timeout_add(REFRESH_TIMEOUT * 2, (GSourceFunc)
+							       gtk_xtext_render_page_timeout,
+							       buffer->xtext);
+		}
+	}
 }
 
 void gtk_xtext_clear(xtext_buffer * buf)
@@ -3869,8 +3889,8 @@ static int gtk_xtext_render_page_timeout(GtkXText * xtext)
 		gtk_xtext_render_page(xtext);
 	} else {
 		gtk_xtext_adjustment_set(xtext->buffer, TRUE);
-		if (xtext->indent_changed) {
-			xtext->indent_changed = FALSE;
+		if (xtext->force_render) {
+			xtext->force_render = FALSE;
 			gtk_xtext_render_page(xtext);
 		}
 	}
@@ -4011,7 +4031,7 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 		gtk_xtext_recalc_widths(buf, FALSE);
 
 		ent->indent = (buf->indent) - buf->xtext->space_width;
-		buf->xtext->indent_changed = TRUE;
+		buf->xtext->force_render = TRUE;
 	}
 
 	gtk_xtext_append_entry(buf, ent);
