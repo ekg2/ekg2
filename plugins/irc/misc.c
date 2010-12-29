@@ -1422,7 +1422,7 @@ IRC_COMMAND(irc_c_join)
  */
 IRC_COMMAND(irc_c_part)
 {
-	char	*ekg2_channel, *tmp, *coloured, *irc_nick;
+	char	*ekg2_channel, *coloured, *irc_nick;
 	char	*__channel, *__identhost, *__nick, *__reason;
 	int	me = 0;
 
@@ -1468,7 +1468,7 @@ IRC_COMMAND(irc_c_part)
 	if (!(ignored_check(s, ekg2_channel) & IGNORE_NOTIFY) && !(ignored_check(s, irc_nick) & IGNORE_NOTIFY)) {
 		char *cchn = clean_channel_names(s, __channel);
 		print_info(ekg2_channel, s, (me)?"irc_left_you":"irc_left", session_name(s),
-				__nick, tmp?tmp+1:"", cchn, coloured);
+				__nick, __identhost, cchn, coloured);
 		xfree(cchn);
 	}
 

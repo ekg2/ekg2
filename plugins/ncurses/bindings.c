@@ -284,6 +284,7 @@ static BINDING_FUNCTION(binding_accept_line)
 	else { /* if message, assume that its' handler has already disabled <composing/> */
 		ncurses_typing_win		= NULL;
 		window_current->out_active	= 1; /* but also remember that it should have set <active/> chatstate */
+		window_current->in_active	= 1; /* but also remember that it should have set <active/> chatstate */
 	}
 
 	if (xwcscmp(line, TEXT(""))) {
