@@ -78,6 +78,20 @@ static void irc_parse_nick_identhost(char *line, char **nick, char **identhost) 
 	}
 }
 
+static void irc_parse_ident_host(char *identhost, char **ident, char **host)  {
+	char	*tmp;
+
+	xfree(*ident);
+	xfree(*host);
+	if ((tmp = xstrchr(identhost, '@'))) {
+		*ident = xstrndup(identhost, tmp-identhost);
+		*host  = xstrdup(tmp+1);
+	} else {
+		*ident = xstrdup(identhost);
+		*host = NULL;
+	}
+}
+
 #ifdef HAVE_ICONV
 static char *try_convert_string_p(const char *ps, iconv_t cd) {
 	char *s = (char *) ps;
@@ -470,21 +484,6 @@ and the prefix.
 		}
 	}
 
-	return 0;
-}
-
-static int irc_parse_identhost(char *identhost, char **ident, char **host)  {
-	char	*tmp;
-
-	xfree(*ident);
-	xfree(*host);
-	if ((tmp = xstrchr(identhost, '@'))) {
-		*ident = xstrndup(identhost, tmp-identhost);
-		*host  = xstrdup(tmp+1);
-	} else {
-		*ident = xstrdup(identhost);
-		*host = NULL;
-	}
 	return 0;
 }
 
@@ -1161,7 +1160,7 @@ IRC_COMMAND(irc_c_msg)
 		if (!person) 
 			person = irc_add_person(s, j, param[0]+1, NULL);
 		if (person && t) 
-			irc_parse_identhost(t+1, &(person->ident), &(person->host));
+			irc_parse_ident_host(t+1, &(person->ident), &(person->host));
 		*/
 		class = (mw&2)?EKG_MSGCLASS_CHAT:EKG_MSGCLASS_MESSAGE; 
 		dest = irc_uid(sender);
@@ -1188,7 +1187,7 @@ IRC_COMMAND(irc_c_msg)
 			/* G->dj: I'm not sure if this what I've added
 			 *	  will still do the same you wanted */
 			if (*identhost && !(person->ident) && !(person->host))
-				irc_parse_identhost(identhost, &(person->ident), &(person->host));
+				irc_parse_ident_host(identhost, &(person->ident), &(person->host));
 
 			perchn = irc_find_person_chan(person->channels, dest);
 			debug("<person->channels: %08X %s %08X>\n", person->channels, dest, perchn);
@@ -1382,7 +1381,7 @@ IRC_COMMAND(irc_c_join)
 	} else {
 		person = irc_add_person(s, j, __nick, __channel);
 		if (person && __identhost && !(person->ident) && !(person->host))
-			irc_parse_identhost(__identhost, &(person->ident), &(person->host));
+			irc_parse_ident_host(__identhost, &(person->ident), &(person->host));
 
 		irc_access_parse(s, irc_find_channel(j->channels, __channel), person, 0);
 	}
