@@ -1102,6 +1102,7 @@ static COMMAND(rss_command_subscribe) {
 	}
 
 	printq("feed_added", format_user(session, target), session_name(session));
+	query_emit_id(NULL, USERLIST_REFRESH);
 	return 0;
 }
 
@@ -1114,6 +1115,7 @@ static COMMAND(rss_command_unsubscribe) {
 
 	printq("feed_deleted", target, session_name(session));
 	userlist_remove(session, u);
+	query_emit_id(NULL, USERLIST_REFRESH);
 	return 0;
 }
 
