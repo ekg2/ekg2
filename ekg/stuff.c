@@ -2574,6 +2574,39 @@ uint32_t *ekg_sent_message_format(const char *text)
 	return format;
 }
 
+#if ! USE_UNICODE
+/*
+ * tolower_pl()
+ *
+ * zamienia podany znak na ma³y je¶li to mo¿liwe
+ * obs³uguje polskie znaki
+ */
+static int tolower_pl(const unsigned char c) {
+	switch(c) {
+		case 161: /* ¡ */
+			return 177;
+		case 198: /* Æ */
+			return 230;
+		case 202: /* Ê */
+			return 234;
+		case 163: /* £ */
+			return 179;
+		case 209: /* Ñ */
+			return 241;
+		case 211: /* Ó */
+			return 243;
+		case 166: /* ¦ */
+			return 182;
+		case 175: /* ¯ */
+			return 191;
+		case 172: /* ¬ */
+			return 188;
+		default: /* reszta */
+			return tolower(c);
+	}
+}
+#endif
+
 size_t strlen_pl(const char *s) {
 #if USE_UNICODE
 	if (!s) s = "";
@@ -2582,8 +2615,6 @@ size_t strlen_pl(const char *s) {
 	return xstrlen(s);
 #endif
 }
-
-static int tolower_pl(const unsigned char c);
 
 char *xstrncat_pl(char *dest, const char *src, size_t n) {
 #if USE_UNICODE
@@ -2633,49 +2664,6 @@ int strncasecmp_pl(const char *cs, const char *ct , size_t count)
 	}
 #endif
 	return __res;
-}
-
-int strcasecmp_pl(const char *cs, const char *ct)
-{
-	register signed char __res = 0;
-
-	while ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) == 0 && !*cs++) {
-		if (!*cs++)
-			return(0);
-	}
-
-	return __res;
-}
-
-/*
- * tolower_pl()
- *
- * zamienia podany znak na ma³y je¶li to mo¿liwe
- * obs³uguje polskie znaki
- */
-static int tolower_pl(const unsigned char c) {
-	switch(c) {
-		case 161: /* ¡ */
-			return 177;
-		case 198: /* Æ */
-			return 230;
-		case 202: /* Ê */
-			return 234;
-		case 163: /* £ */
-			return 179;
-		case 209: /* Ñ */
-			return 241;
-		case 211: /* Ó */
-			return 243;
-		case 166: /* ¦ */
-			return 182;
-		case 175: /* ¯ */
-			return 191;
-		case 172: /* ¬ */
-			return 188;
-		default: /* reszta */
-			return tolower(c);
-	}
 }
 
 /*
