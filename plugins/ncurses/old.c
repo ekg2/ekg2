@@ -375,25 +375,19 @@ int ncurses_backlog_add(window_t *w, fstring_t *str) {
 #if USE_UNICODE
 	{
 		int rlen = xstrlen(str->str.b);
-		wchar_t *temp = xmalloc((rlen + 1) * sizeof(CHAR_T));		/* new str->str */
+		wchar_t *temp = xmalloc((rlen + 1) * sizeof(CHAR_T));		/* new str->str (assuming worst case where there's no multibyte sequence) */
 
 		int cur = 0;
-		int i = 0;
+		int i;
 
 		mbtowc(NULL, NULL, 0);	/* reset */
 
-		while (cur <= rlen) {
+		for (i = 0; cur < rlen; i++) {
 			wchar_t znak;
 			int len	= mbtowc(&znak, &(str->str.b[cur]), rlen-cur);
 
-			if (!len) {	/* NUL, just in case */
-/*				temp[i]		= '\0'; */
-				str->attr[i]	= str->attr[cur]; 
-				i++;		/* just in case x 2 */
-				
-				/* It always hit here. So while (cur <= rlen) can be replaced with while (1) */
+			if (!len)	/* shouldn't happen -- cur < rlen */
 				break;
-			}
 
 			if (len > 0) {
 				temp[i]		= znak;
@@ -416,12 +410,11 @@ int ncurses_backlog_add(window_t *w, fstring_t *str) {
 				str->margin_left = i;
 
 			cur += len;
-			i++;
 		}
 
-	/* resize str->attr && str->str to match newlen. [I think we could use `i` instead of `i+1` but just in case] */
 		xfree(str->str.b); 
 
+		/* resize str->attr && str->str to match newlen. */
 		str->str.w	= xrealloc(temp, (i+1) * sizeof(CHAR_T));
 		str->attr	= xrealloc(str->attr, (i+1) * sizeof(short));
 	}
