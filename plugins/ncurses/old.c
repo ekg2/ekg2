@@ -545,7 +545,42 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				width -= 1;
 			if ((w->frames & WF_RIGHT))
 				width -= 1;
+#ifdef USE_UNICODE
+			{
+				int str_width = 0;
 
+				for (j = 0, word = 0; j < l->len; j++) {
+					int ch_width;
+
+					if (str[j] == CHAR(' '))
+						word = j + 1;
+
+					if (str_width >= width) {
+						l->len = (!w->nowrap && word) ? word : 		/* XXX, (str_width > width) ? word-1 : word? */
+							(str_width > width && j) ? j - 1 : j;
+
+						/* avoid dead loop -- always move forward */
+						/* XXX, a co z bledami przy rysowaniu? moze lepiej str++; attr++; albo break? */
+						if (!l->len)
+							l->len = 1;
+
+						if (str[l->len] == CHAR(' ')) {
+							l->len--;
+							str++;
+							attr++;
+						}
+						break;
+					}
+
+					ch_width = wcwidth(str[j]);
+					if (ch_width == -1) /* not printable? */
+						ch_width = 1;		/* XXX: should be rendered as '?' with A_REVERSE. I hope wcwidth('?') is always 1. */
+					str_width += ch_width;
+				}
+				if (w->nowrap)
+					break;
+			}
+#else
 			if (l->len < width)
 				break;
 
@@ -574,7 +609,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 					break;
 				}
 			}
-
+#endif
 			str += l->len;
 			attr += l->len;
 
