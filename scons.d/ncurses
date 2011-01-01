@@ -27,7 +27,6 @@ d) leave it as is and have ekg2 without ncurses plugin.''')
 if out:
 	libs.append(nc_lib)
 	defines['HAVE_NCURSES_ULC'] = conf.CheckLib(nc_lib, 'use_legacy_coding', None, None, 0)
-	defines['HAVE_NCURSES_TERMINFO'] = conf.CheckLib(nc_lib, 'tigetstr', None, None, 0)
 
 		# XXX: crosscompiling?
 	out2 = True
