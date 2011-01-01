@@ -2611,9 +2611,9 @@ end:
 #endif
 				xwcslen(ncurses_line) < LINE_MAXLEN - 1)
 		{
-					/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
+			/* move &ncurses_line[index_line] to &ncurses_line[index_line+1] */
 			memmove(ncurses_line + line_index + 1, ncurses_line + line_index, sizeof(CHAR_T) * (LINE_MAXLEN - line_index - 1));
-					/* put in ncurses_line[lindex_index] current char */
+			/* put in ncurses_line[lindex_index] current char */
 			ncurses_line[line_index++] = ch;
 
 			ncurses_typing_mod = 1;
