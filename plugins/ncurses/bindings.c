@@ -298,7 +298,7 @@ static BINDING_FUNCTION(binding_accept_line)
 
 static BINDING_FUNCTION(binding_line_discard)
 {
-	if (ncurses_noecho) { /* we don't want to yank passwords */
+	if (!ncurses_noecho) { /* we don't want to yank passwords */
 		xfree(yanked);
 		yanked = xwcsdup(line);
 	}
@@ -317,7 +317,6 @@ static BINDING_FUNCTION(binding_line_discard)
 
 		lines_adjust();
 	}
-
 }
 
 static BINDING_FUNCTION(binding_quoted_insert)
