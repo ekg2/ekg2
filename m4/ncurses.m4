@@ -55,10 +55,6 @@ AC_DEFUN([AC_CHECK_NCURSES],
 				[
 					AC_DEFINE([HAVE_NCURSES_ULC], 1, [define if your ncurses has use_legacy_coding()])
 				])
-				AC_CHECK_LIB([$NLIBRARY], [tigetstr],
-				[
-					AC_DEFINE([HAVE_NCURSES_TERMINFO], 1, [define if your ncurses has terminfo])
-				])
 			])
 		fi
 
