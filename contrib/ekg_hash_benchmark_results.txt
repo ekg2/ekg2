@@ -1,0 +1,32 @@
+#define ROL(x) (((x>>25)&0x7f)|((x<<7)&0xffffff80))
+hash_t ekg_hash(const char *name) {       hash_t ekg_hash(const char *name) {                             hash_t ekg_hash(const char *name) {
+        hash_t hash = 0;                          hash_t hash = 0;                                        	hash_t hash = 0;
+                                                  unsigned long long st = 0x4d6947;                       	unsigned long long st = 0x4d6947;
+        for (; *name; name++) {                   for (; *name; name++) {                                 
+                                                          st = st * 2147483629 + 2147483587;              	for (; *name; name++) {
+                                                          st %= 0x7fffffff;                               		st = st * 2147483629 + 2147483587;
+                                                                                                          		st %= 0x7fffffff;
+                hash ^= *name;                            hash ^= ((*name) ^ ((st >> 16)&0xff) );         
+                hash = ROL(hash);                         hash = ROL(hash);                               		st ^= ((*name) << 16);
+        }                                         }                                                       
+                                                                                                          	}
+        return hash;                              return hash;                                            	hash = (hash_t)st;
+}                                         }                                                               	return hash;
+                                                                                                          }
+      1 no_prompt_cache 139dcbd6                4 0 0.00                                                  
+      1 -- 1179                                 1 no_prompt_cache d4620858                                      1 0 0.00
+     16 1 0.08                                  1 -- 1179                                                       1 no_prompt_cache 5e0fde26
+     27 2 0.17                                 14 1 0.08                                                        1 -- 1179
+     38 3 0.25                                 30 2 0.17                                                       11 1 0.08
+     58 4 0.34                                 38 3 0.25                                                       32 2 0.17
+     38 5 0.42                                 50 4 0.34                                                       53 3 0.25
+     35 6 0.51                                 39 5 0.42                                                       40 4 0.34
+     18 7 0.59                                 34 6 0.51                                                       36 5 0.42
+     12 8 0.68                                 16 7 0.59                                                       34 6 0.51
+      5 9 0.76                                 13 8 0.68                                                       19 7 0.59
+      5 10 0.85                                 9 9 0.76                                                       15 8 0.68
+      3 11 0.93                                 6 10 0.85                                                       8 9 0.76
+      1 13 1.10                                 1 11 0.93                                                       2 10 0.85
+                                                2 12 1.02                                                       4 11 0.93
+                                                                                                                1 12 1.02                                 
+
