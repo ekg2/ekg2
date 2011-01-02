@@ -41,11 +41,9 @@
 #include "ecurses.h"
 #include "bindings.h"
 #include "completion.h"
+#include "notify.h"
 #include "old.h"
 #include "contacts.h"
-
-extern int ncurses_typing_mod;
-extern window_t *ncurses_typing_win;
 
 struct binding *ncurses_binding_map[KEY_MAX + 1];	/* mapa klawiszy */
 struct binding *ncurses_binding_map_meta[KEY_MAX + 1];	/* j.w. z altem */
@@ -590,6 +588,8 @@ BINDING_FUNCTION(binding_next_only_history)
 
 static BINDING_FUNCTION(binding_previous_history)
 {
+	ncurses_window_gone(window_current);
+
 	if (lines && (lines_index || lines_start)) {
 		if (lines_index - lines_start == 0 && lines_start)
 			lines_start--;
@@ -607,6 +607,8 @@ static BINDING_FUNCTION(binding_previous_history)
 static BINDING_FUNCTION(binding_next_history)
 {
 	int count = array_count((char **) lines);
+
+	ncurses_window_gone(window_current);
 
 	if (lines && (lines_index+1<count)) {
 		if (lines_index - line_start == MULTILINE_INPUT_SIZE - 1)

@@ -40,6 +40,7 @@
 #include "old.h"
 #include "contacts.h"
 #include "mouse.h"
+#include "notify.h"
 
 static int ncurses_theme_init();
 PLUGIN_DEFINE(ncurses, PLUGIN_UI, ncurses_theme_init);
@@ -70,7 +71,6 @@ const char *ncurses_settitle_formats[3] = { NULL, "\e]0;%s%s%s\a", "\e_%s%s%s\e\
 static int ncurses_settitle = 0;
 
 QUERY(ncurses_password_input); /* old.c */
-void ncurses_window_gone(window_t *w);
 
 /**
  * ncurses_beep()
