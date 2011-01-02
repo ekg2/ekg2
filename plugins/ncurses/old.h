@@ -82,11 +82,6 @@ typedef struct {
 	time_t last_red_line;	/* timestamp for red line marker */
 } ncurses_window_t;
 
-struct format_data {
-	char *name;			/* %{nazwa} */
-	char *text;			/* tre¶æ */
-};
-
 extern WINDOW *ncurses_contacts;
 extern WINDOW *ncurses_input;
 

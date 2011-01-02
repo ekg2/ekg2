@@ -1213,7 +1213,13 @@ static void update_header() {
 			waddch(ncurses_header, ' ');
 	}
 }
-		
+
+struct format_data {
+	char *name;			/* %{nazwa} */
+	char *text;			/* tre¶æ */
+	int percent_ok;
+};
+
 /*
  * window_printat()
  *
@@ -1315,7 +1321,6 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 			len = xstrlen(data[i].name);
 
 			if (!strncmp(p, data[i].name, len) && p[len] == '}') {
-				int percent_ok = (!xstrcmp(data[i].name, "activity") || !xstrcmp(data[i].name, "time") || !xstrcmp(data[i].name, "irctopic"));	/* XXX */
 				char *text = data[i].text;
 				
 				while (*text) {
@@ -1329,7 +1334,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 						continue;
 					}
 
-					if (*text == '%' && percent_ok) {
+					if (*text == '%' && data[i].percent_ok) {
 						text++;
 
 						if (!*text)	
@@ -1517,25 +1522,26 @@ void update_statusbar(int commit)
 		wattrset(ncurses_header, color_pair(COLOR_WHITE, COLOR_BLUE));
 
 	/* inicjalizujemy wszystkie opisowe bzdurki */
-#define __add_format(x, z) \
+#define __add_format(x, z, p) \
 	{ \
 		formats[formats_count].name = x; \
 		formats[formats_count].text = z; \
+		formats[formats_count].percent_ok = p; \
 		formats_count++; \
 	} 
 
-#define __add_format_emp(x, y)		__add_format(x, y ? (char *) empty_format : NULL)
-#define __add_format_dup(x, y, z)	__add_format(x, y ? xstrdup(z) : NULL)
+#define __add_format_emp(x, y)		__add_format(x, y ? (char *) empty_format : NULL, 0)
+#define __add_format_dup(x, y, z)	__add_format(x, y ? xstrdup(z) : NULL, 0)
 
-	__add_format_dup("time", 1, timestamp(format_find("statusbar_timestamp")));
+	__add_format("time", xstrdup(timestamp(format_find("statusbar_timestamp"))), 1);
 
 	__add_format_dup("window", window_current->id, itoa(window_current->id));
 	__add_format_dup("session", (sess), (sess->alias) ? sess->alias : sess->uid);
 	__add_format_dup("descr", (sess && sess->descr && sess->connected), sess->descr);
 
 	query_tmp = (sess && q && q->nickname) ? saprintf("%s/%s", q->nickname, q->uid) : xstrdup(window_current->alias ? window_current->alias : window_current->target);
-	__add_format("query", query_tmp);
-	__add_format("query_nickname", (sess && q && q->nickname) ? xstrdup(q->nickname) : xstrdup(window_current->alias ? window_current->alias : window_current->target));  
+	__add_format("query", query_tmp, 0);
+	__add_format("query_nickname", (sess && q && q->nickname) ? xstrdup(q->nickname) : xstrdup(window_current->alias ? window_current->alias : window_current->target), 0);
 
 	__add_format_emp("debug", (!window_current->id));
 	__add_format_emp("more", (window_current->more));
@@ -1546,15 +1552,15 @@ void update_statusbar(int commit)
 
 	irctopic = irctopicby = ircmode = NULL;
 	if (query_emit_id(NULL, IRC_TOPIC, &irctopic, &irctopicby, &ircmode) != -2) {
-		__add_format("irctopic", irctopic);
-		__add_format("irctopicby", irctopicby);
-		__add_format("ircmode", ircmode);
+		__add_format("irctopic", irctopic, 1);
+		__add_format("irctopicby", irctopicby, 0);
+		__add_format("ircmode", ircmode, 0);
 	}
 
-	__add_format("activity", ncurses_window_activity());
+	__add_format("activity", ncurses_window_activity(), 1);
 
 	if (sess && (sess->connected || (sess->connecting && connecting_counter))) {
-#define __add_format_emp_st(x, y) case y: __add_format(x, (char *) empty_format) break
+#define __add_format_emp_st(x, y) case y: __add_format(x, (char *) empty_format, 0) break
 		switch (sess->status) {
 				/* XXX: rewrite? */
 			__add_format_emp_st("away", EKG_STATUS_AWAY);
@@ -1578,7 +1584,7 @@ void update_statusbar(int commit)
 	if (q) {
 		int __ip = user_private_item_get_int(q, "ip");
 		char *ip = __ip ? inet_ntoa(*((struct in_addr*) &__ip)) : NULL;;
-#define __add_format_emp_st(x, y) case y: __add_format("query_" x, (char *) empty_format); break
+#define __add_format_emp_st(x, y) case y: __add_format("query_" x, (char *) empty_format, 0); break
 		switch (q->status) {
 				/* XXX: rewrite? */
 			__add_format_emp_st("away", EKG_STATUS_AWAY);
@@ -1606,7 +1612,7 @@ void update_statusbar(int commit)
 	__add_format_dup("url", 1, "http://www.ekg2.org/");
 	__add_format_dup("version", 1, VERSION);
 
-	__add_format(NULL, NULL);	/* NULL-terminator */
+	__add_format(NULL, NULL, 0);	/* NULL-terminator */
 
 #undef __add_format_emp
 #undef __add_format_dup
