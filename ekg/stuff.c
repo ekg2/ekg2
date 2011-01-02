@@ -2576,16 +2576,8 @@ uint32_t *ekg_sent_message_format(const char *text)
 
 size_t strlen_pl(const char *s) {
 #if USE_UNICODE
-	int ok = 1, len=xstrlen(s), count = 0;
-	const char *end = s+len;
-
-	while ((s < end) && (ok > 0)) {
-		if ((ok = mbrtowc(NULL, s, len, NULL)) > 0) {
-			count++;
-			s += ok;
-		}
-	}
-	return count;
+	if (!s) s = "";
+	return mbsrtowcs(NULL, &s, 0, NULL);
 #else
 	return xstrlen(s);
 #endif
@@ -2595,15 +2587,13 @@ static int tolower_pl(const unsigned char c);
 
 char *xstrncat_pl(char *dest, const char *src, size_t n) {
 #if USE_UNICODE
-	int i, v, len=xstrlen(src);
-	char *p = (char *)src;
+	int len=xstrlen(src);
+	wchar_t *wc = xmalloc((len+1) * sizeof(wchar_t));
+	const char *p = src;
 	
-	for (i = 0; i < n && *p; i++) {
-		if ((v = mbrtowc(NULL, p, len, NULL)) > 0) {
-			p += v;
-		}
-	}
-	n = p - src;
+	if (mbsrtowcs(wc, &p, n, NULL) < 0) n = 0;
+	else n = p ? p - src : len;
+	xfree(wc);
 #endif
 	return xstrncat(dest, src, n);
 }
@@ -2619,12 +2609,14 @@ int strncasecmp_pl(const char *cs, const char *ct , size_t count)
 {
 	register signed char __res = 0;
 #if USE_UNICODE
-	wchar_t *wc1 = xcalloc(count+1, sizeof(wchar_t));
-	wchar_t *wc2 = xcalloc(count+1, sizeof(wchar_t));
+	wchar_t *wc1 = xmalloc((count+1) * sizeof(wchar_t));
+	wchar_t *wc2 = xmalloc((count+1) * sizeof(wchar_t));
 	wchar_t *p;
+	int n1 = mbsrtowcs(wc1, &cs, count, NULL);
+	int n2 = mbsrtowcs(wc2, &ct, count, NULL);
 
-	mbsrtowcs(wc1, &cs, count, NULL);
-	mbsrtowcs(wc2, &ct, count, NULL);
+	wc1[n1<0 ? 0 : n1] = 0;
+	wc2[n2<0 ? 0 : n2] = 0;
 
 	for(p=wc1; *p; p++) *p = towlower(*p);
 	for(p=wc2; *p; p++) *p = towlower(*p);
