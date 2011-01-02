@@ -437,7 +437,7 @@ int ncurses_backlog_add(window_t *w, fstring_t *str) {
 int ncurses_backlog_split(window_t *w, int full, int removed)
 {
 	int i, res = 0, bottom = 0;
-	int render_timestamp = (config_timestamp && config_timestamp_show && config_timestamp[0]);
+	char *timestamp_format = NULL;
 	ncurses_window_t *n;
 
 	if (!w || !(n = w->priv_data))
@@ -469,6 +469,9 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		xfree(n->lines);
 		n->lines = NULL;
 	}
+
+	if (config_timestamp && config_timestamp_show && config_timestamp[0])
+		timestamp_format = format_string(config_timestamp);
 
 	/* je¶li upgrade... je¶li pe³ne przebudowanie... */
 	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
@@ -514,18 +517,13 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				l->prompt_attr = NULL;
 			}
 
-			if (!w->floating && render_timestamp) {
+			if (!w->floating && timestamp_format) {
 				fstring_t *s = NULL;
 
 				if (!ts || lastts != ts) {	/* generate new */
 					struct tm *tm = localtime(&ts);
-					char *format;
 
-					format = format_string(config_timestamp);
-					strftime(lasttsbuf, sizeof(lasttsbuf)-1, format, tm);
-
-					xfree(format);
-
+					strftime(lasttsbuf, sizeof(lasttsbuf)-1, timestamp_format, tm);
 					lastts = ts;
 				}
 
@@ -619,6 +617,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			wrapping = 1;
 		}
 	}
+	xfree(timestamp_format);
 
 	if (bottom) {
 		n->start = n->lines_count - w->height;
