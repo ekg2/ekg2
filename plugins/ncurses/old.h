@@ -131,7 +131,6 @@ extern int ncurses_debug;
 
 void header_statusbar_resize(const char *dummy);
 #ifdef WITH_ASPELL
-void ncurses_spellcheck_init();
 
 extern int config_aspell;
 extern char *config_aspell_lang;

@@ -42,6 +42,7 @@
 #include "contacts.h"
 #include "mouse.h"
 #include "notify.h"
+#include "spell.h"
 
 static int ncurses_theme_init();
 PLUGIN_DEFINE(ncurses, PLUGIN_UI, ncurses_theme_init);

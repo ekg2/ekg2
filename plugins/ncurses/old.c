@@ -32,9 +32,6 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-#ifdef WITH_ASPELL
-#	include <aspell.h>
-#endif
 #ifdef HAVE_REGEX_H
 #	include <sys/types.h>
 #	include <regex.h>
@@ -66,6 +63,7 @@
 #include "contacts.h"
 #include "mouse.h"
 #include "notify.h"
+#include "spell.h"
 
 static WINDOW *ncurses_status	= NULL;		/* okno stanu */
 static WINDOW *ncurses_header	= NULL;		/* okno nag³ówka */
@@ -93,11 +91,6 @@ static struct termios old_tio;
 
 int winch_pipe[2];
 int have_winch_pipe = 0;
-#ifdef WITH_ASPELL
-#  define ASPELLCHAR 5
-static AspellSpeller *spell_checker = NULL;
-static AspellConfig  *spell_config  = NULL;
-#endif
 
 static char ncurses_funnything[5] = "|/-\\";
 
@@ -231,48 +224,6 @@ void ncurses_update_real_prompt(ncurses_window_t *n) {
 		}
 	}
 }
-
-/*
- * ncurses_spellcheck_init()
- * 
- * it inializes dictionary
- */
-#ifdef WITH_ASPELL
-void ncurses_spellcheck_init(void) {
-	AspellCanHaveError *possible_err;
-
-	if (!config_aspell || !config_console_charset || !config_aspell_lang) {
-	/* jesli nie chcemy aspella to wywalamy go z pamieci */
-		if (spell_checker)	delete_aspell_speller(spell_checker);
-		if (spell_config)	delete_aspell_config(spell_config);
-		spell_checker = NULL;
-		spell_config = NULL;
-		debug("Maybe config_console_charset, aspell_lang or aspell variable is not set?\n");
-		return;
-	}
-
-	print("aspell_init");
-	
-	if (spell_checker)	{ delete_aspell_speller(spell_checker);	spell_checker = NULL; }
-	if (!spell_config)	spell_config = new_aspell_config();
-	aspell_config_replace(spell_config, "encoding", config_console_charset);
-	aspell_config_replace(spell_config, "lang", config_aspell_lang);
-	possible_err = new_aspell_speller(spell_config);
-	/* delete_aspell_config(spell_config); ? */
-
-	if (aspell_error_number(possible_err) != 0) {
-		spell_checker = NULL;
-		debug("Aspell error: %s\n", aspell_error_message(possible_err));
-		print("aspell_init_error", aspell_error_message(possible_err));
-		config_aspell = 0;
-		delete_aspell_config(spell_config);
-		spell_config = NULL;
-	} else {
-		spell_checker = to_aspell_speller(possible_err);
-		print("aspell_init_success");
-	}
-}
-#endif
 
 /*
  * color_pair()
@@ -2142,95 +2093,6 @@ WATCHER(ncurses_watch_winch)
 	changed_backlog_size(("backlog_size"));
 	return 0;
 }
-
-#ifdef WITH_ASPELL
-
-static inline int isalpha_locale(int x) {
-#ifdef USE_UNICODE
-	return (isalpha(x) || (x > 0x7f));	/* moze i nie najlepsze wyjscie... */
-#else
-	return isalpha_pl(x);
-#endif
-}
-
-/* 
- * spellcheck()
- *
- * it checks if the given word is correct
- */
-static void spellcheck(CHAR_T *what, char *where) {
-	register int i = 0;	/* licznik */
-	register int j = 0;	/* licznik */
-
-	/* Sprawdzamy czy nie mamy doczynienia z / (wtedy nie sprawdzamy reszty ) */
-	if (!what || *what == '/')
-		return;
-
-	while (what[i] && what[i] != '\n' && what[i] != '\r') {
-#if USE_UNICODE
-		CHAR_T what_j; /* zeby nie uzywac wcsndup() ktorego nie mamy. */
-		char *word_mbs;
-#endif
-		char fillznak;	/* do wypelnienia where[] (ASPELLCHAR gdy blednie napisane slowo) */
-
-		if ((isalpha_locale(what[i]) && i != 0) || what[i+1] == '\0') {		/* separator/koniec lini/koniec stringu */
-			i++;
-			continue;
-		}
-
-		/* szukamy jakiejs pierwszej literki */
-		for (; what[i] && what[i] != '\n' && what[i] != '\r'; i++) {
-			if (isalpha_locale(what[i]))
-				break;
-		}
-
-		/* trochê poprawiona wydajno¶æ */
-		if (!what[i] || what[i] == '\n' || what[i] == '\r')
-			continue;
-
-		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */
-		if (what[i] == 'h' && what[i + 1] == 't' && what[i + 2] == 't' && what[i + 3] == 'p' && what[i + 4] == ':' && what[i + 5] == '/' &&
-				what[i + 6] == '/')
-		{
-			while (what[i] && what[i] != ' ' && what[i] != '\n' && what[i] != '\r') i++;
-			continue;
-		}
-
-		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu ftp */
-		if (what[i] == 'f' && what[i + 1] == 't' && what[i + 2] == 'p' && what[i + 3] == ':' && what[i + 4] == '/' && what[i + 5] == '/')
-		{
-			while (what[i] && what[i] != ' ' && what[i] != '\n' && what[i] != '\r') i++;
-			continue;
-		}
-
-		for (j = i; what[j] && what[j] != '\n'; j++) {
-			if (!isalpha_locale(what[j]))
-				break;
-		}
-
-		if (j == i) {		/* Jak dla mnie nie powinno sie wydarzyc. */
-			i++;
-			continue;
-		}
-
-#if USE_UNICODE
-		what_j = what[j];
-		what[j] = '\0';
-
-		word_mbs = wcs_to_normal(&what[i]);
-		fillznak = (aspell_speller_check(spell_checker, word_mbs, -1) == 0) ? ASPELLCHAR : ' ';
-		free_utf(word_mbs);
-
-		what[j] = what_j;
-#else
-		/* sprawdzamy pisownie tego wyrazu */
-		fillznak = (aspell_speller_check(spell_checker, (char *) &what[i], j - i) == 0) ? ASPELLCHAR : ' ';
-#endif
-		for (; i < j; i++)
-			where[i] = fillznak;
-	}
-}
-#endif
 
 extern volatile int sigint_count;
 
