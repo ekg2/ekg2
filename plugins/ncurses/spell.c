@@ -116,8 +116,9 @@ void spellcheck(CHAR_T *what, char *where) {
 			continue;
 
 		/* sprawdzanie czy nastêpny wyraz nie rozpoczyna adresu www */
-		if (what[i] == 'h' && what[i + 1] == 't' && what[i + 2] == 't' && what[i + 3] == 'p' && what[i + 4] == ':' && what[i + 5] == '/' &&
-				what[i + 6] == '/')
+		if ((what[i] == 'h' && what[i + 1] == 't' && what[i + 2] == 't' && what[i + 3] == 'p') &&
+			((what[i + 4] == ':' && what[i + 5] == '/' && what[i + 6] == '/') ||
+			 (what[i + 4] == 's' && what[i + 5] == ':' && what[i + 6] == '/' && what[i + 7] == '/')))
 		{
 			while (what[i] && what[i] != ' ' && what[i] != '\n' && what[i] != '\r') i++;
 			continue;
@@ -141,9 +142,9 @@ void spellcheck(CHAR_T *what, char *where) {
 		}
 
 		what_j = what[j];
-#if USE_UNICODE
 		what[j] = '\0';
 
+#if USE_UNICODE
 		word_mbs = wcs_to_normal(&what[i]);
 		if (!userlist_find(session_current, word_mbs))
 			fillznak = (aspell_speller_check(spell_checker, word_mbs, -1) == 0) ? ASPELLCHAR : ' ';
