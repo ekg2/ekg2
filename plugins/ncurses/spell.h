@@ -10,7 +10,7 @@
 
 #  define ASPELLCHAR 5
 
-extern AspellSpeller *spell_checker = NULL;
+extern AspellSpeller *spell_checker;
 
 void ncurses_spellcheck_init(void);
 void spellcheck(CHAR_T *what, char *where);

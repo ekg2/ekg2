@@ -88,6 +88,7 @@ static inline int isalpha_locale(int x) {
 void spellcheck(CHAR_T *what, char *where) {
 	register int i = 0;	/* licznik */
 	register int j = 0;	/* licznik */
+	CHAR_T what_j;
 
 	/* Sprawdzamy czy nie mamy doczynienia z / (wtedy nie sprawdzamy reszty ) */
 	if (!what || *what == '/')
@@ -95,10 +96,9 @@ void spellcheck(CHAR_T *what, char *where) {
 
 	while (what[i] && what[i] != '\n' && what[i] != '\r') {
 #if USE_UNICODE
-		CHAR_T what_j; /* zeby nie uzywac wcsndup() ktorego nie mamy. */
 		char *word_mbs;
 #endif
-		char fillznak;	/* do wypelnienia where[] (ASPELLCHAR gdy blednie napisane slowo) */
+		char fillznak = ' ';	/* do wypelnienia where[] (ASPELLCHAR gdy blednie napisane slowo) */
 
 		if ((isalpha_locale(what[i]) && i != 0) || what[i+1] == '\0') {		/* separator/koniec lini/koniec stringu */
 			i++;
@@ -140,21 +140,26 @@ void spellcheck(CHAR_T *what, char *where) {
 			continue;
 		}
 
-#if USE_UNICODE
 		what_j = what[j];
+#if USE_UNICODE
 		what[j] = '\0';
 
 		word_mbs = wcs_to_normal(&what[i]);
-		fillznak = (aspell_speller_check(spell_checker, word_mbs, -1) == 0) ? ASPELLCHAR : ' ';
+		if (!userlist_find(session_current, word_mbs))
+			fillznak = (aspell_speller_check(spell_checker, word_mbs, -1) == 0) ? ASPELLCHAR : ' ';
 		free_utf(word_mbs);
-
-		what[j] = what_j;
 #else
 		/* sprawdzamy pisownie tego wyrazu */
-		fillznak = (aspell_speller_check(spell_checker, (char *) &what[i], j - i) == 0) ? ASPELLCHAR : ' ';
+		if (!userlist_find(session_current, what+i))
+			fillznak = (aspell_speller_check(spell_checker, (char *) &what[i], j - i) == 0) ? ASPELLCHAR : ' ';
 #endif
-		for (; i < j; i++)
-			where[i] = fillznak;
+		what[j] = what_j;
+
+		if (fillznak != ASPELLCHAR)
+			i = j;
+		else
+			for (; i < j; i++)
+				where[i] = fillznak;
 	}
 }
 
