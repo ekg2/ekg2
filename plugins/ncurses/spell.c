@@ -2,7 +2,6 @@
  *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
  *			    Wojtek Bojdo³ <wojboj@htcon.pl>
  *			    Pawe³ Maziarz <drg@infomex.pl>
- *			    Jakub 'darkjames' Zawadzki <darkjames@darkjames.ath.cx>
  *		  2008-2010 Wies³aw Ochmiñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
