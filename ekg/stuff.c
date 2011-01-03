@@ -2642,17 +2642,14 @@ int strncasecmp_pl(const char *cs, const char *ct , size_t count)
 #if USE_UNICODE
 	wchar_t *wc1 = xmalloc((count+1) * sizeof(wchar_t));
 	wchar_t *wc2 = xmalloc((count+1) * sizeof(wchar_t));
-	wchar_t *p;
-	int n1 = mbsrtowcs(wc1, &cs, count, NULL);
-	int n2 = mbsrtowcs(wc2, &ct, count, NULL);
+	mbsrtowcs(wc1, &cs, count, NULL);
+	mbsrtowcs(wc2, &ct, count, NULL);
 
-	wc1[n1<0 ? 0 : n1] = 0;
-	wc2[n2<0 ? 0 : n2] = 0;
-
-	for(p=wc1; *p; p++) *p = towlower(*p);
-	for(p=wc2; *p; p++) *p = towlower(*p);
-
-	__res = wcscoll(wc1, wc2);
+	while (count) {
+		if ((__res = towlower(*wc1) - towlower(*wc2++)) != 0 || !*wc1++)
+			break;
+		count--;
+	}
 
 	xfree(wc1);
 	xfree(wc2);
