@@ -2640,13 +2640,14 @@ int strncasecmp_pl(const char *cs, const char *ct , size_t count)
 {
 	register signed char __res = 0;
 #if USE_UNICODE
-	wchar_t *wc1 = xmalloc((count+1) * sizeof(wchar_t));
-	wchar_t *wc2 = xmalloc((count+1) * sizeof(wchar_t));
+	wchar_t *wcs, *wct;
+	wchar_t *wc1 = wcs = xmalloc((count+1) * sizeof(wchar_t));
+	wchar_t *wc2 = wct = xmalloc((count+1) * sizeof(wchar_t));
 	mbsrtowcs(wc1, &cs, count, NULL);
 	mbsrtowcs(wc2, &ct, count, NULL);
 
 	while (count) {
-		if ((__res = towlower(*wc1) - towlower(*wc2++)) != 0 || !*wc1++)
+		if ((__res = towlower(*wcs) - towlower(*wct++)) != 0 || !*wcs++)
 			break;
 		count--;
 	}
