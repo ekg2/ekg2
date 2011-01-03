@@ -1,4 +1,3 @@
-#!/usr/bin/perl
 use Ekg2;
 use Ekg2::Irc;
 use strict;
