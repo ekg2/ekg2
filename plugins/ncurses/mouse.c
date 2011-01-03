@@ -49,7 +49,7 @@ int mouse_initialized = 0;
  * 
  * should show mouse pointer 
  */
-static void show_mouse_pointer() {
+static void show_mouse_pointer(void) {
 #ifdef HAVE_LIBGPM
 	if (gpm_visiblepointer) {
 		Gpm_Event event;
@@ -373,7 +373,7 @@ void ncurses_enable_mouse(const char *env) {
  * it should disable mouse and destroy everything
  * connected with it's support
  */
-void ncurses_disable_mouse()
+void ncurses_disable_mouse(void)
 {
 	if (!mouse_initialized)
 		return;

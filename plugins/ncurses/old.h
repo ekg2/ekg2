@@ -10,8 +10,8 @@
 #include <ekg/themes.h>
 #include <ekg/windows.h>
 
-void ncurses_init();
-void ncurses_deinit();
+void ncurses_init(void);
+void ncurses_deinit(void);
 
 extern plugin_t ncurses_plugin;
 
@@ -93,18 +93,18 @@ extern WINDOW *ncurses_input;
 QUERY(ncurses_session_disconnect_handler);
 
 void ncurses_update_real_prompt(ncurses_window_t *n);
-void ncurses_resize();
+void ncurses_resize(void);
 int ncurses_backlog_add(window_t *w, fstring_t *str);
 int ncurses_backlog_split(window_t *w, int full, int removed);
 void ncurses_redraw(window_t *w);
 void ncurses_redraw_input(unsigned int ch);
 void ncurses_clear(window_t *w, int full);
-void ncurses_refresh();
-void ncurses_commit();
+void ncurses_refresh(void);
+void ncurses_commit(void);
 void ncurses_input_update(int new_line_index);
-void ncurses_line_adjust();
+void ncurses_line_adjust(void);
 #define line_adjust ncurses_line_adjust
-void ncurses_lines_adjust();
+void ncurses_lines_adjust(void);
 #define lines_adjust ncurses_lines_adjust
 int ncurses_window_kill(window_t *w);
 int ncurses_window_new(window_t *w);

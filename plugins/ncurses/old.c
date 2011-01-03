@@ -309,7 +309,7 @@ static inline int color_pair_bold(int fg, int bold, int bg) {
  *
  * zatwierdza wszystkie zmiany w buforach ncurses i wy¶wietla je na ekranie.
  */
-void ncurses_commit()
+void ncurses_commit(void)
 {
 	ncurses_refresh();
 
@@ -642,7 +642,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
  * dostosowuje rozmiar okien do rozmiaru ekranu, przesuwaj±c odpowiednio
  * wy¶wietlan± zawarto¶æ.
  */
-void ncurses_resize()
+void ncurses_resize(void)
 {
 	int left, right, top, bottom, width, height;
 	window_t *w;
@@ -1149,7 +1149,7 @@ void ncurses_clear(window_t *w, int full)
  *
  * wnoutrefresh()uje aktualnie wy¶wietlane okienko.
  */
-void ncurses_refresh()
+void ncurses_refresh(void)
 {
 	window_t *w;
 
@@ -1197,7 +1197,7 @@ void ncurses_refresh()
  *
  * uaktualnia nag³ówek okna
  */
-static void update_header() {
+static void update_header(void) {
 	int y;
 
 	if (!ncurses_header)
@@ -1723,7 +1723,7 @@ static void sigwinch_handler()
  *
  * inicjalizuje ca³± zabawê z ncurses.
  */
-void ncurses_init()
+void ncurses_init(void)
 {
 	int background;
 
@@ -1832,7 +1832,7 @@ void ncurses_init()
  *
  * zamyka, robi porz±dki.
  */
-void ncurses_deinit()
+void ncurses_deinit(void)
 {
 	static int done = 0;
 	window_t *w;
@@ -1896,7 +1896,7 @@ void ncurses_deinit()
  *
  * ustawia kursor w odpowiednim miejscu ekranu po zmianie tekstu w poziomie.
  */
-void ncurses_line_adjust()
+void ncurses_line_adjust(void)
 {
 	const int prompt_len = (ncurses_lines) ? 0 : ncurses_current->prompt_real_len;
 
@@ -1912,7 +1912,7 @@ void ncurses_line_adjust()
  *
  * poprawia kursor po przesuwaniu go w pionie.
  */
-void ncurses_lines_adjust() {
+void ncurses_lines_adjust(void) {
 	size_t linelen;
 	if (lines_index < lines_start)
 		lines_start = lines_index;
