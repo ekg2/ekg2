@@ -1,5 +1,5 @@
 // description of available in ncurses plugin
-// (c) cpopyright 2004 Piotr Kupisiewicz <deletek@ekg2.org>
+// (c) copyright 2004 Piotr Kupisiewicz <deletek@ekg2.org>
 
 aspell 
 	type: bool

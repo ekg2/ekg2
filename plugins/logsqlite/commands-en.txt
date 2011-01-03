@@ -1,5 +1,5 @@
 // command description for logsqlite plugin
-// (c) copyright 2005 - 2008 Leszek KrupiÃ±ski <leafnode@wafel.com>
+// (c) copyright 2005 - 2008 Leszek Krupiñski <leafnode@wafel.com>
 //                           Adam Mikuta <adamm@ekg2.org>
 
 last
