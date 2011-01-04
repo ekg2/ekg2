@@ -1142,29 +1142,6 @@ void ncurses_refresh(void)
 	mvwin(input, stdscr->_maxy - ncurses_input_size + 1, 0);
 }
 
-/*
- * update_header()
- *
- * uaktualnia nag³ówek okna
- */
-static void update_header(void) {
-	int y;
-
-	if (!ncurses_header)
-		return;
-
-	wattrset(ncurses_header, color_pair(COLOR_WHITE, COLOR_BLUE));
-
-	for (y = 0; y < config_header_size; y++) {
-		int x;
-		
-		wmove(ncurses_header, y, 0);
-
-		for (x = 0; x <= ncurses_status->_maxx; x++)
-			waddch(ncurses_header, ' ');
-	}
-}
-
 struct format_data {
 	char *name;			/* %{nazwa} */
 	char *text;			/* tre¶æ */
@@ -2398,17 +2375,15 @@ void header_statusbar_resize(const char *dummy)
 		config_statusbar_size = 5;
 
 	if (config_header_size) {
-		if (!header)
-			header = newwin(config_header_size, stdscr->_maxx + 1, 0, 0);
+		if (!ncurses_header)
+			ncurses_header = newwin(config_header_size, stdscr->_maxx + 1, 0, 0);
 		else
-			wresize(header, config_header_size, stdscr->_maxx + 1);
-
-		update_header();		/* note: do wywalenia, nie robi nic wiecej niz update_statusbar() zrobi kilka linijek nizej */
+			wresize(ncurses_header, config_header_size, stdscr->_maxx + 1);
 	}
 
-	if (!config_header_size && header) {
-		delwin(header);
-		header = NULL;
+	if (!config_header_size && ncurses_header) {
+		delwin(ncurses_header);
+		ncurses_header = NULL;
 	}
 
 	ncurses_resize();

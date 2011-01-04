@@ -105,7 +105,6 @@ int ncurses_window_kill(window_t *w);
 int ncurses_window_new(window_t *w);
 
 #define input ncurses_input
-#define header ncurses_header
 #define contacts ncurses_contacts
 #define history ncurses_history
 #define history_index ncurses_history_index
