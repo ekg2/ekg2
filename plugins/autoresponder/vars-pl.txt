@@ -1,48 +1,48 @@
 allowed_sessions
 	typ: tekst
-	domy¶lna warto¶æ: (brak)
+	domyÅ›lna wartoÅ›Ä‡: (brak)
 	
-	Oddzielona przecinkami lista sesji, dla których wtyczka autorespondera
-	bêdzie u¿ywana. Mo¿e zawieraæ zarówno UID-y, jak i aliasy.
+	Oddzielona przecinkami lista sesji, dla ktÃ³rych wtyczka autorespondera
+	bÄ™dzie uÅ¼ywana. MoÅ¼e zawieraÄ‡ zarÃ³wno UID-y, jak i aliasy.
 	
-	Uwaga: korzystaj±c z autorespondera w sesjach "gg", nale¿y pamiêtaæ aby
-	dodaæ do listy kontaktów lub ignorowanych u¿ytkownika "gg:0", który
-	wysy³a "wiadomo¶ci systemowe". W przeciwnym wypadku serwer mo¿e zrywaæ
-	po³±czenie zaraz po jego nawi±zaniu.
+	Uwaga: korzystajÄ…c z autorespondera w sesjach "gg", naleÅ¼y pamiÄ™taÄ‡ aby
+	dodaÄ‡ do listy kontaktÃ³w lub ignorowanych uÅ¼ytkownika "gg:0", ktÃ³ry
+	wysyÅ‚a "wiadomoÅ›ci systemowe". W przeciwnym wypadku serwer moÅ¼e zrywaÄ‡
+	poÅ‚Ä…czenie zaraz po jego nawiÄ…zaniu.
 
 answer
 	typ: tekst
-	domy¶lna warto¶æ: (brak)
+	domyÅ›lna wartoÅ›Ä‡: (brak)
 	
-	Poprawna odpowied¼ na twoje pytanie - tzn. je¶li u¿ytkownik wy¶le
-	wiadomo¶æ o identycznej tre¶ci, jego dalsze wiadomo¶ci bêd± ju¿
-	dostarczane u¿ytkownikowi. Je¶li nieustalone, autoreponder bêdzie
-	oczekiwa³ od u¿ytkownika dok³adnego przepisania pytania.
+	Poprawna odpowiedÅº na twoje pytanie - tzn. jeÅ›li uÅ¼ytkownik wyÅ›le
+	wiadomoÅ›Ä‡ o identycznej treÅ›ci, jego dalsze wiadomoÅ›ci bÄ™dÄ… juÅ¼
+	dostarczane uÅ¼ytkownikowi. JeÅ›li nieustalone, autoreponder bÄ™dzie
+	oczekiwaÅ‚ od uÅ¼ytkownika dokÅ‚adnego przepisania pytania.
 
 greeting
 	typ: tekst
-	domy¶lna warto¶æ: (brak)
+	domyÅ›lna wartoÅ›Ä‡: (brak)
 	
-	Tekst wysy³any u¿ytkownikowi w momencie otrzymania od niego poprawnej
+	Tekst wysyÅ‚any uÅ¼ytkownikowi w momencie otrzymania od niego poprawnej
 	odpowiedzi.
 
 match_mode
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la sposób porównywania wiadomo¶ci z odpowiedzi± na pytanie.
-	Dopuszczalne warto¶ci:
+	OkreÅ›la sposÃ³b porÃ³wnywania wiadomoÅ›ci z odpowiedziÄ… na pytanie.
+	Dopuszczalne wartoÅ›ci:
 	
-		0 - odpowied¼ musi byæ identyczna
+		0 - odpowiedÅº musi byÄ‡ identyczna
 	
-		1 - odpowied¼ musi zawieraæ siê w wiadomo¶ci
+		1 - odpowiedÅº musi zawieraÄ‡ siÄ™ w wiadomoÅ›ci
 	
-		2 - odpowied¼ jest wyra¿eniem regularnym (POSIX)
+		2 - odpowiedÅº jest wyraÅ¼eniem regularnym (POSIX)
 
 question
 	typ: tekst
-	domy¶lna warto¶æ: (brak)
+	domyÅ›lna wartoÅ›Ä‡: (brak)
 	
-	Pytanie, wysy³ane do nieznanych u¿ytkowników, w przypadku otrzymania
-	od nich wiadomo¶ci. Je¶li nieustawione, autoresponder bêdzie wy³±czony.
+	Pytanie, wysyÅ‚ane do nieznanych uÅ¼ytkownikÃ³w, w przypadku otrzymania
+	od nich wiadomoÅ›ci. JeÅ›li nieustawione, autoresponder bÄ™dzie wyÅ‚Ä…czony.
 

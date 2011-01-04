@@ -1,73 +1,73 @@
-// opis komend dla protoko³u jabber
+// opis komend dla protokoÅ‚u jabber
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004 tomasz torcz <zdzichu@ekg2.org>
 
 _autoaway
 	parametry:
-	krotki opis: zmienia stan na zajêty
+	krotki opis: zmienia stan na zajÄ™ty
 
 _autoback
 	parametry:
-	krotki opis: zmienia stan na dostêpny
+	krotki opis: zmienia stan na dostÄ™pny
 
 add
 	parametry: <JID> [nazwa]
-	krotki opis: dodaje u¿ytkownika do naszego rostera, jednocze¶nie prosz±c o autoryzacjê
+	krotki opis: dodaje uÅ¼ytkownika do naszego rostera, jednoczeÅ›nie proszÄ…c o autoryzacjÄ™
 
 admin
-	parametry: [konferencja pole warto¶æ]
-	krotki opis: zmienia konfiguracjê pokoju
+	parametry: [konferencja pole wartoÅ›Ä‡]
+	krotki opis: zmienia konfiguracjÄ™ pokoju
 	
-	Zmienia konfiguracjê pokoju MUC: ustawia `pole` na `warto¶æ` dla pokoju
+	Zmienia konfiguracjÄ™ pokoju MUC: ustawia `pole` na `wartoÅ›Ä‡` dla pokoju
 	`konferencja`.
 	
-	Je¿eli nie podano ¿adnych argumentów, wy¶wietla wszystkie pola oraz ich
-	warto¶ci dla aktualnego pokoju.
+	JeÅ¼eli nie podano Å¼adnych argumentÃ³w, wyÅ›wietla wszystkie pola oraz ich
+	wartoÅ›ci dla aktualnego pokoju.
 	
-	Przyk³ad (zmieñ typ pokoju na `persistent`):
+	PrzykÅ‚ad (zmieÅ„ typ pokoju na `persistent`):
 	  /admin xmpp:test@conference.example.com --muc#roomconfig_persistentroom 1
 
 auth
 	parametry: <opcje> <JID>
-	krotki opis: obs³uga autoryzacji
+	krotki opis: obsÅ‚uga autoryzacji
 	
 	<akcja> <JID>
 	
 	  -a, --accept <JID>    autoryzuje JID
 	
-	  -d, --deny <JID>      odmawia udzielenia autoryzacji lub j± odbiera
+	  -d, --deny <JID>      odmawia udzielenia autoryzacji lub jÄ… odbiera
 	
-	  -r, --request <JID>   wysy³a ¿±danie autoryzacji
+	  -r, --request <JID>   wysyÅ‚a Å¼Ä…danie autoryzacji
 	
-	  -c, --cancel <JID>    wysy³a ¿±danie cofniêcia autoryzacji
+	  -c, --cancel <JID>    wysyÅ‚a Å¼Ä…danie cofniÄ™cia autoryzacji
 	
-	  -j, --reject <JID>	odrzuca ¿±danie autoryzacji
+	  -j, --reject <JID>	odrzuca Å¼Ä…danie autoryzacji
 	
-	  -l, --list		wy¶wietla oczekuj±ce ¿±dania
+	  -l, --list		wyÅ›wietla oczekujÄ…ce Å¼Ä…dania
 	
-	  -p, --probe		wysy³a pytanie o obecno¶æ u¿ytkownika
+	  -p, --probe		wysyÅ‚a pytanie o obecnoÅ›Ä‡ uÅ¼ytkownika
 
 away
 	parametry: [opis/-]
-	krotki opis: zmienia stan na zajêty
+	krotki opis: zmienia stan na zajÄ™ty
 	
-	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 back
 	parametry: [opis/-]
-	krotki opis: zmienia stan na dostêpny
+	krotki opis: zmienia stan na dostÄ™pny
 	
-	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 ban
-	parametry: <kana³> <JID> [powód]
-	krotki opis: banuje JID z kana³u lub wy¶wietla listê banów
+	parametry: <kanaÅ‚> <JID> [powÃ³d]
+	krotki opis: banuje JID z kanaÅ‚u lub wyÅ›wietla listÄ™ banÃ³w
 	
-	Je¿eli nie podano JID wy¶wietla listê zbanowanych uzytkowników.
-	W przeciwnym wypadku banuje dany JID z okre¶lonego kana³u.
+	JeÅ¼eli nie podano JID wyÅ›wietla listÄ™ zbanowanych uzytkownikÃ³w.
+	W przeciwnym wypadku banuje dany JID z okreÅ›lonego kanaÅ‚u.
 
 bookmark
 	parametry: <opcje>
@@ -104,7 +104,7 @@ change
 	parametry: <opcje>
 	krotki opis: zmienia informacje w katalogu publicznym
 	
-	  -f, --fullname <imiê i nazwisko>
+	  -f, --fullname <imiÄ™ i nazwisko>
 	
 	  -n, --nick <pseudonim>
 	
@@ -116,103 +116,103 @@ change
 	
 	  -C, --country <kraj>
 	
-	  -p, --photo <¶cie¿ka do zdjecia>
+	  -p, --photo <Å›cieÅ¼ka do zdjecia>
 	
-	Je¶li który¶ z parametrów nie zostanie podany, jego warto¶æ zostanie
+	JeÅ›li ktÃ³ryÅ› z parametrÃ³w nie zostanie podany, jego wartoÅ›Ä‡ zostanie
 	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n''
-	wyczy¶ci %Twszystkie%n pola.
+	wyczyÅ›ci %Twszystkie%n pola.
 
 chat
 	parametry:
-	krotki opis: wysy³a wiadomo¶æ w ramach rozmowy
+	krotki opis: wysyÅ‚a wiadomoÅ›Ä‡ w ramach rozmowy
 
 connect
 	parametry:
-	krotki opis: ³±czy siê z serwerem
+	krotki opis: Å‚Ä…czy siÄ™ z serwerem
 
 del
 	parametry: [nazwa]
 	krotki opis: usuwa z naszego rostera
 
 deop
-	parametry: [kana³] [nick]
-	krotki opis: degraduje nick do roli go¶cia
+	parametry: [kanaÅ‚] [nick]
+	krotki opis: degraduje nick do roli goÅ›cia
 	
-	Odbiera u¿ytkownikowi prawa moderatora kana³u oraz prawo wysy³ania
-	wiadomo¶ci je¿eli kana³ jest moderowany.
+	Odbiera uÅ¼ytkownikowi prawa moderatora kanaÅ‚u oraz prawo wysyÅ‚ania
+	wiadomoÅ›ci jeÅ¼eli kanaÅ‚ jest moderowany.
 
 devoice
-	parametry: [kana³] [nick]
-	krotki opis: degraduje nick do roli go¶cia
+	parametry: [kanaÅ‚] [nick]
+	krotki opis: degraduje nick do roli goÅ›cia
 	
-	Odbiera u¿ytkownikowi prawa moderatora kana³u oraz prawo wysy³ania
-	wiadomo¶ci je¿eli kana³ jest moderowany.
+	Odbiera uÅ¼ytkownikowi prawa moderatora kanaÅ‚u oraz prawo wysyÅ‚ania
+	wiadomoÅ›ci jeÅ¼eli kanaÅ‚ jest moderowany.
 
 disconnect
 	parametry:  [opis/-]
-	krotki opis: roz³±cza siê od serwera
+	krotki opis: rozÅ‚Ä…cza siÄ™ od serwera
 	
-	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 dnd
 	parametry: [opis/-]
-	krotki opis: zmienia stan na nie przeszkadzaæ
+	krotki opis: zmienia stan na nie przeszkadzaÄ‡
 	
-	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 ffc
 	parametry: [opis/-]
-	krotki opis: zmienia stan na chêtny do rozmowy
+	krotki opis: zmienia stan na chÄ™tny do rozmowy
 	
-	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 kick
-	parametry: [kana³] [nick]
-	krotki opis: wyrzuca nick z kana³u
+	parametry: [kanaÅ‚] [nick]
+	krotki opis: wyrzuca nick z kanaÅ‚u
 
 invisible
 	parametry: [opis/-]
-	krotki opis: zmienia stan na zajêty
+	krotki opis: zmienia stan na zajÄ™ty
 	
-	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 join
 	parametry: <konferencja> [nick]
-	krotki opis: przy³±cza do konferencji
+	krotki opis: przyÅ‚Ä…cza do konferencji
 	
-	Przy³±cza do konferencji. Je¿eli podana konferencja nie istnieje,
-	zak³ada now± konferencjê. Opcjonalnie ustawia nick u¿ytkownika w
+	PrzyÅ‚Ä…cza do konferencji. JeÅ¼eli podana konferencja nie istnieje,
+	zakÅ‚ada nowÄ… konferencjÄ™. Opcjonalnie ustawia nick uÅ¼ytkownika w
 	konferencji.
 
 lastseen
 	parametry:
-	krotki opis: pobiera informacjê o czasie wylogowania siê danego jid
+	krotki opis: pobiera informacjÄ™ o czasie wylogowania siÄ™ danego jid
 
 msg
 	parametry:
-	krotki opis: wysy³a pojedyncz± wiadomo¶æ
+	krotki opis: wysyÅ‚a pojedynczÄ… wiadomoÅ›Ä‡
 	
-	Wszyscy odbiorcy to * zamiast nadawcy. Poprzedzenie wiadomo¶ci
-	wielolinijkowej ci±giem zdefiniowanym w zmiennej subject_prefix spowoduje
+	Wszyscy odbiorcy to * zamiast nadawcy. Poprzedzenie wiadomoÅ›ci
+	wielolinijkowej ciÄ…giem zdefiniowanym w zmiennej subject_prefix spowoduje
 	potraktowanie pierwszej linijki jako tematu.
 
 modify
 	parametry: <alias> <opcje>
-	krotki opis: zmienia wpisy w li¶cie kontaktów
+	krotki opis: zmienia wpisy w liÅ›cie kontaktÃ³w
 	
-	Opcje mog± byæ nastêpuj±ce:
+	Opcje mogÄ… byÄ‡ nastÄ™pujÄ…ce:
 	
-	-n, --nickname <pseudonim>     wpis w li¶cie kontaktów
+	-n, --nickname <pseudonim>     wpis w liÅ›cie kontaktÃ³w
 
 nick
 	parametry: [konferencja] <nick>
-	krotki opis: zmienia nick u¿ytkownika
+	krotki opis: zmienia nick uÅ¼ytkownika
 	
-	Zmienia nick u¿ytkownika w danej konferencji. Je¿eli nie podano
+	Zmienia nick uÅ¼ytkownika w danej konferencji. JeÅ¼eli nie podano
 	konferencji, zmienia nick na konferencji w aktualnym oknie.
 
 op
@@ -221,11 +221,11 @@ op
 
 part
 	parametry: <konferencja>
-	krotki opis: opuszcza konferencjê
+	krotki opis: opuszcza konferencjÄ™
 
 passwd
 	parametry:
-	krotki opis: zmienia has³o
+	krotki opis: zmienia hasÅ‚o
 
 privacy
 	parametry: <opcje>
@@ -270,23 +270,23 @@ privacy
 
 reconnect
 	parametry:
-	krotki opis: roz³±cza i ³±czy siê ponownie
+	krotki opis: rozÅ‚Ä…cza i Å‚Ä…czy siÄ™ ponownie
 
 reply
 	parametry: <#reply-id> ...
-	krotki opis: odpisuje na w±tek
+	krotki opis: odpisuje na wÄ…tek
 	
-	Wysy³a wiadomo¶æ jako kontynuacjê wskazanego przez reply-id w±tku.
-	Mo¿liwe jest podanie tematu jak w msg, w przeciwnym razie temat
-	zostanie utworzone w oparciu o temat w±tku (poprzedzony
+	WysyÅ‚a wiadomoÅ›Ä‡ jako kontynuacjÄ™ wskazanego przez reply-id wÄ…tku.
+	MoÅ¼liwe jest podanie tematu jak w msg, w przeciwnym razie temat
+	zostanie utworzone w oparciu o temat wÄ…tku (poprzedzony
 	subject_reply_prefix).
 
 tmsg
 	parametry: <uid/nick> <id-watku> ...
-	krotki opis: wysy³a wiadomo¶æ w±tkowan±
+	krotki opis: wysyÅ‚a wiadomoÅ›Ä‡ wÄ…tkowanÄ…
 	
-	Dzia³a podobnie jak msg, z tym, ¿e dodatkowy, drugi parametr zawiera
-	identyfikator w±tku dla wiadomo¶ci.
+	DziaÅ‚a podobnie jak msg, z tym, Å¼e dodatkowy, drugi parametr zawiera
+	identyfikator wÄ…tku dla wiadomoÅ›ci.
 
 topic
 	parametry:  [konferencja] <nowy temat>
@@ -294,10 +294,10 @@ topic
 
 unban
 	parametry: <konferencja> <JID>
-	krotki opis: zdejmuje ban na dany JID z kana³u
+	krotki opis: zdejmuje ban na dany JID z kanaÅ‚u
 	
-	Je¿eli nie podano JID wy¶wietla listê zbanowanych uzytkowników.
-	W przeciwnym wypadku usuwa ban danego JID z okre¶lonego kana³u.
+	JeÅ¼eli nie podano JID wyÅ›wietla listÄ™ zbanowanych uzytkownikÃ³w.
+	W przeciwnym wypadku usuwa ban danego JID z okreÅ›lonego kanaÅ‚u.
 
 userinfo
 	parametry:
@@ -305,30 +305,30 @@ userinfo
 
 ver
 	parametry:
-	krotki opis: pobiera informacjê o sytemie operacyjnym i wersji klienta Jabbera danego jid
+	krotki opis: pobiera informacjÄ™ o sytemie operacyjnym i wersji klienta Jabbera danego jid
 
 voice
 	parametry: <konferencja> <nick>
-	krotki opis: daje "g³os" nickowi
+	krotki opis: daje "gÅ‚os" nickowi
 	
-	Nadaje u¿ytkownikowi uprawnienia do wysy³ania wiadomo¶ci w
-	konferencji, nawet je¶li konferencja jest moderowana.
+	Nadaje uÅ¼ytkownikowi uprawnienia do wysyÅ‚ania wiadomoÅ›ci w
+	konferencji, nawet jeÅ›li konferencja jest moderowana.
 	
-	Uwaga: ustawienie voice na uzytkowniku bêd±cym moderatorem spowoduje
+	Uwaga: ustawienie voice na uzytkowniku bÄ™dÄ…cym moderatorem spowoduje
 	odebraniu mu praw administratora.
 
 xa
 	parametry: [opis/-]
-	krotki opis: zmienia stan na bardzo zajêty
+	krotki opis: zmienia stan na bardzo zajÄ™ty
 	
-	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 xml
 	parametry:
-	krotki opis: wysy³a polecenie xml
+	krotki opis: wysyÅ‚a polecenie xml
 	
-	Polecenie musi byæ zakodowanie w UTF-8, a wszystkie znaki specjalne u¿ywane w XML
-	(& < >) musz± byæ zamienione na odpowiadaj±ce im sekwencje.
+	Polecenie musi byÄ‡ zakodowanie w UTF-8, a wszystkie znaki specjalne uÅ¼ywane w XML
+	(& < >) muszÄ… byÄ‡ zamienione na odpowiadajÄ…ce im sekwencje.
 
 // $Id$

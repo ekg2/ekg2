@@ -2,35 +2,35 @@ eval
 	parametry: [kod]
 	krotki opis: uruchom dowolny kod w ekg2
 	
-	Uruchom dowolny kod w jêzyku Python w ekg2. Kod ma dostêp modu³u ekg.
-	Na przyk³ad spróbuj wykonaæ:
+	Uruchom dowolny kod w jÄ™zyku Python w ekg2. Kod ma dostÄ™p moduÅ‚u ekg.
+	Na przykÅ‚ad sprÃ³buj wykonaÄ‡:
 	
 	  /python:eval ekg.echo("2 + 2 = %%s" %% (2 + 2))
 
 list
 	parametry:
-	krotki opis: wypisz listê za³adowanych skryptów
+	krotki opis: wypisz listÄ™ zaÅ‚adowanych skryptÃ³w
 
 load
 	parametry: [skrypt]
-	krotki opis: za³aduj skrypt jêzyka Python do ekg2 i uruchom go
+	krotki opis: zaÅ‚aduj skrypt jÄ™zyka Python do ekg2 i uruchom go
 	
-	Za³aduj dowolny skrypt jêzyka Python do ekg2 i uruchom go. `skrypt` jest
-	nazw± pliku w katalogu .ekg2/scripts lub .ekg2/<profile>/scripts.
+	ZaÅ‚aduj dowolny skrypt jÄ™zyka Python do ekg2 i uruchom go. `skrypt` jest
+	nazwÄ… pliku w katalogu .ekg2/scripts lub .ekg2/<profile>/scripts.
 
 run
 	parametry: [skrypt]
-	krotki opis: jednorazowo wykonaj skrypt jêzyka Python
+	krotki opis: jednorazowo wykonaj skrypt jÄ™zyka Python
 	
-	Jednorazowo wykonaj dowolny skrypt jêzyka Python. Zauwa¿, ¿e skrypt nie
-	powinien rejestrowaæ ¿adnych handlerów - skrypt zostanie usuniêty z ekg2
-	jak tylko skoñczy siê wykonywaæ. Zobacz równie¿ /python:load. `skrypt` jest
-	nazw± pliku ze ¶cie¿k± wzglêdem CWD.
+	Jednorazowo wykonaj dowolny skrypt jÄ™zyka Python. ZauwaÅ¼, Å¼e skrypt nie
+	powinien rejestrowaÄ‡ Å¼adnych handlerÃ³w - skrypt zostanie usuniÄ™ty z ekg2
+	jak tylko skoÅ„czy siÄ™ wykonywaÄ‡. Zobacz rÃ³wnieÅ¼ /python:load. `skrypt` jest
+	nazwÄ… pliku ze Å›cieÅ¼kÄ… wzglÄ™dem CWD.
 
 unload
 	parametry: [skrypt]
-	krotki opis: usuñ skrypt z ekg2
+	krotki opis: usuÅ„ skrypt z ekg2
 	
-	Usuñ skrypt. To znaczy wyrejestruj wszystkie handlery i bindingi
-	zarejestrowane przez dany skrypt i usuñ skrypt z pamiêci. `skrypt` jest
-	nazw± skryptu, czyli nazw± pliku bez rozszerzenia '.py'.
+	UsuÅ„ skrypt. To znaczy wyrejestruj wszystkie handlery i bindingi
+	zarejestrowane przez dany skrypt i usuÅ„ skrypt z pamiÄ™ci. `skrypt` jest
+	nazwÄ… skryptu, czyli nazwÄ… pliku bez rozszerzenia '.py'.

@@ -1,7 +1,7 @@
 // opis komend dla pluginu xosd
-// (c) copyright 2004-2005 Adam Kuczyñski <dredzik@ekg2.org>
+// (c) copyright 2004-2005 Adam KuczyÅ„ski <dredzik@ekg2.org>
 
 msg
 	parametry: 
-	krotki opis: wy¶wietla wiadomo¶æ poprzez xosd
+	krotki opis: wyÅ›wietla wiadomoÅ›Ä‡ poprzez xosd
 

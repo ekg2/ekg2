@@ -4,8 +4,8 @@
 // $Id$
 
 sms
-	parametry:  <numer/alias/telefon> <tre∂Ê>
-	krotki opis: wysy≥a smsa do podanej osoby
+	parametry:  <numer/alias/telefon> <tre≈õƒá>
+	krotki opis: wysy≈Ça smsa do podanej osoby
 	
 	Polecenie wymaga zdefiniowana zmiennej %Tsms_send_app%n
 

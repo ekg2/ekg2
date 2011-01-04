@@ -1,5 +1,5 @@
 // descripton for logsoracle-plugin proceedings
-// (c) copyright 2006 Szymon Biliñski <ecimon@babel.pl>
+// (c) copyright 2006 Szymon BiliÅ„ski <ecimon@babel.pl>
 
 connect
 	parameters: 

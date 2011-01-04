@@ -1,90 +1,90 @@
 // IRC protocol commands description
 // (c) 2004 Michal 'GiM' Spadlinski
-// parametry opcjonalne s± w <> wymagane w [], 
-// + lub * oznacza, ¿e mo¿na podaæ wiêcej parametrów
+// parametry opcjonalne sÄ… w <> wymagane w [], 
+// + lub * oznacza, Å¼e moÅ¼na podaÄ‡ wiÄ™cej parametrÃ³w
 // danego typu
 
 NIEZNANA_KOMENDA
 	parametry:  [tekst]
-	krotki opis: /help irc: by dostaæ pomoc na temat plugina
+	krotki opis: /help irc: by dostaÄ‡ pomoc na temat plugina
 	
-	[tekst] oznacza, ¿e parametr jest wymagany, <tekst>,
-	¿e parametr jest opcjonalny, + lub * po parametrze oznacza,
-	¿e mo¿e wystêpowaæ wiêcej parametrów danego typu
-	je¿eli w przyk³adach komend pojawia siê ¶rednik,
-	oznacza on koniec komendy [nale¿y wcisn±æ enter ;>]
+	[tekst] oznacza, Å¼e parametr jest wymagany, <tekst>,
+	Å¼e parametr jest opcjonalny, + lub * po parametrze oznacza,
+	Å¼e moÅ¼e wystÄ™powaÄ‡ wiÄ™cej parametrÃ³w danego typu
+	jeÅ¼eli w przykÅ‚adach komend pojawia siÄ™ Å›rednik,
+	oznacza on koniec komendy [naleÅ¼y wcisnÄ…Ä‡ enter ;>]
 
 connect
 	parametry:  
-	krotki opis: pod³±cza sesjê do sieci IRC
+	krotki opis: podÅ‚Ä…cza sesjÄ™ do sieci IRC
 	
-	Nale¿y wcze¶niej ustawiæ zmienn± sesyjn± server 
+	NaleÅ¼y wczeÅ›niej ustawiÄ‡ zmiennÄ… sesyjnÄ… server 
 	[/session irc:nazwa_sesji server irc_serwer_name]
-	oraz zmienn± nickname.
+	oraz zmiennÄ… nickname.
 
 disconnect
 	parametry:  <tekst>
-	krotki opis: od³±cza od servera sieci IRC
+	krotki opis: odÅ‚Ä…cza od servera sieci IRC
 	
-	wysy³a <tekst> jako QUIT, je¶li nie podano wysy³a tekst:
+	wysyÅ‚a <tekst> jako QUIT, jeÅ›li nie podano wysyÅ‚a tekst:
 	"EKG2 - It's better than sex!"
 
 reconnect
 	parametry:  <tekst>
-	krotki opis: roz³±cza z serwerem i ³±czy ponownie
+	krotki opis: rozÅ‚Ä…cza z serwerem i Å‚Ä…czy ponownie
 	
 	<tekst> jest przekazywany do polecenia disconnect
 
 join
-	parametry:  <kana³>+
-	krotki opis: do³±cza u¿ytkownika do kana³u/ów
+	parametry:  <kanaÅ‚>+
+	krotki opis: doÅ‚Ä…cza uÅ¼ytkownika do kanaÅ‚u/Ã³w
 	
-	W wypadku wiêkszej ilo¶ci parametrów, nazwy kana³ów
-	nale¿y oddzieliæ przecinkami. np:
+	W wypadku wiÄ™kszej iloÅ›ci parametrÃ³w, nazwy kanaÅ‚Ã³w
+	naleÅ¼y oddzieliÄ‡ przecinkami. np:
 	/join !ekg2,#apcoh,!apcoh,#english
-	je¿eli nie podano argumentu, próbuje siê pod³±czyæ do
-	kana³u, którego nazw± jest nazwa aktualnego okna
-	[np mo¿na zrobiæ: /window new irc:!6E6WPekg2; /join]
+	jeÅ¼eli nie podano argumentu, prÃ³buje siÄ™ podÅ‚Ä…czyÄ‡ do
+	kanaÅ‚u, ktÃ³rego nazwÄ… jest nazwa aktualnego okna
+	[np moÅ¼na zrobiÄ‡: /window new irc:!6E6WPekg2; /join]
 
 part
-	parametry:  <kana³> <powód>
-	krotki opis: od³±cza u¿ytkownika od aktualnego lub podanego kana³u
+	parametry:  <kanaÅ‚> <powÃ³d>
+	krotki opis: odÅ‚Ä…cza uÅ¼ytkownika od aktualnego lub podanego kanaÅ‚u
 	
-	Je¶li podano powód i je¿eli serwer obs³uguje powody, zostanie on
-	wy¶wietlony przy wychodzeniu innym osobom na kanale.
-	je¿eli pierwszy argument nie jest kana³em, brana jest nazwa aktualnego
+	JeÅ›li podano powÃ³d i jeÅ¼eli serwer obsÅ‚uguje powody, zostanie on
+	wyÅ›wietlony przy wychodzeniu innym osobom na kanale.
+	jeÅ¼eli pierwszy argument nie jest kanaÅ‚em, brana jest nazwa aktualnego
 	okna.
 
 cycle
-	parametry:  <kana³> <powód>
+	parametry:  <kanaÅ‚> <powÃ³d>
 	krotki opis: robi /part i /join
 	
-	je¿eli pierwszy argument nie jest kana³em, brana jest nazwa
+	jeÅ¼eli pierwszy argument nie jest kanaÅ‚em, brana jest nazwa
 	aktualnego okna
 
 query
 	parametry:  [nick]
-	krotki opis: otwiera okno rozmowy z osob±
+	krotki opis: otwiera okno rozmowy z osobÄ…
 
 nick
 	parametry:  [nowynick]
 	krotki opis: zmienia nick na nowy.
 	
 	Komenda ta zmienia tylko nicka, na IRCu, nie zmienia zmiennej
-	sesyjnej nickname, w zwi±zku z czym po ponownym po³aczeniu
-	bêdzie taki nick, jak± warto¶æ ma owa zmienna sesyjna.
+	sesyjnej nickname, w zwiÄ…zku z czym po ponownym poÅ‚aczeniu
+	bÄ™dzie taki nick, jakÄ… wartoÅ›Ä‡ ma owa zmienna sesyjna.
 
 topic
-	parametry:  <kana³> <:>|<nowy temat>
-	krotki opis: wy¶wietla/zmienia/usuwa topic kana³u
+	parametry:  <kanaÅ‚> <:>|<nowy temat>
+	krotki opis: wyÅ›wietla/zmienia/usuwa topic kanaÅ‚u
 	
-	-| bez parametrów - wy¶wietla topic aktualnego kana³u
+	-| bez parametrÃ³w - wyÅ›wietla topic aktualnego kanaÅ‚u
 	
-	-| [kana³] - wy¶wietla topic kana³u
+	-| [kanaÅ‚] - wyÅ›wietla topic kanaÅ‚u
 	
-	-| <kana³> [:] - usuwa topic aktualnego, b±d¼ podanego kana³u
+	-| <kanaÅ‚> [:] - usuwa topic aktualnego, bÄ…dÅº podanego kanaÅ‚u
 	
-	-| <kana³> [nowy temat] - ustawia topic aktualnego, b±d¼ podanego kana³u na 'nowy temat'
+	-| <kanaÅ‚> [nowy temat] - ustawia topic aktualnego, bÄ…dÅº podanego kanaÅ‚u na 'nowy temat'
 
 people
 	parametry: 
@@ -94,7 +94,7 @@ add
 	krotki opis: nie robi nic ;-)
 
 msg
-	parametry:  [nick|kana³] [wiadomo¶æ]
+	parametry:  [nick|kanaÅ‚] [wiadomoÅ›Ä‡]
 	krotki opis: no zgadnij ;-)
 
 me
@@ -102,112 +102,112 @@ me
 	krotki opis: robi /me ;-)
 
 ctcp
-	parametry:  <osoba|kana³> <rodzaj> <...>
-	krotki opis: wysy³a zapytanie ctcp do osoby, kana³u.
+	parametry:  <osoba|kanaÅ‚> <rodzaj> <...>
+	krotki opis: wysyÅ‚a zapytanie ctcp do osoby, kanaÅ‚u.
 	
 	Rodzaj to: ACTION [/me], FINGER, VERSION, SOURCE,
 	USERINFO, CLIENTINFO, PING, TIME, ERRMSG
 	
-	przed wys³aniem ctcp warto wys³aæ /ctcp nick|kana³ clientinfo
-	w celu sprawdzenia, jakie ctcp obs³uguje inny klient.
+	przed wysÅ‚aniem ctcp warto wysÅ‚aÄ‡ /ctcp nick|kanaÅ‚ clientinfo
+	w celu sprawdzenia, jakie ctcp obsÅ‚uguje inny klient.
 	
-	je¿eli nie zostanie podany rodzaj wysy³any jest VERSION
-	je¿eli nie podamy, rodzaju, mo¿na nie podaæ pierwszego
-	parametru, je¿eli tylko znajdujemy siê w oknie [kana³u|rozmowy]
+	jeÅ¼eli nie zostanie podany rodzaj wysyÅ‚any jest VERSION
+	jeÅ¼eli nie podamy, rodzaju, moÅ¼na nie podaÄ‡ pierwszego
+	parametru, jeÅ¼eli tylko znajdujemy siÄ™ w oknie [kanaÅ‚u|rozmowy]
 
 mode
-	parametry:  <kana³> [tryby] <opcje...>
-	krotki opis: zobacz te¿ /help irc:umode
+	parametry:  <kanaÅ‚> [tryby] <opcje...>
+	krotki opis: zobacz teÅ¼ /help irc:umode
 	
-	ustawia MODE kana³u [poczytaj jaki¶ help o MODEach
-	kana³ów]
-	je¿eli nie podano parametru, brana jest nazwa aktualnego okna,
-	[je¶li oczywi¶cie jest to okno kana³u!]
+	ustawia MODE kanaÅ‚u [poczytaj jakiÅ› help o MODEach
+	kanaÅ‚Ã³w]
+	jeÅ¼eli nie podano parametru, brana jest nazwa aktualnego okna,
+	[jeÅ›li oczywiÅ›cie jest to okno kanaÅ‚u!]
 
 umode
 	parametry:  [+|-][riws]
-	krotki opis: zmienia %TTWÓJ%n mode
+	krotki opis: zmienia %TTWÃ“J%n mode
 	
-	r - ustawia restricted [serwer raczej nie pozwoli zdj±æ ;>]
+	r - ustawia restricted [serwer raczej nie pozwoli zdjÄ…Ä‡ ;>]
 	
 	i - invisible
 	
 	w - otrzymywanie wallops
 	
-	s - otrzymywanie notice'ów od serwera
+	s - otrzymywanie notice'Ã³w od serwera
 
 whois
 	parametry:  [nick]
 	krotki opis: robi /whois na danej osobie
 
 op
-	parametry:  <kana³> [nick]*
-	krotki opis: t³umaczy siê samo :)
+	parametry:  <kanaÅ‚> [nick]*
+	krotki opis: tÅ‚umaczy siÄ™ samo :)
 	
-	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+	w wypadku wiÄ™kszej iloÅ›ci nickÃ³w, naleÅ¼y oddzielaÄ‡ spacjami
 
 deop
-	parametry:  <kana³> [nick]*
-	krotki opis: t³umaczy siê samo :)
+	parametry:  <kanaÅ‚> [nick]*
+	krotki opis: tÅ‚umaczy siÄ™ samo :)
 	
-	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+	w wypadku wiÄ™kszej iloÅ›ci nickÃ³w, naleÅ¼y oddzielaÄ‡ spacjami
 
 voice
-	parametry:  <kana³> [nick]*
-	krotki opis: t³umaczy siê samo :-)
+	parametry:  <kanaÅ‚> [nick]*
+	krotki opis: tÅ‚umaczy siÄ™ samo :-)
 	
-	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+	w wypadku wiÄ™kszej iloÅ›ci nickÃ³w, naleÅ¼y oddzielaÄ‡ spacjami
 
 devoice
-	parametry:  <kana³> [nick]*
-	krotki opis: t³umaczy siê samo :)
+	parametry:  <kanaÅ‚> [nick]*
+	krotki opis: tÅ‚umaczy siÄ™ samo :)
 	
-	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+	w wypadku wiÄ™kszej iloÅ›ci nickÃ³w, naleÅ¼y oddzielaÄ‡ spacjami
 
 halfop
-	parametry:  <kana³> [nick]*
-	krotki opis: t³umaczy siê samo :-)
+	parametry:  <kanaÅ‚> [nick]*
+	krotki opis: tÅ‚umaczy siÄ™ samo :-)
 	
-	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+	w wypadku wiÄ™kszej iloÅ›ci nickÃ³w, naleÅ¼y oddzielaÄ‡ spacjami
 
 dehalfop
-	parametry:  <kana³> [nick]*
-	krotki opis: t³umaczy siê samo :)
+	parametry:  <kanaÅ‚> [nick]*
+	krotki opis: tÅ‚umaczy siÄ™ samo :)
 	
-	w wypadku wiêkszej ilo¶ci nicków, nale¿y oddzielaæ spacjami
+	w wypadku wiÄ™kszej iloÅ›ci nickÃ³w, naleÅ¼y oddzielaÄ‡ spacjami
 
 away
 	parametry:  <opis>
-	krotki opis: zmienia stan na zajêty
+	krotki opis: zmienia stan na zajÄ™ty
 
 _autoaway
 	parametry: 
-	krotki opis: zmienia stan na zajêty
+	krotki opis: zmienia stan na zajÄ™ty
 
 back
 	parametry: 
-	krotki opis: zmienia stan na dostêpny
+	krotki opis: zmienia stan na dostÄ™pny
 
 _autoback
 	parametry: 
-	krotki opis: zmienia stan na zajêty
+	krotki opis: zmienia stan na zajÄ™ty
 
 quote
 	parametry:  [komendy]
-	krotki opis: wysy³a bezpo¶rednio tekst do serwera IRC
+	krotki opis: wysyÅ‚a bezpoÅ›rednio tekst do serwera IRC
 
 invite
-	parametry:  <kana³> [nick]
-	krotki opis: zaprasza u¿ytkownika na kana³
+	parametry:  <kanaÅ‚> [nick]
+	krotki opis: zaprasza uÅ¼ytkownika na kanaÅ‚
 
 who
-	parametry:  <kana³/maska>
-	krotki opis: wy¶wietla dane o u¿ytkownikach z danego kana³u/pasuj±cych do maski
+	parametry:  <kanaÅ‚/maska>
+	krotki opis: wyÅ›wietla dane o uÅ¼ytkownikach z danego kanaÅ‚u/pasujÄ…cych do maski
 	
-	Je¶li poleceniu nie podane zostan± ¿adne polecenia, to wy¶wietleni
-	zostan± u¿ytkownicy z bie¿±cego kana³u.
+	JeÅ›li poleceniu nie podane zostanÄ… Å¼adne polecenia, to wyÅ›wietleni
+	zostanÄ… uÅ¼ytkownicy z bieÅ¼Ä…cego kanaÅ‚u.
 
 names
 	parametry: 
-	krotki opis: wy¶wietla nazwy u¿ytkowników z bie¿±cego kana³u
+	krotki opis: wyÅ›wietla nazwy uÅ¼ytkownikÃ³w z bieÅ¼Ä…cego kanaÅ‚u
 

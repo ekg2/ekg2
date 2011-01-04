@@ -1,34 +1,34 @@
-// opis komend dla protoko³u gg
+// opis komend dla protokoÅ‚u gg
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 
 _autoaway
 	parametry: 
-	krotki opis: automatycznie zmienia stan na zajêty
+	krotki opis: automatycznie zmienia stan na zajÄ™ty
 
 _autoback
 	parametry: 
-	krotki opis: automatycznie zmienia stan na dostêpny
+	krotki opis: automatycznie zmienia stan na dostÄ™pny
 
 _descr
 	parametry:  [opis/-]
 	krotki opis: zmienia opis stanu
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+        JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
         Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 away
 	parametry:  [opis/-]
-	krotki opis: zmienia stan na zajêty
+	krotki opis: zmienia stan na zajÄ™ty
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+        JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
         Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 back
 	parametry:  [opis/-]
-	krotki opis: zmienia stan na dostêpny
+	krotki opis: zmienia stan na dostÄ™pny
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+        JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
         Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 block
@@ -39,7 +39,7 @@ change
 	parametry:  <opcje>
 	krotki opis: zmienia informacje w katalogu publicznym
 	
-	  -f, --first <imiê>
+	  -f, --first <imiÄ™>
 	
 	  -l, --last <nazwisko>
 	
@@ -49,92 +49,92 @@ change
 	
 	  -c, --city <miasto>
 	
-	  -N, --familyname <nazwisko>  nazwisko panieñskie
+	  -N, --familyname <nazwisko>  nazwisko panieÅ„skie
 	
 	  -C, --familycity <miasto>    miasto rodzinne
 	
 	  -F, --female                 kobieta
 	
-	  -M, --male                   mê¿czyzna
+	  -M, --male                   mÄ™Å¼czyzna
 	
 	
-	Je¶li który¶ z parametrów nie zostanie podany, jego warto¶æ zostanie 
+	JeÅ›li ktÃ³ryÅ› z parametrÃ³w nie zostanie podany, jego wartoÅ›Ä‡ zostanie 
 	wyczyszczona w katalogu publicznym. Podanie parametru ,,%T-%n'' 
-	wyczy¶ci %Twszystkie%n pola.
+	wyczyÅ›ci %Twszystkie%n pola.
 
 chat
-	parametry:  <numer/alias/@grupa> <wiadomo¶æ>
-	krotki opis: wysy³a wiadomo¶æ
+	parametry:  <numer/alias/@grupa> <wiadomoÅ›Ä‡>
+	krotki opis: wysyÅ‚a wiadomoÅ›Ä‡
 	
-	Polecenie jest podobne do %Tmsg%n, ale wysy³a wiadomo¶æ w ramach rozmowy, 
-	a nie jako pojedyncz±.
+	Polecenie jest podobne do %Tmsg%n, ale wysyÅ‚a wiadomoÅ›Ä‡ w ramach rozmowy, 
+	a nie jako pojedynczÄ….
 
 check_conn
 	parametry:  [alias]
-	krotki opis: sprawdza czy podana osoba jest po³±czona 
+	krotki opis: sprawdza czy podana osoba jest poÅ‚Ä…czona 
 	
-	Sprawdza czy podana osoba jest po³±czona. Klient tej osoby musi 
-	obs³ugiwaæ obrazki. Przetestowane na GG 6.x dla Windows. W przypadku 
-	niektórych klientów jak np. tlen komenda nie dzia³a prawid³owo 
-	(osobie któr± sprawdzamy pojawia siê pusta wiadomo¶æ). Dziêki tej 
-	funkcji mo¿na sprawdziæ czy osoba, któr± widzimy jako niedostêpna 
-	jest niewidoczna. Je¿eli brak aliasu jako parametr sprawdzana jest osoba,
-	z któr± rozmowa znajdujê siê w aktualnym okienku.
+	Sprawdza czy podana osoba jest poÅ‚Ä…czona. Klient tej osoby musi 
+	obsÅ‚ugiwaÄ‡ obrazki. Przetestowane na GG 6.x dla Windows. W przypadku 
+	niektÃ³rych klientÃ³w jak np. tlen komenda nie dziaÅ‚a prawidÅ‚owo 
+	(osobie ktÃ³rÄ… sprawdzamy pojawia siÄ™ pusta wiadomoÅ›Ä‡). DziÄ™ki tej 
+	funkcji moÅ¼na sprawdziÄ‡ czy osoba, ktÃ³rÄ… widzimy jako niedostÄ™pna 
+	jest niewidoczna. JeÅ¼eli brak aliasu jako parametr sprawdzana jest osoba,
+	z ktÃ³rÄ… rozmowa znajdujÄ™ siÄ™ w aktualnym okienku.
 	
-	Od wersji 7.0 nie jest mo¿liwe sprawdzenie w ten sposób czy kto¶ jest
-	niewidoczny. Wszystkie obrazki, a nawet tekst, do którego do³o±czony jest
-	obrazek nie jest pokazywany u¿ytkownikowi.
+	Od wersji 7.0 nie jest moÅ¼liwe sprawdzenie w ten sposÃ³b czy ktoÅ› jest
+	niewidoczny. Wszystkie obrazki, a nawet tekst, do ktÃ³rego doÅ‚oÄ…czony jest
+	obrazek nie jest pokazywany uÅ¼ytkownikowi.
 	
-	Po 15 sekundach u¿ytkownik uznawany jest za niepo³±czonego. W momencie
-	gdy u¿ytkownik zostanie po³±czony pojawi siê równie¿ komunikat
-	informuj±cy o tym.
+	Po 15 sekundach uÅ¼ytkownik uznawany jest za niepoÅ‚Ä…czonego. W momencie
+	gdy uÅ¼ytkownik zostanie poÅ‚Ä…czony pojawi siÄ™ rÃ³wnieÅ¼ komunikat
+	informujÄ…cy o tym.
 
 connect
 	parametry:  
-	krotki opis: ³±czy siê z serwerem
+	krotki opis: Å‚Ä…czy siÄ™ z serwerem
 
 dcc
 	parametry:  [opcje]
-	krotki opis: obs³uga bezpo¶rednich po³±czeñ
+	krotki opis: obsÅ‚uga bezpoÅ›rednich poÅ‚Ä…czeÅ„
 	
-	  [r]send <numer/alias> <¶cie¿ka>  wysy³a podany plik
+	  [r]send <numer/alias> <Å›cieÅ¼ka>  wysyÅ‚a podany plik
 	
-	  get [numer/alias/#id]            akceptuje przysy³any plik
+	  get [numer/alias/#id]            akceptuje przysyÅ‚any plik
 	
 	  resume [numer/alias/#id]         wznawia pobieranie pliku
 	
-	  [r]voice <numer/alias/#id>       rozpoczyna rozmowê g³osow±
+	  [r]voice <numer/alias/#id>       rozpoczyna rozmowÄ™ gÅ‚osowÄ…
 	
-	  close <numer/alias/#id>          zamyka po³±czenie
+	  close <numer/alias/#id>          zamyka poÅ‚Ä…czenie
 	
-	  list                             wy¶wietla listê po³±czeñ
+	  list                             wyÅ›wietla listÄ™ poÅ‚Ä…czeÅ„
 	
 	
-	Po³±czenia bezpo¶rednie wymagaj± w³±czonej opcji %Tdcc%n. 
-	Komendy %Trsend%n i %Trvoice%n wysy³aj± ¿±danie po³±czenia siê 
-	drugiego klienta z naszym i s± przydatne, gdy nie jeste¶my w stanie
-	siê z nim sami po³±czyæ.
+	PoÅ‚Ä…czenia bezpoÅ›rednie wymagajÄ… wÅ‚Ä…czonej opcji %Tdcc%n. 
+	Komendy %Trsend%n i %Trvoice%n wysyÅ‚ajÄ… Å¼Ä…danie poÅ‚Ä…czenia siÄ™ 
+	drugiego klienta z naszym i sÄ… przydatne, gdy nie jesteÅ›my w stanie
+	siÄ™ z nim sami poÅ‚Ä…czyÄ‡.
 
 disconnect
-	parametry:  [powód/-]
-	krotki opis: roz³±cza siê od serwera
+	parametry:  [powÃ³d/-]
+	krotki opis: rozÅ‚Ä…cza siÄ™ od serwera
 	
-	Je¶li w³±czona jest opcja %Tauto_reconnect%n, po wywo³aniu 
-	tej komendy, program nadal bêdzie próbowa³ siê automatycznie 
-	³±czyæ po okre¶lonym czasie.
+	JeÅ›li wÅ‚Ä…czona jest opcja %Tauto_reconnect%n, po wywoÅ‚aniu 
+	tej komendy, program nadal bÄ™dzie prÃ³bowaÅ‚ siÄ™ automatycznie 
+	Å‚Ä…czyÄ‡ po okreÅ›lonym czasie.
 
 dnd
 	parametry: [opis/-]
-	krotki opis: zmienia stan na nie przeszkadzaæ
+	krotki opis: zmienia stan na nie przeszkadzaÄ‡
 	
-	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 ffc
 	parametry: [opis/-]
-	krotki opis: zmienia stan na chêtny do rozmowy
+	krotki opis: zmienia stan na chÄ™tny do rozmowy
 	
-	Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+	JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
 	Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 find
@@ -143,7 +143,7 @@ find
 	
 	  -u, --uin <numerek>
 	
-	  -f, --first <imiê>
+	  -f, --first <imiÄ™>
 	
 	  -l, --last <nazwisko>
 	
@@ -153,117 +153,117 @@ find
 	
 	  -b, --born <min:max>    zakres roku urodzenia
 	
-	  -a, --active            tylko dostêpni
+	  -a, --active            tylko dostÄ™pni
 	
 	  -F, --female            kobiety
 	
-	  -M, --male              mê¿czy¼ni
+	  -M, --male              mÄ™Å¼czyÅºni
 	
-	  -s, --start <n>         wy¶wietla od n-tego numeru
+	  -s, --start <n>         wyÅ›wietla od n-tego numeru
 	
-	  -A, --all               wy¶wietla wszystkich
+	  -A, --all               wyÅ›wietla wszystkich
 	
 	  -S, --stop              zatrzymuje wszystkie poszukiwania
 
 image
 	parametry:  <alias> <obrazek>
-	krotki opis: wysy³a obrazek do podanej osoby
+	krotki opis: wysyÅ‚a obrazek do podanej osoby
 	
-	Obrazek zostanie wys³any jako osobna wiadomo¶æ. Klient adresata 
-	musi obs³ugiwaæ	obrazki.
+	Obrazek zostanie wysÅ‚any jako osobna wiadomoÅ›Ä‡. Klient adresata 
+	musi obsÅ‚ugiwaÄ‡	obrazki.
 
 invisible
 	parametry:  [opis/-]
 	krotki opis: zmienia stan na niewidoczny
 	
-        Je¿eli nie podano opisu to bêdzie szukany losowy opis.
+        JeÅ¼eli nie podano opisu to bÄ™dzie szukany losowy opis.
         Podanie ,,%T-%n'' zamiast powodu spowoduje wyczyszczenie opisu.
 
 modify
 	parametry:  <alias> <opcje>
-	krotki opis: zmienia wpisy w li¶cie kontaktów
+	krotki opis: zmienia wpisy w liÅ›cie kontaktÃ³w
 	
-	Opcje mog± byæ nastêpuj±ce:
+	Opcje mogÄ… byÄ‡ nastÄ™pujÄ…ce:
 	
-	  -f, --first <imiê>
+	  -f, --first <imiÄ™>
 	
 	  -l, --last <nazwisko>
 	
-	  -n, --nick <pseudonim>     pseudonim (nie jest u¿ywany)
+	  -n, --nick <pseudonim>     pseudonim (nie jest uÅ¼ywany)
 	
 	  -u, --uin <numerek>
 	
 	  -g, --group [+/-]<@grupa>  dodaje lub usuwa z grupy
 	
-	                             mo¿na podaæ wiêcej grup po przecinku
+	                             moÅ¼na podaÄ‡ wiÄ™cej grup po przecinku
 	
-	  -p, --phone <numer>        numer telefonu komórkowego
+	  -p, --phone <numer>        numer telefonu komÃ³rkowego
 	
-	  -o, --offline              b±d¼ niedostêpny dla danej osoby
+	  -o, --offline              bÄ…dÅº niedostÄ™pny dla danej osoby
 	
-	  -O, --online               b±d¼ widoczny dla danej osoby
+	  -O, --online               bÄ…dÅº widoczny dla danej osoby
 	
 	
-	Dwie ostatnie opcje dzia³aj± tylko, gdy w³±czony jest tryb ,,tylko dla znajomych''.
+	Dwie ostatnie opcje dziaÅ‚ajÄ… tylko, gdy wÅ‚Ä…czony jest tryb ,,tylko dla znajomych''.
 
 msg
-	parametry:  <numer/alias/@grupa/*> <wiadomo¶æ>
-	krotki opis: wysy³a wiadomo¶æ
+	parametry:  <numer/alias/@grupa/*> <wiadomoÅ›Ä‡>
+	krotki opis: wysyÅ‚a wiadomoÅ›Ä‡
 	
-	Mo¿na podaæ wiêksz± ilo¶æ odbiorców oddzielaj±c ich numery lub pseudonimy 
-	przecinkiem (ale bez odstêpów). Je¶li zamiast odbiorcy podany zostanie znak 
-	,,%T*%n'', to wiadomo¶æ bêdzie wys³ana do wszystkich aktualnych rozmówców.
+	MoÅ¼na podaÄ‡ wiÄ™kszÄ… iloÅ›Ä‡ odbiorcÃ³w oddzielajÄ…c ich numery lub pseudonimy 
+	przecinkiem (ale bez odstÄ™pÃ³w). JeÅ›li zamiast odbiorcy podany zostanie znak 
+	,,%T*%n'', to wiadomoÅ›Ä‡ bÄ™dzie wysÅ‚ana do wszystkich aktualnych rozmÃ³wcÃ³w.
 
 passwd
-	parametry:  <has³o> <token>
-	krotki opis: zmienia has³o u¿ytkownika
+	parametry:  <hasÅ‚o> <token>
+	krotki opis: zmienia hasÅ‚o uÅ¼ytkownika
 
 reconnect
 	parametry: 
-	krotki opis: roz³±cza i ³±czy siê ponownie
+	krotki opis: rozÅ‚Ä…cza i Å‚Ä…czy siÄ™ ponownie
 
 register
-	parametry:  <email> <has³o> <token>
+	parametry:  <email> <hasÅ‚o> <token>
 	krotki opis: rejestruje nowe konto
 	
-	Przed rejestracj± nale¿y pobraæ token komend± token.
+	Przed rejestracjÄ… naleÅ¼y pobraÄ‡ token komendÄ… token.
 
 remind
 	parametry:  [numer] <token>
-	krotki opis: wysy³a has³o na skrzynkê pocztow±
+	krotki opis: wysyÅ‚a hasÅ‚o na skrzynkÄ™ pocztowÄ…
 
 token
 	parametry: 
 	krotki opis: pobiera z serwera token
 	
-	Komenda ta jest niezbêdna do rejestracji i zmiany has³a. Ma na celu 
-	zapewnienie serwera, ¿e operacjê przeprowadza u¿ytkownik, a nie automat. 
-	Je¶li system zawiera odpowiednie biblioteki, token zostanie wy¶wietlony 
-	na ekranie. W przeciwnym wypadku zostanie podana ¶cie¿ka, pod któr± 
-	zapisano plik graficzny zawieraj±cy token.
+	Komenda ta jest niezbÄ™dna do rejestracji i zmiany hasÅ‚a. Ma na celu 
+	zapewnienie serwera, Å¼e operacjÄ™ przeprowadza uÅ¼ytkownik, a nie automat. 
+	JeÅ›li system zawiera odpowiednie biblioteki, token zostanie wyÅ›wietlony 
+	na ekranie. W przeciwnym wypadku zostanie podana Å›cieÅ¼ka, pod ktÃ³rÄ… 
+	zapisano plik graficzny zawierajÄ…cy token.
 
 unblock
 	parametry:  <numer/alias>|*
 	krotki opis: usuwa z listy blokowanych
 
 unregister
-	parametry:  <uin/alias> <has³o> <token>
+	parametry:  <uin/alias> <hasÅ‚o> <token>
 	krotki opis: usuwa konto z serwera
 	
-	Podanie numeru i has³a jest niezbêdne ze wzglêdów bezpieczeñstwa. Nikt 
-	nie chcia³by chyba usun±æ konta przypadkowo, bez ¿adnego potwierdzenia. 
-	Przed rejestracj± nale¿y pobraæ token komend± token.
+	Podanie numeru i hasÅ‚a jest niezbÄ™dne ze wzglÄ™dÃ³w bezpieczeÅ„stwa. Nikt 
+	nie chciaÅ‚by chyba usunÄ…Ä‡ konta przypadkowo, bez Å¼adnego potwierdzenia. 
+	Przed rejestracjÄ… naleÅ¼y pobraÄ‡ token komendÄ… token.
 
 userlist
 	parametry:  [opcje]
-	krotki opis: lista kontaktów na serwerze
+	krotki opis: lista kontaktÃ³w na serwerze
 	
-	Lista kontaktów na serwerze "list [-p|-g|-c]":
+	Lista kontaktÃ³w na serwerze "list [-p|-g|-c]":
 	
-	  -c, --clear  usuwa listê z serwera
+	  -c, --clear  usuwa listÄ™ z serwera
 	
-	  -g, --get    pobiera listê z serwera
+	  -g, --get    pobiera listÄ™ z serwera
 	
-	  -p, --put    umieszcza listê na serwerze
+	  -p, --put    umieszcza listÄ™ na serwerze
 
 $Id$

@@ -1,95 +1,95 @@
 auto_connect
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la, czy sesja bêdzie ³±czona automagicznie przy starcie programu.
+	OkreÅ›la, czy sesja bÄ™dzie Å‚Ä…czona automagicznie przy starcie programu.
 
 charset
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Kodowanie u¿ywane w wiadomo¶ciach przychodz±cych i wychodz±cych. Je¶li
-	nieustalone, xmsg nie bêdzie dokonywa³ konwersji - tzn. wykorzystane
-	bêdzie aktualne kodowanie ekg2.
+	Kodowanie uÅ¼ywane w wiadomoÅ›ciach przychodzÄ…cych i wychodzÄ…cych. JeÅ›li
+	nieustalone, xmsg nie bÄ™dzie dokonywaÅ‚ konwersji - tzn. wykorzystane
+	bÄ™dzie aktualne kodowanie ekg2.
 
 dotfile_suffix
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Okre¶la sufiks dodawany do ukrytych plików tworzonych po odebraniu
-	wiadomo¶ci. Opcja ta pozwala obs³ugiwaæ jeden katalog wiadomo¶ci przez
-	kilka niezale¿nych od siebie klientów.
+	OkreÅ›la sufiks dodawany do ukrytych plikÃ³w tworzonych po odebraniu
+	wiadomoÅ›ci. Opcja ta pozwala obsÅ‚ugiwaÄ‡ jeden katalog wiadomoÅ›ci przez
+	kilka niezaleÅ¼nych od siebie klientÃ³w.
 
 max_filesize
 	typ: liczba
-	domy¶lna warto¶æ: 16384
+	domyÅ›lna wartoÅ›Ä‡: 16384
 	
-	Plik wiêksze ni¿ warto¶æ tej zmiennej, bêd± ignorowane (lub usuwane)
-	przez wtyczkê.
+	Plik wiÄ™ksze niÅ¼ wartoÅ›Ä‡ tej zmiennej, bÄ™dÄ… ignorowane (lub usuwane)
+	przez wtyczkÄ™.
 
 max_oneshot_files
 	typ: liczba
-	domy¶lna warto¶æ: 25
+	domyÅ›lna wartoÅ›Ä‡: 25
 	
-	Maksymalna liczba plików, jakie przetworzone zostaj± podczas jednego
-	wywo³ania funkcji skanuj±cej. Po przekroczeniu tej liczby, funkcja jest
-	wstrzymywana i tworzony jest timer ponawiaj±cy, patrz:
-	oneshot_resume_timer. Warto¶æ zerowa oznacza brak ograniczenia.
+	Maksymalna liczba plikÃ³w, jakie przetworzone zostajÄ… podczas jednego
+	wywoÅ‚ania funkcji skanujÄ…cej. Po przekroczeniu tej liczby, funkcja jest
+	wstrzymywana i tworzony jest timer ponawiajÄ…cy, patrz:
+	oneshot_resume_timer. WartoÅ›Ä‡ zerowa oznacza brak ograniczenia.
 
 name_separator
 	typ: tekst
-	domy¶lna warto¶æ: .
+	domyÅ›lna wartoÅ›Ä‡: .
 	
-	Separator oddzielaj±cy zasadnicz± czê¶æ nazwy (u¿ywan± w UID-ach)
-	od sufiksu. Nazwa pliku bêdzie ³amana na ostatnim wyst±pieniu tego
-	znaku. Warto¶æ nieustalona wy³±cza dzielenie. W przypadku podania
-	wiêkszej liczby znaków, brany bêdzie pod uwagê ten, wystêpuj±cy
-	najbli¿ej koñca nazwy pliku.
+	Separator oddzielajÄ…cy zasadniczÄ… czÄ™Å›Ä‡ nazwy (uÅ¼ywanÄ… w UID-ach)
+	od sufiksu. Nazwa pliku bÄ™dzie Å‚amana na ostatnim wystÄ…pieniu tego
+	znaku. WartoÅ›Ä‡ nieustalona wyÅ‚Ä…cza dzielenie. W przypadku podania
+	wiÄ™kszej liczby znakÃ³w, brany bÄ™dzie pod uwagÄ™ ten, wystÄ™pujÄ…cy
+	najbliÅ¼ej koÅ„ca nazwy pliku.
 
 oneshot_resume_timer
 	typ: liczba
-	domy¶lna warto¶æ: 3
+	domyÅ›lna wartoÅ›Ä‡: 3
 	
-	Okre¶la czas (w sekundach), po jakim operacja wstrzymana po
-	przekroczeniu max_oneshot_files, zostaje wznowiona (a¿ do ponownego
-	przetworzenia okre¶lonej liczby plików). Je¶li zmienna ta bêdzie mia³a
-	warto¶æ 0, operacja zostanie ponowiona dopiero przy kolejnym
-	niezale¿nym wywo³aniu funkcji (np. przy kolejnym ³±czeniu sesji).
+	OkreÅ›la czas (w sekundach), po jakim operacja wstrzymana po
+	przekroczeniu max_oneshot_files, zostaje wznowiona (aÅ¼ do ponownego
+	przetworzenia okreÅ›lonej liczby plikÃ³w). JeÅ›li zmienna ta bÄ™dzie miaÅ‚a
+	wartoÅ›Ä‡ 0, operacja zostanie ponowiona dopiero przy kolejnym
+	niezaleÅ¼nym wywoÅ‚aniu funkcji (np. przy kolejnym Å‚Ä…czeniu sesji).
 
 rescan_timer
 	typ: liczba
-	domy¶lna warto¶æ: 0 or 300
+	domyÅ›lna wartoÅ›Ä‡: 0 or 300
 	
-	Interwa³ ponownego wczytywania katalogu wiadomo¶ci przychodz±cych.
-	Zmienna ta nie powinna byæ u¿ywana w ¶rodowiskach, wspieraj±cych
-	inotify, tak wiêc domy¶lnie ma tam warto¶æ 0.
+	InterwaÅ‚ ponownego wczytywania katalogu wiadomoÅ›ci przychodzÄ…cych.
+	Zmienna ta nie powinna byÄ‡ uÅ¼ywana w Å›rodowiskach, wspierajÄ…cych
+	inotify, tak wiÄ™c domyÅ›lnie ma tam wartoÅ›Ä‡ 0.
 
 send_cmd
 	typ: tekst
-	domy¶lna warto¶æ: (brak)
+	domyÅ›lna wartoÅ›Ä‡: (brak)
 	
-	Polecenie u¿ywane do wysy³ania wiadomo¶ci przy u¿yciu wtyczki.
-	Uruchomione bêdzie z dwoma argumentami - UID-em (bez xmsg:) oraz
-	¶cie¿k± do pliku z wiadomo¶ci±. Proszê zwróciæ uwagê, ¿e xmsg
-	nie sprawdza kodu zakoñczenia aplikacji/skryptu, tak wiêc wszelakie
-	b³êdy zwracane byæ winny poprzez u¿ycie katalogu wiadomo¶ci
-	przychodz±cych.
+	Polecenie uÅ¼ywane do wysyÅ‚ania wiadomoÅ›ci przy uÅ¼yciu wtyczki.
+	Uruchomione bÄ™dzie z dwoma argumentami - UID-em (bez xmsg:) oraz
+	Å›cieÅ¼kÄ… do pliku z wiadomoÅ›ciÄ…. ProszÄ™ zwrÃ³ciÄ‡ uwagÄ™, Å¼e xmsg
+	nie sprawdza kodu zakoÅ„czenia aplikacji/skryptu, tak wiÄ™c wszelakie
+	bÅ‚Ä™dy zwracane byÄ‡ winny poprzez uÅ¼ycie katalogu wiadomoÅ›ci
+	przychodzÄ…cych.
 
 unlink_sent
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la, czy pliki wiadomo¶ci przychodz±cych powinny byæ usuwane
-	po odczytaniu. W przeciwnym razie, dla plików tych tworzone bêd± tzw.
-	dotfiles (ukryte pliki, informuj±ce xmsg, ¿e wiadomo¶æ ju¿ zosta³a
+	OkreÅ›la, czy pliki wiadomoÅ›ci przychodzÄ…cych powinny byÄ‡ usuwane
+	po odczytaniu. W przeciwnym razie, dla plikÃ³w tych tworzone bÄ™dÄ… tzw.
+	dotfiles (ukryte pliki, informujÄ…ce xmsg, Å¼e wiadomoÅ›Ä‡ juÅ¼ zostaÅ‚a
 	odczytana).
 
 unlink_toobig
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la, czy po napotkaniu pliku przekraczaj±cego max_filesize, nale¿y
-	go pomijaæ (0) czy te¿ usun±æ (1). W przypadku pomijania pliku, celem
-	unikniêcia ponawiania siê komunikatu, plik taki bêdzie oznaczany za
-	pomoc± tzw. dotfile (ukrytego pliku).
+	OkreÅ›la, czy po napotkaniu pliku przekraczajÄ…cego max_filesize, naleÅ¼y
+	go pomijaÄ‡ (0) czy teÅ¼ usunÄ…Ä‡ (1). W przypadku pomijania pliku, celem
+	unikniÄ™cia ponawiania siÄ™ komunikatu, plik taki bÄ™dzie oznaczany za
+	pomocÄ… tzw. dotfile (ukrytego pliku).
 

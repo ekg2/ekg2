@@ -1,4 +1,4 @@
-// ma³y opis dostêpnych zmiennych pluginu gg
+// maÅ‚y opis dostÄ™pnych zmiennych pluginu gg
 // (c) copyright 2001-2003 Wojtek Waniewski <wojtekka@irc.pl>
 // (c) copyright      2004 Piotr Kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004-2006 Adam Mikuta <adamm@ekg2.org>

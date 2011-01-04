@@ -1,87 +1,87 @@
-// ma³y opis dostêpnych zmiennych pluginu gg
+// maÅ‚y opis dostÄ™pnych zmiennych pluginu gg
 // (c) copyright 2001-2003 Wojtek Kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 Piotr Kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004-2006 Adam Mikuta <adamm@ekg2.org>
 
 dcc
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	w³±cza lub wy³±cza bezpo¶rednie po³±czenia miêdzy klientami. zmiana
-	tej opcji wymaga ponownego po³±czenia z serwerem, by przes³aæ nowy
+	wÅ‚Ä…cza lub wyÅ‚Ä…cza bezpoÅ›rednie poÅ‚Ä…czenia miÄ™dzy klientami. zmiana
+	tej opcji wymaga ponownego poÅ‚Ä…czenia z serwerem, by przesÅ‚aÄ‡ nowy
 	adres IP lub jego brak.
 
 dcc_ip
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	okre¶la adres IP, który jest wysy³any serwerowi. je¶li przypisze
-	siê tej zmiennej warto¶æ ,,auto'', adres bêdzie ustalany 
-	automatycznie. je¶li chcemy bezproblemowo ³±czyæ siê z klientami
-	z tej samej sieci LAN, dobrze jest podaæ adres IP sieci LAN zamiast
-	zewnêtrznego.
+	okreÅ›la adres IP, ktÃ³ry jest wysyÅ‚any serwerowi. jeÅ›li przypisze
+	siÄ™ tej zmiennej wartoÅ›Ä‡ ,,auto'', adres bÄ™dzie ustalany 
+	automatycznie. jeÅ›li chcemy bezproblemowo Å‚Ä…czyÄ‡ siÄ™ z klientami
+	z tej samej sieci LAN, dobrze jest podaÄ‡ adres IP sieci LAN zamiast
+	zewnÄ™trznego.
 
 dcc_limit
 	typ: tekst
-	domy¶lna warto¶æ: 30/30
+	domyÅ›lna wartoÅ›Ä‡: 30/30
 	
-	okre¶la limit bezpo¶rednich po³±czeñ w danym przedziale czasu.
-	liczba przed uko¶nikiem okre¶la maksymaln± ilo¶æ po³±czeñ, a liczba
-	po uko¶niku ilo¶æ sekund. po przekroczeniu tego progu bezpo¶rednie
-	po³±czenia zostaj± wy³±czone, by zapobiec atakom polegaj±cym na
-	wyczerpaniu zasobów klienta. zwykle po ponownym w³±czeniu
-	bezpo¶rednich po³±czeñ nale¿y po³±czyæ siê ponownie z serwerem.
+	okreÅ›la limit bezpoÅ›rednich poÅ‚Ä…czeÅ„ w danym przedziale czasu.
+	liczba przed ukoÅ›nikiem okreÅ›la maksymalnÄ… iloÅ›Ä‡ poÅ‚Ä…czeÅ„, a liczba
+	po ukoÅ›niku iloÅ›Ä‡ sekund. po przekroczeniu tego progu bezpoÅ›rednie
+	poÅ‚Ä…czenia zostajÄ… wyÅ‚Ä…czone, by zapobiec atakom polegajÄ…cym na
+	wyczerpaniu zasobÃ³w klienta. zwykle po ponownym wÅ‚Ä…czeniu
+	bezpoÅ›rednich poÅ‚Ä…czeÅ„ naleÅ¼y poÅ‚Ä…czyÄ‡ siÄ™ ponownie z serwerem.
 
 dcc_port
 	typ: liczba
-	domy¶lna warto¶æ: 1550
+	domyÅ›lna wartoÅ›Ä‡: 1550
 	
-	port, na którym ekg bêdzie oczekiwaæ na po³±czenia bezpo¶rednie.
+	port, na ktÃ³rym ekg bÄ™dzie oczekiwaÄ‡ na poÅ‚Ä…czenia bezpoÅ›rednie.
 
 display_token
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	zmienna dostêpna tylko gdy w systemie jest biblioteka pozwalaj±ca
-	dekodowaæ pliki JPEG. wy³±czenie jej spowoduje dzia³anie ekg tak,
-	jakby biblioteki nie by³o, tj. zapisywanie tokenów do pliku.
+	zmienna dostÄ™pna tylko gdy w systemie jest biblioteka pozwalajÄ…ca
+	dekodowaÄ‡ pliki JPEG. wyÅ‚Ä…czenie jej spowoduje dziaÅ‚anie ekg tak,
+	jakby biblioteki nie byÅ‚o, tj. zapisywanie tokenÃ³w do pliku.
 
 get_images
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	przy ustawionej warto¶ci 1 je¶li w wiadomo¶ciach bêd± siê znajdowa³y
-	obrazki to bêd± one ¶ci±gane i zapisywane do katalogu okre¶lonego 
+	przy ustawionej wartoÅ›ci 1 jeÅ›li w wiadomoÅ›ciach bÄ™dÄ… siÄ™ znajdowaÅ‚y
+	obrazki to bÄ™dÄ… one Å›ciÄ…gane i zapisywane do katalogu okreÅ›lonego 
 	przez images_dir
 
 images_dir
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	zmienna okre¶la katalog, do którego maj± byæ zapisywane obrazki 
+	zmienna okreÅ›la katalog, do ktÃ³rego majÄ… byÄ‡ zapisywane obrazki 
 	przy ustawionej zmiennej get_images
 
 images_size
 	typ: liczba
-	domy¶lna warto¶æ: 20
+	domyÅ›lna wartoÅ›Ä‡: 20
 	
-	zmienna okre¶la górn± granicê wielko¶ci rozmiaru przyjmowanych obrazków
+	zmienna okreÅ›la gÃ³rnÄ… granicÄ™ wielkoÅ›ci rozmiaru przyjmowanych obrazkÃ³w
 	w kB
 
 skip_default_format
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	je¶li ma warto¶æ 1, to nie przetwarza informacji o formatowaniu tekstu
-	wysy³anej przez windowsowe komunikatory od drugiej (a mo¿e losowej?)
-	wiadomo¶ci (informacja: czarne na bia³ym)
+	jeÅ›li ma wartoÅ›Ä‡ 1, to nie przetwarza informacji o formatowaniu tekstu
+	wysyÅ‚anej przez windowsowe komunikatory od drugiej (a moÅ¼e losowej?)
+	wiadomoÅ›ci (informacja: czarne na biaÅ‚ym)
 
 split_messages
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	zmienna okre¶la co robiæ gdy wiadomo¶æ przekracza maksymaln± d³ugo¶æ
-	wiadomo¶ci. je¿eli 1 to wiadomo¶æ dzielona jest na czê¶ci, je¶li 0
-	to wiadomo¶æ jest wysy³ana niekompletna
+	zmienna okreÅ›la co robiÄ‡ gdy wiadomoÅ›Ä‡ przekracza maksymalnÄ… dÅ‚ugoÅ›Ä‡
+	wiadomoÅ›ci. jeÅ¼eli 1 to wiadomoÅ›Ä‡ dzielona jest na czÄ™Å›ci, jeÅ›li 0
+	to wiadomoÅ›Ä‡ jest wysyÅ‚ana niekompletna
 
 $Id$

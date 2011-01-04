@@ -4,14 +4,14 @@
 
 key
         parametry:  [opcje]
-        krotki opis: zarz±dzanie kluczami dla SIM
+        krotki opis: zarzÄ…dzanie kluczami dla SIM
 	
-	  -g, --generate              generuje parê kluczy u¿ytkownika
+	  -g, --generate              generuje parÄ™ kluczy uÅ¼ytkownika
 	
-	  -s, --send <numer/alias>    wysy³a nasz klucz publiczny
+	  -s, --send <numer/alias>    wysyÅ‚a nasz klucz publiczny
 	
 	  -d, --delete <numer/alias>  usuwa klucz publiczny
 	
-	  [-l, --list] [numer/alias]  wy¶wietla posiadane klucze publiczne
+	  [-l, --list] [numer/alias]  wyÅ›wietla posiadane klucze publiczne
 
 $Id$

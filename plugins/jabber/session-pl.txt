@@ -1,143 +1,143 @@
-// ma³y opis dostêpnych zmiennych sesyjnych pluginu jabber
+// maÅ‚y opis dostÄ™pnych zmiennych sesyjnych pluginu jabber
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 // (c) copyright      2004 tomasz torcz <zdzichu@irc.pl>
 
 allow_add_reply_id
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la, czy ekg2 powinno dodawaæ tzw. Reply-ID dla wiadomo¶ci
-	przychodz±cych:
+	OkreÅ›la, czy ekg2 powinno dodawaÄ‡ tzw. Reply-ID dla wiadomoÅ›ci
+	przychodzÄ…cych:
 	
-		0 - wy³±czone
+		0 - wyÅ‚Ä…czone
 	
-		1 - tylko dla wiadomo¶ci w±tkowanych (thread)
+		1 - tylko dla wiadomoÅ›ci wÄ…tkowanych (thread)
 	
-		2 - dla wszystkich wiadomo¶ci (wy³±czaj±c chat, itp.)
+		2 - dla wszystkich wiadomoÅ›ci (wyÅ‚Ä…czajÄ…c chat, itp.)
 
 auto_auth
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la, czy ekg2 ma automagicznie odpowiadaæ na pro¶by o autoryzacjê.
-	Zmienna ta stanowi bitmapê (sumê nastêpuj±cych warto¶ci):
+	OkreÅ›la, czy ekg2 ma automagicznie odpowiadaÄ‡ na proÅ›by o autoryzacjÄ™.
+	Zmienna ta stanowi bitmapÄ™ (sumÄ™ nastÄ™pujÄ…cych wartoÅ›ci):
 	
-		1 - odpowiada twierdz±co na ¿±dania autoryzacji
+		1 - odpowiada twierdzÄ…co na Å¼Ä…dania autoryzacji
 	
-		2 - odpowiada twierdz±co na ¿±dania cofniêcia autoryzacji
+		2 - odpowiada twierdzÄ…co na Å¼Ä…dania cofniÄ™cia autoryzacji
 	
-		4 - odpowiada przecz±co na ¿±dania autoryzacji
+		4 - odpowiada przeczÄ…co na Å¼Ä…dania autoryzacji
 	
-		8 - odpowiada przecz±co na ¿±dania cofniêcia autoryzacji
+		8 - odpowiada przeczÄ…co na Å¼Ä…dania cofniÄ™cia autoryzacji
 	
-		5 - (1+4) ignoruje ¿±dania autoryzacji
+		5 - (1+4) ignoruje Å¼Ä…dania autoryzacji
 	
-		10 - (8+2) ignoruje ¿±dania cofniêcia autoryzacji
+		10 - (8+2) ignoruje Å¼Ä…dania cofniÄ™cia autoryzacji
 	
-		16 - przy dodawaniu kontaktów, nie wysy³a pro¶by o autoryzacjê
+		16 - przy dodawaniu kontaktÃ³w, nie wysyÅ‚a proÅ›by o autoryzacjÄ™
 
 display_notify
 	typ: liczba
-	domy¶lna warto¶æ: -1
+	domyÅ›lna wartoÅ›Ä‡: -1
 	
-	warto¶æ -1 powoduje korzystanie z globalnej zmiennej.
-	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
-	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
-	tylko zmiany z niedostêpnego na dostêpny i na odwrót. wiêkszy
-	priorytet ma zmienna ,,contacts'', która przy warto¶ci 2
+	wartoÅ›Ä‡ -1 powoduje korzystanie z globalnej zmiennej.
+	wartoÅ›Ä‡ 0 powoduje ignorowanie zmian stanu znajomych, wartoÅ›Ä‡
+	1 powoduje wyÅ›wietlanie wszystkich zmian, wartoÅ›Ä‡ 2 wyÅ›wietla
+	tylko zmiany z niedostÄ™pnego na dostÄ™pny i na odwrÃ³t. wiÄ™kszy
+	priorytet ma zmienna ,,contacts'', ktÃ³ra przy wartoÅ›ci 2
 	ukrywa zmiany stanu.
 
 display_server_features
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la kiedy powinny zostaæ pokazane obs³ugiwane przez serwer ficzery:
+	OkreÅ›la kiedy powinny zostaÄ‡ pokazane obsÅ‚ugiwane przez serwer ficzery:
 	0 - nigdy
-	1 - tylko przy pierwszym po³±czeniu
+	1 - tylko przy pierwszym poÅ‚Ä…czeniu
 	2 - zawsze
 
 log_formats
 	typ: tekst
-	domy¶lna warto¶æ: xml,simple
+	domyÅ›lna wartoÅ›Ä‡: xml,simple
 	
-	Okre¶la formaty, w jakich zapisywane s± logi z rozmów.
+	OkreÅ›la formaty, w jakich zapisywane sÄ… logi z rozmÃ³w.
 	
 	Patrz tez: zmienna "log_path"
 
 msg_gen_thread
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la, czy ekg2 bêdzie automagicznie generowaæ identyfikatory w±tku
-	dla wiadomo¶ci bez podanego owego.
+	OkreÅ›la, czy ekg2 bÄ™dzie automagicznie generowaÄ‡ identyfikatory wÄ…tku
+	dla wiadomoÅ›ci bez podanego owego.
 
 password
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	has³o u¿ytkownika. niezbêdne do po³±czenia z serwerem.
+	hasÅ‚o uÅ¼ytkownika. niezbÄ™dne do poÅ‚Ä…czenia z serwerem.
 
 plaintext_passwd
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy has³o ma byæ przesy³ane do serwera jawnym tekstem (1),
-	czy za pomoc± skrótu kryptograficznego (0).
+	okreÅ›la, czy hasÅ‚o ma byÄ‡ przesyÅ‚ane do serwera jawnym tekstem (1),
+	czy za pomocÄ… skrÃ³tu kryptograficznego (0).
 
 port
 	typ: liczba
-	domy¶lna warto¶æ: 5222
+	domyÅ›lna wartoÅ›Ä‡: 5222
 	
-	port jakiego mamy u¿ywaæ przy ³±czeniu
+	port jakiego mamy uÅ¼ywaÄ‡ przy Å‚Ä…czeniu
 
 priority
 	typ: liczba
-	domy¶lna warto¶æ: 5
+	domyÅ›lna wartoÅ›Ä‡: 5
 	
-	priorytet po³±czenia z serwerem jabbera.
+	priorytet poÅ‚Ä…czenia z serwerem jabbera.
 
 resource
 	typ: tekst
-	domy¶lna warto¶æ: ekg2
+	domyÅ›lna wartoÅ›Ä‡: ekg2
 	
-	zasób jabberowy.
+	zasÃ³b jabberowy.
 
 server
 	typ: tekst
-	domy¶lna warto¶æ: brak 
+	domyÅ›lna wartoÅ›Ä‡: brak 
 	
-	adres serwera, z którym nale¿y sie po³±czyæ, je¶li jest on inny ni¿
-	to wynika z Jabber ID u¿ytkownika.
+	adres serwera, z ktÃ³rym naleÅ¼y sie poÅ‚Ä…czyÄ‡, jeÅ›li jest on inny niÅ¼
+	to wynika z Jabber ID uÅ¼ytkownika.
 
 ssl_port
 	typ: liczba
-	domy¶lna warto¶æ: 5223
+	domyÅ›lna wartoÅ›Ä‡: 5223
 	
-	port u¿ywany przy po³±czeniu szyfrowanym.
+	port uÅ¼ywany przy poÅ‚Ä…czeniu szyfrowanym.
 
 use_ssl
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	okre¶la, czy nawi±zywaæ z serwerem po³±czenie szyfrowane.
+	okreÅ›la, czy nawiÄ…zywaÄ‡ z serwerem poÅ‚Ä…czenie szyfrowane.
 
 ver_client_name
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	nazwa klienta zwracana przy zapytaniach o wersjê
+	nazwa klienta zwracana przy zapytaniach o wersjÄ™
 
 ver_client_version
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	wersja klienta zwracana przy zapytaniach o wersjê
+	wersja klienta zwracana przy zapytaniach o wersjÄ™
 
 ver_os
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	system operacyjny zwracany przy zapytaniach o wersjê
+	system operacyjny zwracany przy zapytaniach o wersjÄ™
 
 $Id$

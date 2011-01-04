@@ -1,64 +1,64 @@
-// opis dostêpnych zmiennych w pluginie ncurses
+// opis dostÄ™pnych zmiennych w pluginie ncurses
 // (c) copyright 2004 piotr kupisiewicz <deletek@ekg2.org>
 
 aspell
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy s³ownik ma zostaæ w³±czony.
-	wiêcej o samym s³owniku w slownik.txt.
+	okreÅ›la, czy sÅ‚ownik ma zostaÄ‡ wÅ‚Ä…czony.
+	wiÄ™cej o samym sÅ‚owniku w slownik.txt.
 
 aspell_lang
 	typ: tekst
-	domy¶lna warto¶æ: "pl"
+	domyÅ›lna wartoÅ›Ä‡: "pl"
 	
-	okre¶la jêzyk wykorzystywany przez s³ownik.
+	okreÅ›la jÄ™zyk wykorzystywany przez sÅ‚ownik.
 
 aspell_encoding
 	typ: tekst
-	domy¶lna warto¶æ: "iso8859-2"
+	domyÅ›lna wartoÅ›Ä‡: "iso8859-2"
 	
-	okre¶la kodowanie u¿ywane przez s³ownik.
+	okreÅ›la kodowanie uÅ¼ywane przez sÅ‚ownik.
 
 backlog_size
 	typ: liczba
-	domy¶lna warto¶æ: 1000
+	domyÅ›lna wartoÅ›Ä‡: 1000
 	
-	ilo¶æ linii, która bêdzie zapisywana w buforze ekranu (tym, który
-	jest przewijany klawiszami Page Up i Page Down). nie mo¿e byæ
-	mniejsza ni¿ ilo¶æ linii na ekranie. 
+	iloÅ›Ä‡ linii, ktÃ³ra bÄ™dzie zapisywana w buforze ekranu (tym, ktÃ³ry
+	jest przewijany klawiszami Page Up i Page Down). nie moÅ¼e byÄ‡
+	mniejsza niÅ¼ iloÅ›Ä‡ linii na ekranie. 
 
 backlog_scroll_half_page
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	okre¶la, w jaki sposób ma byæ przewijane okienko: je¶li jest równe 1
-	(domy¶lnie), przewijane jest o pó³ ekranu, je¶li 0, o ca³y ekran
+	okreÅ›la, w jaki sposÃ³b ma byÄ‡ przewijane okienko: jeÅ›li jest rÃ³wne 1
+	(domyÅ›lnie), przewijane jest o pÃ³Å‚ ekranu, jeÅ›li 0, o caÅ‚y ekran
 	bez jednej linii.
 
 contacts
 	typ: liczba
-	domy¶lna warto¶æ: 2
+	domyÅ›lna wartoÅ›Ä‡: 2
 	
-	okre¶la, czy okienko z list± obecnych ma byæ wy¶wietlone z prawej
-	strony ekranu. je¶li jest równe 2, informacje o zmianie stanu nie
-	s± wy¶wietlane, ignoruj±c warto¶æ zmiennej ,,display_notify''.
+	okreÅ›la, czy okienko z listÄ… obecnych ma byÄ‡ wyÅ›wietlone z prawej
+	strony ekranu. jeÅ›li jest rÃ³wne 2, informacje o zmianie stanu nie
+	sÄ… wyÅ›wietlane, ignorujÄ…c wartoÅ›Ä‡ zmiennej ,,display_notify''.
 
 contacts_descr
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	czy wy¶wietlaæ opisy stanu kontaktów?
+	czy wyÅ›wietlaÄ‡ opisy stanu kontaktÃ³w?
 
 contacts_edge
 	typ: liczba
-	domy¶lna warto¶æ: 2
+	domyÅ›lna wartoÅ›Ä‡: 2
 	
-	po³o¿enie listy kontaktów na ekranie (krawêd¼):
+	poÅ‚oÅ¼enie listy kontaktÃ³w na ekranie (krawÄ™dÅº):
 	
 	  0 - lewa
 	
-	  1 - górna
+	  1 - gÃ³rna
 	
 	  2 - prawa
 	
@@ -66,132 +66,132 @@ contacts_edge
 
 contacts_frame
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	czy wy¶wietlaæ ramkê oddzielaj±c± listê od g³ównego okna?
+	czy wyÅ›wietlaÄ‡ ramkÄ™ oddzielajÄ…cÄ… listÄ™ od gÅ‚Ã³wnego okna?
 
 contacts_groups
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	oddzielone przecinkiem grupy, które mo¿na prze³±czaæ w li¶cie
-	kontaktów klawiszem F4. Aby wy¶wietliæ u¿ytkowników z poza grupy: !grupa.
-	domy¶lnie wy¶wietlani s± wszyscy u¿ytkownicy.
+	oddzielone przecinkiem grupy, ktÃ³re moÅ¼na przeÅ‚Ä…czaÄ‡ w liÅ›cie
+	kontaktÃ³w klawiszem F4. Aby wyÅ›wietliÄ‡ uÅ¼ytkownikÃ³w z poza grupy: !grupa.
+	domyÅ›lnie wyÅ›wietlani sÄ… wszyscy uÅ¼ytkownicy.
 
 contacts_groups_all_sessions
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Je¶li jest w³±czona, przy wy¶wietlaniu kontaktów z grupy brane s± pod
-	uwagê wszystkie sesje.
+	JeÅ›li jest wÅ‚Ä…czona, przy wyÅ›wietlaniu kontaktÃ³w z grupy brane sÄ… pod
+	uwagÄ™ wszystkie sesje.
 
 contacts_margin
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	margines miêdzy list± kontaktów, a g³ównym oknem.
+	margines miÄ™dzy listÄ… kontaktÃ³w, a gÅ‚Ã³wnym oknem.
 
 contacts_metacontacts_swallow
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Je¶li jest w³±czona, przy wy¶wietlaniu wszystkich u¿ytkowników gdy
-	w li¶cie kontaktów wy¶wietlany jest metakontakt, ukrywane s± poszczególne
-	kontakty do niego nale¿±ce.
+	JeÅ›li jest wÅ‚Ä…czona, przy wyÅ›wietlaniu wszystkich uÅ¼ytkownikÃ³w gdy
+	w liÅ›cie kontaktÃ³w wyÅ›wietlany jest metakontakt, ukrywane sÄ… poszczegÃ³lne
+	kontakty do niego naleÅ¼Ä…ce.
 
 contacts_order
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	kolejno¶æ wy¶wietlania stanów na li¶cie kontaktów
+	kolejnoÅ›Ä‡ wyÅ›wietlania stanÃ³w na liÅ›cie kontaktÃ³w
 	
-	mo¿liwe stany to: 
+	moÅ¼liwe stany to: 
 	
-	  ch - free for chat - chêtny do rozmowy
+	  ch - free for chat - chÄ™tny do rozmowy
 	
-	  av - dostêpny
+	  av - dostÄ™pny
 	
-	  aw - zajêty 
+	  aw - zajÄ™ty 
 	
-	  xa - extended away - bardzo zajêty
+	  xa - extended away - bardzo zajÄ™ty
 	
-	  dn - nie przeszkadzaæ
+	  dn - nie przeszkadzaÄ‡
 	
 	  in - niewidoczny
 	
-	  no - niedostêpny
+	  no - niedostÄ™pny
 	
-	  er - b³±d przy pobieraniu stanu
+	  er - bÅ‚Ä…d przy pobieraniu stanu
 	
 	  un - nieznany stan
 	
-	  bl - blokuj±cy
+	  bl - blokujÄ…cy
 	
-	mo¿na pomin±æ niektóre stany -- nie bêd± po prostu wy¶wietlane na li¶cie.
+	moÅ¼na pominÄ…Ä‡ niektÃ³re stany -- nie bÄ™dÄ… po prostu wyÅ›wietlane na liÅ›cie.
 
 contacts_orderbystate
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	czy grupowaæ opisy wg. statusu? je¶li nie, kontakty bêd± sortowane
-	alfabetyczne, ale wy¶wietlane bêd± tylko statusy, wymienione w opcji
+	czy grupowaÄ‡ opisy wg. statusu? jeÅ›li nie, kontakty bÄ™dÄ… sortowane
+	alfabetyczne, ale wyÅ›wietlane bÄ™dÄ… tylko statusy, wymienione w opcji
 	contacts_order.
 
 contacts_size
 	typ: liczba
-	domy¶lna warto¶æ: 8
+	domyÅ›lna wartoÅ›Ä‡: 8
 	
-	okre¶la szeroko¶æ okienka z list± kontaktów.
+	okreÅ›la szerokoÅ›Ä‡ okienka z listÄ… kontaktÃ³w.
 
 contacts_wrap
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	czy zawijaæ zbyt d³ugie kontakty?
+	czy zawijaÄ‡ zbyt dÅ‚ugie kontakty?
 
 display_transparent
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	mówi, czy w t³o ma byæ przezroczyste. 
+	mÃ³wi, czy w tÅ‚o ma byÄ‡ przezroczyste. 
 
 enter_scrolls
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	je¶li w³±czone, wci¶niêcie klawisza Enter w pustej linii spowoduje
-	przesuniêcie ekranu o jedn± liniê. 
+	jeÅ›li wÅ‚Ä…czone, wciÅ›niÄ™cie klawisza Enter w pustej linii spowoduje
+	przesuniÄ™cie ekranu o jednÄ… liniÄ™. 
 
 header_size
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la rozmiar nag³ówka okna wy¶wietlanego na górze ekranu.
-	maksymalna ilo¶æ linii to 5.
+	okreÅ›la rozmiar nagÅ‚Ã³wka okna wyÅ›wietlanego na gÃ³rze ekranu.
+	maksymalna iloÅ›Ä‡ linii to 5.
 
 kill_irc_window
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	je¶li ustawiona na 0, nie mo¿na zamkn±æ okna kana³u ircowego przy
+	jeÅ›li ustawiona na 0, nie moÅ¼na zamknÄ…Ä‡ okna kanaÅ‚u ircowego przy
 	pomocy bindingu klawiaturowego.
 
 margin_size
 	typ: liczba
-	domy¶lna warto¶æ: 15
+	domyÅ›lna wartoÅ›Ä‡: 15
 	
-	okre¶la rozmiar marginesu wykorzystywanego przy /| w themach
+	okreÅ›la rozmiar marginesu wykorzystywanego przy /| w themach
 
 mark_on_window_change
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la czy wstawiaæ marker do okna przy przej¶ciu z niego do innego okna
+	okreÅ›la czy wstawiaÄ‡ marker do okna przy przejÅ›ciu z niego do innego okna
 
 statusbar_size
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	okre¶la rozmiar paska stanu w liniach w zakresie od 1 do 5.
+	okreÅ›la rozmiar paska stanu w liniach w zakresie od 1 do 5.
 
 $Id$

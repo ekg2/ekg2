@@ -158,7 +158,7 @@ devoice
 
 disconnect
 	parameters:  [description/-]
-	short description: roz³±cza siê od serwera
+	short description: rozÅ‚Ä…cza siÄ™ od serwera
 	
 	If description wasn't given, random description will be looked for.
 	Giving ,,%T-%n'' instead of description will clear description.

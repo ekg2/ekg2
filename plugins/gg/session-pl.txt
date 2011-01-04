@@ -1,128 +1,128 @@
-// ma³y opis dostêpnych zmiennych sesyjnych pluginu gg
+// maÅ‚y opis dostÄ™pnych zmiennych sesyjnych pluginu gg
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 
 auto_find
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy osoby, których nie mamy na li¶cie kontaktów, a wys³a³y
-	do nas wiadomo¶æ, maj± byæ automatycznie wyszukane w katalogu.
+	okreÅ›la, czy osoby, ktÃ³rych nie mamy na liÅ›cie kontaktÃ³w, a wysÅ‚aÅ‚y
+	do nas wiadomoÅ›Ä‡, majÄ… byÄ‡ automatycznie wyszukane w katalogu.
 
 concat_multiline_status
 	typ: liczba
-	domy¶lna warto¶æ: 3
+	domyÅ›lna wartoÅ›Ä‡: 3
 	
-	powoduje ³±czenie wkur?aj±cych wielolinijkowych statusów o ile
-	tylko liczba linii przekracza warto¶æ zmiennej. je¶li równa 0 nie
-	bêdzie konkatenacji. dla odró¿nienia wielolinijkowy status poprzedzany
-	jest ci±giem '[m]' (od multiline :)) o ile pozwala na to miejsce.
+	powoduje Å‚Ä…czenie wkur?ajÄ…cych wielolinijkowych statusÃ³w o ile
+	tylko liczba linii przekracza wartoÅ›Ä‡ zmiennej. jeÅ›li rÃ³wna 0 nie
+	bÄ™dzie konkatenacji. dla odrÃ³Å¼nienia wielolinijkowy status poprzedzany
+	jest ciÄ…giem '[m]' (od multiline :)) o ile pozwala na to miejsce.
 
 connection_save
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la czy adres serwera ma byæ zapisywany
+	okreÅ›la czy adres serwera ma byÄ‡ zapisywany
 
 default
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la czy dana sesja ma byæ sesj± domy¶ln± (ustawian± jako pierwsza
+	okreÅ›la czy dana sesja ma byÄ‡ sesjÄ… domyÅ›lnÄ… (ustawianÄ… jako pierwsza
 	podczas uruchomienia programu)
 
 display_notify
 	typ: liczba
-	domy¶lna warto¶æ: -1
+	domyÅ›lna wartoÅ›Ä‡: -1
 	
-	warto¶æ -1 powoduje korzystanie z globalnej zmiennej. 
-	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
-	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
-	tylko zmiany z niedostêpnego na dostêpny i na odwrót. wiêkszy 
-	priorytet ma zmienna ,,contacts'', która przy warto¶ci 2 
+	wartoÅ›Ä‡ -1 powoduje korzystanie z globalnej zmiennej. 
+	wartoÅ›Ä‡ 0 powoduje ignorowanie zmian stanu znajomych, wartoÅ›Ä‡
+	1 powoduje wyÅ›wietlanie wszystkich zmian, wartoÅ›Ä‡ 2 wyÅ›wietla
+	tylko zmiany z niedostÄ™pnego na dostÄ™pny i na odwrÃ³t. wiÄ™kszy 
+	priorytet ma zmienna ,,contacts'', ktÃ³ra przy wartoÅ›ci 2 
 	ukrywa zmiany stanu.
 
 local_ip
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	okre¶la adres IP, z którego nastêpuj± wszelkiego rodzaju po³±czenia,
-	na przyk³ad z serwerem GG. w przypadku b³êdnie wpisanej warto¶ci, 
-	zostanie ona usuniêta.
+	okreÅ›la adres IP, z ktÃ³rego nastÄ™pujÄ… wszelkiego rodzaju poÅ‚Ä…czenia,
+	na przykÅ‚ad z serwerem GG. w przypadku bÅ‚Ä™dnie wpisanej wartoÅ›ci, 
+	zostanie ona usuniÄ™ta.
 
 log_formats
 	typ: tekst
-	domy¶lna warto¶æ: xml,simple
+	domyÅ›lna wartoÅ›Ä‡: xml,simple
 	
 	TODO
 
 password
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	has³o u¿ytkownika. niezbêdne do po³±czenia z serwerem. automatycznie
-	ustawiane po udanej rejestracji, gdy wcze¶niej by³o puste.
+	hasÅ‚o uÅ¼ytkownika. niezbÄ™dne do poÅ‚Ä…czenia z serwerem. automatycznie
+	ustawiane po udanej rejestracji, gdy wczeÅ›niej byÅ‚o puste.
 
 port
 	typ: liczba
-	domy¶lna warto¶æ: 8074
+	domyÅ›lna wartoÅ›Ä‡: 8074
 	
-	port jakiego mamy u¿ywaæ przy ³±czeniu
+	port jakiego mamy uÅ¼ywaÄ‡ przy Å‚Ä…czeniu
 
 proxy
 	typ: tekst
-	domy¶lna warto¶æ: brak 
+	domyÅ›lna wartoÅ›Ä‡: brak 
 	
-	adres i port serwera proxy, oddzielone dwukropkiem. je¶li nie podano
-	portu, domy¶lnie jest przyjmowany 8080. je¶li serwer proxy wymaga
-	autoryzacji, nale¿y poprzedziæ go nazw± u¿ytkownika, dwukropkiem,
-	has³em i ma³p± (np. ,,jan:tajnehas³o@serwer'')
+	adres i port serwera proxy, oddzielone dwukropkiem. jeÅ›li nie podano
+	portu, domyÅ›lnie jest przyjmowany 8080. jeÅ›li serwer proxy wymaga
+	autoryzacji, naleÅ¼y poprzedziÄ‡ go nazwÄ… uÅ¼ytkownika, dwukropkiem,
+	hasÅ‚em i maÅ‚pÄ… (np. ,,jan:tajnehasÅ‚o@serwer'')
 
 proxy_forwarding
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	adres i port (oddzielone dwukropkiem) serwera po¶rednicz±cego
-	(routera, proxy lub czego¶ innego) przekierowany na port 1550
+	adres i port (oddzielone dwukropkiem) serwera poÅ›redniczÄ…cego
+	(routera, proxy lub czegoÅ› innego) przekierowany na port 1550
 	naszego komputera.
 
 private
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
 	tryb tylko dla znajomych.
 
 scroll_long_desc
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la co ile sekund ma nast±piæ automagiczne scrollowanie
-	zbyt d³ugich statusów. Zero - brak scrollowania.
-	OSTRZE¯ENIE: u¿ywanie scrolla w statusach mo¿e doprowadziæ
-	             do usuniêcia konta u¿ytkownika gg
-	UWAGA: gdy status jest scrollowany w informacji wy¶wietlany
-	       jest tylko 'obciêty' status. infromacje o zmianach
-		   statusu na skutek scrollowania NIE s± wy¶wietlane
+	OkreÅ›la co ile sekund ma nastÄ…piÄ‡ automagiczne scrollowanie
+	zbyt dÅ‚ugich statusÃ³w. Zero - brak scrollowania.
+	OSTRZEÅ»ENIE: uÅ¼ywanie scrolla w statusach moÅ¼e doprowadziÄ‡
+	             do usuniÄ™cia konta uÅ¼ytkownika gg
+	UWAGA: gdy status jest scrollowany w informacji wyÅ›wietlany
+	       jest tylko 'obciÄ™ty' status. infromacje o zmianach
+		   statusu na skutek scrollowania NIE sÄ… wyÅ›wietlane
 
 scroll_mode
 	typ: tekst [bounce|simple]
-	domy¶lna warto¶æ: bounce
+	domyÅ›lna wartoÅ›Ä‡: bounce
 	
-	okre¶la rodzaj scrollowania
-	bounce - odbijanie od 'koñców'
-	simple - przewija w lewo, a¿ widaæ do samego koñca, po osi±gniêciu
-             koñca wraca na pocz±tek
+	okreÅ›la rodzaj scrollowania
+	bounce - odbijanie od 'koÅ„cÃ³w'
+	simple - przewija w lewo, aÅ¼ widaÄ‡ do samego koÅ„ca, po osiÄ…gniÄ™ciu
+             koÅ„ca wraca na poczÄ…tek
 
 server
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	adresy IP serwerów, z którym klient powinien próbowaæ siê po³±czyæ,
-	pomijaj±c w³a¶ciw± procedurê ³±czenia siê. przydane podczas awarii
-	g³ównego serwera. adresy nale¿y oddzielaæ przecinkami, ¶rednikami
-	lub spacjami. po dwukropku mo¿na podaæ port serwera. je¶li adres i
-	port serwera zostan± poprzedzone tekstem ,,tls:'', klient spróbuje
-	wynegocjowaæ bezpieczne po³±czenie TLS z serwerem. je¶li zmiennej
-	przypisze siê warto¶æ ,,tls'', spyta g³ówny serwer o adres serwera
-	obs³uguj±cego po³±czenia TLS i spróbuje siê z nim po³±czyæ.
+	adresy IP serwerÃ³w, z ktÃ³rym klient powinien prÃ³bowaÄ‡ siÄ™ poÅ‚Ä…czyÄ‡,
+	pomijajÄ…c wÅ‚aÅ›ciwÄ… procedurÄ™ Å‚Ä…czenia siÄ™. przydane podczas awarii
+	gÅ‚Ã³wnego serwera. adresy naleÅ¼y oddzielaÄ‡ przecinkami, Å›rednikami
+	lub spacjami. po dwukropku moÅ¼na podaÄ‡ port serwera. jeÅ›li adres i
+	port serwera zostanÄ… poprzedzone tekstem ,,tls:'', klient sprÃ³buje
+	wynegocjowaÄ‡ bezpieczne poÅ‚Ä…czenie TLS z serwerem. jeÅ›li zmiennej
+	przypisze siÄ™ wartoÅ›Ä‡ ,,tls'', spyta gÅ‚Ã³wny serwer o adres serwera
+	obsÅ‚ugujÄ…cego poÅ‚Ä…czenia TLS i sprÃ³buje siÄ™ z nim poÅ‚Ä…czyÄ‡.
 

@@ -1,29 +1,29 @@
 alias
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	krótka nazwa sesji
+	krÃ³tka nazwa sesji
 
 auto_away
 	typ: liczba
-	domy¶lna warto¶æ: 600
+	domyÅ›lna wartoÅ›Ä‡: 600
 	
-	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
-	zmieniony na ,,zajêty''. podaje siê w sekundach. je¶li równa 0,
-	nie bêdzie automatycznej zmiany.
+	wartoÅ›Ä‡ okreÅ›lajÄ…ca, po jakim czasie stan uÅ¼ytkownika zostanie
+	zmieniony na ,,zajÄ™ty''. podaje siÄ™ w sekundach. jeÅ›li rÃ³wna 0,
+	nie bÄ™dzie automatycznej zmiany.
 
 auto_away_descr
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Opis ustawiany przy przej¶ciu w auto-away. Je¶li nieustawione, zmiana
-	opisu nie nast±pi. Dozwolone s± nastêpuj±ce sekwencje specjalne:
+	Opis ustawiany przy przejÅ›ciu w auto-away. JeÅ›li nieustawione, zmiana
+	opisu nie nastÄ…pi. Dozwolone sÄ… nastÄ™pujÄ…ce sekwencje specjalne:
 	
-		%?	wypisz nastêpne znaki, je¶li opis jest ustawiony
+		%?	wypisz nastÄ™pne znaki, jeÅ›li opis jest ustawiony
 	
-		%!	wypisz nastêpne znaki, je¶li opis nie jest ustawiony
+		%!	wypisz nastÄ™pne znaki, jeÅ›li opis nie jest ustawiony
 	
-		%/	zawsze wypisz nastêpne znaki (wy³±cza powy¿sze)
+		%/	zawsze wypisz nastÄ™pne znaki (wyÅ‚Ä…cza powyÅ¼sze)
 	
 		%$	wypisz aktualny opis
 	
@@ -31,24 +31,24 @@ auto_away_descr
 
 auto_xa
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	warto¶æ okre¶laj±ca, po jakim czasie stan u¿ytkownika zostanie
-	zmieniony na ,,bardzo zajêty''. podaje siê w sekundach. je¶li
-	równa 0, nie bêdzie automatycznej zmiany.
+	wartoÅ›Ä‡ okreÅ›lajÄ…ca, po jakim czasie stan uÅ¼ytkownika zostanie
+	zmieniony na ,,bardzo zajÄ™ty''. podaje siÄ™ w sekundach. jeÅ›li
+	rÃ³wna 0, nie bÄ™dzie automatycznej zmiany.
 
 auto_xa_descr
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Opis ustawiany przy przej¶ciu w auto-xa. Je¶li nieustawione, zmiana
-	opisu nie nast±pi. Dozwolone s± nastêpuj±ce sekwencje specjalne:
+	Opis ustawiany przy przejÅ›ciu w auto-xa. JeÅ›li nieustawione, zmiana
+	opisu nie nastÄ…pi. Dozwolone sÄ… nastÄ™pujÄ…ce sekwencje specjalne:
 	
-		%?	wypisz nastêpne znaki, je¶li opis jest ustawiony
+		%?	wypisz nastÄ™pne znaki, jeÅ›li opis jest ustawiony
 	
-		%!	wypisz nastêpne znaki, je¶li opis nie jest ustawiony
+		%!	wypisz nastÄ™pne znaki, jeÅ›li opis nie jest ustawiony
 	
-		%/	zawsze wypisz nastêpne znaki (wy³±cza powy¿sze)
+		%/	zawsze wypisz nastÄ™pne znaki (wyÅ‚Ä…cza powyÅ¼sze)
 	
 		%$	wypisz aktualny opis
 	
@@ -56,31 +56,31 @@ auto_xa_descr
 
 auto_back
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	warto¶æ okre¶laj±ca, czy stan ma byæ automatycznie zmieniany na
-	dostêpny, je¶li obecny stan ,,zajêty'' zosta³ ustawiony automatycznie.
-	je¶li równa 1, stan jest zmieniany na dostêpny przy wys³aniu
-	jakiejkolwiek wiadomo¶ci. je¶li równa 2, przy wci¶niêciu klawisza.
+	wartoÅ›Ä‡ okreÅ›lajÄ…ca, czy stan ma byÄ‡ automatycznie zmieniany na
+	dostÄ™pny, jeÅ›li obecny stan ,,zajÄ™ty'' zostaÅ‚ ustawiony automatycznie.
+	jeÅ›li rÃ³wna 1, stan jest zmieniany na dostÄ™pny przy wysÅ‚aniu
+	jakiejkolwiek wiadomoÅ›ci. jeÅ›li rÃ³wna 2, przy wciÅ›niÄ™ciu klawisza.
 
 auto_connect
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	warto¶æ okre¶laj±ca, czy dana sesja ma siê ³±czyæ wraz z uruchomieniem
+	wartoÅ›Ä‡ okreÅ›lajÄ…ca, czy dana sesja ma siÄ™ Å‚Ä…czyÄ‡ wraz z uruchomieniem
 	programu
 
 auto_reconnect
 	typ: liczba
-	domy¶lna warto¶æ: 10
+	domyÅ›lna wartoÅ›Ä‡: 10
 	
-	w przypadku nieudanego po³±czenia, okre¶la po ilu sekundach program
-	ma ponowiæ próbê. je¶li równa 0, nie próbuje wiêcej.
+	w przypadku nieudanego poÅ‚Ä…czenia, okreÅ›la po ilu sekundach program
+	ma ponowiÄ‡ prÃ³bÄ™. jeÅ›li rÃ³wna 0, nie prÃ³buje wiÄ™cej.
 
 connect_timeout
 	typ: liczba
-	domy¶lna warto¶æ: 30
+	domyÅ›lna wartoÅ›Ä‡: 30
 	
-	liczba sekund, po których up³ywie próba ³±czenia z danym serwerem
-	zostanie przerwana. ustawienie na 0 wy³±cza timeouty (niezalecane).
+	liczba sekund, po ktÃ³rych upÅ‚ywie prÃ³ba Å‚Ä…czenia z danym serwerem
+	zostanie przerwana. ustawienie na 0 wyÅ‚Ä…cza timeouty (niezalecane).
 

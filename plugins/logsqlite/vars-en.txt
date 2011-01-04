@@ -1,5 +1,5 @@
 // short description of vairables
-// (c) copyright 2005 Leszek Krupiñski <leafnode@wafel.com>
+// (c) copyright 2005 Leszek KrupiÅ„ski <leafnode@wafel.com>
 
 log
 	type: number

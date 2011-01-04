@@ -1174,7 +1174,7 @@ void ekg_exit()
 
 	/* free internal read_file() buffer */
 	read_file(NULL, -1);
-	read_file_iso(NULL, -1);
+	read_file_utf(NULL, -1);
 
 /* windows: */
 	windows_destroy();

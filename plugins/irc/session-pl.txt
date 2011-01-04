@@ -4,15 +4,15 @@
 
 auto_guess_encoding
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	lista kodowañ, wed³ug których bêdziemy próbowaæ przekodowaæ przychodz±cy tekst
+	lista kodowaÅ„, wedÅ‚ug ktÃ³rych bÄ™dziemy prÃ³bowaÄ‡ przekodowaÄ‡ przychodzÄ…cy tekst
 
 ban_type
 	typ: liczba
-	domy¶lna warto¶æ: 10
+	domyÅ›lna wartoÅ›Ä‡: 10
 	
-	Typy banów: (irssi-like) tylko ze zamiast tekstu mamy numerki:
+	Typy banÃ³w: (irssi-like) tylko ze zamiast tekstu mamy numerki:
 	- 1 (Nick)   - nick!*@*
 	- 2 (User)   - *!*user@*
 	- 4 (Host)   - *!*@host.* (to jest troche inne niz w irssi jak chcesz irssi-like to ustaw 12)
@@ -29,7 +29,7 @@ ban_type
 
 close_windows
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
 	plugin sam zamyka `niepotrzebne` okna. przy /quit usera z ktorym mamy
 	otwarte query, kiedy zostalismy wykopaniu przez kogos z kanalu imho
@@ -37,156 +37,156 @@ close_windows
 
 dcc_port
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	póki co jeszcze nie u¿ywane...
+	pÃ³ki co jeszcze nie uÅ¼ywane...
 
 display_notify
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	warto¶æ -1 powoduje korzystanie z globalnej zmiennej. 
+	wartoÅ›Ä‡ -1 powoduje korzystanie z globalnej zmiennej. 
 	
-	warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
-	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
-	tylko zmiany z niedostêpnego na dostêpny i na odwrót. wiêkszy 
-	priorytet ma zmienna ,,contacts'', która przy warto¶ci 2 
+	wartoÅ›Ä‡ 0 powoduje ignorowanie zmian stanu znajomych, wartoÅ›Ä‡
+	1 powoduje wyÅ›wietlanie wszystkich zmian, wartoÅ›Ä‡ 2 wyÅ›wietla
+	tylko zmiany z niedostÄ™pnego na dostÄ™pny i na odwrÃ³t. wiÄ™kszy 
+	priorytet ma zmienna ,,contacts'', ktÃ³ra przy wartoÅ›ci 2 
 	ukrywa zmiany stanu.
 
 hostname
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	pozwala na korzystanie z vhostów [opcja -h w irssi]
+	pozwala na korzystanie z vhostÃ³w [opcja -h w irssi]
 
 log_formats
 	typ: tekst
-	domy¶lna warto¶æ: xml,simple
+	domyÅ›lna wartoÅ›Ä‡: xml,simple
 	
-	format logów
+	format logÃ³w
 
 make_window
 	typ: liczba
-	domy¶lna warto¶æ: 2
+	domyÅ›lna wartoÅ›Ä‡: 2
 	
-	suma bitowa, okre¶laj±ca czy nale¿y tworzyæ okna w danej sytuacji:
+	suma bitowa, okreÅ›lajÄ…ca czy naleÅ¼y tworzyÄ‡ okna w danej sytuacji:
 	
-	1 - nie u¿ywane
+	1 - nie uÅ¼ywane
 	
-	2 - tworzenie okna, gdy przychodzi do nas wiadomo¶æ od innego
-	u¿ytkownika
+	2 - tworzenie okna, gdy przychodzi do nas wiadomoÅ›Ä‡ od innego
+	uÅ¼ytkownika
 	
-	4 - tworzenie okna rozmowy z u¿ytkownikiem, je¶li ten wys³a³ do nas
+	4 - tworzenie okna rozmowy z uÅ¼ytkownikiem, jeÅ›li ten wysÅ‚aÅ‚ do nas
 	zapytanie ctcp
 	
-	8 - tworzenie okna rozmowy z u¿ytkownikiem, je¶li przysz³a od niego
-	odpowied¼, na wys³ane przez nas zapytanie ctcp
+	8 - tworzenie okna rozmowy z uÅ¼ytkownikiem, jeÅ›li przyszÅ‚a od niego
+	odpowiedÅº, na wysÅ‚ane przez nas zapytanie ctcp
 	
-	16 - tworzenie okienka, je¿eli dostajemy dostajemy NOTICE od serwera
-	przy ³aczeniu... [AUTH mesejgi itp]
+	16 - tworzenie okienka, jeÅ¼eli dostajemy dostajemy NOTICE od serwera
+	przy Å‚aczeniu... [AUTH mesejgi itp]
 	
 	Czyli np: ustawienie na 10 spowoduje otwieranie okienka rozmowy
-	przy przychodzeniu wiadomo¶ci i przy odpowiedzi na /ctcp
-	[je¿eli tylko okienko jeszcze nie istnieje]
+	przy przychodzeniu wiadomoÅ›ci i przy odpowiedzi na /ctcp
+	[jeÅ¼eli tylko okienko jeszcze nie istnieje]
 
 nickname
 	typ: tekst
-	domy¶lna warto¶æ: twoj login
+	domyÅ›lna wartoÅ›Ä‡: twoj login
 	
-	okre¶la domy¶lny nick, pod jakim bêdziemy starali siê po³±czyæ
+	okreÅ›la domyÅ›lny nick, pod jakim bÄ™dziemy starali siÄ™ poÅ‚Ä…czyÄ‡
 	z serwerem IRC
 	
-	zmienna musi byæ ustawiona, ¿eby móc siê po³aczyæ
+	zmienna musi byÄ‡ ustawiona, Å¼eby mÃ³c siÄ™ poÅ‚aczyÄ‡
 
 password
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	has³o do serwera
+	hasÅ‚o do serwera
 
 port
 	typ: liczba
-	domy¶lna warto¶æ: 6667
+	domyÅ›lna wartoÅ›Ä‡: 6667
 	
-	port serwera, do którego bêdziemy siê pod³±czaæ
+	port serwera, do ktÃ³rego bÄ™dziemy siÄ™ podÅ‚Ä…czaÄ‡
 
 prefer_family
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
 	Jesli serwer ma rekordy A i AAAA to zostanie wybrany rekord AAAA gdy
 	prefer_family = 10 (AF_INET6) rekord A gdy prefer_family != 10
 
 realname
 	typ: tekst
-	domy¶lna warto¶æ: realname u¿yszkodnika
+	domyÅ›lna wartoÅ›Ä‡: realname uÅ¼yszkodnika
 	
-	dowolny tekst, który zostanie ustawiony jako nasz realname [m.in. w
-	odpowiedzi na /whois], by zmiany realname odnios³y skutek nale¿y siê
-	ponownie po³±czyæ
+	dowolny tekst, ktÃ³ry zostanie ustawiony jako nasz realname [m.in. w
+	odpowiedzi na /whois], by zmiany realname odniosÅ‚y skutek naleÅ¼y siÄ™
+	ponownie poÅ‚Ä…czyÄ‡
 
 recode_list
 	typ: text
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Lista kodowañ dla poszczególnych nicków lub/i kana³ów
+	Lista kodowaÅ„ dla poszczegÃ³lnych nickÃ³w lub/i kanaÅ‚Ã³w
 	Syntax: encoding1:nick1,nick2,#chan1,nick3;encoding2:nick4,#chan5,chan6
 
 server
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
 	adres serwera irc, np: warszawa.irc.pl
 	
-	zmienna musi byæ ustawiona, ¿eby móc siê po³±czyæ
+	zmienna musi byÄ‡ ustawiona, Å¼eby mÃ³c siÄ™ poÅ‚Ä…czyÄ‡
 
 AUTO_JOIN
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	kana³y, do których klient ma siê pod³±czyæ po po³aczeniu, podane
+	kanaÅ‚y, do ktÃ³rych klient ma siÄ™ podÅ‚Ä…czyÄ‡ po poÅ‚aczeniu, podane
 	w formie:
 	
-	kana³1,kana³2,kana³3,kana³4, klucznakana³1,klucznakana³2
+	kanaÅ‚1,kanaÅ‚2,kanaÅ‚3,kanaÅ‚4, klucznakanaÅ‚1,klucznakanaÅ‚2
 
 DISPLAY_PONG
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	okre¶la czy wy¶wietlaæ komunikat o odebraniu ping i wys³aniu pong
-	do serwera IRC. 1 - wy¶wietlaæ, 0 - nie.
+	okreÅ›la czy wyÅ›wietlaÄ‡ komunikat o odebraniu ping i wysÅ‚aniu pong
+	do serwera IRC. 1 - wyÅ›wietlaÄ‡, 0 - nie.
 
 DISPLAY_AWAY_NOTIFICATION
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	okre¶la czy wy¶wietlaæ czyje¶ away [np: je¶li kto¶ ma ustawione
-	away i zrobimy /msg kto¶ co¶tam]
+	okreÅ›la czy wyÅ›wietlaÄ‡ czyjeÅ› away [np: jeÅ›li ktoÅ› ma ustawione
+	away i zrobimy /msg ktoÅ› coÅ›tam]
 
 DISPLAY_IN_CURRENT
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	suma bitów, okre¶laj±ca, ¿e pewne rzeczy bêd± wy¶wietlane
+	suma bitÃ³w, okreÅ›lajÄ…ca, Å¼e pewne rzeczy bÄ™dÄ… wyÅ›wietlane
 	w aktualnym oknie:
 	
-	1 - wynik komendy /names [RACZEJ G£UPOTA!]
+	1 - wynik komendy /names [RACZEJ GÅUPOTA!]
 	
-	2 - wynik /whois je¿eli nie ma otwartego okna rozmowy z danym
-	uzytkownikiem bêdzie wy¶wietlony w aktualnym oknie zamiast w oknie
+	2 - wynik /whois jeÅ¼eli nie ma otwartego okna rozmowy z danym
+	uzytkownikiem bÄ™dzie wyÅ›wietlony w aktualnym oknie zamiast w oknie
 	statusu
 
 DISPLAY_NICKCHANGE
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	gdzie wy¶wietlaæ zmiany nicków [zobacz opis DISPLAY_QUIT
+	gdzie wyÅ›wietlaÄ‡ zmiany nickÃ³w [zobacz opis DISPLAY_QUIT
 
 DISPLAY_QUIT
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	0 - we wszystkich kana³ach, na których by³ u¿ytkownik
+	0 - we wszystkich kanaÅ‚ach, na ktÃ³rych byÅ‚ uÅ¼ytkownik
 	
 	1 - tylko w oknie statusu
 	
@@ -194,72 +194,72 @@ DISPLAY_QUIT
 
 REJOIN
 	typ: liczba
-	domy¶lna warto¶æ: 2
+	domyÅ›lna wartoÅ›Ä‡: 2
 	
-	suma bitowa, okre¶laj±ca kiedy robiæ autorejoin
+	suma bitowa, okreÅ›lajÄ…ca kiedy robiÄ‡ autorejoin
 	
-	1 - przy dostaniu kicka z kana³u
+	1 - przy dostaniu kicka z kanaÅ‚u
 	
-	2 - przy [re]connec'cie, je¶li s± jakie¶ otwarte okienka z kana³ami
+	2 - przy [re]connec'cie, jeÅ›li sÄ… jakieÅ› otwarte okienka z kanaÅ‚ami
 
 REJOIN_TIME
 	typ: liczba
-	domy¶lna warto¶æ: 2
+	domyÅ›lna wartoÅ›Ä‡: 2
 	
-	ilo¶æ sekund jak± plugin ma odczekaæ, przed prób± ponownego do³±czeniu
-	do kana³u, je¶li zostali¶my wykopani zmienna ta, nie ma ¿adnego
-	znaczenia, je¶li zmienna %TREJOIN%n nie jest ustawiona tak, by klient
-	robi³ autorejoin po kicku
+	iloÅ›Ä‡ sekund jakÄ… plugin ma odczekaÄ‡, przed prÃ³bÄ… ponownego doÅ‚Ä…czeniu
+	do kanaÅ‚u, jeÅ›li zostaliÅ›my wykopani zmienna ta, nie ma Å¼adnego
+	znaczenia, jeÅ›li zmienna %TREJOIN%n nie jest ustawiona tak, by klient
+	robiÅ‚ autorejoin po kicku
 
 SHOW_NICKMODE_EMPTY
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	je¶li 0 spacja NIE jest wy¶wietlana przed nickiem je¿eli ircownik nie
-	ma +, @ ani %, je¶li 1 spacja bêdzie wy¶wietlana
+	jeÅ›li 0 spacja NIE jest wyÅ›wietlana przed nickiem jeÅ¼eli ircownik nie
+	ma +, @ ani %, jeÅ›li 1 spacja bÄ™dzie wyÅ›wietlana
 
 SHOW_MOTD
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	czy wy¶wietlaæ MOTD. 1 - tak, 0 - nie.
+	czy wyÅ›wietlaÄ‡ MOTD. 1 - tak, 0 - nie.
 
 STRIPMIRCCOL
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	czy stripowaæ wy¶wietlanie durnych kolorków na IRCu.
+	czy stripowaÄ‡ wyÅ›wietlanie durnych kolorkÃ³w na IRCu.
 	
-	0 - kolorki bêd± wy¶wietlane
+	0 - kolorki bÄ™dÄ… wyÅ›wietlane
 	
-	1 - nie bêd±.
+	1 - nie bÄ™dÄ….
 	
-	zmienna ta nie ma wp³ywu na wy¶wietlanie atryburów takich jak
+	zmienna ta nie ma wpÅ‚ywu na wyÅ›wietlanie atryburÃ³w takich jak
 	%Tbold%T, %Uunderline%U i %Vreverse%V...
 
 VERSION_NAME
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	okre¶la pierwszy z ci±gów, którymi IRC plugin odpowiada na zapytanie
-	%Tctcp VERSION%n, je¿eli nie ustawione u¿ywany jest ci±g: "IRC plugin
+	okreÅ›la pierwszy z ciÄ…gÃ³w, ktÃ³rymi IRC plugin odpowiada na zapytanie
+	%Tctcp VERSION%n, jeÅ¼eli nie ustawione uÅ¼ywany jest ciÄ…g: "IRC plugin
 	for EKG2:"
 
 VERSION_NO
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	okre¶la drugi z ci±gów, którymi IRC plugin odpowiada na zapytanie
-	%Tctcp VERSION%n, je¿eli nie ustawione u¿ywany jest ci±g:
-	"numer_wersji_plugina:", mo¿na ustawiæ na pusty: /session -s
+	okreÅ›la drugi z ciÄ…gÃ³w, ktÃ³rymi IRC plugin odpowiada na zapytanie
+	%Tctcp VERSION%n, jeÅ¼eli nie ustawione uÅ¼ywany jest ciÄ…g:
+	"numer_wersji_plugina:", moÅ¼na ustawiÄ‡ na pusty: /session -s
 	irc:nazwasesji VERSION_NO ""
 
 VERSION_SYS
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	okre¶la trzeci z ci±gów, którymi IRC plugin odpowiada na
-	zapytanie %Tctcp VERSION%n, je¿eli nie ustawione u¿ywany jest
-	ci±g: "System wersja_j±dra architektura", mo¿na ustawiæ na pusty:
+	okreÅ›la trzeci z ciÄ…gÃ³w, ktÃ³rymi IRC plugin odpowiada na
+	zapytanie %Tctcp VERSION%n, jeÅ¼eli nie ustawione uÅ¼ywany jest
+	ciÄ…g: "System wersja_jÄ…dra architektura", moÅ¼na ustawiÄ‡ na pusty:
 	/session -s irc:nazwasesji VERSION_SYS ""
 

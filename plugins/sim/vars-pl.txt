@@ -1,13 +1,13 @@
-// ma≥y opis dostÍpnych zmiennych pluginu sim
+// ma≈Çy opis dostƒôpnych zmiennych pluginu sim
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 // (c) copyright      2004 piotr kupisiewicz <deletek@ekg2.org>
 // $Id$
 
 encryption
 	typ: bool
-	domy∂lna warto∂Ê: 0
+	domy≈õlna warto≈õƒá: 0
 	
-	w≥±cza szyfrowanie wiadomo∂ci. je∂li w systemie jest zainstalowana
-	biblioteka OpenSSL, moøliwe jest uøywanie szyfrowania zgodnego z SIM
+	w≈ÇƒÖcza szyfrowanie wiadomo≈õci. je≈õli w systemie jest zainstalowana
+	biblioteka OpenSSL, mo≈ºliwe jest u≈ºywanie szyfrowania zgodnego z SIM
 	opisanym na stronie http://gg.wha.la/crypt/
 

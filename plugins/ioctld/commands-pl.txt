@@ -5,25 +5,25 @@
 
 beeps_spk
 	parametry:  <sekwencja>
-	krotki opis: wydaje d¼wiêki zgodnie z sekwencj±
+	krotki opis: wydaje dÅºwiÄ™ki zgodnie z sekwencjÄ…
 	
-	Kolejne d¼wiêki oddzielone s± przecinkami. D¼wiêk sk³ada siê 
-	z tonu w hercach i d³ugo¶ci trwania w mikrosekundach oddzielonej 
-	uko¶nikiem (,,%T/%n''). Je¶li nie podano czasu trwania, domy¶lna 
-	warto¶æ to 0,1s.
+	Kolejne dÅºwiÄ™ki oddzielone sÄ… przecinkami. DÅºwiÄ™k skÅ‚ada siÄ™ 
+	z tonu w hercach i dÅ‚ugoÅ›ci trwania w mikrosekundach oddzielonej 
+	ukoÅ›nikiem (,,%T/%n''). JeÅ›li nie podano czasu trwania, domyÅ›lna 
+	wartoÅ›Ä‡ to 0,1s.
 	
-	Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.
+	Zamiast sekwencji moÅ¼na podaÄ‡ nazwÄ™ formatu z themu.
 
 blink_leds
 	parametry:  <sekwencja>
-	krotki opis: odtwarza sekwencjê na diodach LED
+	krotki opis: odtwarza sekwencjÄ™ na diodach LED
 	
-	Kombinacje diod oddzielone s± przecinkami. Je¶li po kombinacji 
-	wystêpuje znak uko¶nika (,,%T/%n''), po nim podany jest czas 
-	trwania w mikrosekundach. Domy¶lny czas trwania to 0,1s. 
-	Kombinacja jest map± bitow± o nastêpuj±cych 
-	warto¶ciach: 1 - NumLock, 2 - ScrollLock, 4 - CapsLock. Na 
-	przyk³ad w³±czenie NumLock i CapsLock jednocze¶nie to 1+4 czyli 5.
+	Kombinacje diod oddzielone sÄ… przecinkami. JeÅ›li po kombinacji 
+	wystÄ™puje znak ukoÅ›nika (,,%T/%n''), po nim podany jest czas 
+	trwania w mikrosekundach. DomyÅ›lny czas trwania to 0,1s. 
+	Kombinacja jest mapÄ… bitowÄ… o nastÄ™pujÄ…cych 
+	wartoÅ›ciach: 1 - NumLock, 2 - ScrollLock, 4 - CapsLock. Na 
+	przykÅ‚ad wÅ‚Ä…czenie NumLock i CapsLock jednoczeÅ›nie to 1+4 czyli 5.
 	
-	Zamiast sekwencji mo¿na podaæ nazwê formatu z themu.
+	Zamiast sekwencji moÅ¼na podaÄ‡ nazwÄ™ formatu z themu.
 

@@ -1,35 +1,35 @@
 beep_mail
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	czy beepaæ przy nadej¶ciu nowej poczty. wy³±czenie ,,beep'' wy³±cza
-	równie¿ tê opcjê.
+	czy beepaÄ‡ przy nadejÅ›ciu nowej poczty. wyÅ‚Ä…czenie ,,beep'' wyÅ‚Ä…cza
+	rÃ³wnieÅ¼ tÄ™ opcjÄ™.
 
 check_mail
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy ekg ma sprawdzaæ, czy nadesz³a nowa poczta i informowaæ
-	o tym na pasku stanu. warto¶æ 1 odpowiada sprawdzaniu skrzynki typu
-	mbox, a warto¶æ 2 skrzynki typu Maildir. dodadanie warto¶ci 4 oznacza,
-	¿e oprócz informowania na pasku stanu, bêdziemy otrzymywaæ krótk±
-	informacjê o nadej¶ciu poczty w aktualnym oknie. wszystkie dostêpne
-	warto¶ci to: 0, 1, 2, 5, 6.
+	okreÅ›la, czy ekg ma sprawdzaÄ‡, czy nadeszÅ‚a nowa poczta i informowaÄ‡
+	o tym na pasku stanu. wartoÅ›Ä‡ 1 odpowiada sprawdzaniu skrzynki typu
+	mbox, a wartoÅ›Ä‡ 2 skrzynki typu Maildir. dodadanie wartoÅ›ci 4 oznacza,
+	Å¼e oprÃ³cz informowania na pasku stanu, bÄ™dziemy otrzymywaÄ‡ krÃ³tkÄ…
+	informacjÄ™ o nadejÅ›ciu poczty w aktualnym oknie. wszystkie dostÄ™pne
+	wartoÅ›ci to: 0, 1, 2, 5, 6.
 
 check_mail_frequency
 	typ: liczba
-	domy¶lna warto¶æ: 15
+	domyÅ›lna wartoÅ›Ä‡: 15
 	
-	okre¶la w sekundach, jak czêsto sprawdzaæ, czy nie ma nowej poczty.
+	okreÅ›la w sekundach, jak czÄ™sto sprawdzaÄ‡, czy nie ma nowej poczty.
 
 check_mail_folders
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
 	zawiera pliki (mbox) lub katalogi (Maildir) rozdzielone przecinkiem lub
-	spacj±, które ekg ma sprawdzaæ, poza g³ówn± skrzynk± pocztow±. mo¿e to
-	byæ ¶cie¿ka bezwzglêdna lub wzglêdem katalogu domowego.
-	g³ówna w przypadku mbox to ta zapisana w zmiennej systemowej MAIL lub
+	spacjÄ…, ktÃ³re ekg ma sprawdzaÄ‡, poza gÅ‚Ã³wnÄ… skrzynkÄ… pocztowÄ…. moÅ¼e to
+	byÄ‡ Å›cieÅ¼ka bezwzglÄ™dna lub wzglÄ™dem katalogu domowego.
+	gÅ‚Ã³wna w przypadku mbox to ta zapisana w zmiennej systemowej MAIL lub
 	/var/mail/user przy braku tej zmiennej. dla Maildir z kolei, to katalog
-	Maildir w katalogu domowym u¿ytkownika.
+	Maildir w katalogu domowym uÅ¼ytkownika.
 

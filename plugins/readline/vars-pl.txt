@@ -1,13 +1,13 @@
 ctrld_quits
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	okre¶la, czy wci¶niêcie Ctrl-D w oknie statusu ma zakoñczyæ dzia³anie
+	okreÅ›la, czy wciÅ›niÄ™cie Ctrl-D w oknie statusu ma zakoÅ„czyÄ‡ dziaÅ‚anie
 	programu.
 
 print_read_lines
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	okre¶la, czy w oknie pomiêdzy innymi komunikatami i wypowiedziami maj±
-	pojawiaæ siê komendy i wypowiedzi wprowadzane przez u¿ytkownika.
+	okreÅ›la, czy w oknie pomiÄ™dzy innymi komunikatami i wypowiedziami majÄ…
+	pojawiaÄ‡ siÄ™ komendy i wypowiedzi wprowadzane przez uÅ¼ytkownika.

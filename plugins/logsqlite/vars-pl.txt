@@ -1,79 +1,79 @@
-// ma³y opis dostêpnych zmiennych
-// (c) copyright 2005 Leszek Krupiñski <leafnode@wafel.com>
+// maÅ‚y opis dostÄ™pnych zmiennych
+// (c) copyright 2005 Leszek KrupiÅ„ski <leafnode@wafel.com>
 
 log
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy plugin loguje wiadomo¶ci
+	okreÅ›la, czy plugin loguje wiadomoÅ›ci
 
 log_ignored
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy logujemy ignorowane wiadomo¶ci (NFY).
+	okreÅ›la, czy logujemy ignorowane wiadomoÅ›ci (NFY).
 
 log_status
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy bêd± logowane zmiany stanu ludzi z listy (zmienna
-	,,log'' musi byæ ró¿na od 0)
+	okreÅ›la, czy bÄ™dÄ… logowane zmiany stanu ludzi z listy (zmienna
+	,,log'' musi byÄ‡ rÃ³Å¼na od 0)
 
 path
 	typ: tekst
-	domy¶lna warto¶æ: ~/.ekg2/logsqlite.db
+	domyÅ›lna wartoÅ›Ä‡: ~/.ekg2/logsqlite.db
 	
-	¶cie¿ka do pliku z baz± danych. Je¶li plik nie istnieje, to zostanie stworzony.
+	Å›cieÅ¼ka do pliku z bazÄ… danych. JeÅ›li plik nie istnieje, to zostanie stworzony.
 	Rozpoznawane znaki:
 	* %S - sesja nasza
-	* %Y, %M, %D - rok, miesi±c, dzieñ
-	Przyk³ady:
-	- logowanie do katalogów wg. sesji:
+	* %Y, %M, %D - rok, miesiÄ…c, dzieÅ„
+	PrzykÅ‚ady:
+	- logowanie do katalogÃ³w wg. sesji:
 	    log_path = "~/.ekg2/logsqlite/%S.db"
 	  np. /home/users/leafnode/.ekg/logsqlite/gg:123.db
 	- logowanie do katalogow wg. sesji (katalog) i daty (plik):
 	    log_path = "~/.ekg2/logsqlite/%S/%Y-%M-%D.db"
 	  np. /home/users/leafnode/.ekg2/logsqlite/jid:fr@h.pl/2004-05-31.db
-	- logowanie do /tmp z sesj± i dat±:
+	- logowanie do /tmp z sesjÄ… i datÄ…:
 	    log_path = "/tmp/%S-%Y.%M.%D.db"
 	  np. /tmp/gg:31337-2004.05.31.db
 
 last_limit_msg
 	typ: liczba
-	domy¶lna warto¶æ: 10
+	domyÅ›lna wartoÅ›Ä‡: 10
 	
-	maksymalna ilo¶æ wiadomo¶ci wy¶wietlanych przez polecenie
+	maksymalna iloÅ›Ä‡ wiadomoÅ›ci wyÅ›wietlanych przez polecenie
 	logsqlite:last
 
 last_limit_status
 	typ: liczba
-	domy¶lna warto¶æ: 10
+	domyÅ›lna wartoÅ›Ä‡: 10
 	
-	maksymalna ilo¶æ wiadomo¶ci wy¶wietlanych przez polecenie
+	maksymalna iloÅ›Ä‡ wiadomoÅ›ci wyÅ›wietlanych przez polecenie
 	logsqlite:laststatus
 
 
 last_in_window
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la czy wiadomo¶ci wy¶wietlane przez polecenie bêd± wy¶wietlane w
-	oknie rozmowy z dan± osob±. To, czy nieistniej±ce okienko bêdzie
-	otwierane, okre¶la zmienna logsqlite:last_open_window
+	okreÅ›la czy wiadomoÅ›ci wyÅ›wietlane przez polecenie bÄ™dÄ… wyÅ›wietlane w
+	oknie rozmowy z danÄ… osobÄ…. To, czy nieistniejÄ…ce okienko bÄ™dzie
+	otwierane, okreÅ›la zmienna logsqlite:last_open_window
 
 last_open_window
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la czy w przypadku wy¶wietlania wiadomo¶ci danej osoby przez
-	lastlog w okienku rozmowy z ni±, to okienko bêdzie otwierane je¶li
-	jeszcze nie istnieje (kto¶ zrozumia³ co tu napisa³em?)
+	okreÅ›la czy w przypadku wyÅ›wietlania wiadomoÅ›ci danej osoby przez
+	lastlog w okienku rozmowy z niÄ…, to okienko bÄ™dzie otwierane jeÅ›li
+	jeszcze nie istnieje (ktoÅ› zrozumiaÅ‚ co tu napisaÅ‚em?)
 
 last_print_on_open
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy po otwarciu nowego okna rozmowy, logsqlite wypisze w nim
-	last_limit ostatnich wiadomo¶ci powi±zanych z rozmówc±
+	okreÅ›la, czy po otwarciu nowego okna rozmowy, logsqlite wypisze w nim
+	last_limit ostatnich wiadomoÅ›ci powiÄ…zanych z rozmÃ³wcÄ…
 

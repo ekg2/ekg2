@@ -1,14 +1,14 @@
 // opis komend dla pluginu gpg
-// 2009 created by Pawe≥ Tomak <satherot@gmail.com>
+// 2009 created by Pawe≈Ç Tomak <satherot@gmail.com>
 
 key
 	parametry:  [opcje] [uid [klucz]]
-	krotki opis: zarz±dza kluczami uøywanymi do szyfrowania wiadomo∂ci
+	krotki opis: zarzƒÖdza kluczami u≈ºywanymi do szyfrowania wiadomo≈õci
 	
-	  -l, --listkeys                  wypisuje wszystkie klucze oraz ich status (domy∂lna opcja)
+	  -l, --listkeys                  wypisuje wszystkie klucze oraz ich status (domy≈õlna opcja)
 	
-	  -s, --setkey <uid> <klucz>      dodaje/ustawia klucz uøytkownika o podanym uid
+	  -s, --setkey <uid> <klucz>      dodaje/ustawia klucz u≈ºytkownika o podanym uid
 	
-	  -f, --forcekey <uid> <klucz>    wymusza dodanie klucza uøytkownika nawet jesli co∂ siÍ nie zgadza z poprawno∂ci± klucza
+	  -f, --forcekey <uid> <klucz>    wymusza dodanie klucza u≈ºytkownika nawet jesli co≈õ siƒô nie zgadza z poprawno≈õciƒÖ klucza
 	
-	  -d, --delkey <uid>              usuwa klucz dla podanego uøytkownika
+	  -d, --delkey <uid>              usuwa klucz dla podanego u≈ºytkownika

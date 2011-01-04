@@ -1,526 +1,526 @@
-// ma³y opis dostêpnych zmiennych
+// maÅ‚y opis dostÄ™pnych zmiennych
 // (c) copyright 2001-2003 wojtek kaniewski <wojtekka@irc.pl>
 //		      2004 adam mikuta <adammikuta@poczta.onet.pl>
 
 auto_save
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Po jakim czasie automatycznie zapisaæ ustawienia, w sekundach.
-	Je¶li 0, nie zapisuje automatycznie.
+	Po jakim czasie automatycznie zapisaÄ‡ ustawienia, w sekundach.
+	JeÅ›li 0, nie zapisuje automatycznie.
 
 auto_user_add
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la czy osoby których nie mamy w kontaktach a dostajemy 
-	informacjê o ich stanie maj± byæ dodawane automatycznie do listy
-	kontaktów.
-	Taka sytuacja wystêpuje je¶li w kontaktach ma nas kto¶ kto ma
-	w³±czony tryb tylko dla przyjació³ a my go w swoich kontaktach
+	OkreÅ›la czy osoby ktÃ³rych nie mamy w kontaktach a dostajemy 
+	informacjÄ™ o ich stanie majÄ… byÄ‡ dodawane automatycznie do listy
+	kontaktÃ³w.
+	Taka sytuacja wystÄ™puje jeÅ›li w kontaktach ma nas ktoÅ› kto ma
+	wÅ‚Ä…czony tryb tylko dla przyjaciÃ³Å‚ a my go w swoich kontaktach
 	nie mamy.
 
 away_reason
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Domy¶lny opis stanu zajêtego, ustawiany przy zmianie bez podania 
+	DomyÅ›lny opis stanu zajÄ™tego, ustawiany przy zmianie bez podania 
 	parametru.
 
 back_reason
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Domy¶lny opis stanu dostêpnego, ustawiany przy zmianie bez podania 
+	DomyÅ›lny opis stanu dostÄ™pnego, ustawiany przy zmianie bez podania 
 	parametru.
 
 beep
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la, czy klient ma beepaæ w ró¿nych sytuacjach. Wy³±czenie tej
-	opcji spowoduje, ¿e w przypadku ¿adnych zdarzeñ zwi±zanych z GG nie
-	bêdzie podnosiæ alarmu. Niestety nie obejmuje to zdarzeñ zwi±zanych
-	z wprowadzanym tekstem i przy tab-completion mo¿e siê to przytrafiæ.
+	OkreÅ›la, czy klient ma beepaÄ‡ w rÃ³Å¼nych sytuacjach. WyÅ‚Ä…czenie tej
+	opcji spowoduje, Å¼e w przypadku Å¼adnych zdarzeÅ„ zwiÄ…zanych z GG nie
+	bÄ™dzie podnosiÄ‡ alarmu. Niestety nie obejmuje to zdarzeÅ„ zwiÄ…zanych
+	z wprowadzanym tekstem i przy tab-completion moÅ¼e siÄ™ to przytrafiÄ‡.
 
 beep_chat
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Czy beepaæ przy rozmowach. Wy³±czenie ,,beep'' wy³±cza równie¿ tê
-	opcjê.
+	Czy beepaÄ‡ przy rozmowach. WyÅ‚Ä…czenie ,,beep'' wyÅ‚Ä…cza rÃ³wnieÅ¼ tÄ™
+	opcjÄ™.
 
 beep_msg
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Czy beepaæ przy nadchodz±cych wiadomo¶ciach. Wy³±czenie ,,beep''
-	wy³±cza równie¿ tê opcjê.
+	Czy beepaÄ‡ przy nadchodzÄ…cych wiadomoÅ›ciach. WyÅ‚Ä…czenie ,,beep''
+	wyÅ‚Ä…cza rÃ³wnieÅ¼ tÄ™ opcjÄ™.
 
 beep_notify
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Czy beepaæ przy zmianie stanu którego¶ ze znajomych. Wy³±czenie
-	,,beep'' wy³±cza równie¿ tê opcjê.
+	Czy beepaÄ‡ przy zmianie stanu ktÃ³regoÅ› ze znajomych. WyÅ‚Ä…czenie
+	,,beep'' wyÅ‚Ä…cza rÃ³wnieÅ¼ tÄ™ opcjÄ™.
 
 completion_char
 	typ: tekst
-	domy¶lna warto¶æ: ":"
+	domyÅ›lna wartoÅ›Ä‡: ":"
 	
-	Znaki dodawane po dope³nienu nicka u¿ytkownika.
+	Znaki dodawane po dopeÅ‚nienu nicka uÅ¼ytkownika.
 
 completion_notify
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la, czy po pojawieniu siê którego¶ ze znajomych jego nick
-	ma byæ dopisywany do listy dope³niania klawiszem Tab. Je¶li jest
-	równa 2, jest równie¿ usuwany po przej¶ciu w stan niedostêpny.
-	Dodanie warto¶ci 4 spowoduje, ¿e dopisywani bêd± tak¿e ci, którzy
-	pojawi± siê na li¶cie ze stanem ,,zajêty''. Wszystkie dostêpne
-	warto¶ci to: 0, 1, 2, 5, 6.
+	OkreÅ›la, czy po pojawieniu siÄ™ ktÃ³regoÅ› ze znajomych jego nick
+	ma byÄ‡ dopisywany do listy dopeÅ‚niania klawiszem Tab. JeÅ›li jest
+	rÃ³wna 2, jest rÃ³wnieÅ¼ usuwany po przejÅ›ciu w stan niedostÄ™pny.
+	Dodanie wartoÅ›ci 4 spowoduje, Å¼e dopisywani bÄ™dÄ… takÅ¼e ci, ktÃ³rzy
+	pojawiÄ… siÄ™ na liÅ›cie ze stanem ,,zajÄ™ty''. Wszystkie dostÄ™pne
+	wartoÅ›ci to: 0, 1, 2, 5, 6.
 
 console_charset
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Okre¶la kodowanie u¿ywane przez terminal.
+	OkreÅ›la kodowanie uÅ¼ywane przez terminal.
 
 dcc_dir
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Okre¶la katalog, do którego bêd± zapisywane pobierane pliki.
+	OkreÅ›la katalog, do ktÃ³rego bÄ™dÄ… zapisywane pobierane pliki.
 
 debug
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la, czy maj± byæ wypisywane informacje do okna debug.
+	OkreÅ›la, czy majÄ… byÄ‡ wypisywane informacje do okna debug.
 
 default_status_window
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la czy wyniki poleceñ maj± trafiaæ domy¶lnie do okna statusu. 
-	Je¿eli 0 to wyniki poleceñ trafiaj± do aktualnego okienka, je¿eli 1
-	to wszystkie komunikaty trafiaj± do okna statusu .
+	OkreÅ›la czy wyniki poleceÅ„ majÄ… trafiaÄ‡ domyÅ›lnie do okna statusu. 
+	JeÅ¼eli 0 to wyniki poleceÅ„ trafiajÄ… do aktualnego okienka, jeÅ¼eli 1
+	to wszystkie komunikaty trafiajÄ… do okna statusu .
 
 display_ack
 	typ: liczba
-	domy¶lna warto¶æ: 12
+	domyÅ›lna wartoÅ›Ä‡: 12
 	
-	Okre¶la, czy i które powiadomienia o (nie)dostarczeniu wiadomo¶ci
-	maj± byæ wy¶wietlane. Stanowi sumê warto¶ci:
+	OkreÅ›la, czy i ktÃ³re powiadomienia o (nie)dostarczeniu wiadomoÅ›ci
+	majÄ… byÄ‡ wyÅ›wietlane. Stanowi sumÄ™ wartoÅ›ci:
 	
-		1 - wiadomo¶æ dotar³a do adresata
+		1 - wiadomoÅ›Ä‡ dotarÅ‚a do adresata
 	
-		2 - wiadomo¶æ zosta³a umieszczona w kolejce dorêczania
+		2 - wiadomoÅ›Ä‡ zostaÅ‚a umieszczona w kolejce dorÄ™czania
 	
-		4 - wiadomo¶æ zosta³a odrzucona przez serwer/adresata
+		4 - wiadomoÅ›Ä‡ zostaÅ‚a odrzucona przez serwer/adresata
 	
-		8 - wiadomo¶æ tymczasowo nie mo¿e byæ przyjêta
+		8 - wiadomoÅ›Ä‡ tymczasowo nie moÅ¼e byÄ‡ przyjÄ™ta
 	
-		16 - wynik dorêczania nieznany
+		16 - wynik dorÄ™czania nieznany
 
 display_blinking
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la czy powinny zostawaæ pod¶wietlane osoby, które do nas
-	aktualnie pisz±.
+	OkreÅ›la czy powinny zostawaÄ‡ podÅ›wietlane osoby, ktÃ³re do nas
+	aktualnie piszÄ….
 
 display_color
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Warto¶æ 0 wy³±cza wy¶wietlanie kolorów, warto¶æ 1 w³±cza. Warto¶æ
-	2 ma znaczenie tylko w interfejsie ncurses i powoduje wy¶wietlanie
-	kolorów wszêdzie poza paskiem stanu i nag³ówkiem okna.
+	WartoÅ›Ä‡ 0 wyÅ‚Ä…cza wyÅ›wietlanie kolorÃ³w, wartoÅ›Ä‡ 1 wÅ‚Ä…cza. WartoÅ›Ä‡
+	2 ma znaczenie tylko w interfejsie ncurses i powoduje wyÅ›wietlanie
+	kolorÃ³w wszÄ™dzie poza paskiem stanu i nagÅ‚Ã³wkiem okna.
 
 display_color_map
 	typ: tekst
-	domy¶lna warto¶æ: "nTgGbBrR"
+	domyÅ›lna wartoÅ›Ä‡: "nTgGbBrR"
 	
-	Okre¶la jakie kolory bêd± przypisane ró¿nym atrybutom tekstu.
-	Musi zawieraæ 8 znaków zgodnych ze spisem z pliku docs/themes.txt.
-	Ka¿dy z nich okre¶la kolejno kolor dla:
-	- brak atrybutów,
+	OkreÅ›la jakie kolory bÄ™dÄ… przypisane rÃ³Å¼nym atrybutom tekstu.
+	Musi zawieraÄ‡ 8 znakÃ³w zgodnych ze spisem z pliku docs/themes.txt.
+	KaÅ¼dy z nich okreÅ›la kolejno kolor dla:
+	- brak atrybutÃ³w,
 	- pogrubiony,
-	- pochy³y,
-	- pochy³y+pogrubiony,
-	- podkre¶lony,
-	- podkre¶lony+pogrubiony,
-	- podkre¶lony+pochy³y,
-	- podkre¶lony+pochy³y+pogrubiony.
+	- pochyÅ‚y,
+	- pochyÅ‚y+pogrubiony,
+	- podkreÅ›lony,
+	- podkreÅ›lony+pogrubiony,
+	- podkreÅ›lony+pochyÅ‚y,
+	- podkreÅ›lony+pochyÅ‚y+pogrubiony.
 
 display_crap
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Mówi, czy w oknie rozmowy maj± byæ wy¶wietlane komunikaty niezwi±zane
-	z rozmówc±. Je¶li jest równe 0, w oknie rozmowy s± wy¶wietlane tylko
-	wiadomo¶ci i informacje o zmianie stanu rozmówcy. 
+	MÃ³wi, czy w oknie rozmowy majÄ… byÄ‡ wyÅ›wietlane komunikaty niezwiÄ…zane
+	z rozmÃ³wcÄ…. JeÅ›li jest rÃ³wne 0, w oknie rozmowy sÄ… wyÅ›wietlane tylko
+	wiadomoÅ›ci i informacje o zmianie stanu rozmÃ³wcy. 
 
 display_day_changed
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la, czy o pó³nocy w otwartych oknach ma byæ wpisana informacja
+	OkreÅ›la, czy o pÃ³Å‚nocy w otwartych oknach ma byÄ‡ wpisana informacja
 	o zmianie daty.
 
 display_notify
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Warto¶æ 0 powoduje ignorowanie zmian stanu znajomych, warto¶æ
-	1 powoduje wy¶wietlanie wszystkich zmian, warto¶æ 2 wy¶wietla
-	tylko zmiany z niedostêpnego na dostêpny i na odwrót. Wiêkszy priorytet
-	ma zmienna sesyjna o tej samej nazwie (je¿eli nie równa -1).
+	WartoÅ›Ä‡ 0 powoduje ignorowanie zmian stanu znajomych, wartoÅ›Ä‡
+	1 powoduje wyÅ›wietlanie wszystkich zmian, wartoÅ›Ä‡ 2 wyÅ›wietla
+	tylko zmiany z niedostÄ™pnego na dostÄ™pny i na odwrÃ³t. WiÄ™kszy priorytet
+	ma zmienna sesyjna o tej samej nazwie (jeÅ¼eli nie rÃ³wna -1).
 
 display_sent
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Je¶li w³±czone, wy¶wietlane s± równie¿ wysy³ane wiadomo¶ci. Nale¿y
-	zwróciæ uwagê, ¿e przy make_window = 2, wys³anie wiadomo¶ci utworzy
+	JeÅ›li wÅ‚Ä…czone, wyÅ›wietlane sÄ… rÃ³wnieÅ¼ wysyÅ‚ane wiadomoÅ›ci. NaleÅ¼y
+	zwrÃ³ciÄ‡ uwagÄ™, Å¼e przy make_window = 2, wysÅ‚anie wiadomoÅ›ci utworzy
 	automatycznie okienko rozmowy, a przy make_window = 1 tylko wtedy,
-	gdy nie bêdzie ¿adnych wolnych okienek.
+	gdy nie bÄ™dzie Å¼adnych wolnych okienek.
 
 display_welcome
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Mówi, czy ekg ma wy¶wietliæ tekst powitalny po uruchomieniu.
+	MÃ³wi, czy ekg ma wyÅ›wietliÄ‡ tekst powitalny po uruchomieniu.
 
 emoticons
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Uruchamia rozwijanie emotikonów w zdefiniowane teksty. Wiêcej
-	szczegó³ów w pliku docs/files.txt w sekcji 5-tej.
+	Uruchamia rozwijanie emotikonÃ³w w zdefiniowane teksty. WiÄ™cej
+	szczegÃ³Å‚Ã³w w pliku docs/files.txt w sekcji 5-tej.
 
 events_delay
 	typ: liczba
-	domy¶lna warto¶æ: 3
+	domyÅ›lna wartoÅ›Ä‡: 3
 	
-	Okre¶la, po ilu sekundach od po³±czenia z serwerem zaczn± dzia³aæ
-	zdarzenia ,,on'', d¼wiêki zwi±zane ze zmianami stanu i bêd± wy¶wietlane
-	informacje o niedostêpno¶ci osób. Chodzi o to, aby nie traktowaæ
-	pocz±tkowych informacji o stanie osób po po³±czeniu jako zmianê
+	OkreÅ›la, po ilu sekundach od poÅ‚Ä…czenia z serwerem zacznÄ… dziaÅ‚aÄ‡
+	zdarzenia ,,on'', dÅºwiÄ™ki zwiÄ…zane ze zmianami stanu i bÄ™dÄ… wyÅ›wietlane
+	informacje o niedostÄ™pnoÅ›ci osÃ³b. Chodzi o to, aby nie traktowaÄ‡
+	poczÄ…tkowych informacji o stanie osÃ³b po poÅ‚Ä…czeniu jako zmianÄ™
 	ich stanu.
 
 exit_exec
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
 	Polecenie, wykonywane przy zamykaniu EKG2, zaraz przed exit().
-	Charakteryzuje siê tym, ¿e ,,zastêpuje'' owe w tablicy procesów,
-	Tym samym kod wyj¶cia zwracany przez EKG2 bêdzie wynikiem danego
+	Charakteryzuje siÄ™ tym, Å¼e ,,zastÄ™puje'' owe w tablicy procesÃ³w,
+	Tym samym kod wyjÅ›cia zwracany przez EKG2 bÄ™dzie wynikiem danego
 	polecenia.
 
 expert_mode
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	U¿ywane w ró¿nych wersjach ekg2 do ró¿nych diagnostyk. Zmienna bez
-	wiêkszego znaczenia dla u¿ytkownika.
+	UÅ¼ywane w rÃ³Å¼nych wersjach ekg2 do rÃ³Å¼nych diagnostyk. Zmienna bez
+	wiÄ™kszego znaczenia dla uÅ¼ytkownika.
 
 history_savedups
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Je¶li ustawiona na 0, to wiersze pasuj±ce do ostatniego wiersza
-	historii nie s± wprowadzane do listy historii.
+	JeÅ›li ustawiona na 0, to wiersze pasujÄ…ce do ostatniego wiersza
+	historii nie sÄ… wprowadzane do listy historii.
 
 keep_reason
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Je¶li w³±czona, komendy ,,away'', ,,back'', ,,invisible'', ,,quit''
-	i ,,disconnect'' bez podanego powodu przejm± aktualny opis. Zostanie
-	on wraz ze stanem zapisany bez wyra¼nego wydawania komendy zapisu 
-	konfiguracji. Warto¶æ 2 powoduje zapisywanie opisu bez stanu.
+	JeÅ›li wÅ‚Ä…czona, komendy ,,away'', ,,back'', ,,invisible'', ,,quit''
+	i ,,disconnect'' bez podanego powodu przejmÄ… aktualny opis. Zostanie
+	on wraz ze stanem zapisany bez wyraÅºnego wydawania komendy zapisu 
+	konfiguracji. WartoÅ›Ä‡ 2 powoduje zapisywanie opisu bez stanu.
 
 last
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Wskazuje, czy zapisywaæ ostatnie wiadomo¶ci do podrêcznego bufora
-	(,,last_size'' musi byæ wiêksze od 0). Dla 1, bêdzie zapisywaæ tylko
-	last_size wszystkich wiadomo¶ci przychodz±cych, dla 2, last_size
-	wiadomo¶ci od ka¿dego usera. Dostêpna jest jeszcze logiczna
-	warto¶æ 4, która pozwala logowaæ wiadomo¶ci wys³ane. Dostêpne s±
-	w takim razie warto¶ci 0, 1, 2, 5 i 6.
+	Wskazuje, czy zapisywaÄ‡ ostatnie wiadomoÅ›ci do podrÄ™cznego bufora
+	(,,last_size'' musi byÄ‡ wiÄ™ksze od 0). Dla 1, bÄ™dzie zapisywaÄ‡ tylko
+	last_size wszystkich wiadomoÅ›ci przychodzÄ…cych, dla 2, last_size
+	wiadomoÅ›ci od kaÅ¼dego usera. DostÄ™pna jest jeszcze logiczna
+	wartoÅ›Ä‡ 4, ktÃ³ra pozwala logowaÄ‡ wiadomoÅ›ci wysÅ‚ane. DostÄ™pne sÄ…
+	w takim razie wartoÅ›ci 0, 1, 2, 5 i 6.
 
 last_size
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Wskazuje, ile ma byæ zapisywanych wiadomo¶ci dla komendy ,,last''.
+	Wskazuje, ile ma byÄ‡ zapisywanych wiadomoÅ›ci dla komendy ,,last''.
 
 lastlog_display_all
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la zakres wyszukiwania dla polecenia '/window lastlog'
-		0 - bie¿±ce okno
-		1 - bie¿±ce okno + wskazane w poleceniu,
+	OkreÅ›la zakres wyszukiwania dla polecenia '/window lastlog'
+		0 - bieÅ¼Ä…ce okno
+		1 - bieÅ¼Ä…ce okno + wskazane w poleceniu,
 		2 - wszystkie okna + wskazane w poleceniu
 
 lastlog_matchcase
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Je¶li ustawione, '/window lastlog' odró¿nia wielkie i ma³e litery.
+	JeÅ›li ustawione, '/window lastlog' odrÃ³Å¼nia wielkie i maÅ‚e litery.
 
 lastlog_noitems
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la, czy okno z wynikami '/window lastlog' ma siê pojawiæ
-	równie¿ w przypadku braku wyników.
+	OkreÅ›la, czy okno z wynikami '/window lastlog' ma siÄ™ pojawiÄ‡
+	rÃ³wnieÅ¼ w przypadku braku wynikÃ³w.
 
 make_window
 	typ: liczba
-	domy¶lna warto¶æ: 2
+	domyÅ›lna wartoÅ›Ä‡: 2
 	
-	Okre¶la czy bêd± tworzone nowe okienka dla nowych rozmów. Dla 1 bêdzie
-	wykorzystane pierwsze wolne okno (na którym z nikim jeszcze siê nie
+	OkreÅ›la czy bÄ™dÄ… tworzone nowe okienka dla nowych rozmÃ³w. Dla 1 bÄ™dzie
+	wykorzystane pierwsze wolne okno (na ktÃ³rym z nikim jeszcze siÄ™ nie
 	rozmawia), lub tworzone nowe w przypadku braku wolnych. Dla 2
-	bezwarunkowo utworzone zostanie nowe okno. Je¶li do warto¶ci zostanie
-	dodane 4, okienka nie bêd± tworzone dla pojedynczych wiadomo¶ci.
+	bezwarunkowo utworzone zostanie nowe okno. JeÅ›li do wartoÅ›ci zostanie
+	dodane 4, okienka nie bÄ™dÄ… tworzone dla pojedynczych wiadomoÅ›ci.
 
 mesg
 	typ: liczba
-	domy¶lna warto¶æ: 2
+	domyÅ›lna wartoÅ›Ä‡: 2
 	
-	Ustala, czy zezwalamy na wysy³anie do nas komunikatów za pomoc± write,
-	talk lub wall. Dla 0 nie wyra¿amy na to zgody, dla 1 zezwalamy na
-	pisanie na nasz terminal. W przypadku warto¶ci 2 u¿ywane s± ustawienia
+	Ustala, czy zezwalamy na wysyÅ‚anie do nas komunikatÃ³w za pomocÄ… write,
+	talk lub wall. Dla 0 nie wyraÅ¼amy na to zgody, dla 1 zezwalamy na
+	pisanie na nasz terminal. W przypadku wartoÅ›ci 2 uÅ¼ywane sÄ… ustawienia
 	sprzed uruchomienia ekg2.
 
 nickname
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Nasz nick u¿ywany w protoko³ach innych ni¿ irc do wy¶wietlenia
+	Nasz nick uÅ¼ywany w protokoÅ‚ach innych niÅ¼ irc do wyÅ›wietlenia
 	naszego /me.
 
 query_commands
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Mo¿liwo¶æ wydawania d³ugich poleceñ podczas rozmowy z u¿ytkownikiem
+	MoÅ¼liwoÅ›Ä‡ wydawania dÅ‚ugich poleceÅ„ podczas rozmowy z uÅ¼ytkownikiem
 	bez poprzedzania ich znakiem '/'.
 
 quit_reason
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Domy¶lny opis stanu niedostêpnego, ustawiany przy wychodzeniu.
+	DomyÅ›lny opis stanu niedostÄ™pnego, ustawiany przy wychodzeniu.
 
 save_password
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la czy has³o ma byæ zapisywane w pliku konfiguracyjnym. Opcja
-	ta mo¿e przydaæ siê, gdy boimy siê administratora przegl±daj±cego
-	pliki u¿ytkowników.
+	OkreÅ›la czy hasÅ‚o ma byÄ‡ zapisywane w pliku konfiguracyjnym. Opcja
+	ta moÅ¼e przydaÄ‡ siÄ™, gdy boimy siÄ™ administratora przeglÄ…dajÄ…cego
+	pliki uÅ¼ytkownikÃ³w.
 
 save_quit
 	typ: liczba 
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la czy po ewentualnych zmianach przy wyj¶ciu ma pojawiaæ siê
-	pytanie o zapisanie konfiguracji. Je¿eli 0 to konfiguracja nie jest
-	zapisywana, je¿eli 1 to pojawia siê pytanie, je¿eli 2 to konfiguracja
+	OkreÅ›la czy po ewentualnych zmianach przy wyjÅ›ciu ma pojawiaÄ‡ siÄ™
+	pytanie o zapisanie konfiguracji. JeÅ¼eli 0 to konfiguracja nie jest
+	zapisywana, jeÅ¼eli 1 to pojawia siÄ™ pytanie, jeÅ¼eli 2 to konfiguracja
 	zapisana jest bez pytania 
 
 send_white_lines
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la czy ekg2 ma wysy³aæ linie sk³adaj±ce siê wy³±cznie z bia³ych
-	znaków. Je¿eli 0, ekg2 zignoruje wiadomo¶ci sk³adaj±ce siê wy³±cznie
-	z bia³ych znaków. Je¿eli 1, ekg2 bêdzie wysy³a³o takie wiadomo¶ci.
-	W³±cz tê opcjê, je¿eli jeste¶ programist± whitespace. W przeciwnym
-	wypadku mo¿esz pozostawiæ j± wy³±czon±.
+	OkreÅ›la czy ekg2 ma wysyÅ‚aÄ‡ linie skÅ‚adajÄ…ce siÄ™ wyÅ‚Ä…cznie z biaÅ‚ych
+	znakÃ³w. JeÅ¼eli 0, ekg2 zignoruje wiadomoÅ›ci skÅ‚adajÄ…ce siÄ™ wyÅ‚Ä…cznie
+	z biaÅ‚ych znakÃ³w. JeÅ¼eli 1, ekg2 bÄ™dzie wysyÅ‚aÅ‚o takie wiadomoÅ›ci.
+	WÅ‚Ä…cz tÄ™ opcjÄ™, jeÅ¼eli jesteÅ› programistÄ… whitespace. W przeciwnym
+	wypadku moÅ¼esz pozostawiÄ‡ jÄ… wyÅ‚Ä…czonÄ….
 
 session_default
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Nazwa sesji, która po uruchomieniu zostanie ustawiona jako aktywna.
-	Je¿eli sessions_save jest 1, to zmienna session_default jest
-	automatycznie ustawiana przy wyj¶ciu z programu.
+	Nazwa sesji, ktÃ³ra po uruchomieniu zostanie ustawiona jako aktywna.
+	JeÅ¼eli sessions_save jest 1, to zmienna session_default jest
+	automatycznie ustawiana przy wyjÅ›ciu z programu.
 
 session_locks
 	typ: liczba
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Typ blokad sesji, u¿ywanych przez EKG2 celem unikniêcia jednoczesnego
-	po³±czenia siê dwóch kopii owego do jednej sesji. Mo¿liwe warto¶ci:
+	Typ blokad sesji, uÅ¼ywanych przez EKG2 celem unikniÄ™cia jednoczesnego
+	poÅ‚Ä…czenia siÄ™ dwÃ³ch kopii owego do jednej sesji. MoÅ¼liwe wartoÅ›ci:
 	
 		0 - brak blokad,
 	
-		1 - blokady oparte o flock() (domy¶lne),
+		1 - blokady oparte o flock() (domyÅ›lne),
 	
 		2 - blokady oparte o istnieniu pliku (uproszczone).
 
 sessions_save
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la, czy aktualna sesja ma byæ ustawiona jako domy¶lna - przy 
-	nastêpnym uruchomieniu bêdzie ona ustawiona jako aktywna. Przy 
-	wychodzeniu z programu pojawi siê monit o zapisanie zmian.
+	OkreÅ›la, czy aktualna sesja ma byÄ‡ ustawiona jako domyÅ›lna - przy 
+	nastÄ™pnym uruchomieniu bÄ™dzie ona ustawiona jako aktywna. Przy 
+	wychodzeniu z programu pojawi siÄ™ monit o zapisanie zmian.
 
 slash_messages
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la, czy wiadomo¶ci zaczynaj±ce siê od ,,/'' maj± byæ traktowane 
-	w pewnych warunkach jak wiadomo¶ci. Wy³±czenie tej opcji sprawia, ¿e 
-	wszystko, co zostanie wpisane w oknie rozmowy a zaczyna siê od ,,/'' 
+	OkreÅ›la, czy wiadomoÅ›ci zaczynajÄ…ce siÄ™ od ,,/'' majÄ… byÄ‡ traktowane 
+	w pewnych warunkach jak wiadomoÅ›ci. WyÅ‚Ä…czenie tej opcji sprawia, Å¼e 
+	wszystko, co zostanie wpisane w oknie rozmowy a zaczyna siÄ™ od ,,/'' 
 	zostanie potraktowane jak komenda.
 
 sort_windows
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	W³±czenie tej opcji spowoduje przesuwanie okien przy usuniêciu
-	którego¶ ze ¶rodka i likwidowanie luk w numeracji. Na przyk³ad,
-	gdy mamy okna 1,2,3, to po usuniêciu drugiego otrzymamy 1,2
+	WÅ‚Ä…czenie tej opcji spowoduje przesuwanie okien przy usuniÄ™ciu
+	ktÃ³regoÅ› ze Å›rodka i likwidowanie luk w numeracji. Na przykÅ‚ad,
+	gdy mamy okna 1,2,3, to po usuniÄ™ciu drugiego otrzymamy 1,2
 	zamiast 1,3.
 
 sound_app
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Pe³na ¶cie¿ka do programu odtwarzaj±cego pliki zdefiniowane w
-	zmiennych ,,sound_{msg,chat,sysmsg}_file''. Program musi braæ
-	za pierwszy (i jedyny) parametr nazwê pliku. Wavplay i mpg123
-	doskonale siê nadaj±.
+	PeÅ‚na Å›cieÅ¼ka do programu odtwarzajÄ…cego pliki zdefiniowane w
+	zmiennych ,,sound_{msg,chat,sysmsg}_file''. Program musi braÄ‡
+	za pierwszy (i jedyny) parametr nazwÄ™ pliku. Wavplay i mpg123
+	doskonale siÄ™ nadajÄ….
 
 sound_chat_file
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Plik d¼wiêkowy odtwarzany w czasie rozmowy.
+	Plik dÅºwiÄ™kowy odtwarzany w czasie rozmowy.
 
 sound_mail_file
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Plik d¼wiêkowy odtwarzany po otrzymaniu nowej wiadomo¶ci e-mail.
+	Plik dÅºwiÄ™kowy odtwarzany po otrzymaniu nowej wiadomoÅ›ci e-mail.
 
 sound_msg_file
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Plik d¼wiêkowy odtwarzany po otrzymaniu wiadomo¶ci.
+	Plik dÅºwiÄ™kowy odtwarzany po otrzymaniu wiadomoÅ›ci.
 
 sound_notify_file
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Plik d¼wiêkowy odtwarzany po zmianie stanu którego¶ ze znajomych.
+	Plik dÅºwiÄ™kowy odtwarzany po zmianie stanu ktÃ³regoÅ› ze znajomych.
 
 sound_sysmsg_file
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Plik d¼wiêkowy odtwarzany po otrzymaniu wiadomo¶ci systemowej.
+	Plik dÅºwiÄ™kowy odtwarzany po otrzymaniu wiadomoÅ›ci systemowej.
 
 speech_app
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Aplikacja u¿ywana do odczytywania tekstów wy¶wietlanych na ekranie.
-	Jej ustawienie powoduje równie¿ zmianê motywu na taki, który jest
-	³atwiejszy do wymówienia.
+	Aplikacja uÅ¼ywana do odczytywania tekstÃ³w wyÅ›wietlanych na ekranie.
+	Jej ustawienie powoduje rÃ³wnieÅ¼ zmianÄ™ motywu na taki, ktÃ³ry jest
+	Å‚atwiejszy do wymÃ³wienia.
 
 subject_prefix
 	typ: tekst
-	domy¶lna warto¶æ: "## "
+	domyÅ›lna wartoÅ›Ä‡: "## "
 	
-	Prefiks dla tematów wiadomo¶ci.
+	Prefiks dla tematÃ³w wiadomoÅ›ci.
 
 subject_reply_prefix
 	typ: tekst
-	domy¶lna warto¶æ: "Re: "
+	domyÅ›lna wartoÅ›Ä‡: "Re: "
 	
-	Prefiks dla tematów odpowiedzi na wiadomo¶ci.
+	Prefiks dla tematÃ³w odpowiedzi na wiadomoÅ›ci.
 
 tab_command
 	typ: tekst
-	domy¶lna warto¶æ: "chat"
+	domyÅ›lna wartoÅ›Ä‡: "chat"
 	
-	Komenda, która bêdzie wstawiana w linii poleceñ z kolejn±
-	dostêpn± (patrz zmienna ,,completion_notify'') osob± z listy
-	kontaktów po wci¶niêciu klawisza Tab.
+	Komenda, ktÃ³ra bÄ™dzie wstawiana w linii poleceÅ„ z kolejnÄ…
+	dostÄ™pnÄ… (patrz zmienna ,,completion_notify'') osobÄ… z listy
+	kontaktÃ³w po wciÅ›niÄ™ciu klawisza Tab.
 
 theme
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	Zawiera nazwê pliku okre¶laj±cego motyw.
+	Zawiera nazwÄ™ pliku okreÅ›lajÄ…cego motyw.
 
 time_deviation
 	typ: liczba
-	domy¶lna warto¶æ: 300
+	domyÅ›lna wartoÅ›Ä‡: 300
 	
-	Okre¶la zakres rozbie¿no¶ci czasu odbieranych wzglêdem czasu
-	systemowego w sekundach, który jest traktowany jako chwila
-	aktualna. Ma to wp³yw na wy¶wietlanie timestampów przy odbieranych
-	wiadomo¶ciach. Je¶li czas odebranej wiadomo¶ci mie¶ci siê w +/-
-	podanego zakresu, timestamp nie jest wy¶wietlany.
+	OkreÅ›la zakres rozbieÅ¼noÅ›ci czasu odbieranych wzglÄ™dem czasu
+	systemowego w sekundach, ktÃ³ry jest traktowany jako chwila
+	aktualna. Ma to wpÅ‚yw na wyÅ›wietlanie timestampÃ³w przy odbieranych
+	wiadomoÅ›ciach. JeÅ›li czas odebranej wiadomoÅ›ci mieÅ›ci siÄ™ w +/-
+	podanego zakresu, timestamp nie jest wyÅ›wietlany.
 
 timestamp
 	typ: tekst
-	domy¶lna warto¶æ: "\%H:\%M:\%S"
+	domyÅ›lna wartoÅ›Ä‡: "\%H:\%M:\%S"
 	
-	W interfejsie ncurses okre¶la format czasu wy¶wietlanego na
-	pocz±tku ka¿dej linii. Dok³adny opis formatu zawiera strona
-	manuala strftime(3). Znaki formatu nale¿y poprzedziæ znakiem
-	,\' tak aby nie by³y traktowane jako znaki formatu (kolory, itp).
+	W interfejsie ncurses okreÅ›la format czasu wyÅ›wietlanego na
+	poczÄ…tku kaÅ¼dej linii. DokÅ‚adny opis formatu zawiera strona
+	manuala strftime(3). Znaki formatu naleÅ¼y poprzedziÄ‡ znakiem
+	,\' tak aby nie byÅ‚y traktowane jako znaki formatu (kolory, itp).
 
 timestamp_show
 	typ: bool
-	domy¶lna warto¶æ: 1
+	domyÅ›lna wartoÅ›Ä‡: 1
 	
-	Okre¶la czy mamy wy¶wietlaæ timestamp, okre¶lany zmienn± timestamp.
+	OkreÅ›la czy mamy wyÅ›wietlaÄ‡ timestamp, okreÅ›lany zmiennÄ… timestamp.
 
 window_session_allow
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la, w jakich oknach mo¿liwe jest prze³±czanie sesji (C-x):
+	OkreÅ›la, w jakich oknach moÅ¼liwe jest przeÅ‚Ä…czanie sesji (C-x):
 	
 		0 - tylko w oknie statusu,
 	
-		1 - okno statusu oraz rozmów, ale w obrêbie sesji, które
-	obs³uguj± UID rozmówcy,
+		1 - okno statusu oraz rozmÃ³w, ale w obrÄ™bie sesji, ktÃ³re
+	obsÅ‚ugujÄ… UID rozmÃ³wcy,
 	
-		2 - okno statusu oraz rozmów,
+		2 - okno statusu oraz rozmÃ³w,
 	
-		4 - okno statusu oraz rozmów, ale nast±pi prze³±czenie do okna
+		4 - okno statusu oraz rozmÃ³w, ale nastÄ…pi przeÅ‚Ä…czenie do okna
 	statusu.
 
 windows_layout
-	typ: tekst, zmienna wewnêtrzna, ukryta
+	typ: tekst, zmienna wewnÄ™trzna, ukryta
 	
-	Zawiera informacje o okienkach. Wpis ka¿dego okna jest rozdzielony
-	znakiem ,,|''. Je¶li okno nie ma przypisanej rozmowy, wpis jest
-	pusty. Je¶li okno nie istnieje, wpis zawiera ,,-''.
+	Zawiera informacje o okienkach. Wpis kaÅ¼dego okna jest rozdzielony
+	znakiem ,,|''. JeÅ›li okno nie ma przypisanej rozmowy, wpis jest
+	pusty. JeÅ›li okno nie istnieje, wpis zawiera ,,-''.
 
 windows_save
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	Okre¶la, czy ustawienie okienek ma byæ zachowywane przy kolejnym
-	uruchomieniu programu. Przy wychodzeniu z programu pojawi siê 
+	OkreÅ›la, czy ustawienie okienek ma byÄ‡ zachowywane przy kolejnym
+	uruchomieniu programu. Przy wychodzeniu z programu pojawi siÄ™ 
 	monit o zapisanie zmian.
 

@@ -1,41 +1,41 @@
-// ma³y opis dostêpnych zmiennych
-// (c) copyright 2004 Leszek Krupiñski <leafnode@wafel.com>
+// maÅ‚y opis dostÄ™pnych zmiennych
+// (c) copyright 2004 Leszek KrupiÅ„ski <leafnode@wafel.com>
 
 log
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy i w jaki sposób bêd± logowane wysy³ane i otrzymywane
-	wiadomo¶ci. dla 0, nie bêd±. Dla 1, bêd± logowane w formacie znanym z
-	ekg1. Dla 2 bêd± logowane w formacie XML.
+	okreÅ›la, czy i w jaki sposÃ³b bÄ™dÄ… logowane wysyÅ‚ane i otrzymywane
+	wiadomoÅ›ci. dla 0, nie bÄ™dÄ…. Dla 1, bÄ™dÄ… logowane w formacie znanym z
+	ekg1. Dla 2 bÄ™dÄ… logowane w formacie XML.
 
 log_ignored
 	typ: liczba
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy logujemy ignorowane wiadomo¶ci (NFY).
+	okreÅ›la, czy logujemy ignorowane wiadomoÅ›ci (NFY).
 
 log_status
 	typ: bool
-	domy¶lna warto¶æ: 0
+	domyÅ›lna wartoÅ›Ä‡: 0
 	
-	okre¶la, czy bêd± logowane zmiany stanu ludzi z listy (zmienna
-	,,log'' musi byæ ró¿na od 0) (NFY)
+	okreÅ›la, czy bÄ™dÄ… logowane zmiany stanu ludzi z listy (zmienna
+	,,log'' musi byÄ‡ rÃ³Å¼na od 0) (NFY)
 
 path
 	typ: tekst
-	domy¶lna warto¶æ: ~/.ekg2/logs/%S/%u
+	domyÅ›lna wartoÅ›Ä‡: ~/.ekg2/logs/%S/%u
 	
-	¶cie¿ka, gdzie bêd± zachowywane wysy³ane i otrzymane wiadomo¶ci.
+	Å›cieÅ¼ka, gdzie bÄ™dÄ… zachowywane wysyÅ‚ane i otrzymane wiadomoÅ›ci.
 	Rozpoznawane znaki:
 	* %P - profil
 	* %S - sesja nasza
-	* %u - uid u¿ytkownika, z którym piszemy
-	* %U - nick rozmówcy
-	* %Y, %M, %D - rok, miesi±c, dzieñ
-	Rozszerzenie pliku zale¿y od typu pliku logowanie (txt, xml, itp.)
-	Przyk³ady:
-	- logowanie do katalogów wg. sesji, pliki - nazwa rozmowcy:
+	* %u - uid uÅ¼ytkownika, z ktÃ³rym piszemy
+	* %U - nick rozmÃ³wcy
+	* %Y, %M, %D - rok, miesiÄ…c, dzieÅ„
+	Rozszerzenie pliku zaleÅ¼y od typu pliku logowanie (txt, xml, itp.)
+	PrzykÅ‚ady:
+	- logowanie do katalogÃ³w wg. sesji, pliki - nazwa rozmowcy:
 	    log_path = "~/.ekg2/logs/%S/%u"
 	  np. /home/zdzichu/.ekg/logs/gg:123/gg:3334.txt
 	- logowanie do katalogow wg. rozmowcow, pliki - data:
@@ -47,8 +47,8 @@ path
 
 timestamp
 	typ: tekst
-	domy¶lna warto¶æ: brak
+	domyÅ›lna wartoÅ›Ä‡: brak
 	
-	okre¶la format czasu zapisywanego w historii. w przypadku braku,
-	zmiennej, zapisuje w postaci ilo¶ci sekund od 1 stycznia 1970r.
-	UTC. dok³adny opis formatu zawiera strona manuala strftime(3).
+	okreÅ›la format czasu zapisywanego w historii. w przypadku braku,
+	zmiennej, zapisuje w postaci iloÅ›ci sekund od 1 stycznia 1970r.
+	UTC. dokÅ‚adny opis formatu zawiera strona manuala strftime(3).
