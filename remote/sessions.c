@@ -71,7 +71,7 @@ EXPORTNOT session_t *remote_session_add(const char *uid, const char *plugin) {
 
 	/* XXX, session_var_default() */
 
-	query_emit_id(NULL, SESSION_ADDED, &(s->uid));
+	new_guery_emit(NULL, "session_added", &(s->uid));
 	return s;
 }
 
@@ -105,8 +105,8 @@ static int session_remove(const char *uid) {
 	}
 	
 	tmp = xstrdup(uid);
-	query_emit_id(NULL, SESSION_CHANGED);
-	query_emit_id(NULL, SESSION_REMOVED, &tmp);
+	new_guery_emit(NULL, "session_changed");
+	new_guery_emit(NULL, "session_removed", &tmp);
 	xfree(tmp);
 
 	sessions_remove(s);

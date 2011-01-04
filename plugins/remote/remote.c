@@ -1393,7 +1393,7 @@ static TIMER(remote_statusbar_timer) {
 	if (type)
 		return 0;
 
-	if (query_emit_id(NULL, MAIL_COUNT, &mail_count) != -2) {
+	if (new_guery_emit(NULL, "mail_count", &mail_count) != -2) {
 		if (mail_count != rc_last_mail_count) {
 			rc_last_mail_count = mail_count;
 			remote_broadcast("MAILCOUNT", itoa(mail_count), NULL);
@@ -1407,7 +1407,7 @@ static TIMER(remote_statusbar_timer) {
 	r = window_current->priv_data;
 
 	irctopic = irctopicby = ircmode = NULL;
-	query_emit_id(NULL, IRC_TOPIC, &irctopic, &irctopicby, &ircmode);
+	new_guery_emit(NULL, "irc_topic", &irctopic, &irctopicby, &ircmode);
 
 	if (xstrcmp(irctopic, r->last_irctopic)) {
 		xfree(r->last_irctopic);
@@ -1520,7 +1520,7 @@ EXPORT int remote_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("remote");
 
-	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	new_guery_emit(NULL, "ui_is_initialized", &is_UI);
 
 	if (is_UI)
 		return -1;
@@ -1532,60 +1532,60 @@ EXPORT int remote_plugin_init(int prio) {
 	variable_add(&remote_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL);
 	variable_add(&remote_plugin, ("password"), VAR_STR, 0, &rc_password, NULL, NULL, NULL);
 
-	query_connect_id(&remote_plugin, UI_IS_INITIALIZED, remote_ui_is_initialized, NULL);
-	query_connect_id(&remote_plugin, CONFIG_POSTINIT, remote_postinit, NULL);
+	new_guery_connect(&remote_plugin, "ui_is_initialized", remote_ui_is_initialized, NULL);
+	new_guery_connect(&remote_plugin, "config_postinit", remote_postinit, NULL);
 
-	query_connect_id(&remote_plugin, UI_WINDOW_SWITCH, remote_ui_window_switch, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_KILL, remote_ui_window_kill, NULL);
-	query_connect_id(&remote_plugin, UI_BEEP, remote_ui_beep, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_PRINT, remote_ui_window_print, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_CLEAR, remote_ui_window_clear, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_NEW, remote_ui_window_new, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_TARGET_CHANGED, remote_ui_window_target_changed, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_ACT_CHANGED, remote_ui_window_act_changed, NULL);
-	query_connect_id(&remote_plugin, VARIABLE_CHANGED, remote_variable_changed, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_switch", remote_ui_window_switch, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_kill", remote_ui_window_kill, NULL);
+	new_guery_connect(&remote_plugin, "ui_beep", remote_ui_beep, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_print", remote_ui_window_print, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_clear", remote_ui_window_clear, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_new", remote_ui_window_new, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_target_changed", remote_ui_window_target_changed, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_act_changed", remote_ui_window_act_changed, NULL);
+	new_guery_connect(&remote_plugin, "variable_changed", remote_variable_changed, NULL);
 
-	query_connect_id(&remote_plugin, SESSION_ADDED, remote_session_added, NULL);
+	new_guery_connect(&remote_plugin, "session_added", remote_session_added, NULL);
 
 	/* SESSION_EVENT */
-	query_connect_id(&remote_plugin, PROTOCOL_CONNECTED, remote_protocol_connected, NULL);
-	query_connect_id(&remote_plugin, PROTOCOL_DISCONNECTED, remote_protocol_disconnected, NULL);
+	new_guery_connect(&remote_plugin, "protocol_connected", remote_protocol_connected, NULL);
+	new_guery_connect(&remote_plugin, "protocol_disconnected", remote_protocol_disconnected, NULL);
 
-	query_connect_id(&remote_plugin, SESSION_CHANGED, remote_session_changed, NULL);
-	query_connect_id(&remote_plugin, SESSION_RENAMED, remote_session_renamed, NULL);
+	new_guery_connect(&remote_plugin, "session_changed", remote_session_changed, NULL);
+	new_guery_connect(&remote_plugin, "session_renamed", remote_session_renamed, NULL);
 
-	query_connect_id(&remote_plugin, USERLIST_CHANGED, remote_userlist_changed, NULL);
-	query_connect_id(&remote_plugin, USERLIST_REFRESH, remote_userlist_refresh, NULL);
+	new_guery_connect(&remote_plugin, "userlist_changed", remote_userlist_changed, NULL);
+	new_guery_connect(&remote_plugin, "userlist_refresh", remote_userlist_refresh, NULL);
 #if 0
 
-	query_connect_id(&remote_plugin, UI_WINDOW_TARGET_CHANGED, ncurses_ui_window_target_changed, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
-	query_connect_id(&remote_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
-	query_connect_id(&remote_plugin, UI_REFRESH, ncurses_ui_refresh, NULL);
-	query_connect_id(&remote_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
-	query_connect_id(&remote_plugin, BINDING_SET, ncurses_binding_set_query, NULL);
-	query_connect_id(&remote_plugin, BINDING_COMMAND, ncurses_binding_adddelete_query, NULL);
-	query_connect_id(&remote_plugin, BINDING_DEFAULT, ncurses_binding_default, NULL);
-	query_connect_id(&remote_plugin, CONFERENCE_RENAMED, ncurses_conference_renamed, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_target_changed", ncurses_ui_window_target_changed, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_refresh", ncurses_ui_window_refresh, NULL);
+	new_guery_connect(&remote_plugin, "ui_window_update_lastlog", ncurses_ui_window_lastlog, NULL);
+	new_guery_connect(&remote_plugin, "ui_refresh", ncurses_ui_refresh, NULL);
+	new_guery_connect(&remote_plugin, "session_removed", ncurses_statusbar_query, NULL);
+	new_guery_connect(&remote_plugin, "binding_set", ncurses_binding_set_query, NULL);
+	new_guery_connect(&remote_plugin, "binding_command", ncurses_binding_adddelete_query, NULL);
+	new_guery_connect(&remote_plugin, "binding_default", ncurses_binding_default, NULL);
+	new_guery_connect(&remote_plugin, "conference_renamed", ncurses_conference_renamed, NULL);
 
-	query_connect_id(&remote_plugin, PROTOCOL_DISCONNECTING, ncurses_session_disconnect_handler, NULL);
+	new_guery_connect(&remote_plugin, "protocol_disconnecting", ncurses_session_disconnect_handler, NULL);
 #endif
 
 	/* podanie czegokolwiek jako data do remote_all_contacts_changed() powoduje wyzerowanie n->start */
-	query_connect_id(&remote_plugin, UI_REFRESH, remote_all_contacts_changed, (void *) 1);
-	query_connect_id(&remote_plugin, USERLIST_REFRESH, remote_all_contacts_changed, NULL /* ? */);
+	new_guery_connect(&remote_plugin, "ui_refresh", remote_all_contacts_changed, (void *) 1);
+	new_guery_connect(&remote_plugin, "userlist_refresh", remote_all_contacts_changed, NULL /* ? */);
 
-	query_connect_id(&remote_plugin, SESSION_CHANGED, remote_all_contacts_changed, (void *) 1);
-	query_connect_id(&remote_plugin, SESSION_EVENT, remote_all_contacts_changed, NULL);
+	new_guery_connect(&remote_plugin, "session_changed", remote_all_contacts_changed, (void *) 1);
+	new_guery_connect(&remote_plugin, "session_event", remote_all_contacts_changed, NULL);
 
-	query_connect_id(&remote_plugin, METACONTACT_ADDED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, METACONTACT_REMOVED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, METACONTACT_ITEM_ADDED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, METACONTACT_ITEM_REMOVED, remote_all_contacts_changed, NULL);
+	new_guery_connect(&remote_plugin, "metacontact_added", remote_all_contacts_changed, NULL);
+	new_guery_connect(&remote_plugin, "metacontact_removed", remote_all_contacts_changed, NULL);
+	new_guery_connect(&remote_plugin, "metacontact_item_added", remote_all_contacts_changed, NULL);
+	new_guery_connect(&remote_plugin, "metacontact_item_removed", remote_all_contacts_changed, NULL);
 
-	query_connect_id(&remote_plugin, USERLIST_ADDED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, USERLIST_REMOVED, remote_all_contacts_changed, NULL);
-	query_connect_id(&remote_plugin, USERLIST_RENAMED, remote_all_contacts_changed, NULL);
+	new_guery_connect(&remote_plugin, "userlist_added", remote_all_contacts_changed, NULL);
+	new_guery_connect(&remote_plugin, "userlist_removed", remote_all_contacts_changed, NULL);
+	new_guery_connect(&remote_plugin, "userlist_renamed", remote_all_contacts_changed, NULL);
 
 	{
 		int i;

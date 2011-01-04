@@ -415,14 +415,14 @@ void ekg_loop() {
 static void handle_sigusr1()
 {
 	debug("sigusr1 received\n");
-	query_emit_id(NULL, EKG_SIGUSR1);
+	new_guery_emit(NULL, "ekg_sigusr1");
 	signal(SIGUSR1, handle_sigusr1);
 }
 
 static void handle_sigusr2()
 {
 	debug("sigusr2 received\n");
-	query_emit_id(NULL, EKG_SIGUSR2);
+	new_guery_emit(NULL, "ekg_sigusr2");
 	signal(SIGUSR2, handle_sigusr2);
 }
 
@@ -591,7 +591,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 
 	buffer_add(&buffer_debug, theme_format, tmp);
 
-	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	new_guery_emit(NULL, "ui_is_initialized", &is_UI);
 
 	if (is_UI && window_debug) {
 		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
@@ -1005,7 +1005,7 @@ int main(int argc, char **argv)
 	ekg2_reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
-	if (query_emit_id(NULL, UI_LOOP) != -1) {
+	if (new_guery_emit(NULL, "ui_loop") != -1) {
 		/* krêæ imprezê */
 		while (1) {
 			ekg_loop();

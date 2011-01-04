@@ -276,13 +276,13 @@ int jogger_plugin_init(int prio) {
 	jogger_plugin.params	= jogger_plugin_vars;
 	jogger_plugin.priv		= &jogger_priv;
 
-	query_connect_id(&jogger_plugin, PLUGIN_PRINT_VERSION, jogger_print_version, NULL);
-	query_connect_id(&jogger_plugin, PROTOCOL_VALIDATE_UID, jogger_validate_uid, NULL);
-	query_connect_id(&jogger_plugin, PROTOCOL_STATUS, jogger_statuschanged, NULL);
-	query_connect_id(&jogger_plugin, PROTOCOL_DISCONNECTED, jogger_statuscleanup, NULL);
-	query_connect_id(&jogger_plugin, PROTOCOL_MESSAGE, jogger_msghandler, NULL);
-	query_connect_id(&jogger_plugin, SESSION_ADDED, jogger_newsession, NULL);
-	query_connect_id(&jogger_plugin, CONFIG_POSTINIT, jogger_postconfig, NULL);
+	new_guery_connect(&jogger_plugin, "plugin_print_version", jogger_print_version, NULL);
+	new_guery_connect(&jogger_plugin, "protocol_validate_uid", jogger_validate_uid, NULL);
+	new_guery_connect(&jogger_plugin, "protocol_status", jogger_statuschanged, NULL);
+	new_guery_connect(&jogger_plugin, "protocol_disconnected", jogger_statuscleanup, NULL);
+	new_guery_connect(&jogger_plugin, "protocol_message", jogger_msghandler, NULL);
+	new_guery_connect(&jogger_plugin, "session_added", jogger_newsession, NULL);
+	new_guery_connect(&jogger_plugin, "config_postinit", jogger_postconfig, NULL);
 
 #define JOGGER_CMDFLAGS SESSION_MUSTBELONG
 #define JOGGER_CMDFLAGS_TARGET SESSION_MUSTBELONG|COMMAND_ENABLEREQPARAMS|COMMAND_PARAMASTARGET

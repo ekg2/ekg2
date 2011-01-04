@@ -282,24 +282,24 @@ EXPORT int readline_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("readline");
 
-	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	new_guery_emit(NULL, "ui_is_initialized", &is_UI);
 
 	if (is_UI)
 		return -1;
 
 	plugin_register(&readline_plugin, prio);
 
-	query_connect_id(&readline_plugin, UI_BEEP, readline_beep, NULL);
-	query_connect_id(&readline_plugin, UI_IS_INITIALIZED, readline_ui_is_initialized, NULL);
-	query_connect_id(&readline_plugin, UI_WINDOW_NEW, readline_ui_window_new, NULL);
-	query_connect_id(&readline_plugin, UI_WINDOW_SWITCH, readline_ui_window_switch, NULL);
-	query_connect_id(&readline_plugin, UI_WINDOW_KILL, readline_ui_window_kill, NULL);
-	query_connect_id(&readline_plugin, UI_WINDOW_PRINT, readline_ui_window_print, NULL);
-	query_connect_id(&readline_plugin, UI_WINDOW_REFRESH, readline_ui_window_refresh, NULL);
-	query_connect_id(&readline_plugin, UI_REFRESH, readline_ui_window_refresh, NULL);
-	query_connect_id(&readline_plugin, UI_WINDOW_CLEAR, readline_ui_window_clear, NULL);
-	query_connect_id(&readline_plugin, VARIABLE_CHANGED, readline_variable_changed, NULL);
-	query_connect_id(&readline_plugin, UI_LOOP, ekg2_readline_loop, NULL);
+	new_guery_connect(&readline_plugin, "ui_beep", readline_beep, NULL);
+	new_guery_connect(&readline_plugin, "ui_is_initialized", readline_ui_is_initialized, NULL);
+	new_guery_connect(&readline_plugin, "ui_window_new", readline_ui_window_new, NULL);
+	new_guery_connect(&readline_plugin, "ui_window_switch", readline_ui_window_switch, NULL);
+	new_guery_connect(&readline_plugin, "ui_window_kill", readline_ui_window_kill, NULL);
+	new_guery_connect(&readline_plugin, "ui_window_print", readline_ui_window_print, NULL);
+	new_guery_connect(&readline_plugin, "ui_window_refresh", readline_ui_window_refresh, NULL);
+	new_guery_connect(&readline_plugin, "ui_refresh", readline_ui_window_refresh, NULL);
+	new_guery_connect(&readline_plugin, "ui_window_clear", readline_ui_window_clear, NULL);
+	new_guery_connect(&readline_plugin, "variable_changed", readline_variable_changed, NULL);
+	new_guery_connect(&readline_plugin, "ui_loop", ekg2_readline_loop, NULL);
 
 	variable_add(&readline_plugin, ("ctrld_quits"),  VAR_BOOL, 1, &config_ctrld_quits, NULL, NULL, NULL);
 	variable_add(&readline_plugin, "print_read_lines",  VAR_BOOL, 1, &config_print_line, NULL, NULL, NULL);

@@ -318,7 +318,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 		res = (last_command->__function)(last_name, (const char **) par, s, target, (quiet & 1));
 
-		query_emit_id(NULL, UI_WINDOW_REFRESH);		/* XXX? */
+		new_guery_emit(NULL, "ui_window_refresh");		/* XXX? */
 
 		array_free(par);
 		xfree(cmd);

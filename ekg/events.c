@@ -171,7 +171,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	events_add(ev);
 
 	tmp = xstrdup(name);
-	query_emit_id(NULL, EVENT_ADDED, &tmp);
+	new_guery_emit(NULL, "event_added", &tmp);
 	xfree(tmp);
 
 	printq("events_add", name);
@@ -181,7 +181,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 
 		debug("event_add, array_contains(events_all, \"%s\", 0) failed. Binding new query: %s\n", name, name);
 
-		q = query_connect(NULL, name, event_misc, NULL);
+		q = new_guery_connect(NULL, name, event_misc, NULL);
 		q->data = (char *) query_name(q->id);		/* hack */	/* maybe: q->data = ev->name ? */
 
 		array_add(&events_all, (char *) q->data);	/* note: after query_external_free() this won't be accessible */
@@ -219,7 +219,7 @@ static int event_remove(unsigned int id, int quiet) {
 	printq("events_del", itoa(id));
 
 cleanup:	
-/*	  query_emit_id(NULL, EVENT_REMOVED, itoa(id)); */	/* XXX, incorrect. */
+/*	  new_guery_emit(NULL, "event_removed", itoa(id)); */	/* XXX, incorrect. */
 
 	return 0;
 }
@@ -375,7 +375,7 @@ static event_t *event_find_id(unsigned int id) {
 }
 
 static void events_add_handler(char *name, void *function) {
-	query_connect(NULL, name, function, NULL);
+	new_guery_connect(NULL, name, function, NULL);
 	array_add(&events_all, name);
 }
 
@@ -424,10 +424,10 @@ static TIMER(ekg_day_timer) {
 			}
 			xfree(ts);
 
-			query_emit_id(NULL, UI_WINDOW_REFRESH);
+			new_guery_emit(NULL, "ui_window_refresh");
 		}
 		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
-		query_emit_id(NULL, DAY_CHANGED, &tm, &oldtm);
+		new_guery_emit(NULL, "day_changed", &tm, &oldtm);
 #undef dayischanged
 	} else if (!oldtm) {
 		oldtm = xmalloc(sizeof(struct tm));

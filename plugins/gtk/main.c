@@ -352,7 +352,7 @@ EXPORT int gtk_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("gtk");
 
-	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
+	new_guery_emit(NULL, "ui_is_initialized", &is_UI);
 
 	if (is_UI) {
 		debug(ekg2_another_ui);
@@ -388,57 +388,57 @@ EXPORT int gtk_plugin_init(int prio) {
 
 	plugin_register(&gtk_plugin, prio);
 
-	query_connect_id(&gtk_plugin, UI_IS_INITIALIZED,	gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
-	query_connect_id(&gtk_plugin, SET_VARS_DEFAULT,		gtk_setvar_default, NULL);
+	new_guery_connect(&gtk_plugin, "ui_is_initialized",	gtk_ui_is_initialized, NULL); /* aby __debug sie wyswietlalo */
+	new_guery_connect(&gtk_plugin, "set_vars_default",		gtk_setvar_default, NULL);
 
-	query_emit_id(&gtk_plugin, SET_VARS_DEFAULT);
+	new_guery_emit(&gtk_plugin, "set_vars_default");
 
-	query_connect_id(&gtk_plugin, CONFIG_POSTINIT,		gtk_utf_postinit, NULL);
-	query_connect_id(&gtk_plugin, CONFIG_POSTINIT,		gtk_postinit, NULL);
+	new_guery_connect(&gtk_plugin, "config_postinit",		gtk_utf_postinit, NULL);
+	new_guery_connect(&gtk_plugin, "config_postinit",		gtk_postinit, NULL);
 
-	query_connect_id(&gtk_plugin, UI_LOOP,			ekg2_gtk_loop, NULL);
-	query_connect_id(&gtk_plugin, PLUGIN_PRINT_VERSION,	gtk_print_version, NULL);
+	new_guery_connect(&gtk_plugin, "ui_loop",			ekg2_gtk_loop, NULL);
+	new_guery_connect(&gtk_plugin, "plugin_print_version",	gtk_print_version, NULL);
 
-	query_connect_id(&gtk_plugin, UI_BEEP,			gtk_beep, NULL);		/* fe_beep() */
-	query_connect_id(&gtk_plugin, UI_WINDOW_NEW,		gtk_ui_window_new, NULL);	/* fe_new_window() */
-	query_connect_id(&gtk_plugin, UI_WINDOW_PRINT,		gtk_ui_window_print, NULL);	/* fe_print_text() */
-	query_connect_id(&gtk_plugin, UI_WINDOW_ACT_CHANGED,	gtk_ui_window_act_changed, NULL);/* fe_set_tab_color() */
-	query_connect_id(&gtk_plugin, UI_WINDOW_KILL,		gtk_ui_window_kill, NULL);	/* fe_session_callback() */
-	query_connect_id(&gtk_plugin, UI_WINDOW_SWITCH,		gtk_ui_window_switch, NULL);
-	query_connect_id(&gtk_plugin, UI_WINDOW_TARGET_CHANGED, gtk_ui_window_target_changed, NULL);	/* fe_set_channel() */
-	query_connect_id(&gtk_plugin, UI_WINDOW_CLEAR,		gtk_ui_window_clear, NULL);
+	new_guery_connect(&gtk_plugin, "ui_beep",			gtk_beep, NULL);		/* fe_beep() */
+	new_guery_connect(&gtk_plugin, "ui_window_new",		gtk_ui_window_new, NULL);	/* fe_new_window() */
+	new_guery_connect(&gtk_plugin, "ui_window_print",		gtk_ui_window_print, NULL);	/* fe_print_text() */
+	new_guery_connect(&gtk_plugin, "ui_window_act_changed",	gtk_ui_window_act_changed, NULL);/* fe_set_tab_color() */
+	new_guery_connect(&gtk_plugin, "ui_window_kill",		gtk_ui_window_kill, NULL);	/* fe_session_callback() */
+	new_guery_connect(&gtk_plugin, "ui_window_switch",		gtk_ui_window_switch, NULL);
+	new_guery_connect(&gtk_plugin, "ui_window_target_changed", gtk_ui_window_target_changed, NULL);	/* fe_set_channel() */
+	new_guery_connect(&gtk_plugin, "ui_window_clear",		gtk_ui_window_clear, NULL);
 
-	query_connect_id(&gtk_plugin, SESSION_CHANGED,		gtk_session_changed, NULL);
-	query_connect_id(&gtk_plugin, SESSION_EVENT,		gtk_statusbar_query, NULL);
-	query_connect_id(&gtk_plugin, SESSION_RENAMED,		gtk_statusbar_query, NULL);
+	new_guery_connect(&gtk_plugin, "session_changed",		gtk_session_changed, NULL);
+	new_guery_connect(&gtk_plugin, "session_event",		gtk_statusbar_query, NULL);
+	new_guery_connect(&gtk_plugin, "session_renamed",		gtk_statusbar_query, NULL);
 
-	query_connect_id(&gtk_plugin, VARIABLE_CHANGED,		gtk_variable_changed, NULL);
+	new_guery_connect(&gtk_plugin, "variable_changed",		gtk_variable_changed, NULL);
 
-	query_connect_id(&gtk_plugin, USERLIST_CHANGED,	gtk_userlist_changed, NULL);
-	query_connect_id(&gtk_plugin, USERLIST_ADDED,	gtk_userlist_changed, NULL);
-	query_connect_id(&gtk_plugin, USERLIST_REMOVED,	gtk_userlist_changed, NULL);
-	query_connect_id(&gtk_plugin, USERLIST_RENAMED,	gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "userlist_changed",	gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "userlist_added",	gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "userlist_removed",	gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "userlist_renamed",	gtk_userlist_changed, NULL);
 
-	query_connect_id(&gtk_plugin, SESSION_EVENT,	gtk_userlist_changed, NULL);
-	query_connect_id(&gtk_plugin, UI_WINDOW_REFRESH, gtk_userlist_changed, NULL);
-	query_connect_id(&gtk_plugin, USERLIST_REFRESH,	gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "session_event",	gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "ui_window_refresh", gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "userlist_refresh",	gtk_userlist_changed, NULL);
 
 /*
-	query_connect_id(&ncurses_plugin, UI_WINDOW_REFRESH, ncurses_ui_window_refresh, NULL);
-	query_connect_id(&ncurses_plugin, UI_WINDOW_UPDATE_LASTLOG, ncurses_ui_window_lastlog, NULL);
-	query_connect_id(&ncurses_plugin, SESSION_ADDED, ncurses_statusbar_query, NULL);
-	query_connect_id(&ncurses_plugin, SESSION_REMOVED, ncurses_statusbar_query, NULL);
-	query_connect_id(&ncurses_plugin, BINDING_SET, ncurses_binding_set_query, NULL);
-	query_connect_id(&ncurses_plugin, BINDING_COMMAND, ncurses_binding_adddelete_query, NULL);
-	query_connect_id(&ncurses_plugin, BINDING_DEFAULT, ncurses_binding_default, NULL);
-	query_connect_id(&ncurses_plugin, VARIABLE_CHANGED, ncurses_variable_changed, NULL);
-	query_connect_id(&ncurses_plugin, CONFERENCE_RENAMED, ncurses_conference_renamed, NULL);
+	new_guery_connect(&ncurses_plugin, "ui_window_refresh", ncurses_ui_window_refresh, NULL);
+	new_guery_connect(&ncurses_plugin, "ui_window_update_lastlog", ncurses_ui_window_lastlog, NULL);
+	new_guery_connect(&ncurses_plugin, "session_added", ncurses_statusbar_query, NULL);
+	new_guery_connect(&ncurses_plugin, "session_removed", ncurses_statusbar_query, NULL);
+	new_guery_connect(&ncurses_plugin, "binding_set", ncurses_binding_set_query, NULL);
+	new_guery_connect(&ncurses_plugin, "binding_command", ncurses_binding_adddelete_query, NULL);
+	new_guery_connect(&ncurses_plugin, "binding_default", ncurses_binding_default, NULL);
+	new_guery_connect(&ncurses_plugin, "variable_changed", ncurses_variable_changed, NULL);
+	new_guery_connect(&ncurses_plugin, "conference_renamed", ncurses_conference_renamed, NULL);
 */
 
-	query_connect_id(&gtk_plugin, METACONTACT_ADDED, gtk_userlist_changed, NULL);
-	query_connect_id(&gtk_plugin, METACONTACT_REMOVED, gtk_userlist_changed, NULL);
-	query_connect_id(&gtk_plugin, METACONTACT_ITEM_ADDED, gtk_userlist_changed, NULL);
-	query_connect_id(&gtk_plugin, METACONTACT_ITEM_REMOVED, gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "metacontact_added", gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "metacontact_removed", gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "metacontact_item_added", gtk_userlist_changed, NULL);
+	new_guery_connect(&gtk_plugin, "metacontact_item_removed", gtk_userlist_changed, NULL);
 
 #define gtk_backlog_change NULL
 #warning "gtk_backlog_change == NULL, need research"

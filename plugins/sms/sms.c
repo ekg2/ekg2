@@ -340,8 +340,8 @@ int sms_plugin_init(int prio)
 	variable_add(&sms_plugin, ("sms_max_length"), VAR_INT, 1, &config_sms_max_length, NULL, NULL, dd_sms);
 	variable_add(&sms_plugin, ("sms_number"), VAR_STR, 1, &config_sms_number, NULL, NULL, dd_sms);
 
-	query_connect_id(&sms_plugin, PROTOCOL_MESSAGE, sms_protocol_message, NULL);
-	query_connect_id(&sms_plugin, SESSION_STATUS, sms_session_status, NULL);
+	new_guery_connect(&sms_plugin, "protocol_message", sms_protocol_message, NULL);
+	new_guery_connect(&sms_plugin, "session_status", sms_session_status, NULL);
 
 	return 0;
 }

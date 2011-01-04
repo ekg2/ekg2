@@ -583,8 +583,8 @@ SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 
 			userlist_remove(s, u);
 
-			query_emit_id(NULL, USERLIST_REMOVED, &tmp, &uid);
-			query_emit_id(NULL, REMOVE_NOTIFY, &s->uid, &uid);
+			new_guery_emit(NULL, "userlist_removed", &tmp, &uid);
+			new_guery_emit(NULL, "remove_notify", &s->uid, &uid);
 
 			xfree(tmp);
 		}
@@ -593,8 +593,8 @@ SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 		if (!xstrcmp(cmd, "add")) {
 			if ( (u = userlist_add(s, uid, nick)) ) {
 				printq("user_added", u->nickname, session_name(s));
-				query_emit_id(NULL, USERLIST_ADDED, &u->uid, &u->nickname, &quiet);
-				query_emit_id(NULL, ADD_NOTIFY, &s->uid, &u->uid);
+				new_guery_emit(NULL, "userlist_added", &u->uid, &u->nickname, &quiet);
+				new_guery_emit(NULL, "add_notify", &s->uid, &u->uid);
 			}
 		} else {
 			// modify
@@ -602,13 +602,13 @@ SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 				const char *nick = private_item_get(&data, "nick");
 				if (nick) {
 
-					query_emit_id(NULL, USERLIST_RENAMED, &u->nickname, &nick);
+					new_guery_emit(NULL, "userlist_renamed", &u->nickname, &nick);
 				
 					xfree(u->nickname);
 					u->nickname = xstrdup(nick);
 
 					userlist_replace(s, u);
-					query_emit_id(NULL, USERLIST_REFRESH);
+					new_guery_emit(NULL, "userlist_refresh");
 				}
 			}
 		}

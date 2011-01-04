@@ -135,7 +135,7 @@ void userlist_add_entry(session_t *session, const char *line) {
 	{
 		int function = EKG_USERLIST_PRIVHANDLER_READING;
 
-		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry, &count);
+		new_guery_emit(NULL, "userlist_privhandle", &u, &function, &entry, &count);
 	}
 
 	if (valid_plugin_uid(session->plugin, u->uid) != 1) {
@@ -198,7 +198,7 @@ int userlist_read(session_t *session) {
 		userlist_add_entry(session, buf);
 	}
 
-	query_emit_id(NULL, USERLIST_REFRESH);	/* XXX, wywolywac tylko kiedy dodalismy przynajmniej 1 */
+	new_guery_emit(NULL, "userlist_refresh");	/* XXX, wywolywac tylko kiedy dodalismy przynajmniej 1 */
 
 	fclose(f);
 		
@@ -253,7 +253,7 @@ int userlist_write(session_t *session) {
 		{
 			int function = EKG_USERLIST_PRIVHANDLER_WRITING;
 
-			query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &function, &entry);
+			new_guery_emit(NULL, "userlist_privhandle", &u, &function, &entry);
 		}
 
 		line = array_join_count(entry, ";", 7);
@@ -325,7 +325,7 @@ static void userlist_private_free(userlist_t *u) {
 	if (u->priv) {
 		int func = EKG_USERLIST_PRIVHANDLER_FREE;
 
-		query_emit_id(NULL, USERLIST_PRIVHANDLE, &u, &func);
+		new_guery_emit(NULL, "userlist_privhandle", &u, &func);
 	}
 }
 
@@ -333,7 +333,7 @@ void *userlist_private_get(plugin_t *plugin, userlist_t *u) {
 	int func = EKG_USERLIST_PRIVHANDLER_GET;
 	void *up = NULL;
 
-	query_emit_id(plugin, USERLIST_PRIVHANDLE, &u, &func, &up);
+	new_guery_emit(plugin, "userlist_privhandle", &u, &func, &up);
 
 	return up;
 }
@@ -638,7 +638,7 @@ int valid_uid(const char *uid) {
 	char *tmp;
 	tmp = xstrdup(uid);
 
-	query_emit_id(NULL, PROTOCOL_VALIDATE_UID, &tmp, &valid);
+	new_guery_emit(NULL, "protocol_validate_uid", &tmp, &valid);
 	xfree(tmp);
 
 	return (valid > 0);
@@ -670,7 +670,7 @@ int valid_plugin_uid(plugin_t *plugin, const char *uid) {
 
 	tmp = xstrdup(uid);
 
-	query_emit_id(plugin, PROTOCOL_VALIDATE_UID, &tmp, &valid);
+	new_guery_emit(plugin, "protocol_validate_uid", &tmp, &valid);
 	xfree(tmp);
 
 	return (valid > 0);
@@ -850,12 +850,12 @@ int ignored_remove(session_t *session, const char *uid) {
 
 	tmps	= xstrdup(session->uid);
 	tmp	= xstrdup(u->uid);
-	query_emit_id(NULL, PROTOCOL_IGNORE, &tmps, &tmp, &level, &tmp2);
+	new_guery_emit(NULL, "protocol_ignore", &tmps, &tmp, &level, &tmp2);
 	xfree(tmps);
 	xfree(tmp);
 
 	if ((level & IGNORE_STATUS || level & IGNORE_STATUS_DESCR)) {
-		query_emit_id(NULL, PROTOCOL_UNIGNORE, &u, &session);
+		new_guery_emit(NULL, "protocol_unignore", &u, &session);
 	}
 
 	return 0;
@@ -894,7 +894,7 @@ int ignored_add(session_t *session, const char *uid, ignore_t level) {
 
 	tmps	= xstrdup(session->uid);
 	tmp	= xstrdup(u->uid);
-	query_emit_id(NULL, PROTOCOL_IGNORE, &tmps, &tmp, &oldlevel, &level);
+	new_guery_emit(NULL, "protocol_ignore", &tmps, &tmp, &oldlevel, &level);
 	xfree(tmps);
 	xfree(tmp);
 	

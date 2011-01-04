@@ -329,7 +329,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		/* It's FATAL */
 	}
 
-	query_emit_id(pl, SET_VARS_DEFAULT);
+	new_guery_emit(pl, "set_vars_default");
 
 	printq("plugin_loaded", name);
 
@@ -343,7 +343,7 @@ int plugin_load(const char *name, int prio, int quiet)
 			session_read(tmp);
 
 		if (pl)
-			query_emit_id(pl, CONFIG_POSTINIT);
+			new_guery_emit(pl, "config_postinit");
 
 		in_autoexec = 0;
 		config_changed = 1;
@@ -736,7 +736,7 @@ static query_t *query_connect_common(plugin_t *plugin, const int id, query_handl
 			"query_connect_id()... but unfortunetly it won't work cause of 1st possibility, sorry.\n"
 
 
-query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
+query_t *query_connect_idXXX(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
 	if (id >= QUERY_EXTERNAL) {
 		debug_error("%s", ID_AND_QUERY_EXTERNAL);
 		return NULL;
@@ -745,8 +745,15 @@ query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *
 	return query_connect_common(plugin, id, handler, data);
 }
 
-query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
+query_t *query_connectXXX(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
 	return query_connect_common(plugin, query_id(name), handler, data);
+}
+
+query_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
+	FILE *fp = fopen("/tmp/queries.txt", "a+");
+	fprintf (fp, "c: %s\n", name);
+	fclose (fp);
+	return NULL;
 }
 
 int query_free(query_t *q) {
@@ -786,7 +793,24 @@ static int query_emit_common(query_t *q, va_list ap) {
 	return result != -1 ? 0 : -1;
 }
 
-int query_emit_id(plugin_t *plugin, const int id, ...) {
+int new_guery_emit(plugin_t *plugin, const char* name, ...) {
+	int result = -2;
+	va_list ap;
+	query_t *q;
+        FILE *fp;
+	int id;
+
+	va_start(ap, name);
+
+        fp = fopen ("/tmp/queries.txt", "a+");
+        fprintf (fp, "q: %s\n", name);
+        fclose(fp);
+
+	va_end(ap);
+	return result;
+}
+
+int query_emit_idXXX(plugin_t *plugin, const int id, ...) {
 	int result = -2;
 	va_list ap;
 	query_t *q;
@@ -808,7 +832,7 @@ int query_emit_id(plugin_t *plugin, const int id, ...) {
 	return result;
 }
 
-int query_emit(plugin_t *plugin, const char *name, ...) {
+int query_emitXX(plugin_t *plugin, const char *name, ...) {
 	int result = -2;
 	va_list ap;
 	query_t *q;

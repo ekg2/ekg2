@@ -183,7 +183,7 @@ EXPORTNOT void plugin_load(const char *name)
 	if (ui_plugin->theme_init)
 		ui_plugin->theme_init();
 
-	query_emit_id(ui_plugin, SET_VARS_DEFAULT);
+	new_guery_emit(ui_plugin, "set_vars_default");
 }
 
 EXPORTNOT plugin_t *remote_plugin_load(const char *name, int prio) {
@@ -322,7 +322,7 @@ int plugin_unregister(plugin_t *p) {
 	return 0;
 }
 
-query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
+query_t *query_connect_idXXX(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
 	query_t *q = xmalloc(sizeof(query_t));
 
 	q->id		= id;
@@ -342,7 +342,7 @@ EXPORTNOT void queries_destroy() {
 	}
 }
 
-int query_emit_id(plugin_t *plugin, const int id, ...) {
+int query_emit_idXXX(plugin_t *plugin, const int id, ...) {
 	static int nested = 0;
 
 	int result = -2;

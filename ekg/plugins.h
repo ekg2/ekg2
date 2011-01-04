@@ -143,13 +143,16 @@ typedef struct queryx {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
-query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data);
+query_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
+query_t *query_connectXXX(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
+query_t *query_connect_idXXX(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data);
 int query_free(query_t *q);
 void query_external_free();
 
-int query_emit_id(plugin_t *, const int, ...);
-int query_emit(plugin_t *, const char *, ...);
+int new_guery_emit(plugin_t *, const char *, ...);
+
+int query_emit_idXXX(plugin_t *, const int, ...);
+int query_emitXX(plugin_t *, const char *, ...);
 void queries_reconnect();
 
 const char *query_name(const int id);

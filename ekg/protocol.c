@@ -82,17 +82,17 @@ static QUERY(protocol_userlist_changed);
  */
 
 void protocol_init() {
-	query_connect_id(NULL, PROTOCOL_STATUS, protocol_status, NULL);
-	query_connect_id(NULL, PROTOCOL_MESSAGE, protocol_message, NULL);
-	query_connect_id(NULL, PROTOCOL_MESSAGE_ACK, protocol_message_ack, NULL);
-	query_connect_id(NULL, PROTOCOL_XSTATE, protocol_xstate, NULL);
+	new_guery_connect(NULL, "protocol_status", protocol_status, NULL);
+	new_guery_connect(NULL, "protocol_message", protocol_message, NULL);
+	new_guery_connect(NULL, "protocol_message_ack", protocol_message_ack, NULL);
+	new_guery_connect(NULL, "protocol_xstate", protocol_xstate, NULL);
 
-	query_connect_id(NULL, PROTOCOL_CONNECTED, protocol_connected, NULL);
-	query_connect_id(NULL, PROTOCOL_DISCONNECTED, protocol_disconnected, NULL);
+	new_guery_connect(NULL, "protocol_connected", protocol_connected, NULL);
+	new_guery_connect(NULL, "protocol_disconnected", protocol_disconnected, NULL);
 
-	query_connect_id(NULL, USERLIST_ADDED,		protocol_userlist_changed, NULL);
-	query_connect_id(NULL, USERLIST_REMOVED,	protocol_userlist_changed, NULL);
-	query_connect_id(NULL, USERLIST_RENAMED,	protocol_userlist_changed, NULL);
+	new_guery_connect(NULL, "userlist_added",		protocol_userlist_changed, NULL);
+	new_guery_connect(NULL, "userlist_removed",	protocol_userlist_changed, NULL);
+	new_guery_connect(NULL, "userlist_renamed",	protocol_userlist_changed, NULL);
 }
 
 /*
@@ -118,7 +118,7 @@ static QUERY(protocol_userlist_changed) {
 		xfree(w->target);
 		w->target = xstrdup(*p2);
 
-		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+		new_guery_emit(NULL, "ui_window_target_changed", &w);
 	}
 
 	return 0;
@@ -197,7 +197,7 @@ static QUERY(protocol_disconnected) {
 
 			s->last_conn = time(NULL);
 			s->connected = 0;
-			query_emit_id(NULL, SESSION_EVENT, &s, &one);	/* notify UI */
+			new_guery_emit(NULL, "session_event", &s, &one);	/* notify UI */
 		} else
 			s->connecting = 0;
 		command_exec(NULL, s, "/session --unlock", 1);
@@ -253,7 +253,7 @@ static QUERY(protocol_disconnected) {
 int protocol_disconnected_emit(const session_t *s, const char *reason, int type) {
 	char *session   = xstrdup(s->uid);
 	char *reason_ro = xstrdup(reason);
-	int result      = query_emit_id(NULL, PROTOCOL_DISCONNECTED, &session, &reason_ro, &type);
+	int result      = new_guery_emit(NULL, "protocol_disconnected", &session, &reason_ro, &type);
 
 	xfree(session);
 	xfree(reason_ro);
@@ -300,7 +300,7 @@ static QUERY(protocol_connected) {
 		s->connected = 1;
 		timer_remove_session(s, "reconnect");
 
-		query_emit_id(NULL, SESSION_EVENT, &s, &two);	/* Notify UI */
+		new_guery_emit(NULL, "session_event", &s, &two);	/* Notify UI */
 	}
 
 	if (!msg_queue_flush(session))
@@ -311,7 +311,7 @@ static QUERY(protocol_connected) {
 
 int protocol_connected_emit(const session_t *s) {
 	char *session = xstrdup(s->uid);
-	int result    = query_emit_id(NULL, PROTOCOL_CONNECTED, &session);
+	int result    = new_guery_emit(NULL, "protocol_connected", &session);
 
 	xfree(session);
 	return result;
@@ -425,7 +425,7 @@ static QUERY(protocol_status)
 
 	/* daj znaæ d¼wiêkiem... */
 	if (config_beep && config_beep_notify)
-		query_emit_id(NULL, UI_BEEP);
+		new_guery_emit(NULL, "ui_beep");
 
 	/* ...i muzyczk± */
 	if (config_sound_notify_file)
@@ -447,9 +447,9 @@ notify_plugins:
 		xfree(u->last_descr);
 		u->last_descr = xstrdup(de);
 		if (EKG_STATUS_IS_NA(status) && !ignore_events)
-			query_emit_id(NULL, EVENT_OFFLINE, __session, __uid);
+			new_guery_emit(NULL, "event_offline", __session, __uid);
 	} else if (!EKG_STATUS_IS_NA(status) && !ignore_events)
-		query_emit_id(NULL, EVENT_ONLINE, __session, __uid);
+		new_guery_emit(NULL, "event_online", __session, __uid);
 
 	if (!ignore_status) {
 		if (r) {
@@ -464,7 +464,7 @@ notify_plugins:
 	}
 
 	if (xstrcasecmp(de, descr) && !ignore_events)
-		query_emit_id(NULL, EVENT_DESCR, __session, __uid, __descr);
+		new_guery_emit(NULL, "event_descr", __session, __uid, __descr);
 
 	if (!ignore_status && !ignore_status_descr) {
 		if (r) {
@@ -488,7 +488,7 @@ notify_plugins:
 			u->status_time = when ? when : time(NULL);
 	}
 	
-	query_emit_id(NULL, USERLIST_CHANGED, __session, __uid);
+	new_guery_emit(NULL, "userlist_changed", __session, __uid);
 
 	/* Currently it behaves like event means grouped statuses,
 	 * i.e. EVENT_AVAIL is for avail&ffc
@@ -496,11 +496,11 @@ notify_plugins:
 	 *	... */
 	if (!ignore_events) {
 		if (EKG_STATUS_IS_AVAIL(status))
-			query_emit_id(NULL, EVENT_AVAIL, __session, __uid);
+			new_guery_emit(NULL, "event_avail", __session, __uid);
 		else if (EKG_STATUS_IS_AWAY(status))
-			query_emit_id(NULL, EVENT_AWAY, __session, __uid);
+			new_guery_emit(NULL, "event_away", __session, __uid);
 		else if (EKG_STATUS_IS_NA(status))
-			query_emit_id(NULL, EVENT_NA, __session, __uid);
+			new_guery_emit(NULL, "event_na", __session, __uid);
 	}
 
 	return 0;
@@ -510,7 +510,7 @@ int protocol_status_emit(const session_t *s, const char *uid, int status, char *
 	char *session  = xstrdup(s->uid);
 	char *uid_ro   = xstrdup(uid);
 	char *descr_ro = xstrdup(descr);
-	int result     = query_emit_id(NULL, PROTOCOL_STATUS, &session, &uid_ro, &status, &descr_ro, &when);
+	int result     = new_guery_emit(NULL, "protocol_status", &session, &uid_ro, &status, &descr_ro, &when);
 
 	xfree(session);
 	xfree(uid_ro);
@@ -699,7 +699,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	if (mclass == EKG_MSGCLASS_CHAT) {
 
 		if (config_beep && config_beep_chat && dobeep)
-			query_emit_id(NULL, UI_BEEP);
+			new_guery_emit(NULL, "ui_beep");
 	
 		if (config_sound_chat_file && dobeep)
 			play_sound(config_sound_chat_file);
@@ -707,7 +707,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 	} else if (mclass == EKG_MSGCLASS_MESSAGE) {
 
 		if (config_beep && config_beep_msg && dobeep)
-			query_emit_id(NULL, UI_BEEP);
+			new_guery_emit(NULL, "ui_beep");
 		if (config_sound_msg_file && dobeep)
 			play_sound(config_sound_msg_file);
 
@@ -799,7 +799,7 @@ static QUERY(protocol_message)
 		}
 
 		if (oldstate != userlist->blink)
-			query_emit_id(NULL, USERLIST_CHANGED, &session, &uid);
+			new_guery_emit(NULL, "userlist_changed", &session, &uid);
 	}
 	
 	if (mclass & EKG_NO_THEMEBIT) {
@@ -815,7 +815,7 @@ static QUERY(protocol_message)
 		char *___message = xstrdup(*ptext);
 		int ___decrypted = 0;
 
-		query_emit_id(NULL, MESSAGE_DECRYPT, &___session, &___sender, &___message, &___decrypted, NULL);
+		new_guery_emit(NULL, "message_decrypt", &___session, &___sender, &___message, &___decrypted, NULL);
 
 		if (___decrypted) {
 			xfree(*ptext);
@@ -829,10 +829,10 @@ static QUERY(protocol_message)
 		xfree(___message);
 	}
 
-	if (our_msg)	query_emit_id(NULL, PROTOCOL_MESSAGE_SENT, &session, &(rcpts[0]), ptext);
-	else		query_emit_id(NULL, PROTOCOL_MESSAGE_RECEIVED, &session, &uid, &rcpts, ptext, &format, &sent, &mclass, &seq, &secure);
+	if (our_msg)	new_guery_emit(NULL, "protocol_message_sent", &session, &(rcpts[0]), ptext);
+	else		new_guery_emit(NULL, "protocol_message_received", &session, &uid, &rcpts, ptext, &format, &sent, &mclass, &seq, &secure);
 
-	query_emit_id(NULL, PROTOCOL_MESSAGE_POST, &session, &uid, &rcpts, ptext, &format, &sent, &mclass, &seq, &secure);
+	new_guery_emit(NULL, "protocol_message_post", &session, &uid, &rcpts, ptext, &format, &sent, &mclass, &seq, &secure);
 
 	/* show it ! */
 	if (!(our_msg && !config_display_sent)) {
@@ -881,7 +881,7 @@ int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, con
 	char *text_ro = xstrdup(text);
 	char *seq_ro  = xstrdup(seq);
 	/* XXX, rcpts_ro, format_ro */
-	int result    = query_emit_id(NULL, PROTOCOL_MESSAGE, &session, &uid_ro, &rcpts, &text_ro, &format, &sent, &mclass, &seq_ro, &dobeep, &secure);
+	int result    = new_guery_emit(NULL, "protocol_message", &session, &uid_ro, &rcpts, &text_ro, &format, &sent, &mclass, &seq_ro, &dobeep, &secure);
 
 	xfree(session);
 	xfree(uid_ro);
@@ -944,7 +944,7 @@ int protocol_message_ack_emit(const session_t *s, const char *rcpt, const char *
 	char *session = xstrdup(s->uid);
 	char *rcpt_ro = xstrdup(rcpt);
 	char *seq_ro  = xstrdup(seq);
-	int result    = query_emit_id(NULL, PROTOCOL_MESSAGE_ACK, &session, &rcpt_ro, &seq_ro, &status);
+	int result    = new_guery_emit(NULL, "protocol_message_ack", &session, &rcpt_ro, &seq_ro, &status);
 
 	xfree(session);
 	xfree(rcpt_ro);
@@ -975,7 +975,7 @@ static QUERY(protocol_xstate)
 		else
 			goto xs_userlist;
 
-		query_emit_id(NULL, UI_WINDOW_ACT_CHANGED, &w);		/* XXX, UI_WINDOW_TYPING_CHANGED? :> */
+		new_guery_emit(NULL, "ui_window_act_changed", &w);		/* XXX, UI_WINDOW_TYPING_CHANGED? :> */
 	}
 
 xs_userlist:
@@ -987,7 +987,7 @@ xs_userlist:
 		else
 			return 0;
 
-		query_emit_id(NULL, USERLIST_CHANGED, __session, __uid);
+		new_guery_emit(NULL, "userlist_changed", __session, __uid);
 	}
 
 	return 0;
@@ -996,7 +996,7 @@ xs_userlist:
 int protocol_xstate_emit(const session_t *s, const char *uid, int state, int offstate) {
 	char *session = xstrdup(s->uid);
 	char *uid_ro  = xstrdup(uid);
-	int result    = query_emit_id(NULL, PROTOCOL_XSTATE, &session, &uid_ro, &state, &offstate);
+	int result    = new_guery_emit(NULL, "protocol_xstate", &session, &uid_ro, &state, &offstate);
 
 	xfree(session);
 	xfree(uid_ro);

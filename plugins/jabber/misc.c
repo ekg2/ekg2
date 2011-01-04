@@ -59,13 +59,13 @@ char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_
 
 	switch (way) {
 		case JABBER_OPENGPG_ENCRYPT:
-			ret = query_emit_id(NULL, GPG_MESSAGE_ENCRYPT, &fromto, &message, &err);	break;
+			ret = new_guery_emit(NULL, "gpg_message_encrypt", &fromto, &message, &err);	break;
 		case JABBER_OPENGPG_DECRYPT:
-			ret = query_emit_id(NULL, GPG_MESSAGE_DECRYPT, &s->uid, &message, &err);	break; 
+			ret = new_guery_emit(NULL, "gpg_message_decrypt", &s->uid, &message, &err);	break; 
 		case JABBER_OPENGPG_SIGN:
-			ret = query_emit_id(NULL, GPG_SIGN, &s->uid, &message, &err);			break;
+			ret = new_guery_emit(NULL, "gpg_sign", &s->uid, &message, &err);			break;
 		case JABBER_OPENGPG_VERIFY:
-			ret = query_emit_id(NULL, GPG_VERIFY, &fromto, &message, &key, &err);		break;	/* @ KEY retval key-id */
+			ret = new_guery_emit(NULL, "gpg_verify", &fromto, &message, &key, &err);		break;	/* @ KEY retval key-id */
 	}
 
 	if (ret == -2)

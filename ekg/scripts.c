@@ -678,7 +678,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 	}
 #undef NEXT_ARG
 	temp->real_argc = temp->argc;
-	temp->self = query_connect(s->plugin, qname, script_query_handlers, temp);
+	temp->self = new_guery_connect(s->plugin, qname, script_query_handlers, temp);
 	SCRIPT_BIND_FOOTER(script_queries);
 }
 

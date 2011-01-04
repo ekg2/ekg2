@@ -1088,7 +1088,7 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	
 	printq("conferences_rename", oldname, newname);
 
-	query_emit_id(NULL, CONFERENCE_RENAMED, &oldname, &newname);	/* XXX READ-ONLY QUERY */
+	new_guery_emit(NULL, "conference_renamed", &oldname, &newname);	/* XXX READ-ONLY QUERY */
 
 	return 0;
 }
@@ -2368,7 +2368,7 @@ void ekg_update_status(session_t *session)
 			const char *__session	= session_uid_get(session);
 			const char *__uid		= u->uid;
 
-			query_emit_id(NULL, USERLIST_CHANGED, &__session, &__uid);
+			new_guery_emit(NULL, "userlist_changed", &__session, &__uid);
 		}
 	}
 }
@@ -2822,7 +2822,7 @@ int ekg_close(int fd) {
 char *password_input(const char *prompt, const char *rprompt, const bool norepeat) {
 	char *pass = NULL;
 
-	if (query_emit_id(NULL, UI_PASSWORD_INPUT, &pass, &prompt, norepeat ? NULL : &rprompt) == -2) {
+	if (new_guery_emit(NULL, "ui_password_input", &pass, &prompt, norepeat ? NULL : &rprompt) == -2) {
 		print("password_nosupport");
 		return NULL;
 	}

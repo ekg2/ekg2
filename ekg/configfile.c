@@ -137,7 +137,7 @@ void config_postread()
 		}
 	}
 	config_upgrade();
-	query_emit_id(NULL, CONFIG_POSTINIT);
+	new_guery_emit(NULL, "config_postinit");
 }
 
 int config_read_plugins()
@@ -194,8 +194,8 @@ int config_read(const char *filename)
 		timer_remove_user(-1);
 		event_free();
 		variable_set_default();
-		query_emit_id(NULL, SET_VARS_DEFAULT);
-		query_emit_id(NULL, BINDING_DEFAULT);
+		new_guery_emit(NULL, "set_vars_default");
+		new_guery_emit(NULL, "binding_default");
 		debug("  flushed previous config\n");
 	} 
 
@@ -245,7 +245,7 @@ int config_read(const char *filename)
 			char **pms = array_make(foo, (" \t"), 2, 1, 0);
 
 			if (array_count(pms) == 2) {
-				query_emit_id(NULL, BINDING_SET, pms[0], pms[1], 1);
+				new_guery_emit(NULL, "binding_set", pms[0], pms[1], 1);
 			}
 
 			array_free(pms);

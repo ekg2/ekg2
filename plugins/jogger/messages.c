@@ -197,7 +197,7 @@ au_retry:
 					xfree(url);
 			}
 
-			query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcpts, &lmsg, &fmt, &sent, &class, &seq, &dobeep, &secure);
+			new_guery_emit(NULL, "protocol_message", &suid, &uid, &rcpts, &lmsg, &fmt, &sent, &class, &seq, &dobeep, &secure);
 
 			xfree(suid);
 			xfree(uid);
@@ -253,7 +253,7 @@ au_retry:
 		if (!rcpts[0])
 			rcpts[0]	= xstrdup("jogger:");
 
-		query_emit_id(NULL, PROTOCOL_MESSAGE, &suid, &uid, &rcptsb, &lmsg, &fmt, &sent, &class, &seq, &dobeep, &secure);
+		new_guery_emit(NULL, "protocol_message", &suid, &uid, &rcptsb, &lmsg, &fmt, &sent, &class, &seq, &dobeep, &secure);
 	
 		xfree(rcpts[0]);
 		xfree(uid);

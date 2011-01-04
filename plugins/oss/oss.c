@@ -371,7 +371,7 @@ EXPORT int oss_plugin_init(int prio) {
 	audio_register(&oss_audio);
 
 	variable_add(&oss_plugin, ("audio_device"), VAR_STR, 1, &config_audio_device, NULL, NULL, NULL);
-	query_connect(&oss_plugin, "set-vars-default", oss_setvar_default, NULL);
+	new_guery_connect(&oss_plugin, "set-vars-default", oss_setvar_default, NULL);
 
 	command_add(&oss_plugin, "oss:record", "p", oss_cmd_record, 0, 
 			"-c --chanels -d --device -f --filename -F --frequency -s --sample -l --list");

@@ -651,7 +651,7 @@ static char *split_line(char **ptr) {
 static void window_print(window_t *w, fstring_t *line) {
 	if (!line->ts)
 		line->ts = time(NULL);
-	query_emit_id(NULL, UI_WINDOW_PRINT, &w, &line);	/* XXX */
+	new_guery_emit(NULL, "ui_window_print", &w, &line);	/* XXX */
 }
 
 void print_window_w(window_t *w, int activity, const char *theme, ...) {
@@ -679,7 +679,7 @@ void print_window_w(window_t *w, int activity, const char *theme, ...) {
 		if (activity > w->act) {
 			w->act = activity;
 				/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
-			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED, &w);
+			new_guery_emit(NULL, "ui_window_act_changed", &w);
 		}
 	}
 

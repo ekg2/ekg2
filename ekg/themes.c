@@ -738,7 +738,7 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 		if (activity > w->act) {
 			w->act = activity;
 				/* emit UI_WINDOW_ACT_CHANGED only when w->act changed */
-			query_emit_id(NULL, UI_WINDOW_ACT_CHANGED, &w);
+			new_guery_emit(NULL, "ui_window_act_changed", &w);
 		}
 	}
 
@@ -855,7 +855,7 @@ static window_t *print_window_find(const char *target, session_t *session, int s
 				w->target = xstrdup(target);
 				w->session = session;
 
-				query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);	/* XXX */
+				new_guery_emit(NULL, "ui_window_target_changed", &w);	/* XXX */
 				break;
 			}
 			if (w)		/* wtf? */

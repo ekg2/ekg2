@@ -127,7 +127,7 @@ COMMAND(cmd_bind) {
 			printq("not_enough_params", name);
 			return -1;
 		}
-		query_emit_id(NULL, BINDING_COMMAND, (int) 1, params[1], params[2], quiet);
+		new_guery_emit(NULL, "binding_command", (int) 1, params[1], params[2], quiet);
 /*		ncurses_binding_add(p2, p3, 0, quiet); */
 		return 0;
 	}
@@ -137,7 +137,7 @@ COMMAND(cmd_bind) {
 			return -1;
 		}
 
-		query_emit_id(NULL, BINDING_COMMAND, (int) 0, params[1], NULL, quiet);
+		new_guery_emit(NULL, "binding_command", (int) 0, params[1], NULL, quiet);
 /*		ncurses_binding_delete(p2, quiet); */
 		return 0;
 	} 
@@ -148,7 +148,7 @@ COMMAND(cmd_bind) {
 	if (match_arg(params[0], 'S', ("set"), 2)) {
 		window_lock_dec(window_find_s(session, target)); /* this is interactive command. XXX, what about window_current? */
 
-		query_emit_id(NULL, BINDING_SET, params[1], NULL, quiet);
+		new_guery_emit(NULL, "binding_set", params[1], NULL, quiet);
 		return 0;
 	}
 	if (match_arg(params[0], 'l', ("list"), 2)) {

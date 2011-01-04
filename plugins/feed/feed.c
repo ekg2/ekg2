@@ -333,11 +333,11 @@ EXPORT int feed_plugin_init(int prio) {
 	feed_plugin.params = feed_plugin_vars;
 	plugin_register(&feed_plugin, prio);
 			/* common */
-	query_connect_id(&feed_plugin, SESSION_ADDED, feed_session_init, NULL);
-	query_connect_id(&feed_plugin, SESSION_REMOVED, feed_session_deinit, NULL);
-	query_connect_id(&feed_plugin, PROTOCOL_VALIDATE_UID, feed_validate_uid, NULL);
+	new_guery_connect(&feed_plugin, "session_added", feed_session_init, NULL);
+	new_guery_connect(&feed_plugin, "session_removed", feed_session_deinit, NULL);
+	new_guery_connect(&feed_plugin, "protocol_validate_uid", feed_validate_uid, NULL);
 			/* common - rss, nntp */
-	query_connect_id(&feed_plugin, RSS_MESSAGE, rss_message, NULL);
+	new_guery_connect(&feed_plugin, "rss_message", rss_message, NULL);
 
 #ifdef HAVE_EXPAT
 	rss_init();	/* rss */

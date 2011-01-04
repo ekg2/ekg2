@@ -147,7 +147,7 @@ static void window_switch_c(int id) {
 			session_current = w->session;
 	
 		window_current = w;
-		query_emit_id(NULL, UI_WINDOW_SWITCH, &w);	/* XXX */
+		new_guery_emit(NULL, "ui_window_switch", &w);	/* XXX */
 
 		w->act = 0;
 		if (w->target && w->session && (u = userlist_find(w->session, w->target)) && u->blink) {
@@ -173,7 +173,7 @@ static void window_switch_c(int id) {
 	}
 
 	if (ul_refresh)
-		query_emit_id(NULL, USERLIST_REFRESH);
+		new_guery_emit(NULL, "userlist_refresh");
 }
 
 EXPORTNOT void remote_window_switch(int id) {
@@ -198,7 +198,7 @@ static window_t *window_new_c(const char *target, session_t *session, int new_id
 /*	w->userlist = NULL; */		/* xmalloc memset() to 0 memory */
 
 	windows_add(w);
-	query_emit_id(NULL, UI_WINDOW_NEW, &w);	/* XXX */
+	new_guery_emit(NULL, "ui_window_new", &w);	/* XXX */
 
 	return w;
 }
@@ -313,7 +313,7 @@ void window_kill(window_t *w) {
 		w->target	= NULL;
 /*		w->session	= NULL; */
 
-		query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+		new_guery_emit(NULL, "ui_window_target_changed", &w);
 		return;
 	}
 
@@ -341,7 +341,7 @@ void window_kill(window_t *w) {
 		}
 	}
 
-	query_emit_id(NULL, UI_WINDOW_KILL, &w);
+	new_guery_emit(NULL, "ui_window_kill", &w);
 	windows_remove(w);
 }
 
@@ -381,10 +381,10 @@ EXPORTNOT void window_session_set(window_t *w, session_t *new_session) {
 
 	if (w == window_current) {
 		session_current = new_session;
-		query_emit_id(NULL, SESSION_CHANGED);
+		new_guery_emit(NULL, "session_changed");
 	}
 
-	query_emit_id(NULL, UI_WINDOW_TARGET_CHANGED, &w);
+	new_guery_emit(NULL, "ui_window_target_changed", &w);
 }
 
 void window_switch(int id) {
@@ -417,7 +417,7 @@ EXPORTNOT void windows_unlock_all() {
 	for (w = windows; w; w = w->next)
 		w->lock = 0;
 
-	query_emit_id(NULL, UI_WINDOW_REFRESH);	/* powinno wystarczyc */
+	new_guery_emit(NULL, "ui_window_refresh");	/* powinno wystarczyc */
 }
 
 

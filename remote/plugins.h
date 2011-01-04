@@ -104,8 +104,8 @@ typedef struct queryx {
 	int __count;				/* ekg2-remote: OK, 0 */
 } query_t;
 
-query_t *query_connect_id(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data);
-int query_emit_id(plugin_t *, const int, ...);
+query_t *query_connect_idXXX(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data);
+int query_emit_idXXX(plugin_t *, const int, ...);
 void queries_destroy();
 
 typedef enum {

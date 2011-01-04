@@ -69,11 +69,11 @@ int logsoracle_plugin_init(int prio)
 	plugin_register(&logsoracle_plugin, prio);
 
 	/* connect events with handlers */
-	query_connect(&logsoracle_plugin, ("set-vars-default"), logsoracle_handler_setvarsdef, NULL);
-	query_connect(&logsoracle_plugin, ("config-postinit"), logsoracle_handler_postinit, NULL);
-	query_connect(&logsoracle_plugin, ("session-status"), logsoracle_handler_sestatus, NULL);	
-	query_connect(&logsoracle_plugin, ("protocol-status"), logsoracle_handler_prstatus, NULL);
-	query_connect(&logsoracle_plugin, ("protocol-message-post"), logsoracle_handler_prmsg, NULL);
+	new_guery_connect(&logsoracle_plugin, "set-vars-default", logsoracle_handler_setvarsdef, NULL);
+	new_guery_connect(&logsoracle_plugin, "config-postinit", logsoracle_handler_postinit, NULL);
+	new_guery_connect(&logsoracle_plugin, "session-status", logsoracle_handler_sestatus, NULL);	
+	new_guery_connect(&logsoracle_plugin, "protocol-status", logsoracle_handler_prstatus, NULL);
+	new_guery_connect(&logsoracle_plugin, "protocol-message-post", logsoracle_handler_prmsg, NULL);
 		
 	/* register variables */
 	variable_add(&logsoracle_plugin, ("auto_connect"), VAR_BOOL, 1, &logsoracle_config.auto_connect, NULL, NULL, NULL);

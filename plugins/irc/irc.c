@@ -821,7 +821,7 @@ static WATCHER_SESSION_LINE(irc_handle_stream) {
 	 * I'm not sure if this is good idea, just thinking...
 	 */
 	buf = xstrdup((char *)watch);
-	query_emit(NULL, "irc-parse-line", &s->uid, &buf);
+	new_guery_emit(NULL, "irc-parse-line", &s->uid, &buf);
 	irc_parse_line(s, buf, fd);
 	xfree(buf);
 
@@ -899,7 +899,7 @@ static WATCHER_SESSION(irc_handle_stream_ssl_input) {
 		if (strlen > 1 && line[strlen - 1] == '\r')
 			line[strlen - 1] = 0;
 
-		query_emit(NULL, "irc-parse-line", &s->uid, &line);
+		new_guery_emit(NULL, "irc-parse-line", &s->uid, &line);
 
 		irc_parse_line(s, line, fd);
 
@@ -1410,7 +1410,7 @@ static COMMAND(irc_command_msg) {
 			int __to_us = 0;
 			int __priv = !ischn;
 
-			query_emit_id(NULL, IRC_PROTOCOL_MESSAGE, &(session->uid), &(j->nick), &line, &__isour,
+			new_guery_emit(NULL, "irc_protocol_message", &(session->uid), &(j->nick), &line, &__isour,
 					&__to_us, &__priv, &uid);
 		}
 
@@ -1426,7 +1426,7 @@ static COMMAND(irc_command_msg) {
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
-		query_emit_id(NULL, MESSAGE_ENCRYPT, &(session->uid), &uid, &recoded, &secure);
+		new_guery_emit(NULL, "message_encrypt", &(session->uid), &uid, &recoded, &secure);
 
 		protocol_message_emit(session, session->uid, rcpts, coloured, NULL, time(NULL), (EKG_MSGCLASS_SENT | EKG_NO_THEMEBIT), NULL, EKG_NO_BEEP, secure);
 
@@ -2697,15 +2697,15 @@ EXPORT int irc_plugin_init(int prio)
 	fillchars = (config_use_unicode ? fillchars_utf8 : fillchars_norm);
 	fillchars_len = (config_use_unicode ? 2 : 1);
 
-	query_connect_id(&irc_plugin, PROTOCOL_VALIDATE_UID,	irc_validate_uid, NULL);
-	query_connect_id(&irc_plugin, PLUGIN_PRINT_VERSION,	irc_print_version, NULL);
-	query_connect_id(&irc_plugin, UI_WINDOW_KILL,		irc_window_kill, NULL);
-	query_connect_id(&irc_plugin, SESSION_ADDED,		irc_session_init, NULL);
-	query_connect_id(&irc_plugin, SESSION_REMOVED,		irc_session_deinit, NULL);
-	query_connect_id(&irc_plugin, IRC_TOPIC,		irc_topic_header, (void*) 0);
-	query_connect_id(&irc_plugin, STATUS_SHOW,		irc_status_show_handle, NULL);
-	query_connect_id(&irc_plugin, IRC_KICK,			irc_onkick_handler, 0);
-	query_connect_id(&irc_plugin, SET_VARS_DEFAULT,		irc_setvar_default, NULL);
+	new_guery_connect(&irc_plugin, "protocol_validate_uid",	irc_validate_uid, NULL);
+	new_guery_connect(&irc_plugin, "plugin_print_version",	irc_print_version, NULL);
+	new_guery_connect(&irc_plugin, "ui_window_kill",		irc_window_kill, NULL);
+	new_guery_connect(&irc_plugin, "session_added",		irc_session_init, NULL);
+	new_guery_connect(&irc_plugin, "session_removed",		irc_session_deinit, NULL);
+	new_guery_connect(&irc_plugin, "irc_topic",		irc_topic_header, (void*) 0);
+	new_guery_connect(&irc_plugin, "status_show",		irc_status_show_handle, NULL);
+	new_guery_connect(&irc_plugin, "irc_kick",			irc_onkick_handler, 0);
+	new_guery_connect(&irc_plugin, "set_vars_default",		irc_setvar_default, NULL);
 
 #define IRC_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS		IRC_ONLY | SESSION_MUSTBECONNECTED

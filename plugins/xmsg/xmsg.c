@@ -722,8 +722,8 @@ int xmsg_plugin_init(int prio)
 	xmsg_plugin.priv	= &xmsg_priv;
 	plugin_register(&xmsg_plugin, prio);
 
-	query_connect_id(&xmsg_plugin, PROTOCOL_VALIDATE_UID, xmsg_validate_uid, NULL);
-	query_connect_id(&xmsg_plugin, EKG_SIGUSR1, xmsg_handle_sigusr, NULL);
+	new_guery_connect(&xmsg_plugin, "protocol_validate_uid", xmsg_validate_uid, NULL);
+	new_guery_connect(&xmsg_plugin, "ekg_sigusr1", xmsg_handle_sigusr, NULL);
 
 #define XMSG_CMDFLAGS SESSION_MUSTBELONG
 #define XMSG_CMDFLAGS_TARGET SESSION_MUSTBELONG|COMMAND_ENABLEREQPARAMS|COMMAND_PARAMASTARGET|SESSION_MUSTBECONNECTED
