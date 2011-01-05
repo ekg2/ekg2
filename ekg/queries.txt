@@ -1,0 +1,22 @@
+new queries (v3?)
+-----------------
+
+pseudo-design-note:
+
+ # id based queries removed completly
+ # basic hashing scheme
+   * name of a query is hashed,
+   * part of a hash is used to select one of QUERIES_BUCKETS buckets,
+   * each bucket is a list holding queries
+   > we could employ some more sophisticated hashing scheme,
+     but since number of queries (that is unique names)
+     is relatievly low, there is no need for that
+
+ > because this is experimental code, I've left a call
+   to xstrcmp(), but we should probably disallow registering
+   queries that have colliding hashes,
+   (read: we should select such a hash function, that will be
+    both fast and won't cause collisions, at least on queries
+    used by plugins distributed with ekg2)
+   So later we should be able to get rid of xstrcmp() call.
+
