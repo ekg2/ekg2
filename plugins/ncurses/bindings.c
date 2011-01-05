@@ -28,6 +28,10 @@
 #include <string.h>
 #include <unistd.h>
 
+#ifdef USE_UNICODE
+#  include <limits.h>
+#endif
+
 #include <ekg/bindings.h>
 #include <ekg/stuff.h>
 #include <ekg/metacontacts.h>
@@ -379,14 +383,14 @@ static BINDING_FUNCTION(binding_complete)
 
 			line_start_tmp = line_index_tmp = 0;
 			for (i = 0, j = 0; line[i] && i < LINE_MAXLEN; i++) {
-				char buf[MB_CUR_MAX+1];
+				char buf[MB_LEN_MAX+1];
 				int tmp;
 				int k;
 
 				tmp = wctomb(buf, line[i]);
 
-				if (tmp <= 0 || tmp >= MB_CUR_MAX) {
-					debug_error("binding_complete() wctomb() failed (%d)\n", tmp);
+				if (tmp <= 0 || tmp > MB_CUR_MAX) {
+					debug_error("binding_complete() wctomb() failed (%d) [%d]\n", tmp, MB_CUR_MAX);
 					return;
 				}
 
