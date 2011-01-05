@@ -23,34 +23,19 @@
 
 #include "ekg2-config.h"
 
-#include <sys/types.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <termios.h>
-#include <unistd.h>
-
 #ifndef HAVE_STRLCPY
 #  include "compat/strlcpy.h"
 #endif
 
-#include <ekg/commands.h>
 #include <ekg/stuff.h>
-#include <ekg/themes.h>
 #include <ekg/userlist.h>
 #include <ekg/metacontacts.h>
-#include <ekg/vars.h>
 #include <ekg/xmalloc.h>
-#include <ekg/windows.h>
 
+#include "backlog.h"
 #include "bindings.h"
 #include "old.h"
 #include "mouse.h"
-#include "contacts.h"
 
 int contacts_group_index = 0;
 
@@ -75,9 +60,9 @@ char *config_contacts_order;
 char *config_contacts_groups;
 int config_contacts_metacontacts_swallow;
 
-/* 
- * funkcja zwraca pierwsze literki status avail -> av away -> aw itd... 
- * funkcja nie sprawdza czy status jest NULL, ani czy strlen(status) > 2 
+/*
+ * funkcja zwraca pierwsze literki status avail -> av away -> aw itd...
+ * funkcja nie sprawdza czy status jest NULL, ani czy strlen(status) > 2
  */
 static inline char *get_short_status(const char *status_t) {
 	static char buf[3];
@@ -90,8 +75,8 @@ static inline char *get_short_status(const char *status_t) {
 
 /*
  * contacts_compare()
- * 
- * helps list_add_sorted() 
+ *
+ * helps list_add_sorted()
  */
 static int contacts_compare(void *data1, void *data2)
 {
@@ -124,11 +109,11 @@ static inline userlist_t *userlist_dup(userlist_t *up, const char *uid, char *ni
 /*
  * ncurses_contacts_update()
  *
- * updates contacts window 
- * 
+ * updates contacts window
+ *
  * it switches also groups, metacontacts, all together
  * details in documentation
- * 
+ *
  */
 int ncurses_contacts_update(window_t *w, int save_pos) {
 	int old_start;
@@ -140,25 +125,25 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 	ncurses_window_t *n;
 	newconference_t *c	= NULL;
 	userlist_t *sorted_all	= NULL;
-	int (*comp)(void *, void *) = NULL;		/* coz userlist's list are sorted we don't need to sort it again... 
+	int (*comp)(void *, void *) = NULL;		/* coz userlist's list are sorted we don't need to sort it again...
 								unfortunetly if we create list from serveral userlists (for instance: session && window)
-								we must resort... --- in ekg2 we do 
+								we must resort... --- in ekg2 we do
 									list_add_sorted(...., NULL) on session userlist &&
 									list_add_sorted(...., contacts_compare) on window userlist
 							*/
 
-	
+
 	if (!w) w = window_find_sa(NULL, "__contacts", 1);
 	if (!w)
 		return -1;
 
 	n = w->priv_data;
-	
-	if (save_pos) 
+
+	if (save_pos)
 		old_start = n->start;
 	else
 		old_start = 0;
-	
+
 	ncurses_clear(w, 1);
 
 	if (!session_current)
@@ -255,7 +240,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 
 				/* metacontact_find_prio() should always success [for current API] */
 /*
-				if (!metacontact_find_prio(m)) 
+				if (!metacontact_find_prio(m))
 					continue;
 */
 				for (i = m->metacontact_items; i; i = i->next) {
@@ -299,7 +284,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 	if (!all) {
 		sorted_all = session_current->userlist;
 
-		if (c && c->participants) 
+		if (c && c->participants)
 			sorted_all = c->participants;
 		else if (window_current->userlist)
 			sorted_all = window_current->userlist;
@@ -321,7 +306,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			const char *format;
 			fstring_t *string;
 
-			if (!u->nickname || !u->status) 
+			if (!u->nickname || !u->status)
 				continue;
 
 			status_t = ekg_status_string(u->status, 0);
@@ -362,7 +347,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 
 			if (u->priv_data == (void *) 2)
 				string->priv_data = (void *) xstrdup(u->nickname);
-			else 
+			else
 				string->priv_data = (void *) saprintf("%s/%s", (u->priv_data) ? ((session_t *) u->priv_data)->uid : session_current->uid, u->nickname);
 
 			ncurses_backlog_add(w, string);
@@ -395,7 +380,7 @@ after_loop:
 kon:
 /* restore old index */
 	n->start = old_start;
-	
+
 	if (n->start > n->lines_count - w->height + n->overflow)
 		n->start = n->lines_count - w->height + n->overflow;
 
@@ -424,7 +409,7 @@ void ncurses_contacts_changed(const char *name) {
 	if (!xstrcasecmp(name, "ncurses:contacts_size"))
 		config_contacts = 1;
 
-	if (config_contacts_size < 0) 
+	if (config_contacts_size < 0)
 		config_contacts_size = 0;
 
 	if (config_contacts_size == 0)
@@ -467,12 +452,12 @@ void ncurses_contacts_changed(const char *name) {
 	ncurses_commit();
 }
 
-/* 
+/*
  * ncurses_contacts_mouse_handler()
- * 
+ *
  * handler for mouse events
  */
-void ncurses_contacts_mouse_handler(int x, int y, int mouse_state) 
+void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 {
 	window_t *w = window_find_sa(NULL, "__contacts", 1);
 	ncurses_window_t *n;
@@ -519,7 +504,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 	return;
 }
 
-static int ncurses_contacts_update_redraw(window_t *w) { return 0; } 
+static int ncurses_contacts_update_redraw(window_t *w) { return 0; }
 
 /*
  * ncurses_contacts_new()

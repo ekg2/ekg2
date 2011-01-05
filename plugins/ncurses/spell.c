@@ -28,6 +28,12 @@
 
 
 #ifdef WITH_ASPELL
+
+/* vars */
+
+int config_aspell;
+char *config_aspell_lang;
+
 AspellSpeller *spell_checker = NULL;
 static AspellConfig  *spell_config  = NULL;
 

@@ -28,42 +28,34 @@
 
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
-#include <ekg/windows.h>
 #include <ekg/vars.h>
 #include <ekg/stuff.h>
-#include <ekg/themes.h>
 #include <ekg/xmalloc.h>
 
 #include <ekg/queries.h>
 
-#include "ecurses.h"
+#include "backlog.h"
 #include "bindings.h"
-#include "old.h"
 #include "contacts.h"
 #include "mouse.h"
 #include "notify.h"
+#include "old.h"
 #include "spell.h"
+#include "statusbar.h"
 
 static int ncurses_theme_init();
 PLUGIN_DEFINE(ncurses, PLUGIN_UI, ncurses_theme_init);
 /* vars */
-int config_aspell;
-char *config_aspell_lang;
 int config_backlog_size;
 int config_backlog_scroll_half_page;
 int config_display_transparent;
 int config_enter_scrolls;
-int config_header_size;
 int config_margin_size;
-int config_mark_on_window_change = 0;
-int config_kill_irc_window = 1;
-int config_statusbar_size;
+int config_mark_on_window_change	= 0;
+int config_kill_irc_window		= 1;
 int config_lastlog_size;
 int config_lastlog_lock;
-int config_text_bottomalign	= 0;
-int config_typing_interval	= 1;
-int config_typing_timeout	= 10;
-int config_typing_timeout_empty = 5;
+int config_text_bottomalign		= 0;
 
 static int config_traditional_clear	= 1;
 
@@ -196,11 +188,11 @@ static QUERY(ncurses_ui_window_print)
 	ncurses_window_t *n;
 	int bottom = 0, prev_count, count = 0;
 
-	if (!(n = w->priv_data)) { 
+	if (!(n = w->priv_data)) {
 		/* BUGFIX, cause @ ui-window-print handler (not ncurses plugin one, ncurses plugin one is called last cause of 0 prio)
-		 *	plugin may call print_window() 
+		 *	plugin may call print_window()
 		 */
-		ncurses_window_new(w);	
+		ncurses_window_new(w);
 		if (!(n = w->priv_data)) {
 			debug("ncurses_ui_window_print() IInd CC still not w->priv_data, quitting...\n");
 			return -1;
@@ -211,7 +203,7 @@ static QUERY(ncurses_ui_window_print)
 
 	if (n->start == n->lines_count - w->height || (n->start == 0 && n->lines_count <= w->height))
 		bottom = 1;
-	
+
 	count = ncurses_backlog_add(w, line);
 
 	if (n->overflow) {
@@ -241,7 +233,7 @@ static QUERY(ncurses_ui_window_print)
 		if (w->lock == 0) // && w == window_current) it should be tested
 			ncurses_commit();
 	}
-	
+
 	return 0;
 }
 
@@ -280,7 +272,7 @@ static QUERY(ncurses_ui_window_target_changed)
 
 	p = w->alias ? w->alias : (w->target ? w->target : NULL);
 	tmp = format_string(format_find((p) ? "ncurses_prompt_query" : "ncurses_prompt_none"), p);
-	n->prompt = tmp; 
+	n->prompt = tmp;
 	n->prompt_len = xstrlen(tmp);
 
 	ncurses_update_real_prompt(n);
@@ -325,7 +317,7 @@ static QUERY(ncurses_ui_window_clear)
  * ncurses_all_contacts_changed()
  *
  * wywo³ywane przy zmianach userlisty powoduj±cych konieczno¶æ
- * podkasowania sorted_all_cache (zmiany w metakontaktach 
+ * podkasowania sorted_all_cache (zmiany w metakontaktach
  * i ncurses:contacts_metacontacts_swallow)
  */
 
@@ -429,7 +421,7 @@ static QUERY(ncurses_binding_set_query)
 	int quiet = va_arg(ap, int);
 
 	ncurses_binding_set(quiet, p1, p2);
-	
+
 	return 0;
 }
 
@@ -452,7 +444,7 @@ static QUERY(ncurses_binding_adddelete_query)
 static QUERY(ncurses_lastlog_changed) {
 	window_t *w;
 
-	if (config_lastlog_size < 0) 
+	if (config_lastlog_size < 0)
 		config_lastlog_size = 0;
 
 	if (!(w = window_find_sa(NULL, "__lastlog", 1)))
@@ -543,7 +535,7 @@ static QUERY(ncurses_setvar_default)
 /*
  * ncurses_display_transparent_changed ()
  *
- * called when var display_transparent is changed 
+ * called when var display_transparent is changed
  */
 static void ncurses_display_transparent_changed(const char *var)
 {
@@ -557,7 +549,7 @@ static void ncurses_display_transparent_changed(const char *var)
 		background = COLOR_BLACK;
 		assume_default_colors(COLOR_WHITE, COLOR_BLACK);
 	}
-	init_pair(7, COLOR_BLACK, background); 
+	init_pair(7, COLOR_BLACK, background);
 	init_pair(1, COLOR_RED, background);
 	init_pair(2, COLOR_GREEN, background);
 	init_pair(3, COLOR_YELLOW, background);
@@ -680,7 +672,7 @@ static int ncurses_theme_init() {
 	format_add("aspell_init", "%> Please wait while initiating spellcheck...", 1);
 	format_add("aspell_init_success", "%> Spellcheck initiated.", 1);
 	format_add("aspell_init_error", "%! Spellcheck error: %T%1%", 1);
-#endif 
+#endif
 #endif
 	return 0;
 }
@@ -696,7 +688,7 @@ EXPORT int ncurses_plugin_init(int prio)
 
 	query_emit_id(NULL, UI_IS_INITIALIZED, &is_UI);
 
-	if (is_UI) 
+	if (is_UI)
 		return -1;
 	plugin_register(&ncurses_plugin, prio);
 
@@ -789,7 +781,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("typing_interval"), VAR_INT, 1, &config_typing_interval, ncurses_typing_retimer, NULL, NULL);
 	variable_add(&ncurses_plugin, ("typing_timeout"), VAR_INT, 1, &config_typing_timeout, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("typing_timeout_empty"), VAR_INT, 1, &config_typing_timeout_empty, NULL, NULL, NULL);
-	
+
 	have_winch_pipe = 0;
 #ifdef SIGWINCH
 	if (pipe(winch_pipe) == 0) {
@@ -806,7 +798,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	timer_add(&ncurses_plugin, "ncurses:clock", 1, 1, ncurses_statusbar_timer, NULL);
 
 	ncurses_init();
-	
+
 	header_statusbar_resize(NULL);
 	ncurses_typing_retimer(NULL);
 
@@ -838,7 +830,7 @@ static int ncurses_plugin_destroy()
 	ncurses_plugin_destroyed = 1;
 	ncurses_initialized = 0;
 
-	ncurses_disable_mouse(); 
+	ncurses_disable_mouse();
 
 	watch_remove(&ncurses_plugin, 0, WATCH_READ);
 	if (have_winch_pipe)

@@ -6,6 +6,9 @@
 
 #ifdef WITH_ASPELL
 
+extern int config_aspell;
+extern char *config_aspell_lang;
+
 #include <aspell.h>
 
 #  define ASPELLCHAR 5

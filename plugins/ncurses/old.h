@@ -89,51 +89,24 @@ QUERY(ncurses_session_disconnect_handler);
 
 void ncurses_update_real_prompt(ncurses_window_t *n);
 void ncurses_resize(void);
-int ncurses_backlog_add(window_t *w, fstring_t *str);
-int ncurses_backlog_split(window_t *w, int full, int removed);
 void ncurses_redraw(window_t *w);
 void ncurses_redraw_input(unsigned int ch);
 void ncurses_clear(window_t *w, int full);
 void ncurses_refresh(void);
 void ncurses_commit(void);
-void ncurses_input_update(int new_line_index);
-void ncurses_line_adjust(void);
-#define line_adjust ncurses_line_adjust
-void ncurses_lines_adjust(void);
-#define lines_adjust ncurses_lines_adjust
 int ncurses_window_kill(window_t *w);
 int ncurses_window_new(window_t *w);
 
-#define input ncurses_input
 #define contacts ncurses_contacts
 #define history ncurses_history
 #define history_index ncurses_history_index
-#define line_index ncurses_line_index
-#define line_start ncurses_line_start
-#define lines_index ncurses_lines_index
-#define lines_start ncurses_lines_start
-#define input_size ncurses_input_size
-#define yanked ncurses_yanked
 	
 #define HISTORY_MAX 1000
 extern CHAR_T *ncurses_history[HISTORY_MAX];
 extern int ncurses_history_index;
-extern CHAR_T *ncurses_line;
-extern CHAR_T *ncurses_yanked;
-extern CHAR_T **ncurses_lines;
-extern int ncurses_line_start;
-extern int ncurses_line_index;
-extern int ncurses_lines_start;
-extern int ncurses_lines_index;
-extern int ncurses_input_size;
 extern int ncurses_debug;
 
 void header_statusbar_resize(const char *dummy);
-#ifdef WITH_ASPELL
-
-extern int config_aspell;
-extern char *config_aspell_lang;
-#endif
 void changed_backlog_size(const char *var);
 
 extern int config_backlog_size;
@@ -141,14 +114,10 @@ extern int config_backlog_scroll_half_page;
 
 extern int config_display_transparent;
 extern int config_enter_scrolls;
-extern int config_header_size;
 extern int config_margin_size;
-extern int config_statusbar_size;
 extern int config_kill_irc_window;
 
 extern int config_text_bottomalign;
-extern int config_typing_timeout;
-extern int config_typing_timeout_empty;
 
 int ncurses_lastlog_update(window_t *w);
 void ncurses_lastlog_new(window_t *w);
@@ -163,6 +132,14 @@ COMMAND(cmd_mark);
 
 extern int have_winch_pipe;
 extern int winch_pipe[2];
+
+extern int ncurses_screen_height;
+extern int ncurses_screen_width;
+
+int color_pair(int fg, int bg);
+int ncurses_backlog_add_real(window_t *w, fstring_t *str);
+
+CHAR_T ncurses_fixchar(CHAR_T ch, int *attr);
 
 #ifndef COLOR_DEFAULT
 #  define COLOR_DEFAULT (-1)

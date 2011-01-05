@@ -26,10 +26,17 @@
 
 #include <ekg/queries.h>
 
+#include "input.h"
 #include "notify.h"
 #include "old.h"
 
 /* typing */
+
+/* vars */
+int config_typing_interval	= 1;
+int config_typing_timeout	= 10;
+int config_typing_timeout_empty = 5;
+
 int ncurses_typing_mod			= 0;	/* whether buffer was modified */
 window_t *ncurses_typing_win		= NULL;	/* last window for which typing was sent */
 static int ncurses_typing_count		= 0;	/* last count sent */
@@ -54,7 +61,7 @@ static int ncurses_lineslen() {
 static inline int ncurses_typingsend(const int len, const int first) {
 	const char *sid	= session_uid_get(ncurses_typing_win->session);
 	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
-	
+
 	if (((first > 1) || (ncurses_typing_win->in_active)) && uid)
 		return query_emit_id(NULL, PROTOCOL_TYPING_OUT, &sid, &uid, &len, &first);
 	else

@@ -36,7 +36,9 @@
 #include "old.h"
 #include "bindings.h"
 #include "contacts.h"
+#include "input.h"
 #include "mouse.h"
+#include "statusbar.h"
 
 	/* imported bindings */
 BINDING_FUNCTION(binding_previous_only_history);

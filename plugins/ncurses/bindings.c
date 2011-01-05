@@ -24,10 +24,8 @@
 
 #include "ekg2-config.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 
 #ifdef USE_UNICODE
 #  include <limits.h>
@@ -40,15 +38,11 @@
 #include <ekg/debug.h>
 #include <ekg/completion.h>
 
-#ifndef HAVE_STRLCPY
-#  include "compat/strlcpy.h"
-#endif
-
-#include "ecurses.h"
 #include "bindings.h"
+#include "contacts.h"
+#include "input.h"
 #include "notify.h"
 #include "old.h"
-#include "contacts.h"
 
 struct binding *ncurses_binding_map[KEY_MAX + 1];	/* mapa klawiszy */
 struct binding *ncurses_binding_map_meta[KEY_MAX + 1];	/* j.w. z altem */
@@ -63,8 +57,6 @@ int bindings_added_max = 0;
 
 static const void *BINDING_HISTORY_NOEXEC = (void*) -1;
 
-extern int ncurses_noecho;	/* in old.c */
-extern CHAR_T *ncurses_passbuf;	/* in old.c */
 
 static void add_to_history() {
 	if (history[0] != line)
@@ -124,7 +116,7 @@ static BINDING_FUNCTION(binding_toggle_input)
 		string_t s = string_init((""));
 		char *p, *tmp;
 		int i;
-	
+
 		for (i = 0; lines[i]; i++) {
 			char *tmp;
 
@@ -172,7 +164,7 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 
 		line_index = xwcslen(lines[lines_index - 1]);
 		xwcscat(lines[lines_index - 1], lines[lines_index]);
-		
+
 		xfree(lines[lines_index]);
 
 		for (i = lines_index; i < array_count((char **) lines); i++)
@@ -240,7 +232,7 @@ static BINDING_FUNCTION(binding_delete_char)
 		ncurses_typing_mod = 1;
 	}
 }
-				
+
 static BINDING_FUNCTION(binding_accept_line)
 {
 	char *p, *txt;
@@ -264,13 +256,13 @@ static BINDING_FUNCTION(binding_accept_line)
 		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
 		xwcscpy(lines[lines_index + 1], line + line_index);
 		line[line_index] = 0;
-		
+
 		line_index = 0;
 		line_start = 0;
 		lines_index++;
 
 		lines_adjust();
-	
+
 		return;
 	}
 	if (arg != BINDING_HISTORY_NOEXEC) {
@@ -342,11 +334,11 @@ static BINDING_FUNCTION(binding_word_rubout)
 
 	if (!line_index)
 		return;
-	
+
 	xfree(yanked);
 
 	p = line + line_index;
-	
+
 	if (xisspace(*(p - 1))) {
 		while (p > line && xisspace(*(p - 1))) {
 			p--;
@@ -649,7 +641,7 @@ static BINDING_FUNCTION(binding_previous_history)
 		lines_adjust();
 
 	} else
-		binding_previous_only_history(NULL);				
+		binding_previous_only_history(NULL);
 	ncurses_redraw_input(0);
 }
 
@@ -669,7 +661,7 @@ static BINDING_FUNCTION(binding_next_history)
 
 		lines_adjust();
 
-	} else 
+	} else
 		binding_next_only_history(NULL);
 	ncurses_redraw_input(0);
 }
@@ -712,7 +704,7 @@ static void binding_helper_scroll_page(window_t *w, int backward) {
 
 	if (!w)
 		return;
-	
+
 	offset = config_backlog_scroll_half_page ? (w->height / 2) : (w->height-1);
 	if (backward)
 		binding_helper_scroll(w, -offset);
@@ -756,7 +748,7 @@ static BINDING_FUNCTION(binding_ignore_query)
 {
 	if (!window_current->target)
 		return;
-	
+
 	command_exec_format(window_current->target, window_current->session, 0, ("/ignore \"%s\""), window_current->target);
 }
 
@@ -784,10 +776,10 @@ BINDING_FUNCTION(binding_next_contacts_group) {
 	window_t *w;
 
 	contacts_group_index++;
-	
+
 	if ((w = window_find_sa(NULL, "__contacts", 1))) {
 		ncurses_contacts_update(w, 0);
-/*		ncurses_resize(); */ 
+/*		ncurses_resize(); */
 		ncurses_commit();
 	}
 }
@@ -830,12 +822,12 @@ static void binding_parse(struct binding *b, const char *action)
 		array_free(args);
 		return;
 	}
-	
+
 #define __action(x,y) \
 	if (!xstrcmp(args[0], (x))) { \
 		b->function = y; \
 		b->arg = xstrdup(args[1]); \
-	} else	
+	} else
 
 	__action("backward-word", binding_backward_word)
 	__action("forward-word", binding_forward_word)
@@ -923,7 +915,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 
 		if (xstrlen(key) != 5)
 			return -1;
-	
+
 		ch = xtoupper(key[4]);
 
 		b->key = saprintf(("Alt-%c"), ch);	/* XXX Alt-Ó ??? */
@@ -939,7 +931,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 
 	if (!xstrncasecmp(key, ("Ctrl-"), 5)) {
 		unsigned char ch;
-		
+
 //		if (xstrlen(key) != 6)
 //			return -1;
 #define __key(x, y, z) \
@@ -960,7 +952,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 	__key("Tab", KEY_CTRL_TAB, 0);
 
 #undef __key
-	
+
 		ch = xtoupper(key[5]);
 		b->key = saprintf(("Ctrl-%c"), ch);
 
@@ -970,7 +962,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 			else
 				return -1;
 		}
-		
+
 		return 0;
 	}
 
@@ -981,10 +973,10 @@ static int binding_key(struct binding *b, const char *key, int add)
 			return -1;
 
 		b->key = saprintf(("F%d"), f);
-		
+
 		if (add)
 			ncurses_binding_map[KEY_F(f)] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
-		
+
 		return 0;
 	}
 
@@ -1092,14 +1084,14 @@ end:
 void ncurses_binding_add(const char *key, const char *action, int internal, int quiet)
 {
 	struct binding b, *c = NULL, *d;
-	
+
 	if (!key || !action)
 		return;
 
 	memset(&b, 0, sizeof(b));
 
 	b.internal = internal;
-	
+
 	for (d = bindings; d; d = d->next) {
 		if (!xstrcasecmp(key, d->key)) {
 			if (d->internal) {
@@ -1171,7 +1163,7 @@ void ncurses_binding_delete(const char *key, int quiet)
 
 		xfree(b->action);
 		xfree(b->arg);
-		
+
 		if (b->default_action) {
 			b->action	= xstrdup(b->default_action);
 			b->arg		= xstrdup(b->default_arg);
@@ -1193,7 +1185,7 @@ void ncurses_binding_delete(const char *key, int quiet)
 		config_changed = 1;
 
 		printq("bind_seq_remove", key);
-		
+
 		return;
 	}
 
@@ -1272,7 +1264,7 @@ QUERY(ncurses_binding_default)
 	ncurses_binding_add("F4", "next-contacts-group", 1, 1);
 	ncurses_binding_add("F12", "/window switch 0", 1, 1);
 	ncurses_binding_add("F11", "ui-ncurses-debug-toggle", 1, 1);
-	/* ncurses_binding_add("Ctrl-Down", "forward-contacts-page", 1, 1); 
+	/* ncurses_binding_add("Ctrl-Down", "forward-contacts-page", 1, 1);
 	ncurses_binding_add("Ctrl-Up", "backward-contacts-page", 1, 1); */
 	return 0;
 }
