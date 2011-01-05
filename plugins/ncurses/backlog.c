@@ -30,7 +30,7 @@
 
 #include <ekg/stuff.h>
 
-#include "old.h"
+#include "nc-stuff.h"
 
 /*
  * ncurses_backlog_split()

@@ -28,7 +28,7 @@
 
 #include "input.h"
 #include "notify.h"
-#include "old.h"
+#include "nc-stuff.h"
 
 /* typing */
 

@@ -1,5 +1,5 @@
-#ifndef __EKG_NCURSES_OLD_H
-#define __EKG_NCURSES_OLD_H
+#ifndef __EKG_NCURSES_NC_STUFF_H
+#define __EKG_NCURSES_NC_STUFF_H
 
 #include "ekg2-config.h"
 

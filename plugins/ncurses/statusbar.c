@@ -34,7 +34,7 @@
 #include <ekg/queries.h>
 
 #include "input.h"
-#include "old.h"
+#include "nc-stuff.h"
 
 /* vars */
 int config_header_size;

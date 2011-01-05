@@ -33,7 +33,7 @@
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
-#include "old.h"
+#include "nc-stuff.h"
 #include "bindings.h"
 #include "contacts.h"
 #include "input.h"

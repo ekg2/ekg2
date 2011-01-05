@@ -34,7 +34,7 @@
 
 #include "backlog.h"
 #include "bindings.h"
-#include "old.h"
+#include "nc-stuff.h"
 #include "mouse.h"
 
 int contacts_group_index = 0;

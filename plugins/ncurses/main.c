@@ -39,7 +39,7 @@
 #include "contacts.h"
 #include "mouse.h"
 #include "notify.h"
-#include "old.h"
+#include "nc-stuff.h"
 #include "spell.h"
 #include "statusbar.h"
 
@@ -65,7 +65,7 @@ int ncurses_plugin_destroyed;
 const char *ncurses_settitle_formats[3] = { NULL, "\e]0;%s%s%s\a", "\e_%s%s%s\e\\" };
 static int ncurses_settitle = 0;
 
-QUERY(ncurses_password_input); /* old.c */
+QUERY(ncurses_password_input); /* nc-stuff.c */
 
 /**
  * ncurses_beep()

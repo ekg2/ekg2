@@ -44,7 +44,7 @@
 #include "contacts.h"
 #include "input.h"
 #include "notify.h"
-#include "old.h"
+#include "nc-stuff.h"
 #include "spell.h"
 #include "statusbar.h"
 

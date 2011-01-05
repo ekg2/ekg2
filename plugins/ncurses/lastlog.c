@@ -32,7 +32,7 @@
 
 #include "backlog.h"
 #include "mouse.h"
-#include "old.h"
+#include "nc-stuff.h"
 
 static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	const char *header;

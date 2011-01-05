@@ -35,7 +35,7 @@
 #include "input.h"
 #include "mouse.h"
 #include "notify.h"
-#include "old.h"
+#include "nc-stuff.h"
 #include "spell.h"
 
 

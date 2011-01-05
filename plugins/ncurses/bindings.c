@@ -42,7 +42,7 @@
 #include "contacts.h"
 #include "input.h"
 #include "notify.h"
-#include "old.h"
+#include "nc-stuff.h"
 
 struct binding *ncurses_binding_map[KEY_MAX + 1];	/* mapa klawiszy */
 struct binding *ncurses_binding_map_meta[KEY_MAX + 1];	/* j.w. z altem */

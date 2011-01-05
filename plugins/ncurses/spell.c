@@ -23,7 +23,7 @@
 #include <ekg/xmalloc.h>
 #include <ekg/stuff.h>
 
-#include "old.h"
+#include "nc-stuff.h"
 #include "spell.h"
 
 
