@@ -561,7 +561,7 @@ static int ekg_utf8_helper(unsigned char *s, int n, unsigned short *ch) {
 	}
 
 invalid:
-	*ch = '?';
+	*ch = RECHAR;
 	return 1;
 }
 
@@ -595,6 +595,9 @@ static char *ekg_from_utf8(char *b, const unsigned short *recode_table) {	/* siz
 		}
 
 		newbuf[j] = '?';
+
+		if (znak == RECHAR) 
+			continue;
 
 		for (k = 0; k < 0x80; k++) {
 			if (recode_table[k] == znak) {
