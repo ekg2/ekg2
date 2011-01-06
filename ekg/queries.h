@@ -38,6 +38,12 @@ struct query_def {
 							 * Note that QUERY_ARG_END _must_ be the last element. */
 };
 
+struct guery_def {
+        char *name;
+        int name_hash;
+        enum query_arg_type params[QUERY_ARGS_MAX];
+};
+
 /* uniq id of known queries..., add new just before QUERY_EXTERNAL */
 enum queries_id {
 	MAIL_COUNT = 0, DAY_CHANGED, STATUS_SHOW, PLUGIN_PRINT_VERSION,
@@ -87,6 +93,7 @@ enum queries_id {
 };
 
 extern int queries_count;
+extern int gueries_registered_count;
 
 #ifdef __DECLARE_QUERIES_STUFF
 #undef __DECLARE_QUERIES_STUFF
@@ -498,6 +505,8 @@ const struct query_def query_list[] = {
  */
 
 static list_t queries_external;
+
+static list_t gueries_registered;
 #else
 
 extern struct query_def query_list[];		/* for: events.h scripts.h */

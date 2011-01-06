@@ -20,3 +20,10 @@ pseudo-design-note:
     used by plugins distributed with ekg2)
    So later we should be able to get rid of xstrcmp() call.
 
+kind-of-a-rationale:
+
+ it seems that changes related to id-based queries made
+ more bad than good:
+ + known-to-core queries are fast (constant lookup time)
+ - id-based queries makes the code more complicated
+ - problem for script languages

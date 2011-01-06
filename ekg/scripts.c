@@ -941,7 +941,7 @@ int scripts_init()
 {
 	script_variables_read();
 #if 0
-	query_connect(NULL, "config-postinit",	   script_postinit, NULL);
+	new_guery_connect(NULL, "config-postinit",	   script_postinit, NULL);
 #else
 	scripts_autoload(NULL);
 #endif

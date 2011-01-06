@@ -141,6 +141,20 @@ typedef struct queryx {
 	int count;
 } query_t;
 
+
+/* must be power of 2 ;p */
+#define QUERIES_BUCKETS 16
+
+typedef struct guery_node {
+        struct guery_node* next;
+        char *name;
+        int name_hash;
+        plugin_t *plugin;
+        void *data;
+        query_handler_func_t *handler;
+        int count;
+} guery_t;
+
 #ifndef EKG2_WIN32_NOFUNCTION
 
 query_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);

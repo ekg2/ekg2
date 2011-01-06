@@ -64,6 +64,21 @@ list_t watches = NULL;
 query_t *queries[QUERY_EXTERNAL+1];
 int queries_count = QUERY_EXTERNAL;	/* list_count(queries_other)+QUERY_EXTERNAL */
 
+static guery_t* gueries[QUERIES_BUCKETS];
+int gueries_registered_count = 0;
+
+static LIST_FREE_ITEM(list_guery_free, guery_t *) {
+	xfree(data->name);
+}
+
+DYNSTUFF_LIST_DECLARE(gueries, guery_t*, list_guery_free,
+	static __DYNSTUFF_ADD_BEGINNING,	/* formats_add() */
+	static __DYNSTUFF_REMOVE_ITER,		/* formats_removei() */
+	static __DYNSTUFF_DESTROY)		/* formats_destroy() */
+
+
+
+
 #ifdef EKG2_WIN32_HELPERS
 # define WIN32_REQUEST_HELPER
 # include "win32_helper.h"
@@ -601,6 +616,12 @@ static LIST_FREE_ITEM(query_external_free_data, list_t) {
 	xfree(def);
 }
 
+static LIST_FREE_ITEM(guery_registered_free_data, list_t) {
+	struct guery_def *def = data->data;
+	xfree(def->name);
+	xfree(def);
+}
+
 /**
  * query_external_free()
  *
@@ -618,6 +639,15 @@ void query_external_free() {
 
 	queries_external	= NULL;
 	queries_count		= QUERY_EXTERNAL;
+}
+
+void guery_registered_free() {
+	if (!gueries_registered)
+	    return;
+
+	LIST_DESTROY2(gueries_registered, guery_registered_free_data);
+
+	gueries_registered = NULL;
 }
 
 /**
@@ -750,10 +780,43 @@ query_t *query_connectXXX(plugin_t *plugin, const char *name, query_handler_func
 }
 
 query_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
+	int found = 0;
+	list_t l;
+	struct guery_def* a;
+
 	FILE *fp = fopen("/tmp/queries.txt", "a+");
 	fprintf (fp, "c: %s\n", name);
+
+	guery_t *q = xmalloc(sizeof(guery_t));
+
+	q->name         = xstrdup(name);
+	q->name_hash    = ekg_hash(name);
+	q->plugin	= plugin;
+	q->handler	= handler;
+	q->data		= data;
+
+	for (l = gueries_registered; l; l = l->next) {
+		a = l->data;
+
+		if (q->name_hash == a->name_hash && !xstrcmp(a->name, name)) {
+			found = 1;
+			break;
+		}
+	}
+	if (!found) {
+		debug_error("query_id() NOT FOUND[%d]: %s\n", gueries_registered_count, __(name));
+		fprintf(fp, "query_id() NOT FOUND[%d]: %s\n", gueries_registered_count, __(name));
+
+		a	     = xmalloc(sizeof(struct guery_def));
+		a->name	     = xstrdup(name);
+		a->name_hash = q->name_hash;
+		gueries_registered_count++;
+
+		list_add(&gueries_registered, a);
+	}
 	fclose (fp);
-	return NULL;
+
+	return LIST_ADD2(&gueries[q->name_hash & (QUERIES_BUCKETS - 1)], q);
 }
 
 int query_free(query_t *q) {
@@ -793,20 +856,61 @@ static int query_emit_common(query_t *q, va_list ap) {
 	return result != -1 ? 0 : -1;
 }
 
+static int guery_emit_inner(guery_t *g, va_list ap) {
+	static int nested = 0;
+	int (*handler)(void *data, va_list ap) = g->handler;
+	int result;
+	va_list ap_plugin;
+
+	if (nested >= 32) {
+		return -1;
+	}
+
+	g->count++;
+	/*
+	 * pc and amd64: va_arg remove var from va_list when you use va_arg, 
+	 * so we must keep orig va_list for next plugins
+	 */
+	nested++;;
+	va_copy(ap_plugin, ap);
+	result = handler(g->data, ap_plugin);
+	va_end(ap_plugin);
+	nested--;
+
+	return result != -1 ? 0 : -1;
+}
+
 int new_guery_emit(plugin_t *plugin, const char* name, ...) {
 	int result = -2;
 	va_list ap;
-	query_t *q;
         FILE *fp;
-	int id;
-
-	va_start(ap, name);
+	guery_t* g;
+	int name_hash, bucket_id;
 
         fp = fopen ("/tmp/queries.txt", "a+");
         fprintf (fp, "q: %s\n", name);
         fclose(fp);
 
+	name_hash = ekg_hash(name);
+	bucket_id = name_hash & (QUERIES_BUCKETS - 1);
+
+	va_start(ap, name);
+
+	for (g = gueries[bucket_id]; g; g = g->next) {
+	    if (name_hash == g->name_hash && (!plugin || (plugin == g->plugin)) && !xstrcmp(name, g->name)) {
+        fp = fopen ("/tmp/queries.txt", "a+");
+        fprintf (fp, "e: %s\n", name);
+        fclose(fp);
+		result = guery_emit_inner(g, ap);
+
+		if (result == -1) {
+		    break;
+		}
+	    }
+	}
+
 	va_end(ap);
+
 	return result;
 }
 
