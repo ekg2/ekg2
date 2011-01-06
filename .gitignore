@@ -33,3 +33,5 @@ git_version.h
 stamp-h1
 *.bz2
 *.gz
+*.swp
+ekg/ekg2
