@@ -37,7 +37,6 @@
 #include "themes.h"
 #include "windows.h"
 
-#include "queries.h"
 #include "dynstuff_inline.h"
 
 event_t *events = NULL;

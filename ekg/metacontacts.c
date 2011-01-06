@@ -34,7 +34,6 @@
 
 #include "dynstuff_inline.h"
 #include "metacontacts.h"
-#include "queries.h"
 
 metacontact_t *metacontacts = NULL;
 
