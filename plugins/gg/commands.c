@@ -805,7 +805,7 @@ static COMMAND(gg_command_msg) {
 
 			secure = 0;
 			
-			query_emit(NULL, "message_encrypt", &sid, &uid_tmp, &__msg, &secure);
+			query_emit(NULL, "message-encrypt", &sid, &uid_tmp, &__msg, &secure);
 
 			xfree(sid);
 			xfree(uid_tmp);
@@ -1591,14 +1591,14 @@ static COMMAND(gg_command_modify) {
 			tmp1 = xstrdup(u->nickname);
 			tmp2 = xstrdup(argv[++i]);
 
-			query_emit(NULL, "userlist_renamed", &tmp1, &tmp2);
+			query_emit(NULL, "userlist-renamed", &tmp1, &tmp2);
 			xfree(tmp1);
 				
 			xfree(u->nickname);
 			u->nickname = tmp2;
 
 			userlist_replace(session, u);
-			query_emit(NULL, "userlist_refresh");
+			query_emit(NULL, "userlist-refresh");
 			
 			modified = 1;
 			continue;
@@ -1655,7 +1655,7 @@ static COMMAND(gg_command_modify) {
 				}
 
 			if (chg)
-				query_emit(NULL, "userlist_refresh");
+				query_emit(NULL, "userlist-refresh");
 
  			array_free(tmp);
 			continue;
@@ -1696,14 +1696,14 @@ static COMMAND(gg_command_modify) {
 
 			tmp1 = xstrdup(u->uid);
 			tmp2 = xstrdup(argv[i + 1]);
-			query_emit(NULL, "userlist_removed", &tmp1, &tmp2, &q);
+			query_emit(NULL, "userlist-removed", &tmp1, &tmp2, &q);
 			xfree(tmp1);
 			xfree(tmp2);
 
 			userlist_clear_status(session, u->uid);
 
 			tmp1 = xstrdup(argv[++i]);
-			query_emit(NULL, "userlist_added", &tmp1, &tmp1, &q);
+			query_emit(NULL, "userlist-added", &tmp1, &tmp1, &q);
 
 			xfree((void *) u->uid);
 			u->uid = tmp1;

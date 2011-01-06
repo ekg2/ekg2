@@ -341,7 +341,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		/* It's FATAL */
 	}
 
-	query_emit(pl, "set_vars_default");
+	query_emit(pl, "set-vars-default");
 
 	printq("plugin_loaded", name);
 
@@ -355,7 +355,7 @@ int plugin_load(const char *name, int prio, int quiet)
 			session_read(tmp);
 
 		if (pl)
-			query_emit(pl, "config_postinit");
+			query_emit(pl, "config-postinit");
 
 		in_autoexec = 0;
 		config_changed = 1;
@@ -605,9 +605,22 @@ int plugin_var_find(plugin_t *pl, const char *name) {
 
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify) { return -1; }
 
-int query_register(const char *name, ...) {
-	va_list va;
-	int i, arg;
+
+static LIST_FREE_ITEM(registered_query_free_data, query_def_t *) {
+	xfree(data->name);
+}
+
+void registered_queries_free() {
+	if (!registered_queries)
+	    return;
+
+	LIST_DESTROY2(registered_queries, registered_query_free_data);
+
+	/* this has been already done in call above */
+	registered_queries = NULL;
+}
+
+static int query_register_common(const char* name, query_def_t **res) {
 	query_def_t *gd;
 	int found = 0, name_hash = ekg_hash(name);
 
@@ -628,7 +641,21 @@ int query_register(const char *name, ...) {
 		gd->name_hash = name_hash;
 		registered_queries_count++;
 
-		LIST_ADD2(registered_queries, gd);
+		LIST_ADD2(&registered_queries, gd);
+	}
+
+	*res = gd;
+
+	return 0;
+}
+
+int query_register(const char *name, ...) {
+	query_def_t *gd;
+	int i, arg;
+	va_list va;
+
+	if (query_register_common(name, &gd)) {
+	    return -1;
 	}
 
 	va_start(va, name);
@@ -646,21 +673,14 @@ int query_register(const char *name, ...) {
  * alternative way for registering queries
  */
 int query_register_const(const query_def_t *def) {
-	
-}
+        query_def_t *gd;
 
-static LIST_FREE_ITEM(registered_query_free_data, query_def_t *) {
-	xfree(data->name);
-}
+	if (query_register_common(def->name, &gd)) {
+	    return -1;
+	}
+	memcpy(gd->params, def->params, sizeof(def->params));
 
-void registered_queries_free() {
-	if (!registered_queries)
-	    return;
-
-	LIST_DESTROY2(registered_queries, registered_query_free_data);
-
-	/* this has been already done in call above */
-	registered_queries = NULL;
+	return 0;
 }
 
 
@@ -689,6 +709,7 @@ query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t 
 			break;
 		}
 	}
+
 	if (!found) {
 		debug_error("query_connect() NOT FOUND[%d]: %s\n", registered_queries_count, __(name));
 
@@ -697,7 +718,7 @@ query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t 
 		gd->name_hash = q->name_hash;
 		registered_queries_count++;
 
-		LIST_ADD2(registered_queries, gd);
+		LIST_ADD2(&registered_queries, gd);
 	}
 
 	queries_list_add(&queries[q->name_hash & (QUERIES_BUCKETS - 1)], q);
@@ -742,6 +763,7 @@ int query_emit(plugin_t *plugin, const char* name, ...) {
 
 	for (g = queries[bucket_id]; g; g = g->next) {
 	    if (name_hash == g->name_hash && (!plugin || (plugin == g->plugin)) && !xstrcmp(name, g->name)) {
+
 		result = query_emit_inner(g, ap);
 
 		if (result == -1) {

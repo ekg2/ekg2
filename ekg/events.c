@@ -170,7 +170,7 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	events_add(ev);
 
 	tmp = xstrdup(name);
-	query_emit(NULL, "event_added", &tmp);
+	query_emit(NULL, "event-added", &tmp);
 	xfree(tmp);
 
 	printq("events_add", name);
@@ -219,7 +219,7 @@ static int event_remove(unsigned int id, int quiet) {
 	printq("events_del", itoa(id));
 
 cleanup:	
-/*	  query_emit(NULL, "event_removed", itoa(id)); */	/* XXX, incorrect. */
+/*	  query_emit(NULL, "event-removed", itoa(id)); */	/* XXX, incorrect. */
 
 	return 0;
 }
@@ -388,12 +388,12 @@ int events_init() {
 	timer_add(NULL, "daytimer", 1, 1, ekg_day_timer, NULL);
 
 	events_add_handler(("protocol-message"), event_protocol_message);
-	events_add_handler(("event_avail"), event_avail);
-	events_add_handler(("event_away"), event_away);
-	events_add_handler(("event_na"), event_na);
-	events_add_handler(("event_online"), event_online);
-	events_add_handler(("event_offline"), event_offline);
-	events_add_handler(("event_descr"), event_descr);
+	events_add_handler(("event-avail"), event_avail);
+	events_add_handler(("event-away"), event_away);
+	events_add_handler(("event-na"), event_na);
+	events_add_handler(("event-online"), event_online);
+	events_add_handler(("event-offline"), event_offline);
+	events_add_handler(("event-descr"), event_descr);
 	return 0;
 }
 
@@ -424,10 +424,10 @@ static TIMER(ekg_day_timer) {
 			}
 			xfree(ts);
 
-			query_emit(NULL, "ui_window_refresh");
+			query_emit(NULL, "ui-window-refresh");
 		}
 		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
-		query_emit(NULL, "day_changed", &tm, &oldtm);
+		query_emit(NULL, "day-changed", &tm, &oldtm);
 #undef dayischanged
 	} else if (!oldtm) {
 		oldtm = xmalloc(sizeof(struct tm));

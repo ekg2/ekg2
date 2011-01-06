@@ -207,7 +207,7 @@ static COMMAND(jabber_command_disconnect)
 		{
 			char *__session = xstrdup(session_uid_get(session));
 
-			query_emit(NULL, "protocol_disconnecting", &__session);
+			query_emit(NULL, "protocol-disconnecting", &__session);
 
 			xfree(__session);
 		}

@@ -533,7 +533,7 @@ int gg_userlist_set(session_t *session, const char *contacts)
 
 	array_free(entries);
 
-	query_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist-refresh");
 
 	return 0;
 }

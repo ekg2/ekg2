@@ -206,7 +206,7 @@ void window_switch(int id) {
 			session_current = w->session;
 	
 		window_current = w;
-		query_emit(NULL, "ui_window_switch", &w);	/* XXX */
+		query_emit(NULL, "ui-window-switch", &w);	/* XXX */
 
 		w->act = EKG_WINACT_NONE;
 		if (w->target && w->session && (u = userlist_find(w->session, w->target)) && u->blink) {
@@ -232,7 +232,7 @@ void window_switch(int id) {
 	}
 
 	if (ul_refresh)
-		query_emit(NULL, "userlist_refresh");
+		query_emit(NULL, "userlist-refresh");
 }
 
 /**
@@ -328,7 +328,7 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 /*	w->userlist = NULL; */		/* xmalloc memset() to 0 memory */
 
 	windows_add(w);
-	query_emit(NULL, "ui_window_new", &w);	/* XXX */
+	query_emit(NULL, "ui-window-new", &w);	/* XXX */
 
 	return w;
 }
@@ -353,7 +353,7 @@ void window_print(window_t *w, fstring_t *line) {
 
 	if (!line->ts)
 		line->ts = time(NULL);
-	query_emit(NULL, "ui_window_print", &w, &line);	/* XXX */
+	query_emit(NULL, "ui-window-print", &w, &line);	/* XXX */
 }
 
 /*
@@ -445,7 +445,7 @@ void window_kill(window_t *w) {
 		w->target	= NULL;
 /*		w->session	= NULL; */
 
-		query_emit(NULL, "ui_window_target_changed", &w);
+		query_emit(NULL, "ui-window-target-changed", &w);
 		return;
 	}
 
@@ -473,7 +473,7 @@ void window_kill(window_t *w) {
 		}
 	}
 
-	query_emit(NULL, "ui_window_kill", &w);
+	query_emit(NULL, "ui-window-kill", &w);
 	windows_remove(w);
 }
 
@@ -595,7 +595,7 @@ COMMAND(cmd_window) {
 
 	if (!xstrcmp(name, "clear") || (params[0] && !xstrncasecmp(params[0], "clear", par0_matchlen))) {
 		window_t *w = xmemdup(window_current, sizeof(window_t));
-		query_emit(NULL, "ui_window_clear", &w);
+		query_emit(NULL, "ui-window-clear", &w);
 		xfree(w);
 		return 0;
 	}
@@ -771,7 +771,7 @@ COMMAND(cmd_window) {
 		if (w)	window_current->lastlog	= lastlog;
 		else	lastlog_current		= lastlog;
 			
-		return query_emit(NULL, "ui_window_update_lastlog");
+		return query_emit(NULL, "ui-window-update-lastlog");
 	}
 	
 	if (!xstrncasecmp(params[0], "kill", par0_matchlen)) {
@@ -873,7 +873,7 @@ COMMAND(cmd_window) {
 
 	
 	if (!xstrncasecmp(params[0], "refresh", par0_matchlen)) {
-		query_emit(NULL, "ui_refresh");
+		query_emit(NULL, "ui-refresh");
 		return 0;
 	}
 
@@ -897,10 +897,10 @@ void window_session_set(window_t *w, session_t *new_session) {
 
 	if (w == window_current) {
 		session_current = new_session;
-		query_emit(NULL, "session_changed");
+		query_emit(NULL, "session-changed");
 	}
 
-	query_emit(NULL, "ui_window_target_changed", &w);
+	query_emit(NULL, "ui-window-target-changed", &w);
 
 	/* let's sync window_status->session with window_debug->session */
 	if (lock == 0) {

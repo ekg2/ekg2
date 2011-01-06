@@ -647,7 +647,7 @@ int python_plugin_init(int prio)
 	command_add(&python_plugin, ("python:load"),   ("!"),	python_command_load,   COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&python_plugin, ("python:unload"), ("!"),	python_command_unload, COMMAND_ENABLEREQPARAMS, NULL);
 	command_add(&python_plugin, ("python:list"),   NULL,	python_command_list,   0, NULL);
-	query_connect(&python_plugin, "plugin_print_version", python_print_version, NULL);
+	query_connect(&python_plugin, "plugin-print-version", python_print_version, NULL);
 
 	return 0;
 }

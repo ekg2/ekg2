@@ -4,23 +4,23 @@
 protocol-message:
 	odpowiada za odebrane wiadomo¶ci. jako parametr przekazywany jest UID lub nickname.
 
-event_avail:
+event-avail:
 	zmiana statusu na dostêpny. nie przekazywany jest ¿aden parametr
 
-event_away:
+event-away:
 	zmiana statusu na away. nie przekazywany jest ¿aden parametr
 
-event_na:
+event-na:
 	zmiana statusu na niedostêpny. nie przekazywany jest ¿aden parametr.
 
-event_online:
+event-online:
 	zmiana statusu z niedostêpnego na dostêpny/zaraz wracam. nie 
 	przekazywany jest ¿aden parametr.
 
-event_offline:
+event-offline:
 	zmiana statusu z dostêpnego/zaraz wracam na niedostêpny. nie
 	przekazywany jest ¿aden parametr.
 
-event_descr:
+event-descr:
 	zmiana opisu. przekazywany jest opis jako parametr.
 

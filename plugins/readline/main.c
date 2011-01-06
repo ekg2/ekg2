@@ -282,24 +282,24 @@ EXPORT int readline_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("readline");
 
-	query_emit(NULL, "ui_is_initialized", &is_UI);
+	query_emit(NULL, "ui-is-initialized", &is_UI);
 
 	if (is_UI)
 		return -1;
 
 	plugin_register(&readline_plugin, prio);
 
-	query_connect(&readline_plugin, "ui_beep", readline_beep, NULL);
-	query_connect(&readline_plugin, "ui_is_initialized", readline_ui_is_initialized, NULL);
-	query_connect(&readline_plugin, "ui_window_new", readline_ui_window_new, NULL);
-	query_connect(&readline_plugin, "ui_window_switch", readline_ui_window_switch, NULL);
-	query_connect(&readline_plugin, "ui_window_kill", readline_ui_window_kill, NULL);
-	query_connect(&readline_plugin, "ui_window_print", readline_ui_window_print, NULL);
-	query_connect(&readline_plugin, "ui_window_refresh", readline_ui_window_refresh, NULL);
-	query_connect(&readline_plugin, "ui_refresh", readline_ui_window_refresh, NULL);
-	query_connect(&readline_plugin, "ui_window_clear", readline_ui_window_clear, NULL);
-	query_connect(&readline_plugin, "variable_changed", readline_variable_changed, NULL);
-	query_connect(&readline_plugin, "ui_loop", ekg2_readline_loop, NULL);
+	query_connect(&readline_plugin, "ui-beep", readline_beep, NULL);
+	query_connect(&readline_plugin, "ui-is-initialized", readline_ui_is_initialized, NULL);
+	query_connect(&readline_plugin, "ui-window-new", readline_ui_window_new, NULL);
+	query_connect(&readline_plugin, "ui-window-switch", readline_ui_window_switch, NULL);
+	query_connect(&readline_plugin, "ui-window-kill", readline_ui_window_kill, NULL);
+	query_connect(&readline_plugin, "ui-window-print", readline_ui_window_print, NULL);
+	query_connect(&readline_plugin, "ui-window-refresh", readline_ui_window_refresh, NULL);
+	query_connect(&readline_plugin, "ui-refresh", readline_ui_window_refresh, NULL);
+	query_connect(&readline_plugin, "ui-window-clear", readline_ui_window_clear, NULL);
+	query_connect(&readline_plugin, "variable-changed", readline_variable_changed, NULL);
+	query_connect(&readline_plugin, "ui-loop", ekg2_readline_loop, NULL);
 
 	variable_add(&readline_plugin, ("ctrld_quits"),  VAR_BOOL, 1, &config_ctrld_quits, NULL, NULL, NULL);
 	variable_add(&readline_plugin, "print_read_lines",  VAR_BOOL, 1, &config_print_line, NULL, NULL, NULL);

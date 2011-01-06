@@ -1410,7 +1410,7 @@ static COMMAND(irc_command_msg) {
 			int __to_us = 0;
 			int __priv = !ischn;
 
-			query_emit(NULL, "irc_protocol_message", &(session->uid), &(j->nick), &line, &__isour,
+			query_emit(NULL, "irc-protocol-message", &(session->uid), &(j->nick), &line, &__isour,
 					&__to_us, &__priv, &uid);
 		}
 
@@ -1426,7 +1426,7 @@ static COMMAND(irc_command_msg) {
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
-		query_emit(NULL, "message_encrypt", &(session->uid), &uid, &recoded, &secure);
+		query_emit(NULL, "message-encrypt", &(session->uid), &uid, &recoded, &secure);
 
 		protocol_message_emit(session, session->uid, rcpts, coloured, NULL, time(NULL), (EKG_MSGCLASS_SENT | EKG_NO_THEMEBIT), NULL, EKG_NO_BEEP, secure);
 
@@ -2697,15 +2697,15 @@ EXPORT int irc_plugin_init(int prio)
 	fillchars = (config_use_unicode ? fillchars_utf8 : fillchars_norm);
 	fillchars_len = (config_use_unicode ? 2 : 1);
 
-	query_connect(&irc_plugin, "protocol_validate_uid",	irc_validate_uid, NULL);
-	query_connect(&irc_plugin, "plugin_print_version",	irc_print_version, NULL);
-	query_connect(&irc_plugin, "ui_window_kill",		irc_window_kill, NULL);
-	query_connect(&irc_plugin, "session_added",		irc_session_init, NULL);
-	query_connect(&irc_plugin, "session_removed",		irc_session_deinit, NULL);
-	query_connect(&irc_plugin, "irc_topic",		irc_topic_header, (void*) 0);
-	query_connect(&irc_plugin, "status_show",		irc_status_show_handle, NULL);
-	query_connect(&irc_plugin, "irc_kick",			irc_onkick_handler, 0);
-	query_connect(&irc_plugin, "set_vars_default",		irc_setvar_default, NULL);
+	query_connect(&irc_plugin, "protocol-validate-uid",	irc_validate_uid, NULL);
+	query_connect(&irc_plugin, "plugin-print-version",	irc_print_version, NULL);
+	query_connect(&irc_plugin, "ui-window-kill",		irc_window_kill, NULL);
+	query_connect(&irc_plugin, "session-added",		irc_session_init, NULL);
+	query_connect(&irc_plugin, "session-removed",		irc_session_deinit, NULL);
+	query_connect(&irc_plugin, "irc-topic",		irc_topic_header, (void*) 0);
+	query_connect(&irc_plugin, "status-show",		irc_status_show_handle, NULL);
+	query_connect(&irc_plugin, "irc-kick",			irc_onkick_handler, 0);
+	query_connect(&irc_plugin, "set-vars-default",		irc_setvar_default, NULL);
 
 #define IRC_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS		IRC_ONLY | SESSION_MUSTBECONNECTED

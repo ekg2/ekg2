@@ -902,7 +902,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 	}
 
 	if (userlist_changed)
-		query_emit(NULL, "userlist_refresh");
+		query_emit(NULL, "userlist-refresh");
 
 	xfree(nick);
 	xfree(uid);
@@ -987,7 +987,7 @@ static TIMER_SESSION(rivchat_pingpong) {
 	}
 
 	if (userlist_changed)
-		query_emit(NULL, "userlist_refresh");
+		query_emit(NULL, "userlist-refresh");
 
 	rivchat_send_packet(s, RC_PING, NULL, rivchat_generate_data(s), RC_INFOSIZE);
 	return 0;
@@ -1491,15 +1491,15 @@ EXPORT int rivchat_plugin_init(int prio) {
 	plugin_register(&rivchat_plugin, prio);
 	ekg_recode_cp_inc();
 
-	query_connect(&rivchat_plugin, "protocol_validate_uid", rivchat_validate_uid, NULL);
-	query_connect(&rivchat_plugin, "session_added", rivchat_session_init, NULL);
-	query_connect(&rivchat_plugin, "session_removed", rivchat_session_deinit, NULL);
-	query_connect(&rivchat_plugin, "plugin_print_version", rivchat_print_version, NULL);
+	query_connect(&rivchat_plugin, "protocol-validate-uid", rivchat_validate_uid, NULL);
+	query_connect(&rivchat_plugin, "session-added", rivchat_session_init, NULL);
+	query_connect(&rivchat_plugin, "session-removed", rivchat_session_deinit, NULL);
+	query_connect(&rivchat_plugin, "plugin-print-version", rivchat_print_version, NULL);
 
-	query_connect(&rivchat_plugin, "userlist_info", rivchat_userlist_info_handle, NULL);
-	query_connect(&rivchat_plugin, "userlist_privhandle", rivchat_userlist_priv_handler, NULL);
+	query_connect(&rivchat_plugin, "userlist-info", rivchat_userlist_info_handle, NULL);
+	query_connect(&rivchat_plugin, "userlist-privhandle", rivchat_userlist_priv_handler, NULL);
 
-	query_connect(&rivchat_plugin, "irc_topic", rivchat_topic_header, NULL);
+	query_connect(&rivchat_plugin, "irc-topic", rivchat_topic_header, NULL);
 
 #if 0
 	query_connect(&irc_plugin, ("ui-window-kill"),	irc_window_kill, NULL);

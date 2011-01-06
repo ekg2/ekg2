@@ -63,7 +63,7 @@ static inline int ncurses_typingsend(const int len, const int first) {
 	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
 
 	if (((first > 1) || (ncurses_typing_win->in_active)) && uid)
-		return query_emit(NULL, "protocol_typing_out", &sid, &uid, &len, &first);
+		return query_emit(NULL, "protocol-typing-out", &sid, &uid, &len, &first);
 	else
 		return -1;
 }

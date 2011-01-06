@@ -1729,20 +1729,20 @@ int EXPORT gg_plugin_init(int prio) {
 
 	gg_setvar_default(NULL, dummy);
 
-	query_connect(&gg_plugin, "set_vars_default", gg_setvar_default, NULL);
-	query_connect(&gg_plugin, "protocol_validate_uid", gg_validate_uid, NULL);
-	query_connect(&gg_plugin, "plugin_print_version", gg_print_version, NULL);
-	query_connect(&gg_plugin, "session_added", gg_session_init, NULL);
-	query_connect(&gg_plugin, "session_removed", gg_session_deinit, NULL);
-	query_connect(&gg_plugin, "add_notify", gg_add_notify_handle, NULL);
-	query_connect(&gg_plugin, "remove_notify", gg_remove_notify_handle, NULL);
-	query_connect(&gg_plugin, "status_show", gg_status_show_handle, NULL);
+	query_connect(&gg_plugin, "set-vars-default", gg_setvar_default, NULL);
+	query_connect(&gg_plugin, "protocol-validate-uid", gg_validate_uid, NULL);
+	query_connect(&gg_plugin, "plugin-print-version", gg_print_version, NULL);
+	query_connect(&gg_plugin, "session-added", gg_session_init, NULL);
+	query_connect(&gg_plugin, "session-removed", gg_session_deinit, NULL);
+	query_connect(&gg_plugin, "add-notify", gg_add_notify_handle, NULL);
+	query_connect(&gg_plugin, "remove-notify", gg_remove_notify_handle, NULL);
+	query_connect(&gg_plugin, "status-show", gg_status_show_handle, NULL);
 	query_connect(&gg_plugin, "user-offline", gg_user_offline_handle, NULL);
 	query_connect(&gg_plugin, "user-online", gg_user_online_handle, NULL);
-	query_connect(&gg_plugin, "protocol_unignore", gg_user_online_handle, (void *)1);
-	query_connect(&gg_plugin, "userlist_info", gg_userlist_info_handle, NULL);
-	query_connect(&gg_plugin, "userlist_privhandle", gg_userlist_priv_handler, NULL);
-	query_connect(&gg_plugin, "protocol_typing_out", gg_typing_out, NULL);
+	query_connect(&gg_plugin, "protocol-unignore", gg_user_online_handle, (void *)1);
+	query_connect(&gg_plugin, "userlist-info", gg_userlist_info_handle, NULL);
+	query_connect(&gg_plugin, "userlist-privhandle", gg_userlist_priv_handler, NULL);
+	query_connect(&gg_plugin, "protocol-typing-out", gg_typing_out, NULL);
 	
 	gg_register_commands();
 

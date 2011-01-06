@@ -288,7 +288,7 @@ POLCHAT_HANDLER(polchat_join) {
 		if ((u = userlist_add(s, uid, strings[0]))) {
 			u->status = polchat_mode_to_ekg_mode(headers[1]);
 
-			query_emit(NULL, "userlist_refresh");
+			query_emit(NULL, "userlist-refresh");
 		}
 
 		xfree(uid);
@@ -302,7 +302,7 @@ POLCHAT_HANDLER(polchat_part) {
 	if (nheaders == 1 && nstrings == 1) {
 		userlist_remove(s, userlist_find(s, strings[0]));
 
-		query_emit(NULL, "userlist_refresh");
+		query_emit(NULL, "userlist-refresh");
 
 		return 0;
 	}
@@ -422,7 +422,7 @@ POLCHAT_HANDLER(polchat_nicklist) {
 			xfree(uid);
 		}
 
-		query_emit(NULL, "userlist_refresh");
+		query_emit(NULL, "userlist-refresh");
 		return 0;
 	}
 	return 1;
@@ -473,7 +473,7 @@ POLCHAT_HANDLER(polchat_nick_update) {
 		}
 		
 		u->status = polchat_mode_to_ekg_mode(headers[1]);
-		query_emit(NULL, "userlist_refresh");
+		query_emit(NULL, "userlist-refresh");
 
 		return 0;
 	}

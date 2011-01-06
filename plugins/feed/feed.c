@@ -333,11 +333,11 @@ EXPORT int feed_plugin_init(int prio) {
 	feed_plugin.params = feed_plugin_vars;
 	plugin_register(&feed_plugin, prio);
 			/* common */
-	query_connect(&feed_plugin, "session_added", feed_session_init, NULL);
-	query_connect(&feed_plugin, "session_removed", feed_session_deinit, NULL);
-	query_connect(&feed_plugin, "protocol_validate_uid", feed_validate_uid, NULL);
+	query_connect(&feed_plugin, "session-added", feed_session_init, NULL);
+	query_connect(&feed_plugin, "session-removed", feed_session_deinit, NULL);
+	query_connect(&feed_plugin, "protocol-validate-uid", feed_validate_uid, NULL);
 			/* common - rss, nntp */
-	query_connect(&feed_plugin, "rss_message", rss_message, NULL);
+	query_connect(&feed_plugin, "rss-message", rss_message, NULL);
 
 #ifdef HAVE_EXPAT
 	rss_init();	/* rss */

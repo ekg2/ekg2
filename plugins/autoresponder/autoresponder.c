@@ -136,7 +136,7 @@ EXPORT int autoresponder_plugin_init(int prio)
 
 	plugin_register(&autoresponder_plugin, prio);
 	
-	query_connect(&autoresponder_plugin, "protocol_message", autoresponder_message, NULL);
+	query_connect(&autoresponder_plugin, "protocol-message", autoresponder_message, NULL);
 	variable_add(&autoresponder_plugin, "allowed_sessions", VAR_STR, 1, &config_autoresponder_allowed_sessions, NULL, NULL, NULL);
 	variable_add(&autoresponder_plugin, "answer", VAR_STR, 1, &config_autoresponder_answer, autoresponder_varchange, NULL, NULL);
 	variable_add(&autoresponder_plugin, "greeting", VAR_STR, 1, &config_autoresponder_greeting, NULL, NULL, NULL);

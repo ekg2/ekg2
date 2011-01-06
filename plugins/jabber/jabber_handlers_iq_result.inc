@@ -573,7 +573,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 
 			u = userlist_find(s, uid);
 			if (u && xstrcmp(u->nickname, nickname))
-				query_emit(NULL, "userlist_renamed", &nickname, &(u->nickname));
+				query_emit(NULL, "userlist-renamed", &nickname, &(u->nickname));
 			else
 				u = userlist_add(s, uid, nickname); 
 
@@ -682,7 +682,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_roster) {
 		jabber_write_status(s);
 	}
 
-	query_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist-refresh");
 }
 
 JABBER_HANDLER_RESULT(jabber_handle_iq_result_register) {

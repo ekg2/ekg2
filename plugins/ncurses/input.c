@@ -377,7 +377,7 @@ static int ekg_getch(int meta, unsigned int *ch) {
 	}
 #undef GET_TIME
 #undef DIF_TIME
-	if (query_emit(NULL, "ui_keypress", ch) == -1)
+	if (query_emit(NULL, "ui-keypress", ch) == -1)
 		return -2; /* -2 - ignore that key */
 
 	return retcode;

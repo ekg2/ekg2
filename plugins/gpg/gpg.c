@@ -671,19 +671,19 @@ EXPORT int gpg_plugin_init(int prio) {
 	command_add(&gpg_plugin, "gpg:key", "p u ?", gpg_command_key, 0, 
 		"-d --delkey -f --forcekey -i --infokey -l --listkeys -s --setkey");
 
-	query_connect(&gpg_plugin, "gpg_message_encrypt",	gpg_message_encrypt, NULL);
-	query_connect(&gpg_plugin, "gpg_message_decrypt",	gpg_message_decrypt, 
+	query_connect(&gpg_plugin, "gpg-message-encrypt",	gpg_message_encrypt, NULL);
+	query_connect(&gpg_plugin, "gpg-message-decrypt",	gpg_message_decrypt, 
 						"-----BEGIN PGP MESSAGE-----\n\n"
 						"%s\n"
 						"-----END PGP MESSAGE-----\n");
 
-	query_connect(&gpg_plugin, "gpg_sign",			gpg_sign, NULL);
-	query_connect(&gpg_plugin, "gpg_verify",		gpg_verify, 
+	query_connect(&gpg_plugin, "gpg-sign",			gpg_sign, NULL);
+	query_connect(&gpg_plugin, "gpg-verify",		gpg_verify, 
 						"-----BEGIN PGP SIGNATURE-----\n\n"
 						"%s\n"
 						"-----END PGP SIGNATURE-----\n");
 
-	query_connect(&gpg_plugin, "userlist_info",		gpg_user_keyinfo, NULL);
+	query_connect(&gpg_plugin, "userlist-info",		gpg_user_keyinfo, NULL);
 
 	return 0;
 }

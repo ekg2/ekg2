@@ -93,10 +93,10 @@ static int stderr_backup = -1;
 
 int no_mouse = 0;
 
-char *events_all[] = { "protocol-message", "event_avail", "event_away", "event_na", "event_online", "event_descr", NULL };
+char *events_all[] = { "protocol-message", "event-avail", "event-away", "event-na", "event-online", "event-descr", NULL };
 
 static void config_postread() {
-	query_emit(NULL, "config_postinit"); 
+	query_emit(NULL, "config-postinit"); 
 
 	/* legacyconfig.c */
 #if ! USE_UNICODE
@@ -380,7 +380,7 @@ EXPORTNOT void ekg_debug_handler(int level, const char *format, va_list ap) {
 		default:			theme_format = "remote_debug";		break;
 	}
 
-	query_emit(NULL, "ui_is_initialized", &is_UI);
+	query_emit(NULL, "ui-is-initialized", &is_UI);
 
 	if (is_UI && window_debug) {
 		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
@@ -562,8 +562,8 @@ int main(int argc, char **argv)
 _test:
 	in_autoexec = 1;
 
-	query_connect(NULL, "irc_topic", remote_irc_topic_helper, NULL);
-	query_connect(NULL, "mail_count", remote_mail_count_helper, NULL);
+	query_connect(NULL, "irc-topic", remote_irc_topic_helper, NULL);
+	query_connect(NULL, "mail-count", remote_mail_count_helper, NULL);
 
 	if (frontend)
 		plugin_load(frontend);
@@ -591,7 +591,7 @@ _test:
 		return 0;		/* never here */
 	}
 
-	query_emit(NULL, "session_event");			/* XXX, dla ncures, zeby sie statusbar odswiezyl */
+	query_emit(NULL, "session-event");			/* XXX, dla ncures, zeby sie statusbar odswiezyl */
 
 	config_read(NULL);
 
@@ -637,7 +637,7 @@ _test:
 
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
-	if (query_emit(NULL, "ui_loop") != -1) {
+	if (query_emit(NULL, "ui-loop") != -1) {
 		/* krêæ imprezê */
 		while (1) {
 			ekg_loop();

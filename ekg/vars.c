@@ -503,7 +503,7 @@ int variable_set(const char *name, const char *value) {
 		(v->notify)(v->name);
 
 	tmpname = xstrdup(v->name);
-	query_emit(NULL, "variable_changed", &tmpname);
+	query_emit(NULL, "variable-changed", &tmpname);
 	xfree(tmpname);
 			
 	return 0;

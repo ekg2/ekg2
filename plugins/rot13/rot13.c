@@ -262,9 +262,9 @@ EXPORT int rot13_plugin_init(int prio) {
 
 	plugin_register(&rot13_plugin, prio);
 
-	query_connect(&rot13_plugin, "set_vars_default", rot13_setvar_default, NULL);
-	query_connect(&rot13_plugin, "message_encrypt", message_parse, (void *) 1);
-	query_connect(&rot13_plugin, "message_decrypt", message_parse, (void *) 0);
+	query_connect(&rot13_plugin, "set-vars-default", rot13_setvar_default, NULL);
+	query_connect(&rot13_plugin, "message-encrypt", message_parse, (void *) 1);
+	query_connect(&rot13_plugin, "message-decrypt", message_parse, (void *) 0);
 
 	command_add(&rot13_plugin, "rot13", "! ? ?", command_rot, 0, NULL);
 	command_add(&rot13_plugin, "rot:key", ("puUC uUC"), command_key, 0, "-a --add -m --modify -d --delete -l --list");

@@ -589,7 +589,7 @@ static WATCHER_LINE(remote_read_line) {
 					s->connected = (atoi(arr[3]) != 0);
 					event = (s->connected) ? 1 : 2;
 
-					query_emit(NULL, "session_event", &s, &event);	/* Notify UI */
+					query_emit(NULL, "session-event", &s, &event);	/* Notify UI */
 
 				} else if (!strcmp(arr[2], "STATUS")) {
 					s->status = atoi(arr[3]);
@@ -607,7 +607,7 @@ static WATCHER_LINE(remote_read_line) {
 					xfree(s->alias);
 					s->alias = ((arrcnt == 4) ? xstrdup(arr[3]) : NULL);
 
-					query_emit(NULL, "session_renamed", &(s->alias));	/* notify-ui */
+					query_emit(NULL, "session-renamed", &(s->alias));	/* notify-ui */
 				}
 			}
 			/* popsute */
@@ -647,7 +647,7 @@ static WATCHER_LINE(remote_read_line) {
 				if (!strcmp(arr[2], "ALIAS")) {
 					xfree(w->alias);
 					w->alias = ((arrcnt == 4) ? xstrdup(arr[3]) : NULL);
-					query_emit(NULL, "ui_window_target_changed", &w);
+					query_emit(NULL, "ui-window-target-changed", &w);
 
 				} else if (!strcmp(arr[2], "SESSION")) {
 					window_session_set(w, ((arrcnt == 4) ? session_find(arr[3]) : NULL));
@@ -656,7 +656,7 @@ static WATCHER_LINE(remote_read_line) {
 				} else if (!strcmp(arr[2], "TARGET")) {
 					xfree(w->target);
 					w->target = ((arrcnt == 4) ? xstrdup(arr[3]) : NULL);
-					query_emit(NULL, "ui_window_target_changed", &w);
+					query_emit(NULL, "ui-window-target-changed", &w);
 
 	/* IRCTOPIC/IRCTOPICBY/IRCTOPICMODE 
 	 * XXX, informowac ui
@@ -676,7 +676,7 @@ static WATCHER_LINE(remote_read_line) {
 
 				} else if (!strcmp(arr[2], "ACTIVITY") && arrcnt == 4) {
 					w->act = atoi(arr[3]);
-					query_emit(NULL, "ui_window_act_changed", &w);
+					query_emit(NULL, "ui-window-act-changed", &w);
 				}
 			}
 			/* popsute */
@@ -718,7 +718,7 @@ static WATCHER_LINE(remote_read_line) {
 				xfree(u->descr);
 				u->descr = (arrcnt == 5) ? xstrdup(arr[4]) : NULL;
 
-				query_emit(NULL, "userlist_changed", &(arr[1]), &(arr[2]));	/* notify-ui */
+				query_emit(NULL, "userlist-changed", &(arr[1]), &(arr[2]));	/* notify-ui */
 			}
 		}
 
@@ -735,7 +735,7 @@ static WATCHER_LINE(remote_read_line) {
 			window_t *w;
 
 			if ((w = window_exist(id))) {
-				query_emit(NULL, "ui_window_clear", &w);
+				query_emit(NULL, "ui-window-clear", &w);
 
 			} else {
 				/* fucked */
@@ -773,7 +773,7 @@ static WATCHER_LINE(remote_read_line) {
 
 	} else if (!strcmp(cmd, "BEEP")) {
 		if (arrcnt == 1) {
-			query_emit(NULL, "ui_beep", NULL);
+			query_emit(NULL, "ui-beep", NULL);
 		}
 
 	} else if (!strcmp(cmd, "MAILCOUNT")) {

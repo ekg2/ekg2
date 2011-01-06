@@ -768,10 +768,10 @@ EXPORT int sniff_plugin_init(int prio) {
 	ekg_recode_cp_inc();
 	ekg_recode_utf8_inc();
 
-	query_connect(&sniff_plugin, "protocol_validate_uid",	sniff_validate_uid, NULL);
-	query_connect(&sniff_plugin, "status_show",		sniff_status_show, NULL);
-	query_connect(&sniff_plugin, "plugin_print_version",	sniff_print_version, NULL);
-	query_connect(&sniff_plugin, "session_removed",	sniff_session_deinit, NULL);
+	query_connect(&sniff_plugin, "protocol-validate-uid",	sniff_validate_uid, NULL);
+	query_connect(&sniff_plugin, "status-show",		sniff_status_show, NULL);
+	query_connect(&sniff_plugin, "plugin-print-version",	sniff_print_version, NULL);
+	query_connect(&sniff_plugin, "session-removed",	sniff_session_deinit, NULL);
 
 	command_add(&sniff_plugin, "sniff:connect", NULL, sniff_command_connect,    SESSION_MUSTBELONG, NULL);
 	command_add(&sniff_plugin, "sniff:connections", NULL, sniff_command_connections, SESSION_MUSTBELONG | SESSION_MUSTBECONNECTED, NULL);

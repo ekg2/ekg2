@@ -2,9 +2,9 @@
 
 #include "queries.h"
 
-/* list of known queries. keep it sorted with enum. */
+/* list of known queries */
 
-const query_def_t core_query_list[] = {
+static const query_def_t core_query_list[] = {
 	{ NULL, "mail-count", 0, {
 		QUERY_ARG_INT,			/* mail count */
 		QUERY_ARG_END } },
@@ -100,29 +100,29 @@ const query_def_t core_query_list[] = {
 		QUERY_ARG_INT,			/* secure */
 		QUERY_ARG_END } }, 
 
-	{ NULL, "event_away", 0, {
+	{ NULL, "event-away", 0, {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_END } },
 
-	{ NULL, "event_avail", 0, {
+	{ NULL, "event-avail", 0, {
 		/* XXX, emited, but noone connect to this. */
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_END } },
 
-	{ NULL, "event_descr", 0, {
+	{ NULL, "event-descr", 0, {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_CHARP,		/* descr */
 		QUERY_ARG_END } },
 
-	{ NULL, "event_online", 0, {
+	{ NULL, "event-online", 0, {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_END } },
 
-	{ NULL, "event_na", 0, {
+	{ NULL, "event-na", 0, {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_END } },
@@ -180,10 +180,10 @@ const query_def_t core_query_list[] = {
 		/* XXX */
 		QUERY_ARG_END } },
 
-	{ NULL, "sigusr1", 0, {
+	{ NULL, "ekg-sigusr1", 0, {
 		QUERY_ARG_END } },		/* no params */
 
-	{ NULL, "sigusr2", 0, {
+	{ NULL, "ekg-sigusr2", 0, {
 		QUERY_ARG_END } },		/* no params */
 
 	{ NULL, "config-postinit", 0, {
@@ -394,7 +394,7 @@ const query_def_t core_query_list[] = {
 	{ NULL, "userlist-refresh", 0, {
 		QUERY_ARG_END } },
 
-	{ NULL, "event_offline", 0, {
+	{ NULL, "event-offline", 0, {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_END } },
@@ -402,6 +402,12 @@ const query_def_t core_query_list[] = {
 
 
 int queries_init() {
+	query_def_t *p = core_query_list;
+	size_t i;
+
+	for (i = 0; i < sizeof(core_query_list) / sizeof(*core_query_list); ++i, ++p) {
+		query_register_const(p);
+	}
 	return 0;
 }
 

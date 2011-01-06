@@ -352,8 +352,8 @@ COMMAND(cmd_add) {
 	if (u || userlist_add(session, params[0], params[1])) {
 		char *uid = xstrdup(params[0]);
 
-		query_emit(NULL, "userlist_added", &uid, &params[1], &quiet);
-		query_emit(NULL, "add_notify", &session->uid, &uid);
+		query_emit(NULL, "userlist-added", &uid, &params[1], &quiet);
+		query_emit(NULL, "add-notify", &session->uid, &uid);
 		xfree(uid);
 
 		printq("user_added", params[1], session_name(session));
@@ -479,7 +479,7 @@ static COMMAND(cmd_status) {
 	now_days = t->tm_yday;
 
 	if (s) {
-		query_emit(s->plugin, "status_show", &s->uid);
+		query_emit(s->plugin, "status-show", &s->uid);
 
 		/* when we connected [s->connected != 0] to server or when we lost last connection [s->connected == 0] [time from s->last_conn] */
 		if (s->last_conn) { 
@@ -529,7 +529,7 @@ static COMMAND(cmd_del)
 	
 			p0 = xstrdup(u->nickname);
 			tmp = xstrdup(u->uid);
-			query_emit(NULL, "userlist_removed", &p0, &tmp);
+			query_emit(NULL, "userlist-removed", &p0, &tmp);
 			xfree(tmp);
 			xfree(p0);
 
@@ -560,8 +560,8 @@ static COMMAND(cmd_del)
 
 	userlist_remove(session, u);
 
-	query_emit(NULL, "userlist_removed", &params[0], &tmp);
-	query_emit(NULL, "remove_notify", &session->uid, &tmp);
+	query_emit(NULL, "userlist-removed", &params[0], &tmp);
+	query_emit(NULL, "remove-notify", &session->uid, &tmp);
 
 	xfree(tmp);
 	
@@ -1513,7 +1513,7 @@ list_user:
 		}
 
 
-		query_emit(NULL, "userlist_info", &u, &quiet);
+		query_emit(NULL, "userlist-info", &u, &quiet);
 
 
 		if (u->groups) {
@@ -1859,7 +1859,7 @@ static COMMAND(cmd_version) {
 #ifdef VER_DISTNOTES
 	printq("generic2", VER_DISTNOTES);
 #endif
-	query_emit(NULL, "plugin_print_version");
+	query_emit(NULL, "plugin-print-version");
 
 	return 0;
 }
@@ -2393,7 +2393,7 @@ static COMMAND(cmd_test_iconv) {
  */
 
 static COMMAND(cmd_beep) {
-	query_emit(NULL, "ui_beep", NULL);
+	query_emit(NULL, "ui-beep", NULL);
 	return 0;
 }
 
@@ -2532,13 +2532,13 @@ next:
 			if (w) {
 				w->target = xstrdup(par0);				/* new target */
 				w->session = session;					/* change session */
-				query_emit(NULL, "ui_window_target_changed", &w);	/* notify ui-plugin */
+				query_emit(NULL, "ui-window-target-changed", &w);	/* notify ui-plugin */
 			}
 		} else if (!(config_make_window & 2) && window_current /* && window_current->id >1 && !window_current->floating */) {
 			w = window_current;
 			xfree(w->target);	w->target = xstrdup(par0);		/* change target */
 			w->session = session;						/* change session */
-			query_emit(NULL, "ui_window_target_changed", &w);		/* notify ui-plugin */
+			query_emit(NULL, "ui-window-target-changed", &w);		/* notify ui-plugin */
 		}
 
 		if (!w) w = window_new(par0, session, 0);	/* jesli jest config_make_window => 2 lub nie mielismy wolnego okienka przy config_make_window == 1, stworzmy je */
@@ -2836,7 +2836,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 						w->lock = 0;
 					}
 				}
-				query_emit(NULL, "ui_window_refresh");
+				query_emit(NULL, "ui-window-refresh");
 				xfree(uid);
 			}
 			if (last_command->flags & COMMAND_ISALIAS) array_free(parameter_types);

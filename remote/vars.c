@@ -300,7 +300,7 @@ static int variable_set(variable_t *v, const char *value) {
 	if (v->notify)
 		(v->notify)(v->name);
 
-	query_emit(NULL, "variable_changed", &(v->name));
+	query_emit(NULL, "variable-changed", &(v->name));
 	return 0;
 }
 

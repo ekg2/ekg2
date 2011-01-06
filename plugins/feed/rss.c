@@ -738,7 +738,7 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 //			if (channel->new)	item->new = 0;
 			if (item->new)		new_items++;
 
-			query_emit(NULL, "rss_message", 
+			query_emit(NULL, "rss-message", 
 				&(f->session), &(f->uid), &proto_headers, &headers, &(item->title), 
 				&(item->url),  &(item->descr), &(item->new), &modify);
 		}
@@ -1042,7 +1042,7 @@ static COMMAND(rss_command_show) {
 					char *headers		= item->other_tags->len	? item->other_tags->str : NULL;
 					int modify		= 0x04;			/* XXX */
 
-					query_emit(NULL, "rss_message", 
+					query_emit(NULL, "rss-message", 
 							&(feed->session), &(feed->uid), &proto_headers, &headers, &(item->title), 
 							&(item->url),  &(item->descr), &(item->new), &modify);
 				}
@@ -1102,7 +1102,7 @@ static COMMAND(rss_command_subscribe) {
 	}
 
 	printq("feed_added", format_user(session, target), session_name(session));
-	query_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist-refresh");
 	return 0;
 }
 
@@ -1115,7 +1115,7 @@ static COMMAND(rss_command_unsubscribe) {
 
 	printq("feed_deleted", target, session_name(session));
 	userlist_remove(session, u);
-	query_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist-refresh");
 	return 0;
 }
 
@@ -1173,7 +1173,7 @@ void rss_init() {
 	command_add(&feed_plugin, ("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL); 
 	command_add(&feed_plugin, ("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
 
-	query_connect(&feed_plugin, "userlist_info", rss_userlist_info, NULL);
+	query_connect(&feed_plugin, "userlist-info", rss_userlist_info, NULL);
 }
 #endif
 
