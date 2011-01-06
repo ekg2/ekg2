@@ -155,15 +155,18 @@ typedef struct guery_node {
         int count;
 } guery_t;
 
+query_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
+int new_guery_emit(plugin_t *, const char *, ...);
+
+LIST_FREE_ITEM(list_guery_free_data, guery_t *);
+
 #ifndef EKG2_WIN32_NOFUNCTION
 
-query_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
 query_t *query_connectXXX(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
 query_t *query_connect_idXXX(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data);
 int query_free(query_t *q);
 void query_external_free();
-
-int new_guery_emit(plugin_t *, const char *, ...);
+void list_gueries_registered_free();
 
 int query_emit_idXXX(plugin_t *, const int, ...);
 int query_emitXX(plugin_t *, const char *, ...);
@@ -248,6 +251,7 @@ int ekg2_dlinit();
 extern plugin_t *plugins;
 extern list_t watches;
 extern query_t *queries[];
+extern guery_t *gueries[];
 #endif
 
 #ifdef __cplusplus

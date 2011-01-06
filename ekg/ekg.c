@@ -1199,6 +1199,15 @@ void ekg_exit()
 		}
 	}
 	query_external_free();
+/* gueries */
+	{
+		guery_t** kk;
+		for (kk = gueries; kk < &gueries[QUERIES_BUCKETS]; ++kk) {
+			guery_t* g;
+			LIST_DESTROY2(*kk, list_guery_free_data);
+		}
+	}
+	list_gueries_registered_free();
 
 	xfree(home_dir);
 

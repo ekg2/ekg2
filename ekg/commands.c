@@ -2096,6 +2096,7 @@ static COMMAND(cmd_debug_watches)
 static COMMAND(cmd_debug_queries)
 {
 	query_t **ll, *q;
+        guery_t **kk, *g;
 	
 	printq("generic", ("name			     | plugin	   | count"));
 	printq("generic", ("---------------------------------|-------------|------"));
@@ -2111,6 +2112,17 @@ static COMMAND(cmd_debug_queries)
 			printq("generic", buf);
 		}
 	}
+
+        for (kk = gueries; kk < &gueries[QUERIES_BUCKETS]; ++kk) {
+                for (g = *kk; g; g = g->next) {
+                        char buf[256];
+			const char *plugin = (g->plugin) ? g->plugin->name : ("-");
+
+			snprintf(buf, sizeof(buf), "%-32s | %-11s | %d", __(g->name), plugin, g->count);
+			printq("generic", buf);
+
+                }
+        }
 
 	return 0;
 }
