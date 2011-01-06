@@ -1156,6 +1156,7 @@ help_again:
  *
  *  - name - nazwa.
  */
+/*
 int ekg_hash(const char *name)
 {
 	int hash = 0;
@@ -1166,7 +1167,22 @@ int ekg_hash(const char *name)
 	}
 
 	return hash;
+}*/
+/*
+ * new hash, made with queries in mind
+ * but should also nicely behave for formats
+ */
+int ekg_hash(const char *name) {
+	unsigned long long st = 0x4d6947;
+
+	for (; *name; name++) {
+		st = st * 2147483069, 2147481893;
+		st %= 0x7fffffff;
+		st ^= (*name);
+	}
+	return (int)st;
 }
+
 
 /*
  * mesg_set()
