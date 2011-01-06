@@ -458,7 +458,7 @@ void jabber_handle_disconnect(session_t *s, const char *reason, int type) {
 		}
 
 		userlist_free(s);
-		new_guery_emit(NULL, "userlist_refresh");
+		query_emit(NULL, "userlist_refresh");
 	}
 
 	session_set(s, "__sasl_excepted", NULL);
@@ -1653,18 +1653,18 @@ EXPORT int jabber_plugin_init(int prio) {
 
 	session_postinit = 0;
 
-	new_guery_connect(&jabber_plugin, "protocol_validate_uid",	jabber_validate_uid, NULL);
-	new_guery_connect(&jabber_plugin, "plugin_print_version",	jabber_print_version, NULL);
-	new_guery_connect(&jabber_plugin, "session_added",		jabber_session_init, NULL);
-	new_guery_connect(&jabber_plugin, "session_removed",	jabber_session_deinit, NULL);
-	new_guery_connect(&jabber_plugin, "status_show",		jabber_status_show_handle, NULL);
-	new_guery_connect(&jabber_plugin, "ui_window_kill",	jabber_window_kill, NULL);
-	new_guery_connect(&jabber_plugin, "protocol_ignore",	jabber_protocol_ignore, NULL);
-	new_guery_connect(&jabber_plugin, "config_postinit",	jabber_dcc_postinit, NULL);
-	new_guery_connect(&jabber_plugin, "config_postinit",	jabber_pgp_postinit, NULL);
-	new_guery_connect(&jabber_plugin, "userlist_info",		jabber_userlist_info, NULL);
-	new_guery_connect(&jabber_plugin, "userlist_privhandle",	jabber_userlist_priv_handler, NULL);
-	new_guery_connect(&jabber_plugin, "protocol_typing_out",	jabber_typing_out, NULL);
+	query_connect(&jabber_plugin, "protocol_validate_uid",	jabber_validate_uid, NULL);
+	query_connect(&jabber_plugin, "plugin_print_version",	jabber_print_version, NULL);
+	query_connect(&jabber_plugin, "session_added",		jabber_session_init, NULL);
+	query_connect(&jabber_plugin, "session_removed",	jabber_session_deinit, NULL);
+	query_connect(&jabber_plugin, "status_show",		jabber_status_show_handle, NULL);
+	query_connect(&jabber_plugin, "ui_window_kill",	jabber_window_kill, NULL);
+	query_connect(&jabber_plugin, "protocol_ignore",	jabber_protocol_ignore, NULL);
+	query_connect(&jabber_plugin, "config_postinit",	jabber_dcc_postinit, NULL);
+	query_connect(&jabber_plugin, "config_postinit",	jabber_pgp_postinit, NULL);
+	query_connect(&jabber_plugin, "userlist_info",		jabber_userlist_info, NULL);
+	query_connect(&jabber_plugin, "userlist_privhandle",	jabber_userlist_priv_handler, NULL);
+	query_connect(&jabber_plugin, "protocol_typing_out",	jabber_typing_out, NULL);
 
 	variable_add(&jabber_plugin, ("xmpp:beep_mail"), VAR_BOOL, 1, &config_jabber_beep_mail, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("xmpp:dcc"), VAR_BOOL, 1, &jabber_dcc, (void*) jabber_dcc_postinit, NULL, NULL);

@@ -221,7 +221,7 @@ static int check_mail_update(const char *s, int more)
 		}
 
 		if (config_beep && config_beep_mail)
-			new_guery_emit(NULL, "ui_beep", NULL);
+			query_emit(NULL, "ui_beep", NULL);
 
 		play_sound(config_sound_mail_file);
 
@@ -635,7 +635,7 @@ EXPORT int mail_plugin_init(int prio)
 #endif
 	plugin_register(&mail_plugin, prio);
 
-	new_guery_connect(&mail_plugin, "mail_count", mail_count_query, NULL);
+	query_connect(&mail_plugin, "mail_count", mail_count_query, NULL);
 
 	variable_add(&mail_plugin, ("beep_mail"), VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
 	variable_add(&mail_plugin, ("check_mail"), VAR_MAP, 1, &config_check_mail, changed_check_mail, variable_map(4, 0, 0, "no", 1, 2, "mbox", 2, 1, "maildir", 4, 0, "notify"), NULL);

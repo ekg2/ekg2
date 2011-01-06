@@ -27,3 +27,16 @@ kind-of-a-rationale:
  + known-to-core queries are fast (constant lookup time)
  - id-based queries makes the code more complicated
  - problem for script languages
+
+
+api:
+
+query_register - register given query
+
+query_connect - attach a handler to the given query,
+        you probably shouldn't connect if the query hasn't
+        yet been registered
+
+query_emit - emit a query
+
+

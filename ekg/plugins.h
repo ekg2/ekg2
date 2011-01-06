@@ -131,52 +131,29 @@ void plugins_unlink(plugin_t *pl);
 #define QUERY(x) int x(void *data, va_list ap)
 typedef QUERY(query_handler_func_t);
 
-typedef struct queryx {
-	struct queryx *next;
-
-	int id;
-	plugin_t *plugin;
-	void *data;
-	query_handler_func_t *handler;
-	int count;
-} query_t;
-
-
 /* must be power of 2 ;p */
 #define QUERIES_BUCKETS 16
 
-typedef struct guery_node {
-        struct guery_node* next;
+typedef struct query_node {
+        struct query_node* next;
         char *name;
         int name_hash;
         plugin_t *plugin;
         void *data;
         query_handler_func_t *handler;
         int count;
-} guery_t;
+} query_t;
 
-guery_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
-int new_guery_emit(plugin_t *, const char *, ...);
+int query_register(const char *name, ...);
+query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
+int query_emit(plugin_t *, const char *, ...);
+int query_free(query_t* g);
 
-LIST_FREE_ITEM(list_guery_free_data, guery_t *);
-
-#ifndef EKG2_WIN32_NOFUNCTION
-
-query_t *query_connectXXX(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
-query_t *query_connect_idXXX(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data);
-int query_free(query_t *q);
-void query_external_free();
-void list_gueries_registered_free();
-
-int query_emit_idXXX(plugin_t *, const int, ...);
-int query_emitXX(plugin_t *, const char *, ...);
 void queries_reconnect();
 
-const char *query_name(const int id);
-const struct query_def *query_structXXX(const int id);
-int query_register_external(const char *name, ...);
+void gueries_list_destroy(query_t** kk);
 
-#endif
+void registered_gueries_free();
 
 typedef enum {
 	WATCH_NONE = 0,
@@ -250,8 +227,7 @@ int ekg2_dlinit();
 #ifndef EKG2_WIN32_NOFUNCTION
 extern plugin_t *plugins;
 extern list_t watches;
-extern query_t *queries[];
-extern guery_t *gueries[];
+extern query_t *gueries[];
 #endif
 
 #ifdef __cplusplus

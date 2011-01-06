@@ -821,7 +821,7 @@ static WATCHER_SESSION_LINE(irc_handle_stream) {
 	 * I'm not sure if this is good idea, just thinking...
 	 */
 	buf = xstrdup((char *)watch);
-	new_guery_emit(NULL, "irc-parse-line", &s->uid, &buf);
+	query_emit(NULL, "irc-parse-line", &s->uid, &buf);
 	irc_parse_line(s, buf, fd);
 	xfree(buf);
 
@@ -899,7 +899,7 @@ static WATCHER_SESSION(irc_handle_stream_ssl_input) {
 		if (strlen > 1 && line[strlen - 1] == '\r')
 			line[strlen - 1] = 0;
 
-		new_guery_emit(NULL, "irc-parse-line", &s->uid, &line);
+		query_emit(NULL, "irc-parse-line", &s->uid, &line);
 
 		irc_parse_line(s, line, fd);
 
@@ -1410,7 +1410,7 @@ static COMMAND(irc_command_msg) {
 			int __to_us = 0;
 			int __priv = !ischn;
 
-			new_guery_emit(NULL, "irc_protocol_message", &(session->uid), &(j->nick), &line, &__isour,
+			query_emit(NULL, "irc_protocol_message", &(session->uid), &(j->nick), &line, &__isour,
 					&__to_us, &__priv, &uid);
 		}
 
@@ -1426,7 +1426,7 @@ static COMMAND(irc_command_msg) {
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
-		new_guery_emit(NULL, "message_encrypt", &(session->uid), &uid, &recoded, &secure);
+		query_emit(NULL, "message_encrypt", &(session->uid), &uid, &recoded, &secure);
 
 		protocol_message_emit(session, session->uid, rcpts, coloured, NULL, time(NULL), (EKG_MSGCLASS_SENT | EKG_NO_THEMEBIT), NULL, EKG_NO_BEEP, secure);
 
@@ -2697,15 +2697,15 @@ EXPORT int irc_plugin_init(int prio)
 	fillchars = (config_use_unicode ? fillchars_utf8 : fillchars_norm);
 	fillchars_len = (config_use_unicode ? 2 : 1);
 
-	new_guery_connect(&irc_plugin, "protocol_validate_uid",	irc_validate_uid, NULL);
-	new_guery_connect(&irc_plugin, "plugin_print_version",	irc_print_version, NULL);
-	new_guery_connect(&irc_plugin, "ui_window_kill",		irc_window_kill, NULL);
-	new_guery_connect(&irc_plugin, "session_added",		irc_session_init, NULL);
-	new_guery_connect(&irc_plugin, "session_removed",		irc_session_deinit, NULL);
-	new_guery_connect(&irc_plugin, "irc_topic",		irc_topic_header, (void*) 0);
-	new_guery_connect(&irc_plugin, "status_show",		irc_status_show_handle, NULL);
-	new_guery_connect(&irc_plugin, "irc_kick",			irc_onkick_handler, 0);
-	new_guery_connect(&irc_plugin, "set_vars_default",		irc_setvar_default, NULL);
+	query_connect(&irc_plugin, "protocol_validate_uid",	irc_validate_uid, NULL);
+	query_connect(&irc_plugin, "plugin_print_version",	irc_print_version, NULL);
+	query_connect(&irc_plugin, "ui_window_kill",		irc_window_kill, NULL);
+	query_connect(&irc_plugin, "session_added",		irc_session_init, NULL);
+	query_connect(&irc_plugin, "session_removed",		irc_session_deinit, NULL);
+	query_connect(&irc_plugin, "irc_topic",		irc_topic_header, (void*) 0);
+	query_connect(&irc_plugin, "status_show",		irc_status_show_handle, NULL);
+	query_connect(&irc_plugin, "irc_kick",			irc_onkick_handler, 0);
+	query_connect(&irc_plugin, "set_vars_default",		irc_setvar_default, NULL);
 
 #define IRC_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS		IRC_ONLY | SESSION_MUSTBECONNECTED
@@ -2767,14 +2767,14 @@ EXPORT int irc_plugin_init(int prio)
 	variable_add(&irc_plugin, "allow_fake_contacts", VAR_BOOL, 1, &irc_config_allow_fake_contacts, NULL, NULL, NULL);
 	variable_add(&irc_plugin, "experimental_chan_name_clean", VAR_BOOL, 1, &irc_config_experimental_chan_name_clean, NULL, NULL, NULL);
 
-	query_register_external("irc-join", 	QUERY_ARG_CHARP,	/* session */
+	query_register("irc-join",  QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* channel */
 						QUERY_ARG_CHARP,	/* nick */
 						QUERY_ARG_INT,		/* isour */
 						QUERY_ARG_CHARP,	/* ident@host */
 						QUERY_ARG_END);
 
-	query_register_external("irc-mode", 	QUERY_ARG_CHARP,	/* session */
+	query_register("irc-mode", 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* nick!ident@host */
 						QUERY_ARG_CHARP,	/* channel */
 						QUERY_ARG_INT,		/* act */
@@ -2782,19 +2782,19 @@ EXPORT int irc_plugin_init(int prio)
 						QUERY_ARG_CHARP,	/* param */
 						QUERY_ARG_END);
 
-	query_register_external("irc-notice", 	QUERY_ARG_CHARP,	/* session */
+	query_register("irc-notice", 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* from */
 						QUERY_ARG_CHARP,	/* destination (channel|nick) */
 						QUERY_ARG_CHARP,	/* message */
 						QUERY_ARG_INT,		/* is to us */
 						QUERY_ARG_END);
 
-	query_register_external("irc-parse-line",
+	query_register("irc-parse-line",
 					 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* line */
 						QUERY_ARG_END);
 
-	query_register_external("irc-part", 	QUERY_ARG_CHARP,	/* session */
+	query_register("irc-part", 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* channel */
 						QUERY_ARG_CHARP,	/* nick */
 						QUERY_ARG_INT,		/* isour */
@@ -2802,20 +2802,20 @@ EXPORT int irc_plugin_init(int prio)
 						QUERY_ARG_CHARP,	/* reason */
 						QUERY_ARG_END);
 
-	query_register_external("irc-privmsg", 	QUERY_ARG_CHARP,	/* session */
+	query_register("irc-privmsg", 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* from */
 						QUERY_ARG_CHARP,	/* destination (channel|nick) */
 						QUERY_ARG_CHARP,	/* message */
 						QUERY_ARG_INT,		/* is to us */
 						QUERY_ARG_END);
 
-	query_register_external("irc-protocol-numeric",
+	query_register("irc-protocol-numeric",
 						QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_INT,		/* number */
 						QUERY_ARG_CHARPP,	/* params */
 						QUERY_ARG_END);
 
-	query_register_external("irc-quit", 	QUERY_ARG_CHARP,	/* session */
+	query_register("irc-quit", 	QUERY_ARG_CHARP,	/* session */
 						QUERY_ARG_CHARP,	/* nick */
 						QUERY_ARG_INT,		/* isour */
 						QUERY_ARG_CHARP,	/* ident@host */

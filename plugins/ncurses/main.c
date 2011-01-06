@@ -686,7 +686,7 @@ EXPORT int ncurses_plugin_init(int prio)
 
 	PLUGIN_CHECK_VER("ncurses");
 
-	new_guery_emit(NULL, "ui_is_initialized", &is_UI);
+	query_emit(NULL, "ui_is_initialized", &is_UI);
 
 	if (is_UI)
 		return -1;
@@ -694,51 +694,51 @@ EXPORT int ncurses_plugin_init(int prio)
 
 	ncurses_setvar_default(NULL, dummy);
 
-	new_guery_connect(&ncurses_plugin, "set_vars_default", ncurses_setvar_default, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_beep", ncurses_beep, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_is_initialized", ncurses_ui_is_initialized, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_window_switch", ncurses_ui_window_switch, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_window_print", ncurses_ui_window_print, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_window_new", ncurses_ui_window_new, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_window_kill", ncurses_ui_window_kill, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_window_target_changed", ncurses_ui_window_target_changed, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_window_act_changed", ncurses_ui_window_act_changed, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_window_refresh", ncurses_ui_window_refresh, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_window_clear", ncurses_ui_window_clear, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_window_update_lastlog", ncurses_ui_window_lastlog, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_refresh", ncurses_ui_refresh, NULL);
-	new_guery_connect(&ncurses_plugin, "ui_password_input", ncurses_password_input, NULL);
-	new_guery_connect(&ncurses_plugin, "session_added", ncurses_statusbar_query, NULL);
-	new_guery_connect(&ncurses_plugin, "session_removed", ncurses_statusbar_query, NULL);
-	new_guery_connect(&ncurses_plugin, "session_event", ncurses_statusbar_query, NULL);
-	new_guery_connect(&ncurses_plugin, "session_renamed", ncurses_statusbar_query, NULL);
-	new_guery_connect(&ncurses_plugin, "binding_set", ncurses_binding_set_query, NULL);
-	new_guery_connect(&ncurses_plugin, "binding_command", ncurses_binding_adddelete_query, NULL);
-	new_guery_connect(&ncurses_plugin, "binding_default", ncurses_binding_default, NULL);
-	new_guery_connect(&ncurses_plugin, "variable_changed", ncurses_variable_changed, NULL);
-	new_guery_connect(&ncurses_plugin, "conference_renamed", ncurses_conference_renamed, NULL);
+	query_connect(&ncurses_plugin, "set_vars_default", ncurses_setvar_default, NULL);
+	query_connect(&ncurses_plugin, "ui_beep", ncurses_beep, NULL);
+	query_connect(&ncurses_plugin, "ui_is_initialized", ncurses_ui_is_initialized, NULL);
+	query_connect(&ncurses_plugin, "ui_window_switch", ncurses_ui_window_switch, NULL);
+	query_connect(&ncurses_plugin, "ui_window_print", ncurses_ui_window_print, NULL);
+	query_connect(&ncurses_plugin, "ui_window_new", ncurses_ui_window_new, NULL);
+	query_connect(&ncurses_plugin, "ui_window_kill", ncurses_ui_window_kill, NULL);
+	query_connect(&ncurses_plugin, "ui_window_target_changed", ncurses_ui_window_target_changed, NULL);
+	query_connect(&ncurses_plugin, "ui_window_act_changed", ncurses_ui_window_act_changed, NULL);
+	query_connect(&ncurses_plugin, "ui_window_refresh", ncurses_ui_window_refresh, NULL);
+	query_connect(&ncurses_plugin, "ui_window_clear", ncurses_ui_window_clear, NULL);
+	query_connect(&ncurses_plugin, "ui_window_update_lastlog", ncurses_ui_window_lastlog, NULL);
+	query_connect(&ncurses_plugin, "ui_refresh", ncurses_ui_refresh, NULL);
+	query_connect(&ncurses_plugin, "ui_password_input", ncurses_password_input, NULL);
+	query_connect(&ncurses_plugin, "session_added", ncurses_statusbar_query, NULL);
+	query_connect(&ncurses_plugin, "session_removed", ncurses_statusbar_query, NULL);
+	query_connect(&ncurses_plugin, "session_event", ncurses_statusbar_query, NULL);
+	query_connect(&ncurses_plugin, "session_renamed", ncurses_statusbar_query, NULL);
+	query_connect(&ncurses_plugin, "binding_set", ncurses_binding_set_query, NULL);
+	query_connect(&ncurses_plugin, "binding_command", ncurses_binding_adddelete_query, NULL);
+	query_connect(&ncurses_plugin, "binding_default", ncurses_binding_default, NULL);
+	query_connect(&ncurses_plugin, "variable_changed", ncurses_variable_changed, NULL);
+	query_connect(&ncurses_plugin, "conference_renamed", ncurses_conference_renamed, NULL);
 
-	new_guery_connect(&ncurses_plugin, "config_postinit", ncurses_postinit, NULL);
-	new_guery_connect(&ncurses_plugin, "protocol_disconnecting", ncurses_session_disconnect_handler, NULL);
+	query_connect(&ncurses_plugin, "config_postinit", ncurses_postinit, NULL);
+	query_connect(&ncurses_plugin, "protocol_disconnecting", ncurses_session_disconnect_handler, NULL);
 
 /* redraw userlisty: */
 	/* podanie czegokolwiek jako data do ncurses_all_contacts_changed() powoduje wyzerowanie n->start */
 
-	new_guery_connect(&ncurses_plugin, "ui_refresh", ncurses_all_contacts_changed, (void *) 1);
-	new_guery_connect(&ncurses_plugin, "userlist_refresh", ncurses_all_contacts_changed, NULL /* ? */);
+	query_connect(&ncurses_plugin, "ui_refresh", ncurses_all_contacts_changed, (void *) 1);
+	query_connect(&ncurses_plugin, "userlist_refresh", ncurses_all_contacts_changed, NULL /* ? */);
 
-	new_guery_connect(&ncurses_plugin, "session_changed", ncurses_all_contacts_changed, (void *) 1);
-	new_guery_connect(&ncurses_plugin, "session_event", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "session_changed", ncurses_all_contacts_changed, (void *) 1);
+	query_connect(&ncurses_plugin, "session_event", ncurses_all_contacts_changed, NULL);
 
-	new_guery_connect(&ncurses_plugin, "metacontact_added", ncurses_all_contacts_changed, NULL);
-	new_guery_connect(&ncurses_plugin, "metacontact_removed", ncurses_all_contacts_changed, NULL);
-	new_guery_connect(&ncurses_plugin, "metacontact_item_added", ncurses_all_contacts_changed, NULL);
-	new_guery_connect(&ncurses_plugin, "metacontact_item_removed", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "metacontact_added", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "metacontact_removed", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "metacontact_item_added", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "metacontact_item_removed", ncurses_all_contacts_changed, NULL);
 
-	new_guery_connect(&ncurses_plugin, "userlist_changed", ncurses_all_contacts_changed, NULL);
-	new_guery_connect(&ncurses_plugin, "userlist_added", ncurses_all_contacts_changed, NULL);
-	new_guery_connect(&ncurses_plugin, "userlist_removed", ncurses_all_contacts_changed, NULL);
-	new_guery_connect(&ncurses_plugin, "userlist_renamed", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "userlist_changed", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "userlist_added", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "userlist_removed", ncurses_all_contacts_changed, NULL);
+	query_connect(&ncurses_plugin, "userlist_renamed", ncurses_all_contacts_changed, NULL);
 
 	command_add(&ncurses_plugin, ("mark"), NULL, cmd_mark, 0, "-a --all");
 	command_add(&ncurses_plugin, ("dump"), NULL, ncurses_cmd_dump, 0, "-a --append -w --window");

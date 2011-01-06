@@ -805,7 +805,7 @@ static COMMAND(gg_command_msg) {
 
 			secure = 0;
 			
-			new_guery_emit(NULL, "message_encrypt", &sid, &uid_tmp, &__msg, &secure);
+			query_emit(NULL, "message_encrypt", &sid, &uid_tmp, &__msg, &secure);
 
 			xfree(sid);
 			xfree(uid_tmp);
@@ -1388,7 +1388,7 @@ static WATCHER(gg_handle_token)
 		goto fail;
 	}
 
-	if (new_guery_emit(NULL, "gg-display-token", &file) == -1) goto fail;
+	if (query_emit(NULL, "gg-display-token", &file) == -1) goto fail;
 
 #ifdef GIF_OCR
 	if (gg_config_display_token) {
@@ -1591,14 +1591,14 @@ static COMMAND(gg_command_modify) {
 			tmp1 = xstrdup(u->nickname);
 			tmp2 = xstrdup(argv[++i]);
 
-			new_guery_emit(NULL, "userlist_renamed", &tmp1, &tmp2);
+			query_emit(NULL, "userlist_renamed", &tmp1, &tmp2);
 			xfree(tmp1);
 				
 			xfree(u->nickname);
 			u->nickname = tmp2;
 
 			userlist_replace(session, u);
-			new_guery_emit(NULL, "userlist_refresh");
+			query_emit(NULL, "userlist_refresh");
 			
 			modified = 1;
 			continue;
@@ -1655,7 +1655,7 @@ static COMMAND(gg_command_modify) {
 				}
 
 			if (chg)
-				new_guery_emit(NULL, "userlist_refresh");
+				query_emit(NULL, "userlist_refresh");
 
  			array_free(tmp);
 			continue;
@@ -1696,14 +1696,14 @@ static COMMAND(gg_command_modify) {
 
 			tmp1 = xstrdup(u->uid);
 			tmp2 = xstrdup(argv[i + 1]);
-			new_guery_emit(NULL, "userlist_removed", &tmp1, &tmp2, &q);
+			query_emit(NULL, "userlist_removed", &tmp1, &tmp2, &q);
 			xfree(tmp1);
 			xfree(tmp2);
 
 			userlist_clear_status(session, u->uid);
 
 			tmp1 = xstrdup(argv[++i]);
-			new_guery_emit(NULL, "userlist_added", &tmp1, &tmp1, &q);
+			query_emit(NULL, "userlist_added", &tmp1, &tmp1, &q);
 
 			xfree((void *) u->uid);
 			u->uid = tmp1;
@@ -1713,13 +1713,13 @@ static COMMAND(gg_command_modify) {
 		}
 
 		if (match_arg(argv[i], 'o', ("offline"), 2)) {
-			new_guery_emit(NULL, "user-offline", &u, &session);
+			query_emit(NULL, "user-offline", &u, &session);
 			modified = 2;
 			continue;
 		}
 
 		if (match_arg(argv[i], 'O', ("online"), 2)) {
-			new_guery_emit(NULL, "user-online", &u, &session);
+			query_emit(NULL, "user-online", &u, &session);
 			modified = 2;
 			continue;
 		} 
@@ -1774,7 +1774,7 @@ static TIMER(gg_checked_timer_handler)
 					int port	= 0;
 					time_t when	= time(NULL);
 					
-					new_guery_emit(NULL, "protocol-status", &session, &uid, &status, &descr, &host, &port, &when, NULL);
+					query_emit(NULL, "protocol-status", &session, &uid, &status, &descr, &host, &port, &when, NULL);
 					
 					xfree(session);
 					xfree(uid);

@@ -393,7 +393,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		char *artid	= (char *) itoa(art->artid);
 		int modify	= 0;						/* XXX */
 
-		new_guery_emit(NULL, "rss_message", &(s->uid), &uid, &sheaders, &headers, &artid, &(art->msgid), &body, &(art->new), &modify);
+		query_emit(NULL, "rss_message", &(s->uid), &uid, &sheaders, &headers, &artid, &(art->msgid), &body, &(art->new), &modify);
 	}
 
 	if (j->newsgroup) {
@@ -826,7 +826,7 @@ static COMMAND(nntp_command_subscribe) {
 	}
 
 	printq("feed_added", target, session_name(session));
-	new_guery_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist_refresh");
 	return 0;
 }
 
@@ -839,7 +839,7 @@ static COMMAND(nntp_command_unsubscribe) {
 
 	printq("feed_deleted", target, session_name(session));
 	userlist_remove(session, u);
-	new_guery_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist_refresh");
 	return 0;
 }
 

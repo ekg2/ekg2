@@ -1186,7 +1186,7 @@ static COMMAND(icq_command_msg) {
 		// send "typing finished" snac
 		const char *sid	= session_uid_get(session);
 		int first = 0, len = 0;
-		new_guery_emit(NULL, "protocol_typing_out", &sid, &uid, &len, &first);
+		query_emit(NULL, "protocol_typing_out", &sid, &uid, &len, &first);
 	}
 
 	u = userlist_find(session, uid);
@@ -1779,12 +1779,12 @@ EXPORT int icq_plugin_init(int prio) {
 
 	plugin_register(&icq_plugin, prio);
 
-	new_guery_connect(&icq_plugin, "protocol_validate_uid", icq_validate_uid, NULL);
-	new_guery_connect(&icq_plugin, "plugin_print_version", icq_print_version, NULL);
-	new_guery_connect(&icq_plugin, "session_added", icq_session_init, NULL);
-	new_guery_connect(&icq_plugin, "session_removed", icq_session_deinit, NULL);
-	new_guery_connect(&icq_plugin, "userlist_info", icq_userlist_info_handle, NULL);
-	new_guery_connect(&icq_plugin, "protocol_typing_out", icq_typing_out, NULL);
+	query_connect(&icq_plugin, "protocol_validate_uid", icq_validate_uid, NULL);
+	query_connect(&icq_plugin, "plugin_print_version", icq_print_version, NULL);
+	query_connect(&icq_plugin, "session_added", icq_session_init, NULL);
+	query_connect(&icq_plugin, "session_removed", icq_session_deinit, NULL);
+	query_connect(&icq_plugin, "userlist_info", icq_userlist_info_handle, NULL);
+	query_connect(&icq_plugin, "protocol_typing_out", icq_typing_out, NULL);
 
 	variable_add(&icq_plugin, ("disable_chatstates"), VAR_BOOL, 1, &icq_config_disable_chatstates, NULL, NULL, NULL);
 

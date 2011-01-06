@@ -384,11 +384,11 @@ void update_statusbar(int commit)
 	__add_format_emp("more", (window_current->more));
 
 	mail_count = -1;
-	if (new_guery_emit(NULL, "mail_count", &mail_count) != -2)
+	if (query_emit(NULL, "mail_count", &mail_count) != -2)
 		__add_format_dup("mail", (mail_count > 0), itoa(mail_count));
 
 	irctopic = irctopicby = ircmode = NULL;
-	if (new_guery_emit(NULL, "irc_topic", &irctopic, &irctopicby, &ircmode) != -2) {
+	if (query_emit(NULL, "irc_topic", &irctopic, &irctopicby, &ircmode) != -2) {
 		__add_format("irctopic", irctopic, 1);
 		__add_format("irctopicby", irctopicby, 0);
 		__add_format("ircmode", ircmode, 0);

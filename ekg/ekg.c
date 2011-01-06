@@ -415,14 +415,14 @@ void ekg_loop() {
 static void handle_sigusr1()
 {
 	debug("sigusr1 received\n");
-	new_guery_emit(NULL, "ekg_sigusr1");
+	query_emit(NULL, "ekg_sigusr1");
 	signal(SIGUSR1, handle_sigusr1);
 }
 
 static void handle_sigusr2()
 {
 	debug("sigusr2 received\n");
-	new_guery_emit(NULL, "ekg_sigusr2");
+	query_emit(NULL, "ekg_sigusr2");
 	signal(SIGUSR2, handle_sigusr2);
 }
 
@@ -591,7 +591,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 
 	buffer_add(&buffer_debug, theme_format, tmp);
 
-	new_guery_emit(NULL, "ui_is_initialized", &is_UI);
+	query_emit(NULL, "ui_is_initialized", &is_UI);
 
 	if (is_UI && window_debug) {
 		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
@@ -1005,7 +1005,7 @@ int main(int argc, char **argv)
 	ekg2_reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
-	if (new_guery_emit(NULL, "ui_loop") != -1) {
+	if (query_emit(NULL, "ui_loop") != -1) {
 		/* krêæ imprezê */
 		while (1) {
 			ekg_loop();
@@ -1180,34 +1180,14 @@ void ekg_exit()
 	windows_destroy();
 	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
 
-/* queries: */
-	{
-		query_t **ll;
-
-		for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
-			query_t *q;
-
-			for (q = *ll; q; ) {	/* free other queries... connected by protocol_init() for example */
-				query_t *next = q->next;
-
-				query_free(q);
-
-				q = next;
-			}
-
-			LIST_DESTROY2(*ll, NULL); /* XXX: really needed? */
-		}
-	}
-	query_external_free();
 /* gueries */
 	{
-		guery_t** kk;
+		query_t** kk;
 		for (kk = gueries; kk < &gueries[QUERIES_BUCKETS]; ++kk) {
-			guery_t* g;
-			LIST_DESTROY2(*kk, list_guery_free_data);
+			gueries_list_destroy(kk);
 		}
 	}
-	list_gueries_registered_free();
+	registered_gueries_free();
 
 	xfree(home_dir);
 

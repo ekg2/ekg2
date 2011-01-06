@@ -471,7 +471,7 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 	fstr = fstring_new_format(line);
 	fstr->ts = ts;
 
-	new_guery_emit(ui_plugin, "ui_window_print", &w, &fstr);
+	query_emit(ui_plugin, "ui_window_print", &w, &fstr);
 	return 0;
 }
 
@@ -535,7 +535,7 @@ static int logs_buffer_raw_display(const char *file, int items) {
 
 	if (w) {
 		w->lock--;
-		new_guery_emit(NULL, "ui_window_refresh");
+		query_emit(NULL, "ui_window_refresh");
 	}
 
 	xfree(bs);
@@ -1197,14 +1197,14 @@ EXPORT int logs_plugin_init(int prio) {
 
 	plugin_register(&logs_plugin, prio);
 	
-	new_guery_connect(&logs_plugin, "set_vars_default",logs_setvar_default, NULL);
-	new_guery_connect(&logs_plugin, "protocol_message_post", logs_handler, NULL);
-	new_guery_connect(&logs_plugin, "irc_protocol_message", logs_handler_irc, NULL);
-	new_guery_connect(&logs_plugin, "ui_window_new",	logs_handler_newwin, NULL);
-	new_guery_connect(&logs_plugin, "ui_window_print",	logs_handler_raw, NULL);
-	new_guery_connect(&logs_plugin, "ui_window_kill",	logs_handler_killwin, NULL);
-	new_guery_connect(&logs_plugin, "protocol_status", logs_status_handler, NULL);
-	new_guery_connect(&logs_plugin, "config_postinit", logs_postinit, NULL);
+	query_connect(&logs_plugin, "set_vars_default",logs_setvar_default, NULL);
+	query_connect(&logs_plugin, "protocol_message_post", logs_handler, NULL);
+	query_connect(&logs_plugin, "irc_protocol_message", logs_handler_irc, NULL);
+	query_connect(&logs_plugin, "ui_window_new",	logs_handler_newwin, NULL);
+	query_connect(&logs_plugin, "ui_window_print",	logs_handler_raw, NULL);
+	query_connect(&logs_plugin, "ui_window_kill",	logs_handler_killwin, NULL);
+	query_connect(&logs_plugin, "protocol_status", logs_status_handler, NULL);
+	query_connect(&logs_plugin, "config_postinit", logs_postinit, NULL);
 	/* XXX, implement UI_WINDOW_TARGET_CHANGED, IMPORTANT!!!!!! */
 
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */

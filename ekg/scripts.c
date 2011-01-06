@@ -662,8 +662,8 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 	}
 /* other */
 	else {
-		const guery_def_t* g;
-		for (g = list_gueries_registered; g; g = g->next) {
+		const query_def_t* g;
+		for (g = registered_gueries; g; g = g->next) {
 			if (!xstrcmp(qname, g->name)) {
 				int j = 0;
 				while (j < QUERY_ARGS_MAX && g->params[j] != QUERY_ARG_END) {
@@ -675,7 +675,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 	}
 #undef NEXT_ARG
 	temp->real_argc = temp->argc;
-	temp->self = new_guery_connect(s->plugin, qname, script_query_handlers, temp);
+	temp->self = query_connect(s->plugin, qname, script_query_handlers, temp);
 	SCRIPT_BIND_FOOTER(script_queries);
 }
 
@@ -938,7 +938,7 @@ int scripts_init()
 {
 	script_variables_read();
 #if 0
-	new_guery_connect(NULL, "config-postinit",	   script_postinit, NULL);
+	query_connect(NULL, "config-postinit",	   script_postinit, NULL);
 #else
 	scripts_autoload(NULL);
 #endif

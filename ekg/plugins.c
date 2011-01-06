@@ -61,22 +61,20 @@ DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
 
 list_t watches = NULL;
 
-query_t *queries[QUERY_EXTERNAL+1];
-int queries_count = QUERY_EXTERNAL;	/* list_count(queries_other)+QUERY_EXTERNAL */
+query_t* gueries[QUERIES_BUCKETS];
 
-guery_t* gueries[QUERIES_BUCKETS];
-
-guery_def_t* list_gueries_registered;
+query_def_t* registered_gueries;
 int gueries_registered_count = 0;
 
-LIST_FREE_ITEM(list_guery_free_data, guery_t *) {
+LIST_FREE_ITEM(query_free_data, query_t *) {
 	xfree(data->name);
 }
 
-DYNSTUFF_LIST_DECLARE(list_gueries, guery_t, list_guery_free_data,
+DYNSTUFF_LIST_DECLARE(gueries_list, query_t, query_free_data,
 	static __DYNSTUFF_ADD,
 	static __DYNSTUFF_REMOVE_SAFE,
-	static __DYNSTUFF_DESTROY)
+	__DYNSTUFF_DESTROY)
+
 
 #ifdef EKG2_WIN32_HELPERS
 # define WIN32_REQUEST_HELPER
@@ -343,7 +341,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		/* It's FATAL */
 	}
 
-	new_guery_emit(pl, "set_vars_default");
+	query_emit(pl, "set_vars_default");
 
 	printq("plugin_loaded", name);
 
@@ -357,7 +355,7 @@ int plugin_load(const char *name, int prio, int quiet)
 			session_read(tmp);
 
 		if (pl)
-			new_guery_emit(pl, "config_postinit");
+			query_emit(pl, "config_postinit");
 
 		in_autoexec = 0;
 		config_changed = 1;
@@ -525,8 +523,7 @@ int plugin_unregister(plugin_t *p)
 
 	struct timer *t;
 	session_t *s;
-	query_t **ll;
-	guery_t **kk;
+	query_t **kk;
 	variable_t *v;
 	command_t *c;
 	list_t l;
@@ -556,22 +553,15 @@ int plugin_unregister(plugin_t *p)
 		s = next;
 	}
 
-	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
-		query_t *q;
-
-		for (q = *ll; q; ) {
-			query_t *next = q->next;
-
-			if (q->plugin == p)
-				query_free(q);
-
-			q = next;
-		}
-	}
-
-
 	for (kk = gueries; kk < &gueries[QUERIES_BUCKETS]; ++kk) {
-		guery_t *g;
+		query_t *g;
+
+		for (g = *kk; g; ) {
+			query_t *next = g->next;
+			if (g->plugin == p)
+				gueries_list_remove(kk, g);
+			g = next;
+		}
 	}
 
 	for (v = variables; v; v = v->next) {
@@ -615,184 +605,74 @@ int plugin_var_find(plugin_t *pl, const char *name) {
 
 int plugin_var_add(plugin_t *pl, const char *name, int type, const char *value, int secret, plugin_notify_func_t *notify) { return -1; }
 
-static LIST_FREE_ITEM(query_external_free_data, list_t) {
-	struct query_def *def = data->data;
-	xfree(def->name);
-	xfree(def);
-}
+int query_register(const char *name, ...) {
+	va_list va;
+	int i, arg;
+	query_def_t *gd;
+	int found = 0, name_hash = ekg_hash(name);
 
-/**
- * query_external_free()
- *
- * Free memory allocated by query_id() for not-known-in-core-query-names
- *
- * @todo	We don't destroy here queries which uses these ids >= QUERY_EXTERNAL.<br>
- *		It's quite correct in current api. But if you change it, you must clean after yourself.
- */
-
-void query_external_free() {
-	if (!queries_external)
-		return;
-
-	LIST_DESTROY2(queries_external, query_external_free_data);
-
-	queries_external	= NULL;
-	queries_count		= QUERY_EXTERNAL;
-}
-
-/**
- * query_id()
- *
- * Get unique query id, for passed name
- *
- * @param name
- *
- * @return 
- *	- If it's query known for core than return id of it.<br>
- *	- If it's ,,seen'' by query_id() from previous call, than return assigned id also [from @a queries_external list_t]<br>
- *	- else it allocate struct query in @a queries_external, and return next available id.
- */
-#if 0
-static int query_idXXXX(const char *name) {
-	struct query_def *a = NULL;
-	list_t l;
-	int i;
-
-	for (i=0; i < QUERY_EXTERNAL; i++) {
-		if (!xstrcmp(query_list[i].name, name)) {
-#ifdef DDEBUG
-			debug_error("Use query_connect_id()/query_emit_id() for: %s\n", name);
-#endif
-			return query_list[i].id;
+	for (gd = registered_gueries; gd; gd = gd->next) {
+	    if (name_hash == gd->name_hash && !xstrcmp(gd->name, name)) {
+			found = 1;
+			break;
 		}
 	}
+	if (found) {
+		debug_error("query_register() oh noez, seems like it's already registered: [%s]\n", name);
+		debug_error("I'm not sure what I should do, so I'm simply bailing out...\n");
+		return -1;
 
-	for (l = queries_external; l; l = l->next) {
-		a = l->data;
+	} else {
+		gd            = xmalloc(sizeof(query_def_t));
+		gd->name      = xstrdup(name);
+		gd->name_hash = name_hash;
+		gueries_registered_count++;
 
-		if (!xstrcmp(a->name, name))
-			return a->id;
-	}
-	debug_error("query_id() NOT FOUND[%d]: %s\n", queries_count - QUERY_EXTERNAL, __(name));
-
-	a	= xmalloc(sizeof(struct query_def));
-	a->id	= queries_count++;
-	a->name	= xstrdup(name);
-
-	list_add(&queries_external, a);
-
-	return a->id;
-}
-
-/**
- * query_struct()
- *
- * Get struct of query, by passed id
- *
- */
-
-const struct query_def *query_structXXX(const int id) {
-	list_t l;
-
-	if (id < QUERY_EXTERNAL) 
-		return &(query_list[id]);
-
-	for (l = queries_external; l; l = l->next) {
-		struct query_def *a = l->data;
-
-		if (a->id == id) 
-			return a;
+		LIST_ADD2(registered_gueries, gd);
 	}
 
-	debug_error("[%s:%d] query_name() REALLY NASTY (%d)\n", __FILE__, __LINE__, id);
-
-	return NULL;
-}
-
-/**
- * query_name()
- *
- * Get name of query, by passed id
- *
- * @return 
- *	- If id is known for core (@a id < QUERY_EXTERNAL) than return it's name<br>
- *	- If it was ,,seen'' by query_id() than return name registered.<br>
- *	- else return NULL, and display info that smth really nasty happen.
- */
-
-const char *query_name(const int id) {
-	list_t l;
-
-	if (id < QUERY_EXTERNAL) 
-		return query_list[id].name;
-
-	for (l = queries_external; l; l = l->next) {
-		struct query_def *a = l->data;
-
-		if (a->id == id) 
-			return a->name;
+	va_start(va, name);
+	for (i = 0; i < QUERY_ARGS_MAX; i++) {
+		arg = va_arg(va, int);
+		gd->params[i] = arg;
+		if (arg == QUERY_ARG_END)
+			break;
 	}
-
-	debug_error("[%s:%d] query_name() REALLY NASTY (%d)\n", __FILE__, __LINE__, id);
-
-	return NULL;
+	va_end(va);
+	return 0;
 }
 
-static query_t *query_connect_common(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
-	query_t *q = xmalloc(sizeof(query_t));
 
-	q->id		= id;
-	q->plugin	= plugin;
-	q->handler	= handler;
-	q->data		= data;
-
-	return LIST_ADD2(&queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id], q);
-}
-
-#define ID_AND_QUERY_EXTERNAL	\
-	"Here, we have two possibilites.\n"	\
-		"\t1/ You are lazy moron, who doesn't rebuilt core but use plugin with this enum...\n"	\
-		"\t2/ You are ekg2 hacker who use query_id(\"your_own_query_name\") to get new query id and use this id with "	\
-			"query_connect_id()... but unfortunetly it won't work cause of 1st possibility, sorry.\n"
-
-
-query_t *query_connect_idXXX(plugin_t *plugin, const int id, query_handler_func_t *handler, void *data) {
-	if (id >= QUERY_EXTERNAL) {
-		debug_error("%s", ID_AND_QUERY_EXTERNAL);
-		return NULL;
-	}
-
-	return query_connect_common(plugin, id, handler, data);
-}
-
-query_t *query_connectXXX(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
-	return query_connect_common(plugin, query_idXXXX(name), handler, data);
-}
-
-#endif
-
-static LIST_FREE_ITEM(list_guery_registered_free_data, guery_def_t *) {
+static LIST_FREE_ITEM(registered_query_free_data, query_def_t *) {
 	xfree(data->name);
 }
 
-void list_gueries_registered_free() {
-	if (!list_gueries_registered)
+void registered_gueries_free() {
+	if (!registered_gueries)
 	    return;
 
-	LIST_DESTROY2(list_gueries_registered, list_guery_registered_free_data);
+	LIST_DESTROY2(registered_gueries, registered_query_free_data);
 
 	/* this has been already done in call above */
-	list_gueries_registered = NULL;
+	registered_gueries = NULL;
 }
 
-guery_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
+
+int query_free(query_t* g) {
+
+    gueries_list_remove(&gueries[g->name_hash & (QUERIES_BUCKETS - 1)], g);
+
+    return 0;
+}
+
+query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
 	int found = 0;
-	guery_def_t* gd;
+	query_def_t* gd;
 
 	FILE *fp = fopen("/tmp/queries.txt", "a+");
 	fprintf (fp, "c: %s\n", name);
 
-	guery_t *q = xmalloc(sizeof(guery_t));
+	query_t *q = xmalloc(sizeof(query_t));
 
 	q->name         = xstrdup(name);
 	q->name_hash    = ekg_hash(name);
@@ -800,68 +680,31 @@ guery_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_fun
 	q->handler	= handler;
 	q->data		= data;
 
-	for (gd = list_gueries_registered; gd; gd = gd->next) {
+	for (gd = registered_gueries; gd; gd = gd->next) {
 		if (q->name_hash == gd->name_hash && !xstrcmp(gd->name, name)) {
 			found = 1;
 			break;
 		}
 	}
 	if (!found) {
-		debug_error("query_id() NOT FOUND[%d]: %s\n", gueries_registered_count, __(name));
-		fprintf(fp, "query_id() NOT FOUND[%d]: %s\n", gueries_registered_count, __(name));
+		debug_error("query_connect() NOT FOUND[%d]: %s\n", gueries_registered_count, __(name));
+		fprintf(fp, "query_connect() NOT FOUND[%d]: %s\n", gueries_registered_count, __(name));
 
-		gd            = xmalloc(sizeof(guery_def_t));
+		gd            = xmalloc(sizeof(query_def_t));
 		gd->name      = xstrdup(name);
 		gd->name_hash = q->name_hash;
 		gueries_registered_count++;
 
-		LIST_ADD2(list_gueries_registered, gd);
+		LIST_ADD2(registered_gueries, gd);
 	}
 	fclose (fp);
 
-	list_gueries_add(&gueries[q->name_hash & (QUERIES_BUCKETS - 1)], q);
+	gueries_list_add(&gueries[q->name_hash & (QUERIES_BUCKETS - 1)], q);
 
 	return q;
 }
 
-int query_free(query_t *q) {
-	if (!q) return -1;
-
-	LIST_REMOVE2(&queries[q->id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : q->id], q, NULL);
-	return 0;
-}
-
-static int query_emit_common(query_t *q, va_list ap) {
-	static int nested = 0;
-	int (*handler)(void *data, va_list ap) = q->handler;
-	int result;
-	va_list ap_plugin;
-
-	if (nested >= 32) {
-/*
-		if (nested == 33)
-			debug("too many nested queries. exiting to avoid deadlock\n");
- */
-		return -1;
-	}
-
-	nested++;
-	q->count++;
-
-	/*
-	 * pc and amd64: va_arg remove var from va_list when you use va_arg, 
-	 * so we must keep orig va_list for next plugins
-	 */
-	va_copy(ap_plugin, ap);
-	result = handler(q->data, ap_plugin);
-	va_end(ap_plugin);
-
-	nested--;
-
-	return result != -1 ? 0 : -1;
-}
-
-static int guery_emit_inner(guery_t *g, va_list ap) {
+static int query_emit_inner(query_t *g, va_list ap) {
 	static int nested = 0;
 	int (*handler)(void *data, va_list ap) = g->handler;
 	int result;
@@ -885,11 +728,11 @@ static int guery_emit_inner(guery_t *g, va_list ap) {
 	return result != -1 ? 0 : -1;
 }
 
-int new_guery_emit(plugin_t *plugin, const char* name, ...) {
+int query_emit(plugin_t *plugin, const char* name, ...) {
 	int result = -2;
 	va_list ap;
         FILE *fp;
-	guery_t* g;
+	query_t* g;
 	int name_hash, bucket_id;
 
         fp = fopen ("/tmp/queries.txt", "a+");
@@ -906,7 +749,7 @@ int new_guery_emit(plugin_t *plugin, const char* name, ...) {
         fp = fopen ("/tmp/queries.txt", "a+");
         fprintf (fp, "e: %s\n", name);
         fclose(fp);
-		result = guery_emit_inner(g, ap);
+		result = query_emit_inner(g, ap);
 
 		if (result == -1) {
 		    break;
@@ -919,92 +762,7 @@ int new_guery_emit(plugin_t *plugin, const char* name, ...) {
 	return result;
 }
 
-#if 0
-int query_emit_idXXX(plugin_t *plugin, const int id, ...) {
-	int result = -2;
-	va_list ap;
-	query_t *q;
-
-	if (id >= QUERY_EXTERNAL) {
-		debug_error("%s", ID_AND_QUERY_EXTERNAL);
-		return -2;
-	}
-
-	va_start(ap, id);
-	for (q = queries[id]; q; q = q->next) {
-		if ((!plugin || (plugin == q->plugin))) {
-			result = query_emit_common(q, ap);
-
-			if (result == -1) break;
-		}
-	}
-	va_end(ap);
-	return result;
-}
-
-int query_emitXX(plugin_t *plugin, const char *name, ...) {
-	int result = -2;
-	va_list ap;
-	query_t *q;
-	int id;
-
-	id = query_idXXXX(name);
-	va_start(ap, name);
-	for (q = queries[id >= QUERY_EXTERNAL ? QUERY_EXTERNAL : id]; q; q = q->next) {
-		if ((!plugin || (plugin == q->plugin)) && q->id == id) {
-			result = query_emit_common(q, ap);
-
-			if (result == -1) break;
-		}
-	}
-
-	va_end(ap);
-	return result;
-}
-#endif
-
-int query_register_external(const char *name, ...) {
-	va_list va;
-	int i, arg;
-	struct query_def *a, *q = NULL;
-	list_t l;
-	
-	/*
-	for (i=0; i < QUERY_EXTERNAL; i++) {
-		if (!xstrcmp(query_list[i].name, name)) {
-			return -1;
-		}
-	}
-	*/
-
-	for (l = queries_external; l; l = l->next) {
-		a = l->data;
-
-		if (!xstrcmp(a->name, name)) {
-			q = a;
-			break;
-		}
-	}
-
-	if (!q) {
-		q	= xmalloc(sizeof(struct query_def));
-		q->id	= queries_count++;
-		q->name	= xstrdup(name);
-		list_add(&queries_external, q);
-	}
-
-	va_start(va, name);
-	for(i=0; i<QUERY_ARGS_MAX; i++) {
-		arg = va_arg(va, int);
-		q->params[i] = arg;
-		if (arg==QUERY_ARG_END)
-			break;
-	}
-	va_end(va);
-	return q->id;
-}
-
-static LIST_ADD_COMPARE(guery_compare, guery_t *) {
+static LIST_ADD_COMPARE(query_compare, query_t *) {
 	/*				any other suggestions: vvv ? */
 	const int ap = (data1->plugin ? data1->plugin->prio : -666);
 	const int bp = (data2->plugin ? data2->plugin->prio : -666);
@@ -1019,20 +777,13 @@ static LIST_ADD_COMPARE(guery_compare, guery_t *) {
  */
 
 void queries_reconnect() {
-	/*
-	int i;
-
-	for (i = 0; i <= QUERY_EXTERNAL; i++)
-		LIST_RESORT2(&(queries[i]), query_compare);
-	*/
-
 	FILE* fp = fopen("/tmp/queries.txt", "a+");
 	fprintf (fp, "queries_reconnect()\n");
 	fclose(fp);
 
 	size_t i;
 	for (i = 0; i < QUERIES_BUCKETS; ++i) {
-		LIST_RESORT2(&(gueries[i]), guery_compare);
+		LIST_RESORT2(&(gueries[i]), query_compare);
 	}
 }
 

@@ -886,38 +886,38 @@ int httprc_xajax_plugin_init(int prio) {
 /*	variable_add(&rc_plugin, ("remote_control"), VAR_STR, 1, &rc_paths, rc_paths_changed, NULL, NULL); */
 	watch_add(&httprc_xajax_plugin, fd, WATCH_READ, http_watch_accept, NULL);
 
-//	new_guery_connect(&httprc_xajax_plugin, ("set-vars-default"), httprc_xajax_def_action, NULL);
-//	new_guery_connect(&httprc_xajax_plugin, ("ui-beep"), httprc_xajax_def_action, NULL);
-//	new_guery_connect(&httprc_xajax_plugin, ("ui-is-initialized"), httprc_xajax_def_action, NULL);
-	new_guery_connect(&httprc_xajax_plugin, "ui-window-switch",	httprc_xajax_def_action, "ui-window-switch");
-	new_guery_connect(&httprc_xajax_plugin, "ui-window-print",	httprc_xajax_def_action, "ui-window-print");
-	new_guery_connect(&httprc_xajax_plugin, "ui-window-new",		httprc_xajax_def_action, "ui-window-new");
-	new_guery_connect(&httprc_xajax_plugin, "ui-window-kill",		httprc_xajax_def_action, "ui-window-kill");
-	new_guery_connect(&httprc_xajax_plugin, "ui-window-target-changed", httprc_xajax_def_action, "ui-target-changed");
+//	query_connect(&httprc_xajax_plugin, ("set-vars-default"), httprc_xajax_def_action, NULL);
+//	query_connect(&httprc_xajax_plugin, ("ui-beep"), httprc_xajax_def_action, NULL);
+//	query_connect(&httprc_xajax_plugin, ("ui-is-initialized"), httprc_xajax_def_action, NULL);
+	query_connect(&httprc_xajax_plugin, "ui-window-switch",	httprc_xajax_def_action, "ui-window-switch");
+	query_connect(&httprc_xajax_plugin, "ui-window-print",	httprc_xajax_def_action, "ui-window-print");
+	query_connect(&httprc_xajax_plugin, "ui-window-new",		httprc_xajax_def_action, "ui-window-new");
+	query_connect(&httprc_xajax_plugin, "ui-window-kill",		httprc_xajax_def_action, "ui-window-kill");
+	query_connect(&httprc_xajax_plugin, "ui-window-target-changed", httprc_xajax_def_action, "ui-target-changed");
 	/* We're not touching this one, since this would cause
 	 * A LOT of unneeded traffic!
-	new_guery_connect(&httprc_xajax_plugin, "ui-window-act-changed",	httprc_xajax_def_action, "ui-window-act-changed");
+	query_connect(&httprc_xajax_plugin, "ui-window-act-changed",	httprc_xajax_def_action, "ui-window-act-changed");
 	 */
-	new_guery_connect(&httprc_xajax_plugin, "ui-window-refresh",	httprc_xajax_def_action, "ui-window-refresh");
-	new_guery_connect(&httprc_xajax_plugin, "ui-window-clear",	httprc_xajax_def_action, "ui-window-clear");
-	new_guery_connect(&httprc_xajax_plugin, "session-added",		httprc_xajax_def_action, "session-added");
-	new_guery_connect(&httprc_xajax_plugin, "session-removed",	httprc_xajax_def_action, "session-removed");
-	new_guery_connect(&httprc_xajax_plugin, "session-changed",	httprc_xajax_def_action, "session-changed");
-	new_guery_connect(&httprc_xajax_plugin, "userlist-changed",	httprc_xajax_def_action, "userlist-changed");
-	new_guery_connect(&httprc_xajax_plugin, "userlist-added",		httprc_xajax_def_action, "userlist-added");
-	new_guery_connect(&httprc_xajax_plugin, "userlist-removed",	httprc_xajax_def_action, "userlist-removed");
-	new_guery_connect(&httprc_xajax_plugin, "userlist-renamed",	httprc_xajax_def_action, "userlist-renamed");
-	new_guery_connect(&httprc_xajax_plugin, "binding-set",		httprc_xajax_def_action, "binding-set");
-	new_guery_connect(&httprc_xajax_plugin, "binding-command",	httprc_xajax_def_action, "binding-command");
-	new_guery_connect(&httprc_xajax_plugin, "binding-default",	httprc_xajax_def_action, "binding-default");
-	new_guery_connect(&httprc_xajax_plugin, "variable-changed",	httprc_xajax_def_action, "variable-changed");
-	new_guery_connect(&httprc_xajax_plugin, "conference-renamed",	httprc_xajax_def_action, "conference-renamed");
+	query_connect(&httprc_xajax_plugin, "ui-window-refresh",	httprc_xajax_def_action, "ui-window-refresh");
+	query_connect(&httprc_xajax_plugin, "ui-window-clear",	httprc_xajax_def_action, "ui-window-clear");
+	query_connect(&httprc_xajax_plugin, "session-added",		httprc_xajax_def_action, "session-added");
+	query_connect(&httprc_xajax_plugin, "session-removed",	httprc_xajax_def_action, "session-removed");
+	query_connect(&httprc_xajax_plugin, "session-changed",	httprc_xajax_def_action, "session-changed");
+	query_connect(&httprc_xajax_plugin, "userlist-changed",	httprc_xajax_def_action, "userlist-changed");
+	query_connect(&httprc_xajax_plugin, "userlist-added",		httprc_xajax_def_action, "userlist-added");
+	query_connect(&httprc_xajax_plugin, "userlist-removed",	httprc_xajax_def_action, "userlist-removed");
+	query_connect(&httprc_xajax_plugin, "userlist-renamed",	httprc_xajax_def_action, "userlist-renamed");
+	query_connect(&httprc_xajax_plugin, "binding-set",		httprc_xajax_def_action, "binding-set");
+	query_connect(&httprc_xajax_plugin, "binding-command",	httprc_xajax_def_action, "binding-command");
+	query_connect(&httprc_xajax_plugin, "binding-default",	httprc_xajax_def_action, "binding-default");
+	query_connect(&httprc_xajax_plugin, "variable-changed",	httprc_xajax_def_action, "variable-changed");
+	query_connect(&httprc_xajax_plugin, "conference-renamed",	httprc_xajax_def_action, "conference-renamed");
 
-	new_guery_connect(&httprc_xajax_plugin, "metacontact-added",	httprc_xajax_def_action, "metacontact-added");
-	new_guery_connect(&httprc_xajax_plugin, "metacontact-removed",	httprc_xajax_def_action, "metacontact-removed");
-	new_guery_connect(&httprc_xajax_plugin, "metacontact-item-added",	httprc_xajax_def_action, "metacontact-item-added");
-	new_guery_connect(&httprc_xajax_plugin, "metacontact-item-removed", httprc_xajax_def_action, "metacontact-item-removed");
-	new_guery_connect(&httprc_xajax_plugin, "config-postinit",	httprc_xajax_def_action, "config-postinit");
+	query_connect(&httprc_xajax_plugin, "metacontact-added",	httprc_xajax_def_action, "metacontact-added");
+	query_connect(&httprc_xajax_plugin, "metacontact-removed",	httprc_xajax_def_action, "metacontact-removed");
+	query_connect(&httprc_xajax_plugin, "metacontact-item-added",	httprc_xajax_def_action, "metacontact-item-added");
+	query_connect(&httprc_xajax_plugin, "metacontact-item-removed", httprc_xajax_def_action, "metacontact-item-removed");
+	query_connect(&httprc_xajax_plugin, "config-postinit",	httprc_xajax_def_action, "config-postinit");
 
 	return 0;
 }

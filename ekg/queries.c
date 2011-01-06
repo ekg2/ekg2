@@ -4,7 +4,7 @@
 
 /* list of known queries. keep it sorted with enum. */
 
-const guery_def_t core_guery_list[] = {
+const query_def_t core_query_list[] = {
 	{ NULL, "mail-count", 0, {
 		QUERY_ARG_INT,			/* mail count */
 		QUERY_ARG_END } },

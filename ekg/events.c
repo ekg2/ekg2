@@ -170,19 +170,19 @@ int event_add(const char *name, int prio, const char *target, const char *action
 	events_add(ev);
 
 	tmp = xstrdup(name);
-	new_guery_emit(NULL, "event_added", &tmp);
+	query_emit(NULL, "event_added", &tmp);
 	xfree(tmp);
 
 	printq("events_add", name);
 
 	if (!array_contains(events_all, name, 0)) {
-		guery_t *q;
+		query_t *q;
 
 		debug("event_add, array_contains(events_all, \"%s\", 0) failed. Binding new query: %s\n", name, name);
 
-		q = new_guery_connect(NULL, name, event_misc, NULL);
+		q = query_connect(NULL, name, event_misc, NULL);
 		q->data = (char*)q->name; /* GiM: does this even make a sense? */
-		    //(char *) query_name(q->id);		/* hack */	/* maybe: q->data = ev->name ? */
+		    /*(char *) query_name(q->id);*/		/* hack */	/* maybe: q->data = ev->name ? */
 
 		array_add(&events_all, (char *) q->data);	/* note: after query_external_free() this won't be accessible */
 								/* 	luckily, we call event_free() before query_external_free() */
@@ -219,7 +219,7 @@ static int event_remove(unsigned int id, int quiet) {
 	printq("events_del", itoa(id));
 
 cleanup:	
-/*	  new_guery_emit(NULL, "event_removed", itoa(id)); */	/* XXX, incorrect. */
+/*	  query_emit(NULL, "event_removed", itoa(id)); */	/* XXX, incorrect. */
 
 	return 0;
 }
@@ -375,7 +375,7 @@ static event_t *event_find_id(unsigned int id) {
 }
 
 static void events_add_handler(char *name, void *function) {
-	new_guery_connect(NULL, name, function, NULL);
+	query_connect(NULL, name, function, NULL);
 	array_add(&events_all, name);
 }
 
@@ -424,10 +424,10 @@ static TIMER(ekg_day_timer) {
 			}
 			xfree(ts);
 
-			new_guery_emit(NULL, "ui_window_refresh");
+			query_emit(NULL, "ui_window_refresh");
 		}
 		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
-		new_guery_emit(NULL, "day_changed", &tm, &oldtm);
+		query_emit(NULL, "day_changed", &tm, &oldtm);
 #undef dayischanged
 	} else if (!oldtm) {
 		oldtm = xmalloc(sizeof(struct tm));

@@ -355,8 +355,8 @@ EXPORT int sim_plugin_init(int prio)
 	plugin_register(&sim_plugin, prio);
 	ekg_recode_cp_inc();
 
-	new_guery_connect(&sim_plugin, "message_encrypt", message_encrypt, NULL);
-	new_guery_connect(&sim_plugin, "message_decrypt", message_decrypt, NULL);
+	query_connect(&sim_plugin, "message_encrypt", message_encrypt, NULL);
+	query_connect(&sim_plugin, "message_decrypt", message_decrypt, NULL);
 
 	command_add(&sim_plugin, ("sim:key"), ("puUC uUC"), command_key, 0,
 			"-g --generate -s --send -d --delete -l --list");

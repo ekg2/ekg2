@@ -1550,7 +1550,7 @@ JABBER_HANDLER(jabber_handle_presence) {
 								up->aff		= xstrdup(affiliation);
 							}
 						}
-						new_guery_emit(NULL, "userlist_refresh");
+						query_emit(NULL, "userlist_refresh");
 						debug("[MUC, PRESENCE] NEWITEM: %s (%s) ROLE:%s AFF:%s\n", nickjid, __(jid), role, affiliation);
 						xfree(nickjid);
 						xfree(jid); xfree(role); xfree(affiliation);
@@ -1708,7 +1708,7 @@ static void newmail_common(session_t *s) { /* maybe inline? */
 	if (config_sound_mail_file) 
 		play_sound(config_sound_mail_file);
 	else if (config_jabber_beep_mail)
-		new_guery_emit(NULL, "ui_beep", NULL);
+		query_emit(NULL, "ui_beep", NULL);
 	/* XXX, we NEED to connect to MAIL_COUNT && display info about mail like mail plugin do. */
 	/* XXX, emit events */
 }

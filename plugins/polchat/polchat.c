@@ -704,10 +704,10 @@ EXPORT int polchat_plugin_init(int prio) {
 	plugin_register(&polchat_plugin, prio);
 	ekg_recode_utf8_inc();
 
-	new_guery_connect(&polchat_plugin, "protocol_validate_uid", polchat_validate_uid, NULL);
-	new_guery_connect(&polchat_plugin, "session_added", polchat_session_init, NULL);
-	new_guery_connect(&polchat_plugin, "session_removed", polchat_session_deinit, NULL);
-	new_guery_connect(&polchat_plugin, "plugin_print_version", polchat_print_version, NULL);
+	query_connect(&polchat_plugin, "protocol_validate_uid", polchat_validate_uid, NULL);
+	query_connect(&polchat_plugin, "session_added", polchat_session_init, NULL);
+	query_connect(&polchat_plugin, "session_removed", polchat_session_deinit, NULL);
+	query_connect(&polchat_plugin, "plugin_print_version", polchat_print_version, NULL);
 
 #if 0
 	query_connect(&irc_plugin, ("ui-window-kill"),	irc_window_kill, NULL);

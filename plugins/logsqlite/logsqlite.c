@@ -844,9 +844,9 @@ int logsqlite_plugin_init(int prio)
 	command_add(&logsqlite_plugin, "logsqlite:laststatus", "puU puU puU puU puU", logsqlite_cmd_laststatus, 0, "-n --number -s --search");
 	command_add(&logsqlite_plugin, "logsqlite:sync", NULL, logsqlite_cmd_sync, 0, 0);
 
-	new_guery_connect(&logsqlite_plugin, "protocol_message_post", logsqlite_msg_handler, NULL);
-	new_guery_connect(&logsqlite_plugin, "protocol_status", logsqlite_status_handler, NULL);
-	new_guery_connect(&logsqlite_plugin, "ui_window_new",	logsqlite_newwin_handler, NULL);
+	query_connect(&logsqlite_plugin, "protocol_message_post", logsqlite_msg_handler, NULL);
+	query_connect(&logsqlite_plugin, "protocol_status", logsqlite_status_handler, NULL);
+	query_connect(&logsqlite_plugin, "ui_window_new",	logsqlite_newwin_handler, NULL);
 
 	variable_add(&logsqlite_plugin, ("last_open_window"), VAR_BOOL, 1, &config_logsqlite_last_open_window, NULL, NULL, NULL);
 	variable_add(&logsqlite_plugin, ("last_in_window"), VAR_BOOL, 1, &config_logsqlite_last_in_window, NULL, NULL, NULL);

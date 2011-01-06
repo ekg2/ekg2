@@ -183,7 +183,7 @@ EXPORTNOT void plugin_load(const char *name)
 	if (ui_plugin->theme_init)
 		ui_plugin->theme_init();
 
-	new_guery_emit(ui_plugin, "set_vars_default");
+	query_emit(ui_plugin, "set_vars_default");
 }
 
 EXPORTNOT plugin_t *remote_plugin_load(const char *name, int prio) {

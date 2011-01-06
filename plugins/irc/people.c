@@ -246,7 +246,7 @@ people_t *irc_add_person(session_t *s, irc_private_t *j,
 		chan->longest_nick = xstrlen(nick);
 		nickpad_string_create(chan);
 	}
-	new_guery_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist_refresh");
 	return ret;
 }
 
@@ -290,7 +290,7 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 	}
 	nickpad_string_create(chan);
 
-	new_guery_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist_refresh");
 
 	array_free(save);
 	return 0;	
@@ -367,7 +367,7 @@ int irc_del_person_channel(session_t *s, irc_private_t *j, char *nick, char *cha
 	if (xstrlen(nick) == chan->longest_nick)
 		update_longest_nick(chan);
 
-	new_guery_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist_refresh");
 	return ret;
 }
 
@@ -451,7 +451,7 @@ int irc_del_person(session_t *s, irc_private_t *j, char *nick,
 	}
 	xfree(longnick);
 
-	new_guery_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist_refresh");
 	return 0;
 }
 
@@ -487,7 +487,7 @@ int irc_del_channel(session_t *s, irc_private_t *j, char *name)
 	}
 	xfree(tmp);
 
-	new_guery_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist_refresh");
 	return 0;
 }
 
@@ -613,7 +613,7 @@ int irc_nick_change(session_t *s, irc_private_t *j, char *old_nick, char *new_ni
 			 * this way */
 		}
 	}
-	new_guery_emit(NULL, "userlist_refresh");
+	query_emit(NULL, "userlist_refresh");
 
 	/* update nickname in internal structures */
 	t1 = per->nick;
