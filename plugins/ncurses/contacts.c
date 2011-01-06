@@ -54,6 +54,7 @@ int config_contacts_descr = 0;
 int config_contacts_edge;
 int config_contacts_frame;
 int config_contacts_margin = 1;
+int config_contacts_vertical_margin = 1;
 int config_contacts_orderbystate = 1;
 int config_contacts_wrap = 0;
 char *config_contacts_order;
@@ -421,6 +422,9 @@ void ncurses_contacts_changed(const char *name) {
 	if (config_contacts_margin > 10)
 		config_contacts_margin = 10;
 
+	if (config_contacts_vertical_margin > 5)
+		config_contacts_vertical_margin = 5;
+
 	if (config_contacts_edge > 3)
 		config_contacts_edge = 2;
 
@@ -527,11 +531,11 @@ void ncurses_contacts_new(window_t *w)
 			break;
 		case WF_TOP:
 			w->height = size;
-			n->margin_bottom = config_contacts_margin;
+			n->margin_bottom = config_contacts_vertical_margin;
 			break;
 		case WF_BOTTOM:
 			w->height = size;
-			n->margin_top = config_contacts_margin;
+			n->margin_top = config_contacts_vertical_margin;
 			break;
 	}
 
