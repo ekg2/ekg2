@@ -155,7 +155,7 @@ typedef struct guery_node {
         int count;
 } guery_t;
 
-query_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
+guery_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data);
 int new_guery_emit(plugin_t *, const char *, ...);
 
 LIST_FREE_ITEM(list_guery_free_data, guery_t *);
@@ -173,7 +173,7 @@ int query_emitXX(plugin_t *, const char *, ...);
 void queries_reconnect();
 
 const char *query_name(const int id);
-const struct query_def *query_struct(const int id);
+const struct query_def *query_structXXX(const int id);
 int query_register_external(const char *name, ...);
 
 #endif

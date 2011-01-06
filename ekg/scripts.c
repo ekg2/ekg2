@@ -662,16 +662,13 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 	}
 /* other */
 	else {
-		int i;
-		for (i = 0; i < queries_count; i++) {
-			if (!xstrcmp(qname, (query_name(i)))) {
-				const struct query_def *q = query_struct(i);
+		const guery_def_t* g;
+		for (g = list_gueries_registered; g; g = g->next) {
+			if (!xstrcmp(qname, g->name)) {
 				int j = 0;
-
-				while (j < QUERY_ARGS_MAX && q->params[j] != QUERY_ARG_END) {
-					NEXT_ARG(q->params[j++]);
+				while (j < QUERY_ARGS_MAX && g->params[j] != QUERY_ARG_END) {
+					NEXT_ARG(g->params[j++]);
 				}
-
 				break;
 			}
 		}

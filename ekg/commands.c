@@ -2101,18 +2101,6 @@ static COMMAND(cmd_debug_queries)
 	printq("generic", ("name			     | plugin	   | count"));
 	printq("generic", ("---------------------------------|-------------|------"));
 	
-	for (ll = queries; ll <= &queries[QUERY_EXTERNAL]; ll++) {
-		if (ll == &queries[QUERY_EXTERNAL] && *ll)
-			printq("generic", ("------EXTERNAL-QUERIES-----------|-------------|-----"));
-		for (q = *ll; q; q = q->next) {
-			char buf[256];
-			const char *plugin = (q->plugin) ? q->plugin->name : ("-");
-
-			snprintf(buf, sizeof(buf), "%-32s | %-11s | %d", __(query_name(q->id)), plugin, q->count);
-			printq("generic", buf);
-		}
-	}
-
         for (kk = gueries; kk < &gueries[QUERIES_BUCKETS]; ++kk) {
                 for (g = *kk; g; g = g->next) {
                         char buf[256];

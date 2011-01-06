@@ -652,7 +652,7 @@ void query_external_free() {
  *	- If it's ,,seen'' by query_id() from previous call, than return assigned id also [from @a queries_external list_t]<br>
  *	- else it allocate struct query in @a queries_external, and return next available id.
  */
-
+#if 0
 static int query_idXXXX(const char *name) {
 	struct query_def *a = NULL;
 	list_t l;
@@ -691,7 +691,7 @@ static int query_idXXXX(const char *name) {
  *
  */
 
-const struct query_def *query_struct(const int id) {
+const struct query_def *query_structXXX(const int id) {
 	list_t l;
 
 	if (id < QUERY_EXTERNAL) 
@@ -769,6 +769,8 @@ query_t *query_connectXXX(plugin_t *plugin, const char *name, query_handler_func
 	return query_connect_common(plugin, query_idXXXX(name), handler, data);
 }
 
+#endif
+
 static LIST_FREE_ITEM(list_guery_registered_free_data, guery_def_t *) {
 	xfree(data->name);
 }
@@ -783,7 +785,7 @@ void list_gueries_registered_free() {
 	list_gueries_registered = NULL;
 }
 
-query_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
+guery_t *new_guery_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
 	int found = 0;
 	guery_def_t* gd;
 
@@ -917,6 +919,7 @@ int new_guery_emit(plugin_t *plugin, const char* name, ...) {
 	return result;
 }
 
+#if 0
 int query_emit_idXXX(plugin_t *plugin, const int id, ...) {
 	int result = -2;
 	va_list ap;
@@ -958,6 +961,7 @@ int query_emitXX(plugin_t *plugin, const char *name, ...) {
 	va_end(ap);
 	return result;
 }
+#endif
 
 int query_register_external(const char *name, ...) {
 	va_list va;
@@ -965,11 +969,13 @@ int query_register_external(const char *name, ...) {
 	struct query_def *a, *q = NULL;
 	list_t l;
 	
+	/*
 	for (i=0; i < QUERY_EXTERNAL; i++) {
 		if (!xstrcmp(query_list[i].name, name)) {
 			return -1;
 		}
 	}
+	*/
 
 	for (l = queries_external; l; l = l->next) {
 		a = l->data;
@@ -998,7 +1004,7 @@ int query_register_external(const char *name, ...) {
 	return q->id;
 }
 
-static LIST_ADD_COMPARE(query_compare, query_t *) {
+static LIST_ADD_COMPARE(guery_compare, guery_t *) {
 	/*				any other suggestions: vvv ? */
 	const int ap = (data1->plugin ? data1->plugin->prio : -666);
 	const int bp = (data2->plugin ? data2->plugin->prio : -666);
@@ -1013,10 +1019,21 @@ static LIST_ADD_COMPARE(query_compare, query_t *) {
  */
 
 void queries_reconnect() {
+	/*
 	int i;
 
 	for (i = 0; i <= QUERY_EXTERNAL; i++)
 		LIST_RESORT2(&(queries[i]), query_compare);
+	*/
+
+	FILE* fp = fopen("/tmp/queries.txt", "a+");
+	fprintf (fp, "queries_reconnect()\n");
+	fclose(fp);
+
+	size_t i;
+	for (i = 0; i < QUERIES_BUCKETS; ++i) {
+		LIST_RESORT2(&(gueries[i]), guery_compare);
+	}
 }
 
 /*
