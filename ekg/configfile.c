@@ -51,7 +51,6 @@
 #include "plugins.h"
 #include "windows.h"
 
-#include "queries.h"
 
 /* function inside legacyconfig.c */
 void config_upgrade();

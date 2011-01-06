@@ -4,7 +4,6 @@
 #include "dynstuff.h"
 #include "themes.h"
 #include "plugins.h"
-#include "queries.h"
 #include "stuff.h"
 #include "xmalloc.h"
 
