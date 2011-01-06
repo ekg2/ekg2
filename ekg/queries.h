@@ -38,8 +38,10 @@ typedef struct query_def_node {
         enum query_arg_type params[QUERY_ARGS_MAX];
 } query_def_t;
 
-extern query_def_t *registered_gueries;
-extern int gueries_registered_count;
+int queries_init();
+
+extern query_def_t *registered_queries;
+extern int registered_queries_count;
 
 #ifdef __cplusplus
 }

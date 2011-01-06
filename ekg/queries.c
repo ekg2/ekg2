@@ -401,8 +401,7 @@ const query_def_t core_query_list[] = {
 };
 
 
-
-int core_queries_init() {
-
+int queries_init() {
+	return 0;
 }
 

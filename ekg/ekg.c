@@ -852,6 +852,8 @@ int main(int argc, char **argv)
 	variable_init();
 	variable_set_default();
 
+	queries_init();
+
 	mesg_startup = mesg_set(MESG_CHECK);
 #ifdef DEFAULT_THEME 
 	if (theme_read(DEFAULT_THEME, 1) == -1) 
@@ -1180,14 +1182,14 @@ void ekg_exit()
 	windows_destroy();
 	window_status = NULL; window_debug = NULL; window_current = NULL;	/* just in case */
 
-/* gueries */
+/* queries */
 	{
 		query_t** kk;
-		for (kk = gueries; kk < &gueries[QUERIES_BUCKETS]; ++kk) {
-			gueries_list_destroy(kk);
+		for (kk = queries; kk < &queries[QUERIES_BUCKETS]; ++kk) {
+			queries_list_destroy(kk);
 		}
 	}
-	registered_gueries_free();
+	registered_queries_free();
 
 	xfree(home_dir);
 

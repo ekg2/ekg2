@@ -663,7 +663,7 @@ script_query_t *script_query_bind(scriptlang_t *s, script_t *scr, char *qname, v
 /* other */
 	else {
 		const query_def_t* g;
-		for (g = registered_gueries; g; g = g->next) {
+		for (g = registered_queries; g; g = g->next) {
 			if (!xstrcmp(qname, g->name)) {
 				int j = 0;
 				while (j < QUERY_ARGS_MAX && g->params[j] != QUERY_ARG_END) {

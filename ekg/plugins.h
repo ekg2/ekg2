@@ -151,9 +151,9 @@ int query_free(query_t* g);
 
 void queries_reconnect();
 
-void gueries_list_destroy(query_t** kk);
+void queries_list_destroy(query_t** kk);
 
-void registered_gueries_free();
+void registered_queries_free();
 
 typedef enum {
 	WATCH_NONE = 0,
@@ -227,7 +227,7 @@ int ekg2_dlinit();
 #ifndef EKG2_WIN32_NOFUNCTION
 extern plugin_t *plugins;
 extern list_t watches;
-extern query_t *gueries[];
+extern query_t *queries[];
 #endif
 
 #ifdef __cplusplus

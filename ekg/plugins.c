@@ -61,16 +61,16 @@ DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
 
 list_t watches = NULL;
 
-query_t* gueries[QUERIES_BUCKETS];
+query_t* queries[QUERIES_BUCKETS];
 
-query_def_t* registered_gueries;
-int gueries_registered_count = 0;
+query_def_t* registered_queries;
+int registered_queries_count = 0;
 
 LIST_FREE_ITEM(query_free_data, query_t *) {
 	xfree(data->name);
 }
 
-DYNSTUFF_LIST_DECLARE(gueries_list, query_t, query_free_data,
+DYNSTUFF_LIST_DECLARE(queries_list, query_t, query_free_data,
 	static __DYNSTUFF_ADD,
 	static __DYNSTUFF_REMOVE_SAFE,
 	__DYNSTUFF_DESTROY)
@@ -553,13 +553,13 @@ int plugin_unregister(plugin_t *p)
 		s = next;
 	}
 
-	for (kk = gueries; kk < &gueries[QUERIES_BUCKETS]; ++kk) {
+	for (kk = queries; kk < &queries[QUERIES_BUCKETS]; ++kk) {
 		query_t *g;
 
 		for (g = *kk; g; ) {
 			query_t *next = g->next;
 			if (g->plugin == p)
-				gueries_list_remove(kk, g);
+				queries_list_remove(kk, g);
 			g = next;
 		}
 	}
@@ -611,7 +611,7 @@ int query_register(const char *name, ...) {
 	query_def_t *gd;
 	int found = 0, name_hash = ekg_hash(name);
 
-	for (gd = registered_gueries; gd; gd = gd->next) {
+	for (gd = registered_queries; gd; gd = gd->next) {
 	    if (name_hash == gd->name_hash && !xstrcmp(gd->name, name)) {
 			found = 1;
 			break;
@@ -626,9 +626,9 @@ int query_register(const char *name, ...) {
 		gd            = xmalloc(sizeof(query_def_t));
 		gd->name      = xstrdup(name);
 		gd->name_hash = name_hash;
-		gueries_registered_count++;
+		registered_queries_count++;
 
-		LIST_ADD2(registered_gueries, gd);
+		LIST_ADD2(registered_queries, gd);
 	}
 
 	va_start(va, name);
@@ -642,25 +642,31 @@ int query_register(const char *name, ...) {
 	return 0;
 }
 
+/*
+ * alternative way for registering queries
+ */
+int query_register_const(const query_def_t *def) {
+	
+}
 
 static LIST_FREE_ITEM(registered_query_free_data, query_def_t *) {
 	xfree(data->name);
 }
 
-void registered_gueries_free() {
-	if (!registered_gueries)
+void registered_queries_free() {
+	if (!registered_queries)
 	    return;
 
-	LIST_DESTROY2(registered_gueries, registered_query_free_data);
+	LIST_DESTROY2(registered_queries, registered_query_free_data);
 
 	/* this has been already done in call above */
-	registered_gueries = NULL;
+	registered_queries = NULL;
 }
 
 
 int query_free(query_t* g) {
 
-    gueries_list_remove(&gueries[g->name_hash & (QUERIES_BUCKETS - 1)], g);
+    queries_list_remove(&queries[g->name_hash & (QUERIES_BUCKETS - 1)], g);
 
     return 0;
 }
@@ -668,9 +674,6 @@ int query_free(query_t* g) {
 query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t *handler, void *data) {
 	int found = 0;
 	query_def_t* gd;
-
-	FILE *fp = fopen("/tmp/queries.txt", "a+");
-	fprintf (fp, "c: %s\n", name);
 
 	query_t *q = xmalloc(sizeof(query_t));
 
@@ -680,26 +683,24 @@ query_t *query_connect(plugin_t *plugin, const char *name, query_handler_func_t 
 	q->handler	= handler;
 	q->data		= data;
 
-	for (gd = registered_gueries; gd; gd = gd->next) {
+	for (gd = registered_queries; gd; gd = gd->next) {
 		if (q->name_hash == gd->name_hash && !xstrcmp(gd->name, name)) {
 			found = 1;
 			break;
 		}
 	}
 	if (!found) {
-		debug_error("query_connect() NOT FOUND[%d]: %s\n", gueries_registered_count, __(name));
-		fprintf(fp, "query_connect() NOT FOUND[%d]: %s\n", gueries_registered_count, __(name));
+		debug_error("query_connect() NOT FOUND[%d]: %s\n", registered_queries_count, __(name));
 
 		gd            = xmalloc(sizeof(query_def_t));
 		gd->name      = xstrdup(name);
 		gd->name_hash = q->name_hash;
-		gueries_registered_count++;
+		registered_queries_count++;
 
-		LIST_ADD2(registered_gueries, gd);
+		LIST_ADD2(registered_queries, gd);
 	}
-	fclose (fp);
 
-	gueries_list_add(&gueries[q->name_hash & (QUERIES_BUCKETS - 1)], q);
+	queries_list_add(&queries[q->name_hash & (QUERIES_BUCKETS - 1)], q);
 
 	return q;
 }
@@ -731,24 +732,16 @@ static int query_emit_inner(query_t *g, va_list ap) {
 int query_emit(plugin_t *plugin, const char* name, ...) {
 	int result = -2;
 	va_list ap;
-        FILE *fp;
 	query_t* g;
 	int name_hash, bucket_id;
-
-        fp = fopen ("/tmp/queries.txt", "a+");
-        fprintf (fp, "q: %s\n", name);
-        fclose(fp);
 
 	name_hash = ekg_hash(name);
 	bucket_id = name_hash & (QUERIES_BUCKETS - 1);
 
 	va_start(ap, name);
 
-	for (g = gueries[bucket_id]; g; g = g->next) {
+	for (g = queries[bucket_id]; g; g = g->next) {
 	    if (name_hash == g->name_hash && (!plugin || (plugin == g->plugin)) && !xstrcmp(name, g->name)) {
-        fp = fopen ("/tmp/queries.txt", "a+");
-        fprintf (fp, "e: %s\n", name);
-        fclose(fp);
 		result = query_emit_inner(g, ap);
 
 		if (result == -1) {
@@ -777,13 +770,9 @@ static LIST_ADD_COMPARE(query_compare, query_t *) {
  */
 
 void queries_reconnect() {
-	FILE* fp = fopen("/tmp/queries.txt", "a+");
-	fprintf (fp, "queries_reconnect()\n");
-	fclose(fp);
-
 	size_t i;
 	for (i = 0; i < QUERIES_BUCKETS; ++i) {
-		LIST_RESORT2(&(gueries[i]), query_compare);
+		LIST_RESORT2(&(queries[i]), query_compare);
 	}
 }
 

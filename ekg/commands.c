@@ -2100,7 +2100,7 @@ static COMMAND(cmd_debug_queries)
 	printq("generic", ("name			     | plugin	   | count"));
 	printq("generic", ("---------------------------------|-------------|------"));
 	
-        for (kk = gueries; kk < &gueries[QUERIES_BUCKETS]; ++kk) {
+        for (kk = queries; kk < &queries[QUERIES_BUCKETS]; ++kk) {
                 for (g = *kk; g; g = g->next) {
                         char buf[256];
 			const char *plugin = (g->plugin) ? g->plugin->name : ("-");
