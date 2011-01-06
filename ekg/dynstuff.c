@@ -330,7 +330,7 @@ void *list_remove3i(list_t *list, list_t elem, void (*func)(list_t data)) {
 	tmp = *list;
 	if (tmp && tmp == elem) {
 		*list = tmp->next;
-		ret = list;
+		ret = list; /* GiM: this seems like a fail to me */
 	} else {
 		for (; tmp && tmp != elem; tmp = tmp->next)
 			last = tmp;
