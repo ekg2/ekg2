@@ -646,10 +646,9 @@ void ncurses_refresh(void)
 			continue;
 
 		if (n->handle_redraw) {
-			ncurses_redraw(w);
+			if (n->redraw)
+				ncurses_redraw(w);
 		} else {
-			/* window_floating_update() */
-
 			if (w->last_update != time(NULL)) {
 				w->last_update = time(NULL);
 
