@@ -380,13 +380,11 @@ COMMAND(cmd_mark) {
 static void draw_thin_red_line(window_t *w, int y)
 {
 	ncurses_window_t *n = w->priv_data;
-	int x;
 	int attr = color_pair(COLOR_RED, COLOR_BLACK) | A_BOLD | A_ALTCHARSET;
 	unsigned char ch = (unsigned char) ncurses_fixchar((CHAR_T) ACS_HLINE, &attr);
 
 	wattrset(n->window, attr);
-	for (x = 0; x < w->width; x++)
-		mvwaddch(n->window, y, x, ch);
+	mvwhline(n->window, y, 0, ch, w->width);
 }
 
 /*
@@ -434,6 +432,9 @@ void ncurses_redraw(window_t *w)
 		char vline_ch = vertical_line_char[0];
 		char hline_ch = horizontal_line_char[0];
 		int attr = color_pair(COLOR_BLUE, COLOR_BLACK);
+		int x0 = n->margin_left, y0 = n->margin_top;
+		int x1 = w->width - 1 - n->margin_right;
+		int y1 = w->height - 1 - n->margin_bottom;
 
 		if (!vline_ch || !hline_ch) {
 			vline_ch = ACS_VLINE;
@@ -444,42 +445,28 @@ void ncurses_redraw(window_t *w)
 
 		if ((w->frames & WF_LEFT)) {
 			left++;
-
-			for (y = 0; y < w->height; y++)
-				mvwaddch(n->window, y, n->margin_left, vline_ch);
+			mvwvline(n->window, y0, x0, vline_ch, y1-y0+1);
 		}
 
 		if ((w->frames & WF_RIGHT)) {
-			for (y = 0; y < w->height; y++)
-				mvwaddch(n->window, y, w->width - 1 - n->margin_right, vline_ch);
+			mvwvline(n->window, y0, x1, vline_ch, y1-y0+1);
 		}
 
 		if ((w->frames & WF_TOP)) {
 			top++;
 			height--;
-
-			for (x = 0; x < w->width; x++)
-				mvwaddch(n->window, n->margin_top, x, hline_ch);
+			mvwhline(n->window, y0, x0, vline_ch, x1-x0+1);
+			if (w->frames & WF_LEFT)  mvwaddch(n->window, y0, x0, ACS_ULCORNER);
+			if (w->frames & WF_RIGHT) mvwaddch(n->window, y0, x1, ACS_URCORNER);
 		}
 
 		if ((w->frames & WF_BOTTOM)) {
 			height--;
-
-			for (x = 0; x < w->width; x++)
-				mvwaddch(n->window, w->height - 1 - n->margin_bottom, x, hline_ch);
+			mvwhline(n->window, y1, x0, vline_ch, x1-x0+1);
+			if (w->frames & WF_LEFT)  mvwaddch(n->window, y1, x0, ACS_LLCORNER);
+			if (w->frames & WF_RIGHT) mvwaddch(n->window, y1, x1, ACS_LRCORNER);
 		}
 
-		if ((w->frames & WF_LEFT) && (w->frames & WF_TOP))
-			mvwaddch(n->window, 0, 0, ACS_ULCORNER);
-
-		if ((w->frames & WF_RIGHT) && (w->frames & WF_TOP))
-			mvwaddch(n->window, 0, w->width - 1, ACS_URCORNER);
-
-		if ((w->frames & WF_LEFT) && (w->frames & WF_BOTTOM))
-			mvwaddch(n->window, w->height - 1, 0, ACS_LLCORNER);
-
-		if ((w->frames & WF_RIGHT) && (w->frames & WF_BOTTOM))
-			mvwaddch(n->window, w->height - 1, w->width - 1, ACS_LRCORNER);
 	}
 
 	if (n->start < 0)
