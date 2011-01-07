@@ -102,10 +102,10 @@ static QUERY(feed_session_deinit) {
 // #define EKG_WINACT_RSS EKG_WINACT_MSG // till 4616
 #define EKG_WINACT_RSS EKG_WINACT_IMPORTANT
 
-	/* new: 
+	/* new:
 	 *	0x0 - old
 	 *	0x1 - new
-	 *	0x2 - modified 
+	 *	0x2 - modified
 	 */
 
 	/* mtags: (by default rss_message() won't display any messages if new == 0, but if user want to display again (?) news, we must allow him)
@@ -142,7 +142,7 @@ static QUERY(rss_message) {
 		dmode = mtags;
 
 	switch (mw) {			/* XXX, __current ? */
-		case 0: 
+		case 0:
 			target = "__status";
 			targetwnd = window_status;
 			break;
@@ -154,7 +154,7 @@ static QUERY(rss_message) {
 			if (!(target = get_nickname(s, uid)))
 				target = uid;
 			break;
-	} 
+	}
 
 	if (mw)
 		targetwnd = window_new(target, s, 0);
@@ -187,7 +187,7 @@ static QUERY(rss_message) {
 
 			formatka = saprintf("feed_server_header_%s", tmp);
 			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
-	
+
 			formated = format_string(format_find(formatka ? formatka : "feed_server_header_generic"), tmp, value ? value+1 : "");
 			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
 
@@ -205,18 +205,18 @@ static QUERY(rss_message) {
 
 			if ((value = xstrchr(tmp, ' '))) *value = 0;
 			if (dheaders && !xstrstr(dheaders, tmp)) {
-				if (value) 
+				if (value)
 					debug("DHEADER: %s=%s skipping...\n", tmp, value+1);
-				else	debug("DHEADER: %s skipping.. (tag without value?\n", tmp);	
+				else	debug("DHEADER: %s skipping.. (tag without value?\n", tmp);
 				continue;	/* jesli mamy display_headers a tego nie mamy na liscie to pomijamy */
 			}
 
 			formatka = saprintf("feed_message_header_%s", tmp);
 			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
-	
+
 			formated = format_string(format_find(formatka ? formatka : "feed_message_header_generic"), tmp, value ? value+1 : "");
 			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
-			
+
 			xfree(formated);
 			xfree(formatka);
 		}
@@ -299,17 +299,17 @@ static plugins_params_t feed_plugin_vars[] = {
 	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "1", 0, NULL),
 	/* (-1 - nothing; 0 - only notify; 1 - only body; 2 - only headers; 3 - headers+body 4 - sheaders+headers+ body)  default+else: 3 */
-	PLUGIN_VAR_ADD("display_mode",		VAR_INT, "3", 0, NULL),	
+	PLUGIN_VAR_ADD("display_mode",		VAR_INT, "3", 0, NULL),
 
-	PLUGIN_VAR_ADD("display_headers",	VAR_STR, 
-			/* RSS: */ 
-				"pubDate: author: dc:creator: dc:date:" 
-			/* NNTP: */ 
-				"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:", 
+	PLUGIN_VAR_ADD("display_headers",	VAR_STR,
+			/* RSS: */
+				"pubDate: author: dc:creator: dc:date:"
+			/* NNTP: */
+				"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:",
 			0, NULL),
 /* rss vars. */
 #ifdef HAVE_EXPAT
-	PLUGIN_VAR_ADD("display_server_headers", VAR_STR, 
+	PLUGIN_VAR_ADD("display_server_headers", VAR_STR,
 	/* display some basic server headers */
 		"HTTP/1.1 "	/* rcode? */
 		"Server: "
@@ -332,6 +332,19 @@ EXPORT int feed_plugin_init(int prio) {
 
 	feed_plugin.params = feed_plugin_vars;
 	plugin_register(&feed_plugin, prio);
+
+	query_register("rss-message",
+				QUERY_ARG_CHARP,		/* session uid */
+				QUERY_ARG_CHARP,		/* uid */
+				QUERY_ARG_CHARP,		/* proto headers */
+				QUERY_ARG_CHARP,		/* headers */
+				QUERY_ARG_CHARP,		/* title */
+				QUERY_ARG_CHARP,		/* url */
+				QUERY_ARG_CHARP,		/* descr */
+				QUERY_ARG_INT,			/* new */
+				QUERY_ARG_INT,			/* modify */
+				QUERY_ARG_END);
+
 			/* common */
 	query_connect(&feed_plugin, "session-added", feed_session_init, NULL);
 	query_connect(&feed_plugin, "session-removed", feed_session_deinit, NULL);

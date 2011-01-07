@@ -122,8 +122,8 @@ SSL_CTX *ircSslCtx;
  * *************************************************************
  */
 
-/* 
- * IDEAS: 
+/*
+ * IDEAS:
  *  -> maybe some params in /connect command ?
  *     for example if we have in /session server krakow.irc.pl,poznan.irc.pl
  *     and we want connect to poznan.irc.pl (150.254.64.64) nor krakow... we type
@@ -153,8 +153,8 @@ int irc_config_experimental_chan_name_clean;
 
 char fillchars_utf8[] = "\xC2\xA0";
 char fillchars_norm[] = "\xA0";
-char *fillchars = NULL; 
-int fillchars_len = 0; 
+char *fillchars = NULL;
+int fillchars_len = 0;
 
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
@@ -227,7 +227,7 @@ static LIST_FREE_ITEM(list_irc_resolver_free, connector_t *) {
  * @param data NULL
  *
  * @todo Check if userlist_write() here is good.
- * @todo 
+ * @todo
  *
  * @return	0 if @a session is irc one, and memory allocated where xfree()'d.<br>
  *		1 if not such session, or it wasn't irc session <b>[most probable]</b>, or we already free memory.
@@ -265,7 +265,7 @@ static QUERY(irc_session_deinit) {
 
 	irc_free_people(s, j);
 
-	for (i = 0; i<SERVOPTS; i++) 
+	for (i = 0; i<SERVOPTS; i++)
 		xfree(j->sopt[i]);
 
 	xfree(j->nick_modes);
@@ -275,11 +275,11 @@ static QUERY(irc_session_deinit) {
 }
 
 static char *irc_make_banmask(session_t *session, const char *nick, const char *ident, const char *hostname) {
-/* 
+/*
  *	  1 (Nick)   - nick!*@*
  *	  2 (User)   - *!*ident@*
  *	  4 (Host)   - *!*@host.*
- *	  4 (IP)     - *!*@*.168.11.11 - buggy, it bans @*.11 
+ *	  4 (IP)     - *!*@*.168.11.11 - buggy, it bans @*.11
  *	  8 (Domain) - *!*@*.domain.net
  *	  8 (IP)     - *!*@192.168.11.*
  */
@@ -287,20 +287,20 @@ static char *irc_make_banmask(session_t *session, const char *nick, const char *
 	const char	*tmp[4];
 	char		*temp = NULL;
 
-	int		family = 0; 
+	int		family = 0;
 	char		ind = '.';
 	int		bantype = session_int_get(session, "ban_type");
-	
+
 #ifdef HAVE_INET_PTON
 	char		buf[33];
-	
+
 	if (xstrchr(host, ':')) {
 		/* to protect againt iwil var in ircd.conf (ircd-hybrid)
 		 *  dot_in_ip6_addr = yes;
-		 */ 
-		if (host[xstrlen(host)-1] == '.') 
+		 */
+		if (host[xstrlen(host)-1] == '.')
 			host[xstrlen(host)-1] = 0;
-			
+
 		if (inet_pton(AF_INET6, host, &buf) > 0) {
 			family = AF_INET6;
 			ind = ':';
@@ -365,11 +365,11 @@ static QUERY(irc_setvar_default) {
 static int irc_resolver_sort(void *s1, void *s2) {
 	connector_t *sort1 = s1/*, *sort2 = s2*/;
 	int prefer_family = AF_INET;
-/*	
+/*
 	if (sort1->session != sort2->session)
 		return 0;
-*/	
-	if (session_int_get(sort1->session, "prefer_family") == AF_INET6) 
+*/
+	if (session_int_get(sort1->session, "prefer_family") == AF_INET6)
 		prefer_family = AF_INET6;
 
 /*	debug("%d && %d -> %d\n", sort1->family, sort2->family, prefer_family); */
@@ -451,7 +451,7 @@ static void irc_changed_resolve(session_t *s, const char *var) {
 		print("generic_error", strerror(errno));
 
 		j->resolving--;
-		
+
 		xfree(irdata->session);
 		xfree(irdata);
 
@@ -604,7 +604,7 @@ static void irc_changed_recode_list(session_t *s, const char *var) {
 static void irc_changed_recode(session_t *s, const char *var) {
 	const char *val;
 	irc_private_t *j;
-	
+
 	if (!s || !(j = s->priv))
 		return;
 
@@ -630,7 +630,7 @@ static void irc_changed_auto_guess_encoding(session_t *s, const char *var) {
 
 	if (!s || !(j = s->priv))
 		return;
-	
+
 	/* Clean old list */
 	for (el=j->auto_guess_encoding; el;) {
 		e = el->data;
@@ -653,7 +653,7 @@ static void irc_changed_auto_guess_encoding(session_t *s, const char *var) {
 		char *to = NULL;
 		char *from = args[i];
 		if (!xstrcasecmp(from, config_console_charset)) {
-			/* ekg2 can't convert when from and to are the same 
+			/* ekg2 can't convert when from and to are the same
 			 * trick: lets convert iso-8859-2 -> iso8859-2; utf8 -> utf-8; etc.
 			 */
 			char *p = from, *q;
@@ -687,7 +687,7 @@ static void irc_changed_auto_guess_encoding(session_t *s, const char *var) {
 
 void irc_handle_disconnect(session_t *s, const char *reason, int type)
 {
-/* 
+/*
  * EKG_DISCONNECT_NETWORK @ irc_handle_stream type == 1
  * EKG_DISCONNECT_FAILURE @ irc_handle_connect when we got timeouted or connection refused or other..
  * EKG_DISCONNECT_FAILURE @ irc_c_error(misc.c) when we recv ERROR message @ connecting
@@ -703,10 +703,10 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 		return;
 	}
 
-	// !!! 
+	// !!!
 	if (j->send_watch) {
 		j->send_watch->type = WATCH_NONE;
-		watch_free(j->send_watch);	
+		watch_free(j->send_watch);
 		j->send_watch = NULL;
 	}
 	if (j->recv_watch) {
@@ -731,7 +731,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 			j->autoreconnecting = 0;
 			/* if ,,reconnect'' timer exists we should stop doing */
 			if (timer_remove_session(s, "reconnect") == 0)
-				print("auto_reconnect_removed", session_name(s)); 
+				print("auto_reconnect_removed", session_name(s));
 			break;
 			/*
 			 * default:
@@ -739,7 +739,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 			 */
 	}
 	__reason  = xstrdup(format_find(reason));
-	
+
 	if (!xstrcmp(__reason, "")) {
 		xfree(__reason);
 		__reason = xstrdup(reason);
@@ -754,7 +754,7 @@ static WATCHER_LINE(irc_handle_resolver) {
 	irc_private_t *j;
 	char **p;
 
-	if (!s || !(j = s->priv)) 
+	if (!s || !(j = s->priv))
 		return -1;
 
 	if (type) {
@@ -770,7 +770,7 @@ static WATCHER_LINE(irc_handle_resolver) {
 		}
 		return -1;
 	}
-/* 
+/*
  * %s %s %d %d hostname ip family port\n
  */
 	if (!xstrcmp(watch, "EOR")) return -1;	/* koniec resolvowania */
@@ -784,9 +784,9 @@ static WATCHER_LINE(irc_handle_resolver) {
 		listelem->family   = atoi(p[2]);
 		list_add_sorted((resolv->plist), listelem, &irc_resolver_sort);
 
-		debug("%s (%s %s) %x %x\n", p[0], p[1], p[2], resolv->plist, listelem); 
+		debug("%s (%s %s) %x %x\n", p[0], p[1], p[2], resolv->plist, listelem);
 		array_free(p);
-	} else { 
+	} else {
 		debug_error("[irc] received some kind of junk from resolver thread: %s\n", watch);
 		array_free(p);
 		return -1;
@@ -808,7 +808,7 @@ static WATCHER_SESSION_LINE(irc_handle_stream) {
 		j->recv_watch = NULL;
 		/* this will cause  'Removed more than one watch...' */
 		debug ("[irc] handle_stream(): ROZ£¡CZY£O %d %d\n", s->connected, s->connecting);
-		
+
 		/* avoid reconnecting when we do /disconnect */
 		if (s->connected || s->connecting)
 			irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
@@ -836,7 +836,7 @@ static WATCHER_SESSION(irc_handle_stream_ssl_input) {
 	char buf[IRC_SSL_BUFFER], *tmp;
 	int len;
 
-	if (!s || !(j = s->priv)) { 
+	if (!s || !(j = s->priv)) {
 		debug_error("[irc] handle_write_ssl() j: 0x%p\n", j);
 		return -1;
 	}
@@ -917,7 +917,7 @@ static WATCHER_LINE(irc_handle_write_ssl) {
 	irc_private_t *j = (irc_private_t*)data;
 	int res;
 
-	if (!j) { 
+	if (!j) {
 		debug_error("[irc] handle_write_ssl() j: 0x%p\n", j);
 		return -1;
 	}
@@ -932,11 +932,11 @@ static WATCHER_LINE(irc_handle_write_ssl) {
 		j->send_watch = NULL;
 		return -1;
 	}
-	
+
 	res = SSL_SEND(j->ssl_session, watch, xstrlen(watch));
 #ifdef IRC_HAVE_OPENSSL		/* OpenSSL */
 	if ((res == 0 && SSL_get_error(j->ssl_session, res) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
-	else if (res < 0) 
+	else if (res < 0)
 		res = SSL_get_error(j->ssl_session, res);
 	/* XXX, When an SSL_write() operation has to be repeated because of SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE, it must be repeated with the same arguments. */
 #endif
@@ -961,7 +961,7 @@ static WATCHER(irc_handle_connect_real) {
 	irc_private_t		*j = NULL;
 	const char		*real = NULL, *localhostname = NULL;
 	char			*pass = NULL;
-	int			res = 0; 
+	int			res = 0;
 	socklen_t		res_size = sizeof(res);
 
 	if (type == 1) {
@@ -969,7 +969,7 @@ static WATCHER(irc_handle_connect_real) {
 		return 0;
 	}
 
-	if (!s || !(j = s->priv)) { 
+	if (!s || !(j = s->priv)) {
 		debug_error("[irc] handle_connect_real() s: 0x%x j: 0x%x\n", s, j);
 		return -1;
 	}
@@ -984,7 +984,7 @@ static WATCHER(irc_handle_connect_real) {
                  * during already began process of connecting
                  */
                 if (j->conntmplist) {
-                        if (!type) DOT("IRC_TEST_FAIL", "Connect", ((connector_t *) j->conntmplist->data), s, res); 
+                        if (!type) DOT("IRC_TEST_FAIL", "Connect", ((connector_t *) j->conntmplist->data), s, res);
                         j->conntmplist = j->conntmplist->next;
                 }
                 irc_handle_disconnect(s, (type == 2) ? "Connection timed out" : strerror(res), EKG_DISCONNECT_FAILURE);
@@ -1011,7 +1011,7 @@ static WATCHER(irc_handle_connect_real) {
 
         real = session_get(s, "realname");
         real = real ? xstrlen(real) ? real : j->nick : j->nick;
-        if (j->bindtmplist)	
+        if (j->bindtmplist)
                 localhostname = ((connector_t *) j->bindtmplist->data)->hostname;
         if (!xstrlen(localhostname))
                 localhostname = NULL;
@@ -1031,11 +1031,11 @@ static WATCHER(irc_handle_connect_ssl) {
 	irc_private_t *j = NULL;
         int ret;
 
-	if (!s || !(j = s->priv)) { 
+	if (!s || !(j = s->priv)) {
 		debug_error("[irc] handle_connect_ssl() s: 0x%x j: 0x%x\n", s, j);
 		return -1;
 	}
-	
+
 	debug_error("[irc] handle_connect_ssl() type: %d\n", type);
 
         if (type == -1) {
@@ -1109,7 +1109,7 @@ static WATCHER(irc_handle_connect) {
 		return 0;
 	}
 
-	if (!s || !(j = s->priv)) { 
+	if (!s || !(j = s->priv)) {
 		debug_error("[irc] handle_connect() s: 0x%x j: 0x%x\n", s, j);
 		return -1;
 	}
@@ -1138,7 +1138,7 @@ static int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **addres
 
 	*address = NULL;
 
-	if (!co) 
+	if (!co)
 		return 0;
 	port = co->port < 0 ? defport : co->port;
 	if (port < 0) port = DEFPORT;
@@ -1206,7 +1206,7 @@ static int irc_really_connect(session_t *session) {
 	connco = (connector_t *)(j->conntmplist->data);
 	sinlen = irc_build_sin(session, connco, &sinco);
 	if (!sinco) {
-		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje (!sinco)"); 
+		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje (!sinco)");
 		return -1;
 	}
 
@@ -1228,8 +1228,8 @@ static int irc_really_connect(session_t *session) {
 	}
 
 	/* loop, optimize... */
-	if (j->bindtmplist) 
-		connvh = j->bindtmplist->data;	
+	if (j->bindtmplist)
+		connvh = j->bindtmplist->data;
 	irc_build_sin(session, connvh, &sinvh);
 	while (bindret && connvh) {
 		DOT("IRC_TEST", "Bind", connvh, session, 0);
@@ -1276,11 +1276,11 @@ static int irc_really_connect(session_t *session) {
 		session_status_set(session, EKG_STATUS_AVAIL);
 
 	w = watch_add(&irc_plugin, fd, WATCH_WRITE, irc_handle_connect, session);
-	if ((timeout = session_int_get(session, "connect_timeout") > 0)) 
+	if ((timeout = session_int_get(session, "connect_timeout") > 0))
 		watch_timeout_set(w, timeout);
-	
+
 	return 0;
-irc_conn_error: 
+irc_conn_error:
 	xfree(sinco);
 	xfree(sinvh);
 	return -1;
@@ -1340,7 +1340,7 @@ static COMMAND(irc_command_disconnect) {
 }
 
 static COMMAND(irc_command_reconnect) {
-	if (session->connecting || session_connected_get(session)) 
+	if (session->connecting || session_connected_get(session))
 		irc_command_disconnect(name, params, session, target, quiet);
 	return irc_command_connect(name, params, session, target, quiet);
 }
@@ -1354,17 +1354,17 @@ static COMMAND(irc_command_msg) {
 	window_t	*w;
 
 	int		prv = 0; /* NOTICE | PRIVMSG */
-	
+
 	char		*mline[2];
 	char		*tmpbuf;
-	
+
 	int		ischn;	/* IS CHANNEL ? */
 	char		prefix[2] = {' ', '\0'};
 	char		*head, *coloured;
 	const char	*frname; /* formatname */
 
 	int		secure = 0;
-	
+
 	char **rcpts;
 	char *uid;
 
@@ -1458,7 +1458,7 @@ static COMMAND(irc_command_msg) {
 
 	xfree(rcpts[0]);
 	xfree(rcpts);
-	
+
 	xfree(uid);
 	xfree(tmpbuf);
 
@@ -1524,9 +1524,9 @@ static COMMAND(irc_command_alist) {
 	}
 
 	if (match_arg(params[0], 'a', "add", 2)) {
-	/* params[1] - nick!ident@hostname or nickname (in form irc:nick) 
-	 * params[2] - options + channels like: +ison +autoop:#linux,#linux.pl +autounban:* +autovoice:* 
-	 * ZZZ params[2] - channels: #chan1,#chan2 or '*' 
+	/* params[1] - nick!ident@hostname or nickname (in form irc:nick)
+	 * params[2] - options + channels like: +ison +autoop:#linux,#linux.pl +autounban:* +autovoice:*
+	 * ZZZ params[2] - channels: #chan1,#chan2 or '*'
 	 * ZZZ params[3] - options.
 	 */
 
@@ -1554,7 +1554,7 @@ static COMMAND(irc_command_alist) {
 					break;
 				}
 			}
-			
+
 			if (!mask) {
 				printq("user_not_found", params[1]);
 				return -1;
@@ -1600,7 +1600,7 @@ static COMMAND(irc_command_alist) {
 		xfree(groupstr);
 
 		xfree(mask);
-	
+
 		/* XXX sync if wanted */
 		return 0;
 	}
@@ -1726,7 +1726,7 @@ static void irc_statusdescr_handler(session_t *s, const char *varname) {
  * are on it now. if yes (and of course if we are connected) it send PART message to irc
  * server, with reason got using @a PARTMSG macro
  *
- * @param ap 1st param: <i>(window_t *) </i><b>w</b> - window which will be destroyed 
+ * @param ap 1st param: <i>(window_t *) </i><b>w</b> - window which will be destroyed
  * @param data NULL
  *
  * @return 0
@@ -1750,8 +1750,8 @@ static QUERY(irc_window_kill) {
 	return 0;
 }
 
-/** 
- * irc_topic_header() 
+/**
+ * irc_topic_header()
  *
  * handler for <i>IRC_TOPIC</i> query requests
  * @param ap 1st param: <i>(char *) </i><b>top</b> - place to put:<br>
@@ -1762,7 +1762,7 @@ static QUERY(irc_window_kill) {
  *	-> <i>realname of current irc user</i>
  * @param ap 3rd param: <i>(char *) </i><b>modes</b> - place to put:<br>
  *	<i>modes of current irc channel</i> or <i>undefined if not channel</i>
- * @param data 0 
+ * @param data 0
  *
  * @return	 1 if it's known irc channel.<br>
  *		 2 if it's known irc user.<br>
@@ -1779,26 +1779,26 @@ static QUERY(irc_topic_header) {
 	char *targ = window_current->target;
 
 	if (targ && sess && sess->plugin == &irc_plugin && sess->priv && sess->connected)
-	{ 
+	{
 		irc_private_t *j = sess->priv;
 		char *tmp;
 		channel_t *chanp;
 		people_t *per;
 
 		/* channel */
-		if ((tmp = SOP(_005_CHANTYPES)) && 
-		     xstrchr(tmp, targ[4]) && 
-		     (chanp = irc_find_channel((j->channels), targ))) 
+		if ((tmp = SOP(_005_CHANTYPES)) &&
+		     xstrchr(tmp, targ[4]) &&
+		     (chanp = irc_find_channel((j->channels), targ)))
 		{
 			*top   = irc_ircoldcolstr_to_ekgcolstr_nf(sess, chanp->topic, 1);
 			*setby = xstrdup(chanp->topicby);
 			*modes = xstrdup(chanp->mode_str);
 			return 1;
 		}
-		
+
 		/* person */
 		/* ok new irc-find-person checked */
-		if ((per = irc_find_person(j, j->people, targ+4))) { 
+		if ((per = irc_find_person(j, j->people, targ+4))) {
 			*top   = saprintf("%s@%s", per->ident, per->host);
 			*setby = xstrdup(per->realname);
 			*modes = NULL;
@@ -1825,7 +1825,7 @@ static char *irc_getchan_int(session_t *s, const char *name, int checkchan)
 	else
 		ret = irc_uid(name);
 
-	if (checkchan == 2) 
+	if (checkchan == 2)
 		return ret;
 
 	tmp = SOP(_005_CHANTYPES);
@@ -1944,7 +1944,7 @@ static COMMAND(irc_command_names) {
 	int lvl, count = 0, i;
 	userlist_t *ul;
 
-	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN))) 
+	if (!(channame = irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN)))
 		return -1;
 
 	if (!(chan = irc_find_channel(j->channels, channame))) {
@@ -2022,15 +2022,15 @@ static COMMAND(irc_command_topic) {
 	irc_private_t	*j = irc_private(session);
 	char		**mp, *chan, *newtop, *recode;
 
-	if (!(chan=irc_getchan(session, params, name, 
-					&mp, 0, IRC_GC_CHAN))) 
+	if (!(chan=irc_getchan(session, params, name,
+					&mp, 0, IRC_GC_CHAN)))
 		return -1;
 
 	if (*mp)
 		if (xstrlen(*mp)==1 && **mp==':')
 			newtop = saprintf("TOPIC %s :\r\n", chan+4);
 		else
-			newtop = saprintf("TOPIC %s :%s\r\n", 
+			newtop = saprintf("TOPIC %s :%s\r\n",
 						chan+4, *mp);
 	else
 		newtop = saprintf("TOPIC %s\r\n", chan+4);
@@ -2087,7 +2087,7 @@ static COMMAND(irc_command_kick) {
 	char		**mp, *chan;
 
 	if (!(chan=irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_CHAN))) 
+					&mp, 0, IRC_GC_CHAN)))
 		return -1;
 
 	if (!(*mp)) {
@@ -2110,7 +2110,7 @@ static COMMAND(irc_command_unban) {
 	int		i, banid = 0;
 
 	if (!(channame = irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_CHAN))) 
+					&mp, 0, IRC_GC_CHAN)))
 		return -1;
 
 	debug_function("[irc]_command_unban(): chan: %s mp[0]:%s mp[1]:%s\n", channame, mp[0], mp[1]);
@@ -2127,13 +2127,13 @@ static COMMAND(irc_command_unban) {
 				for (i=1; banlist && i<banid; banlist = banlist->next, ++i);
 				if (banlist) /* fit or add  i<=banid) ? */
 					watch_write(j->send_watch, "MODE %s -b %s\r\n", channame+4, banlist->data);
-				else 
+				else
 					debug_warn("%d %d out of range or no such ban %08x\n", i, banid, banlist);
 			}
 			else
 				debug_error("Chanell || chan->banlist not found -> channel not synced ?!Try /mode +b \n");
 		}
-		else { 
+		else {
 			watch_write(j->send_watch, "MODE %s -b %s\r\n", channame+4, *mp);
 		}
 	}
@@ -2149,7 +2149,7 @@ static COMMAND(irc_command_ban) {
 	people_t	*person;
 
 	if (!(chan=irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_CHAN))) 
+					&mp, 0, IRC_GC_CHAN)))
 		return -1;
 
 	debug_function("[irc]_command_ban(): chan: %s mp[0]:%s mp[1]:%s\n", chan, mp[0], mp[1]);
@@ -2169,7 +2169,7 @@ static COMMAND(irc_command_ban) {
 		 */
 		/* ok new irc-find-person checked */
 		person = irc_find_person(j, j->people, (char *) *mp);
-		if (person) 
+		if (person)
 			temp = irc_make_banmask(session, person->nick+4, person->ident, person->host);
 		if (temp) {
 			watch_write(j->send_watch, "MODE %s +b %s\r\n", chan+4, temp);
@@ -2204,7 +2204,7 @@ static COMMAND(irc_command_devop) {
 	string_t	zzz;
 
 	if (!(chan = irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_CHAN))) 
+					&mp, 0, IRC_GC_CHAN)))
 		return -1;
 
 	if (!(*mp)) {
@@ -2224,7 +2224,7 @@ static COMMAND(irc_command_devop) {
 	zzz = string_init(*mp);
 	for (i=1; mp[i]; i++)
 		string_append_c(zzz, ' '), string_append(zzz, mp[i]);
-	
+
 	nicks = string_free(zzz, 0);
 	p = nicks;
 
@@ -2237,7 +2237,7 @@ static COMMAND(irc_command_devop) {
 		for (i=0; i<modes; i++)
 			if (!(tmp = xstrchr(tmp, ' ')))
 				break;
-			else 
+			else
 				tmp++;
 
 		if (tmp) *(--tmp) = '\0';
@@ -2263,7 +2263,7 @@ static COMMAND(irc_command_ctcp) {
 
 	/* GiM: XXX */
 	if (!(who=irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_ANY))) 
+					&mp, 0, IRC_GC_ANY)))
 		return -1;
 
 	if (*mp) {
@@ -2288,7 +2288,7 @@ static COMMAND(irc_command_ping) {
 	char		**mp, *who;
 	struct timeval	tv;
 
-	if (!(who=irc_getchan(session, params, name, &mp, 0, IRC_GC_ANY))) 
+	if (!(who=irc_getchan(session, params, name, &mp, 0, IRC_GC_ANY)))
 		return -1;
 
 	gettimeofday(&tv, NULL);
@@ -2312,7 +2312,7 @@ static COMMAND(irc_command_me) {
 		return -1;
 
 	ischn = chantypes?!!xstrchr(chantypes, chan[4]):0;
-	
+
 	if (!(str = irc_convert_out(j, chan+4, *mp)))
 		str = xstrdup(*mp);
 
@@ -2335,9 +2335,9 @@ static COMMAND(irc_command_mode) {
 	char	**mp, *chan;
 
 	if (!(chan=irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_CHAN))) 
+					&mp, 0, IRC_GC_CHAN)))
 		return -1;
-/* G->dj: I'm still leaving this 
+/* G->dj: I'm still leaving this
 	if (!(*mp)) {
 		print("not_enough_params", name);
 		array_free(mp);
@@ -2422,7 +2422,7 @@ static COMMAND(irc_command_query) {
 	for (i = 0; i<2 && params[i]; i++)
 		p[i] = xstrdup(params[i]);
 
-	p[i] = NULL;/* G->dj: I'm leaving this, I like things like 
+	p[i] = NULL;/* G->dj: I'm leaving this, I like things like
 		     * that to be clearly visible
 		     */
 
@@ -2515,7 +2515,7 @@ static COMMAND(irc_command_test) {
 	list_t		tlist = j->connlist;
 
 //#define DOT(a,x,y,z,error) print_info("__status", z, a, session_name(z), x, y->hostname, y->address, itoa(y->port), itoa(y->family), error ? strerror(error) : "")
-	
+
 	for (tlist = j->connlist; tlist; tlist = tlist->next)
 		DOT("IRC_TEST", "Connect to:", ((connector_t *) tlist->data), session, 0);
 	for (tlist = j->bindlist; tlist; tlist = tlist->next)
@@ -2568,7 +2568,7 @@ char *nickpad_string_restore(channel_t *chan)
 	if (chan->nickpad_pos < chan->nickpad_len && chan->nickpad_pos >= 0)
 	{
 		chan->nickpad_str[chan->nickpad_pos] = fillchars[ chan->nickpad_pos % fillchars_len ];
-	} 
+	}
 	return chan->nickpad_str;
 }
 
@@ -2588,7 +2588,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("auto_find",		VAR_BOOL, "0", 0, NULL),		/* it's really auto_whois */
 	PLUGIN_VAR_ADD("auto_guess_encoding",	VAR_STR, NULL, 0, irc_changed_auto_guess_encoding),
-	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT, "10", 0, NULL), 
+	PLUGIN_VAR_ADD("auto_reconnect",	VAR_INT, "10", 0, NULL),
 	PLUGIN_VAR_ADD("auto_channel_sync",	VAR_BOOL, "1", 0, NULL),		/* like channel_sync in irssi; better DO NOT turn it off! */
 	PLUGIN_VAR_ADD("auto_lusers_sync",	VAR_BOOL, "0", 0, NULL),		/* sync lusers, stupid ;(,  G->dj: well why ? */
 	PLUGIN_VAR_ADD("away_log",		VAR_BOOL, "1", 0, NULL),
@@ -2697,16 +2697,6 @@ EXPORT int irc_plugin_init(int prio)
 	fillchars = (config_use_unicode ? fillchars_utf8 : fillchars_norm);
 	fillchars_len = (config_use_unicode ? 2 : 1);
 
-	query_connect(&irc_plugin, "protocol-validate-uid",	irc_validate_uid, NULL);
-	query_connect(&irc_plugin, "plugin-print-version",	irc_print_version, NULL);
-	query_connect(&irc_plugin, "ui-window-kill",		irc_window_kill, NULL);
-	query_connect(&irc_plugin, "session-added",		irc_session_init, NULL);
-	query_connect(&irc_plugin, "session-removed",		irc_session_deinit, NULL);
-	query_connect(&irc_plugin, "irc-topic",		irc_topic_header, (void*) 0);
-	query_connect(&irc_plugin, "status-show",		irc_status_show_handle, NULL);
-	query_connect(&irc_plugin, "irc-kick",			irc_onkick_handler, 0);
-	query_connect(&irc_plugin, "set-vars-default",		irc_setvar_default, NULL);
-
 #define IRC_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS		IRC_ONLY | SESSION_MUSTBECONNECTED
 #define IRC_FLAGS_TARGET	IRC_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
@@ -2718,7 +2708,7 @@ EXPORT int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:add"), NULL,	irc_command_add,	IRC_ONLY | COMMAND_PARAMASTARGET, NULL);
 	command_add(&irc_plugin, ("irc:away"), "?",	irc_command_away,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:back"), NULL,	irc_command_away,	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, ("irc:ban"),  "uUw uU",	irc_command_ban,	IRC_FLAGS, NULL); 
+	command_add(&irc_plugin, ("irc:ban"),  "uUw uU",	irc_command_ban,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:bankick"), "uUw uU ?", irc_command_kickban,IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:connect"), NULL,	irc_command_connect,	IRC_ONLY, NULL);
 	command_add(&irc_plugin, ("irc:ctcp"), "uUw ?",	irc_command_ctcp,	IRC_FLAGS, NULL);
@@ -2748,7 +2738,7 @@ EXPORT int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:reconnect"), "r ?",irc_command_reconnect,	IRC_ONLY, NULL);
 	command_add(&irc_plugin, ("irc:topic"), "w ?",	irc_command_topic,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:umode"), "?",	irc_command_umode,	IRC_ONLY /* _FLAGS ? */, NULL);
-	command_add(&irc_plugin, ("irc:unban"),  "uUw uU",irc_command_unban,	IRC_FLAGS, NULL); 
+	command_add(&irc_plugin, ("irc:unban"),  "uUw uU",irc_command_unban,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:voice"), "uUw uU uU uU uU uU uU ?",irc_command_devop, IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:who"), "uUw",	irc_command_who,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:whois"), "uU",	irc_command_whois,	IRC_FLAGS, NULL);
@@ -2761,66 +2751,104 @@ EXPORT int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:oper"), "",	NULL, 0, NULL);   q oper %nick %pass
 	command_add(&irc_plugin, ("irc:trace"), "",	NULL, 0, NULL);   q trace %...
 	command_add(&irc_plugin, ("irc:stats"), "\"STATS\" ?",irc_command_quote, 0, NULL); V q stats
-	command:add(&irc_plugin, ("irc:list"), .....)			V q list 
+	command:add(&irc_plugin, ("irc:list"), .....)			V q list
 */
 	variable_add(&irc_plugin, "access_groups", VAR_STR, 1, &irc_config_default_access_groups, NULL, NULL, NULL);
 	variable_add(&irc_plugin, "allow_fake_contacts", VAR_BOOL, 1, &irc_config_allow_fake_contacts, NULL, NULL, NULL);
 	variable_add(&irc_plugin, "experimental_chan_name_clean", VAR_BOOL, 1, &irc_config_experimental_chan_name_clean, NULL, NULL, NULL);
 
-	query_register("irc-join",  QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_CHARP,	/* channel */
-						QUERY_ARG_CHARP,	/* nick */
-						QUERY_ARG_INT,		/* isour */
-						QUERY_ARG_CHARP,	/* ident@host */
-						QUERY_ARG_END);
+	/*
+	 * first register queries
+	 */
+	query_register("irc-join",	QUERY_ARG_CHARP,	/* session */
+					QUERY_ARG_CHARP,	/* channel */
+					QUERY_ARG_CHARP,	/* nick */
+					QUERY_ARG_INT,		/* isour */
+					QUERY_ARG_CHARP,	/* ident@host */
+					QUERY_ARG_END);
+
+	query_register("irc-kick",	QUERY_ARG_CHARP,		/* session uid */
+					QUERY_ARG_CHARP,		/* nick */
+					QUERY_ARG_CHARP,		/* channel */
+					QUERY_ARG_CHARP,		/* kickedby */
+					QUERY_ARG_END);
 
 	query_register("irc-mode", 	QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_CHARP,	/* nick!ident@host */
-						QUERY_ARG_CHARP,	/* channel */
-						QUERY_ARG_INT,		/* act */
-						QUERY_ARG_CHARP,	/* mode */
-						QUERY_ARG_CHARP,	/* param */
-						QUERY_ARG_END);
+					QUERY_ARG_CHARP,	/* nick!ident@host */
+					QUERY_ARG_CHARP,	/* channel */
+					QUERY_ARG_INT,		/* act */
+					QUERY_ARG_CHARP,	/* mode */
+					QUERY_ARG_CHARP,	/* param */
+					QUERY_ARG_END);
 
 	query_register("irc-notice", 	QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_CHARP,	/* from */
-						QUERY_ARG_CHARP,	/* destination (channel|nick) */
-						QUERY_ARG_CHARP,	/* message */
-						QUERY_ARG_INT,		/* is to us */
-						QUERY_ARG_END);
+					QUERY_ARG_CHARP,	/* from */
+					QUERY_ARG_CHARP,	/* destination (channel|nick) */
+					QUERY_ARG_CHARP,	/* message */
+					QUERY_ARG_INT,		/* is to us */
+					QUERY_ARG_END);
 
 	query_register("irc-parse-line",
-					 	QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_CHARP,	/* line */
-						QUERY_ARG_END);
+					QUERY_ARG_CHARP,	/* session */
+					QUERY_ARG_CHARP,	/* line */
+					QUERY_ARG_END);
 
 	query_register("irc-part", 	QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_CHARP,	/* channel */
-						QUERY_ARG_CHARP,	/* nick */
-						QUERY_ARG_INT,		/* isour */
-						QUERY_ARG_CHARP,	/* ident@host */
-						QUERY_ARG_CHARP,	/* reason */
-						QUERY_ARG_END);
+					QUERY_ARG_CHARP,	/* channel */
+					QUERY_ARG_CHARP,	/* nick */
+					QUERY_ARG_INT,		/* isour */
+					QUERY_ARG_CHARP,	/* ident@host */
+					QUERY_ARG_CHARP,	/* reason */
+					QUERY_ARG_END);
 
 	query_register("irc-privmsg", 	QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_CHARP,	/* from */
-						QUERY_ARG_CHARP,	/* destination (channel|nick) */
-						QUERY_ARG_CHARP,	/* message */
-						QUERY_ARG_INT,		/* is to us */
-						QUERY_ARG_END);
+					QUERY_ARG_CHARP,	/* from */
+					QUERY_ARG_CHARP,	/* destination (channel|nick) */
+					QUERY_ARG_CHARP,	/* message */
+					QUERY_ARG_INT,		/* is to us */
+					QUERY_ARG_END);
+
+	query_register("irc-protocol-message",
+					QUERY_ARG_CHARP,		/* session uid */
+					QUERY_ARG_CHARP,		/* uid */
+					QUERY_ARG_CHARP,		/* text */
+					QUERY_ARG_INT,			/* isour */
+					QUERY_ARG_INT,			/* foryou */
+					QUERY_ARG_INT,			/* private */
+					QUERY_ARG_CHARP,		/* channame */
+					QUERY_ARG_END);
 
 	query_register("irc-protocol-numeric",
-						QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_INT,		/* number */
-						QUERY_ARG_CHARPP,	/* params */
-						QUERY_ARG_END);
+					QUERY_ARG_CHARP,	/* session */
+					QUERY_ARG_INT,		/* number */
+					QUERY_ARG_CHARPP,	/* params */
+					QUERY_ARG_END);
 
 	query_register("irc-quit", 	QUERY_ARG_CHARP,	/* session */
-						QUERY_ARG_CHARP,	/* nick */
-						QUERY_ARG_INT,		/* isour */
-						QUERY_ARG_CHARP,	/* ident@host */
-						QUERY_ARG_CHARP,	/* reason */
-						QUERY_ARG_END);
+					QUERY_ARG_CHARP,	/* nick */
+					QUERY_ARG_INT,		/* isour */
+					QUERY_ARG_CHARP,	/* ident@host */
+					QUERY_ARG_CHARP,	/* reason */
+					QUERY_ARG_END);
+
+	query_register("irc-topic",	QUERY_ARG_CHARP,		/* if CHANNEL -> topic;		if USER -> ident@host */
+					QUERY_ARG_CHARP,		/* if CHANNEL -> topicby;	if USER -> realname */
+					QUERY_ARG_CHARP,		/* if CHANNEL -> chanmodes;	if USER -> undefined */
+					QUERY_ARG_END);
+
+
+	/*
+	 * then connect queries
+	 */
+	query_connect(&irc_plugin, "protocol-validate-uid",	irc_validate_uid, NULL);
+	query_connect(&irc_plugin, "plugin-print-version",	irc_print_version, NULL);
+	query_connect(&irc_plugin, "ui-window-kill",		irc_window_kill, NULL);
+	query_connect(&irc_plugin, "session-added",		irc_session_init, NULL);
+	query_connect(&irc_plugin, "session-removed",		irc_session_deinit, NULL);
+	query_connect(&irc_plugin, "status-show",		irc_status_show_handle, NULL);
+	query_connect(&irc_plugin, "irc-topic",			irc_topic_header, (void*) 0);
+	query_connect(&irc_plugin, "irc-kick",			irc_onkick_handler, 0);
+	query_connect(&irc_plugin, "set-vars-default",		irc_setvar_default, NULL);
 
 	return 0;
 }
@@ -2844,7 +2872,7 @@ static int irc_theme_init()
 	format_add("irc_msg_sent_n",	"%P<%n%3%P>%n %6", 1);
 	format_add("irc_msg_sent_chan",	"%P%7<%w%{2*!@%+yrgcp}X%2%3%P>%n %6", 1);
 	format_add("irc_msg_sent_chanh","%P%7<%W%{2*!@%+YRGCP}X%2%3%P>%n %6", 1);
-	
+
 	format_add("irc_not_sent",	"%P(%n%3/%5%P)%n %6", 1);
 	format_add("irc_not_sent_n",	"%P(%n%3%P)%n %6", 1);
 	format_add("irc_not_sent_chan",	"%P%7(%w%{2*!@%+yrgcp}X%2%3%P)%n %6", 1);
@@ -2887,7 +2915,7 @@ static int irc_theme_init()
 
 
 	format_add("IRC_ERR_CANNOTSENDTOCHAN",	"%! %2: %1\n", 1);
-	
+
 	format_add("IRC_RPL_FIRSTSECOND",	"%> (%1) %2 %3\n", 1);
 	format_add("IRC_RPL_SECONDFIRST",	"%> (%1) %3 %2\n", 1);
 	format_add("IRC_RPL_JUSTONE",		"%> (%1) %2\n", 1);
@@ -2897,13 +2925,13 @@ static int irc_theme_init()
 	format_add("IRC_ERR_SECONDFIRST",	"%! (%1) %3 %2\n", 1);
 	format_add("IRC_ERR_JUSTONE",		"%! (%1) %2\n", 1);
 	format_add("IRC_ERR_NEWONE",		"%! (%1,%2) 1:%3 2:%4 3:%5 4:%6\n", 1);
-	
+
 	format_add("IRC_RPL_CANTSEND",	_("%> Cannot send to channel %T%2%n\n"), 1);
 	format_add("RPL_MOTDSTART",	"%g,+=%G-----\n", 1);
 	format_add("RPL_MOTD",		"%g|| %n%2\n", 1);
 	format_add("RPL_ENDOFMOTD",	"%g`+=%G-----\n", 1);
 
-	
+
 	format_add("RPL_INVITE",	_("%> Inviting %W%2%n to %W%3%n\n"), 1);
 	/* Used in: /mode +b|e|I %2 - chan %3 - data from server */
 	/* THIS IS TEMPORARY AND WILL BE DONE OTHER WAY, DO NOT USE THIS STYLES
@@ -2963,22 +2991,22 @@ static int irc_theme_init()
 	format_add("IRC_MODE_CHAN_NEW",	_("%> %2/%4 sets mode [%5]\n"), 1);
 	format_add("IRC_MODE_CHAN",	_("%> %2 mode is [%3]\n"), 1);
 	format_add("IRC_MODE",		_("%> (%1) %2 set mode %3 on You\n"), 1);
-	
+
 	format_add("IRC_INVITE",	_("%> %W%2%n invites you to %W%5%n\n"), 1);
 	format_add("IRC_PINGPONG",	_("%) (%1) ping/pong %c%2%n\n"), 1);
 	format_add("IRC_YOUNEWNICK",	_("%> You are now known as %G%3%n\n"), 1);
 	format_add("IRC_NEWNICK",	_("%> %g%2%n is now known as %G%4%n\n"), 1);
 	format_add("IRC_TRYNICK",	_("%> Will try to use %G%2%n instead\n"), 1);
 	format_add("IRC_CHANNEL_SYNCED", "%> Join to %W%2%n was synced in %W%3.%4%n secs", 1);
-	/* %1 - sesja ; %2 - Connect, BIND, whatever, %3 - hostname %4 - adres %5 - port 
+	/* %1 - sesja ; %2 - Connect, BIND, whatever, %3 - hostname %4 - adres %5 - port
 	 * %6 - family (debug pursuit only) */
 	format_add("IRC_TEST",		"%> (%1) %2 to %W%3%n [%4] port %W%5%n (%6)", 1);
 	format_add("IRC_CONN_ESTAB",	"%> (%1) Connection to %W%3%n estabilished", 1);
 	/* j/w %7 - error */
 	format_add("IRC_TEST_FAIL",	"%! (%1) Error: %2 to %W%3%n [%4] port %W%5%n (%7)", 1);
-	
-	format_add("irc_channel_secure",	"%) (%1) Echelon can kiss our ass on %2 *g*", 1); 
-	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protects us on %2 :( install sim plugin now or at least rot13..", 1); 
+
+	format_add("irc_channel_secure",	"%) (%1) Echelon can kiss our ass on %2 *g*", 1);
+	format_add("irc_channel_unsecure",	"%! (%1) warning no plugin protects us on %2 :( install sim plugin now or at least rot13..", 1);
 
 	format_add("irc_access_added",	_("%> (%1) %3 [#%2] was added to accesslist chan: %4 (flags: %5)"), 1);
 	format_add("irc_access_known", "a-> %2!%3@%4", 1);	/* %2 is nickname, not uid ! */
