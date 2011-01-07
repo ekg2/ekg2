@@ -39,6 +39,7 @@ typedef struct query_def_node {
 } query_def_t;
 
 int queries_init();
+int query_register_const(const query_def_t *def);
 
 extern query_def_t *registered_queries;
 extern int registered_queries_count;

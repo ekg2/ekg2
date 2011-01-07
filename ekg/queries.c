@@ -402,7 +402,7 @@ static const query_def_t core_query_list[] = {
 
 
 int queries_init() {
-	query_def_t *p = core_query_list;
+	const query_def_t *p = core_query_list;
 	size_t i;
 
 	for (i = 0; i < sizeof(core_query_list) / sizeof(*core_query_list); ++i, ++p) {
