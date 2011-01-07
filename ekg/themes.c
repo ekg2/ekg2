@@ -438,7 +438,7 @@ static char *va_format_string(const char *format, va_list ap) {
 
 				if (!str)
 					str = "";
-				len = xstrlen(str);
+				len = strlen_pl(str);
 
 				if (fill_length) {
 					if (len >= fill_length) {
@@ -459,7 +459,7 @@ static char *va_format_string(const char *format, va_list ap) {
 					for (i = 0; i < fill_length+center; i++)
 						string_append_c(buf, fill_char);
 
-				string_append_n(buf, str, len);
+				string_append_n(buf, str, utf8str_char2bytes(str, len));
 
 				if (fill_after)
 					for (i = 0; i < fill_length; i++)
