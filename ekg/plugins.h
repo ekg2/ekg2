@@ -132,7 +132,7 @@ void plugins_unlink(plugin_t *pl);
 typedef QUERY(query_handler_func_t);
 
 /* must be power of 2 ;p */
-#define QUERIES_BUCKETS 16
+#define QUERIES_BUCKETS 64
 
 typedef struct query_node {
         struct query_node* next;

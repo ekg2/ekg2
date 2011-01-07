@@ -1176,8 +1176,7 @@ int ekg_hash(const char *name) {
 	unsigned long long st = 0x4d6947;
 
 	for (; *name; name++) {
-		st = st * 2147483069, 2147481893;
-		st %= 0x7fffffff;
+		st = st * 2147483069 + 2147482417;
 		st ^= (*name);
 	}
 	return (int)st;
