@@ -34,6 +34,7 @@
 
 #include "backlog.h"
 #include "bindings.h"
+#include "contacts.h"
 #include "nc-stuff.h"
 #include "mouse.h"
 
@@ -402,7 +403,7 @@ kon:
  */
 
 void ncurses_contacts_changed(const char *name) {
-	window_t *w = NULL;
+	window_t *w = window_find_sa(NULL, "__contacts", 1);
 
 	if (in_autoexec)
 		return;
@@ -441,16 +442,19 @@ void ncurses_contacts_changed(const char *name) {
 		corderlen = CONTACTS_ORDER_DEFAULT_LEN;	/* xstrlen(CONTACTS_ORDER_DEFAULT) eq CONTACTS_ORDER_DEFAULT_LEN */
 	}
 
-	/* XXX destroy window only if (!config_contacts) ? XXX */
-	if ((w = window_find_sa(NULL, "__contacts", 1))) {
-		window_kill(w);
-		w = NULL;
+	if (w) {
+		if (!config_contacts) {
+			window_kill(w);
+			w = NULL;
+		} else {
+			ncurses_contacts_set(w);
+		}
+	} else if (config_contacts) {
+		w = window_new("__contacts", NULL, 1000);
 	}
 
-	if (config_contacts /* && !w */) {
-		w = window_new("__contacts", NULL, 1000);
+	if (w)
 		ncurses_contacts_update(w, 0);
-	}
 
 	ncurses_resize();
 	ncurses_commit();
@@ -511,11 +515,11 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 static int ncurses_contacts_update_redraw(window_t *w) { return 0; }
 
 /*
- * ncurses_contacts_new()
+ * ncurses_contacts_set()
  *
- * dostosowuje nowoutworzone okno do listy kontaktów.
+ * setup contacts window
  */
-void ncurses_contacts_new(window_t *w)
+void ncurses_contacts_set(window_t *w)
 {
 	int size = config_contacts_size + config_contacts_margin + ((contacts_frame) ? 1 : 0);
 	ncurses_window_t *n = w->priv_data;

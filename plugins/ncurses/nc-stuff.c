@@ -908,7 +908,7 @@ int ncurses_window_new(window_t *w)
 	w->priv_data = n = xmalloc(sizeof(ncurses_window_t));
 
 	if (!xstrcmp(w->target, "__contacts")) {
-		ncurses_contacts_new(w);
+		ncurses_contacts_set(w);
 
 	} else if (!xstrcmp(w->target, "__lastlog")) {
 		ncurses_lastlog_new(w);
@@ -933,7 +933,7 @@ int ncurses_window_new(window_t *w)
 
 	n->window = newwin(w->height, w->width, w->top, w->left);
 
-	if (config_mark_on_window_change)
+	if (config_mark_on_window_change && !w->floating)
 		command_exec_format(NULL, NULL, 0, "/mark %d", w->id);
 
 	ncurses_resize();
