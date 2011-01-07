@@ -524,6 +524,7 @@ void ncurses_contacts_set(window_t *w)
 	int size = config_contacts_size + config_contacts_margin + ((contacts_frame) ? 1 : 0);
 	ncurses_window_t *n = w->priv_data;
 
+	n->margin_right = n->margin_left = n->margin_bottom = n->margin_top = 0;
 	switch (contacts_edge) {
 		case WF_LEFT:
 			w->width = size;
