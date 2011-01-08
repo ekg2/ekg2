@@ -237,7 +237,7 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 				break;
 			}
 			default:
-			       debug("[NIMP] %s %d %d\n", __(query_name(scr_que->self->id)), i, scr_que->argv_type[i]);
+			       debug("[NIMP] %s %d %d\n", __(scr_que->self->name), i, scr_que->argv_type[i]);
 		}
 		if (!w) {
 			Py_INCREF(Py_None);
