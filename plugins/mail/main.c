@@ -178,7 +178,7 @@ static TIMER(check_mail)
  *
  * modyfikuje liczbê nowych emaili i daje o tym znaæ.
  *
- * 0/-1 
+ * 0/-1
  */
 static int check_mail_update(const char *s, int more)
 {
@@ -271,11 +271,11 @@ static int check_mail_mbox()
 				char *buf = saprintf("%d,%d", m->fhash, 0);
 				check_mail_update(buf, 0);
 				xfree(buf);
-			}	
+			}
 
 			m->mtime = 0;
-			m->size = 0;  
-			m->check = 0;  
+			m->size = 0;
+			m->check = 0;
 			m->count = 0;
 
 			continue;
@@ -324,8 +324,8 @@ static int check_mail_mbox()
 					f_new++;
 				}
 
-				if (in_header && (!strncmp(line, "Status: RO", 10) || !strncmp(line, "Status: O", 9))) 
-					f_new--;	
+				if (in_header && (!strncmp(line, "Status: RO", 10) || !strncmp(line, "Status: O", 9)))
+					f_new--;
 
 				line = strip_spaces(line);
 
@@ -364,7 +364,7 @@ static int check_mail_mbox()
 
 				while (left > 0) {
 					sent = write(fd[1], ptr, sizeof(ptr));
-	
+
 					if (sent == -1)
 						break;
 
@@ -397,7 +397,7 @@ static int check_mail_mbox()
 /*
  * check_mail_maildir()
  *
- * tworzy dzieciaka, który sprawdza wszystkie 
+ * tworzy dzieciaka, który sprawdza wszystkie
  * katalogi typu Maildir i liczy, ile jest w nich
  * nowych wiadomo¶ci. zwraca wynik rurk±.
  *
@@ -444,7 +444,7 @@ static int check_mail_maildir()
 
 				xfree(fname);
 			}
-	
+
 			xfree(tmp);
 			closedir(dir);
 
@@ -505,7 +505,7 @@ static void changed_check_mail_folders(const char *var)
 	if (config_check_mail_folders) {
 		char **f = NULL;
 		int i;
-		
+
 		f = array_make(config_check_mail_folders, ", ", 0, 1, 1);
 
 		for (i = 0; f[i]; i++) {
@@ -558,7 +558,7 @@ static void changed_check_mail_folders(const char *var)
 	} else {
 		if (config_check_mail & 2) {
 			char *inbox = saprintf("%s/Maildir", home_dir);
-			
+
 			foo.fhash = ekg_hash(inbox);
 			foo.fname = inbox;
 			foo.check = 1;
@@ -634,6 +634,9 @@ EXPORT int mail_plugin_init(int prio)
 	}
 #endif
 	plugin_register(&mail_plugin, prio);
+
+	query_register("mail-count",	QUERY_ARG_INT,		/* mail count */
+					QUERY_ARG_END);
 
 	query_connect(&mail_plugin, "mail-count", mail_count_query, NULL);
 

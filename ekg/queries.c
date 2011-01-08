@@ -5,10 +5,6 @@
 /* list of known queries */
 
 static const query_def_t core_query_list[] = {
-	{ NULL, "mail-count", 0, {
-		QUERY_ARG_INT,			/* mail count */
-		QUERY_ARG_END } },
-
 	{ NULL, "day-changed", 0, {
 		/* XXX: struct tm *, struct tm * */
 		QUERY_ARG_END } },
@@ -54,7 +50,7 @@ static const query_def_t core_query_list[] = {
 	{ NULL, "message-decrypt", 0, {
 		/* XXX */
 		QUERY_ARG_END } },
-	
+
 	{ NULL, "metacontact-added", 0, {
 		QUERY_ARG_CHARP,		/* metacontact name */
 		QUERY_ARG_END } },
@@ -62,7 +58,7 @@ static const query_def_t core_query_list[] = {
 	{ NULL, "metacontact-item-added", 0, {
 		/* XXX */
 		QUERY_ARG_END } },
-	
+
 	{ NULL, "metacontact-item-removed", 0, {
 		/* XXX */
 		QUERY_ARG_END } },
@@ -98,7 +94,7 @@ static const query_def_t core_query_list[] = {
 		QUERY_ARG_INT,			/* mclass */
 		QUERY_ARG_CHARP,		/* seq */
 		QUERY_ARG_INT,			/* secure */
-		QUERY_ARG_END } }, 
+		QUERY_ARG_END } },
 
 	{ NULL, "event-away", 0, {
 		QUERY_ARG_CHARP,		/* session uid */
@@ -194,50 +190,15 @@ static const query_def_t core_query_list[] = {
 		QUERY_ARG_CHARP,		/* reason */
 		QUERY_ARG_END } },
 
-	{ NULL, "irc-topic", 0, {
-		QUERY_ARG_CHARP,		/* if CHANNEL -> topic;		if USER -> ident@host */
-		QUERY_ARG_CHARP,		/* if CHANNEL -> topicby;	if USER -> realname */
-		QUERY_ARG_CHARP,		/* if CHANNEL -> chanmodes;	if USER -> undefined */
-		QUERY_ARG_END } },
-
-	{ NULL, "irc-protocol-message", 0, {
-		QUERY_ARG_CHARP,		/* session uid */
-		QUERY_ARG_CHARP,		/* uid */
-		QUERY_ARG_CHARP,		/* text */
-		QUERY_ARG_INT,			/* isour */
-		QUERY_ARG_INT,			/* foryou */
-		QUERY_ARG_INT,			/* private */
-		QUERY_ARG_CHARP,		/* channame */
-		QUERY_ARG_END } },
-
-	{ NULL, "irc-kick", 0, {
-		QUERY_ARG_CHARP,		/* session uid */
-		QUERY_ARG_CHARP,		/* nick */
-		QUERY_ARG_CHARP,		/* channel */
-		QUERY_ARG_CHARP,		/* kickedby */
-		QUERY_ARG_END } },
-
-	{ NULL, "rss-message", 0, {
-		QUERY_ARG_CHARP,		/* session uid */
-		QUERY_ARG_CHARP,		/* uid */
-		QUERY_ARG_CHARP,		/* proto headers */
-		QUERY_ARG_CHARP,		/* headers */
-		QUERY_ARG_CHARP,		/* title */
-		QUERY_ARG_CHARP,		/* url */
-		QUERY_ARG_CHARP,		/* descr */
-		QUERY_ARG_INT,			/* new */
-		QUERY_ARG_INT,			/* modify */
-		QUERY_ARG_END } },
-
 	{ NULL, "protocol-connected", 0, {
 		QUERY_ARG_CHARP,		/* session */
-		QUERY_ARG_END } }, 
+		QUERY_ARG_END } },
 
 	{ NULL, "protocol-disconnected", 0, {
 		QUERY_ARG_CHARP,		/* session */
 		QUERY_ARG_CHARP,		/* reason */
 		QUERY_ARG_INT,			/* type */
-		QUERY_ARG_END } }, 
+		QUERY_ARG_END } },
 
 	{ NULL, "protocol-message", 0, {
 		QUERY_ARG_CHARP,		/* session uid */
@@ -265,7 +226,7 @@ static const query_def_t core_query_list[] = {
 		QUERY_ARG_INT,			/* status */
 		QUERY_ARG_CHARP,		/* descr */
 		QUERY_ARG_UINT, /* time_t */	/* when */
-		QUERY_ARG_END } }, 
+		QUERY_ARG_END } },
 
 	{ NULL, "protocol-validate-uid", 0, {
 		QUERY_ARG_CHARP,		/* uid */
@@ -307,7 +268,7 @@ static const query_def_t core_query_list[] = {
 
 	{ NULL, "ui-is-initialized", 0, {
 		QUERY_ARG_INT,			/* is_ui */
-		QUERY_ARG_END } }, 
+		QUERY_ARG_END } },
 
 	{ NULL, "ui-keypress", 0, {
 		QUERY_ARG_INT,	 /* XXX uint? *//* key */
@@ -330,12 +291,12 @@ static const query_def_t core_query_list[] = {
 
 	{ NULL, "ui-window-new", 0, {
 		QUERY_ARG_WINDOW,		/* window */
-		QUERY_ARG_END } }, 
+		QUERY_ARG_END } },
 
 	{ NULL, "ui-window-print", 0, {
 		QUERY_ARG_WINDOW,		/* window */
 		QUERY_ARG_FSTRING,		/* fstring_t */
-		QUERY_ARG_END } }, 
+		QUERY_ARG_END } },
 
 	{ NULL, "ui-window-refresh", 0, {
 		QUERY_ARG_END } },		/* no params */
@@ -397,12 +358,12 @@ static const query_def_t core_query_list[] = {
 	{ NULL, "event-offline", 0, {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
-		QUERY_ARG_END } },
+		QUERY_ARG_END } }
 };
 
 
 int queries_init() {
-	query_def_t *p = core_query_list;
+	const query_def_t *p = core_query_list;
 	size_t i;
 
 	for (i = 0; i < sizeof(core_query_list) / sizeof(*core_query_list); ++i, ++p) {
