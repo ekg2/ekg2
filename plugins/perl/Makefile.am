@@ -30,6 +30,7 @@ clean-generic:
 	 if [ -f Makefile ]; then \
 	   $(MAKE) clean; \
 	 fi && \
+	 rm -f Makefile.old && \
 	 cd ..; \
 	done
 
