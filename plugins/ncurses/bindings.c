@@ -720,27 +720,27 @@ static BINDING_FUNCTION(binding_forward_page) {
 }
 
 static BINDING_FUNCTION(binding_backward_lastlog_page) {
-	binding_helper_scroll_page(window_find_sa(NULL, "__lastlog", 1), 1);
+	binding_helper_scroll_page(window_exist(WINDOW_LASTLOG_ID), 1);
 }
 
 static BINDING_FUNCTION(binding_forward_lastlog_page) {
-	binding_helper_scroll_page(window_find_sa(NULL, "__lastlog", 1), 0);
+	binding_helper_scroll_page(window_exist(WINDOW_LASTLOG_ID), 0);
 }
 
 static BINDING_FUNCTION(binding_backward_contacts_page) {
-	binding_helper_scroll_page(window_find_sa(NULL, "__contacts", 1), 1);
+	binding_helper_scroll_page(window_exist(WINDOW_CONTACTS_ID), 1);
 }
 
 static BINDING_FUNCTION(binding_forward_contacts_page) {
-	binding_helper_scroll_page(window_find_sa(NULL, "__contacts", 1), 0);
+	binding_helper_scroll_page(window_exist(WINDOW_CONTACTS_ID), 0);
 }
 
 static BINDING_FUNCTION(binding_backward_contacts_line) {
-	binding_helper_scroll(window_find_sa(NULL, "__contacts", 1), -1);
+	binding_helper_scroll(window_exist(WINDOW_CONTACTS_ID), -1);
 }
 
 static BINDING_FUNCTION(binding_forward_contacts_line) {
-	binding_helper_scroll(window_find_sa(NULL, "__contacts", 1), 1);
+	binding_helper_scroll(window_exist(WINDOW_CONTACTS_ID), 1);
 }
 
 static BINDING_FUNCTION(binding_ignore_query)
@@ -776,7 +776,7 @@ BINDING_FUNCTION(binding_next_contacts_group) {
 
 	contacts_group_index++;
 
-	if ((w = window_find_sa(NULL, "__contacts", 1))) {
+	if ((w = window_exist(WINDOW_CONTACTS_ID))) {
 		ncurses_contacts_update(w, 0);
 /*		ncurses_resize(); */
 		ncurses_commit();

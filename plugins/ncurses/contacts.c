@@ -135,7 +135,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 							*/
 
 
-	if (!w) w = window_find_sa(NULL, "__contacts", 1);
+	if (!w) w = window_exist(WINDOW_CONTACTS_ID);
 	if (!w)
 		return -1;
 
@@ -403,7 +403,7 @@ kon:
  */
 
 void ncurses_contacts_changed(const char *name) {
-	window_t *w = window_find_sa(NULL, "__contacts", 1);
+	window_t *w = window_exist(WINDOW_CONTACTS_ID);
 
 	if (in_autoexec)
 		return;
@@ -467,7 +467,7 @@ void ncurses_contacts_changed(const char *name) {
  */
 void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 {
-	window_t *w = window_find_sa(NULL, "__contacts", 1);
+	window_t *w = window_exist(WINDOW_CONTACTS_ID);
 	ncurses_window_t *n;
 
 	if (mouse_state == EKG_SCROLLED_UP) {

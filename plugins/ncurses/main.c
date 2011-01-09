@@ -153,7 +153,7 @@ static QUERY(ncurses_ui_window_switch) {
 	if (config_mark_on_window_change)
 		command_exec(NULL, NULL, "/mark -1", 1);
 
-	if ((wc = window_find_sa(NULL, "__contacts", 1))) {
+	if ((wc = window_exist(WINDOW_CONTACTS_ID))) {
 		/* XXX, na pewno nie chcemy zapisywac polozenia userlisty podczas zmiany okna? */
 		ncurses_contacts_update(wc, 0);
 	}
@@ -328,7 +328,7 @@ static QUERY(ncurses_all_contacts_changed)
 
 /*	ncurses_contacts_changed(data); */
 
-	if ((w = window_find_sa(NULL, "__contacts", 1))) {
+	if ((w = window_exist(WINDOW_CONTACTS_ID))) {
 		ncurses_contacts_update(w, !data);
 		ncurses_commit();
 	}
@@ -447,7 +447,7 @@ static QUERY(ncurses_lastlog_changed) {
 	if (config_lastlog_size < 0)
 		config_lastlog_size = 0;
 
-	if (!(w = window_find_sa(NULL, "__lastlog", 1)))
+	if (!(w = window_exist(WINDOW_LASTLOG_ID)))
 		return 0;
 
 	ncurses_lastlog_new(w);
@@ -465,7 +465,7 @@ static QUERY(ncurses_ui_window_lastlog) {
 	int lock_old = config_lastlog_lock;
 	int retval;
 
-	if (!(w = window_find_sa(NULL, "__lastlog", 1)))
+	if (!(w = window_exist(WINDOW_LASTLOG_ID)))
 		w = window_new("__lastlog", NULL, WINDOW_LASTLOG_ID);
 
 	n = w->priv_data;

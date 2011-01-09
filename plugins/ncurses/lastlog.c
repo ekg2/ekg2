@@ -168,7 +168,7 @@ int ncurses_lastlog_update(window_t *w) {
 
 	if (config_lastlog_lock) return 0;
 
-	if (!w) w = window_find_sa(NULL, "__lastlog", 1);
+	if (!w) w = window_exist(WINDOW_LASTLOG_ID);
 	if (!w) return -1;
 
 	n = w->priv_data;

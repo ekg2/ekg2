@@ -893,10 +893,10 @@ int ncurses_window_new(window_t *w)
 
 	w->priv_data = n = xmalloc(sizeof(ncurses_window_t));
 
-	if (!xstrcmp(w->target, "__contacts")) {
+	if (w->id == WINDOW_CONTACTS_ID) {
 		ncurses_contacts_set(w);
 
-	} else if (!xstrcmp(w->target, "__lastlog")) {
+	} else if (w->id == WINDOW_LASTLOG_ID) {
 		ncurses_lastlog_new(w);
 
 	} else if (w->target || w->alias) {
