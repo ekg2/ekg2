@@ -126,7 +126,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				l->prompt_attr = NULL;
 			}
 
-			if (!w->floating && timestamp_format) {
+			if ((!w->floating || (w->id == WINDOW_LASTLOG_ID && ts)) && timestamp_format) {
 				fstring_t *s = NULL;
 
 				if (!ts || lastts != ts) {	/* generate new */
