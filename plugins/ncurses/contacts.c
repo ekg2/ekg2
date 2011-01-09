@@ -450,7 +450,7 @@ void ncurses_contacts_changed(const char *name) {
 			ncurses_contacts_set(w);
 		}
 	} else if (config_contacts) {
-		w = window_new("__contacts", NULL, 1000);
+		w = window_new("__contacts", NULL, WINDOW_CONTACTS_ID);
 	}
 
 	if (w)

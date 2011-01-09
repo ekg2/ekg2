@@ -299,8 +299,8 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
 			if (w->id > id)
 				break;
 
-			if (w->id >= 1000-1 && w->id < 2000 /* -1 */) {	/* [REVERVED CLASS: 1000-1999]	1k-1.999k windows reverved for special use. [1000 - __contacts, 1001 - __lastlog] */
-				id = 2000;
+			if (w->id >= WINDOW_RESERVED_MIN_ID && w->id <= WINDOW_RESERVED_MAX_ID) {
+				id = WINDOW_RESERVED_MAX_ID + 1;
 				continue;
 			}
 

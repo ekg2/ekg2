@@ -759,7 +759,8 @@ static QUERY(logsqlite_newwin_handler) {
 	int		count;
 #endif
 
-	if (!config_logsqlite_last_print_on_open || !w || !w->target || !w->session || w->id == 1000
+	if (!config_logsqlite_last_print_on_open || !w || !w->target || !w->session
+			|| w->id == WINDOW_CONTACTS_ID /* XXX w->id in WINDOW_RESERVED_ID ??? */
 			|| !(uid = get_uid_any(w->session, w->target))
 			|| (ignored_check(w->session, uid) & IGNORE_LOG)
 			|| !(db = logsqlite_prepare_db(w->session, time(0), 0)))

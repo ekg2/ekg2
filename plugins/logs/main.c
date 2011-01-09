@@ -398,7 +398,7 @@ static logs_log_t *logs_log_new(logs_log_t *l, const char *session, const char *
 static void logs_window_new(window_t *w) {
 	const char *uid;
 
-	if (!w->target || !w->session || w->id == 1000)
+	if (!w->target || !w->session || w->id == WINDOW_CONTACTS_ID) /* XXX w->id in WINDOW_RESERVED_ID ??? */
 		return;
 
 	uid = get_uid_any(w->session, w->target);

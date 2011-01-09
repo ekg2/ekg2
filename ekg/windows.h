@@ -37,6 +37,19 @@
 extern "C" {
 #endif
 
+/*
+ * Reserved window id: 1000-1999
+ * windows reverved for special use.
+ *	1000 - __contacts,
+ *	1001 - __lastlog
+ */
+typedef enum {
+	WINDOW_RESERVED_MIN_ID	= 1000,
+	WINDOW_CONTACTS_ID	= 1000,
+	WINDOW_LASTLOG_ID	= 1001,
+	WINDOW_RESERVED_MAX_ID	= 1999
+} window_reserved_id_t;
+
 typedef struct {
 	void *w;			/* window, if NULL it means current */
 	int casense		: 2;	/* 0 - ignore case; 1 - don't ignore case, -1 - use global variable */

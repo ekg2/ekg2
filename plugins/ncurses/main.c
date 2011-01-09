@@ -466,7 +466,7 @@ static QUERY(ncurses_ui_window_lastlog) {
 	int retval;
 
 	if (!(w = window_find_sa(NULL, "__lastlog", 1)))
-		w = window_new("__lastlog", NULL, 1001);
+		w = window_new("__lastlog", NULL, WINDOW_LASTLOG_ID);
 
 	n = w->priv_data;
 
