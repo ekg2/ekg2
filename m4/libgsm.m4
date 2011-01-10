@@ -16,9 +16,9 @@ AC_DEFUN([AC_CHECK_LIBGSM],
 
 	if test "x$without_libgsm" != "xyes"; then
 		old_cppflgs="$CPPFLAGS"
-		old_ldflags="$LDFLAGS"
+		old_libs="$LIBS"
 		CPPFLAGS="$CPPFLAGS $LIBGSM_CFLAGS"
-		LDFLAGS="$LDFLAGS $LIBGSM_LIBS"
+		LIBS="$LIBS $LIBGSM_LIBS"
 		have_libgsm_h=""
 		AC_CHECK_HEADERS([gsm.h],
 		[
@@ -48,7 +48,7 @@ AC_DEFUN([AC_CHECK_LIBGSM],
 		$as_unset have_libgsm_h
 
 		CPPFLAGS="$old_cppflags"
-		LDFLAGS="$old_ldflags"
+		LIBS="$old_libs"
 	fi
 ])
 

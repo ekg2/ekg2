@@ -40,9 +40,9 @@ AC_DEFUN([AC_CHECK_LIBGADU],
 
   if test "x$without_libgadu" != "xyes"; then
     ocf="$CPPFLAGS"
-    olf="$LDFLAGS"
+    olf="$LIBS"
     CPPFLAGS="$CPPFLAGS $LIBGADU_CPPFLAGS"
-    LDFLAGS="$LDFLAGS $LIBGADU_LIBS"
+    LIBS="$LIBS $LIBGADU_LIBS"
     AC_CHECK_HEADERS([libgadu.h],
     [
       AC_CHECK_LIB([gadu], [gg_logoff],
@@ -56,7 +56,7 @@ AC_DEFUN([AC_CHECK_LIBGADU],
       ])
     ])
     CPPFLAGS="$ocf"
-    LDFLAGS="$olf"
+    LIBS="$olf"
   fi
 ])
 
