@@ -47,8 +47,8 @@ AC_DEFUN([AC_CHECK_OPENSSL],[
 
       if test -f $incl/openssl/ssl.h; then
         AC_MSG_RESULT($incl/openssl/ssl.h)
-        ldflags_old="$LDFLAGS"
-        LDFLAGS="$lib -lssl -lcrypto"
+        libs_old="$LIBS"
+        LIBS="$lib -lssl -lcrypto"
         save_LIBS="$LIBS"
         LIBS="-lssl -lcrypto $LIBS"
         AC_CHECK_LIB(ssl, RSA_new, [
@@ -60,7 +60,7 @@ AC_DEFUN([AC_CHECK_OPENSSL],[
           fi
         ])
         LIBS="$save_LIBS"
-        LDFLAGS="$ldflags_old"
+        LIBS="$libs_old"
         break
       fi
     done

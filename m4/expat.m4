@@ -16,9 +16,9 @@ AC_DEFUN([AC_CHECK_EXPAT],
 
 	if test "x$without_expat" != "xyes"; then
 		cf="$CPPFLAGS"
-		lf="$LDFLAGS"
+		lf="$LIBS"
 		CPPFLAGS="$CPPFLAGS $EXPAT_CPPFLAGS"
-		LDFLAGS="$LDFLAGS $EXPAT_LIBS"
+		LIBS="$LIBS $EXPAT_LIBS"
 		AC_CHECK_HEADERS([expat.h],
 		[
 			AC_CHECK_LIB([expat], [XML_ParserCreate],
@@ -29,7 +29,7 @@ AC_DEFUN([AC_CHECK_EXPAT],
 			])
 		])
 		CPPFLAGS="$cf"
-		LDFLAGS="$lf"
+		LIBS="$lf"
 	fi
 ])
 
