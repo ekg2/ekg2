@@ -32,6 +32,36 @@
 
 #include "nc-stuff.h"
 
+static inline int xmbswidth(const char *s, size_t n) {
+#ifdef USE_UNICODE
+	size_t i;
+	int res = 0;
+
+	mbtowc(NULL, NULL, 0);
+	for (i = 0; i < n; ) {
+		wchar_t ch;
+		int ch_len; 
+
+		ch_len = mbtowc(&ch, &s[i], n - i);
+		if (ch_len != -1) {
+			int wc_width = wcwidth(ch);
+
+			if (wc_width == -1)
+				wc_width = 1;
+
+			res += wc_width;
+			i += ch_len;
+		} else {
+			i++;
+			res++;
+		}
+	}
+	return res;
+#else
+	return n;
+#endif
+}
+
 /*
  * ncurses_backlog_split()
  *
@@ -92,15 +122,18 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		time_t ts;			/* current ts */
 		time_t lastts = 0;		/* last cached ts */
 		char lasttsbuf[100];		/* last cached strftime() result */
+		int prompt_width;
 
 		str = n->backlog[i]->str.b + n->backlog[i]->prompt_len;
 		attr = n->backlog[i]->attr + n->backlog[i]->prompt_len;
 		ts = n->backlog[i]->ts;
 		margin_left = (!w->floating) ? n->backlog[i]->margin_left : -1;
+
+		prompt_width = xmbswidth(n->backlog[i]->str.b, n->backlog[i]->prompt_len);
 		
 		for (;;) {
 			int word, width;
-			int ts_len = 0;	/* xstrlen(l->ts) */
+			int ts_width = 0;
 
 			if (!i)
 				res++;
@@ -139,14 +172,14 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 				s = fstring_new(lasttsbuf);
 
 				l->ts = s->str.b;
-				ts_len = xstrlen(l->ts);
-				ts_len++;			/* for separator between timestamp and text */
+				ts_width = xmbswidth(l->ts, xstrlen(l->ts));
+				ts_width++;			/* for separator between timestamp and text */
 				l->ts_attr = s->attr;
 
 				xfree(s);
 			}
 
-			width = w->width - ts_len - l->prompt_len - n->margin_left - n->margin_right; 
+			width = w->width - ts_width - prompt_width - n->margin_left - n->margin_right; 
 
 			if ((w->frames & WF_LEFT))
 				width -= 1;
