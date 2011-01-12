@@ -93,54 +93,29 @@ char *generate_cookie(void)
 	return saprintf("%x%d%d", rand()*rand(), (int)time(NULL), rand());
 }
 
-char *escape_single_quote(char *p, int inuni)
+char *escape_single_quote(char *p)
 {
 	string_t s = string_init(NULL);
 	int l=xstrlen(p);
-#if USE_UNICODE
-	if (inuni)
+	while (l>0)
 	{
-		int r;
-		mbtowc(NULL, NULL, 0);	/* reset */
-		while (l>0)
-		{
-			if ((r = mbtowc(NULL, p, l)) == -1)
-				string_append_c(s, '?'), r=1;
-			else if (r == 1)
-			{
-				if (*p == '\'')
-					string_append(s, "\\'");
-				else
-					string_append_c(s, *p);
-			} else
-				string_append_n(s, p, r);
-			l -= r;
-			p += r;
-		}
-	} else
-#endif
-	{
-		while (l>0)
-		{
-			if (*p == '\'')
-				string_append(s, "\\'");
-			else
-				string_append_c(s, *p);
-			l --;
-			p ++;
-		}
+		if (*p == '\'')
+			string_append(s, "\\'");
+		else
+			string_append_c(s, *p);
+		l --;
+		p ++;
 	}
 	return string_free(s, 0);
 }
 
-char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
+char *http_fstring(int winid, char *parent, fstring_t *line)
 {
 	short *attr = line->attr;
 	char *str = line->str.b;
-	CHAR_T *str_w = line->str.w;
 	string_t asc = string_init(NULL);
 	int i, last, lastbeg, len, att;
-	CHAR_T tempchar;
+	char tempchar;
 	char *normal;
 	char *tmp;
 	char *colortbl[10] = { "grey", "red", "green", "yellow", "blue", "purple", "turquoise", "white" };
@@ -162,12 +137,7 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 	 * <strong><span>...</span>  ... <span> ... </span> </strong>
 	 * since this would be quite senseless
 	 */
-#if USE_UNICODE
-	if (inuni)
-		len = wcslen(str_w);
-	else
-#endif
-		len = strlen(str);
+	len = strlen(str);
 	for (i = 1; i <= len; i++)
 	{
 		if (attr[i] == last)
@@ -176,13 +146,10 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 		tempchar = str[i];
 		str[i] = 0;
 		att = attr[lastbeg];
-		if (inuni)
-			normal = wcs_to_normal(str_w + lastbeg);
-		else
-			normal = str + lastbeg;
+		normal = str + lastbeg;
 		if (ISONLYNORMAL)
 		{
-			ADDJSf("%s.appendChild(document.createTextNode('%s'));\n",parent,(tmp = escape_single_quote(normal,inuni)));
+			ADDJSf("%s.appendChild(document.createTextNode('%s'));\n",parent,(tmp = escape_single_quote(normal)));
 		} else {
 			if (ISBOLD || ISUNDERLINE || ISBLINK)
 				ADDJS("em = document.createElement('em'); em.setAttribute('class', '");
@@ -196,7 +163,7 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 			
 			if (!ISNORMAL)
 				ADDJSf("sp.setAttribute('class', '%s');", colortbl[FORE]);
-			ADDJSf("sp.appendChild(document.createTextNode('%s'));\n",(tmp = escape_single_quote(normal,inuni)));
+			ADDJSf("sp.appendChild(document.createTextNode('%s'));\n",(tmp = escape_single_quote(normal)));
 			if (ISBOLD)
 			{
 				ADDJS("em.appendChild(sp);");
@@ -204,8 +171,6 @@ char *http_fstring(int winid, char *parent, fstring_t *line, int inuni)
 			} else 
 				ADDJSf("%s.appendChild(sp);", parent);
 		}
-		if (inuni)
-			xfree(normal);
 		xfree(tmp);
 
 		ADDJS("\n");
@@ -285,7 +250,7 @@ QUERY(httprc_xajax_def_action)
 /*					ncurses_window_t *n = w->priv_data; */
 					line = *(va_arg(ap, fstring_t **));
 					gline=1;
-					fstringed = http_fstring(w->id, "ch", line, 0);
+					fstringed = http_fstring(w->id, "ch", line);
 					tmp = saprintf("glst=gwins[%d][2].length;\n"
 							"ch = document.createElement('li');\n"
 							"ch.setAttribute('id', 'lin'+glst);\n"
@@ -716,7 +681,7 @@ WATCHER(http_watch_read) {
 					/* really, really stupid... */
 					string_append(htheader, "ch = document.createElement('li');\n"
 							"ch.setAttribute('id', 'lin'+i);\n");
-					tempdata = http_fstring(w2->id, "ch", n->backlog[i], 1);
+					tempdata = http_fstring(w2->id, "ch", n->backlog[i]);
 					string_append(htheader, tempdata);
 					if (j^=1)
 						string_append(htheader, "ch.className='info1';");

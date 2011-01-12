@@ -634,11 +634,7 @@ static COMMAND(ncurses_cmd_dump) {
 		fstring_t *backlog = n->backlog[i-1];
 		/* XXX, kolorki gdy user chce */
 
-#ifdef USE_UNICODE
-		fprintf(f, "%ld %ls\n", backlog->ts, backlog->str.w);
-#else
 		fprintf(f, "%ld %s\n", backlog->ts, backlog->str.b);
-#endif
 	}
 
 	fclose(f);

@@ -29,10 +29,10 @@ void update_statusbar(int commit);
 struct screen_line {
 	int len;		/* d³ugo¶æ linii */
 	
-	CHAR_T *str;		/* tre¶æ */
+	unsigned char *str;		/* tre¶æ */
 	short *attr;		/* atrybuty */
 	
-	CHAR_T *prompt_str;	/* tre¶æ promptu */
+	unsigned char *prompt_str;	/* tre¶æ promptu */
 	short *prompt_attr;	/* atrybuty promptu */
 	int prompt_len;		/* d³ugo¶æ promptu */
 	

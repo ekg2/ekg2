@@ -85,7 +85,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 	/* je¶li upgrade... je¶li pe³ne przebudowanie... */
 	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
 		struct screen_line *l;
-		CHAR_T *str; 
+		char *str; 
 		short *attr;
 		int j, margin_left, wrapping = 0;
 
@@ -93,7 +93,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		time_t lastts = 0;		/* last cached ts */
 		char lasttsbuf[100];		/* last cached strftime() result */
 
-		str = n->backlog[i]->str.w + n->backlog[i]->prompt_len;
+		str = n->backlog[i]->str.b + n->backlog[i]->prompt_len;
 		attr = n->backlog[i]->attr + n->backlog[i]->prompt_len;
 		ts = n->backlog[i]->ts;
 		margin_left = (!w->floating) ? n->backlog[i]->margin_left : -1;
@@ -109,9 +109,9 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			n->lines = xrealloc(n->lines, n->lines_count * sizeof(struct screen_line));
 			l = &n->lines[n->lines_count - 1];
 
-			l->str = str;
+			l->str = (unsigned char *) str;
 			l->attr = attr;
-			l->len = xwcslen(str);
+			l->len = xstrlen(str);
 			l->ts = NULL;
 			l->ts_attr = NULL;
 			l->backlog = i;
@@ -119,7 +119,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			l->prompt_len = n->backlog[i]->prompt_len;
 			if (!n->backlog[i]->prompt_empty) {
-				l->prompt_str = n->backlog[i]->str.w;
+				l->prompt_str = n->backlog[i]->str.u;
 				l->prompt_attr = n->backlog[i]->attr;
 			} else {
 				l->prompt_str = NULL;
@@ -156,33 +156,46 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			{
 				int str_width = 0;
 
-				for (j = 0, word = 0; j < l->len; j++) {
-					int ch_width;
+				mbtowc(NULL, NULL, 0);
 
-					if (str[j] == CHAR(' '))
+				for (j = 0, word = 0; j < l->len;) {
+					wchar_t ch;
+					int ch_width;
+					int ch_len;
+
+					ch_len = mbtowc(&ch, &str[j], l->len - j);
+					if (ch_len == -1) {
+						ch = '?';
+						ch_len = 1;
+					}
+
+					if (ch == CHAR(' '))
 						word = j + 1;
 
 					if (str_width >= width) {
+						int old_len = l->len;
+
 						l->len = (!w->nowrap && word) ? word : 		/* XXX, (str_width > width) ? word-1 : word? */
-							(str_width > width && j) ? j - 1 : j;
+							(str_width > width && j) ? j /* - 1 */ : j;
 
 						/* avoid dead loop -- always move forward */
 						/* XXX, a co z bledami przy rysowaniu? moze lepiej str++; attr++; albo break? */
 						if (!l->len)
 							l->len = 1;
 
-						if (str[l->len] == CHAR(' ')) {
-							l->len--;
-							str++;
-							attr++;
+						if ((ch_len = mbtowc(&ch, &str[l->len], old_len - l->len)) > 0 && ch == CHAR(' ')) {
+							l->len -= ch_len;
+							str += ch_len;
+							attr += ch_len;
 						}
 						break;
 					}
 
-					ch_width = wcwidth(str[j]);
+					ch_width = wcwidth(ch);
 					if (ch_width == -1) /* not printable? */
 						ch_width = 1;		/* XXX: should be rendered as '?' with A_REVERSE. I hope wcwidth('?') is always 1. */
 					str_width += ch_width;
+					j += ch_len;
 				}
 				if (w->nowrap)
 					break;
@@ -295,7 +308,6 @@ int ncurses_backlog_add(window_t *w, fstring_t *str) {
 #if USE_UNICODE
 	{
 		int rlen = xstrlen(str->str.b);
-		wchar_t *temp = xmalloc((rlen + 1) * sizeof(CHAR_T));		/* new str->str (assuming worst case where there's no multibyte sequence) */
 
 		int cur = 0;
 		int i;
@@ -309,34 +321,22 @@ int ncurses_backlog_add(window_t *w, fstring_t *str) {
 			if (!len)	/* shouldn't happen -- cur < rlen */
 				break;
 
-			if (len > 0) {
-				temp[i]		= znak;
-				str->attr[i]	= str->attr[cur]; 
+			if (len == -1) {
+				znak = '?';
+				len  = 1;		/* always move forward */
 
-			} else {
-				/* here mbtowc() returns -1 */
-
-/*				debug("[%s:%d] mbtowc() failed ?! (%d, %s) (%d)\n", __FILE__, __LINE__, errno, strerror(errno), i); */
-
-				len		= 1;		/* always move forward */
-				temp[i]		= '?';
-				str->attr[i]	= str->attr[cur] | FSTR_REVERSE; 
+				str->str.b[cur] = '?';
+				str->attr[cur]  = str->attr[cur] | FSTR_REVERSE; 
 			}
-
+/*
 			if (cur == str->prompt_len)
 				str->prompt_len = i;
 
 			if (cur == str->margin_left)
 				str->margin_left = i;
-
+ */
 			cur += len;
 		}
-
-		xfree(str->str.b); 
-
-		/* resize str->attr && str->str to match newlen. */
-		str->str.w	= xrealloc(temp, (i+1) * sizeof(CHAR_T));
-		str->attr	= xrealloc(str->attr, (i+1) * sizeof(short));
 	}
 #endif
 	return ncurses_backlog_add_real(w, str);

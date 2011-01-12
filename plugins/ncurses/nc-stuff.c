@@ -528,6 +528,7 @@ void ncurses_redraw(window_t *w)
 
 				wattrset(n->window, attr);
 
+				/* XXX, width vs len? */
 				if (!fixup && (l->margin_left != -1 && x >= l->margin_left)) {
 					int x, y;
 
@@ -537,11 +538,7 @@ void ncurses_redraw(window_t *w)
 
 					fixup = 1;
 				}
-#if USE_UNICODE
-				waddnwstr(n->window, &ch, 1);
-#else
 				waddch(n->window, ch);
-#endif
 			}
 		}
 
@@ -551,6 +548,7 @@ void ncurses_redraw(window_t *w)
 
 			wattrset(n->window, attr);
 
+			/* XXX, width vs len? */
 			if (!fixup && (l->margin_left != -1 && (x + l->prompt_len) >= l->margin_left)) {
 				int x, y;
 
@@ -560,11 +558,7 @@ void ncurses_redraw(window_t *w)
 
 				fixup = 1;
 			}
-#if USE_UNICODE
-			waddnwstr(n->window, &ch, 1);
-#else
 			waddch(n->window, ch);
-#endif
 		}
 	}
 

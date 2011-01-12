@@ -36,7 +36,7 @@ extern "C" {
 typedef struct {
 	union {
 		char	*b;			/* possibly multibyte string */
-		CHAR_T	*w;			/* wide char string */
+		unsigned char *u;			/* wide char string */
 	} str;		/* A \0-terminated string of characters. Before the
 	fstring_t is added to history, should be referred to using 'str->b'.
 	Adding to history recodes it to CHAR_T, so afterwards it should be
