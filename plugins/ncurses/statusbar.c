@@ -62,7 +62,6 @@ static inline int color_pair_bold(int fg, int bold, int bg) {
  *
  * wy¶wietla dany tekst w danym miejscu okna.
  *	(w == ncurses_header || ncurses_status)
- *  - x, y - wspó³rzêdne, od których zaczynamy
  *  - format - co mamy wy¶wietliæ
  *  - data - dane do podstawienia w formatach
  *  - fgcolor - domy¶lny kolor tekstu
@@ -72,31 +71,17 @@ static inline int color_pair_bold(int fg, int bold, int bg) {
  * zwraca ilo¶æ dopisanych znaków.
  */
 
-static int window_printat(WINDOW *w, int x, int y, const char *format, struct format_data *data, int fgcolor, int bold, int bgcolor) {
+static void window_printat(WINDOW *w, const char *format, struct format_data *data, int fgcolor, int bold, int bgcolor) {
 	const char *p;			/* temporary format value */
-	int orig_x = x;
 
 	p = format;
 
-	wmove(w, y, x);
-
-	while (*p && *p != '}' && x <= w->_maxx) {
+	while (*p && *p != '}' && getcurx(w) <= w->_maxx) {
 		int i, nest;
-
-		if (config_use_unicode && *p >> 7) {
-			do {
-				waddch(w, (unsigned char) *p);
-				p++;
-			} while ((unsigned char) *p >> 6 == 2); // p == 10xxxxxx
-
-			x++;
-			continue;
-		}
 
 		if (*p != '%') {
 			waddch(w, (unsigned char) *p);
 			p++;
-			x++;
 			continue;
 		}
 
@@ -160,17 +145,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 			if (!strncmp(p, data[i].name, len) && p[len] == '}') {
 				char *text = data[i].text;
 
-				while (*text) {
-					if (config_use_unicode && *text >> 7) {
-						do {
-							waddch(w, (unsigned char) *text);
-							text++;
-						} while ((unsigned char) *text >> 6 == 2); // text == 10xxxxxx
-
-						x++;
-						continue;
-					}
-
+				while (*text && getcurx(w) <= w->_maxx) {
 					if (*text == '%' && data[i].percent_ok) {
 						text++;
 
@@ -207,7 +182,6 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 					} else {
 						waddch(w, (unsigned char) *text);
 						text++;
-						x++;
 					}
 				}
 
@@ -243,7 +217,7 @@ static int window_printat(WINDOW *w, int x, int y, const char *format, struct fo
 					p += len + 1;
 
 					if (matched)
-						x += window_printat(w, x, y, p, data, fgcolor, bold, bgcolor);
+						window_printat(w, p, data, fgcolor, bold, bgcolor);
 					break; /* goto next; */
 				}
 			}
@@ -263,8 +237,6 @@ next:
 			p++;
 		}
 	}
-
-	return x - orig_x;
 }
 
 static char *ncurses_window_activity(void) {
@@ -313,7 +285,6 @@ static char *ncurses_window_activity(void) {
 static void reprint_statusbar(WINDOW *w, int y, const char *format, struct format_data *data) {
 	int backup_display_color = config_display_color;
 	int i;
-	int x;
 
 	if (!w)
 		return;
@@ -323,11 +294,10 @@ static void reprint_statusbar(WINDOW *w, int y, const char *format, struct forma
 
 	wattrset(w, color_pair(COLOR_WHITE, COLOR_BLUE));
 
-	x = window_printat(w, 0, y, format, data, COLOR_WHITE, 0, COLOR_BLUE);
+	wmove(w, y, 0);
+	window_printat(w, format, data, COLOR_WHITE, 0, COLOR_BLUE);
 
-	wmove(w, y, x);
-
-	for (i = x; i <= w->_maxx; i++)
+	for (i = getcurx(w); i <= w->_maxx; i++)
 		waddch(w, ' ');
 
 	config_display_color = backup_display_color;
