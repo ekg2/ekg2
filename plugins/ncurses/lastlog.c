@@ -86,7 +86,7 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 #ifdef HAVE_REGEX_H
 			int rs;
 			
-			rs = regexec(&(lastlog->reg), n->backlog[i]->str.b, 0, NULL, 0);
+			rs = regexec(&(lastlog->reg), n->backlog[i]->str, 0, NULL, 0);
 			if (!rs)
 				found = 1;
 			else if (rs != REG_NOMATCH) {
@@ -102,9 +102,9 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 #endif
 		} else {				/* substring */
 			if (local_config_lastlog_case)
-				found = !!xstrstr(n->backlog[i]->str.b, lastlog->expression);
+				found = !!xstrstr(n->backlog[i]->str, lastlog->expression);
 			else	
-				found = !!xstrcasestr(n->backlog[i]->str.b, lastlog->expression);
+				found = !!xstrcasestr(n->backlog[i]->str, lastlog->expression);
 		}
 
 		if (!config_lastlog_noitems && found && !items) /* add header only when found */
@@ -116,9 +116,9 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 
 			dup = xmalloc(sizeof(fstring_t));
 
-			len = xstrlen(n->backlog[i]->str.b);
+			len = xstrlen(n->backlog[i]->str);
 
-			dup->str.b		= xmemdup(n->backlog[i]->str.b, sizeof(char) * (len + 1));
+			dup->str		= xmemdup(n->backlog[i]->str, sizeof(char) * (len + 1));
 			dup->attr		= xmemdup(n->backlog[i]->attr, sizeof(short) * (len + 1));
 			dup->ts			= n->backlog[i]->ts;
 			dup->prompt_len		= n->backlog[i]->prompt_len;

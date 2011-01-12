@@ -528,7 +528,7 @@ fstring_t *fstring_new(const char *str) {
 	}
 
 	res			= xmalloc(sizeof(fstring_t));
-	res->str.b = tmpstr	= xmalloc((len + 1) * sizeof(char));
+	res->str = tmpstr	= xmalloc((len + 1) * sizeof(char));
 	res->attr		= xmalloc((len + 1) * sizeof(short));
 
 	res->margin_left = -1;
@@ -688,7 +688,7 @@ void fstring_free(fstring_t *str)
 	if (!str)
 		return;
 
-	xfree(str->str.b);
+	xfree(str->str);
 	xfree(str->attr);
 	xfree(str->priv_data);
 	xfree(str);

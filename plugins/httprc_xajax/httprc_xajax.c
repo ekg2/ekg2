@@ -112,7 +112,7 @@ char *escape_single_quote(char *p)
 char *http_fstring(int winid, char *parent, fstring_t *line)
 {
 	short *attr = line->attr;
-	char *str = line->str.b;
+	char *str = line->str;
 	string_t asc = string_init(NULL);
 	int i, last, lastbeg, len, att;
 	char tempchar;
@@ -272,7 +272,7 @@ QUERY(httprc_xajax_def_action)
 				string_append(p->collected, " = ");
 				string_append(p->collected, itoa(w->id));
 				string_append(p->collected, " = ");
-				string_append(p->collected, line->str.b);
+				string_append(p->collected, line->str);
 				string_append(p->collected, "]]></cmd>");
 				string_append(p->collected, "<cmd n=\"js\"><![CDATA[");
 				string_append(p->collected, tmp);

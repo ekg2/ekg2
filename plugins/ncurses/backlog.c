@@ -124,12 +124,12 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		char lasttsbuf[100];		/* last cached strftime() result */
 		int prompt_width;
 
-		str = n->backlog[i]->str.b + n->backlog[i]->prompt_len;
+		str = n->backlog[i]->str + n->backlog[i]->prompt_len;
 		attr = n->backlog[i]->attr + n->backlog[i]->prompt_len;
 		ts = n->backlog[i]->ts;
 		margin_left = (!w->floating) ? n->backlog[i]->margin_left : -1;
 
-		prompt_width = xmbswidth(n->backlog[i]->str.b, n->backlog[i]->prompt_len);
+		prompt_width = xmbswidth(n->backlog[i]->str, n->backlog[i]->prompt_len);
 		
 		for (;;) {
 			int word, width;
@@ -152,7 +152,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 			l->prompt_len = n->backlog[i]->prompt_len;
 			if (!n->backlog[i]->prompt_empty) {
-				l->prompt_str = n->backlog[i]->str.u;
+				l->prompt_str = (unsigned char *) n->backlog[i]->str;
 				l->prompt_attr = n->backlog[i]->attr;
 			} else {
 				l->prompt_str = NULL;
@@ -171,7 +171,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 
 				s = fstring_new(lasttsbuf);
 
-				l->ts = s->str.b;
+				l->ts = s->str;
 				ts_width = xmbswidth(l->ts, xstrlen(l->ts));
 				ts_width++;			/* for separator between timestamp and text */
 				l->ts_attr = s->attr;
@@ -340,7 +340,7 @@ int ncurses_backlog_add_real(window_t *w, fstring_t *str) {
 int ncurses_backlog_add(window_t *w, fstring_t *str) {
 #if USE_UNICODE
 	{
-		int rlen = xstrlen(str->str.b);
+		int rlen = xstrlen(str->str);
 
 		int cur = 0;
 		int i;
@@ -349,7 +349,7 @@ int ncurses_backlog_add(window_t *w, fstring_t *str) {
 
 		for (i = 0; cur < rlen; i++) {
 			wchar_t znak;
-			int len	= mbtowc(&znak, &(str->str.b[cur]), rlen-cur);
+			int len	= mbtowc(&znak, &(str->str[cur]), rlen-cur);
 
 			if (!len)	/* shouldn't happen -- cur < rlen */
 				break;
@@ -358,7 +358,7 @@ int ncurses_backlog_add(window_t *w, fstring_t *str) {
 				znak = '?';
 				len  = 1;		/* always move forward */
 
-				str->str.b[cur] = '?';
+				str->str[cur] = '?';
 				str->attr[cur]  = str->attr[cur] | FSTR_REVERSE; 
 			}
 /*

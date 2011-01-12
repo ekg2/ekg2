@@ -34,14 +34,7 @@ extern "C" {
 #endif
 
 typedef struct {
-	union {
-		char	*b;			/* possibly multibyte string */
-		unsigned char *u;			/* wide char string */
-	} str;		/* A \0-terminated string of characters. Before the
-	fstring_t is added to history, should be referred to using 'str->b'.
-	Adding to history recodes it to CHAR_T, so afterwards it should be
-	referred to by 'str->w'. */
-
+	char *str;				/* possibly multibyte string */
 	short		*attr;			/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
 	time_t		ts;			/* timestamp */
 

@@ -156,7 +156,7 @@ static char *fstring_reverse(fstring_t *fstr) {
 		return NULL;
 
 	attr = fstr->attr;
-	str = fstr->str.b;
+	str = fstr->str;
 
 	if (!attr || !str)
 		return NULL;
