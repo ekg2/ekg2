@@ -486,7 +486,6 @@ void ncurses_redraw(window_t *w)
 		struct screen_line *l = &n->lines[n->start + y];
 
 		int cur_y = (top + y + fix_trl);
-		int cur_x;
 
 		int fixup = 0;
 
@@ -507,52 +506,64 @@ void ncurses_redraw(window_t *w)
 		}
 
 		wattrset(n->window, A_NORMAL);
-
-		cur_x = (left);
+		wmove(n->window, cur_y, left);
 
 		if (l->ts) {
-			for (x = 0; l->ts[x]; x++, cur_x++) {
+			for (x = 0; l->ts[x]; x++) {
 				int attr = fstring_attr2ncurses_attr(l->ts_attr[x]);
-				unsigned char ch = (unsigned char) ncurses_fixchar((CHAR_T) l->ts[x], &attr);
+				unsigned char ch = (unsigned char) ncurses_fixchar((CHAR_T) (unsigned char) l->ts[x], &attr);
 
 				wattrset(n->window, attr);
-				mvwaddch(n->window, cur_y, cur_x, ch);
+				waddch(n->window, ch);
 			}
 		/* render separator */
-			cur_x++;
 			wattrset(n->window, A_NORMAL);
-			mvwaddch(n->window, cur_y, cur_x, ' ');
+			waddch(n->window, ' ');
 		}
 
 		if (l->prompt_str) {
-			for (x = 0; x < l->prompt_len; x++, cur_x++) {
+			for (x = 0; x < l->prompt_len; x++) {
 				int attr = fstring_attr2ncurses_attr(l->prompt_attr[x]);
 				CHAR_T ch = ncurses_fixchar(l->prompt_str[x], &attr);
 
 				wattrset(n->window, attr);
 
-				if (!fixup && (l->margin_left != -1 && x >= l->margin_left))
-					fixup = l->margin_left - config_margin_size;
+				if (!fixup && (l->margin_left != -1 && x >= l->margin_left)) {
+					int x, y;
+
+					getyx(n->window, y, x);
+					x = x - l->margin_left + config_margin_size;
+					wmove(n->window, y, x);
+
+					fixup = 1;
+				}
 #if USE_UNICODE
-				mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
+				waddnwstr(n->window, &ch, 1);
 #else
-				mvwaddch(n->window, cur_y, cur_x - fixup, ch);
+				waddch(n->window, ch);
 #endif
 			}
 		}
 
-		for (x = 0; x < l->len; x++, cur_x++) {
+		for (x = 0; x < l->len; x++) {
 			int attr = fstring_attr2ncurses_attr(l->attr[x]);
 			CHAR_T ch = ncurses_fixchar(l->str[x], &attr);
 
 			wattrset(n->window, attr);
 
-			if (!fixup && (l->margin_left != -1 && (x + l->prompt_len) >= l->margin_left))
-				fixup = l->margin_left - config_margin_size;
+			if (!fixup && (l->margin_left != -1 && (x + l->prompt_len) >= l->margin_left)) {
+				int x, y;
+
+				getyx(n->window, y, x);
+				x = x - l->margin_left + config_margin_size;
+				wmove(n->window, y, x);
+
+				fixup = 1;
+			}
 #if USE_UNICODE
-			mvwaddnwstr(n->window, cur_y, cur_x - fixup, &ch, 1);
+			waddnwstr(n->window, &ch, 1);
 #else
-			mvwaddch(n->window, cur_y, cur_x - fixup, ch);
+			waddch(n->window, ch);
 #endif
 		}
 	}
