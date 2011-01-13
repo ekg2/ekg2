@@ -496,11 +496,11 @@ int variable_set(const char *name, const char *value) {
 			return -1;
 	}
 
-	if (!changed)
-		return 1;
-
 	if (v->notify)
 		(v->notify)(v->name);
+
+	if (!changed)
+		return 1;
 
 	tmpname = xstrdup(v->name);
 	query_emit(NULL, "variable-changed", &tmpname);
