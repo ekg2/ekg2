@@ -422,14 +422,63 @@ extern volatile int sigint_count;
 static int ncurses_redraw_input_already_exec = 0;
 
 /*
+ * returns currsor x position
+ */
+static int ncurses_redraw_input_line(CHAR_T *text) {
+#ifdef WITH_ASPELL
+	char *aspell_line = NULL;
+#endif
+	int i, stop, cur_posx = 0;
+	int attr = A_NORMAL;
+	const size_t linelen = xwcslen(text);
+	int promptlen = getcurx(input);
+	int width = input->_maxx + 1 - promptlen;
+	int y = getcury(input);
+
+#ifdef WITH_ASPELL
+	if (spell_checker) {
+		aspell_line = xmalloc(linelen + 1);
+		spellcheck(text, aspell_line);
+	}
+#endif
+	stop = linelen < width+line_start ? linelen : width + line_start;
+	for (i = line_start; i < stop; i++) {
+		if (line_index == i) {
+			cur_posx = getcurx(input);
+		}
+#ifdef WITH_ASPELL
+		if (aspell_line && aspell_line[i] == ASPELLCHAR && text[i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
+			attr = A_UNDERLINE;
+		else
+			attr = A_NORMAL;
+#endif
+		print_char(input, text[i], attr);
+	}
+	if (line_index >= i) {
+		cur_posx = getcurx(input);
+	}
+#ifdef WITH_ASPELL
+	xfree(aspell_line);
+#endif
+
+	wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
+	if (line_start > 0)
+		mvwaddch(input, y, promptlen, '<');
+	if (linelen && linelen - line_start > width)
+		mvwaddch(input, y, input->_maxx, '>');
+
+	wattrset(input, A_NORMAL);
+	return cur_posx;
+}
+
+/*
  * wyswietla ponownie linie wprowadzenia tekstu		(prompt + aktualnie wpisany tekst)
  *	przy okazji jesli jest aspell to sprawdza czy tekst jest poprawny.
  */
 void ncurses_redraw_input(unsigned int ch) {
+	int cur_posx = -1, cur_posy = 0;
+
 	const int promptlen = ncurses_lines ? 0 : ncurses_current->prompt_real_len;
-#ifdef WITH_ASPELL
-	char *aspell_line = NULL;
-#endif
 	if (line_index - line_start > input->_maxx - 9 - promptlen)
 		line_start += input->_maxx - 19 - promptlen;
 	if (line_index - line_start < 10) {
@@ -443,61 +492,19 @@ void ncurses_redraw_input(unsigned int ch) {
 	wattrset(input, color_pair(COLOR_WHITE, COLOR_BLACK));
 
 	if (ncurses_lines) {
-		int cur_posx = -1, cur_posy = -1;
-		int i;
+		int i, x;
 
+		cur_posy = lines_index - lines_start;
 		for (i = 0; i < MULTILINE_INPUT_SIZE; i++) {
-			CHAR_T *p;
-			int j;
-			size_t plen;
-
 			if (!ncurses_lines[lines_start + i])
 				break;
 
-			p = ncurses_lines[lines_start + i];
-			plen = xwcslen(p);
-#ifdef WITH_ASPELL
-			if (spell_checker) {
-				aspell_line = xmalloc(plen);
-				spellcheck(p, aspell_line);
-			}
-#endif
 			wmove(input, i, 0);
-			for (j = 0; j + line_start < plen && j < input->_maxx + 1; j++) {
-				if (lines_index == (lines_start + i) && line_index == (line_start + j)) {
-					getyx(input, cur_posy, cur_posx);
-				}
-#ifdef WITH_ASPELL
-				if (aspell_line && aspell_line[line_start + j] == ASPELLCHAR && p[line_start + j] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-					print_char(input, p[line_start + j], A_UNDERLINE);
-				else	/* jesli jest wszystko okey to wyswietlamy normalny */
-#endif					/* lub nie mamy aspella */
-					print_char(input, p[j + line_start], A_NORMAL);
-			}
-			if (lines_index == (lines_start + i) && line_index >= (line_start + j)) {	 /* safer version of '==' */
-				getyx(input, cur_posy, cur_posx);
-			}
-#ifdef WITH_ASPELL
-			xfree(aspell_line);
-#endif
-		}
-		wattrset(input, A_NORMAL);
-
-		if (cur_posy != -1 && cur_posx != -1) {
-			wmove(input, cur_posy, cur_posx);
-			curs_set(1);
-		} else if (lines_index < lines_start) {
-			wmove(input, 0, 0);
-			curs_set(0);
-		} else /* if (lines_index > lines_start + 4) */ {
-			wmove(input, 4, stdscr->_maxx);
-			curs_set(0);
+			x = ncurses_redraw_input_line(ncurses_lines[lines_start + i]);
+			if (lines_index == (lines_start + i))
+				cur_posx = x;
 		}
 	} else {
-		int i;
-		/* const */size_t linelen	= xwcslen(ncurses_line);
-		int cur_posx = 0, cur_posy = 0;
-
 		wmove(input, 0, 0);
 		if (ncurses_current->prompt)
 #ifdef USE_UNICODE
@@ -520,46 +527,23 @@ void ncurses_redraw_input(unsigned int ch) {
 
 		}
 
-#ifdef WITH_ASPELL
-		if (spell_checker) {
-			aspell_line = xmalloc(linelen + 1);
-			spellcheck(ncurses_line, aspell_line);
-		}
-#endif
 		/* XXX,
 		 *	line_start can be negative,
 		 *	line_start can be larger than line_len
 		 *
 		 * Research.
 		 */
+		cur_posx = ncurses_redraw_input_line(ncurses_line);
 
-		for (i = 0; i < input->_maxx + 1 - promptlen && i < linelen - line_start; i++) {
-			if (line_index == (line_start + i)) {
-				getyx(input, cur_posy, cur_posx);
-			}
-#ifdef WITH_ASPELL
-			if (spell_checker && aspell_line[line_start + i] == ASPELLCHAR && ncurses_line[line_start + i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
-				print_char(input, ncurses_line[line_start + i], A_UNDERLINE);
-			else	/* jesli jest wszystko okey to wyswietlamy normalny */
-#endif				/* lub gdy nie mamy aspella */
-				print_char(input, ncurses_line[line_start + i], A_NORMAL);
-		}
-		if (line_index >= (line_start + i)) {
-			getyx(input, cur_posy, cur_posx);
-		}
-		wattrset(input, A_NORMAL);
-#ifdef WITH_ASPELL
-		xfree(aspell_line);
-#endif
-		/* this mut be here if we don't want 'timeout' after pressing ^C */
-		if (ch == 3) ncurses_commit();
-		wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
-		if (line_start > 0)
-			mvwaddch(input, 0, promptlen, '<');
-		if (linelen - line_start > input->_maxx + 1 - promptlen)
-			mvwaddch(input, 0, input->_maxx, '>');
-		wattrset(input, color_pair(COLOR_WHITE, COLOR_BLACK));
+	}
+	/* this mut be here if we don't want 'timeout' after pressing ^C */
+	if (ch == 3) ncurses_commit();
+	if (cur_posx != -1) {
 		wmove(input, cur_posy, cur_posx);
+		curs_set(1);
+	} else {
+		wmove(input, 0, 0);	// XXX ???
+		curs_set(0);
 	}
 }
 
