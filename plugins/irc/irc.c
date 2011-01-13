@@ -2602,10 +2602,12 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("identify",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "irssi", 0, NULL),
 	PLUGIN_VAR_ADD("make_window",		VAR_INT, "2", 0, NULL),
+#define IRC_PLUGIN_VAR_NICKNAME 21
 	PLUGIN_VAR_ADD("nickname",		VAR_STR, NULL, 0, NULL),		/* value will be inited @ irc_plugin_init() [pwd_entry->pw_name] */
 	PLUGIN_VAR_ADD("password",		VAR_STR, 0, 1, NULL),
 	PLUGIN_VAR_ADD("port",			VAR_INT, "6667", 0, NULL),
 	PLUGIN_VAR_ADD("prefer_family",		VAR_INT, "0", 0, NULL),
+#define IRC_PLUGIN_VAR_REALNAME 25
 	PLUGIN_VAR_ADD("realname",              VAR_STR, NULL, 0, NULL),		/* value will be inited @ irc_plugin_init() [pwd_entry->pw_gecos] */
 	PLUGIN_VAR_ADD("recode_list",           VAR_STR, NULL, 0, irc_changed_recode_list),
 	PLUGIN_VAR_ADD("recode_out_default_charset", VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
@@ -2686,8 +2688,8 @@ EXPORT int irc_plugin_init(int prio)
 #endif
 
 /* magic stuff */
-	irc_plugin_vars[20].value = pwd_name;
-	irc_plugin_vars[23].value = pwd_realname;
+	irc_plugin_vars[IRC_PLUGIN_VAR_NICKNAME].value = pwd_name;
+	irc_plugin_vars[IRC_PLUGIN_VAR_REALNAME].value = pwd_realname;
 
 	irc_plugin.params	= irc_plugin_vars;
 	irc_plugin.priv		= &irc_priv;
