@@ -9,7 +9,7 @@ our %EKG2 = (
 	name        => 'autoop',
 	description => 'Auto op the good guys.',
 	license     => 'GPL',
-	changed     => '2010-12-27',
+	changed     => '2011-01-12',
 );
 
 ##############################################################################
@@ -239,7 +239,8 @@ sub bool_var() {
 	my ($name, $val) = @_;
 
 	my $v =	Ekg2::variable_find($name);
-	$v->set(0 + !!$val) if $v;
+	my $x = 0 + !!$val;
+	$v->set($x) if ($v && ($x ne $v->{value}));
 }
 #------------------------------
 sub int_var() {
@@ -247,7 +248,8 @@ sub int_var() {
 	my ($name, $val) = @_;
 
 	my $v =	Ekg2::variable_find($name);
-	$v->set(0 + $val) if $v;
+	my $x = 0 + $val;
+	$v->set($x) if ($v && ($x ne $v->{value}));
 }
 #------------------------------
 sub variable_changed() {
