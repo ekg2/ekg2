@@ -430,7 +430,7 @@ static int ncurses_redraw_input_line(CHAR_T *text) {
 #endif
 	int i, stop, cur_posx = 0;
 	int attr = A_NORMAL;
-	const size_t linelen = xwcslen(text);
+	const int linelen = xwcslen(text);
 	int promptlen = getcurx(input);
 	int width = input->_maxx + 1 - promptlen;
 	int y = getcury(input);
@@ -461,12 +461,13 @@ static int ncurses_redraw_input_line(CHAR_T *text) {
 	xfree(aspell_line);
 #endif
 
-	wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
-	if (line_start > 0)
-		mvwaddch(input, y, promptlen, '<');
-	if (linelen && linelen - line_start > width)
-		mvwaddch(input, y, input->_maxx, '>');
-
+	if (width>2) {
+		wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
+		if (line_start > 0)
+			mvwaddch(input, y, promptlen, '<');
+		if (linelen && linelen - line_start > width)
+			mvwaddch(input, y, input->_maxx, '>');
+	}
 	wattrset(input, A_NORMAL);
 	return cur_posx;
 }
