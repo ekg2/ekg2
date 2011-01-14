@@ -477,15 +477,14 @@ static int ncurses_redraw_input_line(CHAR_T *text) {
  */
 void ncurses_redraw_input(unsigned int ch) {
 	int cur_posx = -1, cur_posy = 0;
-
 	const int promptlen = ncurses_lines ? 0 : ncurses_current->prompt_real_len;
-	if (line_index - line_start > input->_maxx - 9 - promptlen)
-		line_start += input->_maxx - 19 - promptlen;
-	if (line_index - line_start < 10) {
-		line_start -= input->_maxx - 19 - promptlen;
-		if (line_start < 0)
-			line_start = 0;
-	}
+	const int width = input->_maxx - promptlen;
+
+	if ((line_index - line_start >= width) || (line_index - line_start < 2))
+		line_start = line_index - width/2;
+	if (line_start < 0)
+		line_start = 0;
+
 	ncurses_redraw_input_already_exec = 1;
 
 	werase(input);
@@ -527,12 +526,6 @@ void ncurses_redraw_input(unsigned int ch) {
 
 		}
 
-		/* XXX,
-		 *	line_start can be negative,
-		 *	line_start can be larger than line_len
-		 *
-		 * Research.
-		 */
 		cur_posx = ncurses_redraw_input_line(ncurses_line);
 
 	}
