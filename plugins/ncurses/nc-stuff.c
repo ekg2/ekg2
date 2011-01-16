@@ -381,10 +381,9 @@ static void draw_thin_red_line(window_t *w, int y)
 {
 	ncurses_window_t *n = w->priv_data;
 	int attr = color_pair(COLOR_RED, COLOR_BLACK) | A_BOLD | A_ALTCHARSET;
-	unsigned char ch = (unsigned char) ncurses_fixchar((CHAR_T) ACS_HLINE, &attr);
 
 	wattrset(n->window, attr);
-	mvwhline(n->window, y, 0, ch, w->width);
+	mvwhline(n->window, y, 0, ACS_HLINE, w->width);
 }
 
 /*
@@ -455,14 +454,14 @@ void ncurses_redraw(window_t *w)
 		if ((w->frames & WF_TOP)) {
 			top++;
 			height--;
-			mvwhline(n->window, y0, x0, vline_ch, x1-x0+1);
+			mvwhline(n->window, y0, x0, hline_ch, x1-x0+1);
 			if (w->frames & WF_LEFT)  mvwaddch(n->window, y0, x0, ACS_ULCORNER);
 			if (w->frames & WF_RIGHT) mvwaddch(n->window, y0, x1, ACS_URCORNER);
 		}
 
 		if ((w->frames & WF_BOTTOM)) {
 			height--;
-			mvwhline(n->window, y1, x0, vline_ch, x1-x0+1);
+			mvwhline(n->window, y1, x0, hline_ch, x1-x0+1);
 			if (w->frames & WF_LEFT)  mvwaddch(n->window, y1, x0, ACS_LLCORNER);
 			if (w->frames & WF_RIGHT) mvwaddch(n->window, y1, x1, ACS_LRCORNER);
 		}
