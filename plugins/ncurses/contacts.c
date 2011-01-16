@@ -84,7 +84,7 @@ static int contacts_compare(void *data1, void *data2)
 {
 	userlist_t *a = data1, *b = data2;
 
-	return xstrcasecmp(a->nickname, b->nickname);
+	return xstrcoll(a->nickname, b->nickname);
 }
 
 /*
