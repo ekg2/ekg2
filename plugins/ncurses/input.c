@@ -488,6 +488,12 @@ void ncurses_redraw_input(unsigned int ch) {
 			if (lines_index == (lines_start + i))
 				cur_posx = x;
 		}
+		wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
+		if (lines_start>0)
+			mvwaddch(input, 0, input->_maxx, '^');
+		if (array_count((char **) ncurses_lines)-lines_start > MULTILINE_INPUT_SIZE)
+			mvwaddch(input, MULTILINE_INPUT_SIZE-1, input->_maxx, 'v');
+		wattrset(input, A_NORMAL);
 	} else {
 		wmove(input, 0, 0);
 		if (ncurses_current->prompt)
@@ -499,12 +505,10 @@ void ncurses_redraw_input(unsigned int ch) {
 
 		if (ncurses_noecho) {
 			static char *funnything	= ncurses_funnything;
-			int x, y;
 
-			waddch(input, ' ');
-			getyx(input, x, y);
+			waddch(input, ' ');		/* XXX why here? If you want to add space after propt, add it in theme */
 			waddch(input, *funnything);
-			wmove(input, y, x);
+			wmove(input, 0, getcurx(input)-1);
 			if (!*(++funnything))
 				funnything = ncurses_funnything;
 			return;

@@ -284,7 +284,6 @@ static char *ncurses_window_activity(void) {
 
 static void reprint_statusbar(WINDOW *w, int y, const char *format, struct format_data *data) {
 	int backup_display_color = config_display_color;
-	int i;
 
 	if (!w)
 		return;
@@ -297,8 +296,7 @@ static void reprint_statusbar(WINDOW *w, int y, const char *format, struct forma
 	wmove(w, y, 0);
 	window_printat(w, format, data, COLOR_WHITE, 0, COLOR_BLUE);
 
-	for (i = getcurx(w); i <= w->_maxx; i++)
-		waddch(w, ' ');
+	mvwhline(w, y, getcurx(w), ' ', w->_maxx);
 
 	config_display_color = backup_display_color;
 }

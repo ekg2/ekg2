@@ -1371,6 +1371,8 @@ IRC_COMMAND(irc_c_join)
 
 		if (xstrcmp(__channel, chname))
 			newwin->alias = xstrdup(chname);
+		else
+			newwin->alias = xstrdup(__channel);
 
 		query_emit(NULL, "ui-window-target-changed", &newwin);	/* let's emit UI_WINDOW_TARGET_CHANGED XXX, another/new query? */
 
