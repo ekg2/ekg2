@@ -156,7 +156,7 @@ void spellcheck(CHAR_T *what, char *where) {
 		free_utf(word_mbs);
 #else
 		/* sprawdzamy pisownie tego wyrazu */
-		if (!userlist_find(session_current, what+i))
+		if (!userlist_find(session_current, (char *)what+i))
 			fillznak = (aspell_speller_check(spell_checker, (char *) &what[i], j - i) == 0) ? ASPELLCHAR : ' ';
 #endif
 		what[j] = what_j;

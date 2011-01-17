@@ -20,6 +20,10 @@
 
 #include "ekg2-config.h"
 
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
+
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>

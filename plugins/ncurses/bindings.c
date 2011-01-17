@@ -31,6 +31,10 @@
 #  include <limits.h>
 #endif
 
+#ifndef HAVE_STRLCPY
+#  include "compat/strlcpy.h"
+#endif
+
 #include <ekg/bindings.h>
 #include <ekg/stuff.h>
 #include <ekg/metacontacts.h>
