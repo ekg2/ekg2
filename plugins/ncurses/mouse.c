@@ -75,6 +75,7 @@ static TIMER(ncurses_mouse_timer)
 	return 0;
 }
 
+#ifdef HAVE_LIBGPM
 /*
  * ncurses_mouse_move_handler()
  * 
@@ -86,6 +87,7 @@ static void ncurses_mouse_move_handler(int x, int y)
 
 	/* add function that should be done when mouse move is done */
 }
+#endif
 
 /*
  * ncurses_lastlog_mouse_handler()
