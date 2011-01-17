@@ -241,7 +241,7 @@ static BINDING_FUNCTION(binding_accept_line)
 		ncurses_noecho = 0;
 		ncurses_passbuf = xwcsdup(line);
 		line[0] = 0;
-		line_adjust();
+		line_index = line_start = 0;
 		return;
 	}
 
@@ -293,7 +293,7 @@ static BINDING_FUNCTION(binding_accept_line)
 	history[0] = line;
 	history_index = 0;
 	*line = 0;
-	line_adjust();
+	line_index = line_start = 0;
 }
 
 static BINDING_FUNCTION(binding_line_discard)
@@ -303,7 +303,7 @@ static BINDING_FUNCTION(binding_line_discard)
 		yanked = xwcsdup(line);
 	}
 	*line = 0;
-	line_adjust();
+	line_index = line_start = 0;
 
 	if (lines && lines_index < array_count((char **) lines) - 1) {
 		int i;
@@ -501,6 +501,24 @@ static BINDING_FUNCTION(binding_complete)
 	}
 }
 
+static BINDING_FUNCTION(binding_end_of_line)
+{
+	const int width = input->_maxx - ncurses_current->prompt_real_len - 1;
+	/* set cursor position to the end of the line */
+	line_index = xwcslen(ncurses_line);
+	/* show as much as possible */
+	if (line_index > width)
+		line_start = line_index - width;
+	else
+		line_start = 0;
+}
+
+static BINDING_FUNCTION(binding_beginning_of_line)
+{
+	line_index = 0;
+	line_start = 0;
+}
+
 static BINDING_FUNCTION(binding_backward_char)
 {
 	if (lines) {
@@ -510,7 +528,7 @@ static BINDING_FUNCTION(binding_backward_char)
 			if (lines_index > 0) {
 				lines_index--;
 				lines_adjust();
-				line_adjust();
+				binding_end_of_line(NULL);
 			}
 		}
 
@@ -542,16 +560,6 @@ static BINDING_FUNCTION(binding_forward_char) {
 		line_index++;
 }
 
-static BINDING_FUNCTION(binding_end_of_line)
-{
-	line_adjust();
-}
-
-static BINDING_FUNCTION(binding_beginning_of_line)
-{
-	line_index = 0;
-	line_start = 0;
-}
 
 static void get_history_lines() {
 	if (xwcschr(history[history_index], ('\015'))) {
@@ -585,7 +593,7 @@ static void get_history_lines() {
 			ncurses_input_update(0);
 		}
 		xwcscpy(line, history[history_index]);
-		line_adjust();
+		binding_end_of_line(NULL);
 	}
 }
 

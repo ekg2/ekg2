@@ -76,7 +76,7 @@ QUERY(ncurses_password_input) {
 	ncurses_update_real_prompt(ncurses_current);
 	ncurses_lines			= NULL;
 	ncurses_line			= xmalloc(LINE_MAXLEN * sizeof(CHAR_T));
-	ncurses_line_adjust();
+	line_index = line_start = 0;
 	ncurses_redraw_input(0);
 
 	while (ncurses_noecho)
@@ -164,22 +164,6 @@ void ncurses_update_real_prompt(ncurses_window_t *n) {
 			n->prompt_real_len	= maxlen;
 		}
 	}
-}
-
-/*
- * line_adjust()
- *
- * ustawia kursor w odpowiednim miejscu ekranu po zmianie tekstu w poziomie.
- */
-void ncurses_line_adjust(void)
-{
-	const int prompt_len = (ncurses_lines) ? 0 : ncurses_current->prompt_real_len;
-
-	line_index = xwcslen(ncurses_line);
-	if (line_index < input->_maxx - 9 - prompt_len)
-		line_start = 0;
-	else
-		line_start = line_index - line_index % (input->_maxx - 9 - prompt_len);
 }
 
 /*
