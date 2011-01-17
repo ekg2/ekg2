@@ -629,8 +629,14 @@ BINDING_FUNCTION(binding_next_only_history)
 	if (history_index > 0) {
 		history_index--;
 		get_history_lines();
-	} else /* history_index == 0 */
-		binding_accept_line(BINDING_HISTORY_NOEXEC);
+	} else {/* history_index == 0 */
+		if (lines) {
+			add_to_history();
+			input_size = 1;
+			ncurses_input_update(0);
+		} else
+			binding_accept_line(BINDING_HISTORY_NOEXEC);
+	}
 }
 
 
@@ -656,20 +662,13 @@ static BINDING_FUNCTION(binding_next_history)
 {
 	int count = array_count((char **) lines);
 
-	ncurses_window_gone(window_current);
-
-	if (lines && (lines_index+1<count)) {
-		if (lines_index - line_start == MULTILINE_INPUT_SIZE - 1)
-			if (lines_index < count - 1)
-				lines_start++;
-
-		if (lines_index < count - 1)
-			lines_index++;
-
+	if (lines && (lines_index < count - 1)) {
+		lines_index++;
 		lines_adjust();
-
-	} else
+	} else {
+		ncurses_window_gone(window_current);
 		binding_next_only_history(NULL);
+	}
 	ncurses_redraw_input(0);
 }
 
