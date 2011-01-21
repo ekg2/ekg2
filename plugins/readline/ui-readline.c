@@ -46,11 +46,16 @@
 #	include <readline.h>
 #endif
 
+#ifdef HAVE_LIBSTRL
+#	include <strl.h>
+#else
+#	ifndef HAVE_STRLCPY
+#		include "compat/strlcpy.h"
+#	endif
+#endif
+
 #include <ekg/bindings.h>
 #include <ekg/commands.h>
-#ifndef HAVE_STRLCPY
-#  include <compat/strlcpy.h>
-#endif
 #include <ekg/stuff.h>
 #include <ekg/themes.h>
 #include <ekg/windows.h>

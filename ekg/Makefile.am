@@ -7,7 +7,7 @@ ekg2_SOURCES = audio.c bindings.c bindings.h commands.c completion.c configfile.
 
 ekg2includedir = $(includedir)/ekg2
 
-ekg2_LDADD = $(top_builddir)/compat/libcompat.a @LIBS@ @STATIC_PLUGINS_LIB@ @DLLIB@ @LTLIBICONV@ @IDN_LIBS@
+ekg2_LDADD = $(top_builddir)/compat/libcompat.a $(STATIC_PLUGINS_LIB) $(DLLIB) $(LTLIBICONV) $(IDN_LIBS) $(STRL_LIBS)
 ekg2_LDFLAGS = -export-dynamic
 ekg2_DEPENDENCIES = $(top_builddir)/compat/libcompat.a
 

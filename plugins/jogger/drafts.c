@@ -20,10 +20,15 @@
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
-#ifndef HAVE_STRLCPY
-#  include "compat/strlcpy.h"
-#endif
 #include <limits.h>
+
+#ifdef HAVE_LIBSTRL
+#	include <strl.h>
+#else
+#	ifndef HAVE_STRLCPY
+#		include "compat/strlcpy.h"
+#	endif
+#endif
 
 #include <sys/mman.h>
 #include <sys/types.h>

@@ -91,11 +91,14 @@ AC_CHECK_FUNCS(inet_ntop)
 AC_CHECK_FUNCS(getaddrinfo)
 
 dnl  strlcat,strlcpy itp wiele systemów nie posiada
-AC_CHECK_FUNCS(strlcat, , [COMPAT="$COMPAT strlcat.o"])
-AC_CHECK_FUNCS(strlcpy, , [COMPAT="$COMPAT strlcpy.o"])
+PKG_CHECK_MODULES(STRL, [libstrl >= 0.2],
+	[AC_DEFINE(HAVE_LIBSTRL, 1, [define if you have libstrl])], [
+	AC_CHECK_FUNCS(strlcat, , [COMPAT="$COMPAT strlcat.o"])
+	AC_CHECK_FUNCS(strlcpy, , [COMPAT="$COMPAT strlcpy.o"])
+	AC_CHECK_FUNCS(strnlen, , [COMPAT="$COMPAT strnlen.o"])
+])
 AC_CHECK_FUNCS(strndup, , [COMPAT="$COMPAT strndup.o"])
 dnl AC_CHECK_FUNCS(strlen, , [COMPAT="$COMPAT strlen.o"])
-AC_CHECK_FUNCS(strnlen, , [COMPAT="$COMPAT strnlen.o"])
 AC_CHECK_FUNCS(strfry, , [COMPAT="$COMPAT strfry.o"])
 
 dnl  utimes do sprawdzania poczty

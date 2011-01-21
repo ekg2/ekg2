@@ -69,11 +69,15 @@
 #include <zlib.h>
 #endif
 
-#ifndef HAVE_STRLCAT
-#  include "compat/strlcat.h"
-#endif
-#ifndef HAVE_STRLCPY
-#  include "compat/strlcpy.h"
+#ifdef HAVE_LIBSTRL
+#	include <strl.h>
+#else
+#	ifndef HAVE_STRLCAT
+#		include "compat/strlcat.h"
+#	endif
+#	ifndef HAVE_STRLCPY
+#		include "compat/strlcpy.h"
+#	endif
 #endif
 
 #include "main.h"

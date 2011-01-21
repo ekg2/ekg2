@@ -3,7 +3,7 @@ EXTRA_DIST = vars-pl.txt vars-en.txt
 lib_LTLIBRARIES = readline.la
 readline_la_SOURCES = main.c ui-readline.c ui-readline.h completion.c
 readline_la_LDFLAGS = -module -avoid-version
-readline_la_LIBADD = $(READLINE_LIBS)
+readline_la_LIBADD = $(READLINE_LIBS) $(STRL_LIBS)
 readline_la_CPPFLAGS = $(READLINE_CPPFLAGS) $(AM_CPPFLAGS)
 readline_la_CFLAGS = $(C_FVISIBILITY) $(READLINE_CFLAGS) $(AM_CFLAGS)
 

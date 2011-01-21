@@ -7,7 +7,7 @@ lib_LTLIBRARIES = gtk.la
 gtk_la_SOURCES = main.c main.h maingui.c maingui.h xtext.c xtext.h gtkutil.c gtkutil.h palette.c palette.h menu.c menu.h chanview.c chanview.h bindings.c bindings.h userlistgui.c userlistgui.h
 
 gtk_la_LDFLAGS = -module -avoid-version
-gtk_la_LIBADD = $(GTK_LIBS)
+gtk_la_LIBADD = $(GTK_LIBS) $(STRL_LIBS)
 gtk_la_CFLAGS = $(C_FVISIBILITY) $(GTK_CFLAGS) $(AM_CFLAGS)
 
 BUILT_SOURCES = inline_pngs_gg.h inline_pngs_icq.h inline_pngs.h

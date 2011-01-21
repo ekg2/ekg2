@@ -23,8 +23,12 @@
 
 #include "ekg2-config.h"
 
-#ifndef HAVE_STRLCPY
-#  include "compat/strlcpy.h"
+#ifdef HAVE_LIBSTRL
+#	include <strl.h>
+#else
+#	ifndef HAVE_STRLCPY
+#		include "compat/strlcpy.h"
+#	endif
 #endif
 
 #include <ekg/stuff.h>

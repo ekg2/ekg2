@@ -3,6 +3,7 @@ EXTRA_DIST =
 lib_LTLIBRARIES = jogger.la
 jogger_la_SOURCES = jogger.c messages.c drafts.c
 jogger_la_LDFLAGS = -module -avoid-version
+jogger_la_LIBADD = $(STRL_LIBS)
 # TODO: add $(C_FVISIBILITY) to *_CFLAGS or comment why this plugin should not be using it.
 
 INCLUDES = -I$(top_srcdir)

@@ -78,6 +78,17 @@
 # include <sys/user.h>
 #endif
 
+#ifdef HAVE_LIBSTRL
+#	include <strl.h>
+#else
+#	ifndef HAVE_STRLCAT
+#		include "compat/strlcat.h"
+#	endif
+#	ifndef HAVE_STRLCPY
+#		include "compat/strlcpy.h"
+#	endif
+#endif
+
 #include "bindings.h"
 #include "commands.h"
 #include "debug.h"
@@ -89,12 +100,6 @@
 #include "msgqueue.h"
 #include "protocol.h"
 #include "sessions.h"
-#ifndef HAVE_STRLCAT
-#  include "compat/strlcat.h"
-#endif
-#ifndef HAVE_STRLCPY
-#  include "compat/strlcpy.h"
-#endif
 #include "stuff.h"
 #include "themes.h"
 #include "vars.h"

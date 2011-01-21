@@ -48,8 +48,12 @@
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
-#ifndef HAVE_STRLCPY
-#  include "compat/strlcpy.h"
+#ifdef HAVE_LIBSTRL
+#	include <strl.h>
+#else
+#	ifndef HAVE_STRLCPY
+#		include "compat/strlcpy.h"
+#	endif
 #endif
 
 #define DEFQUITMSG "EKG2 - It's better than sex!"
