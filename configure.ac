@@ -1,10 +1,11 @@
 dnl $Id$
 
-AC_INIT(ekg/ekg.c)
+AC_INIT([EKG2], [GIT])
+AC_CONFIG_SRCDIR([ekg/ekg.c])
 AC_PREREQ(2.50)
 AC_CONFIG_HEADERS(ekg2-config.h)
 
-AM_INIT_AUTOMAKE(ekg2, CVS)
+AM_INIT_AUTOMAKE([foreign])
 
 dnl we don't use neither fortran neither cxx ... set it to no for disable checking for it..
 F77="no"
