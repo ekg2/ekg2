@@ -1,0 +1,37 @@
+#!/bin/sh
+# Check that po/POTFILES.in is up to date - so we do not forget about any file
+# holding a translatable string.
+#
+# Copyright 2004 Piotr Kupisiewicz <deletek@ekg2.org>
+#           2007 Michał Górny <mgorny@gentoo.org>
+#           2005,2011 Marcin Owsiany <porridge@debian.org>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License Version 2 as
+# published by the Free Software Foundation.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+
+: ${XGETTEXT=xgettext}
+
+# Exclude contrib subdir - it holds a benchmark program which has a copy of
+# every theme string, causing duplicates.
+
+# TODO: we try to obey $srcdir but it will probably fail on anything other than
+# ".", as the paths that xgettext will put into the pot file will most likely
+# differ from the ones listed in po/POTFILES.in. However the logic necessary to
+# strip the right prefix in all possible corner case makes it too much to worry
+# about in advance.
+
+$XGETTEXT --keyword=_ --keyword=N_ --output=- `find $srcdir -name '*.[ch]'` | \
+	sed -ne '/^#:/{s/#://; s/:[0-9]*/\
+/g; s/ //g; p;}' | \
+	grep -v '^$' | sort | uniq | grep -v '^contrib' | \
+	diff -u po/POTFILES.in -
+

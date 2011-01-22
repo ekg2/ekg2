@@ -6,3 +6,5 @@ ACLOCAL_AMFLAGS = -I m4
 INCLUDES = -I$(top_srcdir) $(LTDLINCL)
 
 libtool: $(LIBTOOL_DEPS)
+TESTS = check_potfiles
+check_SCRIPTS = check_potfiles
