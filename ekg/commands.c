@@ -4310,8 +4310,6 @@ void command_init()
 
 	command_add(NULL, ("_segv"), NULL, cmd_test_segv, 0, NULL);
 
-	command_add(NULL, ("_streams"), "p ? ? ? ?", cmd_streams, 0, "-c --create -l --list");
-
 	command_add(NULL, ("_theme_dump"), "?", cmd_test_debug_theme, 0, NULL);
 
 	command_add(NULL, ("_timers"), NULL, cmd_debug_timers, 0, NULL);

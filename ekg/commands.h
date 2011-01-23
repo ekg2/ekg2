@@ -97,7 +97,6 @@ COMMAND(cmd_bind);		/* bindings.c */
 COMMAND(session_command);	/* sessions.c */
 COMMAND(cmd_on);		/* events.c */
 COMMAND(cmd_metacontact);	/* metacontacts.c */
-COMMAND(cmd_streams);		/* audio.c */
 COMMAND(cmd_script);		/* script.c */
 #endif
 /*

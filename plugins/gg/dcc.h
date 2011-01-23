@@ -11,8 +11,6 @@ COMMAND(gg_command_dcc);
 void gg_changed_dcc(const char *var);
 int gg_dcc_socket_open(int port);
 void gg_dcc_socket_close();
-void gg_dcc_audio_init();
-void gg_dcc_audio_close();
 dcc_t *gg_dcc_find(void *D);
 
 

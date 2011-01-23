@@ -81,7 +81,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "audio.h"
 #include "bindings.h"
 #include "commands.h"
 #include "debug.h"
@@ -950,7 +949,6 @@ int main(int argc, char **argv)
 	protocol_init();
 	events_init();
 	metacontact_init();
-	audio_initialize();
 /*	scripts_init();		*/
 
 	/* it has to be done after plugins are loaded, either we wouldn't know if we are
@@ -1164,7 +1162,6 @@ void ekg_exit()
 		}
 	}
 
-	audio_deinitialize();
 	aliases_destroy();
 	theme_free();
 	variables_destroy();

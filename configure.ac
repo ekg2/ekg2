@@ -164,9 +164,9 @@ AC_CONFIG_FILES([contrib/python/Makefile contrib/perl/Makefile])
 dnl crypt-plugins
 AC_CONFIG_FILES([plugins/gpg/Makefile plugins/rot13/Makefile plugins/sim/Makefile])
 dnl misc-plugins
-AC_CONFIG_FILES([plugins/mail/Makefile plugins/sms/Makefile plugins/pcm/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/autoresponder/Makefile plugins/jogger/Makefile])
+AC_CONFIG_FILES([plugins/mail/Makefile plugins/sms/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/autoresponder/Makefile plugins/jogger/Makefile])
 
-PLUGINS="logs mail rc sms pcm icq irc polchat rot13 httprc_xajax xmsg autoresponder jogger rivchat remote"
+PLUGINS="logs mail rc sms icq irc polchat rot13 httprc_xajax xmsg autoresponder jogger rivchat remote"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
 
 AC_CHECK_PROG([PKGCONFIG], [pkg-config], [pkg-config], [no])
@@ -461,17 +461,6 @@ dnl restore CFLAGS && LIBS
 		LIBS="$ac_save_LIBS"
 	fi
 fi
-
-AC_ARG_WITH(libgsm,		AC_HELP_STRING([--without-libgsm],		[Compile without libgsm support (gsm plugin)]))
-
-if test "x$with_libgsm" != "xno"; then
-	AC_CHECK_LIBGSM
-
-	if test "x$have_libgsm" = "xyes"; then
-		PLUGINS="$PLUGINS gsm"
-	fi
-fi
-
 
 AC_ARG_WITH(libxosd,		AC_HELP_STRING([--without-libxosd],		[Compile without libxosd support (xosd plugin)]))
 
@@ -795,21 +784,6 @@ d_plg=""
 		echo_have "logsoracle "
 	else
 		d_plg="${d_plg}logsoracle "
-	fi
-
-	if test "x$d_plg" != "x"; then
-		echo_disabled "(disabled: $d_plg)"
-	fi
-echo ""
-
-# - AUDIO PLUGINS
-echo_section " - Audio:\t"
-echo_have "pcm "
-d_plg=""
-	if test "x$have_libgsm" = "xyes"; then
-		echo_have "libgsm "
-	else
-		d_plg="${d_plg}libgsm "
 	fi
 
 	if test "x$d_plg" != "x"; then
