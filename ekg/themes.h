@@ -20,8 +20,6 @@
 #ifndef __EKG_THEMES_H
 #define __EKG_THEMES_H
 
-#include "strings.h"
-
 #include "gettext.h" 
 #define _(a) gettext(a)
 #define N_(a) gettext_noop(a)

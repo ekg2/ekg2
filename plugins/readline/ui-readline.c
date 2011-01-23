@@ -29,6 +29,8 @@
 #define __EXTENSIONS__
 #endif
 
+#include <glib.h>
+
 #include <sys/ioctl.h>
 
 #include <signal.h>
@@ -44,14 +46,6 @@
 #else
 #	include <history.h>
 #	include <readline.h>
-#endif
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
 #endif
 
 #include <ekg/bindings.h>
@@ -290,7 +284,7 @@ const char *current_prompt()
 	else
 		tmp = format_string(format_find(format), sid, itoa(window_current->id), window_current->target);
 
-	strlcpy(buf, tmp, sizeof(buf));
+	g_strlcpy(buf, tmp, sizeof(buf));
 	xfree(tmp);
 	xfree(act);
 

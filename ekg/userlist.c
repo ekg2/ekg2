@@ -27,6 +27,8 @@
 #define __EXTENSIONS__
 #endif
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #ifndef NO_POSIX_SYSTEM
@@ -42,17 +44,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCAT
-#		include "compat/strlcat.h"
-#	endif
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 
 #include "commands.h"
 #include "dynstuff.h"
@@ -813,7 +804,7 @@ const char *format_user(session_t *session, const char *uid) {
 	else
 		tmp = format_string(format_find("known_user"), u->nickname, uid);
 	
-	strlcpy(buf, tmp, sizeof(buf));
+	g_strlcpy(buf, tmp, sizeof(buf));
 	
 	xfree(tmp);
 
@@ -998,9 +989,9 @@ const char *ignore_format(int level) {
 	for (i = 0; ignore_labels[i].name; i++) {
 		if (level & ignore_labels[i].level) {
 			if (comma++)
-				strlcat(buf, ",", sizeof(buf));
+				g_strlcat(buf, ",", sizeof(buf));
 
-			strlcat(buf, ignore_labels[i].name, sizeof(buf));
+			g_strlcat(buf, ignore_labels[i].name, sizeof(buf));
 		}
 	}
 

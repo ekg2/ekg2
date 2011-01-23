@@ -37,6 +37,8 @@
 
 #define _BSD_SOURCE
 
+#include <glib.h>
+
 #include <sys/types.h>
 
 #ifndef NO_POSIX_SYSTEM
@@ -76,17 +78,6 @@
 # include <sys/param.h>
 # include <sys/sysctl.h>	/* KERN_PROC_PID */
 # include <sys/user.h>
-#endif
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCAT
-#		include "compat/strlcat.h"
-#	endif
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
 #endif
 
 #include "bindings.h"
@@ -3318,26 +3309,26 @@ static COMMAND(cmd_at)
 					sec -= minutes * 60;
 				}
 
-				strlcpy(tmp2, "every ", sizeof(tmp2));
+				g_strlcpy(tmp2, "every ", sizeof(tmp2));
 
 				if (days) {
-					strlcat(tmp2, itoa(days), sizeof(tmp2));
-					strlcat(tmp2, "d ", sizeof(tmp2));
+					g_strlcat(tmp2, itoa(days), sizeof(tmp2));
+					g_strlcat(tmp2, "d ", sizeof(tmp2));
 				}
 
 				if (hours) {
-					strlcat(tmp2, itoa(hours), sizeof(tmp2));
-					strlcat(tmp2, "h ", sizeof(tmp2));
+					g_strlcat(tmp2, itoa(hours), sizeof(tmp2));
+					g_strlcat(tmp2, "h ", sizeof(tmp2));
 				}
 
 				if (minutes) {
-					strlcat(tmp2, itoa(minutes), sizeof(tmp2));
-					strlcat(tmp2, "m ", sizeof(tmp2));
+					g_strlcat(tmp2, itoa(minutes), sizeof(tmp2));
+					g_strlcat(tmp2, "m ", sizeof(tmp2));
 				}
 
 				if (sec) {
-					strlcat(tmp2, itoa(sec), sizeof(tmp2));
-					strlcat(tmp2, "s", sizeof(tmp2));
+					g_strlcat(tmp2, itoa(sec), sizeof(tmp2));
+					g_strlcat(tmp2, "s", sizeof(tmp2));
 				}
 			}
 

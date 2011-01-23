@@ -7,8 +7,9 @@ ekg2_SOURCES = bindings.c bindings.h commands.c completion.c configfile.c dynstu
 
 ekg2includedir = $(includedir)/ekg2
 
-ekg2_LDADD = $(top_builddir)/compat/libcompat.a $(STATIC_PLUGINS_LIB) $(DLLIB) $(LTLIBICONV) \
-		$(IDN_LIBS) $(STRL_LIBS) $(RESOLV_LIBS)
+ekg2_CFLAGS = $(GLIB_CFLAGS) $(AM_CPPFLAGS)
+ekg2_LDADD = $(top_builddir)/compat/libcompat.a $(GLIB_LIBS) $(STATIC_PLUGINS_LIB) $(DLLIB) $(LTLIBICONV) \
+		$(IDN_LIBS) $(RESOLV_LIBS)
 ekg2_LDFLAGS = -export-dynamic
 ekg2_DEPENDENCIES = $(top_builddir)/compat/libcompat.a
 

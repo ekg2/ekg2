@@ -2,9 +2,9 @@ EXTRA_DIST = vars-pl.txt
 
 lib_LTLIBRARIES = rc.la
 rc_la_SOURCES = main.c inputs.c rc.h
-rc_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
+rc_la_CFLAGS = $(C_FVISIBILITY) $(GLIB_CFLAGS) $(AM_CFLAGS)
+rc_la_LIBADD = $(GLIB_LIBS)
 rc_la_LDFLAGS = -module -avoid-version
-rc_la_LIBADD = $(STRL_LIBS)
 
 INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)

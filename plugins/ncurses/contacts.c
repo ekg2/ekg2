@@ -23,13 +23,7 @@
 
 #include "ekg2-config.h"
 
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
+#include <glib.h>
 
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
@@ -439,7 +433,7 @@ void ncurses_contacts_changed(const char *name) {
 			: contacts_edge ^ (WF_TOP|WF_BOTTOM));
 
 	if (config_contacts_order) {
-		strlcpy(contacts_order, config_contacts_order, sizeof(contacts_order));
+		g_strlcpy(contacts_order, config_contacts_order, sizeof(contacts_order));
 		corderlen = xstrlen(contacts_order);
 	} else {
 		xstrcpy(contacts_order, CONTACTS_ORDER_DEFAULT);

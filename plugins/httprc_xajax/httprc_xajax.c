@@ -35,7 +35,6 @@
 #include <ekg/dynstuff.h>
 #include <ekg/log.h>
 #include <ekg/plugins.h>
-#include <ekg/strings.h>
 #include <ekg/stuff.h>
 #include <ekg/userlist.h>
 #include <ekg/vars.h>

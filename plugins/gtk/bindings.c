@@ -34,6 +34,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <glib.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -56,14 +58,6 @@
 #include <gtk/gtkentry.h>
 #include <gtk/gtkvscrollbar.h>
 #include <gdk/gdkkeysyms.h>
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 
 #include <ekg/stuff.h>
 #include <ekg/windows.h>
@@ -214,7 +208,7 @@ static GTK_BINDING_FUNCTION(key_action_tab_comp) {
 
 	cursor_pos = gtk_editable_get_position(GTK_EDITABLE(wid));
 
-	if (strlcpy(buf, text, sizeof(buf)) >= sizeof(buf))
+	if (g_strlcpy(buf, text, sizeof(buf)) >= sizeof(buf))
 		printf("key_action_tab_comp(), strlcpy() UUUUUUUCH!\n");
 
 	int junk = 0;

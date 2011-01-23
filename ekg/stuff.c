@@ -27,6 +27,9 @@
 
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
+
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -62,17 +65,6 @@
 
 #ifdef HAVE_ICONV
 #	include <iconv.h>
-#endif
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCAT
-#		include "compat/strlcat.h"
-#	endif
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
 #endif
 
 #include "debug.h"
@@ -1393,7 +1385,7 @@ const char *prepare_pathf(const char *filename, ...) {
 	size_t len;
 	int fpassed = (filename && *filename);
 
-	len = strlcpy(path, config_dir ? config_dir : "", sizeof(path));
+	len = g_strlcpy(path, config_dir ? config_dir : "", sizeof(path));
 
 	if (len + fpassed >= sizeof(path)) {
 		debug_error("prepare_pathf() LEVEL0 %d + %d >= %d\n", len, fpassed, sizeof(path));
@@ -1523,9 +1515,9 @@ const char *prepare_path_user(const char *path) {
 			xstrcat(out, "/");
 		} else
 			*out = 0;
-		if (homedir && strlcat(out, homedir, sizeof(out)-xstrlen(out)-1) >= sizeof(out)-xstrlen(out)-1)
+		if (homedir && g_strlcat(out, homedir, sizeof(out)-xstrlen(out)-1) >= sizeof(out)-xstrlen(out)-1)
 			return NULL; /* we don't add slash here, 'cause in already has it */
-		if (strlcat(out, in, sizeof(out)-xstrlen(out)) >= sizeof(out)-xstrlen(out))
+		if (g_strlcat(out, in, sizeof(out)-xstrlen(out)) >= sizeof(out)-xstrlen(out))
 			return NULL;
 	}
 

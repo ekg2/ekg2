@@ -15,20 +15,14 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <glib.h>
+
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <limits.h>
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 
 #include <sys/mman.h>
 #include <sys/types.h>
@@ -245,7 +239,7 @@ COMMAND(jogger_prepare) {
 		if (next)	*next	= '\n';
 
 		char tmp[24];		/* longest correct key has 10 chars + '(' + \0 */
-		strlcpy(tmp, s, 20);
+		g_strlcpy(tmp, s, 20);
 		xstrcpy(tmp+20, "..."); /* add ellipsis and \0 */
 		xstrtr(tmp, '\n', 0);
 
@@ -340,14 +334,14 @@ COMMAND(jogger_prepare) {
 	s += xstrspn(s, " \n\r");	/* get on to first real char (again) */
 	if (*s == '(') {
 		char tmp[14];
-		strlcpy(tmp, s, 10);
+		g_strlcpy(tmp, s, 10);
 		xstrcpy(tmp+10, "...");
 		xstrtr(tmp, '\n', 0);
 		WARN_PRINT("jogger_warning_mislocated_header");
 	}
 	if (!xstrstr(s, "<EXCERPT>") && (len - (s-entry) > 4096)) {
 		char tmp[21];
-		strlcpy(tmp, s+4086, 20);
+		g_strlcpy(tmp, s+4086, 20);
 		tmp[20] = 0;
 		xstrtr(tmp, '\n', ' '); /* sanitize */
 		WARN_PRINT("jogger_warning_noexcerpt");

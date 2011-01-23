@@ -17,6 +17,8 @@
 #endif
 #define __BSD_VISIBLE 1
 
+#include <glib.h>
+
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
@@ -47,14 +49,6 @@
 #define IN_ONLYDIR	 0x01000000
 #endif
 #endif /*HAVE_INOTIFY*/
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 
 #ifndef NAME_MAX
 #ifdef MAXNAMLEN /* BSD */
@@ -200,7 +194,7 @@ static const char *xmsg_dirfix(const char *path)
 {
 	char *buf = (char*) prepare_pathf(NULL); /* steal the buffer */
 	
-	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX) { /* buffer too small */
+	if (g_strlcpy(buf, path, PATH_MAX) >= PATH_MAX) { /* buffer too small */
 		xdebug2(DEBUG_ERROR, "Buffer too small for: in = %s, len = %d, PATH_MAX = %d", path, xstrlen(path), PATH_MAX);
 		return NULL;
 	}
@@ -238,7 +232,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	dir = (char*) xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET);
 	dirlen = xstrlen(dir);
 		/* first check if buffer is long enough to fit the whole path for dotfile */
-	if (strlcpy(dir+dirlen+1, fn, PATH_MAX-dirlen-2-xstrlen(dfsuffix)) >= PATH_MAX-dirlen-2-xstrlen(dfsuffix))
+	if (g_strlcpy(dir+dirlen+1, fn, PATH_MAX-dirlen-2-xstrlen(dfsuffix)) >= PATH_MAX-dirlen-2-xstrlen(dfsuffix))
 		xerr("Buffer too small for: fn = %s, len(fn) = %d, dirlen = %d, dfsuffixlen = %d", fn, xstrlen(fn), dirlen, xstrlen(dfsuffix));
 
 		/* then fill in middle part of path */

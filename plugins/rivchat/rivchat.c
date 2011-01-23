@@ -17,6 +17,9 @@
  */
 
 #define _BSD_SOURCE 1 /* gethostname() */
+
+#include <glib.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -47,14 +50,6 @@
 #include <ekg/vars.h>
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 
 #define DEFQUITMSG "EKG2 - It's better than sex!"
 #define SGQUITMSG(x) session_get(x, "QUIT_MSG")
@@ -1476,7 +1471,7 @@ EXPORT int rivchat_plugin_init(int prio) {
 
 /* magic stuff */
 	if ((pwd_entry = getpwuid(getuid()))) {
-		strlcpy(pwd_name, pwd_entry->pw_name, sizeof(pwd_name));
+		g_strlcpy(pwd_name, pwd_entry->pw_name, sizeof(pwd_name));
 		/* XXX, we need to free buffer allocated by getpwuid()? */
 
 		rivchat_plugin_vars[RIVCHAT_VAR_NICKNAME].value = pwd_name;
@@ -1485,7 +1480,7 @@ EXPORT int rivchat_plugin_init(int prio) {
 
 	if (gethostname(pwd_hostname, sizeof(pwd_hostname))) {
 		debug_error("[rivchat] gethostname() failed\n");
-		strlcpy(pwd_hostname, "localhost", sizeof(pwd_hostname));
+		g_strlcpy(pwd_hostname, "localhost", sizeof(pwd_hostname));
 	}
 
 	rivchat_plugin_vars[RIVCHAT_VAR_HOSTNAME].value = pwd_hostname;

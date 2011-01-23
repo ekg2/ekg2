@@ -3,8 +3,8 @@ EXTRA_DIST = vars-pl.txt
 lib_LTLIBRARIES = logs.la
 logs_la_SOURCES = main.c main.h
 logs_la_LDFLAGS = -module -avoid-version
-logs_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
-logs_la_LIBADD = $(ZLIB_LIBS) $(STRL_LIBS)
+logs_la_CFLAGS = $(C_FVISIBILITY) $(GLIB_CFLAGS) $(AM_CFLAGS)
+logs_la_LIBADD = $(GLIB_LIBS) $(ZLIB_LIBS)
 
 INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)

@@ -16,6 +16,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <glib.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -42,14 +44,6 @@
 #include <ekg/queries.h>
 
 #include <ekg/commands.h>
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 
 typedef enum {
 	RC_INPUT_PIPE = 1,		/* pipe:/home/user/.ekg/pipe */
@@ -869,7 +863,7 @@ static int rc_input_new_unix(const char *path)
 	int fd;
 
 	beeth.sun_family = AF_UNIX;
-	strlcpy(beeth.sun_path, path, sizeof(beeth.sun_path));
+	g_strlcpy(beeth.sun_path, path, sizeof(beeth.sun_path));
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		debug("[rc] socket() failed: %s\n", strerror(errno));

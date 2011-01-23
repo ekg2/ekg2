@@ -30,6 +30,8 @@
 #define __EXTENSIONS__
 #endif
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <sys/un.h>
@@ -41,14 +43,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <signal.h>
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 
 #include <ekg/commands.h>
 #include <ekg/dynstuff.h>
@@ -125,7 +119,7 @@ static int ioctld_socket(const char *path)
 		return -1;
 
 	sockun.sun_family = AF_UNIX;
-	strlcpy(sockun.sun_path, path, sizeof(sockun.sun_path));
+	g_strlcpy(sockun.sun_path, path, sizeof(sockun.sun_path));
 
 	for (i = 5; i; i--) {
 		/* XXX, make it non-blocking.. use watches */

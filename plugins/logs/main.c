@@ -33,6 +33,8 @@
 #define __EXTENSIONS__
 #endif
 
+#include <glib.h>
+
 #if defined(__MINGW32__) || defined(__FreeBSD__) || defined(__sun)
 #include <limits.h>
 #endif
@@ -67,17 +69,6 @@
 
 #ifdef HAVE_ZLIB
 #include <zlib.h>
-#endif
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCAT
-#		include "compat/strlcat.h"
-#	endif
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
 #endif
 
 #include "main.h"
@@ -670,12 +661,12 @@ static FILE* logs_open_file(char *path, int ff) {
 		return NULL;
 	}
 
-	strlcpy(fullname, path, PATH_MAX);
+	g_strlcpy(fullname, path, PATH_MAX);
 
-	if (ff == LOG_FORMAT_IRSSI)		strlcat(fullname, ".log", PATH_MAX);
-	else if (ff == LOG_FORMAT_SIMPLE)	strlcat(fullname, ".txt", PATH_MAX);
-	else if (ff == LOG_FORMAT_XML)		strlcat(fullname, ".xml", PATH_MAX);
-	else if (ff == LOG_FORMAT_RAW)		strlcat(fullname, ".raw", PATH_MAX);
+	if (ff == LOG_FORMAT_IRSSI)		g_strlcat(fullname, ".log", PATH_MAX);
+	else if (ff == LOG_FORMAT_SIMPLE)	g_strlcat(fullname, ".txt", PATH_MAX);
+	else if (ff == LOG_FORMAT_XML)		g_strlcat(fullname, ".xml", PATH_MAX);
+	else if (ff == LOG_FORMAT_RAW)		g_strlcat(fullname, ".raw", PATH_MAX);
 
 #ifdef HAVE_ZLIB /* z log.c i starego ekg1. Wypadaloby zaimplementowac... */
 	/* nawet je¶li chcemy gzipowane logi, a istnieje nieskompresowany log,
@@ -697,7 +688,7 @@ static FILE* logs_open_file(char *path, int ff) {
 	}
 	if (zlibmode) {
 		/* XXX, ustawic jakas flage... */
-		strlcat(fullname, ".gz", PATH_MAX);
+		g_strlcat(fullname, ".gz", PATH_MAX);
 	}
 #endif
 

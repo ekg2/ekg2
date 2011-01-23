@@ -30,6 +30,9 @@
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
 #endif
+
+#include <glib.h>
+
 #include <sys/types.h>
 
 #ifndef NO_POSIX_SYSTEM
@@ -92,13 +95,6 @@
 #include "msgqueue.h"
 #include "plugins.h"
 #include "protocol.h"
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 #include "sessions.h"
 #include "stuff.h"
 #include "themes.h"
@@ -690,7 +686,7 @@ int main(int argc, char **argv)
 #endif
 	srand(time(NULL));
 
-	strlcpy(argv0, argv[0], sizeof(argv0));
+	g_strlcpy(argv0, argv[0], sizeof(argv0));
 
 	home_dir = xstrdup(getenv("HOME"));
 

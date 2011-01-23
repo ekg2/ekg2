@@ -20,6 +20,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,14 +45,6 @@
 
 #include "dynstuff_inline.h"
 #include "objects.h"
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 
 #include "queries.h"
 
@@ -482,7 +476,7 @@ const char *session_password_get(session_t *s)
 	if (!tmp)
 		return "";
 	
-	strlcpy(buf, tmp, sizeof(buf));
+	g_strlcpy(buf, tmp, sizeof(buf));
 	xfree(tmp);
 	
 	return buf;
@@ -993,7 +987,7 @@ const char *session_format(session_t *s)
 	else
 		tmp = format_string(format_find("session_format_alias"), s->alias, uid);
 	
-	strlcpy(buf, tmp, sizeof(buf));
+	g_strlcpy(buf, tmp, sizeof(buf));
 	
 	xfree(tmp);
 
@@ -1039,7 +1033,7 @@ const char *session_name(session_t *s)
 	static char buf[150];
 	char *tmp = format_string(format_find("session_name"), s ? (s->alias) ? s->alias : s->uid : "?");
 
-	strlcpy(buf, tmp, sizeof(buf));
+	g_strlcpy(buf, tmp, sizeof(buf));
 
 	xfree(tmp);
 	return buf;

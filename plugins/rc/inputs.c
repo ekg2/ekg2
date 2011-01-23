@@ -17,6 +17,8 @@
 
 #include <ekg/win32.h>
 
+#include <glib.h>
+
 #ifndef NO_POSIX_SYSTEM
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -37,14 +39,6 @@
 
 #include <ekg/debug.h>
 #include <ekg/xmalloc.h>
-
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
 
 #include "rc.h"
 
@@ -156,7 +150,7 @@ int rc_input_new_unix(const char *path)
 	int fd;
 
 	beeth.sun_family = AF_UNIX;
-	strlcpy(beeth.sun_path, path, sizeof(beeth.sun_path));
+	g_strlcpy(beeth.sun_path, path, sizeof(beeth.sun_path));
 
 	if ((fd = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
 		debug("[rc] socket() failed: %s\n", strerror(errno));

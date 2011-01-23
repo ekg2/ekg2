@@ -33,14 +33,6 @@
 #include <stdlib.h>	/* ascii <==> wchar_t stuff */
 #include <errno.h>
 
-#ifdef HAVE_LIBSTRL
-#	include <strl.h>
-#else
-#	ifndef HAVE_STRLCPY
-#		include "compat/strlcpy.h"
-#	endif
-#endif
-
 #include <ekg/dynstuff.h>
 #include <ekg/xmalloc.h>
 
