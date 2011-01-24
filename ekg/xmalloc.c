@@ -63,10 +63,6 @@
 #  include "compat/strnlen.h"
 #endif
 
-#ifndef HAVE_STRFRY
-#  include "compat/strfry.h"
-#endif
-
 #define fix(s) ((s) ? (s) : "")
 
 void ekg_oom_handler()
@@ -316,11 +312,6 @@ char *xstrcpy(char *dest, const char *src)
 size_t xstrcspn(const char *s, const char *reject)
 {
 	return strcspn(fix(s), fix(reject));
-}
-
-char *xstrfry(char *string)
-{
-	return strfry(fix(string));
 }
 
 size_t xstrlen(const char *s)

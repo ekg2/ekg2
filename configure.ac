@@ -98,7 +98,6 @@ AC_SUBST(GLIB_LIBS)
 
 dnl AC_CHECK_FUNCS(strlen, , [COMPAT="$COMPAT strlen.o"])
 AC_CHECK_FUNCS(strnlen, , [COMPAT="$COMPAT strnlen.o"])
-AC_CHECK_FUNCS(strfry, , [COMPAT="$COMPAT strfry.o"])
 
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
