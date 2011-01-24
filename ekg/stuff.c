@@ -2148,9 +2148,6 @@ void debug(const char *format, ...)
 }
 #endif
 
-static char base64_charset[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
 /*
  * base64_encode()
  *
@@ -2162,50 +2159,10 @@ static char base64_charset[] =
  */
 char *base64_encode(const char *buf, size_t len)
 {
-	char *out, *res;
-	int i = 0, j = 0, k = 0;
+	if (!buf)
+		return NULL;
 
-	if (!buf) return NULL;
-/*	if (!len) return NULL; */
-	
-	res = out = xmalloc((len / 3 + 1) * 4 + 2);
-
-	while (j < len) {
-		switch (i % 4) {
-			case 0:
-				k = (buf[j] & 252) >> 2;
-				break;
-			case 1:
-				if (j+1 < len)
-					k = ((buf[j] & 3) << 4) | ((buf[j + 1] & 240) >> 4);
-				else
-					k = (buf[j] & 3) << 4;
-
-				j++;
-				break;
-			case 2:
-				if (j+1 < len)
-					k = ((buf[j] & 15) << 2) | ((buf[j + 1] & 192) >> 6);
-				else
-					k = (buf[j] & 15) << 2;
-
-				j++;
-				break;
-			case 3:
-				k = buf[j++] & 63;
-				break;
-		}
-		*out++ = base64_charset[k];
-		i++;
-	}
-
-	if (i % 4)
-		for (j = 0; j < 4 - (i % 4); j++, out++)
-			*out = '=';
-	
-	*out = 0;
-	
-	return res;
+	return g_base64_encode((guchar*)buf, len);
 }
 
 /*
@@ -2219,49 +2176,12 @@ char *base64_encode(const char *buf, size_t len)
  */
 char *base64_decode(const char *buf)
 {
-	char *res, *save, *foo, val;
-	const char *end;
-	int index = 0;
 	size_t buflen;
 
 	if (!buf || !(buflen = xstrlen(buf)))
 		return NULL;
 
-	save = res = xcalloc(1, (buflen / 4 + 1) * 3 + 2);
-
-	end = buf + buflen - 1;
-
-	while (*buf && buf < end) {
-		if (*buf == '\r' || *buf == '\n') {
-			buf++;
-			continue;
-		}
-		if (!(foo = xstrchr(base64_charset, *buf)))
-			foo = base64_charset;
-		val = (int)(foo - base64_charset);
-		buf++;
-		switch (index) {
-			case 0:
-				*res |= val << 2;
-				break;
-			case 1:
-				*res++ |= val >> 4;
-				*res |= val << 4;
-				break;
-			case 2:
-				*res++ |= val >> 2;
-				*res |= val << 6;
-				break;
-			case 3:
-				*res++ |= val;
-				break;
-		}
-		index++;
-		index %= 4;
-	}
-	*res = 0;
-	
-	return save;
+	return (char*) g_base64_decode(buf, &buflen);
 }
 
 /*
