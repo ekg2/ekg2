@@ -104,6 +104,10 @@ static BINDING_FUNCTION(binding_kill_word)
 		eaten++;
 	}
 
+	xfree(yanked);
+	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
+	xwcslcpy(yanked, line + line_index, eaten + 1);
+
 	memmove(line + line_index, line + line_index + eaten, sizeof(CHAR_T) * (xwcslen(line) - line_index - eaten + 1));
 }
 
@@ -334,8 +338,6 @@ static BINDING_FUNCTION(binding_word_rubout)
 	if (!line_index)
 		return;
 
-	xfree(yanked);
-
 	p = line + line_index;
 
 	if (xisspace(*(p - 1))) {
@@ -357,6 +359,7 @@ static BINDING_FUNCTION(binding_word_rubout)
 		}
 	}
 
+	xfree(yanked);
 	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
 	xwcslcpy(yanked, p, eaten + 1);
 
