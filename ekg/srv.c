@@ -415,7 +415,7 @@ static int basic_resolver_item (gim_host *srv)
 	memset(&hint, 0, sizeof(struct addrinfo));
 	hint.ai_socktype = SOCK_STREAM;
 
-	if (!getaddrinfo(srv->name, NULL, &hint, &ai)) {
+	if (!getaddrinfo((char *)srv->name, NULL, &hint, &ai)) {
 
 		for (aitmp = ai; aitmp; aitmp = aitmp->ai_next) {
 			int ip_cnt;
@@ -475,7 +475,7 @@ int basic_resolver(gim_host **hostlist, const char *hostname, int port)
 #  warning "resolver: You don't have getaddrinfo(), resolver may not work! (ipv6 for sure)"
 	struct hostent	*he4;
 #endif
-	gim_host *srv, *iter;
+	gim_host *srv;
 
 #ifdef HAVE_GETADDRINFO
 	memset(&hint, 0, sizeof(struct addrinfo));
@@ -486,10 +486,11 @@ int basic_resolver(gim_host **hostlist, const char *hostname, int port)
 	if (!getaddrinfo(hostname, NULL, &hint, &ai)) {
 #if 0
 		int do_loop = (AF_INET | AF_INET6);
+		gim_host *iter;
 #endif
 		srv->prio = DNS_SRV_MAX_PRIO;
 		srv->port = port;
-		strncpy(srv->name, hostname, DNS_NS_MAXDNAME);
+		strncpy((char *)srv->name, hostname, DNS_NS_MAXDNAME);
 
 		for (aitmp = ai; aitmp; aitmp = aitmp->ai_next) {
 			int ip_cnt;
