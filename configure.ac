@@ -96,7 +96,6 @@ PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.16)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-AC_CHECK_FUNCS(strndup, , [COMPAT="$COMPAT strndup.o"])
 dnl AC_CHECK_FUNCS(strlen, , [COMPAT="$COMPAT strlen.o"])
 AC_CHECK_FUNCS(strnlen, , [COMPAT="$COMPAT strnlen.o"])
 AC_CHECK_FUNCS(strfry, , [COMPAT="$COMPAT strfry.o"])

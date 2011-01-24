@@ -33,6 +33,8 @@
 #include "ekg2-config.h"
 #include "win32.h"
 
+#include <glib.h>
+
 #define __EXTENSIONS__
 #include <sys/types.h>
 #include <stddef.h>
@@ -55,10 +57,6 @@
 #include <winbase.h>
 
 #define strcasecmp(s1, s2) lstrcmpiA(s1, s2)
-#endif
-
-#ifndef HAVE_STRNDUP
-#  include "compat/strndup.h"
 #endif
 
 #ifndef HAVE_STRNLEN
@@ -202,7 +200,7 @@ char *xstrndup(const char *s, size_t n)
 	if (!s)
 		return NULL;
 
-	if (!(tmp = strndup((char *) s, n)))
+	if (!(tmp = g_strndup((char *) s, n)))
 		ekg_oom_handler();
 
 	return tmp;
