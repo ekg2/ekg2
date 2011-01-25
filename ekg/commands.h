@@ -61,8 +61,6 @@ typedef enum {
 typedef COMMAND(command_func_t);
 
 typedef struct command {
-	struct command	*next;
-
 /* public: */
 	const char	*name;
 	plugin_t	*plugin;
@@ -75,14 +73,13 @@ typedef struct command {
 } command_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern command_t *commands;
+extern GSList *commands;
 
 command_t *command_add(plugin_t *plugin, const char *name, char *params, command_func_t function, command_flags_t flags, char *possibilities);
 int command_remove(plugin_t *plugin, const char *name);
 command_t *command_find (const char *name);
 void command_init();
 void commands_remove(command_t *c);
-command_t *commands_removei(command_t *c);
 void commands_destroy();
 int command_exec(const char *target, session_t *session, const char *line, int quiet);
 int command_exec_params(const char *target, session_t *session, int quiet, const char *command, ...);

@@ -275,7 +275,7 @@ DYNSTUFF_LIST_DECLARE(aliases, alias_t, list_alias_free,
 int alias_add(const char *string, int quiet, int append)
 {
 	char *cmd, *aname, *tmp;
-	command_t *c;
+	GSList *cl;
 	alias_t *a;
 	char **params = NULL;
 	char *array;
@@ -295,7 +295,8 @@ int alias_add(const char *string, int quiet, int append)
 				list_add(&a->commands, xstrdup(cmd));
 				
 				/* przy wielu komendach trudno dope³niaæ, bo wg. której? */
-				for (c = commands; c; c = c->next) {
+				for (cl = commands; cl; cl = cl->next) {
+					command_t *c = cl->data;
 					if (!xstrcasecmp(c->name, a->name)) {
 						xfree(c->params);
 						c->params = array_make(("?"), (" "), 0, 1, 1);
@@ -316,7 +317,8 @@ int alias_add(const char *string, int quiet, int append)
 		*tmp = 0;
 
 	for (i=0; i<2; i++) {
-		for (c = commands; c && !params; c = c->next) {
+		for (cl = commands; cl && !params; cl = cl->next) {
+			command_t *c = cl->data;
 			const char *cname = c->name;
 			if (i) {
 				if ((tmp = xstrchr(cname, ':')))

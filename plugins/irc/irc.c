@@ -20,6 +20,8 @@
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
+#include <glib.h>
+
 #include <errno.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -1847,7 +1849,7 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 	char		*chan, *tmpname;
 	const char	*tf, *ts, *tp; /* first, second */
 	int		i = 0, parnum = 0, argnum = 0, hasq = 0;
-	command_t	*c;
+	GSList *cl;
 
 	if (params) tf = params[0];
 	else tf = NULL;
@@ -1867,7 +1869,8 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 	}
 
 	tmpname = irc_uid(name);
-	for (c = commands; c; c = c->next) {
+	for (cl = commands; cl; cl = cl->next) {
+		command_t	*c = cl->data;
 		if (&irc_plugin == c->plugin && !xstrcmp(tmpname, c->name))
 		{
 			while (c->params[parnum])

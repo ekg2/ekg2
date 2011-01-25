@@ -446,9 +446,10 @@ static WATCHER_LINE(rc_input_handler_line) {
 			remote_writefd(fd, "+UICONFIG", NULL);
 
 		} else if (!xstrcmp(cmd, "REQCOMMANDS")) {
-			command_t *c;
+			GSList *cl;
 
-			for (c = commands; c; c = c->next) {
+			for (cl = commands; cl; cl = cl->next) {
+				command_t *c = cl->data;
 				if (c->params) {
 					char *tmp = array_join(c->params, " ");
 					remote_writefd(fd, "COMMAND", c->name, tmp, NULL);

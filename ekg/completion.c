@@ -59,7 +59,7 @@ session_t *session_in_line;
 static void command_generator(const char *text, int len)
 {
 	const char *slash = (""), *dash = ("");
-	command_t *c;
+	GSList *cl;
 	session_t *session = session_current;
 	if (*text == ('/')) {
 		slash = ("/");
@@ -76,7 +76,8 @@ static void command_generator(const char *text, int len)
 	if (window_current->target)
 		slash = ("/");
 
-	for (c = commands; c; c = c->next) {
+	for (cl = commands; cl; cl = cl->next) {
+		command_t *c = cl->data;
 		char *without_sess_id = NULL;
 		int plen = 0;
 		if (session && session->uid)
@@ -948,7 +949,7 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 	} else {
 		char **params = NULL;
 		int i;
-		command_t *c;
+		GSList *cl;
 		char *cmd = (line[0] == '/') ? line + 1 : line;
 		int len;
 
@@ -959,7 +960,8 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 			session_t *session = session_current;
 			int plen = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 
-			for (c = commands; c; c = c->next) {
+			for (cl = commands; cl; cl = cl->next) {
+				command_t *c = cl->data;
 				if (xstrncasecmp(c->name, session->uid, plen))
 					continue;
 
@@ -971,7 +973,8 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 			}
 		}
 
-		for (c = commands; c; c = c->next) {
+		for (cl = commands; cl; cl = cl->next) {
+			command_t *c = cl->data;
 			if (!xstrncasecmp(c->name, cmd, len)) {
 				params = c->params;
 				actual_completed_command = c;

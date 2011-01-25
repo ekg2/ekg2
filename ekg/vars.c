@@ -547,6 +547,7 @@ static void variable_free(void *_data) {
 
 		xfree(data->map);
 	}
+	xfree(data);
 }
 
 void variables_removei(variable_t *v) {

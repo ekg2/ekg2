@@ -527,7 +527,7 @@ int plugin_unregister(plugin_t *p)
 	session_t *s;
 	query_t **kk;
 	GSList *vl;
-	command_t *c;
+	GSList *cl;
 	list_t l;
 
 	if (!p)
@@ -574,9 +574,12 @@ int plugin_unregister(plugin_t *p)
 			variables_removei(v);
 	}
 
-	for (c = commands; c; c = c->next) {
+	for (cl = commands; cl;) {
+		command_t *c = cl->data;
+
+		cl = cl->next;
 		if (c->plugin == p)
-			c = commands_removei(c);
+			commands_remove(c);
 	}
 
 	plugins_unlink(p);

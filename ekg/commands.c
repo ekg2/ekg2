@@ -106,16 +106,32 @@ char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;
 
-command_t *commands = NULL;
+GSList *commands = NULL;
 
-static LIST_ADD_COMPARE(command_add_compare, command_t *) { return xstrcasecmp(data1->name, data2->name); }
-static LIST_FREE_ITEM(list_command_free, command_t *) { array_free(data->params); array_free(data->possibilities); }
+static gint command_compare(gconstpointer a, gconstpointer b) {
+	const command_t *data1 = (const command_t *) a;
+	const command_t *data2 = (const command_t *) b;
+	return xstrcasecmp(data1->name, data2->name);
+}
 
-DYNSTUFF_LIST_DECLARE2_SORTED(commands, command_t, command_add_compare, list_command_free,
-	static __DYNSTUFF_LIST_ADD_SORTED,	/* commands_add() */
-	__DYNSTUFF_LIST_REMOVE_SAFE,		/* commands_remove() */
-	__DYNSTUFF_LIST_REMOVE_ITER,		/* commands_removei() */
-	__DYNSTUFF_LIST_DESTROY)		/* commands_destroy() */
+static void list_command_free(void *_data) {
+	command_t *data = (command_t *) _data;
+
+	array_free(data->params); array_free(data->possibilities);
+	xfree(data);
+}
+
+static void commands_add(command_t *c) {
+	commands = g_slist_insert_sorted(commands, c, command_compare);
+}
+
+void commands_remove(command_t *c) {
+	commands = g_slist_remove_full(commands, c, list_command_free);
+}
+
+void commands_destroy() {
+	commands = g_slist_destroy_full(commands, list_command_free);
+}
 
 /*
  * match_arg()
@@ -976,7 +992,7 @@ static COMMAND(cmd_for)
 
 static COMMAND(cmd_help)
 {
-	command_t *c;
+	GSList *cl;
 	if (params[0]) {
 		const char *p = (params[0][0] == '/' && xstrlen(params[0]) > 1) ? params[0] + 1 : params[0];
 		int plen;
@@ -999,7 +1015,8 @@ static COMMAND(cmd_help)
 		else
 			plen = 0;
 	
-		for (c = commands; c; c = c->next) {
+		for (cl = commands; cl; cl = cl->next) {
+			command_t *c = cl->data;
 			if (!xstrcasecmp(c->name, p) && (c->flags & COMMAND_ISALIAS)) {
 				printq("help_alias", p);
 				return -1;
@@ -1121,7 +1138,8 @@ static COMMAND(cmd_help)
 		}
 	}
 
-	for (c = commands; c; c = c->next) {
+	for (cl = commands; cl; cl = cl->next) {
+		command_t *c = cl->data;
 		if (xisalnum(*c->name) && !(c->flags & COMMAND_ISALIAS)) {
 			char *blah = NULL;
 			FILE *f;
@@ -2594,7 +2612,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 	int exact = 0;
 
-	command_t *c;
+	GSList *cl;
 
 	if (!xline)
 		return 0;
@@ -2605,7 +2623,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	
 		/* detection of commands entered by mistake */
 		if (config_query_commands) {
-			for (c = commands; c; c = c->next) {
+			for (cl = commands; cl; cl = cl->next) {
+				command_t *c = cl->data;
 				size_t l = xstrlen(c->name);
 
 				if (l < 3 || xstrncasecmp(xline, c->name, l))
@@ -2646,7 +2665,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 	/* Check if this is a special one-character command. These are special
 	 * because they do not require whitespace to separate them from their arguments. */
-	for (c = commands; c; c = c->next) {
+	for (cl = commands; cl; cl = cl->next) {
+		command_t *c = cl->data;
 		if (!isalpha_pl_PL(c->name[0]) && xstrlen(c->name) == 1 && line[0] == c->name[0]) {
 			short_cmd[0] = c->name[0];
 			cmd = short_cmd;
@@ -2673,7 +2693,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	if (session && session->uid) {
 		int prefix_len = (int)(xstrchr(session->uid, ':') - session->uid) + 1;
 		
-		for (c = commands; c; c = c->next) {
+		for (cl = commands; cl; cl = cl->next) {
+			command_t *c = cl->data;
 			/* Consider commands prefixed with current session's prefix. */
 			if (xstrncasecmp(c->name, session->uid, prefix_len))
 				continue;
@@ -2697,7 +2718,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 	}
 	/* If needed, fall back to non-session-specific commands. */
 	if (!exact) {
-		for (c = commands; c; c = c->next) {
+		for (cl = commands; cl; cl = cl->next) {
+			command_t *c = cl->data;
 			if (!xstrcasecmp(c->name, cmd)) {
 				last_command = c;
 				abbrs = 1;
@@ -4221,11 +4243,12 @@ command_t *command_add(plugin_t *plugin, const char *name, char *params, command
 
 int command_remove(plugin_t *plugin, const char *name)
 {
-	command_t *c;
+	GSList *cl;
 
-	for (c = commands; c; c = c->next) {
+	for (cl = commands; cl; cl = cl->next) {
+		command_t *c = cl->data;
 		if (!xstrcasecmp(name, c->name) && plugin == c->plugin) {
-			(void) commands_removei(c);
+			commands_remove(c);
 			return 0;
 		}
 	}
