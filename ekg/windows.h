@@ -44,6 +44,7 @@ extern "C" {
  *	1001 - __lastlog
  */
 typedef enum {
+	WINDOW_DEBUG_ID		= 0,
 	WINDOW_RESERVED_MIN_ID	= 1000,
 	WINDOW_CONTACTS_ID	= 1000,
 	WINDOW_LASTLOG_ID	= 1001,

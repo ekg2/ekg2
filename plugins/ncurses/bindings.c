@@ -484,6 +484,8 @@ static BINDING_FUNCTION(binding_complete)
 
 			debug("wcs-completion MB->WC (%d,%d) => (%d,%d) [%d;%d]\n", line_start_tmp, line_index_tmp, line_start, line_index, j, i);
 			line[i] = '\0';
+			if (window_current->id == WINDOW_DEBUG_ID)
+				ncurses_redraw_input(0);
 #else
 			complete_result =  ekg2_complete(&line_start, &line_index, (char *) line, LINE_MAXLEN);
 #endif
