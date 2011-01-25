@@ -21,6 +21,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include <sys/types.h>
 
 #include <stdio.h>
@@ -594,9 +596,9 @@ COMMAND(cmd_window) {
 	const int par0_matchlen	= par0_len > 2 ? par0_len : 2;
 
 	if (!xstrcmp(name, "clear") || (params[0] && !xstrncasecmp(params[0], "clear", par0_matchlen))) {
-		window_t *w = xmemdup(window_current, sizeof(window_t));
+		window_t *w = g_memdup(window_current, sizeof(window_t));
 		query_emit(NULL, "ui-window-clear", &w);
-		xfree(w);
+		g_free(w);
 		return 0;
 	}
 

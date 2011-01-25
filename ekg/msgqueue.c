@@ -20,6 +20,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -343,7 +345,7 @@ int msg_queue_read() {
 
 		m.message = string_free(msg, 0);
 
-		msgs_queue_add(xmemdup(&m, sizeof(m)));
+		msgs_queue_add(g_memdup(&m, sizeof(m)));
 
 		fclose(f);
 		unlink(fn);

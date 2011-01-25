@@ -24,6 +24,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #if USE_UNICODE
 
 #include "strings.h"
@@ -53,7 +55,7 @@ inline CHAR_T *xwcscpy(CHAR_T *dst, CHAR_T *src) {
 
 inline CHAR_T *xwcsdup(CHAR_T *str) {
 	if (!str) return NULL;
-	return xmemdup(str, (xwcslen(str)+1) * sizeof(CHAR_T));
+	return g_memdup(str, (xwcslen(str)+1) * sizeof(CHAR_T));
 }
 
 inline CHAR_T *xwcscat(CHAR_T *dst, const CHAR_T *src) {

@@ -527,7 +527,7 @@ static void changed_check_mail_folders(const char *var)
 			} else
 #endif
 
-			list_add(&mail_folders, xmemdup(&foo, sizeof(foo)));
+			list_add(&mail_folders, g_memdup(&foo, sizeof(foo)));
 		}
 
 		xfree(f);
@@ -556,7 +556,7 @@ static void changed_check_mail_folders(const char *var)
 		} else
 #endif
 
-		list_add(&mail_folders, xmemdup(&foo, sizeof(foo)));
+		list_add(&mail_folders, g_memdup(&foo, sizeof(foo)));
 	} else {
 		if (config_check_mail & 2) {
 			char *inbox = saprintf("%s/Maildir", home_dir);
@@ -572,7 +572,7 @@ static void changed_check_mail_folders(const char *var)
 			} else
 #endif
 
-			list_add(&mail_folders, xmemdup(&foo, sizeof(foo)));
+			list_add(&mail_folders, g_memdup(&foo, sizeof(foo)));
 		}
 	}
 #endif

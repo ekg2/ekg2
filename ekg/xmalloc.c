@@ -220,15 +220,6 @@ char *utf8ndup(const char *s, size_t n) {
 	return tmp;
 }
 
-void *xmemdup(void *ptr, size_t size)
-{
-	void *tmp = xmalloc(size);
-
-	memcpy(tmp, ptr, size);
-
-	return tmp;
-}
-
 /*
  * XXX póki co, obs³uguje tylko libce zgodne z C99
  */

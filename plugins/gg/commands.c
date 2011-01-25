@@ -1838,7 +1838,7 @@ static COMMAND(gg_command_check_conn) {
 	c.uid = c_timer->uid;
 	c.session = session;
 
-	list_add(&gg_currently_checked, xmemdup(&c, sizeof(c)));
+	list_add(&gg_currently_checked, g_memdup(&c, sizeof(c)));
 
 	/* if there is no reply after 15 secs user is not connected */
 	timer_add(&gg_plugin, NULL, 15, 0, gg_checked_timer_handler, c_timer);

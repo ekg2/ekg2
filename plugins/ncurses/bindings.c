@@ -24,6 +24,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -902,7 +904,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 	if (!xstrcasecmp(key + 4, (x))) { \
 		b->key = saprintf("Alt-%s", (x)); \
 		if (add) { \
-			ncurses_binding_map_meta[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
+			ncurses_binding_map_meta[y] = LIST_ADD2(&bindings, g_memdup(b, sizeof(struct binding))); \
 			if (z) \
 				ncurses_binding_map_meta[z] = ncurses_binding_map_meta[y]; \
 		} \
@@ -932,7 +934,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("Alt-%c"), ch);	/* XXX Alt-Ó ??? */
 
 		if (add) {
-			ncurses_binding_map_meta[ch] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
+			ncurses_binding_map_meta[ch] = LIST_ADD2(&bindings, g_memdup(b, sizeof(struct binding)));
 			if (xisalpha(ch))
 				ncurses_binding_map_meta[xtolower(ch)] = ncurses_binding_map_meta[ch];
 		}
@@ -949,7 +951,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 	if (!xstrcasecmp(key + 5, (x))) { \
 		b->key = saprintf("Ctrl-%s", (x)); \
 		if (add) { \
-			ncurses_binding_map[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
+			ncurses_binding_map[y] = LIST_ADD2(&bindings, g_memdup(b, sizeof(struct binding))); \
 			if (z) \
 				ncurses_binding_map[z] = ncurses_binding_map[y]; \
 		} \
@@ -969,7 +971,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 
 		if (add) {
 			if (xisalpha(ch))
-				ncurses_binding_map[ch - 64] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
+				ncurses_binding_map[ch - 64] = LIST_ADD2(&bindings, g_memdup(b, sizeof(struct binding)));
 			else
 				return -1;
 		}
@@ -986,7 +988,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 		b->key = saprintf(("F%d"), f);
 
 		if (add)
-			ncurses_binding_map[KEY_F(f)] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding)));
+			ncurses_binding_map[KEY_F(f)] = LIST_ADD2(&bindings, g_memdup(b, sizeof(struct binding)));
 
 		return 0;
 	}
@@ -995,7 +997,7 @@ static int binding_key(struct binding *b, const char *key, int add)
 	if (!xstrcasecmp(key, (x))) { \
 		b->key = xstrdup((x)); \
 		if (add) { \
-			ncurses_binding_map[y] = LIST_ADD2(&bindings, xmemdup(b, sizeof(struct binding))); \
+			ncurses_binding_map[y] = LIST_ADD2(&bindings, g_memdup(b, sizeof(struct binding))); \
 			if (z) \
 				ncurses_binding_map[z] = ncurses_binding_map[y]; \
 		} \

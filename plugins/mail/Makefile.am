@@ -4,6 +4,7 @@ lib_LTLIBRARIES = mail.la
 mail_la_SOURCES = main.c
 mail_la_LDFLAGS = -module -avoid-version
 mail_la_CFLAGS = $(C_FVISIBILITY) $(GLIB_CFLAGS) $(AM_CFLAGS)
+mail_la_LIBADD = $(GLIB_LIBS)
 
 INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)

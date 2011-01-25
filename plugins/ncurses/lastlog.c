@@ -20,6 +20,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #ifdef HAVE_REGEX_H
 #	include <sys/types.h>
 #	include <regex.h>
@@ -118,8 +120,8 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 
 			len = xstrlen(n->backlog[i]->str);
 
-			dup->str		= xmemdup(n->backlog[i]->str, sizeof(char) * (len + 1));
-			dup->attr		= xmemdup(n->backlog[i]->attr, sizeof(short) * (len + 1));
+			dup->str		= g_memdup(n->backlog[i]->str, sizeof(char) * (len + 1));
+			dup->attr		= g_memdup(n->backlog[i]->attr, sizeof(short) * (len + 1));
 			dup->ts			= n->backlog[i]->ts;
 			dup->prompt_len		= n->backlog[i]->prompt_len;
 			dup->prompt_empty	= n->backlog[i]->prompt_empty;

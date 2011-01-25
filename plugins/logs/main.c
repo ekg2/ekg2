@@ -279,7 +279,7 @@ static int logs_window_check(logs_log_t *ll, time_t t) {
 		chan = 2;
 	} else {
 		int datechanged = 0; /* bitmaska 0x01 (dzien) 0x02 (miesiac) 0x04 (rok) */
-		struct tm *tm	= xmemdup(localtime(&(ll->t)), sizeof(struct tm));
+		struct tm *tm	= g_memdup(localtime(&(ll->t)), sizeof(struct tm));
 		struct tm *tm2	= localtime(&t);
 
 		/* sprawdzic czy dane z (tm == tm2) */

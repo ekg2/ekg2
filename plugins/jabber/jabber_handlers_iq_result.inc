@@ -1056,7 +1056,7 @@ JABBER_HANDLER_RESULT(jabber_handle_si_result) {
 				streamhost.jid	= saprintf("%s/%s", s->uid+5, j->resource);
 				streamhost.ip	= xstrdup(jabber_dcc_ip);
 				streamhost.port	= jabber_dcc_port;
-				list_add(&(b->streamlist), xmemdup(&streamhost, sizeof(struct jabber_streamhost_item)));
+				list_add(&(b->streamlist), g_memdup(&streamhost, sizeof(struct jabber_streamhost_item)));
 			}
 
 			/* 	... other, proxy, etc, etc..

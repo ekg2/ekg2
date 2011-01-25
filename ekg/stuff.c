@@ -853,7 +853,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 
 	tabnick_add(name);
 
-	cf = xmemdup(&c, sizeof(c));
+	cf = g_memdup(&c, sizeof(c));
 	conferences_add(cf);
 	return cf;
 }
@@ -998,7 +998,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 			int comma = 0;
 
 			if (xstrcasecmp(from, s->uid) && !conference_participant(c, from)) {
-				list_add(&c->recipients, xmemdup(&from, sizeof(from)));
+				list_add(&c->recipients, g_memdup(&from, sizeof(from)));
 
 				comma++;
 				string_append(new, format_user(s, from));
@@ -1006,7 +1006,7 @@ struct conference *conference_find_by_uids(session_t *s, const char *from, const
 
 			for (i = 0; i < count; i++) {
 				if (xstrcasecmp(recipients[i], s->uid) && !conference_participant(c, recipients[i])) {
-					list_add(&c->recipients, xmemdup(&recipients[i], sizeof(recipients[0])));
+					list_add(&c->recipients, g_memdup(&recipients[i], sizeof(recipients[0])));
 			
 					if (comma++)
 						string_append(new, ", ");
