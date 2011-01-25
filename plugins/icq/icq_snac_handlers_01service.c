@@ -38,11 +38,11 @@
 
 SNAC_SUBHANDLER(icq_snac_service_error) {
 	struct {
-		uint16_t error;
+		guint16 error;
 		unsigned char *data;
 	} pkt;
 
-	uint16_t error;
+	guint16 error;
 
 	debug_function("icq_snac_service_error()\n");
 
@@ -72,7 +72,7 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 #if ICQ_DEBUG_UNUSED_INFORMATIONS
 	debug_white("icq_snac_service_families() Server knows families:");
 	while (len>=2) {
-		uint16_t family;
+		guint16 family;
 		ICQ_UNPACK(&buf, "W", &family);
 		debug_white(" 0x%x", family);
 	}
@@ -86,32 +86,32 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 	 */
 
 	pkt = string_init(NULL);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x01, (uint32_t) 0x04);	// Generic service controls
-	icq_pack_append(pkt, "WW", (uint32_t) 0x02, (uint32_t) 0x01);	// Location services
-	icq_pack_append(pkt, "WW", (uint32_t) 0x03, (uint32_t) 0x01);	// Buddy List management service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x04, (uint32_t) 0x01);	// ICBM (messages) service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x09, (uint32_t) 0x01);	// Privacy management service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0a, (uint32_t) 0x01);	// User lookup service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0b, (uint32_t) 0x01);	// Usage stats service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x13, (uint32_t) 0x05);	// Server Side Information (SSI) service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x02);	// ICQ specific extensions service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x17, (uint32_t) 0x01);	// Authorization/registration service
+	icq_pack_append(pkt, "WW", (guint32) 0x01, (guint32) 0x04);	// Generic service controls
+	icq_pack_append(pkt, "WW", (guint32) 0x02, (guint32) 0x01);	// Location services
+	icq_pack_append(pkt, "WW", (guint32) 0x03, (guint32) 0x01);	// Buddy List management service
+	icq_pack_append(pkt, "WW", (guint32) 0x04, (guint32) 0x01);	// ICBM (messages) service
+	icq_pack_append(pkt, "WW", (guint32) 0x09, (guint32) 0x01);	// Privacy management service
+	icq_pack_append(pkt, "WW", (guint32) 0x0a, (guint32) 0x01);	// User lookup service
+	icq_pack_append(pkt, "WW", (guint32) 0x0b, (guint32) 0x01);	// Usage stats service
+	icq_pack_append(pkt, "WW", (guint32) 0x13, (guint32) 0x05);	// Server Side Information (SSI) service
+	icq_pack_append(pkt, "WW", (guint32) 0x15, (guint32) 0x02);	// ICQ specific extensions service
+	icq_pack_append(pkt, "WW", (guint32) 0x17, (guint32) 0x01);	// Authorization/registration service
 #if 0
-	icq_pack_append(pkt, "WW", (uint32_t) 0x05, (uint32_t) 0x01);	//  Advertisements service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x06, (uint32_t) 0x01);	// Invitation service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x08, (uint32_t) 0x01);	// Popup notices service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x07, (uint32_t) 0x01);	//  Administrative service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0c, (uint32_t) 0x01);	// Translation service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0d, (uint32_t) 0x01);	//  Chat navigation service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0e, (uint32_t) 0x01);	//  Chat service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x0f, (uint32_t) 0x01);	//  Directory user search
-	icq_pack_append(pkt, "WW", (uint32_t) 0x10, (uint32_t) 0x01);	//  Server-stored buddy icons (SSBI) service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x15, (uint32_t) 0x01);	//  ICQ specific extensions service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x17, (uint32_t) 0x01);	//  Authorization/registration service
-	icq_pack_append(pkt, "WW", (uint32_t) 0x22, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x24, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x25, (uint32_t) 0x01);
-	icq_pack_append(pkt, "WW", (uint32_t) 0x85, (uint32_t) 0x01);	//  Broadcast service - IServerd extension
+	icq_pack_append(pkt, "WW", (guint32) 0x05, (guint32) 0x01);	//  Advertisements service
+	icq_pack_append(pkt, "WW", (guint32) 0x06, (guint32) 0x01);	// Invitation service
+	icq_pack_append(pkt, "WW", (guint32) 0x08, (guint32) 0x01);	// Popup notices service
+	icq_pack_append(pkt, "WW", (guint32) 0x07, (guint32) 0x01);	//  Administrative service
+	icq_pack_append(pkt, "WW", (guint32) 0x0c, (guint32) 0x01);	// Translation service
+	icq_pack_append(pkt, "WW", (guint32) 0x0d, (guint32) 0x01);	//  Chat navigation service
+	icq_pack_append(pkt, "WW", (guint32) 0x0e, (guint32) 0x01);	//  Chat service
+	icq_pack_append(pkt, "WW", (guint32) 0x0f, (guint32) 0x01);	//  Directory user search
+	icq_pack_append(pkt, "WW", (guint32) 0x10, (guint32) 0x01);	//  Server-stored buddy icons (SSBI) service
+	icq_pack_append(pkt, "WW", (guint32) 0x15, (guint32) 0x01);	//  ICQ specific extensions service
+	icq_pack_append(pkt, "WW", (guint32) 0x17, (guint32) 0x01);	//  Authorization/registration service
+	icq_pack_append(pkt, "WW", (guint32) 0x22, (guint32) 0x01);
+	icq_pack_append(pkt, "WW", (guint32) 0x24, (guint32) 0x01);
+	icq_pack_append(pkt, "WW", (guint32) 0x25, (guint32) 0x01);
+	icq_pack_append(pkt, "WW", (guint32) 0x85, (guint32) 0x01);	//  Broadcast service - IServerd extension
 #endif
 
 	icq_makesnac(s, pkt, 0x01, 0x17, 0, 0);
@@ -138,11 +138,11 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 	icq_private_t *j = s->priv;
 
 	struct {
-		uint16_t no;	// Number of rate classes
+		guint16 no;	// Number of rate classes
 	} pkt;
 	struct {
-		uint16_t cl;	// Class
-		uint16_t no;	// Number of rate groups
+		guint16 cl;	// Class
+		guint16 no;	// Number of rate groups
 	} pkt2;
 	int i;
 
@@ -154,7 +154,7 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 	/* init rates management */
 	icq_rates_init(s, pkt.no);
 	for (i=0; i<pkt.no; i++) {
-		uint16_t id;
+		guint16 id;
 		icq_rate_t *r;
 		(void) ICQ_UNPACK(&buf, "W", &id);	// Rate class ID
 		if (id && (id <= j->n_rates)) {
@@ -181,7 +181,7 @@ SNAC_SUBHANDLER(icq_snac_service_rateinfo) {
 		if (len < pkt2.no*4) goto wrong;
 
 		pkt2.cl--;
-		j->rates[pkt2.cl]->groups = xcalloc(pkt2.no, sizeof(uint32_t));
+		j->rates[pkt2.cl]->groups = xcalloc(pkt2.no, sizeof(guint32));
 		j->rates[pkt2.cl]->n_groups = pkt2.no;
 		for (i=0; i<pkt2.no; i++) {
 			ICQ_UNPACK(&buf, "I", &j->rates[pkt2.cl]->groups[i]);
@@ -193,7 +193,7 @@ wrong:
 	/* ack rate levels */
 	icq_send_snac(s, 0x01, 0x08, 0, 0,
 			"WWWWW",
-			(uint32_t) 0x01, (uint32_t) 0x02, (uint32_t) 0x03, (uint32_t) 0x04, (uint32_t) 0x05);
+			(guint32) 0x01, (guint32) 0x02, (guint32) 0x03, (guint32) 0x04, (guint32) 0x05);
 
 	/* CLI_REQINFO - This command requests from the server certain information about the client that is stored on the server. */
 	icq_send_snac(s, 0x01, 0x0e, 0, 0, NULL);
@@ -255,8 +255,8 @@ wrong:
 		// XXX ?wo? number of items should be "W" ?
 		icq_send_snac(s, 0x13, 0x05, 0, 0,
 				"II",
-				(uint32_t) 0x0000,		// modification date/time of client local SSI copy
-				(uint32_t) 0x0000);		// number of items in client local SSI copy
+				(guint32) 0x0000,		// modification date/time of client local SSI copy
+				(guint32) 0x0000);		// number of items in client local SSI copy
 #endif
 	}
 
@@ -299,7 +299,7 @@ SNAC_SUBHANDLER(icq_snac_service_ratechange) {
 	 * 0x0004	Rate limit clear (current level become > clear level)
 	 */
 	struct {
-		uint16_t status;
+		guint16 status;
 	} pkt;
 	icq_private_t *j = s->priv;
 
@@ -309,8 +309,8 @@ SNAC_SUBHANDLER(icq_snac_service_ratechange) {
 	/* TODO ?wo? -- print warning here ? */
 
 	while (len >= (2 + 8*4 +1)) {
-		uint16_t id;
-		uint32_t x0, x1, x2, x3, x4, x5, x6, x7;
+		guint16 id;
+		guint32 x0, x1, x2, x3, x4, x5, x6, x7;
 		(void) ICQ_UNPACK(&buf, "W", &id);	// Rate class ID
 		(void) ICQ_UNPACK(&buf, "IIII IIII x", &x0, &x1, &x2, &x3, &x4, &x5, &x6, &x7);
 		if (id && (id <= j->n_rates)) {
@@ -354,18 +354,18 @@ SNAC_SUBHANDLER(icq_snac_service_pause) {
 	icq_send_snac(s, 0x01, 0x0c, NULL, NULL,
 			"WWWW WWWW WW",
 			/* This is the list of families that we want to have on the next server. Families array is optional. */
-			(uint32_t) 0x01,	/* Generic service controls */
-			(uint32_t) 0x02,	/* Location services */
-			(uint32_t) 0x03,	/* Buddy List management service */
-			(uint32_t) 0x04,	/* ICBM (messages) service */
+			(guint32) 0x01,	/* Generic service controls */
+			(guint32) 0x02,	/* Location services */
+			(guint32) 0x03,	/* Buddy List management service */
+			(guint32) 0x04,	/* ICBM (messages) service */
 
-			(uint32_t) 0x09,	/* Privacy management service */
-			(uint32_t) 0x0a,	/* User lookup service (not used any more) (XXX ??? - This service used by old AIM clients to search users by email) */
-			(uint32_t) 0x0b,	/* Usage stats service */
-			(uint32_t) 0x13,	/* Server Side Information (SSI) service */
+			(guint32) 0x09,	/* Privacy management service */
+			(guint32) 0x0a,	/* User lookup service (not used any more) (XXX ??? - This service used by old AIM clients to search users by email) */
+			(guint32) 0x0b,	/* Usage stats service */
+			(guint32) 0x13,	/* Server Side Information (SSI) service */
 
-			(uint32_t) 0x15,	/* ICQ specific extensions service */
-			(uint32_t) 0x17		/* Authorization/registration service */
+			(guint32) 0x15,	/* ICQ specific extensions service */
+			(guint32) 0x17		/* Authorization/registration service */
 			);
 
 	j->migrate = 1;
@@ -393,7 +393,7 @@ SNAC_SUBHANDLER(icq_snac_service_reqinfo) {
 	unsigned char *databuf;
 
 	char *uin;
-	uint16_t warning, count;
+	guint16 warning, count;
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
 
@@ -491,7 +491,7 @@ SNAC_SUBHANDLER(icq_snac_service_evil) {
 	 * Anonymous evil notification doesn't contain user info.
 	 */
 	char *uin;
-	uint16_t warning, count;
+	guint16 warning, count;
 	struct icq_tlv_list *tlvs;
 	unsigned char *databuf;
 
@@ -519,7 +519,7 @@ SNAC_SUBHANDLER(icq_snac_service_migrate) {
 	 */
 	int i;
 	icq_private_t *j =s->priv;
-	uint16_t fam_count, fam;
+	guint16 fam_count, fam;
 	unsigned char *databuf;
 
 	if (!icq_unpack(buf, &databuf, &len, "W", &fam_count))
@@ -545,7 +545,7 @@ SNAC_SUBHANDLER(icq_snac_service_motd) {
 	 */
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t;
-	uint16_t type;
+	guint16 type;
 
 	ICQ_UNPACK(&buf, "W", &type);
 	/* MOTD types:
@@ -569,7 +569,7 @@ SNAC_SUBHANDLER(icq_snac_service_urls) {
 	/* SNAC(01,0x15) Well known urls */
 	debug_function("icq_snac_service_urls()\n");
 #if ICQ_DEBUG_UNUSED_INFORMATIONS
-	uint16_t x, ulen;
+	guint16 x, ulen;
 	char *url;
 	while (len>0) {
 		ICQ_UNPACK(&buf, "WW", &x, &ulen);
@@ -604,7 +604,7 @@ SNAC_SUBHANDLER(icq_snac_service_families2) {
 	// Handle incoming packet
 	#if ICQ_DEBUG_UNUSED_INFORMATIONS
 	while (len>=2) {
-		uint16_t fam, ver;
+		guint16 fam, ver;
 		ICQ_UNPACK(&buf, "WW", &fam, &ver);
 		debug_white("icq_snac_service_families2() fam=0x%x ver=0x%x // %s\n",  fam, ver, icq_lookuptable(snac_families, fam));
 	}

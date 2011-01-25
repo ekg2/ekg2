@@ -22,6 +22,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #ifdef HAVE_LIBGIF
 # define GIF_OCR
 #endif
@@ -570,7 +572,7 @@ static COMMAND(gg_command_msg) {
 	unsigned char *format = NULL;
 	char *cpmsg = NULL;
 	const char *seq = NULL;
-	uint32_t *ekg_format = NULL;
+	guint32 *ekg_format = NULL;
 	userlist_t *u;
 	gg_private_t *g = session_private_get(session);
 

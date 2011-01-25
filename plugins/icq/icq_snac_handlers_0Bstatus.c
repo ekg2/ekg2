@@ -42,7 +42,7 @@ SNAC_SUBHANDLER(icq_snac_status_error) {
 	 * This is an error notification snac.
 	 */
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
@@ -60,7 +60,7 @@ SNAC_SUBHANDLER(icq_snac_status_minreport) {
 	 * interval value. Client should send stats report every 1200 hours (default value).
 	 */
 	struct {
-		uint16_t interval;	// min interval between stats reports (hours)
+		guint16 interval;	// min interval between stats reports (hours)
 	} pkt;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.interval))

@@ -44,9 +44,9 @@
 
 SNAC_SUBHANDLER(icq_snac_buddy_error) {
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
-	uint16_t error;
+	guint16 error;
 	// XXX ?wo? TLV(8) - error subcode
 
 	if (ICQ_UNPACK(&buf, "W", &pkt.error))
@@ -64,7 +64,7 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 	if ((tlvs = icq_unpack_tlvs(&buf, &len, 0))) {
 		icq_tlv_t *t_max_uins = icq_tlv_get(tlvs, 1);		// Max number of contact list entries
 		icq_tlv_t *t_max_watchers = icq_tlv_get(tlvs, 2);	// Max number of watcher list entries
-		uint16_t max_uins = 0, max_watchers = 0;
+		guint16 max_uins = 0, max_watchers = 0;
 
 		icq_unpack_tlv_word(t_max_uins, max_uins);
 		icq_unpack_tlv_word(t_max_watchers, max_watchers);
@@ -79,37 +79,37 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 
 
 void icq_pack_append_nullterm_msg(string_t pkt, const char *msg) {
-	    icq_pack_append(pkt, "w", (uint32_t) xstrlen(msg)+1);	// null-terminated msg length
+	    icq_pack_append(pkt, "w", (guint32) xstrlen(msg)+1);	// null-terminated msg length
 	    if (xstrlen(msg))
 		    string_append(pkt, msg);
-	    icq_pack_append(pkt, "c", (uint32_t) 0);			// msg terminate
+	    icq_pack_append(pkt, "c", (guint32) 0);			// msg terminate
 }
 
 void icq_pack_append_rendezvous(string_t pkt, int version, int cookie, int mtype, int mflags, int accept, int priority) {
 	icq_pack_append(pkt, "wwiiiiwicw wwiiiccww",
-				(uint32_t) 27,		// length of this data segment, always 27
-				(uint32_t) version,	// protocol version
-				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // PSIG_MESSAGE
-				(uint32_t) 0,		// unknown
-				(uint32_t) 3,		// client capabilities flag
-				(uint32_t) 0, 		// unknown byte
+				(guint32) 27,		// length of this data segment, always 27
+				(guint32) version,	// protocol version
+				(guint32) 0, (guint32) 0, (guint32) 0, (guint32) 0, // PSIG_MESSAGE
+				(guint32) 0,		// unknown
+				(guint32) 3,		// client capabilities flag
+				(guint32) 0, 		// unknown byte
 				cookie,			// cookie
 
-				(uint32_t) 14,		// length of this data segment, always 14
+				(guint32) 14,		// length of this data segment, always 14
 				cookie,			// cookie
-				(uint32_t) 0, (uint32_t) 0, (uint32_t) 0, // unknown, usually all zeros
+				(guint32) 0, (guint32) 0, (guint32) 0, // unknown, usually all zeros
 				mtype,			// msg type
 				mflags,			// msg flags
-				(uint32_t) accept,	// status code - accepted
-				(uint32_t) priority	// priority ??? XXX
+				(guint32) accept,	// status code - accepted
+				(guint32) priority	// priority ??? XXX
 				);
 }
 
 static void icq_get_description(session_t *s, const char *uin, int status) {
 	icq_private_t *j = s->priv;
 	string_t pkt, tlv5, rdv;
-	uint32_t cookie1=rand(), cookie2=rand();
-	uint32_t mtype, cookie = (j->cookie_seq-- && 0x7fff);
+	guint32 cookie1=rand(), cookie2=rand();
+	guint32 mtype, cookie = (j->cookie_seq-- && 0x7fff);
 
 	debug_function("icq_get_description() for: %s\n", uin);
 
@@ -124,11 +124,11 @@ static void icq_get_description(session_t *s, const char *uin, int status) {
 
 	pkt = string_init(NULL);
 	icq_pack_append(pkt, "II", cookie1, cookie2);		// cookie
-	icq_pack_append(pkt, "W", (uint32_t) 2);		// message type
+	icq_pack_append(pkt, "W", (guint32) 2);		// message type
 	icq_pack_append(pkt, "s", uin);
 
 	tlv5 = string_init(NULL);
-	icq_pack_append(tlv5, "W", (uint32_t) 0);
+	icq_pack_append(tlv5, "W", (guint32) 0);
 	icq_pack_append(tlv5, "II", cookie1, cookie2);		// cookie
 	icq_pack_append_cap(tlv5, CAP_SRV_RELAY);		// AIM_CAPS_ICQSERVERRELAY - Client supports channel 2 extended, TLV(0x2711) based messages.
 	icq_pack_append(tlv5, "tW", icq_pack_tlv_word(0xA, 1));	// TLV 0x0A: acktype (1 = normal message)
@@ -196,7 +196,7 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 
 			case 0x04: /* idle timer */
 			{
-				uint16_t idle;
+				guint16 idle;
 				if ( (idle = t->nr) )
 					user_private_item_set_int(u, "idle", time(NULL) - 60*idle);
 				break;
@@ -214,8 +214,8 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 				 * of two parts. First is a various flags (birthday flag, webaware flag,
 				 * etc). Second is a user status (online, away, busy, etc) flags.
 				 */
-				uint16_t status	= t->nr & 0xffff;
-				uint16_t flags	= t->nr >> 16;
+				guint16 status	= t->nr & 0xffff;
+				guint16 flags	= t->nr >> 16;
 
 				user_private_item_set_int(u, "status_f", flags);
 				debug_white(" %s status flags=0x%04x status=0x%04x\n", u->uid, flags, status);
@@ -225,7 +225,7 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 
 			case 0x0a: /* IP address */
 			{
-				uint32_t ip;
+				guint32 ip;
 				if (icq_unpack_nc(t->buf, t->len, "i", &ip)) {
 					if (ip)
 						user_private_item_set_int(u, "ip", ip);
@@ -236,18 +236,18 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 			case 0x0c: /* DC info */
 			{
 				struct {
-					uint32_t ip;
-					uint32_t port;
-					uint8_t tcp_flag;
-					uint16_t version;
-					uint32_t conn_cookie;
-					uint32_t web_port;
-					uint32_t client_features;
+					guint32 ip;
+					guint32 port;
+					guint8 tcp_flag;
+					guint16 version;
+					guint32 conn_cookie;
+					guint32 web_port;
+					guint32 client_features;
 					/* faked time signatures, used to identify clients */
-					uint32_t ts1;
-					uint32_t ts2;
-					uint32_t ts3;
-					uint16_t junk;
+					guint32 ts1;
+					guint32 ts2;
+					guint32 ts3;
+					guint16 junk;
 				} tlv_c;
 
 				if (!icq_unpack_nc(t->buf, t->len, "IICWIII",
@@ -328,9 +328,9 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 
 				while (t_len > 0) {
 
-					uint16_t item_type;
-					uint8_t item_flags;
-					uint8_t item_len;
+					guint16 item_type;
+					guint8 item_flags;
+					guint8 item_len;
 
 					if (!icq_unpack(t_data, &t_data, &t_len, "WCC", &item_type, &item_flags, &item_len)) {
 						debug_error(" %s TLV(1D) corrupted?\n", u->uid);
@@ -345,7 +345,7 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 						/* iChat online message */
 						if (item_len>4) {
 							char *tmp;
-							uint16_t enc;
+							guint16 enc;
 							icq_unpack_nc(t_data, item_len, "Uw", &tmp, &enc);
 							descr = !enc ? ekg_utf8_to_locale_dup(tmp) : xstrdup(tmp);
 						}
@@ -399,7 +399,7 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 		if (u->status == EKG_STATUS_NA) {
 			icq_send_snac(s, 0x02, 0x05, NULL, NULL,	/* Request user info */
 					"Ws",
-					(uint32_t) 1,			/* request type (1 - general info, 2 - short user info, 3 - away message, 4 - client capabilities) */
+					(guint32) 1,			/* request type (1 - general info, 2 - short user info, 3 - away message, 4 - client capabilities) */
 					u->uid+4);
 		} else {
 			icq_get_description(s, u->uid+4, u->status);
@@ -432,8 +432,8 @@ SNAC_SUBHANDLER(icq_snac_buddy_online) {
 
 	struct {
 		char *uid;
-		uint16_t warning;
-		uint16_t count;
+		guint16 warning;
+		guint16 count;
 	} pkt;
 
 	struct icq_tlv_list *tlvs;
@@ -486,8 +486,8 @@ SNAC_SUBHANDLER(icq_snac_buddy_offline) {
 	 */
 	struct {
 		char *uid;
-		uint16_t warning;
-		uint16_t count;
+		guint16 warning;
+		guint16 count;
 	} pkt;
 
 	char *uid;

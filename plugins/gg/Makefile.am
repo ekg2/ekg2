@@ -6,7 +6,7 @@ gg_la_SOURCES = commands.c dcc.c gg.c images.c misc.c pubdir.c pubdir50.c \
 gg_la_LDFLAGS = -module -avoid-version
 gg_la_LIBADD = $(LIBGADU_LIBS) $(LIBJPEG_LIBS) $(GG_TOKENGIF_LIBS)
 gg_la_CPPFLAGS = $(LIBGADU_CPPFLAGS) $(AM_CPPFLAGS)
-gg_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
+gg_la_CFLAGS = $(C_FVISIBILITY) $(GLIB_CFLAGS) $(AM_CFLAGS)
 
 INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)

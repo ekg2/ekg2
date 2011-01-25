@@ -60,7 +60,7 @@ static void icq_snac_ref_add(session_t *s, icq_snac_reference_list_t *elem) {
 	icq_snac_references_list_add(&(j->snac_ref_list), elem);
 }
 
-static icq_snac_reference_list_t *icq_snac_ref_find(session_t *s, uint32_t ref) {
+static icq_snac_reference_list_t *icq_snac_ref_find(session_t *s, guint32 ref) {
 	icq_private_t *j;
 	icq_snac_reference_list_t *l;
 
@@ -99,11 +99,11 @@ TIMER_SESSION(icq_snac_ref_list_cleanup) {
 }
 
 
-static inline char *_icq_makesnac(uint8_t family, uint16_t cmd, uint16_t flags, uint32_t ref) {
+static inline char *_icq_makesnac(guint8 family, guint16 cmd, guint16 flags, guint32 ref) {
 	static char buf[SNAC_PACKET_LEN];
 	string_t tempstr;
 
-	tempstr = icq_pack("WWWI", (uint32_t) family, (uint32_t) cmd, (uint32_t) flags, (uint32_t) ref);
+	tempstr = icq_pack("WWWI", (guint32) family, (guint32) cmd, (guint32) flags, (guint32) ref);
 	if (tempstr->len != SNAC_PACKET_LEN) {
 		debug_error("_icq_makesnac() critical error\n");
 		return NULL;
@@ -113,7 +113,7 @@ static inline char *_icq_makesnac(uint8_t family, uint16_t cmd, uint16_t flags, 
 	return buf;
 }
 
-void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, private_data_t *data, snac_subhandler_t subhandler) {
+void icq_makesnac(session_t *s, string_t pkt, guint16 fam, guint16 cmd, private_data_t *data, snac_subhandler_t subhandler) {
 	icq_private_t *j;
 	icq_snac_reference_list_t *snac_data = NULL;
 
@@ -145,7 +145,7 @@ void icq_makesnac(session_t *s, string_t pkt, uint16_t fam, uint16_t cmd, privat
 	j->snac_seq++;
 }
 
-void icq_makemetasnac(session_t *s, string_t pkt, uint16_t type, uint16_t subtype, private_data_t *data, snac_subhandler_t subhandler) {
+void icq_makemetasnac(session_t *s, string_t pkt, guint16 type, guint16 subtype, private_data_t *data, snac_subhandler_t subhandler) {
 	icq_private_t *j;
 	string_t newbuf;
 	int t_len;
@@ -158,14 +158,14 @@ void icq_makemetasnac(session_t *s, string_t pkt, uint16_t type, uint16_t subtyp
 		j->snacmeta_seq = 1;
 
 	t_len = pkt->len + (2+4+2+2) + (subtype ? 2 : 0);
-	newbuf = icq_pack("t", (uint32_t) 0x01, (uint32_t) t_len);
+	newbuf = icq_pack("t", (guint32) 0x01, (guint32) t_len);
 	icq_pack_append(newbuf, "wiww",
-				(uint32_t) t_len - 2,			// data chunk size (TLV.Length-2)
-				(uint32_t) atoi(s->uid+4),		// request owner uin
-				(uint32_t) type,			// request cmd type
-				(uint32_t) j->snacmeta_seq);		// request sequence number
+				(guint32) t_len - 2,			// data chunk size (TLV.Length-2)
+				(guint32) atoi(s->uid+4),		// request owner uin
+				(guint32) type,			// request cmd type
+				(guint32) j->snacmeta_seq);		// request sequence number
 	if (subtype)
-		icq_pack_append(newbuf, "w", (uint32_t) subtype);
+		icq_pack_append(newbuf, "w", (guint32) subtype);
 
 	string_insert_n(pkt, 0, newbuf->str, newbuf->len);
 	string_free(newbuf, 1);
@@ -175,7 +175,7 @@ void icq_makemetasnac(session_t *s, string_t pkt, uint16_t type, uint16_t subtyp
 }
 
 /* stolen from Miranda ICQ plugin CIcqProto::LogFamilyError() chan_02data.cpp under GPL-2 or later */
-void icq_snac_error_handler(session_t *s, const char *from, uint16_t error) {
+void icq_snac_error_handler(session_t *s, const char *from, guint16 error) {
 	const char *msg;
 
 	switch (error) {
@@ -216,7 +216,7 @@ void icq_snac_error_handler(session_t *s, const char *from, uint16_t error) {
 	debug_error("icq_snac_error_handler(%s) %s: %s (%.4x)\n", s->uid, from, msg, error);
 }
 
-int icq_snac_handler(session_t *s, uint16_t family, uint16_t cmd, unsigned char *buf, int len, uint16_t flags, uint32_t ref_no) {
+int icq_snac_handler(session_t *s, guint16 family, guint16 cmd, unsigned char *buf, int len, guint16 flags, guint32 ref_no) {
 	snac_handler_t handler;
 	icq_snac_reference_list_t *ref_data = icq_snac_ref_find(s, ref_no);;
 	private_data_t *h_data = ref_data ? ref_data->list : NULL;

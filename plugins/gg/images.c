@@ -20,6 +20,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -49,7 +51,7 @@ int gg_config_image_size;
 int gg_config_get_images;
 char *gg_config_images_dir;
 
-static image_t *image_add_queue(const char *filename, char *data, uint32_t size, uint32_t crc32);
+static image_t *image_add_queue(const char *filename, char *data, guint32 size, guint32 crc32);
 
 /* 
  * gg_changed_images()
@@ -74,7 +76,7 @@ COMMAND(gg_command_image)
 {
 	gg_private_t *g = session_private_get(session);
 	FILE *f;
-	uint32_t size, crc32;
+	guint32 size, crc32;
 	int i;
 	const char *filename	= params[1];
 	char *data;
@@ -135,7 +137,7 @@ COMMAND(gg_command_image)
  * 
  * data should be given as already allocated pointer 
  */
-static image_t *image_add_queue(const char *filename, char *data, uint32_t size, uint32_t crc32)
+static image_t *image_add_queue(const char *filename, char *data, guint32 size, guint32 crc32)
 {
 	image_t *i = xmalloc(sizeof(image_t));
 

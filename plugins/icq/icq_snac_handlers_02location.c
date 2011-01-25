@@ -39,9 +39,9 @@
 
 SNAC_SUBHANDLER(icq_snac_location_error) {
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
-	uint16_t error;
+	guint16 error;
 
 	if (ICQ_UNPACK(&buf, "W", &pkt.error))
 		error = pkt.error;
@@ -100,8 +100,8 @@ SNAC_SUBHANDLER(icq_user_online_info) {
 	 */
 	 struct {
 		char *uid;
-		uint16_t warning;		/* warning level (unused here) */
-		uint16_t tlv_count;		/* Number of TLV in fixed part (user online info) */
+		guint16 warning;		/* warning level (unused here) */
+		guint16 tlv_count;		/* Number of TLV in fixed part (user online info) */
 	} pkt;
 	char *uid, *descr = NULL;
 	userlist_t *u;
@@ -129,8 +129,8 @@ SNAC_SUBHANDLER(icq_user_online_info) {
 	if ( !(t = icq_tlv_get(tlvs, 0x06)) ) {
 		// we need only offline message
 		if ( (t = icq_tlv_get(tlvs, 0x1d)) ) {
-			uint16_t a_type;
-			uint8_t a_flags, a_len;
+			guint16 a_type;
+			guint8 a_flags, a_len;
 			unsigned char *t_data = t->buf;
 			int t_len = t->len;
 			while (t_len > 0) {

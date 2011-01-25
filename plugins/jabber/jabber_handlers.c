@@ -22,6 +22,8 @@
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
+#include <glib.h>
+
 #include <sys/types.h>
 
 #ifndef NO_POSIX_SYSTEM
@@ -975,7 +977,7 @@ JABBER_HANDLER(jabber_handle_message) {
 		int secure	= (x_encrypted != NULL);
 		time_t sent	= bsent;
 		char *text	= tlenjabber_unescape(body->str);
-		uint32_t *format= jabber_msg_format(text, nhtml);
+		guint32 *format= jabber_msg_format(text, nhtml);
 
 		if (!sent) sent = time(NULL);
 

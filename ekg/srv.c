@@ -26,6 +26,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #define __USE_BSD
 #define _GNU_SOURCE
 #include <string.h>
@@ -52,25 +54,26 @@
 #endif
 
 /* Stolen from ClamAV */
+/* XXX: use glib byte order macros */
 #if WORDS_BIGENDIAN == 0
-union unaligned_32 { uint32_t una_u32; int32_t una_s32; } __attribute__((packed));
-union unaligned_16 { uint16_t una_u16; int16_t una_s16; } __attribute__((packed));
+union unaligned_32 { guint32 una_u32; gint32 una_s32; } __attribute__((packed));
+union unaligned_16 { guint16 una_u16; gint16 una_s16; } __attribute__((packed));
 
 #define cli_readint16(buff) (((const union unaligned_16 *)(buff))->una_u16)
 #define cli_readint32(buff) (((const union unaligned_32 *)(buff))->una_u32)
 
 #else
-static inline uint16_t cli_readint16(const unsigned char *buff)
+static inline guint16 cli_readint16(const unsigned char *buff)
 {
-	uint16_t ret;
+	guint16 ret;
 	ret = buff[0] & 0xff;
 	ret |= (buff[1] & 0xff) << 8;
 	return ret;
 }
 
-static inline uint32_t cli_readint32(const unsigned char *buff)
+static inline guint32 cli_readint32(const unsigned char *buff)
 {
-	uint32_t ret;
+	guint32 ret;
 	ret = buff[0] & 0xff;
 	ret |= (buff[1] & 0xff) << 8;
 	ret |= (buff[2] & 0xff) << 16;
@@ -96,9 +99,9 @@ struct _gim_host
 	struct _gim_host *next;
 
 	unsigned char name[MAXDNAME];
-	uint16_t prio;
-	uint16_t weight;
-	uint16_t port;
+	guint16 prio;
+	guint16 weight;
+	guint16 port;
 
 	int *ai_family;
 	char **ip;

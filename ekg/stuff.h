@@ -25,6 +25,8 @@
 #ifndef __EKG_STUFF_H
 #define __EKG_STUFF_H
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/time.h>
 
@@ -356,7 +358,7 @@ const char *ekg_status_string(const int status, const int cmd);
 int ekg_status_int(const char *text);
 
 char *ekg_draw_descr(const int status);
-uint32_t *ekg_sent_message_format(const char *text);
+guint32 *ekg_sent_message_format(const char *text);
 
 void ekg_yield_cpu();
 

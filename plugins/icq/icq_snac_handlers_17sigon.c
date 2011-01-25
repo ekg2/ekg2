@@ -44,7 +44,7 @@ SNAC_SUBHANDLER(icq_snac_sigon_error) {
 	 */
 	// XXX we don't support registration yet
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
@@ -92,7 +92,7 @@ SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
 	 */
 
 	struct {
-		uint16_t key_len;
+		guint16 key_len;
 	} pkt;
 	string_t str;
 

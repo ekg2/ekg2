@@ -17,7 +17,6 @@
  */
 
 #include "ekg2-config.h"
-#include <stdint.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -82,10 +81,10 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 
 	while (*format) {
 		switch (*format) {
-			case 'c':	/* uint8_t */
+			case 'c':	/* guint8 */
 			case 'C':
 			{
-				uint32_t src = va_arg(ap, uint32_t);
+				guint32 src = va_arg(ap, guint32);
 				unsigned char buf[1];
 
 				buf[0] = src;
@@ -94,9 +93,9 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
-			case 'W':	/* uint16_t BE */
+			case 'W':	/* guint16 BE */
 			{
-				uint32_t src = va_arg(ap, uint32_t);
+				guint32 src = va_arg(ap, guint32);
 				unsigned char buf[2];
 
 				buf[0] = (src & 0xff00) >> 8;
@@ -106,9 +105,9 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
-			case 'w':	/* uint16_t LE */
+			case 'w':	/* guint16 LE */
 			{
-				uint32_t src = va_arg(ap, uint32_t);
+				guint32 src = va_arg(ap, guint32);
 				unsigned char buf[2];
 
 				buf[0] = (src & 0x00ff);
@@ -118,9 +117,9 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
-			case 'I':	/* uint32_t BE */
+			case 'I':	/* guint32 BE */
 			{
-				uint32_t src = va_arg(ap, uint32_t);
+				guint32 src = va_arg(ap, guint32);
 				unsigned char buf[4];
 
 				buf[0] = (src & 0xff000000) >> 24;
@@ -132,9 +131,9 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
-			case 'i':	/* uint32_t LE */
+			case 'i':	/* guint32 LE */
 			{
-				uint32_t src = va_arg(ap, uint32_t);
+				guint32 src = va_arg(ap, guint32);
 				unsigned char buf[4];
 
 				buf[3] = (src & 0xff000000) >> 24;
@@ -146,11 +145,11 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
-			case 'T':	/* TLV */		/* uint32_t type, uint32_t len, uint8_t *buf (buflen = len) */
+			case 'T':	/* TLV */		/* guint32 type, guint32 len, guint8 *buf (buflen = len) */
 			{
-				uint32_t t_type = va_arg(ap, uint32_t);
-				uint32_t t_len	= va_arg(ap, uint32_t);
-				uint8_t *t_buf	= va_arg(ap, uint8_t *);
+				guint32 t_type = va_arg(ap, guint32);
+				guint32 t_len	= va_arg(ap, guint32);
+				guint8 *t_buf	= va_arg(ap, guint8 *);
 
 				icq_pack_append(str, "WW", t_type, t_len);
 				string_append_raw(str, (char *) t_buf, t_len);
@@ -158,10 +157,10 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
-			case 't':	/* tlv */		/* uint32_t type, uint32_t len */
+			case 't':	/* tlv */		/* guint32 type, guint32 len */
 			{
-				uint32_t t_type = va_arg(ap, uint32_t);
-				uint32_t t_len	= va_arg(ap, uint32_t);
+				guint32 t_type = va_arg(ap, guint32);
+				guint32 t_len	= va_arg(ap, guint32);
 
 				icq_pack_append(str, "WW", t_type, t_len);
 				break;
@@ -171,17 +170,17 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 			{
 				char *buf = va_arg(ap, char *);
 
-				icq_pack_append(str, "W", (uint32_t) xstrlen(buf));
+				icq_pack_append(str, "W", (guint32) xstrlen(buf));
 				string_append(str, buf);
 				break;
 			}
 
 			case 'u':	/* uid */
 			{
-				uint32_t uin = va_arg(ap, uint32_t);
+				guint32 uin = va_arg(ap, guint32);
 				const char *buf = itoa(uin);	/* XXX, enough? */
 
-				icq_pack_append(str, "C", (uint32_t) xstrlen(buf));
+				icq_pack_append(str, "C", (guint32) xstrlen(buf));
 				string_append(str, buf);
 				break;
 			}
@@ -190,15 +189,15 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 			{
 				char *buf = va_arg(ap, char *);
 
-				icq_pack_append(str, "C", (uint32_t) xstrlen(buf));
+				icq_pack_append(str, "C", (guint32) xstrlen(buf));
 				string_append(str, buf);
 				break;
 			}
 			case 'P':	/* caps */
 			{
-				uint32_t t_new = 0x09460000 | va_arg(ap, uint32_t);
+				guint32 t_new = 0x09460000 | va_arg(ap, guint32);
 
-				icq_pack_append(str, "IIII", (uint32_t) t_new, (uint32_t) 0x4c7f11d1, (uint32_t) 0x82224445, (uint32_t) 0x53540000);
+				icq_pack_append(str, "IIII", (guint32) t_new, (guint32) 0x4c7f11d1, (guint32) 0x82224445, (guint32) 0x53540000);
 				break;
 			}
 
@@ -246,7 +245,7 @@ string_t icq_pack(char *format, ...) {
 	return str;
 }
 
-uint32_t icq_string_to_BE(unsigned char *buf, int len) {
+guint32 icq_string_to_BE(unsigned char *buf, int len) {
 	switch (len) {
 		case 1:	return buf[0];
 		case 2:	return buf[0] << 8 | buf[1];
@@ -280,10 +279,10 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 		}
 
 		switch (*format) {
-			case 'c':	/* uint8_t */
+			case 'c':	/* guint8 */
 			case 'C':
 			{
-				uint8_t *dest = va_arg(ap, uint8_t *);
+				guint8 *dest = va_arg(ap, guint8 *);
 
 				if (len < 1)
 					goto err;
@@ -293,9 +292,9 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 				break;
 			}
 
-			case 'W':	/* uint16_t BE */
+			case 'W':	/* guint16 BE */
 			{
-				uint16_t *dest = va_arg(ap, uint16_t *);
+				guint16 *dest = va_arg(ap, guint16 *);
 
 				if (len < 2)
 					goto err;
@@ -305,9 +304,9 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 				break;
 			}
 
-			case 'w':	/* uint16_t LE */
+			case 'w':	/* guint16 LE */
 			{
-				uint16_t *dest = va_arg(ap, uint16_t *);
+				guint16 *dest = va_arg(ap, guint16 *);
 
 				if (len < 2)
 					goto err;
@@ -317,9 +316,9 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 				break;
 			}
 
-			case 'I':	/* uint32_t BE */
+			case 'I':	/* guint32 BE */
 			{
-				uint32_t *dest = va_arg(ap, uint32_t *);
+				guint32 *dest = va_arg(ap, guint32 *);
 
 				if (len < 4)
 					goto err;
@@ -329,9 +328,9 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 				break;
 			}
 
-			case 'i':	/* uint32_t LE */
+			case 'i':	/* guint32 LE */
 			{
-				uint32_t *dest = va_arg(ap, uint32_t *);
+				guint32 *dest = va_arg(ap, guint32 *);
 
 				if (len < 4)
 					goto err;
@@ -343,7 +342,7 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 
 			case 'u':
 			{
-				uint8_t ulen;
+				guint8 ulen;
 				char **dest = va_arg(ap, char **);
 
 				if (used_ubuf) {
@@ -371,7 +370,7 @@ int icq_unpack_common(unsigned char *buf, unsigned char **endbuf, int *l, char *
 			case 'U':
 			case 'S':
 			{
-				uint16_t Ulen;
+				guint16 Ulen;
 				char **dest = va_arg(ap, char **);
 
 				if (used_Ubuf) {
@@ -459,7 +458,7 @@ DYNSTUFF_LIST_DECLARE(icq_tlvs, icq_tlv_t, tlv_free_do_nothing,
 	__DYNSTUFF_NOREMOVE,
 	__DYNSTUFF_DESTROY)			/* icq_tlvs_destroy() */
 
-icq_tlv_t *icq_tlv_get(struct icq_tlv_list *l, uint16_t type) {
+icq_tlv_t *icq_tlv_get(struct icq_tlv_list *l, guint16 type) {
 	for (; l; l = l->next) {
 		if (l->type == type)
 			return l;
@@ -472,7 +471,7 @@ struct icq_tlv_list *icq_unpack_tlvs(unsigned char **str, int *maxlen, unsigned 
 	int count = 0;
 
 	while (*maxlen >= 4) {
-		uint16_t type, len;
+		guint16 type, len;
 		icq_tlv_t *ptlv;
 
 		if (!icq_unpack(*str, str, maxlen, "WW", &type, &len))
@@ -511,7 +510,7 @@ struct icq_tlv_list *icq_unpack_tlvs_nc(unsigned char *str, int maxlen, unsigned
 
 #include "miscicq.h"
 
-uint16_t icq_status(int status) {
+guint16 icq_status(int status) {
 	switch (status) {
 		case EKG_STATUS_NA:
 			debug_error("icq_status(EKG_STATUS_NA)\n");
@@ -581,7 +580,7 @@ char *icq_encryptpw(const char *pw) {
 	 * decode. Roasting is performed by first xoring each byte in the password
 	 * with the equivalent modulo byte in the roasting array.
 	 */
-	uint8_t tb[] = { 0xf3, 0x26, 0x81, 0xc4, 0x39, 0x86, 0xdb, 0x92, 0x71, 0xa3, 0xb9, 0xe6, 0x53, 0x7a, 0x95, 0x7c };
+	guint8 tb[] = { 0xf3, 0x26, 0x81, 0xc4, 0x39, 0x86, 0xdb, 0x92, 0x71, 0xa3, 0xb9, 0xe6, 0x53, 0x7a, 0x95, 0x7c };
 
 	char *cpw = xstrdup(pw), *p;
 	int i = 0;
@@ -678,7 +677,7 @@ string_t icq_convert_to_ucs2be(char *text) {
 	return ret;
 }
 
-void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...) {
+void icq_send_snac(session_t *s, guint16 family, guint16 cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...) {
 	va_list ap;
 	string_t pkt = string_init(NULL);
 

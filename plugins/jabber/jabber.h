@@ -5,6 +5,8 @@
 
 #include <ekg2-config.h>
 
+#include <glib.h>
+
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
 #include <ekg/protocol.h>		/* XXX, protocol_uid() */
@@ -150,7 +152,7 @@ typedef struct {
 	int id;				/**< queries ID */
 	XML_Parser parser;		/**< expat instance */
 	char *server;			/**< server name */
-	uint16_t port;			/**< server's port number */
+	guint16 port;			/**< server's port number */
 	unsigned int sasl_connecting :1;/**< whether we're connecting over SASL */
 	char *resource;			/**< resource used when connecting to daemon */
 	char *last_gmail_result_time;	/**< last time we're checking mail (this seems not to work correctly ;/) */
@@ -243,7 +245,7 @@ int jabber_conversation_find(jabber_private_t *j, const char *uid, const char *s
 jabber_conversation_t *jabber_conversation_get(jabber_private_t *j, const int n);
 char *jabber_thread_gen(jabber_private_t *j, const char *uid);
 
-uint32_t *jabber_msg_format(const char *plaintext, const xmlnode_t *html);
+guint32 *jabber_msg_format(const char *plaintext, const xmlnode_t *html);
 #endif /* __EKG_JABBER_JABBER_H */
 
 /*

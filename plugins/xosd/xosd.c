@@ -19,6 +19,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include <ekg/commands.h>
 #include <ekg/debug.h>
 #include <ekg/plugins.h>
@@ -191,7 +193,7 @@ static QUERY(xosd_protocol_message)
 	char *uid	= *(va_arg(ap, char**));
 		char **UNUSED(rcpts)	= *(va_arg(ap, char***));
 	char *text	= *(va_arg(ap, char**));
-		uint32_t *UNUSED(format) = *(va_arg(ap, uint32_t**));
+		guint32 *UNUSED(format) = *(va_arg(ap, guint32**));
 		time_t UNUSED(sent)	 = *(va_arg(ap, time_t*));
 	int class	= *(va_arg(ap, int*));
 	

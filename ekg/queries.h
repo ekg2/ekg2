@@ -14,7 +14,7 @@ enum query_arg_type {
 	QUERY_ARG_CHARP,	/* char *	*/
 	QUERY_ARG_CHARPP,	/* char **	*/
 	QUERY_ARG_INT,		/* int		*/
-	QUERY_ARG_UINT,		/* unsgined int */		/* -> time_t, uint32_t */
+	QUERY_ARG_UINT,		/* unsigned int */		/* -> time_t, guint32 */
 
 	QUERY_ARG_WINDOW = 100, /* window_t	*/
 	QUERY_ARG_FSTRING,	/* fstring_t	*/

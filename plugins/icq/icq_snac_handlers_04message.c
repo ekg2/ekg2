@@ -43,9 +43,9 @@
 
 
 typedef struct {
-	uint32_t id1;
-	uint32_t id2;
-	uint16_t channel;	/* Channel 1 message format (plain-text messages)
+	guint32 id1;
+	guint32 id2;
+	guint16 channel;	/* Channel 1 message format (plain-text messages)
 				   Channel 2 message format (rtf messages, rendezvous)
 				   Channel 4 message format (typed old-style messages)
 				 */
@@ -62,7 +62,7 @@ typedef struct {
 
 SNAC_SUBHANDLER(icq_snac_message_error) {
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
@@ -74,14 +74,14 @@ SNAC_SUBHANDLER(icq_snac_message_error) {
 	return 0;
 }
 
-static void icq_snac_message_set_msg_channel(session_t *s, uint16_t chan, uint32_t flags) {
+static void icq_snac_message_set_msg_channel(session_t *s, guint16 chan, guint32 flags) {
 
 	icq_send_snac(s, 0x04, 0x02, 0, 0,
 			"WIWWWWW",
-			(uint32_t) chan, (uint32_t) flags,		/* channel, flags */
-			(uint16_t) 8000, (uint32_t) 999,		/* max-message-snac-size, max-sender-warning-level */
-			(uint32_t) 999, (uint32_t) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
-			(uint32_t) 0);					/* unknown */
+			(guint32) chan, (guint32) flags,		/* channel, flags */
+			(guint16) 8000, (guint32) 999,		/* max-message-snac-size, max-sender-warning-level */
+			(guint32) 999, (guint32) 0,			/* max-rcv-warning-level, minimum message-interval-in-secons */
+			(guint32) 0);					/* unknown */
 }
 
 SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
@@ -91,7 +91,7 @@ SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
 	icq_snac_message_set_msg_channel(s, 0x04, 0x03);
 
 #else	/* Miranda-like */
-	uint32_t flags;
+	guint32 flags;
 
 	/* Set message parameters for all channels (imitate ICQ 6) */
 	flags = 0x00000303;
@@ -112,9 +112,9 @@ static void icq_pack_append_msg_header(string_t pkt, msg_params_t *msg_param) {
 	icq_pack_append(pkt, "IIWsW",
 			msg_param->id1,		// message id part 1
 			msg_param->id2,		// message id part 2
-			(uint32_t) 2,		// channel
+			(guint32) 2,		// channel
 			msg_param->sender,
-			(uint32_t) 3		// message formating
+			(guint32) 3		// message formating
 			);
 }
 
@@ -171,8 +171,8 @@ static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int 
 
 		for (t = tlvs_msg; t; t = t->next) {
 			struct {
-				uint16_t encoding;
-				uint16_t codepage;
+				guint16 encoding;
+				guint16 codepage;
 				unsigned char *message;
 			} t_msg;
 
@@ -248,26 +248,26 @@ static void icq_send_status_descr(session_t *s, int msg_type, msg_params_t *msg_
 
 static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int len, msg_params_t *msg_param) {
 	struct {
-		uint16_t len;		/* length of following data (LE) */
-		uint16_t ver;		/* protocol version (LE) */
+		guint16 len;		/* length of following data (LE) */
+		guint16 ver;		/* protocol version (LE) */
 		unsigned char *plug;	/* plugin or zero bytes (len=0x16) */
-		uint16_t _unkn1;	/* unknown */
-		uint32_t _capflg;	/* client capabilities flags */
-		uint8_t _unkn2;		/* unknown */
-		uint16_t _cookie;	/* cookie (LE) */
+		guint16 _unkn1;	/* unknown */
+		guint32 _capflg;	/* client capabilities flags */
+		guint8 _unkn2;		/* unknown */
+		guint16 _cookie;	/* cookie (LE) */
 	} pkt1;
 	struct {
-		uint16_t len;		/* length of following data (LE) */
-		uint16_t cookie;	/* cookie as in first chunk above (LE) */
+		guint16 len;		/* length of following data (LE) */
+		guint16 cookie;	/* cookie as in first chunk above (LE) */
 		char *_unkn;		/* unknown, usually zeros */
 	} pkt2;
 	/* if plugin field in first chunk above is zero, here is message, overwise here is plugin-specific data. */
 	struct {
-		uint8_t type;		/* message type */
-		uint8_t flags;		/* message flags */
-		uint16_t status;	/* status code (LE) */
-		uint16_t prio;		/* priority code (LE) */
-		uint16_t len;		/* message string length (LE) */
+		guint8 type;		/* message type */
+		guint8 flags;		/* message flags */
+		guint16 status;	/* status code (LE) */
+		guint16 prio;		/* priority code (LE) */
+		guint16 len;		/* message string length (LE) */
 		char *str;		/* message string (null-terminated) */
 	} msg;
 
@@ -356,8 +356,8 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 
 static int icq_snac_message_recv_icbm_ch2(session_t *s, unsigned char *buf, int len, msg_params_t *msg_param) {
 	struct {
-		uint16_t type;		// message type (0 - normal, 1 - cancel, 2 - ack)
-		uint32_t _id1, _id2;	// msg-id cookie (unused here)
+		guint16 type;		// message type (0 - normal, 1 - cancel, 2 - ack)
+		guint32 _id1, _id2;	// msg-id cookie (unused here)
 		unsigned char *cap;	// capability (determines format of message data)
 
 	} pkt;
@@ -479,8 +479,8 @@ static int icq_snac_unpack_message_params(session_t *s, unsigned char **buf, int
 SNAC_SUBHANDLER(icq_snac_message_recv) {
 	msg_params_t msg_param;
 	struct {
-		uint16_t warning_level;	/* not used */
-		uint16_t tlv_count;
+		guint16 warning_level;	/* not used */
+		guint16 tlv_count;
 	} pkt;
 	struct icq_tlv_list *tlvs;
 
@@ -564,17 +564,17 @@ static void icq_snac_message_status_reply(msg_params_t *msg_param, char *msg) {
 SNAC_SUBHANDLER(icq_snac_message_response) {
 	msg_params_t msg_param;
 	struct {
-		uint16_t reason;				/* reason code (1 - unsupported channel, 2 - busted payload, 3 - channel specific) */
-		uint16_t len;
-		uint16_t version;				/* this can be v8 greeting message reply */
+		guint16 reason;				/* reason code (1 - unsupported channel, 2 - busted payload, 3 - channel specific) */
+		guint16 len;
+		guint16 version;				/* this can be v8 greeting message reply */
 		/* 27b unknowns from the msg we sent */
-		uint16_t cookie;				/* Message sequence (cookie) */
+		guint16 cookie;				/* Message sequence (cookie) */
 		/* 12b Unknown */
-		uint8_t msg_type;				/* Message type: MTYPE_AUTOAWAY, MTYPE_AUTOBUSY, etc. */
-		uint8_t flags;					/* Message flags: MFLAG_NORMAL, MFLAG_AUTO, etc. */
-		uint16_t status;				/* Status */
+		guint8 msg_type;				/* Message type: MTYPE_AUTOAWAY, MTYPE_AUTOBUSY, etc. */
+		guint8 flags;					/* Message flags: MFLAG_NORMAL, MFLAG_AUTO, etc. */
+		guint16 status;				/* Status */
 		/* 2b Priority? */
-		uint16_t msg_len;
+		guint16 msg_len;
 	} pkt;
 
 	if (!icq_snac_unpack_message_params(s, &buf, &len, &msg_param))
@@ -630,7 +630,7 @@ SNAC_SUBHANDLER(icq_snac_message_mini_typing_notification) {
 	msg_params_t msg_param;
 
 	struct {
-		uint16_t typing;
+		guint16 typing;
 	} pkt;
 
 	if (!icq_snac_unpack_message_params(s, &buf, &len, &msg_param) || !ICQ_UNPACK(&buf, "W", &pkt.typing))

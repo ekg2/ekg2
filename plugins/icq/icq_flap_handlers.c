@@ -20,7 +20,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -46,11 +45,11 @@
 #include "icq_flap_handlers.h"
 #include "icq_snac_handlers.h"
 
-static inline char *_icq_makeflap(uint8_t cmd, uint16_t id, uint16_t len) {
+static inline char *_icq_makeflap(guint8 cmd, guint16 id, guint16 len) {
 	static char buf[FLAP_PACKET_LEN];
 	string_t tempstr;
 
-	tempstr = icq_pack("CCWW", (uint32_t) 0x2a, (uint32_t) cmd, (uint32_t) id, (uint32_t) len);
+	tempstr = icq_pack("CCWW", (guint32) 0x2a, (guint32) cmd, (guint32) id, (guint32) len);
 	if (tempstr->len != FLAP_PACKET_LEN) {
 		debug_error("_icq_makeflap() critical error\n");
 		return NULL;
@@ -62,7 +61,7 @@ static inline char *_icq_makeflap(uint8_t cmd, uint16_t id, uint16_t len) {
 
 // static inline void _icq_decodeflap();
 
-void icq_makeflap(session_t *s, string_t pkt, uint8_t cmd) {
+void icq_makeflap(session_t *s, string_t pkt, guint8 cmd) {
 	icq_private_t *j;
 
 	if (!s || !(j = s->priv) || !pkt)
@@ -84,7 +83,7 @@ typedef int (*flap_handler_t)	  (session_t * , unsigned char *    , int    );
 #define ICQ_FLAP_LOGIN	0x01
 static ICQ_FLAP_HANDLER(icq_flap_login) {
 	struct {
-		uint32_t id;				/* LOGIN PACKET: 0x00 00 00 01 */
+		guint32 id;				/* LOGIN PACKET: 0x00 00 00 01 */
 		unsigned char *buf;			/* extra data ? */
 	} login;
 
@@ -115,7 +114,7 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		 * ways server could return error or authorization cookie + BOS address.
 		 */
 
-		string_t str = icq_pack("I", (uint32_t) 1);			/* protocol version number */
+		string_t str = icq_pack("I", (guint32) 1);			/* protocol version number */
 
 		if (session_int_get(s, "plaintext_passwd") == 1) {
 			/*
@@ -175,7 +174,7 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 			return -2;
 		}
 
-		str = icq_pack("I", (uint32_t) 1);			/* spkt.flap.pkt.login.id CLI_HELLO */
+		str = icq_pack("I", (guint32) 1);			/* spkt.flap.pkt.login.id CLI_HELLO */
 		icq_pack_append(str, "T", icq_pack_tlv(0x06, j->cookie->str, j->cookie->len));
 
 		icq_makeflap(s, str, ICQ_FLAP_LOGIN);
@@ -214,7 +213,7 @@ static ICQ_FLAP_HANDLER(icq_flap_data) {
 	data = snac.data;
 
 	if (snac.flags & 0x8000) {
-		uint16_t skip_len;
+		guint16 skip_len;
 
 		if (!icq_unpack(data, &data, &len, "W", &skip_len))
 			return -1;
@@ -370,8 +369,8 @@ static ICQ_FLAP_HANDLER(icq_flap_close) {
 #define ICQ_FLAP_PING	0x05
 static ICQ_FLAP_HANDLER(icq_flap_ping) {
 	struct {
-		uint16_t seq;		/* XXX, BE/LE? */
-		uint16_t len;		/* XXX, BE/LE? */
+		guint16 seq;		/* XXX, BE/LE? */
+		guint16 len;		/* XXX, BE/LE? */
 		unsigned char *data;
 	} ping;
 

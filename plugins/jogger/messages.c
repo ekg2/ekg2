@@ -15,6 +15,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <glib.h>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -80,7 +82,7 @@ QUERY(jogger_msghandler) {
 	const char *uid		= *(va_arg(ap, char **));
 	char **rcpts		= *(va_arg(ap, char ***));
 	const char *msg		= *(va_arg(ap, char **));
-		uint32_t **UNUSED(format) = va_arg(ap, uint32_t **);
+		guint32 **UNUSED(format) = va_arg(ap, guint32 **);
 	time_t sent		= *(va_arg(ap, const time_t *));
 	const int class		= *(va_arg(ap, const int *));
 	const char *seq		= *(va_arg(ap, char**));
@@ -148,7 +150,7 @@ au_retry:
 			const int oq	= ((found > 0) && (session_int_get(js, "newentry_open_query") || (found < 4)));
 			char *suid, *uid, *lmsg, *url;
 			char **rcpts	= NULL;
-			uint32_t *fmt	= NULL;
+			guint32 *fmt	= NULL;
 
 
 			if (found == 4) {
@@ -232,7 +234,7 @@ au_retry:
 		char *lmsg	= (char*) msg;
 		char *rcpts[2]	= { NULL, NULL };
 		char **rcptsb	= rcpts; /* this is REALLY necessary, please do not remove or else we get segv */
-		uint32_t *fmt	= NULL;
+		guint32 *fmt	= NULL;
 
 		if (*lmsg == '#') {
 			int n;

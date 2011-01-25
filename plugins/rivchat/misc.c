@@ -19,19 +19,19 @@
 
 #include "ekg2-config.h"
 
-#include <stdint.h>
+#include <glib.h>
 
 #include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
 
-uint32_t rivchat_fix32(uint32_t x) {
+guint32 rivchat_fix32(guint32 x) {
 	return x;
 /*
-	return (uint32_t)
-		(((x & (uint32_t) 0x000000ffU) << 24) |
-		((x & (uint32_t) 0x0000ff00U) << 8) |
-		((x & (uint32_t) 0x00ff0000U) >> 8) |
-		((x & (uint32_t) 0xff000000U) >> 24));
+	return (guint32)
+		(((x & (guint32) 0x000000ffU) << 24) |
+		((x & (guint32) 0x0000ff00U) << 8) |
+		((x & (guint32) 0x00ff0000U) >> 8) |
+		((x & (guint32) 0xff000000U) >> 24));
 */
 }
 

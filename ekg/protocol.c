@@ -23,6 +23,8 @@
 #include "ekg2-config.h"
 #include "win32.h"
 
+#include <glib.h>
+
 #include <stdio.h>
 #include <sys/types.h>
 
@@ -525,7 +527,7 @@ int protocol_status_emit(const session_t *s, const char *uid, int status, char *
  *
  * zwraca target
  */
-char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const uint32_t *format, time_t sent, int mclass, const char *seq, int dobeep, int secure)
+char *message_print(const char *session, const char *sender, const char **rcpts, const char *__text, const guint32 *format, time_t sent, int mclass, const char *seq, int dobeep, int secure)
 {
 	char *class_str, timestamp[100], *text = xstrdup(__text);
 	char *securestr = NULL;
@@ -592,7 +594,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 
 		for (i = 0; text[i]; i++) {
 
-			uint32_t f = format[i];
+			guint32 f = format[i];
 
 			if (i == 0 || f != format[i - 1]) {
 				char attr = 'n';
@@ -763,7 +765,7 @@ static QUERY(protocol_message)
 	char *uid	= *(va_arg(ap, char**));
 	char **rcpts	= *(va_arg(ap, char***));
 	char **ptext	= (va_arg(ap, char**));
-	uint32_t *format= *(va_arg(ap, uint32_t**));
+	guint32 *format= *(va_arg(ap, guint32**));
 	time_t sent	= *(va_arg(ap, time_t*));
 	int mclass	= *(va_arg(ap, int*));
 	char *seq	= *(va_arg(ap, char**));
@@ -875,7 +877,7 @@ static QUERY(protocol_message)
 	return 0;
 }
 
-int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, const char *text, const uint32_t *format, time_t sent, int mclass, const char *seq, int dobeep, int secure) {
+int protocol_message_emit(const session_t *s, const char *uid, char **rcpts, const char *text, const guint32 *format, time_t sent, int mclass, const char *seq, int dobeep, int secure) {
 	char *session = xstrdup(s->uid);
 	char *uid_ro  = xstrdup(uid);
 	char *text_ro = xstrdup(text);

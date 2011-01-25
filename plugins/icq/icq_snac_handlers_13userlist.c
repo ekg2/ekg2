@@ -41,7 +41,7 @@
 
 SNAC_SUBHANDLER(icq_snac_userlist_error) {
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
@@ -72,7 +72,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 	if ((t = icq_tlv_get(tlvs, 0x0C)) && (t->len == 2))
 		debug_white("icq_snac_userlist_reply() max number of contacts in a group = %d\n", t->nr);
 	if ((t = icq_tlv_get(tlvs, 0x04))) {
-		uint16_t a, b, c, d, e;
+		guint16 a, b, c, d, e;
 		if (icq_unpack_nc(t->buf, t->len, "WWWW 20 W", &a, &b, &c, &d, &e))
 			debug_white("icq_snac_userlist_reply() Max %d contacts, %d groups; %d visible contacts, %d invisible contacts, %d ignore items.\n", a, b, c, d, e);
 	}
@@ -94,7 +94,7 @@ static void set_userinfo_from_tlv(userlist_t *u, const char *var, icq_tlv_t *t) 
 	user_private_item_set(u, var, tmp);
 }
 
-static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, const char *name, uint16_t type, uint16_t item_id, uint16_t group_id) {
+static int icq_userlist_parse_entry(session_t *s, struct icq_tlv_list *tlvs, const char *name, guint16 type, guint16 item_id, guint16 group_id) {
 	switch (type) {
 		case 0x0000:	/* Buddy record (name: uin for ICQ and screenname for AIM) */
 		{
@@ -302,8 +302,8 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 	 */
 
 	struct {
-		uint8_t unk1;		/* empty */	/* possible version */
-		uint16_t count;		/* COUNT */
+		guint8 unk1;		/* empty */	/* possible version */
+		guint16 count;		/* COUNT */
 		unsigned char *data;
 	} pkt;
 	int i;
@@ -318,9 +318,9 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 
 	for (i = 0; i < pkt.count; i++) {
 		char *orgname;
-		uint16_t item_id, item_type;
-		uint16_t group_id;
-		uint16_t tlv_len;
+		guint16 item_id, item_type;
+		guint16 group_id;
+		guint16 tlv_len;
 		struct icq_tlv_list *tlvs;
 		char *name;
 
@@ -346,7 +346,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 	}
 
 	if (len >= 4) {
-		uint32_t last_update;
+		guint32 last_update;
 
 		if (!ICQ_UNPACK(&buf, "I", &last_update))
 				return -1;
@@ -387,7 +387,7 @@ char *icq_snac_userlist_edit_ack_msg(int error) {
 }
 
 SNAC_SUBHANDLER(icq_snac_userlist_edit_ack) {
-	uint16_t err;
+	guint16 err;
 
 	debug_function("icq_snac_userlist_edit_ack()\n");
 	while (len>=2) {
@@ -425,8 +425,8 @@ SNAC_SUBHANDLER(icq_snac_userlist_removeentry) {
 {
 	struct {
 		char *uid;
-		uint16_t group, item;
-		uint16_t type;
+		guint16 group, item;
+		guint16 type;
 	} pkt;
 	if (ICQ_UNPACK(&buf, "UWWW", &pkt.uid, &pkt.group, &pkt.item, &pkt.type)) {
 		debug("icq_snac_userlist_removeentry() Details: delete '%s' (item id:%d, type:0x%x) from group %d\n", pkt.uid, pkt.item, pkt.type, pkt.group);
@@ -464,7 +464,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_auth_req) {
 SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
 	struct {
 		char *uid;
-		uint8_t flag;
+		guint8 flag;
 		char *reason;
 	} pkt;
 	char *uid;
@@ -556,7 +556,7 @@ SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 	const char *nick = private_item_get(&data, "nick");
 	const char *cmd  = private_item_get(&data, "cmd");
 	int quiet = private_item_get_int(&data, "quiet");
-	uint16_t error;
+	guint16 error;
 	char *uid;
 
 	if (!ICQ_UNPACK(&buf, "W", &error))

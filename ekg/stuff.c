@@ -2422,9 +2422,9 @@ int ekg_status_int(const char *text)
  * tekstu wycina kolorki i zwraca informacje o formatowaniu tekstu bez
  * kolorków.
  */
-uint32_t *ekg_sent_message_format(const char *text)
+guint32 *ekg_sent_message_format(const char *text)
 {
-	uint32_t *format, attr;
+	guint32 *format, attr;
 	char *newtext, *q;
 	const char *p, *end;
 	int len;

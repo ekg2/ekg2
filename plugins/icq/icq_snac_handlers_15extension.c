@@ -43,7 +43,7 @@ SNAC_SUBHANDLER(icq_snac_extension_error) {
 	 * This is an error notification snac
 	 */
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
@@ -208,7 +208,7 @@ static int __get_userinfo_data(unsigned char *buf, int len, int type, private_da
 			}
 			case 'w':
 			{
-				uint16_t w = 0;
+				guint16 w = 0;
 				if (!ICQ_UNPACK(&buf, "w", &w))
 					ret = 1;
 				else
@@ -219,7 +219,7 @@ static int __get_userinfo_data(unsigned char *buf, int len, int type, private_da
 			case 'c':
 			case 'L':
 			{
-				uint8_t b = 0;
+				guint8 b = 0;
 				if (!ICQ_UNPACK(&buf, "c", &b))
 					ret = 1;
 				else
@@ -279,7 +279,7 @@ static void __display_info(session_t *s, int type, private_data_t *data) {
 
 
 METASNAC_SUBHANDLER(icq_snac_extensions_interests) {
-	uint8_t count;
+	guint8 count;
 	int i;
 
 	if (!ICQ_UNPACK(&buf, "C", &count))
@@ -294,7 +294,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_interests) {
 	for (i = 0; i < count; i++) {
 		char *tmp;
 		const char *str;
-		uint16_t w;
+		guint16 w;
 
 		if (ICQ_UNPACK(&buf, "wS", &w, &str)) {
 			tmp = saprintf("interests%d", i+1);
@@ -310,7 +310,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_interests) {
 
 METASNAC_SUBHANDLER(icq_snac_extensions_affilations) {
 	static const char *names[] = {"pastaff", "aff"};
-	uint8_t count;
+	guint8 count;
 	int i, k;
 
 	for (k=0; k<2; k++) {
@@ -326,7 +326,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_affilations) {
 		for (i = 0; i < count; i++) {
 			char *name1, *name2;
 			const char *str;
-			uint16_t w;
+			guint16 w;
 
 			name1 = saprintf("%s%d", names[k], i+1);
 			name2 = saprintf("%sStr%d", names[k], i+1);
@@ -390,7 +390,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_shortinfo) {
 }
 
 METASNAC_SUBHANDLER(icq_snac_extensions_email) {
-	uint8_t count_discard;
+	guint8 count_discard;
 	int i;
 
 	/* This value used to be a e-mail counter. Either that was wrong or
@@ -405,7 +405,7 @@ METASNAC_SUBHANDLER(icq_snac_extensions_email) {
 		char *tmp;
 		const char *str;
 
-		uint8_t publish_flag;	/* Don't publish flag */
+		guint8 publish_flag;	/* Don't publish flag */
 
 		if (!ICQ_UNPACK(&buf, "C", &publish_flag))
 			return -1;
@@ -447,8 +447,8 @@ METASNAC_SUBHANDLER(icq_snac_extensions_moreinfo) {
 
 METASNAC_SUBHANDLER(icq_snac_extensions_hpagecat) {
 	struct {
-	    uint8_t enabled;
-	    uint16_t cat;
+	    guint8 enabled;
+	    guint16 cat;
 	    char *str;
 	} pkt;
 
@@ -487,10 +487,10 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	const char *__gender = "";
 	char *__active;
 
-	uint32_t uin;
-	uint16_t len2;
-	uint16_t status, age;
-	uint8_t auth, gender;
+	guint32 uin;
+	guint16 len2;
+	guint16 status, age;
+	guint8 auth, gender;
 
 	/* XXX, sprawdzic czy mamy cookie. */
 
@@ -580,7 +580,7 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 	xfree(full_name);
 
 	if (islast && len>=4) {
-		uint32_t omit;
+		guint32 omit;
 		ICQ_UNPACK(&buf, "I", &omit);
 		debug_warn("icq_snac_extension_userfound_last() Bulshit warning!\n");
 		debug_white("icq_snac_extension_userfound_last() %d search results omitted\n", omit);
@@ -600,7 +600,7 @@ METASNAC_SUBHANDLER(icq_snac_extension_userfound) { return icq_snac_extension_us
 METASNAC_SUBHANDLER(icq_snac_extension_userfound_last) { return icq_snac_extension_userfound_common(s, buf, len, 1); }
 METASNAC_SUBHANDLER(icq_snac_extension_fullinfo_ack) { return 0; }
 
-static metasnac_subhandler_t get_userinfo_extension_handler(uint16_t subtype) {
+static metasnac_subhandler_t get_userinfo_extension_handler(guint16 subtype) {
 	switch (subtype) {
 	/* userinfo */
 		case META_BASIC_USERINFO:	return icq_snac_extensions_basicinfo;
@@ -622,8 +622,8 @@ static int icq_meta_info_reply(session_t *s, unsigned char *buf, int len, privat
 	 * This is the server response to client meta info request SNAC(15,02)/07D0.
 	 */
 	struct {
-		uint16_t subtype;
-		uint8_t result;
+		guint16 subtype;
+		guint8 result;
 		unsigned char *data;
 	} pkt;
 	int userinfo = 0;
@@ -683,14 +683,14 @@ static int icq_meta_info_reply(session_t *s, unsigned char *buf, int len, privat
 
 static int check_replyreq(session_t *s, unsigned char **buf, int *len, int *type) {
 	struct {
-		uint16_t type;
-		uint16_t len;
+		guint16 type;
+		guint16 len;
 	} tlv;
 	struct {
-		uint16_t len;
-		uint32_t uid;
-		uint16_t type;
-		uint16_t id;
+		guint16 len;
+		guint32 uid;
+		guint16 type;
+		guint16 id;
 	} pkt;
 
 	if (!icq_unpack(*buf, buf, len, "WW", &tlv.type, &tlv.len) || (tlv.type != 0x0001) || (tlv.len < 10)) {
@@ -734,18 +734,18 @@ static int icq_offline_message(session_t *s, unsigned char *buf, int len, privat
 	 * and buffered by server when client was offline.
 	 */
 	struct {
-		uint32_t uin;		/* message sender uin */
+		guint32 uin;		/* message sender uin */
 
-		uint16_t y;		/* year when message was sent (LE) */
-		uint8_t M;		/* month when message was sent */
-		uint8_t d;		/* day when message was sent */
-		uint8_t h;		/* hour (GMT) when message was sent */
-		uint8_t m;		/* minute when message was sent */
+		guint16 y;		/* year when message was sent (LE) */
+		guint8 M;		/* month when message was sent */
+		guint8 d;		/* day when message was sent */
+		guint8 h;		/* hour (GMT) when message was sent */
+		guint8 m;		/* minute when message was sent */
 
-		uint8_t type;		/* message type */
-		uint8_t flags;		/* message flags */
+		guint8 type;		/* message type */
+		guint8 flags;		/* message flags */
 
-		uint16_t len;		/* message string length (LE) */
+		guint16 len;		/* message string length (LE) */
 		char *msg;		/* message string (null-terminated) */
 	} pkt;
 	char *recode = NULL;

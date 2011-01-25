@@ -43,11 +43,12 @@ A million repetitions of "a"
   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 */
 #include "ekg2-config.h"
+
+#include <glib.h>
+
 #include <ekg/win32.h>
 #include <ekg/debug.h>
 #include <ekg/recode.h>
-
-#include <stdint.h>
 
 #include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
@@ -64,13 +65,13 @@ A million repetitions of "a"
 #include <string.h>
 
 typedef struct {
-    uint32_t state[5];
-    uint32_t count[2];
+    guint32 state[5];
+    guint32 count[2];
     unsigned char buffer[64];
 } EKG2_SHA1_CTX, EKG2_MD5_CTX;
 
 static void Init(EKG2_SHA1_CTX* context, int usesha);
-static void Transform(uint32_t state[5], unsigned char buffer[64], int usesha);
+static void Transform(guint32 state[5], unsigned char buffer[64], int usesha);
 static void Update(EKG2_SHA1_CTX* context, unsigned char* data, unsigned int len, int usesha);
 static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha);
 
@@ -109,19 +110,19 @@ static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha);
 #define H(x, y, z) ((x) ^ (y) ^ (z))
 #define I(x, y, z) ((y) ^ ((x) | (~z)))
 
-#define FF(a, b, c, d, x, s, ac) { (a) += F ((b), (c), (d)) + (x) + (uint32_t)(ac); (a) = rol((a), (s)); (a) += (b); }
-#define GG(a, b, c, d, x, s, ac) { (a) += G ((b), (c), (d)) + (x) + (uint32_t)(ac); (a) = rol((a), (s)); (a) += (b); }
-#define HH(a, b, c, d, x, s, ac) { (a) += H ((b), (c), (d)) + (x) + (uint32_t)(ac); (a) = rol((a), (s)); (a) += (b); }
-#define II(a, b, c, d, x, s, ac) { (a) += I ((b), (c), (d)) + (x) + (uint32_t)(ac); (a) = rol((a), (s)); (a) += (b); }
+#define FF(a, b, c, d, x, s, ac) { (a) += F ((b), (c), (d)) + (x) + (guint32)(ac); (a) = rol((a), (s)); (a) += (b); }
+#define GG(a, b, c, d, x, s, ac) { (a) += G ((b), (c), (d)) + (x) + (guint32)(ac); (a) = rol((a), (s)); (a) += (b); }
+#define HH(a, b, c, d, x, s, ac) { (a) += H ((b), (c), (d)) + (x) + (guint32)(ac); (a) = rol((a), (s)); (a) += (b); }
+#define II(a, b, c, d, x, s, ac) { (a) += I ((b), (c), (d)) + (x) + (guint32)(ac); (a) = rol((a), (s)); (a) += (b); }
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-static void Transform(uint32_t state[5], unsigned char buffer[64], int usesha)
+static void Transform(guint32 state[5], unsigned char buffer[64], int usesha)
 {
-uint32_t a, b, c, d, e;
+guint32 a, b, c, d, e;
 typedef union {
     unsigned char c[64];
-    uint32_t l[16];
+    guint32 l[16];
 } CHAR64LONG16;
 CHAR64LONG16* block;
 #ifdef SHA1HANDSOFF
@@ -161,7 +162,7 @@ static unsigned char workspace[64];
 	    R4(d,e,a,b,c,72); R4(c,d,e,a,b,73); R4(b,c,d,e,a,74); R4(a,b,c,d,e,75);
 	    R4(e,a,b,c,d,76); R4(d,e,a,b,c,77); R4(c,d,e,a,b,78); R4(b,c,d,e,a,79);
     } else {
-	    uint32_t *block = (uint32_t *) &workspace[0];
+	    guint32 *block = (guint32 *) &workspace[0];
 	    /* Round 1 */
 #define S11 7
 #define S12 12
@@ -296,7 +297,7 @@ unsigned int i, j;
     memcpy(&context->buffer[j], &data[i], len - i);
 }
 
-static void Encode (unsigned char *output, uint32_t *input, unsigned int len, int usesha) {
+static void Encode (unsigned char *output, guint32 *input, unsigned int len, int usesha) {
 	unsigned int i, j;
 
 	if (usesha) {
@@ -321,7 +322,7 @@ static void Encode (unsigned char *output, uint32_t *input, unsigned int len, in
 static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 {
     unsigned char finalcount[8];
-    uint32_t i;
+    guint32 i;
 
     Encode(finalcount, context->count, 8, usesha);
 

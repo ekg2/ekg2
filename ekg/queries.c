@@ -78,7 +78,7 @@ static const query_def_t core_query_list[] = {
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_CHARPP,		/* rcpts */
 		QUERY_ARG_CHARP,		/* text */
-		QUERY_ARG_UINT,	/* uint32_t */	/* format */
+		QUERY_ARG_UINT,	/* guint32 */	/* format */
 		QUERY_ARG_UINT, /* time_t */	/* sent */
 		QUERY_ARG_INT,			/* mclass */
 		QUERY_ARG_CHARP,		/* seq */
@@ -89,7 +89,7 @@ static const query_def_t core_query_list[] = {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
 		QUERY_ARG_CHARPP,		/* rcpts */
-		QUERY_ARG_UINT,	/* uint32_t */	/* format */
+		QUERY_ARG_UINT,	/* guint32 */	/* format */
 		QUERY_ARG_UINT, /* time_t */	/* sent */
 		QUERY_ARG_INT,			/* mclass */
 		QUERY_ARG_CHARP,		/* seq */

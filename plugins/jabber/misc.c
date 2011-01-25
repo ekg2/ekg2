@@ -1,5 +1,7 @@
 /* $Id$ */
 
+#include <glib.h>
+
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
@@ -497,7 +499,7 @@ char *jabber_thread_gen(jabber_private_t *j, const char *uid) {
 	return thread;
 }
 
-static inline uint32_t jabber_formatchar(const char c) {
+static inline guint32 jabber_formatchar(const char c) {
 	if (c == '*')	return EKG_FORMAT_BOLD;
 	if (c == '_')	return EKG_FORMAT_UNDERLINE;
 	if (c == '/')	return EKG_FORMAT_ITALIC;
@@ -527,8 +529,8 @@ static inline int jabber_fc_check(const char *curr, const char *beginning, const
  * e.g. *bold* /italic/
  *
  * some time may also parse XHTML */
-uint32_t *jabber_msg_format(const char *plaintext, const xmlnode_t *html) {
-	uint32_t *fmtstring = NULL, *p = NULL, *pf = NULL;
+guint32 *jabber_msg_format(const char *plaintext, const xmlnode_t *html) {
+	guint32 *fmtstring = NULL, *p = NULL, *pf = NULL;
 	const char *c;
 
 	return NULL; /* disable, because of XXX:
@@ -573,7 +575,7 @@ uint32_t *jabber_msg_format(const char *plaintext, const xmlnode_t *html) {
 					continue;
 
 			if (!p) {
-				fmtstring = xcalloc(xstrlen(plaintext), sizeof(uint32_t));
+				fmtstring = xcalloc(xstrlen(plaintext), sizeof(guint32));
 				pf = &fmtstring[c - plaintext];
 				p = pf+1;
 			}

@@ -15,8 +15,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <glib.h>
+
 #include <stdio.h>
-#include <stdint.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -167,13 +168,13 @@ int main() {
 
 #ifdef HASH_SHA1
 	unsigned char digest[20];
-	uint32_t digstate[5];
+	guint32 digstate[5];
 	int i;
 
 /* HASH w SHA1 najpierw z 40 znakowego, ascii-printable znakow od [0-f] zamieniamy na binarna 20 znakow tablice.. */
 
 	for (i = 0; i < 40; i++) {
-		uint8_t znak;
+		guint8 znak;
 
 		if (HASH_SHA1[i] == '\0') { fprintf(stderr, "BAD SHA1 hash: %s\n", HASH_SHA1);	return 1; }
 

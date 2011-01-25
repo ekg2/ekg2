@@ -19,8 +19,9 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include <string.h> /* memset() */
-#include <stdint.h> /* uint32_t */
 #include <time.h>   /* time_t */
 
 #include <ekg/debug.h>
@@ -264,7 +265,7 @@ QUERY(logsoracle_handler_prmsg)
 	char *uid	  = *(va_arg(ap, char**));	/* sender uid */
 	char **rcpts	  = *(va_arg(ap, char***));	/* list of reciepients (uids)*/
 	char *text	  = *(va_arg(ap, char**));	/* message content */
-	uint32_t *format  = *(va_arg(ap, uint32_t**));	/* ? */
+	guint32 *format  = *(va_arg(ap, guint32**));	/* ? */
 	time_t	 sent	  = *(va_arg(ap, time_t*));	/* timestamp */
 	int  class	  = *(va_arg(ap, int*));	/* check msgclass_t in protocol.h */
 	char *seq	  = *(va_arg(ap, char**));	/* sequence number */

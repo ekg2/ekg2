@@ -22,6 +22,8 @@
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -422,7 +424,7 @@ msgdisplay:
 		char **rcpts	= xcalloc(2, sizeof(char *));
 		char *msg	= xstrdup(params[1]);
 		int class	= (chat) ? EKG_MSGCLASS_SENT_CHAT : EKG_MSGCLASS_SENT;
-		uint32_t *format= jabber_msg_format(msg, NULL /*XXX: pass htmlmsg as xmlnode_t ...*/);
+		guint32 *format= jabber_msg_format(msg, NULL /*XXX: pass htmlmsg as xmlnode_t ...*/);
 
 		rcpts[0]	= xstrdup(uid);
 		rcpts[1]	= NULL;

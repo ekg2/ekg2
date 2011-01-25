@@ -23,11 +23,11 @@ struct ethhdr { /* Ethernet header */
 #define SLL_ADDRLEN	8		/* length of address field */
 
 struct sll_header {
-	u_int16_t	sll_pkttype;	/* packet type */
-	u_int16_t	sll_hatype;	/* link-layer address type */
-	u_int16_t	sll_halen;	/* link-layer address length */
-	u_int8_t	sll_addr[SLL_ADDRLEN];	/* link-layer address */
-	u_int16_t	sll_protocol;	/* protocol */
+	u_gint16	sll_pkttype;	/* packet type */
+	u_gint16	sll_hatype;	/* link-layer address type */
+	u_gint16	sll_halen;	/* link-layer address length */
+	u_gint8	sll_addr[SLL_ADDRLEN];	/* link-layer address */
+	u_gint16	sll_protocol;	/* protocol */
 };
 
 struct iphdr { /* IP header */

@@ -22,6 +22,8 @@
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -66,7 +68,7 @@ struct mail_folder {
 	int check;
 
 #ifdef HAVE_INOTIFY
-	uint32_t watch;
+	guint32 watch;
 #endif
 };
 int config_beep_mail = 1;

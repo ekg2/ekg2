@@ -22,7 +22,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdint.h>
 #include <errno.h>
 #include <unistd.h>
 
@@ -57,7 +56,7 @@
 
 #include "rivchat.h"	/* only protocol-stuff */
 
-// extern uint32_t rivchat_fix32(uint32_t x);	/* misc.c */
+// extern guint32 rivchat_fix32(guint32 x);	/* misc.c */
 #define rivchat_fix32(x) x
 
 typedef struct {
@@ -66,15 +65,15 @@ typedef struct {
 	char *nick;
 	char *topic;
 
-	uint32_t ourid;
-	uint8_t seq_nr;
-	uint32_t uptime;
+	guint32 ourid;
+	guint8 seq_nr;
+	guint32 uptime;
 } rivchat_private_t;
 
 typedef struct {
 	int user_locked;
 
-	uint32_t id;		/* unikatowy numerek usera... czyt. ma byc unikatowy*/
+	guint32 id;		/* unikatowy numerek usera... czyt. ma byc unikatowy*/
 	time_t packet_time;
 	time_t ping_packet_time;
 	rivchat_info_t ping_packet;
@@ -92,8 +91,8 @@ static int rivchat_theme_init();
 
 PLUGIN_DEFINE(rivchat, PLUGIN_PROTOCOL, rivchat_theme_init);
 
-static int rivchat_send_packet(session_t *s, uint32_t type, userlist_t *user, const char *buf, size_t buflen);
-static int rivchat_send_packet_string(session_t *s, uint32_t type, userlist_t *user, const char *str);
+static int rivchat_send_packet(session_t *s, guint32 type, userlist_t *user, const char *buf, size_t buflen);
+static int rivchat_send_packet_string(session_t *s, guint32 type, userlist_t *user, const char *str);
 
 #define rivchat_userlist_priv_get(u) ((rivchat_userlist_private_t *) userlist_private_get(&rivchat_plugin, u))
 
@@ -454,7 +453,7 @@ static char *rivchat_generate_data(session_t *s) {
  * It's like orginal rivchat client do.
  */
 
-static int rivchat_send_packet(session_t *s, uint32_t type, userlist_t *user, const char *buf, size_t buflen) {
+static int rivchat_send_packet(session_t *s, guint32 type, userlist_t *user, const char *buf, size_t buflen) {
 	rivchat_private_t *j;
 	rivchat_userlist_private_t *p = NULL;
 
@@ -499,8 +498,8 @@ static int rivchat_send_packet(session_t *s, uint32_t type, userlist_t *user, co
 	hdr.seq = j->seq_nr++;		/* XXX */
 	hdr.encrypted = (user) ? RC_ENCRYPTED : 0;
 #if 0
-	uint8_t gender;				/* 1 - man, 2 - woman */
-	uint8_t bold;				/* ? */
+	guint8 gender;				/* 1 - man, 2 - woman */
+	guint8 bold;				/* ? */
 #endif
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(j->port);
@@ -516,7 +515,7 @@ static int rivchat_send_packet(session_t *s, uint32_t type, userlist_t *user, co
 	return len;
 }
 
-static int rivchat_send_packet_string(session_t *s, uint32_t type, userlist_t *user, const char *str) {
+static int rivchat_send_packet_string(session_t *s, guint32 type, userlist_t *user, const char *str) {
 	int ret;
 	char *recodedstring = ekg_locale_to_cp_dup(str);
 
@@ -531,11 +530,11 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 	rivchat_userlist_private_t *p = NULL;
 
 /* XXX, protect from spoofing, i've got some ideas... */
-	uint32_t from_id = rivchat_fix32(_hdr->fromid);
-	uint32_t to_id = rivchat_fix32(_hdr->toid);
+	guint32 from_id = rivchat_fix32(_hdr->fromid);
+	guint32 to_id = rivchat_fix32(_hdr->toid);
 	int is_our = (from_id == j->ourid);
 	int is_priv = (to_id != RC_BROADCAST);
-	uint32_t type = rivchat_fix32(_hdr->type);
+	guint32 type = rivchat_fix32(_hdr->type);
 
 	int display_activity = EKG_WINACT_NONE;
 	char *display_data = NULL;

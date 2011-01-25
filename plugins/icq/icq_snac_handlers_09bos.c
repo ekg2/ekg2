@@ -41,7 +41,7 @@ SNAC_SUBHANDLER(icq_snac_bos_error) {
 	 * This is an error notification snac.
 	 */
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.error))
@@ -67,7 +67,7 @@ SNAC_SUBHANDLER(icq_snac_bos_replyreq) {
 #if ICQ_DEBUG_UNUSED_INFORMATIONS
 	struct icq_tlv_list *tlvs;
 	icq_tlv_t *t_max_visible_contacts, *t_max_invisible_contacts, *t_max_temp_visible_contacts;
-	uint16_t max_visible_contacts, max_invisible_contacts, max_temp_visible_contacts;
+	guint16 max_visible_contacts, max_invisible_contacts, max_temp_visible_contacts;
 
 	if (!(tlvs = icq_unpack_tlvs(&buf, &len, 0)))
 		return 0;
@@ -94,7 +94,7 @@ SNAC_SUBHANDLER(icq_snac_bos_service_error) {
 	 * This is an error notification snac. Known error codes: 0x01 - wrong mode
 	 */
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.error))

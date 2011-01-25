@@ -23,6 +23,8 @@
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
+#include <glib.h>
+
 #ifdef __APPLE__
 #define _DARWIN_C_SOURCE
 #include <netinet/in.h>
@@ -38,8 +40,6 @@
 #if defined(__MINGW32__) || defined(__FreeBSD__) || defined(__sun)
 #include <limits.h>
 #endif
-
-#include <stdint.h>
 
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -937,7 +937,7 @@ static QUERY(logs_handler) {
 	char *uid	= *(va_arg(ap, char**));
 	char **rcpts	= *(va_arg(ap, char***));
 	char *text	= *(va_arg(ap, char**));
-		uint32_t **UNUSED(format)	= va_arg(ap, uint32_t**);
+		guint32 **UNUSED(format)	= va_arg(ap, guint32**);
 	time_t	 sent	= *(va_arg(ap, time_t*));
 	int  class	= *(va_arg(ap, int*));
 		char **UNUSED(seq)		= va_arg(ap, char**);

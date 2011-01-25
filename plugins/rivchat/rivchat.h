@@ -1,5 +1,7 @@
 /* some rivchat-magic-stuff based on protocol: http://akolacz.googlepages.com/RivChat-specyfikacja.PDF */
 
+#include <glib.h>
+
 #define RC_BROADCAST	0xFFFFFFFF
 
 #define RC_TIMEOUT	30	/* soft-timeout */
@@ -43,37 +45,37 @@ typedef struct {
 	char host[50];
 	char os[20];
 	char prog[18];
-	uint8_t version[2];
-	uint8_t away;
-	uint8_t master;
-	uint32_t slowa;
+	guint8 version[2];
+	guint8 away;
+	guint8 master;
+	guint32 slowa;
 	char user[32];
-	uint8_t kod;
-	uint8_t plec;
-	uint8_t __pad1[2];
-	uint32_t online;
-	uint8_t filetransfer;
-	uint8_t pisze;
-	uint8_t __pad2[2];
+	guint8 kod;
+	guint8 plec;
+	guint8 __pad1[2];
+	guint32 online;
+	guint8 filetransfer;
+	guint8 pisze;
+	guint8 __pad2[2];
 } RC_PACKED rivchat_info_t;
 
 typedef struct {
 	char header[RC_MAGICSIZE];		/* rivchat_magic */
-	uint8_t __pad1;
-	uint32_t size;
-	uint32_t fromid;
-	uint32_t toid;
+	guint8 __pad1;
+	guint32 size;
+	guint32 fromid;
+	guint32 toid;
 	char nick[30];
-	uint8_t __pad2[2];
-	uint32_t type;
+	guint8 __pad2[2];
+	guint32 type;
 	char data[RC_DATASIZE];			/* or RCINFO */
-	uint8_t colors[3];			/* colors RGB values */
-	uint8_t seq;				/* sequence */
+	guint8 colors[3];			/* colors RGB values */
+	guint8 seq;				/* sequence */
 /* these 8bytes, can be uint64_t -> filesize */
-	uint8_t gender;				/* 1 - man, 2 - woman */
-	uint8_t encrypted;			/* we support encryption? */
-	uint8_t bold;				/* ? */
-	uint8_t reserved[5];
+	guint8 gender;				/* 1 - man, 2 - woman */
+	guint8 encrypted;			/* we support encryption? */
+	guint8 bold;				/* ? */
+	guint8 reserved[5];
 } RC_PACKED rivchat_header_t; 
 
 #define RC_FILETRANSFER 2

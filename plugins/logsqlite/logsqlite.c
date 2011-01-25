@@ -18,7 +18,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <stdint.h>
+#include <glib.h>
+
 #include <stdlib.h>
 
 #include "ekg2-config.h"
@@ -532,7 +533,7 @@ QUERY(logsqlite_msg_handler)
 	char	    **__uid = va_arg(ap, char**),	 *uid = *__uid;
 	char	 ***__rcpts = va_arg(ap, char***),    **rcpts = *__rcpts;
 	char	   **__text = va_arg(ap, char**),	*text = *__text;
-	uint32_t **__format = va_arg(ap, uint32_t**), *format = *__format;
+	guint32 **__format = va_arg(ap, guint32**), *format = *__format;
 	time_t	    *__sent = va_arg(ap, time_t*),	 sent = *__sent;
 	int	   *__class = va_arg(ap, int*),		class = *__class;
 	session_t *s = session_find((const char*)session);

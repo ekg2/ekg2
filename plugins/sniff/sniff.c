@@ -21,6 +21,8 @@
 #include "ekg2-config.h"
 
 #define _GNU_SOURCE
+#include <glib.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -63,10 +65,10 @@ PLUGIN_DEFINE(sniff, PLUGIN_PROTOCOL, sniff_theme_init);
 
 typedef struct {
 	struct in_addr srcip;
-	uint16_t srcport;
+	guint16 srcport;
 
 	struct in_addr dstip;
-	uint16_t dstport;
+	guint16 dstport;
 } connection_t;
 
 static char *build_code(const unsigned char *code) {
@@ -89,14 +91,14 @@ static char *build_sha1(const unsigned char *digest) {
 	return &result[0];
 }
 
-static char *build_hex(uint32_t hex) {
+static char *build_hex(guint32 hex) {
 	static char buf[20];
 
 	sprintf(buf, "0x%x", hex);
 	return buf;
 }
 
-static char *build_hex2(uint32_t hex) {
+static char *build_hex2(guint32 hex) {
 	static char buf[20];
 
 	sprintf(buf, "0x%x", hex);
@@ -435,7 +437,7 @@ static inline void sniff_loop_ip(session_t *s, int len, const u_char *packet) {
 
 static inline void sniff_loop_ether(u_char *data, const struct pcap_pkthdr *header, const u_char *packet) {
 	const struct ethhdr *ethernet;
-	uint16_t ethtype;		/* ntohs(ethernet->ether_type) */
+	guint16 ethtype;		/* ntohs(ethernet->ether_type) */
 
 	if (header->caplen < sizeof(struct ethhdr)) {
 		debug_error("sniff_loop_ether() %x %x\n", header->caplen, sizeof(struct ethhdr));
@@ -455,7 +457,7 @@ static inline void sniff_loop_ether(u_char *data, const struct pcap_pkthdr *head
 
 void sniff_loop_sll(u_char *data, const struct pcap_pkthdr *header, const u_char *packet) {
 	const struct sll_header *sll;
-	uint16_t ethtype;
+	guint16 ethtype;
 
 	if (header->caplen < sizeof(struct sll_header)) {
 		debug_error("sniff_loop_ssl() %x %x\n", header->caplen, sizeof(struct sll_header));

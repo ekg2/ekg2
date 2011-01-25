@@ -3,6 +3,8 @@
 #define __EXTENSIONS__
 #endif
 
+#include <glib.h>
+
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/scripts.h>
@@ -149,7 +151,7 @@ void ekg2_bless_window(HV *hv, window_t *window)
 
 }
 
-static inline char *inet_ntoa_u(uint32_t ip) {
+static inline char *inet_ntoa_u(guint32 ip) {
 	struct in_addr in;
 	in.s_addr = ip;
 	return inet_ntoa(in);

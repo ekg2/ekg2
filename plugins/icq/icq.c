@@ -132,7 +132,7 @@ int icq_write_status_msg(session_t *s) {
 
 int icq_write_status(session_t *s) {
 	icq_private_t *j = s->priv;
-	uint32_t status;
+	guint32 status;
 
 	if (!s || !s->connected)
 		return 0;
@@ -217,7 +217,7 @@ int icq_write_info(session_t *s) {
 void icq_set_security(session_t *s) {
 	icq_private_t *j;
 	string_t pkt;
-	uint8_t webaware;
+	guint8 webaware;
 
 	if (!s || !(j = s->priv))
 		return;
@@ -284,7 +284,7 @@ void icq_session_connected(session_t *s) {
 	{
 		string_t pkt;
 		string_t tlv_c;
-		uint32_t cookie, status;
+		guint32 cookie, status;
 
 		cookie = rand() <<16 | rand();
 		status = (j->status_flags << 16) | icq_status(s->status);
@@ -296,17 +296,17 @@ void icq_session_connected(session_t *s) {
 
 		/* TLV C: Direct connection info */
 		tlv_c = string_init(NULL);
-		icq_pack_append(tlv_c, "I", (uint32_t) 0x00000000);	/* XXX, getSettingDword(NULL, "RealIP", 0) */
-		icq_pack_append(tlv_c, "I", (uint32_t) 0x00000000);	/* XXX, nPort */
+		icq_pack_append(tlv_c, "I", (guint32) 0x00000000);	/* XXX, getSettingDword(NULL, "RealIP", 0) */
+		icq_pack_append(tlv_c, "I", (guint32) 0x00000000);	/* XXX, nPort */
 		icq_pack_append(tlv_c, "C", DC_NORMAL);			/* Normal direct connection (without proxy/firewall) */
 		icq_pack_append(tlv_c, "W", ICQ_VERSION);		/* Protocol version */
 		icq_pack_append(tlv_c, "I", cookie);			/* DC Cookie */
 		icq_pack_append(tlv_c, "I", WEBFRONTPORT);		/* Web front port */
 		icq_pack_append(tlv_c, "I", CLIENTFEATURES);		/* Client features*/
-		icq_pack_append(tlv_c, "I", (uint32_t) 0xffffffff);	/* gbUnicodeCore ? 0x7fffffff : 0xffffffff */ /* Abused timestamp */
-		icq_pack_append(tlv_c, "I", (uint32_t) 0x80050003);	/* Abused timestamp */
-		icq_pack_append(tlv_c, "I", (uint32_t) 0x00000000);	/* XXX, Timestamp */
-		icq_pack_append(tlv_c, "W", (uint32_t) 0x0000);		/* Unknown */
+		icq_pack_append(tlv_c, "I", (guint32) 0xffffffff);	/* gbUnicodeCore ? 0x7fffffff : 0xffffffff */ /* Abused timestamp */
+		icq_pack_append(tlv_c, "I", (guint32) 0x80050003);	/* Abused timestamp */
+		icq_pack_append(tlv_c, "I", (guint32) 0x00000000);	/* XXX, Timestamp */
+		icq_pack_append(tlv_c, "W", (guint32) 0x0000);		/* Unknown */
 
 		icq_pack_append(pkt, "T", icq_pack_tlv(0x0C, tlv_c->str, tlv_c->len));
 
@@ -320,8 +320,8 @@ void icq_session_connected(session_t *s) {
 			char *mood = saprintf("icqmood%d", j->xstatus - 1);
 
 			string_t tlv_1d = icq_pack("WCC",
-						(uint32_t) 0x0e,	// item type
-						(uint32_t) 0,		// item flags
+						(guint32) 0x0e,	// item type
+						(guint32) 0,		// item flags
 						xstrlen(mood));
 			string_append(tlv_1d, mood);
 
@@ -336,7 +336,7 @@ void icq_session_connected(session_t *s) {
 	}
 
 	/* SNAC(1,0x11) - Set idle time */
-	icq_send_snac(s, 0x01, 0x11, NULL, NULL, "I", (uint32_t) 0);
+	icq_send_snac(s, 0x01, 0x11, NULL, NULL, "I", (guint32) 0);
 
 	/* j->idleAllow = 0; */
 
@@ -347,17 +347,17 @@ void icq_session_connected(session_t *s) {
 	icq_send_snac(s, 0x01, 0x02, NULL, NULL,
 			"WWWW WWWW WWWW WWWW WWWW WWWW WWWW WWWW WWWW WWWW WWWW",
 			/* family number, family version, family tool id, family tool version */
-			(uint32_t) 0x01, (uint32_t) 0x04, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x02, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x03, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x04, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x06, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x09, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x0a, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x0b, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x13, (uint32_t) 0x04, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x15, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b,
-			(uint32_t) 0x22, (uint32_t) 0x01, (uint32_t) 0x0110, (uint32_t) 0x161b
+			(guint32) 0x01, (guint32) 0x04, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x02, (guint32) 0x01, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x03, (guint32) 0x01, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x04, (guint32) 0x01, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x06, (guint32) 0x01, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x09, (guint32) 0x01, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x0a, (guint32) 0x01, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x0b, (guint32) 0x01, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x13, (guint32) 0x04, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x15, (guint32) 0x01, (guint32) 0x0110, (guint32) 0x161b,
+			(guint32) 0x22, (guint32) 0x01, (guint32) 0x0110, (guint32) 0x161b
 			);
 
 	debug_ok(" *** Yeehah, login sequence complete\n");
@@ -432,18 +432,18 @@ void icq_session_connected(session_t *s) {
 			icq_send_snac(s, 0x13, 0x08, 0, 0,		// SSI edit: add item(s)
 					"U WW W W WWW",
 					j->default_group_name,		// default group name
-					(uint16_t) j->default_group_id, // Group#
-					(uint16_t) 0,			// Item#
-					(uint16_t) 1,			// Group record
-					(uint16_t) 6,			// Length of the additional data
-					(uint16_t) 0xc8, (uint16_t) 2, (uint16_t) 0	// tlv(0xc8) (len=2, val=0)
+					(guint16) j->default_group_id, // Group#
+					(guint16) 0,			// Item#
+					(guint16) 1,			// Group record
+					(guint16) 6,			// Length of the additional data
+					(guint16) 0xc8, (guint16) 2, (guint16) 0	// tlv(0xc8) (len=2, val=0)
 					);
 			icq_send_snac(s, 0x13, 0x12, 0, 0, "");	// Contacts edit end (finish transaction)
 		}
 	}
 }
 
-static uint32_t icq_get_uid(session_t *s, const char *target) {
+static guint32 icq_get_uid(session_t *s, const char *target) {
 	const char *uid;
 	char *first_invalid = NULL;
 	long int uin;
@@ -545,8 +545,8 @@ static QUERY(icq_typing_out) {
 	const char *uid		= *va_arg(ap, const char **);
 	const int len		= *va_arg(ap, const int *);
 	int first		= *va_arg(ap, const int *);
-	uint32_t q1 = rand(), q2 = rand();
-	uint16_t typing = 0;
+	guint32 q1 = rand(), q2 = rand();
+	guint16 typing = 0;
 
 	session_t *s = session_find(session);
 
@@ -560,7 +560,7 @@ static QUERY(icq_typing_out) {
 		typing = (first == 1) ? 2 : 1;
 
 	icq_send_snac(s, 0x04, 0x14, NULL, NULL,
-			"iiWsW", q1, q2, (uint16_t) 1, uid + 4, typing);
+			"iiWsW", q1, q2, (guint16) 1, uid + 4, typing);
 
 	return 0;
 }
@@ -579,8 +579,8 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 	if (s->connected) {
 		/* XXX ?wo? recode & length check */
 		str = icq_pack("WC C U",
-			    (uint32_t) 2, (uint32_t) 4,		/* avatar type & flags -- offline message */
-			    (uint32_t) xstrlen(__reason) + 2,	/* length of message part */
+			    (guint32) 2, (guint32) 4,		/* avatar type & flags -- offline message */
+			    (guint32) xstrlen(__reason) + 2,	/* length of message part */
 			    __reason				/* message */
 			    );
 		icq_send_snac(s, 0x01, 0x1e, 0, 0,		/* Set status (set location info) */
@@ -790,8 +790,8 @@ static COMMAND(icq_command_addssi) {
 	userlist_t *u;
 	icq_private_t *j;
 	private_data_t *refdata = NULL;
-	uint32_t uid;
-	uint16_t group, iid;
+	guint32 uid;
+	guint16 group, iid;
 	int i, ok=0;
 	char *nickname = NULL, *phone = NULL, *email = NULL, *comment = NULL;
 
@@ -875,7 +875,7 @@ static COMMAND(icq_command_addssi) {
 	if ((cmd_add && nickname) || (!cmd_add && ok)) {
 		/* send packets */
 		string_t buddies, data;
-		uint16_t min = 0xffff, max = 0, count = 0;
+		guint16 min = 0xffff, max = 0, count = 0;
 
 		buddies = string_init(NULL);
 		for (u = session->userlist; u; u = u->next) {
@@ -948,9 +948,9 @@ static COMMAND(icq_command_addssi) {
 				"U WWW WA",
 				target+4,				// item name (uin)
 				group,					// Group#
-				(uint16_t) iid,				// Item#
-				(uint16_t) 0,				// Type of item: 0 -- Buddy record
-				(uint16_t) data->len,			// Length of the additional data
+				(guint16) iid,				// Item#
+				(guint16) 0,				// Type of item: 0 -- Buddy record
+				(guint16) data->len,			// Length of the additional data
 				data
 				);
 		}
@@ -968,9 +968,9 @@ static COMMAND(icq_command_addssi) {
 				"U WWWW T",
 				j->default_group_name,			// default group name
 				group,					// Group#
-				(uint16_t) 0,				// Item#
-				(uint16_t) 1,				// Group record
-				(uint16_t) buddies->len + 4,		// Length of the additional data
+				(guint16) 0,				// Item#
+				(guint16) 1,				// Group record
+				(guint16) buddies->len + 4,		// Length of the additional data
 				icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
 				);
 		} else {
@@ -978,9 +978,9 @@ static COMMAND(icq_command_addssi) {
 				"U WWW WA",
 /*XXX*/				itoa(uid),				// item name (uin)
 				group,					// Group#
-				(uint16_t) iid,				// Item#
-				(uint16_t) 0,				// Type of item: 0 -- Buddy record
-				(uint16_t) data->len,			// Length of the additional data
+				(guint16) iid,				// Item#
+				(guint16) 0,				// Type of item: 0 -- Buddy record
+				(guint16) data->len,			// Length of the additional data
 				data
 				);
 		}
@@ -1000,9 +1000,9 @@ static COMMAND(icq_command_delssi) {
 	userlist_t *u;
 	icq_private_t *j;
 	private_data_t *refdata = NULL;
-	uint32_t u_id;
-	uint16_t iid = 0;
-	uint16_t group;
+	guint32 u_id;
+	guint16 iid = 0;
+	guint16 group;
 	string_t buddies;
 	int i;
 
@@ -1040,9 +1040,9 @@ static COMMAND(icq_command_delssi) {
 			"U WWW W",
 /*XXX*/			itoa(u_id),				// item name (uin)
 			group,					// Group#
-			(uint16_t) iid,				// Item#
-			(uint16_t) 0,				// Type of item: 0 -- Buddy record
-			(uint16_t) 0				// Length of the additional data
+			(guint16) iid,				// Item#
+			(guint16) 0,				// Type of item: 0 -- Buddy record
+			(guint16) 0				// Length of the additional data
 			);
 
 	buddies = string_init(NULL);
@@ -1058,9 +1058,9 @@ static COMMAND(icq_command_delssi) {
 			"U WWWW T",
 			j->default_group_name,			// default group name
 			group,					// Group#
-			(uint16_t) 0,				// Item#
-			(uint16_t) 1,				// Group record
-			(uint16_t) buddies->len + 4,		// Length of the additional data
+			(guint16) 0,				// Item#
+			(guint16) 1,				// Group record
+			(guint16) buddies->len + 4,		// Length of the additional data
 			icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
 			);
 
@@ -1076,7 +1076,7 @@ static void icq_send_msg_ch1(session_t *session, const char *uid, const char *me
 	string_t pkt;
 	string_t tlv_2, tlv_101;
 	userlist_t *u = userlist_find(session, uid);
-	uint16_t enc = 0;	/* ASCII */
+	guint16 enc = 0;	/* ASCII */
 	const char *tmp = message;
 
 	while (*tmp) {
@@ -1108,7 +1108,7 @@ static void icq_send_msg_ch1(session_t *session, const char *uid, const char *me
 	string_free(tlv_101, 1);
 
 	/* main packet */
-	pkt = icq_pack("iiWs", (uint32_t) rand(), (uint32_t) rand(), 1, uid+4);	// msgid1, msgid2, channel, recipient
+	pkt = icq_pack("iiWs", (guint32) rand(), (guint32) rand(), 1, uid+4);	// msgid1, msgid2, channel, recipient
 	icq_pack_append(pkt, "TTT",
 				icq_pack_tlv(0x02, tlv_2->str, tlv_2->len),	/* TLV(2) message-block */
 				icq_pack_tlv(0x03, NULL, 0),			/* TLV(3) server-ack */
@@ -1124,7 +1124,7 @@ static void icq_send_msg_ch1(session_t *session, const char *uid, const char *me
 
 static void icq_send_msg_ch2(session_t *session, const char *uid, const char *message) {
 	string_t pkt, t5, t2711;
-	uint32_t msgid1 = rand(), msgid2 = rand();
+	guint32 msgid1 = rand(), msgid2 = rand();
 	int prio = 1;
 	icq_private_t *j = session->priv;
 	int cookie = j->snac_seq++;
@@ -1159,7 +1159,7 @@ static void icq_send_msg_ch2(session_t *session, const char *uid, const char *me
 }
 
 static COMMAND(icq_command_msg) {
-	uint32_t uin;
+	guint32 uin;
 	char *uid;
 	userlist_t *u;
 
@@ -1373,7 +1373,7 @@ static COMMAND(icq_command_reconnect) {
 
 static COMMAND(icq_command_userinfo) {
 	string_t pkt;
-	uint32_t number;
+	guint32 number;
 	int minimal_req = 0;	/* XXX */
 	private_data_t *ref_data = NULL;
 
@@ -1407,7 +1407,7 @@ static COMMAND(icq_command_userinfo) {
 
 static COMMAND(icq_command_searchuin) {
 	string_t pkt;
-	uint32_t uin;
+	guint32 uin;
 
 	debug_function("icq_command_searchuin() %s\n", params[0]);
 
@@ -1499,8 +1499,8 @@ static COMMAND(icq_command_search) {
 
 #define wo_idnhtni(type, str) \
 	{ \
-		uint32_t len = xstrlen(str); \
-		icq_pack_append(pkt, "www", (uint32_t) type, len+3, len+1); \
+		guint32 len = xstrlen(str); \
+		icq_pack_append(pkt, "www", (guint32) type, len+3, len+1); \
 		string_append_raw(pkt, (char *) str, len+1); \
 	}
 
@@ -1553,7 +1553,7 @@ static COMMAND(icq_command_search) {
 }
 
 static COMMAND(icq_command_auth) {
-	uint32_t number;
+	guint32 number;
 	const char *reason = NULL;
 
 	if (match_arg(params[0], 'l', "list", 2)) {
@@ -1589,7 +1589,7 @@ static COMMAND(icq_command_auth) {
 			reason = "Please add me.";
 
 		icq_send_snac(session, 0x13, 0x18, 0, 0,
-				"uUW", number, reason, (uint32_t) 0x00);
+				"uUW", number, reason, (guint32) 0x00);
 
 		return 0;
 	}
@@ -1605,7 +1605,7 @@ static COMMAND(icq_command_auth) {
 		int auth = (match_arg(params[0], 'a', "accept", 2) != 0);
 
 		icq_send_snac(session, 0x13, 0x1a, 0, 0,
-				"ucUW", number, (uint32_t) auth, reason ? reason : "", (uint32_t) 0x00);
+				"ucUW", number, (guint32) auth, reason ? reason : "", (guint32) 0x00);
 		return 0;
 	}
 

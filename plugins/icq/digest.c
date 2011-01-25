@@ -28,10 +28,11 @@
  */
 
 #include "ekg2-config.h"
+
+#include <glib.h>
+
 #include <ekg/win32.h>
 #include <ekg/debug.h>
-
-#include <stdint.h>
 
 #include <ekg/stuff.h>
 #include <ekg/xmalloc.h>
@@ -40,13 +41,13 @@
 #include <string.h>
 
 typedef struct {
-    uint32_t state[4];
-    uint32_t count[2];
+    guint32 state[4];
+    guint32 count[2];
     unsigned char buffer[64];
 } EKG2_MD5_CTX;
 
 static void Init(EKG2_MD5_CTX* context);
-static void Transform(uint32_t state[4], unsigned char buffer[64]);
+static void Transform(guint32 state[4], unsigned char buffer[64]);
 static void Update(EKG2_MD5_CTX* context, unsigned char* data, unsigned int len);
 static void Final(unsigned char digest[20], EKG2_MD5_CTX* context);
 
@@ -62,16 +63,16 @@ static void Final(unsigned char digest[20], EKG2_MD5_CTX* context);
 #define H(x, y, z) ((x) ^ (y) ^ (z))
 #define I(x, y, z) ((y) ^ ((x) | (~z)))
 
-#define FF(a, b, c, d, x, s, ac) { (a) += F ((b), (c), (d)) + (x) + (uint32_t)(ac); (a) = rol((a), (s)); (a) += (b); }
-#define GG(a, b, c, d, x, s, ac) { (a) += G ((b), (c), (d)) + (x) + (uint32_t)(ac); (a) = rol((a), (s)); (a) += (b); }
-#define HH(a, b, c, d, x, s, ac) { (a) += H ((b), (c), (d)) + (x) + (uint32_t)(ac); (a) = rol((a), (s)); (a) += (b); }
-#define II(a, b, c, d, x, s, ac) { (a) += I ((b), (c), (d)) + (x) + (uint32_t)(ac); (a) = rol((a), (s)); (a) += (b); }
+#define FF(a, b, c, d, x, s, ac) { (a) += F ((b), (c), (d)) + (x) + (guint32)(ac); (a) = rol((a), (s)); (a) += (b); }
+#define GG(a, b, c, d, x, s, ac) { (a) += G ((b), (c), (d)) + (x) + (guint32)(ac); (a) = rol((a), (s)); (a) += (b); }
+#define HH(a, b, c, d, x, s, ac) { (a) += H ((b), (c), (d)) + (x) + (guint32)(ac); (a) = rol((a), (s)); (a) += (b); }
+#define II(a, b, c, d, x, s, ac) { (a) += I ((b), (c), (d)) + (x) + (guint32)(ac); (a) = rol((a), (s)); (a) += (b); }
 
 /* Hash a single 512-bit block. This is the core of the algorithm. */
 
-static void Transform(uint32_t state[4], unsigned char buffer[64]) {
-	uint32_t *block = (uint32_t *) buffer;
-	uint32_t a, b, c, d;
+static void Transform(guint32 state[4], unsigned char buffer[64]) {
+	guint32 *block = (guint32 *) buffer;
+	guint32 a, b, c, d;
 
 	/* Copy context->state[] to working vars */
 	a = state[0];
@@ -208,7 +209,7 @@ static void Update(EKG2_MD5_CTX* context, unsigned char* data, unsigned int len)
 	memcpy(&context->buffer[j], &data[i], len - i);
 }
 
-static void Encode (unsigned char *output, uint32_t *input, unsigned int len) {
+static void Encode (unsigned char *output, guint32 *input, unsigned int len) {
 	unsigned int i, j;
 
 	for (i = 0, j = 0; j < len; i++, j += 4) {
@@ -223,7 +224,7 @@ static void Encode (unsigned char *output, uint32_t *input, unsigned int len) {
 
 static void Final(unsigned char digest[16], EKG2_MD5_CTX* context) {
 	unsigned char finalcount[8];
-	uint32_t i;
+	guint32 i;
 
 	Encode(finalcount, context->count, 8);
 

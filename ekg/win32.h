@@ -16,9 +16,9 @@
 #endif
 
 #if 0
-	typedef unsigned long uint32_t;
-	typedef unsigned short uint16_t;
-	typedef unsigned char uint8_t;
+	typedef unsigned long guint32;
+	typedef unsigned short guint16;
+	typedef unsigned char guint8;
 #endif
 
 #include <windef.h>

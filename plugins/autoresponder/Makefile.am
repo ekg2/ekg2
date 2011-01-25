@@ -3,7 +3,7 @@ EXTRA_DIST = vars-pl.txt vars-en.txt
 lib_LTLIBRARIES = autoresponder.la
 autoresponder_la_SOURCES = autoresponder.c
 autoresponder_la_LDFLAGS = -module -avoid-version
-autoresponder_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
+autoresponder_la_CFLAGS = $(C_FVISIBILITY) $(GLIB_CFLAGS) $(AM_CFLAGS)
 
 INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)

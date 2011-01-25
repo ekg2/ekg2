@@ -1,17 +1,17 @@
 #ifndef __ICQ_MISC_H
 #define __ICQ_MISC_H
 
-#include <stdint.h>
+#include <glib.h>
 
 #include <ekg/dynstuff.h>
 
 typedef struct icq_tlv_list {
 	struct icq_tlv_list *next;
 
-	uint16_t type;
-	uint16_t len;
+	guint16 type;
+	guint16 len;
 
-	uint32_t nr;
+	guint32 nr;
 	unsigned char *buf;
 } icq_tlv_t;
 
@@ -35,20 +35,20 @@ int icq_unpack_nc(unsigned char *buf, int len, char *format, ...);
 string_t icq_pack(char *format, ...);
 string_t icq_pack_append(string_t str, char *format, ...);
 
-#define icq_pack_tlv(type, data, datalen)	(uint32_t) type, (uint32_t) datalen, (uint8_t *) data
-#define icq_pack_tlv_char(type, data)		(uint32_t) type, (uint32_t) 1, (uint32_t) data
-#define icq_pack_tlv_word(type, data)		(uint32_t) type, (uint32_t) 2, (uint32_t) data
-#define icq_pack_tlv_dword(type, data)		(uint32_t) type, (uint32_t) 4, (uint32_t) data
+#define icq_pack_tlv(type, data, datalen)	(guint32) type, (guint32) datalen, (guint8 *) data
+#define icq_pack_tlv_char(type, data)		(guint32) type, (guint32) 1, (guint32) data
+#define icq_pack_tlv_word(type, data)		(guint32) type, (guint32) 2, (guint32) data
+#define icq_pack_tlv_dword(type, data)		(guint32) type, (guint32) 4, (guint32) data
 #define icq_pack_tlv_str(type, str)		icq_pack_tlv(type, str, xstrlen(str))
 
 struct icq_tlv_list *icq_unpack_tlvs(unsigned char **str, int *maxlen, unsigned int maxcount);
 struct icq_tlv_list *icq_unpack_tlvs_nc(unsigned char *str, int maxlen, unsigned int maxcount);
-icq_tlv_t *icq_tlv_get(struct icq_tlv_list *l, uint16_t type);
+icq_tlv_t *icq_tlv_get(struct icq_tlv_list *l, guint16 type);
 void icq_tlvs_destroy(struct icq_tlv_list **list);
 
 void icq_hexdump(int level, unsigned char *p, size_t len);
 char *icq_encryptpw(const char *pw);
-uint16_t icq_status(int status);
+guint16 icq_status(int status);
 
 #define ICQ_UNPACK(endbuf, args...) (icq_unpack(buf, endbuf, &len, args))
 
@@ -75,7 +75,7 @@ char *icq_convert_from_ucs2be(char *buf, int len);
 string_t icq_convert_to_ucs2be(char *text);
 char *icq_convert_from_utf8(char *text);
 
-void icq_send_snac(session_t *s, uint16_t family, uint16_t cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...);
+void icq_send_snac(session_t *s, guint16 family, guint16 cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...);
 
 void icq_rates_destroy(session_t *s);
 void icq_rates_init(session_t *s, int n_rates);

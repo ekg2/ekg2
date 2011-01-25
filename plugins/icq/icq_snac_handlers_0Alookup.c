@@ -42,7 +42,7 @@ SNAC_SUBHANDLER(icq_snac_lookup_error) {
 	 * This is an error notification snac. You'll receive it when search fails.
 	 */
 	struct {
-		uint16_t error;
+		guint16 error;
 	} pkt;
 
 	if (!ICQ_UNPACK(&buf, "W", &pkt.error))

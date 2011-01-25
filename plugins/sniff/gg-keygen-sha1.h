@@ -24,7 +24,7 @@
 #define S4(v,w,x,y,z,i) z+=(w^x^y)+0xCA62C1D6+rol(v,5);w=rol(w,30);
 
 /* XXX, ?SHA-1 Broken?, XXX */
-static inline int gg_login_sha1hash(const unsigned char *password, const size_t passlen, const uint32_t seed, const uint32_t *dig) {
+static inline int gg_login_sha1hash(const unsigned char *password, const size_t passlen, const guint32 seed, const guint32 *dig) {
 #define SHA_STATE0 0x67452301
 #define SHA_STATE1 0xEFCDAB89
 #define SHA_STATE2 0x98BADCFE
@@ -36,11 +36,11 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 
 /* SHA1Init() */
     /* SHA1 initialization constants */
-	uint32_t a = SHA_STATE0;
-	uint32_t b = SHA_STATE1;
-	uint32_t c = SHA_STATE2;
-	uint32_t d = SHA_STATE3;
-	uint32_t e = SHA_STATE4;
+	guint32 a = SHA_STATE0;
+	guint32 b = SHA_STATE1;
+	guint32 c = SHA_STATE2;
+	guint32 d = SHA_STATE3;
+	guint32 e = SHA_STATE4;
 
 	/* XXX, it's optimized but it'll work only for short passwords, shorter than 63-4-7 */
 	{
@@ -69,7 +69,7 @@ static inline int gg_login_sha1hash(const unsigned char *password, const size_t 
 	{
 		typedef union {
 			unsigned char c[64];
-			uint32_t l[16];
+			guint32 l[16];
 		} CHAR64LONG16;
 
 		CHAR64LONG16* block = (CHAR64LONG16*) buffer;

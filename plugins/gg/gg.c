@@ -22,6 +22,8 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -763,7 +765,7 @@ static void gg_session_handler_disconnect(session_t *s) {
  *
  * obs³uga zmiany stanu przez u¿ytkownika.
  */
-static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, uint32_t ip, uint16_t port, int protocol) {
+static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, guint32 ip, guint16 port, int protocol) {
 	char *__uid	= saprintf(("gg:%d"), uin);
 	char *__descr	= gg_to_locale(s, xstrdup(descr));
 	int i, j, dlen, state = 0, m = 0;
@@ -830,7 +832,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 
 	char *__sender, **__rcpts = NULL;
 	char *__text;
-	uint32_t *__format = NULL;
+	guint32 *__format = NULL;
 	int image = 0, check_inv = 0;
 	int i;
 
@@ -888,13 +890,13 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 		if (skip)
 			debug_white(" <- skipping");
 		else
-			__format = xcalloc(len, sizeof(uint32_t));
+			__format = xcalloc(len, sizeof(guint32));
 		debug_white("\n");
 
 /* XXX, check it. especially this 'pos' */
 		if (!skip) for (i = 0; i < e->event.msg.formats_length; ) {
 			int j, pos = p[i] + p[i + 1] * 256;
-			uint32_t val = 0;
+			guint32 val = 0;
 
 			if ((p[i + 2] & GG_FONT_IMAGE))	{
 				struct gg_msg_richtext_image *img = (void *) &p[i+3];

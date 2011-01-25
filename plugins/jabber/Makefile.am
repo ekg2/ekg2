@@ -7,7 +7,7 @@ jabber_la_SOURCES = jabber.c commands.c misc.c digest.c xmlnode.c jabber_dcc.c j
 jabber_la_LDFLAGS = -module -avoid-version
 jabber_la_LIBADD = $(EXPAT_LIBS) $(JABBER_SSL_LIBS) $(ZLIB_LIBS)
 jabber_la_CPPFLAGS = $(EXPAT_CPPFLAGS) $(JABBER_SSL_CPPFLAGS) $(AM_CPPFLAGS)
-jabber_la_CFLAGS = $(C_FVISIBILITY) $(AM_CFLAGS)
+jabber_la_CFLAGS = $(C_FVISIBILITY) $(GLIB_CFLAGS) $(AM_CFLAGS)
 
 INCLUDES = -I$(top_srcdir)
 override libdir = $(plugindir)
