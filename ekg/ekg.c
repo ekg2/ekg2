@@ -383,10 +383,8 @@ void ekg_loop() {
 						if (!s->connected || !s->autoaway)
 							continue;
 
-						if (session_int_get(s, "auto_back") != 2)
-							continue;
-
-						command_exec(NULL, s, ("/_autoback"), 2);
+						if (session_int_get(s, "auto_back") == 2)
+							command_exec(NULL, s, ("/_autoback"), 2);
 					}
 				}
 				if (!w->buf) {

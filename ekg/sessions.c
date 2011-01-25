@@ -1057,7 +1057,7 @@ int session_unidle(session_t *s)
 
 	s->activity = time(NULL);
 
-	if (s->autoaway)
+	if (s->autoaway && session_int_get(s, "auto_back") == 1)
 		command_exec(NULL, s, ("/_autoback"), 0);
 
 	return 0;
