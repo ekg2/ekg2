@@ -2176,9 +2176,9 @@ char *base64_encode(const char *buf, size_t len)
  */
 char *base64_decode(const char *buf)
 {
-	gsize buflen;
+	size_t buflen;
 
-	if (!buf || *buf)
+	if (!buf || !(buflen = xstrlen(buf)))
 		return NULL;
 
 	return (char*) g_base64_decode(buf, &buflen);
