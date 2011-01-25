@@ -20,6 +20,8 @@
 #ifndef __EKG_VARS_H
 #define __EKG_VARS_H
 
+#include <glib.h>
+
 #include "dynstuff.h"
 #include "plugins.h"
 
@@ -48,8 +50,6 @@ typedef void (variable_check_func_t)(const char *, const char *);
 typedef int (variable_display_func_t)(const char *);
 
 typedef struct variable {
-	struct variable *next;
-
 	char *name;		/* nazwa zmiennej */
 	plugin_t *plugin;	/* wstyczka obs³uguj±ca zmienn± */
 	int name_hash;		/* hash nazwy zmiennej */
@@ -69,7 +69,7 @@ typedef struct variable {
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-extern variable_t *variables;
+extern GSList *variables;
 
 void variable_init();
 void variable_set_default();
@@ -91,7 +91,7 @@ int variable_set(const char *name, const char *value);
 void variable_help(const char *name);
 int variable_remove(plugin_t *plugin, const char *name);
 
-variable_t *variables_removei(variable_t *v);
+void variables_removei(variable_t *v);
 void variables_destroy();
 
 #endif

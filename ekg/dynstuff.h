@@ -22,6 +22,8 @@
 #ifndef __EKG_DYNSTUFF_H
 #define __EKG_DYNSTUFF_H
 
+#include <glib.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -207,6 +209,9 @@ void private_item_set(private_data_t **data, const char *item_name, const char *
 void private_item_set_int(private_data_t **data, const char *item_name, int value);
 
 void private_items_destroy(private_data_t **data);
+
+GSList *g_slist_destroy_full(GSList *list, GDestroyNotify free_func);
+GSList *g_slist_remove_full(GSList *list, void *data, GDestroyNotify free_func);
 
 #ifdef __cplusplus
 }

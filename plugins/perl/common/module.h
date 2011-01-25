@@ -7,6 +7,8 @@
 #define __EXTENSIONS__
 #endif
 
+#include <glib.h>
+
 #include <ekg/scripts.h>
 
 #include <ekg/debug.h>

@@ -7,10 +7,10 @@ Ekg2::Variable variable_find(const char *name)
 
 void variables()
 PREINIT:
-        variable_t *v;
+        GSList *vl;
 PPCODE:
-        for (v = variables; v; v = v->next) {
-                XPUSHs(sv_2mortal(bless_variable( v )));
+        for (vl = variables; vl; vl = vl->next) {
+                XPUSHs(sv_2mortal(bless_variable( (variable_t *) vl->data )));
         }
 
 void variables_free()

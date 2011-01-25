@@ -19,6 +19,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include <glib.h>
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1496,6 +1498,24 @@ void private_item_set(private_data_t **data, const char *item_name, const char *
 
 void private_item_set_int(private_data_t **data, const char *item_name, int value) {
 	private_item_set(data, item_name, value?itoa(value):NULL);
+}
+
+GSList *g_slist_destroy_full(GSList *list, GDestroyNotify free_func) {
+#if GLIB_CHECK_VERSION(2, 28, 0)
+	g_slist_free_full(list, free_func);
+#else
+	GSList *it;
+
+	for (it = list; it; it = it->next)
+		free_func(it->data);
+	g_slist_free(list);
+#endif
+	return NULL;
+}
+
+GSList *g_slist_remove_full(GSList *list, void *data, GDestroyNotify free_func) {
+	free_func(data);
+	return g_slist_remove(list, data);
 }
 
 /*

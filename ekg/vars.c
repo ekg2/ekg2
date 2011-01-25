@@ -23,6 +23,8 @@
 #include "ekg2-config.h"
 #include "win32.h"
 
+#include <glib.h>
+
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,10 +50,18 @@
 void changed_session_locks(const char *varname); /* sessions.c */
 char *console_charset;
 
-static LIST_ADD_COMPARE(variable_add_compare, variable_t *) { return xstrcasecmp(data1->name, data2->name); }
-static __DYNSTUFF_LIST_ADD_SORTED(variables, variable_t, variable_add_compare);	/* variables_add() */
+GSList *variables = NULL;
 
-variable_t *variables = NULL;
+static gint variable_compare(gconstpointer a, gconstpointer b) {
+	variable_t *data1 = (variable_t *) a;
+	variable_t *data2 = (variable_t *) b;
+
+	return xstrcasecmp(data1->name, data2->name);
+}
+
+static void variables_add(variable_t *v) {
+	variables = g_slist_insert_sorted(variables, v, variable_compare);
+}
 
 /*
  * dd_*()
@@ -204,7 +214,7 @@ void variable_set_default() {
  * - name.
  */
 variable_t *variable_find(const char *name) {
-	variable_t *v;
+	GSList *vl;
 	int hash;
 
 	if (!name)
@@ -212,7 +222,8 @@ variable_t *variable_find(const char *name) {
 
 	hash = variable_hash(name);
 
-	for (v = variables; v; v = v->next) {
+	for (vl = variables; vl; vl = vl->next) {
+		variable_t *v = vl->data;
 		if (v->name_hash == hash && !xstrcasecmp(v->name, name))
 			return v;
 	}
@@ -302,14 +313,15 @@ variable_t *variable_add(plugin_t *plugin, const char *name, int type, int displ
  */
 int variable_remove(plugin_t *plugin, const char *name) {
 	int hash;
-	variable_t *v;
+	GSList *vl;
 
 	if (!name)
 		return -1;
 
 	hash = ekg_hash(name);
 
-	for (v = variables; v; v = v->next) {
+	for (vl = variables; vl; vl = vl->next) {
+		variable_t *v = vl->data;
 		if (!v->name)
 			continue;
 		
@@ -509,7 +521,9 @@ int variable_set(const char *name, const char *value) {
 	return 0;
 }
 
-LIST_FREE_ITEM(variable_list_freeone, variable_t *) {
+static void variable_free(void *_data) {
+	variable_t *data = (variable_t *) _data;
+
 	xfree(data->name);
 
 	switch (data->type) {
@@ -535,8 +549,13 @@ LIST_FREE_ITEM(variable_list_freeone, variable_t *) {
 	}
 }
 
-__DYNSTUFF_LIST_REMOVE_ITER(variables, variable_t, variable_list_freeone);	/* variables_removei() */
-__DYNSTUFF_LIST_DESTROY(variables, variable_t, variable_list_freeone);	/* variables_destroy() */
+void variables_removei(variable_t *v) {
+	variables = g_slist_remove_full(variables, v, variable_free);
+}
+
+void variables_destroy(void) {
+	variables = g_slist_destroy_full(variables, variable_free);
+}
 
 /*
  * variable_help()

@@ -19,6 +19,9 @@
  */
 
 #define _BSD_SOURCE
+
+#include <glib.h>
+
 #include <sys/stat.h>
 #include <string.h>
 #include <ctype.h>
@@ -232,9 +235,10 @@ static void plugin_generator(const char *text, int len)
 
 static void variable_generator(const char *text, int len)
 {
-	variable_t *v;
+	GSList *vl;
 
-	for (v = variables; v; v = v->next) {
+	for (vl = variables; vl; vl = vl->next) {
+		variable_t *v = vl->data;
 		if (*text == '-') {
 			if (!xstrncasecmp(text + 1, v->name, len - 1))
 				array_add_check(&completions, 

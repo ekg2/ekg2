@@ -29,6 +29,9 @@
 #define _XOPEN_SOURCE 600
 #define __EXTENSIONS__
 #endif
+
+#include <glib.h>
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -390,9 +393,10 @@ static void config_write_main(FILE *f)
 		return;
 
 	{
-		variable_t *v;
+		GSList *vl;
 
-		for (v = variables; v; v = v->next) {
+		for (vl = variables; vl; vl = vl->next) {
+			variable_t *v = vl->data;
 			if (!v->plugin)
 				config_write_variable(f, v);
 		}
@@ -520,7 +524,7 @@ int config_write()
 	/* now plugins variables */
 	for (p = plugins; p; p = p->next) {
 		const char *tmp;
-		variable_t *v;
+		GSList *vl;
 
 		if (!(tmp = prepare_pathf("config-%s", p->name)))
 			return -1;
@@ -530,7 +534,8 @@ int config_write()
 
 		fchmod(fileno(f), 0600);
 
-		for (v = variables; v; v = v->next) {
+		for (vl = variables; vl; vl = vl->next) {
+			variable_t *v = vl->data;
 			if (p == v->plugin) {
 				config_write_variable(f, v);
 			}
@@ -704,7 +709,7 @@ void config_write_crash()
 
 	/* now plugins variables */
 	for (p = plugins; p; p = p->next) {
-		variable_t *v;
+		GSList *vl;
 
 		snprintf(name, sizeof(name), "config-%s.%d", p->name, (int) getpid());
 
@@ -713,7 +718,8 @@ void config_write_crash()
 	
 		chmod(name, 0400);
 
-		for (v = variables; v; v = v->next) {
+		for (vl = variables; vl; vl = vl->next) {
+			variable_t *v = vl->data;
 			if (p == v->plugin) {
 				config_write_variable(f, v);
 			}

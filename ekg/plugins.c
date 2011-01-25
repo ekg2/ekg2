@@ -19,6 +19,8 @@
  */
 #include "win32.h"
 
+#include <glib.h>
+
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
@@ -524,7 +526,7 @@ int plugin_unregister(plugin_t *p)
 	struct timer *t;
 	session_t *s;
 	query_t **kk;
-	variable_t *v;
+	GSList *vl;
 	command_t *c;
 	list_t l;
 
@@ -564,9 +566,12 @@ int plugin_unregister(plugin_t *p)
 		}
 	}
 
-	for (v = variables; v; v = v->next) {
-		if (v->plugin == p) 
-			v = variables_removei(v);
+	for (vl = variables; vl;) {
+		variable_t *v = vl->data;
+
+		vl = vl->next;
+		if (v->plugin == p)
+			variables_removei(v);
 	}
 
 	for (c = commands; c; c = c->next) {

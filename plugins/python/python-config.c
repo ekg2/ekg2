@@ -18,6 +18,9 @@
  */
 
 #include "ekg2-config.h"
+
+#include <glib.h>
+
 #include "python.h"
 
 #include <sys/types.h>
@@ -71,13 +74,7 @@ void ekg_config_dealloc(PyObject * o)
 
 int ekg_config_len(ekg_configObj * self)
 {
-	int cnt = 0;
-	variable_t *v;
-
-	for (v = variables; v; v = v->next) {
-		cnt++;
-	}
-	return cnt;
+	return g_slist_length(variables);
 }
 
 /**
@@ -90,10 +87,11 @@ int ekg_config_len(ekg_configObj * self)
 PyObject *ekg_config_get(ekg_configObj * self, PyObject * key)
 {
     char *name = PyString_AsString(key);
-    variable_t *v;
+    GSList *vl;
     debug("[python] Getting value for '%s' config option\n", name);
 
-    for (v = variables; v; v = v->next) {
+    for (vl = variables; vl; vl = vl->next) {
+		variable_t *v = vl->data;
 		if (!strcmp(v->name, name)) {
 			if (v->type == VAR_BOOL || v->type == VAR_INT
 					|| v->type == VAR_MAP) {

@@ -410,11 +410,12 @@ static WATCHER_LINE(rc_input_handler_line) {
 
 /* synchronization ekg2-remote <==> ekg2 */
 		} else if (!xstrcmp(cmd, "REQCONFIG")) {
-			variable_t *v;
+			GSList *vl;
 
 			/* xxx, maybe send all variable which got (->display > 0) */
 
-			for (v = variables; v; v = v->next) {
+			for (vl = variables; vl; vl = vl->next) {
+				variable_t *v = vl->data;
 				const char *_val;
 
 				if (v->plugin == &remote_plugin)

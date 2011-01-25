@@ -1687,10 +1687,11 @@ static COMMAND(cmd_set)
 	}
 
 	if ((!arg || !val) && !unset) {
-		variable_t *v;
+		GSList *vl;
 		int displayed = 0;
 
-		for (v = variables; v; v = v->next) {
+		for (vl = variables; vl; vl = vl->next) {
+			variable_t *v = vl->data;
 			if ((!arg || !xstrcasecmp(arg, v->name)) && (v->display != 2 || xstrcmp(name, ("set")))) {
 				int value;
 

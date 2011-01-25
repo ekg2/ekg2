@@ -1612,10 +1612,11 @@ static COMMAND(jabber_command_private) {
 			session_t *s;
 
 			for (p = plugins; p; p = p->next) {
-				variable_t *v;
+				GSList *vl;
 				watch_write(j->send_watch, "<plugin xmlns=\"ekg2:plugin\" name=\"%s\" prio=\"%d\">", p->name, p->prio);
 back:
-				for (v = variables; v; v = v->next) {
+				for (vl = variables; vl; vl = vl->next) {
+					variable_t *v = vl->data;
 					char *vname, *tname;
 					if (v->plugin != p) continue;
 					tname = vname = jabber_escape(v->name);
