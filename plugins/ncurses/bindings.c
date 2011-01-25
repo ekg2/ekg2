@@ -413,84 +413,84 @@ static BINDING_FUNCTION(binding_complete)
 	int complete_result = 0;
 	if (!lines) {
 #if USE_UNICODE
-			int line_start_tmp, line_index_tmp;
-			char nline[LINE_MAXLEN + 1];	/* (* MB_CUR_MAX)? No, it would be anyway truncated by completion */
-			int i, j;
-			int nlen;
+		int line_start_tmp, line_index_tmp;
+		char nline[LINE_MAXLEN + 1];	/* (* MB_CUR_MAX)? No, it would be anyway truncated by completion */
+		int i, j;
+		int nlen;
 
-			line_start_tmp = line_index_tmp = 0;
-			for (i = 0, j = 0; line[i] && i < LINE_MAXLEN; i++) {
-				char buf[MB_LEN_MAX+1];
-				int tmp;
-				int k;
+		line_start_tmp = line_index_tmp = 0;
+		for (i = 0, j = 0; line[i] && i < LINE_MAXLEN; i++) {
+			char buf[MB_LEN_MAX+1];
+			int tmp;
+			int k;
 
-				tmp = wctomb(buf, line[i]);
+			tmp = wctomb(buf, line[i]);
 
-				if (tmp <= 0 || tmp > MB_CUR_MAX) {
-					debug_error("binding_complete() wctomb() failed (%d) [%d]\n", tmp, MB_CUR_MAX);
-					return;
-				}
-
-				if (j+tmp >= LINE_MAXLEN) {
-					debug_error("binding_complete() buffer might be truncated, aborting\n");
-					return;
-				}
-
-				if (line_start == i)
-					line_start_tmp = j;
-				if (line_index == i)
-					line_index_tmp = j;
-
-				for (k = 0; k < tmp && buf[k]; k++)
-					nline[j++] = buf[k];
+			if (tmp <= 0 || tmp > MB_CUR_MAX) {
+				debug_error("binding_complete() wctomb() failed (%d) [%d]\n", tmp, MB_CUR_MAX);
+				return;
 			}
-			/* XXX, put into loop, wcslen()+1? */
+
+			if (j+tmp >= LINE_MAXLEN) {
+				debug_error("binding_complete() buffer might be truncated, aborting\n");
+				return;
+			}
+
 			if (line_start == i)
 				line_start_tmp = j;
 			if (line_index == i)
 				line_index_tmp = j;
 
-			nline[j] = '\0';
+			for (k = 0; k < tmp && buf[k]; k++)
+				nline[j++] = buf[k];
+		}
+		/* XXX, put into loop, wcslen()+1? */
+		if (line_start == i)
+			line_start_tmp = j;
+		if (line_index == i)
+			line_index_tmp = j;
 
-			debug("wcs-completion WC->MB (%d,%d) => (%d,%d) [%d;%d]\n", line_start, line_index, line_start_tmp, line_index_tmp, j, i);
-			complete_result = ekg2_complete(&line_start_tmp, &line_index_tmp, nline, LINE_MAXLEN);
+		nline[j] = '\0';
 
-			nlen = strlen(nline);
+		debug("wcs-completion WC->MB (%d,%d) => (%d,%d) [%d;%d]\n", line_start, line_index, line_start_tmp, line_index_tmp, j, i);
+		complete_result = ekg2_complete(&line_start_tmp, &line_index_tmp, nline, LINE_MAXLEN);
 
-			line_start = line_index = 0;
-			for (i = 0, j = 0; j < nlen; i++) {
-				int tmp;
+		nlen = strlen(nline);
 
-				tmp = mbtowc(&line[i], &nline[j], nlen-j);
+		line_start = line_index = 0;
+		for (i = 0, j = 0; j < nlen; i++) {
+			int tmp;
 
-				if (tmp <= 0) {
-					debug_error("binding_complete() mbtowc() failed (%d)\n", tmp);
-					break;	/* return; */
-				}
+			tmp = mbtowc(&line[i], &nline[j], nlen-j);
 
-				if (line_start_tmp == j)
-					line_start = i;
-				if (line_index_tmp == j)
-					line_index = i;
-
-				j += tmp;
+			if (tmp <= 0) {
+				debug_error("binding_complete() mbtowc() failed (%d)\n", tmp);
+				break;	/* return; */
 			}
 
-			/* XXX, put into loop, <= nlen? */
 			if (line_start_tmp == j)
 				line_start = i;
 			if (line_index_tmp == j)
 				line_index = i;
 
-			debug("wcs-completion MB->WC (%d,%d) => (%d,%d) [%d;%d]\n", line_start_tmp, line_index_tmp, line_start, line_index, j, i);
-			line[i] = '\0';
-			if (window_current->id == WINDOW_DEBUG_ID)
-				ncurses_redraw_input(0);
+			j += tmp;
+		}
+
+		/* XXX, put into loop, <= nlen? */
+		if (line_start_tmp == j)
+			line_start = i;
+		if (line_index_tmp == j)
+			line_index = i;
+
+		debug("wcs-completion MB->WC (%d,%d) => (%d,%d) [%d;%d]\n", line_start_tmp, line_index_tmp, line_start, line_index, j, i);
+		line[i] = '\0';
+		if (window_current->id == WINDOW_DEBUG_ID)
+			ncurses_redraw_input(0);
 #else
-			complete_result =  ekg2_complete(&line_start, &line_index, (char *) line, LINE_MAXLEN);
+		complete_result =  ekg2_complete(&line_start, &line_index, (char *) line, LINE_MAXLEN);
 #endif
-			if (complete_result)
-				show_completions();
+		if (complete_result)
+			show_completions();
 	} else {
 		int i, count = 8 - (line_index % 8);
 
