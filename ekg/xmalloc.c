@@ -220,44 +220,12 @@ char *utf8ndup(const char *s, size_t n) {
 	return tmp;
 }
 
-/*
- * XXX póki co, obs³uguje tylko libce zgodne z C99
- */
 char *vsaprintf(const char *format, va_list ap)
 {
 	char *res;
-#ifdef HAVE_VASPRINTF
 
-	if (vasprintf(&res, format, ap) == -1 || res == NULL)
+	if (!(res = g_strdup_vprintf(format, ap)))
 		ekg_oom_handler();
-
-#else /* HAVE_VASPRINTF */
-
-#ifdef NO_POSIX_SYSTEM
-	char tmp[10000];
-#else
-	char tmp[2];
-#endif
-#if defined(va_copy) || defined(__va_copy)
-	va_list aq;
-#endif
-	int size;
-
-#if defined(va_copy)
-	va_copy(aq, ap);
-#elif defined(__va_copy)
-	__va_copy(aq, ap);
-#endif
-	size = vsnprintf(tmp, sizeof(tmp), format, ap);
-	res = xmalloc(size + 1);
-#if defined(va_copy) || defined(__va_copy)
-	vsnprintf(res, size + 1, format, aq);
-	va_end(aq);
-#else
-	vsnprintf(res, size + 1, format, ap);
-#endif
-
-#endif
 	return res;
 }
 

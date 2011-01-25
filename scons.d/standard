@@ -6,8 +6,7 @@ Import('*')
 std_funcs = [
 	'inet_aton', 'inet_ntop', 'inet_pton', 'getaddrinfo',
 	'utimes', 'flock',
-	'mkstemp',
-	'vasprintf'
+	'mkstemp'
 	]
 
 std_headers = [
