@@ -32,6 +32,7 @@
 #endif
 
 #include <glib.h>
+#include <glib/gprintf.h>
 
 #include <sys/types.h>
 
@@ -541,8 +542,8 @@ static WATCHER_LINE(handle_stderr)	/* sta³y */
  */
 
 void ekg_debug_handler(int level, const char *format, va_list ap) {
-	static string_t line = NULL;
-	char *tmp;
+	static GString *line = NULL;
+	char *tmp = NULL;
 
 	int is_UI = 0;
 	char *theme_format;
@@ -550,24 +551,24 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 	if (!config_debug)
 		return;
 
-	if (!(tmp = vsaprintf(format, ap)))
-		return;
-
 	if (line) {
-		string_append(line, tmp);
-		xfree(tmp);
+		g_string_append_vprintf(line, format, ap);
 
 		if (line->len == 0 || line->str[line->len - 1] != '\n')
 			return;
 
 		line->str[line->len - 1] = '\0';	/* remove '\n' */
-		tmp = string_free(line, 0);
+		tmp = g_string_free(line, FALSE);
 		line = NULL;
 	} else {
-		const size_t tmplen = xstrlen(tmp);
+		int tmplen = g_vasprintf(&tmp, format, ap);
+
+		if (tmplen < 0 || !tmp)	/* OutOfMemory? */
+			return;
+
 		if (tmplen == 0 || tmp[tmplen - 1] != '\n') {
-			line = string_init(tmp);
-			xfree(tmp);
+			line = g_string_new_len(tmp, tmplen);
+			g_free(tmp);
 			return;
 		}
 		tmp[tmplen - 1] = 0;			/* remove '\n' */
