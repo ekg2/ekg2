@@ -5,9 +5,10 @@ PROTOTYPES: ENABLE
 
 void commands()
 PREINIT:
-        command_t *c;
+	GSList *cl;
 PPCODE:
-        for (c = commands; c; c = c->next) {
+        for (cl = commands; cl; cl = cl->next) {
+    		command_t *c = cl->data;
                 XPUSHs(sv_2mortal(bless_command( c)));
         }
 
