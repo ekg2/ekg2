@@ -26,10 +26,11 @@
 
 #include "ekg2-config.h"
 
-#include <glib.h>
-
 #define __USE_BSD
 #define _GNU_SOURCE
+
+#include <glib.h>
+
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
