@@ -323,9 +323,10 @@ int config_read(const char *filename)
 	fclose(f);
 
 	if (first) {
-		plugin_t *p;
+		GSList *pl;
 
-		for (p = plugins; p; p = p->next) {
+		for (pl = plugins; pl; pl = pl->next) {
+			const plugin_t *p =pl->data;
 			const char *tmp;
 			
 			if ((tmp = prepare_pathf("config-%s", p->name)))
@@ -370,12 +371,13 @@ static void config_write_variable(FILE *f, variable_t *v)
  */
 static void config_write_plugins(FILE *f)
 {
-	plugin_t *p;
+	GSList *pl;
 
 	if (!f)
 		return;
 
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
 		if (p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
 	}
 }
@@ -496,7 +498,7 @@ static void config_write_main(FILE *f)
 int config_write()
 {
 	FILE *f;
-	plugin_t *p;
+	GSList *pl;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
@@ -522,7 +524,8 @@ int config_write()
 	fclose(f);
 
 	/* now plugins variables */
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
 		const char *tmp;
 		GSList *vl;
 
@@ -678,7 +681,7 @@ void config_write_crash()
 {
 	char name[32];
 	FILE *f;
-	plugin_t *p;
+	GSList *pl;
 
 	chdir(config_dir);
 
@@ -708,7 +711,8 @@ void config_write_crash()
 	fclose(f);
 
 	/* now plugins variables */
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
 		GSList *vl;
 
 		snprintf(name, sizeof(name), "config-%s.%d", p->name, (int) getpid());

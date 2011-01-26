@@ -2002,9 +2002,10 @@ static char *timer_next_call(struct timer *t) {
 
 static COMMAND(cmd_debug_plugins) {
 	char buf[256];
-	const plugin_t *p;
+	GSList *pl;
 
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
 		const char *class;
 
 		switch (p->pclass) {
@@ -4080,10 +4081,12 @@ static COMMAND(cmd_plugin) {
 	plugin_t *pl;
 
 	if (!params[0]) {
-		plugin_t *p;
+		GSList *pl;
 
-		for (p = plugins; p; p = p->next)
+		for (pl = plugins; pl; pl = pl->next) {
+			const plugin_t *p = pl->data;
 			printq("plugin_list", p->name ? p->name : ("?"), itoa(p->prio));
+		}
 
 		if (!plugins) {
 			/* XXX, display info: no plugins. */
@@ -4093,16 +4096,18 @@ static COMMAND(cmd_plugin) {
 	}
 
 	if (match_arg(params[0], 'd', ("default"), 2)) {
-		plugin_t *p;
+		GSList *old_plugins = plugins;
+		GSList *pl;
 
-		for (p = plugins; p;) {
-			plugin_t *next;
+		plugins = NULL;
 
-			next = LIST_UNLINK2(&plugins, p);
+		/* XXX, check */
+		for (pl = old_plugins; pl; pl = pl->next) {
+			plugin_t *p = pl->data;
+
 			plugin_register(p, -254);
-
-			p = next;
 		}
+		g_slist_free(old_plugins);
 
 		queries_reconnect();
 		config_changed = 1;

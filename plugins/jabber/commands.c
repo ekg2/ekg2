@@ -1608,10 +1608,11 @@ static COMMAND(jabber_command_private) {
 
 /* Synchronize config (?) */
 		if (config) {
-			plugin_t *p, *last_p = NULL;
+			GSList *pl;
 			session_t *s;
 
-			for (p = plugins; p; p = p->next) {
+			for (pl = plugins; pl; pl = pl->next) {
+				plugin_t *p = pl->data;
 				GSList *vl;
 				watch_write(j->send_watch, "<plugin xmlns=\"ekg2:plugin\" name=\"%s\" prio=\"%d\">", p->name, p->prio);
 back:
@@ -1644,13 +1645,10 @@ back:
 				}
 				if (p) {
 					watch_write(j->send_watch, "</plugin>");
-					if (!p->next) { /* if last plugin, then jump back and write core vars */
-						last_p = p;
+					if (!pl->next) { /* if last plugin, then jump back and write core vars */
 						p = NULL;
 						goto back;
 					}
-				} else {
-					p = last_p;
 				}
 			}
 			for (s = sessions; s; s = s->next) {

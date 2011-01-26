@@ -431,7 +431,7 @@ static void handle_sighup()
 
 static void handle_sigsegv()
 {
-	plugin_t *p;
+	GSList *pl;
 
 	signal(SIGSEGV, SIG_DFL);
 
@@ -440,7 +440,8 @@ static void handle_sigsegv()
 
 	/* wy³±cz pluginy ui, ¿eby odda³y terminal
 	 * destroy also log plugins to make sure that latest changes are written */
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
 		if (p->pclass != PLUGIN_UI && p->pclass != PLUGIN_LOG)
 			continue;
 
@@ -1081,10 +1082,12 @@ void ekg_exit()
 	}
 
 	{
-		plugin_t *p, *next;
+		GSList *pl;
 
-		for (p = plugins; p; p = next) {
-			next = p->next;
+		for (pl = plugins; pl;) {
+			const plugin_t *p = pl->data;
+
+			pl = pl->next;
 
 			if (p->pclass != PLUGIN_UI)
 				continue;
@@ -1144,16 +1147,15 @@ void ekg_exit()
 	sessions_free();
 
 	{
-		plugin_t *p;
+		GSList *pl;
 
-		for (p = plugins; p; ) {
-			plugin_t *next = p->next;
+		for (pl = plugins; pl; ) {
+			const plugin_t *p = pl->data;
 
+			pl = pl->next;
 			p->destroy();
 
 //			if (p->dl) ekg2_dlclose(p->dl);
-
-			p = next;
 		}
 	}
 

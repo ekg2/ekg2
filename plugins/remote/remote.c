@@ -460,9 +460,10 @@ static WATCHER_LINE(rc_input_handler_line) {
 			remote_writefd(fd, "+COMMAND", NULL);
 
 		} else if (!xstrcmp(cmd, "REQPLUGINS")) {
-			plugin_t *p;
+			GSList *pl;
 
-			for (p = plugins; p; p = p->next) {
+			for (pl = plugins; pl; pl = pl->next) {
+				const plugin_t *p = pl->data;
 				remote_writefd(fd, "PLUGIN", p->name, itoa(p->prio), NULL);
 
 				if (p->params) {

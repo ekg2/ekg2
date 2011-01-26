@@ -221,9 +221,10 @@ static void conference_generator(const char *text, int len)
 
 static void plugin_generator(const char *text, int len)
 {
-	plugin_t *p;
+	GSList *pl;
 
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
 		if (!xstrncasecmp(text, p->name, len)) {
 			array_add_check(&completions, xstrdup(p->name), 1);
 		}

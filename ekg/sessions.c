@@ -829,7 +829,7 @@ int session_read(const char *filename) {
 	int ret = 0;
 
 	if (!filename) {
-		plugin_t *p;
+		GSList *pl;
 
 		if (!in_autoexec) {
 			session_t *sf;
@@ -840,7 +840,8 @@ int session_read(const char *filename) {
 			debug("	 flushed sessions\n");
 		}
 
-		for (p = plugins; p; p = p->next) {
+		for (pl = plugins; pl; pl = pl->next) {
+			const plugin_t *p = pl->data;
 			const char *tmp;
 
 			if (!p || p->pclass != PLUGIN_PROTOCOL)
@@ -900,14 +901,15 @@ int session_read(const char *filename) {
  */
 int session_write()
 {
-	plugin_t *p;
+	GSList *pl;
 	FILE *f = NULL;
 	int ret = 0;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 */
 		return -1;
 
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
 		session_t *s;
 		const char *tmp;
 

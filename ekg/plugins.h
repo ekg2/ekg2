@@ -20,6 +20,8 @@
 #ifndef __EKG_PLUGINS_H
 #define __EKG_PLUGINS_H
 
+#include <glib.h>
+
 #include <sys/types.h>
 #include <stdarg.h>
 
@@ -69,8 +71,6 @@ struct protocol_plugin_priv {
 };
 
 typedef struct plugin {
-	struct plugin *next;
-
 	char *name;
 	int prio;
 	plugin_class_t pclass;
@@ -225,7 +225,7 @@ int ekg2_dlinit();
 #endif
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern plugin_t *plugins;
+extern GSList *plugins;
 extern list_t watches;
 extern query_t *queries[];
 #endif

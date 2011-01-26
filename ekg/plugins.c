@@ -54,12 +54,22 @@
 #define va_copy(DST,SRC) __va_copy(DST,SRC)
 #endif
 
-plugin_t *plugins = NULL;
-static LIST_ADD_COMPARE(plugin_register_compare, plugin_t *) { return data2->prio - data1->prio; }
+GSList *plugins = NULL;
 
-DYNSTUFF_LIST_DECLARE_SORTED_NF(plugins, plugin_t, plugin_register_compare,
-	static __DYNSTUFF_LIST_ADD_SORTED,		/* plugins_add() */
-	__DYNSTUFF_LIST_UNLINK)				/* plugins_unlink() */
+static gint plugin_register_compare(gconstpointer a, gconstpointer b) {
+	const plugin_t *data1 = (const plugin_t *) a;
+	const plugin_t *data2 = (const plugin_t *) b;
+
+	return data2->prio - data1->prio;
+}
+
+static void plugins_add(plugin_t *pl) {
+	plugins = g_slist_insert_sorted(plugins, pl, plugin_register_compare);
+}
+
+void plugins_unlink(plugin_t *pl) {
+	plugins = g_slist_remove(plugins, pl);
+}
 
 list_t watches = NULL;
 
@@ -377,9 +387,10 @@ int plugin_load(const char *name, int prio, int quiet)
 
 plugin_t *plugin_find(const char *name)
 {
-	plugin_t *p;
+	GSList *pl;
 
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		plugin_t *p = pl->data;
 		if (!xstrcmp(p->name, name))
 			return p;
 	}
@@ -400,9 +411,10 @@ plugin_t *plugin_find(const char *name)
  */
 
 plugin_t *plugin_find_uid(const char *uid) {
-	plugin_t *p;
+	GSList *pl;
 
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		plugin_t *p = pl->data;
 		if (p && p->pclass == PLUGIN_PROTOCOL && p->name && valid_plugin_uid(p, uid))
 			return p;
 	}
@@ -427,10 +439,11 @@ int plugin_unload(plugin_t *p)
 		return -1;
 
 	if (config_expert_mode == 0 && p->pclass == PLUGIN_UI) {
-		plugin_t *plug;
+		GSList *pl;
 
 		int unloadable = 0;
-		for (plug = plugins; plug; plug = plug->next) {
+		for (pl = plugins; pl; pl = pl->next) {
+			const plugin_t *plug = pl->data;
 			if (plug->pclass == PLUGIN_UI && plug != p) 
 				unloadable = 1;
 		}
@@ -1174,9 +1187,10 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
  */
 
 int have_plugin_of_class(plugin_class_t pclass) {
-	plugin_t *p;
+	GSList *pl;
 
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
 		if (p->pclass == pclass) return 1;
 	}
 

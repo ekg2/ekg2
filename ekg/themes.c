@@ -1245,9 +1245,10 @@ void theme_free() {
 }
 
 void theme_plugins_init() {
-	plugin_t *p;
+	GSList *pl;
 
-	for (p = plugins; p; p = p->next) {
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
 		if (p->theme_init)
 			p->theme_init();
 	}
