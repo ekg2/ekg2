@@ -606,6 +606,36 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 	xfree(tmp);
 }
 
+static void glib_debug_handler(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data) {
+	static int recurse = 0;
+
+	int is_UI = 0;
+	char *theme_format;
+
+	if (recurse)
+		return;
+
+	if (!config_debug)
+		return;
+
+	recurse++;
+	theme_format = "debug";
+
+	buffer_add(&buffer_debug, theme_format, message);
+
+	query_emit(NULL, "ui-is-initialized", &is_UI);
+
+	if (is_UI && window_debug) {
+		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, message, log_domain);
+
+	}
+#ifdef STDERR_DEBUG	/* STDERR debug */
+	else
+		fprintf(stderr, "%s\n", tmp);
+#endif
+	recurse--;
+}
+
 struct option ekg_options[] = {
 	{ "user", required_argument, 0, 'u' },
 	{ "theme", required_argument, 0, 't' },
@@ -828,6 +858,7 @@ int main(int argc, char **argv)
 		}
 	}
 
+	g_log_set_default_handler(glib_debug_handler, NULL);
 	in_autoexec = 1;
 
 	if (optind < argc) {
