@@ -293,8 +293,8 @@ static int ekg_getch(int meta, unsigned int *ch) {
 			 (t2.tv_usec-t1.tv_usec)/1000)
 	if (*ch == KEY_MOUSE) {
 		int btn, mouse_state = 0, x, y;
-		GTimeVal tv1 = { 0, 0 };
-		GTimeVal timeval tv2;
+		static GTimeVal tv1 = { 0, 0 };
+		static GTimeVal tv2;
 		static int clicks;
 		static int last_btn = 0;
 
