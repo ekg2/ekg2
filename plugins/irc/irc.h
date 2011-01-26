@@ -119,7 +119,7 @@ typedef struct {
 typedef struct {
 	char		*name;
 	int		syncmode;
-	struct timeval	syncstart;
+	GTimeVal	syncstart;
 	int		mode;
 	char		*topic, *topicby, *mode_str;
 	window_t	*window;

@@ -1739,7 +1739,7 @@ const char *timestamp_time(const char *format, time_t t) {
 
 struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
 	struct timer *t;
-	struct timeval tv;
+	GTimeVal tv;
 
 	/* wylosuj now± nazwê, je¶li nie mamy */
 	if (!name) {
@@ -1761,7 +1761,7 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
 	}
 
 	t = xmalloc(sizeof(struct timer));
-	gettimeofday(&tv, NULL);
+	g_get_current_time(&tv);
 	tv.tv_sec += (period / 1000);
 	tv.tv_usec += ((period % 1000) * 1000);
 	if (tv.tv_usec >= 1000000) {

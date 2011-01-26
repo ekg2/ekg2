@@ -173,13 +173,13 @@ static TIMER(ekg_autoaway_timer) {
  */
 
 void ekg_loop() {
-	struct timeval tv;
+	GTimeVal tv;
 	struct timeval stv;
 	fd_set rd, wd;
 	int ret, maxfd, status;
 	pid_t pid;
 
-	gettimeofday(&tv, NULL);
+	g_get_current_time(&tv);
 
 	{
 		{		/* przejrzyj timery u¿ytkownika, ui, skryptów */

@@ -288,13 +288,13 @@ static int ekg_getch(int meta, unsigned int *ch) {
 	 * conception is borrowed from Midnight Commander project
 	 *    (www.ibiblio.org/mc/)
 	 */
-#define GET_TIME(tv)	(gettimeofday(&tv, (struct timezone *)NULL))
+#define GET_TIME(tv)	(g_get_current_time(&tv))
 #define DIF_TIME(t1,t2) ((t2.tv_sec -t1.tv_sec) *1000+ \
 			 (t2.tv_usec-t1.tv_usec)/1000)
 	if (*ch == KEY_MOUSE) {
 		int btn, mouse_state = 0, x, y;
-		static struct timeval tv1 = { 0, 0 };
-		static struct timeval tv2;
+		GTimeVal tv1 = { 0, 0 };
+		GTimeVal timeval tv2;
 		static int clicks;
 		static int last_btn = 0;
 

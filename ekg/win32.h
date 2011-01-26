@@ -74,7 +74,6 @@ int fcntl(int fd, int cmd, long arg);
 int fchmod(int fildes, mode_t mode);	/* unimpl */
 int pipe(int *filedes);
 
-int gettimeofday(struct timeval *tv, struct timezone *tz);	/* emulated */
 int ioctl(int fd, int request, void *flags);			/* BAD PROTOTYPE. I KNOW. XXX, emulate some things */
 int uname(struct utsname *buf);					/* emulated ? */
 

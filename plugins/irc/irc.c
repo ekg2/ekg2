@@ -2288,12 +2288,12 @@ static COMMAND(irc_command_ctcp) {
 
 static COMMAND(irc_command_ping) {
 	char		**mp, *who;
-	struct timeval	tv;
+	GTimeVal	tv;
 
 	if (!(who=irc_getchan(session, params, name, &mp, 0, IRC_GC_ANY)))
 		return -1;
 
-	gettimeofday(&tv, NULL);
+	g_get_current_time(&tv);
 	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01PING %d %d\01\r\n",
 			who+4 ,tv.tv_sec, tv.tv_usec);
 

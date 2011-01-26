@@ -97,21 +97,6 @@ static u_int64_t filetime_to_unix_epoch (const FILETIME *ft) {
 	return res;
 }
 
-int gettimeofday(struct timeval *tv, struct timezone *tz) {
-	FILETIME  ft;
-	u_int64_t tim;
-
-	if (!tv) {
-		errno = EINVAL;
-		return -1;
-	}
-	GetSystemTimeAsFileTime (&ft);
-	tim = filetime_to_unix_epoch (&ft);
-	tv->tv_sec  = (long) (tim / 1000000L);
-	tv->tv_usec = (long) (tim % 1000000L);
-	return 0;
-}
-
 int uname(struct utsname *buf) {
 	if (!buf) {
 		errno = EFAULT;

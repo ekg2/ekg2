@@ -958,8 +958,8 @@ IRC_COMMAND(irc_c_list)
 				chan->syncmode--;
 				if (chan->syncmode == 0) {
 					tmpchn = clean_channel_names(s, chan->name+4);
-					struct timeval tv;
-					gettimeofday(&tv, NULL);
+					GTimeVal tv;
+					g_get_current_time(&tv);
 					tv.tv_usec+=(1000000-chan->syncstart.tv_usec);
 					if (tv.tv_usec>1000000)
 						tv.tv_sec++, tv.tv_usec-=1000000;

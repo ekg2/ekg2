@@ -1961,9 +1961,9 @@ static COMMAND(cmd_test_debug_theme)
 
 static char *timer_next_call(struct timer *t) {
 	long usec, sec, minutes = 0, hours = 0, days = 0;
-	struct timeval tv;
+	GTimeVal tv;
 
-	gettimeofday(&tv, NULL);
+	g_get_current_time(&tv);
 
 	if (t->ends.tv_usec < tv.tv_usec) {
 		sec = t->ends.tv_sec - tv.tv_sec - 1;
@@ -3296,7 +3296,7 @@ static COMMAND(cmd_at)
 			a_name = params[0];
 
 		for (t = timers; t; t = t->next) {
-			struct timeval tv;
+			GTimeVal tv;
 			struct tm *at_time;
 			char tmp[100], tmp2[150];
 			time_t sec, minutes = 0, hours = 0, days = 0;
@@ -3309,7 +3309,7 @@ static COMMAND(cmd_at)
 
 			count++;
 
-			gettimeofday(&tv, NULL);
+			g_get_current_time(&tv);
 
 			at_time = localtime((time_t *) &t->ends.tv_sec);
 			if (!strftime(tmp, sizeof(tmp), format_find("at_timestamp"), at_time) && format_exists("at_timestamp"))
