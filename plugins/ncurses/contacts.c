@@ -151,7 +151,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 
 	if (config_contacts_groups) {
 		char **groups = array_make(config_contacts_groups, ", ", 0, 1, 0);
-		int count = array_count(groups);
+		int count = g_strv_length(groups);
 
 		if (contacts_group_index > count + 2) {
 			contacts_group_index = 0;
@@ -171,7 +171,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			header = format_find("contacts_header_group");
 			footer = format_find("contacts_footer_group");
 		}
-		array_free(groups);
+		g_strfreev(groups);
 	} else if (contacts_group_index) {
 		if (contacts_group_index > ((metacontacts) ? 2 :1) )
 			contacts_group_index = 0;

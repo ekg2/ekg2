@@ -125,7 +125,7 @@ void config_postread()
 			}
 		}
 
-		array_free(targets);
+		g_strfreev(targets);
 	}
 
 	if (config_session_default) {
@@ -164,10 +164,10 @@ int config_read_plugins()
 		if (!xstrcasecmp(buf, ("plugin"))) {
 			char **p = array_make(foo, (" \t"), 3, 1, 0);
 
-			if (array_count(p) == 2)
+			if (g_strv_length(p) == 2)
 				plugin_load(p[0], atoi(p[1]), 1);
 
-			array_free(p);
+			g_strfreev(p);
 		}
 	}
 	fclose(f);
@@ -232,44 +232,44 @@ int config_read(const char *filename)
 
 		} else if (!xstrcasecmp(buf, ("plugin"))) {
 			char **p = array_make(foo, (" \t"), 3, 1, 0);
-			if (array_count(p) == 2) 
+			if (g_strv_length(p) == 2) 
 				plugin_load(p[0], atoi(p[1]), 1);
-			array_free(p);
+			g_strfreev(p);
 		} else if (!xstrcasecmp(buf, ("bind"))) {
 			char **pms = array_make(foo, (" \t"), 2, 1, 0);
 
-			if (array_count(pms) == 2) {
+			if (g_strv_length(pms) == 2) {
 				ret = command_exec_format(NULL, NULL, 1, ("/bind --add %s %s"),  pms[0], pms[1]);
 			}
 
-			array_free(pms);
+			g_strfreev(pms);
 		} else if (!xstrcasecmp(buf, ("bind-set"))) {
 			char **pms = array_make(foo, (" \t"), 2, 1, 0);
 
-			if (array_count(pms) == 2) {
+			if (g_strv_length(pms) == 2) {
 				query_emit(NULL, "binding-set", pms[0], pms[1], 1);
 			}
 
-			array_free(pms);
+			g_strfreev(pms);
 		} else if (!xstrcasecmp(buf, ("alias"))) {
 			debug("  alias %s\n", foo);
 			ret = alias_add(foo, 1, 1);
 		} else if (!xstrcasecmp(buf, ("on"))) {
 			char **pms = array_make(foo, (" \t"), 4, 1, 0);
 
-			if (array_count(pms) == 4) {
+			if (g_strv_length(pms) == 4) {
 				debug("  on %s %s %s\n", pms[0], pms[1], pms[2]);
 				ret = event_add(pms[0], atoi(pms[1]), pms[2], pms[3], 1);
 			}
 
-			array_free(pms);
+			g_strfreev(pms);
 
 		} else if (!xstrcasecmp(buf, ("bind"))) {
 			continue;
 		} else if (!xstrcasecmp(buf, ("at"))) {
 			char **p = array_make(foo, (" \t"), 2, 1, 0);
 
-			if (array_count(p) == 2) {
+			if (g_strv_length(p) == 2) {
 				char *name = NULL;
 
 				debug("  at %s %s\n", p[0], p[1]);
@@ -280,14 +280,14 @@ int config_read(const char *filename)
 				ret = command_exec_format(NULL, NULL, 1, ("/at -a %s %s"), ((name) ? name : ("")), p[1]);
 			}
 
-			array_free(p);
+			g_strfreev(p);
 		} else if (!xstrcasecmp(buf, ("timer"))) {
 			char **p = array_make(foo, (" \t"), 3, 1, 0);
 			char *period_str = NULL;
 			char *name = NULL;
 			time_t period;
 
-			if (array_count(p) == 3) {
+			if (g_strv_length(p) == 3) {
 				debug("  timer %s %s %s\n", p[0], p[1], p[2]);
 
 				if (xstrcmp(p[0], ("(null)")))
@@ -308,7 +308,7 @@ int config_read(const char *filename)
 
 				xfree(period_str);
 			}
-			array_free(p);
+			g_strfreev(p);
 		} else {
 			ret = variable_set(buf, (xstrcmp(foo, (""))) ? foo : NULL) < 0;
 
@@ -599,7 +599,7 @@ int config_write_partly(plugin_t *plugin, const char **vars)
 		return -1;
 	}
 	
-	wrote = xcalloc(array_count((char **) vars) + 1, sizeof(int));
+	wrote = xcalloc(g_strv_length((char **) vars) + 1, sizeof(int));
 	
 	fchmod(fileno(fo), 0600);
 

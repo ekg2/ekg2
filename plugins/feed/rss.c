@@ -18,6 +18,8 @@
 #include "ekg2-config.h"
 #ifdef HAVE_EXPAT
 
+#include <glib.h>
+
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -408,7 +410,7 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 			newnode->parent = n;
 		}
 	}
-	arrcount = array_count((char **) atts);
+	arrcount = g_strv_length((char **) atts);
 
 	if (arrcount > 0) {
 		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
@@ -686,7 +688,7 @@ static void xmlnode_free(xmlnode_t *n) {
 
 	xfree(n->name);
 	string_free(n->data, 1);
-	array_free(n->atts);
+	g_strfreev(n->atts);
 	xfree(n);
 }
 

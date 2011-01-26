@@ -292,7 +292,7 @@ int irc_add_people(session_t *s, irc_private_t *j, char *names, char *channame)
 
 	query_emit(NULL, "userlist-refresh");
 
-	array_free(save);
+	g_strfreev(save);
 	return 0;	
 }
 

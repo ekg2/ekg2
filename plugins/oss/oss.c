@@ -340,13 +340,13 @@ static COMMAND(oss_cmd_record) {
 		}
 
 		printq("invalid_params", name);
-		array_free(array);
+		g_strfreev(array);
 		return -1;
 	}
 
 	if (!filename) {
 		printq("not_enough_params", name);	/* XXX, need better */
-		array_free(array);
+		g_strfreev(array);
 		return -1;
 	}
 
@@ -356,7 +356,7 @@ static COMMAND(oss_cmd_record) {
 			__AINIT_F("stream", AUDIO_WRITE, "file", filename, "format", "guess"));
 	/* XXX, check for errors */
 
-	array_free(array);
+	g_strfreev(array);
 
 	return 0;
 }

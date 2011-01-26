@@ -661,7 +661,7 @@ char *message_print(const char *session, const char *sender, const char **rcpts,
 
 	/* if there is a lot of recipients, conference should be made */
 	{
-		int recipients_count = array_count((char **) rcpts);
+		int recipients_count = g_strv_length((char **) rcpts);
 
 		if ((mclass < EKG_MSGCLASS_SENT) && recipients_count > 0) {
 			c = conference_find_by_uids(s, sender, rcpts, recipients_count, 0);

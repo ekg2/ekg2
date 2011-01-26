@@ -301,7 +301,7 @@ QUERY(logsoracle_handler_prmsg)
 	/* BUG (?) */
 	if(rcpts_alloc) {
 		/* This will also attemp to free allocated strings */
-		array_free(rcpts);
+		g_strfreev(rcpts);
 		rcpts=NULL;
 	}
 	/* BUG */

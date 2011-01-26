@@ -117,7 +117,7 @@ static gint command_compare(gconstpointer a, gconstpointer b) {
 static void list_command_free(void *_data) {
 	command_t *data = (command_t *) _data;
 
-	array_free(data->params); array_free(data->possibilities);
+	g_strfreev(data->params); g_strfreev(data->possibilities);
 	xfree(data);
 }
 
@@ -768,7 +768,7 @@ static COMMAND(cmd_eval) {
 	for (i = 0; argv[i]; i++)
 		command_exec(NULL, session, argv[i], 0);
 
-	array_free(argv);
+	g_strfreev(argv);
 
 	return 0;
 }
@@ -817,14 +817,14 @@ static COMMAND(cmd_for)
 			int i;
 			session_t **s;
 	
-			s = xmalloc(sizeof(session_t *) * array_count(tmp));
+			s = xmalloc(sizeof(session_t *) * g_strv_length(tmp));
 			
 			/* first we are checking all of the parametrs */
 			for (i = 0; tmp[i]; i++) {
 				if (!(s[i] = session_find(tmp[i]))) {
 					printq("session_doesnt_exist", tmp[i]);
 					xfree(s);
-					array_free(tmp);
+					g_strfreev(tmp);
 					return -1;
 				}
 			}		
@@ -843,7 +843,7 @@ static COMMAND(cmd_for)
 				command_exec(NULL, s[i], for_command, 0);
 				xfree(for_command);
 			}
-			array_free(tmp);
+			g_strfreev(tmp);
 			xfree(s);
 		}
 	} else if (match_arg(params[0], 'u', ("users"), 2)) {
@@ -889,13 +889,13 @@ static COMMAND(cmd_for)
 			int i;
 			userlist_t **u;
 
-			u = xmalloc(sizeof(userlist_t *) * array_count(tmp));
+			u = xmalloc(sizeof(userlist_t *) * g_strv_length(tmp));
 
 			/* first we are checking all of the parametrs */
 			for (i = 0; tmp[i]; i++) {
 				if (!(u[i] = userlist_find(session, tmp[i]))) {
 					printq("user_not_found", tmp[i]);
-					array_free(tmp);
+					g_strfreev(tmp);
 					xfree(u);
 					return -1;
 				}
@@ -915,7 +915,7 @@ static COMMAND(cmd_for)
 				command_exec(NULL, session, for_command, 0);
 				xfree(for_command);
 			}
-			array_free(tmp);
+			g_strfreev(tmp);
 			xfree(u);
 		}
 	} else if (match_arg(params[0], 'w', ("windows"), 2)) {
@@ -955,13 +955,13 @@ static COMMAND(cmd_for)
 			int i;
 			window_t **w;
 
-			w = xmalloc(sizeof(window_t *) * array_count(tmp));
+			w = xmalloc(sizeof(window_t *) * g_strv_length(tmp));
 
 			/* first we are checking all of the parametrs */
 			for (i = 0; tmp[i]; i++) {
 				if (!(w[i] = window_exist(atoi(tmp[i])))) {
 					printq("window_doesnt_exist", tmp[i]);
-					array_free(tmp);
+					g_strfreev(tmp);
 					xfree(w);
 					return -1;
 				}
@@ -980,7 +980,7 @@ static COMMAND(cmd_for)
 				command_exec(NULL, w[i]->session, for_command, 0);
 				xfree(for_command);
 			}
-			array_free(tmp);
+			g_strfreev(tmp);
 			xfree(w);
 		}
 	} else {
@@ -1701,7 +1701,7 @@ static COMMAND(cmd_set)
 		char **tmp = array_make(val, (""), 0, 0, 1);
 
 		value = xstrdup(tmp[0]);
-		array_free(tmp);
+		g_strfreev(tmp);
 	}
 
 	if ((!arg || !val) && !unset) {
@@ -2026,7 +2026,7 @@ static COMMAND(cmd_debug_plugins) {
 		if (p->pclass == PLUGIN_PROTOCOL && p->priv) {
 			struct protocol_plugin_priv *pp = (struct protocol_plugin_priv *)p->priv;
 
-			char *pr = array_join((char**) pp->protocols, ", ");
+			char *pr = g_strjoinv(", ", (char**) pp->protocols);
 			char *st;
 			char **_sts = NULL;
 			const status_t *_st;
@@ -2034,7 +2034,7 @@ static COMMAND(cmd_debug_plugins) {
 			for (_st = pp->statuses; *_st != EKG_STATUS_NULL; _st++) {
 				array_add(&_sts, (char*) ekg_status_string(*_st, 2));
 			}
-			st = array_join(_sts, ", ");
+			st = g_strjoinv(", ", _sts);
 
 			snprintf(buf, sizeof(buf), "    protocols:  %s", pr);
 			printq("generic2", buf);
@@ -2794,7 +2794,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 		if (!res) {
 			char **parameter_types = (last_command->flags & COMMAND_ISALIAS) ? array_make(("?"), (" "), 0, 1, 1) : last_command->params;
-			int parameter_types_count = array_count(parameter_types);
+			int parameter_types_count = g_strv_length(parameter_types);
 			char **parsed_params = NULL; /* The array of parameter values which is going to be passed to the command handler. */
 
 			/* Perform some parameter verification and mangling.
@@ -2859,8 +2859,8 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 				query_emit(NULL, "ui-window-refresh");
 				xfree(uid);
 			}
-			if (last_command->flags & COMMAND_ISALIAS) array_free(parameter_types);
-			array_free(parsed_params);
+			if (last_command->flags & COMMAND_ISALIAS) g_strfreev(parameter_types);
+			g_strfreev(parsed_params);
 		}
 		xfree(line_save);
 
@@ -3024,10 +3024,10 @@ COMMAND(cmd_alias_exec)
 
 			arr = array_make(params[0], ("\t "), need_args, 1, 1);
 
-			if (array_count(arr) < need_args) {
+			if (g_strv_length(arr) < need_args) {
 				printq("aliases_not_enough_params", name);
 				string_free(str, 1);
-				array_free(arr);
+				g_strfreev(arr);
 				list_destroy(m, 1);
 				return -1;
 			}
@@ -3043,7 +3043,7 @@ COMMAND(cmd_alias_exec)
 			string_append(str, s);
 			xfree(s);
 
-			array_free(arr);
+			g_strfreev(arr);
 
 		} else {
 			string_append(str, tmp->data);
@@ -3231,7 +3231,7 @@ static COMMAND(cmd_at)
 		if (a_name)
 			a_command = xstrdup(params[3]);
 		else
-			a_command = array_join((char **) params + 2, " ");
+			a_command = g_strjoinv(" ", (char **) params + 2);
 
 		if (!xstrcmp(strip_spaces(a_command), "")) {
 			printq("not_enough_params", name);
@@ -3410,7 +3410,7 @@ static COMMAND(cmd_timer)
 			t_command = xstrdup(params[3]);
 		} else {
 			p = params[1];
-			t_command = array_join((char **) params + 2, " ");
+			t_command = g_strjoinv(" ", (char **) params + 2);
 		}
 
 		if ((persistent = !strncmp(p, "*/", 2)))
@@ -3846,11 +3846,11 @@ static COMMAND(cmd_last)
 			/* XXX, get_uid() */
 	if (!show_all && nick && !(uid = get_uid(session, nick))) {
 		printq("user_not_found", nick);
-		array_free(arr);
+		g_strfreev(arr);
 		return -1;
 	}
 
-	array_free(arr);
+	g_strfreev(arr);
 		
 	if (!((uid) ? (count = last_count(uid)) : (count = LIST_COUNT2(lasts)))) {
 		if (uid) {

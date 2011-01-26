@@ -991,7 +991,7 @@ static COMMAND(icq_command_addssi) {
 		string_free(buddies, 1);
 	}
 
-	array_free(argv);
+	g_strfreev(argv);
 
 	return 0;
 }
@@ -1208,7 +1208,7 @@ msgdisplay:
 
 		protocol_message_emit(session, session->uid, rcpts, params[1], NULL, time(NULL), class, NULL, EKG_NO_BEEP, 0);
 
-		array_free(rcpts);
+		g_strfreev(rcpts);
 
 		/* XXX, it's copied from jabber-plugin, however i think we should _always_ add message to queue (if we're offline), even if we want do it quiet */
 		if (!session->connected)
@@ -1488,7 +1488,7 @@ static COMMAND(icq_command_search) {
 
 		/* XXX, madrzej? zgadywanie? */
 		printq("invalid_params", name);
-		array_free(argv);
+		g_strfreev(argv);
 		return -1;
 	}
 
@@ -1547,7 +1547,7 @@ static COMMAND(icq_command_search) {
 	icq_makemetasnac(session, pkt, CLI_META_INFO_REQ, CLI_WHITE_PAGES_SEARCH2, NULL, 0);
 	icq_send_pkt(session, pkt);
 
-	array_free(argv);
+	g_strfreev(argv);
 
 	return 0;
 }

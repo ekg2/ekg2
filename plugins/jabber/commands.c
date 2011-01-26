@@ -435,7 +435,7 @@ msgdisplay:
 		protocol_message_emit(session, session->uid, rcpts, msg, format, time(NULL), class, NULL, EKG_NO_BEEP, secure);
 
 		xfree(msg);
-		array_free(rcpts);
+		g_strfreev(rcpts);
 
 		if (!session_connected_get(session))
 			return msg_queue_add(session_uid_get(session), uid, params[1], "offline", class);
@@ -773,7 +773,7 @@ static COMMAND(jabber_command_modify) {
 							}
 					}
 
-				array_free(tmp);
+				g_strfreev(tmp);
 				continue;
 			}
 		/* emulate gg:modify behavior */
@@ -799,7 +799,7 @@ static COMMAND(jabber_command_modify) {
 				continue;
 			}
 		}
-		array_free(argv);
+		g_strfreev(argv);
 	}
 
 	if (!nickname && !addcom)
@@ -1101,9 +1101,9 @@ static char **jabber_params_split(const char *line, int allow_empty)
 			else if (allow_empty) {
 				ret[num++] = xstrdup("");
 			} else {
-				array_free (arr);
+				g_strfreev(arr);
 				ret[num] = NULL;
-				array_free (ret);
+				g_strfreev(ret);
 				return NULL;
 				//ret[num++] = xstrdup ("");
 			}
@@ -1127,7 +1127,7 @@ static char **jabber_params_split(const char *line, int allow_empty)
 	}
 	ret [num] = NULL;
 
-	array_free (arr);
+	g_strfreev(arr);
 	i = 0;
 	while (ret[i]) {
 		debug (" *[%d]* %s\n", i, ret[i]);
@@ -1152,14 +1152,14 @@ static COMMAND(jabber_command_search) {
 	char **splitted	= NULL;
 	const char *id;
 
-	if (array_count((char **) params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
+	if (g_strv_length((char **) params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
 		printq("invalid_params", name);
 		return -1;
 	}
 
 	if (!(id = jabber_iq_reg(session, "search_", server, "query", "jabber:iq:search"))) {
 		printq("generic_error", "Error in getting id for search request, check debug window");
-		array_free(splitted);
+		g_strfreev(splitted);
 		return 1;
 	}
 
@@ -1188,7 +1188,7 @@ static COMMAND(jabber_command_search) {
 		if (use_x_data) watch_write(j->send_watch, "</x>");
 	}
 	watch_write(j->send_watch, "</query></iq>");
-	array_free(splitted);
+	g_strfreev(splitted);
 
 	JABBER_COMMIT_DATA(j->send_watch);
 
@@ -1369,7 +1369,7 @@ privacy_delete_ok:
 					printq("invalid_params", name);
 					if (allowlist && !allowlist->value)	xfree(allowlist);
 					if (denylist && !denylist->value)	xfree(denylist);
-					array_free(p);
+					g_strfreev(p);
 					return -1;
 				}
   
@@ -1377,7 +1377,7 @@ privacy_delete_ok:
   
 				if (flag != PRIVACY_LIST_ALL && lista2 && (lista2->items & flag))	lista2->items		&= ~flag;	/* uncheck it on 2nd list */
 			}
-			array_free(p);
+			g_strfreev(p);
   
 				/* jesli nie podano order, to bierzemy ostatnia wartosc */
 			if (!opass && !order && ( (denylist && !denylist->value) || (allowlist && !allowlist->value) )) for (l = j->privacy; l; l = l->next) {
@@ -1568,7 +1568,7 @@ static COMMAND(jabber_command_private) {
 					debug("[JABBER, BOOKMARKS] switch(bookmark_sync) sync=%d ?!\n", bookmark_sync);
 			}
 
-			array_free(splitted);
+			g_strfreev(splitted);
 			if (bookmark_sync > 0) {
 				return jabber_command_private(name, (const char **) p, session, target, quiet); /* synchronize db */
 			} else if (bookmark_sync < 0) {
@@ -1776,7 +1776,7 @@ static COMMAND(jabber_command_register)
 	if (!j->send_watch) return -1;
 	j->send_watch->transfer_limit = -1;
 
-	if (array_count((char **) params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
+	if (g_strv_length((char **) params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
 		printq("invalid_params", name);
 		return -1;
 	}
@@ -1801,7 +1801,7 @@ static COMMAND(jabber_command_register)
 		if (use_x_data) watch_write(j->send_watch, "</x>");
 	}
 	watch_write(j->send_watch, "</query></iq>");
-	array_free (splitted);
+	g_strfreev(splitted);
 
 	JABBER_COMMIT_DATA(j->send_watch);
 	return 0;
@@ -2046,7 +2046,7 @@ static COMMAND(jabber_muc_command_admin) {
 
 		if (!(id = jabber_iq_reg(session, "mucowner_", c->name+5, "query", "http://jabber.org/protocol/muc#owner"))) {
 			printq("generic_error", "Error in getting id for room configuration, check debug window");
-			array_free(splitted);
+			g_strfreev(splitted);
 			return 1;
 		}
 
@@ -2067,7 +2067,7 @@ static COMMAND(jabber_muc_command_admin) {
 
 			xfree(value);	xfree(name);
 		}
-		array_free(splitted);
+		g_strfreev(splitted);
 		watch_write(j->send_watch, "</x></query></iq>");
 		JABBER_COMMIT_DATA(j->send_watch);
 	}

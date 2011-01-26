@@ -480,13 +480,13 @@ again:
 	/* je¶li w dope³nieniach wyl±dowa³ tylko jeden wpis i jest katalogiem
 	 * to wejd¼ do niego i szukaj jeszcze raz */
 
-	if (array_count(completions) == 1 && xstrlen(completions[0]) > 0 && completions[0][xstrlen(completions[0]) - 1] == '/') {
+	if (g_strv_length(completions) == 1 && xstrlen(completions[0]) > 0 && completions[0][xstrlen(completions[0]) - 1] == '/') {
 		xfree(dname);
 		dname = xstrdup(completions[0]);
 		fname = "";
 		xfree(namelist);
 		namelist = NULL;
-		array_free(completions);
+		g_strfreev(completions);
 		completions = NULL;
 
 		goto again;
@@ -755,12 +755,12 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 	if (linelen > 1 && (line[linelen - 1] == ' ' || line[linelen - 1] == ',') && !open_quote)
 		array_add(&words, xstrdup(("")));
 
-/*	 for(i = 0; i < array_count(words); i++)
+/*	 for(i = 0; i < g_strv_length(words); i++)
 		debug("words[i = %d] = \"%s\"\n", i, words[i]);     */
 
 	/* inicjujemy pamiêc dla separators */
 	if (words != NULL)
-		separators = xmalloc(array_count(words) * sizeof(char) + 1);
+		separators = xmalloc(g_strv_length(words) * sizeof(char) + 1);
 	else
 		separators = NULL;
 
@@ -821,7 +821,7 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 		if(i >= *line_index)
 			break;
 	}
-	words_count = array_count(words);
+	words_count = g_strv_length(words);
 	if (linelen) {
 		/* trzeba pododawaæ trochê do liczników w spefycicznych (patrz warunki) sytuacjach */
 		if (xisspace(line[linelen - 1]))
@@ -848,7 +848,7 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 	if (continue_complete && completions) {
 		int cnt = continue_complete_count;
 
-		count = array_count(completions);
+		count = g_strv_length(completions);
 		line[0] = '\0';			linelen = 0;
 		if (continue_complete_count >= count - 1)
 			continue_complete_count = 0;
@@ -902,8 +902,8 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 		*line_start = 0;
 		*line_index = xstrlen(line);
 
-		array_free(completions);
-		array_free(words);
+		g_strfreev(completions);
+		g_strfreev(words);
 		xfree(start);
 		xfree(separators);
 		xfree(cmd);
@@ -919,7 +919,7 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 			known_uin_generator(start, xstrlen(start));
 			if (completions) {
 				char *completion_char = (config_completion_char && *config_completion_char) ? config_completion_char : NULL;
-				int nick_count = array_count(completions);
+				int nick_count = g_strv_length(completions);
 
 				for (j = 0; completions[j]; j++) {
 					string_t s;
@@ -1006,8 +1006,8 @@ exact_match:
 
 		}
 
-		if (word_current > array_count(params) + 1) 
-			word_current = array_count(params) + 2;
+		if (word_current > g_strv_length(params) + 1) 
+			word_current = g_strv_length(params) + 2;
 
 		if (params && params[word_current - 2]) {
 			int j;
@@ -1041,7 +1041,7 @@ exact_match:
 			}
 		}	 
 	}
-	count = array_count(completions);
+	count = g_strv_length(completions);
 	
 	/* 
 	 * je¶li jest tylko jedna mo¿lwio¶æ na dope³nienie to drukujemy co mamy,
@@ -1074,7 +1074,7 @@ exact_match:
 			else if (line[xstrlen(line) - 1] != ' ')
 				xstrncat(line, separators + i, 1);
 		}
-		array_free(completions);
+		g_strfreev(completions);
 		completions = NULL;
 	} else 
 
@@ -1164,7 +1164,7 @@ exact_match:
 	}
 
 cleanup:
-	array_free(words);
+	g_strfreev(words);
 	xfree(start);
 	xfree(separators);
 	ekg2_completions = completions;
@@ -1173,7 +1173,7 @@ cleanup:
 
 void ekg2_complete_clear()
 {
-	array_free(completions);
+	g_strfreev(completions);
 	completions = NULL;
 	ekg2_completions = NULL;
 	continue_complete = 0;

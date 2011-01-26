@@ -959,7 +959,7 @@ static QUERY(logs_handler) {
 
 	/* XXX, think more about conferences-logging */
 	if (class < EKG_MSGCLASS_SENT) {
-		int recipients_count = array_count((char **) rcpts);
+		int recipients_count = g_strv_length((char **) rcpts);
 
 		if (recipients_count > 0) {
 			struct conference *c;

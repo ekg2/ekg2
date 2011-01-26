@@ -578,7 +578,7 @@ invalid_packet:
 		debug_error("polchat_processpkt() invalid len packet!! exploit warning?\n");
 
 	xfree(headers);
-	array_free(strings);
+	g_strfreev(strings);
 }
 
 // vim:syn=c

@@ -93,7 +93,7 @@ static int ioctld_parse_seq(const char *seq, struct action_data *data)
 		data->delay[i] = delay;
 	}
 
-	array_free(entries);
+	g_strfreev(entries);
 
 	return 0;
 }

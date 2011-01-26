@@ -963,7 +963,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	xfree(__text);
 	xfree(__sender);
 	xfree(__format);
-	array_free(__rcpts);
+	g_strfreev(__rcpts);
 }
 
 /**
@@ -1506,7 +1506,7 @@ static void gg_changed_proxy(session_t *s, const char *var) {
 	auth = array_make(gg_config_proxy, "@", 0, 0, 0);
 
 	if (!auth[0] || !xstrcmp(auth[0], "")) {
-		array_free(auth);
+		g_strfreev(auth);
 		return; 
 	}
 
@@ -1526,9 +1526,9 @@ static void gg_changed_proxy(session_t *s, const char *var) {
 	gg_proxy_host = xstrdup(hostport[0]);
 	gg_proxy_port = (hostport[1]) ? atoi(hostport[1]) : 8080;
 
-	array_free(hostport);
-	array_free(userpass);
-	array_free(auth);
+	g_strfreev(hostport);
+	g_strfreev(userpass);
+	g_strfreev(auth);
 }
 
 static void gg_statusdescr_handler(session_t *s, const char *varname) {

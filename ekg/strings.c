@@ -102,12 +102,12 @@ inline CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max,
 	arr	= tmp	= array_make(str, sp, max, trim, quotes);
 	if (!arr) return NULL;
 
-	newarr	= tmp2	= (CHAR_T **) xmalloc((array_count(arr)+1) * sizeof(CHAR_T *));
+	newarr	= tmp2	= (CHAR_T **) xmalloc((g_strv_length(arr)+1) * sizeof(CHAR_T *));
 
 	for (; *tmp; tmp++, tmp2++)
 		*tmp2 = normal_to_wcs(*tmp);
 	
-	array_free(arr);
+	g_strfreev(arr);
 	xfree(str);
 	xfree(sp);
 	return newarr;
@@ -136,13 +136,13 @@ inline CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep) {
 	CHAR_T *ret;
 	int i;
 
-	arr = xmalloc( (array_count((char **) array)+1) * sizeof(char *));
+	arr = xmalloc( (g_strv_length((char **) array)+1) * sizeof(char *));
 	for (i = 0; array[i]; i++)
 		arr[i] = wcs_to_normal(array[i]);
 	
-	tmp = array_join(arr, sp);
+	tmp = g_strjoinv(sp, arr);
 	ret = normal_to_wcs(tmp);
-	array_free(arr);
+	g_strfreev(arr);
 	xfree(tmp);
 	xfree(sp);
 	return ret;

@@ -563,7 +563,7 @@ void write_out_and_destroy_list(int fd, gim_host *hostlist)
 
 	for (iter = hostlist; iter; iter = iter->next)
 	{
-		for (i = 0; i < array_count(iter->ip); i++)
+		for (i = 0; i < g_strv_length(iter->ip); i++)
 		{
 			str = saprintf ("%s %s %d %d\n",
 					iter->name, iter->ip[i],
@@ -572,7 +572,7 @@ void write_out_and_destroy_list(int fd, gim_host *hostlist)
 			write (fd, str, xstrlen(str));
 			xfree (str);
 		}
-		array_free (iter->ip);
+		g_strfreev(iter->ip);
 		xfree (iter->ai_family);
 	}
 	LIST_DESTROY2 (hostlist, NULL);

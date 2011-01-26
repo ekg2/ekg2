@@ -286,7 +286,7 @@ static void rc_paths_changed(const char *name)
 		rc_input_close(r);		/* it'll remove l->data */
 	}
 
-	array_free(paths);
+	g_strfreev(paths);
 }
 
 EXPORT int rc_plugin_init(int prio) {

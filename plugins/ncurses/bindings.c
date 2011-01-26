@@ -173,10 +173,10 @@ static BINDING_FUNCTION(binding_backward_delete_char)
 
 		xfree(lines[lines_index]);
 
-		for (i = lines_index; i < array_count((char **) lines); i++)
+		for (i = lines_index; i < g_strv_length((char **) lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (array_count((char **) lines) + 1) * sizeof(CHAR_T *));
+		lines = xrealloc(lines, (g_strv_length((char **) lines) + 1) * sizeof(CHAR_T *));
 
 		lines_index--;
 		lines_adjust();
@@ -218,17 +218,17 @@ static BINDING_FUNCTION(binding_yank)
 
 static BINDING_FUNCTION(binding_delete_char)
 {
-	if (line_index == xwcslen(line) && lines_index < array_count((char **) lines) - 1 && xwcslen(line) + xwcslen(lines[lines_index + 1]) < LINE_MAXLEN) {
+	if (line_index == xwcslen(line) && lines_index < g_strv_length((char **) lines) - 1 && xwcslen(line) + xwcslen(lines[lines_index + 1]) < LINE_MAXLEN) {
 		int i;
 
 		xwcscat(line, lines[lines_index + 1]);
 
 		xfree(lines[lines_index + 1]);
 
-		for (i = lines_index + 1; i < array_count((char **) lines); i++)
+		for (i = lines_index + 1; i < g_strv_length((char **) lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (array_count((char **) lines) + 1) * sizeof(CHAR_T *));
+		lines = xrealloc(lines, (g_strv_length((char **) lines) + 1) * sizeof(CHAR_T *));
 
 		lines_adjust();
 		ncurses_typing_mod = 1;
@@ -254,9 +254,9 @@ static BINDING_FUNCTION(binding_accept_line)
 	if (lines) {
 		int i;
 
-		lines = xrealloc(lines, (array_count((char **) lines) + 2) * sizeof(CHAR_T *));
+		lines = xrealloc(lines, (g_strv_length((char **) lines) + 2) * sizeof(CHAR_T *));
 
-		for (i = array_count((char **) lines); i > lines_index; i--)
+		for (i = g_strv_length((char **) lines); i > lines_index; i--)
 			lines[i + 1] = lines[i];
 
 		lines[lines_index + 1] = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
@@ -311,15 +311,15 @@ static BINDING_FUNCTION(binding_line_discard)
 	*line = 0;
 	line_index = line_start = 0;
 
-	if (lines && lines_index < array_count((char **) lines) - 1) {
+	if (lines && lines_index < g_strv_length((char **) lines) - 1) {
 		int i;
 
 		xfree(lines[lines_index]);
 
-		for (i = lines_index; i < array_count((char **) lines); i++)
+		for (i = lines_index; i < g_strv_length((char **) lines); i++)
 			lines[i] = lines[i + 1];
 
-		lines = xrealloc(lines, (array_count((char **) lines) + 1) * sizeof(CHAR_T *));
+		lines = xrealloc(lines, (g_strv_length((char **) lines) + 1) * sizeof(CHAR_T *));
 
 		lines_adjust();
 	}
@@ -372,7 +372,7 @@ static BINDING_FUNCTION(binding_word_rubout)
 static void show_completions() {
 	int maxlen = 0, cols, rows, i;
 	char *tmp;
-	int complcount = array_count(ekg2_completions);
+	int complcount = g_strv_length(ekg2_completions);
 
 	for (i = 0; ekg2_completions[i]; i++) {
 		size_t compllen = xstrlen(ekg2_completions[i]);
@@ -552,7 +552,7 @@ static BINDING_FUNCTION(binding_forward_char) {
 		if (line_index < linelen)
 			line_index++;
 		else {
-			if (lines_index < array_count((char **) lines) - 1) {
+			if (lines_index < g_strv_length((char **) lines) - 1) {
 				lines_index++;
 				line_index = 0;
 				line_start = 0;
@@ -579,9 +579,9 @@ static void get_history_lines() {
 		}
 
 		tmp = wcs_array_make(history[history_index], TEXT("\015"), 0, 0, 0);
-		count = array_count((char **) tmp);
+		count = g_strv_length((char **) tmp);
 
-		array_free((char **) lines);
+		g_strfreev((char **) lines);
 		lines = xmalloc((count + 2) * sizeof(CHAR_T *));
 
 		for (i = 0; i < count; i++) {
@@ -589,7 +589,7 @@ static void get_history_lines() {
 			xwcscpy(lines[i], tmp[i]);
 		}
 
-		array_free((char **) tmp);
+		g_strfreev((char **) tmp);
 
 		line_index = 0;
 		lines_index = 0;
@@ -625,7 +625,7 @@ BINDING_FUNCTION(binding_previous_only_history)
 	get_history_lines();
 
 	if (lines) {
-		lines_index = array_count((char **)lines) - 1;
+		lines_index = g_strv_length((char **)lines) - 1;
 		line_index = LINE_MAXLEN+1;
 		lines_adjust();
 	}
@@ -667,7 +667,7 @@ static BINDING_FUNCTION(binding_previous_history)
 
 static BINDING_FUNCTION(binding_next_history)
 {
-	int count = array_count((char **) lines);
+	int count = g_strv_length((char **) lines);
 
 	if (lines && (lines_index < count - 1)) {
 		lines_index++;
@@ -832,7 +832,7 @@ static void binding_parse(struct binding *b, const char *action)
 	args = array_make(action, (" \t"), 1, 1, 1);
 
 	if (!args[0]) {
-		array_free(args);
+		g_strfreev(args);
 		return;
 	}
 
@@ -884,7 +884,7 @@ static void binding_parse(struct binding *b, const char *action)
 
 #undef __action
 
-	array_free(args);
+	g_strfreev(args);
 }
 
 /*
@@ -1059,8 +1059,8 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 			nodelay(input, TRUE);
 			count++;
 		}
-		joined = array_join(chars, (" "));
-		array_free(chars);
+		joined = g_strjoinv(" ", chars);
+		g_strfreev(chars);
 	} else
 		joined = xstrdup(sequence);
 

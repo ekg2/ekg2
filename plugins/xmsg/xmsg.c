@@ -656,7 +656,7 @@ static COMMAND(xmsg_msg)
 
 		protocol_message_emit(session, session->uid, rcpts, params[1], NULL, time(NULL), class, NULL, EKG_NO_BEEP, 0);
 
-		array_free(rcpts);
+		g_strfreev(rcpts);
 	}
 			
 	return 0;

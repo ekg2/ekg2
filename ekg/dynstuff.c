@@ -925,7 +925,7 @@ const char *itoa(long int i)
  *	       apostrofach z escapowanymi znakami.
  *
  * zaalokowan± tablicê z zaalokowanymi ci±gami znaków, któr± nale¿y
- * zwolniæ funkcj± array_free()
+ * zwolniæ funkcj± g_strfreev()
  */
 char **array_make(const char *string, const char *sep, int max, int trim, int quotes)
 {
@@ -1023,26 +1023,6 @@ failure:
 	return result;
 }
 
-/*
- * array_count()
- *
- * zwraca ilo¶æ elementów tablicy.
- */
-int array_count(char **array)
-{
-	int result = 0;
-
-	if (!array)
-		return 0;
-
-	while (*array) {
-		result++;
-		array++;
-	}
-
-	return result;
-}
-
 /* 
  * array_add()
  *
@@ -1050,7 +1030,7 @@ int array_count(char **array)
  */
 int array_add(char ***array, char *string)
 {
-	int count = array_count(*array);
+	int count = g_strv_length(*array);
 
 	*array = xrealloc(*array, (count + 2) * sizeof(char*));
 	(*array)[count + 1] = NULL;
@@ -1079,35 +1059,6 @@ int array_add_check(char ***array, char *string, int casesensitive)
 	else
 		xfree(string);
 	return 0;
-}
-
-/*
- * array_join()
- *
- * ³±czy elementy tablicy w jeden string oddzielaj±c elementy odpowiednim
- * separatorem.
- *
- *  - array - wska¼nik do tablicy,
- *  - sep - seperator.
- *
- * zwrócony ci±g znaków nale¿y zwolniæ.
- */
-char *array_join(char **array, const char *sep)
-{
-	string_t s = string_init(NULL);
-	int i;
-
-	if (!array)
-		return string_free(s, 0);
-
-	for (i = 0; array[i]; i++) {
-		if (i)
-			string_append(s, sep);
-
-		string_append(s, array[i]);
-	}
-
-	return string_free(s, 0);
 }
 
 char *array_join_count(char **array, const char *sep, int count) {
@@ -1189,7 +1140,7 @@ char *array_shift(char ***array)
 	int count;
 	char *out;
 
-	if (!(count = array_count(*array)))
+	if (!(count = g_strv_length(*array)))
 		return NULL;
 
 	out = (*array)[0];
@@ -1201,24 +1152,6 @@ char *array_shift(char ***array)
 		*array = NULL;
 	}
 	return out;
-}
-
-/*
- * array_free()
- *
- * zwalnia pamieæ zajmowan± przez tablicê.
- */
-void array_free(char **array)
-{
-	char **tmp;
-
-	if (!array)
-		return;
-
-	for (tmp = array; *tmp; tmp++)
-		xfree(*tmp);
-
-	xfree(array);
 }
 
 void array_free_count(char **array, int count) {

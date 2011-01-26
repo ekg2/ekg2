@@ -120,8 +120,8 @@ void userlist_add_entry(session_t *session, const char *line) {
 	userlist_t *u;
 	int count, i;
 
-	if ((count = array_count(entry)) < 7) {
-		array_free(entry);
+	if ((count = g_strv_length(entry)) < 7) {
+		g_strfreev(entry);
 		return;
 	}
 
@@ -959,7 +959,7 @@ int ignore_flags(const char *str) {
 				ret |= ignore_labels[y].level;
 	}
 
-	array_free(arr);
+	g_strfreev(arr);
 
 	return ret;
 }
@@ -1109,7 +1109,7 @@ struct ekg_group *group_init(const char *names) {
 		g->name = groups[i];
 		ekg_groups_add(&gl, g);
 	}
-	/* NOTE: we don't call here array_free() cause we use items of this
+	/* NOTE: we don't call here g_strfreev() cause we use items of this
 	 *	array @ initing groups. We don't use strdup()
 	 */
 	xfree(groups);

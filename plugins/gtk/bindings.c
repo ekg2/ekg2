@@ -156,7 +156,7 @@ static GTK_BINDING_FUNCTION(key_action_history_down) {
 static void show_completions() {
 	int maxlen = 0, cols, rows, i;
 	char *tmp;
-	int complcount = array_count(ekg2_completions);
+	int complcount = g_strv_length(ekg2_completions);
 
 	for (i = 0; ekg2_completions[i]; i++) {
 		size_t compllen = xstrlen(ekg2_completions[i]);

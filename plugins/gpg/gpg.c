@@ -655,7 +655,7 @@ EXPORT int gpg_plugin_init(int prio) {
 				k->keysetup = atoi(p[2]);
 			} else debug_error("[GPG] INVALID LINE: %s\n", line);
 
-			array_free(p);
+			g_strfreev(p);
 		}
 		fclose(f);
 	} else debug_error("[GPG] Opening of %s failed: %d %s.\n", dbfile, errno, strerror(errno));

@@ -109,10 +109,10 @@ int emoticon_read() {
 
 		emot = array_make(buf, "\t", 2, 1, 1);
 	
-		if (array_count(emot) == 2)
+		if (g_strv_length(emot) == 2)
 			emoticon_add(emot[0], emot[1]);
 
-		array_free(emot);
+		g_strfreev(emot);
 	}
 	
 	fclose(f);

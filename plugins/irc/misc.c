@@ -268,7 +268,7 @@ next2:
 				continue;
 					
 			}
-			array_free(arr);
+			g_strfreev(arr);
 
 			if (!ismatch) continue;
 		}

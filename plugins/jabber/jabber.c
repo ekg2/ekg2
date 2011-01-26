@@ -562,7 +562,7 @@ static void xmlnode_handle_start(void *data, const char *name, const char **atts
 				m->next = newnode;
 			}
 		}
-		arrcount = array_count((char **) atts);
+		arrcount = g_strv_length((char **) atts);
 
 		if (arrcount > 0) {		/* we don't need to allocate table if arrcount = 0 */
 			newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));

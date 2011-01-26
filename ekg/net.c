@@ -200,8 +200,8 @@ static void ekg_connect_data_free(struct ekg_connect_data *c) {
 		c->internal_watch->data = NULL;	/* avoid double free */
 		watch_free(c->internal_watch);
 	}
-	array_free(c->resolver_queue);
-	array_free(c->connect_queue);
+	g_strfreev(c->resolver_queue);
+	g_strfreev(c->connect_queue);
 	xfree(c->session);
 
 	xfree(c);
@@ -264,8 +264,8 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 
 	*address = NULL;
 
-	if (array_count(a) < 3) {
-		array_free(a);
+	if (g_strv_length(a) < 3) {
+		g_strfreev(a);
 		return 0;
 	}
 
@@ -315,7 +315,7 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 	} else
 		debug_function("ekg_build_sin(), unknown addr family %d!\n", family);
 
-	array_free(a);
+	g_strfreev(a);
 
 	return len;
 }

@@ -1,5 +1,7 @@
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
@@ -398,7 +400,7 @@ static int ruby_query(script_t *scr, script_query_t *scr_que, void *args[]) {
 
 #if 0
 				case (QUERY_ARG_CHARPP): {/* char ** */
-					 char *tmp = array_join((char **) args[i], " ");
+					 char *tmp = g_strjoinv(" ", (char **) args[i]);
 					 if (xstrlen(tmp)) 
 					 perlarg = new_pv(tmp);
 					 xfree(tmp);
@@ -435,7 +437,7 @@ static int ruby_query(script_t *scr, script_query_t *scr_que, void *args[]) {
 static int ruby_commands(script_t *scr, script_command_t *comm, char **params) {
 	ruby_helper_t ruby_command;
 	VALUE *argv;
-	int argc = array_count(params);
+	int argc = g_strv_length(params);
 	int i;
 
 	argv = ALLOCA_N(VALUE, argc);

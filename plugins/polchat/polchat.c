@@ -196,7 +196,7 @@ static watch_t *polchat_sendpkt(session_t *s, short headercode, ...)  {
 
 	string_append_raw(w->buf, dword_str(size), 4);
 	string_append_raw(w->buf, word_str(headercode ? 1 : 0), 2);	/* headerlen / 256 + headerlen % 256 */
-	string_append_raw(w->buf, word_str(array_count(arr)), 2);
+	string_append_raw(w->buf, word_str(g_strv_length(arr)), 2);
 
 /* headers */
 	if (headercode)
@@ -209,7 +209,7 @@ static watch_t *polchat_sendpkt(session_t *s, short headercode, ...)  {
 			string_append_n(w->buf, arr[i], len);		/* str */
 			string_append_c(w->buf, '\0');			/* NUL */
 		}
-		array_free(arr);
+		g_strfreev(arr);
 	}
 	
 	w->data = (void *) (long int) w->buf->len;

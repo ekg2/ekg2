@@ -319,7 +319,7 @@ static COMMAND(gg_command_connect) {
 			auth = array_make(tmp, "@", 0, 0, 0);
 		
 			if (!auth[0] || !xstrcmp(auth[0], "")) {
-				array_free(auth);
+				g_strfreev(auth);
 				goto noproxy;
 			}
 	
@@ -339,9 +339,9 @@ static COMMAND(gg_command_connect) {
 			gg_proxy_host = xstrdup(hostport[0]);
 			gg_proxy_port = (hostport[1]) ? atoi(hostport[1]) : 8080;
 	
-			array_free(hostport);
-			array_free(userpass);
-			array_free(auth);
+			g_strfreev(hostport);
+			g_strfreev(userpass);
+			g_strfreev(auth);
 		}
 noproxy:
 
@@ -650,7 +650,7 @@ static COMMAND(gg_command_msg) {
 				printq("group_empty", tmp[i] + 1);
 		}
 
-		array_free(tmp);
+		g_strfreev(tmp);
 	}
 
 	if (!nicks) {
@@ -781,7 +781,7 @@ static COMMAND(gg_command_msg) {
 	raw_msg = xstrdup((char *) msg);
 	cpmsg = locale_to_gg(session, (char *) msg);
 
-	count = array_count(nicks);
+	count = g_strv_length(nicks);
 
 	for (p = nicks; *p; p++) {
 		const char *uid;
@@ -877,7 +877,7 @@ static COMMAND(gg_command_msg) {
 	xfree(nick);
 	xfree(ekg_format);
 
-	array_free(nicks);
+	g_strfreev(nicks);
 
 	return 0;
 }
@@ -1659,7 +1659,7 @@ static COMMAND(gg_command_modify) {
 			if (chg)
 				query_emit(NULL, "userlist-refresh");
 
- 			array_free(tmp);
+ 			g_strfreev(tmp);
 			continue;
 		}
 		
@@ -1670,14 +1670,14 @@ static COMMAND(gg_command_modify) {
 
 			if (valid_plugin_uid(&gg_plugin, argv[i + 1]) != 1) {
 				printq("invalid_uid");
-				array_free(argv);
+				g_strfreev(argv);
 				return -1;
 			}
 
 			if ((existing = userlist_find(session, argv[i + 1]))) {
 				if (existing->nickname) {
 					printq("user_exists_other", argv[i + 1], format_user(session, existing->uid), session_name(session));
-					array_free(argv);
+					g_strfreev(argv);
 					return -1;
 				} else {
 					char *egroups = group_to_string(existing->groups, 1, 0);
@@ -1689,7 +1689,7 @@ static COMMAND(gg_command_modify) {
 						for (i = 0; arr[i]; i++)
 							ekg_group_add(u, arr[i]);
 
-						array_free(arr);
+						g_strfreev(arr);
 					}
 
 					userlist_remove(session, existing);
@@ -1727,7 +1727,7 @@ static COMMAND(gg_command_modify) {
 		} 
 		
 		printq("invalid_params", name);
-		array_free(argv);
+		g_strfreev(argv);
 		return -1;
 	}
 
@@ -1746,7 +1746,7 @@ static COMMAND(gg_command_modify) {
 	} else
 		config_changed = 1;
 
-	array_free(argv);
+	g_strfreev(argv);
 
 	return res;
 }

@@ -586,14 +586,14 @@ int metacontact_read()
 
 		array = array_make(line, " ", 3, 1, 1);
 		
-		if (array_count(array) != 3) {
+		if (g_strv_length(array) != 3) {
 			debug("		metacontact_read: wrong number of forms\n");
 			goto next;
 		}
 
 		metacontact_add_item(m, array[0], array[1], atoi(array[2]), 1);
 next:
-		array_free(array);
+		g_strfreev(array);
 	}
 
 	fclose(f);

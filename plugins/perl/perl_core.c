@@ -103,7 +103,7 @@ int perl_commands(script_t *scr, script_command_t *comm, char **params)
 	char *tmp;
 	PERL_HANDLER_HEADER((char *) comm->priv_data);
 	XPUSHs(sv_2mortal(new_pv(comm->self->name)));
-	tmp = array_join(params, " ");
+	tmp = g_strjoinv(" ", params);
 	XPUSHs(sv_2mortal(new_pv(tmp)));
 	xfree(tmp);
 
@@ -145,7 +145,7 @@ int perl_query(script_t *scr, script_query_t *scr_que, void *args[])
 				perlarg = new_pv( *(char **) args[i] );
 				break;
 			case (QUERY_ARG_CHARPP): {/* char ** */
-				char *tmp = array_join((* (char ***) args[i]), " ");
+				char *tmp = g_strjoinv(" ", (* (char ***) args[i]));
 				if (xstrlen(tmp)) 
 					perlarg = new_pv(tmp);
 				xfree(tmp);

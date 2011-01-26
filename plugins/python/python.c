@@ -231,7 +231,7 @@ int python_query(script_t *scr, script_query_t *scr_que, void **args)
 				break;
 			}
 			case (QUERY_ARG_CHARPP): {
-				char *tmp = array_join((* (char ***) args[i]), " ");
+				char *tmp = g_strjoinv(" ", (* (char ***) args[i]));
 				w = PyString_FromString(tmp); /* CHECK: xstrdup ? */
 				xfree(tmp);
 				break;

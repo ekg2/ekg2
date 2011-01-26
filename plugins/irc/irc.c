@@ -598,9 +598,9 @@ static void irc_changed_recode_list(session_t *s, const char *var) {
 			r_channel->recode = recode;
 			list_add(&(j->recoded_channels), r_channel);
 		}
-		array_free(list2);
+		g_strfreev(list2);
 	}
-	array_free(list1);
+	g_strfreev(list1);
 }
 
 static void irc_changed_recode(session_t *s, const char *var) {
@@ -679,10 +679,9 @@ static void irc_changed_auto_guess_encoding(session_t *s, const char *var) {
 		    debug_error("auto_guess_encoding skips unknown '%s' value\n", from);
 		xfree(to);
 	}
-
-	array_free(args);
-
+	g_strfreev(args);
 }
+
 /*									 *
  * ======================================== HANDLERS ------------------- *
  *									 */
@@ -787,10 +786,10 @@ static WATCHER_LINE(irc_handle_resolver) {
 		list_add_sorted((resolv->plist), listelem, &irc_resolver_sort);
 
 		debug("%s (%s %s) %x %x\n", p[0], p[1], p[2], resolv->plist, listelem);
-		array_free(p);
+		g_strfreev(p);
 	} else {
 		debug_error("[irc] received some kind of junk from resolver thread: %s\n", watch);
-		array_free(p);
+		g_strfreev(p);
 		return -1;
 	}
 	return 0;
@@ -1592,7 +1591,7 @@ static COMMAND(irc_command_alist) {
 					else if (!xstrcmp(value, "ison"))	ekg_group_add(u, "__ison");		/* + */
 					else printq("irc_access_invalid_flag", value);
 				}
-				array_free(arr);
+				g_strfreev(arr);
 			} else u->groups = group_init(irc_config_default_access_groups);
 			xfree(tmp);
 		}
@@ -2015,7 +2014,7 @@ static COMMAND(irc_command_names) {
 	xfree(cchn);
 	debug_white("[IRC_NAMES] levelcounts = %d %d %d %d %d %d\n", sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
 
-	array_free(mp);
+	g_strfreev(mp);
 	string_free (buf, 1);
 	xfree(channame);
 	return 0;
@@ -2044,7 +2043,7 @@ static COMMAND(irc_command_topic) {
 	}
 
 	watch_write(j->send_watch, "%s", newtop);
-	array_free(mp);
+	g_strfreev(mp);
 	xfree (newtop);
 	xfree (chan);
 	return 0;
@@ -2060,7 +2059,7 @@ static COMMAND(irc_command_who) {
 
 	watch_write(j->send_watch, "WHO %s\r\n", chan+4);
 
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(chan);
 	return 0;
 }
@@ -2080,7 +2079,7 @@ static COMMAND(irc_command_invite) {
 	}
 	watch_write(j->send_watch, "INVITE %s %s\r\n", *mp, chan+4);
 
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(chan);
 	return 0;
 }
@@ -2100,7 +2099,7 @@ static COMMAND(irc_command_kick) {
 	}
 	watch_write(j->send_watch, "KICK %s %s :%s\r\n", chan+4, *mp, KICKMSG(session, mp[1]));
 
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(chan);
 	return 0;
 }
@@ -2120,7 +2119,7 @@ static COMMAND(irc_command_unban) {
 
 	if (!(*mp)) {
 		printq("not_enough_params", name);
-		array_free(mp);
+		g_strfreev(mp);
 		xfree(channame);
 		return -1;
 	} else {
@@ -2140,7 +2139,7 @@ static COMMAND(irc_command_unban) {
 			watch_write(j->send_watch, "MODE %s -b %s\r\n", channame+4, *mp);
 		}
 	}
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(channame);
 	return 0;
 
@@ -2180,7 +2179,7 @@ static COMMAND(irc_command_ban) {
 		} else
 			watch_write(j->send_watch, "MODE %s +b %s\r\n", chan+4, *mp);
 	}
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(chan);
 	return 0;
 }
@@ -2255,7 +2254,7 @@ static COMMAND(irc_command_devop) {
 	xfree(chan);
 	xfree(nicks);
 	xfree(op);
-	array_free(mp);
+	g_strfreev(mp);
 	return 0;
 }
 
@@ -2282,7 +2281,7 @@ static COMMAND(irc_command_ctcp) {
 	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01%s\01\r\n",
 			who+4, ctcps[i].name?ctcps[i].name:(*mp));
 
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(who);
 	return 0;
 }
@@ -2298,7 +2297,7 @@ static COMMAND(irc_command_ping) {
 	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01PING %d %d\01\r\n",
 			who+4 ,tv.tv_sec, tv.tv_usec);
 
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(who);
 	return 0;
 }
@@ -2327,7 +2326,7 @@ static COMMAND(irc_command_me) {
 			ischn?"irc_ctcp_action_y_pub":"irc_ctcp_action_y",
 			session_name(session), j->nick, chan, col);
 
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(chan);
 	xfree(col);
 	xfree(str);
@@ -2343,7 +2342,7 @@ static COMMAND(irc_command_mode) {
 /* G->dj: I'm still leaving this
 	if (!(*mp)) {
 		print("not_enough_params", name);
-		array_free(mp);
+		g_strfreev(mp);
 		xfree(chan);
 		return -1;
 	}
@@ -2356,7 +2355,7 @@ static COMMAND(irc_command_mode) {
 		watch_write(irc_private(session)->send_watch, "MODE %s %s\r\n",
 				chan+4, *mp);
 
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(chan);
 	return 0;
 }
@@ -2388,7 +2387,7 @@ static COMMAND(irc_command_whois) {
 		watch_write(irc_private(session)->send_watch, "WHOIS %s %s\r\n", person+4, person+4);
 	else	watch_write(irc_private(session)->send_watch, "WHOIS %s\r\n",  person+4);
 
-	array_free(mp);
+	g_strfreev(mp);
 	xfree (person);
 	return 0;
 }
@@ -2438,7 +2437,7 @@ static COMMAND(irc_command_query) {
 
 	if (!(tar = irc_getchan(session, (const char **) p, name,
 					&mp, 0, IRC_GC_NOT_CHAN))) {
-		array_free(p);
+		g_strfreev(p);
 		return -1;
 	}
 
@@ -2452,8 +2451,8 @@ static COMMAND(irc_command_query) {
 
 	window_switch(w->id);
 
-	array_free(mp);
-	array_free(p);
+	g_strfreev(mp);
+	g_strfreev(p);
 	xfree(tar);
 	return 0;
 }
@@ -2486,7 +2485,7 @@ static COMMAND(irc_command_jopacy) {
 
 	watch_write(j->send_watch, str);
 
-	array_free(mp);
+	g_strfreev(mp);
 	xfree(tar);
 	xfree(str);
 	xfree(tmp);

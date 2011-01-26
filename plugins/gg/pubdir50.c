@@ -92,7 +92,7 @@ COMMAND(gg_command_find)
 		argv = &argv[1];	/* skip this param, and go to nextone */
 	}
 	
-	uargv = xcalloc(array_count(argv)+1, sizeof(char **));
+	uargv = xcalloc(g_strv_length(argv)+1, sizeof(char **));
 
 	for (i = 0; argv[i]; i++)
 		uargv[i] = (char*)locale_to_gg_use(session, argv[i]);
@@ -260,12 +260,12 @@ COMMAND(gg_command_change)
 			}
 
 			printq("invalid_params", name);
-			array_free(argv);
+			g_strfreev(argv);
 
 			gg_pubdir50_free(req);
 			return -1;
 		}
-		array_free(argv);
+		g_strfreev(argv);
 	}
 
 	if (!gg_pubdir50(g->sess, req)) {

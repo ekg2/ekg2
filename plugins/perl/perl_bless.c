@@ -117,8 +117,8 @@ void ekg2_bless_command(HV *hv, command_t *command)
 	char *temp;
 	debug_bless("blessing command %s\n", command->name);
 	(void) hv_store(hv, "name",  4, new_pv(command->name), 0);
-	temp = array_join(command->params, " ");	(void) hv_store(hv, "param", 5, new_pv(temp), 0); xfree(temp);
-	temp = array_join(command->possibilities, " ");	(void) hv_store(hv, "poss",  4, new_pv(temp), 0); xfree(temp);
+	temp = g_strjoinv(" ", command->params);	(void) hv_store(hv, "param", 5, new_pv(temp), 0); xfree(temp);
+	temp = g_strjoinv(" ", command->possibilities);	(void) hv_store(hv, "poss",  4, new_pv(temp), 0); xfree(temp);
 }
 
 void ekg2_bless_fstring(HV *hv, fstring_t *fstr)

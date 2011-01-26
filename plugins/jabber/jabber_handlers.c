@@ -512,7 +512,7 @@ JABBER_HANDLER(jabber_handle_challenge) {
 		debug_error("[%d] %s: %s\n", i / 2, arr[i], __(arr[i+1]));
 		if (!arr[i+1]) {
 			debug_error("Parsing var<=>value failed, NULL....\n");
-			array_free(arr);
+			g_strfreev(arr);
 			j->parser = NULL; 
 			jabber_handle_disconnect(s, "IE, Current SASL support for ekg2 cannot handle with this data, sorry.", EKG_DISCONNECT_FAILURE);
 			return;
@@ -587,7 +587,7 @@ JABBER_HANDLER(jabber_handle_challenge) {
 		xfree(username);
 		xfree(cnonce);
 	}
-	array_free(arr);
+	g_strfreev(arr);
 }
 
 JABBER_HANDLER(jabber_handle_proceed) {
@@ -1221,7 +1221,7 @@ static void jabber_handle_xmldata_result(session_t *s, xmlnode_t *form, const ch
 		} else debug_error("jabber_handle_xmldata_result() name: %s\n", form->name);
 	}
 	if (print_end) print("jabber_form_end", session_name(s), uid, "");
-	array_free(labels);
+	g_strfreev(labels);
 }
 
 struct jabber_iq_generic_handler {

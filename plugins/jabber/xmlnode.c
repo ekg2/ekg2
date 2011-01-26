@@ -25,7 +25,7 @@ static void xmlnode_free(xmlnode_t *n)
 	xfree(n->name);
 	xfree(n->data);
 	xfree(n->xmlns);
-	array_free(n->atts);
+	g_strfreev(n->atts);
 	xfree(n);
 }
  

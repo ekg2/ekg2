@@ -385,7 +385,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 
 			if (!r->login_ok) {
 				remote_writefd(fd, "-LOGIN", NULL);
-				array_free(arr);
+				g_strfreev(arr);
 				return -1;
 			}
 
@@ -395,11 +395,11 @@ static WATCHER_LINE(rc_input_handler_line) {
 
 		} else {
 			debug_error("unknown command: %s\n", arr[0]);
-			array_free(arr);
+			g_strfreev(arr);
 			return -1;
 		}
 
-		array_free(arr);
+		g_strfreev(arr);
 		return 0;
 	}
 
@@ -451,7 +451,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 			for (cl = commands; cl; cl = cl->next) {
 				command_t *c = cl->data;
 				if (c->params) {
-					char *tmp = array_join(c->params, " ");
+					char *tmp = g_strjoinv(" ", c->params);
 					remote_writefd(fd, "COMMAND", c->name, tmp, NULL);
 					xfree(tmp);
 				} else
@@ -659,7 +659,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 			debug_error("unknown command: %s\n", cmd);
 		}
 	}
-	array_free(arr);
+	g_strfreev(arr);
 	return 0;
 }
 
@@ -1026,7 +1026,7 @@ static void rc_paths_changed(const char *name) {
 		rc_input_close(r);		/* it'll remove l->data */
 	}
 
-	array_free(paths);
+	g_strfreev(paths);
 }
 
 static int remote_window_new(window_t *w) {

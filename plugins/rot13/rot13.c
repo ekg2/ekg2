@@ -192,7 +192,7 @@ static COMMAND(command_key) {
 
 		if (!target) {
 			printq("invalid_params", name);
-			array_free(arr);
+			g_strfreev(arr);
 			return -1;
 		}
 
@@ -235,7 +235,7 @@ static QUERY(rot13_setvar_default) {
 				xfree(arr);
 			} else {
 				debug("rot13_setvar_default() failed to parse line: %s\n", tmp);
-				array_free(arr);
+				g_strfreev(arr);
 			}
 		}
 		fclose(f);

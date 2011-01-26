@@ -531,7 +531,7 @@ int gg_userlist_set(session_t *session, const char *contacts)
 	for (i = 0; entries[i]; i++)
 		userlist_add_entry(session, entries[i]);
 
-	array_free(entries);
+	g_strfreev(entries);
 
 	query_emit(NULL, "userlist-refresh");
 

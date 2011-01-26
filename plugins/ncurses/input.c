@@ -195,7 +195,7 @@ void ncurses_lines_adjust(void) {
 void ncurses_input_update(int new_line_index)
 {
 	if (ncurses_input_size == 1) {
-		array_free((char **) ncurses_lines);
+		g_strfreev((char **) ncurses_lines);
 		ncurses_lines = NULL;
 		ncurses_line = xmalloc(LINE_MAXLEN*sizeof(CHAR_T));
 
@@ -491,7 +491,7 @@ void ncurses_redraw_input(unsigned int ch) {
 		wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
 		if (lines_start>0)
 			mvwaddch(input, 0, input->_maxx, '^');
-		if (array_count((char **) ncurses_lines)-lines_start > MULTILINE_INPUT_SIZE)
+		if (g_strv_length((char **) ncurses_lines)-lines_start > MULTILINE_INPUT_SIZE)
 			mvwaddch(input, MULTILINE_INPUT_SIZE-1, input->_maxx, 'v');
 		wattrset(input, A_NORMAL);
 	} else {
@@ -580,7 +580,7 @@ WATCHER(ncurses_watch_stdin)
 			count++;
 		}
 
-		joined = array_join(chars, (" "));
+		joined = g_strjoinv(" ", chars);
 
 		for (d = bindings_added; d; d = d->next) {
 			if (!xstrcasecmp(d->sequence, joined)) {
@@ -596,7 +596,7 @@ WATCHER(ncurses_watch_stdin)
 
 end:
 		xfree(joined);
-		array_free(chars);
+		g_strfreev(chars);
 		if (success)
 			goto then;
 	}

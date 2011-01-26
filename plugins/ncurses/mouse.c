@@ -219,14 +219,14 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 					else
 						lines_start = 0;
 				} else if (mouse_flag == EKG_SCROLLED_DOWN) {
-					const int lines_count = array_count((char **) ncurses_lines);
+					const int lines_count = g_strv_length((char **) ncurses_lines);
 
 					if (lines_start < lines_count - 2)
 						lines_start += 2;
 					else
 						lines_start = lines_count - 1;
 				} else if (mouse_flag == EKG_BUTTON1_CLICKED) {
-					const int lines_count = array_count((char **) ncurses_lines);
+					const int lines_count = g_strv_length((char **) ncurses_lines);
 
 					lines_index = lines_start + y;
 					if (lines_index >= lines_count)

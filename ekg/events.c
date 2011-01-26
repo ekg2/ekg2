@@ -294,12 +294,12 @@ event_t *event_find(const char *name, const char *target) {
 				}
 			}
 		}
-		array_free(a);
-		array_free(d);
+		g_strfreev(a);
+		g_strfreev(d);
 	}
 
-	array_free(b);
-	array_free(c);
+	g_strfreev(b);
+	g_strfreev(c);
 
 	return (ev_max) ? ev_max : NULL;
 }
@@ -344,12 +344,12 @@ static event_t *event_find_all(const char *name, const char *session, const char
 				}
 			}
 		}
-		array_free(a);
-		array_free(d);
+		g_strfreev(a);
+		g_strfreev(d);
 	}
 
-	array_free(b);
-	array_free(c);
+	g_strfreev(b);
+	g_strfreev(c);
 
 	return (ev_max) ? ev_max : NULL;
 }
@@ -617,7 +617,7 @@ static int event_check(const char *session, const char *name, const char *uid, c
 		xfree(tmp);
 	}
 
-	array_free(actions);
+	g_strfreev(actions);
 	xfree(edata);
 
 	return 0;
@@ -753,7 +753,7 @@ static int event_target_check(char *buf) {
 	
 #define s separators[i]
 
-	separators = xmalloc(array_count(params) * sizeof(char) + 1);
+	separators = xmalloc(g_strv_length(params) * sizeof(char) + 1);
 	
 	while (*buf) {
 		if (*buf == '&' || *buf == '|') {
@@ -787,7 +787,7 @@ static int event_target_check(char *buf) {
 #undef s
 
 	xfree(separators);
-	array_free(params);
+	g_strfreev(params);
 
 	return last_returned;
 }

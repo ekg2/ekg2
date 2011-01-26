@@ -347,7 +347,7 @@ int alias_add(const char *string, int quiet, int append)
 	list_add(&(a->commands), xstrdup(cmd));
 	aliases_add(a);
 
-	array = (params) ? array_join(params, (" ")) : xstrdup(("?"));
+	array = (params) ? g_strjoinv(" ", params) : xstrdup(("?"));
 	command_add(NULL, a->name, array, cmd_alias_exec, COMMAND_ISALIAS, NULL);
 	xfree(array);
 	
@@ -807,19 +807,19 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 			if (!nig) {
 				printq("group_empty", gname);
 				printq("conferences_not_added", name);
-				array_free(nicks);
+				g_strfreev(nicks);
 				return NULL;
 			}
 		}
 	}
 
-	count = array_count(nicks);
+	count = g_strv_length(nicks);
 
 	for (cf = conferences; cf; cf = cf->next) {
 		if (!xstrcasecmp(name, cf->name)) {
 			printq("conferences_exist", name);
 
-			array_free(nicks);
+			g_strfreev(nicks);
 
 			return NULL;
 		}
@@ -841,7 +841,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 	}
 
 
-	array_free(nicks);
+	g_strfreev(nicks);
 
 	if (i != count) {
 		printq("conferences_not_added", name);

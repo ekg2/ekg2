@@ -242,13 +242,13 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 	
 	if (!tmpbody || !tmpbody[0] || !tmpbody[1] || !tmpbody[2]) {
 		debug("nntp_message_process() tmpbody? mbody: %s\n", mbody);
-		array_free(tmpbody);
+		g_strfreev(tmpbody);
 		return -1;
 	}
 
 	if (!(art = nntp_article_find(j->newsgroup, atoi(tmpbody[0]), tmpbody[1]))) {
 		debug("nntp_message_process nntp_article_find() failed\n");
-		array_free(tmpbody);
+		g_strfreev(tmpbody);
 		return -1;
 	}
 	
@@ -400,7 +400,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		j->newsgroup->state = NNTP_IDLE;
 	} else debug("nntp_message_process() j->newsgroup == NULL!!!!\n");
 
-	array_free(tmpbody);
+	g_strfreev(tmpbody);
 	return 0;
 }
 
@@ -462,7 +462,7 @@ NNTP_HANDLER(nntp_group_process) {
 	j->newsgroup	= group;
 	group->state	= NNTP_IDLE;
 
-	array_free(p);
+	g_strfreev(p);
 	return 0;
 }
 
@@ -590,7 +590,7 @@ static WATCHER_LINE(nntp_handle_stream) {
 	} else {
 		debug("nntp_handle_stream() buf: %s (last: %d)\n", watch, j->last_code);
 	}
-	array_free(p);
+	g_strfreev(p);
 
 	return 0;
 }

@@ -79,7 +79,7 @@ extern "C" {
 #define xwcschr(s, c) xstrchr((char *) s, c)
 #define wcs_to_normal(x) (char *) x
 #define wcs_array_make(str, sep, max, trim, quotes) (CHAR_T **) array_make((char *) str, sep, max, trim, quotes)
-#define wcs_array_join(arr, sep) (CHAR_T *) array_join((char **) arr, sep)
+#define wcs_array_join(arr, sep) (CHAR_T *) g_strjoinv(sep, (char **) arr)
 #define xwcslcpy(dst, src, size) g_strlcpy((char *) dst, (char *) src, size)
 #define free_utf(x)
 

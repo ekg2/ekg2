@@ -427,12 +427,12 @@ int variable_set(const char *name, const char *value) {
 					}
 
 					if (!found) {
-						array_free(args);
+						g_strfreev(args);
 						return -2;
 					}
 				}
 
-				array_free(args);
+				g_strfreev(args);
 
 				value = itoa(k);
 			}

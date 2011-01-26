@@ -709,16 +709,16 @@ COMMAND(cmd_window) {
 					
 					if (!w) {
 						printq("window_doesnt_exist", arr[i]);
-						array_free(arr);
+						g_strfreev(arr);
 						return -1;
 					}
 				} else {
 					printq("invalid_params", name);
-					array_free(arr);
+					g_strfreev(arr);
 					return -1;
 				}
 			}
-			array_free(arr);
+			g_strfreev(arr);
 			str = params[2];
 
 		} else	str = params[1];

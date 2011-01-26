@@ -77,7 +77,7 @@ char **my_completion(char *text, int start, int end) {
 
 	if (e0!=end || (out_quote ^ in_quote)) {
 
-		if ((n=array_count(ekg2_completions)) == 0) {
+		if ((n=g_strv_length(ekg2_completions)) == 0) {
 			if (in_quote && out_quote) start++;
 			n = end - start - 1;
 			if (n && out_quote && in_quote) n--;
