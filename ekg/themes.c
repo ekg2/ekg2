@@ -206,6 +206,53 @@ static const char *format_ansi(char ch) {
 	return ("");
 }
 
+static char *fstring2str(fstring_t *f) {
+	static char *fore = "krgybmcwKRGYBMCW";
+	static char *back = "lshzeqdx";
+	int i;
+	short prevattr = FSTR_NORMAL;
+	string_t st = string_init(NULL);
+
+	for (i=0; i < strlen(f->str); i++) {
+		short attr = f->attr[i];
+
+		if (attr != prevattr) {
+			short change = attr ^ prevattr;
+			prevattr = attr;
+			if (change & FSTR_BLINK) {
+				if (attr & FSTR_BLINK)
+					string_append(st, format_ansi('i'));	/* turn on blinking */
+				else
+					change |= FSTR_NORMAL;
+			}
+			if (change & FSTR_UNDERLINE) {
+				if (attr & FSTR_UNDERLINE)
+					string_append(st, format_ansi('U'));	/* turn on underline */
+				else
+					change |= FSTR_NORMAL;
+			}
+			if (change & FSTR_REVERSE) {
+				if (attr & FSTR_BLINK)
+					string_append(st, format_ansi('V'));	/* turn on reverse */
+				else
+					change |= FSTR_NORMAL;
+			}
+			if ((change & FSTR_NORMAL) && (attr & FSTR_NORMAL)) {
+				string_append(st, format_ansi('n'));
+			}
+			if (change & (FSTR_BOLD|FSTR_FOREMASK)) {
+				char c = fore[(attr & FSTR_FOREMASK) + ((attr & FSTR_BOLD) ? 8 : 0)];
+				string_append(st, format_ansi(c));
+			}
+			if (change & FSTR_BACKMASK)
+				string_append(st, format_ansi(back[(attr & FSTR_BACKMASK)>>3]));
+                }
+		string_append_c(st, f->str[i]);
+	}
+	return string_free(st, 0);
+}
+
+
 /*
  * va_format_string()
  *
@@ -434,19 +481,21 @@ static char *va_format_string(const char *format, va_list ap) {
 
 			if (*p >= '1' && *p <= '9') {
 				char *str = (char *) args[*p - '1'];
-				int i, len;
-
-				if (!str)
-					str = "";
-				len = strlen_pl(str);
+				int i, need_free = 0;
 
 				if (fill_length) {
+					fstring_t * fstr = fstring_new(str);
+					int len = strlen_pl(fstr->str);
 					if (len >= fill_length) {
-						if (!fill_soft)
-							len = fill_length;
+						if (!fill_soft) {
+							fstr->str[utf8str_char2bytes(fstr->str, fill_length)] = 0;
+							str = fstring2str(fstr);
+							need_free = 1;
+						}
 						fill_length = 0;
 					} else
 						fill_length -= len;
+					fstring_free(fstr);
 				}
 
 				if (center) {
@@ -459,11 +508,13 @@ static char *va_format_string(const char *format, va_list ap) {
 					for (i = 0; i < fill_length+center; i++)
 						string_append_c(buf, fill_char);
 
-				string_append_n(buf, str, utf8str_char2bytes(str, len));
+				string_append(buf, str);
 
 				if (fill_after)
 					for (i = 0; i < fill_length; i++)
 						string_append_c(buf, fill_char);
+				if (need_free)
+					xfree(str);
 			}
 		} else if ((*p=='/') && (p[1] == '|')) {	/* /| 'set margin' */
 			if ((p == format) || (p[-1]!='/'))
