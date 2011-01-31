@@ -12,6 +12,12 @@ CFLAGS="$CFLAGS $GLIB_CFLAGS"
 AC_CHECK_HEADERS(regex.h)
 AC_CHECK_FUNCS([flock getaddrinfo inet_ntop inet_pton inet_aton])
 
+AC_SEARCH_LIBS([gethostbyname], [nsl])
+AC_SEARCH_LIBS([kvm_openfiles], [kvm])
+AC_SEARCH_LIBS([sched_yield], [rt])
+AC_SEARCH_LIBS([socket], [socket])
+AC_CHECK_FUNC([inet_addr],, [AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")])
+
 AC_CHECK_TYPE([socklen_t],,,[
 #include <sys/types.h>
 #include <sys/socket.h>
