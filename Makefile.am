@@ -61,3 +61,8 @@ ekg_ekg2_SOURCES = \
 	ekg/windows.h \
 	ekg/xmalloc.c \
 	ekg/xmalloc.h
+
+ekg_ekg2_CPPFLAGS = \
+	-DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
+	-DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\" \
+	-I$(top_srcdir) $(AM_CPPFLAGS)
