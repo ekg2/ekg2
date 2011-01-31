@@ -1,5 +1,0 @@
-SUBDIRS = @PLUGINS@
-DIST_SUBDIRS = autoresponder feed gg gpg gtk httprc_xajax ioctld icq irc jabber jogger logs logsqlite logsoracle mail ncurses perl polchat python rc readline remote rivchat rot13 sim sms xmsg xosd
-
-EXTRA_DIST = README
-
