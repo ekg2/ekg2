@@ -68,3 +68,4 @@ ekg_ekg2_CPPFLAGS = \
 	-DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
 	-DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\" \
 	-I$(top_srcdir) $(AM_CPPFLAGS)
+ekg_ekg2_LDADD = @EKG_LIBS@

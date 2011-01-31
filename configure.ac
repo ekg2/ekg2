@@ -15,9 +15,6 @@ CFLAGS="$CFLAGS $GLIB_CFLAGS"
 AC_CHECK_HEADERS(regex.h)
 AC_CHECK_FUNCS([flock getaddrinfo inet_ntop inet_pton inet_aton])
 
-AC_SEARCH_LIBS([gethostbyname], [nsl])
-AC_SEARCH_LIBS([kvm_openfiles], [kvm])
-AC_SEARCH_LIBS([sched_yield], [rt])
 AC_SEARCH_LIBS([socket], [socket])
 AC_CHECK_FUNC([inet_addr],, [AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")])
 AC_CHECK_LIB([wsock32], [main])
@@ -34,6 +31,15 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 
 dnl compats -- XXX: get rid of them
 AC_CHECK_FUNCS([scandir])
+
+dnl Libraries specific to the ekg2 binary
+
+COMMON_LIBS="$LIBS"
+LIBS=
+
+AC_SEARCH_LIBS([gethostbyname], [nsl])
+AC_SEARCH_LIBS([kvm_openfiles], [kvm])
+AC_SEARCH_LIBS([sched_yield], [rt])
 
 dnl resolver
 AC_CHECK_FUNC([dn_expand], [], [
@@ -61,6 +67,10 @@ AC_CHECK_FUNC([dn_expand], [], [
 		AC_MSG_WARN([[resolver library not found, SRV record resolution - e.g. for jabber plugin - will not work]])
 	])
 ])
+
+EKG_LIBS="$LIBS"
+AC_SUBST([EKG_LIBS])
+LIBS="$COMMON_LIBS"
 
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.14.3])
