@@ -20,6 +20,7 @@ AC_SEARCH_LIBS([kvm_openfiles], [kvm])
 AC_SEARCH_LIBS([sched_yield], [rt])
 AC_SEARCH_LIBS([socket], [socket])
 AC_CHECK_FUNC([inet_addr],, [AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind")])
+AC_CHECK_LIB([wsock32], [main])
 
 AC_CHECK_TYPE([socklen_t],,,[
 #include <sys/types.h>
@@ -33,6 +34,33 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 
 dnl compats -- XXX: get rid of them
 AC_CHECK_FUNCS([scandir])
+
+dnl resolver
+AC_CHECK_FUNC([dn_expand], [], [
+	AC_CHECK_HEADERS([resolv.h], [
+		saved_LIBS="$LIBS"
+		RESOLV_LIBS="-lresolv"
+		LIBS="$LIBS $RESOLV_LIBS"
+		AC_MSG_CHECKING([[if libresolv is usable]])
+		dnl we cannot just use AC_CHECK_LIB, because dn_expand is
+		dnl implemented as a macro on certain platforms, and will not
+		dnl be resolved by linker without including necessary headers
+		AC_LINK_IFELSE([
+			AC_LANG_PROGRAM([[#include <resolv.h>]],
+					[[dn_expand(0,0,0,0,0);]])
+			],[
+				AC_MSG_RESULT([yes])
+				AC_DEFINE(HAVE_LIBRESOLV, 1, [define if you have libresolv])
+			],[
+				AC_MSG_RESULT([no])
+				AC_MSG_WARN([[resolver library unusable, SRV record resolution - e.g. for jabber plugin - will not work]])
+				LIBS="$saved_LIBS"
+			]
+		)
+	],[
+		AC_MSG_WARN([[resolver library not found, SRV record resolution - e.g. for jabber plugin - will not work]])
+	])
+])
 
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.14.3])
