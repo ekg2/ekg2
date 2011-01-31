@@ -1,9 +1,12 @@
 AC_PREREQ([2.60])
 AC_INIT([ekg2], [git])
 AC_CONFIG_AUX_DIR([build-aux])
+AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([1.6 foreign dist-bzip2])
 
 AC_PROG_CC_C99
+dnl XXX: docs say we should use '-no-undefined' along with 'win32-dll'
+LT_INIT([disable-static win32-dll])
 
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.16 gmodule-2.0])
 LIBS="$LIBS $GLIB_LIBS"
