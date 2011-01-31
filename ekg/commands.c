@@ -2053,7 +2053,7 @@ static COMMAND(cmd_debug_timers) {
 	char buf[256];
 	struct timer *t;
 	
-	printq("generic_bold", ("name               pers peri    handler  next"));
+	printq("generic_bold", ("plugin      name               pers peri     handler  next"));
 	
 	for (t = timers; t; t = t->next) {
 		char *plugin;
@@ -2067,7 +2067,7 @@ static COMMAND(cmd_debug_timers) {
 		tmp = timer_next_call(t);
 
 		/* XXX: pointer truncated */
-		snprintf(buf, sizeof(buf), "%-20s %-2d %-8d %.8x %-20s", t->name, t->persist, (int) t->period, (int) (long) t->function, tmp);
+		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8d %.8x %-20s", plugin, t->name, t->persist, (int) t->period, (int) (long) t->function, tmp);
 		printq("generic", buf);
 		xfree(tmp);
 	}
