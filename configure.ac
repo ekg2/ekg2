@@ -34,9 +34,6 @@ AC_CHECK_FUNCS([scandir])
 
 dnl Libraries specific to the ekg2 binary
 
-COMMON_LIBS="$LIBS"
-LIBS=
-
 AC_SEARCH_LIBS([gethostbyname], [nsl])
 AC_SEARCH_LIBS([kvm_openfiles], [kvm])
 AC_SEARCH_LIBS([sched_yield], [rt])
@@ -70,7 +67,9 @@ AC_CHECK_FUNC([dn_expand], [], [
 
 EKG_LIBS="$LIBS"
 AC_SUBST([EKG_LIBS])
-LIBS="$COMMON_LIBS"
+
+dnl We need not to link plugins against the libraries the binary is already linked to.
+LIBS=
 
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.14.3])
@@ -78,10 +77,12 @@ AM_ICONV
 AM_LANGINFO_CODESET
 
 AC_EKG2_PLUGIN([ncurses], [
-	], [test "x$with_ncurses" != "xno"], [
-		AC_CHECK_HEADERS([curses.h ncurses.h ncurses/ncurses.h])
-	]
-)
+	AC_EKG2_WITH([ncurses], [
+		AC_CHECK_LIB([ncursesw], [initscr],, [with_ncurses=no])
+	])
+], [test "x$with_ncurses" != "xno"], [
+	AC_CHECK_HEADERS([curses.h ncurses.h ncurses/ncurses.h])
+])
 
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])
