@@ -26,6 +26,11 @@ dnl compats -- XXX: get rid of them
 AC_CHECK_FUNCS([scandir],,
 	AC_MSG_ERROR([One of the required libc functions not found]))
 
+AM_GNU_GETTEXT([external])
+AM_GNU_GETTEXT_VERSION([0.14.3])
+AM_ICONV
+AM_LANGINFO_CODESET
+
 AC_CONFIG_HEADERS([ekg2-config.h])
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([Makefile po/Makefile.in])
 AC_OUTPUT

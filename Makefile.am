@@ -1,3 +1,5 @@
+SUBDIRS = po
+
 bin_PROGRAMS = ekg/ekg2
 
 ekg_ekg2_SOURCES = \
