@@ -73,38 +73,40 @@ static void add_to_history() {
 	history_index = 0;
 }
 
+static int input_backward_word(void) {
+	int i = line_index;
+	while (i > 0 && line[i - 1] == ' ')
+		i--;
+	while (i > 0 && line[i - 1] != ' ')
+		i--;
+	return i;
+}
 
+static int input_forward_word(void) {
+	size_t linelen = xwcslen(line);
+	int i = line_index;
+	while (i < linelen && line[i] == ' ')
+		i++;
+	while (i < linelen && line[i] != ' ')
+		i++;
+	return i;
+}
 
 static BINDING_FUNCTION(binding_backward_word)
 {
-	while (line_index > 0 && line[line_index - 1] == ' ')
-		line_index--;
-	while (line_index > 0 && line[line_index - 1] != ' ')
-		line_index--;
+	line_index = input_backward_word();
 }
 
 static BINDING_FUNCTION(binding_forward_word) {
-	size_t linelen = xwcslen(line);
-	while (line_index < linelen && line[line_index] == ' ')
-		line_index++;
-	while (line_index < linelen && line[line_index] != ' ')
-		line_index++;
+	line_index = input_forward_word();
 }
 
 static BINDING_FUNCTION(binding_kill_word)
 {
-	CHAR_T *p = line + line_index;
-	int eaten = 0;
+	int eaten = input_forward_word() - line_index;
 
-	while (*p && *p == ' ') {
-		p++;
-		eaten++;
-	}
-
-	while (*p && *p != ' ') {
-		p++;
-		eaten++;
-	}
+	if (eaten == 0)
+		return;
 
 	xfree(yanked);
 	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
@@ -334,32 +336,16 @@ static BINDING_FUNCTION(binding_quoted_insert)
 
 static BINDING_FUNCTION(binding_word_rubout)
 {
+	int eaten;
 	CHAR_T *p;
-	int eaten = 0;
 
 	if (!line_index)
 		return;
 
-	p = line + line_index;
+	if ((eaten = line_index - input_backward_word()) == 0)
+		return;
 
-	if (xisspace(*(p - 1))) {
-		while (p > line && xisspace(*(p - 1))) {
-			p--;
-			eaten++;
-		}
-	} else {
-		while (p > line && ! xisalpha(*(p - 1)) && ! xisspace(*(p - 1))) {
-			p--;
-			eaten++;
-		}
-	}
-
-	if (p > line) {
-		while (p > line && ! xisspace(*(p - 1)) && xisalpha(*(p - 1))) {
-			p--;
-			eaten++;
-		}
-	}
+	p = line + line_index - eaten;
 
 	xfree(yanked);
 	yanked = xcalloc(eaten + 1, sizeof(CHAR_T));
