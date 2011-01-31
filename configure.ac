@@ -160,7 +160,7 @@ AC_CONFIG_FILES([contrib/python/Makefile contrib/perl/Makefile])
 dnl crypt-plugins
 AC_CONFIG_FILES([plugins/gpg/Makefile plugins/rot13/Makefile plugins/sim/Makefile])
 dnl misc-plugins
-AC_CONFIG_FILES([plugins/mail/Makefile plugins/sms/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/gsm/Makefile plugins/xosd/Makefile plugins/autoresponder/Makefile plugins/jogger/Makefile])
+AC_CONFIG_FILES([plugins/mail/Makefile plugins/sms/Makefile plugins/xmsg/Makefile plugins/ioctld/Makefile plugins/xosd/Makefile plugins/autoresponder/Makefile plugins/jogger/Makefile])
 
 PLUGINS="logs mail rc sms icq irc polchat rot13 httprc_xajax xmsg autoresponder jogger rivchat remote"
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:/usr/local/lib/pkgconfig"
