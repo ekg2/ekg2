@@ -77,6 +77,12 @@ AM_GNU_GETTEXT_VERSION([0.14.3])
 AM_ICONV
 AM_LANGINFO_CODESET
 
+AC_EKG2_PLUGIN([ncurses], [
+	], [test "x$with_ncurses" != "xno"], [
+		AC_CHECK_HEADERS([curses.h ncurses.h ncurses/ncurses.h])
+	]
+)
+
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])
 AC_OUTPUT

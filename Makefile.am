@@ -1,5 +1,9 @@
 SUBDIRS = po
 
+ACLOCAL_AMFLAGS = -I m4
+
+plugindir = $(libdir)/ekg2/plugins
+
 bin_PROGRAMS = ekg/ekg2
 
 ekg_ekg2_SOURCES = \
@@ -69,3 +73,34 @@ ekg_ekg2_CPPFLAGS = \
 	-DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\" \
 	-I$(top_srcdir) $(AM_CPPFLAGS)
 ekg_ekg2_LDADD = @EKG_LIBS@
+
+if ENABLE_NCURSES
+plugin_LTLIBRARIES = plugins/ncurses/ncurses.la
+
+plugins_ncurses_ncurses_la_SOURCES = \
+	ekg2-config.h \
+	plugins/ncurses/backlog.c \
+	plugins/ncurses/backlog.h \
+	plugins/ncurses/bindings.c \
+	plugins/ncurses/bindings.h \
+	plugins/ncurses/contacts.c \
+	plugins/ncurses/contacts.h \
+	plugins/ncurses/ecurses.h \
+	plugins/ncurses/input.c \
+	plugins/ncurses/input.h \
+	plugins/ncurses/lastlog.c \
+	plugins/ncurses/lastlog.h \
+	plugins/ncurses/main.c \
+	plugins/ncurses/mouse.c \
+	plugins/ncurses/mouse.h \
+	plugins/ncurses/nc-stuff.c \
+	plugins/ncurses/nc-stuff.h \
+	plugins/ncurses/notify.c \
+	plugins/ncurses/notify.h \
+	plugins/ncurses/spell.c \
+	plugins/ncurses/spell.h \
+	plugins/ncurses/statusbar.c \
+	plugins/ncurses/statusbar.h
+
+plugins_ncurses_ncurses_la_LDFLAGS = -module -avoid-version
+endif
