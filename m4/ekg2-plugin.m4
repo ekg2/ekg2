@@ -18,35 +18,30 @@ dnl and AC_SUBSTituted with that names.
 
 	AC_ARG_ENABLE([$1], [
 		AS_HELP_STRING([--disable-$1], [Disable building of $1 plugin.])
-	], [
-		AS_CASE([$enableval],
-			[yes], [ekg_plugin_$1=yes],
-			[no], [ekg_plugin_$1=no],
-			[AC_MSG_ERROR([Invalid argument to --enable-$1: $enableval])])
-	], [
-		ekg_plugin_$1=maybe
+	],, [
+		enable_$1=maybe
 	])
 
-	AS_IF([test $ekg_plugin_$1 != no], [
+	AS_IF([test $enable_$1 != no], [
 		ac_ekg2_plugin_save_CPPFLAGS=$CPPFLAGS
 		ac_ekg2_plugin_save_LIBS=$LIBS
 
 		m4_pushdef([EKG2_FAILED_TEST], [
-			AS_IF([test $ekg_plugin_$1 = yes], [
+			AS_IF([test $enable_$1 = yes], [
 				AC_MSG_ERROR([Requirements for plugin $1 not met, aborting build.])
 			], [
 				AC_MSG_WARN([Requirements for plugin $1 not met, $1 plugin will not be built.])
-				ekg_plugin_$1=no
+				enable_$1=no
 			])
 		])
 
 		m4_pushdef([EKG2_DISABLED_TEST], [
 			dnl XXX: get somehow $1 inner expansion
-			AS_IF([test $ekg_plugin_$1 = yes], [
+			AS_IF([test $enable_$1 = yes], [
 				AC_MSG_ERROR([--without-* conflicts with --enable-$1])
 			], [
 				AC_MSG_WARN([Requirements for plugin $1 disabled, $1 plugin will not be built.])
-				ekg_plugin_$1=no
+				enable_$1=no
 			])
 		])
 
@@ -54,7 +49,7 @@ dnl and AC_SUBSTituted with that names.
 
 		m4_popdef([EKG2_FAILED_TEST])
 
-		AS_IF([test $ekg_plugin_$1 != no], [
+		AS_IF([test $enable_$1 != no], [
 			$3
 
 			$1_CPPFLAGS=$CPPFLAGS
@@ -68,5 +63,5 @@ dnl and AC_SUBSTituted with that names.
 		LIBS=$ac_ekg2_plugin_save_LIBS
 	])
 
-	AM_CONDITIONAL([ENABLE_]translit($1, [a-z], [A-Z]), [test $ekg_plugin_$1 != no])
+	AM_CONDITIONAL([ENABLE_]translit($1, [a-z], [A-Z]), [test $enable_$1 != no])
 ])

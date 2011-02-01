@@ -6,9 +6,7 @@ dnl as necessary.
 	AC_ARG_WITH([$1], [
 		AS_HELP_STRING([--with-$1[=<path>]],
 			[Build with $1 (locating it in <path>)])
-	], [
-		with_$1=$withval
-	], [
+	],, [
 		with_$1=maybe
 	])
 
