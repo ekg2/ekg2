@@ -78,9 +78,9 @@ AM_LANGINFO_CODESET
 
 AC_EKG2_PLUGIN([ncurses], [
 	AC_EKG2_WITH([ncurses], [
-		AC_CHECK_LIB([ncursesw], [initscr],, [with_ncurses=no])
+		AC_CHECK_LIB([ncursesw], [initscr],, [EKG2_FAILED_TEST])
 	])
-], [test "x$with_ncurses" != "xno"], [
+], [
 	AC_CHECK_HEADERS([curses.h ncurses.h ncurses/ncurses.h])
 ])
 

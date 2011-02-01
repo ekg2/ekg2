@@ -1,9 +1,16 @@
+AC_DEFUN([EKG2_FAILED_TEST], [
+	m4_fatal_error([EKG2_FAILED_TEST used outside of AC_EKG2_PLUGIN])
+])
+
 AC_DEFUN([AC_EKG2_PLUGIN], [
-dnl AC_EKG2_PLUGIN(name, req-checks, avail-test, opt-checks)
+dnl AC_EKG2_PLUGIN(name, req-checks, opt-checks)
 dnl Create a '--enable-<name>' option for a plugin. Unless disabled, run
-dnl <req-checks> and then check their result calling <avail-test>
-dnl (as an argument to AS_IF()). If a plugin is enabled and checks
-dnl succeed, run <opt-checks> as well.
+dnl <req-checks>. If a plugin is enabled and checks succeed, run <opt-checks>
+dnl as well.
+dnl
+dnl The <req-checks> part is supposed to call EKG2_FAILED_TEST if the checks
+dnl fail. It can also call EKG2_DISABLED_TEST if the necessary checks
+dnl (dependencies) were explicitly disabled by user.
 dnl
 dnl CPPFLAGS & LIBS will be saved and restored on termination. If tests
 dnl succeed, they will be copied as well to $1_CPPFLAGS and $1_LIBS,
@@ -24,8 +31,7 @@ dnl and AC_SUBSTituted with that names.
 		ac_ekg2_plugin_save_CPPFLAGS=$CPPFLAGS
 		ac_ekg2_plugin_save_LIBS=$LIBS
 
-		$2
-		AS_IF($3, [ekg_plugin_$1=yes], [
+		m4_pushdef([EKG2_FAILED_TEST], [
 			AS_IF([test $ekg_plugin_$1 = yes], [
 				AC_MSG_ERROR([Requirements for plugin $1 not met, aborting build.])
 			], [
@@ -34,8 +40,22 @@ dnl and AC_SUBSTituted with that names.
 			])
 		])
 
+		m4_pushdef([EKG2_DISABLED_TEST], [
+			dnl XXX: get somehow $1 inner expansion
+			AS_IF([test $ekg_plugin_$1 = yes], [
+				AC_MSG_ERROR([--without-* conflicts with --enable-$1])
+			], [
+				AC_MSG_WARN([Requirements for plugin $1 disabled, $1 plugin will not be built.])
+				ekg_plugin_$1=no
+			])
+		])
+
+		$2
+
+		m4_popdef([EKG2_FAILED_TEST])
+
 		AS_IF([test $ekg_plugin_$1 != no], [
-			$4
+			$3
 
 			$1_CPPFLAGS=$CPPFLAGS
 			$1_LIBS=$LIBS
