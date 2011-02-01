@@ -76,9 +76,30 @@ AM_GNU_GETTEXT_VERSION([0.14.3])
 AM_ICONV
 AM_LANGINFO_CODESET
 
+AC_ARG_ENABLE([unicode], [
+	AS_HELP_STRING([--disable-unicode],
+		[Disable building with unicode support])
+],, [
+	enable_unicode=yes
+])
+AS_IF([test "$enable_unicode" = "yes"], [
+	AC_DEFINE([USE_UNICODE], [1], [Use unicode (wide character strings)])
+])
+
 AC_EKG2_PLUGIN([ncurses], [
 	AC_EKG2_WITH([ncurses], [
-		AC_CHECK_LIB([ncursesw], [initscr],, [EKG2_FAILED_TEST])
+		AS_IF([test "$enable_unicode" = "yes"], [
+			nlib=ncursesw
+		], [
+			nlib=ncurses
+		])
+
+		AC_CHECK_LIB([$nlib], [initscr], [
+			LIBS="$LIBS -l$nlib"
+			AC_DEFINE([HAVE_NCURSES], [1], [define if you have ncurses])
+		], [EKG2_FAILED_TEST])
+
+		$as_unset nlib
 	])
 ], [
 	AC_CHECK_HEADERS([curses.h ncurses.h ncurses/ncurses.h])
