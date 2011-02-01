@@ -2042,6 +2042,7 @@ static COMMAND(cmd_debug_plugins) {
 			printq("generic2", buf);
 
 			xfree(pr);
+			xfree(st);
 			xfree(_sts);
 		}
 	}
