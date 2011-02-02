@@ -113,6 +113,18 @@ AS_IF([test "x$enable_static" = "xyes"], [
 
 dnl plugins
 
+AC_EKG2_PLUGIN([gg], [
+	AC_EKG2_WITH([libgadu], [
+		AC_CHECK_HEADERS([libgadu.h], [
+			AC_CHECK_LIB([gadu], [gg_logoff],, [EKG2_FAILED_TEST])
+		], [EKG2_FAILED_TEST])
+	])
+], [
+	AC_CHECK_FUNCS([gg_remind_passwd3 gg_change_passwd4 mkstemp])
+
+	dnl Reason to check for gif or jpeg? They seem to be useless nowadays.
+])
+
 AC_EKG2_PLUGIN([ncurses], [
 	AC_EKG2_WITH([ncurses], [
 		dnl AC_EKG2_NCURSES([nlib], [nheaders])

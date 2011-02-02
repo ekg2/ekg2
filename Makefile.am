@@ -74,8 +74,35 @@ ekg_ekg2_CPPFLAGS = \
 	-I$(top_srcdir) $(AM_CPPFLAGS)
 ekg_ekg2_LDADD = @EKG_LIBS@
 
+plugin_LTLIBRARIES =
+
+if ENABLE_GG
+plugin_LTLIBRARIES += plugins/gg/gg.la
+
+plugins_gg_gg_la_SOURCES = \
+	ekg2-config.h \
+	plugins/gg/commands.c \
+	plugins/gg/dcc.c \
+	plugins/gg/dcc.h \
+	plugins/gg/gg.c \
+	plugins/gg/gg.h \
+	plugins/gg/images.c \
+	plugins/gg/images.h \
+	plugins/gg/misc.c \
+	plugins/gg/misc.h \
+	plugins/gg/pubdir50.c \
+	plugins/gg/pubdir50.h \
+	plugins/gg/pubdir.c \
+	plugins/gg/pubdir.h \
+	plugins/gg/token.h
+
+plugins_gg_gg_la_CPPFLAGS = @GG_CPPFLAGS@
+plugins_gg_gg_la_LDFLAGS = -module -avoid-version @GG_LDFLAGS@
+plugins_gg_gg_la_LIBADD = @GG_LIBS@
+endif
+
 if ENABLE_NCURSES
-plugin_LTLIBRARIES = plugins/ncurses/ncurses.la
+plugin_LTLIBRARIES += plugins/ncurses/ncurses.la
 
 plugins_ncurses_ncurses_la_SOURCES = \
 	ekg2-config.h \
