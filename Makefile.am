@@ -102,7 +102,7 @@ plugins_ncurses_ncurses_la_SOURCES = \
 	plugins/ncurses/statusbar.c \
 	plugins/ncurses/statusbar.h
 
-plugins_ncurses_ncurses_la_LDFLAGS = -module -avoid-version
 plugins_ncurses_ncurses_la_CPPFLAGS = @NCURSES_CPPFLAGS@
+plugins_ncurses_ncurses_la_LDFLAGS = -module -avoid-version @NCURSES_LDFLAGS@
 plugins_ncurses_ncurses_la_LIBADD = @NCURSES_LIBS@
 endif

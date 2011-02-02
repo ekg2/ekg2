@@ -34,7 +34,7 @@ dnl as necessary.
 		], [
 			dnl XXX: multilib?
 			CPPFLAGS="$CPPFLAGS -I$with_$1/include"
-			LIBS="$LIBS -L$with_$1/lib"
+			LDFLAGS="$LDFLAGS -L$with_$1/lib"
 
 			$2
 		]

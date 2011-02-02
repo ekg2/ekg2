@@ -24,6 +24,7 @@ dnl and AC_SUBSTituted with that names.
 
 	AS_IF([test $enable_$1 != no], [
 		ac_ekg2_plugin_save_CPPFLAGS=$CPPFLAGS
+		ac_ekg2_plugin_save_LDFLAGS=$LDFLAGS
 		ac_ekg2_plugin_save_LIBS=$LIBS
 
 		m4_pushdef([EKG2_FAILED_TEST], [
@@ -53,13 +54,16 @@ dnl and AC_SUBSTituted with that names.
 			$3
 
 			$1_CPPFLAGS=$CPPFLAGS
+			$1_LDFLAGS=$LDFLAGS
 			$1_LIBS=$LIBS
 
 			AC_SUBST(translit($1, [a-z], [A-Z])[_CPPFLAGS], [$$1_CPPFLAGS])
+			AC_SUBST(translit($1, [a-z], [A-Z])[_LDFLAGS], [$$1_LDFLAGS])
 			AC_SUBST(translit($1, [a-z], [A-Z])[_LIBS], [$$1_LIBS])
 		])
 
 		CPPFLAGS=$ac_ekg2_plugin_save_CPPFLAGS
+		LDFLAGS=$ac_ekg2_plugin_save_LDFLAGS
 		LIBS=$ac_ekg2_plugin_save_LIBS
 	])
 
