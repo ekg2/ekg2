@@ -48,7 +48,7 @@
 #include <sys/filio.h>
 #endif
 
-#ifdef LIBIDN
+#ifdef HAVE_LIBIDN
 # include <idna.h>
 #endif
 
@@ -72,7 +72,7 @@
 #include "xmalloc.h"
 #include "srv.h"
 
-#ifdef LIBIDN /* stolen from squid->url.c (C) Duane Wessels */
+#ifdef HAVE_LIBIDN /* stolen from squid->url.c (C) Duane Wessels */
 static const char valid_hostname_chars_u[] =
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"abcdefghijklmnopqrstuvwxyz"
@@ -549,7 +549,7 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 
 		close(fd[0]);
 
-#ifdef LIBIDN
+#ifdef HAVE_LIBIDN
 		{
 			char *tmp;
 

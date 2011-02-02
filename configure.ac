@@ -65,6 +65,14 @@ AC_CHECK_FUNC([dn_expand], [], [
 	])
 ])
 
+AC_EKG2_WITH([libidn], [
+	dnl XXX: pkg-config
+
+	AC_CHECK_HEADER([idna.h], [
+		AC_CHECK_LIB([idn], [stringprep_check_version])
+	])
+])
+
 EKG_LIBS="$LIBS"
 AC_SUBST([EKG_LIBS])
 
