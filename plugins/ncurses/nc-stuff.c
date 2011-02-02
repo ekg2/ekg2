@@ -726,7 +726,7 @@ void ncurses_init(void)
 	cbreak();
 	noecho();
 	nonl();
-#ifdef HAVE_NCURSES_ULC
+#ifdef HAVE_USE_LEGACY_CODING
 	if (!config_use_iso
 #if USE_UNICODE
 			&& 0

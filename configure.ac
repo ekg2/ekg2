@@ -104,6 +104,8 @@ AC_EKG2_PLUGIN([ncurses], [
 			AC_EKG2_NCURSES([ncurses], [ncurses/ncurses.h ncurses.h])
 		])
 	])
+], [
+	AC_CHECK_FUNCS([use_legacy_coding])
 ])
 
 AC_CONFIG_HEADERS([ekg2-config.h])
