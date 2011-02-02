@@ -88,21 +88,22 @@ AS_IF([test "$enable_unicode" = "yes"], [
 
 AC_EKG2_PLUGIN([ncurses], [
 	AC_EKG2_WITH([ncurses], [
-		AS_IF([test "$enable_unicode" = "yes"], [
-			nlib=ncursesw
-		], [
-			nlib=ncurses
+		dnl AC_EKG2_NCURSES([nlib], [nheaders])
+		AC_DEFUN([AC_EKG2_NCURSES], [
+			AC_CHECK_HEADERS([$2], [
+				AC_CHECK_LIB([$1], [initscr], [
+					LIBS="-l$1 $LIBS"
+					AC_DEFINE([HAVE_NCURSES], [1], [define if you have ncurses])
+				], [EKG2_FAILED_TEST])
+			], [EKG2_FAILED_TEST])
 		])
 
-		AC_CHECK_LIB([$nlib], [initscr], [
-			LIBS="$LIBS -l$nlib"
-			AC_DEFINE([HAVE_NCURSES], [1], [define if you have ncurses])
-		], [EKG2_FAILED_TEST])
-
-		$as_unset nlib
+		AS_IF([test "$enable_unicode" = "yes"], [
+			AC_EKG2_NCURSES([ncursesw], [ncursesw/ncurses.h])
+		], [
+			AC_EKG2_NCURSES([ncurses], [ncurses/ncurses.h ncurses.h])
+		])
 	])
-], [
-	AC_CHECK_HEADERS([curses.h ncurses.h ncurses/ncurses.h])
 ])
 
 AC_CONFIG_HEADERS([ekg2-config.h])
