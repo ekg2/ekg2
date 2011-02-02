@@ -139,6 +139,12 @@ AC_EKG2_PLUGIN([ncurses], [
 			AC_CHECK_LIB([aspell], [new_aspell_config])
 		])
 	])
+
+	AC_EKG2_WITH([gpm_mouse], [
+		AC_CHECK_HEADERS([gpm.h], [
+			AC_CHECK_LIB([gpm], [Gpm_GetEvent])
+		])
+	])
 ])
 
 AC_CONFIG_HEADERS([ekg2-config.h])
