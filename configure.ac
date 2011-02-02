@@ -84,7 +84,7 @@ AM_GNU_GETTEXT_VERSION([0.14.3])
 AM_ICONV
 AM_LANGINFO_CODESET
 
-AC_ARG_ENABLE([skip_relative_plugins_dir], [
+AC_ARG_ENABLE([skip_relative_plugins_dir],
 	AS_HELP_STRING([--enable-skip-relative-plugins-dir],
 		[Do not load plugins from directories relative to CWD])
 ], [
@@ -94,10 +94,10 @@ AC_ARG_ENABLE([skip_relative_plugins_dir], [
 	])
 ])
 
-AC_ARG_ENABLE([unicode], [
+AC_ARG_ENABLE([unicode],
 	AS_HELP_STRING([--disable-unicode],
 		[Disable building with unicode support])
-],, [
+,, [
 	enable_unicode=yes
 ])
 AS_IF([test "x$enable_unicode" = "xyes"], [

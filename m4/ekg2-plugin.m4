@@ -16,9 +16,9 @@ dnl CPPFLAGS & LIBS will be saved and restored on termination. If tests
 dnl succeed, they will be copied as well to $1_CPPFLAGS and $1_LIBS,
 dnl and AC_SUBSTituted with that names.
 
-	AC_ARG_ENABLE([$1], [
+	AC_ARG_ENABLE([$1],
 		AS_HELP_STRING([--disable-$1], [Disable building of $1 plugin.])
-	],, [
+	,, [
 		enable_$1=maybe
 	])
 

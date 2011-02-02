@@ -3,10 +3,10 @@ dnl AC_EKG2_WITH(optname, if-yes, if-no)
 dnl Create an ekg2-style '--with-<optname>' option, adding -I & -L flags
 dnl as necessary.
 
-	AC_ARG_WITH([$1], [
+	AC_ARG_WITH([$1],
 		AS_HELP_STRING([translit([--with-$1[=<path>]], [_], [-])],
 			[Build with $1 (locating it in <path>)])
-	],, [
+	,, [
 		with_$1=maybe
 	])
 
