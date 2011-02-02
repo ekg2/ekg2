@@ -409,7 +409,7 @@ static int ncurses_redraw_input_already_exec = 0;
  * returns currsor x position
  */
 static int ncurses_redraw_input_line(CHAR_T *text) {
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	char *aspell_line = NULL;
 #endif
 	int i, stop, cur_posx = 0;
@@ -419,7 +419,7 @@ static int ncurses_redraw_input_line(CHAR_T *text) {
 	int width = input->_maxx + 1 - promptlen;
 	int y = getcury(input);
 
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	if (spell_checker) {
 		aspell_line = xmalloc(linelen + 1);
 		spellcheck(text, aspell_line);
@@ -430,7 +430,7 @@ static int ncurses_redraw_input_line(CHAR_T *text) {
 		if (line_index == i) {
 			cur_posx = getcurx(input);
 		}
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 		if (aspell_line && aspell_line[i] == ASPELLCHAR && text[i] != ' ') /* jesli b³êdny to wy¶wietlamy podkre¶lony */
 			attr = A_UNDERLINE;
 		else
@@ -441,7 +441,7 @@ static int ncurses_redraw_input_line(CHAR_T *text) {
 	if (line_index >= i) {
 		cur_posx = getcurx(input);
 	}
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	xfree(aspell_line);
 #endif
 

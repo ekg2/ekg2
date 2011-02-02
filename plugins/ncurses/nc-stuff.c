@@ -809,7 +809,7 @@ void ncurses_init(void)
 
 	ncurses_binding_init();
 
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	if (config_aspell)
 		ncurses_spellcheck_init();
 #endif
@@ -873,7 +873,7 @@ void ncurses_deinit(void)
 		ncurses_lines = NULL;
 	}
 
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	delete_aspell_speller(spell_checker);
 #endif
 

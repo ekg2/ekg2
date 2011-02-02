@@ -27,7 +27,7 @@
 #include "spell.h"
 
 
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 
 /* vars */
 

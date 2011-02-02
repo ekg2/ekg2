@@ -133,6 +133,12 @@ AC_EKG2_PLUGIN([ncurses], [
 	])
 ], [
 	AC_CHECK_FUNCS([use_legacy_coding])
+
+	AC_EKG2_WITH([aspell], [
+		AC_CHECK_HEADERS([aspell.h], [
+			AC_CHECK_LIB([aspell], [new_aspell_config])
+		])
+	])
 ])
 
 AC_CONFIG_HEADERS([ekg2-config.h])

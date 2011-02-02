@@ -398,7 +398,7 @@ static QUERY(ncurses_conference_renamed)
  */
 static void ncurses_changed_aspell(const char *var)
 {
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	/* probujemy zainicjowac jeszcze raz aspell'a */
 	if (!in_autoexec)
 		ncurses_spellcheck_init();
@@ -407,7 +407,7 @@ static void ncurses_changed_aspell(const char *var)
 
 static QUERY(ncurses_postinit)
 {
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	ncurses_spellcheck_init();
 #endif
 	ncurses_contacts_changed(NULL);
@@ -524,7 +524,7 @@ static QUERY(ncurses_setvar_default)
 	config_enter_scrolls = 0;
 	config_margin_size = 15;
 	config_mark_on_window_change = 0;
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	xfree(config_aspell_lang);
 
 	config_aspell_lang = xstrdup("pl");
@@ -663,7 +663,7 @@ static int ncurses_theme_init() {
 	format_add("statusbar_act_important2us_typing", "%C", 1);
 	format_add("statusbar_timestamp", "%H:%M", 1);
 
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	/* aspell */
 	format_add("aspell_init", "%> Please wait while initiating spellcheck...", 1);
 	format_add("aspell_init_success", "%> Spellcheck initiated.", 1);
@@ -739,7 +739,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	command_add(&ncurses_plugin, ("mark"), NULL, cmd_mark, 0, "-a --all");
 	command_add(&ncurses_plugin, ("dump"), NULL, ncurses_cmd_dump, 0, "-a --append -w --window");
 
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
 	variable_add(&ncurses_plugin, ("aspell_lang"), VAR_STR, 1, &config_aspell_lang, ncurses_changed_aspell, NULL, NULL);
 #endif

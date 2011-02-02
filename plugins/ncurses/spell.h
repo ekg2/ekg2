@@ -4,7 +4,7 @@
 #include "ekg2-config.h"
 #include <ekg/strings.h>
 
-#ifdef WITH_ASPELL
+#ifdef HAVE_LIBASPELL
 
 extern int config_aspell;
 extern char *config_aspell_lang;
