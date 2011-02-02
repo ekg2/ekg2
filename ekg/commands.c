@@ -1868,12 +1868,6 @@ static COMMAND(cmd_quit)
 
 static COMMAND(cmd_version) {
 	printq("ekg_version", VERSION, compile_time());
-#ifdef SCONS_NOTES
-	printq("generic2", SCONS_NOTES);
-#endif
-#ifdef VER_DISTNOTES
-	printq("generic2", VER_DISTNOTES);
-#endif
 	query_emit(NULL, "plugin-print-version");
 
 	return 0;
