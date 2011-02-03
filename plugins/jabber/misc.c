@@ -8,7 +8,7 @@
 
 #include "ekg2-config.h"
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 # include "zlib.h"
 #endif
 
@@ -106,7 +106,7 @@ char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_
 	return way != JABBER_OPENGPG_VERIFY ? message : key;
 }
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 char *jabber_zlib_compress(const char *buf, int *len) {
 	size_t destlen = (*len) * 1.01 + 12;
 	char *compressed = xmalloc(destlen);
@@ -362,7 +362,7 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 			break;
 
 		case JABBER_COMPRESSION_ZLIB:
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 			res = len;
 			if (!(compressed = jabber_zlib_compress(watch, &len))) return 0;
 #else

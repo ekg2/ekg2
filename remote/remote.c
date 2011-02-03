@@ -77,7 +77,7 @@ static int remote_fd;
 static unsigned int read_total, write_total;
 int remote_mail_count;
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 static unsigned int zlib_read_total, zlib_write_total;
 static int zlib_used;
 #endif
@@ -1080,7 +1080,7 @@ void remote_print_stats() {
 	} else
 #endif
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 	if (zlib_used) { 
 		/* deinit */
 

@@ -67,13 +67,13 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 #include <zlib.h>
 #endif
 
 #include "main.h"
 
-#undef HAVE_ZLIB		/* disable zlib fjuczer */
+#undef HAVE_LIBZ		/* disable zlib fjuczer */
 
 PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 
@@ -615,7 +615,7 @@ attach:
 
 static FILE* logs_open_file(char *path, int ff) {
 	char fullname[PATH_MAX];
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 	int zlibmode = 0;
 #endif
 	if (ff != LOG_FORMAT_IRSSI && ff != LOG_FORMAT_SIMPLE && ff != LOG_FORMAT_XML && ff != LOG_FORMAT_RAW) {
@@ -664,7 +664,7 @@ static FILE* logs_open_file(char *path, int ff) {
 	else if (ff == LOG_FORMAT_XML)		g_strlcat(fullname, ".xml", PATH_MAX);
 	else if (ff == LOG_FORMAT_RAW)		g_strlcat(fullname, ".raw", PATH_MAX);
 
-#ifdef HAVE_ZLIB /* z log.c i starego ekg1. Wypadaloby zaimplementowac... */
+#ifdef HAVE_LIBZ /* z log.c i starego ekg1. Wypadaloby zaimplementowac... */
 	/* nawet je¶li chcemy gzipowane logi, a istnieje nieskompresowany log,
 	 * olewamy kompresjê. je¶li loga nieskompresowanego nie ma, dodajemy
 	 * rozszerzenie .gz i balujemy. */

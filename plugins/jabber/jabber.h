@@ -236,7 +236,7 @@ void xmlnode_handle_cdata(void *data, const char *text, int len);
 void jabber_handle_disconnect(session_t *s, const char *reason, int type);
 
 char *jabber_openpgp(session_t *s, const char *fromto, enum jabber_opengpg_type_t way, char *message, char *key, char **error);
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 char *jabber_zlib_decompress(const char *buf, int *len);
 char *jabber_zlib_compress(const char *buf, int *len);
 #endif

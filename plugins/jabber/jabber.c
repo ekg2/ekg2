@@ -47,7 +47,7 @@
 #include <sys/filio.h>
 #endif
 
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 # include "zlib.h"
 #endif
 
@@ -646,7 +646,7 @@ static WATCHER_SESSION(jabber_handle_stream) {
 
 	switch (j->using_compress) {
 		case JABBER_COMPRESSION_ZLIB:
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 			uncompressed = jabber_zlib_decompress(buf, &rlen);
 #else
 			debug_error("[jabber] jabber_handle_stream() compression zlib, but no zlib support.. you're joking, right?\n");

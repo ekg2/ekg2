@@ -127,6 +127,10 @@ AC_EKG2_PLUGIN([jabber], [
 	AC_EKG2_WITH([expat], [
 		AC_EKG2_CHECK_LIB([expat], [XML_ParserCreate], [expat.h],, [EKG2_FAILED_TEST])
 	])
+], [
+	AC_EKG2_WITH([zlib], [
+		AC_EKG2_CHECK_LIB([z], [gzopen], [zlib.h])
+	])
 ])
 
 AC_EKG2_PLUGIN([ncurses], [

@@ -316,7 +316,7 @@ JABBER_HANDLER(jabber_handle_stream_features) {
 			for (method = n->children; method; method = method->next) {
 				if (!xstrcmp(method->name, "method")) {
 					if (!xstrcmp(method->data, "zlib")) {
-#ifdef HAVE_ZLIB
+#ifdef HAVE_LIBZ
 						if ((tmp2 = xstrstr(tmp, "zlib")) && ((tmp2 < method_comp) || (!method_comp)) && 
 								(tmp2[4] == ',' || tmp2[4] == '\0')) {
 							method_comp = tmp2;	 /* found more preferable method */
