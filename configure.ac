@@ -152,7 +152,7 @@ AC_EKG2_PLUGIN([ncurses], [
 		])
 	])
 
-	AC_EKG2_WITH([gpm_mouse], [
+	AC_EKG2_WITH([gpm], [
 		AC_CHECK_HEADERS([gpm.h], [
 			AC_CHECK_LIB([gpm], [Gpm_GetEvent])
 		])
