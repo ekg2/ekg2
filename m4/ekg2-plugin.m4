@@ -17,8 +17,8 @@ dnl succeed, they will be copied as well to $1_CPPFLAGS and $1_LIBS,
 dnl and AC_SUBSTituted with that names.
 
 	AC_ARG_ENABLE([$1],
-		AS_HELP_STRING([--disable-$1], [Disable building of $1 plugin.])
-	,, [
+		AS_HELP_STRING([--disable-$1], [disable building of $1 plugin [default=auto]]),
+	, [
 		enable_$1=maybe
 	])
 
