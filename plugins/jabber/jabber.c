@@ -70,7 +70,7 @@
 #include "jabber-ssl.h"
 #include "jabber_dcc.h"
 
-#ifdef JABBER_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 SSL_CTX *jabberSslCtx;
 #endif
 
@@ -116,7 +116,7 @@ static QUERY(jabber_session_init) {
 	else
 		ekg_recode_iso2_inc();
 
-#ifdef JABBER_HAVE_GNUTLS
+#ifdef HAVE_LIBGNUTLS
 	gnutls_certificate_allocate_credentials(&(j->xcred));
 	/* XXX - ~/.ekg/certs/server.pem */
 	gnutls_certificate_set_x509_trust_file(j->xcred, "brak", GNUTLS_X509_FMT_PEM);
@@ -152,7 +152,7 @@ static QUERY(jabber_session_deinit) {
 		return 1;
 
 	s->priv = NULL;
-#ifdef JABBER_HAVE_GNUTLS
+#ifdef HAVE_LIBGNUTLS
 	gnutls_certificate_free_credentials(j->xcred);
 #endif
 	if (!j->istlen)
@@ -616,7 +616,7 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	if (j->using_ssl && j->ssl_session) {
 
 		len = SSL_RECV(j->ssl_session, buf, BUFFER_LEN-1);
-#ifdef JABBER_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 		if ((len == 0 && SSL_get_error(j->ssl_session, len) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
 		else if (len < 0) 
 			len = SSL_get_error(j->ssl_session, len);
@@ -908,7 +908,7 @@ XML_Parser jabber_parser_recreate(XML_Parser parser, void *data) {
  */
 
 static const char *jabber_ssl_cert_verify(const SSL_SESSION ssl) {
-#ifdef JABBER_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 	X509 *peer_cert = SSL_get_peer_certificate(ssl);
 	long ret;
 
@@ -995,7 +995,7 @@ WATCHER_SESSION(jabber_handle_connect_ssl) {
 
 	if (type == -1) {
 		/* XXX here. old tls code do: j->parser = NULL. check if needed */
-#ifdef JABBER_HAVE_GNUTLS
+#ifdef HAVE_LIBGNUTLS
 		/* Allow connections to servers that have OpenPGP keys as well. */
 		const int cert_type_priority[3] = {GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0};
 		const int comp_type_priority[3] = {GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0};
@@ -1008,7 +1008,7 @@ WATCHER_SESSION(jabber_handle_connect_ssl) {
 			return -1;
 		}
 
-#ifdef JABBER_HAVE_GNUTLS
+#ifdef HAVE_LIBGNUTLS
 		gnutls_set_default_priority(j->ssl_session);
 		gnutls_certificate_type_set_priority(j->ssl_session, cert_type_priority);
 		gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, j->xcred);
@@ -1034,7 +1034,7 @@ WATCHER_SESSION(jabber_handle_connect_ssl) {
 		return 0;
 
 	ret = SSL_HELLO(j->ssl_session);
-#ifdef JABBER_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 	if (ret != -1)
 		goto handshake_ok;			/* ssl was ok */
 
@@ -1055,7 +1055,7 @@ WATCHER_SESSION(jabber_handle_connect_ssl) {
 		ekg_yield_cpu();
 		return -1;
 	} else {
-#ifdef JABBER_HAVE_GNUTLS
+#ifdef HAVE_LIBGNUTLS
 		if (ret >= 0) goto handshake_ok;	/* gnutls was ok */
 
 /* XXX, move it to jabber_handle_disconnect() */

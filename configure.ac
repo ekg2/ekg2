@@ -131,6 +131,25 @@ AC_EKG2_PLUGIN([jabber], [
 	AC_EKG2_WITH([zlib], [
 		AC_EKG2_CHECK_LIB([z], [gzopen], [zlib.h])
 	])
+
+	try_openssl=no
+
+	AC_EKG2_WITH([gnutls], [
+		AC_EKG2_CHECK_LIB([gnutls], [gnutls_init], [gnutls/gnutls.h],, [
+			try_openssl=yes
+		])
+	], [try_openssl=yes])
+
+	AS_IF([test $try_openssl = yes], [
+		AC_EKG2_WITH([openssl], [
+			AC_EKG2_CHECK_LIB([ssl], [RSA_new], [openssl/ssl.h], [
+				LIBS="-lssl -lcrypto $LIBS"
+				AC_DEFINE([HAVE_LIBSSL], [1], [define if you want to use openssl for ssl connections])
+			])
+		])
+	])
+
+	AS_UNSET([try_openssl])
 ])
 
 AC_EKG2_PLUGIN([ncurses], [

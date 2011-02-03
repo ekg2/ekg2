@@ -381,7 +381,7 @@ WATCHER_LINE(jabber_handle_write) /* tylko gdy jest wlaczona kompresja lub TLS/S
 	if (j->using_ssl) {
 		res = SSL_SEND(j->ssl_session, watch, (size_t) len);
 
-#ifdef JABBER_HAVE_OPENSSL		/* OpenSSL */
+#ifdef HAVE_LIBSSL		/* OpenSSL */
 		if ((res == 0 && SSL_get_error(j->ssl_session, res) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
 		else if (res < 0) 
 			res = SSL_get_error(j->ssl_session, res);

@@ -145,7 +145,7 @@ typedef struct {
 #ifdef JABBER_HAVE_SSL
 	unsigned char using_ssl	: 2;	/**< 1 if we're using SSL, 2 if we're using TLS, else 0 */
 	SSL_SESSION ssl_session;	/**< SSL session */
-#ifdef JABBER_HAVE_GNUTLS
+#ifdef HAVE_LIBGNUTLS
 	gnutls_certificate_credentials xcred;	/**< gnutls credentials (?) */
 #endif
 #endif

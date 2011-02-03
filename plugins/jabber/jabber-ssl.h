@@ -3,11 +3,11 @@
 
 #include <ekg2-config.h>
 
-#ifdef JABBER_HAVE_GNUTLS
+#ifdef HAVE_LIBGNUTLS
 # define JABBER_HAVE_SSL 1
-# undef JABBER_HAVE_OPENSSL	/* na wszelki wypadek */
+# undef HAVE_LIBSSL	/* na wszelki wypadek */
 #else
-#ifdef JABBER_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 # define JABBER_HAVE_SSL 1
 # warning "You want to use OpenSSL library as ssl transport layer for jabber, it have bugs and is not well tested.. It's better if you use gnutls"
 #endif
@@ -15,7 +15,7 @@
 
 #ifdef JABBER_HAVE_SSL
 
-#ifdef JABBER_HAVE_GNUTLS		/* HAVE_GNUTLS */
+#ifdef HAVE_LIBGNUTLS		/* HAVE_GNUTLS */
 # include <gnutls/gnutls.h>
 
 
