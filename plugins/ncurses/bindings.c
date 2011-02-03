@@ -220,7 +220,7 @@ static BINDING_FUNCTION(binding_yank)
 
 static BINDING_FUNCTION(binding_delete_char)
 {
-	if (line_index == xwcslen(line) && lines_index < g_strv_length((char **) lines) - 1 && xwcslen(line) + xwcslen(lines[lines_index + 1]) < LINE_MAXLEN) {
+	if (lines && line_index == xwcslen(line) && lines_index < g_strv_length((char **) lines) - 1 && xwcslen(line) + xwcslen(lines[lines_index + 1]) < LINE_MAXLEN) {
 		int i;
 
 		xwcscat(line, lines[lines_index + 1]);
@@ -656,9 +656,7 @@ static BINDING_FUNCTION(binding_previous_history)
 
 static BINDING_FUNCTION(binding_next_history)
 {
-	int count = g_strv_length((char **) lines);
-
-	if (lines && (lines_index < count - 1)) {
+	if (lines && (lines_index < g_strv_length((char **) lines) - 1)) {
 		lines_index++;
 		lines_adjust();
 	} else {

@@ -1030,7 +1030,7 @@ failure:
  */
 int array_add(char ***array, char *string)
 {
-	int count = g_strv_length(*array);
+	int count = *array ? g_strv_length(*array) : 0;
 
 	*array = xrealloc(*array, (count + 2) * sizeof(char*));
 	(*array)[count + 1] = NULL;
