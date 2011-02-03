@@ -123,6 +123,8 @@ AC_EKG2_PLUGIN([gg], [
 	dnl Reason to check for gif or jpeg? They seem to be useless nowadays.
 ])
 
+AC_EKG2_PLUGIN([icq])
+
 AC_EKG2_PLUGIN([jabber], [
 	AC_EKG2_WITH([expat], [
 		AC_EKG2_CHECK_LIB([expat], [XML_ParserCreate], [expat.h],, [EKG2_FAILED_TEST])

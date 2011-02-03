@@ -101,6 +101,42 @@ plugins_gg_gg_la_LDFLAGS = -module -avoid-version @GG_LDFLAGS@
 plugins_gg_gg_la_LIBADD = @GG_LIBS@
 endif
 
+if ENABLE_ICQ
+plugin_LTLIBRARIES += plugins/icq/icq.la
+
+plugins_icq_icq_la_SOURCES = \
+	ekg2-config.h \
+	plugins/icq/digest.c \
+	plugins/icq/icq.c \
+	plugins/icq/icq_caps.c \
+	plugins/icq/icq_caps.h \
+	plugins/icq/icq_const.h \
+	plugins/icq/icq_debug.inc \
+	plugins/icq/icq_fieldnames.inc \
+	plugins/icq/icq_flap_handlers.c \
+	plugins/icq/icq_flap_handlers.h \
+	plugins/icq/icq.h \
+	plugins/icq/icq_snac_handlers_01service.c \
+	plugins/icq/icq_snac_handlers_02location.c \
+	plugins/icq/icq_snac_handlers_03buddy.c \
+	plugins/icq/icq_snac_handlers_04message.c \
+	plugins/icq/icq_snac_handlers_09bos.c \
+	plugins/icq/icq_snac_handlers_0Alookup.c \
+	plugins/icq/icq_snac_handlers_0Bstatus.c \
+	plugins/icq/icq_snac_handlers_13userlist.c \
+	plugins/icq/icq_snac_handlers_15extension.c \
+	plugins/icq/icq_snac_handlers_17sigon.c \
+	plugins/icq/icq_snac_handlers.c \
+	plugins/icq/icq_snac_handlers.h \
+	plugins/icq/misc.c \
+	plugins/icq/misc.h \
+	plugins/icq/miscicq.h
+
+plugins_icq_icq_la_CPPFLAGS = @ICQ_CPPFLAGS@
+plugins_icq_icq_la_LDFLAGS = -module -avoid-version @ICQ_LDFLAGS@
+plugins_icq_icq_la_LIBADD = @ICQ_LIBS@
+endif
+
 if ENABLE_JABBER
 plugin_LTLIBRARIES += plugins/jabber/jabber.la
 
