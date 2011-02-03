@@ -101,6 +101,31 @@ plugins_gg_gg_la_LDFLAGS = -module -avoid-version @GG_LDFLAGS@
 plugins_gg_gg_la_LIBADD = @GG_LIBS@
 endif
 
+if ENABLE_JABBER
+plugin_LTLIBRARIES += plugins/jabber/jabber.la
+
+plugins_jabber_jabber_la_SOURCES = \
+	ekg2-config.h \
+	plugins/jabber/commands.c \
+	plugins/jabber/digest.c \
+	plugins/jabber/jabber.c \
+	plugins/jabber/jabber_dcc.c \
+	plugins/jabber/jabber_dcc.h \
+	plugins/jabber/jabber.h \
+	plugins/jabber/jabber_handlers.c \
+	plugins/jabber/jabber-ssl.h \
+	plugins/jabber/misc.c \
+	plugins/jabber/xmlnode.c \
+	plugins/jabber/jabber_handlers_iq_error.inc \
+	plugins/jabber/jabber_handlers_iq_get.inc \
+	plugins/jabber/jabber_handlers_iq_result.inc \
+	plugins/jabber/jabber_handlers_tlen.inc
+
+plugins_jabber_jabber_la_CPPFLAGS = @JABBER_CPPFLAGS@
+plugins_jabber_jabber_la_LDFLAGS = -module -avoid-version @JABBER_LDFLAGS@
+plugins_jabber_jabber_la_LIBADD = @JABBER_LIBS@
+endif
+
 if ENABLE_NCURSES
 plugin_LTLIBRARIES += plugins/ncurses/ncurses.la
 
