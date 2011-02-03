@@ -356,14 +356,17 @@ static BINDING_FUNCTION(binding_word_rubout)
 }
 
 static void show_completions() {
-	int maxlen = 0, cols, rows, i;
+	int maxlen, cols, complcount, rows, i;
 	char *tmp;
-	int complcount = g_strv_length(ekg2_completions);
 
+	if (!ekg2_completions || (complcount = g_strv_length(ekg2_completions)) == 0)
+		return;
+
+	maxlen = 0;
 	for (i = 0; ekg2_completions[i]; i++) {
-		size_t compllen = xstrlen(ekg2_completions[i]);
-		if (compllen + 2 > maxlen)
-			maxlen = compllen + 2;
+		size_t compllen = xstrlen(ekg2_completions[i]) + 2;	/* XXX xstrlen_pl() ? */
+		if (compllen > maxlen)
+			maxlen = compllen;
 	}
 
 	cols = (window_current->width - 6) / maxlen;
