@@ -137,6 +137,29 @@ plugins_icq_icq_la_LDFLAGS = -module -avoid-version @ICQ_LDFLAGS@
 plugins_icq_icq_la_LIBADD = @ICQ_LIBS@
 endif
 
+if ENABLE_IRC
+plugin_LTLIBRARIES += plugins/irc/irc.la
+
+plugins_irc_irc_la_SOURCES = \
+	ekg2-config.h \
+	plugins/irc/autoacts.c \
+	plugins/irc/autoacts.h \
+	plugins/irc/input.c \
+	plugins/irc/input.h \
+	plugins/irc/irc.c \
+	plugins/irc/irc.h \
+	plugins/irc/irc-ssl.h \
+	plugins/irc/IRCVERSION.h \
+	plugins/irc/misc.c \
+	plugins/irc/misc.h \
+	plugins/irc/people.c \
+	plugins/irc/people.h
+
+plugins_irc_irc_la_CPPFLAGS = @IRC_CPPFLAGS@
+plugins_irc_irc_la_LDFLAGS = -module -avoid-version @IRC_LDFLAGS@
+plugins_irc_irc_la_LIBADD = @IRC_LIBS@
+endif
+
 if ENABLE_JABBER
 plugin_LTLIBRARIES += plugins/jabber/jabber.la
 

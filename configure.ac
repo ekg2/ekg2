@@ -125,6 +125,15 @@ AC_EKG2_PLUGIN([gg], [
 
 AC_EKG2_PLUGIN([icq])
 
+AC_EKG2_PLUGIN([irc],, [
+	AC_EKG2_WITH([openssl], [
+		AC_EKG2_CHECK_LIB([ssl], [RSA_new], [openssl/ssl.h], [
+			LIBS="-lssl -lcrypto $LIBS"
+			AC_DEFINE([HAVE_LIBSSL], [1], [define if you want to use openssl for ssl connections])
+		])
+	])
+])
+
 AC_EKG2_PLUGIN([jabber], [
 	AC_EKG2_WITH([expat], [
 		AC_EKG2_CHECK_LIB([expat], [XML_ParserCreate], [expat.h],, [EKG2_FAILED_TEST])

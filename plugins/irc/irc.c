@@ -84,7 +84,7 @@
 #include "input.h"
 #include "autoacts.h"
 
-#ifdef IRC_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 SSL_CTX *ircSslCtx;
 #endif
 
@@ -859,7 +859,7 @@ static WATCHER_SESSION(irc_handle_stream_ssl_input) {
 		len = SSL_RECV(j->ssl_session, buf, IRC_SSL_BUFFER-1);
 		debug("[irc] handle_stream_ssl_input() len: %d\n", len);
 
-#ifdef IRC_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 		if ((len == 0 && SSL_get_error(j->ssl_session, len) == SSL_ERROR_ZERO_RETURN)) {
 			debug_ok("[irc] handle_stream_ssl_input HOORAY got EOF?\n");
 			return -1;
@@ -932,7 +932,7 @@ static WATCHER_LINE(irc_handle_write_ssl) {
 	}
 
 	res = SSL_SEND(j->ssl_session, watch, xstrlen(watch));
-#ifdef IRC_HAVE_OPENSSL		/* OpenSSL */
+#ifdef HAVE_LIBSSL		/* OpenSSL */
 	if ((res == 0 && SSL_get_error(j->ssl_session, res) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
 	else if (res < 0)
 		res = SSL_get_error(j->ssl_session, res);
@@ -1023,7 +1023,7 @@ static WATCHER(irc_handle_connect_real) {
 	return -1;
 }
 
-#ifdef IRC_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 static WATCHER(irc_handle_connect_ssl) {
 	session_t *s = (session_t *) data;
 	irc_private_t *j = NULL;
@@ -1112,7 +1112,7 @@ static WATCHER(irc_handle_connect) {
 		return -1;
 	}
 
-#ifdef IRC_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
         if (session_int_get(s, "use_ssl")) {
                 // irc_handle_connect_ssl() will call irc_handle_connect_real()
                 irc_handle_connect_ssl(-1, fd, 0, s);
@@ -2605,7 +2605,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("recode_out_default_charset", VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
 	PLUGIN_VAR_ADD("server",                VAR_STR, 0, 0, irc_changed_resolve),
 	PLUGIN_VAR_ADD("statusdescr",           VAR_STR, 0, 0, irc_statusdescr_handler),
-#ifdef IRC_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 	PLUGIN_VAR_ADD("use_ssl",               VAR_BOOL, "0", 0, NULL),
 #endif
 
@@ -2670,7 +2670,7 @@ EXPORT int irc_plugin_init(int prio)
 	const char *pwd_realname = NULL;
 #endif
 
-#ifdef IRC_HAVE_OPENSSL
+#ifdef HAVE_LIBSSL
 	SSL_load_error_strings();
 	SSL_library_init();
 	if (! (ircSslCtx = SSL_CTX_new(SSLv23_method()))) {
