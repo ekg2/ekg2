@@ -115,9 +115,7 @@ dnl plugins
 
 AC_EKG2_PLUGIN([gg], [
 	AC_EKG2_WITH([libgadu], [
-		AC_CHECK_HEADERS([libgadu.h], [
-			AC_CHECK_LIB([gadu], [gg_logoff],, [EKG2_FAILED_TEST])
-		], [EKG2_FAILED_TEST])
+		AC_EKG2_CHECK_LIB([gadu], [gg_logoff], [libgadu.h],, [EKG2_FAILED_TEST])
 	])
 ], [
 	AC_CHECK_FUNCS([gg_remind_passwd3 gg_change_passwd4 mkstemp])
@@ -129,11 +127,9 @@ AC_EKG2_PLUGIN([ncurses], [
 	AC_EKG2_WITH([ncurses], [
 		dnl AC_EKG2_NCURSES([nlib], [nheaders])
 		AC_DEFUN([AC_EKG2_NCURSES], [
-			AC_CHECK_HEADERS([$2], [
-				AC_CHECK_LIB([$1], [initscr], [
-					LIBS="-l$1 $LIBS"
-					AC_DEFINE([HAVE_NCURSES], [1], [define if you have ncurses])
-				], [EKG2_FAILED_TEST])
+			AC_EKG2_CHECK_LIB([$1], [initscr], [$2], [
+				LIBS="-l$1 $LIBS"
+				AC_DEFINE([HAVE_NCURSES], [1], [define if you have ncurses])
 			], [EKG2_FAILED_TEST])
 		])
 
@@ -147,15 +143,11 @@ AC_EKG2_PLUGIN([ncurses], [
 	AC_CHECK_FUNCS([use_legacy_coding])
 
 	AC_EKG2_WITH([aspell], [
-		AC_CHECK_HEADERS([aspell.h], [
-			AC_CHECK_LIB([aspell], [new_aspell_config])
-		])
+		AC_EKG2_CHECK_LIB([aspell], [new_aspell_config], [aspell.h])
 	])
 
 	AC_EKG2_WITH([gpm], [
-		AC_CHECK_HEADERS([gpm.h], [
-			AC_CHECK_LIB([gpm], [Gpm_GetEvent])
-		])
+		AC_EKG2_CHECK_LIB([gpm], [Gpm_GetEvent], [gpm.h])
 	])
 ])
 
