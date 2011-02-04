@@ -1,7 +1,3 @@
-AC_DEFUN([EKG2_FAILED_TEST], [
-	m4_fatal_error([EKG2_FAILED_TEST used outside of AC_EKG2_PLUGIN])
-])
-
 AC_DEFUN([AC_EKG2_PLUGIN], [
 dnl AC_EKG2_PLUGIN(name, req-checks, opt-checks)
 dnl Create a '--enable-<name>' option for a plugin. Unless disabled, run
@@ -27,7 +23,7 @@ dnl and AC_SUBSTituted with that names.
 		ac_ekg2_plugin_save_LDFLAGS=$LDFLAGS
 		ac_ekg2_plugin_save_LIBS=$LIBS
 
-		m4_pushdef([EKG2_FAILED_TEST], [
+		m4_pushdef([EKG2_FAILED_PLUGIN], [
 			AS_IF([test $enable_$1 = yes], [
 				AC_MSG_ERROR([Requirements for plugin $1 not met, aborting build.])
 			], [
@@ -48,7 +44,8 @@ dnl and AC_SUBSTituted with that names.
 
 		$2
 
-		m4_popdef([EKG2_FAILED_TEST])
+		m4_popdef([EKG2_FAILED_PLUGIN])
+		m4_popdef([EKG2_DISABLED_TEST])
 
 		AS_IF([test $enable_$1 != no], [
 			$3

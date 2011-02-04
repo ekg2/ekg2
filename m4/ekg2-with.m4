@@ -18,9 +18,10 @@ dnl as necessary.
 				AC_MSG_ERROR([Test for --with-$1 failed, aborting build.])
 			]
 		)
-		m4_popdef([EKG2_FAILED_TEST])
-		EKG2_FAILED_TEST
-		m4_pushdef([EKG2_FAILED_TEST], [:])
+
+		m4_ifdef([EKG2_FAILED_PLUGIN], [
+			EKG2_FAILED_PLUGIN
+		])
 	])
 
 	AS_CASE([$with_$1],
