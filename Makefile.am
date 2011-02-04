@@ -185,6 +185,19 @@ plugins_jabber_jabber_la_LDFLAGS = -module -avoid-version @JABBER_LDFLAGS@
 plugins_jabber_jabber_la_LIBADD = @JABBER_LIBS@
 endif
 
+if ENABLE_LOGS
+plugin_LTLIBRARIES += plugins/logs/logs.la
+
+plugins_logs_logs_la_SOURCES = \
+	ekg2-config.h \
+	plugins/logs/main.c \
+	plugins/logs/main.h
+
+plugins_logs_logs_la_CPPFLAGS = @LOGS_CPPFLAGS@
+plugins_logs_logs_la_LDFLAGS = -module -avoid-version @LOGS_LDFLAGS@
+plugins_logs_logs_la_LIBADD = @LOGS_LIBS@
+endif
+
 if ENABLE_NCURSES
 plugin_LTLIBRARIES += plugins/ncurses/ncurses.la
 
