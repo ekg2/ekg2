@@ -115,7 +115,7 @@ dnl plugins
 
 AC_EKG2_PLUGIN([gg], [
 	AC_EKG2_WITH([libgadu], [
-		AC_EKG2_CHECK_LIB([gadu], [gg_logoff], [libgadu.h],, [EKG2_FAILED_TEST])
+		AC_EKG2_CHECK_PKGCONFIG_LIB([libgadu], [gadu], [gg_logoff], [libgadu.h],, [EKG2_FAILED_TEST])
 	])
 ], [
 	AC_CHECK_FUNCS([gg_remind_passwd3 gg_change_passwd4 mkstemp])
@@ -127,7 +127,7 @@ AC_EKG2_PLUGIN([icq])
 
 AC_EKG2_PLUGIN([irc],, [
 	AC_EKG2_WITH([openssl], [
-		AC_EKG2_CHECK_LIB([ssl], [RSA_new], [openssl/ssl.h], [
+		AC_EKG2_CHECK_PKGCONFIG_LIB([openssl], [ssl], [RSA_new], [openssl/ssl.h],,, [
 			LIBS="-lssl -lcrypto $LIBS"
 			AC_DEFINE([HAVE_LIBSSL], [1], [define if you want to use openssl for ssl connections])
 		])
@@ -146,14 +146,14 @@ AC_EKG2_PLUGIN([jabber], [
 	try_openssl=no
 
 	AC_EKG2_WITH([gnutls], [
-		AC_EKG2_CHECK_LIB([gnutls], [gnutls_init], [gnutls/gnutls.h],, [
+		AC_EKG2_CHECK_PKGCONFIG_LIB([gnutls], [gnutls], [gnutls_init], [gnutls/gnutls.h],, [
 			try_openssl=yes
 		])
 	], [try_openssl=yes])
 
 	AS_IF([test $try_openssl = yes], [
 		AC_EKG2_WITH([openssl], [
-			AC_EKG2_CHECK_LIB([ssl], [RSA_new], [openssl/ssl.h], [
+			AC_EKG2_CHECK_PKGCONFIG_LIB([openssl], [ssl], [RSA_new], [openssl/ssl.h],,, [
 				LIBS="-lssl -lcrypto $LIBS"
 				AC_DEFINE([HAVE_LIBSSL], [1], [define if you want to use openssl for ssl connections])
 			])
