@@ -54,6 +54,6 @@ dnl <if-fallback-yes> if specified or <if-yes> otherwise.
 			$6
 		])
 	], [
-		AC_EKG2_CHECK_LIB([$2], [$3], [$4], [m4_ifval([$7], [$7], [$5])], [$6])
+		AC_EKG2_CHECK_LIB([$2], [$3], [$4], m4_default([$7], [$5]), [$6])
 	])
 ])
