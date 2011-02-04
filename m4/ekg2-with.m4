@@ -37,7 +37,25 @@ dnl as necessary.
 			CPPFLAGS="$CPPFLAGS -I$with_$1/include"
 			LDFLAGS="$LDFLAGS -L$with_$1/lib"
 
+			ekg_saved_PKG_CONFIG_LIBDIR=${PKG_CONFIG_LIBDIR+yes}
+			ekg_save_PKG_CONFIG_PATH=$PKG_CONFIG_PATH
+			ekg_save_PKG_CONFIG_LIBDIR=$PKG_CONFIG_LIBDIR
+
+			AS_UNSET([PKG_CONFIG_PATH])
+			PKG_CONFIG_LIBDIR="$with_$1/lib/pkgconfig:$with_$1/share/pkgconfig"
+			export PKG_CONFIG_LIBDIR
+
 			$2
+
+			# pkg-config differentiates between unset & empty PKG_CONFIG_LIBDIR
+			AS_IF([test "$ekg_saved_PKG_CONFIG_LIBDIR" = "yes"], [
+				PKG_CONFIG_LIBDIR=$ekg_save_PKG_CONFIG_LIBDIR
+				export PKG_CONFIG_LIBDIR
+			], [
+				AS_UNSET([PKG_CONFIG_LIBDIR])
+			])
+			PKG_CONFIG_PATH=$ekg_save_PKG_CONFIG_PATH
+			export PKG_CONFIG_PATH
 		]
 	)
 
