@@ -137,8 +137,7 @@ AC_EKG2_PLUGIN([gg], [
 AC_EKG2_PLUGIN([gpg], [
 	AC_EKG2_WITH([gpgme], [
 		AM_PATH_GPGME([1.0.0], [
-			LIBS="$GPGME_LIBS $LIBS"
-			CPPFLAGS="$GPGME_CFLAGS $CPPFLAGS"
+			AC_EKG2_CHECK_FLAGEXPORTED_LIB([GPGME], [gpgme], [gpgme_new], [gpgme.h],, [EKG2_FAILED_TEST])
 		], [EKG2_FAILED_TEST])
 	],, [
 		AC_MSG_ERROR(['--with-gpgme=<path> is uneffective, please use --with-gpgme-prefix instead'])

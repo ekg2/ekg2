@@ -19,6 +19,33 @@ dnl default commands); otherwise run 'if-no'.
 	AS_UNSET([found_any_header])
 ])
 
+AC_DEFUN([AC_EKG2_CHECK_FLAGEXPORTED_LIB], [
+dnl AC_EKG2_CHECK_FLAGEXPORTED_LIB(variable-prefix, lib-name, func, header, [if-yes], [if-no])
+
+	pc_save_CPPFLAGS=$CPPFLAGS
+	CPPFLAGS="$$1_CFLAGS $CPPFLAGS"
+
+	AC_CHECK_HEADER([$4], [
+		pc_save_LIBS=$LIBS
+		LIBS="$$1_LIBS $LIBS"
+
+		AC_CHECK_FUNC([$3], [
+			AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_LIB$2), [1], [define if you have $1])
+
+			$5
+		], [
+			LIBS=$pc_save_LIBS
+			CPPFLAGS=$pc_save_CPPFLAGS
+
+			$6
+		])
+	], [
+		CPPFLAGS=$pc_save_CPPFLAGS
+
+		$6
+	])
+])
+
 AC_DEFUN([AC_EKG2_CHECK_PKGCONFIG_LIB], [
 dnl AC_EKG2_CHECK_PKGCONFIG_LIB(pkg-name, fallback-name, func, headers, [if-yes], [if-no], [if-fallback-yes], [alt-macro])
 dnl Perform PKG_CHECK_MODULES for <pkg-name>, grabbing LIBS & CFLAGS there; then
@@ -31,28 +58,7 @@ dnl <if-fallback-yes> if specified or <if-yes> otherwise.
 
 	dnl XXX: $1 can contain hyphens and stuff
 	PKG_CHECK_MODULES([$1], [$1], [
-		pc_save_CPPFLAGS=$CPPFLAGS
-		CPPFLAGS="$$1_CFLAGS $CPPFLAGS"
-
-		AC_CHECK_HEADER([$4], [
-			pc_save_LIBS=$LIBS
-			LIBS="$$1_LIBS $LIBS"
-
-			AC_CHECK_FUNC([$3], [
-				AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_LIB$2), [1], [define if you have $1])
-
-				$5
-			], [
-				LIBS=$pc_save_LIBS
-				CPPFLAGS=$pc_save_CPPFLAGS
-
-				$6
-			])
-		], [
-			CPPFLAGS=$pc_save_CPPFLAGS
-
-			$6
-		])
+		AC_EKG2_CHECK_FLAGEXPORTED_LIB([$1], [$2], [$3], [$4], [$5], [$6])
 	], [
 		AC_EKG2_CHECK_LIB([$2], [$3], [$4], m4_default([$7], [$5]), [$6])
 	])
