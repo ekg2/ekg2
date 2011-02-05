@@ -188,6 +188,16 @@ plugins_jabber_jabber_la_SOURCES = \
 	plugins/jabber/jabber_handlers_tlen.inc
 endif
 
+if ENABLE_JOGGER
+plugin_LTLIBRARIES += plugins/jogger/jogger.la
+
+plugins_jogger_jogger_la_SOURCES = \
+	ekg2-config.h \
+	plugins/jogger/drafts.c \
+	plugins/jogger/jogger.c \
+	plugins/jogger/messages.c
+endif
+
 if ENABLE_LOGS
 plugin_LTLIBRARIES += plugins/logs/logs.la
 

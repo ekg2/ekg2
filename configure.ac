@@ -171,6 +171,8 @@ AC_EKG2_PLUGIN([jabber], [
 	AS_UNSET([try_openssl])
 ])
 
+AC_EKG2_PLUGIN([jogger])
+
 AC_EKG2_PLUGIN([logs],, [
 	AC_EKG2_WITH([zlib], [
 		AC_EKG2_CHECK_LIB([z], [gzopen], [zlib.h])
