@@ -116,7 +116,7 @@ int rl_set_key(const char *key, void *function, void *keymap)
 }
 #endif
 
-static void set_prompt(const char *prompt) {
+void set_prompt(const char *prompt) {
 #ifdef HAVE_RL_SET_PROMPT
 	rl_set_prompt((char *)prompt);
 #else

@@ -265,12 +265,13 @@ static WATCHER(readline_watch_stdin) {
 }
 
 static int bind_debug_window(int a, int key) {
-	window_switch(0);
+	window_switch(WINDOW_DEBUG_ID);
 	return 0;
 }
 
 static int binding_cycle_sessions(int a, int key) {
 	window_session_cycle(window_current);
+	set_prompt(current_prompt());
 	return 0;
 }
 
