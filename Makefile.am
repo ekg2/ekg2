@@ -81,6 +81,20 @@ dist_pkgdata_DATA = \
 	docs/vars-en.txt \
 	docs/vars-pl.txt
 
+dist_noinst_DATA = \
+	docs/events.txt \
+	docs/mouse.txt \
+	docs/Perl-API-en.txt \
+	docs/Perl-API-pl.txt \
+	docs/README \
+	docs/sim.txt \
+	docs/themes-en.txt \
+	docs/themes.txt \
+	docs/ui-ncurses-en.txt \
+	docs/ui-ncurses.txt \
+	docs/voip.txt
+
+
 themedir = $(pkgdatadir)/themes
 
 dist_theme_DATA = \
