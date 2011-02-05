@@ -81,6 +81,15 @@ pkgdata_DATA = \
 	docs/vars-en.txt \
 	docs/vars-pl.txt
 
+themedir = $(pkgdatadir)/themes
+
+theme_DATA = \
+	contrib/themes/blue_sea_dragon.theme \
+	contrib/themes/dmilith.theme \
+	contrib/themes/irc-irssi.theme \
+	contrib/themes/peres.theme \
+	contrib/themes/wiechu.theme
+
 plugin_LTLIBRARIES =
 
 if ENABLE_AUTORESPONDER
