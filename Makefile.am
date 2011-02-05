@@ -76,6 +76,14 @@ ekg_ekg2_LDADD = @EKG_LIBS@
 
 plugin_LTLIBRARIES =
 
+if ENABLE_AUTORESPONDER
+plugin_LTLIBRARIES += plugins/autoresponder/autoresponder.la
+
+plugins_autoresponder_autoresponder_la_SOURCES = \
+	ekg2-config.h \
+	plugins/autoresponder/autoresponder.c
+endif
+
 if ENABLE_GG
 plugin_LTLIBRARIES += plugins/gg/gg.la
 

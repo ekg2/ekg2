@@ -113,6 +113,8 @@ AS_IF([test "x$enable_static" = "xyes"], [
 
 dnl plugins
 
+AC_EKG2_PLUGIN([autoresponder])
+
 AC_EKG2_PLUGIN([gg], [
 	AC_EKG2_WITH([libgadu], [
 		AC_EKG2_CHECK_PKGCONFIG_LIB([libgadu], [gadu], [gg_logoff], [libgadu.h],, [EKG2_FAILED_TEST])
