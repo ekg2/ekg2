@@ -95,10 +95,6 @@ plugins_gg_gg_la_SOURCES = \
 	plugins/gg/pubdir.c \
 	plugins/gg/pubdir.h \
 	plugins/gg/token.h
-
-plugins_gg_gg_la_CPPFLAGS = @GG_CPPFLAGS@
-plugins_gg_gg_la_LDFLAGS = -module -avoid-version @GG_LDFLAGS@
-plugins_gg_gg_la_LIBADD = @GG_LIBS@
 endif
 
 if ENABLE_ICQ
@@ -131,10 +127,6 @@ plugins_icq_icq_la_SOURCES = \
 	plugins/icq/misc.c \
 	plugins/icq/misc.h \
 	plugins/icq/miscicq.h
-
-plugins_icq_icq_la_CPPFLAGS = @ICQ_CPPFLAGS@
-plugins_icq_icq_la_LDFLAGS = -module -avoid-version @ICQ_LDFLAGS@
-plugins_icq_icq_la_LIBADD = @ICQ_LIBS@
 endif
 
 if ENABLE_IRC
@@ -154,10 +146,6 @@ plugins_irc_irc_la_SOURCES = \
 	plugins/irc/misc.h \
 	plugins/irc/people.c \
 	plugins/irc/people.h
-
-plugins_irc_irc_la_CPPFLAGS = @IRC_CPPFLAGS@
-plugins_irc_irc_la_LDFLAGS = -module -avoid-version @IRC_LDFLAGS@
-plugins_irc_irc_la_LIBADD = @IRC_LIBS@
 endif
 
 if ENABLE_JABBER
@@ -179,10 +167,6 @@ plugins_jabber_jabber_la_SOURCES = \
 	plugins/jabber/jabber_handlers_iq_get.inc \
 	plugins/jabber/jabber_handlers_iq_result.inc \
 	plugins/jabber/jabber_handlers_tlen.inc
-
-plugins_jabber_jabber_la_CPPFLAGS = @JABBER_CPPFLAGS@
-plugins_jabber_jabber_la_LDFLAGS = -module -avoid-version @JABBER_LDFLAGS@
-plugins_jabber_jabber_la_LIBADD = @JABBER_LIBS@
 endif
 
 if ENABLE_LOGS
@@ -192,10 +176,6 @@ plugins_logs_logs_la_SOURCES = \
 	ekg2-config.h \
 	plugins/logs/main.c \
 	plugins/logs/main.h
-
-plugins_logs_logs_la_CPPFLAGS = @LOGS_CPPFLAGS@
-plugins_logs_logs_la_LDFLAGS = -module -avoid-version @LOGS_LDFLAGS@
-plugins_logs_logs_la_LIBADD = @LOGS_LIBS@
 endif
 
 if ENABLE_NCURSES
@@ -225,8 +205,4 @@ plugins_ncurses_ncurses_la_SOURCES = \
 	plugins/ncurses/spell.h \
 	plugins/ncurses/statusbar.c \
 	plugins/ncurses/statusbar.h
-
-plugins_ncurses_ncurses_la_CPPFLAGS = @NCURSES_CPPFLAGS@
-plugins_ncurses_ncurses_la_LDFLAGS = -module -avoid-version @NCURSES_LDFLAGS@
-plugins_ncurses_ncurses_la_LIBADD = @NCURSES_LIBS@
 endif

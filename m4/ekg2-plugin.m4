@@ -50,13 +50,9 @@ dnl and AC_SUBSTituted with that names.
 		AS_IF([test $enable_$1 != no], [
 			$3
 
-			$1_CPPFLAGS=$CPPFLAGS
-			$1_LDFLAGS=$LDFLAGS
-			$1_LIBS=$LIBS
-
-			AC_SUBST(translit($1, [a-z], [A-Z])[_CPPFLAGS], [$$1_CPPFLAGS])
-			AC_SUBST(translit($1, [a-z], [A-Z])[_LDFLAGS], [$$1_LDFLAGS])
-			AC_SUBST(translit($1, [a-z], [A-Z])[_LIBS], [$$1_LIBS])
+			AC_SUBST([plugins_$1_$1_la_CPPFLAGS], [$CPPFLAGS])
+			AC_SUBST([plugins_$1_$1_la_LDFLAGS], ["-module -avoid-version $LDFLAGS"])
+			AC_SUBST([plugins_$1_$1_la_LIBADD], [$LIBS])
 		])
 
 		CPPFLAGS=$ac_ekg2_plugin_save_CPPFLAGS
