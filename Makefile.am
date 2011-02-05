@@ -76,6 +76,9 @@ ekg_ekg2_CPPFLAGS = \
 	-I$(top_srcdir) $(AM_CPPFLAGS)
 ekg_ekg2_LDADD = @EKG2_STATIC_PLUGIN_LIBS@ @EKG_LIBS@
 
+TESTS = check_potfiles
+check_SCRIPTS = check_potfiles
+
 dist_pkgdata_DATA = \
 	docs/commands-pl.txt \
 	docs/session-en.txt \
