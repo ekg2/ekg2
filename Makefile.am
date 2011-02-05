@@ -74,6 +74,13 @@ ekg_ekg2_CPPFLAGS = \
 	-I$(top_srcdir) $(AM_CPPFLAGS)
 ekg_ekg2_LDADD = @EKG_LIBS@
 
+pkgdata_DATA = \
+	docs/commands-pl.txt \
+	docs/session-en.txt \
+	docs/session-pl.txt \
+	docs/vars-en.txt \
+	docs/vars-pl.txt
+
 plugin_LTLIBRARIES =
 
 if ENABLE_AUTORESPONDER
