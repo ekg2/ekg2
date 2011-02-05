@@ -1,3 +1,7 @@
+dnl Stupid debian pkg-config-0.22
+m4_pattern_allow([PKG_CONFIG_LIBDIR])
+m4_pattern_allow([PKG_CONFIG_PATH])
+
 AC_DEFUN([AC_EKG2_WITH], [
 dnl AC_EKG2_WITH(optname, if-yes, if-no)
 dnl Create an ekg2-style '--with-<optname>' option, adding -I & -L flags
