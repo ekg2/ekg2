@@ -28,7 +28,7 @@
  */
 
 void config_upgrade() {
-	const int current_config_version = 9;
+	const int current_config_version = 10;
 
 #if ! USE_UNICODE
 	if (!xstrcasecmp(config_console_charset, "UTF-8")) {
@@ -104,6 +104,10 @@ void config_upgrade() {
 			print("config_upgrade_minor", _("Default config_completion_char is \":\""), "2010-12-11");
 			if (!config_completion_char)
 				config_completion_char = xstrdup(":");
+		case 10:
+			print("config_upgrade_minor",
+				_("irc:experimental_chan_name_clean is no longer maintained, use /set irc:clean_channel_name\n"	\
+				"gg:disable_chatstates is no longer maintained, use /set gg:enable_chatstates"), "2011-02-06");
 	}
 
 	config_version = current_config_version;

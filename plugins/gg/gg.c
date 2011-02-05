@@ -73,7 +73,7 @@ char *last_tokenid;
 int gg_config_display_token;
 int gg_config_skip_default_format;
 int gg_config_split_messages;
-int gg_config_disable_chatstates = 0;
+int gg_config_enable_chatstates = 1;
 /**
  * gg_session_init()
  *
@@ -1555,7 +1555,7 @@ static QUERY(gg_typing_out) {
 	session_t *s		= session_find(session);
 	gg_private_t *g;
 
-	if (gg_config_disable_chatstates)
+	if (!gg_config_enable_chatstates)
 		return -1;
 
 	if (!first || !s || s->plugin != &gg_plugin || !(g = s->priv) || !s->connected)
@@ -1759,7 +1759,7 @@ int EXPORT gg_plugin_init(int prio) {
 	variable_add(&gg_plugin, ("image_size"), VAR_INT, 1, &gg_config_image_size, gg_changed_images, NULL, NULL);
 	variable_add(&gg_plugin, ("skip_default_format"), VAR_BOOL, 1, &gg_config_skip_default_format, NULL, NULL, NULL);
 	variable_add(&gg_plugin, ("split_messages"), VAR_BOOL, 1, &gg_config_split_messages, NULL, NULL, NULL);
-	variable_add(&gg_plugin, ("disable_chatstates"), VAR_BOOL, 1, &gg_config_disable_chatstates, NULL, NULL, NULL);
+	variable_add(&gg_plugin, ("enable_chatstates"), VAR_BOOL, 1, &gg_config_enable_chatstates, NULL, NULL, NULL);
 
 	timer_add(&gg_plugin, "gg-scroller", 1, 1, gg_scroll_timer, NULL);
 

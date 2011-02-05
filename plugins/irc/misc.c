@@ -763,7 +763,7 @@ char *clean_channel_names(session_t *session, char *channels) {
 	int len, skip;
 	char *ret;
 	
-	if (!irc_config_experimental_chan_name_clean)
+	if (!irc_config_clean_channel_name)
 		return xstrdup(channels);
 
 	if (!SOP(_005_IDCHAN))

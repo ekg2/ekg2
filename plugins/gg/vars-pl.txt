@@ -46,6 +46,12 @@ display_token
 	dekodować pliki JPEG. wyłączenie jej spowoduje działanie ekg tak,
 	jakby biblioteki nie było, tj. zapisywanie tokenów do pliku.
 
+enable_chatstates
+	typ: bool
+	domyślna wartość: 1
+	
+	Jeśli ustawione, wysyła rozmówcy informację o tym, że piszemy wiadomość
+
 get_images
 	typ: bool
 	domyślna wartość: 0

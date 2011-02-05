@@ -43,6 +43,12 @@ display_token
         us to decode JPEG. Turning it off will cause that 
         ekg will save tokens to file.
 
+enable_chatstates
+	type: bool
+	default value: 1
+	
+	enable or disable typing notification
+
 get_images
         type: bool
         default value: 0

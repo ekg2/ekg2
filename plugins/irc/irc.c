@@ -151,7 +151,7 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 
 static char *irc_config_default_access_groups;
 int irc_config_allow_fake_contacts = 0;
-int irc_config_experimental_chan_name_clean;
+int irc_config_clean_channel_name;
 
 char fillchars_utf8[] = "\xC2\xA0";
 char fillchars_norm[] = "\xA0";
@@ -2759,7 +2759,7 @@ EXPORT int irc_plugin_init(int prio)
 */
 	variable_add(&irc_plugin, "access_groups", VAR_STR, 1, &irc_config_default_access_groups, NULL, NULL, NULL);
 	variable_add(&irc_plugin, "allow_fake_contacts", VAR_BOOL, 1, &irc_config_allow_fake_contacts, NULL, NULL, NULL);
-	variable_add(&irc_plugin, "experimental_chan_name_clean", VAR_BOOL, 1, &irc_config_experimental_chan_name_clean, NULL, NULL, NULL);
+	variable_add(&irc_plugin, "clean_channel_name", VAR_BOOL, 1, &irc_config_clean_channel_name, NULL, NULL, NULL);
 
 	/*
 	 * first register queries
