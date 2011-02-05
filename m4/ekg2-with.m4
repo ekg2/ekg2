@@ -27,7 +27,7 @@ dnl as necessary.
 	AS_CASE([$with_$1],
 		[yes|maybe], [$2],
 		[no], [
-			m4_ifval([$3], [$3], [
+			m4_default([$3], [
 				m4_ifdef([EKG2_DISABLED_TEST], [
 					EKG2_DISABLED_TEST([--without-$1])
 				])

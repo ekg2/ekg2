@@ -23,7 +23,7 @@
 #define __LOGSQLITE_H__
 
 
-#ifdef HAVE_SQLITE3
+#ifdef HAVE_LIBSQLITE3
 # include <sqlite3.h>
 # define sqlite_t sqlite3
 #else

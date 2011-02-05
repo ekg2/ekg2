@@ -178,6 +178,15 @@ plugins_logs_logs_la_SOURCES = \
 	plugins/logs/main.h
 endif
 
+if ENABLE_LOGSQLITE
+plugin_LTLIBRARIES += plugins/logsqlite/logsqlite.la
+
+plugins_logsqlite_logsqlite_la_SOURCES = \
+	ekg2-config.h \
+	plugins/logsqlite/logsqlite.c \
+	plugins/logsqlite/logsqlite.h
+endif
+
 if ENABLE_NCURSES
 plugin_LTLIBRARIES += plugins/ncurses/ncurses.la
 

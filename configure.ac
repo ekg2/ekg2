@@ -169,6 +169,26 @@ AC_EKG2_PLUGIN([logs],, [
 	])
 ])
 
+AC_EKG2_PLUGIN([logsqlite], [
+	try_sqlite=no
+
+	AC_EKG2_WITH([sqlite3], [
+		AC_EKG2_CHECK_PKGCONFIG_LIB([sqlite3], [sqlite3], [sqlite3_open], [sqlite3.h],, [
+			try_sqlite=yes
+		])
+	], [try_sqlite=yes])
+
+	AS_IF([test $try_sqlite = yes], [
+		AC_EKG2_WITH([sqlite], [
+			AC_EKG2_CHECK_PKGCONFIG_LIB([sqlite], [sqlite], [sqlite_open], [sqlite.h],, [
+				EKG2_FAILED_TEST
+			])
+		], [EKG2_DISABLED_TEST])
+	])
+
+	AS_UNSET([try_sqlite])
+])
+
 AC_EKG2_PLUGIN([ncurses], [
 	AC_EKG2_WITH([ncurses], [
 		dnl AC_EKG2_NCURSES([nlib], [nheaders])
