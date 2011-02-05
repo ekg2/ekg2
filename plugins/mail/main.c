@@ -44,11 +44,11 @@
 #  include <utime.h>
 #endif
 
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 #include <termios.h>
 #include <sys/inotify.h>
 #include <sys/ioctl.h>
-#endif /*HAVE_INOTIFY*/
+#endif /*HAVE_SYS_INOTIFY_H*/
 
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -67,7 +67,7 @@ struct mail_folder {
 	int count;
 	int check;
 
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 	guint32 watch;
 #endif
 };
@@ -76,7 +76,7 @@ int config_beep_mail = 1;
 static list_t mail_folders = NULL;
 
 static int config_check_mail = 0;
-#ifndef HAVE_INOTIFY
+#ifndef HAVE_SYS_INOTIFY_H
 static int config_check_mail_frequency = 15;
 #endif
 static char *config_check_mail_folders = NULL;
@@ -84,7 +84,7 @@ static char *config_check_mail_folders = NULL;
 static int mail_count = 0;
 static int last_mail_count = 0;
 
-#ifndef HAVE_INOTIFY
+#ifndef HAVE_SYS_INOTIFY_H
 static TIMER(check_mail);
 #endif
 static int check_mail_mbox();
@@ -94,14 +94,14 @@ static void check_mail_free();
 
 static int mail_theme_init();
 
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 static int inotify_fd;
 static struct inotify_event *ev = NULL;
 #endif
 
 PLUGIN_DEFINE(mail, PLUGIN_GENERIC, mail_theme_init);
 
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 static WATCHER(mail_inotify) {
 	int n;
 	struct inotify_event *evp;
@@ -148,7 +148,7 @@ static WATCHER(mail_inotify) {
 	return 0; /* XXX: revise above for */
 }
 
-#else /* HAVE_INOTIFY */
+#else /* HAVE_SYS_INOTIFY_H */
 
 /*
  * check_mail()
@@ -516,7 +516,7 @@ static void changed_check_mail_folders(const char *var)
 			foo.fhash = ekg_hash(f[i]);
 			foo.fname = f[i];
 			foo.check = 1;
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 			if (((foo.watch = inotify_add_watch(inotify_fd, foo.fname, IN_CLOSE_WRITE))) == -1) {
 				debug_error("[mail] unable to set inotify watch for %s\n", foo.fname);
 				xfree(foo.fname);
@@ -545,7 +545,7 @@ static void changed_check_mail_folders(const char *var)
 		foo.fname = inbox;
 		foo.check = 1;
 
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 		if (((foo.watch = inotify_add_watch(inotify_fd, foo.fname, IN_CLOSE_WRITE))) == -1) {
 			debug_error("[mail] unable to set inotify watch for %s\n", foo.fname);
 			xfree(foo.fname);
@@ -561,7 +561,7 @@ static void changed_check_mail_folders(const char *var)
 			foo.fname = inbox;
 			foo.check = 1;
 
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 			if (((foo.watch = inotify_add_watch(inotify_fd, foo.fname, IN_CLOSE_WRITE))) == -1) {
 				debug_error("[mail] unable to set inotify watch for %s\n", foo.fname);
 				xfree(foo.fname);
@@ -581,7 +581,7 @@ static void changed_check_mail_folders(const char *var)
  */
 static void changed_check_mail(const char *var)
 {
-#ifndef HAVE_INOTIFY
+#ifndef HAVE_SYS_INOTIFY_H
 	if (config_check_mail) {
 		struct timer *t;
 
@@ -625,7 +625,7 @@ EXPORT int mail_plugin_init(int prio)
 {
 	PLUGIN_CHECK_VER("mail");
 
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 	if ((inotify_fd = inotify_init()) == -1) {
 		print("generic_error", "inotify init failed.");
 		return -1;
@@ -640,12 +640,12 @@ EXPORT int mail_plugin_init(int prio)
 
 	variable_add(&mail_plugin, ("beep_mail"), VAR_BOOL, 1, &config_beep_mail, NULL, NULL, dd_beep);
 	variable_add(&mail_plugin, ("check_mail"), VAR_MAP, 1, &config_check_mail, changed_check_mail, variable_map(4, 0, 0, "no", 1, 2, "mbox", 2, 1, "maildir", 4, 0, "notify"), NULL);
-#ifndef HAVE_INOTIFY
+#ifndef HAVE_SYS_INOTIFY_H
 	variable_add(&mail_plugin, ("check_mail_frequency"), VAR_INT, 1, &config_check_mail_frequency, changed_check_mail, NULL, dd_check_mail);
 #endif
 	variable_add(&mail_plugin, ("check_mail_folders"), VAR_STR, 1, &config_check_mail_folders, changed_check_mail_folders, NULL, dd_check_mail);
 
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 	watch_add(&mail_plugin, inotify_fd, WATCH_READ, mail_inotify, NULL);
 #endif
 
@@ -677,7 +677,7 @@ static void check_mail_free()
 		struct mail_folder *m = l->data;
 
 		xfree(m->fname);
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 		inotify_rm_watch(inotify_fd, m->watch);
 #endif
 	}
@@ -690,7 +690,7 @@ static int mail_plugin_destroy()
 {
 	check_mail_free();
 
-#ifdef HAVE_INOTIFY
+#ifdef HAVE_SYS_INOTIFY_H
 	close(inotify_fd);
 #endif
 

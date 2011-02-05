@@ -216,6 +216,14 @@ plugins_logsqlite_logsqlite_la_SOURCES = \
 	plugins/logsqlite/logsqlite.h
 endif
 
+if ENABLE_MAIL
+plugin_LTLIBRARIES += plugins/mail/mail.la
+
+plugins_mail_mail_la_SOURCES = \
+	ekg2-config.h \
+	plugins/mail/main.c
+endif
+
 if ENABLE_NCURSES
 plugin_LTLIBRARIES += plugins/ncurses/ncurses.la
 

@@ -199,6 +199,14 @@ AC_EKG2_PLUGIN([logsqlite], [
 	AS_UNSET([try_sqlite])
 ])
 
+AC_EKG2_PLUGIN([mail],, [
+	AC_EKG2_WITH([inotify], [
+		AC_CHECK_FUNCS([inotify_init], [
+			AC_CHECK_HEADERS([sys/inotify.h])
+		])
+	])
+])
+
 AC_EKG2_PLUGIN([ncurses], [
 	AC_EKG2_WITH([ncurses], [
 		dnl AC_EKG2_NCURSES([nlib], [nheaders])
