@@ -3,9 +3,14 @@ m4_pattern_allow([PKG_CONFIG_LIBDIR])
 m4_pattern_allow([PKG_CONFIG_PATH])
 
 AC_DEFUN([AC_EKG2_WITH], [
-dnl AC_EKG2_WITH(optname, if-yes, if-no)
-dnl Create an ekg2-style '--with-<optname>' option, adding -I & -L flags
-dnl as necessary.
+dnl AC_EKG2_WITH(optname, if-yes, [if-no], [alt-setup], [alt-cleanup])
+dnl Create an ekg2-style '--with-<optname>' option. Run <if-no> if
+dnl '--without-<optname>' was used, <if-yes> otherwise.
+dnl
+dnl If '--with-<optname>=' was specified with a path, either run <alt-setup>
+dnl before running <if-yes> if specified or set up -I, -L flags and pkg-config
+dnl vars. In the same case, <alt-cleanup> is being run after <if-yes> if
+dnl <alt-setup> was specified, or pkg-config vars are cleaned up.
 
 	AC_ARG_WITH([$1],
 		AS_HELP_STRING([translit([--with-$1[=<prefix>]], [_], [-])],
@@ -37,29 +42,33 @@ dnl as necessary.
 				])
 			])
 		], [
-			dnl XXX: multilib?
-			CPPFLAGS="$CPPFLAGS -I$with_$1/include"
-			LDFLAGS="$LDFLAGS -L$with_$1/lib"
+			m4_default([$4], [
+				dnl XXX: multilib?
+				CPPFLAGS="$CPPFLAGS -I$with_$1/include"
+				LDFLAGS="$LDFLAGS -L$with_$1/lib"
 
-			ekg_saved_PKG_CONFIG_LIBDIR=${PKG_CONFIG_LIBDIR+yes}
-			ekg_save_PKG_CONFIG_PATH=$PKG_CONFIG_PATH
-			ekg_save_PKG_CONFIG_LIBDIR=$PKG_CONFIG_LIBDIR
+				ekg_saved_PKG_CONFIG_LIBDIR=${PKG_CONFIG_LIBDIR+yes}
+				ekg_save_PKG_CONFIG_PATH=$PKG_CONFIG_PATH
+				ekg_save_PKG_CONFIG_LIBDIR=$PKG_CONFIG_LIBDIR
 
-			AS_UNSET([PKG_CONFIG_PATH])
-			PKG_CONFIG_LIBDIR="$with_$1/lib/pkgconfig:$with_$1/share/pkgconfig"
-			export PKG_CONFIG_LIBDIR
+				AS_UNSET([PKG_CONFIG_PATH])
+				PKG_CONFIG_LIBDIR="$with_$1/lib/pkgconfig:$with_$1/share/pkgconfig"
+				export PKG_CONFIG_LIBDIR
+			])
 
 			$2
 
-			# pkg-config differentiates between unset & empty PKG_CONFIG_LIBDIR
-			AS_IF([test "$ekg_saved_PKG_CONFIG_LIBDIR" = "yes"], [
-				PKG_CONFIG_LIBDIR=$ekg_save_PKG_CONFIG_LIBDIR
-				export PKG_CONFIG_LIBDIR
-			], [
-				AS_UNSET([PKG_CONFIG_LIBDIR])
+			m4_ifval([$4], [$5], [
+				# pkg-config differentiates between unset & empty PKG_CONFIG_LIBDIR
+				AS_IF([test "$ekg_saved_PKG_CONFIG_LIBDIR" = "yes"], [
+					PKG_CONFIG_LIBDIR=$ekg_save_PKG_CONFIG_LIBDIR
+					export PKG_CONFIG_LIBDIR
+				], [
+					AS_UNSET([PKG_CONFIG_LIBDIR])
+				])
+				PKG_CONFIG_PATH=$ekg_save_PKG_CONFIG_PATH
+				export PKG_CONFIG_PATH
 			])
-			PKG_CONFIG_PATH=$ekg_save_PKG_CONFIG_PATH
-			export PKG_CONFIG_PATH
 		]
 	)
 

@@ -94,7 +94,6 @@ dist_noinst_DATA = \
 	docs/ui-ncurses.txt \
 	docs/voip.txt
 
-
 themedir = $(pkgdatadir)/themes
 
 dist_theme_DATA = \
@@ -156,6 +155,18 @@ dist_gg_DATA = \
 	plugins/gg/session-pl.txt \
 	plugins/gg/vars-en.txt \
 	plugins/gg/vars-pl.txt
+endif
+
+if ENABLE_GPG
+plugin_LTLIBRARIES += plugins/gpg/gpg.la
+
+plugins_gpg_gpg_la_SOURCES = \
+	ekg2-config.h \
+	plugins/gpg/gpg.c
+
+dist_gpg_DATA = \
+	plugins/gpg/commands-en.txt \
+	plugins/gpg/commands-pl.txt
 endif
 
 if ENABLE_ICQ

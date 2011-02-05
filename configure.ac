@@ -134,6 +134,17 @@ AC_EKG2_PLUGIN([gg], [
 	dnl Reason to check for gif or jpeg? They seem to be useless nowadays.
 ])
 
+AC_EKG2_PLUGIN([gpg], [
+	AC_EKG2_WITH([gpgme], [
+		AM_PATH_GPGME([1.0.0], [
+			LIBS="$GPGME_LIBS $LIBS"
+			CPPFLAGS="$GPGME_CFLAGS $CPPFLAGS"
+		], [EKG2_FAILED_TEST])
+	],, [
+		AC_MSG_ERROR(['--with-gpgme=<path> is uneffective, please use --with-gpgme-prefix instead'])
+	])
+])
+
 AC_EKG2_PLUGIN([icq])
 
 AC_EKG2_PLUGIN([irc],, [
