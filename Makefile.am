@@ -74,7 +74,7 @@ ekg_ekg2_CPPFLAGS = \
 	-I$(top_srcdir) $(AM_CPPFLAGS)
 ekg_ekg2_LDADD = @EKG_LIBS@
 
-pkgdata_DATA = \
+dist_pkgdata_DATA = \
 	docs/commands-pl.txt \
 	docs/session-en.txt \
 	docs/session-pl.txt \
@@ -83,7 +83,7 @@ pkgdata_DATA = \
 
 themedir = $(pkgdatadir)/themes
 
-theme_DATA = \
+dist_theme_DATA = \
 	contrib/themes/blue_sea_dragon.theme \
 	contrib/themes/dmilith.theme \
 	contrib/themes/irc-irssi.theme \
@@ -99,7 +99,7 @@ plugins_autoresponder_autoresponder_la_SOURCES = \
 	ekg2-config.h \
 	plugins/autoresponder/autoresponder.c
 
-autoresponder_DATA = \
+dist_autoresponder_DATA = \
 	plugins/autoresponder/vars-en.txt \
 	plugins/autoresponder/vars-pl.txt
 endif
@@ -135,7 +135,7 @@ plugins_gg_gg_la_SOURCES = \
 	plugins/gg/pubdir.h \
 	plugins/gg/token.h
 
-gg_DATA = \
+dist_gg_DATA = \
 	plugins/gg/commands-en.txt \
 	plugins/gg/commands-pl.txt \
 	plugins/gg/session-en.txt \
@@ -194,7 +194,7 @@ plugins_irc_irc_la_SOURCES = \
 	plugins/irc/people.c \
 	plugins/irc/people.h
 
-irc_DATA = \
+dist_irc_DATA = \
 	plugins/irc/commands-pl.txt \
 	plugins/irc/session-pl.txt
 endif
@@ -219,7 +219,7 @@ plugins_jabber_jabber_la_SOURCES = \
 	plugins/jabber/jabber_handlers_iq_result.inc \
 	plugins/jabber/jabber_handlers_tlen.inc
 
-jabber_DATA = \
+dist_jabber_DATA = \
 	plugins/jabber/commands-en.txt \
 	plugins/jabber/commands-pl.txt \
 	plugins/jabber/session-en.txt \
@@ -244,7 +244,7 @@ plugins_logs_logs_la_SOURCES = \
 	plugins/logs/main.c \
 	plugins/logs/main.h
 
-logs_DATA = \
+dist_logs_DATA = \
 	plugins/logs/vars-pl.txt
 endif
 
@@ -256,7 +256,7 @@ plugins_logsqlite_logsqlite_la_SOURCES = \
 	plugins/logsqlite/logsqlite.c \
 	plugins/logsqlite/logsqlite.h
 
-logsqlite_DATA = \
+dist_logsqlite_DATA = \
 	plugins/logsqlite/commands-en.txt \
 	plugins/logsqlite/commands-pl.txt \
 	plugins/logsqlite/vars-en.txt \
@@ -270,7 +270,7 @@ plugins_mail_mail_la_SOURCES = \
 	ekg2-config.h \
 	plugins/mail/main.c
 
-mail_DATA = \
+dist_mail_DATA = \
 	plugins/mail/vars-pl.txt
 endif
 
@@ -302,7 +302,7 @@ plugins_ncurses_ncurses_la_SOURCES = \
 	plugins/ncurses/statusbar.c \
 	plugins/ncurses/statusbar.h
 
-ncurses_DATA = \
+dist_ncurses_DATA = \
 	plugins/ncurses/commands-pl.txt \
 	plugins/ncurses/vars-en.txt \
 	plugins/ncurses/vars-pl.txt
