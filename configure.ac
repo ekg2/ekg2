@@ -115,6 +115,12 @@ dnl plugins
 
 AC_EKG2_PLUGIN([autoresponder])
 
+AC_EKG2_PLUGIN([feed],, [
+	AC_EKG2_WITH([expat], [
+		AC_EKG2_CHECK_LIB([expat], [XML_ParserCreate], [expat.h],, [EKG2_FAILED_TEST])
+	])
+])
+
 AC_EKG2_PLUGIN([gg], [
 	AC_EKG2_WITH([libgadu], [
 		AC_EKG2_CHECK_PKGCONFIG_LIB([libgadu], [gadu], [gg_logoff], [libgadu.h],, [EKG2_FAILED_TEST])

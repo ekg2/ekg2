@@ -41,7 +41,7 @@ static QUERY(feed_validate_uid)
 
 	if (!uid)
 		return 0;
-#ifdef HAVE_EXPAT
+#ifdef HAVE_LIBEXPAT
 	if (!xstrncasecmp(uid, "rss:", 4)) {
 		(*valid)++;
 		return -1;
@@ -65,7 +65,7 @@ static QUERY(feed_session_init) {
 		return 1;
 
 	j = xmalloc(sizeof(feed_private_t));
-#ifdef HAVE_EXPAT
+#ifdef HAVE_LIBEXPAT
 	j->isrss = (tolower(s->uid[0]) == 'r');
 	if (j->isrss)		j->priv_data = rss_protocol_init();
 	else
@@ -88,7 +88,7 @@ static QUERY(feed_session_deinit) {
 
 	userlist_write(s);
 	s->priv			= NULL;
-#ifdef HAVE_EXPAT
+#ifdef HAVE_LIBEXPAT
 	if (j->isrss)		rss_protocol_deinit(j->priv_data);
 	else
 #endif
@@ -308,7 +308,7 @@ static plugins_params_t feed_plugin_vars[] = {
 				"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:",
 			0, NULL),
 /* rss vars. */
-#ifdef HAVE_EXPAT
+#ifdef HAVE_LIBEXPAT
 	PLUGIN_VAR_ADD("display_server_headers", VAR_STR,
 	/* display some basic server headers */
 		"HTTP/1.1 "	/* rcode? */
@@ -352,7 +352,7 @@ EXPORT int feed_plugin_init(int prio) {
 			/* common - rss, nntp */
 	query_connect(&feed_plugin, "rss-message", rss_message, NULL);
 
-#ifdef HAVE_EXPAT
+#ifdef HAVE_LIBEXPAT
 	rss_init();	/* rss */
 #endif
 	nntp_init();	/* nntp */
@@ -361,7 +361,7 @@ EXPORT int feed_plugin_init(int prio) {
 
 static int feed_plugin_destroy() {
 	plugin_unregister(&feed_plugin);
-#ifdef HAVE_EXPAT
+#ifdef HAVE_LIBEXPAT
 	rss_deinit();	/* rss */
 #endif
 	return 0;

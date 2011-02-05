@@ -11,7 +11,7 @@
 extern plugin_t feed_plugin;
 
 typedef struct {
-#ifdef HAVE_EXPAT
+#ifdef HAVE_LIBEXPAT
 	int isrss;
 #endif
 	void *priv_data;
@@ -21,7 +21,7 @@ extern void *nntp_protocol_init();		/* nntp.c */
 extern void nntp_protocol_deinit(void *);	/* nntp.c */
 extern void nntp_init();			/* nntp.c */
 
-#ifdef HAVE_EXPAT
+#ifdef HAVE_LIBEXPAT
 extern void *rss_protocol_init();		/* rss.c */
 extern void rss_protocol_deinit(void *);	/* rss.c */
 extern void rss_init();				/* rss.c */

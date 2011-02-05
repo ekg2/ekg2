@@ -84,6 +84,17 @@ plugins_autoresponder_autoresponder_la_SOURCES = \
 	plugins/autoresponder/autoresponder.c
 endif
 
+if ENABLE_FEED
+plugin_LTLIBRARIES += plugins/feed/feed.la
+
+plugins_feed_feed_la_SOURCES = \
+	ekg2-config.h \
+	plugins/feed/feed.c \
+	plugins/feed/feed.h \
+	plugins/feed/nntp.c \
+	plugins/feed/rss.c
+endif
+
 if ENABLE_GG
 plugin_LTLIBRARIES += plugins/gg/gg.la
 

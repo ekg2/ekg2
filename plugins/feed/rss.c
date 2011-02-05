@@ -16,7 +16,7 @@
  */
 
 #include "ekg2-config.h"
-#ifdef HAVE_EXPAT
+#ifdef HAVE_LIBEXPAT
 
 #include <glib.h>
 
