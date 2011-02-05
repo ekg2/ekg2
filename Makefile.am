@@ -82,6 +82,10 @@ plugin_LTLIBRARIES += plugins/autoresponder/autoresponder.la
 plugins_autoresponder_autoresponder_la_SOURCES = \
 	ekg2-config.h \
 	plugins/autoresponder/autoresponder.c
+
+autoresponder_DATA = \
+	plugins/autoresponder/vars-en.txt \
+	plugins/autoresponder/vars-pl.txt
 endif
 
 if ENABLE_FEED
@@ -114,6 +118,14 @@ plugins_gg_gg_la_SOURCES = \
 	plugins/gg/pubdir.c \
 	plugins/gg/pubdir.h \
 	plugins/gg/token.h
+
+gg_DATA = \
+	plugins/gg/commands-en.txt \
+	plugins/gg/commands-pl.txt \
+	plugins/gg/session-en.txt \
+	plugins/gg/session-pl.txt \
+	plugins/gg/vars-en.txt \
+	plugins/gg/vars-pl.txt
 endif
 
 if ENABLE_ICQ
@@ -165,6 +177,10 @@ plugins_irc_irc_la_SOURCES = \
 	plugins/irc/misc.h \
 	plugins/irc/people.c \
 	plugins/irc/people.h
+
+irc_DATA = \
+	plugins/irc/commands-pl.txt \
+	plugins/irc/session-pl.txt
 endif
 
 if ENABLE_JABBER
@@ -186,6 +202,12 @@ plugins_jabber_jabber_la_SOURCES = \
 	plugins/jabber/jabber_handlers_iq_get.inc \
 	plugins/jabber/jabber_handlers_iq_result.inc \
 	plugins/jabber/jabber_handlers_tlen.inc
+
+jabber_DATA = \
+	plugins/jabber/commands-en.txt \
+	plugins/jabber/commands-pl.txt \
+	plugins/jabber/session-en.txt \
+	plugins/jabber/session-pl.txt
 endif
 
 if ENABLE_JOGGER
@@ -205,6 +227,9 @@ plugins_logs_logs_la_SOURCES = \
 	ekg2-config.h \
 	plugins/logs/main.c \
 	plugins/logs/main.h
+
+logs_DATA = \
+	plugins/logs/vars-pl.txt
 endif
 
 if ENABLE_LOGSQLITE
@@ -214,6 +239,12 @@ plugins_logsqlite_logsqlite_la_SOURCES = \
 	ekg2-config.h \
 	plugins/logsqlite/logsqlite.c \
 	plugins/logsqlite/logsqlite.h
+
+logsqlite_DATA = \
+	plugins/logsqlite/commands-en.txt \
+	plugins/logsqlite/commands-pl.txt \
+	plugins/logsqlite/vars-en.txt \
+	plugins/logsqlite/vars-pl.txt
 endif
 
 if ENABLE_MAIL
@@ -222,6 +253,9 @@ plugin_LTLIBRARIES += plugins/mail/mail.la
 plugins_mail_mail_la_SOURCES = \
 	ekg2-config.h \
 	plugins/mail/main.c
+
+mail_DATA = \
+	plugins/mail/vars-pl.txt
 endif
 
 if ENABLE_NCURSES
@@ -251,4 +285,9 @@ plugins_ncurses_ncurses_la_SOURCES = \
 	plugins/ncurses/spell.h \
 	plugins/ncurses/statusbar.c \
 	plugins/ncurses/statusbar.h
+
+ncurses_DATA = \
+	plugins/ncurses/commands-pl.txt \
+	plugins/ncurses/vars-en.txt \
+	plugins/ncurses/vars-pl.txt
 endif

@@ -53,6 +53,7 @@ dnl and AC_SUBSTituted with that names.
 			AC_SUBST([plugins_$1_$1_la_CPPFLAGS], [$CPPFLAGS])
 			AC_SUBST([plugins_$1_$1_la_LDFLAGS], ["-module -avoid-version $LDFLAGS"])
 			AC_SUBST([plugins_$1_$1_la_LIBADD], [$LIBS])
+			AC_SUBST([$1dir], ['$(pkgdatadir)/plugins/$1'])
 		])
 
 		CPPFLAGS=$ac_ekg2_plugin_save_CPPFLAGS
