@@ -430,3 +430,17 @@ plugins_rivchat_rivchat_la_SOURCES = \
 	plugins/rivchat/rivchat.c \
 	plugins/rivchat/rivchat.h
 endif
+
+if ENABLE_SIM
+plugin_LTLIBRARIES += plugins/sim/sim.la
+
+plugins_sim_sim_la_SOURCES = \
+	ekg2-config.h \
+	plugins/sim/main.c \
+	plugins/sim/simlite.c \
+	plugins/sim/simlite.h
+
+dist_sim_DATA = \
+	plugins/sim/commands-pl.txt \
+	plugins/sim/vars-pl.txt
+endif

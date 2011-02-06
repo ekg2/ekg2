@@ -294,6 +294,15 @@ AC_EKG2_PLUGIN([python], [
 
 AC_EKG2_PLUGIN([rivchat])
 
+AC_EKG2_PLUGIN([sim], [
+	AC_EKG2_WITH([openssl], [
+		AC_EKG2_CHECK_PKGCONFIG_LIB([openssl], [ssl], [RSA_new], [openssl/ssl.h],,, [
+			LIBS="-lssl -lcrypto $LIBS"
+			AC_DEFINE([HAVE_LIBSSL], [1], [define if you want to use openssl for ssl connections])
+		])
+	])
+])
+
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])
 AC_OUTPUT
