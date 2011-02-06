@@ -152,6 +152,25 @@ AC_EKG2_PLUGIN([gpg], [
 	])
 ])
 
+AC_EKG2_PLUGIN([gtk], [
+	AC_EKG2_WITH([gtk], [
+		PKG_CHECK_MODULES([GTK], [gtk+-2.0],, [
+			AS_CASE([$with_gtk],
+				[yes|maybe], [gtk_prefix=/usr],
+				[gtk_prefix=$with_gtk])
+
+			GTK_LIBS="-lgtk-x11-2.0"
+			GTK_CFLAGS="-I$gtk_prefix/include/gtk-2.0 -I$gtk_prefix/EKG2_LIBDIRNAME/gtk-2.0/include"
+			AS_UNSET([gtk_prefix])
+		])
+
+		AC_EKG2_CHECK_FLAGEXPORTED_LIB([GTK],, [gtk_init], [gtk/gtk.h], [
+			AC_PATH_PROG([GDK_PIXBUF_CSOURCE], [gdk-pixbuf-csource])
+			AS_IF([test x"$GDK_PIXBUF_CSOURCE" = x""], [EKG2_FAILED_TEST])
+		], [EKG2_FAILED_TEST])
+	])
+])
+
 AC_EKG2_PLUGIN([icq])
 
 AC_EKG2_PLUGIN([irc],, [

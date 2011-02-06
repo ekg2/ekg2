@@ -171,6 +171,107 @@ dist_gpg_DATA = \
 	plugins/gpg/commands-pl.txt
 endif
 
+if ENABLE_GTK
+plugin_LTLIBRARIES += plugins/gtk/gtk.la
+
+GTK_INLINE_PNGS = \
+	inline_pngs.h \
+	inline_pngs_gg.h \
+	inline_pngs_icq.h
+
+plugins_gtk_gtk_la_SOURCES = \
+	ekg2-config.h \
+	plugins/gtk/bindings.c \
+	plugins/gtk/bindings.h \
+	plugins/gtk/chanview.c \
+	plugins/gtk/chanview.h \
+	plugins/gtk/gtkutil.c \
+	plugins/gtk/gtkutil.h \
+	plugins/gtk/main.c \
+	plugins/gtk/maingui.c \
+	plugins/gtk/maingui.h \
+	plugins/gtk/main.h \
+	plugins/gtk/menu.c \
+	plugins/gtk/menu.h \
+	plugins/gtk/palette.c \
+	plugins/gtk/palette.h \
+	plugins/gtk/userlistgui.c \
+	plugins/gtk/userlistgui.h \
+	plugins/gtk/xtext.c \
+	plugins/gtk/xtext.h \
+	plugins/gtk/chanview-tabs.inc \
+	plugins/gtk/chanview-tree.inc \
+	$(GTK_INLINE_PNGS)
+
+BUILT_SOURCES = \
+	$(GTK_INLINE_PNGS)
+
+MOSTLYCLEANFILES = \
+	$(GTK_INLINE_PNGS)
+
+BASE_PNGS = \
+	$(top_srcdir)/plugins/gtk/iconssets/avail.png \
+	$(top_srcdir)/plugins/gtk/iconssets/away.png \
+	$(top_srcdir)/plugins/gtk/iconssets/dnd.png \
+	$(top_srcdir)/plugins/gtk/iconssets/ffc.png \
+	$(top_srcdir)/plugins/gtk/iconssets/icon_error.png \
+	$(top_srcdir)/plugins/gtk/iconssets/icon_unknown.png \
+	$(top_srcdir)/plugins/gtk/iconssets/invisible.png \
+	$(top_srcdir)/plugins/gtk/iconssets/notavail.png \
+	$(top_srcdir)/plugins/gtk/iconssets/xa.png
+
+GG_PNGS = \
+	$(top_srcdir)/plugins/gtk/iconssets/gg-avail.png \
+	$(top_srcdir)/plugins/gtk/iconssets/gg-away.png \
+	$(top_srcdir)/plugins/gtk/iconssets/gg-invisible.png \
+	$(top_srcdir)/plugins/gtk/iconssets/gg-notavail.png
+
+ICQ_PNGS = \
+	$(top_srcdir)/plugins/gtk/iconssets/icq-avail.png \
+	$(top_srcdir)/plugins/gtk/iconssets/icq-away.png \
+	$(top_srcdir)/plugins/gtk/iconssets/icq-dnd.png \
+	$(top_srcdir)/plugins/gtk/iconssets/icq-ffc.png \
+	$(top_srcdir)/plugins/gtk/iconssets/icq-invisible.png \
+	$(top_srcdir)/plugins/gtk/iconssets/icq-notavail.png \
+	$(top_srcdir)/plugins/gtk/iconssets/icq-unknown.png \
+	$(top_srcdir)/plugins/gtk/iconssets/icq-xa.png
+
+inline_pngs.h: $(BASE_PNGS)
+	$(GDK_PIXBUF_CSOURCE) --raw --build-list \
+		avail $(top_srcdir)/plugins/gtk/iconssets/avail.png \
+		away $(top_srcdir)/plugins/gtk/iconssets/away.png \
+		dnd $(top_srcdir)/plugins/gtk/iconssets/dnd.png \
+		ffc $(top_srcdir)/plugins/gtk/iconssets/ffc.png \
+		icon_error $(top_srcdir)/plugins/gtk/iconssets/icon_error.png \
+		icon_unknown $(top_srcdir)/plugins/gtk/iconssets/icon_unknown.png \
+		invisible $(top_srcdir)/plugins/gtk/iconssets/invisible.png \
+		notavail $(top_srcdir)/plugins/gtk/iconssets/notavail.png \
+		xa $(top_srcdir)/plugins/gtk/iconssets/xa.png \
+		> $@
+
+inline_pngs_gg.h: $(BASE_PNGS)
+	$(GDK_PIXBUF_CSOURCE) --raw --build-list \
+		gg_avail $(top_srcdir)/plugins/gtk/iconssets/gg-avail.png \
+		gg_away $(top_srcdir)/plugins/gtk/iconssets/gg-away.png \
+		gg_invisible $(top_srcdir)/plugins/gtk/iconssets/gg-invisible.png \
+		gg_notavail $(top_srcdir)/plugins/gtk/iconssets/gg-notavail.png \
+		> $@
+
+inline_pngs_icq.h: $(ICQ_PNGS)
+	$(GDK_PIXBUF_CSOURCE) --raw --build-list \
+		icq_ffc $(top_srcdir)/plugins/gtk/iconssets/icq-ffc.png \
+		icq_avail $(top_srcdir)/plugins/gtk/iconssets/icq-avail.png \
+		icq_away $(top_srcdir)/plugins/gtk/iconssets/icq-away.png \
+		icq_dnd $(top_srcdir)/plugins/gtk/iconssets/icq-dnd.png \
+		icq_xa $(top_srcdir)/plugins/gtk/iconssets/icq-xa.png \
+		icq_invisible $(top_srcdir)/plugins/gtk/iconssets/icq-invisible.png \
+		icq_notavail $(top_srcdir)/plugins/gtk/iconssets/icq-notavail.png \
+		icq_unknown $(top_srcdir)/plugins/gtk/iconssets/icq-unknown.png \
+		> $@
+
+EXTRA_DIST += $(BASE_PNGS) $(GG_PNGS) $(ICQ_PNGS)
+endif
+
 if ENABLE_ICQ
 plugin_LTLIBRARIES += plugins/icq/icq.la
 
