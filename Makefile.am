@@ -444,3 +444,15 @@ dist_sim_DATA = \
 	plugins/sim/commands-pl.txt \
 	plugins/sim/vars-pl.txt
 endif
+
+if ENABLE_SMS
+plugin_LTLIBRARIES += plugins/sms/sms.la
+
+plugins_sms_sms_la_SOURCES = \
+	ekg2-config.h \
+	plugins/sms/sms.c
+
+dist_sms_DATA = \
+	plugins/sms/commands-pl.txt \
+	plugins/sms/vars-pl.txt
+endif

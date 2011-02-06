@@ -303,6 +303,8 @@ AC_EKG2_PLUGIN([sim], [
 	])
 ])
 
+AC_EKG2_PLUGIN([sms])
+
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])
 AC_OUTPUT
