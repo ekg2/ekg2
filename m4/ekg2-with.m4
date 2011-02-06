@@ -61,10 +61,13 @@ dnl <alt-setup> was specified, or pkg-config vars are cleaned up.
 				ekg_saved_PKG_CONFIG_LIBDIR=${PKG_CONFIG_LIBDIR+yes}
 				ekg_save_PKG_CONFIG_PATH=$PKG_CONFIG_PATH
 				ekg_save_PKG_CONFIG_LIBDIR=$PKG_CONFIG_LIBDIR
+				ekg_save_PATH=$PATH
 
 				AS_UNSET([PKG_CONFIG_PATH])
 				PKG_CONFIG_LIBDIR="$with_$1/EKG2_LIBDIRNAME/pkgconfig:$with_$1/share/pkgconfig"
 				export PKG_CONFIG_LIBDIR
+				PATH="$with_$1/bin:$PATH"
+				export PATH
 			])
 
 			$2
@@ -79,6 +82,8 @@ dnl <alt-setup> was specified, or pkg-config vars are cleaned up.
 				])
 				PKG_CONFIG_PATH=$ekg_save_PKG_CONFIG_PATH
 				export PKG_CONFIG_PATH
+				PATH=$ekg_save_PATH
+				export PATH
 			])
 		]
 	)
