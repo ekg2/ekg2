@@ -8,9 +8,22 @@ AC_PROG_CC_C99
 dnl XXX: docs say we should use '-no-undefined' along with 'win32-dll'
 LT_INIT([disable-static win32-dll])
 
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.16 gmodule-2.0])
-LIBS="$LIBS $GLIB_LIBS"
-CFLAGS="$CFLAGS $GLIB_CFLAGS"
+AC_EKG2_WITH([glib], [
+	PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16 gmodule-2.0],, [
+		AS_CASE([$with_glib],
+			[yes|maybe], [with_glib=/usr])
+
+		GLIB_LIBS="-lglib-2.0 -lgmodule-2.0 -Wl,--export-dynamic"
+		dnl XXX: multilib?
+		GLIB_CFLAGS="-I$with_glib/include/glib-2.0 -I$with_glib/lib/glib-2.0/include"
+	])
+
+	AC_EKG2_CHECK_FLAGEXPORTED_LIB([GLIB],, [g_malloc0], [glib.h],, [
+		AC_MSG_ERROR([glib2 not found (neither in standard pkgconfig paths nor in $with_glib)])
+	])
+], [
+	AC_MSG_ERROR([glib dependency is obligatory, bailing due to --without-glib])
+])
 
 AC_CHECK_HEADERS(regex.h)
 AC_CHECK_FUNCS([flock getaddrinfo inet_ntop inet_pton inet_aton])
@@ -282,8 +295,7 @@ AC_EKG2_PLUGIN([python], [
 			])
 
 			AS_IF([test $pyfound = yes], [
-				dnl $2 is just for define name
-				AC_EKG2_CHECK_FLAGEXPORTED_LIB([PYTHON], [python], [Py_Initialize], [Python.h],, [EKG2_FAILED_TEST])
+				AC_EKG2_CHECK_FLAGEXPORTED_LIB([PYTHON],, [Py_Initialize], [Python.h],, [EKG2_FAILED_TEST])
 			], [EKG2_FAILED_TEST])
 
 			AS_UNSET([pyfound])

@@ -30,7 +30,9 @@ dnl AC_EKG2_CHECK_FLAGEXPORTED_LIB(variable-prefix, lib-name, func, header, [if-
 		LIBS="$$1_LIBS $LIBS"
 
 		AC_CHECK_FUNC([$3], [
-			AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_LIB$2), [1], [define if you have $1])
+			m4_ifval([$2], [
+				AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_LIB$2), [1], [define if you have $1])
+			])
 
 			$5
 		], [
