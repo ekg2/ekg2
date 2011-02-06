@@ -511,12 +511,13 @@ static char *irc_convert_out(irc_private_t *j, char *recipient, const char *line
 		}
 	}
 
+	recoded = NULL;
 	/* default recode */
-	if (j->conv_out == (void *) -1)
-		return NULL;
+	if (j->conv_out != (void *) -1)
+		recoded = ekg_convert_string_p(line, j->conv_out);
 
-	if (!(recoded = ekg_convert_string_p(line, j->conv_out)))
-		debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_out);
+	if (!recoded)
+		recoded = xstrdup(line);
 
 	return recoded;
 }
@@ -1422,8 +1423,7 @@ static COMMAND(irc_command_msg) {
 		if (perchn)
 			nickpad_string_restore(perchn->chanp);
 
-		if (!(recoded = irc_convert_out(j, uid, line)))
-			recoded = xstrdup(line);
+		recoded = irc_convert_out(j, uid, line);
 
 		coloured = irc_ircoldcolstr_to_ekgcolstr(session, head, 1);
 
@@ -2022,25 +2022,21 @@ static COMMAND(irc_command_names) {
 
 static COMMAND(irc_command_topic) {
 	irc_private_t	*j = irc_private(session);
-	char		**mp, *chan, *newtop, *recode;
+	char		**mp, *chan, *newtop;
 
-	if (!(chan=irc_getchan(session, params, name,
-					&mp, 0, IRC_GC_CHAN)))
+	if (!(chan=irc_getchan(session, params, name, &mp, 0, IRC_GC_CHAN)))
 		return -1;
 
 	if (*mp)
 		if (xstrlen(*mp)==1 && **mp==':')
 			newtop = saprintf("TOPIC %s :\r\n", chan+4);
-		else
-			newtop = saprintf("TOPIC %s :%s\r\n",
-						chan+4, *mp);
+		else {
+			char *recode = irc_convert_out(j, chan+4, *mp);
+			newtop = saprintf("TOPIC %s :%s\r\n", chan+4, recode);
+			xfree(recode);
+		}
 	else
 		newtop = saprintf("TOPIC %s\r\n", chan+4);
-
-	if ((recode = irc_convert_out(j, chan+4, newtop))) {
-		xfree(newtop);
-		newtop = recode;
-	}
 
 	watch_write(j->send_watch, "%s", newtop);
 	g_strfreev(mp);
@@ -2309,14 +2305,12 @@ static COMMAND(irc_command_me) {
 
 	char *str = NULL;
 
-	if (!(chan=irc_getchan(session, params, name,
-					&mp, 1, IRC_GC_ANY)))
+	if (!(chan=irc_getchan(session, params, name, &mp, 1, IRC_GC_ANY)))
 		return -1;
 
 	ischn = chantypes?!!xstrchr(chantypes, chan[4]):0;
 
-	if (!(str = irc_convert_out(j, chan+4, *mp)))
-		str = xstrdup(*mp);
+	str = irc_convert_out(j, chan+4, *mp);
 
 	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01ACTION %s\01\r\n",
 			chan+4, str?str:"");

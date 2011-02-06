@@ -144,6 +144,8 @@ static char *irc_convert_in(irc_private_t *j, const char *line) {
 	if ( !recoded && is_utf8_string(line) ) /* XXX add variable here? */
 		recoded = ekg_utf8_to_locale_dup(line);
 
+	if (!recoded)
+		recoded = xstrdup(line);
 	return recoded;
 }
 
@@ -682,14 +684,10 @@ IRC_COMMAND(irc_c_error)
 			IRC_TO_LOWER(param[3]);
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
-				char *__topic	= OMITCOLON(param[4]);
-
 				xfree(chanp->topic);
+				chanp->topic  = irc_convert_in(j, OMITCOLON(param[4]));
 
-				char *recoded = irc_convert_in(j, __topic);
-				chanp->topic  = recoded ? recoded : xstrdup(__topic);
-				coloured = irc_ircoldcolstr_to_ekgcolstr(s, 
-						chanp->topic, 1);
+				coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
 				tmpchn	= clean_channel_names(s, param[3]);
 				print_info(dest, s, irccommands[ecode].name,
 						session_name(s), tmpchn, coloured);
@@ -1141,8 +1139,7 @@ IRC_COMMAND(irc_c_msg)
 
 	recipient = xstrdup(param[2]);	/* destination (channel|nick) */
 
-	if ( !(recoded = irc_convert_in(j, OMITCOLON(param[3]))) )
-		recoded = xstrdup(OMITCOLON(param[3]));
+	recoded = irc_convert_in(j, OMITCOLON(param[3]));
 
 	/* probably message from server ... */
 	if (s->connecting && !prv) {
@@ -1631,8 +1628,7 @@ IRC_COMMAND(irc_c_topic)
 	__topic   = OMITCOLON(param[3]);
 	cchn = clean_channel_names(s, param[2]);
 	if (xstrlen(__topic)) {
-		char *recoded = irc_convert_in(j, __topic);
-		chanp->topic  = recoded ? recoded : xstrdup(__topic);;
+		chanp->topic  = irc_convert_in(j, __topic);
 		chanp->topicby = xstrdup(__topicby);
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
 		print_info(dest, s, "IRC_TOPIC_CHANGE",
