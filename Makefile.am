@@ -104,8 +104,8 @@ dist_theme_DATA = \
 	contrib/themes/wiechu.theme
 
 dist_script_DATA =
-
 plugin_LTLIBRARIES =
+EXTRA_DIST =
 
 if ENABLE_AUTORESPONDER
 plugin_LTLIBRARIES += plugins/autoresponder/autoresponder.la
@@ -333,6 +333,54 @@ dist_ncurses_DATA = \
 	plugins/ncurses/commands-pl.txt \
 	plugins/ncurses/vars-en.txt \
 	plugins/ncurses/vars-pl.txt
+endif
+
+if ENABLE_PERL
+plugin_LTLIBRARIES += plugins/perl/perl.la
+
+plugins_perl_perl_la_SOURCES = \
+	ekg2-config.h \
+	plugins/perl/perl_bless.c \
+	plugins/perl/perl_bless.h \
+	plugins/perl/perl_core.c \
+	plugins/perl/perl_core.h \
+	plugins/perl/perl_ekg.c \
+	plugins/perl/perl_ekg.h
+
+dist_script_DATA += \
+	contrib/perl/audioscrobbler_bot.pl \
+	contrib/perl/autoop.pl \
+	contrib/perl/cycki.pl \
+	contrib/perl/dns.pl \
+	contrib/perl/dupa.pl \
+	contrib/perl/ggbe.pl \
+	contrib/perl/irc.pl \
+	contrib/perl/sample.pl \
+	contrib/perl/slownik.pl \
+	contrib/perl/xmms.pl
+
+EXTRA_DIST += \
+	plugins/perl/common/Command.xs \
+	plugins/perl/common/Ekg2.pm \
+	plugins/perl/common/Ekg2.xs \
+	plugins/perl/common/Makefile.PL \
+	plugins/perl/common/module.h \
+	plugins/perl/common/Plugin.xs \
+	plugins/perl/common/Session.xs \
+	plugins/perl/common/Timer.xs \
+	plugins/perl/common/typemap \
+	plugins/perl/common/Userlist.xs \
+	plugins/perl/common/Variable.xs \
+	plugins/perl/common/Watch.xs \
+	plugins/perl/common/Window.xs \
+	plugins/perl/irc/Channel.xs \
+	plugins/perl/irc/Irc.pm \
+	plugins/perl/irc/Irc.xs \
+	plugins/perl/irc/Makefile.PL \
+	plugins/perl/irc/module.h \
+	plugins/perl/irc/Server.xs \
+	plugins/perl/irc/typemap \
+	plugins/perl/irc/User.xs
 endif
 
 if ENABLE_PYTHON

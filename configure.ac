@@ -248,6 +248,18 @@ AC_EKG2_PLUGIN([ncurses], [
 	])
 ])
 
+AC_EKG2_PLUGIN([perl], [
+	AC_EKG2_WITH([perl], [
+		AC_PATH_PROG([PERL], [perl])
+		AS_IF([test x"$PERL", != x""], [
+			PERL_CFLAGS=`perl -MExtUtils::Embed -e ccopts`
+			PERL_LIBS=`perl -MExtUtils::Embed -e ldopts`
+
+			AC_EKG2_CHECK_FLAGEXPORTED_LIB([PERL], [perl], [perl_alloc], [EXTERN.h],, [EKG2_FAILED_TEST])
+		], [EKG2_FAILED_TEST])
+	])
+])
+
 AC_EKG2_PLUGIN([python], [
 	AC_EKG2_WITH([python], [
 		AC_PATH_PROGS([PYTHON], [python2 python python2.7 python2.6 python2.5 python2.4])
