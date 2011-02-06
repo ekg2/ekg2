@@ -332,3 +332,28 @@ dist_ncurses_DATA = \
 	plugins/ncurses/vars-en.txt \
 	plugins/ncurses/vars-pl.txt
 endif
+
+if ENABLE_PYTHON
+plugin_LTLIBRARIES += plugins/python/python.la
+
+plugins_python_python_la_SOURCES = \
+	ekg2-config.h \
+	plugins/python/python.c \
+	plugins/python/python-config.c \
+	plugins/python/python-config.h \
+	plugins/python/python-ekg.c \
+	plugins/python/python-ekg.h \
+	plugins/python/python.h \
+	plugins/python/python-plugin.c \
+	plugins/python/python-plugin.h \
+	plugins/python/python-session.c \
+	plugins/python/python-session.h \
+	plugins/python/python-user.c \
+	plugins/python/python-user.h \
+	plugins/python/python-window.c \
+	plugins/python/python-window.h
+
+dist_python_DATA = \
+	plugins/python/commands-en.txt \
+	plugins/python/commands-pl.txt
+endif

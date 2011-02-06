@@ -56,9 +56,8 @@ dnl If the pkg-config call fails to grab needed data, fallback to
 dnl AC_EKG2_CHECK_LIB. If the fallback succeeds to find the library, run either
 dnl <if-fallback-yes> if specified or <if-yes> otherwise.
 
-	dnl XXX: $1 can contain hyphens and stuff
-	PKG_CHECK_MODULES([$1], [$1], [
-		AC_EKG2_CHECK_FLAGEXPORTED_LIB([$1], [$2], [$3], [$4], [$5], [$6])
+	PKG_CHECK_MODULES(AS_TR_SH([$1]), [$1], [
+		AC_EKG2_CHECK_FLAGEXPORTED_LIB(AS_TR_SH([$1]), [$2], [$3], [$4], [$5], [$6])
 	], [
 		AC_EKG2_CHECK_LIB([$2], [$3], [$4], m4_default([$7], [$5]), [$6])
 	])

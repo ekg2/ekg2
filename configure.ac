@@ -248,6 +248,36 @@ AC_EKG2_PLUGIN([ncurses], [
 	])
 ])
 
+AC_EKG2_PLUGIN([python], [
+	AC_EKG2_WITH([python], [
+		AC_PATH_PROGS([PYTHON], [python2 python python2.7 python2.6 python2.5 python2.4])
+		AS_IF([test x"$PYTHON" != x""], [
+			pyver=`"$PYTHON" -c 'import sys; print "%d.%d" % sys.version_info[[0:2]]'`
+			pyfound=no
+
+			dnl python2.7 comes with a pkg-config file, older do not
+			PKG_CHECK_MODULES([PYTHON], [python-$pyver], [
+				pyfound=yes
+			], [
+				AC_PATH_PROG([PYCONF], [python-config-$pyver])
+				AS_IF([test x"$PYCONF" != x""], [
+					PYTHON_CFLAGS="`$PYCONF --includes`"
+					PYTHON_LIBS="`$PYCONF --libs`"
+					pyfound=yes
+				])
+			])
+
+			AS_IF([test $pyfound = yes], [
+				dnl $2 is just for define name
+				AC_EKG2_CHECK_FLAGEXPORTED_LIB([PYTHON], [python], [Py_Initialize], [Python.h],, [EKG2_FAILED_TEST])
+			], [EKG2_FAILED_TEST])
+
+			AS_UNSET([pyfound])
+			AS_UNSET([pyver])
+		], [EKG2_FAILED_TEST])
+	])
+])
+
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])
 AC_OUTPUT
