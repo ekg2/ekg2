@@ -359,6 +359,36 @@ dist_script_DATA += \
 	contrib/perl/slownik.pl \
 	contrib/perl/xmms.pl
 
+if ENABLE_PERL_MODULES
+$(top_srcdir)/plugins/perl/common/Makefile: $(top_srcdir)/plugins/perl/common/Makefile.PL
+	cd $(top_srcdir)/plugins/perl/common && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.."
+$(top_srcdir)/plugins/perl/irc/Makefile: $(top_srcdir)/plugins/perl/irc/Makefile.PL
+	cd $(top_srcdir)/plugins/perl/irc && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.."
+
+perl-build-common: $(top_srcdir)/plugins/perl/common/Makefile
+	cd $(top_srcdir)/plugins/perl/common && $(MAKE) CC="$(CC)" CCFLAGS="$(plugins_perl_perl_la_CPPFLAGS) $(CFLAGS)"
+perl-build-irc: $(top_srcdir)/plugins/perl/irc/Makefile
+	cd $(top_srcdir)/plugins/perl/irc && $(MAKE) CC="$(CC)" CCFLAGS="$(plugins_perl_perl_la_CPPFLAGS) $(CFLAGS)"
+
+perl-clean-common: $(top_srcdir)/plugins/perl/common
+	cd $(top_srcdir)/plugins/perl/common && test ! -f Makefile || $(MAKE) clean
+perl-clean-irc: $(top_srcdir)/plugins/perl/irc
+	cd $(top_srcdir)/plugins/perl/irc && test ! -f Makefile || $(MAKE) clean
+
+perl-distclean:
+	-rm -f $(top_srcdir)/plugins/perl/common/Makefile $(top_srcdir)/plugins/perl/irc/Makefile
+
+perl-install-common: $(top_srcdir)/plugins/perl/common/Makefile
+	cd $(top_srcdir)/plugins/perl/common && $(MAKE) install DESTDIR="$(DESTDIR)"
+perl-install-irc: $(top_srcdir)/plugins/perl/irc/Makefile
+	cd $(top_srcdir)/plugins/perl/irc && $(MAKE) install DESTDIR="$(DESTDIR)"
+
+all-local: perl-build-common perl-build-irc
+clean-local: perl-clean-common perl-clean-irc
+distclean-local: perl-distclean
+install-exec-local: perl-install-common perl-install-irc
+endif
+
 EXTRA_DIST += \
 	plugins/perl/common/Command.xs \
 	plugins/perl/common/Ekg2.pm \
