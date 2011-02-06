@@ -14,8 +14,7 @@ AC_EKG2_WITH([glib], [
 			[yes|maybe], [with_glib=/usr])
 
 		GLIB_LIBS="-lglib-2.0 -lgmodule-2.0 -Wl,--export-dynamic"
-		dnl XXX: multilib?
-		GLIB_CFLAGS="-I$with_glib/include/glib-2.0 -I$with_glib/lib/glib-2.0/include"
+		GLIB_CFLAGS="-I$with_glib/include/glib-2.0 -I$with_glib/EKG2_LIBDIRNAME/glib-2.0/include"
 	])
 
 	AC_EKG2_CHECK_FLAGEXPORTED_LIB([GLIB],, [g_malloc0], [glib.h],, [

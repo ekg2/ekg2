@@ -2,6 +2,16 @@ dnl Stupid debian pkg-config-0.22
 m4_pattern_allow([PKG_CONFIG_LIBDIR])
 m4_pattern_allow([PKG_CONFIG_PATH])
 
+AC_DEFUN([AC_EKG2_MULTILIB], [
+dnl AC_EKG2_MULTILIB()
+dnl Initialize multilib support, i.e. find out what libdir to use.
+
+	# XXX: actually support multilib
+	ac_ekg2_multilib_libdir=lib
+])
+
+AC_DEFUN([EKG2_LIBDIRNAME], [AC_REQUIRE([AC_EKG2_MULTILIB])$ac_ekg2_multilib_libdir])
+
 AC_DEFUN([AC_EKG2_WITH], [
 dnl AC_EKG2_WITH(optname, if-yes, [if-no], [alt-setup], [alt-cleanup])
 dnl Create an ekg2-style '--with-<optname>' option. Run <if-no> if
@@ -43,16 +53,15 @@ dnl <alt-setup> was specified, or pkg-config vars are cleaned up.
 			])
 		], [
 			m4_default([$4], [
-				dnl XXX: multilib?
 				CPPFLAGS="$CPPFLAGS -I$with_$1/include"
-				LDFLAGS="$LDFLAGS -L$with_$1/lib"
+				LDFLAGS="$LDFLAGS -L$with_$1/EKG2_LIBDIRNAME"
 
 				ekg_saved_PKG_CONFIG_LIBDIR=${PKG_CONFIG_LIBDIR+yes}
 				ekg_save_PKG_CONFIG_PATH=$PKG_CONFIG_PATH
 				ekg_save_PKG_CONFIG_LIBDIR=$PKG_CONFIG_LIBDIR
 
 				AS_UNSET([PKG_CONFIG_PATH])
-				PKG_CONFIG_LIBDIR="$with_$1/lib/pkgconfig:$with_$1/share/pkgconfig"
+				PKG_CONFIG_LIBDIR="$with_$1/EKG2_LIBDIRNAME/pkgconfig:$with_$1/share/pkgconfig"
 				export PKG_CONFIG_LIBDIR
 			])
 
