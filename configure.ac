@@ -260,6 +260,8 @@ AC_EKG2_PLUGIN([perl], [
 	])
 ])
 
+AC_EKG2_PLUGIN([polchat])
+
 AC_EKG2_PLUGIN([python], [
 	AC_EKG2_WITH([python], [
 		AC_PATH_PROGS([PYTHON], [python2 python python2.7 python2.6 python2.5 python2.4])
@@ -289,6 +291,8 @@ AC_EKG2_PLUGIN([python], [
 		], [EKG2_FAILED_TEST])
 	])
 ])
+
+AC_EKG2_PLUGIN([rivchat])
 
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])

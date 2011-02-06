@@ -383,6 +383,15 @@ EXTRA_DIST += \
 	plugins/perl/irc/User.xs
 endif
 
+if ENABLE_POLCHAT
+plugin_LTLIBRARIES += plugins/polchat/polchat.la
+
+plugins_polchat_polchat_la_SOURCES = \
+	ekg2-config.h \
+	plugins/polchat/polchat.c \
+	plugins/polchat/polchat_handlers.inc
+endif
+
 if ENABLE_PYTHON
 plugin_LTLIBRARIES += plugins/python/python.la
 
@@ -410,4 +419,14 @@ dist_python_DATA = \
 dist_script_DATA += \
 	contrib/python/notify-bubble.py \
 	contrib/python/sample.py
+endif
+
+if ENABLE_RIVCHAT
+plugin_LTLIBRARIES += plugins/rivchat/rivchat.la
+
+plugins_rivchat_rivchat_la_SOURCES = \
+	ekg2-config.h \
+	plugins/rivchat/misc.c \
+	plugins/rivchat/rivchat.c \
+	plugins/rivchat/rivchat.h
 endif
