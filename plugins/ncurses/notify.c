@@ -58,14 +58,24 @@ static int ncurses_lineslen() {
 		return (ncurses_line[0] == '/' ? 0 : xwcslen(ncurses_line));
 }
 
-static inline int ncurses_typingsend(const int len, const int first) {
-	const char *sid	= session_uid_get(ncurses_typing_win->session);
-	const char *uid	= get_uid(ncurses_typing_win->session, ncurses_typing_win->target);
-
-	if (((first > 1) || (ncurses_typing_win->in_active)) && uid)
-		return query_emit(NULL, "protocol-typing-out", &sid, &uid, &len, &first);
-	else
+static inline int ncurses_typingsend(window_t *w, const int len, const int first) {
+	const char *sid, *uid;
+	userlist_t *u;
+	session_t *s;
+	
+	if (!w || !(s=w->session) || !s->connected)
 		return -1;
+
+	if (!(uid = get_uid(s, w->target)))
+		return -1;
+
+	u = userlist_find(s, uid);
+	if (!u || (u->status <= EKG_STATUS_NA))
+		return -1;
+
+	sid = session_uid_get(s);
+
+	return query_emit(NULL, "protocol-typing-out", &sid, &uid, &len, &first);
 }
 
 TIMER(ncurses_typing) {
@@ -96,9 +106,9 @@ TIMER(ncurses_typing) {
 			if (winchange)
 				oldwin		= ncurses_typing_win;
 
-			ncurses_typing_win	= window_current;
 			ncurses_typing_count	= curlen;
-			ncurses_typingsend(curlen, winchange);
+			ncurses_typingsend(window_current, curlen, winchange);
+			ncurses_typing_win	= window_current;
 		}
 
 		ncurses_typing_mod		= 0;
@@ -112,20 +122,13 @@ TIMER(ncurses_typing) {
 					config_typing_timeout_empty : config_typing_timeout);
 
 		if (ncurses_typing_win && (!ncurses_typing_time || (timeout && time(NULL) - ncurses_typing_time > timeout))) {
-			window_t *tmpwin = NULL;
 
-			if (oldwin) {
-				tmpwin			= ncurses_typing_win;
-				ncurses_typing_win	= oldwin;
-			}
-			ncurses_typingsend(0, (ncurses_typing_mod == -1 ? 3 : 1));
+			ncurses_typingsend(oldwin ? oldwin : ncurses_typing_win, 0, (ncurses_typing_mod == -1 ? 3 : 1));
 #if 0
 			debug_function("ncurses_typing(), [UNIMPL] disabling for %s [%s]\n",
 					ncurses_typing_win->target, session_uid_get(ncurses_typing_win->session));
 #endif
-			if (oldwin)
-				ncurses_typing_win	= tmpwin;
-			else
+			if (!oldwin)
 				ncurses_typing_win	= NULL;
 		}
 	}
@@ -143,13 +146,8 @@ void ncurses_window_gone(window_t *w) {
 		ncurses_typing(0, NULL);
 
 		ncurses_typing_mod	= tmp;
-	} else if (w->in_active || w->out_active) { /* <gone/> or <active/> */
-		window_t *tmp		= ncurses_typing_win;
-		ncurses_typing_win	= w;
-
-		if (!ncurses_typingsend(0, !w->out_active ? 4 : 5) || w->out_active)
-			w->out_active	^= 1;
-
-		ncurses_typing_win	= tmp;
+	} else if (w->out_active) {
+		ncurses_typingsend(w, 0, 5);	/* <gone/> */
+		w->out_active	^= 1;
 	}
 }

@@ -82,7 +82,8 @@ typedef struct window {
 
 	unsigned int act	: EKG_WINACT_MSG;	/* activity: 1 - status/junk; 2 - msg ; 3 - msg to us */
 	unsigned int in_typing	: 1;	/* user is composing a message to us */
-	unsigned int in_active	: 1;	/* user has sent some kind of message,
+	unsigned int in_active	: 1;	/* XXX UNUSED XXX
+					   user has sent some kind of message,
 					   so we can start sending composing to him/her */
 	unsigned int out_active	: 1;	/* we 'started' sending messages to user (considered
 					   ourselves active), so we shall say goodbye when done */
