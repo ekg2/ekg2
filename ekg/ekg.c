@@ -57,11 +57,6 @@
 #include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
-#ifdef HAVE_GETOPT_LONG
-#  include <getopt.h>
-#else
-#  include "compat/getopt.h"
-#endif
 #include <limits.h>
 #include <locale.h>
 
@@ -493,20 +488,20 @@ config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid
  *
  * zwraca stworzon± linie w zaalokowanym buforze lub NULL przy b³êdzie.
  */
-static char *prepare_batch_line(int argc, char *argv[], int n)
+static char *prepare_batch_line(char *argv[], int n)
 {
 	size_t len = 0;
 	char *buf;
 	int i;
 
-	for (i = n; i < argc; i++)
+	for (i = n; argv[i]; i++)
 		len += xstrlen(argv[i]) + 1;
 
 	buf = xmalloc(len);
 
-	for (i = n; i < argc; i++) {
+	for (i = n; argv[i]; i++) {
 		xstrcat(buf, argv[i]);
-		if (i < argc - 1)
+		if (argv[i+1])
 			xstrcat(buf, " ");
 	}
 
@@ -636,62 +631,83 @@ static void glib_debug_handler(const gchar *log_domain, GLogLevelFlags log_level
 	recurse--;
 }
 
-struct option ekg_options[] = {
-	{ "user", required_argument, 0, 'u' },
-	{ "theme", required_argument, 0, 't' },
-	{ "no-auto", no_argument, 0, 'n' },
-	{ "no-mouse", no_argument, 0, 'm' },
-	{ "no-global-config", no_argument, 0, 'N' },
-	{ "frontend", required_argument, 0, 'F' },
+static GOptionEntry ekg_options[] = {
+	{ "user", 'u', 0, G_OPTION_ARG_STRING, NULL,
+		"uses profile NAME", "NAME" },
+	{ "theme", 't', 0, G_OPTION_ARG_STRING, NULL,
+		"loads theme from FILE", "FILE" },
+	{ "no-auto", 'n', G_OPTION_FLAG_REVERSE, G_OPTION_ARG_NONE, NULL,
+		"does not connect to server automatically", NULL },
+	{ "no-mouse", 'm', 0, G_OPTION_ARG_NONE, &no_mouse,
+		"does not load mouse support", NULL },
+	{ "no-global-config", 'N', 0, G_OPTION_ARG_NONE, NULL,
+		"ignores global configuration file", NULL },
+	{ "frontend", 'F', 0, G_OPTION_ARG_STRING, NULL,
+		"uses NAME frontend (default is ncurses)", "NAME" },
 
-	{ "away", optional_argument, 0, 'a' },
-	{ "back", optional_argument, 0, 'b' },
-	{ "invisible", optional_argument, 0, 'i' },
-	{ "dnd", optional_argument, 0, 'd' },
-	{ "free-for-chat", optional_argument, 0, 'f' },
-	{ "xa", optional_argument, 0, 'x' },
+	{ "away", 'a', G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_CALLBACK, NULL,
+		"changes status to ``away''", "[DESCRIPTION]" },
+	{ "back", 'b', G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_CALLBACK, NULL,
+		"changes status to ``available''", "[DESCRIPTION]" },
+	{ "invisible", 'i', G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_CALLBACK, NULL,
+		"changes status to ``invisible''", "[DESCRIPTION]" },
+	{ "dnd", 'd', G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_CALLBACK, NULL,
+		"changes status to ``do not disturb''", "[DESCRIPTION]" },
+	{ "free-for-chat", 'f', G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_CALLBACK, NULL,
+		"changes status to ``free for chat''", "[DESCRIPTION]" },
+	{ "xa", 'x', G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_CALLBACK, NULL,
+		"changes status to ``very busy''", "[DESCRIPTION]" },
 
-	{ "unicode", no_argument, 0, 'U' }, 
+	{ "unicode", 'U', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, NULL,
+		"enable unicode support", NULL },
+	{ "version", 'v', 0, G_OPTION_ARG_NONE, NULL,
+		"print program version and exit", NULL },
 
-	{ "help", no_argument, 0, 'h' },
-	{ "version", no_argument, 0, 'v' },
-	{ 0, 0, 0, 0 }
+	{ NULL }
 };
-
-#define EKG_USAGE N_( \
-"Usage: %s [OPTIONS] [COMMANDS]\n" \
-"  -u, --user=NAME	       uses profile NAME\n" \
-"  -t, --theme=FILE	       loads theme from FILE\n"\
-"  -n, --no-auto	       does not connect to server automatically\n" \
-"  -m, --no-mouse	       does not load mouse support\n" \
-"  -N, --no-global-config      ignores global configuration file\n" \
-"  -F, --frontend=NAME	       uses NAME frontend (default is ncurses)\n" \
-\
-"  -a, --away[=DESCRIPTION]    changes status to ``away''\n" \
-"  -b, --back[=DESCRIPTION]    changes status to ``available''\n" \
-"  -i, --invisible[=DESCR]     changes status to ``invisible''\n" \
-"  -d, --dnd[=DESCRIPTION]     changes status to ``do not disturb''\n" \
-"  -f, --free-for-chat[=DESCR] changes status to ``free for chat''\n" \
-"  -x, --xa[=DESCRIPTION]      changes status to ``very busy''\n" \
-\
-"  -h, --help		       displays this help message\n" \
-"  -v, --version	       displays program version and exits\n" \
-"\n" \
-"Options concerned with status depend on the protocol of particular session --\n" \
-"some sessions may not support ``do not disturb'' status, etc.\n" \
-"\n" )
-
 
 int main(int argc, char **argv)
 {
-	int auto_connect = 1, c = 0, no_global_config = 0, no_config = 0, new_status = 0;
+	gint auto_connect = 1, c = 0, no_global_config = 0, no_config = 0, new_status = 0,
+		print_version = 0;
 	char *tmp = NULL, *new_descr = NULL;
-	char *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
+	gchar *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
+	GOptionContext *opt;
+	GError *err = NULL;
 #ifndef NO_POSIX_SYSTEM
 	struct rlimit rlim;
 #else
 	WSADATA wsaData;
 #endif
+
+	gboolean set_status_callback(const gchar *optname, const gchar *optval,
+			gpointer data, GError **error) {
+
+		gchar c = optname[1] == '-' ? optname[2] : optname[1];
+		switch (c) {
+			case 'a': new_status = EKG_STATUS_AWAY; break;
+			case 'b': new_status = EKG_STATUS_AVAIL; break;
+			case 'd': new_status = EKG_STATUS_DND; break;
+			case 'f': new_status = EKG_STATUS_FFC; break;
+			case 'i': new_status = EKG_STATUS_INVISIBLE; break;
+			case 'x': new_status = EKG_STATUS_XA; break;
+		}
+		xfree(new_descr);
+		new_descr = xstrdup(optval);
+
+		return TRUE;
+	}
+
+	gboolean unicode_callback(const gchar *optname, const gchar *optval,
+			gpointer data, GError **error) {
+#ifdef USE_UNICODE
+		config_use_unicode = 1;
+#else
+		*error = g_error_new_literal(G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
+			_("EKG2 compiled without unicode support. This just can't work!"));
+		return FALSE;
+#endif
+	}
 
 #ifndef NO_POSIX_SYSTEM
 	/* zostaw po sobie core */
@@ -750,119 +766,43 @@ int main(int argc, char **argv)
 	signal(SIGALRM, SIG_IGN);
 	signal(SIGPIPE, SIG_IGN);
 #endif
-	while ((c = getopt_long(argc, argv, "b::a::i::d::f::x::u:F:t:nmNhvU", ekg_options, NULL)) != -1) 
-	{
-		switch (c) {
-			case 'a':
-				if (!optarg && argv[optind] && argv[optind][0] != '-')
-					optarg = argv[optind++];
 
-				new_status = EKG_STATUS_AWAY;
-				xfree(new_descr);
-				new_descr = xstrdup(optarg);
-				break;
+	ekg_options[0].arg_data = &new_profile;
+	ekg_options[1].arg_data = &load_theme;
+	ekg_options[2].arg_data = &auto_connect;
+	ekg_options[4].arg_data = &no_global_config;
+	ekg_options[5].arg_data = &frontend;
+	ekg_options[6].arg_data = &set_status_callback;
+	ekg_options[7].arg_data = &set_status_callback;
+	ekg_options[8].arg_data = &set_status_callback;
+	ekg_options[9].arg_data = &set_status_callback;
+	ekg_options[10].arg_data = &set_status_callback;
+	ekg_options[11].arg_data = &set_status_callback;
+	ekg_options[12].arg_data = &unicode_callback;
+	ekg_options[13].arg_data = &print_version;
 
-			case 'b':
-				if (!optarg && argv[optind] && argv[optind][0] != '-')
-					optarg = argv[optind++];
+	opt = g_option_context_new("[COMMAND...]");
+	g_option_context_set_description(opt, "Options concerned with status depend on the protocol of particular session -- \n" \
+"some sessions may not support ``do not disturb'' status, etc.\n");
+	g_option_context_add_main_entries(opt, ekg_options, "ekg2");
 
-				new_status = EKG_STATUS_AVAIL;
-				xfree(new_descr);
-				new_descr = xstrdup(optarg);
-				break;
+	if (!g_option_context_parse(opt, &argc, &argv, &err)) {
+		g_print("Option parsing failed: %s\n", err->message);
+		return 1;
+	}
+	
+	g_option_context_free(opt);
 
-			case 'i':
-				if (!optarg && argv[optind] && argv[optind][0] != '-')
-					optarg = argv[optind++];
-
-				new_status = EKG_STATUS_INVISIBLE;
-				xfree(new_descr);
-				new_descr = xstrdup(optarg);
-				break;
-
-			case 'd':
-				if (!optarg && argv[optind] && argv[optind][0] != '-')
-					optarg = argv[optind++];
-
-				new_status = EKG_STATUS_DND;
-				xfree(new_descr);
-				new_descr = xstrdup(optarg);
-				break;
-
-			case 'f':
-				if (!optarg && argv[optind] && argv[optind][0] != '-')
-					optarg = argv[optind++];
-
-				new_status = EKG_STATUS_FFC;
-				xfree(new_descr);
-				new_descr = xstrdup(optarg);
-				break;
-
-			case 'x':
-				if (!optarg && argv[optind] && argv[optind][0] != '-')
-					optarg = argv[optind++];
-
-				new_status = EKG_STATUS_XA;
-				xfree(new_descr);
-				new_descr = xstrdup(optarg);
-				break;
-
-
-			case 'u':
-				new_profile = optarg;
-				break;
-			case 'F':
-				frontend = optarg;
-				break;
-			case 't':
-				load_theme = optarg;
-				break;
-
-			case 'n':
-				auto_connect = 0;
-				break;
-
-			case 'm':
-				no_mouse = 1;
-				break;
-
-			case 'N':
-				no_global_config = 1;
-				break;
-
-
-			case 'h':
-				printf(_(EKG_USAGE), argv[0]);
-				return 0;
-
-			case 'U':
-#ifdef USE_UNICODE
-				config_use_unicode = 1;
-#else
-				fprintf(stderr, _("EKG2 compiled without unicode support. This just can't work!\n"));
-				return 1;
-#endif
-				break;
-
-			case 'v':
-				printf("ekg2-%s (compiled on %s)\n", VERSION, compile_time());
-				return 0;
-
-			case '?':
-				/* supported by getopt */
-				fprintf(stdout, _("To get more information, start program with --help.\n"));
-				return 1;
-
-			default:
-				break;
-		}
+	if (print_version) {
+		g_print("ekg2-%s (compiled on %s)\n", VERSION, compile_time());
+		return 0;
 	}
 
 	g_log_set_default_handler(glib_debug_handler, NULL);
 	in_autoexec = 1;
 
-	if (optind < argc) {
-		batch_line = prepare_batch_line(argc, argv, optind);
+	if (argv[1]) {
+		batch_line = prepare_batch_line(argv, 1);
 		batch_mode = 1;
 	}
 
@@ -900,6 +840,7 @@ int main(int argc, char **argv)
 	if (frontend) {
 		plugin_load(frontend, -254, 1);
 		config_changed = 1;
+		g_free(frontend);
 	}
 
 	config_read_plugins();
@@ -948,8 +889,11 @@ int main(int argc, char **argv)
 		config_version = -1;
 
 	/* je¶li ma byæ theme, niech bêdzie theme */
-	if (load_theme)		theme_read(load_theme, 1);
-	else if (config_theme)	theme_read(config_theme, 1);
+	if (load_theme) {
+		theme_read(load_theme, 1);
+		g_free(load_theme);
+	} else if (config_theme)
+		theme_read(config_theme, 1);
 
 	in_autoexec = 0;
 
