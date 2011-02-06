@@ -6,8 +6,10 @@ AC_DEFUN([AC_EKG2_MULTILIB], [
 dnl AC_EKG2_MULTILIB()
 dnl Initialize multilib support, i.e. find out what libdir to use.
 
-	# XXX: actually support multilib
-	ac_ekg2_multilib_libdir=lib
+	AS_CASE([$libdir],
+		[*lib64], [ac_ekg2_multilib_libdir=lib64],
+		[*lib32], [ac_ekg2_multilib_libdir=lib32],
+		[ac_ekg2_multilib_libdir=lib])
 ])
 
 AC_DEFUN([EKG2_LIBDIRNAME], [AC_REQUIRE([AC_EKG2_MULTILIB])$ac_ekg2_multilib_libdir])
