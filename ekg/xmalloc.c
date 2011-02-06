@@ -184,11 +184,6 @@ char *xstrdup(const char *s)
 	return tmp;
 }
 
-size_t xstrnlen(const char *s, size_t n) 
-{
-	return strnlen(fix(s), n);
-}
-
 char *xstrndup(const char *s, size_t n)
 {
 	char *tmp;

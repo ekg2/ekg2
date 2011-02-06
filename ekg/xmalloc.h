@@ -72,7 +72,6 @@ void *xmalloc(size_t size);
 void xfree(void *ptr);
 void *xrealloc(void *ptr, size_t size);
 char *xstrdup(const char *s);
-size_t xstrnlen(const char *s, size_t n);
 char *xstrndup(const char *s, size_t n);
 char *utf8ndup(const char *s, size_t n);
 
