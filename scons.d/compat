@@ -3,7 +3,7 @@
 
 Import('*')
 
-compat_funcs = ['strfry', 'strlcat', 'strlcpy', 'strndup', 'strnlen', 'scandir']
+compat_funcs = ['scandir']
 
 for func in compat_funcs:
 	have_it = conf.CheckFunc(func)

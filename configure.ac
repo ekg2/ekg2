@@ -93,9 +93,6 @@ PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.16)
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
-dnl AC_CHECK_FUNCS(strlen, , [COMPAT="$COMPAT strlen.o"])
-AC_CHECK_FUNCS(strnlen, , [COMPAT="$COMPAT strnlen.o"])
-
 dnl  utimes do sprawdzania poczty
 AC_CHECK_FUNCS(utimes)
 
