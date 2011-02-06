@@ -59,10 +59,6 @@
 #define strcasecmp(s1, s2) lstrcmpiA(s1, s2)
 #endif
 
-#ifndef HAVE_STRNLEN
-#  include "compat/strnlen.h"
-#endif
-
 #define fix(s) ((s) ? (s) : "")
 
 void ekg_oom_handler()
@@ -98,12 +94,7 @@ void ekg_oom_handler()
 
 void *xcalloc(size_t nmemb, size_t size)
 {
-	void *tmp = calloc(nmemb, size);
-
-	if (!tmp)
-		ekg_oom_handler();
-
-	return tmp;
+	return g_malloc0_n(nmemb, size);
 }
 
 /** 
@@ -112,10 +103,6 @@ void *xcalloc(size_t nmemb, size_t size)
  * Allocate memory for @a size bytes, clears it [set it with \\0], and returns pointer to allocated memory.
  * If malloc() fails with NULL, ekg_oom_handler() kills program.<br>
  * Wrapper to <code>malloc()+memset()</code><br>
- *
- * @bug Possible bug: Some libc may return NULL if size is 0, from man malloc:<br>
- *	<i>If @a size is 0 (...) a <b>null pointer</b> (...) shall be returned.</i><br>
- *	XXX, check it in configure.ac if malloc() returns NULL on 0 size, and check here if size is 0.
  *
  * @sa xcalloc()
  * @sa xfree()
@@ -127,15 +114,7 @@ void *xcalloc(size_t nmemb, size_t size)
 
 void *xmalloc(size_t size)
 {
-	void *tmp = malloc(size);
-
-	if (!tmp)
-		ekg_oom_handler();
-
-	/* na wszelki wypadek wyczy¶æ bufor */
-	memset(tmp, 0, size);
-	
-	return tmp;
+	return g_malloc0(size);
 }
 
 /** 
@@ -150,8 +129,7 @@ void *xmalloc(size_t size)
 
 void xfree(void *ptr)
 {
-	if (ptr)
-		free(ptr);
+	g_free(ptr);
 }
 
 /**
@@ -163,40 +141,17 @@ void xfree(void *ptr)
 
 void *xrealloc(void *ptr, size_t size)
 {
-	void *tmp = realloc(ptr, size);
-
-	if (!tmp)
-		ekg_oom_handler();
-
-	return tmp;
+	return g_realloc(ptr, size);
 }
 
 char *xstrdup(const char *s)
 {
-	char *tmp;
-
-	if (!s)
-		return NULL;
-
-	if (!(tmp = (char *) strdup(s)))
-		ekg_oom_handler();
-
-	return tmp;
+	return g_strdup((char *) s);
 }
 
 char *xstrndup(const char *s, size_t n)
 {
-	char *tmp;
-
-	if (!s)
-		return NULL;
-
-	n = strnlen(s, n);
-
-	if (!(tmp = g_strndup((char *) s, n)))
-		ekg_oom_handler();
-
-	return tmp;
+	return g_strndup((char *) s, n);
 }
 
 char *utf8ndup(const char *s, size_t n) {
@@ -217,11 +172,7 @@ char *utf8ndup(const char *s, size_t n) {
 
 char *vsaprintf(const char *format, va_list ap)
 {
-	char *res;
-
-	if (!(res = g_strdup_vprintf(format, ap)))
-		ekg_oom_handler();
-	return res;
+	return g_strdup_vprintf(format, ap);
 }
 
 char *xstrstr(const char *haystack, const char *needle)
