@@ -421,6 +421,21 @@ dist_script_DATA += \
 	contrib/python/sample.py
 endif
 
+if ENABLE_READLINE
+plugin_LTLIBRARIES += plugins/readline/readline.la
+
+plugins_readline_readline_la_SOURCES = \
+	ekg2-config.h \
+	plugins/readline/completion.c \
+	plugins/readline/main.c \
+	plugins/readline/ui-readline.c \
+	plugins/readline/ui-readline.h
+
+dist_readline_DATA = \
+	plugins/readline/vars-en.txt \
+	plugins/readline/vars-pl.txt
+endif
+
 if ENABLE_RIVCHAT
 plugin_LTLIBRARIES += plugins/rivchat/rivchat.la
 

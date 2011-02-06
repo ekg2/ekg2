@@ -857,7 +857,7 @@ int main(int argc, char **argv)
 #ifdef HAVE_GTK
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("gtk"), -254, 1);
 #endif
-#ifdef HAVE_READLINE
+#ifdef HAVE_LIBREADLINE
 	if (!have_plugin_of_class(PLUGIN_UI)) plugin_load(("readline"), -254, 1);
 #endif
 	if (!have_plugin_of_class(PLUGIN_UI)) {

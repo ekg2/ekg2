@@ -292,6 +292,14 @@ AC_EKG2_PLUGIN([python], [
 	])
 ])
 
+AC_EKG2_PLUGIN([readline], [
+	AC_EKG2_WITH([readline], [
+		AC_EKG2_CHECK_LIB([readline], [readline], [readline/readline.h readline.h],, [EKG2_FAILED_TEST])
+	])
+], [
+	AC_CHECK_FUNCS([rl_set_prompt rl_filename_completion_function rl_get_screen_size rl_set_key rl_bind_key_in_map])
+])
+
 AC_EKG2_PLUGIN([rivchat])
 
 AC_EKG2_PLUGIN([sim], [
