@@ -2795,7 +2795,7 @@ int command_exec(const char *target, session_t *session, const char *xline, int 
 
 		if (!res) {
 			char **parameter_types = (last_command->flags & COMMAND_ISALIAS) ? array_make(("?"), (" "), 0, 1, 1) : last_command->params;
-			int parameter_types_count = g_strv_length(parameter_types);
+			int parameter_types_count = parameter_types ? g_strv_length(parameter_types) : 0;
 			char **parsed_params = NULL; /* The array of parameter values which is going to be passed to the command handler. */
 
 			/* Perform some parameter verification and mangling.
