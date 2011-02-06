@@ -81,9 +81,6 @@ AC_CHECK_FUNC([dn_expand], [], [
 	])
 ])
 
-dnl  sprawdzamy, czy system ma getopt_long
-AC_CHECK_FUNC(getopt_long, , [COMPAT="$COMPAT getopt.o getopt1.o"])
-
 dnl  na SunOSach nie ma scandir()
 AC_CHECK_FUNCS(scandir, , [COMPAT="$COMPAT scandir.o"])
 

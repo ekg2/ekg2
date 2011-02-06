@@ -1,4 +1,3 @@
-compat/getopt.c
 ekg/ekg.c
 ekg/legacyconfig.c
 ekg/scripts.c

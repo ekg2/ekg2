@@ -5,22 +5,11 @@ Import('*')
 
 compat_funcs = ['strfry', 'strlcat', 'strlcpy', 'strndup', 'strnlen', 'scandir']
 
-compat_spec = {
-		'getopt_long': ['getopt', 'getopt1']
-	}
-
 for func in compat_funcs:
 	have_it = conf.CheckFunc(func)
 	defines['HAVE_%s' % (func.upper())] = have_it
 	if not have_it:
 		ekg_compat.append('compat/%s.c' % (func))
-
-for func, files in compat_spec.items():
-	have_it = conf.CheckFunc(func)
-	defines['HAVE_%s' % (func.upper())] = have_it
-	if not have_it:
-		for file in files:
-			ekg_compat.append('compat/%s.c' % (file))
 
 ret = True
 Return('ret')
