@@ -3,6 +3,8 @@ SUBDIRS = po
 ACLOCAL_AMFLAGS = -I m4
 
 plugindir = $(libdir)/ekg2/plugins
+scriptdir = $(pkgdatadir)/scripts
+themedir = $(pkgdatadir)/themes
 
 bin_PROGRAMS = ekg/ekg2
 
@@ -94,14 +96,14 @@ dist_noinst_DATA = \
 	docs/ui-ncurses.txt \
 	docs/voip.txt
 
-themedir = $(pkgdatadir)/themes
-
 dist_theme_DATA = \
 	contrib/themes/blue_sea_dragon.theme \
 	contrib/themes/dmilith.theme \
 	contrib/themes/irc-irssi.theme \
 	contrib/themes/peres.theme \
 	contrib/themes/wiechu.theme
+
+dist_script_DATA =
 
 plugin_LTLIBRARIES =
 
@@ -356,4 +358,8 @@ plugins_python_python_la_SOURCES = \
 dist_python_DATA = \
 	plugins/python/commands-en.txt \
 	plugins/python/commands-pl.txt
+
+dist_script_DATA += \
+	contrib/python/notify-bubble.py \
+	contrib/python/sample.py
 endif
