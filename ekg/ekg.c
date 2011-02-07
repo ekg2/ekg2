@@ -668,8 +668,7 @@ static GOptionEntry ekg_options[] = {
 
 int main(int argc, char **argv)
 {
-	gint auto_connect = 1, c = 0, no_global_config = 0, no_config = 0, new_status = 0,
-		print_version = 0;
+	gint auto_connect = 1, no_global_config = 0, no_config = 0, new_status = 0, print_version = 0;
 	char *tmp = NULL, *new_descr = NULL;
 	gchar *load_theme = NULL, *new_profile = NULL, *frontend = NULL;
 	GOptionContext *opt;
@@ -702,6 +701,7 @@ int main(int argc, char **argv)
 			gpointer data, GError **error) {
 #ifdef USE_UNICODE
 		config_use_unicode = 1;
+		return TRUE;
 #else
 		*error = g_error_new_literal(G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
 			_("EKG2 compiled without unicode support. This just can't work!"));
