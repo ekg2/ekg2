@@ -21,6 +21,7 @@
 #define __EKG_PLUGINS_H
 
 #include <glib.h>
+#include <gmodule.h>
 
 #include <sys/types.h>
 #include <stdarg.h>
@@ -34,7 +35,7 @@ extern "C" {
 
 #define EKG_ABI_VER 5034
 
-#define EXPORT __attribute__ ((visibility("default")))
+#define EXPORT __attribute__ ((visibility("default"))) G_MODULE_EXPORT
 
 typedef enum {
 	PLUGIN_ANY = 0,
