@@ -20,18 +20,13 @@
 #include "win32.h"
 
 #include <glib.h>
+#include <gmodule.h>
 
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
-
-#ifndef NO_POSIX_SYSTEM
-#  include <dlfcn.h>
-#else 
-#  include <winbase.h>
-#endif
 
 #include "configfile.h"
 #include "commands.h"
@@ -114,32 +109,21 @@ int ekg2_dlinit() {
 /**
  * ekg2_dlclose()
  *
- * Close handler to dynamic loaded library.<br>
- * Support POSIX dlclose() and FreeLibrary() [WINDOWS]
- *
- * @todo For support of more dynamic interfaces see sources of lt_dlclose() [libltdl]
+ * Close handler to dynamic loaded library.
  *
  * @param plugin - Handler to loaded library.
  *
  * @return	0 on success, else fail.
  */
 
-/* it only support posix dlclose() but maybe in future... */
-int ekg2_dlclose(void *plugin) {
-#ifndef NO_POSIX_SYSTEM
-	return dlclose(plugin);
-#else
-	return (FreeLibrary(plugin) == 0);	/* FreeLibrary() return 0 on fail. */
-#endif
+int ekg2_dlclose(GModule *plugin) {
+	return (g_module_close(plugin) != TRUE);
 }
 
 /**
  * ekg2_dlopen()
  *
- * Load dynamic library file from @a name<br>
- * Support POSIX dlopen() and LoadLibraryA() [WINDOWS]
- *
- * @todo For support of more dynamic interfaces see sources of lt_dlopen() [libltdl]
+ * Load dynamic library file from @a name
  *
  * @todo Think more about flags for dlopen() [was: RTLD_LAZY | RTLD_GLOBAL]
  *
@@ -148,10 +132,7 @@ int ekg2_dlclose(void *plugin) {
  * @return Pointer to the loaded library, or NULL if fail.
  */
 
-static void *ekg2_dlopen(const char *name) {
-#ifdef NO_POSIX_SYSTEM
-	void *tmp = LoadLibraryA(name);
-#else
+static GModule *ekg2_dlopen(const char *name) {
 	/* RTLD_LAZY is bad flag, because code can SEGV on executing undefined symbols...
 	 *	it's better to fail earlier than later with SIGSEGV
 	 *
@@ -164,10 +145,10 @@ static void *ekg2_dlopen(const char *name) {
 	 * RTLD_GLOBAL is required by perl and python plugins...
 	 *	need investigation. [XXX]
 	 */
-	void *tmp = dlopen(name, RTLD_NOW | RTLD_GLOBAL);
-#endif
+	GModule *tmp = g_module_open(name, 0);
+
 	if (!tmp) {
-		debug_warn("[plugin] could not be loaded: %s %s\n", name, dlerror());
+		debug_warn("[plugin] could not be loaded: %s %s\n", name, g_module_error());
 	} else {
 		debug_ok("[plugin] loaded: %s\n", name);
 	}
@@ -177,10 +158,7 @@ static void *ekg2_dlopen(const char *name) {
 /**
  * ekg2_dlsym()
  *
- * Get symbol with @a name from loaded dynamic library.<br>
- * Support POSIX dlsym() and GetProcAddress() [WINDOWS]
- *
- * @todo For support of more dynamic interfaces see lt_dlsym() [libltdl]
+ * Get symbol with @a name from loaded dynamic library.
  *
  * @param plugin	- Pointer to the loaded library.
  * @param name		- Name of symbol to lookup.
@@ -188,25 +166,15 @@ static void *ekg2_dlopen(const char *name) {
  * @return Address of symbol or NULL if error occur.
  */
 
-static void *ekg2_dlsym(void *plugin, char *name) {
-#ifndef NO_POSIX_SYSTEM
+static void *ekg2_dlsym(GModule *plugin, char *name) {
 	void *tmp;
-	const char *error;
 
-	dlerror();			/* Clear any existing error */
-	tmp = dlsym(plugin, name);	/* Look for symbol */
-
-	/* Be POSIX like, if dlerror() returns smth, even if dlsym() successful return pointer. Then report error.
-	 * man 3 dlsym */
-	if ((error = dlerror())) {
-		debug_error("[plugin] plugin: %x symbol: %s error: %s\n", plugin, name, error);
+	if (!g_module_symbol(plugin, name, &tmp)) {
+		debug_error("[plugin] plugin: %x symbol: %s error: %s\n", plugin, name, g_module_error());
 		return NULL;
 	}
 
 	return tmp;
-#else
-	return GetProcAddress(plugin, name);
-#endif
 }
 
 /*
@@ -237,16 +205,11 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 #ifdef SHARED_LIBS
 #ifndef NO_POSIX_SYSTEM
-#ifdef SCONS
-#	define DOTLIBS "" 
-#else
-#	define DOTLIBS ".libs/"
-#endif
 	if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-		if (snprintf(lib, sizeof(lib), "%s/%s.so", env_ekg_plugins_path, name) < sizeof(lib))
+		if (snprintf(lib, sizeof(lib), "%s/%s.la", env_ekg_plugins_path, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
-		if (!plugin && (snprintf(lib, sizeof(lib), "%s/%s/" DOTLIBS "%s.so", env_ekg_plugins_path, name, name) < sizeof(lib)))
-				plugin = ekg2_dlopen(lib);
+		if (!plugin && (snprintf(lib, sizeof(lib), "%s/%s/%s.la", env_ekg_plugins_path, name, name) < sizeof(lib)))
+			plugin = ekg2_dlopen(lib);
 	}
 
 #ifndef SKIP_RELATIVE_PLUGINS_DIR
@@ -263,23 +226,23 @@ int plugin_load(const char *name, int prio, int quiet)
 	 * EKG_PLUGINS_PATH set appropriately.
 	 */
 	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "plugins/%s/" DOTLIBS "%s.so", name, name) < sizeof(lib))
+		if (snprintf(lib, sizeof(lib), "plugins/%s/%s.la", name, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
 	}
 
 	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "../plugins/%s/" DOTLIBS "%s.so", name, name) < sizeof(lib))
+		if (snprintf(lib, sizeof(lib), "../plugins/%s/%s.la", name, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
 	}
 #endif
 
 	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "%s/%s.so", PLUGINDIR, name) < sizeof(lib))
+		if (snprintf(lib, sizeof(lib), "%s/%s.la", PLUGINDIR, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
 	}
 #else	/* NO_POSIX_SYSTEM */
 	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "c:\\ekg2\\plugins\\%s.dll", name) < sizeof(lib))
+		if (snprintf(lib, sizeof(lib), "c:\\ekg2\\plugins\\%s.la", name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
 	}
 #endif /* SHARED_LIBS */

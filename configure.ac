@@ -16,7 +16,6 @@ AC_PROG_CPP
 AC_PROG_INSTALL
 AC_C_CONST
 
-AC_LIBTOOL_DLOPEN
 AC_DISABLE_STATIC
 
 AC_PROG_LIBTOOL
@@ -89,7 +88,7 @@ AC_CHECK_FUNCS(inet_pton)
 AC_CHECK_FUNCS(inet_ntop)
 AC_CHECK_FUNCS(getaddrinfo)
 
-PKG_CHECK_MODULES(GLIB, glib-2.0 >= 2.16)
+PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.16 gmodule-2.0])
 AC_SUBST(GLIB_CFLAGS)
 AC_SUBST(GLIB_LIBS)
 
@@ -133,8 +132,6 @@ AC_CHECK_TYPE(socklen_t,[AC_DEFINE(HAVE_SOCKLEN_T, 1, [define if you've got sock
 #include <sys/types.h>
 #include <sys/socket.h>
 ])
-
-AC_CHECK_FUNC(dlopen, [], [AC_CHECK_LIB(dl, dlopen, DLLIB="$DLLIB -ldl")])
 
 AM_ICONV
 
@@ -687,7 +684,7 @@ echo_section " LDFLAGS: "
 echo_have "$LDFLAGS\n"
 
 echo_section " LIBS: "
-echo_have "$DLLIB $LIBS\n"
+echo_have "$LIBS\n"
 
 echo_title "PLUGINS:\n"
 # - UI PLUGINS
