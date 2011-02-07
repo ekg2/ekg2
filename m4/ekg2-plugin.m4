@@ -3,6 +3,12 @@ AC_DEFUN([AC_EKG2_PLUGIN_SETUP], [
 
 	AS_IF([test "x$enable_static" = "xyes"], [
 		AC_DEFINE([STATIC_LIBS], [1], [define if you want static plugins])
+		EKG2_STATIC_PLUGIN_DECLS=
+		EKG2_STATIC_PLUGIN_CALLS=
+		AC_CONFIG_COMMANDS_PRE([
+			AC_DEFINE_UNQUOTED([STATIC_PLUGIN_DECLS], [$EKG2_STATIC_PLUGIN_DECLS], [static plugin init function declarations])
+			AC_DEFINE_UNQUOTED([STATIC_PLUGIN_CALLS], [$EKG2_STATIC_PLUGIN_CALLS], [static plugin init function calls])
+		])
 	])
 
 	AS_IF([test "x$enable_shared" = "xyes"], [
@@ -70,6 +76,8 @@ dnl and AC_SUBSTituted with that names.
 			AC_SUBST([$1dir], ['$(pkgdatadir)/plugins/$1'])
 
 			AS_IF([test "x$enable_static" = "xyes"], [
+				EKG2_STATIC_PLUGIN_DECLS="$EKG2_STATIC_PLUGIN_DECLS G_MODULE_IMPORT int $1_plugin_init(int);"
+				EKG2_STATIC_PLUGIN_CALLS="$EKG2_STATIC_PLUGIN_CALLS if (!xstrcmp(name, \"$1\")) plugin_init = &$1_plugin_init;"
 				EKG2_STATIC_PLUGIN_LIBS="$EKG2_STATIC_PLUGIN_LIBS plugins/$1/.libs/$1.a"
 				EKG_LIBS="$EKG_LIBS $LIBS"
 			])
