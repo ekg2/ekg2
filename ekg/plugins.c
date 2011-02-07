@@ -227,42 +227,42 @@ int plugin_load(const char *name, int prio, int quiet)
 		if (snprintf(lib, sizeof(lib), "c:\\ekg2\\plugins\\%s.la", name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
 	}
-#endif /* SHARED_LIBS */
-	if (!plugin) {
-		printq("plugin_doesnt_exist", name);
-		return -1;
-	}
-#endif
+#endif /* NO_POSIX_SYSTEM */
 
-#ifdef STATIC_LIBS
-	{
-		STATIC_PLUGIN_DECLS
-		STATIC_PLUGIN_CALLS
-	}
-#endif
-
-#ifdef SHARED_LIBS
-	if (!plugin_init) {
-/* than if we don't have static plugin... let's try to load it dynamicly */
+	/* prefer shared plugins */
+	if (plugin) {
 		init = saprintf("%s_plugin_init", name);
-
-		if (!(plugin_init = ekg2_dlsym(plugin, init))) {
-			printq("plugin_incorrect", name);
-			ekg2_dlclose(plugin);
-			xfree(init);
-			return -1;
-		}
+		plugin_init = ekg2_dlsym(plugin, init);
 		xfree(init);
 	}
-#endif
+#endif /* SHARED_LIBS */
+
+#ifdef STATIC_LIBS
+	/* if no shared plugin, fallback to the static one */
 	if (!plugin_init) {
+		STATIC_PLUGIN_DECLS
+		STATIC_PLUGIN_CALLS
+
+		if (plugin_init)
+			debug_ok("[plugin] statically compiled in: %s\n", name);
+	}
+#endif
+
+	if (!plugin_init) {
+#ifdef SHARED_LIBS
+		if (plugin) {
+			printq("plugin_incorrect", name);
+			ekg2_dlclose(plugin);
+		} else
+#endif
 		printq("plugin_doesnt_exist", name);
 		return -1;
 	}
 
 	if (plugin_init(prio) == -1) {
 		printq("plugin_not_initialized", name);
-		ekg2_dlclose(plugin);
+		if (plugin)
+			ekg2_dlclose(plugin);
 		return -1;
 	}
 
