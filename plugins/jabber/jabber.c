@@ -85,10 +85,6 @@ static int jabber_theme_init();
 WATCHER_SESSION(jabber_handle_connect_ssl);
 PLUGIN_DEFINE(jabber, PLUGIN_PROTOCOL, jabber_theme_init);
 
-#ifdef EKG2_WIN32_SHARED_LIB
-	EKG2_WIN32_SHARED_LIB_HELPER
-#endif
-
 /**
  * jabber_session_init()
  *

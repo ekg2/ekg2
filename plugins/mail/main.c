@@ -101,10 +101,6 @@ static struct inotify_event *ev = NULL;
 
 PLUGIN_DEFINE(mail, PLUGIN_GENERIC, mail_theme_init);
 
-#ifdef EKG2_WIN32_SHARED_LIB
-	EKG2_WIN32_SHARED_LIB_HELPER
-#endif
-
 #ifdef HAVE_INOTIFY
 static WATCHER(mail_inotify) {
 	int n;

@@ -31,10 +31,6 @@
 PLUGIN_DEFINE(pcm, PLUGIN_CODEC, NULL);
 CODEC_DEFINE(pcm);
 
-#ifdef EKG2_WIN32_SHARED_LIB
-	EKG2_WIN32_SHARED_LIB_HELPER
-#endif
-
 /* prywatna strukturka audio_codec_t */
 typedef struct {
 	char *from, *to;	/* form format, to format */

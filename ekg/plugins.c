@@ -83,25 +83,7 @@ DYNSTUFF_LIST_DECLARE(queries_list, query_t, query_free_data,
 	__DYNSTUFF_DESTROY)
 
 
-#ifdef EKG2_WIN32_HELPERS
-# define WIN32_REQUEST_HELPER
-# include "win32_helper.h"
-#endif
-
 int ekg2_dlinit() {
-#ifdef EKG2_WIN32_HELPERS
-	INIT_HELPER_FUNC(&win32_helper);
-
-	int i;
-	for (i = 0; i < (sizeof(win32_helper) / sizeof(void *)); i++) {
-		void **cur = & ((void **) &win32_helper)[i];
-		if (!*cur) {
-			*cur = (void *) &win32_stub_function;
-			printf("Making evil thing on element: %d\n", i);
-		}
-	}
-#endif
-
 	return 0;
 /*	return lt_dlinit() */
 }
@@ -274,18 +256,6 @@ int plugin_load(const char *name, int prio, int quiet)
 
 #ifdef SHARED_LIBS
 	if (!plugin_init) {
-# ifdef EKG2_WIN32_HELPERS
-		void (*plugin_preinit)(void *);
-		char *preinit = saprintf("win32_plugin_init");
-		if (!(plugin_preinit = ekg2_dlsym(plugin, preinit))) {
-			debug("NO_POSIX_SYSTEM, PLUGIN:%s NOT COMPILATED WITH EKG2_WIN32_SHARED_LIB?!\n", name);
-			printq("plugin_incorrect", name);
-			xfree(preinit);
-			return -1;
-		}
-		xfree(preinit);
-		plugin_preinit(&win32_helper);
-# endif
 /* than if we don't have static plugin... let's try to load it dynamicly */
 		init = saprintf("%s_plugin_init", name);
 

@@ -161,10 +161,6 @@ int fillchars_len = 0;
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
-#ifdef EKG2_WIN32_SHARED_LIB
-	EKG2_WIN32_SHARED_LIB_HELPER
-#endif
-
 /**
  * irc_session_init()
  *

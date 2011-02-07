@@ -77,10 +77,6 @@
 
 PLUGIN_DEFINE(logs, PLUGIN_LOG, NULL);
 
-#ifdef EKG2_WIN32_SHARED_LIB
-	EKG2_WIN32_SHARED_LIB_HELPER
-#endif
-
 static struct buffer_info buffer_lograw = { NULL, 0, 0 };
 
 static logs_log_t *log_curlog = NULL;

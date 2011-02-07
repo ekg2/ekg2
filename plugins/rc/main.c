@@ -38,9 +38,6 @@
 #include "rc.h"
 
 PLUGIN_DEFINE(rc, PLUGIN_UI, NULL);
-#ifdef EKG2_WIN32_SHARED_LIB
-	EKG2_WIN32_SHARED_LIB_HELPER
-#endif
 
 static void rc_input_close(rc_input_t *r);
 

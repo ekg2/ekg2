@@ -10,11 +10,6 @@
 
 #include "ekg2-config.h"
 
-#ifdef PLUGIN_SHARED_LIBS
-# define EKG2_WIN32_SHARED_LIB "da! we want shared libs...... DLL's HELL! :> yeah, let's rock."
-# define EKG2_WIN32_HELPERS
-#endif
-
 #if 0
 	typedef unsigned long guint32;
 	typedef unsigned short guint16;
@@ -51,12 +46,6 @@ struct timezone { /* XXX */
 	int tz_minuteswest;	/* minutes west of Greenwich */
 	int tz_dsttime;		/* type of DST correction */
 };
-/* shared */
-#ifdef EKG2_WIN32_SHARED_LIB
-# define EKG2_WIN32_NOFUNCTION 1
-# error "Currently --enable-shared don't work automagicly pass --enable-static to ./configure if you really want. contact with me. (jid:darkjames@chrome.pl)"
-# include "win32_helper.h"
-#endif
 
 #define THREAD(x) DWORD x(void *data)
 typedef THREAD(thread_func_t);
