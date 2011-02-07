@@ -115,13 +115,6 @@ AS_IF([test "x$enable_unicode" = "xyes"], [
 	AC_DEFINE([USE_UNICODE], [1], [use unicode (wide character strings)])
 ])
 
-AS_IF([test "x$enable_shared" = "xyes"], [
-	AC_DEFINE([SHARED_LIBS], [1], [define if you want shared plugins (in .so or .dll)])
-])
-AS_IF([test "x$enable_static" = "xyes"], [
-	AC_MSG_ERROR([Static plugins not supported currently])
-])
-
 dnl plugins
 
 AC_EKG2_PLUGIN([autoresponder])

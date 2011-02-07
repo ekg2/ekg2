@@ -1,3 +1,15 @@
+AC_DEFUN([AC_EKG2_PLUGIN_SETUP], [
+	AC_SUBST([EKG2_STATIC_PLUGIN_LIBS])
+
+	AS_IF([test "x$enable_static" = "xyes"], [
+		AC_DEFINE([STATIC_LIBS], [1], [define if you want static plugins])
+	])
+
+	AS_IF([test "x$enable_shared" = "xyes"], [
+		AC_DEFINE([SHARED_LIBS], [1], [define if you want shared plugins (in .so or .dll)])
+	])
+])
+
 AC_DEFUN([AC_EKG2_PLUGIN], [
 dnl AC_EKG2_PLUGIN(name, req-checks, opt-checks)
 dnl Create a '--enable-<name>' option for a plugin. Unless disabled, run
@@ -11,6 +23,8 @@ dnl
 dnl CPPFLAGS & LIBS will be saved and restored on termination. If tests
 dnl succeed, they will be copied as well to $1_CPPFLAGS and $1_LIBS,
 dnl and AC_SUBSTituted with that names.
+	
+	AC_REQUIRE([AC_EKG2_PLUGIN_SETUP])
 
 	AC_ARG_ENABLE([$1],
 		AS_HELP_STRING([--disable-$1], [disable building of $1 plugin [default=auto]]),
@@ -54,6 +68,11 @@ dnl and AC_SUBSTituted with that names.
 			AC_SUBST([plugins_$1_$1_la_LDFLAGS], ["-module -avoid-version $LDFLAGS"])
 			AC_SUBST([plugins_$1_$1_la_LIBADD], [$LIBS])
 			AC_SUBST([$1dir], ['$(pkgdatadir)/plugins/$1'])
+
+			AS_IF([test "x$enable_static" = "xyes"], [
+				EKG2_STATIC_PLUGIN_LIBS="$EKG2_STATIC_PLUGIN_LIBS plugins/$1/.libs/$1.a"
+				EKG_LIBS="$EKG_LIBS $LIBS"
+			])
 		])
 
 		CPPFLAGS=$ac_ekg2_plugin_save_CPPFLAGS
