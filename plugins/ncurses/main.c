@@ -167,11 +167,7 @@ static QUERY(ncurses_ui_window_switch) {
 	ncurses_redraw_input(0);	/* redraw prompt... */
 	ncurses_commit();
 
-	if (w->act & 2) { /* enable <composing/> on incoming chat message receival */
-		/* ncurses_typingsend(w, 0, 4);	// XXX ??? <active/> */
-		if (!w->out_active) /* send <active/>, as we showed interest in chat */
-			ncurses_window_gone(w);
-	}
+	ncurses_typingsend(w, EKG_CHATSTATE_ACTIVE);
 
 	p = w->alias ? w->alias : (w->target ? w->target : NULL);
 	if (ncurses_settitle)
@@ -777,7 +773,7 @@ EXPORT int ncurses_plugin_init(int prio)
 
 	variable_add(&ncurses_plugin, ("typing_interval"), VAR_INT, 1, &config_typing_interval, ncurses_typing_retimer, NULL, NULL);
 	variable_add(&ncurses_plugin, ("typing_timeout"), VAR_INT, 1, &config_typing_timeout, NULL, NULL, NULL);
-	variable_add(&ncurses_plugin, ("typing_timeout_empty"), VAR_INT, 1, &config_typing_timeout_empty, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("typing_timeout_inactive"), VAR_INT, 1, &config_typing_timeout_inactive, NULL, NULL, NULL);
 
 	have_winch_pipe = 0;
 #ifdef SIGWINCH

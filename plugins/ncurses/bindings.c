@@ -148,7 +148,6 @@ static BINDING_FUNCTION(binding_toggle_input)
 			ncurses_typing_mod		= 1;
 		else {
 			ncurses_typing_win		= NULL;
-			window_current->out_active	= 1;
 		}
 
 		curs_set(1);
@@ -287,7 +286,6 @@ static BINDING_FUNCTION(binding_accept_line)
 		ncurses_typing_mod		= 1;
 	else { /* if message, assume that its' handler has already disabled <composing/> */
 		ncurses_typing_win		= NULL;
-		window_current->out_active	= 1; /* but also remember that it should have set <active/> chatstate */
 	}
 
 	if (xwcscmp(line, TEXT(""))) {
@@ -638,7 +636,7 @@ BINDING_FUNCTION(binding_next_only_history)
 
 static BINDING_FUNCTION(binding_previous_history)
 {
-	ncurses_window_gone(window_current);
+	ncurses_typingsend(window_current, EKG_CHATSTATE_ACTIVE);
 
 	if (lines && (lines_index || lines_start)) {
 		if (lines_index - lines_start == 0 && lines_start)
@@ -660,7 +658,7 @@ static BINDING_FUNCTION(binding_next_history)
 		lines_index++;
 		lines_adjust();
 	} else {
-		ncurses_window_gone(window_current);
+		ncurses_typingsend(window_current, EKG_CHATSTATE_ACTIVE);
 		binding_next_only_history(NULL);
 	}
 	ncurses_redraw_input(0);

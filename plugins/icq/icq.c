@@ -543,10 +543,10 @@ static QUERY(icq_print_version) {
 static QUERY(icq_typing_out) {
 	const char *session	= *va_arg(ap, const char **);
 	const char *uid		= *va_arg(ap, const char **);
-	const int len		= *va_arg(ap, const int *);
-	int first		= *va_arg(ap, const int *);
+	const int chstate	= *va_arg(ap, const int *);
+
 	guint32 q1 = rand(), q2 = rand();
-	guint16 typing = 0;
+	guint16 typing;
 
 	session_t *s = session_find(session);
 
@@ -556,8 +556,7 @@ static QUERY(icq_typing_out) {
 	if (!s || s->plugin != &icq_plugin)
 		return 0;
 
-	if (len>0)
-		typing = (first == 1) ? 2 : 1;
+	typing = (chstate==EKG_CHATSTATE_COMPOSING);
 
 	icq_send_snac(s, 0x04, 0x14, NULL, NULL,
 			"iiWsW", q1, q2, (guint16) 1, uid + 4, typing);

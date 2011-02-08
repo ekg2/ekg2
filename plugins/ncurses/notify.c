@@ -35,7 +35,7 @@
 /* vars */
 int config_typing_interval	= 1;
 int config_typing_timeout	= 10;
-int config_typing_timeout_empty = 5;
+int config_typing_timeout_inactive = 120;
 
 int ncurses_typing_mod			= 0;	/* whether buffer was modified */
 window_t *ncurses_typing_win		= NULL;	/* last window for which typing was sent */
@@ -58,12 +58,20 @@ static int ncurses_lineslen() {
 		return (ncurses_line[0] == '/' ? 0 : xwcslen(ncurses_line));
 }
 
-static inline int ncurses_typingsend(window_t *w, const int len, const int first) {
+int ncurses_typingsend(window_t *w, int chatstate) {
 	const char *sid, *uid;
 	userlist_t *u;
 	session_t *s;
-	
-	if (!w || !(s=w->session) || !s->connected)
+
+	if (!w || (w->id<2))
+		return -1;
+
+	if (w->last_chatstate == chatstate)
+		return -1;
+
+	w->last_chatstate = chatstate;
+
+	if (!(s=w->session) || !s->connected)
 		return -1;
 
 	if (!(uid = get_uid(s, w->target)))
@@ -75,79 +83,50 @@ static inline int ncurses_typingsend(window_t *w, const int len, const int first
 
 	sid = session_uid_get(s);
 
-	return query_emit(NULL, "protocol-typing-out", &sid, &uid, &len, &first);
+	return query_emit(NULL, "protocol-typing-out", &sid, &uid, &chatstate);
 }
 
 TIMER(ncurses_typing) {
-	window_t *oldwin	= NULL;
 
 	if (type)
 		return 0;
 
-	if (ncurses_typing_mod > 0) { /* need to update status */
-		const int curlen		= ncurses_lineslen();
-		const int winchange		= (ncurses_typing_win != window_current);
+	const int curlen	= ncurses_lineslen();
+	const int winchange	= (ncurses_typing_win != window_current);
 
-		if (winchange && ncurses_typing_win && ncurses_typing_win->target)
-			ncurses_typing_time	= 0; /* this should force check below */
-		else
-			ncurses_typing_time	= time(NULL);
-
-		if (window_current && window_current->target && curlen &&
-				(winchange || ncurses_typing_count != curlen)) {
-
-#if 0
-			debug_function("ncurses_typing(), [UNIMPL] got change for %s [%s] vs %s [%s], %d vs %d!\n",
-					window_current->target, session_uid_get(window_current->session),
-					ncurses_typing_win ? ncurses_typing_win->target : NULL,
-					ncurses_typing_win ? session_uid_get(ncurses_typing_win->session) : NULL,
-					curlen, ncurses_typing_count);
-#endif
-			if (winchange)
-				oldwin		= ncurses_typing_win;
-
-			ncurses_typing_count	= curlen;
-			ncurses_typingsend(window_current, curlen, winchange);
-			ncurses_typing_win	= window_current;
-		}
-
-		ncurses_typing_mod		= 0;
+	if (winchange && ncurses_typing_win && ncurses_typing_win->target) {
+		ncurses_typingsend(ncurses_typing_win, EKG_CHATSTATE_INACTIVE);	/* previous window */
+		ncurses_typing_time	= 0;
+		ncurses_typing_mod	= 0;
+		ncurses_typing_count	= curlen;
+		ncurses_typing_win	= window_current;
+		return 0;
 	}
 
-	{
-		const int isempty = (ncurses_lines
-				? (!ncurses_lines[0][0] && !ncurses_lines[1]) || ncurses_lines[0][0] == '/'
-				: !ncurses_line[0] || ncurses_line[0] == '/');
-		const int timeout = (config_typing_timeout_empty && isempty ?
-					config_typing_timeout_empty : config_typing_timeout);
+	if ((ncurses_typing_mod > 0) && window_current && window_current->target) { /* need to update status */
+		ncurses_typing_win	= window_current;
+		if (!curlen)
+			ncurses_typingsend(ncurses_typing_win, EKG_CHATSTATE_ACTIVE);
+		else if (ncurses_typing_count != curlen)
+			ncurses_typingsend(ncurses_typing_win, EKG_CHATSTATE_COMPOSING);
 
-		if (ncurses_typing_win && (!ncurses_typing_time || (timeout && time(NULL) - ncurses_typing_time > timeout))) {
+		ncurses_typing_time	= time(NULL);
+		ncurses_typing_count	= curlen;
+		ncurses_typing_mod	= 0;
 
-			ncurses_typingsend(oldwin ? oldwin : ncurses_typing_win, 0, (ncurses_typing_mod == -1 ? 3 : 1));
-#if 0
-			debug_function("ncurses_typing(), [UNIMPL] disabling for %s [%s]\n",
-					ncurses_typing_win->target, session_uid_get(ncurses_typing_win->session));
-#endif
-			if (!oldwin)
-				ncurses_typing_win	= NULL;
+	} else if (ncurses_typing_win) {
+		int chat = 0;
+		if (ncurses_typing_time) {
+			int timeout = time(NULL) - ncurses_typing_time;
+			if (curlen && config_typing_timeout && (timeout>config_typing_timeout))
+				chat = EKG_CHATSTATE_PAUSED;
+			else if (config_typing_timeout_inactive && (timeout>config_typing_timeout_inactive))
+				chat = EKG_CHATSTATE_INACTIVE;
 		}
+		if (chat)
+			ncurses_typingsend(ncurses_typing_win, chat);
 	}
 
 	return 0;
 }
 
-void ncurses_window_gone(window_t *w) {
-	if (w == ncurses_typing_win) { /* don't allow timer to touch removed window */
-		const int tmp		= ncurses_typing_mod;
-
-		ncurses_typing_time	= 0;
-		ncurses_typing_mod	= -1; /* prevent ncurses_typing_time modification & main loop behavior */
-
-		ncurses_typing(0, NULL);
-
-		ncurses_typing_mod	= tmp;
-	} else if (w->out_active) {
-		ncurses_typingsend(w, 0, 5);	/* <gone/> */
-		w->out_active	^= 1;
-	}
-}

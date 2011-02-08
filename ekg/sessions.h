@@ -66,6 +66,14 @@ typedef enum {
 	EKG_STATUS_AUTOBACK		/* returning to previous status */
 } status_t;
 
+typedef enum {
+	EKG_CHATSTATE_COMPOSING	= 1 << 0,
+	EKG_CHATSTATE_ACTIVE	= 1 << 1,
+	EKG_CHATSTATE_GONE	= 1 << 2,
+	_EKG_CHATSTATE_NOT	= 1 << 10,
+	EKG_CHATSTATE_PAUSED	= _EKG_CHATSTATE_NOT | EKG_CHATSTATE_COMPOSING,
+	EKG_CHATSTATE_INACTIVE	= _EKG_CHATSTATE_NOT | EKG_CHATSTATE_ACTIVE
+} chatstates_t;
 /* Few words about statuses:
  *
  * All of the enum statuses are proritity-sorted. I mean, if we want to determine, which of the two given statuses is more

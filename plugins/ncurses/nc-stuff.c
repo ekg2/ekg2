@@ -76,7 +76,8 @@ QUERY(ncurses_session_disconnect_handler) {
 		if (w->session != s)
 			continue;
 
-		ncurses_window_gone(w);
+		//XXXncurses_window_gone(w);
+		ncurses_typingsend(w, EKG_CHATSTATE_GONE);
 	}
 
 	return 0;
@@ -694,7 +695,8 @@ int ncurses_window_kill(window_t *w)
 	if (w->floating)
 		ncurses_resize();
 
-	ncurses_window_gone(w);
+	ncurses_typingsend(w, EKG_CHATSTATE_GONE);
+	ncurses_typing_win = NULL;
 
 	return 0;
 }

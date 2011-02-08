@@ -336,9 +336,7 @@ static const query_def_t core_query_list[] = {
 	{ NULL, "protocol-typing-out", 0, {
 		QUERY_ARG_CHARP,		/* session uid */
 		QUERY_ARG_CHARP,		/* uid */
-		QUERY_ARG_INT,			/* typed-in data length */
-		QUERY_ARG_INT,			/* whether this is first typing notification in order
-						   or only length change */
+		QUERY_ARG_INT,			/* chat state */
 		QUERY_ARG_END } },
 
 	{ NULL, "ui-password-input", 0, {

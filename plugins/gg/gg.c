@@ -1549,8 +1549,7 @@ static QUERY(gg_typing_out) {
 #ifdef GG_FEATURE_TYPING_NOTIFICATION
 	const char *session	= *va_arg(ap, const char **);
 	const char *uid		= *va_arg(ap, const char **);
-	const int len		= *va_arg(ap, const int *);
-	const int first		= *va_arg(ap, const int *);
+	const int chatstate	= *va_arg(ap, const int *);
 
 	session_t *s		= session_find(session);
 	gg_private_t *g;
@@ -1558,10 +1557,10 @@ static QUERY(gg_typing_out) {
 	if (!gg_config_enable_chatstates)
 		return -1;
 
-	if (!first || !s || s->plugin != &gg_plugin || !(g = s->priv) || !s->connected)
+	if (!s || s->plugin != &gg_plugin || !(g = s->priv) || !s->connected)
 		return 0;
 
-	gg_typing_notification(g->sess, atoi(uid+3), len ? 1 : 0);
+	gg_typing_notification(g->sess, atoi(uid+3), chatstate==EKG_CHATSTATE_COMPOSING ? 1 : 0);
 #endif
 
 	return 0;

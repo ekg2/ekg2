@@ -77,7 +77,7 @@ SSL_CTX *jabberSslCtx;
 char *jabber_default_search_server = NULL;
 char *jabber_default_pubsub_server = NULL;
 int config_jabber_beep_mail = 0;
-int config_jabber_disable_chatstates = 6;
+int config_jabber_disable_chatstates = EKG_CHATSTATE_ACTIVE | EKG_CHATSTATE_GONE;
 const char *jabber_authtypes[] = { "none", "from", "to", "both" };
 
 static int session_postinit;
@@ -1511,54 +1511,49 @@ static QUERY(jabber_userlist_priv_handler) {
 static QUERY(jabber_typing_out) {
 	const char *session	= *va_arg(ap, const char **);
 	const char *uid		= *va_arg(ap, const char **);
-	const int len		= *va_arg(ap, const int *);
-	int first		= *va_arg(ap, const int *);
+	int chatstate		= *va_arg(ap, const int *);
 
 	const char *jid		= uid + 5;
 	session_t *s		= session_find(session);
-	const int confbit	= (1 << (first <= 3 ? 0 : first - 3)) | (first == 3 ? 4 : 0);
 	jabber_private_t *j;
 
-	if (!first || !s || s->plugin != &jabber_plugin)
+	if (!s || s->plugin != &jabber_plugin)
 		return 0;
 
-	if ((config_jabber_disable_chatstates & confbit) == confbit) /* all bits must be set */
+	/* if user closes window while typing,
+	 * and we are prohibited to send <gone/>,
+	 * we just send standard <active/> */
+	if ((EKG_CHATSTATE_GONE==chatstate) && (config_jabber_disable_chatstates & EKG_CHATSTATE_GONE))
+		chatstate = EKG_CHATSTATE_ACTIVE;
+	else if (config_jabber_disable_chatstates & chatstate)
 		return -1;
-
-	/* first can be:
-	 *   1 - normal first change (or <paused/>),
-	 *   2 - <inactive/> [currently not used],
-	 *   3 - <gone/> from <composing/>,
-	 *   4 - <active/> on window switch,
-	 *   5 - <gone/> from <active/> */
 
 	j = jabber_private(s);
 
 	if (j->istlen) {
-		if (first >= 4)
+		if (!(chatstate & EKG_CHATSTATE_COMPOSING))
 			return -1;
 		watch_write(j->send_watch, "<m to=\"%s\" tp=\"%c\"/>",
-			jid, (len ? 't' : 'u'));
-	} else if (!newconference_find(s, uid) /* DON'T SEND CHATSTATES TO MUCS! */) {
-			/* if user closes window while typing,
-			 * and we are prohibited to send <gone/>,
-			 * we just send standard <active/> */
-		if (first == 3) {
-			if (config_jabber_disable_chatstates & 4)
-				first = 4;
-			else
-				first = 5;
+			jid, (chatstate==EKG_CHATSTATE_COMPOSING ? 't' : 'u'));
+		return 0;
+	}
+
+	if (!newconference_find(s, uid) /* DON'T SEND CHATSTATES TO MUCS! */) {
+		int len = 0;
+		char *csname;
+		switch (chatstate) {
+			case EKG_CHATSTATE_COMPOSING:	csname = "composing"; len = 1; break;
+			case EKG_CHATSTATE_ACTIVE:	csname = "active"; break;
+			case EKG_CHATSTATE_GONE:	csname = "gone"; break;
+			case EKG_CHATSTATE_PAUSED:	csname = "paused"; break;
+			case EKG_CHATSTATE_INACTIVE:	csname = "inactive"; break;
+			default: return -1;
 		}
 
 		watch_write(j->send_watch, "<message type=\"chat\" to=\"%s\">"
 			"<x xmlns=\"jabber:x:event\"%s>"
 			"<%s xmlns=\"http://jabber.org/protocol/chatstates\"/>"
-			"</message>\n", jid, (len ? "><composing/></x" : "/"),
-			(len ? "composing" :
-			 first == 5 ? "gone" :
-			 first == 4 ? "active" :
-			 first == 2 ? "inactive" :
-			 "paused"));
+			"</message>\n", jid, (len ? "><composing/></x" : "/"), csname);
 	}
 
 	return 0;
@@ -1668,7 +1663,10 @@ EXPORT int jabber_plugin_init(int prio) {
 	variable_add(&jabber_plugin, ("xmpp:default_pubsub_server"), VAR_STR, 1, &jabber_default_pubsub_server, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("xmpp:default_search_server"), VAR_STR, 1, &jabber_default_search_server, NULL, NULL, NULL);
 	variable_add(&jabber_plugin, ("xmpp:disable_chatstates"), VAR_MAP, 1, &config_jabber_disable_chatstates, NULL,
-			variable_map(4, 0, 0, "none", 1, 0, "composing", 2, 0, "active", 4, 0, "gone"), NULL); 
+			variable_map(4, 0, 0, "none",
+					EKG_CHATSTATE_COMPOSING, 0, "composing",
+					EKG_CHATSTATE_ACTIVE, 0, "active",
+					EKG_CHATSTATE_GONE, 0, "gone"), NULL); 
 
 	jabber_register_commands();
 #ifdef JABBER_HAVE_SSL
