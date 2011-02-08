@@ -237,7 +237,7 @@ ICQ_PNGS = \
 	$(top_srcdir)/plugins/gtk/iconssets/icq-xa.png
 
 inline_pngs.h: $(BASE_PNGS)
-	$(GDK_PIXBUF_CSOURCE) --raw --build-list \
+	$(AM_V_GEN)$(GDK_PIXBUF_CSOURCE) --raw --build-list \
 		avail $(top_srcdir)/plugins/gtk/iconssets/avail.png \
 		away $(top_srcdir)/plugins/gtk/iconssets/away.png \
 		dnd $(top_srcdir)/plugins/gtk/iconssets/dnd.png \
@@ -250,7 +250,7 @@ inline_pngs.h: $(BASE_PNGS)
 		> $@
 
 inline_pngs_gg.h: $(BASE_PNGS)
-	$(GDK_PIXBUF_CSOURCE) --raw --build-list \
+	$(AM_V_GEN)$(GDK_PIXBUF_CSOURCE) --raw --build-list \
 		gg_avail $(top_srcdir)/plugins/gtk/iconssets/gg-avail.png \
 		gg_away $(top_srcdir)/plugins/gtk/iconssets/gg-away.png \
 		gg_invisible $(top_srcdir)/plugins/gtk/iconssets/gg-invisible.png \
@@ -258,7 +258,7 @@ inline_pngs_gg.h: $(BASE_PNGS)
 		> $@
 
 inline_pngs_icq.h: $(ICQ_PNGS)
-	$(GDK_PIXBUF_CSOURCE) --raw --build-list \
+	$(AM_V_GEN)$(GDK_PIXBUF_CSOURCE) --raw --build-list \
 		icq_ffc $(top_srcdir)/plugins/gtk/iconssets/icq-ffc.png \
 		icq_avail $(top_srcdir)/plugins/gtk/iconssets/icq-avail.png \
 		icq_away $(top_srcdir)/plugins/gtk/iconssets/icq-away.png \
@@ -462,9 +462,9 @@ dist_script_DATA += \
 
 if ENABLE_PERL_MODULES
 $(top_srcdir)/plugins/perl/common/Makefile: $(top_srcdir)/plugins/perl/common/Makefile.PL
-	cd $(top_srcdir)/plugins/perl/common && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.."
+	$(AM_V_GEN)cd $(top_srcdir)/plugins/perl/common && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.."
 $(top_srcdir)/plugins/perl/irc/Makefile: $(top_srcdir)/plugins/perl/irc/Makefile.PL
-	cd $(top_srcdir)/plugins/perl/irc && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.."
+	$(AM_V_GEN)cd $(top_srcdir)/plugins/perl/irc && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.."
 
 perl-build-common: $(top_srcdir)/plugins/perl/common/Makefile
 	cd $(top_srcdir)/plugins/perl/common && $(MAKE) CC="$(CC)" CCFLAGS="$(plugins_perl_perl_la_CPPFLAGS) $(CFLAGS)"
