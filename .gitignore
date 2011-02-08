@@ -22,7 +22,12 @@ config.status
 configure
 libtool
 /build-aux/
+plugins/perl/common/blib/
+plugins/perl/common/pm_to_blib
+plugins/perl/irc/blib/
+plugins/perl/irc/pm_to_blib
 .deps
+.dirstamp
 .libs
 git_version.h
 stamp-h1
