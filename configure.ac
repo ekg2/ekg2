@@ -181,7 +181,7 @@ AC_EKG2_PLUGIN([jabber], [
 	])
 ], [
 	AC_EKG2_WITH([zlib], [
-		AC_EKG2_CHECK_LIB([z], [gzopen], [zlib.h])
+		AC_EKG2_CHECK_PKGCONFIG_LIB([zlib], [z], [gzopen], [zlib.h])
 	])
 
 	try_openssl=no
@@ -208,7 +208,7 @@ AC_EKG2_PLUGIN([jogger])
 
 AC_EKG2_PLUGIN([logs],, [
 	AC_EKG2_WITH([zlib], [
-		AC_EKG2_CHECK_LIB([z], [gzopen], [zlib.h])
+		AC_EKG2_CHECK_PKGCONFIG_LIB([zlib], [z], [gzopen], [zlib.h])
 	])
 ])
 
