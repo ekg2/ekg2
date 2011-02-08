@@ -29,8 +29,7 @@ AC_CHECK_MEMBERS([struct kinfo_proc.ki_size],,,[
 ])
 
 dnl compats -- XXX: get rid of them
-AC_CHECK_FUNCS([scandir],,
-	AC_MSG_ERROR([One of the required libc functions not found]))
+AC_CHECK_FUNCS([scandir])
 
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.14.3])

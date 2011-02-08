@@ -29,10 +29,6 @@
 
 #include "ekg2-config.h"
 
-#ifndef HAVE_SCANDIR
-#  include "compat/scandir.h"
-#endif
-
 #include "commands.h"
 #include "debug.h"
 #include "dynstuff.h"
@@ -313,6 +309,7 @@ static void empty_generator(const char *text, int len)
 
 static void dir_generator(const char *text, int len)
 {
+#ifdef HAVE_SCANDIR
 	struct dirent **namelist = NULL;
 	char *dname, *tmp;
 	const char *fname;
@@ -395,10 +392,12 @@ static void dir_generator(const char *text, int len)
 
 	xfree(dname);
 	xfree(namelist);
+#endif
 }
 
 static void file_generator(const char *text, int len)
 {
+#ifdef HAVE_SCANDIR
 	struct dirent **namelist = NULL;
 	char *dname;
 	char *tmp;
@@ -494,6 +493,7 @@ again:
 
 	xfree(dname);
 	xfree(namelist);
+#endif
 }
 
 /*
@@ -507,6 +507,7 @@ again:
  */
 static void theme_generator_adding(const char *text, int len, const char *dname, int themes_only)
 {
+#ifdef HAVE_SCANDIR
 	struct dirent **namelist = NULL;
 	int count, i;
 
@@ -541,6 +542,7 @@ static void theme_generator_adding(const char *text, int len, const char *dname,
 	}
 
 	xfree(namelist);
+#endif
 }
 
 static void theme_generator(const char *text, int len)
