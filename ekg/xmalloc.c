@@ -151,6 +151,8 @@ char *xstrdup(const char *s)
 
 char *xstrndup(const char *s, size_t n)
 {
+	if (n == (size_t) -1)
+		return g_strdup((char *) s);
 	return g_strndup((char *) s, n);
 }
 
