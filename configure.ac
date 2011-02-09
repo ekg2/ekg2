@@ -26,7 +26,6 @@ AC_EKG2_WITH([glib], [
 	AC_MSG_ERROR([glib dependency is obligatory, bailing due to --without-glib])
 ])
 
-AC_CHECK_HEADERS(regex.h)
 AC_CHECK_FUNCS([flock getaddrinfo inet_ntop inet_pton inet_aton])
 
 AC_SEARCH_LIBS([socket], [socket])
