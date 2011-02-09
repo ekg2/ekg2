@@ -44,6 +44,7 @@
 #include <ekg/debug.h>
 #include <ekg/net.h>
 #include <ekg/protocol.h>
+#include <ekg/recode.h>
 #include <ekg/sessions.h>
 #include <ekg/userlist.h>
 #include <ekg/stuff.h>
@@ -62,7 +63,7 @@
 #include "feed.h"
 
 #define rss_convert_string(text, encoding) \
-	ekg_convert_string(text, encoding ? encoding : "UTF-8", NULL)
+	ekg_recode_to_locale_dup(encoding ? encoding : "UTF-8", text)
 
 typedef enum {
 	RSS_PROTO_UNKNOWN = 0,
@@ -414,10 +415,8 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 
 	if (arrcount > 0) {
 		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
-		for (i = 0; i < arrcount; i++) {
-			char *s = rss_convert_string(atts[i], j->no_unicode);
-			newnode->atts[i] = (s ? s : xstrdup(atts[i]));
-		}
+		for (i = 0; i < arrcount; i++)
+			newnode->atts[i] = rss_convert_string(atts[i], j->no_unicode);
 	} else	newnode->atts = NULL; 
 
 	j->node = newnode;
@@ -430,7 +429,6 @@ static void rss_handle_end(void *data, const char *name) {
 
 	char *text;
 
-	char *tmp;
 	int i;
 	int len;
 
@@ -531,11 +529,8 @@ static void rss_handle_end(void *data, const char *name) {
 
 	xfree(text);
 
-	if ((tmp = rss_convert_string(recode->str, j->no_unicode))) {
-		n->data = string_init(tmp);
-		string_free(recode, 1);
-
-	} else	n->data = recode;
+	n->data = string_init(rss_convert_string(recode->str, j->no_unicode));
+	string_free(recode, 1);
 }
 
 static void rss_handle_cdata(void *data, const char *text, int len) {

@@ -277,14 +277,13 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 		char *uid	= xmalloc(strlen(fn) + 6);
 		char *msgx	= NULL;
 
-		{
-			const char *charset = session_get(s, "charset");
+		const char *charset = session_get(s, "charset");
 
-			if (charset && (msgx = ekg_convert_string(msg, charset, NULL)))
-				xfree(msg);
-			else
-				msgx = msg;
-		}
+		if (charset) {
+			msgx = ekg_recode_to_locale_dup(charset, msg);
+			xfree(msg);
+		} else
+			msgx = msg;
 
 		xstrcpy(uid, "xmsg:");
 		xstrcat(uid, fn);
@@ -617,7 +616,7 @@ static COMMAND(xmsg_msg)
 		const char *charset = session_get(session, "charset");
 
 		if (charset)
-			msgx = ekg_convert_string(msg, NULL, charset);
+			msgx = ekg_recode_from_locale(charset, msg);
 		mymsg = (msgx ? msgx : msg);
 	}
 	fs = xstrlen(mymsg);
