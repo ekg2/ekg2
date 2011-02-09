@@ -6,7 +6,6 @@
 #include <glib.h>
 
 #include <sys/types.h>
-#include <regex.h>
 
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>
@@ -30,7 +29,7 @@ static char *config_autoresponder_answer = NULL;
 static char *config_autoresponder_greeting = NULL;
 static char *config_autoresponder_allowed_sessions = NULL;
 static int config_autoresponder_match_mode = 1;
-static regex_t *autoresponder_answer_regex = NULL;
+static GRegex *autoresponder_answer_regex = NULL;
 
 static list_t autoresponder_allowed_uids;
 
@@ -80,7 +79,7 @@ static QUERY(autoresponder_message)
 			matchoccured = !xstrcmp(text, an);
 			break;
 		case 2: /* POSIX regex match */
-			matchoccured = !regexec(autoresponder_answer_regex, text, 0, NULL, 0);
+			matchoccured = g_regex_match(autoresponder_answer_regex, text, 0, NULL);
 			break;
 		case 1: /* substring match */
 		default:
@@ -102,31 +101,17 @@ static QUERY(autoresponder_message)
 static void autoresponder_varchange(const char *varname)
 {
 	if (autoresponder_answer_regex) {
-		regfree(autoresponder_answer_regex);
-		xfree(autoresponder_answer_regex);
+		g_regex_unref(autoresponder_answer_regex);
 		autoresponder_answer_regex = NULL;
 	}
 
 	if (config_autoresponder_match_mode == 2 && config_autoresponder_answer && (*config_autoresponder_answer)) {
-		int retval;
-
-		autoresponder_answer_regex = xmalloc(sizeof(regex_t));
-		if ((retval = regcomp(autoresponder_answer_regex, config_autoresponder_answer, REG_EXTENDED|REG_NOSUB))) {
-			const int len = regerror(retval, autoresponder_answer_regex, NULL, 0);
-			char *tmp;
+		GError *err = NULL;
+		if (!((autoresponder_answer_regex = g_regex_new(config_autoresponder_answer,
+					G_REGEX_RAW | G_REGEX_NO_AUTO_CAPTURE, 0, &err)))) {
 			
-			if (len) {
-				char *err = xmalloc(len);
-				
-				regerror(retval, autoresponder_answer_regex, err, len);
-				print("generic_error", (tmp = saprintf("Regex compilation error: %s", err)));
-				xfree(err);
-			} else {
-				print("generic_error", (tmp = saprintf("Regex compilation error %d", retval)));
-			}
-			xfree(tmp);
-			xfree(autoresponder_answer_regex);
-			autoresponder_answer_regex = NULL;
+			print("regex_error", err->message);
+			g_error_free(err);
 			config_autoresponder_match_mode = 1;
 		}
 	}
@@ -152,10 +137,8 @@ EXPORT int autoresponder_plugin_init(int prio)
 static int autoresponder_plugin_destroy(void)
 {
 	list_destroy(autoresponder_allowed_uids, 1);
-	if (autoresponder_answer_regex) {
-		regfree(autoresponder_answer_regex);
-		xfree(autoresponder_answer_regex);
-	}
+	if (autoresponder_answer_regex)
+		g_regex_unref(autoresponder_answer_regex);
 	plugin_unregister(&autoresponder_plugin);
 	
 	return 0;
