@@ -46,7 +46,6 @@ ekg_ekg2_SOURCES = \
 	ekg/queries.h \
 	ekg/recode.c \
 	ekg/recode.h \
-	ekg/recode_tables.h \
 	ekg/scripts.c \
 	ekg/scripts.h \
 	ekg/sessions.c \

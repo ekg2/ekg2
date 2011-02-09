@@ -7,11 +7,9 @@
 extern "C" {
 #endif
 
-enum ekg_recode_name {
-	EKG_RECODE_CP = 0,	/* CP-1250 */
-	EKG_RECODE_ISO2,	/* ISO-8859-2 */
-	EKG_RECODE_UTF8		/* UTF-8 */
-};
+#define EKG_RECODE_CP "CP-1250"
+#define EKG_RECODE_ISO2 "ISO-8859-2"
+#define EKG_RECODE_UTF8 "UTF-8"
 
 void *ekg_convert_string_init(const char *from, const char *to, void **rev);
 void ekg_convert_string_destroy(void *ptr);
@@ -23,19 +21,19 @@ string_t ekg_convert_string_t(string_t s, const char *from, const char *to);
 void changed_console_charset(const char *name);
 int ekg_converters_display(int quiet);
 
-void ekg_recode_inc_ref(enum ekg_recode_name enc);
-void ekg_recode_dec_ref(enum ekg_recode_name enc);
+void ekg_recode_inc_ref(const gchar *enc);
+void ekg_recode_dec_ref(const gchar *enc);
 
-char *ekg_recode_from_locale(enum ekg_recode_name enc, char *buf);
-char *ekg_recode_to_locale(enum ekg_recode_name enc, char *buf);
+char *ekg_recode_from_locale(const gchar *enc, char *buf);
+char *ekg_recode_to_locale(const gchar *enc, char *buf);
 
-char *ekg_recode_from_locale_dup(enum ekg_recode_name enc, const char *buf);
-char *ekg_recode_to_locale_dup(enum ekg_recode_name enc, const char *buf);
+char *ekg_recode_from_locale_dup(const gchar *enc, const char *buf);
+char *ekg_recode_to_locale_dup(const gchar *enc, const char *buf);
 
-const char *ekg_recode_from_locale_use(enum ekg_recode_name enc, const char *buf);
-const char *ekg_recode_to_locale_use(enum ekg_recode_name enc, const char *buf);
+const char *ekg_recode_from_locale_use(const gchar *enc, const char *buf);
+const char *ekg_recode_to_locale_use(const gchar *enc, const char *buf);
 
-#define recode_xfree(org, ret) do { if (org != ret) xfree((char *) ret); } while(0); 
+#define recode_xfree(org, ret) xfree((char *) ret);
 
 /* CP-1250 */
 #define ekg_recode_cp_inc()	ekg_recode_inc_ref(EKG_RECODE_CP)
