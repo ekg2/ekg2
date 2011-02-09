@@ -694,7 +694,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 			dcc_filename_set(D, (const char *) d->file_info.filename);
 			dcc_size_set(D, d->file_info.size);
 
-			print("dcc_get_offer", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), itoa(dcc_id_get(D)));
+			print("dcc_get_offer", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), ekg_itoa(d->file_info.size), ekg_itoa(dcc_id_get(D)));
 
 			if (config_dcc_dir)
 				path = saprintf("%s/%s", config_dcc_dir, dcc_filename_get(D));
@@ -702,7 +702,7 @@ WATCHER(gg_dcc_handler)	/* tymczasowy */
 				path = xstrdup(dcc_filename_get(D));
 
 			if (!stat(path, &st) && st.st_size < d->file_info.size)
-				print("dcc_get_offer_resume", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), itoa(d->file_info.size), itoa(dcc_id_get(D)));
+				print("dcc_get_offer_resume", format_user(session_find(uin), dcc_uid_get(D)), dcc_filename_get(D), ekg_itoa(d->file_info.size), ekg_itoa(dcc_id_get(D)));
 			
 			xfree(path);
 

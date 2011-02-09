@@ -89,7 +89,7 @@ static WATCHER(gg_handle_register)	/* tymczasowy */
 		goto fail;
 	}
 
-	print("register", itoa(p->uin));
+	print("register", ekg_itoa(p->uin));
 	gg_register_done = 1;
 
 	tmp = saprintf("gg:%d", p->uin);
@@ -196,7 +196,7 @@ static WATCHER(gg_handle_unregister)	/* tymczasowy */
 		goto fail;
 	}
 
-	print("unregister", itoa(s->uin));
+	print("unregister", ekg_itoa(s->uin));
 
 fail:
 	list_remove(&gg_unregisters, h, 0);

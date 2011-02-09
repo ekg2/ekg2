@@ -401,7 +401,7 @@ char *python_geterror(script_t *s) {
 
 	if ((hook = PyObject_GetAttrString(v, "lineno"))) {
 		string_append_c(str, ':');
-		string_append(str, itoa(PyInt_AsLong(hook)));
+		string_append(str, ekg_itoa(PyInt_AsLong(hook)));
 		Py_DECREF(hook);
 	} 
 	string_append_c(str, '\n');

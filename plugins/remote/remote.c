@@ -148,7 +148,7 @@ static const char *rc_var_get_value(variable_t *v) {
 		case VAR_INT:
 		case VAR_BOOL:
 		case VAR_MAP:
-			return itoa(*((int *) v->ptr));
+			return ekg_itoa(*((int *) v->ptr));
 
 		case VAR_THEME:
 		case VAR_FILE:
@@ -391,7 +391,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 
 			remote_writefd(fd, "+LOGIN", NULL);
 			if (rc_last_mail_count > 0)
-				remote_writefd(fd, "MAILCOUNT", itoa(rc_last_mail_count), NULL);		/* nie najszczesliwsze miejsce, ale nie mam pomyslu gdzie indziej */
+				remote_writefd(fd, "MAILCOUNT", ekg_itoa(rc_last_mail_count), NULL);		/* nie najszczesliwsze miejsce, ale nie mam pomyslu gdzie indziej */
 
 		} else {
 			debug_error("unknown command: %s\n", arr[0]);
@@ -428,7 +428,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 			/* BIGNOTE: 
 			 * 	here send all remote-vars, which we want to show outside
 			 */
-			remote_writefd(fd, "CONFIG", "remote:detach", itoa(rc_detach), NULL);
+			remote_writefd(fd, "CONFIG", "remote:detach", ekg_itoa(rc_detach), NULL);
 			remote_writefd(fd, "CONFIG", "remote:remote_control", rc_paths, NULL);
 			remote_writefd(fd, "+CONFIG", NULL);
 
@@ -464,7 +464,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 
 			for (pl = plugins; pl; pl = pl->next) {
 				const plugin_t *p = pl->data;
-				remote_writefd(fd, "PLUGIN", p->name, itoa(p->prio), NULL);
+				remote_writefd(fd, "PLUGIN", p->name, ekg_itoa(p->prio), NULL);
 
 				if (p->params) {
 					int i;
@@ -515,7 +515,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 						/* XXX, zakladamy ze backlog jest posortowany w/g czasu */
 
 						for (i = from; i; i--) {
-							remote_writefd(fd, "BACKLOG", itoa(w->id), itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
+							remote_writefd(fd, "BACKLOG", ekg_itoa(w->id), ekg_itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
 						}
 					}
 				} else if (!xstrcmp(arr[1], "FROMTIME")) {
@@ -532,7 +532,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 
 						for (i = n->backlog_size; i; i--) {
 							if (n->backlog[i-1]->ts >= ts)
-								remote_writefd(fd, "BACKLOG", itoa(w->id), itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
+								remote_writefd(fd, "BACKLOG", ekg_itoa(w->id), ekg_itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
 						}
 					}
 				}
@@ -546,7 +546,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 						continue;
 
 					for (i = n->backlog_size; i; i--) {
-						remote_writefd(fd, "BACKLOG", itoa(w->id), itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
+						remote_writefd(fd, "BACKLOG", ekg_itoa(w->id), ekg_itoa(n->backlog[i-1]->ts), n->backlog[i-1]->str, NULL);
 					}
 				}
 			}
@@ -558,10 +558,10 @@ static WATCHER_LINE(rc_input_handler_line) {
 
 			for (s = sessions; s; s = s->next) {
 				remote_writefd(fd, "SESSION", s->uid, (s->plugin) ? ((plugin_t *) s->plugin)->name : "-", NULL);
-				remote_writefd(fd, "SESSIONINFO", s->uid, "STATUS", itoa(s->status), NULL);
+				remote_writefd(fd, "SESSIONINFO", s->uid, "STATUS", ekg_itoa(s->status), NULL);
 
 				if (s->connected)
-					remote_writefd(fd, "SESSIONINFO", s->uid, "CONNECTED", itoa(s->connected), NULL);
+					remote_writefd(fd, "SESSIONINFO", s->uid, "CONNECTED", ekg_itoa(s->connected), NULL);
 				if (s->alias)
 					remote_writefd(fd, "SESSIONINFO", s->uid, "ALIAS", s->alias, NULL);
 			}
@@ -573,25 +573,25 @@ static WATCHER_LINE(rc_input_handler_line) {
 			for (w = windows; w; w = w->next) {
 				remote_window_t *n;
 
-				remote_writefd(fd, "WINDOW", itoa(w->id), w->target, NULL);	/* NOTE: w->target can be NULL */
+				remote_writefd(fd, "WINDOW", ekg_itoa(w->id), w->target, NULL);	/* NOTE: w->target can be NULL */
 
 				if (w->alias)
-					remote_writefd(fd, "WINDOWINFO", itoa(w->id), "ALIAS", w->alias, NULL);
+					remote_writefd(fd, "WINDOWINFO", ekg_itoa(w->id), "ALIAS", w->alias, NULL);
 				if (w->session)
-					remote_writefd(fd, "WINDOWINFO", itoa(w->id), "SESSION", w->session->uid, NULL);
+					remote_writefd(fd, "WINDOWINFO", ekg_itoa(w->id), "SESSION", w->session->uid, NULL);
 				if (w->act)
-					remote_writefd(fd, "WINDOWINFO", itoa(w->id), "ACTIVITY", itoa(w->act), NULL);
+					remote_writefd(fd, "WINDOWINFO", ekg_itoa(w->id), "ACTIVITY", ekg_itoa(w->act), NULL);
 
 				if ((n = w->priv_data)) {
 					if (n->last_irctopic)
-						remote_writefd(fd, "WINDOWINFO", itoa(w->id), "IRCTOPIC", n->last_irctopic, NULL);
+						remote_writefd(fd, "WINDOWINFO", ekg_itoa(w->id), "IRCTOPIC", n->last_irctopic, NULL);
 					if (n->last_irctopicby)
-						remote_writefd(fd, "WINDOWINFO", itoa(w->id), "IRCTOPICBY", n->last_irctopicby, NULL);
+						remote_writefd(fd, "WINDOWINFO", ekg_itoa(w->id), "IRCTOPICBY", n->last_irctopicby, NULL);
 					if (n->last_ircmode)
-						remote_writefd(fd, "WINDOWINFO", itoa(w->id), "IRCTOPICMODE", n->last_ircmode, NULL);
+						remote_writefd(fd, "WINDOWINFO", ekg_itoa(w->id), "IRCTOPICMODE", n->last_ircmode, NULL);
 				}
 			}
-			remote_writefd(fd, "WINDOW_SWITCH", itoa(window_current->id), NULL);
+			remote_writefd(fd, "WINDOW_SWITCH", ekg_itoa(window_current->id), NULL);
 			remote_writefd(fd, "+WINDOW", NULL);
 
 		} else if (!xstrcmp(cmd, "REQUSERLISTS")) {
@@ -605,7 +605,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 			for (s = sessions; s; s = s->next) {
 				for (u = s->userlist; u; u = u->next) {
 					char *groups = (u->groups) ? group_to_string(u->groups, 1, 0) : NULL;
-					remote_writefd(fd, "SESSIONITEM", s->uid, fix(u->uid), itoa(u->status), fix(u->nickname), fix(groups), fix(u->descr), NULL);
+					remote_writefd(fd, "SESSIONITEM", s->uid, fix(u->uid), ekg_itoa(u->status), fix(u->nickname), fix(groups), fix(u->descr), NULL);
 					xfree(groups);
 				}
 			}
@@ -614,7 +614,7 @@ static WATCHER_LINE(rc_input_handler_line) {
 			for (w = windows; w; w = w->next) {
 				for (u = w->userlist; u; u = u->next) {
 					char *groups = (u->groups) ? group_to_string(u->groups, 1, 0) : NULL;
-					remote_writefd(fd, "WINDOWITEM", itoa(w->id), fix(u->uid), itoa(u->status), fix(u->nickname), fix(groups), fix(u->descr), NULL);
+					remote_writefd(fd, "WINDOWITEM", ekg_itoa(w->id), fix(u->uid), ekg_itoa(u->status), fix(u->nickname), fix(groups), fix(u->descr), NULL);
 					xfree(groups);
 				}
 
@@ -1131,7 +1131,7 @@ static QUERY(remote_postinit) {
 	printf("\n");
 
 	/* XXX, haslo pozniej */
-	variable_set("remote:password", itoa(getpid()));
+	variable_set("remote:password", ekg_itoa(getpid()));
 	printf("Your password is: %s\n", rc_password);
 
 	variable_set("remote:first_run", "0");
@@ -1154,20 +1154,20 @@ static QUERY(remote_ui_is_initialized) {
 static QUERY(remote_ui_window_clear) {
 	window_t *w	= *(va_arg(ap, window_t **));
 
-	remote_broadcast("WINDOW_CLEAR", itoa(w->id), NULL);
+	remote_broadcast("WINDOW_CLEAR", ekg_itoa(w->id), NULL);
 	return 0;
 }
 
 static QUERY(remote_ui_window_new) {
 	window_t *w	= *(va_arg(ap, window_t **));
 
-	remote_broadcast("WINDOW_NEW", itoa(w->id), w->target, NULL);	/* w->target can be NULL */
+	remote_broadcast("WINDOW_NEW", ekg_itoa(w->id), w->target, NULL);	/* w->target can be NULL */
 
 	if (w->alias)
-		remote_broadcast("WINDOWINFO", itoa(w->id), "ALIAS", w->alias, NULL);
+		remote_broadcast("WINDOWINFO", ekg_itoa(w->id), "ALIAS", w->alias, NULL);
 
 	if (w->session)
-		remote_broadcast("WINDOWINFO", itoa(w->id), "SESSION", w->session->uid, NULL);
+		remote_broadcast("WINDOWINFO", ekg_itoa(w->id), "SESSION", w->session->uid, NULL);
 
 	remote_window_new(w);
 	return 0;
@@ -1176,7 +1176,7 @@ static QUERY(remote_ui_window_new) {
 static QUERY(remote_ui_window_kill) {
 	window_t *w	= *(va_arg(ap, window_t **));
 
-	remote_broadcast("WINDOW_KILL", itoa(w->id), NULL);
+	remote_broadcast("WINDOW_KILL", ekg_itoa(w->id), NULL);
 
 	remote_window_kill(w);
 	return 0;
@@ -1185,7 +1185,7 @@ static QUERY(remote_ui_window_kill) {
 static QUERY(remote_ui_window_switch) {
 	window_t *w	= *(va_arg(ap, window_t **));
 
-	remote_broadcast("WINDOW_SWITCH", itoa(w->id), NULL);
+	remote_broadcast("WINDOW_SWITCH", ekg_itoa(w->id), NULL);
 	return 0;
 }
 
@@ -1216,7 +1216,7 @@ static QUERY(remote_ui_window_print) {
 		remote_backlog_add(w, ln);
 	}
 
-	remote_broadcast("WINDOW_PRINT", itoa(w->id), itoa(line->ts), fstr, NULL);		/* XXX, using id is ok? */
+	remote_broadcast("WINDOW_PRINT", ekg_itoa(w->id), ekg_itoa(line->ts), fstr, NULL);		/* XXX, using id is ok? */
 
 cleanup:
 	fstring_free(line);
@@ -1234,7 +1234,7 @@ static QUERY(remote_session_added) {
 	}
 
 	remote_broadcast("SESSION", s->uid, (s->plugin) ? ((plugin_t *) s->plugin)->name : "-", NULL);
-	remote_broadcast("SESSIONINFO", s->uid, "STATUS", itoa(s->status), NULL);
+	remote_broadcast("SESSIONINFO", s->uid, "STATUS", ekg_itoa(s->status), NULL);
 
 	/* NOTE; assuming: connected = 0, alias = NULL */
 	return 0;
@@ -1281,9 +1281,9 @@ static QUERY(remote_ui_window_target_changed) {
 	window_t *w = *(va_arg(ap, window_t **));
 
 /* wysylamy wszystko, bo nie wiemy co sie zmienilo, a co nie */
-	remote_broadcast("WINDOWINFO", itoa(w->id), "ALIAS", w->alias, NULL);
-	remote_broadcast("WINDOWINFO", itoa(w->id), "TARGET", w->target, NULL);
-	remote_broadcast("WINDOWINFO", itoa(w->id), "SESSION", w->session ? w->session->uid : NULL, NULL);
+	remote_broadcast("WINDOWINFO", ekg_itoa(w->id), "ALIAS", w->alias, NULL);
+	remote_broadcast("WINDOWINFO", ekg_itoa(w->id), "TARGET", w->target, NULL);
+	remote_broadcast("WINDOWINFO", ekg_itoa(w->id), "SESSION", w->session ? w->session->uid : NULL, NULL);
 	return 0;
 }
 
@@ -1291,7 +1291,7 @@ static QUERY(remote_ui_window_act_changed) {
 	window_t *w = *(va_arg(ap, window_t **));		/* note: since r4642 */
 	/* XXX, in_typing */
 
-	remote_broadcast("WINDOWINFO", itoa(w->id), "ACTIVITY", itoa(w->act), NULL);
+	remote_broadcast("WINDOWINFO", ekg_itoa(w->id), "ACTIVITY", ekg_itoa(w->act), NULL);
 	return 0;
 }
 
@@ -1337,7 +1337,7 @@ static QUERY(remote_userlist_changed) {
 		return 0;
 	}
 
-	remote_broadcast("USERINFO", s->uid, u->uid, itoa(u->status), u->descr, NULL);
+	remote_broadcast("USERINFO", s->uid, u->uid, ekg_itoa(u->status), u->descr, NULL);
 
 	return 0;
 }
@@ -1397,7 +1397,7 @@ static TIMER(remote_statusbar_timer) {
 	if (query_emit(NULL, "mail-count", &mail_count) != -2) {
 		if (mail_count != rc_last_mail_count) {
 			rc_last_mail_count = mail_count;
-			remote_broadcast("MAILCOUNT", itoa(mail_count), NULL);
+			remote_broadcast("MAILCOUNT", ekg_itoa(mail_count), NULL);
 		}
 	}
 
@@ -1413,19 +1413,19 @@ static TIMER(remote_statusbar_timer) {
 	if (xstrcmp(irctopic, r->last_irctopic)) {
 		xfree(r->last_irctopic);
 		r->last_irctopic = irctopic;
-		remote_broadcast("WINDOWINFO", itoa(window_current->id), "IRCTOPIC", irctopic, NULL);
+		remote_broadcast("WINDOWINFO", ekg_itoa(window_current->id), "IRCTOPIC", irctopic, NULL);
 	}
 
 	if (xstrcmp(irctopicby, r->last_irctopicby)) {
 		xfree(r->last_irctopicby);
 		r->last_irctopicby = irctopicby;
-		remote_broadcast("WINDOWINFO", itoa(window_current->id), "IRCTOPICBY", irctopicby, NULL);
+		remote_broadcast("WINDOWINFO", ekg_itoa(window_current->id), "IRCTOPICBY", irctopicby, NULL);
 	}
 
 	if (xstrcmp(ircmode, r->last_ircmode)) {
 		xfree(r->last_ircmode);
 		r->last_ircmode = ircmode;
-		remote_broadcast("WINDOWINFO", itoa(window_current->id), "IRCTOPICMODE", ircmode, NULL);
+		remote_broadcast("WINDOWINFO", ekg_itoa(window_current->id), "IRCTOPICMODE", ircmode, NULL);
 	}
 
 	return 0;

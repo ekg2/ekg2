@@ -80,8 +80,8 @@ COMMAND(logsoracle_cmd_status)
 {
 	printq("logsoracle_status");
 	printq("logsoracle_status_con", ( oralog_is_connected() ? "yes" : "no" ) );
-	printq("logsoracle_status_sta", itoa( (long int)logsoracle_stat_get_status() ) );
-	printq("logsoracle_status_msg", itoa( (long int)logsoracle_stat_get_message() ) );
+	printq("logsoracle_status_sta", ekg_itoa( (long int)logsoracle_stat_get_status() ) );
+	printq("logsoracle_status_msg", ekg_itoa( (long int)logsoracle_stat_get_message() ) );
 	
 	return 0;
 }

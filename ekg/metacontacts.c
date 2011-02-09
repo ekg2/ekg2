@@ -198,7 +198,7 @@ COMMAND(cmd_metacontact)
 			else	
 				tmp = format_string(format_find(ekg_status_label(u->status, u->descr, "metacontact_info_")), get_user_name(u), u->descr);
 
-			printq("metacontact_item_list", session_alias_uid_n(i->s_uid), i->name, tmp, itoa(i->prio));
+			printq("metacontact_item_list", session_alias_uid_n(i->s_uid), i->name, tmp, ekg_itoa(i->prio));
 			xfree(tmp);
 		}
 

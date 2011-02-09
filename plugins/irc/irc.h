@@ -20,9 +20,9 @@
 
 #define DOT(a,x,y,z,error) \
 	print_info("__status", z, a, session_name(z), x, y->hostname, y->address, \
-			itoa(y->port < 0 ? \
+			ekg_itoa(y->port < 0 ? \
 				session_int_get(z, "port") < 0 ? DEFPORT : session_int_get(z, "port") : y->port), \
-			itoa(y->family), error ? strerror(error) : "")
+			ekg_itoa(y->family), error ? strerror(error) : "")
 
 #include <ekg/dynstuff.h>
 #include <ekg/plugins.h>

@@ -210,16 +210,16 @@ static int event_remove(unsigned int id, int quiet) {
 	}
 	
 	if (!(ev = event_find_id(id))) {
-		printq("events_del_noexist", itoa(id));
+		printq("events_del_noexist", ekg_itoa(id));
 		return -1;
 	}
 
 	events_remove(ev);
 
-	printq("events_del", itoa(id));
+	printq("events_del", ekg_itoa(id));
 
 cleanup:	
-/*	  query_emit(NULL, "event-removed", itoa(id)); */	/* XXX, incorrect. */
+/*	  query_emit(NULL, "event-removed", ekg_itoa(id)); */	/* XXX, incorrect. */
 
 	return 0;
 }
@@ -253,7 +253,7 @@ static int events_list(int id, int quiet) {
 
 	for (ev = events; ev; ev = ev->next) {
 		if (!id || id == ev->id)
-			printq("events_list", ev->name, itoa(ev->prio), ev->target, ev->action, itoa(ev->id));
+			printq("events_list", ev->name, ekg_itoa(ev->prio), ev->target, ev->action, ekg_itoa(ev->id));
 	}
 
 	return 0;

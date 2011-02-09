@@ -177,7 +177,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 						}
 
 						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_mx",
-							host, tmp_addr, itoa(prio));
+							host, tmp_addr, ekg_itoa(prio));
 						displayed = 1;
 						break;
 					}
@@ -199,7 +199,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 						}
 
 						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_srv",
-							host, tmp_addr, itoa(port), itoa(prio), itoa(weight));
+							host, tmp_addr, ekg_itoa(port), ekg_itoa(prio), ekg_itoa(weight));
 						displayed = 1;
 						break;
 					}
@@ -210,7 +210,7 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 						tcp_print_payload((u_char *) cur, payload);
 
 						print_window_w(window_status, EKG_WINACT_MSG, "sniff_dns_entry_?", 
-							host, itoa(type), itoa(payload));
+							host, ekg_itoa(type), ekg_itoa(payload));
 						displayed = 1;
 				}
 				cur += payload;		/* skip payload */

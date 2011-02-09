@@ -885,7 +885,7 @@ char *string_free(string_t s, int free_string)
 }
 
 /*
- * itoa()
+ * ekg_itoa()
  *
  * prosta funkcja, która zwraca tekstow± reprezentacjê liczby. w obrêbie
  * danego wywo³ania jakiej¶ funkcji lub wyra¿enia mo¿e byæ wywo³ania 10
@@ -896,7 +896,7 @@ char *string_free(string_t s, int free_string)
  *
  * zwraca adres do bufora, którego _NIE_NALE¯Y_ zwalniaæ.
  */
-const char *itoa(long int i)
+const char *ekg_itoa(long int i)
 {
 	static char bufs[10][16];
 	static int index = 0;
@@ -1430,7 +1430,7 @@ void private_item_set(private_data_t **data, const char *item_name, const char *
 }
 
 void private_item_set_int(private_data_t **data, const char *item_name, int value) {
-	private_item_set(data, item_name, value?itoa(value):NULL);
+	private_item_set(data, item_name, value?ekg_itoa(value):NULL);
 }
 
 GSList *g_slist_destroy_full(GSList *list, GDestroyNotify free_func) {

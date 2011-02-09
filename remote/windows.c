@@ -389,7 +389,7 @@ EXPORTNOT void window_session_set(window_t *w, session_t *new_session) {
 
 void window_switch(int id) {
 	/* XXX? */
-	remote_request("REQWINDOW_SWITCH", itoa(id), NULL);
+	remote_request("REQWINDOW_SWITCH", ekg_itoa(id), NULL);
 }
 
 int window_session_cycle(window_t *w) {
@@ -397,7 +397,7 @@ int window_session_cycle(window_t *w) {
 		return -1;
 
 	/* XXX, assume w == window_current? */
-	remote_request("REQSESSION_CYCLE", itoa(w->id), NULL);
+	remote_request("REQSESSION_CYCLE", ekg_itoa(w->id), NULL);
 	return 0;		/* it won't hurt */
 
 	/* NOTE: SESSION_CHANGED emitowane gdy sie zmienia session_current */

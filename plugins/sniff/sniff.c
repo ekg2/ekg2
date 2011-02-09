@@ -600,9 +600,9 @@ static COMMAND(sniff_command_connections) {
 		print_window("__status", session, EKG_WINACT_MSG, 1,
 			"sniff_tcp_connection", 
 				inet_ntop(AF_INET, &c->srcip, src_ip, sizeof(src_ip)),
-				itoa(c->srcport),
+				ekg_itoa(c->srcport),
 				inet_ntop(AF_INET, &c->dstip, dst_ip, sizeof(dst_ip)),
-				itoa(c->dstport));
+				ekg_itoa(c->dstport));
 	}
 	return 0;
 }
@@ -661,9 +661,9 @@ static QUERY(sniff_status_show) {
 	}
 
 	debug("pcap_stats() recv: %d drop: %d ifdrop: %d\n", stats.ps_recv, stats.ps_drop, stats.ps_ifdrop);
-	print("sniff_pkt_rcv",	session_name(s), itoa(stats.ps_recv));
-	print("sniff_pkt_drop",	session_name(s), itoa(stats.ps_drop));
-	print("sniff_conn_db",	session_name(s), itoa(list_count(tcp_connections)));
+	print("sniff_pkt_rcv",	session_name(s), ekg_itoa(stats.ps_recv));
+	print("sniff_pkt_drop",	session_name(s), ekg_itoa(stats.ps_drop));
+	print("sniff_conn_db",	session_name(s), ekg_itoa(list_count(tcp_connections)));
 
 	return 0;
 }

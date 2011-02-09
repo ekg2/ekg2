@@ -573,10 +573,10 @@ WATCHER(ncurses_watch_stdin)
 		int i = 0, count = 0, success = 0;
 		binding_added_t *d;
 		int c;
-		array_add(&chars, xstrdup(itoa(ch)));
+		array_add(&chars, xstrdup(ekg_itoa(ch)));
 
 		while (count <= bindings_added_max && (c = wgetch(input)) != ERR) {
-			array_add(&chars, xstrdup(itoa(c)));
+			array_add(&chars, xstrdup(ekg_itoa(c)));
 			count++;
 		}
 

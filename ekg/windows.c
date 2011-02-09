@@ -605,11 +605,11 @@ COMMAND(cmd_window) {
 			if (w->id) {
 				if (w->target) {
 					if (!w->floating)
-						printq("window_list_query", itoa(w->id), w->alias ? w->alias : w->target);
+						printq("window_list_query", ekg_itoa(w->id), w->alias ? w->alias : w->target);
 					else
-						printq("window_list_floating", itoa(w->id), itoa(w->left), itoa(w->top), itoa(w->width), itoa(w->height), w->target);
+						printq("window_list_floating", ekg_itoa(w->id), ekg_itoa(w->left), ekg_itoa(w->top), ekg_itoa(w->width), ekg_itoa(w->height), w->target);
 				} else
-					printq("window_list_nothing", itoa(w->id));
+					printq("window_list_nothing", ekg_itoa(w->id));
 			}
 		}
 		return 0;
@@ -808,12 +808,12 @@ COMMAND(cmd_window) {
 		source = (params[2]) ? atoi(params[2]) : window_current->id;
 
 		if (!source) {
-			printq("window_invalid_move", itoa(source));
+			printq("window_invalid_move", ekg_itoa(source));
 			return -1;
 		}
 
 		if (!window_exist(source)) {
-			printq("window_doesnt_exist", itoa(source));
+			printq("window_doesnt_exist", ekg_itoa(source));
 			return -1;
 		}
 
@@ -833,7 +833,7 @@ COMMAND(cmd_window) {
 
 
 		if (!dest) {
-			printq("window_invalid_move", itoa(dest));
+			printq("window_invalid_move", ekg_itoa(dest));
 			return -1;
 		}
 

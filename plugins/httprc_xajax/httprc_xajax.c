@@ -266,10 +266,10 @@ QUERY(httprc_xajax_def_action)
 				/* it'd be easier if we'd got iface for creating xml files... */
 
 				string_append(p->collected, "<cmd n=\"ap\" t=\"LOG\" p=\"innerHTML\"><![CDATA[");
-				string_append(p->collected, itoa(nobr));
+				string_append(p->collected, ekg_itoa(nobr));
 				string_append(p->collected, (char *)data);
 				string_append(p->collected, " = ");
-				string_append(p->collected, itoa(w->id));
+				string_append(p->collected, ekg_itoa(w->id));
 				string_append(p->collected, " = ");
 				string_append(p->collected, line->str);
 				string_append(p->collected, "]]></cmd>");
@@ -305,7 +305,7 @@ QUERY(httprc_xajax_def_action)
 			string_append(p->collected, "<cmd n=\"ap\" t=\"LOG\" p=\"innerHTML\"><![CDATA[");
 			string_append(p->collected, (char *)data);
 			string_append(p->collected, " = ID: ");
-			string_append(p->collected, itoa(w->id));
+			string_append(p->collected, ekg_itoa(w->id));
 			string_append(p->collected, " = targ:");
 			string_append(p->collected, w->target?w->target:"empty_target");
 			string_append(p->collected, " = sess:");
@@ -335,9 +335,9 @@ QUERY(httprc_xajax_def_action)
 			string_append(p->collected, "<cmd n=\"ap\" t=\"LOG\" p=\"innerHTML\"><![CDATA[");
 			string_append(p->collected, (char *)data);
 			string_append(p->collected, " = current: ");
-			string_append(p->collected, itoa(window_current->id));
+			string_append(p->collected, ekg_itoa(window_current->id));
 			string_append(p->collected, " = ID: ");
-			string_append(p->collected, itoa(w->id));
+			string_append(p->collected, ekg_itoa(w->id));
 			string_append(p->collected, " = targ:");
 			string_append(p->collected, window_target(w));
 			string_append(p->collected, " = sess:");
@@ -374,7 +374,7 @@ QUERY(httprc_xajax_def_action)
 		if (!nobr)
 		{
 			string_append(p->collected, "<cmd n=\"ce\" t=\"LOG\" p=\"l");
-			string_append(p->collected, itoa(xxxid++));
+			string_append(p->collected, ekg_itoa(xxxid++));
 			string_append(p->collected, "\"><![CDATA[br]]></cmd>");
 		}
 		if (p->fd != -1 && p->collected->len && p->waiting)
@@ -418,7 +418,7 @@ const char *http_timestamp(time_t t) {
 	const char *format = format_find("timestamp");
 
 	if (!format)
-		return itoa(t);
+		return ekg_itoa(t);
 
 	i = i % 2;
 	if (!strftime(buf[i], sizeof(buf[0]), format, tm) && xstrlen(format)>0)
@@ -657,7 +657,7 @@ WATCHER(http_watch_read) {
 			
 			htheader = string_init("gwins = new Array();\n");
 			string_append (htheader, "current_window = ");
-			string_append (htheader, itoa(window_current->id));
+			string_append (htheader, ekg_itoa(window_current->id));
 			string_append (htheader, ";\n");
 
 			for (w2 = windows; w2; w2 = w2->next) {

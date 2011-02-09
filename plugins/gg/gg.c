@@ -296,7 +296,7 @@ static QUERY(gg_status_show_handle) {
 		xfree(tmp);
 
 		if ((mqc = msg_queue_count_session(s->uid)))
-			print("show_status_msg_queue", itoa(mqc));
+			print("show_status_msg_queue", ekg_itoa(mqc));
 		return 0;
 	}
 
@@ -318,10 +318,10 @@ static QUERY(gg_status_show_handle) {
 	print("show_status_status", tmp, priv);
 #ifdef __GG_LIBGADU_HAVE_OPENSSL
 	if (g->sess->ssl)
-		print("show_status_server_tls", inet_ntoa(i), itoa(g->sess->port));
+		print("show_status_server_tls", inet_ntoa(i), ekg_itoa(g->sess->port));
 	else
 #endif
-		print("show_status_server", inet_ntoa(i), itoa(g->sess->port));
+		print("show_status_server", inet_ntoa(i), ekg_itoa(g->sess->port));
 
 	xfree(tmp);
 	xfree(priv);
@@ -975,7 +975,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 
 static void gg_session_handler_ack(session_t *s, struct gg_event *e) {
 	char *__rcpt	= saprintf("gg:%d", e->event.ack.recipient);
-	char *__seq	= xstrdup(itoa(e->event.ack.seq));
+	char *__seq	= xstrdup(ekg_itoa(e->event.ack.seq));
 	int __status;
 
 /* ifndef + defines for old libgadu */
@@ -1339,7 +1339,7 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 					dcc_filename_set(d, dccdata->filename);		/* XXX< sanityzuj, cp -> iso */
 					dcc_size_set(d, dccdata->size);
 
-					print("dcc_get_offer", format_user(s, uid), d->filename, itoa(d->size), itoa(d->id));
+					print("dcc_get_offer", format_user(s, uid), d->filename, ekg_itoa(d->size), ekg_itoa(d->id));
 
 					if (config_dcc_dir)
 						path = saprintf("%s/%s", config_dcc_dir, d->filename);
@@ -1347,7 +1347,7 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 						path = xstrdup(d->filename);
 
 					if (!stat(path, &st) && st.st_size < d->size)
-						print("dcc_get_offer_resume", format_user(s, uid), d->filename, itoa(d->size), itoa(d->id));
+						print("dcc_get_offer_resume", format_user(s, uid), d->filename, ekg_itoa(d->size), ekg_itoa(d->id));
 
 					xfree(path);
 
@@ -1358,7 +1358,7 @@ WATCHER_SESSION(gg_session_handler) {		/* tymczasowe */
 				{
 					dcc_t *d = dcc_add(s, uid, DCC_VOICE, dccdata);
 
-					print("dcc_voice_offer", format_user(s, uid), itoa(d->id));
+					print("dcc_voice_offer", format_user(s, uid), ekg_itoa(d->id));
 					break;
 				}
 

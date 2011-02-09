@@ -132,7 +132,7 @@ PyObject *ekg_config_set(ekg_configObj * self, PyObject * key, PyObject * value)
 			PyErr_SetString(PyExc_TypeError, "invalid type");
 			return NULL;
 		}
-		variable_set(name, itoa(PyInt_AsLong(value)));
+		variable_set(name, ekg_itoa(PyInt_AsLong(value)));
 	} else {
 		if (!PyString_Check(value)) {
 			PyErr_SetString(PyExc_TypeError, "invalid type");

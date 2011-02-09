@@ -280,9 +280,9 @@ const char *current_prompt()
 
 	act = window_activity();
 	if (act)
-		tmp = format_string(format_find(format_act), sid, itoa(window_current->id), act, window_current->target);
+		tmp = format_string(format_find(format_act), sid, ekg_itoa(window_current->id), act, window_current->target);
 	else
-		tmp = format_string(format_find(format), sid, itoa(window_current->id), window_current->target);
+		tmp = format_string(format_find(format), sid, ekg_itoa(window_current->id), window_current->target);
 
 	g_strlcpy(buf, tmp, sizeof(buf));
 	xfree(tmp);
@@ -477,7 +477,7 @@ char *window_activity()
 
 		if (!first)
 			string_append_c(s, ',');
-		string_append(s, itoa(w->id));
+		string_append(s, ekg_itoa(w->id));
 		first = 0;
 	}
 

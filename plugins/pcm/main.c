@@ -133,13 +133,13 @@ CODEC_CONTROL(pcm_codec_control) {
 				debug("[pcm_codec_control] AUDIO_CONTROL_GET attr: %s value: 0x%x\n", attr, val);
 				if (!xstrcmp(attr, "format"))		*val = xstrdup("pcm");
 				else if (way == AUDIO_READ) {
-					if (!xstrcmp(attr, "freq"))		*val = xstrdup(itoa(priv->ifreq));
-					else if (!xstrcmp(attr, "sample"))	*val = xstrdup(itoa(priv->ibps));
-					else if (!xstrcmp(attr, "channels"))	*val = xstrdup(itoa(priv->ich));
+					if (!xstrcmp(attr, "freq"))		*val = xstrdup(ekg_itoa(priv->ifreq));
+					else if (!xstrcmp(attr, "sample"))	*val = xstrdup(ekg_itoa(priv->ibps));
+					else if (!xstrcmp(attr, "channels"))	*val = xstrdup(ekg_itoa(priv->ich));
 				} else if (way == AUDIO_WRITE) {
-					if (!xstrcmp(attr, "freq"))		*val = xstrdup(itoa(priv->ofreq));
-					else if (!xstrcmp(attr, "sample"))	*val = xstrdup(itoa(priv->obps));
-					else if (!xstrcmp(attr, "channels"))	*val = xstrdup(itoa(priv->och));
+					if (!xstrcmp(attr, "freq"))		*val = xstrdup(ekg_itoa(priv->ofreq));
+					else if (!xstrcmp(attr, "sample"))	*val = xstrdup(ekg_itoa(priv->obps));
+					else if (!xstrcmp(attr, "channels"))	*val = xstrdup(ekg_itoa(priv->och));
 				} else					*val = NULL;
 
 			}

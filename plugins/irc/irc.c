@@ -2001,11 +2001,11 @@ static COMMAND(irc_command_names) {
 		print_info(channame, session, "none", buf->str);
 
 	print_info(channame, session, "none2", "");
-#define plvl(x) itoa(sum[x])
+#define plvl(x) ekg_itoa(sum[x])
 	if (sum[1]+sum[3]+sum[4] != 0) /* has halfops, admins or owners */
-		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), cchn, itoa(count), plvl(0), plvl(1), plvl(2), plvl(5), plvl(3), plvl(4));
+		print_info(channame, session, "IRC_NAMES_TOTAL_H", session_name(session), cchn, ekg_itoa(count), plvl(0), plvl(1), plvl(2), plvl(5), plvl(3), plvl(4));
 	else
-		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), cchn, itoa(count), plvl(0), plvl(2), plvl(5));
+		print_info(channame, session, "IRC_NAMES_TOTAL", session_name(session), cchn, ekg_itoa(count), plvl(0), plvl(2), plvl(5));
 #undef plvl
 	xfree(cchn);
 	debug_white("[IRC_NAMES] levelcounts = %d %d %d %d %d %d\n", sum[0], sum[1], sum[2], sum[3], sum[4], sum[5]);
@@ -2506,7 +2506,7 @@ static COMMAND(irc_command_test) {
 	irc_private_t	*j = irc_private(session);
 	list_t		tlist = j->connlist;
 
-//#define DOT(a,x,y,z,error) print_info("__status", z, a, session_name(z), x, y->hostname, y->address, itoa(y->port), itoa(y->family), error ? strerror(error) : "")
+//#define DOT(a,x,y,z,error) print_info("__status", z, a, session_name(z), x, y->hostname, y->address, ekg_itoa(y->port), ekg_itoa(y->family), error ? strerror(error) : "")
 
 	for (tlist = j->connlist; tlist; tlist = tlist->next)
 		DOT("IRC_TEST", "Connect to:", ((connector_t *) tlist->data), session, 0);

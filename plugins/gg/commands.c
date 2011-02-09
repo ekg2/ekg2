@@ -458,7 +458,7 @@ static COMMAND(gg_command_away) {
 				char *descr_poss = utf8ndup(params0, GG_STATUS_DESCR_MAXSIZE);
 				char *descr_not_poss = xstrdup(params0 + xstrlen(descr_poss));
 
-				printq("descr_too_long", itoa(xstrlen(descr_not_poss)), descr_poss, descr_not_poss); /* XXX add new function utf8len() */
+				printq("descr_too_long", ekg_itoa(xstrlen(descr_not_poss)), descr_poss, descr_not_poss); /* XXX add new function utf8len() */
 				g->scroll_op = 0;
 
 				xfree(tmp);
@@ -813,7 +813,7 @@ static COMMAND(gg_command_msg) {
 			xfree(uid_tmp);
 
 			if (g->sess)
-				seq = itoa(gg_send_message_richtext(g->sess, (chat) ? GG_CLASS_CHAT : GG_CLASS_MSG, uin, 
+				seq = ekg_itoa(gg_send_message_richtext(g->sess, (chat) ? GG_CLASS_CHAT : GG_CLASS_MSG, uin, 
 						(unsigned char *) __msg, (unsigned char *) format, formatlen));
 			else
 				seq = "offline";
@@ -838,7 +838,7 @@ static COMMAND(gg_command_msg) {
 		}
 
 		if (g->sess) 
-			seq = itoa(gg_send_message_confer_richtext(g->sess, GG_CLASS_CHAT, realcount, uins, (unsigned char *) cpmsg, format, formatlen));
+			seq = ekg_itoa(gg_send_message_confer_richtext(g->sess, GG_CLASS_CHAT, realcount, uins, (unsigned char *) cpmsg, format, formatlen));
 		else
 			seq = "offline";
 

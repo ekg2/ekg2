@@ -90,7 +90,7 @@ void array_free(char **array);
 
 /* rozszerzenia libców */
 
-const char *itoa(long int i);
+const char *ekg_itoa(long int i);
 
 /*
  * handle private data

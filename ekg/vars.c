@@ -391,7 +391,7 @@ int variable_set(const char *name, const char *value) {
 
 				for (i = 0; v->map[i].label; i++)
 					if (!xstrcasecmp(v->map[i].label, value))
-						value = itoa(v->map[i].value);
+						value = ekg_itoa(v->map[i].value);
 			}
 
 			if (v->map && v->type == VAR_MAP && !xisdigit(*p)) {
@@ -436,7 +436,7 @@ int variable_set(const char *name, const char *value) {
 
 				g_strfreev(args);
 
-				value = itoa(k);
+				value = ekg_itoa(k);
 			}
 
 			p = value;

@@ -390,7 +390,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		char *sheaders	= NULL;
 		char *headers	= article_headers	? art->header->str	: NULL;
 		char *body	= article_body		? art->body->str	: NULL;
-		char *artid	= (char *) itoa(art->artid);
+		char *artid	= (char *) ekg_itoa(art->artid);
 		int modify	= 0;						/* XXX */
 
 		query_emit(NULL, "rss-message", &(s->uid), &uid, &sheaders, &headers, &artid, &(art->msgid), &body, &(art->new), &modify);

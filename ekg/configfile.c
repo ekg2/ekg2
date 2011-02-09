@@ -469,16 +469,16 @@ static void config_write_main(FILE *f)
 				strftime(buf, sizeof(buf), "%G%m%d%H%M.%S", tt);
 
 				if (t->persist)
-					fprintf(f, "at %s %s/%s %s\n", name, buf, itoa(t->period / 1000), (char*)(t->data));
+					fprintf(f, "at %s %s/%s %s\n", name, buf, ekg_itoa(t->period / 1000), (char*)(t->data));
 				else
 					fprintf(f, "at %s %s %s\n", name, buf, (char*)(t->data));
 			} else {
 				char *foo;
 
 				if (t->persist)
-					foo = saprintf("*/%s", itoa(t->period / 1000));
+					foo = saprintf("*/%s", ekg_itoa(t->period / 1000));
 				else
-					foo = saprintf("%s", itoa(t->ends.tv_sec));
+					foo = saprintf("%s", ekg_itoa(t->ends.tv_sec));
 
 				fprintf(f, "timer %s %s %s\n", name, foo, (char*)(t->data));
 

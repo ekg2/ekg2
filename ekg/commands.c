@@ -629,7 +629,7 @@ static void cmd_exec_child_handler(child_t *c, int pid, const char *name, int st
 {
 	int quiet = (name && name[0] == '^');
 
-	printq("process_exit", itoa(pid), name, itoa(status));
+	printq("process_exit", ekg_itoa(pid), name, ekg_itoa(status));
 }
 
 COMMAND(cmd_exec)
@@ -735,7 +735,7 @@ COMMAND(cmd_exec)
 		child_t *c;
 
 		for (c = children; c; c = c->next)
-			printq("process", itoa(c->pid), ((c->name) ? (c->name) : ("?")));
+			printq("process", ekg_itoa(c->pid), ((c->name) ? (c->name) : ("?")));
 
 		if (!children) {
 			printq("no_processes");
@@ -1478,7 +1478,7 @@ list_user:
 			resstatus = format_string(format_find(ekg_status_label(r->status, r->descr, /* resource_info? senseless */ "user_info_")), 
 					/* here r->name ? */
 					 get_user_name(u), r->descr);
-			printq("resource_info_status", r->name, resstatus, itoa(r->prio));
+			printq("resource_info_status", r->name, resstatus, ekg_itoa(r->prio));
 			xfree(resstatus);
 		}
 
@@ -1631,7 +1631,7 @@ list_user:
 		if (show) {
 			int __ip = user_private_item_get_int(u, "ip");
 
-			printq(tmp, format_user(session, u->uid), get_user_name(u), inet_ntoa(*((struct in_addr*) &__ip)), itoa(user_private_item_get_int(u, "port")), u->descr);
+			printq(tmp, format_user(session, u->uid), get_user_name(u), inet_ntoa(*((struct in_addr*) &__ip)), ekg_itoa(user_private_item_get_int(u, "port")), u->descr);
 			count++;
 		}
 	}
@@ -1742,7 +1742,7 @@ static COMMAND(cmd_set)
 					printq("variable", v->name, (value) ? ("1 (on)") : ("0 (off)"));
 				
 				if ((v->type == VAR_INT || v->type == VAR_MAP) && !v->map)
-					printq("variable", v->name, itoa(value));
+					printq("variable", v->name, ekg_itoa(value));
 
 				if (v->type == VAR_INT && v->map) {
 					char *tmp = NULL;
@@ -1763,7 +1763,7 @@ static COMMAND(cmd_set)
 				}
 
 				if (v->type == VAR_MAP && v->map) {
-					string_t s = string_init(itoa(value));
+					string_t s = string_init(ekg_itoa(value));
 					int i, first = 1;
 
 					for (i = 0; v->map[i].label; i++) {
@@ -2326,10 +2326,10 @@ static COMMAND(cmd_test_fds)
 				 */
 				if (sa->sa_family == AF_INET) {
 					xstrcat(buf, "socket, inet, *:");
-					xstrcat(buf, itoa(ntohs(sin->sin_port)));
+					xstrcat(buf, ekg_itoa(ntohs(sin->sin_port)));
 				} else if (sa->sa_family == AF_INET6) {
 					xstrcat(buf, "socket, inet6, *:");
-					xstrcat(buf, itoa(ntohs(sin->sin_port)));
+					xstrcat(buf, ekg_itoa(ntohs(sin->sin_port)));
 				} else
 					xstrcat(buf, "socket");
 			} else {
@@ -2341,7 +2341,7 @@ static COMMAND(cmd_test_fds)
 						xstrcat(buf, "socket, inet, ");
 						xstrcat(buf, inet_ntoa(sin->sin_addr));
 						xstrcat(buf, ":");
-						xstrcat(buf, itoa(ntohs(sin->sin_port)));
+						xstrcat(buf, ekg_itoa(ntohs(sin->sin_port)));
 						break;
 #ifdef HAVE_GETADDRINFO
 					case AF_INET6:
@@ -2353,12 +2353,12 @@ static COMMAND(cmd_test_fds)
 						xstrcat(buf, "strange?");
 #endif /* HAVE_INET_NTOP */
 						xstrcat(buf, ":");
-						xstrcat(buf, itoa(ntohs(sin6->sin6_port)));
+						xstrcat(buf, ekg_itoa(ntohs(sin6->sin6_port)));
 						break;
 #endif /* HAVE_GETADDRINFO */
 					default:
 						xstrcat(buf, "socket, ");
-						xstrcat(buf, itoa(sa->sa_family));
+						xstrcat(buf, ekg_itoa(sa->sa_family));
 				}
 			}
 		}
@@ -3180,7 +3180,7 @@ static COMMAND(cmd_at)
 						return -1;
 					}
 
-					freq_str += xstrlen(itoa(_period));
+					freq_str += xstrlen(ekg_itoa(_period));
 
 					if (xstrlen(freq_str)) {
 						switch (xtolower(*freq_str++)) {
@@ -3331,22 +3331,22 @@ static COMMAND(cmd_at)
 				g_strlcpy(tmp2, "every ", sizeof(tmp2));
 
 				if (days) {
-					g_strlcat(tmp2, itoa(days), sizeof(tmp2));
+					g_strlcat(tmp2, ekg_itoa(days), sizeof(tmp2));
 					g_strlcat(tmp2, "d ", sizeof(tmp2));
 				}
 
 				if (hours) {
-					g_strlcat(tmp2, itoa(hours), sizeof(tmp2));
+					g_strlcat(tmp2, ekg_itoa(hours), sizeof(tmp2));
 					g_strlcat(tmp2, "h ", sizeof(tmp2));
 				}
 
 				if (minutes) {
-					g_strlcat(tmp2, itoa(minutes), sizeof(tmp2));
+					g_strlcat(tmp2, ekg_itoa(minutes), sizeof(tmp2));
 					g_strlcat(tmp2, "m ", sizeof(tmp2));
 				}
 
 				if (sec) {
-					g_strlcat(tmp2, itoa(sec), sizeof(tmp2));
+					g_strlcat(tmp2, ekg_itoa(sec), sizeof(tmp2));
 					g_strlcat(tmp2, "s", sizeof(tmp2));
 				}
 			}
@@ -3422,7 +3422,7 @@ static COMMAND(cmd_timer)
 				return -1;
 			}
 
-			p += xstrlen(itoa(_period));
+			p += xstrlen(ekg_itoa(_period));
 
 			if (xstrlen(p)) {
 				switch (xtolower(*p++)) {
@@ -3973,13 +3973,13 @@ COMMAND(cmd_dcc)
 
 			switch (d->type) {
 				case DCC_SEND:
-					printq("dcc_show_pending_send", itoa(d->id), format_user(session, d->uid), d->filename);
+					printq("dcc_show_pending_send", ekg_itoa(d->id), format_user(session, d->uid), d->filename);
 					break;
 				case DCC_GET:
-					printq("dcc_show_pending_get", itoa(d->id), format_user(session, d->uid), d->filename);
+					printq("dcc_show_pending_get", ekg_itoa(d->id), format_user(session, d->uid), d->filename);
 					break;
 				case DCC_VOICE:
-					printq("dcc_show_pending_voice", itoa(d->id), format_user(session, d->uid));
+					printq("dcc_show_pending_voice", ekg_itoa(d->id), format_user(session, d->uid));
 					break;
 				default:
 					break;
@@ -3999,15 +3999,15 @@ COMMAND(cmd_dcc)
 
 			switch (d->type) {
 				case DCC_SEND:
-					printq("dcc_show_active_send", itoa(d->id), format_user(session, d->uid), d->filename, itoa(d->offset), itoa(d->size), 
-							(d->size) ? itoa(d->offset * 100 / d->size) : "?");
+					printq("dcc_show_active_send", ekg_itoa(d->id), format_user(session, d->uid), d->filename, ekg_itoa(d->offset), ekg_itoa(d->size), 
+							(d->size) ? ekg_itoa(d->offset * 100 / d->size) : "?");
 					break;
 				case DCC_GET:
-					printq("dcc_show_active_get", itoa(d->id), format_user(session, d->uid), d->filename, itoa(d->offset), itoa(d->size), 
-							(d->size) ? itoa(d->offset * 100 / d->size) : "?");
+					printq("dcc_show_active_get", ekg_itoa(d->id), format_user(session, d->uid), d->filename, ekg_itoa(d->offset), ekg_itoa(d->size), 
+							(d->size) ? ekg_itoa(d->offset * 100 / d->size) : "?");
 					break;
 				case DCC_VOICE:
-					printq("dcc_show_active_voice", itoa(d->id), format_user(session, d->uid));
+					printq("dcc_show_active_voice", ekg_itoa(d->id), format_user(session, d->uid));
 					break;
 				default:
 					break;
@@ -4080,7 +4080,7 @@ static COMMAND(cmd_plugin) {
 
 		for (pl = plugins; pl; pl = pl->next) {
 			const plugin_t *p = pl->data;
-			printq("plugin_list", p->name ? p->name : ("?"), itoa(p->prio));
+			printq("plugin_list", p->name ? p->name : ("?"), ekg_itoa(p->prio));
 		}
 
 		if (!plugins) {

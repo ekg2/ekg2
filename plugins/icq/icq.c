@@ -975,7 +975,7 @@ static COMMAND(icq_command_addssi) {
 		} else {
 			icq_send_snac(session, 0x13, 0x09, refdata, icq_cmd_addssi_ack,
 				"U WWW WA",
-/*XXX*/				itoa(uid),				// item name (uin)
+/*XXX*/				ekg_itoa(uid),				// item name (uin)
 				group,					// Group#
 				(guint16) iid,				// Item#
 				(guint16) 0,				// Type of item: 0 -- Buddy record
@@ -1037,7 +1037,7 @@ static COMMAND(icq_command_delssi) {
 	 */
 	icq_send_snac(session, 0x13, 0x0A, refdata, icq_cmd_addssi_ack,
 			"U WWW W",
-/*XXX*/			itoa(u_id),				// item name (uin)
+/*XXX*/			ekg_itoa(u_id),				// item name (uin)
 			group,					// Group#
 			(guint16) iid,				// Item#
 			(guint16) 0,				// Type of item: 0 -- Buddy record
@@ -1620,14 +1620,14 @@ static COMMAND(icq_command_rates) {
 		if (!i)
 			print("icq_rates_header");
 		printq("icq_rates",
-			itoa(i+1),
-			itoa(j->rates[i]->win_size),
-			itoa(j->rates[i]->clear_lvl),
-			itoa(j->rates[i]->alert_lvl),
-			itoa(j->rates[i]->limit_lvl),
-			itoa(j->rates[i]->discn_lvl),
-			itoa(j->rates[i]->curr_lvl),
-			itoa(j->rates[i]->max_lvl));
+			ekg_itoa(i+1),
+			ekg_itoa(j->rates[i]->win_size),
+			ekg_itoa(j->rates[i]->clear_lvl),
+			ekg_itoa(j->rates[i]->alert_lvl),
+			ekg_itoa(j->rates[i]->limit_lvl),
+			ekg_itoa(j->rates[i]->discn_lvl),
+			ekg_itoa(j->rates[i]->curr_lvl),
+			ekg_itoa(j->rates[i]->max_lvl));
 	}
 
 	return 0;

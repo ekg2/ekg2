@@ -271,7 +271,7 @@ static char *ncurses_window_activity(void) {
 			strcat(tmp, "_typing");
 
 		string_append(s, format_find(tmp));
-		string_append(s, itoa(w->id));
+		string_append(s, ekg_itoa(w->id));
 		act = 1;
 	}
 
@@ -340,7 +340,7 @@ void update_statusbar(int commit)
 
 	__add_format("time", xstrdup(timestamp(format_find("statusbar_timestamp"))), 1);
 
-	__add_format_dup("window", window_current->id, itoa(window_current->id));
+	__add_format_dup("window", window_current->id, ekg_itoa(window_current->id));
 	__add_format_dup("session", (sess), (sess->alias) ? sess->alias : sess->uid);
 	__add_format_dup("descr", (sess && sess->descr && sess->connected), sess->descr);
 
@@ -353,7 +353,7 @@ void update_statusbar(int commit)
 
 	mail_count = -1;
 	if (query_emit(NULL, "mail-count", &mail_count) != -2)
-		__add_format_dup("mail", (mail_count > 0), itoa(mail_count));
+		__add_format_dup("mail", (mail_count > 0), ekg_itoa(mail_count));
 
 	irctopic = irctopicby = ircmode = NULL;
 	if (query_emit(NULL, "irc-topic", &irctopic, &irctopicby, &ircmode) != -2) {

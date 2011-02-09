@@ -1149,9 +1149,9 @@ static QUERY(jabber_status_show_handle) {
 
 	// serwer
 #ifdef JABBER_HAVE_SSL
-	print(j->using_ssl ? "show_status_server_tls" : "show_status_server", j->server, itoa(j->port));
+	print(j->using_ssl ? "show_status_server_tls" : "show_status_server", j->server, ekg_itoa(j->port));
 #else
-	print("show_status_server", j->server, itoa(j->port));
+	print("show_status_server", j->server, ekg_itoa(j->port));
 #endif
 
 	if (session_int_get(s, "__gpg_enabled") == 1)

@@ -416,7 +416,7 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 			break;
 		}
 
-		gg_pubdir50_add(req, GG_PUBDIR50_START, itoa(next));
+		gg_pubdir50_add(req, GG_PUBDIR50_START, ekg_itoa(next));
 		gg_pubdir50(g->sess, req);
 
 		break;

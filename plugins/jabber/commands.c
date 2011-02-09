@@ -966,7 +966,7 @@ static char *jabber_avatar_load(session_t *s, const char *path, const int quiet)
 		else
 			printq("io_emptyfile", path);
 	} else if (len >= sizeof(buf))
-		printq("io_toobig", path, itoa(len), sizeof(buf)-1);
+		printq("io_toobig", path, ekg_itoa(len), sizeof(buf)-1);
 	else {
 		char *enc		= base64_encode(buf, len);			/* XXX base64_encode() CHANGED!! len+1 ? */
 		char *out;
@@ -2304,7 +2304,7 @@ static COMMAND(jabber_command_conversations)
 	
 	print("jabber_conversations_begin", session_name(session));
 	for (i = 1; thr; i++, thr = thr->next) {
-		print("jabber_conversations_item", itoa(i), get_nickname(session, thr->uid),
+		print("jabber_conversations_item", ekg_itoa(i), get_nickname(session, thr->uid),
 				(thr->subject ? thr->subject : format_find("jabber_conversations_nosubject")),
 				(thr->thread ? thr->thread : format_find("jabber_conversations_nothread")));
 	}

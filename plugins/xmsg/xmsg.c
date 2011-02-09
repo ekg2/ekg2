@@ -63,7 +63,7 @@
 # if __GNUC__ >= 2
 #  define __func__ __FUNCTION__
 # else
-#  define __func__ itoa(__LINE__)
+#  define __func__ ekg_itoa(__LINE__)
 # endif
 #endif
 

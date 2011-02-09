@@ -161,7 +161,7 @@ static int jogger_checkoutfile(const char *file, char **data, int *len, char **h
 			_read += res;
 			if (maxlen && _read > maxlen) {
 				xfree(out);
-				printq("io_toobig", file, itoa(_read > fs ? _read : fs), itoa(maxlen));
+				printq("io_toobig", file, ekg_itoa(_read > fs ? _read : fs), ekg_itoa(maxlen));
 				return EFBIG;
 			} else if (_read == bufsize) { /* fs sucks? */
 				bufsize += 0x4000;
@@ -184,11 +184,11 @@ static int jogger_checkoutfile(const char *file, char **data, int *len, char **h
 
 	mylen = xstrlen(out);
 	if (fs && _read > fs)
-		printq("io_expanded", file, itoa(_read), itoa(fs));
+		printq("io_expanded", file, ekg_itoa(_read), ekg_itoa(fs));
 	else if (_read < fs)
-		printq("io_truncated", file, itoa(_read), itoa(fs));
+		printq("io_truncated", file, ekg_itoa(_read), ekg_itoa(fs));
 	if (_read > mylen)
-		printq("io_binaryfile", file, itoa(mylen), itoa(_read));
+		printq("io_binaryfile", file, ekg_itoa(mylen), ekg_itoa(_read));
 	if (len)
 		*len = _read;
 

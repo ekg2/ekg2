@@ -1040,7 +1040,7 @@ void ncurses_binding_set(int quiet, const char *key, const char *sequence)
 		printq("bind_press_key");
 		nodelay(input, FALSE);
 		while ((ch = wgetch(input)) != ERR) {
-			array_add(&chars, xstrdup(itoa(ch)));
+			array_add(&chars, xstrdup(ekg_itoa(ch)));
 			nodelay(input, TRUE);
 			count++;
 		}

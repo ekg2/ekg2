@@ -162,7 +162,7 @@ PyObject *ekg_session_set(ekg_sessionObj * self, PyObject * key, PyObject * valu
     }
 
     if (PyInt_Check(value)) {
-		session_set(s, name, itoa(PyInt_AsLong(value)));
+		session_set(s, name, ekg_itoa(PyInt_AsLong(value)));
 	} else {
 		session_set(s, name, PyString_AsString(value));
     }

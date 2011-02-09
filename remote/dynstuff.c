@@ -352,7 +352,7 @@ char *string_free(string_t s, int free_string)
 	return tmp;
 }
 
-const char *itoa(long int i)
+const char *ekg_itoa(long int i)
 {
 	static char bufs[10][16];
 	static int index = 0;

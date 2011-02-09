@@ -229,9 +229,9 @@ SNIFF_HANDLER(sniff_gg_status60, gg_status60) {
 		"sniff_gg_status60",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
-		itoa(pkt->remote_port),
-		itoa(pkt->version), build_hex(pkt->version),
-		itoa(pkt->image_size));
+		ekg_itoa(pkt->remote_port),
+		ekg_itoa(pkt->version), build_hex(pkt->version),
+		ekg_itoa(pkt->image_size));
 
 	return 0;
 }
@@ -318,9 +318,9 @@ SNIFF_HANDLER(sniff_gg_notify_reply60, gg_notify_reply60) {
 		"sniff_gg_notify60",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
-		itoa(pkt->remote_port),
-		itoa(pkt->version), build_hex(pkt->version),
-		itoa(pkt->image_size));
+		ekg_itoa(pkt->remote_port),
+		ekg_itoa(pkt->version), build_hex(pkt->version),
+		ekg_itoa(pkt->image_size));
 
 	if (pkt->uin & 0x40000000)
 		debug_error("gg_notify_reply60: GG_HAS_AUDIO_MASK set\n");
@@ -448,7 +448,7 @@ SNIFF_HANDLER(sniff_gg_pubdir50_reply, gg_pubdir50_reply) {
 		"sniff_gg_pubdir50_reply",
 		sniff_gg_pubdir50_str(pkt->type),
 		build_hex(pkt->type),
-		itoa(pkt->seq));
+		ekg_itoa(pkt->seq));
 
 	data = pkt->data;
 
@@ -511,7 +511,7 @@ SNIFF_HANDLER(sniff_gg_pubdir50_req, gg_pubdir50_request) {
 		"sniff_gg_pubdir50_req",
 		sniff_gg_pubdir50_str(pkt->type),
 		build_hex(pkt->type),
-		itoa(pkt->seq));
+		ekg_itoa(pkt->seq));
 
 	data = pkt->data;
 
@@ -559,7 +559,7 @@ SNIFF_HANDLER(sniff_gg_list_first, gg_notify) {
 	CHECK_LEN(sizeof(gg_notify));
 
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
-		"sniff_gg_list", "GG_LIST_FIRST", itoa(len));
+		"sniff_gg_list", "GG_LIST_FIRST", ekg_itoa(len));
 
 	while (len >= sizeof(gg_notify)) {
 		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1, "sniff_gg_list_data", 
@@ -583,7 +583,7 @@ SNIFF_HANDLER(sniff_gg_list_last, gg_notify) {
 	CHECK_LEN(sizeof(gg_notify));
 
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s, EKG_WINACT_MSG, 1,
-		"sniff_gg_list", "GG_LIST_LAST", itoa(len));
+		"sniff_gg_list", "GG_LIST_LAST", ekg_itoa(len));
 
 	while (len >= sizeof(gg_notify)) {
 		print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s,  EKG_WINACT_MSG, 1, "sniff_gg_list_data", 
@@ -605,7 +605,7 @@ SNIFF_HANDLER(sniff_gg_list_last, gg_notify) {
 
 SNIFF_HANDLER(sniff_gg_list_empty, gg_notify) {
 	print_window(build_windowip_name(hdr->srcip) /* ip and/or gg# */, s,  EKG_WINACT_MSG, 1,
-		"sniff_gg_list", "GG_LIST_EMPTY", itoa(len));
+		"sniff_gg_list", "GG_LIST_EMPTY", ekg_itoa(len));
 
 	if (len) {
 		debug_error("sniff_gg_list_empty() LIST EMPTY BUT len: %d (?)\n", len);
@@ -920,9 +920,9 @@ SNIFF_HANDLER(sniff_gg_notify_reply77, gg_notify_reply77) {
 		"sniff_gg_notify77",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
-		itoa(pkt->remote_port),
-		itoa(pkt->version), build_hex(pkt->version),
-		itoa(pkt->image_size));
+		ekg_itoa(pkt->remote_port),
+		ekg_itoa(pkt->version), build_hex(pkt->version),
+		ekg_itoa(pkt->image_size));
 
 #if 0
 	if (pkt->uin & 0x40000000)
@@ -971,9 +971,9 @@ SNIFF_HANDLER(sniff_gg_status77, gg_status77) {
 		"sniff_gg_status77",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
-		itoa(pkt->remote_port),
-		itoa(pkt->version), build_hex(pkt->version),
-		itoa(pkt->image_size));
+		ekg_itoa(pkt->remote_port),
+		ekg_itoa(pkt->version), build_hex(pkt->version),
+		ekg_itoa(pkt->image_size));
 
 	return 0;
 }
@@ -1245,9 +1245,9 @@ SNIFF_HANDLER(sniff_gg_notify_reply80_real, gg_notify_reply80_real) {
 		"sniff_gg_notify80_real",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
-		itoa(pkt->remote_port),
-		itoa(-1), build_hex(-1),		// wersja
-		itoa(pkt->image_size));
+		ekg_itoa(pkt->remote_port),
+		ekg_itoa(-1), build_hex(-1),		// wersja
+		ekg_itoa(pkt->image_size));
 
 	if (len > 0) {
 		debug_error("gg_notify_reply80_real: again? leftlen: %d\n", len);
@@ -1311,9 +1311,9 @@ SNIFF_HANDLER(sniff_gg_status80_real, gg_status80_real) {
 		"sniff_gg_status80_real",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
-		itoa(pkt->remote_port),
-		itoa(-1), build_hex(-1), // wersja
-		itoa(pkt->image_size));
+		ekg_itoa(pkt->remote_port),
+		ekg_itoa(-1), build_hex(-1), // wersja
+		ekg_itoa(pkt->image_size));
 
 	return 0;
 }
@@ -1374,9 +1374,9 @@ SNIFF_HANDLER(sniff_gg_notify_reply80, gg_notify_reply80) {
 		"sniff_gg_notify80",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
-		itoa(pkt->remote_port),
-		itoa(pkt->version), build_hex(pkt->version),
-		itoa(pkt->image_size));
+		ekg_itoa(pkt->remote_port),
+		ekg_itoa(pkt->version), build_hex(pkt->version),
+		ekg_itoa(pkt->image_size));
 
 	if (len > 0) {
 		debug_error("gg_notify_reply80: again? leftlen: %d\n", len);
@@ -1432,9 +1432,9 @@ SNIFF_HANDLER(sniff_gg_status80, gg_status80) {
 		"sniff_gg_status80",
 
 		inet_ntoa(*(struct in_addr *) &(pkt->remote_ip)),
-		itoa(pkt->remote_port),
-		itoa(pkt->version), build_hex(pkt->version),
-		itoa(pkt->image_size));
+		ekg_itoa(pkt->remote_port),
+		ekg_itoa(pkt->version), build_hex(pkt->version),
+		ekg_itoa(pkt->image_size));
 
 	return 0;
 }

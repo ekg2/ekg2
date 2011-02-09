@@ -16,9 +16,9 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_disco) {
 			char *snode = jabber_unescape(jabber_attr(item->atts, "node"));
 
 			if (!iscontrol)	print(snode ? "jabber_transport_list_item_node" : "jabber_transport_list_item", 
-					session_name(s), uid, sjid, snode, sdesc, itoa(i));
+					session_name(s), uid, sjid, snode, sdesc, ekg_itoa(i));
 			else		print("jabber_remotecontrols_list_item", 
-					session_name(s), uid, sjid, snode, sdesc, itoa(i));
+					session_name(s), uid, sjid, snode, sdesc, ekg_itoa(i));
 			xfree(sdesc);
 			xfree(sjid);
 			xfree(snode);
@@ -263,10 +263,10 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_result_privacy) {
 				if (!i) print("jabber_privacy_list_begin", session_name(s), j->server);
 				if (i != -1) i++;
 				if (active && !xstrcmp(jabber_attr(node->atts, "name"), activename)) {
-					print("jabber_privacy_list_item_act", session_name(s), j->server, itoa(i), activename); dn++; }
+					print("jabber_privacy_list_item_act", session_name(s), j->server, ekg_itoa(i), activename); dn++; }
 				if (def && !xstrcmp(jabber_attr(node->atts, "name"), defaultname)) {
-					print("jabber_privacy_list_item_def", session_name(s), j->server, itoa(i), defaultname); dn++; }
-				if (!dn) print("jabber_privacy_list_item", session_name(s), j->server, itoa(i), jabber_attr(node->atts, "name")); 
+					print("jabber_privacy_list_item_def", session_name(s), j->server, ekg_itoa(i), defaultname); dn++; }
+				if (!dn) print("jabber_privacy_list_item", session_name(s), j->server, ekg_itoa(i), jabber_attr(node->atts, "name")); 
 			}
 		}
 	}
@@ -953,7 +953,7 @@ JABBER_HANDLER_RESULT(jabber_handle_iq_muc_admin) {
 			xmlnode_t *reason	= xmlnode_find_child(node, "reason");
 			char *rsn		= reason ? jabber_unescape(reason->data) : NULL;
 
-			print("jabber_muc_banlist", session_name(s), from, jid, rsn ? rsn : "", itoa(++count));
+			print("jabber_muc_banlist", session_name(s), from, jid, rsn ? rsn : "", ekg_itoa(++count));
 			xfree(rsn);
 		}
 	}
@@ -1006,7 +1006,7 @@ JABBER_HANDLER_SET(jabber_handle_si_set) {
 			if (len) dcc_size_set(D, atoi(len));
 		}
 */
-		print("dcc_get_offer", format_user(s, uid), filename, size, itoa(dcc_id_get(D))); 
+		print("dcc_get_offer", format_user(s, uid), filename, size, ekg_itoa(dcc_id_get(D))); 
 
 		xfree(uin);
 		xfree(uid);
@@ -1066,7 +1066,7 @@ JABBER_HANDLER_RESULT(jabber_handle_si_result) {
 				*/
 
 			xfree(p->req);
-			p->req = xstrdup(itoa(j->id++));
+			p->req = xstrdup(ekg_itoa(j->id++));
 
 			watch_write(j->send_watch, "<iq type=\"set\" to=\"%s\" id=\"%s\">"
 					"<query xmlns=\"http://jabber.org/protocol/bytestreams\" mode=\"tcp\" sid=\"%s\">", 

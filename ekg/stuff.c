@@ -1728,7 +1728,7 @@ const char *timestamp_time(const char *format, time_t t) {
 	static char buf[100];
 
 	if (!format || format[0] == '\0')
-		return itoa(t);
+		return ekg_itoa(t);
 
 	tm = localtime(&t);
 
@@ -1749,14 +1749,14 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
 			int gotit = 0;
 
 			for (t = timers; t; t = t->next) {
-				if (!xstrcmp(t->name, itoa(i))) {
+				if (!xstrcmp(t->name, ekg_itoa(i))) {
 					gotit = 1;
 					break;
 				}
 			}
 
 			if (!gotit)
-				name = itoa(i);
+				name = ekg_itoa(i);
 		}
 	}
 

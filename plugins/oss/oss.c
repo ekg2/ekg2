@@ -225,9 +225,9 @@ AUDIO_CONTROL(oss_audio_control) {
 				char **value = va_arg(ap, char **);
 				debug("[oss_audio_control AUDIO_CONTROL_GET] attr: %s poi: 0x%x\n", attr, value);
 
-				if (!xstrcmp(attr, "freq"))		*value = xstrdup(itoa(dev->freq));
-				else if (!xstrcmp(attr, "sample"))	*value = xstrdup(itoa(dev->sample));
-				else if (!xstrcmp(attr, "channels"))	*value = xstrdup(itoa(dev->channels));
+				if (!xstrcmp(attr, "freq"))		*value = xstrdup(ekg_itoa(dev->freq));
+				else if (!xstrcmp(attr, "sample"))	*value = xstrdup(ekg_itoa(dev->sample));
+				else if (!xstrcmp(attr, "channels"))	*value = xstrdup(ekg_itoa(dev->channels));
 				else if (!xstrcmp(attr, "format"))	*value = xstrdup("pcm");
 				else					*value = NULL;
 			} else { 

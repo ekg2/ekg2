@@ -212,9 +212,9 @@ static int check_mail_update(const char *s, int more)
 				print("new_mail_one");
 			else {
 				if (mail_count >= 2 && mail_count <= 4)
-					print("new_mail_two_four", itoa(mail_count));
+					print("new_mail_two_four", ekg_itoa(mail_count));
 				else
-					print("new_mail_more", itoa(mail_count));
+					print("new_mail_more", ekg_itoa(mail_count));
 			}
 		}
 
@@ -223,7 +223,7 @@ static int check_mail_update(const char *s, int more)
 
 		play_sound(config_sound_mail_file);
 
-//		event_check(EVENT_NEWMAIL, 1, itoa(mail_count));
+//		event_check(EVENT_NEWMAIL, 1, ekg_itoa(mail_count));
 	}
 
 	return 0;

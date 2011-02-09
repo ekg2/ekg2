@@ -178,7 +178,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 			case 'u':	/* uid */
 			{
 				guint32 uin = va_arg(ap, guint32);
-				const char *buf = itoa(uin);	/* XXX, enough? */
+				const char *buf = ekg_itoa(uin);	/* XXX, enough? */
 
 				icq_pack_append(str, "C", (guint32) xstrlen(buf));
 				string_append(str, buf);

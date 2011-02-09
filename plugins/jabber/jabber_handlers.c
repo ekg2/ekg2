@@ -851,7 +851,7 @@ JABBER_HANDLER(jabber_handle_message) {
 					char buf[100];
 					string_append(body, "Sent: ");
 					if (!strftime(buf, sizeof(buf), nazwa_zmiennej_do_formatowania_czasu, tm) 
-						string_append(body, itoa(bsent);	/* if too long display seconds since the Epoch */
+						string_append(body, ekg_itoa(bsent);	/* if too long display seconds since the Epoch */
 					else	string_append(body, buf);	/* otherwise display formatted time */
 					new_line = 1;
 				}

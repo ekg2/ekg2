@@ -507,7 +507,7 @@ int ekg_converters_display(int quiet) {
 		if (strukt.count)	\
 			printq( (strukt.recode_from_locale && strukt.recode_to_locale) ? 		\
 				"iconv_list" : "iconv_list_bad",					\
-				config_console_charset, name, itoa(strukt.count), itoa(strukt.count),"");\
+				config_console_charset, name, ekg_itoa(strukt.count), ekg_itoa(strukt.count),"");\
 	} while(0);
 
 	DISPLAY_RECODER(iso2_recoder, "ISO-8859-2");
@@ -520,8 +520,8 @@ int ekg_converters_display(int quiet) {
 	for (c = ekg_converters; c; c = c->next) {
 		/* cd, rev, from, to, used, rev_used, is_utf */
 
-		printq("iconv_list", c->from, c->to, itoa(c->used), itoa(c->rev_used));
-//		printq("iconv_list_bad", c->from, c->to, itoa(c->used), itoa(c->rev_used));
+		printq("iconv_list", c->from, c->to, ekg_itoa(c->used), ekg_itoa(c->rev_used));
+//		printq("iconv_list_bad", c->from, c->to, ekg_itoa(c->used), ekg_itoa(c->rev_used));
 
 	}
 	return 0;

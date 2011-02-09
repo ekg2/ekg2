@@ -963,7 +963,7 @@ IRC_COMMAND(irc_c_list)
 						tv.tv_sec++, tv.tv_usec-=1000000;
 					tv.tv_sec-=chan->syncstart.tv_sec;
 
-					print_info(dest, s, "IRC_CHANNEL_SYNCED", session_name(s), tmpchn, itoa(tv.tv_sec), itoa(tv.tv_usec));
+					print_info(dest, s, "IRC_CHANNEL_SYNCED", session_name(s), tmpchn, ekg_itoa(tv.tv_sec), ekg_itoa(tv.tv_usec));
 				}
 			}
 		}
@@ -974,14 +974,14 @@ IRC_COMMAND(irc_c_list)
 		switch (ltype) {
 			/* TODO: poprawic te 2 pierwsze... */
 			case (IRC_LISTSTA):
-				print_info(dest, s, irccommands[ecode].name, session_name(s), itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8));
+				print_info(dest, s, irccommands[ecode].name, session_name(s), ekg_itoa(mode_act), IOK2(3), IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8));
 				break;
 			case (IRC_LISTWHO): 
 				/* ok new irc-find-person checked */
 				osoba	 = irc_find_person(j, j->people, IOK(7));
 				realname = xstrchr(IOK2(9), ' ');
 				tmpchn = clean_channel_names(s, IOK2(3));
-				PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), itoa(mode_act), tmpchn, IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), realname);
+				PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), ekg_itoa(mode_act), tmpchn, IOK2(4), IOK(5), IOK(6), IOK(7), IOK(8), realname);
 				if (osoba) {
 					xfree(osoba->host);
 					osoba->host = xstrdup(IOK(5));
@@ -1018,10 +1018,10 @@ IRC_COMMAND(irc_c_list)
 			default:
 				if (param[5] && *param[5] == ':') {
 					coloured = irc_ircoldcolstr_to_ekgcolstr(s, param[5]+1, 1);
-					PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), IOK(3), IOK2(4), coloured, itoa(mode_act));
+					PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), IOK(3), IOK2(4), coloured, ekg_itoa(mode_act));
 				} else {
 					tmpchn = clean_channel_names(s, IOK2(3));
-					PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), tmpchn, IOK2(4), IOK2(5), itoa(mode_act));
+					PRINT_INFO(dest, s, irccommands[ecode].name, session_name(s), tmpchn, IOK2(4), IOK2(5), ekg_itoa(mode_act));
 				}
 				xfree(coloured);
 				break;

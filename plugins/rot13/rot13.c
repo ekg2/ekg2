@@ -209,8 +209,8 @@ static COMMAND(command_key) {
 			printq("rot_list", 
 				k->session ? k->session : "*",
 				k->target ? k->target : "*", 
-				xstrcmp(k->rot, "?") ? k->rot : itoa(config_default_rot),
-				xstrcmp(k->drot, "?") ? k->drot : itoa(config_default_drot));
+				xstrcmp(k->rot, "?") ? k->rot : ekg_itoa(config_default_rot),
+				xstrcmp(k->drot, "?") ? k->drot : ekg_itoa(config_default_drot));
 
 		}
 		return 0;

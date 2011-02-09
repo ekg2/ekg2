@@ -261,8 +261,8 @@ static void __display_info(session_t *s, int type, private_data_t *data) {
 			char *___str = xstrdup(str); /* XXX, guess recode */
 
 			if (!__displayed)
-				print("icq_userinfo_start", session_name(s), itoa(uid), theme);
-			print(theme, session_name(s), itoa(uid), userinfo[i].display, ___str);
+				print("icq_userinfo_start", session_name(s), ekg_itoa(uid), theme);
+			print(theme, session_name(s), ekg_itoa(uid), userinfo[i].display, ___str);
 			__displayed = 1;
 
 			xfree(___str);
@@ -522,7 +522,7 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 
 	if (ICQ_UNPACK(&buf, "cwcw", &auth, &status, &gender, &age)) {
 		if (age)
-			__age = itoa(age);		// XXX calculate birthyear?
+			__age = ekg_itoa(age);		// XXX calculate birthyear?
 		if (gender)
 			__gender = (gender==2) ? "m" : "f";
 	} else {
@@ -573,7 +573,7 @@ static int icq_snac_extension_userfound_common(session_t *s, unsigned char *buf,
 		__active = saprintf("%s %s", temp, auth ? " " : "A");
 		xfree(temp);
 	}
-	print_info(NULL, s, "search_results_multi", itoa(uin), full_name, nickname, email,
+	print_info(NULL, s, "search_results_multi", ekg_itoa(uin), full_name, nickname, email,
 			__age ? __age : ("-"), __gender, __active);
 
 	xfree(__active);
@@ -674,7 +674,7 @@ static int icq_meta_info_reply(session_t *s, unsigned char *buf, int len, privat
 		if (show) {
 			__display_info(s, pkt.subtype, *info);
 			if (__displayed)
-				print("icq_userinfo_end", session_name(s), itoa(uid));
+				print("icq_userinfo_end", session_name(s), ekg_itoa(uid));
 		}
 	}
 
@@ -710,7 +710,7 @@ static int check_replyreq(session_t *s, unsigned char **buf, int *len, int *type
 
 	debug_white("icq_snac_extension_replyreq() uid=%d type=%.4x (len=%d, len2=%d)\n", pkt.uid, pkt.type, *len, pkt.len);
 
-	if (xstrcmp(s->uid+4, itoa(pkt.uid))) {
+	if (xstrcmp(s->uid+4, ekg_itoa(pkt.uid))) {
 		debug_error("icq_snac_extension_replyreq() 1919 UIN mismatch: %s vs %ld.\n", s->uid+4, pkt.uid);
 		return 0;
 	}
@@ -880,7 +880,7 @@ void display_whoami(session_t *s) {
 	end |= __displayed; __displayed = 0;
 	__display_info(s, META_AFFILATIONS_USERINFO,	j->whoami);
 	if (end)
-		print("icq_userinfo_end", session_name(s), itoa(uid));
+		print("icq_userinfo_end", session_name(s), ekg_itoa(uid));
 }
 
 

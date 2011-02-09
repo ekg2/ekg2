@@ -161,7 +161,7 @@ static QUERY(rivchat_userlist_info_handle) {
 		return 1;
 
 	__ip = user_private_item_get_int(u, "ip");
-	printq("rivchat_info_ip", inet_ntoa(*((struct in_addr*) &__ip)), itoa(user_private_item_get_int(u, "port")));
+	printq("rivchat_info_ip", inet_ntoa(*((struct in_addr*) &__ip)), ekg_itoa(user_private_item_get_int(u, "port")));
 
 	if (user->ping_packet_time) {
 		rivchat_info_t *ping = &(user->ping_packet);
@@ -170,14 +170,14 @@ static QUERY(rivchat_userlist_info_handle) {
 		char *prog, *os;
 
 		if (ping->filetransfer)
-			printq("rivchat_info_have_dcc", itoa(ping->filetransfer));
+			printq("rivchat_info_have_dcc", ekg_itoa(ping->filetransfer));
 
 		if (ping->master)
-			printq("rivchat_info_master", itoa(ping->master));
+			printq("rivchat_info_master", ekg_itoa(ping->master));
 
-		printq("rivchat_info_words", itoa(ping->slowa));
+		printq("rivchat_info_words", ekg_itoa(ping->slowa));
 
-		printq("rivchat_info_connected", itoa(ping->online * 10));
+		printq("rivchat_info_connected", ekg_itoa(ping->online * 10));
 
 	/* user, host */
 		user = ekg_cp_to_locale(xstrndup(ping->user, sizeof(ping->user)));
@@ -807,7 +807,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 			dcc_size_set(d, size);
 			dcc_close_handler_set(d, rivchat_dcc_close);
 
-			print("dcc_get_offer", format_user(s, uid), filename, itoa(size), itoa(d->id));
+			print("dcc_get_offer", format_user(s, uid), filename, ekg_itoa(size), ekg_itoa(d->id));
 
 			xfree(filename);
 			break;
@@ -1326,7 +1326,7 @@ static COMMAND(rivchat_command_places) {
 	for (i = 1, l = final; l; l = l->next, i++) {
 		rivchat_place_t *place = l->data;
 
-		printq("rivchat_place", session->uid, place->nickname, itoa(place->words), itoa(place->uptime), place->master ? "*" : " ", itoa(i));
+		printq("rivchat_place", session->uid, place->nickname, ekg_itoa(place->words), ekg_itoa(place->uptime), place->master ? "*" : " ", ekg_itoa(i));
 	}
 	list_destroy(final, 1);
 	return 0;

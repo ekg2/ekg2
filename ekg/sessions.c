@@ -674,7 +674,7 @@ const char *session_get(session_t *s, const char *key) {
 	if (!(v = variable_find(key)) || (v->type != VAR_INT && v->type != VAR_BOOL))
 		return NULL;
 	
-	return itoa(*(int*)(v->ptr));
+	return ekg_itoa(*(int*)(v->ptr));
 }
 
 /*
@@ -814,7 +814,7 @@ notify:
  */
 int session_int_set(session_t *s, const char *key, int value)
 {
-	return session_set(s, key, itoa(value));
+	return session_set(s, key, ekg_itoa(value));
 }
 
 /*
