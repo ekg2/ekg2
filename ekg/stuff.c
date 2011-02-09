@@ -25,9 +25,6 @@
 #include "ekg2-config.h"
 #include "win32.h"
 
-#define _XOPEN_SOURCE 600
-#define __EXTENSIONS__
-
 #include <glib.h>
 
 #include <sys/types.h>
@@ -37,7 +34,6 @@
 #include <sys/socket.h>
 #endif
 
-#define __USE_BSD
 #include <sys/time.h>
 
 #ifndef NO_POSIX_SYSTEM

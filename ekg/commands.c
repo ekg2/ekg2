@@ -30,13 +30,6 @@
 #include "ekg2-config.h"
 #include "win32.h"
 
-#ifndef __FreeBSD__
-#define _XOPEN_SOURCE 600
-#define __EXTENSIONS__
-#endif
-
-#define _BSD_SOURCE
-
 #include <glib.h>
 
 #include <sys/types.h>

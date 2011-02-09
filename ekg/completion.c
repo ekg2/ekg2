@@ -18,8 +18,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define _BSD_SOURCE
-
 #include <glib.h>
 
 #include <sys/stat.h>

@@ -22,7 +22,6 @@
 #include <sys/types.h>
 
 #include <stdlib.h>
-#define __USE_POSIX /* needed for fileno() */
 #include <stdio.h>
 #include <unistd.h>
 #include <errno.h>

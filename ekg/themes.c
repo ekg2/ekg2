@@ -21,7 +21,6 @@
 
 #include "ekg2-config.h"
 
-#define _XOPEN_SOURCE 600
 #include <limits.h>
 #include <stdarg.h>
 #include <stdio.h>

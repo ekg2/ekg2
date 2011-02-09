@@ -3,10 +3,6 @@
 
 #undef VERSION
 
-#ifndef __FreeBSD__
-#define __EXTENSIONS__
-#endif
-
 #include <glib.h>
 
 #include <ekg/scripts.h>

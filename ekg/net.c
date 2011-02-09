@@ -37,9 +37,6 @@
 #include <stdarg.h>	/* ? */
 #include <unistd.h>
 
-#ifndef __USE_POSIX
-#define __USE_POSIX
-#endif
 #ifndef NO_POSIX_SYSTEM
 #include <netdb.h>	/* OK */
 #endif

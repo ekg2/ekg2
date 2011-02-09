@@ -43,9 +43,6 @@
 #endif
 
 #include <sys/stat.h>
-#ifndef __USE_POSIX
-#define __USE_POSIX
-#endif
 #ifndef NO_POSIX_SYSTEM
 #include <netdb.h>
 #endif

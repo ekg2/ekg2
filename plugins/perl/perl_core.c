@@ -51,11 +51,6 @@ static const char *ekg_core_code =
 	"}\n";
 
 
-#ifndef __FreeBSD__
-#define _XOPEN_SOURCE 600
-#define __EXTENSIONS__
-#endif
-
 #include <stdarg.h>
 
 #include <ekg/debug.h>

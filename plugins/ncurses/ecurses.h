@@ -10,12 +10,6 @@
 				 */
 
 #if USE_UNICODE
-# ifndef _XOPEN_SOURCE
-#  define _XOPEN_SOURCE
-# endif
-# ifndef _XOPEN_SOURCE_EXTENDED
-#  define _XOPEN_SOURCE_EXTENDED
-# endif
 # include <ncursesw/ncurses.h>
 #else	/* USE_UNICODE */
 # ifdef HAVE_NCURSES_H

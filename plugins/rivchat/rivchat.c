@@ -16,8 +16,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define _BSD_SOURCE 1 /* gethostname() */
-
 #include <glib.h>
 
 #include <stdio.h>

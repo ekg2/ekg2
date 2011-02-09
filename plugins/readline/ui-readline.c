@@ -24,11 +24,6 @@
 
 #include "ekg2-config.h"
 
-#ifndef __FreeBSD__
-#define _XOPEN_SOURCE 600
-#define __EXTENSIONS__
-#endif
-
 #include <glib.h>
 
 #include <sys/ioctl.h>

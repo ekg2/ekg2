@@ -28,21 +28,17 @@
  * Makro fix(s) zosta³o w³a¶nie stworzone w tym celu 
  */
 
-#define _GNU_SOURCE
-
 #include "ekg2-config.h"
 #include "win32.h"
 
 #include <glib.h>
 
-#define __EXTENSIONS__
 #include <sys/types.h>
 #include <stddef.h>
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-
 
 #include <string.h>
 #include <strings.h>

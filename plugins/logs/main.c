@@ -30,11 +30,6 @@
 #include <netinet/in.h>
 #endif
 
-#ifndef __FreeBSD__
-#define _XOPEN_SOURCE 600
-#define __EXTENSIONS__
-#endif
-
 #include <glib.h>
 
 #if defined(__MINGW32__) || defined(__FreeBSD__) || defined(__sun)

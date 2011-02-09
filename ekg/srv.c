@@ -26,9 +26,6 @@
 
 #include "ekg2-config.h"
 
-#define __USE_BSD
-#define _GNU_SOURCE
-
 #include <glib.h>
 
 #include <string.h>

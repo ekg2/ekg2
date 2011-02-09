@@ -1,10 +1,6 @@
 #ifndef PERL_BLESS_H
 #define PERL_BLESS_H
 
-#ifndef __FreeBSD__
-#define __EXTENSIONS__
-#endif
-
 #ifdef bool
 #define HAS_BOOL
 #endif

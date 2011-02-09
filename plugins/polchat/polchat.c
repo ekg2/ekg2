@@ -28,9 +28,6 @@
 #include <sys/socket.h>
 
 #include <sys/stat.h>
-#ifndef __USE_POSIX
-#define __USE_POSIX
-#endif
 #include <netdb.h>
 
 #include <sys/time.h>

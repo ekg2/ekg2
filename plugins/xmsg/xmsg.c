@@ -3,19 +3,10 @@
  * (C) 2006 Michał Górny <peres@peres.int.pl>
  */
 
-#define _GNU_SOURCE
-
 #ifdef __APPLE__
 #define _DARWIN_C_SOURCE
 #include <sys/fcntl.h>
 #endif
-
-#ifdef __NetBSD__
-# define _NETBSD_SOURCE
-#else
-# define _XOPEN_SOURCE 600
-#endif
-#define __BSD_VISIBLE 1
 
 #include <glib.h>
 

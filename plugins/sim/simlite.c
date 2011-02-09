@@ -23,7 +23,6 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#define _XOPEN_SOURCE 600
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
