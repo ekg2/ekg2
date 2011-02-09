@@ -30,10 +30,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#ifdef HAVE_REGEX_H
-#	include <regex.h>
-#endif
-
 #include "commands.h"
 #include "dynstuff.h"
 #include "windows.h"
@@ -692,6 +688,7 @@ COMMAND(cmd_window) {
 
 	/* parse configuration */
 			for (i = 0; arr[i]; i++) {
+				/* XXX: now they're all PCREs */
 				if (match_arg(arr[i], 'r', "regex", 2)) 
 					isregex = 1;
 				else if (match_arg(arr[i], 'R', "extended-regex", 2))
@@ -729,39 +726,25 @@ COMMAND(cmd_window) {
 			lastlog = xmalloc(sizeof(window_lastlog_t));
 
 		if (w || lastlog_current) {
-#ifdef HAVE_REGEX_H
 			if (lastlog->isregex)
-				regfree(&lastlog->reg);
+				g_regex_unref(lastlog->reg);
 			xfree(lastlog->expression);
-#endif
-
 		}
 
 /* compile regexp if needed */
 		if (isregex) {
-#ifdef HAVE_REGEX_H
-			int rs, flags = REG_NOSUB;
-			char errbuf[512];
-
-			if (isregex == 2)
-				flags |= REG_EXTENDED;
+			GRegexCompileFlags flags = G_REGEX_RAW | G_REGEX_NO_AUTO_CAPTURE | G_REGEX_OPTIMIZE;
+			GError *err = NULL;
 
 /* XXX, when config_lastlog_case is toggled.. we need to recompile regex's */
 			if (!lastlog->casense || (lastlog->casense == -1 && !config_lastlog_case))
-				flags |= REG_ICASE;
+				flags |= G_REGEX_CASELESS;
 
-			if ((rs = regcomp(&lastlog->reg, str, flags))) {
-				regerror(rs, &lastlog->reg, errbuf, sizeof(errbuf));
-				printq("regex_error", errbuf);
-				/* XXX, it was copied from ekg1, although i don't see much sense to free if regcomp() failed.. */
-				regfree(&(lastlog->reg));
+			if (!((lastlog->reg = g_regex_new(str, flags, 0, &err)))) {
+				printq("regex_error", err->message);
+				g_error_free(err);
 				return -1;
 			}
-#else
-			printq("generic_error", "you don't have regex.h !!!!!!!!!!!!!!!!!!!11111");
-/*			isrgex = 0; */
-			return -1;
-#endif
 		}
 
 		lastlog->w		= w;

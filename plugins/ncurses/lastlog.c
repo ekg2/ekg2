@@ -22,11 +22,6 @@
 
 #include <glib.h>
 
-#ifdef HAVE_REGEX_H
-#	include <sys/types.h>
-#	include <regex.h>
-#endif
-
 #include <ekg/windows.h>
 #include <ekg/xmalloc.h>
 
@@ -82,26 +77,10 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
 
 	for (i = n->backlog_size-1; i >= 0; i--) {
-		int found = 0;
+		gboolean found = FALSE;
 
 		if (lastlog->isregex) {		/* regexp */
-#ifdef HAVE_REGEX_H
-			int rs;
-			
-			rs = regexec(&(lastlog->reg), n->backlog[i]->str, 0, NULL, 0);
-			if (!rs)
-				found = 1;
-			else if (rs != REG_NOMATCH) {
-				char errbuf[512];
-				/* blad wyrazenia? */
-				regerror(rs, &(lastlog->reg), errbuf, sizeof(errbuf));	/* NUL-char-ok */
-				print("regex_error", errbuf);
-
-				/* XXX mh, dodac to do backloga? */
-				/* XXX, przerwac wykonywanie? */
-				break;
-			}
-#endif
+			found = g_regex_match(lastlog->reg, n->backlog[i]->str, 0, NULL);
 		} else {				/* substring */
 			if (local_config_lastlog_case)
 				found = !!xstrstr(n->backlog[i]->str, lastlog->expression);

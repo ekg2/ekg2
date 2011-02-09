@@ -23,15 +23,12 @@
 
 #include "ekg2-config.h"
 
+#include <glib.h>
+
 #include "commands.h"
 #include "dynstuff.h"
 #include "sessions.h"
 #include "themes.h"
-
-#ifdef HAVE_REGEX_H
-#include <sys/types.h>
-#include <regex.h>
-#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -56,9 +53,7 @@ typedef struct {
 	int casense		: 2;	/* 0 - ignore case; 1 - don't ignore case, -1 - use global variable */
 	unsigned int lock	: 1;	/* if 0, don't update */
 	unsigned int isregex	: 1;	/* 1 - in target regexp */
-#ifdef HAVE_REGEX_H
-	regex_t reg;			/* regexp compilated expression */
-#endif
+	GRegex *reg;			/* regexp compilated expression */
 	char *expression;		/* expression */
 } window_lastlog_t;
 
