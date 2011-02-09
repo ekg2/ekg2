@@ -278,6 +278,7 @@ AC_EKG2_PLUGIN([perl], [
 			AC_EKG2_CHECK_FLAGEXPORTED_LIB([PERL], [perl], [perl_alloc], [EXTERN.h],, [EKG2_FAILED_TEST])
 		], [EKG2_FAILED_TEST])
 	])
+	enable_perl_modules=no
 ], [
 	AC_ARG_ENABLE([perl-modules],
 		AS_HELP_STRING([--disable-perl-modules],
@@ -285,9 +286,8 @@ AC_EKG2_PLUGIN([perl], [
 	, [
 		enable_perl_modules=yes
 	])
-
-	AM_CONDITIONAL([ENABLE_PERL_MODULES], [test x"$enable_perl_modules" = x"yes"])
 ])
+AM_CONDITIONAL([ENABLE_PERL_MODULES], [test x"$enable_perl_modules" = x"yes"])
 
 AC_EKG2_PLUGIN([polchat])
 
