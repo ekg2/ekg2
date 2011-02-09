@@ -31,10 +31,6 @@
 #include <string.h>
 #include <unistd.h>
 
-#if HAVE_LANGINFO_CODESET
-#include <langinfo.h>
-#endif
-
 #include "debug.h"
 #include "dynstuff.h"
 #include "recode.h"
@@ -163,6 +159,8 @@ void variable_init() {
  * nieliczbowych.
  */
 void variable_set_default() {
+	gboolean is_unicode;
+
 	xfree(config_timestamp);
 	xfree(config_completion_char);
 	xfree(config_display_color_map);
@@ -183,23 +181,27 @@ void variable_set_default() {
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
 	config_subject_reply_prefix = xstrdup("Re: ");
-#if HAVE_LANGINFO_CODESET
-	console_charset = xstrdup(nl_langinfo(CODESET));
-#endif
+	{
+		const gchar* tmp;
+
+		is_unicode = g_get_charset(&tmp);
+		console_charset = g_strdup(tmp);
+	}
 
 	if (console_charset) 
 		config_console_charset = xstrdup(console_charset);
-	else
+	else /* XXX: probably never reached */
 		config_console_charset = xstrdup("ISO-8859-2"); /* Default: ISO-8859-2 */
 #if USE_UNICODE
-	if (!config_use_unicode && xstrcasecmp(console_charset, "UTF-8")) {
+	if (config_use_unicode && !is_unicode) {
 		debug("nl_langinfo(CODESET) == %s swapping config_use_unicode to 0\n", console_charset);
 		config_use_unicode = 0;
-	} else	config_use_unicode = 1;
+	} else
+		config_use_unicode = 1;
 #else
 	config_use_unicode = 0;
-	if (!xstrcasecmp(console_charset, "UTF-8")) {
-		debug("Warning, nl_langinfo(CODESET) reports that you are using utf-8 encoding, but you didn't compile ekg2 with (experimental/untested) --enable-unicode\n");
+	if (is_unicode) {
+		debug("Warning, g_get_charset() reports that you are using utf-8 encoding, but you didn't compile ekg2 with --enable-unicode\n");
 		debug("\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n");
 	}
 #endif

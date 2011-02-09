@@ -91,7 +91,6 @@ LIBS=
 AM_GNU_GETTEXT([external])
 AM_GNU_GETTEXT_VERSION([0.14.3])
 AM_ICONV
-AM_LANGINFO_CODESET
 
 dnl gettext still uses it even if other autotools don't
 AC_SUBST([MKINSTALLDIRS], ['$(top_srcdir)/build-aux/mkinstalldirs'])
