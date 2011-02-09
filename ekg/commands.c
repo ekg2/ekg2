@@ -2380,10 +2380,6 @@ static COMMAND(cmd_test_fds)
 #endif
 }
 
-static COMMAND(cmd_test_iconv) {
-	return ekg_converters_display(quiet);
-}
-
 /**
  * cmd_beep()
  *
@@ -4303,8 +4299,6 @@ void command_init()
 	command_add(NULL, ("_dns2"), "!", cmd_test_dns2, COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(NULL, ("_fds"), NULL, cmd_test_fds, 0, NULL);
-
-	command_add(NULL, ("_iconv"), NULL, cmd_test_iconv, 0, NULL);
 
 	command_add(NULL, ("_mem"), NULL, cmd_test_mem, 0, NULL);
 
