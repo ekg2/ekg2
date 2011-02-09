@@ -486,41 +486,49 @@ void ekg_recode_dec_ref(const gchar *enc) {
 }
 
 char *ekg_recode_from_locale(const gchar *enc, char *buf) {
-	gchar *res = ekg_recode_from_locale_dup(enc, buf);
-	g_free(buf);
+	gchar *res = ekg_recode_from_locale_use(enc, buf);
+	if (res != buf)
+		g_free(buf);
 	return res;
 }
 
 char *ekg_recode_to_locale(const gchar *enc, char *buf) {
-	gchar *res = ekg_recode_to_locale_dup(enc, buf);
-	g_free(buf);
+	gchar *res = ekg_recode_to_locale_use(enc, buf);
+	if (res != buf)
+		g_free(buf);
 	return res;
 }
 
 char *ekg_recode_from_locale_dup(const gchar *enc, const char *buf) {
-	gsize written;
-
-	if (!buf)
-		return NULL;
-
-	return g_convert_with_fallback(buf, -1, enc, config_console_charset,
-			NULL, NULL, &written, NULL);
+	gchar *res = ekg_recode_from_locale_use(enc, buf);
+	return res == buf ? g_strdup(res) : res;
 }
 
 char *ekg_recode_to_locale_dup(const gchar *enc, const char *buf) {
+	gchar *res = ekg_recode_to_locale_use(enc, buf);
+	return res == buf ? g_strdup(res) : res;
+}
+
+const char *ekg_recode_from_locale_use(const gchar *enc, const char *buf) {
 	gsize written;
+	gchar *res;
 
 	if (!buf)
 		return NULL;
 
-	return g_convert_with_fallback(buf, -1, config_console_charset, enc,
+	res = g_convert_with_fallback(buf, -1, enc, config_console_charset,
 			NULL, NULL, &written, NULL);
-}
-
-const char *ekg_recode_from_locale_use(const gchar *enc, const char *buf) {
-	return ekg_recode_from_locale_dup(enc, buf);
+	return res ? res : g_strdup(buf);
 }
 
 const char *ekg_recode_to_locale_use(const gchar *enc, const char *buf) {
-	return ekg_recode_to_locale_dup(enc, buf);
+	gsize written;
+	gchar *res;
+
+	if (!buf)
+		return NULL;
+
+	res = g_convert_with_fallback(buf, -1, config_console_charset, enc,
+			NULL, NULL, &written, NULL);
+	return res ? res : buf;
 }
