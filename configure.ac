@@ -7,6 +7,8 @@ AM_INIT_AUTOMAKE([1.6 foreign dist-bzip2])
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
 AC_PROG_CC_C99
+AC_SYS_LARGEFILE
+
 dnl XXX: docs say we should use '-no-undefined' along with 'win32-dll'
 LT_INIT([disable-static win32-dll])
 
