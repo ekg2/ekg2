@@ -42,11 +42,6 @@ struct utsname {
 	char machine[30];
 };
 
-struct timezone { /* XXX */
-	int tz_minuteswest;	/* minutes west of Greenwich */
-	int tz_dsttime;		/* type of DST correction */
-};
-
 #define THREAD(x) DWORD x(void *data)
 typedef THREAD(thread_func_t);
 
