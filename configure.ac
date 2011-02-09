@@ -33,7 +33,7 @@ AC_CHECK_FUNC([inet_addr],, [AC_CHECK_LIB(bind, __inet_addr, LIBS="$LIBS -lbind"
 AC_CHECK_LIB([wsock32], [main])
 
 AC_CHECK_HEADERS([sys/socket.h ws2tcpip.h])
-AC_CHECK_TYPE([socklen_t],,,[
+AC_CHECK_TYPES([socklen_t],,,[
 #ifdef HAVE_WS2TCPIP_H
 #	include <ws2tcpip.h>
 #endif
