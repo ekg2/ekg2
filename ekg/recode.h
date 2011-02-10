@@ -24,46 +24,46 @@ int ekg_converters_display(int quiet);
 void ekg_recode_inc_ref(const gchar *enc);
 void ekg_recode_dec_ref(const gchar *enc);
 
-char *ekg_recode_from_locale(const gchar *enc, char *buf);
-char *ekg_recode_to_locale(const gchar *enc, char *buf);
+char *ekg_recode_from_core(const gchar *enc, char *buf);
+char *ekg_recode_to_core(const gchar *enc, char *buf);
 
-char *ekg_recode_from_locale_dup(const gchar *enc, const char *buf);
-char *ekg_recode_to_locale_dup(const gchar *enc, const char *buf);
+char *ekg_recode_from_core_dup(const gchar *enc, const char *buf);
+char *ekg_recode_to_core_dup(const gchar *enc, const char *buf);
 
-const char *ekg_recode_from_locale_use(const gchar *enc, const char *buf);
-const char *ekg_recode_to_locale_use(const gchar *enc, const char *buf);
+const char *ekg_recode_from_core_use(const gchar *enc, const char *buf);
+const char *ekg_recode_to_core_use(const gchar *enc, const char *buf);
 
 #define recode_xfree(org, ret) xfree((char *) ret);
 
 /* CP-1250 */
 #define ekg_recode_cp_inc()	ekg_recode_inc_ref(EKG_RECODE_CP)
 #define ekg_recode_cp_dec() 	ekg_recode_dec_ref(EKG_RECODE_CP)
-#define ekg_locale_to_cp(buf)	ekg_recode_from_locale(EKG_RECODE_CP, buf)
-#define ekg_cp_to_locale(buf)	ekg_recode_to_locale(EKG_RECODE_CP, buf)
-#define ekg_locale_to_cp_dup(buf) ekg_recode_from_locale_dup(EKG_RECODE_CP, buf)
-#define ekg_cp_to_locale_dup(buf) ekg_recode_to_locale_dup(EKG_RECODE_CP, buf)
-#define ekg_locale_to_cp_use(buf) ekg_recode_from_locale_use(EKG_RECODE_CP, buf)
-#define ekg_cp_to_locale_use(buf) ekg_recode_to_locale_use(EKG_RECODE_CP, buf)
+#define ekg_locale_to_cp(buf)	ekg_recode_from_core(EKG_RECODE_CP, buf)
+#define ekg_cp_to_core(buf)	ekg_recode_to_core(EKG_RECODE_CP, buf)
+#define ekg_locale_to_cp_dup(buf) ekg_recode_from_core_dup(EKG_RECODE_CP, buf)
+#define ekg_cp_to_core_dup(buf) ekg_recode_to_core_dup(EKG_RECODE_CP, buf)
+#define ekg_locale_to_cp_use(buf) ekg_recode_from_core_use(EKG_RECODE_CP, buf)
+#define ekg_cp_to_core_use(buf) ekg_recode_to_core_use(EKG_RECODE_CP, buf)
 
 /* ISO-8859-2 */
 #define ekg_recode_iso2_inc()	ekg_recode_inc_ref(EKG_RECODE_ISO2)
 #define ekg_recode_iso2_dec()	ekg_recode_dec_ref(EKG_RECODE_ISO2)
-#define ekg_locale_to_iso2(buf)	ekg_recode_from_locale(EKG_RECODE_ISO2, buf)
-#define ekg_iso2_to_locale(buf)	ekg_recode_to_locale(EKG_RECODE_ISO2, buf)
-#define ekg_locale_to_iso2_dup(buf) ekg_recode_from_locale_dup(EKG_RECODE_ISO2, buf)
-#define ekg_iso2_to_locale_dup(buf) ekg_recode_to_locale_dup(EKG_RECODE_ISO2, buf)
-#define ekg_locale_to_iso2_use(buf) ekg_recode_from_locale_use(EKG_RECODE_ISO2, buf)
-#define ekg_iso2_to_locale_use(buf) ekg_recode_to_locale_use(EKG_RECODE_ISO2, buf)
+#define ekg_locale_to_iso2(buf)	ekg_recode_from_core(EKG_RECODE_ISO2, buf)
+#define ekg_iso2_to_core(buf)	ekg_recode_to_core(EKG_RECODE_ISO2, buf)
+#define ekg_locale_to_iso2_dup(buf) ekg_recode_from_core_dup(EKG_RECODE_ISO2, buf)
+#define ekg_iso2_to_core_dup(buf) ekg_recode_to_core_dup(EKG_RECODE_ISO2, buf)
+#define ekg_locale_to_iso2_use(buf) ekg_recode_from_core_use(EKG_RECODE_ISO2, buf)
+#define ekg_iso2_to_core_use(buf) ekg_recode_to_core_use(EKG_RECODE_ISO2, buf)
 
 /* UTF-8 */
 #define ekg_recode_utf8_inc()	ekg_recode_inc_ref(EKG_RECODE_UTF8)
 #define ekg_recode_utf8_dec()	ekg_recode_dec_ref(EKG_RECODE_UTF8)
-#define ekg_locale_to_utf8(buf)	ekg_recode_from_locale(EKG_RECODE_UTF8, buf)
-#define ekg_utf8_to_locale(buf)	ekg_recode_to_locale(EKG_RECODE_UTF8, buf)
-#define ekg_locale_to_utf8_dup(buf) ekg_recode_from_locale_dup(EKG_RECODE_UTF8, buf)
-#define ekg_utf8_to_locale_dup(buf) ekg_recode_to_locale_dup(EKG_RECODE_UTF8, buf)
-#define ekg_locale_to_utf8_use(buf) ekg_recode_from_locale_use(EKG_RECODE_UTF8, buf)
-#define ekg_utf8_to_locale_use(buf) ekg_recode_to_locale_use(EKG_RECODE_UTF8, buf)
+#define ekg_locale_to_utf8(buf)	ekg_recode_from_core(EKG_RECODE_UTF8, buf)
+#define ekg_utf8_to_core(buf)	ekg_recode_to_core(EKG_RECODE_UTF8, buf)
+#define ekg_locale_to_utf8_dup(buf) ekg_recode_from_core_dup(EKG_RECODE_UTF8, buf)
+#define ekg_utf8_to_core_dup(buf) ekg_recode_to_core_dup(EKG_RECODE_UTF8, buf)
+#define ekg_locale_to_utf8_use(buf) ekg_recode_from_core_use(EKG_RECODE_UTF8, buf)
+#define ekg_utf8_to_core_use(buf) ekg_recode_to_core_use(EKG_RECODE_UTF8, buf)
 
 #ifdef __cplusplus
 }

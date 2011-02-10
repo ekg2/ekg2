@@ -280,7 +280,7 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 		const char *charset = session_get(s, "charset");
 
 		if (charset) {
-			msgx = ekg_recode_to_locale_dup(charset, msg);
+			msgx = ekg_recode_to_core_dup(charset, msg);
 			xfree(msg);
 		} else
 			msgx = msg;
@@ -616,7 +616,7 @@ static COMMAND(xmsg_msg)
 		const char *charset = session_get(session, "charset");
 
 		if (charset)
-			msgx = ekg_recode_from_locale(charset, msg);
+			msgx = ekg_recode_from_core(charset, msg);
 		mymsg = (msgx ? msgx : msg);
 	}
 	fs = xstrlen(mymsg);

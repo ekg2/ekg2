@@ -178,14 +178,14 @@ static QUERY(rivchat_userlist_info_handle) {
 		printq("rivchat_info_connected", ekg_itoa(ping->online * 10));
 
 	/* user, host */
-		user = ekg_cp_to_locale(xstrndup(ping->user, sizeof(ping->user)));
-		host = ekg_cp_to_locale(xstrndup(ping->host, sizeof(ping->host)));
+		user = ekg_cp_to_core(xstrndup(ping->user, sizeof(ping->user)));
+		host = ekg_cp_to_core(xstrndup(ping->host, sizeof(ping->host)));
 		printq("rivchat_info_username", user, host);
 		xfree(user); xfree(host);
 
 	/* prog, os, version */
-		prog = ekg_cp_to_locale(xstrndup(ping->prog, sizeof(ping->prog)));
-		os = ekg_cp_to_locale(xstrndup(ping->os, sizeof(ping->os)));
+		prog = ekg_cp_to_core(xstrndup(ping->prog, sizeof(ping->prog)));
+		os = ekg_cp_to_core(xstrndup(ping->os, sizeof(ping->os)));
 		sprintf(ver, "%u.%u", ping->version[0], ping->version[1]);
 		printq("rivchat_info_version", prog, ver, os);
 		xfree(prog); xfree(os);
@@ -545,7 +545,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 		return;
 	}
 
-	nick = ekg_cp_to_locale(xstrndup(_hdr->nick, sizeof(_hdr->nick)));
+	nick = ekg_cp_to_core(xstrndup(_hdr->nick, sizeof(_hdr->nick)));
 	uid = saprintf("rivchat:%X", from_id);
 
 	u = userlist_find(s, uid);
@@ -606,7 +606,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 		{
 			int to_us;
 			
-			display_data = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			display_data = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 
 			to_us = !!xstrstr(display_data, j->nick);
 			display_activity = (is_priv || to_us) ? EKG_WINACT_IMPORTANT : EKG_WINACT_MSG;
@@ -617,8 +617,8 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 		{
 			rivchat_info_t *hdr2 = (rivchat_info_t *) _hdr->data;
 
-			char *user = ekg_cp_to_locale(xstrndup(hdr2->user, sizeof(hdr2->user)));
-			char *host = ekg_cp_to_locale(xstrndup(hdr2->host, sizeof(hdr2->host)));
+			char *user = ekg_cp_to_core(xstrndup(hdr2->user, sizeof(hdr2->user)));
+			char *host = ekg_cp_to_core(xstrndup(hdr2->host, sizeof(hdr2->host)));
 
 			if (is_our) {	/* we join? */
 				window_t *w = window_new(rivchat_make_window(j->port), s, 0);
@@ -642,7 +642,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 		case RC_PINGAWAY:
 		{
 			/* if user is already in away state, do nothing... else do type = RC_AWAY */
-			display_data = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			display_data = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 			if (u->status == EKG_STATUS_AWAY && !xstrcmp(u->descr, display_data)) {
 				xfree(display_data);
 				display_data = NULL;
@@ -656,7 +656,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 		{
 			display_activity = EKG_WINACT_JUNK;
 			if (!display_data)
-				display_data = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+				display_data = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 
 			xfree(u->descr); u->descr = xstrdup(display_data);
 			u->status = EKG_STATUS_AWAY;
@@ -675,7 +675,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 
 		case RC_QUIT:
 		{
-			display_data = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			display_data = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 			if (!xstrlen(display_data)) {
 				xfree(display_data);
 				display_data = xstrdup("no reason");
@@ -692,7 +692,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 		case RC_NEWTOPIC: 
 		{
 			display_activity = EKG_WINACT_MSG;
-			display_data = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			display_data = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 
 			if (type == RC_NEWTOPIC) {
 				xfree(j->topic);
@@ -712,7 +712,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 
 		case RC_POP:	/* XXX, ladniej */
 		{
-			char *pop_data = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			char *pop_data = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 
 			print_window(rivchat_make_window(j->port), s, is_priv ? EKG_WINACT_IMPORTANT : EKG_WINACT_JUNK, 1, 
 					is_priv ? "rivchat_pop_recv" : "rivchat_pop_broadcast",
@@ -725,7 +725,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 		case RC_NICKCHANGE:
 		{
 			display_activity = EKG_WINACT_MSG;
-			display_data = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			display_data = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 
 			xfree(u->nickname);	u->nickname = xstrdup(display_data);
 
@@ -739,7 +739,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 		case RC_ME:
 		{
 			display_activity = EKG_WINACT_MSG;
-			display_data = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			display_data = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 			break;
 		}
 
@@ -785,7 +785,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 				break;
 			}
 
-			filename = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			filename = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 	/* XXX, na pewno 64bity? */
 			size =
 		/*
@@ -823,7 +823,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 				break;
 			}
 
-			filename = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			filename = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 
 			debug("RC_FILEREQUEST\n");
 
@@ -858,7 +858,7 @@ static void rivchat_parse_packet(session_t *s, rivchat_header_t *_hdr, const cha
 				break;
 			}
 
-			filename = ekg_cp_to_locale(xstrndup(_hdr->data, sizeof(_hdr->data)));
+			filename = ekg_cp_to_core(xstrndup(_hdr->data, sizeof(_hdr->data)));
 
 			debug("RC_FILECANCEL2\n");
 

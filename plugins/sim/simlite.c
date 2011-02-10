@@ -496,7 +496,7 @@ cleanup:
 		RSA_free(private_key);
 	if (buf)
 		free(buf);
-	return ekg_cp_to_locale(res);	/* XXX, what if message isn't encoded in cp-1250? */
+	return ekg_cp_to_core(res);	/* XXX, what if message isn't encoded in cp-1250? */
 }
 
 /*

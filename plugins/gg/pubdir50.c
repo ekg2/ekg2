@@ -324,10 +324,10 @@ void gg_session_handler_search50(session_t *s, struct gg_event *e)
 		const char *__birthyear = gg_pubdir50_get(res, i, "birthyear");
 		const char *__city	= gg_pubdir50_get(res, i, "city");
 
-		char *firstname		= gg_to_locale_dup(s, __firstname);
-		char *lastname		= gg_to_locale_dup(s, __lastname);
-		char *nickname		= gg_to_locale_dup(s, __nickname);
-		char *city		= gg_to_locale_dup(s, __city);
+		char *firstname		= gg_to_core_dup(s, __firstname);
+		char *lastname		= gg_to_core_dup(s, __lastname);
+		char *nickname		= gg_to_core_dup(s, __nickname);
+		char *city		= gg_to_core_dup(s, __city);
 		int status		= (__fmstatus)	? atoi(__fmstatus) : GG_STATUS_NOT_AVAIL;
 		const char *birthyear	= (__birthyear && xstrcmp(__birthyear, "0")) ? __birthyear : NULL;
 

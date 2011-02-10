@@ -767,7 +767,7 @@ static void gg_session_handler_disconnect(session_t *s) {
  */
 static void gg_session_handler_status(session_t *s, uin_t uin, int status, const char *descr, guint32 ip, guint16 port, int protocol) {
 	char *__uid	= saprintf(("gg:%d"), uin);
-	char *__descr	= gg_to_locale(s, xstrdup(descr));
+	char *__descr	= gg_to_core(s, xstrdup(descr));
 	int i, j, dlen, state = 0, m = 0;
 
 	{
@@ -875,7 +875,7 @@ static void gg_session_handler_msg(session_t *s, struct gg_event *e) {
 	for (i = 0; i < e->event.msg.recipients_count; i++)
 		array_add(&__rcpts, saprintf("gg:%d", e->event.msg.recipients[i]));
 
-	__text = gg_to_locale(s, xstrdup((const char *) e->event.msg.message));
+	__text = gg_to_core(s, xstrdup((const char *) e->event.msg.message));
 
 	if (e->event.msg.formats && e->event.msg.formats_length) {
 		unsigned char *p = e->event.msg.formats;
@@ -1162,7 +1162,7 @@ static void gg_session_handler_userlist(session_t *s, struct gg_event *e) {
 
 					gg_remove_notify_ex(g->sess, str_to_uin(parsed + 1), gg_userlist_type(u));
 				}
-				reply = gg_to_locale(s, xstrdup(e->event.userlist.reply));
+				reply = gg_to_core(s, xstrdup(e->event.userlist.reply));
 				gg_userlist_set(s, reply);
 				xfree(reply);
 				gg_userlist_send(g->sess, s->userlist);

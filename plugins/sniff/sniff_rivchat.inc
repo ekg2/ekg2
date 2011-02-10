@@ -6,10 +6,10 @@ static char *build_rivchatport_name(const connection_t *hdr) {
 }
 
 SNIFF_HANDLER(sniff_rivchat_info, rivchat_packet_rcinfo) {
-	char *hostname	= ekg_cp_to_locale(xstrndup(pkt->host, sizeof(pkt->host)));
-	char *os	= ekg_cp_to_locale(xstrndup(pkt->os, sizeof(pkt->os)));
-	char *program	= ekg_cp_to_locale(xstrndup(pkt->prog, sizeof(pkt->prog)));
-	char *username	= ekg_cp_to_locale(xstrndup(pkt->user, sizeof(pkt->user)));
+	char *hostname	= ekg_cp_to_core(xstrndup(pkt->host, sizeof(pkt->host)));
+	char *os	= ekg_cp_to_core(xstrndup(pkt->os, sizeof(pkt->os)));
+	char *program	= ekg_cp_to_core(xstrndup(pkt->prog, sizeof(pkt->prog)));
+	char *username	= ekg_cp_to_core(xstrndup(pkt->user, sizeof(pkt->user)));
 
 	char program_ver[8];	/* ddd '.' ddd */
 
@@ -36,7 +36,7 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 
 	CHECK_LEN(sizeof(rivchat_packet))
 
-	nick = ekg_cp_to_locale(xstrndup(pkt->nick, sizeof(pkt->nick)));
+	nick = ekg_cp_to_core(xstrndup(pkt->nick, sizeof(pkt->nick)));
 
 	debug("UDP RIVCHAT PACKET [SIZE: %d FROMID: %d TOID: %d TYPE: %x NICK: %s\n", pkt->size, pkt->fromid, pkt->toid, pkt->type, nick);
 
@@ -48,7 +48,7 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 		case RIVCHAT_ME:
 			debug_function("sniff_rivchat() RIVCHAT_ME\n");
 
-			data = ekg_cp_to_locale(xstrndup(pkt->data, sizeof(pkt->data)));
+			data = ekg_cp_to_core(xstrndup(pkt->data, sizeof(pkt->data)));
 			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, EKG_WINACT_MSG, 1,
 				"sniff_rivchat_me", inet_ntoa(hdr->srcip),
 				nick,
@@ -63,7 +63,7 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 
 			/* XXX secure, not secure */
 
-			data = ekg_cp_to_locale(xstrndup(pkt->data, sizeof(pkt->data)));
+			data = ekg_cp_to_core(xstrndup(pkt->data, sizeof(pkt->data)));
 			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, EKG_WINACT_MSG, 1,
 				"sniff_rivchat_message", inet_ntoa(hdr->srcip),
 				nick,
@@ -85,7 +85,7 @@ SNIFF_HANDLER(sniff_rivchat, rivchat_packet) {
 		case RIVCHAT_PINGAWAY:
 			debug_function("sniff_rivchat() RIVCHAT_AWAY/RIVCHAT_PINGAWAY\n");
 
-			data = ekg_cp_to_locale(xstrndup(pkt->data, sizeof(pkt->data)));
+			data = ekg_cp_to_core(xstrndup(pkt->data, sizeof(pkt->data)));
 			print_window(build_rivchatport_name(hdr) /* sniff:rc:port or smth */, s, EKG_WINACT_MSG, 1,
 				type == RIVCHAT_AWAY ? "sniff_rivchat_away" : "sniff_rivchat_pingaway", inet_ntoa(hdr->srcip),
 

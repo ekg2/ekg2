@@ -74,7 +74,7 @@ void jogger_localize_texts() {
 
 	jogger_free_texts(1);
 	for (i = 0; i < JOGGER_TEXT_MAX; i++)
-		jogger_text[i] = ekg_utf8_to_locale_dup(utf_jogger_text[i]);
+		jogger_text[i] = ekg_utf8_to_core_dup(utf_jogger_text[i]);
 }
 
 QUERY(jogger_msghandler) {

@@ -347,7 +347,7 @@ static void icq_get_user_info(session_t *s, userlist_t *u, struct icq_tlv_list *
 							char *tmp;
 							guint16 enc;
 							icq_unpack_nc(t_data, item_len, "Uw", &tmp, &enc);
-							descr = !enc ? ekg_utf8_to_locale_dup(tmp) : xstrdup(tmp);
+							descr = !enc ? ekg_utf8_to_core_dup(tmp) : xstrdup(tmp);
 						}
 						desc_chg = 1;
 					} else if ((item_type == 0x0e) && (item_len>7)) {

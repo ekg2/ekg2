@@ -63,7 +63,7 @@
 #include "feed.h"
 
 #define rss_convert_string(text, encoding) \
-	ekg_recode_to_locale_dup(encoding ? encoding : "UTF-8", text)
+	ekg_recode_to_core_dup(encoding ? encoding : "UTF-8", text)
 
 typedef enum {
 	RSS_PROTO_UNKNOWN = 0,

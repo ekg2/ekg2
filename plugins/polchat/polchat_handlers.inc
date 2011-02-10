@@ -537,7 +537,7 @@ void polchat_processpkt(session_t *s, unsigned short nheaders, unsigned short ns
 
 		if (len < strlen+1) goto invalid_packet; len -= (strlen+1);
 
-		strings[i] = ekg_utf8_to_locale(xstrndup((char*) &data[2], strlen));
+		strings[i] = ekg_utf8_to_core(xstrndup((char*) &data[2], strlen));
 		data += (2 + strlen + 1);
 	}
 

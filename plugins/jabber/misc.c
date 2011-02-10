@@ -237,7 +237,7 @@ char *jabber_escape(const char *text) {
 char *jabber_unescape(const char *text) {
 	if (!text)
 		return NULL;
-	return ekg_utf8_to_locale_dup(text);
+	return ekg_utf8_to_core_dup(text);
 }
 
 /**
@@ -322,7 +322,7 @@ char *tlen_decode(const char *what) {
 	}
 	*dest = '\0';
 
-	return ekg_iso2_to_locale((char *) retval);
+	return ekg_iso2_to_core((char *) retval);
 }
 
 /*

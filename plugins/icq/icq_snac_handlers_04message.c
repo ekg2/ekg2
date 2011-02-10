@@ -329,7 +329,7 @@ static int icq_snac_message_recv_rtf2711(session_t *s, unsigned char *buf, int l
 					len -= msg.len;
 					if (msg.len > 0) {
 						time_t sent = time(NULL);
-						char *tmp = ekg_utf8_to_locale_dup(msg.str);
+						char *tmp = ekg_utf8_to_core_dup(msg.str);
 
 						protocol_message_emit(s, msg_param->uid, NULL, tmp, NULL, sent, EKG_MSGCLASS_CHAT, NULL, EKG_TRY_BEEP, 0);
 
@@ -551,7 +551,7 @@ static void icq_snac_message_status_reply(msg_params_t *msg_param, char *msg) {
 	debug_function("icq_snac_message_status_reply() status from %s msg: %s\n", msg_param->uid, msg);
 
 	if (msg_param->version == 9) /* utf-8 message */
-		descr = ekg_utf8_to_locale_dup(msg);
+		descr = ekg_utf8_to_core_dup(msg);
 	else
 		descr = xstrdup(msg);
 

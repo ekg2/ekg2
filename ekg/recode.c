@@ -28,7 +28,7 @@
  * 		give info to user, if this first happen.
  *
  * 	- we should also reinit encodings, if user changed console_charset.
- * 	- implement ekg_any_to_locale(), ekg_locale_to_any()
+ * 	- implement ekg_any_to_core(), ekg_locale_to_any()
  *
  * 	- Check if this code works OK.
  */
@@ -190,31 +190,31 @@ void ekg_recode_inc_ref(const gchar *enc) {
 void ekg_recode_dec_ref(const gchar *enc) {
 }
 
-char *ekg_recode_from_locale(const gchar *enc, char *buf) {
-	gchar *res = ekg_recode_from_locale_use(enc, buf);
+char *ekg_recode_from_core(const gchar *enc, char *buf) {
+	gchar *res = ekg_recode_from_core_use(enc, buf);
 	if (res != buf)
 		g_free(buf);
 	return res;
 }
 
-char *ekg_recode_to_locale(const gchar *enc, char *buf) {
-	gchar *res = ekg_recode_to_locale_use(enc, buf);
+char *ekg_recode_to_core(const gchar *enc, char *buf) {
+	gchar *res = ekg_recode_to_core_use(enc, buf);
 	if (res != buf)
 		g_free(buf);
 	return res;
 }
 
-char *ekg_recode_from_locale_dup(const gchar *enc, const char *buf) {
-	gchar *res = ekg_recode_from_locale_use(enc, buf);
+char *ekg_recode_from_core_dup(const gchar *enc, const char *buf) {
+	gchar *res = ekg_recode_from_core_use(enc, buf);
 	return res == buf ? g_strdup(res) : res;
 }
 
-char *ekg_recode_to_locale_dup(const gchar *enc, const char *buf) {
-	gchar *res = ekg_recode_to_locale_use(enc, buf);
+char *ekg_recode_to_core_dup(const gchar *enc, const char *buf) {
+	gchar *res = ekg_recode_to_core_use(enc, buf);
 	return res == buf ? g_strdup(res) : res;
 }
 
-const char *ekg_recode_from_locale_use(const gchar *enc, const char *buf) {
+const char *ekg_recode_from_core_use(const gchar *enc, const char *buf) {
 	gsize written;
 	gchar *res;
 
@@ -226,7 +226,7 @@ const char *ekg_recode_from_locale_use(const gchar *enc, const char *buf) {
 	return res ? res : g_strdup(buf);
 }
 
-const char *ekg_recode_to_locale_use(const gchar *enc, const char *buf) {
+const char *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
 	gsize written;
 	gchar *res;
 

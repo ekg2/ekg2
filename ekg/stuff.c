@@ -1685,7 +1685,7 @@ char *read_file_utf(FILE *f, int alloc) {
 		return NULL;
 
 	ekg_recode_utf8_inc();
-	res = ekg_utf8_to_locale_dup(buf);
+	res = ekg_utf8_to_core_dup(buf);
 	if (!alloc)
 		tmp = res;
 
