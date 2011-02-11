@@ -24,9 +24,6 @@
 #include <time.h>
 #include <unistd.h>
 #include <sys/time.h>
-#ifdef HAVE_ICONV
-#	include <iconv.h>
-#endif
 
 #ifndef NO_POSIX_SYSTEM
 #include <arpa/inet.h>
@@ -92,33 +89,8 @@ static void irc_parse_ident_host(char *identhost, char **ident, char **host)  {
 	}
 }
 
-#ifdef HAVE_ICONV
-static char *try_convert_string_p(const char *ps, iconv_t cd) {
-	char *s = (char *) ps;
-		/* we can assume that both from and to aren't NULL in EKG2,
-		 * and cd is NULL in case of error, not -1 */
-	if (cd) {
-		char *buf, *ib, *ob;
-		size_t ibl, obl;
-
-		ib = s, ibl = xstrlen(s) + 1;
-		obl = 16 * ibl;
-		ob = buf = xmalloc(obl + 1);
-
-		iconv (cd, &ib, &ibl, &ob, &obl);
-
-		if (!ibl) {
-			*ob = '\0';
-			buf = (char*)xrealloc((void*)buf, xstrlen(buf)+1);
-			return buf;
-		}
-		xfree(buf);
-	}
-	return NULL;
-}
-#else
+/* XXX: rewrite to not rely on internal API */
 static char *try_convert_string_p(const char *ps, void *cd) { return NULL; }
-#endif
 
 static char *irc_convert_in(irc_private_t *j, const char *line) {
 	char *recoded;
