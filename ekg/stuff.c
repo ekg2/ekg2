@@ -59,10 +59,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#ifdef HAVE_ICONV
-#	include <iconv.h>
-#endif
-
 #include "debug.h"
 #include "commands.h"
 #include "dynstuff.h"
