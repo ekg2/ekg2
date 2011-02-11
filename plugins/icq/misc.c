@@ -21,9 +21,6 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef HAVE_ICONV
-#	include <iconv.h>
-#endif
 
 #include <ekg/debug.h>
 #include <ekg/dynstuff.h>
@@ -634,32 +631,21 @@ void icq_convert_string_destroy() {
 }
 
 char *icq_convert_from_ucs2be(char *buf, int len) {
-#ifdef HAVE_ICONV
-	char *ret, *ib, *ob;
-	size_t ibl, obl;
-	string_t text;
+	string_t text, ret;
 
 	if (!buf || !len)
 		return NULL;
 
 	text = string_init(NULL);
-	string_append_raw(text, (char *) buf, len);
+	string_append_raw(text, buf, len);
 
-	ib = text->str, ibl = len;
-	obl = 16 * ibl;
-	ob = ret = xmalloc(obl + 1);
-
-	iconv (ucs2be_conv_in, &ib, &ibl, &ob, &obl);
+	ret = ekg_convert_string_t_p(text, ucs2be_conv_in);
 
 	string_free(text, 1);
 
-	if (!ibl) {
-		*ob = '\0';
-		ret = (char*)xrealloc((void*)ret, xstrlen(ret)+1);
-		return ret;
-	}
-	xfree(ret);
-#endif
+	if (ret)
+		return string_free(ret, 0);
+
 	return NULL;
 }
 
