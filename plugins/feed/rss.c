@@ -960,7 +960,7 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 			fd = socket(AF_INET, SOCK_STREAM, 0);
 
 			sin.sin_addr.s_addr	= inet_addr(f->ip);
-			sin.sin_port		= htons(f->port);
+			sin.sin_port		= g_htons(f->port);
 			sin.sin_family		= AF_INET;
 
 			rss_set_descr(f->uid, saprintf("Connecting to: %s (%s)", f->host, f->ip));

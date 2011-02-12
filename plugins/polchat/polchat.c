@@ -467,7 +467,7 @@ static WATCHER(polchat_handle_resolver) {
 	}
 
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(port);
+	sin.sin_port = g_htons(port);
 	sin.sin_addr.s_addr = a.s_addr;
 
 	if (ioctl(fd, FIONBIO, &one) == -1) 

@@ -309,7 +309,7 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 
 		sin.sin_family		= AF_INET;
 		sin.sin_addr.s_addr	= inet_addr(login_str);
-		sin.sin_port		= ntohs(port);
+		sin.sin_port		= g_htons(port);
 
 		if (connect(fd, (struct sockaddr *) &sin, sizeof(sin))) {
 			int err = errno;

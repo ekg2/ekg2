@@ -176,10 +176,10 @@ int extract_rr(unsigned char *start, unsigned char *end, unsigned char **ptr, ns
 	if (rrs + 10 > end)
 		return 3;
 	/* this works both on sparc and intel, so don't mess with it */
-	rr->type	= ntohs(cli_readint16(rrs));
-	rr->rr_class	= ntohs(cli_readint16(rrs+2));
-	rr->ttl		= ntohs(cli_readint32(rrs+4));
-	rr->rdlength	= ntohs(cli_readint32(rrs+8));
+	rr->type	= g_ntohs(cli_readint16(rrs));
+	rr->rr_class	= g_ntohs(cli_readint16(rrs+2));
+	rr->ttl		= g_ntohs(cli_readint32(rrs+4));
+	rr->rdlength	= g_ntohs(cli_readint32(rrs+8));
 
 	rrs += 10;
 	if (rrs + rr->rdlength > end)
@@ -215,9 +215,9 @@ int extract_rr_srv(unsigned char *start, unsigned char *end, unsigned char **ptr
 	if (rr.rdlength < 6)
 		return 1;
 
-	srv->prio	= ntohs(cli_readint16(rr.rdata));
-	srv->weight	= ntohs(cli_readint16(rr.rdata+2));
-	srv->port	= ntohs(cli_readint16(rr.rdata+4));
+	srv->prio	= g_ntohs(cli_readint16(rr.rdata));
+	srv->weight	= g_ntohs(cli_readint16(rr.rdata+2));
+	srv->port	= g_ntohs(cli_readint16(rr.rdata+4));
 
 	if ((exp_len = dn_expand(start, end, rr.rdata+6, exp_dn , sizeof(exp_dn))) == -1)
 		return 1;
@@ -263,7 +263,7 @@ int srv_resolver(gim_host **hostlist, const char *hostname, const int proto_port
 	if (!(pro = getprotobynumber(proto ? proto : IPPROTO_TCP)))
 		return 1;
 
-	if (!(srv = getservbyport(htons(proto_port), pro->p_name)))
+	if (!(srv = getservbyport(g_htons(proto_port), pro->p_name)))
 		return 2;
 
 	if (res_init() == -1)
@@ -300,13 +300,13 @@ int srv_resolver(gim_host **hostlist, const char *hostname, const int proto_port
 
 	/* check if there was no error, and if there is answer section available
 	 */
-	if ( (ntohs(query_resp->rcode) == NOERROR) && (ntohs(query_resp->ancount) > 0) ) {
+	if ( (g_ntohs(query_resp->rcode) == NOERROR) && (g_ntohs(query_resp->ancount) > 0) ) {
 		int i;
 
-		cnt[SQUERY]	= ntohs(query_resp->qdcount);
-		cnt[SANSWER]	= ntohs(query_resp->ancount);
-		cnt[SAUTH]	= ntohs(query_resp->nscount);
-		cnt[SEXTRA]	= ntohs(query_resp->arcount);
+		cnt[SQUERY]	= g_ntohs(query_resp->qdcount);
+		cnt[SANSWER]	= g_ntohs(query_resp->ancount);
+		cnt[SAUTH]	= g_ntohs(query_resp->nscount);
+		cnt[SEXTRA]	= g_ntohs(query_resp->arcount);
 		if (cnt[SQUERY] != 1)
 		{
 			/* fprintf (stderr, "wth, not our query?"); */

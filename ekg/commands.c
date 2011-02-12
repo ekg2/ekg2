@@ -2320,10 +2320,10 @@ static COMMAND(cmd_test_fds)
 				 */
 				if (sa->sa_family == AF_INET) {
 					xstrcat(buf, "socket, inet, *:");
-					xstrcat(buf, ekg_itoa(ntohs(sin->sin_port)));
+					xstrcat(buf, ekg_itoa(g_ntohs(sin->sin_port)));
 				} else if (sa->sa_family == AF_INET6) {
 					xstrcat(buf, "socket, inet6, *:");
-					xstrcat(buf, ekg_itoa(ntohs(sin->sin_port)));
+					xstrcat(buf, ekg_itoa(g_ntohs(sin->sin_port)));
 				} else
 					xstrcat(buf, "socket");
 			} else {
@@ -2335,7 +2335,7 @@ static COMMAND(cmd_test_fds)
 						xstrcat(buf, "socket, inet, ");
 						xstrcat(buf, inet_ntoa(sin->sin_addr));
 						xstrcat(buf, ":");
-						xstrcat(buf, ekg_itoa(ntohs(sin->sin_port)));
+						xstrcat(buf, ekg_itoa(g_ntohs(sin->sin_port)));
 						break;
 #ifdef HAVE_GETADDRINFO
 					case AF_INET6:
@@ -2347,7 +2347,7 @@ static COMMAND(cmd_test_fds)
 						xstrcat(buf, "strange?");
 #endif /* HAVE_INET_NTOP */
 						xstrcat(buf, ":");
-						xstrcat(buf, ekg_itoa(ntohs(sin6->sin6_port)));
+						xstrcat(buf, ekg_itoa(g_ntohs(sin6->sin6_port)));
 						break;
 #endif /* HAVE_GETADDRINFO */
 					default:

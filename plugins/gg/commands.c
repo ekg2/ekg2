@@ -173,7 +173,7 @@ static COMMAND(gg_command_connect) {
 			return -1;
 
 		if (local_ip == NULL)
-			gg_local_ip = htonl(INADDR_ANY);
+			gg_local_ip = g_htonl(INADDR_ANY);
 		else {
 #ifdef HAVE_INET_PTON
 			int tmp = inet_pton(AF_INET, local_ip, &gg_local_ip);
@@ -182,7 +182,7 @@ static COMMAND(gg_command_connect) {
 				print("invalid_local_ip", session_name(session));
 				session_set(session, "local_ip", NULL);
 				config_changed = 1;
-				gg_local_ip = htonl(INADDR_ANY);
+				gg_local_ip = g_htonl(INADDR_ANY);
 			}
 #else
 			gg_local_ip = inet_addr(local_ip);

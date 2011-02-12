@@ -667,7 +667,7 @@ static COMMAND(nntp_command_connect) {
 
 	sin.sin_family		= AF_INET;
 	sin.sin_addr.s_addr	= inet_addr(ip);
-	sin.sin_port		= ntohs(session_int_get(session, "port"));
+	sin.sin_port		= g_htons(session_int_get(session, "port"));
 
 	ioctl(fd, FIONBIO, &one);
 

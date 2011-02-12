@@ -64,7 +64,7 @@ static int rc_input_new_inet(const char *path, int type)
 		port = atoi(path);
 
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(port);
+	sin.sin_port = g_htons(port);
 	sin.sin_addr.s_addr = addr;
 
 	if ((fd = socket(AF_INET, type, 0)) == -1) {

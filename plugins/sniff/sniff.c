@@ -144,10 +144,10 @@ static connection_t *sniff_udp_get(const struct iphdr *ip, const struct udphdr *
 	static connection_t d;
 	
 	d.srcip		= ip->ip_src;
-	d.srcport	= ntohs(udp->th_sport);
+	d.srcport	= g_ntohs(udp->th_sport);
 
 	d.dstip		= ip->ip_dst;
-	d.dstport	= ntohs(udp->th_dport);
+	d.dstport	= g_ntohs(udp->th_dport);
 	return &d;
 }
 
@@ -164,32 +164,32 @@ static connection_t *sniff_tcp_find_connection(const struct iphdr *ip, const str
 	for (l = tcp_connections; l; l = l->next) {
 		connection_t *c = l->data;
 
-		if (	c->srcip.s_addr == ip->ip_src.s_addr && c->srcport == ntohs(tcp->th_sport) &&
-			c->dstip.s_addr == ip->ip_dst.s_addr && c->dstport == ntohs(tcp->th_dport)) 
+		if (	c->srcip.s_addr == ip->ip_src.s_addr && c->srcport == g_ntohs(tcp->th_sport) &&
+			c->dstip.s_addr == ip->ip_dst.s_addr && c->dstport == g_ntohs(tcp->th_dport)) 
 				return c;
 
-		if (	c->srcip.s_addr == ip->ip_dst.s_addr && c->srcport == ntohs(tcp->th_dport) &&
-			c->dstip.s_addr == ip->ip_src.s_addr && c->dstport == ntohs(tcp->th_sport))
+		if (	c->srcip.s_addr == ip->ip_dst.s_addr && c->srcport == g_ntohs(tcp->th_dport) &&
+			c->dstip.s_addr == ip->ip_src.s_addr && c->dstport == g_ntohs(tcp->th_sport))
 				return c;
 	}
 
 	d	= xmalloc(sizeof(connection_t));
 
 	d->srcip	= ip->ip_src;
-	d->srcport	= ntohs(tcp->th_sport);
+	d->srcport	= g_ntohs(tcp->th_sport);
 	
 	d->dstip	= ip->ip_dst;
-	d->dstport	= ntohs(tcp->th_dport);
+	d->dstport	= g_ntohs(tcp->th_dport);
 
 	list_add(&tcp_connections, d, 0);
 #endif
 	static connection_t d;
 	
 	d.srcip		= ip->ip_src;
-	d.srcport	= ntohs(tcp->th_sport);
+	d.srcport	= g_ntohs(tcp->th_sport);
 
 	d.dstip		= ip->ip_dst;
-	d.dstport	= ntohs(tcp->th_dport);
+	d.dstport	= g_ntohs(tcp->th_dport);
 	return &d;
 }
 
@@ -298,7 +298,7 @@ static inline void sniff_loop_tcp(session_t *s, int len, const u_char *packet, c
 		return;
 	}
 
-	size_payload = ntohs(ip->ip_len) - (size_ip + size_tcp);
+	size_payload = g_ntohs(ip->ip_len) - (size_ip + size_tcp);
 
 	CHECK_LEN(size_tcp + size_payload);
 
@@ -312,8 +312,8 @@ static inline void sniff_loop_tcp(session_t *s, int len, const u_char *packet, c
 			_inet_ntoa(hdr->dstip),		/* dest ip */
 			hdr->dstport,			/* dest port */
 			tcp_print_flags(tcp->th_flags), /* tcp flags */
-			htonl(tcp->th_seq),		/* seq */
-			htonl(tcp->th_ack),		/* ack */
+			g_htonl(tcp->th_seq),		/* seq */
+			g_htonl(tcp->th_ack),		/* ack */
 			size_payload);			/* payload len */
 
 	/* XXX check tcp flags */
@@ -374,7 +374,7 @@ static inline void sniff_loop_udp(session_t *s, int len, const u_char *packet, c
 	hdr = sniff_udp_get(ip, udp);
 
 	payload = (char *) (packet + sizeof(struct udphdr));
-	size_payload = ntohs(udp->th_len)-sizeof(struct udphdr);
+	size_payload = g_ntohs(udp->th_len)-sizeof(struct udphdr);
 
 	CHECK_LEN(sizeof(struct udphdr) + size_payload);
 
@@ -436,7 +436,7 @@ static inline void sniff_loop_ip(session_t *s, int len, const u_char *packet) {
 
 static inline void sniff_loop_ether(u_char *data, const struct pcap_pkthdr *header, const u_char *packet) {
 	const struct ethhdr *ethernet;
-	guint16 ethtype;		/* ntohs(ethernet->ether_type) */
+	guint16 ethtype;		/* g_ntohs(ethernet->ether_type) */
 
 	if (header->caplen < sizeof(struct ethhdr)) {
 		debug_error("sniff_loop_ether() %x %x\n", header->caplen, sizeof(struct ethhdr));
@@ -444,7 +444,7 @@ static inline void sniff_loop_ether(u_char *data, const struct pcap_pkthdr *head
 	}
 
 	ethernet = (const struct ethhdr *) packet;
-	ethtype = ntohs(ethernet->ether_type);
+	ethtype = g_ntohs(ethernet->ether_type);
 
 	if (ethtype == ETHERTYPE_ARP)
 		debug_function("sniff_loop_ether() ARP\n");
@@ -464,7 +464,7 @@ void sniff_loop_sll(u_char *data, const struct pcap_pkthdr *header, const u_char
 	}
 
 	sll = (const struct sll_header *) packet;
-	ethtype = ntohs(sll->sll_protocol);
+	ethtype = g_ntohs(sll->sll_protocol);
 	
 	if (ethtype == ETHERTYPE_IP) 
 		sniff_loop_ip((session_t *) data, header->caplen - sizeof(struct sll_header), packet + SIZE_SLL);

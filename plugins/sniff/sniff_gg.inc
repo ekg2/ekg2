@@ -778,7 +778,7 @@ SNIFF_HANDLER(sniff_gg_dcc_3xx_out, gg_dcc_3xx) {
 	}
 
 	debug_error("XXX sniff_gg_dcc_3xx_out() code1: %s\n", build_code(pkt->code1));
-	CHECK_PRINT(pkt->dunno1, htonl(0x04000000));
+	CHECK_PRINT(pkt->dunno1, g_htonl(0x04000000));
 	CHECK_PRINT(pkt->dunno2, !pkt->dunno2);
 	CHECK_PRINT(pkt->dunno3, !pkt->dunno3);
 	return 0;

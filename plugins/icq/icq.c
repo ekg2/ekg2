@@ -761,7 +761,7 @@ static WATCHER(icq_handle_hubresolver) {
 	}
 
 	sin.sin_family = AF_INET;
-	sin.sin_port = ntohs(hubport);
+	sin.sin_port = g_htons(hubport);
 	sin.sin_addr.s_addr = a.s_addr;
 
 	if (ioctl(fd, FIONBIO, &one) == -1)

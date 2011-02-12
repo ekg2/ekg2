@@ -500,7 +500,7 @@ static int rivchat_send_packet(session_t *s, guint32 type, userlist_t *user, con
 	guint8 bold;				/* ? */
 #endif
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(j->port);
+	sin.sin_port = g_htons(j->port);
 	sin.sin_addr.s_addr = INADDR_BROADCAST;	/* XXX */
 	sin.sin_addr.s_addr = (user == NULL) ? inet_addr("10.1.0.255") : user_private_item_get_int(user, "ip");
 
@@ -1029,7 +1029,7 @@ static COMMAND(rivchat_command_connect) {
 		return -1;
 	}
 
-	sin.sin_port		= htons(port);
+	sin.sin_port		= g_htons(port);
 	sin.sin_family		= AF_INET;
 	sin.sin_addr.s_addr	= INADDR_ANY;
 

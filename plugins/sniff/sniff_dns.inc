@@ -27,23 +27,23 @@ SNIFF_HANDLER(sniff_dns, DNS_HEADER) {
 		if (pkt->rcode != NOERROR || pkt->ancount == 0) {
 
 			switch (pkt->rcode) {
-				case NXDOMAIN:	debug_error("[sniff_dns()] NXDOMAIN [%d]\n", ntohs(pkt->ancount));	break;
-				case SERVFAIL:	debug_error("[sniff_dns()] SERVFAIL [%d]\n", ntohs(pkt->ancount));	break;
+				case NXDOMAIN:	debug_error("[sniff_dns()] NXDOMAIN [%d]\n", g_ntohs(pkt->ancount));	break;
+				case SERVFAIL:	debug_error("[sniff_dns()] SERVFAIL [%d]\n", g_ntohs(pkt->ancount));	break;
 				case NOERROR:	debug_error("[sniff_dns()] NODATA\n");					break;
 
 				case FORMERR:
 				case NOTIMP:
 				case REFUSED:
 				default:
-						debug_error("[sniff_dns()] NO_RECORVERY [%d, %d]\n", pkt->rcode, ntohs(pkt->ancount));	break;
+						debug_error("[sniff_dns()] NO_RECORVERY [%d, %d]\n", pkt->rcode, g_ntohs(pkt->ancount));	break;
 			}
 			goto end;
 			return 0;
 		}
 
 		{
-			int qdcount = ntohs(pkt->qdcount);			/* question count */
-			int ancount = ntohs(pkt->ancount);			/* answer count */
+			int qdcount = g_ntohs(pkt->qdcount);			/* question count */
+			int ancount = g_ntohs(pkt->ancount);			/* answer count */
 			int i;
 			int displayed = 0;
 

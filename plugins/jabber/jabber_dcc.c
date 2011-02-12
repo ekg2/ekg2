@@ -312,7 +312,7 @@ static watch_t *jabber_dcc_init(int port) {
 
 	sin.sin_family = AF_INET;
 	sin.sin_addr.s_addr = INADDR_ANY;
-	sin.sin_port = htons(port);
+	sin.sin_port = g_htons(port);
 
 	while (bind(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in))) {
 		debug_error("jabber_dcc_init() bind() port: %d FAILED (%s)\n", port, strerror(errno));
@@ -322,7 +322,7 @@ static watch_t *jabber_dcc_init(int port) {
 			return NULL;
 		}
 
-		sin.sin_port = htons(port);
+		sin.sin_port = g_htons(port);
 	}
 	if (listen(fd, 10)) {
 		debug_error("jabber_dcc_init() listen() FAILED (%s)\n", strerror(errno));

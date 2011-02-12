@@ -21,6 +21,8 @@
 #include "ekg2-config.h"
 #include <ekg/win32.h>
 
+#include <glib.h>
+
 #include <sys/types.h>
 
 #ifndef NO_POSIX_SYSTEM
@@ -279,7 +281,7 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 		ipv4 = xmalloc(len);
 
 		ipv4->sin_family = AF_INET;
-		ipv4->sin_port	 = htons(port);
+		ipv4->sin_port	 = g_htons(port);
 #ifdef HAVE_INET_PTON
 		inet_pton(AF_INET, addr, &(ipv4->sin_addr));
 #else
@@ -301,7 +303,7 @@ static int ekg_build_sin(const char *data, const int defport, struct sockaddr **
 
 		ipv6 = xmalloc(len);
 		ipv6->sin6_family  = AF_INET6;
-		ipv6->sin6_port    = htons(port);
+		ipv6->sin6_port    = g_htons(port);
 #ifdef HAVE_INET_PTON
 		inet_pton(AF_INET6, addr, &(ipv6->sin6_addr));
 #else

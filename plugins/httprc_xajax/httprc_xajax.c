@@ -818,7 +818,7 @@ int httprc_xajax_plugin_init(int prio) {
 	PLUGIN_CHECK_VER("httprc_xajax");
 
 	sin.sin_family = AF_INET;
-	sin.sin_port = htons(atoi(HTTPRCXAJAX_DEFPORT));
+	sin.sin_port = g_htons(atoi(HTTPRCXAJAX_DEFPORT));
 	sin.sin_addr.s_addr = INADDR_ANY;
 
 	if (!config_console_charset || (xstrcmp(config_console_charset, "ISO-8859-2") && xstrcmp(config_console_charset, "UTF-8")))

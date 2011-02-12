@@ -1144,7 +1144,7 @@ static int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **addres
 		ipv4 = xmalloc(len);
 
 		ipv4->sin_family = AF_INET;
-		ipv4->sin_port	 = htons(port);
+		ipv4->sin_port	 = g_htons(port);
 #ifdef HAVE_INET_PTON
 		inet_pton(AF_INET, co->address, &(ipv4->sin_addr));
 #else
@@ -1168,7 +1168,7 @@ static int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **addres
 
 		ipv6 = xmalloc(len);
 		ipv6->sin6_family  = AF_INET6;
-		ipv6->sin6_port    = htons(port);
+		ipv6->sin6_port    = g_htons(port);
 #ifdef HAVE_INET_PTON
 		inet_pton(AF_INET6, co->address, &(ipv6->sin6_addr));
 #else
