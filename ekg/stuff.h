@@ -97,6 +97,7 @@ enum mesg_t {
 #define TIMER_SESSION(x)	int x(int type, session_t *s)
 
 struct timer {
+	guint		id;			/* glib timer id */
 	char		*name;			/* nazwa timera */
 	plugin_t	*plugin;		/* wtyczka obs³uguj±ca deksryptor */
 	struct timeval	ends;			/* kiedy siê koñczy? */

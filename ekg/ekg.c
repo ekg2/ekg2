@@ -163,7 +163,6 @@ static TIMER(ekg_autoaway_timer) {
 
 void ekg_loop() {
 	GTimeVal tv;
-	struct timeval stv;
 	fd_set rd, wd;
 	int ret, maxfd, status;
 	pid_t pid;
@@ -171,31 +170,6 @@ void ekg_loop() {
 	g_get_current_time(&tv);
 
 	{
-		{		/* przejrzyj timery u¿ytkownika, ui, skryptów */
-			GSList *tl;
-			
-			for (tl = timers; tl; ) {
-				struct timer *t = tl->data;
-
-				tl = tl->next;
-				if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
-					int ispersist = t->persist;
-					
-					if (ispersist) {
-						memcpy(&t->ends, &tv, sizeof(tv));
-						t->ends.tv_sec += (t->period / 1000);
-						t->ends.tv_usec += ((t->period % 1000) * 1000);
-						if (t->ends.tv_usec >= 1000000) {
-							t->ends.tv_usec -= 1000000;
-							t->ends.tv_sec++;
-						}
-					}
-
-					if ((t->function(0, t->data) == -1) || !ispersist)
-						timers_remove(t);
-				}
-			}
-		}
 
 		{		/* removed 'w->removed' watches, timeout checking moved below select() */
 			list_t l;
@@ -210,7 +184,7 @@ void ekg_loop() {
 			}
 		}
 
-		/* auto save */
+		/* auto save XXX rewrite to timer */
 		if (config_auto_save && config_changed && (tv.tv_sec - last_save) > config_auto_save) {
 			debug("autosaving userlist and config after %d seconds\n", tv.tv_sec - last_save);
 			last_save = tv.tv_sec;
@@ -277,43 +251,8 @@ void ekg_loop() {
 			}
 		}
 
-		stv.tv_sec = 1;
-		stv.tv_usec = 0;
-		{
-			GSList *tl;
-
-			for (tl = timers; tl; tl = tl->next) {
-				struct timer *t = tl->data;
-				int usec = 0;
-
-				/* zeby uniknac przekrecenia licznika mikrosekund przy
-				 * wiekszych czasach, pomijamy dlugie timery */
-				if (t->ends.tv_sec - tv.tv_sec > 1)
-					continue;
-
-				/* zobacz, ile zostalo do wywolania timera */
-				usec = (t->ends.tv_sec - tv.tv_sec) * 1000000 + (t->ends.tv_usec - tv.tv_usec);
-
-				/* jesli wiecej niz sekunda, to nie ma znacznia */
-				if (usec >= 1000000)
-					continue;
-				
-				/* jesli mniej niz aktualny timeout, zmniejsz */
-				if (stv.tv_sec * 1000000 + stv.tv_usec > usec) {
-					stv.tv_sec = 0;
-					stv.tv_usec = usec;
-				}
-			}
-		}
-
-		/* na wszelki wypadek sprawd¼ warto¶ci */
-		if (stv.tv_sec != 1)
-			stv.tv_sec = 0;
-		if (stv.tv_usec < 0)
-			stv.tv_usec = 1;
-
 		/* sprawd¼, co siê dzieje */
-		ret = select(maxfd + 1, &rd, &wd, NULL, &stv);
+		ret = select(maxfd + 1, &rd, &wd, NULL, NULL);
 
 		/* je¶li wyst±pi³ b³±d, daj znaæ */
 		if (ret == -1) {
@@ -981,6 +920,7 @@ int main(int argc, char **argv)
 	if (query_emit(NULL, "ui-loop") != -1) {
 		/* krêæ imprezê */
 		while (1) {
+			g_main_context_iteration(NULL, FALSE);
 			ekg_loop();
 		}
 	}

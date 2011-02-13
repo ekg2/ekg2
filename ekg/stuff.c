@@ -96,7 +96,6 @@ GSList *timers = NULL;
 
 void timer_free_item(gpointer data) {
 	struct timer *t = data;
-	t->function(1, t->data);
 	xfree(t->name);
 }
 
@@ -104,11 +103,16 @@ static void timers_add(struct timer *t) {
 	timers = g_slist_prepend(timers, t);
 }
 
-void timers_remove(struct timer *t) {
+void ekg2_timers_remove(struct timer *t) {
 	timers = g_slist_remove_full(timers, t, timer_free_item);
 }
 
+void timers_remove(struct timer *t) {
+	g_source_remove(t->id);
+}
+
 void timers_destroy() {
+// XXX
 	timers = g_slist_destroy_full(timers, timer_free_item);
 }
 
@@ -1745,6 +1749,20 @@ const char *timestamp_time(const char *format, time_t t) {
 	return buf;
 }
 
+static void timer_destroy_notify(gpointer data) {
+	struct timer *t = data;
+
+	t->function(1, t->data);
+
+	ekg2_timers_remove(t);
+}
+
+static gboolean timer_wrapper(gpointer data) {
+	struct timer *t = data;
+
+	return !(t->function(0, t->data) == -1 || !t->persist);
+}
+
 struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
 	struct timer *t;
 	GTimeVal tv;
@@ -1785,6 +1803,7 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
 	t->function = function;
 	t->data = data;
 	t->plugin = plugin;
+	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_destroy_notify);
 
 	timers_add(t);
 	return t;
