@@ -97,8 +97,6 @@ enum mesg_t {
 #define TIMER_SESSION(x)	int x(int type, session_t *s)
 
 struct timer {
-	struct timer	*next;
-
 	char		*name;			/* nazwa timera */
 	plugin_t	*plugin;		/* wtyczka obs³uguj±ca deksryptor */
 	struct timeval	ends;			/* kiedy siê koñczy? */
@@ -153,7 +151,7 @@ struct color_map {
 extern child_t *children;
 extern alias_t *aliases;
 extern list_t autofinds; /* char* data */
-extern struct timer *timers;
+extern GSList *timers;
 extern struct conference *conferences;
 extern newconference_t *newconferences;
 extern struct buffer_info buffer_debug;
@@ -347,7 +345,6 @@ int timer_remove(plugin_t *plugin, const char *name);
 int timer_remove_session(session_t *session, const char *name);
 int timer_remove_user();
 void timers_remove(struct timer *t);
-struct timer *timers_removei(struct timer *t);
 void timers_destroy();
 TIMER(timer_handle_command);
 

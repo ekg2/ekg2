@@ -89,16 +89,32 @@ DYNSTUFF_LIST_DECLARE(children, child_t, child_free_item,
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
 
-struct timer *timers = NULL;
-static LIST_FREE_ITEM(timer_free_item, struct timer *) { data->function(1, data->data); xfree(data->name); }
+/***************
+ * timers
+ ***************/
+GSList *timers = NULL;
 
+void timer_free_item(gpointer data) {
+	struct timer *t = data;
+	t->function(1, t->data);
+	xfree(t->name);
+}
 
-DYNSTUFF_LIST_DECLARE2(timers, struct timer, timer_free_item,
-	static __DYNSTUFF_LIST_ADD,		/* timers_add() */
-	__DYNSTUFF_LIST_REMOVE_SAFE,		/* timers_remove() */
-	__DYNSTUFF_LIST_REMOVE_ITER,		/* timers_removei() */
-	__DYNSTUFF_LIST_DESTROY)		/* timers_destroy() */
+static void timers_add(struct timer *t) {
+	timers = g_slist_prepend(timers, t);
+}
 
+void timers_remove(struct timer *t) {
+	timers = g_slist_remove_full(timers, t, timer_free_item);
+}
+
+void timers_destroy() {
+	timers = g_slist_destroy_full(timers, timer_free_item);
+}
+
+/***************
+ * conferences
+ ***************/
 struct conference *conferences = NULL;
 newconference_t *newconferences = NULL;
 
@@ -1738,9 +1754,11 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
 		int i;
 
 		for (i = 1; !name; i++) {
+			GSList *tl;
 			int gotit = 0;
 
-			for (t = timers; t; t = t->next) {
+			for (tl = timers; tl; tl = tl->next) {
+				t = tl->data;
 				if (!xstrcmp(t->name, ekg_itoa(i))) {
 					gotit = 1;
 					break;
@@ -1817,12 +1835,15 @@ struct timer *timer_add_session(session_t *session, const char *name, unsigned i
  */
 int timer_remove(plugin_t *plugin, const char *name)
 {
-	struct timer *t;
+	GSList *tl;
 	int removed = 0;
 
-	for (t = timers; t; t = t->next) {
+	for (tl = timers; tl; ) {
+		struct timer *t = tl->data;
+
+		tl = tl->next;
 		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
-			t = timers_removei(t);
+			timers_remove(t);
 			removed++;
 		}
 	}
@@ -1831,12 +1852,13 @@ int timer_remove(plugin_t *plugin, const char *name)
 }
 
 struct timer *timer_find_session(session_t *session, const char *name) {
-	struct timer *t;
+	GSList *tl;
 
 	if (!session)
 		return NULL;
 	
-	for (t = timers; t; t = t->next) {
+	for (tl = timers; tl; tl = tl->next) {
+		struct timer *t = tl->data;
 		if (t->is_session && t->data == session && !xstrcmp(name, t->name))
 			return t;
 	}
@@ -1846,16 +1868,19 @@ struct timer *timer_find_session(session_t *session, const char *name) {
 
 int timer_remove_session(session_t *session, const char *name)
 {
-	struct timer *t;
+	GSList *tl;
 	plugin_t *p;
 	int removed = 0;
 
 	if (!session || (!(p = session->plugin)))
 		return -1;
 
-	for (t = timers; t; t = t->next) {
+	for (tl = timers; tl; ) {
+		struct timer *t = tl->data;
+
+		tl = tl->next;
 		if (t->is_session && t->data == session && !xstrcmp(name, t->name)) {
-			t = timers_removei(t);
+			timers_remove(t);
 			removed++;
 		}
 	}
@@ -1888,12 +1913,15 @@ TIMER(timer_handle_command)
  */
 int timer_remove_user(int at)
 {
-	struct timer *t;
+	GSList *tl;
 	int removed = 0;
 
-	for (t = timers; t; t = t->next) {
+	for (tl = timers; tl; ) {
+		struct timer *t = tl->data;
+
+		tl = tl->next;
 		if (t->at == at && t->function == timer_handle_command) { 
-			t = timers_removei(t);
+			timers_remove(t);
 			removed = 1;
 		}
 	}

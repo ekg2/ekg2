@@ -172,9 +172,12 @@ void ekg_loop() {
 
 	{
 		{		/* przejrzyj timery u¿ytkownika, ui, skryptów */
-			struct timer *t;
+			GSList *tl;
 			
-			for (t = timers; t; t = t->next) {
+			for (tl = timers; tl; ) {
+				struct timer *t = tl->data;
+
+				tl = tl->next;
 				if (tv.tv_sec > t->ends.tv_sec || (tv.tv_sec == t->ends.tv_sec && tv.tv_usec >= t->ends.tv_usec)) {
 					int ispersist = t->persist;
 					
@@ -189,7 +192,7 @@ void ekg_loop() {
 					}
 
 					if ((t->function(0, t->data) == -1) || !ispersist)
-						t = timers_removei(t);
+						timers_remove(t);
 				}
 			}
 		}
@@ -277,9 +280,10 @@ void ekg_loop() {
 		stv.tv_sec = 1;
 		stv.tv_usec = 0;
 		{
-			struct timer *t;
+			GSList *tl;
 
-			for (t = timers; t; t = t->next) {
+			for (tl = timers; tl; tl = tl->next) {
+				struct timer *t = tl->data;
 				int usec = 0;
 
 				/* zeby uniknac przekrecenia licznika mikrosekund przy

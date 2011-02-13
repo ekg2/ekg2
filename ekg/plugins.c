@@ -456,11 +456,9 @@ int plugin_unregister(plugin_t *p)
 	 * ekg2 do SEGV.
 	 */
 
-	struct timer *t;
 	session_t *s;
 	query_t **kk;
-	GSList *vl;
-	GSList *cl;
+	GSList *tl, *vl, *cl;
 	list_t l;
 
 	if (!p)
@@ -475,9 +473,12 @@ int plugin_unregister(plugin_t *p)
 			watch_free(w);
 	}
 
-	for (t = timers; t; t = t->next) {
+	for (tl = timers; tl; ) {
+		struct timer *t = tl->data;
+
+		tl = tl->next;
 		if (t->plugin == p)
-			t = timers_removei(t);
+			timers_remove(t);
 	}
 
 	for (s = sessions; s; ) {

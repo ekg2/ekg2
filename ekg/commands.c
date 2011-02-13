@@ -2039,11 +2039,12 @@ static COMMAND(cmd_debug_plugins) {
 static COMMAND(cmd_debug_timers) {
 /* XXX, */
 	char buf[256];
-	struct timer *t;
+	GSList *tl;
 	
 	printq("generic_bold", ("plugin      name               pers peri     handler  next"));
 	
-	for (t = timers; t; t = t->next) {
+	for (tl = timers; tl; tl = tl->next) {
+		struct timer *t = tl->data;
 		char *plugin;
 		char *tmp;
 
@@ -3049,7 +3050,7 @@ COMMAND(cmd_alias_exec)
 
 static COMMAND(cmd_at)
 {
-	struct timer *t;
+	GSList *tl;
 
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		const char *p, *a_name = NULL;
@@ -3070,7 +3071,8 @@ static COMMAND(cmd_at)
 				return -1;
 			}
 
-			for (t = timers; t; t = t->next) {
+			for (tl = timers; tl; tl = tl->next) {
+				struct timer *t = tl->data;
 				if (!xstrcasecmp(t->name, a_name)) {
 					printq("at_exist", a_name);
 					return -1;
@@ -3279,7 +3281,8 @@ static COMMAND(cmd_at)
 		else if (params[0])
 			a_name = params[0];
 
-		for (t = timers; t; t = t->next) {
+		for (tl = timers; tl; tl = tl->next) {
+			struct timer *t = tl->data;
 			GTimeVal tv;
 			struct tm *at_time;
 			char tmp[100], tmp2[150];
@@ -3361,7 +3364,7 @@ static COMMAND(cmd_at)
 
 static COMMAND(cmd_timer)
 {
-	struct timer *t;
+	GSList *tl;
 
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		const char *t_name = NULL, *p;
@@ -3383,7 +3386,8 @@ static COMMAND(cmd_timer)
 				return -1;
 			}
 
-			for (t = timers; t; t = t->next) {
+			for (tl = timers; tl; tl = tl->next) {
+				struct timer *t = tl->data;
 				if (!t->at && !xstrcasecmp(t->name, t_name)) {
 					printq("timer_exist", t_name);
 					return -1;
@@ -3497,7 +3501,8 @@ static COMMAND(cmd_timer)
 		else if (params[0])
 			t_name = params[0];
 
-		for (t = timers; t; t = t->next) {
+		for (tl = timers; tl; tl = tl->next) {
+			struct timer *t = tl->data;
 			char *tmp;
 
 			if (t->function != timer_handle_command)

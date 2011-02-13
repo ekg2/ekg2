@@ -298,11 +298,14 @@ int session_remove(const char *uid)
 	}
 
 	{
-		struct timer *t;
+		GSList *tl;
 
-		for (t = timers; t; t = t->next) {
+		for (tl = timers; tl; ) {
+			struct timer *t = tl->data;
+
+			tl = tl->next;
 			if (t->is_session && t->data == s)
-				t = timers_removei(t);
+				timers_remove(t);
 		}
 	}
 
@@ -1535,7 +1538,7 @@ COMMAND(session_command)
 void sessions_free() {
 	session_t *s;
 
-	struct timer *t;
+	GSList *tl;
 	window_t *wl;
 	list_t l;
 
@@ -1550,9 +1553,12 @@ void sessions_free() {
 			watch_free(w);
 	}
 
-	for (t = timers; t; t = t->next) {
+	for (tl = timers; tl; ) {
+		struct timer *t = tl->data;
+
+		tl = tl->next;
 		if (t->is_session)
-			t = timers_removei(t);
+			timers_remove(t);
 	}
 
 /* it's sessions, not 'l' because we emit SESSION_REMOVED, which might want to search over sessions list...

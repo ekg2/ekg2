@@ -438,9 +438,10 @@ static void config_write_main(FILE *f)
 	}
 
 	{
-		struct timer *t;
+		GSList *tl;
 
-		for (t = timers; t; t = t->next) {
+		for (tl = timers; tl; tl = tl->next) {
+			struct timer *t = tl->data;
 			const char *name = NULL;
 
 			if (t->function != timer_handle_command)
