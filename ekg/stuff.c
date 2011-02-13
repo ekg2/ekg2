@@ -61,6 +61,7 @@
 
 #include "debug.h"
 #include "commands.h"
+#include "configfile.h"
 #include "dynstuff.h"
 #include "protocol.h"
 #include "stuff.h"
@@ -132,7 +133,6 @@ char *config_subject_reply_prefix;
 int in_autoexec = 0;
 int config_auto_save = 0;
 int config_auto_user_add = 0;
-time_t last_save = 0;
 int config_display_color = 1;
 int config_beep = 1;
 int config_beep_msg = 1;
@@ -597,17 +597,33 @@ void changed_mesg(const char *var)
 	else
 		mesg_set(config_mesg);
 }
-	
+
+static EKG_TIMER(auto_save_timer) {
+
+	if (!config_changed)
+		return TRUE;
+
+	debug("autosaving userlist and config.\n");
+
+	if (!config_write(NULL) && !session_write()) {
+		config_changed = 0;
+		ekg2_reason_changed = 0;
+		print("autosaved");
+	} else
+		print("error_saving");
+
+	return TRUE;
+}
+
 /*
  * changed_auto_save()
  *
  * wywo³ywane po zmianie warto¶ci zmiennej ,,auto_save''.
  */
-void changed_auto_save(const char *var)
-{
-	/* oszukujemy, ale takie zachowanie wydaje siê byæ
-	 * bardziej ,,naturalne'' */
-	last_save = time(NULL);
+void changed_auto_save(const char *var) {
+	timer_remove(NULL, "auto_save");
+	if (config_auto_save > 0)
+		ekg_timer_add(NULL, "auto_save", config_auto_save, 1, auto_save_timer, NULL, NULL);
 }
 
 /*

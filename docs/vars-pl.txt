@@ -6,7 +6,7 @@ auto_save
 	typ: liczba
 	domyślna wartość: 0
 	
-	Po jakim czasie automatycznie zapisać ustawienia, w sekundach.
+	Określa co ile sekund automatycznie zapisać ustawienia.
 	Jeśli 0, nie zapisuje automatycznie.
 
 auto_user_add

@@ -185,19 +185,6 @@ void ekg_loop() {
 			}
 		}
 
-		/* auto save XXX rewrite to timer */
-		if (config_auto_save && config_changed && (tv.tv_sec - last_save) > config_auto_save) {
-			debug("autosaving userlist and config after %d seconds\n", tv.tv_sec - last_save);
-			last_save = tv.tv_sec;
-
-			if (!config_write(NULL) && !session_write()) {
-				config_changed = 0;
-				ekg2_reason_changed = 0;
-				print("autosaved");
-			} else
-				print("error_saving");
-		}
-
 		/* przegl±danie zdech³ych dzieciaków */
 #ifndef NO_POSIX_SYSTEM
 		while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
@@ -900,9 +887,6 @@ int main(int argc, char **argv)
 				command_exec(NULL, s, ("/connect"), 0);
 		}
 	}
-
-	if (config_auto_save)
-		last_save = time(NULL);
 
 	if (no_config) {
 #ifdef HAVE_LIBGADU

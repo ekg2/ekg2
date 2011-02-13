@@ -1637,7 +1637,7 @@ list_user:
 
 static COMMAND(cmd_save) {
 	int ret = 0;
-	last_save = time(NULL);
+	/* XXX retime autosave timer? */
 
 /* Changes 14 wrze 2006 (dj) */
 /* We try to save everything, but if smth not pass, try others */
@@ -1800,7 +1800,6 @@ static COMMAND(cmd_set)
 			case 0:
 				if (!be_quiet) {
 					config_changed = 1;
-					last_save = time(NULL);
 				}
 			case 1:
 			{
