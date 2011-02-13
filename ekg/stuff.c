@@ -1786,14 +1786,7 @@ struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, unsigned 
 	}
 	t->name = xstrdup(name);
 
-	g_get_current_time(&tv);
-	tv.tv_sec += (period / 1000);
-	tv.tv_usec += ((period % 1000) * 1000);
-	if (tv.tv_usec >= 1000000) {
-		tv.tv_usec -= 1000000;
-		tv.tv_sec++;
-	}
-	memcpy(&(t->ends), &tv, sizeof(tv));
+	g_get_current_time(&(t->lasttime));
 
 	t->period = period;
 	t->persist = persist;
@@ -1828,6 +1821,7 @@ static void timer_wrapper_destroy_notify(gpointer data) {
 static gboolean timer_wrapper(gpointer data) {
 	struct timer *t = data;
 
+	g_get_current_time(&(t->lasttime));
 	return !(t->function(0, t->data) == -1 || !t->persist);
 }
 
@@ -1973,13 +1967,7 @@ EKG_TIMER(timer_handle_command) {
 		return TRUE;
 	}
 
-	gettimeofday(&t->ends, NULL);
-	t->ends.tv_sec += (t->period / 1000);
-	t->ends.tv_usec += ((t->period % 1000) * 1000);
-	if (t->ends.tv_usec >= 1000000) {
-		t->ends.tv_usec -= 1000000;
-		t->ends.tv_sec++;
-	}
+	g_get_current_time(&(t->lasttime));
 
 	return TRUE;
 }

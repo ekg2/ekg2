@@ -1948,16 +1948,26 @@ static COMMAND(cmd_test_debug_theme)
 
 static char *timer_next_call(struct timer *t) {
 	long usec, sec, minutes = 0, hours = 0, days = 0;
-	GTimeVal tv;
+	GTimeVal tv, ends;
+
+	ends.tv_sec	= t->lasttime.tv_sec + (t->period / 1000);
+	ends.tv_usec	= t->lasttime.tv_usec + ((t->period % 1000) * 1000);
+	if (ends.tv_usec > 1000000) {
+		ends.tv_usec -= 1000000;
+		ends.tv_sec++;
+	}
 
 	g_get_current_time(&tv);
 
-	if (t->ends.tv_usec < tv.tv_usec) {
-		sec = t->ends.tv_sec - tv.tv_sec - 1;
-		usec = (t->ends.tv_usec - tv.tv_usec + 1000000) / 1000;
+	if (tv.tv_sec - ends.tv_sec > 2)
+		return g_strdup("?");
+
+	if (ends.tv_usec < tv.tv_usec) {
+		sec = ends.tv_sec - tv.tv_sec - 1;
+		usec = (ends.tv_usec - tv.tv_usec + 1000000) / 1000;
 	} else {
-		sec = t->ends.tv_sec - tv.tv_sec;
-		usec = (t->ends.tv_usec - tv.tv_usec) / 1000;
+		sec = ends.tv_sec - tv.tv_sec;
+		usec = (ends.tv_usec - tv.tv_usec) / 1000;
 	}
 
 	if (sec > 86400) {
@@ -3228,8 +3238,13 @@ static COMMAND(cmd_at)
 		if ((t = ekg_timer_add(NULL, a_name, period, ((freq) ? 1 : 0), timer_handle_command, xstrdup(a_command), NULL))) {
 			t->at = 2;
 			printq("at_added", t->name);
-			if (freq)
+			if (freq) {
+				int d = t->period;
 				t->period = freq * 1000;
+				d -= t->period;
+				t->lasttime.tv_sec += (d / 1000); 
+				t->lasttime.tv_usec += ((d % 1000) * 1000);
+			}
 			if (!in_autoexec)
 				config_changed = 1;
 		}
@@ -3283,7 +3298,7 @@ static COMMAND(cmd_at)
 
 		for (tl = timers; tl; tl = tl->next) {
 			struct timer *t = tl->data;
-			GTimeVal tv;
+			GTimeVal ends, tv;
 			struct tm *at_time;
 			char tmp[100], tmp2[150];
 			time_t sec, minutes = 0, hours = 0, days = 0;
@@ -3298,7 +3313,9 @@ static COMMAND(cmd_at)
 
 			g_get_current_time(&tv);
 
-			at_time = localtime((time_t *) &t->ends.tv_sec);
+			ends.tv_sec = t->lasttime.tv_sec + (t->period / 1000);
+			ends.tv_usec = t->lasttime.tv_usec + ((t->period % 1000) * 1000);
+			at_time = localtime((time_t *) &ends);
 			if (!strftime(tmp, sizeof(tmp), format_find("at_timestamp"), at_time) && format_exists("at_timestamp"))
 				xstrcpy(tmp, "TOOLONG");
 

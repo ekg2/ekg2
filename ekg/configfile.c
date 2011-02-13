@@ -444,11 +444,11 @@ static void config_write_main(FILE *f)
 			struct timer *t = tl->data;
 			const char *name = NULL;
 
-			if (t->function != timer_handle_command)
+			if ((void *)t->function != (void *)timer_handle_command)
 				continue;
 
 			/* nie ma sensu zapisywaæ */
-			if (!t->persist && t->ends.tv_sec - time(NULL) < 5)
+			if (!t->persist) /* XXX && t->ends.tv_sec - time(NULL) < 5) */
 				continue;
 
 			/* posortuje, je¶li nie ma nazwy */
@@ -459,7 +459,7 @@ static void config_write_main(FILE *f)
 
 			if (t->at) {
 				char buf[100];
-				time_t foo = (time_t) t->ends.tv_sec;
+				time_t foo = (time_t) t->lasttime.tv_sec + (t->period / 1000);
 				struct tm *tt = localtime(&foo);
 
 				strftime(buf, sizeof(buf), "%G%m%d%H%M.%S", tt);
@@ -474,7 +474,7 @@ static void config_write_main(FILE *f)
 				if (t->persist)
 					foo = saprintf("*/%s", ekg_itoa(t->period / 1000));
 				else
-					foo = saprintf("%s", ekg_itoa(t->ends.tv_sec));
+					foo = saprintf("%s", ekg_itoa(t->lasttime.tv_sec + (t->period / 1000)));
 
 				fprintf(f, "timer %s %s %s\n", name, foo, (char*)(t->data));
 
