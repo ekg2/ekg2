@@ -163,6 +163,7 @@ static TIMER(ekg_autoaway_timer) {
 
 void ekg_loop() {
 	GTimeVal tv;
+	struct timeval stv;
 	fd_set rd, wd;
 	int ret, maxfd, status;
 	pid_t pid;
@@ -252,7 +253,9 @@ void ekg_loop() {
 		}
 
 		/* sprawd¼, co siê dzieje */
-		ret = select(maxfd + 1, &rd, &wd, NULL, NULL);
+		stv.tv_sec = 0;
+		stv.tv_usec = 50000;
+		ret = select(maxfd + 1, &rd, &wd, NULL, &stv);
 
 		/* je¶li wyst±pi³ b³±d, daj znaæ */
 		if (ret == -1) {
