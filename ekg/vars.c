@@ -328,7 +328,7 @@ int variable_remove(plugin_t *plugin, const char *name) {
 			continue;
 		
 		if (hash == v->name_hash && plugin == v->plugin && !xstrcasecmp(name, v->name)) {
-			(void) variables_removei(v);
+			variables_remove(v);
 			return 0;
 		}
 	}
@@ -552,7 +552,7 @@ static void variable_free(void *_data) {
 	xfree(data);
 }
 
-void variables_removei(variable_t *v) {
+void variables_remove(variable_t *v) {
 	variables = g_slist_remove_full(variables, v, variable_free);
 }
 

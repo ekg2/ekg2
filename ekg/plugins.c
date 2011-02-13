@@ -504,7 +504,7 @@ int plugin_unregister(plugin_t *p)
 
 		vl = vl->next;
 		if (v->plugin == p)
-			variables_removei(v);
+			variables_remove(v);
 	}
 
 	for (cl = commands; cl;) {

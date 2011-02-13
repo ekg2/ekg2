@@ -91,7 +91,7 @@ int variable_set(const char *name, const char *value);
 void variable_help(const char *name);
 int variable_remove(plugin_t *plugin, const char *name);
 
-void variables_removei(variable_t *v);
+void variables_remove(variable_t *v);
 void variables_destroy();
 
 #endif
