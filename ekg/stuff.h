@@ -93,6 +93,8 @@ enum mesg_t {
 	MESG_DEFAULT
 };
 
+#define EKG_TIMER(x)		gboolean x(gpointer data)
+
 #define TIMER(x)		int x(int type, void *data)
 #define TIMER_SESSION(x)	int x(int type, session_t *s)
 
@@ -106,8 +108,10 @@ struct timer {
 	void		*data;			/* dane dla funkcji */
 
 	unsigned int	persist		: 1;	/* czy ma byæ na zawsze? */
-	unsigned int	at		: 1;	/* /at? trzeba siê tego jako¶ pozbyæ
-						 * i ujednoliciæ z /timer */
+	unsigned int	at		: 2;	/* 0 - not /at timer
+						 * 1 - /at timer
+						 * 2 - /at timer - first call
+						 */
 	unsigned int	is_session	: 1;	/* czy sesyjny */
 };
 
@@ -338,7 +342,11 @@ int isalpha_pl(unsigned char c);
 #define xtolower(c) tolower((int) (unsigned char) c)
 #define xtoupper(c) toupper((int) (unsigned char) c)
 
+struct timer *ekg_timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, GSourceFunc function, void *data, GDestroyNotify notify);
+struct timer *ekg_timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, GSourceFunc function, void *data, GDestroyNotify notify);
+
 struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persistent, int (*function)(int, void *), void *data);
+struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data);
 struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data);
 struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, int (*function)(int, session_t *));
 struct timer *timer_find_session(session_t *session, const char *name);
@@ -347,7 +355,7 @@ int timer_remove_session(session_t *session, const char *name);
 int timer_remove_user();
 void timers_remove(struct timer *t);
 void timers_destroy();
-TIMER(timer_handle_command);
+EKG_TIMER(timer_handle_command);
 
 const char *ekg_status_label(const int status, const char *descr, const char *prefix);
 void ekg_update_status(session_t *session);

@@ -3225,8 +3225,8 @@ static COMMAND(cmd_at)
 			return -1;
 		}
 
-		if ((t = timer_add(NULL, a_name, period, ((freq) ? 1 : 0), timer_handle_command, xstrdup(a_command)))) {
-			t->at = 1;
+		if ((t = ekg_timer_add(NULL, a_name, period, ((freq) ? 1 : 0), timer_handle_command, xstrdup(a_command), NULL))) {
+			t->at = 2;
 			printq("at_added", t->name);
 			if (freq)
 				t->period = freq * 1000;
@@ -3291,7 +3291,7 @@ static COMMAND(cmd_at)
 			if (!t->at || (a_name && xstrcasecmp(t->name, a_name)))
 				continue;
 
-			if (t->function != timer_handle_command)
+			if ((void *)t->function != (void *)timer_handle_command)
 				continue;
 
 			count++;
@@ -3449,7 +3449,7 @@ static COMMAND(cmd_timer)
 			return -1;
 		}
 
-		if ((t = timer_add(NULL, t_name, period, persistent, timer_handle_command, xstrdup(t_command)))) {
+		if ((t = ekg_timer_add(NULL, t_name, period, persistent, timer_handle_command, xstrdup(t_command), NULL))) {
 			printq("timer_added", t->name);
 			if (!in_autoexec)
 				config_changed = 1;
@@ -3505,7 +3505,7 @@ static COMMAND(cmd_timer)
 			struct timer *t = tl->data;
 			char *tmp;
 
-			if (t->function != timer_handle_command)
+			if ((void *)t->function != (void *)timer_handle_command)
 				continue;
 
 			if (t->at || (t_name && xstrcasecmp(t->name, t_name)))

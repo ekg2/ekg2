@@ -1749,26 +1749,23 @@ const char *timestamp_time(const char *format, time_t t) {
 	return buf;
 }
 
-static void timer_destroy_notify(gpointer data) {
+/*************
+ * timers
+ *************/
+static void timer_default_destroy_notify(gpointer data) {
 	struct timer *t = data;
 
-	t->function(1, t->data);
+	xfree(t->data);
 
 	ekg2_timers_remove(t);
 }
 
-static gboolean timer_wrapper(gpointer data) {
-	struct timer *t = data;
-
-	return !(t->function(0, t->data) == -1 || !t->persist);
-}
-
-struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
-	struct timer *t;
+struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, unsigned int period, int persist) {
 	GTimeVal tv;
+	struct timer *t = xmalloc(sizeof(struct timer));
 
 	/* wylosuj now± nazwê, je¶li nie mamy */
-	if (!name) {
+	if (!name || !*name) {
 		int i;
 
 		for (i = 1; !name; i++) {
@@ -1787,8 +1784,8 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
 				name = ekg_itoa(i);
 		}
 	}
+	t->name = xstrdup(name);
 
-	t = xmalloc(sizeof(struct timer));
 	g_get_current_time(&tv);
 	tv.tv_sec += (period / 1000);
 	tv.tv_usec += ((period % 1000) * 1000);
@@ -1797,13 +1794,49 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
 		tv.tv_sec++;
 	}
 	memcpy(&(t->ends), &tv, sizeof(tv));
-	t->name = xstrdup(name);
+
 	t->period = period;
 	t->persist = persist;
+	t->plugin = plugin;
+
+	return t;
+}
+
+struct timer *ekg_timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, GSourceFunc function, void *data, GDestroyNotify notify) {
+	struct timer *t = ekg_timer_add_common(plugin, name, period, persist);
+
+	t->function = (void *)function;
+	t->data = data;
+	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, function, t, notify ? notify : timer_default_destroy_notify);
+
+	timers_add(t);
+	return t;
+}
+
+struct timer *ekg_timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, GSourceFunc function, void *data, GDestroyNotify notify) {
+	return ekg_timer_add_ms(plugin, name, 1000*period, persist, function, data, notify);
+}
+
+static void timer_wrapper_destroy_notify(gpointer data) {
+	struct timer *t = data;
+
+	t->function(1, t->data);
+
+	ekg2_timers_remove(t);
+}
+
+static gboolean timer_wrapper(gpointer data) {
+	struct timer *t = data;
+
+	return !(t->function(0, t->data) == -1 || !t->persist);
+}
+
+struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
+	struct timer *t = ekg_timer_add_common(plugin, name, period, persist);
+
 	t->function = function;
 	t->data = data;
-	t->plugin = plugin;
-	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_destroy_notify);
+	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify);
 
 	timers_add(t);
 	return t;
@@ -1912,15 +1945,43 @@ int timer_remove_session(session_t *session, const char *name)
  *
  * obs³uga timera wywo³uj±cego komendê.
  */
-TIMER(timer_handle_command)
-{
-	if (type) {
-		xfree(data);
-		return 0;
+EKG_TIMER(timer_handle_command) {
+	struct timer *t = data;
+	char *cmd = t->data;
+
+	command_exec(NULL, NULL, cmd, 0);
+
+	if (! t->persist)
+		return FALSE;
+
+
+	if (t->at == 2) {
+		unsigned int period = t->period;
+		gpointer function = t->function;
+		char *name =  g_strdup(t->name);
+		cmd = g_strdup(t->data);
+
+		timers_remove(t);
+
+		if ((t = ekg_timer_add_ms(NULL, name, period, 1, function, cmd, NULL)))
+			t->at = 1;
+		else
+			g_free(cmd);
+
+		g_free(name);
+
+		return TRUE;
 	}
-	
-	command_exec(NULL, NULL, (char *) data, 0);
-	return 0;
+
+	gettimeofday(&t->ends, NULL);
+	t->ends.tv_sec += (t->period / 1000);
+	t->ends.tv_usec += ((t->period % 1000) * 1000);
+	if (t->ends.tv_usec >= 1000000) {
+		t->ends.tv_usec -= 1000000;
+		t->ends.tv_sec++;
+	}
+
+	return TRUE;
 }
 
 /*
@@ -1939,7 +2000,7 @@ int timer_remove_user(int at)
 		struct timer *t = tl->data;
 
 		tl = tl->next;
-		if (t->at == at && t->function == timer_handle_command) { 
+		if (t->at == at && (void *)t->function == (void *)timer_handle_command) { 
 			timers_remove(t);
 			removed = 1;
 		}
