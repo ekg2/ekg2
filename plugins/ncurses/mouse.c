@@ -68,11 +68,9 @@ static void show_mouse_pointer(void) {
  * every second we should do something
  * it's done here
  */
-static TIMER(ncurses_mouse_timer)
-{
-	if (type) return 0;
+static EKG_TIMER(ncurses_mouse_timer) {
 	show_mouse_pointer();
-	return 0;
+	return TRUE;
 }
 
 #ifdef HAVE_LIBGPM
@@ -368,7 +366,7 @@ void ncurses_enable_mouse(const char *env) {
 	}
 
 	if (mouse_initialized)
-		timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL);
+		ekg_timer_add(&ncurses_plugin, "ncurses:mouse", 1, 1, ncurses_mouse_timer, NULL, NULL);
 }
 
 /*

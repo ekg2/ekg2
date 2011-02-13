@@ -86,11 +86,7 @@ int ncurses_typingsend(window_t *w, int chatstate) {
 	return query_emit(NULL, "protocol-typing-out", &sid, &uid, &chatstate);
 }
 
-TIMER(ncurses_typing) {
-
-	if (type)
-		return 0;
-
+EKG_TIMER(ncurses_typing) {
 	const int curlen	= ncurses_lineslen();
 	const int winchange	= (ncurses_typing_win != window_current);
 
@@ -100,7 +96,7 @@ TIMER(ncurses_typing) {
 		ncurses_typing_mod	= 0;
 		ncurses_typing_count	= curlen;
 		ncurses_typing_win	= window_current;
-		return 0;
+		return TRUE;
 	}
 
 	if ((ncurses_typing_mod > 0) && window_current && window_current->target) { /* need to update status */
@@ -127,6 +123,6 @@ TIMER(ncurses_typing) {
 			ncurses_typingsend(ncurses_typing_win, chat);
 	}
 
-	return 0;
+	return TRUE;
 }
 

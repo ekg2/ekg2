@@ -8,6 +8,6 @@ extern int config_typing_timeout_inactive;
 extern int config_typing_interval;
 
 int ncurses_typingsend(window_t *w, int chatstate);
-TIMER(ncurses_typing);
+EKG_TIMER(ncurses_typing);
 
 #endif
