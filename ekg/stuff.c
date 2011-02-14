@@ -104,17 +104,23 @@ static void timers_add(struct timer *t) {
 	timers = g_slist_prepend(timers, t);
 }
 
-void ekg2_timers_remove(struct timer *t) {
-	timers = g_slist_remove_full(timers, t, timer_free_item);
-}
-
 void timers_remove(struct timer *t) {
-	g_source_remove(t->id);
+	if (g_slist_find(timers, t)) {
+		guint id = t->id;
+		timers = g_slist_remove_full(timers, t, timer_free_item);
+		g_source_remove(id);
+	}
 }
 
 void timers_destroy() {
-// XXX
-	timers = g_slist_destroy_full(timers, timer_free_item);
+	GSList *tl;
+	for (tl = timers; tl; ) {
+		struct timer *t = tl->data;
+
+		tl = tl->next;
+		timers_remove(t);
+	}
+	timers = NULL;	/* XXX */
 }
 
 /***************
@@ -1771,9 +1777,10 @@ const char *timestamp_time(const char *format, time_t t) {
 static void timer_default_destroy_notify(gpointer data) {
 	struct timer *t = data;
 
-	xfree(t->data);
+	if (!t->is_session)
+		xfree(t->data);
 
-	ekg2_timers_remove(t);
+	timers_remove(t);
 }
 
 struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, unsigned int period, int persist) {
@@ -1831,7 +1838,7 @@ static void timer_wrapper_destroy_notify(gpointer data) {
 
 	t->function(1, t->data);
 
-	ekg2_timers_remove(t);
+	timers_remove(t);
 }
 
 static gboolean timer_wrapper(gpointer data) {
