@@ -13,10 +13,6 @@ PPCODE:
                 XPUSHs(sv_2mortal(bless_variable( (variable_t *) vl->data )));
         }
 
-void variables_free()
-CODE:
-	variables_destroy();
-	
 Ekg2::Variable variable_add_ext(char *name, char *value, char *handler)
 CODE:
         RETVAL = perl_variable_add(name, value, handler)->self;
