@@ -97,7 +97,8 @@ GSList *timers = NULL;
 
 void timer_free_item(gpointer data) {
 	struct timer *t = data;
-	xfree(t->name);
+	g_free(t->name);
+	g_slice_free(struct timer, t);
 }
 
 static void timers_add(struct timer *t) {
@@ -110,7 +111,8 @@ void timers_remove(struct timer *t) {
 	 *	This function MUST be called from timer destroy handler
 	 *	and MUST NOT be called from another place
 	 */
-	timers = g_slist_remove_full(timers, t, timer_free_item);
+	timers = g_slist_remove(timers, t);
+	timer_free_item(t);
 }
 
 void timers_destroy() {
