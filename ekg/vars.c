@@ -558,7 +558,7 @@ void variables_remove(variable_t *v) {
 }
 
 void variables_destroy(void) {
-	variables = g_slist_destroy_full(variables, variable_free);
+	g_slist_free_full(variables, variable_free);
 }
 
 /*

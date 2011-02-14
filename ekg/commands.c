@@ -124,7 +124,7 @@ void commands_remove(command_t *c) {
 }
 
 void commands_destroy() {
-	commands = g_slist_destroy_full(commands, list_command_free);
+	g_slist_free_full(commands, list_command_free);
 }
 
 /*
