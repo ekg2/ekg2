@@ -105,11 +105,12 @@ static void timers_add(struct timer *t) {
 }
 
 void timers_remove(struct timer *t) {
-	if (g_slist_find(timers, t)) {
-		guint id = t->id;
-		timers = g_slist_remove_full(timers, t, timer_free_item);
-		g_source_remove(id);
-	}
+	/*
+	 * NOTE
+	 *	This function MUST be called from timer destroy handler
+	 *	and MUST NOT be called from another place
+	 */
+	timers = g_slist_remove_full(timers, t, timer_free_item);
 }
 
 void timers_destroy() {
@@ -118,7 +119,7 @@ void timers_destroy() {
 		struct timer *t = tl->data;
 
 		tl = tl->next;
-		timers_remove(t);
+		g_source_remove(t->id);;
 	}
 	timers = NULL;	/* XXX */
 }
@@ -1912,7 +1913,7 @@ int timer_remove(plugin_t *plugin, const char *name)
 
 		tl = tl->next;
 		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
-			timers_remove(t);
+			g_source_remove(t->id);
 			removed++;
 		}
 	}
@@ -1949,7 +1950,7 @@ int timer_remove_session(session_t *session, const char *name)
 
 		tl = tl->next;
 		if (t->is_session && t->data == session && !xstrcmp(name, t->name)) {
-			timers_remove(t);
+			g_source_remove(t->id);
 			removed++;
 		}
 	}
@@ -1978,7 +1979,7 @@ EKG_TIMER(timer_handle_command) {
 		char *name =  g_strdup(t->name);
 		cmd = g_strdup(t->data);
 
-		timers_remove(t);
+		g_source_remove(t->id);
 
 		if ((t = ekg_timer_add_ms(NULL, name, period, 1, function, cmd, NULL)))
 			t->at = 1;
@@ -2012,7 +2013,7 @@ int timer_remove_user(int at)
 
 		tl = tl->next;
 		if (t->at == at && (void *)t->function == (void *)timer_handle_command) { 
-			timers_remove(t);
+			g_source_remove(t->id);
 			removed = 1;
 		}
 	}

@@ -478,7 +478,7 @@ int plugin_unregister(plugin_t *p)
 
 		tl = tl->next;
 		if (t->plugin == p)
-			timers_remove(t);
+			g_source_remove(t->id);
 	}
 
 	for (s = sessions; s; ) {

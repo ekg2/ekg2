@@ -305,7 +305,7 @@ int session_remove(const char *uid)
 
 			tl = tl->next;
 			if (t->is_session && t->data == s)
-				timers_remove(t);
+				g_source_remove(t->id);
 		}
 	}
 
@@ -1558,7 +1558,7 @@ void sessions_free() {
 
 		tl = tl->next;
 		if (t->is_session)
-			timers_remove(t);
+			g_source_remove(t->id);
 	}
 
 /* it's sessions, not 'l' because we emit SESSION_REMOVED, which might want to search over sessions list...
