@@ -1784,9 +1784,8 @@ static void timer_default_destroy_notify(gpointer data) {
 	timers_remove(t);
 }
 
-struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, unsigned int period, int persist) {
-	GTimeVal tv;
-	struct timer *t = xmalloc(sizeof(struct timer));
+static struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, unsigned int period, int persist) {
+	struct timer *t = g_slice_new(struct timer);
 
 	/* wylosuj now± nazwê, je¶li nie mamy */
 	if (!name || !*name) {
@@ -1797,8 +1796,8 @@ struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, unsigned 
 			int gotit = 0;
 
 			for (tl = timers; tl; tl = tl->next) {
-				t = tl->data;
-				if (!xstrcmp(t->name, ekg_itoa(i))) {
+				const struct timer *ti = tl->data;
+				if (!xstrcmp(ti->name, ekg_itoa(i))) {
 					gotit = 1;
 					break;
 				}
@@ -1808,7 +1807,7 @@ struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, unsigned 
 				name = ekg_itoa(i);
 		}
 	}
-	t->name = xstrdup(name);
+	t->name = g_strdup(name);
 
 	g_get_current_time(&(t->lasttime));
 
