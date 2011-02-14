@@ -1809,8 +1809,6 @@ static struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, un
 	}
 	t->name = g_strdup(name);
 
-	g_get_current_time(&(t->lasttime));
-
 	t->period = period;
 	t->persist = persist;
 	t->plugin = plugin;
@@ -1824,6 +1822,9 @@ struct timer *ekg_timer_add_ms(plugin_t *plugin, const char *name, unsigned int 
 	t->function = (void *)function;
 	t->data = data;
 	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, function, t, notify ? notify : timer_default_destroy_notify);
+	t->source = g_main_context_find_source_by_id(NULL, t->id);
+	g_assert(t->source);
+	g_source_get_current_time(t->source, &(t->lasttime));
 
 	timers_add(t);
 	return t;
@@ -1844,7 +1845,7 @@ static void timer_wrapper_destroy_notify(gpointer data) {
 static gboolean timer_wrapper(gpointer data) {
 	struct timer *t = data;
 
-	g_get_current_time(&(t->lasttime));
+	g_source_get_current_time(t->source, &(t->lasttime));
 	return !(t->function(0, t->data) == -1 || !t->persist);
 }
 
@@ -1854,6 +1855,9 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
 	t->function = function;
 	t->data = data;
 	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify);
+	t->source = g_main_context_find_source_by_id(NULL, t->id);
+	g_assert(t->source);
+	g_source_get_current_time(t->source, &(t->lasttime));
 
 	timers_add(t);
 	return t;
@@ -1990,7 +1994,7 @@ EKG_TIMER(timer_handle_command) {
 		return TRUE;
 	}
 
-	g_get_current_time(&(t->lasttime));
+	g_source_get_current_time(t->source, &(t->lasttime));
 
 	return TRUE;
 }

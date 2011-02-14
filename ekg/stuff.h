@@ -113,6 +113,9 @@ struct timer {
 						 * 2 - /at timer - first call
 						 */
 	unsigned int	is_session	: 1;	/* czy sesyjny */
+
+	/* -- internal helper data -- */
+	GSource		*source;		/* g_main_context_find_source_by_id(t->id) */
 };
 
 struct conference {
