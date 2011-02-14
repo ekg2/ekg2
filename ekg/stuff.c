@@ -1787,28 +1787,6 @@ static void timer_default_destroy_notify(gpointer data) {
 static struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, unsigned int period, int persist) {
 	struct timer *t = g_slice_new(struct timer);
 
-	/* wylosuj now± nazwê, je¶li nie mamy */
-	if (!name || !*name) {
-		int i;
-
-		for (i = 1; !name; i++) {
-			GSList *tl;
-			int gotit = 0;
-
-			for (tl = timers; tl; tl = tl->next) {
-				const struct timer *ti = tl->data;
-				if (!xstrcmp(ti->name, ekg_itoa(i))) {
-					gotit = 1;
-					break;
-				}
-			}
-
-			if (!gotit)
-				name = ekg_itoa(i);
-		}
-	}
-	t->name = g_strdup(name);
-
 	t->period = period;
 	t->persist = persist;
 	t->plugin = plugin;
@@ -1822,6 +1800,7 @@ struct timer *ekg_timer_add_ms(plugin_t *plugin, const char *name, unsigned int 
 	t->function = (void *)function;
 	t->data = data;
 	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, function, t, notify ? notify : timer_default_destroy_notify);
+	t->name = name ? g_strdup(name) : g_strdup_printf("_%d", t->id);
 	t->source = g_main_context_find_source_by_id(NULL, t->id);
 	g_assert(t->source);
 	g_source_get_current_time(t->source, &(t->lasttime));
@@ -1855,6 +1834,7 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
 	t->function = function;
 	t->data = data;
 	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify);
+	t->name = name ? g_strdup(name) : g_strdup_printf("_%d", t->id);
 	t->source = g_main_context_find_source_by_id(NULL, t->id);
 	g_assert(t->source);
 	g_source_get_current_time(t->source, &(t->lasttime));
