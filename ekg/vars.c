@@ -553,7 +553,8 @@ static void variable_free(void *_data) {
 }
 
 void variables_remove(variable_t *v) {
-	variables = g_slist_remove_full(variables, v, variable_free);
+	variables = g_slist_remove(variables, v);
+	variable_free(v);
 }
 
 void variables_destroy(void) {

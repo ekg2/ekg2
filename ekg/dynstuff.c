@@ -1446,11 +1446,6 @@ GSList *g_slist_destroy_full(GSList *list, GDestroyNotify free_func) {
 	return NULL;
 }
 
-GSList *g_slist_remove_full(GSList *list, void *data, GDestroyNotify free_func) {
-	free_func(data);
-	return g_slist_remove(list, data);
-}
-
 /*
  * Local Variables:
  * mode: c

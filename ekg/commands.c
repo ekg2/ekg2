@@ -119,7 +119,8 @@ static void commands_add(command_t *c) {
 }
 
 void commands_remove(command_t *c) {
-	commands = g_slist_remove_full(commands, c, list_command_free);
+	commands = g_slist_remove(commands, c);
+	list_command_free(c);
 }
 
 void commands_destroy() {
