@@ -682,7 +682,7 @@ void config_write_crash()
 	chdir(config_dir);
 
 	/* first of all we are saving plugins */
-	snprintf(name, sizeof(name), "plugins.%d", (int) getpid());
+	snprintf(name, sizeof(name), "crash-%d-plugins", (int) getpid());
 
 	if (!(f = fopen(name, "w")))
 		return;
@@ -695,7 +695,7 @@ void config_write_crash()
 	fclose(f);
 
 	/* then main part of config */
-	snprintf(name, sizeof(name), "config.%d", (int) getpid());
+	snprintf(name, sizeof(name), "crash-%d-config", (int) getpid());
 	if (!(f = fopen(name, "w")))
 		return;
 
@@ -711,7 +711,7 @@ void config_write_crash()
 		const plugin_t *p = pl->data;
 		GSList *vl;
 
-		snprintf(name, sizeof(name), "config-%s.%d", p->name, (int) getpid());
+		snprintf(name, sizeof(name), "crash-%d-config-%s", (int) getpid(), p->name);
 
 		if (!(f = fopen(name, "w")))
 			continue;	
@@ -743,7 +743,7 @@ void debug_write_crash()
 
 	chdir(config_dir);
 
-	snprintf(name, sizeof(name), "debug.%d", (int) getpid());
+	snprintf(name, sizeof(name), "crash-%d-debug", (int) getpid());
 	if (!(f = fopen(name, "w")))
 		return;
 

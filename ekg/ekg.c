@@ -377,23 +377,24 @@ static void handle_sigsegv()
 "\r\n"
 "The program will attempt to write its settings, but it is not\r\n"
 "guaranteed to succeed. They will be saved as\r\n"
-"%s/config.%d,  %s/config-<plugin>.%d\r\n"
-"and %s/userlist.%d\r\n"
+"%s/crash-%d-config,\r\n"
+"%s/crash-%d-config-<plugin>\r\n"
+"and %s/crash-%d-userlist\r\n"
 "\r\n"
 "Last messages from the debugging window will be saved to a file called\r\n"
-"%s/debug.%d.\r\n"
+"%s/crash-%d-debug.\r\n"
 "\r\n"
-"If a file called %s/core.%d will be created, try running the following\r\n"
+"If a file called %s/core will be created, try running the following\r\n"
 "command:\r\n"
 "\r\n"
-"    gdb %s %s/core.%d\r\n"
+"    gdb %s %s/core\r\n"
 "\n"
 "note the last few lines, and then note the output from the ,,bt'' command.\r\n"
 "This will help the program authors find the location of the problem\r\n"
 "and most likely will help avoid such crashes in the future.\r\n"
 "More details can be found in the documentation, in the file ,,gdb.txt''.\r\n"
 "\r\n",
-config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir,(int) getpid(), argv0, config_dir, (int) getpid());
+config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, argv0, config_dir);
 
 	config_write_crash();
 	userlist_write_crash();
