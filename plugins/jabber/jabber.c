@@ -697,28 +697,27 @@ static WATCHER_SESSION(jabber_handle_stream) {
 	return 0;
 }
 
-static TIMER_SESSION(jabber_ping_timer_handler) {
+static EKG_TIMER(jabber_ping_timer_handler) {
+	session_t *s = ((struct timer*)data)->data;
 	jabber_private_t *j;
 
-	if (type == 1)
-		return 0;
-
 	if (!s || !s->priv || !s->connected) {
-		return -1;
+		return FALSE;
 	}
 
 	j = jabber_private(s);
 	if (j->istlen) {
 		watch_write(j->send_watch, "  \t  ");	/* ping according to libtlen */
-		return 0;
+		return TRUE;
 	}
 	
-	if (session_int_get(s, "ping_server") == 0) return -1;
+	if (session_int_get(s, "ping_server") == 0)
+		return FALSE;
 
 		/* XEP-0199 */
 	watch_write(j->send_watch, "<iq to=\"%s\" id=\"ping%d\" type=\"get\"><ping xmlns=\"urn:xmpp:ping\"/></iq>\n",
 			j->server, j->id++);
-	return 0;
+	return TRUE;
 }
 
 static WATCHER(jabber_handle_connect_tlen_hub);

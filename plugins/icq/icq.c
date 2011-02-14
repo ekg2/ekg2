@@ -86,21 +86,19 @@ int icq_send_pkt(session_t *s, string_t buf) {
 	return 0;
 }
 
-static TIMER_SESSION(icq_ping) {
+static EKG_TIMER(icq_ping) {
+	session_t *s = ((struct timer*)data)->data;
 	icq_private_t *j;
 	string_t pkt;
 
-	if (type)
-		return 0;
-
 	if (!s || !(j = s->priv) || !s->connected)
-		return -1;
+		return FALSE;
 
 	pkt = string_init(NULL);
 	icq_makeflap(s, pkt, 0x05);
 	icq_send_pkt(s, pkt);
 
-	return 0;
+	return TRUE;
 }
 
 int icq_write_status_msg(session_t *s) {

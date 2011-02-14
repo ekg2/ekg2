@@ -1865,7 +1865,7 @@ struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period,
 	return timer_add_ms(plugin, name, period * 1000, persist, function, data);
 }
 
-struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, int (*function)(int, session_t *)) {
+struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, GSourceFunc function) {
 	struct timer *t;
 
 	if (!session || !session->plugin) {
@@ -1873,7 +1873,7 @@ struct timer *timer_add_session(session_t *session, const char *name, unsigned i
 		return NULL;
 	}
 
-	t = timer_add(session->plugin, name, period, persist, (void *) function, session);
+	t = ekg_timer_add(session->plugin, name, period, persist, function, session, NULL);
 	t->is_session = 1;
 	return t;
 }

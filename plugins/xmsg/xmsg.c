@@ -308,8 +308,8 @@ static int xmsg_handle_file(session_t *s, const char *fn)
 	return 0;
 }
 
-static TIMER_SESSION(xmsg_iterate_dir)
-{
+static EKG_TIMER(xmsg_iterate_dir) {
+	session_t *s = ((struct timer*)data)->data;
 	const char *dir;
 	DIR *d;
 	struct dirent *de;
@@ -317,14 +317,14 @@ static TIMER_SESSION(xmsg_iterate_dir)
 	const int maxn = session_int_get(s, "max_oneshot_files");
 
 	if (type || !s || !session_connected_get(s))
-		return -1;
+		return FALSE;
 	
 	session_status_set(s, EKG_STATUS_AVAIL);
 	if (!(dir = xmsg_dirfix(session_uid_get(s)+XMSG_UID_DIROFFSET))
 			|| !(d = opendir(dir))) {
 
 		xerr("unable to open specified directory");
-		return 0;
+		return TRUE;
 	}
 	
 	while ((de = readdir(d))) {
@@ -342,7 +342,7 @@ static TIMER_SESSION(xmsg_iterate_dir)
 	closedir(d);
 	xdebug("processed %d files", n);
 
-	return 0;
+	return TRUE;
 }
 
 static void xmsg_timer_change(session_t *s, const char *varname)
