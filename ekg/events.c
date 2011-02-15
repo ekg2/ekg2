@@ -62,8 +62,6 @@ static QUERY(event_na);
 static QUERY(event_descr);
 static QUERY(event_misc);
 
-static TIMER(ekg_day_timer);
-
 static void events_add_handler(char *name, void *function);
 static event_t *event_find(const char *name, const char *target);
 static event_t *event_find_id(unsigned int id);
@@ -379,13 +377,50 @@ static void events_add_handler(char *name, void *function) {
 	array_add(&events_all, name);
 }
 
+static EKG_TIMER(ekg_day_timer) {
+	static struct tm old = {.tm_mday = 0};
+	static struct tm *oldtm = &old;
+	struct tm *tm;
+	time_t now = time(NULL);
+
+	tm = localtime(&now);
+
+	if ((old.tm_mday == tm->tm_mday) || !config_display_day_changed)
+		return TRUE;
+
+	if (old.tm_mday) {
+		window_t *w;
+		char *ts = g_strdup(timestamp("%d %b %Y"));
+
+		for (w = windows; w; w = w->next) {
+
+			if (!w || w->id == WINDOW_DEBUG_ID || w->floating)
+				continue; /* skip __debug && (floatings windows [__lastlog, __contacts, ...]) */
+
+			w->lock++;		/* lock window */
+			print_window_w(w, EKG_WINACT_NONE, "day_changed", ts);
+			w->lock--;		/* unlock window */
+		}
+		g_free(ts);
+
+		query_emit(NULL, "ui-window-refresh");
+		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
+		query_emit(NULL, "day-changed", &tm, &oldtm);
+
+		old.tm_mday = 0;
+	} else
+		memcpy(&old, tm, sizeof(struct tm));
+
+	return TRUE;
+}
+
 /* 
  * events_init ()
  * 
  * initializing of events and its handlers
  */
 int events_init() {
-	timer_add(NULL, "daytimer", 1, 1, ekg_day_timer, NULL);
+	ekg_timer_add(NULL, "daytimer", 1, 1, ekg_day_timer, NULL, NULL);
 
 	events_add_handler(("protocol-message"), event_protocol_message);
 	events_add_handler(("event-avail"), event_avail);
@@ -394,46 +429,6 @@ int events_init() {
 	events_add_handler(("event-online"), event_online);
 	events_add_handler(("event-offline"), event_offline);
 	events_add_handler(("event-descr"), event_descr);
-	return 0;
-}
-
-static TIMER(ekg_day_timer) {
-	static struct tm *oldtm = NULL;
-	struct tm *tm;
-	time_t now = time(NULL);
-
-	if (type) {
-		xfree(oldtm);
-		return 0;
-	}
-	tm = localtime(&now);
-#define dayischanged(x) (oldtm->tm_##x != tm->tm_##x)
-	if (oldtm && (dayischanged(mday) /* day */ || dayischanged(mon) /* month */ || dayischanged(year)) /* year */)	{
-		if (config_display_day_changed) {
-			window_t *w;
-			char *ts = xstrdup(timestamp("%d %b %Y"));
-
-			for (w = windows; w; w = w->next) {
-				
-				if (!w || w->id == 0 || w->floating)
-					continue; /* skip __debug && (floatings windows [__lastlog, __contacts, ...]) */
-
-				w->lock++;		/* lock window */
-				print_window_w(w, EKG_WINACT_NONE, "day_changed", ts);
-				w->lock--;		/* unlock window */
-			}
-			xfree(ts);
-
-			query_emit(NULL, "ui-window-refresh");
-		}
-		debug("[EKG2] day changed to %.2d.%.2d.%.4d\n", tm->tm_mday, tm->tm_mon+1, tm->tm_year+1900);
-		query_emit(NULL, "day-changed", &tm, &oldtm);
-#undef dayischanged
-	} else if (!oldtm) {
-		oldtm = xmalloc(sizeof(struct tm));
-	} else return 0;
-
-	memcpy(oldtm, tm, sizeof(struct tm));
 	return 0;
 }
 

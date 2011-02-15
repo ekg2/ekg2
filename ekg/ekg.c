@@ -116,14 +116,9 @@ int no_mouse = 0;
  *
  * executed each second.
  */
-static TIMER(ekg_autoaway_timer) {
+static EKG_TIMER(ekg_autoaway_timer) {
 	session_t *sl;
-	time_t t;
-
-	if (type)
-		return 0;
-
-	t = time(NULL);
+	time_t t = time(NULL);
 
 	/* sprawd¼ autoawaye ró¿nych sesji */
 	for (sl = sessions; sl; sl = sl->next) {
@@ -151,7 +146,7 @@ static TIMER(ekg_autoaway_timer) {
 		} while (0);
 	}
 
-	return 0;
+	return TRUE;
 }
 
 /*
@@ -900,7 +895,7 @@ int main(int argc, char **argv)
 #endif
 	}
 
-	timer_add(NULL, "autoaway", 1, 1, ekg_autoaway_timer, NULL);
+	ekg_timer_add(NULL, "autoaway", 1, 1, ekg_autoaway_timer, NULL, NULL);
 
 	ekg2_reason_changed = 0;
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
