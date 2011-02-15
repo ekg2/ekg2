@@ -80,13 +80,6 @@
 
 GSList *children = NULL;
 
-#if 0
-DYNSTUFF_LIST_DECLARE(children, child_t, child_free_item,
-	static __DYNSTUFF_LIST_ADD,		/* children_add() */
-	__DYNSTUFF_LIST_REMOVE_ITER,		/* children_removei() */
-	__DYNSTUFF_LIST_DESTROY)		/* children_destroy() */
-#endif
-
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
 
@@ -116,14 +109,12 @@ void timers_remove(struct timer *t) {
 }
 
 void timers_destroy() {
-	GSList *tl;
-	for (tl = timers; tl; ) {
-		struct timer *t = tl->data;
-
-		tl = tl->next;
-		g_source_remove(t->id);;
+	inline void timer_source_remove(gpointer data, gpointer user_data) {
+		struct timer *t = data;
+		g_source_remove(t->id);
 	}
-	timers = NULL;	/* XXX */
+
+	g_slist_foreach(timers, timer_source_remove, NULL);
 }
 
 /***************
@@ -1325,14 +1316,19 @@ static void child_destroy_notify(gpointer data) {
 }
 
 void children_destroy(void) {
-	GSList *cl;
-	for (cl = children; cl; ) {
-		child_t *c = cl->data;
+	inline void child_source_remove(gpointer data, gpointer user_data) {
+		child_t *c = data;
 
-		cl = g_slist_next(cl);
-		/* that should call child_destroy_notify() */
+#ifndef NO_POSIX_SYSTEM
+		kill(c->pid, SIGTERM);
+#else
+		/* TerminateProcess / TerminateThread */
+#endif
+
 		g_source_remove(c->id);
 	}
+
+	g_slist_foreach(children, child_source_remove, NULL);
 }
 
 static void child_wrapper(GPid pid, gint status, gpointer data) {
@@ -1921,56 +1917,52 @@ struct timer *timer_add_session(session_t *session, const char *name, unsigned i
  */
 int timer_remove(plugin_t *plugin, const char *name)
 {
-	GSList *tl;
 	int removed = 0;
 
-	for (tl = timers; tl; ) {
-		struct timer *t = tl->data;
+	inline void timer_remove_iter(gpointer data, gpointer user_data) {
+		struct timer *t = data;
 
-		tl = tl->next;
 		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
 			g_source_remove(t->id);
 			removed++;
 		}
 	}
 
+	g_slist_foreach(timers, timer_remove_iter, NULL);
 	return ((removed) ? 0 : -1);
 }
 
 struct timer *timer_find_session(session_t *session, const char *name) {
-	GSList *tl;
-
 	if (!session)
 		return NULL;
-	
-	for (tl = timers; tl; tl = tl->next) {
-		struct timer *t = tl->data;
-		if (t->is_session && t->data == session && !xstrcmp(name, t->name))
-			return t;
-	}
 
-	return NULL;
+	inline gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
+		const struct timer *t = li;
+
+		return !(t->is_session && t->data == session && !xstrcmp(name, t->name));
+	}
+	
+	return (struct timer*) g_slist_find_custom(timers, NULL, timer_find_session_cmp);
 }
 
 int timer_remove_session(session_t *session, const char *name)
 {
-	GSList *tl;
 	plugin_t *p;
 	int removed = 0;
 
 	if (!session || (!(p = session->plugin)))
 		return -1;
 
-	for (tl = timers; tl; ) {
-		struct timer *t = tl->data;
+	inline void timer_remove_session_iter(gpointer data, gpointer user_data) {
+		struct timer *t = data;
 
-		tl = tl->next;
 		if (t->is_session && t->data == session && !xstrcmp(name, t->name)) {
 			g_source_remove(t->id);
 			removed++;
 		}
 	}
 
+	g_slist_foreach(timers, timer_remove_session_iter, NULL);
 	return ((removed) ? 0 : -1);
 }
 
@@ -2021,19 +2013,18 @@ EKG_TIMER(timer_handle_command) {
  */
 int timer_remove_user(int at)
 {
-	GSList *tl;
 	int removed = 0;
 
-	for (tl = timers; tl; ) {
-		struct timer *t = tl->data;
+	inline void timer_remove_user_iter(gpointer data, gpointer user_data) {
+		struct timer *t = data;
 
-		tl = tl->next;
 		if (t->at == at && (void *)t->function == (void *)timer_handle_command) { 
 			g_source_remove(t->id);
 			removed = 1;
 		}
 	}
 
+	g_slist_foreach(timers, timer_remove_user_iter, NULL);
 	return ((removed) ? 0 : -1);
 }
 

@@ -938,19 +938,7 @@ void ekg_exit()
 	}
 	send_nicks_count = 0;
 
-	{
-		GSList *c;
-
-		for (c = children; c; c = g_slist_next(c)) {
-			child_t *ch = c->data;
-#ifndef NO_POSIX_SYSTEM
-			kill(ch->pid, SIGTERM);
-#else
-			/* TerminateProcess / TerminateThread */
-#endif
-		}
-		children_destroy();
-	}
+	children_destroy();
 
 	{
 		list_t l;

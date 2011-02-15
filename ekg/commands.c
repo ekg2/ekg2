@@ -726,12 +726,12 @@ COMMAND(cmd_exec)
 		child_add(NULL, pid, command, cmd_exec_child_handler, NULL);
 
 	} else {
-		GSList *cl;
-
-		for (cl = children; cl; cl = g_slist_next(cl)) {
-			const child_t *c = cl->data;
-			printq("process", ekg_itoa(c->pid), ((c->name) ? (c->name) : ("?")));
+		inline void child_print(gpointer data, gpointer user_data) {
+			child_t *c = data;
+			printq("process", ekg_itoa(c->pid), (c->name ? c->name : "?"));
 		}
+
+		g_slist_foreach(children, child_print, NULL);
 
 		if (!children) {
 			printq("no_processes");
@@ -2051,13 +2051,12 @@ static COMMAND(cmd_debug_plugins) {
 static COMMAND(cmd_debug_timers) {
 /* XXX, */
 	char buf[256];
-	GSList *tl;
 	
 	printq("generic_bold", ("plugin      name               pers peri     handler  next"));
 	
-	for (tl = timers; tl; tl = tl->next) {
-		struct timer *t = tl->data;
-		char *plugin;
+	inline void timer_debug_print(gpointer data, gpointer user_data) {
+		struct timer *t = data;
+		const char *plugin;
 		char *tmp;
 
 		if (t->plugin)
@@ -2070,9 +2069,10 @@ static COMMAND(cmd_debug_timers) {
 		/* XXX: pointer truncated */
 		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8d %.8x %-20s", plugin, t->name, t->persist, (int) t->period, (int) (long) t->function, tmp);
 		printq("generic", buf);
-		xfree(tmp);
+		g_free(tmp);
 	}
 
+	g_slist_foreach(timers, timer_debug_print, NULL);
 	return 0;
 }
 
@@ -3060,10 +3060,15 @@ COMMAND(cmd_alias_exec)
 	return 0;
 }
 
+static inline gint timer_match_name(gconstpointer li, gconstpointer ui) {
+	const struct timer *t = li;
+	const gchar *name = ui;
+
+	return strcasecmp(t->name, name);
+}
+
 static COMMAND(cmd_at)
 {
-	GSList *tl;
-
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		const char *p, *a_name = NULL;
 		char *a_command;
@@ -3083,12 +3088,9 @@ static COMMAND(cmd_at)
 				return -1;
 			}
 
-			for (tl = timers; tl; tl = tl->next) {
-				struct timer *t = tl->data;
-				if (!xstrcasecmp(t->name, a_name)) {
-					printq("at_exist", a_name);
-					return -1;
-				}
+			if (g_slist_find_custom(timers, a_name, timer_match_name)) {
+				printq("at_exist", a_name);
+				return -1;
 			}
 
 			p = params[2];
@@ -3298,22 +3300,22 @@ static COMMAND(cmd_at)
 		else if (params[0])
 			a_name = params[0];
 
-		for (tl = timers; tl; tl = tl->next) {
-			struct timer *t = tl->data;
+		inline void timer_print(gpointer data, gpointer user_data) {
+			struct timer *t = data;
 			GTimeVal ends, tv;
 			struct tm *at_time;
 			char tmp[100], tmp2[150];
 			time_t sec, minutes = 0, hours = 0, days = 0;
 
 			if (!t->at || (a_name && xstrcasecmp(t->name, a_name)))
-				continue;
+				return;
 
 			if ((void *)t->function != (void *)timer_handle_command)
-				continue;
+				return;
 
 			count++;
 
-			g_get_current_time(&tv);
+			g_source_get_current_time(t->source, &tv);
 
 			ends.tv_sec = t->lasttime.tv_sec + (t->period / 1000);
 			ends.tv_usec = t->lasttime.tv_usec + ((t->period % 1000) * 1000);
@@ -3364,6 +3366,7 @@ static COMMAND(cmd_at)
 
 			printq("at_list", t->name, tmp, (char*)(t->data), "", ((t->persist) ? tmp2 : ""));
 		}
+		g_slist_foreach(timers, timer_print, NULL);
 
 		if (!count) {
 			if (a_name) {
@@ -3383,8 +3386,6 @@ static COMMAND(cmd_at)
 
 static COMMAND(cmd_timer)
 {
-	GSList *tl;
-
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		const char *t_name = NULL, *p;
 		char *t_command;
@@ -3405,12 +3406,9 @@ static COMMAND(cmd_timer)
 				return -1;
 			}
 
-			for (tl = timers; tl; tl = tl->next) {
-				struct timer *t = tl->data;
-				if (!t->at && !xstrcasecmp(t->name, t_name)) {
-					printq("timer_exist", t_name);
-					return -1;
-				}
+			if (g_slist_find_custom(timers, t_name, timer_match_name)) {
+				printq("timer_exist", t_name);
+				return -1;
 			}
 
 			p = params[2];
@@ -3520,22 +3518,23 @@ static COMMAND(cmd_timer)
 		else if (params[0])
 			t_name = params[0];
 
-		for (tl = timers; tl; tl = tl->next) {
-			struct timer *t = tl->data;
+		inline void timer_print_list(gpointer data, gpointer user_data) {
+			struct timer *t = data;
 			char *tmp;
 
 			if ((void *)t->function != (void *)timer_handle_command)
-				continue;
+				return;
 
 			if (t->at || (t_name && xstrcasecmp(t->name, t_name)))
-				continue;
+				return;
 
 			count++;
 
 			tmp = timer_next_call(t);
 			printq("timer_list", t->name, tmp, (char*)(t->data), "", (t->persist) ? "*" : "");
-			xfree(tmp);
+			g_free(tmp);
 		}
+		g_slist_foreach(timers, timer_print_list, NULL);
 
 		if (!count) {
 			if (t_name) {
