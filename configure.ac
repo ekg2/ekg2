@@ -87,10 +87,6 @@ AC_CHECK_FUNC([dn_expand], [], [
 	])
 ])
 
-AC_EKG2_WITH([libidn], [
-	AC_EKG2_CHECK_PKGCONFIG_LIB([libidn], [idn], [stringprep_check_version], [idna.h])
-])
-
 EKG_LIBS="$LIBS"
 AC_SUBST([EKG_LIBS])
 

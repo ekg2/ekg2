@@ -47,10 +47,6 @@
 #include <sys/filio.h>
 #endif
 
-#ifdef HAVE_LIBIDN
-# include <idna.h>
-#endif
-
 /*
 #include <time.h>
 #include <sys/stat.h>
@@ -70,13 +66,6 @@
 #include "sessions.h"
 #include "xmalloc.h"
 #include "srv.h"
-
-#ifdef HAVE_LIBIDN /* stolen from squid->url.c (C) Duane Wessels */
-static const char valid_hostname_chars_u[] =
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-	"abcdefghijklmnopqrstuvwxyz"
-	"0123456789-._";
-#endif
 
 struct ekg_connect_data {
 		/* internal data */
@@ -166,14 +155,30 @@ watch_t *ekg_resolver4(plugin_t *plugin, const char *server, watcher_handler_fun
 			do {
 				gim_host *gim_host_list = NULL;
 				int sport;
+				gboolean hostname_duped = FALSE;
 
 				if ((nexthost = xstrchr(hostname, ','))) *nexthost = '\0';
 				sport = ekg_resolver_split(hostname, port);
+
+#if GLIB_CHECK_VERSION(2, 22, 0)
+				if (g_hostname_is_non_ascii(hostname)) {
+					gchar *tmp = g_hostname_to_ascii(hostname);
+
+					if (tmp) {
+						hostname_duped = TRUE;
+						hostname = tmp;
+						debug_function("ekg_resolver4(), encoded hostname: %s\n", hostname);
+					} else
+						debug_error("g_hostname_to_ascii(%s) failed\n", hostname);
+				}
+#endif
 
 				srv_resolver (&gim_host_list, hostname, proto_port, sport, 0);
 				basic_resolver (&gim_host_list, hostname, sport);
 				resolve_missing_entries(&gim_host_list);
 
+				if (hostname_duped)
+					g_free(hostname);
 				hostname = nexthost+1;
 				write_out_and_destroy_list(fd[1], gim_host_list);
 			} while (nexthost);
@@ -548,15 +553,16 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 
 		close(fd[0]);
 
-#ifdef HAVE_LIBIDN
-		{
-			char *tmp;
+#if GLIB_CHECK_VERSION(2, 22, 0)
+		if (g_hostname_is_non_ascii(myserver)) {
+			gchar *tmp = g_hostname_to_ascii(myserver);
 
-			if ((xstrspn(myserver, valid_hostname_chars_u) != xstrlen(myserver)) && /* need to escape */
-				(idna_to_ascii_8z(myserver, &tmp, 0) == IDNA_SUCCESS)) {
-				xfree(myserver);
+			if (tmp) {
+				g_free(myserver);
 				myserver = tmp;
-			}
+				debug_function("ekg_resolver2(), encoded hostname: %s\n", myserver);
+			} else
+				debug_error("g_hostname_to_ascii(%s) failed\n", myserver);
 		}
 #endif
 		if ((a.s_addr = inet_addr(myserver)) == INADDR_NONE) {
