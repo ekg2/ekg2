@@ -2193,6 +2193,22 @@ int msg_all(session_t *s, const char *function, const char *what)
 
 	return 0;
 }
+
+#ifndef NO_POSIX_SYSTEM
+static void speech_child_handler(struct child_s *c, pid_t pid, const char *name, int status, void *data) {
+	speech_pid = 0;
+
+	if (!config_speech_app)
+		buffer_free(&buffer_speech);
+
+	if (buffer_speech.count && !status) {
+		char *str = buffer_tail(&buffer_speech);
+		say_it(str);
+		g_free(str);
+	}
+}
+#endif
+
 /*
  * say_it()
  *
@@ -2234,7 +2250,7 @@ int say_it(const char *str)
 		exit(status);
 	}
 
-	child_add(NULL, pid, NULL, NULL, NULL);
+	child_add(NULL, pid, NULL, speech_child_handler, NULL);
 	return 0;
 #else
 	return -1;

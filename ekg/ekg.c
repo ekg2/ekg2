@@ -179,21 +179,6 @@ void ekg_loop() {
 			}
 		}
 
-#if 0 /* XXX: was in child watch loop */
-				if (pid == speech_pid) {
-					speech_pid = 0;
-
-					if (!config_speech_app)
-						buffer_free(&buffer_speech);
-
-					if (buffer_speech.count && !WEXITSTATUS(status)) {
-						char *str = buffer_tail(&buffer_speech);
-						say_it(str);
-						xfree(str);
-					}
-				}
-#endif
-
 		/* zerknij na wszystkie niezbêdne deskryptory */
 
 		FD_ZERO(&rd);
