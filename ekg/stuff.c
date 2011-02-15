@@ -78,14 +78,14 @@
 #include "dynstuff_inline.h"
 #include "queries.h"
 
-child_t *children = NULL;
+GSList *children = NULL;
 
-static LIST_FREE_ITEM(child_free_item, child_t *) { xfree(data->name); }
-
+#if 0
 DYNSTUFF_LIST_DECLARE(children, child_t, child_free_item,
 	static __DYNSTUFF_LIST_ADD,		/* children_add() */
 	__DYNSTUFF_LIST_REMOVE_ITER,		/* children_removei() */
 	__DYNSTUFF_LIST_DESTROY)		/* children_destroy() */
+#endif
 
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
@@ -1312,6 +1312,36 @@ int play_sound(const char *sound_path)
 	return res;
 }
 
+static void child_free_item(gpointer data) {
+	child_t *c = data;
+	g_spawn_close_pid(c->pid);
+	g_free(c->name);
+	g_slice_free(child_t, c);
+}
+
+static void child_destroy_notify(gpointer data) {
+	children = g_slist_remove(children, data);
+	child_free_item(data);
+}
+
+void children_destroy(void) {
+	GSList *cl;
+	for (cl = children; cl; ) {
+		child_t *c = cl->data;
+
+		cl = g_slist_next(cl);
+		/* that should call child_destroy_notify() */
+		g_source_remove(c->id);
+	}
+}
+
+static void child_wrapper(GPid pid, gint status, gpointer data) {
+	child_t *c = data;
+
+	if (c->handler)
+		c->handler(c, pid, c->name, WEXITSTATUS(status), c->priv_data);
+}
+
 /*
  * child_add()
  *
@@ -1327,15 +1357,16 @@ int play_sound(const char *sound_path)
  */
 child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data)
 {
-	child_t *c = xmalloc(sizeof(child_t));
+	child_t *c	= g_slice_new(child_t);
 
 	c->plugin	= plugin;
 	c->pid		= pid;
-	c->name		= xstrdup(name);
+	c->name		= g_strdup(name);
 	c->handler	= handler;
 	c->priv_data	= priv_data;
 	
-	children_add(c);
+	children	= g_slist_prepend(children, c);
+	c->id		= g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, child_destroy_notify);
 	return c;
 }
 

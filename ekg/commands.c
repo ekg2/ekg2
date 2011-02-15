@@ -726,10 +726,12 @@ COMMAND(cmd_exec)
 		child_add(NULL, pid, command, cmd_exec_child_handler, NULL);
 
 	} else {
-		child_t *c;
+		GSList *cl;
 
-		for (c = children; c; c = c->next)
+		for (cl = children; cl; cl = g_slist_next(cl)) {
+			const child_t *c = cl->data;
 			printq("process", ekg_itoa(c->pid), ((c->name) ? (c->name) : ("?")));
+		}
 
 		if (!children) {
 			printq("no_processes");

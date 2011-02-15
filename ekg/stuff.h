@@ -61,18 +61,17 @@ struct child_s;
 typedef void (*child_handler_t)(struct child_s *c, pid_t pid, const char *name, int status, void *data);
 
 typedef struct child_s {
-	struct child_s	*next;
-
 	pid_t		pid;		/* id procesu */
 	plugin_t	*plugin;	/* obs³uguj±cy plugin */
 	char		*name;		/* nazwa, wy¶wietlana przy /exec */
 	child_handler_t	handler;	/* zak³ad pogrzebowy */
 	void		*priv_data;	/* dane procesu */
+
+	guint		id;		/* glib child_watch id */
 } child_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
 child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data);
-child_t *children_removei(child_t *c);
 void children_destroy(void);
 #endif
 
@@ -155,7 +154,7 @@ struct color_map {
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern child_t *children;
+extern GSList *children;
 extern alias_t *aliases;
 extern list_t autofinds; /* char* data */
 extern GSList *timers;

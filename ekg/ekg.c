@@ -160,8 +160,7 @@ void ekg_loop() {
 	GTimeVal tv;
 	struct timeval stv;
 	fd_set rd, wd;
-	int ret, maxfd, status;
-	pid_t pid;
+	int ret, maxfd;
 
 	g_get_current_time(&tv);
 
@@ -180,16 +179,7 @@ void ekg_loop() {
 			}
 		}
 
-		/* przegl±danie zdech³ych dzieciaków */
-#ifndef NO_POSIX_SYSTEM
-		while ((pid = waitpid(-1, &status, WNOHANG)) > 0) {
-			child_t *c;
-			debug("child process %d exited with status %d\n", pid, WEXITSTATUS(status));
-
-			for (c = children; c; c = c->next) {
-				if (pid != c->pid)
-					continue;
-
+#if 0 /* XXX: was in child watch loop */
 				if (pid == speech_pid) {
 					speech_pid = 0;
 
@@ -202,14 +192,8 @@ void ekg_loop() {
 						xfree(str);
 					}
 				}
-
-				if (c->handler)
-					c->handler(c, c->pid, c->name, WEXITSTATUS(status), c->priv_data);
-
-				c = children_removei(c);
-			}
-		}
 #endif
+
 		/* zerknij na wszystkie niezbêdne deskryptory */
 
 		FD_ZERO(&rd);
@@ -955,11 +939,12 @@ void ekg_exit()
 	send_nicks_count = 0;
 
 	{
-		child_t *c;
+		GSList *c;
 
-		for (c = children; c; c = c->next) {
+		for (c = children; c; c = g_slist_next(c)) {
+			child_t *ch = c->data;
 #ifndef NO_POSIX_SYSTEM
-			kill(c->pid, SIGTERM);
+			kill(ch->pid, SIGTERM);
 #else
 			/* TerminateProcess / TerminateThread */
 #endif
