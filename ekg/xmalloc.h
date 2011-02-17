@@ -61,12 +61,14 @@ typedef unsigned int socklen_t;
 
 void ekg_oom_handler();
 
+#ifndef EKG_NO_DEPRECATED
 void *xcalloc(size_t nmemb, size_t size);
 void *xmalloc(size_t size);
 void xfree(void *ptr);
 void *xrealloc(void *ptr, size_t size);
 char *xstrdup(const char *s);
 char *xstrndup(const char *s, size_t n);
+#endif
 char *utf8ndup(const char *s, size_t n);
 
 int xstrcasecmp(const char *s1, const char *s2);
@@ -94,6 +96,8 @@ char *xstrtok(char *s, const char *delim);
 char *xindex(const char *s, int c);
 char *xrindex(const char *s, int c);
 
+#ifndef EKG_NO_DEPRECATED
+
 char *vsaprintf(const char *format, va_list ap);
 
 	/* stuff.h */
@@ -104,6 +108,7 @@ char *saprintf(const char *format, ...);
 #endif
 #endif
 
+#endif
 
 #endif /* __EKG_XMALLOC_H */
 

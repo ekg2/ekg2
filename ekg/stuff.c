@@ -1846,6 +1846,8 @@ struct timer *ekg_timer_add(plugin_t *plugin, const char *name, unsigned int per
 	return ekg_timer_add_ms(plugin, name, 1000*period, persist, function, data, notify);
 }
 
+#ifndef EKG_NO_DEPRECATED
+
 static void timer_wrapper_destroy_notify(gpointer data) {
 	struct timer *t = data;
 
@@ -1897,6 +1899,8 @@ struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period,
 {
 	return timer_add_ms(plugin, name, period * 1000, persist, function, data);
 }
+
+#endif
 
 struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, GSourceFunc function) {
 	struct timer *t;
@@ -2747,11 +2751,15 @@ int strncasecmp_pl(const char *cs, const char *ct , size_t count)
 	return __res;
 }
 
+#ifndef EKG_NO_DEPRECATED
+
 /*
  * saprintf()
  *
  * dzia³a jak sprintf() tylko, ¿e wyrzuca wska¼nik
  * do powsta³ego ci±gu
+ *
+ * NOTE: deprecated, please use g_strdup_printf() instead.
  */
 char *saprintf(const char *format, ...)
 {
@@ -2764,6 +2772,8 @@ char *saprintf(const char *format, ...)
 
 	return res;
 }
+
+#endif
 
 /*
  * xstrtr()

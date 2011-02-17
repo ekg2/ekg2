@@ -81,6 +81,8 @@ void ekg_oom_handler()
 	exit(1);
 }
 
+#ifndef EKG_NO_DEPRECATED
+
 /**
  * xcalloc()
  *
@@ -170,6 +172,8 @@ char *xstrndup(const char *s, size_t n)
 	return g_strndup((char *) s, n);
 }
 
+#endif
+
 char *utf8ndup(const char *s, size_t n) {
 	/* XXX any suggestions for function name? IDKHTNI_ndup()? (IDKHTNI - I Don't Know How To Name It) */
 	char *tmp = xstrndup(s, n);
@@ -186,6 +190,8 @@ char *utf8ndup(const char *s, size_t n) {
 	return tmp;
 }
 
+#ifndef EKG_NO_DEPRECATED
+
 /**
  * vsaprintf()
  *
@@ -195,6 +201,8 @@ char *vsaprintf(const char *format, va_list ap)
 {
 	return g_strdup_vprintf(format, ap);
 }
+
+#endif
 
 /* XXX: most of the below funcs seem braindead, deprecate them as well? */
 

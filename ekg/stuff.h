@@ -345,9 +345,10 @@ int isalpha_pl(unsigned char c);
 struct timer *ekg_timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, GSourceFunc function, void *data, GDestroyNotify notify);
 struct timer *ekg_timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, GSourceFunc function, void *data, GDestroyNotify notify);
 
-struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persistent, int (*function)(int, void *), void *data);
+#ifndef EKG_NO_DEPRECATED
 struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data);
 struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data);
+#endif
 struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, GSourceFunc function);
 struct timer *timer_find_session(session_t *session, const char *name);
 int timer_remove(plugin_t *plugin, const char *name);
