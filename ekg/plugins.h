@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#define EKG_ABI_VER 5388 /* git rev-list master | wc -l */
+#define EKG_ABI_VER 5397 /* git rev-list master | wc -l */
 
 #define EXPORT __attribute__ ((visibility("default"))) G_MODULE_EXPORT
 

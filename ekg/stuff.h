@@ -62,7 +62,7 @@ typedef void (*child_handler_t)(struct child_s *c, pid_t pid, const char *name, 
 
 typedef struct child_s {
 	pid_t		pid;		/* id procesu */
-	plugin_t	*plugin;	/* obs³uguj±cy plugin */
+	char		*plugin;	/* obs³uguj±cy plugin */
 	char		*name;		/* nazwa, wy¶wietlana przy /exec */
 	child_handler_t	handler;	/* zak³ad pogrzebowy */
 	void		*priv_data;	/* dane procesu */

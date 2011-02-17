@@ -1307,6 +1307,7 @@ static void child_free_item(gpointer data) {
 	child_t *c = data;
 	g_spawn_close_pid(c->pid);
 	g_free(c->name);
+	g_free(c->plugin);
 	g_slice_free(child_t, c);
 }
 
@@ -1334,6 +1335,9 @@ void children_destroy(void) {
 static void child_wrapper(GPid pid, gint status, gpointer data) {
 	child_t *c = data;
 
+	/* plugin might have been unloaded */
+	if (c->plugin && !plugin_find(c->plugin))
+		return;
 	if (c->handler)
 		c->handler(c, pid, c->name, WEXITSTATUS(status), c->priv_data);
 }
@@ -1355,7 +1359,7 @@ child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_
 {
 	child_t *c	= g_slice_new(child_t);
 
-	c->plugin	= plugin;
+	c->plugin	= plugin ? g_strdup(plugin->name) : NULL;
 	c->pid		= pid;
 	c->name		= g_strdup(name);
 	c->handler	= handler;
