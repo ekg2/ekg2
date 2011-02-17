@@ -630,10 +630,6 @@ static void cmd_exec_child_handler(GPid pid, gint status, gpointer data) {
 	printq("process_exit", ekg_itoa(pid), name, ekg_itoa(status));
 }
 
-static void cmd_exec_child_destroy(gpointer data) {
-	g_free(data);
-}
-
 COMMAND(cmd_exec)
 {
 	pid_t pid;
@@ -726,8 +722,7 @@ COMMAND(cmd_exec)
 		fcntl(outfd, F_SETFL, O_NONBLOCK);
 		fcntl(errfd, F_SETFL, O_NONBLOCK);
 
-		ekg_child_add(NULL, pid, cmd_exec_child_handler, g_strdup(command), cmd_exec_child_destroy);
-
+		ekg_child_add(NULL, pid, cmd_exec_child_handler, g_strdup(command), g_free);
 	} else {
 		inline void child_print(gpointer data, gpointer user_data) {
 			child_t *c = data;
