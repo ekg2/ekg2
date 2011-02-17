@@ -1306,14 +1306,11 @@ int play_sound(const char *sound_path)
 static void child_free_item(gpointer data) {
 	child_t *c = data;
 	g_spawn_close_pid(c->pid);
+#ifndef EKG_NO_DEPRECATED
 	g_free(c->name);
+#endif
 	g_free(c->plugin);
 	g_slice_free(child_t, c);
-}
-
-static void child_destroy_notify(gpointer data) {
-	children = g_slist_remove(children, data);
-	child_free_item(data);
 }
 
 void children_destroy(void) {
@@ -1332,14 +1329,23 @@ void children_destroy(void) {
 	g_slist_foreach(children, child_source_remove, NULL);
 }
 
+#ifndef EKG_NO_DEPRECATED
+
+static void child_destroy_notify(gpointer data) {
+	children = g_slist_remove(children, data);
+	child_free_item(data);
+}
+
 static void child_wrapper(GPid pid, gint status, gpointer data) {
 	child_t *c = data;
 
 	/* plugin might have been unloaded */
 	if (c->plugin && !plugin_find(c->plugin))
 		return;
-	if (c->handler)
-		c->handler(c, pid, c->name, WEXITSTATUS(status), c->priv_data);
+	if (c->handler) {
+		child_handler_t ch = (void*) c->handler;
+		ch(c, pid, c->name, WEXITSTATUS(status), c->priv_data);
+	}
 }
 
 /*
@@ -1354,6 +1360,8 @@ static void child_wrapper(GPid pid, gint status, gpointer data) {
  *  - data
  *
  * 0/-1
+ *
+ * NOTE: DEPRECATED, please use ekg_child_add() instead.
  */
 child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data)
 {
@@ -1362,11 +1370,70 @@ child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_
 	c->plugin	= plugin ? g_strdup(plugin->name) : NULL;
 	c->pid		= pid;
 	c->name		= g_strdup(name);
-	c->handler	= handler;
+	c->handler	= (void*) handler;
 	c->priv_data	= priv_data;
 	
 	children	= g_slist_prepend(children, c);
 	c->id		= g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, child_destroy_notify);
+	return c;
+}
+
+#endif
+
+static void child_destroy_notify2(gpointer data) {
+	child_t *c = data;
+	children = g_slist_remove(children, data);
+
+	if (G_LIKELY(!(c->plugin) || plugin_find(c->plugin))) {
+		/* XXX: leak can happen if plugin was unloaded */
+		if (c->destr)
+			c->destr(c->priv_data);
+	}
+
+	child_free_item(data);
+}
+
+static void child_wrapper2(GPid pid, gint status, gpointer data) {
+	child_t *c = data;
+
+	/* plugin might have been unloaded */
+	if (G_UNLIKELY(c->plugin && !plugin_find(c->plugin)))
+		return;
+	if (G_LIKELY(c->handler))
+		c->handler(pid, WEXITSTATUS(status), c->priv_data);
+}
+
+/**
+ * ekg_child_add()
+ *
+ * Add a watcher for the child process.
+ *
+ * @param plugin - plugin which contains handler funcs or NULL if in core.
+ * @param pid - PID of the child process.
+ * @param handler - the handler func called when the process exits.
+ *	The handler func will be provided with the child PID, exit status
+ *	(filtered through WEXITSTATUS()) and private data.
+ * @param data - the private data passed to the handler.
+ * @param destr - destructor for the private data. It will be called
+ *	even if the handler isn't (i.e. when the watch is removed before
+ *	process exits). Can be NULL.
+ *
+ * @return The newly-allocated child_t pointer.
+ */
+child_t *ekg_child_add(plugin_t *plugin, GPid pid, GChildWatchFunc handler, gpointer data, GDestroyNotify destr) {
+	child_t *c = g_slice_new(child_t);
+
+	c->plugin = plugin ? g_strdup(plugin->name) : NULL;
+	c->pid = pid;
+#ifndef EKG_NO_DEPRECATED
+	c->name = NULL;
+#endif
+	c->handler = handler;
+	c->priv_data = data;
+	c->destr = destr;
+	
+	children = g_slist_prepend(children, c);
+	c->id = g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper2, c, child_destroy_notify2);
 	return c;
 }
 
