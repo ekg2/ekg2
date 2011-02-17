@@ -1890,6 +1890,8 @@ struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int peri
  *  - data - dane przekazywane do funkcji.
  *
  * zwraca zaalokowan± struct timer lub NULL w przypadku b³êdu.
+ *
+ * NOTE: DEPRECATED, please use ekg_timer_add*() instead.
  */
 struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data)
 {

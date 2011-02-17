@@ -86,11 +86,13 @@ void ekg_oom_handler()
  *
  * @bug same as in xmalloc()
  *
+ * @note Deprecated, please use g_new(), g_new0(), g_slice_new()
+ * or g_slice_new0() instead.
  */
 
 void *xcalloc(size_t nmemb, size_t size)
 {
-	return g_malloc0(nmemb * size);
+	return g_malloc0_n(nmemb, size);
 }
 
 /** 
@@ -106,6 +108,9 @@ void *xcalloc(size_t nmemb, size_t size)
  * @param size - the same as in malloc()
  *
  * @return pointer to allocated memory 
+ *
+ * @note Deprecated, please use g_malloc(), g_malloc0(), g_new(),
+ * g_new0(), g_slice_new() or g_slice_new0() instead.
  */
 
 void *xmalloc(size_t size)
@@ -121,6 +126,8 @@ void *xmalloc(size_t size)
  * Equivalent to: <code>if (ptr) free(ptr);</code>
  *
  * @sa xrealloc() - If you want change size of allocated memory.
+ *
+ * @note Deprecated, please use g_free() (or g_slice_free()) instead.
  */
 
 void xfree(void *ptr)
@@ -133,6 +140,7 @@ void xfree(void *ptr)
  *
  * @bug same as in xmalloc()
  *
+ * @note Deprecated, please use g_realloc() instead.
  */
 
 void *xrealloc(void *ptr, size_t size)
@@ -140,11 +148,21 @@ void *xrealloc(void *ptr, size_t size)
 	return g_realloc(ptr, size);
 }
 
+/**
+ * xstrdup()
+ *
+ * @note Deprecated, please use g_strdup() instead.
+ */
 char *xstrdup(const char *s)
 {
 	return g_strdup((char *) s);
 }
 
+/**
+ * xstrndup()
+ *
+ * @note Deprecated, please use g_strndup() and g_strdup() instead.
+ */
 char *xstrndup(const char *s, size_t n)
 {
 	if (n == (size_t) -1)
@@ -168,10 +186,17 @@ char *utf8ndup(const char *s, size_t n) {
 	return tmp;
 }
 
+/**
+ * vsaprintf()
+ *
+ * @note Deprecated, please use g_strdup_vprintf() instead.
+ */
 char *vsaprintf(const char *format, va_list ap)
 {
 	return g_strdup_vprintf(format, ap);
 }
+
+/* XXX: most of the below funcs seem braindead, deprecate them as well? */
 
 char *xstrstr(const char *haystack, const char *needle)
 {
