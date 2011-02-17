@@ -583,6 +583,7 @@ typedef struct {
 	int quiet;		/**< Whether to be quiet (i.e. don't print info on exit) */
 	string_t buf;		/**< Buffer */
 	char *cmdexec;		/**< Command to execute with result */
+	gint ref;			/**< Reference count */
 } cmd_exec_info_t;
 
 static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
@@ -594,6 +595,9 @@ static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 		return -1;
 
 	if (type == 1) {
+		if ((i->ref--) > 0)
+			return 0;
+
 		if (i->buf) {
 			command_exec_format(i->target, session_find(i->session), quiet, ("/ %s"), i->buf->str);
 			string_free(i->buf, 1);
@@ -601,7 +605,7 @@ static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 		xfree(i->cmdexec);
 		xfree(i->target);
 		xfree(i->session);
-		xfree(i);
+		g_slice_free(cmd_exec_info_t, i);
 		return 0;
 	}
 
@@ -635,11 +639,13 @@ COMMAND(cmd_exec)
 	pid_t pid;
 
 	if (params[0]) {
-		int fd[2] = { 0, 0 }, buf = 0, cmdx = 0, add_commandline = 0;
+		int buf = 0, cmdx = 0, add_commandline = 0;
 		const char *command = params[0], *__target = NULL, *cmdexec = NULL;
 		char **args = NULL;
 		cmd_exec_info_t *i;
 		watch_t *w;
+		GError *err = NULL;
+		gint outfd, errfd;
 
 		if (params[0][0] == '-') {
 			int big_match = 0;
@@ -673,66 +679,63 @@ COMMAND(cmd_exec)
 			}
 		} 
 
-		if (pipe(fd) == -1) {
-			printq("exec_error", strerror(errno));
-			return -1;
-		}
-
+		{
 #ifndef NO_POSIX_SYSTEM
-		if (!(pid = fork())) {
-			dup2(open("/dev/null", O_RDONLY), 0);
-			dup2(fd[1], 1);
-			dup2(fd[1], 2);
-
-			close(fd[0]);
-			close(fd[1]);
-
-			execl("/bin/sh", "sh", "-c", (command[0] == '^') ? command + 1 : command, (void *) NULL);
-
-			exit(1);
-		}
+			const gchar *argv[] = { "sh", "-c", command, NULL };
 #else
-/* XXX, fork and execute cmd /C $command
- * MG: I think using explicitly 'cmd /c' is very bad - in win9x we've got command.com instead;
- *     but AFAIR $COMSPEC should be always defined; if not, we should even use command.com
- *     (AFAIK newer versions of windows are backwards compatible with this) */
-		pid = -1;
+			const gchar *argv[] = { "command", "/c", command, NULL };
+			/* XXX: untested, use %COMSPEC, etc. */
 #endif
+			/* glib seems to lack const in prototype */
+			gchar **dupargv = g_strdupv((gchar**) argv);
 
-		if (pid < 0) {
-			printq("exec_error", strerror(errno));
-			close(fd[0]);
-			close(fd[1]);
-			return -1;
+			if (argv[2][0] == '^')
+				argv[2]++;
+			if (!g_spawn_async_with_pipes(NULL, dupargv, NULL,
+						G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH,
+						NULL, NULL, &pid, NULL, &outfd, &errfd, &err)) {
+
+				printq("exec_error", err->message);
+				g_error_free(err);
+				g_strfreev(dupargv);
+				return -1;
+			}
+			g_strfreev(dupargv);
 		}
-	
-		i = xmalloc(sizeof(cmd_exec_info_t));
+
+		i = g_slice_new(cmd_exec_info_t);
 		
 		i->quiet = quiet;
-		i->target = xstrdup(__target);
-		i->cmdexec = xstrdup(cmdexec);
-		i->session = xstrdup(session_uid_get(session));
+		i->target = g_strdup(__target);
+		i->cmdexec = g_strdup(cmdexec);
+		i->session = g_strdup(session_uid_get(session));
+		i->ref = 2; /* outfd & errfd */
 
 		if (buf)
 			i->buf = string_init(NULL);
 
-		w = watch_add_line(NULL, fd[0], WATCH_READ_LINE, cmd_exec_watch_handler, i);
+		watch_add_line(NULL, outfd, WATCH_READ_LINE, cmd_exec_watch_handler, i);
+		w = watch_add_line(NULL, errfd, WATCH_READ_LINE, cmd_exec_watch_handler, i);
 
 		if (add_commandline) {
 			char *tmp = format_string(format_find("exec_prompt"), ((command[0] == '^') ? command + 1 : command));
 			string_append(w->buf, tmp);
-			xfree(tmp);
+			g_free(tmp);
 		}
 
-		fcntl(fd[0], F_SETFL, O_NONBLOCK);
+		fcntl(outfd, F_SETFL, O_NONBLOCK);
+		fcntl(errfd, F_SETFL, O_NONBLOCK);
 
-		close(fd[1]);
 		ekg_child_add(NULL, pid, cmd_exec_child_handler, g_strdup(command), cmd_exec_child_destroy);
 
 	} else {
 		inline void child_print(gpointer data, gpointer user_data) {
 			child_t *c = data;
-			printq("process", ekg_itoa(c->pid), (c->name ? c->name : "?"));
+			const gchar *name = "?";
+
+			if (c->handler == cmd_exec_child_handler)
+				name = (gchar*) c->priv_data;
+			printq("process", ekg_itoa(c->pid), name);
 		}
 
 		g_slist_foreach(children, child_print, NULL);
