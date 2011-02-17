@@ -57,14 +57,12 @@ static int config_sms_max_length = 100;
 static int sms_theme_init();
 PLUGIN_DEFINE(sms, PLUGIN_GENERIC, sms_theme_init);
 
-static void sms_child_handler(child_t *c, int pid, const char *name, int status, void *data)
+static void sms_child_handler(GPid pid, gint status, gpointer data)
 {
 	char *number = data;
 
-	if (number) {
+	if (number)
 		print((!status) ? "sms_sent" : "sms_failed", number);
-		xfree(number);
-	}
 }
 
 /*
@@ -77,7 +75,6 @@ static void sms_child_handler(child_t *c, int pid, const char *name, int status,
 static int sms_send(const char *recipient, const char *message)
 {
 	int pid, fd[2] = { 0, 0 };
-	char *tmp;
 
 	if (!config_sms_app) {
 		errno = EINVAL;
@@ -114,10 +111,7 @@ static int sms_send(const char *recipient, const char *message)
 
 	close(fd[1]);
 
-	tmp = saprintf(("%s %s %s"), config_sms_app, recipient, message);
-	child_add(&sms_plugin, pid, tmp, sms_child_handler, xstrdup(recipient));
-	xfree(tmp);
-
+	ekg_child_add(&sms_plugin, pid, sms_child_handler, g_strdup(recipient), g_free);
 	return 0;
 }
 
