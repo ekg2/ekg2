@@ -619,11 +619,15 @@ static WATCHER_LINE(cmd_exec_watch_handler)	/* sta³y */
 	return 0;
 }
 
-static void cmd_exec_child_handler(child_t *c, int pid, const char *name, int status, void *priv)
-{
+static void cmd_exec_child_handler(GPid pid, gint status, gpointer data) {
+	gchar *name = data;
 	int quiet = (name && name[0] == '^');
 
 	printq("process_exit", ekg_itoa(pid), name, ekg_itoa(status));
+}
+
+static void cmd_exec_child_destroy(gpointer data) {
+	g_free(data);
 }
 
 COMMAND(cmd_exec)
@@ -723,7 +727,7 @@ COMMAND(cmd_exec)
 		fcntl(fd[0], F_SETFL, O_NONBLOCK);
 
 		close(fd[1]);
-		child_add(NULL, pid, command, cmd_exec_child_handler, NULL);
+		ekg_child_add(NULL, pid, cmd_exec_child_handler, g_strdup(command), cmd_exec_child_destroy);
 
 	} else {
 		inline void child_print(gpointer data, gpointer user_data) {
