@@ -377,16 +377,19 @@ static void events_add_handler(char *name, void *function) {
 	array_add(&events_all, name);
 }
 
-static EKG_TIMER(ekg_day_timer) {
+static TIMER(ekg_day_timer) {
 	static struct tm old = {.tm_mday = 0};
 	static struct tm *oldtm = &old;
 	struct tm *tm;
 	time_t now = time(NULL);
 
+	if (type)
+		return 0;
+
 	tm = localtime(&now);
 
 	if ((old.tm_mday == tm->tm_mday) || !config_display_day_changed)
-		return TRUE;
+		return 0;
 
 	if (old.tm_mday) {
 		window_t *w;
@@ -411,7 +414,7 @@ static EKG_TIMER(ekg_day_timer) {
 	} else
 		memcpy(&old, tm, sizeof(struct tm));
 
-	return TRUE;
+	return 0;
 }
 
 /* 
@@ -420,7 +423,7 @@ static EKG_TIMER(ekg_day_timer) {
  * initializing of events and its handlers
  */
 int events_init() {
-	ekg_timer_add(NULL, "daytimer", 1, 1, ekg_day_timer, NULL, NULL);
+	timer_add(NULL, "daytimer", 1, 1, ekg_day_timer, NULL);
 
 	events_add_handler(("protocol-message"), event_protocol_message);
 	events_add_handler(("event-avail"), event_avail);

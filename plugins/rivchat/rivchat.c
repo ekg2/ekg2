@@ -941,15 +941,17 @@ static WATCHER_SESSION(rivchat_handle_stream) {
 	return 0;
 }
 
-static EKG_TIMER(rivchat_pingpong) {
-	session_t *s = ((struct timer*)data)->data;
+static TIMER_SESSION(rivchat_pingpong) {
 	rivchat_private_t *j;
 	userlist_t *ul;
 	time_t cur_time;
 	int userlist_changed = 0;
 	
+	if (type)
+		return 0;
+
 	if (!s || !(j = s->priv))
-		return FALSE;
+		return -1;
 
 	cur_time = time(NULL);
 
@@ -984,7 +986,7 @@ static EKG_TIMER(rivchat_pingpong) {
 		query_emit(NULL, "userlist-refresh");
 
 	rivchat_send_packet(s, RC_PING, NULL, rivchat_generate_data(s), RC_INFOSIZE);
-	return TRUE;
+	return 0;
 }
 
 static COMMAND(rivchat_command_connect) {

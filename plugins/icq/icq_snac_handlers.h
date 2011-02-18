@@ -22,7 +22,7 @@ int icq_snac_handler(session_t *s, guint16 family, guint16 cmd, unsigned char *b
 void icq_snac_error_handler(session_t *s, const char *from, guint16 error);
 
 void icq_snac_references_list_destroy(icq_snac_reference_list_t **lista);
-EKG_TIMER(icq_snac_ref_list_cleanup);
+TIMER_SESSION(icq_snac_ref_list_cleanup);
 
 SNAC_SUBHANDLER(icq_my_meta_information_response);
 SNAC_SUBHANDLER(icq_cmd_addssi_ack);

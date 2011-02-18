@@ -82,21 +82,20 @@ static void icq_snac_ref_remove(session_t *s, icq_snac_reference_list_t *elem) {
 	icq_snac_references_list_remove(&(j->snac_ref_list), elem);
 }
 
-EKG_TIMER(icq_snac_ref_list_cleanup) {
-	session_t *s = ((struct timer*)data)->data;
+TIMER_SESSION(icq_snac_ref_list_cleanup) {
 	icq_private_t *j;
 	icq_snac_reference_list_t *l;
 	time_t t = time(NULL) - 100; /* XXX add to session configuration? */
 
 	if (!s || !(j = (icq_private_t *) s->priv))
-		return TRUE;
+		return 0;
 
 	/* XXX ?wo? inform about removed refs??? */
 	for (l = j->snac_ref_list; l ; l = l->next) {
 		if (t > l->timestamp)
 			l = icq_snac_references_list_removei(&j->snac_ref_list, l);
 	}
-	return TRUE;
+	return 0;
 }
 
 

@@ -100,9 +100,10 @@ static int dd_contacts(const char *name)
  * @return 0	[permanent timer]
  */
 
-static EKG_TIMER(ncurses_statusbar_timer) {
+static TIMER(ncurses_statusbar_timer) {
+	if (type) return 0;
 	update_statusbar(1);
-	return TRUE;
+	return 0;
 }
 
 static QUERY(ncurses_statusbar_query)
@@ -578,7 +579,7 @@ static void ncurses_sigint_handler(int s)
 static void ncurses_typing_retimer(const char *dummy) {
 	timer_remove(&ncurses_plugin, "ncurses:typing");
 	if (config_typing_interval > 0)
-		ekg_timer_add(&ncurses_plugin, "ncurses:typing", config_typing_interval, 1, ncurses_typing, NULL, NULL);
+		timer_add(&ncurses_plugin, "ncurses:typing", config_typing_interval, 1, ncurses_typing, NULL);
 }
 
 static COMMAND(ncurses_cmd_dump) {
@@ -787,7 +788,7 @@ EXPORT int ncurses_plugin_init(int prio)
 #endif
 	watch_add(&ncurses_plugin, 0, WATCH_READ, ncurses_watch_stdin, NULL);
 	signal(SIGINT, ncurses_sigint_handler);
-	ekg_timer_add(&ncurses_plugin, "ncurses:clock", 1, 1, ncurses_statusbar_timer, NULL, NULL);
+	timer_add(&ncurses_plugin, "ncurses:clock", 1, 1, ncurses_statusbar_timer, NULL);
 
 	ncurses_init();
 

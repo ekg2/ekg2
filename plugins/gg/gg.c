@@ -601,18 +601,20 @@ static QUERY(gg_userlist_priv_handler) {
  *
  * pinguje serwer co jaki¶ czas, je¶li jest nadal po³±czony.
  */
-static EKG_TIMER(gg_ping_timer_handler) {
-	session_t *s = ((struct timer*)data)->data;
+static TIMER_SESSION(gg_ping_timer_handler) {
 	gg_private_t *g;
 
+	if (type == 1)
+		return 0;
+
 	if (!s || !session_connected_get(s)) {
-		return FALSE;
+		return -1;
 	}
 
 	if ((g = session_private_get(s))) {
 		gg_ping(g->sess);
 	}
-	return TRUE;
+	return 0;
 }
 
 /* 

@@ -139,16 +139,17 @@ static QUERY(protocol_userlist_changed) {
  * @return -1 [TEMPORARY TIMER]
  */
 
-static EKG_TIMER(protocol_reconnect_handler) {
-	session_t *s = ((struct timer*)data)->data;
+static TIMER_SESSION(protocol_reconnect_handler) {
+	if (type == 1)
+		return 0;
 
 	if (!s || s->connected)
-		return FALSE;
+		return -1;
 
 	debug("protocol_reconnect_handler() reconnecting session %s\n", s->uid);
 
 	command_exec(NULL, s, ("/connect"), 0);
-	return FALSE;
+	return -1;
 }
 
 /**
