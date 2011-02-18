@@ -685,8 +685,8 @@ COMMAND(cmd_exec)
 			/* glib seems to lack const in prototype */
 			gchar **dupargv = g_strdupv((gchar**) argv);
 
-			if (argv[2][0] == '^')
-				argv[2]++;
+			if (dupargv[2][0] == '^')
+				dupargv[2]++;
 			if (!g_spawn_async_with_pipes(NULL, dupargv, NULL,
 						G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH,
 						NULL, NULL, &pid, NULL, &outfd, &errfd, &err)) {
