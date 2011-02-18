@@ -706,9 +706,7 @@ COMMAND(cmd_exec)
 		i->cmdexec = g_strdup(cmdexec);
 		i->session = g_strdup(session_uid_get(session));
 		i->ref = 2; /* outfd & errfd */
-
-		if (buf)
-			i->buf = string_init(NULL);
+		i->buf = buf ? string_init(NULL) : NULL;
 
 		watch_add_line(NULL, outfd, WATCH_READ_LINE, cmd_exec_watch_handler, i);
 		w = watch_add_line(NULL, errfd, WATCH_READ_LINE, cmd_exec_watch_handler, i);
