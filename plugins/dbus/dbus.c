@@ -15,12 +15,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "ekg2.h"
+
 #include <errno.h>
 #include <string.h>
 
-#include <ekg/debug.h>
-#include <ekg/plugins.h>
-#include <ekg/xmalloc.h>
 #define DBUS_API_SUBJECT_TO_CHANGE
 #include <dbus/dbus.h>
 #include "dbus.h"

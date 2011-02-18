@@ -17,10 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-
-#include <ekg/debug.h>
-#include <ekg/plugins.h>
+#include "ekg2.h"
 
 PLUGIN_DEFINE(dummy, PLUGIN_GENERIC, NULL);
 

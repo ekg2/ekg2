@@ -3,20 +3,9 @@
  * (C) 2006 Michał Górny <peres@peres.int.pl>
  */
 
-#include <glib.h>
+#include "ekg2.h"
 
 #include <sys/types.h>
-
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
-#include <ekg/queries.h>
-#include <ekg/sessions.h>
-#include <ekg/themes.h>
-#include <ekg/userlist.h>
-#include <ekg/vars.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
 
 static list_t list_find_str(const list_t first, const char *needle);
 static QUERY(autoresponder_message);

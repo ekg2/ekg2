@@ -1,7 +1,4 @@
-#include <ekg/debug.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-#include <ekg/xmalloc.h>
+#include "ekg2.h"
 #define DBUS_API_SUBJECT_TO_CHANGE
 #include <dbus/dbus.h>
 #include "dbus.h"

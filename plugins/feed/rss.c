@@ -15,10 +15,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 #ifdef HAVE_LIBEXPAT
-
-#include <glib.h>
 
 #include <errno.h>
 #include <sys/types.h>
@@ -39,20 +37,7 @@
 #include <sys/filio.h>
 #endif
 
-#include <ekg/dynstuff.h>
-#include <ekg/commands.h>
-#include <ekg/debug.h>
 #include <ekg/net.h>
-#include <ekg/protocol.h>
-#include <ekg/recode.h>
-#include <ekg/sessions.h>
-#include <ekg/userlist.h>
-#include <ekg/stuff.h>
-#include <ekg/vars.h>
-#include <ekg/xmalloc.h>
-
-#include <ekg/dynstuff_inline.h>
-#include <ekg/queries.h>
 
 #ifdef HAVE_EXPAT_H
 # include <expat.h>
