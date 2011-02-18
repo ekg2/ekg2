@@ -20,28 +20,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-#include "win32.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "debug.h"
-#include "dynstuff.h"
-#include "recode.h"
-#include "stuff.h"
-#include "themes.h"
-#include "vars.h"
-#include "xmalloc.h"
-#include "plugins.h"
-
-#include "dynstuff_inline.h"
-#include "queries.h"
 
 void changed_session_locks(const char *varname); /* sessions.c */
 char *console_charset;

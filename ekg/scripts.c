@@ -1,5 +1,5 @@
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -10,18 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
-#include "debug.h"
-#include "dynstuff.h"
-#include "dynstuff_inline.h"
 #include "scripts.h"
-#include "xmalloc.h"
-
-#include "commands.h"	/* commands */
-#include "protocol.h"	/* queries */
-#include "stuff.h"	/* timer */
-#include "vars.h"	/* vars */
-
-#include "queries.h"
 
 /* TODO && BUGS 
  * - cleanup.

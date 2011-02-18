@@ -19,17 +19,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <glib.h>
+#include "ekg2.h"
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
 #include <string.h>
-
-#include "dynstuff.h"
-#include "dynstuff_inline.h"
-#include "xmalloc.h"
 
 /*
  * list_add_sorted()

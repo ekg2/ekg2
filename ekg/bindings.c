@@ -1,15 +1,5 @@
+#include "ekg2.h"
 #include <string.h>
-
-#include "commands.h"
-#include "dynstuff.h"
-#include "themes.h"
-#include "plugins.h"
-#include "stuff.h"
-#include "xmalloc.h"
-
-#include "bindings.h"
-
-#include "dynstuff_inline.h"
 
 struct binding *bindings = NULL;
 binding_added_t *bindings_added;

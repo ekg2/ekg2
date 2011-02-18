@@ -33,16 +33,10 @@
  * 	- Check if this code works OK.
  */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include <errno.h>
 #include <string.h>
-
-#include "commands.h"
-#include "recode.h"
-#include "stuff.h"
-#include "windows.h"
-#include "xmalloc.h"
 
 struct ekg_encoding_pair {
 	gchar *from;

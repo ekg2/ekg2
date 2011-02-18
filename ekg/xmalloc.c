@@ -28,10 +28,7 @@
  * Makro fix(s) zosta³o w³a¶nie stworzone w tym celu 
  */
 
-#include "ekg2-config.h"
-#include "win32.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <sys/types.h>
 #include <stddef.h>
@@ -43,11 +40,6 @@
 #include <string.h>
 #include <strings.h>
 #include <unistd.h>
-
-#include "configfile.h"
-#include "stuff.h"
-#include "userlist.h"
-#include "xmalloc.h"
 
 #ifdef NO_POSIX_SYSTEM
 #include <winbase.h>

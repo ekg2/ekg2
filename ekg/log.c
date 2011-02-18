@@ -21,15 +21,10 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include <sys/types.h>
 #include <time.h>
-
-#include "dynstuff.h"
-#include "dynstuff_inline.h"
-#include "log.h"
-#include "xmalloc.h"
 
 struct last *lasts = NULL;
 

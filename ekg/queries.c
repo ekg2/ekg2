@@ -1,6 +1,6 @@
-#include <stdio.h>
-
 #include "queries.h"
+
+#include <stdio.h>
 
 /* list of known queries */
 

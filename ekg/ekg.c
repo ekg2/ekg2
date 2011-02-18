@@ -23,10 +23,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-#include "win32.h"
+#include "ekg2.h"
 
-#include <glib.h>
 #include <glib/gprintf.h>
 
 #include <sys/types.h>
@@ -74,27 +72,8 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "bindings.h"
-#include "commands.h"
-#include "debug.h"
-#include "events.h"
-#include "configfile.h"
 #include "emoticons.h"
-#include "log.h"
-#include "metacontacts.h"
-#include "msgqueue.h"
-#include "plugins.h"
-#include "protocol.h"
-#include "sessions.h"
-#include "stuff.h"
-#include "themes.h"
-#include "userlist.h"
 #include "scripts.h"
-#include "vars.h"
-#include "windows.h"
-#include "xmalloc.h"
-
-#include "queries.h"
 
 char *config_dir;
 int mesg_startup;

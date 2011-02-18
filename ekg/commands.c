@@ -27,10 +27,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-#include "win32.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <sys/types.h>
 
@@ -73,27 +70,8 @@
 # include <sys/user.h>
 #endif
 
-#include "bindings.h"
-#include "commands.h"
-#include "debug.h"
-#include "events.h"
-#include "configfile.h"
-#include "dynstuff.h"
-#include "log.h"
-#include "metacontacts.h"
-#include "msgqueue.h"
-#include "protocol.h"
-#include "sessions.h"
-#include "stuff.h"
-#include "themes.h"
-#include "vars.h"
-#include "userlist.h"
 #include "scripts.h"
-#include "windows.h"
-#include "xmalloc.h"
 #include "net.h"
-#include "queries.h"
-#include "dynstuff_inline.h"
 
 char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;

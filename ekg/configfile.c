@@ -22,10 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-#include "win32.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -36,19 +33,6 @@
 #include <unistd.h>
 #include <string.h>
 #include <errno.h>
-
-#include "bindings.h"
-#include "commands.h"
-#include "debug.h"
-#include "dynstuff.h"
-#include "events.h"
-#include "metacontacts.h"
-#include "stuff.h"
-#include "vars.h"
-#include "xmalloc.h"
-#include "plugins.h"
-#include "windows.h"
-
 
 /* function inside legacyconfig.c */
 void config_upgrade();

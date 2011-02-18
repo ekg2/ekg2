@@ -18,9 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -32,17 +30,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "debug.h"
-#include "dynstuff.h"
-#include "commands.h"
-#include "msgqueue.h"
-#include "protocol.h"
-#include "sessions.h"
-#include "stuff.h"
-#include "xmalloc.h"
-
-#include "dynstuff_inline.h"
 
 msg_queue_t *msgs_queue = NULL;
 

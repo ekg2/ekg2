@@ -22,9 +22,7 @@
  * Ekg2 char and string utilities with wide character strings support.
  */
 
-#include "ekg2-config.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #if USE_UNICODE
 
@@ -34,9 +32,6 @@
 #include <string.h>	/* ascii stuff */
 #include <stdlib.h>	/* ascii <==> wchar_t stuff */
 #include <errno.h>
-
-#include <ekg/dynstuff.h>
-#include <ekg/xmalloc.h>
 
 /* stringo-naprawiacz, taki jak ufix() w xmalloc */
 #define ufix(x)	((wchar_t *) x ? (wchar_t *) x : (wchar_t *) L"")

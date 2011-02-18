@@ -9,6 +9,7 @@ themedir = $(pkgdatadir)/themes
 bin_PROGRAMS = ekg/ekg2
 
 ekg_ekg2_SOURCES = \
+	ekg2.h \
 	ekg2-config.h \
 	gettext.h \
 	ekg/bindings.c \

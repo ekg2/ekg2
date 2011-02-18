@@ -17,27 +17,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-
-#include "commands.h"
-#include "debug.h"
-#include "events.h"
-#include "plugins.h"
-#include "sessions.h"
-#include "userlist.h"
-#include "stuff.h"
-#include "xmalloc.h"
-
-#include "themes.h"
-#include "windows.h"
-
-#include "dynstuff_inline.h"
 
 event_t *events = NULL;
 

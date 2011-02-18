@@ -24,9 +24,7 @@
 
 /* this is srv resolver as used by ekg2 */
 
-#include "ekg2-config.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <string.h>
 #include <sys/types.h>
@@ -43,8 +41,6 @@
 #include <resolv.h> /* res_init, res_query */
 #endif
 
-#include "dynstuff.h"
-#include "xmalloc.h"
 #include "srv.h"
 
 #ifndef T_SRV

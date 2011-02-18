@@ -18,24 +18,12 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <glib.h>
+#include "ekg2.h"
 
 #include <sys/stat.h>
 #include <string.h>
 #include <ctype.h>
 #include <dirent.h>
-
-#include "ekg2-config.h"
-
-#include "commands.h"
-#include "debug.h"
-#include "dynstuff.h"
-#include "events.h"
-#include "metacontacts.h"
-#include "stuff.h"
-#include "userlist.h"
-#include "vars.h"
-#include "xmalloc.h"
 
 /* nadpisujemy funkcjê xstrncasecmp() odpowiednikiem z obs³ug± polskich znaków */
 #define xstrncasecmp(x...) xstrncasecmp_pl(x)

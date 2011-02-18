@@ -20,10 +20,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-#include "win32.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -36,24 +33,8 @@
 
 #include <string.h>
 
-#include "debug.h"
-#include "dynstuff.h"
-#include "dynstuff_inline.h"
-#include "xmalloc.h"
-
-#include "commands.h"
 #include "emoticons.h"
 #include "objects.h"
-#include "userlist.h"
-#include "windows.h"
-
-#include "log.h"
-#include "msgqueue.h"
-#include "protocol.h"
-#include "stuff.h"
-#include "themes.h"
-
-#include "queries.h"
 
 static int auto_find_limit = 100; /* counter of persons who we were looking for when autofind */
 dcc_t *dccs = NULL;

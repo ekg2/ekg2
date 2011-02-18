@@ -19,10 +19,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-#include "win32.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -39,21 +36,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-
-#include "commands.h"
-#include "dynstuff.h"
-#include "plugins.h"
-#include "stuff.h"
-#include "themes.h"
-#include "userlist.h"
-#include "vars.h"
-#include "windows.h"
-#include "xmalloc.h"
-#include "log.h"
-
-#include "debug.h"
-#include "dynstuff_inline.h"
-#include "queries.h"
 
 static void userlist_private_free(userlist_t *u);
 

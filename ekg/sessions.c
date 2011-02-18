@@ -18,9 +18,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,20 +31,7 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include "debug.h"
-#include "dynstuff.h"
-#include "sessions.h"
-#include "stuff.h"
-#include "themes.h"
-#include "userlist.h"
-#include "vars.h"
-#include "windows.h"
-#include "xmalloc.h"
-
-#include "dynstuff_inline.h"
 #include "objects.h"
-
-#include "queries.h"
 
 session_t *sessions = NULL;
 
