@@ -21,8 +21,6 @@
 #ifndef __EKG_GG_PUBDIR_H
 #define __EKG_GG_PUBDIR_H
 
-#include <ekg/commands.h>
-
 extern list_t gg_registers;
 extern list_t gg_unregisters;
 extern list_t gg_reminds;

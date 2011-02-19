@@ -19,10 +19,6 @@
 #ifndef __EKG_GG_IMAGES_H
 #define __EKG_GG_IMAGES_H
 
-#include <glib.h>
-
-#include <ekg/dynstuff.h>
-
 typedef struct {
 	char *filename;
 	char *data;

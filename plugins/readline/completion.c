@@ -1,4 +1,4 @@
-#include "ekg2-config.h"
+#include "ekg2.h"
 #include <stdio.h>
 
 #ifdef HAVE_READLINE_READLINE_H
@@ -7,11 +7,7 @@
 #	include <readline.h>
 #endif
 
-#include <ekg/debug.h>
 #include <ekg/completion.h>
-#include <ekg/dynstuff.h>
-#include <ekg/strings.h>
-#include <ekg/xmalloc.h>
 
 extern char **completion_matches();
 

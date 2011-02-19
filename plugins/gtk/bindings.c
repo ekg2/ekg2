@@ -34,7 +34,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <glib.h>
+#include "ekg2.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -58,11 +58,6 @@
 #include <gtk/gtkentry.h>
 #include <gtk/gtkvscrollbar.h>
 #include <gdk/gdkkeysyms.h>
-
-#include <ekg/stuff.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
-#include <ekg/completion.h>
 
 #include "main.h"
 #include "bindings.h"

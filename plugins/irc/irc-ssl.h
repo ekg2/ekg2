@@ -1,8 +1,6 @@
 #ifndef __EKG_IRC_SSL_H
 #define __EKG_IRC_SSL_H
 
-#include <ekg2-config.h>
-
 #ifdef HAVE_LIBSSL
 # define IRC_HAVE_SSL 1
 //# warning "support for ssl (using openssl) in irc plugin is in beta version, be prepared for unpredictable"

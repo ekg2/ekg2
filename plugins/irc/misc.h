@@ -20,9 +20,6 @@
 
 #include <stdio.h>
 
-#include <ekg/plugins.h>
-#include <ekg/sessions.h>
-
 #include "irc.h"
 
 #define IRC_COMMAND(x) static int x(session_t *s, irc_private_t *j, int fd, int ecode, char **param)

@@ -21,7 +21,6 @@
 #define __PYTHON_EKG_H_
 
 #include <Python.h>
-#include <ekg/windows.h>
 
 PyObject * python_build_session(char * name);
 PyObject * python_build_window_id(int id);

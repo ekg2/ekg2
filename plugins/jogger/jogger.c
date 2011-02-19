@@ -16,17 +16,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <ekg/commands.h>
-#include <ekg/debug.h>
-#include <ekg/plugins.h>
-#include <ekg/recode.h>
-#include <ekg/queries.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-#include <ekg/themes.h>
-#include <ekg/userlist.h>
-#include <ekg/xmalloc.h>
-#include <ekg/vars.h>
+#include "ekg2.h"
 
 #define JOGGER_DATE "2007-05-04"
 

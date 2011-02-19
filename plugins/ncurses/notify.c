@@ -18,13 +18,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
-#include <ekg/windows.h>
-#include <ekg/stuff.h>
-#include <ekg/userlist.h>
-
-#include <ekg/queries.h>
+#include "ecurses.h"
 
 #include "input.h"
 #include "notify.h"

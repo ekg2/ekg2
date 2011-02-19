@@ -19,10 +19,6 @@
 #ifndef __EKG_PLUGINS_IRC_AUTOACTS_H
 #define __EKG_PLUGINS_IRC_AUTOACTS_H
 
-#include <ekg/plugins.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-
 enum { IRC_REJOIN_KICK=0, IRC_REJOIN_CONNECT };
 
 typedef struct {

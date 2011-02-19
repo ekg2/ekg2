@@ -1,17 +1,8 @@
+#include "ekg2.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
-
-#include <ekg/commands.h>
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/vars.h>
-#include <ekg/stuff.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
-
-#include <ekg/queries.h>
 
 typedef struct {
 	char *session;

@@ -34,15 +34,12 @@
  *  can convert this to a 'readers & writers' problem.
  */
 
+#include "ekg2.h"
+
 #include "oralog.h"
 
 #include <string.h>
 #include <time.h>
-
-#include <ekg/xmalloc.h>
-#include <ekg/debug.h>
-#include <ekg/themes.h>
-#include <ekg/windows.h>
 
 #include <oci.h>
 

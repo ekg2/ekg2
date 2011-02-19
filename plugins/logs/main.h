@@ -21,11 +21,7 @@
 #ifndef __logs_h__
 #define __logs_h__
 
-#include "ekg2-config.h"
 #include <stdio.h>
-#include <ekg/sessions.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
 
 typedef struct {
 	int   logformat; 

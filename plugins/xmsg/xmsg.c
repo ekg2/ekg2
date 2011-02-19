@@ -8,7 +8,7 @@
 #include <sys/fcntl.h>
 #endif
 
-#include <glib.h>
+#include "ekg2.h"
 
 #include <dirent.h>
 #include <errno.h>
@@ -19,16 +19,6 @@
 
 #include <sys/stat.h>
 #include <sys/types.h>
-
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
-#include <ekg/queries.h>
-#include <ekg/stuff.h>
-#include <ekg/userlist.h>
-#include <ekg/vars.h>
-#include <ekg/xmalloc.h>
 
 #ifdef HAVE_INOTIFY
 #include <termios.h>

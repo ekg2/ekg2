@@ -51,14 +51,11 @@ static const char *ekg_core_code =
 	"}\n";
 
 
+#include "ekg2.h"
+
 #include <stdarg.h>
 
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
 #include <ekg/scripts.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
-#include <ekg/queries.h>
 #undef _
 
 #include "perl_ekg.h"

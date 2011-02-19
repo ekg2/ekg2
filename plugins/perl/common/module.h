@@ -3,19 +3,7 @@
 
 #undef VERSION
 
-#include <glib.h>
-
-#include <ekg/scripts.h>
-
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-#include <ekg/userlist.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
-#include <ekg/vars.h>
+#include "ekg2.h"
 
 #undef _
 #include "../perl_ekg.h"

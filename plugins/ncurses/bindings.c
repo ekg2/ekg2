@@ -22,9 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -33,11 +31,6 @@
 #  include <limits.h>
 #endif
 
-#include <ekg/bindings.h>
-#include <ekg/stuff.h>
-#include <ekg/metacontacts.h>
-#include <ekg/xmalloc.h>
-#include <ekg/debug.h>
 #include <ekg/completion.h>
 
 #include "bindings.h"

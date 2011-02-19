@@ -21,8 +21,6 @@
 #ifndef __EKG_GG_PUBDIR50_H
 #define __EKG_GG_PUBDIR50_H
 
-#include <ekg/commands.h>
-
 COMMAND(gg_command_find);
 COMMAND(gg_command_change);
 

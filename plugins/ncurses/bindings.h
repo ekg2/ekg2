@@ -22,9 +22,6 @@
 
 #include "ecurses.h"
 
-#include <ekg/bindings.h>
-#include <ekg/stuff.h>
-
 #define KEY_CTRL_ENTER 350
 #define KEY_CTRL_ESCAPE 351
 #define KEY_CTRL_HOME 352

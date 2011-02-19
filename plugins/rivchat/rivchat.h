@@ -1,7 +1,5 @@
 /* some rivchat-magic-stuff based on protocol: http://akolacz.googlepages.com/RivChat-specyfikacja.PDF */
 
-#include <glib.h>
-
 #define RC_BROADCAST	0xFFFFFFFF
 
 #define RC_TIMEOUT	30	/* soft-timeout */

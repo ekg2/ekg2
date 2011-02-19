@@ -15,7 +15,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <glib.h>
+#include "ekg2.h"
 
 #include <stdlib.h>
 #include <unistd.h>
@@ -27,14 +27,6 @@
 #include <sys/mman.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-
-#include <ekg/commands.h>
-#include <ekg/debug.h>
-#include <ekg/recode.h>
-#include <ekg/stuff.h>
-#include <ekg/themes.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
 
 #define JOGGER_KEYS_MAX 25
 #define JOGGER_VALUES_MAX 14

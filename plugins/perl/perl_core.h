@@ -5,7 +5,6 @@
 #define HAS_BOOL
 #endif
 
-#include <ekg/xmalloc.h>
 #define fix(s) ((s) ? (s) : "") /* xmalloc.h */
 
 #include <EXTERN.h>

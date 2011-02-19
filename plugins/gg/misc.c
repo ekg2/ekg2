@@ -18,20 +18,13 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
 
 #include <libgadu.h>
-
-#include <ekg/sessions.h>
-#include <ekg/themes.h>
-#include <ekg/userlist.h>
-#include <ekg/xmalloc.h>
-#include <ekg/debug.h>
-#include <ekg/stuff.h>
 
 #include "gg.h"
 #include "misc.h"

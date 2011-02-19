@@ -16,7 +16,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <glib.h>
+#include "ekg2.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,17 +33,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <sys/un.h>
-
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/stuff.h>
-#include <ekg/themes.h>
-#include <ekg/vars.h>
-#include <ekg/xmalloc.h>
-#include <ekg/queries.h>
-
-#include <ekg/commands.h>
 
 typedef enum {
 	RC_INPUT_PIPE = 1,		/* pipe:/home/user/.ekg/pipe */

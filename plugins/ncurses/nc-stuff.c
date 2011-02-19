@@ -20,7 +20,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include "ecurses.h"
 
@@ -34,10 +34,6 @@
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
-
-#include <ekg/xmalloc.h>
-
-#include <ekg/stuff.h>
 
 #include "bindings.h"
 #include "backlog.h"

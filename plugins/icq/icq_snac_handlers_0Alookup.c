@@ -26,7 +26,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <ekg/debug.h>
+#include "ekg2.h"
 
 #include "icq.h"
 #include "misc.h"

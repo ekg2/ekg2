@@ -20,6 +20,9 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+
+#include "ekg2.h"
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -30,13 +33,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/protocol.h>
-#include <ekg/sessions.h>
-#include <ekg/plugins.h>
-#include <ekg/xmalloc.h>
 
 #include "icq.h"
 #include "misc.h"

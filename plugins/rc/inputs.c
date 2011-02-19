@@ -15,9 +15,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <ekg/win32.h>
-
-#include <glib.h>
+#include "ekg2.h"
 
 #ifndef NO_POSIX_SYSTEM
 #include <arpa/inet.h>
@@ -36,9 +34,6 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
-
-#include <ekg/debug.h>
-#include <ekg/xmalloc.h>
 
 #include "rc.h"
 

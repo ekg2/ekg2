@@ -20,8 +20,6 @@
 #ifndef __commands_h__
 #define __commands_h__
 
-#include <ekg/commands.h>
-
 COMMAND(logsoracle_cmd_db_connect);
 COMMAND(logsoracle_cmd_db_disconnect);
 COMMAND(logsoracle_cmd_status);

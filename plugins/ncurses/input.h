@@ -1,8 +1,6 @@
 #ifndef __EKG_NCURSES_INPUT_H
 #define __EKG_NCURSES_INPUT_H
 
-#include <ekg/strings.h>
-
 extern int ncurses_noecho;
 extern CHAR_T *ncurses_passbuf;
 

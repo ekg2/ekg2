@@ -3,16 +3,6 @@
 #ifndef __EKG_JABBER_JABBER_H
 #define __EKG_JABBER_JABBER_H
 
-#include <ekg2-config.h>
-
-#include <glib.h>
-
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>		/* XXX, protocol_uid() */
-#include <ekg/sessions.h>
-#include <ekg/userlist.h>
-
 #ifdef HAVE_EXPAT_H
  #include <expat.h>
 #endif

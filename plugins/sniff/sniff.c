@@ -18,9 +18,7 @@
 /* some functions are copied from ekg2's gg plugin/other ekg2's plugins/libgadu 
  *	there're copyrighted under GPL-2 */
 
-#include "ekg2-config.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,22 +30,6 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
-
-#include <ekg/debug.h>
-
-#include <ekg/plugins.h>
-#include <ekg/commands.h>
-#include <ekg/vars.h>
-#include <ekg/userlist.h>
-
-#include <ekg/commands.h>
-#include <ekg/stuff.h>
-#include <ekg/recode.h>
-#include <ekg/themes.h>
-
-#include <ekg/queries.h>
-#include <ekg/xmalloc.h>
-#include <ekg/protocol.h>
 
 #include "sniff_ip.h"
 #include "sniff_gg.h"

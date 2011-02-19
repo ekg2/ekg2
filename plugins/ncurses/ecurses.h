@@ -3,8 +3,6 @@
 #ifndef __EKG_NCURSES_ECURSES_H
 #define __EKG_NCURSES_ECURSES_H
 
-#include "ekg2-config.h"
-
 #define NCURSES_OPAQUE 0	/* for broken macOSX 10.6.1 header
                                    XXX detect during configure
 				 */

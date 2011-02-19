@@ -17,8 +17,7 @@
 #ifndef __PERL_EKG_H_
 #define __PERL_EKG_H_
 
-#include <ekg/plugins.h>
-#include <ekg/scripts.h>
+#include "ekg2.h"
 
 extern scriptlang_t perl_lang;
 extern plugin_t     perl_plugin;

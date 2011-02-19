@@ -16,7 +16,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <ekg/win32.h>
+
+#include "ekg2.h"
 
 #include <ctype.h>
 #include <stdio.h>
@@ -25,13 +26,6 @@
 #include <sys/utsname.h>
 #endif
 #include <sys/time.h>
-
-#define __EKG_STUFF_H
-#include <ekg/sessions.h>
-#include <ekg/themes.h>
-#include <ekg/userlist.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
 
 #include "input.h"
 #include "IRCVERSION.h"

@@ -1,20 +1,9 @@
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include <stdlib.h>
 #include <string.h>
 #include <signal.h>
 #include <unistd.h>
-
-#include <ekg/bindings.h>
-#include <ekg/debug.h>
-#include <ekg/plugins.h>
-#include <ekg/stuff.h>
-#include <ekg/vars.h>
-#include <ekg/windows.h>
-#include <ekg/themes.h>
-#include <ekg/xmalloc.h>
-
-#include <ekg/queries.h>
 
 #ifdef HAVE_READLINE_READLINE_H
 #	include <readline/readline.h>

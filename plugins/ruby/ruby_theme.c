@@ -1,6 +1,4 @@
-#include "ekg2-config.h"
-
-#include <ekg/themes.h>
+#include "ekg2.h"
 
 #include <ruby.h>
 #include "ruby_ekg.h"

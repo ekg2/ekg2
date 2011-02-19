@@ -26,13 +26,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "ekg2.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include <ekg/debug.h>
-#include <ekg/recode.h>
-#include <ekg/xmalloc.h>
 
 #include "icq.h"
 #include "misc.h"

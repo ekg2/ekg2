@@ -17,12 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-
-#include <glib.h>
-
-#include <ekg/stuff.h>
-#include <ekg/xmalloc.h>
+#include "ekg2.h"
 
 guint32 rivchat_fix32(guint32 x) {
 	return x;

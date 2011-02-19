@@ -14,13 +14,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include <ekg/win32.h>
-
-#include <ekg/debug.h>
-#include <ekg/stuff.h>
-#include <ekg/sessions.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
+#include "ekg2.h"
 
 #include "irc.h"
 #include "autoacts.h"

@@ -1,3 +1,5 @@
+#include "ekg2.h"
+
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -8,19 +10,6 @@
 #include <string.h>
 #include <dirent.h>
 #include <errno.h>
-
-#include <ekg/commands.h>
-#include <ekg/debug.h>
-#include <ekg/plugins.h>
-#include <ekg/vars.h>
-#include <ekg/userlist.h>
-#include <ekg/sessions.h>
-#include <ekg/xmalloc.h>
-
-#include <ekg/recode.h>
-#include <ekg/stuff.h>
-#include <ekg/themes.h>
-#include <ekg/queries.h>
 
 #include "simlite.h"
 

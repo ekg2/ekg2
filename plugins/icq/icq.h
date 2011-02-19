@@ -1,12 +1,6 @@
 #ifndef __ICQ_ICQ_H
 #define __ICQ_ICQ_H
 
-#include <glib.h>
-
-#include <ekg/dynstuff.h>
-#include <ekg/protocol.h>
-#include <ekg/sessions.h>
-
 #define SNAC_HANDLER(x) int x(session_t *s, guint16 cmd, unsigned char *buf, int len, private_data_t *data)
 typedef int (*snac_handler_t) (session_t *, guint16 cmd, unsigned char *, int, private_data_t * );
 

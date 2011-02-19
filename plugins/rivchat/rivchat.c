@@ -16,7 +16,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include <glib.h>
+#include "ekg2.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -32,21 +32,6 @@
 #include <fcntl.h>
 #include <pwd.h>
 #include <sys/utsname.h>
-
-#include <ekg/commands.h>
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
-#include <ekg/recode.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-#include <ekg/themes.h>
-#include <ekg/queries.h>
-#include <ekg/userlist.h>
-#include <ekg/vars.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
 
 #define DEFQUITMSG "EKG2 - It's better than sex!"
 #define SGQUITMSG(x) session_get(x, "QUIT_MSG")

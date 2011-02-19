@@ -23,9 +23,6 @@
 #define __EKG_GG_GG_H
 
 #include <libgadu.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/userlist.h>
 
 COMMAND(gg_command_image); /* images.c */
 

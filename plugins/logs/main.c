@@ -20,36 +20,16 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-#include <ekg/win32.h>
-
-#include <glib.h>
+#include "ekg2.h"
 
 #ifdef __APPLE__
 #define _DARWIN_C_SOURCE
 #include <netinet/in.h>
 #endif
 
-#include <glib.h>
-
 #if defined(__MINGW32__) || defined(__FreeBSD__) || defined(__sun)
 #include <limits.h>
 #endif
-
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/log.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-#include <ekg/themes.h> //print()
-#include <ekg/vars.h>
-#include <ekg/windows.h>
-#include <ekg/userlist.h>
-#include <ekg/xmalloc.h>
-
-#include <ekg/queries.h>
 
 #include <sys/stat.h>
 #include <sys/types.h>

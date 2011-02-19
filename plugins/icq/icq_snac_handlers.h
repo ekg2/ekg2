@@ -1,9 +1,6 @@
 #ifndef __ICQ_SNAC_H
 #define __ICQ_SNAC_H
 
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-
 #include "icq.h"
 
 typedef struct {	/* flap_packet_t->data ** if flap_packet_t->cmd == 0x02 */

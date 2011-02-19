@@ -2,8 +2,6 @@
 #include <gtk/gtkcontainer.h>
 #include <gtk/gtksignal.h>
 
-#include <ekg/plugins.h>
-
 extern int ui_quit;
 
 extern plugin_t gtk_plugin;

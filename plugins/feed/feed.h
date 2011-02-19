@@ -1,6 +1,5 @@
-#include "ekg2-config.h"
-#include <ekg/plugins.h>
-#include <ekg/sessions.h>
+#ifndef __EKG_FEED_H
+#define __EKG_FEED_H
 
 #define RSS_ONLY	 SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define RSS_FLAGS	 RSS_ONLY  | SESSION_MUSTBECONNECTED
@@ -33,3 +32,4 @@ void feed_set_statusdescr(userlist_t *u, int status, char *descr);
 void feed_set_descr(userlist_t *u, char *descr);
 void feed_set_status(userlist_t *u, int status);
 
+#endif

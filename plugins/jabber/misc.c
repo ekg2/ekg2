@@ -1,27 +1,15 @@
 /* $Id$ */
 
-#include <glib.h>
+#include "ekg2.h"
 
 #include <errno.h>
 #include <string.h>
 #include <unistd.h>
 
-#include "ekg2-config.h"
-
 #ifdef HAVE_LIBZ
 # include "zlib.h"
 #endif
 
-#include <ekg/debug.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
-#include <ekg/themes.h>
-#include <ekg/recode.h>
-#include <ekg/stuff.h>
-#include <ekg/xmalloc.h>
-#include <ekg/log.h>
-
-#include <ekg/queries.h>
 
 #include "jabber.h"
 #include "jabber-ssl.h"

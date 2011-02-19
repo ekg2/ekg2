@@ -3,12 +3,8 @@
 
 #define JABBER_DEFAULT_DCC_PORT 6000	/* XXX */
 
-#include <ekg/plugins.h>
-
 #include <stdio.h>
 
-#include <ekg/dynstuff.h>
-#include <ekg/protocol.h>
 
 enum jabber_dcc_protocol_type_t {
 	JABBER_DCC_PROTOCOL_UNKNOWN	= 0,

@@ -1,10 +1,6 @@
 #ifndef __ICQ_MISC_H
 #define __ICQ_MISC_H
 
-#include <glib.h>
-
-#include <ekg/dynstuff.h>
-
 typedef struct icq_tlv_list {
 	struct icq_tlv_list *next;
 

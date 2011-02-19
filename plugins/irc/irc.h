@@ -24,12 +24,6 @@
 				session_int_get(z, "port") < 0 ? DEFPORT : session_int_get(z, "port") : y->port), \
 			ekg_itoa(y->family), error ? strerror(error) : "")
 
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>	/* XXX, protocol_uid() */
-#include <ekg/sessions.h>
-#include <ekg/windows.h>
-
 #include "irc-ssl.h"
 
 /* irc_private->sopt */

@@ -1,12 +1,6 @@
-#include "ekg2-config.h"
+#include "ekg2.h"
 
-#include <glib.h>
-
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
 #include <ekg/scripts.h>
-#include <ekg/xmalloc.h>
 
 #undef __
 #undef _

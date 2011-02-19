@@ -17,7 +17,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include <string.h>
 #include <stdlib.h>
@@ -33,12 +33,6 @@
 #  endif
 # endif
 #endif
-
-#include <ekg/audio.h>
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/xmalloc.h>
 
 PLUGIN_DEFINE(gsm, PLUGIN_CODEC, NULL);
 CODEC_DEFINE(gsm); 

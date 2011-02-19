@@ -16,6 +16,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "ekg2.h"
+
 #include <stdlib.h>
 #include <unistd.h>
 
@@ -39,17 +41,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <ekg/debug.h>
 #include <ekg/net.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
-#include <ekg/recode.h>
-#include <ekg/stuff.h>
-#include <ekg/vars.h>
-#include <ekg/xmalloc.h>
-#include <ekg/userlist.h>
-
-#include <ekg/queries.h>
 
 #define DEFPARTMSG "EKG2 bejbi! http://ekg2.org/"
 #define DEFQUITMSG "EKG2 - It's better than sex!"

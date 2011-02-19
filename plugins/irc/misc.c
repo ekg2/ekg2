@@ -15,8 +15,7 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include "ekg2-config.h"
-#include <ekg/win32.h>
+#include "ekg2.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -28,21 +27,6 @@
 #ifndef NO_POSIX_SYSTEM
 #include <arpa/inet.h>
 #endif
-
-#include <ekg/commands.h>
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/plugins.h>
-#include <ekg/protocol.h>
-#include <ekg/recode.h>
-#include <ekg/sessions.h>
-#include <ekg/stuff.h>
-#include <ekg/themes.h>
-#include <ekg/userlist.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
-
-#include <ekg/queries.h>
 
 #define GDEBUG
 #define MARLENE

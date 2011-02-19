@@ -16,6 +16,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA
  */
 
+#include "ekg2.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -31,11 +33,6 @@
 #include <gtk/gtkcellrenderertext.h>
 #include <gtk/gtkliststore.h>
 #include <gdk/gdkkeysyms.h>
-
-#include <ekg/userlist.h>
-#include <ekg/stuff.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
 
 #include "main.h"
 #include "menu.h"

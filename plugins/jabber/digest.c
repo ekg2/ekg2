@@ -42,16 +42,7 @@ Test Vectors (from FIPS PUB 180-1)
 A million repetitions of "a"
   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 */
-#include "ekg2-config.h"
-
-#include <glib.h>
-
-#include <ekg/win32.h>
-#include <ekg/debug.h>
-#include <ekg/recode.h>
-
-#include <ekg/stuff.h>
-#include <ekg/xmalloc.h>
+#include "ekg2.h"
 
 #include "jabber.h"
 

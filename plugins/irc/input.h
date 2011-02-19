@@ -18,7 +18,6 @@
 #ifndef __EKG_PLUGINS_IRC_INPUT_H
 #define __EKG_PLUGINS_IRC_INPUT_H
 
-#include <ekg/sessions.h>
 #include "irc.h"
 
 char *irc_ircoldcolstr_juststrip(session_t *sess, char *inp);

@@ -22,16 +22,12 @@
  * Window header and statusbar routines
  */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include "ecurses.h"
 
 #include <arpa/inet.h>
 #include <string.h>
-
-#include <ekg/xmalloc.h>
-#include <ekg/stuff.h>
-#include <ekg/queries.h>
 
 #include "input.h"
 #include "nc-stuff.h"

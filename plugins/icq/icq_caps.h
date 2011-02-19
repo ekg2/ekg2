@@ -1,8 +1,6 @@
 #ifndef __ICQ_CAPS_H
 #define __ICQ_CAPS_H
 
-#include <ekg/dynstuff.h>
-
 typedef enum {
 	CAP_HTML = 0,
 	CAP_NEWCAPS,		/* Client understands new format of caps */

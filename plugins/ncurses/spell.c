@@ -17,11 +17,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include "ekg2-config.h"
 
-#include <ekg/debug.h>
-#include <ekg/xmalloc.h>
-#include <ekg/stuff.h>
+#include "ekg2.h"
 
 #include "nc-stuff.h"
 #include "spell.h"

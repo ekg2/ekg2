@@ -15,19 +15,11 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "ekg2.h"
+
 #include <stdio.h>
 #include <time.h>
 #include <sys/time.h>
-
-#define __EKG_STUFF_H
-
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/sessions.h>
-#include <ekg/userlist.h>
-#include <ekg/xmalloc.h>
-
-#include <ekg/queries.h>
 
 #include "people.h"
 #include "irc.h"

@@ -1,6 +1,4 @@
-#include "jabber_dcc.h"
-
-#include <ekg/debug.h>
+#include "ekg2.h"
 
 int jabber_dcc = 0;
 int jabber_dcc_port = 0;
@@ -17,12 +15,8 @@ static int jabber_dcc_fd = -1;
 
 #include <unistd.h>
 
-#include <ekg/plugins.h>
-#include <ekg/userlist.h>
-#include <ekg/themes.h>
-#include <ekg/xmalloc.h>
-
 #include "jabber.h"
+#include "jabber_dcc.h"
 
 WATCHER(jabber_dcc_handle_recv) {
 	dcc_t *d = data;

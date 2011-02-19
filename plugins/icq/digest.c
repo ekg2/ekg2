@@ -27,15 +27,7 @@
  * documentation and/or software.
  */
 
-#include "ekg2-config.h"
-
-#include <glib.h>
-
-#include <ekg/win32.h>
-#include <ekg/debug.h>
-
-#include <ekg/stuff.h>
-#include <ekg/xmalloc.h>
+#include "ekg2.h"
 
 #include <stdio.h>
 #include <string.h>

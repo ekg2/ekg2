@@ -1,14 +1,7 @@
 #ifndef __EKG_NCURSES_NC_STUFF_H
 #define __EKG_NCURSES_NC_STUFF_H
 
-#include "ekg2-config.h"
-
 #include "ecurses.h"
-
-#include <ekg/commands.h>
-#include <ekg/plugins.h>
-#include <ekg/themes.h>
-#include <ekg/windows.h>
 
 void ncurses_init(void);
 void ncurses_deinit(void);

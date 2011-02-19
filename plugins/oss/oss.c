@@ -1,4 +1,4 @@
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include <stdlib.h>
 #include <sys/ioctl.h>
@@ -12,13 +12,6 @@
 
 #include <errno.h>
 
-#include <ekg/audio.h>
-#include <ekg/debug.h>
-#include <ekg/commands.h>
-#include <ekg/plugins.h>
-#include <ekg/vars.h>
-#include <ekg/windows.h>
-#include <ekg/xmalloc.h>
 
 char *config_audio_device = NULL;
 

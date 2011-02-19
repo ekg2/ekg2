@@ -23,6 +23,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
+#include "ekg2.h"
+
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
@@ -37,9 +39,6 @@
 #include <time.h>
 
 #include "simlite.h"
-#include <ekg/debug.h>
-#include <ekg/recode.h>
-#include <ekg/xmalloc.h>
 
 char *sim_key_path = NULL;
 int sim_errno = 0;

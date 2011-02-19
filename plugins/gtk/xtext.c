@@ -39,7 +39,7 @@
 #define REFRESH_TIMEOUT 20
 #define WORDWRAP_LIMIT 24
 
-#include <ekg2-config.h>
+#include "ekg2.h"
 #define USE_XLIB
 
 
@@ -60,10 +60,6 @@
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #endif
-
-#include <ekg/stuff.h>
-#include <ekg/themes.h>
-#include <ekg/xmalloc.h>
 
 #include "xtext.h"
 

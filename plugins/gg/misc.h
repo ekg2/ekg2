@@ -21,10 +21,6 @@
 #ifndef __EKG_GG_MISC_H
 #define __EKG_GG_MISC_H
 
-#include <ekg/sessions.h>
-#include <ekg/userlist.h>
-#include <ekg/recode.h>
-
 int gg_status_to_text(const int status);
 int gg_text_to_status(const int status, const char *descr);
 char gg_userlist_type(userlist_t *u);

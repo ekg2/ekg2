@@ -1,13 +1,6 @@
 #if 0
 
-#include <ekg/debug.h>
-#include <ekg/dynstuff.h>
-#include <ekg/userlist.h>
-#include <ekg/xmalloc.h>
-
-#include <ekg/themes.h>	/* ? */
-
-#include <ekg/queries.h>
+#include "ekg2.h"
 
 #endif
 

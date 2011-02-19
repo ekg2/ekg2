@@ -1,11 +1,8 @@
 /* $Id$ */
 
-#include "ekg2-config.h"
+#include "ekg2.h"
 
 #include <string.h>
-
-#include <ekg/debug.h>
-#include <ekg/xmalloc.h>
 
 #include "jabber.h"
 

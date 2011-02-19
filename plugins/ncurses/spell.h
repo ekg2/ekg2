@@ -1,9 +1,6 @@
 #ifndef __EKG_NCURSES_SPELL_H
 #define __EKG_NCURSES_SPELL_H
 
-#include "ekg2-config.h"
-#include <ekg/strings.h>
-
 #ifdef HAVE_LIBASPELL
 
 extern int config_aspell;

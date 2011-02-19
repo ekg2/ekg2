@@ -3,9 +3,6 @@
 #ifndef __EKG_GG_DCC_H
 #define __EKG_GG_DCC_H
 
-#include <ekg/protocol.h>
-#include <ekg/commands.h>
-
 COMMAND(gg_command_dcc);
 
 void gg_changed_dcc(const char *var);
