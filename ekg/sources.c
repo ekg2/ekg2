@@ -25,16 +25,27 @@ static GSList *children = NULL;
  * Child watches
  */
 
+struct ekg_child {
+	pid_t		pid;		/* id procesu */
+	char		*plugin;	/* obsługuj±cy plugin */
+	char		*name;		/* nazwa, wy¶wietlana przy /exec */
+	GChildWatchFunc	handler;	/* zakład pogrzebowy */
+	void		*priv_data;	/* dane procesu */
+
+	guint		id;		/* glib child_watch id */
+	GDestroyNotify	destr;
+};
+
 static void child_free_item(gpointer data) {
-	child_t *c = data;
+	struct ekg_child *c = data;
 	g_spawn_close_pid(c->pid);
 	g_free(c->name);
 	g_free(c->plugin);
-	g_slice_free(child_t, c);
+	g_slice_free(struct ekg_child, c);
 }
 
 static void child_destroy_notify2(gpointer data) {
-	child_t *c = data;
+	struct ekg_child *c = data;
 	children = g_slist_remove(children, data);
 
 	if (G_LIKELY(!(c->plugin) || plugin_find(c->plugin))) {
@@ -47,7 +58,7 @@ static void child_destroy_notify2(gpointer data) {
 }
 
 static void child_wrapper2(GPid pid, gint status, gpointer data) {
-	child_t *c = data;
+	struct ekg_child *c = data;
 
 	/* plugin might have been unloaded */
 	if (G_UNLIKELY(c->plugin && !plugin_find(c->plugin)))
@@ -74,11 +85,11 @@ static void child_wrapper2(GPid pid, gint status, gpointer data) {
  *	process exits). Can be NULL.
  * @param ... - arguments to name_format format string.
  *
- * @return The newly-allocated child_t pointer.
+ * @return The newly-allocated struct ekg_child pointer.
  */
-child_t *ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) {
+ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) {
 	va_list args;
-	child_t *c = g_slice_new(child_t);
+	struct ekg_child *c = g_slice_new(struct ekg_child);
 
 	c->plugin = plugin ? g_strdup(plugin->name) : NULL;
 	c->pid = pid;
@@ -97,7 +108,7 @@ child_t *ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GCh
 
 void children_destroy(void) {
 	inline void child_source_remove(gpointer data, gpointer user_data) {
-		child_t *c = data;
+		struct ekg_child *c = data;
 
 #ifndef NO_POSIX_SYSTEM
 		kill(c->pid, SIGTERM);
@@ -118,7 +129,7 @@ void children_destroy(void) {
 G_GNUC_INTERNAL
 gint ekg_children_print(gint quiet) {
 	inline void child_print(gpointer data, gpointer user_data) {
-		child_t *c = data;
+		struct ekg_child *c = data;
 		print("process", ekg_itoa(c->pid), c->name ? c->name : "?");
 	}
 

@@ -23,18 +23,9 @@
 #include <glib.h>
 
 /* Child watches */
-typedef struct {
-	pid_t		pid;		/* id procesu */
-	char		*plugin;	/* obsługuj±cy plugin */
-	char		*name;		/* nazwa, wy¶wietlana przy /exec */
-	GChildWatchFunc	handler;	/* zakład pogrzebowy */
-	void		*priv_data;	/* dane procesu */
+typedef struct ekg_child *ekg_child_t;
 
-	guint		id;		/* glib child_watch id */
-	GDestroyNotify	destr;
-} child_t;
-
-child_t *ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) G_GNUC_PRINTF(3, 7) G_GNUC_MALLOC;
+ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) G_GNUC_PRINTF(3, 7) G_GNUC_MALLOC;
 void children_destroy(void);
 
 #endif
