@@ -1308,9 +1308,7 @@ int play_sound(const char *sound_path)
 static void child_free_item(gpointer data) {
 	child_t *c = data;
 	g_spawn_close_pid(c->pid);
-#ifndef EKG_NO_DEPRECATED
 	g_free(c->name);
-#endif
 	g_free(c->plugin);
 	g_slice_free(child_t, c);
 }
@@ -1412,6 +1410,8 @@ static void child_wrapper2(GPid pid, gint status, gpointer data) {
  *
  * @param plugin - plugin which contains handler funcs or NULL if in core.
  * @param pid - PID of the child process.
+ * @param name_format - format string for watcher name. Can be NULL, or
+ *	simple string if the name is guaranteed not to contain '%'.
  * @param handler - the handler func called when the process exits.
  *	The handler func will be provided with the child PID, exit status
  *	(filtered through WEXITSTATUS()) and private data.
@@ -1419,20 +1419,23 @@ static void child_wrapper2(GPid pid, gint status, gpointer data) {
  * @param destr - destructor for the private data. It will be called
  *	even if the handler isn't (i.e. when the watch is removed before
  *	process exits). Can be NULL.
+ * @param ... - arguments to name_format format string.
  *
  * @return The newly-allocated child_t pointer.
  */
-child_t *ekg_child_add(plugin_t *plugin, GPid pid, GChildWatchFunc handler, gpointer data, GDestroyNotify destr) {
+child_t *ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) {
+	va_list args;
 	child_t *c = g_slice_new(child_t);
 
 	c->plugin = plugin ? g_strdup(plugin->name) : NULL;
 	c->pid = pid;
-#ifndef EKG_NO_DEPRECATED
-	c->name = NULL;
-#endif
 	c->handler = handler;
 	c->priv_data = data;
 	c->destr = destr;
+
+	va_start(args, destr);
+	c->name = g_strdup_vprintf(name_format, args);
+	va_end(args);
 	
 	children = g_slist_prepend(children, c);
 	c->id = g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper2, c, child_destroy_notify2);

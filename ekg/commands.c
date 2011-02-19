@@ -700,15 +700,11 @@ COMMAND(cmd_exec)
 		fcntl(outfd, F_SETFL, O_NONBLOCK);
 		fcntl(errfd, F_SETFL, O_NONBLOCK);
 
-		ekg_child_add(NULL, pid, cmd_exec_child_handler, g_strdup(command), g_free);
+		ekg_child_add(NULL, pid, "%s", cmd_exec_child_handler, g_strdup(command), g_free, command);
 	} else {
 		inline void child_print(gpointer data, gpointer user_data) {
 			child_t *c = data;
-			const gchar *name = "?";
-
-			if (c->handler == cmd_exec_child_handler)
-				name = (gchar*) c->priv_data;
-			printq("process", ekg_itoa(c->pid), name);
+			printq("process", ekg_itoa(c->pid), c->name ? c->name : "?");
 		}
 
 		g_slist_foreach(children, child_print, NULL);

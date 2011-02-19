@@ -65,9 +65,7 @@ typedef void (*child_handler_t)(struct child_s *c, pid_t pid, const char *name, 
 typedef struct child_s {
 	pid_t		pid;		/* id procesu */
 	char		*plugin;	/* obs³uguj±cy plugin */
-#ifndef EKG_NO_DEPRECATED
 	char		*name;		/* nazwa, wy¶wietlana przy /exec */
-#endif
 	GChildWatchFunc	handler;	/* zak³ad pogrzebowy */
 	void		*priv_data;	/* dane procesu */
 
@@ -79,7 +77,7 @@ typedef struct child_s {
 #ifndef EKG_NO_DEPRECATED
 child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data);
 #endif
-child_t *ekg_child_add(plugin_t *plugin, GPid pid, GChildWatchFunc handler, gpointer data, GDestroyNotify destr);
+child_t *ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) G_GNUC_PRINTF(3, 7) G_GNUC_MALLOC;
 void children_destroy(void);
 #endif
 
