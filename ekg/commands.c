@@ -71,11 +71,8 @@
 #endif
 
 #include "scripts.h"
+#include "intern.h"
 #include "net.h"
-
-/* sources.c */
-gint ekg_children_print(gint quiet);
-/* -- */
 
 char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;

@@ -15,9 +15,8 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "stuff.h" /* config_version here */
-#include "themes.h" /* print() & _() */
-#include "xmalloc.h" /* x*() */
+#include "ekg2.h"
+#include "intern.h"
 
 /**
  * config_upgrade()

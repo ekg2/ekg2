@@ -18,6 +18,7 @@
  */
 
 #include "ekg2.h"
+#include "intern.h"
 
 static GSList *children = NULL;
 
@@ -126,7 +127,6 @@ void children_destroy(void) {
  * Command helpers
  */
 
-G_GNUC_INTERNAL
 gint ekg_children_print(gint quiet) {
 	inline void child_print(gpointer data, gpointer user_data) {
 		struct ekg_child *c = data;

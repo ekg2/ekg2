@@ -34,8 +34,7 @@
 #include <string.h>
 #include <errno.h>
 
-/* function inside legacyconfig.c */
-void config_upgrade();
+#include "intern.h"
 
 #define check_file() if (!(f = fopen(filename, "r")))\
 		return -1;\
