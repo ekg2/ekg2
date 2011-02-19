@@ -1329,57 +1329,6 @@ void children_destroy(void) {
 	g_slist_foreach(children, child_source_remove, NULL);
 }
 
-#ifndef EKG_NO_DEPRECATED
-
-static void child_destroy_notify(gpointer data) {
-	children = g_slist_remove(children, data);
-	child_free_item(data);
-}
-
-static void child_wrapper(GPid pid, gint status, gpointer data) {
-	child_t *c = data;
-
-	/* plugin might have been unloaded */
-	if (c->plugin && !plugin_find(c->plugin))
-		return;
-	if (c->handler) {
-		child_handler_t ch = (void*) c->handler;
-		ch(c, pid, c->name, WEXITSTATUS(status), c->priv_data);
-	}
-}
-
-/*
- * child_add()
- *
- * dopisuje do listy uruchomionych dzieci procesów.
- *
- *  - plugin
- *  - pid
- *  - name
- *  - handler
- *  - data
- *
- * 0/-1
- *
- * NOTE: DEPRECATED, please use ekg_child_add() instead.
- */
-child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data)
-{
-	child_t *c	= g_slice_new(child_t);
-
-	c->plugin	= plugin ? g_strdup(plugin->name) : NULL;
-	c->pid		= pid;
-	c->name		= g_strdup(name);
-	c->handler	= (void*) handler;
-	c->priv_data	= priv_data;
-	
-	children	= g_slist_prepend(children, c);
-	c->id		= g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, child_destroy_notify);
-	return c;
-}
-
-#endif
-
 static void child_destroy_notify2(gpointer data) {
 	child_t *c = data;
 	children = g_slist_remove(children, data);
@@ -2218,7 +2167,7 @@ int msg_all(session_t *s, const char *function, const char *what)
 }
 
 #ifndef NO_POSIX_SYSTEM
-static void speech_child_handler(struct child_s *c, pid_t pid, const char *name, int status, void *data) {
+static void speech_child_handler(GPid pid, gint status, gpointer data) {
 	speech_pid = 0;
 
 	if (!config_speech_app)
@@ -2273,7 +2222,7 @@ int say_it(const char *str)
 		exit(status);
 	}
 
-	child_add(NULL, pid, NULL, speech_child_handler, NULL);
+	ekg_child_add(NULL, pid, NULL, speech_child_handler, NULL, NULL);
 	return 0;
 #else
 	return -1;

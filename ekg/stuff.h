@@ -56,13 +56,7 @@ extern "C" {
 
 /* obs³uga procesów potomnych */
 
-struct child_s;
-
-#ifndef EKG_NO_DEPRECATED
-typedef void (*child_handler_t)(struct child_s *c, pid_t pid, const char *name, int status, void *data);
-#endif
-
-typedef struct child_s {
+typedef struct {
 	pid_t		pid;		/* id procesu */
 	char		*plugin;	/* obs³uguj±cy plugin */
 	char		*name;		/* nazwa, wy¶wietlana przy /exec */
@@ -73,14 +67,8 @@ typedef struct child_s {
 	GDestroyNotify	destr;
 } child_t;
 
-#ifndef EKG2_WIN32_NOFUNCTION
-#ifndef EKG_NO_DEPRECATED
-child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data);
-#endif
 child_t *ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) G_GNUC_PRINTF(3, 7) G_GNUC_MALLOC;
 void children_destroy(void);
-#endif
-
 
 #ifndef EKG2_WIN32_NOFUNCTION
 typedef struct alias {
