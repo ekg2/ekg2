@@ -171,7 +171,8 @@ int config_read(const char *filename)
 
 	if (!in_autoexec && !filename) {
 		aliases_destroy();
-		timer_remove_user(NULL);
+		timer_remove_user(timer_handle_command);
+		timer_remove_user(timer_handle_at);
 		event_free();
 		variable_set_default();
 		query_emit(NULL, "set-vars-default");

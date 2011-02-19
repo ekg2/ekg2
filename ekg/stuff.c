@@ -1867,12 +1867,13 @@ int timer_remove_user(void *handler)
 	inline void timer_remove_user_iter(gpointer data, gpointer user_data) {
 		struct timer *t = data;
 
-		if (!handler || t->function == handler) { 
+		if (t->function == handler) { 
 			g_source_remove(t->id);
 			removed = 1;
 		}
 	}
 
+	g_assert(handler);
 	g_slist_foreach(timers, timer_remove_user_iter, NULL);
 	return ((removed) ? 0 : -1);
 }
