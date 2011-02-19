@@ -61,6 +61,7 @@
 
 #include "main.h"
 #include "bindings.h"
+#include "ekg/completion.h"
 
 char *gtk_history[HISTORY_MAX];
 int gtk_history_index;
