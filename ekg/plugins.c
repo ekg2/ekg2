@@ -17,9 +17,8 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-#include "win32.h"
 
-#include <glib.h>
+#include "ekg2.h"
 #include <gmodule.h>
 
 #include <stdlib.h>
@@ -28,22 +27,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "configfile.h"
-#include "commands.h"
-#include "debug.h"
-#include "dynstuff.h"
-#include "events.h"
 #include "objects.h"
-#include "plugins.h"
-#include "userlist.h"
-#include "stuff.h"
-#include "vars.h"
-#include "themes.h"
-#include "xmalloc.h"
-#include "dynstuff_inline.h"
-
-#define __DECLARE_QUERIES_STUFF
-#include "queries.h"
 
 #if !defined(va_copy) && defined(__va_copy)
 #define va_copy(DST,SRC) __va_copy(DST,SRC)
