@@ -85,8 +85,6 @@ struct timer {
 	void		*data;			/* dane dla funkcji */
 
 	unsigned int	persist		: 1;	/* czy ma byæ na zawsze? */
-	unsigned int	at		: 1;	/* /at? trzeba siê tego jako¶ pozbyæ
-						 * i ujednoliciæ z /timer */
 	unsigned int	is_session	: 1;	/* czy sesyjny */
 
 	/* -- internal helper data -- */
@@ -324,10 +322,9 @@ struct timer *timer_add_session(session_t *session, const char *name, unsigned i
 struct timer *timer_find_session(session_t *session, const char *name);
 int timer_remove(plugin_t *plugin, const char *name);
 int timer_remove_session(session_t *session, const char *name);
-int timer_remove_user();
+int timer_remove_user(void *handler);
 void timers_remove(struct timer *t);
 void timers_destroy();
-TIMER(timer_handle_command);
 
 const char *ekg_status_label(const int status, const char *descr, const char *prefix);
 void ekg_update_status(session_t *session);

@@ -1853,36 +1853,22 @@ int timer_remove_session(session_t *session, const char *name)
 }
 
 /*
- * timer_handle_command()
- *
- * obs³uga timera wywo³uj±cego komendê.
- */
-TIMER(timer_handle_command)
-{
-	if (type) {
-		xfree(data);
-		return 0;
-	}
-	
-	command_exec(NULL, NULL, (char *) data, 0);
-	return 0;
-}
-
-/*
  * timer_remove_user()
  *
  * usuwa wszystkie timery u¿ytkownika.
  *
  * 0/-1
  */
-int timer_remove_user(int at)
+/* XXX: temporary API? */
+G_GNUC_INTERNAL
+int timer_remove_user(void *handler)
 {
 	int removed = 0;
 
 	inline void timer_remove_user_iter(gpointer data, gpointer user_data) {
 		struct timer *t = data;
 
-		if (t->at == at && t->function == timer_handle_command) { 
+		if (!handler || t->function == handler) { 
 			g_source_remove(t->id);
 			removed = 1;
 		}

@@ -3033,6 +3033,33 @@ static inline gint timer_match_name(gconstpointer li, gconstpointer ui) {
 	return strcasecmp(t->name, name);
 }
 
+/*
+ * timer_handle_command()
+ *
+ * obs³uga timera wywo³uj±cego komendê.
+ */
+TIMER(timer_handle_command)
+{
+	if (type) {
+		xfree(data);
+		return 0;
+	}
+	
+	command_exec(NULL, NULL, (char *) data, 0);
+	return 0;
+}
+
+TIMER(timer_handle_at)
+{
+	if (type) {
+		xfree(data);
+		return 0;
+	}
+	
+	command_exec(NULL, NULL, (char *) data, 0);
+	return 0;
+}
+
 static COMMAND(cmd_at)
 {
 	if (match_arg(params[0], 'a', ("add"), 2)) {
@@ -3205,8 +3232,7 @@ static COMMAND(cmd_at)
 			return -1;
 		}
 
-		if ((t = timer_add(NULL, a_name, period, ((freq) ? 1 : 0), timer_handle_command, xstrdup(a_command)))) {
-			t->at = 1;
+		if ((t = timer_add(NULL, a_name, period, ((freq) ? 1 : 0), timer_handle_at, xstrdup(a_command)))) {
 			printq("at_added", t->name);
 			if (freq) {
 				int d = t->period;
@@ -3234,7 +3260,7 @@ static COMMAND(cmd_at)
 
 		if (!xstrcmp(params[1], "*")) {
 			del_all = 1;
-			ret = timer_remove_user(1);
+			ret = timer_remove_user(timer_handle_at);
 		} else
 			ret = timer_remove(NULL, params[1]);
 		
@@ -3273,10 +3299,9 @@ static COMMAND(cmd_at)
 			char tmp[100], tmp2[150];
 			time_t sec, minutes = 0, hours = 0, days = 0;
 
-			if (!t->at || (a_name && xstrcasecmp(t->name, a_name)))
-				return;
-
 			if (t->function != timer_handle_command)
+				return;
+			if (a_name && xstrcasecmp(t->name, a_name))
 				return;
 
 			count++;
@@ -3452,7 +3477,7 @@ static COMMAND(cmd_timer)
 
 		if (!xstrcmp(params[1], "*")) {
 			del_all = 1;
-			ret = timer_remove_user(0);
+			ret = timer_remove_user(timer_handle_command);
 		} else
 			ret = timer_remove(NULL, params[1]);
 		
@@ -3488,10 +3513,9 @@ static COMMAND(cmd_timer)
 			struct timer *t = data;
 			char *tmp;
 
-			if (t->function != timer_handle_command)
+			if (t->function != timer_handle_at)
 				return;
-
-			if (t->at || (t_name && xstrcasecmp(t->name, t_name)))
+			if ((t_name && xstrcasecmp(t->name, t_name)))
 				return;
 
 			count++;

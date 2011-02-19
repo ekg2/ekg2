@@ -20,6 +20,13 @@
 #ifndef __EKG_INTERN_H
 #define __EKG_INTERN_H
 
+/* commands.c */
+
+G_GNUC_INTERNAL
+TIMER(timer_handle_at);
+G_GNUC_INTERNAL
+TIMER(timer_handle_command);
+
 /* legacyconfig.c */
 
 G_GNUC_INTERNAL
