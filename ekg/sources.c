@@ -20,52 +20,96 @@
 #include "ekg2.h"
 #include "intern.h"
 
-static GSList *children = NULL;
+/*
+ * Common API
+ */
+
+static GSList *sources = NULL;
+
+enum ekg_source_type {
+	EKG_SOURCE_CHILD
+};
+
+struct ekg_source {
+	guint id;
+	plugin_t *plugin;
+	gchar *name;
+
+	union {
+		GChildWatchFunc as_child;
+	} handler;
+
+	gpointer priv_data;
+	GDestroyNotify destr;
+
+	enum ekg_source_type type;
+	union {
+		pid_t pid;
+	} details;
+};
+
+static ekg_source_t source_new(enum ekg_source_type type, plugin_t *plugin, const gchar *name_format, va_list args, gpointer data, GDestroyNotify destr) {
+	struct ekg_source *s = g_slice_new(struct ekg_source);
+
+	s->type = type;
+	s->plugin = plugin;
+	s->name = g_strdup_vprintf(name_format, args);
+	s->priv_data = data;
+	s->destr = destr;
+	
+	sources = g_slist_prepend(sources, s);
+	return s;
+}
+
+static void source_free(gpointer data) {
+	struct ekg_source *s = data;
+
+	switch (s->type) {
+		case EKG_SOURCE_CHILD:
+			g_spawn_close_pid(s->details.pid);
+	}
+
+	g_free(s->name);
+	g_slice_free(struct ekg_source, s);
+}
+
+static void source_destroy_notify(gpointer data) {
+	struct ekg_source *s = data;
+	sources = g_slist_remove(sources, data);
+
+	if (G_UNLIKELY(s->destr))
+		s->destr(s->priv_data);
+
+	source_free(data);
+}
+
+void sources_destroy(void) {
+	inline void source_remove(gpointer data, gpointer user_data) {
+		struct ekg_source *s = data;
+
+		if (s->type == EKG_SOURCE_CHILD)
+#ifndef NO_POSIX_SYSTEM
+			kill(s->details.pid, SIGTERM);
+#else
+			/* TerminateProcess / TerminateThread */;
+#endif
+
+		g_source_remove(s->id);
+	}
+
+	g_slist_foreach(sources, source_remove, NULL);
+}
 
 /*
  * Child watches
  */
 
-struct ekg_child {
-	pid_t		pid;		/* id procesu */
-	char		*plugin;	/* obsługuj±cy plugin */
-	char		*name;		/* nazwa, wy¶wietlana przy /exec */
-	GChildWatchFunc	handler;	/* zakład pogrzebowy */
-	void		*priv_data;	/* dane procesu */
+static void child_wrapper(GPid pid, gint status, gpointer data) {
+	struct ekg_source *c = data;
 
-	guint		id;		/* glib child_watch id */
-	GDestroyNotify	destr;
-};
-
-static void child_free_item(gpointer data) {
-	struct ekg_child *c = data;
-	g_spawn_close_pid(c->pid);
-	g_free(c->name);
-	g_free(c->plugin);
-	g_slice_free(struct ekg_child, c);
-}
-
-static void child_destroy_notify2(gpointer data) {
-	struct ekg_child *c = data;
-	children = g_slist_remove(children, data);
-
-	if (G_LIKELY(!(c->plugin) || plugin_find(c->plugin))) {
-		/* XXX: leak can happen if plugin was unloaded */
-		if (c->destr)
-			c->destr(c->priv_data);
-	}
-
-	child_free_item(data);
-}
-
-static void child_wrapper2(GPid pid, gint status, gpointer data) {
-	struct ekg_child *c = data;
-
-	/* plugin might have been unloaded */
-	if (G_UNLIKELY(c->plugin && !plugin_find(c->plugin)))
-		return;
-	if (G_LIKELY(c->handler))
-		c->handler(pid, WEXITSTATUS(status), c->priv_data);
+	g_assert(pid == c->details.pid);
+	if (G_LIKELY(c->handler.as_child))
+		c->handler.as_child(pid, WEXITSTATUS(status), c->priv_data);
 }
 
 /**
@@ -90,37 +134,17 @@ static void child_wrapper2(GPid pid, gint status, gpointer data) {
  */
 ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) {
 	va_list args;
-	struct ekg_child *c = g_slice_new(struct ekg_child);
-
-	c->plugin = plugin ? g_strdup(plugin->name) : NULL;
-	c->pid = pid;
-	c->handler = handler;
-	c->priv_data = data;
-	c->destr = destr;
-
-	va_start(args, destr);
-	c->name = g_strdup_vprintf(name_format, args);
-	va_end(args);
+	struct ekg_source *c;
 	
-	children = g_slist_prepend(children, c);
-	c->id = g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper2, c, child_destroy_notify2);
+	va_start(args, destr);
+	c = source_new(EKG_SOURCE_CHILD, plugin, name_format, args, data, destr);
+	va_end(args);
+
+	c->handler.as_child = handler;
+	c->details.pid = pid;
+	c->id = g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, source_destroy_notify);
+
 	return c;
-}
-
-void children_destroy(void) {
-	inline void child_source_remove(gpointer data, gpointer user_data) {
-		struct ekg_child *c = data;
-
-#ifndef NO_POSIX_SYSTEM
-		kill(c->pid, SIGTERM);
-#else
-		/* TerminateProcess / TerminateThread */
-#endif
-
-		g_source_remove(c->id);
-	}
-
-	g_slist_foreach(children, child_source_remove, NULL);
 }
 
 /*
@@ -128,15 +152,20 @@ void children_destroy(void) {
  */
 
 gint ekg_children_print(gint quiet) {
+	gboolean found_one = FALSE;
+
 	inline void child_print(gpointer data, gpointer user_data) {
-		struct ekg_child *c = data;
-		print("process", ekg_itoa(c->pid), c->name ? c->name : "?");
+		struct ekg_source *c = data;
+
+		if (c->type == EKG_SOURCE_CHILD) {
+			printq("process", ekg_itoa(c->details.pid), c->name ? c->name : "?");
+			found_one = TRUE;
+		}
 	}
 
-	if (!quiet)
-		g_slist_foreach(children, child_print, NULL);
+	g_slist_foreach(sources, child_print, NULL);
 
-	if (!children) {
+	if (!found_one) {
 		printq("no_processes");
 		return -1;
 	}

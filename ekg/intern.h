@@ -28,6 +28,8 @@ void config_upgrade(void);
 /* sources.c */
 
 G_GNUC_INTERNAL
+void sources_destroy(void);
+G_GNUC_INTERNAL
 gint ekg_children_print(gint quiet);
 
 #endif

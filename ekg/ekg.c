@@ -73,6 +73,7 @@
 #include <unistd.h>
 
 #include "emoticons.h"
+#include "intern.h"
 #include "scripts.h"
 
 char *config_dir;
@@ -907,7 +908,7 @@ void ekg_exit()
 	}
 	send_nicks_count = 0;
 
-	children_destroy();
+	sources_destroy();
 
 	{
 		list_t l;

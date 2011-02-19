@@ -22,10 +22,12 @@
 
 #include <glib.h>
 
+/* Common API */
+typedef struct ekg_source *ekg_source_t;
+
 /* Child watches */
-typedef struct ekg_child *ekg_child_t;
+typedef ekg_source_t ekg_child_t;
 
 ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) G_GNUC_PRINTF(3, 7) G_GNUC_MALLOC;
-void children_destroy(void);
 
 #endif
