@@ -289,7 +289,7 @@ int session_remove(const char *uid)
 			struct timer *t = tl->data;
 
 			tl = tl->next;
-			if (t->is_session && t->data == s)
+			if (t->data == s)
 				g_source_remove(t->id);
 		}
 	}
@@ -1538,20 +1538,20 @@ void sessions_free() {
 			watch_free(w);
 	}
 
-	for (tl = timers; tl; ) {
-		struct timer *t = tl->data;
-
-		tl = tl->next;
-		if (t->is_session)
-			g_source_remove(t->id);
-	}
-
 /* it's sessions, not 'l' because we emit SESSION_REMOVED, which might want to search over sessions list...
  * This bug was really time-wasting ;(
  */
 /* mg: I modified it so it'll first emit all the events, and then start to free everything
  * That shouldn't be a problem, should it? */
 	for (s = sessions; s; s = s->next) {
+		for (tl = timers; tl; ) {
+			struct timer *t = tl->data;
+
+			tl = tl->next;
+			if (t->data == s)
+				g_source_remove(t->id);
+		}
+
 		query_emit(s->plugin, "session-removed", &(s->uid));	/* it notify only that plugin here, to free internal data. 
 									 * ui-plugin already removed.. other plugins @ quit.
 									 * shouldn't be aware about it. too...

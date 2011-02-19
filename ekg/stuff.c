@@ -1787,7 +1787,6 @@ struct timer *timer_add_session(session_t *session, const char *name, unsigned i
 	}
 
 	t = timer_add(session->plugin, name, period, persist, (void *) function, session);
-	t->is_session = 1;
 	return t;
 }
 
@@ -1825,7 +1824,7 @@ struct timer *timer_find_session(session_t *session, const char *name) {
 	inline gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
 		const struct timer *t = li;
 
-		return !(t->is_session && t->data == session && !xstrcmp(name, t->name));
+		return !(t->data == session && !xstrcmp(name, t->name));
 	}
 	
 	return (struct timer*) g_slist_find_custom(timers, NULL, timer_find_session_cmp);
@@ -1842,7 +1841,7 @@ int timer_remove_session(session_t *session, const char *name)
 	inline void timer_remove_session_iter(gpointer data, gpointer user_data) {
 		struct timer *t = data;
 
-		if (t->is_session && t->data == session && !xstrcmp(name, t->name)) {
+		if (t->data == session && !xstrcmp(name, t->name)) {
 			g_source_remove(t->id);
 			removed++;
 		}

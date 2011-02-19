@@ -85,7 +85,6 @@ struct timer {
 	void		*data;			/* dane dla funkcji */
 
 	unsigned int	persist		: 1;	/* czy ma byæ na zawsze? */
-	unsigned int	is_session	: 1;	/* czy sesyjny */
 
 	/* -- internal helper data -- */
 	GSource		*source;		/* g_main_context_find_source_by_id(t->id) */
