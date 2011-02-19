@@ -100,6 +100,17 @@ static void source_destroy_notify(gpointer data) {
 	source_free(data);
 }
 
+/**
+ * ekg_source_remove()
+ *
+ * Remove a particular source (which can be ekg_child_t, ekg_timer_t...).
+ *
+ * @param s - the source identifier.
+ */
+void ekg_source_remove(ekg_source_t s) {
+	g_source_remove(s->id);
+}
+
 void sources_destroy(void) {
 	inline void source_remove(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
@@ -111,7 +122,7 @@ void sources_destroy(void) {
 			/* TerminateProcess / TerminateThread */;
 #endif
 
-		g_source_remove(s->id);
+		ekg_source_remove(s);
 	}
 
 	g_slist_foreach(sources, source_remove, NULL);
@@ -243,7 +254,7 @@ gint timer_remove(plugin_t *plugin, const gchar *name) {
 		struct ekg_source *t = data;
 
 		if (t->type == EKG_SOURCE_TIMER && t->plugin == plugin && !xstrcmp(name, t->name)) {
-			g_source_remove(t->id);
+			ekg_source_remove(t);
 			removed++;
 		}
 	}
@@ -276,7 +287,7 @@ gint timer_remove_session(session_t *session, const gchar *name) {
 		struct ekg_source *t = data;
 
 		if (t->type == EKG_SOURCE_TIMER && t->priv_data == session && !xstrcmp(name, t->name)) {
-			g_source_remove(t->id);
+			ekg_source_remove(t);
 			removed++;
 		}
 	}
@@ -301,7 +312,7 @@ gint timer_remove_user(gint (*handler)(gint, gpointer)) {
 		struct ekg_source *t = data;
 
 		if (t->type == EKG_SOURCE_TIMER && t->handler.as_timer == handler) { 
-			g_source_remove(t->id);
+			ekg_source_remove(t);
 			removed = 1;
 		}
 	}

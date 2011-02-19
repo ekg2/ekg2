@@ -25,6 +25,8 @@
 /* Common API */
 typedef struct ekg_source *ekg_source_t;
 
+void ekg_source_remove(ekg_source_t s);
+
 /* Child watches */
 typedef ekg_source_t ekg_child_t;
 
