@@ -1,6 +1,8 @@
 SUBDIRS = po
 
 ACLOCAL_AMFLAGS = -I m4
+# XXX: we should check for -Wall support?
+AM_CFLAGS = -Wall
 
 plugindir = $(libdir)/ekg2/plugins
 scriptdir = $(pkgdatadir)/scripts
