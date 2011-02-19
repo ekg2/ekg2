@@ -144,14 +144,7 @@ int list_remove_safe(list_t *list, void *data, int free_data);
  *     string_free(s, 1);
  */
 
-struct string {
-	char *str;
-	int len, size;
-};
-
-typedef struct string *string_t;
-
-#ifndef EKG2_WIN32_NOFUNCTION
+typedef GString *string_t;
 
 string_t string_init(const char *str);
 int string_append(string_t s, const char *str);
@@ -180,8 +173,6 @@ void array_free_count(char **array, int count);
 
 const char *ekg_itoa(long int i);
 const char *cssfind(const char *haystack, const char *needle, const char sep, int caseinsensitive);
-
-#endif
 
 char *escape(const char *src);
 char *unescape(const char *src);
