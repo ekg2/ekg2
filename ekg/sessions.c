@@ -282,6 +282,7 @@ int session_remove(const char *uid)
 
 	}
 
+#ifdef TIMERS_FIXME  /* XXX! */
 	{
 		GSList *tl;
 
@@ -293,6 +294,7 @@ int session_remove(const char *uid)
 				g_source_remove(t->id);
 		}
 	}
+#endif
 
 	tmp = xstrdup(uid);
 	query_emit(NULL, "session-changed");
@@ -1544,6 +1546,7 @@ void sessions_free() {
 /* mg: I modified it so it'll first emit all the events, and then start to free everything
  * That shouldn't be a problem, should it? */
 	for (s = sessions; s; s = s->next) {
+#ifdef TIMER_FIXME /* XXX! */
 		for (tl = timers; tl; ) {
 			struct timer *t = tl->data;
 
@@ -1551,6 +1554,7 @@ void sessions_free() {
 			if (t->data == s)
 				g_source_remove(t->id);
 		}
+#endif
 
 		query_emit(s->plugin, "session-removed", &(s->uid));	/* it notify only that plugin here, to free internal data. 
 									 * ui-plugin already removed.. other plugins @ quit.

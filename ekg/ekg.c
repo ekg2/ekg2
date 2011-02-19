@@ -1004,7 +1004,6 @@ void ekg_exit()
 	script_variables_free(1);
 	emoticons_destroy();
 	commands_destroy();
-	timers_destroy();
 	binding_free();
 	lasts_destroy();
 

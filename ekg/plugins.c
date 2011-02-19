@@ -457,6 +457,7 @@ int plugin_unregister(plugin_t *p)
 			watch_free(w);
 	}
 
+#ifdef TIMERS_FIXME /* XXX! */
 	for (tl = timers; tl; ) {
 		struct timer *t = tl->data;
 
@@ -464,6 +465,7 @@ int plugin_unregister(plugin_t *p)
 		if (t->plugin == p)
 			g_source_remove(t->id);
 	}
+#endif
 
 	for (s = sessions; s; ) {
 		session_t *next = s->next;

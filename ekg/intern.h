@@ -37,6 +37,14 @@ void config_upgrade(void);
 G_GNUC_INTERNAL
 void sources_destroy(void);
 G_GNUC_INTERNAL
+gint timer_remove_user(gint (*handler)(gint, gpointer));
+G_GNUC_INTERNAL
 gint ekg_children_print(gint quiet);
+G_GNUC_INTERNAL
+COMMAND(cmd_debug_timers);
+G_GNUC_INTERNAL
+COMMAND(cmd_at);
+G_GNUC_INTERNAL
+COMMAND(cmd_timer);
 
 #endif

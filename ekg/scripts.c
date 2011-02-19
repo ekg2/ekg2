@@ -535,8 +535,10 @@ int script_timer_unbind(script_timer_t *temp, int remove)
 {
 	if (temp->removed) return -1;
 	temp->removed = 1;
+#ifdef TIMERS_FIXME
 	if (remove) 
 		g_source_remove(temp->self->id);
+#endif
 	SCRIPT_UNBIND_HANDLER(SCRIPT_TIMERTYPE, temp->priv_data);
 	return list_remove(&script_timers, temp, 0 /* 0 is ok */);
 }

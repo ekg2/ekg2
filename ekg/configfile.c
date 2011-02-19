@@ -421,6 +421,7 @@ static void config_write_main(FILE *f)
 		}
 	}
 
+#ifdef TIMERS_FIXME /* XXX! */
 	{
 		GSList *tl;
 
@@ -463,6 +464,7 @@ static void config_write_main(FILE *f)
 			}
 		}
 	}
+#endif
 }
 
 /*

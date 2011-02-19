@@ -30,4 +30,20 @@ typedef ekg_source_t ekg_child_t;
 
 ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) G_GNUC_PRINTF(3, 7) G_GNUC_MALLOC;
 
+/* Timers */
+typedef ekg_source_t ekg_timer_t;
+
+/* XXX: fuuu, macros */
+#define TIMER(x) gint x(gint type, gpointer data)
+#define TIMER_SESSION(x) gint x(gint type, session_t *s)
+
+ekg_timer_t timer_add(plugin_t *plugin, const gchar *name, guint period, gboolean persist, gint (*function)(gint, gpointer), gpointer data);
+ekg_timer_t timer_add_ms(plugin_t *plugin, const gchar *name, guint period, gboolean persist, gint (*function)(gint, gpointer), gpointer data);
+ekg_timer_t timer_add_session(session_t *session, const gchar *name, guint period, gboolean persist, gint (*function)(gint, session_t *));
+ekg_timer_t timer_find_session(session_t *session, const gchar *name);
+gint timer_remove(plugin_t *plugin, const gchar *name);
+gint timer_remove_session(session_t *session, const gchar *name);
+void timers_remove(ekg_timer_t t);
+void timers_destroy();
+
 #endif

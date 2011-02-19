@@ -20,6 +20,8 @@
 #include "ekg2.h"
 #include "intern.h"
 
+#include <string.h>
+
 /*
  * Common API
  */
@@ -27,16 +29,19 @@
 static GSList *sources = NULL;
 
 enum ekg_source_type {
-	EKG_SOURCE_CHILD
+	EKG_SOURCE_CHILD,
+	EKG_SOURCE_TIMER
 };
 
 struct ekg_source {
 	guint id;
+	GSource *source;
 	plugin_t *plugin;
 	gchar *name;
 
 	union {
 		GChildWatchFunc as_child;
+		int (*as_timer)(int, void*);
 	} handler;
 
 	gpointer priv_data;
@@ -44,7 +49,15 @@ struct ekg_source {
 
 	enum ekg_source_type type;
 	union {
-		pid_t pid;
+		struct {
+			pid_t pid;
+		} as_child;
+
+		struct {
+			GTimeVal lasttime;
+			guint interval;
+			gboolean persist;
+		} as_timer;
 	} details;
 };
 
@@ -53,7 +66,8 @@ static ekg_source_t source_new(enum ekg_source_type type, plugin_t *plugin, cons
 
 	s->type = type;
 	s->plugin = plugin;
-	s->name = g_strdup_vprintf(name_format, args);
+	/* XXX: temporary */
+	s->name = args ? g_strdup_vprintf(name_format, args) : g_strdup(name_format);
 	s->priv_data = data;
 	s->destr = destr;
 	
@@ -66,7 +80,10 @@ static void source_free(gpointer data) {
 
 	switch (s->type) {
 		case EKG_SOURCE_CHILD:
-			g_spawn_close_pid(s->details.pid);
+			g_spawn_close_pid(s->details.as_child.pid);
+			break;
+		case EKG_SOURCE_TIMER:
+			break;
 	}
 
 	g_free(s->name);
@@ -89,7 +106,7 @@ void sources_destroy(void) {
 
 		if (s->type == EKG_SOURCE_CHILD)
 #ifndef NO_POSIX_SYSTEM
-			kill(s->details.pid, SIGTERM);
+			kill(s->details.as_child.pid, SIGTERM);
 #else
 			/* TerminateProcess / TerminateThread */;
 #endif
@@ -107,7 +124,7 @@ void sources_destroy(void) {
 static void child_wrapper(GPid pid, gint status, gpointer data) {
 	struct ekg_source *c = data;
 
-	g_assert(pid == c->details.pid);
+	g_assert(pid == c->details.as_child.pid);
 	if (G_LIKELY(c->handler.as_child))
 		c->handler.as_child(pid, WEXITSTATUS(status), c->priv_data);
 }
@@ -141,10 +158,215 @@ ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, 
 	va_end(args);
 
 	c->handler.as_child = handler;
-	c->details.pid = pid;
+	c->details.as_child.pid = pid;
 	c->id = g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, source_destroy_notify);
 
 	return c;
+}
+
+/*
+ * Timers
+ */
+
+static void timer_wrapper_destroy_notify(gpointer data) {
+	struct ekg_source *t = data;
+
+	t->handler.as_timer(1, t->priv_data);
+
+	source_destroy_notify(data);
+}
+
+static gboolean timer_wrapper(gpointer data) {
+	struct ekg_source *t = data;
+
+	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
+	return !(t->handler.as_timer(0, t->priv_data) == -1 || !t->details.as_timer.persist);
+}
+
+ekg_timer_t timer_add_ms(plugin_t *plugin, const gchar *name, guint period, gboolean persist, gint (*function)(gint, gpointer), gpointer data) {
+	struct ekg_source *t = source_new(EKG_SOURCE_TIMER, plugin, name, NULL, data, NULL);
+
+	t->handler.as_timer = function;
+	t->details.as_timer.interval = period;
+	t->details.as_timer.persist = persist;
+
+	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify);
+	if (!t->name)
+		t->name = g_strdup_printf("_%d", t->id);
+	t->source = g_main_context_find_source_by_id(NULL, t->id);
+	g_assert(t->source);
+	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
+
+	return t;
+}
+
+/*
+ * timer_add()
+ *
+ * dodaje timera.
+ *
+ *  - plugin - plugin obsługuj±cy timer,
+ *  - name - nazwa timera w celach identyfikacji. je¶li jest równa NULL,
+ *	     zostanie przyznany pierwszy numerek z brzegu.
+ *  - period - za jaki czas w sekundach ma być uruchomiony,
+ *  - persist - czy stały timer,
+ *  - function - funkcja do wywołania po upłynięciu czasu,
+ *  - data - dane przekazywane do funkcji.
+ *
+ * zwraca zaalokowan± struct timer lub NULL w przypadku błędu.
+ */
+ekg_timer_t timer_add(plugin_t *plugin, const gchar *name, guint period, gboolean persist, gint (*function)(gint, gpointer), gpointer data) {
+	return timer_add_ms(plugin, name, period * 1000, persist, function, data);
+}
+
+ekg_timer_t timer_add_session(session_t *session, const gchar *name, guint period, gboolean persist, gint (*function)(gint, session_t *)) {
+	g_assert(session);
+	g_assert(session->plugin);
+
+	return timer_add(session->plugin, name, period, persist, (void *) function, session);
+}
+
+/*
+ * timer_remove()
+ *
+ * usuwa timer.
+ *
+ *  - plugin - plugin obsługuj±cy timer,
+ *  - name - nazwa timera,
+ *
+ * 0/-1
+ */
+gint timer_remove(plugin_t *plugin, const gchar *name) {
+	gint removed = 0;
+
+	inline void timer_remove_iter(gpointer data, gpointer user_data) {
+		struct ekg_source *t = data;
+
+		if (t->type == EKG_SOURCE_TIMER && t->plugin == plugin && !xstrcmp(name, t->name)) {
+			g_source_remove(t->id);
+			removed++;
+		}
+	}
+
+	g_slist_foreach(sources, timer_remove_iter, NULL);
+	return ((removed) ? 0 : -1);
+}
+
+ekg_timer_t timer_find_session(session_t *session, const gchar *name) {
+	if (!session)
+		return NULL;
+
+	inline gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
+		const struct ekg_source *t = li;
+
+		return !(t->type == EKG_SOURCE_TIMER && t->priv_data == session && !xstrcmp(name, t->name));
+	}
+
+	return (ekg_timer_t) g_slist_find_custom(sources, NULL, timer_find_session_cmp);
+}
+
+gint timer_remove_session(session_t *session, const gchar *name) {
+	gint removed = 0;
+
+	if (!session)
+		return -1;
+	g_assert(session->plugin);
+
+	inline void timer_remove_session_iter(gpointer data, gpointer user_data) {
+		struct ekg_source *t = data;
+
+		if (t->type == EKG_SOURCE_TIMER && t->priv_data == session && !xstrcmp(name, t->name)) {
+			g_source_remove(t->id);
+			removed++;
+		}
+	}
+
+	g_slist_foreach(sources, timer_remove_session_iter, NULL);
+	return ((removed) ? 0 : -1);
+}
+
+/*
+ * timer_remove_user()
+ *
+ * usuwa wszystkie timery użytkownika.
+ *
+ * 0/-1
+ */
+/* XXX: temporary API? */
+G_GNUC_INTERNAL
+gint timer_remove_user(gint (*handler)(gint, gpointer)) {
+	gint removed = 0;
+
+	inline void timer_remove_user_iter(gpointer data, gpointer user_data) {
+		struct ekg_source *t = data;
+
+		if (t->type == EKG_SOURCE_TIMER && t->handler.as_timer == handler) { 
+			g_source_remove(t->id);
+			removed = 1;
+		}
+	}
+
+	g_assert(handler);
+	g_slist_foreach(sources, timer_remove_user_iter, NULL);
+	return ((removed) ? 0 : -1);
+}
+
+static gchar *timer_next_call(struct ekg_source *t) {
+	long usec, sec, minutes = 0, hours = 0, days = 0;
+	GTimeVal tv, ends;
+
+	ends.tv_sec = t->details.as_timer.lasttime.tv_sec + (t->details.as_timer.interval / 1000);
+	ends.tv_usec = t->details.as_timer.lasttime.tv_usec + ((t->details.as_timer.interval % 1000) * 1000);
+	if (ends.tv_usec > 1000000) {
+		ends.tv_usec -= 1000000;
+		ends.tv_sec++;
+	}
+
+	g_source_get_current_time(t->source, &tv);
+
+	if (tv.tv_sec - ends.tv_sec > 2)
+		return g_strdup("?");
+
+	if (ends.tv_usec < tv.tv_usec) {
+		sec = ends.tv_sec - tv.tv_sec - 1;
+		usec = (ends.tv_usec - tv.tv_usec + 1000000) / 1000;
+	} else {
+		sec = ends.tv_sec - tv.tv_sec;
+		usec = (ends.tv_usec - tv.tv_usec) / 1000;
+	}
+
+	if (sec > 86400) {
+		days = sec / 86400;
+		sec -= days * 86400;
+	}
+
+	if (sec > 3600) {
+		hours = sec / 3600;
+		sec -= hours * 3600;
+	}
+
+	if (sec > 60) {
+		minutes = sec / 60;
+		sec -= minutes * 60;
+	}
+
+	if (days)
+		return saprintf("%ldd %ldh %ldm %ld.%.3ld", days, hours, minutes, sec, usec);
+
+	if (hours)
+		return saprintf("%ldh %ldm %ld.%.3ld", hours, minutes, sec, usec);
+
+	if (minutes)
+		return saprintf("%ldm %ld.%.3ld", minutes, sec, usec);
+
+	return saprintf("%ld.%.3ld", sec, usec);
+}
+
+static inline gint timer_match_name(gconstpointer li, gconstpointer ui) {
+	const struct ekg_source *t = li;
+	const gchar *name = ui;
+
+	return t->type == EKG_SOURCE_TIMER && strcmp(t->name, name);
 }
 
 /*
@@ -158,7 +380,7 @@ gint ekg_children_print(gint quiet) {
 		struct ekg_source *c = data;
 
 		if (c->type == EKG_SOURCE_CHILD) {
-			printq("process", ekg_itoa(c->details.pid), c->name ? c->name : "?");
+			printq("process", ekg_itoa(c->details.as_child.pid), c->name ? c->name : "?");
 			found_one = TRUE;
 		}
 	}
@@ -170,4 +392,543 @@ gint ekg_children_print(gint quiet) {
 		return -1;
 	}
 	return 0;
+}
+
+COMMAND(cmd_debug_timers) {
+/* XXX, */
+	char buf[256];
+	
+	printq("generic_bold", ("plugin      name               pers peri     handler  next"));
+	
+	inline void timer_debug_print(gpointer data, gpointer user_data) {
+		struct ekg_source *t = data;
+		const gchar *plugin;
+		gchar *tmp;
+			
+		if (t->type == EKG_SOURCE_TIMER)
+			return;
+
+		if (t->plugin)
+			plugin = t->plugin->name;
+		else
+			plugin = "-";
+
+		tmp = timer_next_call(t);
+
+		/* XXX: pointer truncated */
+		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8u %.8x %-20s", plugin, t->name, t->details.as_timer.persist, t->details.as_timer.interval, GPOINTER_TO_UINT(t->handler.as_timer), tmp);
+		printq("generic", buf);
+		g_free(tmp);
+	}
+
+	g_slist_foreach(sources, timer_debug_print, NULL);
+	return 0;
+}
+
+TIMER(timer_handle_at)
+{
+	if (type) {
+		xfree(data);
+		return 0;
+	}
+	
+	command_exec(NULL, NULL, (char *) data, 0);
+	return 0;
+}
+
+COMMAND(cmd_at)
+{
+	if (match_arg(params[0], 'a', ("add"), 2)) {
+		const char *p, *a_name = NULL;
+		char *a_command;
+		time_t period = 0, freq = 0;
+		struct ekg_source *t;
+
+		if (!params[1] || !params[2]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!strncmp(params[2], "*/", 2) || xisdigit(params[2][0])) {
+			a_name = params[1];
+
+			if (!xstrcmp(a_name, "(null)")) {
+				printq("invalid_params", name);
+				return -1;
+			}
+
+			if (g_slist_find_custom(sources, a_name, timer_match_name)) {
+				printq("at_exist", a_name);
+				return -1;
+			}
+
+			p = params[2];
+		} else
+			p = params[1];
+
+		{
+			struct tm *lt;
+			time_t now = time(NULL);
+			char *tmp, *freq_str = NULL, *foo = xstrdup(p);
+			int wrong = 0;
+
+			lt = localtime(&now);
+			lt->tm_isdst = -1;
+
+			/* częstotliwo¶ć */
+			if ((tmp = xstrchr(foo, '/'))) {
+				*tmp = 0;
+				freq_str = ++tmp;
+			}
+
+			/* wyci±gamy sekundy, je¶li s± i obcinamy */
+			if ((tmp = xstrchr(foo, '.')) && !(wrong = (xstrlen(tmp) != 3))) {
+				sscanf(tmp + 1, "%2d", &lt->tm_sec);
+				tmp[0] = 0;
+			} else
+				lt->tm_sec = 0;
+
+			/* pozb±dĽmy się dwukropka */
+			if ((tmp = xstrchr(foo, ':')) && !(wrong = (xstrlen(tmp) != 3))) {
+				tmp[0] = tmp[1];
+				tmp[1] = tmp[2];
+				tmp[2] = 0;
+			}
+
+			/* jedziemy ... */
+			if (!wrong) {
+				switch (xstrlen(foo)) {
+					int ret;
+
+					case 12:
+						ret = sscanf(foo, "%4d%2d%2d%2d%2d", &lt->tm_year, &lt->tm_mon, &lt->tm_mday, &lt->tm_hour, &lt->tm_min);
+						if (ret != 5)
+							wrong = 1;
+						lt->tm_year -= 1900;
+						lt->tm_mon -= 1;
+						break;
+					case 10:
+						ret = sscanf(foo, "%2d%2d%2d%2d%2d", &lt->tm_year, &lt->tm_mon, &lt->tm_mday, &lt->tm_hour, &lt->tm_min);
+						if (ret != 5)
+							wrong = 1;
+						lt->tm_year += 100;
+						lt->tm_mon -= 1;
+						break;
+					case 8:
+						ret = sscanf(foo, "%2d%2d%2d%2d", &lt->tm_mon, &lt->tm_mday, &lt->tm_hour, &lt->tm_min);
+						if (ret != 4)
+							wrong = 1;
+						lt->tm_mon -= 1;
+						break;
+					case 6:
+						ret = sscanf(foo, "%2d%2d%2d", &lt->tm_mday, &lt->tm_hour, &lt->tm_min);
+						if (ret != 3)
+							wrong = 1;
+						break;	
+					case 4:
+						ret = sscanf(foo, "%2d%2d", &lt->tm_hour, &lt->tm_min);
+						if (ret != 2)
+							wrong = 1;
+						break;
+					default:
+						wrong = 1;
+				}
+			}
+
+			/* nie ma błędów ? */
+			if (wrong || lt->tm_hour > 23 || lt->tm_min > 59 || lt->tm_sec > 59 || lt->tm_mday > 31 || !lt->tm_mday || lt->tm_mon > 11) {
+				printq("invalid_params", name);
+				xfree(foo);
+				return -1;
+			}
+
+			if (freq_str) {
+				for (;;) {
+					time_t _period = 0;
+
+					if (xisdigit(*freq_str))
+						_period = atoi(freq_str);
+					else {
+						printq("invalid_params", name);
+						xfree(foo);
+						return -1;
+					}
+
+					freq_str += xstrlen(ekg_itoa(_period));
+
+					if (xstrlen(freq_str)) {
+						switch (xtolower(*freq_str++)) {
+							case 'd':
+								_period *= 86400;
+								break;
+							case 'h':
+								_period *= 3600;
+								break;
+							case 'm':
+								_period *= 60;
+								break;
+							case 's':
+								break;
+							default:
+								printq("invalid_params", name);
+								xfree(foo);
+								return -1;
+						}
+					}
+
+					freq += _period;
+					
+					if (!*freq_str)
+						break;
+				}
+			}
+
+			xfree(foo);
+
+			/* plany na przeszło¶ć? */
+			if ((period = mktime(lt) - now) <= 0) {
+				if (freq) {
+					while (period <= 0)
+						period += freq;
+				} else {
+					printq("at_back_to_past");
+					return -1;
+				}
+			}
+		}
+
+		if (a_name)
+			a_command = xstrdup(params[3]);
+		else
+			a_command = g_strjoinv(" ", (char **) params + 2);
+
+		if (!xstrcmp(strip_spaces(a_command), "")) {
+			printq("not_enough_params", name);
+			xfree(a_command);
+			return -1;
+		}
+
+		if ((t = timer_add(NULL, a_name, period, ((freq) ? 1 : 0), timer_handle_at, xstrdup(a_command)))) {
+			printq("at_added", t->name);
+			if (freq) {
+				guint d = t->details.as_timer.interval;
+				t->details.as_timer.interval = freq * 1000;
+				d -= t->details.as_timer.interval;
+				t->details.as_timer.lasttime.tv_sec += (d / 1000); 
+				t->details.as_timer.lasttime.tv_usec += ((d % 1000) * 1000);
+			}
+			if (!in_autoexec)
+				config_changed = 1;
+		}
+
+		xfree(a_command);
+		return 0;
+	}
+
+	if (match_arg(params[0], 'd', ("del"), 2)) {
+		int del_all = 0;
+		int ret = 1;
+
+		if (!params[1]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!xstrcmp(params[1], "*")) {
+			del_all = 1;
+			ret = timer_remove_user(timer_handle_at);
+		} else
+			ret = timer_remove(NULL, params[1]);
+		
+		if (!ret) {
+			if (del_all)
+				printq("at_deleted_all");
+			else
+				printq("at_deleted", params[1]);
+			
+			config_changed = 1;
+		} else {
+			if (del_all)
+				printq("at_empty");
+			else {
+				printq("at_noexist", params[1]);
+				return -1;
+			}
+		}
+
+		return 0;
+	}
+
+	if (!params[0] || match_arg(params[0], 'l', ("list"), 2) || params[0][0] != '-') {
+		const char *a_name = NULL;
+		int count = 0;
+
+		if (params[0] && match_arg(params[0], 'l', ("list"), 2))
+			a_name = params[1];
+		else if (params[0])
+			a_name = params[0];
+
+		inline void timer_print(gpointer data, gpointer user_data) {
+			struct ekg_source *t = data;
+			GTimeVal ends, tv;
+			struct tm *at_time;
+			char tmp[100], tmp2[150];
+			time_t sec, minutes = 0, hours = 0, days = 0;
+
+			if (t->type != EKG_SOURCE_TIMER)
+				return;
+			if (t->handler.as_timer != timer_handle_at)
+				return;
+			if (a_name && xstrcasecmp(t->name, a_name))
+				return;
+
+			count++;
+
+			g_source_get_current_time(t->source, &tv);
+
+			ends.tv_sec = t->details.as_timer.lasttime.tv_sec + (t->details.as_timer.interval / 1000);
+			ends.tv_usec = t->details.as_timer.lasttime.tv_usec + ((t->details.as_timer.interval % 1000) * 1000);
+			at_time = localtime((time_t *) &ends);
+			if (!strftime(tmp, sizeof(tmp), format_find("at_timestamp"), at_time) && format_exists("at_timestamp"))
+				xstrcpy(tmp, "TOOLONG");
+
+			if (t->details.as_timer.persist) {
+				sec = t->details.as_timer.interval / 1000;
+
+				if (sec > 86400) {
+					days = sec / 86400;
+					sec -= days * 86400;
+				}
+
+				if (sec > 3600) {
+					hours = sec / 3600;
+					sec -= hours * 3600;
+				}
+			
+				if (sec > 60) {
+					minutes = sec / 60;
+					sec -= minutes * 60;
+				}
+
+				g_strlcpy(tmp2, "every ", sizeof(tmp2));
+
+				if (days) {
+					g_strlcat(tmp2, ekg_itoa(days), sizeof(tmp2));
+					g_strlcat(tmp2, "d ", sizeof(tmp2));
+				}
+
+				if (hours) {
+					g_strlcat(tmp2, ekg_itoa(hours), sizeof(tmp2));
+					g_strlcat(tmp2, "h ", sizeof(tmp2));
+				}
+
+				if (minutes) {
+					g_strlcat(tmp2, ekg_itoa(minutes), sizeof(tmp2));
+					g_strlcat(tmp2, "m ", sizeof(tmp2));
+				}
+
+				if (sec) {
+					g_strlcat(tmp2, ekg_itoa(sec), sizeof(tmp2));
+					g_strlcat(tmp2, "s", sizeof(tmp2));
+				}
+			}
+
+			printq("at_list", t->name, tmp, (char*)(t->priv_data), "", ((t->details.as_timer.persist) ? tmp2 : ""));
+		}
+		g_slist_foreach(sources, timer_print, NULL);
+
+		if (!count) {
+			if (a_name) {
+				printq("at_noexist", a_name);
+				return -1;
+			} else
+				printq("at_empty");
+		}
+
+		return 0;
+	}
+
+	printq("invalid_params", name);
+
+	return -1;
+}
+
+TIMER(timer_handle_command)
+{
+	if (type) {
+		xfree(data);
+		return 0;
+	}
+	
+	command_exec(NULL, NULL, (char *) data, 0);
+	return 0;
+}
+
+COMMAND(cmd_timer)
+{
+	if (match_arg(params[0], 'a', ("add"), 2)) {
+		const char *t_name = NULL, *p;
+		char *t_command;
+		time_t period = 0;
+		struct ekg_source *t;
+		int persistent = 0;
+
+		if (!params[1] || !params[2]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (xisdigit(params[2][0]) || !strncmp(params[2], "*/", 2)) {
+			t_name = params[1];
+
+			if (!xstrcmp(t_name, "(null)")) {
+				printq("invalid_params", name);
+				return -1;
+			}
+
+			if (g_slist_find_custom(sources, t_name, timer_match_name)) {
+				printq("timer_exist", t_name);
+				return -1;
+			}
+
+			p = params[2];
+			t_command = xstrdup(params[3]);
+		} else {
+			p = params[1];
+			t_command = g_strjoinv(" ", (char **) params + 2);
+		}
+
+		if ((persistent = !strncmp(p, "*/", 2)))
+			p += 2;
+
+		for (;;) {
+			time_t _period = 0;
+
+			if (xisdigit(*p))
+				_period = atoi(p);
+			else {
+				printq("invalid_params", name);
+				xfree(t_command);
+				return -1;
+			}
+
+			p += xstrlen(ekg_itoa(_period));
+
+			if (xstrlen(p)) {
+				switch (xtolower(*p++)) {
+					case 'd':
+						_period *= 86400;
+						break;
+					case 'h':
+						_period *= 3600;
+						break;
+					case 'm':
+						_period *= 60;
+						break;
+					case 's':
+						break;
+					default:
+						printq("invalid_params", name);
+						xfree(t_command);
+						return -1;
+				}
+			}
+
+			period += _period;
+			
+			if (!*p)
+				break;
+		}
+
+		if (!xstrcmp(strip_spaces(t_command), "")) {
+			printq("not_enough_params", name);
+			xfree(t_command);
+			return -1;
+		}
+
+		if ((t = timer_add(NULL, t_name, period, persistent, timer_handle_command, xstrdup(t_command)))) {
+			printq("timer_added", t->name);
+			if (!in_autoexec)
+				config_changed = 1;
+		}
+
+		xfree(t_command);
+		return 0;
+	}
+
+	if (match_arg(params[0], 'd', ("del"), 2)) {
+		int del_all = 0, ret;
+
+		if (!params[1]) {
+			printq("not_enough_params", name);
+			return -1;
+		}
+
+		if (!xstrcmp(params[1], "*")) {
+			del_all = 1;
+			ret = timer_remove_user(timer_handle_command);
+		} else
+			ret = timer_remove(NULL, params[1]);
+		
+		if (!ret) {
+			if (del_all)
+				printq("timer_deleted_all");
+			else
+				printq("timer_deleted", params[1]);
+
+			config_changed = 1;
+		} else {
+			if (del_all)
+				printq("timer_empty");
+			else {
+				printq("timer_noexist", params[1]);
+				return -1;	
+			}
+		}
+
+		return 0;
+	}
+
+	if (!params[0] || match_arg(params[0], 'l', ("list"), 2) || params[0][0] != '-') {
+		const char *t_name = NULL;
+		int count = 0;
+
+		if (params[0] && match_arg(params[0], 'l', ("list"), 2))
+			t_name = params[1];
+		else if (params[0])
+			t_name = params[0];
+
+		inline void timer_print_list(gpointer data, gpointer user_data) {
+			struct ekg_source *t = data;
+			char *tmp;
+
+			if (t->type != EKG_SOURCE_TIMER)
+				return;
+			if (t->handler.as_timer != timer_handle_command)
+				return;
+			if (t_name && xstrcasecmp(t->name, t_name))
+				return;
+
+			count++;
+
+			tmp = timer_next_call(t);
+			printq("timer_list", t->name, tmp, (char*)(t->priv_data), "", (t->details.as_timer.persist) ? "*" : "");
+			g_free(tmp);
+		}
+		g_slist_foreach(sources, timer_print_list, NULL);
+
+		if (!count) {
+			if (t_name) {
+				printq("timer_noexist", t_name);
+				return -1;
+			} else
+				printq("timer_empty");
+		}
+
+		return 0;
+	}	
+
+	printq("invalid_params", name);
+
+	return -1;
 }

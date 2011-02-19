@@ -167,12 +167,14 @@ void ekg2_bless_session(HV *hv, session_t *session)
 	(void) hv_store(hv, "alias",	  5, new_pv(session->alias), 0);
 }
 
-void ekg2_bless_timer(HV *hv, struct timer *timer)
+void ekg2_bless_timer(HV *hv, ekg_timer_t timer)
 {
-	debug_bless("blessing timer %s\n", timer->name);
+	debug_bless("blessing timer 0x%08x", GPOINTER_TO_UINT(timer));
+#if 0 /* XXX? */
 	(void) hv_store(hv, "name", 4, new_pv(timer->name), 0);
 	(void) hv_store(hv, "freq",  4, newSViv(timer->period / 1000), 0);
 	(void) hv_store(hv, "freq_ms",  4, newSViv(timer->period), 0);
+#endif
 }
 
 void ekg2_bless_plugin(HV *hv, plugin_t *plugin)
