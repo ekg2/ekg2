@@ -73,6 +73,10 @@
 #include "scripts.h"
 #include "net.h"
 
+/* sources.c */
+gint ekg_children_print(gint quiet);
+/* -- */
+
 char *send_nicks[SEND_NICKS_MAX] = { NULL };
 int send_nicks_count = 0, send_nicks_index = 0;
 static int quit_command = 0;
@@ -701,19 +705,8 @@ COMMAND(cmd_exec)
 		fcntl(errfd, F_SETFL, O_NONBLOCK);
 
 		ekg_child_add(NULL, pid, "%s", cmd_exec_child_handler, g_strdup(command), g_free, command);
-	} else {
-		inline void child_print(gpointer data, gpointer user_data) {
-			child_t *c = data;
-			printq("process", ekg_itoa(c->pid), c->name ? c->name : "?");
-		}
-
-		g_slist_foreach(children, child_print, NULL);
-
-		if (!children) {
-			printq("no_processes");
-			return -1;
-		}
-	}
+	} else
+		ekg_children_print(quiet);
 
 	return 0;
 }

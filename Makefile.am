@@ -51,6 +51,8 @@ ekg_ekg2_SOURCES = \
 	ekg/scripts.h \
 	ekg/sessions.c \
 	ekg/sessions.h \
+	ekg/sources.c \
+	ekg/sources.h \
 	ekg/srv.c \
 	ekg/srv.h \
 	ekg/strings.c \

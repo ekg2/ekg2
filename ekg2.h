@@ -24,4 +24,5 @@
 #include "ekg/msgqueue.h"
 #include "ekg/queries.h"
 #include "ekg/recode.h"
+#include "ekg/sources.h"
 #include "ekg/vars.h"

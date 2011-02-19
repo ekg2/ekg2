@@ -56,20 +56,6 @@ extern "C" {
 
 /* obs³uga procesów potomnych */
 
-typedef struct {
-	pid_t		pid;		/* id procesu */
-	char		*plugin;	/* obs³uguj±cy plugin */
-	char		*name;		/* nazwa, wy¶wietlana przy /exec */
-	GChildWatchFunc	handler;	/* zak³ad pogrzebowy */
-	void		*priv_data;	/* dane procesu */
-
-	guint		id;		/* glib child_watch id */
-	GDestroyNotify	destr;
-} child_t;
-
-child_t *ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) G_GNUC_PRINTF(3, 7) G_GNUC_MALLOC;
-void children_destroy(void);
-
 #ifndef EKG2_WIN32_NOFUNCTION
 typedef struct alias {
 	struct alias	*next;
@@ -145,7 +131,6 @@ struct color_map {
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern GSList *children;
 extern alias_t *aliases;
 extern list_t autofinds; /* char* data */
 extern GSList *timers;
