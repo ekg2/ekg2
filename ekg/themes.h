@@ -31,9 +31,12 @@
 extern "C" {
 #endif
 
+/* XXX: make this guint16 after migrating code */
+typedef short int fstr_attr_t;
+
 typedef struct {
-	char *str;				/* possibly multibyte string */
-	short		*attr;			/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
+	gchar		*str;			/* possibly multibyte string */
+	fstr_attr_t	*attr;			/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
 	time_t		ts;			/* timestamp */
 
 	int		prompt_len;		/* d³ugo¶æ promptu, który bêdzie powtarzany przy
@@ -70,6 +73,9 @@ void theme_free();
 fstring_t *fstring_new(const char *str);
 fstring_t *fstring_new_format(const char *format, ...);
 void fstring_free(fstring_t *str);
+
+void fstring_iter(fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len);
+fstr_attr_t fstring_next(gchar **text, fstr_attr_t **attr, gssize *len);
 
 #endif
 

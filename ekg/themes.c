@@ -194,7 +194,79 @@ static const char *format_ansi(char ch) {
 	return ("");
 }
 
+/**
+ * fstring_iter()
+ *
+ * Initiate iteration over fstring_t. Set pointers to the initial
+ * values.
+ *
+ * @param s - the iterated fstring_t.
+ * @param text - location to store the current text segment pointer.
+ * @param attr - location to store the current attr segment pointer.
+ * @param len - location to store the length of the current segment.
+ *
+ * @note This function just initializes the vars, use fstring_next()
+ * to get the first segment.
+ */
+void fstring_iter(fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len) {
+	*text = s->str;
+	*attr = s->attr;
+	*len = 0;
+}
+
+/**
+ * fstring_next()
+ *
+ * Iterate over fragments of fstring_t with unchanged attributes.
+ *
+ * @param text - location to store the current text segment pointer.
+ * @param attr - location to store the current attr segment pointer.
+ * @param len - location to store the length of the current segment.
+ *
+ * @return Changed attribute map (attr ^ prevattr).
+ *
+ * @note This function relies on the values stored by previous calls,
+ * please do not modify them. The variables need to be initialized
+ * by @ref fstring_iter().
+ *
+ * @code
+ *
+ *	gchar *s;
+ *	fstr_attr_t *a;
+ *	gssize len;
+ *	fstr_attr_t change;
+ *
+ *	fstring_iter(fstr, &s, &a, &len);
+ *	while ((change = fstring_next(&s, &a, &len))) {
+ *		my_setattr(*a);
+ *		my_printn(s, len);
+ *	}
+ *
+ * @endcode
+ */
+fstr_attr_t fstring_next(gchar **text, fstr_attr_t **attr, gssize *len) {
+	const gchar* c;
+	const fstr_attr_t* a;
+	const fstr_attr_t prevattr = *len ? **attr : FSTR_NORMAL;
+	fstr_attr_t curattr;
+
+	*text += *len;
+	*attr += *len;
+	curattr = **attr;
+
+	for (c = *text, a = *attr;; c++, a++) {
+		if (G_UNLIKELY(!*c || *a != curattr)) {
+			*len = (c - *text);
+			/* yep, returning the _previous_ change here */
+			return ((G_LIKELY(*len) ? curattr : FSTR_NORMAL) ^ prevattr);
+		}
+	}
+
+	g_assert_not_reached();
+}
+
 static char *fstring2str(fstring_t *f) {
+	g_assert(1);
 	static char *fore = "krgybmcwKRGYBMCW";
 	static char *back = "lshzeqdx";
 	int i;
