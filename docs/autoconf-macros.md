@@ -259,4 +259,39 @@ In any case, `ENABLE_<name>` automake conditional is declared.
 It evaluates to either true or false depending on whether the particular
 plugin is enabled (and obligatory dependency tests succeeded).
 
+Example:
+
+	dnl Declare gg plugin
+	dnl libgadu is an obligatory dep, thus EKG2_FAILED_TEST is used
+	dnl additional functions are checked only if libgadu is found
+
+	AC_EKG2_PLUGIN([gg], [
+		AC_EKG2_WITH([libgadu], [
+			AC_EKG2_CHECK_PKGCONFIG_LIB([libgadu], [gadu], [gg_logoff],
+					[libgadu.h],, [EKG2_FAILED_TEST])
+		])
+	], [
+		AC_CHECK_FUNCS([gg_remind_passwd3 gg_change_passwd4 mkstemp])
+	])
+
+Respective `Makefile.am` fragment:
+
+	# ENABLE_GG is always declared by AC_EKG2_PLUGIN
+
+	if ENABLE_GG
+	# append to LTLIBRARIES explicitly
+	plugin_LTLIBRARIES += plugins/gg/gg.la
+
+	# declare plugin sources
+	plugins_gg_gg_la_SOURCES = \
+		ekg2-config.h \
+		plugins/gg/commands.c \
+		...
+
+	# install plugin data (into ggdir)
+	dist_gg_DATA = \
+		plugins/gg/commands-en.txt \
+		...
+	endif
+
 <!-- vim:set syn=markdown : -->
