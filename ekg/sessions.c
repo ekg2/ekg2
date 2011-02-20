@@ -1533,16 +1533,7 @@ void sessions_free() {
 /* mg: I modified it so it'll first emit all the events, and then start to free everything
  * That shouldn't be a problem, should it? */
 	for (s = sessions; s; s = s->next) {
-#ifdef TIMER_FIXME /* XXX! */
-		for (tl = timers; tl; ) {
-			struct timer *t = tl->data;
-
-			tl = tl->next;
-			if (t->data == s)
-				g_source_remove(t->id);
-		}
-#endif
-
+		ekg_source_remove_by_data(s, NULL);
 		query_emit(s->plugin, "session-removed", &(s->uid));	/* it notify only that plugin here, to free internal data. 
 									 * ui-plugin already removed.. other plugins @ quit.
 									 * shouldn't be aware about it. too...
