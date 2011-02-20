@@ -563,6 +563,9 @@ int metacontact_read()
 		char *tmp;
 		char **array = NULL;
 
+		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
+			continue;
+
 		if (line[0] == '[') {
 			tmp = xstrchr(line, ']');
 

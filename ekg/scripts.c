@@ -425,8 +425,12 @@ int script_variables_read() {
 		return -1;
 	}
 	
-	while ((line = read_file(f, 0)))
+	while ((line = read_file(f, 0))) {
+		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
+			continue;
+
 		script_var_add(NULL, NULL, line, NULL, NULL);
+	}
 
 	fclose(f);
 	return 0;

@@ -849,6 +849,9 @@ int session_read(const char *filename) {
 	while ((line = read_file(f, 0))) {
 		char *tmp;
 
+		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
+			continue;
+
 		if (line[0] == '[') {
 			tmp = xstrchr(line, ']');
 
