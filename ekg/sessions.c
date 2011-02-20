@@ -282,19 +282,7 @@ int session_remove(const char *uid)
 
 	}
 
-#ifdef TIMERS_FIXME  /* XXX! */
-	{
-		GSList *tl;
-
-		for (tl = timers; tl; ) {
-			struct timer *t = tl->data;
-
-			tl = tl->next;
-			if (t->data == s)
-				g_source_remove(t->id);
-		}
-	}
-#endif
+	ekg_source_remove_by_data(s, NULL);
 
 	tmp = xstrdup(uid);
 	query_emit(NULL, "session-changed");
@@ -1525,7 +1513,6 @@ COMMAND(session_command)
 void sessions_free() {
 	session_t *s;
 
-	GSList *tl;
 	window_t *wl;
 	list_t l;
 

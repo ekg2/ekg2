@@ -442,11 +442,10 @@ int plugin_unregister(plugin_t *p)
 
 	session_t *s;
 	query_t **kk;
-	GSList *tl, *vl, *cl;
+	GSList *vl, *cl;
 	list_t l;
 
-	if (!p)
-		return -1;
+	g_assert(p);
 
 /* XXX think about sequence of unloading....: currently: watches, timers, sessions, queries, variables, commands */
 
@@ -457,15 +456,7 @@ int plugin_unregister(plugin_t *p)
 			watch_free(w);
 	}
 
-#ifdef TIMERS_FIXME /* XXX! */
-	for (tl = timers; tl; ) {
-		struct timer *t = tl->data;
-
-		tl = tl->next;
-		if (t->plugin == p)
-			g_source_remove(t->id);
-	}
-#endif
+	ekg_source_remove_by_plugin(p, NULL);
 
 	for (s = sessions; s; ) {
 		session_t *next = s->next;

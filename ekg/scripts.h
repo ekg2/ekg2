@@ -39,7 +39,7 @@ extern script_t		*scripts;
 
 typedef struct {
 	script_t	*scr;
-	struct timer	*self;
+	ekg_timer_t	self;
 	int		removed;
 	void		*priv_data;
 } script_timer_t; 
