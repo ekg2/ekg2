@@ -266,50 +266,49 @@ fstr_attr_t fstring_next(gchar **text, fstr_attr_t **attr, gssize *len) {
 }
 
 static char *fstring2str(fstring_t *f) {
-	g_assert(1);
 	static char *fore = "krgybmcwKRGYBMCW";
 	static char *back = "lshzeqdx";
-	int i;
-	short prevattr = FSTR_NORMAL;
-	string_t st = string_init(NULL);
+	GString *st = g_string_sized_new(strlen(f->str));
 
-	for (i=0; i < strlen(f->str); i++) {
-		short attr = f->attr[i];
+	gchar *c;
+	fstr_attr_t *a, change;
+	gssize len;
 
-		if (attr != prevattr) {
-			short change = attr ^ prevattr;
-			prevattr = attr;
-			if (change & FSTR_BLINK) {
-				if (attr & FSTR_BLINK)
-					string_append(st, format_ansi('i'));	/* turn on blinking */
-				else
-					change |= FSTR_NORMAL;
-			}
-			if (change & FSTR_UNDERLINE) {
-				if (attr & FSTR_UNDERLINE)
-					string_append(st, format_ansi('U'));	/* turn on underline */
-				else
-					change |= FSTR_NORMAL;
-			}
-			if (change & FSTR_REVERSE) {
-				if (attr & FSTR_BLINK)
-					string_append(st, format_ansi('V'));	/* turn on reverse */
-				else
-					change |= FSTR_NORMAL;
-			}
-			if ((change & FSTR_NORMAL) && (attr & FSTR_NORMAL)) {
-				string_append(st, format_ansi('n'));
-			}
-			if (change & (FSTR_BOLD|FSTR_FOREMASK)) {
-				char c = fore[(attr & FSTR_FOREMASK) + ((attr & FSTR_BOLD) ? 8 : 0)];
-				string_append(st, format_ansi(c));
-			}
-			if (change & FSTR_BACKMASK)
-				string_append(st, format_ansi(back[(attr & FSTR_BACKMASK)>>3]));
-                }
-		string_append_c(st, f->str[i]);
+	fstring_iter(f, &c, &a, &len);
+	while (( change = fstring_next(&c, &a, &len) )) {
+		fstr_attr_t attr = *a;
+
+		if (change & FSTR_BLINK) {
+			if (attr & FSTR_BLINK)
+				g_string_append(st, format_ansi('i'));	/* turn on blinking */
+			else
+				change |= FSTR_NORMAL;
+		}
+		if (change & FSTR_UNDERLINE) {
+			if (attr & FSTR_UNDERLINE)
+				g_string_append(st, format_ansi('U'));	/* turn on underline */
+			else
+				change |= FSTR_NORMAL;
+		}
+		if (change & FSTR_REVERSE) {
+			if (attr & FSTR_BLINK)
+				g_string_append(st, format_ansi('V'));	/* turn on reverse */
+			else
+				change |= FSTR_NORMAL;
+		}
+		if ((change & FSTR_NORMAL) && (attr & FSTR_NORMAL)) {
+			g_string_append(st, format_ansi('n'));
+		}
+		if (change & (FSTR_BOLD|FSTR_FOREMASK)) {
+			char c = fore[(attr & FSTR_FOREMASK) + ((attr & FSTR_BOLD) ? 8 : 0)];
+			g_string_append(st, format_ansi(c));
+		}
+		if (change & FSTR_BACKMASK)
+			g_string_append(st, format_ansi(back[(attr & FSTR_BACKMASK)>>3]));
+
+		g_string_append_len(st, c, len);
 	}
-	return string_free(st, 0);
+	return g_string_free(st, FALSE);
 }
 
 
