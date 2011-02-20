@@ -74,8 +74,8 @@ fstring_t *fstring_new(const char *str);
 fstring_t *fstring_new_format(const char *format, ...);
 void fstring_free(fstring_t *str);
 
-void fstring_iter(fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len);
-fstr_attr_t fstring_next(gchar **text, fstr_attr_t **attr, gssize *len);
+void fstring_iter(const fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len);
+gboolean fstring_next(gchar **text, fstr_attr_t **attr, gssize *len, fstr_attr_t *change);
 
 #endif
 

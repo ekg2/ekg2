@@ -208,7 +208,7 @@ static const char *format_ansi(char ch) {
  * @note This function just initializes the vars, use fstring_next()
  * to get the first segment.
  */
-void fstring_iter(fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len) {
+void fstring_iter(const fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len) {
 	*text = s->str;
 	*attr = s->attr;
 	*len = 0;
@@ -222,8 +222,9 @@ void fstring_iter(fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len) {
  * @param text - location to store the current text segment pointer.
  * @param attr - location to store the current attr segment pointer.
  * @param len - location to store the length of the current segment.
+ * @param change - location to store changed attribute map or NULL.
  *
- * @return Changed attribute map (attr ^ prevattr).
+ * @return TRUE if next segment was found, FALSE on end of string.
  *
  * @note This function relies on the values stored by previous calls,
  * please do not modify them. The variables need to be initialized
@@ -237,14 +238,14 @@ void fstring_iter(fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len) {
  *	fstr_attr_t change;
  *
  *	fstring_iter(fstr, &s, &a, &len);
- *	while ((change = fstring_next(&s, &a, &len))) {
+ *	while (fstring_next(&s, &a, &len, NULL)) {
  *		my_setattr(*a);
  *		my_printn(s, len);
  *	}
  *
  * @endcode
  */
-fstr_attr_t fstring_next(gchar **text, fstr_attr_t **attr, gssize *len) {
+gboolean fstring_next(gchar **text, fstr_attr_t **attr, gssize *len, fstr_attr_t *change) {
 	const gchar* c;
 	const fstr_attr_t* a;
 	const fstr_attr_t prevattr = *len ? **attr : FSTR_NORMAL;
@@ -258,7 +259,9 @@ fstr_attr_t fstring_next(gchar **text, fstr_attr_t **attr, gssize *len) {
 		if (G_UNLIKELY(!*c || *a != curattr)) {
 			*len = (c - *text);
 			/* yep, returning the _previous_ change here */
-			return ((G_LIKELY(*len) ? curattr : FSTR_NORMAL) ^ prevattr);
+			if (change)
+				*change = ((G_LIKELY(*len) ? curattr : FSTR_NORMAL) ^ prevattr);
+			return !!*len;
 		}
 	}
 
@@ -275,36 +278,38 @@ static char *fstring2str(fstring_t *f) {
 	gssize len;
 
 	fstring_iter(f, &c, &a, &len);
-	while (( change = fstring_next(&c, &a, &len) )) {
-		fstr_attr_t attr = *a;
+	while (fstring_next(&c, &a, &len, &change)) {
+		if (change) {
+			fstr_attr_t attr = *a;
 
-		if (change & FSTR_BLINK) {
-			if (attr & FSTR_BLINK)
-				g_string_append(st, format_ansi('i'));	/* turn on blinking */
-			else
-				change |= FSTR_NORMAL;
+			if (change & FSTR_BLINK) {
+				if (attr & FSTR_BLINK)
+					g_string_append(st, format_ansi('i'));	/* turn on blinking */
+				else
+					change |= FSTR_NORMAL;
+			}
+			if (change & FSTR_UNDERLINE) {
+				if (attr & FSTR_UNDERLINE)
+					g_string_append(st, format_ansi('U'));	/* turn on underline */
+				else
+					change |= FSTR_NORMAL;
+			}
+			if (change & FSTR_REVERSE) {
+				if (attr & FSTR_BLINK)
+					g_string_append(st, format_ansi('V'));	/* turn on reverse */
+				else
+					change |= FSTR_NORMAL;
+			}
+			if ((change & FSTR_NORMAL) && (attr & FSTR_NORMAL)) {
+				g_string_append(st, format_ansi('n'));
+			}
+			if (change & (FSTR_BOLD|FSTR_FOREMASK)) {
+				char c = fore[(attr & FSTR_FOREMASK) + ((attr & FSTR_BOLD) ? 8 : 0)];
+				g_string_append(st, format_ansi(c));
+			}
+			if (change & FSTR_BACKMASK)
+				g_string_append(st, format_ansi(back[(attr & FSTR_BACKMASK)>>3]));
 		}
-		if (change & FSTR_UNDERLINE) {
-			if (attr & FSTR_UNDERLINE)
-				g_string_append(st, format_ansi('U'));	/* turn on underline */
-			else
-				change |= FSTR_NORMAL;
-		}
-		if (change & FSTR_REVERSE) {
-			if (attr & FSTR_BLINK)
-				g_string_append(st, format_ansi('V'));	/* turn on reverse */
-			else
-				change |= FSTR_NORMAL;
-		}
-		if ((change & FSTR_NORMAL) && (attr & FSTR_NORMAL)) {
-			g_string_append(st, format_ansi('n'));
-		}
-		if (change & (FSTR_BOLD|FSTR_FOREMASK)) {
-			char c = fore[(attr & FSTR_FOREMASK) + ((attr & FSTR_BOLD) ? 8 : 0)];
-			g_string_append(st, format_ansi(c));
-		}
-		if (change & FSTR_BACKMASK)
-			g_string_append(st, format_ansi(back[(attr & FSTR_BACKMASK)>>3]));
 
 		g_string_append_len(st, c, len);
 	}
