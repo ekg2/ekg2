@@ -46,7 +46,8 @@ struct ekg_source {
 
 	union {
 		struct {
-			pid_t pid;
+			GPid pid;
+			gboolean terminated;
 		} as_child;
 
 		struct {
@@ -80,17 +81,6 @@ static void source_set_id(struct ekg_source *s, guint id) {
 static void source_free(struct ekg_source *s) {
 	g_free(s->name);
 	g_slice_free(struct ekg_source, s);
-}
-
-static void child_destroy_notify(gpointer data) {
-	struct ekg_source *c = data;
-	children = g_slist_remove(children, data);
-	g_spawn_close_pid(c->details.as_child.pid);
-
-	if (G_UNLIKELY(c->destr))
-		c->destr(c->priv_data);
-
-	source_free(c);
 }
 
 /**
@@ -205,16 +195,6 @@ gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name) {
 void sources_destroy(void) {
 	inline void source_remove(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
-
-#if 0 /* XXX */
-		if (s->type == EKG_SOURCE_CHILD)
-#ifndef NO_POSIX_SYSTEM
-			kill(s->details.as_child.pid, SIGTERM);
-#else
-			/* TerminateProcess / TerminateThread */;
-#endif
-#endif
-
 		ekg_source_remove(s);
 	}
 
@@ -226,10 +206,31 @@ void sources_destroy(void) {
  * Child watches
  */
 
+static void child_destroy_notify(gpointer data) {
+	struct ekg_source *c = data;
+	children = g_slist_remove(children, data);
+
+	if (!c->details.as_child.terminated)
+#ifndef NO_POSIX_SYSTEM
+		kill(c->details.as_child.pid, SIGTERM);
+#else
+		/* TerminateProcess / TerminateThread */;
+#endif
+
+	g_spawn_close_pid(c->details.as_child.pid);
+
+	if (G_UNLIKELY(c->destr))
+		c->destr(c->priv_data);
+
+	source_free(c);
+}
+
 static void child_wrapper(GPid pid, gint status, gpointer data) {
 	struct ekg_source *c = data;
 
 	g_assert(pid == c->details.as_child.pid);
+	g_assert(!c->details.as_child.terminated); /* avoid calling twice */
+	c->details.as_child.terminated = TRUE;
 	if (G_LIKELY(c->handler.as_child))
 		c->handler.as_child(pid, WEXITSTATUS(status), c->priv_data);
 }
@@ -264,6 +265,7 @@ ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, 
 
 	c->handler.as_child = handler;
 	c->details.as_child.pid = pid;
+	c->details.as_child.terminated = FALSE;
 	children = g_slist_prepend(children, c);
 	source_set_id(c, g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, child_destroy_notify));
 
