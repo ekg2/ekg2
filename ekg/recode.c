@@ -250,7 +250,7 @@ fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
 	fstring_t *out = g_memdup(fstr, sizeof(fstring_t)); /* XXX: move to slice alloc */
 
 	fstring_iter(fstr, &s, &a, &len);
-	while (fstring_next(&s, &a, &len)) {
+	while (fstring_next(&s, &a, &len, NULL)) {
 		char *ls;
 		gsize ob;
 
