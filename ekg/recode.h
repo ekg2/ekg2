@@ -24,14 +24,17 @@ int ekg_converters_display(int quiet);
 void ekg_recode_inc_ref(const gchar *enc);
 void ekg_recode_dec_ref(const gchar *enc);
 
-char *ekg_recode_from_core(const gchar *enc, char *buf);
-char *ekg_recode_to_core(const gchar *enc, char *buf);
+char *ekg_recode_from_core(const gchar *enc, gchar *buf);
+gchar *ekg_recode_to_core(const gchar *enc, char *buf);
 
-char *ekg_recode_from_core_dup(const gchar *enc, const char *buf);
-char *ekg_recode_to_core_dup(const gchar *enc, const char *buf);
+char *ekg_recode_from_core_dup(const gchar *enc, const gchar *buf);
+gchar *ekg_recode_to_core_dup(const gchar *enc, const char *buf);
 
-const char *ekg_recode_from_core_use(const gchar *enc, const char *buf);
-const char *ekg_recode_to_core_use(const gchar *enc, const char *buf);
+const char *ekg_recode_from_core_use(const gchar *enc, const gchar *buf);
+const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf);
+
+gchar *ekg_recode_from_locale(const char *str);
+char *ekg_recode_to_locale(const gchar *str);
 
 #define recode_xfree(org, ret) xfree((char *) ret);
 
