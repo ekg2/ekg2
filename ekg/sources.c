@@ -26,12 +26,8 @@
  * Common API
  */
 
-static GSList *sources = NULL;
-
-enum ekg_source_type {
-	EKG_SOURCE_CHILD,
-	EKG_SOURCE_TIMER
-};
+static GSList *children = NULL;
+static GSList *timers = NULL;
 
 struct ekg_source {
 	guint id;
@@ -48,7 +44,6 @@ struct ekg_source {
 	gpointer priv_data;
 	GDestroyNotify destr;
 
-	enum ekg_source_type type;
 	union {
 		struct {
 			pid_t pid;
@@ -62,17 +57,15 @@ struct ekg_source {
 	} details;
 };
 
-static ekg_source_t source_new(enum ekg_source_type type, plugin_t *plugin, const gchar *name_format, va_list args, gpointer data, GDestroyNotify destr) {
+static ekg_source_t source_new(plugin_t *plugin, const gchar *name_format, va_list args, gpointer data, GDestroyNotify destr) {
 	struct ekg_source *s = g_slice_new(struct ekg_source);
 
-	s->type = type;
 	s->plugin = plugin;
 	/* XXX: temporary */
 	s->name = args ? g_strdup_vprintf(name_format, args) : g_strdup(name_format);
 	s->priv_data = data;
 	s->destr = destr;
 	
-	sources = g_slist_prepend(sources, s);
 	return s;
 }
 
@@ -84,29 +77,20 @@ static void source_set_id(struct ekg_source *s, guint id) {
 	g_assert(s->source);
 }
 
-static void source_free(gpointer data) {
-	struct ekg_source *s = data;
-
-	switch (s->type) {
-		case EKG_SOURCE_CHILD:
-			g_spawn_close_pid(s->details.as_child.pid);
-			break;
-		case EKG_SOURCE_TIMER:
-			break;
-	}
-
+static void source_free(struct ekg_source *s) {
 	g_free(s->name);
 	g_slice_free(struct ekg_source, s);
 }
 
-static void source_destroy_notify(gpointer data) {
-	struct ekg_source *s = data;
-	sources = g_slist_remove(sources, data);
+static void child_destroy_notify(gpointer data) {
+	struct ekg_source *c = data;
+	children = g_slist_remove(children, data);
+	g_spawn_close_pid(c->details.as_child.pid);
 
-	if (G_UNLIKELY(s->destr))
-		s->destr(s->priv_data);
+	if (G_UNLIKELY(c->destr))
+		c->destr(c->priv_data);
 
-	source_free(data);
+	source_free(c);
 }
 
 /**
@@ -149,7 +133,8 @@ gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
 		}
 	}
 
-	g_slist_foreach(sources, source_remove_by_h, NULL);
+	g_slist_foreach(children, source_remove_by_h, NULL);
+	g_slist_foreach(timers, source_remove_by_h, NULL);
 	return ret;
 }
 
@@ -182,7 +167,8 @@ gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name) {
 		}
 	}
 
-	g_slist_foreach(sources, source_remove_by_d, NULL);
+	g_slist_foreach(children, source_remove_by_d, NULL);
+	g_slist_foreach(timers, source_remove_by_d, NULL);
 	return ret;
 }
 
@@ -211,7 +197,8 @@ gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name) {
 		}
 	}
 
-	g_slist_foreach(sources, source_remove_by_p, NULL);
+	g_slist_foreach(children, source_remove_by_p, NULL);
+	g_slist_foreach(timers, source_remove_by_p, NULL);
 	return ret;
 }
 
@@ -219,17 +206,20 @@ void sources_destroy(void) {
 	inline void source_remove(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
 
+#if 0 /* XXX */
 		if (s->type == EKG_SOURCE_CHILD)
 #ifndef NO_POSIX_SYSTEM
 			kill(s->details.as_child.pid, SIGTERM);
 #else
 			/* TerminateProcess / TerminateThread */;
 #endif
+#endif
 
 		ekg_source_remove(s);
 	}
 
-	g_slist_foreach(sources, source_remove, NULL);
+	g_slist_foreach(children, source_remove, NULL);
+	g_slist_foreach(timers, source_remove, NULL);
 }
 
 /*
@@ -269,12 +259,13 @@ ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, 
 	struct ekg_source *c;
 	
 	va_start(args, destr);
-	c = source_new(EKG_SOURCE_CHILD, plugin, name_format, args, data, destr);
+	c = source_new(plugin, name_format, args, data, destr);
 	va_end(args);
 
 	c->handler.as_child = handler;
 	c->details.as_child.pid = pid;
-	source_set_id(c, g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, source_destroy_notify));
+	children = g_slist_prepend(children, c);
+	source_set_id(c, g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, child_destroy_notify));
 
 	return c;
 }
@@ -288,7 +279,8 @@ static void timer_wrapper_destroy_notify(gpointer data) {
 
 	t->handler.as_timer(1, t->priv_data);
 
-	source_destroy_notify(data);
+	timers = g_slist_remove(timers, data);
+	source_free(t);
 }
 
 static gboolean timer_wrapper(gpointer data) {
@@ -299,11 +291,12 @@ static gboolean timer_wrapper(gpointer data) {
 }
 
 ekg_timer_t timer_add_ms(plugin_t *plugin, const gchar *name, guint period, gboolean persist, gint (*function)(gint, gpointer), gpointer data) {
-	struct ekg_source *t = source_new(EKG_SOURCE_TIMER, plugin, name, NULL, data, NULL);
+	struct ekg_source *t = source_new(plugin, name, NULL, data, NULL);
 
 	t->handler.as_timer = function;
 	t->details.as_timer.interval = period;
 	t->details.as_timer.persist = persist;
+	timers = g_slist_prepend(timers, t);
 
 	source_set_id(t, g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify));
 	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
@@ -360,10 +353,10 @@ ekg_timer_t timer_find_session(session_t *session, const gchar *name) {
 	inline gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
 		const struct ekg_source *t = li;
 
-		return !(t->type == EKG_SOURCE_TIMER && t->priv_data == session && !xstrcmp(name, t->name));
+		return !(t->priv_data == session && !xstrcmp(name, t->name));
 	}
 
-	return (ekg_timer_t) g_slist_find_custom(sources, NULL, timer_find_session_cmp);
+	return (ekg_timer_t) g_slist_find_custom(timers, NULL, timer_find_session_cmp);
 }
 
 gint timer_remove_session(session_t *session, const gchar *name) {
@@ -376,13 +369,13 @@ gint timer_remove_session(session_t *session, const gchar *name) {
 	inline void timer_remove_session_iter(gpointer data, gpointer user_data) {
 		struct ekg_source *t = data;
 
-		if (t->type == EKG_SOURCE_TIMER && t->priv_data == session && !xstrcmp(name, t->name)) {
+		if (t->priv_data == session && !xstrcmp(name, t->name)) {
 			ekg_source_remove(t);
 			removed++;
 		}
 	}
 
-	g_slist_foreach(sources, timer_remove_session_iter, NULL);
+	g_slist_foreach(timers, timer_remove_session_iter, NULL);
 	return ((removed) ? 0 : -1);
 }
 
@@ -455,7 +448,7 @@ static inline gint timer_match_name(gconstpointer li, gconstpointer ui) {
 	const struct ekg_source *t = li;
 	const gchar *name = ui;
 
-	return t->type == EKG_SOURCE_TIMER && strcmp(t->name, name);
+	return strcasecmp(t->name, name);
 }
 
 /*
@@ -463,20 +456,15 @@ static inline gint timer_match_name(gconstpointer li, gconstpointer ui) {
  */
 
 gint ekg_children_print(gint quiet) {
-	gboolean found_one = FALSE;
-
 	inline void child_print(gpointer data, gpointer user_data) {
 		struct ekg_source *c = data;
 
-		if (c->type == EKG_SOURCE_CHILD) {
-			printq("process", ekg_itoa(c->details.as_child.pid), c->name ? c->name : "?");
-			found_one = TRUE;
-		}
+		printq("process", ekg_itoa(c->details.as_child.pid), c->name ? c->name : "?");
 	}
 
-	g_slist_foreach(sources, child_print, NULL);
+	g_slist_foreach(children, child_print, NULL);
 
-	if (!found_one) {
+	if (!children) {
 		printq("no_processes");
 		return -1;
 	}
@@ -494,9 +482,6 @@ COMMAND(cmd_debug_timers) {
 		const gchar *plugin;
 		gchar *tmp;
 			
-		if (t->type == EKG_SOURCE_TIMER)
-			return;
-
 		if (t->plugin)
 			plugin = t->plugin->name;
 		else
@@ -510,7 +495,7 @@ COMMAND(cmd_debug_timers) {
 		g_free(tmp);
 	}
 
-	g_slist_foreach(sources, timer_debug_print, NULL);
+	g_slist_foreach(timers, timer_debug_print, NULL);
 	return 0;
 }
 
@@ -546,7 +531,7 @@ COMMAND(cmd_at)
 				return -1;
 			}
 
-			if (g_slist_find_custom(sources, a_name, timer_match_name)) {
+			if (g_slist_find_custom(timers, a_name, timer_match_name)) {
 				printq("at_exist", a_name);
 				return -1;
 			}
@@ -763,8 +748,6 @@ COMMAND(cmd_at)
 			char tmp[100], tmp2[150];
 			time_t sec, minutes = 0, hours = 0, days = 0;
 
-			if (t->type != EKG_SOURCE_TIMER)
-				return;
 			if (t->handler.as_timer != timer_handle_at)
 				return;
 			if (a_name && xstrcasecmp(t->name, a_name))
@@ -823,7 +806,7 @@ COMMAND(cmd_at)
 
 			printq("at_list", t->name, tmp, (char*)(t->priv_data), "", ((t->details.as_timer.persist) ? tmp2 : ""));
 		}
-		g_slist_foreach(sources, timer_print, NULL);
+		g_slist_foreach(timers, timer_print, NULL);
 
 		if (!count) {
 			if (a_name) {
@@ -874,7 +857,7 @@ COMMAND(cmd_timer)
 				return -1;
 			}
 
-			if (g_slist_find_custom(sources, t_name, timer_match_name)) {
+			if (g_slist_find_custom(timers, t_name, timer_match_name)) {
 				printq("timer_exist", t_name);
 				return -1;
 			}
@@ -989,8 +972,6 @@ COMMAND(cmd_timer)
 			struct ekg_source *t = data;
 			char *tmp;
 
-			if (t->type != EKG_SOURCE_TIMER)
-				return;
 			if (t->handler.as_timer != timer_handle_command)
 				return;
 			if (t_name && xstrcasecmp(t->name, t_name))
@@ -1002,7 +983,7 @@ COMMAND(cmd_timer)
 			printq("timer_list", t->name, tmp, (char*)(t->priv_data), "", (t->details.as_timer.persist) ? "*" : "");
 			g_free(tmp);
 		}
-		g_slist_foreach(sources, timer_print_list, NULL);
+		g_slist_foreach(timers, timer_print_list, NULL);
 
 		if (!count) {
 			if (t_name) {

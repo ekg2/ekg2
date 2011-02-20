@@ -112,7 +112,6 @@ struct color_map {
 #ifndef EKG2_WIN32_NOFUNCTION
 extern alias_t *aliases;
 extern list_t autofinds; /* char* data */
-extern GSList *timers;
 extern struct conference *conferences;
 extern newconference_t *newconferences;
 extern struct buffer_info buffer_debug;
