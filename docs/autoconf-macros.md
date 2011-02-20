@@ -1,7 +1,7 @@
 ekg2-checks.m4
 ========================================================================
 
-`AC_EKG2_CHECK_LIB`
+AC_EKG2_CHECK_LIB
 ------------------------------------------------------------------------
 
 	AC_EKG2_CHECK_LIB(name, func, headers, [if-yes], [if-no])
@@ -28,7 +28,7 @@ Example:
 			[EKG2_FAILED_TEST])
 
 
-`AC_EKG2_CHECK_FLAGEXPORTED_LIB`
+AC_EKG2_CHECK_FLAGEXPORTED_LIB
 ------------------------------------------------------------------------
 
 	AC_EKG2_CHECK_FLAGEXPORTED_LIB(variable-prefix, lib-name, func,
@@ -65,7 +65,7 @@ script. For example:
 	], [EKG2_FAILED_TEST])
 
 
-`AC_EKG2_CHECK_PKGCONFIG_LIB`
+AC_EKG2_CHECK_PKGCONFIG_LIB
 ------------------------------------------------------------------------
 
 	AC_EKG2_CHECK_PKGCONFIG_LIB(pkg-name, fallback-name, func,
@@ -114,7 +114,7 @@ A more complex example:
 ekg2-with.m4
 ========================================================================
 
-`AC_EKG2_MULTILIB`
+AC_EKG2_MULTILIB
 ------------------------------------------------------------------------
 
 	AC_EKG2_MULTILIB
@@ -126,7 +126,7 @@ or `lib32`, and makes `EKG2_LIBDIRNAME` evaluate to either one of these
 two, or to simple `lib` otherwise.
 
 
-`EKG2_LIBDIRNAME`
+EKG2_LIBDIRNAME
 ------------------------------------------------------------------------
 
 	EKG2_LIBDIRNAME
@@ -138,7 +138,7 @@ Example use:
 	GLIB_CFLAGS="... -I/usr/EKG2_LIBDIRNAME/glib-2.0/include"
 
 
-`EKG2_FAILED_TEST`
+EKG2_FAILED_TEST
 ------------------------------------------------------------------------
 
 	EKG2_FAILED_TEST
@@ -148,7 +148,7 @@ to be used whenever the tests required for the package fail, to disable
 the relevant option. It _does not_ terminate the test scope.
 
 
-`AC_EKG2_WITH`
+AC_EKG2_WITH
 ------------------------------------------------------------------------
 
 	AC_EKG2_WITH(optname, if-yes, [if-no],
@@ -194,7 +194,7 @@ Example:
 ekg2-plugin.m4
 ========================================================================
 
-`AC_EKG2_PLUGIN_SETUP`
+AC_EKG2_PLUGIN_SETUP
 ------------------------------------------------------------------------
 
 	AC_EKG2_PLUGIN_SETUP
@@ -203,7 +203,7 @@ Internal use macro which sets up plugin support. It is invoked
 automatically before first use of `AC_EKG2_PLUGIN`.
 
 
-`EKG2_FAILED_PLUGIN`
+EKG2_FAILED_PLUGIN
 ------------------------------------------------------------------------
 
 	EKG2_FAILED_PLUGIN
@@ -214,7 +214,7 @@ like `EKG2_FAILED_TEST`, it does not terminate the test scope. It is
 called automatically by `EKG2_FAILED_TEST` if available.
 
 
-`EKG2_DISABLED_TEST`
+EKG2_DISABLED_TEST
 ------------------------------------------------------------------------
 
 	EKG2_DISABLED_TEST
@@ -226,7 +226,7 @@ it is called automatically by `AC_EKG2_WITH`. It is used to detect
 conflicting options.
 
 
-`AC_EKG2_PLUGIN`
+AC_EKG2_PLUGIN
 ------------------------------------------------------------------------
 
 	AC_EKG2_PLUGIN(name, req-checks, opt-checks)
