@@ -503,6 +503,7 @@ int config_write()
 		return -1;
 	
 	fchmod(fileno(f), 0600);
+	fprintf(f, "# vim:fenc=%s\n", config_console_charset);
 
 	config_write_plugins(f);
 	fclose(f);
@@ -514,6 +515,7 @@ int config_write()
 		return -1;
 
 	fchmod(fileno(f), 0600);
+	fprintf(f, "# vim:fenc=%s\n", config_console_charset);
 
 	config_write_main(f);
 	fclose(f);
@@ -530,6 +532,7 @@ int config_write()
 			return -1;
 
 		fchmod(fileno(f), 0600);
+		fprintf(f, "# vim:fenc=%s\n", config_console_charset);
 
 		for (v = variables; v; v = v->next) {
 			if (p == v->plugin) {
