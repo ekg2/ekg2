@@ -348,19 +348,9 @@ ekg_timer_t timer_add_session(session_t *session, const gchar *name, guint perio
  * 0/-1
  */
 gint timer_remove(plugin_t *plugin, const gchar *name) {
-	gint removed = 0;
-
-	inline void timer_remove_iter(gpointer data, gpointer user_data) {
-		struct ekg_source *t = data;
-
-		if (t->type == EKG_SOURCE_TIMER && t->plugin == plugin && !xstrcmp(name, t->name)) {
-			ekg_source_remove(t);
-			removed++;
-		}
-	}
-
-	g_slist_foreach(sources, timer_remove_iter, NULL);
-	return ((removed) ? 0 : -1);
+	/* originally, timer_remove() didn't remove all timers with !name */
+	g_assert(name);
+	return (ekg_source_remove_by_plugin(plugin, name) ? 0 : -1);
 }
 
 ekg_timer_t timer_find_session(session_t *session, const gchar *name) {
@@ -406,20 +396,8 @@ gint timer_remove_session(session_t *session, const gchar *name) {
 /* XXX: temporary API? */
 G_GNUC_INTERNAL
 gint timer_remove_user(gint (*handler)(gint, gpointer)) {
-	gint removed = 0;
-
-	inline void timer_remove_user_iter(gpointer data, gpointer user_data) {
-		struct ekg_source *t = data;
-
-		if (t->type == EKG_SOURCE_TIMER && t->handler.as_timer == handler) { 
-			ekg_source_remove(t);
-			removed = 1;
-		}
-	}
-
 	g_assert(handler);
-	g_slist_foreach(sources, timer_remove_user_iter, NULL);
-	return ((removed) ? 0 : -1);
+	return (ekg_source_remove_by_handler(handler, NULL) ? 0 : -1);
 }
 
 static gchar *timer_next_call(struct ekg_source *t) {
@@ -745,11 +723,10 @@ COMMAND(cmd_at)
 			return -1;
 		}
 
-		if (!xstrcmp(params[1], "*")) {
+		if (!xstrcmp(params[1], "*"))
 			del_all = 1;
-			ret = timer_remove_user(timer_handle_at);
-		} else
-			ret = timer_remove(NULL, params[1]);
+		ret = !ekg_source_remove_by_handler(timer_handle_at,
+				del_all ? NULL : params[1]);
 		
 		if (!ret) {
 			if (del_all)
@@ -975,12 +952,11 @@ COMMAND(cmd_timer)
 			return -1;
 		}
 
-		if (!xstrcmp(params[1], "*")) {
+		if (!xstrcmp(params[1], "*"))
 			del_all = 1;
-			ret = timer_remove_user(timer_handle_command);
-		} else
-			ret = timer_remove(NULL, params[1]);
-		
+		ret = !ekg_source_remove_by_handler(timer_handle_command,
+				del_all ? NULL : params[1]);
+
 		if (!ret) {
 			if (del_all)
 				printq("timer_deleted_all");
