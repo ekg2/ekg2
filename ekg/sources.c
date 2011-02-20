@@ -42,6 +42,7 @@ struct ekg_source {
 	union {
 		GChildWatchFunc as_child;
 		int (*as_timer)(int, void*);
+		gpointer as_void;
 	} handler;
 
 	gpointer priv_data;
@@ -73,6 +74,14 @@ static ekg_source_t source_new(enum ekg_source_type type, plugin_t *plugin, cons
 	
 	sources = g_slist_prepend(sources, s);
 	return s;
+}
+
+static void source_set_id(struct ekg_source *s, guint id) {
+	s->id = id;
+	if (!s->name)
+		s->name = g_strdup_printf("_%d", s->id);
+	s->source = g_main_context_find_source_by_id(NULL, s->id);
+	g_assert(s->source);
 }
 
 static void source_free(gpointer data) {
@@ -109,6 +118,101 @@ static void source_destroy_notify(gpointer data) {
  */
 void ekg_source_remove(ekg_source_t s) {
 	g_source_remove(s->id);
+}
+
+/**
+ * ekg_source_remove_by_handler()
+ *
+ * Remove source(s) using a particular handler (and optionally matching
+ * the name).
+ *
+ * @param handler - handler function.
+ * @param name - expected source name or NULL if any.
+ *
+ * @return TRUE if any source found, FALSE otherwise.
+ *
+ * @note This function doesn't do any source type checks. We assume
+ * that (due to handler prototype differences) a particular handler is
+ * used only with a single source type.
+ */
+gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
+	gboolean ret = FALSE;
+
+	inline void source_remove_by_h(gpointer data, gpointer user_data) {
+		struct ekg_source *s = data;
+
+		if (s->handler.as_void == handler) {
+			if (!name || G_UNLIKELY(!strcasecmp(s->name, name))) {
+				ekg_source_remove(s);
+				ret = TRUE;
+			}
+		}
+	}
+
+	g_slist_foreach(sources, source_remove_by_h, NULL);
+	return ret;
+}
+
+/**
+ * ekg_source_remove_by_data()
+ *
+ * Remove source(s) using a particular private data (and optionally
+ * matching the name).
+ *
+ * @param priv_data - private data pointer.
+ * @param name - expected source name or NULL if any.
+ *
+ * @return TRUE if any source found, FALSE otherwise.
+ *
+ * @note This function doesn't do any source type checks. We assume
+ * that either one doesn't reuse the same private data with different
+ * source types or expects to remove all of them at once.
+ */
+gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name) {
+	gboolean ret = FALSE;
+
+	inline void source_remove_by_d(gpointer data, gpointer user_data) {
+		struct ekg_source *s = data;
+
+		if (s->priv_data == priv_data) {
+			if (!name || G_UNLIKELY(!strcasecmp(s->name, name))) {
+				ekg_source_remove(s);
+				ret = TRUE;
+			}
+		}
+	}
+
+	g_slist_foreach(sources, source_remove_by_d, NULL);
+	return ret;
+}
+
+/**
+ * ekg_source_remove_by_plugin()
+ *
+ * Remove source(s) using a particular plugin (e.g. on plugin unload),
+ * and optionally bearing a name.
+ *
+ * @param plugin - plugin_t pointer.
+ * @param name - expected source name or NULL if any.
+ *
+ * @return TRUE if any source found, FALSE otherwise.
+ */
+gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name) {
+	gboolean ret = FALSE;
+
+	inline void source_remove_by_p(gpointer data, gpointer user_data) {
+		struct ekg_source *s = data;
+
+		if (s->plugin == plugin) {
+			if (!name || G_UNLIKELY(!strcasecmp(s->name, name))) {
+				ekg_source_remove(s);
+				ret = TRUE;
+			}
+		}
+	}
+
+	g_slist_foreach(sources, source_remove_by_p, NULL);
+	return ret;
 }
 
 void sources_destroy(void) {
@@ -170,7 +274,7 @@ ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, 
 
 	c->handler.as_child = handler;
 	c->details.as_child.pid = pid;
-	c->id = g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, source_destroy_notify);
+	source_set_id(c, g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, source_destroy_notify));
 
 	return c;
 }
@@ -201,11 +305,7 @@ ekg_timer_t timer_add_ms(plugin_t *plugin, const gchar *name, guint period, gboo
 	t->details.as_timer.interval = period;
 	t->details.as_timer.persist = persist;
 
-	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify);
-	if (!t->name)
-		t->name = g_strdup_printf("_%d", t->id);
-	t->source = g_main_context_find_source_by_id(NULL, t->id);
-	g_assert(t->source);
+	source_set_id(t, g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify));
 	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
 
 	return t;

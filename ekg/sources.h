@@ -26,6 +26,9 @@
 typedef struct ekg_source *ekg_source_t;
 
 void ekg_source_remove(ekg_source_t s);
+gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name);
+gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name);
+gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name);
 
 /* Child watches */
 typedef ekg_source_t ekg_child_t;
