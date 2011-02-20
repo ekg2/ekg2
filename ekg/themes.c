@@ -208,7 +208,7 @@ static const char *format_ansi(char ch) {
  * @note This function just initializes the vars, use fstring_next()
  * to get the first segment.
  */
-void fstring_iter(fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len) {
+void fstring_iter(const fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len) {
 	*text = s->str;
 	*attr = s->attr;
 	*len = 0;
