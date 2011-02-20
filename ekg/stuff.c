@@ -1747,23 +1747,8 @@ static char *random_line(const char *path) {
 	return NULL;
 }
 
-/**
- * read_file()
- *
- * Read next line from file @a f, if needed alloc memory for it.<br>
- * Remove \\r and \\n chars from end of line if needed.
- *
- * @param f	- opened FILE *
- * @param alloc 
- *		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
- *			which you <b>MUST NOT</b> xfree()<br>
- *		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
- *		- If -1 than it free <i>internal</i> pointer which were used by xrealloc()
- *
- * @return Line without \\r and \\n which must or mustn't be xfree()'d. It depends on @a alloc param
- */
-
-char *read_file(FILE *f, int alloc) {
+/* XXX: need to validate input */
+char *read_file_utf(FILE *f, int alloc) {
 	static char buf[1024];
 	static char *reres = NULL;
 
@@ -1815,22 +1800,37 @@ char *read_file(FILE *f, int alloc) {
 	return (alloc) ? xstrdup(res) : res;
 }
 
-char *read_file_utf(FILE *f, int alloc) {
+/**
+ * read_file()
+ *
+ * Read next line from file @a f, if needed alloc memory for it.<br>
+ * Remove \\r and \\n chars from end of line if needed.
+ *
+ * @param f	- opened FILE *
+ * @param alloc 
+ *		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
+ *			which you <b>MUST NOT</b> xfree()<br>
+ *		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
+ *		- If -1 than it free <i>internal</i> pointer which were used by xrealloc()
+ *
+ * @return Line without \\r and \\n which must or mustn't be xfree()'d. It depends on @a alloc param
+ */
+
+char *read_file(FILE *f, int alloc) {
 	static char *tmp = NULL;
-	char *buf = read_file(f, 0);
+	char *buf = read_file_utf(f, 0);
 	char *res;
 
-	xfree(tmp);
+	g_free(tmp);
 	tmp = NULL;
 	if (alloc == -1)
 		return NULL;
 
-	ekg_recode_utf8_inc();
-	res = ekg_utf8_to_core_dup(buf);
+	/* XXX: use encoded GIOChannel instead */
+	res = ekg_recode_from_locale(buf);
 	if (!alloc)
 		tmp = res;
 
-	ekg_recode_utf8_dec();
 	return res;
 }
 
