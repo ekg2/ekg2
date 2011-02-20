@@ -1122,58 +1122,51 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	return 0;
 }
 
-/*
- * help_path()
+/**
+ * help_open()
  *
- * zwraca plik z pomoc± we w³a¶ciwym jêzyku lub null je¶li nie ma takiego pliku
+ * Open the help file in best language available.
  *
+ * @param name - help file basename.
+ * @param plugin - plugin name or NULL if core help is requested.
+ *
+ * @return Open GIOChannel with utf8 encoding or NULL if no file was
+ * found. The channel should be unreference using g_io_channel_unref()
+ * when no longer used.
  */
-FILE *help_path(char *name, char *plugin) {
-	char lang[3];
-	char *tmp;
-	FILE *fp;
+GIOChannel *help_open(const gchar *name, const gchar *plugin) {
+	const gchar* const *p;
 
-	char *base = plugin ? 
-		saprintf(DATADIR "/plugins/%s/%s", plugin, name) :
-		saprintf(DATADIR "/%s", name);
+	gchar *base = plugin
+		? g_build_filename(DATADIR, "plugins", plugin, name, NULL)
+		: g_build_filename(DATADIR, name, NULL);
+	GString *fnbuf = g_string_new(base);
+	const gsize baselen = fnbuf->len;
+	g_free(base);
 
-	do {
-		/* if we don't get lang from $LANGUAGE (man 3 gettext) */
-		if ((tmp = getenv("LANGUAGE"))) break;
-		/* fallback on locale enviroments.. (man 5 locale) */
-		if ((tmp = getenv("LC_ALL"))) break;
-		if ((tmp = getenv("LANG"))) break;
-		/* fallback to en language */
-		tmp = "en";
-	} while (0);
+	for (p = g_get_language_names(); *p; p++) {
+		GError *err = NULL;
+		GIOChannel *ret;
 
-	xstrncpy(&lang[0], tmp, 2);
-	lang[2] = 0;
-	
-help_again:
-	tmp = saprintf("%s-%s.txt", base, lang);
+		if (G_UNLIKELY(!strcmp(*p, "C")))
+			g_string_append(fnbuf, "-en.txt");
+		else
+			g_string_append_printf(fnbuf, "-%s.txt", *p);
+		ret = g_io_channel_new_file(fnbuf->str, "r", &err);
 
-	if ((fp = fopen(tmp, "r"))) {
-		xfree(base);
-		xfree(tmp);
-		return fp;
+		if (ret) {
+			g_string_free(fnbuf, TRUE);
+			return ret;
+		} else if (err->code != G_FILE_ERROR_NOENT)
+			debug_error("help_path() failed to open %s with error: %s\n",
+					fnbuf->str, err->message);
+
+		g_error_free(err);
+		g_string_truncate(fnbuf, baselen);
 	}
 
-	/* Temporary fallback - untill we don't have full en translation */
-	xfree(tmp);
-	if (xstrcasecmp(lang, "pl")) {
-		lang[0] = 'p';
-		lang[1] = 'l';
-		goto help_again;
-	}
-
-	/* last chance, just base without lang. */
-	tmp = saprintf("%s.txt", base);
-	fp = fopen(tmp, "r");
-
-	xfree(tmp);
-	xfree(base);
-	return fp;
+	g_string_free(fnbuf, TRUE);
+	return NULL;
 }
 
 
@@ -1832,6 +1825,46 @@ char *read_file(FILE *f, int alloc) {
 		tmp = res;
 
 	return res;
+}
+
+/**
+ * read_line()
+ *
+ * Read a single line from GIOChannel allocated in a static buffer.
+ * Strip the line terminator.
+ *
+ * @param f - GIOChannel to read from.
+ *
+ * @return Pointer to a static line which will be overwritten by next
+ * call to read_line() or NULL on EOF or error.
+ *
+ * @note The GIOChannel must not be open in non-blocking mode.
+ */
+const gchar *read_line(GIOChannel *f) {
+	static GString *buf = NULL;
+	gsize term_pos;
+	GError *err = NULL;
+
+	/* XXX: maybe we could make a static GString? */
+	if (G_UNLIKELY(!buf))
+		buf = g_string_sized_new(120); /* seems sufficient for help files */
+
+	switch (g_io_channel_read_line_string(f, buf, &term_pos, &err)) {
+		case G_IO_STATUS_NORMAL:
+			g_string_truncate(buf, term_pos);
+			return buf->str;
+		case G_IO_STATUS_ERROR:
+			debug_error("read_line() failed: %s\n", err->message);
+			g_error_free(err);
+			/* fall through */
+		case G_IO_STATUS_EOF:
+			g_string_truncate(buf, 0);
+			return NULL;
+		case G_IO_STATUS_AGAIN:
+			g_assert_not_reached();
+	}
+
+	g_assert_not_reached();
 }
 
 /**

@@ -1578,9 +1578,9 @@ void sessions_free() {
  */
 void session_help(session_t *s, const char *name)
 {
-	FILE *f;
-	char *line, *type = NULL, *def = NULL, *tmp;
-	char *plugin_name;
+	GIOChannel *f;
+	gchar *type = NULL, *def = NULL, *tmp;
+	const gchar *line, *plugin_name;
 
 	string_t str;
 	int found = 0;
@@ -1599,12 +1599,12 @@ void session_help(session_t *s, const char *name)
 
 	do {
 		/* first try to find the variable in plugins' session file */
-		if (!(f = help_path("session", plugin_name))) {
+		if (!(f = help_open("session", plugin_name))) {
 			sessfilnf = 1;
 			break;
 		}
 
-		while ((line = read_file_utf(f, 0))) {
+		while ((line = read_line(f))) {
 			if (!xstrcasecmp(line, name)) {
 				found = 1;
 				break;
@@ -1616,12 +1616,12 @@ void session_help(session_t *s, const char *name)
 		do {
 			/* then look for them inside global session file */
 			if (!sessfilnf)
-				fclose(f);
+				g_io_channel_unref(f);
 			
-			if (!(f = help_path("session", NULL)))
+			if (!(f = help_open("session", NULL)))
 				break;
 
-			while ((line = read_file_utf(f, 0))) {
+			while ((line = read_line(f))) {
 				if (!xstrcasecmp(line, name)) {
 					found = 1;
 					break;
@@ -1633,7 +1633,7 @@ void session_help(session_t *s, const char *name)
 
 	if (!found) {
 		if (f)
-			fclose(f);
+			g_io_channel_unref(f);
 		if (sessfilnf)
 			print("help_session_file_not_found", plugin_name);
 		else
@@ -1641,14 +1641,14 @@ void session_help(session_t *s, const char *name)
 		return;
 	}
 
-	line = read_file_utf(f, 0);
+	line = read_line(f);
 
 	if ((tmp = xstrstr(line, (": "))))
 		type = xstrdup(tmp + 2);
 	else
 		type = xstrdup(("?"));
 
-	line = read_file_utf(f, 0);
+	line = read_line(f);
 	if ((tmp = xstrstr(line, (": "))))
 		def = xstrdup(tmp + 2);
 	else
@@ -1660,10 +1660,10 @@ void session_help(session_t *s, const char *name)
 	xfree(def);
 
 	if (tmp)		/* je¶li nie jest to ukryta zmienna... */
-		read_file_utf(f, 0);	/* ... pomijamy liniê */
+		read_line(f);	/* ... pomijamy liniê */
 
 	str = string_init(NULL);
-	while ((line = read_file_utf(f, 0))) {
+	while ((line = read_line(f))) {
 		if (line[0] != '\t')
 			break;
 
@@ -1691,7 +1691,7 @@ void session_help(session_t *s, const char *name)
 	if (xstrcmp(format_find("help_session_footer"), ""))
 		print("help_session_footer", name);
 
-	fclose(f);
+	g_io_channel_unref(f);
 }
 
 /**
