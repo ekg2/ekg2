@@ -49,7 +49,7 @@ dnl AC_EKG2_CHECK_FLAGEXPORTED_LIB(variable-prefix, lib-name, func, header, [if-
 ])
 
 AC_DEFUN([AC_EKG2_CHECK_PKGCONFIG_LIB], [
-dnl AC_EKG2_CHECK_PKGCONFIG_LIB(pkg-name, fallback-name, func, headers, [if-yes], [if-no], [if-fallback-yes], [alt-macro])
+dnl AC_EKG2_CHECK_PKGCONFIG_LIB(pkg-name, fallback-name, func, header, [if-yes], [if-no], [if-fallback-yes])
 dnl Perform PKG_CHECK_MODULES for <pkg-name>, grabbing LIBS & CFLAGS there; then
 dnl perform an AC_CHECK_HEADERS & AC_CHECK_FUNC to check if the obtained data is
 dnl useful.
