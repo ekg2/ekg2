@@ -37,7 +37,7 @@ struct ekg_source {
 
 	union {
 		GChildWatchFunc as_child;
-		int (*as_timer)(int, void*);
+		int (*as_old_timer)(int, void*);
 		gpointer as_void;
 	} handler;
 
@@ -279,28 +279,28 @@ ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, 
 static void timer_wrapper_destroy_notify(gpointer data) {
 	struct ekg_source *t = data;
 
-	t->handler.as_timer(1, t->priv_data);
+	t->handler.as_old_timer(1, t->priv_data);
 
 	timers = g_slist_remove(timers, data);
 	source_free(t);
 }
 
-static gboolean timer_wrapper(gpointer data) {
+static gboolean timer_wrapper_old(gpointer data) {
 	struct ekg_source *t = data;
 
 	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
-	return !(t->handler.as_timer(0, t->priv_data) == -1 || !t->details.as_timer.persist);
+	return !(t->handler.as_old_timer(0, t->priv_data) == -1 || !t->details.as_timer.persist);
 }
 
 ekg_timer_t timer_add_ms(plugin_t *plugin, const gchar *name, guint period, gboolean persist, gint (*function)(gint, gpointer), gpointer data) {
 	struct ekg_source *t = source_new(plugin, name, NULL, data, NULL);
 
-	t->handler.as_timer = function;
+	t->handler.as_old_timer = function;
 	t->details.as_timer.interval = period;
 	t->details.as_timer.persist = persist;
 	timers = g_slist_prepend(timers, t);
 
-	source_set_id(t, g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify));
+	source_set_id(t, g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper_old, t, timer_wrapper_destroy_notify));
 	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
 
 	return t;
@@ -492,7 +492,7 @@ COMMAND(cmd_debug_timers) {
 		tmp = timer_next_call(t);
 
 		/* XXX: pointer truncated */
-		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8u %.8x %-20s", plugin, t->name, t->details.as_timer.persist, t->details.as_timer.interval, GPOINTER_TO_UINT(t->handler.as_timer), tmp);
+		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8u %.8x %-20s", plugin, t->name, t->details.as_timer.persist, t->details.as_timer.interval, GPOINTER_TO_UINT(t->handler.as_old_timer), tmp);
 		printq("generic", buf);
 		g_free(tmp);
 	}
@@ -750,7 +750,7 @@ COMMAND(cmd_at)
 			char tmp[100], tmp2[150];
 			time_t sec, minutes = 0, hours = 0, days = 0;
 
-			if (t->handler.as_timer != timer_handle_at)
+			if (t->handler.as_old_timer != timer_handle_at)
 				return;
 			if (a_name && xstrcasecmp(t->name, a_name))
 				return;
@@ -974,7 +974,7 @@ COMMAND(cmd_timer)
 			struct ekg_source *t = data;
 			char *tmp;
 
-			if (t->handler.as_timer != timer_handle_command)
+			if (t->handler.as_old_timer != timer_handle_command)
 				return;
 			if (t_name && xstrcasecmp(t->name, t_name))
 				return;
