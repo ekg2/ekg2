@@ -29,10 +29,6 @@
 
 #include "objects.h"
 
-#if !defined(va_copy) && defined(__va_copy)
-#define va_copy(DST,SRC) __va_copy(DST,SRC)
-#endif
-
 GSList *plugins = NULL;
 
 static gint plugin_register_compare(gconstpointer a, gconstpointer b) {
@@ -663,7 +659,7 @@ static int query_emit_inner(query_t *g, va_list ap) {
 	 * so we must keep orig va_list for next plugins
 	 */
 	nested++;;
-	va_copy(ap_plugin, ap);
+	G_VA_COPY(ap_plugin, ap);
 	result = handler(g->data, ap_plugin);
 	va_end(ap_plugin);
 	nested--;
