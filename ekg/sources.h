@@ -33,7 +33,7 @@ gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name);
 /* Child watches */
 typedef ekg_source_t ekg_child_t;
 
-ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) G_GNUC_PRINTF(3, 7) G_GNUC_MALLOC;
+ekg_child_t ekg_child_add(plugin_t *plugin, const gchar *name_format, GPid pid, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) G_GNUC_PRINTF(2, 7) G_GNUC_MALLOC;
 
 /* Timers */
 typedef ekg_source_t ekg_timer_t;

@@ -241,9 +241,9 @@ static void child_wrapper(GPid pid, gint status, gpointer data) {
  * Add a watcher for the child process.
  *
  * @param plugin - plugin which contains handler funcs or NULL if in core.
- * @param pid - PID of the child process.
  * @param name_format - format string for watcher name. Can be NULL, or
  *	simple string if the name is guaranteed not to contain '%'.
+ * @param pid - PID of the child process.
  * @param handler - the handler func called when the process exits.
  *	The handler func will be provided with the child PID, exit status
  *	(filtered through WEXITSTATUS()) and private data.
@@ -253,9 +253,9 @@ static void child_wrapper(GPid pid, gint status, gpointer data) {
  *	process exits). Can be NULL.
  * @param ... - arguments to name_format format string.
  *
- * @return The newly-allocated struct ekg_child pointer.
+ * @return An unique ekg_child_t.
  */
-ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) {
+ekg_child_t ekg_child_add(plugin_t *plugin, const gchar *name_format, GPid pid, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) {
 	va_list args;
 	struct ekg_source *c;
 	

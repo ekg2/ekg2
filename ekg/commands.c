@@ -701,7 +701,7 @@ COMMAND(cmd_exec)
 		fcntl(outfd, F_SETFL, O_NONBLOCK);
 		fcntl(errfd, F_SETFL, O_NONBLOCK);
 
-		ekg_child_add(NULL, pid, "%s", cmd_exec_child_handler, g_strdup(command), g_free, command);
+		ekg_child_add(NULL, "%s", pid, cmd_exec_child_handler, g_strdup(command), g_free, command);
 	} else
 		ekg_children_print(quiet);
 

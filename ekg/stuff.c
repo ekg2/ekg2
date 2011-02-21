@@ -1906,7 +1906,7 @@ int say_it(const char *str)
 		exit(status);
 	}
 
-	ekg_child_add(NULL, pid, NULL, speech_child_handler, NULL, NULL);
+	ekg_child_add(NULL, "(speech)", pid, speech_child_handler, NULL, NULL);
 	return 0;
 #else
 	return -1;
