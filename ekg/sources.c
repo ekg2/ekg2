@@ -37,6 +37,7 @@ struct ekg_source {
 
 	union {
 		GChildWatchFunc as_child;
+		GSourceFunc as_timer;
 		int (*as_old_timer)(int, void*);
 		gpointer as_void;
 	} handler;
@@ -52,7 +53,10 @@ struct ekg_source {
 
 		struct {
 			GTimeVal lasttime;
-			guint interval;
+			guint64 interval;
+			/* persist arg is deprecated, and mostly unused
+			 * however, /at uses it, and so does xmsg plugin
+			 * the former needs fixing, the latter will probably be removed */
 			gboolean persist;
 		} as_timer;
 	} details;
@@ -332,6 +336,70 @@ ekg_timer_t timer_add_session(session_t *session, const gchar *name, guint perio
 	return timer_add(session->plugin, name, period, persist, (void *) function, session);
 }
 
+static void timer_destroy_notify(gpointer data) {
+	struct ekg_source *t = data;
+	timers = g_slist_remove(timers, data);
+
+	if (G_UNLIKELY(t->destr))
+		t->destr(t->priv_data);
+
+	source_free(t);
+}
+
+static gboolean timer_wrapper(gpointer data) {
+	struct ekg_source *t = data;
+
+	return t->handler.as_timer(t->priv_data);
+}
+
+/**
+ * ekg_timer_add()
+ *
+ * Add a timer.
+ *
+ * @param plugin - plugin which contains handler funcs or NULL if in core.
+ * @param name_format - format string for timer name. Can be NULL, or
+ *	simple string if the name is guaranteed not to contain '%'.
+ * @param interval - the interval between successive timer calls,
+ *	in milliseconds. If it is a multiple of 1000, the timer will use
+ *	glib second timeouts (more efficient); otherwise, the millisecond
+ *	timeout will be used.
+ * @param handler - the handler func. It will be passed the private
+ *	data, and should either return TRUE or FALSE, depending on whether
+ *	the timer should persist or be removed.
+ * @param data - the private data passed to the handler.
+ * @param destr - destructor for the private data. It will be called
+ *	even if the handler is not. Can be NULL.
+ * @param ... - arguments to name_format format string.
+ *
+ * @return An unique ekg_timer_t.
+ */
+ekg_timer_t ekg_timer_add(plugin_t *plugin, const gchar *name_format, guint64 interval, GSourceFunc handler, gpointer data, GDestroyNotify destr, ...) {
+	va_list args;
+	struct ekg_source *t;
+	guint id;
+	
+	va_start(args, destr);
+	t = source_new(plugin, name_format, args, data, destr);
+	va_end(args);
+
+	g_assert(handler);
+	t->handler.as_timer = handler;
+	t->details.as_timer.interval = interval;
+	t->details.as_timer.persist = TRUE;
+
+	timers = g_slist_prepend(timers, t);
+	if (interval % 1000 == 0)
+		id = g_timeout_add_seconds_full(G_PRIORITY_DEFAULT, interval / 1000, timer_wrapper, t, timer_destroy_notify);
+	else
+		id = g_timeout_add_full(G_PRIORITY_DEFAULT, interval, timer_wrapper, t, timer_destroy_notify);
+
+	source_set_id(t, id);
+	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
+
+	return t;
+}
+
 /*
  * timer_remove()
  *
@@ -492,7 +560,7 @@ COMMAND(cmd_debug_timers) {
 		tmp = timer_next_call(t);
 
 		/* XXX: pointer truncated */
-		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8u %.8x %-20s", plugin, t->name, t->details.as_timer.persist, t->details.as_timer.interval, GPOINTER_TO_UINT(t->handler.as_old_timer), tmp);
+		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8" G_GINT64_MODIFIER "u %.8x %-20s", plugin, t->name, t->details.as_timer.persist, t->details.as_timer.interval, GPOINTER_TO_UINT(t->handler.as_old_timer), tmp);
 		printq("generic", buf);
 		g_free(tmp);
 	}
