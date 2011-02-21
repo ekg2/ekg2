@@ -63,6 +63,7 @@ DYNSTUFF_LIST_DECLARE(queries_list, query_t, query_free_data,
 	__DYNSTUFF_DESTROY)
 
 
+#ifdef SHARED_LIBS
 /**
  * ekg2_dlclose()
  *
@@ -133,6 +134,7 @@ static void *ekg2_dlsym(GModule *plugin, char *name) {
 
 	return tmp;
 }
+#endif
 
 /*
  * plugin_load()
@@ -147,10 +149,10 @@ int plugin_load(const char *name, int prio, int quiet)
 	char lib[PATH_MAX];
 	char *env_ekg_plugins_path = NULL;
 	char *init = NULL;
+	GModule *plugin = NULL;
 #endif
 
 	plugin_t *pl;
-	void *plugin = NULL;
 	int (*plugin_init)() = NULL;
 
 	if (!name)
@@ -236,13 +238,19 @@ int plugin_load(const char *name, int prio, int quiet)
 
 	if (plugin_init(prio) == -1) {
 		printq("plugin_not_initialized", name);
+#ifdef SHARED_LIBS
 		if (plugin)
 			ekg2_dlclose(plugin);
+#endif
 		return -1;
 	}
 
 	if ((pl = plugin_find(name))) {
+#ifdef SHARED_LIBS
 		pl->dl = plugin;
+#else
+		pl->dl = NULL;
+#endif
 	} else {
 		debug_error("plugin_load() plugin_find(%s) not found.\n", name);
 		/* It's FATAL */
@@ -363,8 +371,10 @@ int plugin_unload(plugin_t *p)
 	if (p->destroy)
 		p->destroy();
 
+#ifdef SHARED_LIBS
 	if (p->dl)
 		ekg2_dlclose(p->dl);
+#endif
 
 	print("plugin_unloaded", name);
 
