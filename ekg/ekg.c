@@ -78,7 +78,6 @@
 
 char *config_dir;
 int mesg_startup;
-int ekg_watches_removed;
 static char argv0[PATH_MAX];
 
 pid_t speech_pid = 0;
@@ -142,79 +141,9 @@ static TIMER(ekg_autoaway_timer) {
  */
 
 void ekg_loop() {
-	GTimeVal tv;
-	struct timeval stv;
-	fd_set rd, wd;
-	int ret, maxfd;
-
-	g_get_current_time(&tv);
-
 	{
 
-		{		/* removed 'w->removed' watches, timeout checking moved below select() */
-			list_t l;
-
-			for (l = watches; l; l = l->next) {
-				watch_t *w = l->data;
-
-				if (w && w->removed == 1) {
-					w->removed = 0;
-					watch_free(w);
-				}
-			}
-		}
-
-		/* zerknij na wszystkie niezbêdne deskryptory */
-
-		FD_ZERO(&rd);
-		FD_ZERO(&wd);
-
-		{
-			list_t l;
-
-			for (maxfd = 0, l = watches; l; l = l->next) {
-				watch_t *w = l->data;
-				if (!w)
-					continue;
-
-				if (w->fd > maxfd)
-					maxfd = w->fd;
-				if ((w->type & WATCH_READ))
-					FD_SET(w->fd, &rd);
-				if ((w->type & WATCH_WRITE)) {
-					if (w->buf && !w->buf->len) continue; /* if we have WATCH_WRITE_LINE and there's nothink to send, ignore this */ 
-					FD_SET(w->fd, &wd); 
-				}
-			}
-		}
-
-		/* sprawd¼, co siê dzieje */
-		stv.tv_sec = 0;
-		stv.tv_usec = 50000;
-		ret = select(maxfd + 1, &rd, &wd, NULL, &stv);
-
-		/* je¶li wyst±pi³ b³±d, daj znaæ */
-		if (ret == -1) {
-			/* jaki¶ plugin doda³ do watchów z³y deskryptor. ¿eby
-			 * ekg mog³o dzia³aæ dalej, sprawd¼my który to i go
-			 * usuñmy z listy. */
-			if (errno == EBADF) {
-				list_t l;
-
-				for (l = watches; l; l = l->next) {
-					watch_t *w = l->data;
-					struct stat st;
-
-					if (w && fstat(w->fd, &st)) {
-						debug("select(): bad file descriptor: fd=%d, type=%d, plugin=%s\n", w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
-						watch_free(w);
-					}
-				}
-			} else if (errno != EINTR)
-				debug("select() failed: %s\n", strerror(errno));
-			return;
-		}
-
+#ifdef WATCHES_FIXME
 		{		/* przejrzyj deskryptory */
 			list_t l;
 
@@ -259,22 +188,10 @@ void ekg_loop() {
 							command_exec(NULL, s, ("/_autoback"), 2);
 					}
 				}
-				if (!w->buf) {
-					if (((w->type == WATCH_WRITE) && FD_ISSET(w->fd, &wd)) ||
-							((w->type == WATCH_READ) && FD_ISSET(w->fd, &rd)))
-						watch_handle(w);
-				} else {
-					if (FD_ISSET(w->fd, &rd) && w->type == WATCH_READ)		watch_handle_line(w);
-					else if (FD_ISSET(w->fd, &wd) && w->type == WATCH_WRITE)	watch_handle_write(w);
-				}
 			}
 		}
+#endif
 
-		if (ekg_watches_removed > 0) {
-			debug("ekg_loop() Removed %d watches this loop, let's cleanup calling: list_cleanup() ...\n", ekg_watches_removed);
-			list_cleanup(&watches);
-			ekg_watches_removed = 0;
-		}
 	}
 #undef tv
 

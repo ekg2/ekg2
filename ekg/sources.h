@@ -81,7 +81,6 @@ typedef struct watch {
 	string_t buf;		/* bufor na linię */
 	time_t timeout;		/* timeout */
 	time_t started;		/* kiedy zaczęto obserwować */
-	int removed;		/* wywołano już watch_remove() */
 
 	int transfer_limit;	/* XXX, requested by GiM to limit data transmitted to ircd server... currently only to send all data
 					done by serveral calls of watch_write() in one packet... by setting it to -1 and than changing it back to 0
@@ -92,6 +91,9 @@ typedef struct watch {
 					executed in next ekg_loop() loop.
 				*/
 	int is_session;		/* if set, this watch belongs to session specified in data */
+
+	guint id;
+	GIOChannel *f;
 } watch_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION

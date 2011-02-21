@@ -1023,7 +1023,7 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type) {
 		watch_t *w = l->data;
 
 			/* XXX: added simple plugin ignoring, make something nicer? */
-		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && (w->type & type) && !(w->removed > 0))
+		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && (w->type & type))
 			return w;
 	}
 
@@ -1031,8 +1031,6 @@ watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type) {
 }
 
 static LIST_FREE_ITEM(watch_free_data, watch_t *) {
-	data->removed = 2;	/* to avoid situation: when handler of watch, execute watch_free() on this watch... stupid */
-
 	if (data->buf) {
 		int (*handler)(int, int, const char *, void *) = data->handler;
 		string_free(data->buf, 1);
@@ -1044,6 +1042,8 @@ static LIST_FREE_ITEM(watch_free_data, watch_t *) {
 		if (handler)
 			handler(1, data->fd, data->type, data->data);
 	}
+
+	g_io_channel_unref(data->f);
 }
 
 /*
@@ -1057,24 +1057,8 @@ void watch_free(watch_t *w) {
 	if (!w)
 		return;
 
-	if (w->removed == 2)
-		return;
+	g_source_remove(w->id);
 
-	if (w->removed == -1 || w->removed == 1) { /* watch is running.. we cannot remove it */
-		w->removed = 1;
-		return;
-	}
-
-	if (w->type == WATCH_WRITE && w->buf && !w->handler && w->plugin) {	/* XXX */
-		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
-		return;
-	}
-
-	watch_free_data(w);
-	list_remove_safe(&watches, w, 1);
-
-	ekg_watches_removed++;
-	debug("watch_free() REMOVED WATCH, watches removed this loop: %d oldwatch: 0x%x\n", ekg_watches_removed, w);
 }
 
 /*
@@ -1088,10 +1072,8 @@ void watch_handle_line(watch_t *w)
 	int ret, res = 0;
 	int (*handler)(int, int, const char *, void *) = w->handler;
 
-	if (!w || w->removed == -1)
-		return;	/* watch is running in another thread / context */
+	g_assert(w);
 
-	w->removed = -1;
 #ifndef NO_POSIX_SYSTEM
 	ret = read(w->fd, buf, sizeof(buf) - 1);
 #else
@@ -1135,15 +1117,13 @@ void watch_handle_line(watch_t *w)
 
 	/* je¶li koniec strumienia, lub nie jest to ci±głe przegl±danie,
 	 * zwolnij pamięć i usuń z listy */
-	if (res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN) || w->removed == 1) {
+	if (res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN)) {
 		int fd = w->fd;
-		w->removed = 0;
 
 		watch_free(w);
-		close(fd);
+		close(fd); /*XXX*/
 		return;
 	} 
-	w->removed = 0;
 }
 
 /* ripped from irc plugin */
@@ -1152,12 +1132,10 @@ int watch_handle_write(watch_t *w) {
 	int res = -1;
 	int len = (w && w->buf) ? w->buf->len : 0;
 
-	if (!w || w->removed == -1) return -1;	/* watch is running in another thread / context */
+	g_assert(w);
 	if (w->transfer_limit == -1) return 0;	/* transfer limit turned on, don't send anythink... XXX */
 	debug_io("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
 	if (!len) return -1;
-
-	w->removed = -1;
 
 	if (handler) {
 		res = handler(0, w->fd, w->buf->str, w->data);
@@ -1182,7 +1160,6 @@ int watch_handle_write(watch_t *w) {
 		debug("WSAError: %d\n", WSAGetLastError());
 #else
 		debug("Error: %s %d\n", strerror(errno), errno);
-		w->removed = 0;
 		watch_free(w);
 #endif
 		return -1;
@@ -1209,7 +1186,6 @@ int watch_handle_write(watch_t *w) {
 	string_remove(w->buf, res);
 	debug_io("left: %d bytes\n", w->buf->len);
 
-	w->removed = 0;
 	return res;
 }
 
@@ -1274,22 +1250,57 @@ void watch_handle(watch_t *w) {
 	int (*handler)(int, int, int, void *);
 	int res;
 
-	if (!w || w->removed == -1)	/* watch is running in another thread / context */
-		return;
+	g_assert(w);
 
-	w->removed = -1;
 	handler = w->handler;
 		
 	res = handler(0, w->fd, w->type, w->data);
 
-	if (res == -1 || w->removed == 1) {
-		w->removed = 0;
+	if (res == -1) {
 		watch_free(w);
 		return;
 	}
 
 	w->started = time(NULL);
-	w->removed = 0;
+}
+
+gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data) {
+	watch_t *w = data;
+
+	if (cond & (G_IO_IN | G_IO_OUT)) {
+		g_assert(cond & (w->type == WATCH_WRITE ? G_IO_OUT : G_IO_IN));
+
+		if (!w->buf)
+			watch_handle(w);
+		else if (w->type == WATCH_READ)
+			watch_handle_line(w);
+		else if (w->type == WATCH_WRITE)
+			watch_handle_write(w);
+	}
+
+	if (cond & (G_IO_ERR | G_IO_NVAL | G_IO_HUP)) {
+		debug("watch_old_wrapper(): fd no longer valid, fd=%d, type=%d, plugin=%s\n",
+				w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
+		return FALSE;
+	}
+
+	return TRUE; /* XXX */
+}
+
+void watch_old_destroy_notify(gpointer data) {
+	watch_t *w = data;
+
+#ifdef FIXME_WATCHES
+	if (w->type == WATCH_WRITE && w->buf && !w->handler && w->plugin) {	/* XXX */
+		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
+		return;
+	}
+#endif
+
+	watch_free_data(w);
+	list_remove_safe(&watches, w, 1);
+
+	debug("watch_old_destroy_notify() REMOVED WATCH, oldwatch: 0x%x\n", w);
 }
 
 /**
@@ -1307,6 +1318,7 @@ void watch_handle(watch_t *w) {
  */
 
 watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data) {
+	GError *err	= NULL;
 	watch_t *w	= xmalloc(sizeof(watch_t));
 	w->plugin	= plugin;
 	w->fd		= fd;
@@ -1323,6 +1335,13 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	w->started = time(NULL);
 	w->handler = handler;
 	w->data    = data;
+
+	w->f = g_io_channel_unix_new(fd);
+	g_assert(g_io_channel_set_encoding(w->f, NULL, &err) == G_IO_STATUS_NORMAL);
+	w->id = g_io_add_watch_full(w->f, G_PRIORITY_DEFAULT,
+			(w->type == WATCH_WRITE ? G_IO_OUT : G_IO_IN)
+			| G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+			watch_old_wrapper, w, watch_old_destroy_notify);
 
 	list_add_beginning(&watches, w);
 	return w;

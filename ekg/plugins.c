@@ -357,6 +357,9 @@ int plugin_unload(plugin_t *p)
 		}
 	}
 
+#ifdef WATCHES_FIXME
+	/* XXX: why not simply destroy them right now? */
+
 	for (l = watches; l; l = l->next) {
 		watch_t *w = l->data;
 
@@ -366,6 +369,7 @@ int plugin_unload(plugin_t *p)
 		}
 	}
 	/* XXX, to samo dla timerow */
+#endif
 
 	name = xstrdup(p->name);
 
