@@ -18,7 +18,7 @@
  */
 
 #include "ekg2.h"
-#include "intern.h"
+#include "internal.h"
 
 #include <string.h>
 

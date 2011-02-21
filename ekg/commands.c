@@ -71,7 +71,7 @@
 #endif
 
 #include "scripts.h"
-#include "intern.h"
+#include "internal.h"
 #include "net.h"
 
 char *send_nicks[SEND_NICKS_MAX] = { NULL };
