@@ -127,8 +127,9 @@ gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
 		}
 	}
 
-	g_slist_foreach(children, source_remove_by_h, NULL);
 	g_slist_foreach(timers, source_remove_by_h, NULL);
+	if (G_UNLIKELY(!ret))
+		g_slist_foreach(children, source_remove_by_h, NULL);
 	return ret;
 }
 
