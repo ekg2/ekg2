@@ -73,7 +73,7 @@
 #include <unistd.h>
 
 #include "emoticons.h"
-#include "intern.h"
+#include "internal.h"
 #include "scripts.h"
 
 char *config_dir;

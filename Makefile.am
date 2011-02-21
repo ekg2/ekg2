@@ -29,7 +29,7 @@ ekg_ekg2_SOURCES = \
 	ekg/emoticons.h \
 	ekg/events.c \
 	ekg/events.h \
-	ekg/intern.h \
+	ekg/internal.h \
 	ekg/legacyconfig.c \
 	ekg/log.c \
 	ekg/log.h \

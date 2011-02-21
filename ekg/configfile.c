@@ -34,7 +34,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include "intern.h"
+#include "internal.h"
 
 #define check_file() if (!(f = fopen(filename, "r")))\
 		return -1;\
