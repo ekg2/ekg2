@@ -1066,7 +1066,7 @@ void watch_free(watch_t *w) {
  *
  * obsługa deskryptorów przegl±danych WATCH_READ_LINE.
  */
-static void watch_handle_line(watch_t *w)
+static int watch_handle_line(watch_t *w)
 {
 	char buf[1024], *tmp;
 	int ret, res = 0;
@@ -1117,13 +1117,10 @@ static void watch_handle_line(watch_t *w)
 
 	/* je¶li koniec strumienia, lub nie jest to ci±głe przegl±danie,
 	 * zwolnij pamięć i usuń z listy */
-	if (res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN)) {
-		int fd = w->fd;
+	if (res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN))
+		return -1; /* XXX: close(fd) was here, seemed unsafe */
 
-		watch_free(w);
-		close(fd); /*XXX*/
-		return;
-	} 
+	return res;
 }
 
 /* ripped from irc plugin */
@@ -1162,7 +1159,6 @@ static int watch_handle_write(watch_t *w) {
 		debug("WSAError: %d\n", WSAGetLastError());
 #else
 		debug("Error: %s %d\n", strerror(errno), errno);
-		watch_free(w);
 #endif
 		return -1;
 	}
@@ -1248,7 +1244,7 @@ int watch_write(watch_t *w, const char *format, ...) {			/* XXX, refactory: watc
  * @todo We only check for w->removed == -1, maybe instead change it to: w->removed != 0
  */
 
-static void watch_handle(watch_t *w) {
+static int watch_handle(watch_t *w) {
 	int (*handler)(int, int, int, void *);
 	int res;
 
@@ -1258,26 +1254,27 @@ static void watch_handle(watch_t *w) {
 		
 	res = handler(0, w->fd, w->type, w->data);
 
-	if (res == -1) {
-		watch_free(w);
-		return;
-	}
-
 	w->started = time(NULL);
+
+	return res;
 }
 
 gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data) {
 	watch_t *w = data;
 
 	if (cond & (G_IO_IN | G_IO_OUT)) {
+		int ret;
 		g_assert(cond & (w->type == WATCH_WRITE ? G_IO_OUT : G_IO_IN));
 
 		if (!w->buf)
-			watch_handle(w);
+			ret = watch_handle(w);
 		else if (w->type == WATCH_READ)
-			watch_handle_line(w);
+			ret = watch_handle_line(w);
 		else if (w->type == WATCH_WRITE)
-			watch_handle_write(w);
+			ret = watch_handle_write(w);
+
+		if (ret == -1)
+			return FALSE;
 	}
 
 	if (cond & (G_IO_ERR | G_IO_NVAL | G_IO_HUP)) {
@@ -1286,7 +1283,7 @@ gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data) {
 		return FALSE;
 	}
 
-	return TRUE; /* XXX */
+	return TRUE;
 }
 
 void watch_old_destroy_notify(gpointer data) {
