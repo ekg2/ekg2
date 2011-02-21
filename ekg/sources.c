@@ -1376,11 +1376,14 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
 {
 	int res = -1;
 	watch_t *w;
+#ifdef FIXME_WATCHES
 /* XXX, here can be deadlock feel warned. */
+/* DEADLOCK ACHIEVED! */
 	while ((w = watch_find(plugin, fd, type))) {
 		watch_free(w);
 		res = 0;
 	}
+#endif
 
 	return res;
 }
