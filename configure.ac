@@ -14,17 +14,27 @@ dnl XXX: docs say we should use '-no-undefined' along with 'win32-dll'
 LT_INIT([disable-static win32-dll])
 
 AC_EKG2_WITH([glib], [
-	PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16 gmodule-2.0],, [
+	AS_IF([test "x$enable_shared" = "xyes"], [
+		gmod_dep="gmodule-2.0"
+	], [
+		gmod_dep=
+	])
+
+	PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16 $gmod_dep],, [
 		AS_CASE([$with_glib],
 			[yes|maybe], [with_glib=/usr])
 
-		GLIB_LIBS="-lglib-2.0 -lgmodule-2.0 -Wl,--export-dynamic"
+		GLIB_LIBS="-lglib-2.0"
+		AS_IF([test "x$enable_shared" = "xyes"], [
+			GLIB_LIBS="$GLIB_LIBS -lgmodule-2.0 -Wl,--export-dynamic"
+		])
 		GLIB_CFLAGS="-I$with_glib/include/glib-2.0 -I$with_glib/EKG2_LIBDIRNAME/glib-2.0/include"
 	])
 
 	AC_EKG2_CHECK_FLAGEXPORTED_LIB([GLIB],, [g_malloc0], [glib.h],, [
 		AC_MSG_ERROR([glib2 not found (neither in standard pkgconfig paths nor in $with_glib)])
 	])
+	AS_UNSET([gmod_dep])
 ], [
 	AC_MSG_ERROR([glib dependency is obligatory, bailing due to --without-glib])
 ])
