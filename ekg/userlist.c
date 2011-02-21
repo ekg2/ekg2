@@ -208,6 +208,7 @@ int userlist_write(session_t *session) {
 		return -2;
 	}
 	fchmod(fileno(f), 0600);
+	fprintf(f, "# vim:fenc=%s\n", config_console_charset);
 
 	/* userlist_dump() */
 	for (ul = session->userlist; ul; ul = ul->next) {
