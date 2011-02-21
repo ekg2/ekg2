@@ -83,11 +83,6 @@ DYNSTUFF_LIST_DECLARE(queries_list, query_t, query_free_data,
 	__DYNSTUFF_DESTROY)
 
 
-int ekg2_dlinit() {
-	return 0;
-/*	return lt_dlinit() */
-}
-
 /**
  * ekg2_dlclose()
  *

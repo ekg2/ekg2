@@ -599,7 +599,6 @@ int main(int argc, char **argv)
 
 	ekg_started = time(NULL);
 
-	ekg2_dlinit();
 	setlocale(LC_ALL, "");
 	tzset();
 #ifdef ENABLE_NLS
