@@ -62,7 +62,7 @@ struct ekg_source {
 	} details;
 };
 
-static ekg_source_t source_new(plugin_t *plugin, const gchar *name_format, va_list args, gpointer data, GDestroyNotify destr) {
+static ekg_source_t source_new(plugin_t *plugin, const gchar *name_format, gpointer data, GDestroyNotify destr, va_list args) {
 	struct ekg_source *s = g_slice_new(struct ekg_source);
 
 	s->plugin = plugin;
@@ -264,7 +264,7 @@ ekg_child_t ekg_child_add(plugin_t *plugin, const gchar *name_format, GPid pid, 
 	struct ekg_source *c;
 	
 	va_start(args, destr);
-	c = source_new(plugin, name_format, args, data, destr);
+	c = source_new(plugin, name_format, data, destr, args);
 	va_end(args);
 
 	c->handler.as_child = handler;
@@ -297,7 +297,7 @@ static gboolean timer_wrapper_old(gpointer data) {
 }
 
 ekg_timer_t timer_add_ms(plugin_t *plugin, const gchar *name, guint period, gboolean persist, gint (*function)(gint, gpointer), gpointer data) {
-	struct ekg_source *t = source_new(plugin, name, NULL, data, NULL);
+	struct ekg_source *t = source_new(plugin, name, data, NULL, NULL);
 
 	t->handler.as_old_timer = function;
 	t->details.as_timer.interval = period;
@@ -380,7 +380,7 @@ ekg_timer_t ekg_timer_add(plugin_t *plugin, const gchar *name_format, guint64 in
 	guint id;
 	
 	va_start(args, destr);
-	t = source_new(plugin, name_format, args, data, destr);
+	t = source_new(plugin, name_format, data, destr, args);
 	va_end(args);
 
 	g_assert(handler);
