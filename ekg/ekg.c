@@ -141,6 +141,7 @@ static TIMER(ekg_autoaway_timer) {
  */
 
 void ekg_loop() {
+	g_main_context_iteration(NULL, FALSE);
 	{
 
 #ifdef WATCHES_FIXME
@@ -772,11 +773,10 @@ int main(int argc, char **argv)
 	/* jesli jest emit: ui-loop (plugin-side) to dajemy mu kontrole, jesli nie 
 	 * to wywolujemy normalnie sami ekg_loop() w petelce */
 	if (query_emit(NULL, "ui-loop") != -1) {
+
 		/* krêæ imprezê */
-		while (1) {
-			g_main_context_iteration(NULL, FALSE);
-			ekg_loop();
-		}
+		while (1)
+			g_main_context_iteration(NULL, TRUE);
 	}
 
 	ekg_exit();
