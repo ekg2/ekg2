@@ -31,6 +31,7 @@ ekg_ekg2_SOURCES = \
 	ekg/emoticons.h \
 	ekg/events.c \
 	ekg/events.h \
+	ekg/internal.h \
 	ekg/legacyconfig.c \
 	ekg/log.c \
 	ekg/log.h \
@@ -53,6 +54,8 @@ ekg_ekg2_SOURCES = \
 	ekg/scripts.h \
 	ekg/sessions.c \
 	ekg/sessions.h \
+	ekg/sources.c \
+	ekg/sources.h \
 	ekg/srv.c \
 	ekg/srv.h \
 	ekg/strings.c \

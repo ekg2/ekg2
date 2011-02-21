@@ -159,7 +159,7 @@ typedef struct {
 	time_t last_mtime;
 } nntp_children_t;
 
-static void nntp_children_died(struct child_s *c, int pid, const char *name, int status, void *data) {
+static void nntp_children_died(GPid pid, gint status, gpointer data) {
 	nntp_children_t *d = data;
 	session_t *s = session_find(d->session);
 	nntp_private_t *j;

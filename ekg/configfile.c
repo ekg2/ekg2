@@ -34,8 +34,7 @@
 #include <string.h>
 #include <errno.h>
 
-/* function inside legacyconfig.c */
-void config_upgrade();
+#include "internal.h"
 
 #define check_file() if (!(f = fopen(filename, "r")))\
 		return -1;\
@@ -172,7 +171,8 @@ int config_read(const char *filename)
 
 	if (!in_autoexec && !filename) {
 		aliases_destroy();
-		timer_remove_user(-1);
+		timer_remove_user(timer_handle_command);
+		timer_remove_user(timer_handle_at);
 		event_free();
 		variable_set_default();
 		query_emit(NULL, "set-vars-default");
@@ -421,15 +421,13 @@ static void config_write_main(FILE *f)
 		}
 	}
 
+#ifdef TIMERS_FIXME /* XXX! */
 	{
 		GSList *tl;
 
 		for (tl = timers; tl; tl = tl->next) {
 			struct timer *t = tl->data;
 			const char *name = NULL;
-
-			if ((void *)t->function != (void *)timer_handle_command)
-				continue;
 
 			/* nie ma sensu zapisywaæ */
 			if (!t->persist) /* XXX && t->ends.tv_sec - time(NULL) < 5) */
@@ -441,7 +439,7 @@ static void config_write_main(FILE *f)
 			else
 				name = "(null)";
 
-			if (t->at) {
+			if (t->function == timer_handle_at) {
 				char buf[100];
 				time_t foo = (time_t) t->lasttime.tv_sec + (t->period / 1000);
 				struct tm *tt = localtime(&foo);
@@ -452,7 +450,7 @@ static void config_write_main(FILE *f)
 					fprintf(f, "at %s %s/%s %s\n", name, buf, ekg_itoa(t->period / 1000), (char*)(t->data));
 				else
 					fprintf(f, "at %s %s %s\n", name, buf, (char*)(t->data));
-			} else {
+			} else if (t->function == timer_handle_command) {
 				char *foo;
 
 				if (t->persist)
@@ -466,6 +464,7 @@ static void config_write_main(FILE *f)
 			}
 		}
 	}
+#endif
 }
 
 /*

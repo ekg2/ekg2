@@ -56,34 +56,6 @@ extern "C" {
 
 /* obs³uga procesów potomnych */
 
-struct child_s;
-
-#ifndef EKG_NO_DEPRECATED
-typedef void (*child_handler_t)(struct child_s *c, pid_t pid, const char *name, int status, void *data);
-#endif
-
-typedef struct child_s {
-	pid_t		pid;		/* id procesu */
-	char		*plugin;	/* obs³uguj±cy plugin */
-#ifndef EKG_NO_DEPRECATED
-	char		*name;		/* nazwa, wy¶wietlana przy /exec */
-#endif
-	GChildWatchFunc	handler;	/* zak³ad pogrzebowy */
-	void		*priv_data;	/* dane procesu */
-
-	guint		id;		/* glib child_watch id */
-	GDestroyNotify	destr;
-} child_t;
-
-#ifndef EKG2_WIN32_NOFUNCTION
-#ifndef EKG_NO_DEPRECATED
-child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data);
-#endif
-child_t *ekg_child_add(plugin_t *plugin, GPid pid, GChildWatchFunc handler, gpointer data, GDestroyNotify destr);
-void children_destroy(void);
-#endif
-
-
 #ifndef EKG2_WIN32_NOFUNCTION
 typedef struct alias {
 	struct alias	*next;
@@ -98,27 +70,6 @@ enum mesg_t {
 	MESG_OFF,
 	MESG_ON,
 	MESG_DEFAULT
-};
-
-#define TIMER(x)		int x(int type, void *data)
-#define TIMER_SESSION(x)	int x(int type, session_t *s)
-
-struct timer {
-	guint		id;			/* glib timer id */
-	char		*name;			/* nazwa timera */
-	plugin_t	*plugin;		/* wtyczka obs³uguj±ca deksryptor */
-	GTimeVal	lasttime;		/* last call time */
-	unsigned int	period;			/* ile milisekund ma trwaæ czekanie */
-	int	(*function)(int, void *);	/* funkcja do wywo³ania */
-	void		*data;			/* dane dla funkcji */
-
-	unsigned int	persist		: 1;	/* czy ma byæ na zawsze? */
-	unsigned int	at		: 1;	/* /at? trzeba siê tego jako¶ pozbyæ
-						 * i ujednoliciæ z /timer */
-	unsigned int	is_session	: 1;	/* czy sesyjny */
-
-	/* -- internal helper data -- */
-	GSource		*source;		/* g_main_context_find_source_by_id(t->id) */
 };
 
 struct conference {
@@ -159,10 +110,8 @@ struct color_map {
 };
 
 #ifndef EKG2_WIN32_NOFUNCTION
-extern GSList *children;
 extern alias_t *aliases;
 extern list_t autofinds; /* char* data */
-extern GSList *timers;
 extern struct conference *conferences;
 extern newconference_t *newconferences;
 extern struct buffer_info buffer_debug;
@@ -346,17 +295,6 @@ int isalpha_pl(unsigned char c);
 #define xisspace(c) isspace((int) (unsigned char) c)
 #define xtolower(c) tolower((int) (unsigned char) c)
 #define xtoupper(c) toupper((int) (unsigned char) c)
-
-struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data);
-struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data);
-struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, int (*function)(int, session_t *));
-struct timer *timer_find_session(session_t *session, const char *name);
-int timer_remove(plugin_t *plugin, const char *name);
-int timer_remove_session(session_t *session, const char *name);
-int timer_remove_user();
-void timers_remove(struct timer *t);
-void timers_destroy();
-TIMER(timer_handle_command);
 
 const char *ekg_status_label(const int status, const char *descr, const char *prefix);
 void ekg_update_status(session_t *session);

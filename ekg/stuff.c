@@ -22,10 +22,7 @@
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
 
-#include "ekg2-config.h"
-#include "win32.h"
-
-#include <glib.h>
+#include "ekg2.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -59,63 +56,10 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "debug.h"
-#include "commands.h"
-#include "configfile.h"
-#include "dynstuff.h"
-#include "protocol.h"
-#include "stuff.h"
-#include "themes.h"
-#include "userlist.h"
-#include "vars.h"
-#include "windows.h"
-#include "xmalloc.h"
-#include "plugins.h"
-#include "sessions.h"
 #include "strings.h"
-#include "recode.h"
-
-#include "dynstuff_inline.h"
-#include "queries.h"
-
-GSList *children = NULL;
 
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
-
-/***************
- * timers
- ***************/
-GSList *timers = NULL;
-
-void timer_free_item(gpointer data) {
-	struct timer *t = data;
-	g_free(t->name);
-	g_slice_free(struct timer, t);
-}
-
-static void timers_add(struct timer *t) {
-	timers = g_slist_prepend(timers, t);
-}
-
-void timers_remove(struct timer *t) {
-	/*
-	 * NOTE
-	 *	This function MUST be called from timer destroy handler
-	 *	and MUST NOT be called from another place
-	 */
-	timers = g_slist_remove(timers, t);
-	timer_free_item(t);
-}
-
-void timers_destroy() {
-	inline void timer_source_remove(gpointer data, gpointer user_data) {
-		struct timer *t = data;
-		g_source_remove(t->id);
-	}
-
-	g_slist_foreach(timers, timer_source_remove, NULL);
-}
 
 /***************
  * conferences
@@ -1305,140 +1249,6 @@ int play_sound(const char *sound_path)
 	return res;
 }
 
-static void child_free_item(gpointer data) {
-	child_t *c = data;
-	g_spawn_close_pid(c->pid);
-#ifndef EKG_NO_DEPRECATED
-	g_free(c->name);
-#endif
-	g_free(c->plugin);
-	g_slice_free(child_t, c);
-}
-
-void children_destroy(void) {
-	inline void child_source_remove(gpointer data, gpointer user_data) {
-		child_t *c = data;
-
-#ifndef NO_POSIX_SYSTEM
-		kill(c->pid, SIGTERM);
-#else
-		/* TerminateProcess / TerminateThread */
-#endif
-
-		g_source_remove(c->id);
-	}
-
-	g_slist_foreach(children, child_source_remove, NULL);
-}
-
-#ifndef EKG_NO_DEPRECATED
-
-static void child_destroy_notify(gpointer data) {
-	children = g_slist_remove(children, data);
-	child_free_item(data);
-}
-
-static void child_wrapper(GPid pid, gint status, gpointer data) {
-	child_t *c = data;
-
-	/* plugin might have been unloaded */
-	if (c->plugin && !plugin_find(c->plugin))
-		return;
-	if (c->handler) {
-		child_handler_t ch = (void*) c->handler;
-		ch(c, pid, c->name, WEXITSTATUS(status), c->priv_data);
-	}
-}
-
-/*
- * child_add()
- *
- * dopisuje do listy uruchomionych dzieci procesów.
- *
- *  - plugin
- *  - pid
- *  - name
- *  - handler
- *  - data
- *
- * 0/-1
- *
- * NOTE: DEPRECATED, please use ekg_child_add() instead.
- */
-child_t *child_add(plugin_t *plugin, pid_t pid, const char *name, child_handler_t handler, void *priv_data)
-{
-	child_t *c	= g_slice_new(child_t);
-
-	c->plugin	= plugin ? g_strdup(plugin->name) : NULL;
-	c->pid		= pid;
-	c->name		= g_strdup(name);
-	c->handler	= (void*) handler;
-	c->priv_data	= priv_data;
-	
-	children	= g_slist_prepend(children, c);
-	c->id		= g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper, c, child_destroy_notify);
-	return c;
-}
-
-#endif
-
-static void child_destroy_notify2(gpointer data) {
-	child_t *c = data;
-	children = g_slist_remove(children, data);
-
-	if (G_LIKELY(!(c->plugin) || plugin_find(c->plugin))) {
-		/* XXX: leak can happen if plugin was unloaded */
-		if (c->destr)
-			c->destr(c->priv_data);
-	}
-
-	child_free_item(data);
-}
-
-static void child_wrapper2(GPid pid, gint status, gpointer data) {
-	child_t *c = data;
-
-	/* plugin might have been unloaded */
-	if (G_UNLIKELY(c->plugin && !plugin_find(c->plugin)))
-		return;
-	if (G_LIKELY(c->handler))
-		c->handler(pid, WEXITSTATUS(status), c->priv_data);
-}
-
-/**
- * ekg_child_add()
- *
- * Add a watcher for the child process.
- *
- * @param plugin - plugin which contains handler funcs or NULL if in core.
- * @param pid - PID of the child process.
- * @param handler - the handler func called when the process exits.
- *	The handler func will be provided with the child PID, exit status
- *	(filtered through WEXITSTATUS()) and private data.
- * @param data - the private data passed to the handler.
- * @param destr - destructor for the private data. It will be called
- *	even if the handler isn't (i.e. when the watch is removed before
- *	process exits). Can be NULL.
- *
- * @return The newly-allocated child_t pointer.
- */
-child_t *ekg_child_add(plugin_t *plugin, GPid pid, GChildWatchFunc handler, gpointer data, GDestroyNotify destr) {
-	child_t *c = g_slice_new(child_t);
-
-	c->plugin = plugin ? g_strdup(plugin->name) : NULL;
-	c->pid = pid;
-#ifndef EKG_NO_DEPRECATED
-	c->name = NULL;
-#endif
-	c->handler = handler;
-	c->priv_data = data;
-	c->destr = destr;
-	
-	children = g_slist_prepend(children, c);
-	c->id = g_child_watch_add_full(G_PRIORITY_DEFAULT, pid, child_wrapper2, c, child_destroy_notify2);
-	return c;
-}
-
 /**
  * mkdir_recursive()
  *
@@ -1874,180 +1684,6 @@ const char *timestamp_time(const char *format, time_t t) {
 	return buf;
 }
 
-static struct timer *ekg_timer_add_common(plugin_t *plugin, const char *name, unsigned int period, int persist) {
-	struct timer *t = g_slice_new(struct timer);
-
-	t->period = period;
-	t->persist = persist;
-	t->plugin = plugin;
-
-	return t;
-}
-
-static void timer_wrapper_destroy_notify(gpointer data) {
-	struct timer *t = data;
-
-	t->function(1, t->data);
-
-	timers_remove(t);
-}
-
-static gboolean timer_wrapper(gpointer data) {
-	struct timer *t = data;
-
-	g_source_get_current_time(t->source, &(t->lasttime));
-	return !(t->function(0, t->data) == -1 || !t->persist);
-}
-
-struct timer *timer_add_ms(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data) {
-	struct timer *t = ekg_timer_add_common(plugin, name, period, persist);
-
-	t->function = function;
-	t->data = data;
-	t->id = g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify);
-	t->name = name ? g_strdup(name) : g_strdup_printf("_%d", t->id);
-	t->source = g_main_context_find_source_by_id(NULL, t->id);
-	g_assert(t->source);
-	g_source_get_current_time(t->source, &(t->lasttime));
-
-	timers_add(t);
-	return t;
-}
-
-/*
- * timer_add()
- *
- * dodaje timera.
- *
- *  - plugin - plugin obs³uguj±cy timer,
- *  - name - nazwa timera w celach identyfikacji. je¶li jest równa NULL,
- *	     zostanie przyznany pierwszy numerek z brzegu.
- *  - period - za jaki czas w sekundach ma byæ uruchomiony,
- *  - persist - czy sta³y timer,
- *  - function - funkcja do wywo³ania po up³yniêciu czasu,
- *  - data - dane przekazywane do funkcji.
- *
- * zwraca zaalokowan± struct timer lub NULL w przypadku b³êdu.
- */
-struct timer *timer_add(plugin_t *plugin, const char *name, unsigned int period, int persist, int (*function)(int, void *), void *data)
-{
-	return timer_add_ms(plugin, name, period * 1000, persist, function, data);
-}
-
-struct timer *timer_add_session(session_t *session, const char *name, unsigned int period, int persist, int (*function)(int, session_t *)) {
-	struct timer *t;
-
-	if (!session || !session->plugin) {
-		debug_error("timer_add_session() s: 0x%x s->plugin: 0x%x\n", session, session ? session->plugin : NULL);
-		return NULL;
-	}
-
-	t = timer_add(session->plugin, name, period, persist, (void *) function, session);
-	t->is_session = 1;
-	return t;
-}
-
-/*
- * timer_remove()
- *
- * usuwa timer.
- *
- *  - plugin - plugin obs³uguj±cy timer,
- *  - name - nazwa timera,
- *
- * 0/-1
- */
-int timer_remove(plugin_t *plugin, const char *name)
-{
-	int removed = 0;
-
-	inline void timer_remove_iter(gpointer data, gpointer user_data) {
-		struct timer *t = data;
-
-		if (t->plugin == plugin && !xstrcasecmp(name, t->name)) {
-			g_source_remove(t->id);
-			removed++;
-		}
-	}
-
-	g_slist_foreach(timers, timer_remove_iter, NULL);
-	return ((removed) ? 0 : -1);
-}
-
-struct timer *timer_find_session(session_t *session, const char *name) {
-	if (!session)
-		return NULL;
-
-	inline gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
-		const struct timer *t = li;
-
-		return !(t->is_session && t->data == session && !xstrcmp(name, t->name));
-	}
-	
-	return (struct timer*) g_slist_find_custom(timers, NULL, timer_find_session_cmp);
-}
-
-int timer_remove_session(session_t *session, const char *name)
-{
-	plugin_t *p;
-	int removed = 0;
-
-	if (!session || (!(p = session->plugin)))
-		return -1;
-
-	inline void timer_remove_session_iter(gpointer data, gpointer user_data) {
-		struct timer *t = data;
-
-		if (t->is_session && t->data == session && !xstrcmp(name, t->name)) {
-			g_source_remove(t->id);
-			removed++;
-		}
-	}
-
-	g_slist_foreach(timers, timer_remove_session_iter, NULL);
-	return ((removed) ? 0 : -1);
-}
-
-/*
- * timer_handle_command()
- *
- * obs³uga timera wywo³uj±cego komendê.
- */
-TIMER(timer_handle_command)
-{
-	if (type) {
-		xfree(data);
-		return 0;
-	}
-	
-	command_exec(NULL, NULL, (char *) data, 0);
-	return 0;
-}
-
-/*
- * timer_remove_user()
- *
- * usuwa wszystkie timery u¿ytkownika.
- *
- * 0/-1
- */
-int timer_remove_user(int at)
-{
-	int removed = 0;
-
-	inline void timer_remove_user_iter(gpointer data, gpointer user_data) {
-		struct timer *t = data;
-
-		if (t->at == at && t->function == timer_handle_command) { 
-			g_source_remove(t->id);
-			removed = 1;
-		}
-	}
-
-	g_slist_foreach(timers, timer_remove_user_iter, NULL);
-	return ((removed) ? 0 : -1);
-}
-
 /* 
  * xstrmid()
  *
@@ -2215,7 +1851,7 @@ int msg_all(session_t *s, const char *function, const char *what)
 }
 
 #ifndef NO_POSIX_SYSTEM
-static void speech_child_handler(struct child_s *c, pid_t pid, const char *name, int status, void *data) {
+static void speech_child_handler(GPid pid, gint status, gpointer data) {
 	speech_pid = 0;
 
 	if (!config_speech_app)
@@ -2270,7 +1906,7 @@ int say_it(const char *str)
 		exit(status);
 	}
 
-	child_add(NULL, pid, NULL, speech_child_handler, NULL);
+	ekg_child_add(NULL, "(speech)", pid, speech_child_handler, NULL, NULL);
 	return 0;
 #else
 	return -1;

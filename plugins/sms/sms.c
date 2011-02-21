@@ -101,7 +101,8 @@ static int sms_send(const char *recipient, const char *message)
 
 	close(fd[1]);
 
-	ekg_child_add(&sms_plugin, pid, sms_child_handler, g_strdup(recipient), g_free);
+	ekg_child_add(&sms_plugin, "%s %s %s", pid, sms_child_handler, g_strdup(recipient), g_free,
+			config_sms_app, recipient, message);
 	return 0;
 }
 
