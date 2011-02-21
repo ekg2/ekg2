@@ -119,10 +119,6 @@ watch_t *watch_add_session(session_t *session, int fd, watch_type_t type, watche
 
 int watch_remove(plugin_t *plugin, int fd, watch_type_t type);
 
-void watch_handle(watch_t *w);
-void watch_handle_line(watch_t *w);
-int watch_handle_write(watch_t *w);
-
 #endif
 
 #endif

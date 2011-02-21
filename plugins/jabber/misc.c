@@ -158,11 +158,15 @@ char *jabber_zlib_decompress(const char *buf, int *len) {
 #endif
 
 int JABBER_COMMIT_DATA(watch_t *w) {
+#ifdef FIXME_WATCHES_TRANSFER_LIMITS
 	if (w) { 
 		w->transfer_limit = 0;
 		return watch_handle_write(w); 
 	}
 	return -1;
+#else
+	return 0;
+#endif
 }
 
 char *jabber_attr(char **atts, const char *att)

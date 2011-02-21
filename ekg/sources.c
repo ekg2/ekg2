@@ -1066,7 +1066,7 @@ void watch_free(watch_t *w) {
  *
  * obsługa deskryptorów przegl±danych WATCH_READ_LINE.
  */
-void watch_handle_line(watch_t *w)
+static void watch_handle_line(watch_t *w)
 {
 	char buf[1024], *tmp;
 	int ret, res = 0;
@@ -1127,13 +1127,15 @@ void watch_handle_line(watch_t *w)
 }
 
 /* ripped from irc plugin */
-int watch_handle_write(watch_t *w) {
+static int watch_handle_write(watch_t *w) {
 	int (*handler)(int, int, const char *, void *) = w->handler;
 	int res = -1;
 	int len = (w && w->buf) ? w->buf->len : 0;
 
 	g_assert(w);
+#ifdef FIXME_WATCHES_TRANSFER_LIMITS
 	if (w->transfer_limit == -1) return 0;	/* transfer limit turned on, don't send anythink... XXX */
+#endif
 	debug_io("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
 	if (!len) return -1;
 
@@ -1246,7 +1248,7 @@ int watch_write(watch_t *w, const char *format, ...) {			/* XXX, refactory: watc
  * @todo We only check for w->removed == -1, maybe instead change it to: w->removed != 0
  */
 
-void watch_handle(watch_t *w) {
+static void watch_handle(watch_t *w) {
 	int (*handler)(int, int, int, void *);
 	int res;
 
