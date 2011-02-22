@@ -1047,21 +1047,6 @@ static LIST_FREE_ITEM(watch_free_data, watch_t *) {
 }
 
 /*
- * watch_free()
- *
- * zwalnia pamięć po obiekcie watch_t.
- * zwraca wskaĽnik do następnego obiektu do iterowania
- * albo NULL, jak nie można skasować.
- */
-void watch_free(watch_t *w) {
-	if (!w)
-		return;
-
-	g_source_remove(w->id);
-
-}
-
-/*
  * watch_handle_line()
  *
  * obsługa deskryptorów przegl±danych WATCH_READ_LINE.
@@ -1123,6 +1108,8 @@ static int watch_handle_line(watch_t *w)
 	return res;
 }
 
+static gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data);
+
 /* ripped from irc plugin */
 static int watch_handle_write(watch_t *w) {
 	int (*handler)(int, int, const char *, void *) = w->handler;
@@ -1133,7 +1120,7 @@ static int watch_handle_write(watch_t *w) {
 #ifdef FIXME_WATCHES_TRANSFER_LIMITS
 	if (w->transfer_limit == -1) return 0;	/* transfer limit turned on, don't send anythink... XXX */
 #endif
-	if (!len) return 0;
+	g_assert(len);
 	debug_io("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
 
 	if (handler) {
@@ -1184,6 +1171,12 @@ static int watch_handle_write(watch_t *w) {
 	string_remove(w->buf, res);
 	debug_io("left: %d bytes\n", w->buf->len);
 
+	if (!w->buf->len) {
+		/* all written, remove the watch */
+		g_source_remove(w->id);
+		w->id = -1;
+	}
+
 	return res;
 }
 
@@ -1196,8 +1189,17 @@ int watch_write_data(watch_t *w, const char *buf, int len) {		/* XXX, refactory:
 	was_empty = !w->buf->len;
 	string_append_raw(w->buf, buf, len);
 
-	if (was_empty) 
-		return watch_handle_write(w); /* let's try to write somethink ? */
+	/* if it was empty, we need to readd the watch */
+	if (was_empty) {
+		/* but maybe we could write it all right now? */
+		watch_handle_write(w);
+		/* ...or maybe not */
+		if (w->buf->len)
+			w->id = g_io_add_watch_full(w->f, G_PRIORITY_DEFAULT,
+				G_IO_OUT | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+				watch_old_wrapper, w, NULL);
+			/* XXX: we can't clearly destroy it ;f */
+	}
 	return 0;
 }
 
@@ -1259,7 +1261,7 @@ static int watch_handle(watch_t *w) {
 	return res;
 }
 
-gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data) {
+static gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data) {
 	watch_t *w = data;
 
 	if (w->type != WATCH_NONE && (cond & (G_IO_IN | G_IO_OUT))) {
@@ -1286,7 +1288,7 @@ gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data) {
 	return TRUE;
 }
 
-void watch_old_destroy_notify(gpointer data) {
+static void watch_old_destroy_notify(gpointer data) {
 	watch_t *w = data;
 
 #ifdef FIXME_WATCHES
@@ -1300,6 +1302,26 @@ void watch_old_destroy_notify(gpointer data) {
 	list_remove_safe(&watches, w, 1);
 
 	debug("watch_old_destroy_notify() REMOVED WATCH, oldwatch: 0x%x\n", w);
+}
+
+/*
+ * watch_free()
+ *
+ * zwalnia pamięć po obiekcie watch_t.
+ * zwraca wskaĽnik do następnego obiektu do iterowania
+ * albo NULL, jak nie można skasować.
+ */
+void watch_free(watch_t *w) {
+	if (!w)
+		return;
+
+	if (w->id != -1)
+		g_source_remove(w->id);
+	/* stupid line watchers with their stupid manual removal */
+	else if (w->type == WATCH_NONE)
+		watch_old_destroy_notify(w);
+	else
+		debug_function("watch_free() with no action, id=-1, fd=%d, type=%d\n", w->fd, w->type);
 }
 
 /**
@@ -1341,10 +1363,13 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	g_assert(g_io_channel_set_encoding(w->f, NULL, &err) == G_IO_STATUS_NORMAL);
 	g_io_channel_set_buffered(w->f, FALSE);
 
-	w->id = g_io_add_watch_full(w->f, G_PRIORITY_DEFAULT,
+	if (!w->buf || w->type == WATCH_READ)
+		w->id = g_io_add_watch_full(w->f, G_PRIORITY_DEFAULT,
 			(w->type == WATCH_WRITE ? G_IO_OUT : G_IO_IN)
 			| G_IO_ERR | G_IO_HUP | G_IO_NVAL,
 			watch_old_wrapper, w, watch_old_destroy_notify);
+	else
+		w->id = -1; /* backwards compat magic ;f */
 
 	list_add_beginning(&watches, w);
 	return w;
