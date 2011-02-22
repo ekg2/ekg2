@@ -242,15 +242,6 @@ static QUERY(gtk_print_version) {
 	return 0;
 }
 
-static QUERY(gtk_utf_postinit) {
-	/* hack */
-	xfree(config_console_charset);
-	config_console_charset = xstrdup("UTF-8");
-
-	config_use_unicode = 1;
-	return 0;
-}
-
 static QUERY(gtk_postinit) {
 	mg_apply_setup();
 
@@ -385,7 +376,6 @@ EXPORT int gtk_plugin_init(int prio) {
 
 	query_emit(&gtk_plugin, "set-vars-default");
 
-	query_connect(&gtk_plugin, "config-postinit",		gtk_utf_postinit, NULL);
 	query_connect(&gtk_plugin, "config-postinit",		gtk_postinit, NULL);
 
 	query_connect(&gtk_plugin, "ui-loop",			ekg2_gtk_loop, NULL);

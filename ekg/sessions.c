@@ -908,7 +908,7 @@ int session_write()
 		}
 
 		fchmod(fileno(f), 0600);
-		fprintf(f, "# vim:fenc=%s\n", config_console_charset);
+		fprintf(f, "# vim:fenc=%s\n", console_charset);
 		for (s = sessions; s; s = s->next) {
 			int i;
 

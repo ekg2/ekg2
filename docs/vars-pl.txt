@@ -81,12 +81,6 @@ completion_notify
 	pojawią się na liście ze stanem ,,zajęty''. Wszystkie dostępne
 	wartości to: 0, 1, 2, 5, 6.
 
-console_charset
-	typ: tekst
-	domyślna wartość: brak
-	
-	Określa kodowanie używane przez terminal.
-
 dcc_dir
 	typ: tekst
 	domyślna wartość: brak

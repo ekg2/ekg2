@@ -445,7 +445,7 @@ int script_variables_free(int free) {
 
 	if (f) {
 		fchmod(fileno(f), 0600);
-		fprintf(f, "# vim:fenc=%s\n", config_console_charset);
+		fprintf(f, "# vim:fenc=%s\n", console_charset);
 	}
 	for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;

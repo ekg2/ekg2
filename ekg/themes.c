@@ -2192,10 +2192,6 @@ void theme_init()
 
 	format_add("directory_cant_create",	_("%! Can't create directory: %1 (%2)"), 1);
 
-	/* charset stuff */
-	format_add("console_charset_using",	_("%) EKG2 detected that your console works under: %W%1%n Please verify and change %Gconsole_charset%n variable if needed"), 1);
-	format_add("console_charset_bad",	_("%! EKG2 detected that your console works under: %W%1%n, but in %Gconsole_charset%n variable you've got: %W%2%n Please verify."), 1);
-
 	/* jogger-like I/O */
 	format_add("io_cantopen", _("%! %|Unable to open file: %T%1%n (%c%2%n)!"), 1);
 	format_add("io_nonfile", _("%! %|Given path doesn't appear to be regular file: %T%1%n!"), 1);

@@ -630,23 +630,6 @@ static void irc_changed_auto_guess_encoding(session_t *s, const char *var) {
 	for (i=0; args[i]; i++) {
 		char *to = NULL;
 		char *from = args[i];
-		if (!xstrcasecmp(from, config_console_charset)) {
-			/* ekg2 can't convert when from and to are the same
-			 * trick: lets convert iso-8859-2 -> iso8859-2; utf8 -> utf-8; etc.
-			 */
-			char *p = from, *q;
-			to = xmalloc(xstrlen(from)+2);
-			q = to;
-			while ( (*p=tolower(*p)) && (*p>='a') && (*p<='z') )
-			    *q++ = *p++;
-			if (*p == '-')
-			    p++;
-			else
-			    *q++ = '-';
-			while ( (*q++ = *p++) )
-			    ;
-			*q = '\0';
-		}
 		e = xmalloc(sizeof(conv_in_out_t));
 		e->conv_in = ekg_convert_string_init(from, to, &(e->conv_out));
 		if (e->conv_in)

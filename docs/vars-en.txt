@@ -58,12 +58,6 @@ completion_notify
 	
 	*not translated yet*
 
-console_charset
-	type: text
-	default value: none
-	
-	*not translated yet*
-
 dcc_dir
 	type: text
 	default value: none

@@ -171,13 +171,6 @@ string_t ekg_convert_string_t(string_t s, const char *from, const char *to) {
 	return ret;
 }
 
-void changed_console_charset(const char *name) {
-	if (1) {
-		/* XXX: replace with some recoding test? */
-	} else if (!in_autoexec && xstrcasecmp(console_charset, config_console_charset)) 
-		print("console_charset_bad", console_charset, config_console_charset);
-}
-
 void ekg_recode_inc_ref(const gchar *enc) {
 }
 
@@ -233,11 +226,11 @@ const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
 }
 
 gchar *ekg_recode_from_locale(const char *str) {
-	return ekg_recode_to_core_dup(config_console_charset, str);
+	return ekg_recode_to_core_dup(console_charset, str);
 }
 
 char *ekg_recode_to_locale(const gchar *str) {
-	return ekg_recode_from_core_dup(config_console_charset, str);
+	return ekg_recode_from_core_dup(console_charset, str);
 }
 	
 fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
@@ -254,7 +247,7 @@ fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
 		char *ls;
 		gsize ob;
 
-		ls = g_convert_with_fallback(s, len, config_console_charset, "utf8",
+		ls = g_convert_with_fallback(s, len, console_charset, "utf8",
 				NULL, NULL, &ob, NULL);
 
 		if (ls) {

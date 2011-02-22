@@ -36,11 +36,6 @@ void config_upgrade() {
 	}
 #endif
 
-	if (xstrcasecmp(console_charset, config_console_charset)) 
-		print("console_charset_bad", console_charset, config_console_charset);
-	else if (config_version == 0 || config_version == -1)
-		print("console_charset_using", config_console_charset);
-
 	if (config_version == -1)
 		config_version = current_config_version;
 

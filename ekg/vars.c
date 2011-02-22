@@ -29,7 +29,7 @@
 #include <unistd.h>
 
 void changed_session_locks(const char *varname); /* sessions.c */
-char *console_charset;
+const char *console_charset;
 
 GSList *variables = NULL;
 
@@ -74,10 +74,6 @@ void variable_init() {
 	variable_add(NULL, ("completion_notify"), VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
 		/* It's very, very special variable; shouldn't be used by user */
 	variable_add(NULL, ("config_version"), VAR_INT, 2, &config_version, NULL, NULL, NULL);
-		/* XXX, warn here. user should change only console_charset if it's really nesessary... we should make user know about his terminal
-		 *	encoding... and give some tip how to correct this... it's just temporary
-		 */
-	variable_add(NULL, ("console_charset"), VAR_STR, 1, &config_console_charset, changed_console_charset, NULL, NULL);
 	variable_add(NULL, ("dcc_dir"), VAR_STR, 1, &config_dcc_dir, NULL, NULL, NULL); 
 	variable_add(NULL, ("debug"), VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
 /*	variable_add(NULL, ("default_protocol"), VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL); */
@@ -151,10 +147,7 @@ void variable_set_default() {
 	xfree(config_display_color_map);
 	xfree(config_subject_prefix);
 	xfree(config_subject_reply_prefix);
-	xfree(config_console_charset);
 	xfree(config_dcc_dir);
-
-	xfree(console_charset);
 
 	config_slash_messages = 1;
 	config_history_savedups = 1;		/* save lines matching the previous history entry */
@@ -166,17 +159,8 @@ void variable_set_default() {
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
 	config_subject_reply_prefix = xstrdup("Re: ");
-	{
-		const gchar* tmp;
+	is_unicode = g_get_charset(&console_charset);
 
-		is_unicode = g_get_charset(&tmp);
-		console_charset = g_strdup(tmp);
-	}
-
-	if (console_charset) 
-		config_console_charset = xstrdup(console_charset);
-	else /* XXX: probably never reached */
-		config_console_charset = xstrdup("ISO-8859-2"); /* Default: ISO-8859-2 */
 #if USE_UNICODE
 	if (config_use_unicode && !is_unicode) {
 		debug("nl_langinfo(CODESET) == %s swapping config_use_unicode to 0\n", console_charset);

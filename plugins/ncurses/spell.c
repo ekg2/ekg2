@@ -42,7 +42,7 @@ static AspellConfig  *spell_config  = NULL;
 void ncurses_spellcheck_init(void) {
 	AspellCanHaveError *possible_err;
 
-	if (!config_aspell || !config_console_charset || !config_aspell_lang) {
+	if (!config_aspell || !console_charset || !config_aspell_lang) {
 	/* jesli nie chcemy aspella to wywalamy go z pamieci */
 		if (spell_checker)	delete_aspell_speller(spell_checker);
 		if (spell_config)	delete_aspell_config(spell_config);
@@ -56,7 +56,7 @@ void ncurses_spellcheck_init(void) {
 
 	if (spell_checker)	{ delete_aspell_speller(spell_checker);	spell_checker = NULL; }
 	if (!spell_config)	spell_config = new_aspell_config();
-	aspell_config_replace(spell_config, "encoding", config_console_charset);
+	aspell_config_replace(spell_config, "encoding", console_charset);
 	aspell_config_replace(spell_config, "lang", config_aspell_lang);
 	possible_err = new_aspell_speller(spell_config);
 	/* delete_aspell_config(spell_config); ? */
