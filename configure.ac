@@ -2,11 +2,12 @@ AC_PREREQ([2.60])
 AC_INIT([ekg2], [git])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([1.6 foreign dist-bzip2 -Wall])
+AM_INIT_AUTOMAKE([1.6 foreign dist-bzip2 nostdinc -Wall])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
 AC_PROG_CC_C99
+AM_PROG_CC_C_O
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 
@@ -354,6 +355,12 @@ AC_EKG2_PLUGIN([sim], [
 ])
 
 AC_EKG2_PLUGIN([sms])
+
+dnl CPPFLAGS were duplicated into whatever_CPPFLAGS
+dnl make the global ones exe-specific
+EKG_CPPFLAGS="$CPPFLAGS"
+AC_SUBST([EKG_CPPFLAGS])
+CPPFLAGS=
 
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])

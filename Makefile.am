@@ -78,23 +78,27 @@ ekg_ekg2_SOURCES = \
 	ekg/windows.c \
 	ekg/xmalloc.c
 
-ekg_ekg2_LDADD = @EKG_LIBS@
+ekg_ekg2_LDADD = $(EKG_LIBS)
+ekg_ekg2_CPPFLAGS = $(AM_CPPFLAGS) $(EKG_CPPFLAGS)
 
 if STATIC_LIBS
 ekg_ekg2_LDFLAGS = -static
 ekg_ekg2_LDADD += $(plugin_LTLIBRARIES)
 endif
 
-AM_CPPFLAGS = \
+AM_CPPFLAGS = -I$(top_builddir)/plugins -I$(top_builddir) -I$(top_srcdir) \
 	-DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
-	-DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\" \
-	-I$(top_builddir) -I$(top_srcdir)
+	-DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\"
 
-BUILT_SOURCES = ekg2.h.gch
-MOSTLYCLEANFILES = ekg2.h.gch
+BUILT_SOURCES = ekg2.h.gch plugins/ekg2.h.gch
+MOSTLYCLEANFILES = ekg2.h.gch plugins/ekg2.h.gch
 
 ekg2.h.gch: $(noinst_HEADERS)
-	$(AM_V_CC)$(COMPILE) -o $@ $< || touch $@
+	$(AM_V_CC)$(COMPILE) $(EKG_CPPFLAGS) -o $@ $< || touch $@
+
+plugins/ekg2.h.gch: $(noinst_HEADERS)
+	$(MKDIR_P) plugins
+	$(AM_V_CC)$(COMPILE) $(EKG_CPPFLAGS) -fPIC -DPIC -o $@ $< || touch $@
 
 TESTS = check_potfiles
 check_SCRIPTS = check_potfiles
