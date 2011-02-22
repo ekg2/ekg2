@@ -1139,7 +1139,9 @@ exact_match:
 					if (completions[0][common - 1] == '"')
 						common--;
 
-					xstrncat_pl(line, completions[0], common);
+					/* XXX: that was xstrncat_pl(), so in chars
+					 * but common is in bytes - wtf? INVESTIGATE */
+					strncat(line, completions[0], common);
 					*line_index = xstrlen(line);
 				} else {
 					if (xstrchr(words[i], (' '))) {

@@ -2350,13 +2350,6 @@ int utf8str_char2bytes(const char *src, size_t n) {
 	return n;
 }
 
-char *xstrncat_pl(char *dest, const char *src, size_t n) {
-#if USE_UNICODE
-	n = utf8str_char2bytes(src, n);
-#endif
-	return xstrncat(dest, src, n);
-}
-
 /*
  * strncasecmp_pl()
  *
