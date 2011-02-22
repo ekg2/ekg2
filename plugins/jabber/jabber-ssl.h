@@ -1,8 +1,6 @@
 #ifndef __EKG_JABBER_SSL_H
 #define __EKG_JABBER_SSL_H
 
-#include "ekg2.h"
-
 #ifdef HAVE_LIBGNUTLS
 # define JABBER_HAVE_SSL 1
 # undef HAVE_LIBSSL	/* na wszelki wypadek */
