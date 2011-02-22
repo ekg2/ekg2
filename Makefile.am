@@ -10,70 +10,73 @@ themedir = $(pkgdatadir)/themes
 
 bin_PROGRAMS = ekg/ekg2
 
-ekg_ekg2_SOURCES = \
+noinst_HEADERS = \
 	ekg2.h \
 	ekg2-config.h \
-	gettext.h \
-	ekg/bindings.c \
 	ekg/bindings.h \
-	ekg/commands.c \
 	ekg/commands.h \
-	ekg/completion.c \
 	ekg/completion.h \
-	ekg/configfile.c \
 	ekg/configfile.h \
 	ekg/debug.h \
-	ekg/dynstuff.c \
 	ekg/dynstuff.h \
 	ekg/dynstuff_inline.h \
-	ekg/ekg.c \
-	ekg/emoticons.c \
 	ekg/emoticons.h \
-	ekg/events.c \
 	ekg/events.h \
 	ekg/internal.h \
-	ekg/legacyconfig.c \
-	ekg/log.c \
 	ekg/log.h \
-	ekg/metacontacts.c \
 	ekg/metacontacts.h \
-	ekg/msgqueue.c \
 	ekg/msgqueue.h \
-	ekg/net.c \
 	ekg/net.h \
 	ekg/objects.h \
-	ekg/plugins.c \
 	ekg/plugins.h \
-	ekg/protocol.c \
 	ekg/protocol.h \
-	ekg/queries.c \
 	ekg/queries.h \
-	ekg/recode.c \
 	ekg/recode.h \
-	ekg/scripts.c \
 	ekg/scripts.h \
-	ekg/sessions.c \
 	ekg/sessions.h \
-	ekg/sources.c \
 	ekg/sources.h \
-	ekg/srv.c \
 	ekg/srv.h \
-	ekg/strings.c \
 	ekg/strings.h \
-	ekg/stuff.c \
 	ekg/stuff.h \
-	ekg/themes.c \
 	ekg/themes.h \
-	ekg/userlist.c \
 	ekg/userlist.h \
-	ekg/vars.c \
 	ekg/vars.h \
-	ekg/win32.c \
 	ekg/win32.h \
-	ekg/windows.c \
 	ekg/windows.h \
-	ekg/xmalloc.c \
 	ekg/xmalloc.h
+
+ekg_ekg2_SOURCES = \
+	gettext.h \
+	$(noinst_HEADERS) \
+	ekg/bindings.c \
+	ekg/commands.c \
+	ekg/completion.c \
+	ekg/configfile.c \
+	ekg/dynstuff.c \
+	ekg/ekg.c \
+	ekg/emoticons.c \
+	ekg/events.c \
+	ekg/legacyconfig.c \
+	ekg/log.c \
+	ekg/metacontacts.c \
+	ekg/msgqueue.c \
+	ekg/net.c \
+	ekg/plugins.c \
+	ekg/protocol.c \
+	ekg/queries.c \
+	ekg/recode.c \
+	ekg/scripts.c \
+	ekg/sessions.c \
+	ekg/sources.c \
+	ekg/srv.c \
+	ekg/strings.c \
+	ekg/stuff.c \
+	ekg/themes.c \
+	ekg/userlist.c \
+	ekg/vars.c \
+	ekg/win32.c \
+	ekg/windows.c \
+	ekg/xmalloc.c
 
 ekg_ekg2_CPPFLAGS = \
 	-DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
@@ -124,7 +127,7 @@ if ENABLE_AUTORESPONDER
 plugin_LTLIBRARIES += plugins/autoresponder/autoresponder.la
 
 plugins_autoresponder_autoresponder_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/autoresponder/autoresponder.c
 
 dist_autoresponder_DATA = \
@@ -136,7 +139,7 @@ if ENABLE_FEED
 plugin_LTLIBRARIES += plugins/feed/feed.la
 
 plugins_feed_feed_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/feed/feed.c \
 	plugins/feed/feed.h \
 	plugins/feed/nntp.c \
@@ -147,7 +150,7 @@ if ENABLE_GG
 plugin_LTLIBRARIES += plugins/gg/gg.la
 
 plugins_gg_gg_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/gg/commands.c \
 	plugins/gg/dcc.c \
 	plugins/gg/dcc.h \
@@ -176,7 +179,7 @@ if ENABLE_GPG
 plugin_LTLIBRARIES += plugins/gpg/gpg.la
 
 plugins_gpg_gpg_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/gpg/gpg.c
 
 dist_gpg_DATA = \
@@ -193,7 +196,7 @@ GTK_INLINE_PNGS = \
 	inline_pngs_icq.h
 
 plugins_gtk_gtk_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/gtk/bindings.c \
 	plugins/gtk/bindings.h \
 	plugins/gtk/chanview.c \
@@ -289,7 +292,7 @@ if ENABLE_ICQ
 plugin_LTLIBRARIES += plugins/icq/icq.la
 
 plugins_icq_icq_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/icq/digest.c \
 	plugins/icq/icq.c \
 	plugins/icq/icq_caps.c \
@@ -321,7 +324,7 @@ if ENABLE_IRC
 plugin_LTLIBRARIES += plugins/irc/irc.la
 
 plugins_irc_irc_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/irc/autoacts.c \
 	plugins/irc/autoacts.h \
 	plugins/irc/input.c \
@@ -344,7 +347,7 @@ if ENABLE_JABBER
 plugin_LTLIBRARIES += plugins/jabber/jabber.la
 
 plugins_jabber_jabber_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/jabber/commands.c \
 	plugins/jabber/digest.c \
 	plugins/jabber/jabber.c \
@@ -371,7 +374,7 @@ if ENABLE_JOGGER
 plugin_LTLIBRARIES += plugins/jogger/jogger.la
 
 plugins_jogger_jogger_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/jogger/drafts.c \
 	plugins/jogger/jogger.c \
 	plugins/jogger/messages.c
@@ -381,7 +384,7 @@ if ENABLE_LOGS
 plugin_LTLIBRARIES += plugins/logs/logs.la
 
 plugins_logs_logs_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/logs/main.c \
 	plugins/logs/main.h
 
@@ -393,7 +396,7 @@ if ENABLE_LOGSQLITE
 plugin_LTLIBRARIES += plugins/logsqlite/logsqlite.la
 
 plugins_logsqlite_logsqlite_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/logsqlite/logsqlite.c \
 	plugins/logsqlite/logsqlite.h
 
@@ -408,7 +411,7 @@ if ENABLE_MAIL
 plugin_LTLIBRARIES += plugins/mail/mail.la
 
 plugins_mail_mail_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/mail/main.c
 
 dist_mail_DATA = \
@@ -419,7 +422,7 @@ if ENABLE_NCURSES
 plugin_LTLIBRARIES += plugins/ncurses/ncurses.la
 
 plugins_ncurses_ncurses_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/ncurses/backlog.c \
 	plugins/ncurses/backlog.h \
 	plugins/ncurses/bindings.c \
@@ -453,7 +456,7 @@ if ENABLE_PERL
 plugin_LTLIBRARIES += plugins/perl/perl.la
 
 plugins_perl_perl_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/perl/perl_bless.c \
 	plugins/perl/perl_bless.h \
 	plugins/perl/perl_core.c \
@@ -531,7 +534,7 @@ if ENABLE_POLCHAT
 plugin_LTLIBRARIES += plugins/polchat/polchat.la
 
 plugins_polchat_polchat_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/polchat/polchat.c \
 	plugins/polchat/polchat_handlers.inc
 endif
@@ -540,7 +543,7 @@ if ENABLE_PYTHON
 plugin_LTLIBRARIES += plugins/python/python.la
 
 plugins_python_python_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/python/python.c \
 	plugins/python/python-config.c \
 	plugins/python/python-config.h \
@@ -569,7 +572,7 @@ if ENABLE_READLINE
 plugin_LTLIBRARIES += plugins/readline/readline.la
 
 plugins_readline_readline_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/readline/completion.c \
 	plugins/readline/main.c \
 	plugins/readline/ui-readline.c \
@@ -584,7 +587,7 @@ if ENABLE_RIVCHAT
 plugin_LTLIBRARIES += plugins/rivchat/rivchat.la
 
 plugins_rivchat_rivchat_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/rivchat/misc.c \
 	plugins/rivchat/rivchat.c \
 	plugins/rivchat/rivchat.h
@@ -594,7 +597,7 @@ if ENABLE_SIM
 plugin_LTLIBRARIES += plugins/sim/sim.la
 
 plugins_sim_sim_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/sim/main.c \
 	plugins/sim/simlite.c \
 	plugins/sim/simlite.h
@@ -608,7 +611,7 @@ if ENABLE_SMS
 plugin_LTLIBRARIES += plugins/sms/sms.la
 
 plugins_sms_sms_la_SOURCES = \
-	ekg2-config.h \
+	$(noinst_HEADERS) \
 	plugins/sms/sms.c
 
 dist_sms_DATA = \
