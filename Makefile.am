@@ -94,7 +94,7 @@ BUILT_SOURCES = ekg2.h.gch
 MOSTLYCLEANFILES = ekg2.h.gch
 
 ekg2.h.gch: $(noinst_HEADERS)
-	$(COMPILE) -o $@ $< || touch $@
+	$(AM_V_CC)$(COMPILE) -o $@ $< || touch $@
 
 TESTS = check_potfiles
 check_SCRIPTS = check_potfiles
