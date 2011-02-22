@@ -1336,7 +1336,11 @@ watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_
 	w->data    = data;
 
 	w->f = g_io_channel_unix_new(fd);
+
+	/* we need to disable recoding & buffering, as we use fd directly */
 	g_assert(g_io_channel_set_encoding(w->f, NULL, &err) == G_IO_STATUS_NORMAL);
+	g_io_channel_set_buffered(w->f, FALSE);
+
 	w->id = g_io_add_watch_full(w->f, G_PRIORITY_DEFAULT,
 			(w->type == WATCH_WRITE ? G_IO_OUT : G_IO_IN)
 			| G_IO_ERR | G_IO_HUP | G_IO_NVAL,
