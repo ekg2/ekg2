@@ -72,7 +72,7 @@ dnl and AC_SUBSTituted with that names.
 		AS_IF([test $enable_$1 != no], [
 			$3
 
-			AC_SUBST([plugins_$1_$1_la_CPPFLAGS], [$CPPFLAGS])
+			AC_SUBST([plugins_$1_$1_la_CPPFLAGS], ["$CPPFLAGS \$(AM_CPPFLAGS)"])
 			AC_SUBST([plugins_$1_$1_la_LDFLAGS], ["-module -avoid-version $LDFLAGS"])
 			AC_SUBST([plugins_$1_$1_la_LIBADD], [$LIBS])
 			AC_SUBST([$1dir], ['$(pkgdatadir)/plugins/$1'])

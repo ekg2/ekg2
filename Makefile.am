@@ -78,16 +78,23 @@ ekg_ekg2_SOURCES = \
 	ekg/windows.c \
 	ekg/xmalloc.c
 
-ekg_ekg2_CPPFLAGS = \
-	-DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
-	-DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\" \
-	-I$(top_srcdir) $(AM_CPPFLAGS)
 ekg_ekg2_LDADD = @EKG_LIBS@
 
 if STATIC_LIBS
 ekg_ekg2_LDFLAGS = -static
 ekg_ekg2_LDADD += $(plugin_LTLIBRARIES)
 endif
+
+AM_CPPFLAGS = \
+	-DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
+	-DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\" \
+	-I$(top_builddir) -I$(top_srcdir)
+
+BUILT_SOURCES = ekg2.h.gch
+MOSTLYCLEANFILES = ekg2.h.gch
+
+ekg2.h.gch: $(noinst_HEADERS)
+	$(COMPILE) -o $@ $< || touch $@
 
 TESTS = check_potfiles
 check_SCRIPTS = check_potfiles
@@ -219,10 +226,10 @@ plugins_gtk_gtk_la_SOURCES = \
 	plugins/gtk/chanview-tree.inc \
 	$(GTK_INLINE_PNGS)
 
-BUILT_SOURCES = \
+BUILT_SOURCES += \
 	$(GTK_INLINE_PNGS)
 
-MOSTLYCLEANFILES = \
+MOSTLYCLEANFILES += \
 	$(GTK_INLINE_PNGS)
 
 BASE_PNGS = \
