@@ -1262,7 +1262,7 @@ static int watch_handle(watch_t *w) {
 gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data) {
 	watch_t *w = data;
 
-	if (cond & (G_IO_IN | G_IO_OUT)) {
+	if (w->type != WATCH_NONE && (cond & (G_IO_IN | G_IO_OUT))) {
 		int ret;
 		g_assert(cond & (w->type == WATCH_WRITE ? G_IO_OUT : G_IO_IN));
 
