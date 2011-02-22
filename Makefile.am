@@ -79,7 +79,12 @@ ekg_ekg2_CPPFLAGS = \
 	-DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
 	-DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\" \
 	-I$(top_srcdir) $(AM_CPPFLAGS)
-ekg_ekg2_LDADD = @EKG2_STATIC_PLUGIN_LIBS@ @EKG_LIBS@
+ekg_ekg2_LDADD = @EKG_LIBS@
+
+if STATIC_LIBS
+ekg_ekg2_LDFLAGS = -static
+ekg_ekg2_LDADD += $(plugin_LTLIBRARIES)
+endif
 
 TESTS = check_potfiles
 check_SCRIPTS = check_potfiles
