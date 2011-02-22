@@ -277,7 +277,6 @@ const char *timestamp(const char *format);
 const char *timestamp_time(const char *format, time_t t);
 char *xstrmid(const char *str, int start, int length);
 void xstrtr(char *text, char from, char to);
-size_t strlen_pl(const char *s) G_GNUC_DEPRECATED;
 char color_map(unsigned char r, unsigned char g, unsigned char b);
 char *strcasestr(const char *haystack, const char *needle);
 int msg_all(session_t *s, const char *function, const char *what);

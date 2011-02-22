@@ -2330,10 +2330,6 @@ guint32 *ekg_sent_message_format(const char *text)
 	return format;
 }
 
-size_t strlen_pl(const char *s) {
-	return xstrlen(s);
-}
-
 /*
  * strncasecmp_pl()
  *

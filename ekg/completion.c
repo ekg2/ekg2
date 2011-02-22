@@ -1009,7 +1009,7 @@ exact_match:
 					session_in_line = session_current;
 				for (j = 0; params[word_current - 2][j]; j++) {
 					if (generators[i].ch == params[word_current - 2][j]) {
-						generators[i].generate(words[word], strlen_pl(words[word]));
+						generators[i].generate(words[word], xstrlen(words[word]));
 					}
 				}
 			}		
