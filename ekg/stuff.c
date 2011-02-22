@@ -2332,46 +2332,8 @@ guint32 *ekg_sent_message_format(const char *text)
 	return format;
 }
 
-#if ! USE_UNICODE
-/*
- * tolower_pl()
- *
- * zamienia podany znak na ma³y je¶li to mo¿liwe
- * obs³uguje polskie znaki
- */
-static int tolower_pl(const unsigned char c) {
-	switch(c) {
-		case 161: /* ¡ */
-			return 177;
-		case 198: /* Æ */
-			return 230;
-		case 202: /* Ê */
-			return 234;
-		case 163: /* £ */
-			return 179;
-		case 209: /* Ñ */
-			return 241;
-		case 211: /* Ó */
-			return 243;
-		case 166: /* ¦ */
-			return 182;
-		case 175: /* ¯ */
-			return 191;
-		case 172: /* ¬ */
-			return 188;
-		default: /* reszta */
-			return tolower(c);
-	}
-}
-#endif
-
 size_t strlen_pl(const char *s) {
-#if USE_UNICODE
-	if (!s) s = "";
-	return mbsrtowcs(NULL, &s, 0, NULL);
-#else
 	return xstrlen(s);
-#endif
 }
 
 int utf8str_char2bytes(const char *src, size_t n) {
@@ -2402,32 +2364,24 @@ char *xstrncat_pl(char *dest, const char *src, size_t n) {
  * dzia³a analogicznie do xstrncasecmp()
  * obs³uguje polskie znaki
  */
-int strncasecmp_pl(const char *cs, const char *ct , size_t count)
+/* adjusted to use casefold utf8
+ * (normalized would be better but count would have to be adjusted)
+ * count is in bytes, to make it simpler
+ * XXX: potentially slow, try to get rid of it
+ *	in favour of something with the common string being normalized
+ *	before calling
+ */
+int strncasecmp_pl(const char *cs, const char *ct, size_t count)
 {
-	register signed char __res = 0;
-#if USE_UNICODE
-	wchar_t *wcs, *wct;
-	wchar_t *wc1 = wcs = xmalloc((count+1) * sizeof(wchar_t));
-	wchar_t *wc2 = wct = xmalloc((count+1) * sizeof(wchar_t));
-	mbsrtowcs(wc1, &cs, count, NULL);
-	mbsrtowcs(wc2, &ct, count, NULL);
+	gchar *csc = g_utf8_casefold(cs, -1);
+	gchar *ctc = g_utf8_casefold(ct, -1);
 
-	while (count) {
-		if ((__res = towlower(*wcs) - towlower(*wct++)) != 0 || !*wcs++)
-			break;
-		count--;
-	}
+	gint ret = strncmp(csc, ctc, count);
 
-	xfree(wc1);
-	xfree(wc2);
-#else
-	while (count) {
-		if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
-			break;
-		count--;
-	}
-#endif
-	return __res;
+	g_free(csc);
+	g_free(ctc);
+
+	return ret;
 }
 
 #ifndef EKG_NO_DEPRECATED
