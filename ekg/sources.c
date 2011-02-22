@@ -1133,8 +1133,8 @@ static int watch_handle_write(watch_t *w) {
 #ifdef FIXME_WATCHES_TRANSFER_LIMITS
 	if (w->transfer_limit == -1) return 0;	/* transfer limit turned on, don't send anythink... XXX */
 #endif
+	if (!len) return 0;
 	debug_io("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
-	if (!len) return -1;
 
 	if (handler) {
 		res = handler(0, w->fd, w->buf->str, w->data);
