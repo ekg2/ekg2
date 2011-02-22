@@ -56,8 +56,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "strings.h"
-
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
 
@@ -2334,20 +2332,6 @@ guint32 *ekg_sent_message_format(const char *text)
 
 size_t strlen_pl(const char *s) {
 	return xstrlen(s);
-}
-
-int utf8str_char2bytes(const char *src, size_t n) {
-/* FIXME - stupid function name */
-#if USE_UNICODE
-	int len=xstrlen(src);
-	wchar_t *wc = xmalloc((len+1) * sizeof(wchar_t));
-	const char *p = src;
-	
-	if (mbsrtowcs(wc, &p, n, NULL) < 0) n = 0;
-	else n = p ? p - src : len;
-	xfree(wc);
-#endif
-	return n;
 }
 
 /*

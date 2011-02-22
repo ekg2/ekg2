@@ -258,7 +258,6 @@ const gchar *read_line(GIOChannel *f);
 int mesg_set(int what);
 char *strip_spaces(char *line);
 int strncasecmp_pl(const char * cs,const char * ct,size_t count);
-int utf8str_char2bytes(const char *src, size_t n);
 int mkdir_recursive(const char *pathname, int isdir);
 
 #ifdef __GNUC__

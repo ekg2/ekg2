@@ -552,7 +552,8 @@ static char *va_format_string(const char *format, va_list ap) {
 					int len = strlen_pl(fstr->str);
 					if (len >= fill_length) {
 						if (!fill_soft) {
-							fstr->str[utf8str_char2bytes(fstr->str, fill_length)] = 0;
+							/* XXX: how about double width chars? */
+							*(g_utf8_offset_to_pointer(fstr->str, fill_length)) = 0;
 							str = fstring2str(fstr);
 							need_free = 1;
 						}
