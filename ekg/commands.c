@@ -992,16 +992,16 @@ static COMMAND(cmd_help)
 					(!xstrcasecmp(c->name, p) || 
 					(session && !xstrncmp(c->name, session->uid, plen) && !xstrcasecmp(c->name + plen, p))))
 			{
-				FILE *f; 
-				char *line, *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL;
-				const char *seeking_name;
+				GIOChannel *f; 
+				gchar *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL;
+				const gchar *line, *seeking_name;
 				string_t s;
 				int found = 0;
 
 				if (c->plugin && c->plugin->name) {
 					char *tmp2;
 
-					if (!(f = help_path("commands", c->plugin->name))) {
+					if (!(f = help_open("commands", c->plugin->name))) {
 						print("help_command_file_not_found_plugin", c->plugin->name);
 						return -1;
 					}
@@ -1011,7 +1011,7 @@ static COMMAND(cmd_help)
 					else
 						seeking_name = tmp2 + 1;
 				} else {
-					if (!(f = help_path("commands", NULL))) {
+					if (!(f = help_open("commands", NULL))) {
 						print("help_command_file_not_found");
 						return -1;
 					}
@@ -1019,7 +1019,7 @@ static COMMAND(cmd_help)
 					seeking_name = c->name;
 				}
 
-				while ((line = read_file_utf(f, 0))) {
+				while ((line = read_line(f))) {
 					if (!xstrcasecmp(line, seeking_name)) {
 						found = 1;
 						break;
@@ -1027,12 +1027,12 @@ static COMMAND(cmd_help)
 				}
 
 				if (!found) {
-					fclose(f);
+					g_io_channel_unref(f);
 					print("help_command_not_found", c->name);
 					return -1;
 				}
 
-				line = read_file_utf(f, 0);
+				line = read_line(f);
 
 				if ((tmp = xstrstr(line, (": "))))
 					params_help = xstrdup(tmp + 2);
@@ -1041,7 +1041,7 @@ static COMMAND(cmd_help)
 
 				params_help_s = strip_spaces(params_help);
 
-				line = read_file_utf(f, 0);
+				line = read_line(f);
 
 				if ((tmp = xstrstr(line, (": "))))
 					brief = xstrdup(tmp + 2);
@@ -1068,7 +1068,7 @@ static COMMAND(cmd_help)
 				xfree(tmp);
 
 				s = string_init(NULL);
-				while ((line = read_file_utf(f, 0))) {
+				while ((line = read_line(f))) {
 					if (line[0] != ('\t'))
 						break;
 					
@@ -1093,7 +1093,7 @@ static COMMAND(cmd_help)
 					printq("help_command_body", tmp);
 					xfree(tmp);
 				}
-				fclose(f);
+				g_io_channel_unref(f);
 				string_free(s, 1);
 				return 0;
 			}
@@ -1104,15 +1104,15 @@ static COMMAND(cmd_help)
 		command_t *c = cl->data;
 		if (xisalnum(*c->name) && !(c->flags & COMMAND_ISALIAS)) {
 			char *blah = NULL;
-			FILE *f;
-			char *line, *params_help, *params_help_s, *brief, *tmp = NULL;
-			const char *seeking_name;
+			GIOChannel *f;
+			gchar *params_help, *params_help_s, *brief, *tmp = NULL;
+			const gchar *line, *seeking_name;
 			int found = 0;
 
 			if (c->plugin && c->plugin->name) {
 				char *tmp2;
 
-				if (!(f = help_path("commands", c->plugin->name))) continue;
+				if (!(f = help_open("commands", c->plugin->name))) continue;
 
 				tmp2 = xstrchr(c->name, (':'));
 				if (!tmp2)
@@ -1120,12 +1120,12 @@ static COMMAND(cmd_help)
 				else 
 					seeking_name = tmp2 + 1;
 			} else {
-				if (!(f = help_path("commands", NULL))) continue;
+				if (!(f = help_open("commands", NULL))) continue;
 
 				seeking_name = c->name;
 			}
 
-			while ((line = read_file_utf(f, 0))) {
+			while ((line = read_line(f))) {
 				if (!xstrcasecmp(line, seeking_name)) {
 					found = 1;
 					break;
@@ -1133,11 +1133,11 @@ static COMMAND(cmd_help)
 			}
 
 			if (!found) {
-				fclose(f);
+				g_io_channel_unref(f);
 				continue;
 			}
 
-			line = read_file_utf(f, 0);
+			line = read_line(f);
 		
 			if ((tmp = xstrstr(line, (": "))))
 			       params_help = xstrdup(tmp + 2);
@@ -1146,7 +1146,7 @@ static COMMAND(cmd_help)
 
 			params_help_s = strip_spaces(params_help);	
 
-			line = read_file_utf(f, 0);
+			line = read_line(f);
 
 			if ((tmp = xstrstr(line, (": "))))
 			       brief = xstrdup(tmp + 2);
@@ -1169,7 +1169,7 @@ static COMMAND(cmd_help)
 			xfree(brief);
 			xfree(params_help);
 
-			fclose(f);
+			g_io_channel_unref(f);
 		}
 	}
 

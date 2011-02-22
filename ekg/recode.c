@@ -136,9 +136,9 @@ char *ekg_convert_string(const char *ps, const char *from, const char *to) {
 	gsize written;
 
 	if (!from)
-		from = config_console_charset;
+		from = "utf8";
 	if (!to)
-		to = config_console_charset;
+		to = "utf8";
 
 	res = g_convert_with_fallback(ps, -1, to, from, NULL, NULL, &written, NULL);
 
@@ -156,9 +156,9 @@ string_t ekg_convert_string_t(string_t s, const char *from, const char *to) {
 	gsize written;
 
 	if (!from)
-		from = config_console_charset;
+		from = "utf8";
 	if (!to)
-		to = config_console_charset;
+		to = "utf8";
 
 	res = g_convert_with_fallback(s->str, s->len, to, from, NULL, NULL, &written, NULL);
 	ret = string_init(NULL);
@@ -184,50 +184,99 @@ void ekg_recode_inc_ref(const gchar *enc) {
 void ekg_recode_dec_ref(const gchar *enc) {
 }
 
-char *ekg_recode_from_core(const gchar *enc, char *buf) {
-	gchar *res = ekg_recode_from_core_use(enc, buf);
+char *ekg_recode_from_core(const gchar *enc, gchar *buf) {
+	char *res = ekg_recode_from_core_use(enc, buf);
 	if (res != buf)
 		g_free(buf);
 	return res;
 }
 
-char *ekg_recode_to_core(const gchar *enc, char *buf) {
+gchar *ekg_recode_to_core(const gchar *enc, char *buf) {
 	gchar *res = ekg_recode_to_core_use(enc, buf);
 	if (res != buf)
 		g_free(buf);
 	return res;
 }
 
-char *ekg_recode_from_core_dup(const gchar *enc, const char *buf) {
-	gchar *res = ekg_recode_from_core_use(enc, buf);
+char *ekg_recode_from_core_dup(const gchar *enc, const gchar *buf) {
+	char *res = ekg_recode_from_core_use(enc, buf);
 	return res == buf ? g_strdup(res) : res;
 }
 
-char *ekg_recode_to_core_dup(const gchar *enc, const char *buf) {
+gchar *ekg_recode_to_core_dup(const gchar *enc, const char *buf) {
 	gchar *res = ekg_recode_to_core_use(enc, buf);
 	return res == buf ? g_strdup(res) : res;
 }
 
-const char *ekg_recode_from_core_use(const gchar *enc, const char *buf) {
+const char *ekg_recode_from_core_use(const gchar *enc, const gchar *buf) {
 	gsize written;
-	gchar *res;
+	char *res;
 
 	if (!buf)
 		return NULL;
 
-	res = g_convert_with_fallback(buf, -1, enc, config_console_charset,
+	res = g_convert_with_fallback(buf, -1, enc, "utf8",
 			NULL, NULL, &written, NULL);
 	return res ? res : g_strdup(buf);
 }
 
-const char *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
+const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
 	gsize written;
 	gchar *res;
 
 	if (!buf)
 		return NULL;
 
-	res = g_convert_with_fallback(buf, -1, config_console_charset, enc,
+	res = g_convert_with_fallback(buf, -1, "utf8", enc,
 			NULL, NULL, &written, NULL);
 	return res ? res : buf;
+}
+
+gchar *ekg_recode_from_locale(const char *str) {
+	return ekg_recode_to_core_dup(config_console_charset, str);
+}
+
+char *ekg_recode_to_locale(const gchar *str) {
+	return ekg_recode_from_core_dup(config_console_charset, str);
+}
+	
+fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
+	gchar *s;
+	fstr_attr_t *a;
+	gssize len;
+	const gssize inpsize = strlen(fstr->str);
+	GString *outs = g_string_sized_new(inpsize);
+	GByteArray *outa = g_byte_array_sized_new(inpsize * sizeof(fstr_attr_t));
+	fstring_t *out = g_memdup(fstr, sizeof(fstring_t)); /* XXX: move to slice alloc */
+
+	fstring_iter(fstr, &s, &a, &len);
+	while (fstring_next(&s, &a, &len, NULL)) {
+		char *ls;
+		gsize ob;
+
+		ls = g_convert_with_fallback(s, len, config_console_charset, "utf8",
+				NULL, NULL, &ob, NULL);
+
+		if (ls) {
+			g_string_append_len(outs, ls, ob);
+			g_free(ls);
+		} else {
+			/* XXX: is that really a good idea? */
+			g_string_append_len(outs, s, len);
+			ob = len;
+		}
+
+		/* we can assume 'a' has len identical 'fstr_attr_t's */
+		while (ob > len) {
+			g_byte_array_append(outa, (gpointer) a, len * sizeof(fstr_attr_t));
+			ob -= len;
+		}
+		if (ob > 0)
+			g_byte_array_append(outa, (gpointer) a, ob * sizeof(fstr_attr_t));
+	}
+
+	out->str = g_string_free(outs, FALSE);
+	out->attr = (fstr_attr_t*) g_byte_array_free(outa, FALSE);
+	/* XXX: margins and stuff get outdated */
+	return out;
 }

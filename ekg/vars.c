@@ -555,9 +555,9 @@ void variables_destroy(void) {
  * name - name of the variable
  */
 void variable_help(const char *name) {
-	FILE *f; 
-	char *line, *type = NULL, *def = NULL, *tmp;
-	const char *seeking_name;
+	GIOChannel *f; 
+	gchar *type = NULL, *def = NULL, *tmp;
+	const gchar *line, *seeking_name;
 	string_t s;
 	int found = 0;
 	variable_t *v = variable_find(name);
@@ -570,7 +570,7 @@ void variable_help(const char *name) {
 	if (v->plugin && v->plugin->name) {
 		char *tmp2;
 
-		if (!(f = help_path("vars", v->plugin->name))) {
+		if (!(f = help_open("vars", v->plugin->name))) {
 			print("help_set_file_not_found_plugin", v->plugin->name);
 			return;
 		}
@@ -581,7 +581,7 @@ void variable_help(const char *name) {
 		else
 			seeking_name = name;
 	} else {
-		if (!(f = help_path("vars", NULL))) {
+		if (!(f = help_open("vars", NULL))) {
 			print("help_set_file_not_found");
 			return;
 		}
@@ -589,7 +589,7 @@ void variable_help(const char *name) {
 		seeking_name = name;
 	}
 
-	while ((line = read_file_utf(f, 0))) {
+	while ((line = read_line(f))) {
 		if (!xstrcasecmp(line, seeking_name)) {
 			found = 1;
 			break;
@@ -597,19 +597,19 @@ void variable_help(const char *name) {
 	}
 
 	if (!found) {
-		fclose(f);
+		g_io_channel_unref(f);
 		print("help_set_var_not_found", name);
 		return;
 	}
 
-	line = read_file_utf(f, 0);
+	line = read_line(f);
 	
 	if ((tmp = xstrstr(line, (": "))))
 		type = xstrdup(tmp + 2);
 	else
 		type = xstrdup(("?"));
 	
-	line = read_file_utf(f, 0);
+	line = read_line(f);
 	if ((tmp = xstrstr(line, (": "))))
 		def = xstrdup(tmp + 2);
 	else
@@ -621,9 +621,9 @@ void variable_help(const char *name) {
 	xfree(def);
 
 	if (tmp)		/* je¶li nie jest to ukryta zmienna... */
-		read_file_utf(f, 0);	/* ... pomijamy liniê */
+		read_line(f);	/* ... pomijamy liniê */
 	s = string_init(NULL);
-	while ((line = read_file_utf(f, 0))) {
+	while ((line = read_line(f))) {
 		if (line[0] != '\t')
 			break;
 
@@ -651,7 +651,7 @@ void variable_help(const char *name) {
 	if (format_exists("help_set_footer"))
 		print("help_set_footer", name);
 
-	fclose(f);
+	g_io_channel_unref(f);
 }
 
 /*
