@@ -22,7 +22,7 @@
  */
 
 #include "ekg2-config.h"
-
+#include "ecurses.h"
 
 #if USE_UNICODE
 

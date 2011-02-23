@@ -120,16 +120,6 @@ AC_ARG_ENABLE([skip_relative_plugins_dir],
 	])
 ])
 
-AC_ARG_ENABLE([unicode],
-	AS_HELP_STRING([--disable-unicode],
-		[disable building with unicode support [default=on]]),
-, [
-	enable_unicode=yes
-])
-AS_IF([test "x$enable_unicode" = "xyes"], [
-	AC_DEFINE([USE_UNICODE], [1], [use unicode (wide character strings)])
-])
-
 dnl plugins
 
 AC_EKG2_PLUGIN([autoresponder])
@@ -257,22 +247,30 @@ AC_EKG2_PLUGIN([mail],, [
 
 AC_EKG2_PLUGIN([ncurses], [
 	AC_EKG2_WITH([ncurses], [
-		dnl AC_EKG2_NCURSES([nlib], [nheaders])
-		AC_DEFUN([AC_EKG2_NCURSES], [
-			AC_EKG2_CHECK_LIB([$1], [initscr], [$2], [
-				LIBS="-l$1 $LIBS"
+		AC_SEARCH_LIBS([initscr], [ncursesw ncurses], [
+			nc_headers="ncurses/ncurses.h ncurses.h"
+			found_any_header=no
+			AC_CHECK_FUNCS([waddnwstr], [
+				AC_CHECK_HEADERS([ncursesw/ncurses.h ncurses/ncurses.h ncurses.h], [
+					found_any_header=yes
+					break
+				])
+			], [
+				AC_CHECK_HEADERS([ncurses/ncurses.h ncurses.h], [
+					found_any_header=yes
+					break
+				])
+			])
+
+			AS_IF([test $found_any_header = yes], [
 				AC_DEFINE([HAVE_NCURSES], [1], [define if you have ncurses])
 			], [EKG2_FAILED_TEST])
-		])
-
-		AS_IF([test "$enable_unicode" = "yes"], [
-			AC_EKG2_NCURSES([ncursesw], [ncursesw/ncurses.h])
-		], [
-			AC_EKG2_NCURSES([ncurses], [ncurses/ncurses.h ncurses.h])
-		])
+			AS_UNSET([found_any_header])
+			AS_UNSET([nc_headers])
+		], [EKG2_FAILED_TEST])
 	])
 ], [
-	AC_CHECK_FUNCS([use_legacy_coding])
+	AC_CHECK_FUNCS([addwstr use_legacy_coding])
 
 	AC_EKG2_WITH([aspell], [
 		AC_EKG2_CHECK_LIB([aspell], [new_aspell_config], [aspell.h])
