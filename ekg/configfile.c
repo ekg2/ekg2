@@ -173,6 +173,9 @@ GIOChannel *config_open(const gchar *path, const gchar *mode) {
 		debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
 		g_error_free(err);
 		/* well, try the default one (utf8) anyway... */
+		wanted_enc = g_io_channel_get_encoding(f);
+		if (!wanted_enc) /* raw means what we use in core */
+			wanted_enc = "UTF-8";
 	}
 
 	if (mode[0] == 'w') {
