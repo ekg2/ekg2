@@ -132,6 +132,8 @@ gboolean ekg_fprintf(GIOChannel *f, const gchar *format, ...) {
 GIOChannel *config_open(const gchar *path, const gchar *mode) {
 	GIOChannel *f;
 	GError *err = NULL;
+	const gchar modeline_prefix[] = "# vim:fenc=";
+	const gchar *wanted_enc = console_charset;
 
 	f = g_io_channel_new_file(path, mode, &err);
 	if (!f) {
@@ -142,19 +144,40 @@ GIOChannel *config_open(const gchar *path, const gchar *mode) {
 	}
 
 	if (mode[0] == 'r') {
-		/* XXX: read encoding */
+		const gchar *buf = read_line(f);
+
+		/* XXX: support more modeline formats? */
+		if (buf && g_str_has_prefix(buf, modeline_prefix))
+			wanted_enc = &buf[sizeof(modeline_prefix) - 1]; /* 1 for null terminator */
+
+		if (g_io_channel_seek_position(f, 0, G_SEEK_SET, &err) != G_IO_STATUS_NORMAL) {
+			if (err)
+				debug_error("config_open(): rewind failed: %s\n", err->message);
+			/* ok, screwed it */
+			g_error_free(err);
+			g_io_channel_unref(f);
+
+			err = NULL;
+			/* let's try reopening */
+			f = g_io_channel_new_file(path, mode, &err);
+			if (!f) {
+				debug_error("config_open(): reopen failed %s\n", err->message);
+				g_error_free(err);
+				return NULL;
+			}
+		}
 	}
 
 	/* fallback to locale-encoded config */
 	if (g_io_channel_set_encoding(f, console_charset, &err) != G_IO_STATUS_NORMAL) {
 		debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
 		g_error_free(err);
-		/* try default one (utf8) anyway... */
+		/* well, try the default one (utf8) anyway... */
 	}
 
 	if (mode[0] == 'w') {
 		g_chmod(path, 0600);
-		if (!ekg_fprintf(f, "# vim:fenc=%s\n", console_charset)) {
+		if (!ekg_fprintf(f, "%s%s\n", modeline_prefix, console_charset)) {
 			g_io_channel_unref(f);
 			return NULL;
 		}
