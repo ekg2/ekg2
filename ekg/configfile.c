@@ -144,8 +144,18 @@ GIOChannel *config_open(const gchar *path, const gchar *mode) {
 	}
 
 	if (mode[0] == 'r') {
-		const gchar *buf = read_line(f);
+		const gchar *buf;
 
+		/* glib is a long runner
+		 * if file is not utf8-encoded, we can end up with ILSEQ
+		 * even if invalid seq is not in the first line */
+		if (g_io_channel_set_encoding(f, NULL, &err) != G_IO_STATUS_NORMAL) {
+			debug_error("config_open(%s, %s) failed to unset encoding: %s\n", path, mode, err->message);
+			g_error_free(err);
+			err = NULL;
+		}
+
+		buf = read_line(f);
 		if (!buf) {
 			/* Some error occured, or EOF
 			 * in either case, there's no need to read that file anyway */
