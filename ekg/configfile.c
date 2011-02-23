@@ -176,7 +176,7 @@ GIOChannel *config_open(const gchar *path, const gchar *mode) {
 	}
 
 	/* fallback to locale-encoded config */
-	if (g_io_channel_set_encoding(f, console_charset, &err) != G_IO_STATUS_NORMAL) {
+	if (g_io_channel_set_encoding(f, wanted_enc, &err) != G_IO_STATUS_NORMAL) {
 		debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
 		g_error_free(err);
 		/* well, try the default one (utf8) anyway... */
@@ -187,7 +187,7 @@ GIOChannel *config_open(const gchar *path, const gchar *mode) {
 
 	if (mode[0] == 'w') {
 		g_chmod(path, 0600);
-		if (!ekg_fprintf(f, "%s%s\n", modeline_prefix, console_charset)) {
+		if (!ekg_fprintf(f, "%s%s\n", modeline_prefix, wanted_enc)) {
 			g_io_channel_unref(f);
 			return NULL;
 		}
