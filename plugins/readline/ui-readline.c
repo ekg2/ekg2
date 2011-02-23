@@ -293,7 +293,6 @@ static gchar *my_readline(void)
 		 * and break the buffer */
 	char *prompt = g_strdup(current_prompt());
 	char *res, *tmp;
-	gchar *out;
 
 	in_readline++;
 	res = readline(prompt);
@@ -308,10 +307,8 @@ static gchar *my_readline(void)
 	}
 
 	g_free(prompt);
-	out = ekg_recode_from_locale(res);
-	free(res); /* allocd by readline */
 
-	return out;
+	return res;
 }
 
 /*
@@ -322,8 +319,9 @@ static gchar *my_readline(void)
  */
 int ui_readline_loop(void)
 {
-	gchar *line = my_readline();
-	gchar *p;
+	char *line = my_readline();
+	char *rline = line; /* for freeing */
+	gchar *out, *p;
 	gint len;
 
 	if (!line) {
@@ -348,7 +346,7 @@ int ui_readline_loop(void)
 			/* multi line handler */
 			GString *s = g_string_new_len(line, len-1);
 			
-			g_free(line);
+			free(line);
 
 			no_prompt = 1;
 			rl_bind_key(9, rl_insert);
@@ -358,7 +356,7 @@ int ui_readline_loop(void)
 					break;
 				g_string_append(s, line);
 				g_string_append_len(s, "\r\n", 2); /* XXX */
-				g_free(line);
+				free(line);
 			}
 
 			rl_bind_key(9, rl_complete);
@@ -366,7 +364,7 @@ int ui_readline_loop(void)
 
 			if (line) {
 				g_string_free(s, TRUE);
-				g_free(line);
+				free(line);
 				return 1;
 			}
 
@@ -374,21 +372,27 @@ int ui_readline_loop(void)
 		}
 		
 		/* if no empty line and we save duplicate lines, add it to history */
-			/* XXX: recode? */
 		if (config_history_savedups || !history_length || strcmp(line, history_get(history_length)->line))
 			add_history(line);
 	}
 
 	pager_lines = 0;
 
+	/* now we can definitely recode */
+	out = ekg_recode_from_locale(line);
+	if (G_LIKELY(line == rline))
+		free(rline); /* allocd by readline */
+	else
+		g_free(line); /* allocd by us */
+
 	/* omit leading whitespace */
-	for (p = line; g_unichar_isspace(g_utf8_get_char(p)); p = g_utf8_next_char(p));
+	for (p = out; g_unichar_isspace(g_utf8_get_char(p)); p = g_utf8_next_char(p));
 	if (*p || config_send_white_lines)
-		command_exec(window_current->target, window_current->session, line, 0);
+		command_exec(window_current->target, window_current->session, out, 0);
 
 	pager_lines = -1;
 
-	g_free(line);
+	g_free(out);
 	return 1;
 }
 
