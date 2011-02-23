@@ -333,40 +333,6 @@ int ncurses_backlog_add_real(window_t *w, fstring_t *str) {
  * zwraca rozmiar dodanej linii w liniach ekranowych.
  */
 int ncurses_backlog_add(window_t *w, fstring_t *str) {
-#if USE_UNICODE
-	{
-		int rlen = xstrlen(str->str);
-
-		int cur = 0;
-		int i;
-
-		mbtowc(NULL, NULL, 0);	/* reset */
-
-		for (i = 0; cur < rlen; i++) {
-			wchar_t znak;
-			int len	= mbtowc(&znak, &(str->str[cur]), rlen-cur);
-
-			if (!len)	/* shouldn't happen -- cur < rlen */
-				break;
-
-			if (len == -1) {
-				znak = '?';
-				len  = 1;		/* always move forward */
-
-				str->str[cur] = '?';
-				str->attr[cur]  = str->attr[cur] | FSTR_REVERSE; 
-			}
-/*
-			if (cur == str->prompt_len)
-				str->prompt_len = i;
-
-			if (cur == str->margin_left)
-				str->margin_left = i;
- */
-			cur += len;
-		}
-	}
-#endif
 	return ncurses_backlog_add_real(w, str);
 }
 
