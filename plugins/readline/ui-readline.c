@@ -81,7 +81,7 @@ int rl_get_screen_size(int *lines, int *columns)
 #endif
 
 #ifndef HAVE_RL_FILENAME_COMPLETION_FUNCTION
-char *rl_filename_completion_function()
+char *rl_filename_completion_function(void)
 {
 	return NULL;
 }
@@ -173,8 +173,6 @@ void ui_readline_print(window_t *w, int separate, const /*locale*/ char *xline)
 
 	/* ukryj prompt, je¶li jeste¶my w trakcie readline */
 	if (in_readline) {
-		int i;
-
 		old_prompt = g_strdup(rl_prompt);
 		rl_end = 0;
 /*		set_prompt(NULL);*/
@@ -204,7 +202,7 @@ void ui_readline_print(window_t *w, int separate, const /*locale*/ char *xline)
 			g_free(lprompt);
 			in_readline--;
 			if (tmp) {
-				xfree(tmp);
+				free(tmp); /* allocd by readline */
 				pager_lines = 0;
 			} else {
 				printf("\n");
@@ -226,11 +224,7 @@ done:
 	if (line_buf)
 		g_free(line_buf);
 }
-/*
- * current_prompt()
- *
- * zwraca wska¼nik aktualnego prompta. statyczny bufor, nie zwalniaæ.
- */
+
 /**
  * current_prompt()
  *
@@ -238,7 +232,7 @@ done:
  *
  * @return Static buffer pointer, non-NULL, locale-encoded.
  */
-const char *current_prompt(void)
+const /*locale*/ char *current_prompt(void)
 {
 	static gchar *buf = NULL;
 	session_t *s;
@@ -279,24 +273,25 @@ const char *current_prompt(void)
 	return buf;
 }
 
-int my_loop() {
+int my_loop(void) {
 	extern void ekg_loop();
 	ekg_loop();
 	return 0;
 }
 
-/*
+/**
  * my_readline()
  *
- * malutki wrapper na readline(), który przygotowuje odpowiedniego prompta
- * w zale¿no¶ci od tego, czy jeste¶my zajêci czy nie i informuje resztê
- * programu, ¿e jeste¶my w trakcie czytania linii i je¶li chc± wy¶wietlaæ,
- * powinny najpierw sprz±tn±æ.
+ * Wrapper for readline(). Prepares appropriate prompt, locks screen
+ * output. Recodes the result to utf-8.
+ *
+ * @return A pointer to utf8 string or NULL.
  */
-char *my_readline()
+static gchar *my_readline(void)
 {
 	const char *prompt = current_prompt();
 	char *res, *tmp;
+	gchar *out;
 
 	in_readline = 1;
 	set_prompt(prompt);
@@ -304,16 +299,17 @@ char *my_readline()
 	in_readline = 0;
 
 	if (config_print_line) {
-			/* XXX: this needs recoding back,
-			 * maybe some internal API? */
-		tmp = saprintf("%s%s\n", prompt, (res) ? res : "");
+		tmp = g_strdup_printf("%s%s\n", prompt, (res) ? res : "");
 		window_write(window_current->id, tmp);
-		xfree(tmp);
+		g_free(tmp);
 	} else {
 		window_refresh();
 	}
 
-	return res;
+	out = ekg_recode_from_locale(res);
+	free(res); /* allocd by readline */
+
+	return out;
 }
 
 /*
@@ -322,10 +318,11 @@ char *my_readline()
  * g³ówna pêtla programu. wczytuje dane z klawiatury w miêdzyczasie
  * obs³uguj±c sieæ i takie tam.
  */
-int ui_readline_loop()
+int ui_readline_loop(void)
 {
-	char *line = my_readline();
-	char *p;
+	gchar *line = my_readline();
+	gchar *p;
+	gint len;
 
 	if (!line) {
 		/* Ctrl-D handler */
@@ -343,52 +340,53 @@ int ui_readline_loop()
 		return 1;
 	}
 
-	if (xstrlen(line) > 0 && line[xstrlen(line) - 1] == '\\') {
-		/* multi line handler */
-		string_t s = string_init(NULL);
+	len = strlen(line);
+	if (G_LIKELY(len > 0)) {
+		if (G_UNLIKELY(line[len - 1] == '\\')) {
+			/* multi line handler */
+			GString *s = g_string_new_len(line, len-1);
+			
+			g_free(line);
 
-		line[xstrlen(line) - 1] = 0;
+			no_prompt = 1;
+			rl_bind_key(9, rl_insert);
 
-		string_append(s, line);
+			while ((line = my_readline())) {
+				if (!strcmp(line, "."))
+					break;
+				g_string_append(s, line);
+				g_string_append_len(s, "\r\n", 2); /* XXX */
+				g_free(line);
+			}
 
-		xfree(line);
+			rl_bind_key(9, rl_complete);
+			no_prompt = 0;
 
-		no_prompt = 1;
-		rl_bind_key(9, rl_insert);
+			if (line) {
+				g_string_free(s, TRUE);
+				g_free(line);
+				return 1;
+			}
 
-		while ((line = my_readline())) {
-			if (!xstrcmp(line, "."))
-				break;
-			string_append(s, line);
-			string_append(s, "\r\n");
-			xfree(line);
+			line = g_string_free(s, FALSE);
 		}
-
-		rl_bind_key(9, rl_complete);
-		no_prompt = 0;
-
-		if (line) {
-			string_free(s, 1);
-			xfree(line);
-			return 1;
-		}
-
-		line = string_free(s, 0);
+		
+		/* if no empty line and we save duplicate lines, add it to history */
+			/* XXX: recode? */
+		if (config_history_savedups || !history_length || strcmp(line, history_get(history_length)->line))
+			add_history(line);
 	}
-		
-	/* if no empty line and we save duplicate lines, add it to history */
-	if (line && *line && (config_history_savedups || !history_length || xstrcmp(line, history_get(history_length)->line)))
-		add_history(line);
-	
+
 	pager_lines = 0;
-		
-	for (p=line; *p && isspace(*p); p++);
+
+	/* omit leading whitespace */
+	for (p = line; g_unichar_isspace(g_utf8_get_char(p)); p = g_utf8_next_char(p));
 	if (*p || config_send_white_lines)
 		command_exec(window_current->target, window_current->session, line, 0);
 
 	pager_lines = -1;
 
-	xfree(line);
+	g_free(line);
 	return 1;
 }
 
@@ -454,10 +452,10 @@ int window_write(int id, const /*locale*/ char *line)
  *
  * zwraca string z actywnymi oknami 
  */
-char *window_activity() 
+gchar *window_activity(void)
 {
-	string_t s = string_init("");
-	int first = 1;
+	GString *s = g_string_sized_new(8);
+	gboolean first = TRUE;
 	window_t *w;
 
 	for (w = windows; w; w = w->next) {
@@ -466,18 +464,12 @@ char *window_activity()
 			continue;
 
 		if (!first)
-			string_append_c(s, ',');
-		string_append(s, ekg_itoa(w->id));
-		first = 0;
+			g_string_append_c(s, ',');
+		g_string_append(s, ekg_itoa(w->id));
+		first = FALSE;
 	}
 
-	if (!first) {
-		char *tmp = string_free(s, 0);
-		char *act = tmp;
-		return act;
-	}
-	string_free(s, 1);
-	return NULL;
+	return g_string_free(s, first);
 }
 		
 /*
