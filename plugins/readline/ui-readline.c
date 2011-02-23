@@ -198,7 +198,7 @@ void ui_readline_print(window_t *w, int separate, const /*locale*/ char *xline)
 			set_prompt(lprompt);
 
 			pager_lines = -1;
-			tmp = readline((char *) lprompt);
+			tmp = readline(lprompt);
 			g_free(lprompt);
 			in_readline--;
 			if (tmp) {
@@ -289,14 +289,15 @@ int my_loop(void) {
  */
 static gchar *my_readline(void)
 {
-	const char *prompt = current_prompt();
+		/* main loop could call current_prompt()
+		 * and break the buffer */
+	char *prompt = g_strdup(current_prompt());
 	char *res, *tmp;
 	gchar *out;
 
-	in_readline = 1;
-	set_prompt(prompt);
-	res = readline((char *) prompt);
-	in_readline = 0;
+	in_readline++;
+	res = readline(prompt);
+	in_readline--;
 
 	if (config_print_line) {
 		tmp = g_strdup_printf("%s%s\n", prompt, (res) ? res : "");
@@ -306,6 +307,7 @@ static gchar *my_readline(void)
 		window_refresh();
 	}
 
+	g_free(prompt);
 	out = ekg_recode_from_locale(res);
 	free(res); /* allocd by readline */
 
