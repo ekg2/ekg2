@@ -11,6 +11,29 @@
 
 extern char **completion_matches();
 
+static char *rl_strndup(gchar *s, gsize n) {
+	static GString *buf = NULL;
+	gchar *rec;
+
+		/* XXX: API for stated-size recoding */
+	if (G_UNLIKELY(!buf))
+		buf = g_string_sized_new(n+1);
+	g_string_truncate(buf, 0);
+	g_string_append_len(buf, s, n);
+
+	rec = ekg_recode_to_locale(buf->str);
+	if (g_mem_is_system_malloc())
+		return rec;
+	else {
+		gsize len = strlen(rec) + 1;
+		char *out = malloc(len);
+		
+		memcpy(out, rec, len);
+		g_free(rec);
+		return out;
+	}
+}
+
 char *empty_generator(char *text, int state) {
 	return NULL;
 }
@@ -39,16 +62,13 @@ char *multi_generator(char *text, int state) {
 	return xstrdup(ret);
 }
 
-#define RL_LINE_MAXLEN 2048
-/* XXX what is readline input line length limit? */
-
-char **my_completion(char *text, int start, int end) {
-	static char buffer[RL_LINE_MAXLEN];
+/*locale*/ char **my_completion(/*locale*/ char *text, int start, int end) {
+	gchar *buffer;
 	int i, n, e0=end, in_quote, out_quote;
 
 	ekg2_complete_clear();
 
-	xstrcpy(buffer, rl_line_buffer);
+	buffer = ekg_recode_from_locale(rl_line_buffer);
 
 	if ((in_quote = (start && buffer[start-1] == '"'))) start--;
 
@@ -67,7 +87,7 @@ char **my_completion(char *text, int start, int end) {
 		}
 	}
 
-	ekg2_complete(&start, &end, buffer, RL_LINE_MAXLEN);
+	ekg2_complete(&start, &end, buffer, strlen(buffer));
 
 	out_quote = (buffer[start] == '"');
 
@@ -78,20 +98,22 @@ char **my_completion(char *text, int start, int end) {
 			n = end - start - 1;
 			if (n && out_quote && in_quote) n--;
 			if (n && ' ' == buffer[start+n-1]) n--;
-			one_and_only = xstrndup(buffer+start, n);
+			one_and_only = rl_strndup(buffer+start, n);
 
+			g_free(buffer);
 			return completion_matches(text, one_generator);
 		}
 
 		for(i=0;i<n;i++) {
 			if (ekg2_completions[i][0] != '"')
 				continue;
-			char *tmp = xstrndup(ekg2_completions[i]+1, xstrlen(ekg2_completions[i])-2);
+			char *tmp = rl_strndup(ekg2_completions[i]+1, xstrlen(ekg2_completions[i])-2);
 			xfree(ekg2_completions[i]);
 			ekg2_completions[i] = tmp;
 		}
 
 	}
 
+	g_free(buffer);
 	return completion_matches(text, multi_generator);
 }
