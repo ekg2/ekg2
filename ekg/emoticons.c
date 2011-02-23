@@ -88,15 +88,15 @@ static int emoticon_add(const char *name, const char *value) {
 int emoticon_read() {
 	const char *filename;
 	char *buf;
-	FILE *f;
+	GIOChannel *f;
 
 	if (!(filename = prepare_pathf("emoticons")))
 		return -1;
 	
-	if (!(f = fopen(filename, "r")))
+	if (!(f = config_open(filename, "r")))
 		return -1;
 
-	while ((buf = read_file(f, 0))) {
+	while ((buf = read_line(f))) {
 		char **emot;
 	
 		if (buf[0] == '#')
@@ -110,7 +110,7 @@ int emoticon_read() {
 		g_strfreev(emot);
 	}
 	
-	fclose(f);
+	g_io_channel_unref(f);
 	
 	return 0;
 }

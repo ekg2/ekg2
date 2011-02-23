@@ -417,41 +417,37 @@ int script_load(scriptlang_t *s, char *tname)
 }
 
 int script_variables_read() {
-	FILE *f;
+	GIOChannel *f;
 	char *line;
 
-	if (!(f = fopen(prepare_path("scripts-var", 0), "r"))) {
+	if (!(f = config_open(prepare_path("scripts-var", 0), "r"))) {
 		debug("Error opening script variable file..\n");
 		return -1;
 	}
 	
-	while ((line = read_file(f, 0))) {
+	while ((line = read_line(f))) {
 		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
 			continue;
 
 		script_var_add(NULL, NULL, line, NULL, NULL);
 	}
 
-	fclose(f);
+	g_io_channel_unref(f);
 	return 0;
 }
 
 int script_variables_free(int free) {
-	FILE *f = fopen(prepare_path("scripts-var", 0), "w");
+	GIOChannel *f = config_open(prepare_path("scripts-var", 0), "w");
 	list_t l;
 	
 	if (!f && !free) 
 		return -1;
 
-	if (f) {
-		fchmod(fileno(f), 0600);
-		fprintf(f, "# vim:fenc=%s\n", console_charset);
-	}
 	for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
 		
 		if (f)
-			fprintf(f, "%s\n", v->name);
+			ekg_fprintf(f, "%s\n", v->name);
 		if (free) {
 /*			xfree(v->value); variables_free() free it. */
 			xfree(v->priv_data); /* should be NULL here. */
@@ -460,7 +456,7 @@ int script_variables_free(int free) {
 		}
 	}
 	if (f)
-		fclose(f);
+		g_io_channel_unref(f);
 	
 	if (free)
 		list_destroy(script_vars, 0);

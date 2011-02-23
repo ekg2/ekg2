@@ -801,8 +801,8 @@ int session_int_set(session_t *s, const char *key, int value)
  * czyta informacje o sesjach z pliku.
  */
 int session_read(const char *filename) {
-	char *line;
-	FILE *f;
+	gchar *line;
+	GIOChannel *f;
 	session_t *s = NULL;
 	int ret = 0;
 
@@ -831,12 +831,10 @@ int session_read(const char *filename) {
 		return ret;
 	}
 
-	if (!(f = fopen(filename, "r"))) {
-		debug("Error opening file %s\n", filename);
+	if (!(f = config_open(filename, "r")))
 		return -1;
-	}
 
-	while ((line = read_file(f, 0))) {
+	while ((line = read_line(f))) {
 		char *tmp;
 
 		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
@@ -871,7 +869,7 @@ int session_read(const char *filename) {
 		}
 	}
 
-	fclose(f);
+	g_io_channel_unref(f);
 	return ret;
 }
 
@@ -883,7 +881,7 @@ int session_read(const char *filename) {
 int session_write()
 {
 	GSList *pl;
-	FILE *f = NULL;
+	GIOChannel *f = NULL;
 	int ret = 0;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 */
@@ -901,14 +899,11 @@ int session_write()
 			continue;
 		}
 		
-		if (!(f = fopen(tmp, "w"))) {
-			debug("Error opening file %s\n", tmp);
+		if (!(f = config_open(tmp, "w"))) {
 			ret = -1;
 			continue;
 		}
 
-		fchmod(fileno(f), 0600);
-		fprintf(f, "# vim:fenc=%s\n", console_charset);
 		for (s = sessions; s; s = s->next) {
 			int i;
 
@@ -916,19 +911,19 @@ int session_write()
 				continue;
 
 			userlist_write(s);
-			fprintf(f, "[%s]\n", s->uid);
+			ekg_fprintf(f, "[%s]\n", s->uid);
 			if (s->alias)
-				fprintf(f, "alias=%s\n", s->alias);
+				ekg_fprintf(f, "alias=%s\n", s->alias);
 			if (s->status && config_keep_reason != 2)
-				fprintf(f, "status=%s\n", ekg_status_string(s->autoaway ? s->last_status : s->status, 0));
+				ekg_fprintf(f, "status=%s\n", ekg_status_string(s->autoaway ? s->last_status : s->status, 0));
 			if (s->descr && config_keep_reason) {
 				char *myvar = (s->autoaway ? s->last_descr : s->descr);
 				xstrtr(myvar, '\n', '\002');
-				fprintf(f, "descr=%s\n", myvar);
+				ekg_fprintf(f, "descr=%s\n", myvar);
 				xstrtr(myvar, '\002', '\n');
 			}
 			if (s->password && config_save_password)
-				fprintf(f, "password=\001%s\n", s->password);
+				ekg_fprintf(f, "password=\001%s\n", s->password);
 
 			if (!p->params) 
 				continue;
@@ -936,11 +931,11 @@ int session_write()
 			for (i = 0; (p->params[i].key /* && p->params[i].id != -1 */); i++) {
 				if (!s->values[i]) 
 					continue;
-				fprintf(f, "%s=%s\n", p->params[i].key, s->values[i]);
+				ekg_fprintf(f, "%s=%s\n", p->params[i].key, s->values[i]);
 			}
 			/* We don't save _local_ variables */
 		}
-		fclose(f);
+		g_io_channel_unref(f);
 	}
 	return ret;
 }

@@ -156,15 +156,15 @@ void userlist_add_entry(session_t *session, const char *line) {
 int userlist_read(session_t *session) {
 	const char *filename;
 	char *buf;
-	FILE *f;
+	GIOChannel *f;
 
 	if (!(filename = prepare_pathf("%s-userlist", session->uid)))
 		return -1;
 	
-	if (!(f = fopen(filename, "r")))
+	if (!(f = config_open(filename, "r")))
 		return -1;
 			
-	while ((buf = read_file(f, 0))) {
+	while ((buf = read_line(f))) {
 		if (buf[0] == '#' || (buf[0] == '/' && buf[1] == '/'))
 			continue;
 		
@@ -173,7 +173,7 @@ int userlist_read(session_t *session) {
 
 	query_emit(NULL, "userlist-refresh");	/* XXX, wywolywac tylko kiedy dodalismy przynajmniej 1 */
 
-	fclose(f);
+	g_io_channel_unref(f);
 		
 	return 0;
 } 
@@ -195,7 +195,7 @@ int userlist_read(session_t *session) {
 
 int userlist_write(session_t *session) {
 	const char *filename;
-	FILE *f;
+	GIOChannel *f;
 	userlist_t *ul;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
@@ -204,11 +204,9 @@ int userlist_write(session_t *session) {
 	if (!(filename = prepare_pathf("%s-userlist", session->uid)))
 		return -1;
 	
-	if (!(f = fopen(filename, "w"))) {
+	if (!(f = config_open(filename, "w"))) {
 		return -2;
 	}
-	fchmod(fileno(f), 0600);
-	fprintf(f, "# vim:fenc=%s\n", console_charset);
 
 	/* userlist_dump() */
 	for (ul = session->userlist; ul; ul = ul->next) {
@@ -232,7 +230,7 @@ int userlist_write(session_t *session) {
 
 		line = array_join_count(entry, ";", 7);
 
-		fprintf(f, "%s%s\n", 
+		ekg_fprintf(f, "%s%s\n", 
 			line,					/* look upper */
 			u->foreign ? u->foreign : "");		/* backwards compatibility */
 
@@ -240,7 +238,7 @@ int userlist_write(session_t *session) {
 		array_free_count(entry, 7);
 	}
 
-	fclose(f);
+	g_io_channel_unref(f);
 	return 0;
 }
 

@@ -526,21 +526,21 @@ void metacontact_init()
 int metacontact_write()
 {
 	metacontact_t *m;
-	FILE *f = NULL;
+	GIOChannel *f = NULL;
 
-	f = fopen(prepare_path("metacontacts", 1), "w");
+	f = config_open(prepare_path("metacontacts", 1), "w");
 
 	if (!f)
 		return -1;
 
 	for (m = metacontacts; m; m = m->next) {
 		metacontact_item_t *i;
-		fprintf(f, "[%s]\n", m->name);
+		ekg_fprintf(f, "[%s]\n", m->name);
 
 		for (i = m->metacontact_items; i; i = i->next)
-			fprintf(f, "%s %s %d\n", i->s_uid, i->name, i->prio);
+			ekg_fprintf(f, "%s %s %d\n", i->s_uid, i->name, i->prio);
 	}
-	fclose(f);
+	g_io_channel_unref(f);
 
 	return 0;
 }
@@ -553,13 +553,13 @@ int metacontact_write()
 int metacontact_read()
 {
 	char *line;
-	FILE *f;
+	GIOChannel *f;
 	metacontact_t *m = NULL;
 
-	if (!(f = fopen(prepare_path("metacontacts", 0), "r")))
+	if (!(f = config_open(prepare_path("metacontacts", 0), "r")))
 		return -1;
 
-	while ((line = read_file(f, 0))) {
+	while ((line = read_line(f))) {
 		char *tmp;
 		char **array = NULL;
 
@@ -590,7 +590,7 @@ next:
 		g_strfreev(array);
 	}
 
-	fclose(f);
+	g_io_channel_unref(f);
 
 	return 0;
 }

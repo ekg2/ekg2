@@ -1648,7 +1648,7 @@ char *read_file(FILE *f, int alloc) {
  *
  * @note The GIOChannel must not be open in non-blocking mode.
  */
-const gchar *read_line(GIOChannel *f) {
+gchar *read_line(GIOChannel *f) {
 	static GString *buf = NULL;
 	gsize term_pos;
 	GError *err = NULL;
