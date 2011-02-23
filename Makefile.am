@@ -36,7 +36,6 @@ noinst_HEADERS = \
 	ekg/sessions.h \
 	ekg/sources.h \
 	ekg/srv.h \
-	ekg/strings.h \
 	ekg/stuff.h \
 	ekg/themes.h \
 	ekg/userlist.h \
@@ -69,7 +68,6 @@ ekg_ekg2_SOURCES = \
 	ekg/sessions.c \
 	ekg/sources.c \
 	ekg/srv.c \
-	ekg/strings.c \
 	ekg/stuff.c \
 	ekg/themes.c \
 	ekg/userlist.c \
@@ -448,6 +446,8 @@ plugins_ncurses_ncurses_la_SOURCES = \
 	plugins/ncurses/main.c \
 	plugins/ncurses/mouse.c \
 	plugins/ncurses/mouse.h \
+	plugins/ncurses/nc-strings.c \
+	plugins/ncurses/nc-strings.h \
 	plugins/ncurses/nc-stuff.c \
 	plugins/ncurses/nc-stuff.h \
 	plugins/ncurses/notify.c \

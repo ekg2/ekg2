@@ -19,7 +19,7 @@
 # endif	/* HAVE_NCURSES_H */
 #endif	/* USE_UNICODE */
 
-#include <ekg/strings.h>
+#include "nc-strings.h"
 
 #endif	/* __EKG_NCURSES_ECURSES_H */
 

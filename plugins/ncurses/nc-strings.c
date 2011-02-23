@@ -26,7 +26,7 @@
 
 #if USE_UNICODE
 
-#include "strings.h"
+#include "nc-strings.h"
 
 /* some unicode/ascii stuff */
 #include <string.h>	/* ascii stuff */
