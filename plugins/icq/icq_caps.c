@@ -106,13 +106,13 @@ const char *icq_capability_name(int id) {
 	return "Unknown";
 }
 
-void icq_pack_append_cap(string_t pkt, int cap_id) {
+void icq_pack_append_cap(GString *pkt, int cap_id) {
 	if ((cap_id >=CAP_UNKNOWN) || (cap_id < 0)) {
 		debug_error("icq_pack_append_cap() - unknown cap id: 0x%x\n", cap_id);
 		return;
 	}
 
-	string_append_raw(pkt, (char *) _caps[cap_id], 0x10);
+	g_string_append_len(pkt, (char *) _caps[cap_id], 0x10);
 
 }
 
@@ -208,11 +208,11 @@ int icq_xstatus_id(unsigned char *buf) {
 	return 0;
 }
 
-void icq_pack_append_xstatus(string_t pkt, int x_id) {
+void icq_pack_append_xstatus(GString *pkt, int x_id) {
 	if ((x_id <=0) || (x_id > XSTATUS_COUNT))
 		return;
 
-	string_append_raw(pkt, (char *) _capXStatus[x_id-1], 0x10);
+	g_string_append_len(pkt, (char *) _capXStatus[x_id-1], 0x10);
 
 }
 

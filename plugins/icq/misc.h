@@ -28,8 +28,8 @@ int icq_unpack_nc(unsigned char *buf, int len, char *format, ...);
 	} while(0);
 
 
-string_t icq_pack(char *format, ...);
-string_t icq_pack_append(string_t str, char *format, ...);
+GString *icq_pack(char *format, ...);
+GString *icq_pack_append(GString *str, char *format, ...);
 
 #define icq_pack_tlv(type, data, datalen)	(guint32) type, (guint32) datalen, (guint8 *) data
 #define icq_pack_tlv_char(type, data)		(guint32) type, (guint32) 1, (guint32) data
@@ -62,13 +62,13 @@ const char *icq_snac_name(int family, int cmd);
 
 const char *icq_lookuptable(struct fieldnames_t *table, int code);
 
-void icq_pack_append_client_identification(string_t pkt);
+void icq_pack_append_client_identification(GString *pkt);
 
 void icq_convert_string_init();
 void icq_convert_string_destroy();
 
 char *icq_convert_from_ucs2be(char *buf, int len);
-string_t icq_convert_to_ucs2be(char *text);
+GString *icq_convert_to_ucs2be(char *text);
 char *icq_convert_from_utf8(char *text);
 
 void icq_send_snac(session_t *s, guint16 family, guint16 cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...);

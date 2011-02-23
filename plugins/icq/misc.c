@@ -65,7 +65,7 @@ void icq_hexdump(int level, unsigned char *p, size_t len) {
 	}
 }
 
-static void icq_pack_common(string_t str, char *format, va_list ap) {
+static void icq_pack_common(GString *str, char *format, va_list ap) {
 	if (!format)
 		return;
 
@@ -79,7 +79,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 
 				buf[0] = src;
 
-				string_append_raw(str, (char *) buf, 1);
+				g_string_append_len(str, (char *) buf, 1);
 				break;
 			}
 
@@ -91,7 +91,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				buf[0] = (src & 0xff00) >> 8;
 				buf[1] = (src & 0x00ff);
 
-				string_append_raw(str, (char *) buf, 2);
+				g_string_append_len(str, (char *) buf, 2);
 				break;
 			}
 
@@ -103,7 +103,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				buf[0] = (src & 0x00ff);
 				buf[1] = (src & 0xff00) >> 8;
 
-				string_append_raw(str, (char *) buf, 2);
+				g_string_append_len(str, (char *) buf, 2);
 				break;
 			}
 
@@ -117,7 +117,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				buf[2] = (src & 0x0000ff00) >> 8;
 				buf[3] = (src & 0x000000ff);
 
-				string_append_raw(str, (char *) buf, 4);
+				g_string_append_len(str, (char *) buf, 4);
 				break;
 			}
 
@@ -131,7 +131,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				buf[1] = (src & 0x0000ff00) >> 8;
 				buf[0] = (src & 0x000000ff);
 
-				string_append_raw(str, (char *) buf, 4);
+				g_string_append_len(str, (char *) buf, 4);
 				break;
 			}
 
@@ -142,7 +142,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				guint8 *t_buf	= va_arg(ap, guint8 *);
 
 				icq_pack_append(str, "WW", t_type, t_len);
-				string_append_raw(str, (char *) t_buf, t_len);
+				g_string_append_len(str, (char *) t_buf, t_len);
 
 				break;
 			}
@@ -161,7 +161,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				char *buf = va_arg(ap, char *);
 
 				icq_pack_append(str, "W", (guint32) xstrlen(buf));
-				string_append(str, buf);
+				g_string_append(str, buf);
 				break;
 			}
 
@@ -171,7 +171,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				const char *buf = ekg_itoa(uin);	/* XXX, enough? */
 
 				icq_pack_append(str, "C", (guint32) xstrlen(buf));
-				string_append(str, buf);
+				g_string_append(str, buf);
 				break;
 			}
 
@@ -180,7 +180,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				char *buf = va_arg(ap, char *);
 
 				icq_pack_append(str, "C", (guint32) xstrlen(buf));
-				string_append(str, buf);
+				g_string_append(str, buf);
 				break;
 			}
 			case 'P':	/* caps */
@@ -191,11 +191,11 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 				break;
 			}
 
-			case 'A':	/* append string_t */
+			case 'A':	/* append GString* */
 			{
-				string_t buf = va_arg(ap, string_t);
+				GString *buf = va_arg(ap, GString *);
 
-				string_append_raw(str, buf->str, buf->len);
+				g_string_append_len(str, buf->str, buf->len);
 
 				break;
 			}
@@ -214,7 +214,7 @@ static void icq_pack_common(string_t str, char *format, va_list ap) {
 	}
 }
 
-string_t icq_pack_append(string_t str, char *format, ...) {
+GString *icq_pack_append(GString *str, char *format, ...) {
 	va_list ap;
 
 	va_start(ap, format);
@@ -224,8 +224,8 @@ string_t icq_pack_append(string_t str, char *format, ...) {
 	return str;
 }
 
-string_t icq_pack(char *format, ...) {
-	string_t str = string_init(NULL);
+GString *icq_pack(char *format, ...) {
+	GString *str = g_string_new(NULL);
 	va_list ap;
 
 	va_start(ap, format);
@@ -597,7 +597,7 @@ const char *icq_lookuptable(struct fieldnames_t *table, int code) {
 	return NULL;
 }
 
-void icq_pack_append_client_identification(string_t pkt) {
+void icq_pack_append_client_identification(GString *pkt) {
 	/*
 	 * Pack client identification details.
 	 */
@@ -624,41 +624,41 @@ void icq_convert_string_destroy() {
 }
 
 char *icq_convert_from_ucs2be(char *buf, int len) {
-	string_t text, ret;
+	GString *text, *ret;
 
 	if (!buf || !len)
 		return NULL;
 
-	text = string_init(NULL);
-	string_append_raw(text, buf, len);
+	text = g_string_new(NULL);
+	g_string_append_len(text, buf, len);
 
 	ret = ekg_convert_string_t_p(text, ucs2be_conv_in);
 
-	string_free(text, 1);
+	g_string_free(text, TRUE);
 
 	if (ret)
-		return string_free(ret, 0);
+		return g_string_free(ret, FALSE);
 
 	return NULL;
 }
 
-string_t icq_convert_to_ucs2be(char *text) {
-	string_t ret, s;
+GString *icq_convert_to_ucs2be(char *text) {
+	GString *ret, *s;
 
 	if (!text || !*text)
 		return NULL;
 
-	s = string_init(text);
+	s = g_string_new(text);
 	ret = ekg_convert_string_t_p(s, ucs2be_conv_out);
 	/* XXX, ret == NULL */
-	string_free(s, 1);
+	g_string_free(s, TRUE);
 
 	return ret;
 }
 
 void icq_send_snac(session_t *s, guint16 family, guint16 cmd, private_data_t *data, snac_subhandler_t subhandler, char *format, ...) {
 	va_list ap;
-	string_t pkt = string_init(NULL);
+	GString *pkt = g_string_new(NULL);
 
 	if (format && *format) {
 		va_start(ap, format);

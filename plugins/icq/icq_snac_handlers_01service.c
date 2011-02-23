@@ -64,7 +64,7 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 	 * server SNAC(01,03) doesn't contain it - your client should popup "server error"
 	 * message when user want's to change server-stored information (SSI).
 	 */
-	string_t pkt;
+	GString *pkt;
 
 	debug_function("icq_snac_service_families()\n");
 	// Handle incoming packet
@@ -84,7 +84,7 @@ SNAC_SUBHANDLER(icq_snac_service_families) {
 	 * the client as an ICQ vice AIM client to the server.
 	 */
 
-	pkt = string_init(NULL);
+	pkt = g_string_new(NULL);
 	icq_pack_append(pkt, "WW", (guint32) 0x01, (guint32) 0x04);	// Generic service controls
 	icq_pack_append(pkt, "WW", (guint32) 0x02, (guint32) 0x01);	// Location services
 	icq_pack_append(pkt, "WW", (guint32) 0x03, (guint32) 0x01);	// Buddy List management service
