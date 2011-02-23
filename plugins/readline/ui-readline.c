@@ -128,13 +128,14 @@ int my_getc(FILE *f)
  * wy¶wietla dany tekst na ekranie, uwa¿aj±c na trwaj±ce w danych chwili
  * readline().
  */
-void ui_readline_print(window_t *w, int separate, const char *xline)
+void ui_readline_print(window_t *w, int separate, const /*locale*/ char *xline)
 {
 	int old_end = rl_end, id = w->id;
 	char *old_prompt = NULL, *line_buf = NULL;
 	const char *line = NULL;
 
 	if (config_timestamp) {
+			/* XXX: recode timestamp? for fun or wcs? */
 		string_t s = string_init(NULL);
 		const char *p = xline;
 		const char *buf = timestamp(format_string(config_timestamp));
@@ -174,14 +175,13 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 	if (in_readline) {
 		int i;
 
-		old_prompt = xstrdup(rl_prompt);
+		old_prompt = g_strdup(rl_prompt);
 		rl_end = 0;
 /*		set_prompt(NULL);*/
 		rl_redisplay();
-		printf("\r");
-		for (i = 0; i < xstrlen(old_prompt); i++)
-			printf(" ");
-		printf("\r");
+			/* XXX: string width instead?
+			 * or cleartoeol? */
+		printf("\r%*c\r", (int) xstrlen(old_prompt), ' ');
 	}
 
 	printf("%s", line);
@@ -218,13 +218,13 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 	if (in_readline) {
 		rl_end = old_end;
 		set_prompt(old_prompt);
-		xfree(old_prompt);
+		g_free(old_prompt);
 		rl_forced_update_display();
 	}
 	
 done:
 	if (line_buf)
-		xfree(line_buf);
+		g_free(line_buf);
 }
 /*
  * current_prompt()
@@ -413,7 +413,7 @@ int window_refresh() {
  *
  * dopisuje liniê do bufora danego okna.
  */
-int window_write(int id, const char *line)
+int window_write(int id, const /*locale*/ char *line)
 {
 	window_t *w = window_exist(id);
 	readline_window_t *r = readline_window(w);

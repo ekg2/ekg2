@@ -181,26 +181,32 @@ static char *readline_change_string_t_back_to_char(const char *str, const short 
 	return string_free(asc, 0);
 }
 
-static char *readline_ui_window_print_helper(char *str, short *attr) {
-	char *ascii = readline_change_string_t_back_to_char(str, attr);
-	char *colorful = format_string(ascii);
+static /*locale*/ char *readline_ui_window_print_helper(const fstring_t *f) {
+	const gchar *str = f->str;
+	const fstr_attr_t *attr = f->attr;
 
-	xfree(ascii);
-	return colorful;
+		/* XXX: rewrite, optimize! */
+	gchar *ascii = readline_change_string_t_back_to_char(str, attr);
+	gchar *colorful = format_string(ascii);
+	char *recoded = ekg_recode_to_locale(colorful);
+
+	g_free(ascii);
+	g_free(colorful);
+	return recoded;
 }
 
 static QUERY(readline_ui_window_print) {
 	window_t *w = *(va_arg(ap, window_t **));
 	fstring_t *l = *(va_arg(ap, fstring_t **));
-	char *str = readline_ui_window_print_helper(l->str, l->attr);
+	char *str = readline_ui_window_print_helper(l);
 
 	ui_readline_print(w, 1, str);
-	xfree(str);
+	g_free(str);
 	return 0;
 }
 
 static QUERY(readline_variable_changed) {
-	char *name = *(va_arg(ap, char**));
+	gchar *name = *(va_arg(ap, gchar**));
 	if (!xstrcasecmp(name, "sort_windows") && config_sort_windows) {
 		window_t *w;
 		int id = 2;
@@ -216,7 +222,7 @@ static QUERY(readline_ui_window_clear) {
 	readline_window_t *r = w->priv_data;
 
 	for (i = 0; i < MAX_LINES_PER_SCREEN; i++) {
-		xfree(r->line[i]);
+		g_free(r->line[i]);
 		r->line[i] = NULL;
 	}
 	window_refresh();
