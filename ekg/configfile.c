@@ -146,8 +146,15 @@ GIOChannel *config_open(const gchar *path, const gchar *mode) {
 	if (mode[0] == 'r') {
 		const gchar *buf = read_line(f);
 
+		if (!buf) {
+			/* Some error occured, or EOF
+			 * in either case, there's no need to read that file anyway */
+			g_io_channel_unref(f);
+			return NULL;
+		}
+
 		/* XXX: support more modeline formats? */
-		if (buf && g_str_has_prefix(buf, modeline_prefix))
+		if (g_str_has_prefix(buf, modeline_prefix))
 			wanted_enc = &buf[sizeof(modeline_prefix) - 1]; /* 1 for null terminator */
 
 		if (g_io_channel_seek_position(f, 0, G_SEEK_SET, &err) != G_IO_STATUS_NORMAL) {

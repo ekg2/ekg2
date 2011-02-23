@@ -1666,7 +1666,6 @@ gchar *read_line(GIOChannel *f) {
 			g_error_free(err);
 			/* fall through */
 		case G_IO_STATUS_EOF:
-			g_string_truncate(buf, 0);
 			return NULL;
 		case G_IO_STATUS_AGAIN:
 			g_assert_not_reached();
