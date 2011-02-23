@@ -87,13 +87,6 @@ char *rl_filename_completion_function()
 }
 #endif
 
-#ifndef HAVE_RL_SET_PROMPT
-int rl_set_prompt(const char *foo)
-{
-	return -1;
-}
-#endif
-
 #ifndef HAVE_RL_SET_KEY
 int rl_set_key(const char *key, void *function, void *keymap)
 {
@@ -103,7 +96,7 @@ int rl_set_key(const char *key, void *function, void *keymap)
 
 void set_prompt(const char *prompt) {
 #ifdef HAVE_RL_SET_PROMPT
-	rl_set_prompt((char *)prompt);
+	rl_set_prompt(prompt);
 #else
 	rl_expand_prompt((char *)prompt);
 #endif
@@ -197,15 +190,18 @@ void ui_readline_print(window_t *w, int separate, const char *xline)
 		pager_lines++;
 
 		if (pager_lines >= screen_lines - 2) {
-			const char *prompt = format_find("readline_more");
+			const gchar *prompt = format_find("readline_more");
+			char *lprompt = ekg_recode_to_locale(prompt);
 			char *tmp;
-			
+				/* XXX: lprompt pretty const, make it static? */
+
 			in_readline++;
 
-			set_prompt(prompt);
+			set_prompt(lprompt);
 
 			pager_lines = -1;
-			tmp = readline((char *) prompt);
+			tmp = readline((char *) lprompt);
+			g_free(lprompt);
 			in_readline--;
 			if (tmp) {
 				xfree(tmp);
@@ -235,10 +231,16 @@ done:
  *
  * zwraca wska¼nik aktualnego prompta. statyczny bufor, nie zwalniaæ.
  */
-const char *current_prompt()
+/**
+ * current_prompt()
+ *
+ * Get the current prompt, locale-recoded.
+ *
+ * @return Static buffer pointer, non-NULL, locale-encoded.
+ */
+const char *current_prompt(void)
 {
-	static char buf[80];
-	const char *prompt = buf;
+	static gchar *buf = NULL;
 	session_t *s;
 	char *tmp, *act, *sid;
 	char *format, *format_act;
@@ -269,11 +271,12 @@ const char *current_prompt()
 	else
 		tmp = format_string(format_find(format), sid, ekg_itoa(window_current->id), window_current->target);
 
-	g_strlcpy(buf, tmp, sizeof(buf));
-	xfree(tmp);
-	xfree(act);
+	g_free(buf);
+	buf = ekg_recode_to_locale(tmp);
+	g_free(tmp);
+	g_free(act);
 
-	return prompt;
+	return buf;
 }
 
 int my_loop() {
@@ -301,6 +304,8 @@ char *my_readline()
 	in_readline = 0;
 
 	if (config_print_line) {
+			/* XXX: this needs recoding back,
+			 * maybe some internal API? */
 		tmp = saprintf("%s%s\n", prompt, (res) ? res : "");
 		window_write(window_current->id, tmp);
 		xfree(tmp);

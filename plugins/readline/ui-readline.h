@@ -14,7 +14,7 @@ int ui_readline_loop();
 void ui_readline_init();
 void ui_readline_print(window_t *w, int separate, const char *xline);
 int window_refresh();
-const char *current_prompt();
+const /*locale*/ char *current_prompt();
 void set_prompt(const char *prompt);
 int window_write(int id, const char *line);
 

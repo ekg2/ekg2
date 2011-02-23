@@ -104,11 +104,7 @@ static QUERY(readline_ui_window_switch) { /* window_switch */
 	window_current = w;
 	w->act = 0;
 	window_refresh();
-#ifdef HAVE_RL_SET_PROMPT
-	rl_set_prompt((char *) current_prompt());
-#else
-	rl_expand_prompt((char *) current_prompt());
-#endif
+	set_prompt(current_prompt());
 	rl_initialize();
 	return 0;
 }
