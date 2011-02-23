@@ -29,13 +29,6 @@
 void config_upgrade() {
 	const int current_config_version = 10;
 
-#if ! USE_UNICODE
-	if (!xstrcasecmp(config_console_charset, "UTF-8")) {
-		print("config_error", _("Warning, nl_langinfo(CODESET) reports that you are using utf-8 encoding, but you didn't compile ekg2 with (experimental/untested) --enable-unicode\n"
-			    "\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n"));
-	}
-#endif
-
 	if (config_version == -1)
 		config_version = current_config_version;
 

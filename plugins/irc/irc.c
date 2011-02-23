@@ -132,11 +132,8 @@ static char *irc_config_default_access_groups;
 int irc_config_allow_fake_contacts = 0;
 int irc_config_clean_channel_name;
 
-char fillchars_utf8[] = "\xC2\xA0";
-char fillchars_norm[] = "\xA0";
-char *fillchars = NULL;
-int fillchars_len = 0;
-
+const gchar fillchars[] = "\xC2\xA0";
+const gint fillchars_len = 2;
 
 PLUGIN_DEFINE(irc, PLUGIN_PROTOCOL, irc_theme_init);
 
@@ -2505,9 +2502,7 @@ char *nickpad_string_create(channel_t *chan)
 
 char *nickpad_string_apply(channel_t *chan, const char *str)
 {
-	chan->nickpad_pos = chan->longest_nick - xstrlen(str);
-	if (config_use_unicode)
-		chan->nickpad_pos <<= 1;
+	chan->nickpad_pos = (chan->longest_nick - xstrlen(str)) * 2;
 	if (chan->nickpad_pos < chan->nickpad_len && chan->nickpad_pos >= 0)
 	{
 		chan->nickpad_str[chan->nickpad_pos] = '\0';
@@ -2649,9 +2644,6 @@ EXPORT int irc_plugin_init(int prio)
 	irc_plugin.priv		= &irc_priv;
 
 	plugin_register(&irc_plugin, prio);
-
-	fillchars = (config_use_unicode ? fillchars_utf8 : fillchars_norm);
-	fillchars_len = (config_use_unicode ? 2 : 1);
 
 #define IRC_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define IRC_FLAGS		IRC_ONLY | SESSION_MUSTBECONNECTED

@@ -139,7 +139,7 @@ void ncurses_update_real_prompt(ncurses_window_t *n) {
 		const CHAR_T *dots	= (CHAR_T *) TEXT("...");
 #ifdef USE_UNICODE
 		const wchar_t udots[2]	= { 0x2026, 0 };
-		if (config_use_unicode)	/* use unicode hellip, if using utf8 */
+		if (console_charset_is_utf8)	/* use unicode hellip, if using utf8 */
 			dots		= udots;
 #endif
 

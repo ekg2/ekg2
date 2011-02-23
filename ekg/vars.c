@@ -29,6 +29,7 @@
 #include <unistd.h>
 
 void changed_session_locks(const char *varname); /* sessions.c */
+gboolean console_charset_is_utf8;
 const char *console_charset;
 
 GSList *variables = NULL;
@@ -140,8 +141,6 @@ void variable_init() {
  * nieliczbowych.
  */
 void variable_set_default() {
-	gboolean is_unicode;
-
 	xfree(config_timestamp);
 	xfree(config_completion_char);
 	xfree(config_display_color_map);
@@ -159,22 +158,7 @@ void variable_set_default() {
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
 	config_subject_reply_prefix = xstrdup("Re: ");
-	is_unicode = g_get_charset(&console_charset);
-
-#if USE_UNICODE
-	if (config_use_unicode && !is_unicode) {
-		debug("nl_langinfo(CODESET) == %s swapping config_use_unicode to 0\n", console_charset);
-		config_use_unicode = 0;
-	} else
-		config_use_unicode = 1;
-#else
-	config_use_unicode = 0;
-	if (is_unicode) {
-		debug("Warning, g_get_charset() reports that you are using utf-8 encoding, but you didn't compile ekg2 with --enable-unicode\n");
-		debug("\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n");
-	}
-#endif
-	config_use_iso = !xstrncasecmp(console_charset, "ISO-8859-", 9);
+	console_charset_is_utf8 = g_get_charset(&console_charset);
 }
 
 /*

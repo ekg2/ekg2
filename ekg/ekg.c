@@ -535,8 +535,6 @@ static GOptionEntry ekg_options[] = {
 	{ "xa", 'x', G_OPTION_FLAG_OPTIONAL_ARG, G_OPTION_ARG_CALLBACK, NULL,
 		"changes status to ``very busy''", "[DESCRIPTION]" },
 
-	{ "unicode", 'U', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, NULL,
-		"enable unicode support", NULL },
 	{ "version", 'v', 0, G_OPTION_ARG_NONE, NULL,
 		"print program version and exit", NULL },
 
@@ -572,18 +570,6 @@ int main(int argc, char **argv)
 		new_descr = xstrdup(optval);
 
 		return TRUE;
-	}
-
-	gboolean unicode_callback(const gchar *optname, const gchar *optval,
-			gpointer data, GError **error) {
-#ifdef USE_UNICODE
-		config_use_unicode = 1;
-		return TRUE;
-#else
-		*error = g_error_new_literal(G_OPTION_ERROR, G_OPTION_ERROR_FAILED,
-			_("EKG2 compiled without unicode support. This just can't work!"));
-		return FALSE;
-#endif
 	}
 
 #ifndef NO_POSIX_SYSTEM
@@ -654,8 +640,7 @@ int main(int argc, char **argv)
 	ekg_options[9].arg_data = &set_status_callback;
 	ekg_options[10].arg_data = &set_status_callback;
 	ekg_options[11].arg_data = &set_status_callback;
-	ekg_options[12].arg_data = &unicode_callback;
-	ekg_options[13].arg_data = &print_version;
+	ekg_options[12].arg_data = &print_version;
 
 	opt = g_option_context_new("[COMMAND...]");
 	g_option_context_set_description(opt, "Options concerned with status depend on the protocol of particular session -- \n" \

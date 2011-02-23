@@ -184,8 +184,6 @@ extern char *config_theme;
 extern int config_time_deviation;
 extern char *config_timestamp;
 extern int config_timestamp_show;
-extern int config_use_unicode;	/* for instance in jabber plugin if this is on, than we don't need to make iconv from / to unicode.. */
-extern int config_use_iso;  /* this for ncurses */
 extern int config_window_session_allow;
 extern char *config_windows_layout;
 extern int config_windows_save;
@@ -198,6 +196,7 @@ extern char *config_nickname;
 extern char *home_dir;
 extern char *config_dir;
 extern const char *console_charset;
+extern gboolean console_charset_is_utf8;
 extern int in_autoexec;
 extern int ekg_watches_removed;
 extern time_t ekg_started;

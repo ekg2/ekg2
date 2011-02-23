@@ -347,17 +347,6 @@ EXPORT int gtk_plugin_init(int prio) {
 	if (!(gtk_init_check(0, NULL)))
 		return -1;
 
-#ifdef USE_UNICODE
-	if (!config_use_unicode)
-#endif
-	{
-		int la = in_autoexec;
-		bind_textdomain_codeset("ekg2", "UTF-8");
-		in_autoexec = 0;	changed_theme(("theme"));	in_autoexec = la; /* gettext + themes... */
-	}
-
-		/* ... */
-
 	/* fe_init() */
 	gtk_binding_init();
 	pixmaps_init();

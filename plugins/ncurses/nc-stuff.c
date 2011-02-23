@@ -323,6 +323,7 @@ inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 		return ch + 64;
 	}
 
+#if 0 /* XXX */
 	if (ch > 127 && ch < 160 &&
 #if USE_UNICODE
 		0 &&
@@ -332,6 +333,7 @@ inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 		*attr |= A_REVERSE;
 		return '?';
 	}
+#endif
 
 	return ch;
 }
@@ -725,12 +727,9 @@ void ncurses_init(void)
 	noecho();
 	nonl();
 #ifdef HAVE_USE_LEGACY_CODING
-	if (!config_use_iso
-#if USE_UNICODE
-			&& 0
+#ifndef USE_UNICODE
+	use_legacy_coding(2);
 #endif
-			)
-		use_legacy_coding(2);
 #endif
 
 	if (config_display_transparent) {
