@@ -59,6 +59,13 @@ static int ncurses_settitle = 0;
 
 QUERY(ncurses_password_input); /* nc-stuff.c */
 
+	/* XXX: any need for random arguments? */
+static void ncurses_set_title(const gchar* a, const gchar* b, const gchar* c) {
+		/* XXX: recode? */
+	if (ncurses_settitle)
+		printf(ncurses_settitle_formats[ncurses_settitle], a, b, c);
+}
+
 /**
  * ncurses_beep()
  *
@@ -162,8 +169,7 @@ static QUERY(ncurses_ui_window_switch) {
 	ncurses_typingsend(w, EKG_CHATSTATE_ACTIVE);
 
 	p = w->alias ? w->alias : (w->target ? w->target : NULL);
-	if (ncurses_settitle)
-		printf(ncurses_settitle_formats[ncurses_settitle], p ? p : "", p ? " - " : "", "EKG2");
+	ncurses_set_title(p ? p : "", p ? " - " : "", "EKG2");
 
 	return 0;
 }
@@ -804,8 +810,7 @@ EXPORT int ncurses_plugin_init(int prio)
 			ncurses_settitle = 1;
 	}
 
-	if (ncurses_settitle)
-		printf(ncurses_settitle_formats[ncurses_settitle], "", "", "EKG2");
+	ncurses_set_title("", "", "EKG2");
 
 	return 0;
 }

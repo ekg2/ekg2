@@ -338,6 +338,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 
 			string = fstring_new_format(format_find(tmp), u->nickname, u->descr);
 
+				/* used in mouse handler, do not recode */
 			if (u->priv_data == (void *) 2)
 				string->priv_data = g_strdup(u->nickname);
 			else
@@ -507,6 +508,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 		return;
 	}
 
+		/* (we keep priv_data utf8-encoded) */
 	command_exec_format(NULL, NULL, 0, ("/query \"%s\""), n->backlog[y]->priv_data);
 	return;
 }
