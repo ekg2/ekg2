@@ -120,6 +120,8 @@ bind
 	
 	  -S, --set <sekwencja>           binduje klawisze pod sekwencję
 	
+	  -e, --exec <akcja>              wykonuje akcję
+	
 	
 	Dostępne sekwencje to: Ctrl-<znak>, Alt-<znak>, F<liczba>, Enter, 
 	Backspace, Delete, Insert, Home, End, Left, Right, Up, Down, PageUp, PageDown.
