@@ -86,7 +86,7 @@ void ekg_oom_handler()
 
 void *xcalloc(size_t nmemb, size_t size)
 {
-	return g_malloc0_n(nmemb, size);
+	return g_malloc0(nmemb * size);
 }
 
 /** 
