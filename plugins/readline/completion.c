@@ -11,18 +11,22 @@
 
 extern char **completion_matches();
 
-static char *rl_strndup(gchar *s, gsize n) {
+static char *rl_strndup(gchar *s, gssize n) {
 	static GString *buf = NULL;
 	gchar *rec;
 
 		/* XXX: API for stated-size recoding */
 	if (G_UNLIKELY(!buf))
-		buf = g_string_sized_new(n+1);
-	g_string_truncate(buf, 0);
-	g_string_append_len(buf, s, n);
+		buf = g_string_sized_new(G_LIKELY(n != -1) ? n+1 : 16);
+	if (G_LIKELY(n == -1))
+		g_string_assign(buf, s);
+	else {
+		g_string_truncate(buf, 0);
+		g_string_append_len(buf, s, n);
+	}
 
 	rec = ekg_recode_to_locale(buf->str);
-	if (g_mem_is_system_malloc())
+	if (G_LIKELY(g_mem_is_system_malloc()))
 		return rec;
 	else {
 		gsize len = strlen(rec) + 1;
@@ -59,7 +63,7 @@ char *multi_generator(char *text, int state) {
 	ret = *ekg2_completions;
 	ekg2_completions++;
 
-	return xstrdup(ret);
+	return rl_strndup(ret, -1);
 }
 
 /*locale*/ char **my_completion(/*locale*/ char *text, int start, int end) {
@@ -69,6 +73,7 @@ char *multi_generator(char *text, int state) {
 	ekg2_complete_clear();
 
 	buffer = ekg_recode_from_locale(rl_line_buffer);
+		/* XXX: start & end? */
 
 	if ((in_quote = (start && buffer[start-1] == '"'))) start--;
 
@@ -107,8 +112,8 @@ char *multi_generator(char *text, int state) {
 		for(i=0;i<n;i++) {
 			if (ekg2_completions[i][0] != '"')
 				continue;
-			char *tmp = rl_strndup(ekg2_completions[i]+1, xstrlen(ekg2_completions[i])-2);
-			xfree(ekg2_completions[i]);
+			gchar *tmp = g_strndup(ekg2_completions[i]+1, xstrlen(ekg2_completions[i])-2);
+			g_free(ekg2_completions[i]);
 			ekg2_completions[i] = tmp;
 		}
 
