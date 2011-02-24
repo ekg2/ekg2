@@ -144,6 +144,25 @@ COMMAND(cmd_bind) {
 		binding_list(quiet, params[1], 0);
 		return 0;
 	}
+	if (match_arg(params[0], 'e', ("exec"), 2)) {
+		struct binding *b;
+		if (!params[1]) {
+			printq("not_enough_params", ("bind"));
+			return -1;
+		}
+		if (!bindings) {
+			printq("bind_seq_list_empty");
+			return 0;
+		}
+		for (b = bindings; b; b = b->next) {
+			if (xstrcasestr(b->action, params[1]) && b->function) {
+				b->function(NULL);
+				return 0;
+			}
+		}
+		/* XXX not found */
+	}
+
 	binding_list(quiet, params[0], 0);
 
 	return 0;

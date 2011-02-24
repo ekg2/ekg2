@@ -3747,7 +3747,7 @@ void command_init()
 	command_add(NULL, ("beep"), NULL, cmd_beep, 0, NULL);
 
 	command_add(NULL, ("bind"), "p ? ?", cmd_bind, 0,
-	 "-a --add -d --del -l --list -L --list-default");
+	 "-a --add -d --del -e --exec -l --list -L --list-default -S --set");
 
 	command_add(NULL, ("clear"), NULL, cmd_window, 0,	NULL);
  
