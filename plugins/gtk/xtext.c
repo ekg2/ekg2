@@ -3975,7 +3975,7 @@ static void gtk_xtext_append_entry(xtext_buffer * buf, textentry * ent)
 
 /* XXX: gtk_xtext_append(), gtk_xtext_append_indent() */
 
-void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
+void gtk_xtext_append_fstring(xtext_buffer *buf, const fstring_t *fstr)
 {
 	textentry *ent;
 	int space;
@@ -3987,7 +3987,7 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 		len = sizeof(buf->xtext->scratch_buffer) - 1;
 
 	ent = xmalloc(sizeof(textentry));
-	ent->fstr = fstr;
+	ent->fstr = fstring_dup(fstr);
 
 	/* NOTE, xchat create new string with str[0] = ' ' str[1...] = str[0...] 
 	 *	i don't know why, but without it, ui looks ugly.
@@ -4004,7 +4004,7 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 		ent->fstr->attr[0] = FSTR_NORMAL;
 
 	ent->left_len = 0;
-	ent->str = fstr->str;
+	ent->str = ent->fstr->str;
 	ent->str_len = len+1;
 	ent->indent = (buf->indent) - buf->xtext->space_width;
 

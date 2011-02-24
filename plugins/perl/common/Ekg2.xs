@@ -82,11 +82,13 @@ OUTPUT:
 void print(int dest, char *str)
 CODE:
 	char *line;
-        while ((line = split_line(&str))) {
+	while ((line = split_line(&str))) {
 		char *tmp = format_string(line);
-		window_print(window_exist(dest), fstring_new(tmp));
+		fstring_t *l = fstring_new(tmp);
+		window_print(window_exist(dest), l);
+		fstring_free(l);
 		xfree(tmp);
-        }
+	}
 
 void init()
 CODE:

@@ -204,7 +204,7 @@ static QUERY(gtk_ui_window_kill) {			/* fe_session_callback() || fe_close_window
 
 static QUERY(gtk_ui_window_print) {			/* fe_print_text() */
 	window_t *w = *(va_arg(ap, window_t **));
-	fstring_t *line = *(va_arg(ap, fstring_t **));
+	const fstring_t *line = *(va_arg(ap, const fstring_t **));
 
 	gtk_xtext_append_fstring(gtk_private(w)->buffer, line);
 

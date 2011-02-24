@@ -332,7 +332,7 @@ int ncurses_backlog_add_real(window_t *w, fstring_t *str) {
  *
  * zwraca rozmiar dodanej linii w liniach ekranowych.
  */
-int ncurses_backlog_add(window_t *w, fstring_t *str) {
+int ncurses_backlog_add(window_t *w, const fstring_t *str) {
 #if USE_UNICODE
 	{
 		int rlen = xstrlen(str->str);
@@ -367,7 +367,7 @@ int ncurses_backlog_add(window_t *w, fstring_t *str) {
 		}
 	}
 #endif
-	return ncurses_backlog_add_real(w, str);
+	return ncurses_backlog_add_real(w, fstring_dup(str));
 }
 
 

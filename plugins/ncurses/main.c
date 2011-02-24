@@ -171,7 +171,7 @@ static QUERY(ncurses_ui_window_switch) {
 static QUERY(ncurses_ui_window_print)
 {
 	window_t *w	= *(va_arg(ap, window_t **));
-	fstring_t *line = *(va_arg(ap, fstring_t **));
+	const fstring_t *line = *(va_arg(ap, const fstring_t **));
 
 	ncurses_window_t *n;
 	int bottom = 0, prev_count, count = 0;

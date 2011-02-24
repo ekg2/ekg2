@@ -322,22 +322,17 @@ window_t *window_new(const char *target, session_t *session, int new_id) {
  *
  * Print fstring_t @a line to window
  *
- * @todo If UI_WINDOW_PRINT is not handled by ui-plugin, we should free @a line, or we'll have memleaks.
- *
  * @param w - window
  * @param line - line
- *
  */
 
 void window_print(window_t *w, fstring_t *line) {
-	if (!w || !line) {
-		fstring_free(line);
-		return;
-	}
+	g_assert(w);
+	g_assert(line);
 
 	if (!line->ts)
 		line->ts = time(NULL);
-	query_emit(NULL, "ui-window-print", &w, &line);	/* XXX */
+	query_emit(NULL, "ui-window-print", &w, &line);
 }
 
 /*

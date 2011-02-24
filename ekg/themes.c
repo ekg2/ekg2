@@ -810,6 +810,7 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 		char *tmp = stmp;
 		while ((line = split_line(&tmp))) {
 			char *p;
+			fstring_t *l;
 
 			if ((p = xstrstr(line, "\033[00m"))) {
 				xfree(prompt);
@@ -821,11 +822,13 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 			}
 
 			if (prompt) {
-				char *tmp = saprintf("%s%s", prompt, line);
-				window_print(w, fstring_new(tmp));
-				xfree(tmp);
+				gchar *tmp = g_strdup_printf("%s%s", prompt, line);
+				l = fstring_new(tmp);
+				g_free(tmp);
 			} else
-				window_print(w, fstring_new(line));
+				l = fstring_new(line);
+			window_print(w, l);
+			fstring_free(l);
 		}
 		xfree(prompt);
 	}

@@ -100,10 +100,10 @@ char *escape_single_quote(char *p)
 	return string_free(s, 0);
 }
 
-char *http_fstring(int winid, char *parent, fstring_t *line)
+char *http_fstring(int winid, char *parent, const fstring_t *line)
 {
-	short *attr = line->attr;
-	char *str = line->str;
+	const short *attr = line->attr;
+	const char *str = line->str;
 	string_t asc = string_init(NULL);
 	int i, last, lastbeg, len, att;
 	char tempchar;
@@ -223,7 +223,7 @@ QUERY(httprc_xajax_def_action)
 	int gname=0, gw=0, gline=0;
 	char *name = NULL, *tmp = NULL;
 	window_t *w = NULL;
-	fstring_t *line = NULL;
+	const fstring_t *line = NULL;
 
 	for (a=clients; a; a=a->next)
 	{
@@ -239,7 +239,7 @@ QUERY(httprc_xajax_def_action)
 				if (!gline) {
 					char *fstringed;
 /*					ncurses_window_t *n = w->priv_data; */
-					line = *(va_arg(ap, fstring_t **));
+					line = *(va_arg(ap, const fstring_t **));
 					gline=1;
 					fstringed = http_fstring(w->id, "ch", line);
 					tmp = saprintf("glst=gwins[%d][2].length;\n"
