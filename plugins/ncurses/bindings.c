@@ -68,6 +68,7 @@ static void add_to_history() {
 
 static int input_backward_word(void) {
 	int i = line_index;
+		/* XXX: isspace()/iswspace()? */
 	while (i > 0 && line[i - 1] == ' ')
 		i--;
 	while (i > 0 && line[i - 1] != ' ')
@@ -115,7 +116,8 @@ static BINDING_FUNCTION(binding_toggle_input)
 		ncurses_input_update(line_index);
 	} else {
 		string_t s = string_init((""));
-		char *p, *tmp;
+		char *tmp;
+		gchar *out, *p;
 		int i;
 
 		for (i = 0; lines[i]; i++) {
@@ -126,25 +128,29 @@ static BINDING_FUNCTION(binding_toggle_input)
 				string_append(s, ("\r\n"));
 		}
 
+			/* XXX: we could probably use string_t recoding func here */
 		tmp = string_free(s, 0);
+		out = ekg_recode_from_locale(tmp);
+		g_free(tmp);
 
 		add_to_history();
 
 		input_size = 1;
 		ncurses_input_update(0);
 
-		for (p=tmp; *p && isspace(*p); p++);
-                if (*p || config_send_white_lines)
-			command_exec(window_current->target, window_current->session, tmp, 0);
+		/* omit leading whitespace */
+		for (p = out; g_unichar_isspace(g_utf8_get_char(p)); p = g_utf8_next_char(p));
+		if (*p || config_send_white_lines)
+			command_exec(window_current->target, window_current->session, out, 0);
 
-		if (!tmp[0] || tmp[0] == '/' || !window_current->target)
+		if (!out[0] || out[0] == '/' || !window_current->target)
 			ncurses_typing_mod		= 1;
 		else {
 			ncurses_typing_win		= NULL;
 		}
 
 		curs_set(1);
-		xfree(tmp);
+		g_free(out);
 	}
 }
 
@@ -268,10 +274,13 @@ static BINDING_FUNCTION(binding_accept_line)
 		return;
 	}
 	if (arg != BINDING_HISTORY_NOEXEC) {
-               txt = wcs_to_normal(line);
-               for (p=txt; *p && isspace(*p); p++);
-               if (*p || config_send_white_lines)
-                       command_exec(window_current->target, window_current->session, txt, 0);
+		gchar *out;
+		txt = wcs_to_normal(line);
+		out = ekg_recode_from_locale(txt);
+		for (p = out; g_unichar_isspace(g_utf8_get_char(p)); p = g_utf8_next_char(p));
+		if (*p || config_send_white_lines)
+			command_exec(window_current->target, window_current->session, out, 0);
+		g_free(out);
 		free_utf(txt);
 	}
 

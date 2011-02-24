@@ -34,6 +34,7 @@
 #include "spell.h"
 
 
+	/* CHAR_Ts are always locale-encoded */
 CHAR_T *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
 CHAR_T *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
 CHAR_T **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
