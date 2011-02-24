@@ -68,13 +68,17 @@ char *multi_generator(char *text, int state) {
 
 /*locale*/ char **my_completion(/*locale*/ char *text, int start, int end) {
 	gchar *buffer;
+	GString *buf = g_string_sized_new(80);
 	int i, n, e0=end, in_quote, out_quote;
 
 	ekg2_complete_clear();
 
 	buffer = ekg_recode_from_locale(rl_line_buffer);
 		/* XXX: start & end? */
+	g_string_assign(buf, buffer);
+	g_free(buffer);
 
+	buffer = buf->str;
 	if ((in_quote = (start && buffer[start-1] == '"'))) start--;
 
 	char *p1, *p2;
@@ -92,7 +96,7 @@ char *multi_generator(char *text, int state) {
 		}
 	}
 
-	ekg2_complete(&start, &end, buffer, strlen(buffer));
+	ekg2_complete(&start, &end, buf->str, buf->allocated_len);
 
 	out_quote = (buffer[start] == '"');
 
@@ -105,7 +109,7 @@ char *multi_generator(char *text, int state) {
 			if (n && ' ' == buffer[start+n-1]) n--;
 			one_and_only = rl_strndup(buffer+start, n);
 
-			g_free(buffer);
+			g_string_free(buf, TRUE);
 			return completion_matches(text, one_generator);
 		}
 
@@ -119,6 +123,6 @@ char *multi_generator(char *text, int state) {
 
 	}
 
-	g_free(buffer);
+	g_string_free(buf, TRUE);
 	return completion_matches(text, multi_generator);
 }
