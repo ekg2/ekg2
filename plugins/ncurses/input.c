@@ -46,6 +46,7 @@ int ncurses_input_size = 1;		/* rozmiar okna wpisywania tekstu */
 int ncurses_noecho = 0;
 
 
+#if 0
 static char ncurses_funnything[5] = "|/-\\";
 
 CHAR_T *ncurses_passbuf;
@@ -114,6 +115,7 @@ QUERY(ncurses_password_input) {
 
 	return -1;
 }
+#endif
 
 /* cut prompt to given width and recalculate its' width */
 void ncurses_update_real_prompt(ncurses_window_t *n) {
@@ -498,6 +500,7 @@ void ncurses_redraw_input(unsigned int ch) {
 			waddstr(input, (char *) ncurses_current->prompt_real);
 #endif
 
+#if 0
 		if (ncurses_noecho) {
 			static char *funnything	= ncurses_funnything;
 
@@ -507,8 +510,8 @@ void ncurses_redraw_input(unsigned int ch) {
 			if (!*(++funnything))
 				funnything = ncurses_funnything;
 			return;
-
 		}
+#endif
 
 		cur_posx = ncurses_redraw_input_line(ncurses_line);
 

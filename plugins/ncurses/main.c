@@ -697,7 +697,9 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "ui-window-clear", ncurses_ui_window_clear, NULL);
 	query_connect(&ncurses_plugin, "ui-window-update-lastlog", ncurses_ui_window_lastlog, NULL);
 	query_connect(&ncurses_plugin, "ui-refresh", ncurses_ui_refresh, NULL);
+#if 0
 	query_connect(&ncurses_plugin, "ui-password-input", ncurses_password_input, NULL);
+#endif
 	query_connect(&ncurses_plugin, "session-added", ncurses_statusbar_query, NULL);
 	query_connect(&ncurses_plugin, "session-removed", ncurses_statusbar_query, NULL);
 	query_connect(&ncurses_plugin, "session-event", ncurses_statusbar_query, NULL);
