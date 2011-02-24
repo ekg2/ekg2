@@ -225,12 +225,19 @@ const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
 	return res ? res : buf;
 }
 
+	/* XXX: validate utf8 */
 gchar *ekg_recode_from_locale(const char *str) {
-	return ekg_recode_to_core_dup(console_charset, str);
+	if (console_charset_is_utf8)
+		return g_strdup(str);
+	else
+		return ekg_recode_to_core_dup(console_charset, str);
 }
 
 char *ekg_recode_to_locale(const gchar *str) {
-	return ekg_recode_from_core_dup(console_charset, str);
+	if (console_charset_is_utf8)
+		return g_strdup(str);
+	else
+		return ekg_recode_from_core_dup(console_charset, str);
 }
 	
 fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
