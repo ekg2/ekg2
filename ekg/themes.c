@@ -522,6 +522,27 @@ static char *va_format_string(const char *format, va_list ap) {
 }
 
 /**
+ * fstring_dup()
+ *
+ * Return a duplicated copy of a fstring_t with all internal data duplicated.
+ *
+ * @param str - string
+ *
+ * @return A newly-allocated fstring_t.
+ *
+ * @note Please note that private data is not duplicated.
+ */
+fstring_t *fstring_dup(const fstring_t *str) {
+	fstring_t *out = g_memdup(str, sizeof(fstring_t));
+	gsize len = strlen(str->str) + 1;
+
+	out->str = g_memdup(str->str, len * sizeof(gchar));
+	out->attr = g_memdup(str->attr, len * sizeof(short));
+
+	return out;
+}
+
+/**
  * fstring_new()
  *
  * Change formatted ansi string (@a str) to Nowy-i-Lepszy (tm) [New-and-Better].
