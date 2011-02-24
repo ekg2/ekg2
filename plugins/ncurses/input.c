@@ -119,8 +119,9 @@ QUERY(ncurses_password_input) {
 
 /* cut prompt to given width and recalculate its' width */
 void ncurses_update_real_prompt(ncurses_window_t *n) {
-	if (!n)
-		return;
+	g_assert(n);
+
+#if 0 /* XXX: shortening */
 
 	const int _maxlen = n->window && n->window->_maxx ? n->window->_maxx : 80;
 	const int maxlen = ncurses_noecho ? _maxlen - 3 : _maxlen / 3;
@@ -161,6 +162,7 @@ void ncurses_update_real_prompt(ncurses_window_t *n) {
 			n->prompt_real_len	= maxlen;
 		}
 	}
+#endif
 }
 
 /*
@@ -458,72 +460,78 @@ static int ncurses_redraw_input_line(CHAR_T *text) {
  *	przy okazji jesli jest aspell to sprawdza czy tekst jest poprawny.
  */
 void ncurses_redraw_input(unsigned int ch) {
-	int cur_posx = -1, cur_posy = 0;
-	const int promptlen = ncurses_lines ? 0 : ncurses_current->prompt_real_len;
-	const int width = input->_maxx - promptlen;
-
-	if ((line_index - line_start >= width) || (line_index - line_start < 2))
-		line_start = line_index - width/2;
-	if (line_start < 0)
-		line_start = 0;
-
-	ncurses_redraw_input_already_exec = 1;
-
+	int x, y;
+	/* draw prompt */
 	werase(input);
-	wattrset(input, color_pair(COLOR_WHITE, COLOR_BLACK));
-
-	if (ncurses_lines) {
-		int i, x;
-
-		cur_posy = lines_index - lines_start;
-		for (i = 0; i < MULTILINE_INPUT_SIZE; i++) {
-			if (!ncurses_lines[lines_start + i])
-				break;
-
-			wmove(input, i, 0);
-			x = ncurses_redraw_input_line(ncurses_lines[lines_start + i]);
-			if (lines_index == (lines_start + i))
-				cur_posx = x;
-		}
-		wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
-		if (lines_start>0)
-			mvwaddch(input, 0, input->_maxx, '^');
-		if (g_strv_length((char **) ncurses_lines)-lines_start > MULTILINE_INPUT_SIZE)
-			mvwaddch(input, MULTILINE_INPUT_SIZE-1, input->_maxx, 'v');
-		wattrset(input, A_NORMAL);
-	} else {
-		wmove(input, 0, 0);
+	wmove(input, 0, 0);
+	if (!ncurses_lines) {
 		if (ncurses_current->prompt)
-#ifdef USE_UNICODE
-			waddwstr(input, ncurses_current->prompt_real);
-#else
-			waddstr(input, (char *) ncurses_current->prompt_real);
-#endif
-
-#if 0
-		if (ncurses_noecho) {
-			static char *funnything	= ncurses_funnything;
-
-			waddch(input, ' ');		/* XXX why here? If you want to add space after propt, add it in theme */
-			waddch(input, *funnything);
-			wmove(input, 0, getcurx(input)-1);
-			if (!*(++funnything))
-				funnything = ncurses_funnything;
-			return;
-		}
-#endif
-
-		cur_posx = ncurses_redraw_input_line(ncurses_line);
-
+			ncurses_common_print(input, ncurses_current->prompt->str,
+					ncurses_current->prompt->attr, -1 /* XXX */);
+			
 	}
-	/* this mut be here if we don't want 'timeout' after pressing ^C */
-	if (ch == 3) ncurses_commit();
-	if (cur_posx != -1) {
-		wmove(input, cur_posy, cur_posx);
-		curs_set(1);
-	} else {
-		wmove(input, 0, 0);	// XXX ???
-		curs_set(0);
+	getyx(input, y, x);
+	ncurses_current->prompt_len = x;
+
+	/* XXX: cleanup, optimize */
+	{
+		int cur_posx = -1, cur_posy = 0;
+		const int width = input->_maxx - x;
+
+		if ((line_index - line_start >= width) || (line_index - line_start < 2))
+			line_start = line_index - width/2;
+		if (line_start < 0)
+			line_start = 0;
+
+		ncurses_redraw_input_already_exec = 1;
+
+		wattrset(input, color_pair(COLOR_WHITE, COLOR_BLACK));
+
+		if (ncurses_lines) {
+			int i, x;
+
+			cur_posy = lines_index - lines_start;
+			for (i = 0; i < MULTILINE_INPUT_SIZE; i++) {
+				if (!ncurses_lines[lines_start + i])
+					break;
+
+				wmove(input, i, 0);
+				x = ncurses_redraw_input_line(ncurses_lines[lines_start + i]);
+				if (lines_index == (lines_start + i))
+					cur_posx = x;
+			}
+			wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
+			if (lines_start>0)
+				mvwaddch(input, 0, input->_maxx, '^');
+			if (g_strv_length((char **) ncurses_lines)-lines_start > MULTILINE_INPUT_SIZE)
+				mvwaddch(input, MULTILINE_INPUT_SIZE-1, input->_maxx, 'v');
+			wattrset(input, A_NORMAL);
+		} else {
+#if 0
+			if (ncurses_noecho) {
+				static char *funnything	= ncurses_funnything;
+
+				waddch(input, ' ');		/* XXX why here? If you want to add space after propt, add it in theme */
+				waddch(input, *funnything);
+				wmove(input, 0, getcurx(input)-1);
+				if (!*(++funnything))
+					funnything = ncurses_funnything;
+				return;
+			}
+#endif
+
+			cur_posx = ncurses_redraw_input_line(ncurses_line);
+
+		}
+		/* this mut be here if we don't want 'timeout' after pressing ^C */
+		if (ch == 3) ncurses_commit();
+		if (cur_posx != -1) {
+			wmove(input, cur_posy, cur_posx);
+			curs_set(1);
+		} else {
+			wmove(input, 0, 0);	// XXX ???
+			curs_set(0);
+		}
 	}
 }
 

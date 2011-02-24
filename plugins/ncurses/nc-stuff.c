@@ -60,6 +60,28 @@ static struct termios old_tio;
 int winch_pipe[2];
 int have_winch_pipe = 0;
 
+/**
+ * ncurses_prompt_set()
+ *
+ * Set window prompt, updating internal data as necessary.
+ *
+ * @param w - window to be updated
+ * @param str - new prompt as returned by format_string()
+ *
+ * @note str will be duplicated so it needs to be freed by caller.
+ */
+void ncurses_prompt_set(window_t *w, const gchar *str) {
+	ncurses_window_t *n = w->priv_data;
+	fstring_t *f = fstring_new(str);
+
+	fstring_free(n->prompt); /* free current prompt */
+
+	n->prompt = ekg_recode_fstr_to_locale(f);
+
+	fstring_free(f);
+
+	ncurses_update_real_prompt(n);
+}
 
 	/* this one is meant to check whether we need to send some chatstate to disconnecting session,
 	 * so jabber plugin doesn't need to care about this anymore */
@@ -336,6 +358,19 @@ inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 #endif
 
 	return ch;
+}
+
+	/* XXX: use it commonly */
+void ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxlen) {
+	/* XXX: maxlen support */
+
+	for (; *s; s++, attr++) {
+		int nattr = fstring_attr2ncurses_attr(*attr);
+		CHAR_T ch = ncurses_fixchar(*s, &nattr);
+
+		wattrset(w, nattr);
+		waddch(w, ch);
+	}
 }
 
 /*
@@ -684,8 +719,7 @@ int ncurses_window_kill(window_t *w)
 
 	ncurses_clear(w, 1);
 
-	xfree(n->prompt);
-	xfree(n->prompt_real);
+	fstring_free(n->prompt);
 	delwin(n->window);
 	xfree(n);
 	w->priv_data = NULL;
@@ -902,19 +936,18 @@ int ncurses_window_new(window_t *w)
 
 	} else if (w->target || w->alias) {
 		const char *f = format_find("ncurses_prompt_query");
+		gchar *tmp = format_string(f, w->alias ? w->alias : w->target);
 
-		n->prompt = format_string(f, w->alias ? w->alias : w->target);
-		n->prompt_len = xstrlen(n->prompt);
-
-		ncurses_update_real_prompt(n);
+		ncurses_prompt_set(w, tmp);
+		g_free(tmp);
 	} else {
 		const char *f = format_find("ncurses_prompt_none");
 
 		if (format_ok(f)) {
-			n->prompt = format_string(f);
-			n->prompt_len = xstrlen(n->prompt);
+			gchar *tmp = format_string(f);
 
-			ncurses_update_real_prompt(n);
+			ncurses_prompt_set(w, tmp);
+			g_free(tmp);
 		}
 	}
 

@@ -47,7 +47,8 @@ enum window_frame_t {
 typedef struct {
 	WINDOW *window;		/* okno okna */
 
-	char *prompt;		/* sformatowany prompt lub NULL */
+		/* -- the input prompt -- */
+	fstring_t *prompt;		/* sformatowany prompt lub NULL */
 	int prompt_len;		/* d³ugo¶æ prompta lub 0 */
 
 	int margin_left, margin_right, margin_top, margin_bottom;
@@ -70,8 +71,6 @@ typedef struct {
 
 	void (*handle_mouse)(int x, int y, int state);
 
-	CHAR_T *prompt_real;	/* prompt shortened to 2/3 of window width & converted to real chartype */
-	int prompt_real_len;	/* real prompt length, including cutting, in chars instead of bytes */
 	time_t last_red_line;	/* timestamp for red line marker */
 } ncurses_window_t;
 
@@ -80,6 +79,8 @@ extern WINDOW *ncurses_input;
 
 QUERY(ncurses_session_disconnect_handler);
 
+void ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxlen);
+void ncurses_prompt_set(window_t *w, const gchar *str);
 void ncurses_update_real_prompt(ncurses_window_t *n);
 void ncurses_resize(void);
 void ncurses_redraw(window_t *w);

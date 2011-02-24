@@ -192,9 +192,10 @@ void ncurses_mouse_clicked_handler(int x, int y, int mouse_flag)
 				else if (mouse_flag == EKG_SCROLLED_DOWN)
 					binding_next_only_history(NULL);
 				else if (mouse_flag == EKG_BUTTON1_CLICKED) {
+						/* XXX, check, cleanup */
 						/* the plugin already calculates offset incorrectly,
 						 * so we shall follow it */
-					const int promptlen	= ncurses_current ? ncurses_current->prompt_real_len : 0;
+					const int promptlen	= ncurses_current ? ncurses_current->prompt_len : 0;
 					const int linelen	= xwcslen(ncurses_line);
 
 					line_index = x - promptlen + line_start;

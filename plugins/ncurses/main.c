@@ -259,17 +259,12 @@ static QUERY(ncurses_ui_window_act_changed)
 static QUERY(ncurses_ui_window_target_changed)
 {
 	window_t *w = *(va_arg(ap, window_t **));
-	ncurses_window_t *n = w->priv_data;
 	char *tmp, *p;
-
-	xfree(n->prompt);
 
 	p = w->alias ? w->alias : (w->target ? w->target : NULL);
 	tmp = format_string(format_find((p) ? "ncurses_prompt_query" : "ncurses_prompt_none"), p);
-	n->prompt = tmp;
-	n->prompt_len = xstrlen(tmp);
-
-	ncurses_update_real_prompt(n);
+	ncurses_prompt_set(w, tmp);
+	g_free(tmp);
 
 	update_statusbar(1);
 
@@ -367,15 +362,13 @@ static QUERY(ncurses_conference_renamed)
 	window_t *w;
 
 	for (w = windows; w; w = w->next) {
-		ncurses_window_t *n = w->priv_data;
-
 		if (w->target && !xstrcasecmp(w->target, oldname)) {
+			gchar *tmp;
 			xfree(w->target);
-			xfree(n->prompt);
 			w->target = xstrdup(newname);
-			n->prompt = format_string(format_find("ncurses_prompt_query"), newname);
-			n->prompt_len = xstrlen(n->prompt);
-			ncurses_update_real_prompt(n);
+			tmp = format_string(format_find("ncurses_prompt_query"), newname);
+			ncurses_prompt_set(w, tmp);
+			g_free(tmp);
 		}
 	}
 

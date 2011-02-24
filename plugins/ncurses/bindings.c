@@ -494,7 +494,7 @@ static BINDING_FUNCTION(binding_complete)
 
 static BINDING_FUNCTION(binding_end_of_line)
 {
-	const int width = input->_maxx - ncurses_current->prompt_real_len - 1;
+	const int width = input->_maxx - ncurses_current->prompt_len - 1;
 	/* set cursor position to the end of the line */
 	line_index = xwcslen(ncurses_line);
 	/* show as much as possible */
