@@ -366,7 +366,7 @@ void ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gss
 
 	for (; *s; s++, attr++) {
 		int nattr = fstring_attr2ncurses_attr(*attr);
-		CHAR_T ch = ncurses_fixchar(*s, &nattr);
+		CHAR_T ch = ncurses_fixchar((unsigned char) *s, &nattr);
 
 		wattrset(w, nattr);
 		waddch(w, ch);
