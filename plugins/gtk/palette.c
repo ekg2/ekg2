@@ -58,7 +58,7 @@
 #include "inline_pngs_icq.h"
 
 /* XXX, todo: colors[0..15] are ok, than colors[16..31] are not ok [duplication of above], invistigate xchat sources if they needed, fix and remove. */
-#warning "XXX, colors[16..31] remove!"
+/* XXX, colors[16..31] remove! */
 
 GdkColor colors[] = {
 #if XCHAT_COLORS

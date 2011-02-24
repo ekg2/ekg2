@@ -484,7 +484,7 @@ GtkWidget *userlist_create(GtkWidget *box)
 			 G_CALLBACK(userlist_click_cb), 0);
 	g_signal_connect(G_OBJECT(treeview), "key_press_event", G_CALLBACK(userlist_key_cb), 0);
 
-#warning "xchat->ekg2: drag & drop"
+/* xchat->ekg2: drag & drop */
 
 	userlist_add_columns(GTK_TREE_VIEW(treeview));
 

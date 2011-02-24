@@ -181,7 +181,7 @@ static QUERY(gtk_ui_window_new) {			/* fe_new_window() */
 int gtk_ui_window_switch_lock = 0;
 
 static QUERY(gtk_ui_window_switch) {
-#warning "XXX, fast implementation"
+/* XXX, fast implementation */
 	window_t *w	= *(va_arg(ap, window_t **));
 
 	if (gtk_ui_window_switch_lock)
@@ -330,7 +330,7 @@ static QUERY(gtk_statusbar_query) {
 static QUERY(gtk_ui_window_clear) {
 	window_t *w = *(va_arg(ap, window_t **));
 
-#warning "This is real clear, not ncurses-like"
+/* This is real clear, not ncurses-like */
 	gtk_xtext_clear(gtk_private(w)->buffer);
 	return 0;
 }
@@ -433,7 +433,7 @@ EXPORT int gtk_plugin_init(int prio) {
 	query_connect(&gtk_plugin, "metacontact-item-removed", gtk_userlist_changed, NULL);
 
 #define gtk_backlog_change NULL
-#warning "gtk_backlog_change == NULL, need research"
+/* gtk_backlog_change == NULL, need research */
 	variable_add(&gtk_plugin, ("backlog_size"), VAR_INT, 1, &backlog_size_config, gtk_backlog_change, NULL, NULL);
 	variable_add(&gtk_plugin, ("tab_layout"), VAR_INT, 1, &tab_layout_config, gtk_tab_layout_change, NULL, NULL);	/* XXX, variable_map() 0 -> 2-> */
 

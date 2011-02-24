@@ -67,7 +67,7 @@
 
 /* is delimiter */
 #define is_del(c)	(c == ' ' || c == '\n' || c == ')' || c == '(' || c == '>' || c == '<' || c == 0)
-#warning "XXX, ATTR_* stuff"
+/* XXX, ATTR_* stuff */
 /* is_del includes ATTR_RESET, ATTR_BOLD */
 
 #ifdef SCROLL_HACK
