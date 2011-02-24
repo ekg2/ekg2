@@ -75,7 +75,7 @@ static int contacts_compare(void *data1, void *data2)
 {
 	userlist_t *a = data1, *b = data2;
 
-	return xstrcoll(a->nickname, b->nickname);
+	return g_utf8_collate(a->nickname, b->nickname);
 }
 
 /*
@@ -85,16 +85,10 @@ static int contacts_compare(void *data1, void *data2)
  */
 
 static inline userlist_t *userlist_dup(userlist_t *up, const char *uid, char *nickname, void *priv) {
-	userlist_t *u = xmalloc(sizeof(userlist_t));
+	userlist_t *u = g_memdup(up, sizeof(userlist_t));
 
 	u->uid		= uid;
 	u->nickname	= nickname;
-	u->descr	= up->descr;
-	u->status	= up->status;
-		/* XXX: we need to copy these two? or maybe we shall memcpy() whole struct,
-		 * then change invidual fields? */
-	u->blink	= up->blink;
-	u->typing	= up->typing;
 	u->priv_data	= priv;
 	return u;
 }
@@ -186,8 +180,11 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 		footer = format_find("contacts_footer");
 	}
 
-	if (format_ok(header))
-		ncurses_backlog_add(w, fstring_new_format(header, group));
+	if (format_ok(header)) {
+		fstring_t *fstr = fstring_new_format(header, group);
+		ncurses_backlog_add(w, fstr);
+		fstring_free(fstr);
+	}
 
 	if (all == 1) {
 		userlist_t *l;
@@ -319,8 +316,11 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			if (!count) {
 				snprintf(tmp, sizeof(tmp), "contacts_%s_header", status_t);
 				format = format_find(tmp);
-				if (format_ok(format))
-					ncurses_backlog_add(w, fstring_new_format(format));
+				if (format_ok(format)) {
+					fstring_t *fstr = fstring_new_format(format);
+					ncurses_backlog_add(w, fstr);
+					fstring_free(fstr);
+				}
 				footer_status = status_t;
 			}
 
@@ -339,11 +339,13 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			string = fstring_new_format(format_find(tmp), u->nickname, u->descr);
 
 			if (u->priv_data == (void *) 2)
-				string->priv_data = (void *) xstrdup(u->nickname);
+				string->priv_data = g_strdup(u->nickname);
 			else
-				string->priv_data = (void *) saprintf("%s/%s", (u->priv_data) ? ((session_t *) u->priv_data)->uid : session_current->uid, u->nickname);
+				string->priv_data = g_strdup_printf("%s/%s", (u->priv_data) ? ((session_t *) u->priv_data)->uid : session_current->uid, u->nickname);
 
 			ncurses_backlog_add(w, string);
+			string->priv_data = NULL; /* XXX: stop freeing this in fstring_free()! */
+			fstring_free(string);
 
 			count++;
 		}
@@ -354,8 +356,11 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			snprintf(tmp, sizeof(tmp), "contacts_%s_footer", footer_status);
 			format = format_find(tmp);
 
-			if (format_ok(format))
-				ncurses_backlog_add(w, fstring_new_format(format));
+			if (format_ok(format)) {
+				fstring_t *fstr = fstring_new_format(format);
+				ncurses_backlog_add(w, fstr);
+				fstring_free(fstr);
+			}
 		}
 
 		if (!config_contacts_orderbystate)
@@ -363,8 +368,11 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 	}
 
 after_loop:
-	if (format_ok(footer))
-		ncurses_backlog_add(w, fstring_new_format(footer, group));
+	if (format_ok(footer)) {
+		fstring_t *fstr = fstring_new_format(footer, group);
+		ncurses_backlog_add(w, fstr);
+		fstring_free(fstr);
+	}
 	if (all)
 		LIST_DESTROY2(sorted_all, NULL);
 

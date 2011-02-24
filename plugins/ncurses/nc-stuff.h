@@ -19,7 +19,7 @@ extern int ncurses_plugin_destroyed;
 
 void update_statusbar(int commit);
 
-struct screen_line {
+struct screen_line { /* everything locale-encoded */
 	int len;		/* d³ugo¶æ linii */
 	
 	unsigned char *str;		/* tre¶æ */
@@ -53,7 +53,7 @@ typedef struct {
 	int margin_left, margin_right, margin_top, margin_bottom;
 				/* marginesy */
 
-	fstring_t **backlog;	/* bufor z liniami */
+	fstring_t **backlog;	/* bufor z liniami, locale-encoded */
 	int backlog_size;	/* rozmiar backloga */
 
 	int redraw;		/* trzeba przerysowaæ przed wy¶wietleniem */
@@ -130,7 +130,7 @@ extern int ncurses_screen_height;
 extern int ncurses_screen_width;
 
 int color_pair(int fg, int bg);
-int ncurses_backlog_add_real(window_t *w, fstring_t *str);
+int ncurses_backlog_add_real(window_t *w, /*locale*/ fstring_t *str);
 
 CHAR_T ncurses_fixchar(CHAR_T ch, int *attr);
 

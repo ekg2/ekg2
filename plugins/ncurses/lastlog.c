@@ -64,8 +64,11 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	if (!w || !(n = w->priv_data))
 		return items;
 
-	if (config_lastlog_noitems) /* always add header */
-		ncurses_backlog_add(lastlog_w, fstring_new_format(header, window_target(w), lastlog->expression));
+	if (config_lastlog_noitems) { /* always add header */
+		fstring_t *fstr = fstring_new_format(header, window_target(w), lastlog->expression);
+		ncurses_backlog_add(lastlog_w, fstr);
+		fstring_free(fstr);
+	}
 
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
 
@@ -81,27 +84,14 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 				found = !!xstrcasestr(n->backlog[i]->str, lastlog->expression);
 		}
 
-		if (!config_lastlog_noitems && found && !items) /* add header only when found */
-			ncurses_backlog_add(lastlog_w, fstring_new_format(header, window_target(w), lastlog->expression));
+		if (!config_lastlog_noitems && found && !items) { /* add header only when found */
+			fstring_t *fstr = fstring_new_format(header, window_target(w), lastlog->expression);
+			ncurses_backlog_add(lastlog_w, fstr);
+			fstring_free(fstr);
+		}
 
 		if (found) {
-			fstring_t *dup;
-			size_t len;
-
-			dup = xmalloc(sizeof(fstring_t));
-
-			len = xstrlen(n->backlog[i]->str);
-
-			dup->str		= g_memdup(n->backlog[i]->str, sizeof(char) * (len + 1));
-			dup->attr		= g_memdup(n->backlog[i]->attr, sizeof(short) * (len + 1));
-			dup->ts			= n->backlog[i]->ts;
-			dup->prompt_len		= n->backlog[i]->prompt_len;
-			dup->prompt_empty	= n->backlog[i]->prompt_empty;
-			dup->margin_left	= n->backlog[i]->margin_left;
-		/* org. window for example if we would like user allow move under that line with mouse and double-click.. or whatever */
-/*			dup->priv_data		= (void *) w;	 */
-
-			ncurses_backlog_add_real(lastlog_w, dup);
+			ncurses_backlog_add_real(lastlog_w, fstring_dup(n->backlog[i]));
 			items++;
 		}
 	}
@@ -141,8 +131,13 @@ int ncurses_lastlog_update(window_t *w) {
 			retval += ncurses_ui_window_lastlog(w, ww);
 		}
 	}
-	ncurses_backlog_add(w, fstring_new(""));
-	ncurses_backlog_add(w, fstring_new(""));
+	{
+		fstring_t *fstr = fstring_new("");
+			/* double intentionally */
+		ncurses_backlog_add(w, fstr);
+		ncurses_backlog_add(w, fstr);
+		fstring_free(fstr);
+	}
 
 /* XXX fix n->start */
 	n->start = old_start;
