@@ -45,14 +45,14 @@ typedef struct {
 	int xstatus;		/* XXX ?wo? set it! */
 	private_data_t *whoami;
 	char *default_group_name;
-	string_t cookie;	/* connection login cookie */
-	string_t stream_buf;
+	GString *cookie;	/* connection login cookie */
+	GString *stream_buf;
 	icq_snac_reference_list_t *snac_ref_list;
 	int n_rates;
 	icq_rate_t **rates;
 } icq_private_t;
 
-int icq_send_pkt(session_t *s, string_t buf);
+int icq_send_pkt(session_t *s, GString *buf);
 
 void icq_session_connected(session_t *s);
 int icq_write_status(session_t *s);

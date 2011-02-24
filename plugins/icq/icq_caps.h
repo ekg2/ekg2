@@ -35,7 +35,7 @@ int icq_short_cap_id(unsigned char *buf);
 
 const unsigned char *icq_cap_str(int id);
 
-void icq_pack_append_cap(string_t pkt, int cap_id);
+void icq_pack_append_cap(GString *pkt, int cap_id);
 
 
 /*
@@ -50,7 +50,7 @@ const char *icq_xstatus_name(int id);
 
 int icq_xstatus_id(unsigned char *buf);
 
-void icq_pack_append_xstatus(string_t pkt, int x_id);
+void icq_pack_append_xstatus(GString *pkt, int x_id);
 
 /*
  * Plugins

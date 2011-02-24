@@ -313,7 +313,7 @@ static gboolean mg_inputbox_focus(GtkWidget *widget, GdkEventFocus *event, gtk_w
 
 	for (w = windows; w; w = w->next) {
 		if (gtk_private(w)->gui == gui) {
-#warning "window_switch() XXX"
+/* window_switch() XXX */
 			window_switch(w->id);
 			return FALSE;
 		}
@@ -603,10 +603,10 @@ static int ul_tag = 0;
 	if (!sess)
 		sess = window_current;
 
-#warning "mg_populate_userlist() hack, slowdown"
+/* mg_populate_userlist() hack, slowdown */
 	fe_userlist_clear(sess);
 
-#warning "xchat->ekg2, mg_populate_userlist() xchat here check if param is valid window_t, XXX"
+/* xchat->ekg2, mg_populate_userlist() xchat here check if param is valid window_t, XXX */
 
 	if (sess->userlist) {
 		userlist_t *ul;
@@ -783,7 +783,7 @@ void mg_switch_page(int relative, int num) {
 /* a toplevel IRC window was destroyed */
 
 static void mg_topdestroy_cb(GtkWidget *win, window_t *sess) {
-#warning "xchat->ekg2: mg_topdestroy_cb() BIG XXX"
+/* xchat->ekg2: mg_topdestroy_cb() BIG XXX */
 	printf("mg_topdestroy_cb() XXX\n");
 #if 0
 /*	printf("enter mg_topdestroy. sess %p was destroyed\n", sess);*/
@@ -837,7 +837,7 @@ static void mg_ircdestroy(session *sess) {
 #endif
 
 void mg_tab_close(window_t *sess) {
-#warning "xchat->ekg2: mg_tab_close() XXX"
+/* xchat->ekg2: mg_tab_close() XXX */
 	if (chan_remove(gtk_private(sess)->tab, FALSE))
 #if 0
 		mg_ircdestroy(sess);
@@ -882,7 +882,7 @@ void mg_open_quit_dialog(gboolean minimize_button) {
 	}
 
 	if (config_save_quit == 1) {
-#warning "Display question if user want to /save config"
+/* Display question if user want to /save config */
 /*
 		if (config_changed)					format_find("config_changed")
 		else if (config_keep_reason && ekg2_reason_changed)	format_find("quit_keep_reason");
@@ -890,7 +890,7 @@ void mg_open_quit_dialog(gboolean minimize_button) {
 		config_save_quit = 0;
 	}
 
-#warning "xchat->ekg2 XXX"
+/* xchat->ekg2 XXX */
 	/*	xchat count dcc's + connected network, and display warning about it.
 	 *
 	 *		"<span weight=\"bold\" size=\"larger\">Are you sure you want to quit?</span>\n
@@ -1015,7 +1015,7 @@ static void mg_xbutton_cb(chanview * cv, chan * ch, int tag, gpointer userdata) 
 	if (tag == TAG_IRC)	/* irc tab */
 		mg_close_sess(userdata);
 
-#warning "xchat->ekg2, removed support for generic tabs"
+/* xchat->ekg2, removed support for generic tabs */
 }
 
 
@@ -1025,7 +1025,7 @@ static void mg_detach_tab_cb(GtkWidget *item, chan * ch) {
 		mg_link_irctab(chan_get_userdata(ch), 1);
 		return;
 	}
-#warning "xchat->ekg2, removed support for generic tabs"
+/* xchat->ekg2, removed support for generic tabs */
 }
 
 static void mg_destroy_tab_cb(GtkWidget *item, chan * ch) {
@@ -1437,7 +1437,7 @@ mg_create_topicbar(window_t *sess, GtkWidget *box)
 static int
 mg_word_check(GtkWidget *xtext, char *word, int len)
 {
-#warning "xchat->ekg2: mg_word_check() nice functionality XXX"
+/* xchat->ekg2: mg_word_check() nice functionality XXX */
 	return 0;
 }
 
@@ -1446,7 +1446,7 @@ mg_word_check(GtkWidget *xtext, char *word, int len)
 static void
 mg_word_clicked(GtkWidget *xtext, char *word, GdkEventButton * even)
 {
-#warning "xchat->ekg2: mg_word_clicked() nice functionality XXX"
+/* xchat->ekg2: mg_word_clicked() nice functionality XXX */
 }
 
 void
@@ -1517,7 +1517,7 @@ mg_create_textarea(window_t *sess, GtkWidget *box)
 	gui->vscrollbar = gtk_vscrollbar_new(GTK_XTEXT(xtext)->adj);
 	gtk_box_pack_start(GTK_BOX(inbox), gui->vscrollbar, FALSE, TRUE, 0);
 
-#warning "xchat->ekg2: g_signal_connect() \"drag_begin\", \"drag_drop\", \"drag_motion\", \"drag_end\", \"drag_data_received\" && gtk_drag_dest_set() do zaimplementowania"
+/* xchat->ekg2: g_signal_connect() \"drag_begin\", \"drag_drop\", \"drag_motion\", \"drag_end\", \"drag_data_received\" && gtk_drag_dest_set() do zaimplementowania */
 }
 
 static void
@@ -1626,7 +1626,7 @@ mg_create_center(window_t *sess, gtk_window_ui_t *gui, GtkWidget *box)
 }
 
 static void mg_sessionclick_cb(GtkWidget *button, gpointer userdata) {
-#warning "xchat->ekg2: mg_sessionclick_cb() XXX, change session using this [like ^X] implement"
+/* xchat->ekg2: mg_sessionclick_cb() XXX, change session using this [like ^X] implement */
 	/* xchat: 
 	 *	fe_get_str (_("Enter new nickname:"), current_sess->server->nick, mg_change_nick, NULL);
 	 */
@@ -1833,7 +1833,7 @@ static void mg_switch_tab_cb(chanview * cv, chan * ch, int tag, gpointer ud) {
 	active_tab = ch;
 
 	if (active_tab != old) {
-#warning "xchat->ekg2 mg_switch_tab_cb() mg_unpopulate()"
+/* xchat->ekg2 mg_switch_tab_cb() mg_unpopulate() */
 		mg_populate(sess);
 
 		/* it's switched by gui, let's inform ekg2 */

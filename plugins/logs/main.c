@@ -438,6 +438,7 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 	fstr->ts = ts;
 
 	query_emit(ui_plugin, "ui-window-print", &w, &fstr);
+	fstring_free(fstr);
 	return 0;
 }
 

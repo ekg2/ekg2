@@ -214,7 +214,7 @@ struct _GtkXTextClass {
 };
 
 GtkWidget *gtk_xtext_new(GdkColor palette[], int separator);
-void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr);
+void gtk_xtext_append_fstring(xtext_buffer *buf, const fstring_t *fstr);
 int gtk_xtext_set_font(GtkXText * xtext, char *name);
 void gtk_xtext_set_background(GtkXText * xtext, GdkPixmap * pixmap, gboolean trans);
 void gtk_xtext_set_palette(GtkXText * xtext, GdkColor palette[]);

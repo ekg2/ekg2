@@ -43,7 +43,7 @@
 
 static inline char *_icq_makeflap(guint8 cmd, guint16 id, guint16 len) {
 	static char buf[FLAP_PACKET_LEN];
-	string_t tempstr;
+	GString *tempstr;
 
 	tempstr = icq_pack("CCWW", (guint32) 0x2a, (guint32) cmd, (guint32) id, (guint32) len);
 	if (tempstr->len != FLAP_PACKET_LEN) {
@@ -51,13 +51,13 @@ static inline char *_icq_makeflap(guint8 cmd, guint16 id, guint16 len) {
 		return NULL;
 	}
 	memcpy(buf, tempstr->str, FLAP_PACKET_LEN);
-	string_free(tempstr, 1);
+	g_string_free(tempstr, TRUE);
 	return buf;
 }
 
 // static inline void _icq_decodeflap();
 
-void icq_makeflap(session_t *s, string_t pkt, guint8 cmd) {
+void icq_makeflap(session_t *s, GString *pkt, guint8 cmd) {
 	icq_private_t *j;
 
 	if (!s || !(j = s->priv) || !pkt)
@@ -70,7 +70,7 @@ void icq_makeflap(session_t *s, string_t pkt, guint8 cmd) {
 	j->flap_seq &= 0x7fff;
 
 	debug_function("icq_makeflap() 0x%x\n", cmd);
-	string_insert_n(pkt, 0, _icq_makeflap(cmd, j->flap_seq, pkt->len), FLAP_PACKET_LEN);
+	g_string_prepend_len(pkt, _icq_makeflap(cmd, j->flap_seq, pkt->len), FLAP_PACKET_LEN);
 }
 
 #define ICQ_FLAP_HANDLER(x) int x(session_t *s, unsigned char *buf, int len)
@@ -110,7 +110,7 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		 * ways server could return error or authorization cookie + BOS address.
 		 */
 
-		string_t str = icq_pack("I", (guint32) 1);			/* protocol version number */
+		GString *str = icq_pack("I", (guint32) 1);			/* protocol version number */
 
 		if (session_int_get(s, "plaintext_passwd") == 1) {
 			/*
@@ -161,7 +161,7 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		 * packet named CLI_COOKIE. In reply server will return list of supported services - SNAC(01,03).
 		 */
 
-		string_t str;
+		GString *str;
 
 		debug("icq_flap_login(2) s=0x%x cookie=0x%x cookielen=%d\n", s, j->cookie, j->cookie ? j->cookie->len : -1);
 
@@ -176,7 +176,8 @@ static ICQ_FLAP_HANDLER(icq_flap_login) {
 		icq_makeflap(s, str, ICQ_FLAP_LOGIN);
 		icq_send_pkt(s, str); str = NULL;			// Send CLI_COOKIE
 
-		string_free(j->cookie, 1); j->cookie = NULL;
+		g_string_free(j->cookie, TRUE);
+		j->cookie = NULL;
 	}
 	else {
 		debug_error("icq_flap_login(%d) XXX?\n", s->connecting);
@@ -254,7 +255,7 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 		icq_tlv_t *cookie_tlv = icq_tlv_get(tlvs, 0x06);
 		char *login_str = xstrndup((char *) login_tlv->buf, login_tlv->len);
 		struct sockaddr_in sin;
-		string_t pkt;
+		GString *pkt;
 		char *tmp;
 		int port;
 		int fd;
@@ -279,13 +280,12 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 
 		debug("icq_flap_close() Redirect to server %s:%d\n", login_str, port);
 
-		string_free(j->cookie, 1);
-		j->cookie = string_init(NULL);
-		string_append_raw(j->cookie, (char *) cookie_tlv->buf, cookie_tlv->len);
+		g_string_set_size(j->cookie, 0);
+		g_string_append_len(j->cookie, (char *) cookie_tlv->buf, cookie_tlv->len);
 
 		if (!j->migrate) {
 			/* FlapCliGoodbye() */
-			pkt = string_init(NULL);
+			pkt = g_string_new(NULL);
 			icq_makeflap(s, pkt, ICQ_FLAP_CLOSE);
 			icq_send_pkt(s, pkt); pkt = NULL;
 		}
@@ -383,7 +383,7 @@ static ICQ_FLAP_HANDLER(icq_flap_ping) {
 	return 0;
 }
 
-int icq_flap_handler(session_t *s, string_t buffer) {
+int icq_flap_handler(session_t *s, GString *buffer) {
 	unsigned char *buf = (unsigned char *) buffer->str;
 	int next_flap = 0;
 	int len = buffer->len;

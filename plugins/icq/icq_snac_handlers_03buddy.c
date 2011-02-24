@@ -76,14 +76,14 @@ SNAC_SUBHANDLER(icq_snac_buddy_reply) {
 }
 
 
-void icq_pack_append_nullterm_msg(string_t pkt, const char *msg) {
+void icq_pack_append_nullterm_msg(GString *pkt, const char *msg) {
 	    icq_pack_append(pkt, "w", (guint32) xstrlen(msg)+1);	// null-terminated msg length
 	    if (xstrlen(msg))
-		    string_append(pkt, msg);
+		    g_string_append(pkt, msg);
 	    icq_pack_append(pkt, "c", (guint32) 0);			// msg terminate
 }
 
-void icq_pack_append_rendezvous(string_t pkt, int version, int cookie, int mtype, int mflags, int accept, int priority) {
+void icq_pack_append_rendezvous(GString *pkt, int version, int cookie, int mtype, int mflags, int accept, int priority) {
 	icq_pack_append(pkt, "wwiiiiwicw wwiiiccww",
 				(guint32) 27,		// length of this data segment, always 27
 				(guint32) version,	// protocol version
@@ -105,7 +105,7 @@ void icq_pack_append_rendezvous(string_t pkt, int version, int cookie, int mtype
 
 static void icq_get_description(session_t *s, const char *uin, int status) {
 	icq_private_t *j = s->priv;
-	string_t pkt, tlv5, rdv;
+	GString *pkt, *tlv5, *rdv;
 	guint32 cookie1=rand(), cookie2=rand();
 	guint32 mtype, cookie = (j->cookie_seq-- && 0x7fff);
 
@@ -120,12 +120,12 @@ static void icq_get_description(session_t *s, const char *uin, int status) {
 	    default: return;
 	}
 
-	pkt = string_init(NULL);
+	pkt = g_string_new(NULL);
 	icq_pack_append(pkt, "II", cookie1, cookie2);		// cookie
 	icq_pack_append(pkt, "W", (guint32) 2);		// message type
 	icq_pack_append(pkt, "s", uin);
 
-	tlv5 = string_init(NULL);
+	tlv5 = g_string_new(NULL);
 	icq_pack_append(tlv5, "W", (guint32) 0);
 	icq_pack_append(tlv5, "II", cookie1, cookie2);		// cookie
 	icq_pack_append_cap(tlv5, CAP_SRV_RELAY);		// AIM_CAPS_ICQSERVERRELAY - Client supports channel 2 extended, TLV(0x2711) based messages.
@@ -133,14 +133,14 @@ static void icq_get_description(session_t *s, const char *uin, int status) {
 	icq_pack_append(tlv5, "T", icq_pack_tlv(0x0F, NULL, 0));	// TLV 0x0F: unknown
 
 	// RendezvousMessageData
-	rdv = string_init(NULL);
+	rdv = g_string_new(NULL);
 	icq_pack_append_rendezvous(rdv, 9, cookie, mtype, MFLAG_AUTO, 1, 1);
 	icq_pack_append_nullterm_msg(rdv, "");
 	icq_pack_append(tlv5, "T", icq_pack_tlv(0x2711, rdv->str, rdv->len));
-	string_free(rdv, 1);
+	g_string_free(rdv, TRUE);
 
 	icq_pack_append(pkt, "T", icq_pack_tlv(0x05, tlv5->str, tlv5->len));
-	string_free(tlv5, 1);
+	g_string_free(tlv5, TRUE);
 
 	icq_pack_append(pkt, "T", icq_pack_tlv(0x03, NULL, 0));		// empty TLV 3 to get an ack from the server
 

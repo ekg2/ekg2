@@ -93,7 +93,7 @@ SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
 	struct {
 		guint16 key_len;
 	} pkt;
-	string_t str;
+	GString *str;
 
 	char *digest;
 
@@ -118,7 +118,7 @@ SNAC_SUBHANDLER(icq_snac_sigon_authkey) {
 
 	digest = icq_md5_digest(session_password_get(s), buf, pkt.key_len);
 
-	str = string_init(NULL);
+	str = g_string_new(NULL);
 
 	icq_pack_append(str, "T", icq_pack_tlv_str(1, s->uid + 4));	// TLV(0x01) - uin
 	icq_pack_append(str, "T", icq_pack_tlv(0x25, digest, 16));	// TLV(0x25) - password md5 hash

@@ -600,6 +600,27 @@ static char *va_format_string(const char *format, va_list ap) {
 }
 
 /**
+ * fstring_dup()
+ *
+ * Return a duplicated copy of a fstring_t with all internal data duplicated.
+ *
+ * @param str - string
+ *
+ * @return A newly-allocated fstring_t.
+ *
+ * @note Please note that private data is not duplicated.
+ */
+fstring_t *fstring_dup(const fstring_t *str) {
+	fstring_t *out = g_memdup(str, sizeof(fstring_t));
+	gsize len = strlen(str->str) + 1;
+
+	out->str = g_memdup(str->str, len * sizeof(gchar));
+	out->attr = g_memdup(str->attr, len * sizeof(short));
+
+	return out;
+}
+
+/**
  * fstring_new()
  *
  * Change formatted ansi string (@a str) to Nowy-i-Lepszy (tm) [New-and-Better].
@@ -867,6 +888,7 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 		char *tmp = stmp;
 		while ((line = split_line(&tmp))) {
 			char *p;
+			fstring_t *l;
 
 			if ((p = xstrstr(line, "\033[00m"))) {
 				xfree(prompt);
@@ -878,11 +900,13 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 			}
 
 			if (prompt) {
-				char *tmp = saprintf("%s%s", prompt, line);
-				window_print(w, fstring_new(tmp));
-				xfree(tmp);
+				gchar *tmp = g_strdup_printf("%s%s", prompt, line);
+				l = fstring_new(tmp);
+				g_free(tmp);
 			} else
-				window_print(w, fstring_new(line));
+				l = fstring_new(line);
+			window_print(w, l);
+			fstring_free(l);
 		}
 		xfree(prompt);
 	}

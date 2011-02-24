@@ -197,7 +197,7 @@ static /*locale*/ char *readline_ui_window_print_helper(const fstring_t *f) {
 
 static QUERY(readline_ui_window_print) {
 	window_t *w = *(va_arg(ap, window_t **));
-	fstring_t *l = *(va_arg(ap, fstring_t **));
+	const fstring_t *l = *(va_arg(ap, const fstring_t **));
 	char *str = readline_ui_window_print_helper(l);
 
 	ui_readline_print(w, 1, str);
