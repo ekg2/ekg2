@@ -213,50 +213,56 @@ int last(const char **params, session_t *session, int quiet, int status)
 		tm = localtime(&ts);
 		strftime(buf, sizeof(buf), format_find("last_list_timestamp"), tm);
 
-		if(!status) {
+		{
+			gchar *r1, *r3, *r4;
 #ifdef HAVE_LIBSQLITE3
-			if (sqlite3_column_int(stmt, 4) == 0)
+			r1 = g_strdup(sqlite3_column_text(stmt, 1));
+			r3 = g_strdup(sqlite3_column_text(stmt, 3));
 #else
-			if (!xstrcmp(results[4], "0"))
+			r1 = g_strdup(results[1]);
+			r3 = g_strdup(results[3]);
 #endif
-				last_direction = "last_list_in";
-			else
-				last_direction = "last_list_out";
+			ekg_fix_utf8(r1);
+			ekg_fix_utf8(r3);
 
-		print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, last_direction, buf,
+			if(!status) {
 #ifdef HAVE_LIBSQLITE3
-			sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3));
+				if (sqlite3_column_int(stmt, 4) == 0)
 #else
-			results[1], results[3]);
+				if (!xstrcmp(results[4], "0"))
 #endif
+					last_direction = "last_list_in";
+				else
+					last_direction = "last_list_out";
 
-		} else {
-			last_direction = "last_list_status";
-#ifdef HAVE_LIBSQLITE3
-			if(xstrlen(sqlite3_column_text(stmt, 4))) {
-#else
-			if(xstrlen(results[4])) {
-#endif
-				last_direction = "last_list_status_descr";
-
-				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, last_direction, buf,
-#ifdef HAVE_LIBSQLITE3
-				sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3), sqlite3_column_text(stmt, 4));
-#else
-				results[1], results[3], results[4]);
-#endif
+				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window,
+						last_direction, buf, r1, r3);
 			} else {
 				last_direction = "last_list_status";
-
-				print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window, last_direction, buf,
 #ifdef HAVE_LIBSQLITE3
-				sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 3));
+				r4 = g_strdup(sqlite3_column_text(stmt, 4));
 #else
-				results[1], results[3]);
+				r4 = g_strdup(results[4]);
 #endif
 
+				if (*r4) {
+					ekg_fix_utf8(r4);
+					last_direction = "last_list_status_descr";
+
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window,
+							last_direction, buf, r1, r3, r4);
+				} else {
+					last_direction = "last_list_status";
+
+					print_window(target_window, session, EKG_WINACT_MSG, config_logsqlite_last_open_window,
+							last_direction, buf, r1, r3);
+				}
+				g_free(r4);
 			}
-		}	
+			
+			g_free(r1);
+			g_free(r3);
+		}
 	}
 	if (count2 == 0) {
 		if (nick) {
