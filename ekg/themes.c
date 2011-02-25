@@ -253,7 +253,7 @@ gboolean fstring_next(gchar **text, fstr_attr_t **attr, gssize *len, fstr_attr_t
 
 	*text += *len;
 	*attr += *len;
-	curattr = **attr;
+	curattr = **text ? **attr : FSTR_NORMAL;
 
 	for (c = *text, a = *attr;; c++, a++) {
 		if (G_UNLIKELY(!*c || *a != curattr)) {
