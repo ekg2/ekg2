@@ -225,6 +225,18 @@ const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
 	return res ? res : buf;
 }
 
+gchar *ekg_recode_from(const gchar *enc, const char *str) {
+	if (G_UNLIKELY(!enc))
+		return ekg_recode_from_locale(str);
+	return ekg_recode_to_core_dup(enc, str);
+}
+
+char *ekg_recode_to(const gchar *enc, const gchar *str) {
+	if (G_UNLIKELY(!enc))
+		return ekg_recode_to_locale(str);
+	return ekg_recode_from_core_dup(enc, str);
+}
+
 	/* XXX: validate utf8 */
 gchar *ekg_recode_from_locale(const char *str) {
 	if (console_charset_is_utf8)

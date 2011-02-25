@@ -33,6 +33,11 @@ gchar *ekg_recode_to_core_dup(const gchar *enc, const char *buf);
 const char *ekg_recode_from_core_use(const gchar *enc, const gchar *buf);
 const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf);
 
+/* below starts the current API */
+
+gchar *ekg_recode_from(const gchar *enc, const char *str);
+char *ekg_recode_to(const gchar *enc, const gchar *str);
+
 gchar *ekg_recode_from_locale(const char *str);
 char *ekg_recode_to_locale(const gchar *str);
 

@@ -670,7 +670,8 @@ static FILE* logs_open_file(char *path, int ff) {
 		if (!fdesc) {
 			if (!(fdesc = fopen(fullname, "w+")))
 				return NULL;
-			fputs("<?xml version=\"1.0\"?>\n", fdesc);
+					/* XXX: what about old, locale-encoded logs? */
+			fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fdesc);
 			fputs("<!DOCTYPE ekg2log PUBLIC \"-//ekg2log//DTD ekg2log 1.0//EN\" ", fdesc);
 			fputs("\"http://www.ekg2.org/DTD/ekg2log.dtd\">\n", fdesc);
 			fputs("<ekg2log xmlns=\"http://www.ekg2.org/DTD/\">\n", fdesc);
@@ -694,6 +695,8 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	session_t *s = session_find((const char*)session);
 	const char *gotten_uid = get_uid(s, uid);
 	const char *gotten_nickname = get_nickname(s, uid);
+
+	gchar *tmp;
 
 	if (!file)
 		return;
@@ -725,8 +728,12 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	 * status,<numer>,<nick>,[<ip>],<time>,<status>,<descr>
 	 */
 
-	fputs(gotten_uid, file);      fputc(',', file);
-	fputs(gotten_nickname, file); fputc(',', file);
+	tmp = ekg_recode_to(config_logs_encoding, gotten_uid);
+	fputs(tmp, file);      fputc(',', file);
+	g_free(tmp);
+	tmp = ekg_recode_to(config_logs_encoding, gotten_nickname);
+	fputs(tmp, file); fputc(',', file);
+	g_free(tmp);
 	if (class == EKG_MSGCLASS_PRIV_STATUS) {
 		userlist_t *u = userlist_find(s, gotten_uid);
 		int __ip = u ? user_private_item_get_int(u, "ip") : INADDR_NONE;
@@ -747,7 +754,11 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 		fputs(status, file); 
 		fputc(',', file);
 	}
-	if (textcopy) fputs(textcopy, file);
+	if (textcopy) {
+		tmp = ekg_recode_to(config_logs_encoding, textcopy);
+		fputs(textcopy, file);
+		g_free(tmp);
+	}
 	fputs("\n", file);
 
 	xfree(textcopy);
@@ -847,6 +858,7 @@ static void logs_gaim()
 
 static void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class) {
 	const char *nuid = NULL;	/* get_nickname(session_find(session), uid) */
+	gchar *tmp, *enc;
 
 	if (!file)
 		return;
@@ -857,22 +869,26 @@ static void logs_irssi(FILE *file, const char *session, const char *uid, const c
 			userlist_t *u = userlist_find(session_find(session), uid);
 			int __ip = u ? user_private_item_get_int(u, "ip") : INADDR_NONE;
 
-			fprintf(file, "%s * %s reports status: %s [~notirc@%s:%s] /* {status} */\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), inet_ntoa(*((struct in_addr*) &__ip)), ekg_itoa(u ? user_private_item_get_int(u, "port") : 0));
+			tmp = g_strdup_printf("%s * %s reports status: %s [~notirc@%s:%s] /* {status} */\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), inet_ntoa(*((struct in_addr*) &__ip)), ekg_itoa(u ? user_private_item_get_int(u, "port") : 0));
 			break;
 		}
 
 		case EKG_MSGCLASS_SYSTEM: /* other messages like session started, session closed and so on */
-			fprintf(file, "%s\n", __(text));
+			tmp = g_strdup_printf("%s\n", __(text));
 			break;
 
 		case EKG_MSGCLASS_MESSAGE:	/* just normal message */
-			fprintf(file, "%s <%s> %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
+			tmp = g_strdup_printf("%s <%s> %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
 			break;
 
 		default: /* everythink else */
 			debug("[LOGS_IRSSI] UTYPE = %d\n", class);
 			return; /* to avoid flushisk file */
 	}
+	enc = ekg_recode_to(config_logs_encoding, tmp);
+	fputs(enc, file);
+	g_free(tmp);
+	g_free(enc);
 	fflush(file);
 }
 
@@ -1120,6 +1136,7 @@ static QUERY(logs_handler_newwin) {
 			return 0;
 		}
 
+		/* XXX, validate utf8 */
 		/* XXX, in fjuczer it can be gzipped file, WARN HERE */
 		while ((line = read_file(f, 0)))
 			buffer_add_str(&buffer_lograw, path, line);
@@ -1174,6 +1191,8 @@ EXPORT int logs_plugin_init(int prio) {
 	query_connect(&logs_plugin, "config-postinit", logs_postinit, NULL);
 	/* XXX, implement UI_WINDOW_TARGET_CHANGED, IMPORTANT!!!!!! */
 
+		/* we need to reopen files on change and that's what logs_changed_path() does */
+	variable_add(&logs_plugin, ("encoding"), VAR_STR, 1, &config_logs_encoding, &logs_changed_path, NULL, NULL);
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */
 	variable_add(&logs_plugin, ("log_max_open_files"), VAR_INT, 1, &config_logs_max_files, NULL /* XXX: logs_changed_maxfd */, NULL, NULL); 
 	variable_add(&logs_plugin, ("log"), VAR_MAP, 1, &config_logs_log, &logs_changed_path, 
