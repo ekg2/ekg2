@@ -239,13 +239,19 @@ char *ekg_recode_to_locale(const gchar *str) {
 	else
 		return ekg_recode_from_core_dup(console_charset, str);
 }
-	
+
+static void fstr_mark_linebreaks(const gchar *s, fstr_attr_t *a) {
+	/* XXX: set FSTR_LINEBREAK */
+}
+
 fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
-	if (console_charset_is_utf8)
-		return fstring_dup(fstr);
-	else {
+	if (console_charset_is_utf8) {
+		fstring_t *s = fstring_dup(fstr);
+		fstr_mark_linebreaks(s->str, s->attr);
+		return s;
+	} else {
 		gchar *s;
-		fstr_attr_t *a;
+		fstr_attr_t *a, *dupattr;
 		gssize len;
 		const gssize inpsize = strlen(fstr->str);
 		GString *outs = g_string_sized_new(inpsize);
@@ -253,6 +259,9 @@ fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
 		fstring_t *out = g_memdup(fstr, sizeof(fstring_t)); /* XXX: move to slice alloc */
 
 		fstring_iter(fstr, &s, &a, &len);
+			/* we need to have a modifiable copy to set linebreaks */
+		a = dupattr = g_memdup(a, inpsize * sizeof(fstr_attr_t));
+		fstr_mark_linebreaks(s, a);
 		while (fstring_next(&s, &a, &len, NULL)) {
 			char *ls;
 			gsize ob;
@@ -278,6 +287,7 @@ fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
 				g_byte_array_append(outa, (gpointer) a, ob * sizeof(fstr_attr_t));
 		}
 
+		g_free(dupattr);
 		out->str = g_string_free(outs, FALSE);
 		out->attr = (fstr_attr_t*) g_byte_array_free(outa, FALSE);
 		/* XXX: margins and stuff get outdated */

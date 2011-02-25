@@ -100,7 +100,8 @@ typedef enum {
 	FSTR_BLINK		= 256,
 	FSTR_UNDERLINE		= 512,
 	FSTR_REVERSE		= 1024,
-	FSTR_ALTCHARSET		= 2048
+	FSTR_ALTCHARSET		= 2048,
+	FSTR_LINEBREAK		= 4096,
 } fstr_t;
 
 #ifdef __cplusplus
