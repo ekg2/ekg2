@@ -31,8 +31,7 @@
 extern "C" {
 #endif
 
-/* XXX: make this guint16 after migrating code */
-typedef short int fstr_attr_t;
+typedef guint16 fstr_attr_t;
 
 typedef struct {
 	gchar		*str;			/* possibly multibyte string */
