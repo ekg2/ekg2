@@ -737,6 +737,8 @@ static QUERY(logsqlite_newwin_handler) {
 	time_t		ts;
 	const char	*rcpts[2] = { NULL, NULL };
 
+	gchar *r;
+
 	sqlite_t	*db;
 #ifdef HAVE_LIBSQLITE3
 	sqlite3_stmt	*stmt;
@@ -786,13 +788,17 @@ static QUERY(logsqlite_newwin_handler) {
 			rcpts[0] = uid;
 		}
 
-		message_print(session_uid_get(w->session), (class < EKG_MSGCLASS_SENT ? uid : session_uid_get(w->session)), rcpts, 
 #ifdef HAVE_LIBSQLITE3
-			sqlite3_column_text(stmt, 1),
+		r = g_strdup(sqlite3_column_text(stmt, 1));
 #else
-			results[1],
+		r = g_strdup(results[1]);
 #endif
-			NULL, ts, class, NULL, 0, 0);
+		ekg_fix_utf8(r);
+
+		message_print(session_uid_get(w->session),
+				(class < EKG_MSGCLASS_SENT ? uid : session_uid_get(w->session)),
+				rcpts, r, NULL, ts, class, NULL, 0, 0);
+		g_free(r);
 	};
 
 #ifdef HAVE_LIBSQLITE3
