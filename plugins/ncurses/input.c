@@ -467,17 +467,39 @@ void ncurses_redraw_input(unsigned int ch) {
 	werase(input);
 	wmove(input, 0, 0);
 	if (!ncurses_lines) {
-		if (ncurses_current->prompt) {
-				/* should return pointer to null terminator if output the whole string */
-			if (*ncurses_common_print(input, ncurses_current->prompt->str,
-					ncurses_current->prompt->attr, input->_maxx / 4)) {
+		gchar *tmp = ekg_recode_to_locale(format_find(
+					ncurses_current->prompt ? "ncurses_prompt_query" : "ncurses_prompt_none"));
+		gchar *tmp2 = format_string(tmp, "\037"); /* unit separator */
+		fstring_t *prompt_f = fstring_new(tmp2);
+		gchar *s = prompt_f->str, *s2;
+		fstr_attr_t *a = prompt_f->attr, *a2;
+		g_free(tmp2);
+		g_free(tmp);
 
-				/* XXX: prompt may not end with ']'? */
-				wattrset(input, A_NORMAL);
-				waddstr(input, ncurses_hellip);
-				waddstr(input, "] ");
-			}
+		if (ncurses_current->prompt) {
+				/* find our \037 */
+			for (s2 = s, a2 = a; *s2 != '\037'; s2++, a2++)
+				g_assert(*s2);
+			*s2 = '\0'; /* and split the original string using it */
 		}
+
+		ncurses_common_print(input, s, a, -1);
+		
+		if (ncurses_current->prompt) {
+			wattrset(input, fstring_attr2ncurses_attr(*a2));
+				/* if doesn't return pointer to NUL, whole string hasn't been written */
+			if (*ncurses_common_print(input, ncurses_current->prompt,
+						NULL, input->_maxx / 4)) {
+
+					/* don't change colors or anything
+					 * just disable bold to distinguish */
+				wattroff(input, A_BOLD); /* XXX? */
+				waddstr(input, ncurses_hellip);
+			}
+			s2++, a2++;
+			ncurses_common_print(input, s2, a2, -1);
+		}
+		fstring_free(prompt_f);
 	}
 	getyx(input, y, x);
 	ncurses_current->prompt_len = x;

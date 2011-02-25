@@ -260,13 +260,8 @@ static QUERY(ncurses_ui_window_act_changed)
 static QUERY(ncurses_ui_window_target_changed)
 {
 	window_t *w = *(va_arg(ap, window_t **));
-	char *tmp, *p;
 
-	p = w->alias ? w->alias : (w->target ? w->target : NULL);
-	tmp = format_string(format_find((p) ? "ncurses_prompt_query" : "ncurses_prompt_none"), p);
-	ncurses_prompt_set(w, tmp);
-	g_free(tmp);
-
+	ncurses_prompt_set(w, w->alias ? w->alias : w->target);
 	update_statusbar(1);
 
 	return 0;
@@ -364,12 +359,9 @@ static QUERY(ncurses_conference_renamed)
 
 	for (w = windows; w; w = w->next) {
 		if (w->target && !xstrcasecmp(w->target, oldname)) {
-			gchar *tmp;
 			xfree(w->target);
 			w->target = xstrdup(newname);
-			tmp = format_string(format_find("ncurses_prompt_query"), newname);
-			ncurses_prompt_set(w, tmp);
-			g_free(tmp);
+			ncurses_prompt_set(w, newname);
 		}
 	}
 
@@ -634,7 +626,7 @@ static int ncurses_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	/* prompty i statusy dla ui-ncurses */
 	format_add("ncurses_prompt_none", "", 1);
-	format_add("ncurses_prompt_query", "[%1] ", 1);
+	format_add("ncurses_prompt_query", "[%Y%1%n] ", 1);
 	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %G}%{?avail %Y}%{?chat %W}%{?dnd %K}%{?xa %g}%{?gone %R}"
 			"%{?invisible %C}%{?notavail %r}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{?typing %C}%{window}}"
 			"%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}"
