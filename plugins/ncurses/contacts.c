@@ -126,10 +126,12 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 
 	n = w->priv_data;
 
+#ifdef SCROLLING_FIXME
 	if (save_pos)
 		old_start = n->start;
 	else
 		old_start = 0;
+#endif
 
 	ncurses_clear(w, 1);
 
@@ -380,6 +382,7 @@ after_loop:
 	xfree(group);
 
 kon:
+#ifdef SCROLLING_FIXME
 /* restore old index */
 	n->start = old_start;
 
@@ -388,6 +391,7 @@ kon:
 
 	if (n->start < 0)
 		n->start = 0;
+#endif
 
 /* redraw */
 	n->redraw = 1;
@@ -486,6 +490,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 
 	n = w->priv_data;
 
+#ifdef SCROLLING_FIXME
 	if (!w->nowrap) {
 		/* here new code, should work also with w->nowrap == 1 */
 		y -= 1;		/* ??? */
@@ -510,7 +515,7 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 
 		/* (we keep priv_data utf8-encoded) */
 	command_exec_format(NULL, NULL, 0, ("/query \"%s\""), n->backlog[y]->priv_data);
-	return;
+#endif
 }
 
 static int ncurses_contacts_update_redraw(window_t *w) { return 0; }
@@ -551,7 +556,9 @@ void ncurses_contacts_set(window_t *w)
 	n->handle_redraw = ncurses_contacts_update_redraw;
 	n->handle_mouse = ncurses_contacts_mouse_handler;
 	w->nowrap = !config_contacts_wrap;
+#ifdef SCROLLING_FIXME
 	n->start = 0;
+#endif
 }
 
 /*

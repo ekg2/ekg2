@@ -19,23 +19,6 @@ extern int ncurses_plugin_destroyed;
 
 void update_statusbar(int commit);
 
-struct screen_line { /* everything locale-encoded */
-	int len;		/* d³ugo¶æ linii */
-	
-	unsigned char *str;		/* tre¶æ */
-	fstr_attr_t *attr;		/* atrybuty */
-	
-	unsigned char *prompt_str;	/* tre¶æ promptu */
-	fstr_attr_t *prompt_attr;	/* atrybuty promptu */
-	int prompt_len;		/* d³ugo¶æ promptu */
-	
-	char *ts;		/* timestamp */
-	fstr_attr_t *ts_attr;	/* attributes of the timestamp */
-
-	int backlog;		/* z której linii backlogu pochodzi? */
-	int margin_left;	/* where the margin should be setted */	
-};
-
 enum window_frame_t {
 	WF_LEFT = 1,
 	WF_TOP = 2,
@@ -58,13 +41,6 @@ typedef struct {
 	int backlog_size;	/* rozmiar backloga */
 
 	int redraw;		/* trzeba przerysowaæ przed wy¶wietleniem */
-
-	int start;		/* od której linii zaczyna siê wy¶wietlanie */
-	int lines_count;	/* ilo¶æ linii ekranowych w backlogu */
-	struct screen_line *lines;
-				/* linie ekranowe */
-
-	int overflow;		/* ilo¶æ nadmiarowych linii w okienku */
 
 	int (*handle_redraw)(window_t *w);
 				/* obs³uga przerysowania zawarto¶ci okna */

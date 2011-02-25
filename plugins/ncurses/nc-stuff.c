@@ -167,6 +167,7 @@ void ncurses_resize(void)
 	if (height < 1)
 		height = 1;
 
+#ifdef SCROLLING_FIXME
 	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->priv_data;
 		int old_width = w->width;
@@ -296,6 +297,7 @@ void ncurses_resize(void)
 		ncurses_update_real_prompt(n);
 		n->redraw = 1;
 	}
+#endif
 
 	ncurses_screen_width = width;
 	ncurses_screen_height = height;
@@ -508,6 +510,7 @@ void ncurses_redraw(window_t *w)
 
 	}
 
+#ifdef OLD_WRAPPING
 	if (n->start < 0)
 		n->start = 0;
 
@@ -612,6 +615,7 @@ void ncurses_redraw(window_t *w)
 		}
 		draw_thin_red_line(w, top+y);
 	}
+#endif
 
 	if (w == window_current)
 		ncurses_redraw_input(0);
@@ -627,6 +631,7 @@ void ncurses_clear(window_t *w, int full)
 	ncurses_window_t *n = w->priv_data;
 	w->more = 0;
 
+#ifdef CLEAR_FIXME
 	if (!full) {
 		n->start = n->lines_count;
 		n->redraw = 1;
@@ -661,6 +666,7 @@ void ncurses_clear(window_t *w, int full)
 	}
 
 	n->start = 0;
+#endif
 	n->redraw = 1;
 }
 

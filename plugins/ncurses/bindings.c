@@ -685,6 +685,7 @@ void binding_helper_scroll(window_t *w, int offset) {
 	if (!w || !(n = w->priv_data))
 		return;
 
+#ifdef SCROLLING_FIXME
 	if (offset < 0) {
 		n->start += offset;
 		if (n->start < 0)
@@ -707,6 +708,7 @@ void binding_helper_scroll(window_t *w, int offset) {
 			}
 		}
 	}
+#endif
 
 	ncurses_redraw(w);
 	ncurses_commit();

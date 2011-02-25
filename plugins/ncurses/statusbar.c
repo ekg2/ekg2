@@ -467,9 +467,11 @@ void update_statusbar(int commit)
 				break;
 
 			case 1:
+#if 0
 				tmp = saprintf(" debug: lines_count=%d start=%d height=%d overflow=%d screen_width=%d", ncurses_current->lines_count, ncurses_current->start, window_current->height, ncurses_current->overflow, ncurses_screen_width);
 				reprint_statusbar(ncurses_status, y, tmp, formats);
 				xfree(tmp);
+#endif
 				break;
 
 			case 2:

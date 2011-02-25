@@ -111,7 +111,9 @@ int ncurses_lastlog_update(window_t *w) {
 	if (!w) return -1;
 
 	n = w->priv_data;
+#ifdef SCROLLING_FIXME
 	old_start = n->start;
+#endif
 
 	ncurses_clear(w, 1);
 
@@ -139,6 +141,7 @@ int ncurses_lastlog_update(window_t *w) {
 		fstring_free(fstr);
 	}
 
+#ifdef SCROLLING_FIXME
 /* XXX fix n->start */
 	n->start = old_start;
 	if (n->start > n->lines_count - w->height + n->overflow)
@@ -146,6 +149,7 @@ int ncurses_lastlog_update(window_t *w) {
 
 	if (n->start < 0)
 		n->start = 0;
+#endif
 
 	n->redraw = 1;
 	return retval;
@@ -181,7 +185,9 @@ void ncurses_lastlog_new(window_t *w) {
 	w->frames = lastlog_frame;
 	n->handle_redraw = ncurses_lastlog_update;
 	n->handle_mouse = ncurses_lastlog_mouse_handler;
+#ifdef SCROLLING_FIXME
 	n->start = 0;
+#endif
 	w->edge = lastlog_edge;
 	w->nowrap = !lastlog_wrap;
 	w->floating = 1;

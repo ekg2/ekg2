@@ -194,13 +194,16 @@ static QUERY(ncurses_ui_window_print)
 		}
 	}
 
+#ifdef SCROLLING_FIXME
 	prev_count = n->lines_count;
 
 	if (n->start == n->lines_count - w->height || (n->start == 0 && n->lines_count <= w->height))
 		bottom = 1;
+#endif
 
 	count = ncurses_backlog_add(w, line);
 
+#ifdef SCROLLING_FIXME
 	if (n->overflow) {
 		n->overflow -= count;
 
@@ -222,6 +225,7 @@ static QUERY(ncurses_ui_window_print)
 
 	if (n->start < n->lines_count - w->height)
 		w->more = 1;
+#endif
 
 	if (!w->floating) {
 		ncurses_redraw(w);
@@ -344,8 +348,10 @@ static QUERY(ncurses_variable_changed)
 	} else if (!xstrcasecmp(name, "timestamp") || !xstrcasecmp(name, "timestamp_show") || !xstrcasecmp(name, "ncurses:margin_size")) {
 		window_t *w;
 
+#if 0 /* XXX: redraw */
 		for (w = windows; w; w = w->next)
 			ncurses_backlog_split(w, 1, 0);
+#endif
 
 		ncurses_resize();
 	}
@@ -474,7 +480,9 @@ static QUERY(ncurses_ui_window_lastlog) {
 		return 0;
 	}
 
+#ifdef SCROLLING_FIXME
 	n->start = n->lines_count - w->height + n->overflow;
+#endif
 	config_lastlog_lock = 1;
 	ncurses_redraw(w);
 	config_lastlog_lock = lock_old;
