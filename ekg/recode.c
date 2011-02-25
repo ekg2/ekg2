@@ -240,7 +240,7 @@ char *ekg_recode_to(const gchar *enc, const gchar *str) {
 	/* XXX: validate utf8 */
 gchar *ekg_recode_from_locale(const char *str) {
 	if (console_charset_is_utf8)
-		return g_strdup(str);
+		return ekg_fix_utf8(str);
 	else
 		return ekg_recode_to_core_dup(console_charset, str);
 }
@@ -250,6 +250,11 @@ char *ekg_recode_to_locale(const gchar *str) {
 		return g_strdup(str);
 	else
 		return ekg_recode_from_core_dup(console_charset, str);
+}
+
+gchar *ekg_fix_utf8(const char *str) {
+		/* XXX */
+	return g_strdup(str);
 }
 
 static void fstr_mark_linebreaks(const gchar *s, fstr_attr_t *a) {
