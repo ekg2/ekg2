@@ -262,7 +262,43 @@ void ekg_fix_utf8(gchar *buf) {
 }
 
 static void fstr_mark_linebreaks(const gchar *s, fstr_attr_t *a) {
-	/* XXX: set FSTR_LINEBREAK */
+	const gchar *p;
+
+	/* XXX: use pango */
+
+	g_assert(g_utf8_validate(s, -1, NULL));
+	for (p = s; *p; p = g_utf8_next_char(p)) {
+		switch (g_unichar_break_type(g_utf8_get_char(p))) {
+				/* these should cause line break themselves
+				 * but we don't support unicode that well,
+				 * so just use them as wrap opportunity */
+			case G_UNICODE_BREAK_MANDATORY:
+			case G_UNICODE_BREAK_CARRIAGE_RETURN:
+			case G_UNICODE_BREAK_LINE_FEED:
+			case G_UNICODE_BREAK_NEXT_LINE:
+				/* typical break opportunities */
+			case G_UNICODE_BREAK_ZERO_WIDTH_SPACE:
+			case G_UNICODE_BREAK_SPACE:
+			case G_UNICODE_BREAK_BEFORE_AND_AFTER:
+			case G_UNICODE_BREAK_AFTER:
+				/* not always but use it anyway */
+			case G_UNICODE_BREAK_HYPHEN:
+				{
+					const gsize startpos = p - s;
+					const gsize endpos = g_utf8_next_char(p) - s;
+					gsize i;
+
+					for (i = startpos; i < endpos; i++)
+						a[i] |= FSTR_LINEBREAK;
+				}
+				break;
+
+				/* we do not support breaking before */
+			case G_UNICODE_BREAK_BEFORE:
+			default:
+				break;
+		}
+	}
 }
 
 fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
