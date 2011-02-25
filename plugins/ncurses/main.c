@@ -770,21 +770,15 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("typing_timeout_inactive"), VAR_INT, 1, &config_typing_timeout_inactive, NULL, NULL, NULL);
 
 	{ /* initialize locale-related vars */
-		GError *err = NULL;
 		const gchar utf8hellip[] = { 0xe2, 0x80, 0xa6 };
 		const gchar asciihellip[] = { '.', '.', '.' };
 
 		ncurses_hellip = g_locale_from_utf8(utf8hellip, sizeof(utf8hellip),
-				NULL, NULL, &err);
+				NULL, NULL, NULL);
 		if (!ncurses_hellip) {
-				/* input should be known to be valid */
-			g_assert(err->code == G_CONVERT_ERROR_NO_CONVERSION || err->code == G_CONVERT_ERROR_FAILED);
-
-			g_error_free(err);
-			err = NULL;
 				/* fallback to asciihellip */
 			ncurses_hellip = g_locale_from_utf8(asciihellip, sizeof(asciihellip),
-					NULL, NULL, &err);
+					NULL, NULL, NULL);
 
 				/* failure here? you're joking, right?
 				 * well, better die early. */
