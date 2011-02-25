@@ -41,7 +41,7 @@ char *ekg_recode_to(const gchar *enc, const gchar *str);
 gchar *ekg_recode_from_locale(const char *str);
 char *ekg_recode_to_locale(const gchar *str);
 
-gchar *ekg_fix_utf8(const char *str);
+void ekg_fix_utf8(gchar *buf);
 
 fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr);
 

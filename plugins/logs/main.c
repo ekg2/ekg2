@@ -1138,9 +1138,8 @@ static QUERY(logs_handler_newwin) {
 
 		/* XXX, in fjuczer it can be gzipped file, WARN HERE */
 		while ((line = read_file(f, 0))) {
-			gchar *tmp = ekg_fix_utf8(line);
-			buffer_add_str(&buffer_lograw, path, tmp);
-			g_free(tmp);
+			ekg_fix_utf8(line);
+			buffer_add_str(&buffer_lograw, path, line);
 		}
 
 		ftruncate(fileno(f), 0);	/* works? */

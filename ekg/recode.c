@@ -237,11 +237,13 @@ char *ekg_recode_to(const gchar *enc, const gchar *str) {
 	return ekg_recode_from_core_dup(enc, str);
 }
 
-	/* XXX: validate utf8 */
 gchar *ekg_recode_from_locale(const char *str) {
-	if (console_charset_is_utf8)
-		return ekg_fix_utf8(str);
-	else
+	if (console_charset_is_utf8) {
+		gchar *tmp = g_strdup(str);
+		if (tmp)
+			ekg_fix_utf8(tmp);
+		return tmp;
+	} else
 		return ekg_recode_to_core_dup(console_charset, str);
 }
 
@@ -252,9 +254,11 @@ char *ekg_recode_to_locale(const gchar *str) {
 		return ekg_recode_from_core_dup(console_charset, str);
 }
 
-gchar *ekg_fix_utf8(const char *str) {
-		/* XXX */
-	return g_strdup(str);
+void ekg_fix_utf8(gchar *buf) {
+	const gchar *p = buf;
+
+	while (G_UNLIKELY(!g_utf8_validate(p, -1, &p)))
+		*((gchar*) p++) = 0x1a; /* substitute, UTR#36 suggests it as byte replacement */
 }
 
 static void fstr_mark_linebreaks(const gchar *s, fstr_attr_t *a) {
