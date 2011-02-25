@@ -339,6 +339,7 @@ static inline int fstring_attr2ncurses_attr(fstr_attr_t chattr) {
  * When we recv ISO control character [and we're using console under iso charset] (ASCII code between 128..159), we can REVERSE attr, and return '?'
  */
 
+	/* XXX: distinguish between ^z & recode-related SUB? */
 inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 	if (ch < 32) {
 		*attr |= A_REVERSE;
