@@ -360,6 +360,9 @@ EKG_CPPFLAGS="$CPPFLAGS"
 AC_SUBST([EKG_CPPFLAGS])
 CPPFLAGS=
 
+AC_CONFIG_COMMANDS_PRE([
+	AM_CONDITIONAL([ENABLE_GCH], [test "x$enable_dependency_tracking" = "xno"])
+])
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])
 AC_OUTPUT

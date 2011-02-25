@@ -223,6 +223,8 @@ static void variable_generator(const char *text, int len)
 
 	for (vl = variables; vl; vl = vl->next) {
 		variable_t *v = vl->data;
+		if (v->display == 2)
+			continue;
 		if (*text == '-') {
 			if (!xstrncasecmp(text + 1, v->name, len - 1))
 				array_add_check(&completions, 
