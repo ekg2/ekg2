@@ -1014,7 +1014,6 @@ void ekg_exit()
 	xfree(home_dir);
 
 	xfree(config_dir);
-	xfree(console_charset);
 
 	mesg_set(mesg_startup);
 #ifdef NO_POSIX_SYSTEM
