@@ -362,16 +362,21 @@ inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 }
 
 	/* XXX: use it commonly */
-void ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxlen) {
-	/* XXX: maxlen support */
-
+const char *ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxlen) {
 	for (; *s; s++, attr++) {
+		int x, y;
 		int nattr = fstring_attr2ncurses_attr(*attr);
 		CHAR_T ch = ncurses_fixchar((unsigned char) *s, &nattr);
 
 		wattrset(w, nattr);
 		waddch(w, ch);
+
+		getyx(w, y, x);
+		if (x >= maxlen) /* XXX: what about double-width chars? */
+			break;
 	}
+
+	return s;
 }
 
 /*

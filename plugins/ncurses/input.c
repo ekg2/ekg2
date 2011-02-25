@@ -46,6 +46,7 @@ int ncurses_input_size = 1;		/* rozmiar okna wpisywania tekstu */
 
 int ncurses_noecho = 0;
 
+gchar *ncurses_hellip;
 
 #if 0
 static char ncurses_funnything[5] = "|/-\\";
@@ -466,10 +467,17 @@ void ncurses_redraw_input(unsigned int ch) {
 	werase(input);
 	wmove(input, 0, 0);
 	if (!ncurses_lines) {
-		if (ncurses_current->prompt)
-			ncurses_common_print(input, ncurses_current->prompt->str,
-					ncurses_current->prompt->attr, -1 /* XXX */);
-			
+		if (ncurses_current->prompt) {
+				/* should return pointer to null terminator if output the whole string */
+			if (*ncurses_common_print(input, ncurses_current->prompt->str,
+					ncurses_current->prompt->attr, input->_maxx / 4)) {
+
+				/* XXX: prompt may not end with ']'? */
+				wattrset(input, A_NORMAL);
+				waddstr(input, ncurses_hellip);
+				waddstr(input, "] ");
+			}
+		}
 	}
 	getyx(input, y, x);
 	ncurses_current->prompt_len = x;

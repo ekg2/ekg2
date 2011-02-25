@@ -79,7 +79,7 @@ extern WINDOW *ncurses_input;
 
 QUERY(ncurses_session_disconnect_handler);
 
-void ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxlen);
+const char *ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxlen);
 void ncurses_prompt_set(window_t *w, const gchar *str);
 void ncurses_update_real_prompt(ncurses_window_t *n);
 void ncurses_resize(void);

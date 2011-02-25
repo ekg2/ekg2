@@ -25,5 +25,6 @@ extern int ncurses_line_index;
 extern int ncurses_lines_start;
 extern int ncurses_lines_index;
 extern int ncurses_input_size;
+extern gchar *ncurses_hellip;
 
 #endif
