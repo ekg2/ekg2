@@ -1136,10 +1136,12 @@ static QUERY(logs_handler_newwin) {
 			return 0;
 		}
 
-		/* XXX, validate utf8 */
 		/* XXX, in fjuczer it can be gzipped file, WARN HERE */
-		while ((line = read_file(f, 0)))
-			buffer_add_str(&buffer_lograw, path, line);
+		while ((line = read_file(f, 0))) {
+			gchar *tmp = ekg_fix_utf8(line);
+			buffer_add_str(&buffer_lograw, path, tmp);
+			g_free(tmp);
+		}
 
 		ftruncate(fileno(f), 0);	/* works? */
 		fclose(f);
