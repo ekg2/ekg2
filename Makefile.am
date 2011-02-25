@@ -90,8 +90,11 @@ AM_CPPFLAGS = -I$(top_builddir)/plugins -I$(top_builddir) -I$(top_srcdir) \
 	-DSYSCONFDIR=\"$(sysconfdir)\" -DDATADIR=\"$(pkgdatadir)\" \
 	-DPLUGINDIR=\"$(plugindir)\" -DLOCALEDIR=\"$(localedir)\"
 
-BUILT_SOURCES = ekg2.h.gch plugins/ekg2.h.gch
+BUILT_SOURCES =
 MOSTLYCLEANFILES = ekg2.h.gch plugins/ekg2.h.gch
+
+if ENABLE_GCH
+BUILT_SOURCES += ekg2.h.gch plugins/ekg2.h.gch
 
 ekg2.h.gch: $(noinst_HEADERS)
 	$(AM_V_CC)$(COMPILE) $(EKG_CPPFLAGS) -o $@ $< || touch $@
@@ -99,6 +102,7 @@ ekg2.h.gch: $(noinst_HEADERS)
 plugins/ekg2.h.gch: $(noinst_HEADERS)
 	$(MKDIR_P) plugins
 	$(AM_V_CC)$(COMPILE) $(EKG_CPPFLAGS) -fPIC -DPIC -o $@ $< || touch $@
+endif
 
 TESTS = check_potfiles
 check_SCRIPTS = check_potfiles
