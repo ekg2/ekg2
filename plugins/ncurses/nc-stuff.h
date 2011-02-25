@@ -23,14 +23,14 @@ struct screen_line { /* everything locale-encoded */
 	int len;		/* d³ugo¶æ linii */
 	
 	unsigned char *str;		/* tre¶æ */
-	short *attr;		/* atrybuty */
+	fstr_attr_t *attr;		/* atrybuty */
 	
 	unsigned char *prompt_str;	/* tre¶æ promptu */
-	short *prompt_attr;	/* atrybuty promptu */
+	fstr_attr_t *prompt_attr;	/* atrybuty promptu */
 	int prompt_len;		/* d³ugo¶æ promptu */
 	
 	char *ts;		/* timestamp */
-	short *ts_attr;		/* attributes of the timestamp */
+	fstr_attr_t *ts_attr;	/* attributes of the timestamp */
 
 	int backlog;		/* z której linii backlogu pochodzi? */
 	int margin_left;	/* where the margin should be setted */	

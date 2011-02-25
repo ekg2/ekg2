@@ -34,12 +34,12 @@ OUTPUT:
 char *fstring2ascii(char *str, void *attr_)
 CODE:
         string_t st = string_init(NULL);
-	short *attr = attr_;
+	fstr_attr_t *attr = attr_;
         int prev = -1, prevbold = 0, prevblink = 0;
         int i;
 /* rewrite */
         for (i=0; i < strlen(str); i++) {
-                short chattr = attr[i];
+                fstr_attr_t chattr = attr[i];
                 int bold = 0, blink = 0;
 
                 if (chattr & 64)  bold = 1;

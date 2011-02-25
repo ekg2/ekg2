@@ -153,7 +153,7 @@ static const char *rc_var_get_value(variable_t *v) {
 
 static char *rc_fstring_reverse(fstring_t *fstr) {
 	const char *str;
-	const short *attr;
+	const fstr_attr_t *attr;
 	string_t asc;
 	int i;
 

@@ -114,7 +114,7 @@ static char *log_escape(const char *str)
 
 static char *fstring_reverse(fstring_t *fstr) {
 	const char *str;
-	const short *attr;
+	const fstr_attr_t *attr;
 	string_t asc;
 	int i;
 

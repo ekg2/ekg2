@@ -109,7 +109,7 @@ static QUERY(readline_ui_window_switch) { /* window_switch */
 	return 0;
 }
 
-static char *readline_change_string_t_back_to_char(const char *str, const short *attr) {
+static char *readline_change_string_t_back_to_char(const char *str, const fstr_attr_t *attr) {
 	int i;
 	string_t asc = string_init(NULL);
 

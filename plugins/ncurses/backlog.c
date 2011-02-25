@@ -111,7 +111,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
 		struct screen_line *l;
 		char *str; 
-		short *attr;
+		fstr_attr_t *attr;
 		int j, margin_left, wrapping = 0;
 
 		time_t ts;			/* current ts */

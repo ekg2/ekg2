@@ -102,7 +102,7 @@ char *escape_single_quote(char *p)
 
 char *http_fstring(int winid, char *parent, const fstring_t *line)
 {
-	const short *attr = line->attr;
+	const fstr_attr_t *attr = line->attr;
 	const char *str = line->str;
 	string_t asc = string_init(NULL);
 	int i, last, lastbeg, len, att;

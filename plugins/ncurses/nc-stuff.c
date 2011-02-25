@@ -308,7 +308,7 @@ void ncurses_resize(void)
  *
  */
 
-static inline int fstring_attr2ncurses_attr(short chattr) {
+static inline int fstring_attr2ncurses_attr(fstr_attr_t chattr) {
 	int attr = A_NORMAL;
 
 	if ((chattr & FSTR_BOLD))

@@ -615,7 +615,7 @@ fstring_t *fstring_dup(const fstring_t *str) {
 	gsize len = strlen(str->str) + 1;
 
 	out->str = g_memdup(str->str, len * sizeof(gchar));
-	out->attr = g_memdup(str->attr, len * sizeof(short));
+	out->attr = g_memdup(str->attr, len * sizeof(fstr_attr_t));
 
 	return out;
 }
@@ -637,7 +637,7 @@ fstring_t *fstring_new(const char *str) {
 #define NPAR 16			/* ECMA-48 CSI have got max 16 params (NPAR) defined in <linux/console_struct.h> */
 	fstring_t *res;
 	char *tmpstr;
-	short attr = FSTR_NORMAL;
+	fstr_attr_t attr = FSTR_NORMAL;
 	int i, j, len = 0, isbold = 0;
 
 	for (i = 0; str[i]; i++) {
@@ -666,8 +666,8 @@ fstring_t *fstring_new(const char *str) {
 	}
 
 	res			= xmalloc(sizeof(fstring_t));
-	res->str = tmpstr	= xmalloc((len + 1) * sizeof(char));
-	res->attr		= xmalloc((len + 1) * sizeof(short));
+	res->str = tmpstr	= xmalloc((len + 1) * sizeof(gchar));
+	res->attr		= xmalloc((len + 1) * sizeof(fstr_attr_t));
 
 	res->margin_left = -1;
 /*
