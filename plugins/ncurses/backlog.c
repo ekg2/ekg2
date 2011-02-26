@@ -69,6 +69,9 @@ int ncurses_backlog_add_real(window_t *w, /*locale*/ fstring_t *str) {
 	if (n->backlog->len >= config_backlog_size)
 		g_ptr_array_remove_index(n->backlog, 0);
 
+		/* when tracking the last line (or on a new window), update */
+	if (G_UNLIKELY(n->last_rindex > 0) && G_LIKELY(n->last_rindex < config_backlog_size - 1))
+		n->last_rindex++;
 	g_ptr_array_add(n->backlog, str);
 	return 0;
 }
@@ -105,6 +108,8 @@ void changed_backlog_size(const char *var)
 
 	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->priv_data;
-		g_ptr_array_set_size(n->backlog, config_backlog_size);
+		if (n->backlog->len > config_backlog_size)
+			g_ptr_array_remove_range(n->backlog, 0,
+					n->backlog->len - config_backlog_size);
 	}
 }

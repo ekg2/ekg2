@@ -38,6 +38,7 @@ typedef struct {
 				/* margins */
 
 	GPtrArray *backlog;	/* last screen lines */
+	int last_rindex;	/* rindex of last screen line in backlog (0 = last) */
 
 	int redraw;		/* does it have to be redrawn before display */
 

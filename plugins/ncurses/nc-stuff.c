@@ -159,7 +159,6 @@ void ncurses_resize(void)
 	if (height < 1)
 		height = 1;
 
-#ifdef SCROLLING_FIXME
 	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->priv_data;
 		int old_width = w->width;
@@ -225,10 +224,12 @@ void ncurses_resize(void)
 
 		n->redraw = 1;
 
+#ifdef SCROLLING_FIXME
 		/* if width changed, we should recalculate screen_lines, like for normal windows. */
 		/* XXX, only for !w->nowrap windows? */
 		if (old_width != w->width && w->floating /* XXX ? */)
 			ncurses_backlog_split(w, 1, 0);
+#endif
 	}
 
 	if (left < 0)			left = 0;
@@ -246,6 +247,7 @@ void ncurses_resize(void)
 
 		delta = height - w->height;
 
+#ifdef SCROLLING_FIXME
 		if (n->lines_count - n->start == w->height) {
 			n->start -= delta;
 
@@ -260,6 +262,7 @@ void ncurses_resize(void)
 
 		if (n->overflow > height)
 			n->overflow = height;
+#endif
 
 		w->height = height;
 
@@ -268,7 +271,9 @@ void ncurses_resize(void)
 
 		if (w->width != width && !w->doodle) {
 			w->width = width;
+#ifdef SCROLLING_FIXME
 			ncurses_backlog_split(w, 1, 0);
+#endif
 		}
 
 		w->width = width;
@@ -280,16 +285,17 @@ void ncurses_resize(void)
 
 		mvwin(n->window, w->top, w->left);
 
+#ifdef SCROLLING_FIXME
 		if (n->overflow) {
 			n->start = n->lines_count - w->height + n->overflow;
 			if (n->start < 0)
 				n->start = 0;
 		}
+#endif
 
 		ncurses_update_real_prompt(n);
 		n->redraw = 1;
 	}
-#endif
 
 	ncurses_screen_width = width;
 	ncurses_screen_height = height;
@@ -558,10 +564,7 @@ void ncurses_redraw(window_t *w)
 
 	}
 
-#ifdef OLD_WRAPPING
-	if (n->start < 0)
-		n->start = 0;
-
+#if 0 /* XXX */
 	if (config_text_bottomalign && (!w->floating || config_text_bottomalign == 2)
 			&& n->start == 0 && n->lines_count < height)
 	{
@@ -570,7 +573,27 @@ void ncurses_redraw(window_t *w)
 		if (tmp > top)
 			top = tmp;
 	}
+#endif
 
+	{
+		const int last_index = n->backlog->len - n->last_rindex - 1;
+		const int first_index = last_index - height + 1;
+		
+		for (y = 0; y < height; y++) {
+			const int blindex = first_index + y;
+			fstring_t *bl;
+
+			if (blindex < 0) /* before backlog */
+				continue;
+			g_assert(blindex <= last_index); /* guaranteed by loop cond */
+			bl = n->backlog->pdata[first_index + y];
+
+			wmove(n->window, top + y, 0);
+			ncurses_fstring_print(n->window, bl->str, bl->attr, -1);
+		}
+	}
+
+#ifdef FIXME_WRAPPING
 	fix_trl=0;
 	for (y = 0; y < height && n->start + y < n->lines_count; y++) {
 		struct screen_line *l = &n->lines[n->start + y];
@@ -579,6 +602,7 @@ void ncurses_redraw(window_t *w)
 
 		int fixup = 0;
 
+#if 0 /* XXX */
 		if (( y == 0 ) && n->last_red_line && (n->backlog[l->backlog]->ts < n->last_red_line))
 			dtrl = 1;	/* First line timestamp is less then mark. Mayby marker is on this page? */
 
@@ -594,6 +618,7 @@ void ncurses_redraw(window_t *w)
 			}
 			dtrl = 0;
 		}
+#endif
 
 		wattrset(n->window, A_NORMAL);
 		wmove(n->window, cur_y, left);
@@ -652,8 +677,6 @@ void ncurses_redraw(window_t *w)
 		}
 	}
 
-	n->redraw = 0;
-
 	if (dtrl && (n->start + y >= n->lines_count)) {
 		/* marker still not drawn and last line from backlog. */
 		if (y >= height - (top - n->margin_top)) {
@@ -664,6 +687,8 @@ void ncurses_redraw(window_t *w)
 		draw_thin_red_line(w, top+y);
 	}
 #endif
+
+	n->redraw = 0;
 
 	if (w == window_current)
 		ncurses_redraw_input(0);
@@ -990,7 +1015,7 @@ int ncurses_window_new(window_t *w)
 
 	w->priv_data = n = xmalloc(sizeof(ncurses_window_t));
 	n->backlog = g_ptr_array_new_with_free_func((GDestroyNotify) fstring_free);
-	g_ptr_array_set_size(n->backlog, config_backlog_size);
+	n->last_rindex = 0;
 
 	if (w->id == WINDOW_CONTACTS_ID) {
 		ncurses_contacts_set(w);
