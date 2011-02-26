@@ -459,7 +459,7 @@ IRC_COMMAND(irc_c_init)
 			xfree(j->host_ident);
 			if (t)	j->host_ident=xstrdup(++t); 
 			else j->host_ident=NULL;
-			debug_ok("\nspoko miejscówka ziom!...[%s:%s] given: %s\n", j->nick, j->host_ident, param[2]);
+			debug_ok("\nirc_c_init()/num=1/...[%s:%s] given: %s\n", j->nick, j->host_ident, param[2]);
 
 			xfree(j->nick);
 			j->nick = xstrdup(param[2]);

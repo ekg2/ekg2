@@ -12,7 +12,7 @@ extern plugin_t ncurses_plugin;
 
 extern int ncurses_plugin_destroyed;
 
-#define LINE_MAXLEN 1000		/* rozmiar linii */
+#define LINE_MAXLEN 1000		/* max line length */
 #define MULTILINE_INPUT_SIZE 5
 
 #define ncurses_current ((ncurses_window_t *) window_current->priv_data)
@@ -28,22 +28,22 @@ enum window_frame_t {
 };
 
 typedef struct {
-	WINDOW *window;		/* okno okna */
+	WINDOW *window;		/* WINDOW of a window */
 
 		/* -- the input prompt -- */
 	gchar *prompt;		/* prompt target or NULL */
-	int prompt_len;		/* d³ugo¶æ prompta lub 0 */
+	int prompt_len;		/* prompt length or 0 */
 
 	int margin_left, margin_right, margin_top, margin_bottom;
-				/* marginesy */
+				/* margins */
 
-	fstring_t **backlog;	/* bufor z liniami, locale-encoded */
-	int backlog_size;	/* rozmiar backloga */
+	fstring_t **backlog;	/* buffer with lines */
+	int backlog_size;	/* backlog size */
 
-	int redraw;		/* trzeba przerysowaæ przed wy¶wietleniem */
+	int redraw;		/* does it have to be redrawn before display */
 
 	int (*handle_redraw)(window_t *w);
-				/* obs³uga przerysowania zawarto¶ci okna */
+				/* window contents redraw handler */
 
 	void (*handle_mouse)(int x, int y, int state);
 

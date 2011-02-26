@@ -1455,7 +1455,7 @@ void theme_init()
 	format_add("prompt2", "%K:%c:%C:%n", 1);
 	format_add("prompt2,speech", " ", 1);
 	format_add("error", "%K:%r:%R:%n", 1);
-	format_add("error,speech", "b³±d!", 1);
+	format_add("error,speech", "Error!", 1);
 	format_add("timestamp", "%T", 1);
 	format_add("timestamp,speech", " ", 1);
 
@@ -1489,7 +1489,6 @@ void theme_init()
 	format_add("wdebug",	"%W%1\n", 1);
 	format_add("warndebug",	"%r%1\n", 1);
 	format_add("okdebug",	"%G%1\n", 1);
-	format_add("wtfdebug",	"%W?!%n %M%1\n", 1);
 
 	format_add("ekg_failure", _("%! %|Something really unexpected happened, you should %Treally%n contact authors!\nEKG2 may now behave fine, or more failures could occur.\nDetails follow (see also __debug):\n%R%1%n"), 1);
 

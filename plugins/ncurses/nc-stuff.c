@@ -2,9 +2,9 @@
 
 /*
  *  (C) Copyright 2002-2003 Wojtek Kaniewski <wojtekka@irc.pl>
- *			    Wojtek Bojdo≥ <wojboj@htcon.pl>
- *			    Pawe≥ Maziarz <drg@infomex.pl>
- *		  2008-2010 Wies≥aw OchmiÒski <wiechu@wiechu.com>
+ *			    Wojtek Bojdo≈Ç <wojboj@htcon.pl>
+ *			    Pawe≈Ç Maziarz <drg@infomex.pl>
+ *		  2008-2010 Wies≈Çaw Ochmi≈Ñski <wiechu@wiechu.com>
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License Version 2 as
@@ -44,13 +44,13 @@
 #include "spell.h"
 #include "statusbar.h"
 
-WINDOW *ncurses_input	= NULL;		/* okno wpisywania tekstu */
+WINDOW *ncurses_input	= NULL;		/* text input window */
 WINDOW *ncurses_contacts= NULL;
 
-CHAR_T *ncurses_history[HISTORY_MAX];	/* zapamiÍtane linie */
-int ncurses_history_index = 0;		/* offset w historii */
+CHAR_T *ncurses_history[HISTORY_MAX];	/* remembered lines */
+int ncurses_history_index = 0;		/* offset in backlog */
 
-int ncurses_debug = 0;			/* debugowanie */
+int ncurses_debug = 0;			/* debugging */
 
 int ncurses_screen_height;
 int ncurses_screen_width;
@@ -98,8 +98,8 @@ QUERY(ncurses_session_disconnect_handler) {
 /*
  * color_pair()
  *
- * zwraca numer COLOR_PAIR odpowiadaj±cej danej parze atrybutÛw: kolorze
- * tekstu i kolorze t≥a.
+ * returns COLOR_PAIR number corresponding given attribute pair: text color
+ * and background color.
  */
 int color_pair(int fg, int bg) {
 	if (!config_display_color) {
@@ -121,7 +121,7 @@ int color_pair(int fg, int bg) {
 /*
  * ncurses_commit()
  *
- * zatwierdza wszystkie zmiany w buforach ncurses i wy∂wietla je na ekranie.
+ * Commits all changes in ncurses buffers and displays them on screen.
  */
 void ncurses_commit(void)
 {
@@ -140,8 +140,7 @@ void ncurses_commit(void)
 /*
  * ncurses_resize()
  *
- * dostosowuje rozmiar okien do rozmiaru ekranu, przesuwaj±c odpowiednio
- * wy∂wietlan± zawarto∂Ê.
+ * Resizes windows to the screen size, moving contents accordingly.
  */
 void ncurses_resize(void)
 {
@@ -331,8 +330,10 @@ int fstring_attr2ncurses_attr(fstr_attr_t chattr) {
 /*
  * ncurses_fixchar()
  *
- * When we recv control character (ASCII code below 32), we can add 64 to it, and REVERSE attr.
- * When we recv ISO control character [and we're using console under iso charset] (ASCII code between 128..159), we can REVERSE attr, and return '?'
+ * When we recv control character (ASCII code below 32), we can add 64 to it,
+ * and REVERSE attr.
+ * When we recv ISO control character [and we're using console under iso
+ * charset] (ASCII code between 128..159), we can REVERSE attr, and return '?'
  */
 
 	/* XXX: distinguish between ^z & recode-related SUB? */
@@ -477,9 +478,9 @@ static void draw_thin_red_line(window_t *w, int y)
 /*
  * ncurses_redraw()
  *
- * przerysowuje zawarto∂Ê okienka.
+ * Redraws the window
  *
- *  - w - okno
+ * - w - window
  */
 void ncurses_redraw(window_t *w)
 {
@@ -504,9 +505,10 @@ void ncurses_redraw(window_t *w)
 	}
 
 	if (n->handle_redraw) {
-		/* handler moøe sam narysowaÊ wszystko, wtedy zwraca -1.
-		 * moøe teø tylko uaktualniÊ zawarto∂Ê okna, wtedy zwraca
-		 * 0 i rysowaniem zajmuje siÍ ta funkcja. */
+		/* handler can draw everything on its own - in that case
+                 * it returns -1. It can also only redraw the window,
+                 * indicating that case by returning 0; drawing is done
+                 * by this function */
 		if (n->handle_redraw(w) == -1)
 			return;
 	}
@@ -670,7 +672,7 @@ void ncurses_redraw(window_t *w)
 /*
  * ncurses_clear()
  *
- * czy∂ci zawarto∂Ê okna.
+ * Cleans window contents.
  */
 void ncurses_clear(window_t *w, int full)
 {
@@ -719,7 +721,7 @@ void ncurses_clear(window_t *w, int full)
 /*
  * ncurses_refresh()
  *
- * wnoutrefresh()uje aktualnie wy∂wietlane okienko.
+ * Does wnoutrefresh() on currently displayed window.
  */
 void ncurses_refresh(void)
 {
@@ -766,7 +768,9 @@ void ncurses_refresh(void)
 /*
  * ncurses_window_kill()
  *
- * usuwa podane okno.
+ * Removes given window.
+ *
+ *  - w - window to remove.
  */
 int ncurses_window_kill(window_t *w)
 {
@@ -805,7 +809,7 @@ static void sigwinch_handler()
 /*
  * ncurses_init()
  *
- * inicjalizuje ca≥± zabawÍ z ncurses.
+ * Initializes all the ncurses' fun stuff.
  */
 void ncurses_init(void)
 {
@@ -842,7 +846,7 @@ void ncurses_init(void)
 
 	start_color();
 
-	init_pair(7, COLOR_BLACK, background);	/* ma≥e obej∂cie domy∂lnego koloru */
+	init_pair(7, COLOR_BLACK, background);	/* ma≈Çe obej≈õcie domy≈õlnego koloru */
 	init_pair(1, COLOR_RED, background);
 	init_pair(2, COLOR_GREEN, background);
 	init_pair(3, COLOR_YELLOW, background);
@@ -873,7 +877,7 @@ void ncurses_init(void)
 	ncurses_contacts_changed("contacts");
 	ncurses_commit();
 
-	/* deaktywujemy klawisze INTR, QUIT, SUSP i DSUSP */
+	/* deactivating INTR, QUIT, SUSP and DSUSP keys */
 	if (!tcgetattr(0, &old_tio)) {
 		struct termios tio;
 
@@ -911,7 +915,7 @@ void ncurses_init(void)
 /*
  * ncurses_deinit()
  *
- * zamyka, robi porz±dki.
+ * Closes, does cleanup.
  */
 void ncurses_deinit(void)
 {
@@ -975,7 +979,7 @@ void ncurses_deinit(void)
 /*
  * ncurses_window_new()
  *
- * tworzy nowe okno ncurses do istniej±cego okna ekg.
+ * Creates new ncurses window for existing ekg window.
  */
 int ncurses_window_new(window_t *w)
 {

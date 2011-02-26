@@ -1155,7 +1155,7 @@ static int irc_really_connect(session_t *session) {
 	if (!j->bindtmplist) j->bindtmplist = j->bindlist;
 
 	if (!j->conntmplist) {
-		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje (!j->conntmplist)");
+		print("generic_error", "Resolver request failed (!j->conntmplist)");
 		return -1;
 	}
 
@@ -1163,7 +1163,7 @@ static int irc_really_connect(session_t *session) {
 	connco = (connector_t *)(j->conntmplist->data);
 	sinlen = irc_build_sin(session, connco, &sinco);
 	if (!sinco) {
-		print("generic_error", "Ziomu¶ twój resolver co¶ nie tegesuje (!sinco)");
+		print("generic_error", "Resolver request failed (!sinco)");
 		return -1;
 	}
 
