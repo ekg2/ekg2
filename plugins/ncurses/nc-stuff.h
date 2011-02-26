@@ -12,7 +12,7 @@ extern plugin_t ncurses_plugin;
 
 extern int ncurses_plugin_destroyed;
 
-#define LINE_MAXLEN 1000		/* rozmiar linii */
+#define LINE_MAXLEN 1000		/* max line length */
 #define MULTILINE_INPUT_SIZE 5
 
 #define ncurses_current ((ncurses_window_t *) window_current->priv_data)
@@ -20,19 +20,19 @@ extern int ncurses_plugin_destroyed;
 void update_statusbar(int commit);
 
 struct screen_line { /* everything locale-encoded */
-	int len;		/* d³ugo¶æ linii */
+	int len;		/* line length */
 	
-	unsigned char *str;		/* tre¶æ */
-	fstr_attr_t *attr;		/* atrybuty */
+	unsigned char *str;		/* content */
+	fstr_attr_t *attr;		/* attributes */
 	
-	unsigned char *prompt_str;	/* tre¶æ promptu */
-	fstr_attr_t *prompt_attr;	/* atrybuty promptu */
-	int prompt_len;		/* d³ugo¶æ promptu */
+	unsigned char *prompt_str;	/* prompt string */
+	fstr_attr_t *prompt_attr;	/* prompt attributes */
+	int prompt_len;		/* prompt length */
 	
 	char *ts;		/* timestamp */
 	fstr_attr_t *ts_attr;	/* attributes of the timestamp */
 
-	int backlog;		/* z której linii backlogu pochodzi? */
+	int backlog;		/* backlog line it comes from */
 	int margin_left;	/* where the margin should be setted */	
 };
 
@@ -45,29 +45,29 @@ enum window_frame_t {
 };
 
 typedef struct {
-	WINDOW *window;		/* okno okna */
+	WINDOW *window;		/* WINDOW of a window */
 
 		/* -- the input prompt -- */
 	gchar *prompt;		/* prompt target or NULL */
-	int prompt_len;		/* d³ugo¶æ prompta lub 0 */
+	int prompt_len;		/* prompt length or 0 */
 
 	int margin_left, margin_right, margin_top, margin_bottom;
-				/* marginesy */
+				/* margins */
 
-	fstring_t **backlog;	/* bufor z liniami, locale-encoded */
-	int backlog_size;	/* rozmiar backloga */
+	fstring_t **backlog;	/* buffer with lines */
+	int backlog_size;	/* backlog size */
 
-	int redraw;		/* trzeba przerysowaæ przed wy¶wietleniem */
+	int redraw;		/* does it have to be redrawn before display */
 
-	int start;		/* od której linii zaczyna siê wy¶wietlanie */
-	int lines_count;	/* ilo¶æ linii ekranowych w backlogu */
+	int start;		/* from which line displaying starts */
+	int lines_count;	/* number of screen lines in backlog */
 	struct screen_line *lines;
-				/* linie ekranowe */
+				/* screen lines */
 
-	int overflow;		/* ilo¶æ nadmiarowych linii w okienku */
+	int overflow;		/* number of superfluous lines in a window */
 
 	int (*handle_redraw)(window_t *w);
-				/* obs³uga przerysowania zawarto¶ci okna */
+				/* window contents redraw handler */
 
 	void (*handle_mouse)(int x, int y, int state);
 

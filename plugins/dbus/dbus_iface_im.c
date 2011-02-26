@@ -106,8 +106,8 @@ static EKG2_DBUS_IFACE_HANDLER(ekg2_dbus_iface_im_getPresence)
 
 			for (a = pp->protocols; *a; a++) {
 				if (!dbus_message_iter_append_basic(&args, DBUS_TYPE_STRING, a)) {
-					debug("ekg2_dbus_iface_im_getProtocols cannot allocate memory?\n");
-					ekg_oom_handler();
+					g_printerr("ekg2_dbus_iface_im_getProtocols cannot allocate memory?\n");
+					abort();
 				}
 			}
 		}

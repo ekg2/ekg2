@@ -33,8 +33,8 @@ int contacts_group_index = 0;
 
 static int contacts_edge = WF_RIGHT;
 static int contacts_frame = WF_LEFT;
-#define CONTACTS_ORDER_DEFAULT "chavawxadninnouner"			/* if you modify it, please modify also CONTACTS_ORDER_DEFAULT_LEN */
-#define CONTACTS_ORDER_DEFAULT_LEN 18					/* CONTACTS_ORDER_DEFAULT_LEN == strlen(CONTACTS_ORDER_DEFAULT) */
+#define CONTACTS_ORDER_DEFAULT "chavawxadnintynouner"			/* if you modify it, please modify also CONTACTS_ORDER_DEFAULT_LEN */
+#define CONTACTS_ORDER_DEFAULT_LEN 20					/* CONTACTS_ORDER_DEFAULT_LEN == strlen(CONTACTS_ORDER_DEFAULT) */
 static char contacts_order[32] = CONTACTS_ORDER_DEFAULT;
 static size_t corderlen	= CONTACTS_ORDER_DEFAULT_LEN;			/* it must be always equal xstrlen(contacts_order) XXX please note if you add somewhere code which modify contacts_order */
 
@@ -302,7 +302,7 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 			status_t = ekg_status_string(u->status, 0);
 
 			if (config_contacts_orderbystate ?
-				xstrncmp(contacts_order + j, status_t, 2) :		/* when config_contacts_orderbystate, we need to have got this status in contacts_order now. */
+				xstrncmp(contacts_order + j, u->status == EKG_STATUS_NA && u->typing ? "ty" : status_t, 2) :	/* when config_contacts_orderbystate, we need to have got this status in contacts_order now. */
 				!xstrstr(contacts_order, get_short_status(status_t)))	/* when !config_contacts_orderbystate, we need to have got this status in contacts_order anywhere. */
 					continue;
 

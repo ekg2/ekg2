@@ -49,30 +49,6 @@
 
 #define fix(s) ((s) ? (s) : "")
 
-void ekg_oom_handler()
-{
-	if (old_stderr)
-		dup2(old_stderr, 2);
-
-	fprintf(stderr,
-"\r\n"
-"\r\n"
-"*** Brak pamiêci ***\r\n"
-"\r\n"
-"Próbujê zapisaæ ustawienia do plików z przyrostkami .%d, ale nie\r\n"
-"obiecujê, ¿e cokolwiek z tego wyjdzie.\r\n"
-"\r\n"
-"Do pliku %s/debug.%d zapiszê ostatanie komunikaty\r\n"
-"z okna debugowania.\r\n"
-"\r\n", (int) getpid(), config_dir, (int) getpid());
-
-	config_write_crash();
-	userlist_write_crash();
-	debug_write_crash();
-
-	exit(1);
-}
-
 #ifndef EKG_NO_DEPRECATED
 
 /**

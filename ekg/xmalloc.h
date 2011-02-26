@@ -59,8 +59,6 @@ typedef unsigned int socklen_t;
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-void ekg_oom_handler();
-
 #ifndef EKG_NO_DEPRECATED
 void *xcalloc(size_t nmemb, size_t size);
 void *xmalloc(size_t size);

@@ -523,11 +523,9 @@ static inline status_t session_status_nearest(session_t *s, status_t status) {
 	const status_t			*ast;
 	const int			dir	= (status < EKG_STATUS_AVAIL);
 
-	if (p->pclass != PLUGIN_PROTOCOL) {
-		debug_wtf("session_status_nearest(), session '%s' on non-protocol plugin '%s'!\n", session_uid_get(s), p->name);
-		return EKG_STATUS_NULL;
-	} else if (!p->priv) {
-		debug_warn("session_status_nearest(), plugin '%s' doesn't declared supported statuses.\n", p->name);
+	g_assert(p->pclass == PLUGIN_PROTOCOL);
+	if (!p->priv) {
+		debug_warn("session_status_nearest(), plugin '%s' didn't declare supported statuses.\n", p->name);
 		return status;
 	}
 
