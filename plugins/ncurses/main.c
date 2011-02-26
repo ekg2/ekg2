@@ -618,8 +618,8 @@ static COMMAND(ncurses_cmd_dump) {
 
 	n = w->priv_data;
 
-	for (i = n->backlog_size; i; i--) {
-		fstring_t *backlog = n->backlog[i-1];
+	for (i = n->backlog->len; i; i--) {
+		fstring_t *backlog = n->backlog->pdata[i-1];
 		/* XXX, kolorki gdy user chce */
 
 		fprintf(f, "%ld %s\n", backlog->ts, backlog->str);

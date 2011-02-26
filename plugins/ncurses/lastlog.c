@@ -72,16 +72,17 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
 
-	for (i = n->backlog_size-1; i >= 0; i--) {
+	for (i = n->backlog->len-1; i >= 0; i--) {
 		gboolean found = FALSE;
+		fstring_t *bl = n->backlog->pdata[i];
 
 		if (lastlog->isregex) {		/* regexp */
-			found = g_regex_match(lastlog->reg, n->backlog[i]->str, 0, NULL);
+			found = g_regex_match(lastlog->reg, bl->str, 0, NULL);
 		} else {				/* substring */
 			if (local_config_lastlog_case)
-				found = !!xstrstr(n->backlog[i]->str, lastlog->expression);
+				found = !!xstrstr(bl->str, lastlog->expression);
 			else	
-				found = !!xstrcasestr(n->backlog[i]->str, lastlog->expression);
+				found = !!xstrcasestr(bl->str, lastlog->expression);
 		}
 
 		if (!config_lastlog_noitems && found && !items) { /* add header only when found */
@@ -91,7 +92,7 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		}
 
 		if (found) {
-			ncurses_backlog_add_real(lastlog_w, fstring_dup(n->backlog[i]));
+			ncurses_backlog_add_real(lastlog_w, fstring_dup(bl));
 			items++;
 		}
 	}

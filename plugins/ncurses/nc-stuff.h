@@ -37,8 +37,7 @@ typedef struct {
 	int margin_left, margin_right, margin_top, margin_bottom;
 				/* margins */
 
-	fstring_t **backlog;	/* buffer with lines */
-	int backlog_size;	/* backlog size */
+	GPtrArray *backlog;	/* last screen lines */
 
 	int redraw;		/* does it have to be redrawn before display */
 

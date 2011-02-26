@@ -66,17 +66,10 @@ int ncurses_backlog_add_real(window_t *w, /*locale*/ fstring_t *str) {
 	if (!w)
 		return 0;
 
-	if (n->backlog_size == config_backlog_size) {
-		fstring_t *line = n->backlog[n->backlog_size - 1];
-		fstring_free(line);
-		n->backlog_size--;
-	} else 
-		n->backlog = xrealloc(n->backlog, (n->backlog_size + 1) * sizeof(fstring_t *));
+	if (n->backlog->len >= config_backlog_size)
+		g_ptr_array_remove_index(n->backlog, 0);
 
-	memmove(&n->backlog[1], &n->backlog[0], n->backlog_size * sizeof(fstring_t *));
-	n->backlog[0] = str;
-	n->backlog_size++;
-
+	g_ptr_array_add(n->backlog, str);
 	return 0;
 }
 
@@ -112,15 +105,6 @@ void changed_backlog_size(const char *var)
 
 	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->priv_data;
-		int i;
-				
-		if (n->backlog_size <= config_backlog_size)
-			continue;
-				
-		for (i = config_backlog_size; i < n->backlog_size; i++)
-			fstring_free(n->backlog[i]);
-
-		n->backlog_size = config_backlog_size;
-		n->backlog = xrealloc(n->backlog, n->backlog_size * sizeof(fstring_t *));
+		g_ptr_array_set_size(n->backlog, config_backlog_size);
 	}
 }

@@ -779,7 +779,7 @@ int ncurses_window_kill(window_t *w)
 	if (!n)
 		return -1;
 
-	ncurses_clear(w, 1);
+	g_ptr_array_free(n->backlog, TRUE);
 
 	g_free(n->prompt);
 	delwin(n->window);
@@ -989,6 +989,8 @@ int ncurses_window_new(window_t *w)
 		return 0;
 
 	w->priv_data = n = xmalloc(sizeof(ncurses_window_t));
+	n->backlog = g_ptr_array_new_with_free_func((GDestroyNotify) fstring_free);
+	g_ptr_array_set_size(n->backlog, config_backlog_size);
 
 	if (w->id == WINDOW_CONTACTS_ID) {
 		ncurses_contacts_set(w);

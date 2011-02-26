@@ -21,7 +21,7 @@ AC_EKG2_WITH([glib], [
 		gmod_dep=
 	])
 
-	PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16 $gmod_dep],, [
+	PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.22 $gmod_dep],, [
 		AS_CASE([$with_glib],
 			[yes|maybe], [with_glib=/usr])
 
@@ -32,7 +32,7 @@ AC_EKG2_WITH([glib], [
 		GLIB_CFLAGS="-I$with_glib/include/glib-2.0 -I$with_glib/EKG2_LIBDIRNAME/glib-2.0/include"
 	])
 
-	AC_EKG2_CHECK_FLAGEXPORTED_LIB([GLIB],, [g_malloc0], [glib.h],, [
+	AC_EKG2_CHECK_FLAGEXPORTED_LIB([GLIB],, [g_ptr_array_new_with_free_func], [glib.h],, [
 		AC_MSG_ERROR([glib2 not found (neither in standard pkgconfig paths nor in $with_glib)])
 	])
 	AS_UNSET([gmod_dep])
