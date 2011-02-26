@@ -106,7 +106,9 @@ static GModule *ekg2_dlopen(const char *name) {
 	GModule *tmp = g_module_open(name, 0);
 
 	if (!tmp) {
-		debug_warn("[plugin] could not be loaded: %s %s\n", name, g_module_error());
+		char *errstr = ekg_recode_from_locale(g_module_error());
+		debug_warn("[plugin] could not be loaded: %s %s\n", name, errstr);
+		g_free(errstr);
 	} else {
 		debug_ok("[plugin] loaded: %s\n", name);
 	}

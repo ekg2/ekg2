@@ -764,7 +764,7 @@ static WATCHER_SESSION_LINE(irc_handle_stream) {
 	if (type == 1) {
 		j->recv_watch = NULL;
 		/* this will cause  'Removed more than one watch...' */
-		debug ("[irc] handle_stream(): ROZ£¡CZY£O %d %d\n", s->connected, s->connecting);
+		debug ("[irc] handle_stream(): DISCONNECTED %d %d\n", s->connected, s->connecting);
 
 		/* avoid reconnecting when we do /disconnect */
 		if (s->connected || s->connecting)

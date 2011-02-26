@@ -31,7 +31,7 @@ typedef struct {
 	WINDOW *window;		/* okno okna */
 
 		/* -- the input prompt -- */
-	fstring_t *prompt;		/* sformatowany prompt lub NULL */
+	gchar *prompt;		/* prompt target or NULL */
 	int prompt_len;		/* d³ugo¶æ prompta lub 0 */
 
 	int margin_left, margin_right, margin_top, margin_bottom;
@@ -55,7 +55,9 @@ extern WINDOW *ncurses_input;
 
 QUERY(ncurses_session_disconnect_handler);
 
-const char *ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxlen);
+gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize maxx);
+const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx);
+
 void ncurses_prompt_set(window_t *w, const gchar *str);
 void ncurses_update_real_prompt(ncurses_window_t *n);
 void ncurses_resize(void);
