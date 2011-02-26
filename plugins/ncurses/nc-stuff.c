@@ -587,6 +587,7 @@ void ncurses_redraw(window_t *w)
 		char *p;
 		fstr_attr_t *a;
 
+		scrollok(n->window, 1);
 		for (y = 0; blp <= backlog_last; y++) {
 			if (G_LIKELY(!byteshift)) {
 				p = (*blp)->str;
@@ -595,9 +596,10 @@ void ncurses_redraw(window_t *w)
 				p += byteshift;
 				a += byteshift;
 			}
-			if (y >= height)
+			if (y >= height) {
 				scroll(n->window);
-
+				y--;
+			}
 			wmove(n->window, top + y, left);
 				/* XXX: disable ncurses autowrap somehow? */
 			byteshift = ncurses_fstring_print(n->window, p, a,
@@ -605,6 +607,7 @@ void ncurses_redraw(window_t *w)
 			if (G_LIKELY(!byteshift))
 				blp++;
 		}
+		scrollok(n->window, 0);
 	}
 
 #ifdef FIXME_WRAPPING
