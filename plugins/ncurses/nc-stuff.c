@@ -301,7 +301,7 @@ void ncurses_resize(void)
  *
  */
 
-G_GNUC_CONST
+static G_GNUC_CONST
 int fstring_attr2ncurses_attr(fstr_attr_t chattr) {
 	int attr = A_NORMAL;
 
@@ -355,26 +355,71 @@ inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 	return ch;
 }
 
-	/* XXX: use it commonly */
-const char *ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxlen) {
+/**
+ * ncurses_simple_print()
+ *
+ * Print simple string, making sure it doesn't exceed max width.
+ *
+ * @param w - target ncurses window.
+ * @param s - locale-encoded string to print.
+ * @param attr - attribute set (one for the whole string).
+ * @param maxx - max output width expressed through the last column
+ *	to print in or -1 if any.
+ *
+ * @return TRUE if whole string was printed, FALSE if maxwidth reached.
+ *
+ * @note If printed string ends with a double-column char maxx may
+ * be exceeded. If necessary, provide decreased value.
+ */
+gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize maxx) {
+	const int bnattr = fstring_attr2ncurses_attr(attr);
+
 	for (; *s; s++) {
 		int x, y;
-		int nattr = attr ? fstring_attr2ncurses_attr(*attr) : 0;
+		int nattr = bnattr;
 		CHAR_T ch = ncurses_fixchar((unsigned char) *s, &nattr);
 
-		if (attr)
-			wattrset(w, nattr);
-		else if (nattr)
-			wattron(w, nattr);
+		wattrset(w, nattr);
 		waddch(w, ch);
-		if (!attr && nattr)
-			wattroff(w, nattr);
 
 		getyx(w, y, x);
-		if (maxlen != -1 && x >= maxlen) /* XXX: what about double-width chars? */
+		if (G_UNLIKELY(maxx != -1 && x >= maxx))
+			return FALSE;
+	}
+
+	return TRUE;
+}
+
+/**
+ * ncurses_fstring_print()
+ *
+ * Print fstring_t, making sure output width doesn't exceed max width.
+ * If it does, rewind to the previous linebreak possibility.
+ *
+ * @param w - target ncurses window.
+ * @param s - locale-encoded string to print.
+ * @param attr - attribute list (of length strlen(s)).
+ * @param maxx - max output width expressed through the last column
+ *	to print in or -1 if any.
+ *
+ * @return Pointer to the character which the next print should
+ * begin at.
+ */
+const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx) {
+	for (; *s; s++, attr++) {
+		int x, y;
+		int nattr = fstring_attr2ncurses_attr(*attr);
+		CHAR_T ch = ncurses_fixchar((unsigned char) *s, &nattr);
+
+		wattrset(w, nattr);
+		waddch(w, ch);
+
+		getyx(w, y, x);
+		if (maxx != -1 && x >= maxx) {
+				/* XXX: rewind */
+			s++;
 			break;
-		if (attr)
-			attr++;
+		}
 	}
 
 	return s;
