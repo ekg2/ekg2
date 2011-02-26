@@ -56,7 +56,7 @@ extern WINDOW *ncurses_input;
 QUERY(ncurses_session_disconnect_handler);
 
 gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize maxx);
-const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx);
+gsize ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx);
 
 void ncurses_prompt_set(window_t *w, const gchar *str);
 void ncurses_update_real_prompt(ncurses_window_t *n);

@@ -411,10 +411,12 @@ gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize
  * @param maxx - max output width expressed through the last column
  *	to print in or -1 if any.
  *
- * @return Pointer to the character which the next print should
- * begin at.
+ * @return Number of bytes to shift s & attr for the next line or 0
+ *	if the whole line was written.
  */
-const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx) {
+gsize ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx) {
+	const char *starts = s;
+
 	for (; *s; s++, attr++) {
 		int x, y;
 		int nattr = fstring_attr2ncurses_attr(*attr);
@@ -427,11 +429,11 @@ const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *a
 		if (maxx != -1 && x >= maxx) {
 				/* XXX: rewind */
 			s++;
-			break;
+			return s - starts;
 		}
 	}
 
-	return s;
+	return 0;
 }
 
 /*
@@ -575,21 +577,33 @@ void ncurses_redraw(window_t *w)
 	}
 #endif
 
-	{
+	if (n->backlog->len > 0) {
 		const int last_index = n->backlog->len - n->last_rindex - 1;
 		const int first_index = last_index - height + 1;
-		
-		for (y = 0; y < height; y++) {
-			const int blindex = first_index + y;
-			fstring_t *bl;
+		fstring_t **backlog_last = &n->backlog->pdata[last_index];
+		fstring_t **blp = &n->backlog->pdata[first_index >= 0 ? first_index : 0];
 
-			if (blindex < 0) /* before backlog */
-				continue;
-			g_assert(blindex <= last_index); /* guaranteed by loop cond */
-			bl = n->backlog->pdata[first_index + y];
+		int byteshift = 0;
+		char *p;
+		fstr_attr_t *a;
 
-			wmove(n->window, top + y, 0);
-			ncurses_fstring_print(n->window, bl->str, bl->attr, -1);
+		for (y = 0; blp <= backlog_last; y++) {
+			if (G_LIKELY(!byteshift)) {
+				p = (*blp)->str;
+				a = (*blp)->attr;
+			} else {
+				p += byteshift;
+				a += byteshift;
+			}
+			if (y >= height)
+				scroll(n->window);
+
+			wmove(n->window, top + y, left);
+				/* XXX: disable ncurses autowrap somehow? */
+			byteshift = ncurses_fstring_print(n->window, p, a,
+					w->nowrap ? -1 : width + left - 1);
+			if (G_LIKELY(!byteshift))
+				blp++;
 		}
 	}
 
