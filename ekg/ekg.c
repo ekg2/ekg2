@@ -80,6 +80,7 @@ char *config_dir;
 int mesg_startup;
 int ekg_watches_removed;
 static char argv0[PATH_MAX];
+static gchar last_err_message[128] = {0};
 
 pid_t speech_pid = 0;
 
@@ -300,6 +301,60 @@ static void handle_sighup()
 	ekg_exit();
 }
 
+static void handle_sigabrt()
+{
+	GSList *pl;
+
+	signal(SIGABRT, SIG_DFL);
+
+	if (stderr_backup && stderr_backup != -1)
+		dup2(stderr_backup, 2);
+
+	/* wy³±cz pluginy ui, ¿eby odda³y terminal
+	 * destroy also log plugins to make sure that latest changes are written */
+	for (pl = plugins; pl; pl = pl->next) {
+		const plugin_t *p = pl->data;
+		if (p->pclass != PLUGIN_UI && p->pclass != PLUGIN_LOG)
+			continue;
+
+		p->destroy();
+	}
+
+	fprintf(stderr,
+"\r\n"
+"\r\n"
+"*** Abnormal program termination ***\r\n"
+"\r\n"
+"%s"
+"\r\n"
+"The program will attempt to write its settings, but it is not\r\n"
+"guaranteed to succeed. They will be saved as\r\n"
+"%s/crash-%d-config,\r\n"
+"%s/crash-%d-config-<plugin>\r\n"
+"and %s/crash-%d-userlist\r\n"
+"\r\n"
+"Last messages from the debugging window will be saved to a file called\r\n"
+"%s/crash-%d-debug.\r\n"
+"\r\n"
+"If a file called %s/core will be created, try running the following\r\n"
+"command:\r\n"
+"\r\n"
+"    gdb %s %s/core\r\n"
+"\n"
+"note the last few lines, and then note the output from the ,,bt'' command.\r\n"
+"This will help the program authors find the location of the problem\r\n"
+"and most likely will help avoid such crashes in the future.\r\n"
+"More details can be found in the documentation, in the file ,,gdb.txt''.\r\n"
+"\r\n",
+last_err_message, config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, argv0, config_dir);
+
+	config_write_crash();
+	userlist_write_crash();
+	debug_write_crash();
+
+	raise(SIGABRT);
+}
+
 static void handle_sigsegv()
 {
 	GSList *pl;
@@ -397,6 +452,22 @@ static WATCHER_LINE(handle_stderr)	/* sta³y */
 	return 0;
 }
 
+static void debug_common(const gchar *theme_format, const gchar *message, const gchar *log_domain) {
+	int is_UI = 0;
+	buffer_add(&buffer_debug, theme_format, message);
+
+	query_emit(NULL, "ui-is-initialized", &is_UI);
+
+	if (is_UI && window_debug) {
+		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, message, log_domain);
+
+	}
+#ifdef STDERR_DEBUG	/* STDERR debug */
+	else
+		fprintf(stderr, "%s\n", tmp);
+#endif
+}
+
 /**
  * ekg_debug_handler()
  *
@@ -418,7 +489,6 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 	static GString *line = NULL;
 	char *tmp = NULL;
 
-	int is_UI = 0;
 	char *theme_format;
 
 	if (!config_debug)
@@ -456,33 +526,15 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 		case DEBUG_WHITE:		theme_format = "wdebug";	break;
 		case DEBUG_WARN:		theme_format = "warndebug";	break;
 		case DEBUG_OK:			theme_format = "okdebug";	break;
-		case DEBUG_WTF:		theme_format = "wtfdebug";	break;
 		default:			theme_format = "debug";		break;
 	}
 
-	buffer_add(&buffer_debug, theme_format, tmp);
-
-	query_emit(NULL, "ui-is-initialized", &is_UI);
-
-	if (is_UI && window_debug) {
-		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
-
-		if (level == DEBUG_WTF) /* if real failure, warn also in current window (XXX: maybe always __status?) */
-			print("ekg_failure", tmp);
-	}
-#ifdef STDERR_DEBUG	/* STDERR debug */
-	else
-		fprintf(stderr, "%s\n", tmp);
-#endif
-
+	debug_common(theme_format, tmp, NULL);
 	xfree(tmp);
 }
 
 static void glib_debug_handler(const gchar *log_domain, GLogLevelFlags log_level, const gchar *message, gpointer user_data) {
 	static int recurse = 0;
-
-	int is_UI = 0;
-	char *theme_format;
 
 	if (recurse)
 		return;
@@ -491,21 +543,18 @@ static void glib_debug_handler(const gchar *log_domain, GLogLevelFlags log_level
 		return;
 
 	recurse++;
-	theme_format = "debug";
-
-	buffer_add(&buffer_debug, theme_format, message);
-
-	query_emit(NULL, "ui-is-initialized", &is_UI);
-
-	if (is_UI && window_debug) {
-		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, message, log_domain);
-
-	}
-#ifdef STDERR_DEBUG	/* STDERR debug */
-	else
-		fprintf(stderr, "%s\n", tmp);
-#endif
+	debug_common("debug", message, log_domain);
 	recurse--;
+}
+
+static void glib_print_handler(const gchar *string) {
+	debug_common("debug", string, NULL);
+}
+
+static void glib_printerr_handler(const gchar *string) {
+	g_strlcpy(last_err_message, string, sizeof(last_err_message));
+
+	debug_common("debug_error", string, NULL);
 }
 
 static GOptionEntry ekg_options[] = {
@@ -634,6 +683,7 @@ int main(int argc, char **argv)
 
 	command_init();
 #ifndef NO_POSIX_SYSTEM
+	signal(SIGABRT, handle_sigabrt);
 	signal(SIGSEGV, handle_sigsegv);
 	signal(SIGHUP, handle_sighup);
 	signal(SIGTERM, handle_sighup);
@@ -675,6 +725,8 @@ int main(int argc, char **argv)
 	}
 
 	g_log_set_default_handler(glib_debug_handler, NULL);
+	g_set_print_handler(glib_print_handler);
+	g_set_printerr_handler(glib_printerr_handler);
 	in_autoexec = 1;
 
 	if (argv[1]) {
