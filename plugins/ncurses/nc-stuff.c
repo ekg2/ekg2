@@ -66,19 +66,12 @@ int have_winch_pipe = 0;
  * Set window prompt, updating internal data as necessary.
  *
  * @param w - window to be updated
- * @param str - new prompt as returned by format_string()
- *
- * @note str will be duplicated so it needs to be freed by caller.
+ * @param str - prompt target (uid/nickname) or NULL if none
  */
 void ncurses_prompt_set(window_t *w, const gchar *str) {
 	ncurses_window_t *n = w->priv_data;
-	fstring_t *f = fstring_new(str);
 
-	fstring_free(n->prompt); /* free current prompt */
-
-	n->prompt = ekg_recode_fstr_to_locale(f);
-
-	fstring_free(f);
+	n->prompt = ekg_recode_to_locale(str);
 
 	ncurses_update_real_prompt(n);
 }
@@ -308,7 +301,8 @@ void ncurses_resize(void)
  *
  */
 
-static inline int fstring_attr2ncurses_attr(fstr_attr_t chattr) {
+G_GNUC_CONST
+int fstring_attr2ncurses_attr(fstr_attr_t chattr) {
 	int attr = A_NORMAL;
 
 	if ((chattr & FSTR_BOLD))
@@ -363,17 +357,24 @@ inline CHAR_T ncurses_fixchar(CHAR_T ch, int *attr) {
 
 	/* XXX: use it commonly */
 const char *ncurses_common_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxlen) {
-	for (; *s; s++, attr++) {
+	for (; *s; s++) {
 		int x, y;
-		int nattr = fstring_attr2ncurses_attr(*attr);
+		int nattr = attr ? fstring_attr2ncurses_attr(*attr) : 0;
 		CHAR_T ch = ncurses_fixchar((unsigned char) *s, &nattr);
 
-		wattrset(w, nattr);
+		if (attr)
+			wattrset(w, nattr);
+		else if (nattr)
+			wattron(w, nattr);
 		waddch(w, ch);
+		if (!attr && nattr)
+			wattroff(w, nattr);
 
 		getyx(w, y, x);
-		if (x >= maxlen) /* XXX: what about double-width chars? */
+		if (maxlen != -1 && x >= maxlen) /* XXX: what about double-width chars? */
 			break;
+		if (attr)
+			attr++;
 	}
 
 	return s;
@@ -725,7 +726,7 @@ int ncurses_window_kill(window_t *w)
 
 	ncurses_clear(w, 1);
 
-	fstring_free(n->prompt);
+	g_free(n->prompt);
 	delwin(n->window);
 	xfree(n);
 	w->priv_data = NULL;
@@ -940,22 +941,8 @@ int ncurses_window_new(window_t *w)
 	} else if (w->id == WINDOW_LASTLOG_ID) {
 		ncurses_lastlog_new(w);
 
-	} else if (w->target || w->alias) {
-		const char *f = format_find("ncurses_prompt_query");
-		gchar *tmp = format_string(f, w->alias ? w->alias : w->target);
-
-		ncurses_prompt_set(w, tmp);
-		g_free(tmp);
-	} else {
-		const char *f = format_find("ncurses_prompt_none");
-
-		if (format_ok(f)) {
-			gchar *tmp = format_string(f);
-
-			ncurses_prompt_set(w, tmp);
-			g_free(tmp);
-		}
-	}
+	} else /* both w->alias & w->target can be effectively NULL */
+		ncurses_prompt_set(w, w->alias ? w->alias : w->target);
 
 	n->window = newwin(w->height, w->width, w->top, w->left);
 
