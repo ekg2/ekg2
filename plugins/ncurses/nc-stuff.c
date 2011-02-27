@@ -392,7 +392,7 @@ gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize
 		waddch(w, ch);
 
 		getyx(w, y, x);
-		if (G_UNLIKELY(maxx != -1 && x >= maxx))
+		if (G_UNLIKELY(maxx != -1 && x > maxx))
 			return FALSE;
 	}
 
@@ -417,29 +417,37 @@ gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize
 gsize ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx) {
 	const char *starts = s;
 	const char *prevsp = NULL;
-	int prevspx;
+	int prevspx, starty;
+	getyx(w, starty, prevspx); /* prevspx works here as tmp */
 
 	for (; *s; s++, attr++) {
 		int x, y;
 		int nattr = fstring_attr2ncurses_attr(*attr);
 		CHAR_T ch = ncurses_fixchar((unsigned char) *s, &nattr);
 
+		if (*attr & FSTR_LINEBREAK) {
+			prevsp = s;
+			prevspx = x;
+		}
+
 		wattrset(w, nattr);
 		waddch(w, ch);
 
 		getyx(w, y, x);
-		if (maxx != -1 && x >= maxx) {
+		if (y != starty || (maxx != -1 && x > maxx)) {
+			/* clear the new line too, ncurses might have printed
+			 * something there due to double-width char */
+			if (y != starty) {
+				wclrtoeol(w);
+			}
+
 			if (prevsp) { /* rewind */
 				s = prevsp;
-				wmove(w, y, prevspx);
+				wmove(w, starty, prevspx + 1);
 				wclrtoeol(w);
 			}
 			s++;
 			return s - starts;
-		}
-		if (*attr & FSTR_LINEBREAK) {
-			prevsp = s;
-			prevspx = x;
 		}
 	}
 
@@ -613,7 +621,7 @@ void ncurses_redraw(window_t *w)
 			wmove(n->window, top + y, left);
 				/* XXX: disable ncurses autowrap somehow? */
 			byteshift = ncurses_fstring_print(n->window, p, a,
-					w->nowrap ? -1 : width + left - 1);
+					w->nowrap ? -1 : left + width);
 			if (G_LIKELY(!byteshift))
 				blp++;
 		}
