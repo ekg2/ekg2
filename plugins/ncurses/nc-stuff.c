@@ -608,10 +608,7 @@ void ncurses_redraw(window_t *w)
 
 		scrollok(n->window, 1);
 		for (y = 0; blp <= backlog_last; y++) {
-			if (G_LIKELY(!byteshift)) {
-				p = (*blp)->str;
-				a = (*blp)->attr;
-			} else {
+			if (G_UNLIKELY(byteshift)) {
 				int rx, ry;
 				p += byteshift;
 				a += byteshift;
@@ -621,7 +618,19 @@ void ncurses_redraw(window_t *w)
 				if (ry == y - 2)
 					y--;
 				g_assert(ry == y || ry == y - 1);
+
+				/* no wrapping? then proceed */
+				if (w->nowrap) {
+					blp++;
+					byteshift = 0;
+				}
 			}
+
+			if (G_LIKELY(!byteshift)) {
+				p = (*blp)->str;
+				a = (*blp)->attr;
+			}
+
 			if (y >= height) {
 				scroll(n->window);
 				y--;
