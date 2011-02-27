@@ -612,8 +612,15 @@ void ncurses_redraw(window_t *w)
 				p = (*blp)->str;
 				a = (*blp)->attr;
 			} else {
+				int rx, ry;
 				p += byteshift;
 				a += byteshift;
+
+				getyx(n->window, ry, rx);
+				/* -2 means ncurses scrolled */
+				if (ry == y - 2)
+					y--;
+				g_assert(ry == y || ry == y - 1);
 			}
 			if (y >= height) {
 				scroll(n->window);
