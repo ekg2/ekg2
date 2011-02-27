@@ -417,8 +417,7 @@ gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize
 gsize ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx) {
 	const char *starts = s;
 	const char *prevsp = NULL;
-	int prevspx, starty;
-	getyx(w, starty, prevspx); /* prevspx works here as tmp */
+	int prevspx, prevx = -1;
 
 	for (; *s; s++, attr++) {
 		int x, y;
@@ -434,21 +433,23 @@ gsize ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, g
 		waddch(w, ch);
 
 		getyx(w, y, x);
-		if (y != starty || (maxx != -1 && x > maxx)) {
+		if ((maxx != -1 && x > maxx) || x < prevx) {
 			/* clear the new line too, ncurses might have printed
 			 * something there due to double-width char */
-			if (y != starty) {
+			if (x < prevx) {
 				wclrtoeol(w);
+				y--;
 			}
 
 			if (prevsp) { /* rewind */
 				s = prevsp;
-				wmove(w, starty, prevspx + 1);
+				wmove(w, y, prevspx + 1);
 				wclrtoeol(w);
 			}
 			s++;
 			return s - starts;
 		}
+		prevx = x;
 	}
 
 	return 0;
