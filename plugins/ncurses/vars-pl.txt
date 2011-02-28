@@ -182,6 +182,28 @@ kill_irc_window
 	jeśli ustawiona na 0, nie można zamknąć okna kanału ircowego przy
 	pomocy bindingu klawiaturowego.
 
+lastlog_display_all
+	typ: liczba
+	domyślna wartość: 0
+	
+	Określa zakres wyszukiwania dla polecenia '/lastlog'
+		0 - bieżące okno
+		1 - bieżące okno + wskazane w poleceniu,
+		2 - wszystkie okna + wskazane w poleceniu
+
+lastlog_matchcase
+	typ: bool
+	domyślna wartość: 0
+	
+	Jeśli ustawione, '/lastlog' odróżnia wielkie i małe litery.
+
+lastlog_noitems
+	typ: bool
+	domyślna wartość: 0
+	
+	Określa, czy okno z wynikami '/lastlog' ma się pojawić
+	również w przypadku braku wyników.
+
 margin_size
 	typ: liczba
 	domyślna wartość: 15

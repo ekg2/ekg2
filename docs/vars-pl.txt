@@ -260,28 +260,6 @@ last_size
 	
 	Wskazuje, ile ma być zapisywanych wiadomości dla komendy ,,last''.
 
-lastlog_display_all
-	typ: liczba
-	domyślna wartość: 0
-	
-	Określa zakres wyszukiwania dla polecenia '/window lastlog'
-		0 - bieżące okno
-		1 - bieżące okno + wskazane w poleceniu,
-		2 - wszystkie okna + wskazane w poleceniu
-
-lastlog_matchcase
-	typ: bool
-	domyślna wartość: 0
-	
-	Jeśli ustawione, '/window lastlog' odróżnia wielkie i małe litery.
-
-lastlog_noitems
-	typ: bool
-	domyślna wartość: 0
-	
-	Określa, czy okno z wynikami '/window lastlog' ma się pojawić
-	również w przypadku braku wyników.
-
 make_window
 	typ: liczba
 	domyślna wartość: 2

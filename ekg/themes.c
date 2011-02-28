@@ -2005,11 +2005,6 @@ void theme_init()
 	format_add("last_end", _("%) Lastlog end\n"), 1);
 	format_add("last_end_status", _("%) Lastlog status end\n"), 1);
 
-
-	/* lastlog */
-	format_add("lastlog_title",	_("%) %gLastlog [%B%2%n%g] from window: %W%T%1%n"), 1);
-	format_add("lastlog_title_cur", _("%) %gLastlog [%B%2%n%g] from window: %W%T%1 (*)%n"), 1);
-
 	/* queue */
 	format_add("queue_list_timestamp", "%d-%m-%Y %H:%M", 1);
 	format_add("queue_list_message", "%) %G >>%n [%1] %2 %3\n", 1);

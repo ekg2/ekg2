@@ -190,24 +190,6 @@ last_size
 	
 	*not translated yet*
 
-lastlog_display_all
-	type: integer
-	default value: 0
-	
-	*not translated yet*
-
-lastlog_matchcase
-	type: bool
-	default value: 0
-	
-	*not translated yet*
-
-lastlog_noitems
-	type: bool
-	default value: 0
-	
-	*not translated yet*
-
 make_window
 	type: integer
 	default value: 2
