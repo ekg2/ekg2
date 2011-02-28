@@ -261,13 +261,19 @@ void ekg_fix_utf8(gchar *buf) {
 		*((gchar*) p++) = 0x1a; /* substitute, UTR#36 suggests it as byte replacement */
 }
 
-static void fstr_mark_linebreaks(const gchar *s, fstr_attr_t *a) {
-	const gchar *p;
+static void fstr_mark_linebreaks(gchar *s, fstr_attr_t *a) {
+	gchar *p;
 
 	/* XXX: use pango */
 
 	g_assert(g_utf8_validate(s, -1, NULL));
 	for (p = s; *p; p = g_utf8_next_char(p)) {
+		/* if we're already mangling fstring_t, suit SUBs as well */
+		if (G_UNLIKELY(*p == 0x1a)) {
+			*p = '?';
+			a[p - s] |= FSTR_REVERSE;
+		}
+
 		switch (g_unichar_break_type(g_utf8_get_char(p))) {
 				/* these should cause line break themselves
 				 * but we don't support unicode that well,
