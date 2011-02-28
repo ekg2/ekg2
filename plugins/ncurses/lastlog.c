@@ -24,6 +24,12 @@
 #include "mouse.h"
 #include "nc-stuff.h"
 
+int config_lastlog_noitems = 0;
+int config_lastlog_case = 0;
+int config_lastlog_display_all = 0;
+
+window_lastlog_t *lastlog_current = NULL;
+
 static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 	const char *header;
 
@@ -185,4 +191,95 @@ void ncurses_lastlog_new(window_t *w) {
 	w->edge = lastlog_edge;
 	w->nowrap = !lastlog_wrap;
 	w->floating = 1;
+}
+
+COMMAND(ncurses_cmd_lastlog) {
+	static window_lastlog_t lastlog_current_static;
+
+	window_lastlog_t *lastlog;
+
+	const char *str = NULL;
+	window_t *w = NULL;
+
+	int i;
+	int iscase	= -1;	/* default-default variable */
+	int isregex	= 0;	/* constant, make variable? */
+	int islock	= 0;	/* constant, make variable? */
+
+	if (!params[0]) {
+		printq("not_enough_params", name);
+		return -1;
+	}
+
+	/* parse configuration */
+	for (i = 0; params[i]; i++) {
+		/* XXX: now they're all PCREs */
+		if (match_arg(params[i], 'r', "regex", 2)) 
+			isregex = 1;
+		else if (match_arg(params[i], 'R', "extended-regex", 2))
+			isregex = 2;
+		else if (match_arg(params[i], 's', "substring", 2))
+			isregex = 0;
+		else if (match_arg(params[i], 'C', "CaseSensitive", 2))
+			iscase = 1;
+		else if (match_arg(params[i], 'c', "caseinsensitive", 2))
+			iscase = 0;
+		else if (match_arg(params[i], 'w', "window", 2) && params[i+1]) {
+			w = window_exist(atoi(params[++i]));
+					
+			if (!w) {
+				printq("window_doesnt_exist", params[i]);
+				return -1;
+			}
+		} else if (!str) {
+			str = params[i];
+		} else {
+			printq("invalid_params", name);
+			return -1;
+		}
+	}
+
+	if (!str) {
+		printq("not_enough_params", name);
+		return -1;
+	}
+
+	lastlog = w ? window_current->lastlog : &lastlog_current_static;
+
+	if (!lastlog) 
+		lastlog = xmalloc(sizeof(window_lastlog_t));
+
+	if (w || lastlog_current) {
+		if (lastlog->isregex)
+			g_regex_unref(lastlog->reg);
+		xfree(lastlog->expression);
+	}
+
+	/* compile regexp if needed */
+	if (isregex) {
+		GRegexCompileFlags flags = G_REGEX_RAW | G_REGEX_NO_AUTO_CAPTURE | G_REGEX_OPTIMIZE;
+		GError *err = NULL;
+
+		/* XXX, when config_lastlog_case is toggled.. we need to recompile regex's */
+		if (!lastlog->casense || (lastlog->casense == -1 && !config_lastlog_case))
+			flags |= G_REGEX_CASELESS;
+
+		if (!((lastlog->reg = g_regex_new(str, flags, 0, &err)))) {
+			printq("regex_error", err->message);
+			g_error_free(err);
+			return -1;
+		}
+	}
+
+	lastlog->w		= w;
+	lastlog->casense	= iscase;
+	lastlog->lock		= islock;
+	lastlog->isregex	= isregex;
+	lastlog->expression	= xstrdup(str);
+
+	if (w)	window_current->lastlog	= lastlog;
+	else	lastlog_current		= lastlog;
+			
+	return query_emit(NULL, "ui-window-update-lastlog");
+
 }

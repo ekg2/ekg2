@@ -30,6 +30,7 @@
 #include "bindings.h"
 #include "contacts.h"
 #include "input.h"
+#include "lastlog.h"
 #include "mouse.h"
 #include "notify.h"
 #include "nc-stuff.h"
@@ -643,6 +644,10 @@ static int ncurses_theme_init() {
 	format_add("statusbar_act_important2us_typing", "%C", 1);
 	format_add("statusbar_timestamp", "%H:%M", 1);
 
+	/* lastlog */
+	format_add("lastlog_title",	_("%) %gLastlog [%B%2%n%g] from window: %W%T%1%n"), 1);
+	format_add("lastlog_title_cur", _("%) %gLastlog [%B%2%n%g] from window: %W%T%1 (*)%n"), 1);
+
 #ifdef HAVE_LIBASPELL
 	/* aspell */
 	format_add("aspell_init", "%> Please wait while initiating spellcheck...", 1);
@@ -667,6 +672,8 @@ EXPORT int ncurses_plugin_init(int prio)
 	if (is_UI)
 		return -1;
 	plugin_register(&ncurses_plugin, prio);
+
+	query_register("ui-window-update-lastlog", QUERY_ARG_END);
 
 	ncurses_setvar_default(NULL, dummy);
 
@@ -718,8 +725,10 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "userlist-removed", ncurses_all_contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-renamed", ncurses_all_contacts_changed, NULL);
 
-	command_add(&ncurses_plugin, ("mark"), NULL, cmd_mark, 0, "-a --all");
-	command_add(&ncurses_plugin, ("dump"), NULL, ncurses_cmd_dump, 0, "-a --append -w --window");
+	command_add(&ncurses_plugin, ("mark"), "p", cmd_mark, 0, "-a --all");
+	command_add(&ncurses_plugin, ("dump"), "pf pf pf", ncurses_cmd_dump, 0, "-a --append -w --window");
+	command_add(&ncurses_plugin, ("lastlog"), "p? p? p? p? p?", ncurses_cmd_lastlog, 0, 
+		"-c --caseinsensitive -C --CaseSensitive -s --substring -r --regex -R --extended-regex -w --window");
 
 #ifdef HAVE_LIBASPELL
 	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
@@ -744,8 +753,16 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("contacts_orderbystate"), VAR_BOOL, 1, &config_contacts_orderbystate, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("contacts_size"), VAR_INT, 1, &config_contacts_size, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("contacts_wrap"), VAR_BOOL, 1, &config_contacts_wrap, ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("lastlog_size"), VAR_INT, 1, &config_lastlog_size, (void (*)(const char *))ncurses_lastlog_changed, NULL, NULL);
+
+	variable_add(&ncurses_plugin, ("lastlog_display_all"), VAR_INT, 1, &config_lastlog_display_all, NULL, variable_map(3, 
+			0, 0, "current window",
+			1, 2, "current window + configured",
+			2, 1, "all windows + configured"), NULL);
 	variable_add(&ncurses_plugin, ("lastlog_lock"), VAR_BOOL, 1, &config_lastlog_lock, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("lastlog_matchcase"), VAR_BOOL, 1, &config_lastlog_case, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("lastlog_noitems"), VAR_BOOL, 1, &config_lastlog_noitems, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("lastlog_size"), VAR_INT, 1, &config_lastlog_size, (void (*)(const char *))ncurses_lastlog_changed, NULL, NULL);
+
 	variable_add(&ncurses_plugin, ("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, ("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("header_size"), VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);

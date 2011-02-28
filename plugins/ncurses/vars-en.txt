@@ -130,6 +130,24 @@ kill_irc_window
         if set to 0, you disables killing irc chat window with keystroke
         binding.
 
+lastlog_display_all
+	type: integer
+	default value: 0
+	
+	*not translated yet*
+
+lastlog_matchcase
+	type: bool
+	default value: 0
+	
+	*not translated yet*
+
+lastlog_noitems
+	type: bool
+	default value: 0
+	
+	*not translated yet*
+
 margin_size
 	type: integer
 	default value: 15 

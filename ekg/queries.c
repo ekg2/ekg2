@@ -322,9 +322,6 @@ static const query_def_t core_query_list[] = {
 	{ NULL, "gpg-verify", 0, {
 		QUERY_ARG_END } },
 
-	{ NULL, "ui-window-update-lastlog", 0, {
-		QUERY_ARG_END } },
-
 	{ NULL, "session-event", 0, {
 		QUERY_ARG_SESSION,		/* session */
 		QUERY_ARG_INT,			/* event type, [not used] */
