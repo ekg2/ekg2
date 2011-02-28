@@ -606,6 +606,16 @@ void ncurses_redraw(window_t *w)
 		char *p;
 		fstr_attr_t *a;
 
+		/* timestamps */
+		time_t prevts = -1;
+		gchar *timestamp_format = NULL;
+		fstring_t *formatted_ts = NULL;
+		gchar tsbuf[60];
+
+		if (G_LIKELY(config_timestamp_show && config_timestamp && *config_timestamp
+					&& (!w->floating || (w->id == WINDOW_LASTLOG_ID) /*XXX?*/)))
+			timestamp_format = format_string(config_timestamp);
+
 		scrollok(n->window, 1);
 		for (y = 0; blp <= backlog_last; y++) {
 			if (G_UNLIKELY(byteshift)) {
@@ -636,6 +646,21 @@ void ncurses_redraw(window_t *w)
 				y--;
 			}
 			wmove(n->window, top + y, left);
+
+			if (timestamp_format) { /* non-NULL when timestamps enabled */
+				if ((*blp)->ts != prevts || !formatted_ts) { /* ts cache */
+					struct tm *tm = localtime(&(*blp)->ts);
+					strftime(tsbuf, sizeof(tsbuf)-1, timestamp_format, tm);
+
+					fstring_free(formatted_ts);
+					formatted_ts = fstring_new(tsbuf);
+				}
+
+				g_assert(!ncurses_fstring_print(n->window,
+							formatted_ts->str, formatted_ts->attr, -1));
+				g_assert(ncurses_simple_print(n->window, " ", A_NORMAL, -1));
+			}
+
 				/* XXX: disable ncurses autowrap somehow? */
 			byteshift = ncurses_fstring_print(n->window, p, a,
 					w->nowrap ? -1 : left + width);
@@ -643,6 +668,7 @@ void ncurses_redraw(window_t *w)
 				blp++;
 		}
 		scrollok(n->window, 0);
+		fstring_free(formatted_ts);
 	}
 
 #ifdef FIXME_WRAPPING
