@@ -542,47 +542,25 @@ void ncurses_redraw(window_t *w)
 
 	werase(n->window);
 
+	/* first, adjust the dimensions; frame will be drawn after text */
 	if (w->floating) {
-		const char *vertical_line_char	= format_find("contacts_vertical_line_char");
-		const char *horizontal_line_char= format_find("contacts_horizontal_line_char");
-		char vline_ch = vertical_line_char[0];
-		char hline_ch = horizontal_line_char[0];
-		int attr = color_pair(COLOR_BLUE, COLOR_BLACK);
-		int x0 = n->margin_left, y0 = n->margin_top;
-		int x1 = w->width - 1 - n->margin_right;
-		int y1 = w->height - 1 - n->margin_bottom;
-
-		if (!vline_ch || !hline_ch) {
-			vline_ch = ACS_VLINE;
-			hline_ch = ACS_HLINE;
-			attr |= A_ALTCHARSET;
-		}
-		wattrset(n->window, attr);
+		/* XXX: we used not to touch width, rethink it */
 
 		if ((w->frames & WF_LEFT)) {
 			left++;
-			mvwvline(n->window, y0, x0, vline_ch, y1-y0+1);
+			width--;
 		}
 
-		if ((w->frames & WF_RIGHT)) {
-			mvwvline(n->window, y0, x1, vline_ch, y1-y0+1);
-		}
+		if ((w->frames & WF_RIGHT))
+			width--;
 
 		if ((w->frames & WF_TOP)) {
 			top++;
 			height--;
-			mvwhline(n->window, y0, x0, hline_ch, x1-x0+1);
-			if (w->frames & WF_LEFT)  mvwaddch(n->window, y0, x0, ACS_ULCORNER);
-			if (w->frames & WF_RIGHT) mvwaddch(n->window, y0, x1, ACS_URCORNER);
 		}
 
-		if ((w->frames & WF_BOTTOM)) {
+		if ((w->frames & WF_BOTTOM))
 			height--;
-			mvwhline(n->window, y1, x0, hline_ch, x1-x0+1);
-			if (w->frames & WF_LEFT)  mvwaddch(n->window, y1, x0, ACS_LLCORNER);
-			if (w->frames & WF_RIGHT) mvwaddch(n->window, y1, x1, ACS_LRCORNER);
-		}
-
 	}
 
 #if 0 /* XXX */
@@ -596,6 +574,7 @@ void ncurses_redraw(window_t *w)
 	}
 #endif
 
+	/* draw text */
 	if (n->backlog->len > 0) {
 		const int last_index = n->backlog->len - n->last_rindex - 1;
 		const int first_index = last_index - height + 1;
@@ -669,6 +648,46 @@ void ncurses_redraw(window_t *w)
 		}
 		scrollok(n->window, 0);
 		fstring_free(formatted_ts);
+	}
+
+	/* draw frames */
+	if (w->floating) {
+		const char *vertical_line_char	= format_find("contacts_vertical_line_char");
+		const char *horizontal_line_char= format_find("contacts_horizontal_line_char");
+		char vline_ch = vertical_line_char[0];
+		char hline_ch = horizontal_line_char[0];
+		int attr = color_pair(COLOR_BLUE, COLOR_BLACK);
+		int x0 = n->margin_left, y0 = n->margin_top;
+		int x1 = w->width - n->margin_right;
+		int y1 = w->height - n->margin_bottom;
+
+		if (!vline_ch || !hline_ch) {
+			vline_ch = ACS_VLINE;
+			hline_ch = ACS_HLINE;
+			attr |= A_ALTCHARSET;
+		}
+		wattrset(n->window, attr);
+
+		/* XXX: recheck coordinates */
+
+		if ((w->frames & WF_LEFT))
+			mvwvline(n->window, y0, x0, vline_ch, y1-y0+1);
+
+		if ((w->frames & WF_RIGHT))
+			mvwvline(n->window, y0, x1, vline_ch, y1-y0+1);
+
+		if ((w->frames & WF_TOP)) {
+			mvwhline(n->window, y0, x0, hline_ch, x1-x0+1);
+			if (w->frames & WF_LEFT)  mvwaddch(n->window, y0, x0, ACS_ULCORNER);
+			if (w->frames & WF_RIGHT) mvwaddch(n->window, y0, x1, ACS_URCORNER);
+		}
+
+		if ((w->frames & WF_BOTTOM)) {
+			mvwhline(n->window, y1, x0, hline_ch, x1-x0+1);
+			if (w->frames & WF_LEFT)  mvwaddch(n->window, y1, x0, ACS_LLCORNER);
+			if (w->frames & WF_RIGHT) mvwaddch(n->window, y1, x1, ACS_LRCORNER);
+		}
+
 	}
 
 #ifdef FIXME_WRAPPING
