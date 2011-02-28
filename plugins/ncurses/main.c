@@ -731,8 +731,8 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "userlist-removed", ncurses_all_contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-renamed", ncurses_all_contacts_changed, NULL);
 
-	command_add(&ncurses_plugin, ("mark"), NULL, cmd_mark, 0, "-a --all");
-	command_add(&ncurses_plugin, ("dump"), NULL, ncurses_cmd_dump, 0, "-a --append -w --window");
+	command_add(&ncurses_plugin, ("mark"), "p", cmd_mark, 0, "-a --all");
+	command_add(&ncurses_plugin, ("dump"), "pf pf pf", ncurses_cmd_dump, 0, "-a --append -w --window");
 	command_add(&ncurses_plugin, ("lastlog"), "p? p? p? p? p?", ncurses_cmd_lastlog, 0, 
 		"-c --caseinsensitive -C --CaseSensitive -s --substring -r --regex -R --extended-regex -w --window");
 
