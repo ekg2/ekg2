@@ -71,9 +71,11 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		return items;
 
 	if (config_lastlog_noitems) { /* always add header */
-		fstring_t *fstr = fstring_new_format(header, window_target(w), lastlog->expression);
+		gchar *titleexpr = ekg_recode_from_locale(lastlog->expression);
+		fstring_t *fstr = fstring_new_format(header, window_target(w), titleexpr);
 		ncurses_backlog_add(lastlog_w, fstr);
 		fstring_free(fstr);
+		g_free(titleexpr);
 	}
 
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
@@ -91,9 +93,11 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		}
 
 		if (!config_lastlog_noitems && found && !items) { /* add header only when found */
-			fstring_t *fstr = fstring_new_format(header, window_target(w), lastlog->expression);
+			gchar *titleexpr = ekg_recode_from_locale(lastlog->expression);
+			fstring_t *fstr = fstring_new_format(header, window_target(w), titleexpr);
 			ncurses_backlog_add(lastlog_w, fstr);
 			fstring_free(fstr);
+			g_free(titleexpr);
 		}
 
 		if (found) {
@@ -259,23 +263,27 @@ COMMAND(ncurses_cmd_lastlog) {
 	if (isregex) {
 		GRegexCompileFlags flags = G_REGEX_RAW | G_REGEX_NO_AUTO_CAPTURE | G_REGEX_OPTIMIZE;
 		GError *err = NULL;
+		char *tmp = ekg_recode_to_locale(str);
 
 		/* XXX, when config_lastlog_case is toggled.. we need to recompile regex's */
+		/* XXX, this won't really work -- we run regex in raw mode, backlog is not utf */
 		if (!lastlog->casense || (lastlog->casense == -1 && !config_lastlog_case))
 			flags |= G_REGEX_CASELESS;
 
-		if (!((lastlog->reg = g_regex_new(str, flags, 0, &err)))) {
+		if (!((lastlog->reg = g_regex_new(tmp, flags, 0, &err)))) {
 			printq("regex_error", err->message);
 			g_error_free(err);
+			g_free(tmp);
 			return -1;
 		}
+		g_free(tmp);
 	}
 
 	lastlog->w		= w;
 	lastlog->casense	= iscase;
 	lastlog->lock		= islock;
 	lastlog->isregex	= isregex;
-	lastlog->expression	= xstrdup(str);
+	lastlog->expression	= ekg_recode_to_locale(str);
 
 	if (w)	window_current->lastlog	= lastlog;
 	else	lastlog_current		= lastlog;
