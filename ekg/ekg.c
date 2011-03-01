@@ -529,6 +529,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 		default:			theme_format = "debug";		break;
 	}
 
+	ekg_fix_utf8(tmp); /* debug message can contain random data */
 	debug_common(theme_format, tmp, NULL);
 	xfree(tmp);
 }
