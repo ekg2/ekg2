@@ -222,7 +222,11 @@ const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
 
 	res = g_convert_with_fallback(buf, -1, "utf8", enc,
 			NULL, NULL, &written, NULL);
-	return res ? res : buf;
+	if (!res) {
+		res = g_strdup(buf);
+		ekg_fix_utf8(res);
+	}
+	return res;
 }
 
 gchar *ekg_recode_from(const gchar *enc, const char *str) {
