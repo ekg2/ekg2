@@ -447,41 +447,6 @@ static QUERY(ncurses_lastlog_changed) {
 	return 0;
 }
 
-static QUERY(ncurses_ui_window_lastlog) {
-	window_t *w;
-	ncurses_window_t *n;
-
-	int lock_old = config_lastlog_lock;
-	int retval;
-
-	if (!(w = window_exist(WINDOW_LASTLOG_ID)))
-		w = window_new("__lastlog", NULL, WINDOW_LASTLOG_ID);
-
-	n = w->priv_data;
-
-	if (!n || !n->handle_redraw) {
-		debug_error("ncurses_ui_window_lastlog() BAD __lastlog wnd?\n");
-		return -1;
-	}
-
-	config_lastlog_lock = 0;
-	if (!(retval = n->handle_redraw(w)) && !config_lastlog_noitems) {	/* if we don't want __backlog wnd when no items founded.. */
-		/* destroy __backlog */
-		window_kill(w);
-		config_lastlog_lock = lock_old;
-/* XXX bugnotes, when killing visible w->floating window we should do: implement in window_kill() */
-		ncurses_resize();
-		ncurses_commit();
-		return 0;
-	}
-
-	n->start = n->lines_count - w->height + n->overflow;
-	config_lastlog_lock = 1;
-	ncurses_redraw(w);
-	config_lastlog_lock = lock_old;
-	return retval;
-}
-
 static QUERY(ncurses_setvar_default)
 {
 	config_contacts_size = 9;	  /* szeroko¶æ okna kontaktów */
@@ -696,7 +661,6 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "ui-window-act-changed", ncurses_ui_window_act_changed, NULL);
 	query_connect(&ncurses_plugin, "ui-window-refresh", ncurses_ui_window_refresh, NULL);
 	query_connect(&ncurses_plugin, "ui-window-clear", ncurses_ui_window_clear, NULL);
-	query_connect(&ncurses_plugin, "ui-window-update-lastlog", ncurses_ui_window_lastlog, NULL);
 	query_connect(&ncurses_plugin, "ui-refresh", ncurses_ui_refresh, NULL);
 	query_connect(&ncurses_plugin, "ui-password-input", ncurses_password_input, NULL);
 	query_connect(&ncurses_plugin, "session-added", ncurses_statusbar_query, NULL);

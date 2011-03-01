@@ -202,9 +202,12 @@ COMMAND(ncurses_cmd_lastlog) {
 	static window_lastlog_t lastlog_current_static;
 
 	window_lastlog_t *lastlog;
+	ncurses_window_t *n;
 
 	const char *str = NULL;
 	window_t *w = NULL;
+	const int lock_old = config_lastlog_lock;
+	int retval;
 
 	int i;
 	int iscase	= -1;	/* default-default variable */
@@ -285,6 +288,26 @@ COMMAND(ncurses_cmd_lastlog) {
 	if (w)	window_current->lastlog	= lastlog;
 	else	lastlog_current		= lastlog;
 			
-	return query_emit(NULL, "ui-window-update-lastlog");
+	if (!(w = window_exist(WINDOW_LASTLOG_ID)))
+		w = window_new("__lastlog", NULL, WINDOW_LASTLOG_ID);
 
+	n = w->priv_data;
+	g_assert(n && n->handle_redraw);
+
+	config_lastlog_lock = 0;
+	if (!(retval = n->handle_redraw(w)) && !config_lastlog_noitems) {	/* if we don't want __backlog wnd when no items founded.. */
+		/* destroy __backlog */
+		window_kill(w);
+		config_lastlog_lock = lock_old;
+/* XXX bugnotes, when killing visible w->floating window we should do: implement in window_kill() */
+		ncurses_resize();
+		ncurses_commit();
+		return 0;
+	}
+
+	n->start = n->lines_count - w->height + n->overflow;
+	config_lastlog_lock = 1;
+	ncurses_redraw(w);
+	config_lastlog_lock = lock_old;
+	return retval;
 }
