@@ -17,7 +17,7 @@ extern void nntp_protocol_deinit(void *);	/* nntp.c */
 extern void nntp_init();			/* nntp.c */
 
 #ifdef HAVE_LIBEXPAT
-extern void *rss_protocol_init();		/* rss.c */
+extern void *rss_protocol_init(session_t *);	/* rss.c */
 extern void rss_protocol_deinit(void *);	/* rss.c */
 extern void rss_init();				/* rss.c */
 extern void rss_deinit();			/* rss.c */

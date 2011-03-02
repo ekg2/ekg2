@@ -1039,19 +1039,6 @@ static COMMAND(rss_command_show) {
 	return 0;
 }
 
-static COMMAND(rss_command_connect) {
-	if (session_connected_get(session)) {
-		printq("already_connected", session_name(session));
-		return -1;
-	}
-
-	session_connected_set(session, 1);
-	session->status = EKG_STATUS_AVAIL;
-	protocol_connected_emit(session);
-
-	return 0;
-}
-
 static COMMAND(rss_command_subscribe) {
 	const char *nick;
 	const char *uidnoproto;
@@ -1108,7 +1095,10 @@ void rss_protocol_deinit(void *priv) {
 	return;
 }
 
-void *rss_protocol_init() {
+void *rss_protocol_init(session_t *session) {
+	session_connected_set(session, 1);
+	session->status = EKG_STATUS_AVAIL;
+	protocol_connected_emit(session);
 	return NULL;
 }
 
@@ -1149,7 +1139,6 @@ static QUERY(rss_userlist_info) {
 }
 
 void rss_init() {
-	command_add(&feed_plugin, ("rss:connect"), "?", rss_command_connect, RSS_ONLY, NULL);
 	command_add(&feed_plugin, ("rss:check"), "u", rss_command_check, RSS_ONLY, NULL);
 	command_add(&feed_plugin, ("rss:get"), "!u", rss_command_get, RSS_FLAGS_TARGET, NULL);
 
