@@ -35,6 +35,10 @@
 
 #include "feed.h"
 
+#define NNTP_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define NNTP_FLAGS        NNTP_ONLY  | SESSION_MUSTBECONNECTED
+#define NNTP_FLAGS_TARGET NNTP_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+
 typedef enum {
 	NNTP_IDLE = 0,
 	NNTP_CHECKING,
@@ -843,19 +847,18 @@ void nntp_protocol_deinit(void *priv) {
 
 void nntp_init() {
 /*XXX,	:msg -- wysylanie wiadomosc na serwer... BE CAREFULL cause news aren't IM ;) */
-	command_add(&feed_plugin, ("nntp:connect"), "?",	nntp_command_connect, RSS_ONLY, NULL);
-	command_add(&feed_plugin, ("nntp:disconnect"), "?", nntp_command_disconnect, RSS_ONLY, NULL);
+	command_add(&feed_plugin, ("nntp:connect"), "?",	nntp_command_connect, NNTP_ONLY, NULL);
+	command_add(&feed_plugin, ("nntp:disconnect"), "?", nntp_command_disconnect, NNTP_ONLY, NULL);
 
-	command_add(&feed_plugin, ("nntp:subscribe"), "!",	nntp_command_subscribe, RSS_FLAGS_TARGET, NULL); 
-	command_add(&feed_plugin, ("nntp:unsubscibe"), "!", nntp_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
+	command_add(&feed_plugin, ("nntp:subscribe"), "!",	nntp_command_subscribe, NNTP_FLAGS_TARGET, NULL); 
+	command_add(&feed_plugin, ("nntp:unsubscibe"), "!", nntp_command_unsubscribe, NNTP_FLAGS_TARGET, NULL);
 
-	command_add(&feed_plugin, ("nntp:check"), "u",	nntp_command_check, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:check"), "u",	nntp_command_check, NNTP_FLAGS, NULL);
 
-	command_add(&feed_plugin, ("nntp:article"), "? ?",	nntp_command_get, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, ("nntp:body"),	"? ?",	nntp_command_get, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, ("nntp:raw"), "?",	nntp_command_raw, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:article"), "? ?",	nntp_command_get, NNTP_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:body"),	"? ?",	nntp_command_get, NNTP_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:raw"), "?",	nntp_command_raw, NNTP_FLAGS, NULL);
 
-	command_add(&feed_plugin, ("nntp:next"), "?",	nntp_command_nextprev, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, ("nntp:prev"), "?",	nntp_command_nextprev, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:next"), "?",	nntp_command_nextprev, NNTP_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:prev"), "?",	nntp_command_nextprev, NNTP_FLAGS, NULL);
 }
-

@@ -47,6 +47,9 @@
 
 #include "feed.h"
 
+#define RSS_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define RSS_FLAGS_TARGET RSS_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+
 #define rss_convert_string(text, encoding) \
 	ekg_recode_to_core_dup(encoding ? encoding : "UTF-8", text)
 
@@ -1147,10 +1150,10 @@ static QUERY(rss_userlist_info) {
 
 void rss_init() {
 	command_add(&feed_plugin, ("rss:connect"), "?", rss_command_connect, RSS_ONLY, NULL);
-	command_add(&feed_plugin, ("rss:check"), "u", rss_command_check, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("rss:check"), "u", rss_command_check, RSS_ONLY, NULL);
 	command_add(&feed_plugin, ("rss:get"), "!u", rss_command_get, RSS_FLAGS_TARGET, NULL);
 
-	command_add(&feed_plugin, ("rss:show"), "!", rss_command_show, RSS_FLAGS | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&feed_plugin, ("rss:show"), "!", rss_command_show, RSS_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
 
 	command_add(&feed_plugin, ("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL); 
 	command_add(&feed_plugin, ("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
@@ -1158,4 +1161,3 @@ void rss_init() {
 	query_connect(&feed_plugin, "userlist-info", rss_userlist_info, NULL);
 }
 #endif
-
