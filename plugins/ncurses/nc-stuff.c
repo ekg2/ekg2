@@ -585,6 +585,9 @@ void ncurses_redraw(window_t *w)
 		char *p;
 		fstr_attr_t *a;
 
+		/* prompt */
+		char *prompt = NULL;
+
 		/* timestamps */
 		time_t prevts = -1;
 		gchar *timestamp_format = NULL;
@@ -612,12 +615,23 @@ void ncurses_redraw(window_t *w)
 				if (w->nowrap) {
 					blp++;
 					byteshift = 0;
+				} else if (!prompt && (*blp)->prompt_len > 0) { /* maybe a (new) prompt to repeat? */
+					if (!(*blp)->prompt_empty) {
+						prompt = g_strndup((*blp)->str, (*blp)->prompt_len);
+					} else {
+						/* XXX */
+					}
 				}
 			}
 
 			if (G_LIKELY(!byteshift)) {
 				p = (*blp)->str;
 				a = (*blp)->attr;
+
+				if (prompt) {
+					g_free(prompt);
+					prompt = NULL;
+				}
 			}
 
 			if (y >= height) {
@@ -638,6 +652,11 @@ void ncurses_redraw(window_t *w)
 				g_assert(!ncurses_fstring_print(n->window,
 							formatted_ts->str, formatted_ts->attr, -1));
 				g_assert(ncurses_simple_print(n->window, " ", A_NORMAL, -1));
+			}
+
+			if (prompt) {
+				g_assert(!ncurses_fstring_print(n->window,
+							prompt, (*blp)->attr, -1));
 			}
 
 				/* XXX: disable ncurses autowrap somehow? */

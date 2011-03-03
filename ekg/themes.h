@@ -38,8 +38,7 @@ typedef struct {
 	fstr_attr_t	*attr;			/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
 	time_t		ts;			/* timestamp */
 
-	int		prompt_len;		/* d³ugo¶æ promptu, który bêdzie powtarzany przy
-						   przej¶ciu do kolejnej linii. */
+	int		prompt_len;		/* prompt length (in bytes of str) */
 	unsigned int	prompt_empty	: 1;	/* prompt przy przenoszeniu bêdzie pusty */
 	int		margin_left;		/* where the margin is set (on what char) */
 	gchar		*priv_data;		/* can be helpfull */
