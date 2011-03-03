@@ -24,7 +24,7 @@ T_Ekg2User
 	$var = (userlist_t *) Ekg2_ref_object($arg)
 
 T_Ekg2Time
-	$var = (struct timer *) Ekg2_ref_object($arg)
+	$var = (ekg_timer_t) Ekg2_ref_object($arg)
 
 T_Ekg2Var
 	$var = (variable_t *) Ekg2_ref_object($arg)

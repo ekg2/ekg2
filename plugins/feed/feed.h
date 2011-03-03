@@ -1,10 +1,6 @@
 #ifndef __EKG_FEED_H
 #define __EKG_FEED_H
 
-#define RSS_ONLY	 SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
-#define RSS_FLAGS	 RSS_ONLY  | SESSION_MUSTBECONNECTED
-#define RSS_FLAGS_TARGET RSS_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
-
 #define feed_private(s) ((s && s->priv) ? ((feed_private_t *) s->priv)->priv_data : NULL)
 
 extern plugin_t feed_plugin;
@@ -21,7 +17,7 @@ extern void nntp_protocol_deinit(void *);	/* nntp.c */
 extern void nntp_init();			/* nntp.c */
 
 #ifdef HAVE_LIBEXPAT
-extern void *rss_protocol_init();		/* rss.c */
+extern void *rss_protocol_init(session_t *);	/* rss.c */
 extern void rss_protocol_deinit(void *);	/* rss.c */
 extern void rss_init();				/* rss.c */
 extern void rss_deinit();			/* rss.c */
