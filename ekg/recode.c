@@ -142,7 +142,12 @@ char *ekg_convert_string(const char *ps, const char *from, const char *to) {
 
 	res = g_convert_with_fallback(ps, -1, to, from, NULL, NULL, &written, NULL);
 
-	return res ? res : g_strdup(ps);
+	if (!res) {
+		res = g_strdup(ps);
+		ekg_fix_utf8(res);
+	}
+
+	return res;
 }
 
 string_t ekg_convert_string_t_p(string_t s, void *ptr) {
