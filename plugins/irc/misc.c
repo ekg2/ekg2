@@ -96,12 +96,10 @@ static char *irc_convert_in(irc_private_t *j, const char *line) {
 			debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
 	}
 
-	/* convert from unicode */
-	if ( !recoded && is_utf8_string(line) ) /* XXX add variable here? */
-		recoded = ekg_utf8_to_core_dup(line);
-
-	if (!recoded)
+	if (!recoded) {
 		recoded = xstrdup(line);
+		ekg_fix_utf8(recoded);
+	}
 	return recoded;
 }
 
@@ -335,17 +333,22 @@ static char *irc_tolower_int(char *buf, int casemapping)
 /*
  */
 
-int irc_parse_line(session_t *s, char *buf, int fd)
+int irc_parse_line(session_t *s, const char *l, int fd)
 {
 	irc_private_t *j = s->priv;
 	int	i, c=0, ecode;
 	char	*p, *q[20];
 
+	gchar *buf = irc_convert_in(j, l);
 	int	len = xstrlen(buf);
 
+	query_emit(NULL, "irc-parse-line", &s->uid, &buf);
+
 	p=buf;
-	if(!p)
+	if(!p) {
+		g_free(buf);
 		return -1;
+	}
 	for (i=0; i<20; i++) q[i]=NULL;
 /*
 Each IRC message may consist of up to three main parts: the prefix
@@ -400,6 +403,7 @@ and the prefix.
 			    (query_emit(NULL, emitname, &s->uid, &pq) == -1))
 			{
 				xfree(emitname);
+				g_free(buf);
 				return -1;
 			}
 			xfree(emitname);
@@ -442,6 +446,7 @@ and the prefix.
 		}
 	}
 
+	g_free(buf);
 	return 0;
 }
 
@@ -641,7 +646,7 @@ IRC_COMMAND(irc_c_error)
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
 				xfree(chanp->topic);
-				chanp->topic  = irc_convert_in(j, OMITCOLON(param[4]));
+				chanp->topic  = g_strdup(OMITCOLON(param[4]));
 
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
 				tmpchn	= clean_channel_names(s, param[3]);
@@ -1094,8 +1099,7 @@ IRC_COMMAND(irc_c_msg)
 	irc_parse_nick_identhost(OMITCOLON(param[0]), &sender, &identhost);
 
 	recipient = xstrdup(param[2]);	/* destination (channel|nick) */
-
-	recoded = irc_convert_in(j, OMITCOLON(param[3]));
+	recoded = g_strdup(OMITCOLON(param[3]));
 
 	/* probably message from server ... */
 	if (s->connecting && !prv) {
@@ -1584,7 +1588,7 @@ IRC_COMMAND(irc_c_topic)
 	__topic   = OMITCOLON(param[3]);
 	cchn = clean_channel_names(s, param[2]);
 	if (xstrlen(__topic)) {
-		chanp->topic  = irc_convert_in(j, __topic);
+		chanp->topic  = g_strdup(__topic);
 		chanp->topicby = xstrdup(__topicby);
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
 		print_info(dest, s, "IRC_TOPIC_CHANGE",
