@@ -753,7 +753,6 @@ static WATCHER_LINE(irc_handle_resolver) {
 
 static WATCHER_SESSION_LINE(irc_handle_stream) {
 	irc_private_t *j = NULL;
-	char *buf;
 
 	if (!s || !(j = s->priv)) {
 		debug_error("irc_handle_stream() s: 0x%x j: 0x%x\n", s, j);
@@ -777,10 +776,7 @@ static WATCHER_SESSION_LINE(irc_handle_stream) {
 	 * const char, so the queries could modify this param,
 	 * I'm not sure if this is good idea, just thinking...
 	 */
-	buf = xstrdup((char *)watch);
-	query_emit(NULL, "irc-parse-line", &s->uid, &buf);
-	irc_parse_line(s, buf, fd);
-	xfree(buf);
+	irc_parse_line(s, watch, fd);
 
 	return 0;
 }
@@ -855,8 +851,6 @@ static WATCHER_SESSION(irc_handle_stream_ssl_input) {
 		/* we strndup() str with len == strlen, so we don't need to call xstrlen() */
 		if (strlen > 1 && line[strlen - 1] == '\r')
 			line[strlen - 1] = 0;
-
-		query_emit(NULL, "irc-parse-line", &s->uid, &line);
 
 		irc_parse_line(s, line, fd);
 

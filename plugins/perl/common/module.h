@@ -30,7 +30,7 @@ typedef window_t	*Ekg2__Window;
 typedef plugin_t	*Ekg2__Plugin;
 typedef watch_t		*Ekg2__Watch;
 
-typedef struct timer	*Ekg2__Timer;
+typedef ekg_timer_t	Ekg2__Timer;
 
 typedef userlist_t	*Ekg2__User;
 

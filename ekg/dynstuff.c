@@ -577,10 +577,10 @@ int string_append_n(string_t s, const char *str, int count)
 	string_t tmp;
 	gssize sl = xstrlen(str);
 
-	if (count > sl)
-		tmp = g_string_append_len(s, str, count);
-	else
+	if (count > sl || count == -1)
 		tmp = g_string_append(s, str);
+	else
+		tmp = g_string_append_len(s, str, count);
 	g_assert(tmp == s);
 	return 0;
 }
@@ -659,10 +659,10 @@ void string_insert_n(string_t s, int index, const char *str, int count)
 	string_t tmp;
 	gssize sl = xstrlen(str);
 
-	if (count > sl)
-		tmp = g_string_insert_len(s, index, str, count);
-	else
+	if (count > sl || count == -1)
 		tmp = g_string_insert(s, index, str);
+	else
+		tmp = g_string_insert_len(s, index, str, count);
 	g_assert(tmp == s);
 }
 

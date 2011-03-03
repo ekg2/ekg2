@@ -171,7 +171,7 @@ enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 
 #define irc_write(s, args...) watch_write((s && s->priv) ? irc_private(s)->send_watch : NULL, args);
 
-int irc_parse_line(session_t *s, char *buf, int fd);	/* misc.c */
+int irc_parse_line(session_t *s, const char *l, int fd);	/* misc.c */
 
 extern int irc_config_allow_fake_contacts;
 extern int irc_config_clean_channel_name;
