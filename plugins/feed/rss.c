@@ -445,11 +445,11 @@ static void rss_handle_end(void *data, const char *name) {
 			static const char nbsp[] = { 'n', 'b', 's', 'p', ';' };
 
 			i++;
-			if (!xstrncmp(&(text[i]), lt, sizeof(lt)))	{ i += sizeof(lt);	string_append_c(recode, '<'); continue; }
-			if (!xstrncmp(&(text[i]), gt, sizeof(gt)))	{ i += sizeof(gt);	string_append_c(recode, '>'); continue; }
-			if (!xstrncmp(&(text[i]), amp, sizeof(amp)))	{ i += sizeof(amp);	string_append_c(recode, '&'); continue; }
-			if (!xstrncmp(&(text[i]), quot, sizeof(quot)))	{ i += sizeof(quot);	string_append_c(recode, '"'); continue; }
-			if (!xstrncmp(&(text[i]), nbsp, sizeof(nbsp)))	{ i += sizeof(nbsp);	string_append_c(recode, 0xA0); continue; }
+			if	(!xstrncmp(&(text[i]), lt, sizeof(lt)))		{ i += sizeof(lt);	string_append_c(recode, '<'); continue; }
+			else if (!xstrncmp(&(text[i]), gt, sizeof(gt)))		{ i += sizeof(gt);	string_append_c(recode, '>'); continue; }
+			else if (!xstrncmp(&(text[i]), amp, sizeof(amp)))	{ i += sizeof(amp);	string_append_c(recode, '&'); continue; }
+			else if (!xstrncmp(&(text[i]), quot, sizeof(quot)))	{ i += sizeof(quot);	string_append_c(recode, '"'); continue; }
+			else if (!xstrncmp(&(text[i]), nbsp, sizeof(nbsp)))	{ i += sizeof(nbsp);	if (j->no_unicode) string_append_c(recode, 0xA0); else string_append(recode,"\302\240"); continue; }
 			i--;
 
 #if 0
