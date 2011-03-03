@@ -280,7 +280,7 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 
 		debug("icq_flap_close() Redirect to server %s:%d\n", login_str, port);
 
-		g_string_set_size(j->cookie, 0);
+		j->cookie = g_string_new(NULL);
 		g_string_append_len(j->cookie, (char *) cookie_tlv->buf, cookie_tlv->len);
 
 		if (!j->migrate) {
