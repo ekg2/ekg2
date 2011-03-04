@@ -73,10 +73,8 @@ static void irc_parse_ident_host(char *identhost, char **ident, char **host)  {
 	}
 }
 
-/* XXX: rewrite to not rely on internal API */
-static char *try_convert_string_p(const char *ps, void *cd) { return NULL; }
-
-static char *irc_convert_in(irc_private_t *j, const char *line) {
+static void irc_convert_in(irc_private_t *j, GString *line) {
+#if 0 /* XXX! */
 	char *recoded;
 	conv_in_out_t *e;
 	list_t el;
@@ -101,6 +99,8 @@ static char *irc_convert_in(irc_private_t *j, const char *line) {
 		ekg_fix_utf8(recoded);
 	}
 	return recoded;
+#endif
+	ekg_fix_utf8(line->str);
 }
 
 /* cos co blabla, zwraca liczbe pochlonietych znakow przez '*' XXX */
@@ -335,20 +335,28 @@ static char *irc_tolower_int(char *buf, int casemapping)
 
 int irc_parse_line(session_t *s, const char *l, int fd)
 {
+	static GString *strbuf = NULL;
 	irc_private_t *j = s->priv;
 	int	i, c=0, ecode;
 	char	*p, *q[20];
 
-	gchar *buf = irc_convert_in(j, l);
-	int	len = xstrlen(buf);
+	gchar *buf;
+	int	len;
+
+	if (G_UNLIKELY(!strbuf))
+		strbuf = g_string_new(l);
+	else
+		g_string_assign(strbuf, l);
+
+	irc_convert_in(j, strbuf);
+	buf = strbuf->str;
+	len = strbuf->len;
 
 	query_emit(NULL, "irc-parse-line", &s->uid, &buf);
 
 	p=buf;
-	if(!p) {
-		g_free(buf);
+	if(!p)
 		return -1;
-	}
 	for (i=0; i<20; i++) q[i]=NULL;
 /*
 Each IRC message may consist of up to three main parts: the prefix
@@ -403,7 +411,6 @@ and the prefix.
 			    (query_emit(NULL, emitname, &s->uid, &pq) == -1))
 			{
 				xfree(emitname);
-				g_free(buf);
 				return -1;
 			}
 			xfree(emitname);
@@ -446,7 +453,6 @@ and the prefix.
 		}
 	}
 
-	g_free(buf);
 	return 0;
 }
 
