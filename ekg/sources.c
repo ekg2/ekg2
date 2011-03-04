@@ -22,6 +22,9 @@
 
 #include <string.h>
 
+/* WEXITSTATUS for FreeBSD */
+#include <sys/wait.h>
+
 /*
  * Common API
  */
@@ -113,10 +116,11 @@ void ekg_source_remove(ekg_source_t s) {
  * that (due to handler prototype differences) a particular handler is
  * used only with a single source type.
  */
+
 gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
 	gboolean ret = FALSE;
 
-	inline void source_remove_by_h(gpointer data, gpointer user_data) {
+	void source_remove_by_h(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
 
 		if (s->handler.as_void == handler) {
@@ -151,7 +155,7 @@ gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
 gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name) {
 	gboolean ret = FALSE;
 
-	inline void source_remove_by_d(gpointer data, gpointer user_data) {
+	void source_remove_by_d(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
 
 		if (s->priv_data == priv_data) {
@@ -181,7 +185,7 @@ gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name) {
 gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name) {
 	gboolean ret = FALSE;
 
-	inline void source_remove_by_p(gpointer data, gpointer user_data) {
+	void source_remove_by_p(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
 
 		if (s->plugin == plugin) {
@@ -198,7 +202,7 @@ gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name) {
 }
 
 void sources_destroy(void) {
-	inline void source_remove(gpointer data, gpointer user_data) {
+	void source_remove(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
 		ekg_source_remove(s);
 	}
@@ -421,7 +425,7 @@ ekg_timer_t timer_find_session(session_t *session, const gchar *name) {
 	if (!session)
 		return NULL;
 
-	inline gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
+	gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
 		const struct ekg_source *t = li;
 
 		return !(t->priv_data == session && !xstrcmp(name, t->name));
@@ -437,7 +441,7 @@ gint timer_remove_session(session_t *session, const gchar *name) {
 		return -1;
 	g_assert(session->plugin);
 
-	inline void timer_remove_session_iter(gpointer data, gpointer user_data) {
+	void timer_remove_session_iter(gpointer data, gpointer user_data) {
 		struct ekg_source *t = data;
 
 		if (t->priv_data == session && !xstrcmp(name, t->name)) {
@@ -527,7 +531,7 @@ static inline gint timer_match_name(gconstpointer li, gconstpointer ui) {
  */
 
 gint ekg_children_print(gint quiet) {
-	inline void child_print(gpointer data, gpointer user_data) {
+	void child_print(gpointer data, gpointer user_data) {
 		struct ekg_source *c = data;
 
 		printq("process", ekg_itoa(c->details.as_child.pid), c->name ? c->name : "?");
@@ -548,7 +552,7 @@ COMMAND(cmd_debug_timers) {
 	
 	printq("generic_bold", ("plugin      name               pers peri     handler  next"));
 	
-	inline void timer_debug_print(gpointer data, gpointer user_data) {
+	void timer_debug_print(gpointer data, gpointer user_data) {
 		struct ekg_source *t = data;
 		const gchar *plugin;
 		gchar *tmp;
@@ -812,7 +816,7 @@ COMMAND(cmd_at)
 		else if (params[0])
 			a_name = params[0];
 
-		inline void timer_print(gpointer data, gpointer user_data) {
+		void timer_print(gpointer data, gpointer user_data) {
 			struct ekg_source *t = data;
 			GTimeVal ends, tv;
 			struct tm *at_time;
@@ -1039,7 +1043,7 @@ COMMAND(cmd_timer)
 		else if (params[0])
 			t_name = params[0];
 
-		inline void timer_print_list(gpointer data, gpointer user_data) {
+		void timer_print_list(gpointer data, gpointer user_data) {
 			struct ekg_source *t = data;
 			char *tmp;
 
