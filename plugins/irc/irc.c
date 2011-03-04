@@ -453,31 +453,15 @@ out_recodes_t *irc_find_out_recode(list_t rl, char *encname) {
 	return NULL;
 }
 
-recoded_channels_t *irc_find_recode_channel(list_t rcl, char *channame) {
-	recoded_channels_t *r_channel;
-
-	if (!(channame && rcl))
-		return NULL;
-
-	for ( ; rcl; rcl = rcl->next) {
-		r_channel = (recoded_channels_t *)(rcl->data);
-		if ( r_channel->name && !xstrcasecmp(r_channel->name, channame) )
-			return r_channel;
-	}
-	return NULL;
-}
-
 static char *irc_convert_out(irc_private_t *j, char *recipient, const char *line) {
 	char *recoded;
-	recoded_channels_t *r_channel;
 
 	if ((j->recoded_channels)) {
 		/* channel/nick recode */
 		char *channame = (!xstrncasecmp(recipient, IRC4, 4)) ? recipient+4 : recipient;
-		if ((r_channel = irc_find_recode_channel(j->recoded_channels, channame))) {
-			if ((recoded = ekg_convert_string_p(line, r_channel->recode->conv_out)))
-				return recoded;
-		}
+		gchar *enc = g_datalist_get_data(&j->recoded_channels, channame);
+		if (enc)
+			return ekg_recode_to(enc, line);
 	}
 
 	recoded = NULL;
@@ -492,33 +476,13 @@ static void irc_changed_recode_list(session_t *s, const char *var) {
 	const char *val;
 	irc_private_t *j;
 	char **list1, **list2, *nicks, *encoding;
-	void *conv_in, *conv_out;
 	int i,i2;
-	list_t rcl, rl;
-	out_recodes_t *recode;
-	recoded_channels_t *r_channel;
 
-	if (!s || !(j = s->priv))
+	g_assert(s);
+	if (!(j = s->priv))
 		return;
 
-	/* Clean old lists */
-	for (rcl = j->recoded_channels; rcl; ) {
-		r_channel = rcl->data;
-		rcl = rcl->next;
-		xfree(r_channel->name);
-		list_remove(&rcl, r_channel, 1);
-	}
-	j->recoded_channels = NULL;
-
-	for (rl = j->out_recodes; rl; ) {
-		recode = rl->data;
-		rl = rl->next;
-		xfree(recode->name);
-		ekg_convert_string_destroy(recode->conv_in);
-		ekg_convert_string_destroy(recode->conv_out);
-		list_remove(&rl, recode, 1);
-	}
-	j->out_recodes = NULL;
+	g_datalist_clear(&j->recoded_channels);
 
 	if (!(val = session_get(s, var)) || !*val)
 		return;
@@ -542,28 +506,14 @@ static void irc_changed_recode_list(session_t *s, const char *var) {
 			continue;
 		}
 
-		if (!(recode = irc_find_out_recode(j->out_recodes, encoding))) {
-			if (!(conv_in = ekg_convert_string_init(encoding, NULL, &(conv_out)))) {
-				debug_error("[irc] recode_list error: unknown encoding '%s'\n", encoding);
-				continue;
-			}
-			recode = xmalloc(sizeof(out_recodes_t));
-			recode->name = xstrdup(encoding);
-			recode->conv_in  = conv_in;
-			recode->conv_out = conv_out;
-			list_add(&(j->out_recodes), recode);
-		}
-
 		list2 = array_make(nicks, ",", 0, 1, 0);
 		for(i2=0; list2[i2]; i2++) {
-			if ((r_channel = irc_find_recode_channel(j->recoded_channels, list2[i2]))) {
+			if (g_datalist_get_data(&j->recoded_channels, list2[i2])) {
 				debug_error("[irc] recode_list. Duplicated channel/nick '%s'. Skipped.'\n", list2[i2]);
 				continue;
 			}
-			r_channel = xmalloc(sizeof(recoded_channels_t));
-			r_channel->name = xstrdup(list2[i2]);
-			r_channel->recode = recode;
-			list_add(&(j->recoded_channels), r_channel);
+			g_datalist_set_data_full(&j->recoded_channels, list2[i2],
+					g_strdup(encoding), g_free);
 		}
 		g_strfreev(list2);
 	}

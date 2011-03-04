@@ -66,8 +66,7 @@ typedef struct _irc_private_t {
 	list_t awaylog;
 
 	gchar **auto_guess_encoding; /* encoding names */
-	list_t out_recodes;
-	list_t recoded_channels;
+	GData *recoded_channels;
 
 	gchar *conv;
 } irc_private_t;
