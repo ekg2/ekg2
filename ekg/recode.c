@@ -135,6 +135,8 @@ char *ekg_convert_string(const char *ps, const char *from, const char *to) {
 	char *res;
 	gsize written;
 
+	if (!ps) /* compat, please do not rely on it */
+		return NULL;
 	if (!from)
 		from = "utf8";
 	if (!to)
@@ -183,67 +185,43 @@ void ekg_recode_dec_ref(const gchar *enc) {
 }
 
 char *ekg_recode_from_core(const gchar *enc, gchar *buf) {
-	char *res = ekg_recode_from_core_use(enc, buf);
-	if (res != buf)
-		g_free(buf);
+	char *res = ekg_recode_to(enc, buf);
+	g_free(buf);
 	return res;
 }
 
 gchar *ekg_recode_to_core(const gchar *enc, char *buf) {
-	gchar *res = ekg_recode_to_core_use(enc, buf);
-	if (res != buf)
-		g_free(buf);
+	gchar *res = ekg_recode_from(enc, buf);
+	g_free(buf);
 	return res;
 }
 
 char *ekg_recode_from_core_dup(const gchar *enc, const gchar *buf) {
-	char *res = ekg_recode_from_core_use(enc, buf);
-	return res == buf ? g_strdup(res) : res;
+	return ekg_recode_to(enc, buf);
 }
 
 gchar *ekg_recode_to_core_dup(const gchar *enc, const char *buf) {
-	gchar *res = ekg_recode_to_core_use(enc, buf);
-	return res == buf ? g_strdup(res) : res;
+	return ekg_recode_from(enc, buf);
 }
 
 const char *ekg_recode_from_core_use(const gchar *enc, const gchar *buf) {
-	gsize written;
-	char *res;
-
-	if (!buf)
-		return NULL;
-
-	res = g_convert_with_fallback(buf, -1, enc, "utf8",
-			NULL, NULL, &written, NULL);
-	return res ? res : g_strdup(buf);
+	return ekg_recode_to(enc, buf);
 }
 
 const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
-	gsize written;
-	gchar *res;
-
-	if (!buf)
-		return NULL;
-
-	res = g_convert_with_fallback(buf, -1, "utf8", enc,
-			NULL, NULL, &written, NULL);
-	if (!res) {
-		res = g_strdup(buf);
-		ekg_fix_utf8(res);
-	}
-	return res;
+	return ekg_recode_from(enc, buf);
 }
 
 gchar *ekg_recode_from(const gchar *enc, const char *str) {
 	if (G_UNLIKELY(!enc))
 		return ekg_recode_from_locale(str);
-	return ekg_recode_to_core_dup(enc, str);
+	return ekg_convert_string(str, enc, NULL);
 }
 
 char *ekg_recode_to(const gchar *enc, const gchar *str) {
 	if (G_UNLIKELY(!enc))
 		return ekg_recode_to_locale(str);
-	return ekg_recode_from_core_dup(enc, str);
+	return ekg_convert_string(str, NULL, enc);
 }
 
 gchar *ekg_recode_from_locale(const char *str) {
@@ -253,14 +231,14 @@ gchar *ekg_recode_from_locale(const char *str) {
 			ekg_fix_utf8(tmp);
 		return tmp;
 	} else
-		return ekg_recode_to_core_dup(console_charset, str);
+		return ekg_recode_from(console_charset, str);
 }
 
 char *ekg_recode_to_locale(const gchar *str) {
 	if (console_charset_is_utf8)
 		return g_strdup(str);
 	else
-		return ekg_recode_from_core_dup(console_charset, str);
+		return ekg_recode_to(console_charset, str);
 }
 
 void ekg_fix_utf8(gchar *buf) {
