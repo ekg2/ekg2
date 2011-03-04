@@ -16,6 +16,7 @@ plugins/jabber/jabber.c
 plugins/jogger/jogger.c
 plugins/logsoracle/main.c
 plugins/mail/main.c
+plugins/ncurses/main.c
 plugins/python/python-ekg.c
 plugins/python/python-user.c
 plugins/python/python-window.c
