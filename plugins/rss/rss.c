@@ -1,4 +1,5 @@
 /*
+ *  (C) Copyright 2011 Paweł Zuzelski <pawelz@google.com>
  *  (C) Copyright 2006 Jakub Zawadzki <darkjames@darkjames.ath.cx>
  *
  *  This program is free software; you can redistribute it and/or modify
@@ -14,9 +15,6 @@
  *  along with this program; if not, write to the Free Software
  *  Foundation, Inc., 675 Mass Ave, Cambridge, MA 02139, USA.
  */
-
-#include "ekg2.h"
-#ifdef HAVE_LIBEXPAT
 
 #include <errno.h>
 #include <sys/types.h>
@@ -39,13 +37,19 @@
 
 #include <ekg/net.h>
 
-#ifdef HAVE_EXPAT_H
-# include <expat.h>
-#endif
+#include <expat.h>
+
+#include "ekg2.h"
+
+#define feed_private(s) ((s && s->priv) ? ((feed_private_t *) s->priv)->priv_data : NULL)
+
+extern plugin_t feed_plugin;
+
+typedef struct {
+	void *priv_data;
+} rss_private_t;
 
 #define RSS_DEFAULT_TIMEOUT 60
-
-#include "feed.h"
 
 #define RSS_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define RSS_FLAGS_TARGET RSS_ONLY | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
@@ -100,315 +104,32 @@ typedef struct rss_channel_list {
 	struct rss_item_list *rss_items;	/* list of channel items */
 } rss_channel_t;
 
-typedef struct rss_feed_list {
-	struct rss_feed_list *next;
+typedef struct rss_rss_list {
+	struct rss_rss_list *next;
 
 	char *session;
 
 	char *url;		/* url */
 	char *uid;		/* rss:url */
 
-	int resolving;		/* we wait for resolver ? */
-	int connecting;		/* we wait for connect() ? */
-	int getting;		/* we wait for read()	 ? */
+	int resolving;		/* we are waiting for resolver ? */
+	int connecting;		/* we are waiting for connect() ? */
+	int getting;		/* we are waiting for read()	 ? */
 
 	int headers_done;
 	struct rss_channel_list *rss_channels;
-/* XXX headers_* */
 
+/* XXX headers_* */
 	string_t headers;	/* headers */
 	string_t buf;		/* buf with requested file */
+
 /* PROTOs: */
 	rss_proto_t proto;
 	char *host;	/* protos: RSS_PROTO_HTTP, RSS_PROTO_HTTPS, RSS_PROTO_FTP			hostname	*/
 	char *ip;	/*		j/w								cached ip addr	*/
 	int port;	/*		j/w								port		*/
 	char *file;	/* protos:	j/w RSS_PROTO_FILE						file		*/
-} rss_feed_t;
-
-static LIST_FREE_ITEM(rss_item_free_item, rss_item_t *) {
-	xfree(data->session);
-	xfree(data->url);
-	xfree(data->title);
-	xfree(data->descr);
-}
-
-DYNSTUFF_LIST_DECLARE_WC(rss_items, rss_item_t, rss_item_free_item,
-	static __DYNSTUFF_ADD,			/* rss_items_add() */
-	__DYNSTUFF_NOREMOVE,
-	static __DYNSTUFF_DESTROY,		/* rss_items_destroy() */
-	static __DYNSTUFF_COUNT)		/* rss_items_count() */
-
-static LIST_FREE_ITEM(rss_channel_free_item, rss_channel_t *) {
-	xfree(data->session);
-	xfree(data->url);
-	xfree(data->title);
-	xfree(data->descr);
-	xfree(data->lang);
-	rss_items_destroy(&data->rss_items);
-}
-
-DYNSTUFF_LIST_DECLARE_WC(rss_channels, rss_channel_t, rss_channel_free_item,
-	static __DYNSTUFF_ADD,			/* rss_channels_add() */
-	__DYNSTUFF_NOREMOVE,
-	static __DYNSTUFF_DESTROY,		/* rss_channels_destroy() */
-	static __DYNSTUFF_COUNT)		/* rss_channels_count() */
-
-static rss_feed_t *feeds;
-
-static LIST_FREE_ITEM(feeds_free_item, rss_feed_t *) {
-	xfree(data->session);
-	xfree(data->url);
-	xfree(data->uid);
-	rss_channels_destroy(&data->rss_channels);
-	string_free(data->buf, 1);
-	string_free(data->headers, 1);
-	xfree(data->host);
-	xfree(data->ip);
-	xfree(data->file);
-}
-
-DYNSTUFF_LIST_DECLARE(feeds, rss_feed_t, feeds_free_item,
-	static __DYNSTUFF_LIST_ADD,			/* feeds_add() */
-	__DYNSTUFF_NOREMOVE,
-	static __DYNSTUFF_LIST_DESTROY)			/* feeds_destroy() */
-
-
-static void rss_string_append(rss_feed_t *f, const char *str) {
-	string_t buf		= f->buf;
-
-	if (!buf) buf = f->buf =	string_init(str);
-	else				string_append(buf, str);
-	string_append_c(buf, '\n');
-}
-
-static void rss_set_statusdescr(const char *uid, int status, char *descr) {
-	session_t *s;
-
-	for (s = sessions; s; s = s->next) {
-		if (!xstrncmp(s->uid, "rss:", 4))
-			feed_set_statusdescr(userlist_find(s, uid), status, descr);
-	}
-}
-
-static void rss_set_status(const char *uid, int status) {
-	session_t *s;
-
-	for (s = sessions; s; s = s->next) {
-		if (!xstrncmp(s->uid, "rss:", 4))
-			feed_set_status(userlist_find(s, uid), status);
-	}
-}
-
-static void rss_set_descr(const char *uid, char *descr) {
-	session_t *s;
-
-	for (s = sessions; s; s = s->next) {
-		if (!xstrncmp(s->uid, "rss:", 4))
-			feed_set_descr(userlist_find(s, uid), descr);
-	}
-}
-
-static rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *title, const char *descr) {
-	session_t *s	= session_find(c->session);
-
-	int hash_url	= url	? ekg_hash(url)   : 0;
-	int hash_title	= title ? ekg_hash(title) : 0;
-	int hash_descr	= descr ? ekg_hash(descr) : 0;
-
-	struct rss_item_list *l;
-	rss_item_t *item;
-
-	for (l = c->rss_items; l; l = l->next) {
-		item = l;
-
-		if (item->hash_url != hash_url || xstrcmp(url, item->url)) continue;
-		if (session_int_get(s, "item_enable_title_checking") == 1 && (item->hash_title != hash_title || xstrcmp(title, item->title))) continue;
-		if (session_int_get(s, "item_enable_descr_checking") == 1 && (item->hash_descr != hash_descr || xstrcmp(descr, item->descr))) continue;
-
-		return item;
-	}
-
-	item		= xmalloc(sizeof(rss_item_t));
-	item->url	= xstrdup(url);
-	item->hash_url	= hash_url;
-	item->title	= xstrdup(title);
-	item->hash_title= hash_title;
-	item->descr	= xstrdup(descr);
-	item->hash_descr= hash_descr;
-
-	item->other_tags= string_init(NULL);
-	item->new	= 1;
-
-	rss_items_add(&(c->rss_items), item);
-	return item;
-}
-
-static rss_channel_t *rss_channel_find(rss_feed_t *f, const char *url, const char *title, const char *descr, const char *lang) {
-	session_t *s	= session_find(f->session);
-
-	int hash_url	= url	? ekg_hash(url)   : 0;
-	int hash_title	= title ? ekg_hash(title) : 0;
-	int hash_descr	= descr ? ekg_hash(descr) : 0;
-	int hash_lang	= lang	? ekg_hash(lang)  : 0;
-
-	struct rss_channel_list *l;
-	rss_channel_t *channel;
-
-	for (l = f->rss_channels; l; l = l->next) {
-		channel = l;
-
-		if (channel->hash_url != hash_url || xstrcmp(url, channel->url)) continue;
-		if (session_int_get(s, "channel_enable_title_checking") == 1 && (channel->hash_title != hash_title || xstrcmp(title, channel->title))) continue;
-		if (session_int_get(s, "channel_enable_descr_checking") == 1 && (channel->hash_descr != hash_descr || xstrcmp(descr, channel->descr))) continue;
-		if (session_int_get(s, "channel_enable_lang_checking")	== 1 && (channel->hash_lang  != hash_lang  || xstrcmp(lang, channel->lang))) continue;
-
-		return channel;
-	}
-
-	channel			= xmalloc(sizeof(rss_channel_t));
-	channel->session	= xstrdup(f->session);
-	channel->url		= xstrdup(url);
-	channel->hash_url	= hash_url;
-	channel->title		= xstrdup(title);
-	channel->hash_title	= hash_title;
-	channel->descr		= xstrdup(descr);
-	channel->hash_descr	= hash_descr;
-	channel->lang		= xstrdup(lang);
-	channel->hash_lang	= hash_lang;
-
-	channel->new	= 1;
-
-	rss_channels_add(&(f->rss_channels), channel);
-	return channel;
-}
-
-static rss_feed_t *rss_feed_find(session_t *s, const char *url) {
-	struct rss_feed_list *l;
-	rss_feed_t *feed;
-
-	if (!xstrncmp(url, "rss:", 4)) url += 4;
-
-	for (l = feeds; l; l = l->next) {
-		feed = l;
-
-		if (!xstrcmp(feed->url, url))
-			return feed;
-	}
-
-	feed		= xmalloc(sizeof(rss_feed_t));
-	feed->session	= xstrdup(s->uid);
-	feed->uid	= saprintf("rss:%s", url);
-	feed->url	= xstrdup(url);
-
-/*  URI: ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))? */
-
-	if (!xstrncmp(url, "https://", 8)) {
-		url += 8;				/* skip https:// */
-		feed->proto = RSS_PROTO_HTTPS;
-	} else if (!xstrncmp(url, "ftp://", 6)) {
-		url += 6;				/* skip ftp://	*/
-		feed->proto = RSS_PROTO_FTP;
-	} else if (!xstrncmp(url, "file://", 7)) {
-		url += 7;				/* skip file:// */
-		feed->proto = RSS_PROTO_FILE;
-	} else if (!xstrncmp(url, "http://", 7)) {
-		url += 7;				/* skip http:// */
-		feed->proto = RSS_PROTO_HTTP;
-	} else if (!xstrncmp(url, "exec:", 5)) {
-		url += 5;
-		feed->proto = RSS_PROTO_EXEC;
-	}
-
-	if (feed->proto == RSS_PROTO_HTTP || feed->proto == RSS_PROTO_HTTPS || feed->proto == RSS_PROTO_FTP) {
-		const char *req;
-		char *host = NULL, *tmp;
-
-		if ((req = xstrchr(url, '/')))	feed->host = xstrndup(url, req - url);
-		else				feed->host = xstrdup(url);
-
-		if ((tmp = xstrchr(host, ':'))) {	/* port http://www.cos:1234 */
-			feed->port = atoi(tmp+1);
-			*tmp = 0;
-		} else {
-			if (feed->proto == RSS_PROTO_FTP)	feed->port = 21;
-			if (feed->proto == RSS_PROTO_HTTP)	feed->port = 80;
-			if (feed->proto == RSS_PROTO_HTTPS)	feed->port = 443;
-		}
-		url = req;
-	}
-	if (feed->proto == RSS_PROTO_HTTP || feed->proto == RSS_PROTO_HTTPS || feed->proto == RSS_PROTO_FTP || feed->proto == RSS_PROTO_FILE || feed->proto == RSS_PROTO_EXEC)
-		feed->file = xstrdup(url);
-
-	debug_white("[rss] proto: %d url: %s port: %d url: %s file: %s\n", feed->proto, feed->url, feed->port, feed->url, feed->file);
-
-	feeds_add(feed);
-	return feed;
-}
-
-typedef struct xmlnode_s {
-	char *name;
-	string_t data;
-	char **atts;
-
-	struct xmlnode_s *parent;
-	struct xmlnode_s *children;
-
-	struct xmlnode_s *next;
-} xmlnode_t;
-
-typedef struct {
-	rss_feed_t *f;
-	xmlnode_t *node;
-	char *no_unicode;
-} rss_fetch_process_t;
-
-static void rss_fetch_error(rss_feed_t *f, const char *str) {
-	debug_error("rss_fetch_error() %s\n", str);
-	rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, xstrdup(str));
-}
-
-/* ripped from jabber plugin */
-static void rss_handle_start(void *data, const char *name, const char **atts) {
-	rss_fetch_process_t *j = data;
-	xmlnode_t *n, *newnode;
-	int arrcount;
-	int i;
-
-	if (!data || !name) {
-		debug_error("[rss] rss_handle_start() invalid parameters\n");
-		return;
-	}
-
-	newnode = xmalloc(sizeof(xmlnode_t));
-	newnode->name = xstrdup(name);
-	newnode->data = string_init(NULL);
-
-	if ((n = j->node)) {
-		newnode->parent = n;
-
-		if (!n->children) {
-			n->children = newnode;
-		} else {
-			xmlnode_t *m = n->children;
-
-			while (m->next)
-				m = m->next;
-
-			m->next = newnode;
-			newnode->parent = n;
-		}
-	}
-	arrcount = g_strv_length((char **) atts);
-
-	if (arrcount > 0) {
-		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
-		for (i = 0; i < arrcount; i++)
-			newnode->atts[i] = rss_convert_string(atts[i], j->no_unicode);
-	} else	newnode->atts = NULL;
-
-	j->node = newnode;
-}
+} rss_rss_t;
 
 struct htmlent_t {
 	int l;
@@ -672,6 +393,578 @@ static const struct htmlent_t html_entities[] = {
 	{ 0,	NULL,		0	}
 };
 
+static int rss_theme_init();
+void rss_protocol_deinit(void *priv);
+void *rss_protocol_init(session_t *session);
+void rss_init();
+void rss_deinit();
+
+PLUGIN_DEFINE(rss, PLUGIN_PROTOCOL, rss_theme_init);
+
+static QUERY(rss_validate_uid)
+{
+	char *uid = *(va_arg(ap, char **));
+	int *valid = va_arg(ap, int *);
+
+	if (!uid)
+		return 0;
+
+	if (!xstrncasecmp(uid, "rss:", 4)) {
+		(*valid)++;
+		return -1;
+	}
+
+	return 0;
+}
+
+static QUERY(rss_session_init) {
+	char *session = *(va_arg(ap, char**));
+	session_t *s = session_find(session);
+
+	rss_private_t *j;
+
+	if (!s || s->priv || s->plugin != &rss_plugin)
+		return 1;
+
+	j = xmalloc(sizeof(rss_private_t));
+	j->priv_data = rss_protocol_init(s);
+
+	s->priv = j;
+	userlist_read(s);
+	return 0;
+}
+
+static QUERY(rss_session_deinit) {
+	char *session = *(va_arg(ap, char**));
+	session_t *s = session_find(session);
+
+	rss_private_t *j;
+
+	if (!s || !(j = s->priv) || s->plugin != &rss_plugin)
+		return 1;
+
+	userlist_write(s);
+	s->priv			= NULL;
+	rss_protocol_deinit(j->priv_data);
+
+	xfree(j);
+
+	return 0;
+}
+
+// #define EKG_WINACT_RSS EKG_WINACT_MSG // till 4616
+#define EKG_WINACT_RSS EKG_WINACT_IMPORTANT
+
+	/* new:
+	 *	0x0 - old
+	 *	0x1 - new
+	 *	0x2 - modified
+	 */
+
+	/* mtags: (by default rss_message() won't display any messages if new == 0, but if user want to display again (?) news, we must allow him)
+	 *	0x0 - none
+	 *	0x8 - display all headers / sheaders
+	 */
+
+static QUERY(rss_message) {
+	char *session	= *(va_arg(ap, char **));
+	char *uid	= *(va_arg(ap, char **));
+	char *sheaders	= *(va_arg(ap, char **));
+	char *headers	= *(va_arg(ap, char **));
+	char *title	= *(va_arg(ap, char **));
+	char *url	= *(va_arg(ap, char **));
+	char *body	= *(va_arg(ap, char **));
+
+	int *new	= va_arg(ap, int *);		/* 0 - old; 1 - new; 2 - modified */
+	int mtags	= *(va_arg(ap, int *));
+
+	session_t *s	= session_find(session);
+	char *tmp;
+
+	const char *dheaders	= session_get(s, "display_headers");
+	const char *dsheaders	= session_get(s, "display_server_headers");
+	int dmode		= session_int_get(s, "display_mode");
+	int mw			= session_int_get(s, "make_window");
+
+	const char *target	= NULL;
+	window_t *targetwnd	= NULL;
+
+	if (*new == 0 && !mtags) return 0;
+
+	if (mtags)	/* XXX */
+		dmode = mtags;
+
+	switch (mw) {			/* XXX, __current ? */
+		case 0:
+			target = "__status";
+			targetwnd = window_status;
+			break;
+		case 1:
+			target = session;
+			break;
+		case 2:
+		default:
+			if (!(target = get_nickname(s, uid)))
+				target = uid;
+			break;
+	}
+
+	if (mw)
+		targetwnd = window_new(target, s, 0);
+
+	switch (dmode) {
+		case 0:	 print_window_w(targetwnd, EKG_WINACT_RSS, "rss_message_new", title, url);	/* only notify */
+		case -1: return 0;							/* do nothing */
+
+		case 2:	body		= NULL;					/* only headers */
+		case 1:	if (dmode == 1) headers = NULL;				/* only body */
+		default:							/* default: 3 (body+headers) */
+		case 3:	sheaders = NULL;					/* headers+body */
+		case 4:	break;							/* shreaders+headers+body */
+	}
+
+	print_window_w(targetwnd, EKG_WINACT_RSS, "rss_message_header", title, url);
+
+	if (sheaders) {
+		char *str = xstrdup(sheaders);
+		char *formated = NULL;
+		while ((tmp = split_line(&str))) {
+			char *value = NULL;
+			char *formatka;
+
+			if ((value = xstrchr(tmp, ' '))) *value = 0;
+			if (dsheaders && !xstrstr(dsheaders, tmp)) {
+/*				debug("DSHEADER: %s=%s skipping..\n", tmp, value+1); */
+				continue;	/* jesli mamy display_server_headers a tego nie mamy na liscie to pomijamy */
+			}
+
+			formatka = saprintf("rss_server_header_%s", tmp);
+			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
+
+			formated = format_string(format_find(formatka ? formatka : "rss_server_header_generic"), tmp, value ? value+1 : "");
+			print_window_w(targetwnd, EKG_WINACT_RSS, "rss_message_body", formated ? formated : tmp);
+
+			xfree(formatka);
+		}
+		if (headers || body) print_window_w(targetwnd, EKG_WINACT_RSS, "rss_message_body", "");	/* rozdziel */
+	}
+	if (headers) {
+		char *str, *org;
+		str = org = xstrdup(headers);
+		char *formated = NULL;
+		while ((tmp = split_line(&str))) {
+			char *value = NULL;
+			char *formatka;
+
+			if ((value = xstrchr(tmp, ' '))) *value = 0;
+			if (dheaders && !xstrstr(dheaders, tmp)) {
+				if (value)
+					debug("DHEADER: %s=%s skipping...\n", tmp, value+1);
+				else	debug("DHEADER: %s skipping.. (tag without value?\n", tmp);
+				continue;	/* jesli mamy display_headers a tego nie mamy na liscie to pomijamy */
+			}
+
+			formatka = saprintf("rss_message_header_%s", tmp);
+			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
+
+			formated = format_string(format_find(formatka ? formatka : "rss_message_header_generic"), tmp, value ? value+1 : "");
+			print_window_w(targetwnd, EKG_WINACT_RSS, "rss_message_body", formated ? formated : tmp);
+
+			xfree(formated);
+			xfree(formatka);
+		}
+		if (body) print_window_w(targetwnd, EKG_WINACT_RSS, "rss_message_body", "");	/* rozdziel */
+		xfree(org);
+	}
+	if (body) {
+		print_window_w(targetwnd, EKG_WINACT_RSS, "rss_message_body", body);
+	}
+
+	print_window_w(targetwnd, EKG_WINACT_RSS, "rss_message_footer");
+
+	*new = 0;
+	return 0;
+}
+
+static plugins_params_t rss_plugin_vars[] = {
+/* common vars. */
+	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
+	/* (-1 - nothing; 0 - only notify; 1 - only body; 2 - only headers; 3 - headers+body 4 - sheaders+headers+ body)  default+else: 3 */
+	PLUGIN_VAR_ADD("display_mode",		VAR_INT, "3", 0, NULL),
+	PLUGIN_VAR_ADD("display_headers",	VAR_STR, "pubDate: author: dc:creator: dc:date:", 0, NULL),
+	PLUGIN_VAR_ADD("display_server_headers", VAR_STR,
+	/* display some basic server headers */
+		"HTTP/1.1 "	/* rcode? */
+		"Server: "
+		"Date: ",
+		0, NULL),
+	/* [common var again] 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per rss / group. default+else: 2 */
+	PLUGIN_VAR_ADD("make_window",		VAR_INT, "2", 0, NULL),
+	PLUGIN_VAR_END()
+};
+
+EXPORT int rss_plugin_init(int prio) {
+	PLUGIN_CHECK_VER("rss");
+
+	rss_plugin.params = rss_plugin_vars;
+	plugin_register(&rss_plugin, prio);
+
+	query_register("rss-message",
+				QUERY_ARG_CHARP,		/* session uid */
+				QUERY_ARG_CHARP,		/* uid */
+				QUERY_ARG_CHARP,		/* proto headers */
+				QUERY_ARG_CHARP,		/* headers */
+				QUERY_ARG_CHARP,		/* title */
+				QUERY_ARG_CHARP,		/* url */
+				QUERY_ARG_CHARP,		/* descr */
+				QUERY_ARG_INT,			/* new */
+				QUERY_ARG_INT,			/* modify */
+				QUERY_ARG_END);
+
+	query_connect(&rss_plugin, "session-added", rss_session_init, NULL);
+	query_connect(&rss_plugin, "session-removed", rss_session_deinit, NULL);
+	query_connect(&rss_plugin, "protocol-validate-uid", rss_validate_uid, NULL);
+	query_connect(&rss_plugin, "rss-message", rss_message, NULL);
+
+	rss_init();
+	return 0;
+}
+
+static int rss_plugin_destroy() {
+	plugin_unregister(&rss_plugin);
+	rss_deinit();
+	return 0;
+}
+
+static int rss_theme_init() {
+#ifndef NO_DEFAULT_THEME
+	/* url - %1; title - %2; descr - %3; lang: %4 */
+	format_add("rss_user_info_channel_unread",	_("%K| %g[unread]%n %2 (%1)"), 1);
+	format_add("rss_user_info_channel_read",	_("%K| %R[read]%n %2 (%1)"), 1);
+
+	/* same, but without lang (%4) */
+	format_add("rss_user_info_item_unread",		_("%K|   %g[unread]%n %2 (%1)"), 1);
+	format_add("rss_user_info_item_read",		_("%K|   %R[read]%n %2 (%1)"), 1);
+
+	format_add("rss_status",		_("%> Newstatus: %1 (%2) %3"), 1);	/* XXX */
+
+	format_add("rss_added",		_("%> (%2) Added %T%1%n to subscription\n"), 1);
+	format_add("rss_exists_other",		_("%! (%3) %T%1%n already subscribed as %2\n"), 1);
+	format_add("rss_not_found",		_("%) Subscription %1 not found, cannot unsubscribe"), 1);
+	format_add("rss_deleted",		_("%) (%2) Removed from subscription %T%1%n\n"), 1);
+
+	format_add("rss_message_new",		_("%) New message: %Y%1%n (%W%2%n)"), 1);
+
+	format_add("rss_message_header",	_("%g,+=%G-----%y  %1 %n(ID: %W%2%n)"), 1);
+	format_add("rss_message_body",		_("%g||%n %|%1"), 1);
+	format_add("rss_message_footer",	_("%g|+=%G----- End of message...%n\n"), 1);
+
+		/* %1 - tag %2 - value */
+/* rss: */
+	format_add("rss_message_header_generic",	_("%r %1 %W%2"), 1);
+	format_add("rss_message_header_pubDate:",	_("%r Napisano: %W%2"), 1);
+	format_add("rss_message_header_author:",	_("%r Autor: %W%2"), 1);
+/* rdf: */
+	format_add("rss_message_header_dc:date:",	_("%r Napisano: %W%2"), 1);
+	format_add("rss_message_header_dc:creator:",	_("%r Autor: %W%2"), 1);
+
+	format_add("rss_server_header_generic",	_("%m %1 %W%2"), 1);
+#endif
+
+	return 0;
+}
+
+static LIST_FREE_ITEM(rss_item_free_item, rss_item_t *) {
+	xfree(data->session);
+	xfree(data->url);
+	xfree(data->title);
+	xfree(data->descr);
+}
+
+DYNSTUFF_LIST_DECLARE_WC(rss_items, rss_item_t, rss_item_free_item,
+	static __DYNSTUFF_ADD,			/* rss_items_add() */
+	__DYNSTUFF_NOREMOVE,
+	static __DYNSTUFF_DESTROY,		/* rss_items_destroy() */
+	static __DYNSTUFF_COUNT)		/* rss_items_count() */
+
+static LIST_FREE_ITEM(rss_channel_free_item, rss_channel_t *) {
+	xfree(data->session);
+	xfree(data->url);
+	xfree(data->title);
+	xfree(data->descr);
+	xfree(data->lang);
+	rss_items_destroy(&data->rss_items);
+}
+
+DYNSTUFF_LIST_DECLARE_WC(rss_channels, rss_channel_t, rss_channel_free_item,
+	static __DYNSTUFF_ADD,			/* rss_channels_add() */
+	__DYNSTUFF_NOREMOVE,
+	static __DYNSTUFF_DESTROY,		/* rss_channels_destroy() */
+	static __DYNSTUFF_COUNT)		/* rss_channels_count() */
+
+static rss_rss_t *rsss;
+
+static LIST_FREE_ITEM(rsss_free_item, rss_rss_t *) {
+	xfree(data->session);
+	xfree(data->url);
+	xfree(data->uid);
+	rss_channels_destroy(&data->rss_channels);
+	string_free(data->buf, 1);
+	string_free(data->headers, 1);
+	xfree(data->host);
+	xfree(data->ip);
+	xfree(data->file);
+}
+
+DYNSTUFF_LIST_DECLARE(rsss, rss_rss_t, rsss_free_item,
+	static __DYNSTUFF_LIST_ADD,			/* rsss_add() */
+	__DYNSTUFF_NOREMOVE,
+	static __DYNSTUFF_LIST_DESTROY)			/* rsss_destroy() */
+
+
+static void rss_string_append(rss_rss_t *f, const char *str) {
+	string_t buf		= f->buf;
+
+	if (!buf) buf = f->buf =	string_init(str);
+	else				string_append(buf, str);
+	string_append_c(buf, '\n');
+}
+
+static void rss_set_status(const char *uid, int status) {
+	session_t *s;
+
+	for (s = sessions; s; s = s->next) {
+		userlist_t *u = userlist_find(s, uid);
+		if (u) u->status = status;
+	}
+}
+
+static void rss_set_descr(const char *uid, char *descr) {
+	session_t *s;
+
+	for (s = sessions; s; s = s->next) {
+		userlist_t *u = userlist_find(s, uid);
+		if (u) {
+			char *tmp;
+			tmp = u->descr;
+			u->descr = descr;
+			xfree(tmp);
+		}
+	}
+}
+
+static void rss_set_statusdescr(const char *uid, int status, char *descr) {
+	session_t *s;
+
+	for (s = sessions; s; s = s->next) {
+		if (!xstrncmp(s->uid, "rss:", 4)) {
+			rss_set_status(uid, status);
+			rss_set_descr(uid, descr);
+		}
+	}
+}
+
+static rss_item_t *rss_item_find(rss_channel_t *c, const char *url, const char *title, const char *descr) {
+	session_t *s	= session_find(c->session);
+
+	int hash_url	= url	? ekg_hash(url)   : 0;
+	int hash_title	= title ? ekg_hash(title) : 0;
+	int hash_descr	= descr ? ekg_hash(descr) : 0;
+
+	struct rss_item_list *l;
+	rss_item_t *item;
+
+	for (l = c->rss_items; l; l = l->next) {
+		item = l;
+
+		if (item->hash_url != hash_url || xstrcmp(url, item->url)) continue;
+		if (session_int_get(s, "item_enable_title_checking") == 1 && (item->hash_title != hash_title || xstrcmp(title, item->title))) continue;
+		if (session_int_get(s, "item_enable_descr_checking") == 1 && (item->hash_descr != hash_descr || xstrcmp(descr, item->descr))) continue;
+
+		return item;
+	}
+
+	item		= xmalloc(sizeof(rss_item_t));
+	item->url	= xstrdup(url);
+	item->hash_url	= hash_url;
+	item->title	= xstrdup(title);
+	item->hash_title= hash_title;
+	item->descr	= xstrdup(descr);
+	item->hash_descr= hash_descr;
+
+	item->other_tags= string_init(NULL);
+	item->new	= 1;
+
+	rss_items_add(&(c->rss_items), item);
+	return item;
+}
+
+static rss_channel_t *rss_channel_find(rss_rss_t *f, const char *url, const char *title, const char *descr, const char *lang) {
+	session_t *s	= session_find(f->session);
+
+	int hash_url	= url	? ekg_hash(url)   : 0;
+	int hash_title	= title ? ekg_hash(title) : 0;
+	int hash_descr	= descr ? ekg_hash(descr) : 0;
+	int hash_lang	= lang	? ekg_hash(lang)  : 0;
+
+	struct rss_channel_list *l;
+	rss_channel_t *channel;
+
+	for (l = f->rss_channels; l; l = l->next) {
+		channel = l;
+
+		if (channel->hash_url != hash_url || xstrcmp(url, channel->url)) continue;
+		if (session_int_get(s, "channel_enable_title_checking") == 1 && (channel->hash_title != hash_title || xstrcmp(title, channel->title))) continue;
+		if (session_int_get(s, "channel_enable_descr_checking") == 1 && (channel->hash_descr != hash_descr || xstrcmp(descr, channel->descr))) continue;
+		if (session_int_get(s, "channel_enable_lang_checking")	== 1 && (channel->hash_lang  != hash_lang  || xstrcmp(lang, channel->lang))) continue;
+
+		return channel;
+	}
+
+	channel			= xmalloc(sizeof(rss_channel_t));
+	channel->session	= xstrdup(f->session);
+	channel->url		= xstrdup(url);
+	channel->hash_url	= hash_url;
+	channel->title		= xstrdup(title);
+	channel->hash_title	= hash_title;
+	channel->descr		= xstrdup(descr);
+	channel->hash_descr	= hash_descr;
+	channel->lang		= xstrdup(lang);
+	channel->hash_lang	= hash_lang;
+
+	channel->new	= 1;
+
+	rss_channels_add(&(f->rss_channels), channel);
+	return channel;
+}
+
+static rss_rss_t *rss_rss_find(session_t *s, const char *url) {
+	struct rss_rss_list *l;
+	rss_rss_t *rss;
+
+	if (!xstrncmp(url, "rss:", 4)) url += 4;
+
+	for (l = rsss; l; l = l->next) {
+		rss = l;
+
+		if (!xstrcmp(rss->url, url))
+			return rss;
+	}
+
+	rss		= xmalloc(sizeof(rss_rss_t));
+	rss->session	= xstrdup(s->uid);
+	rss->uid	= saprintf("rss:%s", url);
+	rss->url	= xstrdup(url);
+
+/*  URI: ^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\?([^#]*))?(#(.*))? */
+
+	if (!xstrncmp(url, "https://", 8)) {
+		url += 8;				/* skip https:// */
+		rss->proto = RSS_PROTO_HTTPS;
+	} else if (!xstrncmp(url, "ftp://", 6)) {
+		url += 6;				/* skip ftp://	*/
+		rss->proto = RSS_PROTO_FTP;
+	} else if (!xstrncmp(url, "file://", 7)) {
+		url += 7;				/* skip file:// */
+		rss->proto = RSS_PROTO_FILE;
+	} else if (!xstrncmp(url, "http://", 7)) {
+		url += 7;				/* skip http:// */
+		rss->proto = RSS_PROTO_HTTP;
+	} else if (!xstrncmp(url, "exec:", 5)) {
+		url += 5;
+		rss->proto = RSS_PROTO_EXEC;
+	}
+
+	if (rss->proto == RSS_PROTO_HTTP || rss->proto == RSS_PROTO_HTTPS || rss->proto == RSS_PROTO_FTP) {
+		const char *req;
+		char *host = NULL, *tmp;
+
+		if ((req = xstrchr(url, '/')))	rss->host = xstrndup(url, req - url);
+		else				rss->host = xstrdup(url);
+
+		if ((tmp = xstrchr(host, ':'))) {	/* port http://www.cos:1234 */
+			rss->port = atoi(tmp+1);
+			*tmp = 0;
+		} else {
+			if (rss->proto == RSS_PROTO_FTP)	rss->port = 21;
+			if (rss->proto == RSS_PROTO_HTTP)	rss->port = 80;
+			if (rss->proto == RSS_PROTO_HTTPS)	rss->port = 443;
+		}
+		url = req;
+	}
+	if (rss->proto == RSS_PROTO_HTTP || rss->proto == RSS_PROTO_HTTPS || rss->proto == RSS_PROTO_FTP || rss->proto == RSS_PROTO_FILE || rss->proto == RSS_PROTO_EXEC)
+		rss->file = xstrdup(url);
+
+	debug_white("[rss] proto: %d url: %s port: %d url: %s file: %s\n", rss->proto, rss->url, rss->port, rss->url, rss->file);
+
+	rsss_add(rss);
+	return rss;
+}
+
+typedef struct xmlnode_s {
+	char *name;
+	string_t data;
+	char **atts;
+
+	struct xmlnode_s *parent;
+	struct xmlnode_s *children;
+
+	struct xmlnode_s *next;
+} xmlnode_t;
+
+typedef struct {
+	rss_rss_t *f;
+	xmlnode_t *node;
+	char *no_unicode;
+} rss_fetch_process_t;
+
+static void rss_fetch_error(rss_rss_t *f, const char *str) {
+	debug_error("rss_fetch_error() %s\n", str);
+	rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, xstrdup(str));
+}
+
+/* ripped from jabber plugin */
+static void rss_handle_start(void *data, const char *name, const char **atts) {
+	rss_fetch_process_t *j = data;
+	xmlnode_t *n, *newnode;
+	int arrcount;
+	int i;
+
+	if (!data || !name) {
+		debug_error("[rss] rss_handle_start() invalid parameters\n");
+		return;
+	}
+
+	newnode = xmalloc(sizeof(xmlnode_t));
+	newnode->name = xstrdup(name);
+	newnode->data = string_init(NULL);
+
+	if ((n = j->node)) {
+		newnode->parent = n;
+
+		if (!n->children) {
+			n->children = newnode;
+		} else {
+			xmlnode_t *m = n->children;
+
+			while (m->next)
+				m = m->next;
+
+			m->next = newnode;
+			newnode->parent = n;
+		}
+	}
+	arrcount = g_strv_length((char **) atts);
+
+	if (arrcount > 0) {
+		newnode->atts = xmalloc((arrcount + 1) * sizeof(char *));
+		for (i = 0; i < arrcount; i++)
+			newnode->atts[i] = rss_convert_string(atts[i], j->no_unicode);
+	} else	newnode->atts = NULL;
+
+	j->node = newnode;
+}
+
 static void rss_handle_end(void *data, const char *name) {
 	rss_fetch_process_t *j = data;
 	xmlnode_t *n;
@@ -762,11 +1055,11 @@ static int rss_handle_encoding(void *data, const char *name, XML_Encoding *info)
 	return 1;
 }
 
-static void rss_parsexml_atom(rss_feed_t *f, xmlnode_t *node) {
+static void rss_parsexml_atom(rss_rss_t *f, xmlnode_t *node) {
 	debug_error("rss_parsexml_atom() sorry, atom not implemented\n");
 }
 
-static void rss_parsexml_rdf(rss_feed_t *f, xmlnode_t *node) {
+static void rss_parsexml_rdf(rss_rss_t *f, xmlnode_t *node) {
 	rss_channel_t *chan;
 
 	debug("rss_parsexml_rdf (channels oldcount: %d)\n", rss_channels_count(f->rss_channels));
@@ -811,7 +1104,7 @@ static void rss_parsexml_rdf(rss_feed_t *f, xmlnode_t *node) {
 	}
 }
 
-static void rss_parsexml_rss(rss_feed_t *f, xmlnode_t *node) {
+static void rss_parsexml_rss(rss_rss_t *f, xmlnode_t *node) {
 	debug("rss_parsexml_rss (channels oldcount: %d)\n", rss_channels_count(f->rss_channels));
 
 	for (; node; node = node->next) {
@@ -884,7 +1177,7 @@ static void xmlnode_free(xmlnode_t *n) {
 	xfree(n);
 }
 
-static void rss_fetch_process(rss_feed_t *f, const char *str) {
+static void rss_fetch_process(rss_rss_t *f, const char *str) {
 	int new_items = 0;
 	struct rss_channel_list *l;
 
@@ -904,7 +1197,7 @@ static void rss_fetch_process(rss_feed_t *f, const char *str) {
 	if (XML_Parse(parser, str, xstrlen(str), 1) == XML_STATUS_OK) {
 		for (node = priv->node; node; node = node->next) {
 			if (!xstrcmp(node->name, "rss")) rss_parsexml_rss(f, node->children);
-			else if (!xstrcmp(node->name, "feed")) rss_parsexml_atom(f, node->children); /* xmlns */
+			else if (!xstrcmp(node->name, "rss")) rss_parsexml_atom(f, node->children); /* xmlns */
 			else if (!xstrcmp(node->name, "rdf:RDF")) rss_parsexml_rdf(f, node->children);
 			else {
 				debug("UNKNOWN node->name: %s\n", node->name);
@@ -949,7 +1242,7 @@ fail:
 }
 
 static WATCHER_LINE(rss_fetch_handler) {
-	rss_feed_t	*f = data;
+	rss_rss_t	*f = data;
 
 	if (type) {
 		if (f->buf)
@@ -983,7 +1276,7 @@ static WATCHER_LINE(rss_fetch_handler) {
 static WATCHER(rss_fetch_handler_connect) {
 	int		res = 0;
 	socklen_t	res_size = sizeof(res);
-	rss_feed_t	*f = data;
+	rss_rss_t	*f = data;
 
 	f->connecting = 0;
 
@@ -1006,7 +1299,7 @@ static WATCHER(rss_fetch_handler_connect) {
 		char *request = saprintf(
 			"GET %s HTTP/1.0\r\n"
 			"Host: %s\r\n"
-			"User-Agent: Ekg2 - evilny klient gnu (rss feeder)\r\n"
+			"User-Agent: Ekg2 - evilny klient gnu (ssacz rssuff)\r\n"
 			/* XXX, other headers */
 			"Connection: close\r\n"
 			"\r\n", f->file, f->host);
@@ -1018,7 +1311,7 @@ static WATCHER(rss_fetch_handler_connect) {
 	}
 	f->getting = 1;
 	f->headers_done = 0;
-	watch_add_line(&feed_plugin, fd, WATCH_READ_LINE, rss_fetch_handler, f);
+	watch_add_line(&rss_plugin, fd, WATCH_READ_LINE, rss_fetch_handler, f);
 	return -1;
 }
 
@@ -1027,18 +1320,18 @@ typedef struct {
 	char *uid;
 } rss_resolver_t;
 
-static int rss_url_fetch(rss_feed_t *f, int quiet);
+static int rss_url_fetch(rss_rss_t *f, int quiet);
 
 static WATCHER(rss_url_fetch_resolver) {
 	rss_resolver_t *b = data;
-	rss_feed_t *f;
+	rss_rss_t *f;
 
 	struct in_addr a;
 	int len;
 
 	debug("rss_url_fetch_resolver() fd: %d type: %d\n", fd, type);
 
-	f = rss_feed_find(session_find(b->session), b->uid);
+	f = rss_rss_find(session_find(b->session), b->uid);
 
 	if (type) {
 		f->resolving = 0;
@@ -1071,7 +1364,7 @@ static WATCHER(rss_url_fetch_resolver) {
 	return -1;
 }
 
-static int rss_url_fetch(rss_feed_t *f, int quiet) {
+static int rss_url_fetch(rss_rss_t *f, int quiet) {
 	int fd = -1;
 
 	debug_function("rss_url_fetch() f: 0x%x\n", f);
@@ -1134,7 +1427,7 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 		close(fds[1]);
 
 		fd = fds[0];
-		watch_add_line(&feed_plugin, fd, WATCH_READ_LINE, rss_fetch_handler, f);
+		watch_add_line(&rss_plugin, fd, WATCH_READ_LINE, rss_fetch_handler, f);
 	}
 
 	if (f->proto == RSS_PROTO_HTTP) {
@@ -1167,12 +1460,12 @@ static int rss_url_fetch(rss_feed_t *f, int quiet) {
 
 			ret = connect(fd, (struct sockaddr *) &sin, sizeof(sin));
 
-			watch_add(&feed_plugin, fd, WATCH_WRITE, rss_fetch_handler_connect, f);
+			watch_add(&rss_plugin, fd, WATCH_WRITE, rss_fetch_handler_connect, f);
 		} else {
 			watch_t *w;
 			rss_resolver_t *b;
 
-			if (!(w = ekg_resolver2(&feed_plugin, f->host, rss_url_fetch_resolver, NULL))) {
+			if (!(w = ekg_resolver2(&rss_plugin, f->host, rss_url_fetch_resolver, NULL))) {
 				rss_set_statusdescr(f->uid, EKG_STATUS_ERROR, saprintf("Resolver error: %s\n", strerror(errno)));
 				return -1;
 			}
@@ -1201,13 +1494,13 @@ static COMMAND(rss_command_check) {
 			return -1;
 		}
 
-		return rss_url_fetch(rss_feed_find(session, u->uid), quiet);
+		return rss_url_fetch(rss_rss_find(session, u->uid), quiet);
 	}
 
 	/* if param not given, check all */
 	for (ul = session->userlist; ul; ul = ul->next) {
 		userlist_t *u = ul;
-		rss_feed_t *f = rss_feed_find(session, u->uid);
+		rss_rss_t *f = rss_rss_find(session, u->uid);
 
 		rss_url_fetch(f, quiet);
 	}
@@ -1215,29 +1508,29 @@ static COMMAND(rss_command_check) {
 }
 
 static COMMAND(rss_command_get) {
-	return rss_url_fetch(rss_feed_find(session, target), quiet);
+	return rss_url_fetch(rss_rss_find(session, target), quiet);
 }
 
 static COMMAND(rss_command_show) {
-	rss_feed_t *feed;
+	rss_rss_t *rss;
 
-	for (feed = feeds; feed; feed = feed->next) {
-		/* if (!xstrcmp(feed->uid, XXX)); */
+	for (rss = rsss; rss; rss = rss->next) {
+		/* if (!xstrcmp(rss->uid, XXX)); */
 		rss_channel_t *chan;
 
-		for (chan = feed->rss_channels; chan; chan = chan->next) {
+		for (chan = rss->rss_channels; chan; chan = chan->next) {
 			rss_item_t *item;
 			/* if (!xstrcmp(chan->url, XXX)); */
 
 			for (item = chan->rss_items; item; item = item->next) {
 
 				if (!xstrcmp(item->url, params[0])) {
-					char *proto_headers	= feed->headers->len	? feed->headers->str	: NULL;
+					char *proto_headers	= rss->headers->len	? rss->headers->str	: NULL;
 					char *headers		= item->other_tags->len	? item->other_tags->str : NULL;
 					int modify		= 0x04;			/* XXX */
 
 					query_emit(NULL, "rss-message",
-							&(feed->session), &(feed->uid), &proto_headers, &headers, &(item->title),
+							&(rss->session), &(rss->uid), &proto_headers, &headers, &(item->title),
 							&(item->url),  &(item->descr), &(item->new), &modify);
 				}
 
@@ -1254,7 +1547,7 @@ static COMMAND(rss_command_subscribe) {
 	userlist_t *u;
 
 	if ((u = userlist_find(session, target))) {
-		printq("feed_exists_other", target, format_user(session, u->uid), session_name(session));
+		printq("rss_exists_other", target, format_user(session, u->uid), session_name(session));
 		return -1;
 	}
 
@@ -1282,7 +1575,7 @@ static COMMAND(rss_command_subscribe) {
 		return -1;
 	}
 
-	printq("feed_added", format_user(session, target), session_name(session));
+	printq("rss_added", format_user(session, target), session_name(session));
 	query_emit(NULL, "userlist-refresh");
 	return 0;
 }
@@ -1290,11 +1583,11 @@ static COMMAND(rss_command_subscribe) {
 static COMMAND(rss_command_unsubscribe) {
 	userlist_t *u;
 	if (!(u = userlist_find(session, target))) {
-		printq("feed_not_found", target);
+		printq("rss_not_found", target);
 		return -1;
 	}
 
-	printq("feed_deleted", target, session_name(session));
+	printq("rss_deleted", target, session_name(session));
 	userlist_remove(session, u);
 	query_emit(NULL, "userlist-refresh");
 	return 0;
@@ -1312,23 +1605,23 @@ void *rss_protocol_init(session_t *session) {
 }
 
 void rss_deinit() {
-	feeds_destroy();
+	rsss_destroy();
 }
 
 static QUERY(rss_userlist_info) {
 	userlist_t *u	= *va_arg(ap, userlist_t **);
 	int quiet	= *va_arg(ap, int *);
 
-	rss_feed_t *feed;
+	rss_rss_t *rss;
 
-	if (!u || valid_plugin_uid(&feed_plugin, u->uid) != 1 || u->uid[0] != 'r')
+	if (!u || valid_plugin_uid(&rss_plugin, u->uid) != 1 || u->uid[0] != 'r')
 		return 1;
 
-	for (feed = feeds; feed; feed = feed->next) {
-		if (!xstrcmp(feed->uid, u->uid)) {
+	for (rss = rsss; rss; rss = rss->next) {
+		if (!xstrcmp(rss->uid, u->uid)) {
 			rss_channel_t *chan;
 
-			for (chan = feed->rss_channels; chan; chan = chan->next) {
+			for (chan = rss->rss_channels; chan; chan = chan->next) {
 				rss_item_t *item;
 
 				printq(chan->new ? "rss_user_info_channel_unread" : "rss_user_info_channel_read",
@@ -1347,14 +1640,13 @@ static QUERY(rss_userlist_info) {
 }
 
 void rss_init() {
-	command_add(&feed_plugin, ("rss:check"), "u", rss_command_check, RSS_ONLY, NULL);
-	command_add(&feed_plugin, ("rss:get"), "!u", rss_command_get, RSS_FLAGS_TARGET, NULL);
+	command_add(&rss_plugin, ("rss:check"), "u", rss_command_check, RSS_ONLY, NULL);
+	command_add(&rss_plugin, ("rss:get"), "!u", rss_command_get, RSS_FLAGS_TARGET, NULL);
 
-	command_add(&feed_plugin, ("rss:show"), "!", rss_command_show, RSS_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
+	command_add(&rss_plugin, ("rss:show"), "!", rss_command_show, RSS_ONLY | COMMAND_ENABLEREQPARAMS, NULL);
 
-	command_add(&feed_plugin, ("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL);
-	command_add(&feed_plugin, ("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
+	command_add(&rss_plugin, ("rss:subscribe"), "! ?",	rss_command_subscribe, RSS_FLAGS_TARGET, NULL);
+	command_add(&rss_plugin, ("rss:unsubscribe"), "!u",rss_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
 
-	query_connect(&feed_plugin, "userlist-info", rss_userlist_info, NULL);
+	query_connect(&rss_plugin, "userlist-info", rss_userlist_info, NULL);
 }
-#endif

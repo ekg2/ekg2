@@ -134,12 +134,6 @@ dnl plugins
 
 AC_EKG2_PLUGIN([autoresponder])
 
-AC_EKG2_PLUGIN([feed],, [
-	AC_EKG2_WITH([expat], [
-		AC_EKG2_CHECK_LIB([expat], [XML_ParserCreate], [expat.h],, [EKG2_FAILED_TEST])
-	])
-])
-
 AC_EKG2_PLUGIN([gg], [
 	AC_EKG2_WITH([libgadu], [
 		AC_EKG2_CHECK_PKGCONFIG_LIB([libgadu], [gadu], [gg_logoff], [libgadu.h],, [EKG2_FAILED_TEST])
@@ -283,6 +277,8 @@ AC_EKG2_PLUGIN([ncurses], [
 	])
 ])
 
+AC_EKG2_PLUGIN([nntp])
+
 AC_EKG2_PLUGIN([perl], [
 	AC_EKG2_WITH([perl], [
 		AC_PATH_PROG([PERL], [perl])
@@ -343,6 +339,12 @@ AC_EKG2_PLUGIN([readline], [
 ])
 
 AC_EKG2_PLUGIN([rivchat])
+
+AC_EKG2_PLUGIN([rss], [
+	AC_EKG2_WITH([expat], [
+		AC_EKG2_CHECK_LIB([expat], [XML_ParserCreate], [expat.h],, [EKG2_FAILED_TEST])
+	])
+])
 
 AC_EKG2_PLUGIN([sim], [
 	AC_EKG2_WITH([openssl], [

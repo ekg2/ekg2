@@ -150,17 +150,6 @@ dist_autoresponder_DATA = \
 	plugins/autoresponder/vars-pl.txt
 endif
 
-if ENABLE_FEED
-plugin_LTLIBRARIES += plugins/feed/feed.la
-
-plugins_feed_feed_la_SOURCES = \
-	$(noinst_HEADERS) \
-	plugins/feed/feed.c \
-	plugins/feed/feed.h \
-	plugins/feed/nntp.c \
-	plugins/feed/rss.c
-endif
-
 if ENABLE_GG
 plugin_LTLIBRARIES += plugins/gg/gg.la
 
@@ -545,6 +534,15 @@ EXTRA_DIST += \
 	plugins/perl/irc/User.xs
 endif
 
+if ENABLE_NNTP
+plugin_LTLIBRARIES += plugins/nntp/nntp.la
+
+plugins_nntp_nntp_la_SOURCES = \
+	$(noinst_HEADERS) \
+	plugins/nntp/nntp.c
+endif
+
+
 if ENABLE_POLCHAT
 plugin_LTLIBRARIES += plugins/polchat/polchat.la
 
@@ -607,6 +605,15 @@ plugins_rivchat_rivchat_la_SOURCES = \
 	plugins/rivchat/rivchat.c \
 	plugins/rivchat/rivchat.h
 endif
+
+if ENABLE_RSS
+plugin_LTLIBRARIES += plugins/rss/rss.la
+
+plugins_rss_rss_la_SOURCES = \
+	$(noinst_HEADERS) \
+	plugins/rss/rss.c
+endif
+
 
 if ENABLE_SIM
 plugin_LTLIBRARIES += plugins/sim/sim.la
