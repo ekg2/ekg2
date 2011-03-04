@@ -241,6 +241,29 @@ char *ekg_recode_to_locale(const gchar *str) {
 		return ekg_recode_to(console_charset, str);
 }
 
+static gboolean gstring_recode_helper(GString *s, const gchar *from, const gchar *to) {
+	char *res;
+	gsize written;
+
+	res = g_convert_with_fallback(s->str, s->len, to, from, NULL, NULL, &written, NULL);
+
+	if (res) {
+		g_string_truncate(s, 0);
+		g_string_append_len(s, res, written);
+	} else
+		ekg_fix_utf8(s->str);
+
+	return !!res;
+}
+
+gboolean ekg_recode_gstring_from(const gchar *enc, GString *s) {
+	return gstring_recode_helper(s, enc, "utf8");
+}
+
+gboolean ekg_recode_gstring_to(const gchar *enc, GString *s) {
+	return gstring_recode_helper(s, "utf8", enc);
+}
+
 void ekg_fix_utf8(gchar *buf) {
 	const gchar *p = buf;
 
