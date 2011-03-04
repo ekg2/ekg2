@@ -452,22 +452,6 @@ static WATCHER_LINE(handle_stderr)	/* sta³y */
 	return 0;
 }
 
-static void debug_common(const gchar *theme_format, const gchar *message, const gchar *log_domain) {
-	int is_UI = 0;
-	buffer_add(&buffer_debug, theme_format, message);
-
-	query_emit(NULL, "ui-is-initialized", &is_UI);
-
-	if (is_UI && window_debug) {
-		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, message, log_domain);
-
-	}
-#ifdef STDERR_DEBUG	/* STDERR debug */
-	else
-		fprintf(stderr, "%s\n", tmp);
-#endif
-}
-
 /**
  * ekg_debug_handler()
  *
@@ -490,6 +474,7 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 	char *tmp = NULL;
 
 	char *theme_format;
+	int is_UI = 0;
 
 	if (!config_debug)
 		return;
@@ -530,7 +515,17 @@ void ekg_debug_handler(int level, const char *format, va_list ap) {
 	}
 
 	ekg_fix_utf8(tmp); /* debug message can contain random data */
-	debug_common(theme_format, tmp, NULL);
+	buffer_add(&buffer_debug, theme_format, tmp);
+
+	query_emit(NULL, "ui-is-initialized", &is_UI);
+
+	if (is_UI && window_debug) {
+		print_window_w(window_debug, EKG_WINACT_NONE, theme_format, tmp);
+	}
+#ifdef STDERR_DEBUG	/* STDERR debug */
+	else
+		fprintf(stderr, "%s\n", tmp);
+#endif
 	xfree(tmp);
 }
 
@@ -544,18 +539,18 @@ static void glib_debug_handler(const gchar *log_domain, GLogLevelFlags log_level
 		return;
 
 	recurse++;
-	debug_common("debug", message, log_domain);
+	debug("[%s] %s", log_domain, message);
 	recurse--;
 }
 
 static void glib_print_handler(const gchar *string) {
-	debug_common("debug", string, NULL);
+	debug("%s", string);
 }
 
 static void glib_printerr_handler(const gchar *string) {
 	g_strlcpy(last_err_message, string, sizeof(last_err_message));
 
-	debug_common("debug_error", string, NULL);
+	debug_error("%s", string);
 }
 
 static GOptionEntry ekg_options[] = {

@@ -410,15 +410,273 @@ static void rss_handle_start(void *data, const char *name, const char **atts) {
 	j->node = newnode;
 }
 
+struct htmlent_t {
+	int l;
+	char *s;
+	gunichar uni;
+};
+
+static const struct htmlent_t html_entities[] = {
+	{ 4,	"nbsp",		0xa0	},	/* no-break space = non-breaking space  */
+	{ 4,	"quot",		0x22	},	/* quotation mark = APL quote  */
+	{ 3,	"amp",		0x26	},	/* ampersand  */
+	{ 2,	"lt",		0x3c	},	/* less-than sign  */
+	{ 2,	"gt",		0x3e	},	/* greater-than sign  */
+	{ 5,	"iexcl",	0xa1	},	/* inverted exclamation mark  */
+	{ 4,	"cent",		0xa2	},	/* cent sign  */
+	{ 5,	"pound",	0xa3	},	/* pound sign  */
+	{ 6,	"curren",	0xa4	},	/* currency sign  */
+	{ 3,	"yen",		0xa5	},	/* yen sign = yuan sign  */
+	{ 6,	"brvbar",	0xa6	},	/* broken bar = broken vertical bar  */
+	{ 4,	"sect",		0xa7	},	/* section sign  */
+	{ 3,	"uml",		0xa8	},	/* diaeresis = spacing diaeresis  */
+	{ 4,	"copy",		0xa9	},	/* copyright sign  */
+	{ 4,	"ordf",		0xaa	},	/* feminine ordinal indicator  */
+	{ 5,	"laquo",	0xab	},	/* left-pointing double angle quotation mark = left pointing guillemet  */
+	{ 3,	"not",		0xac	},	/* not sign  */
+	{ 3,	"shy",		0xad	},	/* soft hyphen = discretionary hyphen  */
+	{ 3,	"reg",		0xae	},	/* registered sign = registered trade mark sign  */
+	{ 4,	"macr",		0xaf	},	/* macron = spacing macron = overline = APL overbar  */
+	{ 3,	"deg",		0xb0	},	/* degree sign  */
+	{ 6,	"plusmn",	0xb1	},	/* plus-minus sign = plus-or-minus sign  */
+	{ 4,	"sup2",		0xb2	},	/* superscript two = superscript digit two = squared  */
+	{ 4,	"sup3",		0xb3	},	/* superscript three = superscript digit three = cubed  */
+	{ 5,	"acute",	0xb4	},	/* acute accent = spacing acute  */
+	{ 5,	"micro",	0xb5	},	/* micro sign  */
+	{ 4,	"para",		0xb6	},	/* pilcrow sign = paragraph sign  */
+	{ 6,	"middot",	0xb7	},	/* middle dot = Georgian comma = Greek middle dot  */
+	{ 5,	"cedil",	0xb8	},	/* cedilla = spacing cedilla  */
+	{ 4,	"sup1",		0xb9	},	/* superscript one = superscript digit one  */
+	{ 4,	"ordm",		0xba	},	/* masculine ordinal indicator  */
+	{ 5,	"raquo",	0xbb	},	/* right-pointing double angle quotation mark = right pointing guillemet  */
+	{ 6,	"frac14",	0xbc	},	/* vulgar fraction one quarter = fraction one quarter  */
+	{ 6,	"frac12",	0xbd	},	/* vulgar fraction one half = fraction one half  */
+	{ 6,	"frac34",	0xbe	},	/* vulgar fraction three quarters = fraction three quarters  */
+	{ 6,	"iquest",	0xbf	},	/* inverted question mark = turned question mark  */
+	{ 6,	"Agrave",	0xc0	},	/* Latin capital letter A with grave = Latin capital letter A grave  */
+	{ 6,	"Aacute",	0xc1	},	/* Latin capital letter A with acute  */
+	{ 5,	"Acirc",	0xc2	},	/* Latin capital letter A with circumflex  */
+	{ 6,	"Atilde",	0xc3	},	/* Latin capital letter A with tilde  */
+	{ 4,	"Auml",		0xc4	},	/* Latin capital letter A with diaeresis  */
+	{ 5,	"Aring",	0xc5	},	/* Latin capital letter A with ring above = Latin capital letter A ring  */
+	{ 5,	"AElig",	0xc6	},	/* Latin capital letter AE = Latin capital ligature AE  */
+	{ 6,	"Ccedil",	0xc7	},	/* Latin capital letter C with cedilla  */
+	{ 6,	"Egrave",	0xc8	},	/* Latin capital letter E with grave  */
+	{ 6,	"Eacute",	0xc9	},	/* Latin capital letter E with acute  */
+	{ 5,	"Ecirc",	0xca	},	/* Latin capital letter E with circumflex  */
+	{ 4,	"Euml",		0xcb	},	/* Latin capital letter E with diaeresis  */
+	{ 6,	"Igrave",	0xcc	},	/* Latin capital letter I with grave  */
+	{ 6,	"Iacute",	0xcd	},	/* Latin capital letter I with acute  */
+	{ 5,	"Icirc",	0xce	},	/* Latin capital letter I with circumflex  */
+	{ 4,	"Iuml",		0xcf	},	/* Latin capital letter I with diaeresis  */
+	{ 3,	"ETH",		0xd0	},	/* Latin capital letter ETH  */
+	{ 6,	"Ntilde",	0xd1	},	/* Latin capital letter N with tilde  */
+	{ 6,	"Ograve",	0xd2	},	/* Latin capital letter O with grave  */
+	{ 6,	"Oacute",	0xd3	},	/* Latin capital letter O with acute  */
+	{ 5,	"Ocirc",	0xd4	},	/* Latin capital letter O with circumflex  */
+	{ 6,	"Otilde",	0xd5	},	/* Latin capital letter O with tilde  */
+	{ 4,	"Ouml",		0xd6	},	/* Latin capital letter O with diaeresis  */
+	{ 5,	"times",	0xd7	},	/* multiplication sign  */
+	{ 6,	"Oslash",	0xd8	},	/* Latin capital letter O with stroke = Latin capital letter O slash  */
+	{ 6,	"Ugrave",	0xd9	},	/* Latin capital letter U with grave  */
+	{ 6,	"Uacute",	0xda	},	/* Latin capital letter U with acute  */
+	{ 5,	"Ucirc",	0xdb	},	/* Latin capital letter U with circumflex  */
+	{ 4,	"Uuml",		0xdc	},	/* Latin capital letter U with diaeresis  */
+	{ 6,	"Yacute",	0xdd	},	/* Latin capital letter Y with acute  */
+	{ 5,	"THORN",	0xde	},	/* Latin capital letter THORN  */
+	{ 5,	"szlig",	0xdf	},	/* Latin small letter sharp s = ess-zed  */
+	{ 6,	"agrave",	0xe0	},	/* Latin small letter a with grave = Latin small letter a grave  */
+	{ 6,	"aacute",	0xe1	},	/* Latin small letter a with acute  */
+	{ 5,	"acirc",	0xe2	},	/* Latin small letter a with circumflex  */
+	{ 6,	"atilde",	0xe3	},	/* Latin small letter a with tilde  */
+	{ 4,	"auml",		0xe4	},	/* Latin small letter a with diaeresis  */
+	{ 5,	"aring",	0xe5	},	/* Latin small letter a with ring above = Latin small letter a ring  */
+	{ 5,	"aelig",	0xe6	},	/* Latin small letter ae = Latin small ligature ae  */
+	{ 6,	"ccedil",	0xe7	},	/* Latin small letter c with cedilla  */
+	{ 6,	"egrave",	0xe8	},	/* Latin small letter e with grave  */
+	{ 6,	"eacute",	0xe9	},	/* Latin small letter e with acute  */
+	{ 5,	"ecirc",	0xea	},	/* Latin small letter e with circumflex  */
+	{ 4,	"euml",		0xeb	},	/* Latin small letter e with diaeresis  */
+	{ 6,	"igrave",	0xec	},	/* Latin small letter i with grave  */
+	{ 6,	"iacute",	0xed	},	/* Latin small letter i with acute  */
+	{ 5,	"icirc",	0xee	},	/* Latin small letter i with circumflex  */
+	{ 4,	"iuml",		0xef	},	/* Latin small letter i with diaeresis  */
+	{ 3,	"eth",		0xf0	},	/* Latin small letter eth  */
+	{ 6,	"ntilde",	0xf1	},	/* Latin small letter n with tilde  */
+	{ 6,	"ograve",	0xf2	},	/* Latin small letter o with grave  */
+	{ 6,	"oacute",	0xf3	},	/* Latin small letter o with acute  */
+	{ 5,	"ocirc",	0xf4	},	/* Latin small letter o with circumflex  */
+	{ 6,	"otilde",	0xf5	},	/* Latin small letter o with tilde  */
+	{ 4,	"ouml",		0xf6	},	/* Latin small letter o with diaeresis  */
+	{ 6,	"divide",	0xf7	},	/* division sign  */
+	{ 6,	"oslash",	0xf8	},	/* Latin small letter o with stroke = Latin small letter o slash  */
+	{ 6,	"ugrave",	0xf9	},	/* Latin small letter u with grave  */
+	{ 6,	"uacute",	0xfa	},	/* Latin small letter u with acute  */
+	{ 5,	"ucirc",	0xfb	},	/* Latin small letter u with circumflex  */
+	{ 4,	"uuml",		0xfc	},	/* Latin small letter u with diaeresis  */
+	{ 6,	"yacute",	0xfd	},	/* Latin small letter y with acute  */
+	{ 5,	"thorn",	0xfe	},	/* Latin small letter thorn  */
+	{ 4,	"yuml",		0xff	},	/* Latin small letter y with diaeresis  */
+	{ 4,	"fnof",		0x192	},	/* Latin small f with hook = function = florin  */
+	{ 5,	"Alpha",	0x391	},	/* Greek capital letter alpha  */
+	{ 4,	"Beta",		0x392	},	/* Greek capital letter beta  */
+	{ 5,	"Gamma",	0x393	},	/* Greek capital letter gamma  */
+	{ 5,	"Delta",	0x394	},	/* Greek capital letter delta  */
+	{ 7,	"Epsilon",	0x395	},	/* Greek capital letter epsilon  */
+	{ 4,	"Zeta",		0x396	},	/* Greek capital letter zeta  */
+	{ 3,	"Eta",		0x397	},	/* Greek capital letter eta  */
+	{ 5,	"Theta",	0x398	},	/* Greek capital letter theta  */
+	{ 4,	"Iota",		0x399	},	/* Greek capital letter iota  */
+	{ 5,	"Kappa",	0x39a	},	/* Greek capital letter kappa  */
+	{ 6,	"Lambda",	0x39b	},	/* Greek capital letter lambda  */
+	{ 2,	"Mu",		0x39c	},	/* Greek capital letter mu  */
+	{ 2,	"Nu",		0x39d	},	/* Greek capital letter nu  */
+	{ 2,	"Xi",		0x39e	},	/* Greek capital letter xi  */
+	{ 7,	"Omicron",	0x39f	},	/* Greek capital letter omicron  */
+	{ 2,	"Pi",		0x3a0	},	/* Greek capital letter pi  */
+	{ 3,	"Rho",		0x3a1	},	/* Greek capital letter rho  */
+	{ 5,	"Sigma",	0x3a3	},	/* Greek capital letter sigma  */
+	{ 3,	"Tau",		0x3a4	},	/* Greek capital letter tau  */
+	{ 7,	"Upsilon",	0x3a5	},	/* Greek capital letter upsilon  */
+	{ 3,	"Phi",		0x3a6	},	/* Greek capital letter phi  */
+	{ 3,	"Chi",		0x3a7	},	/* Greek capital letter chi  */
+	{ 3,	"Psi",		0x3a8	},	/* Greek capital letter psi  */
+	{ 5,	"Omega",	0x3a9	},	/* Greek capital letter omega  */
+	{ 5,	"alpha",	0x3b1	},	/* Greek small letter alpha  */
+	{ 4,	"beta",		0x3b2	},	/* Greek small letter beta  */
+	{ 5,	"gamma",	0x3b3	},	/* Greek small letter gamma  */
+	{ 5,	"delta",	0x3b4	},	/* Greek small letter delta  */
+	{ 7,	"epsilon",	0x3b5	},	/* Greek small letter epsilon  */
+	{ 4,	"zeta",		0x3b6	},	/* Greek small letter zeta  */
+	{ 3,	"eta",		0x3b7	},	/* Greek small letter eta  */
+	{ 5,	"theta",	0x3b8	},	/* Greek small letter theta  */
+	{ 4,	"iota",		0x3b9	},	/* Greek small letter iota  */
+	{ 5,	"kappa",	0x3ba	},	/* Greek small letter kappa  */
+	{ 6,	"lambda",	0x3bb	},	/* Greek small letter lambda  */
+	{ 2,	"mu",		0x3bc	},	/* Greek small letter mu  */
+	{ 2,	"nu",		0x3bd	},	/* Greek small letter nu  */
+	{ 2,	"xi",		0x3be	},	/* Greek small letter xi  */
+	{ 7,	"omicron",	0x3bf	},	/* Greek small letter omicron  */
+	{ 2,	"pi",		0x3c0	},	/* Greek small letter pi  */
+	{ 3,	"rho",		0x3c1	},	/* Greek small letter rho  */
+	{ 6,	"sigmaf",	0x3c2	},	/* Greek small letter final sigma  */
+	{ 5,	"sigma",	0x3c3	},	/* Greek small letter sigma  */
+	{ 3,	"tau",		0x3c4	},	/* Greek small letter tau  */
+	{ 7,	"upsilon",	0x3c5	},	/* Greek small letter upsilon  */
+	{ 3,	"phi",		0x3c6	},	/* Greek small letter phi  */
+	{ 3,	"chi",		0x3c7	},	/* Greek small letter chi  */
+	{ 3,	"psi",		0x3c8	},	/* Greek small letter psi  */
+	{ 5,	"omega",	0x3c9	},	/* Greek small letter omega  */
+	{ 8,	"thetasym",	0x3d1	},	/* Greek small letter theta symbol  */
+	{ 5,	"upsih",	0x3d2	},	/* Greek upsilon with hook symbol  */
+	{ 3,	"piv",		0x3d6	},	/* Greek pi symbol  */
+	{ 4,	"bull",		0x2022	},	/* bullet = black small circle  */
+	{ 6,	"hellip",	0x2026	},	/* horizontal ellipsis = three dot leader  */
+	{ 5,	"prime",	0x2032	},	/* prime = minutes = feet  */
+	{ 5,	"Prime",	0x2033	},	/* double prime = seconds = inches  */
+	{ 5,	"oline",	0x203e	},	/* overline = spacing overscore  */
+	{ 5,	"frasl",	0x2044	},	/* fraction slash  */
+	{ 6,	"weierp",	0x2118	},	/* script capital P = power set = Weierstrass p  */
+	{ 5,	"image",	0x2111	},	/* blackletter capital I = imaginary part  */
+	{ 4,	"real",		0x211c	},	/* blackletter capital R = real part symbol  */
+	{ 5,	"trade",	0x2122	},	/* trade mark sign  */
+	{ 7,	"alefsym",	0x2135	},	/* alef symbol = first transfinite cardinal  */
+	{ 4,	"larr",		0x2190	},	/* leftwards arrow  */
+	{ 4,	"uarr",		0x2191	},	/* upwards arrow  */
+	{ 4,	"rarr",		0x2192	},	/* rightwards arrow  */
+	{ 4,	"darr",		0x2193	},	/* downwards arrow  */
+	{ 4,	"harr",		0x2194	},	/* left right arrow  */
+	{ 5,	"crarr",	0x21b5	},	/* downwards arrow with corner leftwards = carriage return  */
+	{ 4,	"lArr",		0x21d0	},	/* leftwards double arrow  */
+	{ 4,	"uArr",		0x21d1	},	/* upwards double arrow  */
+	{ 4,	"rArr",		0x21d2	},	/* rightwards double arrow  */
+	{ 4,	"dArr",		0x21d3	},	/* downwards double arrow  */
+	{ 4,	"hArr",		0x21d4	},	/* left right double arrow  */
+	{ 6,	"forall",	0x2200	},	/* for all  */
+	{ 4,	"part",		0x2202	},	/* partial differential  */
+	{ 5,	"exist",	0x2203	},	/* there exists  */
+	{ 5,	"empty",	0x2205	},	/* empty set = null set = diameter  */
+	{ 5,	"nabla",	0x2207	},	/* nabla = backward difference  */
+	{ 4,	"isin",		0x2208	},	/* element of  */
+	{ 5,	"notin",	0x2209	},	/* not an element of  */
+	{ 2,	"ni",		0x220b	},	/* contains as member  */
+	{ 4,	"prod",		0x220f	},	/* n-ary product = product sign  */
+	{ 3,	"sum",		0x2211	},	/* n-ary sumation  */
+	{ 5,	"minus",	0x2212	},	/* minus sign  */
+	{ 6,	"lowast",	0x2217	},	/* asterisk operator  */
+	{ 5,	"radic",	0x221a	},	/* square root = radical sign  */
+	{ 4,	"prop",		0x221d	},	/* proportional to  */
+	{ 5,	"infin",	0x221e	},	/* infinity  */
+	{ 3,	"ang",		0x2220	},	/* angle  */
+	{ 3,	"and",		0x2227	},	/* logical and = wedge  */
+	{ 2,	"or",		0x2228	},	/* logical or = vee  */
+	{ 3,	"cap",		0x2229	},	/* intersection = cap  */
+	{ 3,	"cup",		0x222a	},	/* union = cup  */
+	{ 3,	"int",		0x222b	},	/* integral  */
+	{ 6,	"there4",	0x2234	},	/* therefore  */
+	{ 3,	"sim",		0x223c	},	/* tilde operator = varies with = similar to  */
+	{ 4,	"cong",		0x2245	},	/* approximately equal to  */
+	{ 5,	"asymp",	0x2248	},	/* almost equal to = asymptotic to  */
+	{ 2,	"ne",		0x2260	},	/* not equal to  */
+	{ 5,	"equiv",	0x2261	},	/* identical to  */
+	{ 2,	"le",		0x2264	},	/* less-than or equal to  */
+	{ 2,	"ge",		0x2265	},	/* greater-than or equal to  */
+	{ 3,	"sub",		0x2282	},	/* subset of  */
+	{ 3,	"sup",		0x2283	},	/* superset of  */
+	{ 4,	"nsub",		0x2284	},	/* not a subset of  */
+	{ 4,	"sube",		0x2286	},	/* subset of or equal to  */
+	{ 4,	"supe",		0x2287	},	/* superset of or equal to  */
+	{ 5,	"oplus",	0x2295	},	/* circled plus = direct sum  */
+	{ 6,	"otimes",	0x2297	},	/* circled times = vector product  */
+	{ 4,	"perp",		0x22a5	},	/* up tack = orthogonal to = perpendicular  */
+	{ 4,	"sdot",		0x22c5	},	/* dot operator  */
+	{ 5,	"lceil",	0x2308	},	/* left ceiling = APL upstile  */
+	{ 5,	"rceil",	0x2309	},	/* right ceiling  */
+	{ 6,	"lfloor",	0x230a	},	/* left floor = APL downstile  */
+	{ 6,	"rfloor",	0x230b	},	/* right floor  */
+	{ 4,	"lang",		0x2329	},	/* left-pointing angle bracket = bra  */
+	{ 4,	"rang",		0x232a	},	/* right-pointing angle bracket = ket  */
+	{ 3,	"loz",		0x25ca	},	/* lozenge  */
+	{ 6,	"spades",	0x2660	},	/* black spade suit  */
+	{ 5,	"clubs",	0x2663	},	/* black club suit = shamrock  */
+	{ 6,	"hearts",	0x2665	},	/* black heart suit = valentine  */
+	{ 5,	"diams",	0x2666	},	/* black diamond suit  */
+	{ 5,	"OElig",	0x152	},	/* Latin capital ligature OE  */
+	{ 5,	"oelig",	0x153	},	/* Latin small ligature oe  */
+	{ 6,	"Scaron",	0x160	},	/* Latin capital letter S with caron  */
+	{ 6,	"scaron",	0x161	},	/* Latin small letter s with caron  */
+	{ 4,	"Yuml",		0x178	},	/* Latin capital letter Y with diaeresis  */
+	{ 4,	"circ",		0x2c6	},	/* modifier letter circumflex accent  */
+	{ 5,	"tilde",	0x2dc	},	/* small tilde  */
+	{ 4,	"ensp",		0x2002	},	/* en space  */
+	{ 4,	"emsp",		0x2003	},	/* em space  */
+	{ 6,	"thinsp",	0x2009	},	/* thin space  */
+	{ 4,	"zwnj",		0x200c	},	/* zero width non-joiner  */
+	{ 3,	"zwj",		0x200d	},	/* zero width joiner  */
+	{ 3,	"lrm",		0x200e	},	/* left-to-right mark  */
+	{ 3,	"rlm",		0x200f	},	/* right-to-left mark  */
+	{ 5,	"ndash",	0x2013	},	/* en dash  */
+	{ 5,	"mdash",	0x2014	},	/* em dash  */
+	{ 5,	"lsquo",	0x2018	},	/* left single quotation mark  */
+	{ 5,	"rsquo",	0x2019	},	/* right single quotation mark  */
+	{ 5,	"sbquo",	0x201a	},	/* single low-9 quotation mark  */
+	{ 5,	"ldquo",	0x201c	},	/* left double quotation mark  */
+	{ 5,	"rdquo",	0x201d	},	/* right double quotation mark  */
+	{ 5,	"bdquo",	0x201e	},	/* double low-9 quotation mark  */
+	{ 6,	"dagger",	0x2020	},	/* dagger  */
+	{ 6,	"Dagger",	0x2021	},	/* double dagger  */
+	{ 6,	"permil",	0x2030	},	/* per mille sign  */
+	{ 6,	"lsaquo",	0x2039	},	/* single left-pointing angle quotation mark  */
+	{ 6,	"rsaquo",	0x203a	},	/* single right-pointing angle quotation mark  */
+	{ 4,	"euro",		0x20ac	},	/* euro sign  */
+	{ 0,	NULL,		0	}
+};
+
 static void rss_handle_end(void *data, const char *name) {
 	rss_fetch_process_t *j = data;
 	xmlnode_t *n;
 	string_t recode;
-
-	char *text;
-
-	int i;
-	int len;
+	char *text, *end;
 
 	if (!data || !name) {
 		debug_error("[rss] rss_handle_end() invalid parameters\n");
@@ -430,93 +688,46 @@ static void rss_handle_end(void *data, const char *name) {
 
 	recode = string_init(NULL);
 
-	len = n->data->len;
+	end = n->data->str + n->data->len;
 
-	text = string_free(n->data, 0);
+	for (text = n->data->str; text < end; text++) {
+		int n;
+		gunichar unichar;
+		gchar buffer[6];
 
-	for (i = 0; i < len;) {
-		unsigned int znak = (unsigned char) text[i];
-
-		if (znak == '&') {
-			static const char lt[] = { 'l', 't', ';' };
-			static const char gt[] = { 'g', 't', ';' };
-			static const char amp[] = { 'a', 'm', 'p', ';' };
-			static const char quot[] = { 'q', 'u', 'o', 't', ';' };
-			static const char nbsp[] = { 'n', 'b', 's', 'p', ';' };
-
-			i++;
-			if (!xstrncmp(&(text[i]), lt, sizeof(lt)))	{ i += sizeof(lt);	string_append_c(recode, '<'); continue; }
-			if (!xstrncmp(&(text[i]), gt, sizeof(gt)))	{ i += sizeof(gt);	string_append_c(recode, '>'); continue; }
-			if (!xstrncmp(&(text[i]), amp, sizeof(amp)))	{ i += sizeof(amp);	string_append_c(recode, '&'); continue; }
-			if (!xstrncmp(&(text[i]), quot, sizeof(quot)))	{ i += sizeof(quot);	string_append_c(recode, '"'); continue; }
-			if (!xstrncmp(&(text[i]), nbsp, sizeof(nbsp)))	{ i += sizeof(nbsp);	string_append_c(recode, 0xA0); continue; }
-			i--;
-
-#if 0
-			if (text[i+1] == '#') {	/* khem? */
-				int j = i + 2;
-				unsigned int count = 0;
-
-				while (text[j] >= '0' && text[j] <= '9') {
-					count *= 10;
-					count += (text[j] - '0');
-					j++;
-				}
-
-				if (text[j] == ';') {
-					/* BE vs LE? */
-					debug("rss_handle_end() cos: %u\n", count);
-#if 0
-					if (count <= 0xff) {
-						string_append_c(recode, count);
-					} else if (count <= 0xffff) {
-						string_append_c(recode, count & 0xff);
-						string_append_c(recode, (count & 0xff) >> 8);
-					}
-#endif
-					string_append_c(recode, '?');
-					i = j + 1;
-					continue;
-				}
-			}
-#endif
-		}
-
-		if (znak > 0x7F && j->no_unicode) {
-			int ucount = 0;
-			unsigned char znaczek = 0;
-
-			/* mapowanie takie samo jak iso-8859-1 <==> utf-8 */
-			/* stolen from linux/drivers/char/vt.c do_con_write() */
-
-			if ((znak & 0xe0) == 0xc0)	{ ucount = 1; znaczek = (znak & 0x1f); }
-			else if ((znak & 0xf0) == 0xe0) { ucount = 2; znaczek = (znak & 0x0f); }
-			else if ((znak & 0xf8) == 0xf0) { ucount = 3; znaczek = (znak & 0x07); }
-			else if ((znak & 0xfc) == 0x78) { ucount = 4; znaczek = (znak & 0x03); }
-			else if ((znak & 0xfe) == 0xfc) { ucount = 5; znaczek = (znak & 0x01); }	/* shouldn't happen in utf-8 */
-			i++;		/* next */
-
-			if (i+ucount > len || ucount == 5 || !ucount) {
-				debug_error("invalid utf-8 char\n");	/* shouldn't happen */
-				string_append_c(recode, '?');
-				i += ucount;
-				continue;
-			}
-
-			while (ucount && ((((unsigned char) text[i]) & 0xc0) == 0x80)) {
-				ucount--;
-				znaczek = (znaczek << 6) | (((unsigned char) text[i]) & 0x3f);
-				i++;
-			}
-			string_append_c(recode, znaczek);
+		if (*text != '&') {
+			string_append_c(recode, *text);
 			continue;
 		}
-		string_append_c(recode, znak);
-		i++;
+
+		text++;
+
+		if ('#' == *text) {
+			if (sscanf(text, "#%d;", &unichar) || sscanf(text, "#x%x;", &unichar)) {
+				n = g_unichar_to_utf8(unichar, buffer);
+				string_append_raw(recode, buffer, n);
+				text = xstrchr(text, ';');
+				continue;
+			}
+		} else {
+			const struct htmlent_t *e;
+			for (e = html_entities; e->l; e++) {
+				if (!xstrncmp(text, e->s, e->l) && (';' == text[e->l])) {
+					n = g_unichar_to_utf8(e->uni, buffer);
+					string_append_raw(recode, buffer, n);
+					text += e->l;
+					break;
+				}
+			}
+			if (e->l)
+				continue;
+		}
+
+		text--;
+		string_append_c(recode, '&');
 	}
 
-	xfree(text);
-
+	string_free(n->data, 1);
 	n->data = string_init(rss_convert_string(recode->str, j->no_unicode));
 	string_free(recode, 1);
 }
