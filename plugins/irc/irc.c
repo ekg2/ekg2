@@ -227,6 +227,7 @@ static QUERY(irc_session_deinit) {
 	LIST_DESTROY(j->connlist, list_irc_resolver_free);
 
 	g_free(j->conv);
+	g_strfreev(j->auto_guess_encoding);
 
 	/* XXX, hilights list_t */
 
@@ -588,42 +589,21 @@ static void irc_changed_recode(session_t *s, const char *var) {
 static void irc_changed_auto_guess_encoding(session_t *s, const char *var) {
 	const char *val;
 	irc_private_t *j;
-	conv_in_out_t *e;
-	list_t el;
 
-	if (!s || !(j = s->priv))
+	g_assert(s);
+	j = s->priv;
+	if (!j)
 		return;
 
-	/* Clean old list */
-	for (el=j->auto_guess_encoding; el;) {
-		e = el->data;
-		el = el->next;
-		if (e->conv_in != (void*) -1) {
-			ekg_convert_string_destroy(e->conv_in);
-			ekg_convert_string_destroy(e->conv_out);
-		}
-		list_remove(&el, e, 1);
+	if (j->auto_guess_encoding) {
+		g_strfreev(j->auto_guess_encoding);
+		j->auto_guess_encoding = NULL;
 	}
-	j->auto_guess_encoding = NULL;
 
 	if (!(val = session_get(s, var)) || !*val)
 		return;
 
-	char **args;
-	args = array_make(val, ",", 0, 1, 0);
-	int i;
-	for (i=0; args[i]; i++) {
-		char *to = NULL;
-		char *from = args[i];
-		e = xmalloc(sizeof(conv_in_out_t));
-		e->conv_in = ekg_convert_string_init(from, to, &(e->conv_out));
-		if (e->conv_in)
-		    list_add(&(j->auto_guess_encoding), e);
-		else
-		    debug_error("auto_guess_encoding skips unknown '%s' value\n", from);
-		xfree(to);
-	}
-	g_strfreev(args);
+	j->auto_guess_encoding = array_make(val, ",", 0, 1, 0);
 }
 
 /*									 *

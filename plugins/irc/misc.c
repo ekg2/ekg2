@@ -74,32 +74,12 @@ static void irc_parse_ident_host(char *identhost, char **ident, char **host)  {
 }
 
 static void irc_convert_in(irc_private_t *j, GString *line) {
-#if 0 /* XXX! */
-	char *recoded;
-	conv_in_out_t *e;
-	list_t el;
+	gchar **ep;
 
-	/* auto guess encoding */
-	for (el=j->auto_guess_encoding; el; el=el->next) {
-		e = el->data;
-		recoded = try_convert_string_p(line, e->conv_in);
-		if (recoded)
-			return recoded;
+	for (ep = j->auto_guess_encoding; *ep; ep++) {
+		if (ekg_try_recode_gstring_from(*ep, line))
+			return;
 	}
-
-	/* default recode */
-	recoded = NULL;
-	if (j->conv_in != (void *) -1) {
-		if (!(recoded = ekg_convert_string_p(line, j->conv_in)))
-			debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
-	}
-
-	if (!recoded) {
-		recoded = xstrdup(line);
-		ekg_fix_utf8(recoded);
-	}
-	return recoded;
-#endif
 
 	if (j->conv)
 		ekg_recode_gstring_from(j->conv, line);
