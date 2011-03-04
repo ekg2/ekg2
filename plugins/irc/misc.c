@@ -100,7 +100,11 @@ static void irc_convert_in(irc_private_t *j, GString *line) {
 	}
 	return recoded;
 #endif
-	ekg_fix_utf8(line->str);
+
+	if (j->conv)
+		ekg_recode_gstring_from(j->conv, line);
+	else
+		ekg_fix_utf8(line->str);
 }
 
 /* cos co blabla, zwraca liczbe pochlonietych znakow przez '*' XXX */

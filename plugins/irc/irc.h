@@ -69,8 +69,7 @@ typedef struct _irc_private_t {
 	list_t out_recodes;
 	list_t recoded_channels;
 
-	void *conv_in;
-	void *conv_out;
+	gchar *conv;
 } irc_private_t;
 
 /* data for private->auto_guess_encoding */

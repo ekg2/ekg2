@@ -168,8 +168,7 @@ static QUERY(irc_session_init) {
 	j->nick_modes = j->nick_signs = NULL;
 	j->fd = -1;
 
-	j->conv_in = (void *) -1;
-	j->conv_out = (void *) -1;
+	j->conv = NULL;
 	// xmalloc will do that, so it's not needed
 	// j->ssl_buf = NULL;
 
@@ -227,10 +226,7 @@ static QUERY(irc_session_deinit) {
 	LIST_DESTROY(j->bindlist, list_irc_resolver_free);
 	LIST_DESTROY(j->connlist, list_irc_resolver_free);
 
-	if (j->conv_in != (void*) -1) {
-		ekg_convert_string_destroy(j->conv_in);
-		ekg_convert_string_destroy(j->conv_out);
-	}
+	g_free(j->conv);
 
 	/* XXX, hilights list_t */
 
@@ -485,11 +481,8 @@ static char *irc_convert_out(irc_private_t *j, char *recipient, const char *line
 
 	recoded = NULL;
 	/* default recode */
-	if (j->conv_out != (void *) -1)
-		recoded = ekg_convert_string_p(line, j->conv_out);
-
-	if (!recoded)
-		recoded = xstrdup(line);
+	if (j->conv)
+		recoded = ekg_recode_to(j->conv, line);
 
 	return recoded;
 }
@@ -583,18 +576,13 @@ static void irc_changed_recode(session_t *s, const char *var) {
 	if (!s || !(j = s->priv))
 		return;
 
-	if (j->conv_in != (void*) -1) {
-		ekg_convert_string_destroy(j->conv_in);
-		ekg_convert_string_destroy(j->conv_out);
-	}
-
+	g_free(j->conv);
 	if (!(val = session_get(s, var)) || !*val) {
-		j->conv_in = (void *) -1;
-		j->conv_out = (void *) -1;
+		j->conv = NULL;
 		return;
 	}
 
-	j->conv_in = ekg_convert_string_init(val, NULL, &(j->conv_out));
+	j->conv = g_strdup(val);
 }
 
 static void irc_changed_auto_guess_encoding(session_t *s, const char *var) {
@@ -2347,8 +2335,8 @@ static QUERY(irc_status_show_handle) {
 		return -1;
 
 	if ((j = s->priv)) {
-		if (j->conv_in != (void *) -1) {
-			debug("[%s] Uses recoding for: %s [%x, %x]\n", s->uid, session_get(s, "recode_out_default_charset"), j->conv_in, j->conv_out);
+		if (j->conv) {
+			debug("[%s] Uses recoding for: %s\n", s->uid, j->conv);
 		}
 	}
 
