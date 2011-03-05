@@ -2,7 +2,6 @@ ekg/ekg.c
 ekg/legacyconfig.c
 ekg/scripts.c
 ekg/themes.c
-plugins/feed/feed.c
 plugins/gg/gg.c
 plugins/gpg/gpg.c
 plugins/gtk/gtkutil.c
@@ -17,12 +16,14 @@ plugins/jogger/jogger.c
 plugins/logsoracle/main.c
 plugins/mail/main.c
 plugins/ncurses/main.c
+plugins/nntp/nntp.c
 plugins/python/python-ekg.c
 plugins/python/python-user.c
 plugins/python/python-window.c
 plugins/readline/main.c
 plugins/rivchat/rivchat.c
 plugins/rot13/rot13.c
+plugins/rss/rss.c
 plugins/ruby/ruby_ekg.c
 plugins/sim/main.c
 plugins/sms/sms.c
