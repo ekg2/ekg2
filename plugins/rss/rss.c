@@ -873,6 +873,8 @@ static rss_rss_t *rss_rss_find(session_t *s, const char *url) {
 	} else if (!xstrncmp(url, "exec:", 5)) {
 		url += 5;
 		rss->proto = RSS_PROTO_EXEC;
+	} else {
+		rss->proto = RSS_PROTO_HTTP;
 	}
 
 	if (rss->proto == RSS_PROTO_HTTP || rss->proto == RSS_PROTO_HTTPS || rss->proto == RSS_PROTO_FTP) {
@@ -1544,6 +1546,7 @@ static COMMAND(rss_command_show) {
 static COMMAND(rss_command_subscribe) {
 	const char *nick;
 	const char *uidnoproto;
+	char *fulluid;
 	userlist_t *u;
 
 	if ((u = userlist_find(session, target))) {
@@ -1551,32 +1554,32 @@ static COMMAND(rss_command_subscribe) {
 		return -1;
 	}
 
-	if (target[0] == 'n' || valid_plugin_uid(session->plugin, target) != 1) {
-		printq("invalid_session");
-		return -1;
+	if (!xstrncmp(target, "rss:", 4)) {
+		fulluid = malloc(strlen(target));
+		strcpy(fulluid, target);
+	} else {
+		fulluid = malloc(strlen(target+4));
+		fulluid[0] = 'r'; fulluid[1] = 's'; fulluid[2] = 's'; fulluid[3] = ':';
+		strcpy(fulluid+4, target);
 	}
 
-	uidnoproto = target + 4;
+	uidnoproto = fulluid + 4;
 
 	if (!xstrncmp(uidnoproto, "http://", 7))	uidnoproto += 7;
 	else if (!xstrncmp(uidnoproto, "file://", 7))	uidnoproto += 7;
 	else if (!xstrncmp(uidnoproto, "exec:", 5))	uidnoproto += 5;
-	else {
-		debug_error("rss_command_subscribe() uidnoproto: %s\n", uidnoproto);
-		printq("generic_error", "Protocol not implemented, sorry");
-		return -1;
-	}
 
 	nick = (params[0] && params[1]) ? params[1] : uidnoproto;
 
-	if (!(u = userlist_add(session, target, nick))) {
-		debug_error("rss_command_subscribe() userlist_add(%s, %s, %s) failed\n", session->uid, target, nick);
+	if (!(u = userlist_add(session, fulluid, nick))) {
+		debug_error("rss_command_subscribe() userlist_add(%s, %s, %s) failed\n", session->uid, fulluid, nick);
 		printq("generic_error", "IE, userlist_add() failed.");
 		return -1;
 	}
 
-	printq("rss_added", format_user(session, target), session_name(session));
+	printq("rss_added", format_user(session, fulluid), session_name(session));
 	query_emit(NULL, "userlist-refresh");
+	free(fulluid);
 	return 0;
 }
 
