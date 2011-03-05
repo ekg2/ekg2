@@ -954,8 +954,6 @@ void ekg_exit()
 	}
 	send_nicks_count = 0;
 
-	sources_destroy();
-
 	{
 		list_t l;
 
@@ -1025,6 +1023,7 @@ void ekg_exit()
 
 /* XXX, think about sequence of unloading. */
 
+	sources_destroy();
 	msgs_queue_destroy();
 	conferences_destroy();
 	newconferences_destroy();

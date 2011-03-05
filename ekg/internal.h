@@ -46,5 +46,7 @@ G_GNUC_INTERNAL
 COMMAND(cmd_at);
 G_GNUC_INTERNAL
 COMMAND(cmd_timer);
+G_GNUC_INTERNAL
+void timers_write(FILE *f);
 
 #endif

@@ -1075,3 +1075,46 @@ COMMAND(cmd_timer)
 
 	return -1;
 }
+
+void timers_write(FILE *f) {
+	void timer_write(gpointer data, gpointer user_data) {
+		struct ekg_source *t = data;
+		FILE *f = user_data;
+
+		const char *name = NULL;
+
+		if (!t->details.as_timer.persist) /* XXX && t->ends.tv_sec - time(NULL) < 5) */
+			return;
+
+		if (t->name && t->name[0] != '_')
+			name = t->name;
+		else
+			name = "(null)";
+
+		if (t->handler.as_old_timer == timer_handle_at) {
+			char buf[100];
+			time_t foo = (time_t) t->details.as_timer.lasttime.tv_sec + (t->details.as_timer.interval / 1000);
+			struct tm *tt = localtime(&foo);
+
+			strftime(buf, sizeof(buf), "%G%m%d%H%M.%S", tt);
+
+			if (t->details.as_timer.persist)
+				fprintf(f, "at %s %s/%s %s\n", name, buf, ekg_itoa(t->details.as_timer.interval / 1000), (char*)(t->priv_data));
+			else
+				fprintf(f, "at %s %s %s\n", name, buf, (char*)(t->priv_data));
+		} else if (t->handler.as_old_timer == timer_handle_command) {
+			char *foo;
+
+			if (t->details.as_timer.persist)
+				foo = saprintf("*/%s", ekg_itoa(t->details.as_timer.interval / 1000));
+			else
+				foo = saprintf("%s", ekg_itoa(t->details.as_timer.lasttime.tv_sec + (t->details.as_timer.interval / 1000)));
+
+			fprintf(f, "timer %s %s %s\n", name, foo, (char*)(t->priv_data));
+
+			xfree(foo);
+		}
+	}
+
+	g_slist_foreach(timers, timer_write, f);
+}
