@@ -76,9 +76,11 @@ static void irc_parse_ident_host(char *identhost, char **ident, char **host)  {
 static void irc_convert_in(irc_private_t *j, GString *line) {
 	gchar **ep;
 
-	for (ep = j->auto_guess_encoding; *ep; ep++) {
-		if (ekg_try_recode_gstring_from(*ep, line))
-			return;
+	if (j->auto_guess_encoding) {
+		for (ep = j->auto_guess_encoding; *ep; ep++) {
+			if (ekg_try_recode_gstring_from(*ep, line))
+				return;
+		}
 	}
 
 	if (j->conv)
