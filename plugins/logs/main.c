@@ -696,7 +696,8 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	const char *gotten_uid = get_uid(s, uid);
 	const char *gotten_nickname = get_nickname(s, uid);
 
-	gchar *tmp;
+	const gchar *logsenc = config_logs_encoding ? config_logs_encoding : console_charset;
+	GString *tmp;
 
 	if (!file)
 		return;
@@ -728,12 +729,12 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	 * status,<numer>,<nick>,[<ip>],<time>,<status>,<descr>
 	 */
 
-	tmp = ekg_recode_to(config_logs_encoding, gotten_uid);
-	fputs(tmp, file);      fputc(',', file);
-	g_free(tmp);
-	tmp = ekg_recode_to(config_logs_encoding, gotten_nickname);
-	fputs(tmp, file); fputc(',', file);
-	g_free(tmp);
+	tmp = g_string_new(gotten_uid);
+	ekg_recode_gstring_to(logsenc, tmp);
+	fputs(tmp->str, file);      fputc(',', file);
+	g_string_assign(tmp, gotten_nickname);
+	ekg_recode_gstring_to(logsenc, tmp);
+	fputs(tmp->str, file); fputc(',', file);
 	if (class == EKG_MSGCLASS_PRIV_STATUS) {
 		userlist_t *u = userlist_find(s, gotten_uid);
 		int __ip = u ? user_private_item_get_int(u, "ip") : INADDR_NONE;
@@ -755,13 +756,14 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 		fputc(',', file);
 	}
 	if (textcopy) {
-		tmp = ekg_recode_to(config_logs_encoding, textcopy);
-		fputs(textcopy, file);
-		g_free(tmp);
+		g_string_assign(tmp, textcopy);
+		ekg_recode_gstring_to(logsenc, tmp);
+		fputs(tmp->str, file);
 	}
 	fputs("\n", file);
 
 	xfree(textcopy);
+	g_string_free(tmp, TRUE);
 	fflush(file);
 }
 
