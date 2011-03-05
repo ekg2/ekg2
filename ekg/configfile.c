@@ -508,50 +508,7 @@ static void config_write_main(GIOChannel *f)
 		}
 	}
 
-#ifdef TIMERS_FIXME /* XXX! */
-	{
-		GSList *tl;
-
-		for (tl = timers; tl; tl = tl->next) {
-			struct timer *t = tl->data;
-			const char *name = NULL;
-
-			/* nie ma sensu zapisywaæ */
-			if (!t->persist) /* XXX && t->ends.tv_sec - time(NULL) < 5) */
-				continue;
-
-			/* posortuje, je¶li nie ma nazwy */
-			if (t->name && !xisdigit(t->name[0]))
-				name = t->name;
-			else
-				name = "(null)";
-
-			if (t->function == timer_handle_at) {
-				char buf[100];
-				time_t foo = (time_t) t->lasttime.tv_sec + (t->period / 1000);
-				struct tm *tt = localtime(&foo);
-
-				strftime(buf, sizeof(buf), "%G%m%d%H%M.%S", tt);
-
-				if (t->persist)
-					ekg_fprintf(f, "at %s %s/%s %s\n", name, buf, ekg_itoa(t->period / 1000), (char*)(t->data));
-				else
-					ekg_fprintf(f, "at %s %s %s\n", name, buf, (char*)(t->data));
-			} else if (t->function == timer_handle_command) {
-				char *foo;
-
-				if (t->persist)
-					foo = saprintf("*/%s", ekg_itoa(t->period / 1000));
-				else
-					foo = saprintf("%s", ekg_itoa(t->lasttime.tv_sec + (t->period / 1000)));
-
-				ekg_fprintf(f, "timer %s %s %s\n", name, foo, (char*)(t->data));
-
-				xfree(foo);
-			}
-		}
-	}
-#endif
+	timers_write(f);
 }
 
 /*
