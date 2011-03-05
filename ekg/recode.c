@@ -265,7 +265,7 @@ gboolean ekg_try_recode_gstring_from(const gchar *enc, GString *s) {
 }
 
 gboolean ekg_recode_gstring_to(const gchar *enc, GString *s) {
-	return gstring_recode_helper(s, "utf8", enc, TRUE);
+	return gstring_recode_helper(s, "utf8", enc, FALSE);
 }
 
 void ekg_fix_utf8(gchar *buf) {
