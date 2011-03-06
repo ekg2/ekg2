@@ -1555,11 +1555,10 @@ static COMMAND(rss_command_subscribe) {
 	}
 
 	if (!xstrncmp(target, "rss:", 4)) {
-		fulluid = malloc(strlen(target));
-		strcpy(fulluid, target);
+		fulluid = g_strdup(target);
 	} else {
-		fulluid = malloc(strlen(target+4));
-		fulluid[0] = 'r'; fulluid[1] = 's'; fulluid[2] = 's'; fulluid[3] = ':';
+		fulluid = g_malloc(strlen(target)+ 1 + 4);
+		strcpy(fulluid, "rss:");
 		strcpy(fulluid+4, target);
 	}
 
@@ -1574,12 +1573,13 @@ static COMMAND(rss_command_subscribe) {
 	if (!(u = userlist_add(session, fulluid, nick))) {
 		debug_error("rss_command_subscribe() userlist_add(%s, %s, %s) failed\n", session->uid, fulluid, nick);
 		printq("generic_error", "IE, userlist_add() failed.");
+		g_free(fulluid);
 		return -1;
 	}
 
 	printq("rss_added", format_user(session, fulluid), session_name(session));
 	query_emit(NULL, "userlist-refresh");
-	free(fulluid);
+	g_free(fulluid);
 	return 0;
 }
 
