@@ -8,7 +8,7 @@ plugindir = $(libdir)/ekg2/plugins
 scriptdir = $(pkgdatadir)/scripts
 themedir = $(pkgdatadir)/themes
 
-bin_PROGRAMS = ekg/ekg2
+bin_PROGRAMS = ekg2
 
 noinst_HEADERS = \
 	ekg2.h \
@@ -44,7 +44,7 @@ noinst_HEADERS = \
 	ekg/windows.h \
 	ekg/xmalloc.h
 
-ekg_ekg2_SOURCES = \
+ekg2_SOURCES = \
 	gettext.h \
 	$(noinst_HEADERS) \
 	ekg/bindings.c \
@@ -76,12 +76,12 @@ ekg_ekg2_SOURCES = \
 	ekg/windows.c \
 	ekg/xmalloc.c
 
-ekg_ekg2_LDADD = $(EKG_LIBS)
-ekg_ekg2_CPPFLAGS = $(AM_CPPFLAGS) $(EKG_CPPFLAGS)
+ekg2_LDADD = $(EKG_LIBS)
+ekg2_CPPFLAGS = $(AM_CPPFLAGS) $(EKG_CPPFLAGS)
 
 if STATIC_LIBS
-ekg_ekg2_LDFLAGS = -static
-ekg_ekg2_LDADD += $(plugin_LTLIBRARIES)
+ekg2_LDFLAGS = -static
+ekg2_LDADD += $(plugin_LTLIBRARIES)
 endif
 
 AM_CPPFLAGS = -I$(top_builddir)/plugins -I$(top_builddir) -I$(top_srcdir) \
