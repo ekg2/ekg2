@@ -1545,7 +1545,6 @@ static COMMAND(rss_command_show) {
 
 static COMMAND(rss_command_subscribe) {
 	const char *nick;
-	const char *uidnoproto;
 	char *fulluid;
 	userlist_t *u;
 
@@ -1562,15 +1561,18 @@ static COMMAND(rss_command_subscribe) {
 		strcpy(fulluid+4, target);
 	}
 
-	uidnoproto = fulluid + 4;
+	if (params[0] && params[1]) {
+		nick = params[1];
+	} else {
+		if ( (nick=xstrstr(fulluid + 4, "://")) )
+			nick += 3;
+		else if (!xstrncmp(fulluid + 4, "exec:", 5))
+			nick = fulluid + 9;
+		else
+			nick = fulluid;
+	}
 
-	if (!xstrncmp(uidnoproto, "http://", 7))	uidnoproto += 7;
-	else if (!xstrncmp(uidnoproto, "file://", 7))	uidnoproto += 7;
-	else if (!xstrncmp(uidnoproto, "exec:", 5))	uidnoproto += 5;
-
-	nick = (params[0] && params[1]) ? params[1] : uidnoproto;
-
-	if (!(u = userlist_add(session, fulluid, nick))) {
+	if (userlist_find(session, nick) || !(u = userlist_add(session, fulluid, nick))) {
 		debug_error("rss_command_subscribe() userlist_add(%s, %s, %s) failed\n", session->uid, fulluid, nick);
 		printq("generic_error", "IE, userlist_add() failed.");
 		g_free(fulluid);
