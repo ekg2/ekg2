@@ -728,6 +728,9 @@ int main(int argc, char **argv)
 	xfree(tmp);
 	tmp = NULL;
 
+	/* initialize dynamic module support */
+	ekg2_dlinit(argv[0]);
+
 	variable_init();
 	variable_set_default();
 

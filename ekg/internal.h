@@ -32,6 +32,11 @@ TIMER(timer_handle_command);
 G_GNUC_INTERNAL
 void config_upgrade(void);
 
+/* plugins.c */
+
+G_GNUC_INTERNAL
+void ekg2_dlinit(const gchar *argv0);
+
 /* sources.c */
 
 G_GNUC_INTERNAL

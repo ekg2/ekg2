@@ -62,6 +62,17 @@ DYNSTUFF_LIST_DECLARE(queries_list, query_t, query_free_data,
 	static __DYNSTUFF_REMOVE_SAFE,
 	__DYNSTUFF_DESTROY)
 
+void ekg2_dlinit(const gchar *argv0) {
+#ifdef SHARED_LIBS
+#	ifndef STATIC_LIBS
+	if (!g_module_supported()) {
+		g_printerr("Dynamic module loading unsupported, and no static plugins.\n"
+				"Please recompile with --enable-static.\n");
+		abort();
+	}
+#	endif
+#endif
+}
 
 #ifdef SHARED_LIBS
 /**
