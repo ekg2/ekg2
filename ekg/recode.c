@@ -212,18 +212,60 @@ const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
 	return ekg_recode_from(enc, buf);
 }
 
+/**
+ * ekg_recode_from()
+ *
+ * Convert complete string str from given encoding to ekg2 internal
+ * encoding (utf8). If the conversion fails, fallback to duplicating
+ * and utf8-cleaning str.
+ *
+ * @param enc - source encoding (e.g. "iso-8859-2").
+ * @param str - string to recode [may be NULL].
+ *
+ * @return A newly-allocated string which is guaranteed to be correct
+ * utf8 and needs to be freed using g_free(), or NULL if !str.
+ */
 gchar *ekg_recode_from(const gchar *enc, const char *str) {
+	/* -- temporary, please do not rely on !enc */
 	if (G_UNLIKELY(!enc))
 		return ekg_recode_from_locale(str);
+
 	return ekg_convert_string(str, enc, NULL);
 }
 
+/**
+ * ekg_recode_to()
+ *
+ * Convert complete string str from ekg2 internal encoding (utf8)
+ * to given encoding. If the conversion fails, fallback to duplicating
+ * the string.
+ *
+ * @param enc - target encoding (e.g. "iso-8859-2").
+ * @param str - string to recode [may be NULL].
+ *
+ * @return A newly-allocated string which must be freed using g_free(),
+ * or NULL if !str.
+ */
 char *ekg_recode_to(const gchar *enc, const gchar *str) {
+	/* -- temporary, please do not rely on !enc */
 	if (G_UNLIKELY(!enc))
 		return ekg_recode_to_locale(str);
+
 	return ekg_convert_string(str, NULL, enc);
 }
 
+/**
+ * ekg_recode_from_locale()
+ *
+ * Convert complete string str from locale to ekg2 internal encoding
+ * (utf8). If the conversion fails, fallback to duplicating
+ * and utf8-cleaning the string.
+ *
+ * @param str - string to recode. May be NULL.
+ *
+ * @return A newly-allocated string which must be freed using g_free(),
+ * or NULL if !str.
+ */
 gchar *ekg_recode_from_locale(const char *str) {
 	if (console_charset_is_utf8) {
 		gchar *tmp = g_strdup(str);
@@ -234,6 +276,18 @@ gchar *ekg_recode_from_locale(const char *str) {
 		return ekg_recode_from(console_charset, str);
 }
 
+/**
+ * ekg_recode_to_locale()
+ *
+ * Convert complete string str from ekg2 internal encoding (utf8)
+ * to locale. If the conversion fails, fallback to duplicating
+ * the string.
+ *
+ * @param str - string to recode. May be NULL.
+ *
+ * @return A newly-allocated string which must be freed using g_free(),
+ * or NULL if !str.
+ */
 char *ekg_recode_to_locale(const gchar *str) {
 	if (console_charset_is_utf8)
 		return g_strdup(str);
@@ -256,18 +310,66 @@ static gboolean gstring_recode_helper(GString *s, const gchar *from, const gchar
 	return !!res;
 }
 
+/**
+ * ekg_recode_gstring_from()
+ *
+ * Convert complete GString in-place from given encoding to ekg2
+ * internal encoding (utf8). If the conversion fails, fallback to
+ * utf8-cleaning the string.
+ *
+ * @param enc - source encoding.
+ * @param s - GString to recode and to write the result into. After
+ *	the call to this function, it is guaranteed to contain correct utf8.
+ *
+ * @return TRUE if conversion succeeded, FALSE otherwise.
+ */
 gboolean ekg_recode_gstring_from(const gchar *enc, GString *s) {
 	return gstring_recode_helper(s, enc, "utf8", TRUE);
 }
 
+/**
+ * ekg_try_recode_gstring_from()
+ *
+ * Convert complete GString in-place from given encoding to ekg2
+ * internal encoding (utf8). If the conversion fails, leave string
+ * unchanged.
+ *
+ * @param enc - source encoding.
+ * @param s - GString to recode and to write the result into
+ *	if the conversion succeeds.
+ *
+ * @return TRUE if conversion succeeded, FALSE otherwise.
+ */
 gboolean ekg_try_recode_gstring_from(const gchar *enc, GString *s) {
 	return gstring_recode_helper(s, enc, "utf8", FALSE);
 }
 
+/**
+ * ekg_recode_gstring_to()
+ *
+ * Convert complete GString in-place from ekg2 internal encoding (utf8)
+ * to given encoding. If the conversion fails, leave string unchanged.
+ *
+ * @param enc - target encoding.
+ * @param s - GString to recode and to write the result into
+ *	if the conversion succeeds.
+ *
+ * @return TRUE if conversion succeeded, FALSE otherwise.
+ */
 gboolean ekg_recode_gstring_to(const gchar *enc, GString *s) {
 	return gstring_recode_helper(s, "utf8", enc, FALSE);
 }
 
+/**
+ * ekg_fix_utf8()
+ *
+ * Ensure correct utf8 in buffer, replacing incorrect sequences.
+ *
+ * @param buf - writable, null-terminated, utf8 string.
+ *
+ * @note Currently, this function replaces incorrect bytes with ASCII
+ * SUB (0x1a). This may change in future.
+ */
 void ekg_fix_utf8(gchar *buf) {
 	const gchar *p = buf;
 
@@ -321,6 +423,18 @@ static void fstr_mark_linebreaks(gchar *s, fstr_attr_t *a) {
 	}
 }
 
+/**
+ * ekg_recode_fstr_to_locale()
+ *
+ * Recode fstring_t from ekg2 internal encoding (utf8) to locale,
+ * adjusting attributes as necessary. Set attributes based on special
+ * unicode character properties (e.g. FSTR_LINEBREAK).
+ *
+ * @param fstr - input fstring_t.
+ *
+ * @return Newly-allocated fstring_t, which needs to be freed using
+ *	fstring_free().
+ */
 fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
 	if (console_charset_is_utf8) {
 		fstring_t *s = fstring_dup(fstr);
