@@ -228,7 +228,7 @@ GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
 	path = g_strdup_vprintf(path_format, args);
 	va_end(args);
 
-	lpath = prepare_path(path, 0);
+	lpath = prepare_path(path, (mode[0] == 'w'));
 	g_free(path);
 
 	debug_function("config_open2(): lpath=%s\n", lpath);
