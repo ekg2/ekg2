@@ -206,6 +206,8 @@ GIOChannel *config_open(const gchar *path, const gchar *mode) {
 	return f;
 }
 
+static gchar *writing_config_file = NULL;
+
 /**
  * config_open2()
  *
@@ -233,12 +235,25 @@ GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
 	lpath = prepare_path(path, (mode[0] == 'w'));
 	g_free(path);
 
+	if (mode[0] == 'w') {
+		g_assert(!writing_config_file);
+		writing_config_file = g_strdup(lpath);
+	}
+
 	debug_function("config_open2(): lpath=%s\n", lpath);
 	f = config_open(lpath, mode);
 	return f;
 }
 
 void config_close(GIOChannel *f) {
+	if (g_io_channel_get_flags(f) & G_IO_FLAG_IS_WRITEABLE) {
+#if 0 /* re-enable when got rid of old config_open() */
+		g_assert(writing_config_file);
+#endif
+		g_free(writing_config_file);
+		writing_config_file = NULL;
+	}
+
 	g_io_channel_unref(f);
 }
 
