@@ -86,14 +86,10 @@ static int emoticon_add(const char *name, const char *value) {
  * 0/-1
  */
 int emoticon_read() {
-	const char *filename;
 	char *buf;
 	GIOChannel *f;
 
-	if (!(filename = prepare_pathf("emoticons")))
-		return -1;
-	
-	if (!(f = config_open(filename, "r")))
+	if (!(f = config_open2("emoticons", "r")))
 		return -1;
 
 	while ((buf = read_line(f))) {

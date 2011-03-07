@@ -219,6 +219,7 @@ int msg_queue_write()
 		if (!(fn = prepare_pathf("queue/%ld.%d", (long) m->time, num++)))	/* prepare_pathf() ~/.ekg2/[PROFILE/]queue/TIME.UNIQID */
 			continue;
 
+			/* XXX: em, config? */
 		if (!(f = config_open(fn, "w")))
 			continue;
 
