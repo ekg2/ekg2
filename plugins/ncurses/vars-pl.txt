@@ -126,6 +126,8 @@ contacts_order
 	  un - nieznany stan
 	
 	  bl - blokujący
+
+	  ty - niedostępny piszący
 	
 	można pominąć niektóre stany -- nie będą po prostu wyświetlane na liście.
 

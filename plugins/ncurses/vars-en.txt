@@ -63,7 +63,7 @@ contacts_metacontacts_swallow
 	If turn on - displaying all users means that if on contact list is displayd metaconatct, 
 	all contacts belongs to it are hide.
 
-contacts_options
+contacts_order
 	type: text
 	default value: none
 	
@@ -88,6 +88,8 @@ contacts_options
 	
 	er - illegal contac
 	
+	ty - pseudo state "typing not avail"
+
 	it possible to skipp some of status -- they will be not displayed on contacts list.
 	
 	list of available option:
