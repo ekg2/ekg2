@@ -209,7 +209,7 @@ static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 static gchar *writing_config_file = NULL;
 
 /**
- * config_open2()
+ * config_open()
  *
  * Open a configuration file, formatting the name if necessary. Choose
  * correct location and file encoding.
@@ -222,7 +222,7 @@ static gchar *writing_config_file = NULL;
  *	instance must be closed using config_close() (especially if open
  *	for writing).
  */
-GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
+GIOChannel *config_open(const gchar *path_format, const gchar *mode, ...) {
 	va_list args;
 	gchar *path, *lpath;
 	GIOChannel *f;
@@ -240,7 +240,7 @@ GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
 		lpath = g_strdup_printf("%s.tmp", lpath);
 	}
 
-	debug_function("config_open2(): lpath=%s\n", lpath);
+	debug_function("config_open(): lpath=%s\n", lpath);
 	f = config_open_real(lpath, mode);
 	g_free(lpath);
 	return f;
@@ -284,7 +284,7 @@ int config_read_plugins()
 	gchar *buf, *foo;
 	GIOChannel *f;
 
-	f = config_open2("plugins", "r");
+	f = config_open("plugins", "r");
 	if (!f)
 		return -1;
 
@@ -336,9 +336,9 @@ int config_read(const gchar *plugin_name)
 
 	/* then global and plugins variables */
 	if (plugin_name)
-		f = config_open2("config-%s", "r", plugin_name);
+		f = config_open("config-%s", "r", plugin_name);
 	else
-		f = config_open2("config", "r");
+		f = config_open("config", "r");
 
 	if (!f)
 		return -1;
@@ -595,7 +595,7 @@ int config_write()
 		return -1;
 
 	/* first of all we are saving plugins */
-	if (!(f = config_open2("plugins", "w")))
+	if (!(f = config_open("plugins", "w")))
 		return -1;
 	
 	config_write_plugins(f);
@@ -604,7 +604,7 @@ int config_write()
 	/* now we are saving global variables and settings
 	 * timers, bindings etc. */
 
-	if (!(f = config_open2("config", "w")))
+	if (!(f = config_open("config", "w")))
 		return -1;
 
 	config_write_main(f);
@@ -615,7 +615,7 @@ int config_write()
 		const plugin_t *p = pl->data;
 		GSList *vl;
 
-		if (!(f = config_open2("config-%s", "w", p->name)))
+		if (!(f = config_open("config-%s", "w", p->name)))
 			return -1;
 
 		for (vl = variables; vl; vl = vl->next) {
@@ -661,18 +661,18 @@ int config_write_partly(plugin_t *plugin, const char **vars)
 		return -1;
 
 	if (plugin)
-		fi = config_open2("config-%s", "r", plugin->name);
+		fi = config_open("config-%s", "r", plugin->name);
 	else
-		fi = config_open2("config", "r");
+		fi = config_open("config", "r");
 	if (!fi)
 		return -1;
 
-	/* config_open2() writes through temporary file,
+	/* config_open() writes through temporary file,
 	 * so it's sane to open the same name twice */
 	if (plugin)
-		fo = config_open2("config-%s", "w", plugin->name);
+		fo = config_open("config-%s", "w", plugin->name);
 	else
-		fo = config_open2("config", "w");
+		fo = config_open("config", "w");
 
 	if (!fo) {
 		config_close(fi);
@@ -760,7 +760,7 @@ void config_write_crash()
 	g_chdir(config_dir);
 
 	/* first of all we are saving plugins */
-	if (!(f = config_open2("crash-%d-plugins", "w", (int) getpid())))
+	if (!(f = config_open("crash-%d-plugins", "w", (int) getpid())))
 		return;
 
 	config_write_plugins(f);
@@ -768,7 +768,7 @@ void config_write_crash()
 	config_close(f);
 
 	/* then main part of config */
-	if (!(f = config_open2("crash-%d-plugin", "w", (int) getpid())))
+	if (!(f = config_open("crash-%d-plugin", "w", (int) getpid())))
 		return;
 
 	config_write_main(f);
@@ -780,7 +780,7 @@ void config_write_crash()
 		const plugin_t *p = pl->data;
 		GSList *vl;
 
-		if (!(f = config_open2("crash-%d-config-%s", "w", (int) getpid(), p->name)))
+		if (!(f = config_open("crash-%d-config-%s", "w", (int) getpid(), p->name)))
 			continue;	
 	
 		for (vl = variables; vl; vl = vl->next) {
@@ -806,7 +806,7 @@ void debug_write_crash()
 
 	g_chdir(config_dir);
 
-	if (!(f = config_open2("crash-%d-debug", "w", (int) getpid())))
+	if (!(f = config_open("crash-%d-debug", "w", (int) getpid())))
 		return;
 
 	for (b = buffer_debug.data; b; b = b->next)

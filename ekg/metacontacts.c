@@ -528,7 +528,7 @@ int metacontact_write()
 	metacontact_t *m;
 	GIOChannel *f = NULL;
 
-	f = config_open2("metacontacts", "w");
+	f = config_open("metacontacts", "w");
 
 	if (!f)
 		return -1;
@@ -556,7 +556,7 @@ int metacontact_read()
 	GIOChannel *f;
 	metacontact_t *m = NULL;
 
-	if (!(f = config_open2("metacontacts", "r")))
+	if (!(f = config_open("metacontacts", "r")))
 		return -1;
 
 	while ((line = read_line(f))) {

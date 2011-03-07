@@ -89,7 +89,7 @@ int emoticon_read() {
 	char *buf;
 	GIOChannel *f;
 
-	if (!(f = config_open2("emoticons", "r")))
+	if (!(f = config_open("emoticons", "r")))
 		return -1;
 
 	while ((buf = read_line(f))) {

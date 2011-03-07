@@ -157,7 +157,7 @@ int userlist_read(session_t *session) {
 	char *buf;
 	GIOChannel *f;
 
-	if (!(f = config_open2("%s-userlist", "r", session->uid)))
+	if (!(f = config_open("%s-userlist", "r", session->uid)))
 		return -1;
 			
 	while ((buf = read_line(f))) {
@@ -196,7 +196,7 @@ int userlist_write(session_t *session) {
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
 
-	if (!(f = config_open2("%s-userlist", "w", session->uid))) {
+	if (!(f = config_open("%s-userlist", "w", session->uid))) {
 		return -2;
 	}
 

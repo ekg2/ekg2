@@ -827,7 +827,7 @@ int session_read(const gchar *plugin_name) {
 		return ret;
 	}
 
-	if (!(f = config_open2("sessions-%s", "r", plugin_name)))
+	if (!(f = config_open("sessions-%s", "r", plugin_name)))
 		return -1;
 
 	while ((line = read_line(f))) {
@@ -889,7 +889,7 @@ int session_write()
 
 		if (p->pclass != PLUGIN_PROTOCOL) continue; /* skip no protocol plugins */
 
-		if (!(f = config_open2("sessions-%s", "w", p->name))) {
+		if (!(f = config_open("sessions-%s", "w", p->name))) {
 			ret = -1;
 			continue;
 		}

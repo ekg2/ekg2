@@ -35,7 +35,7 @@ extern "C" {
 void config_postread();
 gboolean ekg_fprintf(GIOChannel *f, const gchar *format, ...)
 	G_GNUC_PRINTF(2, 3) G_GNUC_WARN_UNUSED_RESULT;
-GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...)
+GIOChannel *config_open(const gchar *path_format, const gchar *mode, ...)
 	G_GNUC_PRINTF(1, 3);
 gboolean config_close(GIOChannel *f) G_GNUC_WARN_UNUSED_RESULT;
 

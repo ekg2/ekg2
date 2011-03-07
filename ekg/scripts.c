@@ -420,7 +420,7 @@ int script_variables_read() {
 	GIOChannel *f;
 	char *line;
 
-	if (!(f = config_open2("scripts-var", "r"))) {
+	if (!(f = config_open("scripts-var", "r"))) {
 		debug("Error opening script variable file..\n");
 		return -1;
 	}
@@ -437,7 +437,7 @@ int script_variables_read() {
 }
 
 int script_variables_free(int free) {
-	GIOChannel *f = config_open2("scripts-var", "w");
+	GIOChannel *f = config_open("scripts-var", "w");
 	list_t l;
 	
 	if (!f && !free) 
