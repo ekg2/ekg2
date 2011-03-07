@@ -56,8 +56,6 @@
 #include <time.h>
 #include <unistd.h>
 
-#include "strings.h"
-
 alias_t *aliases = NULL;
 list_t autofinds = NULL;
 
@@ -82,7 +80,6 @@ int config_beep = 1;
 int config_beep_msg = 1;
 int config_beep_chat = 1;
 int config_beep_notify = 1;
-char *config_console_charset;
 char *config_dcc_dir;
 int config_display_blinking = 1;
 int config_events_delay = 3;
@@ -94,8 +91,6 @@ char *config_sound_notify_file = NULL;
 char *config_sound_sysmsg_file = NULL;
 char *config_sound_mail_file = NULL;
 char *config_sound_app = NULL;
-int config_use_unicode;
-int config_use_iso;
 int config_changed = 0;
 int config_display_ack = 12;
 int config_completion_notify = 1;
@@ -135,9 +130,6 @@ int config_windows_save = 0;
 char *config_windows_layout = NULL;
 char *config_profile = NULL;
 int config_debug = 1;
-int config_lastlog_noitems = 0;
-int config_lastlog_case = 0;
-int config_lastlog_display_all = 0;
 int config_version = 0;
 char *config_exit_exec = NULL;
 int config_session_locks = 0;
@@ -1066,58 +1058,51 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
 	return 0;
 }
 
-/*
- * help_path()
+/**
+ * help_open()
  *
- * zwraca plik z pomoc± we w³a¶ciwym jêzyku lub null je¶li nie ma takiego pliku
+ * Open the help file in best language available.
  *
+ * @param name - help file basename.
+ * @param plugin - plugin name or NULL if core help is requested.
+ *
+ * @return Open GIOChannel with utf8 encoding or NULL if no file was
+ * found. The channel should be unreference using g_io_channel_unref()
+ * when no longer used.
  */
-FILE *help_path(char *name, char *plugin) {
-	char lang[3];
-	char *tmp;
-	FILE *fp;
+GIOChannel *help_open(const gchar *name, const gchar *plugin) {
+	const gchar* const *p;
 
-	char *base = plugin ? 
-		saprintf(DATADIR "/plugins/%s/%s", plugin, name) :
-		saprintf(DATADIR "/%s", name);
+	gchar *base = plugin
+		? g_build_filename(DATADIR, "plugins", plugin, name, NULL)
+		: g_build_filename(DATADIR, name, NULL);
+	GString *fnbuf = g_string_new(base);
+	const gsize baselen = fnbuf->len;
+	g_free(base);
 
-	do {
-		/* if we don't get lang from $LANGUAGE (man 3 gettext) */
-		if ((tmp = getenv("LANGUAGE"))) break;
-		/* fallback on locale enviroments.. (man 5 locale) */
-		if ((tmp = getenv("LC_ALL"))) break;
-		if ((tmp = getenv("LANG"))) break;
-		/* fallback to en language */
-		tmp = "en";
-	} while (0);
+	for (p = g_get_language_names(); *p; p++) {
+		GError *err = NULL;
+		GIOChannel *ret;
 
-	xstrncpy(&lang[0], tmp, 2);
-	lang[2] = 0;
-	
-help_again:
-	tmp = saprintf("%s-%s.txt", base, lang);
+		if (G_UNLIKELY(!strcmp(*p, "C")))
+			g_string_append(fnbuf, "-en.txt");
+		else
+			g_string_append_printf(fnbuf, "-%s.txt", *p);
+		ret = g_io_channel_new_file(fnbuf->str, "r", &err);
 
-	if ((fp = fopen(tmp, "r"))) {
-		xfree(base);
-		xfree(tmp);
-		return fp;
+		if (ret) {
+			g_string_free(fnbuf, TRUE);
+			return ret;
+		} else if (err->code != G_FILE_ERROR_NOENT)
+			debug_error("help_path() failed to open %s with error: %s\n",
+					fnbuf->str, err->message);
+
+		g_error_free(err);
+		g_string_truncate(fnbuf, baselen);
 	}
 
-	/* Temporary fallback - untill we don't have full en translation */
-	xfree(tmp);
-	if (xstrcasecmp(lang, "pl")) {
-		lang[0] = 'p';
-		lang[1] = 'l';
-		goto help_again;
-	}
-
-	/* last chance, just base without lang. */
-	tmp = saprintf("%s.txt", base);
-	fp = fopen(tmp, "r");
-
-	xfree(tmp);
-	xfree(base);
-	return fp;
+	g_string_free(fnbuf, TRUE);
+	return NULL;
 }
 
 
@@ -1557,23 +1542,8 @@ static char *random_line(const char *path) {
 	return NULL;
 }
 
-/**
- * read_file()
- *
- * Read next line from file @a f, if needed alloc memory for it.<br>
- * Remove \\r and \\n chars from end of line if needed.
- *
- * @param f	- opened FILE *
- * @param alloc 
- *		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
- *			which you <b>MUST NOT</b> xfree()<br>
- *		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
- *		- If -1 than it free <i>internal</i> pointer which were used by xrealloc()
- *
- * @return Line without \\r and \\n which must or mustn't be xfree()'d. It depends on @a alloc param
- */
-
-char *read_file(FILE *f, int alloc) {
+/* XXX: need to validate input */
+char *read_file_utf(FILE *f, int alloc) {
 	static char buf[1024];
 	static char *reres = NULL;
 
@@ -1625,23 +1595,77 @@ char *read_file(FILE *f, int alloc) {
 	return (alloc) ? xstrdup(res) : res;
 }
 
-char *read_file_utf(FILE *f, int alloc) {
+/**
+ * read_file()
+ *
+ * Read next line from file @a f, if needed alloc memory for it.<br>
+ * Remove \\r and \\n chars from end of line if needed.
+ *
+ * @param f	- opened FILE *
+ * @param alloc 
+ *		- If  0 than it return internal read_file() either xrealloc()'ed or static char with sizeof()==1024,
+ *			which you <b>MUST NOT</b> xfree()<br>
+ *		- If  1 than it return strdup()'ed string this <b>MUST</b> xfree()<br>
+ *		- If -1 than it free <i>internal</i> pointer which were used by xrealloc()
+ *
+ * @return Line without \\r and \\n which must or mustn't be xfree()'d. It depends on @a alloc param
+ */
+
+char *read_file(FILE *f, int alloc) {
 	static char *tmp = NULL;
-	char *buf = read_file(f, 0);
+	char *buf = read_file_utf(f, 0);
 	char *res;
 
-	xfree(tmp);
+	g_free(tmp);
 	tmp = NULL;
 	if (alloc == -1)
 		return NULL;
 
-	ekg_recode_utf8_inc();
-	res = ekg_utf8_to_core_dup(buf);
+	/* XXX: use encoded GIOChannel instead */
+	res = ekg_recode_from_locale(buf);
 	if (!alloc)
 		tmp = res;
 
-	ekg_recode_utf8_dec();
 	return res;
+}
+
+/**
+ * read_line()
+ *
+ * Read a single line from GIOChannel allocated in a static buffer.
+ * Strip the line terminator.
+ *
+ * @param f - GIOChannel to read from.
+ *
+ * @return Pointer to a static line which will be overwritten by next
+ * call to read_line() or NULL on EOF or error.
+ *
+ * @note The GIOChannel must not be open in non-blocking mode.
+ */
+gchar *read_line(GIOChannel *f) {
+	static GString *buf = NULL;
+	gsize term_pos;
+	GError *err = NULL;
+
+	/* XXX: maybe we could make a static GString? */
+	if (G_UNLIKELY(!buf))
+		buf = g_string_sized_new(120); /* seems sufficient for help files */
+
+	switch (g_io_channel_read_line_string(f, buf, &term_pos, &err)) {
+		case G_IO_STATUS_NORMAL:
+			g_string_truncate(buf, term_pos);
+			return buf->str;
+		case G_IO_STATUS_ERROR:
+			debug_error("read_line() failed: %s\n", err->message);
+			g_error_free(err);
+			/* fall through */
+		case G_IO_STATUS_EOF:
+			return NULL;
+		case G_IO_STATUS_AGAIN:
+			g_assert_not_reached();
+	}
+
+	g_assert_not_reached();
 }
 
 /**
@@ -1906,7 +1930,7 @@ int say_it(const char *str)
 		exit(status);
 	}
 
-	ekg_child_add(NULL, pid, NULL, speech_child_handler, NULL, NULL);
+	ekg_child_add(NULL, "(speech)", pid, speech_child_handler, NULL, NULL);
 	return 0;
 #else
 	return -1;
@@ -2299,69 +2323,6 @@ guint32 *ekg_sent_message_format(const char *text)
 	return format;
 }
 
-#if ! USE_UNICODE
-/*
- * tolower_pl()
- *
- * zamienia podany znak na ma³y je¶li to mo¿liwe
- * obs³uguje polskie znaki
- */
-static int tolower_pl(const unsigned char c) {
-	switch(c) {
-		case 161: /* ¡ */
-			return 177;
-		case 198: /* Æ */
-			return 230;
-		case 202: /* Ê */
-			return 234;
-		case 163: /* £ */
-			return 179;
-		case 209: /* Ñ */
-			return 241;
-		case 211: /* Ó */
-			return 243;
-		case 166: /* ¦ */
-			return 182;
-		case 175: /* ¯ */
-			return 191;
-		case 172: /* ¬ */
-			return 188;
-		default: /* reszta */
-			return tolower(c);
-	}
-}
-#endif
-
-size_t strlen_pl(const char *s) {
-#if USE_UNICODE
-	if (!s) s = "";
-	return mbsrtowcs(NULL, &s, 0, NULL);
-#else
-	return xstrlen(s);
-#endif
-}
-
-int utf8str_char2bytes(const char *src, size_t n) {
-/* FIXME - stupid function name */
-#if USE_UNICODE
-	int len=xstrlen(src);
-	wchar_t *wc = xmalloc((len+1) * sizeof(wchar_t));
-	const char *p = src;
-	
-	if (mbsrtowcs(wc, &p, n, NULL) < 0) n = 0;
-	else n = p ? p - src : len;
-	xfree(wc);
-#endif
-	return n;
-}
-
-char *xstrncat_pl(char *dest, const char *src, size_t n) {
-#if USE_UNICODE
-	n = utf8str_char2bytes(src, n);
-#endif
-	return xstrncat(dest, src, n);
-}
-
 /*
  * strncasecmp_pl()
  *
@@ -2369,32 +2330,24 @@ char *xstrncat_pl(char *dest, const char *src, size_t n) {
  * dzia³a analogicznie do xstrncasecmp()
  * obs³uguje polskie znaki
  */
-int strncasecmp_pl(const char *cs, const char *ct , size_t count)
+/* adjusted to use casefold utf8
+ * (normalized would be better but count would have to be adjusted)
+ * count is in bytes, to make it simpler
+ * XXX: potentially slow, try to get rid of it
+ *	in favour of something with the common string being normalized
+ *	before calling
+ */
+int strncasecmp_pl(const char *cs, const char *ct, size_t count)
 {
-	register signed char __res = 0;
-#if USE_UNICODE
-	wchar_t *wcs, *wct;
-	wchar_t *wc1 = wcs = xmalloc((count+1) * sizeof(wchar_t));
-	wchar_t *wc2 = wct = xmalloc((count+1) * sizeof(wchar_t));
-	mbsrtowcs(wc1, &cs, count, NULL);
-	mbsrtowcs(wc2, &ct, count, NULL);
+	gchar *csc = g_utf8_casefold(cs, -1);
+	gchar *ctc = g_utf8_casefold(ct, -1);
 
-	while (count) {
-		if ((__res = towlower(*wcs) - towlower(*wct++)) != 0 || !*wcs++)
-			break;
-		count--;
-	}
+	gint ret = strncmp(csc, ctc, count);
 
-	xfree(wc1);
-	xfree(wc2);
-#else
-	while (count) {
-		if ((__res = tolower_pl(*cs) - tolower_pl(*ct++)) != 0 || !*cs++)
-			break;
-		count--;
-	}
-#endif
-	return __res;
+	g_free(csc);
+	g_free(ctc);
+
+	return ret;
 }
 
 #ifndef EKG_NO_DEPRECATED

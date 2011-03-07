@@ -29,6 +29,8 @@
 #include "backlog.h"
 #include "bindings.h"
 #include "contacts.h"
+#include "input.h"
+#include "lastlog.h"
 #include "mouse.h"
 #include "notify.h"
 #include "nc-stuff.h"
@@ -58,6 +60,13 @@ const char *ncurses_settitle_formats[3] = { NULL, "\e]0;%s%s%s\a", "\e_%s%s%s\e\
 static int ncurses_settitle = 0;
 
 QUERY(ncurses_password_input); /* nc-stuff.c */
+
+	/* XXX: any need for random arguments? */
+static void ncurses_set_title(const gchar* a, const gchar* b, const gchar* c) {
+		/* XXX: recode? */
+	if (ncurses_settitle)
+		printf(ncurses_settitle_formats[ncurses_settitle], a, b, c);
+}
 
 /**
  * ncurses_beep()
@@ -162,8 +171,7 @@ static QUERY(ncurses_ui_window_switch) {
 	ncurses_typingsend(w, EKG_CHATSTATE_ACTIVE);
 
 	p = w->alias ? w->alias : (w->target ? w->target : NULL);
-	if (ncurses_settitle)
-		printf(ncurses_settitle_formats[ncurses_settitle], p ? p : "", p ? " - " : "", "EKG2");
+	ncurses_set_title(p ? p : "", p ? " - " : "", "EKG2");
 
 	return 0;
 }
@@ -171,7 +179,7 @@ static QUERY(ncurses_ui_window_switch) {
 static QUERY(ncurses_ui_window_print)
 {
 	window_t *w	= *(va_arg(ap, window_t **));
-	fstring_t *line = *(va_arg(ap, fstring_t **));
+	const fstring_t *line = *(va_arg(ap, const fstring_t **));
 
 	ncurses_window_t *n;
 	int bottom = 0, prev_count, count = 0;
@@ -253,18 +261,8 @@ static QUERY(ncurses_ui_window_act_changed)
 static QUERY(ncurses_ui_window_target_changed)
 {
 	window_t *w = *(va_arg(ap, window_t **));
-	ncurses_window_t *n = w->priv_data;
-	char *tmp, *p;
 
-	xfree(n->prompt);
-
-	p = w->alias ? w->alias : (w->target ? w->target : NULL);
-	tmp = format_string(format_find((p) ? "ncurses_prompt_query" : "ncurses_prompt_none"), p);
-	n->prompt = tmp;
-	n->prompt_len = xstrlen(tmp);
-
-	ncurses_update_real_prompt(n);
-
+	ncurses_prompt_set(w, w->alias ? w->alias : w->target);
 	update_statusbar(1);
 
 	return 0;
@@ -361,15 +359,10 @@ static QUERY(ncurses_conference_renamed)
 	window_t *w;
 
 	for (w = windows; w; w = w->next) {
-		ncurses_window_t *n = w->priv_data;
-
 		if (w->target && !xstrcasecmp(w->target, oldname)) {
 			xfree(w->target);
-			xfree(n->prompt);
 			w->target = xstrdup(newname);
-			n->prompt = format_string(format_find("ncurses_prompt_query"), newname);
-			n->prompt_len = xstrlen(n->prompt);
-			ncurses_update_real_prompt(n);
+			ncurses_prompt_set(w, newname);
 		}
 	}
 
@@ -444,41 +437,6 @@ static QUERY(ncurses_lastlog_changed) {
 	ncurses_resize();
 	ncurses_commit();
 	return 0;
-}
-
-static QUERY(ncurses_ui_window_lastlog) {
-	window_t *w;
-	ncurses_window_t *n;
-
-	int lock_old = config_lastlog_lock;
-	int retval;
-
-	if (!(w = window_exist(WINDOW_LASTLOG_ID)))
-		w = window_new("__lastlog", NULL, WINDOW_LASTLOG_ID);
-
-	n = w->priv_data;
-
-	if (!n || !n->handle_redraw) {
-		debug_error("ncurses_ui_window_lastlog() BAD __lastlog wnd?\n");
-		return -1;
-	}
-
-	config_lastlog_lock = 0;
-	if (!(retval = n->handle_redraw(w)) && !config_lastlog_noitems) {	/* if we don't want __backlog wnd when no items founded.. */
-		/* destroy __backlog */
-		window_kill(w);
-		config_lastlog_lock = lock_old;
-/* XXX bugnotes, when killing visible w->floating window we should do: implement in window_kill() */
-		ncurses_resize();
-		ncurses_commit();
-		return 0;
-	}
-
-	n->start = n->lines_count - w->height + n->overflow;
-	config_lastlog_lock = 1;
-	ncurses_redraw(w);
-	config_lastlog_lock = lock_old;
-	return retval;
 }
 
 static QUERY(ncurses_setvar_default)
@@ -634,7 +592,7 @@ static int ncurses_theme_init() {
 #ifndef NO_DEFAULT_THEME
 	/* prompty i statusy dla ui-ncurses */
 	format_add("ncurses_prompt_none", "", 1);
-	format_add("ncurses_prompt_query", "[%1] ", 1);
+	format_add("ncurses_prompt_query", "[%Y%1%n] ", 1);
 	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %G}%{?avail %Y}%{?chat %W}%{?dnd %K}%{?xa %g}%{?gone %R}"
 			"%{?invisible %C}%{?notavail %r}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{?typing %C}%{window}}"
 			"%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}"
@@ -650,6 +608,10 @@ static int ncurses_theme_init() {
 	format_add("statusbar_act_important_typing", "%C", 1);
 	format_add("statusbar_act_important2us_typing", "%C", 1);
 	format_add("statusbar_timestamp", "%H:%M", 1);
+
+	/* lastlog */
+	format_add("lastlog_title",	_("%) %gLastlog [%B%2%n%g] from window: %W%T%1%n"), 1);
+	format_add("lastlog_title_cur", _("%) %gLastlog [%B%2%n%g] from window: %W%T%1 (*)%n"), 1);
 
 #ifdef HAVE_LIBASPELL
 	/* aspell */
@@ -676,6 +638,8 @@ EXPORT int ncurses_plugin_init(int prio)
 		return -1;
 	plugin_register(&ncurses_plugin, prio);
 
+	query_register("ui-window-update-lastlog", QUERY_ARG_END);
+
 	ncurses_setvar_default(NULL, dummy);
 
 	query_connect(&ncurses_plugin, "set-vars-default", ncurses_setvar_default, NULL);
@@ -689,9 +653,10 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "ui-window-act-changed", ncurses_ui_window_act_changed, NULL);
 	query_connect(&ncurses_plugin, "ui-window-refresh", ncurses_ui_window_refresh, NULL);
 	query_connect(&ncurses_plugin, "ui-window-clear", ncurses_ui_window_clear, NULL);
-	query_connect(&ncurses_plugin, "ui-window-update-lastlog", ncurses_ui_window_lastlog, NULL);
 	query_connect(&ncurses_plugin, "ui-refresh", ncurses_ui_refresh, NULL);
+#if 0
 	query_connect(&ncurses_plugin, "ui-password-input", ncurses_password_input, NULL);
+#endif
 	query_connect(&ncurses_plugin, "session-added", ncurses_statusbar_query, NULL);
 	query_connect(&ncurses_plugin, "session-removed", ncurses_statusbar_query, NULL);
 	query_connect(&ncurses_plugin, "session-event", ncurses_statusbar_query, NULL);
@@ -724,8 +689,10 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "userlist-removed", ncurses_all_contacts_changed, NULL);
 	query_connect(&ncurses_plugin, "userlist-renamed", ncurses_all_contacts_changed, NULL);
 
-	command_add(&ncurses_plugin, ("mark"), NULL, cmd_mark, 0, "-a --all");
-	command_add(&ncurses_plugin, ("dump"), NULL, ncurses_cmd_dump, 0, "-a --append -w --window");
+	command_add(&ncurses_plugin, ("mark"), "p", cmd_mark, 0, "-a --all");
+	command_add(&ncurses_plugin, ("dump"), "pf pf pf", ncurses_cmd_dump, 0, "-a --append -w --window");
+	command_add(&ncurses_plugin, ("lastlog"), "p? p? p? p? p?", ncurses_cmd_lastlog, 0, 
+		"-c --caseinsensitive -C --CaseSensitive -s --substring -r --regex -R --extended-regex -w --window");
 
 #ifdef HAVE_LIBASPELL
 	variable_add(&ncurses_plugin, ("aspell"), VAR_BOOL, 1, &config_aspell, ncurses_changed_aspell, NULL, NULL);
@@ -750,8 +717,16 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("contacts_orderbystate"), VAR_BOOL, 1, &config_contacts_orderbystate, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("contacts_size"), VAR_INT, 1, &config_contacts_size, ncurses_contacts_changed, NULL, dd_contacts);
 	variable_add(&ncurses_plugin, ("contacts_wrap"), VAR_BOOL, 1, &config_contacts_wrap, ncurses_contacts_changed, NULL, dd_contacts);
-	variable_add(&ncurses_plugin, ("lastlog_size"), VAR_INT, 1, &config_lastlog_size, (void (*)(const char *))ncurses_lastlog_changed, NULL, NULL);
+
+	variable_add(&ncurses_plugin, ("lastlog_display_all"), VAR_INT, 1, &config_lastlog_display_all, NULL, variable_map(3, 
+			0, 0, "current window",
+			1, 2, "current window + configured",
+			2, 1, "all windows + configured"), NULL);
 	variable_add(&ncurses_plugin, ("lastlog_lock"), VAR_BOOL, 1, &config_lastlog_lock, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("lastlog_matchcase"), VAR_BOOL, 1, &config_lastlog_case, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("lastlog_noitems"), VAR_BOOL, 1, &config_lastlog_noitems, NULL, NULL, NULL);
+	variable_add(&ncurses_plugin, ("lastlog_size"), VAR_INT, 1, &config_lastlog_size, (void (*)(const char *))ncurses_lastlog_changed, NULL, NULL);
+
 	variable_add(&ncurses_plugin, ("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, ("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("header_size"), VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
@@ -766,6 +741,23 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("typing_interval"), VAR_INT, 1, &config_typing_interval, ncurses_typing_retimer, NULL, NULL);
 	variable_add(&ncurses_plugin, ("typing_timeout"), VAR_INT, 1, &config_typing_timeout, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("typing_timeout_inactive"), VAR_INT, 1, &config_typing_timeout_inactive, NULL, NULL, NULL);
+
+	{ /* initialize locale-related vars */
+		const gchar utf8hellip[] = { 0xe2, 0x80, 0xa6 };
+		const gchar asciihellip[] = { '.', '.', '.' };
+
+		ncurses_hellip = g_locale_from_utf8(utf8hellip, sizeof(utf8hellip),
+				NULL, NULL, NULL);
+		if (!ncurses_hellip) {
+				/* fallback to asciihellip */
+			ncurses_hellip = g_locale_from_utf8(asciihellip, sizeof(asciihellip),
+					NULL, NULL, NULL);
+
+				/* failure here? you're joking, right?
+				 * well, better die early. */
+			g_assert(ncurses_hellip);
+		}
+	}
 
 	have_winch_pipe = 0;
 #ifdef SIGWINCH
@@ -804,8 +796,7 @@ EXPORT int ncurses_plugin_init(int prio)
 			ncurses_settitle = 1;
 	}
 
-	if (ncurses_settitle)
-		printf(ncurses_settitle_formats[ncurses_settitle], "", "", "EKG2");
+	ncurses_set_title("", "", "EKG2");
 
 	return 0;
 }
@@ -824,6 +815,7 @@ static int ncurses_plugin_destroy()
 	timer_remove(&ncurses_plugin, "ncurses:clock");
 
 	ncurses_deinit();
+	g_free(ncurses_hellip);
 
 	plugin_unregister(&ncurses_plugin);
 

@@ -34,6 +34,7 @@
 #include "spell.h"
 
 
+	/* CHAR_Ts are always locale-encoded */
 CHAR_T *ncurses_line = NULL;		/* wska¼nik aktualnej linii */
 CHAR_T *ncurses_yanked = NULL;		/* bufor z ostatnio wyciêtym tekstem */
 CHAR_T **ncurses_lines = NULL;		/* linie wpisywania wielolinijkowego */
@@ -45,7 +46,9 @@ int ncurses_input_size = 1;		/* rozmiar okna wpisywania tekstu */
 
 int ncurses_noecho = 0;
 
+gchar *ncurses_hellip;
 
+#if 0
 static char ncurses_funnything[5] = "|/-\\";
 
 CHAR_T *ncurses_passbuf;
@@ -114,11 +117,13 @@ QUERY(ncurses_password_input) {
 
 	return -1;
 }
+#endif
 
 /* cut prompt to given width and recalculate its' width */
 void ncurses_update_real_prompt(ncurses_window_t *n) {
-	if (!n)
-		return;
+	g_assert(n);
+
+#if 0 /* XXX: shortening */
 
 	const int _maxlen = n->window && n->window->_maxx ? n->window->_maxx : 80;
 	const int maxlen = ncurses_noecho ? _maxlen - 3 : _maxlen / 3;
@@ -139,7 +144,7 @@ void ncurses_update_real_prompt(ncurses_window_t *n) {
 		const CHAR_T *dots	= (CHAR_T *) TEXT("...");
 #ifdef USE_UNICODE
 		const wchar_t udots[2]	= { 0x2026, 0 };
-		if (config_use_unicode)	/* use unicode hellip, if using utf8 */
+		if (console_charset_is_utf8)	/* use unicode hellip, if using utf8 */
 			dots		= udots;
 #endif
 
@@ -159,6 +164,7 @@ void ncurses_update_real_prompt(ncurses_window_t *n) {
 			n->prompt_real_len	= maxlen;
 		}
 	}
+#endif
 }
 
 /*
@@ -456,71 +462,105 @@ static int ncurses_redraw_input_line(CHAR_T *text) {
  *	przy okazji jesli jest aspell to sprawdza czy tekst jest poprawny.
  */
 void ncurses_redraw_input(unsigned int ch) {
-	int cur_posx = -1, cur_posy = 0;
-	const int promptlen = ncurses_lines ? 0 : ncurses_current->prompt_real_len;
-	const int width = input->_maxx - promptlen;
-
-	if ((line_index - line_start >= width) || (line_index - line_start < 2))
-		line_start = line_index - width/2;
-	if (line_start < 0)
-		line_start = 0;
-
-	ncurses_redraw_input_already_exec = 1;
-
+	int x, y;
+	/* draw prompt */
 	werase(input);
-	wattrset(input, color_pair(COLOR_WHITE, COLOR_BLACK));
+	wmove(input, 0, 0);
+	if (!ncurses_lines) {
+		gchar *tmp = ekg_recode_to_locale(format_find(
+					ncurses_current->prompt ? "ncurses_prompt_query" : "ncurses_prompt_none"));
+		gchar *tmp2 = format_string(tmp, "\037"); /* unit separator */
+		fstring_t *prompt_f = fstring_new(tmp2);
+		gchar *s = prompt_f->str, *s2;
+		fstr_attr_t *a = prompt_f->attr, *a2;
+		g_free(tmp2);
+		g_free(tmp);
 
-	if (ncurses_lines) {
-		int i, x;
-
-		cur_posy = lines_index - lines_start;
-		for (i = 0; i < MULTILINE_INPUT_SIZE; i++) {
-			if (!ncurses_lines[lines_start + i])
-				break;
-
-			wmove(input, i, 0);
-			x = ncurses_redraw_input_line(ncurses_lines[lines_start + i]);
-			if (lines_index == (lines_start + i))
-				cur_posx = x;
+		if (ncurses_current->prompt) {
+				/* find our \037 */
+			for (s2 = s, a2 = a; *s2 != '\037'; s2++, a2++)
+				g_assert(*s2);
+			*s2 = '\0'; /* and split the original string using it */
 		}
-		wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
-		if (lines_start>0)
-			mvwaddch(input, 0, input->_maxx, '^');
-		if (g_strv_length((char **) ncurses_lines)-lines_start > MULTILINE_INPUT_SIZE)
-			mvwaddch(input, MULTILINE_INPUT_SIZE-1, input->_maxx, 'v');
-		wattrset(input, A_NORMAL);
-	} else {
-		wmove(input, 0, 0);
-		if (ncurses_current->prompt)
-#ifdef USE_UNICODE
-			waddwstr(input, ncurses_current->prompt_real);
-#else
-			waddstr(input, (char *) ncurses_current->prompt_real);
+
+		ncurses_fstring_print(input, s, a, -1);
+		
+		if (ncurses_current->prompt) {
+			if (!ncurses_simple_print(input, ncurses_current->prompt,
+						*a2, input->_maxx / 4)) {
+
+					/* don't change colors or anything
+					 * just disable bold to distinguish */
+				wattroff(input, A_BOLD); /* XXX? */
+				waddstr(input, ncurses_hellip);
+			}
+			s2++, a2++;
+			ncurses_fstring_print(input, s2, a2, -1);
+		}
+		fstring_free(prompt_f);
+	}
+	getyx(input, y, x);
+	ncurses_current->prompt_len = x;
+
+	/* XXX: cleanup, optimize */
+	{
+		int cur_posx = -1, cur_posy = 0;
+		const int width = input->_maxx - x;
+
+		if ((line_index - line_start >= width) || (line_index - line_start < 2))
+			line_start = line_index - width/2;
+		if (line_start < 0)
+			line_start = 0;
+
+		ncurses_redraw_input_already_exec = 1;
+
+		wattrset(input, color_pair(COLOR_WHITE, COLOR_BLACK));
+
+		if (ncurses_lines) {
+			int i, x;
+
+			cur_posy = lines_index - lines_start;
+			for (i = 0; i < MULTILINE_INPUT_SIZE; i++) {
+				if (!ncurses_lines[lines_start + i])
+					break;
+
+				wmove(input, i, 0);
+				x = ncurses_redraw_input_line(ncurses_lines[lines_start + i]);
+				if (lines_index == (lines_start + i))
+					cur_posx = x;
+			}
+			wattrset(input, color_pair(COLOR_BLACK, COLOR_BLACK) | A_BOLD);
+			if (lines_start>0)
+				mvwaddch(input, 0, input->_maxx, '^');
+			if (g_strv_length((char **) ncurses_lines)-lines_start > MULTILINE_INPUT_SIZE)
+				mvwaddch(input, MULTILINE_INPUT_SIZE-1, input->_maxx, 'v');
+			wattrset(input, A_NORMAL);
+		} else {
+#if 0
+			if (ncurses_noecho) {
+				static char *funnything	= ncurses_funnything;
+
+				waddch(input, ' ');		/* XXX why here? If you want to add space after propt, add it in theme */
+				waddch(input, *funnything);
+				wmove(input, 0, getcurx(input)-1);
+				if (!*(++funnything))
+					funnything = ncurses_funnything;
+				return;
+			}
 #endif
 
-		if (ncurses_noecho) {
-			static char *funnything	= ncurses_funnything;
-
-			waddch(input, ' ');		/* XXX why here? If you want to add space after propt, add it in theme */
-			waddch(input, *funnything);
-			wmove(input, 0, getcurx(input)-1);
-			if (!*(++funnything))
-				funnything = ncurses_funnything;
-			return;
+			cur_posx = ncurses_redraw_input_line(ncurses_line);
 
 		}
-
-		cur_posx = ncurses_redraw_input_line(ncurses_line);
-
-	}
-	/* this mut be here if we don't want 'timeout' after pressing ^C */
-	if (ch == 3) ncurses_commit();
-	if (cur_posx != -1) {
-		wmove(input, cur_posy, cur_posx);
-		curs_set(1);
-	} else {
-		wmove(input, 0, 0);	// XXX ???
-		curs_set(0);
+		/* this mut be here if we don't want 'timeout' after pressing ^C */
+		if (ch == 3) ncurses_commit();
+		if (cur_posx != -1) {
+			wmove(input, cur_posy, cur_posx);
+			curs_set(1);
+		} else {
+			wmove(input, 0, 0);	// XXX ???
+			curs_set(0);
+		}
 	}
 }
 

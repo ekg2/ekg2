@@ -73,36 +73,20 @@ static void irc_parse_ident_host(char *identhost, char **ident, char **host)  {
 	}
 }
 
-/* XXX: rewrite to not rely on internal API */
-static char *try_convert_string_p(const char *ps, void *cd) { return NULL; }
+static void irc_convert_in(irc_private_t *j, GString *line) {
+	gchar **ep;
 
-static char *irc_convert_in(irc_private_t *j, const char *line) {
-	char *recoded;
-	conv_in_out_t *e;
-	list_t el;
-
-	/* auto guess encoding */
-	for (el=j->auto_guess_encoding; el; el=el->next) {
-		e = el->data;
-		recoded = try_convert_string_p(line, e->conv_in);
-		if (recoded)
-			return recoded;
+	if (j->auto_guess_encoding) {
+		for (ep = j->auto_guess_encoding; *ep; ep++) {
+			if (ekg_try_recode_gstring_from(*ep, line))
+				return;
+		}
 	}
 
-	/* default recode */
-	recoded = NULL;
-	if (j->conv_in != (void *) -1) {
-		if (!(recoded = ekg_convert_string_p(line, j->conv_in)))
-			debug_error("[irc] ekg_convert_string_p() failed [%x] using not recoded text\n", j->conv_in);
-	}
-
-	/* convert from unicode */
-	if ( !recoded && is_utf8_string(line) ) /* XXX add variable here? */
-		recoded = ekg_utf8_to_core_dup(line);
-
-	if (!recoded)
-		recoded = xstrdup(line);
-	return recoded;
+	if (j->conv)
+		ekg_recode_gstring_from(j->conv, line);
+	else
+		ekg_fix_utf8(line->str);
 }
 
 /* cos co blabla, zwraca liczbe pochlonietych znakow przez '*' XXX */
@@ -335,13 +319,26 @@ static char *irc_tolower_int(char *buf, int casemapping)
 /*
  */
 
-int irc_parse_line(session_t *s, char *buf, int fd)
+int irc_parse_line(session_t *s, const char *l, int fd)
 {
+	static GString *strbuf = NULL;
 	irc_private_t *j = s->priv;
 	int	i, c=0, ecode;
 	char	*p, *q[20];
 
-	int	len = xstrlen(buf);
+	gchar *buf;
+	int	len;
+
+	if (G_UNLIKELY(!strbuf))
+		strbuf = g_string_new(l);
+	else
+		g_string_assign(strbuf, l);
+
+	irc_convert_in(j, strbuf);
+	buf = strbuf->str;
+	len = strbuf->len;
+
+	query_emit(NULL, "irc-parse-line", &s->uid, &buf);
 
 	p=buf;
 	if(!p)
@@ -459,7 +456,7 @@ IRC_COMMAND(irc_c_init)
 			xfree(j->host_ident);
 			if (t)	j->host_ident=xstrdup(++t); 
 			else j->host_ident=NULL;
-			debug_ok("\nspoko miejscówka ziom!...[%s:%s] given: %s\n", j->nick, j->host_ident, param[2]);
+			debug_ok("\nirc_c_init()/num=1/...[%s:%s] given: %s\n", j->nick, j->host_ident, param[2]);
 
 			xfree(j->nick);
 			j->nick = xstrdup(param[2]);
@@ -641,7 +638,7 @@ IRC_COMMAND(irc_c_error)
 			if ((chanp = irc_find_channel(j->channels, param[3])))
 			{
 				xfree(chanp->topic);
-				chanp->topic  = irc_convert_in(j, OMITCOLON(param[4]));
+				chanp->topic  = g_strdup(OMITCOLON(param[4]));
 
 				coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
 				tmpchn	= clean_channel_names(s, param[3]);
@@ -1094,8 +1091,7 @@ IRC_COMMAND(irc_c_msg)
 	irc_parse_nick_identhost(OMITCOLON(param[0]), &sender, &identhost);
 
 	recipient = xstrdup(param[2]);	/* destination (channel|nick) */
-
-	recoded = irc_convert_in(j, OMITCOLON(param[3]));
+	recoded = g_strdup(OMITCOLON(param[3]));
 
 	/* probably message from server ... */
 	if (s->connecting && !prv) {
@@ -1584,7 +1580,7 @@ IRC_COMMAND(irc_c_topic)
 	__topic   = OMITCOLON(param[3]);
 	cchn = clean_channel_names(s, param[2]);
 	if (xstrlen(__topic)) {
-		chanp->topic  = irc_convert_in(j, __topic);
+		chanp->topic  = g_strdup(__topic);
 		chanp->topicby = xstrdup(__topicby);
 		coloured = irc_ircoldcolstr_to_ekgcolstr(s, chanp->topic, 1);
 		print_info(dest, s, "IRC_TOPIC_CHANGE",

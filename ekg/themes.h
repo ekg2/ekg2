@@ -31,16 +31,18 @@
 extern "C" {
 #endif
 
+typedef guint16 fstr_attr_t;
+
 typedef struct {
-	char *str;				/* possibly multibyte string */
-	short		*attr;			/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
+	gchar		*str;			/* possibly multibyte string */
+	fstr_attr_t	*attr;			/* atrybuty, ci±g o d³ugo¶ci strlen(str) */
 	time_t		ts;			/* timestamp */
 
 	int		prompt_len;		/* d³ugo¶æ promptu, który bêdzie powtarzany przy
 						   przej¶ciu do kolejnej linii. */
 	unsigned int	prompt_empty	: 1;	/* prompt przy przenoszeniu bêdzie pusty */
 	int		margin_left;		/* where the margin is set (on what char) */
-	void		*priv_data;		/* can be helpfull */
+	gchar		*priv_data;		/* can be helpfull */
 } fstring_t;
 
 #define print(x...)		print_window_w(NULL, EKG_WINACT_JUNK, x) 
@@ -67,9 +69,13 @@ int theme_write(const char *filename);
 void theme_cache_reset();
 void theme_free();
 
+fstring_t *fstring_dup(const fstring_t *str);
 fstring_t *fstring_new(const char *str);
 fstring_t *fstring_new_format(const char *format, ...);
 void fstring_free(fstring_t *str);
+
+void fstring_iter(const fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len);
+gboolean fstring_next(gchar **text, fstr_attr_t **attr, gssize *len, fstr_attr_t *change);
 
 #endif
 
@@ -93,7 +99,8 @@ typedef enum {
 	FSTR_BLINK		= 256,
 	FSTR_UNDERLINE		= 512,
 	FSTR_REVERSE		= 1024,
-	FSTR_ALTCHARSET		= 2048
+	FSTR_ALTCHARSET		= 2048,
+	FSTR_LINEBREAK		= 4096,
 } fstr_t;
 
 #ifdef __cplusplus

@@ -26,6 +26,9 @@
 #include <unistd.h>
 #include <errno.h>
 
+/* WEXITSTATUS for FreeBSD */
+#include <sys/wait.h>
+
 /*
  * Common API
  */
@@ -41,7 +44,8 @@ struct ekg_source {
 
 	union {
 		GChildWatchFunc as_child;
-		int (*as_timer)(int, void*);
+		GSourceFunc as_timer;
+		int (*as_old_timer)(int, void*);
 		gpointer as_void;
 	} handler;
 
@@ -56,13 +60,16 @@ struct ekg_source {
 
 		struct {
 			GTimeVal lasttime;
-			guint interval;
+			guint64 interval;
+			/* persist arg is deprecated, and mostly unused
+			 * however, /at uses it, and so does xmsg plugin
+			 * the former needs fixing, the latter will probably be removed */
 			gboolean persist;
 		} as_timer;
 	} details;
 };
 
-static ekg_source_t source_new(plugin_t *plugin, const gchar *name_format, va_list args, gpointer data, GDestroyNotify destr) {
+static ekg_source_t source_new(plugin_t *plugin, const gchar *name_format, gpointer data, GDestroyNotify destr, va_list args) {
 	struct ekg_source *s = g_slice_new(struct ekg_source);
 
 	s->plugin = plugin;
@@ -113,10 +120,11 @@ void ekg_source_remove(ekg_source_t s) {
  * that (due to handler prototype differences) a particular handler is
  * used only with a single source type.
  */
+
 gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
 	gboolean ret = FALSE;
 
-	inline void source_remove_by_h(gpointer data, gpointer user_data) {
+	void source_remove_by_h(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
 
 		if (s->handler.as_void == handler) {
@@ -127,8 +135,9 @@ gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
 		}
 	}
 
-	g_slist_foreach(children, source_remove_by_h, NULL);
 	g_slist_foreach(timers, source_remove_by_h, NULL);
+	if (G_UNLIKELY(!ret))
+		g_slist_foreach(children, source_remove_by_h, NULL);
 	return ret;
 }
 
@@ -150,7 +159,7 @@ gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
 gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name) {
 	gboolean ret = FALSE;
 
-	inline void source_remove_by_d(gpointer data, gpointer user_data) {
+	void source_remove_by_d(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
 
 		if (s->priv_data == priv_data) {
@@ -180,7 +189,7 @@ gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name) {
 gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name) {
 	gboolean ret = FALSE;
 
-	inline void source_remove_by_p(gpointer data, gpointer user_data) {
+	void source_remove_by_p(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
 
 		if (s->plugin == plugin) {
@@ -197,7 +206,7 @@ gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name) {
 }
 
 void sources_destroy(void) {
-	inline void source_remove(gpointer data, gpointer user_data) {
+	void source_remove(gpointer data, gpointer user_data) {
 		struct ekg_source *s = data;
 		ekg_source_remove(s);
 	}
@@ -245,9 +254,9 @@ static void child_wrapper(GPid pid, gint status, gpointer data) {
  * Add a watcher for the child process.
  *
  * @param plugin - plugin which contains handler funcs or NULL if in core.
- * @param pid - PID of the child process.
  * @param name_format - format string for watcher name. Can be NULL, or
  *	simple string if the name is guaranteed not to contain '%'.
+ * @param pid - PID of the child process.
  * @param handler - the handler func called when the process exits.
  *	The handler func will be provided with the child PID, exit status
  *	(filtered through WEXITSTATUS()) and private data.
@@ -257,14 +266,14 @@ static void child_wrapper(GPid pid, gint status, gpointer data) {
  *	process exits). Can be NULL.
  * @param ... - arguments to name_format format string.
  *
- * @return The newly-allocated struct ekg_child pointer.
+ * @return An unique ekg_child_t.
  */
-ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) {
+ekg_child_t ekg_child_add(plugin_t *plugin, const gchar *name_format, GPid pid, GChildWatchFunc handler, gpointer data, GDestroyNotify destr, ...) {
 	va_list args;
 	struct ekg_source *c;
 	
 	va_start(args, destr);
-	c = source_new(plugin, name_format, args, data, destr);
+	c = source_new(plugin, name_format, data, destr, args);
 	va_end(args);
 
 	c->handler.as_child = handler;
@@ -283,28 +292,28 @@ ekg_child_t ekg_child_add(plugin_t *plugin, GPid pid, const gchar *name_format, 
 static void timer_wrapper_destroy_notify(gpointer data) {
 	struct ekg_source *t = data;
 
-	t->handler.as_timer(1, t->priv_data);
+	t->handler.as_old_timer(1, t->priv_data);
 
 	timers = g_slist_remove(timers, data);
 	source_free(t);
 }
 
-static gboolean timer_wrapper(gpointer data) {
+static gboolean timer_wrapper_old(gpointer data) {
 	struct ekg_source *t = data;
 
 	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
-	return !(t->handler.as_timer(0, t->priv_data) == -1 || !t->details.as_timer.persist);
+	return !(t->handler.as_old_timer(0, t->priv_data) == -1 || !t->details.as_timer.persist);
 }
 
 ekg_timer_t timer_add_ms(plugin_t *plugin, const gchar *name, guint period, gboolean persist, gint (*function)(gint, gpointer), gpointer data) {
-	struct ekg_source *t = source_new(plugin, name, NULL, data, NULL);
+	struct ekg_source *t = source_new(plugin, name, data, NULL, NULL);
 
-	t->handler.as_timer = function;
+	t->handler.as_old_timer = function;
 	t->details.as_timer.interval = period;
 	t->details.as_timer.persist = persist;
 	timers = g_slist_prepend(timers, t);
 
-	source_set_id(t, g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper, t, timer_wrapper_destroy_notify));
+	source_set_id(t, g_timeout_add_full(G_PRIORITY_DEFAULT, period, timer_wrapper_old, t, timer_wrapper_destroy_notify));
 	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
 
 	return t;
@@ -336,6 +345,70 @@ ekg_timer_t timer_add_session(session_t *session, const gchar *name, guint perio
 	return timer_add(session->plugin, name, period, persist, (void *) function, session);
 }
 
+static void timer_destroy_notify(gpointer data) {
+	struct ekg_source *t = data;
+	timers = g_slist_remove(timers, data);
+
+	if (G_UNLIKELY(t->destr))
+		t->destr(t->priv_data);
+
+	source_free(t);
+}
+
+static gboolean timer_wrapper(gpointer data) {
+	struct ekg_source *t = data;
+
+	return t->handler.as_timer(t->priv_data);
+}
+
+/**
+ * ekg_timer_add()
+ *
+ * Add a timer.
+ *
+ * @param plugin - plugin which contains handler funcs or NULL if in core.
+ * @param name_format - format string for timer name. Can be NULL, or
+ *	simple string if the name is guaranteed not to contain '%'.
+ * @param interval - the interval between successive timer calls,
+ *	in milliseconds. If it is a multiple of 1000, the timer will use
+ *	glib second timeouts (more efficient); otherwise, the millisecond
+ *	timeout will be used.
+ * @param handler - the handler func. It will be passed the private
+ *	data, and should either return TRUE or FALSE, depending on whether
+ *	the timer should persist or be removed.
+ * @param data - the private data passed to the handler.
+ * @param destr - destructor for the private data. It will be called
+ *	even if the handler is not. Can be NULL.
+ * @param ... - arguments to name_format format string.
+ *
+ * @return An unique ekg_timer_t.
+ */
+ekg_timer_t ekg_timer_add(plugin_t *plugin, const gchar *name_format, guint64 interval, GSourceFunc handler, gpointer data, GDestroyNotify destr, ...) {
+	va_list args;
+	struct ekg_source *t;
+	guint id;
+	
+	va_start(args, destr);
+	t = source_new(plugin, name_format, data, destr, args);
+	va_end(args);
+
+	g_assert(handler);
+	t->handler.as_timer = handler;
+	t->details.as_timer.interval = interval;
+	t->details.as_timer.persist = TRUE;
+
+	timers = g_slist_prepend(timers, t);
+	if (interval % 1000 == 0)
+		id = g_timeout_add_seconds_full(G_PRIORITY_DEFAULT, interval / 1000, timer_wrapper, t, timer_destroy_notify);
+	else
+		id = g_timeout_add_full(G_PRIORITY_DEFAULT, interval, timer_wrapper, t, timer_destroy_notify);
+
+	source_set_id(t, id);
+	g_source_get_current_time(t->source, &(t->details.as_timer.lasttime));
+
+	return t;
+}
+
 /*
  * timer_remove()
  *
@@ -356,7 +429,7 @@ ekg_timer_t timer_find_session(session_t *session, const gchar *name) {
 	if (!session)
 		return NULL;
 
-	inline gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
+	gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
 		const struct ekg_source *t = li;
 
 		return !(t->priv_data == session && !xstrcmp(name, t->name));
@@ -372,7 +445,7 @@ gint timer_remove_session(session_t *session, const gchar *name) {
 		return -1;
 	g_assert(session->plugin);
 
-	inline void timer_remove_session_iter(gpointer data, gpointer user_data) {
+	void timer_remove_session_iter(gpointer data, gpointer user_data) {
 		struct ekg_source *t = data;
 
 		if (t->priv_data == session && !xstrcmp(name, t->name)) {
@@ -462,7 +535,7 @@ static inline gint timer_match_name(gconstpointer li, gconstpointer ui) {
  */
 
 gint ekg_children_print(gint quiet) {
-	inline void child_print(gpointer data, gpointer user_data) {
+	void child_print(gpointer data, gpointer user_data) {
 		struct ekg_source *c = data;
 
 		printq("process", ekg_itoa(c->details.as_child.pid), c->name ? c->name : "?");
@@ -483,7 +556,7 @@ COMMAND(cmd_debug_timers) {
 	
 	printq("generic_bold", ("plugin      name               pers peri     handler  next"));
 	
-	inline void timer_debug_print(gpointer data, gpointer user_data) {
+	void timer_debug_print(gpointer data, gpointer user_data) {
 		struct ekg_source *t = data;
 		const gchar *plugin;
 		gchar *tmp;
@@ -496,7 +569,7 @@ COMMAND(cmd_debug_timers) {
 		tmp = timer_next_call(t);
 
 		/* XXX: pointer truncated */
-		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8u %.8x %-20s", plugin, t->name, t->details.as_timer.persist, t->details.as_timer.interval, GPOINTER_TO_UINT(t->handler.as_timer), tmp);
+		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8" G_GINT64_MODIFIER "u %.8x %-20s", plugin, t->name, t->details.as_timer.persist, t->details.as_timer.interval, GPOINTER_TO_UINT(t->handler.as_old_timer), tmp);
 		printq("generic", buf);
 		g_free(tmp);
 	}
@@ -747,14 +820,14 @@ COMMAND(cmd_at)
 		else if (params[0])
 			a_name = params[0];
 
-		inline void timer_print(gpointer data, gpointer user_data) {
+		void timer_print(gpointer data, gpointer user_data) {
 			struct ekg_source *t = data;
 			GTimeVal ends, tv;
 			struct tm *at_time;
 			char tmp[100], tmp2[150];
 			time_t sec, minutes = 0, hours = 0, days = 0;
 
-			if (t->handler.as_timer != timer_handle_at)
+			if (t->handler.as_old_timer != timer_handle_at)
 				return;
 			if (a_name && xstrcasecmp(t->name, a_name))
 				return;
@@ -974,11 +1047,11 @@ COMMAND(cmd_timer)
 		else if (params[0])
 			t_name = params[0];
 
-		inline void timer_print_list(gpointer data, gpointer user_data) {
+		void timer_print_list(gpointer data, gpointer user_data) {
 			struct ekg_source *t = data;
 			char *tmp;
 
-			if (t->handler.as_timer != timer_handle_command)
+			if (t->handler.as_old_timer != timer_handle_command)
 				return;
 			if (t_name && xstrcasecmp(t->name, t_name))
 				return;
@@ -1005,6 +1078,49 @@ COMMAND(cmd_timer)
 	printq("invalid_params", name);
 
 	return -1;
+}
+
+void timers_write(GIOChannel *f) {
+	void timer_write(gpointer data, gpointer user_data) {
+		struct ekg_source *t = data;
+		FILE *f = user_data;
+
+		const char *name = NULL;
+
+		if (!t->details.as_timer.persist) /* XXX && t->ends.tv_sec - time(NULL) < 5) */
+			return;
+
+		if (t->name && t->name[0] != '_')
+			name = t->name;
+		else
+			name = "(null)";
+
+		if (t->handler.as_old_timer == timer_handle_at) {
+			char buf[100];
+			time_t foo = (time_t) t->details.as_timer.lasttime.tv_sec + (t->details.as_timer.interval / 1000);
+			struct tm *tt = localtime(&foo);
+
+			strftime(buf, sizeof(buf), "%G%m%d%H%M.%S", tt);
+
+			if (t->details.as_timer.persist)
+				ekg_fprintf(f, "at %s %s/%s %s\n", name, buf, ekg_itoa(t->details.as_timer.interval / 1000), (char*)(t->priv_data));
+			else
+				ekg_fprintf(f, "at %s %s %s\n", name, buf, (char*)(t->priv_data));
+		} else if (t->handler.as_old_timer == timer_handle_command) {
+			char *foo;
+
+			if (t->details.as_timer.persist)
+				foo = saprintf("*/%s", ekg_itoa(t->details.as_timer.interval / 1000));
+			else
+				foo = saprintf("%s", ekg_itoa(t->details.as_timer.lasttime.tv_sec + (t->details.as_timer.interval / 1000)));
+
+			ekg_fprintf(f, "timer %s %s %s\n", name, foo, (char*)(t->priv_data));
+
+			xfree(foo);
+		}
+	}
+
+	g_slist_foreach(timers, timer_write, f);
 }
 
 /*
@@ -1416,5 +1532,3 @@ int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
 
 	return res;
 }
-
-

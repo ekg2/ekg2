@@ -34,12 +34,12 @@ OUTPUT:
 char *fstring2ascii(char *str, void *attr_)
 CODE:
         string_t st = string_init(NULL);
-	short *attr = attr_;
+	fstr_attr_t *attr = attr_;
         int prev = -1, prevbold = 0, prevblink = 0;
         int i;
 /* rewrite */
         for (i=0; i < strlen(str); i++) {
-                short chattr = attr[i];
+                fstr_attr_t chattr = attr[i];
                 int bold = 0, blink = 0;
 
                 if (chattr & 64)  bold = 1;
@@ -82,11 +82,13 @@ OUTPUT:
 void print(int dest, char *str)
 CODE:
 	char *line;
-        while ((line = split_line(&str))) {
+	while ((line = split_line(&str))) {
 		char *tmp = format_string(line);
-		window_print(window_exist(dest), fstring_new(tmp));
+		fstring_t *l = fstring_new(tmp);
+		window_print(window_exist(dest), l);
+		fstring_free(l);
 		xfree(tmp);
-        }
+	}
 
 void init()
 CODE:

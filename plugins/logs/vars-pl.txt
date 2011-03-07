@@ -1,6 +1,13 @@
 // mały opis dostępnych zmiennych
 // (c) copyright 2004 Leszek Krupiński <leafnode@wafel.com>
 
+encoding
+	typ: tekst
+	domyślna wartość: brak
+	
+	kodowanie dla zapisu logów w plaintekście. Jeśli nieustawione, będzie
+	używane kodowanie systemowe. Logi XML zawsze będą zapisywane w UTF-8.
+
 log
 	typ: liczba
 	domyślna wartość: 0

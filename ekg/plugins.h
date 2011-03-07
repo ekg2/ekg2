@@ -33,7 +33,7 @@
 extern "C" {
 #endif
 
-#define EKG_ABI_VER 5397 /* git rev-list master | wc -l */
+#define EKG_ABI_VER 5463 /* git rev-list master | wc -l */
 
 #define EXPORT __attribute__ ((visibility("default"))) G_MODULE_EXPORT
 
@@ -155,10 +155,6 @@ void queries_reconnect();
 void queries_list_destroy(query_t** kk);
 
 void registered_queries_free();
-
-#ifndef EKG2_WIN32_NOFUNCTION
-int ekg2_dlinit();
-#endif
 
 #ifndef EKG2_WIN32_NOFUNCTION
 extern GSList *plugins;

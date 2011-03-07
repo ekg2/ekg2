@@ -156,9 +156,6 @@ extern int config_history_savedups;
 extern int config_keep_reason;
 extern int config_last;
 extern int config_last_size;
-extern int config_lastlog_case;
-extern int config_lastlog_noitems;
-extern int config_lastlog_display_all;
 extern int config_make_window;
 extern int config_mesg;
 extern int config_query_commands;
@@ -184,9 +181,6 @@ extern char *config_theme;
 extern int config_time_deviation;
 extern char *config_timestamp;
 extern int config_timestamp_show;
-extern int config_use_unicode;	/* for instance in jabber plugin if this is on, than we don't need to make iconv from / to unicode.. */
-extern int config_use_iso;  /* this for ncurses */
-extern char *config_console_charset;	/* */
 extern int config_window_session_allow;
 extern char *config_windows_layout;
 extern int config_windows_save;
@@ -198,7 +192,8 @@ extern char *config_nickname;
 
 extern char *home_dir;
 extern char *config_dir;
-extern char *console_charset;
+extern const char *console_charset;
+extern gboolean console_charset_is_utf8;
 extern int in_autoexec;
 extern int ekg_watches_removed;
 extern time_t ekg_started;
@@ -252,12 +247,12 @@ void newconferences_destroy();
 
 int ekg_hash(const char *name);
 
-FILE *help_path(char *name, char *plugin);
+GIOChannel *help_open(const gchar *name, const gchar *plugin);
+gchar *read_line(GIOChannel *f);
 
 int mesg_set(int what);
 char *strip_spaces(char *line);
 int strncasecmp_pl(const char * cs,const char * ct,size_t count);
-int utf8str_char2bytes(const char *src, size_t n);
 int mkdir_recursive(const char *pathname, int isdir);
 
 #ifdef __GNUC__
@@ -278,8 +273,6 @@ const char *timestamp(const char *format);
 const char *timestamp_time(const char *format, time_t t);
 char *xstrmid(const char *str, int start, int length);
 void xstrtr(char *text, char from, char to);
-char *xstrncat_pl(char *dest, const char *src, size_t n);
-size_t strlen_pl(const char *s);
 char color_map(unsigned char r, unsigned char g, unsigned char b);
 char *strcasestr(const char *haystack, const char *needle);
 int msg_all(session_t *s, const char *function, const char *what);

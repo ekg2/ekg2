@@ -94,7 +94,7 @@ TIMER_SESSION(icq_snac_ref_list_cleanup) {
 
 static inline char *_icq_makesnac(guint8 family, guint16 cmd, guint16 flags, guint32 ref) {
 	static char buf[SNAC_PACKET_LEN];
-	string_t tempstr;
+	GString *tempstr;
 
 	tempstr = icq_pack("WWWI", (guint32) family, (guint32) cmd, (guint32) flags, (guint32) ref);
 	if (tempstr->len != SNAC_PACKET_LEN) {
@@ -102,11 +102,11 @@ static inline char *_icq_makesnac(guint8 family, guint16 cmd, guint16 flags, gui
 		return NULL;
 	}
 	memcpy(buf, tempstr->str, SNAC_PACKET_LEN);
-	string_free(tempstr, 1);
+	g_string_free(tempstr, TRUE);
 	return buf;
 }
 
-void icq_makesnac(session_t *s, string_t pkt, guint16 fam, guint16 cmd, private_data_t *data, snac_subhandler_t subhandler) {
+void icq_makesnac(session_t *s, GString *pkt, guint16 fam, guint16 cmd, private_data_t *data, snac_subhandler_t subhandler) {
 	icq_private_t *j;
 	icq_snac_reference_list_t *snac_data = NULL;
 
@@ -123,7 +123,7 @@ void icq_makesnac(session_t *s, string_t pkt, guint16 fam, guint16 cmd, private_
 		icq_snac_ref_add(s, snac_data);
 	}
 
-	string_insert_n(pkt, 0, _icq_makesnac(fam, cmd, 0x0000, j->snac_seq), SNAC_PACKET_LEN);
+	g_string_prepend_len(pkt, _icq_makesnac(fam, cmd, 0x0000, j->snac_seq), SNAC_PACKET_LEN);
 
 #if ICQ_SNAC_NAMES_DEBUG
 	{
@@ -138,9 +138,9 @@ void icq_makesnac(session_t *s, string_t pkt, guint16 fam, guint16 cmd, private_
 	j->snac_seq++;
 }
 
-void icq_makemetasnac(session_t *s, string_t pkt, guint16 type, guint16 subtype, private_data_t *data, snac_subhandler_t subhandler) {
+void icq_makemetasnac(session_t *s, GString *pkt, guint16 type, guint16 subtype, private_data_t *data, snac_subhandler_t subhandler) {
 	icq_private_t *j;
-	string_t newbuf;
+	GString *newbuf;
 	int t_len;
 
 	if (!s || !(j = s->priv) || !pkt)
@@ -160,8 +160,8 @@ void icq_makemetasnac(session_t *s, string_t pkt, guint16 type, guint16 subtype,
 	if (subtype)
 		icq_pack_append(newbuf, "w", (guint32) subtype);
 
-	string_insert_n(pkt, 0, newbuf->str, newbuf->len);
-	string_free(newbuf, 1);
+	g_string_prepend_len(pkt, newbuf->str, newbuf->len);
+	g_string_free(newbuf, TRUE);
 
 	debug_function("icq_makemetasnac() 0x%x 0x0%x\n", type, subtype);
 	icq_makesnac(s, pkt, 0x15, 0x2, data, subhandler);

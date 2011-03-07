@@ -104,8 +104,6 @@ extern window_t *window_debug;
 extern window_t *window_status;
 extern window_t *window_current;
 
-extern window_lastlog_t *lastlog_current;
-
 window_t *window_find(const char *target);
 window_t *window_find_sa(session_t *session, const char *target, int session_null_means_no_session);
 

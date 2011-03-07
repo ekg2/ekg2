@@ -23,10 +23,9 @@
  */
 
 #include "ekg2.h"
+#include "nc-strings.h"
 
 #if USE_UNICODE
-
-#include "strings.h"
 
 /* some unicode/ascii stuff */
 #include <string.h>	/* ascii stuff */

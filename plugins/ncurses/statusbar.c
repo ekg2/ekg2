@@ -67,7 +67,7 @@ static inline int color_pair_bold(int fg, int bold, int bg) {
  * zwraca ilo¶æ dopisanych znaków.
  */
 
-static void window_printat(WINDOW *w, const char *format, struct format_data *data, int fgcolor, int bold, int bgcolor) {
+static void window_printat(WINDOW *w, const /*locale*/ char *format, /*locale*/ struct format_data *data, int fgcolor, int bold, int bgcolor) {
 	const char *p;			/* temporary format value */
 
 	p = format;
@@ -278,8 +278,9 @@ static char *ncurses_window_activity(void) {
 		return string_free(s, 0);
 }
 
-static void reprint_statusbar(WINDOW *w, int y, const char *format, struct format_data *data) {
+static void reprint_statusbar(WINDOW *w, int y, const gchar *format, /*locale*/ struct format_data *data) {
 	int backup_display_color = config_display_color;
+	char *tmp;
 
 	if (!w)
 		return;
@@ -290,7 +291,9 @@ static void reprint_statusbar(WINDOW *w, int y, const char *format, struct forma
 	wattrset(w, color_pair(COLOR_WHITE, COLOR_BLUE));
 
 	wmove(w, y, 0);
-	window_printat(w, format, data, COLOR_WHITE, 0, COLOR_BLUE);
+	tmp = ekg_recode_to_locale(format);
+	window_printat(w, tmp, data, COLOR_WHITE, 0, COLOR_BLUE);
+	g_free(tmp);
 
 	mvwhline(w, y, getcurx(w), ' ', w->_maxx);
 
@@ -323,7 +326,7 @@ void update_statusbar(int commit)
 		wattrset(ncurses_header, color_pair(COLOR_WHITE, COLOR_BLUE));
 
 	/* inicjalizujemy wszystkie opisowe bzdurki */
-#define __add_format(x, z, p) \
+#define __add_format_(x, z, p) \
 	{ \
 		formats[formats_count].name = x; \
 		formats[formats_count].text = z; \
@@ -331,8 +334,14 @@ void update_statusbar(int commit)
 		formats_count++; \
 	}
 
-#define __add_format_emp(x, y)		__add_format(x, y ? (char *) empty_format : NULL, 0)
-#define __add_format_dup(x, y, z)	__add_format(x, y ? xstrdup(z) : NULL, 0)
+#define __add_format(x, y, z) \
+	{ \
+		__add_format_(x, ekg_recode_to_locale(y), z); \
+		g_free(y); \
+	}
+
+#define __add_format_emp(x, y)		__add_format_(x, y ? (char*) empty_format : NULL, 0)
+#define __add_format_dup(x, y, z)	__add_format_(x, y ? ekg_recode_to_locale(z) : NULL, 0)
 
 	__add_format("time", xstrdup(timestamp(format_find("statusbar_timestamp"))), 1);
 
@@ -361,7 +370,7 @@ void update_statusbar(int commit)
 	__add_format("activity", ncurses_window_activity(), 1);
 
 	if (sess && (sess->connected || (sess->connecting && connecting_counter))) {
-#define __add_format_emp_st(x, y) case y: __add_format(x, (char *) empty_format, 0) break
+#define __add_format_emp_st(x, y) case y: __add_format_(x, (char *) empty_format, 0) break
 		switch (sess->status) {
 				/* XXX: rewrite? */
 			__add_format_emp_st("away", EKG_STATUS_AWAY);
@@ -385,7 +394,7 @@ void update_statusbar(int commit)
 	if (q) {
 		int __ip = user_private_item_get_int(q, "ip");
 		char *ip = __ip ? inet_ntoa(*((struct in_addr*) &__ip)) : NULL;;
-#define __add_format_emp_st(x, y) case y: __add_format("query_" x, (char *) empty_format, 0); break
+#define __add_format_emp_st(x, y) case y: __add_format_("query_" x, (char *) empty_format, 0); break
 		switch (q->status) {
 				/* XXX: rewrite? */
 			__add_format_emp_st("away", EKG_STATUS_AWAY);
@@ -418,6 +427,7 @@ void update_statusbar(int commit)
 #undef __add_format_emp
 #undef __add_format_dup
 #undef __add_format
+#undef __add_format_
 
 	for (y = 0; y < config_header_size; y++) {
 		const char *p;

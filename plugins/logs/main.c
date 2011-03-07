@@ -114,7 +114,7 @@ static char *log_escape(const char *str)
 
 static char *fstring_reverse(fstring_t *fstr) {
 	const char *str;
-	const short *attr;
+	const fstr_attr_t *attr;
 	string_t asc;
 	int i;
 
@@ -438,6 +438,7 @@ static int logs_print_window(session_t *s, window_t *w, const char *line, time_t
 	fstr->ts = ts;
 
 	query_emit(ui_plugin, "ui-window-print", &w, &fstr);
+	fstring_free(fstr);
 	return 0;
 }
 
@@ -669,7 +670,8 @@ static FILE* logs_open_file(char *path, int ff) {
 		if (!fdesc) {
 			if (!(fdesc = fopen(fullname, "w+")))
 				return NULL;
-			fputs("<?xml version=\"1.0\"?>\n", fdesc);
+					/* XXX: what about old, locale-encoded logs? */
+			fputs("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n", fdesc);
 			fputs("<!DOCTYPE ekg2log PUBLIC \"-//ekg2log//DTD ekg2log 1.0//EN\" ", fdesc);
 			fputs("\"http://www.ekg2.org/DTD/ekg2log.dtd\">\n", fdesc);
 			fputs("<ekg2log xmlns=\"http://www.ekg2.org/DTD/\">\n", fdesc);
@@ -693,6 +695,9 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	session_t *s = session_find((const char*)session);
 	const char *gotten_uid = get_uid(s, uid);
 	const char *gotten_nickname = get_nickname(s, uid);
+
+	const gchar *logsenc = config_logs_encoding ? config_logs_encoding : console_charset;
+	GString *tmp;
 
 	if (!file)
 		return;
@@ -724,8 +729,12 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 	 * status,<numer>,<nick>,[<ip>],<time>,<status>,<descr>
 	 */
 
-	fputs(gotten_uid, file);      fputc(',', file);
-	fputs(gotten_nickname, file); fputc(',', file);
+	tmp = g_string_new(gotten_uid);
+	ekg_recode_gstring_to(logsenc, tmp);
+	fputs(tmp->str, file);      fputc(',', file);
+	g_string_assign(tmp, gotten_nickname);
+	ekg_recode_gstring_to(logsenc, tmp);
+	fputs(tmp->str, file); fputc(',', file);
 	if (class == EKG_MSGCLASS_PRIV_STATUS) {
 		userlist_t *u = userlist_find(s, gotten_uid);
 		int __ip = u ? user_private_item_get_int(u, "ip") : INADDR_NONE;
@@ -746,10 +755,15 @@ static void logs_simple(FILE *file, const char *session, const char *uid, const 
 		fputs(status, file); 
 		fputc(',', file);
 	}
-	if (textcopy) fputs(textcopy, file);
+	if (textcopy) {
+		g_string_assign(tmp, textcopy);
+		ekg_recode_gstring_to(logsenc, tmp);
+		fputs(tmp->str, file);
+	}
 	fputs("\n", file);
 
 	xfree(textcopy);
+	g_string_free(tmp, TRUE);
 	fflush(file);
 }
 
@@ -846,6 +860,7 @@ static void logs_gaim()
 
 static void logs_irssi(FILE *file, const char *session, const char *uid, const char *text, time_t sent, msgclass_t class) {
 	const char *nuid = NULL;	/* get_nickname(session_find(session), uid) */
+	gchar *tmp, *enc;
 
 	if (!file)
 		return;
@@ -856,22 +871,26 @@ static void logs_irssi(FILE *file, const char *session, const char *uid, const c
 			userlist_t *u = userlist_find(session_find(session), uid);
 			int __ip = u ? user_private_item_get_int(u, "ip") : INADDR_NONE;
 
-			fprintf(file, "%s * %s reports status: %s [~notirc@%s:%s] /* {status} */\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), inet_ntoa(*((struct in_addr*) &__ip)), ekg_itoa(u ? user_private_item_get_int(u, "port") : 0));
+			tmp = g_strdup_printf("%s * %s reports status: %s [~notirc@%s:%s] /* {status} */\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text), inet_ntoa(*((struct in_addr*) &__ip)), ekg_itoa(u ? user_private_item_get_int(u, "port") : 0));
 			break;
 		}
 
 		case EKG_MSGCLASS_SYSTEM: /* other messages like session started, session closed and so on */
-			fprintf(file, "%s\n", __(text));
+			tmp = g_strdup_printf("%s\n", __(text));
 			break;
 
 		case EKG_MSGCLASS_MESSAGE:	/* just normal message */
-			fprintf(file, "%s <%s> %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
+			tmp = g_strdup_printf("%s <%s> %s\n", prepare_timestamp_format(config_logs_timestamp, sent), nuid ? nuid : __(uid), __(text));
 			break;
 
 		default: /* everythink else */
 			debug("[LOGS_IRSSI] UTYPE = %d\n", class);
 			return; /* to avoid flushisk file */
 	}
+	enc = ekg_recode_to(config_logs_encoding, tmp);
+	fputs(enc, file);
+	g_free(tmp);
+	g_free(enc);
 	fflush(file);
 }
 
@@ -1120,8 +1139,10 @@ static QUERY(logs_handler_newwin) {
 		}
 
 		/* XXX, in fjuczer it can be gzipped file, WARN HERE */
-		while ((line = read_file(f, 0)))
+		while ((line = read_file(f, 0))) {
+			ekg_fix_utf8(line);
 			buffer_add_str(&buffer_lograw, path, line);
+		}
 
 		ftruncate(fileno(f), 0);	/* works? */
 		fclose(f);
@@ -1173,6 +1194,8 @@ EXPORT int logs_plugin_init(int prio) {
 	query_connect(&logs_plugin, "config-postinit", logs_postinit, NULL);
 	/* XXX, implement UI_WINDOW_TARGET_CHANGED, IMPORTANT!!!!!! */
 
+		/* we need to reopen files on change and that's what logs_changed_path() does */
+	variable_add(&logs_plugin, ("encoding"), VAR_STR, 1, &config_logs_encoding, &logs_changed_path, NULL, NULL);
 	/* TODO: maksymalna ilosc plikow otwartych przez plugin logs */
 	variable_add(&logs_plugin, ("log_max_open_files"), VAR_INT, 1, &config_logs_max_files, NULL /* XXX: logs_changed_maxfd */, NULL, NULL); 
 	variable_add(&logs_plugin, ("log"), VAR_MAP, 1, &config_logs_log, &logs_changed_path, 

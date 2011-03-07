@@ -22,7 +22,7 @@
  */
 
 #include "ekg2-config.h"
-
+#include "ecurses.h"
 
 #if USE_UNICODE
 
@@ -40,18 +40,18 @@ extern int config_use_unicode;	/* not everyone want to include stuff.h */
 #define STRING_FORMAT "%ls"
 #define CHAR_FORMAT "%lc"
 
-extern size_t xwcslen(const CHAR_T *str);
-extern size_t xmbslen(const char *str);
-extern CHAR_T *xwcscpy(CHAR_T *dst, CHAR_T *src);
-extern CHAR_T *xwcsdup(CHAR_T *str);
-extern CHAR_T *xwcscat(CHAR_T *dst, const CHAR_T *src);
-extern int xwcscmp(const CHAR_T *s1, const CHAR_T *s2);
-extern CHAR_T *xwcschr(const CHAR_T *s, CHAR_T c);
-extern char *wcs_to_normal(const CHAR_T *str);
-extern CHAR_T *normal_to_wcs(const char *str);
-extern CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int trim, int quotes);
-extern CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep);
-extern size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
+size_t xwcslen(const CHAR_T *str);
+size_t xmbslen(const char *str);
+CHAR_T *xwcscpy(CHAR_T *dst, CHAR_T *src);
+CHAR_T *xwcsdup(CHAR_T *str);
+CHAR_T *xwcscat(CHAR_T *dst, const CHAR_T *src);
+int xwcscmp(const CHAR_T *s1, const CHAR_T *s2);
+CHAR_T *xwcschr(const CHAR_T *s, CHAR_T c);
+char *wcs_to_normal(const CHAR_T *str);
+CHAR_T *normal_to_wcs(const char *str);
+CHAR_T **wcs_array_make(const CHAR_T *string, const CHAR_T *sep, int max, int trim, int quotes);
+CHAR_T *wcs_array_join(CHAR_T **array, const CHAR_T *sep);
+size_t xwcslcpy(CHAR_T *dst, const CHAR_T *src, size_t size);
 
 #define free_utf(x) xfree(x)
 

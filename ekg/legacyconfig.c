@@ -27,19 +27,7 @@
  */
 
 void config_upgrade() {
-	const int current_config_version = 10;
-
-#if ! USE_UNICODE
-	if (!xstrcasecmp(config_console_charset, "UTF-8")) {
-		print("config_error", _("Warning, nl_langinfo(CODESET) reports that you are using utf-8 encoding, but you didn't compile ekg2 with (experimental/untested) --enable-unicode\n"
-			    "\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n"));
-	}
-#endif
-
-	if (xstrcasecmp(console_charset, config_console_charset)) 
-		print("console_charset_bad", console_charset, config_console_charset);
-	else if (config_version == 0 || config_version == -1)
-		print("console_charset_using", config_console_charset);
+	const int current_config_version = 11;
 
 	if (config_version == -1)
 		config_version = current_config_version;
@@ -97,7 +85,7 @@ void config_upgrade() {
 				_("display_pl_chars option is no longer maintained, use /set console_charset US-ASCII"), "2009-04-24");
 		case 8:
 			print("config_upgrade_minor",
-				_("Jabber variables has ben changed from 'jabber:' to 'xmpp:'. " \
+				_("Jabber variables have been changed from 'jabber:' to 'xmpp:'. " \
 				"Your config couldn't be updated automagically, so you must set it by hand."), "2010-08-17");
 		case 9:
 			print("config_upgrade_minor", _("Default config_completion_char is \":\""), "2010-12-11");
@@ -107,6 +95,12 @@ void config_upgrade() {
 			print("config_upgrade_minor",
 				_("irc:experimental_chan_name_clean is no longer maintained, use /set irc:clean_channel_name\n"	\
 				"gg:disable_chatstates is no longer maintained, use /set gg:enable_chatstates"), "2011-02-06");
+		case 11:
+			print("config_upgrade_major",
+				_("console_coding variable has been removed. If you need to adjust the locale ekg2 uses, " \
+				"please use appropriate system interface (i.e. LC_ALL). The raw & XML logs of logs plugin " \
+				"and SQLite logs of logsqlite plugin always write utf8 now. If you used non-utf8 locale, " \
+				"you might want to convert the logfiles/database using iconv."), "2011-03-01");
 	}
 
 	config_version = current_config_version;

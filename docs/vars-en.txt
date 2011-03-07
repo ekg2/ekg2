@@ -58,12 +58,6 @@ completion_notify
 	
 	*not translated yet*
 
-console_charset
-	type: text
-	default value: none
-	
-	*not translated yet*
-
 dcc_dir
 	type: text
 	default value: none
@@ -186,24 +180,6 @@ last
 
 last_size
 	type: integer
-	default value: 0
-	
-	*not translated yet*
-
-lastlog_display_all
-	type: integer
-	default value: 0
-	
-	*not translated yet*
-
-lastlog_matchcase
-	type: bool
-	default value: 0
-	
-	*not translated yet*
-
-lastlog_noitems
-	type: bool
 	default value: 0
 	
 	*not translated yet*

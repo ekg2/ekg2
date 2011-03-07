@@ -2,11 +2,12 @@ AC_PREREQ([2.60])
 AC_INIT([ekg2], [git])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([1.6 foreign dist-bzip2])
+AM_INIT_AUTOMAKE([1.6 foreign dist-bzip2 nostdinc -Wall])
 
 m4_ifdef([AM_SILENT_RULES], [AM_SILENT_RULES])
 
 AC_PROG_CC_C99
+AM_PROG_CC_C_O
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
 
@@ -14,17 +15,27 @@ dnl XXX: docs say we should use '-no-undefined' along with 'win32-dll'
 LT_INIT([disable-static win32-dll])
 
 AC_EKG2_WITH([glib], [
-	PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16 gmodule-2.0],, [
+	AS_IF([test "x$enable_shared" = "xyes"], [
+		gmod_dep="gmodule-2.0"
+	], [
+		gmod_dep=
+	])
+
+	PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16 $gmod_dep],, [
 		AS_CASE([$with_glib],
 			[yes|maybe], [with_glib=/usr])
 
-		GLIB_LIBS="-lglib-2.0 -lgmodule-2.0 -Wl,--export-dynamic"
+		GLIB_LIBS="-lglib-2.0"
+		AS_IF([test "x$enable_shared" = "xyes"], [
+			GLIB_LIBS="$GLIB_LIBS -lgmodule-2.0 -Wl,--export-dynamic"
+		])
 		GLIB_CFLAGS="-I$with_glib/include/glib-2.0 -I$with_glib/EKG2_LIBDIRNAME/glib-2.0/include"
 	])
 
 	AC_EKG2_CHECK_FLAGEXPORTED_LIB([GLIB],, [g_malloc0], [glib.h],, [
 		AC_MSG_ERROR([glib2 not found (neither in standard pkgconfig paths nor in $with_glib)])
 	])
+	AS_UNSET([gmod_dep])
 ], [
 	AC_MSG_ERROR([glib dependency is obligatory, bailing due to --without-glib])
 ])
@@ -99,35 +110,9 @@ AM_GNU_GETTEXT_VERSION([0.14.3])
 dnl gettext still uses it even if other autotools don't
 AC_SUBST([MKINSTALLDIRS], ['$(top_srcdir)/build-aux/mkinstalldirs'])
 
-AC_ARG_ENABLE([skip_relative_plugins_dir],
-	AS_HELP_STRING([--enable-skip-relative-plugins-dir],
-		[do not load plugins from directories relative to CWD]),
-[
-	AS_IF([test "x$enableval" != "xno"], [
-		AC_MSG_NOTICE([plugins will not be loaded from relative directories])
-		AC_DEFINE([SKIP_RELATIVE_PLUGINS_DIR], [1], [do not load plugins from directories relative to CWD [default=off]])
-	])
-])
-
-AC_ARG_ENABLE([unicode],
-	AS_HELP_STRING([--disable-unicode],
-		[disable building with unicode support [default=on]]),
-, [
-	enable_unicode=yes
-])
-AS_IF([test "x$enable_unicode" = "xyes"], [
-	AC_DEFINE([USE_UNICODE], [1], [use unicode (wide character strings)])
-])
-
 dnl plugins
 
 AC_EKG2_PLUGIN([autoresponder])
-
-AC_EKG2_PLUGIN([feed],, [
-	AC_EKG2_WITH([expat], [
-		AC_EKG2_CHECK_LIB([expat], [XML_ParserCreate], [expat.h],, [EKG2_FAILED_TEST])
-	])
-])
 
 AC_EKG2_PLUGIN([gg], [
 	AC_EKG2_WITH([libgadu], [
@@ -246,22 +231,30 @@ AC_EKG2_PLUGIN([mail],, [
 
 AC_EKG2_PLUGIN([ncurses], [
 	AC_EKG2_WITH([ncurses], [
-		dnl AC_EKG2_NCURSES([nlib], [nheaders])
-		AC_DEFUN([AC_EKG2_NCURSES], [
-			AC_EKG2_CHECK_LIB([$1], [initscr], [$2], [
-				LIBS="-l$1 $LIBS"
+		AC_SEARCH_LIBS([initscr], [ncursesw ncurses], [
+			nc_headers="ncurses/ncurses.h ncurses.h"
+			found_any_header=no
+			AC_CHECK_FUNCS([waddnwstr], [
+				AC_CHECK_HEADERS([ncursesw/ncurses.h ncurses/ncurses.h ncurses.h], [
+					found_any_header=yes
+					break
+				])
+			], [
+				AC_CHECK_HEADERS([ncurses/ncurses.h ncurses.h], [
+					found_any_header=yes
+					break
+				])
+			])
+
+			AS_IF([test $found_any_header = yes], [
 				AC_DEFINE([HAVE_NCURSES], [1], [define if you have ncurses])
 			], [EKG2_FAILED_TEST])
-		])
-
-		AS_IF([test "$enable_unicode" = "yes"], [
-			AC_EKG2_NCURSES([ncursesw], [ncursesw/ncurses.h])
-		], [
-			AC_EKG2_NCURSES([ncurses], [ncurses/ncurses.h ncurses.h])
-		])
+			AS_UNSET([found_any_header])
+			AS_UNSET([nc_headers])
+		], [EKG2_FAILED_TEST])
 	])
 ], [
-	AC_CHECK_FUNCS([use_legacy_coding])
+	AC_CHECK_FUNCS([addwstr use_legacy_coding])
 
 	AC_EKG2_WITH([aspell], [
 		AC_EKG2_CHECK_LIB([aspell], [new_aspell_config], [aspell.h])
@@ -271,6 +264,8 @@ AC_EKG2_PLUGIN([ncurses], [
 		AC_EKG2_CHECK_LIB([gpm], [Gpm_GetEvent], [gpm.h])
 	])
 ])
+
+AC_EKG2_PLUGIN([nntp])
 
 AC_EKG2_PLUGIN([perl], [
 	AC_EKG2_WITH([perl], [
@@ -282,7 +277,6 @@ AC_EKG2_PLUGIN([perl], [
 			AC_EKG2_CHECK_FLAGEXPORTED_LIB([PERL], [perl], [perl_alloc], [EXTERN.h],, [EKG2_FAILED_TEST])
 		], [EKG2_FAILED_TEST])
 	])
-	enable_perl_modules=no
 ], [
 	AC_ARG_ENABLE([perl-modules],
 		AS_HELP_STRING([--disable-perl-modules],
@@ -306,7 +300,7 @@ AC_EKG2_PLUGIN([python], [
 			PKG_CHECK_MODULES([PYTHON], [python-$pyver], [
 				pyfound=yes
 			], [
-				AC_PATH_PROG([PYCONF], [python-config-$pyver])
+				AC_PATH_PROGS([PYCONF], [python$pyver-config python-config-$pyver])
 				AS_IF([test x"$PYCONF" != x""], [
 					PYTHON_CFLAGS="`$PYCONF --includes`"
 					PYTHON_LIBS="`$PYCONF --libs`"
@@ -334,6 +328,12 @@ AC_EKG2_PLUGIN([readline], [
 
 AC_EKG2_PLUGIN([rivchat])
 
+AC_EKG2_PLUGIN([rss], [
+	AC_EKG2_WITH([expat], [
+		AC_EKG2_CHECK_LIB([expat], [XML_ParserCreate], [expat.h],, [EKG2_FAILED_TEST])
+	])
+])
+
 AC_EKG2_PLUGIN([sim], [
 	AC_EKG2_WITH([openssl], [
 		AC_EKG2_CHECK_PKGCONFIG_LIB([openssl], [ssl], [RSA_new], [openssl/ssl.h],,, [
@@ -345,6 +345,15 @@ AC_EKG2_PLUGIN([sim], [
 
 AC_EKG2_PLUGIN([sms])
 
+dnl CPPFLAGS were duplicated into whatever_CPPFLAGS
+dnl make the global ones exe-specific
+EKG_CPPFLAGS="$CPPFLAGS"
+AC_SUBST([EKG_CPPFLAGS])
+CPPFLAGS=
+
+AC_CONFIG_COMMANDS_PRE([
+	AM_CONDITIONAL([ENABLE_GCH], [test "x$enable_dependency_tracking" = "xno"])
+])
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])
 AC_OUTPUT

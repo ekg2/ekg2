@@ -67,7 +67,7 @@
 
 /* is delimiter */
 #define is_del(c)	(c == ' ' || c == '\n' || c == ')' || c == '(' || c == '>' || c == '<' || c == 0)
-#warning "XXX, ATTR_* stuff"
+/* XXX, ATTR_* stuff */
 /* is_del includes ATTR_RESET, ATTR_BOLD */
 
 #ifdef SCROLL_HACK
@@ -2340,7 +2340,7 @@ static void gtk_xtext_reset(GtkXText * xtext, int mark, int attribs)
 
 static int
 gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
-		     const unsigned char *str, short *attr, int len, int win_width, int indent,
+		     const unsigned char *str, fstr_attr_t *attr, int len, int win_width, int indent,
 		     int line, int left_only, int *x_size_ret)
 {
 	GdkGC *gc;
@@ -2350,7 +2350,7 @@ gtk_xtext_render_str(GtkXText * xtext, int y, textentry * ent,
 	int mark = FALSE;
 	int ret = 1;
 
-	short last_attr = FSTR_NORMAL;
+	fstr_attr_t last_attr = FSTR_NORMAL;
 
 	xtext->in_hilight = FALSE;
 
@@ -3208,7 +3208,7 @@ gtk_xtext_render_line(GtkXText * xtext, textentry * ent, int line,
 		      int lines_max, int subline, int win_width)
 {
 	const unsigned char *str;
-	short *attr;
+	fstr_attr_t *attr;
 	int indent, taken, entline, len, y, start_subline;
 
 	entline = taken = 0;
@@ -3975,7 +3975,7 @@ static void gtk_xtext_append_entry(xtext_buffer * buf, textentry * ent)
 
 /* XXX: gtk_xtext_append(), gtk_xtext_append_indent() */
 
-void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
+void gtk_xtext_append_fstring(xtext_buffer *buf, const fstring_t *fstr)
 {
 	textentry *ent;
 	int space;
@@ -3987,7 +3987,7 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 		len = sizeof(buf->xtext->scratch_buffer) - 1;
 
 	ent = xmalloc(sizeof(textentry));
-	ent->fstr = fstr;
+	ent->fstr = fstring_dup(fstr);
 
 	/* NOTE, xchat create new string with str[0] = ' ' str[1...] = str[0...] 
 	 *	i don't know why, but without it, ui looks ugly.
@@ -3999,12 +3999,12 @@ void gtk_xtext_append_fstring(xtext_buffer *buf, fstring_t *fstr)
 		memmove(ent->fstr->str+1, ent->fstr->str, len);
 		ent->fstr->str[0] = ' ';
 		ent->fstr->str[len+1] = '\0';
-	ent->fstr->attr  = xrealloc(ent->fstr->attr, sizeof(short) * (len+1));
-		memmove(ent->fstr->attr+1, ent->fstr->attr, len*sizeof(short));
+	ent->fstr->attr  = xrealloc(ent->fstr->attr, sizeof(fstr_attr_t) * (len+1));
+		memmove(ent->fstr->attr+1, ent->fstr->attr, len*sizeof(fstr_attr_t));
 		ent->fstr->attr[0] = FSTR_NORMAL;
 
 	ent->left_len = 0;
-	ent->str = fstr->str;
+	ent->str = ent->fstr->str;
 	ent->str_len = len+1;
 	ent->indent = (buf->indent) - buf->xtext->space_width;
 

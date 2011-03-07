@@ -12,27 +12,27 @@ extern plugin_t ncurses_plugin;
 
 extern int ncurses_plugin_destroyed;
 
-#define LINE_MAXLEN 1000		/* rozmiar linii */
+#define LINE_MAXLEN 1000		/* max line length */
 #define MULTILINE_INPUT_SIZE 5
 
 #define ncurses_current ((ncurses_window_t *) window_current->priv_data)
 
 void update_statusbar(int commit);
 
-struct screen_line {
-	int len;		/* d³ugo¶æ linii */
+struct screen_line { /* everything locale-encoded */
+	int len;		/* line length */
 	
-	unsigned char *str;		/* tre¶æ */
-	short *attr;		/* atrybuty */
+	unsigned char *str;		/* content */
+	fstr_attr_t *attr;		/* attributes */
 	
-	unsigned char *prompt_str;	/* tre¶æ promptu */
-	short *prompt_attr;	/* atrybuty promptu */
-	int prompt_len;		/* d³ugo¶æ promptu */
+	unsigned char *prompt_str;	/* prompt string */
+	fstr_attr_t *prompt_attr;	/* prompt attributes */
+	int prompt_len;		/* prompt length */
 	
 	char *ts;		/* timestamp */
-	short *ts_attr;		/* attributes of the timestamp */
+	fstr_attr_t *ts_attr;	/* attributes of the timestamp */
 
-	int backlog;		/* z której linii backlogu pochodzi? */
+	int backlog;		/* backlog line it comes from */
 	int margin_left;	/* where the margin should be setted */	
 };
 
@@ -45,33 +45,32 @@ enum window_frame_t {
 };
 
 typedef struct {
-	WINDOW *window;		/* okno okna */
+	WINDOW *window;		/* WINDOW of a window */
 
-	char *prompt;		/* sformatowany prompt lub NULL */
-	int prompt_len;		/* d³ugo¶æ prompta lub 0 */
+		/* -- the input prompt -- */
+	gchar *prompt;		/* prompt target or NULL */
+	int prompt_len;		/* prompt length or 0 */
 
 	int margin_left, margin_right, margin_top, margin_bottom;
-				/* marginesy */
+				/* margins */
 
-	fstring_t **backlog;	/* bufor z liniami */
-	int backlog_size;	/* rozmiar backloga */
+	fstring_t **backlog;	/* buffer with lines */
+	int backlog_size;	/* backlog size */
 
-	int redraw;		/* trzeba przerysowaæ przed wy¶wietleniem */
+	int redraw;		/* does it have to be redrawn before display */
 
-	int start;		/* od której linii zaczyna siê wy¶wietlanie */
-	int lines_count;	/* ilo¶æ linii ekranowych w backlogu */
+	int start;		/* from which line displaying starts */
+	int lines_count;	/* number of screen lines in backlog */
 	struct screen_line *lines;
-				/* linie ekranowe */
+				/* screen lines */
 
-	int overflow;		/* ilo¶æ nadmiarowych linii w okienku */
+	int overflow;		/* number of superfluous lines in a window */
 
 	int (*handle_redraw)(window_t *w);
-				/* obs³uga przerysowania zawarto¶ci okna */
+				/* window contents redraw handler */
 
 	void (*handle_mouse)(int x, int y, int state);
 
-	CHAR_T *prompt_real;	/* prompt shortened to 2/3 of window width & converted to real chartype */
-	int prompt_real_len;	/* real prompt length, including cutting, in chars instead of bytes */
 	time_t last_red_line;	/* timestamp for red line marker */
 } ncurses_window_t;
 
@@ -80,6 +79,10 @@ extern WINDOW *ncurses_input;
 
 QUERY(ncurses_session_disconnect_handler);
 
+gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize maxx);
+const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx);
+
+void ncurses_prompt_set(window_t *w, const gchar *str);
 void ncurses_update_real_prompt(ncurses_window_t *n);
 void ncurses_resize(void);
 void ncurses_redraw(window_t *w);
@@ -130,7 +133,7 @@ extern int ncurses_screen_height;
 extern int ncurses_screen_width;
 
 int color_pair(int fg, int bg);
-int ncurses_backlog_add_real(window_t *w, fstring_t *str);
+int ncurses_backlog_add_real(window_t *w, /*locale*/ fstring_t *str);
 
 CHAR_T ncurses_fixchar(CHAR_T ch, int *attr);
 

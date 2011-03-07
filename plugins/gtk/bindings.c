@@ -219,7 +219,7 @@ static GTK_BINDING_FUNCTION(key_action_tab_comp) {
 
 static GTK_BINDING_FUNCTION(key_action_cycle_session) {
 	if (window_session_cycle(sess) == 0) {
-#warning "ekg2 ncurses->gtk XXX"
+/* ekg2 ncurses->gtk XXX */
 /*
 		ncurses_contacts_update(NULL);
 		update_statusbar(1);

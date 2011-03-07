@@ -33,7 +33,328 @@
 #include <sys/filio.h>
 #endif
 
-#include "feed.h"
+#define NNTP_ONLY         SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
+#define NNTP_FLAGS        NNTP_ONLY  | SESSION_MUSTBECONNECTED
+#define NNTP_FLAGS_TARGET NNTP_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
+
+#define feed_private(s) ((s && s->priv) ? ((feed_private_t *) s->priv)->priv_data : NULL)
+
+extern plugin_t feed_plugin;
+
+typedef struct {
+	void *priv_data;
+} feed_private_t;
+
+static int feed_theme_init();
+PLUGIN_DEFINE(feed, PLUGIN_PROTOCOL, feed_theme_init);
+
+void *nntp_protocol_init();
+void nntp_protocol_deinit(void *priv);
+void nntp_init();
+
+static QUERY(feed_validate_uid)
+{
+	char *uid = *(va_arg(ap, char **));
+	int *valid = va_arg(ap, int *);
+
+	if (!uid)
+		return 0;
+	if (!xstrncasecmp(uid, "nntp:", 5)) {
+		(*valid)++;
+		return -1;
+	}
+
+	return 0;
+}
+
+static QUERY(feed_session_init) {
+	char *session = *(va_arg(ap, char**));
+	session_t *s = session_find(session);
+
+	feed_private_t *j;
+
+	if (!s || s->priv || s->plugin != &feed_plugin)
+		return 1;
+
+	j = xmalloc(sizeof(feed_private_t));
+	j->priv_data = nntp_protocol_init();
+
+	s->priv = j;
+	userlist_read(s);
+	return 0;
+}
+
+static QUERY(feed_session_deinit) {
+	char *session = *(va_arg(ap, char**));
+	session_t *s = session_find(session);
+
+	feed_private_t *j;
+
+	if (!s || !(j = s->priv) || s->plugin != &feed_plugin)
+		return 1;
+
+	userlist_write(s);
+	s->priv			= NULL;
+	nntp_protocol_deinit(j->priv_data);
+
+	xfree(j);
+
+	return 0;
+}
+
+// #define EKG_WINACT_RSS EKG_WINACT_MSG // till 4616
+#define EKG_WINACT_RSS EKG_WINACT_IMPORTANT
+
+	/* new:
+	 *	0x0 - old
+	 *	0x1 - new
+	 *	0x2 - modified
+	 */
+
+	/* mtags: (by default rss_message() won't display any messages if new == 0, but if user want to display again (?) news, we must allow him)
+	 *	0x0 - none
+	 *	0x8 - display all headers / sheaders
+	 */
+
+static QUERY(rss_message) {
+	char *session	= *(va_arg(ap, char **));
+	char *uid	= *(va_arg(ap, char **));
+	char *sheaders	= *(va_arg(ap, char **));
+	char *headers	= *(va_arg(ap, char **));
+	char *title	= *(va_arg(ap, char **));
+	char *url	= *(va_arg(ap, char **));
+	char *body	= *(va_arg(ap, char **));
+
+	int *new	= va_arg(ap, int *);		/* 0 - old; 1 - new; 2 - modified */
+	int mtags	= *(va_arg(ap, int *));
+
+	session_t *s	= session_find(session);
+	char *tmp;
+
+	const char *dheaders	= session_get(s, "display_headers");
+	const char *dsheaders	= session_get(s, "display_server_headers");
+	int dmode		= session_int_get(s, "display_mode");
+	int mw			= session_int_get(s, "make_window");
+
+	const char *target	= NULL;
+	window_t *targetwnd	= NULL;
+
+	if (*new == 0 && !mtags) return 0;
+
+	if (mtags)	/* XXX */
+		dmode = mtags;
+
+	switch (mw) {			/* XXX, __current ? */
+		case 0:
+			target = "__status";
+			targetwnd = window_status;
+			break;
+		case 1:
+			target = session;
+			break;
+		case 2:
+		default:
+			if (!(target = get_nickname(s, uid)))
+				target = uid;
+			break;
+	}
+
+	if (mw)
+		targetwnd = window_new(target, s, 0);
+
+	switch (dmode) {
+		case 0:	 print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_new", title, url);	/* only notify */
+		case -1: return 0;							/* do nothing */
+
+		case 2:	body		= NULL;					/* only headers */
+		case 1:	if (dmode == 1) headers = NULL;				/* only body */
+		default:							/* default: 3 (body+headers) */
+		case 3:	sheaders = NULL;					/* headers+body */
+		case 4:	break;							/* shreaders+headers+body */
+	}
+
+	print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_header", title, url);
+
+	if (sheaders) {
+		char *str = xstrdup(sheaders);
+		char *formated = NULL;
+		while ((tmp = split_line(&str))) {
+			char *value = NULL;
+			char *formatka;
+
+			if ((value = xstrchr(tmp, ' '))) *value = 0;
+			if (dsheaders && !xstrstr(dsheaders, tmp)) {
+/*				debug("DSHEADER: %s=%s skipping..\n", tmp, value+1); */
+				continue;	/* jesli mamy display_server_headers a tego nie mamy na liscie to pomijamy */
+			}
+
+			formatka = saprintf("feed_server_header_%s", tmp);
+			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
+
+			formated = format_string(format_find(formatka ? formatka : "feed_server_header_generic"), tmp, value ? value+1 : "");
+			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
+
+			xfree(formatka);
+		}
+		if (headers || body) print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", "");	/* rozdziel */
+	}
+	if (headers) {
+		char *str, *org;
+		str = org = xstrdup(headers);
+		char *formated = NULL;
+		while ((tmp = split_line(&str))) {
+			char *value = NULL;
+			char *formatka;
+
+			if ((value = xstrchr(tmp, ' '))) *value = 0;
+			if (dheaders && !xstrstr(dheaders, tmp)) {
+				if (value)
+					debug("DHEADER: %s=%s skipping...\n", tmp, value+1);
+				else	debug("DHEADER: %s skipping.. (tag without value?\n", tmp);
+				continue;	/* jesli mamy display_headers a tego nie mamy na liscie to pomijamy */
+			}
+
+			formatka = saprintf("feed_message_header_%s", tmp);
+			if (!format_exists(formatka)) { xfree(formatka); formatka = NULL; }
+
+			formated = format_string(format_find(formatka ? formatka : "feed_message_header_generic"), tmp, value ? value+1 : "");
+			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
+
+			xfree(formated);
+			xfree(formatka);
+		}
+		if (body) print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", "");	/* rozdziel */
+		xfree(org);
+	}
+	if (body) {
+		if (session_check(s, 0, "nntp")) {
+			int article_signature	= 0;
+			char *str, *org;
+			str = org = xstrdup(body);
+
+			while ((tmp = split_line(&str))) {
+				char *formated = NULL;
+
+				if (!xstrcmp(tmp, "-- ")) article_signature = 1;
+				if (article_signature) {
+					formated = format_string(format_find("nntp_message_signature"), tmp);
+				} else {
+					int i;
+					char *quote_name = NULL;
+					const char *f = NULL;
+					for (i = 0; i < xstrlen(tmp) && tmp[i] == '>'; i++);
+
+//					if (i > 0 && tmp[i] == ' ')	/* normal clients quote:  >>>> aaaa */
+					if (i > 0)			/* buggy clients quote:   >>>>>aaaa */
+					{
+						quote_name = saprintf("nntp_message_quote_level%d", i+1);
+
+						f = format_find(quote_name);
+						if (!format_ok(f)) {
+							debug("[NNTP, QUOTE] format: %s not found, using global one...\n", quote_name);
+							f = format_find("nntp_message_quote_level");
+						}
+						xfree(quote_name);
+					}
+					if (f && f[0] != '\0')
+						formated = format_string(f, tmp);
+				}
+
+				print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", formated ? formated : tmp);
+				xfree(formated);
+			}
+			xfree(org);
+		} else {
+			print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_body", body);
+		}
+	}
+
+	print_window_w(targetwnd, EKG_WINACT_RSS, "feed_message_footer");
+
+	*new = 0;
+	return 0;
+}
+
+void feed_set_status(userlist_t *u, int status) {
+	if (!u || !status) return;
+
+/*	if (xstrcmp(u->status, status)) print("feed_status", u->uid, status, u->descr); */
+	u->status	= status;
+}
+
+void feed_set_descr(userlist_t *u, char *descr) {
+	char *tmp;
+	if (!u || !descr) return;
+
+/*	if (xstrcmp(u->descr, descr)) print("feed_status", u->uid, u->status, descr); */
+	tmp		= u->descr;
+	u->descr	= descr;
+	xfree(tmp);
+}
+
+void feed_set_statusdescr(userlist_t *u, int status, char *descr) {
+	feed_set_status(u, status);
+	feed_set_descr(u, descr);
+}
+
+static plugins_params_t feed_plugin_vars[] = {
+	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
+	/* (-1 - nothing; 0 - only notify; 1 - only body; 2 - only headers; 3 - headers+body 4 - sheaders+headers+ body)  default+else: 3 */
+	PLUGIN_VAR_ADD("display_mode",		VAR_INT, "3", 0, NULL),
+
+	PLUGIN_VAR_ADD("display_headers",	VAR_STR,
+				"From: Date: Newsgroups: Subject: User-Agent: NNTP-Posting-Host:",
+			0, NULL),
+	/* 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per feed / group. default+else: 2 */
+	PLUGIN_VAR_ADD("make_window",		VAR_INT, "2", 0, NULL),
+	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
+	PLUGIN_VAR_ADD("username",		VAR_STR, NULL, 0, NULL),
+	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
+	PLUGIN_VAR_ADD("port",			VAR_INT, "119", 0, NULL),
+	PLUGIN_VAR_ADD("server",		VAR_STR, NULL, 0, NULL),
+
+	PLUGIN_VAR_END()
+};
+
+EXPORT int feed_plugin_init(int prio) {
+	PLUGIN_CHECK_VER("feed");
+
+	feed_plugin.params = feed_plugin_vars;
+	plugin_register(&feed_plugin, prio);
+
+			/* common */
+	query_connect(&feed_plugin, "session-added", feed_session_init, NULL);
+	query_connect(&feed_plugin, "session-removed", feed_session_deinit, NULL);
+	query_connect(&feed_plugin, "protocol-validate-uid", feed_validate_uid, NULL);
+			/* common - rss, nntp */
+
+	query_connect(&feed_plugin, "rss-message", rss_message, NULL);  // TODO: Rename to nntp-message
+
+	nntp_init();	/* nntp */
+	return 0;
+}
+
+static int feed_plugin_destroy() {
+	plugin_unregister(&feed_plugin);
+	return 0;
+}
+
+static int feed_theme_init() {
+#ifndef NO_DEFAULT_THEME
+	format_add("nntp_command_help_header",	_("%g,+=%G----- %2 %n(%T%1%n)"), 1);
+	format_add("nntp_command_help_item",	_("%g|| %W%1: %n%2"), 1);
+	format_add("nntp_command_help_footer",	_("%g`+=%G----- End of 100%n\n"), 1);
+
+	format_add("nntp_message_quote_level1",	"%g%1", 1);
+	format_add("nntp_message_quote_level2", "%y%1", 1);
+	format_add("nntp_message_quote_level",	"%B%1", 1);	/* upper levels.. */
+	format_add("nntp_message_signature",	"%B%1", 1);
+
+	format_add("nntp_posting_failed",	_("(%1) Posting to group: %2 failed: %3 (post saved in: %4)"), 1);
+	format_add("nntp_posting",		_("(%1) Posting to group: %2 Subject: %3...."), 1);
+#endif
+	return 0;
+}
 
 typedef enum {
 	NNTP_IDLE = 0,
@@ -109,7 +430,7 @@ static nntp_newsgroup_t *nntp_newsgroup_find(session_t *s, const char *name) {
 		newsgroup = l->data;
 
 		debug("nntp_newsgroup_find() %s %s\n", newsgroup->name, name);
-		if (!xstrcmp(newsgroup->name, name)) 
+		if (!xstrcmp(newsgroup->name, name))
 			return newsgroup;
 	}
 	debug("nntp_newsgroup_find() 0x%x NEW %s\n", j->newsgroups, name);
@@ -192,7 +513,7 @@ fail:
 	xfree(d);
 }
 
-#define NNTP_HANDLER(x) static int x(session_t *s, int code, char *str, void *data) 
+#define NNTP_HANDLER(x) static int x(session_t *s, int code, char *str, void *data)
 typedef int (*nntp_handler) (session_t *, int, char *, void *);
 
 
@@ -210,7 +531,7 @@ static char hextochar(char t) {
 		return t - '0';
 	else if (t >= 'A' && t <= 'F')
 		return 10+(t - 'A');
-	else if (t >= 'a' && t <= 'f') 
+	else if (t >= 'a' && t <= 'f')
 		return 10+(t - 'a');
 	debug_error("hextochar() invalid char: %d\n", t);
 	return 0;
@@ -223,11 +544,11 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 	char *mbody, **tmpbody;
 
 	nntp_article_t *art = NULL;
-	
+
 	if (!(mbody = split_line(&str))) return -1;
 
 	tmpbody = array_make(mbody, " ", 3, 1, 0);		/* header [id <message-id> type] */
-	
+
 	if (!tmpbody || !tmpbody[0] || !tmpbody[1] || !tmpbody[2]) {
 		debug("nntp_message_process() tmpbody? mbody: %s\n", mbody);
 		g_strfreev(tmpbody);
@@ -239,7 +560,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		g_strfreev(tmpbody);
 		return -1;
 	}
-	
+
 	if (article_headers)	string_clear(art->header);
 	if (article_body)	string_clear(art->body);
 
@@ -251,7 +572,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		} else {
 			debug("ERROR, It's really article_headers with article_body?!\n");
 		}
-	} else if (article_headers) 
+	} else if (article_headers)
 		string_append_n(art->header, str, xstrlen(str)-1);	/* don't add ending \n */
 
 	if (article_body)
@@ -262,7 +583,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		char *text, *org;
 		char *tmp;
 		text = org = string_free(art->header, 0);
-		
+
 		art->header = string_init(NULL);
 
 		while ((tmp = split_line(&text))) {
@@ -289,20 +610,20 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 					(endque = xstrstr(encque+1, "?=")) &&			/* end */
 					((*(encque-1) == 'Q' || *(encque-1) == 'B'))		/* valid encodings are: 'B' -- base64 && 'Q' -- quoted-printable */
 					) {
-					
+
 					debug("RFC1522: encoding: %c\n", *(encque-1));
 
 					i = (encque - value)+1;
 					while (&value[i] != endque) {
 	/* XXX before adding text to buffer do iconv() */
 						switch (*(encque-1)) {
-							case 'Q': 
+							case 'Q':
 								if (value[i] == '=' && value[i+1] && value[i+2]) {
 									string_append_c(art->header, hextochar(value[i+1]) * 16 | hextochar(value[i+2]));
 									i += 2;
 								} else	string_append_c(art->header, value[i]);
 								break;
-							case 'B': 
+							case 'B':
 								*(endque) = 0;
 								string_append(art->header, base64_decode(&value[i]));
 								i = (endque - value)-1;
@@ -318,7 +639,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 
 			string_append_c(art->header, '\n');
 		}
-		
+
 		xfree(org);
 	}
 
@@ -331,7 +652,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		} cte = ENCODING_UNKNOWN;
 
 //		char *encoding;
-		char *tmp; 
+		char *tmp;
 
 		char *text;
 		int i = 0;
@@ -372,7 +693,7 @@ NNTP_HANDLER(nntp_message_process) {			/* 220, 221, 222 */
 		xfree(text);
 	} while(0);
 
-	
+
 	{
 		char *uid	= j->newsgroup		? j->newsgroup->uid	: NULL;
 		char *sheaders	= NULL;
@@ -397,8 +718,8 @@ NNTP_HANDLER(nntp_auth_process) {
 	char *tmp;
 
 	switch(code) {
-		case 200: 
-		case 201: 
+		case 200:
+		case 201:
 			if (code == 200)	s->status = EKG_STATUS_AVAIL;
 			else			s->status = EKG_STATUS_AWAY;
 
@@ -409,11 +730,11 @@ NNTP_HANDLER(nntp_auth_process) {
 			if (!j->authed && session_get(s, "username"))
 				watch_write(j->send_watch, "AUTHINFO USER %s\r\n", session_get(s, "username"));
 			break;
-		case 381:	
-			watch_write(j->send_watch, "AUTHINFO PASS %s\r\n", session_get(s, "password"));		
+		case 381:
+			watch_write(j->send_watch, "AUTHINFO PASS %s\r\n", session_get(s, "password"));
 			break;
-		case 281:	
-			j->authed = 1; 
+		case 281:
+			j->authed = 1;
 			break;
 		case 480:		/* XXX, auth required */
 			break;
@@ -429,7 +750,7 @@ NNTP_HANDLER(nntp_null_process) {
 NNTP_HANDLER(nntp_group_process) {
 	nntp_private_t *j	= feed_private(s);
 	char **p = array_make(str, " ", 4, 1, 0);
-	nntp_newsgroup_t *group; 
+	nntp_newsgroup_t *group;
 	userlist_t *u;
 
 	if (!p) return -1;
@@ -489,26 +810,26 @@ typedef	struct {
 } nntp_handler_t;
 
 nntp_handler_t nntp_handlers[] = {
-	{100, nntp_help_process,	1, NULL}, 
+	{100, nntp_help_process,	1, NULL},
 	{200, nntp_auth_process,	0, NULL},
 	{201, nntp_auth_process,	0, NULL},
-	{281, nntp_auth_process,	0, NULL}, 
-	{381, nntp_auth_process,	0, NULL}, 
-	{480, nntp_auth_process,	0, NULL}, 
+	{281, nntp_auth_process,	0, NULL},
+	{381, nntp_auth_process,	0, NULL},
+	{480, nntp_auth_process,	0, NULL},
 
 	{220, nntp_message_process,	1, NULL},
-	{221, nntp_message_process,	1, NULL}, 
+	{221, nntp_message_process,	1, NULL},
 	{222, nntp_message_process,	1, NULL},
-	{423, nntp_message_error,	0, NULL}, 
+	{423, nntp_message_error,	0, NULL},
 
-	{211, nntp_group_process,	0, NULL}, 
-	{411, nntp_group_error,		0, NULL}, 
+	{211, nntp_group_process,	0, NULL},
+	{411, nntp_group_error,		0, NULL},
 
-	{224, nntp_xover_process,	1, "xover"}, 
+	{224, nntp_xover_process,	1, "xover"},
 
-	{282, nntp_null_process,	1, "xgitle"}, 
+	{282, nntp_null_process,	1, "xgitle"},
 	{-1, NULL,			0, NULL},
-}; 
+};
 
 static void nntp_string_append(session_t *s, const char *str) {
 	nntp_private_t *j	= feed_private(s);
@@ -559,7 +880,7 @@ static WATCHER_LINE(nntp_handle_stream) {
 			nntp_string_append(s, watch);
 			return 0;
 		}
-	} 
+	}
 
 	if ((p = array_make(watch, " ", 2, 1, 0)) && p[0] && atoi(p[0])) {
 		int code = atoi(p[0]);
@@ -759,7 +1080,7 @@ static COMMAND(nntp_command_check) {
 		if (params[0] && xstrcmp(params[0], u->uid)) continue;
 
 		n = nntp_newsgroup_find(session, u->uid+5);
-	
+
 		feed_set_statusdescr(u, EKG_STATUS_AWAY, xstrdup("Checking..."));
 
 		j->newsgroup	= n;
@@ -789,7 +1110,7 @@ static COMMAND(nntp_command_check) {
 			while (n->state == NNTP_DOWNLOADING) ekg_loop();
 		}
 		n->state		= NNTP_IDLE;
-		
+
 		feed_set_statusdescr(u, EKG_STATUS_AVAIL, saprintf("%d new articles", n->lart - n->cart));
 		j->newsgroup->cart = n->lart;
 
@@ -806,8 +1127,9 @@ static COMMAND(nntp_command_subscribe) {
 		printq("feed_exists_other", target, format_user(session, u->uid), session_name(session));
 		return -1;
 	}
-	
+
 	/* userlist_add() fails only when invalid uid was passed */
+	// TODO: rss garbage
 	if (target[0] == 'r' /* rss: */ || !(userlist_add(session, target, target))) {
 		printq("invalid_session");
 		return -1;
@@ -819,7 +1141,7 @@ static COMMAND(nntp_command_subscribe) {
 }
 
 static COMMAND(nntp_command_unsubscribe) {
-	userlist_t *u; 
+	userlist_t *u;
 	if (!(u = userlist_find(session, target))) {
 		printq("feed_not_found", target);
 		return -1;
@@ -838,24 +1160,22 @@ void *nntp_protocol_init() {
 }
 
 void nntp_protocol_deinit(void *priv) {
-
 }
 
 void nntp_init() {
 /*XXX,	:msg -- wysylanie wiadomosc na serwer... BE CAREFULL cause news aren't IM ;) */
-	command_add(&feed_plugin, ("nntp:connect"), "?",	nntp_command_connect, RSS_ONLY, NULL);
-	command_add(&feed_plugin, ("nntp:disconnect"), "?", nntp_command_disconnect, RSS_ONLY, NULL);
+	command_add(&feed_plugin, ("nntp:connect"), "?",	nntp_command_connect, NNTP_ONLY, NULL);
+	command_add(&feed_plugin, ("nntp:disconnect"), "?", nntp_command_disconnect, NNTP_ONLY, NULL);
 
-	command_add(&feed_plugin, ("nntp:subscribe"), "!",	nntp_command_subscribe, RSS_FLAGS_TARGET, NULL); 
-	command_add(&feed_plugin, ("nntp:unsubscibe"), "!", nntp_command_unsubscribe, RSS_FLAGS_TARGET, NULL);
+	command_add(&feed_plugin, ("nntp:subscribe"), "!",	nntp_command_subscribe, NNTP_FLAGS_TARGET, NULL);
+	command_add(&feed_plugin, ("nntp:unsubscibe"), "!", nntp_command_unsubscribe, NNTP_FLAGS_TARGET, NULL);
 
-	command_add(&feed_plugin, ("nntp:check"), "u",	nntp_command_check, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:check"), "u",	nntp_command_check, NNTP_FLAGS, NULL);
 
-	command_add(&feed_plugin, ("nntp:article"), "? ?",	nntp_command_get, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, ("nntp:body"),	"? ?",	nntp_command_get, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, ("nntp:raw"), "?",	nntp_command_raw, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:article"), "? ?",	nntp_command_get, NNTP_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:body"),	"? ?",	nntp_command_get, NNTP_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:raw"), "?",	nntp_command_raw, NNTP_FLAGS, NULL);
 
-	command_add(&feed_plugin, ("nntp:next"), "?",	nntp_command_nextprev, RSS_FLAGS, NULL);
-	command_add(&feed_plugin, ("nntp:prev"), "?",	nntp_command_nextprev, RSS_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:next"), "?",	nntp_command_nextprev, NNTP_FLAGS, NULL);
+	command_add(&feed_plugin, ("nntp:prev"), "?",	nntp_command_nextprev, NNTP_FLAGS, NULL);
 }
-

@@ -523,11 +523,9 @@ static inline status_t session_status_nearest(session_t *s, status_t status) {
 	const status_t			*ast;
 	const int			dir	= (status < EKG_STATUS_AVAIL);
 
-	if (p->pclass != PLUGIN_PROTOCOL) {
-		debug_wtf("session_status_nearest(), session '%s' on non-protocol plugin '%s'!\n", session_uid_get(s), p->name);
-		return EKG_STATUS_NULL;
-	} else if (!p->priv) {
-		debug_warn("session_status_nearest(), plugin '%s' doesn't declared supported statuses.\n", p->name);
+	g_assert(p->pclass == PLUGIN_PROTOCOL);
+	if (!p->priv) {
+		debug_warn("session_status_nearest(), plugin '%s' didn't declare supported statuses.\n", p->name);
 		return status;
 	}
 
@@ -801,8 +799,8 @@ int session_int_set(session_t *s, const char *key, int value)
  * czyta informacje o sesjach z pliku.
  */
 int session_read(const char *filename) {
-	char *line;
-	FILE *f;
+	gchar *line;
+	GIOChannel *f;
 	session_t *s = NULL;
 	int ret = 0;
 
@@ -831,13 +829,14 @@ int session_read(const char *filename) {
 		return ret;
 	}
 
-	if (!(f = fopen(filename, "r"))) {
-		debug("Error opening file %s\n", filename);
+	if (!(f = config_open(filename, "r")))
 		return -1;
-	}
 
-	while ((line = read_file(f, 0))) {
+	while ((line = read_line(f))) {
 		char *tmp;
+
+		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
+			continue;
 
 		if (line[0] == '[') {
 			tmp = xstrchr(line, ']');
@@ -868,7 +867,7 @@ int session_read(const char *filename) {
 		}
 	}
 
-	fclose(f);
+	g_io_channel_unref(f);
 	return ret;
 }
 
@@ -880,7 +879,7 @@ int session_read(const char *filename) {
 int session_write()
 {
 	GSList *pl;
-	FILE *f = NULL;
+	GIOChannel *f = NULL;
 	int ret = 0;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 */
@@ -898,8 +897,7 @@ int session_write()
 			continue;
 		}
 		
-		if (!(f = fopen(tmp, "w"))) {
-			debug("Error opening file %s\n", tmp);
+		if (!(f = config_open(tmp, "w"))) {
 			ret = -1;
 			continue;
 		}
@@ -911,19 +909,19 @@ int session_write()
 				continue;
 
 			userlist_write(s);
-			fprintf(f, "[%s]\n", s->uid);
+			ekg_fprintf(f, "[%s]\n", s->uid);
 			if (s->alias)
-				fprintf(f, "alias=%s\n", s->alias);
+				ekg_fprintf(f, "alias=%s\n", s->alias);
 			if (s->status && config_keep_reason != 2)
-				fprintf(f, "status=%s\n", ekg_status_string(s->autoaway ? s->last_status : s->status, 0));
+				ekg_fprintf(f, "status=%s\n", ekg_status_string(s->autoaway ? s->last_status : s->status, 0));
 			if (s->descr && config_keep_reason) {
 				char *myvar = (s->autoaway ? s->last_descr : s->descr);
 				xstrtr(myvar, '\n', '\002');
-				fprintf(f, "descr=%s\n", myvar);
+				ekg_fprintf(f, "descr=%s\n", myvar);
 				xstrtr(myvar, '\002', '\n');
 			}
 			if (s->password && config_save_password)
-				fprintf(f, "password=\001%s\n", s->password);
+				ekg_fprintf(f, "password=\001%s\n", s->password);
 
 			if (!p->params) 
 				continue;
@@ -931,11 +929,11 @@ int session_write()
 			for (i = 0; (p->params[i].key /* && p->params[i].id != -1 */); i++) {
 				if (!s->values[i]) 
 					continue;
-				fprintf(f, "%s=%s\n", p->params[i].key, s->values[i]);
+				ekg_fprintf(f, "%s=%s\n", p->params[i].key, s->values[i]);
 			}
 			/* We don't save _local_ variables */
 		}
-		fclose(f);
+		g_io_channel_unref(f);
 	}
 	return ret;
 }
@@ -1560,9 +1558,9 @@ void sessions_free() {
  */
 void session_help(session_t *s, const char *name)
 {
-	FILE *f;
-	char *line, *type = NULL, *def = NULL, *tmp;
-	char *plugin_name;
+	GIOChannel *f;
+	gchar *type = NULL, *def = NULL, *tmp;
+	const gchar *line, *plugin_name;
 
 	string_t str;
 	int found = 0;
@@ -1581,12 +1579,12 @@ void session_help(session_t *s, const char *name)
 
 	do {
 		/* first try to find the variable in plugins' session file */
-		if (!(f = help_path("session", plugin_name))) {
+		if (!(f = help_open("session", plugin_name))) {
 			sessfilnf = 1;
 			break;
 		}
 
-		while ((line = read_file_utf(f, 0))) {
+		while ((line = read_line(f))) {
 			if (!xstrcasecmp(line, name)) {
 				found = 1;
 				break;
@@ -1598,12 +1596,12 @@ void session_help(session_t *s, const char *name)
 		do {
 			/* then look for them inside global session file */
 			if (!sessfilnf)
-				fclose(f);
+				g_io_channel_unref(f);
 			
-			if (!(f = help_path("session", NULL)))
+			if (!(f = help_open("session", NULL)))
 				break;
 
-			while ((line = read_file_utf(f, 0))) {
+			while ((line = read_line(f))) {
 				if (!xstrcasecmp(line, name)) {
 					found = 1;
 					break;
@@ -1615,7 +1613,7 @@ void session_help(session_t *s, const char *name)
 
 	if (!found) {
 		if (f)
-			fclose(f);
+			g_io_channel_unref(f);
 		if (sessfilnf)
 			print("help_session_file_not_found", plugin_name);
 		else
@@ -1623,14 +1621,14 @@ void session_help(session_t *s, const char *name)
 		return;
 	}
 
-	line = read_file_utf(f, 0);
+	line = read_line(f);
 
 	if ((tmp = xstrstr(line, (": "))))
 		type = xstrdup(tmp + 2);
 	else
 		type = xstrdup(("?"));
 
-	line = read_file_utf(f, 0);
+	line = read_line(f);
 	if ((tmp = xstrstr(line, (": "))))
 		def = xstrdup(tmp + 2);
 	else
@@ -1642,10 +1640,10 @@ void session_help(session_t *s, const char *name)
 	xfree(def);
 
 	if (tmp)		/* je¶li nie jest to ukryta zmienna... */
-		read_file_utf(f, 0);	/* ... pomijamy liniê */
+		read_line(f);	/* ... pomijamy liniê */
 
 	str = string_init(NULL);
-	while ((line = read_file_utf(f, 0))) {
+	while ((line = read_line(f))) {
 		if (line[0] != '\t')
 			break;
 
@@ -1673,7 +1671,7 @@ void session_help(session_t *s, const char *name)
 	if (xstrcmp(format_find("help_session_footer"), ""))
 		print("help_session_footer", name);
 
-	fclose(f);
+	g_io_channel_unref(f);
 }
 
 /**

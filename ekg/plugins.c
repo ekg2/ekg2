@@ -29,11 +29,9 @@
 
 #include "objects.h"
 
-#if !defined(va_copy) && defined(__va_copy)
-#define va_copy(DST,SRC) __va_copy(DST,SRC)
-#endif
-
 GSList *plugins = NULL;
+/* XXX: not freed anywhere yet */
+gchar *rel_plugin_dir = NULL;
 
 static gint plugin_register_compare(gconstpointer a, gconstpointer b) {
 	const plugin_t *data1 = (const plugin_t *) a;
@@ -66,12 +64,28 @@ DYNSTUFF_LIST_DECLARE(queries_list, query_t, query_free_data,
 	static __DYNSTUFF_REMOVE_SAFE,
 	__DYNSTUFF_DESTROY)
 
+void ekg2_dlinit(const gchar *argv0) {
+#ifdef SHARED_LIBS
+	if (g_module_supported()) {
+		/* Set relative plugin path based on executable location */
+		gchar *progpath = g_find_program_in_path(argv0);
 
-int ekg2_dlinit() {
-	return 0;
-/*	return lt_dlinit() */
+		if (progpath) {
+			rel_plugin_dir = g_path_get_dirname(progpath);
+			g_free(progpath);
+		}
+	}
+#	ifndef STATIC_LIBS
+	else {
+		g_printerr("Dynamic module loading unsupported, and no static plugins.\n"
+				"Please recompile with --enable-static.\n");
+		abort();
+	}
+#	endif
+#endif
 }
 
+#ifdef SHARED_LIBS
 /**
  * ekg2_dlclose()
  *
@@ -114,7 +128,9 @@ static GModule *ekg2_dlopen(const char *name) {
 	GModule *tmp = g_module_open(name, 0);
 
 	if (!tmp) {
-		debug_warn("[plugin] could not be loaded: %s %s\n", name, g_module_error());
+		char *errstr = ekg_recode_from_locale(g_module_error());
+		debug_warn("[plugin] could not be loaded: %s %s\n", name, errstr);
+		g_free(errstr);
 	} else {
 		debug_ok("[plugin] loaded: %s\n", name);
 	}
@@ -142,6 +158,7 @@ static void *ekg2_dlsym(GModule *plugin, char *name) {
 
 	return tmp;
 }
+#endif
 
 /*
  * plugin_load()
@@ -153,71 +170,61 @@ static void *ekg2_dlsym(GModule *plugin, char *name) {
 int plugin_load(const char *name, int prio, int quiet)
 {
 #ifdef SHARED_LIBS
-	char lib[PATH_MAX];
-	char *env_ekg_plugins_path = NULL;
+	const gchar *env_ekg_plugins_path = NULL;
 	char *init = NULL;
+	gchar *lib;
+	gchar *libname;
+	GModule *plugin = NULL;
 #endif
 
 	plugin_t *pl;
-	void *plugin = NULL;
 	int (*plugin_init)() = NULL;
 
-	if (!name)
-		return -1;
-
+	g_assert(name);
 	if (plugin_find(name)) {
 		printq("plugin_already_loaded", name); 
 		return -1;
 	}
+
 #ifdef SHARED_LIBS
-#ifndef NO_POSIX_SYSTEM
-	if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-		if (snprintf(lib, sizeof(lib), "%s/%s.la", env_ekg_plugins_path, name) < sizeof(lib))
+	libname = g_strdup_printf("%s.la", name);
+	if ((env_ekg_plugins_path = g_getenv("EKG_PLUGINS_PATH"))) {
+		lib = g_build_filename(env_ekg_plugins_path, libname, NULL);
+		plugin = ekg2_dlopen(lib);
+		g_free(lib);
+
+		if (!plugin) {
+			lib = g_build_filename(env_ekg_plugins_path, name, libname, NULL);
 			plugin = ekg2_dlopen(lib);
-		if (!plugin && (snprintf(lib, sizeof(lib), "%s/%s/%s.la", env_ekg_plugins_path, name, name) < sizeof(lib)))
-			plugin = ekg2_dlopen(lib);
+			g_free(lib);
+		}
 	}
 
-#ifndef SKIP_RELATIVE_PLUGINS_DIR
 	/* The following lets ekg2 load plugins when it is run directly from
 	 * the source tree, without installation. This can be beneficial when
 	 * developing the program, or for less knowlegeable users, who don't
 	 * know how to or cannot for some other reason use installation prefix
-	 * to install in their home directory. However this impses a security
-	 * risk if the program installed in the system directory is run in
-	 * untrusted $CWD or when $CWD/../plugins is untrusted.
-	 *
-	 * TODO(porridge,darkjames): This can be fixed by having a wrapper
-	 * script in the source tree to run ekg/.libs/ekg2 with
-	 * EKG_PLUGINS_PATH set appropriately.
+	 * to install in their home directory. It might be also useful
+	 * for win32-style installs.
 	 */
-	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "plugins/%s/%s.la", name, name) < sizeof(lib))
-			plugin = ekg2_dlopen(lib);
+	if (!plugin && rel_plugin_dir) {
+		lib = g_build_filename(rel_plugin_dir, "plugins", name, libname, NULL);
+		plugin = ekg2_dlopen(lib);
+		g_free(lib);
 	}
 
 	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "../plugins/%s/%s.la", name, name) < sizeof(lib))
-			plugin = ekg2_dlopen(lib);
+		lib = g_build_filename(PLUGINDIR, libname, NULL);
+		plugin = ekg2_dlopen(lib);
+		g_free(lib);
 	}
-#endif
 
-	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "%s/%s.la", PLUGINDIR, name) < sizeof(lib))
-			plugin = ekg2_dlopen(lib);
-	}
-#else	/* NO_POSIX_SYSTEM */
-	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "c:\\ekg2\\plugins\\%s.la", name) < sizeof(lib))
-			plugin = ekg2_dlopen(lib);
-	}
-#endif /* NO_POSIX_SYSTEM */
-
+	g_free(libname);
 	/* prefer shared plugins */
 	if (plugin) {
-		init = saprintf("%s_plugin_init", name);
+		init = g_strdup_printf("%s_plugin_init", name);
 		plugin_init = ekg2_dlsym(plugin, init);
-		xfree(init);
+		g_free(init);
 	}
 #endif /* SHARED_LIBS */
 
@@ -245,13 +252,19 @@ int plugin_load(const char *name, int prio, int quiet)
 
 	if (plugin_init(prio) == -1) {
 		printq("plugin_not_initialized", name);
+#ifdef SHARED_LIBS
 		if (plugin)
 			ekg2_dlclose(plugin);
+#endif
 		return -1;
 	}
 
 	if ((pl = plugin_find(name))) {
+#ifdef SHARED_LIBS
 		pl->dl = plugin;
+#else
+		pl->dl = NULL;
+#endif
 	} else {
 		debug_error("plugin_load() plugin_find(%s) not found.\n", name);
 		/* It's FATAL */
@@ -376,8 +389,10 @@ int plugin_unload(plugin_t *p)
 	if (p->destroy)
 		p->destroy();
 
+#ifdef SHARED_LIBS
 	if (p->dl)
 		ekg2_dlclose(p->dl);
+#endif
 
 	print("plugin_unloaded", name);
 
@@ -665,7 +680,7 @@ static int query_emit_inner(query_t *g, va_list ap) {
 	 * so we must keep orig va_list for next plugins
 	 */
 	nested++;;
-	va_copy(ap_plugin, ap);
+	G_VA_COPY(ap_plugin, ap);
 	result = handler(g->data, ap_plugin);
 	va_end(ap_plugin);
 	nested--;

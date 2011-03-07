@@ -14,6 +14,9 @@ AC_DEFUN([AC_EKG2_PLUGIN_SETUP], [
 	AS_IF([test "x$enable_shared" = "xyes"], [
 		AC_DEFINE([SHARED_LIBS], [1], [define if you want shared plugins (in .so or .dll)])
 	])
+
+	AM_CONDITIONAL([SHARED_LIBS], [test "x$enable_shared" = "xyes"])
+	AM_CONDITIONAL([STATIC_LIBS], [test "x$enable_static" = "xyes"])
 ])
 
 AC_DEFUN([AC_EKG2_PLUGIN], [
@@ -70,7 +73,7 @@ dnl and AC_SUBSTituted with that names.
 		AS_IF([test $enable_$1 != no], [
 			$3
 
-			AC_SUBST([plugins_$1_$1_la_CPPFLAGS], [$CPPFLAGS])
+			AC_SUBST([plugins_$1_$1_la_CPPFLAGS], ["\$(AM_CPPFLAGS) $CPPFLAGS"])
 			AC_SUBST([plugins_$1_$1_la_LDFLAGS], ["-module -avoid-version $LDFLAGS"])
 			AC_SUBST([plugins_$1_$1_la_LIBADD], [$LIBS])
 			AC_SUBST([$1dir], ['$(pkgdatadir)/plugins/$1'])
@@ -78,8 +81,6 @@ dnl and AC_SUBSTituted with that names.
 			AS_IF([test "x$enable_static" = "xyes"], [
 				EKG2_STATIC_PLUGIN_DECLS="$EKG2_STATIC_PLUGIN_DECLS G_MODULE_IMPORT int $1_plugin_init(int);"
 				EKG2_STATIC_PLUGIN_CALLS="$EKG2_STATIC_PLUGIN_CALLS if (!xstrcmp(name, \"$1\")) plugin_init = &$1_plugin_init;"
-				EKG2_STATIC_PLUGIN_LIBS="$EKG2_STATIC_PLUGIN_LIBS plugins/$1/.libs/$1.a"
-				EKG_LIBS="$EKG_LIBS $LIBS"
 			])
 		])
 

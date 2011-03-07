@@ -33,6 +33,9 @@ extern "C" {
 #endif
 
 void config_postread();
+gboolean ekg_fprintf(GIOChannel *f, const gchar *format, ...)
+	G_GNUC_PRINTF(2, 3) G_GNUC_WARN_UNUSED_RESULT;
+GIOChannel *config_open(const gchar *path, const gchar *mode);
 int config_read(const char *filename);
 int config_read_plugins();
 int config_read_later(const char *filename);

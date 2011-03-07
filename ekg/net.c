@@ -186,7 +186,7 @@ watch_t *ekg_resolver4(plugin_t *plugin, const char *server, watcher_handler_fun
 	/* parent */
 	close(fd[1]);
 
-	/* XXX dodac dzieciaka do przegladania */
+	ekg_child_add(plugin, "resolver: %s", res, NULL, NULL, NULL, server);
 	return watch_add_line(plugin, fd[0], WATCH_READ_LINE, async, data);
 }
 
@@ -574,7 +574,7 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 	/* parent */
 	close(fd[1]);
 	xfree(myserver);
-	/* XXX dodac dzieciaka do przegladania */
+
+	ekg_child_add(plugin, "resolver: %s", res, NULL, NULL, NULL, server);
 	return watch_add(plugin, fd[0], WATCH_READ, async, data);
 }
-

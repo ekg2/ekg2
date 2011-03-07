@@ -135,14 +135,21 @@ char *ekg_convert_string(const char *ps, const char *from, const char *to) {
 	char *res;
 	gsize written;
 
+	if (!ps) /* compat, please do not rely on it */
+		return NULL;
 	if (!from)
-		from = config_console_charset;
+		from = "utf8";
 	if (!to)
-		to = config_console_charset;
+		to = "utf8";
 
 	res = g_convert_with_fallback(ps, -1, to, from, NULL, NULL, &written, NULL);
 
-	return res ? res : g_strdup(ps);
+	if (!res) {
+		res = g_strdup(ps);
+		ekg_fix_utf8(res);
+	}
+
+	return res;
 }
 
 string_t ekg_convert_string_t_p(string_t s, void *ptr) {
@@ -156,9 +163,9 @@ string_t ekg_convert_string_t(string_t s, const char *from, const char *to) {
 	gsize written;
 
 	if (!from)
-		from = config_console_charset;
+		from = "utf8";
 	if (!to)
-		to = config_console_charset;
+		to = "utf8";
 
 	res = g_convert_with_fallback(s->str, s->len, to, from, NULL, NULL, &written, NULL);
 	ret = string_init(NULL);
@@ -171,63 +178,312 @@ string_t ekg_convert_string_t(string_t s, const char *from, const char *to) {
 	return ret;
 }
 
-void changed_console_charset(const char *name) {
-	if (1) {
-		/* XXX: replace with some recoding test? */
-	} else if (!in_autoexec && xstrcasecmp(console_charset, config_console_charset)) 
-		print("console_charset_bad", console_charset, config_console_charset);
-}
-
 void ekg_recode_inc_ref(const gchar *enc) {
 }
 
 void ekg_recode_dec_ref(const gchar *enc) {
 }
 
-char *ekg_recode_from_core(const gchar *enc, char *buf) {
-	gchar *res = ekg_recode_from_core_use(enc, buf);
-	if (res != buf)
-		g_free(buf);
+char *ekg_recode_from_core(const gchar *enc, gchar *buf) {
+	char *res = ekg_recode_to(enc, buf);
+	g_free(buf);
 	return res;
 }
 
-char *ekg_recode_to_core(const gchar *enc, char *buf) {
-	gchar *res = ekg_recode_to_core_use(enc, buf);
-	if (res != buf)
-		g_free(buf);
+gchar *ekg_recode_to_core(const gchar *enc, char *buf) {
+	gchar *res = ekg_recode_from(enc, buf);
+	g_free(buf);
 	return res;
 }
 
-char *ekg_recode_from_core_dup(const gchar *enc, const char *buf) {
-	gchar *res = ekg_recode_from_core_use(enc, buf);
-	return res == buf ? g_strdup(res) : res;
+char *ekg_recode_from_core_dup(const gchar *enc, const gchar *buf) {
+	return ekg_recode_to(enc, buf);
 }
 
-char *ekg_recode_to_core_dup(const gchar *enc, const char *buf) {
-	gchar *res = ekg_recode_to_core_use(enc, buf);
-	return res == buf ? g_strdup(res) : res;
+gchar *ekg_recode_to_core_dup(const gchar *enc, const char *buf) {
+	return ekg_recode_from(enc, buf);
 }
 
-const char *ekg_recode_from_core_use(const gchar *enc, const char *buf) {
+const char *ekg_recode_from_core_use(const gchar *enc, const gchar *buf) {
+	return ekg_recode_to(enc, buf);
+}
+
+const gchar *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
+	return ekg_recode_from(enc, buf);
+}
+
+/**
+ * ekg_recode_from()
+ *
+ * Convert complete string str from given encoding to ekg2 internal
+ * encoding (utf8). If the conversion fails, fallback to duplicating
+ * and utf8-cleaning str.
+ *
+ * @param enc - source encoding (e.g. "iso-8859-2").
+ * @param str - string to recode [may be NULL].
+ *
+ * @return A newly-allocated string which is guaranteed to be correct
+ * utf8 and needs to be freed using g_free(), or NULL if !str.
+ */
+gchar *ekg_recode_from(const gchar *enc, const char *str) {
+	/* -- temporary, please do not rely on !enc */
+	if (G_UNLIKELY(!enc))
+		return ekg_recode_from_locale(str);
+
+	return ekg_convert_string(str, enc, NULL);
+}
+
+/**
+ * ekg_recode_to()
+ *
+ * Convert complete string str from ekg2 internal encoding (utf8)
+ * to given encoding. If the conversion fails, fallback to duplicating
+ * the string.
+ *
+ * @param enc - target encoding (e.g. "iso-8859-2").
+ * @param str - string to recode [may be NULL].
+ *
+ * @return A newly-allocated string which must be freed using g_free(),
+ * or NULL if !str.
+ */
+char *ekg_recode_to(const gchar *enc, const gchar *str) {
+	/* -- temporary, please do not rely on !enc */
+	if (G_UNLIKELY(!enc))
+		return ekg_recode_to_locale(str);
+
+	return ekg_convert_string(str, NULL, enc);
+}
+
+/**
+ * ekg_recode_from_locale()
+ *
+ * Convert complete string str from locale to ekg2 internal encoding
+ * (utf8). If the conversion fails, fallback to duplicating
+ * and utf8-cleaning the string.
+ *
+ * @param str - string to recode. May be NULL.
+ *
+ * @return A newly-allocated string which must be freed using g_free(),
+ * or NULL if !str.
+ */
+gchar *ekg_recode_from_locale(const char *str) {
+	if (console_charset_is_utf8) {
+		gchar *tmp = g_strdup(str);
+		if (tmp)
+			ekg_fix_utf8(tmp);
+		return tmp;
+	} else
+		return ekg_recode_from(console_charset, str);
+}
+
+/**
+ * ekg_recode_to_locale()
+ *
+ * Convert complete string str from ekg2 internal encoding (utf8)
+ * to locale. If the conversion fails, fallback to duplicating
+ * the string.
+ *
+ * @param str - string to recode. May be NULL.
+ *
+ * @return A newly-allocated string which must be freed using g_free(),
+ * or NULL if !str.
+ */
+char *ekg_recode_to_locale(const gchar *str) {
+	if (console_charset_is_utf8)
+		return g_strdup(str);
+	else
+		return ekg_recode_to(console_charset, str);
+}
+
+static gboolean gstring_recode_helper(GString *s, const gchar *from, const gchar *to, gboolean fixutf) {
+	char *res;
 	gsize written;
-	gchar *res;
 
-	if (!buf)
-		return NULL;
+	res = g_convert_with_fallback(s->str, s->len, to, from, NULL, NULL, &written, NULL);
 
-	res = g_convert_with_fallback(buf, -1, enc, config_console_charset,
-			NULL, NULL, &written, NULL);
-	return res ? res : g_strdup(buf);
+	if (G_LIKELY(res)) {
+		g_string_truncate(s, 0);
+		g_string_append_len(s, res, written);
+	} else if (G_LIKELY(fixutf))
+		ekg_fix_utf8(s->str);
+
+	return !!res;
 }
 
-const char *ekg_recode_to_core_use(const gchar *enc, const char *buf) {
-	gsize written;
-	gchar *res;
+/**
+ * ekg_recode_gstring_from()
+ *
+ * Convert complete GString in-place from given encoding to ekg2
+ * internal encoding (utf8). If the conversion fails, fallback to
+ * utf8-cleaning the string.
+ *
+ * @param enc - source encoding.
+ * @param s - GString to recode and to write the result into. After
+ *	the call to this function, it is guaranteed to contain correct utf8.
+ *
+ * @return TRUE if conversion succeeded, FALSE otherwise.
+ */
+gboolean ekg_recode_gstring_from(const gchar *enc, GString *s) {
+	return gstring_recode_helper(s, enc, "utf8", TRUE);
+}
 
-	if (!buf)
-		return NULL;
+/**
+ * ekg_try_recode_gstring_from()
+ *
+ * Convert complete GString in-place from given encoding to ekg2
+ * internal encoding (utf8). If the conversion fails, leave string
+ * unchanged.
+ *
+ * @param enc - source encoding.
+ * @param s - GString to recode and to write the result into
+ *	if the conversion succeeds.
+ *
+ * @return TRUE if conversion succeeded, FALSE otherwise.
+ */
+gboolean ekg_try_recode_gstring_from(const gchar *enc, GString *s) {
+	return gstring_recode_helper(s, enc, "utf8", FALSE);
+}
 
-	res = g_convert_with_fallback(buf, -1, config_console_charset, enc,
-			NULL, NULL, &written, NULL);
-	return res ? res : buf;
+/**
+ * ekg_recode_gstring_to()
+ *
+ * Convert complete GString in-place from ekg2 internal encoding (utf8)
+ * to given encoding. If the conversion fails, leave string unchanged.
+ *
+ * @param enc - target encoding.
+ * @param s - GString to recode and to write the result into
+ *	if the conversion succeeds.
+ *
+ * @return TRUE if conversion succeeded, FALSE otherwise.
+ */
+gboolean ekg_recode_gstring_to(const gchar *enc, GString *s) {
+	return gstring_recode_helper(s, "utf8", enc, FALSE);
+}
+
+/**
+ * ekg_fix_utf8()
+ *
+ * Ensure correct utf8 in buffer, replacing incorrect sequences.
+ *
+ * @param buf - writable, null-terminated, utf8 string.
+ *
+ * @note Currently, this function replaces incorrect bytes with ASCII
+ * SUB (0x1a). This may change in future.
+ */
+void ekg_fix_utf8(gchar *buf) {
+	const gchar *p = buf;
+
+	while (G_UNLIKELY(!g_utf8_validate(p, -1, &p)))
+		*((gchar*) p++) = 0x1a; /* substitute, UTR#36 suggests it as byte replacement */
+}
+
+static void fstr_mark_linebreaks(gchar *s, fstr_attr_t *a) {
+	gchar *p;
+
+	/* XXX: use pango */
+
+	g_assert(g_utf8_validate(s, -1, NULL));
+	for (p = s; *p; p = g_utf8_next_char(p)) {
+		/* if we're already mangling fstring_t, suit SUBs as well */
+		if (G_UNLIKELY(*p == 0x1a)) {
+			*p = '?';
+			a[p - s] |= FSTR_REVERSE;
+		}
+
+		switch (g_unichar_break_type(g_utf8_get_char(p))) {
+				/* these should cause line break themselves
+				 * but we don't support unicode that well,
+				 * so just use them as wrap opportunity */
+			case G_UNICODE_BREAK_MANDATORY:
+			case G_UNICODE_BREAK_CARRIAGE_RETURN:
+			case G_UNICODE_BREAK_LINE_FEED:
+			case G_UNICODE_BREAK_NEXT_LINE:
+				/* typical break opportunities */
+			case G_UNICODE_BREAK_ZERO_WIDTH_SPACE:
+			case G_UNICODE_BREAK_SPACE:
+			case G_UNICODE_BREAK_BEFORE_AND_AFTER:
+			case G_UNICODE_BREAK_AFTER:
+				/* not always but use it anyway */
+			case G_UNICODE_BREAK_HYPHEN:
+				{
+					const gsize startpos = p - s;
+					const gsize endpos = g_utf8_next_char(p) - s;
+					gsize i;
+
+					for (i = startpos; i < endpos; i++)
+						a[i] |= FSTR_LINEBREAK;
+				}
+				break;
+
+				/* we do not support breaking before */
+			case G_UNICODE_BREAK_BEFORE:
+			default:
+				break;
+		}
+	}
+}
+
+/**
+ * ekg_recode_fstr_to_locale()
+ *
+ * Recode fstring_t from ekg2 internal encoding (utf8) to locale,
+ * adjusting attributes as necessary. Set attributes based on special
+ * unicode character properties (e.g. FSTR_LINEBREAK).
+ *
+ * @param fstr - input fstring_t.
+ *
+ * @return Newly-allocated fstring_t, which needs to be freed using
+ *	fstring_free().
+ */
+fstring_t *ekg_recode_fstr_to_locale(const fstring_t *fstr) {
+	if (console_charset_is_utf8) {
+		fstring_t *s = fstring_dup(fstr);
+		fstr_mark_linebreaks(s->str, s->attr);
+		return s;
+	} else {
+		gchar *s;
+		fstr_attr_t *a, *dupattr;
+		gssize len;
+		const gssize inpsize = strlen(fstr->str);
+		GString *outs = g_string_sized_new(inpsize);
+		GByteArray *outa = g_byte_array_sized_new(inpsize * sizeof(fstr_attr_t));
+		fstring_t *out = g_memdup(fstr, sizeof(fstring_t)); /* XXX: move to slice alloc */
+
+		fstring_iter(fstr, &s, &a, &len);
+			/* we need to have a modifiable copy to set linebreaks */
+		a = dupattr = g_memdup(a, inpsize * sizeof(fstr_attr_t));
+		fstr_mark_linebreaks(s, a);
+		while (fstring_next(&s, &a, &len, NULL)) {
+			char *ls;
+			gsize ob;
+
+			ls = g_convert_with_fallback(s, len, console_charset, "utf8",
+					NULL, NULL, &ob, NULL);
+
+			if (ls) {
+				g_string_append_len(outs, ls, ob);
+				g_free(ls);
+			} else {
+				/* XXX: is that really a good idea? */
+				g_string_append_len(outs, s, len);
+				ob = len;
+			}
+
+			/* we can assume 'a' has len identical 'fstr_attr_t's */
+			while (ob > len) {
+				g_byte_array_append(outa, (gpointer) a, len * sizeof(fstr_attr_t));
+				ob -= len;
+			}
+			if (ob > 0)
+				g_byte_array_append(outa, (gpointer) a, ob * sizeof(fstr_attr_t));
+		}
+
+		g_free(dupattr);
+		out->str = g_string_free(outs, FALSE);
+		out->attr = (fstr_attr_t*) g_byte_array_free(outa, FALSE);
+		/* XXX: margins and stuff get outdated */
+		return out;
+	}
+
+	g_assert_not_reached();
 }

@@ -78,5 +78,6 @@ static int config_logs_remind_number = 0;
 static int config_logs_max_files = 7;
 static char *config_logs_path;
 static char *config_logs_timestamp;
+static gchar *config_logs_encoding;
 
 #endif

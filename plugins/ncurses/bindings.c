@@ -68,6 +68,7 @@ static void add_to_history() {
 
 static int input_backward_word(void) {
 	int i = line_index;
+		/* XXX: isspace()/iswspace()? */
 	while (i > 0 && line[i - 1] == ' ')
 		i--;
 	while (i > 0 && line[i - 1] != ' ')
@@ -115,7 +116,8 @@ static BINDING_FUNCTION(binding_toggle_input)
 		ncurses_input_update(line_index);
 	} else {
 		string_t s = string_init((""));
-		char *p, *tmp;
+		char *tmp;
+		gchar *out, *p;
 		int i;
 
 		for (i = 0; lines[i]; i++) {
@@ -126,25 +128,29 @@ static BINDING_FUNCTION(binding_toggle_input)
 				string_append(s, ("\r\n"));
 		}
 
+			/* XXX: we could probably use string_t recoding func here */
 		tmp = string_free(s, 0);
+		out = ekg_recode_from_locale(tmp);
+		g_free(tmp);
 
 		add_to_history();
 
 		input_size = 1;
 		ncurses_input_update(0);
 
-		for (p=tmp; *p && isspace(*p); p++);
-                if (*p || config_send_white_lines)
-			command_exec(window_current->target, window_current->session, tmp, 0);
+		/* omit leading whitespace */
+		for (p = out; g_unichar_isspace(g_utf8_get_char(p)); p = g_utf8_next_char(p));
+		if (*p || config_send_white_lines)
+			command_exec(window_current->target, window_current->session, out, 0);
 
-		if (!tmp[0] || tmp[0] == '/' || !window_current->target)
+		if (!out[0] || out[0] == '/' || !window_current->target)
 			ncurses_typing_mod		= 1;
 		else {
 			ncurses_typing_win		= NULL;
 		}
 
 		curs_set(1);
-		xfree(tmp);
+		g_free(out);
 	}
 }
 
@@ -237,6 +243,7 @@ static BINDING_FUNCTION(binding_accept_line)
 {
 	char *p, *txt;
 
+#if 0
 	if (ncurses_noecho) { /* we are running ui-password-input */
 		ncurses_noecho = 0;
 		ncurses_passbuf = xwcsdup(line);
@@ -244,6 +251,7 @@ static BINDING_FUNCTION(binding_accept_line)
 		line_index = line_start = 0;
 		return;
 	}
+#endif
 
 	if (lines) {
 		int i;
@@ -266,10 +274,13 @@ static BINDING_FUNCTION(binding_accept_line)
 		return;
 	}
 	if (arg != BINDING_HISTORY_NOEXEC) {
-               txt = wcs_to_normal(line);
-               for (p=txt; *p && isspace(*p); p++);
-               if (*p || config_send_white_lines)
-                       command_exec(window_current->target, window_current->session, txt, 0);
+		gchar *out;
+		txt = wcs_to_normal(line);
+		out = ekg_recode_from_locale(txt);
+		for (p = out; g_unichar_isspace(g_utf8_get_char(p)); p = g_utf8_next_char(p));
+		if (*p || config_send_white_lines)
+			command_exec(window_current->target, window_current->session, out, 0);
+		g_free(out);
 		free_utf(txt);
 	}
 
@@ -297,10 +308,12 @@ static BINDING_FUNCTION(binding_accept_line)
 
 static BINDING_FUNCTION(binding_line_discard)
 {
+#if 0
 	if (!ncurses_noecho) { /* we don't want to yank passwords */
 		xfree(yanked);
 		yanked = xwcsdup(line);
 	}
+#endif
 	*line = 0;
 	line_index = line_start = 0;
 
@@ -392,19 +405,18 @@ static void show_completions() {
 
 static BINDING_FUNCTION(binding_complete)
 {
-	int complete_result = 0;
 	if (!lines) {
-#if USE_UNICODE
+		int complete_result = 0;
+		GString *linebuf = g_string_sized_new(LINE_MAXLEN + 1);
+		gchar *tmp;
 		int line_start_tmp, line_index_tmp;
-		char nline[LINE_MAXLEN + 1];	/* (* MB_CUR_MAX)? No, it would be anyway truncated by completion */
-		int i, j;
-		int nlen;
+		int i, j, nlen;
 
-		line_start_tmp = line_index_tmp = 0;
-		for (i = 0, j = 0; line[i] && i < LINE_MAXLEN; i++) {
+#if USE_UNICODE
+		wctomb(NULL, 0); /* reset */
+		for (i = 0; line[i]; i++) {
 			char buf[MB_LEN_MAX+1];
 			int tmp;
-			int k;
 
 			tmp = wctomb(buf, line[i]);
 
@@ -413,64 +425,74 @@ static BINDING_FUNCTION(binding_complete)
 				return;
 			}
 
-			if (j+tmp >= LINE_MAXLEN) {
-				debug_error("binding_complete() buffer might be truncated, aborting\n");
-				return;
-			}
-
-			if (line_start == i)
-				line_start_tmp = j;
-			if (line_index == i)
-				line_index_tmp = j;
-
-			for (k = 0; k < tmp && buf[k]; k++)
-				nline[j++] = buf[k];
+			g_string_append_len(linebuf, buf, tmp);
 		}
-		/* XXX, put into loop, wcslen()+1? */
-		if (line_start == i)
-			line_start_tmp = j;
-		if (line_index == i)
-			line_index_tmp = j;
+#endif
 
-		nline[j] = '\0';
+		tmp = ekg_recode_from_locale(
+#if USE_UNICODE
+				linebuf->str
+#else
+				line
+#endif
+				);
+		g_string_assign(linebuf, tmp);
+		g_free(tmp);
 
-		debug("wcs-completion WC->MB (%d,%d) => (%d,%d) [%d;%d]\n", line_start, line_index, line_start_tmp, line_index_tmp, j, i);
-		complete_result = ekg2_complete(&line_start_tmp, &line_index_tmp, nline, LINE_MAXLEN);
+		/* recalc offsets */
 
-		nlen = strlen(nline);
+#if !USE_UNICODE
+		if (console_charset_is_utf8) {
+			line_start_tmp = line_start;
+			line_index_tmp = line_index;
+		} else
+#endif
+		{
+			line_start_tmp = (int) (g_utf8_offset_to_pointer(linebuf->str, line_start) - linebuf->str);
+			line_index_tmp = (int) (g_utf8_offset_to_pointer(linebuf->str, line_index) - linebuf->str);
+		}
 
-		line_start = line_index = 0;
-		for (i = 0, j = 0; j < nlen; i++) {
-			int tmp;
+			/* XXX: rewrite ekg2_complete() to use GString directly */
+		complete_result = ekg2_complete(&line_start_tmp, &line_index_tmp,
+				linebuf->str, linebuf->allocated_len);
 
-			tmp = mbtowc(&line[i], &nline[j], nlen-j);
+		/* warning: ATM linebuf->len can not be trusted */
 
-			if (tmp <= 0) {
+#if !USE_UNICODE
+		if (console_charset_is_utf8) {
+			line_start = line_start_tmp;
+			line_index = line_index_tmp;
+		} else
+#endif
+		{
+			line_start = g_utf8_pointer_to_offset(linebuf->str, &linebuf->str[line_start_tmp]);
+			line_index = g_utf8_pointer_to_offset(linebuf->str, &linebuf->str[line_index_tmp]);
+		}
+
+		tmp = ekg_recode_to_locale(linebuf->str);
+#if USE_UNICODE
+		nlen = strlen(tmp); /* linebuf->len can't be used as we modified the buf! */
+			/* XXX: mbstowcs()? */
+		mbtowc(NULL, NULL, 0);
+		for (i = 0, j = 0; tmp[j]; i++) {
+			int ret;
+
+			ret = mbtowc(&line[i], &tmp[j], nlen-j);
+
+			if (ret <= 0) {
 				debug_error("binding_complete() mbtowc() failed (%d)\n", tmp);
 				break;	/* return; */
 			}
 
-			if (line_start_tmp == j)
-				line_start = i;
-			if (line_index_tmp == j)
-				line_index = i;
-
-			j += tmp;
+			j += ret;
 		}
-
-		/* XXX, put into loop, <= nlen? */
-		if (line_start_tmp == j)
-			line_start = i;
-		if (line_index_tmp == j)
-			line_index = i;
-
-		debug("wcs-completion MB->WC (%d,%d) => (%d,%d) [%d;%d]\n", line_start_tmp, line_index_tmp, line_start, line_index, j, i);
 		line[i] = '\0';
-		if (window_current->id == WINDOW_DEBUG_ID)
-			ncurses_redraw_input(0);
 #else
-		complete_result =  ekg2_complete(&line_start, &line_index, (char *) line, LINE_MAXLEN);
+		g_strlcpy(line, tmp, LINE_MAXLEN); /* XXX: use GString for line? */
 #endif
+		g_free(tmp);
+		g_string_free(linebuf, TRUE);
+
 		if (complete_result)
 			show_completions();
 	} else {
@@ -490,7 +512,7 @@ static BINDING_FUNCTION(binding_complete)
 
 static BINDING_FUNCTION(binding_end_of_line)
 {
-	const int width = input->_maxx - ncurses_current->prompt_real_len - 1;
+	const int width = input->_maxx - ncurses_current->prompt_len - 1;
 	/* set cursor position to the end of the line */
 	line_index = xwcslen(ncurses_line);
 	/* show as much as possible */

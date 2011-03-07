@@ -111,7 +111,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
 		struct screen_line *l;
 		char *str; 
-		short *attr;
+		fstr_attr_t *attr;
 		int j, margin_left, wrapping = 0;
 
 		time_t ts;			/* current ts */
@@ -288,7 +288,7 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 /*
  *
  */
-int ncurses_backlog_add_real(window_t *w, fstring_t *str) {
+int ncurses_backlog_add_real(window_t *w, /*locale*/ fstring_t *str) {
 	int i, removed = 0;
 	ncurses_window_t *n = w->priv_data;
 	
@@ -321,53 +321,21 @@ int ncurses_backlog_add_real(window_t *w, fstring_t *str) {
 	return ncurses_backlog_split(w, 0, removed);
 }
 
-/*
+/**
  * ncurses_backlog_add()
  *
- * dodaje do bufora okna. zak³adamy dodawanie linii ju¿ podzielonych.
- * je¶li doda siê do backloga liniê zawieraj±c± '\n', bêdzie ¼le.
+ * Add an utf8-encoded line to window backlog, recoding it whenever
+ * necessary. The line should not contain \n. It will be duplicated, so
+ * caller needs to free it.
  *
- *  - w - wska¼nik na okno ekg
- *  - str - linijka do dodania
+ * @param w - target window
+ * @param str - an utf8-encoded fstring_t to add
  *
- * zwraca rozmiar dodanej linii w liniach ekranowych.
+ * @return The return value is going to be changed, thou shalt not rely
+ * upon it.
  */
-int ncurses_backlog_add(window_t *w, fstring_t *str) {
-#if USE_UNICODE
-	{
-		int rlen = xstrlen(str->str);
-
-		int cur = 0;
-		int i;
-
-		mbtowc(NULL, NULL, 0);	/* reset */
-
-		for (i = 0; cur < rlen; i++) {
-			wchar_t znak;
-			int len	= mbtowc(&znak, &(str->str[cur]), rlen-cur);
-
-			if (!len)	/* shouldn't happen -- cur < rlen */
-				break;
-
-			if (len == -1) {
-				znak = '?';
-				len  = 1;		/* always move forward */
-
-				str->str[cur] = '?';
-				str->attr[cur]  = str->attr[cur] | FSTR_REVERSE; 
-			}
-/*
-			if (cur == str->prompt_len)
-				str->prompt_len = i;
-
-			if (cur == str->margin_left)
-				str->margin_left = i;
- */
-			cur += len;
-		}
-	}
-#endif
-	return ncurses_backlog_add_real(w, str);
+int ncurses_backlog_add(window_t *w, const fstring_t *str) {
+	return ncurses_backlog_add_real(w, ekg_recode_fstr_to_locale(str));
 }
 
 
@@ -399,4 +367,3 @@ void changed_backlog_size(const char *var)
 		ncurses_backlog_split(w, 1, 0);
 	}
 }
-

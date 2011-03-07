@@ -15,8 +15,7 @@ typedef enum {
 	DEBUG_GGMISC,		/* cause of a lot GG_DEBUG_MISC in libgadu we've got special formats for them... */
 	DEBUG_WHITE,
 	DEBUG_WARN,
-	DEBUG_OK,
-	DEBUG_WTF			/* serious fail */
+	DEBUG_OK
 } debug_level_t;
 
 #ifndef DISABLE_DEBUG
@@ -34,7 +33,6 @@ void debug_ext(debug_level_t level, const char *format, ...);
 #define debug_white(args...)	debug_ext(DEBUG_WHITE, args)
 #define debug_warn(args...)	debug_ext(DEBUG_WARN, args)
 #define debug_ok(args...)	debug_ext(DEBUG_OK, args)
-#define debug_wtf(args...)	debug_ext(DEBUG_WTF, args)
 
 #ifdef __cplusplus
 }

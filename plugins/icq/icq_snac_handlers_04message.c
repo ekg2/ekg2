@@ -106,7 +106,7 @@ SNAC_SUBHANDLER(icq_snac_message_replyicbm) {
 	return 0;
 }
 
-static void icq_pack_append_msg_header(string_t pkt, msg_params_t *msg_param) {
+static void icq_pack_append_msg_header(GString *pkt, msg_params_t *msg_param) {
 	icq_pack_append(pkt, "IIWsW",
 			msg_param->id1,		// message id part 1
 			msg_param->id2,		// message id part 2
@@ -117,7 +117,7 @@ static void icq_pack_append_msg_header(string_t pkt, msg_params_t *msg_param) {
 }
 
 static void icq_send_adv_msg_ack(session_t *s, msg_params_t *msg_param) {
-	string_t pkt = string_init(NULL);
+	GString *pkt = g_string_new(NULL);
 
 	icq_pack_append_msg_header(pkt, msg_param);
 	icq_pack_append_rendezvous(pkt, ICQ_VERSION, msg_param->cookie, msg_param->msg_type, msg_param->msg_flags, 0, 0);
@@ -164,7 +164,7 @@ static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int 
 		 * but in some cases there can be more 0x0101 TLVs containing message parts in
 		 * different encoding (just like the new format of Offline Messages) */
 		struct icq_tlv_list *t;
-		string_t msg = string_init(NULL);
+		GString *msg = g_string_new(NULL);
 		time_t sent;
 
 		for (t = tlvs_msg; t; t = t->next) {
@@ -196,7 +196,7 @@ static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int 
 				default:
 					debug_error("icq_snac_message_recv_icbm_ch1() Unsupported encoding 0x%x\n", t_msg.encoding);
 			}
-			string_append_n(msg, recode, xstrlen(recode));
+			g_string_append(msg, recode);
 			xfree(recode);
 		}
 
@@ -209,7 +209,7 @@ static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int 
 			protocol_message_emit(s, msg_param->uid, NULL, msg->str, NULL, sent, msgclass, NULL, EKG_TRY_BEEP, 0);
 		}
 
-		string_free(msg, 1);
+		g_string_free(msg, TRUE);
 	}
 
 	icq_tlvs_destroy(&tlvs);
@@ -218,7 +218,7 @@ static int icq_snac_message_recv_icbm_ch1(session_t *s, unsigned char *buf, int 
 }
 
 static void icq_send_status_descr(session_t *s, int msg_type, msg_params_t *msg_param) {
-	string_t pkt;
+	GString *pkt;
 	char *desc;
 
 	if (!msg_param->u) {
@@ -227,7 +227,7 @@ static void icq_send_status_descr(session_t *s, int msg_type, msg_params_t *msg_
 	}
 	debug_function("icq_send_status_descr() to %s\n", msg_param->uid);
 
-	pkt = string_init(NULL);
+	pkt = g_string_new(NULL);
 
 	desc = xstrdup(s->descr);
 	icq_pack_append_msg_header(pkt, msg_param);

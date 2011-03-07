@@ -29,7 +29,8 @@
 #include <unistd.h>
 
 void changed_session_locks(const char *varname); /* sessions.c */
-char *console_charset;
+gboolean console_charset_is_utf8;
+const char *console_charset;
 
 GSList *variables = NULL;
 
@@ -74,10 +75,6 @@ void variable_init() {
 	variable_add(NULL, ("completion_notify"), VAR_MAP, 1, &config_completion_notify, NULL, variable_map(4, 0, 0, "none", 1, 2, "add", 2, 1, "addremove", 4, 0, "away"), NULL);
 		/* It's very, very special variable; shouldn't be used by user */
 	variable_add(NULL, ("config_version"), VAR_INT, 2, &config_version, NULL, NULL, NULL);
-		/* XXX, warn here. user should change only console_charset if it's really nesessary... we should make user know about his terminal
-		 *	encoding... and give some tip how to correct this... it's just temporary
-		 */
-	variable_add(NULL, ("console_charset"), VAR_STR, 1, &config_console_charset, changed_console_charset, NULL, NULL);
 	variable_add(NULL, ("dcc_dir"), VAR_STR, 1, &config_dcc_dir, NULL, NULL, NULL); 
 	variable_add(NULL, ("debug"), VAR_BOOL, 1, &config_debug, NULL, NULL, NULL);
 /*	variable_add(NULL, ("default_protocol"), VAR_STR, 1, &config_default_protocol, NULL, NULL, NULL); */
@@ -99,12 +96,6 @@ void variable_init() {
 	variable_add(NULL, ("keep_reason"), VAR_INT, 1, &config_keep_reason, NULL, NULL, NULL);
 	variable_add(NULL, ("last"), VAR_MAP, 1, &config_last, NULL, variable_map(4, 0, 0, "none", 1, 2, "all", 2, 1, "separate", 4, 0, "sent"), NULL);
 	variable_add(NULL, ("last_size"), VAR_INT, 1, &config_last_size, NULL, NULL, NULL);
-	variable_add(NULL, ("lastlog_display_all"), VAR_INT, 1, &config_lastlog_display_all, NULL, variable_map(3, 
-			0, 0, "current window",
-			1, 2, "current window + configured",
-			2, 1, "all windows + configured"), NULL);
-	variable_add(NULL, ("lastlog_matchcase"), VAR_BOOL, 1, &config_lastlog_case, NULL, NULL, NULL);
-	variable_add(NULL, ("lastlog_noitems"), VAR_BOOL, 1, &config_lastlog_noitems, NULL, NULL, NULL);
 	variable_add(NULL, ("nickname"), VAR_STR, 1, &config_nickname, NULL, NULL, NULL);
 	variable_add(NULL, ("make_window"), VAR_MAP, 1, &config_make_window, changed_make_window, variable_map(4, 0, 0, "none", 1, 2, "usefree", 2, 1, "always", 4, 0, "chatonly"), NULL);
 	variable_add(NULL, ("mesg"), VAR_INT, 1, &config_mesg, changed_mesg, variable_map(3, 0, 0, "no", 1, 2, "yes", 2, 1, "default"), NULL);
@@ -144,17 +135,12 @@ void variable_init() {
  * nieliczbowych.
  */
 void variable_set_default() {
-	gboolean is_unicode;
-
 	xfree(config_timestamp);
 	xfree(config_completion_char);
 	xfree(config_display_color_map);
 	xfree(config_subject_prefix);
 	xfree(config_subject_reply_prefix);
-	xfree(config_console_charset);
 	xfree(config_dcc_dir);
-
-	xfree(console_charset);
 
 	config_slash_messages = 1;
 	config_history_savedups = 1;		/* save lines matching the previous history entry */
@@ -166,31 +152,7 @@ void variable_set_default() {
 	config_display_color_map = xstrdup("nTgGbBrR");
 	config_subject_prefix = xstrdup("## ");
 	config_subject_reply_prefix = xstrdup("Re: ");
-	{
-		const gchar* tmp;
-
-		is_unicode = g_get_charset(&tmp);
-		console_charset = g_strdup(tmp);
-	}
-
-	if (console_charset) 
-		config_console_charset = xstrdup(console_charset);
-	else /* XXX: probably never reached */
-		config_console_charset = xstrdup("ISO-8859-2"); /* Default: ISO-8859-2 */
-#if USE_UNICODE
-	if (config_use_unicode && !is_unicode) {
-		debug("nl_langinfo(CODESET) == %s swapping config_use_unicode to 0\n", console_charset);
-		config_use_unicode = 0;
-	} else
-		config_use_unicode = 1;
-#else
-	config_use_unicode = 0;
-	if (is_unicode) {
-		debug("Warning, g_get_charset() reports that you are using utf-8 encoding, but you didn't compile ekg2 with --enable-unicode\n");
-		debug("\tPlease compile ekg2 with --enable-unicode or change your enviroment setting to use not utf-8 but iso-8859-1 maybe? (LC_ALL/LC_CTYPE)\n");
-	}
-#endif
-	config_use_iso = !xstrncasecmp(console_charset, "ISO-8859-", 9);
+	console_charset_is_utf8 = g_get_charset(&console_charset);
 }
 
 /*
@@ -555,9 +517,9 @@ void variables_destroy(void) {
  * name - name of the variable
  */
 void variable_help(const char *name) {
-	FILE *f; 
-	char *line, *type = NULL, *def = NULL, *tmp;
-	const char *seeking_name;
+	GIOChannel *f; 
+	gchar *type = NULL, *def = NULL, *tmp;
+	const gchar *line, *seeking_name;
 	string_t s;
 	int found = 0;
 	variable_t *v = variable_find(name);
@@ -570,7 +532,7 @@ void variable_help(const char *name) {
 	if (v->plugin && v->plugin->name) {
 		char *tmp2;
 
-		if (!(f = help_path("vars", v->plugin->name))) {
+		if (!(f = help_open("vars", v->plugin->name))) {
 			print("help_set_file_not_found_plugin", v->plugin->name);
 			return;
 		}
@@ -581,7 +543,7 @@ void variable_help(const char *name) {
 		else
 			seeking_name = name;
 	} else {
-		if (!(f = help_path("vars", NULL))) {
+		if (!(f = help_open("vars", NULL))) {
 			print("help_set_file_not_found");
 			return;
 		}
@@ -589,7 +551,7 @@ void variable_help(const char *name) {
 		seeking_name = name;
 	}
 
-	while ((line = read_file_utf(f, 0))) {
+	while ((line = read_line(f))) {
 		if (!xstrcasecmp(line, seeking_name)) {
 			found = 1;
 			break;
@@ -597,19 +559,19 @@ void variable_help(const char *name) {
 	}
 
 	if (!found) {
-		fclose(f);
+		g_io_channel_unref(f);
 		print("help_set_var_not_found", name);
 		return;
 	}
 
-	line = read_file_utf(f, 0);
+	line = read_line(f);
 	
 	if ((tmp = xstrstr(line, (": "))))
 		type = xstrdup(tmp + 2);
 	else
 		type = xstrdup(("?"));
 	
-	line = read_file_utf(f, 0);
+	line = read_line(f);
 	if ((tmp = xstrstr(line, (": "))))
 		def = xstrdup(tmp + 2);
 	else
@@ -621,9 +583,9 @@ void variable_help(const char *name) {
 	xfree(def);
 
 	if (tmp)		/* je¶li nie jest to ukryta zmienna... */
-		read_file_utf(f, 0);	/* ... pomijamy liniê */
+		read_line(f);	/* ... pomijamy liniê */
 	s = string_init(NULL);
-	while ((line = read_file_utf(f, 0))) {
+	while ((line = read_line(f))) {
 		if (line[0] != '\t')
 			break;
 
@@ -651,7 +613,7 @@ void variable_help(const char *name) {
 	if (format_exists("help_set_footer"))
 		print("help_set_footer", name);
 
-	fclose(f);
+	g_io_channel_unref(f);
 }
 
 /*

@@ -1,0 +1,3 @@
+#!/bin/sh
+
+./ekg2 -F check -n quit

@@ -794,7 +794,7 @@ static int icq_offline_message_end(session_t *s, unsigned char *buf, int len, pr
 	 * SNAC(15,02)/003C. If you doesn't delete messages server will send them
 	 * again after client request.
 	 */
-	string_t pkt = string_init(NULL);
+	GString *pkt = g_string_new(NULL);
 	icq_makemetasnac(s, pkt, CLI_DELETE_OFFLINE_MSGS_REQ, 0, NULL, NULL);
 	icq_send_pkt(s, pkt);
 

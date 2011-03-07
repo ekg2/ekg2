@@ -194,50 +194,126 @@ static const char *format_ansi(char ch) {
 	return ("");
 }
 
+/**
+ * fstring_iter()
+ *
+ * Initiate iteration over fstring_t. Set pointers to the initial
+ * values.
+ *
+ * @param s - the iterated fstring_t.
+ * @param text - location to store the current text segment pointer.
+ * @param attr - location to store the current attr segment pointer.
+ * @param len - location to store the length of the current segment.
+ *
+ * @note This function just initializes the vars, use fstring_next()
+ * to get the first segment.
+ */
+void fstring_iter(const fstring_t *s, gchar **text, fstr_attr_t **attr, gssize *len) {
+	*text = s->str;
+	*attr = s->attr;
+	*len = 0;
+}
+
+/**
+ * fstring_next()
+ *
+ * Iterate over fragments of fstring_t with unchanged attributes.
+ *
+ * @param text - location to store the current text segment pointer.
+ * @param attr - location to store the current attr segment pointer.
+ * @param len - location to store the length of the current segment.
+ * @param change - location to store changed attribute map or NULL.
+ *
+ * @return TRUE if next segment was found, FALSE on end of string.
+ *
+ * @note This function relies on the values stored by previous calls,
+ * please do not modify them. The variables need to be initialized
+ * by @ref fstring_iter().
+ *
+ * @code
+ *
+ *	gchar *s;
+ *	fstr_attr_t *a;
+ *	gssize len;
+ *	fstr_attr_t change;
+ *
+ *	fstring_iter(fstr, &s, &a, &len);
+ *	while (fstring_next(&s, &a, &len, NULL)) {
+ *		my_setattr(*a);
+ *		my_printn(s, len);
+ *	}
+ *
+ * @endcode
+ */
+gboolean fstring_next(gchar **text, fstr_attr_t **attr, gssize *len, fstr_attr_t *change) {
+	const gchar* c;
+	const fstr_attr_t* a;
+	const fstr_attr_t prevattr = *len ? **attr : FSTR_NORMAL;
+	fstr_attr_t curattr;
+
+	*text += *len;
+	*attr += *len;
+	curattr = **text ? **attr : FSTR_NORMAL;
+
+	for (c = *text, a = *attr;; c++, a++) {
+		if (G_UNLIKELY(!*c || *a != curattr)) {
+			*len = (c - *text);
+			/* yep, returning the _previous_ change here */
+			if (change)
+				*change = ((G_LIKELY(*len) ? curattr : FSTR_NORMAL) ^ prevattr);
+			return !!*len;
+		}
+	}
+
+	g_assert_not_reached();
+}
+
 static char *fstring2str(fstring_t *f) {
 	static char *fore = "krgybmcwKRGYBMCW";
 	static char *back = "lshzeqdx";
-	int i;
-	short prevattr = FSTR_NORMAL;
-	string_t st = string_init(NULL);
+	GString *st = g_string_sized_new(strlen(f->str));
 
-	for (i=0; i < strlen(f->str); i++) {
-		short attr = f->attr[i];
+	gchar *c;
+	fstr_attr_t *a, change;
+	gssize len;
 
-		if (attr != prevattr) {
-			short change = attr ^ prevattr;
-			prevattr = attr;
+	fstring_iter(f, &c, &a, &len);
+	while (fstring_next(&c, &a, &len, &change)) {
+		if (change) {
+			fstr_attr_t attr = *a;
+
 			if (change & FSTR_BLINK) {
 				if (attr & FSTR_BLINK)
-					string_append(st, format_ansi('i'));	/* turn on blinking */
+					g_string_append(st, format_ansi('i'));	/* turn on blinking */
 				else
 					change |= FSTR_NORMAL;
 			}
 			if (change & FSTR_UNDERLINE) {
 				if (attr & FSTR_UNDERLINE)
-					string_append(st, format_ansi('U'));	/* turn on underline */
+					g_string_append(st, format_ansi('U'));	/* turn on underline */
 				else
 					change |= FSTR_NORMAL;
 			}
 			if (change & FSTR_REVERSE) {
 				if (attr & FSTR_BLINK)
-					string_append(st, format_ansi('V'));	/* turn on reverse */
+					g_string_append(st, format_ansi('V'));	/* turn on reverse */
 				else
 					change |= FSTR_NORMAL;
 			}
 			if ((change & FSTR_NORMAL) && (attr & FSTR_NORMAL)) {
-				string_append(st, format_ansi('n'));
+				g_string_append(st, format_ansi('n'));
 			}
 			if (change & (FSTR_BOLD|FSTR_FOREMASK)) {
 				char c = fore[(attr & FSTR_FOREMASK) + ((attr & FSTR_BOLD) ? 8 : 0)];
-				string_append(st, format_ansi(c));
+				g_string_append(st, format_ansi(c));
 			}
 			if (change & FSTR_BACKMASK)
-				string_append(st, format_ansi(back[(attr & FSTR_BACKMASK)>>3]));
-                }
-		string_append_c(st, f->str[i]);
+				g_string_append(st, format_ansi(back[(attr & FSTR_BACKMASK)>>3]));
+		}
+
+		g_string_append_len(st, c, len);
 	}
-	return string_free(st, 0);
+	return g_string_free(st, FALSE);
 }
 
 
@@ -473,10 +549,12 @@ static char *va_format_string(const char *format, va_list ap) {
 
 				if (fill_length) {
 					fstring_t * fstr = fstring_new(str);
-					int len = strlen_pl(fstr->str);
+					/* XXX: width */
+					int len = g_utf8_strlen(fstr->str, -1);
 					if (len >= fill_length) {
 						if (!fill_soft) {
-							fstr->str[utf8str_char2bytes(fstr->str, fill_length)] = 0;
+							/* XXX: how about double width chars? */
+							*(g_utf8_offset_to_pointer(fstr->str, fill_length)) = 0;
 							str = fstring2str(fstr);
 							need_free = 1;
 						}
@@ -522,6 +600,27 @@ static char *va_format_string(const char *format, va_list ap) {
 }
 
 /**
+ * fstring_dup()
+ *
+ * Return a duplicated copy of a fstring_t with all internal data duplicated.
+ *
+ * @param str - string
+ *
+ * @return A newly-allocated fstring_t.
+ *
+ * @note Please note that private data is not duplicated.
+ */
+fstring_t *fstring_dup(const fstring_t *str) {
+	fstring_t *out = g_memdup(str, sizeof(fstring_t));
+	gsize len = strlen(str->str) + 1;
+
+	out->str = g_memdup(str->str, len * sizeof(gchar));
+	out->attr = g_memdup(str->attr, len * sizeof(fstr_attr_t));
+
+	return out;
+}
+
+/**
  * fstring_new()
  *
  * Change formatted ansi string (@a str) to Nowy-i-Lepszy (tm) [New-and-Better].
@@ -538,7 +637,7 @@ fstring_t *fstring_new(const char *str) {
 #define NPAR 16			/* ECMA-48 CSI have got max 16 params (NPAR) defined in <linux/console_struct.h> */
 	fstring_t *res;
 	char *tmpstr;
-	short attr = FSTR_NORMAL;
+	fstr_attr_t attr = FSTR_NORMAL;
 	int i, j, len = 0, isbold = 0;
 
 	for (i = 0; str[i]; i++) {
@@ -567,8 +666,8 @@ fstring_t *fstring_new(const char *str) {
 	}
 
 	res			= xmalloc(sizeof(fstring_t));
-	res->str = tmpstr	= xmalloc((len + 1) * sizeof(char));
-	res->attr		= xmalloc((len + 1) * sizeof(short));
+	res->str = tmpstr	= xmalloc((len + 1) * sizeof(gchar));
+	res->attr		= xmalloc((len + 1) * sizeof(fstr_attr_t));
 
 	res->margin_left = -1;
 /*
@@ -789,6 +888,7 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 		char *tmp = stmp;
 		while ((line = split_line(&tmp))) {
 			char *p;
+			fstring_t *l;
 
 			if ((p = xstrstr(line, "\033[00m"))) {
 				xfree(prompt);
@@ -800,11 +900,13 @@ static void print_window_c(window_t *w, int activity, const char *theme, va_list
 			}
 
 			if (prompt) {
-				char *tmp = saprintf("%s%s", prompt, line);
-				window_print(w, fstring_new(tmp));
-				xfree(tmp);
+				gchar *tmp = g_strdup_printf("%s%s", prompt, line);
+				l = fstring_new(tmp);
+				g_free(tmp);
 			} else
-				window_print(w, fstring_new(line));
+				l = fstring_new(line);
+			window_print(w, l);
+			fstring_free(l);
 		}
 		xfree(prompt);
 	}
@@ -1353,7 +1455,7 @@ void theme_init()
 	format_add("prompt2", "%K:%c:%C:%n", 1);
 	format_add("prompt2,speech", " ", 1);
 	format_add("error", "%K:%r:%R:%n", 1);
-	format_add("error,speech", "b³±d!", 1);
+	format_add("error,speech", "Error!", 1);
 	format_add("timestamp", "%T", 1);
 	format_add("timestamp,speech", " ", 1);
 
@@ -1387,7 +1489,6 @@ void theme_init()
 	format_add("wdebug",	"%W%1\n", 1);
 	format_add("warndebug",	"%r%1\n", 1);
 	format_add("okdebug",	"%G%1\n", 1);
-	format_add("wtfdebug",	"%W?!%n %M%1\n", 1);
 
 	format_add("ekg_failure", _("%! %|Something really unexpected happened, you should %Treally%n contact authors!\nEKG2 may now behave fine, or more failures could occur.\nDetails follow (see also __debug):\n%R%1%n"), 1);
 
@@ -1982,11 +2083,6 @@ void theme_init()
 	format_add("last_end", _("%) Lastlog end\n"), 1);
 	format_add("last_end_status", _("%) Lastlog status end\n"), 1);
 
-
-	/* lastlog */
-	format_add("lastlog_title",	_("%) %gLastlog [%B%2%n%g] from window: %W%T%1%n"), 1);
-	format_add("lastlog_title_cur", _("%) %gLastlog [%B%2%n%g] from window: %W%T%1 (*)%n"), 1);
-
 	/* queue */
 	format_add("queue_list_timestamp", "%d-%m-%Y %H:%M", 1);
 	format_add("queue_list_message", "%) %G >>%n [%1] %2 %3\n", 1);
@@ -2114,10 +2210,6 @@ void theme_init()
 	format_add("script_varlist_empty", _("%! No script vars!\n"), 1);
 
 	format_add("directory_cant_create",	_("%! Can't create directory: %1 (%2)"), 1);
-
-	/* charset stuff */
-	format_add("console_charset_using",	_("%) EKG2 detected that your console works under: %W%1%n Please verify and change %Gconsole_charset%n variable if needed"), 1);
-	format_add("console_charset_bad",	_("%! EKG2 detected that your console works under: %W%1%n, but in %Gconsole_charset%n variable you've got: %W%2%n Please verify."), 1);
 
 	/* jogger-like I/O */
 	format_add("io_cantopen", _("%! %|Unable to open file: %T%1%n (%c%2%n)!"), 1);

@@ -23,31 +23,17 @@
  */
 
 #include "ekg2.h"
+#include <glib/gstdio.h>
 
+/* for getpid() */
 #include <sys/types.h>
-#include <sys/stat.h>
-
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
 #include <unistd.h>
+
+#include <stdlib.h>
+#include <stdarg.h>
 #include <string.h>
-#include <errno.h>
 
 #include "internal.h"
-
-#define check_file() if (!(f = fopen(filename, "r")))\
-		return -1;\
-\
-	if (stat(filename, &st) || !S_ISREG(st.st_mode)) {\
-		if (S_ISDIR(st.st_mode))\
-			errno = EISDIR;\
-		else\
-			errno = EINVAL;\
-		fclose(f);\
-		return -1;\
-	}
-
 
 static char *strip_quotes(char *line) {
 	size_t linelen;
@@ -120,20 +106,120 @@ void config_postread()
 	query_emit(NULL, "config-postinit");
 }
 
+gboolean ekg_fprintf(GIOChannel *f, const gchar *format, ...) {
+	static GString *buf = NULL;
+	va_list args;
+	gsize out;
+	GError *err = NULL;
+
+	if (!buf)
+		buf = g_string_sized_new(120);
+
+	va_start(args, format);
+	g_string_vprintf(buf, format, args);
+	va_end(args);
+
+	if (g_io_channel_write_chars(f, buf->str, buf->len, &out, &err) != G_IO_STATUS_NORMAL) {
+		debug_error("ekg_fprintf() failed (wrote %d out of %d): %s\n",
+				out, buf->len, err->message);
+		g_error_free(err);
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+GIOChannel *config_open(const gchar *path, const gchar *mode) {
+	GIOChannel *f;
+	GError *err = NULL;
+	const gchar modeline_prefix[] = "# vim:fenc=";
+	const gchar *wanted_enc = console_charset;
+
+	f = g_io_channel_new_file(path, mode, &err);
+	if (!f) {
+		if (err->code != G_FILE_ERROR_NOENT)
+			debug_error("config_open(%s, %s) failed: %s\n", path, mode, err->message);
+		g_error_free(err);
+		return NULL;
+	}
+
+	if (mode[0] == 'r') {
+		const gchar *buf;
+
+		/* glib is a long runner
+		 * if file is not utf8-encoded, we can end up with ILSEQ
+		 * even if invalid seq is not in the first line */
+		if (g_io_channel_set_encoding(f, NULL, &err) != G_IO_STATUS_NORMAL) {
+			debug_error("config_open(%s, %s) failed to unset encoding: %s\n", path, mode, err->message);
+			g_error_free(err);
+			err = NULL;
+		}
+
+		buf = read_line(f);
+		if (!buf) {
+			/* Some error occured, or EOF
+			 * in either case, there's no need to read that file anyway */
+			g_io_channel_unref(f);
+			return NULL;
+		}
+
+		/* XXX: support more modeline formats? */
+		if (g_str_has_prefix(buf, modeline_prefix))
+			wanted_enc = &buf[sizeof(modeline_prefix) - 1]; /* 1 for null terminator */
+
+		if (g_io_channel_seek_position(f, 0, G_SEEK_SET, &err) != G_IO_STATUS_NORMAL) {
+			if (err)
+				debug_error("config_open(): rewind failed: %s\n", err->message);
+			/* ok, screwed it */
+			g_error_free(err);
+			g_io_channel_unref(f);
+
+			err = NULL;
+			/* let's try reopening */
+			f = g_io_channel_new_file(path, mode, &err);
+			if (!f) {
+				debug_error("config_open(): reopen failed %s\n", err->message);
+				g_error_free(err);
+				return NULL;
+			}
+		}
+	}
+
+	/* fallback to locale-encoded config */
+	if (g_io_channel_set_encoding(f, wanted_enc, &err) != G_IO_STATUS_NORMAL) {
+		debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
+		g_error_free(err);
+		/* well, try the default one (utf8) anyway... */
+		wanted_enc = g_io_channel_get_encoding(f);
+		if (!wanted_enc) /* raw means what we use in core */
+			wanted_enc = "UTF-8";
+	}
+
+	if (mode[0] == 'w') {
+		g_chmod(path, 0600);
+		if (!ekg_fprintf(f, "%s%s\n", modeline_prefix, wanted_enc)) {
+			g_io_channel_unref(f);
+			return NULL;
+		}
+	}
+
+	return f;
+}
+
 int config_read_plugins()
 {
-	char*buf, *foo;
-	const char *filename;
-	FILE *f;
-	struct stat st;
-
+	gchar *buf, *foo;
+	const gchar *filename;
+	GIOChannel *f;
 
 	if (!(filename = prepare_path("plugins", 0)))
-			return -1;
-	
-	check_file();
+		return -1;
 
-	while ((buf = read_file(f, 0))) {
+	f = config_open(filename, "r");
+	if (!f)
+		return -1;
+
+	while ((buf = read_line(f))) {
 		if (!(foo = xstrchr(buf, (' '))))
 			continue;
 
@@ -148,7 +234,7 @@ int config_read_plugins()
 			g_strfreev(p);
 		}
 	}
-	fclose(f);
+	g_io_channel_unref(f);
 
 	return 0;
 }
@@ -164,10 +250,9 @@ int config_read_plugins()
  */
 int config_read(const char *filename)
 {
-	char *buf, *foo;
-	FILE *f;
+	gchar *buf, *foo;
+	GIOChannel *f;
 	int err_count = 0, first = (filename) ? 0 : 1, ret;
-	struct stat st;
 
 	if (!in_autoexec && !filename) {
 		aliases_destroy();
@@ -184,9 +269,11 @@ int config_read(const char *filename)
 	if (!filename && !(filename = prepare_path("config", 0)))
 		return -1;
 
-	check_file();
+	f = config_open(filename, "r");
+	if (!f)
+		return -1;
 
-	while ((buf = read_file(f, 0))) {
+	while ((buf = read_line(f))) {
 		ret = 0;
 
 		if (buf[0] == '#' || buf[0] == ';' || (buf[0] == '/' && buf[1] == '/'))
@@ -299,7 +386,7 @@ int config_read(const char *filename)
 			break;
 	}
 	
-	fclose(f);
+	g_io_channel_unref(f);
 
 	if (first) {
 		GSList *pl;
@@ -324,7 +411,7 @@ int config_read(const char *filename)
  *  - f - otwarty plik konfiguracji,
  *  - v - wpis zmiennej,
  */
-static void config_write_variable(FILE *f, variable_t *v)
+static void config_write_variable(GIOChannel *f, variable_t *v)
 {
 	if (!f || !v)
 		return;
@@ -334,10 +421,10 @@ static void config_write_variable(FILE *f, variable_t *v)
 		case VAR_THEME:
 		case VAR_FILE:
 		case VAR_STR:
-			fprintf(f, "%s %s\n", v->name, (*(char**)(v->ptr)) ? *(char**)(v->ptr) : "");
+			ekg_fprintf(f, "%s %s\n", v->name, (*(char**)(v->ptr)) ? *(char**)(v->ptr) : "");
 			break;
 		default:
-			fprintf(f, "%s %d\n", v->name, *(int*)(v->ptr));
+			ekg_fprintf(f, "%s %d\n", v->name, *(int*)(v->ptr));
 	}
 }
 
@@ -348,7 +435,7 @@ static void config_write_variable(FILE *f, variable_t *v)
  *
  * - f - file, that we are saving to
  */
-static void config_write_plugins(FILE *f)
+static void config_write_plugins(GIOChannel *f)
 {
 	GSList *pl;
 
@@ -357,7 +444,7 @@ static void config_write_plugins(FILE *f)
 
 	for (pl = plugins; pl; pl = pl->next) {
 		const plugin_t *p = pl->data;
-		if (p->name) fprintf(f, "plugin %s %d\n", p->name, p->prio);
+		if (p->name) ekg_fprintf(f, "plugin %s %d\n", p->name, p->prio);
 	}
 }
 
@@ -368,7 +455,7 @@ static void config_write_plugins(FILE *f)
  *
  *  - f - plik, do którego piszemy
  */
-static void config_write_main(FILE *f)
+static void config_write_main(GIOChannel *f)
 {
 	if (!f)
 		return;
@@ -390,7 +477,7 @@ static void config_write_main(FILE *f)
 			list_t m;
 
 			for (m = a->commands; m; m = m->next)
-				fprintf(f, "alias %s %s\n", a->name, (char *) m->data);
+				ekg_fprintf(f, "alias %s %s\n", a->name, (char *) m->data);
 		}
 	}
 
@@ -398,7 +485,7 @@ static void config_write_main(FILE *f)
 		event_t *e;
 
 		for (e = events; e; e = e->next) {
-			fprintf(f, "on %s %d %s %s\n", e->name, e->prio, e->target, e->action);
+			ekg_fprintf(f, "on %s %d %s %s\n", e->name, e->prio, e->target, e->action);
 		}
 	}
 
@@ -409,7 +496,7 @@ static void config_write_main(FILE *f)
 			if (b->internal)
 				continue;
 
-			fprintf(f, "bind %s %s\n", b->key, b->action);
+			ekg_fprintf(f, "bind %s %s\n", b->key, b->action);
 		}
 	}
 
@@ -417,54 +504,11 @@ static void config_write_main(FILE *f)
 		binding_added_t *d;
 
 		for (d = bindings_added; d; d = d->next) {
-			fprintf(f, "bind-set %s %s\n", d->binding->key, d->sequence);
+			ekg_fprintf(f, "bind-set %s %s\n", d->binding->key, d->sequence);
 		}
 	}
 
-#ifdef TIMERS_FIXME /* XXX! */
-	{
-		GSList *tl;
-
-		for (tl = timers; tl; tl = tl->next) {
-			struct timer *t = tl->data;
-			const char *name = NULL;
-
-			/* nie ma sensu zapisywaæ */
-			if (!t->persist) /* XXX && t->ends.tv_sec - time(NULL) < 5) */
-				continue;
-
-			/* posortuje, je¶li nie ma nazwy */
-			if (t->name && !xisdigit(t->name[0]))
-				name = t->name;
-			else
-				name = "(null)";
-
-			if (t->function == timer_handle_at) {
-				char buf[100];
-				time_t foo = (time_t) t->lasttime.tv_sec + (t->period / 1000);
-				struct tm *tt = localtime(&foo);
-
-				strftime(buf, sizeof(buf), "%G%m%d%H%M.%S", tt);
-
-				if (t->persist)
-					fprintf(f, "at %s %s/%s %s\n", name, buf, ekg_itoa(t->period / 1000), (char*)(t->data));
-				else
-					fprintf(f, "at %s %s %s\n", name, buf, (char*)(t->data));
-			} else if (t->function == timer_handle_command) {
-				char *foo;
-
-				if (t->persist)
-					foo = saprintf("*/%s", ekg_itoa(t->period / 1000));
-				else
-					foo = saprintf("%s", ekg_itoa(t->lasttime.tv_sec + (t->period / 1000)));
-
-				fprintf(f, "timer %s %s %s\n", name, foo, (char*)(t->data));
-
-				xfree(foo);
-			}
-		}
-	}
-#endif
+	timers_write(f);
 }
 
 /*
@@ -476,31 +520,27 @@ static void config_write_main(FILE *f)
  */
 int config_write()
 {
-	FILE *f;
+	GIOChannel *f;
 	GSList *pl;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
 
 	/* first of all we are saving plugins */
-	if (!(f = fopen(prepare_path("plugins", 0), "w")))
+	if (!(f = config_open(prepare_path("plugins", 0), "w")))
 		return -1;
 	
-	fchmod(fileno(f), 0600);
-
 	config_write_plugins(f);
-	fclose(f);
+	g_io_channel_unref(f);
 
 	/* now we are saving global variables and settings
 	 * timers, bindings etc. */
 
-	if (!(f = fopen(prepare_path("config", 0), "w")))
+	if (!(f = config_open(prepare_path("config", 0), "w")))
 		return -1;
 
-	fchmod(fileno(f), 0600);
-
 	config_write_main(f);
-	fclose(f);
+	g_io_channel_unref(f);
 
 	/* now plugins variables */
 	for (pl = plugins; pl; pl = pl->next) {
@@ -511,10 +551,8 @@ int config_write()
 		if (!(tmp = prepare_pathf("config-%s", p->name)))
 			return -1;
 
-		if (!(f = fopen(tmp, "w")))
+		if (!(f = config_open(tmp, "w")))
 			return -1;
-
-		fchmod(fileno(f), 0600);
 
 		for (vl = variables; vl; vl = vl->next) {
 			variable_t *v = vl->data;
@@ -523,7 +561,7 @@ int config_write()
 			}
 		}	
 
-		fclose(f);
+		g_io_channel_unref(f);
 	}
 
 	return 0;
@@ -554,7 +592,7 @@ int config_write_partly(plugin_t *plugin, const char **vars)
 	const char *filename;
 	char *newfn;
 	char *line;
-	FILE *fi, *fo;
+	GIOChannel *fi, *fo;
 	int *wrote, i;
 
 	if (!vars)
@@ -567,22 +605,20 @@ int config_write_partly(plugin_t *plugin, const char **vars)
 	if (!filename)
 		return -1;
 	
-	if (!(fi = fopen(filename, "r")))
+	if (!(fi = config_open(filename, "r")))
 		return -1;
 
 	newfn = saprintf("%s.%d.%ld", filename, (int) getpid(), (long) time(NULL));
 
-	if (!(fo = fopen(newfn, "w"))) {
+	if (!(fo = config_open(newfn, "w"))) {
 		xfree(newfn);
-		fclose(fi);
+		g_io_channel_unref(fi);
 		return -1;
 	}
 	
 	wrote = xcalloc(g_strv_length((char **) vars) + 1, sizeof(int));
 	
-	fchmod(fileno(fo), 0600);
-
-	while ((line = read_file(fi, 0))) {
+	while ((line = read_line(fi))) {
 		char *tmp;
 
 		if (line[0] == '#' || line[0] == ';' || (line[0] == '/' && line[1] == '/'))
@@ -629,7 +665,7 @@ int config_write_partly(plugin_t *plugin, const char **vars)
 
 pass:
 		if (line)
-			fprintf(fo, "%s\n", line);
+			ekg_fprintf(fo, "%s\n", line);
 	}
 
 	for (i = 0; vars[i]; i++) {
@@ -641,10 +677,10 @@ pass:
 
 	xfree(wrote);
 	
-	fclose(fi);
-	fclose(fo);
+	g_io_channel_unref(fi);
+	g_io_channel_unref(fo);
 	
-	rename(newfn, filename);
+	g_rename(newfn, filename);
 
 	xfree(newfn);
 	return 0;
@@ -659,35 +695,29 @@ pass:
 void config_write_crash()
 {
 	char name[32];
-	FILE *f;
+	GIOChannel *f;
 	GSList *pl;
 
-	chdir(config_dir);
+	g_chdir(config_dir);
 
 	/* first of all we are saving plugins */
 	snprintf(name, sizeof(name), "crash-%d-plugins", (int) getpid());
 
-	if (!(f = fopen(name, "w")))
+	if (!(f = config_open(name, "w")))
 		return;
-
-	fchmod(fileno(f), 0400);
 
 	config_write_plugins(f);
 
-	fflush(f);
-	fclose(f);
+	g_io_channel_unref(f);
 
 	/* then main part of config */
 	snprintf(name, sizeof(name), "crash-%d-config", (int) getpid());
-	if (!(f = fopen(name, "w")))
+	if (!(f = config_open(name, "w")))
 		return;
 
-	chmod(name, 0400);
-	
 	config_write_main(f);
 
-	fflush(f);
-	fclose(f);
+	g_io_channel_unref(f);
 
 	/* now plugins variables */
 	for (pl = plugins; pl; pl = pl->next) {
@@ -696,11 +726,9 @@ void config_write_crash()
 
 		snprintf(name, sizeof(name), "crash-%d-config-%s", (int) getpid(), p->name);
 
-		if (!(f = fopen(name, "w")))
+		if (!(f = config_open(name, "w")))
 			continue;	
 	
-		chmod(name, 0400);
-
 		for (vl = variables; vl; vl = vl->next) {
 			variable_t *v = vl->data;
 			if (p == v->plugin) {
@@ -708,8 +736,7 @@ void config_write_crash()
 			}
 		}
 
-		fflush(f);
-		fclose(f);
+		g_io_channel_unref(f);
 	}
 }
 
@@ -721,21 +748,19 @@ void config_write_crash()
 void debug_write_crash()
 {
 	char name[32];
-	FILE *f;
+	GIOChannel *f;
 	struct buffer *b;
 
-	chdir(config_dir);
+	g_chdir(config_dir);
 
 	snprintf(name, sizeof(name), "crash-%d-debug", (int) getpid());
-	if (!(f = fopen(name, "w")))
+	if (!(f = config_open(name, "w")))
 		return;
 
-	chmod(name, 0400);
-	
 	for (b = buffer_debug.data; b; b = b->next)
-		fprintf(f, "%s\n", b->line);
+		ekg_fprintf(f, "%s\n", b->line);
 	
-	fclose(f);
+	g_io_channel_unref(f);
 }
 
 /*

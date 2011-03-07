@@ -31,8 +31,8 @@ typedef struct ekg2_dbus_iface_function ekg2_dbus_iface_function_t;
 
 #define EKG2_DBUS_ADD(type, x) do { \
 			if (!dbus_message_iter_append_basic(&args, type, (x) )) { \
-				debug("%s cannot allocate memory?\n", __FUNCTION__); \
-				ekg_oom_handler(); \
+				g_printerr("%s cannot allocate memory?\n", __FUNCTION__); \
+				abort(); \
 			} \
 		} while(0)
 

@@ -223,6 +223,8 @@ static void variable_generator(const char *text, int len)
 
 	for (vl = variables; vl; vl = vl->next) {
 		variable_t *v = vl->data;
+		if (v->display == 2)
+			continue;
 		if (*text == '-') {
 			if (!xstrncasecmp(text + 1, v->name, len - 1))
 				array_add_check(&completions, 
@@ -1009,7 +1011,7 @@ exact_match:
 					session_in_line = session_current;
 				for (j = 0; params[word_current - 2][j]; j++) {
 					if (generators[i].ch == params[word_current - 2][j]) {
-						generators[i].generate(words[word], strlen_pl(words[word]));
+						generators[i].generate(words[word], xstrlen(words[word]));
 					}
 				}
 			}		
@@ -1107,19 +1109,25 @@ exact_match:
 		}
 	
 		/* debug("common :%d\t\n", common); */
-#if UNICODE
 		{
-			char *p = completions[0];
-			wchar_t * wc = xmalloc((common+1) * sizeof(wchar_t));
-			if (mbsrtowcs(wc, &p, common, NULL) < 0)
-				common_len = 0;
-			else
-				common_len = p ? p - completions[0] : xstrlen(completions[0]);
-			xfree(wc);
+			/* that's the one _after_ last matching byte */
+			const gchar *p = &completions[0][common];
+
+			/* Check whether common didn't occur in a middle of a char
+			 * -> rewind to the previous char, then seek forward
+			 *
+			 * if we get the same offset, we got the whole char
+			 * if we get more, we partially matched something and need to dec
+			 */
+			common_len = common;
+			if (common > 0) {
+				const gchar *prev = g_utf8_prev_char(p);
+
+				if (g_utf8_next_char(prev) != p)
+					common_len -= (p - prev);
+			}
 		}
-#else
-		common_len = common;
-#endif
+
 		if (xstrlen(line) + common_len < line_maxlen) {
 			line[0] = '\0';
 			for(i = 0; i < words_count; i++) {
@@ -1133,7 +1141,9 @@ exact_match:
 					if (completions[0][common - 1] == '"')
 						common--;
 
-					xstrncat_pl(line, completions[0], common);
+					/* XXX: that was xstrncat_pl(), so in chars
+					 * but common is in bytes - wtf? INVESTIGATE */
+					strncat(line, completions[0], common);
 					*line_index = xstrlen(line);
 				} else {
 					if (xstrchr(words[i], (' '))) {

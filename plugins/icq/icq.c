@@ -53,12 +53,12 @@ int icq_config_disable_chatstates = 0;
 static int icq_theme_init();
 PLUGIN_DEFINE(icq, PLUGIN_PROTOCOL, icq_theme_init);
 
-int icq_send_pkt(session_t *s, string_t buf) {
+int icq_send_pkt(session_t *s, GString *buf) {
 	icq_private_t *j;
 	int fd;
 
 	if (!s || !(j = s->priv) || !buf) {
-		string_free(buf, 1);
+		g_string_free(buf, TRUE);
 		return -1;
 	}
 
@@ -70,13 +70,13 @@ int icq_send_pkt(session_t *s, string_t buf) {
 		debug_warn("Client migrate! Packet will not be send\n");
 	else	
 		ekg_write(fd, buf->str, buf->len);
-	string_free(buf, 1);
+	g_string_free(buf, TRUE);
 	return 0;
 }
 
 static TIMER_SESSION(icq_ping) {
 	icq_private_t *j;
-	string_t pkt;
+	GString *pkt;
 
 	if (type)
 		return 0;
@@ -84,7 +84,7 @@ static TIMER_SESSION(icq_ping) {
 	if (!s || !(j = s->priv) || !s->connected)
 		return -1;
 
-	pkt = string_init(NULL);
+	pkt = g_string_new(NULL);
 	icq_makeflap(s, pkt, 0x05);
 	icq_send_pkt(s, pkt);
 
@@ -143,9 +143,9 @@ int icq_write_info(session_t *s) {
 #define m_bAvatarsEnabled 0
 #define m_bUtfEnabled 1
 
-	string_t pkt, tlv_5;
+	GString *pkt, *tlv_5;
 
-	tlv_5 = string_init(NULL);
+	tlv_5 = g_string_new(NULL);
 
 #ifdef DBG_CAPMTN
 	icq_pack_append_cap(tlv_5, CAP_TYPING);
@@ -198,13 +198,13 @@ int icq_write_info(session_t *s) {
 	icq_makesnac(s, pkt, 0x02, 0x04, NULL, 0);
 	icq_send_pkt(s, pkt);
 
-	string_free(tlv_5, 1);
+	g_string_free(tlv_5, TRUE);
 	return 0;
 }
 
 void icq_set_security(session_t *s) {
 	icq_private_t *j;
-	string_t pkt;
+	GString *pkt;
 	guint8 webaware;
 
 	if (!s || !(j = s->priv))
@@ -236,7 +236,7 @@ void icq_set_security(session_t *s) {
 
 void icq_session_connected(session_t *s) {
 	icq_private_t *j = s->priv;
-	string_t pkt;
+	GString *pkt;
 
 	icq_write_info(s);
 
@@ -270,20 +270,19 @@ void icq_session_connected(session_t *s) {
 
 	/* SNAC 1,1E: Set status */
 	{
-		string_t pkt;
-		string_t tlv_c;
+		GString *pkt, *tlv_c;
 		guint32 cookie, status;
 
 		cookie = rand() <<16 | rand();
 		status = (j->status_flags << 16) | icq_status(s->status);
 
-		pkt = string_init(NULL);
+		pkt = g_string_new(NULL);
 
 		icq_pack_append(pkt, "tI", icq_pack_tlv_dword(0x06, status));	/* TLV 6: Status mode and security flags */
 		icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x08, 0x00));	/* TLV 8: Error code */
 
 		/* TLV C: Direct connection info */
-		tlv_c = string_init(NULL);
+		tlv_c = g_string_new(NULL);
 		icq_pack_append(tlv_c, "I", (guint32) 0x00000000);	/* XXX, getSettingDword(NULL, "RealIP", 0) */
 		icq_pack_append(tlv_c, "I", (guint32) 0x00000000);	/* XXX, nPort */
 		icq_pack_append(tlv_c, "C", DC_NORMAL);			/* Normal direct connection (without proxy/firewall) */
@@ -298,7 +297,7 @@ void icq_session_connected(session_t *s) {
 
 		icq_pack_append(pkt, "T", icq_pack_tlv(0x0C, tlv_c->str, tlv_c->len));
 
-		string_free(tlv_c, 1);
+		g_string_free(tlv_c, TRUE);
 
 		/* TLV(0x1F) - unknown? */
 		icq_pack_append(pkt, "tW", icq_pack_tlv_word(0x1F, 0x00));
@@ -307,15 +306,15 @@ void icq_session_connected(session_t *s) {
 		if (j->xstatus && (j->xstatus - 1 <= MAX_ICQMOOD)) {
 			char *mood = saprintf("icqmood%d", j->xstatus - 1);
 
-			string_t tlv_1d = icq_pack("WCC",
-						(guint32) 0x0e,	// item type
+			GString *tlv_1d = icq_pack("WCC",
+						(guint32) 0x0e,		// item type
 						(guint32) 0,		// item flags
-						xstrlen(mood));
-			string_append(tlv_1d, mood);
+						(guint32) xstrlen(mood));
+			g_string_append(tlv_1d, mood);
 
 			icq_pack_append(pkt, "T", icq_pack_tlv(0x1d, tlv_1d->str, tlv_1d->len));
 
-			string_free(tlv_1d, 1);
+			g_string_free(tlv_1d, TRUE);
 			xfree(mood);
 		}
 
@@ -365,7 +364,7 @@ void icq_session_connected(session_t *s) {
 		 * again. You should ask it to delete them by SNAC(15,02)/003E
 		 */
 		/* XXX, cookie */
-		pkt = string_init(NULL);
+		pkt = g_string_new(NULL);
 		icq_makemetasnac(s, pkt, CLI_OFFLINE_MESSAGE_REQ, 0, NULL, NULL);
 		icq_send_pkt(s, pkt);
 
@@ -475,7 +474,7 @@ static QUERY(icq_session_init) {
 	j = xmalloc(sizeof(icq_private_t));
 	j->fd = -1;
 	j->fd2= -1;
-	j->stream_buf = string_init(NULL);
+	j->stream_buf = g_string_new(NULL);
 
 	s->priv = j;
 	return 0;
@@ -495,8 +494,8 @@ static QUERY(icq_session_deinit) {
 
 	private_items_destroy(&j->whoami);
 	xfree(j->default_group_name);
-	string_free(j->cookie, 1);
-	string_free(j->stream_buf, 1);
+	g_string_free(j->cookie, TRUE);
+	g_string_free(j->stream_buf, TRUE);
 	icq_snac_references_list_destroy(&j->snac_ref_list);
 	icq_rates_destroy(s);
 
@@ -554,7 +553,7 @@ static QUERY(icq_typing_out) {
 
 void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 	icq_private_t *j;
-	string_t str;
+	GString *str;
 	const char *__reason = reason ? reason : "";
 
 	if (!s || !(j = s->priv))
@@ -572,7 +571,7 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 			    );
 		icq_send_snac(s, 0x01, 0x1e, 0, 0,		/* Set status (set location info) */
 			"T", icq_pack_tlv(0x1d, str->str, str->len));
-		string_free(str, 1);
+		g_string_free(str, TRUE);
 	}
 
 	timer_remove_session(s, "ping");
@@ -588,7 +587,7 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 		ekg_close(j->fd2);
 		j->fd2 = -1;
 	}
-	string_clear(j->stream_buf);
+	g_string_set_size(j->stream_buf, 0);
 	j->migrate = 0;
 }
 
@@ -614,7 +613,7 @@ static WATCHER_SESSION(icq_handle_connect) {
 
 	debug("[icq] handle_connect(%d)\n", s->connecting);
 
-	string_clear(j->stream_buf);
+	g_string_set_size(j->stream_buf, 0);
 
 	if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
 		if (type)
@@ -643,7 +642,8 @@ static WATCHER_SESSION(icq_handle_stream) {
 
 	len = read(fd, buf, sizeof(buf));
 
-	string_append_raw(j->stream_buf, buf, len);
+	if (len>0)
+		g_string_append_len(j->stream_buf, buf, len);
 
 	debug_iorecv("icq_handle_stream(%d) fd: %d; rcv: %d, %d in buffer.\n", s->connecting, fd, len, j->stream_buf->len);
 
@@ -660,7 +660,7 @@ static WATCHER_SESSION(icq_handle_stream) {
 
 	if ( (left = j->stream_buf->len) > 0 ) {
 		j->stream_buf->len = start_len;
-		string_remove(j->stream_buf, start_len - left);
+		g_string_erase(j->stream_buf, 0, start_len - left);
 	}
 
 	switch (ret) {		/* XXX, magic values */
@@ -861,10 +861,10 @@ static COMMAND(icq_command_addssi) {
 
 	if ((cmd_add && nickname) || (!cmd_add && ok)) {
 		/* send packets */
-		string_t buddies, data;
+		GString *buddies, *data;
 		guint16 min = 0xffff, max = 0, count = 0;
 
-		buddies = string_init(NULL);
+		buddies = g_string_new(NULL);
 		for (u = session->userlist; u; u = u->next) {
 			i = user_private_item_get_int(u, "iid");
 			icq_pack_append(buddies, "W", i);
@@ -898,7 +898,7 @@ static COMMAND(icq_command_addssi) {
 		 */
 		icq_send_snac(session, 0x13, 0x11, NULL, NULL, "");
 
-		data = string_init(NULL);
+		data = g_string_new(NULL);
 
 		/* TLV(0x0066) - Signifies that you are awaiting authorization for this buddy. The client is in
 		 * charge of putting this TLV, but you will not receiving status updates for the contact until
@@ -974,8 +974,8 @@ static COMMAND(icq_command_addssi) {
 
 		icq_send_snac(session, 0x13, 0x12, NULL, NULL, "");	// Contacts edit end (finish transaction)
 
-		string_free(data, 1);
-		string_free(buddies, 1);
+		g_string_free(data, TRUE);
+		g_string_free(buddies, TRUE);
 	}
 
 	g_strfreev(argv);
@@ -990,7 +990,7 @@ static COMMAND(icq_command_delssi) {
 	guint32 u_id;
 	guint16 iid = 0;
 	guint16 group;
-	string_t buddies;
+	GString *buddies;
 	int i;
 
 	if (params[0])
@@ -1032,7 +1032,7 @@ static COMMAND(icq_command_delssi) {
 			(guint16) 0				// Length of the additional data
 			);
 
-	buddies = string_init(NULL);
+	buddies = g_string_new(NULL);
 	for (u = session->userlist; u; u = u->next) {
 		if (group == user_private_item_get_int(u, "gid")) {
 			i = user_private_item_get_int(u, "iid");
@@ -1051,7 +1051,7 @@ static COMMAND(icq_command_delssi) {
 			icq_pack_tlv(0xc8, buddies->str, buddies->len)	// TLV(0xC8) contains the buddy ID#s of all buddies in the group
 			);
 
-	string_free(buddies, 1);
+	g_string_free(buddies, TRUE);
 
 	icq_send_snac(session, 0x13, 0x12, NULL, NULL, "");	// Contacts edit end (finish transaction)
 
@@ -1060,8 +1060,7 @@ static COMMAND(icq_command_delssi) {
 
 
 static void icq_send_msg_ch1(session_t *session, const char *uid, const char *message) {
-	string_t pkt;
-	string_t tlv_2, tlv_101;
+	GString *pkt, *tlv_2, *tlv_101;
 	userlist_t *u = userlist_find(session, uid);
 	guint16 enc = 0;	/* ASCII */
 	const char *tmp = message;
@@ -1079,12 +1078,12 @@ static void icq_send_msg_ch1(session_t *session, const char *uid, const char *me
 	tlv_101 = icq_pack("WW", enc, 0x00);		// encoding, codepage
 	if (enc == 2) {
 		/* send unicode message */
-		string_t recode = icq_convert_to_ucs2be((char *) message);
-		string_append_raw(tlv_101, recode->str, recode->len);
-		string_free(recode, 1);
+		GString *recode = icq_convert_to_ucs2be((char *) message);
+		g_string_append_len(tlv_101, recode->str, recode->len);
+		g_string_free(recode, TRUE);
 	} else {
 		/* send ASCII/ANSII message */
-		string_append(tlv_101, message);
+		g_string_append(tlv_101, message);
 	}
 
 	/* TLV(2) */
@@ -1092,7 +1091,7 @@ static void icq_send_msg_ch1(session_t *session, const char *uid, const char *me
 				icq_pack_tlv_char(0x501, 0x1),			/* TLV(501) features, meaning unknown, duplicated from ICQ Lite */
 				icq_pack_tlv(0x0101, tlv_101->str, tlv_101->len)/* TLV(101) text TLV. */
 			);
-	string_free(tlv_101, 1);
+	g_string_free(tlv_101, TRUE);
 
 	/* main packet */
 	pkt = icq_pack("iiWs", (guint32) rand(), (guint32) rand(), 1, uid+4);	// msgid1, msgid2, channel, recipient
@@ -1102,7 +1101,7 @@ static void icq_send_msg_ch1(session_t *session, const char *uid, const char *me
 				icq_pack_tlv(0x06, NULL, 0)			/* TLV(6) received-offline */
 				);
 
-	string_free(tlv_2, 1);
+	g_string_free(tlv_2, TRUE);
 
 	/* message-header */
 	icq_makesnac(session, pkt, 0x04, 0x06, NULL, NULL);	// CLI_SEND_ICBM -- Send message thru server
@@ -1110,19 +1109,19 @@ static void icq_send_msg_ch1(session_t *session, const char *uid, const char *me
 }
 
 static void icq_send_msg_ch2(session_t *session, const char *uid, const char *message) {
-	string_t pkt, t5, t2711;
+	GString *pkt, *t5, *t2711;
 	guint32 msgid1 = rand(), msgid2 = rand();
 	int prio = 1;
 	icq_private_t *j = session->priv;
 	int cookie = j->snac_seq++;
 
-	t5 = string_init(NULL);
+	t5 = g_string_new(NULL);
 	icq_pack_append(t5, "WII", 0, msgid1, msgid2);	//
 	icq_pack_append_cap(t5, CAP_SRV_RELAY);
 	icq_pack_append(t5, "tW", icq_pack_tlv_word(0x0a, 1));
 	icq_pack_append(t5, "T", icq_pack_tlv(0x0f, NULL, 0));		// empty TLV(0x0f)
 
-	t2711 = string_init(NULL);
+	t2711 = g_string_new(NULL);
 {
 		icq_pack_append_rendezvous(t2711, ICQ_VERSION, cookie, MTYPE_PLAIN, 0, 1, prio);
 		char *recode = ekg_locale_to_utf8_dup(message);
@@ -1130,10 +1129,10 @@ static void icq_send_msg_ch2(session_t *session, const char *uid, const char *me
 		xfree(recode);
 		icq_pack_append(t2711, "II", 0, 0xffffffff);	// XXX text & background colors
 		icq_pack_append(t2711, "i", xstrlen(CAP_UTF8_str));
-		string_append(t2711, CAP_UTF8_str);
+		g_string_append(t2711, CAP_UTF8_str);
 }
 	icq_pack_append(t5, "T", icq_pack_tlv(0x2711, t2711->str, t2711->len));
-	string_free(t2711, 1);
+	g_string_free(t2711, TRUE);
 
 
 	/* main packet */
@@ -1359,7 +1358,7 @@ static COMMAND(icq_command_reconnect) {
 }
 
 static COMMAND(icq_command_userinfo) {
-	string_t pkt;
+	GString *pkt;
 	guint32 number;
 	int minimal_req = 0;	/* XXX */
 	private_data_t *ref_data = NULL;
@@ -1393,7 +1392,7 @@ static COMMAND(icq_command_userinfo) {
 }
 
 static COMMAND(icq_command_searchuin) {
-	string_t pkt;
+	GString *pkt;
 	guint32 uin;
 
 	debug_function("icq_command_searchuin() %s\n", params[0]);
@@ -1428,7 +1427,7 @@ static COMMAND(icq_command_search) {
 	char **argv;
 	int i;
 
-	string_t pkt;
+	GString *pkt;
 
 	argv = array_make(params[0], " \t", 0, 1, 1);
 
@@ -1482,13 +1481,13 @@ static COMMAND(icq_command_search) {
 	/* XXX, cookie */
 
 	/* Pack the search details */
-	pkt = string_init(NULL);
+	pkt = g_string_new(NULL);
 
 #define wo_idnhtni(type, str) \
 	{ \
 		guint32 len = xstrlen(str); \
 		icq_pack_append(pkt, "www", (guint32) type, len+3, len+1); \
-		string_append_raw(pkt, (char *) str, len+1); \
+		g_string_append_len(pkt, (char *) str, len+1); \
 	}
 
 	if (first_name) wo_idnhtni(0x0140, first_name);	/* TLV_FIRSTNAME */

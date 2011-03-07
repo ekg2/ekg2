@@ -153,7 +153,7 @@ static const char *rc_var_get_value(variable_t *v) {
 
 static char *rc_fstring_reverse(fstring_t *fstr) {
 	const char *str;
-	const short *attr;
+	const fstr_attr_t *attr;
 	string_t asc;
 	int i;
 
@@ -1180,13 +1180,13 @@ static QUERY(remote_ui_window_switch) {
 
 static QUERY(remote_ui_window_print) {
 	window_t *w	= *(va_arg(ap, window_t **));
-	fstring_t *line = *(va_arg(ap, fstring_t **));
+	const fstring_t *line = *(va_arg(ap, const fstring_t **));
 	char *fstr;
 
 	remote_window_t *n;
 
 	if (w == window_debug)		/* XXX! */
-		goto cleanup;
+		return -1;
 
 	if (!(n = w->priv_data)) { 
 		/* BUGFIX, cause @ ui-window-print handler (not ncurses plugin one, ncurses plugin one is called last cause of 0 prio)
@@ -1207,9 +1207,7 @@ static QUERY(remote_ui_window_print) {
 
 	remote_broadcast("WINDOW_PRINT", ekg_itoa(w->id), ekg_itoa(line->ts), fstr, NULL);		/* XXX, using id is ok? */
 
-cleanup:
-	fstring_free(line);
-	return -1;		/* XXX, sry, jak ktos potrzebuje tego stringa oprocz nas, to go nie dostanie. (memleaki sa gorsze) */
+	return -1;
 }
 
 static QUERY(remote_session_added) {
