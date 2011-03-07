@@ -798,13 +798,13 @@ int session_int_set(session_t *s, const char *key, int value)
  *
  * czyta informacje o sesjach z pliku.
  */
-int session_read(const char *filename) {
+int session_read(const gchar *plugin_name) {
 	gchar *line;
 	GIOChannel *f;
 	session_t *s = NULL;
 	int ret = 0;
 
-	if (!filename) {
+	if (!plugin_name) {
 		GSList *pl;
 
 		if (!in_autoexec) {
@@ -818,18 +818,16 @@ int session_read(const char *filename) {
 
 		for (pl = plugins; pl; pl = pl->next) {
 			const plugin_t *p = pl->data;
-			const char *tmp;
 
 			if (!p || p->pclass != PLUGIN_PROTOCOL)
 				continue;
 
-			if ((tmp = prepare_pathf("sessions-%s", p->name)))
-				ret = session_read(tmp);
+			ret += session_read(p->name);
 		}
 		return ret;
 	}
 
-	if (!(f = config_open(filename, "r")))
+	if (!(f = config_open2("sessions-%s", "r", plugin_name)))
 		return -1;
 
 	while ((line = read_line(f))) {

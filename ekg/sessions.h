@@ -212,7 +212,7 @@ int session_unidle(session_t *s);
 session_t *session_add(const char *uid);
 int session_remove(const char *uid);
 
-int session_read(const char *filename);
+int session_read(const gchar *plugin_name) G_GNUC_INTERNAL;
 int session_write();
 
 void sessions_free();
