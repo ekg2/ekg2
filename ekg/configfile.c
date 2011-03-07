@@ -231,20 +231,17 @@ GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
 	lpath = prepare_path(path, 0);
 	g_free(path);
 
-	f = config_open(path, mode);
+	debug_function("config_open2(): lpath=%s\n", lpath);
+	f = config_open(lpath, mode);
 	return f;
 }
 
 int config_read_plugins()
 {
 	gchar *buf, *foo;
-	const gchar *filename;
 	GIOChannel *f;
 
-	if (!(filename = prepare_path("plugins", 0)))
-		return -1;
-
-	f = config_open(filename, "r");
+	f = config_open2("plugins", "r");
 	if (!f)
 		return -1;
 
@@ -556,7 +553,7 @@ int config_write()
 		return -1;
 
 	/* first of all we are saving plugins */
-	if (!(f = config_open(prepare_path("plugins", 0), "w")))
+	if (!(f = config_open2("plugins", "w")))
 		return -1;
 	
 	config_write_plugins(f);
@@ -565,7 +562,7 @@ int config_write()
 	/* now we are saving global variables and settings
 	 * timers, bindings etc. */
 
-	if (!(f = config_open(prepare_path("config", 0), "w")))
+	if (!(f = config_open2("config", "w")))
 		return -1;
 
 	config_write_main(f);
@@ -574,13 +571,9 @@ int config_write()
 	/* now plugins variables */
 	for (pl = plugins; pl; pl = pl->next) {
 		const plugin_t *p = pl->data;
-		const char *tmp;
 		GSList *vl;
 
-		if (!(tmp = prepare_pathf("config-%s", p->name)))
-			return -1;
-
-		if (!(f = config_open(tmp, "w")))
+		if (!(f = config_open2("config-%s", "w", p->name)))
 			return -1;
 
 		for (vl = variables; vl; vl = vl->next) {
@@ -633,7 +626,7 @@ int config_write_partly(plugin_t *plugin, const char **vars)
 
 	if (!filename)
 		return -1;
-	
+
 	if (!(fi = config_open(filename, "r")))
 		return -1;
 
@@ -723,16 +716,13 @@ pass:
  */
 void config_write_crash()
 {
-	char name[32];
 	GIOChannel *f;
 	GSList *pl;
 
 	g_chdir(config_dir);
 
 	/* first of all we are saving plugins */
-	snprintf(name, sizeof(name), "crash-%d-plugins", (int) getpid());
-
-	if (!(f = config_open(name, "w")))
+	if (!(f = config_open2("crash-%d-plugins", "w", (int) getpid())))
 		return;
 
 	config_write_plugins(f);
@@ -740,8 +730,7 @@ void config_write_crash()
 	g_io_channel_unref(f);
 
 	/* then main part of config */
-	snprintf(name, sizeof(name), "crash-%d-config", (int) getpid());
-	if (!(f = config_open(name, "w")))
+	if (!(f = config_open2("crash-%d-plugin", "w", (int) getpid())))
 		return;
 
 	config_write_main(f);
@@ -753,9 +742,7 @@ void config_write_crash()
 		const plugin_t *p = pl->data;
 		GSList *vl;
 
-		snprintf(name, sizeof(name), "crash-%d-config-%s", (int) getpid(), p->name);
-
-		if (!(f = config_open(name, "w")))
+		if (!(f = config_open2("crash-%d-config-%s", "w", (int) getpid(), p->name)))
 			continue;	
 	
 		for (vl = variables; vl; vl = vl->next) {
@@ -776,14 +763,12 @@ void config_write_crash()
  */
 void debug_write_crash()
 {
-	char name[32];
 	GIOChannel *f;
 	struct buffer *b;
 
 	g_chdir(config_dir);
 
-	snprintf(name, sizeof(name), "crash-%d-debug", (int) getpid());
-	if (!(f = config_open(name, "w")))
+	if (!(f = config_open2("crash-%d-debug", "w", (int) getpid())))
 		return;
 
 	for (b = buffer_debug.data; b; b = b->next)
