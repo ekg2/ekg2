@@ -4,6 +4,8 @@
 
 #include "ekg2.h"
 
+void add_recode_tests(void);
+
 PLUGIN_DEFINE(check, PLUGIN_UI, NULL);
 
 EXPORT int check_plugin_init(int prio) {
@@ -11,6 +13,8 @@ EXPORT int check_plugin_init(int prio) {
 	char **argv = { NULL };
 
 	g_test_init(&argc, &argv, NULL);
+
+	add_recode_tests();
 
 	g_test_run();
 	ekg_exit();

@@ -155,7 +155,9 @@ check_LTLIBRARIES = plugins/check/check.la
 
 plugins_check_check_la_SOURCES = \
 	$(noinst_HEADERS) \
-	plugins/check/check.c
+	plugins/check/check.c \
+	plugins/check/recode.c
+
 plugins_check_check_la_LDFLAGS = -module -avoid-version -shared -rpath $(abs_top_builddir)/plugins/check
 plugins_check_check_la_CPPFLAGS = $(AM_CPPFLAGS) $(EKG_CPPFLAGS)
 endif
