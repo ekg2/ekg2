@@ -224,37 +224,59 @@ static gchar *writing_config_file = NULL;
  */
 GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
 	va_list args;
-	gchar *path;
-	const gchar *lpath;
+	gchar *path, *lpath;
 	GIOChannel *f;
 
 	va_start(args, mode);
 	path = g_strdup_vprintf(path_format, args);
 	va_end(args);
 
-	lpath = prepare_path(path, (mode[0] == 'w'));
+	lpath = g_strdup(prepare_path(path, (mode[0] == 'w')));
 	g_free(path);
 
 	if (mode[0] == 'w') {
 		g_assert(!writing_config_file);
-		writing_config_file = g_strdup(lpath);
+		writing_config_file = lpath;
+		lpath = g_strdup_printf("%s.tmp", lpath);
 	}
 
 	debug_function("config_open2(): lpath=%s\n", lpath);
 	f = config_open(lpath, mode);
+	g_free(lpath);
 	return f;
 }
 
-void config_close(GIOChannel *f) {
-	if (g_io_channel_get_flags(f) & G_IO_FLAG_IS_WRITEABLE) {
+gboolean config_close(GIOChannel *f) {
+	const gboolean writeable = !!(g_io_channel_get_flags(f) & G_IO_FLAG_IS_WRITEABLE);
+	gboolean ret = TRUE;
+
+	if (writeable)
+		g_io_channel_flush(f, NULL);
+	g_io_channel_unref(f);
+
+	if (writeable) {
+		gchar *src;
+
 #if 0 /* re-enable when got rid of old config_open() */
 		g_assert(writing_config_file);
+#else
+		if (!writing_config_file)
+			return TRUE;
 #endif
+
+		src = g_strdup_printf("%s.tmp", writing_config_file);
+		/* XXX: use GFile */
+		ret = !g_rename(src, writing_config_file);
+		if (!ret)
+			debug_error("config_close(), failed renaming %s -> %s, config not saved.",
+					src, writing_config_file);
+
+		g_free(src);
 		g_free(writing_config_file);
 		writing_config_file = NULL;
 	}
 
-	g_io_channel_unref(f);
+	return ret;
 }
 
 int config_read_plugins()

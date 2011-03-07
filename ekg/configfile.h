@@ -38,7 +38,7 @@ gboolean ekg_fprintf(GIOChannel *f, const gchar *format, ...)
 GIOChannel *config_open(const gchar *path, const gchar *mode);
 GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...)
 	G_GNUC_PRINTF(1, 3);
-void config_close(GIOChannel *f);
+gboolean config_close(GIOChannel *f) G_GNUC_WARN_UNUSED_RESULT;
 
 int config_read(const gchar *plugin_name);
 int config_read_plugins();
