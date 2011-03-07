@@ -110,16 +110,6 @@ AM_GNU_GETTEXT_VERSION([0.14.3])
 dnl gettext still uses it even if other autotools don't
 AC_SUBST([MKINSTALLDIRS], ['$(top_srcdir)/build-aux/mkinstalldirs'])
 
-AC_ARG_ENABLE([skip_relative_plugins_dir],
-	AS_HELP_STRING([--enable-skip-relative-plugins-dir],
-		[do not load plugins from directories relative to CWD]),
-[
-	AS_IF([test "x$enableval" != "xno"], [
-		AC_MSG_NOTICE([plugins will not be loaded from relative directories])
-		AC_DEFINE([SKIP_RELATIVE_PLUGINS_DIR], [1], [do not load plugins from directories relative to CWD [default=off]])
-	])
-])
-
 dnl plugins
 
 AC_EKG2_PLUGIN([autoresponder])

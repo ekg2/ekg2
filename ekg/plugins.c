@@ -30,6 +30,8 @@
 #include "objects.h"
 
 GSList *plugins = NULL;
+/* XXX: not freed anywhere yet */
+gchar *rel_plugin_dir = NULL;
 
 static gint plugin_register_compare(gconstpointer a, gconstpointer b) {
 	const plugin_t *data1 = (const plugin_t *) a;
@@ -64,8 +66,17 @@ DYNSTUFF_LIST_DECLARE(queries_list, query_t, query_free_data,
 
 void ekg2_dlinit(const gchar *argv0) {
 #ifdef SHARED_LIBS
+	if (g_module_supported()) {
+		/* Set relative plugin path based on executable location */
+		gchar *progpath = g_find_program_in_path(argv0);
+
+		if (progpath) {
+			rel_plugin_dir = g_path_get_dirname(progpath);
+			g_free(progpath);
+		}
+	}
 #	ifndef STATIC_LIBS
-	if (!g_module_supported()) {
+	else {
 		g_printerr("Dynamic module loading unsupported, and no static plugins.\n"
 				"Please recompile with --enable-static.\n");
 		abort();
@@ -175,8 +186,8 @@ int plugin_load(const char *name, int prio, int quiet)
 		printq("plugin_already_loaded", name); 
 		return -1;
 	}
+
 #ifdef SHARED_LIBS
-#ifndef NO_POSIX_SYSTEM
 	if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
 		if (snprintf(lib, sizeof(lib), "%s/%s.la", env_ekg_plugins_path, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
@@ -184,40 +195,22 @@ int plugin_load(const char *name, int prio, int quiet)
 			plugin = ekg2_dlopen(lib);
 	}
 
-#ifndef SKIP_RELATIVE_PLUGINS_DIR
 	/* The following lets ekg2 load plugins when it is run directly from
 	 * the source tree, without installation. This can be beneficial when
 	 * developing the program, or for less knowlegeable users, who don't
 	 * know how to or cannot for some other reason use installation prefix
-	 * to install in their home directory. However this impses a security
-	 * risk if the program installed in the system directory is run in
-	 * untrusted $CWD or when $CWD/../plugins is untrusted.
-	 *
-	 * TODO(porridge,darkjames): This can be fixed by having a wrapper
-	 * script in the source tree to run ekg/.libs/ekg2 with
-	 * EKG_PLUGINS_PATH set appropriately.
+	 * to install in their home directory. It might be also useful
+	 * for win32-style installs.
 	 */
-	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "plugins/%s/%s.la", name, name) < sizeof(lib))
+	if (!plugin && rel_plugin_dir) {
+		if (snprintf(lib, sizeof(lib), "%s/plugins/%s/%s.la", rel_plugin_dir, name, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
 	}
-
-	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "../plugins/%s/%s.la", name, name) < sizeof(lib))
-			plugin = ekg2_dlopen(lib);
-	}
-#endif
 
 	if (!plugin) {
 		if (snprintf(lib, sizeof(lib), "%s/%s.la", PLUGINDIR, name) < sizeof(lib))
 			plugin = ekg2_dlopen(lib);
 	}
-#else	/* NO_POSIX_SYSTEM */
-	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "c:\\ekg2\\plugins\\%s.la", name) < sizeof(lib))
-			plugin = ekg2_dlopen(lib);
-	}
-#endif /* NO_POSIX_SYSTEM */
 
 	/* prefer shared plugins */
 	if (plugin) {
