@@ -219,7 +219,7 @@ int msg_queue_write()
 		if (!(fn = prepare_pathf("queue/%ld.%d", (long) m->time, num++)))	/* prepare_pathf() ~/.ekg2/[PROFILE/]queue/TIME.UNIQID */
 			continue;
 
-		if (!(f = config_open(fn, "w")))
+		if (!(f = g_io_channel_new_file(fn, "w", NULL)))
 			continue;
 
 		ekg_fprintf(f, "v2\n%s\n%s\n%ld\n%s\n%d\n%s", m->session, m->rcpts, m->time, m->seq, m->mclass, m->message);
@@ -262,7 +262,7 @@ int msg_queue_read() {
 		if (!(fn = prepare_pathf("queue/%s", d->d_name)))
 			continue;
 
-		if (!(f = config_open(fn, "r")))
+		if (!(f = g_io_channel_new_file(fn, "r", NULL)))
 			continue;
 
 		memset(&m, 0, sizeof(m));
@@ -275,25 +275,25 @@ int msg_queue_read() {
 		if (buf && *buf == 'v')
 			filever = atoi(buf+1);
 		if (!filever || filever > 2) {
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 
 		if (!(m.session = g_strdup(read_line(f)))) {
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 	
 		if (!(m.rcpts = g_strdup(read_line(f)))) {
 			xfree(m.session);
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 
 		if (!(buf = read_line(f))) {
 			xfree(m.session);
 			xfree(m.rcpts);
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 
@@ -302,7 +302,7 @@ int msg_queue_read() {
 		if (!(m.seq = g_strdup(read_line(f)))) {
 			xfree(m.session);
 			xfree(m.rcpts);
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 	
@@ -310,7 +310,7 @@ int msg_queue_read() {
 			if (!(buf = read_line(f))) {
 				xfree(m.session);
 				xfree(m.rcpts);
-				g_io_channel_unref(f);
+				config_close(f);
 				continue;
 			}
 

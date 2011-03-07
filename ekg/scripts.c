@@ -420,7 +420,7 @@ int script_variables_read() {
 	GIOChannel *f;
 	char *line;
 
-	if (!(f = config_open(prepare_path("scripts-var", 0), "r"))) {
+	if (!(f = config_open("scripts-var", "r"))) {
 		debug("Error opening script variable file..\n");
 		return -1;
 	}
@@ -432,12 +432,12 @@ int script_variables_read() {
 		script_var_add(NULL, NULL, line, NULL, NULL);
 	}
 
-	g_io_channel_unref(f);
+	config_close(f);
 	return 0;
 }
 
 int script_variables_free(int free) {
-	GIOChannel *f = config_open(prepare_path("scripts-var", 0), "w");
+	GIOChannel *f = config_open("scripts-var", "w");
 	list_t l;
 	
 	if (!f && !free) 
@@ -456,7 +456,7 @@ int script_variables_free(int free) {
 		}
 	}
 	if (f)
-		g_io_channel_unref(f);
+		config_close(f);
 	
 	if (free)
 		list_destroy(script_vars, 0);

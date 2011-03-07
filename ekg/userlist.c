@@ -154,14 +154,10 @@ void userlist_add_entry(session_t *session, const char *line) {
  * @return 0 on success, -1 file not found
  */
 int userlist_read(session_t *session) {
-	const char *filename;
 	char *buf;
 	GIOChannel *f;
 
-	if (!(filename = prepare_pathf("%s-userlist", session->uid)))
-		return -1;
-	
-	if (!(f = config_open(filename, "r")))
+	if (!(f = config_open("%s-userlist", "r", session->uid)))
 		return -1;
 			
 	while ((buf = read_line(f))) {
@@ -173,7 +169,7 @@ int userlist_read(session_t *session) {
 
 	query_emit(NULL, "userlist-refresh");	/* XXX, wywolywac tylko kiedy dodalismy przynajmniej 1 */
 
-	g_io_channel_unref(f);
+	config_close(f);
 		
 	return 0;
 } 
@@ -194,17 +190,13 @@ int userlist_read(session_t *session) {
  */
 
 int userlist_write(session_t *session) {
-	const char *filename;
 	GIOChannel *f;
 	userlist_t *ul;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
 
-	if (!(filename = prepare_pathf("%s-userlist", session->uid)))
-		return -1;
-	
-	if (!(f = config_open(filename, "w"))) {
+	if (!(f = config_open("%s-userlist", "w", session->uid))) {
 		return -2;
 	}
 
@@ -238,7 +230,7 @@ int userlist_write(session_t *session) {
 		array_free_count(entry, 7);
 	}
 
-	g_io_channel_unref(f);
+	config_close(f);
 	return 0;
 }
 
