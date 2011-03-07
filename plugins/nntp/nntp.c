@@ -1003,7 +1003,7 @@ static COMMAND(nntp_command_nextprev) {
 	int mode = session_int_get(session, "display_mode");
 
 	if (!j->newsgroup) {
-		printq("invalid_params", name);
+		printq("invalid_params", name, "???");	/* XXX */
 		return -1;
 	}
 	if (!xstrcmp(name, "next"))	j->newsgroup->article++;
@@ -1030,13 +1030,13 @@ static COMMAND(nntp_command_get) {
 	if (!group && j->newsgroup)	group = j->newsgroup->uid;
 
 	if (!article) {
-		printq("invalid_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 
 	if (!group) {
 		/* no group */
-		printq("invalid_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 

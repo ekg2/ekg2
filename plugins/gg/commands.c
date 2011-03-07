@@ -1704,7 +1704,7 @@ static COMMAND(gg_command_modify) {
 			continue;
 		} 
 		
-		printq("invalid_params", name);
+		printq("invalid_params", name, argv[i]);
 		g_strfreev(argv);
 		return -1;
 	}

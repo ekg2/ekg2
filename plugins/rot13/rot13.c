@@ -164,7 +164,7 @@ static COMMAND(command_key) {
 		int i;
 
 		if (!params[1]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -182,7 +182,7 @@ static COMMAND(command_key) {
 		}
 
 		if (!target) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			g_strfreev(arr);
 			return -1;
 		}
@@ -207,7 +207,7 @@ static COMMAND(command_key) {
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 	return -1;
 }
 

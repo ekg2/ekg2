@@ -726,7 +726,7 @@ struct conference *conference_add(session_t *session, const char *name, const ch
 		return NULL;
 
 	if (nicklist[0] == ',' || nicklist[xstrlen(nicklist) - 1] == ',') {
-		printq("invalid_params", ("chat"));
+		printq("invalid_params", ("chat"), nicklist);
 		return NULL;
 	}
 

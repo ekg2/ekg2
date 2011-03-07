@@ -241,7 +241,7 @@ COMMAND(ncurses_cmd_lastlog) {
 		} else if (!str) {
 			str = params[i];
 		} else {
-			printq("invalid_params", name);
+			printq("invalid_params", name, params[i]);
 			return -1;
 		}
 	}

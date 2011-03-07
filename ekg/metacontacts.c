@@ -77,7 +77,7 @@ COMMAND(cmd_metacontact)
 
 	if (match_arg(params[0], 'a', ("add"), 2)) {
 		if (!params[1]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -100,7 +100,7 @@ COMMAND(cmd_metacontact)
 
 	if (match_arg(params[0], 'd', ("del"), 2)) {
 		if (!params[1]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -123,7 +123,7 @@ COMMAND(cmd_metacontact)
 
 	if (match_arg(params[0], 'i', ("add-item"), 2)) {
 		if (!params[1] || !params[2] || !params[3] || !params[4]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -147,7 +147,7 @@ COMMAND(cmd_metacontact)
 
 	if (match_arg(params[0], 'r', ("del-item"), 2)) {
 		if (!params[1] || !params[2] || !params[3]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -204,7 +204,7 @@ COMMAND(cmd_metacontact)
 		return -1;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return -1;
 }

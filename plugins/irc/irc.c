@@ -1488,7 +1488,7 @@ static COMMAND(irc_command_alist) {
 		return -1;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 	return -1;
 }
 
@@ -1726,7 +1726,7 @@ static char *irc_getchan(session_t *s, const char **params, const char *name,
 	if (!(chan = irc_getchan_int(s, tf, checkchan))) {
 		if (!(chan = irc_getchan_int(s, ts, checkchan)))
 		{
-			print("invalid_params", name);
+			print("invalid_params", name, ts);
 			return 0;
 		}
 		pr = !!pr;

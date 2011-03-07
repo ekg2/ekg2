@@ -618,7 +618,7 @@ static COMMAND(polchat_command_part) {
 	const char *reason = PARTMSG(session, params[0]);
 
 	if (!j->room) {
-		printq("invalid_params", name);
+		printq("invalid_params", name, params[0]);
 		return 0;
 	}
 

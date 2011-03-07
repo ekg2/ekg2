@@ -302,7 +302,7 @@ static COMMAND(command_key)
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return -1;
 }

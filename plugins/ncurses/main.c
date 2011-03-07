@@ -558,7 +558,7 @@ static COMMAND(ncurses_cmd_dump) {
 		} else if (!fname)
 			fname = params[i];
 		else {	// fname again?
-			printq("invalid_params", name);
+			printq("invalid_params", name, params[i]);
 			return -1;
 		}
 	}

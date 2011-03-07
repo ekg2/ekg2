@@ -213,7 +213,7 @@ COMMAND(jogger_prepare) {
 	int outstarted		= 0;
 
 	if (!fn) {
-		printq("invalid_params", name);
+		printq("invalid_params", name, params[0]);
 		return -1;
 	}
 

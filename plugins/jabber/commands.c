@@ -587,7 +587,7 @@ static COMMAND(jabber_command_auth) {
 	if (params[1])
 		target = params[1];
 	else if (!target) {
-		printq("invalid_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -656,7 +656,7 @@ static COMMAND(jabber_command_auth) {
 
 		} else {
 
-			printq("invalid_params", name);
+			printq("invalid_params", name, params[0]);
 			result = -1;
 			xfree(uid);
 			break;
@@ -1133,7 +1133,7 @@ static COMMAND(jabber_command_search) {
 	const char *id;
 
 	if (g_strv_length((char **) params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
-		printq("invalid_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -1202,7 +1202,7 @@ static COMMAND(jabber_command_privacy) {	/* jabber:iq:privacy in ekg2 (RFC 3921)
 		char *tag = !xstrcmp(params[0], "--session") ? "active" : "default";
 		if (!val) {
 			/* XXX, display current default/session list? */
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 		if (unset)	watch_write(j->send_watch, "<iq type=\"set\" id=\"privacy%d\"><query xmlns=\"jabber:iq:privacy\"><%s/></query></iq>", j->id++, tag);
@@ -1229,7 +1229,7 @@ static COMMAND(jabber_command_privacy) {	/* jabber:iq:privacy in ekg2 (RFC 3921)
 
 	if (!xstrcmp(params[0], "--remove")) {		/* delete list's entry */
 		if (!params[1]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 	
@@ -1238,7 +1238,7 @@ static COMMAND(jabber_command_privacy) {	/* jabber:iq:privacy in ekg2 (RFC 3921)
 			jabber_iq_privacy_t *p;
 
 			if (!liczba) {
-				printq("invalid_params", name);
+				printq("invalid_params", name, params[1]);
 				return -1;
 			}
 
@@ -1247,7 +1247,7 @@ static COMMAND(jabber_command_privacy) {	/* jabber:iq:privacy in ekg2 (RFC 3921)
 				goto privacy_delete_ok;
 			}
 
-			printq("invalid_params", name);		/* invalid_id ? */
+			printq("invalid_params", name, params[1]);		/* invalid_id ? */
 			return -1;
 		}
 
@@ -1271,7 +1271,7 @@ privacy_delete_ok:
 		const char *value;		/* <item value */
 
 		if (!params[1]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -1280,7 +1280,7 @@ privacy_delete_ok:
 		else if (!xstrcmp(params[1], "none") || !xstrcmp(params[1], "both") || !xstrcmp(params[1], "from") || !xstrcmp(params[1], "to"))
 							{ type = "subscription"; value = params[1]; }
 		else {
-			printq("invalid_params", name);
+			printq("invalid_params", name, params[1]);
 			return -1;
 		}
 
@@ -1346,7 +1346,7 @@ privacy_delete_ok:
   
 				if (flag == -1 || !lista) {
 					debug("[JABBER, PRIVACY] INVALID PARAM @ p[%d] = %s... [%d, 0x%x] \n", i, cur, flag, lista);
-					printq("invalid_params", name);
+					printq("invalid_params", name, cur);	/* XXX cur? */
 					if (allowlist && !allowlist->value)	xfree(allowlist);
 					if (denylist && !denylist->value)	xfree(denylist);
 					g_strfreev(p);
@@ -1465,7 +1465,7 @@ privacy_delete_ok:
 	if (params[0] && params[0][0] != '-') /* jesli nie opcja, to pewnie jest to lista, wyswietlamy liste */
 		return command_exec_format(target, session, 0, "/xmpp:privacy --get %s", params[0]);
 
-	print("invalid_params", name);
+	print("invalid_params", name, params[0]);
 	return 1;
 }
 
@@ -1505,7 +1505,7 @@ static COMMAND(jabber_command_private) {
 			splitted = jabber_params_split(params[1], 1);
 
 			if (!splitted) {
-				printq("invalid_params", name);
+				printq("not_enough_params", name);
 				return -1;
 			}
 
@@ -1548,12 +1548,14 @@ static COMMAND(jabber_command_private) {
 					debug("[JABBER, BOOKMARKS] switch(bookmark_sync) sync=%d ?!\n", bookmark_sync);
 			}
 
+			if (bookmark_sync <0)
+				printq("invalid_params", name, splitted[0]);
+
 			g_strfreev(splitted);
 			if (bookmark_sync > 0) {
 				return jabber_command_private(name, (const char **) p, session, target, quiet); /* synchronize db */
 			} else if (bookmark_sync < 0) {
 				debug("[JABBER, BOOKMARKS] sync=%d\n", bookmark_sync);
-				printq("invalid_params", name);
 				return -1;
 			}
 		}
@@ -1730,7 +1732,7 @@ put_finish:
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 	return -1;
 }
 
@@ -1757,7 +1759,7 @@ static COMMAND(jabber_command_register)
 	j->send_watch->transfer_limit = -1;
 
 	if (g_strv_length((char **) params) > 1 && !(splitted = jabber_params_split(params[1], 0))) {
-		printq("invalid_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 	watch_write(j->send_watch, "<iq type=\"%s\" to=\"%s\" id=\"transpreg%d\"><query xmlns=\"jabber:iq:register\">", params[1] || unregister ? "set" : "get", server, j->id++);
@@ -1890,7 +1892,7 @@ static COMMAND(jabber_muc_command_join) {
 	char *mucuid;
 	
 	if (!username) {		/* shouldn't happen */
-		printq("invalid_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -2020,7 +2022,7 @@ static COMMAND(jabber_muc_command_admin) {
 		}
 
 		if (!(splitted = jabber_params_split(params[1], 0))) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -2253,7 +2255,7 @@ static COMMAND(jabber_command_reply)
 		/* XXX: some UID/thread/whatever match? */
 
 	if (!thr) {
-		printq("invalid_params", name);
+		printq("invalid_params", name, params[0]);
 		return -1;
 	}
 
@@ -2390,7 +2392,7 @@ static COMMAND(jabber_command_userlist) {
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 	return -1;
 }
 

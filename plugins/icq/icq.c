@@ -850,7 +850,7 @@ static COMMAND(icq_command_addssi) {
 				continue;
 			}
 		}
-		printq("invalid_params", name);
+		printq("invalid_params", name, argv[i]);
 	}
 
 	if (nickname && (u = userlist_find(session, nickname))) {
@@ -1473,7 +1473,7 @@ static COMMAND(icq_command_search) {
 		}
 
 		/* XXX, madrzej? zgadywanie? */
-		printq("invalid_params", name);
+		printq("invalid_params", name, argv[i]);
 		g_strfreev(argv);
 		return -1;
 	}
@@ -1556,7 +1556,7 @@ static COMMAND(icq_command_auth) {
 		target = params[1];
 		reason = params[2];
 	} else if (!target) {
-		printq("invalid_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 
@@ -1595,7 +1595,7 @@ static COMMAND(icq_command_auth) {
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 	return -1;
 }
 

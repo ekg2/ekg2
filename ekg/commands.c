@@ -225,7 +225,7 @@ static COMMAND(cmd_tabclear)
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return -1;
 }
@@ -434,7 +434,7 @@ static COMMAND(cmd_alias) {
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 	return -1;
 }
 
@@ -649,7 +649,7 @@ COMMAND(cmd_exec)
 					__target = uid;
 				command = args[2];
 			} else {
-				printq("invalid_params", name);
+				printq("invalid_params", name, args[0]);
 				return -1;
 			}
 		} 
@@ -946,7 +946,7 @@ static COMMAND(cmd_for)
 			xfree(w);
 		}
 	} else {
-		printq("invalid_params", name);
+		printq("invalid_params", name, params[0]);
 		return -1;
 	}
 	return 0;
@@ -1222,7 +1222,7 @@ static COMMAND(cmd_ignore)
 			int __flags = ignore_flags(params[1]);
 
 			if (!__flags) {
-				printq("invalid_params", name);
+				printq("invalid_params", name, params[1]);
 				return -1;
 			}
 
@@ -1548,12 +1548,16 @@ list_user:
 				int off = (params[i][0] == '@' && xstrlen(params[i]) > 1) ? 1 : 0;
 				xfree(show_group);
 				show_group = xstrdup(params[i] + off);
-			} else
-				printq("invalid_params", name);
+			} else {
+				printq("not_enough_params", name);
+				/* XXX return here? */
+			}
 		} else if (match_arg(params[i], 'd', ("description"), 2)) {
 			show_descr = 1;
-		} else
-			printq("invalid_params", name);
+		} else {
+			printq("invalid_params", name, params[i]);
+			/* XXX return here? */
+		}
 	}
 
 	for (ul = session->userlist; ul; ul = ul->next) {
@@ -3175,7 +3179,7 @@ static COMMAND(cmd_conference)
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return -1;
 }
@@ -3463,7 +3467,7 @@ COMMAND(cmd_dcc)
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return -1;
 }
@@ -3549,7 +3553,7 @@ static COMMAND(cmd_plugin) {
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return -1;
 }
@@ -3582,7 +3586,7 @@ static COMMAND(cmd_desc) {
 static COMMAND(cmd_me)
 {
 	if (!target) {
-		printq("invalid_params", name);
+		printq("not_enough_params", name);
 		return -1;
 	}
 

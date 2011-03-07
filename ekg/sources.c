@@ -602,7 +602,7 @@ COMMAND(cmd_at)
 			a_name = params[1];
 
 			if (!xstrcmp(a_name, "(null)")) {
-				printq("invalid_params", name);
+				printq("invalid_params", name, a_name);
 				return -1;
 			}
 
@@ -686,7 +686,7 @@ COMMAND(cmd_at)
 
 			/* nie ma błędów ? */
 			if (wrong || lt->tm_hour > 23 || lt->tm_min > 59 || lt->tm_sec > 59 || lt->tm_mday > 31 || !lt->tm_mday || lt->tm_mon > 11) {
-				printq("invalid_params", name);
+				printq("invalid_params", name, p);	/* XXX */
 				xfree(foo);
 				return -1;
 			}
@@ -698,7 +698,7 @@ COMMAND(cmd_at)
 					if (xisdigit(*freq_str))
 						_period = atoi(freq_str);
 					else {
-						printq("invalid_params", name);
+						printq("invalid_params", name, freq_str);
 						xfree(foo);
 						return -1;
 					}
@@ -719,7 +719,7 @@ COMMAND(cmd_at)
 							case 's':
 								break;
 							default:
-								printq("invalid_params", name);
+								printq("invalid_params", name, freq_str);
 								xfree(foo);
 								return -1;
 						}
@@ -894,7 +894,7 @@ COMMAND(cmd_at)
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return -1;
 }
@@ -928,7 +928,7 @@ COMMAND(cmd_timer)
 			t_name = params[1];
 
 			if (!xstrcmp(t_name, "(null)")) {
-				printq("invalid_params", name);
+				printq("invalid_params", name, t_name);
 				return -1;
 			}
 
@@ -953,7 +953,7 @@ COMMAND(cmd_timer)
 			if (xisdigit(*p))
 				_period = atoi(p);
 			else {
-				printq("invalid_params", name);
+				printq("invalid_params", name, p);
 				xfree(t_command);
 				return -1;
 			}
@@ -974,7 +974,7 @@ COMMAND(cmd_timer)
 					case 's':
 						break;
 					default:
-						printq("invalid_params", name);
+						printq("invalid_params", name, p);	/* XXX */
 						xfree(t_command);
 						return -1;
 				}
@@ -1071,7 +1071,7 @@ COMMAND(cmd_timer)
 		return 0;
 	}	
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return -1;
 }

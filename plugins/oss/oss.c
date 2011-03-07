@@ -332,7 +332,7 @@ static COMMAND(oss_cmd_record) {
 			continue;
 		}
 
-		printq("invalid_params", name);
+		printq("invalid_params", name, array[i]);
 		g_strfreev(array);
 		return -1;
 	}

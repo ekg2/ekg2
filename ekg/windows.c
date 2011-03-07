@@ -685,7 +685,7 @@ COMMAND(cmd_window) {
 			return -1;
 
 		if (!params[1]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}
 
@@ -747,7 +747,7 @@ COMMAND(cmd_window) {
 	}
 
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return 0;
 }

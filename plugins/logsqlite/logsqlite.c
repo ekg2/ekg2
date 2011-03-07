@@ -107,7 +107,7 @@ int last(const char **params, session_t *session, int quiet, int status)
 				limit_msg = atoi(params[++i]);
 
 				if (limit_msg <= 0) {
-					printq("invalid_params", "logsqlite:last");
+					printq("invalid_params", "logsqlite:last", params[i]);
 					return 0;
 				}
 				continue;
@@ -115,7 +115,7 @@ int last(const char **params, session_t *session, int quiet, int status)
 				limit_status = atoi(params[++i]);
 
 				if (limit_status <= 0) {
-					printq("invalid_params", "logsqlite:laststatus");
+					printq("invalid_params", "logsqlite:laststatus", params[i]);
 					return 0;
 				}
 				continue;

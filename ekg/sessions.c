@@ -1140,7 +1140,7 @@ COMMAND(session_command)
 		session_t *s;
 		
 		if (!params[1]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;		
 		}
 		if (!(s = session_find(params[1]))) {
@@ -1213,7 +1213,7 @@ COMMAND(session_command)
 	if (match_arg(params[0], 's', ("set"), 2)) {
 		
 		if (!params[1]) {
-			printq("invalid_params", name);
+			printq("not_enough_params", name);
 			return -1;
 		}	
 		
@@ -1270,7 +1270,7 @@ COMMAND(session_command)
 				return 0;
 			}
 			
-			printq("invalid_params", name);
+			printq("invalid_params", name, params[1]);	/* XXX */
 			return -1;
 		}
 		
@@ -1313,7 +1313,7 @@ COMMAND(session_command)
 			return 0;
 		}
 
-		printq("invalid_params", name);
+		printq("invalid_params", name, params[1]);	/* XXX */
 		return -1;
 	}
 
@@ -1499,7 +1499,7 @@ COMMAND(session_command)
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 	
 	return -1;
 }

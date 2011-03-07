@@ -155,7 +155,7 @@ COMMAND(gg_command_find)
 			continue;
 		}
 
-		printq("invalid_params", name);
+		printq("invalid_params", name, arg);
 		gg_pubdir50_free(req);
 
 		for (i = 0; argv[i]; i++)
@@ -252,7 +252,7 @@ COMMAND(gg_command_change)
 				continue;
 			}
 
-			printq("invalid_params", name);
+			printq("invalid_params", name, argv[i]);
 			g_strfreev(argv);
 
 			gg_pubdir50_free(req);

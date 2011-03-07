@@ -70,7 +70,7 @@ COMMAND(cmd_on) {
 		}
 
 		if (!(prio = atoi(params[2]))) {
-			printq("invalid_params", name);
+			printq("invalid_params", name, params[2]);
 			return -1;
 		}
 
@@ -93,7 +93,7 @@ COMMAND(cmd_on) {
 			par = 0;
 		else {
 			if (!(par = atoi(params[1]))) {
-				printq("invalid_params", name);			
+				printq("invalid_params", name, params[1]);
 				return -1;
 			}
 		}
@@ -110,7 +110,7 @@ COMMAND(cmd_on) {
 		return 0;
 	}
 
-	printq("invalid_params", name);
+	printq("invalid_params", name, params[0]);
 
 	return -1;
 }
