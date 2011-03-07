@@ -188,7 +188,7 @@ COMMAND(gg_command_change)
 	gg_pubdir50_t req;
 
 	if (!g->sess || g->sess->state != GG_STATE_CONNECTED) {
-		printq("not_connected");
+		printq("not_connected", session_name(session));
 		return -1;
 	}
 
