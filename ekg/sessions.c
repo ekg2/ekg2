@@ -886,16 +886,10 @@ int session_write()
 	for (pl = plugins; pl; pl = pl->next) {
 		const plugin_t *p = pl->data;
 		session_t *s;
-		const char *tmp;
 
 		if (p->pclass != PLUGIN_PROTOCOL) continue; /* skip no protocol plugins */
 
-		if (!(tmp = prepare_pathf("sessions-%s", p->name))) {
-			ret = -1;
-			continue;
-		}
-		
-		if (!(f = config_open(tmp, "w"))) {
+		if (!(f = config_open2("sessions-%s", "w", p->name))) {
 			ret = -1;
 			continue;
 		}
