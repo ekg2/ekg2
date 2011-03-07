@@ -653,8 +653,6 @@ int config_write()
  */
 int config_write_partly(plugin_t *plugin, const char **vars)
 {
-	const char *filename;
-	char *newfn;
 	char *line;
 	GIOChannel *fi, *fo;
 	int *wrote, i;
@@ -663,19 +661,20 @@ int config_write_partly(plugin_t *plugin, const char **vars)
 		return -1;
 
 	if (plugin)
-		filename = prepare_pathf("config-%s", plugin->name);
-	else	filename = prepare_pathf("config");
-
-	if (!filename)
+		fi = config_open2("config-%s", "r", plugin->name);
+	else
+		fi = config_open2("config", "r");
+	if (!fi)
 		return -1;
 
-	if (!(fi = config_open(filename, "r")))
-		return -1;
+	/* config_open2() writes through temporary file,
+	 * so it's sane to open the same name twice */
+	if (plugin)
+		fo = config_open2("config-%s", "w", plugin->name);
+	else
+		fo = config_open2("config", "w");
 
-	newfn = saprintf("%s.%d.%ld", filename, (int) getpid(), (long) time(NULL));
-
-	if (!(fo = config_open(newfn, "w"))) {
-		xfree(newfn);
+	if (!fo) {
 		config_close(fi);
 		return -1;
 	}
@@ -744,9 +743,6 @@ pass:
 	config_close(fi);
 	config_close(fo);
 	
-	g_rename(newfn, filename);
-
-	xfree(newfn);
 	return 0;
 }
 
