@@ -900,7 +900,6 @@ int session_write()
 			if (s->plugin != p)
 				continue;
 
-			userlist_write(s);
 			ekg_fprintf(f, "[%s]\n", s->uid);
 			if (s->alias)
 				ekg_fprintf(f, "alias=%s\n", s->alias);
@@ -926,6 +925,12 @@ int session_write()
 			/* We don't save _local_ variables */
 		}
 		config_close(f);
+
+		for (s = sessions; s; s = s->next) {
+			if (s->plugin != p)
+				continue;
+			userlist_write(s);
+		}
 	}
 	return ret;
 }
