@@ -445,7 +445,7 @@ static QUERY(event_avail) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
 
-	event_check(session, "event_avail", uid, NULL);
+	event_check(session, "event-avail", uid, NULL);
 	return 0;
 }
 
@@ -458,7 +458,7 @@ static QUERY(event_away) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
 
-	event_check(session, "event_away", uid, NULL);
+	event_check(session, "event-away", uid, NULL);
 	return 0;
 }
 
@@ -471,7 +471,7 @@ static QUERY(event_na) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
 
-	event_check(session, "event_na", uid, NULL);
+	event_check(session, "event-na", uid, NULL);
 	return 0;
 }
 
@@ -484,7 +484,7 @@ static QUERY(event_online) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
 
-	event_check(session, "event_online", uid, NULL);
+	event_check(session, "event-online", uid, NULL);
 	return 0;
 }
 
@@ -497,7 +497,7 @@ static QUERY(event_offline) {
 	char *session	= *(va_arg(ap, char**));
 	char *uid	= *(va_arg(ap, char**));
 
-	event_check(session, "event_offline", uid, NULL);
+	event_check(session, "event-offline", uid, NULL);
 	return 0;
 }
 
@@ -511,7 +511,7 @@ static QUERY(event_descr) {
 	char *uid	= *(va_arg(ap, char**));
 	char *descr	= *(va_arg(ap, char**));
 	
-	event_check(session, "event_descr", uid, descr);
+	event_check(session, "event-descr", uid, descr);
 	return 0;
 }
 
