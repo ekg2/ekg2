@@ -103,7 +103,7 @@ plugins/ekg2.h.gch: $(noinst_HEADERS)
 endif
 
 TESTS = check_potfiles
-check_SCRIPTS = check_potfiles
+check_SCRIPTS = check_potfiles check_ekg2
 
 dist_pkgdata_DATA = \
 	docs/commands-pl.txt \
@@ -146,6 +146,18 @@ plugins_autoresponder_autoresponder_la_SOURCES = \
 dist_autoresponder_DATA = \
 	plugins/autoresponder/vars-en.txt \
 	plugins/autoresponder/vars-pl.txt
+endif
+
+if SHARED_LIBS
+TESTS += check_ekg2
+
+check_LTLIBRARIES = plugins/check/check.la
+
+plugins_check_check_la_SOURCES = \
+	$(noinst_HEADERS) \
+	plugins/check/check.c
+plugins_check_check_la_LDFLAGS = -module -avoid-version -shared -rpath $(abs_top_builddir)/plugins/check
+plugins_check_check_la_CPPFLAGS = $(AM_CPPFLAGS) $(EKG_CPPFLAGS)
 endif
 
 if ENABLE_GG

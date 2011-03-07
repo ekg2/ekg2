@@ -15,6 +15,7 @@ AC_DEFUN([AC_EKG2_PLUGIN_SETUP], [
 		AC_DEFINE([SHARED_LIBS], [1], [define if you want shared plugins (in .so or .dll)])
 	])
 
+	AM_CONDITIONAL([SHARED_LIBS], [test "x$enable_shared" = "xyes"])
 	AM_CONDITIONAL([STATIC_LIBS], [test "x$enable_static" = "xyes"])
 ])
 
