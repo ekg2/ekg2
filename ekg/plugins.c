@@ -170,29 +170,34 @@ static void *ekg2_dlsym(GModule *plugin, char *name) {
 int plugin_load(const char *name, int prio, int quiet)
 {
 #ifdef SHARED_LIBS
-	char lib[PATH_MAX];
-	char *env_ekg_plugins_path = NULL;
+	const gchar *env_ekg_plugins_path = NULL;
 	char *init = NULL;
+	gchar *lib;
+	gchar *libname;
 	GModule *plugin = NULL;
 #endif
 
 	plugin_t *pl;
 	int (*plugin_init)() = NULL;
 
-	if (!name)
-		return -1;
-
+	g_assert(name);
 	if (plugin_find(name)) {
 		printq("plugin_already_loaded", name); 
 		return -1;
 	}
 
 #ifdef SHARED_LIBS
-	if ((env_ekg_plugins_path = getenv("EKG_PLUGINS_PATH"))) {
-		if (snprintf(lib, sizeof(lib), "%s/%s.la", env_ekg_plugins_path, name) < sizeof(lib))
+	libname = g_strdup_printf("%s.la", name);
+	if ((env_ekg_plugins_path = g_getenv("EKG_PLUGINS_PATH"))) {
+		lib = g_build_filename(env_ekg_plugins_path, libname, NULL);
+		plugin = ekg2_dlopen(lib);
+		g_free(lib);
+
+		if (!plugin) {
+			lib = g_build_filename(env_ekg_plugins_path, name, libname, NULL);
 			plugin = ekg2_dlopen(lib);
-		if (!plugin && (snprintf(lib, sizeof(lib), "%s/%s/%s.la", env_ekg_plugins_path, name, name) < sizeof(lib)))
-			plugin = ekg2_dlopen(lib);
+			g_free(lib);
+		}
 	}
 
 	/* The following lets ekg2 load plugins when it is run directly from
@@ -203,20 +208,23 @@ int plugin_load(const char *name, int prio, int quiet)
 	 * for win32-style installs.
 	 */
 	if (!plugin && rel_plugin_dir) {
-		if (snprintf(lib, sizeof(lib), "%s/plugins/%s/%s.la", rel_plugin_dir, name, name) < sizeof(lib))
-			plugin = ekg2_dlopen(lib);
+		lib = g_build_filename(rel_plugin_dir, "plugins", name, libname, NULL);
+		plugin = ekg2_dlopen(lib);
+		g_free(lib);
 	}
 
 	if (!plugin) {
-		if (snprintf(lib, sizeof(lib), "%s/%s.la", PLUGINDIR, name) < sizeof(lib))
-			plugin = ekg2_dlopen(lib);
+		lib = g_build_filename(PLUGINDIR, libname, NULL);
+		plugin = ekg2_dlopen(lib);
+		g_free(lib);
 	}
 
+	g_free(libname);
 	/* prefer shared plugins */
 	if (plugin) {
-		init = saprintf("%s_plugin_init", name);
+		init = g_strdup_printf("%s_plugin_init", name);
 		plugin_init = ekg2_dlsym(plugin, init);
-		xfree(init);
+		g_free(init);
 	}
 #endif /* SHARED_LIBS */
 
