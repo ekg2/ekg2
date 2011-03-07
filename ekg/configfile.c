@@ -206,6 +206,35 @@ GIOChannel *config_open(const gchar *path, const gchar *mode) {
 	return f;
 }
 
+/**
+ * config_open2()
+ *
+ * Open a configuration file, formatting the name if necessary. Choose
+ * correct location and file encoding.
+ *
+ * @param path_format - format string for file name. Should be
+ *	utf8-encoded.
+ * @param mode - string mode for opening the file (r or w).
+ *
+ * @return Open GIOChannel or NULL if open failed.
+ */
+GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
+	va_list args;
+	gchar *path;
+	const gchar *lpath;
+	GIOChannel *f;
+
+	va_start(args, mode);
+	path = g_strdup_vprintf(path_format, args);
+	va_end(args);
+
+	lpath = prepare_path(path, 0);
+	g_free(path);
+
+	f = config_open(path, mode);
+	return f;
+}
+
 int config_read_plugins()
 {
 	gchar *buf, *foo;
