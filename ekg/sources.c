@@ -1079,7 +1079,7 @@ COMMAND(cmd_timer)
 void timers_write(GIOChannel *f) {
 	void timer_write(gpointer data, gpointer user_data) {
 		struct ekg_source *t = data;
-		FILE *f = user_data;
+		GIOChannel *f = user_data;
 
 		const char *name = NULL;
 
