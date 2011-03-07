@@ -463,7 +463,6 @@ int config_read(const gchar *plugin_name)
 
 		for (pl = plugins; pl; pl = pl->next) {
 			const plugin_t *p = pl->data;
-			const char *tmp;
 			
 			config_read(p->name);
 		}
