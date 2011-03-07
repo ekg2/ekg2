@@ -393,6 +393,7 @@ static const struct htmlent_t html_entities[] = {
 	{ 0,	NULL,		0	}
 };
 
+void update_timer(session_t *s, const char *name);
 static int rss_theme_init();
 void rss_protocol_deinit(void *priv);
 void *rss_protocol_init(session_t *session);
@@ -600,6 +601,7 @@ static plugins_params_t rss_plugin_vars[] = {
 		0, NULL),
 	/* [common var again] 0 - status; 1 - all in one window (s->uid) 2 - seperate windows per rss / group. default+else: 2 */
 	PLUGIN_VAR_ADD("make_window",		VAR_INT, "2", 0, NULL),
+	PLUGIN_VAR_ADD("check_interval",	VAR_INT, "30", 0, update_timer),
 	PLUGIN_VAR_END()
 };
 
@@ -1642,6 +1644,35 @@ static QUERY(rss_userlist_info) {
 	}
 
 	return 1;
+}
+
+// Function triggered by rss_check_timer.
+gboolean periodic_check(void *data) {
+	session_t *session = (session_t *)data;
+
+	userlist_t *ul;
+	for (ul = session->userlist; ul; ul = ul->next) {
+		userlist_t *u = ul;
+		rss_rss_t *f = rss_rss_find(session, u->uid);
+		rss_url_fetch(f, 0);
+	}
+}
+
+void update_timer(session_t *session, const char *name) {
+	// If returns -1, it means there was no such timer.
+	(void) timer_remove_session(session, "rss_check_timer");
+
+	int interval = session_int_get(session, "check_interval");
+
+	// If interval is 0, do not register a timer.
+	if (!interval) return;
+
+	ekg_timer_add(&rss_plugin,             // session
+					  "rss_check_timer",   // timer
+				   	  interval*1000,       // interval
+				   	  periodic_check,      // callback
+					  (void *)session,     // data for callback
+					  NULL);               // destructor for callback data
 }
 
 void rss_init() {
