@@ -219,12 +219,11 @@ int msg_queue_write()
 		if (!(fn = prepare_pathf("queue/%ld.%d", (long) m->time, num++)))	/* prepare_pathf() ~/.ekg2/[PROFILE/]queue/TIME.UNIQID */
 			continue;
 
-			/* XXX: em, config? */
-		if (!(f = config_open(fn, "w")))
+		if (!(f = g_io_channel_new_file(fn, "w", NULL)))
 			continue;
 
 		ekg_fprintf(f, "v2\n%s\n%s\n%ld\n%s\n%d\n%s", m->session, m->rcpts, m->time, m->seq, m->mclass, m->message);
-		config_close(f);
+		g_io_channel_unref(f);
 	}
 
 	return 0;
@@ -263,7 +262,7 @@ int msg_queue_read() {
 		if (!(fn = prepare_pathf("queue/%s", d->d_name)))
 			continue;
 
-		if (!(f = config_open(fn, "r")))
+		if (!(f = g_io_channel_new_file(fn, "r", NULL)))
 			continue;
 
 		memset(&m, 0, sizeof(m));
@@ -334,7 +333,7 @@ int msg_queue_read() {
 
 		msgs_queue_add(g_memdup(&m, sizeof(m)));
 
-		config_close(f);
+		g_io_channel_unref(f);
 		g_unlink(fn);
 	}
 
