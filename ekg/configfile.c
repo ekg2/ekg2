@@ -129,7 +129,7 @@ gboolean ekg_fprintf(GIOChannel *f, const gchar *format, ...) {
 	return TRUE;
 }
 
-GIOChannel *config_open(const gchar *path, const gchar *mode) {
+static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 	GIOChannel *f;
 	GError *err = NULL;
 	const gchar modeline_prefix[] = "# vim:fenc=";
@@ -241,7 +241,7 @@ GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
 	}
 
 	debug_function("config_open2(): lpath=%s\n", lpath);
-	f = config_open(lpath, mode);
+	f = config_open_real(lpath, mode);
 	g_free(lpath);
 	return f;
 }
