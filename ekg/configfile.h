@@ -39,7 +39,7 @@ GIOChannel *config_open(const gchar *path, const gchar *mode);
 GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...)
 	G_GNUC_PRINTF(1, 3);
 
-int config_read(const char *filename);
+int config_read(const gchar *plugin_name);
 int config_read_plugins();
 int config_read_later(const char *filename);
 int config_write();

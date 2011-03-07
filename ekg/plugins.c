@@ -278,8 +278,7 @@ int plugin_load(const char *name, int prio, int quiet)
 		const char *tmp;
 
 		in_autoexec = 1;
-		if ((tmp = prepare_pathf("config-%s", name)))
-			config_read(tmp);
+		config_read(name);
 		if (pl->pclass == PLUGIN_PROTOCOL)
 			session_read(name);
 

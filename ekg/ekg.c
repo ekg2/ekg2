@@ -746,8 +746,10 @@ int main(int argc, char **argv)
 	window_status	= window_new(NULL, NULL, 1);			/* okno stanu */
 	window_current	= window_status;
 
+#if 0
 	if (!no_global_config)
 		config_read(SYSCONFDIR "/ekg2.conf");
+#endif
 
 	if (frontend) {
 		plugin_load(frontend, -254, 1);
@@ -756,8 +758,10 @@ int main(int argc, char **argv)
 	}
 
 	config_read_plugins();
+#if 0
 	if (!no_global_config)
 		config_read(SYSCONFDIR "/ekg2-override.conf");
+#endif
 
 /*	  userlist_read(); */
 	emoticon_read();

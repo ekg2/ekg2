@@ -274,13 +274,13 @@ int config_read_plugins()
  *
  * 0/-1
  */
-int config_read(const char *filename)
+int config_read(const gchar *plugin_name)
 {
 	gchar *buf, *foo;
 	GIOChannel *f;
-	int err_count = 0, first = (filename) ? 0 : 1, ret;
+	int err_count = 0, ret;
 
-	if (!in_autoexec && !filename) {
+	if (!in_autoexec && !plugin_name) {
 		aliases_destroy();
 		timer_remove_user(timer_handle_command);
 		timer_remove_user(timer_handle_at);
@@ -292,10 +292,11 @@ int config_read(const char *filename)
 	} 
 
 	/* then global and plugins variables */
-	if (!filename && !(filename = prepare_path("config", 0)))
-		return -1;
+	if (plugin_name)
+		f = config_open2("config-%s", "r", plugin_name);
+	else
+		f = config_open2("config", "r");
 
-	f = config_open(filename, "r");
 	if (!f)
 		return -1;
 
@@ -414,15 +415,14 @@ int config_read(const char *filename)
 	
 	g_io_channel_unref(f);
 
-	if (first) {
+	if (!plugin_name) {
 		GSList *pl;
 
 		for (pl = plugins; pl; pl = pl->next) {
-			const plugin_t *p =pl->data;
+			const plugin_t *p = pl->data;
 			const char *tmp;
 			
-			if ((tmp = prepare_pathf("config-%s", p->name)))
-				config_read(tmp);
+			config_read(p->name);
 		}
 	}
 	
