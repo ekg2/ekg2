@@ -106,7 +106,7 @@ int emoticon_read() {
 		g_strfreev(emot);
 	}
 	
-	g_io_channel_unref(f);
+	config_close(f);
 	
 	return 0;
 }

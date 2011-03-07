@@ -169,7 +169,7 @@ int userlist_read(session_t *session) {
 
 	query_emit(NULL, "userlist-refresh");	/* XXX, wywolywac tylko kiedy dodalismy przynajmniej 1 */
 
-	g_io_channel_unref(f);
+	config_close(f);
 		
 	return 0;
 } 
@@ -230,7 +230,7 @@ int userlist_write(session_t *session) {
 		array_free_count(entry, 7);
 	}
 
-	g_io_channel_unref(f);
+	config_close(f);
 	return 0;
 }
 

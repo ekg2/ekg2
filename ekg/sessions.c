@@ -865,7 +865,7 @@ int session_read(const gchar *plugin_name) {
 		}
 	}
 
-	g_io_channel_unref(f);
+	config_close(f);
 	return ret;
 }
 
@@ -931,7 +931,7 @@ int session_write()
 			}
 			/* We don't save _local_ variables */
 		}
-		g_io_channel_unref(f);
+		config_close(f);
 	}
 	return ret;
 }

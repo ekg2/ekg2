@@ -540,7 +540,7 @@ int metacontact_write()
 		for (i = m->metacontact_items; i; i = i->next)
 			ekg_fprintf(f, "%s %s %d\n", i->s_uid, i->name, i->prio);
 	}
-	g_io_channel_unref(f);
+	config_close(f);
 
 	return 0;
 }
@@ -590,7 +590,7 @@ next:
 		g_strfreev(array);
 	}
 
-	g_io_channel_unref(f);
+	config_close(f);
 
 	return 0;
 }

@@ -216,7 +216,9 @@ GIOChannel *config_open(const gchar *path, const gchar *mode) {
  *	utf8-encoded.
  * @param mode - string mode for opening the file (r or w).
  *
- * @return Open GIOChannel or NULL if open failed.
+ * @return Open GIOChannel or NULL if open failed. The GIOChannel
+ *	instance must be closed using config_close() (especially if open
+ *	for writing).
  */
 GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
 	va_list args;
@@ -234,6 +236,10 @@ GIOChannel *config_open2(const gchar *path_format, const gchar *mode, ...) {
 	debug_function("config_open2(): lpath=%s\n", lpath);
 	f = config_open(lpath, mode);
 	return f;
+}
+
+void config_close(GIOChannel *f) {
+	g_io_channel_unref(f);
 }
 
 int config_read_plugins()
@@ -260,7 +266,7 @@ int config_read_plugins()
 			g_strfreev(p);
 		}
 	}
-	g_io_channel_unref(f);
+	config_close(f);
 
 	return 0;
 }
@@ -413,7 +419,7 @@ int config_read(const gchar *plugin_name)
 			break;
 	}
 	
-	g_io_channel_unref(f);
+	config_close(f);
 
 	if (!plugin_name) {
 		GSList *pl;
@@ -557,7 +563,7 @@ int config_write()
 		return -1;
 	
 	config_write_plugins(f);
-	g_io_channel_unref(f);
+	config_close(f);
 
 	/* now we are saving global variables and settings
 	 * timers, bindings etc. */
@@ -566,7 +572,7 @@ int config_write()
 		return -1;
 
 	config_write_main(f);
-	g_io_channel_unref(f);
+	config_close(f);
 
 	/* now plugins variables */
 	for (pl = plugins; pl; pl = pl->next) {
@@ -583,7 +589,7 @@ int config_write()
 			}
 		}	
 
-		g_io_channel_unref(f);
+		config_close(f);
 	}
 
 	return 0;
@@ -634,7 +640,7 @@ int config_write_partly(plugin_t *plugin, const char **vars)
 
 	if (!(fo = config_open(newfn, "w"))) {
 		xfree(newfn);
-		g_io_channel_unref(fi);
+		config_close(fi);
 		return -1;
 	}
 	
@@ -699,8 +705,8 @@ pass:
 
 	xfree(wrote);
 	
-	g_io_channel_unref(fi);
-	g_io_channel_unref(fo);
+	config_close(fi);
+	config_close(fo);
 	
 	g_rename(newfn, filename);
 
@@ -727,7 +733,7 @@ void config_write_crash()
 
 	config_write_plugins(f);
 
-	g_io_channel_unref(f);
+	config_close(f);
 
 	/* then main part of config */
 	if (!(f = config_open2("crash-%d-plugin", "w", (int) getpid())))
@@ -735,7 +741,7 @@ void config_write_crash()
 
 	config_write_main(f);
 
-	g_io_channel_unref(f);
+	config_close(f);
 
 	/* now plugins variables */
 	for (pl = plugins; pl; pl = pl->next) {
@@ -752,7 +758,7 @@ void config_write_crash()
 			}
 		}
 
-		g_io_channel_unref(f);
+		config_close(f);
 	}
 }
 
@@ -774,7 +780,7 @@ void debug_write_crash()
 	for (b = buffer_debug.data; b; b = b->next)
 		ekg_fprintf(f, "%s\n", b->line);
 	
-	g_io_channel_unref(f);
+	config_close(f);
 }
 
 /*

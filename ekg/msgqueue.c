@@ -224,7 +224,7 @@ int msg_queue_write()
 			continue;
 
 		ekg_fprintf(f, "v2\n%s\n%s\n%ld\n%s\n%d\n%s", m->session, m->rcpts, m->time, m->seq, m->mclass, m->message);
-		g_io_channel_unref(f);
+		config_close(f);
 	}
 
 	return 0;
@@ -276,25 +276,25 @@ int msg_queue_read() {
 		if (buf && *buf == 'v')
 			filever = atoi(buf+1);
 		if (!filever || filever > 2) {
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 
 		if (!(m.session = g_strdup(read_line(f)))) {
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 	
 		if (!(m.rcpts = g_strdup(read_line(f)))) {
 			xfree(m.session);
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 
 		if (!(buf = read_line(f))) {
 			xfree(m.session);
 			xfree(m.rcpts);
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 
@@ -303,7 +303,7 @@ int msg_queue_read() {
 		if (!(m.seq = g_strdup(read_line(f)))) {
 			xfree(m.session);
 			xfree(m.rcpts);
-			g_io_channel_unref(f);
+			config_close(f);
 			continue;
 		}
 	
@@ -311,7 +311,7 @@ int msg_queue_read() {
 			if (!(buf = read_line(f))) {
 				xfree(m.session);
 				xfree(m.rcpts);
-				g_io_channel_unref(f);
+				config_close(f);
 				continue;
 			}
 
@@ -334,7 +334,7 @@ int msg_queue_read() {
 
 		msgs_queue_add(g_memdup(&m, sizeof(m)));
 
-		g_io_channel_unref(f);
+		config_close(f);
 		g_unlink(fn);
 	}
 

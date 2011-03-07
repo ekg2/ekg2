@@ -432,7 +432,7 @@ int script_variables_read() {
 		script_var_add(NULL, NULL, line, NULL, NULL);
 	}
 
-	g_io_channel_unref(f);
+	config_close(f);
 	return 0;
 }
 
@@ -456,7 +456,7 @@ int script_variables_free(int free) {
 		}
 	}
 	if (f)
-		g_io_channel_unref(f);
+		config_close(f);
 	
 	if (free)
 		list_destroy(script_vars, 0);
