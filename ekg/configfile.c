@@ -250,8 +250,17 @@ gboolean config_close(GIOChannel *f) {
 	const gboolean writeable = !!(g_io_channel_get_flags(f) & G_IO_FLAG_IS_WRITEABLE);
 	gboolean ret = TRUE;
 
-	if (writeable)
-		g_io_channel_flush(f, NULL);
+	if (writeable) {
+		GError *err = NULL;
+
+		/* XXX: currently, we're hoping this will fail if write failed */
+		if (g_io_channel_flush(f, &err) != G_IO_STATUS_NORMAL) {
+			debug_error("config_close(): flush failed: %s\n",
+					err ? err->message : "(reason unknown)");
+			g_error_free(err);
+			ret = FALSE;
+		}
+	}
 	g_io_channel_unref(f);
 
 	if (writeable) {
@@ -265,11 +274,14 @@ gboolean config_close(GIOChannel *f) {
 #endif
 
 		src = g_strdup_printf("%s.tmp", writing_config_file);
-		/* XXX: use GFile */
-		ret = !g_rename(src, writing_config_file);
-		if (!ret)
-			debug_error("config_close(), failed renaming %s -> %s, config not saved.",
-					src, writing_config_file);
+		if (ret) {
+			/* XXX: use GFile */
+			ret = !g_rename(src, writing_config_file);
+			if (!ret)
+				debug_error("config_close(), failed renaming %s -> %s, config not saved.",
+						src, writing_config_file);
+		} else /* flush/write failed */
+			g_unlink(src);
 
 		g_free(src);
 		g_free(writing_config_file);
