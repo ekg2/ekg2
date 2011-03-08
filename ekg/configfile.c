@@ -106,6 +106,18 @@ void config_postread()
 	query_emit(NULL, "config-postinit");
 }
 
+/**
+ * ekg_fprintf()
+ *
+ * Output formatted string to a GIOChannel.
+ *
+ * @param f - writable GIOChannel.
+ * @param format - the format string.
+ * 
+ * @return TRUE on success, FALSE otherwise.
+ *
+ * @note The channel must be open for writing in blocking mode.
+ */
 gboolean ekg_fprintf(GIOChannel *f, const gchar *format, ...) {
 	static GString *buf = NULL;
 	va_list args;
@@ -221,6 +233,11 @@ static gchar *writing_config_file = NULL;
  * @return Open GIOChannel or NULL if open failed. The GIOChannel
  *	instance must be closed using config_close() (especially if open
  *	for writing).
+ *
+ * @note Opening a file for writing is implemented through use
+ *	of a temporary file. This means the actual config file will actually
+ *	be overwritten in config_close(), and that means you are free to
+ *	open the same file for reading and writing at the same time.
  */
 GIOChannel *config_open(const gchar *path_format, const gchar *mode, ...) {
 	va_list args;
@@ -246,6 +263,20 @@ GIOChannel *config_open(const gchar *path_format, const gchar *mode, ...) {
 	return f;
 }
 
+/**
+ * config_close()
+ *
+ * Close the config file, flushing it if necessary. If the file was open
+ * for writing and flush succeeds (which means last write probably
+ * succeeded as well), the config file is actually overwritten.
+ * Otherwise, the changes are forfeit.
+ *
+ * @param f - GIOChannel returned by config_open().
+ *
+ * @return TRUE on success, FALSE otherwise. If file was open for
+ *	reading, config_close() always succeeds. If it was open for writing,
+ *	it succeeds if the original file is overwritten.
+ */
 gboolean config_close(GIOChannel *f) {
 	const gboolean writeable = !!(g_io_channel_get_flags(f) & G_IO_FLAG_IS_WRITEABLE);
 	gboolean ret = TRUE;
