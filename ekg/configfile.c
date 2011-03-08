@@ -145,7 +145,6 @@ static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 	GIOChannel *f;
 	GError *err = NULL;
 	const gchar modeline_prefix[] = "# vim:fenc=";
-	const gchar *wanted_enc = console_charset;
 
 	f = g_io_channel_new_file(path, mode, &err);
 	if (!f) {
@@ -156,7 +155,7 @@ static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 	}
 
 	if (mode[0] == 'r') {
-		const gchar *buf;
+		const gchar *wanted_enc, *buf;
 
 		/* glib is a long runner
 		 * if file is not utf8-encoded, we can end up with ILSEQ
@@ -178,6 +177,8 @@ static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 		/* XXX: support more modeline formats? */
 		if (g_str_has_prefix(buf, modeline_prefix))
 			wanted_enc = &buf[sizeof(modeline_prefix) - 1]; /* 1 for null terminator */
+		else
+			wanted_enc = console_charset; /* fallback to locale */
 
 		if (g_io_channel_seek_position(f, 0, G_SEEK_SET, &err) != G_IO_STATUS_NORMAL) {
 			if (err)
@@ -195,21 +196,17 @@ static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 				return NULL;
 			}
 		}
-	}
 
-	/* fallback to locale-encoded config */
-	if (g_io_channel_set_encoding(f, wanted_enc, &err) != G_IO_STATUS_NORMAL) {
-		debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
-		g_error_free(err);
-		/* well, try the default one (utf8) anyway... */
-		wanted_enc = g_io_channel_get_encoding(f);
-		if (!wanted_enc) /* raw means what we use in core */
-			wanted_enc = "UTF-8";
-	}
+		if (g_io_channel_set_encoding(f, wanted_enc, &err) != G_IO_STATUS_NORMAL) {
+			debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
+			g_error_free(err);
+			/* well, try the default one (utf8) anyway... */
+		}
+	} else if (mode[0] == 'w') {
+		/* always write config in utf8 */
 
-	if (mode[0] == 'w') {
 		g_chmod(path, 0600);
-		if (!ekg_fprintf(f, "%s%s\n", modeline_prefix, wanted_enc)) {
+		if (!ekg_fprintf(f, "%s%s\n", modeline_prefix, "UTF-8")) {
 			g_io_channel_unref(f);
 			return NULL;
 		}
