@@ -1656,6 +1656,8 @@ gboolean periodic_check(void *data) {
 		rss_rss_t *f = rss_rss_find(session, u->uid);
 		rss_url_fetch(f, 0);
 	}
+
+	return true;
 }
 
 void update_timer(session_t *session, const char *name) {
