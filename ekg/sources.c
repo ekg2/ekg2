@@ -1076,10 +1076,10 @@ COMMAND(cmd_timer)
 	return -1;
 }
 
-void timers_write(GIOChannel *f) {
+void timers_write(GOutputStream *f) {
 	void timer_write(gpointer data, gpointer user_data) {
 		struct ekg_source *t = data;
-		GIOChannel *f = user_data;
+		GOutputStream *f = user_data;
 
 		const char *name = NULL;
 

@@ -214,16 +214,21 @@ int msg_queue_write()
 
 	for (m = msgs_queue; m; m = m->next) {
 		const char *fn;
-		GIOChannel *f;
+		GFile *f;
+		GFileOutputStream *fs;
 
 		if (!(fn = prepare_pathf("queue/%ld.%d", (long) m->time, num++)))	/* prepare_pathf() ~/.ekg2/[PROFILE/]queue/TIME.UNIQID */
 			continue;
 
-		if (!(f = g_io_channel_new_file(fn, "w", NULL)))
+		f = g_file_new_for_path(fn);
+		fs = g_file_replace(f, NULL, FALSE, G_FILE_CREATE_PRIVATE, NULL, NULL);
+		g_object_unref(f);
+
+		if (!fs)
 			continue;
 
-		ekg_fprintf(f, "v2\n%s\n%s\n%ld\n%s\n%d\n%s", m->session, m->rcpts, m->time, m->seq, m->mclass, m->message);
-		g_io_channel_unref(f);
+		ekg_fprintf(G_OUTPUT_STREAM(fs), "v2\n%s\n%s\n%ld\n%s\n%d\n%s", m->session, m->rcpts, m->time, m->seq, m->mclass, m->message);
+		g_object_unref(fs);
 	}
 
 	return 0;
@@ -256,61 +261,69 @@ int msg_queue_read() {
 		msg_queue_t m;
 		string_t msg;
 		char *buf;
-		GIOChannel *f;
+		GFile *f;
+		GFileInputStream *fs;
+		GDataInputStream *fd;
 		int filever = 0;
 
 		if (!(fn = prepare_pathf("queue/%s", d->d_name)))
 			continue;
 
-		if (!(f = g_io_channel_new_file(fn, "r", NULL)))
+		f = g_file_new_for_path(fn);
+		fs = g_file_read(f, NULL, NULL);
+		g_object_unref(f);
+
+		if (!fs)
 			continue;
+
+		fd = g_data_input_stream_new(G_INPUT_STREAM(fs));
 
 		memset(&m, 0, sizeof(m));
 
 		do {
-			buf = read_line(f);
+			buf = read_line(fd);
 		} while (buf && (buf[0] == '#' || buf[0] == ';' || (buf[0] == '/' && buf[1] == '/')));
 		/* Allow leading comments */
 		
 		if (buf && *buf == 'v')
 			filever = atoi(buf+1);
 		if (!filever || filever > 2) {
-			config_close(f);
+			g_object_unref(fd);
 			continue;
 		}
 
-		if (!(m.session = g_strdup(read_line(f)))) {
-			config_close(f);
+		if (!(m.session = g_strdup(read_line(fd)))) {
+			g_object_unref(fd);
 			continue;
 		}
 	
-		if (!(m.rcpts = g_strdup(read_line(f)))) {
+		if (!(m.rcpts = g_strdup(read_line(fd)))) {
 			xfree(m.session);
-			config_close(f);
+			g_object_unref(fd);
 			continue;
 		}
 
-		if (!(buf = read_line(f))) {
+		if (!(buf = read_line(fd))) {
 			xfree(m.session);
 			xfree(m.rcpts);
-			config_close(f);
+			g_object_unref(fd);
 			continue;
 		}
 
 		m.time = atoi(buf);
 
-		if (!(m.seq = g_strdup(read_line(f)))) {
+		if (!(m.seq = g_strdup(read_line(fd)))) {
 			xfree(m.session);
 			xfree(m.rcpts);
-			config_close(f);
+			g_object_unref(fd);
 			continue;
 		}
 	
 		if (filever == 2) {
-			if (!(buf = read_line(f))) {
+			if (!(buf = read_line(fd))) {
 				xfree(m.session);
 				xfree(m.rcpts);
-				config_close(f);
+				g_object_unref(fd);
 				continue;
 			}
 
@@ -320,11 +333,11 @@ int msg_queue_read() {
 
 		msg = string_init(NULL);
 
-		buf = read_line(f);
+		buf = read_line(fd);
 
 		while (buf) {
 			string_append(msg, buf);
-			buf = read_line(f);
+			buf = read_line(fd);
 			if (buf)
 				string_append(msg, "\r\n");
 		}
@@ -333,7 +346,7 @@ int msg_queue_read() {
 
 		msgs_queue_add(g_memdup(&m, sizeof(m)));
 
-		g_io_channel_unref(f);
+		g_object_unref(fd);
 		g_unlink(fn);
 	}
 

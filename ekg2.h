@@ -1,6 +1,8 @@
 #include "ekg2-config.h"
 
 #include <glib.h>
+#include <gio/gio.h>
+
 #include "ekg/xmalloc.h"
 #include "ekg/win32.h"
 

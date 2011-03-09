@@ -617,6 +617,8 @@ int main(int argc, char **argv)
 		return TRUE;
 	}
 
+	g_type_init();
+
 #ifndef NO_POSIX_SYSTEM
 	/* zostaw po sobie core */
 	rlim.rlim_cur = RLIM_INFINITY;

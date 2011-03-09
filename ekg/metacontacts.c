@@ -526,9 +526,9 @@ void metacontact_init()
 int metacontact_write()
 {
 	metacontact_t *m;
-	GIOChannel *f = NULL;
+	GOutputStream *f = NULL;
 
-	f = config_open("metacontacts", "w");
+	f = G_OUTPUT_STREAM(config_open("metacontacts", "w"));
 
 	if (!f)
 		return -1;
@@ -540,7 +540,7 @@ int metacontact_write()
 		for (i = m->metacontact_items; i; i = i->next)
 			ekg_fprintf(f, "%s %s %d\n", i->s_uid, i->name, i->prio);
 	}
-	config_close(f);
+	g_object_unref(f);
 
 	return 0;
 }
@@ -553,10 +553,10 @@ int metacontact_write()
 int metacontact_read()
 {
 	char *line;
-	GIOChannel *f;
+	GDataInputStream *f;
 	metacontact_t *m = NULL;
 
-	if (!(f = config_open("metacontacts", "r")))
+	if (!(f = G_DATA_INPUT_STREAM(config_open("metacontacts", "r"))))
 		return -1;
 
 	while ((line = read_line(f))) {
@@ -590,7 +590,7 @@ next:
 		g_strfreev(array);
 	}
 
-	config_close(f);
+	g_object_unref(f);
 
 	return 0;
 }

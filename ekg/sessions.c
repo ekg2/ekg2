@@ -800,7 +800,7 @@ int session_int_set(session_t *s, const char *key, int value)
  */
 int session_read(const gchar *plugin_name) {
 	gchar *line;
-	GIOChannel *f;
+	GDataInputStream *f;
 	session_t *s = NULL;
 	int ret = 0;
 
@@ -827,7 +827,7 @@ int session_read(const gchar *plugin_name) {
 		return ret;
 	}
 
-	if (!(f = config_open("sessions-%s", "r", plugin_name)))
+	if (!(f = G_DATA_INPUT_STREAM(config_open("sessions-%s", "r", plugin_name))))
 		return -1;
 
 	while ((line = read_line(f))) {
@@ -865,7 +865,7 @@ int session_read(const gchar *plugin_name) {
 		}
 	}
 
-	config_close(f);
+	g_object_unref(f);
 	return ret;
 }
 
@@ -877,7 +877,7 @@ int session_read(const gchar *plugin_name) {
 int session_write()
 {
 	GSList *pl;
-	GIOChannel *f = NULL;
+	GOutputStream *f = NULL;
 	int ret = 0;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 */
@@ -889,7 +889,7 @@ int session_write()
 
 		if (p->pclass != PLUGIN_PROTOCOL) continue; /* skip no protocol plugins */
 
-		if (!(f = config_open("sessions-%s", "w", p->name))) {
+		if (!(f = G_OUTPUT_STREAM(config_open("sessions-%s", "w", p->name)))) {
 			ret = -1;
 			continue;
 		}
@@ -924,7 +924,7 @@ int session_write()
 			}
 			/* We don't save _local_ variables */
 		}
-		config_close(f);
+		g_object_unref(f);
 
 		for (s = sessions; s; s = s->next) {
 			if (s->plugin != p)
@@ -1555,7 +1555,7 @@ void sessions_free() {
  */
 void session_help(session_t *s, const char *name)
 {
-	GIOChannel *f;
+	GDataInputStream *f;
 	gchar *type = NULL, *def = NULL, *tmp;
 	const gchar *line, *plugin_name;
 
@@ -1593,7 +1593,7 @@ void session_help(session_t *s, const char *name)
 		do {
 			/* then look for them inside global session file */
 			if (!sessfilnf)
-				g_io_channel_unref(f);
+				g_object_unref(f);
 			
 			if (!(f = help_open("session", NULL)))
 				break;
@@ -1610,7 +1610,7 @@ void session_help(session_t *s, const char *name)
 
 	if (!found) {
 		if (f)
-			g_io_channel_unref(f);
+			g_object_unref(f);
 		if (sessfilnf)
 			print("help_session_file_not_found", plugin_name);
 		else
@@ -1668,7 +1668,7 @@ void session_help(session_t *s, const char *name)
 	if (xstrcmp(format_find("help_session_footer"), ""))
 		print("help_session_footer", name);
 
-	g_io_channel_unref(f);
+	g_object_unref(f);
 }
 
 /**

@@ -155,9 +155,9 @@ void userlist_add_entry(session_t *session, const char *line) {
  */
 int userlist_read(session_t *session) {
 	char *buf;
-	GIOChannel *f;
+	GDataInputStream *f;
 
-	if (!(f = config_open("%s-userlist", "r", session->uid)))
+	if (!(f = G_DATA_INPUT_STREAM(config_open("%s-userlist", "r", session->uid))))
 		return -1;
 			
 	while ((buf = read_line(f))) {
@@ -169,7 +169,7 @@ int userlist_read(session_t *session) {
 
 	query_emit(NULL, "userlist-refresh");	/* XXX, wywolywac tylko kiedy dodalismy przynajmniej 1 */
 
-	config_close(f);
+	g_object_unref(f);
 		
 	return 0;
 } 
@@ -190,13 +190,13 @@ int userlist_read(session_t *session) {
  */
 
 int userlist_write(session_t *session) {
-	GIOChannel *f;
+	GOutputStream *f;
 	userlist_t *ul;
 
 	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
 		return -1;
 
-	if (!(f = config_open("%s-userlist", "w", session->uid))) {
+	if (!(f = G_OUTPUT_STREAM(config_open("%s-userlist", "w", session->uid)))) {
 		return -2;
 	}
 
@@ -230,7 +230,7 @@ int userlist_write(session_t *session) {
 		array_free_count(entry, 7);
 	}
 
-	config_close(f);
+	g_object_unref(f);
 	return 0;
 }
 
