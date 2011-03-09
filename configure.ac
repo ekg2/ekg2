@@ -21,11 +21,11 @@ AC_EKG2_WITH([glib], [
 		gmod_dep=
 	])
 
-	PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.16 $gmod_dep],, [
+	PKG_CHECK_MODULES([GLIB], [glib-2.0 >= 2.22 gio-2.0 gobject-2.0 $gmod_dep],, [
 		AS_CASE([$with_glib],
 			[yes|maybe], [with_glib=/usr])
 
-		GLIB_LIBS="-lglib-2.0"
+		GLIB_LIBS="-lglib-2.0 -lgobject-2.0 -lgio-2.0"
 		AS_IF([test "x$enable_shared" = "xyes"], [
 			GLIB_LIBS="$GLIB_LIBS -lgmodule-2.0 -Wl,--export-dynamic"
 		])
