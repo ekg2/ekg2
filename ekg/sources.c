@@ -22,6 +22,10 @@
 
 #include <string.h>
 
+/* watch stuff, XXX YYY */
+#include <unistd.h>
+#include <errno.h>
+
 /* WEXITSTATUS for FreeBSD */
 #include <sys/wait.h>
 
@@ -1117,4 +1121,414 @@ void timers_write(GIOChannel *f) {
 	}
 
 	g_slist_foreach(timers, timer_write, f);
+}
+
+/*
+ * Watches
+ */
+
+/*
+ * watch_find()
+ *
+ * zwraca obiekt watch_t o podanych parametrach.
+ */
+watch_t *watch_find(plugin_t *plugin, int fd, watch_type_t type) {
+	list_t l;
+	
+	for (l = watches; l; l = l->next) {
+		watch_t *w = l->data;
+
+			/* XXX: added simple plugin ignoring, make something nicer? */
+		if (w && ((plugin == (void*) -1) || w->plugin == plugin) && w->fd == fd && (w->type & type))
+			return w;
+	}
+
+	return NULL;
+}
+
+static LIST_FREE_ITEM(watch_free_data, watch_t *) {
+	if (data->buf) {
+		int (*handler)(int, int, const char *, void *) = data->handler;
+		string_free(data->buf, 1);
+		/* DO WE WANT TO SEND ALL  IN BUFOR TO FD ? IF IT'S WATCH_WRITE_LINE? or parse all data if it's WATCH_READ_LINE? mmh. XXX */
+		if (handler)
+			handler(1, data->fd, NULL, data->data);
+	} else {
+		int (*handler)(int, int, int, void *) = data->handler;
+		if (handler)
+			handler(1, data->fd, data->type, data->data);
+	}
+
+	g_io_channel_unref(data->f);
+}
+
+/*
+ * watch_handle_line()
+ *
+ * obsługa deskryptorów przegl±danych WATCH_READ_LINE.
+ */
+static int watch_handle_line(watch_t *w)
+{
+	char buf[1024], *tmp;
+	int ret, res = 0;
+	int (*handler)(int, int, const char *, void *) = w->handler;
+
+	g_assert(w);
+
+#ifndef NO_POSIX_SYSTEM
+	ret = read(w->fd, buf, sizeof(buf) - 1);
+#else
+	ret = recv(w->fd, buf, sizeof(buf) - 1, 0);
+	if (ret == -1 && WSAGetLastError() == WSAENOTSOCK) {
+		printf("recv() failed Error: %d, using ReadFile()", WSAGetLastError());
+		res = ReadFile(w->fd, &buf, sizeof(buf)-1, &ret, NULL);
+		printf(" res=%d ret=%d\n", res, ret);
+	}
+	res = 0;
+#endif
+
+	if (ret > 0) {
+		buf[ret] = 0;
+		string_append(w->buf, buf);
+#ifdef NO_POSIX_SYSTEM
+		printf("RECV: %s\n", buf);
+#endif
+	}
+
+	if (ret == 0 || (ret == -1 && errno != EAGAIN))
+		string_append_c(w->buf, '\n');
+
+	while ((tmp = xstrchr(w->buf->str, '\n'))) {
+		size_t strlen = tmp - w->buf->str;		/* get len of str from begining to \n char */
+		char *line = xstrndup(w->buf->str, strlen);	/* strndup() str with len == strlen */
+
+		/* we strndup() str with len == strlen, so we don't need to call xstrlen() */
+		if (strlen > 1 && line[strlen - 1] == '\r')
+			line[strlen - 1] = 0;
+
+		if ((res = handler(0, w->fd, line, w->data)) == -1) {
+			xfree(line);
+			break;
+		}
+
+		string_remove(w->buf, strlen + 1);
+
+		xfree(line);
+	}
+
+	/* je¶li koniec strumienia, lub nie jest to ci±głe przegl±danie,
+	 * zwolnij pamięć i usuń z listy */
+	if (res == -1 || ret == 0 || (ret == -1 && errno != EAGAIN))
+		return -1; /* XXX: close(fd) was here, seemed unsafe */
+
+	return res;
+}
+
+static gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data);
+
+/* ripped from irc plugin */
+static int watch_handle_write(watch_t *w) {
+	int (*handler)(int, int, const char *, void *) = w->handler;
+	int res = -1;
+	int len = (w && w->buf) ? w->buf->len : 0;
+
+	g_assert(w);
+#ifdef FIXME_WATCHES_TRANSFER_LIMITS
+	if (w->transfer_limit == -1) return 0;	/* transfer limit turned on, don't send anythink... XXX */
+#endif
+	g_assert(len);
+	debug_io("[watch_handle_write] fd: %d in queue: %d bytes.... ", w->fd, len);
+
+	if (handler) {
+		res = handler(0, w->fd, w->buf->str, w->data);
+	} else {
+#ifdef NO_POSIX_SYSTEM
+		res = send(w->fd, w->buf->str, len, 0 /* MSG_NOSIGNAL */);
+#else
+		res = write(w->fd, w->buf->str, len);
+#endif
+	}
+
+	debug_io(" ... wrote:%d bytes (handler: 0x%x) ", res, handler);
+
+	if (res == -1 &&
+#ifdef NO_POSIX_SYSTEM
+			(WSAGetLastError() != 666)
+#else
+			1
+#endif
+		) {
+#ifdef NO_POSIX_SYSTEM
+		debug("WSAError: %d\n", WSAGetLastError());
+#else
+		debug("Error: %s %d\n", strerror(errno), errno);
+#endif
+		return -1;
+	}
+	
+	if (res > len) {
+		/* use debug_fatal() */
+		/* debug_fatal() should do:
+		 *	- print this info to all open windows with RED color
+		 *	- change some variable 'ekg2_need_restart' to 1.
+		 *	- @ ncurses if we have ekg2_need_restart set, and if colors turned on, change from blue to red..
+		 *	- and do other happy stuff.
+		 *
+		 * XXX, implement and use it. It should be used as ASSERT()
+		 */
+		
+		debug_error("watch_write(): handler returned bad value, 0x%x vs 0x%x\n", res, len);
+		res = len;
+	} else if (res < 0) {
+		debug_error("watch_write(): handler returned negative value other than -1.. XXX\n");
+		res = 0;
+	}
+
+	string_remove(w->buf, res);
+	debug_io("left: %d bytes\n", w->buf->len);
+
+	if (!w->buf->len) {
+		/* all written, remove the watch */
+		g_source_remove(w->id);
+		w->id = -1;
+	}
+
+	return res;
+}
+
+int watch_write_data(watch_t *w, const char *buf, int len) {		/* XXX, refactory: watch_write() */
+	int was_empty;
+
+	if (!w || !buf || len <= 0)
+		return -1;
+
+	was_empty = !w->buf->len;
+	string_append_raw(w->buf, buf, len);
+
+	/* if it was empty, we need to readd the watch */
+	if (was_empty) {
+		/* but maybe we could write it all right now? */
+		watch_handle_write(w);
+		/* ...or maybe not */
+		if (w->buf->len)
+			w->id = g_io_add_watch_full(w->f, G_PRIORITY_DEFAULT,
+				G_IO_OUT | G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+				watch_old_wrapper, w, NULL);
+			/* XXX: we can't clearly destroy it ;f */
+	}
+	return 0;
+}
+
+int watch_write(watch_t *w, const char *format, ...) {			/* XXX, refactory: watch_writef() */
+	char		*text;
+	int		textlen;
+	va_list		ap;
+	int		res;
+
+	if (!w || !format)
+		return -1;
+
+	va_start(ap, format);
+	text = vsaprintf(format, ap);
+	va_end(ap);
+	
+	textlen = xstrlen(text); 
+
+	debug_io("[watch]_send: %s\n", text ? textlen ? text: "[0LENGTH]":"[FAILED]");
+
+	if (!text) 
+		return -1;
+
+	res = watch_write_data(w, text, textlen);
+
+	xfree(text);
+	return res;
+}
+
+
+/**
+ * watch_handle()
+ *
+ * Handler for watches with type: <i>WATCH_READ</i> or <i>WATCH_WRITE</i><br>
+ * Mark watch with w->removed = -1, to indicate that watch is in use. And it shouldn't be
+ * executed again. [If watch can or even must be executed twice from ekg_loop() than you must
+ * change w->removed by yourself.]<br>
+ * 
+ * If handler of watch return -1 or watch was removed inside function [by watch_remove() or watch_free()]. Than it'll be removed.<br>
+ * ELSE Update w->started field to current time.
+ *
+ * @param w	- watch_t to handler
+ *
+ * @todo We only check for w->removed == -1, maybe instead change it to: w->removed != 0
+ */
+
+static int watch_handle(watch_t *w) {
+	int (*handler)(int, int, int, void *);
+	int res;
+
+	g_assert(w);
+
+	handler = w->handler;
+		
+	res = handler(0, w->fd, w->type, w->data);
+
+	w->started = time(NULL);
+
+	return res;
+}
+
+static gboolean watch_old_wrapper(GIOChannel *f, GIOCondition cond, gpointer data) {
+	watch_t *w = data;
+
+	if (w->type != WATCH_NONE && (cond & (G_IO_IN | G_IO_OUT))) {
+		int ret;
+		g_assert(cond & (w->type == WATCH_WRITE ? G_IO_OUT : G_IO_IN));
+
+		if (!w->buf)
+			ret = watch_handle(w);
+		else if (w->type == WATCH_READ)
+			ret = watch_handle_line(w);
+		else if (w->type == WATCH_WRITE)
+			ret = watch_handle_write(w);
+
+		if (ret == -1)
+			return FALSE;
+	}
+
+	if (cond & (G_IO_ERR | G_IO_NVAL | G_IO_HUP)) {
+		debug("watch_old_wrapper(): fd no longer valid, fd=%d, type=%d, plugin=%s\n",
+				w->fd, w->type, (w->plugin) ? w->plugin->name : ("none"));
+		return FALSE;
+	}
+
+	return TRUE;
+}
+
+static void watch_old_destroy_notify(gpointer data) {
+	watch_t *w = data;
+
+#ifdef FIXME_WATCHES
+	if (w->type == WATCH_WRITE && w->buf && !w->handler && w->plugin) {	/* XXX */
+		debug_error("[INTERNAL_DEBUG] WATCH_LINE_WRITE must be removed by plugin, manually (settype to WATCH_NONE and than call watch_free()\n");
+		return;
+	}
+#endif
+
+	watch_free_data(w);
+	list_remove_safe(&watches, w, 1);
+
+	debug("watch_old_destroy_notify() REMOVED WATCH, oldwatch: 0x%x\n", w);
+}
+
+/*
+ * watch_free()
+ *
+ * zwalnia pamięć po obiekcie watch_t.
+ * zwraca wskaĽnik do następnego obiektu do iterowania
+ * albo NULL, jak nie można skasować.
+ */
+void watch_free(watch_t *w) {
+	if (!w)
+		return;
+
+	if (w->id != -1)
+		g_source_remove(w->id);
+	/* stupid line watchers with their stupid manual removal */
+	else if (w->type == WATCH_NONE)
+		watch_old_destroy_notify(w);
+	else
+		debug_function("watch_free() with no action, id=-1, fd=%d, type=%d\n", w->fd, w->type);
+}
+
+/**
+ * watch_add()
+ *
+ * Create new watch_t and add it on the beginning of watches list.
+ *
+ * @param plugin	- plugin
+ * @param fd		- fd to watch data for.
+ * @param type		- type of watch.
+ * @param handler	- handler of watch.
+ * @param data		- data which be passed to handler.
+ *
+ * @return Created watch_t. if @a type is either WATCH_READ_LINE or WATCH_WRITE_LINE than also allocate memory for buffer
+ */
+
+watch_t *watch_add(plugin_t *plugin, int fd, watch_type_t type, watcher_handler_func_t *handler, void *data) {
+	GError *err	= NULL;
+	watch_t *w	= xmalloc(sizeof(watch_t));
+	w->plugin	= plugin;
+	w->fd		= fd;
+	w->type		= type;
+
+	if (w->type == WATCH_READ_LINE) {
+		w->type = WATCH_READ;
+		w->buf = string_init(NULL);
+	} else if (w->type == WATCH_WRITE_LINE) {
+		w->type = WATCH_WRITE;
+		w->buf = string_init(NULL);
+	}
+	
+	w->started = time(NULL);
+	w->handler = handler;
+	w->data    = data;
+
+	w->f = g_io_channel_unix_new(fd);
+
+	/* we need to disable recoding & buffering, as we use fd directly */
+	g_assert(g_io_channel_set_encoding(w->f, NULL, &err) == G_IO_STATUS_NORMAL);
+	g_io_channel_set_buffered(w->f, FALSE);
+
+	if (!w->buf || w->type == WATCH_READ)
+		w->id = g_io_add_watch_full(w->f, G_PRIORITY_DEFAULT,
+			(w->type == WATCH_WRITE ? G_IO_OUT : G_IO_IN)
+			| G_IO_ERR | G_IO_HUP | G_IO_NVAL,
+			watch_old_wrapper, w, watch_old_destroy_notify);
+	else
+		w->id = -1; /* backwards compat magic ;f */
+
+	list_add_beginning(&watches, w);
+	return w;
+}
+
+/**
+ * watch_add_session()
+ *
+ * Create new session watch_t and add it on the beginning of watches list.
+ *
+ * @param session	- session
+ * @param fd		- fd to watch data for
+ * @param type		- type of watch.
+ * @param handler	- handler of watch.
+ *
+ * @return	If @a session is NULL, or @a session->plugin is NULL, it return NULL.<br>
+ *		else created watch_t
+ */
+
+watch_t *watch_add_session(session_t *session, int fd, watch_type_t type, watcher_session_handler_func_t *handler) {
+	watch_t *w;
+	if (!session || !session->plugin) {
+		debug_error("watch_add_session() s: 0x%x s->plugin: 0x%x\n", session, session ? session->plugin : NULL);
+		return NULL;
+	}
+	w = watch_add(session->plugin, fd, type, (watcher_handler_func_t *) handler, session);
+
+	w->is_session = 1;
+	return w;
+}
+
+int watch_remove(plugin_t *plugin, int fd, watch_type_t type)
+{
+	int res = -1;
+	watch_t *w;
+#ifdef FIXME_WATCHES
+/* XXX, here can be deadlock feel warned. */
+/* DEADLOCK ACHIEVED! */
+	while ((w = watch_find(plugin, fd, type))) {
+		watch_free(w);
+		res = 0;
+	}
+#endif
+
+	return res;
 }

@@ -120,7 +120,6 @@ void ekg2_bless_watch(HV *hv, watch_t *watch)
 {
 	(void) hv_store(hv, "fd", 2, newSViv(watch->fd), 0);
 	(void) hv_store(hv, "type", 4, newSViv(watch->type), 0);
-	(void) hv_store(hv, "removed", 7, newSViv(watch->removed), 0);
 	(void) hv_store(hv, "timeout", 7, newSViv(watch->timeout), 0);
 	(void) hv_store(hv, "plugin", 6, ekg2_bless(BLESS_PLUGIN, 0, watch->plugin), 0);
 	(void) hv_store(hv, "started", 7, newSViv(watch->started), 0);

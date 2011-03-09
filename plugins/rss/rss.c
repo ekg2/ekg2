@@ -35,11 +35,10 @@
 #include <sys/filio.h>
 #endif
 
-#include <ekg/net.h>
-
 #include <expat.h>
 
 #include "ekg2.h"
+#include "ekg/net.h"
 
 #define feed_private(s) ((s && s->priv) ? ((feed_private_t *) s->priv)->priv_data : NULL)
 
