@@ -147,9 +147,7 @@ static GObject *config_open_real(const gchar *path, const gchar *mode) {
 	GFile *f;
 	GObject *stream;
 	GError *err = NULL;
-#if 0
 	const gchar modeline_prefix[] = "# vim:fenc=";
-#endif
 
 	f = g_file_new_for_path(path);
 
@@ -179,6 +177,12 @@ static GObject *config_open_real(const gchar *path, const gchar *mode) {
 			break;
 		case 'w':
 			stream = G_OBJECT(g_data_output_stream_new(G_OUTPUT_STREAM(stream)));
+			
+			/* we're always writing config in utf8 */
+			if (!ekg_fprintf(G_OUTPUT_STREAM(stream), "%s%s\n", modeline_prefix, "UTF-8")) {
+				g_object_unref(stream);
+				return NULL;
+			}
 			break;
 		default:
 			g_assert_not_reached();
@@ -232,14 +236,6 @@ static GObject *config_open_real(const gchar *path, const gchar *mode) {
 			debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
 			g_error_free(err);
 			/* well, try the default one (utf8) anyway... */
-		}
-	} else if (mode[0] == 'w') {
-		/* always write config in utf8 */
-
-		g_chmod(path, 0600);
-		if (!ekg_fprintf(f, "%s%s\n", modeline_prefix, "UTF-8")) {
-			g_io_channel_unref(f);
-			return NULL;
 		}
 	}
 #endif
