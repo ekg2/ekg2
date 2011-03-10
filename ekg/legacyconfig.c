@@ -27,7 +27,7 @@
  */
 
 void config_upgrade() {
-	const int current_config_version = 11;
+	const int current_config_version = 12;
 
 	if (config_version == -1)
 		config_version = current_config_version;
@@ -101,6 +101,18 @@ void config_upgrade() {
 				"please use appropriate system interface (i.e. LC_ALL). The raw & XML logs of logs plugin " \
 				"and SQLite logs of logsqlite plugin always write utf8 now. If you used non-utf8 locale, " \
 				"you might want to convert the logfiles/database using iconv."), "2011-03-01");
+		case 12:
+			{
+				gchar *fs = g_strdup_printf(
+					_("The configuration files were moved to XDG_CONFIG_DIR (%s/ekg2). " \
+					"Old EKG2 version will no longer be able to read configs written by this new version, " \
+					"and it won't reflect changes done in %s. Please notice, though, that EKG2 still " \
+					"keeps logs in old location, so if you're willing to remove it, do so carefully."),
+					g_get_user_config_dir(), config_dir);
+
+				print("config_upgrade_major", fs, "2011-03-08");
+				g_free(fs);
+			}
 	}
 
 	config_version = current_config_version;

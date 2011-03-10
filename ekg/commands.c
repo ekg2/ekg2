@@ -1994,7 +1994,7 @@ static COMMAND(cmd_debug_watches)
 			plugin = w->plugin->name;
 		else
 			plugin = ("-");
-		snprintf(buf, sizeof(buf), "%-5d  %-3s	%-8s  %-2d  %-4ld  %-10ld  %-2d", w->fd, wa, plugin, 1, w->timeout, w->started, w->removed);
+		snprintf(buf, sizeof(buf), "%-5d  %-3s	%-8s  %-2d  %-4ld  %-10ld", w->fd, wa, plugin, 1, w->timeout, w->started);
 		printq("generic", buf);
 	}
 

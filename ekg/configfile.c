@@ -145,7 +145,6 @@ static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 	GIOChannel *f;
 	GError *err = NULL;
 	const gchar modeline_prefix[] = "# vim:fenc=";
-	const gchar *wanted_enc = console_charset;
 
 	f = g_io_channel_new_file(path, mode, &err);
 	if (!f) {
@@ -156,7 +155,7 @@ static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 	}
 
 	if (mode[0] == 'r') {
-		const gchar *buf;
+		const gchar *wanted_enc, *buf;
 
 		/* glib is a long runner
 		 * if file is not utf8-encoded, we can end up with ILSEQ
@@ -178,6 +177,8 @@ static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 		/* XXX: support more modeline formats? */
 		if (g_str_has_prefix(buf, modeline_prefix))
 			wanted_enc = &buf[sizeof(modeline_prefix) - 1]; /* 1 for null terminator */
+		else
+			wanted_enc = console_charset; /* fallback to locale */
 
 		if (g_io_channel_seek_position(f, 0, G_SEEK_SET, &err) != G_IO_STATUS_NORMAL) {
 			if (err)
@@ -195,21 +196,17 @@ static GIOChannel *config_open_real(const gchar *path, const gchar *mode) {
 				return NULL;
 			}
 		}
-	}
 
-	/* fallback to locale-encoded config */
-	if (g_io_channel_set_encoding(f, wanted_enc, &err) != G_IO_STATUS_NORMAL) {
-		debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
-		g_error_free(err);
-		/* well, try the default one (utf8) anyway... */
-		wanted_enc = g_io_channel_get_encoding(f);
-		if (!wanted_enc) /* raw means what we use in core */
-			wanted_enc = "UTF-8";
-	}
+		if (g_io_channel_set_encoding(f, wanted_enc, &err) != G_IO_STATUS_NORMAL) {
+			debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
+			g_error_free(err);
+			/* well, try the default one (utf8) anyway... */
+		}
+	} else if (mode[0] == 'w') {
+		/* always write config in utf8 */
 
-	if (mode[0] == 'w') {
 		g_chmod(path, 0600);
-		if (!ekg_fprintf(f, "%s%s\n", modeline_prefix, wanted_enc)) {
+		if (!ekg_fprintf(f, "%s%s\n", modeline_prefix, "UTF-8")) {
 			g_io_channel_unref(f);
 			return NULL;
 		}
@@ -241,25 +238,54 @@ static gchar *writing_config_file = NULL;
  */
 GIOChannel *config_open(const gchar *path_format, const gchar *mode, ...) {
 	va_list args;
-	gchar *path, *lpath;
+	gchar *basename, *cdir, *path, *p;
+	GString *fname;
 	GIOChannel *f;
+	gboolean nonalnum = FALSE;
 
 	va_start(args, mode);
-	path = g_strdup_vprintf(path_format, args);
+	basename = g_strdup_vprintf(path_format, args);
 	va_end(args);
 
-	lpath = g_strdup(prepare_path(path, (mode[0] == 'w')));
-	g_free(path);
+	fname = g_string_new(basename);
+	for (p = fname->str; *p; p++) { /* filter out the name */
+		if (!g_ascii_isalnum(*p) && *p != '.' && *p != '_' && *p != '-') {
+			nonalnum = TRUE;
+			*p = '_';
+		}
+	}
+	if (nonalnum) {
+		gchar *cksum = g_compute_checksum_for_string(G_CHECKSUM_MD5, basename, -1);
+		g_string_append_c(fname, '_');
+		g_string_append_len(fname, cksum, 8);
+		g_free(cksum);
+	}
+	if (mode[0] == 'w')
+		g_string_append(fname, ".tmp");
 
-	if (mode[0] == 'w') {
-		g_assert(!writing_config_file);
-		writing_config_file = lpath;
-		lpath = g_strdup_printf("%s.tmp", lpath);
+	cdir = g_build_filename(g_get_user_config_dir(), "ekg2",
+			config_profile, NULL);
+	path = g_build_filename(cdir, g_string_free(fname, FALSE), NULL);
+
+	debug_function("config_open(), path=%s\n", path);
+	f = config_open_real(path, mode);
+
+	if (G_UNLIKELY(mode[0] == 'w' && !f)) {
+		if (G_LIKELY(!g_mkdir_with_parents(cdir, 0700)))
+			f = config_open_real(path, mode);
 	}
 
-	debug_function("config_open(): lpath=%s\n", lpath);
-	f = config_open_real(lpath, mode);
-	g_free(lpath);
+	if (mode[0] == 'w' && f) {
+		g_assert(!writing_config_file);
+		writing_config_file = path;
+	} else
+		g_free(path);
+	g_free(cdir);
+
+	if (G_UNLIKELY(!f && mode[0] == 'r')) /* fallback to old config */
+		f = config_open_real(prepare_path(basename, 0), mode);
+
+	g_free(basename);
 	return f;
 }
 
@@ -295,26 +321,22 @@ gboolean config_close(GIOChannel *f) {
 	g_io_channel_unref(f);
 
 	if (writeable) {
-		gchar *src;
-
-#if 0 /* re-enable when got rid of old config_open() */
+		gchar *dst;
 		g_assert(writing_config_file);
-#else
-		if (!writing_config_file)
-			return TRUE;
-#endif
 
-		src = g_strdup_printf("%s.tmp", writing_config_file);
+		dst = g_strndup(writing_config_file,
+				strlen(writing_config_file) - 4);
+
 		if (ret) {
 			/* XXX: use GFile */
-			ret = !g_rename(src, writing_config_file);
+			ret = !g_rename(writing_config_file, dst);
 			if (!ret)
 				debug_error("config_close(), failed renaming %s -> %s, config not saved.",
-						src, writing_config_file);
+						writing_config_file, dst);
 		} else /* flush/write failed */
-			g_unlink(src);
+			g_unlink(writing_config_file);
 
-		g_free(src);
+		g_free(dst);
 		g_free(writing_config_file);
 		writing_config_file = NULL;
 	}
