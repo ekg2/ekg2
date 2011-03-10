@@ -145,7 +145,7 @@ gboolean ekg_fprintf(GOutputStream *f, const gchar *format, ...) {
 
 static GObject *config_open_real(const gchar *path, const gchar *mode) {
 	GFile *f;
-	GObject *stream;
+	GObject *instream, *stream;
 	GError *err = NULL;
 	const gchar modeline_prefix[] = "# vim:fenc=";
 
@@ -153,92 +153,98 @@ static GObject *config_open_real(const gchar *path, const gchar *mode) {
 
 	switch (mode[0]) {
 		case 'r':
-			stream = G_OBJECT(g_file_read(f, NULL, &err));
+			instream = G_OBJECT(g_file_read(f, NULL, &err));
 			break;
 		case 'w':
-			stream = G_OBJECT(g_file_replace(f, NULL, TRUE, G_FILE_CREATE_PRIVATE, NULL, &err));
+			instream = G_OBJECT(g_file_replace(f, NULL, TRUE, G_FILE_CREATE_PRIVATE, NULL, &err));
 			break;
 		default:
 			g_assert_not_reached();
 	}
 
-	g_object_unref(f);
-
-	if (!stream) {
+	if (!instream) {
 		if (err->code != G_IO_ERROR_NOT_FOUND)
 			debug_error("config_open(%s, %s) failed: %s\n", path, mode, err->message);
 		g_error_free(err);
+		g_object_unref(f);
 		return NULL;
 	}
 
 	switch (mode[0]) {
 		case 'r':
-			stream = G_OBJECT(g_data_input_stream_new(G_INPUT_STREAM(stream)));
+			stream = G_OBJECT(g_data_input_stream_new(G_INPUT_STREAM(instream)));
+
+			{
+				const gchar *wanted_enc, *buf;
+				GCharsetConverter *conv;
+
+				buf = read_line(G_DATA_INPUT_STREAM(stream));
+				if (!buf) {
+					/* Some error occured, or EOF
+					 * in either case, there's no need to read that file anyway */
+					g_object_unref(stream);
+					g_object_unref(f);
+					return NULL;
+				}
+
+				/* XXX: support more modeline formats? */
+				if (g_str_has_prefix(buf, modeline_prefix))
+					wanted_enc = &buf[sizeof(modeline_prefix) - 1]; /* 1 for null terminator */
+				else
+					wanted_enc = console_charset; /* fallback to locale */
+
+				g_filter_input_stream_set_close_base_stream(G_FILTER_INPUT_STREAM(stream), FALSE);
+				g_object_unref(stream);
+
+				if (!g_seekable_can_seek(G_SEEKABLE(instream)) ||
+						!g_seekable_seek(G_SEEKABLE(instream), 0, G_SEEK_SET, NULL, &err)) {
+
+					/* ok, screwed it */
+					if (err)
+						debug_error("config_open(): rewind failed: %s\n", err->message);
+					g_error_free(err);
+					g_object_unref(instream);
+
+					/* let's try reopening */
+					err = NULL;
+					instream = G_OBJECT(g_file_read(f, NULL, &err));
+					if (!instream) {
+						debug_error("config_open(): reopen failed %s\n", err->message);
+						g_error_free(err);
+						g_object_unref(f);
+						return NULL;
+					}
+				}
+
+				conv = g_charset_converter_new("UTF-8", wanted_enc, &err);
+				if (!conv) {
+					debug_error("config_open(): failed to setup recoding from %s: %s\n",
+							wanted_enc, err ? err->message : "(unknown error)");
+					g_error_free(err);
+					stream = instream;
+					/* fallback to utf8 */
+				} else {
+					g_charset_converter_set_use_fallback(conv, TRUE);
+					stream = G_OBJECT(g_converter_input_stream_new(
+								G_INPUT_STREAM(instream), G_CONVERTER(conv)));
+				}
+				stream = G_OBJECT(g_data_input_stream_new(G_INPUT_STREAM(stream)));
+			}
 			break;
 		case 'w':
-			stream = G_OBJECT(g_data_output_stream_new(G_OUTPUT_STREAM(stream)));
+			stream = G_OBJECT(g_data_output_stream_new(G_OUTPUT_STREAM(instream)));
 			
 			/* we're always writing config in utf8 */
 			if (!ekg_fprintf(G_OUTPUT_STREAM(stream), "%s%s\n", modeline_prefix, "UTF-8")) {
 				g_object_unref(stream);
+				g_object_unref(f);
 				return NULL;
 			}
 			break;
 		default:
 			g_assert_not_reached();
 	}
-
-#if 0
-	if (mode[0] == 'r') {
-		const gchar *wanted_enc, *buf;
-
-		/* glib is a long runner
-		 * if file is not utf8-encoded, we can end up with ILSEQ
-		 * even if invalid seq is not in the first line */
-		if (g_io_channel_set_encoding(f, NULL, &err) != G_IO_STATUS_NORMAL) {
-			debug_error("config_open(%s, %s) failed to unset encoding: %s\n", path, mode, err->message);
-			g_error_free(err);
-			err = NULL;
-		}
-
-		buf = read_line(f);
-		if (!buf) {
-			/* Some error occured, or EOF
-			 * in either case, there's no need to read that file anyway */
-			g_io_channel_unref(f);
-			return NULL;
-		}
-
-		/* XXX: support more modeline formats? */
-		if (g_str_has_prefix(buf, modeline_prefix))
-			wanted_enc = &buf[sizeof(modeline_prefix) - 1]; /* 1 for null terminator */
-		else
-			wanted_enc = console_charset; /* fallback to locale */
-
-		if (g_io_channel_seek_position(f, 0, G_SEEK_SET, &err) != G_IO_STATUS_NORMAL) {
-			if (err)
-				debug_error("config_open(): rewind failed: %s\n", err->message);
-			/* ok, screwed it */
-			g_error_free(err);
-			g_io_channel_unref(f);
-
-			err = NULL;
-			/* let's try reopening */
-			f = g_io_channel_new_file(path, mode, &err);
-			if (!f) {
-				debug_error("config_open(): reopen failed %s\n", err->message);
-				g_error_free(err);
-				return NULL;
-			}
-		}
-
-		if (g_io_channel_set_encoding(f, wanted_enc, &err) != G_IO_STATUS_NORMAL) {
-			debug_error("config_open(%s, %s) failed to set encoding: %s\n", path, mode, err->message);
-			g_error_free(err);
-			/* well, try the default one (utf8) anyway... */
-		}
-	}
-#endif
+	g_object_unref(f);
 
 	return stream;
 }
