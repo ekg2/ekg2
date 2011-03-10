@@ -1543,7 +1543,7 @@ static char *random_line(const char *path) {
 	return NULL;
 }
 
-/* XXX: need to validate input */
+/* XXX: ekg_fix_utf8() here */
 char *read_file_utf(FILE *f, int alloc) {
 	static char buf[1024];
 	static char *reres = NULL;
@@ -1622,7 +1622,6 @@ char *read_file(FILE *f, int alloc) {
 	if (alloc == -1)
 		return NULL;
 
-	/* XXX: use encoded GIOChannel instead */
 	res = ekg_recode_from_locale(buf);
 	if (!alloc)
 		tmp = res;
@@ -1650,7 +1649,8 @@ gchar *read_line(GDataInputStream *f) {
 	if (!buf && err) {
 		debug_error("read_line() failed: %s\n", err->message);
 		g_error_free(err);
-	}
+	} else if (buf)
+		ekg_fix_utf8(buf);
 
 	return buf;
 }
