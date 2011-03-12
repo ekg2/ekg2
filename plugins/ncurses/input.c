@@ -467,36 +467,43 @@ void ncurses_redraw_input(unsigned int ch) {
 	werase(input);
 	wmove(input, 0, 0);
 	if (!ncurses_lines) {
+		gboolean ok = FALSE;
 		gchar *tmp = ekg_recode_to_locale(format_find(
 					ncurses_current->prompt ? "ncurses_prompt_query" : "ncurses_prompt_none"));
 		gchar *tmp2 = format_string(tmp, "\037"); /* unit separator */
 		fstring_t *prompt_f = fstring_new(tmp2);
-		gchar *s = prompt_f->str, *s2;
-		fstr_attr_t *a = prompt_f->attr, *a2;
+		gchar *s = prompt_f->str;
+		fstr_attr_t *a = prompt_f->attr;
 		g_free(tmp2);
 		g_free(tmp);
 
 		if (ncurses_current->prompt) {
-				/* find our \037 */
-			for (s2 = s, a2 = a; *s2 != '\037'; s2++, a2++)
+			gchar *s2;
+			fstr_attr_t *a2;
+			/* find our \037 */
+			for (s2 = s, a2 = a; *s2 && *s2 != '\037'; s2++, a2++)
 				g_assert(*s2);
-			*s2 = '\0'; /* and split the original string using it */
-		}
+			if (*s2) {
+				ok = TRUE;
+				*s2 = '\0'; /* and split the original string using it */
 
-		ncurses_fstring_print(input, s, a, -1);
+				ncurses_fstring_print(input, s, a, -1);
 		
-		if (ncurses_current->prompt) {
-			if (!ncurses_simple_print(input, ncurses_current->prompt,
+				if (!ncurses_simple_print(input, ncurses_current->prompt,
 						*a2, input->_maxx / 4)) {
 
 					/* don't change colors or anything
 					 * just disable bold to distinguish */
-				wattroff(input, A_BOLD); /* XXX? */
-				waddstr(input, ncurses_hellip);
+					wattroff(input, A_BOLD); /* XXX? */
+					waddstr(input, ncurses_hellip);
+				}
+				s2++, a2++;
+				ncurses_fstring_print(input, s2, a2, -1);
 			}
-			s2++, a2++;
-			ncurses_fstring_print(input, s2, a2, -1);
 		}
+		if (!ok)
+			ncurses_fstring_print(input, s, a, -1);
+
 		fstring_free(prompt_f);
 	}
 	getyx(input, y, x);
