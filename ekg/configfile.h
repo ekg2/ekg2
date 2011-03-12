@@ -34,14 +34,14 @@ extern "C" {
 
 void config_postread();
 gboolean ekg_fprintf(GOutputStream *f, const gchar *format, ...)
-	G_GNUC_PRINTF(2, 3) G_GNUC_WARN_UNUSED_RESULT;
+	G_GNUC_PRINTF(2, 3);
 GObject *config_open(const gchar *path_format, const gchar *mode, ...)
 	G_GNUC_PRINTF(1, 3);
+gboolean config_commit(void);
 
 int config_read(const gchar *plugin_name);
 int config_read_plugins();
-int config_read_later(const char *filename);
-int config_write();
+void config_write();
 int config_write_partly(plugin_t *plugin, const char **vars);
 void config_write_crash();
 void debug_write_crash();

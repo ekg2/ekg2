@@ -543,7 +543,10 @@ static TIMER(auto_save_timer) {
 
 	debug("autosaving userlist and config.\n");
 
-	if (!config_write(NULL) && !session_write()) {
+	config_write();
+	session_write();
+
+	if (config_commit()) {
 		config_changed = 0;
 		ekg2_reason_changed = 0;
 		print("autosaved");

@@ -436,12 +436,12 @@ int script_variables_read() {
 	return 0;
 }
 
-int script_variables_free(int free) {
+void script_variables_free(int free) {
 	GOutputStream *f = G_OUTPUT_STREAM(config_open("scripts-var", "w"));
 	list_t l;
 	
 	if (!f && !free) 
-		return -1;
+		return;
 
 	for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
@@ -455,16 +455,14 @@ int script_variables_free(int free) {
 			xfree(v);
 		}
 	}
-	if (f)
-		g_object_unref(f);
-	
+
 	if (free)
 		list_destroy(script_vars, 0);
-	return 0;
+	return;
 }
 
-int script_variables_write() {
-	return script_variables_free(0);
+void script_variables_write() {
+	script_variables_free(0);
 }
 
 script_command_t *script_command_find(const char *name)

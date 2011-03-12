@@ -351,6 +351,7 @@ last_err_message, config_dir, (int) getpid(), config_dir, (int) getpid(), config
 	config_write_crash();
 	userlist_write_crash();
 	debug_write_crash();
+	config_commit();
 
 	raise(SIGABRT);
 }
@@ -403,6 +404,7 @@ config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid
 	config_write_crash();
 	userlist_write_crash();
 	debug_write_crash();
+	config_commit();
 
 	raise(SIGSEGV);			/* niech zrzuci core */
 }
@@ -986,13 +988,22 @@ void ekg_exit()
 			if (line[xstrlen(line) - 1] == '\n')
 				line[xstrlen(line) - 1] = 0;
 			if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
-				if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write())
+				config_write();
+				session_write();
+				metacontact_write();
+				script_variables_write();
+				if (!config_commit())
 					printf(_("Error while saving.\n"));
 			}
 		} else
 			printf("\n");
 	} else if (config_save_quit == 2) {
-		if (config_write(NULL) || session_write() || metacontact_write() || script_variables_write())
+		config_write();
+		session_write();
+		metacontact_write();
+		script_variables_write();
+
+		if (!config_commit())
 			printf(_("Error while saving.\n"));
 
 	} else if (config_keep_reason && ekg2_reason_changed && config_save_quit == 1) {
@@ -1004,14 +1015,16 @@ void ekg_exit()
 			if (line[xstrlen(line) - 1] == '\n')
 				line[xstrlen(line) - 1] = 0;
 			if (!xstrcasecmp(line, "tak") || !xstrcasecmp(line, "yes") || !xstrcasecmp(line, "t") || !xstrcasecmp(line, "y")) {
-				if (session_write())
+				session_write();
+				if (!config_commit())
 					printf(_("Error while saving.\n"));
 			}
 		} else
 			printf("\n");
 
 	} else if (config_keep_reason && ekg2_reason_changed && config_save_quit == 2) {
-		if (session_write())
+		session_write();
+		if (!config_commit())
 			printf(_("Error while saving.\n"));
 	}
 	config_exit_exec = NULL; /* avoid freeing it */

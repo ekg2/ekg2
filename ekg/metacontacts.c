@@ -523,7 +523,7 @@ void metacontact_init()
  * 
  * it writes info about metacontacts to file 
  */
-int metacontact_write()
+void metacontact_write()
 {
 	metacontact_t *m;
 	GOutputStream *f = NULL;
@@ -531,7 +531,7 @@ int metacontact_write()
 	f = G_OUTPUT_STREAM(config_open("metacontacts", "w"));
 
 	if (!f)
-		return -1;
+		return;
 
 	for (m = metacontacts; m; m = m->next) {
 		metacontact_item_t *i;
@@ -540,9 +540,6 @@ int metacontact_write()
 		for (i = m->metacontact_items; i; i = i->next)
 			ekg_fprintf(f, "%s %s %d\n", i->s_uid, i->name, i->prio);
 	}
-	g_object_unref(f);
-
-	return 0;
 }
 
 /* 

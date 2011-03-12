@@ -189,16 +189,12 @@ int userlist_read(session_t *session) {
  *		-2 if we fail to create/open userlist file in rw mode
  */
 
-int userlist_write(session_t *session) {
+void userlist_write(session_t *session) {
 	GOutputStream *f;
 	userlist_t *ul;
 
-	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
-		return -1;
-
-	if (!(f = G_OUTPUT_STREAM(config_open("%s-userlist", "w", session->uid)))) {
-		return -2;
-	}
+	if (!(f = G_OUTPUT_STREAM(config_open("%s-userlist", "w", session->uid))))
+		return;
 
 	/* userlist_dump() */
 	for (ul = session->userlist; ul; ul = ul->next) {
@@ -229,9 +225,6 @@ int userlist_write(session_t *session) {
 		xfree(line);
 		array_free_count(entry, 7);
 	}
-
-	g_object_unref(f);
-	return 0;
 }
 
 /**

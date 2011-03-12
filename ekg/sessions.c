@@ -874,14 +874,10 @@ int session_read(const gchar *plugin_name) {
  *
  * writes information about sessions in files
  */
-int session_write()
+void session_write()
 {
 	GSList *pl;
 	GOutputStream *f = NULL;
-	int ret = 0;
-
-	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 */
-		return -1;
 
 	for (pl = plugins; pl; pl = pl->next) {
 		const plugin_t *p = pl->data;
@@ -889,10 +885,8 @@ int session_write()
 
 		if (p->pclass != PLUGIN_PROTOCOL) continue; /* skip no protocol plugins */
 
-		if (!(f = G_OUTPUT_STREAM(config_open("sessions-%s", "w", p->name)))) {
-			ret = -1;
-			continue;
-		}
+		if (!(f = G_OUTPUT_STREAM(config_open("sessions-%s", "w", p->name))))
+			break;
 
 		for (s = sessions; s; s = s->next) {
 			int i;
@@ -924,7 +918,6 @@ int session_write()
 			}
 			/* We don't save _local_ variables */
 		}
-		g_object_unref(f);
 
 		for (s = sessions; s; s = s->next) {
 			if (s->plugin != p)
@@ -932,7 +925,6 @@ int session_write()
 			userlist_write(s);
 		}
 	}
-	return ret;
 }
 
 /*

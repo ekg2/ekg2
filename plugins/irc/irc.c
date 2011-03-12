@@ -217,6 +217,7 @@ static QUERY(irc_session_deinit) {
 		return 1;
 
 	userlist_write(s);
+	config_commit();
 
 	s->priv = NULL;
 

@@ -1609,12 +1609,7 @@ list_user:
 }
 
 static COMMAND(cmd_save) {
-	int ret = 0;
 	/* XXX retime autosave timer? */
-
-/* Changes 14 wrze 2006 (dj) */
-/* We try to save everything, but if smth not pass, try others */
-/* makes it executable even if we don't have sessions. */
 
 	/* set windows layout */
 	windows_save();
@@ -1624,20 +1619,21 @@ static COMMAND(cmd_save) {
 		xfree(config_session_default); config_session_default = xstrdup(session_current->uid);
 	}
 
-	if (session_write())		ret = -1;
-	if (config_write(params[0]))	ret = -1;
-	if (metacontact_write())	ret = -1;
-	if (script_variables_write())	ret = -1;
+	session_write();
+	config_write();
+	metacontact_write();
+	script_variables_write();
 
-	if (!ret) {
+	if (config_commit()) {
 		printq("saved");
 		config_changed = 0;
 		ekg2_reason_changed = 0;
+		return 0;
 	} else {
 		printq("error_saving");
+		return -1;
 	}
-
-	return ret;
+	g_assert_not_reached();
 }
 
 static COMMAND(cmd_set)

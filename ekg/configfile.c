@@ -106,6 +106,9 @@ void config_postread()
 	query_emit(NULL, "config-postinit");
 }
 
+static GPtrArray *config_openfiles = NULL;
+static GCancellable *config_cancellable = NULL;
+
 /**
  * ekg_fprintf()
  *
@@ -134,9 +137,21 @@ gboolean ekg_fprintf(GOutputStream *f, const gchar *format, ...) {
 	out = g_output_stream_write(f, buf->str, buf->len, NULL, &err);
 
 	if (out < buf->len) {
+		gpointer *p;
+
 		debug_error("ekg_fprintf() failed (wrote %d out of %d): %s\n",
 				out, buf->len, err ? err->message : "(no error?!)");
 		g_error_free(err);
+
+		if (config_openfiles) {
+			for (p = &config_openfiles->pdata[0];
+					p < &config_openfiles->pdata[config_openfiles->len];
+					p++) {
+				if (*p == f)
+					g_cancellable_cancel(config_cancellable);
+			}
+		}
+
 		return FALSE;
 	}
 
@@ -306,7 +321,51 @@ GObject *config_open(const gchar *path_format, const gchar *mode, ...) {
 		f = config_open_real(prepare_path(basename, 0), mode);
 
 	g_free(basename);
+
+	if (mode[0] == 'w') {
+		if (!config_cancellable) {
+			config_cancellable = g_cancellable_new();
+			g_assert(!config_openfiles);
+			config_openfiles = g_ptr_array_new();
+		}
+
+		if (f)
+			g_ptr_array_add(config_openfiles, f);
+		else
+			g_cancellable_cancel(config_cancellable);
+	}
+
 	return f;
+}
+
+/**
+ * config_commit()
+ *
+ * Close all configuration files open for writing, and commit changes
+ * to them if written successfully. Otherwise, just leave old files
+ * intact.
+ *
+ * @return TRUE if new config was saved, FALSE otherwise.
+ */
+gboolean config_commit(void) {
+	gpointer *p;
+	gboolean ret = TRUE;
+
+	g_assert(config_cancellable);
+
+	for (p = &config_openfiles->pdata[0];
+			p < &config_openfiles->pdata[config_openfiles->len];
+			p++) {
+		ret &= g_output_stream_close(G_OUTPUT_STREAM(*p), config_cancellable, NULL);
+		g_object_unref(*p);
+	}
+
+	g_ptr_array_free(config_openfiles, FALSE);
+	g_object_unref(config_cancellable);
+	config_openfiles = NULL;
+	config_cancellable = NULL;
+
+	return ret;
 }
 
 int config_read_plugins()
@@ -613,32 +672,25 @@ static void config_write_main(GOutputStream *f)
  * config_write()
  *
  * zapisuje aktualn± konfiguracjê do pliku ~/.ekg2/config lub podanego.
- *
- * 0/-1
  */
-int config_write()
+void config_write()
 {
 	GOutputStream *f;
 	GSList *pl;
 
-	if (!prepare_path(NULL, 1))	/* try to create ~/.ekg2 dir */
-		return -1;
-
 	/* first of all we are saving plugins */
 	if (!(f = G_OUTPUT_STREAM(config_open("plugins", "w"))))
-		return -1;
+		return;
 	
 	config_write_plugins(f);
-	g_object_unref(f);
 
 	/* now we are saving global variables and settings
 	 * timers, bindings etc. */
 
 	if (!(f = G_OUTPUT_STREAM(config_open("config", "w"))))
-		return -1;
+		return;
 
 	config_write_main(f);
-	g_object_unref(f);
 
 	/* now plugins variables */
 	for (pl = plugins; pl; pl = pl->next) {
@@ -646,7 +698,7 @@ int config_write()
 		GSList *vl;
 
 		if (!(f = G_OUTPUT_STREAM(config_open("config-%s", "w", p->name))))
-			return -1;
+			return;
 
 		for (vl = variables; vl; vl = vl->next) {
 			variable_t *v = vl->data;
@@ -654,11 +706,7 @@ int config_write()
 				config_write_variable(f, v);
 			}
 		}	
-
-		g_object_unref(f);
 	}
-
-	return 0;
 }
 
 /*
@@ -668,8 +716,6 @@ int config_write()
  *  
  *  - plugin - zmienne w vars, maja byc z tego pluginu, lub NULL gdy to sa zmienne z core.
  *  - vars - tablica z nazwami zmiennych do zapisania.
- * 
- * 0/-1
  */
 /* BIG BUGNOTE:
  *	Ta funkcja jest zle zportowana z ekg1, zle napisana, wolna, etc..
@@ -772,7 +818,6 @@ pass:
 	xfree(wrote);
 	
 	g_object_unref(fi);
-	g_object_unref(fo);
 	
 	return 0;
 }
@@ -796,15 +841,11 @@ void config_write_crash()
 
 	config_write_plugins(f);
 
-	g_object_unref(f);
-
 	/* then main part of config */
 	if (!(f = G_OUTPUT_STREAM(config_open("crash-%d-plugin", "w", (int) getpid()))))
 		return;
 
 	config_write_main(f);
-
-	g_object_unref(f);
 
 	/* now plugins variables */
 	for (pl = plugins; pl; pl = pl->next) {
@@ -820,8 +861,6 @@ void config_write_crash()
 				config_write_variable(f, v);
 			}
 		}
-
-		g_object_unref(f);
 	}
 }
 
@@ -842,8 +881,6 @@ void debug_write_crash()
 
 	for (b = buffer_debug.data; b; b = b->next)
 		ekg_fprintf(f, "%s\n", b->line);
-	
-	g_object_unref(f);
 }
 
 /*

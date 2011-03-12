@@ -94,6 +94,7 @@ static QUERY(nntp_session_deinit) {
 		return 1;
 
 	userlist_write(s);
+	config_commit();
 	s->priv			= NULL;
 	nntp_protocol_deinit(j->priv_data);
 
