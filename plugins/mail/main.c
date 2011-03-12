@@ -373,6 +373,7 @@ static int check_mail_mbox()
 	close(fd[1]);
 	fcntl(fd[0], F_SETFL, O_NONBLOCK);
 
+	ekg_child_add(&mail_plugin, "mail", pid, NULL, NULL, NULL, NULL);
 	watch_add_line(&mail_plugin, fd[0], WATCH_READ_LINE, mail_handler, NULL);
 	/* XXX czy tutaj potrzebny jest timeout? */
 	return 0;
@@ -468,6 +469,7 @@ static int check_mail_maildir()
 	close(fd[1]);
 	fcntl(fd[0], F_SETFL, O_NONBLOCK);
 
+	ekg_child_add(&mail_plugin, "mail", pid, NULL, NULL, NULL, NULL);
 	watch_add_line(&mail_plugin, fd[0], WATCH_READ_LINE, mail_handler, NULL);
 	/* XXX timeout */
 
