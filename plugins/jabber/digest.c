@@ -377,16 +377,16 @@ static char *base16_encode(const unsigned char *data) {
 }
 
 /**
- * jabber_challange_digest()
+ * jabber_challenge_digest()
  *
- * Return base16 encoded hash for SASL MD5 CHALLANGE
+ * Return base16 encoded hash for SASL MD5 CHALLENGE
  *
  * @todo MD5Update() on NULL params will fail. XXX, no idea what to do.
  *
  * @return <b>static</b> buffer with 32 digit BASE16 HASH + NUL char
  */
 
-char *jabber_challange_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm) {
+char *jabber_challenge_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm) {
 	EKG2_MD5_CTX ctx;
 	unsigned char digest[20];
 

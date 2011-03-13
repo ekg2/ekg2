@@ -200,7 +200,7 @@ const char *jabber_iq_send(session_t *s, const char *prefix, jabber_iq_type_t iq
 char *jabber_digest(const char *sid, const char *password, int istlen);
 char *jabber_sha1_generic(char *buf, int len);
 char *jabber_dcc_digest(char *sid, char *initiator, char *target);
-char *jabber_challange_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm);
+char *jabber_challenge_digest(const char *sid, const char *password, const char *nonce, const char *cnonce, const char *xmpp_temp, const char *realm);
 void jabber_iq_auth_send(session_t *s, const char *username, const char *passwd, const char *stream_id);
 
 char *jabber_attr(char **atts, const char *att);

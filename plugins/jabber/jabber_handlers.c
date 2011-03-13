@@ -482,7 +482,7 @@ JABBER_HANDLER(jabber_handle_challenge) {
 
 	/* decode && parse challenge data */
 	data = base64_decode(n->data);
-	debug_error("[jabber] PARSING challange (%s): \n", data);
+	debug_error("[jabber] PARSING challenge (%s): \n", data);
 	arr = array_make(data, "=,", 0, 1, 1);	/* maybe we need to change/create another one parser... i'm not sure. please notify me, 
 						   I'm lazy, sorry */
 	/* for chrome.pl and jabber.autocom.pl it works */
@@ -543,12 +543,12 @@ JABBER_HANDLER(jabber_handle_challenge) {
 		cnonce = base64_encode(tmp_cnonce, sizeof(tmp_cnonce));
 
 		xmpp_temp	= saprintf(":xmpp/%s", realm);
-		auth_resp	= jabber_challange_digest(username, password, nonce, cnonce, xmpp_temp, realm);
+		auth_resp	= jabber_challenge_digest(username, password, nonce, cnonce, xmpp_temp, realm);
 		session_set(s, "__sasl_excepted", auth_resp);
 		xfree(xmpp_temp);
 
 		xmpp_temp	= saprintf("AUTHENTICATE:xmpp/%s", realm);
-		auth_resp	= jabber_challange_digest(username, password, nonce, cnonce, xmpp_temp, realm);
+		auth_resp	= jabber_challenge_digest(username, password, nonce, cnonce, xmpp_temp, realm);
 		xfree(xmpp_temp);
 
 		string_append(str, "username=\"");	string_append(str, username);	string_append_c(str, '\"');
