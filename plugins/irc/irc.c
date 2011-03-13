@@ -454,7 +454,6 @@ out_recodes_t *irc_find_out_recode(list_t rl, char *encname) {
 }
 
 static char *irc_convert_out(irc_private_t *j, char *recipient, const char *line) {
-	char *recoded;
 
 	if ((j->recoded_channels)) {
 		/* channel/nick recode */
@@ -464,12 +463,8 @@ static char *irc_convert_out(irc_private_t *j, char *recipient, const char *line
 			return ekg_recode_to(enc, line);
 	}
 
-	recoded = NULL;
 	/* default recode */
-	if (j->conv)
-		recoded = ekg_recode_to(j->conv, line);
-
-	return recoded;
+	return j->conv ? ekg_recode_to(j->conv, line) : xstrdup(line);
 }
 
 static void irc_changed_recode_list(session_t *s, const char *var) {
