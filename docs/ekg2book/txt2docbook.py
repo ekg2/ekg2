@@ -1,5 +1,5 @@
 #!/usr/bin/python
-# -*- encoding: iso-8859-2 -*-
+# -*- encoding: utf-8 -*-
 
 import re
 import sys
@@ -10,12 +10,12 @@ msg_vars = "Zmienne"
 msg_commands = "Polecenia"
 str_type = "typ"
 msg_type = "Typ"
-str_def_val = "domy¶lna warto¶æ"
-msg_def_val = "Domy¶lna warto¶æ"
+str_def_val = "domyÅ›lna wartoÅ›Ä‡"
+msg_def_val = "DomyÅ›lna wartoÅ›Ä‡"
 str_params = "parametry"
 msg_params = "Parametry"
 str_short_desc = "krotki opis"
-msg_short_desc = "Krótki opis"
+msg_short_desc = "KrÃ³tki opis"
 
 debug = True
 
