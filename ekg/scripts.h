@@ -205,8 +205,8 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 script_watch_t *script_watch_add(scriptlang_t *s, script_t *scr, int fd, int type, void *handler, void *data);
 script_plugin_t *script_plugin_init(scriptlang_t *s, script_t *scr, char *name, plugin_class_t pclass, void *handler);
 
-int script_variables_free(int free);
-int script_variables_write();
+void script_variables_free(int free);
+void script_variables_write();
 #endif
 
 #define SCRIPT_UNBIND_HANDLER(type, args...) \

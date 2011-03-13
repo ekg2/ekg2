@@ -517,7 +517,7 @@ void variables_destroy(void) {
  * name - name of the variable
  */
 void variable_help(const char *name) {
-	GIOChannel *f; 
+	GDataInputStream *f; 
 	gchar *type = NULL, *def = NULL, *tmp;
 	const gchar *line, *seeking_name;
 	string_t s;
@@ -559,7 +559,7 @@ void variable_help(const char *name) {
 	}
 
 	if (!found) {
-		g_io_channel_unref(f);
+		g_object_unref(f);
 		print("help_set_var_not_found", name);
 		return;
 	}
@@ -613,7 +613,7 @@ void variable_help(const char *name) {
 	if (format_exists("help_set_footer"))
 		print("help_set_footer", name);
 
-	g_io_channel_unref(f);
+	g_object_unref(f);
 }
 
 /*

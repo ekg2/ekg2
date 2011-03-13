@@ -152,7 +152,6 @@ watch_t *ekg_resolver4(plugin_t *plugin, const char *server, watcher_handler_fun
 				if ((nexthost = xstrchr(hostname, ','))) *nexthost = '\0';
 				sport = ekg_resolver_split(hostname, port);
 
-#if GLIB_CHECK_VERSION(2, 22, 0)
 				if (g_hostname_is_non_ascii(hostname)) {
 					gchar *tmp = g_hostname_to_ascii(hostname);
 
@@ -163,7 +162,6 @@ watch_t *ekg_resolver4(plugin_t *plugin, const char *server, watcher_handler_fun
 					} else
 						debug_error("g_hostname_to_ascii(%s) failed\n", hostname);
 				}
-#endif
 
 				srv_resolver (&gim_host_list, hostname, proto_port, sport, 0);
 				basic_resolver (&gim_host_list, hostname, sport);
@@ -545,7 +543,6 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 
 		close(fd[0]);
 
-#if GLIB_CHECK_VERSION(2, 22, 0)
 		if (g_hostname_is_non_ascii(myserver)) {
 			gchar *tmp = g_hostname_to_ascii(myserver);
 
@@ -556,7 +553,6 @@ watch_t *ekg_resolver2(plugin_t *plugin, const char *server, watcher_handler_fun
 			} else
 				debug_error("g_hostname_to_ascii(%s) failed\n", myserver);
 		}
-#endif
 		if ((a.s_addr = inet_addr(myserver)) == INADDR_NONE) {
 			struct hostent *he = gethostbyname(myserver);
 

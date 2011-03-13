@@ -87,9 +87,9 @@ static int emoticon_add(const char *name, const char *value) {
  */
 int emoticon_read() {
 	char *buf;
-	GIOChannel *f;
+	GDataInputStream *f;
 
-	if (!(f = config_open("emoticons", "r")))
+	if (!(f = G_DATA_INPUT_STREAM(config_open("emoticons", "r"))))
 		return -1;
 
 	while ((buf = read_line(f))) {
@@ -106,7 +106,7 @@ int emoticon_read() {
 		g_strfreev(emot);
 	}
 	
-	config_close(f);
+	g_object_unref(f);
 	
 	return 0;
 }

@@ -50,7 +50,7 @@ metacontact_item_t *metacontact_find_prio(metacontact_t *m);
 void metacontact_init();
 void metacontacts_destroy();
 
-int metacontact_write();
+void metacontact_write();
 int metacontact_read();
 
 #endif

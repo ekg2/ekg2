@@ -543,7 +543,10 @@ static TIMER(auto_save_timer) {
 
 	debug("autosaving userlist and config.\n");
 
-	if (!config_write(NULL) && !session_write()) {
+	config_write();
+	session_write();
+
+	if (config_commit()) {
 		config_changed = 0;
 		ekg2_reason_changed = 0;
 		print("autosaved");
@@ -1066,11 +1069,10 @@ int conference_rename(const char *oldname, const char *newname, int quiet)
  * @param name - help file basename.
  * @param plugin - plugin name or NULL if core help is requested.
  *
- * @return Open GIOChannel with utf8 encoding or NULL if no file was
- * found. The channel should be unreference using g_io_channel_unref()
- * when no longer used.
+ * @return Open GDataInputStream with utf8 encoding or NULL if no file was
+ * found. It should be unreferenced with g_object_unref(). 
  */
-GIOChannel *help_open(const gchar *name, const gchar *plugin) {
+GDataInputStream *help_open(const gchar *name, const gchar *plugin) {
 	const gchar* const *p;
 
 	gchar *base = plugin
@@ -1082,17 +1084,19 @@ GIOChannel *help_open(const gchar *name, const gchar *plugin) {
 
 	for (p = g_get_language_names(); *p; p++) {
 		GError *err = NULL;
-		GIOChannel *ret;
+		GFile *f;
+		GFileInputStream *ret;
 
 		if (G_UNLIKELY(!strcmp(*p, "C")))
 			g_string_append(fnbuf, "-en.txt");
 		else
 			g_string_append_printf(fnbuf, "-%s.txt", *p);
-		ret = g_io_channel_new_file(fnbuf->str, "r", &err);
+		f = g_file_new_for_path(fnbuf->str);
+		ret = g_file_read(f, NULL, &err);
 
 		if (ret) {
 			g_string_free(fnbuf, TRUE);
-			return ret;
+			return g_data_input_stream_new(G_INPUT_STREAM(ret));
 		} else if (err->code != G_FILE_ERROR_NOENT)
 			debug_error("help_path() failed to open %s with error: %s\n",
 					fnbuf->str, err->message);
@@ -1542,7 +1546,7 @@ static char *random_line(const char *path) {
 	return NULL;
 }
 
-/* XXX: need to validate input */
+/* XXX: ekg_fix_utf8() here */
 char *read_file_utf(FILE *f, int alloc) {
 	static char buf[1024];
 	static char *reres = NULL;
@@ -1621,7 +1625,6 @@ char *read_file(FILE *f, int alloc) {
 	if (alloc == -1)
 		return NULL;
 
-	/* XXX: use encoded GIOChannel instead */
 	res = ekg_recode_from_locale(buf);
 	if (!alloc)
 		tmp = res;
@@ -1632,40 +1635,27 @@ char *read_file(FILE *f, int alloc) {
 /**
  * read_line()
  *
- * Read a single line from GIOChannel allocated in a static buffer.
- * Strip the line terminator.
+ * Read a single line from GDataInputStream.
  *
- * @param f - GIOChannel to read from.
+ * @param f - GDataInputStream to read from.
  *
  * @return Pointer to a static line which will be overwritten by next
  * call to read_line() or NULL on EOF or error.
- *
- * @note The GIOChannel must not be open in non-blocking mode.
  */
-gchar *read_line(GIOChannel *f) {
-	static GString *buf = NULL;
-	gsize term_pos;
+gchar *read_line(GDataInputStream *f) {
+	static gchar *buf = NULL;
 	GError *err = NULL;
 
-	/* XXX: maybe we could make a static GString? */
-	if (G_UNLIKELY(!buf))
-		buf = g_string_sized_new(120); /* seems sufficient for help files */
+	g_free(buf);
+	buf = g_data_input_stream_read_line(f, NULL, NULL, &err);
 
-	switch (g_io_channel_read_line_string(f, buf, &term_pos, &err)) {
-		case G_IO_STATUS_NORMAL:
-			g_string_truncate(buf, term_pos);
-			return buf->str;
-		case G_IO_STATUS_ERROR:
-			debug_error("read_line() failed: %s\n", err->message);
-			g_error_free(err);
-			/* fall through */
-		case G_IO_STATUS_EOF:
-			return NULL;
-		case G_IO_STATUS_AGAIN:
-			g_assert_not_reached();
-	}
+	if (!buf && err) {
+		debug_error("read_line() failed: %s\n", err->message);
+		g_error_free(err);
+	} else if (buf)
+		ekg_fix_utf8(buf);
 
-	g_assert_not_reached();
+	return buf;
 }
 
 /**

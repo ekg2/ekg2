@@ -52,6 +52,6 @@ COMMAND(cmd_at);
 G_GNUC_INTERNAL
 COMMAND(cmd_timer);
 G_GNUC_INTERNAL
-void timers_write(GIOChannel *f);
+void timers_write(GOutputStream *f);
 
 #endif

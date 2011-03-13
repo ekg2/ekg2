@@ -247,8 +247,8 @@ void newconferences_destroy();
 
 int ekg_hash(const char *name);
 
-GIOChannel *help_open(const gchar *name, const gchar *plugin);
-gchar *read_line(GIOChannel *f);
+GDataInputStream *help_open(const gchar *name, const gchar *plugin);
+gchar *read_line(GDataInputStream *f);
 
 int mesg_set(int what);
 char *strip_spaces(char *line);

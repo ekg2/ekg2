@@ -489,6 +489,7 @@ static QUERY(icq_session_deinit) {
 		return 1;
 #if OLD_ICQ
 	userlist_write(s);
+	config_commit();
 #endif
 	s->priv = NULL;
 

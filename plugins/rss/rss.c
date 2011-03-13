@@ -444,6 +444,7 @@ static QUERY(rss_session_deinit) {
 		return 1;
 
 	userlist_write(s);
+	config_commit();
 	s->priv			= NULL;
 	rss_protocol_deinit(j->priv_data);
 

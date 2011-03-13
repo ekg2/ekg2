@@ -417,10 +417,10 @@ int script_load(scriptlang_t *s, char *tname)
 }
 
 int script_variables_read() {
-	GIOChannel *f;
+	GDataInputStream *f;
 	char *line;
 
-	if (!(f = config_open("scripts-var", "r"))) {
+	if (!(f = G_DATA_INPUT_STREAM(config_open("scripts-var", "r")))) {
 		debug("Error opening script variable file..\n");
 		return -1;
 	}
@@ -432,16 +432,16 @@ int script_variables_read() {
 		script_var_add(NULL, NULL, line, NULL, NULL);
 	}
 
-	config_close(f);
+	g_object_unref(f);
 	return 0;
 }
 
-int script_variables_free(int free) {
-	GIOChannel *f = config_open("scripts-var", "w");
+void script_variables_free(int free) {
+	GOutputStream *f = G_OUTPUT_STREAM(config_open("scripts-var", "w"));
 	list_t l;
 	
 	if (!f && !free) 
-		return -1;
+		return;
 
 	for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
@@ -455,16 +455,14 @@ int script_variables_free(int free) {
 			xfree(v);
 		}
 	}
-	if (f)
-		config_close(f);
-	
+
 	if (free)
 		list_destroy(script_vars, 0);
-	return 0;
+	return;
 }
 
-int script_variables_write() {
-	return script_variables_free(0);
+void script_variables_write() {
+	script_variables_free(0);
 }
 
 script_command_t *script_command_find(const char *name)

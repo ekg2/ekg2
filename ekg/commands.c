@@ -992,7 +992,7 @@ static COMMAND(cmd_help)
 					(!xstrcasecmp(c->name, p) || 
 					(session && !xstrncmp(c->name, session->uid, plen) && !xstrcasecmp(c->name + plen, p))))
 			{
-				GIOChannel *f; 
+				GDataInputStream *f; 
 				gchar *params_help = NULL, *params_help_s, *brief = NULL, *tmp = NULL;
 				const gchar *line, *seeking_name;
 				string_t s;
@@ -1027,7 +1027,7 @@ static COMMAND(cmd_help)
 				}
 
 				if (!found) {
-					g_io_channel_unref(f);
+					g_object_unref(f);
 					print("help_command_not_found", c->name);
 					return -1;
 				}
@@ -1093,7 +1093,7 @@ static COMMAND(cmd_help)
 					printq("help_command_body", tmp);
 					xfree(tmp);
 				}
-				g_io_channel_unref(f);
+				g_object_unref(f);
 				string_free(s, 1);
 				return 0;
 			}
@@ -1104,7 +1104,7 @@ static COMMAND(cmd_help)
 		command_t *c = cl->data;
 		if (xisalnum(*c->name) && !(c->flags & COMMAND_ISALIAS)) {
 			char *blah = NULL;
-			GIOChannel *f;
+			GDataInputStream *f;
 			gchar *params_help, *params_help_s, *brief, *tmp = NULL;
 			const gchar *line, *seeking_name;
 			int found = 0;
@@ -1133,7 +1133,7 @@ static COMMAND(cmd_help)
 			}
 
 			if (!found) {
-				g_io_channel_unref(f);
+				g_object_unref(f);
 				continue;
 			}
 
@@ -1169,7 +1169,7 @@ static COMMAND(cmd_help)
 			xfree(brief);
 			xfree(params_help);
 
-			g_io_channel_unref(f);
+			g_object_unref(f);
 		}
 	}
 
@@ -1609,12 +1609,7 @@ list_user:
 }
 
 static COMMAND(cmd_save) {
-	int ret = 0;
 	/* XXX retime autosave timer? */
-
-/* Changes 14 wrze 2006 (dj) */
-/* We try to save everything, but if smth not pass, try others */
-/* makes it executable even if we don't have sessions. */
 
 	/* set windows layout */
 	windows_save();
@@ -1624,20 +1619,21 @@ static COMMAND(cmd_save) {
 		xfree(config_session_default); config_session_default = xstrdup(session_current->uid);
 	}
 
-	if (session_write())		ret = -1;
-	if (config_write(params[0]))	ret = -1;
-	if (metacontact_write())	ret = -1;
-	if (script_variables_write())	ret = -1;
+	session_write();
+	config_write();
+	metacontact_write();
+	script_variables_write();
 
-	if (!ret) {
+	if (config_commit()) {
 		printq("saved");
 		config_changed = 0;
 		ekg2_reason_changed = 0;
+		return 0;
 	} else {
 		printq("error_saving");
+		return -1;
 	}
-
-	return ret;
+	g_assert_not_reached();
 }
 
 static COMMAND(cmd_set)

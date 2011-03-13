@@ -275,8 +275,6 @@ int plugin_load(const char *name, int prio, int quiet)
 	printq("plugin_loaded", name);
 
 	if (!in_autoexec) {
-		const char *tmp;
-
 		in_autoexec = 1;
 		config_read(name);
 		if (pl->pclass == PLUGIN_PROTOCOL)
