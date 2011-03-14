@@ -34,9 +34,6 @@ enum { IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_S
 typedef struct _irc_private_t {
 	int fd;				/* connection's fd */
 	int autoreconnecting;		/* are we in reconnecting mode now? */
-	int resolving;			/* count of resolver threads. */
-	list_t bindlist, bindtmplist;
-	list_t connlist, conntmplist;
 
 	watch_t *recv_watch;
 	watch_t *send_watch;
@@ -124,21 +121,6 @@ typedef struct {
 	char sign[2];
 	channel_t *chanp;
 } people_chan_t;
-
-/* structure needed by resolver */
-typedef struct {
-	session_t *session;
-	char *hostname;
-	char *address;
-	int port;
-	int family;
-} connector_t;
-
-typedef struct {
-	char *session;
-	list_t *plist;
-	int isbind;
-} irc_resolver_t;
 
 #define irc_private(s) ((irc_private_t*) session_private_get(s))
 

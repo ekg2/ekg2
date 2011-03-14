@@ -117,7 +117,6 @@
  *									 */
 
 static int irc_theme_init();
-static WATCHER_LINE(irc_handle_resolver);
 static COMMAND(irc_command_disconnect);
 static int irc_really_connect(session_t *session);
 static char *irc_getchan_int(session_t *s, const char *name, int checkchan);
@@ -179,12 +178,6 @@ static LIST_FREE_ITEM(list_irc_awaylog_free, irc_awaylog_t *) {
 	xfree(data);
 }
 
-static LIST_FREE_ITEM(list_irc_resolver_free, connector_t *) {
-	xfree(data->address);
-	xfree(data->hostname);
-	xfree(data);
-}
-
 /**
  * irc_session_deinit()
  *
@@ -219,9 +212,6 @@ static QUERY(irc_session_deinit) {
 
 	xfree(j->host_ident);
 	xfree(j->nick);
-
-	LIST_DESTROY(j->bindlist, list_irc_resolver_free);
-	LIST_DESTROY(j->connlist, list_irc_resolver_free);
 
 	g_free(j->conv);
 	g_strfreev(j->auto_guess_encoding);
@@ -330,23 +320,6 @@ static QUERY(irc_setvar_default) {
 	return 0;
 }
 
-static int irc_resolver_sort(void *s1, void *s2) {
-	connector_t *sort1 = s1/*, *sort2 = s2*/;
-	int prefer_family = AF_INET;
-/*
-	if (sort1->session != sort2->session)
-		return 0;
-*/
-	if (session_int_get(sort1->session, "prefer_family") == AF_INET6)
-		prefer_family = AF_INET6;
-
-/*	debug("%d && %d -> %d\n", sort1->family, sort2->family, prefer_family); */
-
-	if (prefer_family != sort1->family)
-		return 1;
-	return 0;
-}
-
 /**
  * irc_validate_uid()
  *
@@ -376,64 +349,6 @@ static QUERY(irc_validate_uid) {
 	}
 
 	return 0;
-}
-
-static void irc_changed_resolve(session_t *s, const char *var) {
-	irc_private_t *j;
-	list_t *rlist;
-	int isbind;
-
-	list_t oldlist, tmpoldlist;
-
-	irc_resolver_t *irdata;
-
-	if (!s || !(j = s->priv))
-		return;
-
-	isbind = !xstrcmp((char *) var, "hostname");
-
-	if (isbind) {
-		oldlist		= j->bindlist;
-		tmpoldlist	= j->bindtmplist;
-
-		j->bindtmplist = j->bindlist = NULL;
-
-		rlist = &(j->bindlist);
-	} else {
-		oldlist		= j->connlist;
-		tmpoldlist	= j->conntmplist;
-
-		j->conntmplist = j->connlist = NULL;
-
-		rlist = &(j->connlist);
-	}
-
-	j->resolving++;
-
-	irdata = xmalloc(sizeof(irc_resolver_t));
-	irdata->session = xstrdup(s->uid);
-	irdata->plist	= rlist;
-	irdata->isbind = isbind;
-
-	if (!(ekg_resolver4(&irc_plugin, session_get(s, var), (watcher_handler_func_t*) irc_handle_resolver, irdata, 6667, 0, 0))) {
-		print("generic_error", strerror(errno));
-
-		j->resolving--;
-
-		xfree(irdata->session);
-		xfree(irdata);
-
-		if (isbind) {
-			j->bindlist = oldlist;
-			j->bindtmplist = tmpoldlist;
-		} else {
-			j->connlist = oldlist;
-			j->conntmplist = tmpoldlist;
-		}
-
-		return;
-	}
-	LIST_DESTROY(oldlist, list_irc_resolver_free);
 }
 
 out_recodes_t *irc_find_out_recode(list_t rl, char *encname) {
@@ -615,52 +530,6 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	xfree(__reason);
 }
 
-static WATCHER_LINE(irc_handle_resolver) {
-	irc_resolver_t *resolv = (irc_resolver_t *) data;
-	session_t *s = session_find(resolv->session);
-	irc_private_t *j;
-	char **p;
-
-	if (!s || !(j = s->priv))
-		return -1;
-
-	if (type) {
-		debug("[irc] handle_resolver for session %s type = 1 !! 0x%x resolving = %d connecting = %d\n", resolv->session, resolv->plist, j->resolving, s->connecting);
-		xfree(resolv->session);
-		xfree(resolv);
-		if (j->resolving > 0)
-			j->resolving--;
-
-		if (j->resolving == 0 && s->connecting == 2) {
-			debug("[irc] handle_resolver calling really_connect\n");
-                        irc_really_connect(s);
-		}
-		return -1;
-	}
-/*
- * %s %s %d %d hostname ip family port\n
- */
-	if (!xstrcmp(watch, "EOR")) return -1;	/* koniec resolvowania */
-	if ((p = array_make(watch, " ", 3, 1, 0)) && p[0] && p[1] && p[2]) {
-		connector_t *listelem = xmalloc(sizeof(connector_t));
-
-		listelem->session = s;
-		listelem->hostname = xstrdup(p[0]);
-		listelem->address  = xstrdup(p[1]);
-		listelem->port	   = (resolv->isbind ? 0 : -1);
-		listelem->family   = atoi(p[2]);
-		list_add_sorted((resolv->plist), listelem, &irc_resolver_sort);
-
-		debug("%s (%s %s) %x %x\n", p[0], p[1], p[2], resolv->plist, listelem);
-		g_strfreev(p);
-	} else {
-		debug_error("[irc] received some kind of junk from resolver thread: %s\n", watch);
-		g_strfreev(p);
-		return -1;
-	}
-	return 0;
-}
-
 static WATCHER_SESSION_LINE(irc_handle_stream) {
 	irc_private_t *j = NULL;
 
@@ -693,6 +562,7 @@ static WATCHER_SESSION_LINE(irc_handle_stream) {
 
 
 static WATCHER(irc_handle_connect_real) {
+#if 0
 	session_t *s = (session_t *) data;
 	irc_private_t		*j = NULL;
 	const char		*real = NULL, *localhostname = NULL;
@@ -747,6 +617,8 @@ static WATCHER(irc_handle_connect_real) {
         xfree(pass);
 
 	return -1;
+#endif
+	return -1;
 }
 
 static WATCHER(irc_handle_connect) {
@@ -770,63 +642,8 @@ static WATCHER(irc_handle_connect) {
 /*									 *
  * ======================================== COMMANDS ------------------- *
  *									 */
-static int irc_build_sin(session_t *s, connector_t *co, struct sockaddr **address) {
-	struct sockaddr_in  *ipv4;
-	struct sockaddr_in6 *ipv6;
-	int len = 0;
-	int defport = session_int_get(s, "port");
-	int port;
-
-	*address = NULL;
-
-	if (!co)
-		return 0;
-	port = co->port < 0 ? defport : co->port;
-	if (port < 0) port = DEFPORT;
-
-	if (co->family == AF_INET) {
-		len = sizeof(struct sockaddr_in);
-
-		ipv4 = xmalloc(len);
-
-		ipv4->sin_family = AF_INET;
-		ipv4->sin_port	 = g_htons(port);
-#ifdef HAVE_INET_PTON
-		inet_pton(AF_INET, co->address, &(ipv4->sin_addr));
-#else
-#warning "irc: You don't have inet_pton() connecting to ipv4 hosts may not work"
-#ifdef HAVE_INET_ATON /* XXX */
-		if (!inet_aton(co->address, &(ipv4->sin_addr))) {
-			debug_warn("inet_aton() failed on addr: %s.\n", co->address);
-		}
-#else
-#warning "irc: You don't have inet_aton() connecting to ipv4 hosts may not work"
-#endif
-#warning "irc: Yeah, You have inet_addr() connecting to ipv4 hosts may work :)"
-		if ((ipv4->sin_addr.s_addr = inet_addr(co->address)) == -1) {
-			debug_warn("inet_addr() failed or returns 255.255.255.255? on %s\n", co->address);
-		}
-#endif
-
-		*address = (struct sockaddr *) ipv4;
-	} else if (co->family == AF_INET6) {
-		len = sizeof(struct sockaddr_in6);
-
-		ipv6 = xmalloc(len);
-		ipv6->sin6_family  = AF_INET6;
-		ipv6->sin6_port    = g_htons(port);
-#ifdef HAVE_INET_PTON
-		inet_pton(AF_INET6, co->address, &(ipv6->sin6_addr));
-#else
-#warning "irc: You don't have inet_pton() connecting to ipv6 hosts may not work "
-#endif
-
-		*address = (struct sockaddr *) ipv6;
-	}
-	return len;
-}
-
 static int irc_really_connect(session_t *session) {
+#if 0
 	irc_private_t		*j = irc_private(session);
 	connector_t		*connco, *connvh = NULL;
 	struct sockaddr		*sinco,  *sinvh  = NULL;
@@ -924,8 +741,8 @@ static int irc_really_connect(session_t *session) {
 irc_conn_error:
 	xfree(sinco);
 	xfree(sinvh);
+#endif
 	return -1;
-
 }
 
 static COMMAND(irc_command_connect) {
@@ -949,11 +766,6 @@ static COMMAND(irc_command_connect) {
 		j->nick = xstrdup(newnick);
 	} else {
 		printq("generic_error", "gdzie lecimy ziom ?! [/session nickname]");
-		return -1;
-	}
-	if (j->resolving) {
-		printq("generic", "resolving in progress... you will be connected as soon as possible");
-		session->connecting = 2;
 		return -1;
 	}
 	return irc_really_connect(session);
@@ -2145,29 +1957,6 @@ static COMMAND(irc_command_nick) {
 	return 0;
 }
 
-static COMMAND(irc_command_test) {
-	irc_private_t	*j = irc_private(session);
-	list_t		tlist = j->connlist;
-
-//#define DOT(a,x,y,z,error) print_info("__status", z, a, session_name(z), x, y->hostname, y->address, ekg_itoa(y->port), ekg_itoa(y->family), error ? strerror(error) : "")
-
-	for (tlist = j->connlist; tlist; tlist = tlist->next)
-		DOT("IRC_TEST", "Connect to:", ((connector_t *) tlist->data), session, 0);
-	for (tlist = j->bindlist; tlist; tlist = tlist->next)
-		DOT("IRC_TEST", "Bind to:", ((connector_t *) tlist->data), session, 0);
-
-	if (j->conntmplist && j->conntmplist->data) {
-		if (session->connecting)
-			DOT("IRC_TEST", "Connecting:", ((connector_t *) j->conntmplist->data), session, 0);
-		else if (session_connected_get(session))
-			DOT("IRC_TEST", "Connected:", ((connector_t *) j->conntmplist->data), session, 0);
-		else	DOT("IRC_TEST", "Will Connect to:", ((connector_t *) j->conntmplist->data), session, 0);
-	}
-	if (j->bindtmplist && j->bindtmplist->data)
-		DOT("IRC_TEST", "((Will Bind to) || (Binded)) :", ((connector_t *) j->bindtmplist->data), session, 0);
-	return 0;
-}
-
 /* nickpad, these funcs should go to misc.c */
 char *nickpad_string_create(channel_t *chan)
 {
@@ -2231,7 +2020,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("dcc_port",		VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("display_notify",	VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("dont_ban_user_on_noident", VAR_BOOL, "0", 0, NULL),
-	PLUGIN_VAR_ADD("hostname",		VAR_STR, 0, 0, irc_changed_resolve),
+	PLUGIN_VAR_ADD("hostname",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("identify",		VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "irssi", 0, NULL),
 	PLUGIN_VAR_ADD("make_window",		VAR_INT, "2", 0, NULL),
@@ -2244,7 +2033,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("realname",              VAR_STR, NULL, 0, NULL),		/* value will be inited @ irc_plugin_init() [pwd_entry->pw_gecos] */
 	PLUGIN_VAR_ADD("recode_list",           VAR_STR, NULL, 0, irc_changed_recode_list),
 	PLUGIN_VAR_ADD("recode_out_default_charset", VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
-	PLUGIN_VAR_ADD("server",                VAR_STR, 0, 0, irc_changed_resolve),
+	PLUGIN_VAR_ADD("server",                VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("statusdescr",           VAR_STR, 0, 0, irc_statusdescr_handler),
 
 	/* upper case: names of variables, that reffer to protocol stuff */
@@ -2323,7 +2112,6 @@ EXPORT int irc_plugin_init(int prio)
 	command_add(&irc_plugin, ("irc:"), "?",		irc_command_inline_msg, IRC_FLAGS | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&irc_plugin, ("irc:_autoaway"), NULL,	irc_command_away,	IRC_FLAGS, NULL);
 	command_add(&irc_plugin, ("irc:_autoback"), NULL,	irc_command_away,	IRC_FLAGS, NULL);
-	command_add(&irc_plugin, ("irc:_conntest"), "?",	irc_command_test,	IRC_ONLY, NULL);
 	command_add(&irc_plugin, ("irc:access"), "p uUw ? ?",	irc_command_alist, 0, "-a --add -d --delete -e --edit -s --show -l --list -S --sync");
 	command_add(&irc_plugin, ("irc:add"), NULL,	irc_command_add,	IRC_ONLY | COMMAND_PARAMASTARGET, NULL);
 	command_add(&irc_plugin, ("irc:away"), "?",	irc_command_away,	IRC_FLAGS, NULL);

@@ -446,11 +446,9 @@ IRC_COMMAND(irc_c_init)
 {
 	int		i, k;
 	char		*t;
-	connector_t	*temp;
 	switch (irccommands[ecode].num)
 	{
 		case 1:
-			temp = j->conntmplist->data;
 			protocol_connected_emit(s);
 			t = xstrchr(param[3], '!');
 			xfree(j->host_ident);
