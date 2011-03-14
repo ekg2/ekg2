@@ -303,7 +303,7 @@ AC_EKG2_PLUGIN([python], [
 				AC_PATH_PROGS([PYCONF], [python$pyver-config python-config-$pyver])
 				AS_IF([test x"$PYCONF" != x""], [
 					PYTHON_CFLAGS="`$PYCONF --includes`"
-					PYTHON_LIBS="`$PYCONF --libs`"
+					PYTHON_LIBS="`$PYCONF --libs --ldflags`"
 					pyfound=yes
 				])
 			])
