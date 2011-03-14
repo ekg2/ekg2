@@ -12,6 +12,9 @@ Protocol plugins:
 * Jabber - (XMPP, gtalk and Tlen.pl support),
 * GG (gadu-gadu) - (using libgadu, the most popular polish IM protocol),
 * IRC - (mostly IRCnet oriented),
+* ICQ
+* polchat
+* rivchat
 
 GUI plugins:
 
@@ -23,20 +26,17 @@ Logging facility:
 
 * logs - multi plugin that allows logging in irssi like format, xml, simple and raw,
 * logsqlite - logging into a sqlite db,
-* logsoracle - logging into an oracle db
 
-Script languages bindings: Python, Perl, Ruby (under development)
+Script languages bindings: Python, Perl
 
 Other superb plugins:
 
-* dbus - basic dbus support (allows creating superb "now-playing" ;) !),
-* sim (using openssl) & gpg & rot13 ;) - these plugins allow encryption within supported protocols,
-* xosd - on screen display,
-* rc & httprc_xajax - rc plugins allow remote control of ekg2,
-* xmsg - simple messaging through filesystem (e.g. notifications from other apps),
+* autoresponder - a simple captcha for IM
+* sim (using openssl) & gpg - these plugins allow encryption within supported protocols,
 * jogger - allows manipulation of JoggerBot via ekg2,
 * mail - checking local maildir/mailbox for new messages,
+* nntp - read usenet news
+* rss - read RSS/Atom feeds
 * sms - sms sending,
-* sniff - built-in sniffer for analyzing protocols
 
-There are also a few others not mentioned here!
+There are also a few other plugins in development.
