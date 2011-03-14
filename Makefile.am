@@ -16,6 +16,7 @@ noinst_HEADERS = \
 	ekg/bindings.h \
 	ekg/commands.h \
 	ekg/completion.h \
+	ekg/connections.h \
 	ekg/configfile.h \
 	ekg/debug.h \
 	ekg/dynstuff.h \
@@ -51,6 +52,7 @@ ekg2_SOURCES = \
 	ekg/commands.c \
 	ekg/completion.c \
 	ekg/configfile.c \
+	ekg/connections.c \
 	ekg/dynstuff.c \
 	ekg/ekg.c \
 	ekg/emoticons.c \
