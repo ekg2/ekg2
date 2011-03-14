@@ -63,10 +63,6 @@
 #include "input.h"
 #include "autoacts.h"
 
-#ifdef HAVE_LIBSSL
-SSL_CTX *ircSslCtx;
-#endif
-
 #include "IRCVERSION.h"
 
 #define DEFPORT 6667
@@ -696,131 +692,6 @@ static WATCHER_SESSION_LINE(irc_handle_stream) {
 }
 
 
-#ifdef IRC_HAVE_SSL
-static WATCHER_SESSION(irc_handle_stream_ssl_input) {
-#define IRC_SSL_BUFFER 4*1024
-	irc_private_t *j = NULL;
-	char buf[IRC_SSL_BUFFER], *tmp;
-	int len;
-
-	if (!s || !(j = s->priv)) {
-		debug_error("[irc] handle_write_ssl() j: 0x%p\n", j);
-		return -1;
-	}
-
-	if (! j->using_ssl || ! j->ssl_session) {
-		return -1;
-	}
-
-	debug_function("[irc] handle_stream_ssl_input() type: %d\n", type);
-
-	// ATM we never enter here ;/
-	if (type == 1) {
-		debug ("ok need to do some deinitializaition stuff...\n");
-
-		j->recv_watch = NULL;
-		if (s->connected || s->connecting)
-			irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
-		return 0;
-	}
-
-	//do {
-		len = SSL_RECV(j->ssl_session, buf, IRC_SSL_BUFFER-1);
-		debug("[irc] handle_stream_ssl_input() len: %d\n", len);
-
-#ifdef HAVE_LIBSSL
-		if ((len == 0 && SSL_get_error(j->ssl_session, len) == SSL_ERROR_ZERO_RETURN)) {
-			debug_ok("[irc] handle_stream_ssl_input HOORAY got EOF?\n");
-			return -1;
-		} else if (len < 0)  {
-			len = SSL_get_error(j->ssl_session, len);
-		}
-		/* XXX, When an SSL_read() operation has to be repeated because of SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE, it must be repeated with the same arguments. */
-#endif
-
-		/* try reading again */
-		if (SSL_E_AGAIN(len)) {
-			ekg_yield_cpu();
-			debug("[irc] handle_stream_ssl_input yield cpu\n");
-			return 0;
-		}
-
-		if (len < 0) {
-			irc_handle_disconnect(s, SSL_ERROR(len), EKG_DISCONNECT_NETWORK);
-			debug_warn("[irc] handle_stream_ssl_input disconnect?!\n");
-			return -1;
-		}
-
-		buf[len] = 0;
-		string_append(j->ssl_buf, buf);
-
-		//debug ("stream: %s\n", buf);
-
-	//} while (1);
-	//
-	while ((tmp = xstrchr(j->ssl_buf->str, '\n'))) {
-		size_t strlen = tmp - j->ssl_buf->str;		/* get len of str from begining to \n char */
-		char *line = xstrndup(j->ssl_buf->str, strlen);	/* strndup() str with len == strlen */
-
-		/* we strndup() str with len == strlen, so we don't need to call xstrlen() */
-		if (strlen > 1 && line[strlen - 1] == '\r')
-			line[strlen - 1] = 0;
-
-		irc_parse_line(s, line, fd);
-
-		string_remove(j->ssl_buf, strlen + 1);
-		xfree(line);
-	}
-
-	return 0;
-}
-#endif
-
-/* this is only used for ssl connection */
-#ifdef IRC_HAVE_SSL
-static WATCHER_LINE(irc_handle_write_ssl) {
-	irc_private_t *j = (irc_private_t*)data;
-	int res;
-
-	if (!j) {
-		debug_error("[irc] handle_write_ssl() j: 0x%p\n", j);
-		return -1;
-	}
-
-	if (type == 1) {
-		debug_warn("[irc] handle_write_ssl(): type %d (probably disconnect?)\n", type);
-		return 0;
-	}
-
-	if (!j->using_ssl) {
-		debug_error("[irc] handle_write_ssl() OH NOEZ impossible has become possible!\n");
-		j->send_watch = NULL;
-		return -1;
-	}
-
-	res = SSL_SEND(j->ssl_session, watch, xstrlen(watch));
-#ifdef HAVE_LIBSSL		/* OpenSSL */
-	if ((res == 0 && SSL_get_error(j->ssl_session, res) == SSL_ERROR_ZERO_RETURN)); /* connection shut down cleanly */
-	else if (res < 0)
-		res = SSL_get_error(j->ssl_session, res);
-	/* XXX, When an SSL_write() operation has to be repeated because of SSL_ERROR_WANT_READ or SSL_ERROR_WANT_WRITE, it must be repeated with the same arguments. */
-#endif
-
-	/* ok do try repeat */
-	if (SSL_E_AGAIN(res)) {
-		ekg_yield_cpu();
-		return 0;
-	}
-
-	if (res < 0) {
-		print("generic_error", SSL_ERROR(res));
-	}
-
-	return res;
-}
-#endif
-
-
 static WATCHER(irc_handle_connect_real) {
 	session_t *s = (session_t *) data;
 	irc_private_t		*j = NULL;
@@ -859,20 +730,8 @@ static WATCHER(irc_handle_connect_real) {
         timer_remove_session(s, "reconnect");
         DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
 
-#ifdef IRC_HAVE_SSL
-	debug ("will have ssl: %d\n", j->using_ssl);
-	if (j->using_ssl) {
-	        j->send_watch = watch_add_line(&irc_plugin, fd, WATCH_WRITE_LINE, irc_handle_write_ssl, j);
-		string_free(j->ssl_buf, 1);
-		j->ssl_buf = string_init(NULL);
-		j->recv_watch = watch_add_session(s, fd, WATCH_READ, irc_handle_stream_ssl_input);
-	} else {
-#endif
-		j->send_watch = watch_add_line(&irc_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
-		j->recv_watch = watch_add_session_line(s, fd, WATCH_READ_LINE, irc_handle_stream);
-#ifdef IRC_HAVE_SSL
-	}
-#endif
+	j->send_watch = watch_add_line(&irc_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
+	j->recv_watch = watch_add_session_line(s, fd, WATCH_READ_LINE, irc_handle_stream);
 
         real = session_get(s, "realname");
         real = real ? xstrlen(real) ? real : j->nick : j->nick;
@@ -890,81 +749,6 @@ static WATCHER(irc_handle_connect_real) {
 	return -1;
 }
 
-#ifdef HAVE_LIBSSL
-static WATCHER(irc_handle_connect_ssl) {
-	session_t *s = (session_t *) data;
-	irc_private_t *j = NULL;
-        int ret;
-
-	if (!s || !(j = s->priv)) {
-		debug_error("[irc] handle_connect_ssl() s: 0x%x j: 0x%x\n", s, j);
-		return -1;
-	}
-
-	debug_error("[irc] handle_connect_ssl() type: %d\n", type);
-
-        if (type == -1) {
-                if ((ret = SSL_INIT(j->ssl_session))) {
-                        /* XXX, OpenSSL error value XXX */
-						debug_error("SSL_INIT failed\n");
-                        print("conn_failed_tls");
-                        irc_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
-                        return -1;
-                }
-
-                if (SSL_SET_FD(j->ssl_session, fd) == 0) {	/* gnutls never fail */
-						debug_error("SSL_SET_FD failed\n");
-                        print("conn_failed_tls");
-                        SSL_DEINIT(j->ssl_session);
-                        j->ssl_session = NULL;
-                        irc_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
-                        return -1;
-                }
-
-                watch_add(&irc_plugin, fd, WATCH_WRITE, irc_handle_connect_ssl, s);
-        }
-
-	if (type)
-		return 0;
-
-	ret = SSL_HELLO(j->ssl_session);
-	if (ret == -1) {
-		ret = SSL_get_error(j->ssl_session, ret);
-
-		if (SSL_E_AGAIN(ret)) {
-			int direc = SSL_WRITE_DIRECTION(j->ssl_session, ret) ? WATCH_WRITE : WATCH_READ;
-			int newfd = SSL_GET_FD(j->ssl_session, fd);
-
-			/* don't create && destroy watch if data is the same... */
-			if (newfd == fd && direc == watch) {
-				ekg_yield_cpu();
-				return 0;
-			}
-
-			watch_add(&irc_plugin, fd, direc, irc_handle_connect_ssl, s);
-			ekg_yield_cpu();
-			return -1;
-		} else {
-			irc_handle_disconnect(s, SSL_ERROR(ret), EKG_DISCONNECT_FAILURE);
-			return -1;
-		}
-	} /* else */
-
-	debug ("don't be concerned, stick to your daily routine!\n");
-	//if ((certret = irc_ssl_cert_verify(j->ssl_session))) {
-	//	debug_error("[irc] irc_ssl_cert_verify() %s retcode = %s\n", s->uid, certret);
-	//	print("generic2", certret);
-	//}
-
-        // handshake successful
-        j->using_ssl = 1;
-        watch_add(&irc_plugin, fd, WATCH_WRITE, irc_handle_connect_real, s);
-
-        return -1;
-}
-#endif
-
-
 static WATCHER(irc_handle_connect) {
 	session_t *s = (session_t *) data;
 	irc_private_t		*j = NULL;
@@ -978,14 +762,6 @@ static WATCHER(irc_handle_connect) {
 		debug_error("[irc] handle_connect() s: 0x%x j: 0x%x\n", s, j);
 		return -1;
 	}
-
-#ifdef HAVE_LIBSSL
-        if (session_int_get(s, "use_ssl")) {
-                // irc_handle_connect_ssl() will call irc_handle_connect_real()
-                irc_handle_connect_ssl(-1, fd, 0, s);
-                return -1;
-        }
-#endif
 
         return irc_handle_connect_real(type, fd, watch, data);
 }
@@ -2470,9 +2246,6 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("recode_out_default_charset", VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
 	PLUGIN_VAR_ADD("server",                VAR_STR, 0, 0, irc_changed_resolve),
 	PLUGIN_VAR_ADD("statusdescr",           VAR_STR, 0, 0, irc_statusdescr_handler),
-#ifdef HAVE_LIBSSL
-	PLUGIN_VAR_ADD("use_ssl",               VAR_BOOL, "0", 0, NULL),
-#endif
 
 	/* upper case: names of variables, that reffer to protocol stuff */
 	PLUGIN_VAR_ADD("AUTO_JOIN",			VAR_STR, 0, 0, NULL),
@@ -2533,15 +2306,6 @@ EXPORT int irc_plugin_init(int prio)
 #else
 	const char *pwd_name = NULL;
 	const char *pwd_realname = NULL;
-#endif
-
-#ifdef HAVE_LIBSSL
-	SSL_load_error_strings();
-	SSL_library_init();
-	if (! (ircSslCtx = SSL_CTX_new(SSLv23_method()))) {
-		debug_error("couldn't init ssl ctx: %s!\n", ERR_error_string(ERR_get_error(), NULL));
-		return -1;
-	}
 #endif
 
 /* magic stuff */

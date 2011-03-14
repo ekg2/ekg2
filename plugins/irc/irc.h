@@ -24,8 +24,6 @@
 				session_int_get(z, "port") < 0 ? DEFPORT : session_int_get(z, "port") : y->port), \
 			ekg_itoa(y->family), error ? strerror(error) : "")
 
-#include "irc-ssl.h"
-
 /* irc_private->sopt */
 enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
 	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, _005_IDCHAN, SERVOPTS };
