@@ -53,8 +53,9 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 	struct ekg_connection *c = user_data;
 	GError *err = NULL;
 	gssize rsize;
+	GBufferedInputStream *instr = G_BUFFERED_INPUT_STREAM(obj);
 
-	rsize = g_buffered_input_stream_fill_finish(G_BUFFERED_INPUT_STREAM(obj), res, &err);
+	rsize = g_buffered_input_stream_fill_finish(instr, res, &err);
 
 	if (rsize == -1) {
 		debug_error("done_async_read(), read failed: %s\n", err ? err->message : NULL);
@@ -64,15 +65,30 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 		return;
 	}
 
+	if (rsize == 0) { /* EOF */
+		if (g_buffered_input_stream_get_available(instr) > 0)
+			c->callback(c->instream, c->priv_data);
+		/* XXX */
+		return;
+	}
+
 	switch (c->in_type) {
 		case EKG_INPUT_RAW:
-			if (rsize == 0) {
-				/* XXX: EOF */
-				return;
-			}
-
 			c->callback(c->instream, c->priv_data);
 			break;
+
+		case EKG_INPUT_LINE:
+			{
+				const char *buf;
+				const char *le = "\r\n"; /* CRLF; XXX: other line endings? */
+				gsize count;
+
+				buf = g_buffered_input_stream_peek_buffer(instr, &count);
+				if (g_strstr_len(buf, count, le))
+					c->callback(c->instream, c->priv_data);
+				break;
+			}
+
 		default:
 			g_assert_not_reached();
 	}
@@ -142,6 +158,8 @@ GDataOutputStream *ekg_connection_add(
 	c->priv_data = priv_data;
 	c->in_type = in_type;
 
+		/* CRLF is common in network protocols */
+	g_data_input_stream_set_newline_type(c->instream, G_DATA_STREAM_NEWLINE_TYPE_CR_LF);
 		/* disallow any blocking writes */
 	g_buffered_output_stream_set_auto_grow(G_BUFFERED_OUTPUT_STREAM(c->outstream), TRUE);
 
