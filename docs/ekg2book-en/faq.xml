@@ -19,16 +19,16 @@
                <para>
 	          You should visit <ulink url="http://ekg2.org">/http://ekg2.org</ulink>.
 		  There is some Files section and you can download from there everyday
-		  snapshots. You can also use CVS, which makes you able to have current
+		  snapshots. You can also use GIT, which makes you able to have current
 		  version of program (for instance. if somebody fixed some segvault problem 
-		  with EKG2 10 minutes ago). Way of using CVS is described on webpage.
+		  with EKG2 10 minutes ago). Way of using GIT is described on webpage.
                </para>
             </answer>
          </qandaentry>
          <qandaentry>
             <question>
                <para>
-  	          I have CVS EKG2, but when I'm doing ./autogen some errors about 
+  	          I have EKG2 from GIT, but when I'm doing ./autogen some errors about 
 		  missing libtoolize, libttol, aclocal, autoheader, automake, autoconf,
 		  autom4te appear. What should I do ?
                </para>

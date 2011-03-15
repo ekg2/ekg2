@@ -1,6 +1,6 @@
 
 EKG2 uses the autotools package for building. If you are checking out the
-source code directly from CVS, you probably need to call:
+source code directly from GIT, you probably need to call:
 	$ ./autogen.sh [configure options]
 before invoking make to perform the actual build, or:
 	$ NOCONFIGURE=1 ./autogen.sh

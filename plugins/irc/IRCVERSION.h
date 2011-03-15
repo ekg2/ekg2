@@ -1,4 +1,4 @@
-#define IRCVERSION "0.8.cvs"
+#define IRCVERSION "0.8.git"
 
 #ifndef IRCVERSION
 #include "ircversion.h"

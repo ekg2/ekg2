@@ -401,7 +401,7 @@ static WATCHER_SESSION(polchat_handle_connect) {
 		"http://www.polchat.pl/chat/room.phtml/?room=AmiX",	/* referer */
 		"polchat.pl",						/* adres serwera */
 		"nlst=1&nnum=1&jlmsg=true&ignprv=false",		/* konfiguracja */
-		"ekg2-CVS-polchat",					/* klient */
+		"ekg2-GIT-polchat",					/* klient */
 		NULL);
 
 	watch_add_session(s, fd, WATCH_READ, polchat_handle_stream);

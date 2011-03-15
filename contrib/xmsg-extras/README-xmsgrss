@@ -19,8 +19,8 @@ XMSG-RSS uses also Syslog, to which it is writing information about processed
 feeds, in the form 'name: action taken'.
 
 How to use it? First, you'll need some XMSG-capable IM, that is EKG2
-(<http://www.ekg2.org>, xmsg is available only in fresh CVS versions). Then you
-should read XMSG plugin README, and prepare yourself XMSG environment.
+(<http://www.ekg2.org>). Then you should read XMSG plugin README, and prepare
+yourself XMSG environment.
 
 Then, you should put xmsgrss.pl and db.example in some directory, and rename the
 second one to something less-exampling. XMSG incoming message directory should
