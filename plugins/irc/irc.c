@@ -161,7 +161,6 @@ static QUERY(irc_session_init) {
 
 	j = xmalloc(sizeof(irc_private_t));
 	j->nick_modes = j->nick_signs = NULL;
-	j->fd = -1;
 
 	j->conv = NULL;
 	// xmalloc will do that, so it's not needed
@@ -480,25 +479,8 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	irc_private_t	*j = irc_private(s);
 	char		*__reason;
 
-	if (!j) {
-		debug_error("[irc_ierror] @irc_handle_disconnect j == NULL");
-		return;
-	}
+	g_assert(j);
 
-	// !!!
-	if (j->send_watch) {
-		j->send_watch->type = WATCH_NONE;
-		watch_free(j->send_watch);
-		j->send_watch = NULL;
-	}
-	if (j->recv_watch) {
-		watch_free(j->recv_watch);
-		j->recv_watch = NULL;
-	}
-	watch_remove(&irc_plugin, j->fd, WATCH_WRITE);
-
-	close(j->fd);
-	j->fd = -1;
 	irc_free_people(s, j);
 
 	switch (type) {
@@ -530,112 +512,53 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	xfree(__reason);
 }
 
-static WATCHER_SESSION_LINE(irc_handle_stream) {
-	irc_private_t *j = NULL;
+static void irc_handle_line(GDataInputStream *f, gpointer data) {
+	session_t *s = data;
 
-	if (!s || !(j = s->priv)) {
-		debug_error("irc_handle_stream() s: 0x%x j: 0x%x\n", s, j);
-		return -1;
-	}
-
-	/* ups, we get disconnected */
-	if (type == 1) {
-		j->recv_watch = NULL;
-		/* this will cause  'Removed more than one watch...' */
-		debug ("[irc] handle_stream(): DISCONNECTED %d %d\n", s->connected, s->connecting);
-
-		/* avoid reconnecting when we do /disconnect */
-		if (s->connected || s->connecting)
-			irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
-		return 0;
-	}
-
-	/* this shouldn't be like that, it would be better to change
-	 * query_connect, so the handler should get char not
-	 * const char, so the queries could modify this param,
-	 * I'm not sure if this is good idea, just thinking...
-	 */
-	irc_parse_line(s, watch, fd);
-
-	return 0;
+		/* XXX: get rid of that fd arg */
+	irc_parse_line(s, g_data_input_stream_read_line(f, NULL, NULL, NULL), -1);
 }
 
+static void irc_handle_failure(GDataInputStream *f, GError *err, gpointer data) {
+	session_t *s = data;
+	irc_private_t *j = irc_private(s);
 
-static WATCHER(irc_handle_connect_real) {
-#if 0
-	session_t *s = (session_t *) data;
-	irc_private_t		*j = NULL;
-	const char		*real = NULL, *localhostname = NULL;
-	char			*pass = NULL;
-	int			res = 0;
-	socklen_t		res_size = sizeof(res);
+	j->send_stream = NULL; /* XXX: needed? */
 
-	if (type == 1) {
-		debug ("[irc] handle_connect_real(): type %d\n", type);
-		return 0;
-	}
-
-	if (!s || !(j = s->priv)) {
-		debug_error("[irc] handle_connect_real() s: 0x%x j: 0x%x\n", s, j);
-		return -1;
-	}
-
-	debug_function("[irc] handle_connect_real()\n");
-
-        if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-                if (type) debug_error("[irc] handle_connect_real(): SO_ERROR %s\n", strerror(res));
-
-                /* try next server. */
-                /* 'if' because someone can make: /session server blah and /reconnect
-                 * during already began process of connecting
-                 */
-                if (j->conntmplist) {
-                        if (!type) DOT("IRC_TEST_FAIL", "Connect", ((connector_t *) j->conntmplist->data), s, res);
-                        j->conntmplist = j->conntmplist->next;
-                }
-                irc_handle_disconnect(s, (type == 2) ? "Connection timed out" : strerror(res), EKG_DISCONNECT_FAILURE);
-                return -1; /* ? */
-        }
-
-        timer_remove_session(s, "reconnect");
-        DOT("IRC_CONN_ESTAB", NULL, ((connector_t *) j->conntmplist->data), s, 0);
-
-	j->send_watch = watch_add_line(&irc_plugin, fd, WATCH_WRITE_LINE, NULL, NULL);
-	j->recv_watch = watch_add_session_line(s, fd, WATCH_READ_LINE, irc_handle_stream);
-
-        real = session_get(s, "realname");
-        real = real ? xstrlen(real) ? real : j->nick : j->nick;
-        if (j->bindtmplist)
-                localhostname = ((connector_t *) j->bindtmplist->data)->hostname;
-        if (!xstrlen(localhostname))
-                localhostname = NULL;
-        pass = (char *)session_password_get(s);
-        pass = xstrlen(strip_spaces(pass))?
-                saprintf("PASS %s\r\n", strip_spaces(pass)) : xstrdup("");
-        watch_write(j->send_watch, "%sUSER %s %s unused_field :%s\r\nNICK %s\r\n",
-                        pass, j->nick, localhostname?localhostname:"12", real, j->nick);
-        xfree(pass);
-
-	return -1;
-#endif
-	return -1;
+	if (s->connected || s->connecting)
+		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
 }
 
-static WATCHER(irc_handle_connect) {
-	session_t *s = (session_t *) data;
-	irc_private_t		*j = NULL;
+static void irc_handle_connect(GSocketConnection *c, gpointer data) {
+	session_t *s = data;
+	irc_private_t *j = irc_private(s);
 
-	if (type == 1) {
-		debug ("[irc] handle_connect(): type %d\n", type);
-		return 0;
+	j->send_stream = ekg_connection_add(
+			c,
+			g_io_stream_get_input_stream(G_IO_STREAM(c)),
+			g_io_stream_get_output_stream(G_IO_STREAM(c)),
+			EKG_INPUT_LINE,
+			irc_handle_line,
+			irc_handle_failure,
+			s);
+
+	{
+		const gchar *real = session_get(s, "realname");
+		const gchar *hostname = session_get(s, "hostname");
+		const gchar *pass = session_password_get(s); /* XXX: we used to strip_spaces() here?! */
+
+		if (pass && *pass)
+			ekg_fprintf(G_OUTPUT_STREAM(j->send_stream), "PASS %s\r\n", pass);
+		ekg_connection_write(j->send_stream,
+				"USER %s %s unused_field :%s\r\nNICK %s\r\n",
+				j->nick, hostname ? hostname : "12", real, j->nick);
 	}
+}
 
-	if (!s || !(j = s->priv)) {
-		debug_error("[irc] handle_connect() s: 0x%x j: 0x%x\n", s, j);
-		return -1;
-	}
+static void irc_handle_connect_failure(GError *err, gpointer data) {
+	session_t *s = data;
 
-        return irc_handle_connect_real(type, fd, watch, data);
+	irc_handle_disconnect(s, err->message, EKG_DISCONNECT_FAILURE);
 }
 
 
@@ -643,105 +566,35 @@ static WATCHER(irc_handle_connect) {
  * ======================================== COMMANDS ------------------- *
  *									 */
 static int irc_really_connect(session_t *session) {
-#if 0
-	irc_private_t		*j = irc_private(session);
-	connector_t		*connco, *connvh = NULL;
-	struct sockaddr		*sinco,  *sinvh  = NULL;
-	int			one = 1, connret = -1, bindret = -1, err;
-	int			sinlen, fd;
-	int			timeout;
-	watch_t			*w;
+	irc_private_t *j = irc_private(session);
+	GSocketClient *s;
+	const gchar *tmp;
 
-	if (!j->conntmplist) j->conntmplist = j->connlist;
-	if (!j->bindtmplist) j->bindtmplist = j->bindlist;
-
-	if (!j->conntmplist) {
-		print("generic_error", "Resolver request failed (!j->conntmplist)");
-		return -1;
-	}
-
-	j->autoreconnecting = 1;
-	connco = (connector_t *)(j->conntmplist->data);
-	sinlen = irc_build_sin(session, connco, &sinco);
-	if (!sinco) {
-		print("generic_error", "Resolver request failed (!sinco)");
-		return -1;
-	}
-
-	if ((fd = socket(connco->family, SOCK_STREAM, 0)) == -1) {
-		err = errno;
-		debug_error("[irc] handle_resolver() socket() failed: %s\n", strerror(err));
-		irc_handle_disconnect(session, strerror(err), EKG_DISCONNECT_FAILURE);
-		goto irc_conn_error;
-	}
-	j->fd = fd;
-	debug("[irc] socket() = %d\n", fd);
-
-	setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one));
-	if (ioctl(fd, FIONBIO, &one) == -1) {
-		err = errno;
-		debug_warn("[irc] handle_resolver() ioctl() failed: %s\n", strerror(err));
-		irc_handle_disconnect(session, strerror(err), EKG_DISCONNECT_FAILURE);
-		goto irc_conn_error;
-	}
-
-	/* loop, optimize... */
-	if (j->bindtmplist)
-		connvh = j->bindtmplist->data;
-	irc_build_sin(session, connvh, &sinvh);
-	while (bindret && connvh) {
-		DOT("IRC_TEST", "Bind", connvh, session, 0);
-		if (connvh->family == connco->family)  {
-			bindret = bind(fd, sinvh, sinlen);
-			if (bindret == -1)
-				DOT("IRC_TEST_FAIL", "Bind", connvh, session, errno);
-		}
-
-		if (bindret && j->bindtmplist->next) {
-			xfree(sinvh);
-			j->bindtmplist = j->bindtmplist->next;
-			connvh = j->bindtmplist->data;
-			irc_build_sin(session, connvh, &sinvh);
-			if (!sinvh)
-				continue;
-		} else
-			break;
-	}
 	session->connecting = 1;
-	DOT("IRC_TEST", "Connecting", connco, session, 0);
-	connret = connect(fd, sinco, sinlen);
-	debug("connecting: %s %s\n", connco->hostname, connco->address);
+	j->autoreconnecting = 1; /* XXX? */
 
-	xfree(sinco);
-	xfree(sinvh);
+	s = g_socket_client_new();
 
-	if (connret &&
-#ifdef NO_POSIX_SYSTEM
-		(WSAGetLastError() != WSAEWOULDBLOCK)
-#else
-		(errno != EINPROGRESS)
-#endif
-		) {
-		debug("[irc] really_connect control point 1\n");
-		err = errno;
-		DOT("IRC_TEST_FAIL", "Connect", connco, session, err);
-		j->conntmplist = j->connlist->next;
-		irc_handle_disconnect(session, strerror(err), EKG_DISCONNECT_FAILURE);
-		return -1;
+	tmp = session_get(session, "hostname");
+	if (tmp) /* XXX: support domain name in hostname */
+		g_socket_client_set_local_address(s,
+				g_inet_socket_address_new(g_inet_address_new_from_string(tmp), 0));
 
+	{
+		const int defport = session_int_get(session, "port");
+		j->connect_cancellable = ekg_connection_start(
+				s, NULL, NULL,
+				session_get(session, "server"),
+				defport > 0 ? defport : DEFPORT,
+				irc_handle_connect,
+				irc_handle_connect_failure,
+				session);
 	}
+
 	if (session_status_get(session) == EKG_STATUS_NA)
 		session_status_set(session, EKG_STATUS_AVAIL);
 
-	w = watch_add(&irc_plugin, fd, WATCH_WRITE, irc_handle_connect, session);
-	if ((timeout = session_int_get(session, "connect_timeout") > 0))
-		watch_timeout_set(w, timeout);
-
-	return 0;
-irc_conn_error:
-	xfree(sinco);
-	xfree(sinvh);
-#endif
+	/* XXX: timeout */
 	return -1;
 }
 
@@ -782,7 +635,9 @@ static COMMAND(irc_command_disconnect) {
 	}
 
 	if (reason && session_connected_get(session))
-		watch_write(j->send_watch, "QUIT :%s\r\n", reason);
+		ekg_connection_write(j->send_stream, "QUIT :%s\r\n", reason);
+	if (session->connecting)
+		g_cancellable_cancel(j->connect_cancellable);
 
 	if (session->connecting || j->autoreconnecting)
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
@@ -895,12 +750,12 @@ static COMMAND(irc_command_msg) {
 		{
 			char saved = __mtmp[len_limit];
 			__mtmp[len_limit] = '\0';	/* XXX danger: cut unicode chars */
-			watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __mtmp);
+			ekg_connection_write(j->send_stream, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __mtmp);
 			__mtmp[len_limit] = saved;
 			__mtmp += len_limit;
 			msg_len -= len_limit;
 		}
-		watch_write(j->send_watch, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __mtmp);
+		ekg_connection_write(j->send_stream, "%s %s :%s\r\n", (prv) ? "PRIVMSG" : "NOTICE", uid+4, __mtmp);
 
 		xfree(line);
 		xfree(recoded);
@@ -927,7 +782,7 @@ static COMMAND(irc_command_inline_msg) {
 }
 
 static COMMAND(irc_command_quote) {
-	watch_write(irc_private(session)->send_watch, "%s\r\n", params[0]);
+	ekg_connection_write(irc_private(session)->send_stream, "%s\r\n", params[0]);
 	return 0;
 }
 
@@ -1138,11 +993,11 @@ static COMMAND(irc_command_away) {
 		const char *status = ekg_status_string(session_status_get(session), 0);
 		const char *descr  = session_descr_get(session);
 		if (descr)
-			watch_write(j->send_watch, "AWAY :%s\r\n", descr);
+			ekg_connection_write(j->send_stream, "AWAY :%s\r\n", descr);
 		else
-			watch_write(j->send_watch, "AWAY :%s\r\n", status);
+			ekg_connection_write(j->send_stream, "AWAY :%s\r\n", status);
 	} else {
-		watch_write(j->send_watch, "AWAY :\r\n");
+		ekg_connection_write(j->send_stream, "AWAY :\r\n");
 
 		/* @ back, display awaylog. */
 		irc_display_awaylog(session);
@@ -1157,11 +1012,11 @@ static void irc_statusdescr_handler(session_t *s, const char *varname) {
 	if (status == EKG_STATUS_AWAY) {
 		const char *descr  = session_descr_get(s);
 		if (descr)
-			watch_write(j->send_watch, "AWAY :%s\r\n", descr);
+			ekg_connection_write(j->send_stream, "AWAY :%s\r\n", descr);
 		else
-			watch_write(j->send_watch, "AWAY :%s\r\n", ekg_status_string(status, 0));
+			ekg_connection_write(j->send_stream, "AWAY :%s\r\n", ekg_status_string(status, 0));
 	} else {
-		watch_write(j->send_watch, "AWAY :\r\n");
+		ekg_connection_write(j->send_stream, "AWAY :\r\n");
 
 		/* @ back, display awaylog. */
 		irc_display_awaylog(s);
@@ -1197,7 +1052,7 @@ static QUERY(irc_window_kill) {
 			session_connected_get(w->session)
 			)
 	{
-		watch_write(j->send_watch, "PART %s :%s\r\n", (w->target)+4, PARTMSG(w->session, NULL));
+		ekg_connection_write(j->send_stream, "PART %s :%s\r\n", (w->target)+4, PARTMSG(w->session, NULL));
 	}
 	return 0;
 }
@@ -1489,7 +1344,7 @@ static COMMAND(irc_command_topic) {
 	else
 		newtop = saprintf("TOPIC %s\r\n", chan+4);
 
-	watch_write(j->send_watch, "%s", newtop);
+	ekg_connection_write(j->send_stream, "%s", newtop);
 	g_strfreev(mp);
 	xfree (newtop);
 	xfree (chan);
@@ -1504,7 +1359,7 @@ static COMMAND(irc_command_who) {
 					&mp, 0, IRC_GC_CHAN)))
 		return -1;
 
-	watch_write(j->send_watch, "WHO %s\r\n", chan+4);
+	ekg_connection_write(j->send_stream, "WHO %s\r\n", chan+4);
 
 	g_strfreev(mp);
 	xfree(chan);
@@ -1524,7 +1379,7 @@ static COMMAND(irc_command_invite) {
 		xfree(chan);
 		return -1;
 	}
-	watch_write(j->send_watch, "INVITE %s %s\r\n", *mp, chan+4);
+	ekg_connection_write(j->send_stream, "INVITE %s %s\r\n", *mp, chan+4);
 
 	g_strfreev(mp);
 	xfree(chan);
@@ -1544,7 +1399,7 @@ static COMMAND(irc_command_kick) {
 		xfree(chan);
 		return -1;
 	}
-	watch_write(j->send_watch, "KICK %s %s :%s\r\n", chan+4, *mp, KICKMSG(session, mp[1]));
+	ekg_connection_write(j->send_stream, "KICK %s %s :%s\r\n", chan+4, *mp, KICKMSG(session, mp[1]));
 
 	g_strfreev(mp);
 	xfree(chan);
@@ -1575,7 +1430,7 @@ static COMMAND(irc_command_unban) {
 			if (chan && (banlist = (chan->banlist)) ) {
 				for (i=1; banlist && i<banid; banlist = banlist->next, ++i);
 				if (banlist) /* fit or add  i<=banid) ? */
-					watch_write(j->send_watch, "MODE %s -b %s\r\n", channame+4, banlist->data);
+					ekg_connection_write(j->send_stream, "MODE %s -b %s\r\n", channame+4, (const gchar*) banlist->data);
 				else
 					debug_warn("%d %d out of range or no such ban %08x\n", i, banid, banlist);
 			}
@@ -1583,7 +1438,7 @@ static COMMAND(irc_command_unban) {
 				debug_error("Chanell || chan->banlist not found -> channel not synced ?!Try /mode +b \n");
 		}
 		else {
-			watch_write(j->send_watch, "MODE %s -b %s\r\n", channame+4, *mp);
+			ekg_connection_write(j->send_stream, "MODE %s -b %s\r\n", channame+4, *mp);
 		}
 	}
 	g_strfreev(mp);
@@ -1604,7 +1459,7 @@ static COMMAND(irc_command_ban) {
 	debug_function("[irc]_command_ban(): chan: %s mp[0]:%s mp[1]:%s\n", chan, mp[0], mp[1]);
 
 	if (!(*mp))
-		watch_write(j->send_watch, "MODE %s +b \r\n", chan+4);
+		ekg_connection_write(j->send_stream, "MODE %s +b \r\n", chan+4);
 	else {
 		/* if parameter to /ban is prefixed with irc: like /ban irc:xxx
 		 * we don't care, since this is what user requested ban user with
@@ -1621,10 +1476,10 @@ static COMMAND(irc_command_ban) {
 		if (person)
 			temp = irc_make_banmask(session, person->nick+4, person->ident, person->host);
 		if (temp) {
-			watch_write(j->send_watch, "MODE %s +b %s\r\n", chan+4, temp);
+			ekg_connection_write(j->send_stream, "MODE %s +b %s\r\n", chan+4, temp);
 			xfree(temp);
 		} else
-			watch_write(j->send_watch, "MODE %s +b %s\r\n", chan+4, *mp);
+			ekg_connection_write(j->send_stream, "MODE %s +b %s\r\n", chan+4, *mp);
 	}
 	g_strfreev(mp);
 	xfree(chan);
@@ -1691,7 +1546,7 @@ static COMMAND(irc_command_devop) {
 
 		if (tmp) *(--tmp) = '\0';
 		op[i+2]='\0';
-		watch_write(j->send_watch, "MODE %s %s %s\r\n", chan, op, p);
+		ekg_connection_write(j->send_stream, "MODE %s %s %s\r\n", chan, op, p);
 		if (!tmp) break;
 		*tmp = ' ';
 		tmp++;
@@ -1725,7 +1580,7 @@ static COMMAND(irc_command_ctcp) {
 		return -1;
 	}*/
 
-	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01%s\01\r\n",
+	ekg_connection_write(irc_private(session)->send_stream, "PRIVMSG %s :\01%s\01\r\n",
 			who+4, ctcps[i].name?ctcps[i].name:(*mp));
 
 	g_strfreev(mp);
@@ -1741,7 +1596,7 @@ static COMMAND(irc_command_ping) {
 		return -1;
 
 	g_get_current_time(&tv);
-	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01PING %d %d\01\r\n",
+	ekg_connection_write(irc_private(session)->send_stream, "PRIVMSG %s :\01PING %d %d\01\r\n",
 			who+4 ,tv.tv_sec, tv.tv_usec);
 
 	g_strfreev(mp);
@@ -1763,7 +1618,7 @@ static COMMAND(irc_command_me) {
 
 	str = irc_convert_out(j, chan+4, *mp);
 
-	watch_write(irc_private(session)->send_watch, "PRIVMSG %s :\01ACTION %s\01\r\n",
+	ekg_connection_write(irc_private(session)->send_stream, "PRIVMSG %s :\01ACTION %s\01\r\n",
 			chan+4, str?str:"");
 
 	col = irc_ircoldcolstr_to_ekgcolstr(session, *mp, 1);
@@ -1794,10 +1649,10 @@ static COMMAND(irc_command_mode) {
 */
 	debug_function("irc_command_mode %s %s \n", chan, mp[0]);
 	if (!(*mp))
-		watch_write(irc_private(session)->send_watch, "MODE %s\r\n",
+		ekg_connection_write(irc_private(session)->send_stream, "MODE %s\r\n",
 				chan+4);
 	else
-		watch_write(irc_private(session)->send_watch, "MODE %s %s\r\n",
+		ekg_connection_write(irc_private(session)->send_stream, "MODE %s %s\r\n",
 				chan+4, *mp);
 
 	g_strfreev(mp);
@@ -1813,7 +1668,7 @@ static COMMAND(irc_command_umode) {
 		return -1;
 	}
 
-	watch_write(j->send_watch, "MODE %s %s\r\n", j->nick, *params);
+	ekg_connection_write(j->send_stream, "MODE %s %s\r\n", j->nick, *params);
 
 	return 0;
 }
@@ -1827,10 +1682,10 @@ static COMMAND(irc_command_whois) {
 
 	debug_function("irc_command_whois(): %s\n", name);
 	if (!xstrcmp(name, ("whowas")))
-		watch_write(irc_private(session)->send_watch, "WHOWAS %s\r\n", person+4);
+		ekg_connection_write(irc_private(session)->send_stream, "WHOWAS %s\r\n", person+4);
 	else if (!xstrcmp(name, ("wii")))
-		watch_write(irc_private(session)->send_watch, "WHOIS %s %s\r\n", person+4, person+4);
-	else	watch_write(irc_private(session)->send_watch, "WHOIS %s\r\n",  person+4);
+		ekg_connection_write(irc_private(session)->send_stream, "WHOIS %s %s\r\n", person+4, person+4);
+	else	ekg_connection_write(irc_private(session)->send_stream, "WHOIS %s\r\n",  person+4);
 
 	g_strfreev(mp);
 	xfree (person);
@@ -1891,7 +1746,7 @@ static COMMAND(irc_command_query) {
 	if (!w) {
 		w = window_new(tar, session, 0);
 		if (session_int_get(session, "auto_lusers_sync") > 0)
-			watch_write(j->send_watch, "USERHOST %s\r\n", tar+4);
+			ekg_connection_write(j->send_stream, "USERHOST %s\r\n", tar+4);
 	}
 
 	window_switch(w->id);
@@ -1928,7 +1783,7 @@ static COMMAND(irc_command_jopacy) {
 	} else
 		return 0;
 
-	watch_write(j->send_watch, str);
+	ekg_connection_write(j->send_stream, "%s", str);
 
 	g_strfreev(mp);
 	xfree(tar);
@@ -1943,7 +1798,7 @@ static COMMAND(irc_command_nick) {
 
 	/* GiM: XXX FIXME TODO think more about session->connecting... */
 	if (session->connecting || session_connected_get(session)) {
-		watch_write(j->send_watch, "NICK %s\r\n", params[0]);
+		ekg_connection_write(j->send_stream, "NICK %s\r\n", params[0]);
 		/* this is needed, couse, when connecting and server will
 		 * respond, nickname is already in use, and user
 		 * will type /nick somethin', server doesn't send respond

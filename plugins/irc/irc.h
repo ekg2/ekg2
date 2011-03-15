@@ -32,20 +32,13 @@ enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
 enum { IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT, IRC_CASEMAPPING_COUNT };
 
 typedef struct _irc_private_t {
-	int fd;				/* connection's fd */
 	int autoreconnecting;		/* are we in reconnecting mode now? */
 
-	watch_t *recv_watch;
-	watch_t *send_watch;
+	GCancellable *connect_cancellable;
+	GDataOutputStream *send_stream;
 
 	char *nick;			/* guess again ? ;> */
 	char *host_ident;		/* ident+host */
-
-#ifdef IRC_HAVE_SSL
-	unsigned char using_ssl	: 2;	/**< 1 if we're using SSL, else 0 */
-	SSL_SESSION ssl_session;	/**< SSL session */
-	string_t ssl_buf;
-#endif
 
 	list_t people;			/* list of people_t */
 	list_t channels;		/* list of people_chan_t */
@@ -141,7 +134,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type);
  */
 enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 
-#define irc_write(s, args...) watch_write((s && s->priv) ? irc_private(s)->send_watch : NULL, args);
+#define irc_write(s, args...) ekg_connection_write(irc_private(s)->send_stream, args)
 
 int irc_parse_line(session_t *s, const char *l, int fd);	/* misc.c */
 
