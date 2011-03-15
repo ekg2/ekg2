@@ -216,7 +216,7 @@ static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_da
 	GSocketClient *sock = G_SOCKET_CLIENT(obj);
 	struct ekg_connection_starter *cs = user_data;
 	GSocketConnection *conn;
-	GError *err;
+	GError *err = NULL;
 	
 	conn = g_socket_client_connect_finish(sock, res, &err);
 	if (conn) {
@@ -228,7 +228,7 @@ static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_da
 	} else {
 		debug_error("done_async_connect(), connect failed: %s\n",
 				err ? err->message : "(reason unknown)");
-		if (!setup_async_connect(sock, cs))
+		if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED) || !setup_async_connect(sock, cs))
 			cs->failure_callback(err, cs->priv_data);
 		g_error_free(err);
 	}
@@ -236,7 +236,8 @@ static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_da
 
 static gboolean setup_async_connect(GSocketClient *sock, struct ekg_connection_starter *cs) {
 	if (cs->current_server) {
-		debug_function("setup_async_connect(), trying %s\n", *(cs->current_server));
+		debug_function("setup_async_connect(), trying %s (defport: %d)\n",
+				*(cs->current_server), cs->defport);
 		g_socket_client_connect_to_host_async(
 				sock, *(cs->current_server), cs->defport,
 				cs->cancellable,
@@ -263,6 +264,7 @@ GCancellable *ekg_connection_start(
 	cs->cancellable = g_cancellable_new();
 	cs->servers = g_strsplit(servers, ",", 0);
 	cs->current_server = cs->servers;
+	cs->defport = defport;
 	cs->callback = callback;
 	cs->failure_callback = failure_callback;
 	cs->priv_data = priv_data;
