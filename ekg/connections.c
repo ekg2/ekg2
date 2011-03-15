@@ -95,10 +95,14 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 				const char *buf;
 				const char *le = "\r\n"; /* CRLF; XXX: other line endings? */
 				gsize count;
+				gboolean found;
 
-				buf = g_buffered_input_stream_peek_buffer(instr, &count);
-				if (g_strstr_len(buf, count, le))
-					c->callback(c->instream, c->priv_data);
+				do { /* repeat till user grabs all lines */
+					buf = g_buffered_input_stream_peek_buffer(instr, &count);
+					found = !!g_strstr_len(buf, count, le);
+					if (found)
+						c->callback(c->instream, c->priv_data);
+				} while (found);
 				break;
 			}
 
