@@ -22,6 +22,8 @@
 
 typedef void (*ekg_input_callback_t) (GDataInputStream *instream, gpointer data);
 typedef void (*ekg_failure_callback_t) (GDataInputStream *instream, GError *err, gpointer data);
+typedef void (*ekg_connection_callback_t) (GSocketConnection *outstream, gpointer data);
+typedef void (*ekg_connection_failure_callback_t) (GError *err, gpointer data);
 
 typedef enum {
 	EKG_INPUT_RAW,
@@ -35,6 +37,16 @@ GDataOutputStream *ekg_connection_add(
 		ekg_input_type_t intype,
 		ekg_input_callback_t callback,
 		ekg_failure_callback_t failure_callback,
+		gpointer priv_data);
+
+GCancellable *ekg_connection_start(
+		GSocketClient *sock,
+		const gchar *service,
+		const gchar *domain,
+		const gchar *servers,
+		const guint16 defport,
+		ekg_connection_callback_t callback,
+		ekg_connection_failure_callback_t failure_callback,
 		gpointer priv_data);
 
 #endif /* __EKG_CONNECTIONS_H */
