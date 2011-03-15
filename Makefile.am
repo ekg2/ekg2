@@ -507,8 +507,10 @@ perl-build-irc: $(top_srcdir)/plugins/perl/irc/Makefile
 
 perl-clean-common: $(top_srcdir)/plugins/perl/common
 	cd $(top_srcdir)/plugins/perl/common && test ! -f Makefile || $(MAKE) clean
+	rm -f $(top_srcdir)/plugins/perl/common/Makefile.old
 perl-clean-irc: $(top_srcdir)/plugins/perl/irc
 	cd $(top_srcdir)/plugins/perl/irc && test ! -f Makefile || $(MAKE) clean
+	rm -f $(top_srcdir)/plugins/perl/irc/Makefile.old
 
 perl-distclean:
 	-rm -f $(top_srcdir)/plugins/perl/common/Makefile $(top_srcdir)/plugins/perl/irc/Makefile
