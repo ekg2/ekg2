@@ -39,6 +39,11 @@ GDataOutputStream *ekg_connection_add(
 		ekg_failure_callback_t failure_callback,
 		gpointer priv_data);
 
+void ekg_connection_write(
+		GDataOutputStream *f,
+		const gchar *format,
+		...) G_GNUC_PRINTF(2,3);
+
 GCancellable *ekg_connection_start(
 		GSocketClient *sock,
 		const gchar *service,
