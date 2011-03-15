@@ -160,10 +160,11 @@ GDataOutputStream *ekg_connection_add(
 		gpointer priv_data)
 {
 	struct ekg_connection *c = g_slice_new(struct ekg_connection);
+	GOutputStream *bout = g_buffered_output_stream_new(raw_outstream);
 
 	c->conn = conn;
 	c->instream = g_data_input_stream_new(raw_instream);
-	c->outstream = g_data_output_stream_new(raw_outstream);
+	c->outstream = g_data_output_stream_new(bout);
 	c->cancellable = g_cancellable_new();
 
 	c->callback = callback;
@@ -174,7 +175,7 @@ GDataOutputStream *ekg_connection_add(
 		/* CRLF is common in network protocols */
 	g_data_input_stream_set_newline_type(c->instream, G_DATA_STREAM_NEWLINE_TYPE_CR_LF);
 		/* disallow any blocking writes */
-	g_buffered_output_stream_set_auto_grow(G_BUFFERED_OUTPUT_STREAM(c->outstream), TRUE);
+	g_buffered_output_stream_set_auto_grow(G_BUFFERED_OUTPUT_STREAM(bout), TRUE);
 
 	connections = g_slist_prepend(connections, c);
 	setup_async_read(c);
