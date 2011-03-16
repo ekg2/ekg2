@@ -234,8 +234,11 @@ static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_da
 	} else {
 		debug_error("done_async_connect(), connect failed: %s\n",
 				err ? err->message : "(reason unknown)");
-		if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED) || !setup_async_connect(sock, cs))
+		if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED) || !setup_async_connect(sock, cs)) {
 			cs->failure_callback(err, cs->priv_data);
+			ekg_connection_starter_free(cs);
+			g_object_unref(sock);
+		}
 		g_error_free(err);
 	}
 }
