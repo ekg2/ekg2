@@ -31,18 +31,6 @@ struct ekg_connection {
 	ekg_input_type_t in_type;
 };
 
-struct ekg_connection_starter {
-	GCancellable *cancellable;
-
-	gchar **servers;
-	gchar **current_server;
-	guint16 defport;
-
-	ekg_connection_callback_t callback;
-	ekg_connection_failure_callback_t failure_callback;
-	gpointer priv_data;
-};
-
 static GSList *connections = NULL;
 
 static void setup_async_read(struct ekg_connection *c);
@@ -217,6 +205,21 @@ void ekg_connection_write(GDataOutputStream *f, const gchar *format, ...) {
 	setup_async_write(c);
 }
 
+struct ekg_connection_starter {
+	GCancellable *cancellable;
+
+	gchar *service;
+	gchar *domain;
+
+	gchar **servers;
+	gchar **current_server;
+	guint16 defport;
+
+	ekg_connection_callback_t callback;
+	ekg_connection_failure_callback_t failure_callback;
+	gpointer priv_data;
+};
+
 static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_data) {
 	GSocketClient *sock = G_SOCKET_CLIENT(obj);
 	struct ekg_connection_starter *cs = user_data;
@@ -226,9 +229,7 @@ static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_da
 	conn = g_socket_client_connect_finish(sock, res, &err);
 	if (conn) {
 		cs->callback(conn, cs->priv_data);
-		g_strfreev(cs->servers);
-		g_object_unref(cs->cancellable);
-		g_slice_free(struct ekg_connection_starter, cs);
+		ekg_connection_starter_free(cs);
 		g_object_unref(sock);
 	} else {
 		debug_error("done_async_connect(), connect failed: %s\n",
@@ -254,34 +255,63 @@ static gboolean setup_async_connect(GSocketClient *sock, struct ekg_connection_s
 		return FALSE;
 }
 
-GCancellable *ekg_connection_start(
-		GSocketClient *sock,
+ekg_connection_starter_t ekg_connection_starter_new(guint16 defport) {
+	struct ekg_connection_starter *cs = g_slice_new0(struct ekg_connection_starter);
+
+	cs->defport = defport;
+
+	return cs;
+}
+
+void ekg_connection_starter_free(ekg_connection_starter_t cs) {
+	g_free(cs->service);
+	g_free(cs->domain);
+	g_strfreev(cs->servers);
+	g_object_unref(cs->cancellable);
+	g_slice_free(struct ekg_connection_starter, cs);
+}
+
+void ekg_connection_starter_set_srv_resolver(
+		ekg_connection_starter_t cs,
 		const gchar *service,
-		const gchar *domain,
-		const gchar *servers,
-		const guint16 defport,
+		const gchar *domain)
+{
+	g_free(cs->service);
+	g_free(cs->domain);
+	cs->service = g_strdup(service);
+	cs->domain = g_strdup(domain);
+}
+
+void ekg_connection_starter_set_servers(
+		ekg_connection_starter_t cs,
+		const gchar *servers)
+{
+	g_strfreev(cs->servers);
+	cs->servers = g_strsplit(servers, ",", 0);
+}
+
+GCancellable *ekg_connection_starter_run(
+		ekg_connection_starter_t cs,
+		GSocketClient *sock,
 		ekg_connection_callback_t callback,
 		ekg_connection_failure_callback_t failure_callback,
 		gpointer priv_data)
 {
-	struct ekg_connection_starter *cs = g_slice_new(struct ekg_connection_starter);
-
-	cs->cancellable = g_cancellable_new();
-	cs->servers = g_strsplit(servers, ",", 0);
-	cs->current_server = cs->servers;
-	cs->defport = defport;
 	cs->callback = callback;
 	cs->failure_callback = failure_callback;
 	cs->priv_data = priv_data;
 
+	cs->cancellable = g_cancellable_new();
+	cs->current_server = cs->servers;
+
 		/* if we have the domain name, try SRV lookup first */
-	if (domain) {
-		g_assert(service);
+	if (cs->domain) {
+		g_assert(cs->service);
 
 		debug_function("ekg_connection_start(), trying _%s._tcp.%s\n",
-				service, domain);
+				cs->service, cs->domain);
 		g_socket_client_connect_to_service_async(
-				sock, domain, service,
+				sock, cs->domain, cs->service,
 				cs->cancellable,
 				done_async_connect,
 				cs);

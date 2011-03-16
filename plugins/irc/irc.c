@@ -582,13 +582,13 @@ static int irc_really_connect(session_t *session) {
 
 	{
 		const int defport = session_int_get(session, "port");
-		j->connect_cancellable = ekg_connection_start(
-				s, NULL, NULL,
-				session_get(session, "server"),
-				defport > 0 ? defport : DEFPORT,
-				irc_handle_connect,
-				irc_handle_connect_failure,
-				session);
+		ekg_connection_starter_t cs;
+
+		cs = ekg_connection_starter_new(defport > 0 ? defport : DEFPORT);
+		ekg_connection_starter_set_servers(cs, session_get(session, "server"));
+
+		ekg_connection_starter_run(cs, s, irc_handle_connect,
+				irc_handle_connect_failure, session);
 	}
 
 	if (session_status_get(session) == EKG_STATUS_NA)

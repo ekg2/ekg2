@@ -44,12 +44,22 @@ void ekg_connection_write(
 		const gchar *format,
 		...) G_GNUC_PRINTF(2,3);
 
-GCancellable *ekg_connection_start(
-		GSocketClient *sock,
+typedef struct ekg_connection_starter *ekg_connection_starter_t;
+
+ekg_connection_starter_t ekg_connection_starter_new(guint16 defport);
+void ekg_connection_starter_free(ekg_connection_starter_t cs);
+
+void ekg_connection_starter_set_srv_resolver(
+		ekg_connection_starter_t cs,
 		const gchar *service,
-		const gchar *domain,
-		const gchar *servers,
-		const guint16 defport,
+		const gchar *domain);
+void ekg_connection_starter_set_servers(
+		ekg_connection_starter_t cs,
+		const gchar *servers);
+
+GCancellable *ekg_connection_starter_run(
+		ekg_connection_starter_t cs,
+		GSocketClient *sock,
 		ekg_connection_callback_t callback,
 		ekg_connection_failure_callback_t failure_callback,
 		gpointer priv_data);
