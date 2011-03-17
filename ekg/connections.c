@@ -311,6 +311,10 @@ GCancellable *ekg_connection_starter_run(
 	if (cs->domain) {
 		g_assert(cs->service);
 
+			/* fallback to domainname lookup if 'servers' not set */
+		if (!cs->servers || !cs->servers[0])
+			ekg_connection_starter_set_servers(cs, cs->domain);
+
 		debug_function("ekg_connection_start(), trying _%s._tcp.%s\n",
 				cs->service, cs->domain);
 		g_socket_client_connect_to_service_async(
