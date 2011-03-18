@@ -56,6 +56,9 @@ void ekg_connection_starter_set_srv_resolver(
 void ekg_connection_starter_set_servers(
 		ekg_connection_starter_t cs,
 		const gchar *servers);
+void ekg_connection_starter_set_use_tls(
+		ekg_connection_starter_t cs,
+		gboolean use_tls); /* XXX */
 
 GCancellable *ekg_connection_starter_run(
 		ekg_connection_starter_t cs,

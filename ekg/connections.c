@@ -18,6 +18,12 @@
  */
 
 #include "ekg2.h"
+#include "ekg/internal.h"
+
+#ifdef HAVE_LIBGNUTLS
+#	include <errno.h> /* EAGAIN for transport wrappers */
+#	include <gnutls/gnutls.h>
+#endif
 
 struct ekg_connection {
 	GSocketConnection *conn;
@@ -36,6 +42,12 @@ static GSList *connections = NULL;
 static void setup_async_read(struct ekg_connection *c);
 static void setup_async_write(struct ekg_connection *c);
 static gboolean setup_async_connect(GSocketClient *sock, struct ekg_connection_starter *cs);
+
+#ifdef HAVE_LIBGNUTLS
+static void ekg_gnutls_new_session(
+		GSocketConnection *sock,
+		struct ekg_connection_starter *cs);
+#endif
 
 static struct ekg_connection *get_connection_by_outstream(GDataOutputStream *s) {
 	GSList *el;
@@ -215,6 +227,8 @@ struct ekg_connection_starter {
 	gchar **current_server;
 	guint16 defport;
 
+	gboolean use_tls;
+
 	ekg_connection_callback_t callback;
 	ekg_connection_failure_callback_t failure_callback;
 	gpointer priv_data;
@@ -228,9 +242,16 @@ static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_da
 	
 	conn = g_socket_client_connect_finish(sock, res, &err);
 	if (conn) {
-		cs->callback(conn, cs->priv_data);
-		ekg_connection_starter_free(cs);
-		g_object_unref(sock);
+#ifdef HAVE_LIBGNUTLS
+		if (cs->use_tls) {
+			ekg_gnutls_new_session(conn, cs);
+		} else
+#endif
+		{
+			cs->callback(conn, cs->priv_data);
+			ekg_connection_starter_free(cs);
+			g_object_unref(sock);
+		}
 	} else {
 		debug_error("done_async_connect(), connect failed: %s\n",
 				err ? err->message : "(reason unknown)");
@@ -293,6 +314,13 @@ void ekg_connection_starter_set_servers(
 	cs->servers = g_strsplit(servers, ",", 0);
 }
 
+void ekg_connection_starter_set_use_tls(
+		ekg_connection_starter_t cs,
+		gboolean use_tls) /* XXX */
+{
+	cs->use_tls = use_tls;
+}
+
 GCancellable *ekg_connection_starter_run(
 		ekg_connection_starter_t cs,
 		GSocketClient *sock,
@@ -326,4 +354,100 @@ GCancellable *ekg_connection_starter_run(
 		g_assert(setup_async_connect(sock, cs));
 
 	return cs->cancellable;
+}
+
+#ifdef HAVE_LIBGNUTLS
+struct ekg_gnutls_connection {
+	GDataOutputStream *outstream;
+
+	gnutls_session_t session;
+	gboolean during_handshake;
+};
+
+struct ekg_gnutls_connection_starter {
+	struct ekg_connection_starter *parent;
+
+	gnutls_session_t session;
+};
+
+static gssize ekg_gnutls_pull(gnutls_transport_ptr_t connptr, gpointer buf, gsize len) {
+	struct ekg_gnutls_connection *conn = connptr;
+
+	/* XXX,
+	 * gnutls_transport_set_errno(conn->session, EAGAIN)
+	 */
+	g_assert_not_reached();
+}
+
+static gssize ekg_gnutls_push(gnutls_transport_ptr_t connptr, gconstpointer buf, gsize len) {
+	struct ekg_gnutls_connection *conn = connptr;
+	g_assert_not_reached();
+}
+
+static void ekg_gnutls_async_handshake(struct ekg_gnutls_connection *conn) {
+	gint ret = gnutls_handshake(conn->session);
+
+	switch (ret) {
+		case GNUTLS_E_SUCCESS:
+			conn->during_handshake = FALSE;
+			break;
+		case GNUTLS_E_AGAIN:
+		case GNUTLS_E_INTERRUPTED:
+			break;
+		default:
+			g_assert_not_reached(); /* XXX */
+	}
+}
+
+static void ekg_gnutls_handle_input(GDataInputStream *s, gpointer data) {
+	struct ekg_gnutls_connection *conn = data;
+
+	if (G_UNLIKELY(conn->during_handshake)) {
+		ekg_gnutls_async_handshake(conn);
+	} else
+		g_assert_not_reached(); /* XXX */
+}
+
+static void ekg_gnutls_handle_failure(GDataInputStream *s, GError *err, gpointer data) {
+	struct ekg_gnutls_connection *conn = data;
+
+	g_assert_not_reached(); /* XXX */
+}
+
+static void ekg_gnutls_new_session(
+		GSocketConnection *sock,
+		struct ekg_connection_starter *cs)
+{
+	gnutls_session_t s;
+	struct ekg_gnutls_connection *conn = g_slice_new(struct ekg_gnutls_connection);
+
+	g_assert(!gnutls_init(&s, GNUTLS_CLIENT));
+	gnutls_transport_set_ptr(s, conn);
+	gnutls_transport_set_pull_function(s, ekg_gnutls_pull);
+	gnutls_transport_set_push_function(s, ekg_gnutls_push);
+
+	conn->session = s;
+	conn->during_handshake = TRUE;
+	conn->outstream = ekg_connection_add(
+			sock,
+			g_io_stream_get_input_stream(G_IO_STREAM(sock)),
+			g_io_stream_get_output_stream(G_IO_STREAM(sock)),
+			EKG_INPUT_RAW,
+			ekg_gnutls_handle_input,
+			ekg_gnutls_handle_failure,
+			conn);
+	ekg_gnutls_async_handshake(conn);
+}
+#endif
+
+void ekg_tls_init(void) {
+#ifdef HAVE_LIBGNUTLS
+	g_assert(!gnutls_global_init()); /* XXX: error handling */
+#endif
+}
+
+void ekg_tls_deinit(void) {
+#ifdef HAVE_LIBGNUTLS
+	gnutls_global_deinit();
+#endif
 }

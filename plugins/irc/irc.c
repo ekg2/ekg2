@@ -586,6 +586,7 @@ static int irc_really_connect(session_t *session) {
 
 		cs = ekg_connection_starter_new(defport > 0 ? defport : DEFPORT);
 		ekg_connection_starter_set_servers(cs, session_get(session, "server"));
+		ekg_connection_starter_set_use_tls(cs, !!session_int_get(session, "use_tls"));
 
 		ekg_connection_starter_run(cs, s, irc_handle_connect,
 				irc_handle_connect_failure, session);
@@ -1890,6 +1891,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("recode_out_default_charset", VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
 	PLUGIN_VAR_ADD("server",                VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("statusdescr",           VAR_STR, 0, 0, irc_statusdescr_handler),
+	PLUGIN_VAR_ADD("use_tls",		VAR_BOOL, "0", 0, NULL),
 
 	/* upper case: names of variables, that reffer to protocol stuff */
 	PLUGIN_VAR_ADD("AUTO_JOIN",			VAR_STR, 0, 0, NULL),

@@ -27,6 +27,13 @@ TIMER(timer_handle_at);
 G_GNUC_INTERNAL
 TIMER(timer_handle_command);
 
+/* connections.c */
+
+G_GNUC_INTERNAL
+void ekg_tls_init(void);
+G_GNUC_INTERNAL
+void ekg_tls_deinit(void);
+
 /* legacyconfig.c */
 
 G_GNUC_INTERNAL
