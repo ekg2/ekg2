@@ -436,33 +436,34 @@ int script_variables_read() {
 	return 0;
 }
 
-void script_variables_free(int free) {
-	GOutputStream *f = G_OUTPUT_STREAM(config_open("scripts-var", "w"));
+void script_variables_free() {
 	list_t l;
 	
-	if (!f && !free) 
+	for (l = script_vars; l; l = l->next) {
+		script_var_t *v = l->data;
+		
+/*		xfree(v->value); variables_free() free it. */
+		xfree(v->priv_data); /* should be NULL here. */
+		xfree(v->name);
+		xfree(v);
+	}
+
+	list_destroy(script_vars, 0);
+	return;
+}
+
+void script_variables_write() {
+	list_t l;
+	GOutputStream *f = G_OUTPUT_STREAM(config_open("scripts-var", "w"));
+
+	if (!f) 
 		return;
 
 	for (l = script_vars; l; l = l->next) {
 		script_var_t *v = l->data;
 		
-		if (f)
-			ekg_fprintf(f, "%s\n", v->name);
-		if (free) {
-/*			xfree(v->value); variables_free() free it. */
-			xfree(v->priv_data); /* should be NULL here. */
-			xfree(v->name);
-			xfree(v);
-		}
+		ekg_fprintf(f, "%s\n", v->name);
 	}
-
-	if (free)
-		list_destroy(script_vars, 0);
-	return;
-}
-
-void script_variables_write() {
-	script_variables_free(0);
 }
 
 script_command_t *script_command_find(const char *name)
