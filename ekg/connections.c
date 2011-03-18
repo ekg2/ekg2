@@ -361,6 +361,7 @@ struct ekg_gnutls_connection {
 	GDataOutputStream *outstream;
 
 	gnutls_session_t session;
+	gnutls_anon_client_credentials_t anoncred;
 	gboolean during_handshake;
 };
 
@@ -419,14 +420,20 @@ static void ekg_gnutls_new_session(
 		struct ekg_connection_starter *cs)
 {
 	gnutls_session_t s;
+	gnutls_anon_client_credentials_t anoncred;
 	struct ekg_gnutls_connection *conn = g_slice_new(struct ekg_gnutls_connection);
 
+	g_assert(!gnutls_anon_allocate_client_credentials(&anoncred));
 	g_assert(!gnutls_init(&s, GNUTLS_CLIENT));
-	gnutls_transport_set_ptr(s, conn);
+	g_assert(!gnutls_priority_set_direct(s, "NORMAL", NULL));
+	g_assert(!gnutls_credentials_set(s, GNUTLS_CRD_ANON, anoncred));
+
 	gnutls_transport_set_pull_function(s, ekg_gnutls_pull);
 	gnutls_transport_set_push_function(s, ekg_gnutls_push);
+	gnutls_transport_set_ptr(s, conn);
 
 	conn->session = s;
+	conn->anoncred = anoncred;
 	conn->during_handshake = TRUE;
 	conn->outstream = ekg_connection_add(
 			sock,
@@ -438,11 +445,24 @@ static void ekg_gnutls_new_session(
 			conn);
 	ekg_gnutls_async_handshake(conn);
 }
+
+static void ekg_gnutls_free_session(struct ekg_gnutls_connection *conn) {
+	gnutls_deinit(conn->session);
+	gnutls_anon_free_client_credentials(conn->anoncred);
+	g_slice_free(struct ekg_gnutls_connection, conn);
+}
+
+static void ekg_gnutls_log(gint level, const char *msg) {
+	debug_function("[gnutls:%d] %s\n", level, msg);
+}
 #endif
 
 void ekg_tls_init(void) {
 #ifdef HAVE_LIBGNUTLS
 	g_assert(!gnutls_global_init()); /* XXX: error handling */
+
+	gnutls_global_set_log_function(ekg_gnutls_log);
+	gnutls_global_set_log_level(3);
 #endif
 }
 
