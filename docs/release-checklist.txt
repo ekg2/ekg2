@@ -1,0 +1,46 @@
+Release checklist
+-----------------
+
+Pick a new $version. The versioning scheme we use is:
+  0.2.7 < (0.3.0_rc1_pre) < 0.3.0_rc1 < (0.3.0_rc2_pre) < 0.3.0_rc2 < 0.3.0 << 0.3.1 <<< 0.4.0
+
+Note:
+ * "rc" stands for Release Candidate
+ * the "_pre" versions are used just as a placeholder between RCs
+ * if you are about to bump the first or second number in the $version, it
+   means you need to start a new maintenance branch, for instance:
+
+     git checkout -b 0.4.x master
+
+   otherwise (you're bumping just the last digit, or rc number), check out the
+   existing maintenance branch:
+
+     git checkout 0.4.x
+
+   Note: the "x" is literal in this branch name.
+
+# Prepare and tag the source:
+version=....
+make check
+make -C po update-po
+git commit -m 'Refreshed the PO files.' po/
+vi configure.ac # bump the version to $version
+git commit -m "Bumped the version to $version." configure.ac
+git tag ekg2_$version
+git push
+git push origin ekg2_$version
+
+# Update the website:
+cd ../ekg2-website
+vi -O index.php en/index.php # mention $version
+git commit -m "Mentioned $version." index.php en/index.php
+git push
+
+# Publish:
+ssh toxygen.net
+$HOME/ekg2-website/website-scripts/release ekg_$version
+crontab -l # find and use the command line to push website update
+
+Other notes:
+- After doing an "rc1", drop "rc*" tags from the _previous_ release.
+
