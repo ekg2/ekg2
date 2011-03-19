@@ -47,6 +47,11 @@ static gboolean setup_async_connect(GSocketClient *sock, struct ekg_connection_s
 static void ekg_gnutls_new_session(
 		GSocketConnection *sock,
 		struct ekg_connection_starter *cs);
+
+#define EKG_GNUTLS_ERROR ekg_gnutls_error_quark()
+static G_GNUC_CONST GQuark ekg_gnutls_error_quark() {
+	return g_quark_from_static_string("ekg-gnutls-error-quark");
+}
 #endif
 
 static struct ekg_connection *get_connection_by_outstream(GDataOutputStream *s) {
@@ -234,6 +239,20 @@ struct ekg_connection_starter {
 	gpointer priv_data;
 };
 
+static void failed_async_connect(
+		GSocketClient *sock,
+		GError *err,
+		struct ekg_connection_starter *cs)
+{
+	debug_error("done_async_connect(), connect failed: %s\n",
+			err ? err->message : "(reason unknown)");
+	if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED) || !setup_async_connect(sock, cs)) {
+		cs->failure_callback(err, cs->priv_data);
+		ekg_connection_starter_free(cs);
+		g_object_unref(sock);
+	}
+}
+
 static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_data) {
 	GSocketClient *sock = G_SOCKET_CLIENT(obj);
 	struct ekg_connection_starter *cs = user_data;
@@ -253,13 +272,7 @@ static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_da
 			g_object_unref(sock);
 		}
 	} else {
-		debug_error("done_async_connect(), connect failed: %s\n",
-				err ? err->message : "(reason unknown)");
-		if (g_error_matches(err, G_IO_ERROR, G_IO_ERROR_CANCELLED) || !setup_async_connect(sock, cs)) {
-			cs->failure_callback(err, cs->priv_data);
-			ekg_connection_starter_free(cs);
-			g_object_unref(sock);
-		}
+		failed_async_connect(sock, err, cs);
 		g_error_free(err);
 	}
 }
@@ -362,14 +375,22 @@ struct ekg_gnutls_connection {
 
 	gnutls_session_t session;
 	gnutls_anon_client_credentials_t anoncred;
-	gboolean during_handshake;
 };
 
 struct ekg_gnutls_connection_starter {
 	struct ekg_connection_starter *parent;
-
-	gnutls_session_t session;
+	struct ekg_gnutls_connection *conn;
 };
+
+static void ekg_gnutls_free_connection(struct ekg_gnutls_connection *conn) {
+	gnutls_deinit(conn->session);
+	gnutls_anon_free_client_credentials(conn->anoncred);
+	g_slice_free(struct ekg_gnutls_connection, conn);
+}
+
+static void ekg_gnutls_free_connection_starter(struct ekg_gnutls_connection_starter *gcs) {
+	g_slice_free(struct ekg_gnutls_connection_starter, gcs);
+}
 
 static gssize ekg_gnutls_pull(gnutls_transport_ptr_t connptr, gpointer buf, gsize len) {
 	struct ekg_gnutls_connection *conn = connptr;
@@ -385,34 +406,40 @@ static gssize ekg_gnutls_push(gnutls_transport_ptr_t connptr, gconstpointer buf,
 	g_assert_not_reached();
 }
 
-static void ekg_gnutls_async_handshake(struct ekg_gnutls_connection *conn) {
-	gint ret = gnutls_handshake(conn->session);
+static void ekg_gnutls_handle_handshake_failure(GDataInputStream *s, GError *err, gpointer data) {
+	struct ekg_gnutls_connection_starter *gcs = data;
+
+	failed_async_connect(NULL, err, gcs->parent);
+	ekg_gnutls_free_connection(gcs->conn);
+	ekg_gnutls_free_connection_starter(gcs);
+	/* XXX: remove connection */
+}
+
+static void ekg_gnutls_async_handshake(struct ekg_gnutls_connection_starter *gcs) {
+	gint ret = gnutls_handshake(gcs->conn->session);
 
 	switch (ret) {
 		case GNUTLS_E_SUCCESS:
-			conn->during_handshake = FALSE;
+			g_assert_not_reached();
+			/* XXX: replace handlers */
 			break;
 		case GNUTLS_E_AGAIN:
 		case GNUTLS_E_INTERRUPTED:
 			break;
 		default:
-			g_assert_not_reached(); /* XXX */
+			{
+				GError *err = g_error_new_literal(EKG_GNUTLS_ERROR,
+						ret, gnutls_strerror(ret));
+				ekg_gnutls_handle_handshake_failure(NULL, err, gcs); /* XXX */
+				g_error_free(err);
+			}
 	}
 }
 
-static void ekg_gnutls_handle_input(GDataInputStream *s, gpointer data) {
-	struct ekg_gnutls_connection *conn = data;
+static void ekg_gnutls_handle_handshake_input(GDataInputStream *s, gpointer data) {
+	struct ekg_gnutls_connection_starter *gcs = data;
 
-	if (G_UNLIKELY(conn->during_handshake)) {
-		ekg_gnutls_async_handshake(conn);
-	} else
-		g_assert_not_reached(); /* XXX */
-}
-
-static void ekg_gnutls_handle_failure(GDataInputStream *s, GError *err, gpointer data) {
-	struct ekg_gnutls_connection *conn = data;
-
-	g_assert_not_reached(); /* XXX */
+	ekg_gnutls_async_handshake(gcs);
 }
 
 static void ekg_gnutls_new_session(
@@ -422,6 +449,7 @@ static void ekg_gnutls_new_session(
 	gnutls_session_t s;
 	gnutls_anon_client_credentials_t anoncred;
 	struct ekg_gnutls_connection *conn = g_slice_new(struct ekg_gnutls_connection);
+	struct ekg_gnutls_connection_starter *gcs = g_slice_new(struct ekg_gnutls_connection_starter);
 
 	g_assert(!gnutls_anon_allocate_client_credentials(&anoncred));
 	g_assert(!gnutls_init(&s, GNUTLS_CLIENT));
@@ -432,24 +460,20 @@ static void ekg_gnutls_new_session(
 	gnutls_transport_set_push_function(s, ekg_gnutls_push);
 	gnutls_transport_set_ptr(s, conn);
 
+	gcs->parent = cs;
+	gcs->conn = conn;
+
 	conn->session = s;
 	conn->anoncred = anoncred;
-	conn->during_handshake = TRUE;
 	conn->outstream = ekg_connection_add(
 			sock,
 			g_io_stream_get_input_stream(G_IO_STREAM(sock)),
 			g_io_stream_get_output_stream(G_IO_STREAM(sock)),
 			EKG_INPUT_RAW,
-			ekg_gnutls_handle_input,
-			ekg_gnutls_handle_failure,
-			conn);
-	ekg_gnutls_async_handshake(conn);
-}
-
-static void ekg_gnutls_free_session(struct ekg_gnutls_connection *conn) {
-	gnutls_deinit(conn->session);
-	gnutls_anon_free_client_credentials(conn->anoncred);
-	g_slice_free(struct ekg_gnutls_connection, conn);
+			ekg_gnutls_handle_handshake_input,
+			ekg_gnutls_handle_handshake_failure,
+			gcs);
+	ekg_gnutls_async_handshake(gcs);
 }
 
 static void ekg_gnutls_log(gint level, const char *msg) {
