@@ -400,10 +400,31 @@ static void ekg_gnutls_free_connection_starter(struct ekg_gnutls_connection_star
 
 static gssize ekg_gnutls_pull(gnutls_transport_ptr_t connptr, gpointer buf, gsize len) {
 	struct ekg_gnutls_connection *conn = connptr;
+	GBufferedInputStream *s = G_BUFFERED_INPUT_STREAM(conn->connection->instream);
+	gsize avail_bytes = g_buffered_input_stream_get_available(s);
 
-	/* XXX,
-	 * gnutls_transport_set_errno(conn->session, EAGAIN)
-	 */
+	/* XXX: EOF? */
+
+	if (avail_bytes == 0) {
+		gnutls_transport_set_errno(conn->session, EAGAIN);
+		return -1;
+	} else {
+		GError *err = NULL;
+		gssize ret = g_input_stream_read(
+				G_INPUT_STREAM(s),
+				buf,
+				MIN(avail_bytes, len),
+				NULL,
+				&err);
+		
+		if (ret == -1) {
+			debug_error("ekg_gnutls_pull() failed: %s\n", err->message);
+			g_error_free(err);
+		}
+
+		return ret;
+	}
+
 	g_assert_not_reached();
 }
 
