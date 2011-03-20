@@ -453,7 +453,7 @@ static void ekg_gnutls_new_session(
 
 	g_assert(!gnutls_anon_allocate_client_credentials(&anoncred));
 	g_assert(!gnutls_init(&s, GNUTLS_CLIENT));
-	g_assert(!gnutls_priority_set_direct(s, "NORMAL", NULL));
+	g_assert(!gnutls_priority_set_direct(s, "PERFORMANCE:+ANON-DH", NULL)); /* XXX */
 	g_assert(!gnutls_credentials_set(s, GNUTLS_CRD_ANON, anoncred));
 
 	gnutls_transport_set_pull_function(s, ekg_gnutls_pull);
