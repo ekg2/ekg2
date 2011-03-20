@@ -349,7 +349,6 @@ plugins_irc_irc_la_SOURCES = \
 	plugins/irc/input.h \
 	plugins/irc/irc.c \
 	plugins/irc/irc.h \
-	plugins/irc/irc-ssl.h \
 	plugins/irc/IRCVERSION.h \
 	plugins/irc/misc.c \
 	plugins/irc/misc.h \

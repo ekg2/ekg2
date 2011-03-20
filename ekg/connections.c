@@ -192,12 +192,26 @@ GDataOutputStream *ekg_connection_add(
 	return c->outstream;
 }
 
+void ekg_connection_write_buf(GDataOutputStream *f, gconstpointer buf, gsize len) {
+	struct ekg_connection *c = get_connection_by_outstream(f);
+	GError *err = NULL;
+	gsize out = g_output_stream_write(G_OUTPUT_STREAM(f), buf, len, NULL, &err);
+
+	if (out < len) {
+		debug_error("ekg_connection_write_string() failed (wrote %d out of %d): %s\n",
+				out, len, err ? err->message : "(no error?!)");
+		failed_write(c);
+		g_error_free(err);
+
+		return;
+	}
+
+	setup_async_write(c);
+}
+
 void ekg_connection_write(GDataOutputStream *f, const gchar *format, ...) {
 	static GString *buf = NULL;
 	va_list args;
-	gsize out;
-	GError *err = NULL;
-	struct ekg_connection *c = get_connection_by_outstream(f);
 
 	if (G_LIKELY(format)) {
 		if (!buf)
@@ -206,20 +220,12 @@ void ekg_connection_write(GDataOutputStream *f, const gchar *format, ...) {
 		va_start(args, format);
 		g_string_vprintf(buf, format, args);
 		va_end(args);
-		
-		out = g_output_stream_write(G_OUTPUT_STREAM(f), buf->str, buf->len, NULL, &err);
 
-		if (out < buf->len) {
-			debug_error("ekg_connection_write() failed (wrote %d out of %d): %s\n",
-					out, buf->len, err ? err->message : "(no error?!)");
-			failed_write(c);
-			g_error_free(err);
-
-			return;
-		}
+		ekg_connection_write_buf(f, buf->str, buf->len);
+	} else {
+		struct ekg_connection *c = get_connection_by_outstream(f);
+		setup_async_write(c);
 	}
-
-	setup_async_write(c);
 }
 
 struct ekg_connection_starter {
@@ -403,7 +409,10 @@ static gssize ekg_gnutls_pull(gnutls_transport_ptr_t connptr, gpointer buf, gsiz
 
 static gssize ekg_gnutls_push(gnutls_transport_ptr_t connptr, gconstpointer buf, gsize len) {
 	struct ekg_gnutls_connection *conn = connptr;
-	g_assert_not_reached();
+
+		/* XXX: handle failures better? */
+	ekg_connection_write_buf(conn->connection->outstream, buf, len);
+	return len;
 }
 
 static void ekg_gnutls_handle_handshake_failure(GDataInputStream *s, GError *err, gpointer data) {
