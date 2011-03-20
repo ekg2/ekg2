@@ -371,7 +371,7 @@ GCancellable *ekg_connection_starter_run(
 
 #ifdef HAVE_LIBGNUTLS
 struct ekg_gnutls_connection {
-	GDataOutputStream *outstream;
+	struct ekg_connection *connection;
 
 	gnutls_session_t session;
 	gnutls_anon_client_credentials_t anoncred;
@@ -465,14 +465,17 @@ static void ekg_gnutls_new_session(
 
 	conn->session = s;
 	conn->anoncred = anoncred;
-	conn->outstream = ekg_connection_add(
-			sock,
-			g_io_stream_get_input_stream(G_IO_STREAM(sock)),
-			g_io_stream_get_output_stream(G_IO_STREAM(sock)),
-			EKG_INPUT_RAW,
-			ekg_gnutls_handle_handshake_input,
-			ekg_gnutls_handle_handshake_failure,
-			gcs);
+	conn->connection = get_connection_by_outstream(
+			ekg_connection_add(
+				sock,
+				g_io_stream_get_input_stream(G_IO_STREAM(sock)),
+				g_io_stream_get_output_stream(G_IO_STREAM(sock)),
+				EKG_INPUT_RAW,
+				ekg_gnutls_handle_handshake_input,
+				ekg_gnutls_handle_handshake_failure,
+				gcs)
+			);
+	g_assert(conn->connection);
 	ekg_gnutls_async_handshake(gcs);
 }
 
