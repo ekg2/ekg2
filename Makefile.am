@@ -2,7 +2,7 @@ SUBDIRS = po
 
 ACLOCAL_AMFLAGS = -I m4
 # XXX: we should check for -Wall support?
-AM_CFLAGS = -Wall
+AM_CFLAGS = -Wall $(C_STRICT_ALIASING)
 
 plugindir = $(libdir)/ekg2/plugins
 scriptdir = $(pkgdatadir)/scripts
@@ -508,8 +508,10 @@ perl-build-irc: $(top_srcdir)/plugins/perl/irc/Makefile
 
 perl-clean-common: $(top_srcdir)/plugins/perl/common
 	cd $(top_srcdir)/plugins/perl/common && test ! -f Makefile || $(MAKE) clean
+	rm -f $(top_srcdir)/plugins/perl/common/Makefile.old
 perl-clean-irc: $(top_srcdir)/plugins/perl/irc
 	cd $(top_srcdir)/plugins/perl/irc && test ! -f Makefile || $(MAKE) clean
+	rm -f $(top_srcdir)/plugins/perl/irc/Makefile.old
 
 perl-distclean:
 	-rm -f $(top_srcdir)/plugins/perl/common/Makefile $(top_srcdir)/plugins/perl/irc/Makefile

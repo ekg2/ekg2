@@ -10,6 +10,7 @@ AC_PROG_CC_C99
 AM_PROG_CC_C_O
 AC_USE_SYSTEM_EXTENSIONS
 AC_SYS_LARGEFILE
+AC_PROG_C_NO_STRICT_ALIASING
 
 dnl XXX: docs say we should use '-no-undefined' along with 'win32-dll'
 LT_INIT([disable-static win32-dll])
@@ -281,7 +282,7 @@ AC_EKG2_PLUGIN([python], [
 				AC_PATH_PROGS([PYCONF], [python$pyver-config python-config-$pyver])
 				AS_IF([test x"$PYCONF" != x""], [
 					PYTHON_CFLAGS="`$PYCONF --includes`"
-					PYTHON_LIBS="`$PYCONF --libs`"
+					PYTHON_LIBS="`$PYCONF --ldflags`"
 					pyfound=yes
 				])
 			])

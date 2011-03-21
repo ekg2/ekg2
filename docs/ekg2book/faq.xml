@@ -19,7 +19,7 @@
                <para>
                   Zapraszam na <ulink url="http://ekg2.org">/http://ekg2.org/</ulink>
                   do dzialu Pliki i stamt±d mo¿na ¶ciagaæ codzinne snapshoty. Mo¿na
-                  równie¿ skorzystaæ z CVS'a który pozwala byæ na bie¿±co z
+                  równie¿ skorzystaæ z GIT'a który pozwala byæ na bie¿±co z
                   aktualizacjami (np. jak sie oka¿e ¿e 10 minut temu naprawiono b³±d
                   powoduj±ce Segmentation Fault naszego EKG2). Sposób postêpowania
                   jest oczywisty bo wszystko ³adnie zosta³o opisane na stronce, wiêc
@@ -55,7 +55,7 @@
          <qandaentry>
             <question>
                <para>
-                  Mam wersjê CVS EKG2 ale przy wykonywaniu ./autogen.sh pojawiaja mi
+                  Mam wersjê EKG2 z GIT, ale przy wykonywaniu ./autogen.sh pojawiaja mi
                   siê b³edy o brakuj±cym libtoolize, libtool, aclocal, autoheader,
                   automake, autoconf, autom4te. Co z tym zrobic?
                </para>

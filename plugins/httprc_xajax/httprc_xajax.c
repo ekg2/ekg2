@@ -184,7 +184,7 @@ char *http_fstring(int winid, char *parent, const fstring_t *line)
 #define HTTP_HEADER(ver, scode, eheaders) \
 	httprc_write(send_watch,				\
 		"%s %d %s\r\n"						/* statusline: $PROTOCOL $SCODE $RESPONSE */\
-		"Server: ekg2-CVS-httprc_xajax plugin\r\n"		/* server info */	\
+		"Server: ekg2-GIT-httprc_xajax plugin\r\n"		/* server info */	\
 		"%s\r\n",							/* headers */		\
 		ver == 0 ? "HTTP/1.0" : ver == 1 ? "HTTP/1.1" : "",	/* PROTOCOL */		\
 		scode,							/* Status code */	\

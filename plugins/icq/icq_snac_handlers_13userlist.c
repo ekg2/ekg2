@@ -36,7 +36,7 @@
 #include "icq_snac_handlers.h"
 
 
-SNAC_SUBHANDLER(icq_snac_userlist_error) {
+static SNAC_SUBHANDLER(icq_snac_userlist_error) {
 	struct {
 		guint16 error;
 	} pkt;
@@ -51,7 +51,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_error) {
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_reply) {
+static SNAC_SUBHANDLER(icq_snac_userlist_reply) {
 	/* SNAC(13,03) SRV_SSI_RIGHTS_REPLY	Service parameters reply
 	 *
 	 * Server replies with this SNAC to SNAC(13,02) - client SSI service parameters request.
@@ -285,7 +285,7 @@ cleanup_user:
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_roster) {
+static SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 	/*
 	 * Handle SNAC(0x13, 0x6) -- Server contact list reply
 	 *
@@ -366,7 +366,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_roster) {
 	return 0;
 }
 
-char *icq_snac_userlist_edit_ack_msg(int error) {
+static char *icq_snac_userlist_edit_ack_msg(int error) {
 	char *msg;
 
 	switch (error) {
@@ -383,7 +383,13 @@ char *icq_snac_userlist_edit_ack_msg(int error) {
 	return msg;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_edit_ack) {
+static SNAC_SUBHANDLER(icq_snac_userlist_edit_ack) {
+	/*
+	 * SNAC(13,0E)	SRV_SSIxMODxACK -- SSI edit server ack
+	 *
+	 * This SNAC is an ack sent by the server when adding a buddy,
+	 * deleting a buddy, or otherwise modifying a group.
+	 */
 	guint16 err;
 
 	debug_function("icq_snac_userlist_edit_ack()\n");
@@ -399,24 +405,56 @@ SNAC_SUBHANDLER(icq_snac_userlist_edit_ack) {
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_up_to_date) {
+static SNAC_SUBHANDLER(icq_snac_userlist_up_to_date) {
+	/*
+	 * SNAC(13,0F)	SRV_SSI_UPxTOxDATE -- client local SSI is up-to-date
+	 *
+	 * Server send this snac as reply for SNAC(13,05) when server-stored
+	 * information has the same modification date and items number.
+	 */
 	/* XXX "I" - modification date/time of client local SSI copy, "W" - number of items in client local SSI copy */
 	debug_function("icq_snac_userlist_up_to_date()\n");
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_modifystart) {
+static SNAC_SUBHANDLER(icq_snac_userlist_modifystart) {
+	/*
+	 * SNAC(13,11)	CLI_SSI_EDIT_BEGIN -- Contacts edit start (begin transaction)
+	 *
+	 * Use this before server side information (SSI) modification. Also
+	 * you should send SNAC(13,12) after SSI modification. You could also
+	 * use "import" transaction mode to add contacts requiring
+	 * authorization. Just add 0x00010000 to snac data to start import
+	 * transaction.
+	 */
+	/* XXX empty (or 0x00010000 for import transaction) */
 	debug_white("icq_snac_userlist_modifystart() Server is modifying contact list\n");
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_modifyentry) {
+static SNAC_SUBHANDLER(icq_snac_userlist_modifyentry) {
+	/*
+	 * SNAC(13,09)  	CLI_SSIxUPDATE
+	 *
+	 * This can be used to modify either the name or additional data for
+	 * any items that are already in your server-stored information. It
+	 * is most commonly used after adding or removing a buddy: you should
+	 * either add or remove the buddy ID# from the type 0x00c9 TLV in the
+	 * additional data of the parent group, and then send this SNAC
+	 * containing the modified data. Server should reply via SNAC(13,0E).
+	 */
 	debug_function("icq_snac_userlist_modifyentry() Server updated our contact on list\n");
 
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_removeentry) {
+static SNAC_SUBHANDLER(icq_snac_userlist_removeentry) {
+	/*
+	 * SNAC(13,0A)	CLI_SSIxDELETE -- SSI edit: remove item
+	 *
+	 * Client use this to delete items from server-side info. Server
+	 * should reply via SNAC(13,0E).
+	 */
 	debug_function("icq_snac_userlist_removeentry() Server updated our contact on list\n");
 #if ICQ_DEBUG_UNUSED_INFORMATIONS
 {
@@ -433,32 +471,77 @@ SNAC_SUBHANDLER(icq_snac_userlist_removeentry) {
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_modifyend) {
+static SNAC_SUBHANDLER(icq_snac_userlist_modifyend) {
+	/*
+	 * SNAC(13,12)	CLI_SSI_EDIT_END -- Contacts edit end (finish transaction)
+	 *
+	 * This snac used after SSI modification to commit transaction started by SNAC(13,11).
+	 * See also snac list for SSI service here.
+	 */
 	debug_white("icq_snac_userlist_modifyend() End of server modification\n");
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_auth_req) {
+static SNAC_SUBHANDLER(icq_snac_userlist_future_auth) {
+	/*
+	 * SNAC(13,15) SRV_SSI_FUTURExAUTHxGRANTED -- Future authorization granted
+	 *
+	 * You'll receive this when somebody grants future authorization to
+	 * you. You can use SNAC(13,14) to send such authorization grant.
+	 */
+	struct {
+		char *uid;
+		char *reason;
+	} pkt;
+
+	if (!ICQ_UNPACK(&buf, "u", &pkt.uid))
+		return -1;
+
+	if (!ICQ_UNPACK(&buf, "U", &pkt.reason))
+		pkt.reason = "";
+
+	/* XXX, pkt.reason recode */
+	debug_function("icq_snac_userlist_future_auth() %s reason: %s\n", pkt.uid, pkt.reason);
+	return 0;
+}
+
+static SNAC_SUBHANDLER(icq_snac_userlist_auth_req) {
+	/*
+	 * SNAC(13,19)	SRV_SSI_AUTHxREQUEST -- Authorization request
+	 *
+	 * This is the authorization request from another client because it
+	 * wants to add you to its contact list. You may just ignore this
+	 * request or you could reply via SNAC(13,1A) - authorization reply.
+	 */
 	struct {
 		char *uid;
 		char *reason;
 	} pkt;
 	char *uid;
 
-	if (!ICQ_UNPACK(&buf, "uU", &pkt.uid, &pkt.reason))
+	if (!ICQ_UNPACK(&buf, "u", &pkt.uid))
 		return -1;
 
-	debug_function("icq_snac_userlist_auth_req() uid: %s reason: %s\n", pkt.uid, pkt.reason);
+	if (!ICQ_UNPACK(&buf, "U", &pkt.reason))
+		pkt.reason = "";
 
 	/* XXX, pkt.reason recode */
 
 	uid = icq_uid(pkt.uid);
+	debug_function("icq_snac_userlist_auth_req() %s reason: %s\n", uid, pkt.reason);
 	print("icq_auth_subscribe", session_name(s), uid, pkt.reason);
 	xfree(uid);
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
+static SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
+	/*
+	 * SNAC(13,1B)	SRV_SSI_AUTHxREPLY -- Authorization reply
+	 *
+	 * This snac received when someone grant or declines you
+	 * authorization, sent via SNAC(13,18). It contain screen name (uin)
+	 * of the user, result flag and reason string.
+	 */
 	struct {
 		char *uid;
 		guint8 flag;
@@ -474,6 +557,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
 	if (ICQ_UNPACK(&buf, "c", &pkt.flag)) {
 		if (!ICQ_UNPACK(&buf, "U", &pkt.reason))
 			pkt.reason = "";
+		/* XXX, pkt.reason recode */
 		/* XXX, spammer */
 		switch (pkt.flag) {
 			case 0:
@@ -498,7 +582,14 @@ SNAC_SUBHANDLER(icq_snac_userlist_auth_reply) {
 	return 0;
 }
 
-SNAC_SUBHANDLER(icq_snac_userlist_you_were_added) {
+static SNAC_SUBHANDLER(icq_snac_userlist_you_were_added) {
+	/*
+	 * SNAC(13,1C)	SRV_SSI_YOUxWERExADDED -- "You were added" message
+	 *
+	 * Server send this snac to clients, that announced the use of family
+	 * 0x13 in SNAC(01,17). This is the "you-were-added" message meaning
+	 * that somebody (snac contain his/her screenname) added you to his/her roster.
+	 */
 	struct {
 		char *uid;
 	} pkt;
@@ -513,7 +604,7 @@ SNAC_SUBHANDLER(icq_snac_userlist_you_were_added) {
 	print_info(uid, s, "icq_you_were_added", session_name(s), format_user(s, uid));
 
 	if ( config_auto_user_add && !(u = userlist_find(s, uid)) )
-		u = userlist_add(s, uid, uid);
+		u = userlist_add(s, uid, uid);				/* XXX "/addssi uid" */
 
 	xfree(uid);
 
@@ -533,6 +624,7 @@ SNAC_HANDLER(icq_snac_userlist_handler) {
 		case 0x0F: handler = icq_snac_userlist_up_to_date; break;
 		case 0x11: handler = icq_snac_userlist_modifystart; break;	/* Miranda: OK */
 		case 0x12: handler = icq_snac_userlist_modifyend; break;	/* Miranda: OK */
+		case 0x15: handler = icq_snac_userlist_future_auth; break;
 		case 0x19: handler = icq_snac_userlist_auth_req; break;
 		case 0x1B: handler = icq_snac_userlist_auth_reply; break;
 		case 0x1C: handler = icq_snac_userlist_you_were_added; break;
@@ -600,7 +692,7 @@ SNAC_SUBHANDLER(icq_cmd_addssi_ack) {
 				if (nick) {
 
 					query_emit(NULL, "userlist-renamed", &u->nickname, &nick);
-				
+
 					xfree(u->nickname);
 					u->nickname = xstrdup(nick);
 

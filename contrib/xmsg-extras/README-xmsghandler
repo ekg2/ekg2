@@ -14,8 +14,8 @@ sends failure message to user.
 
 What is that XMSG? That's simple external message delivery system for IM's,
 independent of any servers, with simplest queuing ever. Currently only IM
-supporting it is EKG2 (<http://www.ekg2.org/>, only fresh CVS versions). See
-README within plugins/xmsg/ in its' CVS for more information.
+supporting it is EKG2. See README within plugins/xmsg/ in its source tree for
+more information.
 
 What's rules of creating handler.d scripts?
 1) Main handler invokes all scripts with same arguments it is invoked with,
