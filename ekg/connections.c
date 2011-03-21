@@ -83,10 +83,13 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 		return;
 	}
 
+	debug_function("done_async_read(): read %d bytes\n", rsize);
+
 	if (rsize == 0) { /* EOF */
 		if (g_buffered_input_stream_get_available(instr) > 0)
 			c->callback(c->instream, c->priv_data);
 		/* XXX */
+		g_assert_not_reached();
 		return;
 	}
 
@@ -195,9 +198,9 @@ GDataOutputStream *ekg_connection_add(
 void ekg_connection_write_buf(GDataOutputStream *f, gconstpointer buf, gsize len) {
 	struct ekg_connection *c = get_connection_by_outstream(f);
 	GError *err = NULL;
-	gsize out = g_output_stream_write(G_OUTPUT_STREAM(f), buf, len, NULL, &err);
+	gssize out = g_output_stream_write(G_OUTPUT_STREAM(f), buf, len, NULL, &err);
 
-	if (out < len) {
+	if (out < (gssize) len) {
 		debug_error("ekg_connection_write_string() failed (wrote %d out of %d): %s\n",
 				out, len, err ? err->message : "(no error?!)");
 		failed_write(c);
@@ -205,6 +208,8 @@ void ekg_connection_write_buf(GDataOutputStream *f, gconstpointer buf, gsize len
 
 		return;
 	}
+
+	debug_function("ekg_connection_write_buf(), wrote %d bytes\n", out);
 
 	setup_async_write(c);
 }
