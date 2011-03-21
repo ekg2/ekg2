@@ -198,8 +198,15 @@ GDataOutputStream *ekg_connection_add(
 void ekg_connection_write_buf(GDataOutputStream *f, gconstpointer buf, gsize len) {
 	struct ekg_connection *c = get_connection_by_outstream(f);
 	GError *err = NULL;
-	gssize out = g_output_stream_write(G_OUTPUT_STREAM(f), buf, len, NULL, &err);
+	gssize out;
+	GOutputStream *of = G_OUTPUT_STREAM(f);
 
+	/* we need to abort current flush in order to append to buf,
+	 * yes, it is stupid. */
+	/* XXX: is this enough or should we actually cancel the flush? */
+	g_output_stream_clear_pending(of);
+
+	out = g_output_stream_write(of, buf, len, NULL, &err);
 	if (out < (gssize) len) {
 		debug_error("ekg_connection_write_string() failed (wrote %d out of %d): %s\n",
 				out, len, err ? err->message : "(no error?!)");
