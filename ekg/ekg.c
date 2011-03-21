@@ -459,7 +459,7 @@ static void glib_debug_handler(const gchar *log_domain, GLogLevelFlags log_level
 		return;
 
 	recurse++;
-	debug("[%s] %s", log_domain, message);
+	debug("[%s] %s\n", log_domain, message);
 	recurse--;
 }
 
