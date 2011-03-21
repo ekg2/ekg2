@@ -207,7 +207,7 @@ void ekg_connection_write_buf(GDataOutputStream *f, gconstpointer buf, gsize len
 	g_output_stream_clear_pending(of);
 
 	out = g_output_stream_write(of, buf, len, NULL, &err);
-	if (out < (gssize) len) {
+	if (out != len) {
 		debug_error("ekg_connection_write_string() failed (wrote %d out of %d): %s\n",
 				out, len, err ? err->message : "(no error?!)");
 		failed_write(c);
