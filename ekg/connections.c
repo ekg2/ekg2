@@ -514,7 +514,7 @@ static void ekg_gnutls_new_session(
 }
 
 static void ekg_gnutls_log(gint level, const char *msg) {
-	debug_function("[gnutls:%d] %s\n", level, msg);
+	debug_ext(DEBUG_GGMISC, "[gnutls:%d] %s", level, msg);
 }
 #endif
 
