@@ -404,6 +404,8 @@ GCancellable *ekg_connection_starter_run(
 #ifdef HAVE_LIBGNUTLS
 struct ekg_gnutls_connection {
 	struct ekg_connection *connection;
+	GMemoryInputStream *instream;
+	GMemoryOutputStream *outstream;
 
 	gnutls_session_t session;
 	gnutls_certificate_credentials_t cred;
@@ -493,17 +495,21 @@ static void ekg_gnutls_async_handshake(struct ekg_gnutls_connection_starter *gcs
 				struct ekg_gnutls_connection *gc = gcs->conn;
 				struct ekg_connection_starter *cs = gcs->parent;
 
+				GInputStream *mi = g_memory_input_stream_new();
+				GOutputStream *mo = g_memory_output_stream_new(NULL, 0, g_realloc, g_free);
+
+					/* set streams */
+				gc->instream = G_MEMORY_INPUT_STREAM(mi);
+				gc->outstream = G_MEMORY_OUTPUT_STREAM(mo);
+
 					/* switch handlers */
 				gc->connection->callback = ekg_gnutls_handle_data;
 				gc->connection->failure_callback = ekg_gnutls_handle_data_failure;
 				gc->connection->priv_data = gc;
 
 					/* this cleans up the socket, and cs */
-				succeeded_async_connect(gcs->sockclient,
-						gc->connection->conn,
-						cs,
-						NULL,
-						NULL); /* XXX! */
+				succeeded_async_connect(gcs->sockclient, gc->connection->conn,
+						cs, mi, mo);
 					/* and this cleans up gcs */
 				ekg_gnutls_free_connection_starter(gcs);
 			}
