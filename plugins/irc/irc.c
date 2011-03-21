@@ -529,14 +529,19 @@ static void irc_handle_failure(GDataInputStream *f, GError *err, gpointer data) 
 		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
 }
 
-static void irc_handle_connect(GSocketConnection *c, gpointer data) {
+static void irc_handle_connect(
+		GSocketConnection *conn,
+		GInputStream *instream,
+		GOutputStream *outstream,
+		gpointer data)
+{
 	session_t *s = data;
 	irc_private_t *j = irc_private(s);
 
 	j->send_stream = ekg_connection_add(
-			c,
-			g_io_stream_get_input_stream(G_IO_STREAM(c)),
-			g_io_stream_get_output_stream(G_IO_STREAM(c)),
+			conn,
+			instream,
+			outstream,
 			EKG_INPUT_LINE,
 			irc_handle_line,
 			irc_handle_failure,

@@ -20,10 +20,21 @@
 #ifndef __EKG_CONNECTIONS_H
 #define __EKG_CONNECTIONS_H
 
-typedef void (*ekg_input_callback_t) (GDataInputStream *instream, gpointer data);
-typedef void (*ekg_failure_callback_t) (GDataInputStream *instream, GError *err, gpointer data);
-typedef void (*ekg_connection_callback_t) (GSocketConnection *outstream, gpointer data);
-typedef void (*ekg_connection_failure_callback_t) (GError *err, gpointer data);
+typedef void (*ekg_input_callback_t) (
+		GDataInputStream *instream,
+		gpointer data);
+typedef void (*ekg_failure_callback_t) (
+		GDataInputStream *instream,
+		GError *err,
+		gpointer data);
+typedef void (*ekg_connection_callback_t) (
+		GSocketConnection *conn,
+		GInputStream *instream,
+		GOutputStream *outstream,
+		gpointer data);
+typedef void (*ekg_connection_failure_callback_t) (
+		GError *err,
+		gpointer data);
 
 typedef enum {
 	EKG_INPUT_RAW,
