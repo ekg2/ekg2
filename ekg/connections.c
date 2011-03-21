@@ -380,7 +380,7 @@ struct ekg_gnutls_connection {
 	struct ekg_connection *connection;
 
 	gnutls_session_t session;
-	gnutls_anon_client_credentials_t anoncred;
+	gnutls_certificate_credentials_t cred;
 };
 
 struct ekg_gnutls_connection_starter {
@@ -390,7 +390,7 @@ struct ekg_gnutls_connection_starter {
 
 static void ekg_gnutls_free_connection(struct ekg_gnutls_connection *conn) {
 	gnutls_deinit(conn->session);
-	gnutls_anon_free_client_credentials(conn->anoncred);
+	gnutls_certificate_free_credentials(conn->cred);
 	g_slice_free(struct ekg_gnutls_connection, conn);
 }
 
@@ -404,6 +404,8 @@ static gssize ekg_gnutls_pull(gnutls_transport_ptr_t connptr, gpointer buf, gsiz
 	gsize avail_bytes = g_buffered_input_stream_get_available(s);
 
 	/* XXX: EOF? */
+
+	g_assert(len > 0);
 
 	if (avail_bytes == 0) {
 		gnutls_transport_set_errno(conn->session, EAGAIN);
@@ -430,6 +432,8 @@ static gssize ekg_gnutls_pull(gnutls_transport_ptr_t connptr, gpointer buf, gsiz
 
 static gssize ekg_gnutls_push(gnutls_transport_ptr_t connptr, gconstpointer buf, gsize len) {
 	struct ekg_gnutls_connection *conn = connptr;
+
+	g_assert(len > 0);
 
 		/* XXX: handle failures better? */
 	ekg_connection_write_buf(conn->connection->outstream, buf, len);
@@ -477,14 +481,14 @@ static void ekg_gnutls_new_session(
 		struct ekg_connection_starter *cs)
 {
 	gnutls_session_t s;
-	gnutls_anon_client_credentials_t anoncred;
+	gnutls_certificate_credentials_t cred;
 	struct ekg_gnutls_connection *conn = g_slice_new(struct ekg_gnutls_connection);
 	struct ekg_gnutls_connection_starter *gcs = g_slice_new(struct ekg_gnutls_connection_starter);
 
-	g_assert(!gnutls_anon_allocate_client_credentials(&anoncred));
+	g_assert(!gnutls_certificate_allocate_credentials(&cred));
 	g_assert(!gnutls_init(&s, GNUTLS_CLIENT));
-	g_assert(!gnutls_priority_set_direct(s, "PERFORMANCE:+ANON-DH", NULL)); /* XXX */
-	g_assert(!gnutls_credentials_set(s, GNUTLS_CRD_ANON, anoncred));
+	g_assert(!gnutls_priority_set_direct(s, "PERFORMANCE", NULL)); /* XXX */
+	g_assert(!gnutls_credentials_set(s, GNUTLS_CRD_CERTIFICATE, cred));
 
 	gnutls_transport_set_pull_function(s, ekg_gnutls_pull);
 	gnutls_transport_set_push_function(s, ekg_gnutls_push);
@@ -494,7 +498,7 @@ static void ekg_gnutls_new_session(
 	gcs->conn = conn;
 
 	conn->session = s;
-	conn->anoncred = anoncred;
+	conn->cred = cred;
 	conn->connection = get_connection_by_outstream(
 			ekg_connection_add(
 				sock,
