@@ -25,6 +25,10 @@
 #	include <gnutls/gnutls.h>
 #endif
 
+struct ekg_connection;
+
+typedef void (*ekg_flush_handler_t) (struct ekg_connection *conn);
+
 struct ekg_connection {
 	GSocketConnection *conn;
 	GDataInputStream *instream;
@@ -35,6 +39,8 @@ struct ekg_connection {
 	ekg_input_callback_t callback;
 	ekg_failure_callback_t failure_callback;
 	ekg_input_type_t in_type;
+
+	ekg_flush_handler_t flush_handler;
 };
 
 static GSList *connections = NULL;
@@ -185,6 +191,8 @@ GDataOutputStream *ekg_connection_add(
 	c->priv_data = priv_data;
 	c->in_type = in_type;
 
+	c->flush_handler = setup_async_write;
+
 		/* CRLF is common in network protocols */
 	g_data_input_stream_set_newline_type(c->instream, G_DATA_STREAM_NEWLINE_TYPE_CR_LF);
 		/* disallow any blocking writes */
@@ -219,7 +227,7 @@ void ekg_connection_write_buf(GDataOutputStream *f, gconstpointer buf, gsize len
 
 	debug_function("ekg_connection_write_buf(), wrote %d bytes\n", out);
 
-	setup_async_write(c);
+	c->flush_handler(c);
 }
 
 void ekg_connection_write(GDataOutputStream *f, const gchar *format, ...) {
@@ -237,7 +245,7 @@ void ekg_connection_write(GDataOutputStream *f, const gchar *format, ...) {
 		ekg_connection_write_buf(f, buf->str, buf->len);
 	} else {
 		struct ekg_connection *c = get_connection_by_outstream(f);
-		setup_async_write(c);
+		c->flush_handler(c);
 	}
 }
 
