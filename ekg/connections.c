@@ -23,6 +23,8 @@
 #ifdef HAVE_LIBGNUTLS
 #	include <errno.h> /* EAGAIN for transport wrappers */
 #	include <gnutls/gnutls.h>
+
+#	define NEED_SLAVERY 1
 #endif
 
 struct ekg_connection;
@@ -41,12 +43,16 @@ struct ekg_connection {
 	ekg_input_type_t in_type;
 
 	ekg_flush_handler_t flush_handler;
+
+#if NEED_SLAVERY
+	struct ekg_connection *master;
+	struct ekg_connection *slave;
+#endif
 };
 
 static GSList *connections = NULL;
 
 static void setup_async_read(struct ekg_connection *c);
-static void setup_async_write(struct ekg_connection *c);
 static gboolean setup_async_connect(GSocketClient *sock, struct ekg_connection_starter *cs);
 
 #ifdef HAVE_LIBGNUTLS
@@ -73,6 +79,21 @@ static struct ekg_connection *get_connection_by_outstream(GDataOutputStream *s) 
 	el = g_slist_find_custom(connections, s, conn_find_outstream);
 	return el ? el->data : NULL;
 }
+
+#if NEED_SLAVERY
+static struct ekg_connection *get_slave_connection_by_conn(GSocketConnection *c) {
+	GSList *el;
+
+	gint conn_find_slaveless_conn(gconstpointer list_elem, gconstpointer comp_elem) {
+		const struct ekg_connection *c = list_elem;
+
+		return (!c->slave && c->conn == comp_elem) ? 0 : -1;
+	}
+
+	el = g_slist_find_custom(connections, c, conn_find_slaveless_conn);
+	return el ? el->data : NULL;
+}
+#endif
 
 static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data) {
 	struct ekg_connection *c = user_data;
@@ -191,7 +212,26 @@ GDataOutputStream *ekg_connection_add(
 	c->priv_data = priv_data;
 	c->in_type = in_type;
 
-	c->flush_handler = setup_async_write;
+#if NEED_SLAVERY
+	c->master = get_slave_connection_by_conn(conn);
+	c->slave = NULL;
+
+		/* be a good slave.. er, servant */
+	if (c->master) {
+		struct ekg_connection *ci;
+		c->master->slave = c;
+
+		/* shift flush handlers (if set)
+		 * this is required in order to be able to easily set flush
+		 * handlers for future slaves */
+		for (ci = c;
+				ci->master && (ci->master->flush_handler != setup_async_write);
+				ci = ci->master)
+			ci->flush_handler = ci->master->flush_handler;
+		ci->flush_handler = setup_async_write;
+	} else
+#endif
+		c->flush_handler = setup_async_write;
 
 		/* CRLF is common in network protocols */
 	g_data_input_stream_set_newline_type(c->instream, G_DATA_STREAM_NEWLINE_TYPE_CR_LF);
