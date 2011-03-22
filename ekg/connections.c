@@ -217,7 +217,7 @@ GDataOutputStream *ekg_connection_add(
 	c->slave = NULL;
 
 		/* be a good slave.. er, servant */
-	if (c->master) {
+	if (G_UNLIKELY(c->master)) {
 		struct ekg_connection *ci;
 		c->master->slave = c;
 
@@ -239,7 +239,10 @@ GDataOutputStream *ekg_connection_add(
 	g_buffered_output_stream_set_auto_grow(G_BUFFERED_OUTPUT_STREAM(bout), TRUE);
 
 	connections = g_slist_prepend(connections, c);
-	setup_async_read(c);
+#if NEED_SLAVERY
+	if (G_LIKELY(!c->master))
+#endif
+		setup_async_read(c);
 
 	return c->outstream;
 }
