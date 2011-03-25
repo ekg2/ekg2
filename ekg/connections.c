@@ -69,9 +69,13 @@ static G_GNUC_CONST GQuark ekg_gnutls_error_quark() {
 
 #if NEED_SLAVERY
 #define EKG_TYPE_DUMMY_OUTPUT_STREAM (ekg_dummy_output_stream_get_type())
+#define EKG_DUMMY_OUTPUT_STREAM(obj) (G_TYPE_CHECK_INSTANCE_CAST((obj), EKG_TYPE_DUMMY_OUTPUT_STREAM, ekgDummyOutputStream))
 
 typedef struct {
 	GOutputStream parent_instance;
+
+	gpointer buf;
+	gsize buflen;
 } ekgDummyOutputStream;
 
 typedef struct {
@@ -79,7 +83,10 @@ typedef struct {
 } ekgDummyOutputStreamClass;
 
 static void ekg_dummy_output_stream_class_init(ekgDummyOutputStreamClass *klass);
-static void ekg_dummy_output_stream_init(ekgDummyOutputStream *stream) {};
+
+static void ekg_dummy_output_stream_init(ekgDummyOutputStream *stream) {
+	stream->buf = NULL;
+};
  
 G_DEFINE_TYPE(ekgDummyOutputStream, ekg_dummy_output_stream, G_TYPE_OUTPUT_STREAM);
 
@@ -94,6 +101,12 @@ static gssize ekg_dummy_output_stream_write(
 		GCancellable *cancellable,
 		GError **error)
 {
+	ekgDummyOutputStream *dos = EKG_DUMMY_OUTPUT_STREAM(stream);
+
+	g_free(dos->buf);
+	dos->buf = g_memdup(buffer, count);
+	dos->buflen = count;
+
 	return count;
 }
 
@@ -102,43 +115,11 @@ static gboolean ekg_dummy_output_stream_close(
 		GCancellable *cancellable,
 		GError **error)
 {
+	ekgDummyOutputStream *dos = EKG_DUMMY_OUTPUT_STREAM(stream);
+	g_free(dos->buf);
+	dos->buf = NULL;
+
 	return TRUE;
-}
-
-static void ekg_dummy_output_stream_write_async(
-		GOutputStream *stream,
-		gconstpointer buffer,
-		gsize count,
-		gint io_priority,
-		GCancellable *cancellable,
-		GAsyncReadyCallback callback,
-		gpointer data)
-{
-	GSimpleAsyncResult *simple;
-
-	simple = g_simple_async_result_new(
-			G_OBJECT(stream),
-			callback,
-			data,
-			ekg_dummy_output_stream_write_async);
-	g_simple_async_result_set_op_res_gssize(simple, count);
-	g_simple_async_result_complete_in_idle(simple);
-	g_object_unref(simple);
-}
-
-static gssize ekg_dummy_output_stream_write_finish(
-	GOutputStream *stream,
-	GAsyncResult *result,
-	GError **error)
-{
-	GSimpleAsyncResult *simple;
-
-	simple = G_SIMPLE_ASYNC_RESULT(result);
-
-	g_warn_if_fail(g_simple_async_result_get_source_tag(simple) ==
-			ekg_dummy_output_stream_write_async);
-
-	return g_simple_async_result_get_op_res_gssize(simple);
 }
 
 static void ekg_dummy_output_stream_class_init(ekgDummyOutputStreamClass *klass)
@@ -149,9 +130,9 @@ static void ekg_dummy_output_stream_class_init(ekgDummyOutputStreamClass *klass)
 
 	ostream_class->write_fn = ekg_dummy_output_stream_write;
 	ostream_class->close_fn = ekg_dummy_output_stream_close;
-	ostream_class->write_async = ekg_dummy_output_stream_write_async;
-	ostream_class->write_finish = ekg_dummy_output_stream_write_finish;
-	/* not used in our code */
+	/* async ops unsupported */
+	ostream_class->write_async = NULL;
+	ostream_class->write_finish = NULL;
 	ostream_class->close_async = NULL;
 	ostream_class->close_finish = NULL;
 }
@@ -553,7 +534,7 @@ GCancellable *ekg_connection_starter_run(
 struct ekg_gnutls_connection {
 	struct ekg_connection *connection;
 	GMemoryInputStream *instream;
-	GOutputStream *outstream;
+	ekgDummyOutputStream *outstream;
 
 	gnutls_session_t session;
 	gnutls_certificate_credentials_t cred;
@@ -626,9 +607,35 @@ static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
 }
 
 static void ekg_gnutls_flush(struct ekg_connection *c) {
-	struct ekg_gnutls_connection *gc = c->priv_data;
+	struct ekg_gnutls_connection *gc = c->master->priv_data;
+	ekgDummyOutputStream *dos = gc->outstream;
+	ssize_t ret = 1;
+	gconstpointer bufp;
+	gsize bufleft;
 
-	g_assert_not_reached();
+		/* ekgDummyOutputStream is not supposed to fail */
+	g_assert(g_output_stream_flush(
+			G_OUTPUT_STREAM(c->outstream),
+			NULL,
+			NULL));
+
+		/* now pass the written data to gnutls */
+	bufp = dos->buf;
+	bufleft = dos->buflen;
+	do {
+		ret = gnutls_record_send(gc->session, dos->buf, dos->buflen);
+
+		if (ret > 0) {
+			g_assert(ret <= bufleft);
+			bufp += ret;
+			bufleft -= ret;
+		} else if (ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
+			debug_error("gnutls_flush(), write failed: %s\n",
+					gnutls_strerror(ret));
+			/* XXX */
+			failed_write(c);
+		}
+	} while (bufleft > 0);
 }
 
 static void ekg_gnutls_handle_handshake_failure(GDataInputStream *s, GError *err, gpointer data) {
@@ -654,7 +661,7 @@ static void ekg_gnutls_async_handshake(struct ekg_gnutls_connection_starter *gcs
 
 					/* set streams */
 				gc->instream = G_MEMORY_INPUT_STREAM(mi);
-				gc->outstream = mo;
+				gc->outstream = EKG_DUMMY_OUTPUT_STREAM(mo);
 
 					/* switch handlers */
 				gc->connection->callback = ekg_gnutls_handle_data;
