@@ -71,11 +71,11 @@ static G_GNUC_CONST GQuark ekg_gnutls_error_quark() {
 #define EKG_TYPE_DUMMY_OUTPUT_STREAM (ekg_dummy_output_stream_get_type())
 
 typedef struct {
-	GObject parent_instance;
+	GOutputStream parent_instance;
 } ekgDummyOutputStream;
 
 typedef struct {
-	GObjectClass parent_class;
+	GOutputStreamClass parent_class;
 } ekgDummyOutputStreamClass;
 
 static void ekg_dummy_output_stream_class_init(ekgDummyOutputStreamClass *klass);
@@ -246,6 +246,7 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 }
 
 static void setup_async_read(struct ekg_connection *c) {
+	g_assert(!c->master);
 	g_buffered_input_stream_fill_async(
 			G_BUFFERED_INPUT_STREAM(c->instream),
 			-1, /* fill the buffer */
