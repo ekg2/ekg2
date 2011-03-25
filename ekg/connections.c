@@ -67,6 +67,96 @@ static G_GNUC_CONST GQuark ekg_gnutls_error_quark() {
 }
 #endif
 
+#if NEED_SLAVERY
+#define EKG_TYPE_DUMMY_OUTPUT_STREAM (ekg_dummy_output_stream_get_type())
+
+typedef struct {
+	GObject parent_instance;
+} ekgDummyOutputStream;
+
+typedef struct {
+	GObjectClass parent_class;
+} ekgDummyOutputStreamClass;
+
+static void ekg_dummy_output_stream_class_init(ekgDummyOutputStreamClass *klass);
+static void ekg_dummy_output_stream_init(ekgDummyOutputStream *stream) {};
+ 
+G_DEFINE_TYPE(ekgDummyOutputStream, ekg_dummy_output_stream, G_TYPE_OUTPUT_STREAM);
+
+static GOutputStream *ekg_dummy_output_stream_new(void) {
+	return g_object_new(EKG_TYPE_DUMMY_OUTPUT_STREAM, NULL);
+}
+
+static gssize ekg_dummy_output_stream_write(
+		GOutputStream *stream,
+		gconstpointer buffer,
+		gsize count,
+		GCancellable *cancellable,
+		GError **error)
+{
+	return count;
+}
+
+static gboolean ekg_dummy_output_stream_close(
+		GOutputStream *stream,
+		GCancellable *cancellable,
+		GError **error)
+{
+	return TRUE;
+}
+
+static void ekg_dummy_output_stream_write_async(
+		GOutputStream *stream,
+		gconstpointer buffer,
+		gsize count,
+		gint io_priority,
+		GCancellable *cancellable,
+		GAsyncReadyCallback callback,
+		gpointer data)
+{
+	GSimpleAsyncResult *simple;
+
+	simple = g_simple_async_result_new(
+			G_OBJECT(stream),
+			callback,
+			data,
+			ekg_dummy_output_stream_write_async);
+	g_simple_async_result_set_op_res_gssize(simple, count);
+	g_simple_async_result_complete_in_idle(simple);
+	g_object_unref(simple);
+}
+
+static gssize ekg_dummy_output_stream_write_finish(
+	GOutputStream *stream,
+	GAsyncResult *result,
+	GError **error)
+{
+	GSimpleAsyncResult *simple;
+
+	simple = G_SIMPLE_ASYNC_RESULT(result);
+
+	g_warn_if_fail(g_simple_async_result_get_source_tag(simple) ==
+			ekg_dummy_output_stream_write_async);
+
+	return g_simple_async_result_get_op_res_gssize(simple);
+}
+
+static void ekg_dummy_output_stream_class_init(ekgDummyOutputStreamClass *klass)
+{
+	GOutputStreamClass *ostream_class;
+
+	ostream_class = G_OUTPUT_STREAM_CLASS(klass);
+
+	ostream_class->write_fn = ekg_dummy_output_stream_write;
+	ostream_class->close_fn = ekg_dummy_output_stream_close;
+	ostream_class->write_async = ekg_dummy_output_stream_write_async;
+	ostream_class->write_finish = ekg_dummy_output_stream_write_finish;
+	/* not used in our code */
+	ostream_class->close_async = NULL;
+	ostream_class->close_finish = NULL;
+}
+#endif
+
 static struct ekg_connection *get_connection_by_outstream(GDataOutputStream *s) {
 	GSList *el;
 
@@ -95,6 +185,36 @@ static struct ekg_connection *get_slave_connection_by_conn(GSocketConnection *c)
 }
 #endif
 
+static void done_read(
+		struct ekg_connection *c,
+		GBufferedInputStream *instr)
+{
+	switch (c->in_type) {
+		case EKG_INPUT_RAW:
+			c->callback(c->instream, c->priv_data);
+			break;
+
+		case EKG_INPUT_LINE:
+			{
+				const char *buf;
+				const char *le = "\r\n"; /* CRLF; XXX: other line endings? */
+				gsize count;
+				gboolean found;
+
+				do { /* repeat till user grabs all lines */
+					buf = g_buffered_input_stream_peek_buffer(instr, &count);
+					found = !!g_strstr_len(buf, count, le);
+					if (found)
+						c->callback(c->instream, c->priv_data);
+				} while (found);
+				break;
+			}
+
+		default:
+			g_assert_not_reached();
+	}
+}
+
 static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data) {
 	struct ekg_connection *c = user_data;
 	GError *err = NULL;
@@ -121,31 +241,7 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 		return;
 	}
 
-	switch (c->in_type) {
-		case EKG_INPUT_RAW:
-			c->callback(c->instream, c->priv_data);
-			break;
-
-		case EKG_INPUT_LINE:
-			{
-				const char *buf;
-				const char *le = "\r\n"; /* CRLF; XXX: other line endings? */
-				gsize count;
-				gboolean found;
-
-				do { /* repeat till user grabs all lines */
-					buf = g_buffered_input_stream_peek_buffer(instr, &count);
-					found = !!g_strstr_len(buf, count, le);
-					if (found)
-						c->callback(c->instream, c->priv_data);
-				} while (found);
-				break;
-			}
-
-		default:
-			g_assert_not_reached();
-	}
-
+	done_read(c, instr);
 	setup_async_read(c);
 }
 
@@ -456,7 +552,7 @@ GCancellable *ekg_connection_starter_run(
 struct ekg_gnutls_connection {
 	struct ekg_connection *connection;
 	GMemoryInputStream *instream;
-	GMemoryOutputStream *outstream;
+	GOutputStream *outstream;
 
 	gnutls_session_t session;
 	gnutls_certificate_credentials_t cred;
@@ -528,6 +624,12 @@ static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
 	g_assert_not_reached();
 }
 
+static void ekg_gnutls_flush(struct ekg_connection *c) {
+	struct ekg_gnutls_connection *gc = c->priv_data;
+
+	g_assert_not_reached();
+}
+
 static void ekg_gnutls_handle_handshake_failure(GDataInputStream *s, GError *err, gpointer data) {
 	struct ekg_gnutls_connection_starter *gcs = data;
 
@@ -547,16 +649,17 @@ static void ekg_gnutls_async_handshake(struct ekg_gnutls_connection_starter *gcs
 				struct ekg_connection_starter *cs = gcs->parent;
 
 				GInputStream *mi = g_memory_input_stream_new();
-				GOutputStream *mo = g_memory_output_stream_new(NULL, 0, g_realloc, g_free);
+				GOutputStream *mo = ekg_dummy_output_stream_new();
 
 					/* set streams */
 				gc->instream = G_MEMORY_INPUT_STREAM(mi);
-				gc->outstream = G_MEMORY_OUTPUT_STREAM(mo);
+				gc->outstream = mo;
 
 					/* switch handlers */
 				gc->connection->callback = ekg_gnutls_handle_data;
 				gc->connection->failure_callback = ekg_gnutls_handle_data_failure;
 				gc->connection->priv_data = gc;
+				gc->connection->flush_handler = ekg_gnutls_flush;
 
 					/* this cleans up the socket, and cs */
 				succeeded_async_connect(gcs->sockclient, gc->connection->conn,
