@@ -215,6 +215,8 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 	debug_function("done_async_read(): read %d bytes\n", rsize);
 
 	if (rsize == 0) { /* EOF */
+		if (c->master) /* let the master handle EOF */
+			return;
 		if (g_buffered_input_stream_get_available(instr) > 0)
 			c->callback(c->instream, c->priv_data);
 		/* XXX */
@@ -227,7 +229,6 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 }
 
 static void setup_async_read(struct ekg_connection *c) {
-	g_assert(!c->master);
 	g_buffered_input_stream_fill_async(
 			G_BUFFERED_INPUT_STREAM(c->instream),
 			-1, /* fill the buffer */
@@ -603,13 +604,37 @@ static void ekg_gnutls_handle_data_failure(GDataInputStream *s, GError *err, gpo
 }
 
 static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
-	g_assert_not_reached();
+	struct ekg_gnutls_connection *gc = data;
+	ssize_t ret;
+	char buf[4096];
+
+	g_assert(gc->connection->slave);
+
+	do {
+		ret = gnutls_record_recv(gc->session, buf, sizeof(buf));
+
+		if (ret > 0)
+			g_memory_input_stream_add_data(
+					gc->instream,
+					g_memdup(buf, ret),
+					ret,
+					g_free);
+		else if (ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
+			GError *err = g_error_new_literal(EKG_GNUTLS_ERROR,
+					ret, gnutls_strerror(ret));
+			ekg_gnutls_handle_data_failure(NULL, err, gc);
+			g_error_free(err);
+		}
+	} while (ret > 0 || ret == GNUTLS_E_INTERRUPTED);
+
+		/* not necessarily async but be lazy */
+	setup_async_read(gc->connection->slave);
 }
 
 static void ekg_gnutls_flush(struct ekg_connection *c) {
 	struct ekg_gnutls_connection *gc = c->master->priv_data;
 	ekgDummyOutputStream *dos = gc->outstream;
-	ssize_t ret = 1;
+	ssize_t ret;
 	gconstpointer bufp;
 	gsize bufleft;
 
