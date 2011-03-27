@@ -548,7 +548,8 @@ static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
 					g_memdup(buf, ret),
 					ret,
 					g_free);
-		else if (ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
+		/* XXX: does 0 mean EOF here? */
+		else if (ret != 0 && ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
 			GError *err = g_error_new_literal(EKG_GNUTLS_ERROR,
 					ret, gnutls_strerror(ret));
 			ekg_gnutls_handle_data_failure(NULL, err, gc);
@@ -557,7 +558,8 @@ static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
 	} while (ret > 0 || ret == GNUTLS_E_INTERRUPTED);
 
 		/* not necessarily async but be lazy */
-	setup_async_read(gc->connection->slave);
+	if (!g_input_stream_has_pending(G_INPUT_STREAM(gc->connection->slave->instream)))
+		setup_async_read(gc->connection->slave);
 }
 
 static void ekg_gnutls_flush(struct ekg_connection *c) {
