@@ -27,6 +27,11 @@
 #	define NEED_SLAVERY 1
 #endif
 
+#define EKG_CONNECTION_ERROR ekg_connection_error_quark()
+GQuark ekg_connection_error_quark() {
+	return g_quark_from_static_string("ekg-connection-error-quark");
+}
+
 struct ekg_connection;
 
 typedef void (*ekg_flush_handler_t) (struct ekg_connection *conn);
@@ -133,8 +138,22 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 
 	rsize = g_buffered_input_stream_fill_finish(instr, res, &err);
 
-	if (rsize == -1) {
-		debug_error("done_async_read(), read failed: %s\n", err ? err->message : NULL);
+	if (rsize <= 0) {
+		if (rsize == -1) /* error */
+			debug_error("done_async_read(), read failed: %s\n", err ? err->message : NULL);
+		else { /* EOF */
+			if (c->master) /* let the master handle it */
+				return;
+			debug_function("done_async_read(), EOF\n");
+			if (g_buffered_input_stream_get_available(instr) > 0)
+				c->callback(c->instream, c->priv_data);
+
+			err = g_error_new_literal(
+					EKG_CONNECTION_ERROR,
+					EKG_CONNECTION_ERROR_EOF,
+					"Connection terminated unexpectedly");
+		}
+
 		c->failure_callback(c->instream, err, c->priv_data);
 		/* XXX: cleanup */
 		g_error_free(err);
@@ -142,16 +161,6 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 	}
 
 	debug_function("done_async_read(): read %d bytes\n", rsize);
-
-	if (rsize == 0) { /* EOF */
-		if (c->master) /* let the master handle EOF */
-			return;
-		if (g_buffered_input_stream_get_available(instr) > 0)
-			c->callback(c->instream, c->priv_data);
-		/* XXX */
-		g_assert_not_reached();
-		return;
-	}
 
 	done_read(c, instr);
 	setup_async_read(c);

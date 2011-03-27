@@ -20,6 +20,13 @@
 #ifndef __EKG_CONNECTIONS_H
 #define __EKG_CONNECTIONS_H
 
+#define EKG_CONNECTION_ERROR ekg_connection_error_quark()
+G_GNUC_CONST GQuark ekg_connection_error_quark();
+
+enum ekg_connection_error {
+	EKG_CONNECTION_ERROR_EOF
+};
+
 typedef void (*ekg_input_callback_t) (
 		GDataInputStream *instream,
 		gpointer data);
