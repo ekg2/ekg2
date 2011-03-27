@@ -72,6 +72,22 @@ static G_GNUC_CONST GQuark ekg_gnutls_error_quark() {
 }
 #endif
 
+static void ekg_connection_remove(struct ekg_connection *c) {
+	g_assert(!g_input_stream_has_pending(
+				G_INPUT_STREAM(c->instream)));
+#if 0 /* XXX */
+	g_assert(!g_output_stream_has_pending(
+				G_OUTPUT_STREAM(c->outstream)));
+#endif
+
+	connections = g_slist_remove(connections, c);
+
+	g_object_unref(c->cancellable);
+	g_object_unref(c->instream);
+	g_object_unref(c->outstream);
+	g_slice_free(struct ekg_connection, c);
+}
+
 static struct ekg_connection *get_connection_by_outstream(GDataOutputStream *s) {
 	GSList *el;
 
@@ -155,7 +171,7 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 		}
 
 		c->failure_callback(c->instream, err, c->priv_data);
-		/* XXX: cleanup */
+		ekg_connection_remove(c);
 		g_error_free(err);
 		return;
 	}
@@ -582,6 +598,8 @@ static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
 					err,
 					gc->connection->slave->priv_data);
 			g_error_free(err);
+			ekg_connection_remove(gc->connection->slave);
+			ekg_connection_remove(gc->connection);
 			return;
 		}
 	} while (ret > 0 || ret == GNUTLS_E_INTERRUPTED);
@@ -633,9 +651,9 @@ static void ekg_gnutls_handle_handshake_failure(GDataInputStream *s, GError *err
 	struct ekg_gnutls_connection_starter *gcs = data;
 
 	failed_async_connect(gcs->sockclient, err, gcs->parent);
+	ekg_connection_remove(gcs->conn->connection);
 	ekg_gnutls_free_connection(gcs->conn);
 	ekg_gnutls_free_connection_starter(gcs);
-	/* XXX: remove connection */
 }
 
 static void ekg_gnutls_async_handshake(struct ekg_gnutls_connection_starter *gcs) {
