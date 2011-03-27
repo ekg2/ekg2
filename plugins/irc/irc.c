@@ -514,9 +514,12 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 
 static void irc_handle_line(GDataInputStream *f, gpointer data) {
 	session_t *s = data;
+	gchar *l;
 
+	l = g_data_input_stream_read_line(f, NULL, NULL, NULL);
 		/* XXX: get rid of that fd arg */
-	irc_parse_line(s, g_data_input_stream_read_line(f, NULL, NULL, NULL), -1);
+	if (l)
+		irc_parse_line(s, l, -1);
 }
 
 static void irc_handle_failure(GDataInputStream *f, GError *err, gpointer data) {
@@ -526,7 +529,7 @@ static void irc_handle_failure(GDataInputStream *f, GError *err, gpointer data) 
 	j->send_stream = NULL; /* XXX: needed? */
 
 	if (s->connected || s->connecting)
-		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
+		irc_handle_disconnect(s, err->message, EKG_DISCONNECT_NETWORK);
 }
 
 static void irc_handle_connect(
@@ -643,13 +646,17 @@ static COMMAND(irc_command_disconnect) {
 
 	if (reason && session_connected_get(session))
 		ekg_connection_write(j->send_stream, "QUIT :%s\r\n", reason);
-	if (session->connecting)
+	if (session->connecting) {
 		g_cancellable_cancel(j->connect_cancellable);
+		/* XXX: how about the 'connection processing' part? */
+	}
 
+#if 0
 	if (session->connecting || j->autoreconnecting)
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
 	else
 		irc_handle_disconnect(session, reason, EKG_DISCONNECT_USER);
+#endif
 
 	return 0;
 }
