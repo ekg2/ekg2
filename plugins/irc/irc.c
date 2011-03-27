@@ -163,8 +163,6 @@ static QUERY(irc_session_init) {
 	j->nick_modes = j->nick_signs = NULL;
 
 	j->conv = NULL;
-	// xmalloc will do that, so it's not needed
-	// j->ssl_buf = NULL;
 
 	s->priv = j;
 	return 0;
@@ -481,6 +479,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 
 	g_assert(j);
 
+	j->disconnecting = FALSE;
 	irc_free_people(s, j);
 
 	switch (type) {
@@ -528,7 +527,10 @@ static void irc_handle_failure(GDataInputStream *f, GError *err, gpointer data) 
 
 	j->send_stream = NULL; /* XXX: needed? */
 
-	if (s->connected || s->connecting)
+	if (j->disconnecting &&
+			g_error_matches(err, EKG_CONNECTION_ERROR, EKG_CONNECTION_ERROR_EOF))
+		irc_handle_disconnect(s, NULL, EKG_DISCONNECT_USER);
+	else
 		irc_handle_disconnect(s, err->message, EKG_DISCONNECT_NETWORK);
 }
 
@@ -644,6 +646,7 @@ static COMMAND(irc_command_disconnect) {
 		return -1;
 	}
 
+	j->disconnecting = TRUE;
 	if (reason && session_connected_get(session))
 		ekg_connection_write(j->send_stream, "QUIT :%s\r\n", reason);
 	if (session->connecting) {

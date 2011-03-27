@@ -27,6 +27,7 @@ enum { IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_S
 
 typedef struct _irc_private_t {
 	int autoreconnecting;		/* are we in reconnecting mode now? */
+	gboolean disconnecting;
 
 	GCancellable *connect_cancellable;
 	GDataOutputStream *send_stream;
