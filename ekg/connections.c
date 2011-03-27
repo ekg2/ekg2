@@ -151,7 +151,7 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 			err = g_error_new_literal(
 					EKG_CONNECTION_ERROR,
 					EKG_CONNECTION_ERROR_EOF,
-					"Connection terminated unexpectedly");
+					"Connection terminated");
 		}
 
 		c->failure_callback(c->instream, err, c->priv_data);
@@ -475,6 +475,7 @@ struct ekg_gnutls_connection {
 	GMemoryInputStream *instream;
 	GMemoryOutputStream *outstream;
 
+	GError *connection_error;
 	gnutls_session_t session;
 	gnutls_certificate_credentials_t cred;
 };
@@ -505,6 +506,9 @@ static gssize ekg_gnutls_pull(gnutls_transport_ptr_t connptr, gpointer buf, gsiz
 	g_assert(len > 0);
 
 	if (avail_bytes == 0) {
+		if (conn->connection_error)
+			return 0; /* EOF */
+
 		gnutls_transport_set_errno(conn->session, EAGAIN);
 		return -1;
 	} else {
@@ -538,7 +542,9 @@ static gssize ekg_gnutls_push(gnutls_transport_ptr_t connptr, gconstpointer buf,
 }
 
 static void ekg_gnutls_handle_data_failure(GDataInputStream *s, GError *err, gpointer data) {
-	g_assert_not_reached(); /* XXX */
+	struct ekg_gnutls_connection *gc = data;
+
+	gc->connection_error = g_error_copy(err);
 }
 
 static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
@@ -557,12 +563,26 @@ static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
 					g_memdup(buf, ret),
 					ret,
 					g_free);
-		/* XXX: does 0 mean EOF here? */
-		else if (ret != 0 && ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
-			GError *err = g_error_new_literal(EKG_GNUTLS_ERROR,
-					ret, gnutls_strerror(ret));
-			ekg_gnutls_handle_data_failure(NULL, err, gc);
+		else if (ret != GNUTLS_E_INTERRUPTED && ret != GNUTLS_E_AGAIN) {
+			GError *err;
+			
+			if (ret != 0)
+				err = g_error_new_literal(EKG_GNUTLS_ERROR,
+						ret, gnutls_strerror(ret));
+			else {
+				debug_function("ekg_gnutls_handle_data(), got EOF from gnutls\n");
+				err = g_error_new_literal(
+						EKG_CONNECTION_ERROR,
+						EKG_CONNECTION_ERROR_EOF,
+						"Connection terminated");
+			}
+
+			gc->connection->slave->failure_callback(
+					gc->connection->slave->instream,
+					err,
+					gc->connection->slave->priv_data);
 			g_error_free(err);
+			return;
 		}
 	} while (ret > 0 || ret == GNUTLS_E_INTERRUPTED);
 
@@ -692,6 +712,7 @@ static void ekg_gnutls_new_session(
 
 	conn->session = s;
 	conn->cred = cred;
+	conn->connection_error = NULL;
 	conn->connection = get_connection_by_outstream(
 			ekg_connection_add(
 				sock,
