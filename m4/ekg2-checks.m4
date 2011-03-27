@@ -18,6 +18,7 @@ dnl default commands); otherwise run 'if-no'.
 			AC_CHECK_LIB([$1], [$2], [$4], [$5])
 		], [
 			LIBS="-l$1 $LIBS"
+			$4
 		])
 
 		found_any_header=yes
@@ -61,6 +62,8 @@ dnl AC_EKG2_CHECK_FLAGEXPORTED_LIB(variable-prefix, lib-name, func, header, [if-
 		])
 	], [
 		LIBS="$$1_LIBS $LIBS"
+
+		$5
 	])
 ])
 
