@@ -593,8 +593,11 @@ static void ekg_gnutls_flush(struct ekg_connection *c) {
 		}
 	} while (bufleft > 0);
 
-	g_assert(g_seekable_truncate(
-				G_SEEKABLE(dos), 0, NULL, NULL));
+	{
+		GSeekable *sos = G_SEEKABLE(dos);
+		g_assert(g_seekable_seek(sos, 0, G_SEEK_SET, NULL, NULL));
+		g_assert(g_seekable_truncate(sos, 0, NULL, NULL));
+	}
 }
 
 static void ekg_gnutls_handle_handshake_failure(GDataInputStream *s, GError *err, gpointer data) {
