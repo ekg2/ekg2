@@ -118,7 +118,7 @@
 
 static int irc_theme_init();
 static COMMAND(irc_command_disconnect);
-static int irc_really_connect(session_t *session);
+static int irc_really_connect(session_t *session, gboolean quiet);
 static char *irc_getchan_int(session_t *s, const char *name, int checkchan);
 static char *irc_getchan(session_t *s, const char **params, const char *name,
       char ***v, int pr, int checkchan);
@@ -570,13 +570,14 @@ static void irc_handle_connect_failure(GError *err, gpointer data) {
 /*									 *
  * ======================================== COMMANDS ------------------- *
  *									 */
-static int irc_really_connect(session_t *session) {
+static int irc_really_connect(session_t *session, gboolean quiet) {
 	irc_private_t *j = irc_private(session);
 	GSocketClient *s;
 	const gchar *tmp;
 
 	session->connecting = 1;
 	j->autoreconnecting = 1; /* XXX? */
+	printq("connecting", session_name(session));
 
 	s = g_socket_client_new();
 
@@ -627,7 +628,7 @@ static COMMAND(irc_command_connect) {
 		printq("generic_error", "gdzie lecimy ziom ?! [/session nickname]");
 		return -1;
 	}
-	return irc_really_connect(session);
+	return irc_really_connect(session, quiet);
 }
 
 static COMMAND(irc_command_disconnect) {

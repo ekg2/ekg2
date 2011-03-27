@@ -18,12 +18,6 @@
 #ifndef __EKG_PLUGINS_IRC_IRC_H
 #define __EKG_PLUGINS_IRC_IRC_H
 
-#define DOT(a,x,y,z,error) \
-	print_info("__status", z, a, session_name(z), x, y->hostname, y->address, \
-			ekg_itoa(y->port < 0 ? \
-				session_int_get(z, "port") < 0 ? DEFPORT : session_int_get(z, "port") : y->port), \
-			ekg_itoa(y->family), error ? strerror(error) : "")
-
 /* irc_private->sopt */
 enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
 	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, _005_IDCHAN, SERVOPTS };
