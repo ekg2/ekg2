@@ -397,7 +397,7 @@ static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_da
 }
 
 static gboolean setup_async_connect(GSocketClient *sock, struct ekg_connection_starter *cs) {
-	if (cs->current_server) {
+	if (*(cs->current_server)) {
 		debug_function("setup_async_connect(), trying %s (defport: %d)\n",
 				*(cs->current_server), cs->defport);
 		g_socket_client_connect_to_host_async(
