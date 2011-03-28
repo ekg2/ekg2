@@ -158,8 +158,10 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 		if (rsize == -1) /* error */
 			debug_error("done_async_read(), read failed: %s\n", err ? err->message : NULL);
 		else { /* EOF */
+#if NEED_SLAVERY
 			if (c->master) /* let the master handle it */
 				return;
+#endif
 			debug_function("done_async_read(), EOF\n");
 			if (g_buffered_input_stream_get_available(instr) > 0)
 				c->callback(c->instream, c->priv_data);
@@ -379,8 +381,9 @@ static void done_async_connect(GObject *obj, GAsyncResult *res, gpointer user_da
 #ifdef HAVE_LIBGNUTLS
 		if (cs->use_tls) {
 			ekg_gnutls_new_session(sock, conn, cs);
-		} else {
+		} else
 #endif
+		{
 			GIOStream *cio = G_IO_STREAM(conn);
 			succeeded_async_connect(
 					sock, conn, cs,
