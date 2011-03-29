@@ -578,30 +578,24 @@ static void irc_handle_connect_failure(GError *err, gpointer data) {
 static int irc_really_connect(session_t *session, gboolean quiet) {
 	irc_private_t *j = irc_private(session);
 	GSocketClient *s;
-	const gchar *tmp;
+	
+	const int defport = session_int_get(session, "port");
+	const gchar *bindhost = session_get(session, "hostname");
+	ekg_connection_starter_t cs;
 
 	session->connecting = 1;
 	j->autoreconnecting = 1; /* XXX? */
 	printq("connecting", session_name(session));
 
+	cs = ekg_connection_starter_new(defport > 0 ? defport : DEFPORT);
+	ekg_connection_starter_set_servers(cs, session_get(session, "server"));
+	ekg_connection_starter_set_use_tls(cs, !!session_int_get(session, "use_tls"));
+	if (bindhost)
+		ekg_connection_starter_bind(cs, bindhost);
+
 	s = g_socket_client_new();
-
-	tmp = session_get(session, "hostname");
-	if (tmp) /* XXX: support domain name in hostname */
-		g_socket_client_set_local_address(s,
-				g_inet_socket_address_new(g_inet_address_new_from_string(tmp), 0));
-
-	{
-		const int defport = session_int_get(session, "port");
-		ekg_connection_starter_t cs;
-
-		cs = ekg_connection_starter_new(defport > 0 ? defport : DEFPORT);
-		ekg_connection_starter_set_servers(cs, session_get(session, "server"));
-		ekg_connection_starter_set_use_tls(cs, !!session_int_get(session, "use_tls"));
-
-		ekg_connection_starter_run(cs, s, irc_handle_connect,
-				irc_handle_connect_failure, session);
-	}
+	ekg_connection_starter_run(cs, s, irc_handle_connect,
+			irc_handle_connect_failure, session);
 
 	if (session_status_get(session) == EKG_STATUS_NA)
 		session_status_set(session, EKG_STATUS_AVAIL);

@@ -67,6 +67,9 @@ typedef struct ekg_connection_starter *ekg_connection_starter_t;
 ekg_connection_starter_t ekg_connection_starter_new(guint16 defport);
 void ekg_connection_starter_free(ekg_connection_starter_t cs);
 
+void ekg_connection_starter_bind(
+		ekg_connection_starter_t cs,
+		const gchar *hostname);
 void ekg_connection_starter_set_srv_resolver(
 		ekg_connection_starter_t cs,
 		const gchar *service,

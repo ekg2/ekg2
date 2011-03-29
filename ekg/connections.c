@@ -330,6 +330,8 @@ void ekg_connection_write(GDataOutputStream *f, const gchar *format, ...) {
 struct ekg_connection_starter {
 	GCancellable *cancellable;
 
+	gchar *bind_hostname;
+
 	gchar *service;
 	gchar *domain;
 
@@ -420,11 +422,20 @@ ekg_connection_starter_t ekg_connection_starter_new(guint16 defport) {
 }
 
 void ekg_connection_starter_free(ekg_connection_starter_t cs) {
+	g_free(cs->bind_hostname);
 	g_free(cs->service);
 	g_free(cs->domain);
 	g_strfreev(cs->servers);
 	g_object_unref(cs->cancellable);
 	g_slice_free(struct ekg_connection_starter, cs);
+}
+
+void ekg_connection_starter_bind(
+		ekg_connection_starter_t cs,
+		const gchar *hostname)
+{
+	g_free(cs->bind_hostname);
+	cs->bind_hostname = g_strdup(hostname);
 }
 
 void ekg_connection_starter_set_srv_resolver(
@@ -466,6 +477,10 @@ GCancellable *ekg_connection_starter_run(
 
 	cs->cancellable = g_cancellable_new();
 	cs->current_server = cs->servers;
+
+	if (cs->bind_hostname)
+		g_socket_client_set_local_address(sock,
+				g_inet_socket_address_new(g_inet_address_new_from_string(cs->bind_hostname), 0));
 
 		/* if we have the domain name, try SRV lookup first */
 	if (cs->domain) {
