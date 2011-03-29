@@ -478,9 +478,31 @@ GCancellable *ekg_connection_starter_run(
 	cs->cancellable = g_cancellable_new();
 	cs->current_server = cs->servers;
 
-	if (cs->bind_hostname)
+	if (cs->bind_hostname) {
+		GResolver *res = g_resolver_get_default();
+		GList *addrs;
+		GError *err = NULL;
+
+		addrs = g_resolver_lookup_by_name(
+				res,
+				cs->bind_hostname,
+				NULL,
+				&err);
+
+		if (!addrs) {
+				/* XXX: delay calling that */
+			failed_async_connect(sock, err, cs);
+			g_error_free(err);
+			return cs->cancellable;
+		}
+
 		g_socket_client_set_local_address(sock,
-				g_inet_socket_address_new(g_inet_address_new_from_string(cs->bind_hostname), 0));
+				g_inet_socket_address_new(
+					G_INET_ADDRESS(g_list_nth_data(addrs, 0)), 0));
+
+		g_resolver_free_addresses(addrs);
+		g_object_unref(res);
+	}
 
 		/* if we have the domain name, try SRV lookup first */
 	if (cs->domain) {
