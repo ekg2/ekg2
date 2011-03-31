@@ -232,8 +232,7 @@ plugins_gtk_gtk_la_SOURCES = \
 	plugins/gtk/xtext.c \
 	plugins/gtk/xtext.h \
 	plugins/gtk/chanview-tabs.inc \
-	plugins/gtk/chanview-tree.inc \
-	$(GTK_INLINE_PNGS)
+	plugins/gtk/chanview-tree.inc
 
 BUILT_SOURCES += \
 	$(GTK_INLINE_PNGS)
