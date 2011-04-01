@@ -3721,13 +3721,13 @@ msgid ""
 "%> (%2) %T%1%n asks for authorisation. Use \"/auth -a %1\" to accept, \"/"
 "auth -d %1\" to refuse.%n\n"
 msgstr ""
-"%> (%2) %T%1%n prosi o autoryzacjê dodania. U¿yj \"/auth -a %1\" aby "
+"%> (%2) %T%1%n prosi o autoryzacjê. U¿yj \"/auth -a %1\" aby "
 "zaakceptowaæ, \"/auth -d %1\" aby odrzuciæ.%n\n"
 
 #: plugins/jabber/jabber.c:1250
 msgid "%> (%2) %T%1%n asks for removal. Use \"/auth -d %1\" to delete.%n\n"
 msgstr ""
-"%> (%2) %T%1%n prosi o autoryzacjê usuniêcia. U¿yj \"/auth -d %1\" aby "
+"%> (%2) %T%1%n prosi o cofniêcie autoryzacji. U¿yj \"/auth -d %1\" aby "
 "usun±æ.%n\n"
 
 #: plugins/jabber/jabber.c:1251
