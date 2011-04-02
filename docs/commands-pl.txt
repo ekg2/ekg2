@@ -396,7 +396,7 @@ on
 	Przykładowe założenie może mieć postać: ,,%T\%1=nick&\%1!=nick2|\%2+tekst%n''
 	
 	
-	W przypdakach, w których chcemy, aby zdarzenie dotyczyło wszystkich możliwych 
+	W przypadkach, w których chcemy, aby zdarzenie dotyczyło wszystkich możliwych 
 	sytuacji należy zamiast założenia użyć ,,%T*%n''. Nazwy zdarzeń mogą być 
 	roździelone przecinkiem.
 	
