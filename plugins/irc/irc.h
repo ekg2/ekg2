@@ -18,14 +18,6 @@
 #ifndef __EKG_PLUGINS_IRC_IRC_H
 #define __EKG_PLUGINS_IRC_IRC_H
 
-#define DOT(a,x,y,z,error) \
-	print_info("__status", z, a, session_name(z), x, y->hostname, y->address, \
-			ekg_itoa(y->port < 0 ? \
-				session_int_get(z, "port") < 0 ? DEFPORT : session_int_get(z, "port") : y->port), \
-			ekg_itoa(y->family), error ? strerror(error) : "")
-
-#include "irc-ssl.h"
-
 /* irc_private->sopt */
 enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
 	_005_CHANMODES, _005_MODES, _005_CHANLIMIT, _005_NICKLEN, _005_IDCHAN, SERVOPTS };
@@ -34,23 +26,14 @@ enum { USERMODES=0, CHANMODES, _005_PREFIX, _005_CHANTYPES,
 enum { IRC_CASEMAPPING_ASCII, IRC_CASEMAPPING_RFC1459, IRC_CASEMAPPING_RFC1459_STRICT, IRC_CASEMAPPING_COUNT };
 
 typedef struct _irc_private_t {
-	int fd;				/* connection's fd */
 	int autoreconnecting;		/* are we in reconnecting mode now? */
-	int resolving;			/* count of resolver threads. */
-	list_t bindlist, bindtmplist;
-	list_t connlist, conntmplist;
+	gboolean disconnecting;
 
-	watch_t *recv_watch;
-	watch_t *send_watch;
+	GCancellable *connect_cancellable;
+	GDataOutputStream *send_stream;
 
 	char *nick;			/* guess again ? ;> */
 	char *host_ident;		/* ident+host */
-
-#ifdef IRC_HAVE_SSL
-	unsigned char using_ssl	: 2;	/**< 1 if we're using SSL, else 0 */
-	SSL_SESSION ssl_session;	/**< SSL session */
-	string_t ssl_buf;
-#endif
 
 	list_t people;			/* list of people_t */
 	list_t channels;		/* list of people_chan_t */
@@ -127,21 +110,6 @@ typedef struct {
 	channel_t *chanp;
 } people_chan_t;
 
-/* structure needed by resolver */
-typedef struct {
-	session_t *session;
-	char *hostname;
-	char *address;
-	int port;
-	int family;
-} connector_t;
-
-typedef struct {
-	char *session;
-	list_t *plist;
-	int isbind;
-} irc_resolver_t;
-
 #define irc_private(s) ((irc_private_t*) session_private_get(s))
 
 /* DO NOT TOUCH THIS! */
@@ -161,7 +129,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type);
  */
 enum { IRC_GC_CHAN=0, IRC_GC_NOT_CHAN, IRC_GC_ANY };
 
-#define irc_write(s, args...) watch_write((s && s->priv) ? irc_private(s)->send_watch : NULL, args);
+#define irc_write(s, args...) ekg_connection_write(irc_private(s)->send_stream, args)
 
 int irc_parse_line(session_t *s, const char *l, int fd);	/* misc.c */
 

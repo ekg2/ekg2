@@ -16,6 +16,7 @@ noinst_HEADERS = \
 	ekg/bindings.h \
 	ekg/commands.h \
 	ekg/completion.h \
+	ekg/connections.h \
 	ekg/configfile.h \
 	ekg/debug.h \
 	ekg/dynstuff.h \
@@ -51,6 +52,7 @@ ekg2_SOURCES = \
 	ekg/commands.c \
 	ekg/completion.c \
 	ekg/configfile.c \
+	ekg/connections.c \
 	ekg/dynstuff.c \
 	ekg/ekg.c \
 	ekg/emoticons.c \
@@ -346,7 +348,6 @@ plugins_irc_irc_la_SOURCES = \
 	plugins/irc/input.h \
 	plugins/irc/irc.c \
 	plugins/irc/irc.h \
-	plugins/irc/irc-ssl.h \
 	plugins/irc/IRCVERSION.h \
 	plugins/irc/misc.c \
 	plugins/irc/misc.h \

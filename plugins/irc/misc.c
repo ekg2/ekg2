@@ -446,11 +446,9 @@ IRC_COMMAND(irc_c_init)
 {
 	int		i, k;
 	char		*t;
-	connector_t	*temp;
 	switch (irccommands[ecode].num)
 	{
 		case 1:
-			temp = j->conntmplist->data;
 			protocol_connected_emit(s);
 			t = xstrchr(param[3], '!');
 			xfree(j->host_ident);
@@ -618,7 +616,7 @@ IRC_COMMAND(irc_c_error)
 							session_name(s), altnick);
 					xfree(j->nick);
 					j->nick = xstrdup(altnick);
-					watch_write(j->send_watch, "NICK %s\r\n", j->nick);
+					ekg_connection_write(j->send_stream, "NICK %s\r\n", j->nick);
 				}
 			}
 			break;
@@ -670,7 +668,7 @@ IRC_COMMAND(irc_c_error)
 			/* zero, identify with nickserv */
 			if (xstrlen(session_get(s, "identify"))) {
 				/* temporary */
-				watch_write(j->send_watch, "PRIVMSG nickserv :IDENTIFY %s\n", session_get(s, "identify"));
+				ekg_connection_write(j->send_stream, "PRIVMSG nickserv :IDENTIFY %s\n", session_get(s, "identify"));
 				/* XXX, bedzie:
 				 *	session_get(s, "identify") 
 				 *		<nick_ns> <host_ns *weryfikacja zeby nikt nie spoofowac*> "<NICK1 HASLO>" "<NICK2 HASLO>" "[GLOWNE HASLO]"
@@ -685,7 +683,7 @@ IRC_COMMAND(irc_c_error)
 
 			/* first we join */
 			if (xstrlen(session_get(s, "AUTO_JOIN")))
-				watch_write(j->send_watch, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
+				ekg_connection_write(j->send_stream, "JOIN %s\r\n", session_get(s, "AUTO_JOIN"));
 		case 372:
 		case 375:
 			if (session_int_get(s, "SHOW_MOTD") != 0) {
@@ -995,7 +993,7 @@ IRC_COMMAND(irc_c_list)
  */
 IRC_COMMAND(irc_c_ping)
 {
-	watch_write(j->send_watch, "PONG %s\r\n", param[2]);
+	ekg_connection_write(j->send_stream, "PONG %s\r\n", param[2]);
 	if (session_int_get(s, "DISPLAY_PONG"))
 		print_info("__status", s, "IRC_PINGPONG", session_name(s), OMITCOLON(param[2]));
 	return 0;
@@ -1626,7 +1624,7 @@ IRC_COMMAND(irc_c_invite)
 	xfree(cchn);
 
 	if (session_int_get(s, "AUTO_JOIN_CHANS_ON_INVITE") == 1)
-		watch_write(j->send_watch, "JOIN %s\r\n", channel);
+		ekg_connection_write(j->send_stream, "JOIN %s\r\n", channel);
 
 	if (tmp) *tmp = '!';
 
@@ -1743,7 +1741,7 @@ IRC_COMMAND(irc_c_mode)
 		print_info(w?w->target:NULL, s, "IRC_MODE_CHAN_NEW", session_name(s),
 				param[0]+1, bang?bang+1:"", cchn, moderpl->str);
 /*		if (moderpl->str[1] == 'b')
- *			watch_write(j->send_watch, "MODE %s +%c\r\n",  irc_channame, moderpl->str[1]);
+ *			ekg_connection_write(j->send_stream, "MODE %s +%c\r\n",  irc_channame, moderpl->str[1]);
  */
 	} else {
 		print_info(w?w->target:NULL, s, "IRC_MODE_CHAN", session_name(s),
