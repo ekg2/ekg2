@@ -205,6 +205,7 @@ dist_gpg_DATA = \
 	plugins/gpg/commands-pl.txt
 endif
 
+EXTRA_DIST += $(BASE_PNGS) $(GG_PNGS) $(ICQ_PNGS)
 if ENABLE_GTK
 plugin_LTLIBRARIES += plugins/gtk/gtk.la
 
@@ -302,7 +303,6 @@ inline_pngs_icq.h: $(ICQ_PNGS)
 		icq_unknown $(top_srcdir)/plugins/gtk/iconssets/icq-unknown.png \
 		> $@
 
-EXTRA_DIST += $(BASE_PNGS) $(GG_PNGS) $(ICQ_PNGS)
 endif
 
 if ENABLE_ICQ
@@ -470,6 +470,28 @@ dist_ncurses_DATA = \
 	plugins/ncurses/vars-pl.txt
 endif
 
+EXTRA_DIST += \
+	plugins/perl/common/Command.xs \
+	plugins/perl/common/Ekg2.pm \
+	plugins/perl/common/Ekg2.xs \
+	plugins/perl/common/Makefile.PL \
+	plugins/perl/common/module.h \
+	plugins/perl/common/Plugin.xs \
+	plugins/perl/common/Session.xs \
+	plugins/perl/common/Timer.xs \
+	plugins/perl/common/typemap \
+	plugins/perl/common/Userlist.xs \
+	plugins/perl/common/Variable.xs \
+	plugins/perl/common/Watch.xs \
+	plugins/perl/common/Window.xs \
+	plugins/perl/irc/Channel.xs \
+	plugins/perl/irc/Irc.pm \
+	plugins/perl/irc/Irc.xs \
+	plugins/perl/irc/Makefile.PL \
+	plugins/perl/irc/module.h \
+	plugins/perl/irc/Server.xs \
+	plugins/perl/irc/typemap \
+	plugins/perl/irc/User.xs
 if ENABLE_PERL
 plugin_LTLIBRARIES += plugins/perl/perl.la
 
@@ -526,28 +548,6 @@ distclean-local: perl-distclean
 install-exec-local: perl-install-common perl-install-irc
 endif
 
-EXTRA_DIST += \
-	plugins/perl/common/Command.xs \
-	plugins/perl/common/Ekg2.pm \
-	plugins/perl/common/Ekg2.xs \
-	plugins/perl/common/Makefile.PL \
-	plugins/perl/common/module.h \
-	plugins/perl/common/Plugin.xs \
-	plugins/perl/common/Session.xs \
-	plugins/perl/common/Timer.xs \
-	plugins/perl/common/typemap \
-	plugins/perl/common/Userlist.xs \
-	plugins/perl/common/Variable.xs \
-	plugins/perl/common/Watch.xs \
-	plugins/perl/common/Window.xs \
-	plugins/perl/irc/Channel.xs \
-	plugins/perl/irc/Irc.pm \
-	plugins/perl/irc/Irc.xs \
-	plugins/perl/irc/Makefile.PL \
-	plugins/perl/irc/module.h \
-	plugins/perl/irc/Server.xs \
-	plugins/perl/irc/typemap \
-	plugins/perl/irc/User.xs
 endif
 
 if ENABLE_NNTP
