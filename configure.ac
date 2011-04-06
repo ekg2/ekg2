@@ -246,6 +246,7 @@ AC_EKG2_PLUGIN([ncurses], [
 
 AC_EKG2_PLUGIN([nntp])
 
+perl_module_build_flags=
 AC_EKG2_PLUGIN([perl], [
 	AC_EKG2_WITH([perl], [
 		AC_PATH_PROG([PERL], [perl])
@@ -263,7 +264,16 @@ AC_EKG2_PLUGIN([perl], [
 	, [
 		enable_perl_modules=yes
 	])
+
+	AC_ARG_WITH([perl-module-build-flags],
+		AS_HELP_STRING([--with-perl-module-build-flags=...],
+			[additional flags passed to Makefile.PL (e.g. INSTALLDIRS)]),
+	[
+		perl_module_build_flags=$withval
+	])
 ])
+
+AC_SUBST([PERL_MODULE_BUILD_FLAGS], [$perl_module_build_flags])
 AM_CONDITIONAL([ENABLE_PERL_MODULES], [test x"$enable_perl_modules" = x"yes"])
 
 AC_EKG2_PLUGIN([polchat])

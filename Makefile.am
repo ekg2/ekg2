@@ -519,9 +519,9 @@ dist_script_DATA += \
 
 if ENABLE_PERL_MODULES
 $(top_srcdir)/plugins/perl/common/Makefile: $(top_srcdir)/plugins/perl/common/Makefile.PL
-	$(AM_V_GEN)cd $(top_srcdir)/plugins/perl/common && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.."
+	$(AM_V_GEN)cd $(top_srcdir)/plugins/perl/common && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.." $(PERL_MODULE_BUILD_FLAGS)
 $(top_srcdir)/plugins/perl/irc/Makefile: $(top_srcdir)/plugins/perl/irc/Makefile.PL
-	$(AM_V_GEN)cd $(top_srcdir)/plugins/perl/irc && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.."
+	$(AM_V_GEN)cd $(top_srcdir)/plugins/perl/irc && $(PERL) Makefile.PL INC="-I$(abs_top_builddir) -I../../.." $(PERL_MODULE_BUILD_FLAGS)
 
 perl-build-common: $(top_srcdir)/plugins/perl/common/Makefile
 	cd $(top_srcdir)/plugins/perl/common && $(MAKE) CC="$(CC)" CCFLAGS="$(plugins_perl_perl_la_CPPFLAGS) $(CFLAGS)"
