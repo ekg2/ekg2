@@ -26,6 +26,7 @@
 #include "ekg2.h"
 
 #include <glib/gprintf.h>
+#include <glib/gstdio.h>
 
 #include <sys/types.h>
 
@@ -249,11 +250,14 @@ static void do_crash_writes(void)
 "\r\n",
 config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, argv0, config_dir);
 
-	g_free(config_dir);
 	config_write_crash();
 	userlist_write_crash();
 	debug_write_crash();
 	config_commit();
+
+	/* Place core there too (temporarily) */
+	g_chdir(config_dir);
+	g_free(config_dir);
 }
 
 static void handle_sigabrt()
