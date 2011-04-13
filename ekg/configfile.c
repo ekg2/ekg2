@@ -360,6 +360,7 @@ gboolean config_commit(void) {
 		g_object_unref(*p);
 	}
 
+	ret &= !g_cancellable_is_cancelled(config_cancellable);
 	g_ptr_array_free(config_openfiles, FALSE);
 	g_object_unref(config_cancellable);
 	config_openfiles = NULL;

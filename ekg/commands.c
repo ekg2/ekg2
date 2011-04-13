@@ -1630,6 +1630,7 @@ static COMMAND(cmd_save) {
 		ekg2_reason_changed = 0;
 		return 0;
 	} else {
+		/* XXX: grab some kind of error? */
 		printq("error_saving");
 		return -1;
 	}
