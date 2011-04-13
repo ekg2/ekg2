@@ -834,8 +834,6 @@ void config_write_crash()
 	GOutputStream *f;
 	GSList *pl;
 
-	g_chdir(config_dir);
-
 	/* first of all we are saving plugins */
 	if (!(f = G_OUTPUT_STREAM(config_open("crash-%d-plugins", "w", (int) getpid()))))
 		return;
@@ -843,7 +841,7 @@ void config_write_crash()
 	config_write_plugins(f);
 
 	/* then main part of config */
-	if (!(f = G_OUTPUT_STREAM(config_open("crash-%d-plugin", "w", (int) getpid()))))
+	if (!(f = G_OUTPUT_STREAM(config_open("crash-%d-config", "w", (int) getpid()))))
 		return;
 
 	config_write_main(f);
