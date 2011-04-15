@@ -18,6 +18,7 @@ dnl default commands); otherwise run 'if-no'.
 			AC_CHECK_LIB([$1], [$2], [$4], [$5])
 		], [
 			LIBS="-l$1 $LIBS"
+			AC_DEFINE_UNQUOTED(AS_TR_CPP(HAVE_LIB$1), [1], [define if you have $1])
 			$4
 		])
 
