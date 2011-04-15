@@ -1841,7 +1841,7 @@ char *nickpad_string_create(channel_t *chan)
 
 char *nickpad_string_apply(channel_t *chan, const char *str)
 {
-	chan->nickpad_pos = (chan->longest_nick - xstrlen(str)) * 2;
+	chan->nickpad_pos = (chan->longest_nick - g_utf8_strlen(str, -1)) * 2;
 	if (chan->nickpad_pos < chan->nickpad_len && chan->nickpad_pos >= 0)
 	{
 		chan->nickpad_str[chan->nickpad_pos] = '\0';

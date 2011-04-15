@@ -135,8 +135,9 @@ static void update_longest_nick(channel_t *chan)
 	for (p=chan->onchan; p; p=p->next)
 	{
 		people_t *person = (people_t *)p->data;
-		if (person->nick && xstrlen(person->nick+4) > chan->longest_nick)
-			chan->longest_nick = xstrlen(person->nick+4);
+		const gsize nicklen = g_utf8_strlen(person->nick+4, -1);
+		if (person->nick && nicklen > chan->longest_nick)
+			chan->longest_nick = nicklen;
 	}
 	nickpad_string_create(chan);
 }
