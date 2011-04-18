@@ -1556,12 +1556,14 @@ static COMMAND(irc_command_devop) {
 		string_append_c(zzz, ' '), string_append(zzz, mp[i]);
 
 	nicks = string_free(zzz, 0);
-	p = nicks;
+	p = irc_convert_out(j, chan+4, nicks);
 
 	i=0;
 	chan+=4;
 
 	tmp = p;
+	debug_function("converting %s to %s \n", p, tmp);
+	  
 	while (1)
 	{
 		for (i=0; i<modes; i++)
@@ -1579,6 +1581,7 @@ static COMMAND(irc_command_devop) {
 		p = tmp;
 	}
 	chan-=4;
+	xfree(tmp);
 	xfree(chan);
 	xfree(nicks);
 	xfree(op);
