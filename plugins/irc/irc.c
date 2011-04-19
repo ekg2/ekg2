@@ -1003,10 +1003,13 @@ static COMMAND(irc_command_away) {
 	if (isaway) {
 		const char *status = ekg_status_string(session_status_get(session), 0);
 		const char *descr  = session_descr_get(session);
+		char *tmp;
 		if (descr)
-			ekg_connection_write(j->send_stream, "AWAY :%s\r\n", descr);
+			tmp = irc_convert_out(j, NULL, descr);
 		else
-			ekg_connection_write(j->send_stream, "AWAY :%s\r\n", status);
+			tmp = irc_convert_out(j, NULL, status);
+		ekg_connection_write(j->send_stream, "AWAY :%s\r\n", tmp);
+		xfree(tmp);
 	} else {
 		ekg_connection_write(j->send_stream, "AWAY :\r\n");
 
@@ -1022,10 +1025,13 @@ static void irc_statusdescr_handler(session_t *s, const char *varname) {
 
 	if (status == EKG_STATUS_AWAY) {
 		const char *descr  = session_descr_get(s);
+		char *tmp;
 		if (descr)
-			ekg_connection_write(j->send_stream, "AWAY :%s\r\n", descr);
+			tmp = irc_convert_out(j, NULL, descr);
 		else
-			ekg_connection_write(j->send_stream, "AWAY :%s\r\n", ekg_status_string(status, 0));
+			tmp = irc_convert_out(j, NULL, ekg_status_string(status, 0));
+		ekg_connection_write(j->send_stream, "AWAY :%s\r\n", tmp);
+		xfree(tmp);
 	} else {
 		ekg_connection_write(j->send_stream, "AWAY :\r\n");
 
@@ -1694,14 +1700,16 @@ static COMMAND(irc_command_whois) {
 					&mp, 0, IRC_GC_NOT_CHAN)))
 		return -1;
 
+	char * tmp = irc_convert_out(irc_private(session), NULL, person+4);
 	debug_function("irc_command_whois(): %s\n", name);
 	if (!xstrcmp(name, ("whowas")))
-		ekg_connection_write(irc_private(session)->send_stream, "WHOWAS %s\r\n", person+4);
+		ekg_connection_write(irc_private(session)->send_stream, "WHOWAS %s\r\n", tmp);
 	else if (!xstrcmp(name, ("wii")))
-		ekg_connection_write(irc_private(session)->send_stream, "WHOIS %s %s\r\n", person+4, person+4);
-	else	ekg_connection_write(irc_private(session)->send_stream, "WHOIS %s\r\n",  person+4);
+		ekg_connection_write(irc_private(session)->send_stream, "WHOIS %s %s\r\n", tmp, tmp);
+	else	ekg_connection_write(irc_private(session)->send_stream, "WHOIS %s\r\n",  tmp);
 
 	g_strfreev(mp);
+	xfree (tmp);
 	xfree (person);
 	return 0;
 }
