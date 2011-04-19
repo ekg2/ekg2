@@ -1835,7 +1835,9 @@ static COMMAND(irc_command_nick) {
 
 	/* GiM: XXX FIXME TODO think more about session->connecting... */
 	if (session->connecting || session_connected_get(session)) {
-		ekg_connection_write(j->send_stream, "NICK %s\r\n", params[0]);
+		char * tmp = irc_convert_out(j, NULL, params[0]);
+		ekg_connection_write(j->send_stream, "NICK %s\r\n", tmp);
+		xfree(tmp);
 		/* this is needed, couse, when connecting and server will
 		 * respond, nickname is already in use, and user
 		 * will type /nick somethin', server doesn't send respond
