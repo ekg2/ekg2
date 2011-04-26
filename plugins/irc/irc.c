@@ -1581,7 +1581,7 @@ static COMMAND(irc_command_devop) {
 
 	nicks = string_free(zzz, 0);
 	p = irc_convert_out(j, NULL, nicks);
-	rchan = irc_convert_out(j, NULL, chan);
+	rchan = irc_convert_out(j, NULL, chan+4);
 
 	i=0;
 	chan+=4;
