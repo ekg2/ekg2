@@ -793,7 +793,8 @@ static QUERY(logsqlite_newwin_handler) {
 #else
 		r = g_strdup(results[1]);
 #endif
-		ekg_fix_utf8(r);
+		if (r)
+			ekg_fix_utf8(r);
 
 		message_print(session_uid_get(w->session),
 				(class < EKG_MSGCLASS_SENT ? uid : session_uid_get(w->session)),
