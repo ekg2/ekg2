@@ -456,10 +456,12 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 		sqlite_exec(db, "CREATE INDEX uid ON log_msg(uid)", NULL, NULL, NULL);
 #endif
 		sqlite_n_exec(db, "COMMIT", NULL, NULL, NULL);
+
+		chmod(path, S_IRUSR | S_IWUSR); // Set permissions
 	} else {
 		fclose(testFile);
 
-#ifdef HAVE_LIBSQLITE3		
+#ifdef HAVE_LIBSQLITE3
 		sqlite3_open(path, &db);
 
 		/* sqlite3 (unlike sqlite 2) defers opening until it's
@@ -476,7 +478,7 @@ sqlite_t * logsqlite_open_db(session_t * session, time_t sent, char * path)
 		errormsg = sqlite3_errmsg(db);
 #else
 	if (!db) {
-#endif 
+#endif
 		debug("[logsqlite] error opening database - %s\n", errormsg);
 		print("logsqlite_open_error", errormsg);
 #ifdef HAVE_LIBSQLITE3
