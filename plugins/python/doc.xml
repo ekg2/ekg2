@@ -921,5 +921,5 @@ ekg.variable_add('zmienna_testowa', 'warto¶æ', varchange)
    </programlisting>
 </sect2>
 <!--
-vim: ft=docbk encoding=iso-8859-2
+vim: ft=docbk fileencoding=iso-8859-2
 -->
