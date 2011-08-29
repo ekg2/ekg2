@@ -952,9 +952,7 @@ EXPORTNOT void theme_init() {
 	format_add("remote_warndebug",	"ekg2-remote: %r%1\n", 1);
 	format_add("remote_okdebug",	"ekg2-remote: %G%1\n", 1);
 
-	format_add("remote_welcome", 	_("%> %|%Tekg2-remote-0.4%n (%ge%Gk%gg %Gr%ge%Gl%go%Ga%gd%Ge%gd%n)\n"
-						"Connected to: %T%1%n\n%rNOTE: All commands except /quit will be executed remotely!\n"
-						"If you want to shutdown remote ekg2 type %W/exit [reason]%n"), 1);
+	format_add("remote_welcome", 	_("%> %|%Tekg2-remote-0.4%n (%ge%Gk%gg %Gr%ge%Gl%go%Ga%gd%Ge%gd%n)\nConnected to: %T%1%n\n%rNOTE: All commands except /quit will be executed remotely!\nIf you want to shutdown remote ekg2 type %W/exit [reason]%n"), 1);
 
 	format_add("remote_console_charset_using", _("%) %Tekg2-remote%n detected that your console works under: %W%1%n Please verify and run ekg2-remote -c your-encoding if needed"), 1);
 }

@@ -589,10 +589,8 @@ static int gpg_theme_init() {
 	format_add("gpg_key_unset",	_("%) GPGKEY for uid: %W%1%n UNSET!"), 1);
 	format_add("gpg_key_not_found", _("%> GPGKEY for uid: %W%1%n NOT FOUND!"), 1);
 
-	format_add("gpg_key_set_new",	_("%) You've set up new key for uid: %W%1%n keyid: %W%2%n\n"
-					"%) Encryption will be disabled until you force key (gpg:key --forcekey) NOT RECOMENDED or we verify key (signed presence is enough)"), 1);
-	format_add("gpg_key_set_newf",	_("%) You've forced setting new key for uid: %W%1%n keyid: %W%2%n\n"
-					"%! Forcing key is not good idea... Please rather use /gpg:key --setkey coz key will be verified before encryption..."), 1);
+	format_add("gpg_key_set_new",	_("%) You've set up new key for uid: %W%1%n keyid: %W%2%n\n%) Encryption will be disabled until you force key (gpg:key --forcekey) NOT RECOMENDED or we verify key (signed presence is enough)"), 1);
+	format_add("gpg_key_set_newf",	_("%) You've forced setting new key for uid: %W%1%n keyid: %W%2%n\n%! Forcing key is not good idea... Please rather use /gpg:key --setkey coz key will be verified before encryption..."), 1);
 
 	format_add("gpg_key_set_ok",		_("%> Keys you've set up for uid: %W%1%n match with our internal DB. Happy encrypted talk. F**k echelon"), 1);
 	format_add("gpg_key_set_okf",		_("%> Keys you've set up for uid: %W%1%n match with our internal DB. Happy encrypted talk. F**k echelon (Forcing key is not nessesary here!)"), 1);
