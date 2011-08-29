@@ -2238,11 +2238,9 @@ static int irc_theme_init()
 
 	format_add("RPL_AWAY",		_("%G||%n away	   : %2 - %3\n"), 1);
 	/* in whois %2 is always nick */
-	format_add("RPL_WHOISUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
-				"%G||%n realname : %6\n"), 1);
+	format_add("RPL_WHOISUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n%G||%n realname : %6\n"), 1);
 
-	format_add("RPL_WHOWASUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
-				"%G||%n realname : %6\n"), 1);
+	format_add("RPL_WHOWASUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n%G||%n realname : %6\n"), 1);
 
 /* %2 - nick %3 - there is/ was no such nickname / channel, and so on... */
 	/*

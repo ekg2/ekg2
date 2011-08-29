@@ -1199,8 +1199,7 @@ static int jabber_theme_init() {
 	/* %1 - sessionname, %2 - mucjid %3 - text */
 	format_add("jabber_muc_notice", "%n-%P%2%n- %3", 1);
 
-	format_add("jabber_muc_room_created", 
-		_("%> Room %W%2%n created, now to configure it: type %W/admin %g%2%n to get configuration form, or type %W/admin %g%2%n --instant to create instant one"), 1);
+	format_add("jabber_muc_room_created", _("%> Room %W%2%n created, now to configure it: type %W/admin %g%2%n to get configuration form, or type %W/admin %g%2%n --instant to create instant one"), 1);
 	format_add("jabber_muc_banlist", _("%g|| %n %5 - %W%2%n: ban %c%3%n [%4]"), 1);	/* %1 sesja %2 kanal %3 kto %4 reason %5 numerek */
 #if 0
 	format_add("jabber_send_chan", _("%B<%W%2%B>%n %5"), 1);
@@ -1258,8 +1257,7 @@ static int jabber_theme_init() {
 	format_add("jabber_gpg_config",	_("%> (%1) First set gpg_key and gpg_password before turning on gpg_active!"), 1); /* sesja */
 	format_add("jabber_gpg_ok",	_("%) (%1) GPG support: %gENABLED%n using key: %W%2%n"), 1);			/* sesja, klucz */
 	format_add("jabber_gpg_sok",	_("%) GPG key: %W%2%n"), 1);							/* sesja, klucz for /status */
-	format_add("jabber_gpg_fail",	_("%> (%1) We didn't manage to sign testdata using key: %W%2%n (%R%3%n)\n"	/* sesja, klucz, error */
-					"OpenGPG support for this session disabled."), 1);
+	format_add("jabber_gpg_fail",	_("%> (%1) We didn't manage to sign testdata using key: %W%2%n (%R%3%n)\nOpenGPG support for this session disabled."), 1);	/* sesja, klucz, error */
 
 /* stream:features */
 	/* %1 - sesja, %2 - serwer, %3 - nazwa, %4 - XMLNS, %5 - z czym sie je */

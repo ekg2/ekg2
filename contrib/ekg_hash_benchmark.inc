@@ -378,8 +378,7 @@
 	format_add("passwd", _("%> Password changed\n"), 1);
 	format_add("passwd_failed", _("%! Error while changing password: %1\n"), 1);
 	format_add("passwd_timeout", _("%! Password changing timed out\n"), 1);
-	format_add("passwd_possible_abuse", "%> (%1) Password reply send by wrong uid: %2, if this is good server uid please report this to developers and manually "
-						"change your session password using /session password", 1);
+	format_add("passwd_possible_abuse", "%> (%1) Password reply send by wrong uid: %2, if this is good server uid please report this to developers and manually change your session password using /session password", 1);
 	format_add("passwd_abuse", "%! (%1) Somebody want to clear our password (%2)", 1);
 	format_add("change", _("%> Informations in public directory chenged\n"), 1);
 	format_add("change_failed", _("%! Error while changing information in public directory\n"), 1);
@@ -765,10 +764,8 @@
 	format_add("gg_version", _("%> %TGadu-Gadu%n: libgadu %g%1%n (headers %c%2%n), protocol %g%3%n (%c0x%4%n)"), 1);
 	format_add("gpg_key_unset",	_("%) GPGKEY for uid: %W%1%n UNSET!"), 1);
 	format_add("gpg_key_not_found", _("%> GPGKEY for uid: %W%1%n NOT FOUND!"), 1);
-	format_add("gpg_key_set_new",	_("%) You've set up new key for uid: %W%1%n keyid: %W%2%n\n"
-					"%) Encryption will be disabled until you force key (gpg:key --forcekey) NOT RECOMENDED or we verify key (signed presence is enough)"), 1);
-	format_add("gpg_key_set_newf",	_("%) You've forced setting new key for uid: %W%1%n keyid: %W%2%n\n"
-					"%! Forcing key is not good idea... Please rather use /gpg:key --setkey coz key will be verified before encryption..."), 1);
+	format_add("gpg_key_set_new",	_("%) You've set up new key for uid: %W%1%n keyid: %W%2%n\n%) Encryption will be disabled until you force key (gpg:key --forcekey) NOT RECOMENDED or we verify key (signed presence is enough)"), 1);
+	format_add("gpg_key_set_newf",	_("%) You've forced setting new key for uid: %W%1%n keyid: %W%2%n\n%! Forcing key is not good idea... Please rather use /gpg:key --setkey coz key will be verified before encryption..."), 1);
 	format_add("gpg_key_set_ok",		_("%> Keys you've set up for uid: %W%1%n match with our internal DB. Happy encrypted talk. F**k echelon"), 1);
 	format_add("gpg_key_set_okf",		_("%> Keys you've set up for uid: %W%1%n match with our internal DB. Happy encrypted talk. F**k echelon (Forcing key is not nessesary here!)"), 1);
 	format_add("gpg_key_set_okbutver",	_("%! Keys matched, but lasttime we fail to verify key. Encryption won't work until forced."), 1);
@@ -849,10 +846,8 @@
 //	format_add("RPL_WHOREPLY",   "%g|| %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n", 1);
 	format_add("RPL_WHOREPLY",	"%g|| %c%3 %W%7 %n%8 %6 %4@%5 %W%9\n", 1);
 	format_add("RPL_AWAY",		_("%G||%n away     : %2 - %3\n"), 1);
-	format_add("RPL_WHOISUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
-				"%G||%n realname : %6\n"), 1);
-	format_add("RPL_WHOWASUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n"
-				"%G||%n realname : %6\n"), 1);
+	format_add("RPL_WHOISUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n%G||%n realname : %6\n"), 1);
+	format_add("RPL_WHOWASUSER",	_("%G.+===%g-----\n%G||%n (%T%2%n) (%3@%4)\n%G||%n realname : %6\n"), 1);
 //	format_add("IRC_WHOERROR", _("%G.+===%g-----\n%G||%n %3 (%2)\n"), 1);
 //	format_add("IRC_ERR_NOSUCHNICK", _("%n %3 (%2)\n"), 1);
 	format_add("RPL_WHOISCHANNELS",	_("%G||%n %|channels : %3\n"), 1);
@@ -965,8 +960,7 @@
 	format_add("jabber_vacation", _("%> You'd set up your vacation status: %g%2%n (since: %3 expires@%4)"), 1);
 	format_add("jabber_muc_recv", 	"%B<%w%X%5%3%B>%n %4", 1);
 	format_add("jabber_muc_send",	"%B<%n%X%5%W%3%B>%n %4", 1);
-	format_add("jabber_muc_room_created", 
-		_("%> Room %W%2%n created, now to configure it: type %W/admin %g%2%n to get configuration form, or type %W/admin %g%2%n --instant to create instant one"), 1);
+	format_add("jabber_muc_room_created", _("%> Room %W%2%n created, now to configure it: type %W/admin %g%2%n to get configuration form, or type %W/admin %g%2%n --instant to create instant one"), 1);
 	format_add("jabber_muc_banlist", _("%g|| %n %5 - %W%2%n: ban %c%3%n [%4]"), 1);	/* %1 sesja %2 kanal %3 kto %4 reason %5 numerek */
 //	format_add("jabber_send_chan", _("%B<%W%2%B>%n %5"), 1);
 //	format_add("jabber_send_chan_n", _("%B<%W%2%B>%n %5"), 1);
@@ -991,8 +985,7 @@
 	format_add("jabber_gpg_config",	_("%> (%1) First set gpg_key and gpg_password before turning on gpg_active!"), 1); /* sesja */
 	format_add("jabber_gpg_ok",	_("%) (%1) GPG support: %gENABLED%n using key: %W%2%n"), 1);			/* sesja, klucz */
 	format_add("jabber_gpg_sok",	_("%) GPG key: %W%2%n"), 1);							/* sesja, klucz for /status */
-	format_add("jabber_gpg_fail", 	_("%> (%1) We didn't manage to sign testdata using key: %W%2%n (%R%3%n)\n"	/* sesja, klucz, error */
-					"OpenGPG support for this session disabled."), 1);
+	format_add("jabber_gpg_fail", 	_("%> (%1) We didn't manage to sign testdata using key: %W%2%n (%R%3%n)\nOpenGPG support for this session disabled."), 1);	/* sesja, klucz, error */
 	format_add("jabber_msg_xmlsyntaxerr",	_("%! Expat syntax-checking failed on your message: %T%1%n. Please correct your code or use double ^R to disable syntax-checking."), 1);
 	format_add("jabber_conversations_begin",	_("%g,+=%G--%n (%1) %GAvailable Reply-IDs:%n"), 1);
 	format_add("jabber_conversations_item",		_("%g|| %n %1 - %W%2%n (%g%3%n [%c%4%n])"), 1);		/* %1 - n, %2 - user, %3 - subject, %4 - thread */

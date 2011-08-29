@@ -593,14 +593,8 @@ static int ncurses_theme_init() {
 	/* prompty i statusy dla ui-ncurses */
 	format_add("ncurses_prompt_none", "", 1);
 	format_add("ncurses_prompt_query", "[%Y%1%n] ", 1);
-	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %G}%{?avail %Y}%{?chat %W}%{?dnd %K}%{?xa %g}%{?gone %R}"
-			"%{?invisible %C}%{?notavail %r}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{?typing %C}%{window}}"
-			"%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}"
-			"%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
-	format_add("header", " %{?query %c(%{?query_away %w}%{?query_avail %W}%{?query_invisible %K}%{?query_notavail %k}"
-			"%{?query_chat %W}%{?query_dnd %K}%{query_xa %g}%{?query_gone %R}%{?query_unknown %M}%{?query_error %m}%{?query_blocking %m}"
-			"%{query}%{?query_descr %c/%w%{query_descr}}%c) %{?query_ip (%wip%c/%w%{query_ip}%c)} %{irctopic}}"
-			"%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}", 1);
+	format_add("statusbar", " %c(%w%{time}%c)%w %c(%w%{?session %{?away %G}%{?avail %Y}%{?chat %W}%{?dnd %K}%{?xa %g}%{?gone %R}%{?invisible %C}%{?notavail %r}%{session}}%{?!session ---}%c) %{?window (%wwin%c/%w%{?typing %C}%{window}}%{?query %c:%W%{query}}%{?debug %c(%Cdebug}%c)%w%{?activity  %c(%wact%c/%W}%{activity}%{?activity %c)%w}%{?mail  %c(%wmail%c/%w}%{mail}%{?mail %c)}%{?more  %c(%Gmore%c)}", 1);
+	format_add("header", " %{?query %c(%{?query_away %w}%{?query_avail %W}%{?query_invisible %K}%{?query_notavail %k}%{?query_chat %W}%{?query_dnd %K}%{query_xa %g}%{?query_gone %R}%{?query_unknown %M}%{?query_error %m}%{?query_blocking %m}%{query}%{?query_descr %c/%w%{query_descr}}%c) %{?query_ip (%wip%c/%w%{query_ip}%c)} %{irctopic}}%{?!query %c(%wekg2%c/%w%{version}%c) (%w%{url}%c)}", 1);
 	format_add("statusbar_act_important", "%Y", 1);
 	format_add("statusbar_act_important2us", "%W", 1);
 	format_add("statusbar_act", "%K", 1);
