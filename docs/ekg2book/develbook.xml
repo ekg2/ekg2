@@ -363,9 +363,9 @@ Copyright 2000 Free Software Foundation, Inc.
          </para>
          <programlisting role="shell">
 <![CDATA[
-grep -R -I 'format_add("' * | cut -d: -f2- | \
-   perl -ne '/format_add\("(.*?)".+"(.*)".*/; print $1." ".$2."\n"' \
-   > my.theme
+find . -name '*.c' -type f | xargs sed \
+    '/^[ \t]*format_add("/!d;s///;s/"[^"]*"\(.*\)".*/ \1/' \
+    > my.theme
    ]]>
          </programlisting>
          <para>
