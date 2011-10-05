@@ -306,7 +306,7 @@ plugin <nazwa>
       </para>
       <screen>
 <![CDATA[
-$ gdb ekg ~/.ekg2/core.<pid>
+$ gdb ekg core
 GNU gdb 5.0 (UI_OUT)
 Copyright 2000 Free Software Foundation, Inc.
 (...)

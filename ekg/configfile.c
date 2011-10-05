@@ -824,46 +824,6 @@ pass:
 }
 
 /*
- * config_write_crash()
- *
- * funkcja zapisuj±ca awaryjnie konfiguracjê. nie powinna alokowaæ ¿adnej
- * pamiêci.
- */
-void config_write_crash()
-{
-	GOutputStream *f;
-	GSList *pl;
-
-	/* first of all we are saving plugins */
-	if (!(f = G_OUTPUT_STREAM(config_open("crash-%d-plugins", "w", (int) getpid()))))
-		return;
-
-	config_write_plugins(f);
-
-	/* then main part of config */
-	if (!(f = G_OUTPUT_STREAM(config_open("crash-%d-config", "w", (int) getpid()))))
-		return;
-
-	config_write_main(f);
-
-	/* now plugins variables */
-	for (pl = plugins; pl; pl = pl->next) {
-		const plugin_t *p = pl->data;
-		GSList *vl;
-
-		if (!(f = G_OUTPUT_STREAM(config_open("crash-%d-config-%s", "w", (int) getpid(), p->name))))
-			continue;	
-	
-		for (vl = variables; vl; vl = vl->next) {
-			variable_t *v = vl->data;
-			if (p == v->plugin) {
-				config_write_variable(f, v);
-			}
-		}
-	}
-}
-
-/*
  * debug_write_crash()
  *
  * zapisuje ostatnie linie z debug.

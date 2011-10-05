@@ -220,104 +220,61 @@ static void handle_sighup()
 	ekg_exit();
 }
 
-static void do_crash_writes(void)
+/**
+ * Notifies plugins, writes the message to stderr, with last_err_message.
+ *
+ * We are only allowed to call POSIX-defined "async-signal-safe functions" here
+ * (see signal(7)), because anything else can result in a "bad thing" such as a
+ * deadlock (e.g. if the signal was a result of a malloc()/free()) or a
+ * segfault. There were cases of this happening to ekg2.
+ *
+ * In order to avoid touching the (possibly corrupt) heap, we invoke statically
+ * stored set of abort handlers. This is the mechanism we use to notify UI and
+ * logs plugins to reset the terminal and sync their output as necessary.
+ */
+static void handle_fatal_signal(char *message)
 {
-	gchar *config_dir = g_build_filename(
-			g_get_user_config_dir(),
-			"ekg2",
-			config_profile,
-			NULL);
-
-	fprintf(stderr,
-"The program will attempt to write its settings, but it is not\r\n"
-"guaranteed to succeed. They will be saved as\r\n"
-"%s/crash-%d-config,\r\n"
-"%s/crash-%d-config-<plugin>\r\n"
-"and %s/crash-%d-userlist\r\n"
-"\r\n"
-"Last messages from the debugging window will be saved to a file called\r\n"
-"%s/crash-%d-debug.\r\n"
-"\r\n"
-"If a file called %s/core will be created, try running the following\r\n"
-"command:\r\n"
-"\r\n"
-"    gdb %s %s/core\r\n"
-"\n"
-"note the last few lines, and then note the output from the ,,bt'' command.\r\n"
-"This will help the program authors find the location of the problem\r\n"
-"and most likely will help avoid such crashes in the future.\r\n"
-"More details can be found in the documentation, in the file ,,gdb.txt''.\r\n"
-"\r\n",
-config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, (int) getpid(), config_dir, argv0, config_dir);
-
-	config_write_crash();
-	userlist_write_crash();
-	debug_write_crash();
-	config_commit();
-
-	/* Place core there too (temporarily) */
-	g_chdir(config_dir);
-	g_free(config_dir);
-}
-
-static void handle_sigabrt()
-{
-	GSList *pl;
-
-	signal(SIGABRT, SIG_DFL);
+	const char *err_msg_prefix = "Last error message (if any): ";
+	const char *debug_instructions = "If a file called core is be created, try running the following\r\n"
+	"command:\r\n"
+	"\r\n"
+	"    gdb ekg2 core\r\n"
+	"\n"
+	"note the last few lines, and then note the output from the ,,bt'' command.\r\n"
+	"This will help the program authors find the location of the problem\r\n"
+	"and most likely will help avoid such crashes in the future.\r\n";
 
 	if (stderr_backup && stderr_backup != -1)
 		dup2(stderr_backup, 2);
 
-	/* wy³±cz pluginy ui, ¿eby odda³y terminal
-	 * destroy also log plugins to make sure that latest changes are written */
-	for (pl = plugins; pl; pl = pl->next) {
-		const plugin_t *p = pl->data;
-		if (p->pclass != PLUGIN_UI && p->pclass != PLUGIN_LOG)
-			continue;
+	/* Notify plugins of impending doom. */
+	ekg2_run_all_abort_handlers();
 
-		p->destroy();
-	}
+	/* Now that the terminal is (hopefully) back to plain text mode, write messages. */
+	/* There is nothing we can do if this fails, so suppress warnings about ignored results. */
+	IGNORE_RESULT(write(2, "\r\n\r\n *** ", 9));
+	IGNORE_RESULT(write(2, message, strlen(message)));
+	IGNORE_RESULT(write(2, " ***\r\n", 6));
+	IGNORE_RESULT(write(2, err_msg_prefix, strlen(err_msg_prefix)));
+	IGNORE_RESULT(write(2, last_err_message, strlen(last_err_message)));
+	IGNORE_RESULT(write(2, "\r\n", 2));
+	IGNORE_RESULT(write(2, debug_instructions, strlen(debug_instructions)));
+}
 
-	fprintf(stderr,
-"\r\n"
-"\r\n"
-"*** Abnormal program termination ***\r\n"
-"\r\n"
-"%s"
-"\r\n", last_err_message);
-
-	do_crash_writes();
+/* See handle_fatal_signal comment. */
+static void handle_sigabrt()
+{
+	signal(SIGABRT, SIG_DFL);
+	handle_fatal_signal("Abnormal program termination");
 	raise(SIGABRT);
 }
 
+/* See handle_fatal_signal comment. */
 static void handle_sigsegv()
 {
-	GSList *pl;
-
 	signal(SIGSEGV, SIG_DFL);
-
-	if (stderr_backup && stderr_backup != -1)
-		dup2(stderr_backup, 2);
-
-	/* wy³±cz pluginy ui, ¿eby odda³y terminal
-	 * destroy also log plugins to make sure that latest changes are written */
-	for (pl = plugins; pl; pl = pl->next) {
-		const plugin_t *p = pl->data;
-		if (p->pclass != PLUGIN_UI && p->pclass != PLUGIN_LOG)
-			continue;
-
-		p->destroy();
-	}
-
-	fprintf(stderr,
-"\r\n"
-"\r\n"
-"*** Segmentation violation detected ***\r\n"
-"\r\n");
-
-	do_crash_writes();
-	raise(SIGSEGV);			/* niech zrzuci core */
+	handle_fatal_signal("Segmentation violation detected");
+	raise(SIGSEGV);
 }
 #endif
 

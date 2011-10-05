@@ -15,6 +15,7 @@
 #include "ekg/userlist.h"
 #include "ekg/stuff.h"
 
+#include "ekg/abort.h"
 #include "ekg/bindings.h"
 #include "ekg/commands.h"
 #include "ekg/configfile.h"

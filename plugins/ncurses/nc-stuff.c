@@ -800,6 +800,11 @@ static void sigwinch_handler()
 }
 #endif
 
+void ncurses_abort(void)
+{
+	IGNORE_RESULT(reset_shell_mode());
+}
+
 /*
  * ncurses_init()
  *
@@ -813,6 +818,7 @@ void ncurses_init(void)
 	ncurses_screen_height = getenv("LINES") ? atoi(getenv("LINES")) : 24;
 
 	initscr();
+	ekg2_register_abort_handler(ncurses_abort, &ncurses_plugin);
 	cbreak();
 	noecho();
 	nonl();
@@ -942,6 +948,7 @@ void ncurses_deinit(void)
 	if (ncurses_header)
 		delwin(ncurses_header);
 	endwin();
+	ekg2_unregister_abort_handlers_for_plugin(&ncurses_plugin);
 
 	for (i = 0; i < HISTORY_MAX; i++)
 		if (ncurses_history[i] != ncurses_line) {

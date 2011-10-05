@@ -22,7 +22,7 @@
  *
  * The reason for all this is to avoid heap references in fatal signal handlers
  * (which are a big no-no), but still allow plugins to do some rudimentary
- * cleanup.
+ * cleanup. See @sa handle_fatal_signal() for more information.
  *
  * Plugins, during initialization, register their abort handlers using
  * ekg2_register_abort_handler().
@@ -44,6 +44,8 @@ typedef void (*abort_handler)(void);
 
 /**
  * Statically register the abort @a handler function for the @a plugin.
+ *
+ * The @a handler MUST be async-signal-safe (see signal(7)).
  *
  * @return 1 if successful, 0 if there was no space left.
  */

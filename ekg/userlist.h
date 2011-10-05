@@ -156,7 +156,6 @@ extern struct ignore_label ignore_labels[IGNORE_LABELS_MAX];
 
 int userlist_read(session_t* session);
 void userlist_write(session_t *session);
-void userlist_write_crash();
 void userlist_clear_status(session_t *session, const char *uid);
 userlist_t *userlist_add(session_t *session, const char *uid, const char *nickname);
 userlist_t *userlist_add_u(userlist_t **userlist, const char *uid, const char *nickname);

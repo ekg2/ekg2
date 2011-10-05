@@ -227,57 +227,6 @@ void userlist_write(session_t *session) {
 	}
 }
 
-/**
- * userlist_write_crash()
- *
- * zapisuje listê kontaktów w sytuacji kryzysowej jak najmniejszym
- * nak³adem pamiêci i pracy.
- *
- * @sa userlist_write
- * @bug It was copied from ekg1 and it doesn't match ekg2 abi.
- *	It's bad so i comment it out... Reimplement it or delete
- */
-void userlist_write_crash() {
-/*
-	list_t l;
-	char name[32];
-	FILE *f;
-
-	chdir(config_dir);
-	
-	snprintf(name, sizeof(name), "userlist.%d", (int) getpid());
-	if (!(f = fopen(name, "w")))
-		return;
-
-	chmod(name, 0400);
-		
-	for (l = userlist; l; l = l->next) {
-		userlist_t *u = l->data;
-		list_t m;
-		
-		fprintf(f, "%s;%s;%s;%s;%s;", 
-			(u->first_name) ? u->first_name : "",
-			(u->last_name) ? u->last_name : "",
-			(u->nickname) ? u->nickname : "",
-			(u->nickname) ? u->nickname : "",
-			(u->mobile) ? u->mobile : "");
-		
-		for (m = u->groups; m; m = m->next) {
-			struct ekg_group *g = m->data;
-
-			if (m != u->groups)
-				fprintf(f, ",");
-
-			fprintf(f, "%s", g->name);
-		}
-		
-		fprintf(f, ";%s%s\r\n", u->uid, u->foreign);
-	}	
-
-	fclose(f);
- */
-}
-
 static void userlist_private_free(userlist_t *u) {
 	if (u->priv) {
 		int func = EKG_USERLIST_PRIVHANDLER_FREE;

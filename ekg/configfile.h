@@ -43,7 +43,6 @@ int config_read(const gchar *plugin_name);
 int config_read_plugins();
 void config_write();
 int config_write_partly(plugin_t *plugin, const char **vars);
-void config_write_crash();
 void debug_write_crash();
 
 #ifdef __cplusplus
