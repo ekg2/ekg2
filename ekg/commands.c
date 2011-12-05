@@ -1673,7 +1673,7 @@ static COMMAND(cmd_set)
 
 		for (vl = variables; vl; vl = vl->next) {
 			variable_t *v = vl->data;
-			if ((!arg || !xstrcasecmp(arg, v->name)) && (v->display != 2 || xstrcmp(name, ("set")))) {
+			if ((!arg || xstrcasestr(v->name, arg)) && (v->display != 2 || xstrcmp(name, ("set")))) {
 				int value;
 
 				if (!show_all && !arg && v->dyndisplay && !((v->dyndisplay)(v->name)))
