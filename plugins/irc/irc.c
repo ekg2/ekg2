@@ -517,8 +517,10 @@ static void irc_handle_line(GDataInputStream *f, gpointer data) {
 
 	l = g_data_input_stream_read_line(f, NULL, NULL, NULL);
 		/* XXX: get rid of that fd arg */
-	if (l)
+	if (l) {
 		irc_parse_line(s, l, -1);
+		g_free(l);
+	}
 }
 
 static void irc_handle_failure(GDataInputStream *f, GError *err, gpointer data) {
