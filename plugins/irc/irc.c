@@ -554,14 +554,18 @@ static void irc_handle_connect(
 
 	{
 		const gchar *real = session_get(s, "realname");
-		const gchar *hostname = session_get(s, "hostname");
+		const gchar *mode = session_get(s, "usermode");
 		const gchar *pass = session_password_get(s); /* XXX: we used to strip_spaces() here?! */
+
+		/* XXX: check space in j->nick and mode */
 
 		if (pass && *pass)
 			ekg_fprintf(G_OUTPUT_STREAM(j->send_stream), "PASS %s\r\n", pass);
 		ekg_connection_write(j->send_stream,
-				"USER %s %s unused_field :%s\r\nNICK %s\r\n",
-				j->nick, hostname ? hostname : "12", real, j->nick);
+				"USER %s %s unused_field :%s\r\n"
+				"NICK %s\r\n",
+				j->nick, (mode && *mode) ? mode : EKG_IRC_DEFAULT_USERMODE, (real && *real) ? real : j->nick,
+				j->nick);
 	}
 }
 
@@ -1901,6 +1905,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("recode_out_default_charset", VAR_STR, NULL, 0, irc_changed_recode),		/* irssi-like-variable */
 	PLUGIN_VAR_ADD("server",                VAR_STR, 0, 0, NULL),
 	PLUGIN_VAR_ADD("statusdescr",           VAR_STR, 0, 0, irc_statusdescr_handler),
+	PLUGIN_VAR_ADD("usermode",		VAR_STR, "+iw", 0, NULL),
 	PLUGIN_VAR_ADD("use_tls",		VAR_BOOL, "0", 0, NULL),
 
 	/* upper case: names of variables, that reffer to protocol stuff */
