@@ -511,16 +511,26 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	xfree(__reason);
 }
 
-static void irc_handle_line(GDataInputStream *f, gpointer data) {
+static void irc_handle_line(GBufferedInputStream *bstr, GDataInputStream *f, gpointer data) {
 	session_t *s = data;
 	gchar *l;
 
-	l = g_data_input_stream_read_line(f, NULL, NULL, NULL);
-		/* XXX: get rid of that fd arg */
-	if (l) {
-		irc_parse_line(s, l, -1);
-		g_free(l);
-	}
+	const char *buf;
+	const char *le = "\n";
+	gsize count;
+	gboolean found;
+
+	do { /* repeat till user grabs all lines */
+		buf = g_buffered_input_stream_peek_buffer(bstr, &count);
+		found = !!g_strstr_len(buf, count, le);
+		if (found) {
+			l = g_data_input_stream_read_line(f, NULL, NULL, NULL);
+			if (l) {
+				irc_parse_line(s, l, -1);
+				g_free(l);
+			}
+		}
+	} while (found);
 }
 
 static void irc_handle_failure(GDataInputStream *f, GError *err, gpointer data) {
@@ -549,7 +559,6 @@ static void irc_handle_connect(
 			conn,
 			instream,
 			outstream,
-			EKG_INPUT_LINE,
 			irc_handle_line,
 			irc_handle_failure,
 			s);

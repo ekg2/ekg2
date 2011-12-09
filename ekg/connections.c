@@ -45,7 +45,6 @@ struct ekg_connection {
 	gpointer priv_data;
 	ekg_input_callback_t callback;
 	ekg_failure_callback_t failure_callback;
-	ekg_input_type_t in_type;
 
 	ekg_flush_handler_t flush_handler;
 
@@ -116,35 +115,6 @@ static struct ekg_connection *get_slave_connection_by_conn(GSocketConnection *c)
 }
 #endif
 
-static void done_read(
-		struct ekg_connection *c,
-		GBufferedInputStream *instr)
-{
-	switch (c->in_type) {
-		case EKG_INPUT_RAW:
-			c->callback(c->instream, c->priv_data);
-			break;
-
-		case EKG_INPUT_LINE:
-			{
-				const char *buf;
-				const char *le = "\n";
-				gsize count;
-				gboolean found;
-
-				do { /* repeat till user grabs all lines */
-					buf = g_buffered_input_stream_peek_buffer(instr, &count);
-					found = !!g_strstr_len(buf, count, le);
-					if (found)
-						c->callback(c->instream, c->priv_data);
-				} while (found);
-				break;
-			}
-
-		default:
-			g_assert_not_reached();
-	}
-}
 
 static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data) {
 	struct ekg_connection *c = user_data;
@@ -164,7 +134,7 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 #endif
 			debug_function("done_async_read(), EOF\n");
 			if (g_buffered_input_stream_get_available(instr) > 0)
-				c->callback(c->instream, c->priv_data);
+				c->callback(instr, c->instream, c->priv_data);
 
 			err = g_error_new_literal(
 					EKG_CONNECTION_ERROR,
@@ -180,7 +150,7 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 
 	debug_function("done_async_read(): read %d bytes\n", rsize);
 
-	done_read(c, instr);
+	c->callback(instr, c->instream, c->priv_data);
 	setup_async_read(c);
 }
 
@@ -229,7 +199,6 @@ GDataOutputStream *ekg_connection_add(
 		GSocketConnection *conn,
 		GInputStream *raw_instream,
 		GOutputStream *raw_outstream,
-		ekg_input_type_t in_type,
 		ekg_input_callback_t callback,
 		ekg_failure_callback_t failure_callback,
 		gpointer priv_data)
@@ -245,7 +214,6 @@ GDataOutputStream *ekg_connection_add(
 	c->callback = callback;
 	c->failure_callback = failure_callback;
 	c->priv_data = priv_data;
-	c->in_type = in_type;
 
 #if NEED_SLAVERY
 	c->master = get_slave_connection_by_conn(conn);
@@ -603,7 +571,7 @@ static void ekg_gnutls_handle_data_failure(GDataInputStream *s, GError *err, gpo
 	gc->connection_error = g_error_copy(err);
 }
 
-static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
+static void ekg_gnutls_handle_data(GBufferedInputStream *instr, GDataInputStream *s, gpointer data) {
 	struct ekg_gnutls_connection *gc = data;
 	ssize_t ret;
 	char buf[4096];
@@ -739,7 +707,7 @@ static void ekg_gnutls_async_handshake(struct ekg_gnutls_connection_starter *gcs
 	}
 }
 
-static void ekg_gnutls_handle_handshake_input(GDataInputStream *s, gpointer data) {
+static void ekg_gnutls_handle_handshake_input(GBufferedInputStream *instr, GDataInputStream *s, gpointer data) {
 	struct ekg_gnutls_connection_starter *gcs = data;
 
 	ekg_gnutls_async_handshake(gcs);
@@ -776,7 +744,6 @@ static void ekg_gnutls_new_session(
 				sock,
 				g_io_stream_get_input_stream(G_IO_STREAM(sock)),
 				g_io_stream_get_output_stream(G_IO_STREAM(sock)),
-				EKG_INPUT_RAW,
 				ekg_gnutls_handle_handshake_input,
 				ekg_gnutls_handle_handshake_failure,
 				gcs)
