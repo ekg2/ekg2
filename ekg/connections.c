@@ -128,7 +128,7 @@ static void done_read(
 		case EKG_INPUT_LINE:
 			{
 				const char *buf;
-				const char *le = "\r\n"; /* CRLF; XXX: other line endings? */
+				const char *le = "\n";
 				gsize count;
 				gboolean found;
 
@@ -268,8 +268,8 @@ GDataOutputStream *ekg_connection_add(
 #endif
 		c->flush_handler = setup_async_write;
 
-		/* CRLF is common in network protocols */
-	g_data_input_stream_set_newline_type(c->instream, G_DATA_STREAM_NEWLINE_TYPE_CR_LF);
+		/* LF works fine for CRLF */
+	g_data_input_stream_set_newline_type(c->instream, G_DATA_STREAM_NEWLINE_TYPE_LF);
 		/* disallow any blocking writes */
 	g_buffered_output_stream_set_auto_grow(G_BUFFERED_OUTPUT_STREAM(bout), TRUE);
 
