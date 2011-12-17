@@ -1673,8 +1673,19 @@ static COMMAND(cmd_set)
 
 		for (vl = variables; vl; vl = vl->next) {
 			variable_t *v = vl->data;
-			if ((!arg || xstrcasestr(v->name, arg)) && (v->display != 2 || xstrcmp(name, ("set")))) {
-				int value;
+			int value;
+			int found = 0;
+			
+			if (arg) {
+				if (xstrcmp(name, ("set"))) {
+					found = !xstrcasecmp(arg, v->name);
+				}
+				else {
+					found = !!xstrcasestr(v->name, arg);
+				}
+			}
+
+			if ((!arg || found) && (v->display != 2 || xstrcmp(name, ("set")))) {
 
 				if (!show_all && !arg && v->dyndisplay && !((v->dyndisplay)(v->name)))
 					continue;
@@ -1748,9 +1759,8 @@ static COMMAND(cmd_set)
 				displayed = 1;
 			}
 		}
-
 		if (!displayed && params[0]) {
-			printq("variable_not_found", params[0]);
+			printq("variable_no_match", params[0]);
 			return -1;
 		}
 	} else {
