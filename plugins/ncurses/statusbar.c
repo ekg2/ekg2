@@ -473,7 +473,7 @@ void update_statusbar(int commit)
 				break;
 
 			case 2:
-				tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", g_strv_length((char **) ncurses_lines), lines_start, lines_index, line_start, line_index);
+				tmp = saprintf(" debug: lines(count=%d,start=%d,index=%d), line(start=%d,index=%d)", ncurses_lines ? g_strv_length((char **) ncurses_lines) : 0, lines_start, lines_index, line_start, line_index);
 				reprint_statusbar(ncurses_status, y, tmp, formats);
 				xfree(tmp);
 				break;
