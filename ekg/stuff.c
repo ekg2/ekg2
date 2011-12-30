@@ -1817,6 +1817,10 @@ int isalpha_pl(unsigned char c)
 	return 0;
 }
 
+void ignore_result_helper(int __attribute__((unused)) dummy, ...)
+{
+}
+
 /*
  * strcasestr()
  *

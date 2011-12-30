@@ -289,6 +289,14 @@ int isalpha_pl(unsigned char c);
 #define xtolower(c) tolower((int) (unsigned char) c)
 #define xtoupper(c) toupper((int) (unsigned char) c)
 
+void ignore_result_helper(int __attribute__((unused)) dummy, ...);
+
+#ifdef __GNUC__
+# define IGNORE_RESULT(X) ignore_result_helper(0, (X))
+#else
+# define IGNORE_RESULT(X) (X)
+#endif
+
 const char *ekg_status_label(const int status, const char *descr, const char *prefix);
 void ekg_update_status(session_t *session);
 #define ekg_update_status_n(a) ekg_update_status(session_find(a))
