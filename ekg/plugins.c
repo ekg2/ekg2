@@ -28,6 +28,7 @@
 #include <errno.h>
 
 #include "objects.h"
+#include "abort.h"
 
 GSList *plugins = NULL;
 /* XXX: not freed anywhere yet */
@@ -385,6 +386,8 @@ int plugin_unload(plugin_t *p)
 
 	if (p->destroy)
 		p->destroy();
+
+	ekg2_unregister_abort_handlers_for_plugin(p);
 
 #ifdef SHARED_LIBS
 	if (p->dl)

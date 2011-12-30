@@ -7,6 +7,7 @@
 #include <stdio.h>
 
 void add_recode_tests(void);
+void add_static_aborts_tests(void);
 
 PLUGIN_DEFINE(check, PLUGIN_UI, NULL);
 
@@ -25,6 +26,7 @@ EXPORT int check_plugin_init(int prio) {
 	g_test_init(&argc, &argv, NULL);
 
 	add_recode_tests();
+	add_static_aborts_tests();
 
 	g_test_run();
 	ekg_exit();
