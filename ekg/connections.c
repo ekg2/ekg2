@@ -134,7 +134,7 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 #endif
 			debug_function("done_async_read(), EOF\n");
 			if (g_buffered_input_stream_get_available(instr) > 0)
-				c->callback(instr, c->instream, c->priv_data);
+				c->callback(c->instream, c->priv_data);
 
 			err = g_error_new_literal(
 					EKG_CONNECTION_ERROR,
@@ -150,7 +150,7 @@ static void done_async_read(GObject *obj, GAsyncResult *res, gpointer user_data)
 
 	debug_function("done_async_read(): read %d bytes\n", rsize);
 
-	c->callback(instr, c->instream, c->priv_data);
+	c->callback(c->instream, c->priv_data);
 	setup_async_read(c);
 }
 
@@ -571,7 +571,7 @@ static void ekg_gnutls_handle_data_failure(GDataInputStream *s, GError *err, gpo
 	gc->connection_error = g_error_copy(err);
 }
 
-static void ekg_gnutls_handle_data(GBufferedInputStream *instr, GDataInputStream *s, gpointer data) {
+static void ekg_gnutls_handle_data(GDataInputStream *s, gpointer data) {
 	struct ekg_gnutls_connection *gc = data;
 	ssize_t ret;
 	char buf[4096];
@@ -707,7 +707,7 @@ static void ekg_gnutls_async_handshake(struct ekg_gnutls_connection_starter *gcs
 	}
 }
 
-static void ekg_gnutls_handle_handshake_input(GBufferedInputStream *instr, GDataInputStream *s, gpointer data) {
+static void ekg_gnutls_handle_handshake_input(GDataInputStream *s, gpointer data) {
 	struct ekg_gnutls_connection_starter *gcs = data;
 
 	ekg_gnutls_async_handshake(gcs);

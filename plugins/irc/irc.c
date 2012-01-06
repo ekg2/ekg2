@@ -511,7 +511,7 @@ void irc_handle_disconnect(session_t *s, const char *reason, int type)
 	xfree(__reason);
 }
 
-static void irc_handle_line(GBufferedInputStream *bstr, GDataInputStream *f, gpointer data) {
+static void irc_handle_line(GDataInputStream *input, gpointer data) {
 	session_t *s = data;
 	gchar *l;
 
@@ -521,10 +521,10 @@ static void irc_handle_line(GBufferedInputStream *bstr, GDataInputStream *f, gpo
 	gboolean found;
 
 	do { /* repeat till user grabs all lines */
-		buf = g_buffered_input_stream_peek_buffer(bstr, &count);
+		buf = g_buffered_input_stream_peek_buffer(G_BUFFERED_INPUT_STREAM(input), &count);
 		found = !!g_strstr_len(buf, count, le);
 		if (found) {
-			l = g_data_input_stream_read_line(f, NULL, NULL, NULL);
+			l = g_data_input_stream_read_line(input, NULL, NULL, NULL);
 			if (l) {
 				irc_parse_line(s, l, -1);
 				g_free(l);
