@@ -51,6 +51,10 @@ GDataOutputStream *ekg_connection_add(
 		ekg_failure_callback_t failure_callback,
 		gpointer priv_data);
 
+void ekg_disconnect_by_outstream(GDataOutputStream *f);
+
+void ekg_connection_write_buf(GDataOutputStream *f, gconstpointer buf, gsize len);
+
 void ekg_connection_write(
 		GDataOutputStream *f,
 		const gchar *format,

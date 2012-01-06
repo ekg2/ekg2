@@ -72,8 +72,10 @@ static G_GNUC_CONST GQuark ekg_gnutls_error_quark() {
 #endif
 
 static void ekg_connection_remove(struct ekg_connection *c) {
-	g_assert(!g_input_stream_has_pending(
-				G_INPUT_STREAM(c->instream)));
+	if (g_input_stream_has_pending(G_INPUT_STREAM(c->instream))) {
+		debug_warn("ekg_connection_remove(%x) input stream has pending!\n", c);
+		g_input_stream_clear_pending(G_INPUT_STREAM(c->instream));
+	}
 #if 0 /* XXX */
 	g_assert(!g_output_stream_has_pending(
 				G_OUTPUT_STREAM(c->outstream)));
@@ -248,6 +250,19 @@ GDataOutputStream *ekg_connection_add(
 		setup_async_read(c);
 
 	return c->outstream;
+}
+
+void ekg_disconnect_by_outstream(GDataOutputStream *f) {
+	struct ekg_connection *c = get_connection_by_outstream(f);
+
+	if (!c) {
+		debug_warn("ekg_disconnect_by_outstream() - connection not found\n");
+		return;
+	}
+
+	debug_function("ekg_disconnect_by_outstream(%x)\n",c);
+
+	ekg_connection_remove(c);
 }
 
 void ekg_connection_write_buf(GDataOutputStream *f, gconstpointer buf, gsize len) {
