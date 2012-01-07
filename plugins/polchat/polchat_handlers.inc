@@ -228,7 +228,7 @@ static char *polchat_unformat_string(char *text) {
 }
 
 static int polchat_display(session_t *s, char *target, char *html, int type) {
-	char *clear, format, *text;
+	char *clear, *format, *text;
 	polchat_private_t *j;
 
 	if (!s || !(j = s->priv))
