@@ -57,13 +57,11 @@
 #define polchat_uid(target) protocol_uid("polchat", target)
 
 typedef struct {
-	int fd;
+	GCancellable *connect_cancellable;
+	GDataOutputStream *out_stream;
+	GString *recvbuf;
 
 	char *nick;
-	char *room;
-	char *newroom;
-
-	string_t recvbuf;
 } polchat_private_t;
 
 static int polchat_theme_init();
@@ -92,86 +90,27 @@ static inline char *word_str(short word) {	/* 2 bajty BE */
 	return (char *) buf;
 }
 
-/* w data rozmiar danych do wyslania */
-
-static WATCHER_LINE(polchat_handle_write) {
-	static time_t t = 0;	/* last time_t execute of this function */
-
-	size_t fulllen = (size_t) data;
-	int len;
-
-	if (type) 
-		return 0;
-
-	if (t == time(NULL)) 
-		return 0;	/* flood-protection [XXX] */
-
-	len = write(fd, watch, fulllen);
-
-	if (len == fulllen) {	/* we sent all data, ok.. */
-		watch_t *next_watch = NULL;
-		list_t l;
-
-		/* turn on next watch */
-
-		for (l = watches; l; l = l->next) {	/* watche sa od najnowszego po najstarszy.. dlatego musimy znalezc ostatni... */
-			watch_t *w = l->data;
-
-			if (w && w->fd == fd && w->type == WATCH_NONE) 
-				next_watch = w;
-		}
-
-		if (next_watch) 
-			next_watch->type = WATCH_WRITE;	/* turn on watch */
-		t = time(NULL);
-		errno = 0;
-
-	} else if (len > 0) {
-		list_t l;
-
-		for (l = watches; l; l = l->next) {
-			watch_t *w = l->data;
-
-			if (w && w->fd == fd && w->type == WATCH_WRITE_LINE && w->data == data) { /* this watch */
-				w->data = (void *) fulllen - len;
-				break;
-			}
-		}
-	}
-
-	return (fulllen == len) ? -1 : len;
-}
-
-static watch_t *polchat_sendpkt(session_t *s, short headercode, ...)  {
+static int polchat_sendpkt(session_t *s, short headercode, ...)  {
 	va_list ap;
 
-	watch_t *w;
 	polchat_private_t *j;
-	int fd;
 
 	char **arr = NULL;
 	char *tmp;
 	int size;
 	int i;
+	GString *buf;
+
 /* XXX, headercode brzydko */
 
 	if (!s || !(j = s->priv)) {
 		debug_error("polchat_sendpkt() Invalid params\n");
-		return NULL;
+		return -1;
 	}
 
-	fd = j->fd;
-
-	if (watch_find(&polchat_plugin, fd, WATCH_WRITE_LINE)) {
-		w = watch_add_line(&polchat_plugin, fd, WATCH_WRITE_LINE, polchat_handle_write, NULL);
-		w->type = WATCH_NONE;
-
-	} else 
-		w = watch_add_line(&polchat_plugin, fd, WATCH_WRITE_LINE, polchat_handle_write, NULL);
-
 	size = 8;	/* size [4 bytes] + headers [4 bytes] */
-	
-	if (headercode) 
+
+	if (headercode)
 		size += (2 * 1);
 
 	va_start(ap, headercode);
@@ -183,40 +122,58 @@ static watch_t *polchat_sendpkt(session_t *s, short headercode, ...)  {
 	}
 	va_end(ap);
 
-	string_append_raw(w->buf, dword_str(size), 4);
-	string_append_raw(w->buf, word_str(headercode ? 1 : 0), 2);	/* headerlen / 256 + headerlen % 256 */
-	string_append_raw(w->buf, word_str(g_strv_length(arr)), 2);
+	buf = g_string_new(NULL);
+	g_string_append_len(buf, dword_str(size), 4);
+	g_string_append_len(buf, word_str(headercode ? 1 : 0), 2);	/* headerlen / 256 + headerlen % 256 */
+	g_string_append_len(buf, word_str(g_strv_length(arr)), 2);
 
 /* headers */
 	if (headercode)
-		string_append_raw(w->buf, word_str(headercode), 2);
+		g_string_append_len(buf, word_str(headercode), 2);
 
 	if (arr) {
 		for (i = 0; arr[i]; i++) {
 			size_t len = xstrlen(arr[i]);
-			string_append_raw(w->buf, word_str(len), 2);	/* LEN */
-			string_append_n(w->buf, arr[i], len);		/* str */
-			string_append_c(w->buf, '\0');			/* NUL */
+			g_string_append_len(buf, word_str(len), 2);	/* LEN */
+			g_string_append_len(buf, arr[i], len);		/* str */
+			g_string_append_c(buf, '\0');			/* NUL */
 		}
 		g_strfreev(arr);
 	}
-	
-	w->data = (void *) (long int) w->buf->len;
-	return w;
+
+	ekg_connection_write_buf(j->out_stream, buf->str, buf->len);
+	g_string_free(buf, TRUE);
+	return 0;
 }
 
-static watch_t *polchat_sendmsg(session_t *s, const char *message, ...) {
+static int polchat_sendmsg(session_t *s, const char *message, ...) {
 	va_list ap;
 	char *msg;
 
-	watch_t *res;
-	
+	int res;
+
 	va_start(ap, message);
 	msg = vsaprintf(message, ap);
 	va_end(ap);
 
 	res = polchat_sendpkt(s, 0x019a, msg, NULL);
-	
+
+	xfree(msg);
+	return res;
+}
+
+static int polchat_send_target_msg(session_t *s, const char *target, const char *message, ...) {
+	va_list ap;
+	char *msg;
+
+	int res;
+
+	va_start(ap, message);
+	msg = vsaprintf(message, ap);
+	va_end(ap);
+
+	res = polchat_sendpkt(s, 0x019a, msg, target, NULL);
+
 	xfree(msg);
 	return res;
 }
@@ -237,11 +194,11 @@ static QUERY(polchat_validate_uid) {
 }
 
 static QUERY(polchat_print_version) {
-	 print("generic", 
+	 print("generic",
 		"polchat plugin, proto code based on AmiX v0.2 (http://213.199.197.135/~kowalskijan/amix/) (c ABUKAJ) "
 		"and on http://eter.sytes.net/polchatproto/ v0.3");
 	 return 0;
-} 
+}
 
 static QUERY(polchat_session_init) {
 	char		*session = *(va_arg(ap, char**));
@@ -252,11 +209,10 @@ static QUERY(polchat_session_init) {
 		return 1;
 
 	j = xmalloc(sizeof(polchat_private_t));
-	j->fd = -1;
 	j->recvbuf = string_init(NULL);
 
 	s->priv = j;
-	
+
 	return 0;
 }
 
@@ -272,8 +228,6 @@ static QUERY(polchat_session_deinit) {
 
 	string_free(j->recvbuf, 1);
 
-	xfree(j->newroom);
-	xfree(j->room);
 	xfree(j->nick);
 	xfree(j);
 
@@ -288,48 +242,37 @@ static void polchat_handle_disconnect(session_t *s, const char *reason, int type
 
 	if (!s->connected && !s->connecting)
 		return;
-	
+
 	userlist_free(s);
 
 	protocol_disconnected_emit(s, reason, type);
 
-	if (j->fd != -1) {
-		list_t l;
-
-		for (l = watches; l; l = l->next) {
-			watch_t *w = l->data;
-
-			if (w && w->fd == j->fd && (1 /* || w->type == WATCH_NONE || w->type == WATCH_WRITE_LINE */))
-				watch_free(w);
-		}
-
-		close(j->fd);
-		j->fd = -1;
-	}
 }
 
 #include "polchat_handlers.inc"
 /* extern void polchat_processpkt(session_t *s, unsigned short nheaders, unsigned short nstrings, unsigned char *data, size_t len); */
 
-static WATCHER_SESSION(polchat_handle_stream) {
-	polchat_private_t *j; 
-	char buf[1024];
-	int len;
+static void polchat_handle_stream(GDataInputStream *input, gpointer data) {
+	session_t *s = data;
+	polchat_private_t *j = NULL;
+	gsize count;
 
-	if (type) {
-		polchat_handle_disconnect(s, NULL, EKG_DISCONNECT_NETWORK);
-		return 0;
+	if (!s || !(j = s->priv)) {
+		debug_error("polchat_handle_stream() s: 0x%x j: 0x%x\n", s, j);
+		return;
 	}
 
-	if (!s || !(j = s->priv))
-		return -1;
+	count = g_buffered_input_stream_get_available(G_BUFFERED_INPUT_STREAM(input));
 
-	if ((len = read(fd, buf, sizeof(buf))) > 0) {
+	debug_function("polchat_handle_stream() read %d bytes\n", count);
+
+	if (count>0) {
 		unsigned char *buffer;
-		
-		debug("polchat_handle_stream() read %d bytes from fd\n", len);
+		char *tmp = g_malloc (count);
+		gssize res = g_input_stream_read(G_INPUT_STREAM(input), tmp, count, NULL, NULL);
 
-		string_append_raw(j->recvbuf, buf, len);
+		g_string_append_len(j->recvbuf, tmp, res);
+		g_free(tmp);
 
 		buffer = (unsigned char *) j->recvbuf->str;
 
@@ -340,12 +283,12 @@ static WATCHER_SESSION(polchat_handle_stream) {
 
 			if (rlen < 8) {	/* bad packet */
 				debug_error("polchat_handle_stream() RECV BAD PACKET rlen < 8\n");
-				return -1;
+				return;
 			}
 
 			if (rlen > 1024 * 1024) {
 				debug_error("polchat_handle_stream() RECV BAD PACKET rlen > 1MiB\n");
-				return -1;
+				return;
 			}
 
 			if (j->recvbuf->len >= rlen) {
@@ -354,49 +297,66 @@ static WATCHER_SESSION(polchat_handle_stream) {
 
 				if (!headerlen && !nstrings) {
 					debug_error("polchat_handle_stream() <blink> CONNECTION LOST :-( </blink>");
-					return -1;
+					return;
 				}
 
 				polchat_processpkt(s, headerlen, nstrings, &buffer[8], rlen-8);
 
-				string_remove(j->recvbuf, rlen);
-			} else
-				break;
+				g_string_erase(j->recvbuf, 0, rlen);
+
+			} else {
+				debug_warn("polchat_handle_stream() NEED MORE DATA\n");
+				return;
+			}
 		}
-		return 0;
+		return;
 	}
 
-	debug("polchat_handle_stream() Connection closed/ error XXX\n");
-	return -1;
+	debug_error("polchat_handle_stream() Connection closed/ error XXX\n");
+	return;
 }
 
-static WATCHER_SESSION(polchat_handle_connect) {
+static void polchat_handle_failure(GDataInputStream *f, GError *err, gpointer data) {
+	session_t *s = data;
+
+	if (g_error_matches(err, EKG_CONNECTION_ERROR, EKG_CONNECTION_ERROR_EOF))
+		polchat_handle_disconnect(s, NULL, EKG_DISCONNECT_USER);
+	else
+		polchat_handle_disconnect(s, err->message, EKG_DISCONNECT_NETWORK);
+}
+
+static void polchat_handle_connect(
+		GSocketConnection *conn,
+		GInputStream *instream,
+		GOutputStream *outstream,
+		gpointer data)
+{
+	session_t *s = data;
 	polchat_private_t *j;
 	const char *tmp;
 
-	int res = 0;
-	socklen_t res_size = sizeof(res);
-
-	if (type)
-		return 0;
-
-	if (getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-		polchat_handle_disconnect(s, strerror(res), EKG_DISCONNECT_FAILURE);
-		return -1;
-	}
-
 	if (!s || !(j = s->priv))
-		return -1;
-
-	/* here we shouldn't have any WATCH_WRITE watch */
+		return;
 
 	s->connecting = 2;
 
-	polchat_sendpkt(s, 0x0578, 
+	debug_function("[polchat] handle_connect(%d)\n", s->connecting);
+
+	g_string_set_size(j->recvbuf, 0);
+
+	j->out_stream = ekg_connection_add(
+			conn,
+			instream,
+			outstream,
+			polchat_handle_stream,
+			polchat_handle_failure,
+			s);
+
+	polchat_sendpkt(s, 0x0578,
 		j->nick,						/* nickname */
 		((tmp = session_get(s, "password")) ? tmp : ""),	/* password */
 		"",							/* XXX cookie, always NUL? */
-		j->newroom + 8,						/* pokoj */
+		session_get(s, "room"),					/* pokoj */
 	/* XXX: */
 		"http://www.polchat.pl/chat/room.phtml/?room=AmiX",	/* referer */
 		"polchat.pl",						/* adres serwera */
@@ -404,85 +364,13 @@ static WATCHER_SESSION(polchat_handle_connect) {
 		"ekg2-GIT-polchat",					/* klient */
 		NULL);
 
-	watch_add_session(s, fd, WATCH_READ, polchat_handle_stream);
-	return -1;
+	return;
 }
 
-static WATCHER(polchat_handle_resolver) {
-	session_t *s = session_find((char *) data);
-	polchat_private_t *j;
+static void polchat_handle_connect_failure(GError *err, gpointer data) {
+	session_t *s = data;
 
-	struct sockaddr_in sin;
-	struct in_addr a;
-
-	int one = 1;
-	int port;
-	int res;
-
-	if (type) {
-		xfree(data);
-		close(fd);
-		return 0;
-	}
-
-	if (!s || !(j = s->priv))
-		return -1;
-
-	if (!s->connecting)		/* user makes /disconnect before resolver finished */
-		return -1;
-
-	res = read(fd, &a, sizeof(a));
-
-	if ((res != sizeof(a)) || (res && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
-		if (res == -1)
-			debug_error("[polchat] unable to read data from resolver: %s\n", strerror(errno));
-		else
-			debug_error("[polchat] read %d bytes from resolver. not good\n", res);
-
-		/* no point in reconnecting by polchat_handle_disconnect() */
-
-		print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
-		s->connecting = 0;
-		return -1;
-	}
-
-	debug_function("[polchat] resolved to %s\n", inet_ntoa(a));
-
-	port = session_int_get(s, "port");
-	if (port < 0 || port > 65535) 
-		port = atoi(POLCHAT_DEFAULT_PORT);
-
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		debug("[polchat] socket() failed: %s\n", strerror(errno));
-		polchat_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE); 
-		return -1;
-	}
-
-	sin.sin_family = AF_INET;
-	sin.sin_port = g_htons(port);
-	sin.sin_addr.s_addr = a.s_addr;
-
-	if (ioctl(fd, FIONBIO, &one) == -1) 
-		debug_error("[polchat] ioctl() FIONBIO failed: %s\n", strerror(errno));
-	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) == -1) 
-		debug_error("[polchat] setsockopt() SO_KEEPALIVE failed: %s\n", strerror(errno));
-
-	res = connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in)); 
-
-	if (res == -1 && errno != EINPROGRESS) {
-		int err = errno;
-
-		close(fd);
-		debug_error("[polchat] connect() failed: %s (errno=%d)\n", strerror(err), err);
-		polchat_handle_disconnect(s, strerror(err), EKG_DISCONNECT_FAILURE);
-		return -1;
-	}
-
-	j->fd = fd;
-
-	watch_add_session(s, fd, WATCH_WRITE, polchat_handle_connect);
-
-	return -1;
+	polchat_handle_disconnect(s, err->message, EKG_DISCONNECT_FAILURE);
 }
 
 static COMMAND(polchat_command_connect) {
@@ -490,6 +378,9 @@ static COMMAND(polchat_command_connect) {
 	const char *server;
 	const char *nick;
 	const char *room;
+	int port;
+	ekg_connection_starter_t cs;
+	GSocketClient *s;
 
 	if (session->connecting) {
 		printq("during_connect", session_name(session));
@@ -520,26 +411,25 @@ static COMMAND(polchat_command_connect) {
 		return -1;
 	}
 
-	xfree(j->room);
-	j->room = NULL;
 
 	xfree(j->nick);
 	j->nick = xstrdup(nick);
-
-	xfree(j->newroom);
-	j->newroom = polchat_uid(room);
 
 	string_clear(j->recvbuf);
 
 	session->connecting = 1;
 
-	if (ekg_resolver2(&polchat_plugin, server, polchat_handle_resolver, xstrdup(session->uid)) == NULL) {
-		print("generic_error", strerror(errno));
-		session->connecting = 0;
-		return -1;
-	}
-
 	printq("connecting", session_name(session));
+
+	port = session_int_get(session, "port");
+	if (port < 0 || port > 65535)
+		port = atoi(POLCHAT_DEFAULT_PORT);
+
+	cs = ekg_connection_starter_new(port);
+	ekg_connection_starter_set_servers(cs, server);
+
+	s = g_socket_client_new();
+	ekg_connection_starter_run(cs, s, polchat_handle_connect, polchat_handle_connect_failure, session);
 
 	return 0;
 }
@@ -563,7 +453,7 @@ static COMMAND(polchat_command_disconnect) {
 
 	if (session->connecting)
 		polchat_handle_disconnect(session, reason, EKG_DISCONNECT_STOPPED);
-	else	
+	else
 		polchat_handle_disconnect(session, reason, EKG_DISCONNECT_USER);
 
 	return 0;
@@ -577,24 +467,22 @@ static COMMAND(polchat_command_reconnect) {
 }
 
 static COMMAND(polchat_command_msg) {
-	polchat_private_t   *j = session->priv;
+	window_t *w;
+	char *uid;
 
 	/* NOTE: sending `/quit` msg disconnect session */	/* XXX, escape? */
 
 	if (!xstrncmp(target, "polchat:", 8))
 		target += 8;
 
-	if (j->room && !xstrcmp(target, j->room+8)) {
-		/* polchat_sendpkt(session, 0x019a, params[1], NULL); */
-		polchat_sendmsg(session, "%s", params[1]);
+	uid = polchat_uid(target);
+	w = window_find_s(session, uid);
+	xfree(uid);
+
+
+	if (w && (w->userlist)) {
+		polchat_send_target_msg(session, target, "%s", params[1]);
 	} else {
-#if 0	/* nie musimy tego sprawdzac, serwer za nas to robi */
-		if (!(userlist_find(session, target))) {
-			debug_error("polchat_command_msg() but target: %s not found in userlist, neither eq j->room: %s\n", target, j->room);
-			printq("generic_error", "see debug");
-			return 0;
-		}
-#endif
 		polchat_sendmsg(session, "/msg %s %s", target, params[1]);
 	}
 
@@ -614,41 +502,44 @@ static COMMAND(polchat_command_inline_msg) {
 }
 
 static COMMAND(polchat_command_part) {
-	polchat_private_t   *j = session->priv;
-	const char *reason = PARTMSG(session, params[0]);
+	const char *reason;
+	const char *p0 = params[0];
+	char *p, *t = NULL;
 
-	if (!j->room) {
-		printq("invalid_params", name, params[0]);
-		return 0;
+	debug_function("polchat_command_part(%s) reason=%s\n", target, p0);
+
+	if (!target) {
+		if (!*p0)
+			return 1;
+		if ((p=xstrchr(p0,' '))) {
+			t = xstrndup(p0, p - p0);
+			p0 = p + 1;
+		} else {
+			t = xstrdup(p0);
+			p0 = "";
+		}
+		target = t;
 	}
-
-	polchat_sendmsg(session, "/part %s", reason);
-
-	return 0;
-}
-
-static COMMAND(polchat_command_join) {
-	polchat_private_t   *j = session->priv;
 
 	if (!xstrncmp(target, "polchat:", 8))
 		target += 8;
 
-	if (j->room && !xstrcmp(j->room + 8, target)) {
-		/* ten sam pokoj, ignoruj */
-		printq("generic", "Jestes wlasnie w tym pokoju"); /* XXX */
-		return 0;
-	}
+	reason = PARTMSG(session, p0);
+	polchat_send_target_msg(session, target, "/part %s", reason);
 
-	if (j->newroom) {
-		debug_error("/join but j->newroom: %s\n", j->newroom);
+	xfree(t);
+	
+	return 0;
+}
 
-		printq("generic_error", "Too fast, or please look at debug.");
-		return 0;
-	}
+static COMMAND(polchat_command_join) {
+
+	debug_function("polchat_command_join() target=%s\n", target);
+
+	if (!xstrncmp(target, "polchat:", 8))
+		target += 8;
 
 	polchat_sendmsg(session, "/join %s", target);
-
-	j->newroom = polchat_uid(target);
 
 	return 0;
 }
@@ -658,25 +549,34 @@ static COMMAND(polchat_command_raw) {
 		polchat_sendmsg(session, "/%s %s", name, params[0]);
 	else
 		polchat_sendmsg(session, "/%s", name);
-	
+
 	return 0;
+}
+
+static COMMAND(polchat_command_target_raw) {
+	if (target) {
+		if (!xstrncmp(target, "polchat:", 8))
+			target += 8;
+		if (params[0])
+			polchat_send_target_msg(session, target, "/%s %s", name, params[0]);
+		else
+			polchat_send_target_msg(session, target, "/%s", name);
+		return 0;
+	}
+	return polchat_command_raw(name, params, session, target, quiet);
 }
 
 static int polchat_theme_init() {
 #ifndef NO_DEFAULT_THEME
-/*
-	format_add("polchat_joined",		_("%> %Y%2%n has joined %3"), 1);
-	format_add("polchat_joined_you",	_("%> %RYou%n have joined %3"), 1);
- */
 #endif
 	return 0;
 }
 
 static plugins_params_t polchat_plugin_vars[] = {
-	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL), 
+	PLUGIN_VAR_ADD("alias",			VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("auto_connect",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("log_formats",		VAR_STR, "irssi", 0, NULL),
-	PLUGIN_VAR_ADD("nickname",		VAR_STR, NULL, 0, NULL), 
+	PLUGIN_VAR_ADD("nickname",		VAR_STR, NULL, 0, NULL),
 	PLUGIN_VAR_ADD("password",		VAR_STR, NULL, 1, NULL),
 	PLUGIN_VAR_ADD("port",			VAR_INT, POLCHAT_DEFAULT_PORT, 0, NULL),
 	PLUGIN_VAR_ADD("room",			VAR_STR, NULL, 0, NULL),
@@ -688,7 +588,7 @@ EXPORT int polchat_plugin_init(int prio) {
 
 	PLUGIN_CHECK_VER("polchat");
 
-	polchat_plugin.params = polchat_plugin_vars;
+	polchat_plugin.params	= polchat_plugin_vars;
 
 	plugin_register(&polchat_plugin, prio);
 	ekg_recode_utf8_inc();
@@ -707,30 +607,30 @@ EXPORT int polchat_plugin_init(int prio) {
 #define POLCHAT_ONLY		SESSION_MUSTBELONG | SESSION_MUSTHASPRIVATE
 #define POLCHAT_FLAGS		POLCHAT_ONLY | SESSION_MUSTBECONNECTED
 #define POLCHAT_FLAGS_TARGET	POLCHAT_FLAGS | COMMAND_ENABLEREQPARAMS | COMMAND_PARAMASTARGET
-	
+
 	command_add(&polchat_plugin, "polchat:", "?",		polchat_command_inline_msg, POLCHAT_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&polchat_plugin, "polchat:msg", "!uUw !",	polchat_command_msg,	    POLCHAT_FLAGS_TARGET, NULL);
 	command_add(&polchat_plugin, "polchat:connect", NULL,	polchat_command_connect,    POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:disconnect", "r ?",polchat_command_disconnect,POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:reconnect", "r ?", polchat_command_reconnect, POLCHAT_ONLY, NULL);
 
-	command_add(&polchat_plugin, "polchat:part", "r",	polchat_command_part, POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:part", "w ?",	polchat_command_part, POLCHAT_ONLY | COMMAND_PASS_UNCHANGED, NULL);
 	command_add(&polchat_plugin, "polchat:join", "!uUw",	polchat_command_join, POLCHAT_FLAGS_TARGET, NULL);
 
 /* XXX, REQ params ? */
-	command_add(&polchat_plugin, "polchat:info", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
-	command_add(&polchat_plugin, "polchat:op", "?",		polchat_command_raw,	POLCHAT_ONLY, NULL);
-	command_add(&polchat_plugin, "polchat:unop", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
-	command_add(&polchat_plugin, "polchat:halfop", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
-	command_add(&polchat_plugin, "polchat:tmphalfop", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:info", "uU",	polchat_command_target_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:op", "uU",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:unop", "uU",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:halfop", "uU",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:tmphalfop", "uU",	polchat_command_raw,	POLCHAT_ONLY, NULL);
 
 	/* /guest /unguest */
 	/* /buddy /unbuddy /ignore /unignore */
 
-	command_add(&polchat_plugin, "polchat:kick", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
-	command_add(&polchat_plugin, "polchat:ban", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:kick", "uU",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:ban", "uU",	polchat_command_raw,	POLCHAT_ONLY, NULL);
 	command_add(&polchat_plugin, "polchat:banip", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
-	command_add(&polchat_plugin, "polchat:unban", "?",	polchat_command_raw,	POLCHAT_ONLY, NULL);
+	command_add(&polchat_plugin, "polchat:unban", "uU",	polchat_command_raw,	POLCHAT_ONLY, NULL);
 
 	return 0;
 }
