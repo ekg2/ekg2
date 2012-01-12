@@ -462,7 +462,6 @@ static int ncurses_redraw_input_line(CHAR_T *text) {
  *	przy okazji jesli jest aspell to sprawdza czy tekst jest poprawny.
  */
 void ncurses_redraw_input(unsigned int ch) {
-	int x, y;
 	/* draw prompt */
 	werase(input);
 	wmove(input, 0, 0);
@@ -506,13 +505,12 @@ void ncurses_redraw_input(unsigned int ch) {
 
 		fstring_free(prompt_f);
 	}
-	getyx(input, y, x);
-	ncurses_current->prompt_len = x;
+	ncurses_current->prompt_len = getcurx(input);
 
 	/* XXX: cleanup, optimize */
 	{
 		int cur_posx = -1, cur_posy = 0;
-		const int width = input->_maxx - x;
+		const int width = input->_maxx - ncurses_current->prompt_len;
 
 		if ((line_index - line_start >= width) || (line_index - line_start < 2))
 			line_start = line_index - width/2;
