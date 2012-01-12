@@ -376,14 +376,14 @@ gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize
 	const int bnattr = fstring_attr2ncurses_attr(attr);
 
 	for (; *s; s++) {
-		int x, y;
+		int x;
 		int nattr = bnattr;
 		CHAR_T ch = ncurses_fixchar((unsigned char) *s, &nattr);
 
 		wattrset(w, nattr);
 		waddch(w, ch);
 
-		getyx(w, y, x);
+		x = getcurx(w);
 		if (G_UNLIKELY(maxx != -1 && x >= maxx))
 			return FALSE;
 	}
@@ -408,14 +408,14 @@ gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize
  */
 const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx) {
 	for (; *s; s++, attr++) {
-		int x, y;
+		int x;
 		int nattr = fstring_attr2ncurses_attr(*attr);
 		CHAR_T ch = ncurses_fixchar((unsigned char) *s, &nattr);
 
 		wattrset(w, nattr);
 		waddch(w, ch);
 
-		getyx(w, y, x);
+		x = getcurx(w);
 		if (maxx != -1 && x >= maxx) {
 				/* XXX: rewind */
 			s++;
@@ -482,7 +482,7 @@ static void draw_thin_red_line(window_t *w, int y)
  */
 void ncurses_redraw(window_t *w)
 {
-	int x, y, left, top, height, width, fix_trl;
+	int x, y, left, top, height, fix_trl;
 	ncurses_window_t *n = w->priv_data;
 	int dtrl = 0;	/* dtrl -- draw thin red line
 			 *	0 - not on this page or line already drawn
@@ -495,7 +495,9 @@ void ncurses_redraw(window_t *w)
 	left = n->margin_left;
 	top = n->margin_top;
 	height = w->height - n->margin_top - n->margin_bottom;
+#if 0
 	width = w->width - n->margin_left - n->margin_right;
+#endif
 
 	if (w->doodle) {
 		n->redraw = 0;
@@ -919,7 +921,6 @@ void ncurses_init(void)
  */
 void ncurses_deinit(void)
 {
-	static int done = 0;
 	window_t *w;
 	int i;
 
@@ -973,8 +974,6 @@ void ncurses_deinit(void)
 
 	xfree(ncurses_line);
 	xfree(ncurses_yanked);
-
-	done = 1;
 }
 
 /*
