@@ -1284,7 +1284,6 @@ IRC_COMMAND(irc_c_join)
 {
 	char		*ekg2_channel,  *chname, *irc_nick;
 	char		*__channel, *__identhost, *__nick;
-	channel_t	*ischan;
 	window_t	*newwin;
 	people_t	*person;
 	int		me = 0;
@@ -1325,7 +1324,7 @@ IRC_COMMAND(irc_c_join)
 
 		window_switch(newwin->id);
 		debug_function("[irc] c_join() %08X\n", newwin);
-		ischan = irc_add_channel(s, j , __channel, newwin);
+		irc_add_channel(s, j , __channel, newwin);
 	/* someone joined */
 	} else {
 		person = irc_add_person(s, j, __nick, __channel);

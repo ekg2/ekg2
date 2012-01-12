@@ -1622,7 +1622,7 @@ static COMMAND(irc_command_ping) {
 		return -1;
 
 	g_get_current_time(&tv);
-	ekg_connection_write(irc_private(session)->send_stream, "PRIVMSG %s :\01PING %d %d\01\r\n",
+	ekg_connection_write(irc_private(session)->send_stream, "PRIVMSG %s :\01PING %ld %ld\01\r\n",
 			who+4 ,tv.tv_sec, tv.tv_usec);
 
 	g_strfreev(mp);
@@ -1724,7 +1724,7 @@ static QUERY(irc_status_show_handle) {
 	session_t	*s = session_find(*uid);
 	irc_private_t	*j;
 
-	const char	*p[1];
+	const char	*p[2];
 
 	if (!s)
 		return -1;
