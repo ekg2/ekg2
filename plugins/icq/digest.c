@@ -216,7 +216,6 @@ static void Encode (unsigned char *output, guint32 *input, unsigned int len) {
 
 static void Final(unsigned char digest[16], EKG2_MD5_CTX* context) {
 	unsigned char finalcount[8];
-	guint32 i;
 
 	Encode(finalcount, context->count, 8);
 
@@ -230,7 +229,6 @@ static void Final(unsigned char digest[16], EKG2_MD5_CTX* context) {
 	Encode(digest, context->state, 16);
 
 	/* Wipe variables */
-	i = 0;
 	memset(context->buffer, 0, 64);
 	memset(context->state, 0, 16);
 	memset(context->count, 0, 8);

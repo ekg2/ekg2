@@ -313,7 +313,6 @@ static void Encode (unsigned char *output, guint32 *input, unsigned int len, int
 static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
 {
     unsigned char finalcount[8];
-    guint32 i;
 
     Encode(finalcount, context->count, 8, usesha);
 
@@ -341,7 +340,6 @@ static void Final(unsigned char digest[20], EKG2_SHA1_CTX* context, int usesha)
     Encode(digest, context->state, usesha ? 20 : 16, usesha);
 
     /* Wipe variables */
-    i = 0;
     memset(context->buffer, 0, 64);
     memset(context->state, 0, 20);
     memset(context->count, 0, 8);
