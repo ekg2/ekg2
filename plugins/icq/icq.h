@@ -29,8 +29,8 @@ typedef struct icq_snac_reference_list_s {
 } icq_snac_reference_list_t;
 
 typedef struct {
-	int fd;
-	int fd2;
+	GCancellable *connect_cancellable;
+	GDataOutputStream *send_stream;
 
 	int flap_seq;		/* FLAP seq id */
 	guint16 snac_seq;	/* SNAC seq id */
@@ -57,6 +57,8 @@ int icq_send_pkt(session_t *s, GString *buf);
 void icq_session_connected(session_t *s);
 int icq_write_status(session_t *s);
 void icq_handle_disconnect(session_t *s, const char *reason, int type);
+
+void icq_connect(session_t *session, const char *server, int port);
 
 #define icq_uid(target) protocol_uid("icq", target)
 

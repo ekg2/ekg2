@@ -55,21 +55,18 @@ PLUGIN_DEFINE(icq, PLUGIN_PROTOCOL, icq_theme_init);
 
 int icq_send_pkt(session_t *s, GString *buf) {
 	icq_private_t *j;
-	int fd;
 
 	if (!s || !(j = s->priv) || !buf) {
 		g_string_free(buf, TRUE);
 		return -1;
 	}
 
-	fd = j->fd;
-
-	debug_io("icq_send_pkt(%s) fd: %d len: %d\n", s->uid, fd, buf->len);
+	debug_io("icq_send_pkt(%s) len: %d\n", s->uid, buf->len);
 	icq_hexdump(DEBUG_IO, (unsigned char *) buf->str, buf->len);
 	if (j->migrate)
 		debug_warn("Client migrate! Packet will not be send\n");
-	else	
-		ekg_write(fd, buf->str, buf->len);
+	else
+		ekg_connection_write_buf(j->send_stream, buf->str, buf->len);
 	g_string_free(buf, TRUE);
 	return 0;
 }
@@ -472,8 +469,6 @@ static QUERY(icq_session_init) {
 #endif
 
 	j = xmalloc(sizeof(icq_private_t));
-	j->fd = -1;
-	j->fd2= -1;
 	j->stream_buf = g_string_new(NULL);
 
 	s->priv = j;
@@ -579,78 +574,37 @@ void icq_handle_disconnect(session_t *s, const char *reason, int type) {
 	timer_remove_session(s, "snac_timeout");
 	protocol_disconnected_emit(s, reason, type);
 
-	if (j->fd != -1) {
-		ekg_close(j->fd);
-		j->fd = -1;
-	}
-
-	if (j->fd2 != -1) {
-		ekg_close(j->fd2);
-		j->fd2 = -1;
-	}
 	g_string_set_size(j->stream_buf, 0);
 	j->migrate = 0;
 }
 
-static WATCHER_SESSION(icq_handle_stream);
-
-static WATCHER_SESSION(icq_handle_connect) {
+static void icq_handle_stream(GDataInputStream *input, gpointer data) {
+	session_t *s = data;
 	icq_private_t *j = NULL;
-	int res = 0;
-	socklen_t res_size = sizeof(res);
-
-	if (type)
-		return 0;
-
-	if (type == 1) {
-		debug ("[icq] handle_connect(): type %d\n", type);
-		return 0;
-	}
-
-	if (!s || !(j = s->priv)) {
-		debug_error("icq_handle_connect() s: 0x%x j: 0x%x\n", s, j);
-		return -1;
-	}
-
-	debug("[icq] handle_connect(%d)\n", s->connecting);
-
-	g_string_set_size(j->stream_buf, 0);
-
-	if (type || getsockopt(fd, SOL_SOCKET, SO_ERROR, &res, &res_size) || res) {
-		if (type)
-			debug_error("[icq] handle_connect(): SO_ERROR %s\n", strerror(res));
-
-		icq_handle_disconnect(s, (type == 2) ? "Connection timed out" : strerror(res), EKG_DISCONNECT_FAILURE);
-	}
-
-	watch_add_session(s, fd, WATCH_READ, icq_handle_stream);
-
-	return -1;
-}
-
-static WATCHER_SESSION(icq_handle_stream) {
-	icq_private_t *j = NULL;
-	char buf[8192];
-	int len, ret, start_len, left;
+	gsize count;
+	int left, ret, start_len;
 
 	if (!s || !(j = s->priv)) {
 		debug_error("icq_handle_stream() s: 0x%x j: 0x%x\n", s, j);
-		return -1;
+		return;
 	}
 
-	if (type)
-		return 0;
+	count = g_buffered_input_stream_get_available(G_BUFFERED_INPUT_STREAM(input));
 
-	len = read(fd, buf, sizeof(buf));
+	if (count>0) {
+		char *tmp = g_malloc(count);
+		gssize result = g_input_stream_read(G_INPUT_STREAM(input), tmp, count, NULL, NULL);
 
-	if (len>0)
-		g_string_append_len(j->stream_buf, buf, len);
+		g_string_append_len(j->stream_buf, tmp, result);
 
-	debug_iorecv("icq_handle_stream(%d) fd: %d; rcv: %d, %d in buffer.\n", s->connecting, fd, len, j->stream_buf->len);
+		g_free(tmp);
+	}
 
-	if (len < 1) {
+	debug_iorecv("icq_handle_stream(%d) rcv: %d, %d in buffer.\n", s->connecting, count, j->stream_buf->len);
+
+	if (count < 1) {
 		icq_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_NETWORK);
-		return -1;
+		return;
 	}
 
 	icq_hexdump(DEBUG_IORECV, (unsigned char *) j->stream_buf->str, j->stream_buf->len);
@@ -676,103 +630,64 @@ static WATCHER_SESSION(icq_handle_stream) {
 		}
 		case -2:
 			debug_error("icq_handle_stream() DISCONNECT\n");
-			return -1;
+			return;
 
 		default:
 			debug_error("icq_handle_stream() icq_flap_loop() returns %d ???\n", ret);
 			break;
 	}
 
-	if (j->fd2 != -1) {	/* fd changed */
-		ekg_close(j->fd);
-		j->fd = j->fd2;
-		j->fd2 = -1;
-
-		if (s->connecting == 2) {
-			watch_add_session(s, j->fd, WATCH_WRITE, icq_handle_connect);
-		} else {
-			debug_error("unknown s->connecting: %d\n", s->connecting);
-		}
-		return -1;
-	}
-
-	return 0;
 }
 
-static WATCHER(icq_handle_hubresolver) {
-	session_t *s = session_find((char *) data);
-	icq_private_t *j;
+static void icq_handle_failure(GDataInputStream *f, GError *err, gpointer data) {
+	session_t *s = data;
 
-	struct sockaddr_in sin;
-	struct in_addr a;
-	int one = 1;
-	int hubport;
-	int res;
-
-	if (type) {
-		xfree(data);
-		close(fd);
-		return 0;
-	}
-
-	if (!s || !(j = s->priv))
-		return -1;
-
-	if (!s->connecting)	/* user makes /disconnect before resolver finished */
-		return -1;
-
-	res = read(fd, &a, sizeof(a));
-
-	if ((res != sizeof(a)) || (res && a.s_addr == INADDR_NONE /* INADDR_NONE kiedy NXDOMAIN */)) {
-		if (res == -1)
-			debug_error("[icq] unable to read data from resolver: %s\n", strerror(errno));
-		else
-			debug_error("[icq] read %d bytes from resolver. not good\n", res);
-
-		/* no point in reconnecting by icq_handle_disconnect() XXX? */
-
-		print("conn_failed", format_find("conn_failed_resolving"), session_name(s));
-		s->connecting = 0;
-		return -1;
-	}
-
-	debug_function("[icq] resolved to %s\n", inet_ntoa(a));
-
-/* port */
-	hubport = session_int_get(s, "hubport");
-	if (hubport < 1 || hubport > 65535)
-		hubport = ICQ_HUB_PORT;
-
-	if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-		debug("[icq] socket() failed: %s\n", strerror(errno));
-		icq_handle_disconnect(s, strerror(errno), EKG_DISCONNECT_FAILURE);
-		return -1;
-	}
-
-	sin.sin_family = AF_INET;
-	sin.sin_port = g_htons(hubport);
-	sin.sin_addr.s_addr = a.s_addr;
-
-	if (ioctl(fd, FIONBIO, &one) == -1)
-		debug_error("[icq] ioctl() FIONBIO failed: %s\n", strerror(errno));
-	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) == -1)
-		debug_error("[icq] setsockopt() SO_KEEPALIVE failed: %s\n", strerror(errno));
-
-	res = connect(fd, (struct sockaddr *) &sin, sizeof(struct sockaddr_in));
-
-	if (res == -1 && errno != EINPROGRESS) {
-		int err = errno;
-
-		debug_error("[icq] connect() failed: %s (errno=%d)\n", strerror(err), err);
-		icq_handle_disconnect(s, strerror(err), EKG_DISCONNECT_FAILURE);
-		return -1;
-	}
-
-	j->fd = fd;
-
-	watch_add_session(s, fd, WATCH_WRITE, icq_handle_connect);
-	return -1;
+	icq_handle_disconnect(s, err->message, EKG_DISCONNECT_NETWORK);
 }
+
+static void icq_handle_connect(
+		GSocketConnection *conn,
+		GInputStream *instream,
+		GOutputStream *outstream,
+		gpointer data)
+{
+	session_t *s = data;
+	icq_private_t *j = NULL;
+
+	if (!s || !(j = s->priv)) {
+		debug_error("icq_handle_connect() s: 0x%x j: 0x%x\n", s, j);
+		return;
+	}
+
+	debug_function("[icq] handle_connect(%d)\n", s->connecting);
+
+	g_string_set_size(j->stream_buf, 0);
+
+	j->send_stream = ekg_connection_add(
+			conn,
+			instream,
+			outstream,
+			icq_handle_stream,
+			icq_handle_failure,
+			s);
+}
+
+static void icq_handle_connect_failure(GError *err, gpointer data) {
+	session_t *s = data;
+
+	icq_handle_disconnect(s, err->message, EKG_DISCONNECT_FAILURE);
+}
+
+void icq_connect(session_t *session, const char *server, int port) {
+
+	GSocketClient *sock		= g_socket_client_new();
+	ekg_connection_starter_t cs	= ekg_connection_starter_new(port);
+	
+	ekg_connection_starter_set_servers(cs, server);
+
+	ekg_connection_starter_run(cs, sock, icq_handle_connect, icq_handle_connect_failure, session);
+}
+
 
 static COMMAND(icq_command_addssi) {
 	userlist_t *u;
@@ -1290,6 +1205,7 @@ static COMMAND(icq_command_away) {
 	return 0;
 }
 
+
 static COMMAND(icq_command_connect) {
 	icq_private_t *j = session->priv;
 	const char *hubserver;
@@ -1319,13 +1235,10 @@ static COMMAND(icq_command_connect) {
 	j->ssi = 1;	/* XXX */
 	j->aim = 1;	/* XXX */
 
-	if (ekg_resolver2(&icq_plugin, hubserver, icq_handle_hubresolver, xstrdup(session->uid)) == NULL) {
-		print("generic_error", strerror(errno));
-		session->connecting = 0;
-		return -1;
-	}
-
 	printq("connecting", session_name(session));
+
+	icq_connect(session, hubserver, ICQ_HUB_PORT);
+
 	if ((session_status_get(session) == EKG_STATUS_NA))
 		session_status_set(session, EKG_STATUS_AVAIL);
 

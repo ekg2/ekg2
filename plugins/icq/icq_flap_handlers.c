@@ -254,11 +254,9 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 	if ((login_tlv = icq_tlv_get(tlvs, 5)) && login_tlv->len) {
 		icq_tlv_t *cookie_tlv = icq_tlv_get(tlvs, 0x06);
 		char *login_str = xstrndup((char *) login_tlv->buf, login_tlv->len);
-		struct sockaddr_in sin;
 		GString *pkt;
 		char *tmp;
 		int port;
-		int fd;
 
 		if (!cookie_tlv) {
 			debug_error("icq_flap_close() loginTLV, but no cookieTLV?\n");
@@ -290,33 +288,14 @@ int icq_flap_close_helper(session_t *s, unsigned char *buf, int len) {
 			icq_send_pkt(s, pkt); pkt = NULL;
 		}
 
+		// Client disconnects from authorizer
+		ekg_disconnect_by_outstream(j->send_stream);
+
 		s->connecting = 2;
 		j->migrate = 0;
 
-		// Client disconnects from authorizer
-		if ((fd = socket(AF_INET, SOCK_STREAM, 0)) == -1) {
-			int err = errno;
+		icq_connect(s, login_str, port);
 
-			debug_error("icq_flap_close() socket() failed..\n");
-
-			errno = err;
-			return -2;
-		}
-
-		sin.sin_family		= AF_INET;
-		sin.sin_addr.s_addr	= inet_addr(login_str);
-		sin.sin_port		= g_htons(port);
-
-		if (connect(fd, (struct sockaddr *) &sin, sizeof(sin))) {
-			int err = errno;
-
-			debug_error("icq_flap_close() connect() failed..\n");
-			close(fd);
-			errno = err;
-			return -2;
-		}
-
-		j->fd2 = fd;
 	} else {
 		icq_tlv_t *t_uid = icq_tlv_get(tlvs, 0x01);			// uin
 		icq_tlv_t *t_url = icq_tlv_get(tlvs, 0x04);			// [NOT ALWAYS] error description url string
