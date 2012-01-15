@@ -53,6 +53,8 @@ int config_text_bottomalign		= 0;
 
 static int config_traditional_clear	= 1;
 
+static int redraw_timer_id = 0;
+
 int ncurses_initialized;
 int ncurses_plugin_destroyed;
 
@@ -185,6 +187,7 @@ static int redraw_timer(gpointer data) {
 			ncurses_commit();
 	}
 
+	redraw_timer_id = 0;
 	return FALSE;	// done. destroy timer
 }
 
@@ -239,13 +242,12 @@ static QUERY(ncurses_ui_window_print)
 	if (!w->floating) {
 		n->redraw = 1;
 		if (window_current && window_current->id == w->id && !w->more) {
-			static int timer_id = 0;
 			/* redraw only visible window and lines,
 			 * but wait 5ms for next lines
 			 */
-			if (timer_id>0)
-				g_source_remove(timer_id);
-			timer_id = g_timeout_add(5/*ms*/, redraw_timer, w);
+			if (redraw_timer_id>0)
+				g_source_remove(redraw_timer_id);
+			redraw_timer_id = g_timeout_add(5/*ms*/, redraw_timer, w);
 		}
 	}
 
@@ -826,6 +828,8 @@ static int ncurses_plugin_destroy()
 		watch_remove(&ncurses_plugin, winch_pipe[0], WATCH_READ);
 
 	timer_remove(&ncurses_plugin, "ncurses:clock");
+	if (redraw_timer_id>0)
+		g_source_remove(redraw_timer_id);
 
 	ncurses_deinit();
 	g_free(ncurses_hellip);
