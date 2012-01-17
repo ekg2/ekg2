@@ -188,7 +188,7 @@ int plugin_load(const char *name, int prio, int quiet)
 	}
 
 #ifdef SHARED_LIBS
-	libname = g_strdup_printf("%s.la", name);
+	libname = g_strdup_printf("%s.so", name);
 	if ((env_ekg_plugins_path = g_getenv("EKG_PLUGINS_PATH"))) {
 		lib = g_build_filename(env_ekg_plugins_path, libname, NULL);
 		plugin = ekg2_dlopen(lib);
