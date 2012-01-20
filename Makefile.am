@@ -601,6 +601,19 @@ dist_script_DATA += \
 	contrib/python/sample.py
 endif
 
+if ENABLE_RC
+plugin_LTLIBRARIES += plugins/rc/rc.la
+
+plugins_rc_rc_la_SOURCES = \
+	$(noinst_HEADERS) \
+	plugins/rc/rc.h \
+	plugins/rc/inputs.c \
+	plugins/rc/main.c
+
+dist_rc_DATA = \
+	plugins/rc/vars-pl.txt
+endif
+
 if ENABLE_READLINE
 plugin_LTLIBRARIES += plugins/readline/readline.la
 

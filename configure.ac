@@ -307,6 +307,8 @@ AC_EKG2_PLUGIN([python], [
 	])
 ])
 
+AC_EKG2_PLUGIN([rc])
+
 AC_EKG2_PLUGIN([readline], [
 	AC_EKG2_WITH([readline], [
 		AC_EKG2_CHECK_LIB([readline], [readline], [readline/readline.h readline.h],, [EKG2_FAILED_TEST])
