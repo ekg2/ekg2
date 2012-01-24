@@ -138,7 +138,7 @@ void ui_readline_print(window_t *w, int separate, const /*locale*/ char *xline)
 			/* XXX: recode timestamp? for fun or wcs? */
 		string_t s = string_init(NULL);
 		const char *p = xline;
-		const char *buf = timestamp(format_string(config_timestamp));
+		const char *buf = timestamp(formated_config_timestamp);
 
 		string_append(s, "\033[0m");
 		string_append(s, buf);
