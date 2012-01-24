@@ -140,6 +140,8 @@ char *last_search_last_name = NULL;
 char *last_search_nickname = NULL;
 char *last_search_uid = 0;
 
+char *formated_config_timestamp = NULL;
+
 int ekg2_reason_changed = 0;
 
 /*
@@ -607,6 +609,16 @@ void changed_theme(const char *var)
 			variable_set(("theme"), NULL);
 		}
 	}
+}
+
+/*
+ * changed_theme()
+ *
+ * funkcja wywo³ywana przy zmianie warto¶ci zmiennej ,,config_timestamp''.
+ */
+void changed_config_timestamp(const char *var) {
+	xfree(formated_config_timestamp);
+	formated_config_timestamp = (config_timestamp && *config_timestamp) ? format_string(config_timestamp) : NULL;
 }
 
 /**

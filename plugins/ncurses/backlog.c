@@ -104,8 +104,8 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 		n->lines = NULL;
 	}
 
-	if (config_timestamp && config_timestamp_show && config_timestamp[0])
-		timestamp_format = format_string(config_timestamp);
+	if (config_timestamp_show)
+		timestamp_format = formated_config_timestamp;
 
 	/* je¶li upgrade... je¶li pe³ne przebudowanie... */
 	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
@@ -267,7 +267,6 @@ int ncurses_backlog_split(window_t *w, int full, int removed)
 			wrapping = 1;
 		}
 	}
-	xfree(timestamp_format);
 
 	if (bottom) {
 		n->start = n->lines_count - w->height;

@@ -190,6 +190,8 @@ extern char *config_exit_exec;
 extern int config_session_locks;
 extern char *config_nickname;
 
+extern char *formated_config_timestamp;
+
 extern char *home_dir;
 extern char *config_dir;
 extern const char *console_charset;
@@ -222,6 +224,7 @@ void changed_display_blinking(const char *var);
 void changed_make_window(const char *var);
 void changed_mesg(const char *var);
 void changed_theme(const char *var);
+void changed_config_timestamp(const char *var);
 
 const char *compile_time();
 
