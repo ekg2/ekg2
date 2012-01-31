@@ -27,7 +27,7 @@
  */
 
 void config_upgrade() {
-	const int current_config_version = 12;
+	const int current_config_version = 13;
 
 	if (config_version == -1)
 		config_version = current_config_version;
@@ -112,6 +112,22 @@ void config_upgrade() {
 
 				print("config_upgrade_major", fs, "2011-03-08");
 				g_free(fs);
+			}
+		case 13:
+			{
+				char *msg, *tmp = "";
+
+				if (config_timestamp && config_timestamp[xstrlen(config_timestamp)] != ' ') {
+					tmp = config_timestamp;
+					config_timestamp = g_strdup_printf("%s ", tmp);
+					changed_config_timestamp("timestamp");
+					xfree(tmp);
+					tmp = "Variable timestamp changed.";
+					config_changed = 1;
+				}
+				msg = g_strdup_printf("No default space after timestamp. %s", tmp);
+				print("config_upgrade_major", msg, "2012-01-31");
+				xfree(msg);
 			}
 	}
 

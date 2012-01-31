@@ -174,7 +174,7 @@ static int backlog_split(window_t *w, backlog_line_t *b, gboolean show, int y) {
 		ts_str	 = s->str;
 		ts_attr	 = s->attr;
 		xfree(s);
-		ts_width = xmbswidth(ts_str, xstrlen(ts_str)) + 1;
+		ts_width = xmbswidth(ts_str, xstrlen(ts_str));
 	}
 
 	while (*str || rows_count==0) {
@@ -188,9 +188,6 @@ static int backlog_split(window_t *w, backlog_line_t *b, gboolean show, int y) {
 
 			if (ts_width) {		/* print timestamp */
 				ncurses_fstring_print_fast(n->window, ts_str, ts_attr, -1);
-				/* render separator */
-				wattrset(n->window, A_NORMAL);
-				waddch(n->window, ' ');
 			}
 
 			if (prompt_width)	/* print prompt */
