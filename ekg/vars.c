@@ -147,7 +147,7 @@ void variable_set_default() {
 
 	config_dcc_dir = NULL;
 
-	config_timestamp = xstrdup("\\%H:\\%M:\\%S");
+	config_timestamp = xstrdup("\\%H:\\%M:\\%S ");
 	changed_config_timestamp("timestamp");
 	config_completion_char = xstrdup(":");
 	config_display_color_map = xstrdup("nTgGbBrR");
