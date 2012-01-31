@@ -42,6 +42,7 @@ PLUGIN_DEFINE(ncurses, PLUGIN_UI, ncurses_theme_init);
 /* vars */
 int config_backlog_size;
 int config_backlog_scroll_half_page;
+int config_display_mode;
 int config_display_transparent;
 int config_enter_scrolls;
 int config_margin_size;
@@ -459,6 +460,7 @@ static QUERY(ncurses_setvar_default)
 
 	config_backlog_size = 1000;	    /* maksymalny rozmiar backloga */
 	config_backlog_scroll_half_page = 0;	    /* tryb przewijania: pó³ ekranu lub ekran bez jednej linii */
+	config_display_mode = 0;
 	config_display_transparent = 1;     /* czy chcemy przezroczyste t³o? */
 	config_kill_irc_window = 1;	    /* czy zamykaæ kana³y ircowe przez alt-k? */
 	config_statusbar_size = 1;
@@ -505,6 +507,20 @@ static void ncurses_display_transparent_changed(const char *var)
 	header_statusbar_resize(NULL);
 
 	changed_backlog_size("backlog_size");
+}
+
+/*
+ * ncurses_display_mode_changed ()
+ *
+ * called when var display_mode is changed
+ */
+static void ncurses_display_mode_changed(const char *var) {
+	window_t *w;
+
+	for (w = windows; w; w = w->next)
+		ncurses_backlog_reset_heights(w, w->nowrap);
+
+	ncurses_commit();
 }
 
 volatile int sigint_count = 0;
@@ -718,6 +734,8 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("lastlog_noitems"), VAR_BOOL, 1, &config_lastlog_noitems, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("lastlog_size"), VAR_INT, 1, &config_lastlog_size, (void (*)(const char *))ncurses_lastlog_changed, NULL, NULL);
 
+	variable_add(&ncurses_plugin, ("display_mode"), VAR_INT, 1, &config_display_mode, ncurses_display_mode_changed,
+			variable_map(3, 0, 0, "classic", 1, 2, "mode1", 2, 1, "mode2"), NULL);
 	variable_add(&ncurses_plugin, ("display_transparent"), VAR_BOOL, 1, &config_display_transparent, ncurses_display_transparent_changed, NULL, NULL);
 	variable_add(&ncurses_plugin, ("enter_scrolls"), VAR_BOOL, 1, &config_enter_scrolls, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("header_size"), VAR_INT, 1, &config_header_size, header_statusbar_resize, NULL, NULL);
