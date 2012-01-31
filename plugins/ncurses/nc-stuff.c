@@ -224,10 +224,9 @@ void ncurses_resize(void)
 
 		n->redraw = 1;
 
-		/* if width changed, we should recalculate screen_lines, like for normal windows. */
-		/* XXX, only for !w->nowrap windows? */
-		if (old_width != w->width && w->floating /* XXX ? */)
-			ncurses_backlog_split(w, 1, 0);
+		/* if width changed, we should recalculate screen lines heights. */
+		if (old_width != w->width)
+			ncurses_backlog_reset_heights(w, w->nowrap);
 	}
 
 	if (left < 0)			left = 0;
@@ -238,27 +237,11 @@ void ncurses_resize(void)
 
 	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->priv_data;
-		int delta;
 
 		if (!n || w->floating)
 			continue;
 
-		delta = height - w->height;
-
-		if (n->lines_count - n->start == w->height) {
-			n->start -= delta;
-
-			if (delta < 0) {
-				if (n->start > n->lines_count)
-					n->start = n->lines_count;
-			} else {
-				if (n->start < 0)
-					n->start = 0;
-			}
-		}
-
-		if (n->overflow > height)
-			n->overflow = height;
+		n->first_row = 0;
 
 		w->height = height;
 
@@ -267,7 +250,7 @@ void ncurses_resize(void)
 
 		if (w->width != width && !w->doodle) {
 			w->width = width;
-			ncurses_backlog_split(w, 1, 0);
+			ncurses_backlog_reset_heights(w, w->nowrap);
 		}
 
 		w->width = width;
@@ -278,12 +261,6 @@ void ncurses_resize(void)
 		w->left = left;
 
 		mvwin(n->window, w->top, w->left);
-
-		if (n->overflow) {
-			n->start = n->lines_count - w->height + n->overflow;
-			if (n->start < 0)
-				n->start = 0;
-		}
 
 		ncurses_update_real_prompt(n);
 		n->redraw = 1;
@@ -426,6 +403,32 @@ const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *a
 	return s;
 }
 
+/**
+ * ncurses_fstring_print_fast()
+ *
+ * Print fstring_t, making sure output width doesn't exceed max width.
+ * If it does, rewind to the previous linebreak possibility.
+ *
+ * @param w - target ncurses window.
+ * @param s - locale-encoded string to print.
+ * @param attr - attribute list (of length strlen(s)).
+ * @param len - number of chars to be printed; -1 print whole string.
+ *
+ * @return Pointer to the character which the next print should
+ * begin at.
+ */
+const char *ncurses_fstring_print_fast(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize len) {
+	for (; *s && len; s++, len--) {
+		int nattr = fstring_attr2ncurses_attr(*attr++);
+		CHAR_T ch = ncurses_fixchar((unsigned char) *s, &nattr);
+
+		wattrset(w, nattr);
+		waddch(w, ch);
+	}
+
+	return s;
+}
+
 /*
  * cmd_mark()
  *
@@ -464,13 +467,51 @@ COMMAND(cmd_mark) {
  * draw_thin_red_line()
  *
  */
-static void draw_thin_red_line(window_t *w, int y)
-{
+void draw_thin_red_line(window_t *w, int y) {
 	ncurses_window_t *n = w->priv_data;
 	int attr = color_pair(COLOR_RED, COLOR_BLACK) | A_BOLD | A_ALTCHARSET;
 
 	wattrset(n->window, attr);
-	mvwhline(n->window, y, 0, ACS_HLINE, w->width);
+	mvwhline(n->window, n->margin_top + y, 0, ACS_HLINE, w->width);
+}
+
+static void ncurses_draw_frames(window_t *w) {
+	ncurses_window_t *n = w->priv_data;
+	const char *vertical_line_char	= format_find("contacts_vertical_line_char");
+	const char *horizontal_line_char= format_find("contacts_horizontal_line_char");
+	char vline_ch = vertical_line_char[0];
+	char hline_ch = horizontal_line_char[0];
+	int attr = color_pair(COLOR_BLUE, COLOR_BLACK);
+	int x0 = n->margin_left, y0 = n->margin_top;
+	int x1 = w->width - n->margin_right;
+	int y1 = w->height - n->margin_bottom;
+
+	if (!vline_ch || !hline_ch) {
+		vline_ch = ACS_VLINE;
+		hline_ch = ACS_HLINE;
+		attr |= A_ALTCHARSET;
+	}
+	wattrset(n->window, attr);
+
+	/* XXX: recheck coordinates */
+
+	if ((w->frames & WF_LEFT))
+		mvwvline(n->window, y0, x0, vline_ch, y1-y0+1);
+
+	if ((w->frames & WF_RIGHT))
+		mvwvline(n->window, y0, x1, vline_ch, y1-y0+1);
+
+	if ((w->frames & WF_TOP)) {
+		mvwhline(n->window, y0, x0, hline_ch, x1-x0+1);
+		if (w->frames & WF_LEFT)  mvwaddch(n->window, y0, x0, ACS_ULCORNER);
+		if (w->frames & WF_RIGHT) mvwaddch(n->window, y0, x1, ACS_URCORNER);
+	}
+
+	if ((w->frames & WF_BOTTOM)) {
+		mvwhline(n->window, y1, x0, hline_ch, x1-x0+1);
+		if (w->frames & WF_LEFT)  mvwaddch(n->window, y1, x0, ACS_LLCORNER);
+		if (w->frames & WF_RIGHT) mvwaddch(n->window, y1, x1, ACS_LRCORNER);
+	}
 }
 
 /*
@@ -480,24 +521,11 @@ static void draw_thin_red_line(window_t *w, int y)
  *
  * - w - window
  */
-void ncurses_redraw(window_t *w)
-{
-	int x, y, left, top, height, fix_trl;
+void ncurses_redraw(window_t *w) {
 	ncurses_window_t *n = w->priv_data;
-	int dtrl = 0;	/* dtrl -- draw thin red line
-			 *	0 - not on this page or line already drawn
-			 *	1 - mayby on this page, we'll see later
-			 */
 
 	if (!n)
 		return;
-
-	left = n->margin_left;
-	top = n->margin_top;
-	height = w->height - n->margin_top - n->margin_bottom;
-#if 0
-	width = w->width - n->margin_left - n->margin_right;
-#endif
 
 	if (w->doodle) {
 		n->redraw = 0;
@@ -513,158 +541,17 @@ void ncurses_redraw(window_t *w)
 			return;
 	}
 
-	werase(n->window);
+	ncurses_backlog_display(w);
 
-	if (w->floating) {
-		const char *vertical_line_char	= format_find("contacts_vertical_line_char");
-		const char *horizontal_line_char= format_find("contacts_horizontal_line_char");
-		char vline_ch = vertical_line_char[0];
-		char hline_ch = horizontal_line_char[0];
-		int attr = color_pair(COLOR_BLUE, COLOR_BLACK);
-		int x0 = n->margin_left, y0 = n->margin_top;
-		int x1 = w->width - 1 - n->margin_right;
-		int y1 = w->height - 1 - n->margin_bottom;
-
-		if (!vline_ch || !hline_ch) {
-			vline_ch = ACS_VLINE;
-			hline_ch = ACS_HLINE;
-			attr |= A_ALTCHARSET;
-		}
-		wattrset(n->window, attr);
-
-		if ((w->frames & WF_LEFT)) {
-			left++;
-			mvwvline(n->window, y0, x0, vline_ch, y1-y0+1);
-		}
-
-		if ((w->frames & WF_RIGHT)) {
-			mvwvline(n->window, y0, x1, vline_ch, y1-y0+1);
-		}
-
-		if ((w->frames & WF_TOP)) {
-			top++;
-			height--;
-			mvwhline(n->window, y0, x0, hline_ch, x1-x0+1);
-			if (w->frames & WF_LEFT)  mvwaddch(n->window, y0, x0, ACS_ULCORNER);
-			if (w->frames & WF_RIGHT) mvwaddch(n->window, y0, x1, ACS_URCORNER);
-		}
-
-		if ((w->frames & WF_BOTTOM)) {
-			height--;
-			mvwhline(n->window, y1, x0, hline_ch, x1-x0+1);
-			if (w->frames & WF_LEFT)  mvwaddch(n->window, y1, x0, ACS_LLCORNER);
-			if (w->frames & WF_RIGHT) mvwaddch(n->window, y1, x1, ACS_LRCORNER);
-		}
-
-	}
-
-	if (n->start < 0)
-		n->start = 0;
-
-	if (config_text_bottomalign && (!w->floating || config_text_bottomalign == 2)
-			&& n->start == 0 && n->lines_count < height)
-	{
-		const int tmp = height - n->lines_count;
-
-		if (tmp > top)
-			top = tmp;
-	}
-
-	fix_trl=0;
-	for (y = 0; y < height && n->start + y < n->lines_count; y++) {
-		struct screen_line *l = &n->lines[n->start + y];
-
-		int cur_y = (top + y + fix_trl);
-
-		int fixup = 0;
-
-		if (( y == 0 ) && n->last_red_line && (n->backlog[l->backlog]->ts < n->last_red_line))
-			dtrl = 1;	/* First line timestamp is less then mark. Mayby marker is on this page? */
-
-		if (dtrl && (n->backlog[l->backlog]->ts >= n->last_red_line)) {
-			draw_thin_red_line(w, cur_y);
-			if ((n->lines_count-n->start == height - (top - n->margin_top)) ) {
-				/* we have stolen line for marker, so we scroll up */
-				wmove(n->window, n->margin_top, 0);
-				winsdelln(n->window,-1);
-			} else {
-				fix_trl = 1;
-				cur_y++;
-			}
-			dtrl = 0;
-		}
-
-		wattrset(n->window, A_NORMAL);
-		wmove(n->window, cur_y, left);
-
-		if (l->ts) {
-			for (x = 0; l->ts[x]; x++) {
-				int attr = fstring_attr2ncurses_attr(l->ts_attr[x]);
-				unsigned char ch = (unsigned char) ncurses_fixchar((CHAR_T) (unsigned char) l->ts[x], &attr);
-
-				wattrset(n->window, attr);
-				waddch(n->window, ch);
-			}
-		/* render separator */
-			wattrset(n->window, A_NORMAL);
-			waddch(n->window, ' ');
-		}
-
-		if (l->prompt_str) {
-			for (x = 0; x < l->prompt_len; x++) {
-				int attr = fstring_attr2ncurses_attr(l->prompt_attr[x]);
-				CHAR_T ch = ncurses_fixchar(l->prompt_str[x], &attr);
-
-				wattrset(n->window, attr);
-
-				/* XXX, width vs len? */
-				if (!fixup && (l->margin_left != -1 && x >= l->margin_left)) {
-					int x, y;
-
-					getyx(n->window, y, x);
-					x = x - l->margin_left + config_margin_size;
-					wmove(n->window, y, x);
-
-					fixup = 1;
-				}
-				waddch(n->window, ch);
-			}
-		}
-
-		for (x = 0; x < l->len; x++) {
-			int attr = fstring_attr2ncurses_attr(l->attr[x]);
-			CHAR_T ch = ncurses_fixchar(l->str[x], &attr);
-
-			wattrset(n->window, attr);
-
-			/* XXX, width vs len? */
-			if (!fixup && (l->margin_left != -1 && (x + l->prompt_len) >= l->margin_left)) {
-				int x, y;
-
-				getyx(n->window, y, x);
-				x = x - l->margin_left + config_margin_size;
-				wmove(n->window, y, x);
-
-				fixup = 1;
-			}
-			waddch(n->window, ch);
-		}
-	}
+	/* draw frames */
+	if (w->floating)
+		ncurses_draw_frames(w);
 
 	n->redraw = 0;
 
-	if (dtrl && (n->start + y >= n->lines_count)) {
-		/* marker still not drawn and last line from backlog. */
-		if (y >= height - (top - n->margin_top)) {
-			wmove(n->window, n->margin_top, 0);
-			winsdelln(n->window,-1);
-			y--;
-		}
-		draw_thin_red_line(w, top+y);
-	}
-
 	if (w == window_current)
 		ncurses_redraw_input(0);
+
 }
 
 /*
@@ -675,43 +562,20 @@ void ncurses_redraw(window_t *w)
 void ncurses_clear(window_t *w, int full)
 {
 	ncurses_window_t *n = w->priv_data;
-	w->more = 0;
 
-	if (!full) {
-		n->start = n->lines_count;
-		n->redraw = 1;
-		n->overflow = w->height;
-		return;
-	}
+	w->more = 0;
+	n->redraw = 1;
+	n->cleared = !full;
+
+	ncurses_backlog_seek_start(n);
 
 	if (n->backlog) {
-		int i;
-
-		for (i = 0; i < n->backlog_size; i++)
-			fstring_free(n->backlog[i]);
-
-		xfree(n->backlog);
-
-		n->backlog = NULL;
-		n->backlog_size = 0;
+		if (full) {
+			ncurses_backlog_destroy(w);
+			ncurses_backlog_new(w);
+		} else
+			n->index = n->backlog->len;
 	}
-
-	if (n->lines) {
-		int i;
-
-		for (i = 0; i < n->lines_count; i++) {
-			xfree(n->lines[i].ts);
-			xfree(n->lines[i].ts_attr);
-		}
-
-		xfree(n->lines);
-
-		n->lines = NULL;
-		n->lines_count = 0;
-	}
-
-	n->start = 0;
-	n->redraw = 1;
 }
 
 /*
@@ -775,7 +639,7 @@ int ncurses_window_kill(window_t *w)
 	if (!n)
 		return -1;
 
-	ncurses_clear(w, 1);
+	g_ptr_array_free(n->backlog, TRUE);
 
 	g_free(n->prompt);
 	delwin(n->window);
@@ -802,11 +666,6 @@ static void sigwinch_handler()
 }
 #endif
 
-void ncurses_abort(void)
-{
-	IGNORE_RESULT(reset_shell_mode());
-}
-
 /*
  * ncurses_init()
  *
@@ -820,7 +679,6 @@ void ncurses_init(void)
 	ncurses_screen_height = getenv("LINES") ? atoi(getenv("LINES")) : 24;
 
 	initscr();
-	ekg2_register_abort_handler(ncurses_abort, &ncurses_plugin);
 	cbreak();
 	noecho();
 	nonl();
@@ -949,7 +807,6 @@ void ncurses_deinit(void)
 	if (ncurses_header)
 		delwin(ncurses_header);
 	endwin();
-	ekg2_unregister_abort_handlers_for_plugin(&ncurses_plugin);
 
 	for (i = 0; i < HISTORY_MAX; i++)
 		if (ncurses_history[i] != ncurses_line) {
@@ -989,6 +846,8 @@ int ncurses_window_new(window_t *w)
 		return 0;
 
 	w->priv_data = n = xmalloc(sizeof(ncurses_window_t));
+
+	ncurses_backlog_new(w);
 
 	if (w->id == WINDOW_CONTACTS_ID) {
 		ncurses_contacts_set(w);

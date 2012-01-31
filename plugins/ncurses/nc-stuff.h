@@ -2,6 +2,7 @@
 #define __EKG_NCURSES_NC_STUFF_H
 
 #include "ecurses.h"
+#include "backlog.h"
 
 void ncurses_init(void);
 void ncurses_deinit(void);
@@ -18,23 +19,6 @@ extern int ncurses_plugin_destroyed;
 #define ncurses_current ((ncurses_window_t *) window_current->priv_data)
 
 void update_statusbar(int commit);
-
-struct screen_line { /* everything locale-encoded */
-	int len;		/* line length */
-	
-	unsigned char *str;		/* content */
-	fstr_attr_t *attr;		/* attributes */
-	
-	unsigned char *prompt_str;	/* prompt string */
-	fstr_attr_t *prompt_attr;	/* prompt attributes */
-	int prompt_len;		/* prompt length */
-	
-	char *ts;		/* timestamp */
-	fstr_attr_t *ts_attr;	/* attributes of the timestamp */
-
-	int backlog;		/* backlog line it comes from */
-	int margin_left;	/* where the margin should be setted */	
-};
 
 enum window_frame_t {
 	WF_LEFT = 1,
@@ -54,17 +38,14 @@ typedef struct {
 	int margin_left, margin_right, margin_top, margin_bottom;
 				/* margins */
 
-	fstring_t **backlog;	/* buffer with lines */
-	int backlog_size;	/* backlog size */
+	GPtrArray *backlog;	/* last screen lines */
+	int index;
+	int first_row;
+	int x0, y0, height, width;
+
+	int cleared;
 
 	int redraw;		/* does it have to be redrawn before display */
-
-	int start;		/* from which line displaying starts */
-	int lines_count;	/* number of screen lines in backlog */
-	struct screen_line *lines;
-				/* screen lines */
-
-	int overflow;		/* number of superfluous lines in a window */
 
 	int (*handle_redraw)(window_t *w);
 				/* window contents redraw handler */
@@ -79,8 +60,11 @@ extern WINDOW *ncurses_input;
 
 QUERY(ncurses_session_disconnect_handler);
 
+void draw_thin_red_line(window_t *w, int y);
+
 gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize maxx);
 const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx);
+const char *ncurses_fstring_print_fast(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize len);
 
 void ncurses_prompt_set(window_t *w, const gchar *str);
 void ncurses_update_real_prompt(ncurses_window_t *n);
@@ -117,6 +101,7 @@ extern int config_text_bottomalign;
 
 int ncurses_lastlog_update(window_t *w);
 void ncurses_lastlog_new(window_t *w);
+
 extern int config_lastlog_size;
 extern int config_lastlog_lock;
 extern int config_mark_on_window_change;
@@ -133,7 +118,6 @@ extern int ncurses_screen_height;
 extern int ncurses_screen_width;
 
 int color_pair(int fg, int bg);
-int ncurses_backlog_add_real(window_t *w, /*locale*/ fstring_t *str);
 
 CHAR_T ncurses_fixchar(CHAR_T ch, int *attr);
 

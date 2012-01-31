@@ -80,16 +80,17 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 
 	local_config_lastlog_case = (lastlog->casense == -1) ? config_lastlog_case : lastlog->casense;
 
-	for (i = n->backlog_size-1; i >= 0; i--) {
+	for (i = 0; i<n->backlog->len; i++) {
 		gboolean found = FALSE;
+		backlog_line_t *bl = g_ptr_array_index(n->backlog, i);
 
 		if (lastlog->isregex) {		/* regexp */
-			found = g_regex_match(lastlog->reg, n->backlog[i]->str, 0, NULL);
+			found = g_regex_match(lastlog->reg, bl->line->str, 0, NULL);
 		} else {				/* substring */
 			if (local_config_lastlog_case)
-				found = !!xstrstr(n->backlog[i]->str, lastlog->expression);
+				found = !!xstrstr(bl->line->str, lastlog->expression);
 			else	
-				found = !!xstrcasestr(n->backlog[i]->str, lastlog->expression);
+				found = !!xstrcasestr(bl->line->str, lastlog->expression);
 		}
 
 		if (!config_lastlog_noitems && found && !items) { /* add header only when found */
@@ -101,10 +102,11 @@ static int ncurses_ui_window_lastlog(window_t *lastlog_w, window_t *w) {
 		}
 
 		if (found) {
-			ncurses_backlog_add_real(lastlog_w, fstring_dup(n->backlog[i]));
+			ncurses_backlog_add_real(lastlog_w, fstring_dup(bl->line));
 			items++;
 		}
 	}
+	ncurses_backlog_seek_end(n);
 	return items;
 }
 
@@ -113,7 +115,7 @@ int ncurses_lastlog_update(window_t *w) {
 	window_t *ww;
 	int retval = 0;
 
-	int old_start;
+	int old_index;
 
 	if (config_lastlog_lock) return 0;
 
@@ -121,7 +123,7 @@ int ncurses_lastlog_update(window_t *w) {
 	if (!w) return -1;
 
 	n = w->priv_data;
-	old_start = n->start;
+	old_index = n->index;
 
 	ncurses_clear(w, 1);
 
@@ -149,13 +151,12 @@ int ncurses_lastlog_update(window_t *w) {
 		fstring_free(fstr);
 	}
 
-/* XXX fix n->start */
-	n->start = old_start;
-	if (n->start > n->lines_count - w->height + n->overflow)
-		n->start = n->lines_count - w->height + n->overflow;
-
-	if (n->start < 0)
-		n->start = 0;
+	if (old_index >= n->backlog->len) {
+		ncurses_backlog_seek_end(n);
+	} else {
+		n->index = old_index;
+		n->first_row = 0;
+	}
 
 	n->redraw = 1;
 	return retval;
@@ -191,7 +192,6 @@ void ncurses_lastlog_new(window_t *w) {
 	w->frames = lastlog_frame;
 	n->handle_redraw = ncurses_lastlog_update;
 	n->handle_mouse = ncurses_lastlog_mouse_handler;
-	n->start = 0;
 	w->edge = lastlog_edge;
 	w->nowrap = !lastlog_wrap;
 	w->floating = 1;
@@ -308,7 +308,8 @@ COMMAND(ncurses_cmd_lastlog) {
 		return 0;
 	}
 
-	n->start = n->lines_count - w->height + n->overflow;
+	ncurses_backlog_seek_end(n);
+
 	config_lastlog_lock = 1;
 	ncurses_redraw(w);
 	config_lastlog_lock = lock_old;
