@@ -57,267 +57,362 @@ static inline int xmbswidth(const char *s, size_t n) {
 #endif
 }
 
+static int get_word_width(gchar *str, fstr_attr_t *attr, int *eat) {
+	int i, len = xstrlen(str);
+	for (i=0; i<len; i++) {
+		if ((attr[i] & FSTR_LINEBREAK)) {
+			i++;
+			break;
+		}
+	}
+	*eat = i;
+	return xmbswidth(str, i);
+}
+
+static int break_word(gchar *str, int width) {
+	size_t i;
+	int len = xstrlen(str);
+#if USE_UNICODE
+	int sum = 0;
+
+	mbtowc(NULL, NULL, 0);
+	for (i = 0; i < len && sum<width; ) {
+		wchar_t ch;
+		int ch_len = mbtowc(&ch, &str[i], len - i);
+		if (ch_len!=-1) {
+			int wc_width = wcwidth(ch);
+
+			if (wc_width == -1)
+				wc_width = 1;
+
+			if (sum + wc_width > width)
+				break;
+			sum += wc_width;
+			i += ch_len;
+		} else {
+			i++;
+			sum++;
+		}
+	}
+#else
+	i = (len>=width ? width : len);
+#endif
+	return i;
+}
+
+static int wrap_line(window_t *w, int width, char *str, fstr_attr_t *attr, int *last_space) {
+	int i, j, eat, printed, len = xstrlen(str);
+
+	if (len==0 || xmbswidth(str, len)<width || width < 1)
+		return len;
+
+	if (w->nowrap)
+		return break_word(str, width);
+
+	for (i=0, printed=0; printed <= width && i < len; printed += j, i += eat) {
+		j = get_word_width(str+i, attr+i, &eat);
+
+		if (printed + j <= width)
+			continue;
+
+		if (printed+j == width+1 && str[i+eat-1]==' ') {
+			*last_space = 1;
+			return i + eat - 1;
+		} else if (i==0) {
+			return break_word(str, width);
+		} else if ((j > width) && (width-printed>8)) {
+			return i + break_word(str+i, width-printed);
+		}
+		return i;
+	}
+	return len;
+}
+
+static void calc_window_dimension(window_t *w) {
+	ncurses_window_t *n = w->priv_data;
+
+	n->x0 = n->margin_left;
+	n->y0 = n->margin_top;
+
+	if (w->frames & WF_LEFT) n->x0++;
+	if (w->frames & WF_TOP) n->y0++;
+
+	n->width = w->width - n->x0 - n->margin_right;
+	n->height = w->height - n->y0 - n->margin_bottom;
+
+	if (w->frames & WF_RIGHT) n->width--;
+	if (w->frames & WF_BOTTOM) n->height--;
+}
+
 /*
- * ncurses_backlog_split()
+ * backlog_split()
  *
  * dzieli linie tekstu w buforze na linie ekranowe.
  *
  *  - w - okno do podzielenia
- *  - full - czy robimy pe³ne uaktualnienie?
- *  - removed - ile linii ekranowych z góry usuniêto?
  *
- * zwraca rozmiar w liniach ekranowych ostatnio dodanej linii.
+ * XXX function uses n->x0, y0, width, height !!! call calc_window_dimension(). !!!
  */
-int ncurses_backlog_split(window_t *w, int full, int removed)
-{
-	int i, res = 0, bottom = 0;
-	char *timestamp_format = NULL;
-	ncurses_window_t *n;
+static int backlog_split(window_t *w, backlog_line_t *b, gboolean show, int y) {
+	ncurses_window_t *n = w->priv_data;
+	int rows_count = 0;
+	/* timestamp */
+	int ts_width		= 0;
+	gchar *ts_str		= NULL;
+	fstr_attr_t *ts_attr	= NULL;
+	/* prompt */
+	int prompt_width	= b->line->prompt_empty ? 0 : xmbswidth(b->line->str, b->line->prompt_len);
+	/* text */
+	char *str		= b->line->str  + b->line->prompt_len;
+	fstr_attr_t *attr	= b->line->attr + b->line->prompt_len;
 
-	if (!w || !(n = w->priv_data))
-		return 0;
+	/* set timestamp */
+	if (b->line->ts && formated_config_timestamp && config_timestamp_show &&
+	    (!w->floating || w->id == WINDOW_LASTLOG_ID))
+	{
+		fstring_t *s = fstring_new(timestamp_time(formated_config_timestamp, b->line->ts));
+		ts_str	 = s->str;
+		ts_attr	 = s->attr;
+		xfree(s);
+		ts_width = xmbswidth(ts_str, xstrlen(ts_str)) + 1;
+	}
 
-	/* przy pe³nym przebudowaniu ilo¶ci linii nie musz± siê koniecznie
-	 * zgadzaæ, wiêc nie bêdziemy w stanie pó¼niej stwierdziæ czy jeste¶my
-	 * na koñcu na podstawie ilo¶ci linii mieszcz±cych siê na ekranie. */
-	if (full && n->start == n->lines_count - w->height)
-		bottom = 1;
-	
-	/* mamy usun±æ co¶ z góry, bo wywalono liniê z backloga. */
-	if (removed) {
-		for (i = 0; i < removed && i < n->lines_count; i++) {
-			xfree(n->lines[i].ts);
-			xfree(n->lines[i].ts_attr);
+	while (*str || rows_count==0) {
+		int len, last_space = 0;
+		int width = n->width - ts_width - prompt_width;
+
+		len = wrap_line(w, width, str, attr, &last_space);
+
+		if (show && (0 <= y && y < n->height)) {
+			wmove(n->window, n->y0 + y, n->x0);
+
+			if (ts_width) {		/* print timestamp */
+				ncurses_fstring_print_fast(n->window, ts_str, ts_attr, -1);
+				/* render separator */
+				wattrset(n->window, A_NORMAL);
+				waddch(n->window, ' ');
+			}
+
+			if (prompt_width)	/* print prompt */
+				ncurses_fstring_print_fast(n->window, b->line->str, b->line->attr, b->line->prompt_len);
+
+			if (width > 0)		/* print text */
+				ncurses_fstring_print_fast(n->window, str, attr, len);
 		}
-		memmove(&n->lines[0], &n->lines[removed], sizeof(struct screen_line) * (n->lines_count - removed));
-		n->lines_count -= removed;
+
+		rows_count++;
+
+		if (w->nowrap)
+			break;
+
+		str	+= len + last_space;
+		attr	+= len + last_space;
+		y++;
 	}
 
-	/* je¶li robimy pe³ne przebudowanie backloga, czy¶cimy wszystko */
-	if (full) {
-		for (i = 0; i < n->lines_count; i++) {
-			xfree(n->lines[i].ts);
-			xfree(n->lines[i].ts_attr);
-		}
-		n->lines_count = 0;
-		xfree(n->lines);
-		n->lines = NULL;
-	}
+	xfree(ts_str);
+	xfree(ts_attr);
 
-	if (config_timestamp_show)
-		timestamp_format = formated_config_timestamp;
-
-	/* je¶li upgrade... je¶li pe³ne przebudowanie... */
-	for (i = (!full) ? 0 : (n->backlog_size - 1); i >= 0; i--) {
-		struct screen_line *l;
-		char *str; 
-		fstr_attr_t *attr;
-		int j, margin_left, wrapping = 0;
-
-		time_t ts;			/* current ts */
-		time_t lastts = 0;		/* last cached ts */
-		char lasttsbuf[100];		/* last cached strftime() result */
-		int prompt_width;
-
-		str = n->backlog[i]->str + n->backlog[i]->prompt_len;
-		attr = n->backlog[i]->attr + n->backlog[i]->prompt_len;
-		ts = n->backlog[i]->ts;
-		margin_left = (!w->floating) ? n->backlog[i]->margin_left : -1;
-
-		prompt_width = xmbswidth(n->backlog[i]->str, n->backlog[i]->prompt_len);
-		
-		for (;;) {
-			int word, width;
-			int ts_width = 0;
-
-			if (!i)
-				res++;
-
-			n->lines_count++;
-			n->lines = xrealloc(n->lines, n->lines_count * sizeof(struct screen_line));
-			l = &n->lines[n->lines_count - 1];
-
-			l->str = (unsigned char *) str;
-			l->attr = attr;
-			l->len = xstrlen(str);
-			l->ts = NULL;
-			l->ts_attr = NULL;
-			l->backlog = i;
-			l->margin_left = (!wrapping || margin_left == -1) ? margin_left : 0;
-
-			l->prompt_len = n->backlog[i]->prompt_len;
-			if (!n->backlog[i]->prompt_empty) {
-				l->prompt_str = (unsigned char *) n->backlog[i]->str;
-				l->prompt_attr = n->backlog[i]->attr;
-			} else {
-				l->prompt_str = NULL;
-				l->prompt_attr = NULL;
-			}
-
-			if ((!w->floating || (w->id == WINDOW_LASTLOG_ID && ts)) && timestamp_format) {
-				fstring_t *s = NULL;
-
-				if (!ts || lastts != ts) {	/* generate new */
-					struct tm *tm = localtime(&ts);
-
-					strftime(lasttsbuf, sizeof(lasttsbuf)-1, timestamp_format, tm);
-					lastts = ts;
-				}
-
-				s = fstring_new(lasttsbuf);
-
-				l->ts = s->str;
-				ts_width = xmbswidth(l->ts, xstrlen(l->ts));
-				ts_width++;			/* for separator between timestamp and text */
-				l->ts_attr = s->attr;
-
-				xfree(s);
-			}
-
-			width = w->width - ts_width - prompt_width - n->margin_left - n->margin_right; 
-
-			if ((w->frames & WF_LEFT))
-				width -= 1;
-			if ((w->frames & WF_RIGHT))
-				width -= 1;
-#ifdef USE_UNICODE
-			{
-				int str_width = 0;
-
-				mbtowc(NULL, NULL, 0);
-
-				for (j = 0, word = 0; j < l->len;) {
-					wchar_t ch;
-					int ch_width;
-					int ch_len;
-
-					ch_len = mbtowc(&ch, &str[j], l->len - j);
-					if (ch_len == -1) {
-						ch = '?';
-						ch_len = 1;
-					}
-
-					if (ch == CHAR(' '))
-						word = j + 1;
-
-					if (str_width >= width) {
-						int old_len = l->len;
-
-						l->len = (!w->nowrap && word) ? word : 		/* XXX, (str_width > width) ? word-1 : word? */
-							(str_width > width && j) ? j /* - 1 */ : j;
-
-						/* avoid dead loop -- always move forward */
-						/* XXX, a co z bledami przy rysowaniu? moze lepiej str++; attr++; albo break? */
-						if (!l->len)
-							l->len = 1;
-
-						if ((ch_len = mbtowc(&ch, &str[l->len], old_len - l->len)) > 0 && ch == CHAR(' ')) {
-							l->len -= ch_len;
-							str += ch_len;
-							attr += ch_len;
-						}
-						break;
-					}
-
-					ch_width = wcwidth(ch);
-					if (ch_width == -1) /* not printable? */
-						ch_width = 1;		/* XXX: should be rendered as '?' with A_REVERSE. I hope wcwidth('?') is always 1. */
-					str_width += ch_width;
-					j += ch_len;
-				}
-				if (w->nowrap)
-					break;
-			}
-#else
-			if (l->len < width)
-				break;
-
-			if (w->nowrap) {
-				l->len = width;		/* XXX, what for? for not drawing outside screen-area? ncurses can handle with it */
-
-				if (str[width] == CHAR(' ')) {
-					l->len--;
-					/* str++; attr++; */
-				}
-				/* while (*str) { str++; attr++; } */
-				break;
-			}
-		
-			for (j = 0, word = 0; j < l->len; j++) {
-				if (str[j] == CHAR(' '))
-					word = j + 1;
-
-				if (j == width) {
-					l->len = (word) ? word : width;
-					if (str[j] == CHAR(' ')) {
-						l->len--;
-						str++;
-						attr++;
-					}
-					break;
-				}
-			}
-#endif
-			str += l->len;
-			attr += l->len;
-
-			if (! *str)
-				break;
-
-			wrapping = 1;
-		}
-	}
-
-	if (bottom) {
-		n->start = n->lines_count - w->height;
-		if (n->start < 0)
-			n->start = 0;
-	}
-
-	if (full) {
-		if (window_current && window_current->id == w->id) 
-			ncurses_redraw(w);
-		else
-			n->redraw = 1;
-	}
-
-	return res;
+	return rows_count;
 }
 
+static int ncurses_backlog_calc_height(window_t *w, backlog_line_t *bl) {
+	return (w->nowrap) ? 1 : backlog_split(w, bl, FALSE, 0);
+}
+
+static int ncurses_backlog_display_line(window_t *w, int y, backlog_line_t *bl) {
+	return backlog_split(w, bl, TRUE, y);
+}
+
+#define ncurses_get_backlog_height(w,b,index) (b=g_ptr_array_index(n->backlog, index), b->height ? b->height : (b->height=ncurses_backlog_calc_height(w, b)))
+
+void ncurses_backlog_display(window_t *w) {
+	ncurses_window_t *n = w->priv_data;
+	int y, n_rows, idx, dtrl;
+	backlog_line_t *bl;
+
+	werase(n->window);
+
+	if (n->backlog->len <= 0)
+		return;
+
+	calc_window_dimension(w);
+
+	dtrl = n->last_red_line ? 1 : 0;
+
+	/* draw text */
+	if (n->index == EKG_NCURSES_BACKLOG_END) {
+		/* display from end of backlog */
+		w->more = n->cleared = 0;
+		for (y = n->height, idx = n->backlog->len - 1; idx >= 0 && y > 0; idx--) {
+			n_rows = ncurses_get_backlog_height(w, bl, idx);
+			if (dtrl && (bl->line->ts < n->last_red_line)) {
+				dtrl = 0;
+				draw_thin_red_line(w, --y);
+				if (y == 0) break;
+			}
+			y -= n_rows;
+			ncurses_backlog_display_line(w, y, bl);
+		}
+
+		if (y>0 && !(config_text_bottomalign && (!w->floating || config_text_bottomalign == 2))) {
+			wmove(n->window, n->margin_top, 0);
+			winsdelln(n->window, -y);
+		}
+	} else {
+		/* display from line */
+		idx = n->index;
+		if (dtrl && idx > 0 ) {
+			bl = g_ptr_array_index(n->backlog, idx - 1);
+			dtrl = (bl->line->ts < n->last_red_line);
+		}
+		for (y = - n->first_row; idx < n->backlog->len && y < n->height; idx++) {
+			n_rows = ncurses_get_backlog_height(w, bl, idx);
+			if (dtrl && (bl->line->ts > n->last_red_line)) {
+				dtrl = 0;
+				draw_thin_red_line(w, y++);
+				if (y == n->height) break;
+			}
+			ncurses_backlog_display_line(w, y, bl);
+			y += n_rows;
+		}
+
+		if ((!n->cleared && !(idx < n->backlog->len)) ||
+		    ( n->cleared && !(y < n->height)))
+		{
+			ncurses_backlog_seek_end(n);
+			ncurses_backlog_display(w);
+		}
+	}
+}
+
+static void scroll_up(window_t *w, int count) {
+	ncurses_window_t *n = w->priv_data;
+	backlog_line_t *bl;
+
+	if (n->index == EKG_NCURSES_BACKLOG_END)
+		n->index = n->backlog->len;
+	else {
+		if (count <= n->first_row) {
+			n->first_row -= count;
+			return;
+		}
+		count -= n->first_row;
+	}
+
+	while (count > 0 && --n->index >= 0 )
+		count -= ncurses_get_backlog_height(w, bl, n->index);
+
+	if (n->index < 0)
+		ncurses_backlog_seek_start(n);
+	else
+		n->first_row = -count;
+}
+
+void ncurses_backlog_scroll(window_t *w, int offset) {
+	ncurses_window_t *n;
+	backlog_line_t *bl;
+
+/* XXX: add thin red line correction */
+
+	if (!w || !(n = w->priv_data) || !n->backlog->len)
+		return;
+
+	n->cleared = 0;
+
+	calc_window_dimension(w);
+
+	if (n->index == EKG_NCURSES_BACKLOG_END) {
+		if (offset > 0)
+			return;
+		/* move to first line on screen */
+		scroll_up(w, n->height);
+	}
+
+	if (offset < 0) {
+		scroll_up(w, -offset);
+	} else {
+		int h = ncurses_get_backlog_height(w, bl, n->index);
+		if (n->first_row + offset < h) {
+			n->first_row += offset;
+			return;
+		}
+		
+		offset -= (h - n->first_row);
+		while (offset >= 0 && ++n->index < n->backlog->len) {
+			h = ncurses_get_backlog_height(w, bl, n->index);
+			offset -= h;
+		}
+		if (!(n->index < n->backlog->len)) {
+			ncurses_backlog_seek_end(n);
+			return;
+		}
+		n->first_row = h + offset;
+	}
+}
+
+backlog_line_t *ncurses_backlog_mouse_click(window_t *w, int click_y) {
+	ncurses_window_t *n = w->priv_data;
+	backlog_line_t *bl = NULL;
+	int i, h, y = 0;
+
+/* XXX: add thin red line correction */
+	if (n->backlog->len < 1)
+		return NULL;
+
+	calc_window_dimension(w);
+	click_y -= n->y0;
+
+	if (n->index == EKG_NCURSES_BACKLOG_END) {
+		/* move to first line */
+		h = n->height;
+		for (i = n->backlog->len; h > 0 && --i >= 0; )
+			h -= ncurses_get_backlog_height(w, bl, i);
+
+		if (i < 0)
+			i = 0;
+	} else {
+		i = n->index;
+		h = - n->first_row;
+	}
+
+	for (y = h; i < n->backlog->len && y < click_y; i++)
+		y += ncurses_get_backlog_height(w, bl, i);
+
+	if (click_y > y)
+		return NULL;
+
+	return bl;
+}
 /*
  *
  */
-int ncurses_backlog_add_real(window_t *w, /*locale*/ fstring_t *str) {
-	int i, removed = 0;
+void ncurses_backlog_add_real(window_t *w, /*locale*/ fstring_t *str) {
 	ncurses_window_t *n = w->priv_data;
+	backlog_line_t *b;
 	
 	if (!w)
-		return 0;
+		return;
 
-	if (n->backlog_size == config_backlog_size) {
-		fstring_t *line = n->backlog[n->backlog_size - 1];
-		int i;
+	/* add line */
+	b = xmalloc(sizeof(backlog_line_t));
+	b->line = str;
+	if (w->nowrap)
+		b->height = 1;
 
-		for (i = 0; i < n->lines_count; i++) {
-			if (n->lines[i].backlog == n->backlog_size - 1)
-				removed++;
-		}
+	g_ptr_array_add(n->backlog, b);
 
-		fstring_free(line);
+	/* check backlog length */
+	if (n->backlog->len >= config_backlog_size) {
+		g_ptr_array_remove_index(n->backlog, 0);
 
-		n->backlog_size--;
-	} else 
-		n->backlog = xrealloc(n->backlog, (n->backlog_size + 1) * sizeof(fstring_t *));
+		if (n->index == 0)
+			ncurses_backlog_seek_start(n);
+		else if (n->index > 0)
+			n->index--;
+	}
 
-	memmove(&n->backlog[1], &n->backlog[0], n->backlog_size * sizeof(fstring_t *));
-	n->backlog[0] = str;
-
-	n->backlog_size++;
-
-	for (i = 0; i < n->lines_count; i++)
-		n->lines[i].backlog++;
-
-	return ncurses_backlog_split(w, 0, removed);
+	return;
 }
 
 /**
@@ -333,10 +428,9 @@ int ncurses_backlog_add_real(window_t *w, /*locale*/ fstring_t *str) {
  * @return The return value is going to be changed, thou shalt not rely
  * upon it.
  */
-int ncurses_backlog_add(window_t *w, const fstring_t *str) {
-	return ncurses_backlog_add_real(w, ekg_recode_fstr_to_locale(str));
+void ncurses_backlog_add(window_t *w, const fstring_t *str) {
+	ncurses_backlog_add_real(w, ekg_recode_fstr_to_locale(str));
 }
-
 
 /*
  * changed_backlog_size()
@@ -352,17 +446,59 @@ void changed_backlog_size(const char *var)
 
 	for (w = windows; w; w = w->next) {
 		ncurses_window_t *n = w->priv_data;
-		int i;
-				
-		if (n->backlog_size <= config_backlog_size)
-			continue;
-				
-		for (i = config_backlog_size; i < n->backlog_size; i++)
-			fstring_free(n->backlog[i]);
-
-		n->backlog_size = config_backlog_size;
-		n->backlog = xrealloc(n->backlog, n->backlog_size * sizeof(fstring_t *));
-
-		ncurses_backlog_split(w, 1, 0);
+		if (n->backlog->len > config_backlog_size) {
+			int removed = n->backlog->len - config_backlog_size;
+			g_ptr_array_remove_range(n->backlog, 0, removed);
+			if (n->index == EKG_NCURSES_BACKLOG_END)
+				continue;
+			n->index -= removed;
+			if (n->index < 0)
+				ncurses_backlog_seek_start(n);
+		}
 	}
+}
+
+/*
+ * ncurses_backlog_reset_heights()
+ *
+ */
+void ncurses_backlog_reset_heights(window_t *w, int height) {
+	ncurses_window_t *n = w->priv_data;
+
+	if (!w || !n)
+		return;
+
+	void set_height(gpointer data, gpointer user_data) {
+		backlog_line_t *b = data;
+		
+		b->height = height;
+	}
+
+	g_ptr_array_foreach(n->backlog, set_height, NULL);
+}
+
+
+static void backlog_line_destroy(gpointer data) {
+	backlog_line_t *b = data;
+	fstring_free(b->line);
+	g_free(b);
+}
+/*
+ * ncurses_backlog_new()
+ *
+ */
+void ncurses_backlog_new(window_t *w) {
+	ncurses_window_t *n = w->priv_data;
+	n->backlog = g_ptr_array_new_with_free_func(backlog_line_destroy);
+	ncurses_backlog_seek_end(n);
+}
+/*
+ * ncurses_backlog_destroy()
+ *
+ */
+void ncurses_backlog_destroy(window_t *w) {
+	ncurses_window_t *n = w->priv_data;
+	g_ptr_array_free(n->backlog, TRUE);
+	n->backlog = NULL;
+	ncurses_backlog_seek_start(n);
 }

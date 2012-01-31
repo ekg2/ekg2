@@ -24,8 +24,6 @@
 #endif
 
 #include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
 
 #include "nc-stuff.h"
 #include "bindings.h"
@@ -33,9 +31,6 @@
 #include "input.h"
 #include "mouse.h"
 #include "statusbar.h"
-
-#define MAGIC_ENABLE_MOUSE_SEQUENCE  "\033[?1001s\033[?1000h"
-#define MAGIC_DISABLE_MOUSE_SEQUENCE "\033[?1000l\033[?1001r"
 
 	/* imported bindings */
 BINDING_FUNCTION(binding_previous_only_history);
@@ -328,12 +323,6 @@ static int ncurses_has_mouse_support(const char *term) {
 	return 0;
 }
 
-static void ncurses_emergency_disable_mouse(void)
-{
-	if (mouse_initialized)
-		IGNORE_RESULT(write(1, MAGIC_DISABLE_MOUSE_SEQUENCE, strlen(MAGIC_DISABLE_MOUSE_SEQUENCE)));
-}
-
 /*
  * ncurses_enable_mouse()
  * 
@@ -365,9 +354,8 @@ void ncurses_enable_mouse(const char *env) {
 
 	if (!mouse_initialized) {
 		if ((mouse_initialized = ncurses_has_mouse_support(env))) {
-			printf(MAGIC_ENABLE_MOUSE_SEQUENCE);
+			printf("\033[?1001s\033[?1000h");
 			fflush(stdout);
-			ekg2_register_abort_handler(ncurses_emergency_disable_mouse, &ncurses_plugin);
 		} else
 			debug_error("[ncurses] Mouse in %s terminal is not supported\n", env);
 	}
@@ -393,7 +381,7 @@ void ncurses_disable_mouse(void)
 		watch_remove(&ncurses_plugin, gpm_fd, WATCH_READ);
 	else {		/* if GPM is not used, but we have mouse on, then it's xterm */
 #endif
-		printf(MAGIC_DISABLE_MOUSE_SEQUENCE); /* we would like to disable it if restoring flag won't work */
+		printf("\033[?1000l\033[?1001r"); /* we would like to disable it if restoring flag won't work */
 		fflush(stdout);
 #ifdef HAVE_LIBGPM
 	}

@@ -103,7 +103,7 @@ static inline userlist_t *userlist_dup(userlist_t *up, const char *uid, char *ni
  *
  */
 int ncurses_contacts_update(window_t *w, int save_pos) {
-	int old_start;
+	int old_index;
 
 	const char *header = NULL, *footer = NULL;
 	char *group = NULL;
@@ -127,9 +127,9 @@ int ncurses_contacts_update(window_t *w, int save_pos) {
 	n = w->priv_data;
 
 	if (save_pos)
-		old_start = n->start;
+		old_index = n->index;	// XXX start_from ?
 	else
-		old_start = 0;
+		old_index = 0;
 
 	ncurses_clear(w, 1);
 
@@ -381,13 +381,8 @@ after_loop:
 
 kon:
 /* restore old index */
-	n->start = old_start;
-
-	if (n->start > n->lines_count - w->height + n->overflow)
-		n->start = n->lines_count - w->height + n->overflow;
-
-	if (n->start < 0)
-		n->start = 0;
+	n->index = old_index;
+	n->first_row = 0;
 
 /* redraw */
 	n->redraw = 1;
@@ -467,8 +462,8 @@ void ncurses_contacts_changed(const char *name) {
  */
 void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 {
+	backlog_line_t *bl;
 	window_t *w = window_exist(WINDOW_CONTACTS_ID);
-	ncurses_window_t *n;
 
 	if (mouse_state == EKG_SCROLLED_UP) {
 		binding_helper_scroll(w, -5);
@@ -484,33 +479,10 @@ void ncurses_contacts_mouse_handler(int x, int y, int mouse_state)
 	if (!w || mouse_state != EKG_BUTTON1_DOUBLE_CLICKED)
 		return;
 
-	n = w->priv_data;
-
-	if (!w->nowrap) {
-		/* here new code, should work also with w->nowrap == 1 */
-		y -= 1;		/* ??? */
-
-		if (y < 0 || y >= n->lines_count)
-			return;
-
-		y = n->lines[n->start + y].backlog;
-	} else {
-		/* here old code */
-
-		if (y > n->backlog_size)
-			return;
-
-		y = n->backlog_size - (n->start + y);
-	}
-
-	if (y >= n->backlog_size) {
-		/* error */
-		return;
-	}
-
+	if ((bl = ncurses_backlog_mouse_click(w, y))) {
 		/* (we keep priv_data utf8-encoded) */
-	command_exec_format(NULL, NULL, 0, ("/query \"%s\""), n->backlog[y]->priv_data);
-	return;
+		command_exec_format(NULL, NULL, 0, ("/query \"%s\""), bl->line->priv_data);
+	}
 }
 
 static int ncurses_contacts_update_redraw(window_t *w) { return 0; }
@@ -551,7 +523,7 @@ void ncurses_contacts_set(window_t *w)
 	n->handle_redraw = ncurses_contacts_update_redraw;
 	n->handle_mouse = ncurses_contacts_mouse_handler;
 	w->nowrap = !config_contacts_wrap;
-	n->start = 0;
+	ncurses_backlog_seek_start(n);
 }
 
 /*

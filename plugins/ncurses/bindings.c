@@ -680,35 +680,12 @@ static BINDING_FUNCTION(binding_next_history)
 }
 
 void binding_helper_scroll(window_t *w, int offset) {
-	ncurses_window_t *n;
 
-	if (!w || !(n = w->priv_data))
-		return;
-
-	if (offset < 0) {
-		n->start += offset;
-		if (n->start < 0)
-			n->start = 0;
-
-	} else {
-		n->start += offset;
-
-		if (n->start > n->lines_count - w->height + n->overflow)
-			n->start = n->lines_count - w->height + n->overflow;
-
-		if (n->start < 0)
-			n->start = 0;
-
-	/* old code from: binding_forward_page() need it */
-		if (w == window_current) {
-			if (ncurses_current->start == ncurses_current->lines_count - window_current->height + ncurses_current->overflow) {
-				window_current->more = 0;
-				update_statusbar(0);
-			}
-		}
-	}
+	ncurses_backlog_scroll(w, offset);
 
 	ncurses_redraw(w);
+	if (w == window_current)
+		update_statusbar(0);
 	ncurses_commit();
 }
 

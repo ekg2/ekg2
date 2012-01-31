@@ -197,7 +197,6 @@ static QUERY(ncurses_ui_window_print)
 	const fstring_t *line = *(va_arg(ap, const fstring_t **));
 
 	ncurses_window_t *n;
-	int bottom = 0, prev_count, count = 0;
 
 	if (!(n = w->priv_data)) {
 		/* BUGFIX, cause @ ui-window-print handler (not ncurses plugin one, ncurses plugin one is called last cause of 0 prio)
@@ -210,33 +209,9 @@ static QUERY(ncurses_ui_window_print)
 		}
 	}
 
-	prev_count = n->lines_count;
+	ncurses_backlog_add(w, line);
 
-	if (n->start == n->lines_count - w->height || (n->start == 0 && n->lines_count <= w->height))
-		bottom = 1;
-
-	count = ncurses_backlog_add(w, line);
-
-	if (n->overflow) {
-		n->overflow -= count;
-
-		if (n->overflow < 0) {
-			bottom = 1;
-			n->overflow = 0;
-		}
-	}
-
-	if (bottom)
-		n->start = n->lines_count - w->height;
-	else {
-		if (n->backlog_size == config_backlog_size)
-			n->start -= count - (n->lines_count - prev_count);
-	}
-
-	if (n->start < 0)
-		n->start = 0;
-
-	if (n->start < n->lines_count - w->height)
+	if (n->index != EKG_NCURSES_BACKLOG_END && !n->cleared)
 		w->more = 1;
 
 	if (!w->floating) {
@@ -362,7 +337,7 @@ static QUERY(ncurses_variable_changed)
 		window_t *w;
 
 		for (w = windows; w; w = w->next)
-			ncurses_backlog_split(w, 1, 0);
+			ncurses_backlog_reset_heights(w, w->nowrap);
 
 		ncurses_resize();
 	}
@@ -597,11 +572,12 @@ static COMMAND(ncurses_cmd_dump) {
 
 	n = w->priv_data;
 
-	for (i = n->backlog_size; i; i--) {
-		fstring_t *backlog = n->backlog[i-1];
+	for (i = 0; i<n->backlog->len; i++) {
+		backlog_line_t *backlog = g_ptr_array_index(n->backlog, i);
 		/* XXX, kolorki gdy user chce */
 
-		fprintf(f, "%ld %s\n", backlog->ts, backlog->str);
+		fprintf(f, "%ld %s\n", backlog->line->ts, backlog->line->str);
+
 	}
 
 	fclose(f);
