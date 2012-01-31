@@ -725,7 +725,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	variable_add(&ncurses_plugin, ("margin_size"), VAR_INT, 1, &config_margin_size, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("mark_on_window_change"), VAR_BOOL, 1, &config_mark_on_window_change, NULL, NULL, NULL);
 	variable_add(&ncurses_plugin, ("statusbar_size"), VAR_INT, 1, &config_statusbar_size, header_statusbar_resize, NULL, NULL);
-	variable_add(&ncurses_plugin, ("text_bottomalign"), VAR_INT, 1, &config_text_bottomalign, NULL,
+	variable_add(&ncurses_plugin, ("text_bottomalign"), VAR_INT, 1, &config_text_bottomalign, ncurses_contacts_changed,
 			variable_map(3, 0, 0, "off", 1, 2, "except-floating", 2, 1, "all"), NULL);
 	variable_add(&ncurses_plugin, ("traditional_clear"), VAR_BOOL, 1, &config_traditional_clear, NULL, NULL, NULL);
 
