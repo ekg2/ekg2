@@ -1760,6 +1760,7 @@ void theme_init()
 	/* zmienne, konfiguracja */
 	format_add("variable", "%> %1 = %2\n", 1);
 	format_add("variable_not_found", _("%! Unknown variable: %T%1%n\n"), 1);
+	format_add("variable_no_match", _("%! No variable name matches %T%1%n\n"), 1);
 	format_add("variable_invalid", _("%! Invalid session variable value\n"), 1);
 	format_add("no_config", _("%! Incomplete configuration. Use:\n%!   %Tsession -a <gg:gg-number/xmpp:jabber-id>%n\n%!   %Tsession password <password>%n\n%!   %Tsave%n\n%! And then:\n%!	 %Tconnect%n\n%! If you don't have an account yet, use:\n%!   %Tregister <e-mail> <password>%n\n\n%> %|Query windows will be created automatically. To switch windows press %TAlt-number%n or %TEsc%n and then the number. To start a conversation use %Tquery%n. To add someone to your roster use %Tadd%n. All key shortcuts are described in %TREADME%n. There is also a %Thelp%n command. Remember about prefixes before UID, for example %Tgg:<no>%n. \n\n"), 2);
 	format_add("no_config,speech", _("incomplete configuration. enter session -a, and then gg: gg-number, or xmpp: jabber id, then session password and your password. enter save to save. enter connect to connect. if you do not have an account yet, enter register, space, e-mail and password. Query windows will be created automatically. To switch windows press Alt and window number or Escape and then the number. To start a conversation use query command. To add someone to your roster use add command. All key shortcuts are described in README file. There is also a help command."), 1);
