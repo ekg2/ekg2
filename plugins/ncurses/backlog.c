@@ -351,7 +351,7 @@ void ncurses_backlog_scroll(window_t *w, int offset) {
 backlog_line_t *ncurses_backlog_mouse_click(window_t *w, int click_y) {
 	ncurses_window_t *n = w->priv_data;
 	backlog_line_t *bl = NULL;
-	int i, h, y = 0;
+	int i, h, y;
 
 /* XXX: add thin red line correction */
 	if (n->backlog->len < 1)
@@ -360,18 +360,18 @@ backlog_line_t *ncurses_backlog_mouse_click(window_t *w, int click_y) {
 	calc_window_dimension(w);
 	click_y -= n->y0;
 
-	if (n->index == EKG_NCURSES_BACKLOG_END) {
+	i = n->index;
+
+	if (i == EKG_NCURSES_BACKLOG_END) {
 		/* move to first line */
 		h = n->height;
 		for (i = n->backlog->len; h > 0 && --i >= 0; )
 			h -= ncurses_get_backlog_height(w, bl, i);
 
 		if (i < 0)
-			i = 0;
-	} else {
-		i = n->index;
+			h = i = 0;
+	} else
 		h = - n->first_row;
-	}
 
 	for (y = h; i < n->backlog->len && y < click_y; i++)
 		y += ncurses_get_backlog_height(w, bl, i);
