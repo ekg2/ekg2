@@ -29,10 +29,10 @@ backlog_size
 
 backlog_scroll_half_page
 	type: bool
-	default value: 1
+	default value: 0
 	
-	defines how window is scrolled: if set to 1 (default), window is scrolled
-	for half its size, if set to 0, whole content minus one line is scrolled
+	defines how window is scrolled: if set to 1, window is scrolled for half
+	its size, if set to 0 (default), whole content minus one line is scrolled
 	up or down.
 
 contacts

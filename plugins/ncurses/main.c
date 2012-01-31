@@ -458,7 +458,7 @@ static QUERY(ncurses_setvar_default)
 	config_contacts_metacontacts_swallow = 1;
 
 	config_backlog_size = 1000;	    /* maksymalny rozmiar backloga */
-	config_backlog_scroll_half_page = 1;	    /* tryb przewijania: pó³ ekranu lub ekran bez jednej linii */
+	config_backlog_scroll_half_page = 0;	    /* tryb przewijania: pó³ ekranu lub ekran bez jednej linii */
 	config_display_transparent = 1;     /* czy chcemy przezroczyste t³o? */
 	config_kill_irc_window = 1;	    /* czy zamykaæ kana³y ircowe przez alt-k? */
 	config_statusbar_size = 1;

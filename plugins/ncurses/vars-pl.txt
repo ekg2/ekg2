@@ -30,10 +30,10 @@ backlog_size
 
 backlog_scroll_half_page
 	typ: bool
-	domyślna wartość: 1
+	domyślna wartość: 0
 	
-	określa, w jaki sposób ma być przewijane okienko: jeśli jest równe 1
-	(domyślnie), przewijane jest o pół ekranu, jeśli 0, o cały ekran
+	określa, w jaki sposób ma być przewijane okienko: jeśli jest równe 1,
+	przewijane jest o pół ekranu, jeśli 0 (domyślnie), o cały ekran
 	bez jednej linii.
 
 contacts
