@@ -69,11 +69,13 @@ sub shortenline() {
     Ekg2::debug("LENGTH-> $length\n")       if ($debug);
     Ekg2::debug("TIMEOUT-> $timeout\n")     if ($debug);
 
+    Ekg2::command_exec( '', Ekg2::session_find($session), "/query $uid" ) unless Ekg2::window_find($uid);
+    my $window = Ekg2::window_find($uid);
+
     while ( $ptext =~ m|(http.*?://([^\s)\"](?!ttp:))+)|g ) {
         my $url = $&;
         Ekg2::debug("DETECTED URL-> $url\n") if ($debug);
 
-        my $window = Ekg2::window_find($uid);
         Ekg2::debug( "URL-> URLLENGTH: " . length($url) . " LENGTH: $length\n" ) if ($debug);
         if ( length($url) > $length ) {
             Ekg2::debug("URL-> LONGER\n") if ($debug);
