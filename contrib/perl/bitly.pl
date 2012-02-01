@@ -58,14 +58,12 @@ sub bitly() {
 }
 
 sub shortenline() {
-    my ( $session, $uid, $rcpts, $ptext, $format, $sent ) = map $$_, @_;
+    my ( $session, $uid, $rcpts, $ptext ) = map $$_, @_;
 
     Ekg2::debug("SESSION-> $session\n")     if ($debug);
     Ekg2::debug("UID-> $uid\n")             if ($debug);
     Ekg2::debug("RCPTS-> $rcpts\n")         if ($debug);
     Ekg2::debug("PTEXT-> $ptext\n")         if ($debug);
-    Ekg2::debug("FORMAT-> $format\n")       if ($debug);
-    Ekg2::debug("SENT-> $sent\n")           if ($debug);
     Ekg2::debug("APIKEY-> $bitly_apikey\n") if ($debug);
     Ekg2::debug("LOGIN-> $bitly_login\n")   if ($debug);
     Ekg2::debug("LENGTH-> $length\n")       if ($debug);
