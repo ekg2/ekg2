@@ -52,7 +52,6 @@ sub bitly() {
     }
     else {
         my $errstr = $response->status_line;
-        Ekg2::debug("An error occurred while making the HTTP Request: $errstr\n") if ($debug);
         Ekg2::Window::print( $window, "An error occurred while making the HTTP Request: $errstr\n" );
     }
 }
