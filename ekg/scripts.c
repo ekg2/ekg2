@@ -572,8 +572,6 @@ script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *v
 	if (tmp) {
 		tmp->scr = scr;
 		tmp->priv_data = handler;
-		if (in_autoexec) /* i think it is enough, not tested. */
-			variable_set(name, value);
 	} else if (!tmp) {
 		SCRIPT_BIND_HEADER(script_var_t);
 		temp->name  = xstrdup(name);
@@ -915,20 +913,18 @@ static int scripts_autoload(scriptlang_t *scr)
 	debug("[SCRIPTS_AUTOLOAD] DONE: (re)loaded %d scripts\n", i);
 	return i;
 }
-#if 0
+
 int script_postinit(void *data, va_list ap)
 {
 	return scripts_autoload(NULL);
 }
-#endif
+
 int scripts_init()
 {
 	script_variables_read();
-#if 0
+
 	query_connect(NULL, "config-postinit",	   script_postinit, NULL);
-#else
-	scripts_autoload(NULL);
-#endif
+
 	return 0;
 }
 
