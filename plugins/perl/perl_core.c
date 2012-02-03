@@ -348,9 +348,9 @@ int perl_timer_unbind(script_timer_t *stimer)
 	return script_timer_unbind(stimer, 1);
 }
 
-script_var_t *perl_variable_add(char *var, char *value, char *handler)
+script_var_t *perl_variable_add(char *var, int type, char *value, char *handler)
 {
-	return script_var_add(&perl_lang, perl_caller(), var, value, xstrdup(handler));
+	return script_var_add_full(&perl_lang, perl_caller(), var, type, value, xstrdup(handler));
 }
 
 void *perl_watch_add(int fd, int type, void *handler, void *data)

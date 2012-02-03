@@ -15,16 +15,39 @@ PPCODE:
 
 Ekg2::Variable variable_add_ext(char *name, char *value, char *handler)
 CODE:
-        RETVAL = perl_variable_add(name, value, handler)->self;
+        RETVAL = perl_variable_add(name, VAR_STR, value, handler)->self;
 OUTPUT:
 	RETVAL
 	
 Ekg2::Variable variable_add(char *name, char *value)
 CODE:
-	RETVAL = perl_variable_add(name, value, NULL)->self;
+	RETVAL = perl_variable_add(name, VAR_STR, value, NULL)->self;
 OUTPUT:
 	RETVAL
 		
+Ekg2::Variable variable_add_bool_ext(char *name, char *value, char *handler)
+CODE:
+	RETVAL = perl_variable_add(name, VAR_BOOL, value, handler)->self;
+OUTPUT:
+	RETVAL
+
+Ekg2::Variable variable_add_bool(char *name, char *value)
+CODE:
+	RETVAL = perl_variable_add(name, VAR_BOOL, value, NULL)->self;
+OUTPUT:
+	RETVAL
+
+Ekg2::Variable variable_add_int_ext(char *name, char *value, char *handler)
+CODE:
+	RETVAL = perl_variable_add(name, VAR_INT, value, handler)->self;
+OUTPUT:
+	RETVAL
+
+Ekg2::Variable variable_add_int(char *name, char *value)
+CODE:
+	RETVAL = perl_variable_add(name, VAR_INT, value, NULL)->self;
+OUTPUT:
+	RETVAL
 
 #*******************************
 MODULE = Ekg2::Variable	PACKAGE = Ekg2::Variable  PREFIX = variable_

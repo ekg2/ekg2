@@ -565,22 +565,28 @@ int script_var_unbind(script_var_t *temp, int free)
 
 /****************************************************************************************************/
 
-script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *value, void *handler)
+script_var_t *script_var_add_full(scriptlang_t *s, script_t *scr, char *name, int type, char *value, void *handler)
 {
 	script_var_t *tmp;
 	tmp = script_var_find(name);
 	if (tmp) {
 		tmp->scr = scr;
 		tmp->priv_data = handler;
+		tmp->self->type = type;
 	} else if (!tmp) {
 		SCRIPT_BIND_HEADER(script_var_t);
 		temp->name  = xstrdup(name);
 		temp->value = xstrdup(value);
-		temp->self = variable_add(NULL, name, VAR_STR, 1, &(temp->value), &script_var_changed, NULL, NULL);
+		temp->self = variable_add(NULL, name, type, 1, &(temp->value), &script_var_changed, NULL, NULL);
 		SCRIPT_BIND_FOOTER(script_vars);
 	} 
 	
 	return tmp;
+}
+
+script_var_t *script_var_add(scriptlang_t *s, script_t *scr, char *name, char *value, void *handler)
+{
+	return script_var_add_full(s, scr, name, VAR_STR, value, handler);
 }
 
 script_command_t *script_command_bind(scriptlang_t *s, script_t *scr, char *command, char *params, char *possibilities, void *handler) 

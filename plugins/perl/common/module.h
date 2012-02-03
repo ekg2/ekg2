@@ -39,7 +39,7 @@ typedef userlist_t	*Ekg2__Userlist;
 typedef session_param_t *Ekg2__Session__Param;
 typedef script_t	*Ekg2__Script;
 
-script_var_t *perl_variable_add(char *var, char *value, char *handler);
+script_var_t *perl_variable_add(char *var, int type, char *value, char *handler);
 void *perl_watch_add(int fd, int type, void *handler, void *data);
 void *perl_handler_bind(char *query_name, char *handler);
 void *perl_command_bind(char *command, char *params, char *poss, char *handler);
