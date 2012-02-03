@@ -572,12 +572,37 @@ script_var_t *script_var_add_full(scriptlang_t *s, script_t *scr, char *name, in
 	if (tmp) {
 		tmp->scr = scr;
 		tmp->priv_data = handler;
-		tmp->self->type = type;
+		if ( (tmp->self->type == VAR_STR) && ((type == VAR_INT) || (type == VAR_BOOL)) ) {
+			/* Convert from string values */
+			variable_t *var = tmp->self;
+			int *ival = xmalloc(sizeof(int));
+			if (tmp->value && *(tmp->value))
+				*ival = atoi(tmp->value);
+			if (type == VAR_BOOL)
+				*ival &= 1;
+			g_free(tmp->value);
+			var->ptr = tmp->value = (char*)(ival);
+			tmp->self->type = type;
+		}
 	} else if (!tmp) {
+		void *pVar;
 		SCRIPT_BIND_HEADER(script_var_t);
+
 		temp->name  = xstrdup(name);
-		temp->value = xstrdup(value);
-		temp->self = variable_add(NULL, name, type, 1, &(temp->value), &script_var_changed, NULL, NULL);
+
+		if ((type == VAR_INT) || (type == VAR_BOOL)) {
+			int *ival = xmalloc(sizeof(int));
+			if (value && *value)
+				*ival = atoi(value);
+			if (type == VAR_BOOL)
+				*ival &= 1;
+			pVar = temp->value = (char*)(ival);
+		} else {
+			temp->value = xstrdup(value);
+			pVar = &(temp->value);
+		}
+
+		temp->self = variable_add(NULL, name, type, 1, pVar, &script_var_changed, NULL, NULL);
 		SCRIPT_BIND_FOOTER(script_vars);
 	} 
 	
