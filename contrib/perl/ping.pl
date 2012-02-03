@@ -4,7 +4,7 @@ use strict;
 
 our $VERSION = '0.01';
 our %EKG2 = (
-	authors     => 'Wies³aw Ochmiñski',
+	authors     => 'WiesÅ‚aw OchmiÅ„ski',
 	contact     => 'wiechu@wiechu.com',
 	name        => 'ping',
 	description => 'Ping irc servers.',
@@ -76,7 +76,7 @@ sub ping_timer() {
 		next unless $session->{connected};
 		
 		my $t = Time::HiRes::gettimeofday;
-		Ekg2::command_exec( '', Ekg2::session_find($session), "/quote ping $t" )
+		Ekg2::command_exec( '', $session, "/quote ping $t" )
 	}
 }
 
