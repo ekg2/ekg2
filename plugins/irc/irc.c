@@ -1754,8 +1754,16 @@ static COMMAND(irc_command_query) {
 		     * that to be clearly visible
 		     */
 
-	if (params[0] && (tmp = xstrrchr(params[0], '/'))) {
-		tmp++;
+	if (p[0] && (tmp = xstrrchr(p[0], '/'))) {
+		session_t *s;
+
+		*tmp++ = 0;
+
+		if ((s = session_find(p[0])) && (s != session)) {
+			command_exec_format(NULL, s, 0, ("/query \"%s\""), tmp);
+			g_strfreev(p);
+			return -1;
+		}
 
 		xfree(p[0]);
 		p[0] = xstrdup(tmp);
