@@ -1148,8 +1148,6 @@ COMMAND(session_command)
 
 	if (match_arg(params[0], 'g', ("get"), 2)) {	/* /session --get [session uid] <variable name> */
 		const char *key;	/* variable name */
-		const char *var;	/* variable value */
-		int paid;		/* `plugin params id`, if it's _global_ session variable */
 
 		char *tmp = NULL;
 
@@ -1173,20 +1171,7 @@ COMMAND(session_command)
 			return -1;
 		}
 
-		/* emulate session_get() */
-		if (!xstrcasecmp(key, "uid"))		var = session_uid_get(s);
-		else if (!xstrcasecmp(key, "alias"))	var = session_alias_get(s);
-		else if (!xstrcasecmp(key, "descr"))	var = session_descr_get(s);
-		else if (!xstrcasecmp(key, "status"))	var = ekg_status_string(session_status_get(s), 2);
-		else if (!xstrcasecmp(key, "statusdescr"))	return 0; /* workaround to disable display, XXX? */
-		else if (!xstrcasecmp(key, "password")) { var = s->password ? "(...)" : NULL; }
-		else if ((paid = plugin_var_find(s->plugin, key))) {
-			plugins_params_t *pa = PLUGIN_VAR_FIND_BYID(s->plugin, paid);
-
-			var = s->values[paid-1];
-			if (pa->secret)
-				var = var ? "(...)" : NULL;
-		} else {
+		if (!session_variable_display(session, key, quiet)) {
 		/* XXX, idea, here we can do: session_localvar_find() to check if this is _local_ variable, and perhaps print other info.. 
 		 *	The same at --set ? 
 		 */
@@ -1194,7 +1179,6 @@ COMMAND(session_command)
 			return -1;
 		}
 
-		printq("session_variable", session_name(s), key, (var) ? var : (tmp = format_string(format_find("value_none"))));
 		xfree(tmp);
 		return 0;
 	}
@@ -1449,22 +1433,8 @@ COMMAND(session_command)
 		xfree(tmp);
 
 		if (p) {
-			tmp = format_string(format_find("value_none"));
-
-			for (i = 0; (p->params[i].key /* && p->params[i].id != -1*/); i++) {
-				plugins_params_t *sp = &(p->params[i]);
-
-				if (!xstrcmp(sp->key, "alias"));
-				else if (!xstrcmp(sp->key, "password"))
-					printq("session_info_param", sp->key, s->password ? "(...)" : tmp);
-				else {
-					if (sp->secret)
-						printq("session_info_param", sp->key, s->values[i] ? "(...)" : tmp);
-					else
-						printq("session_info_param", sp->key, s->values[i] ? s->values[i] : tmp);
-				}
-			}
-			xfree(tmp);
+			for (i = 0; p->params[i].key; i++)
+				session_variable_info(session, p->params[i].key, quiet);
 		} else printq("generic_error", "Internal fatal error, plugin somewhere disappear. Report this bug");
 
 		printq("session_info_footer", s->uid);

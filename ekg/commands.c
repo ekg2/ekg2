@@ -1673,7 +1673,6 @@ static COMMAND(cmd_set)
 
 		for (vl = variables; vl; vl = vl->next) {
 			variable_t *v = vl->data;
-			int value;
 			int found = 0;
 			
 			if (arg) {
@@ -1690,71 +1689,7 @@ static COMMAND(cmd_set)
 				if (!show_all && !arg && v->dyndisplay && !((v->dyndisplay)(v->name)))
 					continue;
 
-				if (!v->display) {
-					printq("variable", v->name, ("(...)"));
-					displayed = 1;
-					continue;
-				}
-
-				if (v->type == VAR_STR || v->type == VAR_FILE || v->type == VAR_DIR || v->type == VAR_THEME) {
-					char *string = *(char**)(v->ptr);
-					char *tmp = (string) ? saprintf(("\"%s\""), string) : ("(none)");
-
-					printq("variable", v->name, tmp);
-					
-					if (string)
-						xfree(tmp);
-				}
-
-				/* We delay variable initialization until the
-				 * type is known to be such that is properly
-				 * aligned for reading an int.
-				 */
-				value = *(int*)(v->ptr);
-
-				if (v->type == VAR_BOOL)
-					printq("variable", v->name, (value) ? ("1 (on)") : ("0 (off)"));
-				
-				if ((v->type == VAR_INT || v->type == VAR_MAP) && !v->map)
-					printq("variable", v->name, ekg_itoa(value));
-
-				if (v->type == VAR_INT && v->map) {
-					char *tmp = NULL;
-					int i;
-
-					for (i = 0; v->map[i].label; i++)
-						if (v->map[i].value == value) {
-							tmp = saprintf(("%d (%s)"), value, v->map[i].label);
-							break;
-						}
-
-					if (!tmp)
-						tmp = saprintf(("%d"), value);
-
-					printq("variable", v->name, tmp);
-
-					xfree(tmp);
-				}
-
-				if (v->type == VAR_MAP && v->map) {
-					string_t s = string_init(ekg_itoa(value));
-					int i, first = 1;
-
-					for (i = 0; v->map[i].label; i++) {
-						if ((value & v->map[i].value) || (!value && !v->map[i].value)) {
-							string_append(s, (first) ? (" (") : (","));
-							first = 0;
-							string_append(s, v->map[i].label);
-						}
-					}
-
-					if (!first)
-						string_append_c(s, (')'));
-
-					printq("variable", v->name, s->str);
-
-					string_free(s, 1);
-				}
+				variable_display(v, quiet);
 
 				displayed = 1;
 			}

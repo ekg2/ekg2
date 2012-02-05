@@ -47,6 +47,7 @@
 #include "plugins.h"
 #include "sessions.h"
 #include "userlist.h"
+#include "vars.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -323,6 +324,9 @@ int ekg_converters_display(int quiet);
 char *password_input(const char *prompt, const char *rprompt, const bool norepeat);
 int is_utf8_string(const char *txt);
 
+void variable_display(variable_t *v, int quiet);
+int session_variable_display(session_t *s, const char *name, int quiet);
+void session_variable_info(session_t *s, const char *name, int quiet);
 
 /* funkcje poza stuff.c */
 void ekg_exit();
