@@ -2665,7 +2665,7 @@ static variable_t *get_fake_sess_variable(session_t *s, const char *name) {
 			val = s->values[id-1];
 
 		if (pa->secret)
-			var->display = 0;
+			display = 0;
 	} else
 		return NULL;
 
