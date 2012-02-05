@@ -48,7 +48,6 @@ int ncurses_noecho = 0;
 
 gchar *ncurses_hellip;
 
-#if 0
 static char ncurses_funnything[5] = "|/-\\";
 
 CHAR_T *ncurses_passbuf;
@@ -117,7 +116,6 @@ QUERY(ncurses_password_input) {
 
 	return -1;
 }
-#endif
 
 /* cut prompt to given width and recalculate its' width */
 void ncurses_update_real_prompt(ncurses_window_t *n) {
@@ -541,18 +539,14 @@ void ncurses_redraw_input(unsigned int ch) {
 				mvwaddch(input, MULTILINE_INPUT_SIZE-1, input->_maxx, 'v');
 			wattrset(input, A_NORMAL);
 		} else {
-#if 0
 			if (ncurses_noecho) {
 				static char *funnything	= ncurses_funnything;
 
-				waddch(input, ' ');		/* XXX why here? If you want to add space after propt, add it in theme */
 				waddch(input, *funnything);
-				wmove(input, 0, getcurx(input)-1);
 				if (!*(++funnything))
 					funnything = ncurses_funnything;
 				return;
 			}
-#endif
 
 			cur_posx = ncurses_redraw_input_line(ncurses_line);
 

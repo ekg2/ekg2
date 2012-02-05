@@ -6,6 +6,8 @@ extern CHAR_T *ncurses_passbuf;
 
 #define input ncurses_input
 
+QUERY(ncurses_password_input);
+
 void ncurses_input_update(int new_line_index);
 void ncurses_lines_adjust(void);
 #define lines_adjust ncurses_lines_adjust

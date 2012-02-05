@@ -62,8 +62,6 @@ int ncurses_plugin_destroyed;
 const char *ncurses_settitle_formats[3] = { NULL, "\e]0;%s%s%s\a", "\e_%s%s%s\e\\" };
 static int ncurses_settitle = 0;
 
-QUERY(ncurses_password_input); /* nc-stuff.c */
-
 	/* XXX: any need for random arguments? */
 static void ncurses_set_title(const gchar* a, const gchar* b, const gchar* c) {
 		/* XXX: recode? */
@@ -661,9 +659,7 @@ EXPORT int ncurses_plugin_init(int prio)
 	query_connect(&ncurses_plugin, "ui-window-refresh", ncurses_ui_window_refresh, NULL);
 	query_connect(&ncurses_plugin, "ui-window-clear", ncurses_ui_window_clear, NULL);
 	query_connect(&ncurses_plugin, "ui-refresh", ncurses_ui_refresh, NULL);
-#if 0
 	query_connect(&ncurses_plugin, "ui-password-input", ncurses_password_input, NULL);
-#endif
 	query_connect(&ncurses_plugin, "session-added", ncurses_statusbar_query, NULL);
 	query_connect(&ncurses_plugin, "session-removed", ncurses_statusbar_query, NULL);
 	query_connect(&ncurses_plugin, "session-event", ncurses_statusbar_query, NULL);

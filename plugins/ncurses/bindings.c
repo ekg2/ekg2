@@ -243,7 +243,6 @@ static BINDING_FUNCTION(binding_accept_line)
 {
 	char *p, *txt;
 
-#if 0
 	if (ncurses_noecho) { /* we are running ui-password-input */
 		ncurses_noecho = 0;
 		ncurses_passbuf = xwcsdup(line);
@@ -251,7 +250,6 @@ static BINDING_FUNCTION(binding_accept_line)
 		line_index = line_start = 0;
 		return;
 	}
-#endif
 
 	if (lines) {
 		int i;
@@ -308,12 +306,11 @@ static BINDING_FUNCTION(binding_accept_line)
 
 static BINDING_FUNCTION(binding_line_discard)
 {
-#if 0
 	if (!ncurses_noecho) { /* we don't want to yank passwords */
 		xfree(yanked);
 		yanked = xwcsdup(line);
 	}
-#endif
+
 	*line = 0;
 	line_index = line_start = 0;
 
