@@ -1171,7 +1171,7 @@ COMMAND(session_command)
 			return -1;
 		}
 
-		if (!session_variable_display(session, key, quiet)) {
+		if (!session_variable_display(s, key, quiet)) {
 		/* XXX, idea, here we can do: session_localvar_find() to check if this is _local_ variable, and perhaps print other info.. 
 		 *	The same at --set ? 
 		 */
@@ -1434,7 +1434,7 @@ COMMAND(session_command)
 
 		if (p) {
 			for (i = 0; p->params[i].key; i++)
-				session_variable_info(session, p->params[i].key, quiet);
+				session_variable_info(s, p->params[i].key, quiet);
 		} else printq("generic_error", "Internal fatal error, plugin somewhere disappear. Report this bug");
 
 		printq("session_info_footer", s->uid);
