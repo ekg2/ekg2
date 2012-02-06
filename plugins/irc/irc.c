@@ -1887,8 +1887,19 @@ char *nickpad_string_restore(channel_t *chan)
 /*									 *
  * ======================================== INIT/DESTROY --------------- *
  *									 */
+#define VAR_MAP_ADD(v, c, l)	{ l, v, c }
+#define VAR_MAP_END()		{ NULL, 0, 0 }
 
 #define params(x) x
+#include <ekg/vars.h>
+
+static variable_map_t ban_type_map[] = {
+		VAR_MAP_ADD( 1, 0, "nick"),
+		VAR_MAP_ADD( 2, 0, "user"),
+		VAR_MAP_ADD( 3, 0, "host"),
+		VAR_MAP_ADD( 4, 0, "domain"),
+		VAR_MAP_END()
+	};
 
 static plugins_params_t irc_plugin_vars[] = {
 	/* lower case: names of variables that reffer to client itself */
@@ -1903,7 +1914,7 @@ static plugins_params_t irc_plugin_vars[] = {
 	PLUGIN_VAR_ADD("auto_channel_sync",	VAR_BOOL, "1", 0, NULL),		/* like channel_sync in irssi; better DO NOT turn it off! */
 	PLUGIN_VAR_ADD("auto_lusers_sync",	VAR_BOOL, "0", 0, NULL),		/* sync lusers, stupid ;(,  G->dj: well why ? */
 	PLUGIN_VAR_ADD("away_log",		VAR_BOOL, "1", 0, NULL),
-	PLUGIN_VAR_ADD("ban_type",		VAR_INT, "10", 0, NULL),
+	PLUGIN_VAR_ADD_MAP("ban_type",		VAR_MAP, "10", 0, NULL, ban_type_map ),
 	PLUGIN_VAR_ADD("connect_timeout",	VAR_INT, "0", 0, NULL),
 	PLUGIN_VAR_ADD("close_windows",		VAR_BOOL, "0", 0, NULL),
 	PLUGIN_VAR_ADD("dcc_port",		VAR_INT, "0", 0, NULL),
