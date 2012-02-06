@@ -39,7 +39,7 @@ typedef enum {
 	VAR_THEME		/* theme */
 } variable_class_t;
 
-typedef struct {
+typedef struct variable_map_t {
 	char *label;		/* nazwa warto¶ci */
 	int value;		/* warto¶æ */
 	int conflicts;		/* warto¶ci, z którymi koliduje */

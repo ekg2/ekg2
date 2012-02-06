@@ -2644,36 +2644,37 @@ void variable_display(variable_t *v, int quiet) {
 static variable_t *get_fake_sess_variable(session_t *s, const char *name) {
 	static int fake_int_value;
 	const char *val;
-	void *ptr = &val;
-	variable_t *var;
-	int id, display = 1, type = VAR_STR;
+	variable_t *var = g_malloc0(sizeof(variable_t));
+	int id;
+
+	var->name = (char *)name;
+	var->type = VAR_STR;
+	var->display = 1;
+	var->ptr = &val;
 
 	/* emulate session_get() */
 	if (!xstrcasecmp(name, "uid"))		val = session_uid_get(s);
 	else if (!xstrcasecmp(name, "alias"))	val = session_alias_get(s);
 	else if (!xstrcasecmp(name, "descr"))	val = session_descr_get(s);
-	else if (!xstrcasecmp(name, "status"))	{ type = -1; val = ekg_status_string(session_status_get(s), 2); }
-	else if (!xstrcasecmp(name, "statusdescr")) display = 2;
-	else if (!xstrcasecmp(name, "password")) display = 0;
+	else if (!xstrcasecmp(name, "status"))	{ var->type = -1; val = ekg_status_string(session_status_get(s), 2); }
+	else if (!xstrcasecmp(name, "statusdescr")) var->display = 2;
+	else if (!xstrcasecmp(name, "password")) var->display = 0;
 	else if ((id = plugin_var_find(s->plugin, name))) {
 		plugins_params_t *pa = &(((plugin_t *) s->plugin)->params[id-1]);
-		type = pa->type;
-		if ((type == VAR_INT) || (type == VAR_BOOL) || (type == VAR_MAP)) {
+		var->type = pa->type;
+		var->map = pa->map;
+		if ((var->type == VAR_INT) || (var->type == VAR_BOOL) || (var->type == VAR_MAP)) {
 			fake_int_value = s->values[id-1] ? atoi(s->values[id-1]) : 0;
-			ptr = &fake_int_value;
+			var->ptr = &fake_int_value;
 		} else
 			val = s->values[id-1];
 
 		if (pa->secret)
-			display = 0;
-	} else
+			var->display = 0;
+	} else {
+		g_free(var);
 		return NULL;
-
-	var = g_malloc0(sizeof(variable_t));
-	var->name = (char *)name;
-	var->type = type;
-	var->display = display;
-	var->ptr = ptr;
+	}
 
 	return var;
 }
