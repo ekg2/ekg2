@@ -121,23 +121,36 @@ void ekg_source_remove(ekg_source_t s) {
  * used only with a single source type.
  */
 
-gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
-	gboolean ret = FALSE;
+struct source_remove_data {
+	gpointer data;
+	const gchar *name;
+	gboolean *ret;
+};
 
-	void source_remove_by_h(gpointer data, gpointer user_data) {
-		struct ekg_source *s = data;
+struct source_find_data {
+	gpointer data;
+	const gchar *name;
+};
 
-		if (s->handler.as_void == handler) {
-			if (!name || G_UNLIKELY(!strcasecmp(s->name, name))) {
-				ekg_source_remove(s);
-				ret = TRUE;
-			}
+static void source_remove_by_h(gpointer data, gpointer user_data) {
+	struct ekg_source *s = data;
+	struct source_remove_data *args = user_data;
+
+	if (s->handler.as_void == args->data) {
+		if (!args->name || G_UNLIKELY(!strcasecmp(s->name, args->name))) {
+			ekg_source_remove(s);
+			*args->ret = TRUE;
 		}
 	}
+}
 
-	g_slist_foreach(timers, source_remove_by_h, NULL);
+gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
+	gboolean ret = FALSE;
+	struct source_remove_data args = { handler, name, &ret };
+
+	g_slist_foreach(timers, source_remove_by_h, &args);
 	if (G_UNLIKELY(!ret))
-		g_slist_foreach(children, source_remove_by_h, NULL);
+		g_slist_foreach(children, source_remove_by_h, &args);
 	return ret;
 }
 
@@ -156,22 +169,25 @@ gboolean ekg_source_remove_by_handler(gpointer handler, const gchar *name) {
  * that either one doesn't reuse the same private data with different
  * source types or expects to remove all of them at once.
  */
-gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name) {
-	gboolean ret = FALSE;
 
-	void source_remove_by_d(gpointer data, gpointer user_data) {
-		struct ekg_source *s = data;
+static void source_remove_by_d(gpointer data, gpointer user_data) {
+	struct ekg_source *s = data;
+	struct source_remove_data *args = user_data;
 
-		if (s->priv_data == priv_data) {
-			if (!name || G_UNLIKELY(!strcasecmp(s->name, name))) {
-				ekg_source_remove(s);
-				ret = TRUE;
-			}
+	if (s->priv_data == args->data) {
+		if (!args->name || G_UNLIKELY(!strcasecmp(s->name, args->name))) {
+			ekg_source_remove(s);
+			*args->ret = TRUE;
 		}
 	}
+}
 
-	g_slist_foreach(children, source_remove_by_d, NULL);
-	g_slist_foreach(timers, source_remove_by_d, NULL);
+gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name) {
+	gboolean ret = FALSE;
+	struct source_remove_data args = { priv_data, name, &ret };
+
+	g_slist_foreach(children, source_remove_by_d, &args);
+	g_slist_foreach(timers, source_remove_by_d, &args);
 	return ret;
 }
 
@@ -186,31 +202,34 @@ gboolean ekg_source_remove_by_data(gpointer priv_data, const gchar *name) {
  *
  * @return TRUE if any source found, FALSE otherwise.
  */
-gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name) {
-	gboolean ret = FALSE;
 
-	void source_remove_by_p(gpointer data, gpointer user_data) {
-		struct ekg_source *s = data;
+static void source_remove_by_p(gpointer data, gpointer user_data) {
+	struct ekg_source *s = data;
+	struct source_remove_data *args = user_data;
 
-		if (s->plugin == plugin) {
-			if (!name || G_UNLIKELY(!strcasecmp(s->name, name))) {
-				ekg_source_remove(s);
-				ret = TRUE;
-			}
+	if (s->plugin == args->data) {
+		if (!args->name || G_UNLIKELY(!strcasecmp(s->name, args->name))) {
+			ekg_source_remove(s);
+			*args->ret = TRUE;
 		}
 	}
+}
 
-	g_slist_foreach(children, source_remove_by_p, NULL);
-	g_slist_foreach(timers, source_remove_by_p, NULL);
+gboolean ekg_source_remove_by_plugin(plugin_t *plugin, const gchar *name) {
+	gboolean ret = FALSE;
+	struct source_remove_data args = { plugin, name, &ret };
+
+	g_slist_foreach(children, source_remove_by_p, &args);
+	g_slist_foreach(timers, source_remove_by_p, &args);
 	return ret;
 }
 
-void sources_destroy(void) {
-	void source_remove(gpointer data, gpointer user_data) {
-		struct ekg_source *s = data;
-		ekg_source_remove(s);
-	}
+static void source_remove(gpointer data, gpointer user_data) {
+	struct ekg_source *s = data;
+	ekg_source_remove(s);
+}
 
+void sources_destroy(void) {
 	g_slist_foreach(children, source_remove, NULL);
 	g_slist_foreach(timers, source_remove, NULL);
 }
@@ -425,36 +444,41 @@ gint timer_remove(plugin_t *plugin, const gchar *name) {
 	return (ekg_source_remove_by_plugin(plugin, name) ? 0 : -1);
 }
 
+gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
+	const struct ekg_source *t = li;
+	const struct source_find_data *args = ui;
+
+	return !(t->priv_data == args->data && !xstrcmp(args->name, t->name));
+}
+
 ekg_timer_t timer_find_session(session_t *session, const gchar *name) {
+	struct source_find_data args = { session, name };
+
 	if (!session)
 		return NULL;
 
-	gint timer_find_session_cmp(gconstpointer li, gconstpointer ui) {
-		const struct ekg_source *t = li;
+	return (ekg_timer_t) g_slist_find_custom(timers, &args, timer_find_session_cmp);
+}
 
-		return !(t->priv_data == session && !xstrcmp(name, t->name));
+static void timer_remove_session_iter(gpointer data, gpointer user_data) {
+	struct ekg_source *t = data;
+	struct source_remove_data *args = user_data;
+
+	if (t->priv_data == args->data && !xstrcmp(args->name, t->name)) {
+		ekg_source_remove(t);
+		*args->ret = TRUE;
 	}
-
-	return (ekg_timer_t) g_slist_find_custom(timers, NULL, timer_find_session_cmp);
 }
 
 gint timer_remove_session(session_t *session, const gchar *name) {
-	gint removed = 0;
+	gboolean removed = FALSE;
+	struct source_remove_data args = { session, name, &removed };
 
 	if (!session)
 		return -1;
 	g_assert(session->plugin);
 
-	void timer_remove_session_iter(gpointer data, gpointer user_data) {
-		struct ekg_source *t = data;
-
-		if (t->priv_data == session && !xstrcmp(name, t->name)) {
-			ekg_source_remove(t);
-			removed++;
-		}
-	}
-
-	g_slist_foreach(timers, timer_remove_session_iter, NULL);
+	g_slist_foreach(timers, timer_remove_session_iter, &args);
 	return ((removed) ? 0 : -1);
 }
 
@@ -534,14 +558,15 @@ static inline gint timer_match_name(gconstpointer li, gconstpointer ui) {
  * Command helpers
  */
 
+static void child_print(gpointer data, gpointer user_data) {
+	struct ekg_source *c = data;
+	gint quiet = *((gint*) user_data);
+
+	printq("process", ekg_itoa(c->details.as_child.pid), c->name ? c->name : "?");
+}
+
 gint ekg_children_print(gint quiet) {
-	void child_print(gpointer data, gpointer user_data) {
-		struct ekg_source *c = data;
-
-		printq("process", ekg_itoa(c->details.as_child.pid), c->name ? c->name : "?");
-	}
-
-	g_slist_foreach(children, child_print, NULL);
+	g_slist_foreach(children, child_print, &quiet);
 
 	if (!children) {
 		printq("no_processes");
@@ -550,31 +575,31 @@ gint ekg_children_print(gint quiet) {
 	return 0;
 }
 
+static void timer_debug_print(gpointer data, gpointer user_data) {
+	struct ekg_source *t = data;
+	const gchar *plugin;
+	gchar *tmp;
+	gint quiet = *((gint*) user_data);
+	char buf[256];
+
+	if (t->plugin)
+		plugin = t->plugin->name;
+	else
+		plugin = "-";
+
+	tmp = timer_next_call(t);
+
+	/* XXX: pointer truncated */
+	snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8" G_GINT64_MODIFIER "u %.8x %-20s", plugin, t->name, t->details.as_timer.persist, t->details.as_timer.interval, GPOINTER_TO_UINT(t->handler.as_old_timer), tmp);
+	printq("generic", buf);
+	g_free(tmp);
+}
+
 COMMAND(cmd_debug_timers) {
 /* XXX, */
-	char buf[256];
-	
 	printq("generic_bold", ("plugin      name               pers peri     handler  next"));
-	
-	void timer_debug_print(gpointer data, gpointer user_data) {
-		struct ekg_source *t = data;
-		const gchar *plugin;
-		gchar *tmp;
-			
-		if (t->plugin)
-			plugin = t->plugin->name;
-		else
-			plugin = "-";
 
-		tmp = timer_next_call(t);
-
-		/* XXX: pointer truncated */
-		snprintf(buf, sizeof(buf), "%-11s %-20s %-2d %-8" G_GINT64_MODIFIER "u %.8x %-20s", plugin, t->name, t->details.as_timer.persist, t->details.as_timer.interval, GPOINTER_TO_UINT(t->handler.as_old_timer), tmp);
-		printq("generic", buf);
-		g_free(tmp);
-	}
-
-	g_slist_foreach(timers, timer_debug_print, NULL);
+	g_slist_foreach(timers, timer_debug_print, &quiet);
 	return 0;
 }
 
@@ -584,9 +609,83 @@ TIMER(timer_handle_at)
 		xfree(data);
 		return 0;
 	}
-	
+
 	command_exec(NULL, NULL, (char *) data, 0);
 	return 0;
+}
+
+struct timer_print_args {
+	const gchar *name;
+	gint *count;
+	gint quiet;
+};
+
+static void timer_print(gpointer data, gpointer user_data) {
+	struct ekg_source *t = data;
+	GTimeVal ends, tv;
+	struct tm *at_time;
+	char tmp[100], tmp2[150];
+	time_t sec, minutes = 0, hours = 0, days = 0;
+	struct timer_print_args *args = user_data;
+	gint quiet = args->quiet;
+
+	if (t->handler.as_old_timer != timer_handle_at)
+		return;
+	if (args->name && xstrcasecmp(t->name, args->name))
+		return;
+
+	(*args->count)++;
+
+	g_source_get_current_time(t->source, &tv);
+
+	ends.tv_sec = t->details.as_timer.lasttime.tv_sec + (t->details.as_timer.interval / 1000);
+	ends.tv_usec = t->details.as_timer.lasttime.tv_usec + ((t->details.as_timer.interval % 1000) * 1000);
+	at_time = localtime((time_t *) &ends);
+	if (!strftime(tmp, sizeof(tmp), format_find("at_timestamp"), at_time) && format_exists("at_timestamp"))
+		xstrcpy(tmp, "TOOLONG");
+
+	if (t->details.as_timer.persist) {
+		sec = t->details.as_timer.interval / 1000;
+
+		if (sec > 86400) {
+			days = sec / 86400;
+			sec -= days * 86400;
+		}
+
+		if (sec > 3600) {
+			hours = sec / 3600;
+			sec -= hours * 3600;
+		}
+	
+		if (sec > 60) {
+			minutes = sec / 60;
+			sec -= minutes * 60;
+		}
+
+		g_strlcpy(tmp2, "every ", sizeof(tmp2));
+
+		if (days) {
+			g_strlcat(tmp2, ekg_itoa(days), sizeof(tmp2));
+			g_strlcat(tmp2, "d ", sizeof(tmp2));
+		}
+
+		if (hours) {
+			g_strlcat(tmp2, ekg_itoa(hours), sizeof(tmp2));
+			g_strlcat(tmp2, "h ", sizeof(tmp2));
+		}
+
+		if (minutes) {
+			g_strlcat(tmp2, ekg_itoa(minutes), sizeof(tmp2));
+			g_strlcat(tmp2, "m ", sizeof(tmp2));
+		}
+
+		if (sec) {
+			g_strlcat(tmp2, ekg_itoa(sec), sizeof(tmp2));
+			g_strlcat(tmp2, "s", sizeof(tmp2));
+		}
+	}
+
+	printq("at_list", t->name, tmp, (char*)(t->priv_data), "", ((t->details.as_timer.persist) ? tmp2 : ""));
 }
 
 COMMAND(cmd_at)
@@ -820,72 +919,10 @@ COMMAND(cmd_at)
 		else if (params[0])
 			a_name = params[0];
 
-		void timer_print(gpointer data, gpointer user_data) {
-			struct ekg_source *t = data;
-			GTimeVal ends, tv;
-			struct tm *at_time;
-			char tmp[100], tmp2[150];
-			time_t sec, minutes = 0, hours = 0, days = 0;
-
-			if (t->handler.as_old_timer != timer_handle_at)
-				return;
-			if (a_name && xstrcasecmp(t->name, a_name))
-				return;
-
-			count++;
-
-			g_source_get_current_time(t->source, &tv);
-
-			ends.tv_sec = t->details.as_timer.lasttime.tv_sec + (t->details.as_timer.interval / 1000);
-			ends.tv_usec = t->details.as_timer.lasttime.tv_usec + ((t->details.as_timer.interval % 1000) * 1000);
-			at_time = localtime((time_t *) &ends);
-			if (!strftime(tmp, sizeof(tmp), format_find("at_timestamp"), at_time) && format_exists("at_timestamp"))
-				xstrcpy(tmp, "TOOLONG");
-
-			if (t->details.as_timer.persist) {
-				sec = t->details.as_timer.interval / 1000;
-
-				if (sec > 86400) {
-					days = sec / 86400;
-					sec -= days * 86400;
-				}
-
-				if (sec > 3600) {
-					hours = sec / 3600;
-					sec -= hours * 3600;
-				}
-			
-				if (sec > 60) {
-					minutes = sec / 60;
-					sec -= minutes * 60;
-				}
-
-				g_strlcpy(tmp2, "every ", sizeof(tmp2));
-
-				if (days) {
-					g_strlcat(tmp2, ekg_itoa(days), sizeof(tmp2));
-					g_strlcat(tmp2, "d ", sizeof(tmp2));
-				}
-
-				if (hours) {
-					g_strlcat(tmp2, ekg_itoa(hours), sizeof(tmp2));
-					g_strlcat(tmp2, "h ", sizeof(tmp2));
-				}
-
-				if (minutes) {
-					g_strlcat(tmp2, ekg_itoa(minutes), sizeof(tmp2));
-					g_strlcat(tmp2, "m ", sizeof(tmp2));
-				}
-
-				if (sec) {
-					g_strlcat(tmp2, ekg_itoa(sec), sizeof(tmp2));
-					g_strlcat(tmp2, "s", sizeof(tmp2));
-				}
-			}
-
-			printq("at_list", t->name, tmp, (char*)(t->priv_data), "", ((t->details.as_timer.persist) ? tmp2 : ""));
+		{
+			struct timer_print_args args = { a_name, &count, quiet };
+			g_slist_foreach(timers, timer_print, &args);
 		}
-		g_slist_foreach(timers, timer_print, NULL);
 
 		if (!count) {
 			if (a_name) {
@@ -912,6 +949,24 @@ TIMER(timer_handle_command)
 	
 	command_exec(NULL, NULL, (char *) data, 0);
 	return 0;
+}
+
+static void timer_print_list(gpointer data, gpointer user_data) {
+	struct ekg_source *t = data;
+	char *tmp;
+	struct timer_print_args *args = user_data;
+	gint quiet = args->quiet;
+
+	if (t->handler.as_old_timer != timer_handle_command)
+		return;
+	if (args->name && xstrcasecmp(t->name, args->name))
+		return;
+
+	(*args->count)++;
+
+	tmp = timer_next_call(t);
+	printq("timer_list", t->name, tmp, (char*)(t->priv_data), "", (t->details.as_timer.persist) ? "*" : "");
+	g_free(tmp);
 }
 
 COMMAND(cmd_timer)
@@ -1047,22 +1102,10 @@ COMMAND(cmd_timer)
 		else if (params[0])
 			t_name = params[0];
 
-		void timer_print_list(gpointer data, gpointer user_data) {
-			struct ekg_source *t = data;
-			char *tmp;
-
-			if (t->handler.as_old_timer != timer_handle_command)
-				return;
-			if (t_name && xstrcasecmp(t->name, t_name))
-				return;
-
-			count++;
-
-			tmp = timer_next_call(t);
-			printq("timer_list", t->name, tmp, (char*)(t->priv_data), "", (t->details.as_timer.persist) ? "*" : "");
-			g_free(tmp);
+		{
+			struct timer_print_args args = { t_name, &count, quiet };
+			g_slist_foreach(timers, timer_print_list, &args);
 		}
-		g_slist_foreach(timers, timer_print_list, NULL);
 
 		if (!count) {
 			if (t_name) {
