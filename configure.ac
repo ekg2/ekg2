@@ -344,6 +344,10 @@ CPPFLAGS=
 
 AC_CONFIG_COMMANDS_PRE([
 	AM_CONDITIONAL([ENABLE_GCH], [test "x$enable_dependency_tracking" = "xno"])
+	AS_IF([test "x$shrext_cmds" != "x"], [
+		AC_DEFINE_UNQUOTED([PLUGIN_SUFFIX], ["$shrext_cmds"],
+				[set to plugin suffix if known])
+	])
 ])
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])
