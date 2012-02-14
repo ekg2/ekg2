@@ -48,6 +48,8 @@ struct ekg_connection {
 
 	ekg_flush_handler_t flush_handler;
 
+	GString *wr_buffer;
+
 #if NEED_SLAVERY
 	struct ekg_connection *master;
 	struct ekg_connection *slave;
@@ -83,6 +85,7 @@ static void ekg_connection_remove(struct ekg_connection *c) {
 
 	connections = g_slist_remove(connections, c);
 
+	g_string_free(c->wr_buffer, TRUE);
 	g_object_unref(c->cancellable);
 	g_object_unref(c->instream);
 	g_object_unref(c->outstream);
@@ -174,8 +177,9 @@ static void done_async_write(GObject *obj, GAsyncResult *res, gpointer user_data
 	struct ekg_connection *c = user_data;
 	GError *err = NULL;
 	gboolean ret;
+	GOutputStream *of = G_OUTPUT_STREAM(obj);
 
-	ret = g_output_stream_flush_finish(G_OUTPUT_STREAM(obj), res, &err);
+	ret = g_output_stream_flush_finish(of, res, &err);
 
 	if (!ret) {
 		debug_error("done_async_write(), write failed: %s\n", err ? err->message : NULL);
@@ -183,6 +187,17 @@ static void done_async_write(GObject *obj, GAsyncResult *res, gpointer user_data
 		failed_write(c);
 		g_error_free(err);
 		return;
+	}
+
+	if (c->wr_buffer->len > 0) {
+		/* the stream should not have any pending writes ATM
+		 * we need to ensure that to have the data written to stream
+		 * rather than re-appended to the buffer*/
+		g_assert(!g_output_stream_has_pending(of));
+
+		ekg_connection_write_buf(G_DATA_OUTPUT_STREAM(of),
+				c->wr_buffer->str, c->wr_buffer->len);
+		g_string_truncate(c->wr_buffer, 0);
 	}
 
 	/* XXX: anything to do? */
@@ -212,6 +227,7 @@ GDataOutputStream *ekg_connection_add(
 	c->instream = g_data_input_stream_new(raw_instream);
 	c->outstream = g_data_output_stream_new(bout);
 	c->cancellable = g_cancellable_new();
+	c->wr_buffer = g_string_new("");
 
 	c->callback = callback;
 	c->failure_callback = failure_callback;
@@ -271,10 +287,12 @@ void ekg_connection_write_buf(GDataOutputStream *f, gconstpointer buf, gsize len
 	gssize out;
 	GOutputStream *of = G_OUTPUT_STREAM(f);
 
-	/* we need to abort current flush in order to append to buf,
+	/* we can't write to buffer if it has pending ops;
 	 * yes, it is stupid. */
-	/* XXX: is this enough or should we actually cancel the flush? */
-	g_output_stream_clear_pending(of);
+	if (g_output_stream_has_pending(of)) {
+		c->wr_buffer = g_string_append_len(c->wr_buffer, buf, len);
+		return;
+	}
 
 	out = g_output_stream_write(of, buf, len, NULL, &err);
 	if (out != len) {
