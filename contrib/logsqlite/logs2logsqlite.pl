@@ -16,11 +16,9 @@ use Date::Parse;
 # homedir, inserted instead of '~', by default automagically detected, but you can change it
 my $home = File::HomeDir->my_home;
 # source path
-(my $logspath = '~/.ekg2/logs')
-	=~ s/~/$home/;
+(my $logspath = '~/.ekg2/logs') =~ s/~/$home/;
 # destination db
-(my $logsqlitedb = '~/.ekg2/logsqlite.db')
-	=~ s/~/$home/;
+(my $logsqlitedb = '~/logsqlite.db') =~ s/~/$home/;
 
 my $db = DBI->connect("dbi:SQLite:dbname=$logsqlitedb", '', '') or die;
 $db->begin_work;
