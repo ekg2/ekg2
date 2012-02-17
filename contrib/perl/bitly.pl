@@ -4,14 +4,14 @@ use URI::Escape;
 use strict;
 use vars qw($VERSION %EKG2);
 
-our $VERSION = "1.7";
+our $VERSION = "1.8";
 our %EKG2    = (
     authors     => 'Jakub Łaszczyński',
     contact     => 'jakub.laszczynski@gmail.com',
     name        => 'bitly for ekg2',
     description => 'shortens urls for incoming messages',
     license     => 'GNU GPL',
-    changed     => '2012-02-01'
+    changed     => '2012-02-20'
 );
 
 Ekg2::variable_add( 'bitly_login',   '' );
@@ -39,7 +39,7 @@ sub bitly() {
 
     $url = uri_escape($url);
 
-    my $api_src  = 'http://api.bit.ly/v3/shorten?login=' . $bitly_login . '&apiKey=' . $bitly_apikey . '&format=txt&longUrl=' . $url;
+    my $api_src  = 'https://api-ssl.bit.ly/v3/shorten?login=' . $bitly_login . '&apiKey=' . $bitly_apikey . '&format=txt&longUrl=' . $url;
     my $response = $lwp->get($api_src);
 
     Ekg2::debug("BITLY API->$api_src\n") if ($debug);
@@ -48,10 +48,17 @@ sub bitly() {
         my $url_bitly = $response->decoded_content;
         $url_bitly =~ s/\n//g;
         Ekg2::debug("BITLY SHORTENED->$url_bitly\n") if ($debug);
+        my $get_title    = $lwp->get($url_bitly);
+        if ( $get_title->is_success ) {
+            $get_title = $get_title->decoded_content;
+            $get_title =~ /<title>(.*)<\/title>/;
+            Ekg2::Window::print( $window, "Page title: $1" );
+        }
         Ekg2::Window::print( $window, "Shortened url: $url_bitly" );
     }
     else {
         my $errstr = $response->status_line;
+        Ekg2::debug("An error occurred while making the HTTP Request: $errstr\n") if ($debug);
         Ekg2::Window::print( $window, "An error occurred while making the HTTP Request: $errstr\n" );
     }
 }
