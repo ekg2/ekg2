@@ -493,6 +493,7 @@ static int irc_sync_channel(session_t *s, irc_private_t *j, channel_t *p)
 	g_get_current_time(&(p->syncstart));
 	ekg_connection_write(j->send_stream, "WHO %s\r\n", p->name+4);
 	ekg_connection_write(j->send_stream, "MODE %s +b\r\n", p->name+4);
+	ekg_connection_write(j->send_stream, "MODE %s\r\n", p->name+4);
 	return 0;
 }
 
