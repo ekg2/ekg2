@@ -443,12 +443,16 @@ COMMAND(cmd_mark) {
 		for (w = windows; w; w = w->next) {
 			if (!w->floating && (w->act <= EKG_WINACT_MSG)) {
 				n = w->priv_data;
-				n->last_red_line = time(0);
-				n->redraw = 1;
+				if (n->backlog->len > 0) {
+					n->marker = g_ptr_array_index(n->backlog, n->backlog->len - 1);
+					n->redraw = 1;
+				}
 			}
 		}
 		return 0;
-	} else if (params[0] && (atoi(params[0]) || xstrcmp(params[1], ("0")))) {
+	}
+
+	if (params[0] && (atoi(params[0]) || xstrcmp(params[1], ("0")))) {
 		extern int window_last_id;
 		int id = atoi(params[0]);
 		w = window_exist(id<0 ? window_last_id : id);
@@ -457,22 +461,12 @@ COMMAND(cmd_mark) {
 
 	if (w && !w->floating && (w->act <= EKG_WINACT_MSG)) {
 		n = w->priv_data;
-		n->last_red_line = time(0);
-		n->redraw = 1;
+		if (n->backlog->len > 0) {
+			n->marker = g_ptr_array_index(n->backlog, n->backlog->len - 1);
+			n->redraw = 1;
+		}
 	}
 	return 0;
-}
-
-/*
- * draw_thin_red_line()
- *
- */
-void draw_thin_red_line(window_t *w, int y) {
-	ncurses_window_t *n = w->priv_data;
-	int attr = color_pair(COLOR_RED, COLOR_BLACK) | A_BOLD | A_ALTCHARSET;
-
-	wattrset(n->window, attr);
-	mvwhline(n->window, n->margin_top + y, 0, ACS_HLINE, w->width);
 }
 
 static void ncurses_draw_frames(window_t *w) {

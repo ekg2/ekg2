@@ -52,15 +52,13 @@ typedef struct {
 
 	void (*handle_mouse)(int x, int y, int state);
 
-	time_t last_red_line;	/* timestamp for red line marker */
+	gpointer marker;	/* pointer to marked line */
 } ncurses_window_t;
 
 extern WINDOW *ncurses_contacts;
 extern WINDOW *ncurses_input;
 
 QUERY(ncurses_session_disconnect_handler);
-
-void draw_thin_red_line(window_t *w, int y);
 
 gboolean ncurses_simple_print(WINDOW *w, const char *s, fstr_attr_t attr, gssize maxx);
 const char *ncurses_fstring_print(WINDOW *w, const char *s, const fstr_attr_t *attr, gssize maxx);

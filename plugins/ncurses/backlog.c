@@ -145,6 +145,18 @@ static void calc_window_dimension(window_t *w) {
 }
 
 /*
+ * draw_thin_red_line()
+ *
+ */
+static void draw_thin_red_line(window_t *w, int y) {
+	ncurses_window_t *n = w->priv_data;
+	int attr = color_pair(COLOR_RED, COLOR_BLACK) | A_BOLD | A_ALTCHARSET;
+
+	wattrset(n->window, attr);
+	mvwhline(n->window, n->margin_top + y, 0, ACS_HLINE, w->width);
+}
+
+/*
  * backlog_split()
  *
  * dzieli linie tekstu w buforze na linie ekranowe.
@@ -211,6 +223,9 @@ static int backlog_split(window_t *w, backlog_line_t *b, gboolean show, int y) {
 		y++;
 	}
 
+	if (show && (n->marker == b) && (0 <= y && y < n->height))
+		draw_thin_red_line(w, n->y0 + y);
+
 	xfree(ts_str);
 	xfree(ts_attr);
 
@@ -225,11 +240,15 @@ static int ncurses_backlog_display_line(window_t *w, int y, backlog_line_t *bl) 
 	return backlog_split(w, bl, TRUE, y);
 }
 
-#define ncurses_get_backlog_height(w,b,index) (b=g_ptr_array_index(n->backlog, index), b->height ? b->height : (b->height=ncurses_backlog_calc_height(w, b)))
+#define ncurses_get_backlog_height(w,b,index) ( \
+		b=g_ptr_array_index(n->backlog, index), \
+		b->height ? b->height : (b->height=ncurses_backlog_calc_height(w, b)), \
+		(n->marker == b) ? b->height+1 : b->height \
+	)
 
 void ncurses_backlog_display(window_t *w) {
 	ncurses_window_t *n = w->priv_data;
-	int y, n_rows, idx, dtrl;
+	int y, n_rows, idx;
 	backlog_line_t *bl;
 
 	werase(n->window);
@@ -239,20 +258,12 @@ void ncurses_backlog_display(window_t *w) {
 
 	calc_window_dimension(w);
 
-	dtrl = n->last_red_line ? 1 : 0;
-
 	/* draw text */
 	if (n->index == EKG_NCURSES_BACKLOG_END) {
 		/* display from end of backlog */
 		w->more = n->cleared = 0;
 		for (y = n->height, idx = n->backlog->len - 1; idx >= 0 && y > 0; idx--) {
-			n_rows = ncurses_get_backlog_height(w, bl, idx);
-			if (dtrl && (bl->line->ts < n->last_red_line)) {
-				dtrl = 0;
-				draw_thin_red_line(w, --y);
-				if (y == 0) break;
-			}
-			y -= n_rows;
+			y -= ncurses_get_backlog_height(w, bl, idx);
 			ncurses_backlog_display_line(w, y, bl);
 		}
 
@@ -263,22 +274,15 @@ void ncurses_backlog_display(window_t *w) {
 	} else {
 		/* display from line */
 		idx = n->index;
-		if (dtrl && idx > 0 ) {
-			bl = g_ptr_array_index(n->backlog, idx - 1);
-			dtrl = (bl->line->ts < n->last_red_line);
-		}
 		for (y = - n->first_row; idx < n->backlog->len && y < n->height; idx++) {
 			n_rows = ncurses_get_backlog_height(w, bl, idx);
-			if (dtrl && (bl->line->ts > n->last_red_line)) {
-				dtrl = 0;
-				draw_thin_red_line(w, y++);
-				if (y == n->height) break;
-			}
 			ncurses_backlog_display_line(w, y, bl);
 			y += n_rows;
 		}
 
-		if ((!n->cleared && !(idx < n->backlog->len)) ||
+debug_ok("idx:%d, len:%d, y:%d, height:%d\n", idx, n->backlog->len, y, n->height);
+
+		if ((!n->cleared && (!(idx < n->backlog->len) && (y <= n->height))) ||
 		    ( n->cleared && !(y < n->height)))
 		{
 			ncurses_backlog_seek_end(n);
@@ -313,8 +317,6 @@ static void scroll_up(window_t *w, int count) {
 void ncurses_backlog_scroll(window_t *w, int offset) {
 	ncurses_window_t *n;
 	backlog_line_t *bl;
-
-/* XXX: add thin red line correction */
 
 	if (!w || !(n = w->priv_data) || !n->backlog->len)
 		return;
@@ -357,7 +359,6 @@ backlog_line_t *ncurses_backlog_mouse_click(window_t *w, int click_y) {
 	backlog_line_t *bl = NULL;
 	int i, h, y;
 
-/* XXX: add thin red line correction */
 	if (n->backlog->len < 1)
 		return NULL;
 
