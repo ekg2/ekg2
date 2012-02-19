@@ -1676,11 +1676,11 @@ static COMMAND(cmd_set)
 			int found = 0;
 			
 			if (arg) {
-				if (xstrcmp(name, ("set"))) {
-					found = !xstrcasecmp(arg, v->name);
+				if (show_all) {
+					found = !!xstrcasestr(v->name, arg);
 				}
 				else {
-					found = !!xstrcasestr(v->name, arg);
+					found = !xstrcasecmp(arg, v->name);
 				}
 			}
 
@@ -1694,8 +1694,8 @@ static COMMAND(cmd_set)
 				displayed = 1;
 			}
 		}
-		if (!displayed && params[0]) {
-			printq("variable_no_match", params[0]);
+		if (!displayed && arg) {
+			printq (show_all ? "variable_no_match" : "variable_not_found_suggest", arg);
 			return -1;
 		}
 	} else {

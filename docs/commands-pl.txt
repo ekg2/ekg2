@@ -517,8 +517,9 @@ set
 	Jeżeli chcemy przełączyć wartość zmiennej typu bool używamy %T,t'%n zamiast ustawianej 
 	wartości.
 	
-	Poprzedzenie opcji parametrem %T-a%n lub %T--all%n spowoduje wyświetlenie wszystkich, 
-	nawet aktualnie nieaktywnych zmiennych.
+	Parametr %T-a%n lub %T--all%n spowoduje wyświetlenie wszystkich, nawet aktualnie
+	nieaktywnych zmiennych. Jeżeli podano kolejny argument polecenia, wyświetlone zostaną
+	tylko zmienne zawierające podany ciąg znaków.
 	
 	Parametr %T-q%n lub %T--quiet%n spowoduje, że informacja o nowej wartości zmiennej nie zostanie
 	wyświetlona i nie zaznaczy zmiany konfiguracji.
