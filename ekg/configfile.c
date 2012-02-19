@@ -264,6 +264,18 @@ static GObject *config_open_real(const gchar *path, const gchar *mode) {
 	return stream;
 }
 
+static const char *prepare_old_path(const char *filename) {
+	static char path[PATH_MAX];
+	extern char *old_config_dir;
+
+	if (!filename || !*filename)
+		snprintf(path, sizeof(path), "%s", old_config_dir);
+	else
+		snprintf(path, sizeof(path), "%s/%s", old_config_dir, filename);
+	
+	return path;
+}
+
 /**
  * config_open()
  *
@@ -318,7 +330,7 @@ GObject *config_open(const gchar *path_format, const gchar *mode, ...) {
 	g_free(cdir);
 
 	if (G_UNLIKELY(!f && mode[0] == 'r')) /* fallback to old config */
-		f = config_open_real(prepare_path(basename, 0), mode);
+		f = config_open_real(prepare_old_path(basename), mode);
 
 	g_free(basename);
 

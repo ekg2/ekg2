@@ -78,6 +78,7 @@
 #include "scripts.h"
 
 char *config_dir;
+char *old_config_dir;		/* used for copy old config files */
 int mesg_startup;
 static char argv0[PATH_MAX];
 static gchar last_err_message[128] = {0};
@@ -611,9 +612,11 @@ int main(int argc, char **argv)
 		tmp = xstrdup("");
 
 	if (getenv("HOME_ETC"))
-		config_dir = saprintf("%s/ekg2%s", getenv("HOME_ETC"), tmp);
+		old_config_dir = saprintf("%s/ekg2%s", getenv("HOME_ETC"), tmp);
 	else
-		config_dir = saprintf("%s/.ekg2%s", home_dir, tmp);
+		old_config_dir = saprintf("%s/.ekg2%s", home_dir, tmp);
+
+	config_dir = g_build_filename(g_get_user_config_dir(), "ekg2", tmp, NULL);
 
 	xfree(tmp);
 	tmp = NULL;
@@ -973,6 +976,7 @@ void ekg_exit()
 	xfree(home_dir);
 
 	xfree(config_dir);
+	xfree(old_config_dir);
 
 	mesg_set(mesg_startup);
 #ifdef NO_POSIX_SYSTEM
