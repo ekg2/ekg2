@@ -280,8 +280,6 @@ void ncurses_backlog_display(window_t *w) {
 			y += n_rows;
 		}
 
-debug_ok("idx:%d, len:%d, y:%d, height:%d\n", idx, n->backlog->len, y, n->height);
-
 		if ((!n->cleared && (!(idx < n->backlog->len) && (y <= n->height))) ||
 		    ( n->cleared && !(y < n->height)))
 		{
