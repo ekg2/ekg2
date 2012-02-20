@@ -2643,7 +2643,7 @@ void variable_display(variable_t *v, int quiet) {
  */
 static variable_t *get_fake_sess_variable(session_t *s, const char *name) {
 	static int fake_int_value;
-	const char *val;
+	static const char *val;
 	variable_t *var = g_malloc0(sizeof(variable_t));
 	int id;
 
@@ -2667,7 +2667,7 @@ static variable_t *get_fake_sess_variable(session_t *s, const char *name) {
 			fake_int_value = s->values[id-1] ? atoi(s->values[id-1]) : 0;
 			var->ptr = &fake_int_value;
 		} else
-			val = s->values[id-1];
+			var->ptr = &(s->values[id-1]);
 
 		if (pa->secret)
 			var->display = 0;
