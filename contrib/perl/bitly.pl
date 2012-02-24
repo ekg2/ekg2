@@ -4,14 +4,14 @@ use URI::Escape;
 use strict;
 use vars qw($VERSION %EKG2);
 
-our $VERSION = "1.9";
+our $VERSION = "1.10";
 our %EKG2    = (
     authors     => 'Jakub Łaszczyński',
     contact     => 'jakub.laszczynski@gmail.com',
     name        => 'bitly for ekg2',
     description => 'shortens urls for incoming messages',
     license     => 'GNU GPL',
-    changed     => '2012-02-21'
+    changed     => '2012-02-24'
 );
 
 Ekg2::variable_add( 'bitly_login',   '' );
@@ -55,6 +55,7 @@ sub bitly() {
         my $get_title    = $lwp->get($url_bitly);
         if ( $get_title->is_success ) {
             $get_title = $get_title->decoded_content;
+            $get_title =~ s/(\s+|\n)/ /g;
             $get_title =~ /<title>(.*)<\/title>/;
             Ekg2::Window::print( $window, "Page title: $1" ) if $1;
         }
