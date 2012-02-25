@@ -54,7 +54,7 @@ sub set_timer() {
 		Ekg2::Timer::destroy($timer);
 		undef $timer;
 	}
-	if ($v != $period) {
+	if ( ($v > 0) && ($v != $period) ) {
 		Ekg2::Timer::destroy($timer) if $timer;
 		$timer = Ekg2::timer_bind($v, 'ping_timer');
 		Ekg2::debug("Create timer($v) $timer\n");
