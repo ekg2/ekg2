@@ -114,9 +114,13 @@ sub variable_changed() {
         $timeout = Ekg2::variable_find('bitly_timeout')->{value};
         Ekg2::debug("BITLY TIMEOUT CHANGED-> $timeout\n") if ($debug);
     }
-    elsif ( $name eq 'debug' ) {
-        $debug = Ekg2::variable_find('debug')->{value};
-        Ekg2::debug("DEBUG VALUE CHANGED-> $timeout\n") if ($debug);
+    elsif ( $name eq 'bitly_pagesizelimit' ) {
+        $pagesizelimit = Ekg2::variable_find('bitly_pagesizelimit')->{value};
+        Ekg2::debug("BITLY PAGESIZELIMIT CHANGED-> $pagesizelimit\n") if ($debug);
+    }
+    elsif ( $name eq 'bitly_debug' || $name eq 'debug' ) {
+        $debug = Ekg2::variable_find('debug')->{value} && Ekg2::variable_find('bitly_debug')->{value};
+        Ekg2::debug("DEBUG VALUE CHANGED-> $debug\n");
     }
 }
 
