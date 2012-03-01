@@ -1479,9 +1479,10 @@ static WATCHER(gg_handle_token)
 
 #ifdef HAVE_MKSTEMP
 	unlink(file);
+#endif
+
 fail:
 	xfree(file);
-#endif
 
 	/* if we free token... we must search for it in all watches, and point data to NULL */
 	/* XXX, hack... let's copy token data to all watch ? */
