@@ -25,11 +25,13 @@ void format_add(char *str, char *value)
 CODE:
 	format_add(str, value, 1);
 
+
 char *format_string(char *str)
-CODE:
-	RETVAL = format_string(str);
-OUTPUT:
-	RETVAL	
+PPCODE:
+	char *tmp = format_string(str);
+	XPUSHs(sv_2mortal(newSVpv(tmp, 0)));
+	xfree(tmp);
+
 
 char *fstring2ascii(char *str, void *attr_)
 CODE:
