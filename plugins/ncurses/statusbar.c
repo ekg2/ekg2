@@ -336,8 +336,9 @@ void update_statusbar(int commit)
 
 #define __add_format(x, y, z) \
 	{ \
-		__add_format_(x, ekg_recode_to_locale(y), z); \
-		g_free(y); \
+		char *tmp = y; \
+		__add_format_(x, ekg_recode_to_locale(tmp), z); \
+		g_free(tmp); \
 	}
 
 #define __add_format_emp(x, y)		__add_format_(x, y ? (char*) empty_format : NULL, 0)
