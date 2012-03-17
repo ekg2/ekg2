@@ -1554,7 +1554,7 @@ static COMMAND(irc_command_kickban) {
 static COMMAND(irc_command_devop) {
 	irc_private_t	*j = irc_private(session);
 	int		modes, i;
-	char		**mp, *op, *nicks, *tmp, c, *chan, *p, *rchan;
+	char		**mp, *op, *nicks, *tmp, c, *chan, *p, *rchan, *rnicks;
 	string_t	zzz;
 
 	if (!(chan = irc_getchan(session, params, name,
@@ -1581,6 +1581,7 @@ static COMMAND(irc_command_devop) {
 
 	nicks = string_free(zzz, 0);
 	p = irc_convert_out(j, NULL, nicks);
+	rnicks = p; // storing pointer to p in order to free memory
 	rchan = irc_convert_out(j, NULL, chan+4);
 
 	i=0;
@@ -1605,9 +1606,8 @@ static COMMAND(irc_command_devop) {
 	}
 	chan-=4;
 	xfree(rchan);
-	xfree(tmp);
 	xfree(chan);
-	xfree(nicks);
+	xfree(rnicks);
 	xfree(op);
 	g_strfreev(mp);
 	return 0;
