@@ -304,7 +304,7 @@ EXPORT int readline_plugin_init(int prio) {
 	rl_getc_function = my_getc;
 	rl_event_hook	 = my_loop;
 
-	rl_attempted_completion_function = (CPPFunction *) my_completion;
+	rl_attempted_completion_function = (rl_completion_func_t *) my_completion;
 	rl_completion_entry_function = (void*) empty_generator;
 
 	rl_set_key("\033[[A", binding_help, emacs_standard_keymap);
