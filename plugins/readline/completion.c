@@ -38,7 +38,7 @@ static char *rl_strndup(gchar *s, gssize n) {
 	}
 }
 
-char *empty_generator(char *text, int state) {
+char *empty_generator(const char *text, int state) {
 	return NULL;
 }
 
@@ -66,7 +66,7 @@ char *multi_generator(char *text, int state) {
 	return rl_strndup(ret, -1);
 }
 
-/*locale*/ char **my_completion(/*locale*/ char *text, int start, int end) {
+/*locale*/ char **my_completion(/*locale*/ const char *text, int start, int end) {
 	gchar *buffer;
 	GString *buf = g_string_sized_new(80);
 	int i, n, e0=end, in_quote, out_quote;

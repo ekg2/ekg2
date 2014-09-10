@@ -314,6 +314,14 @@ AC_EKG2_PLUGIN([readline], [
 		AC_EKG2_CHECK_LIB([readline], [readline], [readline/readline.h readline.h],, [EKG2_FAILED_TEST])
 	])
 ], [
+	AC_CHECK_TYPES([rl_completion_func_t],,, [[
+#include <stdio.h>
+#ifdef HAVE_READLINE_READLINE_H
+#	include <readline/readline.h>
+#else
+#	include <readline.h>
+#endif
+]])
 	AC_CHECK_FUNCS([rl_set_prompt rl_filename_completion_function rl_get_screen_size rl_set_key rl_bind_key_in_map])
 ])
 

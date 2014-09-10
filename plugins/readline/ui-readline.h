@@ -23,8 +23,8 @@ int bind_sequence(const char *seq, const char *command, int quiet);
 int bind_handler_window(int a, int key);
 int my_getc(FILE *f);
 int my_loop(void);
-char **my_completion(char *text, int start, int end);
-char *empty_generator(char *text, int state);
+char **my_completion(const char *text, int start, int end);
+char *empty_generator(const char *text, int state);
 
 /* vars remove some !*/
 extern int ui_need_refresh; /* DARK */
