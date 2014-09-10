@@ -74,10 +74,19 @@ static ekg_source_t source_new(plugin_t *plugin, const gchar *name_format, gpoin
 
 	s->plugin = plugin;
 	/* XXX: temporary */
-	s->name = args ? g_strdup_vprintf(name_format, args) : g_strdup(name_format);
+	s->name = g_strdup_vprintf(name_format, args);
 	s->priv_data = data;
 	s->destr = destr;
 	
+	return s;
+}
+
+static ekg_source_t source_new_va(plugin_t *plugin, const gchar *name_format, gpointer data, GDestroyNotify destr, ...) {
+	va_list ap;
+	struct ekg_source *s;
+	va_start(ap, destr);
+	s = source_new(plugin, name_format, data, destr, ap);
+	va_end(ap);
 	return s;
 }
 
@@ -325,7 +334,7 @@ static gboolean timer_wrapper_old(gpointer data) {
 }
 
 ekg_timer_t timer_add_ms(plugin_t *plugin, const gchar *name, guint period, gboolean persist, gint (*function)(gint, gpointer), gpointer data) {
-	struct ekg_source *t = source_new(plugin, name, data, NULL, NULL);
+	struct ekg_source *t = source_new_va(plugin, name, data, NULL);
 
 	t->handler.as_old_timer = function;
 	t->details.as_timer.interval = period;
