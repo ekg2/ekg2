@@ -14,6 +14,7 @@ AC_PROG_C_NO_STRICT_ALIASING
 
 dnl XXX: docs say we should use '-no-undefined' along with 'win32-dll'
 LT_INIT([disable-static win32-dll])
+LT_SYS_MODULE_EXT
 
 AC_EKG2_WITH([glib], [
 	AS_IF([test "x$enable_shared" = "xyes"], [
@@ -352,10 +353,6 @@ CPPFLAGS=
 
 AC_CONFIG_COMMANDS_PRE([
 	AM_CONDITIONAL([ENABLE_GCH], [test "x$enable_dependency_tracking" = "xno"])
-	AS_IF([test "x$shrext_cmds" != "x"], [
-		AC_DEFINE_UNQUOTED([PLUGIN_SUFFIX], ["$shrext_cmds"],
-				[set to plugin suffix if known])
-	])
 ])
 AC_CONFIG_HEADERS([ekg2-config.h])
 AC_CONFIG_FILES([Makefile po/Makefile.in])

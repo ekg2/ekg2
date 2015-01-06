@@ -92,30 +92,31 @@ static void ekg_connection_remove(struct ekg_connection *c) {
 	g_slice_free(struct ekg_connection, c);
 }
 
+static gint __conn_find_outstream(gconstpointer list_elem, gconstpointer comp_elem) {
+	const struct ekg_connection *c = list_elem;
+
+	return c->outstream == comp_elem ? 0 : -1;
+}
+
+
 static struct ekg_connection *get_connection_by_outstream(GDataOutputStream *s) {
 	GSList *el;
 
-	gint conn_find_outstream(gconstpointer list_elem, gconstpointer comp_elem) {
-		const struct ekg_connection *c = list_elem;
-
-		return c->outstream == comp_elem ? 0 : -1;
-	}
-
-	el = g_slist_find_custom(connections, s, conn_find_outstream);
+	el = g_slist_find_custom(connections, s, __conn_find_outstream);
 	return el ? el->data : NULL;
 }
 
 #if NEED_SLAVERY
+static gint __conn_find_slaveless_conn(gconstpointer list_elem, gconstpointer comp_elem) {
+	const struct ekg_connection *c = list_elem;
+
+	return (!c->slave && c->conn == comp_elem) ? 0 : -1;
+}
+
 static struct ekg_connection *get_slave_connection_by_conn(GSocketConnection *c) {
 	GSList *el;
 
-	gint conn_find_slaveless_conn(gconstpointer list_elem, gconstpointer comp_elem) {
-		const struct ekg_connection *c = list_elem;
-
-		return (!c->slave && c->conn == comp_elem) ? 0 : -1;
-	}
-
-	el = g_slist_find_custom(connections, c, conn_find_slaveless_conn);
+	el = g_slist_find_custom(connections, c, __conn_find_slaveless_conn);
 	return el ? el->data : NULL;
 }
 #endif
