@@ -222,10 +222,10 @@ int plugin_load(const char *name, int prio, int quiet)
 
 	g_free(libname);
 
-#ifdef PLUGIN_SUFFIX
+#ifdef LT_MODULE_EXT
 	/* no .la found? try the standard suffix as well */
 	if (!plugin) {
-		libname = g_strdup_printf("%s" PLUGIN_SUFFIX, name);
+		libname = g_strdup_printf("%s" LT_MODULE_EXT, name);
 
 		if ((env_ekg_plugins_path = g_getenv("EKG_PLUGINS_PATH"))) {
 			lib = g_build_filename(env_ekg_plugins_path, libname, NULL);
