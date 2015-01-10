@@ -345,6 +345,13 @@ AC_EKG2_PLUGIN([sim], [
 
 AC_EKG2_PLUGIN([sms])
 
+AC_EKG2_PLUGIN([otr], [
+	AC_EKG2_WITH([otr], [
+		m4_pushdef([AC_INCLUDES_DEFAULT])
+		AC_EKG2_CHECK_PKGCONFIG_LIB([otr], [otr], [otrl_userstate_create], [libotr/context.h])
+	])
+])
+
 dnl CPPFLAGS were duplicated into whatever_CPPFLAGS
 dnl make the global ones exe-specific
 EKG_CPPFLAGS="$CPPFLAGS"

@@ -673,3 +673,16 @@ dist_sms_DATA = \
 	plugins/sms/commands-pl.txt \
 	plugins/sms/vars-pl.txt
 endif
+
+if ENABLE_OTR
+plugin_LTLIBRARIES += plugins/otr/otr.la
+
+plugins_otr_otr_la_SOURCES = \
+	$(noinst_HEADERS) \
+	plugins/otr/otrp.h \
+	plugins/otr/otrp.c \
+	plugins/otr/main.c
+
+dist_otr_DATA = \
+	plugins/otr/commands-en.txt
+endif

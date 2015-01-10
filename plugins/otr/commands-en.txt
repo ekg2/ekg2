@@ -1,0 +1,48 @@
+status
+	parameters: [name]
+	short description: shows OTR status of conversation
+
+init
+	parameters: [name]
+	short description: requests encrypted chat from user
+
+finish
+	parameters: [name]
+	short description: finishes encrypted chat with user
+
+trust
+	parameters: [name]
+	short description: remembers user's public key as trusted
+
+distrust
+	parameters: [name]
+	short description: remembers user's public key as untrusted
+
+auth
+	parameters: <secret> [question]
+	short description: authenticates other user's public key
+	
+	  %T/otr:auth <secret> [question]%n	request authentication from peer, optionally including a question for your peer to answer
+	
+	  %T/otr:auth <secret>%n		respond to received authentication request
+	
+	  %T/otr:auth -a|--abort%n		abort ongoing authentication
+	
+	If <secret> includes white space characters, it needs to be "double quoted".
+
+key
+	parameters: [session] <operation>
+	short description: manages private encryption keys
+	
+	  -l, --list
+	
+	  -g, --generate
+	
+	  -f, --forget
+	
+
+// Local Variables:
+// mode: text
+// indent-tabs-mode: t
+// eval: (auto-fill-mode 0)
+// End:
