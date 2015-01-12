@@ -1,0 +1,6 @@
+Makevars.template
+Makefile.in.in
+Rules-quot
+*.sed
+*.sin
+*.header
