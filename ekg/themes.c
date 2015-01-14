@@ -852,9 +852,8 @@ char *format_string(const char *format, ...)
 }
 
 /**
- * print_window_c()
+ * vprint_window_w()
  *
- * Mind abbreviation ;) print_window_c() -> print_window_common()<br>
  * Common stuff for: print_window() and print_window_w()<br>
  * Change w->act if needed, format theme, make fstring() and send everything to window_print()
  *
@@ -862,13 +861,13 @@ char *format_string(const char *format, ...)
  *		Yeah, we can do here window_find_ptr() but it'll slow down code a lot.
  */
 
-static void print_window_c(window_t *w, int activity, const char *theme, va_list ap) {
+void vprint_window_w(window_t *w, int activity, const char *theme, va_list ap) {
 	char *stmp;
 
-	/* w here shouldn't here be NULL. In case. */
-	if (!w) {
-		/* debug_fatal("print_window_common() w == NULL, theme: %s ap: 0x%x\n", w, theme, ap); */
-		return;
+	if (!w) {	/* if no window passed, then get window based of */
+		if (config_default_status_window || !config_display_crap)
+			w = window_status;
+		else	w = ((window_current != window_debug) ? window_current : window_status);	/* don't print in __debug window, print in __status one */
 	}
 
 	/* Change w->act */
@@ -1020,7 +1019,7 @@ static window_t *print_window_find(const char *target, session_t *session, int s
 }
 
 /**
- * print_window()
+ * vprint_window()
  *
  * Print given text in given window [@a target+ @a session]
  *
@@ -1040,38 +1039,49 @@ static window_t *print_window_find(const char *target, session_t *session, int s
  * @param ...
  */
 
+void vprint_window(const char *target, session_t *session, int activity, int separate, const char *theme, va_list ap) {
+	window_t *w = print_window_find(target, session, separate);
+	vprint_window_w(w, activity, theme, ap);
+}
+
 void print_window(const char *target, session_t *session, int activity, int separate, const char *theme, ...) {
-	window_t *w;
 	va_list ap;
 
-	w = print_window_find(target, session, separate);
-
 	va_start(ap, theme);
-	print_window_c(w, activity, theme, ap);
+	vprint_window(target, session, activity, separate, theme, ap);
 	va_end(ap);
 }
 
-void print_info(const char *target, session_t *session, const char *theme, ...) {
+void vprint_info(const char *target, session_t *session, const char *theme, va_list ap) {
 	window_t *w;
-	va_list ap;
 
 	/* info configuration goes here... */
 	w = print_window_find(target, session, 0);
+	vprint_window_w(w, EKG_WINACT_JUNK, theme, ap);
+}
+
+void print_info(const char *target, session_t *session, const char *theme, ...) {
+	va_list ap;
 
 	va_start(ap, theme);
-	print_window_c(w, EKG_WINACT_JUNK, theme, ap);
+	vprint_info(target, session, theme, ap);
 	va_end(ap);
 }
 
-void print_warning(const char *target, session_t *session, const char *theme, ...) {
+void vprint_warning(const char *target, session_t *session, const char *theme, va_list ap) {
 	window_t *w;
-	va_list ap;
 
 	/* warning configuration goes here... */
 	w = print_window_find(target, session, 0);
 
+	vprint_window_w(w, EKG_WINACT_JUNK, theme, ap);
+}
+
+void print_warning(const char *target, session_t *session, const char *theme, ...) {
+	va_list ap;
+
 	va_start(ap, theme);
-	print_window_c(w, EKG_WINACT_JUNK, theme, ap);
+	vprint_warning(target, session, theme, ap);
 	va_end(ap);
 }
 
@@ -1080,9 +1090,9 @@ void print_warning(const char *target, session_t *session, const char *theme, ..
  *
  * Like print_window() but it takes window_t struct instead of target+session.
  *
- * @note	The same as in print_window_c(): we don't check if @a w is valid window ptr.
+ * @note	The same as in vprint_window_w(): we don't check if @a w is valid window ptr.
  *		Just be careful. If you are not sure call:<br>
- *		<code>print_window_c(window_find_ptr(w), separate, theme, ...)</code>
+ *		<code>print_window_w(window_find_ptr(w), separate, theme, ...)</code>
  *		And in worst case text will be displayed in (__status / or __current) window instead of a usual one.. But ekg2 won't crash.
  * 
  *		@param	w - window to display,<br>
@@ -1091,15 +1101,8 @@ void print_warning(const char *target, session_t *session, const char *theme, ..
 
 void print_window_w(window_t *w, int activity, const char *theme, ...) {
 	va_list ap;
-
-	if (!w) {	/* if no window passed, then get window based of */
-		if (config_default_status_window || !config_display_crap)
-			w = window_status;
-		else	w = ((window_current != window_debug) ? window_current : window_status);	/* don't print in __debug window, print in __status one */
-	}
-
 	va_start(ap, theme);
-	print_window_c(w, activity, theme, ap);
+	vprint_window_w(w, activity, theme, ap);
 	va_end(ap);
 }
 

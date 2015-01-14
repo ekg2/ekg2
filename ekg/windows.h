@@ -23,6 +23,7 @@
 
 #include "ekg2-config.h"
 
+#include <stdarg.h>
 #include <glib.h>
 
 #include "commands.h"
@@ -115,6 +116,7 @@ void window_switch(int id);
 window_t *window_exist(int id);
 void window_print(window_t *w, fstring_t *line);
 void print_window_w(window_t *w, int activity, const char *theme, ...);	/* themes.c */
+void vprint_window_w(window_t *w, int activity, const char *theme, va_list ap);
 char *window_target(window_t *window);
 
 void window_session_set(window_t *w, session_t *newsession);

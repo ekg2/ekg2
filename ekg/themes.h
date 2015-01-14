@@ -24,6 +24,8 @@
 #define _(a) gettext(a)
 #define N_(a) gettext_noop(a)
 
+#include <stdarg.h>
+
 #include "dynstuff.h"
 #include "sessions.h"
 
@@ -47,11 +49,16 @@ typedef struct {
 
 #define print(x...)		print_window_w(NULL, EKG_WINACT_JUNK, x) 
 #define print_status(x...)	print_window_w(window_status, EKG_WINACT_JUNK, x)
+#define vprint(x...)		vprint_window_w(NULL, EKG_WINACT_JUNK, x) 
+#define vprint_status(x...)	vprint_window_w(window_status, EKG_WINACT_JUNK, x)
 
 #ifndef EKG2_WIN32_NOFUNCTION
 
-void print_window(const char *target, session_t *session, int activity, int separate, const char *theme, ...);
+void vprint_window(const char *target, session_t *session, int activity, int separate, const char *theme, va_list ap);
+void vprint_info(const char *target, session_t *session, const char *theme, va_list ap);
+void vprint_warning(const char *target, session_t *session, const char *theme, va_list ap);
 
+void print_window(const char *target, session_t *session, int activity, int separate, const char *theme, ...);
 void print_info(const char *target, session_t *session, const char *theme, ...);
 void print_warning(const char *target, session_t *session, const char *theme, ...);
 
