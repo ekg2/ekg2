@@ -1,42 +1,42 @@
 EKG2
 ====
 
-Multiplatform, multiprotocol, plugin-based instant messenger with (GTK2 GUI || console UI)!
+Multi-platform, multi-protocol, and plugin-based, instant messenger with a Gtk+ 2 GUI or a console UI!
 
-EKG2 is an OpenSource IM application for Unix systems (Linux, *BSD, SunOS, Solaris, MacOS, X, BeOS) available under the terms of GPL.
+EKG2 is an open source IM application for Unix systems (Linux, *BSD, SunOS, Solaris, Mac OS X, BeOS) available under the terms of the GPL.
 
-EKG2 is plugin-based, and because of this it can support many different protocols. It can also support different GUIs! Below is a list of available plugins.
+EKG2 is plugin-based, and because of this, it can support many different protocols. It can also support different GUIs! Below is a list of available plugins.
 
 Protocol plugins:
 
-* Jabber - (XMPP, gtalk and Tlen.pl support),
+* Jabber - (XMPP, GTalk and Tlen.pl support),
 * GG (gadu-gadu) - (using libgadu, the most popular polish IM protocol),
-* IRC - (mostly IRCnet oriented),
+* IRC - (mostly IRCnet-oriented),
 * ICQ
 * polchat
 * rivchat
 
 GUI plugins:
 
-* GTK2 - under development,
-* ncurses - primary ekg2 ui, console
+* Gtk+ 2.x - under development.
+* ncurses - primary EKG2 user-interface, console
 * readline
 
 Logging facility:
 
-* logs - multi plugin that allows logging in irssi like format, xml, simple and raw,
-* logsqlite - logging into a sqlite db,
+* logs - a multi-functionality plugin that allows logging in irssi-like format, in XML, in a simple format and in a raw format.
+* logsqlite - logging into a SQLite database.
 
-Script languages bindings: Python, Perl
+Scripting languages bindings: Python, Perl
 
 Other superb plugins:
 
 * autoresponder - a simple captcha for IM
-* sim (using openssl) & gpg - these plugins allow encryption within supported protocols,
-* jogger - allows manipulation of JoggerBot via ekg2,
-* mail - checking local maildir/mailbox for new messages,
-* nntp - read usenet news
+* sim (using OpenSSL) & gpg - these plugins allow encryption within supported protocols
+* jogger - allows manipulation of JoggerBot via ekg2
+* mail - checking local maildir/mailbox for new messages
+* nntp - read Usenet news
 * rss - read RSS/Atom feeds
-* sms - sms sending,
+* sms - sms sending
 
 There are also a few other plugins in development.
