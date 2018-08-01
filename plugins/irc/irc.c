@@ -768,8 +768,12 @@ static COMMAND(irc_command_msg) {
 		/* "Thus, there are 510 characters maximum allowed for the command and its parameters." [rfc2812]
 		 * yes, I know it's a nasty variable reusing ;)
 		 */
-		len_limit = 510 - (prv?7:6) - 6 - xstrlen(uid+4) - xstrlen(j->host_ident) - xstrlen(j->nick);
-		/* 6 = 3xspace + '!' + 2xsemicolon; -> [:nick!ident@hostident PRIVMSG dest :mesg] */
+		if (j->host_ident) {
+			len_limit = 510 - (prv?7:6) - 6 - xstrlen(uid+4) - xstrlen(j->host_ident) - xstrlen(j->nick);
+			/* 6 = 3xspace + '!' + 2xsemicolon; -> [:nick!ident@hostident PRIVMSG dest :mesg] */
+		} else {
+			len_limit = 410;
+		}
 		msg_len = xstrlen(recoded);
 		__mtmp = recoded;
 		while ( msg_len > len_limit )

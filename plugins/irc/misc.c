@@ -944,6 +944,9 @@ IRC_COMMAND(irc_c_list)
 					if (chan && chan->syncmode)
 						irc_access_parse(s, chan, osoba, 0);
 				}
+				if ( (!j->host_ident) && (!xstrcmp(IOK(7), j->nick)) ) {
+					j->host_ident = saprintf("%s@%s", IOK(4), IOK(5));
+				}
 				break;
 			/*
 			case (IRC_LISTCHA):
