@@ -981,11 +981,6 @@ WATCHER_SESSION(jabber_handle_connect_ssl) {
 
 	if (type == -1) {
 		/* XXX here. old tls code do: j->parser = NULL. check if needed */
-#ifdef HAVE_LIBGNUTLS
-		/* Allow connections to servers that have OpenPGP keys as well. */
-		const int cert_type_priority[3] = {GNUTLS_CRT_X509, GNUTLS_CRT_OPENPGP, 0};
-		const int comp_type_priority[3] = {GNUTLS_COMP_ZLIB, GNUTLS_COMP_NULL, 0};
-#endif
 
 		if ((ret = SSL_INIT(j->ssl_session))) {
 			/* XXX, OpenSSL error value XXX */
@@ -996,9 +991,7 @@ WATCHER_SESSION(jabber_handle_connect_ssl) {
 
 #ifdef HAVE_LIBGNUTLS
 		gnutls_set_default_priority(j->ssl_session);
-		gnutls_certificate_type_set_priority(j->ssl_session, cert_type_priority);
 		gnutls_credentials_set(j->ssl_session, GNUTLS_CRD_CERTIFICATE, j->xcred);
-		gnutls_compression_set_priority(j->ssl_session, comp_type_priority);
 
 		/* we use read/write instead of recv/send */
 		gnutls_transport_set_pull_function(j->ssl_session, (gnutls_pull_func)read);
