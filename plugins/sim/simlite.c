@@ -185,7 +185,7 @@ char *sim_key_fingerprint(const char *uid)
 	RSA *key = sim_key_read(uid, NULL);
 	unsigned char md_value[EVP_MAX_MD_SIZE], *buf, *newbuf;
 	char *result = NULL;
-	EVP_MD_CTX ctx;
+	EVP_MD_CTX *ctx;
 	unsigned int md_len;
 	int size, i;
 
@@ -208,10 +208,16 @@ char *sim_key_fingerprint(const char *uid)
 		size = i2d_RSAPublicKey(key, &newbuf);
 	else
 		size = i2d_RSAPrivateKey(key, &newbuf);
-	
-	EVP_DigestInit(&ctx, EVP_sha1());	
-	EVP_DigestUpdate(&ctx, buf, size);
-	EVP_DigestFinal(&ctx, md_value, &md_len);
+
+	if (!(ctx = EVP_MD_CTX_new())) {
+		free(buf);
+		sim_errno = SIM_ERROR_MEMORY;
+		goto cleanup;
+	}
+	EVP_DigestInit(ctx, EVP_sha1());
+	EVP_DigestUpdate(ctx, buf, size);
+	EVP_DigestFinal(ctx, md_value, &md_len);
+	EVP_MD_CTX_free(ctx);
 
 	free(buf);
 
