@@ -362,20 +362,22 @@ static COMMAND(jabber_command_msg)
 
 	if (!msg2) goto nomsg;
 
+	query_emit(NULL, "message-encrypt", &session->uid, &uid, &msg2, &secure);
+
 	if (session_int_get(session, "__gpg_enabled") == 1) {
 		char *e_msg = xstrdup(msg2);
 
 		if ((e_msg = jabber_openpgp(session, uid, JABBER_OPENGPG_ENCRYPT, e_msg, NULL, NULL))) {
-			watch_write(j->send_watch, 
-					"<x xmlns=\"jabber:x:encrypted\">%s</x>"
-					"<body>This message was encrypted by ekg2! (EKG2 BABY) Sorry if you cannot decode it ;)</body>", e_msg);
+			watch_write(j->send_watch, "<x xmlns=\"jabber:x:encrypted\">%s</x>", e_msg);
 			secure = 1;
 			xfree(e_msg);
+			xfree(msg2);
+			msg2 = xstrdup("This message was encrypted by ekg2! (EKG2 BABY) Sorry if you cannot decode it ;)");
 		}
 	}
-	if (!secure /* || j->istlen */) {
-		char *tmp = (j->istlen ? tlen_encode(msg2) : xml_escape(msg2));
 
+	{
+		char *tmp = (j->istlen ? tlen_encode(msg2) : xml_escape(msg2));
 		watch_write(j->send_watch, "<body>%s</body>", tmp);
 		xfree(tmp);
 	}

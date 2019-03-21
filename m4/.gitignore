@@ -1,0 +1,7 @@
+*.m4
+!ekg2-checks.m4
+!ekg2-plugin.m4
+!ekg2-with.m4
+!gcc_strict_aliasing.m4
+!gpgme.m4
+!pkg.m4

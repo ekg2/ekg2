@@ -36,3 +36,7 @@ stamp-h1
 *.swp
 ekg/ekg2
 /tags
+/ekg2
+/ekg2-config.h
+/ekg2-config.h.in
+/ABOUT-NLS

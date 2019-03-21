@@ -800,6 +800,13 @@ static QUERY(protocol_message)
 
 		query_emit(NULL, "message-decrypt", &___session, &___sender, &___message, &___decrypted, NULL);
 
+		if (!___message) {
+			/* Message has been cancelled (crypto plugin's internal comm) */
+			xfree(___session);
+			xfree(___sender);
+			return 0;
+		}
+
 		if (___decrypted) {
 			xfree(*ptext);
 			*ptext = ___message;

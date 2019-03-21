@@ -1,5 +1,6 @@
 #include "ekg2.h"
 #include <stdio.h>
+#include <string.h>
 
 #ifdef HAVE_READLINE_READLINE_H
 #	include <readline/readline.h>
