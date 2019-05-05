@@ -798,7 +798,7 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 	/* aktualny wyraz bez uwzgledniania przecinkow */
 	for (i = 0, words_count = 0, word_current = 0; i < linelen; i++, words_count++) {
 		for(; i < linelen && !xisspace(line[i]); i++)
-			if(line[i] == '"') 
+			if(line[i] == '"')
 				for(i++; i < linelen && line[i] != '"'; i++);
 		for(i++; i < linelen && xisspace(line[i]); i++);
 		if(i >= linelen) {
@@ -946,6 +946,9 @@ int ekg2_complete(int *line_start, int *line_index, char *line, int line_maxlen)
 
 		for (len = 0; cmd[len] && !xisspace(cmd[len]); len++);
 
+		/* complete nicks */
+		known_uin_generator(start, xstrlen(start));
+ 		
 		/* first we look for some session complete */
 		if (session_current) {
 			session_t *session = session_current;
