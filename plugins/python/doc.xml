@@ -8,7 +8,7 @@
             <term>command( str )</term>
             <listitem>
                <para>
-                  Wywo³anie polecenia ekg2
+                   Wywo³anie polecenia <str>, opcjonalnie <session> okresla sesje
                </para>
             </listitem>
          </varlistentry>

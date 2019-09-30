@@ -128,11 +128,27 @@ PyObject *python_build_window_w(window_t *w)
 PyObject *ekg_cmd_command(PyObject * self, PyObject * args)
 {
 	char *command = NULL;
+	char *session = NULL;
+	char buf[100];
+	session_t *s = NULL;
 
-	if (!PyArg_ParseTuple(args, "s", &command)) {
+	if (!PyArg_ParseTuple(args, "s|s", &command, &session)) {
 		return NULL;
 	}
-	command_exec(NULL, NULL, command, 0);	// run command for current session
+
+	if(session)
+	{
+		debug("[python] checking for  '%s' session\n", session);
+		s = session_find((const char *) session);
+
+		if (!s) {
+			snprintf(buf, 99, "Can't find session '%s'", session);
+			PyErr_SetString(PyExc_KeyError, buf);
+			return NULL;
+		}
+	}
+
+	command_exec(NULL, s, command, 0);
 	Py_INCREF(Py_None);
 	return Py_None;
 }
